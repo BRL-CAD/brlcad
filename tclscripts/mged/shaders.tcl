@@ -119,6 +119,14 @@ proc do_checker { shade_var id } {
 		{summary "Enter another color to use in the checkerboard pattern"}
 		{range "An RGB triple, each value from 0 to 255"}
 	}
+	hoc_register_data $shader_params($id,window).fr.color1 "First Color" {
+		{summary "Enter one of the colors to use in the checkerboard pattern"}
+		{range "An RGB triple, each value from 0 to 255"}
+	}
+	hoc_register_data $shader_params($id,window).fr.color2 "Second Color" {
+		{summary "Enter another color to use in the checkerboard pattern"}
+		{range "An RGB triple, each value from 0 to 255"}
+	}
 
 	set_checker_values $shader_str $id
 
@@ -175,10 +183,14 @@ proc do_checker_apply { shade_var id } {
 	# if set to the default, ignore it
 	if { [string length $shader_params($id,ckr_a) ] > 0 } then {
 		if { $shader_params($id,ckr_a) != $shader_params($id,def_ckr_a) } then {
-			lappend params a $shader_params($id,ckr_a) } }
+			lappend params a $shader_params($id,ckr_a)
+		}
+	}
 	if { [string length $shader_params($id,ckr_b) ] > 0 } then {
 		if { $shader_params($id,ckr_b) != $shader_params($id,def_ckr_b) } then {
-			lappend params b $shader_params($id,ckr_b) } }
+			lappend params b $shader_params($id,ckr_b)
+		}
+	}
 
 	set shader [list checker $params ]
 }
@@ -720,8 +732,12 @@ proc do_texture { shade_var id } {
 
 	hoc_register_data $shader_params($id,window).fr.file_e File {
 		{ summary "Enter the name of the file containing the texture to be mapped to this\n\
-			object. This file should be a 'pix' file for the 'texture' shader,\n\
-			or a 'bw' file for 'bwtexture'."}
+			object. This file should be a 'pix' file for the 'texture' or 'bump' shaders,\n\
+			or a 'bw' file for 'bwtexture'. For the 'bump' shader, the red and blue\n\
+			channels of the image are used to perturb the true surface normal.\n\
+			Red and blue values of 128 produce no perturbation, while values of 0\n\
+			produce maximum perturbation in one direction and 255 produces maximum\n\
+			perturbation in the opposite"}
 	}
 
 	hoc_register_data $shader_params($id,window).fr.width_e Width {
@@ -737,11 +753,45 @@ proc do_texture { shade_var id } {
 			transparent. All pixels on this object that get assigned this\n\
 			color from the texture will be treated as though this object\n\
 			does not exist. For the 'texture' shader, this must be an RGB\n\
-			triple. For the 'bwtexture' shader, a single value is sufficient"}
+			triple. For the 'bwtexture' shader, a single value is sufficient\n\
+			This is ignored for the 'bump' shader"}
 		{ range "RGB values must be integers from 0 to 255"}
 	}
 
 	hoc_register_data $shader_params($id,window).fr.valid_e Transparency {
+		{ summary "If depressed, transparency is enabled using the transparency\n\
+			color. Otherwise, the transparency color is ignored"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.file File {
+		{ summary "Enter the name of the file containing the texture to be mapped to this\n\
+			object. This file should be a 'pix' file for the 'texture' or 'bump' shaders,\n\
+			or a 'bw' file for 'bwtexture'. For the 'bump' shader, the red and blue\n\
+			channels of the image are used to perturb the true surface normal.\n\
+			Red and blue values of 128 produce no perturbation, while values of 0\n\
+			produce maximum perturbation in one direction and 255 produces maximum\n\
+			perturbation in the opposite"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.width Width {
+		{ summary "Enter the width of the texture in pixels\n(default is 512)"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.height Height {
+		{ summary "Enter the height of the texture in pixels\n(default is 512)"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.trans Transparency {
+		{ summary "Enter the color in the texture that will be treated as\n\
+			transparent. All pixels on this object that get assigned this\n\
+			color from the texture will be treated as though this object\n\
+			does not exist. For the 'texture' shader, this must be an RGB\n\
+			triple. For the 'bwtexture' shader, a single value is sufficient.\n\
+			This is ignored for the 'bump' shader"}
+		{ range "RGB values must be integers from 0 to 255"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.valid Transparency {
 		{ summary "If depressed, transparency is enabled using the transparency\n\
 			color. Otherwise, the transparency color is ignored"}
 	}
@@ -930,6 +980,10 @@ proc do_stack { shade_var id } {
 	menubutton $shader_params($id,window).fr.add\
 		-menu $shader_params($id,window).fr.add.m\
 		-text "Add shader" -relief raised
+	hoc_register_data $shader_params($id,window).fr.add "Add Shader" {
+		{summary "Use this menu to select a shader to add to\n\
+			the end of the stack"}
+	}
 
 	menu $shader_params($id,window).fr.add.m -tearoff 0
 	$shader_params($id,window).fr.add.m add command \
@@ -952,6 +1006,10 @@ proc do_stack { shade_var id } {
 	menubutton $shader_params($id,window).fr.del\
 		-menu $shader_params($id,window).fr.del.m\
 		-text "Delete shader" -relief raised
+	hoc_register_data $shader_params($id,window).fr.del "Delete Shader" {
+		{summary "Use this menu to select a shader to delete from\n\
+			the stack"}
+	}
 
 	menu $shader_params($id,window).fr.del.m -tearoff 0
 
