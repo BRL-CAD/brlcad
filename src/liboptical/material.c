@@ -100,7 +100,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 	void *handle;
 	struct mfuncs *shader_mfuncs;
 	struct mfuncs *mfp;
-	char *dl_error_str;
+	const char *dl_error_str;
 	char sym[MAXPATHLEN];
 
 
