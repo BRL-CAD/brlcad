@@ -32,16 +32,7 @@
  */
 
 #include "conf.h"
-#ifdef FB_USING_TCL_TK
 #include "tk.h"
-#else
-#include <Xm/Xm.h> 
-#include <Xm/Form.h> 
-#include <Xm/RowColumn.h>
-#include <Xm/MenuShell.h>
-#include <Xm/PushBG.h>
-#include <Xm/DrawingA.h>
-#endif
 #include <X11/keysym.h> 
 #include <X11/StringDefs.h> 
 #include <GL/glx.h>
@@ -61,6 +52,7 @@
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "fb.h"
 #include "./fblocal.h"
 
@@ -108,17 +100,10 @@ char *visual_class[] = {
 };
 
 /* Internal callbacks etc.*/
-#ifdef FB_USING_TCL_TK
 static int input();
 static int expose_callback();
 static int CloseCB();
 static int PostIt();
-#else
-static void input(Widget, XtPointer, XtPointer); 
-static void expose_callback (Widget, XtPointer, XtPointer); 
-static void CloseCB(Widget, XtPointer, XtPointer);
-static void PostIt(Widget, XtPointer, XButtonEvent *);
-#endif
 
 /* Other Internal routines */
 _LOCAL_ int ogl_getmem();
@@ -129,10 +114,6 @@ _LOCAL_ Pixmap  	make_bitmap();
 _LOCAL_ XVisualInfo *	ogl_choose_visual();
 static int		is_linear_cmap();
 
-#ifndef FB_USING_TCL_TK
-static Widget 	popup;
-static Widget 	popupshell;
-#endif
 static int	ogl_nwindows = 0; 	/* number of open windows*/
 static int	multiple_windows = 0;	/* someone wants to be ready
 					 * for multiple windows, at the
@@ -266,21 +247,12 @@ struct sgiinfo {
  *  Per window state information particular to the OpenGL interface
  */
 struct oglinfo {
-#ifdef FB_USING_TCL_TK
   Tcl_Interp *interp;
+  Tk_Window main_tkwin;
   Tk_Window tkwin;
   GLXContext glxc;
   Display *dispp;
   Window wind;
-#else
-	XtAppContext 	appc;		/* application context */
-	GLXContext	glxc;		/* graphics context */
-	Display     *	dispp;		/* display */
-	Window 		wind;		/* window id */
-	Widget 		toplevel;	/* top widget for this framebuffer */
-	Widget 		form;		/* widget to add popup to */
-	Widget		glw;		/* graphics library widget */
-#endif
 	short 		firstTime;	/* first time exposed */
 	short 		close_me; 	/* flag set by popup close button */
 	short		front_flag;	/* front buffer being used (b-mode) */
@@ -737,9 +709,6 @@ int	width, height;
 	int		mode, i, direct;
 	int 		xpos, ypos, win_width, win_height;
 	Pixmap		src_bitmap, nil_bitmap;
-#ifndef FB_USING_TCL_TK
-	Arg args[20];  
-#endif  
 	int 		n;
 	int 		fake_argc = 0;
 	FBIO 		*client_data1;
@@ -928,7 +897,6 @@ int	width, height;
 		return(-1);
 
 
-#ifdef FB_USING_TCL_TK
 	OGL(ifp)->interp = Tcl_CreateInterp();
 
 	/* This runs the init.tcl script */
@@ -937,14 +905,20 @@ int	width, height;
 	  return (-1);
 	}
 
-	if((OGL(ifp)->tkwin = Tk_CreateMainWindow(OGL(ifp)->interp, (char *)NULL,
-						  title, "LIBFB")) == NULL){
-	  fb_log("ogl_open: Failed to create main window.\n");
+	if (Tk_Init(OGL(ifp)->interp) == TCL_ERROR){
+	  fb_log("Tk_Init error %s\n", OGL(ifp)->interp->result);
 	  return (-1);
 	}
 
-	if (Tk_Init(OGL(ifp)->interp) == TCL_ERROR){
-	  fb_log("Tk_Init error %s\n", OGL(ifp)->interp->result);
+	if((OGL(ifp)->main_tkwin = Tk_MainWindow(OGL(ifp)->interp)) == NULL){
+	  fb_log("ogl_open: Failed to get main window.\n");
+	  return (-1);
+	}
+
+	if((OGL(ifp)->tkwin = Tk_CreateWindowFromPath(OGL(ifp)->interp,
+						      OGL(ifp)->main_tkwin,
+						      ".ogl", NULL)) == NULL){
+	  fb_log("ogl_open: Failed to create window.\n");
 	  return (-1);
 	}
 
@@ -1002,12 +976,23 @@ int	width, height;
 	/* count windows */
 	ogl_nwindows++;
 
+	Tk_GeometryRequest(OGL(ifp)->main_tkwin, ifp->if_width, ifp->if_height);
+	Tk_ResizeWindow(OGL(ifp)->tkwin, ifp->if_width, ifp->if_height);
 	Tk_SetWindowVisual(OGL(ifp)->tkwin, OGL(ifp)->vip->visual,
 			   OGL(ifp)->vip->depth, OGL(ifp)->xcmap);
-	Tk_GeometryRequest(OGL(ifp)->tkwin, ifp->if_width, ifp->if_height);
-	Tk_ResizeWindow(OGL(ifp)->tkwin, ifp->if_width, ifp->if_height);
 	Tk_MakeWindowExist(OGL(ifp)->tkwin);
 	OGL(ifp)->wind = Tk_WindowId(OGL(ifp)->tkwin);
+
+	{
+	  struct bu_vls vls;
+	  int status;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "wm title . \"%s\";", title);
+	  bu_vls_printf(&vls, "wm resizable . 0 0");
+	  status = Tcl_Eval(OGL(ifp)->interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
 	
 	/* 
 	 * Cursor set-up:
@@ -1041,156 +1026,15 @@ int	width, height;
 
 	Tk_CreateGenericHandler(expose_callback, (ClientData)ifp);
 	Tk_MapWindow(OGL(ifp)->tkwin);
+	Tk_MapWindow(OGL(ifp)->main_tkwin);
 	ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
 
 	/* Loop through events until first exposure event is processed */
 	OGL(ifp)->firstTime = 1;
 	while(OGL(ifp)->firstTime){
-	  Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT);
-	}
-#else
-	/* Start up XtIntrinsics */
-	XtToolkitInitialize();
-	OGL(ifp)->appc = XtCreateApplicationContext();
-	OGL(ifp)->dispp = XtOpenDisplay(OGL(ifp)->appc, NULL, NULL, NULL,
-				NULL, 0, &fargc, NULL);
-
-	/* Choose an appropriate visual */
-	if ((OGL(ifp)->vip = ogl_choose_visual(ifp))==NULL){
-		fb_log("ogl_open: Couldn't find an appropriate visual. Exiting.\n");
-		exit(-1);
+	  Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
 	}
 
-	/* Open an OpenGL context with this visual*/
-	if (multiple_windows){	/* force indirect context */
-		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
-					OGL(ifp)->vip, 0, GL_FALSE);
-	} else {		/* try direct context */
-		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
-					OGL(ifp)->vip, 0, GL_TRUE);
-	}
-
-	if (CJDEBUG){
-		direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
-		printf("Context is %s.\n", direct ? "direct" : "indirect");
-	}
-
-
-	/* Create a colormap for this visual */
-	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-	if (!OGL(ifp)->soft_cmap_flag) {
-		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
-					RootWindow(OGL(ifp)->dispp,
-						OGL(ifp)->vip->screen),
-					OGL(ifp)->vip->visual,
-					AllocAll);
-		/* initialize virtual colormap - it will be loaded into
-		 * the hardware. This code has not yet been tested.
-		 */
-		if(CJDEBUG) printf("Loading read/write colormap.\n");
-	    	for (i = 0; i < 256; i++) {
-	    		color_cell[i].pixel = i;
-	    		color_cell[i].red = CMR(ifp)[i];
-	    		color_cell[i].green = CMG(ifp)[i];
-	    		color_cell[i].blue = CMB(ifp)[i];
-	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
-	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
-	} else { /* read only colormap */
-		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
-					RootWindow(OGL(ifp)->dispp,
-						OGL(ifp)->vip->screen),
-					OGL(ifp)->vip->visual,
-					AllocNone);
-	}
-
-
-	/* 
-	 * Create Application shell and widgets
-	 */
-	n = 0;
-	XtSetArg(args[n], XmNtitle, title); n++;	
-	if (!ogl_nwindows) { /* else let wm decide */
-		XtSetArg(args[n], XmNx, xpos); n++;
-		XtSetArg(args[n], XmNy, ypos); n++;
-	} 
-	XtSetArg(args[n], XmNvisual, OGL(ifp)->vip->visual); n++;
-	XtSetArg(args[n], XmNcolormap, OGL(ifp)->xcmap); n++;
-	XtSetArg(args[n], XmNdepth, OGL(ifp)->vip->depth); n++;
-	OGL(ifp)->toplevel = XtAppCreateShell(NULL,NULL,
-			applicationShellWidgetClass, OGL(ifp)->dispp, args, n);
-
-	n = 0;
-	XtSetArg(args[n], XmNnoResize, True); n++;
-	OGL(ifp)->form = XmCreateForm(OGL(ifp)->toplevel, "form", args, n);
-	XtManageChild(OGL(ifp)->form);     
-
-	n = 0;
-	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;    
-	XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;    
-	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;    
-	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;    
-	XtSetArg(args[n], XmNwidth, win_width); n++;
-	XtSetArg(args[n], XmNheight, win_height); n++;
-	OGL(ifp)->glw = XmCreateDrawingArea(OGL(ifp)->form, "glwidget",
-				args, n);
-
-	XtManageChild (OGL(ifp)->glw);    
-
-	XtAddCallback(OGL(ifp)->glw, XmNexposeCallback,    
-		expose_callback, (XtPointer) ifp);    
-	XtAddCallback(OGL(ifp)->glw, XmNinputCallback, 
-		input,    (XtPointer) ifp);     
-
-
-	/* realize window on the screen */
-	XtRealizeWidget(OGL(ifp)->toplevel);
-	OGL(ifp)->wind = XtWindow(OGL(ifp)->glw);
-	/* count windows */
-	ogl_nwindows++;
-
-	/* 
-	 * Cursor set-up:
-	 * create the default cursor and an invisible cursor for when the
-	 * cursor is off
-	 */
-	src_bitmap = make_bitmap(ifp, arr_data.bits, 
-				arr_data.xbits, arr_data.ybits);
-	/* (complication in last parameter is conversion from 
-	 *  first quadrant to third quadrant coordinates)
-	 */
-	OGL(ifp)->cursor = XCreatePixmapCursor(OGL(ifp)->dispp, src_bitmap,
-			src_bitmap, &curs_color, &curs_color, 
-			arr_data.xorig, arr_data.ybits - arr_data.yorig - 1);
-	XFreePixmap(OGL(ifp)->dispp,src_bitmap);
-
-	/* only need one copy of null cursor for all open windows*/
-	if (ogl_nwindows < 2) {
-		nil_bitmap = make_bitmap(ifp, nil_data.bits,nil_data.xbits, nil_data.ybits);
-		nil_cursor = XCreatePixmapCursor(OGL(ifp)->dispp, nil_bitmap,
-			nil_bitmap, &curs_color, &curs_color, 
-			nil_data.xorig, nil_data.ybits - nil_data.yorig -1);
-		XFreePixmap(OGL(ifp)->dispp,nil_bitmap);
-	}
-
-	if ( SGI(ifp)->mi_curs_on == 0 ) {
-		XDefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind,nil_cursor);
-	} else {
-		XDefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->cursor);
-	}
-
-
-
-	/* Must call "is_linear_cmap" AFTER "ogl_getmem" which allocates
-		space for the color map.				*/
-
-	/* Loop through events until first exposure event is processed */
-	OGL(ifp)->firstTime = 1;
-	while(OGL(ifp)->firstTime){
-		XtAppNextEvent(OGL(ifp)->appc, &event);
-		XtDispatchEvent(&event);
-	}
-#endif
 	return 0;
 }
 
@@ -1204,12 +1048,7 @@ FBIO	*ifp;
 	XEvent event;
 	
 	XUndefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind);
-#ifdef FB_USING_TCL_TK
-	Tk_DestroyWindow(OGL(ifp)->tkwin);
-#else
-	XtUnmapWidget(OGL(ifp)->toplevel);
-	XtDestroyWidget(OGL(ifp)->toplevel);
-#endif
+	Tk_DestroyWindow(OGL(ifp)->main_tkwin);
 	XFreeCursor(OGL(ifp)->dispp,OGL(ifp)->cursor);
 	XFreeColormap(OGL(ifp)->dispp,OGL(ifp)->xcmap);
 	if (ogl_nwindows < 2){
@@ -1250,11 +1089,6 @@ FBIO	*ifp;
 {
 
 	FILE *fp = NULL;
-#ifndef FB_USING_TCL_TK
-	XEvent event;
-	Widget closeit;
-	Arg args[10];
-#endif
 	int n, scr;
 
 	/* only the last open window can linger -
@@ -1295,39 +1129,6 @@ FBIO	*ifp;
 	(void)signal( SIGQUIT, SIG_IGN );
 	(void)signal( SIGALRM, SIG_IGN );
 
-#ifndef FB_USING_TCL_TK
-	/* Line up at the "complaints window", just in case... */
-	fp = fopen("/dev/console", "w");
-
-	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
-
-	scr = DefaultScreen(OGL(ifp)->dispp);
-	n = 0;
-	XtSetArg(args[n], XmNvisual, DefaultVisual(OGL(ifp)->dispp, scr)); n++;
-	XtSetArg(args[n], XmNdepth, DefaultDepth(OGL(ifp)->dispp, scr)); n++;
-	XtSetArg(args[n], XmNcolormap, DefaultColormap(OGL(ifp)->dispp, scr));	n++;
-	XtSetArg(args[n], XmNheight, 100); n++;
-	XtSetArg(args[n], XmNwidth, 100); n++;
-	popupshell = XmCreateMenuShell(OGL(ifp)->form, "pshell", args, n);
-	
-	n = 0;
-	XtSetArg(args[n], XmNrowColumnType, XmMENU_POPUP); n++;
-	popup = XmCreateRowColumn(popupshell, "popup", args, n);
-	XtAddEventHandler(OGL(ifp)->form, ButtonPressMask, False, (XtEventHandler) PostIt, ifp);
-
-	closeit = XmCreatePushButtonGadget(popup,"close",NULL,0);
-	XtManageChild(closeit);
-
-	/* loop until close menu is selected */
-	OGL(ifp)->close_me = 0;
-	while(!OGL(ifp)->close_me){
-		XtAppNextEvent(OGL(ifp)->appc, &event);
-		XtDispatchEvent(&event);
-	}
-
-	if( fp ) fclose(fp);		/* close our "complaints window" */
-#endif
-
 	return ogl_final_close( ifp );
 }
 
@@ -1343,14 +1144,7 @@ FBIO	*ifp;
 {
 	XEvent event;
 
-#ifdef FB_USING_TCL_TK
-	while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 	return(0);
 }
 
@@ -1390,14 +1184,7 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 
 	if(CJDEBUG) printf("entering ogl_clear\n");
 
-#ifdef FB_USING_TCL_TK
-	while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
@@ -1474,14 +1261,7 @@ int	xzoom, yzoom;
 
 	if(CJDEBUG) printf("entering ogl_view\n");
 
-#ifdef FB_USING_TCL_TK
-	while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	if( xzoom < 1 ) xzoom = 1; 
 	if( yzoom < 1 ) yzoom = 1;
@@ -1557,14 +1337,7 @@ int	*xzoom, *yzoom;
 	XEvent event;
 	if(CJDEBUG) printf("entering ogl_getview\n");
 
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
@@ -1724,14 +1497,7 @@ int	count;
 	 * before updating the screen
 	 */
 
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
@@ -1824,15 +1590,8 @@ CONST unsigned char	*pp;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
-
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+	
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
@@ -1926,22 +1685,12 @@ register CONST ColorMap	*cmp;
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
 	XEvent event;
-#ifndef FB_USING_TCL_TK
-	Arg args[1];	
-#endif
 	XVisualInfo *vi;
     	int num;
 	
 	if(CJDEBUG) printf("entering ogl_wmap\n");
 
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	prev = SGI(ifp)->mi_cmap_flag;
 	if ( cmp == COLORMAP_NULL)  {
@@ -2033,14 +1782,7 @@ int	xorig, yorig;
 	Pixmap new_bitmap;
 	Cursor new_cursor;
 
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	/* Check size of cursor */
 	if( xbits < 0 )
@@ -2089,14 +1831,7 @@ int	x, y;
 {
 	XEvent event;
 
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
 	/* set values into FBIO structure */
 	fb_sim_cursor(ifp, mode, x, y);
@@ -2119,15 +1854,7 @@ FBIO	*ifp;
 {
 	XEvent event;
 
-#ifdef FB_USING_TCL_TK
-	        while(Tk_DoOneEvent(TK_ALL_EVENTS|TK_DONT_WAIT));
-#else
-	while ((int) XtAppPending(OGL(ifp)->appc)){
-		XtAppNextEvent(OGL(ifp)->appc,&event);
-		XtDispatchEvent(&event);
-	}
-#endif
-
+	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 	return(0);
 }
 
@@ -2249,34 +1976,18 @@ input(Widget w, XtPointer client_data,    XtPointer call)
 }   
 #endif
   
-#ifdef FB_USING_TCL_TK
 static int
 expose_callback(client_data, eventPtr)
 ClientData client_data;
 XEvent *eventPtr;
-#else
-static void 
-expose_callback (Widget w, XtPointer client_data, XtPointer call) 
-#endif
 {    
-#ifdef FB_USING_TCL_TK
   XWindowAttributes xwa;
-#else
-	XmDrawingAreaCallbackStruct *call_data;
-	Arg args[10];
-	int n;
-	Dimension width, height;
-#endif
 	FBIO *ifp;
 	struct ogl_clip *clp;
 
 	if(CJDEBUG) printf("entering expose_callback()\n");
 
 	ifp = (FBIO *) client_data;     
-
-#ifndef FB_USING_TCL_TK
-	call_data = (XmDrawingAreaCallbackStruct *) call;    
-#endif
 
 	if (multiple_windows || OGL(ifp)->firstTime) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
@@ -2313,18 +2024,10 @@ expose_callback (Widget w, XtPointer client_data, XtPointer call)
 			OGL(ifp)->copy_flag = 0;
 		}
 
-#ifdef FB_USING_TCL_TK
 		XGetWindowAttributes(OGL(ifp)->dispp, OGL(ifp)->wind, &xwa);
 		OGL(ifp)->win_width = xwa.width;
 		OGL(ifp)->win_height = xwa.height;
-#else
-		n = 0;
-		XtSetArg(args[n], XmNwidth, &width); n++;
-		XtSetArg(args[n], XmNheight, &height); n++;
-		XtGetValues(OGL(ifp)->glw, args, n);
-		OGL(ifp)->win_width = width;
-		OGL(ifp)->win_height = height;
-#endif
+
 		/* clear entire window */
 		glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
 		glClearColor(0,0,0,0);
