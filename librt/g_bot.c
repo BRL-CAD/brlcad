@@ -2057,6 +2057,138 @@ struct rt_bot_internal *bot;
 }
 
 int
+same_orientation( a, b )
+int *a, *b;
+{
+	int i,j;
+
+	for( i=0 ; i<3 ; j++ )
+	{
+		if( a[0] == b[i] )
+		{
+			i++;
+			if( i == 3 )
+				i = 0;
+			if( a[1] == b[i] )
+				return( 1 );
+			else
+				return( 0 );
+		}
+	}
+
+	return( 0 );
+}
+
+int
+bot_face_fuse( bot )
+struct rt_bot_internal *bot;
+{
+	int num_faces;
+	int i,j,k,l;
+	int count=0;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	num_faces = bot->num_faces;
+	for( i=0 ; i<num_faces ; i++ )
+	{
+		for( j=i+1 ; j<num_faces ; j++ )
+		{
+			int match=0;
+			int elim;
+
+			for( k=i*3 ; k<(i+1)*3 ; k++ )
+			{
+				for( l=j*3 ; l<(j+1)*3 ; l++ )
+				{
+					if( bot->faces[k] == bot->faces[l] )
+					{
+						match++;
+						break;
+					}
+				}
+			}
+
+			if( match != 3 )
+				continue;
+
+			/* these two faces have the same vertices */
+			elim = -1;
+			switch( bot->mode )
+			{
+				case RT_BOT_PLATE:
+				case RT_BOT_PLATE_NOCOS:
+					/* check the face thickness and face mode */
+					if( bot->thickness[i] != bot->thickness[j] ||
+						BU_BITTEST( bot->face_mode, i ) != BU_BITTEST( bot->face_mode, j ) )
+							break;
+				case RT_BOT_SOLID:
+				case RT_BOT_SURFACE:
+					if( bot->orientation == RT_BOT_UNORIENTED )
+					{
+						/* faces are identical, so eliminate one */
+						elim = j;
+					}
+					else
+					{
+						/* need to check orientation */
+						if( same_orientation( &bot->faces[i*3], &bot->faces[j*3] ) )
+							elim = j;
+					}
+					break;
+				default:
+					bu_bomb( "bot_face_condense: Unrecognized BOT mode!!!\n" );
+					break;
+			}
+
+			if( elim < 0 )
+				continue;
+
+			/* we are eliminating face number "elim" */
+			for( l=elim*3 ; l< num_faces-1 ; l++ )
+				bot->faces[l] = bot->faces[l+3];
+			if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
+			{
+				for( l=elim ; l<num_faces-1 ; l++ )
+				{
+					bot->thickness[l] = bot->thickness[l+1];
+					if( BU_BITTEST( bot->face_mode, l+1 ) )
+						BU_BITSET( bot->face_mode, l );
+					else
+						BU_BITCLR( bot->face_mode, l );
+				}
+			}
+			num_faces--;
+		}
+	}
+
+	count = bot->num_faces - num_faces;
+
+	if( count )
+	{
+		bot->num_faces = num_faces;
+		bot->faces = (int *)bu_realloc( bot->faces, num_faces*3*sizeof( int ), "BOT faces realloc" );
+		if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
+		{
+			struct bu_bitv *new_mode;
+
+			bot->thickness = bu_realloc( bot->thickness, num_faces*sizeof( fastf_t ), "BOT thickness realloc" );
+			new_mode = bu_bitv_new( num_faces );
+			bu_bitv_clear( new_mode );
+			for( l=0 ; l<num_faces ; l++ )
+			{
+				if( BU_BITTEST( bot->face_mode, l ) )
+					BU_BITSET( new_mode, l );
+			}
+			bu_free( (char *)bot->face_mode, "BOT face_mode" );
+			bot->face_mode = new_mode;
+		}
+	}
+
+	return( count );
+}
+
+int
 bot_condense( bot )
 struct rt_bot_internal *bot;
 {
