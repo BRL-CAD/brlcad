@@ -100,11 +100,11 @@ proc do_mouse_bindings { w } {
     if {$adcflag && $transform == "a"} {
 	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t 1 %x %y"
 	bind $w <Shift-ButtonPress-2> "winset $w; dm adc t 1 %x %y"
-	bind $w <Shift-ButtonPress-3> "winset $w; dm adc t 1 %x %y"
+	bind $w <Shift-ButtonPress-3> "winset $w; dm adc d 1 %x %y"
 
 	bind $w <Control-ButtonPress-1> "winset $w; dm adc 1 1 %x %y"
 	bind $w <Control-ButtonPress-2> "winset $w; dm adc 2 1 %x %y"
-	bind $w <Control-ButtonPress-3> "winset $w; dm adc 1 1 %x %y"
+	bind $w <Control-ButtonPress-3> "winset $w; dm adc d 1 %x %y"
 
 	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm adc d 1 %x %y"
 	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm adc d 1 %x %y"
@@ -117,6 +117,9 @@ proc do_mouse_bindings { w } {
 	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con a 1 1 %x %y"
 	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con a 2 1 %x %y"
 	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con a d 1 %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con a d 1 %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con a d 1 %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con a d 1 %x %y"
     } else {
 	bind $w <Shift-ButtonPress-1> "winset $w; dm am t 1 %x %y"
 	bind $w <Control-ButtonPress-1> "winset $w; dm am r 1 %x %y"

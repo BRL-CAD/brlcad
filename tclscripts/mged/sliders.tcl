@@ -6,30 +6,24 @@
 #    are provided by the application
 #
 
-set extern_commands "_mged_sliders _mged_knob"
-foreach cmd $extern_commands {
-    if {[string compare [info command $cmd] $cmd] != 0} {
-	puts stderr "Application fails to provide command '$cmd'"
-	return
-    }
-}
+check_externs "_mged_sliders _mged_knob"
 
 # Customization Variables
 set sliders(orient) horizontal
-set sliders(length) 350;
-set sliders(width) 10;
+set sliders(length) 350
+set sliders(width) 10
 set sliders(high_res) 0.01
 set sliders(low_res) 1
-set sliders(show_value) 0;
-set sliders(NOISE) 0.03;
-set sliders(scale) 1.0;
+set sliders(show_value) 0
+set sliders(NOISE) 0.03
+set sliders(scale) 1.0
 set sliders(ar_scale) 11.372222;  # 2047.0/180.0
 set sliders(rr_scale) 341.16667;  # 2047.0/6.0
-set sliders(adc_scale) 1.0;
+set sliders(adc_scale) 1.0
 set sliders(adc_ang_scale) 45.488889;  # 2047.0/45.0
-set sliders(max) [expr $sliders(scale) + $sliders(NOISE)];
-set sliders(min) [expr $sliders(max) * -1];
-set sliders(range) [expr $sliders(max) * 2];
+set sliders(max) [expr $sliders(scale) + $sliders(NOISE)]
+set sliders(min) [expr $sliders(max) * -1]
+set sliders(range) [expr $sliders(max) * 2]
 set sliders(from) -1
 set sliders(to) 1
 set sliders(rate_rot_from) -6
@@ -45,7 +39,6 @@ set EDIT_CLASS_TRAN 1
 set EDIT_CLASS_ROTATE 2
 set EDIT_CLASS_SCALE 3
 
-
 proc sliders args {
     global sliders
     global player_screen
@@ -56,87 +49,98 @@ proc sliders args {
     global EDIT_CLASS_ROTATE
     global EDIT_CLASS_SCALE
     global sliders_on
+    global mged_active_dm
+    global mged_dm_loc
 
     set result [eval _mged_sliders $args]
     # get a list of the id's associated with the current command window
     set cmd_list [cmd_get]
-    set id [lindex $cmd_list 0]
-    set sliders_on($id) [_mged_sliders]
-    set dm_id [lindex $cmd_list 1]
-    set id_list [lindex $cmd_list 2]
+    set dm_id [lindex $cmd_list 0]
+    set sh_id [lindex $cmd_list 1]
+    set base_id [lindex $cmd_list 2]
 
-    if { [string compare $id "mged"]==0 } {
-	continue
+    if {$base_id == "mged"} {
+	return
     }
 
-    set w .sliders$id
-    set w_exists [winfo exists $w]
-    if { [llength $args]>0 && $sliders_on($id) } then {
+    if {![info exists player_screen($base_id)]} {
+	return
+    }
 
+    if {$mged_dm_loc($base_id) != "lv" && $mged_active_dm($base_id) != $dm_id} {
+	return
+    }
+
+    set sliders_on($base_id) [_mged_sliders]
+
+    eval do_mged_sliders $base_id
+
+    set w .sliders$base_id
+    set w_exists [winfo exists $w]
+    if { [llength $args]>0 && $sliders_on($base_id) } {
 	if { $w_exists } {
-	    reconfig_sliders $w.f $id $dm_id
+	    reconfig_sliders $w.f $base_id $dm_id $sh_id
 	    return
 	}
 
 	toplevel $w \
 		-class Dialog \
-		-screen $player_screen($id)
-	wm title $w "$id\'s Sliders"
+		-screen $player_screen($base_id)
+	wm title $w "MGED Sliders ($base_id)"
 	    
 	frame $w.f -borderwidth 3
 	frame $w.f.buttons -borderwidth 3
-	button $w.f.rate -text "Rate/Abs" -command "cmd_set $id;\
-		set rateknobs !;"
-	button $w.f.adc -text "Adc" -command "cmd_set $id; adc"
-	button $w.f.zero -text Zero -command "cmd_set $id; knob zero"
-	button $w.f.close -text Close -command "cmd_set $id; sliders off"
+	button $w.f.rate -text "Rate/Abs" -command "do_rate_abs $base_id"
+	button $w.f.adc -text "ADC" -command "do_adc $base_id"
+	button $w.f.zero -text Zero -command "do_knob_zero $base_id"
+	button $w.f.close -text Close -command "cmd_set $base_id; sliders off"
 	if { $rateknobs } {
 	    label $w.f.label \
 		    -text "Rate Based Sliders" \
 		    -anchor c
 
-	    if { $scroll_edit($id) == $EDIT_CLASS_TRAN } {
-		build_tran_sliders $w.f $id " - EDIT" edit_rate_tran "" ""
+	    if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+		build_tran_sliders $w.f $base_id " - EDIT" edit_rate_tran "" ""
 	    } else {
-		build_tran_sliders $w.f $id "" rate_tran "$dm_id\," ""
+		build_tran_sliders $w.f $base_id "" rate_tran "$sh_id\," ""
 	    }
 
-	    if { $scroll_edit($id) == $EDIT_CLASS_SCALE } {
-		build_scale_sliders $w.f $id " - EDIT" edit_rate_scale "" ""
+	    if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+		build_scale_sliders $w.f $base_id " - EDIT" edit_rate_scale "" ""
 	    } else {
-		build_scale_sliders $w.f $id "" rate_scale "\($dm_id\)" ""
+		build_scale_sliders $w.f $base_id "" rate_scale "\($sh_id\)" ""
 	    }
 
-	    if { $scroll_edit($id) == $EDIT_CLASS_ROTATE } {
-		build_rotate_sliders $w.f $id " - EDIT" $sliders(rate_rot_from) \
+	    if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+		build_rotate_sliders $w.f $base_id " - EDIT" $sliders(rate_rot_from) \
 			$sliders(rate_rot_to) edit_rate_rotate "" ""
 	    } else {
-		build_rotate_sliders $w.f $id "" $sliders(rate_rot_from) \
-			$sliders(rate_rot_to) rate_rotate "$dm_id\," ""
+		build_rotate_sliders $w.f $base_id "" $sliders(rate_rot_from) \
+			$sliders(rate_rot_to) rate_rotate "$sh_id\," ""
 	    }
 	} else {
 	    label $w.f.label \
 		    -text "Absolute Sliders" \
 		    -anchor c
 
-	    if { $scroll_edit($id) == $EDIT_CLASS_TRAN } {
-		build_tran_sliders $w.f $id " - EDIT" edit_abs_tran "" a
+	    if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+		build_tran_sliders $w.f $base_id " - EDIT" edit_abs_tran "" a
 	    } else {
-		build_tran_sliders $w.f $id "" abs_tran "$dm_id\," a
+		build_tran_sliders $w.f $base_id "" abs_tran "$sh_id\," a
 	    }
 
-	    if { $scroll_edit($id) == $EDIT_CLASS_SCALE } {
-		build_scale_sliders $w.f $id " - EDIT" edit_abs_scale "" a
+	    if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+		build_scale_sliders $w.f $base_id " - EDIT" edit_abs_scale "" a
 	    } else {
-		build_scale_sliders $w.f $id "" abs_scale "\($dm_id\)" a
+		build_scale_sliders $w.f $base_id "" abs_scale "\($sh_id\)" a
 	    }
 
-	    if { $scroll_edit($id) == $EDIT_CLASS_ROTATE } {
-		build_rotate_sliders $w.f $id " - EDIT" $sliders(abs_rot_from) \
+	    if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+		build_rotate_sliders $w.f $base_id " - EDIT" $sliders(abs_rot_from) \
 			$sliders(abs_rot_to) edit_abs_rotate "" a
 	    } else {
-		build_rotate_sliders $w.f $id "" $sliders(abs_rot_from) \
-			$sliders(abs_rot_to) abs_rotate "$dm_id\," a
+		build_rotate_sliders $w.f $base_id "" $sliders(abs_rot_from) \
+			$sliders(abs_rot_to) abs_rotate "$sh_id\," a
 	    }
 	}
 
@@ -159,7 +163,7 @@ proc sliders args {
 	pack $w.f.fov
 
 	if { $adcflag } {
-	    build_adc_sliders $w.f $id $dm_id
+	    build_adc_sliders $w.f $base_id $sh_id
 		
 	    pack $w.f.adclabel -pady 4
 	    pack $w.f.kxadc $w.f.kyadc $w.f.kang1 \
@@ -171,9 +175,9 @@ proc sliders args {
 	pack $w.f.buttons -expand 1 -fill both
 
 	pack $w.f -padx 1m -pady 1m
-	wm protocol .sliders$id WM_DELETE_WINDOW "toggle_sliders $id"
+	wm protocol .sliders$base_id WM_DELETE_WINDOW "toggle_sliders $base_id"
 	wm resizable $w 0 0
-    } elseif { [llength $args]>0 && !$sliders_on($id) && $w_exists } {
+    } elseif { [llength $args]>0 && !$sliders_on($base_id) && $w_exists } {
 	destroy $w
     }
 
@@ -188,11 +192,11 @@ proc sliders args {
 proc sliders_irlimit { val } {
     global sliders
 
-    if { [expr $val > $sliders(NOISE)] } then {
+    if { [expr $val > $sliders(NOISE)] } {
 	return [expr $val - $sliders(NOISE)]
     }
 
-    if { [expr $val < -$sliders(NOISE)] } then {
+    if { [expr $val < -$sliders(NOISE)] } {
 	return [expr $val + $sliders(NOISE)]
     }
     
@@ -209,8 +213,25 @@ proc sliders_change { id knob val } {
     _mged_knob $knob $val
 }
 
-proc build_tran_sliders { w id lt vt vid kp } {
+proc sliders_change_atran { id knob val } {
     global sliders
+    global Viewscale
+    global base2local
+
+    cmd_set $id
+    set sh_id [lindex [cmd_get] 1]
+    _mged_knob $knob [expr $val * $Viewscale($sh_id) * $base2local]
+}
+
+proc build_tran_sliders { w base_id lt vt vid kp } {
+    global sliders
+    global rateknobs
+
+    if {$rateknobs} {
+	set callback "sliders_change"
+    } else {
+	set callback "sliders_change_atran"
+    }
 
     scale $w.kX \
 	    -label "X Translate $lt" \
@@ -220,7 +241,7 @@ proc build_tran_sliders { w id lt vt vid kp } {
 	    -from $sliders(from) \
 	    -to $sliders(to) \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\X" \
+	    -command "$callback $base_id $kp\X" \
 	    -variable "$vt\($vid\X\)" \
 	    -showvalue $sliders(show_value)
     scale $w.kY \
@@ -231,7 +252,7 @@ proc build_tran_sliders { w id lt vt vid kp } {
 	    -from $sliders(from) \
 	    -to $sliders(to) \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\Y" \
+	    -command "$callback $base_id $kp\Y" \
 	    -variable "$vt\($vid\Y\)" \
 	    -showvalue $sliders(show_value)
     scale $w.kZ \
@@ -242,12 +263,12 @@ proc build_tran_sliders { w id lt vt vid kp } {
 	    -from $sliders(from) \
 	    -to $sliders(to) \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\Z" \
+	    -command "$callback $base_id $kp\Z" \
 	    -variable "$vt\($vid\Z\)" \
 	    -showvalue $sliders(show_value)
 }
 
-proc build_rotate_sliders { w id lt from to vt vid kp } {
+proc build_rotate_sliders { w base_id lt from to vt vid kp } {
     global sliders
 
     scale $w.kx \
@@ -258,7 +279,7 @@ proc build_rotate_sliders { w id lt from to vt vid kp } {
 	    -from $from \
 	    -to $to \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\x" \
+	    -command "sliders_change $base_id $kp\x" \
 	    -variable "$vt\($vid\X\)" \
 	    -showvalue $sliders(show_value)
     scale $w.ky \
@@ -269,7 +290,7 @@ proc build_rotate_sliders { w id lt from to vt vid kp } {
 	    -from $from \
 	    -to $to \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\y" \
+	    -command "sliders_change $base_id $kp\y" \
 	    -variable "$vt\($vid\Y\)" \
 	    -showvalue $sliders(show_value)
     scale $w.kz \
@@ -280,13 +301,13 @@ proc build_rotate_sliders { w id lt from to vt vid kp } {
 	    -from $from \
 	    -to $to \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\z" \
+	    -command "sliders_change $base_id $kp\z" \
 	    -variable "$vt\($vid\Z\)" \
 	    -showvalue $sliders(show_value)
 }
 
 
-proc build_scale_sliders { w id lt vt vid kp } {
+proc build_scale_sliders { w base_id lt vt vid kp } {
     global sliders
 
     scale $w.kS \
@@ -297,17 +318,17 @@ proc build_scale_sliders { w id lt vt vid kp } {
 	    -from $sliders(from) \
 	    -to $sliders(to) \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id $kp\S" \
+	    -command "sliders_change $base_id $kp\S" \
 	    -variable "$vt$vid" \
 	    -showvalue $sliders(show_value)
 }
 
 
-proc build_adc_sliders { w id dm_id } {
+proc build_adc_sliders { w base_id sh_id } {
     global sliders
 
     label $w.adclabel \
-	    -text "Adc Sliders" \
+	    -text "ADC Sliders" \
 	    -anchor c
     scale $w.kxadc \
 	    -label "X adc" \
@@ -317,8 +338,8 @@ proc build_adc_sliders { w id dm_id } {
 	    -from $sliders(adc_from) \
 	    -to $sliders(adc_to) \
 	    -resolution $sliders(low_res) \
-	    -command "sliders_change $id xadc" \
-	    -variable xadc($dm_id) \
+	    -command "sliders_change $base_id xadc" \
+	    -variable xadc($sh_id) \
 	    -showvalue $sliders(show_value)
     scale $w.kyadc \
 	    -label "Y adc" \
@@ -328,8 +349,8 @@ proc build_adc_sliders { w id dm_id } {
 	    -from $sliders(adc_from) \
 	    -to $sliders(adc_to) \
 	    -resolution $sliders(low_res) \
-	    -command "sliders_change $id yadc" \
-	    -variable yadc($dm_id) \
+	    -command "sliders_change $base_id yadc" \
+	    -variable yadc($sh_id) \
 	    -showvalue $sliders(show_value)
     scale $w.kang1 \
 	    -label "Angle 1" \
@@ -339,8 +360,8 @@ proc build_adc_sliders { w id dm_id } {
 	    -from $sliders(adc_ang_from) \
 	    -to $sliders(adc_ang_to) \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id ang1" \
-	    -variable ang1($dm_id) \
+	    -command "sliders_change $base_id ang1" \
+	    -variable ang1($sh_id) \
 	    -showvalue $sliders(show_value)
     scale $w.kang2 \
 	    -label "Angle 2" \
@@ -350,8 +371,8 @@ proc build_adc_sliders { w id dm_id } {
 	    -from $sliders(adc_ang_from) \
 	    -to $sliders(adc_ang_to) \
 	    -resolution $sliders(high_res) \
-	    -command "sliders_change $id ang2" \
-	    -variable ang2($dm_id) \
+	    -command "sliders_change $base_id ang2" \
+	    -variable ang2($sh_id) \
 	    -showvalue $sliders(show_value)
     scale $w.kdistadc \
 	    -label "Adc distance" \
@@ -361,13 +382,13 @@ proc build_adc_sliders { w id dm_id } {
 	    -from $sliders(adc_from) \
 	    -to $sliders(adc_to) \
 	    -resolution $sliders(low_res) \
-	    -command "sliders_change $id distadc" \
-	    -variable distadc($dm_id) \
+	    -command "sliders_change $base_id distadc" \
+	    -variable distadc($sh_id) \
 	    -showvalue 0
 }
 
 
-proc reconfig_sliders { w id dm_id } {
+proc reconfig_sliders { w base_id dm_id sh_id } {
     global sliders
     global rateknobs
     global adcflag
@@ -380,52 +401,54 @@ proc reconfig_sliders { w id dm_id } {
     if { $rateknobs } {
 	$w.label configure -text "Rate Based Sliders"
 
-	if { $scroll_edit($id) == $EDIT_CLASS_TRAN } {
-	    reconfig_tran_sliders $w $id " - EDIT" edit_rate_tran "" ""
+	if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+	    reconfig_tran_sliders $w $base_id " - EDIT" edit_rate_tran "" ""
 	} else {
-	    reconfig_tran_sliders $w $id "" rate_tran "$dm_id\," ""
+	    reconfig_tran_sliders $w $base_id "" rate_tran "$sh_id\," ""
 	}
 
-	if { $scroll_edit($id) == $EDIT_CLASS_SCALE } {
-	    reconfig_scale_sliders $w $id " - EDIT" edit_rate_scale "" ""
+	if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+	    reconfig_scale_sliders $w $base_id " - EDIT" edit_rate_scale "" ""
 	} else {
-	    reconfig_scale_sliders $w $id "" rate_scale "\($dm_id\)" ""
+	    reconfig_scale_sliders $w $base_id "" rate_scale "\($sh_id\)" ""
 	}
 
-	if { $scroll_edit($id) == $EDIT_CLASS_ROTATE } {
-	    reconfig_rotate_sliders $w $id " - EDIT" $sliders(rate_rot_from) \
+	if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+	    reconfig_rotate_sliders $w $base_id " - EDIT" $sliders(rate_rot_from) \
 		    $sliders(rate_rot_to) edit_rate_rotate "" ""
 	} else {
-	    reconfig_rotate_sliders $w $id "" $sliders(rate_rot_from) \
-		    $sliders(rate_rot_to) rate_rotate "$dm_id\," ""
+	    reconfig_rotate_sliders $w $base_id "" $sliders(rate_rot_from) \
+		    $sliders(rate_rot_to) rate_rotate "$sh_id\," ""
 	}
     } else {
 	$w.label configure -text "Absolute Sliders"
 
-	if { $scroll_edit($id) == $EDIT_CLASS_TRAN } {
-	    reconfig_tran_sliders $w $id " - EDIT" edit_abs_tran "" a
+	if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+	    reconfig_tran_sliders $w $base_id " - EDIT" edit_abs_tran "" a
 	} else {
-	    reconfig_tran_sliders $w $id "" abs_tran "$dm_id\," a
+	    reconfig_tran_sliders $w $base_id "" abs_tran "$sh_id\," a
 	}
 
-	if { $scroll_edit($id) == $EDIT_CLASS_SCALE } {
-	    reconfig_scale_sliders $w $id " - EDIT" edit_abs_scale "" a
+	if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+	    reconfig_scale_sliders $w $base_id " - EDIT" edit_abs_scale "" a
 	} else {
-	    reconfig_scale_sliders $w $id "" abs_scale "\($dm_id\)" a
+	    reconfig_scale_sliders $w $base_id "" abs_scale "\($sh_id\)" a
 	}
 
-	if { $scroll_edit($id) == $EDIT_CLASS_ROTATE } {
-	    reconfig_rotate_sliders $w $id " - EDIT" $sliders(abs_rot_from) \
+	if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+	    reconfig_rotate_sliders $w $base_id " - EDIT" $sliders(abs_rot_from) \
 		    $sliders(abs_rot_to) edit_abs_rotate "" a
 	} else {
-	    reconfig_rotate_sliders $w $id "" $sliders(abs_rot_from) \
-		    $sliders(abs_rot_to) abs_rotate "$dm_id\," a
+	    reconfig_rotate_sliders $w $base_id "" $sliders(abs_rot_from) \
+		    $sliders(abs_rot_to) abs_rotate "$sh_id\," a
 	}
     }
 
     if { $adcflag } {
 	if ![winfo exists $w.adclabel] {
-	    build_adc_sliders $w $id $dm_id
+	    build_adc_sliders $w $base_id $sh_id
+	} else {
+	    reconfig_adc_sliders $w $base_id $sh_id
 	}
 
 	pack $w.adclabel -pady 4 -before $w.buttons
@@ -440,47 +463,114 @@ proc reconfig_sliders { w id dm_id } {
     }
 }
 
+proc reconfig_tran_sliders { w base_id lt vt vid kp } {
+    global rateknobs
 
-proc reconfig_tran_sliders { w id lt vt vid kp } {
+    if {$rateknobs} {
+	set callback "sliders_change"
+    } else {
+	set callback "sliders_change_atran"
+    }
+
     $w.kX configure \
 	    -label "X Translate $lt" \
-	    -command "sliders_change $id $kp\X" \
+	    -command "$callback $base_id $kp\X" \
 	    -variable "$vt\($vid\X\)"
     $w.kY configure \
 	    -label "Y Translate $lt" \
-	    -command "sliders_change $id $kp\Y" \
+	    -command "$callback $base_id $kp\Y" \
 	    -variable "$vt\($vid\Y\)"
     $w.kZ configure \
 	    -label "Z Translate $lt" \
-	    -command "sliders_change $id $kp\Z" \
+	    -command "$callback $base_id $kp\Z" \
 	    -variable "$vt\($vid\Z\)"
 }
 
-
-proc reconfig_rotate_sliders { w id lt from to vt vid kp } {
+proc reconfig_rotate_sliders { w base_id lt from to vt vid kp } {
     $w.kx configure \
 	    -label "X Rotate $lt" \
 	    -from $from \
 	    -to $to \
-	    -command "sliders_change $id $kp\x" \
+	    -command "sliders_change $base_id $kp\x" \
 	    -variable "$vt\($vid\X\)"
     $w.ky configure \
 	    -label "Y Rotate $lt" \
 	    -from $from \
 	    -to $to \
-	    -command "sliders_change $id $kp\y" \
+	    -command "sliders_change $base_id $kp\y" \
 	    -variable "$vt\($vid\Y\)"
     $w.kz configure \
 	    -label "Z Rotate $lt" \
 	    -from $from \
 	    -to $to \
-	    -command "sliders_change $id $kp\z" \
+	    -command "sliders_change $base_id $kp\z" \
 	    -variable "$vt\($vid\Z\)"
 }
 
-proc reconfig_scale_sliders { w id lt vt vid kp } {
+proc reconfig_scale_sliders { w base_id lt vt vid kp } {
     $w.kS configure \
 	    -label "Scale $lt" \
-	    -command "sliders_change $id $kp\S" \
+	    -command "sliders_change $base_id $kp\S" \
 	    -variable "$vt$vid"
+}
+
+proc reconfig_adc_sliders { w base_id sh_id } {
+    global sliders
+
+    $w.kxadc configure \
+	    -command "sliders_change $base_id xadc" \
+	    -variable xadc($sh_id)
+    $w.kyadc configure \
+	    -command "sliders_change $base_id yadc" \
+	    -variable yadc($sh_id)
+    $w.kang1 configure \
+	    -command "sliders_change $base_id ang1" \
+	    -variable ang1($sh_id)
+    $w.kang2 configure \
+	    -command "sliders_change $base_id ang2" \
+	    -variable ang2($sh_id)
+    $w.kdistadc configure\
+	    -command "sliders_change $base_id distadc" \
+	    -variable distadc($sh_id)
+}
+
+proc do_adc { id } {
+    cmd_set $id
+    sliders on
+    adc
+}
+
+proc do_rate_abs { id } {
+    global rateknobs
+
+    cmd_set $id
+    sliders on
+    set rateknobs !
+}
+
+proc do_knob_zero { id } {
+    cmd_set $id
+    sliders on
+    knob zero
+}
+
+proc do_mged_sliders { id } {
+    global mged_top
+    global sliders_on
+
+    set save_win [winset]
+
+    winset $mged_top($id).ul
+    _mged_sliders $sliders_on($id)
+ 
+    winset $mged_top($id).ur
+    _mged_sliders $sliders_on($id)
+
+    winset $mged_top($id).ll
+    _mged_sliders $sliders_on($id)
+
+    winset $mged_top($id).lr
+    _mged_sliders $sliders_on($id)
+
+    winset $save_win
 }

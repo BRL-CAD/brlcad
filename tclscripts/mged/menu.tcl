@@ -126,6 +126,10 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
     global rotate_about_what
     global coord_type
 
+    if ![info exists mged_players] {
+	return
+    }
+
     set edit_type "none of above"
     foreach id $mged_players {
 	.$id.m.options.m.cm_transform entryconfigure 3 -state normal
@@ -140,31 +144,31 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 	set coord_type($id) "o"
 	set_coords $id
 
+	.$id.m.edit.m entryconfigure 0 -state disabled
 	.$id.m.edit.m entryconfigure 1 -state disabled
 	.$id.m.edit.m entryconfigure 2 -state disabled
-	.$id.m.edit.m entryconfigure 3 -state disabled
 
-	.$id.m.edit.m insert 1 cascade -label "move edges" \
+	.$id.m.edit.m insert 0 cascade -label "move edges" \
 		-menu .$id.m.edit.m.cm_mvedges
-	.$id.m.edit.m insert 2 cascade -label "move faces" \
+	.$id.m.edit.m insert 1 cascade -label "move faces" \
 		-menu .$id.m.edit.m.cm_mvfaces
-	.$id.m.edit.m insert 3 cascade -label "rotate faces" \
+	.$id.m.edit.m insert 2 cascade -label "rotate faces" \
 		-menu .$id.m.edit.m.cm_rotfaces
-	.$id.m.edit.m insert 4 separator
-	.$id.m.edit.m insert 5 radiobutton -variable edit_type \
+	.$id.m.edit.m insert 3 separator
+	.$id.m.edit.m insert 4 radiobutton -variable edit_type \
 		-label "Rotate" -underline 0 -command "press srot"
-	.$id.m.edit.m insert 6 radiobutton -variable edit_type \
+	.$id.m.edit.m insert 5 radiobutton -variable edit_type \
 		-label "Translate" -underline 0 -command "press sxy"
-	.$id.m.edit.m insert 7 radiobutton -variable edit_type \
+	.$id.m.edit.m insert 6 radiobutton -variable edit_type \
 		-label "Scale" -underline 0 -command "press sscale"
-	.$id.m.edit.m insert 8 radiobutton -variable edit_type \
+	.$id.m.edit.m insert 7 radiobutton -variable edit_type \
 		 -label "none of above" -command "press \"edit menu\""
-	.$id.m.edit.m insert 9 separator
-	.$id.m.edit.m insert 10 command -label "Reject" -underline 0 \
+	.$id.m.edit.m insert 8 separator
+	.$id.m.edit.m insert 9 command -label "Reject" -underline 0 \
 		-command "press reject"
-	.$id.m.edit.m insert 11 command -label "Accept" -underline 0 \
+	.$id.m.edit.m insert 10 command -label "Accept" -underline 0 \
 		-command "press accept"
-	.$id.m.edit.m insert 12 separator
+	.$id.m.edit.m insert 11 separator
 
 	menu .$id.m.edit.m.cm_mvedges
 	foreach item $menu1 {
@@ -203,6 +207,10 @@ proc do_edit_menu { menu1 } {
     global rotate_about_what
     global coord_type
 
+    if ![info exists mged_players] {
+	return
+    }
+
     set edit_type "none of above"
     foreach id $mged_players {
 	.$id.m.options.m.cm_transform entryconfigure 3 -state normal
@@ -217,11 +225,11 @@ proc do_edit_menu { menu1 } {
 	set coord_type($id) "o"
 	set_coords $id
 
+	.$id.m.edit.m entryconfigure 0 -state disabled
 	.$id.m.edit.m entryconfigure 1 -state disabled
 	.$id.m.edit.m entryconfigure 2 -state disabled
-	.$id.m.edit.m entryconfigure 3 -state disabled
 
-	set i 1
+	set i 0
 	foreach item $menu1 {
 	    if {$item != "RETURN"} {
 		.$id.m.edit.m insert $i radiobutton -variable edit_type \
@@ -246,7 +254,37 @@ proc do_edit_menu { menu1 } {
 		    -label "Scale" -underline 0 -command "press sscale"
 	    incr i
 	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
-		    -label "none of above" -command "press \"edit menu\""
+		    -label "none of above" -command "set edit_solid_flag 0"
+	    incr i
+	    .$id.m.edit.m insert $i separator
+	    incr i
+	} else {
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Scale" -command "press \"Scale\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "X move" -command "press \"X move\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Y move" -command "press \"Y move\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "XY move" -command "press \"XY move\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Rotate" -command "press \"Rotate\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Scale X" -command "press \"Scale X\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Scale Y" -command "press \"Scale Y\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Scale Z" -command "press \"Scale Z\""
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "none of above" -command "set edit_object_flag 0"
 	    incr i
 	    .$id.m.edit.m insert $i separator
 	    incr i
@@ -270,15 +308,19 @@ proc undo_edit_menu {} {
     global rotate_about_what
     global coord_type
 
+    if ![info exists mged_players] {
+	return
+    }
+
     foreach id $mged_players {
 	while {1} {
-	    if {[.$id.m.edit.m type 1] == "separator"} {
-		.$id.m.edit.m delete 1
+	    if {[.$id.m.edit.m type 0] == "separator"} {
+		.$id.m.edit.m delete 0
 		continue
 	    }
 
-	    if {[.$id.m.edit.m entrycget 1 -label] != "Add"} {
-		.$id.m.edit.m delete 1
+	    if {[.$id.m.edit.m entrycget 0 -label] != "Add"} {
+		.$id.m.edit.m delete 0
 	    } else {
 		break
 	    }
@@ -290,9 +332,9 @@ proc undo_edit_menu {} {
 	    destroy .$id.m.edit.m.cm_rotfaces
 	}
 
+	.$id.m.edit.m entryconfigure 0 -state normal
 	.$id.m.edit.m entryconfigure 1 -state normal
 	.$id.m.edit.m entryconfigure 2 -state normal
-	.$id.m.edit.m entryconfigure 3 -state normal
 
 	.$id.m.options.m.cm_transform entryconfigure 3 -state disabled
 	if {$transform_what($id) == "e"} {
