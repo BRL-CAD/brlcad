@@ -32,4 +32,5 @@ extern int	rdebug;
 #define RDEBUG_PARSE	0x00000020	/* Command parsing */
 
 /* These will cause binary debugging output */
-#define RDEBUG_RAYWRITE	0x80000000	/* Ray(5V) view rays to stdout */
+#define RDEBUG_RAYWRITE	0x40000000	/* Ray(5V) view rays to stdout */
+#define RDEBUG_RAYPLOT	0x80000000	/* plot(5) rays to stdout */

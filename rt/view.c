@@ -339,6 +339,22 @@ struct partition *PartHeadp;
 				ap, stdout );
 		}
 	}
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		if( hitp->hit_dist > 0.0001 )  {
+			register int i, lvl;
+			vect_t hit;
+			lvl = ap->a_level % 100;
+			if( lvl > 3 )  lvl = 3;
+			i = 127 + lvl * (128/4);
+			/* Should check for INFINITY here.  XXX */
+			VJOIN1( hit,
+				ap->a_ray.r_pt, pp->pt_outhit->hit_dist,
+				ap->a_ray.r_dir );
+			pl_color( stdout, i, i, i );
+			rt_drawvec( stdout, ap->a_rt_i,
+				ap->a_ray.r_pt, hit );
+		}
+	}
 
 	/*
 	 *  Call the material-handling function.

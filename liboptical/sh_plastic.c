@@ -401,13 +401,6 @@ register struct partition *pp;
 
 	if( (ps->reflect <= 0 && ps->transmit <= 0) ||
 	    ap->a_level > MAX_BOUNCE )  {
-		if( rdebug&RDEBUG_RAYWRITE )  {
-			register struct soltab *stp;
-			/* Record passing through the solid */
-			stp = pp->pt_outseg->seg_stp;
-			RT_HIT_NORM( pp->pt_outhit, stp, &(ap->a_ray) );
-			wray( pp, ap, stdout );
-		}
 		/* Nothing more to do for this ray */
 		goto finish;
 	}
@@ -474,18 +467,24 @@ do_inside:
 			}
 		}
 		/* NOTE: phg_rhit returns EXIT Point in sub_ap.a_uvec,
-		 *  and returns EXIT Normal in sub_ap.a_color.
+		 *  and returns EXIT Normal in sub_ap.a_vvec.
 		 */
 		if( rdebug&RDEBUG_RAYWRITE )  {
 			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
 				ap, stdout );
+		}
+		if( rdebug&RDEBUG_RAYPLOT )  {
+			pl_color( stdout, 0, 255, 0 );
+			rt_drawvec( stdout, ap->a_rt_i,
+				sub_ap.a_ray.r_pt,
+				sub_ap.a_uvec );
 		}
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 
 		/* Calculate refraction at exit. */
 		VMOVE( incident_dir, sub_ap.a_ray.r_dir );
 		if( !phg_refract( incident_dir,		/* input direction */
-			sub_ap.a_color,			/* exit normal */
+			sub_ap.a_vvec,			/* exit normal */
 			ps->refrac_index, RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
@@ -532,7 +531,7 @@ struct partition *PartHeadp;
  *
  *  Implicit Returns -
  *	a_uvec	exit Point
- *	a_color	exit Normal
+ *	a_vvec	exit Normal
  */
 HIDDEN int
 phg_rhit( ap, PartHeadp )
@@ -593,7 +592,7 @@ struct partition *PartHeadp;
 	    	goto bad;
 	}
 	/* For refraction, want exit normal to point inward. */
-	VREVERSE( ap->a_color, hitp->hit_normal );
+	VREVERSE( ap->a_vvec, hitp->hit_normal );
 	return(1);
 
 	/* Give serious information when problems are encountered */
