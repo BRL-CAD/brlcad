@@ -253,7 +253,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 			vertlist[2] = eu2->eumate_p->vu_p->v_p;
 			vertlist[3] = eu->eumate_p->vu_p->v_p;
 			outfaces[face_count] = nmg_cface( fu->s_p , vertlist , 4 );
-			if( nmg_fu_planeeqn( outfaces[face_count] , tol ) < 0 )
+			if( nmg_calc_face_g( outfaces[face_count] ) )
 			{
 				rt_log( "nmg_extrude_face: failed to calculate plane eqn\n" );
 				return( -1 );
