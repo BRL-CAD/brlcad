@@ -86,6 +86,7 @@ extern	int	_fb_disk_enable;
 static  void	main_loop();
 static	void	comm_error();
 static	void	init_syslog();
+static	void	setup_socket();
 static	int	use_syslog;	/* error messages to stderr if 0 */
 
 static	char	*framebuffer = NULL;	/* frame buffer name */
@@ -230,6 +231,7 @@ struct pkg_conn	*pcp;
 /*
  *			D R O P _ C L I E N T
  */
+void
 drop_client( sub )
 int	sub;
 {
@@ -443,6 +445,7 @@ init_syslog()
 #endif /* BSD && !CRAY2 */
 }
 
+void
 setup_socket(fd)
 int	fd;
 {
