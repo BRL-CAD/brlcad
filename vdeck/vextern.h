@@ -93,7 +93,7 @@
 
 extern int	debug;
 extern char	*usage[], *cmd[];
-extern mat_t	xform, notrans, identity;
+extern mat_t	identity;
 
 extern void		abort_sig(), quit();
 extern void		toc(), list_toc();
@@ -118,7 +118,6 @@ extern int	ndir, nns, nnr;
 extern int			delsol, delreg;
 extern char			buff[];
 extern long			savsol;
-extern struct deck_ident	d_ident, idbuf;
 
 extern jmp_buf		env;
 #define EPSILON		0.0001

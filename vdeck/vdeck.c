@@ -154,7 +154,7 @@ char		buff[30];
 long		savsol;		/* File postion of # of solids & regions */
 
 /* Structures.								*/
-mat_t		xform, notrans, identity;
+mat_t		identity;
 
 extern void		blank_fill(), menu();
 extern void		quit();
@@ -521,7 +521,6 @@ int			id;
 	union tree		*curtree;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
-	struct rt_tol		tol;
 	struct rt_vls		sol;
 
 	RT_VLS_INIT( &sol );
@@ -844,7 +843,6 @@ struct rt_ell_internal	*gp;
 char			*name;
 int			num;
 {
-	register int	i;
 	double	ma, mb, mc;
 	int	cgtype;
 
@@ -939,9 +937,7 @@ struct rt_tgc_internal	*gp;
 char			*name;
 int			num;
 {
-	register int	i;
 	vect_t	axb, cxd;
-	vect_t	work;
 	double	ma, mb, mc, md, maxb, mcxd, mh;
 	int	cgtype;
 
@@ -1111,8 +1107,6 @@ int			todo;
 int			curveno;
 int			num;
 {
-	register int	i;
-
 	while( todo > 0 )  {
 		vls_itoa( v, num, 5 );
 		vls_blanks( v, 5 );
@@ -1179,18 +1173,8 @@ unsigned	bytes;
 	if( (bytes_written = write( fd, buf, bytes )) != (int) bytes )
 		(void) fprintf( stderr,
 		    "ERROR: Write of %d bytes returned %d\n",
-		    bytes,
+		    (int)bytes,
 		    bytes_written
 		    );
 	return;
-}
-
-pr_dir( dirp )
-struct directory	*dirp;
-{
-	(void) printf(	"dirp(0x%x)->d_namep=%s d_addr=%ld\n",
-	    dirp, dirp->d_namep, dirp->d_addr
-	    );
-	(void) fflush( stdout );
-	return	1;
 }

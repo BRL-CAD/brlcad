@@ -52,7 +52,7 @@ void		blank_fill();
 deck( prefix )
 register char *prefix;
 {	
-	register int	i, j;
+	register int	i;
 
 	nns = nnr = 0;
 
@@ -121,7 +121,6 @@ register char *prefix;
 
 	/* Initialize matrices.						*/
 	mat_idn( identity );
-	mat_idn( xform );
 
 	/* Check integrity of list against directory and build card deck.	*/
 	for( i = 0; i < curr_ct; i++ )
@@ -222,7 +221,6 @@ void
 toc()
 {
 	register struct directory *dp;
-	register char		*flags;
 	register int		i;
 
 	(void) printf( "Making the Table of Contents.\n" );
@@ -318,7 +316,6 @@ char		*args[];
 register int	ct;
 {	
 	register int	i, j, nomatch;
-	unsigned	bytect;
 
 	/* For each argument (does not include args[0]).			*/
 	for( i = 1; i < ct; i++ )
@@ -387,7 +384,6 @@ char	*args[];
 	Section 4:	S T R I N G   P R O C E S S I N G   R O U T I N E S
 
 			itoa()
-			ftoascii()
 			check()
  */
 
@@ -418,69 +414,6 @@ int   n,    w;
 
 	/* Reverse the array.					*/
 	for( i = 0, j = w - 1; i < j; i++, j-- ) {
-		c    = s[i];
-		s[i] = s[j];
-		s[j] =    c;
-	}
-}
-
-/*	f t o a s c i i ( )
-	Convert float to ascii  w.df format.
- */
-ftoascii( f, s, w, d )
-register char	   *s;
-register int	w, d;
-float	  	f;
-{	
-	register int	c, i, j;
-	long	n, sign;
-
-	if( w <= d + 2 )
-	{
-		(void) fprintf( stderr,
-		    "ftoascii: incorrect format  need w.df  stop"
-		    );
-		exit( 10 );
-	}
-	for( i = 1; i <= d; i++ )
-		f = f * 10.0;
-
-	/* round up */
-	if( f < 0.0 )
-		f -= 0.5;
-	else
-		f += 0.5;
-	n = f;
-	if( (sign = n) < 0 )
-		n = -n;
-	i = 0;
-	do	{
-		s[i++] = n % 10 + '0';
-		if( i == d )
-			s[i++] = '.';
-	}	while( (n /= 10) > 0 );
-
-	/* Zero fill the d field if necessary.				*/
-	if( i < d )
-	{
-		for( j = i; j < d; j++ )
-			s[j] = '0';
-		s[j++] = '.';
-		i = j;
-	}
-	if( sign < 0 )
-		s[i++] = '-';
-
-	/* Blank fill rest of field.					*/
-	for ( j = i; j < w; j++ )
-		s[j] = ' ';
-	if( i > w )
-		(void) fprintf( stderr, "Ftoascii: field length too small\n" );
-	s[w] = '\0';
-
-	/* Reverse the array.						*/
-	for( i = 0, j = w - 1; i < j; i++, j-- )
-	{
 		c    = s[i];
 		s[i] = s[j];
 		s[j] =    c;
