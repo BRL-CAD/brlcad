@@ -7375,7 +7375,7 @@ wdb_summary_cmd(struct rt_wdb	*wdbp,
 
 	cp = argv[1];
 	while (*cp)  switch(*cp++) {
-	case 's':
+	case 'p':
 		flags |= DIR_SOLID;
 		break;
 	case 'r':
@@ -7385,7 +7385,7 @@ wdb_summary_cmd(struct rt_wdb	*wdbp,
 		flags |= DIR_COMB;
 		break;
 	default:
-		Tcl_AppendResult(interp, "summary:  S R or G are only valid parmaters\n",
+		Tcl_AppendResult(interp, "summary:  P R or G are only valid parmaters\n",
 				 (char *)NULL);
 		bad = 1;
 		break;
