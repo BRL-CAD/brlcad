@@ -13,7 +13,9 @@
 
 #include "../Cakefile.defs"
 
-#if defined(__CAKE__5d) || defined(__CAKE__6d) || defined(__CAKE__7d) || defined(__CAKE__irix4) || defined(__CAKE__irix5) || defined( __CAKE__irix6) 
+#if defined(__CAKE__5d) || defined(__CAKE__6d) || defined(__CAKE__7d) || \
+ defined(__CAKE__irix4) || defined(__CAKE__irix5) || defined( __CAKE__irix6) || \
+ defined(__CAKE__m3i62) || defined(__CAKE__m4i62) || defined(__CAKE__m4i64)
 #	define DSLIB	-lds
 #else
 #	define DSLIB
