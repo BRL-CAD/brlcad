@@ -7,6 +7,8 @@
  *  The first value is based on L samples, the last on only one.
  *  Zeros are assumed outside of the range of an input record.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

@@ -3,6 +3,8 @@
  *
  *  Data Display - shows doubles on a framebuffer in various ways.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "fb.h"

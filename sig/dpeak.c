@@ -4,6 +4,8 @@
  *  An EXPERIMENTAL routine to find the N peak values in data set.
  *  Where "peak" means negative second difference, local maximum.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

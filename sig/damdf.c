@@ -4,6 +4,8 @@
  *  Average Magnitude Difference Function
  *  (Experimental: for pitch extraction)
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

@@ -7,6 +7,8 @@
  * Ref: "Procedural Elements for Computer Graphics,"
  *       D. F. Rogers.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
 #include "machine.h"

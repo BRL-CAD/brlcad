@@ -3,6 +3,8 @@
  *
  *  Compute the autocorrelation function of doubles.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

@@ -4,6 +4,8 @@
  *  Extract sliding windows of double values.
  *  Apply window functions if desired.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 

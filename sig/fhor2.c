@@ -4,6 +4,8 @@
  *  given at the same resolution as the screen.
  *  No lines need to be drawn, nor intersection computed!
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
 #include "machine.h"

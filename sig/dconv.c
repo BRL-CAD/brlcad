@@ -11,6 +11,8 @@
  *  are thrown away, while the last M-1 points of each input section
  *  are saved for the next xform.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
