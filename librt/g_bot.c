@@ -591,11 +591,15 @@ struct seg		*seghead;
 		}
 	}
 	if( (nhits&1) )  {
+#if 1
 		/* XXX This consumes an extra hit structure in the array */
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
 		bu_log( "\t\tadding fictitious hit at %f (%s)\n", hits[nhits].hit_dist, stp->st_name );
 		nhits++;
+#else
+		nhits--;
+#endif
 	}
 
 	/* nhits is even, build segments */
