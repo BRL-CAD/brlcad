@@ -443,6 +443,9 @@ struct resource	*resp;
  *
  *  Release all the dynamic storage associated with a particular rt_i
  *  structure, except for the database instance information (dir, etc).
+ *
+ *  Note that an animation script can invoke a "clean" operation before
+ *  anything has been prepped.
  */
 void
 rt_clean( rtip )
@@ -531,16 +534,18 @@ register struct rt_i *rtip;
 	 *  defaulted to rt_uniresource) and can't themselves be freed.
 	 *  rt_shootray() saved a table of them for us to use here.
  	 */
-	BU_CK_PTBL( &rtip->rti_resources );
-	{
+	if( !BU_LIST_UNINITIALIZED( &rtip->rti_resources.l ) )  {
 		struct resource	**rpp;
+		BU_CK_PTBL( &rtip->rti_resources );
 		for( BU_PTBL_FOR( rpp, (struct resource **), &rtip->rti_resources ) )  {
 			RT_CK_RESOURCE(*rpp);
 			rt_free_resource(rtip, *rpp);
 		}
+		bu_ptbl_free( &rtip->rti_resources );
 	}
-	bu_ptbl_free( &rtip->rti_resources );
-	rt_free_resource(rtip, &rt_uniresource );	/* Used for rt_optim_tree() */
+	if( rt_uniresource.re_magic )  {
+		rt_free_resource(rtip, &rt_uniresource );/* Used for rt_optim_tree() */
+	}
 
 	/*
 	 *  Re-initialize everything important.

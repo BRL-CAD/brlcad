@@ -1455,6 +1455,8 @@ int			depth;
  *  The rtip->rti_CutFree list can not be freed directly
  *  because  is bulk allocated.
  *  Fortunately, we have a list of all the bu_malloc()'ed blocks.
+ *  This routine may be called before the first frame is done,
+ *  so it must be prepared for uninitialized items.
  */
 void
 rt_cut_clean(rtip)
@@ -1469,6 +1471,9 @@ struct rt_i	*rtip;
 
 	/* Abandon the linked list of diced-up structures */
 	rtip->rti_CutFree = CUTTER_NULL;
+
+	if( BU_LIST_UNINITIALIZED(&rtip->rti_busy_cutter_nodes.l) )
+		return;
 
 	/* Release the blocks we got from bu_malloc() */
 	for( BU_PTBL_FOR( p, (genptr_t *), &rtip->rti_busy_cutter_nodes ) )  {
