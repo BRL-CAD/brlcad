@@ -325,12 +325,13 @@ set -S2 "/bin/sh"
 #	if 1	/* PRODUCTION=1 */
 /*		32-bit version, compatible with HLA, etc. etc. */
 #		define	GFLAG		-n32 -mips3 -KPIC -G 7
+#		define	XLIBDIR /usr/lib32
 #	else
 /*		64-bit version */
 #		define	GFLAG		-64 -mips3 -KPIC -G 7
+#		define	XLIBDIR /usr/lib64
 #endif
 #	define  XINCDIR /usr/include/X11
-#	define	XLIBDIR /usr/lib64
 #	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
