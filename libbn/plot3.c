@@ -295,11 +295,11 @@ register FILE *plotfp;
 double x, y;
 {
 	double	in[2];
-	char	out[2*8+1];
+	unsigned char	out[2*8+1];
 
 	in[0] = x;
 	in[1] = y;
-	htond( &out[1], in, 2 );
+	htond( &out[1], (unsigned char *)in, 2 );
 
 	out[0] = 'x';
 	fwrite( out, 1, 2*8+1, plotfp );
@@ -311,13 +311,13 @@ register FILE *plotfp;
 double x1, y1, x2, y2;
 {
 	double	in[4];
-	char	out[4*8+1];
+	unsigned char	out[4*8+1];
 
 	in[0] = x1;
 	in[1] = y1;
 	in[2] = x2;
 	in[3] = y2;
-	htond( &out[1], in, 4 );
+	htond( &out[1], (unsigned char *)in, 4 );
 
 	out[0] = 'v';
 	fwrite( out, 1, 4*8+1, plotfp );
@@ -331,11 +331,11 @@ register FILE *plotfp;
 double x, y;
 {
 	double	in[2];
-	char	out[2*8+1];
+	unsigned char	out[2*8+1];
 
 	in[0] = x;
 	in[1] = y;
-	htond( &out[1], in, 2 );
+	htond( &out[1], (unsigned char *)in, 2 );
 
 	out[0] = 'o';
 	fwrite( out, 1, 2*8+1, plotfp );
@@ -347,11 +347,11 @@ register FILE *plotfp;
 double x, y;
 {
 	double	in[2];
-	char	out[2*8+1];
+	unsigned char	out[2*8+1];
 
 	in[0] = x;
 	in[1] = y;
-	htond( &out[1], in, 2 );
+	htond( &out[1], (unsigned char *)in, 2 );
 
 	out[0] = 'q';
 	fwrite( out, 1, 2*8+1, plotfp );
@@ -363,13 +363,13 @@ register FILE *plotfp;
 double x1, y1, x2, y2;
 {
 	double	in[4];
-	char	out[4*8+1];
+	unsigned char	out[4*8+1];
 
 	in[0] = x1;
 	in[1] = y1;
 	in[2] = x2;
 	in[3] = y2;
-	htond( &out[1], in, 4 );
+	htond( &out[1], (unsigned char *)in, 4 );
 
 	out[0] = 'w';
 	fwrite( out, 1, 4*8+1, plotfp );
@@ -381,12 +381,12 @@ register FILE *plotfp;
 double x, y, r;
 {
 	double	in[3];
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
 	in[0] = x;
 	in[1] = y;
 	in[2] = r;
-	htond( &out[1], in, 3 );
+	htond( &out[1], (unsigned char *)in, 3 );
 
 	out[0] = 'i';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -398,7 +398,7 @@ register FILE *plotfp;
 double xc, yc, x1, y1, x2, y2;
 {
 	double	in[6];
-	char	out[6*8+1];
+	unsigned char	out[6*8+1];
 
 	in[0] = xc;
 	in[1] = yc;
@@ -406,7 +406,7 @@ double xc, yc, x1, y1, x2, y2;
 	in[3] = y1;
 	in[4] = x2;
 	in[5] = y2;
-	htond( &out[1], in, 6 );
+	htond( &out[1], (unsigned char *)in, 6 );
 
 	out[0] = 'r';
 	fwrite( out, 1, 6*8+1, plotfp );
@@ -432,10 +432,10 @@ register FILE *plotfp;
 vect_t	min;
 vect_t	max;
 {
-	char	out[6*8+1];
+	unsigned char	out[6*8+1];
 
-	htond( &out[1], min, 3 );
-	htond( &out[3*8+1], max, 3 );
+	htond( &out[1], (unsigned char *)min, 3 );
+	htond( &out[3*8+1], (unsigned char *)max, 3 );
 
 	out[0] = 'W';
 	fwrite( out, 1, 6*8+1, plotfp );
@@ -447,7 +447,7 @@ register FILE *plotfp;
 double x1, y1, z1, x2, y2, z2;
 {
 	double	in[6];
-	char	out[6*8+1];
+	unsigned char	out[6*8+1];
 
 	in[0] = x1;
 	in[1] = y1;
@@ -455,7 +455,7 @@ double x1, y1, z1, x2, y2, z2;
 	in[3] = x2;
 	in[4] = y2;
 	in[5] = z2;
-	htond( &out[1], in, 6 );
+	htond( &out[1], (unsigned char *)in, 6 );
 
 	out[0] = 'W';
 	fwrite( out, 1, 6*8+1, plotfp );
@@ -466,9 +466,9 @@ pdv_3point( plotfp, pt )
 register FILE *plotfp;
 vect_t	pt;
 {
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
-	htond( &out[1], pt, 3 );
+	htond( &out[1], (unsigned char *)pt, 3 );
 
 	out[0] = 'X';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -480,12 +480,12 @@ register FILE *plotfp;
 double x, y, z;
 {
 	double	in[3];
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
 	in[0] = x;
 	in[1] = y;
 	in[2] = z;
-	htond( &out[1], in, 3 );
+	htond( &out[1], (unsigned char *)in, 3 );
 
 	out[0] = 'X';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -496,9 +496,9 @@ pdv_3move( plotfp, pt )
 register FILE *plotfp;
 vect_t	pt;
 {
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
-	htond( &out[1], pt, 3 );
+	htond( &out[1], (unsigned char *)pt, 3 );
 
 	out[0] = 'O';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -510,12 +510,12 @@ register FILE *plotfp;
 double x, y, z;
 {
 	double	in[3];
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
 	in[0] = x;
 	in[1] = y;
 	in[2] = z;
-	htond( &out[1], in, 3 );
+	htond( &out[1], (unsigned char *)in, 3 );
 
 	out[0] = 'O';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -526,9 +526,9 @@ pdv_3cont( plotfp, pt )
 register FILE *plotfp;
 vect_t	pt;
 {
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
-	htond( &out[1], pt, 3 );
+	htond( &out[1], (unsigned char *)pt, 3 );
 
 	out[0] = 'Q';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -540,12 +540,12 @@ register FILE *plotfp;
 double x, y, z;
 {
 	double	in[3];
-	char	out[3*8+1];
+	unsigned char	out[3*8+1];
 
 	in[0] = x;
 	in[1] = y;
 	in[2] = z;
-	htond( &out[1], in, 3 );
+	htond( &out[1], (unsigned char *)in, 3 );
 
 	out[0] = 'Q';
 	fwrite( out, 1, 3*8+1, plotfp );
@@ -556,10 +556,10 @@ pdv_3line( plotfp, a, b )
 register FILE *plotfp;
 vect_t	a, b;
 {
-	char	out[6*8+1];
+	unsigned char	out[6*8+1];
 
-	htond( &out[1], a, 3 );
-	htond( &out[3*8+1], b, 3 );
+	htond( &out[1], (unsigned char *)a, 3 );
+	htond( &out[3*8+1], (unsigned char *)b, 3 );
 
 	out[0] = 'V';
 	fwrite( out, 1, 6*8+1, plotfp );
@@ -571,7 +571,7 @@ register FILE *plotfp;
 double x1, y1, z1, x2, y2, z2;
 {
 	double	in[6];
-	char	out[6*8+1];
+	unsigned char	out[6*8+1];
 
 	in[0] = x1;
 	in[1] = y1;
@@ -579,7 +579,7 @@ double x1, y1, z1, x2, y2, z2;
 	in[3] = x2;
 	in[4] = y2;
 	in[5] = z2;
-	htond( &out[1], in, 6 );
+	htond( &out[1], (unsigned char *)in, 6 );
 
 	out[0] = 'V';
 	fwrite( out, 1, 6*8+1, plotfp );
