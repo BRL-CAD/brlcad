@@ -101,7 +101,8 @@ register struct txt_specific *tp;
 {
 	char *linebuf;
 	register FILE *fp;
-	register int i;
+	register int	i;
+	register int	got;
 
 	if( (fp = fopen(tp->tx_file, "r")) == NULL )  {
 		rt_log("txt_read(%s):  can't open\n", tp->tx_file);
@@ -113,11 +114,15 @@ register struct txt_specific *tp;
 		tp->tx_w * tp->tx_n * 3,
 		tp->tx_file );
 	for( i=0; i<tp->tx_n; i++ )  {
-		if( fread(linebuf,1,tp->tx_fw*3,fp) != tp->tx_fw*3 ) {
+		got = fread(linebuf, 1, tp->tx_fw*3, fp);
+		if( got != tp->tx_fw*3 ) {
 			rt_log("txt_read: read error on %s\n", tp->tx_file);
-			tp->tx_file[0] = '\0';
+			rt_log("txt_read: wanted %d, got %d on line %d\n", tp->tx_fw*3, got, i);
 			(void)fclose(fp);
+			rt_free( tp->tx_pixels, tp->tx_file );
 			rt_free(linebuf,"file line, error");
+			tp->tx_file[0] = '\0';
+			tp->tx_n = -1;
 			return(0);
 		}
 		bcopy( linebuf, tp->tx_pixels + i*tp->tx_w*3, tp->tx_w*3 );
