@@ -165,6 +165,17 @@ RT_DECLARE_INTERFACE(grp)
 #define rt_hf_xform rt_generic_xform
 RT_DECLARE_INTERFACE(hf)
 
+/* from db_comb.c */
+RT_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
+		CONST struct rt_external *ep, CONST mat_t mat));
+RT_EXTERN(int rt_comb_export, (struct rt_external *ep,
+		CONST struct rt_db_internal *ip,
+		double local2mm));
+RT_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
+RT_EXTERN(int rt_comb_describe, (struct rt_vls *str,
+		struct rt_db_internal *ip, int verbose,
+		double mm2local));
+
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 	struct seg segp[], int n, struct application *ap ));
@@ -172,7 +183,7 @@ RT_EXTERN(int rt_generic_xform, (struct rt_db_internal *op,
 	CONST mat_t mat, struct rt_db_internal *ip,
 	int free));
 
-struct rt_functab rt_functab[ID_MAXIMUM+2] = {
+struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	"ID_NULL",	0,		/* 0 */
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print, 	rt_nul_norm,
 	 	rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
@@ -347,6 +358,16 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_hf_plot,	rt_vstub,	rt_hf_tess,	rt_nul_tnurb,
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,
+
+	/* ID_MAXIMUM.  Add new solids _above_ this point */
+
+	"ID_COMBINATION",	0,
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
+		rt_comb_import,	rt_comb_export,	rt_comb_ifree,
+		rt_comb_describe,rt_generic_xform,
+
 
 	">ID_MAXIMUM",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
