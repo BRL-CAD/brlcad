@@ -312,7 +312,13 @@ db_close(register struct db_i *dbip)
 			/* Put 'dp' back on the freelist */
 			dp->d_forw = rt_uniresource.re_directory_hd;
 			rt_uniresource.re_directory_hd = dp;
-			dp->d_forw = NULL;
+
+			/* null'ing the forward pointer here is a huge
+			 * memory leak as it causes the loss of all
+			 * nodes on the freelist except the first.
+			 * (so don't do it)
+			 */
+			/* dp->d_forw = NULL; */
 
 			dp = nextdp;
 		}
