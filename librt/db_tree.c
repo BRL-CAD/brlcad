@@ -1049,7 +1049,6 @@ union tree	*tp;
 				tp->tr_d.td_name = (CONST char *)NULL;
 			}
 			if( r == (struct nmgregion *)NULL )  {
-				rt_log("db_free_tree: OP_NMG_TESS, r=NULL\n");
 				break;
 			}
 			/* Disposing of the nmg model structue is
