@@ -3789,32 +3789,38 @@ struct wdb_node_data {
 	Tcl_Interp   *interp;
 };
 
-#if 0
-/*XXX need to modify the Cakefiles so that LIBRT comes before LIBWDB */
+/*
+ *			W D B _ N O D E _ W R I T E
+ *
+ *  Support for the 'keep' method.
+ *  Write each node encountered exactly once.
+ */
 void
 wdb_node_write(dbip, dp, client_data)
      struct db_i		*dbip;
      register struct directory	*dp;
      genptr_t			client_data;
 {
-	struct rt_db_internal	intern;
+	struct bu_external	ext;
 	struct wdb_node_data *wndp = (struct wdb_node_data *)client_data;
 	
 
 	if (dp->d_nref++ > 0)
 		return;		/* already written */
 
-	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
-		Tcl_AppendResult(wndp->interp, "Database read error, aborting", (char *)NULL);
+	/* Use db_get_external() and db_fwrite_external().  Faster. */
+	if( db_get_external( &ext, dp, dbip ) < 0 )  {
+		Tcl_AppendResult(wndp->interp, "Input database read error on ",
+			dp->d_namep, ", aborting", (char *)NULL);
 		return;
 	}
 
-	if (mk_export_fwrite(wndp->fp, dp->d_namep, intern.idb_ptr, intern.idb_type)) {
-		Tcl_AppendResult(wndp->interp, "Database write error, aborting", (char *)NULL);
-		return;
+	if( db_fwrite_external( wndp->fp, dp->d_namep, &ext, 1.0 ) < 0 )  {
+		Tcl_AppendResult(wndp->interp, "Output database write error on ",
+			dp->d_namep, ", aborting", (char *)NULL);
 	}
+	db_free_external(&ext);
 }
-#endif
 
 /*
  * Usage:
@@ -3832,9 +3838,8 @@ wdb_keep_tcl(clientData, interp, argc, argv)
 	register struct directory *dp;
 	struct bu_vls		title;
 	register int		i;
-	struct wdb_node_data *wndp;
+	struct wdb_node_data	wnd;
 
-#if 0
 	if (argc < 4 || MAXARGS < argc) {
 		struct bu_vls vls;
 
@@ -3863,33 +3868,31 @@ wdb_keep_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 	
-	/* ident record */
+	/* All databases must start with an ident record */
 	bu_vls_init(&title);
 	bu_vls_strcat(&title, "Parts of: ");
 	bu_vls_strcat(&title, wdbp->dbip->dbi_title);
 
-	if (mk_id_units2(keepfp, bu_vls_addr(&title), wdbp->dbip->dbi_localunit) < 0) {
+	if (mk_id_editunits(keepfp, bu_vls_addr(&title), wdbp->dbip->dbi_local2base) < 0) {
 		perror("fwrite");
-		Tcl_AppendResult(interp, "mk_id_units() failed\n", (char *)NULL);
+		Tcl_AppendResult(interp, "mk_id_editunits() failed\n", (char *)NULL);
 		fclose(keepfp);
 		bu_vls_free(&title);
 		return TCL_ERROR;
 	}
 
-	GETSTRUCT(wndp,wdb_node_data);
-	wndp->fp = keepfp;
-	wndp->interp = interp;
+	wnd.fp = keepfp;
+	wnd.interp = interp;
 
 	for (i = 3; i < argc; i++) {
 		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
-		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, (genptr_t)wndp);
+		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, (genptr_t)&wnd);
 	}
 
-	bu_free(wndp, "wdb_keep: wndp");
 	fclose(keepfp);
 	bu_vls_free(&title);
-#endif
+
 	return TCL_OK;
 }
 
