@@ -613,7 +613,9 @@ Ir_open()
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
 	qdevice(RIGHTMOUSE);
+	tie(LEFTMOUSE, MOUSEX, MOUSEY);
 	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
+	tie(RIGHTMOUSE, MOUSEX, MOUSEY);
 
 #if IR_KNOBS
 	/*
@@ -1245,7 +1247,8 @@ Ircheckevents()  {
 	register int n;
 	static	button0  = 0;	/*  State of button 0 */
 	static	knobs[8];	/*  Save values of dials  */
-	static	pending_middleval = 0;
+	static char	pending_button = 'M';
+	static int	pending_val = 0;
 	static	pending_x = 0;
 	static	pending_y = 0;
 
@@ -1519,16 +1522,17 @@ continue;
 #endif
 		switch( ret )  {
 		case LEFTMOUSE:
-			if( valp[1] )
-				rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
+			pending_button = 'L';
+			pending_val = (int)valp[1] ? 1 : 0;
 			break;
 		case RIGHTMOUSE:
-			if( valp[1] )
-				rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
+			pending_button = 'R';
+			pending_val = (int)valp[1] ? 1 : 0;
 			break;
 		case MIDDLEMOUSE:
-			/* Will also get MOUSEX and MOUSEY hits */
-			pending_middleval = (int)valp[1] ? 1 : 0;
+			/* Will be followed by MOUSEX and MOUSEY hits */
+			pending_button = 'M';
+			pending_val = (int)valp[1] ? 1 : 0;
 			/* Don't signal DV_PICK until MOUSEY event */
 			break;
 		case MOUSEX:
@@ -1546,19 +1550,21 @@ continue;
 			 *  blkqread() buffer, owing to time delays in
 			 *  the outputting of the tie()'ed events.
 			 *  So, don't report the mouse event on MIDDLEMOUSE;
-			 *  instead, the flag pending_middleval flag is set,
+			 *  instead, the flag pending_val flag is set,
 			 *  and the mouse event is signaled here, which
 			 *  may need multiple trips through this subroutine.
 			 *
 			 *  MOUSEY may be queued all by itself to support
-			 *  illuminate mode;  in those cases, pending_middleval
+			 *  illuminate mode;  in those cases, pending_val
 			 *  will be zero already, and we just parrot the last
 			 *  X value.
 			 */
-			rt_vls_printf( &dm_values.dv_string, "M %d %d %d\n",
-			    pending_middleval,
+			rt_vls_printf( &dm_values.dv_string, "%c %d %d %d\n",
+			    pending_button,
+			    pending_val,
 			    pending_x, pending_y);
-			pending_middleval = 0;
+			pending_button = 'M';
+			pending_val = 0;
 			break;
 		case REDRAW:
 			/* Window may have moved */
