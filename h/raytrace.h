@@ -929,6 +929,22 @@ struct animate {
 #define ANIMATE_MAGIC	0x414e4963		/* 1095649635 */
 #define RT_CK_ANIMATE(_p)	BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
+/*			Q E L E M
+ *
+ *	Structure for use by pmalloc()
+ */
+#define NBUCKETS        18
+
+struct qelem {
+        struct qelem *q_forw;
+        struct qelem *q_back;
+};
+
+struct pm_res {
+	struct qelem buckets[NBUCKETS];
+	struct qelem adjhead;
+};
+
 /*
  *			R E S O U R C E
  *
@@ -966,6 +982,7 @@ struct resource {
 	struct bu_list	re_solid_bitv;	/* head of freelist */
 	struct bu_list	re_region_ptbl;	/* head of freelist */
 	struct bu_list	re_nmgfree;	/* head of NMG hitmiss freelist */
+	struct rt_pm_res re_pmem;	/* for use by pmalloc() */
 	union tree	**re_boolstack;	/* Stack for rt_booleval() */
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	float		*re_randptr;	/* ptr into random number table */
