@@ -268,6 +268,7 @@ int		filled;
 		    	else if (*vu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
 		    		fu_p = vu_p->up.lu_p->up.fu_p;
 	    		else  {
+	    			fu_p = (struct faceuse *)NULL;
 	    			rt_bomb("vertex_hit: bad vu->up\n");
 	    			/* NOTREACHED */
 	    		}

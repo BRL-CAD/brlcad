@@ -1048,6 +1048,7 @@ struct nurb_hit * head;
 		return NULL_HIT;
 
 	dist = INFINITY;
+	ret = NULL_HIT;
 
 	for( h = head->next; h != NULL_HIT; h = h->next)
 	{
