@@ -697,6 +697,16 @@ register struct directory *dp;
 	}
 }
 
+static char *mged_vl_draw_message[] = {
+	"line move ",
+	"line draw ",
+	"poly start",
+	"poly move ",
+	"poly draw ",
+	"poly end  ",
+	"**unknown*"
+};
+
 /*
  *			P R _ S C H A I N
  *
@@ -724,13 +734,13 @@ int		lvl;			/* debug level */
 		if( lvl <= 0 )  continue;
 
 		/* convert to the local unit for printing */
-		(void)printf("  (%.3f,%.3f,%.3f) sz=%g ",
+		(void)printf("  cent=(%.3f,%.3f,%.3f) sz=%g ",
 			sp->s_center[X]*base2local,
 			sp->s_center[Y]*base2local, 
 			sp->s_center[Z]*base2local,
 			sp->s_size*base2local );
-		(void)printf("reg=%d",sp->s_regionid );
-		(void)printf(" (%d,%d,%d) %d,%d,%d i=%d\n",
+		(void)printf("reg=%d\n",sp->s_regionid );
+		(void)printf("  color=(%d,%d,%d) %d,%d,%d i=%d\n",
 			sp->s_basecolor[0],
 			sp->s_basecolor[1],
 			sp->s_basecolor[2],
@@ -743,7 +753,8 @@ int		lvl;			/* debug level */
 
 		/* Print the actual vector list */
 		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			printf("%d (%g, %g, %g)\n", vp->vl_draw,
+			printf("  %s (%g, %g, %g)\n",
+				mged_vl_draw_message[vp->vl_draw],
 				vp->vl_pnt[X],
 				vp->vl_pnt[Y],
 				vp->vl_pnt[Z] );
@@ -960,7 +971,20 @@ out:
 	sp->s_vlist = vhead.vh_first;
 	sp->s_vlen = 0;
 	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
-		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
+		switch( vp->vl_draw )  {
+		case VL_CMD_POLY_START:
+			/* Has normal vector, not location */
+			break;
+		case VL_CMD_LINE_MOVE:
+		case VL_CMD_LINE_DRAW:
+		case VL_CMD_POLY_MOVE:
+		case VL_CMD_POLY_DRAW:
+		case VL_CMD_POLY_END:
+			VMINMAX( minvalue, maxvalue, vp->vl_pnt );
+			break;
+		default:
+			(void)printf("unknown vlist op %d\n", vp->vl_draw);
+		}
 		sp->s_vlen++;
 	}
 	nvectors += sp->s_vlen;

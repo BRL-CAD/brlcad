@@ -541,8 +541,20 @@ struct solid		*existing_sp;
 	sp->s_vlist = vfirst;
 	sp->s_vlen = 0;
 	for( vp = vfirst; vp != VL_NULL; vp = vp->vl_forw )  {
-		/* XXX need to skip normal vectors, markers */
-		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
+		switch( vp->vl_draw )  {
+		case VL_CMD_POLY_START:
+			/* Has normal vector, not location */
+			break;
+		case VL_CMD_LINE_MOVE:
+		case VL_CMD_LINE_DRAW:
+		case VL_CMD_POLY_MOVE:
+		case VL_CMD_POLY_DRAW:
+		case VL_CMD_POLY_END:
+			VMINMAX( minvalue, maxvalue, vp->vl_pnt );
+			break;
+		default:
+			(void)printf("unknown vlist op %d\n", vp->vl_draw);
+		}
 		sp->s_vlen++;
 	}
 	nvectors += sp->s_vlen;
