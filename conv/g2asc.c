@@ -23,11 +23,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
  
-#include	<stdio.h>
+#include <stdio.h>
+#include <ctype.h>
 #include "../h/db.h"
 
 extern void	exit();
 extern int	printf(), fprintf();
+
+char *name();
 
 void	idendump(), polyhead(), polydata();
 void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
@@ -42,44 +45,46 @@ char **argv;
 	while( fread( (char *)&record, sizeof record, 1, stdin ) == 1  &&
 	    !feof(stdin) )  {
 	    	if( argc > 1 )
-	    		fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
+			fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
 		/* Check record type and skip deleted records */
-		if( record.u_id == ID_FREE )  {
+	    	switch( record.u_id )  {
+	    	case ID_FREE:
 			continue;
-		}
-		if( record.u_id == ID_SOLID )  {
+	    	case ID_SOLID:
 			(void)soldump();
-		}
-		else if( record.u_id == ID_COMB )  {
+			continue;
+	    	case ID_COMB:
 			(void)combdump();
-		}
-		else if( record.u_id == ID_ARS_A )  {
+			continue;
+	    	case ID_ARS_A:
 			(void)arsadump();
-		}
-		else if( record.u_id == ID_P_HEAD )  {
+	    		continue;
+	    	case ID_P_HEAD:
 			(void)polyhead();
-		}
-		else if( record.u_id == ID_P_DATA )  {
+	    		continue;
+	    	case ID_P_DATA:
 			(void)polydata();
-		}
-		else if( record.u_id == ID_IDENT )  {
+	    		continue;
+	    	case ID_IDENT:
 			(void)idendump();
-		}
-		else if( record.u_id == ID_MATERIAL )  {
+	    		continue;
+	    	case ID_MATERIAL:
 			materdump();
-		}
-		else if( record.u_id == ID_BSOLID )  {
+	    		continue;
+	    	case ID_BSOLID:
 			bspldump();
-		}
-		else if( record.u_id == ID_BSURF )  {
+	    		continue;
+	    	case ID_BSURF:
 			bsurfdump();
-		}
-		else  {
-			(void)fprintf(stderr,"G2ASC: bad record type\n");
-			exit(1);
+	    		continue;
+	    	default:
+			(void)fprintf(stderr,
+				"g2asc: unable to convert record type '%c' (0%o), skipping\n",
+				record.u_id, record.u_id);
+	    		continue;
 		}
 	}
-	return(0);
+	exit(0);
 }
 
 void
@@ -105,7 +110,7 @@ void
 polyhead()	/* Print out Polyhead record information */
 {
 	(void)printf("%c ", record.p.p_id );		/* P */
-	(void)printf("%.16s", record.p.p_name );	/* unique name */
+	(void)printf("%.16s", name(record.p.p_name) );	/* unique name */
 	(void)printf("\n");			/* Terminate w/ a newline */
 }
 
@@ -136,7 +141,7 @@ soldump()	/* Print out Solid record information */
 
 	(void)printf("%c ", record.s.s_id );	/* S */
 	(void)printf("%d ", record.s.s_type );	/* GED primitive type */
-	(void)printf("%.16s ", record.s.s_name );	/* unique name */
+	(void)printf("%.16s ", name(record.s.s_name) );	/* unique name */
 	(void)printf("%d ", record.s.s_cgtype );/* COMGEOM solid type */
 	for( i = 0; i < 24; i++ )
 		(void)printf("%.12e ", record.s.s_values[i] ); /* parameters */
@@ -154,7 +159,7 @@ combdump()	/* Print out Combination record information */
 		(void)printf("Y ");			/* Y if `R' */
 	else
 		(void)printf("N ");			/* N if ` ' */
-	(void)printf("%.16s ", record.c.c_name );	/* unique name */
+	(void)printf("%.16s ", name(record.c.c_name) );	/* unique name */
 	(void)printf("%d ", record.c.c_regionid );	/* region ID code */
 	(void)printf("%d ", record.c.c_aircode );	/* air space code */
 	(void)printf("%d ", record.c.c_length );	/* # of members */
@@ -195,7 +200,7 @@ membdump()	/* Print out Member record information */
 	(void)fread( (char *)&record, sizeof record, 1, stdin );
 	(void)printf("%c ", record.M.m_id );		/* M */
 	(void)printf("%c ", record.M.m_relation );	/* Boolean oper. */
-	(void)printf("%.16s ", record.M.m_instname );	/* referred-to obj. */
+	(void)printf("%.16s ", name(record.M.m_instname) );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
 		(void)printf("%.12e ", record.M.m_mat[i] );
 	(void)printf("%d ", record.M.m_num );		/* COMGEOM solid # */
@@ -210,7 +215,7 @@ arsadump()	/* Print out ARS record information */
 
 	(void)printf("%c ", record.a.a_id );	/* A */
 	(void)printf("%d ", record.a.a_type );	/* primitive type */
-	(void)printf("%.16s ", record.a.a_name );	/* unique name */
+	(void)printf("%.16s ", name(record.a.a_name) );	/* unique name */
 	(void)printf("%d ", record.a.a_m );	/* # of curves */
 	(void)printf("%d ", record.a.a_n );	/* # of points per curve */
 	(void)printf("%d ", record.a.a_curlen );/* # of granules per curve */
@@ -265,7 +270,7 @@ bspldump()	/* Print out B-spline solid description record information */
 {
 	(void)printf( "%c %.16s %d %.12e\n",
 		record.B.B_id,		/* b */
-		record.B.B_name,	/* unique name */
+		name(record.B.B_name),	/* unique name */
 		record.B.B_nsurf,	/* # of surfaces in this solid */
 		record.B.B_resolution );	/* resolution of flatness */
 }
@@ -359,3 +364,43 @@ register int n;
 		*str++ = '\0';
 }
 #endif
+
+/*
+ *			N A M E
+ *
+ *  Take a database name and null-terminate it,
+ *  converting unprintable characters to something printable.
+ *  Here we deal with NAMESIZE long names not being null-terminated.
+ */
+char *name( str )
+char *str;
+{
+	static char buf[NAMESIZE+2];
+	register char *ip = str;
+	register char *op = buf;
+	register int warn = 0;
+
+	while( op < &buf[NAMESIZE] )  {
+		if( *ip == '\0' )  break;
+		if( isprint(*ip) && !isspace(*ip) )  {
+			*op++ = *ip++;
+		}  else  {
+			*op++ = '@';
+			ip++;
+			warn = 1;
+		}
+	}
+	*op = '\0';
+	if(warn)  {
+		(void)fprintf(stderr,
+		"g2asc: Illegal char in object name.  '%s' converted to '%s'\n",
+		str, buf );
+	}
+	if( op == buf )  {
+		/* Null input name */
+		(void)fprintf(stderr,
+			"g2asc:  NULL object name converted to -=NULL=-\n");
+		return("-=NULL=-");
+	}
+	return(buf);
+}
