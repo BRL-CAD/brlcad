@@ -8009,11 +8009,11 @@ fi
     else
 	MAKE_STATIC_LIB="\${STLIB_LD} \$@ \$(${PACKAGE}_OBJECTS)"
 	MAKE_SHARED_LIB="\${SHLIB_LD} -o \$@ \$(${PACKAGE}_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS}"
-#	if test "x$RANLIB" = "x" ; then
+	if test "x$RANLIB" = "x" -o "x`uname -s`" = "xIRIX64" -o "x`uname -s`" = "xIRIX" ; then
 		MAKE_STUB_LIB="\${STLIB_LD} \$@ \$(${PACKAGE}stub_OBJECTS)"
-#	else
-#		MAKE_STUB_LIB="\${STLIB_LD} \[$]@ \$(${PACKAGE}stub_OBJECTS) ; $RANLIB \[$]@"
-#	fi
+	else
+		MAKE_STUB_LIB="\${STLIB_LD} \$@ \$(${PACKAGE}stub_OBJECTS) ; $RANLIB \$@"
+	fi
     fi
 
     if test "${SHARED_BUILD}" = "1" ; then
