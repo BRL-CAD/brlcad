@@ -511,13 +511,6 @@ int		howfar;
 		if( inuse++ == 0 )
 			first_tlp = tlp;
 	}
-	if( first_tlp->tl_op != OP_UNION )  {
-		first_tlp->tl_op = OP_UNION;	/* Fix it */
-		if( rt_g.debug & DEBUG_TREEWALK )  {
-			rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
-				first_tlp->tl_op );
-		}
-	}
 
 	/* Handle trivial cases */
 	if( inuse <= 0 )
@@ -526,6 +519,14 @@ int		howfar;
 		curtree = first_tlp->tl_tree;
 		first_tlp->tl_tree = TREE_NULL;
 		return( curtree );
+	}
+
+	if( first_tlp->tl_op != OP_UNION )  {
+		first_tlp->tl_op = OP_UNION;	/* Fix it */
+		if( rt_g.debug & DEBUG_TREEWALK )  {
+			rt_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
+				first_tlp->tl_op );
+		}
 	}
 
 	curtree = first_tlp->tl_tree;
@@ -649,8 +650,10 @@ struct combined_tree_state	**region_start_statepp;
 	/*
 	 * Load the entire object into contiguous memory.
 	 */
-	if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )
+	if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )  {
+		rt_log("db_recurse() db_get_external() FAIL\n");
 		return(TREE_NULL);		/* FAIL */
+	}
 
 	if( dp->d_flags & DIR_COMB )  {
 		register CONST union record	*rp = (union record *)ext.ext_buf;
