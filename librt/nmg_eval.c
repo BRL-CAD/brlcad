@@ -27,8 +27,6 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-void		(*nmg_plot_anim_upcall)();	/* For I/F with MGED */
-
 struct nmg_counter {
 	long	regions;
 	long	shells;
@@ -1090,6 +1088,11 @@ struct nmg_counter	*ctr;
 	}
 }
 
+/*
+ *			N M G _ E V A L _ P L O T
+ *
+ *  Called from nmg_eval_shell
+ */
 nmg_eval_plot( bs, num, delay )
 struct nmg_bool_state	*bs;
 int		num;
@@ -1108,37 +1111,51 @@ int		delay;
 
 	if( !do_plot && !do_anim )  return;
 
-	/* get space for list of items processed */
-	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
+	if( do_plot )  {
+		/* get space for list of items processed */
+		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
 
-	sprintf(fname, "/tmp/eval%d.pl", num);
-	if( (fp = fopen(fname,"w")) == NULL )  {
-		perror(fname);
-		return;
+		sprintf(fname, "/tmp/eval%d.pl", num);
+		if( (fp = fopen(fname,"w")) == NULL )  {
+			perror(fname);
+			return;
+		}
+		rt_log("Plotting %s\n", fname);
+
+		nmg_pl_s( fp, bs->bs_dest );
+		nmg_pl_s( fp, bs->bs_src );
+
+		fclose(fp);
+
+		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 	}
-	rt_log("Plotting %s\n", fname);
-
-	nmg_pl_s( fp, bs->bs_dest );
-	nmg_pl_s( fp, bs->bs_src );
-
-	fclose(fp);
-
-	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
 	if( do_anim )  {
+		extern void (*nmg_vlblock_anim_upcall)();
+		struct vlblock *vbp;
+
+		/* get space for list of items processed */
+		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
+		vbp = rt_vlblock_init();
+
+		nmg_vlblock_s( vbp, bs->bs_dest );
+		nmg_vlblock_s( vbp, bs->bs_src );
+
+		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
+
 		/* Cause animation of boolean operation as it proceeds! */
-		if( nmg_plot_anim_upcall )  {
+		if( nmg_vlblock_anim_upcall )  {
+#if 0
 			/* if requested, delay 1/4 second */
-			(*nmg_plot_anim_upcall)( fname,
+			(*nmg_vlblock_anim_upcall)( vbp,
 				delay ? 250000 : 0 );
+#else
+			/* Go full speed */
+			(*nmg_vlblock_anim_upcall)( vbp, 0 );
+#endif
 		} else {
-			rt_log("null nmg_plot_anim_upcall, no animation\n");
+			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
-		if( !do_plot )  {
-			/* Plot was just for animation, delete it to
-			 * save on disk space
-			 */
-			(void)unlink(fname);
-		}
+		rt_vlblock_free(vbp);
 	}
 }
