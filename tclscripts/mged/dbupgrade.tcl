@@ -244,6 +244,9 @@ proc dbupgrade {args} {
     catch {exec dbupgrade $db_orig $dbname} ret
 
     if {[file exists $dbname]} {
+	#XXX There may eventually need to be more checks, but
+	#    for now assume that everything converted properly.
+
 	# set file permissions
 	file attributes $dbname -permissions $perms
 
@@ -255,6 +258,9 @@ proc dbupgrade {args} {
 	unset dbupgrade_priv(dbname)
 	return
     } else {
+	# Something went wrong with the conversion, so
+	# put things back the way they were.
+
 	# rename original to previous name
 	file rename -force $db_orig $dbname
 
