@@ -78,9 +78,7 @@ static FILE *fd_in;		/* input file */
 static struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */
 static unsigned int obj_count=0; /* Count of parts converted for "stl-g" conversions */
-static fastf_t *bot_verts=NULL;	 /* array of vertices for a bot solid */
-static int *bot_faces=NULL;	 /* array of ints (indices into bot_verts array) three per face */
-static int bot_vcurr=0;		/* current bot vertex */
+static int *bot_faces=NULL;	 /* array of ints (indices into tree_root->the_array array) three per face */
 static int bot_fsize=0;		/* current size of the bot_faces array */
 static int bot_fcurr=0;		/* current bot face */
 
@@ -126,7 +124,6 @@ char line[MAX_LINE_LEN];
 	unsigned char color[3]={ 128, 128, 128 };
 	char *brlcad_name;
 	struct wmember head;
-	struct wmember *wmem;
 	vect_t normal={0,0,0};
 	int solid_in_region=0;
 
@@ -141,7 +138,6 @@ char line[MAX_LINE_LEN];
 	}
 
 
-	bot_vcurr = 0;
 	bot_fcurr = 0;
 	BU_LIST_INIT( &head.l );
 
@@ -282,9 +278,9 @@ char line[MAX_LINE_LEN];
 					endloop = 1;
 				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
 				{
-					float x,y,z;
+					double x,y,z;
 
-					sscanf( &line1[start+6] , "%f%f%f" , &x , &y , &z );
+					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
 
 					if( vert_no > 2 )
 					{
@@ -292,7 +288,7 @@ char line[MAX_LINE_LEN];
 
 						bu_log( "Non-triangular loop:\n" );
 						for( n=0 ; n<3 ; n++ )
-							bu_log( "\t( %g %g %g )\n", V3ARGS( &bot_verts[tmp_face[n]] ) );
+							bu_log( "\t( %g %g %g )\n", V3ARGS( &tree_root->the_array[tmp_face[n]] ) );
 
 						bu_log( "\t( %g %g %g )\n", x, y, z );
 					}
@@ -327,7 +323,7 @@ char line[MAX_LINE_LEN];
 
 				bu_log( "Making Face:\n" );
 				for( n=0 ; n<3; n++ )
-					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &bot_verts[3*tmp_face[n]] ) );
+					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &tree_root->the_array[3*tmp_face[n]] ) );
 				VPRINT(" normal", normal);
 			}
 
@@ -360,7 +356,7 @@ char line[MAX_LINE_LEN];
 
 	if( face_count && !solid_in_region )
 	{
-		wmem = mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
+		(void)mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
 	}
 
 	brlcad_name = bu_malloc( strlen( solid_name ) + 3, "region name" );
@@ -410,7 +406,6 @@ Convert_part_binary()
 	vect_t normal;
 	int tmp_face[3];
 	struct wmember head;
-	struct wmember *wmem;
 	char *solid_name="s.stl";
 	int face_count=0;
 	int degenerate_count=0;
@@ -425,6 +420,7 @@ Convert_part_binary()
 	bu_log( "\t%d facets\n", num_facets );
 	while( fread( buf, 48, 1, fd_in ) ) {
 		int i;
+		double pt[3];
 
 		for( i=0 ; i<12 ; i++ ) {
 			lswap( (unsigned int *)&buf[i*4] );
@@ -434,9 +430,12 @@ Convert_part_binary()
 		fread( buf, 2, 1, fd_in );
 
 		VMOVE( normal, flts );
-		tmp_face[0] = Add_vert( V3ARGS( &flts[3] ), tree_root, tol.dist_sq );
-		tmp_face[1] = Add_vert( V3ARGS( &flts[6] ), tree_root, tol.dist_sq );
-		tmp_face[2] = Add_vert( V3ARGS( &flts[9] ), tree_root, tol.dist_sq );
+		VMOVE( pt, &flts[3] );
+		tmp_face[0] = Add_vert( V3ARGS( pt ), tree_root, tol.dist_sq );
+		VMOVE( pt, &flts[6] );
+		tmp_face[1] = Add_vert( V3ARGS( pt ), tree_root, tol.dist_sq );
+		VMOVE( pt, &flts[9] );
+		tmp_face[2] = Add_vert( V3ARGS( pt ), tree_root, tol.dist_sq );
 
 		/* check for degenerate faces */
 		if( tmp_face[0] == tmp_face[1] ) {
@@ -459,7 +458,7 @@ Convert_part_binary()
 
 			bu_log( "Making Face:\n" );
 			for( n=0 ; n<3; n++ )
-				bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &bot_verts[3*tmp_face[n]] ) );
+				bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &tree_root->the_array[3*tmp_face[n]] ) );
 			VPRINT(" normal", normal);
 		}
 
@@ -492,7 +491,7 @@ Convert_part_binary()
 	BU_LIST_INIT( &head.l );
 	if( face_count )
 	{
-		wmem = mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
+		(void)mk_addmember( solid_name , &head.l , NULL, WMOP_UNION );
 	}
 	bu_log( "\tMaking region (r.stl)\n" );
 
