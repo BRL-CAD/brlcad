@@ -44,8 +44,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./solid.h"
 
-extern double atof();
-
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
 extern int	newargs;	/* number of args from getcmd() */
