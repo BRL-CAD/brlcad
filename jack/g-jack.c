@@ -277,31 +277,33 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( ncpu == 1 && RT_SETJUMP )  {
-		/* Error, bail out */
-		RT_UNSETJUMP;		/* Relinquish the protection */
+	if( ncpu == 1 ) {
+		if( RT_SETJUMP )  {
+			/* Error, bail out */
+			RT_UNSETJUMP;		/* Relinquish the protection */
 
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
-		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+			/* Sometimes the NMG library adds debugging bits when
+			 * it detects an internal error, before rt_bomb().
+			 */
+			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
+			/* Release any intersector 2d tables */
+			nmg_isect2d_final_cleanup();
 
-		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+			/* Release the tree memory & input regions */
+			db_free_tree(curtree);		/* Does an nmg_kr() */
 
-		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
-			nmg_km(*tsp->ts_m);
-		} else {
-			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			/* Get rid of (m)any other intermediate structures */
+			if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
+				nmg_km(*tsp->ts_m);
+			} else {
+				rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+			}
+
+			/* Now, make a new, clean model structure for next pass. */
+			*tsp->ts_m = nmg_mm();
+			goto out;
 		}
-	
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
 	}
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
