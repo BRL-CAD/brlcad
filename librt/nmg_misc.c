@@ -2201,10 +2201,29 @@ CONST struct rt_tol *tol;
 
 	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
 	{
+		struct edgeuse *eu2;
+		int radial_count=0;
+
 		/* eu1 is an edgeuse on an OT_SAME face, so its radial
 		 * should be in an OT_SAME also */
 
 		NMG_CK_EDGEUSE( eu1 );
+
+		/* if there is more than one other radial for this edge
+		 * in this shell, then can't know which to propogate to
+		 */
+
+		eu2 = eu1->radial_p->eumate_p;
+		while( eu2 != eu1 )
+		{
+			if( nmg_find_s_of_eu( eu2 ) == fu_in->s_p )
+				radial_count++;
+
+			eu2 = eu2->radial_p->eumate_p;
+		}
+
+		if( radial_count > 1 )
+			continue;
 
 		/* go to the radial */
 		eu = eu1->radial_p;
