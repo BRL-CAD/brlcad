@@ -20,16 +20,23 @@ proc init_comb { id } {
 	return
     }
 
+    # get default values for ident, air, los, and material
+    set defaults [regdef]
+    set default_ident [lindex $defaults 1]
+    set default_air [lindex $defaults 3]
+    set default_los [lindex $defaults 5]
+    set default_material [lindex $defaults 7]
+
     # set the padding
     set comb_control($id,padx) 4
     set comb_control($id,pady) 2
 
     set comb_control($id,name) ""
     set comb_control($id,isRegion) "Yes"
-    set comb_control($id,id) ""
-    set comb_control($id,air) ""
-    set comb_control($id,material) ""
-    set comb_control($id,los) ""
+    set comb_control($id,id) $default_ident
+    set comb_control($id,air) $default_air
+    set comb_control($id,material) $default_material
+    set comb_control($id,los) $default_los
     set comb_control($id,color) ""
     set comb_control($id,inherit) ""
     set comb_control($id,comb) ""
@@ -473,10 +480,24 @@ proc comb_reset { id } {
     set comb_control($id,isRegion) [lindex $comb_defs 1]
 
     if {$comb_control($id,isRegion) == "Yes"} {
-	set comb_control($id,id) [lindex $comb_defs 2]
-	set comb_control($id,air) [lindex $comb_defs 3]
-	set comb_control($id,material) [lindex $comb_defs 4]
-	set comb_control($id,los) [lindex $comb_defs 5]
+	if {$result == 2} {
+	    # get default values for ident, air, los, and material
+	    set defaults [regdef]
+	    set default_ident [lindex $defaults 1]
+	    set default_air [lindex $defaults 3]
+	    set default_los [lindex $defaults 5]
+	    set default_material [lindex $defaults 7]
+
+	    set comb_control($id,id) $default_ident
+	    set comb_control($id,air) $default_air
+	    set comb_control($id,material) $default_material
+	    set comb_control($id,los) $default_los
+	} else {
+	    set comb_control($id,id) [lindex $comb_defs 2]
+	    set comb_control($id,air) [lindex $comb_defs 3]
+	    set comb_control($id,material) [lindex $comb_defs 4]
+	    set comb_control($id,los) [lindex $comb_defs 5]
+	}
 	set comb_control($id,color) [lindex $comb_defs 6]
 	set comb_control($id,shader) [lindex $comb_defs 7]
 	set comb_control($id,inherit) [lindex $comb_defs 8]
