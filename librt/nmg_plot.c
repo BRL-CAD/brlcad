@@ -2609,7 +2609,6 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 	}
 
 	NMG_CK_CNURB( c );
-rt_nurb_c_print(c);
 
 	coords = RT_NURB_EXTRACT_COORDS( c->pt_type );
 	
@@ -2632,7 +2631,6 @@ rt_nurb_c_print(c);
 		/* cnurb on spline face -- ctl points are UV or UVW */
 		if( coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type) ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 		s = fu->f_p->g.snurb_p;
-rt_nurb_s_print("srf", s);
 
 		/* This section uses rt_nurb_c_eval(), but rt_nurb_c_refine is likely faster.
 		 * XXXX Need a way to selectively and recursively refine curve to avoid
@@ -2645,24 +2643,20 @@ rt_nurb_s_print("srf", s);
 
 			/* evaluate curve at parameter values */
 			crv_param += param_delta; 
-VSETALL(uvw,0);
+
+			VSETALL(uvw,0);
+
 			rt_nurb_c_eval( c, crv_param, uvw );
 
-rt_log("%g \n", crv_param);
-VPRINT("uvw1", uvw);
 			if( RT_NURB_IS_PT_RATIONAL( c->pt_type ) )
 			{
 				uvw[0] = uvw[0]/uvw[2];
 				uvw[1] = uvw[1]/uvw[2];
-VPRINT("uvw2", uvw);
 			}
-if(uvw[0] >= 1 || uvw[1] >= 1 )  {
-	nmg_pr_eg( (CONST long *) eg, 0 );
-	continue;
-}
 
 			/* convert 'uvw' from UV coord to XYZ coord via surf! */
 			rt_nurb_s_eval( s, uvw[0], uvw[1], final );
+
 			if( RT_NURB_IS_PT_RATIONAL( s->pt_type ) )
 			{
 				/* divide out homogeneous coordinate */
