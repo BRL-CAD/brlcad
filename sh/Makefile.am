@@ -23,7 +23,6 @@ bin_SCRIPTS = \
 	pixinfo.sh \
 	pixread.sh \
 	pixwrite.sh \
-	ranlib5.sh \
 	sgisnap.sh \
 	sharedliblink.sh \
 	sharedlibvers.sh \
