@@ -452,33 +452,17 @@ write_matrix(frame)
 	vect_t	model;
 	vect_t	view;
 
-	/* Build viewrot matrix */
-/*	VSUB2( model, hit_cur_try, pt_prev_step );	/* Look to next step */
-	VSUB2( model, goal_point, pt_prev_step );
-	VUNITIZE( model );
-
-	mat_lookat( viewrot, model, 0 );
-
-#if 0
-	/* Old way */
-	fprintf(outfp, "%g\n", viewsize);
-	fprintf(outfp, "%g %g %g",
-		pt_prev_step[X],
-		pt_prev_step[Y],
-		pt_prev_step[Z]);
-
-	for( i=0; i < 16; i++ ) {
-		if( (i%4) == 0 )  (void)fprintf(outfp, "\n");
-		(void)fprintf( outfp, "%.9e ", viewrot[i] );
-	}
-	(void)fprintf(outfp,"\n\n");
-#else
-	/* New way */
 	fprintf(outfp, "viewsize %g;\n", viewsize);
 	fprintf(outfp, "eye_pt %g %g %g;\n",
 		pt_prev_step[X],
 		pt_prev_step[Y],
 		pt_prev_step[Z]);
+#if 0
+	/* Build viewrot matrix */
+	VSUB2( model, goal_point, pt_prev_step );
+	VUNITIZE( model );
+
+	mat_lookat( viewrot, model, 0 );
 	fprintf(outfp, "viewrot ");
 	for( i=0; i < 16; i++ ) {
 		(void)fprintf(outfp, "%.9e ", viewrot[i] );
@@ -486,22 +470,9 @@ write_matrix(frame)
 			(void)fprintf(outfp, "\n");
 	}
 	(void)fprintf(outfp,";\n");
+#else
+	fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point) );
+#endif
 	fprintf(outfp, "start %d;\n", frame);
 	fprintf(outfp, "end;\n\n" );
-#endif
 }
-
-#if defined(SYSV)
-#if !defined(bcopy)
-bcopy(from,to,count)
-{
-	memcpy( to, from, count );
-}
-#endif
-#if !defined(bzero)
-bzero(str,n)
-{
-	memset( str, '\0', n );
-}
-#endif
-#endif
