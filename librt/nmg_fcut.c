@@ -518,6 +518,7 @@ struct nmg_loop_stuff {
 #define WEDGE_LEFT	-1
 #define WEDGE_CROSS	0
 #define WEDGE_RIGHT	1
+#define WEDGECLASS2STR(_cl)	nmg_wedgeclass_string[(_cl)+1]
 static CONST char *nmg_wedgeclass_string[] = {
 	"LEFT",
 	"CROSS",
@@ -732,136 +733,178 @@ candidate);
  *
  *  Support routine for nmg_face_coincident_vu_sort(), via qsort().
  *
+ *  It is important to note that an edge on the LEFT side of the ray
+ *  will have a "lo" angle which is numerically LARGER than the "hi" angle.
+ *  However, all are measured in the usual units:
+ *  0 = ON_REV, 90 = RIGHT, 180 = ON_FORW, 270 = LEFT.
+ *
  *  Returns -
  *	-1	when A < B
  *	 0	when A == B
  *	+1	when A > B
  */
+#define	A_WINS		{ret = -1; goto out;}
+#define AB_EQUAL	{ret = 0; goto out;}
+#define B_WINS		{ret = 1; goto out;}
 static int
-nmg_face_vu_compare( a, b )
-CONST genptr_t	a;
-CONST genptr_t	b;
+nmg_face_vu_compare( aa, bb )
+CONST genptr_t	aa;
+CONST genptr_t	bb;
 {
-	register CONST struct nmg_vu_stuff *va = (CONST struct nmg_vu_stuff *)a;
-	register CONST struct nmg_vu_stuff *vb = (CONST struct nmg_vu_stuff *)b;
+	register CONST struct nmg_vu_stuff *a = (CONST struct nmg_vu_stuff *)aa;
+	register CONST struct nmg_vu_stuff *b = (CONST struct nmg_vu_stuff *)bb;
 	register double	diff;
+	int	lo_equal = 0;
+	int	hi_equal = 0;
+	register int	ret = 0;
 
-	if( va->loop_index == vb->loop_index )  {
+#if 0
+	if( a->loop_index == b->loop_index )  {
 		/* Within a loop, sort by vu sequence number */
-		if( va->seq < vb->seq )  return -1;
-		if( va->seq == vb->seq )  return 0;
-		return 1;
+		if( a->seq < b->seq )  A_WINS;
+		if( a->seq == b->seq )  AB_EQUAL;
+		B_WINS;
 	}
+#endif
 #if 0
 	/* Between two loops each with a single vertex, use min angle */
 	/* This works, but is the "very old way".  Should use dot products. */
-	if( va->lsp->n_vu_in_loop <= 1 && vb->lsp->n_vu_in_loop <= 1 )  {
-		diff = va->in_vu_angle - vb->in_vu_angle;
-		if( diff < 0 )  return -1;
+	if( a->lsp->n_vu_in_loop <= 1 && b->lsp->n_vu_in_loop <= 1 )  {
+		diff = a->in_vu_angle - b->in_vu_angle;
+		if( diff < 0 )  A_WINS;
 		if( diff == 0 )  {
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
-				va->in_vu_angle);
-			return 0;
+				a->in_vu_angle);
+			AB_EQUAL;
 		}
-		return 1;
+		B_WINS;
 	}
 #endif
 
-#if 1
+#if 0
 	/* Between loops, sort by minimum dot product of the loops */
 /* XXX This is wrong.  Test13.r shows how */
 	/* The intermediate old way */
-	diff = va->lsp->min_dot - vb->lsp->min_dot;
+	diff = a->lsp->min_dot - b->lsp->min_dot;
 	if( NEAR_ZERO( diff, RT_DOT_TOL) )  {
 		/*
 		 *  The dot product is the same, so loop edges are parallel.
 		 *  Take minimum CCW angle first.
 		 */
-		diff = va->in_vu_angle - vb->in_vu_angle;
-		if( diff < 0 )  return -1;	/* A ang < B ang */
+		diff = a->in_vu_angle - b->in_vu_angle;
+		if( diff < 0 )  A_WINS;	/* A ang < B ang */
 		if( diff == 0 )  {
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops have same min_dot %g, in_vu_angle%g?\n",
-				va->lsp->min_dot, va->in_vu_angle);
-			return 0;
+				a->lsp->min_dot, a->in_vu_angle);
+			AB_EQUAL;
 		}
-		return 1;			/* A ang > B ang */
+		B_WINS;			/* A ang > B ang */
 	}
-	if( diff < 0 )  return -1;		/* A dot < B dot */
-	return 1;				/* A dot > B dot */
+	if( diff < 0 )  A_WINS;		/* A dot < B dot */
+	B_WINS;				/* A dot > B dot */
 #else
+	lo_equal = NEAR_ZERO( a->lo_ang - b->lo_ang, 0.001 );
+	hi_equal = NEAR_ZERO( a->hi_ang - b->hi_ang, 0.001 );
 	/* If both have the same assessment & angles match, => tie */
-	if( va->wedge_class == vb->wedge_class &&
-	    NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) &&
-	    NEAR_ZERO( va->hi_ang - vb->hi_ang, 0.001 ) ) {
+	if( a->wedge_class == b->wedge_class && lo_equal && hi_equal ) {
 	    	/* XXX tie break */
 tie_break:
+		if( a->loop_index == b->loop_index )  {
+			/* Within a loop, sort by vu sequence number */
+			if( a->seq < b->seq )  A_WINS;
+			if( a->seq == b->seq )  AB_EQUAL;
+			B_WINS;
+		}
 	    	/* XXX what about loop orientation? */
 	    	rt_log("XXX nmg_face_vu_compare(): tie break\n");
-		diff = va->in_vu_angle - vb->in_vu_angle;
-		if( diff < 0 )  return -1;
+		diff = a->in_vu_angle - b->in_vu_angle;
+		if( diff < 0 )  A_WINS;
 		if( diff == 0 )  {
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
-				va->in_vu_angle);
-			return 0;
+				a->in_vu_angle);
+			AB_EQUAL;
 		}
-		return 1;
+		B_WINS;
 	}
-/* XXX draw all 6 cases, and re-check this */
-/* XXX should NOT have two NEAR_ZERO checks for any case. */
-	switch( va->wedge_class )  {
+	switch( a->wedge_class )  {
 	case WEDGE_LEFT:
-		switch( vb->wedge_class )  {
+		switch( b->wedge_class )  {
 		case WEDGE_LEFT:
-			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
-			if( va->lo_ang > vb->lo_ang )  return -1; /* A */
-			return 1;	/* B */
+			if( lo_equal )  {
+				/* hi_equal case handled above */
+				if( a->hi_ang < b->hi_ang ) A_WINS;
+				B_WINS;
+			}
+			if( a->lo_ang > b->lo_ang )  A_WINS;
+			B_WINS;
 		case WEDGE_CROSS:
-			if( NEAR_ZERO( va->lo_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
-			if( NEAR_ZERO( va->hi_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
-			if( va->hi_ang > vb->hi_ang )  return -1; /* A */
-			return 1;	/* B */
+			/* See if A is behind B */
+			if( a->lo_ang <= b->hi_ang ) B_WINS;
+			/* Choose smaller inbound angle */
+			diff = 360 - a->lo_ang;/* CW version of left angle */
+			if( b->lo_ang <= diff )  B_WINS;
+			A_WINS;
 		case WEDGE_RIGHT:
-			diff = 360 - va->lo_ang;/* CW version of left angle */
-			if( diff < vb->hi_ang )  return -1; /* A */
-			return 1;	/* B */
+			diff = 360 - a->lo_ang;/* CW version of left angle */
+			if( b->lo_ang <= diff )  B_WINS;
+			A_WINS;
 		}
 	case WEDGE_CROSS:
-		switch( vb->wedge_class )  {
+		switch( b->wedge_class )  {
 		case WEDGE_LEFT:
-			if( NEAR_ZERO( va->hi_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
-			if( NEAR_ZERO( va->hi_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
-			if( va->hi_ang > vb->hi_ang )  return -1; /* A */
-			return 1;	/* B */
+			if( a->hi_ang >= b->lo_ang ) A_WINS;
+			/* Choose smaller inbound angle */
+			diff = 360 - b->lo_ang;/* CW version of left angle */
+			if( diff <= a->lo_ang )  B_WINS;
+			A_WINS;
 		case WEDGE_CROSS:
-			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
-			return 1;	/* B */
+			if( lo_equal )  {
+				if( a->hi_ang > b->hi_ang )  A_WINS;
+				B_WINS;
+			}
+			if( a->lo_ang < b->lo_ang )  A_WINS;
+			B_WINS;
 		case WEDGE_RIGHT:
-			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
-			if( NEAR_ZERO( va->lo_ang - vb->hi_ang, 0.001 ) )  goto tie_break;
-			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
-			return 1;	/* B */
+			if( a->lo_ang < b->hi_ang )  A_WINS;
+			/* Choose smaller inbound angle */
+			diff = 360 - a->hi_ang;/* CW version of left angle */
+			if( diff < b->lo_ang )  A_WINS;
+			B_WINS;
 		}
 	case WEDGE_RIGHT:
-		switch( vb->wedge_class )  {
+		switch( b->wedge_class )  {
 		case WEDGE_LEFT:
-			diff = 360 - vb->lo_ang;/* CW version of left angle */
-			if( va->lo_ang < diff )  return -1; /* A */
-			return 1;	/* B */
+			diff = 360 - b->lo_ang;/* CW version of left angle */
+			if( a->lo_ang <= diff )  A_WINS;
+			B_WINS;
 		case WEDGE_CROSS:
-			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
-			if( NEAR_ZERO( va->hi_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
-			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
-			return 1;	/* B */
+			if( b->lo_ang < a->hi_ang )  B_WINS;
+			/* Choose smaller inbound angle */
+			diff = 360 - b->hi_ang;/* CW version of left angle */
+			if( diff < a->lo_ang )  B_WINS;
+			A_WINS;
 		case WEDGE_RIGHT:
-			if( NEAR_ZERO( va->lo_ang - vb->lo_ang, 0.001 ) )  goto tie_break;
-			if( va->lo_ang < vb->lo_ang )  return -1; /* A */
-			return 1;	/* B */
+			if( lo_equal )  {
+				if( a->hi_ang < b->hi_ang )  B_WINS;
+				A_WINS;
+			}
+			if( a->lo_ang < b->lo_ang )  A_WINS;
+			B_WINS;
 		}
 	}
 #endif
+out:
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		rt_log("nmg_face_vu_comapre(x%x, x%x) %s %s, %s\n",
+			a, b,
+			WEDGECLASS2STR(a->wedge_class),
+			WEDGECLASS2STR(b->wedge_class),
+			ret==(-1) ? "A<B" : (ret==0 ? "A==B" : "A>B") );
+	}
+	return ret;
 }
 
 /*
@@ -1023,7 +1066,7 @@ int			end;		/* last index + 1 */
 		vs[nvu].out_vu_angle = nmg_vu_angle_measure( rs->vu[i],
 			rs->ang_x_dir, rs->ang_y_dir, ass, 0 ) * rt_radtodeg;
 		vs[nvu].wedge_class = nmg_wedge_class( vs[nvu].in_vu_angle, vs[nvu].out_vu_angle );
-		if(rt_g.NMG_debug&DEBUG_VU_SORT) rt_log("nmg_wedge_class = %d %s\n", vs[nvu].wedge_class, nmg_wedgeclass_string[vs[nvu].wedge_class+1]);
+		if(rt_g.NMG_debug&DEBUG_VU_SORT) rt_log("nmg_wedge_class = %d %s\n", vs[nvu].wedge_class, WEDGECLASS2STR(vs[nvu].wedge_class));
 		/* Sort the angles */
 		if( (vs[nvu].wedge_class == WEDGE_LEFT  && vs[nvu].in_vu_angle > vs[nvu].out_vu_angle) ||
 		    (vs[nvu].wedge_class == WEDGE_RIGHT && vs[nvu].in_vu_angle < vs[nvu].out_vu_angle) )  {
@@ -1119,7 +1162,7 @@ got_loop:
 				vs[i].vu, vs[i].loop_index,
 				vs[i].in_vu_angle, vs[i].out_vu_angle,
 				vs[i].lo_ang, vs[i].hi_ang,
-				nmg_wedgeclass_string[vs[i].wedge_class+1],
+				WEDGECLASS2STR(vs[i].wedge_class),
 				vs[i].seq );
 		}
 	}
