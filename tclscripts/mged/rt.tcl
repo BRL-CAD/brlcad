@@ -447,19 +447,13 @@ proc do_Raytrace { id } {
 	append rt_cmd " -J$rt_control($id,jitter)"
     }
 
-	puts "-a-";
-	puts $rt_cmd
-	puts "-a-";
-
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
 	if {$rt_control($id,lmodel) == 7} {
 		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmImportanceMapping),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmScaleIndirectEntry),$rt_control($id,pmCacheFileEntry) -A0"
 	}
     }
-	puts "-b-";
-	puts $rt_cmd
-	puts "-b-";
+	#puts $rt_cmd
 
     if {$rt_control($id,other) != ""} {
 	append rt_cmd " $rt_control($id,other)"
