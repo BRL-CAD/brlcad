@@ -236,11 +236,19 @@ char **argv;
 		if( rt_cpuget() > 0 )  {
 			rt_cpuset( 9999999 );
 		}
+
+		/*
+		 *  Unless controller process has specificially said
+		 *  that this is an interactive session, eg, for a demo,
+		 *  drop to the lowest sensible priority.
+		 */
+		if( !interactive )  {
 #ifdef CRAY
-		rt_pri_set(6);		/* highest "free" priority */
+			rt_pri_set(6);		/* highest "free" priority */
 #else
-		rt_pri_set(19);		/* lowest priority */
+			rt_pri_set(19);		/* lowest priority */
 #endif
+		}
 
 		/* Close off the world */
 		fclose(stdin);
