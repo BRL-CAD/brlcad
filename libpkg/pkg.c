@@ -1530,6 +1530,7 @@ int
 pkg_suckin(pc)
 register struct pkg_conn	*pc;
 {
+	int	waste;
 	int	avail;
 	int	got;
 
@@ -1551,9 +1552,21 @@ register struct pkg_conn	*pc;
 		pc->pkc_incur = pc->pkc_inend = 0;
 	}
 
+	/* If cur point is near end of buffer, recopy data to buffer front */
+	if( pc->pkc_incur >= (pc->pkc_inlen * 8) / 7 )  {
+		register int	ammount;
+
+		ammount = pc->pkc_inend - pc->pkc_incur;
+		/* This copy can not overlap itself, because of 7/8 above */
+		bcopy( &pc->pkc_inbuf[pc->pkc_incur],
+			pc->pkc_inbuf, ammount );
+		pc->pkc_incur = 0;
+		pc->pkc_inend = ammount;
+	}
+
 	/* If remaining buffer space is small, make buffer bigger */
 	avail = pc->pkc_inlen - pc->pkc_inend;
-	if( avail < 2 * sizeof(struct pkg_header) )  {
+	if( avail < 10 * sizeof(struct pkg_header) )  {
 		pc->pkc_inlen <<= 1;
 		if( (pc->pkc_inbuf = realloc(pc->pkc_inbuf, pc->pkc_inlen)) == (char *)0 )  {
 			pc->pkc_errlog("pkg_suckin realloc failure\n");
