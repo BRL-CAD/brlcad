@@ -8,6 +8,11 @@
  *  It is expected that this library will grow as experience is gained.
  *  Routines for writing every permissible solid do not yet exist.
  *
+ *  Note that routines which are passed point_t or vect_t or mat_t
+ *  parameters (which are call-by-address) must be VERY careful to
+ *  leave those parameters unmodified (eg, by scaling), so that the
+ *  calling routine is not surprised.
+ *
  *  Return codes of 0 are OK, -1 signal an error.
  *
  *  Authors -
@@ -33,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "wdb.h"
 
 #define PI	3.14159265358979323
 
@@ -53,6 +59,57 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define F6	(rec.s.s_values+(6-1)*3)
 #define F7	(rec.s.s_values+(7-1)*3)
 #define F8	(rec.s.s_values+(8-1)*3)
+/*
+ *			V E C _ O R T H O
+ *
+ *  Lifted from librt/mat.c
+ *
+ *  Given a vector, create another vector which is perpendicular to it,
+ *  and with unit length.  This algorithm taken from Gift's arvec.f;
+ *  a faster algorithm may be possible.
+ */
+static void
+vec_ortho( out, in )
+register fastf_t *out, *in;
+{
+	register int j, k;
+	FAST fastf_t	f;
+	register int i;
+
+	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
+	    NEAR_ZERO(in[Z], 0.0001) )  {
+		VSETALL( out, 0 );
+		VPRINT("vec_ortho: zero-length input", in);
+		return;
+	}
+
+	/* Find component closest to zero */
+	f = fabs(in[X]);
+	i = X;
+	j = Y;
+	k = Z;
+	if( fabs(in[Y]) < f )  {
+		f = fabs(in[Y]);
+		i = Y;
+		j = Z;
+		k = X;
+	}
+	if( fabs(in[Z]) < f )  {
+		i = Z;
+		j = X;
+		k = Y;
+	}
+	f = hypot( in[j], in[k] );
+	if( NEAR_ZERO( f, SMALL ) ) {
+		VPRINT("vec_ortho: zero hypot on", in);
+		VSETALL( out, 0 );
+		return;
+	}
+	f = 1.0/f;
+	out[i] = 0.0;
+	out[j] = -in[k]*f;
+	out[k] =  in[j]*f;
+}
 
 /*
  *			M K _ I D
@@ -64,7 +121,7 @@ mk_id( fp, title )
 FILE	*fp;
 char	*title;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.i.i_id = ID_IDENT;
@@ -89,14 +146,14 @@ char	*name;
 vect_t	norm;
 double	d;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = HALFSPACE;
 	NAMEMOVE( name, rec.s.s_name );
 	VMOVE( rec.s.s_values, norm );
-	rec.s.s_values[3] = d;
+	rec.s.s_values[3] = d * mk_conv2mm;
 	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);
 	return(0);
@@ -172,15 +229,15 @@ char	*name;
 point_t	pts[];
 {
 	register int i;
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENARB8;
 	NAMEMOVE( name, rec.s.s_name );
-	VMOVE( &rec.s.s_values[3*0], pts[0] );
+	VSCALE( &rec.s.s_values[3*0], pts[0], mk_conv2mm );
 	for( i=1; i<8; i++ )  {
-		VSUB2( &rec.s.s_values[3*i], pts[i], pts[0] );
+		VSUB2SCALE( &rec.s.s_values[3*i], pts[i], pts[0], mk_conv2mm );
 	}
 	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
 		return(-1);		/* fail */
@@ -200,7 +257,8 @@ point_t	center;
 fastf_t	radius;
 {
 	register int i;
-	static union record rec;
+	union record rec;
+	fastf_t		nrad = radius * mk_conv2mm;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
@@ -208,11 +266,11 @@ fastf_t	radius;
 	rec.s.s_cgtype = SPH;
 	NAMEMOVE(name,rec.s.s_name);
 
-	VMOVE( &rec.s.s_values[0], center );
-	VSET( &rec.s.s_values[3], radius, 0, 0 );
-	VSET( &rec.s.s_values[6], 0, radius, 0 );
-	VSET( &rec.s.s_values[9], 0, 0, radius );
-	
+	VSCALE( &rec.s.s_values[0], center, mk_conv2mm );
+	VSET( &rec.s.s_values[3], nrad, 0, 0 );
+	VSET( &rec.s.s_values[6], 0, nrad, 0 );
+	VSET( &rec.s.s_values[9], 0, 0, nrad );
+
 	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
 		return(-1);
 	return(0);
@@ -233,18 +291,18 @@ point_t	center;
 vect_t	a, b, c;
 {
 	register int i;
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENELL;
 	NAMEMOVE(name,rec.s.s_name);
 
-	VMOVE( &rec.s.s_values[0], center );
-	VMOVE( &rec.s.s_values[3], a );
-	VMOVE( &rec.s.s_values[6], b );
-	VMOVE( &rec.s.s_values[9], c );
-	
+	VSCALE( &rec.s.s_values[0], center, mk_conv2mm );
+	VSCALE( &rec.s.s_values[3], a, mk_conv2mm );
+	VSCALE( &rec.s.s_values[6], b, mk_conv2mm );
+	VSCALE( &rec.s.s_values[9], c, mk_conv2mm );
+
 	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
 		return(-1);
 	return(0);
@@ -266,7 +324,7 @@ vect_t	norm;
 double	r1, r2;
 {
 	register int i;
-	static union record rec;
+	union record rec;
 	vect_t	work;
 	double	r3, r4;
 	double	m1, m2, m3, m4, m5, m6;
@@ -282,11 +340,13 @@ double	r1, r2;
 			name, r1, r2);
 		return(-1);
 	}
+	r1 *= mk_conv2mm;
+	r2 *= mk_conv2mm;
 	r3=r1-r2;	/* Radius to inner circular edge */
 	r4=r1+r2;	/* Radius to outer circular edge */
 
-	VMOVE( F1, center );
-	VMOVE( F2, norm );
+	VSCALE( F1, center, mk_conv2mm );
+	VSCALE( F2, norm, mk_conv2mm );
 
 	/*
 	 * To allow for V being (0,0,0), for VCROSS purposes only,
@@ -362,7 +422,7 @@ point_t	base;
 vect_t	height;
 fastf_t	radius;
 {
-	static union record rec;
+	union record rec;
 	fastf_t m1, m2;
 	vect_t	tvec;
 
@@ -372,9 +432,11 @@ fastf_t	radius;
 	rec.s.s_cgtype = RCC;
 	NAMEMOVE(name, rec.s.s_name);
 
-	VMOVE( F1, base );
-	VMOVE( F2, height  );
-	VMOVE( tvec, base );
+	radius *= mk_conv2mm;
+	VSCALE( F1, base, mk_conv2mm );
+	VSCALE( F2, height, mk_conv2mm  );
+
+	VSCALE( tvec, base, mk_conv2mm );
 	tvec[0] += PI;
 	tvec[1] += PI;
 	tvec[2] += PI;
@@ -422,7 +484,7 @@ vect_t	height;
 vect_t	a, b;
 vect_t	c, d;
 {
-	static union record rec;
+	union record rec;
 	fastf_t m1, m2;
 
 	bzero( (char *)&rec, sizeof(rec) );
@@ -432,12 +494,12 @@ vect_t	c, d;
 	NAMEMOVE(name, rec.s.s_name);
 
 	/* Really, converting from fastf_t to dbfloat_t here */
-	VMOVE( F1, base );
-	VMOVE( F2, height );
-	VMOVE( F3, a );
-	VMOVE( F4, b );
-	VMOVE( F5, c );
-	VMOVE( F6, d );
+	VSCALE( F1, base, mk_conv2mm );
+	VSCALE( F2, height, mk_conv2mm );
+	VSCALE( F3, a, mk_conv2mm );
+	VSCALE( F4, b, mk_conv2mm );
+	VSCALE( F5, c, mk_conv2mm );
+	VSCALE( F6, d, mk_conv2mm );
 
 	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
 		return(-1);
@@ -446,22 +508,22 @@ vect_t	c, d;
 
 /*		M K _ T R C
  *
- *  mk_trc( name, base, height, radius)
+ *  mk_trc( name, base, height, radius1, radius2 )
  *  Make a truncated right cylinder. 
  */
 int
-mk_trc( fp, name, base, top, radbase,radtop )
+mk_trc( fp, name, ibase, iheight, radbase,radtop )
 FILE	*fp;
 char	*name;
-point_t	base;
-point_t	top;
+point_t	ibase;
+vect_t	iheight;
 fastf_t	radbase;
 fastf_t	radtop;
 {
+	point_t	base;
 	vect_t	height;
-	static union record rec;
-	static float pi = 3.14159265358979323264;
-	fastf_t m1, m2;
+	union record rec;
+	vect_t	cross1, cross2;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.s.s_id = ID_SOLID;
@@ -469,59 +531,24 @@ fastf_t	radtop;
 	rec.s.s_cgtype = TRC;
 	NAMEMOVE(name, rec.s.s_name);
 
-	VSUB2(height,top,base);
+	/* Units conversion */
+	radbase *= mk_conv2mm;
+	radtop *= mk_conv2mm;
+	VSCALE( base, ibase, mk_conv2mm );
+	VSCALE( height, iheight, mk_conv2mm );
 
 	VMOVE( F1, base );
-	VMOVE( F2, height  );
-	base[0] += pi;
-	base[1] += pi;
-	base[2] += pi;
-	VCROSS( F3, base, F2 );
-	m1 = MAGNITUDE( F3 );
-	if( m1 == 0.0 )  {
-		base[1] = 0.0;		/* Vector is colinear, so */
-		base[2] = 0.0;		/* make it different */
-		VCROSS( F3, base, F2 );
-		m1 = MAGNITUDE( F3 );
-		if( m1 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-	}
-	VSCALE( F3, F3, radbase/m1 );
-	VCROSS( F4, F2, F3 );
-	m2 = MAGNITUDE( F4 );
-	if( m2 == 0.0 )  {
-		(void)printf("ERROR, magnitude is zero!\n");
-		return(-1);	/* failure */
-	}
+	VMOVE( F2, height );
 
-	VSCALE( F4, F4, radbase/m2 );
+	vec_ortho( cross1, height );
+	VCROSS( cross2, cross1, height );
+	VUNITIZE( cross2 );
 
-	VMOVE(F5,F3);
-	VMOVE(F6,F4);
+	VSCALE( F3, cross1, radbase );
+	VSCALE( F4, cross2, radbase );
 
-	m1 = MAGNITUDE( F5 );
-	if( m1 == 0.0 )  {
-		base[1] = 0.0;		/* Vector is colinear, so */
-		base[2] = 0.0;		/* make it different */
-		VCROSS( F5, F2, top );
-		m1 = MAGNITUDE( F5 );
-		if( m1 == 0.0 )  {
-			(void)printf("ERROR, magnitude is zero!\n");
-			return(-1);	/* failure */
-		}
-	}
-
-	VSCALE( F5, F5, radtop/m1 );
-
-	m2 = MAGNITUDE( F6 );
-	if( m2 == 0.0 )  {
-		(void)printf("ERROR, magnitude is zero!\n");
-		return(-1);	/* failure */
-	}
-
-	VSCALE( F6, F6, radtop/m2 );
+	VSCALE( F5, cross1, radtop );
+	VSCALE( F6, cross2, radtop );
 
 	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
 		return(-1);
@@ -540,7 +567,7 @@ mk_polysolid( fp, name )
 FILE	*fp;
 char	*name;
 {
-	static union record rec;
+	union record rec;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.p.p_id = ID_P_HEAD;
@@ -562,7 +589,7 @@ int	npts;
 fastf_t	verts[][3];
 fastf_t	norms[][3];
 {
-	static union record rec;
+	union record rec;
 	register int i,j;
 
 	if( npts < 3 || npts > 5 )  {
@@ -575,8 +602,8 @@ fastf_t	norms[][3];
 	rec.q.q_count = npts;
 	for( i=0; i<npts; i++ )  {
 		for( j=0; j<3; j++ )  {
-			rec.q.q_verts[i][j] = verts[i][j];
-			rec.q.q_norms[i][j] = norms[i][j];
+			rec.q.q_verts[i][j] = verts[i][j] * mk_conv2mm;
+			rec.q.q_norms[i][j] = norms[i][j] * mk_conv2mm;
 		}
 	}
 	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1)
