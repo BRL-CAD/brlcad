@@ -197,6 +197,24 @@ rt_nmg_class()
 }
 
 /*
+ *			N M G _ M _ T O _ V L I S T
+ * XXX move to nmg_plot.c
+ */
+void
+nmg_m_to_vlist( vhead, m, poly_markers )
+struct rt_list	*vhead;
+struct model	*m;
+int		poly_markers;
+{
+	register struct region	*r;
+
+	NMG_CK_MODEL( m );
+	for( RT_LIST_FOR( r, region, &m->r_hd ) )  {
+		nmg_r_to_vlist( vhead, r, poly_markers );
+	}
+}
+
+/*
  *			R T _ N M G _ P L O T
  */
 int
@@ -213,7 +231,9 @@ double			norm_tol;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	return(-1);
+	nmg_m_to_vlist( vhead, m, 0 );
+
+	return(0);
 }
 
 /*
@@ -239,6 +259,80 @@ double			norm_tol;
 	NMG_CK_MODEL(m);
 
 	return(-1);
+}
+
+/*
+ *  Transform a bounding box (RPP) by the given 4x4 matrix.
+ *  There are 8 corners to the bounding RPP.
+ *  Each one needs to be transformed and min/max'ed.
+ *  This is not minimal, but does fully contain any internal object,
+ *  using an axis-aligned RPP.
+ */
+void
+rt_rotate_bbox( omin, omax, mat, imin, imax )
+point_t		omin;
+point_t		omax;
+mat_t		mat;
+point_t		imin;
+point_t		imax;
+{
+	point_t		rmin, rmax;
+	point_t		pt;
+
+	MAT4X3PNT( rmin, mat, imin );
+	MAT4X3PNT( rmax, mat, imax );
+
+	VSET( omin, rmin[X], rmin[Y], rmin[Z] );
+	VMOVE( omax, omin );
+
+	VSET( pt, rmax[X], rmin[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmax[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmax[Y], rmin[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmin[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmin[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmin[X], rmax[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+
+	VSET( pt, rmax[X], rmax[Y], rmax[Z] );
+	VMINMAX( omin, omax, pt );
+}
+
+/*
+ *  Transform a plane equation by the given 4x4 matrix.
+ */
+void
+rt_rotate_plane( oplane, mat, iplane )
+plane_t		oplane;
+mat_t		mat;
+plane_t		iplane;
+{
+	point_t		orig_pt;
+	point_t		new_pt;
+
+	/* First, pick a point that lies on the original halfspace */
+	VSCALE( orig_pt, iplane, iplane[3] );
+
+	/* Transform the surface normal */
+	MAT4X3VEC( oplane, mat, iplane );
+
+	/* Transform the point from original to new halfspace */
+	MAT4X3PNT( new_pt, mat, orig_pt );
+
+	/*
+	 *  The transformed normal is all that is required.
+	 *  The new distance is found from the transformed point on the plane.
+	 */
+	oplane[3] = VDOT( new_pt, oplane );
 }
 
 /* Format of db.h nmg.N_nstructs info, sucked straight from nmg_struct_counts */
@@ -675,12 +769,14 @@ double		local2mm;
 		{
 			struct nmgregion_a	*r = (struct nmgregion_a *)ip;
 			struct disk_nmgregion_a	*d;
+			point_t			min, max;
 			d = &((struct disk_nmgregion_a *)op)[oindex];
 			NMG_CK_REGION_A(r);
 			rt_plong( d->magic, DISK_REGION_A_MAGIC );
-/* XXX local2mm */
-			htond( d->min_pt, r->min_pt, 3 );
-			htond( d->max_pt, r->max_pt, 3 );
+			VSCALE( min, r->min_pt, local2mm );
+			VSCALE( max, r->max_pt, local2mm );
+			htond( d->min_pt, min, 3 );
+			htond( d->max_pt, max, 3 );
 		}
 		return;
 	case 4:
@@ -705,12 +801,14 @@ double		local2mm;
 		{
 			struct shell_a	*sa = (struct shell_a *)ip;
 			struct disk_shell_a	*d;
+			point_t			min, max;
 			d = &((struct disk_shell_a *)op)[oindex];
 			NMG_CK_SHELL_A(sa);
 			rt_plong( d->magic, DISK_SHELL_A_MAGIC );
-/* XXX local2mm */
-			htond( d->min_pt, sa->min_pt, 3 );
-			htond( d->max_pt, sa->max_pt, 3 );
+			VSCALE( min, sa->min_pt, local2mm );
+			VSCALE( max, sa->max_pt, local2mm );
+			htond( d->min_pt, min, 3 );
+			htond( d->max_pt, max, 3 );
 		}
 		return;
 	case 6:
@@ -757,13 +855,18 @@ double		local2mm;
 		{
 			struct face_g	*fg = (struct face_g *)ip;
 			struct disk_face_g	*d;
+			point_t			min, max;
+			plane_t			plane;
 			d = &((struct disk_face_g *)op)[oindex];
 			NMG_CK_FACE_G(fg);
 			rt_plong( d->magic, DISK_FACE_G_MAGIC );
-/* XXX local2mm */
-			htond( d->N, fg->N, 4 );
-			htond( d->min_pt, fg->min_pt, 3 );
-			htond( d->max_pt, fg->max_pt, 3 );
+			VMOVE( plane, fg->N );
+			plane[3] = fg->N[3] * local2mm;
+			htond( d->N, plane, 4 );
+			VSCALE( min, fg->min_pt, local2mm );
+			VSCALE( max, fg->max_pt, local2mm );
+			htond( d->min_pt, min, 3 );
+			htond( d->max_pt, max, 3 );
 		}
 		return;
 	case 10:
@@ -810,12 +913,14 @@ double		local2mm;
 		{
 			struct loop_g	*lg = (struct loop_g *)ip;
 			struct disk_loop_g	*d;
+			point_t			min, max;
 			d = &((struct disk_loop_g *)op)[oindex];
 			NMG_CK_LOOP_G(lg);
 			rt_plong( d->magic, DISK_LOOP_G_MAGIC );
-/* XXX local2mm */
-			htond( d->min_pt, lg->min_pt, 3 );
-			htond( d->max_pt, lg->max_pt, 3 );
+			VSCALE( min, lg->min_pt, local2mm );
+			VSCALE( max, lg->max_pt, local2mm );
+			htond( d->min_pt, min, 3 );
+			htond( d->max_pt, max, 3 );
 		}
 		return;
 	case 14:
@@ -887,11 +992,13 @@ double		local2mm;
 		{
 			struct vertexuse_a	*vua = (struct vertexuse_a *)ip;
 			struct disk_vertexuse_a	*d;
+			plane_t			plane;
 			d = &((struct disk_vertexuse_a *)op)[oindex];
 			NMG_CK_VERTEXUSE_A(vua);
 			rt_plong( d->magic, DISK_VERTEXUSE_A_MAGIC );
-/* XXX local2mm */
-			htond( d->N, vua->N, 4 );
+			VMOVE( plane, vua->N );
+			plane[3] = vua->N[3] * local2mm;
+			htond( d->N, plane, 4 );
 		}
 		return;
 	case 20:
@@ -911,15 +1018,343 @@ double		local2mm;
 		{
 			struct vertex_g	*vg = (struct vertex_g *)ip;
 			struct disk_vertex_g	*d;
+			point_t			pt;
 			d = &((struct disk_vertex_g *)op)[oindex];
 			NMG_CK_VERTEX_G(vg);
 			rt_plong( d->magic, DISK_VERTEX_G_MAGIC );
-/* XXX local2mm */
-			htond( d->coord, vg->coord, 3 );
+			VSCALE( pt, vg->coord, local2mm );
+			htond( d->coord, pt, 3 );
 		}
 		return;
 	}
 	rt_log("rt_nmg_edisk kind=%d unknown\n", ecnt[index].kind);
+}
+#undef INDEX
+#undef INDEXL
+
+#define RT_CK_DISKMAGIC(_cp,_magic)	\
+	if( rt_glong(_cp) != _magic )  { \
+		rt_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x\n", rt_glong(_cp), _magic); \
+		rt_bomb("bad magic\n"); \
+	}
+
+
+/*
+ *  For symmetry with export, use same macro names and arg ordering,
+ *  but here take from "o" (outboard) variable and put in "i" (internal).
+ */
+#define INDEX(o,i,ty,elem)	(i)->elem = (struct ty *)ptrs[rt_glong((o)->elem)]
+#define INDEXL(oo,ii,elem)	{ \
+	(ii)->elem.forw = (struct rt_list *)ptrs[rt_glong((oo)->elem.forw)]; \
+	(ii)->elem.back = (struct rt_list *)ptrs[rt_glong((oo)->elem.back)]; }
+
+void
+rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat )
+genptr_t	op;		/* ptr to in-memory structure */
+genptr_t	ip;		/* base of disk array */
+struct nmg_exp_counts	*ecnt;
+int		index;
+long		**ptrs;
+mat_t		mat;
+{
+	int	iindex;		/* index in ip */
+
+	iindex = ecnt[index].per_struct_index;
+	switch(ecnt[index].kind)  {
+	case 0:
+		/* model */
+		{
+			struct model	*m = (struct model *)op;
+			struct disk_model	*d;
+			d = &((struct disk_model *)ip)[iindex];
+			NMG_CK_MODEL(m);
+			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_MAGIC );
+			INDEX( d, m, model_a, ma_p );
+			INDEXL( d, m, r_hd );
+		}
+		return;
+	case 1:
+		/* model_a */
+		{
+			struct model_a	*ma = (struct model_a *)op;
+			struct disk_model_a	*d;
+			d = &((struct disk_model_a *)ip)[iindex];
+			NMG_CK_MODEL_A(ma);
+			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_A_MAGIC );
+		}
+		return;
+	case 2:
+		/* region */
+		{
+			struct nmgregion	*r = (struct nmgregion *)op;
+			struct disk_nmgregion	*d;
+			d = &((struct disk_nmgregion *)ip)[iindex];
+			NMG_CK_REGION(r);
+			RT_CK_DISKMAGIC( d->magic, DISK_REGION_MAGIC );
+			INDEXL( d, r, l );
+			INDEX( d, r, model, m_p );
+			INDEX( d, r, nmgregion_a, ra_p );
+			INDEXL( d, r, s_hd );
+		}
+		return;
+	case 3:
+		/* region_a */
+		{
+			struct nmgregion_a	*r = (struct nmgregion_a *)op;
+			struct disk_nmgregion_a	*d;
+			point_t			min, max;
+			d = &((struct disk_nmgregion_a *)ip)[iindex];
+			NMG_CK_REGION_A(r);
+			RT_CK_DISKMAGIC( d->magic, DISK_REGION_A_MAGIC );
+			ntohd( min, d->min_pt, 3 );
+			ntohd( max, d->max_pt, 3 );
+			rt_rotate_bbox( r->min_pt, r->max_pt, mat, min, max );
+		}
+		return;
+	case 4:
+		/* shell */
+		{
+			struct shell	*s = (struct shell *)op;
+			struct disk_shell	*d;
+			d = &((struct disk_shell *)ip)[iindex];
+			NMG_CK_SHELL(s);
+			RT_CK_DISKMAGIC( d->magic, DISK_SHELL_MAGIC );
+			INDEXL( d, s, l );
+			INDEX( d, s, nmgregion, r_p );
+			INDEX( d, s, shell_a, sa_p );
+			INDEXL( d, s, fu_hd );
+			INDEXL( d, s, lu_hd );
+			INDEXL( d, s, eu_hd );
+			INDEX( d, s, vertexuse, vu_p );
+		}
+		return;
+	case 5:
+		/* shell_a */
+		{
+			struct shell_a	*sa = (struct shell_a *)op;
+			struct disk_shell_a	*d;
+			point_t			min, max;
+			d = &((struct disk_shell_a *)ip)[iindex];
+			NMG_CK_SHELL_A(sa);
+			RT_CK_DISKMAGIC( d->magic, DISK_SHELL_A_MAGIC );
+			ntohd( min, d->min_pt, 3 );
+			ntohd( max, d->max_pt, 3 );
+			rt_rotate_bbox( sa->min_pt, sa->max_pt, mat, min, max );
+		}
+		return;
+	case 6:
+		/* faceuse */
+		{
+			struct faceuse	*fu = (struct faceuse *)op;
+			struct disk_faceuse	*d;
+			d = &((struct disk_faceuse *)ip)[iindex];
+			NMG_CK_FACEUSE(fu);
+			RT_CK_DISKMAGIC( d->magic, DISK_FACEUSE_MAGIC );
+			INDEXL( d, fu, l );
+			INDEX( d, fu, shell, s_p );
+			INDEX( d, fu, faceuse, fumate_p );
+			fu->orientation = rt_glong( d->orientation );
+			INDEX( d, fu, face, f_p );
+			INDEX( d, fu, faceuse_a, fua_p );
+			INDEXL( d, fu, lu_hd );
+		}
+		return;
+	case 7:
+		/* faceuse_a */
+		{
+			struct faceuse_a	*fua = (struct faceuse_a *)op;
+			struct disk_faceuse_a	*d;
+			d = &((struct disk_faceuse_a *)ip)[iindex];
+			NMG_CK_FACEUSE_A(fua);
+			RT_CK_DISKMAGIC( d->magic, DISK_FACEUSE_A_MAGIC );
+		}
+		return;
+	case 8:
+		/* face */
+		{
+			struct face	*f = (struct face *)op;
+			struct disk_face	*d;
+			d = &((struct disk_face *)ip)[iindex];
+			NMG_CK_FACE(f);
+			RT_CK_DISKMAGIC( d->magic, DISK_FACE_MAGIC );
+			INDEX( d, f, faceuse, fu_p );
+			INDEX( d, f, face_g, fg_p );
+		}
+		return;
+	case 9:
+		/* face_g */
+		{
+			struct face_g	*fg = (struct face_g *)op;
+			struct disk_face_g	*d;
+			plane_t			plane;
+			point_t			min, max;
+			d = &((struct disk_face_g *)ip)[iindex];
+			NMG_CK_FACE_G(fg);
+			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_MAGIC );
+			htond( plane, d->N, 4 );
+			ntohd( min, d->min_pt, 3 );
+			ntohd( max, d->max_pt, 3 );
+			rt_rotate_plane( fg->N, mat, plane );
+			rt_rotate_bbox( fg->min_pt, fg->max_pt, mat, min, max );
+		}
+		return;
+	case 10:
+		/* loopuse */
+		{
+			struct loopuse	*lu = (struct loopuse *)op;
+			struct disk_loopuse	*d;
+			d = &((struct disk_loopuse *)ip)[iindex];
+			NMG_CK_LOOPUSE(lu);
+			RT_CK_DISKMAGIC( d->magic, DISK_LOOPUSE_MAGIC );
+			INDEXL( d, lu, l );
+			lu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
+			INDEX( d, lu, loopuse, lumate_p );
+			lu->orientation = rt_glong( d->orientation );
+			INDEX( d, lu, loop, l_p );
+			INDEX( d, lu, loopuse_a, lua_p );
+			INDEXL( d, lu, down_hd );
+		}
+		return;
+	case 11:
+		/* loopuse_a */
+		{
+			struct loopuse_a	*lua = (struct loopuse_a *)op;
+			struct disk_loopuse_a	*d;
+			d = &((struct disk_loopuse_a *)ip)[iindex];
+			NMG_CK_LOOPUSE_A(lua);
+			RT_CK_DISKMAGIC( d->magic, DISK_LOOPUSE_A_MAGIC );
+		}
+		return;
+	case 12:
+		/* loop */
+		{
+			struct loop	*loop = (struct loop *)op;
+			struct disk_loop	*d;
+			d = &((struct disk_loop *)ip)[iindex];
+			NMG_CK_LOOP(loop);
+			RT_CK_DISKMAGIC( d->magic, DISK_LOOP_MAGIC );
+			INDEX( d, loop, loopuse, lu_p );
+			INDEX( d, loop, loop_g, lg_p );
+		}
+		return;
+	case 13:
+		/* loop_g */
+		{
+			struct loop_g	*lg = (struct loop_g *)op;
+			struct disk_loop_g	*d;
+			point_t			min, max;
+			d = &((struct disk_loop_g *)ip)[iindex];
+			NMG_CK_LOOP_G(lg);
+			RT_CK_DISKMAGIC( d->magic, DISK_LOOP_G_MAGIC );
+			ntohd( min, d->min_pt, 3 );
+			ntohd( max, d->max_pt, 3 );
+			rt_rotate_bbox( lg->min_pt, lg->max_pt, mat, min, max );
+		}
+		return;
+	case 14:
+		/* edgeuse */
+		{
+			struct edgeuse	*eu = (struct edgeuse *)op;
+			struct disk_edgeuse	*d;
+			d = &((struct disk_edgeuse *)ip)[iindex];
+			NMG_CK_EDGEUSE(eu);
+			RT_CK_DISKMAGIC( d->magic, DISK_EDGEUSE_MAGIC );
+			INDEXL( d, eu, l );
+			eu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
+			INDEX( d, eu, edgeuse, eumate_p );
+			INDEX( d, eu, edgeuse, radial_p );
+			INDEX( d, eu, edge, e_p );
+			INDEX( d, eu, edgeuse_a, eua_p );
+			eu->orientation = rt_glong( d->orientation );
+			INDEX( d, eu, vertexuse, vu_p );
+		}
+		return;
+	case 15:
+		/* edgeuse_a */
+		{
+			struct edgeuse_a	*eua = (struct edgeuse_a *)op;
+			struct disk_edgeuse_a	*d;
+			d = &((struct disk_edgeuse_a *)ip)[iindex];
+			NMG_CK_EDGEUSE_A(eua);
+			RT_CK_DISKMAGIC( d->magic, DISK_EDGEUSE_A_MAGIC );
+		}
+		return;
+	case 16:
+		/* edge */
+		{
+			struct edge	*e = (struct edge *)op;
+			struct disk_edge	*d;
+			d = &((struct disk_edge *)ip)[iindex];
+			NMG_CK_EDGE(e);
+			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_MAGIC );
+			INDEX( d, e, edgeuse, eu_p );
+			INDEX( d, e, edge_g, eg_p );
+		}
+		return;
+	case 17:
+		/* edge_g */
+		{
+			struct edge_g	*eg = (struct edge_g *)op;
+			struct disk_edge_g	*d;
+			d = &((struct disk_edge_g *)ip)[iindex];
+			NMG_CK_EDGE_G(eg);
+			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_MAGIC );
+		}
+		return;
+	case 18:
+		/* vertexuse */
+		{
+			struct vertexuse	*vu = (struct vertexuse *)op;
+			struct disk_vertexuse	*d;
+			d = &((struct disk_vertexuse *)ip)[iindex];
+			NMG_CK_VERTEXUSE(vu);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_MAGIC );
+		/***	INDEXL( d, vu, l ); ***/	/* tough */
+			vu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
+			INDEX( d, vu, vertex, v_p );
+			INDEX( d, vu, vertexuse_a, vua_p );
+		}
+		return;
+	case 19:
+		/* vertexuse_a */
+		{
+			struct vertexuse_a	*vua = (struct vertexuse_a *)op;
+			struct disk_vertexuse_a	*d;
+			plane_t			plane;
+			d = &((struct disk_vertexuse_a *)ip)[iindex];
+			NMG_CK_VERTEXUSE_A(vua);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_MAGIC );
+			htond( plane, d->N, 4 );
+			rt_rotate_plane( vua->N, mat, plane );
+		}
+		return;
+	case 20:
+		/* vertex */
+		{
+			struct vertex	*v = (struct vertex *)op;
+			struct disk_vertex	*d;
+			d = &((struct disk_vertex *)ip)[iindex];
+			NMG_CK_VERTEX(v);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEX_MAGIC );
+			INDEXL( d, v, vu_hd );
+			INDEX( d, v, vertex_g, vg_p );
+		}
+		return;
+	case 21:
+		/* vertex_g */
+		{
+			struct vertex_g	*vg = (struct vertex_g *)op;
+			struct disk_vertex_g	*d;
+			point_t			pt;
+			d = &((struct disk_vertex_g *)ip)[iindex];
+			NMG_CK_VERTEX_G(vg);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEX_G_MAGIC );
+			ntohd( pt, d->coord, 3 );
+			MAT4X3PNT( vg->coord, mat, pt );
+		}
+		return;
+	}
+	rt_log("rt_nmg_idisk kind=%d unknown\n", ecnt[index].kind);
 }
 
 /*
@@ -1179,16 +1614,20 @@ rt_log("  magic=%4.4s\n", cp );
 		cp += indices[i] * rt_disk_sizes[i];
 	}
 
-return(-1);
-#if 0
+rt_log("starting to convert to internal form\n");
+	/* Import each structure, in turn */
+	cp = (char *)(rp+1);	/* start at first granule in */
+	for( i=1; i < maxindex; i++ )  {
+		rt_nmg_idisk( ptrs[i], cp, ecnt, i, ptrs, mat );
+		cp += rt_disk_sizes[ecnt[i].kind];
+	}
+rt_log("all structures imported\n");
+
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_NMG;
-	ip->idb_ptr = rt_malloc( sizeof(struct model), "model");
-	m = (struct model *)ip->idb_ptr;
-	m->magic = RT_NMG_INTERNAL_MAGIC;
+	ip->idb_ptr = (genptr_t)m;
 
 	return(0);			/* OK */
-#endif
 }
 
 /*
