@@ -326,7 +326,7 @@ Add_vert_and_norm( double x, double y, double z, double nx, double ny, double nz
 	union vert_tree *ptr, *prev=NULL, *new_leaf, *new_node;
 	fastf_t diff[6];
 	fastf_t vertex[6];
-	double d1_sq, d2_sq;
+	double d1_sq=0.0, d2_sq=0.0;
 
 	BN_CK_VERT_TREE( vert_root );
 
