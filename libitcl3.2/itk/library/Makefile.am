@@ -1,7 +1,5 @@
 # $Id$
 
-install:
-	mkdir -p ${prefix}/itk3.2
-	${INSTALL} -m 444 ${srcdir}/itk.tcl ${prefix}/itk3.2
+brlcadscriptdir = ${prefix}/itk3.2
+brlcadscript_SCRIPTS = Archetype.itk itk.tcl tclIndex Toplevel.itk Widget.itk
 
-extra_DIST = itk.tk
