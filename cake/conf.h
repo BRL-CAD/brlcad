@@ -64,8 +64,8 @@ typedef	long	Cast;
 #endif
 
 #if __MACHINETYPE__bsdi
-	/* BSDI from Rob Colstad */
-#	define	CPP		"/usr/ucb/cpp"
+	/* BSD/OS from BSDI */
+#	define	CPP		"/usr/bin/cpp"
 #	define	CPP_OPTIONS	"-D__CAKE__bsdi"
 #endif
 
