@@ -1,22 +1,20 @@
 #  routines implement the gui for the BRL-CAD shaders
 # shader_params is a global array containing all the values for this shader gui
+# make your shader param names unique
 # the 'id' is passed to these routines to use for uniqueness
 # the top-level interface is 'do_shader'
 
 # To implement a new shader gui:
-#	1. add the new shader to the 'switch' in 'do_shader_apply'
-#	2. add the new shader to the 'switch' in 'do_shader'
-#	3. add the new shader to the 'switch' in 'set_shader_params'
-#	4. add the new shader to the switch command in 'stack_add', 'stack_insert', and 'env_select', if this shader is
+#	1. add the new shader to the switch command in 'stack_add', 'stack_insert', and 'env_select', if this shader is
 #		appropriate for being in a stack or environment map
-#	5. add the new shader to the menus in 'do_stack' and 'do_envmap'
-#	6. add a menu item for the new shader in 'init_comb' (comb.tcl)
-#	7. add the new shader to the list of shader names in the 'is_good_shader' proc
-#	8. add the following routines:
+#	2. add the new shader to the menus in 'do_stack' and 'do_envmap' (again, if appropriate)
+#	3. add a menu item for the new shader in 'init_comb' (comb.tcl) (required)
+#	4. add the following routines: (all are required, replace 'newshader' with your shader name
 
 # proc do_newshader { shade_var id } - Creates the frame to hold the shader widgets and
-#	creates the labels, entries, buttons... Also registers 'help-in-context' data
-#	calls 'set_newshader_values' to set initial settings of widgets
+#	creates the labels, entries, buttons... Also registers 'help-on-context' data.
+#	all entry widgets should bind <KeyRelease> to "do_shader_apply".
+#	calls 'set_newshader_values' to set initial settings of widgets.
 #	returns the created frame name.
 
 # proc set_newshader_values { shader_str id }
@@ -28,10 +26,6 @@
 
 # proc set_newshader_defaults { id }
 #	This routine sets the default values for this shader
-
-
-
-
 
 proc vec_compare { v1 v2 n } {
 	for { set i 0 } { $i < $n } { incr i } {
@@ -64,7 +58,7 @@ proc do_camo {  shade_var id } {
 	set shader_params($id,c3) ""
 
 	label $shader_params($id,window).fr.lacun -text Lacunarity
-	entry $shader_params($id,window).fr.lacun_e -width 5 -textvariable shader_params($id,lacun)
+	entry $shader_params($id,window).fr.lacun_e -width 7 -textvariable shader_params($id,lacun)
 	bind $shader_params($id,window).fr.lacun_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.lacun "Lacunarity" {
 		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -90,7 +84,7 @@ proc do_camo {  shade_var id } {
 	}
 
 	label $shader_params($id,window).fr.h -text "H value"
-	entry $shader_params($id,window).fr.h_e -width 5 -textvariable shader_params($id,hval)
+	entry $shader_params($id,window).fr.h_e -width 7 -textvariable shader_params($id,hval)
 	bind $shader_params($id,window).fr.h_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.h "H Value" {
 		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -112,7 +106,7 @@ proc do_camo {  shade_var id } {
 	}
 
 	label $shader_params($id,window).fr.octaves -text "Octaves"
-	entry $shader_params($id,window).fr.octaves_e -width 5 -textvariable shader_params($id,octaves)
+	entry $shader_params($id,window).fr.octaves_e -width 7 -textvariable shader_params($id,octaves)
 	bind $shader_params($id,window).fr.octaves_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.octaves "Octaves" {
 		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -136,7 +130,7 @@ proc do_camo {  shade_var id } {
 	}
 
 	label $shader_params($id,window).fr.size -text "Noise Size"
-	entry $shader_params($id,window).fr.size_e -width 5 -textvariable shader_params($id,size)
+	entry $shader_params($id,window).fr.size_e -width 7 -textvariable shader_params($id,size)
 	bind $shader_params($id,window).fr.size_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.size "Noise Size" {
 		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -230,7 +224,7 @@ proc do_camo {  shade_var id } {
 	}
 
 	label $shader_params($id,window).fr.t1 -text "Threshold #1"
-	entry $shader_params($id,window).fr.t1_e -width 5 -textvariable  shader_params($id,t1)
+	entry $shader_params($id,window).fr.t1_e -width 7 -textvariable  shader_params($id,t1)
 	bind $shader_params($id,window).fr.t1_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.t1 "Noise Scale" {
 		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -254,7 +248,7 @@ proc do_camo {  shade_var id } {
 	}
 
 	label $shader_params($id,window).fr.t2 -text "Threshold #2"
-	entry $shader_params($id,window).fr.t2_e -width 5 -textvariable  shader_params($id,t2)
+	entry $shader_params($id,window).fr.t2_e -width 7 -textvariable  shader_params($id,t2)
 	bind $shader_params($id,window).fr.t2_e <KeyRelease> "do_shader_apply $shade_var $id"
 	hoc_register_data $shader_params($id,window).fr.t2 "Noise Scale" {
 		{summary "The 'camo' shader creates a pseudo-random tri-color camouflage pattern\n\
@@ -359,17 +353,17 @@ proc set_camo_values { shader_str id } {
 		trace vdelete shader_params($id,c3) [lindex $atrace 0] [lindex $atrace 1]
 	}
 
-	set shader_params($id,c1) ""
-	set shader_params($id,c2) ""
-	set shader_params($id,c3) ""
-	set shader_params($id,lacun) ""
-	set shader_params($id,hval) ""
-	set shader_params($id,octaves) ""
-	set shader_params($id,size) ""
-	set shader_params($id,scale) ""
-	set shader_params($id,t1) ""
-	set shader_params($id,t2) ""
-	set shader_params($id,delta) ""
+	set shader_params($id,c1) $shader_params($id,def_c1)
+	set shader_params($id,c2) $shader_params($id,def_c2)
+	set shader_params($id,c3) $shader_params($id,def_c3)
+	set shader_params($id,lacun) $shader_params($id,def_lacun)
+	set shader_params($id,hval) $shader_params($id,def_hval)
+	set shader_params($id,octaves) $shader_params($id,def_octaves) 
+	set shader_params($id,size) $shader_params($id,def_size)
+	set shader_params($id,scale) $shader_params($id,def_scale)
+	set shader_params($id,t1) $shader_params($id,def_t1)
+	set shader_params($id,t2) $shader_params($id,def_t2)
+	set shader_params($id,delta) $shader_params($id,def_delta)
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -794,8 +788,9 @@ proc do_checker { shade_var id } {
 proc set_checker_values { shader_str id } {
 	global shader_params
 
-	set shader_params($id,ckr_a) ""
-	set shader_params($id,ckr_b) ""
+	set shader_params($id,ckr_a) $shader_params($id,def_ckr_a)
+	set shader_params($id,ckr_b) $shader_params($id,def_ckr_b)
+	set shader_params($id,ckr_scale) $shader_params($id,def_ckr_scale)
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -874,6 +869,18 @@ proc set_checker_defaults { id } {
 }
 
 # PHONG routines
+
+proc do_plastic { shade_var id } {
+	return [do_phong $shade_var $id]
+}
+
+proc do_mirror { shade_var id } {
+	return [do_phong $shade_var $id]
+}
+
+proc do_glass { shade_var id } {
+	return [do_phong $shade_var $id]
+}
 
 proc do_phong { shade_var id } {
 	global shader_params
@@ -1098,15 +1105,13 @@ proc set_mirror_values { shader_str id } {
 proc set_phong_values { shader_str id } {
 	global shader_params
 
-#	make sure all the entry variables start empty
-
-	set shader_params($id,trans) ""
-	set shader_params($id,refl) ""
-	set shader_params($id,spec) ""
-	set shader_params($id,diff) ""
-	set shader_params($id,ri) ""
-	set shader_params($id,shine) ""
-	set shader_params($id,ext) ""
+	set shader_params($id,trans) $shader_params($id,def_trans)
+	set shader_params($id,refl) $shader_params($id,def_refl)
+	set shader_params($id,spec) $shader_params($id,def_spec)
+	set shader_params($id,diff) $shader_params($id,def_diff)
+	set shader_params($id,ri) $shader_params($id,def_ri)
+	set shader_params($id,shine) $shader_params($id,def_shine)
+	set shader_params($id,ext) $shader_params($id,def_ext)
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -1315,8 +1320,8 @@ proc set_texture_values { shader_str id } {
 	set shader_params($id,transp) ""
 	set shader_params($id,trans_valid) 0
 	set shader_params($id,file) ""
-	set shader_params($id,width) ""
-	set shader_params($id,height) ""
+	set shader_params($id,width) $shader_params($id,def_width)
+	set shader_params($id,height) $shader_params($id,def_height)
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -1404,6 +1409,14 @@ proc do_texture_apply { shade_var id } {
 	}
 
 	set shader [list $shader_params($id,shader_name) $params ]
+}
+
+proc do_bump { shade_var id } {
+	return [do_texture $shade_var $id]
+}
+
+proc do_bwtexture { shade_var id } {
+	return [do_texture $shade_var $id]
 }
 
 proc do_texture { shade_var id } {
@@ -2159,8 +2172,9 @@ proc do_cloud { shade_var id } {
 proc set_cloud_values { shader_str id } {
 	global shader_params
 
-	set shader_params($id,cl_thresh) ""
-	set shader_params($id,cl_range) ""
+	set shader_params($id,cl_thresh) $shader_params($id,def_cl_thresh)
+	set shader_params($id,cl_range) $shader_params($id,def_cl_range)
+
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
 	} else {
@@ -2313,6 +2327,14 @@ proc do_air { shade_var id } {
 	entry $shader_params($id,window).fr.density_e -width 5 -textvariable shader_params($id,density)
 	bind $shader_params($id,window).fr.density_e <KeyRelease> "do_shader_apply $shade_var $id"
 
+	label $shader_params($id,window).fr.delta -text "Delta"
+	entry $shader_params($id,window).fr.delta_e -width 5 -textvariable shader_params($id,delta)
+	bind $shader_params($id,window).fr.delta_e <KeyRelease> "do_shader_apply $shade_var $id"
+
+	label $shader_params($id,window).fr.scale -text "Scale"
+	entry $shader_params($id,window).fr.scale_e -width 5 -textvariable shader_params($id,air_scale)
+	bind $shader_params($id,window).fr.scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+
 	hoc_register_data $shader_params($id,window).fr.density "Density" {
 		{summary "The 'air' shader implements Beer's law to produce realistic\n\
 			fog or haze"}
@@ -2332,6 +2354,10 @@ proc do_air { shade_var id } {
 
 	grid $shader_params($id,window).fr.density -row 0 -column 0 -sticky e
 	grid $shader_params($id,window).fr.density_e -row 0 -column 1 -sticky w
+	grid $shader_params($id,window).fr.delta -row 0 -column 2 -sticky e
+	grid $shader_params($id,window).fr.delta_e -row 0 -column 3 -sticky w
+	grid $shader_params($id,window).fr.scale -row 1 -column 1 -sticky e
+	grid $shader_params($id,window).fr.scale_e -row 1 -column 2 -sticky w
 
 	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
 
@@ -2341,7 +2367,9 @@ proc do_air { shade_var id } {
 proc set_air_values { shader_str id } {
 	global shader_params
 
-	set shader_params($id,density) ""
+	set shader_params($id,density) $shader_params($id,def_density)
+	set shader_params($id,delta) $shader_params($id,def_delta)
+	set shader_params($id,air_scale) $shader_params($id,def_air_scale)
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -2359,18 +2387,24 @@ proc set_air_values { shader_str id } {
 			switch $key {
 				dpm { catch {
 						if { $value != $shader_params($id,def_density) } then {
-							set $shader_params($id,dennsity) $value
+							set shader_params($id,density) $value
 						}
 					}
 				}
 				delta -
 				d { catch {
-						if { $value != $shader_params($id,def_density) } then {
-							set $shader_params($id,dennsity) $value
+						if { $value != $shader_params($id,def_delta) } then {
+							set shader_params($id,delta) $value
 						}
 					}
 				}
-
+				scale -
+				s { catch {
+						if { $value != $shader_params($id,def_air_scale) } then {
+							set shader_params($id,air_scale) $value
+						}
+					}
+				}
 			}
 		}
 	}
@@ -2388,6 +2422,18 @@ proc do_air_apply { shade_var id } {
 		}
 	}
 
+	if { [string length $shader_params($id,delta) ] > 0 } then {
+		if { $shader_params($id,delta) != $shader_params($id,def_delta) } then {
+			lappend params d $shader_params($id,delta)
+		}
+	}
+
+	if { [string length $shader_params($id,air_scale) ] > 0 } then {
+		if { $shader_params($id,air_scale) != $shader_params($id,def_air_scale) } then {
+			lappend params s $shader_params($id,air_scale)
+		}
+	}
+
 	set shade_str [list air $params]
 }
 
@@ -2395,7 +2441,7 @@ proc set_air_defaults { id } {
 	global shader_params
 
 	set shader_params($id,def_density) 0.1
-	set shader_params($id,def_scale) 1.0
+	set shader_params($id,def_air_scale) 0.01
 	set shader_params($id,def_delta) 0.0
 }
 
@@ -2412,55 +2458,10 @@ proc set_shader_params { shade_var id } {
 		([is_good_shader $shader] == 0 &&
 		 [is_good_shader $shader_params($id,shader_name)] == 0) } then {
 
-		switch $shader {
-			glass {
-				set_glass_values $shade_str $id
-			}
-			mirror {
-				set_mirror_values $shade_str $id
-			}
-			plastic {
-				set_phong_values $shade_str $id
-			}
-			bump {
-				set_bump_values $shade_str $id
-			}
-			bwtexture {
-				set_bwtexture_values $shade_str $id
-			}
-			texture {
-				set_texture_values $shade_str $id
-			}
-			checker {
-				set_checker_values $shade_str $id
-			}
-			testmap {
-				set_testmap_values $shade_str $id
-			}
-			fakestar {
-				set_fakestar_values $shade_str $id
-			}
-			stack {
-				set_stack_values $shade_str $id
-			}
-			envmap {
-				set_envmap_values $shade_str $id
-			}
-			cloud {
-				set_cloud_values $shade_str $id
-			}
-			prj {
-				set_prj_values $shade_str $id
-			}
-			camo {
-				set_camo_values $shade_str $id
-			}
-			air {
-				aet_air_values $shade_str $id
-			}
-			default {
-				set_unknown_values $shade_str $id
-			}
+		if { [llength [info procs set_${shader}_values]] == 1 } {
+			set_${shader}_values $shade_str $id
+		} else {
+			set_unknown_values $shade_str $id
 		}
 	} else {
 		# we have to replace the current frame with a different shader
@@ -2487,65 +2488,13 @@ proc do_shader { shade_var id frame_name } {
 		set material [lindex $shade_str 0]
 		set shader_params($id,shader_name) $material
 
-		switch $material {
-			glass {
-				set_glass_defaults $id
-				set my_win [do_phong $shade_var $id]
-			}
-			mirror {
-				set_mirror_defaults $id
-				set my_win [do_phong $shade_var $id]
-			}
-			plastic {
-				set_plastic_defaults $id
-				set my_win [do_phong $shade_var $id]
-			}
-			bump -
-			bwtexture -
-			texture {
-				set_texture_defaults $id
-				set my_win [do_texture $shade_var $id]
-			}
-			checker {
-				set_checker_defaults $id
-				set my_win [do_checker $shade_var $id]
-			}
-			testmap {
-				set_testmap_defaults $id
-				set my_win [do_testmap $shade_var $id]
-			}
-			fakestar {
-				set_fakestar_defaults $id
-				set my_win [do_fakestar $shade_var $id]
-			}
-			stack {
-				set_stack_defaults $id
-				set my_win [do_stack $shade_var $id]
-			}
-			envmap {
-				set_envmap_defaults $id
-				set my_win [do_envmap $shade_var $id]
-			}
-			cloud {
-				set_cloud_defaults $id
-				set my_win [do_cloud $shade_var $id]
-			}
-			prj {
-				set_prj_defaults $id
-				set my_win [do_prj $shade_var $id]
-			}
-			camo {
-				set_camo_defaults $id
-				set my_win [do_camo $shade_var $id]
-			}
-			air {
-				set_air_defaults $id
-				set my_win [do_air $shade_var $id]
-			}
-			default {
-				set_unknown_defaults $id
-				set my_win [do_unknown $shade_var $id]
-			}
+		if { [llength [info procs do_$material]] == 1 &&
+		     [llength [info procs set_${material}_defaults]] == 1} {
+			set_${material}_defaults $id
+			set mywin [do_$material $shade_var $id]
+		} else {
+			set_unknown_defaults $id
+			set my_win [do_unknown $shade_var $id]
 		}
 	}
 
@@ -2557,75 +2506,17 @@ proc do_shader_apply { shade_var id } {
 	upvar #0 $shade_var shader_str
 
 	if { [string length $shader_str] == 0 } { return }
+
 	set current_shader_type [lindex $shader_str 0]
 
-	switch $current_shader_type {
-
-		plastic {
-			do_plastic_apply $shade_var $id
-		}
-		mirror {
-			do_mirror_apply $shade_var $id
-		}
-		glass {
-			do_glass_apply $shade_var $id
-		}
-
-		bump -
-		bwtexture -
-		texture {
-			do_texture_apply $shade_var $id
-		}
-		checker {
-			do_checker_apply $shade_var $id
-		}
-		testmap {
-			do_testmap_apply $shade_var $id
-		}
-		fakestar {
-			do_fakestar_apply $shade_var $id
-		}
-		stack {
-			do_stack_apply $shade_var $id
-		}
-		envmap {
-			do_envmap_apply $shade_var $id
-		}
-		cloud {
-			do_cloud_apply $shade_var $id
-		}
-		prj {
-			do_prj_apply $shade_var $id
-		}
-		camo {
-			do_camo_apply $shade_var $id
-		}
-		air {
-			do_air_apply $shade_var $id
-		}
-		default {
-			do_unknown_apply $shade_var $id
-		}
+	if { [llength [info procs do_${current_shader_type}_apply]] } {
+		do_${current_shader_type}_apply $shade_var $id
+	} else {
+		do_unknown_apply $shade_var $id
 	}
 }
 
 proc is_good_shader { shader } {
-	switch $shader {
-		stack -
-		plastic -
-		glass -
-		mirror -
-		bump -
-		texture -
-		bwtexture -
-		fakestar -
-		checker -
-		envmap -
-		cloud -
-		prj -
-		camo -
-		air -
-		testmap { return 1 }
-		default { return 0 }
-	}
+
+	return [llength [info procs do_$shader] ]
 }
