@@ -1255,9 +1255,15 @@ CONST union tree	*tp;
 	switch( tp->tr_op )  {
 	case OP_NOP:
 	case OP_SOLID:
-	case OP_DB_LEAF:
-		/* If this is a leaf, done */
+		/* If this is a simple leaf, done */
 		return(new);
+
+	case OP_DB_LEAF:
+		if( tp->tr_l.tl_mat )
+			new->tr_l.tl_mat = bn_mat_dup( tp->tr_l.tl_mat );
+		new->tr_l.tl_name = bu_strdup( tp->tr_l.tl_name );
+		return new;
+
 	case OP_REGION:
 		/* If this is a REGION leaf, dup combined_tree_state & path */
 		new->tr_c.tc_ctsp = db_dup_combined_tree_state(
