@@ -30,11 +30,20 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "./debug.h"
+#include "./nmg_rt.h"
 
 /* rt_nmg_internal is just "model", from nmg.h */
 
-#define	G_NMG_START_MAGIC	6014061
-#define	G_NMG_END_MAGIC		7013061
+#define	NMG_SPEC_START_MAGIC	6014061
+#define	NMG_SPEC_END_MAGIC		7013061
+
+/* This is the solid information specific to an nmg solid */
+struct nmg_specific {
+	int				nmg_smagic;	/* STRUCT START magic number */
+	struct model	*nmg_model;
+	vect_t			nmg_invdir;
+	int				nmg_emagic;	/* STRUCT END magic number */
+};
 
 
 /*
@@ -59,23 +68,20 @@ struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
 	struct model		*m;
-	register struct nmg_specific	*nmg;
+	register struct nmg_specific	*nmg_s;
 	struct nmgregion *rp;
 	vect_t work;	
-
-	/* XXX  Cause debugging output always
-	rt_g.NMG_debug |= DEBUG_NMGRT;	 */
 
 	RT_CK_DB_INTERNAL(ip);
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	GETSTRUCT( nmg, nmg_specific );
-	stp->st_specific = (genptr_t)nmg;
-	nmg->nmg_model = m;
+	GETSTRUCT( nmg_s, nmg_specific );
+	stp->st_specific = (genptr_t)nmg_s;
+	nmg_s->nmg_model = m;
 	ip->idb_ptr = (genptr_t)NULL;
-	nmg->nmg_smagic = G_NMG_START_MAGIC;
-	nmg->nmg_emagic = G_NMG_END_MAGIC;
+	nmg_s->nmg_smagic = NMG_SPEC_START_MAGIC;
+	nmg_s->nmg_emagic = NMG_SPEC_END_MAGIC;
 
 	/* get bounding box of NMG solid */
 	VSETALL(stp->st_min, MAX_FASTF);
@@ -109,7 +115,7 @@ struct rt_i		*rtip;
  */
 void
 rt_nmg_print( stp )
-register const struct soltab *stp;
+register CONST struct soltab *stp;
 {
 	register struct model *m =
 		(struct model *)stp->st_specific;
@@ -138,17 +144,19 @@ register struct xray	*rp;	/* info about the ray */
 struct application	*ap;	
 struct seg		*seghead;	/* intersection w/ ray */
 {
-	register struct nmg_specific *nmg =
+	struct ray_data rd;
+	int status;
+	struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
 
 	if(rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("rt_nmg_shot\n");
 
 	/* check validity of nmg specific structure */
- 	if (nmg->nmg_smagic != G_NMG_START_MAGIC)
+ 	if (nmg->nmg_smagic != NMG_SPEC_START_MAGIC)
 		rt_bomb("start of NMG st_specific structure corrupted\n");
 
- 	if (nmg->nmg_emagic != G_NMG_END_MAGIC)
+ 	if (nmg->nmg_emagic != NMG_SPEC_END_MAGIC)
 		rt_bomb("end of NMG st_specific structure corrupted\n");
 
 	/* Compute the inverse of the direction cosines */
@@ -171,8 +179,37 @@ struct seg		*seghead;	/* intersection w/ ray */
 		rp->r_dir[Z] = 0.0;
 	}
 
-	return(nmg_ray_isect_segs(stp, rp, ap, seghead, nmg));
+	/* build the NMG per-ray data structure */
+	rd.rd_m = nmg->nmg_model;
+	VMOVE(rd.rd_invdir, nmg->nmg_invdir);
+	rd.rp = rp;
+	rd.tol = &ap->a_rt_i->rti_tol;
+	rd.ap = ap;
+	rd.stp = stp;
+	rd.seghead = seghead;
+	
+	/* create a table to keep track of which elements have been
+	 * processed before and which haven't.  Elements in this table
+	 * will either be:
+	 *		(NULL)		item not previously processed
+	 *		hitmiss ptr	item previously processed
+	 */
+	rd.hitmiss = (struct hitmiss **)rt_calloc( rd.rd_m->maxindex,
+		sizeof(struct hitmiss *), "nmg geom hit list");
+
+	/* initialize the lists of things that have been hit/missed */
+	RT_LIST_INIT(&rd.rd_hit);
+	RT_LIST_INIT(&rd.rd_miss);
+
+	/* intersect the ray with the geometry */
+	nmg_isect_ray_model(&rd);
+
+	/* build the segment lists */
+	status = nmg_ray_segs(&rd);
+
+	return(status);
 }
+
 
 #define RT_NMG_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
