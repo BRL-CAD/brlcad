@@ -61,11 +61,9 @@ struct directory *dp;
 
 	if( dp->d_addr < 0 )
 		return( (union record *)0 );	/* was dummy DB entry */
-	if( (where = (union record *)rt_malloc(
+	where = (union record *)rt_malloc(
 		dp->d_len * sizeof(union record),
-		dp->d_namep)
-	    ) == ((union record *)0) )
-		return( (union record *)0 );
+		"db_getmrec record[]");
 
 	if( db_read( dbip, (char *)where,
 	    (long)dp->d_len * sizeof(union record),
@@ -266,4 +264,74 @@ long		offset;
 		return(-1);
 	}
 	return(0);			/* OK */
+}
+
+/*
+ *			D B _ G E T _ E X T E R N A L
+ *
+ *  Returns -
+ *	-1	error
+ *	 0	success
+ */
+int
+db_get_external( ep, dp, dbip )
+register struct rt_external	*ep;
+struct directory		*dp;
+struct db_i			*dbip;
+{
+	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get_external:  bad dbip\n");
+	if(rt_g.debug&DEBUG_DB) rt_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+		dp->d_namep, ep, dbip, dp );
+
+	if( dp->d_addr < 0 )
+		return( -1 );		/* was dummy DB entry */
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = dp->d_len * sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_malloc(
+		ep->ext_nbytes, "db_get_ext ext_buf");
+
+	if( db_read( dbip, (char *)ep->ext_buf,
+	    (long)ep->ext_nbytes, dp->d_addr ) < 0 )  {
+		rt_free( (char *)ep->ext_buf, "db_get_ext ext_buf" );
+	    	ep->ext_buf = (genptr_t)NULL;
+	    	ep->ext_nbytes = 0;
+		return( -1 );	/* VERY BAD */
+	}
+	return(0);
+}
+
+/*
+ *
+ *			D B _ P U T _ E X T E R N A L
+ *
+ *  Caller is responsible for freeing memory, using db_free_external().
+ */
+int
+db_put_external( ep, dp, dbip )
+struct rt_external	*ep;
+struct directory	*dp;
+struct db_i		*dbip;
+{
+	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put_external:  bad dbip\n");
+	if(rt_g.debug&DEBUG_DB) rt_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
+		dp->d_namep, ep, dbip, dp );
+
+	RT_CK_EXTERNAL(ep);
+	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0,
+	    (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record)
+	    ) < 0 )
+		return(-1);
+	return(0);
+}
+
+/*
+ *			D B _ F R E E _ E X T E R N A L
+ */
+void
+db_free_external( ep )
+register struct rt_external	*ep;
+{
+	RT_CK_EXTERNAL(ep);
+	rt_free( ep->ext_buf, "db_external buf" );
 }
