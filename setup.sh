@@ -95,6 +95,9 @@ chmod 664 Cakefile.defs
 #  ensure that machinetype.sh and Cakefile.defs are set up the same way.
 #  This is mostly a double-check on people porting to new machines.
 #
+#  Note that the `echo MTYPE` is necessary because some newer AT&T cpp's
+#  add a space around each macro substitution.
+#
 ############################################################################
 IN_FILE=/tmp/setup$$.c
 OUT_FILE=/tmp/setup$$
@@ -104,13 +107,13 @@ cat << EOF > ${IN_FILE}
 #line 1 "$0"
 #include "Cakefile.defs"
 
-C_MACHINE=MTYPE;
+C_MACHINE=\`echo MTYPE\`;
 #ifdef BSD
 	C_UNIXTYPE="BSD";
 #else
 	C_UNIXTYPE="SYSV";
 #endif
-C_HAS_TCP=HAS_TCP;
+C_HAS_TCP=\`echo HAS_TCP\`;
 EOF
 # Run the file through the macro preprocessor.
 # Many systems don't provide many built-in symbols with bare CPP,
