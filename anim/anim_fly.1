@@ -7,6 +7,7 @@ anim_fly - make animation table to simulate flying motion
 .B [-r]
 .B [-p integer] 
 .B [-b max_bank_angle]
+.B [-s step]
 .B < in.table 
 .B > out.table
 .SH DESCRIPTION
@@ -71,6 +72,18 @@ anim_fly -f0.001 -p10 < in.table > out.table
 .sp
 would produce an animation table containing 3 rows for each
 second of the animation.
+.TP
+.B -s
+Specify the minimum step size for the discrete-time differentiation. At any 
+given point on the flight path, the yaw, pitch, and roll are calculated based
+on a past point, the current point, and a future point. Normally,
+these are consecutive points from the input table. If the time
+difference between the points falls below a certain threshold, 
+then non-consecutive points are used to avoid
+numerical instability. The default time threshhold is 0.1 seconds - this
+can be raised or lowered using the -s option. 
+Try raising the threshold if the output orientations experience random
+jiter.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
