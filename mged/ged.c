@@ -306,11 +306,12 @@ char **argv;
 		dmp->dmr_window(windowbounds);	/* hack */
 
 		/* Apply the knob slew factor to the view center */
-		if( dm_values.dv_xslew != 0.0 || dm_values.dv_yslew != 0.0 )  {
+		if( dm_values.dv_xslew != 0.0 || dm_values.dv_yslew != 0.0
+		  || dm_values.dv_zslew != 0.0 )  {
 			/* slew 1/10th of the view per update */
 			knobvec[X] = -dm_values.dv_xslew / 10;
 			knobvec[Y] = -dm_values.dv_yslew / 10;
-			knobvec[Z] = 0;
+			knobvec[Z] = -dm_values.dv_zslew / 10;
 			slewview( knobvec );
 			rateflag++;
 		}
