@@ -124,7 +124,7 @@ struct _mged_variables {
   int		mv_fb;				/* toggle image on/off */
   int		mv_fb_all;			/* 0 - use part of image as defined by the rectangle
 						   1 - use the entire image */
-  int		mv_fb_overlay;			/* 0 - underlay     1 - overlay */
+  int		mv_fb_overlay;			/* 0 - underlay    1 - interlay    2 - overlay */
   char		mv_mouse_behavior;
   char		mv_coords;
   char		mv_rotate_about;
