@@ -625,6 +625,7 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_YACC
+# XXX libtool shouldn't be generated until after LD is set
 AC_PROG_LIBTOOL
 AM_PROG_LEX
 
