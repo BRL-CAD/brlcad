@@ -332,7 +332,10 @@ CONST struct db_i		*dbip;
 		return( -1 );		/* was dummy DB entry */
 
 	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = dp->d_len * sizeof(union record);
+	if( dbip->dbi_version <= 4 )
+		ep->ext_nbytes = dp->d_len * sizeof(union record);
+	else
+		ep->ext_nbytes = dp->d_len;
 	ep->ext_buf = (genptr_t)bu_malloc(
 		ep->ext_nbytes, "db_get_ext ext_buf");
 

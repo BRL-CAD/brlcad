@@ -758,3 +758,80 @@ CONST struct bu_attribute_value_pair	*attr;
 	return 0;
 
 }
+
+/*
+ *			R T _ D B _ G E T _ I N T E R N A L 5
+ *
+ *  Get an object from the database, and convert it into it's internal
+ *  representation.
+ *
+ *  Returns -
+ *	<0	On error
+ *	id	On success.
+ */
+int
+rt_db_get_internal5( ip, dp, dbip, mat )
+struct rt_db_internal	*ip;
+CONST struct directory	*dp;
+CONST struct db_i	*dbip;
+CONST mat_t		mat;
+{
+	struct bu_external	ext;
+	register int		id;
+	struct db5_raw_internal	raw;
+	struct bu_external	body;
+
+	BU_INIT_EXTERNAL(&ext);
+	RT_INIT_DB_INTERNAL(ip);
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -2;		/* FAIL */
+
+	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
+		bu_log("rt_db_get_internal5(%s):  import failure\n",
+			dp->d_namep );
+		db_free_external( &ext );
+		return -3;
+	}
+
+	if( raw.major_type == DB5HDR_MAJORTYPE_BRLCAD_NONGEOM )  {
+		id = ID_COMBINATION;
+	} else if( raw.major_type == DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY )  {
+		id = raw.minor_type;
+		/* As a convenience to older ft_import routines */
+		if( mat == NULL )  mat = bn_mat_identity;
+	} else {
+		bu_log("rt_db_get_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
+			dp->d_namep, raw.major_type );
+		db_free_external( &ext );
+		return -1;		/* FAIL */
+	}
+
+	if( !raw.body )  {
+		bu_log("rt_db_get_internal5(%s):  object has no body\n",
+			dp->d_namep );
+		db_free_external( &ext );
+		return -4;
+	}
+
+	BU_INIT_EXTERNAL(&body);
+	body.ext_nbytes = raw.body_length;
+	body.ext_buf = raw.body;
+	
+	if( rt_functab[id].ft_import5( ip, &body, mat, dbip ) < 0 )  {
+		bu_log("rt_db_get_internal5(%s):  import failure\n",
+			dp->d_namep );
+	    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
+		db_free_external( &ext );
+		return -1;		/* FAIL */
+	}
+	db_free_external( &ext );
+	/* Don't free &body */
+
+	RT_CK_DB_INTERNAL( ip );
+	ip->idb_type = id;
+	ip->idb_meth = &rt_functab[id];
+	return id;			/* OK */
+}

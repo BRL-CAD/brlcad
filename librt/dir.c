@@ -91,6 +91,10 @@ CONST mat_t		mat;
 
 	BU_INIT_EXTERNAL(&ext);
 	RT_INIT_DB_INTERNAL(ip);
+
+	if( dbip->dbi_version > 4 )
+		return  rt_db_get_internal5( ip, dp, dbip, mat );
+
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
