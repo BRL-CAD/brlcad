@@ -16,6 +16,9 @@ char *name;
 {
   Display *dpy;
   int val = 0;
+#if !defined(USE_MESA_GL) && defined(DM_OGL)
+  int return_val;
+#endif
 
 #ifdef USE_MESA_GL
 
@@ -59,6 +62,9 @@ char *dpy_string;
 {
   Display *dpy;
   char *name = (char *)NULL;
+#if !defined(USE_MESA_GL) && defined(DM_OGL)
+  int return_val;
+#endif
 
 #ifdef USE_MESA_GL
 
