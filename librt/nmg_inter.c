@@ -29,7 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-struct nmg_boolstruct {
+/* Was nmg_boolstruct, but that name has appeared in nmg.h */
+struct nmg_inter_struct {
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
 	struct nmg_ptbl *l2;		/* intersection between planes */
 	fastf_t		tol;
@@ -154,7 +155,7 @@ struct faceuse *fu;
  *	loops of a single vertex with a face).
  */
 static void isect_vertex_face(bs, vu, fu)
-struct nmg_boolstruct *bs;
+struct nmg_inter_struct *bs;
 struct vertexuse *vu;
 struct faceuse *fu;
 {
@@ -194,7 +195,7 @@ struct faceuse *fu;
  *	Intersect an edge with a face
  */
 static void isect_edge_face(bs, eu, fu)
-struct nmg_boolstruct *bs;
+struct nmg_inter_struct *bs;
 struct edgeuse *eu;
 struct faceuse *fu;
 {
@@ -547,7 +548,7 @@ struct faceuse *fu;
  *	Intersect a single loop with another face
  */
 static void isect_loop_face(bs, lu, fu)
-struct nmg_boolstruct *bs;
+struct nmg_inter_struct *bs;
 struct loopuse *lu;
 struct faceuse *fu;
 {
@@ -602,7 +603,7 @@ struct faceuse *fu;
  *	Intersect loops of face 1 with the entirety of face 2
  */
 static void nmg_isect_2face_loops(bs, fu1, fu2)
-struct nmg_boolstruct *bs;
+struct nmg_inter_struct *bs;
 struct faceuse	*fu1;
 struct faceuse	*fu2;
 {
@@ -635,7 +636,7 @@ struct faceuse *fu1, *fu2;
 fastf_t tol;
 {
 	struct nmg_ptbl vert_list1, vert_list2;
-	struct nmg_boolstruct	bs;
+	struct nmg_inter_struct	bs;
 	int		i;
 	fastf_t		*pl1, *pl2;
 	struct face	*f1;
