@@ -4,8 +4,8 @@
  *	image to a Sun Microsystems 8-bit deep color "rasterfile" format
  *	image.
  *
- *   Author(s)
- *   Lee A. Butler
+ *  Author -
+ *	Lee A. Butler
  *
  *  Source -
  *      SECAD/VLD Computing Consortium, Bldg 394
@@ -18,7 +18,11 @@
  */
 #include <stdio.h>
 #include <ctype.h>
+#ifdef BSD
 #include <strings.h>
+#else
+#include <string.h>
+#endif
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:d";
