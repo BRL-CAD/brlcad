@@ -171,5 +171,5 @@ Tcl_Interp *interp;
 
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */
 	Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
-	Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_INT );
+	Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_LINK_INT );
 }
