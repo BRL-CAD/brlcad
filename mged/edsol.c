@@ -1647,7 +1647,12 @@ init_objedit()
 		es_rec.s.s_cgtype = ARS;
 		break;
 
-	case ID_SOLID:
+	case ID_TOR:
+	case ID_TGC:
+	case ID_ELL:
+	case ID_ARB8:
+	case ID_HALF:
+		/* All folks with u_id == (DB_)ID_SOLID */
 		if( es_rec.s.s_cgtype < 0 )
 			es_rec.s.s_cgtype *= -1;
 
@@ -1668,6 +1673,8 @@ init_objedit()
 
 	default:
 		/* XXX Need SOMETHING in s_values, s/b es_keypoint */
+		printf("init_objedit() using %g,%g,%g as keypoint\n",
+			V3ARGS(illump->s_center) );
 		VMOVE(es_rec.s.s_values, illump->s_center);
 	}
 
