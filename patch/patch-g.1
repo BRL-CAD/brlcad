@@ -2,7 +2,7 @@
 .SH NAME
 patch\(hyg \- convert FASTGEN ASCII databases into binary MGED databases.
 .SH SYNOPSIS
-.B patch-g [options] > output.g
+.B patch-g [options] output.g
 .SH DESCRIPTION
 This program converts FASTGEN geometry into BRL-CAD 
 .IR mged (1)
@@ -25,9 +25,9 @@ This is achieved by executing
 .IR rpatch < fastgen_file > file.rpatch .
 Once this step is executed, 
 .IR patch-g 
-can be used to convert the intermediate file into binary
-.IR mged (1)
-file.
+can be used to convert the intermediate file into a binary
+.IR brlcad (1)
+".g" file.
 .PP
 .IR patch-g 
 will provide messages when encountering problems in the conversion of FASTGEN
@@ -99,7 +99,7 @@ Specifies a debug level (1-3).
 rpatch < fastgen_file > file.rpatch
 .br
 .I
-patch-g -p -f file.rpatch > file.g
+patch-g -p -f file.rpatch  file.g
 .SH DIAGNOSTICS
 The diagnostics are intended to be self-explanatory.
 .SH SEE ALSO
@@ -114,4 +114,4 @@ The U. S. Army Ballistic Research Laboratory
 Aberdeen Proving Ground, MD  21005
 .SH BUG REPORTS
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.MIL>.
+mail to <CAD@ARL.ARMY.MIL>.
