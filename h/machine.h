@@ -198,6 +198,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
+/*  Bit vector mask */
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
 
 /*
@@ -217,6 +218,20 @@ typedef long	bitv_t;		/* largest integer type */
 #define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
 #endif
 #define SMALL			SQRT_SMALL_FASTF
+
+/*
+ *  Definition of a "generic" pointer that can hold a pointer to anything.
+ *  According to tradition, a (char *) was generic, but the ANSI folks
+ *  worry about machines where (int *) might be wider than (char *),
+ *  so here is the clean way of handling it.
+ */
+#if !defined(GENPTR_H_SEEN)
+#  if __STDC__
+	typedef void	*genptr_t;
+#  else
+	typedef char	*genptr_t;
+#  endif
+#endif
 
 /*
  *  Some very common BSD --> SYSV conversion aids
