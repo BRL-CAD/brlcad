@@ -350,7 +350,6 @@ int		ncolors, bgflag, cmflag;
 RGBpixel		bgpixel;
 	{
 	/* Magic numbers for output file.				*/
-	register int	bbw;
 	static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
 	static RGBpixel	black = { 0, 0, 0 };
 
@@ -361,6 +360,7 @@ RGBpixel		bgpixel;
 	/* If black and white mode, compute NTSC value of background.	*/
 	if( ncolors == 1 )
 		{
+		register int	bbw;
 		if( rle_verbose )
 			(void) fprintf( stderr,
 					"Image being saved as monochrome.\n"
@@ -368,15 +368,19 @@ RGBpixel		bgpixel;
 		bbw = 0.35 * bgpixel[RED] +
 			0.55 * bgpixel[GRN] +
 			0.10 * bgpixel[BLU];
+		w_setup.h_background[0] = bbw;
+		w_setup.h_background[1] = bbw;
+		w_setup.h_background[2] = bbw;
+		} else {
+		w_setup.h_background[0] = bgpixel[RED];
+		w_setup.h_background[1] = bgpixel[GRN];
+		w_setup.h_background[2] = bgpixel[BLU];
 		}
 	w_setup.h_flags = bgflag ? H_CLEARFIRST : 0;
 	w_setup.h_ncolors = ncolors;
 	w_setup.h_pixelbits = _pixelbits;
 	w_setup.h_ncmap = cmflag ? _ncmap : 0;
 	w_setup.h_cmaplen = _cmaplen;
-	w_setup.h_background[0] = ncolors == 1 ? bbw : bgpixel[RED];
-	w_setup.h_background[1] = ncolors == 1 ? bbw : bgpixel[GRN];
-	w_setup.h_background[2] = ncolors == 1 ? bbw : bgpixel[BLU];
 
 	if( fp != stdout && fseek( fp, 0L, 0 ) == -1 )
 		{
@@ -632,17 +636,17 @@ RGBpixel		*scan_buf;
 		{
 		if( (nseg = _bg_Get_Runs( scan_p, last_p )) == -1 )
 			return	-1;
+		if( nseg <= 0 )
+			{
+			RSkipLines( 1 );
+			return	0;
+			}
 		}
 	else
 		{
 		runs[0].first = scan_p;
 		runs[0].last = last_p;
 		nseg = 1;
-		}
-	if( nseg <= 0 )
-		{
-		RSkipLines( 1 );
-		return	0;
 		}
 	if( _bw_flag )
 		{	register RGBpixel *pixelp;
