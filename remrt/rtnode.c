@@ -119,6 +119,7 @@ int print_on = 1;
 #define RTSYNCMSG_OPENFB 1002	/* both:  width height framebuffer */
 #define RTSYNCMSG_DIRBUILD 1003	/* both:  database */
 #define RTSYNCMSG_GETTREES 1004	/* both:  treetop(s) */
+#define RTSYNCMSG_CMD	1006	/* MtoS:  Any Tcl command */
 #define RTSYNCMSG_POV	1007	/* MtoS:  pov, min_res, start&end lines */
 #define RTSYNCMSG_HALT	1008	/* MtoS:  abandon frame & xmit, NOW */
 #define RTSYNCMSG_DONE	1009	/* StoM:  halt=0/1, res, elapsed, etc... */
@@ -129,10 +130,12 @@ void	rtsync_ph_openfb();
 void	rtsync_ph_dirbuild();
 void	rtsync_ph_gettrees();
 void	rtsync_ph_halt();
+void	rtsync_ph_cmd();
 static struct pkg_switch rtsync_pkgswitch[] = {
 	{ RTSYNCMSG_POV,	rtsync_ph_pov, "POV" },
 	{ RTSYNCMSG_ALIVE,	ph_default,	"ALIVE" },
 	{ RTSYNCMSG_HALT,	rtsync_ph_halt, "HALT" },
+	{ RTSYNCMSG_CMD,	rtsync_ph_cmd, "CMD" },
 	{ RTSYNCMSG_OPENFB,	rtsync_ph_openfb, "RTNODE open(ed) fb" },
 	{ RTSYNCMSG_GETTREES,	rtsync_ph_gettrees, "RTNODE prep(ed) db" },
 	{ RTSYNCMSG_DIRBUILD,	rtsync_ph_dirbuild, "RTNODE dirbuilt/built" },
@@ -743,12 +746,33 @@ char			*buf;
 	free(buf);
 }
 
-
+/*
+ *			P H _ H A L T
+ */
 void
 rtsync_ph_halt(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
+	free(buf);
+}
+
+/*
+ *			P H _ C M D
+ *
+ *  Run the buffer as a Tcl script.  There is no return,
+ *  except for a log message on error.
+ */
+void
+rtsync_ph_cmd(pc, buf)
+register struct pkg_conn *pc;
+char			*buf;
+{
+	if( Tcl_Eval(interp, buf) != TCL_OK )
+		bu_log("rtnode Tcl_Eval error: %s\n", interp->result );
+	else
+		bu_log("%s\n", interp->result);	/* may be noisy */
+	free(buf);
 }
 
 

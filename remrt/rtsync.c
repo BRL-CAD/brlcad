@@ -119,6 +119,7 @@ int			print_on = 1;
 #define RTSYNCMSG_OPENFB 1002	/* both:  width height framebuffer */
 #define RTSYNCMSG_DIRBUILD 1003	/* both:  database */
 #define RTSYNCMSG_GETTREES 1004	/* both:  treetop(s) */
+#define RTSYNCMSG_CMD	1006	/* MtoS:  Any Tcl command */
 #define RTSYNCMSG_POV	1007	/* MtoS:  pov, min_res, start&end lines */
 #define RTSYNCMSG_HALT	1008	/* MtoS:  abandon frame & xmit, NOW */
 #define RTSYNCMSG_DONE	1009	/* StoM:  halt=0/1, res, elapsed, etc... */
@@ -137,6 +138,7 @@ static struct pkg_switch rtsync_pkgswitch[] = {
 	{ RTSYNCMSG_GETTREES,	rtsync_ph_gettrees, "RTNODE prep(ed) db" },
 	{ RTSYNCMSG_POV,	ph_default,	"POV" },
 	{ RTSYNCMSG_HALT,	ph_default,	"HALT" },
+	{ RTSYNCMSG_CMD,	ph_default,	"CMD" },
 	{ RTSYNCMSG_PRINT,	ph_print,	"Log Message" },
 	{ 0,			0,		(char *)0 }
 };
