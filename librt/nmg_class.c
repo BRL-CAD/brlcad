@@ -599,8 +599,10 @@ again:
 
 		/* Any other OT_UNSPEC or OT_BOOLPLACE lu's don't help either */
 		if( lu2->orientation != OT_SAME && lu2->orientation != OT_OPPOSITE )  {
-			rt_log("nmg_class_lu_fu(lu=x%x) WARNING:  skipping %s lu=x%x in fu=x%x!\n",
-				lu, nmg_orientation(lu2->orientation), lu2, fu);
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
+				rt_log("nmg_class_lu_fu(lu=x%x) WARNING:  skipping %s lu=x%x in fu=x%x!\n",
+					lu, nmg_orientation(lu2->orientation), lu2, fu);
+			}
 			continue;
 		}
 
