@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  17:54:31  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.1  85/01/17  23:57:57  dpk
  * Added minimal blit support, more to come...
  * 
@@ -29,7 +33,7 @@ static char RCSid[] = "@(#)$Header$";
    line/character features of the terminal (if they exist).  */
 
 #include "./jove.h"
-#include <termcap.h>
+#include "./termcap.h"
 
 #include <signal.h>
 

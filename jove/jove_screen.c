@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  17:54:39  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.3  88/03/10  05:25:54  phil
  * ignore ll if li != winsize
  * 
@@ -42,7 +46,7 @@ static char RCSid[] = "@(#)$Header$";
 
 #include "./jove.h"
 #include "./jove_temp.h"
-#include <termcap.h>
+#include "./termcap.h"
 
 extern int	BufSize;
 

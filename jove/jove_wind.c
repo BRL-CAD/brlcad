@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:54:41  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.0  84/12/26  16:49:18  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -23,7 +27,7 @@ static char RCSid[] = "@(#)$Header$";
    This creates/deletes/divides/grows/shrinks windows.  */
 
 #include "./jove.h"
-#include <termcap.h>
+#include "./termcap.h"
 
 char	onlyone[] = "You only have one window!";
 char	toosmall[] = "too small";

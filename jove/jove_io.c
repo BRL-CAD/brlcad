@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  17:54:34  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.3  91/08/30  17:49:08  mike
  * Paul Stay mods for ANSI C
  * 
@@ -39,7 +43,7 @@ static char RCSid[] = "@(#)$Header$";
    Commands to read/write files/regions.  */
 
 #include "./jove.h"
-#include <termcap.h>
+#include "./termcap.h"
 
 #include <errno.h>
 #include <sys/types.h>

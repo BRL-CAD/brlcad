@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.13  91/08/30  17:54:35  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.12  91/08/30  17:49:09  mike
  * Paul Stay mods for ANSI C
  * 
@@ -69,7 +73,7 @@ static char RCSid[] = "@(#)$Header$";
    Contains the main loop, initializations, getch routine... */
 
 #include "./jove.h"
-#include <termcap.h>
+#include "./termcap.h"
 
 #include <signal.h>
 #ifndef SYS5

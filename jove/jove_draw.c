@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  17:54:31  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.1  91/08/30  17:49:04  mike
  * Paul Stay mods for ANSI C
  * 
@@ -28,7 +32,7 @@ static char RCSid[] = "@(#)$Header$";
 
 #include "./jove.h"
 
-#include <termcap.h>
+#include "./termcap.h"
 
 char mesgbuf[100];
 
@@ -264,7 +268,7 @@ PrevPage()
    information in them, or temporarily writing over the user's text. */
 
 
-#include <termcap.h>
+#include "./termcap.h"
 
 static char	*BufToUse;	/* Buffer to pop to if we are using buffers */
 static WINDOW	*LastW;		/* Save old window here so we can return */
