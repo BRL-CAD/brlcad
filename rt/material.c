@@ -156,6 +156,41 @@ register char *str;
 }
 
 /*
+ *			M L I B _ V E C T
+ *
+ *  Parse a slash (or other non-numeric, non-whitespace) separated string
+ *  as a vect_t (3 fastf_t's).  Useful for entering vector values in
+ *  mlib_parse as 1.0/0.5/0.1.
+ */
+void
+mlib_vect( vp, str )
+register fastf_t *vp;
+register char *str;
+{
+	if( !isdigit(*str) && *str != '.' )  return;
+	vp[0] = atof(str);
+	vp[1] = vp[2] = 0.0;
+	while( *str ) {
+		if( !isdigit(*str) && *str != '.' ) {
+			str++;
+			break;
+		}
+		str++;
+	}
+	if( !*str )  return;
+	vp[1] = atof(str);
+	while( *str ) {
+		if( !isdigit(*str) && *str != '.' ) {
+			str++;
+			break;
+		}
+		str++;
+	}
+	if( !*str )  return;
+	vp[2] = atof(str);
+}
+
+/*
  *			M L I B _ P A R S E
  */
 void
@@ -204,6 +239,117 @@ int *base;		/* base address of users structure */
 			switch( mp->mp_fmt[1] )  {
 			case 'C':
 				mlib_rgb( loc, value );
+				break;
+			case 'V':
+				mlib_vect( loc, value );
+				break;
+			case 'f':
+				/*  Silicon Graphics sucks wind.
+				 *  On the 3-D machines, float==double,
+				 *  which breaks the scanf() strings.
+				 *  So, here we cause "%f" to store into
+				 *  a double.  This is the "generic"
+				 *  floating point read.  Humbug.
+				 */
+				*((double *)loc) = atof( value );
+				break;
+			default:
+				(void)sscanf( value, mp->mp_fmt, loc );
+				break;
+			}
+			goto out;
+		}
+		rt_log("mlib_parse:  %s=%s not a valid arg\n", name, value);
+out:		;
+	}
+}
+
+/*
+ *			M L I B _ P A R S E 2
+ *
+ *  XXX A Hack to take two parse tables until (unless?) things are
+ *  fixed up so that we can chain tables together.
+ */
+void
+mlib_parse2( cp, parsetab, parsetab2, base )
+register char *cp;
+struct matparse *parsetab;
+struct matparse *parsetab2;
+int *base;		/* base address of users structure */
+{
+	register struct matparse *mp;
+	char *name;
+	char *value;
+
+	while( *cp )  {
+		/* NAME = VALUE separator (comma, space, tab) */
+
+		/* skip any leading whitespace */
+		while( *cp != '\0' && 
+		    (*cp == ',' || *cp == ' ' || *cp == '\t' ) )
+			cp++;
+
+		/* Find equal sign */
+		name = cp;
+		while( *cp != '\0' && *cp != '=' )  cp++;
+		if( *cp == '\0' )  {
+			rt_log("name %s without value\n", name );
+			break;
+		}
+		*cp++ = '\0';
+
+		/* Find end of value */
+		value = cp;
+		while( *cp != '\0' && *cp != ',' &&
+		    *cp != ' ' && *cp != '\t' )
+			cp++;
+		if( *cp != '\0' )
+			*cp++ = '\0';
+
+		/* Lookup name in parsetab table */
+		for( mp = parsetab; mp->mp_name != (char *)0; mp++ )  {
+			register char *loc;
+
+			if( strcmp( mp->mp_name, name ) != 0 )
+				continue;
+			loc = (char *)(((mp_off_ty)base) +
+					((int)mp->mp_offset));
+			switch( mp->mp_fmt[1] )  {
+			case 'C':
+				mlib_rgb( loc, value );
+				break;
+			case 'V':
+				mlib_vect( loc, value );
+				break;
+			case 'f':
+				/*  Silicon Graphics sucks wind.
+				 *  On the 3-D machines, float==double,
+				 *  which breaks the scanf() strings.
+				 *  So, here we cause "%f" to store into
+				 *  a double.  This is the "generic"
+				 *  floating point read.  Humbug.
+				 */
+				*((double *)loc) = atof( value );
+				break;
+			default:
+				(void)sscanf( value, mp->mp_fmt, loc );
+				break;
+			}
+			goto out;
+		}
+		for( mp = parsetab2; mp->mp_name != (char *)0; mp++ )  {
+			register char *loc;
+
+			if( strcmp( mp->mp_name, name ) != 0 )
+				continue;
+			loc = (char *)(((mp_off_ty)base) +
+					((int)mp->mp_offset));
+			switch( mp->mp_fmt[1] )  {
+			case 'C':
+				mlib_rgb( loc, value );
+				break;
+			case 'V':
+				mlib_vect( loc, value );
 				break;
 			case 'f':
 				/*  Silicon Graphics sucks wind.
@@ -268,6 +414,14 @@ int *base;		/* base address of users structure */
 					(unsigned char *)loc;
 				rt_log(" %s=%d/%d/%d(%d)\n", mp->mp_name,
 					cp[0], cp[1], cp[2], cp[3] );
+				break;
+			}
+		case 'V':
+			{
+				register fastf_t *fp =
+					(fastf_t *)loc;
+				rt_log(" %s=%f/%f/%f\n", mp->mp_name,
+					fp[0], fp[1], fp[2] );
 				break;
 			}
 		default:
