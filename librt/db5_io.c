@@ -113,8 +113,7 @@ long len;
  *  Given a variable-width length field in network order (XDR),
  *  store it in *lenp.
  *
- *  Note that for object_length the returned number needs to be
- *  multiplied by 8, while for the other lengths, it is already a byte count.
+ *  This routine processes unsigned values.
  *
  *  Returns -
  *	The number of bytes of input that were decoded.
@@ -131,6 +130,46 @@ int			format;
 		return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
 		*lenp = BU_GSHORT(cp);
+		return 2;
+	case DB5HDR_WIDTHCODE_32BIT:
+		*lenp = BU_GLONG(cp);
+		return 4;
+	case DB5HDR_WIDTHCODE_64BIT:
+#if 0
+		if( sizeof(long) >= 8 )  {
+			*lenp = BU_GLONGLONG(cp);
+			return 8;
+		}
+#endif
+		bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
+	}
+	bu_bomb("db5_decode_length(): unknown width code\n");
+	/* NOTREACHED */
+}
+
+/*
+ *			D B 5 _ D E C O D E _ S I G N E D
+ *
+ *  Given a variable-width length field in network order (XDR),
+ *  store it in *lenp.
+ *
+ *  This routine processes signed values.
+ *
+ *  Returns -
+ *	The number of bytes of input that were decoded.
+ */
+int
+db5_decode_signed( lenp, cp, format )
+long			*lenp;
+CONST unsigned char	*cp;
+int			format;
+{
+	switch( format )  {
+	case DB5HDR_WIDTHCODE_8BIT:
+		if( (*lenp = (*cp)) & 0x80 ) *lenp |= 0xFFFFFF00;
+		return 1;
+	case DB5HDR_WIDTHCODE_16BIT:
+		if( (*lenp = BU_GSHORT(cp)) & 0x8000 )  *lenp |= 0xFFFF0000;
 		return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
 		*lenp = BU_GLONG(cp);
