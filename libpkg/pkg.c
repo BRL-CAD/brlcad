@@ -53,20 +53,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #endif
 
-#if defined(BSD) && !defined(cray) && !defined(mips)
+#if defined(BSD) && !defined(CRAY) && !defined(mips)
 #define	HAS_WRITEV
 #endif
 
 #ifdef HAS_WRITEV
-#include <sys/uio.h>		/* for struct iovec (writev) */
+# include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
 #ifdef SGI_EXCELAN
-#include <EXOS/exos/misc.h>
-#include <EXOS/sys/socket.h>
-#include <EXOS/netinet/in.h>
-#include <sys/time.h>		/* for struct timeval */
-#define select	bsdselect	/* bloody GL2 select() conflict */
+# include <EXOS/exos/misc.h>
+# include <EXOS/sys/socket.h>
+# include <EXOS/netinet/in.h>
+# include <sys/time.h>		/* for struct timeval */
+# define select	bsdselect	/* bloody GL2 select() conflict */
 #endif
 
 #include <errno.h>
@@ -82,6 +82,7 @@ extern void perror();
 extern int errno;
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
+int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
 /* Internal Functions */
 static struct pkg_conn *pkg_makeconn();
@@ -346,20 +347,26 @@ void (*errlog)();
 	bzero((char *)&sinme, sizeof(sinme));
 
 	/* Determine port for service */
+	if( atoi(service) > 0 )  {
+		sinme.sin_port = htons((unsigned short)atoi(service));
+	} else {
 #ifdef BSD
-	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-		sprintf(errbuf,"pkg_permserver(%s,%d): unknown service\n",
-			service, backlog );
-		errlog(errbuf);
-		return(-1);
-	}
-	sinme.sin_port = sp->s_port;
+		if( (sp = getservbyname( service, "tcp" )) == NULL )  {
+			sprintf(errbuf,
+				"pkg_permserver(%s,%d): unknown service\n",
+				service, backlog );
+			errlog(errbuf);
+			return(-1);
+		}
+		sinme.sin_port = sp->s_port;
 #endif
-	sinme.sin_family = AF_INET;
 #ifdef SGI_EXCELAN
-	/* What routine does SGI give for this one? */
-	sinme.sin_port = htons(5558);	/* mfb service!! XXX */
+		/* What routine does SGI give for this one? */
+		sinme.sin_port = htons(5558);	/* mfb service!! XXX */
 #endif
+	}
+	pkg_permport = sinme.sin_port;		/* XXX -- needs formal I/F */
+	sinme.sin_family = AF_INET;
 
 #ifdef BSD
 	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
