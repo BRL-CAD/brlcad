@@ -4538,19 +4538,50 @@ char	**argv;
   return( status );
 }
 
+/*
+ * Initialize vsp1 using vsp2 if vsp2 is not null.
+ */
 void
-view_ring_init(dlp)
-struct dm_list *dlp;
+view_ring_init(vsp1, vsp2)
+struct _view_state *vsp1;
+struct _view_state *vsp2;
 {
-  struct view_ring *vrp;
+  struct view_ring *vrp1;
+  struct view_ring *vrp2;
 
-  BU_LIST_INIT(&dlp->dml_view_state->vs_headView.l);
-  BU_GETSTRUCT(vrp, view_ring);
-  BU_LIST_APPEND(&dlp->dml_view_state->vs_headView.l, &vrp->l);
+  BU_LIST_INIT(&vsp1->vs_headView.l);
 
-  vrp->vr_id = 1;
-  dlp->dml_view_state->vs_current_view = vrp;
-  dlp->dml_view_state->vs_last_view = vrp;
+  if(vsp2 != (struct _view_state *)NULL){
+    struct view_ring *vrp1_current_view;
+    struct view_ring *vrp1_last_view;
+
+    for(BU_LIST_FOR(vrp2, view_ring, &vsp2->vs_headView.l)){
+      BU_GETSTRUCT(vrp1, view_ring);
+      /* append to last list element */
+      BU_LIST_APPEND(vsp1->vs_headView.l.back, &vrp1->l);
+
+      bn_mat_copy(vrp1->vr_rot_mat, vrp2->vr_rot_mat);
+      bn_mat_copy(vrp1->vr_tvc_mat, vrp2->vr_tvc_mat);
+      vrp1->vr_scale = vrp2->vr_scale;
+      vrp1->vr_id = vrp2->vr_id;
+
+      if(vsp2->vs_current_view == vrp2)
+	vrp1_current_view = vrp1;
+
+      if(vsp2->vs_last_view == vrp2)
+	vrp1_last_view = vrp1;
+    }
+
+    vsp1->vs_current_view = vrp1_current_view;
+    vsp1->vs_last_view = vrp1_last_view;
+  } else {
+    BU_GETSTRUCT(vrp1, view_ring);
+    BU_LIST_APPEND(&vsp1->vs_headView.l, &vrp1->l);
+
+    vrp1->vr_id = 1;
+    vsp1->vs_current_view = vrp1;
+    vsp1->vs_last_view = vrp1;
+  }
 }
 
 void
@@ -4871,350 +4902,6 @@ char    **argv;
 
   Tcl_AppendResult(interp, "view_ring: unrecognized command - ", argv[1], (char *)NULL);
   return TCL_ERROR;
-}
-
-
-int
-f_add_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  struct view_ring *vrp;
-  struct view_ring *lv;
-  struct bu_vls vls;
-
-  if(argc != 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help add_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* save current Viewrot */
-  bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-  /* save current toViewcenter */
-  bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-  /* save current Viewscale */
-  view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-
-  /* allocate memory and append to list */
-  BU_GETSTRUCT(vrp, view_ring);
-  lv = BU_LIST_LAST(view_ring, &view_state->vs_headView.l);
-  BU_LIST_APPEND(&lv->l, &vrp->l);
-
-  /* assign a view number */
-  vrp->vr_id = lv->vr_id + 1;
-
-  view_state->vs_last_view = view_state->vs_current_view;
-  view_state->vs_current_view = vrp;
-  (void)mged_svbase();
-
-  return TCL_OK;
-}
-
-
-int
-f_delete_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  int n;
-  struct view_ring *vrp;
-
-  struct bu_vls vls;
-
-  if(argc != 2){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help delete_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* search for view with id of n */
-  n = atoi(argv[1]);
-  for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)){
-    if(vrp->vr_id == n)
-      break;
-  }
-
-  if(BU_LIST_IS_HEAD(vrp, &view_state->vs_headView.l)){
-    Tcl_AppendResult(interp, "delete_view: ", argv[1], " is not a valid view\n",
-		     (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* check to see if this is the last view in the list */
-  if(BU_LIST_IS_HEAD(vrp->l.forw, &view_state->vs_headView.l) &&
-     BU_LIST_IS_HEAD(vrp->l.back, &view_state->vs_headView.l)){
-    Tcl_AppendResult(interp, "delete_view: Cannot delete the only remaining view!\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(vrp == view_state->vs_current_view){
-    if(view_state->vs_current_view == view_state->vs_last_view){
-      view_state->vs_current_view = BU_LIST_PNEXT(view_ring, view_state->vs_last_view);
-      view_state->vs_last_view = view_state->vs_current_view;
-    }else
-      view_state->vs_current_view = view_state->vs_last_view;
-
-    bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-    view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-    new_mats();
-    (void)mged_svbase();
-  }else if(vrp == view_state->vs_last_view)
-    view_state->vs_last_view = view_state->vs_current_view;
-
-  BU_LIST_DEQUEUE(&vrp->l);
-  bu_free((genptr_t)vrp, "f_delete_view");
-
-  return TCL_OK;
-}
-
-
-int
-f_get_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  struct bu_vls vls;
-  struct view_ring *vrp;
-
-  if(argc < 1 || 2 < argc){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help get_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* return current view */
-  if(argc == 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%d", view_state->vs_current_view->vr_id);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(strcmp("-a", argv[1])){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help get_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  bu_vls_init(&vls);
-  for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)){
-    bu_vls_printf(&vls, "%d", vrp->vr_id);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-    bu_vls_trunc(&vls, 0);
-  }
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-}
-
-
-int
-f_goto_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  int n;
-  struct view_ring *vrp;
-  struct bu_vls vls;
-
-  if(argc != 2){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help goto_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* search for view with id of n */
-  n = atoi(argv[1]);
-  for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l)){
-    if(vrp->vr_id == n)
-      break;
-  }
-
-  if(BU_LIST_IS_HEAD(vrp, &view_state->vs_headView.l)){
-    Tcl_AppendResult(interp, "goto_view: ", argv[1], " is not a valid view\n",
-		     (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  /* nothing to do */
-  if(vrp == view_state->vs_current_view)
-    return TCL_OK;
-
-  /* save current Viewrot */
-  bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-  /* save current toViewcenter */
-  bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-  /* save current Viewscale */
-  view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-
-  view_state->vs_last_view = view_state->vs_current_view;
-  view_state->vs_current_view = vrp;
-  bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-  bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-  view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-
-  new_mats();
-  (void)mged_svbase();
-
-  return TCL_OK;
-}
-
-
-int
-f_next_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  struct bu_vls vls;
-
-  if(argc != 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help next_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* check to see if this is the last view in the list */
-  if(BU_LIST_IS_HEAD(view_state->vs_current_view->l.forw, &view_state->vs_headView.l) &&
-     BU_LIST_IS_HEAD(view_state->vs_current_view->l.back, &view_state->vs_headView.l))
-    return TCL_OK;
-
-  /* save current Viewrot */
-  bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-  /* save current toViewcenter */
-  bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-  /* save current Viewscale */
-  view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-
-  view_state->vs_last_view = view_state->vs_current_view;
-  view_state->vs_current_view = BU_LIST_PNEXT(view_ring, view_state->vs_current_view);
-  if(BU_LIST_IS_HEAD(view_state->vs_current_view, &view_state->vs_headView.l))
-    view_state->vs_current_view = BU_LIST_FIRST(view_ring, &view_state->vs_headView.l);
-  bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-  bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-  view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-
-  new_mats();
-  (void)mged_svbase();
-
-  return TCL_OK;
-}
-
-
-int
-f_prev_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  struct bu_vls vls;
-
-  if(argc != 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help prev_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* check to see if this is the last view in the list */
-  if(BU_LIST_IS_HEAD(view_state->vs_current_view->l.forw, &view_state->vs_headView.l) &&
-     BU_LIST_IS_HEAD(view_state->vs_current_view->l.back, &view_state->vs_headView.l))
-    return TCL_OK;
-
-  /* save current Viewrot */
-  bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-  /* save current toViewcenter */
-  bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-  /* save current Viewscale */
-  view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-
-  view_state->vs_last_view = view_state->vs_current_view;
-  view_state->vs_current_view = BU_LIST_PLAST(view_ring, view_state->vs_current_view);
-  if(BU_LIST_IS_HEAD(view_state->vs_current_view, &view_state->vs_headView.l))
-    view_state->vs_current_view = BU_LIST_LAST(view_ring, &view_state->vs_headView.l);
-  bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-  bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-  view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-
-  new_mats();
-  (void)mged_svbase();
-
-  return TCL_OK;
-}
-
-
-int
-f_toggle_view(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-  struct view_ring *save_last_view;
-  struct bu_vls vls;
-
-  if(argc != 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help toggle_view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  /* save current Viewrot */
-  bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-  /* save current toViewcenter */
-  bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-  /* save current Viewscale */
-  view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-
-  save_last_view = view_state->vs_last_view;
-  view_state->vs_last_view = view_state->vs_current_view;
-  view_state->vs_current_view = save_last_view;
-  bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-  bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-  view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-
-  new_mats();
-  (void)mged_svbase();
-
-  return TCL_OK;
 }
 
 int
