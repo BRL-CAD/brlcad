@@ -34,7 +34,6 @@ static char RCSpolylib[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
-#include <setjmp.h>
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
