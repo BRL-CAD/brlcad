@@ -337,6 +337,24 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 }
 
 /*
+ *			R T _ D E F O V E R L A P
+ *
+ *  Default handler for overlaps in rt_boolfinal().
+ */
+int
+rt_defoverlap( ap, pp, name1, name2 )
+register struct application	*ap;
+register struct partition	*pp;
+char				*name1;
+char				*name2;
+{
+	rt_log("OVERLAP: %s %s (x%d y%d lvl%d)\n",
+		name1, name2,
+		ap->a_x, ap->a_y, ap->a_level );
+	rt_pr_pt( ap->a_rt_i, pp );
+}
+
+/*
  *			R T _ B O O L F I N A L
  *
  * For each partition, evaluate the boolean expression tree.
@@ -442,11 +460,16 @@ struct application *ap;
 				pp->pt_inhit->hit_dist
 				> OVERLAP_TOL /* Permissable overlap */
 			   ) )  {
-				rt_log("OVERLAP: %s %s (x%d y%d lvl%d)\n",
-					regp->reg_name,
-					lastregion->reg_name,
-					ap->a_x, ap->a_y, ap->a_level );
-				rt_pr_pt( ap->a_rt_i, pp );
+			   	/*
+			   	 *  Hand overlap to application-specific
+			   	 *  overlap handler, or default.
+			   	 */
+			   	if( ap->a_overlap == RT_AFN_NULL )
+			   		ap->a_overlap = rt_defoverlap;
+				ap->a_overlap(	ap,
+						pp,
+						regp->reg_name,
+						lastregion->reg_name );
 			} else {
 				/* last region is air, replace with solid */
 				if( lastregion->reg_aircode != 0 )
@@ -472,8 +495,11 @@ struct application *ap;
 			pp=pp->pt_forw;
 			DEQUEUE_PT( newpp );
 			newpp->pt_regionp = lastregion;
-			if(	lastregion == FinalHdp->pt_back->pt_regionp
-			    &&	rt_fdiff(	newpp->pt_inhit->hit_dist,
+			if( hitcnt > 1 )  {
+				/* Overlapping partition, discard it.	*/
+				FREE_PT(newpp, ap->a_resource);
+			}  else if( lastregion == FinalHdp->pt_back->pt_regionp
+			         &&  rt_fdiff(	newpp->pt_inhit->hit_dist,
 					FinalHdp->pt_back->pt_outhit->hit_dist
 					) == 0
 			)  {
