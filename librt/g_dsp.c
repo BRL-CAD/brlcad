@@ -1101,11 +1101,21 @@ isect_ray_triangle(struct isect_stuff *isect,
     double toldist;	/* distance tolerance from isect->tol */
 
     if (RT_G_DEBUG & DEBUG_HF) {
+	fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
 
-	bu_log("isect_ray_triangle...\n  A %g %g %g\n  B %g %g %g\n  C %g %g %g\n",
-	       V3ARGS(A),
-	       V3ARGS(B),
-	       V3ARGS(C));
+
+	MAT4X3PNT(P, stom, A);
+	bu_log("isect_ray_triangle...\n  A %g %g %g  (%g %g %g)\n",
+	       V3ARGS(A), V3ARGS(P));
+
+	MAT4X3PNT(P, stom, B);
+	bu_log("  B %g %g %g  (%g %g %g)\n",
+	       V3ARGS(B), V3ARGS(P));
+
+	MAT4X3PNT(P, stom, C);
+	bu_log("  C %g %g %g  (%g %g %g)\n",
+	       V3ARGS(C), V3ARGS(P));
+
     }
     VSUB2(AB, B, A);
     VSUB2(AC, C, A);
@@ -1500,8 +1510,10 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     struct hit *hitp;
     int hitf = 0;	/* bit flags for valid hits in hits */
     int cond, i;
+    int hitcount = 0;
     point_t bbmin, bbmax;
     double dot;
+    double v1, v2;
 
 
     dlog("isect_ray_cell_top\n");
@@ -1557,7 +1569,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	/* private */
 	hits[0].hit_surfno = isect->dmin;
 
-	/* XXX need to fill in rest of hit struct ?*/
+	hitcount++;
+
 	hitf = 1;
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    dot = VDOT(hits[0].hit_normal, isect->r.r_dir);
@@ -1579,7 +1592,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	/* private */
 	hits[3].hit_surfno = isect->dmax;
 
-	/* XXX need to fill in rest of hit struct ? */
+	hitcount++;
+
 	hitf |= 8;
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    dot = VDOT(hits[3].hit_normal, isect->r.r_dir);
@@ -1603,6 +1617,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	hits[1].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
 	hits[1].hit_surfno = ZTOP; /* indicate we hit the top */
 
+	hitcount++;
 	hitf |= 2; 
 	dlog("  hit triangle 1 (alpha: %g beta:%g alpha+beta: %g)\n",
 	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1]);
@@ -1618,6 +1633,8 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	hits[2].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
 	hits[2].hit_surfno = ZTOP; /* indicate we hit the top */
 
+	hitcount++;
+
 	hitf |= 4;
 	dlog("  hit triangle 2 (alpha: %g beta:%g alpha+beta: %g)\n",
 	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1]);
@@ -1626,36 +1643,10 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1], cond);
     }
 
-    /* XXX if we hit both triangles, then the normals must oppose along
-     * the ray for them to both count
-     */
-    if ( (hitf & 2)  && (hitf & 4) ) {
-	double dot1, dot2;
-
-	dot1 = VDOT(hits[1].hit_normal, isect->r.r_dir);
-	dot2 = VDOT(hits[2].hit_normal, isect->r.r_dir);
-
-
-	dlog("double-triangle hit.  Checking for proper normals\n");
-
-	/* BTW: This non-toleranced check works only because
-	 * isect_ray_triangle does the tolerancing for us
-	 */
-	if (dot1 > 0 && dot2 > 0) {
-	    /* pick the furthest one */
-	    bu_log("%s:%d Write code here\n", __FILE__, __LINE__);
-	    bu_bomb("");
-	} else if (dot1 < 0 && dot2 < 0) {
-	    /* pick the closest one */
-	    bu_log("%s:%d Write code here\n", __FILE__, __LINE__);
-	    bu_bomb("");
-	}
-    }
-
-
-
 
     if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("hitcount: %d flags: 0x%0x\n", hitcount, hitf);
+
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
 	for (i=0 ; i < 4 ; i++) {
 	    if (hitf & (1<<i)) {
@@ -1672,37 +1663,58 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	bu_log("assembling segs\n");
     }
 
-    /* XXX check to see if we have an odd number of hits 
-     * BEFORE we start assembling
-     */
-
     /* fill out the segment structures */
+
     hitp = 0;
     for (i = 0 ; i < 4 ; i++ ) {
 	if (hitf & (1<<i)) {
 	    if (hitp) {
+
+		v2 = VDOT(isect->r.r_dir, hits[i].hit_normal);
+
+		/* if we have two entry points then pick the first one */
+		if ( v2 < 0.0 ) {
+		    dlog("v2(%g) < 0.0\n", v2);
+		    if (hitp->hit_dist > hits[i].hit_dist) {
+			dlog("skipping duplicate entry point at dist %g\n",
+			     hitp->hit_dist);
+
+			hitp = &hits[i];
+		    } else {
+			dlog("skipping duplicate entry point at dist %g\n",
+			     hits[i].hit_dist);
+		    }
+
+		    continue;
+		}
+
 		/* create seg with hits[i].hit_point); as out point */
 		if (RT_G_DEBUG & DEBUG_HF) {
 		    /* int/float conv */
 		    VMOVE(bbmin, dsp_bb->dspb_rpp.dsp_min);
 		    VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
 		}
-
+		
 		ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255);
 		hitp = 0;
 	    } else {
+		dot = VDOT(isect->r.r_dir, hits[i].hit_normal);
+		if (dot >= 0.0)
+		    continue;
+		
 		/* remember hits[i].hit_point); as in point */
 		if (RT_G_DEBUG & DEBUG_HF) {
 		    bu_log("in-hit at dist %g\n", hits[i].hit_dist);
 		}
 		hitp = &hits[i];
+		v1 = dot;
 	    }
-	}
+	} else dlog("no data at %d\n", i);
     }
 
-    if (hitp) {
+    if (hitp && hitcount > 1) {
 	point_t p1, p2;
-
+	
 	bu_log("----------------ERROR incomplete segment-------------\n");
 	bu_log("  pixel %d %d\n", isect->ap->a_x, isect->ap->a_y);
 
