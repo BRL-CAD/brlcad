@@ -1463,3 +1463,308 @@ CONST char				*value;	/* string containing value */
 	/* reconvert with optional units */
 	*p = bu_mm_value(value);
 }
+
+#define STATE_UNKNOWN		0
+#define STATE_IN_KEYWORD	1
+#define STATE_IN_VALUE		2
+#define STATE_IN_QUOTED_VALUE	3
+
+char *
+bu_key_eq_to_key_val( in )
+CONST char *in;
+{
+	CONST char *iptr=in;
+	char *optr;
+	char *out;
+	int state=STATE_IN_KEYWORD;
+
+	/* output string should be same length as input string */
+	out = (char *)bu_malloc( strlen( in ) + 1, "bu_key_eq_to_key_val:out" );
+	optr = out;
+
+	while ( *iptr )
+	{
+		char *prev='\0';
+
+		switch( state )
+		{
+			case STATE_IN_KEYWORD:
+				/* skip leading white space */
+				while( isspace( *iptr ) )
+					iptr++;
+
+				/* copy keyword up to '=' (skipping white space) */
+				while( *iptr != '=' )
+				{
+					if( isspace( *iptr ) )
+						iptr++;
+					else
+						*optr++ = *iptr++;
+				}
+
+				/* add a single space after keyword */
+				*optr++ = ' ';
+
+				/* skip over '=' in input */
+				iptr++;
+
+				/* switch to value state */
+				state = STATE_IN_VALUE;
+
+				break;
+			case STATE_IN_VALUE:
+				/* skip excess white space */
+				while( isspace( *iptr ) )
+					iptr++;
+
+				/* check for quoted value */
+				if( *iptr == '"' )
+				{
+					/* switch to quoted value state */
+					state = STATE_IN_QUOTED_VALUE;
+
+					/* skip over '"' */
+					iptr++;
+
+					break;
+				}
+
+				/* copy value up to next white space or end of string */
+				while( *iptr && !isspace( *iptr ) )
+					*optr++ = *iptr++;
+
+				if( *iptr ) /* more to come */
+				{
+					*optr++ = ' ';
+					/* switch back to keyword state */
+					state = STATE_IN_KEYWORD;
+				}
+
+				break;
+			case STATE_IN_QUOTED_VALUE:
+				/* copy byte-for-byte to end quote (watch out for escaped quote)
+				 * replace quotes with '{' '}' */
+
+				*optr++ = '{';
+				while( 1 )
+				{
+					if( *iptr == '"' && *prev != '\\' )
+					{
+						*optr++ = '}';
+						iptr++;
+						break;
+					}
+					*prev = *optr;
+					*optr++ = *iptr++;
+				}
+
+				if( *iptr ) /* more to come */
+				{
+					*optr++ = ' ';
+					/* switch back to keyword state */
+					state = STATE_IN_KEYWORD;
+				}
+
+				break;
+		}
+	}
+
+	*optr++ = '\0';
+	return( out );
+}
+
+char *
+bu_shader_to_key_val( in )
+CONST char *in;
+{
+	CONST char *iptr=in;
+	char *out;
+	char *out_params=(char *)NULL;
+	CONST char *shader;
+	int shader_name_len=0;
+
+	/* skip over shader name */
+	while( isspace( *iptr ) )
+		iptr++;
+
+	shader = iptr;
+	while( *iptr && !isspace( *iptr ) )
+		iptr++;
+	shader_name_len = iptr - shader;
+
+	while( isspace( *iptr ) )
+		iptr++;
+
+	/* iptr now points at start of parameters */
+	if( *iptr )
+		out_params = bu_key_eq_to_key_val( iptr );
+
+	if( out_params )
+	{
+		out = bu_malloc( strlen( out_params ) + shader_name_len + 1, "bu_shader_to key_val:out" );
+		strncpy( out, shader, shader_name_len );
+		strcat( out, " " );
+		strcat( out, out_params );
+		bu_free( out_params, "bu_shader_to key_val:out_params" );
+	}
+	else
+	{
+		out = bu_malloc( shader_name_len + 1, "bu_shader_to key_val:out" );
+		strncpy( out, shader, shader_name_len );
+	}
+
+	return( out );
+}
+
+char *
+bu_key_val_to_key_eq( in )
+CONST char *in;
+{
+	char *out;
+	char *optr;
+	CONST char *iptr=in;
+	int list_depth=0;
+	int state=STATE_IN_KEYWORD;
+
+	/* output string should be same length as input string */
+	out = (char *)bu_malloc( strlen( in ) + 1, "bu_key_val_to_key_eq:out" );
+	optr = out;
+
+	while( *iptr )
+	{
+		char *prev = '\0';
+
+		switch( state )
+		{
+			case STATE_IN_KEYWORD:
+				/* skip leading white space */
+				while( *iptr && isspace( *iptr ) )
+					iptr++;
+
+				/* copy keyword up to first ' ' */
+				while( *iptr && !isspace( *iptr ) )
+					*optr++ = *iptr++;
+
+				/* add a '=' after keyword */
+				*optr++ = '=';
+
+				/* skip over ' ' in input */
+				iptr++;
+
+				/* switch to value state */
+				state = STATE_IN_VALUE;
+
+				break;
+			case STATE_IN_VALUE:
+				/* skip excess white space */
+				while( *iptr && isspace( *iptr ) )
+					iptr++;
+
+				/* check for list start */
+				if( *iptr == '{' )
+				{
+					/* switch to quoted value state */
+					state = STATE_IN_QUOTED_VALUE;
+
+					/* skip over '{' */
+					iptr++;
+
+					break;
+				}
+
+				/* copy value up to next white space or end of string */
+				while( *iptr && !isspace( *iptr ) )
+					*optr++ = *iptr++;
+
+				if( *iptr ) /* more to come */
+				{
+					*optr++ = ' ';
+					/* switch back to keyword state */
+					state = STATE_IN_KEYWORD;
+				}
+
+				break;
+			case STATE_IN_QUOTED_VALUE:
+				/* copy byte-for-byte to of list
+				 * watch out for escaped quotes or included lists.
+				 * replace ending '}' with '"' */
+
+				list_depth++;
+				*optr++ = '\"';
+				while( 1 )
+				{
+					if( *iptr == '}' )
+					{
+						if( *prev != '\\' && list_depth == 1 )
+						{
+							*optr++ = '"';
+							iptr++;
+							break;
+						}
+						else if( *prev != '\\' )
+							list_depth--;
+					}
+					else if( *iptr == '{' && *prev != '\\' )
+						list_depth++;
+
+					*prev = *optr;
+					*optr++ = *iptr++;
+				}
+
+				if( *iptr ) /* more to come */
+				{
+					*optr++ = ' ';
+					/* switch back to keyword state */
+					state = STATE_IN_KEYWORD;
+				}
+
+				break;
+		}
+	}
+
+	*optr++ = '\0';
+	return( out );
+}
+
+char *
+bu_shader_to_key_eq( in )
+CONST char *in;
+{
+	CONST char *iptr=in;
+	char *out;
+	char *out_params=(char *)NULL;
+	CONST char *shader;
+	int shader_name_len=0;
+
+	/* skip over shader name */
+	while( isspace( *iptr ) )
+		iptr++;
+
+	shader = iptr;
+	while( *iptr && !isspace( *iptr ) )
+		iptr++;
+	shader_name_len = iptr - shader;
+
+	while( isspace( *iptr ) )
+		iptr++;
+
+	/* iptr now points at start of parameters */
+	if( *iptr )
+		out_params = bu_key_val_to_key_eq( iptr );
+
+	if( out_params )
+	{
+		out = bu_malloc( strlen( out_params ) + shader_name_len + 1, "bu_shader_to key_val:out" );
+		strncpy( out, shader, shader_name_len );
+		strcat( out, " " );
+		strcat( out, out_params );
+		bu_free( out_params, "bu_shader_to key_val:out_params" );
+	}
+	else
+	{
+		out = bu_malloc( shader_name_len + 1, "bu_shader_to key_val:out" );
+		strncpy( out, shader, shader_name_len );
+	}
+
+	return( out );
+}
