@@ -374,6 +374,7 @@ struct shell *s;
  *
  *  Generic list checker.
  */
+void
 nmg_ck_list( hd, str )
 struct nmg_list	*hd;
 char		*str;
@@ -1628,7 +1629,7 @@ struct edgeuse *eudst, *eusrc;
 	eudst->radial_p = eusrc;
 }
 
-/*	N M G _ U N G L U E 
+/*			N M G _ U N G L U E E D G E
  *
  *	If edgeuse is part of a shared edge (more than one pair of edgeuses
  *	on the edge), it and its mate are "unglued" from the edge, and 
@@ -2180,6 +2181,7 @@ fastf_t		tol;
  *	enumerated in "fulist", glue the edges of the faces together
  *
  */
+void
 nmg_gluefaces(fulist, n)
 struct faceuse *fulist[];
 int n;
@@ -2687,7 +2689,7 @@ struct loopuse *lu;
  *
  *
  *	combine adjacent loops within a face which serve no apparent purpose
- *	by remaining separate and distinct.
+ *	by remaining separate and distinct.  Kill "wire-snakes" in face.
  */
 void nmg_simplify_face(fu)
 struct faceuse *fu;
@@ -2705,6 +2707,9 @@ struct faceuse *fu;
 }
 
 
+/*
+ *			N M G _ S I M P L I F Y _ S H E L L
+ */
 void nmg_simplify_shell(s)
 struct shell *s;
 {
@@ -2715,6 +2720,105 @@ struct shell *s;
 		nmg_simplify_face(fu);
 	}
 }
+
+
+/*	N M G _ D E M O T E _ L U
+ *
+ *	Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
+ *
+ *	Explicit Return
+ *		1	Loopuse was on a single vertex.  Nothing done
+ *		0	Loopse edges moved to shell, loopuse deleted.
+ */
+int nmg_demote_lu(lu1)
+struct loopuse *lu1;
+{
+	struct edgeuse *eu1;
+	struct shell *s;
+
+	NMG_CK_LOOPUSE(lu1);
+
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log("demoting loop\n");
+
+	if (NMG_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC) {
+		if (rt_g.NMG_debug) {
+			register struct vertexuse *vu;
+			vu = NMG_LIST_FIRST(vertexuse, &lu1->down_hd);
+			rt_log("trying to demote a loopuse of a single vertex\n");
+			if (vu->v_p->vg_p) {
+				VPRINT("Vertex: ", vu->v_p->vg_p->coord);
+			}
+		}
+		return(1);
+	}
+
+	if (NMG_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC)
+		rt_bomb("nmg_demote_lu: bad loopuse child\n");
+
+	/* get the parent shell */
+	s = nmg_lups(lu1);
+	NMG_CK_SHELL(s);
+
+	/* move all edgeuses (&mates) to shell
+	 */
+	while ( NMG_LIST_NON_EMPTY(&lu1->down_hd) ) {
+
+		eu1 = NMG_LIST_FIRST(edgeuse, &lu1->down_hd);
+		NMG_CK_EDGEUSE(eu1);
+		NMG_CK_EDGE(eu1->e_p);
+		NMG_CK_EDGEUSE(eu1->eumate_p);
+		NMG_CK_EDGE(eu1->eumate_p->e_p);
+
+		NMG_LIST_DEQUEUE(&eu1->eumate_p->l);
+		NMG_LIST_APPEND(&s->eu_hd, &eu1->eumate_p->l);
+
+		NMG_LIST_DEQUEUE(&eu1->l);
+		NMG_LIST_APPEND(&s->eu_hd, &eu1->l);
+
+		eu1->up.s_p = eu1->eumate_p->up.s_p = s;
+	}
+
+	if (NMG_LIST_NON_EMPTY(&lu1->lumate_p->down_hd))
+		rt_bomb("loopuse mates don't have same # of edges\n");
+
+	nmg_klu(lu1);
+
+	return(0);
+}
+
+/*	N M G _ D E M O T E _ E U
+ *
+ *	Demote a wire edge into a pair of verticies
+ *
+ *	Explicit Retruns
+ *		1	Edge was not a wire edge.  Nothing done.
+ *		0	edge decomposed into verticies.
+ */
+int nmg_demote_eu(eu)
+struct edgeuse *eu;
+{
+	struct shell	*s;
+
+	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC)
+		return(1);
+	s = eu->up.s_p;
+	NMG_CK_SHELL(s);
+
+	NMG_CK_EDGEUSE(eu);
+	nmg_ensure_vertex(eu->vu_p->v_p, s);
+
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	nmg_ensure_vertex(eu->eumate_p->vu_p->v_p, s);
+
+	nmg_keu(eu);
+	return(0);
+}
+
+
+
+
+
 #if 0
 
 
