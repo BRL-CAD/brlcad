@@ -31,6 +31,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	include <sys/ioctl_compat.h>
 #	define TAB3 (TAB1|TAB2)
 #endif
+#if defined(__bsdi__)
+#	include <sys/ioctl_compat.h>
+#	define TAB3 (TAB1|TAB2)
+#	define OCRNL   0000010
+#endif
 
 #include "machine.h"
 #include "externs.h"
