@@ -17,9 +17,9 @@ char	*Joverc		= "/usr/brl/lib/jove/joverc";
 			/* Where to search for the describe command */
 int	Dfltmode	= 0644;
 
-#ifdef BSD
+#ifdef pdp11
 char	*cerrfmt = "\\([^:]*\\):\\([0-9][0-9]*\\):";
-	/* C error scanf format string for errors of the form
+	/* Very old pdp11 C error scanf format string for errors of the form
 	 * filename:linenum: error message
 	 */
 #else
@@ -32,7 +32,8 @@ char	*cerrfmt = " \\* [FW] \\* :\\([^:]*\\): \\([0-9][0-9]*\\):";
 # else
 char	*cerrfmt = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";
 	/* C error scanf format string for errors of the form
-	 * "filename", line linenum: error message., used on SYSV.
+	 * "filename", line linenum: error message.
+	 * used on all SYSV and all modern BSD systems.
 	 */
 # endif
 #endif
