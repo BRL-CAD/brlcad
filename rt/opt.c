@@ -362,11 +362,24 @@ int get_args( int argc, register char **argv )
 
 		case 'P':
 			/* Number of parallel workers */
-			npsw = atoi( bu_optarg );
-			if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
-				fprintf(stderr,"abs(npsw) out of range 1..%d, using -P%d\n",
-					MAX_PSW, MAX_PSW);
-				npsw = MAX_PSW;
+			{
+				int avail_cpus;
+
+				avail_cpus = bu_avail_cpus();
+
+				npsw = atoi( bu_optarg );
+
+				if( npsw > avail_cpus ) {
+					fprintf( stderr, "Requesting %d cpus, only %d available. ",
+						 npsw, avail_cpus );
+					fprintf( stderr, "Will use %d.\n", avail_cpus );
+					npsw = avail_cpus;
+				}
+				if( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
+					fprintf(stderr,"abs(npsw) out of range 1..%d, using -P%d\n",
+						MAX_PSW, MAX_PSW);
+					npsw = MAX_PSW;
+				}
 			}
 			break;
 		case 'Q':
