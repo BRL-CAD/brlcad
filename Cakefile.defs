@@ -637,6 +637,29 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
+#ifdef n16
+/*	Encore Multi-Max */
+#	undef mmax
+#	define	MTYPE	mmax
+#	define	OPTIMIZER	-g
+#	if 1
+/*		No Parallel support */
+#	else
+/*		Parallel version */
+#		define	LD_OPTS	-m -X -z -AE /usr/lib/taskcrt0.o
+#		define	LIBRT_LIBES	-lpp
+#	endif
+#	define	LDFLAGS	LD_OPTS
+#	define	STANDARD_LIBES	-lm -lc
+#	define	LIBMALLOC	/* use vendor library */
+#	define	HAS_TCP	1
+#	define	LIBRT_TIMER	timerunix
+#	define	LIBPKG_CONFIG	/**/
+#	define	LIBFB_OBJS	if_remote
+#	define	LIBFB_CONFIG	-DIF_REMOTE
+#	define	LIBFB_LIBES	LIBPKG
+#endif
+
 /*
  *  Prototype System V machine
  */
