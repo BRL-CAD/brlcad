@@ -1546,11 +1546,6 @@ struct faceuse *fu;
 	NMG_CK_VERTEX(v1mate);
 	NMG_CK_VERTEX_G(v1mate->vg_p);
 
-	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		/* XXX edge sanity checking */
-		nmg_veu( &eu->up.lu_p->down_hd, eu->up.magic_p );
-	}
-
 	/*
 	 * First check the topology.  If the topology says that starting
 	 * vertex of this edgeuse is on the other face, enter the
@@ -1725,13 +1720,6 @@ struct faceuse *fu;
 		rt_log("\tdist to plane X: X > MAGNITUDE(edge)\n");
 
 out:
-	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		/* XXX edge sanity checking */
-		nmg_veu( &eu->up.lu_p->down_hd, eu->up.magic_p );
-	}
-	/* XXX Ensure that other face is still OK */
-	nmg_vfu( &fu->s_p->fu_hd, fu->s_p );
-
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_3edge_3face(, eu=x%x, fu=x%x) END\n", eu, fu);
 }
@@ -1783,8 +1771,6 @@ struct faceuse *fu;
 	 * them is split, it inserts a new edge AHEAD or
 	 * "nextward" of the current edgeuse.
 	 */ 
-	nmg_vfu( &fu->s_p->fu_hd, fu->s_p );
-	nmg_veu( &lu->down_hd, &lu->l.magic );
 	for( eu = RT_LIST_LAST(edgeuse, &lu->down_hd );
 	     RT_LIST_NOT_HEAD(eu,&lu->down_hd);
 	     eu = RT_LIST_PLAST(edgeuse,eu) )  {
@@ -1798,8 +1784,6 @@ struct faceuse *fu;
 
 		nmg_ck_lueu(lu, "nmg_isect_loop3p_face3p");
 	}
-	nmg_veu( &lu->down_hd, &lu->l.magic );
-	nmg_vfu( &fu->s_p->fu_hd, fu->s_p );
 }
 
 /*
@@ -2146,8 +2130,6 @@ CONST struct rt_tol	*tol;
 			pl1[0], pl1[1], pl1[2], pl1[3],
 			pl2[0], pl2[1], pl2[2], pl2[3]);
 	}
-	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 
 	if ( !V3RPP_OVERLAP(f2->fg_p->min_pt, f2->fg_p->max_pt,
 	    f1->fg_p->min_pt, f1->fg_p->max_pt) )  return;
@@ -2180,9 +2162,6 @@ rt_log("co-planar faces.\n");
 	}
 
 	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
-
-	nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
-	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 }
 
 /*
