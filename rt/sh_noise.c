@@ -68,7 +68,9 @@ struct gravel_specific {
 	vect_t	delta;
 	mat_t	m_to_sh;	/* model to shader space matrix */
 	mat_t	sh_to_m;	/* shader to model space matrix */
-	struct rt_vls	shader;
+	double max_delta;
+	double nsd;
+	int	shader_number;
 };
 
 /* The default values for the variables in the shader specific structure */
@@ -90,7 +92,9 @@ struct gravel_specific gravel_defaults = {
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0 },
-	{ 0, (char *)0, 0, 0, 0 }
+	0.0,
+	0.0,
+	0
 	};
 
 #define SHDR_NULL	((struct gravel_specific *)0)
@@ -135,7 +139,8 @@ struct bu_structparse gravel_parse_tab[] = {
 
 HIDDEN int	gravel_setup(), gravel_render(),
 		fbmbump_render(), turbump_render(),
-		fbmcolor_render(), turcolor_render();
+		fbmcolor_render(), turcolor_render(),
+		fractal_render();
 HIDDEN void	gravel_print(), gravel_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
@@ -145,22 +150,27 @@ HIDDEN void	gravel_print(), gravel_free();
  * from a set of source functions.  There you will find that "glass" "mirror"
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
+ *
+ * WARNING:  The order of this table is critical for these shaders.
  */
 struct mfuncs gravel_mfuncs[] = {
 	{"gravel",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	gravel_setup,	gravel_render,	gravel_print,	gravel_free },
+	gravel_setup,	fractal_render,	gravel_print,	gravel_free },
 
 	{"fbmbump",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	gravel_setup,	fbmbump_render,	gravel_print,	gravel_free },
+	gravel_setup,	fractal_render,	gravel_print,	gravel_free },
 
 	{"turbump",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	gravel_setup,	turbump_render, gravel_print,	gravel_free },
+	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
 	{"fbmcolor",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	gravel_setup,	fbmcolor_render, gravel_print,	gravel_free },
+	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
 	{"turcolor",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	gravel_setup,	turcolor_render, gravel_print,	gravel_free },
+	gravel_setup,	fractal_render, gravel_print,	gravel_free },
+
+	{"grunge",	0,	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	gravel_setup,	fractal_render, gravel_print,	gravel_free },
 
 	{(char *)0,	0,	0,		0,		0,
 	0,		0,		0,		0 }
@@ -185,6 +195,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_t	tmp;
 	mat_t model_to_region;
 	vect_t	bb_min, bb_max, v_tmp;
+	int i;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -207,24 +218,16 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( bu_struct_parse( matparm, gravel_parse_tab, (char *)gravel_sp ) < 0 )
 		return(-1);
 
-	bu_vls_init(&gravel_sp->shader);
-	bu_vls_strcpy(&gravel_sp->shader, rp->reg_mater.ma_shader);
-
-	/* Optional:
-	 *
-	 * If the shader needs to operate in a coordinate system which stays
-	 * fixed on the region when the region is moved (as in animation)
-	 * we need to get a matrix to perform the appropriate transform(s).
-	 *
-	 * db_shader_mat returns a matrix which maps points on/in the region
-	 * into the unit cube.  This unit cube is formed by first mapping from
-	 * world coordinates into "region coordinates" (the coordinate system
-	 * in which the region is defined).  Then the bounding box of the 
-	 * region is used to establish a mapping to the unit cube
-	 *
-*	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp, xxx_sp->xxx_min,
-*		xxx_sp->xxx_max);
-	 */
+	/* figure out which shader is really being called */
+	for (i = 0 ; gravel_mfuncs[i].mf_name ; i++ ) {
+		if (!strcmp(gravel_mfuncs[i].mf_name, mfp->mf_name))
+			goto found;
+	}
+	rt_log("shader name \"%s\" not recognized, assuming \"%s\"\n",
+		mfp->mf_name, gravel_mfuncs[0].mf_name);
+	i = 0;
+found:
+	gravel_sp->shader_number = i;
 
 	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
 
@@ -250,6 +253,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	mat_mul2(tmp, gravel_sp->m_to_sh);
 
 	mat_inv(gravel_sp->sh_to_m, gravel_sp->m_to_sh);
+
+	gravel_sp->nsd = 1.0 / 
+		pow(gravel_sp->lacunarity, gravel_sp->octaves);
 
 	if( rdebug&RDEBUG_SHADE) {
 		bu_struct_print( " Parameters:", gravel_print_tab, (char *)gravel_sp );
@@ -277,10 +283,181 @@ HIDDEN void
 gravel_free( cp )
 char *cp;
 {
+	register struct gravel_specific *gravel_sp =
+		(struct gravel_specific *)cp;
+
 	rt_free( cp, "gravel_specific" );
 }
+#define RESCALE_NOISE(n) n = n+1.0
+
+/*
+ *	N O R M _ N O I S E
+ *
+ *	Apply a noise function to the surface normal
+ */
+static void
+norm_noise(pt, val, gravel_sp, func, swp, rescale)
+point_t pt;
+double val;
+struct gravel_specific *gravel_sp;
+double (*func)();
+struct shadework	*swp;	/* defined in material.h */
+int rescale;
+{
+	vect_t N, tmp;
+	point_t u_pt, v_pt;
+	vect_t u_vec, v_vec;
+	double u_val, v_val;
+	mat_t u_mat, v_mat;
 
-/*
+	/* dork the normal around
+	 * Convert the normal to shader space, get u,v coordinate system
+	 */
+
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("Model space Normal", swp->sw_hit.hit_normal);
+	}
+	MAT4X3VEC(N, gravel_sp->m_to_sh, swp->sw_hit.hit_normal);
+	VUNITIZE(N);
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("Shader space Normal", N);
+	}
+
+	/* construct coordinate system from vectors perpendicular to normal */
+	bn_vec_perp(u_vec, N);
+	VCROSS(v_vec, N, u_vec);
+
+	/* compute noise function at position slightly off pt in both
+	 * U and V directions to get change in values
+	 */
+	VJOIN1(u_pt, pt, gravel_sp->nsd, u_vec);
+	u_val = func(u_pt, gravel_sp->h_val, gravel_sp->lacunarity,
+		gravel_sp->octaves);
+
+	if (rescale) RESCALE_NOISE(u_val);
+
+	VJOIN1(v_pt, pt, gravel_sp->nsd, v_vec);
+	v_val = func(v_pt, gravel_sp->h_val, gravel_sp->lacunarity,
+		gravel_sp->octaves);
+
+	if (rescale) RESCALE_NOISE(v_val);
+
+	/* construct normal rotation about U and V vectors based upon 
+	 * variation in surface in each direction.  Apply the result to
+	 * the surface normal.
+	 */
+	bn_mat_arb_rot(u_mat, pt, u_vec, (val - v_val) * gravel_sp->max_angle);
+	MAT4X3VEC(tmp, u_mat, N);
+
+	bn_mat_arb_rot(v_mat, pt, v_vec, (val - u_val) * gravel_sp->max_angle);
+
+	MAT4X3VEC(N, v_mat, tmp);
+
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("old normal", swp->sw_hit.hit_normal);
+	}
+
+	MAT4X3VEC(swp->sw_hit.hit_normal, gravel_sp->sh_to_m, N);
+	VUNITIZE(swp->sw_hit.hit_normal);
+	if( rdebug&RDEBUG_SHADE) {
+		VPRINT("new normal", swp->sw_hit.hit_normal);
+	}
+}
+
+/*
+ *	F R A C T A L _ R E N D E R
+ *
+ *	This is called (from viewshade() in shade.c) once for each hit point
+ *	to be shaded.  The purpose here is to fill in values in the shadework
+ *	structure.
+ */
+int
+fractal_render( ap, pp, swp, dp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;	/* defined in material.h */
+char			*dp;	/* ptr to the shader-specific struct */
+{
+	register struct gravel_specific *gravel_sp =
+		(struct gravel_specific *)dp;
+	point_t pt;
+	double val;
+
+	/* check the validity of the arguments we got */
+	RT_AP_CHECK(ap);
+	RT_CHECK_PT(pp);
+	CK_gravel_SP(gravel_sp);
+
+	if( rdebug&RDEBUG_SHADE)
+		bu_struct_print( "gravel_render Parameters:", gravel_print_tab, (char *)gravel_sp );
+
+	/* If we are performing the shading in "region" space, we must 
+	 * transform the hit point from "model" space to "region" space.
+	 * See the call to db_region_mat in gravel_setup().
+	 */
+	MAT4X3PNT(pt, gravel_sp->m_to_sh, swp->sw_hit.hit_point);
+
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("%s:%d gravel_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
+		__FILE__, __LINE__,
+		gravel_mfuncs[gravel_sp->shader_number].mf_name,
+		V3ARGS(swp->sw_hit.hit_point),
+		V3ARGS(pt) );
+	}
+
+	switch (gravel_sp->shader_number) {
+	case 0:	/* gravel */
+		val = bn_noise_turb(pt, gravel_sp->h_val,
+			gravel_sp->lacunarity, gravel_sp->octaves);
+		VSCALE(swp->sw_color, swp->sw_color, val);
+
+		norm_noise(pt, val, gravel_sp, bn_noise_turb, swp, 0);
+		break;
+	case 1:	/* fbmbump */
+		val = bn_noise_fbm(pt, gravel_sp->h_val,
+			gravel_sp->lacunarity, gravel_sp->octaves);
+		RESCALE_NOISE(val);
+		norm_noise(pt, val, gravel_sp, bn_noise_fbm, swp, 1);
+		break;
+	case 2:	/* turbump */
+		val = bn_noise_turb(pt, gravel_sp->h_val,
+			gravel_sp->lacunarity, gravel_sp->octaves);
+
+		norm_noise(pt, val, gravel_sp, bn_noise_turb, swp, 0);
+		break;
+	case 3:	/* fbmcolor */
+		val = bn_noise_fbm(pt, gravel_sp->h_val,
+			gravel_sp->lacunarity, gravel_sp->octaves);
+		RESCALE_NOISE(val);
+		VSCALE(swp->sw_color, swp->sw_color, val);
+		break;
+	case 4:	/* turcolor */
+		val = bn_noise_turb(pt, gravel_sp->h_val,
+			gravel_sp->lacunarity, gravel_sp->octaves);
+		VSCALE(swp->sw_color, swp->sw_color, val);
+		break;
+	case 5: /* grunge */
+		val = bn_noise_fbm(pt, gravel_sp->h_val,
+			gravel_sp->lacunarity, gravel_sp->octaves);
+		RESCALE_NOISE(val);
+		VSCALE(swp->sw_color, swp->sw_color, val);
+		norm_noise(pt, val, gravel_sp, bn_noise_fbm, swp, 1);
+		break;
+	}
+
+
+	/* shader must perform transmission/reflection calculations
+	 *
+	 * 0 < swp->sw_transmit <= 1 causes transmission computations
+	 * 0 < swp->sw_reflect <= 1 causes reflection computations
+	 */
+	if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+		(void)rr_render( ap, pp, swp );
+
+	return(1);
+}
+#if 0
+/*
  *	G R A V E L _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point
@@ -299,7 +476,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	point_t pt;
 	point_t u_pt, v_pt;
 	vect_t u_vec, v_vec;
-	double u_val, v_val, noise_space_delta;
+	double u_val, v_val;
 	mat_t u_mat, v_mat;
 	vect_t N, tmp;
 	double val;
@@ -321,7 +498,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("%s:%d gravel_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
-		bu_vls_addr(&gravel_sp->shader),
+		gravel_mfuncs[gravel_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}
@@ -348,15 +525,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 	bn_vec_perp(u_vec, N);
 	VCROSS(v_vec, N, u_vec);
 
-	noise_space_delta = 1.0 / 
-		pow(gravel_sp->lacunarity, gravel_sp->octaves);
-
-
-	VJOIN1(u_pt, pt, noise_space_delta, u_vec);
+	VJOIN1(u_pt, pt, gravel_sp->nsd, u_vec);
 	u_val = bn_noise_turb(u_pt, gravel_sp->h_val, gravel_sp->lacunarity,
 		gravel_sp->octaves);
 
-	VJOIN1(v_pt, pt, noise_space_delta, v_vec);
+	VJOIN1(v_pt, pt, gravel_sp->nsd, v_vec);
 	v_val = bn_noise_turb(v_pt, gravel_sp->h_val, gravel_sp->lacunarity,
 		gravel_sp->octaves);
 
@@ -368,7 +541,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		VPRINT("v_pt", v_pt);
 		
 		rt_log("u_val:%g  v_val:%g  nsd:%g\n",
-			u_val, v_val, noise_space_delta);
+			u_val, v_val, gravel_sp->nsd);
 	}
 
 	bn_mat_arb_rot(u_mat, pt, u_vec, (val - v_val) * gravel_sp->max_angle);
@@ -416,7 +589,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	point_t pt;
 	point_t u_pt, v_pt;
 	vect_t u_vec, v_vec;
-	double u_val, v_val, noise_space_delta;
+	double u_val, v_val;
 	mat_t u_mat, v_mat;
 	vect_t N, tmp;
 	double val;
@@ -427,7 +600,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_gravel_SP(gravel_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_struct_print( "gravel_render Parameters:", gravel_print_tab, (char *)gravel_sp );
+		bu_struct_print( "turcolor_render Parameters:", gravel_print_tab, (char *)gravel_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
@@ -438,7 +611,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("%s:%d gravel_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
-		bu_vls_addr(&gravel_sp->shader),
+		gravel_mfuncs[gravel_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}
@@ -479,7 +652,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	point_t pt;
 	point_t u_pt, v_pt;
 	vect_t u_vec, v_vec;
-	double u_val, v_val, noise_space_delta;
+	double u_val, v_val;
 	mat_t u_mat, v_mat;
 	vect_t N, tmp;
 	double val;
@@ -501,7 +674,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("%s:%d gravel_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
-		bu_vls_addr(&gravel_sp->shader),
+		gravel_mfuncs[gravel_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}
@@ -544,7 +717,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	point_t pt;
 	point_t u_pt, v_pt;
 	vect_t u_vec, v_vec;
-	double u_val, v_val, noise_space_delta;
+	double u_val, v_val;
 	mat_t u_mat, v_mat;
 	vect_t N, tmp;
 	double val;
@@ -555,7 +728,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_gravel_SP(gravel_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_struct_print( "gravel_render Parameters:", gravel_print_tab, (char *)gravel_sp );
+		bu_struct_print( "turbump_render Parameters:", gravel_print_tab, (char *)gravel_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
@@ -566,7 +739,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("%s:%d gravel_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
-		bu_vls_addr(&gravel_sp->shader),
+		gravel_mfuncs[gravel_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}
@@ -590,15 +763,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 	bn_vec_perp(u_vec, N);
 	VCROSS(v_vec, N, u_vec);
 
-	noise_space_delta = 1.0 / 
-		pow(gravel_sp->lacunarity, gravel_sp->octaves);
-
-
-	VJOIN1(u_pt, pt, noise_space_delta, u_vec);
+	VJOIN1(u_pt, pt, gravel_sp->nsd, u_vec);
 	u_val = bn_noise_turb(u_pt, gravel_sp->h_val, gravel_sp->lacunarity,
 		gravel_sp->octaves);
 
-	VJOIN1(v_pt, pt, noise_space_delta, v_vec);
+	VJOIN1(v_pt, pt, gravel_sp->nsd, v_vec);
 	v_val = bn_noise_turb(v_pt, gravel_sp->h_val, gravel_sp->lacunarity,
 		gravel_sp->octaves);
 
@@ -610,13 +779,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 		VPRINT("v_pt", v_pt);
 		
 		rt_log("u_val:%g  v_val:%g  nsd:%g\n",
-			u_val, v_val, noise_space_delta);
+			u_val, v_val, gravel_sp->nsd);
 	}
 
-	bn_mat_arb_rot(u_mat, pt, u_vec, (val - v_val) * gravel_sp->max_angle);
+	bn_mat_arb_rot(u_mat, pt, u_vec, (val-v_val) * gravel_sp->max_angle);
 	MAT4X3VEC(tmp, u_mat, N);
 
-	bn_mat_arb_rot(v_mat, pt, v_vec, (val - u_val) * gravel_sp->max_angle);
+	bn_mat_arb_rot(v_mat, pt, v_vec, (val-u_val) * gravel_sp->max_angle);
 	MAT4X3VEC(N, v_mat, tmp);
 
 	if( rdebug&RDEBUG_SHADE) {
@@ -664,10 +833,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 	point_t pt;
 	point_t u_pt, v_pt;
 	vect_t u_vec, v_vec;
-	double u_val, v_val, noise_space_delta;
+	double u_val, v_val;
 	mat_t u_mat, v_mat;
 	vect_t N, tmp;
 	double val;
+	double delta_val;
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -675,7 +845,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	CK_gravel_SP(gravel_sp);
 
 	if( rdebug&RDEBUG_SHADE)
-		bu_struct_print( "gravel_render Parameters:", gravel_print_tab, (char *)gravel_sp );
+		bu_struct_print( "fbmbump_render Parameters:", gravel_print_tab, (char *)gravel_sp );
 
 	/* If we are performing the shading in "region" space, we must 
 	 * transform the hit point from "model" space to "region" space.
@@ -686,7 +856,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	if( rdebug&RDEBUG_SHADE) {
 		rt_log("%s:%d gravel_render(%s)  model:(%g %g %g) shader:(%g %g %g)\n", 
 		__FILE__, __LINE__,
-		bu_vls_addr(&gravel_sp->shader),
+		gravel_mfuncs[gravel_sp->shader_number].mf_name,
 		V3ARGS(swp->sw_hit.hit_point),
 		V3ARGS(pt) );
 	}
@@ -710,15 +880,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 	bn_vec_perp(u_vec, N);
 	VCROSS(v_vec, N, u_vec);
 
-	noise_space_delta = 1.0 / 
-		pow(gravel_sp->lacunarity, gravel_sp->octaves);
-
-
-	VJOIN1(u_pt, pt, noise_space_delta, u_vec);
+	VJOIN1(u_pt, pt, gravel_sp->nsd, u_vec);
 	u_val = bn_noise_turb(u_pt, gravel_sp->h_val, gravel_sp->lacunarity,
 		gravel_sp->octaves);
 
-	VJOIN1(v_pt, pt, noise_space_delta, v_vec);
+	VJOIN1(v_pt, pt, gravel_sp->nsd, v_vec);
 	v_val = bn_noise_turb(v_pt, gravel_sp->h_val, gravel_sp->lacunarity,
 		gravel_sp->octaves);
 
@@ -730,13 +896,28 @@ char			*dp;	/* ptr to the shader-specific struct */
 		VPRINT("v_pt", v_pt);
 		
 		rt_log("u_val:%g  v_val:%g  nsd:%g\n",
-			u_val, v_val, noise_space_delta);
+			u_val, v_val, gravel_sp->nsd);
 	}
 
-	bn_mat_arb_rot(u_mat, pt, u_vec, (val - v_val) * gravel_sp->max_angle);
+
+	delta_val = val-v_val;
+	if (fabs(delta_val) > gravel_sp->max_delta) {
+		gravel_sp->max_delta = fabs(delta_val);
+		rt_log("max delta %g\n", gravel_sp->max_delta);
+	}
+	delta_val *= 0.125;
+
+	bn_mat_arb_rot(u_mat, pt, u_vec, delta_val * gravel_sp->max_angle);
 	MAT4X3VEC(tmp, u_mat, N);
 
-	bn_mat_arb_rot(v_mat, pt, v_vec, (val - u_val) * gravel_sp->max_angle);
+	delta_val = val-u_val;
+	if (fabs(delta_val) > gravel_sp->max_delta) {
+		gravel_sp->max_delta = fabs(delta_val);
+		rt_log("max delta %g\n", gravel_sp->max_delta);
+	}
+	delta_val *= 0.125;
+
+	bn_mat_arb_rot(v_mat, pt, v_vec, delta_val * gravel_sp->max_angle);
 	MAT4X3VEC(N, v_mat, tmp);
 
 	if( rdebug&RDEBUG_SHADE) {
@@ -759,3 +940,4 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	return(1);
 }
+#endif
