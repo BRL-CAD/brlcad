@@ -116,6 +116,7 @@ Nu_input( fd, noblock )
 {
 	long readfds = (1<<fd);
 	(void)_select( 32, &readfds, 0L, 0L, (char *)0 );
+	return(1);
 }
 
 /*
