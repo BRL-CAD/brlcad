@@ -2150,7 +2150,7 @@ RT_EXTERN(void			nmg_pr_fu_briefly, (CONST struct faceuse *fu,	char *h) );
 RT_EXTERN(void			nmg_pr_l, (CONST struct loop *l, char *h) );
 RT_EXTERN(void			nmg_pr_lu, (CONST struct loopuse *lu, char *h) );
 RT_EXTERN(void			nmg_pr_lu_briefly, (CONST struct loopuse *lu, char *h) );
-RT_EXTERN(void			nmg_pr_eg, (CONST struct edge_g_lseg *eg, char *h) );
+RT_EXTERN(void			nmg_pr_eg, (CONST long *eg, char *h) );
 RT_EXTERN(void			nmg_pr_e, (CONST struct edge *e, char *h) );
 RT_EXTERN(void			nmg_pr_eu, (CONST struct edgeuse *eu, char *h) );
 RT_EXTERN(void			nmg_pr_eu_briefly, (CONST struct edgeuse *eu, char *h) );
