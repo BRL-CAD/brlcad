@@ -1,3 +1,4 @@
+
 /*
  *			F O R T R A Y . C
  *
@@ -34,29 +35,6 @@ static const char RCSid[] = "@(#)$Header$";
 #include "vmath.h"
 #include "raytrace.h"
 
-/*
- *  Macro 'F' is used to take the 'C' function name,
- *  and convert it to the convention used for a particular system.
- *  Both lower-case and upper-case alternatives have to be provided
- *  because there is no way to get the C preprocessor to change the
- *  case of a token.
- *
- *  See also the code in ../libplot3/fortran.c
- */
-#if CRAY
-#	define	F(lc,uc)	uc
-#endif
-#if defined(apollo) || defined(mips) || defined(aux)
-	/* Lower case, with a trailing underscore */
-#ifdef __STDC__
-#	define	F(lc,uc)	lc ## _
-#else
-#	define	F(lc,uc)	lc/**/_
-#endif
-#endif
-#if !defined(F)
-#	define	F(lc,uc)	lc
-#endif
 
 extern struct resource rt_uniresource;	/* From librt/shoot.c */
 
@@ -95,9 +73,9 @@ fr_string_f2c(char *str, int maxlen)
 	int	i;
 
 	len = sizeof(buf)-1;
-	buf[len] = '\0';
 	if( maxlen < len )  len = maxlen;
 	strncpy( buf, str, len );
+	buf[len] = '\0';
 
 	/* Remove any trailing blanks */
 	for( i=strlen(buf)-1; i >= 0; i-- )  {
@@ -119,14 +97,11 @@ fr_string_f2c(char *str, int maxlen)
  *  initialized here (eg, Cray).
  */
 void
-F(frdir,FRDIR)( rtip, filename, filelen )
-struct rt_i	**rtip;
-char		*filename;
-int		filelen;
+BU_FORTRAN(frdir,FRDIR)(struct rt_i **rtip, char *filename, int *filelen)
 {
 	char	*file;
 
-	file = fr_string_f2c( filename, filelen );
+	file = fr_string_f2c( filename, *filelen );
 	*rtip = rt_dirbuild( file, (char *)0, 0 );
 }
 
@@ -136,17 +111,30 @@ int		filelen;
  *  Add another top-level tree to the in-core geometry.
  */
 void
-F(frtree,FRTREE)( fail, rtip, objname, objlen )
-int		*fail;
-struct rt_i	**rtip;
-char		*objname;
-int		objlen;
+BU_FORTRAN(frtree,FRTREE)(int		*fail,
+			  struct rt_i	**rtip,
+			  char		*objname,
+			  int		*objlen)
 {
 	char	*obj;
 
-	obj = fr_string_f2c( objname, objlen );
+	RT_CHECK_RTI(*rtip);
+
+	obj = fr_string_f2c( objname, *objlen );
 	*fail = rt_gettree( *rtip, obj );
 }
+
+/*
+ *	F R P R E P
+ *
+ */
+void
+BU_FORTRAN(frprep,FRPREP)(struct rt_i	**rtip)
+{
+    RT_CHECK_RTI(*rtip);
+    rt_prep(*rtip);
+}
+
 
 #define CONTEXT_LEN	6	/* Reserve this many FORTRAN Doubles for each */
 struct context {
@@ -162,20 +150,21 @@ struct context {
  * NOTE that the [0] element here corresponds with the caller's (1) element. 
  */
 void
-F(frshot,FRSHOT)( nloc, indist, outdist, region_ids, context, rtip, pt, dir )
-int		*nloc;		/* input & output */
-double		*indist;	/* output only */
-double		*outdist;
-int		*region_ids;
-struct context	*context;
-struct rt_i	**rtip;		/* input only */
-double		*pt;
-double		*dir;
+BU_FORTRAN(frshot,FRSHOT)(int			*nloc,		/* input & output */
+			  double		*indist,	/* output only */
+			  double		*outdist,
+			  int			*region_ids,
+			  struct context	*context,
+			  struct rt_i		**rtip,		/* input only */
+			  double		*pt,
+			  double		*dir)
 {
 	struct application	ap;
 	register struct partition *pp;
 	int		ret;
 	register int	i;
+
+	RT_CHECK_RTI(*rtip);
 
 	if( *nloc <= 0 )  {
 		bu_log("ERROR frshot: nloc=%d\n", *nloc);
@@ -194,7 +183,7 @@ double		*dir;
 	ap.a_hit = fr_hit;
 	ap.a_miss = fr_miss;
 	ap.a_level = 0;
-	ap.a_onehit = 1;		/* Should be parameter XXX */
+	ap.a_onehit = *nloc * 2;
 	ap.a_resource = &rt_uniresource;
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 	ap.a_purpose = "frshot";
@@ -226,7 +215,7 @@ double		*dir;
 		*nloc = 0;
 		return;
 	}
-	for( i=0; i < *nloc; i++, pp=pp->pt_forw )  {
+	for( i=0 ; i < *nloc; i++, pp=pp->pt_forw )  {
 		register struct context	*ctp;
 
 		if( pp == &fr_global_head )  break;
@@ -284,13 +273,12 @@ fr_miss(struct application *ap)
  *  structures are reconstructed, suitable for passing to RT_HIT_NORM.
  */
 void
-F(frnorm,FRNORM)( normal, index, indist, context, pt, dir )
-double		*normal;	/* output only */
-int		*index;		/* input only */
-double		*indist;
-struct context	*context;
-double		*pt;
-double		*dir;
+BU_FORTRAN(frnorm,FRNORM)(double		*normal,	/* output only */
+			  int			*index,		/* input only */
+			  double		*indist,
+			  struct context	*context,
+			  double		*pt,
+			  double		*dir)
 {
 	register struct context	*ctp;
 	struct hit	hit;
@@ -334,9 +322,7 @@ double		*dir;
  *  Return the number of regions that exist in the model
  */
 void
-F(frnreg,FRNREG)( nreg, rtip )
-int		*nreg;
-struct rt_i	**rtip;
+BU_FORTRAN(frnreg,FRNREG)(int *nreg, struct rt_i **rtip)
 {
 	*nreg = (*rtip)->nregions;
 }
@@ -350,11 +336,10 @@ struct rt_i	**rtip;
  *  XXX buflen is provided "automaticly" on the Apollo.
  */
 void
-F(frname,FRNAME)( fbuf, region_num, rtip, fbuflen )
-char		*fbuf;
-int		*region_num;
-struct rt_i	**rtip;
-int		fbuflen;
+BU_FORTRAN(frname,FRNAME)(char		*fbuf,
+			  int		*region_num,
+			  struct rt_i	**rtip,
+			  int		fbuflen)
 {
 	register struct region *rp;
 	int	i;
