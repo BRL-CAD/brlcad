@@ -1,4 +1,4 @@
-1#!/bin/sh
+#!/bin/sh
 # A Shell script to extract the 4 benchmark statistics, and build an
 # entry for the tables in doc/benchmark.doc.
 #  Mike Muuss & Susan Muuss, 11-Sept-88.
@@ -30,7 +30,9 @@ CURVALS=`grep RTFM $INFILES | \
 RATIO_LIST=""
 
 # Trick:  Force args $1 through $4 to 4 numbers in $CURVALS
-set -- $CURVALS
+# This should be "set -- $CURVALS", but 4.2BSD /bin/sh can't handle it,
+# and CURVALS are all positive (ie, no leading dashes), so this is safe.
+set $CURVALS
 
 for ref in $VAXREF
 do
