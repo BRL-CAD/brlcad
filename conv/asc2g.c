@@ -362,7 +362,6 @@ membbld()
 	char		relation;	/* boolean operation */
 	char		inst_name[NAMESIZE];
 	fastf_t		mat[16];	/* transformation matrix */
-	short		num;		/* comgeom reference num: DEPRECATED */
 
 	cp = buf;
 	id = *cp++;
@@ -383,11 +382,6 @@ membbld()
 		mat[i] = atof( cp );
 		cp = nxt_spc( cp );
 	}
-
-	num = (short)atoi( cp );	/* What to do with this? */
-
-
-	/* Call mk_memb(). Should the name or the inst_name be used? */
 
 	mk_memb(stdout, inst_name, mat, relation );
 }
