@@ -619,11 +619,11 @@ struct menu_item bot_menu[] = {
 	{ "Move Vertex", bot_ed, ECMD_BOT_MOVEV },
 	{ "Move Edge", bot_ed, ECMD_BOT_MOVEE },
 	{ "Move Triangle", bot_ed, ECMD_BOT_MOVET },
+	{ "Delete Triangle", bot_ed, ECMD_BOT_FDEL },
 	{ "Select Mode", bot_ed, ECMD_BOT_MODE },
 	{ "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
 	{ "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
 	{ "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
-	{ "Delete Face", bot_ed, ECMD_BOT_FDEL },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -3297,14 +3297,23 @@ sedit()
 
 			if( bot->face_mode )
 			{
+				struct bu_bitv *new_bitv;
+
+				new_bitv = bu_bitv_new( bot->num_faces );
+				BU_BITV_ZEROALL( new_bitv )
+				for( i=0 ; i<face_no ; i++ )
+				{
+					if( BU_BITTEST( bot->face_mode, i ) )
+						BU_BITSET( new_bitv, i );
+				}
 				for( i=face_no ; i<bot->num_faces ; i++ )
 				{
 					j = i+1;
 					if( BU_BITTEST( bot->face_mode, j ) )
-						BU_BITSET( bot->face_mode, i );
-					else
-						BU_BITCLR( bot->face_mode, i );
+						BU_BITSET( new_bitv, i );
 				}
+				bu_bitv_free( bot->face_mode );
+				bot->face_mode = new_bitv;
 			}
 			bot_verts[0] = -1;
 			bot_verts[1] = -1;
@@ -5882,12 +5891,12 @@ CONST vect_t	mousevec;
 	  		bot_verts[0] = -1;
 	  		bot_verts[1] = -1;
 	  		bot_verts[2] = -1;
+			bu_vls_free( &vls );
   		}
   		if( hits == 1 )
   		{
-	  		bot_verts[0] = v1;
-	  		bot_verts[1] = v2;
-	  		bot_verts[2] = v3;
+  			(void)sscanf( bu_vls_addr( &vls ), " { { %d %d %d", &bot_verts[0], &bot_verts[1], &bot_verts[2] );
+			bu_vls_free( &vls );
   		}
 		else
 		{
