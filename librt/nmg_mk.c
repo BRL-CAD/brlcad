@@ -1793,10 +1793,7 @@ struct edgeuse *eu;
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
 	if(eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
-	{
-		rt_log("nmg_edge_g(): Warning - edge runs from+to same vertex, 0 len!\n");
-		return;
-	}
+		rt_bomb("nmg_edge_g(): Warning - edge runs from+to same vertex, 0 len!\n");
 
 	if (eg_p = eu->g.lseg_p) {
 		NMG_CK_EDGE_G_LSEG(eg_p);
@@ -2186,7 +2183,8 @@ CONST struct rt_tol	*tol;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			VMINMAX(lg->min_pt, lg->max_pt, vg->coord);
-			if( !eu->g.magic_p )  nmg_edge_g(eu);
+			if( !eu->g.magic_p && eu->vu_p->v_p != eu->eumate_p->vu_p->v_p )
+				nmg_edge_g(eu);
 		}
 	} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		struct vertexuse	*vu;
