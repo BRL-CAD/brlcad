@@ -543,6 +543,7 @@ char			*buf;
 	fastf_t	viewscale;
 	point_t	viewcenter_model;
 	point_t	eye_screen;
+	int	saved_print_on = print_on;
 
 	RT_CK_RTI(rtip);
 
@@ -582,16 +583,12 @@ char			*buf;
 	width = fb_getwidth(fbp);
 	height = fb_getheight(fbp);
 
-	/* XXX NOT eye_model */
 	VSET( viewcenter_model, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
 	VSET( orient, atof(argv[6]), atof(argv[7]), atof(argv[8]) );
 	orient[3] = atof(argv[9]);
 	viewscale = atof(argv[10]);
-VPRINT("viewcenter_model", viewcenter_model);
-HPRINT("orient", orient);
 
 	viewsize = 2 * viewscale;
-rt_log("viewsize = %g\n", viewsize);
 	mat_idn( Viewrotscale );
 	quat_quat2mat( Viewrotscale, orient );
 
@@ -610,7 +607,9 @@ rt_log("viewsize = %g\n", viewsize);
 	grid_setup();
 
 	/* initialize lighting */
+	print_on = 0;
 	view_2init( &ap );
+	print_on = saved_print_on;
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;
@@ -625,7 +624,12 @@ rt_log("viewsize = %g\n", viewsize);
 	do_run( start_line*width, end_line*width+width-1 );
 	(void)rt_read_timer( (char *)0, 0 );
 
-	rt_log("done!\n");
+	if(debug) rt_log("done!\n");
+
+	if( pkg_send( RTSYNCMSG_DONE, "1", 2, pcsrv ) < 0 )  {
+		fprintf(stderr,"pkg_send RTSYNCMSG_DONE failed\n");
+		exit(12);
+	}
 
 	/* Signal done */
 
