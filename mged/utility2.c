@@ -15,9 +15,9 @@
 #include <signal.h>
 #include <stdio.h>
 #ifdef BSD
-#include <string.h>
-#else
 #include <strings.h>
+#else
+#include <string.h>
 #endif
 
 #include "./machine.h"	/* special copy */

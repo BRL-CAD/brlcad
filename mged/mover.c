@@ -22,7 +22,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<string.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
+
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
 #include "db.h"
