@@ -430,7 +430,7 @@ struct partition *PartHeadp;
 		}
 		ret = mfp->mf_render( ap, pp );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
-		return(ret);
+		return(1);		/* "ret" isn't reliable yet */
 	}
 }
 
