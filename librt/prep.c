@@ -659,6 +659,9 @@ struct resource	*resp;
 		/* XXX How to release the pmalloc buckets? */
 	}
 
+	/* Release the state variables for 'solid pieces' */
+	rt_res_pieces_clean( resp, rtip );
+
 	/* Reinitialize pointers, to be tidy.  No storage is allocated. */
 	rt_init_resource( resp, resp->re_cpu );
 }

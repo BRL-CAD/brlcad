@@ -83,6 +83,34 @@ struct rt_i	*rtip;
 }
 
 /*
+ *			R T _ R E S _ P I E C E S _ C L E A N
+ */
+void
+rt_res_pieces_clean( resp, rtip )
+struct resource	*resp;
+struct rt_i	*rtip;
+{
+	struct rt_piecestate	*psp;
+	struct soltab		*stp;
+	int			i;
+
+	RT_CK_RESOURCE(resp);
+	RT_CK_RTI(rtip);
+
+	if( !resp->re_pieces )  return;
+
+	for( i = rtip->rti_nsolids_with_pieces-1; i >= 0; i-- )  {
+		psp = &resp->re_pieces[i];
+		RT_CK_PIECESTATE(psp);
+		bu_bitv_free(psp->shot);
+		psp->shot = NULL;	/* sanity */
+		psp->magic = 0;
+	}
+	bu_free( (char *)resp->re_pieces, "re_pieces[]" );
+	resp->re_pieces = NULL;
+}
+
+/*
  *			R T _ F I N D _ N U G R I D
  *
  *  Along the given axis, find which NUgrid cell this value lies in.
