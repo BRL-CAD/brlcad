@@ -309,8 +309,9 @@ shoot_grids(struct application *ap,
 		bu_log("shoot_grids Z, step=(%g, %g, %g)\n", V3ARGS(step) );
 
 	/* shoot through the X,Y plane */
+#define MIN_GRID_STEP_MM	0.1		/* had been 10.0 */
 
-	if (step[Y] > 10.0 && step[X] > 10.0) {
+	if (step[Y] > MIN_GRID_STEP_MM && step[X] > MIN_GRID_STEP_MM) {
 		z = tree_min[Z];
 
 		VSET(ap->a_ray.r_dir, 0.0, 0.0, 1.0);
@@ -330,7 +331,7 @@ shoot_grids(struct application *ap,
 		bu_log("shoot_grids Y\n");
 
 	/* shoot through the X, Z plane */
-	if (step[Z] > 10.0 && step[X] > 10.0) {
+	if (step[Z] > MIN_GRID_STEP_MM && step[X] > MIN_GRID_STEP_MM) {
 		y = tree_min[Y];
 
 		VSET(ap->a_ray.r_dir, 0.0, 1.0, 0.0);
@@ -349,7 +350,7 @@ shoot_grids(struct application *ap,
 	/* shoot through the Y, Z plane */
 	if (rdebug & RDEBUG_LIGHT )
 		bu_log("shoot_grids X\n");
-	if (step[Z] > 10.0 && step[Y] > 10.0) {
+	if (step[Z] > MIN_GRID_STEP_MM && step[Y] > MIN_GRID_STEP_MM) {
 		VSET(ap->a_ray.r_dir, 1.0, 0.0, 0.0);
 		x = tree_min[X];
 
