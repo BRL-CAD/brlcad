@@ -22,26 +22,19 @@ umask 002
 # Acquire current machine type, BASEDIR, etc.
 #
 # newbindir.sh can be run to edit all relevant files (esp. machinetype.sh).
+# Or, just set environment variable $BRLCAD_ROOT before running this script.
 #
 ############################################################################
 eval `sh sh/machinetype.sh -v`
+
+BRLCAD_ROOT=$BASEDIR
+export BRLCAD_ROOT
 
 BINDIR=$BASEDIR/bin
 MANDIR=$BASEDIR/man/man1
 
 echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
-echo
-echo Creating the necessary directories
 
-for LAST in \
-	bin include include/brlcad html lib vfont \
-	man man/man1 man/man3 man/man5 etc tcl tk tclscripts
-do
-	if test ! -d $BASEDIR/$LAST
-	then
-		mkdir $BASEDIR/$LAST
-	fi
-done
 
 ############################################################################
 #
@@ -50,7 +43,8 @@ done
 # For this purpose, specifically exclude "dot" from the check.
 #
 ############################################################################
-echo Checking search path
+echo
+echo Verifying that ${BINDIR} is in your search path.
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -68,8 +62,26 @@ do
 			# all is well
 			not_found=0
 			break
+		else
+			mkdir ${BINDIR}
+			if test -d ${PREFIX}
+			then
+				# all is well
+				not_found=0
+				break
+			fi
 		fi
 		echo "$0 WARNING:  ${PREFIX} is in the search path, but is not a directory."
+	fi
+
+	# Make sure that there are no conflicting files earlier in path.
+	if test -f ${PREFIX}/machinetype.sh -o -f ${PREFIX}/cake
+	then
+		echo " "
+		echo "$0 ERROR: Different version of BRL-CAD detected in ${PREFIX},"
+		echo " which is earlier in your search path than ${BINDIR}."
+		echo " Please place ${BINDIR} earlier in your PATH."
+		exit 2
 	fi
 done
 if test ${not_found} -ne 0
@@ -80,6 +92,39 @@ then
 	echo "$0 ERROR:  file: install.doc, section INSTALLATION DIRECTORIES."
 	exit 1		# Die
 fi
+echo "OK"
+
+############################################################################
+#
+# Ensure that destination directory is clean.  No stale cakes, etc.
+# Then create desired directory structure.
+#
+############################################################################
+echo
+echo "Cleaning out ${BASEDIR}."
+echo "OK to run  rm -fr ${BASEDIR}  ? (yes|no)[no]"
+read ANS
+if test "$ANS" != "yes"
+then
+	echo "You did not answer 'yes', aborting."
+	exit 1
+fi
+
+echo "rm -fr ${BASEDIR}/*"
+rm -fr ${BASEDIR}/*
+
+echo
+echo Creating the necessary directories
+
+for LAST in \
+	bin include include/brlcad html lib vfont \
+	man man/man1 man/man3 man/man5 etc tcl tk tclscripts
+do
+	if test ! -d $BASEDIR/$LAST
+	then
+		mkdir $BASEDIR/$LAST
+	fi
+done
 
 ############################################################################
 #
@@ -88,6 +133,8 @@ fi
 # Includes machinetype.sh and many others,
 # but does NOT include gen.sh, setup.sh, or newbindir.sh -- those
 # pertain to the installation process only, and don't get installed.
+#
+# Note that the installation directory is "burned in" as they are copied.
 #
 ############################################################################
 echo Installing shell scripts
@@ -98,7 +145,8 @@ do
 	then
 		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
 	fi
-	cp ${i} ${BINDIR}/.
+	sed -e "s,/usr/brlcad,${BASEDIR}," < ${i} > ${BINDIR}/${i}
+	chmod 555 ${BINDIR}/${i}
 done
 cd ..
 
@@ -108,7 +156,7 @@ cd ..
 #
 ############################################################################
 echo Compiling cake and cakeaux
-echo machintype.sh -d returns `machinetype.sh -d`
+echo "   " `machinetype.sh -d`
 if test x$1 != x-f
 then
 	cd cake
@@ -216,3 +264,4 @@ sh gen.sh mkdir		# Won't have any effect unless NFS is set.
 
 # Congratulations.  Everything is fine.
 echo "BRL-CAD initial setup is complete."
+echo "Run 'make install' next."
