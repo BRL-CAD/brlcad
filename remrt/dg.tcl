@@ -43,7 +43,7 @@ global treetop_tree
 set treetop_name all.g
 # XXX Hack from Moss-World, should be obtained with
 # XXX set treetop_tree [list [send rtsync vrmgr_send .inmem get all.g]]
-set treetop_tree "{u {u {u {u {u {l platform.r {1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1}} {l box.r {1 0 0 -23.6989  0 1 0 13.41  0 0 1 8.02399  0 0 0 1}}} {l cone.r {1 0 0 22.0492  0 1 0 12.2349  0 0 1 2.11125e-07  0 0 0 1}}} {l ellipse.r {1 0 0 14.6793  0 1 0 -41.6077  0 0 1 38.7988  0 0 0 1}}} {l tor.r {1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1}}} {l light.r {1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1}}}"
+set treetop_tree "{u {u {u {u {u {l platform.r} {l box.r {1 0 0 -23.6989  0 1 0 13.41  0 0 1 8.02399  0 0 0 1}}} {l cone.r {1 0 0 22.0492  0 1 0 12.2349  0 0 1 2.11125e-07  0 0 0 1}}} {l ellipse.r {1 0 0 14.6793  0 1 0 -41.6077  0 0 1 38.7988  0 0 0 1}}} {l tor.r}} {l light.r}}"
 
 # Create main interaction widget
 frame .logo_fr ; pack .logo_fr -side top
@@ -217,14 +217,14 @@ proc hole_init {} {
 			_mged_e _hole.s ";" \
 		"}"
 
-	set newtree [list "{" - $treetop_tree "{" l _hole.s \
-		"{" 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 "}" \
-		"}" "}" ]
+	set newtree [concat "{-" $treetop_tree "{l _hole.s}}"]
 	puts "newtree = $newtree"
 
 	send rtsync \
-		vrmgr_send .inmem adjust $treetop_name \
-			tree "{" $newtree "}"
+		vrmgr_send "{" \
+			.inmem adjust $treetop_name \
+				tree $newtree \
+		"}"
 }
 
 proc hole_size { radius } {
