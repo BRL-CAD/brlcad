@@ -1,22 +1,28 @@
-/* 	N U R B  _ C I N T E R P . C
+/*
+ *			N U R B  _ C I N T E R P . C
  *
  * nurb_interp.c - Interpolatopn routines for fitting NURB curves to
  *				existing data.
  *			
  *
  * Author:  Paul R. Stay
- * Source
- * 	VLD  Bldg 247
- * 	The US Army Ballistic Research Laboratory
- * 	Aberdeen Proving Ground, Maryland 21005
- * 
- * Date: Fri. May 14, 1993
- * 
- * Copyright Notice - 
- * 	This software is Copyright (C) 1992 by the United States Army.
- * 	All rights reserved.
- * 
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 
@@ -28,12 +34,59 @@
 #include "nurb.h"
 
 
-/* main routine for interpolation for curves */
+void
+rt_nurb_nodes( nodes, knots, order)
+fastf_t * nodes;
+struct knot_vector * knots;
+int order;
+{
+	int i, j;
+	fastf_t sum;
 
+	for( i = 0; i < knots->k_size -order; i++)
+	{
+
+		sum = 0.0;
+		
+		for( j = 1; j <= order -1; j++)
+		{
+			sum += knots->knots[i+j];
+		}
+		nodes[i] = sum/(order -1);
+	}
+}
+
+void
+rt_nurb_interp_mat( imat, knots, nodes, order, dim)
+fastf_t * imat;
+struct knot_vector * knots;
+fastf_t * nodes;
+int order;
+int dim;
+{
+	int i,j;
+	int ptr;
+	
+	ptr = 0;
+
+	for( i = 0; i < dim; i++)
+	for( j = 0; j < dim; j++)
+	{
+		imat[ptr] = rt_nurb_basis_eval( knots, j, order, nodes[i]);
+		ptr++;
+	}
+
+	imat[ptr-1] = 1.0;	
+}
+
+
+/* main routine for interpolation for curves */
+void
 rt_nurb_cinterp( crv, order, data, n)
-struct cnurb * crv;
-fastf_t * data;
-int n;
+struct cnurb	* crv;
+int		order;
+fastf_t		* data;
+int		n;
 {
 
 	fastf_t * interp_mat;
@@ -84,47 +137,4 @@ int n;
 	rt_free( (char *) nodes, "rt_nurb_cinterp: nodes");
 
 	/* All done, The resulting crv now interpolates the data */
-}
-
-rt_nurb_nodes( nodes, knots, order)
-fastf_t * nodes;
-struct knot_vector * knots;
-int order;
-{
-	int i, j;
-	fastf_t sum;
-
-	for( i = 0; i < knots->k_size -order; i++)
-	{
-
-		sum = 0.0;
-		
-		for( j = 1; j <= order -1; j++)
-		{
-			sum += knots->knots[i+j];
-		}
-		nodes[i] = sum/(order -1);
-	}
-}
-
-rt_nurb_interp_mat( imat, knots, nodes, order, dim)
-fastf_t * imat;
-struct knot_vector * knots;
-fastf_t * nodes;
-int order;
-int dim;
-{
-	int i,j;
-	int ptr;
-	
-	ptr = 0;
-
-	for( i = 0; i < dim; i++)
-	for( j = 0; j < dim; j++)
-	{
-		imat[ptr] = rt_nurb_basis_eval( knots, j, order, nodes[i]);
-		ptr++;
-	}
-
-	imat[ptr-1] = 1.0;	
 }
