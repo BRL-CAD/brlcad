@@ -53,16 +53,16 @@ HELP="${HELP}\t-a\tAddress to send the status message to (default is [$MAIL_TO])
 
 # handle dash question special since some getopts don't play nice
 if [ x$1 = "x-?" ] ; then
-    log "$USAGE" /dev/tty
-    log "$HELP" /dev/tty
+    log "$USAGE"
+    log "$HELP"
     exit
 fi
 
 args=`getopt d:a:wmhH? $*`
 
 if [ $? != 0 ] ; then
-    log "$USAGE" /dev/tty
-    log "$HELP" /dev/tty
+    log "$USAGE"
+    log "$HELP"
     exit
 fi
 
@@ -79,10 +79,10 @@ for i in $* ; do
 	-a)
 	    MAIL_TO="$2"; MAIL_RESULTS="1"; shift 2;;
 	-h | -H)
-	    echo $USAGE; exit;;
+	    log $USAGE; exit;;
 	# dash question should never be reached
 	-\?)
-	    echo "Odd getopt..."; echo $USAGE; echo -e $HELP; exit;;
+	    log "Odd getopt..."; log $USAGE; log $HELP; exit;;
 	--)
 	    shift; break;;
     esac
@@ -101,8 +101,7 @@ initializeVariable REGRESS_LOG ""
 # sanity check -- make sure someone didn't request ""
 # not a good idea to use "." either, but we do not check
 if [ "x$REGRESS_DIR" = "x" ] ; then
-	echo "ERROR: Must specify regression directory [REGRESS_DIR=$REGRESS_DIR]"
-	exit
+	bomb "Must specify regression directory [REGRESS_DIR=$REGRESS_DIR]"
 fi
 
 #
@@ -110,11 +109,7 @@ fi
 #
 if [ ! -d "$REGRESS_DIR" ] ; then
     REGRESS_LOG="[$REGRESS_DIR] does not exist"
-    log "$REGRESS_LOG"
-#    mail "$MAIL_TO" "Regression Error: $REGRESS_LOG" "$REGRESS_LOG"
-    exit
 fi
-
 
 # make sure the master script ran and completed successfully
 MASTER_LOG_COUNT=`ls ${REGRESS_DIR}/.master-*.log | wc | awk '{print $1}'`
@@ -131,10 +126,10 @@ if [ $MASTER_LOG_COUNT -gt 0 ] ; then
 	REGRESS_LOG="${REGRESS_LOG}Could not determine if master.sh run completed\n\t(multiple log files and none are from $HOSTNAME)\n"
     fi
 
-    if [ ! "x$DEBUG" = "x" ] ; then echo "Using master log file [$MASTER_FILE]" ; fi
+    if [ ! "x$DEBUG" = "x" ] ; then log "Using master log file [$MASTER_FILE]" ; fi
     if [ ! "x$MASTER_FILE" = "x___NONE___" ] ; then
 	MASTER_RETURN=`tail -1 $MASTER_FILE | awk '{print $1}'`
-	if [ ! "x$DEBUG" = "x" ] ; then echo "MASTER_RETURN=[$MASTER_RETURN]" ; fi
+	if [ ! "x$DEBUG" = "x" ] ; then log "MASTER_RETURN=[$MASTER_RETURN]" ; fi
 	if [ ! "x$MASTER_RETURN" = "xDone" ] ; then
 	    REGRESS_LOG="${REGRESS_LOG}the master script did not complete successfully\n\t(see [$MASTER_FILE] for details)\n"
 	fi
@@ -163,7 +158,7 @@ if [ $CVS_LOG_COUNT -gt 0 ] ; then
 
     if [ ! "x$CVS_FILE" = "x___NONE___" ] ; then
 	CVS_RETURN=`tail -1 $CVS_FILE | awk '{print $1}'`
-	if [ ! "x$DEBUG" = "x" ] ; then echo "CVS_RETURN=[$CVS_RETURN]" ; fi
+	if [ ! "x$DEBUG" = "x" ] ; then log "CVS_RETURN=[$CVS_RETURN]" ; fi
 	if [ ! "x$CVS_RETURN" = "xOK:" ] ; then
 	    if [ "x$CVS_RETURN" = "xERROR:" ] ; then
 		REGRESS_LOG="${REGRESS_LOG}cvs export failed\n\t(see [$CVS_FILE] for details)\n"
@@ -186,7 +181,7 @@ else
     # now iterate over the architectures we understand
     for ARCH in $ARCHES ; do
 	if [ -d "$REGRESS_DIR/.regress.$ARCH" ] && [ -r "$REGRESS_DIR/.regress.$ARCH" ] ; then
-	    echo "Found an [$ARCH] build"
+	    log "Found an [$ARCH] build"
 	    
 	    # is there no regress log (bad)
 	    if [ ! -f "$REGRESS_DIR/.regress.$ARCH/MAKE_LOG" ] ; then
