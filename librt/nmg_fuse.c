@@ -326,12 +326,13 @@ CONST struct rt_tol	*tol;
 	if( fabs(VDOT(eg1->e_dir, eg2->e_dir)) <
 	    0.9 * MAGNITUDE(eg1->e_dir) * MAGNITUDE(eg2->e_dir)  )  return 0;
 
-	/* Ensure that vertices of both edges are within tol of other eg */
+	/* Ensure that vertices on edge 2 are within tol of e1 */
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
 	    e2->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
 	    e2->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
 
+	/* Ensure that vertices of both edges are within tol of other eg */
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
 	    e1->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
@@ -359,7 +360,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(m);
 	RT_CK_TOL(tol);
 
-	/* Make a list of all the edgeuse structs in the model */
+	/* Make a list of all the edge structs in the model */
 	nmg_edge_tabulate( &etab, &m->magic );
 
 	for( i = NMG_TBL_END(&etab)-1; i >= 0; i-- )  {
@@ -402,6 +403,7 @@ CONST struct rt_tol	*tol;
 			}
 		}
 	}
+	nmg_tbl( &etab, TBL_FREE, (long *)0 );
 if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g's fused\n", total);
 	return total;
 }
