@@ -249,7 +249,7 @@ struct partition *PartHeadp;
 
 		/* outhit info */
 		stp = pp->pt_outseg->seg_stp;
-		VJOIN1( outpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
+		VJOIN1( outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
 		RT_HIT_NORMAL( onormal, pp->pt_outhit, stp, &(ap->a_ray), pp->pt_outflip );
 		RT_CURVATURE( &cur, pp->pt_outhit, pp->pt_outflip, stp );
 
