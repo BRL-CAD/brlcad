@@ -14,6 +14,7 @@
 	rletoabA60 rletoascii rletogray rletopaint \
 	rletops rletoraw targatorle wasatchrle \
 	rletogif rletoabA62 
+#define STATIC_PRODUCTS	../SRCDIR/font.src
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
