@@ -139,6 +139,8 @@ register char **argv;
 main( argc, argv )
 int argc; char **argv;
 {
+	int i;
+
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -152,11 +154,19 @@ int argc; char **argv;
 	/* See how many lines we can buffer */
 	scanlen = inx;
 	init_buffer( scanlen );
-	if( (outbuf = malloc(scanlen)) == NULL )
+
+	if (inx < outx) i = outx;
+	else i = inx;
+
+	if( (outbuf = malloc(i)) == NULL )
 		exit( 4 );
 
 	/* Here we go */
-	scale( stdout, inx, iny, outx, outy );
+	i = scale( stdout, inx, iny, outx, outy );
+
+	free( outbuf );
+	free( buffer );
+	return(0);
 }
 
 /*
@@ -181,7 +191,12 @@ int scanlen;
 	if( max > 512 ) max = 512;
 
 	buflines = max;
-	buffer = malloc( buflines * scanlen );
+	if ((buffer = malloc( buflines * scanlen )) == (char *)NULL) {
+		fprintf(stderr, "Cannot allocate buffer\n");
+		exit(-1);
+	} else {
+		bzero(buffer, buflines * scanlen);
+	}
 }
 
 /*
@@ -234,6 +249,7 @@ int	ix, iy, ox, oy;
 		return( -1 );
 	}
 	if( pxlen < 1.0 || pylen < 1.0 ) {
+		/* scale up */
 		if( rflag ) {
 			/* nearest neighbor interpolate */
 			ninterp( ofp, ix, iy, ox, oy );
@@ -245,7 +261,7 @@ int	ix, iy, ox, oy;
 	}
 
 	/* for each output pixel */
-	for( j = 0; j < oy; j++ ) {
+	for( j = 0; j < oy ; j++ ) {
 		ystart = j * pylen;
 		yend = ystart + pylen;
 		op = outbuf;
@@ -285,6 +301,8 @@ int	ix, iy, ox, oy;
 				}
 			}
 			*op++ = (int)(sum / (pxlen * pylen));
+			if (op > (outbuf+scanlen))
+				abort();
 		}
 		(void) fwrite( outbuf, 1, ox, ofp );
 	}
@@ -336,6 +354,7 @@ int	ix, iy, ox, oy;
 
 			mid1 = lp[0] + dx * ((double)lp[1] - (double)lp[0]);
 			mid2 = up[0] + dx * ((double)up[1] - (double)up[0]);
+
 			*op++ = mid1 + dy * (mid2 - mid1);
 		}
 
