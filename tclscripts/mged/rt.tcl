@@ -454,7 +454,7 @@ proc do_Raytrace { id } {
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
 	if {$rt_control($id,lmodel) == 7} {
-		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,VisualizeIrradiance),$rt_control($id,pmLightIntensityEntry) -A0"
+		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmLightIntensityEntry) -A0"
 	}
     }
 	puts "-b-";
