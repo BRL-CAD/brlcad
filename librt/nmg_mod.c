@@ -817,9 +817,9 @@ int		n;
 		if (*verts[i]) {
 			/* look for an existing edge to share */
 			eur = nmg_findeu(*verts[i+1], *verts[i], s, euold, 1);
-			eu = nmg_eusplit(*verts[i], euold);
+			eu = nmg_eusplit(*verts[i], euold, 0);
 			if (eur) {
-				nmg_moveeu(eur, eu);
+				nmg_je(eur, eu);
 
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
 					rt_log("nmg_cmface() found another edgeuse (%8x) between %8x and %8x\n",
@@ -830,7 +830,7 @@ int		n;
 					i+1, *verts[i+1], i, *verts[i]);
 			}
 		} else {
-			eu = nmg_eusplit(*verts[i], euold);
+			eu = nmg_eusplit(*verts[i], euold, 0);
 			*verts[i] = eu->vu_p->v_p;
 
 			if (rt_g.NMG_debug & DEBUG_CMFACE)  {
@@ -841,7 +841,7 @@ int		n;
 	}
 
 	if (eur = nmg_findeu(*verts[n-1], *verts[0], s, euold, 1))  {
-		nmg_moveeu(eur, euold);
+		nmg_je(eur, euold);
 	} else  {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)
 		rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
@@ -916,7 +916,7 @@ int n;
 
 		for (i = n-2 ; i >= 0 ; i--) {
 			eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
-			eu = nmg_eusplit(verts[i], eu);
+			eu = nmg_eusplit(verts[i], eu, 0);
 			if (!verts[i])
 				verts[i] = eu->vu_p->v_p;
 		}
@@ -927,7 +927,7 @@ int n;
 		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 		eu = nmg_meonvu(vu);
 		while (--n) {
-			(void)nmg_eusplit((struct vertex *)NULL, eu);
+			(void)nmg_eusplit((struct vertex *)NULL, eu, 0);
 		}
 	}
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
@@ -997,7 +997,7 @@ int n, dir;
 
 		for (i = n-2 ; i >= 0 ; i--) {
 			eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
-			eu = nmg_eusplit(verts[i], eu);
+			eu = nmg_eusplit(verts[i], eu, 0);
 			if (!verts[i])
 				verts[i] = eu->vu_p->v_p;
 		}
@@ -1011,7 +1011,7 @@ int n, dir;
 		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 		eu = nmg_meonvu(vu);
 		while (--n) {
-			(void)nmg_eusplit((struct vertex *)NULL, eu);
+			(void)nmg_eusplit((struct vertex *)NULL, eu, 0);
 		}
 	}
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
@@ -1221,7 +1221,7 @@ int n;
 							continue;
 						for( RT_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
 							if (EDGESADJ(eu, eu2))
-							    	nmg_moveeu(eu, eu2);
+							    	nmg_je(eu, eu2);
 						}
 					}
 				}
@@ -1909,11 +1909,11 @@ struct vertexuse	*vu2;
 		first_new_eu = nmg_eins(eu1);
 
 		/* split the new edge, and connect it to vertex 2 */
-		second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+		second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu, 0 );
 		first_new_eu = RT_LIST_PPREV_CIRC(edgeuse, second_new_eu);
 
 		/* Make the two new edgeuses share just one edge */
-		nmg_moveeu( second_new_eu, first_new_eu );
+		nmg_je( second_new_eu, first_new_eu );
 
 		/* first_new_eu is eu that enters shared vertex */
 		vu1 = second_new_eu->vu_p;
@@ -1993,10 +1993,10 @@ struct vertexuse	*vu1, *vu2;
     	/* Insert 0 length edge */
     	first_new_eu = nmg_eins(eu1);
 	/* split the new edge, and connect it to vertex 2 */
-	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu, 0 );
 	first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
 	/* Make the two new edgeuses share just one edge */
-	nmg_moveeu( second_new_eu, first_new_eu );
+	nmg_je( second_new_eu, first_new_eu );
 
 	/* Kill loop lu2 associated with vu2 */
 	lu2 = vu2->up.lu_p;
@@ -2041,10 +2041,10 @@ struct vertexuse	*vu1, *vu2;
 	/* Make a 0 length edge on vu1 */
 	first_new_eu = nmg_meonvu(vu1);
 	/* split the new edge, and connect it to vertex 2 */
-	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu, 0 );
 	first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
 	/* Make the two new edgeuses share just one edge */
-	nmg_moveeu( second_new_eu, first_new_eu );
+	nmg_je( second_new_eu, first_new_eu );
 
 	/* Kill loop lu2 associated with vu2 */
 	lu2 = vu2->up.lu_p;
@@ -2220,7 +2220,7 @@ struct vertexuse *vu1, *vu2;
 	eunext->eumate_p->up.lu_p = eu1->eumate_p->up.lu_p;
 
 	/* make new edgeuses radial to each other, sharing the new edge */
-	nmg_moveeu(neweu, eunext);
+	nmg_je(neweu, eunext);
 
 	nmg_ck_lueu(oldlu, "oldlu");
 	nmg_ck_lueu(lu, "lu");	/*LABLABLAB*/
@@ -3014,7 +3014,7 @@ long	**trans_tbl;
 			new_eu = RT_LIST_LAST(edgeuse, &new_lu->down_hd);
 			NMG_CK_EDGEUSE(new_eu);
 
-			new_eu = nmg_eusplit(new_v, new_eu);
+			new_eu = nmg_eusplit(new_v, new_eu, 0);
 			new_vu = new_eu->vu_p;
 
 			if( !new_v )  {
@@ -3053,7 +3053,7 @@ long	**trans_tbl;
 
 		/* new_eu isn't sharing edge with tbl_eu, join them */
 		/* XXX Is radial relationship preserved (enough)? */
-		nmg_moveeu( tbl_eu, new_eu );
+		nmg_je( tbl_eu, new_eu );
 	}
 #endif
 
@@ -3067,8 +3067,8 @@ long	**trans_tbl;
 		new_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu );
 		NMG_CK_EDGEUSE(new_eu);
 		NMG_CK_EDGE(new_eu->e_p);
-		if( new_eu->e_p->eg_p )  continue;
-		nmg_edge_g(new_eu->e_p);
+		if( new_eu->g.magic_p )  continue;
+		nmg_edge_g(new_eu);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
@@ -3269,8 +3269,11 @@ rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nm
  *	In either case, the new edge will exist as the "next" edgeuse after
  *	the edgeuse passed as a parameter.
  *
+ *	Upon return, the new edgeuses (eu1 and mate) will not refer to any
+ *	geometry, unless argument "share_geom" was non-zero.
+ *
  *  Explicit return -
- *	edgeuse of new edge, starting at v.
+ *	edgeuse of new edge "eu1", starting at V and going to B.
  *
  *  List on entry -
  *
@@ -3293,9 +3296,10 @@ rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nm
  *		       mate	 mate
  */
 struct edgeuse *
-nmg_eusplit(v, oldeu)
-struct vertex *v;
-struct edgeuse *oldeu;
+nmg_eusplit(v, oldeu, share_geom)
+struct vertex	*v;
+struct edgeuse	*oldeu;
+int		share_geom;
 {
 	struct edgeuse	*eu1,
 			*eu2,
@@ -3370,6 +3374,11 @@ struct edgeuse *oldeu;
 		 *	    <-------.   <-----.
 		 *	    oldeumate     eu2
 		 */
+		if( share_geom )  {
+			/* Make eu1 share geom with oldeu, eu2 with oldeumate */
+			nmg_use_edge_g( eu1, oldeu->g.magic_p );
+			nmg_use_edge_g( eu2, oldeumate->g.magic_p );
+		}
 		goto out;
 	}
 	else if (*oldeu->up.magic_p != NMG_LOOPUSE_MAGIC) {
@@ -3468,10 +3477,24 @@ struct edgeuse *oldeu;
 	oldeumate->e_p->eu_p = oldeumate;
 	eu2->e_p->eu_p = eu2;
 
+	if( share_geom )  {
+		/* Make eu1 share same geometry as oldeu */
+		nmg_use_edge_g( eu1, oldeu->g.magic_p );
+		/* Make eu2 share same geometry as oldeumate */
+		nmg_use_edge_g( eu2, oldeumate->g.magic_p );
+	} else {
+		/* Make eu2 use same geometry as oldeumate */
+		nmg_use_edge_g( eu2, oldeumate->g.magic_p );
+		/* Now release geometry from oldeumate;  new edge has no geom */
+		nmg_keg( oldeumate );
+	}
+	if( oldeu->g.magic_p != oldeu->eumate_p->g.magic_p )  rt_bomb("nmg_eusplit() unshared geom\n");
+
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_eusplit(v=x%x, eu=x%x) new_eu=x%x, mate=x%x\n",
-			v, oldeu, eu1, eu1->eumate_p );
+		rt_log("nmg_eusplit(v=x%x, eu=x%x, share=%d) new_eu=x%x, mate=x%x\n",
+			v, oldeu, share_geom,
+			eu1, eu1->eumate_p );
 	}
 	return(eu1);
 }
@@ -3494,6 +3517,10 @@ out:
  *
  *	Note that eu->e_p changes value upon return, because the old
  *	edge is incrementally replaced by two new ones.
+ *
+ *	Geometry will be preserved on eu and it's mates (by nmg_eusplit),
+ *	if any.  ret_eu and mates will share that geometry if share_geom
+ *	is set non-zero, otherwise they will have null geom pointers.
  *
  *  Explicit return -
  *	Pointer to the edgeuse which starts at the newly created
@@ -3523,11 +3550,15 @@ out:
  *	(newedge) A ========= V ~~~~~~~~~~~ B (new edge)
  *			     /             /
  *		    <-------.   <---------.
+ *
+ *  Note: to replicate the behavior of this routine in BRL-CAD Relase 4.0,
+ *  call with share_geom=0.
  */
 struct edgeuse *
-nmg_esplit(v, eu)
+nmg_esplit(v, eu, share_geom)
 struct vertex	*v;		/* New vertex, to go in middle */
 struct edgeuse	*eu;
+int		share_geom;
 {
 	struct edge	*e;	/* eu->e_p */
 	struct edgeuse	*teuX,	/* radial edgeuse of eu */
@@ -3569,7 +3600,7 @@ struct edgeuse	*eu;
 		/* Peel two temporary edgeuses off the original edge */
 		teuX = eu->radial_p;
 		/* teuX runs from vA to vB */
-		teuY = nmg_eusplit(v, teuX);
+		teuY = nmg_eusplit(v, teuX, share_geom);
 		/* Now, teuX runs from vA to v, teuY runs from v to vB */
 		NMG_CK_EDGEUSE(teuX);
 		NMG_CK_EDGEUSE(teuY);
@@ -3588,22 +3619,22 @@ struct edgeuse	*eu;
 		if (teuY->e_p == e || teuX->e_p == e) notdone = 0;
 		
 		/*  Are the two edgeuses going in same or opposite directions?
-		 *  Move the newly created temporary edge (teuX, teuY)
-		 *  onto the new edge (neu1, neu2).
+		 *  Join the newly created temporary edge (teuX, teuY)
+		 *  with the new permanant edge (neu1, neu2).
 		 *  On first pass, just take note of the new edge & edgeuses.
 		 */
 		NMG_CK_VERTEX(teuX->vu_p->v_p);
 		if (teuX->vu_p->v_p == vA) {
 			if (neu1) {
-				nmg_moveeu(neu1, teuX);
-				nmg_moveeu(neu2, teuY);
+				nmg_je(neu1, teuX);
+				nmg_je(neu2, teuY);
 			}
 			neu1 = teuX->eumate_p;
 			neu2 = teuY->eumate_p;
 		} else if (teuX->vu_p->v_p == vB) {
 			if (neu1) {
-				nmg_moveeu(neu2, teuX);
-				nmg_moveeu(neu1, teuY);
+				nmg_je(neu2, teuX);
+				nmg_je(neu1, teuY);
 			}
 			neu2 = teuX->eumate_p;
 			neu1 = teuY->eumate_p;
@@ -3618,8 +3649,8 @@ struct edgeuse	*eu;
 	/* Find an edgeuse that runs from v to vB */
 	if( neu2->vu_p->v_p == v && neu2->eumate_p->vu_p->v_p == vB )  {
 		if (rt_g.NMG_debug & DEBUG_BASIC)  {
-			rt_log("nmg_esplit(v=x%x, eu=x%x) neu2=x%x\n",
-				v, eu, neu2);
+			rt_log("nmg_esplit(v=x%x, eu=x%x, share=%d) neu2=x%x\n",
+				v, eu, share_geom, neu2);
 		}
 		return neu2;
 	}
@@ -3630,73 +3661,36 @@ struct edgeuse	*eu;
 /*
  *			N M G _ E B R E A K
  *
- *  Like nmg_esplit(), split an edge into two parts, but where the
- *  two resultant parts share the original edge geometry.
+ *  Like nmg_esplit(), split an edge into two parts.
+ *  Ensure that both sets of edgeuses share the original edgeuse geometry.
  *  If the original edge had no edge geometry, then none is created here.
  *
+ *  This is a simple compatability interface to nmg_esplit().
  *  The return is the return of nmg_esplit().
  */
 struct edgeuse *
 nmg_ebreak(v, eu)
-struct vertex	*v;
+struct vertex	*v;			/* May be NULL */
 struct edgeuse	*eu;
 {
 	struct edgeuse	*new_eu;
-	struct edge_g_lseg	*eg;
 
 	NMG_CK_EDGEUSE(eu);
-	eg = eu->e_p->eg_p;
-
-	/* nmg_esplit() will delete eu->e_p, so if geom is present, save it! */
-	if( eg )  {
-		NMG_CK_EDGE_G_LSEG(eg);
-		/* eg->usage++; */	/* ??? */
+	if( eu->g.magic_p )  {
+		NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
 	}
 
-	new_eu = nmg_esplit(v, eu);	/* Do the hard work */
+	new_eu = nmg_esplit(v, eu, 1);	/* Do the hard work */
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGEUSE(new_eu);
 
 	if( eu->e_p == new_eu->e_p )  rt_bomb("nmb_ebreak() same edges?\n");
 
-	/* If there wasn't any edge geometry before, nothing more to do */
-	if( !eg )
-	{
-		if (rt_g.NMG_debug & DEBUG_BASIC)  {
-			rt_log("nmg_ebreak( v=x%x, eu=x%x ) new_eu=x%x\n", v, eu, new_eu);
-		}
-		return new_eu;
-	}
-
-	/* Make sure the two edges share the same geometry. */
-	NMG_CK_EDGE_G_LSEG(eg);
-
-	/* Both these edges should be fresh, without geometry yet. */
-	if( eu->e_p->eg_p )   {
-		rt_log("old eg=x%x, new_eg=x%x\n", eg, eu->e_p->eg_p);
-		nmg_pr_eg(eg, "old_");
-		nmg_pr_eg(eu->e_p->eg_p, "new_");
-		rt_bomb("nmg_ebreak() eu grew geometry?\n");
-	}
-	eu->e_p->eg_p = eg;		/* eg->usage++ was done above */
-
-	/* Sometimes new_eu still has the previous edge geometry on it */
-	if( new_eu->e_p->eg_p )  {
-		if( new_eu->e_p->eg_p != eg )
-			rt_bomb("nmg_ebreak() new_eu grew geometry?\n");
-		/* new_eu retained the previous geometry (why?) */
-	} else {
-		nmg_use_edge_g( new_eu->e_p, eg );
-	}
-
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_ebreak( v=x%x, eu=x%x ) new_eu=x%x\n", v, eu, new_eu);
+		rt_log("nmg_ebreak( v=x%x, eu=x%x ) new_eu=x%x\n",
+			v, eu, new_eu);
 	}
 	return new_eu;
-
-	/* XXX It would be much nicer to have a list of edges sharing
-	 * XXX edge geometry, rather than a count...
-	 */
 }
 
 /*
@@ -3791,6 +3785,11 @@ struct edgeuse	*eu2;
  *  The edge geometry must be shared, and all uses of the vertex
  *  to be disposed of must originate from this edge pair.
  *
+ *  XXX for t-NURBS, this should probably be re-stated as
+ *  saying that all the edgeuses must share the same 2 edges, and that
+ *  every eu1 needs to share geom with it's corresponding eu2,
+ *  and similarly for the two mates.
+ *
  *		     eu1          eu2
  *		*----------->*----------->*
  *		A.....e1.....B.....e2.....C
@@ -3832,7 +3831,10 @@ struct edgeuse	*eu1_first;
 	e1 = eu1_first->e_p;
 	NMG_CK_EDGE( e1 );
 
-	eg = e1->eg_p;
+	if( eu1_first->g.magic_p != eu1_first->eumate_p->g.magic_p )
+		rt_bomb("nmg_unbreak_edge() eu and mate don't share geometry\n");
+
+	eg = eu1_first->g.lseg_p;
 	if( !eg )  {
 		rt_log( "nmg_unbreak_edge: no geometry for edge1 x%x\n" , e1 );
 		ret = -1;
@@ -3852,9 +3854,9 @@ struct edgeuse	*eu1_first;
 
 	eu1 = eu1_first;
 	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
-	if( eu2->e_p->eg_p != eg )  {
+	if( eu2->g.lseg_p != eg )  {
 		rt_log( "nmg_unbreak_edge: second eu geometry x%x does not match geometry x%x of edge1 x%x\n" ,
-			eu2->e_p->eg_p, eg, e1 );
+			eu2->g.magic_p, eg, e1 );
 		ret = -3;
 		goto out;
 	}
@@ -3875,8 +3877,8 @@ struct edgeuse	*eu1_first;
 			ret = -4;
 			goto out;
 		}
-		NMG_CK_EDGE(vu->up.eu_p->e_p);
-		if( vu->up.eu_p->e_p->eg_p != eg )  {
+		NMG_CK_EDGEUSE(vu->up.eu_p);
+		if( vu->up.eu_p->g.lseg_p != eg )  {
 			ret = -5;
 			goto out;
 		}
@@ -3890,7 +3892,7 @@ struct edgeuse	*eu1_first;
 		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
 		eu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 );
 		NMG_CK_EDGEUSE(eu2);
-		if( eu2->e_p->eg_p != eg )  {
+		if( eu2->g.lseg_p != eg )  {
 			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
 		}
 		if( nmg_keu( eu2 ) )
@@ -4048,42 +4050,35 @@ register struct edgeuse	*eu;
  *
  *  XXX In keeping with other names, this should probably be called nmg_jeg().
  *
- *  XXX The algorithm needs to be changed when edge_g get linked lists of edges.
- *
  *  This algorithm does not make sense to use on edge_g_cnurb's;  they
  *  only make sense in the parameter space of their associated face.
  */
 void
-nmg_move_eg( old_eg, new_eg, s )
+nmg_move_eg( old_eg, new_eg )
 struct edge_g_lseg	*old_eg;
 struct edge_g_lseg	*new_eg;
-struct shell	*s;
 {
 	register struct edgeuse		*eu;
 	register struct edge		*e;
 
 	NMG_CK_EDGE_G_LSEG(old_eg);
 	NMG_CK_EDGE_G_LSEG(new_eg);
-	NMG_CK_SHELL(s);
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_move_eg( old_eg=x%x, new_eg=x%x, s=x%x )\n",
-			old_eg, new_eg, s );
+		rt_log("nmg_move_eg( old_eg=x%x, new_eg=x%x )\n",
+			old_eg, new_eg );
 	}
 
 	while( RT_LIST_NON_EMPTY( &old_eg->eu_hd2 ) )  {
 		struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
+
+		/* Obtain an eu from old_eg */
 		midway = RT_LIST_FIRST(rt_list, &old_eg->eu_hd2 );
-		RT_LIST_DEQUEUE( midway );
 		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu);
 
-		e = eu->e_p;
-		NMG_CK_EDGE(e);
-		e->eg_p = new_eg;
-
-		RT_LIST_INSERT( &new_eg->eu_hd2, &eu->l2 );
+		/* Associate eu and mate with new_eg. old_eg freed when unused. */
+		nmg_use_edge_g( eu, &new_eg->magic );
 	}
-	nmg_keg( (long *)old_eg );
 }
 
 /************************************************************************

@@ -368,9 +368,9 @@ if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
 
 /* XXX move to nmg_info.c */
 /*
- *			N M G _ 2 E D G E _ G _ C O I N C I D E N T
+ *			N M G _ 2 E D G E U S E _ G _ C O I N C I D E N T
  *
- *  Given two edges, determine if they share the same edge geometry,
+ *  Given two edgeuses, determine if they share the same edge geometry,
  *  either topologically, or within tolerance.
  *
  *  Returns -
@@ -379,20 +379,21 @@ if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
  *		(For linear edge_g_lseg, the 2 are the same line, within tol.)
  */
 int
-nmg_2edge_g_coincident( e1, e2, tol )
-CONST struct edge	*e1;
-CONST struct edge	*e2;
+nmg_2edgeuse_g_coincident( eu1, eu2, tol )
+CONST struct edgeuse	*eu1;
+CONST struct edgeuse	*eu2;
 CONST struct rt_tol	*tol;
 {
 	struct edge_g_lseg	*eg1;
 	struct edge_g_lseg	*eg2;
 	fastf_t		t, u;
 
-	NMG_CK_EDGE(e1);
-	NMG_CK_EDGE(e2);
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
 	RT_CK_TOL(tol);
-	eg1 = e1->eg_p;
-	eg2 = e2->eg_p;
+
+	eg1 = eu1->g.lseg_p;
+	eg2 = eu2->g.lseg_p;
 	NMG_CK_EDGE_G_LSEG(eg1);
 	NMG_CK_EDGE_G_LSEG(eg2);
 
@@ -406,15 +407,15 @@ CONST struct rt_tol	*tol;
 
 	/* Ensure that vertices on edge 2 are within tol of e1 */
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
-	    e2->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+	    eu2->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
-	    e2->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+	    eu2->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 
 	/* Ensure that vertices of both edges are within tol of other eg */
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
-	    e1->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+	    eu1->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
-	    e1->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
+	    eu1->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 
 	/* Perhaps check for ultra-short edges (< 10*tol->dist)? */
 
@@ -429,12 +430,16 @@ trouble:
 	/* XXX debug */
 	nmg_pr_eg( eg1, 0 );
 	nmg_pr_eg( eg2, 0 );
-	rt_log("nmg_2edge_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
+	rt_log("nmg_2edgeuse_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
 	return 1;
 }
 
 /*
  *			N M G _ M O D E L _ E D G E _ G _ F U S E
+ *
+ *  The present algorithm is a consequence of the old edge geom ptr structure.
+ *  XXX This might be better formulated by generating a list of all
+ *  edge_g structs in the model, and comparing *them* pairwise.
  */
 int
 nmg_model_edge_g_fuse( m, tol )
@@ -448,32 +453,31 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(m);
 	RT_CK_TOL(tol);
 
-	/* Make a list of all the edge structs in the model */
-	nmg_edge_tabulate( &etab, &m->magic );
+	/* Make a list of all the edge geometry structs in the model */
+	nmg_edge_g_tabulate( &etab, &m->magic );
 
 	for( i = NMG_TBL_END(&etab)-1; i >= 0; i-- )  {
-		register struct edge	*e1;
 		struct edge_g_lseg		*eg1;
+		struct edgeuse			*eu1;
 
-		e1 = (struct edge *)NMG_TBL_GET(&etab, i);
-		NMG_CK_EDGE(e1);
-		eg1 = e1->eg_p;
+		eg1 = (struct edge_g_lseg *)NMG_TBL_GET(&etab, i);
 		NMG_CK_EDGE_G_LSEG(eg1);
+		eu1 = RT_LIST_MAIN_PTR( edgeuse, RT_LIST_FIRST( rt_list, &eg1->eu_hd2 ), l2 );
+		NMG_CK_EDGEUSE(eu1);
 
 		for( j = i-1; j >= 0; j-- )  {
-			register struct edge	*e2;
-			struct edge_g_lseg		*eg2;
+			struct edge_g_lseg	*eg2;
+			struct edgeuse		*eu2;
 			register struct edge	**ep;
 
-			e2 = (struct edge *)NMG_TBL_GET(&etab,j);
-			NMG_CK_EDGE(e2);
-			eg2 = e2->eg_p;
+			eg2 = (struct edge_g_lseg *)NMG_TBL_GET(&etab,j);
 			NMG_CK_EDGE_G_LSEG(eg2);
+			eu2 = RT_LIST_MAIN_PTR( edgeuse, RT_LIST_FIRST( rt_list, &eg2->eu_hd2 ), l2 );
+			NMG_CK_EDGEUSE(eu2);
 
-			if( e1 == e2 )  rt_bomb("nmg_model_edge_g_fuse() two incidences of edge?\n");
-			if( eg1 == eg2 )  continue;
+			if( eg1 == eg2 )  rt_bomb("nmg_model_edge_g_fuse() edge_g listed twice in ptbl?\n");
 
-			if( !nmg_2edge_g_coincident( e1, e2, tol ) )  continue;
+			if( !nmg_2edgeuse_g_coincident( eu1, eu2, tol ) )  continue;
 
 			/* Comitted to fusing two edge_g_lseg's.
 			 * Make all instances of eg2 become eg1.
@@ -481,14 +485,7 @@ CONST struct rt_tol	*tol;
 			 * XXX against ALL edges using eg2 for coincidence.
 			 */
 		     	total++;
-			for( ep = (struct edge **)NMG_TBL_LASTADDR(&etab);
-			     ep >= (struct edge **)NMG_TBL_BASEADDR(&etab);
-			     ep--
-			)  {
-				if( (*ep)->eg_p != eg2 )  continue;
-				/* Change every edge using eg2 to use eg1 */
-				nmg_use_edge_g( *ep, eg1 );
-			}
+			nmg_move_eg( eg2, eg1 );
 		}
 	}
 	nmg_tbl( &etab, TBL_FREE, (long *)0 );

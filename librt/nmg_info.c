@@ -1166,12 +1166,12 @@ CONST struct rt_tol	*tol;
 				    		}
 				    	} else {
 				    		/* Previous edge found, check edge_g_lseg */
-				    		if( eur->e_p->eg_p != ret->e_p->eg_p )  {
+				    		if( eur->g.lseg_p != ret->g.lseg_p )  {
 				    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
-				    				eur, eur->e_p->eg_p,
-				    				ret, ret->e_p->eg_p );
-				    			nmg_pr_eg( eur->e_p->eg_p, 0 );
-				    			nmg_pr_eg( ret->e_p->eg_p, 0 );
+				    				eur, eur->g.lseg_p,
+				    				ret, ret->g.lseg_p );
+				    			nmg_pr_eg( eur->g.lseg_p, 0 );
+				    			nmg_pr_eg( ret->g.lseg_p, 0 );
 				    			nmg_pr_eu_endpoints( eur, 0 );
 				    			nmg_pr_eu_endpoints( ret, 0 );
 
@@ -1179,9 +1179,9 @@ CONST struct rt_tol	*tol;
 							if( coincident )  {
 								/* Change eur to use ret's eg */
 								rt_log("nmg_find_edge_between_2fu() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
-									eur->e_p, eur->e_p->eg_p,
-									ret->e_p, ret->e_p->eg_p );
-								nmg_move_eg( eur->e_p->eg_p, ret->e_p->eg_p, nmg_find_s_of_eu(eur) );
+									eur->e_p, eur->g.lseg_p,
+									ret->e_p, ret->g.lseg_p );
+								nmg_move_eg( eur->g.lseg_p, ret->g.lseg_p );
 								/* See if there are any others. */
 								nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
 							} else {
@@ -2206,7 +2206,7 @@ int		first;
 	/* If this edgeuse has been processed before, do nothing more */
 	if( !NMG_INDEX_FIRST_TIME(sp->visited, eu) )  return;
 
-	if( eu->e_p->eg_p != sp->eg )  return;
+	if( eu->g.lseg_p != sp->eg )  return;
 
 	nmg_tbl( sp->tabl, TBL_INS, longp );
 }
@@ -2280,15 +2280,15 @@ int		first;
 	 *  which are colinear only by virtue of being very small.
 	 */
 	RT_CK_TOL(sp->tol);
-	NMG_CK_EDGE_G_LSEG(eu->e_p->eg_p);
+	NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
 #if 1
 	/* XXX This assumes unit vectors.  These are not.  Fixing this causes lots of error messages, though. */
 	/* ERROR: vu=x10063d54 v=x10050578 is on isect line, tvu=x10063614 eu=x10081b30 isn't */
-	if( fabs( VDOT( eu->e_p->eg_p->e_dir, sp->dir ) ) < sp->tol->para )
+	if( fabs( VDOT( eu->g.lseg_p->e_dir, sp->dir ) ) < sp->tol->para )
 		return;
 #else
 	/* sp->tol->para and RT_DOT_TOL are too tight. 0.1 is 5 degrees */
-	if( fabs( VDOT( eu->e_p->eg_p->e_dir, sp->dir ) ) < 0.9 * MAGNITUDE(eu->e_p->eg_p->e_dir) * MAGNITUDE(sp->dir) )
+	if( fabs( VDOT( eu->g.lseg_p->e_dir, sp->dir ) ) < 0.9 * MAGNITUDE(eu->g.lseg_p->e_dir) * MAGNITUDE(sp->dir) )
 		return;
 #endif
 	if( rt_distsq_line3_pt3( sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord )

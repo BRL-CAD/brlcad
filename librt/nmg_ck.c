@@ -189,8 +189,6 @@ struct edgeuse *eup;
 
 	if (!is_use)
 		rt_bomb("nmg_vedge() Cannot get from edge to parent edgeuse\n");
-
-	if (e->eg_p) nmg_veg(e->eg_p);
 }
 
 /*
@@ -271,6 +269,10 @@ long	*up_magic_p;
 			rt_bomb("nmg_veu() edgeuse radial denies knowing edgeuse\n");
 
 		nmg_vedge(eu->e_p, eu);
+
+		if( eu->g.magic_p != eu->eumate_p->g.magic_p )
+			rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
+		if (eu->g.magic_p) nmg_veg(eu->g.magic_p);
 		
 		switch (eu->orientation) {
 		case OT_NONE	: break;

@@ -467,15 +467,27 @@ struct disk_face {
 	unsigned char		flip[4];
 };
 
-#define DISK_FACE_G_PLANE_MAGIC	0x4e665f61	/* Nf_a */
+#define DISK_FACE_G_PLANE_MAGIC	0x4e665f70	/* Nf_p */
 struct disk_face_g_plane {
 	unsigned char		magic[4];
 	struct disk_rt_list	f_hd;
 	unsigned char		N[4*8];
-	/*
-	 * Note that min_pt and max_pt are not stored on disk,
-	 * regardless of "compact" flag setting.
-	 */
+};
+
+#define DISK_FACE_G_SNURB_MAGIC	0x4e665f73	/* Nf_s */
+struct disk_face_g_snurb {
+	unsigned char		magic[4];
+	struct disk_rt_list	f_hd;
+	unsigned char		u_order[4];
+	unsigned char		v_order[4];
+	unsigned char		u_size[4];	/* u.k_size */
+	unsigned char		v_size[4];	/* v.k_size */
+	/* XXXXXX knot vetor??? u.knots */
+	/* XXXXXX knot vetor??? v.knots */
+	unsigned char		us_size[4];
+	unsigned char		vs_size[4];
+	unsigned char		pt_type[4];
+	/* XXXXXX ctl_points ???? */
 };
 
 #define DISK_FACEUSE_MAGIC	0x4e667520	/* Nfu */
@@ -488,11 +500,6 @@ struct disk_faceuse {
 	disk_index_t		f_p;
 	disk_index_t		fua_p;
 	struct disk_rt_list	lu_hd;
-};
-
-#define DISK_FACEUSE_A_MAGIC	0x4e667561	/* Nfua */
-struct disk_faceuse_a {
-	unsigned char		magic[4];	/* XXX */
 };
 
 #define DISK_LOOP_MAGIC		0x4e6c6f70	/* Nlop */
@@ -521,11 +528,6 @@ struct disk_loopuse {
 	struct disk_rt_list	down_hd;
 };
 
-#define DISK_LOOPUSE_A_MAGIC	0x4e6c7561	/* Nlua */
-struct disk_loopuse_a {
-	unsigned char		magic[4];	/* XXX */
-};
-
 #define DISK_EDGE_MAGIC		0x4e656467	/* Nedg */
 struct disk_edge {
 	unsigned char		magic[4];
@@ -534,13 +536,24 @@ struct disk_edge {
 	unsigned char		is_real[4];
 };
 
-#define DISK_EDGE_G_MAGIC	0x4e655f67	/* Ne_g */
+#define DISK_EDGE_G_LSEG_MAGIC	0x4e655f67	/* Ne_g */
 struct disk_edge_g_lseg {
 	unsigned char		magic[4];
-	/* usage is gone */
 	struct disk_rt_list	eu_hd2;
 	unsigned char		e_pt[3*8];
 	unsigned char		e_dir[3*8];
+};
+
+#define DISK_EDGE_G_CNURB_MAGIC	0x4e655f63	/* Ne_c */
+struct disk_edge_g_cnurb {
+	unsigned char		magic[4];
+	struct disk_rt_list	eu_hd2;
+	unsigned char		order[4];
+	unsigned char		k_size[4];	/* k.k_size */
+	/* XXXXXXX knot vector???   knot.knots */
+	unsigned char		c_size[4];
+	unsigned char		pt_type[4];
+	/* XXXXXXX ctl_points[] ???? */
 };
 
 #define DISK_EDGEUSE_MAGIC	0x4e657520	/* Neu */
@@ -555,11 +568,7 @@ struct disk_edgeuse {
 	disk_index_t		eua_p;
 	unsigned char  		orientation[4];
 	disk_index_t		vu_p;
-};
-
-#define DISK_EDGEUSE_A_MAGIC	0x4e657561	/* Neua */
-struct disk_edgeuse_a {
-	unsigned char		magic[4];	/* XXX */
+	disk_index_t		g;
 };
 
 #define DISK_VERTEX_MAGIC	0x4e767274	/* Nvrt */
@@ -605,75 +614,85 @@ struct disk_vertexuse_a_cnurb {
 #define NMG_KIND_SHELL		4
 #define NMG_KIND_SHELL_A	5
 #define NMG_KIND_FACEUSE	6
-#define NMG_KIND_FACEUSE_A	7		/* XXX */
-#define NMG_KIND_FACE		8
-#define NMG_KIND_FACE_G_PLANE	9
+#define NMG_KIND_FACE		7
+#define NMG_KIND_FACE_G_PLANE	8
+#define NMG_KIND_FACE_G_SNURB	9
 #define NMG_KIND_LOOPUSE	10
-#define NMG_KIND_LOOPUSE_A	11		/* XXX */
-#define NMG_KIND_LOOP		12
-#define NMG_KIND_LOOP_G		13
-#define NMG_KIND_EDGEUSE	14
-#define NMG_KIND_EDGEUSE_A	15		/* XXX */
-#define NMG_KIND_EDGE		16
-#define NMG_KIND_EDGE_G_LSEG		17
-#define NMG_KIND_EDGE_G_CNURB		0	/* XXX reuse */
-#define NMG_KIND_VERTEXUSE	18
-#define NMG_KIND_VERTEXUSE_A_PLANE	19
-#define NMG_KIND_VERTEXUSE_A_CNURB	0	/* XXX reuse */
+#define NMG_KIND_LOOP		11
+#define NMG_KIND_LOOP_G		12
+#define NMG_KIND_EDGEUSE	13
+#define NMG_KIND_EDGE		14
+#define NMG_KIND_EDGE_G_LSEG	15
+#define NMG_KIND_EDGE_G_CNURB	16
+#define NMG_KIND_VERTEXUSE	17
+#define NMG_KIND_VERTEXUSE_A_PLANE	18
+#define NMG_KIND_VERTEXUSE_A_CNURB	19
 #define NMG_KIND_VERTEX		20
 #define NMG_KIND_VERTEX_G	21
+
+#define NMG_KIND_DOUBLE_ARRAY	25		/* special, variable sized */
 
 /* This number must have some extra space, for upwards compatability */
 /* 26 is the limit, in the current incarnation of db.h */
 #define NMG_N_KINDS		26		/* number of kinds */
 
 int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
-	sizeof(struct disk_model),
+	sizeof(struct disk_model),		/* 0 */
 	sizeof(struct disk_model_a),
 	sizeof(struct disk_nmgregion),
 	sizeof(struct disk_nmgregion_a),
 	sizeof(struct disk_shell),
 	sizeof(struct disk_shell_a),
 	sizeof(struct disk_faceuse),
-	sizeof(struct disk_faceuse_a),
 	sizeof(struct disk_face),
 	sizeof(struct disk_face_g_plane),
-	sizeof(struct disk_loopuse),
-	sizeof(struct disk_loopuse_a),
+	sizeof(struct disk_face_g_snurb),
+	sizeof(struct disk_loopuse),		/* 10 */
 	sizeof(struct disk_loop),
 	sizeof(struct disk_loop_g),
 	sizeof(struct disk_edgeuse),
-	sizeof(struct disk_edgeuse_a),
 	sizeof(struct disk_edge),
 	sizeof(struct disk_edge_g_lseg),
+	sizeof(struct disk_edge_g_cnurb),
 	sizeof(struct disk_vertexuse),
 	sizeof(struct disk_vertexuse_a_plane),
-	sizeof(struct disk_vertex),
-	sizeof(struct disk_vertex_g)
+	sizeof(struct disk_vertexuse_a_cnurb),
+	sizeof(struct disk_vertex),		/* 20 */
+	sizeof(struct disk_vertex_g),
+	0,
+	0,
+	0,
+	0					/* 25: MUST BE ZERO */
 };
-char	rt_nmg_kind_names[NMG_N_KINDS][18] = {
-	"model",
+char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
+	"model",				/* 0 */
 	"model_a",
 	"nmgregion",
 	"nmgregion_a",
 	"shell",
 	"shell_a",
 	"faceuse",
-	"faceuse_a",
 	"face",
 	"face_g_plane",
-	"loopuse",
-	"loopuse_a",
+	"face_g_snurb",
+	"loopuse",				/* 10 */
 	"loop",
 	"loop_g",
 	"edgeuse",
-	"edgeuse_a",
 	"edge",
 	"edge_g_lseg",
+	"edge_g_cnurb",
 	"vertexuse",
 	"vertexuse_a_plane",
-	"vertex",
-	"vertex_g"
+	"vertexuse_a_cnurb",
+	"vertex",				/* 20 */
+	"vertex_g",
+	"k22",
+	"k23",
+	"k24",
+	"double_array",				/* 25 */
+	"k26-OFF_END",
+	"k27-OFF_END"
 };
 
 /*
@@ -705,6 +724,8 @@ register long	magic;
 		return NMG_KIND_FACE;
 	case NMG_FACE_G_PLANE_MAGIC:
 		return NMG_KIND_FACE_G_PLANE;
+	case NMG_FACE_G_SNURB_MAGIC:
+		return NMG_KIND_FACE_G_SNURB;
 	case NMG_LOOPUSE_MAGIC:
 		return NMG_KIND_LOOPUSE;
 	case NMG_LOOP_G_MAGIC:
@@ -717,6 +738,8 @@ register long	magic;
 		return NMG_KIND_EDGE;
 	case NMG_EDGE_G_LSEG_MAGIC:
 		return NMG_KIND_EDGE_G_LSEG;
+	case NMG_EDGE_G_CNURB_MAGIC:
+		return NMG_KIND_EDGE_G_CNURB;
 	case NMG_VERTEXUSE_MAGIC:
 		return NMG_KIND_VERTEXUSE;
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
@@ -790,6 +813,8 @@ struct nmg_exp_counts	*ecnt;
  *			R T _ N M G _ E D I S K
  *
  *  Export a given structure from memory to disk format
+ *
+ *  Scale geometry by 'local2mm'
  */
 void
 rt_nmg_edisk( op, ip, ecnt, index, local2mm )
@@ -899,9 +924,6 @@ double		local2mm;
 			INDEXL( d, fu, lu_hd );
 		}
 		return;
-	case NMG_KIND_FACEUSE_A:
-		rt_bomb("nmg_kind_faceuse_a\n");
-		return;
 	case NMG_KIND_FACE:
 		{
 			struct face	*f = (struct face *)ip;
@@ -929,6 +951,26 @@ double		local2mm;
 			htond( d->N, plane, 4 );
 		}
 		return;
+	case NMG_KIND_FACE_G_SNURB:
+		{
+			struct face_g_snurb	*fg = (struct face_g_snurb *)ip;
+			struct disk_face_g_snurb	*d;
+
+			d = &((struct disk_face_g_snurb *)op)[oindex];
+			NMG_CK_FACE_G_SNURB(fg);
+			PUTMAGIC( DISK_FACE_G_SNURB_MAGIC );
+			INDEXL( d, fg, f_hd );
+			rt_plong( d->u_order, fg->order[0] );
+			rt_plong( d->v_order, fg->order[1] );
+			rt_plong( d->u_size, fg->u.k_size );
+			rt_plong( d->v_size, fg->v.k_size );
+			rt_plong( d->us_size, fg->s_size[0] );
+			rt_plong( d->vs_size, fg->s_size[1] );
+			rt_plong( d->pt_type, fg->pt_type );
+			/* XXX scale ctl_points by local2mm */
+/* XXX */		rt_bomb("face_g_snurb knot & ctl_points export\n");
+		}
+		return;
 	case NMG_KIND_LOOPUSE:
 		{
 			struct loopuse	*lu = (struct loopuse *)ip;
@@ -943,9 +985,6 @@ double		local2mm;
 			INDEX( d, lu, l_p );
 			INDEXL( d, lu, down_hd );
 		}
-		return;
-	case NMG_KIND_LOOPUSE_A:
-		rt_bomb("nmg_kind_loopuse_a\n");
 		return;
 	case NMG_KIND_LOOP:
 		{
@@ -987,10 +1026,8 @@ double		local2mm;
 			INDEX( d, eu, e_p );
 			rt_plong( d->orientation, eu->orientation);
 			INDEX( d, eu, vu_p );
+			rt_plong( d->g, rt_nmg_reindex((genptr_t)(eu->g.magic_p), ecnt) );
 		}
-		return;
-	case NMG_KIND_EDGEUSE_A:
-		rt_bomb("nmg_kind_edgeuse_a\n");
 		return;
 	case NMG_KIND_EDGE:
 		{
@@ -1001,19 +1038,36 @@ double		local2mm;
 			PUTMAGIC( DISK_EDGE_MAGIC );
 			rt_plong( d->is_real, e->is_real );
 			INDEX( d, e, eu_p );
-			INDEX( d, e, eg_p );
 		}
 		return;
 	case NMG_KIND_EDGE_G_LSEG:
 		{
 			struct edge_g_lseg	*eg = (struct edge_g_lseg *)ip;
 			struct disk_edge_g_lseg	*d;
+			point_t			pt;
 			d = &((struct disk_edge_g_lseg *)op)[oindex];
 			NMG_CK_EDGE_G_LSEG(eg);
-			PUTMAGIC( DISK_EDGE_G_MAGIC );
+			PUTMAGIC( DISK_EDGE_G_LSEG_MAGIC );
 			INDEXL( d, eg, eu_hd2 );
-			htond( d->e_pt, eg->e_pt, 3);
+			VSCALE( pt, eg->e_pt, local2mm );
+			htond( d->e_pt, pt, 3);
 			htond( d->e_dir, eg->e_dir, 3);
+		}
+		return;
+	case NMG_KIND_EDGE_G_CNURB:
+		{
+			struct edge_g_cnurb	*eg = (struct edge_g_cnurb *)ip;
+			struct disk_edge_g_cnurb	*d;
+			d = &((struct disk_edge_g_cnurb *)op)[oindex];
+			NMG_CK_EDGE_G_CNURB(eg);
+			PUTMAGIC( DISK_EDGE_G_CNURB_MAGIC );
+			INDEXL( d, eg, eu_hd2 );
+			rt_plong( d->order, eg->order );
+			rt_plong( d->k_size, eg->k.k_size );
+			rt_plong( d->c_size, eg->c_size );
+			rt_plong( d->pt_type, eg->pt_type );
+			/* XXX Scale ctl_points by local2mm */
+/* XXX */		rt_bomb("edge_g_cnurb knots and ctl_points export\n");
 		}
 		return;
 	case NMG_KIND_VERTEXUSE:
@@ -1033,13 +1087,23 @@ double		local2mm;
 		{
 			struct vertexuse_a_plane	*vua = (struct vertexuse_a_plane *)ip;
 			struct disk_vertexuse_a_plane	*d;
-			plane_t			plane;
 			d = &((struct disk_vertexuse_a_plane *)op)[oindex];
 			NMG_CK_VERTEXUSE_A_PLANE(vua);
 			PUTMAGIC( DISK_VERTEXUSE_A_PLANE_MAGIC );
-			VMOVE( plane, vua->N );
-			plane[3] = vua->N[3] * local2mm;
-			htond( d->N, plane, 4 );
+			/* Normal vectors don't scale */
+			htond( d->N, vua->N, 3 );
+		}
+		return;
+	case NMG_KIND_VERTEXUSE_A_CNURB:
+		{
+			struct vertexuse_a_cnurb	*vua = (struct vertexuse_a_cnurb *)ip;
+			struct disk_vertexuse_a_cnurb	*d;
+
+			d = &((struct disk_vertexuse_a_cnurb *)op)[oindex];
+			NMG_CK_VERTEXUSE_A_CNURB(vua);
+			PUTMAGIC( DISK_VERTEXUSE_A_CNURB_MAGIC );
+			/* (u,v) parameters on curves don't scale */
+			htond( d->param, vua->param, 3 );
 		}
 		return;
 	case NMG_KIND_VERTEX:
@@ -1099,6 +1163,8 @@ double		local2mm;
  *			R T _ N M G _ I D I S K
  *
  *  Import a given structure from disk to memory format.
+ *
+ *  Transform geometry by given matrix.
  */
 int
 rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat )
@@ -1207,9 +1273,6 @@ mat_t		mat;
 			NMG_CK_FACEUSE(fu->fumate_p);
 		}
 		return 0;
-	case NMG_KIND_FACEUSE_A:
-		rt_bomb("nmg_kind_faceuse_a\n");
-		return 0;
 	case NMG_KIND_FACE:
 		{
 			struct face	*f = (struct face *)op;
@@ -1242,6 +1305,25 @@ mat_t		mat;
 			rt_rotate_plane( fg->N, mat, plane );
 		}
 		return 0;
+	case NMG_KIND_FACE_G_SNURB:
+		{
+			struct face_g_snurb	*fg = (struct face_g_snurb *)op;
+			struct disk_face_g_snurb	*d;
+			d = &((struct disk_face_g_snurb *)ip)[iindex];
+			NMG_CK_FACE_G_SNURB(fg);
+			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_SNURB_MAGIC );
+			INDEXL_HD( d, fg, f_hd, fg->f_hd );
+			fg->order[0] = rt_glong( d->u_order );
+			fg->order[1] = rt_glong( d->v_order );
+			fg->u.k_size = rt_glong( d->u_size );
+			fg->v.k_size = rt_glong( d->v_size );
+			fg->s_size[0] = rt_glong( d->us_size );
+			fg->s_size[1] = rt_glong( d->vs_size );
+			fg->pt_type = rt_glong( d->pt_type );
+			/* XXX Must transform ctl_points by 'mat' */
+/* XXX */		rt_bomb("snurb u.knots, v.knots, ctl_points\n");
+		}
+		return 0;
 	case NMG_KIND_LOOPUSE:
 		{
 			struct loopuse	*lu = (struct loopuse *)op;
@@ -1268,9 +1350,6 @@ mat_t		mat;
 				rt_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
 			NMG_CK_LOOP(lu->l_p);
 		}
-		return 0;
-	case NMG_KIND_LOOPUSE_A:
-		rt_bomb("nmg_kind_loopuse_a\n");
 		return 0;
 	case NMG_KIND_LOOP:
 		{
@@ -1320,16 +1399,14 @@ mat_t		mat;
 			} else if( up_kind == NMG_KIND_SHELL )  {
 				INDEXL_HD( d, eu, l, eu->up.s_p->eu_hd );
 			} else rt_log("bad edgeuse up, index=%d, kind=%d\n", up_index, up_kind);
+			eu->g.magic_p = (long *)ptrs[rt_glong(d->g)];
 			NMG_CK_EDGE(eu->e_p);
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
-			NMG_CK_EDGE_G_LSEG(eu->e_p->eg_p);
-			INDEXL_HD( d, eu, l2, eu->e_p->eg_p->eu_hd2 );
+			NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);	/* XXX */
+			INDEXL_HD( d, eu, l2, eu->g.lseg_p->eu_hd2 );	/* pun for g.cnurb_p->eu_hd2 also */
 		}
-		return 0;
-	case NMG_KIND_EDGEUSE_A:
-		rt_bomb("nmg_kind_edgeuse_a\n");
 		return 0;
 	case NMG_KIND_EDGE:
 		{
@@ -1340,7 +1417,6 @@ mat_t		mat;
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_MAGIC );
 			e->is_real = rt_glong( d->is_real );
 			INDEX( d, e, edgeuse, eu_p );
-			INDEX( d, e, edge_g_lseg, eg_p );
 			NMG_CK_EDGEUSE(e->eu_p);
 		}
 		return 0;
@@ -1348,13 +1424,33 @@ mat_t		mat;
 		{
 			struct edge_g_lseg	*eg = (struct edge_g_lseg *)op;
 			struct disk_edge_g_lseg	*d;
+			point_t			pt;
+			vect_t			dir;
+
 			d = &((struct disk_edge_g_lseg *)ip)[iindex];
 			NMG_CK_EDGE_G_LSEG(eg);
-			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_MAGIC );
-			/* usage is gone */
-			ntohd(eg->e_pt, d->e_pt, 3);
-			ntohd(eg->e_dir, d->e_dir, 3);
+			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_LSEG_MAGIC );
 			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
+			ntohd(pt, d->e_pt, 3);
+			ntohd(dir, d->e_dir, 3);
+			MAT4X3PNT( eg->e_pt, mat, pt );
+			MAT4X3VEC( eg->e_dir, mat, dir );
+		}
+		return 0;
+	case NMG_KIND_EDGE_G_CNURB:
+		{
+			struct edge_g_cnurb	*eg = (struct edge_g_cnurb *)op;
+			struct disk_edge_g_cnurb	*d;
+			d = &((struct disk_edge_g_cnurb *)ip)[iindex];
+			NMG_CK_EDGE_G_CNURB(eg);
+			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_CNURB_MAGIC );
+			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
+			/* XXX Must transform ctl_points by 'mat' */
+			eg->order = rt_glong( d->order );
+			eg->k.k_size = rt_glong( d->k_size );
+			eg->c_size = rt_glong( d->c_size );
+			eg->pt_type = rt_glong( d->pt_type );
+/* XXX */		rt_bomb("cnurb knots and ctl_points?\n");
 		}
 		return 0;
 	case NMG_KIND_VERTEXUSE:
@@ -1375,26 +1471,25 @@ mat_t		mat;
 		{
 			struct vertexuse_a_plane	*vua = (struct vertexuse_a_plane *)op;
 			struct disk_vertexuse_a_plane	*d;
-			plane_t			plane;
+			vect_t			norm;
 			d = &((struct disk_vertexuse_a_plane *)ip)[iindex];
 			NMG_CK_VERTEXUSE_A_PLANE(vua);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC );
-			ntohd( plane, d->N, 4 );
-			rt_rotate_plane( vua->N, mat, plane );
+			ntohd( norm, d->N, 3 );
+			MAT4X3VEC( vua->N, mat, norm );
 		}
 		return 0;
-#if 0
 	case NMG_KIND_VERTEXUSE_A_CNURB:
 		{
 			struct vertexuse_a_cnurb	*vua = (struct vertexuse_a_cnurb *)op;
 			struct disk_vertexuse_a_cnurb	*d;
 			d = &((struct disk_vertexuse_a_cnurb *)ip)[iindex];
-			NMG_CK_VERTEXUSE_A_PLANE(vua);
-			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_PLANE_MAGIC );
+			NMG_CK_VERTEXUSE_A_CNURB(vua);
+			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_A_CNURB_MAGIC );
+			/* These parameters are invarient w.r.t. 'mat' */
 			ntohd( vua->param, d->param, 3 );
 		}
 		return 0;
-#endif
 	case NMG_KIND_VERTEX:
 		{
 			struct vertex	*v = (struct vertex *)op;
@@ -1427,6 +1522,7 @@ mat_t		mat;
  *			R T _ N M G _ I A L L O C
  *
  *  Allocate storage for all the in-memory NMG structures,
+ *  in preparation for the importation operation,
  *  using the GET_xxx() macros, so that m->maxindex, etc,
  *  are all appropriately handled.
  */
@@ -1510,9 +1606,6 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)fu;
 				}
 				break;
-			case NMG_KIND_FACEUSE_A:
-				rt_bomb("nmg_kind_faceuse_a\n");
-				break;
 			case NMG_KIND_FACE:
 				{
 					struct face	*f;
@@ -1530,6 +1623,15 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)fg;
 				}
 				break;
+			case NMG_KIND_FACE_G_SNURB:
+				{
+					struct face_g_snurb	*fg;
+					GET_FACE_G_SNURB( fg, m );
+					fg->magic = NMG_FACE_G_SNURB_MAGIC;
+					RT_LIST_INIT( &fg->f_hd );
+					ptrs[subscript] = (long *)fg;
+				}
+				break;
 			case NMG_KIND_LOOPUSE:
 				{
 					struct loopuse	*lu;
@@ -1538,9 +1640,6 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					RT_LIST_INIT( &lu->down_hd );
 					ptrs[subscript] = (long *)lu;
 				}
-				break;
-			case NMG_KIND_LOOPUSE_A:
-				rt_bomb("nmg_kind_loopuse_a\n");
 				break;
 			case NMG_KIND_LOOP:
 				{
@@ -1566,9 +1665,6 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)eu;
 				}
 				break;
-			case NMG_KIND_EDGEUSE_A:
-				rt_bomb("nmg_kind_edgeuse_a\n");
-				break;
 			case NMG_KIND_EDGE:
 				{
 					struct edge	*e;
@@ -1582,6 +1678,16 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					struct edge_g_lseg	*eg;
 					GET_EDGE_G_LSEG( eg, m );
 					eg->magic = NMG_EDGE_G_LSEG_MAGIC;
+					RT_LIST_INIT( &eg->eu_hd2 );
+					ptrs[subscript] = (long *)eg;
+				}
+				break;
+			case NMG_KIND_EDGE_G_CNURB:
+				{
+					struct edge_g_cnurb	*eg;
+					GET_EDGE_G_CNURB( eg, m );
+					eg->magic = NMG_EDGE_G_CNURB_MAGIC;
+					RT_LIST_INIT( &eg->eu_hd2 );
 					ptrs[subscript] = (long *)eg;
 				}
 				break;
@@ -1601,7 +1707,6 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)vua;
 				}
 				break;
-#if 0
 			case NMG_KIND_VERTEXUSE_A_CNURB:
 				{
 					struct vertexuse_a_cnurb	*vua;
@@ -1610,7 +1715,6 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)vua;
 				}
 				break;
-#endif
 			case NMG_KIND_VERTEX:
 				{
 					struct vertex	*v;
@@ -1766,9 +1870,34 @@ CONST struct rt_tol		*tol;
  *	loop_g
  *  are not converted for storage in the database.
  *  They should be re-generated at import time.
- *  (Saving space in face_g_plane is problematic).
  *
  *  If the "compact" flag is not set, then the NMG model is saved, verbatim.
+ *
+ *  The overall layout of the on-disk NMG is like this:
+ *
+ *	+---------------------------+
+ *	|  NMG header granule       |
+ *	|    solid name             |
+ *	|    # additional granules  |
+ *	|    format version         |
+ *	|    kind_count[] array     |
+ *	+---------------------------+
+ *	|                           |
+ *	|                           |
+ *	~     N_count granules      ~
+ *	~              :            ~
+ *	|              :            |
+ *	|                           |
+ *	+---------------------------+
+ *
+ *  In the additional granules, all structures of "kind" 0 (model) go first,
+ *  followed by all structures of kind 1 (nmgregion), etc.
+ *  As each structure is output, it is assigned a subscript number,
+ *  starting with #1 for the model structure.
+ *  All pointers are converted to the matching subscript numbers.
+ *  An on-disk subscript of zero indicates a corresponding NULL pointer in memory.
+ *  All integers are converted to network (Big-Endian) byte order.
+ *  All floating point values are stored in network (Big-Endian IEEE) format.
  */
 int
 rt_nmg_export_internal( ep, ip, local2mm, compact )

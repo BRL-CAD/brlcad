@@ -89,9 +89,6 @@ genptr_t			*state;		/* Handler's private state */
 	NMG_CK_EDGE( e );
 
 	if(htab->vis_edge) htab->vis_edge( (long *)e, state, 0 );
-
-	if(htab->vis_edge_g && e->eg_p)
-		htab->vis_edge_g( (long *)e->eg_p, state, 0 );
 }
 
 /*
@@ -109,6 +106,9 @@ genptr_t			*state;		/* Handler's private state */
 
 	nmg_visit_vertexuse( eu->vu_p, htab, state );
 	nmg_visit_edge( eu->e_p, htab, state );
+
+	if(htab->vis_edge_g && eu->g.magic_p)
+		htab->vis_edge_g( eu->g.magic_p, state, 0 );
 
 	if(htab->aft_edgeuse) htab->aft_edgeuse( (long *)eu, state, 1 );
 }

@@ -492,7 +492,7 @@ CONST long		*assoc_use;
 		rt_log("2d prep for edgeuse\n");
 		e1 = eu1->e_p;
 		NMG_CK_EDGE(e1);
-		eg = e1->eg_p;
+		eg = eu1->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
 		is->twod = &e1->magic;
 
@@ -1032,7 +1032,7 @@ CONST struct rt_tol	*tol;
 		struct edgeuse	*new_eu;
 
 		NMG_CK_EDGEUSE(*eup);
-		if( (*eup)->e_p->eg_p != eg )  continue;
+		if( (*eup)->g.lseg_p != eg )  continue;
 
 		va = (*eup)->vu_p->v_p;
 		vb = (*eup)->eumate_p->vu_p->v_p;
@@ -2039,7 +2039,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	(void)nmg_tbl(&eu1_list, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&eu2_list, TBL_INIT,(long *)NULL);
 
-	is->on_eg = eu1->e_p->eg_p;
+	is->on_eg = eu1->g.lseg_p;
     	is->l1 = &vert_list1;
     	is->l2 = &vert_list2;
 	is->s1 = nmg_find_s_of_eu(eu1);		/* may be wire edge */
@@ -2257,7 +2257,7 @@ f1_again:
 			struct edge_g_lseg	*eg;
 
 			NMG_CK_EDGEUSE(eu);
-			eg = eu->e_p->eg_p;
+			eg = eu->g.lseg_p;
 			/* If this eu's eg has been seen before, skip on. */
 			if( eg && !NMG_INDEX_FIRST_TIME(tags, eg) )  continue;
 
@@ -2296,7 +2296,7 @@ f2_again:
 			struct edge_g_lseg	*eg;
 
 			NMG_CK_EDGEUSE(eu);
-			eg = eu->e_p->eg_p;
+			eg = eu->g.lseg_p;
 			/* If this eu's eg has been seen before, skip on. */
 			if( eg && !NMG_INDEX_FIRST_TIME(tags, eg) )  continue;
 
@@ -2633,12 +2633,12 @@ CONST struct rt_tol	*tol;
 	)  {
 		if( !ret )  {
 			/* No edge_g_lseg found yet, use this one. */
-			ret = (*eup)->e_p->eg_p;
+			ret = (*eup)->g.lseg_p;
 			continue;
 		}
-		if( (*eup)->e_p->eg_p == ret ) continue;	/* OK */
+		if( (*eup)->g.lseg_p == ret ) continue;	/* OK */
 		/* Found different edge_g_lseg, claimed to be colinear */
-		rt_log("*eup=x%x, eg_p=x%x, ret=x%x\n", *eup, (*eup)->e_p->eg_p, ret );
+		rt_log("*eup=x%x, g=x%x, ret=x%x\n", *eup, (*eup)->g.lseg_p, ret );
 		rt_bomb("nmg_find_eg_on_line() 2 different eg's, fuser failure.\n");
 	}
 	(void)nmg_tbl( &eutab, TBL_FREE, 0 );
@@ -2728,8 +2728,8 @@ struct vertex *
 nmg_search_v_eg( eu, second, eg1, eg2, hit_v, tol )
 CONST struct edgeuse		*eu;
 int				second;		/* 2nd vu on eu, not 1st */
-CONST struct edge_g_lseg		*eg1;
-CONST struct edge_g_lseg		*eg2;
+CONST struct edge_g_lseg	*eg1;
+CONST struct edge_g_lseg	*eg2;
 struct vertex			*hit_v;		/* often will be NULL */
 CONST struct rt_tol		*tol;
 {
@@ -2760,8 +2760,8 @@ CONST struct rt_tol		*tol;
 		NMG_CK_VERTEXUSE(vu1);
 		if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
 		eu1 = vu1->up.eu_p;
-		if( eu1->e_p->eg_p == eg1 )  seen1 = 1;
-		if( eu1->e_p->eg_p == eg2 )  seen2 = 1;
+		if( eu1->g.lseg_p == eg1 )  seen1 = 1;
+		if( eu1->g.lseg_p == eg2 )  seen2 = 1;
 		if( !seen1 || !seen2 )  continue;
 
 		/* Both edge_g's have been seen at 'v', this is a hit. */
@@ -2817,7 +2817,7 @@ struct model		*m;		/* XXX */
 	     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu1_list); eu1--
 	)  {
 		NMG_CK_EDGEUSE(*eu1);
-		if( (*eu1)->e_p->eg_p != eg1 )  rt_bomb("nmg_isect_2eg() sanity\n");
+		if( (*eu1)->g.lseg_p != eg1 )  rt_bomb("nmg_isect_2eg() sanity\n");
 		/* Both verts of *eu1 lie on line *eg1 */
 		hit_v = nmg_search_v_eg( *eu1, 0, eg1, eg2, hit_v, tol );
 		hit_v = nmg_search_v_eg( *eu1, 1, eg1, eg2, hit_v, tol );
@@ -2952,7 +2952,7 @@ colinear:
 			     eu1++
 			)  {
 				NMG_CK_EDGEUSE(*eu1);
-				if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
+				if( (*eu1)->g.lseg_p != is->on_eg )  continue;
 				/* *eu1 is from fu1 */
 
 				for( eu2 = (struct edgeuse **)NMG_TBL_BASEADDR(eu2_list);
@@ -2960,7 +2960,7 @@ colinear:
 				     eu2++
 				)  {
 					NMG_CK_EDGEUSE(*eu2);
-					if( (*eu2)->e_p->eg_p != is->on_eg )  continue;
+					if( (*eu2)->g.lseg_p != is->on_eg )  continue;
 					/*
 					 *  *eu2 is from fu2.
 					 *  Perform intersection.
@@ -3019,7 +3019,7 @@ fixup:
 #else
 		    	/* fuse eg1 with on_eg, handle as colinear */
 		    	rt_log("fusing with on_eg, handling as colinear\n");
-		    	nmg_move_eg( *eg1, is->on_eg, fu1->s_p );
+		    	nmg_move_eg( *eg1, is->on_eg );
 		    	goto colinear;
 #endif
 		}
@@ -3081,7 +3081,7 @@ force_isect:
 			point_t			eu1_end2d;	/* 2D */
 
 			NMG_CK_EDGEUSE(*eu1);
-			if( (*eu1)->e_p->eg_p != *eg1 )  continue;
+			if( (*eu1)->g.lseg_p != *eg1 )  continue;
 			vu1a = (*eu1)->vu_p;
 			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eu1) )->vu_p;
 
@@ -3247,7 +3247,7 @@ hit_b:
 		     eu1++
 		)  {
 			NMG_CK_EDGEUSE(*eu1);
-			if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
+			if( (*eu1)->g.lseg_p != is->on_eg )  continue;
 			/* *eu1 is from fu1 and on the intersection line */
 			new_eu = nmg_break_eu_on_v( *eu1, vu1->v_p, fu1, is );
 			if( !new_eu )  continue;
@@ -3262,7 +3262,7 @@ hit_b:
 		     eu2++
 		)  {
 			NMG_CK_EDGEUSE(*eu2);
-			if( (*eu2)->e_p->eg_p != is->on_eg )  continue;
+			if( (*eu2)->g.lseg_p != is->on_eg )  continue;
 			/* *eu2 is from fu2 and on the intersection line */
 			new_eu = nmg_break_eu_on_v( *eu2, vu1->v_p, fu1, is );
 			if( !new_eu )  continue;
@@ -3298,7 +3298,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
-	eg = eu->e_p->eg_p;
+	eg = eu->g.lseg_p;
 	NMG_CK_EDGE_G_LSEG(eg);
 
 	/* Ensure direction vectors are generally parallel */
@@ -3396,7 +3396,7 @@ CONST struct rt_tol	*tol;
 				    	}
 
 			    		/* Previous edge found, check edge_g */
-			    		if( eur->e_p->eg_p == ret->e_p->eg_p )  continue;
+			    		if( eur->g.lseg_p == ret->g.lseg_p )  continue;
 					if( eur->e_p == ret->e_p )  continue;
 
 					/* Edge geometry differs. vu's same? */
@@ -3410,10 +3410,10 @@ CONST struct rt_tol	*tol;
 
 					/* This condition "shouldn't happen */
 		    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
-		    				eur, eur->e_p->eg_p,
-		    				ret, ret->e_p->eg_p);
-		    			nmg_pr_eg( eur->e_p->eg_p, 0 );
-		    			nmg_pr_eg( ret->e_p->eg_p, 0 );
+		    				eur, eur->g.lseg_p,
+		    				ret, ret->g.lseg_p);
+		    			nmg_pr_eg( eur->g.lseg_p, 0 );
+		    			nmg_pr_eg( ret->g.lseg_p, 0 );
 		    			nmg_pr_eu_endpoints( eur, 0 );
 		    			nmg_pr_eu_endpoints( ret, 0 );
 
@@ -3421,9 +3421,9 @@ CONST struct rt_tol	*tol;
 					if( coincident )  {
 						/* Change eur to use ret's eg */
 						rt_log("nmg_find_eg_between_2fg() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
-							eur->e_p, eur->e_p->eg_p,
-							ret->e_p, ret->e_p->eg_p );
-						nmg_move_eg( eur->e_p->eg_p, ret->e_p->eg_p, nmg_find_s_of_eu(eur) );
+							eur->e_p, eur->g.lseg_p,
+							ret->e_p, ret->g.lseg_p );
+						nmg_move_eg( eur->g.lseg_p, ret->g.lseg_p );
 						/* See if there are any others. */
 						nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
 					} else {
@@ -3436,10 +3436,10 @@ CONST struct rt_tol	*tol;
 	}
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_find_eg_between_2fg(fu1=x%x, fu2=x%x) edge_g=x%x\n",
-			ofu1, fu2, ret ? ret->e_p->eg_p : 0);
+			ofu1, fu2, ret ? ret->g.lseg_p : 0);
 	}
 	if( ret )
-		return ret->e_p->eg_p;
+		return ret->g.lseg_p;
 	return (struct edge_g_lseg *)NULL;
 }
 
@@ -3502,9 +3502,9 @@ struct faceuse		*fu1, *fu2;
 		if( !nmg_is_eu_on_line3( on_eu, is->pt, is->dir, &(is->tol) ) )  {
 			rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 			VPRINT("isect ray is->pt ", is->pt);
-			VPRINT("on_eu   eg->e_pt ", on_eu->e_p->eg_p->e_pt);
+			VPRINT("on_eu   eg->e_pt ", on_eu->g.lseg_p->e_pt);
 			VPRINT("isect ray is->dir", is->dir);
-			VPRINT("on_eu   eg->e_dir", on_eu->e_p->eg_p->e_dir);
+			VPRINT("on_eu   eg->e_dir", on_eu->g.lseg_p->e_dir);
 			rt_bomb("bad line\n");
 			/* XXX How about resetting is->pt to eg->pt, etc.? */
 		}
@@ -4129,7 +4129,7 @@ struct shell		*s2;
 		struct edgeuse	*neu1, *neu2;
 
 		neu1 = nmg_meonvu( RT_LIST_FIRST( vertexuse, &lu2->down_hd ) );
-		neu2 = nmg_eusplit( eu1->eumate_p->vu_p->v_p, neu1 );
+		neu2 = nmg_eusplit( eu1->eumate_p->vu_p->v_p, neu1, 0 );
 		NMG_CK_EDGEUSE(eu1);
 		/* Attach new edge in s2 to original edge in s1 */
 		nmg_moveeu( eu1, neu2 );

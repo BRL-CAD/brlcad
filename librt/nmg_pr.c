@@ -509,6 +509,8 @@ char *h;
 
 /*
  *			N M G _ P R _ E G
+ *
+ * XXX This is presently just nmg_pr_eg_lseg().
  */
 void
 nmg_pr_eg(eg, h)
@@ -544,10 +546,6 @@ char *h;
 		Return;
 	}
 	rt_log("%s%8x eu_p\n", h, e->eu_p);
-	rt_log("%s%8x eg_p\n", h, e->eg_p);
-
-	if (e->eg_p)
-		nmg_pr_eg(e->eg_p, h);
 
 	Return;
 }
@@ -580,8 +578,12 @@ char *h;
 	nmg_pr_orient(eu->orientation, h);
 	rt_log("%s%8x e_p\n", h, eu->e_p);
 	rt_log("%s%8x vu_p\n", h, eu->vu_p);
+	rt_log("%s%8x g.magic_p\n", h, eu->g.magic_p);
 	nmg_pr_e(eu->e_p, h);
 	nmg_pr_vu(eu->vu_p, h);
+
+	if (eu->g.magic_p)
+		nmg_pr_eg(eu->g.lseg_p, h);
 
 	Return;
 }
@@ -714,7 +716,8 @@ char *h;
 	}
 	rt_log("%s%8x v_p\n", h, vu->v_p);
 	nmg_pr_v(vu->v_p, h);
-	
+	if( vu->a.magic_p )  nmg_pr_vua( vu->a.magic_p, h );
+
 	Return;
 }
 
@@ -742,6 +745,37 @@ char *h;
 
 	Return;
 }
+
+/*
+ *			N M G _ P R _ V U A
+ */
+void
+nmg_pr_vua(magic_p, h)
+CONST long	*magic_p;
+char *h;
+{
+	MKPAD(h);
+
+	rt_log("%sVERTEXUSE_A %8x\n", h, magic_p);
+	if (!magic_p)  {
+		rt_log("bad vertexuse_a magic\n");
+		Return;
+	}
+
+	switch( *magic_p )  {
+	case NMG_VERTEXUSE_A_PLANE_MAGIC:
+		rt_log("%s N=(%g, %g, %g, %g)\n", h,
+			V4ARGS( ((struct vertexuse_a_plane *)magic_p)->N ) );
+		break;
+	case NMG_VERTEXUSE_A_CNURB_MAGIC:
+		rt_log("%s param=(%g, %g, %g)\n", h,
+			V3ARGS( ((struct vertexuse_a_cnurb *)magic_p)->param ) );
+		break;
+	}
+
+	Return;
+}
+
 
 /*
  *			N M G _ E U P R I N T

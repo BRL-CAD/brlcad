@@ -638,7 +638,7 @@ CONST struct rt_tol *tol;
 						else
 						{
 							VJOIN1( pt , eu1->vu_p->v_p->vg_p->coord , dist[0] , v1 );
-							new_eu = nmg_esplit( v , eu1 );
+							new_eu = nmg_esplit( v , eu1, 0 );
 							v = new_eu->vu_p->v_p;
 							if( !v->vg_p )
 								nmg_vertex_gv( v , pt );
@@ -658,7 +658,7 @@ CONST struct rt_tol *tol;
 						else
 						{
 							VJOIN1( pt , eu2->vu_p->v_p->vg_p->coord , dist[1] , v2 );
-							new_eu = nmg_esplit( v , eu2 );
+							new_eu = nmg_esplit( v , eu2, 0 );
 							v = new_eu->vu_p->v_p;
 							if( !v->vg_p )
 								nmg_vertex_gv( v , pt );
@@ -852,7 +852,7 @@ CONST struct rt_tol *tol;
 								v = nmg_find_pt_in_shell( is , pt , tol );
 							}
 
-							new_eu = nmg_esplit( v , eu1 );
+							new_eu = nmg_esplit( v , eu1, 0 );
 							v = new_eu->vu_p->v_p;
 							if( !v->vg_p )
 								nmg_vertex_gv( v , pt );
@@ -873,7 +873,7 @@ CONST struct rt_tol *tol;
 								v = nmg_find_pt_in_shell( is , pt , tol );
 							}
 
-							new_eu = nmg_esplit( v , eu2 );
+							new_eu = nmg_esplit( v , eu2, 0 );
 							v = new_eu->vu_p->v_p;
 							if( !v->vg_p )
 								nmg_vertex_gv( v , pt );

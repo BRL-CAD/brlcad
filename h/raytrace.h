@@ -1914,8 +1914,8 @@ RT_EXTERN(void			nmg_km, (struct model *m) );
 /*	Geometry and Attribute routines */
 RT_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 RT_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
-RT_EXTERN(void			nmg_edge_g, (struct edge *e) );
-RT_EXTERN(void			nmg_use_edge_g, (struct edge *e, struct edge_g *eg) );
+RT_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
+RT_EXTERN(void			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
 RT_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct rt_tol *tol) );
 RT_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
 RT_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct rt_tol *tol) );
@@ -1926,7 +1926,8 @@ RT_EXTERN(int			nmg_demote_lu, (struct loopuse *lu) );
 RT_EXTERN(int			nmg_demote_eu, (struct edgeuse *eu) );
 /*	MODIFY routines */
 RT_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
-RT_EXTERN(void			nmg_moveeu, (struct edgeuse *eudst, struct edgeuse *eusrc) );
+#define nmg_moveeu(a,b)		nmg_je(a,b)
+RT_EXTERN(void			nmg_je, (struct edgeuse *eudst, struct edgeuse *eusrc) );
 RT_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
 
@@ -1972,8 +1973,8 @@ RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse *lu, int is_opposite) )
 RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
 				CONST struct rt_tol *tol) );
 /*	EDGE Routines */
-RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu) );
-RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu) );
+RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu, int share_geom) );
+RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu, int share_geom) );
 RT_EXTERN(struct edgeuse	*nmg_ebreak, (struct vertex *v, struct edgeuse *eu));
 RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
 				struct edgeuse *eu, CONST struct rt_tol *tol));
@@ -1981,7 +1982,7 @@ RT_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2
 RT_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
 				struct shell *src, struct edgeuse *eu) );
-RT_EXTERN(void			nmg_move_eg, (struct edge_g *old_eg, struct edge_g *new_eg, struct shell *s) );
+RT_EXTERN(void			nmg_move_eg, (struct edge_g *old_eg, struct edge_g *new_eg) );
 /*	VERTEX Routines */
 RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 				struct shell *src, struct vertexuse *vu) );
@@ -2101,6 +2102,7 @@ RT_EXTERN(void			nmg_pr_vg, (CONST struct vertex_g *vg, char *h) );
 RT_EXTERN(void			nmg_pr_v, (CONST struct vertex *v, char *h) );
 RT_EXTERN(void			nmg_pr_vu, (CONST struct vertexuse *vu, char *h) );
 RT_EXTERN(void			nmg_pr_vu_briefly, (CONST struct vertexuse *vu, char *h) );
+RT_EXTERN(void			nmg_pr_vua, (CONST long *magic_p, char *h) );
 RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 
 /* From nmg_misc.c */

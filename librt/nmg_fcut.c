@@ -600,7 +600,7 @@ again:
 			fareu = RT_LIST_PLAST_CIRC( edgeuse, fareu );
 		}
 		if( fareu == eu )  goto really_on;	/* All eu's are ON! */
-		if( fareu->e_p->eg_p != eu->e_p->eg_p )  goto really_on;
+		if( fareu->g.lseg_p != eu->g.lseg_p )  goto really_on;
 		farv = fareu->vu_p->v_p;
 rt_log("nmg_assess_eu() farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
 		if( nmg_is_v_on_rs_list(rs, farv) > -1 )  {
@@ -2471,64 +2471,57 @@ top:
 /*
  *			N M G _ E D G E _ G E O M _ I S E C T _ L I N E
  *
- *  Force the edge geometry structure for a given edge to be that of
+ *  Force the geometry structure for a given edge to be that of
  *  the intersection line between the two faces.
  *
  */
 void
-nmg_edge_geom_isect_line( e, rs )
-struct edge		*e;
+nmg_edge_geom_isect_line( eu, rs )
+struct edgeuse		*eu;
 struct nmg_ray_state	*rs;
 {
 	register struct edge_g_lseg	*eg;
 
-	NMG_CK_EDGE(e);
+	NMG_CK_EDGEUSE(eu);
 	NMG_CK_RAYSTATE(rs);
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_edge_geom_isect_line(e=x%x) eg=x%x, rs->eg=x%x at start\n",
-			e, e->eg_p, rs->eg_p);
+		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at start\n",
+			eu, eu->g.magic_p, rs->eg_p);
 	}
-	if( !e->eg_p )  {
-		/* No edge geometry so far */
+	if( !eu->g.magic_p )  {
+		/* This edgeuse has No edge geometry so far.  How??? */
 		if( !rs->eg_p )  {
-			nmg_edge_g( e );
-			eg = e->eg_p;
+			nmg_edge_g( eu );
+			eg = eu->g.lseg_p;
 			NMG_CK_EDGE_G_LSEG(eg);
 			VMOVE( eg->e_pt, rs->pt );
 			VMOVE( eg->e_dir, rs->dir );
 			rs->eg_p = eg;
 		} else {
-			nmg_use_edge_g( e, rs->eg_p );
+			nmg_use_edge_g( eu, (long *)rs->eg_p );
 		}
 		goto out;
 	}
 	/* Edge has edge geometry */
-	if( e->eg_p == rs->eg_p )  return;	/* nothing changes */
+	if( eu->g.lseg_p == rs->eg_p )  return;	/* nothing changes */
 	if( !rs->eg_p )  {
-		/* Smash edge geom with isect line geom, and remember it */
-		eg = e->eg_p;
+		/* This is first edge_g on line, remember it */
+		eg = eu->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
-		VMOVE( eg->e_pt, rs->pt );
-		VMOVE( eg->e_dir, rs->dir );
 		rs->eg_p = eg;
 		goto out;
 	}
 	/*
 	 * Edge has an edge geometry struct, different from that of isect line.
 	 * Force all uses of this edge geom to take on isect line's geometry.
-	 * Everywhere e->eg_p is seen, replace with rs->eg_p.
+	 * Everywhere eu->g.lseg_p is seen, replace with rs->eg_p.
 	 */
-	nmg_move_eg( e->eg_p, rs->eg_p, rs->sA );
-#if 0
-	/* XXX Old routine will break association with eg in other shells!! */
-	/* Only need one call to do whole model, with new routine */
-	nmg_move_eg( e->eg_p, rs->eg_p, rs->sB );
-#endif
+	nmg_move_eg( eu->g.lseg_p, rs->eg_p );
 out:
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_edge_geom_isect_line(e=x%x) eg=x%x, rs->eg=x%x at end\n",
-			e, e->eg_p, rs->eg_p);
+		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at end\n",
+			eu, eu->g.magic_p, rs->eg_p);
 	}
 }
 
@@ -2878,17 +2871,17 @@ nmg_fu_touchingloops(rs->fu2);
 		eu = nmg_find_eu_of_vu(vu);
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
-		if( !rs->eg_p || eu->e_p->eg_p != rs->eg_p )  {
+		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
 rt_log("force prev eu to ray\n");
-			nmg_edge_geom_isect_line( eu->e_p, rs );
+			nmg_edge_geom_isect_line( eu, rs );
 		}
 	}
 	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
 		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
-		if( !rs->eg_p || eu->e_p->eg_p != rs->eg_p )  {
+		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
 rt_log("force next eu to ray\n");
-			nmg_edge_geom_isect_line( eu->e_p, rs );
+			nmg_edge_geom_isect_line( eu, rs );
 		}
 	}
 
@@ -3021,7 +3014,7 @@ rt_log("force next eu to ray\n");
 			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 		} else {
 			/* Break edge, force onto isect line */
-			nmg_edge_geom_isect_line( eu->e_p, rs );
+			nmg_edge_geom_isect_line( eu, rs );
 			rs->vu[pos] = nmg_ebreaker( vu->v_p, eu, rs->tol )->vu_p;
 		}
 		/* Kill lone vertex loop (and vertexuse) */
@@ -3058,7 +3051,7 @@ rt_log("force next eu to ray\n");
 
 		/*  We know edge geom is null, make it be the isect line */
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
-		nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+		nmg_edge_geom_isect_line( first_new_eu, rs );
 
 		/* Fusing to this new edge will happen in nmg_face_cutjoin() */
 
@@ -3123,7 +3116,7 @@ rt_log("force next eu to ray\n");
 					rt_bomb("nmg_face_state_transition() cut loop bafflement\n");
 				}
 				/* Fuse new edge to intersect line, old edge */
-				nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+				nmg_edge_geom_isect_line( first_new_eu, rs );
 				if( old_eu )  nmg_radial_join_eu( old_eu, first_new_eu, rs->tol );
 			}
 
@@ -3202,7 +3195,7 @@ rt_log("force next eu to ray\n");
 		NMG_CK_EDGEUSE(first_new_eu);
 		if( eu == first_new_eu )  {
 			if( old_eu )  nmg_radial_join_eu( old_eu, eu, rs->tol );
-			nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+			nmg_edge_geom_isect_line( first_new_eu, rs );
 		}
 
 		/* Recompute loop geometry.  Bounding box may have expanded */

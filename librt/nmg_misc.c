@@ -3645,7 +3645,9 @@ int	after;
 	/* make sure we only visit this edge once */
 	if( !NMG_INDEX_TEST_AND_SET( ub_state->flags , e ) )  return;
 
-	eg = e->eg_p;
+	eu1 = e->eu_p;
+	NMG_CK_EDGEUSE( eu1 );
+	eg = eu1->g.lseg_p;
 	if( !eg )  {
 		rt_log( "nmg_unbreak_handler: no geomtry for edge x%x\n" , e );
 		return;
@@ -3660,10 +3662,8 @@ int	after;
 	}
 
 	/* Check for two consecutive uses, by looking forward. */
-	eu1 = e->eu_p;
-	NMG_CK_EDGEUSE( eu1 );
 	eu2 = RT_LIST_PNEXT_CIRC( edgeuse , eu1 );
-	if( eu2->e_p->eg_p != eg )
+	if( eu2->g.lseg_p != eg )
 	{
 		/* Can't look backward here, or nmg_unbreak_edge()
 		 * will be asked to kill *this* edgeuse, which
@@ -3687,13 +3687,6 @@ int	after;
 
 	/* keep a count of unbroken edges */
 	ub_state->unbroken++;
-
-#if 0
-	/* See if vertex "B" survived, meaning it has other uses */
-	if( vb->l.magic != NMG_VERTEX_MAGIC )  return;
-
-	/* It's really unclear how to proceed here. No context info. */
-#endif
 }
 
 /*
@@ -4758,7 +4751,7 @@ CONST struct rt_tol *tol;
 			VUNITIZE( i_fus->dir );
 			continue;
 		}
-		new_eu = nmg_esplit( i_fus->vp , i_fus->eu );
+		new_eu = nmg_esplit( i_fus->vp , i_fus->eu, 0 );
 		i_fus->vp = new_eu->vu_p->v_p;
 
 		/* Need to keep track of correct eu in this case */
@@ -4810,7 +4803,7 @@ CONST struct rt_tol *tol;
 			 * this moves the neighboring edge's endpoint to
 			 * fall on the first edge.
 			 */
-			new_eu = nmg_esplit( i_fus->vp , j_fus->eu );
+			new_eu = nmg_esplit( i_fus->vp , j_fus->eu, 0 );
 
 			/* now we can ignore this edge */
 			nmg_fuse_inters( i_fus , j_fus , int_faces , tol );
@@ -5114,7 +5107,7 @@ CONST struct rt_tol *tol;
 				if( rt_g.NMG_debug & DEBUG_BASIC )
 					rt_log( "\tSplitting i_fus->eu x%x at vertex x%x\n" , i_fus->eu , j_fus->vp );
 
-				(void)nmg_esplit( j_fus->vp , i_fus->eu );
+				(void)nmg_esplit( j_fus->vp , i_fus->eu, 0 );
 				i_fus->vp = j_fus->vp;
 				nmg_fuse_inters( i_fus , j_fus , int_faces , tol );
 
@@ -5129,7 +5122,7 @@ CONST struct rt_tol *tol;
 				if( rt_g.NMG_debug & DEBUG_BASIC )
 					rt_log( "\tSplitting j_fus->eu x%x at vertex x%x\n" , j_fus->eu , i_fus->vp );
 
-				(void)nmg_esplit( i_fus->vp , j_fus->eu );
+				(void)nmg_esplit( i_fus->vp , j_fus->eu, 0 );
 				nmg_fuse_inters( i_fus , j_fus , int_faces , tol );
 				continue;
 			}
@@ -6280,7 +6273,7 @@ CONST struct rt_tol *tol;
 	struct nmgregion *r;
 	struct faceuse *fu,*fu1;
 	struct edgeuse *eu,*eu1;
-	struct edge_g *eg;
+	struct edge_g_lseg *eg;
 	struct vertex *v1,*v2;
 	struct model *m;
 	vect_t e_dir;
@@ -6305,9 +6298,10 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX( v2 );
 
 	/* get edge direction */
-	eg = mv_eu->e_p->eg_p;
+	eg = mv_eu->g.lseg_p;
 	if( eg )
 	{
+		NMG_CK_EDGE_G_LSEG(eg);
 		VMOVE( e_dir , eg->e_dir );
 		if( mv_eu->orientation == OT_OPPOSITE )
 		{
@@ -7057,7 +7051,7 @@ CONST struct rt_tol *tol;
 			rt_bomb( "\n" );
 		}
 
-		new_eu = nmg_esplit( v2 , eu );
+		new_eu = nmg_esplit( v2 , eu, 0 );
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 			rt_log( "Split eu x%x (x%x -> x%x) at vertex x%x\n" , eu , eu->vu_p->v_p , eu->eumate_p->vu_p->v_p, v2 );

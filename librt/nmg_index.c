@@ -105,6 +105,33 @@ register long	*p;
 		(_p)->index = newindex++; }
 
 /*
+ *			N M G _ M A R K _ E D G E _ G
+ *
+ *  Helper routine
+ */
+static void
+nmg_mark_edge_g( magic_p )
+long	*magic_p;
+{
+	if( !magic_p )  rt_bomb("nmg_mark_edge_g bad magic\n");
+	switch( *magic_p )  {
+	case NMG_EDGE_G_LSEG_MAGIC:
+		{
+			struct edge_g_lseg *lseg = (struct edge_g_lseg *)magic_p;
+			NMG_MARK_INDEX(lseg);
+			return;
+		}
+	case NMG_EDGE_G_CNURB_MAGIC:
+		{
+			struct edge_g_cnurb *cnurb = (struct edge_g_cnurb *)magic_p;
+			NMG_MARK_INDEX(cnurb);
+			return;
+		}
+	}	
+	rt_bomb("nmg_mark_edge_g() unknown magic\n");
+}
+
+/*
  *			N M G _ M _ S E T _ H I G H _ B I T
  *
  *  First pass:  just set the high bit on all index words
@@ -191,10 +218,7 @@ struct model	*m;
 						e = eu->e_p;
 						NMG_CK_EDGE(e);
 						NMG_MARK_INDEX(e);
-						if(e->eg_p)  {
-							NMG_CK_EDGE_G_LSEG(e->eg_p);
-							NMG_MARK_INDEX(e->eg_p);
-						}
+						if(eu->g.magic_p) nmg_mark_edge_g( eu->g.magic_p );
 						vu = eu->vu_p;
 						NMG_CK_VERTEXUSE(vu);
 						NMG_MARK_INDEX(vu);
@@ -243,10 +267,7 @@ struct model	*m;
 					e = eu->e_p;
 					NMG_CK_EDGE(e);
 					NMG_MARK_INDEX(e);
-					if(e->eg_p)  {
-						NMG_CK_EDGE_G_LSEG(e->eg_p);
-						NMG_MARK_INDEX(e->eg_p);
-					}
+					if(eu->g.magic_p) nmg_mark_edge_g( eu->g.magic_p );
 					vu = eu->vu_p;
 					NMG_CK_VERTEXUSE(vu);
 					NMG_MARK_INDEX(vu);
@@ -266,10 +287,7 @@ struct model	*m;
 				e = eu->e_p;
 				NMG_CK_EDGE(e);
 				NMG_MARK_INDEX(e);
-				if(e->eg_p)  {
-					NMG_CK_EDGE_G_LSEG(e->eg_p);
-					NMG_MARK_INDEX(e->eg_p);
-				}
+				if(eu->g.magic_p) nmg_mark_edge_g( eu->g.magic_p );
 				vu = eu->vu_p;
 				NMG_CK_VERTEXUSE(vu);
 				NMG_MARK_INDEX(vu);
@@ -379,7 +397,14 @@ register long	newindex;
 						e = eu->e_p;
 						NMG_CK_EDGE(e);
 						NMG_ASSIGN_NEW_INDEX(e);
-						if(e->eg_p) NMG_ASSIGN_NEW_INDEX(e->eg_p);
+						if( eu->g.magic_p ) switch(*eu->g.magic_p)  {
+						case NMG_EDGE_G_LSEG_MAGIC:
+							NMG_ASSIGN_NEW_INDEX(eu->g.lseg_p);
+							break;
+						case NMG_EDGE_G_CNURB_MAGIC:
+							NMG_ASSIGN_NEW_INDEX(eu->g.cnurb_p);
+							break;
+						}
 						vu = eu->vu_p;
 						NMG_CK_VERTEXUSE(vu);
 						NMG_ASSIGN_NEW_INDEX(vu);
@@ -416,7 +441,14 @@ register long	newindex;
 					e = eu->e_p;
 					NMG_CK_EDGE(e);
 					NMG_ASSIGN_NEW_INDEX(e);
-					if(e->eg_p) NMG_ASSIGN_NEW_INDEX(e->eg_p);
+					if( eu->g.magic_p ) switch(*eu->g.magic_p)  {
+					case NMG_EDGE_G_LSEG_MAGIC:
+						NMG_ASSIGN_NEW_INDEX(eu->g.lseg_p);
+						break;
+					case NMG_EDGE_G_CNURB_MAGIC:
+						NMG_ASSIGN_NEW_INDEX(eu->g.cnurb_p);
+						break;
+					}
 					vu = eu->vu_p;
 					NMG_CK_VERTEXUSE(vu);
 					NMG_ASSIGN_NEW_INDEX(vu);
@@ -433,7 +465,14 @@ register long	newindex;
 				e = eu->e_p;
 				NMG_CK_EDGE(e);
 				NMG_ASSIGN_NEW_INDEX(e);
-				if(e->eg_p) NMG_ASSIGN_NEW_INDEX(e->eg_p);
+				if( eu->g.magic_p ) switch(*eu->g.magic_p)  {
+				case NMG_EDGE_G_LSEG_MAGIC:
+					NMG_ASSIGN_NEW_INDEX(eu->g.lseg_p);
+					break;
+				case NMG_EDGE_G_CNURB_MAGIC:
+					NMG_ASSIGN_NEW_INDEX(eu->g.cnurb_p);
+					break;
+				}
 				vu = eu->vu_p;
 				NMG_CK_VERTEXUSE(vu);
 				NMG_ASSIGN_NEW_INDEX(vu);
@@ -638,9 +677,13 @@ CONST struct model			*m;
 						e = eu->e_p;
 						NMG_CK_EDGE(e);
 						NMG_UNIQ_INDEX(e, edge);
-						if(e->eg_p)  {
-							NMG_CK_EDGE_G_LSEG(e->eg_p);
-							NMG_UNIQ_INDEX(e->eg_p, edge_g);
+						if( eu->g.magic_p )  switch( *eu->g.magic_p )  {
+						case NMG_EDGE_G_LSEG_MAGIC:
+							NMG_UNIQ_INDEX(eu->g.lseg_p, edge_g_lseg);
+							break;
+						case NMG_EDGE_G_CNURB_MAGIC:
+							NMG_UNIQ_INDEX(eu->g.cnurb_p, edge_g_cnurb);
+							break;
 						}
 						vu = eu->vu_p;
 						NMG_CK_VERTEXUSE(vu);
@@ -692,9 +735,13 @@ CONST struct model			*m;
 					e = eu->e_p;
 					NMG_CK_EDGE(e);
 					NMG_UNIQ_INDEX(e, edge);
-					if(e->eg_p)  {
-						NMG_CK_EDGE_G_LSEG(e->eg_p);
-						NMG_UNIQ_INDEX(e->eg_p, edge_g);
+					if( eu->g.magic_p )  switch( *eu->g.magic_p )  {
+					case NMG_EDGE_G_LSEG_MAGIC:
+						NMG_UNIQ_INDEX(eu->g.lseg_p, edge_g_lseg);
+						break;
+					case NMG_EDGE_G_CNURB_MAGIC:
+						NMG_UNIQ_INDEX(eu->g.cnurb_p, edge_g_cnurb);
+						break;
 					}
 					vu = eu->vu_p;
 					NMG_CK_VERTEXUSE(vu);
@@ -717,9 +764,13 @@ CONST struct model			*m;
 				e = eu->e_p;
 				NMG_CK_EDGE(e);
 				NMG_UNIQ_INDEX(e, edge);
-				if(e->eg_p)  {
-					NMG_CK_EDGE_G_LSEG(e->eg_p);
-					NMG_UNIQ_INDEX(e->eg_p, edge_g);
+				if( eu->g.magic_p )  switch( *eu->g.magic_p )  {
+				case NMG_EDGE_G_LSEG_MAGIC:
+					NMG_UNIQ_INDEX(eu->g.lseg_p, edge_g_lseg);
+					break;
+				case NMG_EDGE_G_CNURB_MAGIC:
+					NMG_UNIQ_INDEX(eu->g.cnurb_p, edge_g_cnurb);
+					break;
 				}
 				vu = eu->vu_p;
 				NMG_CK_VERTEXUSE(vu);

@@ -729,8 +729,8 @@ struct shell *s;
 
 	RT_LIST_INIT( &eu1->l2 );
 	RT_LIST_INIT( &eu2->l2 );
+	eu1->l2.magic = eu2->l2.magic = NMG_EDGEUSE2_MAGIC;
 
-	e->eg_p = (struct edge_g *)NULL;
 	e->eu_p = eu1;
 	/* e->is_real = XXX; */
 	e->magic = NMG_EDGE_MAGIC;	/* Edge struct is GOOD */
@@ -827,10 +827,10 @@ struct vertexuse *vu;
 
 	RT_LIST_INIT( &eu1->l2 );
 	RT_LIST_INIT( &eu2->l2 );
+	eu1->l2.magic = eu2->l2.magic = NMG_EDGEUSE2_MAGIC;
 
-	e->eg_p = (struct edge_g *)NULL;
 	e->eu_p = eu1;
-	/* e->is_real = XXX; */
+	e->is_real = 0;
 	e->magic = NMG_EDGE_MAGIC;
 
 	eu1->radial_p = eu1->eumate_p = eu2;
@@ -1121,7 +1121,7 @@ register struct vertexuse *vu;
 		FREE_VERTEXUSE_A_PLANE(vu->a.plane_p);
 		break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-		FREE_VERTEXUSE_A_CNURN(vu->a.cnurb_p);
+		FREE_VERTEXUSE_A_CNURB(vu->a.cnurb_p);
 		break;
 	default:
 		rt_bomb("nmg_kvu() illegal vua\n");
@@ -1341,18 +1341,28 @@ struct loopuse *lu1;
  *
  *  Internal routine to kill an edge geometry structure (of either type),
  *  if all the edgeuses on it's list have vanished.
+ *  Regardless, the edgeuse's geometry pointer is cleared.
+ *
+ *  This routine does only a single edgeuse.
+ *  If the edgeuse mate has geometry to be killed, make a second call.
+ *  Sometimes only one of the two needs to release the geometry.
  *
  *  NOT INTENDED FOR GENERAL USE!  However, nmg_mod.c needs it.  (Drat!)
  */
 /**static**/ void
-nmg_keg( magic_p )
-long	*magic_p;
+nmg_keg( eu )
+struct edgeuse	*eu;
 {
-	switch( *magic_p )  {
+	NMG_CK_EDGEUSE(eu);
+
+	if( !eu->g.magic_p )  return;
+
+	switch( *eu->g.magic_p )  {
 	case NMG_EDGE_G_LSEG_MAGIC:
 		{
 			struct edge_g_lseg	*lp;
-			lp = (struct edge_g_lseg *)magic_p;
+			lp = eu->g.lseg_p;
+			eu->g.magic_p = (long *)NULL;
 			if( RT_LIST_NON_EMPTY( &lp->eu_hd2 ) )  return;
 			FREE_EDGE_G_LSEG(lp);
 		}
@@ -1360,7 +1370,8 @@ long	*magic_p;
 	case NMG_EDGE_G_CNURB_MAGIC:
 		{
 			struct edge_g_cnurb	*cp;
-			cp = (struct edge_g_cnurb *)magic_p;
+			cp = eu->g.cnurb_p;
+			eu->g.magic_p = (long *)NULL;
 			if( RT_LIST_NON_EMPTY( &cp->eu_hd2 ) )  return;
 			/* XXX */ rt_bomb("nmg_keg() cnurb internals?\n");
 			FREE_EDGE_G_CNURB(cp);
@@ -1422,29 +1433,19 @@ register struct edgeuse *eu1;
 		 * we need to free the edge (since all uses are about 
 		 * to disappear).
 		 */
-	/* XXX temp */
-	/* Dequeue edgeuse from geometry's list of users */
-	RT_LIST_DEQUEUE( &eu1->l2 );
-	RT_LIST_DEQUEUE( &eu2->l2 );
-	RT_LIST_INIT( &eu1->l2 );
-	RT_LIST_INIT( &eu2->l2 );
-	if (e->eg_p) nmg_keg( &e->eg_p->magic );
-
 		FREE_EDGE(e);
 		e = (struct edge *)NULL;
 		eu1->e_p = e;	/* sanity */
 		eu2->e_p = e;
 	}
 
-#if 0
 	/* Dequeue edgeuse from geometry's list of users */
 	RT_LIST_DEQUEUE( &eu1->l2 );
 	RT_LIST_DEQUEUE( &eu2->l2 );
 
-	/* Release the edgeuse's geometry, if all uses are finished. */
-	if( eu1->g.magic_p )  nmg_keg( eu1->g.magic_p );
-	if( eu2->g.magic_p )  nmg_keg( eu2->g.magic_p );
-#endif
+	/* Release the edgeuse's geometry pointer */
+	nmg_keg( eu1 );
+	nmg_keg( eu2 );
 
 	/* remove the edgeuses from their parents */
 	if (*eu1->up.magic_p == NMG_LOOPUSE_MAGIC) {
@@ -1705,20 +1706,22 @@ CONST vect_t norm;
  *			N M G _ E D G E _ G
  *
  *	Compute the equation of the line formed by the endpoints of the edge.
+ *
+ *  XXX This isn't the best name.  nmg_edge_g_lseg() ?
  */
-/* XXX Need to change this to take an edgeuse! */
 void
-nmg_edge_g(e)
-struct edge *e;
+nmg_edge_g(eu)
+struct edgeuse *eu;
 {
 	struct model *m;	
 	struct edge_g_lseg *eg_p = (struct edge_g_lseg *)NULL;
-	struct edgeuse	*eu;
+	struct edge	*e;
+	struct edgeuse	*eu2;
 	pointp_t	pt;
 
+	NMG_CK_EDGEUSE(eu);
+	e = eu->e_p;
 	NMG_CK_EDGE(e);
-	NMG_CK_EDGEUSE(e->eu_p);
-	eu = e->eu_p;
 	NMG_CK_VERTEXUSE(eu->vu_p);
 	NMG_CK_VERTEX(eu->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
@@ -1731,49 +1734,60 @@ struct edge *e;
 	if(eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
 		rt_bomb("nmg_edge_g(): edge runs from+to same vertex, 0 len!\n");
 
-	/* make sure we've got a valid edge_g structure */
-	if (eg_p = e->eg_p) {
+	if (eg_p = eu->g.lseg_p) {
 		NMG_CK_EDGE_G_LSEG(eg_p);
-	} else {
+		rt_bomb("nmg_edge_g() geometry already assigned\n");
+	}
+
+	/* Search all other uses of this edge for an existing edge_g_lseg */
+	eu2 = eu->eumate_p->radial_p;
+	while( eu2 != eu )  {
+		if( eu2->g.magic_p && *eu2->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )  {
+			eg_p = eu2->g.lseg_p;
+			break;
+		}
+		eu2 = eu2->eumate_p->radial_p;
+	}
+
+	if( !eg_p )  {
+		/* Make new edge_g structure */
 		m = nmg_find_model(&eu->l.magic);
 		GET_EDGE_G_LSEG(eg_p, m);
 		RT_LIST_INIT( &eg_p->eu_hd2 );
 		eg_p->magic = NMG_EDGE_G_LSEG_MAGIC;
 
-		e->eg_p = eg_p;
-		/* Dequeue edgeuses from current list, add to our list */
-		RT_LIST_DEQUEUE( &eu->l2 );
-		RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
-		RT_LIST_INSERT( &eg_p->eu_hd2, &eu->l2 );
-		RT_LIST_INSERT( &eg_p->eu_hd2, &eu->eumate_p->l2 );
+		/* copy the point from the vertex of one of our edgeuses */
+		pt = eu->vu_p->v_p->vg_p->coord;
+		VMOVE(eg_p->e_pt, pt);
+
+		/* compute the direction from the endpoints of the edgeuse(s) */
+		pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
+		VSUB2(eg_p->e_dir, eg_p->e_pt, pt);	
+
+		/* If the edge vector is essentially 0 magnitude we're in trouble.
+		 * Warn the user and create an arbitrary vector we can use.
+		 */
+		if (VNEAR_ZERO(eg_p->e_dir, SMALL_FASTF)) {
+			pointp_t pt2 = eu->vu_p->v_p->vg_p->coord;
+			VPRINT("nmg_edge_g(): e_dir too small", eg_p->e_dir);
+			rt_log("nmg_edge_g(): (%g %g %g) -> (%g %g %g)",
+					pt[X],  pt[Y],  pt[Z],
+					pt2[X], pt2[Y], pt2[Z]);
+
+			VSET(eg_p->e_dir, 1.0, 0.0, 0.0);
+			VPRINT("nmg_edge_g(): Forcing e_dir to", eg_p->e_dir);
+			rt_bomb("nmg_edge_g():  0 length edge\n");
+		}
 	}
 
-	/* copy the point from the vertex of one of our edgeuses */
-	pt = eu->vu_p->v_p->vg_p->coord;
-	VMOVE(eg_p->e_pt, pt);
-
-	/* compute the direction from the endpoints of the edgeuse(s) */
-	pt = eu->eumate_p->vu_p->v_p->vg_p->coord;
-	VSUB2(eg_p->e_dir, eg_p->e_pt, pt);	
-
-
-	/* If the edge vector is essentially 0 magnitude we're in trouble.
-	 * We warn the user and create an arbitrary vector we can use.
-	 */
-	if (VNEAR_ZERO(eg_p->e_dir, SMALL_FASTF)) {
-		pointp_t pt2 = eu->vu_p->v_p->vg_p->coord;
-		VPRINT("nmg_edge_g(): e_dir too small", eg_p->e_dir);
-		rt_log("nmg_edge_g(): (%g %g %g) -> (%g %g %g)",
-				pt[X],  pt[Y],  pt[Z],
-				pt2[X], pt2[Y], pt2[Z]);
-
-		VSET(eg_p->e_dir, 1.0, 0.0, 0.0);
-		VPRINT("nmg_edge_g(): Forcing e_dir to", eg_p->e_dir);
-		rt_bomb("nmg_edge_g():  0 length edge\n");
-	}
+	/* Dequeue edgeuses from their current list (should point to themselves), add to new list */
+	RT_LIST_DEQUEUE( &eu->l2 );
+	RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
+	RT_LIST_INSERT( &eg_p->eu_hd2, &eu->l2 );
+	RT_LIST_INSERT( &eg_p->eu_hd2, &eu->eumate_p->l2 );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_edge_g(e=x%x) eg=x%x\n", e, e->eg_p );
+		rt_log("nmg_edge_g(e=x%x) eg=x%x\n", e, eg_p );
 	}
 }
 
@@ -1783,51 +1797,38 @@ struct edge *e;
  *  Associate edgeuse 'eu' with the edge_g_X structure given as 'magic_p'.
  *  If the edgeuse is already associated with some geometry, release
  *  that first.
- *
- *  Make a use of the edge geometry structure "eg" in edge "e",
- *  releasing the use of any previous edge geometry by "e".
+ *  Also do the edgeuse mate.
  */
-/* XXX Need to change to take an edgeuse, and a magic_p */
 void
-nmg_use_edge_g( e, eg )
-struct edge	*e;
-struct edge_g_lseg	*eg;
+nmg_use_edge_g( eu, magic_p )
+struct edgeuse	*eu;
+long		*magic_p;
 {
-	struct edge_g_lseg	*old;
+	long	*old;
+	/* eg->eu_hd2 is a pun for eu_hd2 in either _lseg or _cnurb */
+	struct edge_g_lseg	*eg = (struct edge_g_lseg *)magic_p;
 
-	NMG_CK_EDGE(e);
+	if( !magic_p )  return;	/* Don't use a null new geom */
+
+	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE_G_LSEG(eg);
 
-	if( old = e->eg_p )  {
-		/* XXX For all the edgeuses around e, disconnect from old edge_g_lseg */
-		struct edgeuse	*start = e->eu_p;
-		struct edgeuse	*cur = e->eu_p->radial_p;
-		do {
-			/* Process cur, then cur->eumate_p */
-			RT_LIST_DEQUEUE( &cur->l2 );
-			RT_LIST_DEQUEUE( &cur->eumate_p->l2 );
-			cur = cur->eumate_p->radial_p;
-		} while( cur != start->radial_p );
+	old = eu->g.magic_p;
 
-		/* If this was last use, kill the old edge_g */
-		nmg_keg( (long *)old );
-	}
-	e->eg_p = eg;
-	/* XXX For all the edgeuses around e, connect to new edge_g_lseg */
-	{
-		struct edgeuse	*start = e->eu_p;
-		struct edgeuse	*cur = e->eu_p->radial_p;
-		do {
-			/* Process cur, then cur->eumate_p */
-			RT_LIST_INSERT( &eg->eu_hd2, &cur->l2 );
-			RT_LIST_INSERT( &eg->eu_hd2, &cur->eumate_p->l2 );
-			cur = cur->eumate_p->radial_p;
-		} while( cur != start->radial_p );
-	}
+	RT_LIST_DEQUEUE( &eu->l2 );
+	RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
+	nmg_keg( eu );
+	nmg_keg( eu->eumate_p );
+
+	eu->g.magic_p = magic_p;
+	eu->eumate_p->g.magic_p = magic_p;
+
+	RT_LIST_INSERT( &eg->eu_hd2, &(eu->l2) );
+	RT_LIST_INSERT( &eg->eu_hd2, &(eu->eumate_p->l2) );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_use_egde_g(e=x%x, new_eg=x%x) old_eg=x%x\n",
-			e , eg, old);
+		rt_log("nmg_use_egde_g(eu=x%x, magic_p=x%x) old_eg=x%x\n",
+			eu, magic_p, old);
 	}
 }
 
@@ -1874,7 +1875,7 @@ CONST struct rt_tol	*tol;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			VMINMAX(lg->min_pt, lg->max_pt, vg->coord);
-			if( !eu->e_p->eg_p )  nmg_edge_g(eu->e_p);
+			if( !eu->g.magic_p )  nmg_edge_g(eu);
 		}
 	} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		struct vertexuse	*vu;
@@ -2283,15 +2284,20 @@ struct vertex *v;
 }
 
 /*
- *			N M G _ M O V E E U
+ *			N M G _ J E
  *
- *	Move a pair of edgeuses onto a new edge (glue edgeuse).
- *	the edgeuse eusrc and its mate are moved to the edge
+ *	Move a pair of edgeuses onto a single edge (glue edgeuse).
+ *	The edgeuse eusrc and its mate are moved to the edge
  *	used by eudst.  eusrc is made to be immediately radial to eudst.
  *	if eusrc does not share the same vertices as eudst, we bomb.
+ *
+ *	The edgeuse geometry pointers are not changed by this operation.
+ *	(For compat, if both are linear, geometries are fused here)
+ *
+ *	This routine was formerly called nmg_moveeu().
  */
 void
-nmg_moveeu(eudst, eusrc)
+nmg_je(eudst, eusrc)
 struct edgeuse *eudst, *eusrc;
 {
 	struct edgeuse	*eudst_mate;
@@ -2309,13 +2315,13 @@ struct edgeuse *eudst, *eusrc;
 	 * move an edgeuse to itself or it's mate
 	 */
 	if (eusrc == eudst || eusrc_mate == eudst)  {
-		rt_log("nmg_moveeu() moving edgeuse to itself\n");
+		rt_log("nmg_je() moving edgeuse to itself\n");
 		return;
 	}
 
 	if (eusrc->e_p == eudst->e_p &&
 	    (eusrc->radial_p == eudst || eudst->radial_p == eusrc))  {
-	    	rt_log("nmg_moveeu() edgeuses already share edge\n");
+	    	rt_log("nmg_je() edgeuses already share edge\n");
 		return;
 	}
 
@@ -2329,20 +2335,11 @@ struct edgeuse *eudst, *eusrc;
 	    	VPRINT("eusrc_mate", eusrc_mate->vu_p->v_p->vg_p->coord);
 	    	VPRINT("eudst", eudst->vu_p->v_p->vg_p->coord);
 	    	VPRINT("eudst_mate", eudst_mate->vu_p->v_p->vg_p->coord);
-	    	rt_bomb("nmg_moveeu() edgeuses do not share vertices, cannot share edge\n");
+	    	rt_bomb("nmg_je() edgeuses do not share vertices, cannot share edge\n");
 	}
-
-	/* Dequeue edgeuse from geometry's list of users */
-	RT_LIST_DEQUEUE( &eusrc->l2 );
-	RT_LIST_DEQUEUE( &eusrc_mate->l2 );
-	RT_LIST_INIT( &eusrc->l2 );
-	RT_LIST_INIT( &eusrc_mate->l2 );
 
 	e = eusrc->e_p;
 	eusrc_mate->e_p = eusrc->e_p = eudst->e_p;
-
-	/* If this was last use of eusrc edge, kill old edge_g */
-	if( e->eg_p )  nmg_keg( (long *)e->eg_p );
 
 	/* if we're not deleting the edge, make sure it will be able
 	 * to reference the remaining uses, otherwise, take care of disposing
@@ -2367,15 +2364,16 @@ struct edgeuse *eudst, *eusrc;
 	eudst->radial_p->radial_p = eusrc_mate;
 	eudst->radial_p = eusrc;
 
-	/* XXX Make eusrc use geometry of eudst */
-	if( eudst->e_p->eg_p )  {
-		struct edge_g_lseg	*eg = eudst->e_p->eg_p;
-		RT_LIST_INSERT( &eg->eu_hd2, &eusrc->l2 );
-		RT_LIST_INSERT( &eg->eu_hd2, &eusrc_mate->l2 );
+	/* If linear, make eusrc use geometry of eudst */
+	if( eusrc->g.magic_p != eudst->g.magic_p &&
+	    eudst->g.magic_p && *eudst->g.magic_p == NMG_EDGE_G_LSEG_MAGIC &&
+	    eusrc->g.magic_p && *eusrc->g.magic_p == NMG_EDGE_G_LSEG_MAGIC
+	)  {
+		nmg_use_edge_g( eusrc, eudst->g.magic_p );
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_moveeu(eudst=x%x, eusrc=x%x)\n", eudst , eusrc);
+		rt_log("nmg_je(eudst=x%x, eusrc=x%x)\n", eudst , eusrc);
 	}
 }
 
@@ -2420,7 +2418,6 @@ struct edgeuse *eu;
 
 	new_e->magic = NMG_EDGE_MAGIC;
 	new_e->eu_p = eu;
-	new_e->eg_p = (struct edge_g *)NULL;
 
 	/* make sure the old edge isn't pointing at this edgeuse */
 	if (old_e->eu_p == eu || old_e->eu_p == eu->eumate_p ) {

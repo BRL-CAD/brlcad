@@ -1,17 +1,16 @@
-#define OLD_NMG	1	/* Tags Mike's changes */
 /*
  *			N M G . H
  *
- *  Author -
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  *
  *  Definition of data structures for "Non-Manifold Geometry Modelling."
  *  Developed from "Non-Manifold Geometric Boundary Modeling" by 
@@ -382,11 +381,11 @@ struct face_g_plane {
 };
 
 struct face_g_snurb {
-	struct rt_list		l;	/* magic, forw */
+	long			magic;
 	struct rt_list		f_hd;	/* list of faces sharing this surface */
 	int			order[2]; /* surface order [0] = u, [1] = v */
-	struct knot_vector	u_knots;/* surface knot vectors */
-	struct knot_vector	v_knots;/* surface knot vectors */
+	struct knot_vector	u;	/* surface knot vectors */
+	struct knot_vector	v;	/* surface knot vectors */
 	/* surface control points */
 	int			s_size[2]; /* mesh size, u,v */
 	int			pt_type; /* surface point type */
@@ -399,9 +398,7 @@ struct faceuse {
 	struct shell		*s_p;	/* owning shell */
 	struct faceuse		*fumate_p;    /* opposite side of face */
 	int			orientation;  /* rel to face geom defn */
-#if !OLD_NMG
 	int			outside; /* RESERVED for future:  See Lee Butler */
-#endif
 	struct face		*f_p;	/* face definition and attributes */
 	struct rt_list		lu_hd;	/* list of loops in face-use */
 	long			index;	/* struct # in this model */
@@ -513,20 +510,13 @@ struct loopuse {
 struct edge {
 	long			magic;
 	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
-#if OLD_NMG
-	struct edge_g		*eg_p;  /* geometry */
-#endif
 	long			is_real;/* artifact or modeled edge (from tessellator) */
 	long			index;	/* struct # in this model */
 };
 
 struct edge_g_lseg {
 	long			magic;
-#if 0
-	long			usage;	/* # of uses of this geometry */
-#else
 	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this line */
-#endif
 	point_t			e_pt;	/* parametric equation of the line */
 	vect_t			e_dir;
 	long			index;	/* struct # in this model */
@@ -538,7 +528,7 @@ struct edge_g_cnurb {
 	long			magic;
 	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
 	int			order;	/* Curve Order */
-	struct knot_vector	knot;	/* curve knot vector */
+	struct knot_vector	k;	/* curve knot vector */
 	/* curve control polygon */
 	int			c_size;	/* number of ctl points */
 	int			pt_type;/* curve point type */
@@ -554,6 +544,8 @@ struct edge_g_cnurb {
  *  '_name2' in structure '_type') back into a pointer to the overall
  *  enclosing structure.  For example:
  *		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+ *
+ *  eu1 = RT_LIST_MAIN_PTR(edgeuse, RT_LIST_FIRST(rt_list, &eg1->eu_hd2), l2);
  */  
 #define RT_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
 	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
@@ -571,14 +563,12 @@ struct edgeuse {
 	struct edge		*e_p;	    /* edge definition and attributes */
 	int	  		orientation;/* compared to geom (null if wire) */
 	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
-#if !OLD_NMG
 	union {
 		long		    *magic_p;
 		struct edge_g_lseg  *lseg_p;
 		struct edge_g_cnurb *cnurb_p;
 	} g;				/* geometry */
 	/* (u,v,w) param[] of vu is found in vu_p->vua_p->param */
-#endif
 	long			index;	/* struct # in this model */
 };
 
@@ -830,12 +820,8 @@ struct nmg_struct_counts {
 	long	loop_g;
 	long	edgeuse;
 	long	edge;
-#if OLD_NMG
-	long	edge_g;
-#else
 	long	edge_g_lseg;
 	long	edge_g_cnurb;
-#endif
 	long	vertexuse;
 	long	vertexuse_a_plane;
 	long	vertexuse_a_cnurb;
