@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.10  94/09/22  18:53:54  butler
+ * Added ifdef needed for Solaris
+ * 
  * Revision 10.9  1994/09/17  04:57:35  butler
  * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
  *
@@ -119,8 +122,8 @@ static char RCSid[] = "@(#)$Header$";
 #  endif
 # include <termios.h>
 # include <fcntl.h>
-# if defined(sun) && defined(sparc)
-#   include <sys/file.h>  /* Solaris needs this */
+# if defined(sun) || defined(sparc) || defined(__sparc)
+#   include <sys/file.h>  /* Solaris needs this for FNDELAY */
 # endif
 #else
 # ifndef SYS5
