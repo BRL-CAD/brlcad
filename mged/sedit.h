@@ -110,16 +110,17 @@
 #define	ECMD_BOT_ORIENT		68	/* set BOT face orientation */
 #define	ECMD_BOT_THICK		69	/* set face thickness (one or all) */
 #define	ECMD_BOT_FMODE		70	/* set face mode (one or all) */
+#define ECMD_BOT_FDEL		71	/* delete current face */
 
-#define	ECMD_EXTR_SCALE_H	71	/* scale extrusion vector */
-#define ECMD_EXTR_MOV_H		72	/* move end of extrusion vector */
-#define	ECMD_EXTR_ROT_H		73	/* rotate extrusion vector */
-#define	ECMD_EXTR_SKT_NAME	74	/* set sketch that the extrusion uses */
+#define	ECMD_EXTR_SCALE_H	72	/* scale extrusion vector */
+#define ECMD_EXTR_MOV_H		73	/* move end of extrusion vector */
+#define	ECMD_EXTR_ROT_H		74	/* rotate extrusion vector */
+#define	ECMD_EXTR_SKT_NAME	75	/* set sketch that the extrusion uses */
 
-#define ECMD_CLINE_SCALE_H	75	/* scale height vector */
-#define ECMD_CLINE_MOVE_H	76	/* move end of height vector */
-#define	ECMD_CLINE_SCALE_R	77	/* scale radius */
-#define	ECMD_CLINE_SCALE_T	78	/* scale thickness */
+#define ECMD_CLINE_SCALE_H	76	/* scale height vector */
+#define ECMD_CLINE_MOVE_H	77	/* move end of height vector */
+#define	ECMD_CLINE_SCALE_R	78	/* scale radius */
+#define	ECMD_CLINE_SCALE_T	79	/* scale thickness */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \

@@ -214,14 +214,15 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_BOT_ORIENT		98
 #define	MENU_BOT_THICK		99
 #define	MENU_BOT_FMODE		100
-#define MENU_EXTR_SCALE_H	101
-#define MENU_EXTR_MOV_H		102
-#define MENU_EXTR_ROT_H		103
-#define MENU_EXTR_SKT_NAME	104
-#define	MENU_CLINE_SCALE_H	105
-#define	MENU_CLINE_MOVE_H	106
-#define MENU_CLINE_SCALE_R	107
-#define	MENU_CLINE_SCALE_T	108
+#define MENU_BOT_DELETE_TRI	101
+#define MENU_EXTR_SCALE_H	102
+#define MENU_EXTR_MOV_H		103
+#define MENU_EXTR_ROT_H		104
+#define MENU_EXTR_SKT_NAME	105
+#define	MENU_CLINE_SCALE_H	106
+#define	MENU_CLINE_MOVE_H	107
+#define MENU_CLINE_SCALE_R	108
+#define	MENU_CLINE_SCALE_T	109
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -622,6 +623,7 @@ struct menu_item bot_menu[] = {
 	{ "Select Orientation", bot_ed, ECMD_BOT_ORIENT },
 	{ "Set Face Thickness", bot_ed, ECMD_BOT_THICK },
 	{ "Set Face Mode", bot_ed, ECMD_BOT_FMODE },
+	{ "Delete Face", bot_ed, ECMD_BOT_FDEL },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -3249,6 +3251,64 @@ sedit()
 				else
 					bu_bitv_clear( bot->face_mode );
 			}
+		}
+		break;
+	case ECMD_BOT_FDEL:
+		{
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)es_int.idb_ptr;
+
+			int i, j, face_no;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot_verts[0] < 0 || bot_verts[1] < 0 || bot_verts[2] < 0 )
+			{
+				bu_log( "No Face selected!!!\n" );
+				return;
+			}
+
+			face_no = -1;
+			for( i=0 ; i < bot->num_faces ; i++ )
+			{
+				if( bot_verts[0] == bot->faces[i*3] &&
+				    bot_verts[1] == bot->faces[i*3+1] &&
+				    bot_verts[2] == bot->faces[i*3+2] )
+				{
+					face_no = i;
+					break;
+				}
+			}
+			if( face_no < 0 )
+			{
+				bu_log( "Cannot find selected face!!!\n");
+				return;
+			}
+			bot->num_faces--;
+			for( i=face_no ; i<bot->num_faces ; i++ )
+			{
+				j = i + 1;
+				bot->faces[3*i] = bot->faces[3*j];
+				bot->faces[3*i + 1] = bot->faces[3*j + 1];
+				bot->faces[3*i + 2] = bot->faces[3*j + 2];
+				if( bot->thickness )
+					bot->thickness[i] = bot->thickness[j];
+			}
+
+			if( bot->face_mode )
+			{
+				for( i=face_no ; i<bot->num_faces ; i++ )
+				{
+					j = i+1;
+					if( BU_BITTEST( bot->face_mode, j ) )
+						BU_BITSET( bot->face_mode, i );
+					else
+						BU_BITCLR( bot->face_mode, i );
+				}
+			}
+			bot_verts[0] = -1;
+			bot_verts[1] = -1;
+			bot_verts[2] = -1;
 		}
 		break;
 	case ECMD_EXTR_SKT_NAME:
