@@ -274,7 +274,7 @@ proc mouse_rt_obj_select { x y } {
 	    do_Raytrace $id
 	}
 	several {
-	    lappend rt_control($id,olist) $component
+	    rt_olist_add $id $component
 	}
     }
 
