@@ -1,3 +1,14 @@
+/*
+ * tkCanvBezier.c --
+ * 
+ *	This module provides Bezier curse support for canvases.
+ *
+ * Distribution status is public domain, distribution unlimited.
+ *
+ * See the file "license.terms" for information on usage and redistribution
+ * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ */
 #include <stdio.h>
 #include "tkInt.h"
 #include "tkPort.h"
@@ -5,6 +16,9 @@
 
 #define NUM_BEZIER_POINTS	50
 
+/*
+ * The structure below defines the record for each bitmap item.
+ */
 typedef struct BezierItem {
 	Tk_Item header;
 	Tk_Outline outline;
@@ -12,6 +26,9 @@ typedef struct BezierItem {
 	double *coords;
 } BezierItem;
 
+/*
+ * Information used for parsing configuration specs:
+ */
 static Tk_CustomOption tagsOption = {
     (Tk_OptionParseProc *) Tk_CanvasTagsParseProc,
     Tk_CanvasTagsPrintProc, (ClientData) NULL
@@ -34,6 +51,9 @@ static Tk_CustomOption stateOption = {
     TkStatePrintProc, (ClientData) 2
 };
 
+/*
+ * Prototypes for procedures defined in this file:
+ */
 static double BezierToPoint( Tk_Canvas canvas, Tk_Item *itemPtr, double *pointPtr);
 static void TranslateBezier( Tk_Canvas canvas, Tk_Item *itemPtr, double deltaX, double deltaY);
 static void ScaleBezier( Tk_Canvas canvas, Tk_Item *itemPtr, double originX, double originY,
@@ -102,6 +122,10 @@ static Tk_ConfigSpec configSpecs[] = {
 	(char *) NULL, 0, 0}
 };
 
+/*
+ * The structures below defines the bitmap item type in terms of
+ * procedures that can be invoked by generic item code.
+ */
 Tk_ItemType tkBezierType = {
     "bezier",				/* name */
     sizeof(BezierItem),			/* itemSize */
@@ -131,6 +155,23 @@ Tk_CreateCanvasBezierType()
 	Tk_CreateItemType( &tkBezierType );
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * TranslateBezier --
+ *
+ *	This procedure is called to move an item by a given amount.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The position of the item is offset by (xDelta, yDelta), and
+ *	the bounding box is updated in the generic part of the item
+ *	structure.
+ *
+ *--------------------------------------------------------------
+ */
 static void
 TranslateBezier(
     Tk_Canvas canvas,			/* Canvas containing item. */
@@ -147,6 +188,25 @@ TranslateBezier(
 	ComputeBezierBbox(canvas, bezierPtr);
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * ScaleBezier --
+ *
+ *	This procedure is invoked to rescale a bezier curve in
+ *	a canvas.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The item referred to by itemPtr is rescaled so that the
+ *	following transformation is applied to all point coordinates:
+ *		x' = originX + scaleX*(x-originX)
+ *		y' = originY + scaleY*(y-originY)
+ *
+ *--------------------------------------------------------------
+ */
 static void
 ScaleBezier(
     Tk_Canvas canvas,			/* Canvas containing line. */
@@ -165,6 +225,26 @@ ScaleBezier(
 	ComputeBezierBbox(canvas, bezierPtr);
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * BezierToPostscript --
+ *
+ *	This procedure is called to generate Postscript for
+ *	bezier curves.
+ *
+ * Results:
+ *	The return value is a standard Tcl result.  If an error
+ *	occurs in generating Postscript then an error message is
+ *	left in the interp's result, replacing whatever used to be there.
+ *	If no error occurs, then Postscript for the item is appended
+ *	to the result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
 int
 BezierToPostscript(
     Tcl_Interp *interp,			/* Leave Postscript or error message here. */
@@ -191,6 +271,25 @@ BezierToPostscript(
 	return TCL_OK;
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * BezierToArea --
+ *
+ *	This procedure is called to determine whether an item
+ *	lies entirely inside, entirely outside, or overlapping
+ *	a given curve.
+ *
+ * Results:
+ *	-1 is returned if the item is entirely outside the area
+ *	given by rectPtr, 0 if it overlaps, and 1 if it is entirely
+ *	inside the given area.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
 int
 BezierToArea(
     Tk_Canvas canvas,		/* Canvas containing item. */
@@ -287,6 +386,23 @@ Calc_Bezier_d(
 	ckfree( (char *)Vtemp );
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * DisplayBezier --
+ *
+ *	This procedure is invoked to draw a bezier curve in a
+ *	given drawable.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	ItemPtr is drawn in drawable using the transformation
+ *	information in canvas.
+ *
+ *--------------------------------------------------------------
+ */
 static void
 DisplayBezier(
     Tk_Canvas canvas,			/* Canvas that contains item. */
@@ -314,6 +430,22 @@ DisplayBezier(
 	       NUM_BEZIER_POINTS, CoordModeOrigin);
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * DeleteBezier --
+ *
+ *	This procedure is called to clean up the data structure
+ *	associated with a bezier curve.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Resources associated with itemPtr are released.
+ *
+ *--------------------------------------------------------------
+ */
 static void
 DeleteBezier(
     Tk_Canvas canvas,			/* Info about overall canvas widget. */
@@ -327,6 +459,24 @@ DeleteBezier(
 	return;
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * CreateBezier --
+ *
+ *	This procedure is invoked to create a new bezier
+ *	item in a canvas.
+ *
+ * Results:
+ *	A standard Tcl return value.  If an error occurred in
+ *	creating the item, then an error message is left in
+ *	the interp's result.
+ *
+ * Side effects:
+ *	A new bezier curve item is created.
+ *
+ *--------------------------------------------------------------
+ */
 int
 CreateBezier( 
     Tcl_Interp *interp,			/* Interpreter for error reporting. */
@@ -368,6 +518,22 @@ CreateBezier(
 }
 
 
+/*
+ *--------------------------------------------------------------
+ *
+ * BezierCoords --
+ *
+ *	This procedure is invoked to process the "coords" widget
+ *	command on bezier items.
+ *
+ * Results:
+ *	Returns TCL_OK or TCL_ERROR, and sets the interp's result.
+ *
+ * Side effects:
+ *	The coordinates for the given item may be changed.
+ *
+ *--------------------------------------------------------------
+ */
 static int
 BezierCoords(interp, canvas, itemPtr, argc, argv)
     Tcl_Interp *interp;			/* Used for error reporting. */
@@ -429,6 +595,23 @@ BezierCoords(interp, canvas, itemPtr, argc, argv)
     return TCL_OK;
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * ComputeBezierBbox --
+ *
+ *	This procedure is invoked to compute the bounding box of
+ *	all the pixels that may be drawn as part of a bezier curve.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The fields x1, y1, x2, and y2 are updated in the header
+ *	for itemPtr.
+ *
+ *--------------------------------------------------------------
+ */
 static void
 ComputeBezierBbox(
     Tk_Canvas canvas,			/* Canvas that contains item. */
@@ -453,6 +636,23 @@ ComputeBezierBbox(
 	}
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * ConfigureBezier --
+ *
+ *	This procedure is invoked to configure various aspects
+ *	of a bezier curve, such as its anchor position.
+ *
+ * Results:
+ *	A standard Tcl result code.  If an error occurs, then
+ *	an error message is left in the interp's result.
+ *
+ * Side effects:
+ *	Configuration information may be set for itemPtr.
+ *
+ *--------------------------------------------------------------
+ */
 static int
 ConfigureBezier(interp, canvas, itemPtr, argc, argv, flags)
     Tcl_Interp *interp;		/* Used for error reporting. */
@@ -570,6 +770,24 @@ int		MAXDEPTH = 64;	/*  Maximum depth for recursion */
 
 #define	EPSILON	(ldexp(1.0,-MAXDEPTH-1)) /*Flatness control value */
 
+/*
+ *--------------------------------------------------------------
+ *
+ * BezierToPoint --
+ *
+ *	Computes the distance from a given point to a given
+ *	rectangle, in canvas units.
+ *
+ * Results:
+ *	The return value is 0 if the point whose x and y coordinates
+ *	are coordPtr[0] and coordPtr[1] is on the bezier curve.
+ *      Otherwise, the closest point on the curve is computed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
 static double
 BezierToPoint(
     Tk_Canvas canvas,		/* Canvas containing item. */
