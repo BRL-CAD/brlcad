@@ -347,7 +347,14 @@ rt_log("went all the way around\n");
 				PLPRINT("  fu1", fu1->f_p->fg_p->N );
 				PLPRINT("  fu2", fu2->f_p->fg_p->N );
 				PLPRINT("  fur", fur->f_p->fg_p->N );
-				rt_log("  skipping\n");
+				{
+					int debug = rt_g.NMG_debug;
+					rt_g.NMG_debug |= DEBUG_MESH;
+					if( nmg_two_face_fuse(fu1->f_p, fur->f_p, tol) == 0 )
+						rt_bomb("faces didn't fuse?\n");
+					rt_g.NMG_debug = debug;
+				}
+				rt_log("  nmg_radial_join_eu() skipping this eu\n");
 				goto cont;
 			}
 
