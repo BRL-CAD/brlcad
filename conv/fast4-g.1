@@ -3,7 +3,7 @@
 fast4-g \- FASTGEN4 Translator (FASTGEN4 to BRL-CAD)
 .SH SYNOPSIS
 .B fast4-g
-[-dwp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D tol_dist] [-P tol_cosine] file.fastgen4 file.g
+[-dnw] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D tol_dist] [-P tol_cosine] file.fastgen4 file.g
 .SH DESCRIPTION
 .I fast4-g\^
 converts the specified
@@ -18,8 +18,15 @@ option prints debugging information and the
 option prints warnings whenever an object is assigned a default name (no
 name specified in the FASTGEN4 file).
 The
-.I -p
-option results in a BRL-CAD model built from polysolids instead of NMGs.
+.I -n
+option results in a BRL-CAD model built from NMGs instead of the default polysolids.
+The
+.I min_angle
+is the smallest angle (degrees) between two adjacent faces that will not be considered
+an error in a PLATE-MODE component. If a PLATE_MODE component has two adjacent faces
+that make an angle smaller than
+the minimum, then that component will be converted using an ARB6 solid for each
+PLATE-MODE triangle.
 The
 .I tol_dist
 is the maximum distance (in mm) between two vertices at which the two vertices
@@ -55,13 +62,14 @@ elements are converted to faces of a BRL-CAD n-manifold geometry
 .I (NMG)
 object. For plate mode, these faces are copied and extruded by
 the indicated thickness to create a real surface where one is only
-implied in the FASTGEN4 data.  The
-.I -p
+implied in the FASTGEN4 data.  The default is to convert these objects
+to BRL-CAD polysolids.  The
+.I -n
 option results in these
 .I NMG
-objects being converted to
-.I polysolids
-upon output.
+objects being output directly as
+.I NMG
+solids.
 .I CSPHERE
 elements are converted to BRL-CAD spheres
 .I (SPH)
