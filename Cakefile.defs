@@ -79,7 +79,7 @@ set -S2 "/bin/sh"
  ****************************************************************/
 
 /* #undef NFS */
-#define NFS	0
+#define NFS	1
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
 #define	TCLTK_VERS	8.2
