@@ -1045,6 +1045,17 @@ struct vd_curve {
 #define VD_CURVE_NULL		((struct vd_curve *)NULL)
 
 /*
+ * Used to keep track of forked rt's for possible future aborts.
+ * Currently used in mged/rtif.c and librt/dg_obj.c
+ */
+struct run_rt {
+	struct bu_list		l;
+	int			fd;
+	int			pid;
+	int			aborted;
+};
+
+/*
  *			D G _ O B J
  *
  * A drawable geometry object is associated with a database object
@@ -1063,6 +1074,7 @@ struct dg_obj {
 	char			*dgo_rt_cmd[RT_MAXARGS];
 	int			dgo_rt_cmd_len;
 	struct bu_observer	dgo_observers;
+	struct run_rt		dgo_headRunRt;	/* head of forked rt processes */
 };
 extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)
