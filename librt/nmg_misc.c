@@ -3031,11 +3031,14 @@ CONST struct rt_tol *tol;
 			struct intersect_fus *tmp_fus;
 
 			tmp_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
-			if( rt_pt3_pt3_equal( tmp_fus->pt , i_fus->pt , tol ) )
+			if( tmp_fus->vp )
 			{
-				i_fus->vp = tmp_fus->vp;
-				VMOVE( i_fus->pt , tmp_fus->pt );
-				break;
+				if( rt_pt3_pt3_equal( tmp_fus->pt , i_fus->pt , tol ) )
+				{
+					i_fus->vp = tmp_fus->vp;
+					VMOVE( i_fus->pt , tmp_fus->pt );
+					break;
+				}
 			}
 		}
 
@@ -3057,6 +3060,25 @@ CONST struct rt_tol *tol;
 		struct nmg_ptbl new_faces;
 
 		nmg_tbl( &new_faces , TBL_INIT , (long *)NULL );
+
+for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
+{
+	struct intersect_fus *i_fus;
+
+	i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
+
+	rt_log( "%d intersect_fus: \n" , i );
+	rt_log( "\tfu[0] = x%x\n" , i_fus->fu[0] );
+	rt_log( "\tfu[1] = x%x\n" , i_fus->fu[1] );
+	rt_log( "\teu = x%x\n" , i_fus->eu );
+	rt_log( "\tvp = x%x\n" , i_fus->vp );
+	rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
+	rt_log( "\tstart = ( %f %f %f )\n" , V3ARGS( i_fus->start ) );
+	rt_log( "\tdir = ( %f %f %f )\n" , V3ARGS( i_fus->dir ) );
+
+	nmg_pr_fu_briefly( i_fus->fu[0] , (char *)NULL );
+	nmg_pr_fu_briefly( i_fus->fu[1] , (char *)NULL );
+}
 
 		/* Need to make new faces.
 		 * loop around the vertex again, looking at
@@ -3082,7 +3104,6 @@ CONST struct rt_tol *tol;
 				 j = 0;
 			j_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
 
-
 			/* if the two vertices are the same, no face needed */
 			if( i_fus->vp == j_fus->vp )
 				continue;
@@ -3094,23 +3115,22 @@ CONST struct rt_tol *tol;
 			if( j_fus->vp == NULL )
 				continue;
 
+			NMG_CK_VERTEX( i_fus->vp );
+			NMG_CK_VERTEX( j_fus->vp );
+
 			/* if the two vertices are within tolerance, fuse them */
 			if( rt_pt3_pt3_equal( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , tol ) )
 			{
-				struct vertex *set_i_to_null;
-				struct edgeuse *eu_base;
+				struct vertex *old_vp,*new_vp;
 
 				/* fuse all uses of i_fus->vp to j_fus->vp */
-				while( (vu = RT_LIST_FIRST( vertexuse , &i_fus->vp->vu_hd )) != NULL )
-				{
-					NMG_CK_VERTEXUSE( vu );
-					nmg_movevu( vu , j_fus->vp );
-				}
-				set_i_to_null = i_fus->vp;
-				i_fus->vp = NULL;
+				nmg_jv( j_fus->vp , i_fus->vp );
+				old_vp = i_fus->vp;
+				new_vp = j_fus->vp;
+				i_fus->vp = j_fus->vp;
 				i_fus->eu = NULL;
 
-				/* find one edgeuse from new_v to i_fus->vp */
+				/* join radial edges created by vertex fuse */
 				for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
 				{
 					struct edgeuse *eu;
@@ -3119,36 +3139,22 @@ CONST struct rt_tol *tol;
 						continue;
 
 					eu = vu->up.eu_p;
-					if( eu->eumate_p->vu_p->v_p == i_fus->vp )
-					{
-						eu_base = eu;
-						break;
-					}
+
+					/* if endpoints are the same, but edges are different
+					 * need to make them radial */
+					if( eu->eumate_p->vu_p->v_p == j_fus->vp  &&
+						eu->e_p != j_fus->eu->e_p )
+						nmg_radial_join_eu( j_fus->eu , eu , tol );
 				}
 
-				/* join radial edges */
-				for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
-				{
-					struct edgeuse *eu;
-
-					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
-						continue;
-
-					if( eu == eu_base )
-						continue;
-
-					eu = vu->up.eu_p;
-					if( eu->eumate_p->vu_p->v_p == i_fus->vp )
-						nmg_radial_join_eu( eu_base , eu , tol );
-				}
-#if 0
+				/* make sure any other vertex pointers don't reference the now
+				 * defunct vertex */
 				for( j=0 ; j<NMG_TBL_END( &int_faces ) ; j++ )
 				{
 					j_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
-					if( j_fus->vp == set_i_to_null )
-						j_fus->vp = NULL;
+					if( j_fus->vp == old_vp )
+						j_fus->vp = new_vp;
 				}
-#endif
 			}
 			else if( rt_3pts_collinear( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , new_v->vg_p->coord , tol ) )
 			{
@@ -3170,60 +3176,55 @@ CONST struct rt_tol *tol;
 
 				if( diff_dist < tol->dist_sq && j_fus->vp )
 				{
+					struct vertex *old_vp,*new_vp;
+
 					/* i and j points are within tolerance, fuse them */
-					while( (vu = RT_LIST_FIRST( vertexuse , &i_fus->vp->vu_hd )) != NULL )
-					{
-						NMG_CK_VERTEXUSE( vu );
-						nmg_movevu( vu , j_fus->vp );
-					}
-					set_i_to_null = i_fus->vp;
+					nmg_jv( j_fus->vp , i_fus->vp );
+					old_vp = i_fus->vp;
+					new_vp = j_fus->vp;
 					i_fus->vp = j_fus->vp;
+
+					/* join radial edges created by vertex fuse */
+					for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
+					{
+						struct edgeuse *eu;
+
+						if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+							continue;
+
+						eu = vu->up.eu_p;
+
+						/* if endpoints are the same, but edges are different
+						 * need to make them radial */
+						if( eu->eumate_p->vu_p->v_p == j_fus->vp  &&
+							eu->e_p != j_fus->eu->e_p )
+							nmg_radial_join_eu( j_fus->eu , eu , tol );
+					}
+
+					/* make sure any other vertex pointers don't reference the now
+					 * defunct vertex */
+					for( j=0 ; j<NMG_TBL_END( &int_faces ) ; j++ )
+					{
+						j_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
+						if( j_fus->vp == old_vp )
+							j_fus->vp = new_vp;
+					}
 				}
 				if( i_dist < tol->dist_sq && i_fus->vp )
 				{
 					/* i point is within tolerance of new_v
-					 * fuse with new_v and
-					 * kill edges between i point and new_v
+					 * fuse with new_v
 					 */
-					while( (vu = RT_LIST_FIRST( vertexuse , &i_fus->vp->vu_hd )) != NULL )
-					{
-						NMG_CK_VERTEXUSE( vu );
-						nmg_movevu( vu , new_v );
-						if( *vu->up.magic_p == NMG_EDGEUSE_MAGIC )
-						{
-							eu = vu->up.eu_p;
-							NMG_CK_EDGEUSE( eu );
-							if( eu->eumate_p->vu_p->v_p == new_v )
-							{
-								/* zero length edge */
-								nmg_keu( eu );
-							}
-						}
-					}
+					nmg_jv( new_v , i_fus->vp );
 					set_i_to_null = i_fus->vp;
 					i_fus->vp = NULL;
 				}
-				if( j_dist < tol->dist_sq )
+				if( j_dist < tol->dist_sq && j_fus->vp )
 				{
 					/* j point is within tolerance of new_v
-					 * fuse with new_v and
-					 * kill edges between j point and new_v
+					 * fuse with new_v
 					 */
-					while( (vu = RT_LIST_FIRST( vertexuse , &j_fus->vp->vu_hd )) != NULL )
-					{
-						NMG_CK_VERTEXUSE( vu );
-						nmg_movevu( vu , new_v );
-						if( *vu->up.magic_p == NMG_EDGEUSE_MAGIC )
-						{
-							eu = vu->up.eu_p;
-							NMG_CK_EDGEUSE( eu );
-							if( eu->eumate_p->vu_p->v_p == new_v )
-							{
-								/* zero length edge */
-								nmg_keu( eu );
-							}
-						}
-					}
+					nmg_jv( new_v , j_fus->vp );
 					set_j_to_null = j_fus->vp;
 					j_fus->vp = NULL;
 				}
@@ -3243,15 +3244,33 @@ CONST struct rt_tol *tol;
 					NMG_CK_VERTEX( i_fus->vp );
 					(void)nmg_esplit( i_fus->vp , j_fus->eu );
 				}
-#if 0
 
+				/* kill zero length edges created by vertex fusion */
+				vu = RT_LIST_FIRST( vertexuse , &new_v->vu_hd );
+				while( RT_LIST_NOT_HEAD( vu , &new_v->vu_hd ))
+				{
+					struct vertexuse *vu_next;
+
+					NMG_CK_VERTEXUSE( vu );
+					vu_next = RT_LIST_PNEXT( vertexuse , &vu->l );
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					eu = vu->up.eu_p;
+					NMG_CK_EDGEUSE( eu );
+
+					/* if endpoints are both new_v kill the edge */
+					if( eu->eumate_p->vu_p->v_p == new_v )
+						(void)nmg_keu( eu );
+
+					vu = vu_next;
+				}
 				for( j=0 ; j<NMG_TBL_END( &int_faces ) ; j++ )
 				{
 					j_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , j );
-					if( j_fus->vp == set_i_to_null|| j_fus->vp == set_j_to_null )
+					if( j_fus->vp == set_i_to_null || j_fus->vp == set_j_to_null )
 						j_fus->vp = NULL;
 				}
-#endif
 				continue;
 			}
 
@@ -3260,33 +3279,37 @@ CONST struct rt_tol *tol;
 				fu = fu->fumate_p;
 			/* put this face on the "new_faces" list for glueing */
 			nmg_tbl( &new_faces , TBL_INS , (long *)fu );
-			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-			vu1 = (struct vertexuse *)NULL;
 
 			/* find use of i_fus->vp in faceuse "fu" */
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 			{
-				if( eu->vu_p->v_p == i_fus->vp )
-				{
-					vu1 = eu->vu_p;
-					break;
-				}
-			}
-			if( vu1 == (struct vertexuse *)NULL )
-				rt_log( "Can't find vertex use of new i vertex use in faceuse x%x\n" , fu );
-			vu2 = (struct vertexuse *)NULL;
+				if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+					continue;
 
-			/* find use of j_fus->vp in faceuse "fu" */
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-			{
-				if( eu->vu_p->v_p == j_fus->vp )
+				vu1 = (struct vertexuse *)NULL;
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 				{
-					vu2 = eu->vu_p;
-					break;
+					if( eu->vu_p->v_p == i_fus->vp )
+					{
+						vu1 = eu->vu_p;
+						break;
+					}
 				}
+
+				vu2 = (struct vertexuse *)NULL;
+				/* find use of j_fus->vp in faceuse "fu" */
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					if( eu->vu_p->v_p == j_fus->vp )
+					{
+						vu2 = eu->vu_p;
+						break;
+					}
+				}
+
+				if( vu1 && vu2 )
+					break;
 			}
-			if( vu2 == (struct vertexuse *)NULL )
-				rt_log( "Can't find vertex use of new j vertex in faceuse\n" , fu );
 
 			if( !vu1 || !vu2 )
 				continue;
@@ -3347,27 +3370,55 @@ CONST struct rt_tol *tol;
 		}
 		if( NMG_TBL_END( &new_faces ) )
 		{
-			/* gluse the new faces together */
+			/* glue the new faces together */
 			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &new_faces) , NMG_TBL_END( &new_faces ) );
 			nmg_tbl( &new_faces , TBL_FREE , (long *)NULL );
 		}
 	}
 
+rt_log( "After building faces:\n" );
+for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
+{
+	struct intersect_fus *i_fus;
+
+	i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
+
+	rt_log( "%d intersect_fus: \n" , i );
+	rt_log( "\tfu[0] = x%x\n" , i_fus->fu[0] );
+	rt_log( "\tfu[1] = x%x\n" , i_fus->fu[1] );
+	rt_log( "\teu = x%x\n" , i_fus->eu );
+	rt_log( "\tvp = x%x\n" , i_fus->vp );
+	rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
+	rt_log( "\tstart = ( %f %f %f )\n" , V3ARGS( i_fus->start ) );
+	rt_log( "\tdir = ( %f %f %f )\n" , V3ARGS( i_fus->dir ) );
+
+	nmg_pr_fu_briefly( i_fus->fu[0] , (char *)NULL );
+	nmg_pr_fu_briefly( i_fus->fu[1] , (char *)NULL );
+}
 	/* Where faces were not built, cracks have formed */
 	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 	{
 		struct intersect_fus *i_fus;
 		struct loopuse *lu;
+		int bad_face=0;
 
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
 		fu = i_fus->fu[0];
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
 		{
 			struct edgeuse *eu_prev;
+			struct loopuse *lu_next;
+			int bad_loop = 0;
 
+			lu_next = RT_LIST_PNEXT( loopuse , &lu->l );
 			eu_prev = NULL;
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			while( RT_LIST_NOT_HEAD( eu , &lu->down_hd ) )
 			{
+				struct edgeuse *eu_next;
+
+				eu_next = RT_LIST_PNEXT( edgeuse , &eu->l );
 				if( !eu_prev )
 				{
 					eu_prev = eu;
@@ -3379,22 +3430,57 @@ CONST struct rt_tol *tol;
 					/* This is a crack , get rid of it */
 					if( nmg_keu( eu_prev ) )
 					{
-						rt_log( "nmg_complex_vertex_solve: nmg_keu resulted in empty loop\n" );
-						return( 1 );
+						bad_loop = 1;
+						break;
 					}
 					if( nmg_keu( eu ) )
 					{
-						rt_log( "nmg_complex_vertex_solve: nmg_keu resulted in empty loop\n" );
-						return( 1 );
+						bad_loop = 1;
+						break;
 					}
 					break;
 				}
 				else
 					eu_prev = eu;
+
+				eu = eu_next;
 			}
+			if( bad_loop )
+			{
+				if( nmg_klu( lu ) )
+				{
+					bad_face = 1;
+					break;
+				}
+			}
+			lu = lu_next;
+		}
+
+		if( bad_face )
+		{
+			(void)nmg_kfu( fu );
 		}
 	}
 
+rt_log( "After killing cracks:\n" );
+for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
+{
+	struct intersect_fus *i_fus;
+
+	i_fus = (struct intersect_fus *)NMG_TBL_GET( &int_faces , i );
+
+	rt_log( "%d intersect_fus: \n" , i );
+	rt_log( "\tfu[0] = x%x\n" , i_fus->fu[0] );
+	rt_log( "\tfu[1] = x%x\n" , i_fus->fu[1] );
+	rt_log( "\teu = x%x\n" , i_fus->eu );
+	rt_log( "\tvp = x%x\n" , i_fus->vp );
+	rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
+	rt_log( "\tstart = ( %f %f %f )\n" , V3ARGS( i_fus->start ) );
+	rt_log( "\tdir = ( %f %f %f )\n" , V3ARGS( i_fus->dir ) );
+
+	nmg_pr_fu_briefly( i_fus->fu[0] , (char *)NULL );
+	nmg_pr_fu_briefly( i_fus->fu[1] , (char *)NULL );
+}
 	/* free some memory */
 	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
 	{
