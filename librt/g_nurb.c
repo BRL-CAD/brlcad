@@ -53,6 +53,8 @@ RT_EXTERN(int rt_nurb_grans, (struct snurb * srf));
 RT_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
 	struct xray *r, struct rt_nurb_uv_hit *h));
 RT_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
+RT_EXTERN(void		rt_nurb_add_hit, (struct nurb_hit *head,
+			struct nurb_hit * hit, CONST struct rt_tol *tol));
 
 
 /*
@@ -683,12 +685,13 @@ struct rt_nurb_uv_hit * h;
 
 void
 rt_nurb_add_hit( head, hit, tol )
-struct nurb_hit * head;
-struct nurb_hit * hit;
-struct rt_tol	*tol;
+struct nurb_hit		* head;
+struct nurb_hit		* hit;
+CONST struct rt_tol	*tol;
 {
 	register struct nurb_hit * h_ptr;
 
+	RT_CK_TOL(tol);
 #if 0
 	/* Shouldn't be discarded, because shootray moves start pt around */
 	if( hit->hit_dist < .001)
@@ -902,6 +905,7 @@ struct rt_db_internal 	*ip;
 /*
  *			R T _ N U R B _ D E S C R I B E
  */
+int
 rt_nurb_describe(str, ip, verbose, mm2local )
 struct rt_vls		* str;
 struct rt_db_internal	* ip;
@@ -918,7 +922,7 @@ double			mm2local;
 	rt_vls_strcat( str, "Non Uniform Rational B-Spline solid (NURB)\n");
 	
 	rt_vls_printf( str, "\t%d surfaces\n", sip->nsrf);
-	if( verbose < 2 )  return;
+	if( verbose < 2 )  return 0;
 
 	for( surf = 0; surf < sip->nsrf; surf++)
 	{
