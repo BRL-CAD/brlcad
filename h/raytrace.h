@@ -1546,6 +1546,25 @@ struct rt_functab {
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
 
+
+/*  A supply of pseudo-random numbers (from table in snoise.c).  
+ *  The values are in the range 0..1
+ *
+ * Usage:
+ *	int idx;
+ *	float f;
+ *
+ *	RT_RANDSEED( idx, integer_seed );
+ *
+ *	while (NEED_MORE_RAND_NUMBERS) {
+ *		f = RT_RANDOM( idx );
+ *	}
+ */
+#define RT_RAND_TABSIZE 4096
+#define RT_RANDSEED( _i, _seed )        _i = _seed % RT_RAND_TABSIZE
+#define RT_RANDOM( _i )         rt_rand_table[ _i = (_i+1) % RT_RAND_TABSIZE ]
+extern CONST float rt_rand_table[RT_RAND_TABSIZE];
+
 /*****************************************************************
  *                                                               *
  *          Applications interface to the RT library             *
