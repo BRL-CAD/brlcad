@@ -298,6 +298,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     return DM_NULL;
   }
 
+#ifdef HAVE_XQUERYEXTENSION
   {
     int return_val;
 
@@ -307,6 +308,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
       return DM_NULL;
     }
   }
+#endif
 
   if(dmp->dm_width == 0){
     dmp->dm_width =
