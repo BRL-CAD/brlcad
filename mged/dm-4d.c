@@ -51,9 +51,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "./dm.h"
+#include "./mged_dm.h"
+#include "dm.h"
 #include "externs.h"
-#include "./solid.h"
+#include "solid.h"
 #include "tcl.h"
 
 #define YSTEREO		491	/* subfield height, in scanlines */
@@ -2176,7 +2177,7 @@ ir_colorit()
 
 	if( mvars.rgb )  return;
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS (sp, &HeadSolid.l) {
 		r = sp->s_color[0];
 		g = sp->s_color[1];
 		b = sp->s_color[2];
