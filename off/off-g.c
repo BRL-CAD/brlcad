@@ -136,7 +136,7 @@ FILE *fgeom;
 int off2nmg(fpin, fpout)
 FILE *fpin, *fpout;
 {
-	char title[64] geom_fname[64];
+	char title[64], geom_fname[64];
 	char rname[67], sname[67];
 	char buf[200], buf2[200];
 
