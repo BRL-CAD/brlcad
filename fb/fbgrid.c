@@ -1,13 +1,13 @@
 /*
-	SCCS id:	@(#) fbgrid.c	1.5
-	Last edit: 	3/14/85 at 17:57:48	G S M
-	Retrieved: 	8/13/86 at 03:14:11
+	SCCS id:	@(#) fbgrid.c	1.6
+	Last edit: 	3/29/85 at 15:38:54	G S M
+	Retrieved: 	8/13/86 at 03:14:17
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbgrid.c
 
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbgrid.c	1.5	last edit 3/14/85 at 17:57:48";
+char	sccsTag[] = "@(#) fbgrid.c	1.6	last edit 3/29/85 at 15:38:54";
 #endif
 /*
 			F B G R I D
@@ -21,16 +21,14 @@ char	sccsTag[] = "@(#) fbgrid.c	1.5	last edit 3/14/85 at 17:57:48";
  */
 #include <stdio.h>
 #include <fb.h>
-Pixel	line[1024]; /* Room for high or low resolution.			*/
-
 main( argc, argv )
 int	argc;
 char	**argv;
 	{
 	register int	x, y;
-	register int	hf_fbsz, fb_sz;
-	static int val;
-	static Pixel	*lp;
+	register int	fb_sz;
+	static Pixel	black, white;
+	static int	val;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -41,37 +39,21 @@ char	**argv;
 		{
 		return	1;
 		}
-	fb_sz = getfbsize();
-	hf_fbsz = fb_sz / 2;
-	for( y = hf_fbsz; y < fb_sz; y++ )
+	fb_sz = fbgetsize();
+	white.red = white.green = white.blue = 255;
+	black.red = black.green = black.blue = 0;
+	fbioinit();
+	for( y = 0; y < fb_sz; y++ )
 		{
-		for( x = hf_fbsz; x < fb_sz; x++ )
+		for( x = 0; x < fb_sz; x++ )
 			{
-			if(	x == y
-			    ||	(x % 8) == 0
-			    ||	(y % 8) == 0
-				)
-				val = 255;
+			if( x == y || x == fb_sz - y )
+				(void) fbwpixel( &white );
 			else
-				val = 0;
-			lp = &line[x];
-			lp->red = lp->green = lp->blue = val;
-			lp = &line[fb_sz-x];
-			lp->red = lp->green = lp->blue = val;
-			}
-		if(	fbwrite( 0, y, line, fb_sz )
-		    ==	-1
-			)
-			{
-			(void) fprintf( stderr, "Write failed!\n" );
-			return	1;
-			}
-		if(	fbwrite( 0, fb_sz-y, line, fb_sz )
-		    ==	-1
-			)
-			{
-			(void) fprintf( stderr, "Write failed!\n" );
-			return	1;
+			if( (x & 0x7) && (y & 0x7) )
+				(void) fbwpixel( &black );
+			else
+				(void) fbwpixel( &white );
 			}
 		}
 	return	0;
