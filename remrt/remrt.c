@@ -1898,7 +1898,7 @@ struct timeval		*nowp;
 		if (sp->sr_curframe != FRAME_NULL ) return 3;
 		if (work_allocate_method==OPT_MOVIE) {
 			register struct servers *csp;
-			for (csp =& servers[0]; csp < &servers[MAXSERVERS]; csp++ ){
+			for (csp = &servers[0]; csp < &servers[MAXSERVERS]; csp++ ){
 				if (csp->sr_curframe == fr) return 2;
 			}
 		} else if (work_allocate_method==OPT_LOAD) {
