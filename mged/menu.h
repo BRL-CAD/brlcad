@@ -1,3 +1,6 @@
+#ifndef SEEN_MENU_H
+#define SEEN_MENU_H
+
 /*
  *			M E N U . H
  *
@@ -38,5 +41,8 @@ struct	menu_item  {
 #define MENU_L2		1	/* second-level menu (unused) */
 #define MENU_GEN	2	/* general features (mouse buttons) */
 
+#if 0
 extern struct menu_item *menu_array[NMENU];
 extern int cur_menu, cur_item, menuflag;
+#endif
+#endif /* SEEN_MENU_H */
