@@ -44,7 +44,7 @@ int	digits;		/* # digits wide */
 		digits = 1;
 	sprintf( fmt, "%%%dg", digits, digits );
 	sprintf( buf, fmt, input );
-	tp_2symbol( fp, buf, x, y, cscale, theta );
+	tp_2symbol( fp, buf, (double)x, (double)y, (double)cscale, theta );
 }
 
 void
