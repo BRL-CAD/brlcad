@@ -188,7 +188,7 @@ cat << EOF > ${IN_FILE}
 #if defined(sun) && defined(sparc)
 #	undef	sun
 #	undef	sun4
-	MACHINE=sun4;
+#	undef	sun5
 	HAS_TCP=1;
 	HAS_SYMLINKS=1;
 
@@ -196,13 +196,16 @@ cat << EOF > ${IN_FILE}
 		if expr \`/usr/bin/uname -r\` : '4\.*' > /dev/null; then
 			/* Solarix 1.X (BSD based) */
 			UNIXTYPE=BSD;
+			MACHINE=sun4;
 		else
-			/* Solaris 2.X (SYSV based) */
+			/* Solaris 2.X (SYSV based) (SunOS 5) */
 			UNIXTYPE=SYSV;
+			MACHINE=sun5;
 		fi
 	else
-		/* No uname.  Must be Solarix 1.X */
+		/* No uname.  Must be Solarix 1.X (SunOS 4) */
 		UNIXTYPE=BSD;
+		MACHINE=sun4;
 	fi
 #endif
 
