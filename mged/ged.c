@@ -167,6 +167,16 @@ static int	mged_init_flag = 1;	/* >0 means in initialization stage */
 struct bu_vls input_str, scratchline, input_str_prefix;
 int input_str_index = 0;
 
+/*
+ * 0 - warn
+ * 1 - no warn, prompt to convert database
+ * 2 - no warn, convert database
+ */
+int db_nowarn = 0;
+
+/* force creation of db4 databases */
+int create_db4 = 0;
+
 static void     mged_insert_char();
 static void	mged_process_char();
 static int	do_rc();
@@ -2095,7 +2105,7 @@ f_opendb(
 		}
 
 	    	/* File does not exist, and should be created */
-		if( (dbip = db_create( argv[1], 5 )) == DBI_NULL )  {
+		if ((dbip = db_create(argv[1], create_db4 ? 4 : 5)) == DBI_NULL) {
 			dbip = save_dbip; /* restore previous database */
 			rt_material_head = save_materp;
 			bu_vls_free(&vls);
