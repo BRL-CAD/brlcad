@@ -318,8 +318,8 @@ char **argv;
 	max_cpus = bu_get_public_cpus();
 
 	if( bu_set_realtime() )  {
-		/* We have realtime priority, use every CPU */
-		max_cpus = avail_cpus;
+		/* We have realtime priority, use all but one CPU */
+		max_cpus = avail_cpus-1;
 	} else {
 		/* Be nice on loaded machines */
 		if( (debug&1) == 0 )  {
