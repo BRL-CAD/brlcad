@@ -157,6 +157,7 @@ rt_vlist_cleanup()
  *
  *  Output a vlist as an extended 3-D floating point UNIX-Plot file.
  *  You provide the file.
+ *  Uses libplot3 routines to create the UNIX-Plot output.
  */
 void
 rt_vlist_to_uplot( fp, vhead )
@@ -201,12 +202,12 @@ struct rt_list	*vhead;
 #define	TSTRING	5	/* linefeed terminated string */
 
 struct uplot {
-	int	targ;	/* type of args */
-	int	narg;	/* number or args */
-	char	*desc;	/* description */
+	int	targ;		/* type of args */
+	int	narg;		/* number or args */
+	char	desc[14];	/* description */
 };
-struct uplot uplot_error = { 0, 0, 0 };
-struct uplot uplot_letters[] = {
+static CONST struct uplot rt_uplot_error = { 0, 0, "error" };
+static CONST struct uplot rt_uplot_letters[] = {
 /*A*/	{ 0, 0, 0 },
 /*B*/	{ 0, 0, 0 },
 /*C*/	{ TCHAR, 3, "color" },
@@ -294,14 +295,15 @@ FILE	*fp;
  *  This might be more naturally located in mged/plot.c
  */
 int
-rt_uplot_to_vlist( vbp, fp )
+rt_uplot_to_vlist( vbp, fp, char_size )
 struct rt_vlblock	*vbp;
 register FILE		*fp;
+double			char_size;
 {
 	register struct rt_list	*vhead;
 	register int	c;
 	mat_t	mat;
-	struct	uplot *up;
+	CONST struct uplot	*up;
 	char	carg[256];
 	fastf_t	arg[6];
 	char	inbuf[8];
@@ -316,9 +318,9 @@ register FILE		*fp;
 	while( (c = getc(fp)) != EOF ) {
 		/* look it up */
 		if( c < 'A' || c > 'z' ) {
-			up = &uplot_error;
+			up = &rt_uplot_error;
 		} else {
-			up = &uplot_letters[ c - 'A' ];
+			up = &rt_uplot_letters[ c - 'A' ];
 		}
 
 		if( up->targ == TBAD ) {
@@ -429,7 +431,7 @@ register FILE		*fp;
 			} else {
 				VSETALL( last_pos, 0 );
 			}
-			rt_vlist_3string( vhead, carg, last_pos, mat, Viewscale * 0.01 );
+			rt_vlist_3string( vhead, carg, last_pos, mat, char_size );
 			break;
 		}
 	}
