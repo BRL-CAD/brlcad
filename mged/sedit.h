@@ -29,22 +29,25 @@ extern union record es_rec;		/* current solid record */
 #define es_gentype es_rec.s.s_type	/* GED general solid type. XXX used only in chgmodel.c */
 
 extern int     es_edflag;		/* type of editing for this solid */
-#define IDLE	0
-#define STRANS	1
-#define SSCALE	2
-#define SROT	3
-#define MENU	4
-#define PSCALE	5
-#define PROT	6
-#define EARB	7
-#define	MOVEH	8
-#define MOVEHH	9
-#define PTARB	10
-#define CONTROL 11
-#define MVFACE  12
-#define ROTFACE 13
-#define CHGMENU 14
-#define SETUP_ROTFACE 15
+/* These ECMD_ values go in es_edflag.  Some names not changed yet */
+#define IDLE		0	/* edarb.c */
+#define STRANS		1	/* buttons.c */
+#define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalor */
+#define SROT		3	/* buttons.c */
+#define PSCALE		4	/* Scale one solid parameter by scalor */
+
+#define	ECMD_TGC_MV_H	5
+#define ECMD_TGC_MV_HH	6
+#define ECMD_TGC_ROT_H	7
+#define ECMD_TGC_ROT_AB	8
+
+#define EARB		9	/* chgmodel.c, edarb.c */
+#define PTARB		10	/* edarb.c */
+#define ECMD_ARB_MAIN_MENU	11
+#define ECMD_ARB_SPECIFIC_MENU	12
+#define ECMD_ARB_MOVE_FACE	13
+#define ECMD_ARB_SETUP_ROTFACE	14
+#define ECMD_ARB_ROTATE_FACE	15
 
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
