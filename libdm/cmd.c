@@ -23,12 +23,12 @@
  */
 int
 do_cmd(clientData, interp, argc, argv, cmds, cmd_index)
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
-struct cmdtab	*cmds;
-int		cmd_index;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
+     struct cmdtab *cmds;
+     int cmd_index;
 {
   register struct cmdtab *ctp;
 
@@ -56,4 +56,19 @@ missing_cmd:
   Tcl_AppendResult(interp, "\n", (char *)NULL);
 
   return TCL_ERROR;
+}
+
+/*
+ * Generic routine to register commands with a Tcl interpreter.
+ */
+void
+register_cmds(interp, cmds)
+     Tcl_Interp *interp;
+     struct cmdtab *cmds;
+{
+  register struct cmdtab *ctp;
+
+  for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++)
+    (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
+			    (ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
 }
