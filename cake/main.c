@@ -294,7 +294,8 @@ int	signo;
 */
 
 void
-cake_finish()
+cake_finish(sig)
+int	sig;
 {
 	reg	List	*ptr;
 	reg	Proc	*proc;
