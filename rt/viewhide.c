@@ -117,7 +117,10 @@ register struct application *ap;
 char *file, *obj;
 {
 
-	npsw = 1;			/* Disable parallel processing */
+	if( npsw != 1 )  {
+		rt_log("Note: changing from %d to one cpu\n", npsw );
+		npsw = 1;		/* Disable parallel processing */
+	}
 
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
