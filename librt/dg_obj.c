@@ -1604,19 +1604,22 @@ struct solid		*existing_sp;
 }
 
 /*
+ * This looks for a drawable geometry object that has a matching "dbip"
+ * and deletes the solids corresponding to "dp" from the solid list.
  * At the moment this is being called from wdb_obj.c/wdb_kill_tcl() if the
  * object is not phony.
  */
 void
-dgo_eraseobjall_callback(interp, wdbop, dp)
+dgo_eraseobjall_callback(interp, dbip, dp)
      Tcl_Interp *interp;
-     struct wdb_obj *wdbop;
+     struct db_i *dbip;
      struct directory *dp;
 {
 	struct dg_obj *dgop;
 
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
-		if (dgop->dgo_wdbop == wdbop)
+		/* drawable geometry objects associated database matches */
+		if (dgop->dgo_wdbop->wdb_wp->dbip == dbip)
 			dgo_eraseobjall(interp, dgop, dp);
 }
 
