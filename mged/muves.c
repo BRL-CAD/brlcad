@@ -576,6 +576,7 @@ int *e_argv_len;
 
 		(*e_argv)[(*e_argc)-1] = cad->dp->d_namep;
 	}
+	return 42;
 }
 
 int
@@ -601,7 +602,6 @@ int *e_argv_len;
 				Tcl_AppendResult(interp, "unrecognized member type in system ",
 					sys->muves_name, " \n", (char *)NULL );
 				return TCL_ERROR;
-				break;
 		}
 	}
 
