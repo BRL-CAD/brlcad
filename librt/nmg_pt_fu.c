@@ -296,6 +296,7 @@ found:
 		ed->status = ved->status;
 		ed->v1 = ed->v2 = ved->v1;
 
+		RT_LIST_MAGIC_SET(&ed->l, NMG_VE_DIST_MAGIC);
 		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
 
 		if (fpi->vu_func &&
@@ -316,6 +317,7 @@ found:
 		ed->status = ved->status;
 		ed->v1 = ed->v2 = ved->v2;
 
+		RT_LIST_MAGIC_SET(&ed->l, NMG_VE_DIST_MAGIC);
 		RT_LIST_APPEND(&fpi->ve_dh, &ed->l);
 		if (fpi->vu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
