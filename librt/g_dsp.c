@@ -57,6 +57,8 @@ static const char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include <setjmp.h>
 
+#define ORDERED_ISECT 1
+
 int old_way = 0;
 
 #define DIM_BB_CHILDREN 4
@@ -408,7 +410,8 @@ plot_cell_top(struct isect_stuff *isect,
 	      point_t C,
 	      point_t D,
 	      struct hit hitlist[],
-	      int hitflags, int style)
+	      int hitflags,
+	      int style)	/* plot diagonal */
 {
     fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
     char buf[64];
@@ -449,16 +452,18 @@ plot_cell_top(struct isect_stuff *isect,
     MAT4X3PNT(p4, stom, D);
 
     pdv_3move(fp, p1);
-    pdv_3cont(fp, p2);
-    pdv_3cont(fp, p4);
-    if (!style) pl_color(fp, 96, 96, 96);
-
-    pdv_3cont(fp, p1);
-
-    if (!style) pl_color(fp, 255, 255, 255);
-    pdv_3cont(fp, p3);
-    pdv_3cont(fp, p4);
-
+    if (style) {
+	pdv_3cont(fp, p2);
+	pdv_3cont(fp, p4);
+	pdv_3cont(fp, p1);
+	pdv_3cont(fp, p3);
+	pdv_3cont(fp, p4);	
+    } else {
+	pdv_3cont(fp, p2);
+	pdv_3cont(fp, p4);
+	pdv_3cont(fp, p3);
+	pdv_3cont(fp, p1);
+    }
 
     /* plot the hit points */
 
@@ -961,6 +966,45 @@ struct rt_i		*rtip;
 	return 0;
 }
 
+static void
+plot_seg(struct isect_stuff *isect,
+	 struct hit *in_hit,
+	 struct hit *out_hit,
+	 const point_t bbmin,/* The bounding box of what you are adding ... */
+	 const point_t bbmax,/* ... */
+	 int r, int g, int b)/* ... this is strictly for debug plot purposes */
+{
+    fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
+    struct bound_rpp rpp;
+    char fname[32];
+    FILE *fp;
+    static int segnum =0;
+
+    /* plot the bounding box and the seg */
+    sprintf(fname, "dsp_seg%04d.pl", segnum++);
+
+    if ((fp=fopen(fname, "w")) != (FILE *)NULL) {
+	bu_log("plotting %s\n", fname);
+
+	MAT4X3PNT(rpp.min, stom, bbmin);
+	MAT4X3PNT(rpp.max, stom, bbmax);
+	plot_rpp(fp, &rpp, r/2, g/2, b/2);
+
+	/* re-use the rpp for the points for the segment */
+	MAT4X3PNT(rpp.min, stom, in_hit->hit_point);
+	MAT4X3PNT(rpp.max, stom, out_hit->hit_point);
+
+	pl_color(fp, r, g, b);
+	pdv_3line(fp, rpp.min, rpp.max);
+
+	fclose(fp);
+    }
+}
+
+/*	A D D _ S E G
+ *
+ *  Add a segment to the list of intersections in DSP space
+ */
 #define ADD_SEG(isect, in, out, min, max, r, g, b) \
 	add_seg(isect, in, out, min, max, r, g, b, __LINE__)
 
@@ -974,16 +1018,34 @@ add_seg(struct isect_stuff *isect,
 	int line)
 
 {
-    struct dsp_specific *dsp = isect->dsp;
-    fastf_t *stom = &dsp->dsp_i.dsp_stom[0];
-    FILE *fp;
-    char fname[32];
-    static int segnum = 0;
     struct seg *seg;
+#ifndef ORDERED_ISECT
     struct seg *seg_p;
-    struct bound_rpp rpp;
+#endif
 
     dlog("add_seg %g %g line %d\n", in_hit->hit_dist, out_hit->hit_dist, line);
+
+#ifdef ORDERED_ISECT
+    if (BU_LIST_NON_EMPTY(&isect->seglist) ) {
+	double tt = isect->tol->dist;
+	/* if the new in-distance equals the old out distance
+	 * we just extend the old segment 
+	 */
+	seg = BU_LIST_LAST(seg, &isect->seglist);
+	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= (tt*tt) ) {
+
+	    seg->seg_out = *out_hit; /* struct copy */
+	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
+	    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
+
+	    if (RT_G_DEBUG & DEBUG_HF) {
+		bu_log("extending previous seg to %g\n", out_hit->hit_dist);
+		plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
+	    }
+	    return;
+	}
+    }
+#endif
 
     RT_GET_SEG(seg, isect->ap->a_resource);
 
@@ -991,24 +1053,12 @@ add_seg(struct isect_stuff *isect,
 
     seg->seg_in.hit_magic = RT_HIT_MAGIC;
     seg->seg_in.hit_vpriv[Z] = 0; /* flag as in-hit */
-    /* XXX */
-
-    if (seg->seg_in.hit_surfno < 0 || seg->seg_in.hit_surfno > ZTOP) {
-	bu_log("%s:%d bogus surfno %d  dist:%g\n", __FILE__, __LINE__,
-	       seg->seg_in.hit_surfno, seg->seg_in.hit_dist);
-	bu_bomb("");
-    }
 
 
     seg->seg_out = *out_hit; /* struct copy */
     seg->seg_out.hit_magic = RT_HIT_MAGIC;
     seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
-    /* XXX */
-    if (seg->seg_out.hit_surfno < 0 || seg->seg_out.hit_surfno > ZTOP) {
-	bu_log("%s:%d bogus surfno %d  dist:%g\n", __FILE__, __LINE__,
-	       seg->seg_in.hit_surfno, seg->seg_out.hit_dist);
-	bu_bomb("");
-    }
+
 
     seg->seg_stp = isect->stp;
 
@@ -1028,6 +1078,9 @@ add_seg(struct isect_stuff *isect,
     }
 
 
+#ifdef ORDERED_ISECT
+    BU_LIST_INSERT(&isect->seglist, &seg->l);
+#else
     /* insert the segment in the list by in-hit distance */
     for ( BU_LIST_FOR(seg_p, seg, &isect->seglist) ) {
 	fp = (FILE *)NULL;
@@ -1045,33 +1098,10 @@ add_seg(struct isect_stuff *isect,
     if (seg->seg_in.hit_dist > seg->seg_out.hit_dist) {
 	bu_log("DSP:  Adding inside-out seg\n");
     }
-
-    if (RT_G_DEBUG & DEBUG_HF) {
-	/* plot the bounding box and the seg */
-	sprintf(fname, "dsp_seg%04d.pl", segnum++);
-
-	if ((fp=fopen(fname, "w")) != (FILE *)NULL) {
-	    bu_log("plotting %s\n", fname);
-
-	    MAT4X3PNT(rpp.min, stom, bbmin);
-	    MAT4X3PNT(rpp.max, stom, bbmax);
-	    plot_rpp(fp, &rpp, r/2, g/2, b/2);
-
-	    /* re-use the rpp for the points for the segment */
-	    MAT4X3PNT(rpp.min, stom, in_hit->hit_point);
-	    MAT4X3PNT(rpp.max, stom, out_hit->hit_point);
-
-	    pl_color(fp, r, g, b);
-	    pdv_3line(fp, rpp.min, rpp.max);
-
-	    fclose(fp);
-	}
-
-    }
+#endif
+    if (RT_G_DEBUG & DEBUG_HF)
+	plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
 }
-
-
-
 
 /*	I S E C T _ R A Y _ T R I A N G L E
  *
@@ -1090,7 +1120,6 @@ isect_ray_triangle(struct isect_stuff *isect,
 		   point_t C,
 		   struct hit *hitp,
 		   double alphabbeta[])
-
 {
     point_t P;		/* plane intercept point */
     vect_t AB, AC, AP;
@@ -1102,7 +1131,6 @@ isect_ray_triangle(struct isect_stuff *isect,
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
-
 
 	MAT4X3PNT(P, stom, A);
 	bu_log("isect_ray_triangle...\n  A %g %g %g  (%g %g %g)\n",
@@ -1153,20 +1181,17 @@ isect_ray_triangle(struct isect_stuff *isect,
 	    bu_log("  plotting %s\n", buf);
 
 
-	pl_color(fp, 50, 50, 128);
+	pl_color(fp, 255, 255, 255);
 	MAT4X3PNT(p1, stom, A); pdv_3move(fp, p1);
 	MAT4X3PNT(p2, stom, B);	pdv_3cont(fp, p2);
-
-	pl_color(fp, 75, 75, 128);
-
 	MAT4X3PNT(p2, stom, C);	pdv_3cont(fp, p2);
-
-	pl_color(fp, 50, 50, 128);
-
 	pdv_3cont(fp, p1);
 
-	pl_color(fp, 255, 255, 255);
-	MAT4X3PNT(p2, stom, P);	pdv_3line(fp, p1, p2);
+	/* plot the ray */
+	pl_color(fp, 255, 255, 0);
+	MAT4X3PNT(p1, stom, P);
+	MAT4X3PNT(p2, stom, isect->r.r_pt);
+	pdv_3line(fp, p1, p2);
 
 	fclose(fp);
 
@@ -1638,11 +1663,27 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	hitf |= 4;
 	dlog("  hit triangle 2 (alpha: %g beta:%g alpha+beta: %g)\n",
 	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1]);
+
+	if (hitf & 2) {
+	    /* if this hit occurs before the hit on the other triangle
+	     * swap the order
+	     */
+	    if (hits[1].hit_dist > hits[2].hit_dist) {
+		struct hit tmp;
+		tmp = hits[1]; /* struct copy */
+		hits[1] = hits[2]; /* struct copy */
+		hits[2] = tmp; /* struct copy */
+		dlog("re-ordered triangle hits\n");
+
+	    } else 
+		dlog("triangle hits in order\n");
+	}
+
+
     } else {
 	dlog("  miss triangle 2 (alpha: %g beta:%g alpha+beta: %g) cond:%d\n",
 	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1], cond);
     }
-
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_log("hitcount: %d flags: 0x%0x\n", hitcount, hitf);
@@ -1662,6 +1703,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	}
 	bu_log("assembling segs\n");
     }
+
 
     /* fill out the segment structures */
 
@@ -2150,15 +2192,15 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      * boundary.  We've got to intersect the children
      */
     if (dsp_bb->dspb_ch_dim[0]) {
-#if 0
+#ifdef ORDERED_ISECT
+	recurse_dsp_bb(isect, dsp_bb, minpt, maxpt, bbmin, bbmax);
+#else
 	int i;
 	/* there are children, so we recurse */
 	i = dsp_bb->dspb_ch_dim[X] * dsp_bb->dspb_ch_dim[Y] - 1;
 	for ( ; i >= 0 ; i--)
 	    isect_ray_dsp_bb(isect, dsp_bb->dspb_children[i]);
 
-#else
-	recurse_dsp_bb(isect, dsp_bb, minpt, maxpt, bbmin, bbmax);
 #endif
 	return;
     }
