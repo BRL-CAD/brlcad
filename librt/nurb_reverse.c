@@ -26,7 +26,7 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-nurb_reverse_srf( srf )
+rt_nurb_reverse_srf( srf )
 struct snurb * srf;
 {
 
