@@ -355,68 +355,25 @@ CONST struct rt_spect_sample	*ss;
 }
 
 
-#if 0
-#define C 	2.9979E10 /* cm/sec */
-#define H 	6.6256E-34 /* watt sec sec */
-#define K 	1.38054E-23 /* watt-sec/degK */
-#define SIGMA 	5.6697E-12 /* watt/cm*cm degK^4 */
-#define C3	1.8837E23   /* um^3 sec^-1 cm^-2 */
-#endif
-
 #define C1	3.7415E4    /* watts um^4 cm^-2 */
 #define C2    	1.4388E4    /* um K */ 	
 /* Handbook of Physics and Chem gives these values as 37,403 and 14,384 */
 /* Aircraft Combat Surv gives these values as 37,483.2 and 14,387.86 */
 
-#define	PLANCK(_w,_temp)	\
-	(C1/(_w*_w*_w*_w*_w*(exp(C2/(_w*_temp))-1)))
-	/* Units: W / cm**2 / um */
+/* Requires wavelength _w in um, not nm, returns units: W / cm**2 / um */
+#define	PLANCK(_w,_tempK)	\
+	(C1/(_w*_w*_w*_w*_w*(exp(C2/(_w*_tempK))-1)))
 
 /*
+ *			R T _ S P E C T _ B L A C K _ B O D Y
+ *
  *  Integrate Planck's Radiation Formula for a black body radiator
- *  at temperature T.
- *  Returns radiant emittance in W/cm**2
+ *  across the given spectrum.
+ *  Returns radiant emittance in W/cm**2 for each wavelength interval.
  *
  *  Based upon code kindly provided by Russ Moulton, Jr., EOSoft Inc.
- */
-static fastf_t
-rad(ax,bx,dx,temp)
-double	ax;		/* starting wavelength, um */
-double	bx;		/* ending wavelength, um */
-double	dx;		/* delta wavelength, um */
-double	temp;		/* Temperature, degK */
-{  
-	double	w_sum;
-	double	wavlen;
-	unsigned long n,i;
-
-	if ( (bx-ax) <=  0) 
-	{
-		printf("Inconsistent spectral band...\n");
-		return(0.0);
-	}
-
-	n = (unsigned long)((bx-ax)/dx + 0.99);
-
-	w_sum = 0.50 * PLANCK(ax, temp);
-
-	w_sum += 0.50 * PLANCK(bx, temp);
-
-	wavlen = ax + dx;
-	for (i=1; i<n; i++)
-	{
-		w_sum += PLANCK(wavlen, temp);
-		wavlen+=dx;
-	}
-	w_sum*=dx;
-
-	/*
-	printf("Temp = %6.2f  Radiant emittance %8.4e\n",temp,w_sum);
-	*/ 
-	return(w_sum);   
-}
-
-/*
+ *  Compute at 'n-1' wavelengths evenly spaces between ax and bx,
+ *  taking half of the left and right-most rectangles.
  */
 void
 rt_spect_black_body( ss, temp )
@@ -435,20 +392,46 @@ spect->wavel[spect->nwave] * 0.001	/* nm to um */
 );
 
 	for( j = 0; j < spect->nwave; j++ )  {
-		ss->val[j] = rad(
-			spect->wavel[j] * 0.001,	/* nm to um */
-			spect->wavel[j+1] * 0.001,	/* nm to um */
-			(spect->wavel[j+1] - spect->wavel[j]) / 8 * 0.001,
-			temp );
+		double	ax;		/* starting wavelength, um */
+		double	bx;		/* ending wavelength, um */
+		double	w_sum;
+		double	wavlen;
+		double	dx;
+		unsigned long n,i;
+
+		ax = spect->wavel[j] * 0.001;	/* nm to um */
+		bx = spect->wavel[j+1] * 0.001;	/* nm to um */
+
+		n = 3;
+		dx = (bx - ax) / (double)n;
+
+		w_sum = 0.50 * PLANCK(ax, temp);
+		wavlen = ax + dx;
+		for (i=1; i<n; i++)  {
+			w_sum += PLANCK(wavlen, temp);
+			wavlen += dx;
+		}
+		w_sum += 0.50 * PLANCK(bx, temp);
+		w_sum *= dx;
+
+		ss->val[j] = w_sum;
 	}
 }
 
 /*
- *  Returns radiant emittance in units of watts/cm**2
- *  by integrating each wavelength span of spectral radiant emittance.
+ *			R T _ S P E C T _ B L A C K _ B O D Y _ F A S T
+ *
+ *  Returns radiant emittance for each spectral interval in the given
+ *  spectrum in units of watts/cm**2.
+ *  Integrate each wavelength interval of spectral radiant emittance,
+ *  by fitting with a rectangle (approximating curve with a horizontal line).
+ *  For narrow spacing in wavelength this is OK, but with large spacing
+ *  this tends to over-predict the power by 20%, due to the sharp
+ *  (exponential) slope of the curve.
+ *  With coarse spacing, or when unsure, use rt_spect_black_body().
  */
 void
-rt_spect_black_body2( ss, temp )
+rt_spect_black_body_fast( ss, temp )
 struct rt_spect_sample	*ss;
 double			temp;		/* Degrees Kelvin */
 {
@@ -458,7 +441,7 @@ double			temp;		/* Degrees Kelvin */
 	RT_CK_SPECT_SAMPLE(ss);
 	spect = ss->spectrum;
 	RT_CK_SPECTRUM(spect);
-rt_log("rt_spect_black_body2( x%x, %g degK )\n", ss, temp );
+rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", ss, temp );
 
 	for( j = 0; j < spect->nwave; j++ )  {
 		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp ) *
@@ -504,7 +487,7 @@ main()
 	rt_write_spect_sample( "/tmp/z", z );
 #endif
 
-	spect = rt_spect_uniform( 8, 3.0, 3000.0 );
+	spect = rt_spect_uniform( 100, 3.0, 3000.0 );
 
 	RT_GET_SPECT_SAMPLE( x, spect );
 	rt_spect_black_body_points( x, 10000.0 );
@@ -515,7 +498,7 @@ main()
 	rt_write_spect_sample( "/tmp/y", y );
 
 	RT_GET_SPECT_SAMPLE( z, spect );
-	rt_spect_black_body2( z, 10000.0 );
+	rt_spect_black_body_fast( z, 10000.0 );
 	rt_write_spect_sample( "/tmp/z", z );
 }
 
