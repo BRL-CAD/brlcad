@@ -103,23 +103,23 @@ struct application	*ap;
 		 */
 		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
 		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
-			segp->seg_out.hit_dist = segp->seg_in.hit_dist;
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolweave:  Zero thickness seg: %s (%g,%g)\n",
+				"rt_boolweave:  Zero thickness seg: %s (%.18e,%.18e)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
+			segp->seg_out.hit_dist = segp->seg_in.hit_dist;
 		}
 		if( !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
-		    	rt_log("rt_boolweave:  Defective segment %s (%g,%g)\n",
+		    	rt_log("rt_boolweave:  Defective segment %s (%.18e,%.18e)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
 			continue;
 		}
 		if( segp->seg_in.hit_dist > segp->seg_out.hit_dist )  {
-		    	rt_log("rt_boolweave:  Inside-out segment %s (%g,%g)\n",
+		    	rt_log("rt_boolweave:  Inside-out segment %s (%.18e,%.18e)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
@@ -406,6 +406,9 @@ struct region			*reg2;
 
 	RT_CHECK_PT(pp);
 
+	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	if( depth <= 0 )  return(1);	/* Retain 0-thickness partition */
+
 	/* Attempt to control tremendous error outputs */
 	if( ++count > 100 )  {
 		if( (count%100) != 3 )  return(1);
@@ -414,7 +417,6 @@ struct region			*reg2;
 
 	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 		ap->a_ray.r_dir );
-	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	/*
 	 * An application program might want to add code here
 	 * to ignore "small" overlap depths.
@@ -422,11 +424,14 @@ struct region			*reg2;
 	 * so that messages will be grouped together in parallel runs.
 	 */
 	rt_log( "\
-OVERLAP1: reg=%s isol=%s\n\
-OVERLAP2: reg=%s osol=%s\n\
-OVERLAP depth %gmm at (%g,%g,%g) x%d y%d lvl%d\n",
-		reg1->reg_name, pp->pt_inseg->seg_stp->st_name,
-		reg2->reg_name, pp->pt_outseg->seg_stp->st_name,
+OVERLAP1: %s\n\
+OVERLAP2: %s\n\
+OVERLAP3: isol=%s osol=%s\n\
+OVERLAP4: depth %.5fmm at (%g,%g,%g) x%d y%d lvl%d\n",
+		reg1->reg_name,
+		reg2->reg_name,
+		pp->pt_inseg->seg_stp->st_name,
+		pp->pt_outseg->seg_stp->st_name,
 		depth, pt[X], pt[Y], pt[Z],
 		ap->a_x, ap->a_y, ap->a_level );
 	return(1);
@@ -520,10 +525,22 @@ struct application *ap;
 			rt_log("rt_boolfinal: (%g,%g)\n", startdist, enddist );
 			rt_pr_pt( ap->a_rt_i, pp );
 		}
-
-		/* Sanity checks on sorting.  Remove later. */
 		RT_CHECK_SEG(pp->pt_inseg);
 		RT_CHECK_SEG(pp->pt_outseg);
+
+		/* Force "very thin" partitions to have exactly zero thickness. */
+		diff = pp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
+		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
+			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
+				"rt_boolfinal:  Zero thickness partition: %s (%.18e,%.18e)\n",
+				pp->pt_regionp->reg_name,
+				pp->pt_inhit->hit_dist,
+				pp->pt_outhit->hit_dist );
+			pp->pt_outhit->hit_dist = pp->pt_inhit->hit_dist;
+		}
+
+
+		/* Sanity checks on sorting.  Remove later. */
 		if( pp->pt_inhit->hit_dist > pp->pt_outhit->hit_dist )  {
 			rt_log("rt_boolfinal: inverted partition %.8x\n", pp);
 			rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
@@ -968,7 +985,7 @@ double a, b;
 	}
 	ret = 1;
 out:
-	if(rt_g.debug&DEBUG_FDIFF) rt_log("rt_fdiff(%g,%g)=%d\n", a, b, ret);
+	if(rt_g.debug&DEBUG_FDIFF) rt_log("rt_fdiff(%.18e,%.18e)=%d\n", a, b, ret);
 	return(ret);
 }
 
