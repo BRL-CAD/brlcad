@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$";
 
 extern struct resource rt_uniresource;	/* From librt/shoot.c */
 
-int			fr_hit(struct application *ap, struct partition *headp), fr_miss(struct application *ap);
+int			fr_hit(struct application *ap, struct partition *headp, struct seg *segp), fr_miss(struct application *ap);
 struct partition	fr_global_head;
 
 /*
@@ -249,7 +249,7 @@ double		*dir;
 }
 
 int
-fr_hit(struct application *ap, struct partition *headp)
+fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
 {
 	if( headp->pt_forw == headp )  return(0);
 
