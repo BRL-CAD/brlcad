@@ -1598,8 +1598,11 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 		 * entries) to the array.
 		 */
 		for (i = 0; i < RT_DBNHASH; i++)
-			for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+			for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+				if( !aflag && (dp->d_flags & DIR_HIDDEN) )
+					continue;
 				*dirp++ = dp;
+			}
 	}
 
 	if (lflag)
