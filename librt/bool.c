@@ -437,7 +437,7 @@ struct application *ap;
 		lastregion = TrueRg[0];
 		if(debug&DEBUG_PARTITION) rtlog("TRUE\n");
 #endif
-		if( pp->pt_outhit->hit_dist <= EPSILON )  {
+		if( pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
 			/* partition is behind start point (k=0), ignore */
 			pp=pp->pt_forw;
 			continue;
