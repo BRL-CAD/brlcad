@@ -196,7 +196,7 @@ struct mater_info *materp;
 		rt_log("nesting exceeds %d levels\n", MAX_PATH );
 		for(i=0; i<MAX_PATH; i++)
 			rt_log("/%s", cur_path[i]->d_namep );
-		(void)putchar('\n');
+		rt_log("\n");
 		return;			/* ERROR */
 	}
 

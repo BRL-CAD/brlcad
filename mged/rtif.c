@@ -77,7 +77,7 @@ int	status;
 		rt_log(", terminating signal = %d", sig );
 	else
 		rt_log(", return (exit) code = %d", ret );
-	(void)putchar('\n');
+	rt_log("\n");
 }
 
 /*

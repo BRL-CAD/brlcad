@@ -706,7 +706,7 @@ char	**argv;
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
-			putchar( '\n' );
+			rt_log( "\n" );
 		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
@@ -731,12 +731,12 @@ int cont;		/* non-zero when continuing partly printed line */
 
 	if( !cont ) {
 		for( i=0; i<(pathpos*(NAMESIZE+2)); i++) 
-			putchar(' ');
+			rt_log(" ");
 		cont = 1;
 	}
 	rt_log("| %s", dp->d_namep);
 	if( !(dp->d_flags & DIR_COMB) )  {
-		putchar( '\n' );
+		rt_log( "\n" );
 		return;
 	}
 
@@ -747,10 +747,10 @@ int cont;		/* non-zero when continuing partly printed line */
 	 */
 	i = NAMESIZE - strlen(dp->d_namep);
 	while( i-- > 0 )
-		putchar('_');
+		rt_log("_");
 
 	if( dp->d_len <= 1 )
-		putchar('\n');		/* empty combination */
+		rt_log("\n");		/* empty combination */
 
 	for( i=1; i < dp->d_len; i++ )  {
 		if( (nextdp = db_lookup( dbip, rp[i].M.m_instname, LOOKUP_NOISY ))
@@ -780,7 +780,7 @@ char	**argv;
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
-			putchar( '\n' );
+			rt_log( "\n" );
 		if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		printnode(dp, 0, 0);
@@ -806,19 +806,19 @@ char prefix;
 		READ_ERR_return;
 
 	for( i=0; i<pathpos; i++) 
-		putchar('\t');
+		rt_log("\t");
 	if( prefix ) {
-		putchar(prefix);
-		putchar(' ');
+		rt_log("%c", prefix);
+		rt_log(" ");
 	}
 
 	rt_log("%s", dp->d_namep);
 	/* Output Comb and Region flags (-F?) */
 	if( dp->d_flags & DIR_COMB )
-		putchar('/');
+		rt_log("/");
 	if( dp->d_flags & DIR_REGION )
-		putchar('R');
-	putchar('\n');
+		rt_log("R");
+	rt_log("\n");
 
 	if( !(dp->d_flags & DIR_COMB) )  {
 		return;
