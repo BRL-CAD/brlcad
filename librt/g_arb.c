@@ -180,7 +180,6 @@ int a, b, c, d;
 pointp_t ap, bp, cp, dp;
 {
 	register struct arb_specific *arbp;
-	register int pts;
 
 	while( (arbp=FreeArb) == ARB_NULL )  {
 		register struct arb_specific *arbp;
@@ -211,7 +210,7 @@ pointp_t ap, bp, cp, dp;
 	/* Add this face onto the linked list for this solid */
 	arbp->arb_forw = (struct arb_specific *)stp->st_specific;
 	stp->st_specific = (int *)arbp;
-	return(pts);					/* OK */
+	return(arb_npts);					/* OK */
 }
 
 /*
