@@ -356,6 +356,7 @@ int		rdebug;
 extern char	*outputfile;		/* output file name */
 extern char	*framebuffer;
 extern int	desiredframe;
+extern int	finalframe;
 
 extern struct rt_g	rt_g;
 
@@ -1079,6 +1080,10 @@ FILE	*fp;
 		}
 		frame = atoi( argv[1] );
 		if( frame < desiredframe )  {
+			rt_vls_free( &body );
+			goto bad;
+		}
+		if( frame > finalframe ) {
 			rt_vls_free( &body );
 			goto bad;
 		}
@@ -2343,7 +2348,7 @@ int		a, b;
  */
 void
 write_fb( pp, fr, a, b )
-RGBpixel	*pp;
+unsigned char 	*pp;
 struct frame	*fr;
 int		a;
 int		b;
@@ -2407,7 +2412,7 @@ repaint_fb( fr )
 register struct frame *fr;
 {
 	register int	y;
-	char		*line;
+	unsigned char	*line;
 	int		nby;
 	FILE		*fp;
 	int		w;
@@ -2421,7 +2426,7 @@ register struct frame *fr;
 
 	/* Draw the accumulated image */
 	nby = 3*fr->fr_width;
-	line = rt_malloc( nby, "scanline" );
+	line = (unsigned char *)rt_malloc( nby, "scanline" );
 	if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
 		perror( fr->fr_filename );
 		return;
@@ -2430,12 +2435,12 @@ register struct frame *fr;
 	if( w > fb_getwidth(fbp) )  w = fb_getwidth(fbp);
 
 	for( y=0; y < fr->fr_height; y++ )  {
-		cnt = fread( line, nby, 1, fp );
+		cnt = fread( (char *)line, nby, 1, fp );
 		/* Write out even partial results, then quit */
 		fb_write( fbp, 0, y, line, w );
 		if( cnt != 1 )  break;
 	}
-	rt_free( line, "scanline" );
+	rt_free( (char *)line, "scanline" );
 }
 
 /*
