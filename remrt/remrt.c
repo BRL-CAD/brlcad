@@ -75,11 +75,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./list.h"
 #include "./protocol.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-extern char	*getenv();
-
 #ifdef SYSV
 # define vfork	fork
 #endif
