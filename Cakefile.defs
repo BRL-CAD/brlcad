@@ -82,18 +82,13 @@ set -S2 "/bin/sh"
 #define NFS	1
 
 /****************************************************************
- *								*
- * If the PRODUCTION flag is not defined, then a debugable	*
- * and static build is usually performed.			*
- *								*
- * Each platform should distiguish the appropriate build	*
- * parameters for a production and non-production compile.	*
+ * B U I L D   O P T I O N S                                    *
  *								*
  * Shared library builds (BUILD_SHARED) and optimized		*
- * compilation (BUILD_OPTIMIZED) are turned off by default for	*
+ * compilation (BUILD_OPTIMIZED) should be turned off for	*
  * a production compile.  Each individual platform may set or 	*
  * override a default build option if there is some special 	*
- * significance	(e.g. building staticly on m4i64).		*
+ * significance	(e.g. building staticly on m4i65).		*
  *								*
  * The BUILD_XWINDOWS flag will enable building of the X Window	*
  * System (a portable, network-transparent window system).	*
@@ -115,27 +110,24 @@ set -S2 "/bin/sh"
  * potential for database corruption..  Enabling the option,	*
  * however, should improve raytrace performance noticeably.	*
  *								*
+ * Release Complation Options:			        	*
+ *   BUILD_OPTIMIZED    1					*
+ *   BUILD_SHARED       1					*
+ *   BUILD_XWINDOWS     1					*
+ *   BUILD_OPENGL       0					*
+ *   BUILD_PRODUCTION   0					*
+ *								*
  ****************************************************************/
 
 /* 1==YES, 0==NO */
 
-#define PRODUCTION	0
+/* Read above for the meaning and implications of each flag! */
+#define BUILD_OPTIMIZED	        1
+#define BUILD_SHARED	        1
+#define BUILD_XWINDOWS	        1
+#define BUILD_OPENGL	        0
+#define BUILD_PRODUCTION	0
 
-#if PRODUCTION
-#	define BUILD_OPTIMIZED	1
-#	define BUILD_SHARED	1
-#	define BUILD_XWINDOWS	1
-#	define BUILD_OPENGL	0
-# 	define BUILD_PRODUCTION	0
-/* #	define BUILD_SMP	0 */ /* does nothing right now */
-#else
-#	define BUILD_OPTIMIZED	0
-#	define BUILD_SHARED	1
-#	define BUILD_XWINDOWS	1
-#	define BUILD_OPENGL	1
-#	define BUILD_PRODUCTION	0
-/* #	define BUILD_SMP	0 */ /* does nothing right now */
-#endif
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
 #define	TCLTK_VERS	8.3
@@ -229,7 +221,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
 #	define	MTYPE	6d
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
 #		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
@@ -237,7 +229,7 @@ set -S2 "/bin/sh"
 /*		This version for debugging with DBX */
 #		define	OPTIMIZER	-g
 #	endif
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support */
 #		define	GFLAG		-KPIC
 #		define	ARCH_SUF	so
@@ -295,7 +287,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a MIPS-3 32-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -315,7 +307,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG	-n32 -KPIC -G 0
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib32
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -363,7 +355,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS3 machine) */
 #	undef	sgi
 #	define	MTYPE	m3i62
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -383,7 +375,7 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 /*		32-bit version, compatible with HLA, etc. etc. */
 #		define	GFLAG		-n32 -mips3 -KPIC -G 7
 #		define	XLIBDIR /usr/lib32
@@ -393,7 +385,7 @@ set -S2 "/bin/sh"
 #		define	XLIBDIR /usr/lib64
 #endif
 #	define  XINCDIR /usr/include/X11
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -434,7 +426,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i62
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -461,7 +453,7 @@ set -S2 "/bin/sh"
 #endif
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -510,7 +502,7 @@ set -S2 "/bin/sh"
 #		endif /* else use 32 (o32) */
 #	endif
 #	define	MTYPE	m4i64
-#	if BUILD_OPTIMIZED /*	PRODUCTION=1	*/
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
@@ -625,6 +617,7 @@ set -S2 "/bin/sh"
 #	endif
 /*	Building staticly on this architecture creates *huge* executeables, thus we override by default*/
 #	if 1
+#               undef BUILD_SHARED
 #		define	BUILD_SHARED	1
 #	endif
 #	define	MTYPE	m4i65
@@ -739,7 +732,7 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sun4
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
@@ -831,7 +824,7 @@ set -S2 "/bin/sh"
 
 #	if defined( __GNUC__ )
 #		define	CC		gcc
-#		if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#		if BUILD_OPTIMIZED	
 #			define	OPTIMIZER	-O3 -fno-strict-aliasing
 #		else
 #			define	OPTIMIZER	-O -g
@@ -842,7 +835,7 @@ set -S2 "/bin/sh"
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
-#		if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#		if BUILD_OPTIMIZED	
 #			define	OPTIMIZER	-dalign -xcg92 -xO4 -Xt
 #		else
 #			define	OPTIMIZER	-g -Xt
@@ -857,7 +850,7 @@ set -S2 "/bin/sh"
 #	endif
 
 /*	Shared library support */
-#	if BUILD_SHARED /* PRODUCTION=1 */
+#	if BUILD_SHARED 
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	LDSHARED	ld -Bdynamic -G
@@ -882,7 +875,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
-#	if BUILD_OPENGL	/* PRODUCTION=1 */
+#	if BUILD_OPENGL	
 #		define	LIBMESA_CONFIG	-DFBIND=2
 #		define	LIBDM_OBJS	color query dm-X
 #		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
@@ -1020,13 +1013,13 @@ set -S2 "/bin/sh"
 #	define	CC	gcc
 #	define	CC_DEFS -pipe -fPIC -Wall -pedantic
 /*			-std=iso9899:199409 */
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-O -g
 #		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support.  Requires ELF for Linux. */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1113,13 +1106,13 @@ set -S2 "/bin/sh"
 #	define	CC	gcc
 #	define	CC_DEFS -pipe -fPIC -Wall -pedantic
 #	define	LEX_OPTS	-l
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-O -g
 #		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support.  */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1193,12 +1186,12 @@ set -S2 "/bin/sh"
 #	define XLIBDIR	/usr/X11R6/lib
 #	define XINCDIR	/usr/X11R6/include
 /*#	define	LEX_OPTS	-l*/
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3  -ffast-math -fstrength-reduce -fexpensive-optimizations /* -faltivec */
 #	else
 #		define	OPTIMIZER	-g -pg -O
 #	endif
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support.  */
 #		define	CC_DEFS -pipe -fPIC -Wall -bsd
 /*#		define	ARCH_SUF	dylib*/
@@ -1344,7 +1337,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
-#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -1372,7 +1365,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
-#	if BUILD_OPENGL	/* PRODUCTION=1 */
+#	if BUILD_OPENGL	
 /*		X11 for MGED */
 #		define	MGED_OBJS	doevent update dm-4d dm-X dm-ogl dm-generic
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
@@ -1420,7 +1413,7 @@ set -S2 "/bin/sh"
 #	define	BSD	42
 #	define	HAS_TCP	1
 /*	Select correct floating point flag, -fswitch if unsure */
-#	if 1	/* PRODUCTION=1 */
+#	if 1	
 /*		Using the Sun Compiler (the default) */
 #		if 0
 /*			Generic unoptimized Sun configuration */
@@ -1453,7 +1446,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBRT_TIMER	timer42
 
-#	define	sun_openwin 1	/* PRODUCTION=1 */
+#	define	sun_openwin 1	
 #	undef	sun_x11
 #	undef	sun_no_opts
 #	undef	sun_x11_gds
@@ -1517,7 +1510,7 @@ set -S2 "/bin/sh"
 #	undef	alpha
 #	define	CC_OPTS	-std1 -readonly_strings
 #	define	OPTIMIZER	-O2 -Olimit 1400 -fp_reorder
-#	if BUILD_SHARED	/* PRODUCTION=1 */
+#	if BUILD_SHARED	
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1572,7 +1565,7 @@ set -S2 "/bin/sh"
 /*	Apple MAC II running A/UX 1.0 */
 #	undef	aux
 #	define	MTYPE	aux
-#	if 1	/* PRODUCTION=1 */
+#	if 1	
 #		define  CC      /bin/cc
 #		define	OPTIMIZER	-O
 #	else
