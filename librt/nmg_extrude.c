@@ -35,9 +35,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl, CONST struct bn_tol *tol ) );
-RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct bn_tol *tol ) );
-RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
 /*
  *	V e r t s _ i n _ N M G _ L o o p
