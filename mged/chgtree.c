@@ -1219,8 +1219,9 @@ char **argv;
     BU_GETSTRUCT(anp, animate);
     anp -> magic = ANIMATE_MAGIC;
 
-    bzero((char *) &ts, sizeof(ts));
+    ts = mged_initial_tree_state;	/* struct copy */
     ts.ts_dbip = dbip;
+    ts.ts_resp = &rt_uniresource;
     mat_idn(ts.ts_mat);
     db_full_path_init(&anp -> an_path);
     if (db_follow_path_for_state(&ts, &(anp -> an_path), argv[1], LOOKUP_NOISY)

@@ -80,6 +80,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "../librt/debug.h"	/* XXX */
 
+extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
+
 extern void color_soltab();
 extern void set_absolute_tran(); /* defined in set.c */
 extern void set_absolute_view_tran(); /* defined in set.c */
@@ -938,10 +940,10 @@ int recurse;
       struct db_tree_state ts;
       struct db_full_path path;
 
-      bzero( (char *)&ts, sizeof( ts ) );
       db_full_path_init( &path );
-
+      ts = mged_initial_tree_state;	/* struct copy */
       ts.ts_dbip = dbip;
+      ts.ts_resp = &rt_uniresource;
       bn_mat_idn(ts.ts_mat);
 
       if (db_follow_path_for_state(&ts, &path, argv[arg], 1))

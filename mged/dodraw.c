@@ -1048,6 +1048,7 @@ pathHmat(
 	db_full_path_init( &null_path );
 	ts = mged_initial_tree_state;		/* struct copy */
 	ts.ts_dbip = dbip;
+	ts.ts_resp = &rt_uniresource;
 
 	(void)db_follow_path( &ts, &null_path, &path, LOOKUP_NOISY, depth+1 );
 	db_free_full_path( &null_path );
