@@ -50,8 +50,6 @@ DIRS		= h \
 		  whetstone dhrystone
 
 all:
-	@echo "Hopefully, all the Makefile.loc parameters are right"
-
 	-@for dir in ${DIRS}; \
 	do	echo " "; \
 		echo ---------- $$dir; \
