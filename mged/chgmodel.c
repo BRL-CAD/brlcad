@@ -146,11 +146,17 @@ char	**argv;
 	    /* Material */
 	    strcpy( record.c.c_matname, argv[2]);
 	  }else{
-	    Tcl_AppendResult(interp, "Was ", record.c.c_matname, " ",
-			     record.c.c_matparm, "\n", (char *)NULL);
-	    record.c.c_matname[0] = '\0';
-	    record.c.c_override = 0;
-	    goto out;
+	    if(record.c.c_matname[0] != '\0'){
+#if 0
+	      Tcl_AppendResult(interp, "Was ", record.c.c_matname, " ",
+			       record.c.c_matparm, "\n", (char *)NULL);
+#endif
+	      record.c.c_matname[0] = '\0';
+	      record.c.c_override = 0;
+#if 0
+	      goto out;
+#endif
+	    }
 	  }
 	}else{
 	  /* Material */
@@ -225,25 +231,25 @@ color_prompt:
 	  return TCL_ERROR;
 	}
 
-	/* Inherit */
-	switch( record.c.c_inherit )  {
-	default:
-	  /* This is necessary to clean up old databases with grunge here */
-	  record.c.c_inherit = DB_INH_LOWER;
-	  /* Fall through */
-	case DB_INH_LOWER:
-	  Tcl_AppendResult(interp, "Inherit = 0:  lower nodes (towards leaves) override\n",
-			   (char *)NULL);
-	  break;
-	case DB_INH_HIGHER:
-	   Tcl_AppendResult(interp, "Inherit = 1:  higher nodes (towards root) override\n",
-			    (char *)NULL);
-	   break;
-	}
-
 	if(argc >= 8 - skip_args){
-	  record.c.c_inherit = inherit = *argv[7 - skip_args];
+	  inherit = *argv[7 - skip_args];
 	}else{
+	  /* Inherit */
+	  switch( record.c.c_inherit )  {
+	  default:
+	    /* This is necessary to clean up old databases with grunge here */
+	    record.c.c_inherit = DB_INH_LOWER;
+	    /* Fall through */
+	  case DB_INH_LOWER:
+	    Tcl_AppendResult(interp, "Inherit = 0:  lower nodes (towards leaves) override\n",
+			     (char *)NULL);
+	    break;
+	  case DB_INH_HIGHER:
+	    Tcl_AppendResult(interp, "Inherit = 1:  higher nodes (towards root) override\n",
+			     (char *)NULL);
+	    break;
+	  }
+
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
 			   "Inheritance (0|1)? (CR to skip) ", (char *)NULL);
 	  switch( record.c.c_inherit ) {
