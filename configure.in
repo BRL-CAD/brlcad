@@ -53,14 +53,15 @@ TCL=libtcl8.4
 AC_SUBST(TCL)
 AC_SUBST(TCL_LIBS)
 
+TCL_LIBRARY="$prefix/tcl8.4"
+AC_SUBST(TCL_LIBRARY)
 if test "$FRAMEWORK_BUILD" = "1" ; then
-    TCL_PACKAGE_PATH="${libdir}/Resources/Scripts"
-elif test "$prefix" != "$exec_prefix"; then
-    TCL_PACKAGE_PATH="${libdir} ${prefix}/lib"
+	dnl this may be wrong
+    TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir/Resources/Scripts\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 else
-    TCL_PACKAGE_PATH="${prefix}/lib"
+    TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 fi
-TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$(TCL_PACKAGE_PATH)\\\" -DTCL_LIBRARY=\\\"$(prefix)/lib/tcl8.4\\\""
+echo "TCL_BUILD_CFLAGS = $TCL_BUILD_CFLAGS"
 AC_SUBST(TCL_BUILD_CFLAGS)
 
 
@@ -159,7 +160,6 @@ dnl REGEX
 dnl BSDGETTIMEOFDAY
 
 AC_OUTPUT([
-	Makefile
 	anim/Makefile
 	bwish/Makefile
 	doc/Makefile
@@ -190,15 +190,27 @@ AC_OUTPUT([
 	libpkg/Makefile
 	librt/Makefile
 	libsysv/Makefile
+	libtcl8.4/doc/Makefile
 	libtcl8.4/generic/Makefile
+	libtcl8.4/library/dde/Makefile
+	libtcl8.4/library/encoding/Makefile
+	libtcl8.4/library/http1.0/Makefile
+	libtcl8.4/library/http/Makefile
+	libtcl8.4/library/Makefile
+	libtcl8.4/library/msgcat/Makefile
+	libtcl8.4/library/opt/Makefile
+	libtcl8.4/library/reg/Makefile
+	libtcl8.4/library/tcltest/Makefile
 	libtcl8.4/Makefile
 	libtcl8.4/unix/Makefile
 	libtermio/Makefile
+	libtk8.4/doc/Makefile
 	libtk8.4/generic/Makefile
 	libtk8.4/Makefile
 	libtk8.4/unix/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
+	Makefile
 	mged/Makefile
 	rt/Makefile
 	sh/Makefile
@@ -221,4 +233,3 @@ AC_OUTPUT([
 	tclscripts/util/Makefile
 	util/Makefile
 ])
-

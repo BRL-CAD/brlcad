@@ -1,4 +1,4 @@
-SUBDIRS = generic unix
+SUBDIRS = generic unix doc library
 
 lib_LTLIBRARIES = libtcl.la
  
