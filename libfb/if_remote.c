@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	PCP(p)	((struct pkg_conn *)p->if_pbase)
 
 /* Package Handlers. */
-extern int pkgerror();	/* foobar message handler */
+static int pkgerror();	/* error message handler */
 static struct pkg_switch pkgswitch[] = {
 	{ MSG_ERROR, pkgerror, "Error Message" },
 	{ 0, NULL, NULL }
@@ -138,7 +138,7 @@ int	width, height;
 		return	-1;
 	}
 	(void) strncpy( official_hostname, hostentry->h_name, MAX_HOSTNAME );
-	if( (PCP(ifp) = pkg_open( official_hostname, "mossfb", pkgswitch )) < 0 ) {
+	if( (PCP(ifp) = pkg_open( official_hostname, "mossfb", pkgswitch, fb_log )) < 0 ) {
 		fb_log(	"remote_device_open : can't connect to host \"%s\".\n",
 			official_hostname );
 		return	-1;
@@ -155,9 +155,6 @@ int	width, height;
 
 	/* XXX - need to get the size back! */
 	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	ret = ntohl( ret );
-	if( ret < 0 )
-		fb_log( "remote_device_open : device \"%s\" busy.\n", devicename );
 	return	ntohl( ret );
 }
 
@@ -338,19 +335,17 @@ ColorMap	*cmap;
 }
 
 /*
- * Called from pkgswitch.c, this is where we come on
- * error messages.
+ * This is where we come on
+ * asynchronous error messages.
  */
-int
-pkgerror(type, buf, length)
-int type, length;
+static int
+pkgerror(pcp, buf)
+struct pkg_conn *pcp;
 char *buf;
 {
-	/* Dangerous, but such is life */
-	buf[length] = '\0';
-
-	fb_log( "PKGFOO: Type %d, \"%s\"\n", type, buf );
-	return	0; /* Declared as integer function in pkg_switch.	*/
+	fb_log( "remote: %s", buf );
+	(void)free(buf);
+	return	0;	/* Declared as integer function in pkg_switch. */
 }
 
 /***** Experimental Queueing routines *****/
