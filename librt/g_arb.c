@@ -117,7 +117,9 @@ struct rt_i	*rtip;
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	LOCAL int	faces;		/* # of faces produced */
 	register int	i;
+	register int	j;
 	LOCAL fastf_t	f;
+	register struct arb_specific *arbp;
 
 	/*
 	 * Process an ARB8, which is represented as a vector
@@ -152,32 +154,37 @@ struct rt_i	*rtip;
 
 	stp->st_specific = (int *) 0;
 
-#define P(x)	(&vec[(x)*ELEMENTS_PER_VECT])
 	faces = 0;
-#if 0
-	if( arb_face( stp, P(3), P(2), P(1), P(0), "1234" ) )
-		faces++;					/* 1234 */
-	if( arb_face( stp, P(4), P(5), P(6), P(7), "8765" ) )
-		faces++;					/* 8765 */
-	if( arb_face( stp, P(4), P(7), P(3), P(0), "1485" ) )
-		faces++;					/* 1485 */
-	if( arb_face( stp, P(2), P(6), P(5), P(1), "2673" ) )
-		faces++;					/* 2673 */
-	if( arb_face( stp, P(1), P(5), P(4), P(0), "1562" ) )
-		faces++;					/* 1562 */
-	if( arb_face( stp, P(7), P(6), P(2), P(3), "4378" ) )
-		faces++;					/* 4378 */
-#undef P
-#else
 	for( i=0; i<6; i++ )  {
-		if( arb_face( stp,
-			P(arb_info[i].ai_sub[0]),
-			P(arb_info[i].ai_sub[1]),
-			P(arb_info[i].ai_sub[2]),
-			P(arb_info[i].ai_sub[3]),
-			arb_info[i].ai_title ) )  faces++;
+		while( (arbp=FreeArb) == ARB_NULL )  arb_getarb();
+		FreeArb = arbp->arb_forw;
+
+		arb_npts = 0;
+		for( j=0; j<4; j++ )  {
+			arb_add_pt(
+				&vec[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT],
+				stp, arbp, arb_info[i].ai_title );
+		}
+
+		if( arb_npts < 3 )  {
+			/* This face is BAD */
+			arbp->arb_forw = FreeArb;
+			FreeArb = arbp;
+			continue;
+		}
+
+		/* Scale U and V basis vectors by the inverse of Ulen and Vlen */
+		arbp->arb_Ulen = 1.0 / arbp->arb_Ulen;
+		arbp->arb_Vlen = 1.0 / arbp->arb_Vlen;
+		VSCALE( arbp->arb_U, arbp->arb_U, arbp->arb_Ulen );
+		VSCALE( arbp->arb_V, arbp->arb_V, arbp->arb_Vlen );
+
+		/* Add this face onto the linked list for this solid */
+		arbp->arb_forw = (struct arb_specific *)stp->st_specific;
+		stp->st_specific = (int *)arbp;
+
+		faces++;
 	}
-#endif
 	if( faces < 4  || faces > 6 )  {
 		rt_log("arb(%s):  only %d faces present\n",
 			stp->st_name, faces);
