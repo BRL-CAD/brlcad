@@ -323,16 +323,18 @@ register struct directory *dp;
 			record.c.c_los,
 			record.c.c_material );
 	(void)printf("--\n");
-	if( record.c.c_override == 1 || record.c.c_matname[0] != '\0' )  {
-		if( record.c.c_matname[0] )
-			(void)printf("Material '%s' '%s'\n",
-				record.c.c_matname,
-				record.c.c_matparm);
-		if( record.c.c_override == 1)
-			(void)printf("Color %d %d %d\n",
-				record.c.c_rgb[0],
-				record.c.c_rgb[1],
-				record.c.c_rgb[2]);
+	if( record.c.c_matname[0] )
+		(void)printf("Material '%s' '%s'\n",
+			record.c.c_matname,
+			record.c.c_matparm);
+	if( record.c.c_override == 1)
+		(void)printf("Color %d %d %d\n",
+			record.c.c_rgb[0],
+			record.c.c_rgb[1],
+			record.c.c_rgb[2]);
+	if( record.c.c_matname[0] || record.c.c_override )  {
+		if( record.c.c_inherit == DB_INH_HIGHER )
+			(void)printf("(These material properties override all lower ones in the tree)\n");
 	}
 
 	for( i=1; i < dp->d_len; i++ )  {
