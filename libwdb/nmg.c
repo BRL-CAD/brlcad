@@ -46,5 +46,5 @@ struct model	*m;
 {
 	NMG_CK_MODEL( m );
 
-	return mk_export_fwrite( filep, name, (genptr_t)&m, ID_NMG );
+	return mk_export_fwrite( filep, name, (genptr_t)m, ID_NMG );
 }
