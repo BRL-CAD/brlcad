@@ -28,7 +28,6 @@
 #ifndef RLE_RAW_H
 #define RLE_RAW_H
 
-#include <rle_code.h>
 
 /*****************************************************************
  * TAG( rle_op )

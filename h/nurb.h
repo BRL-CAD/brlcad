@@ -35,7 +35,6 @@
 #endif
 
 #ifndef RAYTRACE_H
-# include <stdio.h>
 # include "raytrace.h"
 #endif
 
