@@ -747,6 +747,31 @@ register struct pkg_conn *pc;
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 #else
+	/*
+	 *  On the assumption that buffer copying is less expensive than
+	 *  having this transmission broken into two network packets
+	 *  (with TCP, each with a "push" bit set),
+	 *  merge it all into one buffer here, unless size is enormous.
+	 */
+	if( len + sizeof(hdr) <= 16*1024 )  {
+		char	tbuf[16*1024];
+
+		bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
+		if( len > 0 )
+			bcopy( buf, tbuf+sizeof(hdr), len );
+		if( (i = write( pc->pkc_fd, tbuf, len+sizeof(hdr) )) != len+sizeof(hdr) )  {
+			if( i < 0 )  {
+				pkg_perror(pc->pkc_errlog, "pkg_send: tbuf write");
+				return(-1);
+			}
+			sprintf(errbuf,"pkg_send of %d, wrote %d\n",
+				len, i-sizeof(hdr) );
+			(pc->pkc_errlog)(errbuf);
+			return(i-sizeof(hdr));	/* amount of user data sent */
+		}
+		return(len);
+	}
+	/* Send them separately */
 	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
 		if( i < 0 )  {
 			pkg_perror(pc->pkc_errlog, "pkg_send: header write");
@@ -842,16 +867,70 @@ register struct pkg_conn *pc;
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 #else
-	/* Assume all succeed if last one does */
-	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
-	i = write( pc->pkc_fd, buf1, len1 );
+	/*
+	 *  On the assumption that buffer copying is less expensive than
+	 *  having this transmission broken into two network packets
+	 *  (with TCP, each with a "push" bit set),
+	 *  merge it all into one buffer here, unless size is enormous.
+	 */
+	if( len1 + len2 + sizeof(hdr) <= 16*1024 )  {
+		char	tbuf[16*1024];
+
+		bcopy( (char *)&hdr, tbuf, sizeof(hdr) );
+		if( len1 > 0 )
+			bcopy( buf1, tbuf+sizeof(hdr), len1 );
+		if( len2 > 0 )
+			bcopy( buf2, tbuf+sizeof(hdr)+len1, len2 );
+		if( (i = write( pc->pkc_fd, tbuf, len1+len2+sizeof(hdr) )) != len1+len2+sizeof(hdr) )  {
+			if( i < 0 )  {
+				pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
+				return(-1);
+			}
+			sprintf(errbuf,"pkg_2send of %d+%d, wrote %d\n",
+				len1, len2, i-sizeof(hdr) );
+			(pc->pkc_errlog)(errbuf);
+			return(i-sizeof(hdr));	/* amount of user data sent */
+		}
+		return(len1+len2);
+	}
+	/* Send it in three pieces */
+	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
+			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
+				pc->pkc_fd, &hdr, sizeof(hdr), i );
+			(pc->pkc_errlog)(errbuf);
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote header=%d\n",
+			sizeof(hdr), len1, len2, i );
+		(pc->pkc_errlog)(errbuf);
+		return(-1);		/* amount of user data sent */
+	}
+	if( (i = write( pc->pkc_fd, buf1, len1 )) != len1 )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
+			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
+				pc->pkc_fd, buf1, len1, i );
+			(pc->pkc_errlog)(errbuf);
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote len1=%d\n",
+			sizeof(hdr), len1, len2, i );
+		(pc->pkc_errlog)(errbuf);
+		return(i);		/* amount of user data sent */
+	}
 	if( len2 <= 0 )  return(i);
 	if( (i = write( pc->pkc_fd, buf2, len2 )) != len2 )  {
 		if( i < 0 )  {
-			pkg_perror(pc->pkc_errlog, "pkg_2send: write2");
+			pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
+			sprintf(errbuf, "pkg_2send write(%d, x%x, %d) ret=%d\n",
+				pc->pkc_fd, buf2, len2, i );
+			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
-		sprintf(errbuf,"pkg_2send of %d, wrote %d+%d\n", len2, len1, i);
+		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote len2=%d\n",
+			sizeof(hdr), len1, len2, i );
 		(pc->pkc_errlog)(errbuf);
 		return(len1+i);		/* amount of user data sent */
 	}
@@ -899,7 +978,8 @@ register struct pkg_conn *pc;
 	pkg_pshort( hdr.pkh_type, type );	/* should see if valid type */
 	pkg_plong( hdr.pkh_len, len );
 
-	bcopy( &hdr, &(pc->pkc_stream[pc->pkc_strpos]), sizeof(struct pkg_header) );
+	bcopy( (char *)&hdr, &(pc->pkc_stream[pc->pkc_strpos]),
+		sizeof(struct pkg_header) );
 	pc->pkc_strpos += sizeof(struct pkg_header);
 	bcopy( buf, &(pc->pkc_stream[pc->pkc_strpos]), len );
 	pc->pkc_strpos += len;
