@@ -47,11 +47,16 @@
 #define VMATH_H seen
 
 #ifndef sqrt
-#	if defined(__STDC__) || \
-	(defined(sgi) && defined(mips) && !defined(SGI4D_Rel2))
-		extern double sqrt(double _sqrt_arg_x);
+	/* In case <math.h> has not been included, define sqrt() here */
+#	if defined(__STDC__)
+		extern double sqrt(double x);
 #	else
-		extern double sqrt();
+#		if (defined(sgi) && defined(mips) && !defined(SGI4D_Rel2))
+			/* What could SGI have been thinking of? */
+			extern double sqrt(double);
+#		else
+			extern double sqrt();
+#		endif
 #	endif
 #endif
 
