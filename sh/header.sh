@@ -356,7 +356,7 @@ esac
 
 if [ "x$wrap" = "x1" ] ; then
     block="${block}${c}
-${c}*/"
+${c}/"
 else
     block="${block}${c}
 ${c}${c}${c}"
@@ -508,7 +508,7 @@ case "$lineone" in
 	skip=0
 	closeit=1
 	;;
-    #include*)
+    \#include*)
         echo "found code"
 	skip=0
 	closeit=1
@@ -522,12 +522,14 @@ esac
 
 if [ "x$wrap" = "x1" ] ; then
     if [ "x$closeit" = "x1" ] ; then
-	echo "/${block}/** @file $basefilename
+	echo "/${block}
+/** @file $basefilename
  *
  */
 " >> $FILE
     else
-	echo "/${block}/** @file $basefilename" >> $FILE
+	echo "/${block}
+/** @file $basefilename" >> $FILE
     fi
 else
     echo "${block}" >> $FILE
