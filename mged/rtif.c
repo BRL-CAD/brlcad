@@ -40,7 +40,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #ifndef WIN32
-#include <sys/time.h>		/* For struct timeval */
+#  include <sys/time.h>		/* For struct timeval */
 #endif
 #include <sys/stat.h>		/* for chmod() */
 
@@ -61,7 +61,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./cmd.h"
 
 #ifdef WIN32
-#include <fcntl.h>
+#  include <fcntl.h>
 #endif
 
 extern int mged_svbase();
@@ -79,11 +79,11 @@ struct rtcheck {
 	HANDLE			fd;
 	HANDLE			hProcess;
 	DWORD			pid;
-#ifdef TCL_OK
+#  ifdef TCL_OK
 	Tcl_Channel		chan;
-#else
+#  else
 	genptr_t chan;
-#endif
+#  endif
 #else
        int			fd;    
        int			pid;
@@ -408,17 +408,10 @@ rt_output_handler(ClientData clientData, int mask)
 {
 	struct run_rt *run_rtp = (struct run_rt *)clientData;
 	int count;
-#if 0
 	char line[RT_MAXLINE+1];
 
 	/* Get data from rt */
 	if ((count = read((int)run_rtp->fd, line, RT_MAXLINE)) == 0) {
-#else
-	char line[5120+1];
-
-	/* Get data from rt */
-	if ((count = read((int)run_rtp->fd, line, 5120)) == 0) {
-#endif
 		int retcode;
 		int rpid;
 		int aborted;
@@ -1697,6 +1690,9 @@ char	**argv;
 	register char **vp;
 	FILE *fp_in;
 	FILE *fp_out, *fp_err;
+	int pid;
+	int rpid;
+	int retcode;
 #ifndef WIN32
 	int pipe_in[2];
 	int pipe_out[2];
@@ -1706,10 +1702,10 @@ char	**argv;
 	HANDLE pipe_out[2],hSaveStdout,pipe_outDup;
 	HANDLE pipe_err[2],hSaveStderr,pipe_errDup;
 	STARTUPINFO si = {0};
-   PROCESS_INFORMATION pi = {0};
-   SECURITY_ATTRIBUTES sa          = {0};
-   char name[1024];
-   char line1[2048];
+	PROCESS_INFORMATION pi = {0};
+	SECURITY_ATTRIBUTES sa          = {0};
+	char name[1024];
+	char line1[2048];
 #endif
 	int use_input_orig = 0;
 	vect_t	center_model;
@@ -1852,10 +1848,10 @@ done:
 	    else{
 	      bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
 #else
-		if(*val == '\0')
-	      bu_vls_printf(&o_vls, " fmt r \\\"\\\\n\\\" ");
-	    else{
-	      bu_vls_printf(&o_vls, " fmt r \\\"\\\\n%*s\\\" ", count, val);
+	      if(*val == '\0')
+		bu_vls_printf(&o_vls, " fmt r \\\"\\\\n\\\" ");
+	      else	{
+		bu_vls_printf(&o_vls, " fmt r \\\"\\\\n%*s\\\" ", count, val);
 #endif
 	      if(count)
 		val += count + 1;
