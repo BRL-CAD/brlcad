@@ -23,7 +23,8 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define COMPLETE_LIBES	LIB_PRE''LIBRT RT_LIBES LIBMALLOC MGED_LIBES LIBES
+#define COMPLETE_LIBES	\
+	LIB_PRE''LIBRT RT_LIBES LIBMALLOC MGED_LIBES LIBES
 
 mged:	OBJ LIBRT
 	-rm -f vers.c
