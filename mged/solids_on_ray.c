@@ -43,7 +43,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #define	ORDER_BY_NAME		 0
 #define	ORDER_BY_DISTANCE	 1
