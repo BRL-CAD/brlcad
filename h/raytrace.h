@@ -888,7 +888,7 @@ union tree {
 	struct tree_nmgregion {
 		long		magic;
 		int		td_op;		/* leaf, OP_NMG_TESS */
-		CONST char	*td_name;	/* If non-null, former name of this object.  Not to be freed. */
+		CONST char	*td_name;	/* If non-null, dynamic string describing heritage of this region */
 #if defined(NMG_H)
 		struct nmgregion *td_r;		/* ptr to NMG region */
 #else
@@ -2287,7 +2287,7 @@ RT_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
 RT_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
 				struct rt_external *ep, int id));
-RT_EXTERN(struct nmgregion	*nmg_booltree_evaluate, (union tree *tp,
+RT_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
 				CONST struct rt_tol *tol));
 RT_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
 				CONST struct rt_tol *tol));
