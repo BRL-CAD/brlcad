@@ -111,6 +111,7 @@ int argc;
 char **argv;
 {
 	register int i;
+	int	rateflag = 0;
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
@@ -253,140 +254,16 @@ char **argv;
 
 	/****************  M A I N   L O O P   *********************/
 	while(1) {
-		static vect_t knobvec;	/* knob slew */
-		static int rateflag;	/* != 0 means change RATE */
-
 		(void)signal( SIGINT, SIG_IGN );
 
-		/*
-		 * dmr_input() will suspend until some change has occured,
-		 * either on the device peripherals, or a command on the
-		 * keyboard.
-		 */
-		i = dmp->dmr_input( 0, rateflag );	/* fd 0 for cmds */
-		if( i )  {
-			static char line[MAXLINE];
-
-			line[0] = '\0';
-
-			/* Read input line */
-			if( fgets( line, MAXLINE, stdin ) != NULL ) {
-				if( cmdline( line ) )
-					pr_prompt();
-			} else {
-				/* Check for Control-D (EOF) */
-				if( feof( stdin ) )  {
-					/* EOF, let's hit the road */
-					f_quit();
-					/* NOTREACHED */
-				}
-			}
-		}
-
-		rateflag = 0;
-
-		/* Process any function button presses */
-		if( dm_values.dv_buttonpress )
-			button( dm_values.dv_buttonpress );
-
-		/* Process any joystick activity */
-		if(	dmaflag
-		   ||	dm_values.dv_xjoy != 0.0
-		   ||	dm_values.dv_yjoy != 0.0
-		   ||	dm_values.dv_zjoy != 0.0
-		)  {
-			rateflag++;
-
-			/* Compute delta x,y,z parameters */
-			usejoy( dm_values.dv_xjoy * 6 * degtorad,
-				dm_values.dv_yjoy * 6 * degtorad,
-				dm_values.dv_zjoy * 6 * degtorad );
-		}
-
-		/*
-		 * Use data tablet inputs.
-		 */		 
-		if( dm_values.dv_penpress )
-			rateflag++;	/* to catch transition back to 0 */
-
-		switch( dm_values.dv_penpress )  {
-		case DV_INZOOM:
-			Viewscale *= 0.5;
-			new_mats();
-			break;
-
-		case DV_OUTZOOM:
-			Viewscale *= 2.0;
-			new_mats();
-			break;
-
-		case DV_SLEW:		/* Move view center to here */
-			{
-				vect_t tabvec;
-				tabvec[X] =  dm_values.dv_xpen / 2047.0;
-				tabvec[Y] =  dm_values.dv_ypen / 2047.0;
-				tabvec[Z] = 0;
-				slewview( tabvec );
-			}
-			break;
-
-		case DV_PICK:		/* transition 0 --> 1 */
-		case 0:			/* transition 1 --> 0 */
-			usepen();
-			break;
-		default:
-			(void)fprintf(outfile, "pen(%d,%d,x%x) -- bad dm press code\n",
-			dm_values.dv_xpen,
-			dm_values.dv_ypen,
-			dm_values.dv_penpress);
-			break;
-		}
-
-		/*
-		 * Set up window so that drawing does not run over into the
-		 * status line area, and menu area (if present).
-		 */
-		windowbounds[1] = XMIN;		/* XLR */
-		if( illump != SOLID_NULL )
-			windowbounds[1] = MENUXLIM;
-		windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
-		dmp->dmr_window(windowbounds);	/* hack */
-
-		/* Apply the knob slew factor to the view center */
-		if( dm_values.dv_xslew != 0.0 || dm_values.dv_yslew != 0.0
-		  || dm_values.dv_zslew != 0.0 )  {
-			/* slew 1/10th of the view per update */
-			knobvec[X] = -dm_values.dv_xslew / 10;
-			knobvec[Y] = -dm_values.dv_yslew / 10;
-			knobvec[Z] = -dm_values.dv_zslew / 10;
-			slewview( knobvec );
-			rateflag++;
-		}
-
-		/* Apply zoom rate input to current view window size */
-		if( dm_values.dv_zoom != 0 )  {
-#define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
-
-			Viewscale *= 1.0 - (dm_values.dv_zoom / 10);
-			if( Viewscale < MINVIEW )
-				Viewscale = MINVIEW;
-			else  {
-				rateflag++;
-			}
-			new_mats();
-			dmaflag = 1;
-		}
+		rateflag = event_check( rateflag );
 
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
-			sedit();			/* e13.c */
+			sedit();
 			sedraw = 0;
 			dmaflag = 1;
 		}
-
-		/* See if the angle/distance cursor is doing anything */
-		if(  adcflag && dm_values.dv_flagadc )
-			dmaflag = 1;	/* Make refresh call dozoom */
 
 		/*
 		 * Cause the control portion of the displaylist to be
@@ -395,6 +272,146 @@ char **argv;
 		refresh();
 	}
 	/* NOTREACHED */
+}
+
+/*
+ *			E V E N T _ C H E C K
+ *
+ *  Check for events, and dispatch them.
+ *  Eventually, this will be done entirely by generating commands
+ */
+int
+event_check( non_blocking )
+int	non_blocking;
+{
+	char		input_line[MAXLINE];
+	vect_t		knobvec;	/* knob slew */
+	char		cmd[128];
+	int		i;
+
+	/*
+	 * dmr_input() will suspend until some change has occured,
+	 * either on the device peripherals, or a command has been
+	 * entered on the keyboard, unless the non-blocking flag is set.
+	 */
+	i = dmp->dmr_input( 0, non_blocking );	/* fd 0 for cmds */
+	if( i )  {
+
+		input_line[0] = '\0';
+
+		/* Read input line */
+		if( fgets( input_line, MAXLINE, stdin ) != NULL ) {
+			if( cmdline( input_line ) )
+				pr_prompt();
+		} else {
+			/* Check for Control-D (EOF) */
+			if( feof( stdin ) )  {
+				/* EOF, let's hit the road */
+				f_quit();
+				/* NOTREACHED */
+			}
+		}
+	}
+
+	non_blocking = 0;
+
+	/* Process any function button presses */
+	if( dm_values.dv_buttonpress )
+		button( dm_values.dv_buttonpress );
+
+	/* Process any joystick activity */
+	if(	dmaflag
+	   ||	dm_values.dv_xjoy != 0.0
+	   ||	dm_values.dv_yjoy != 0.0
+	   ||	dm_values.dv_zjoy != 0.0
+	)  {
+		non_blocking++;
+
+		/* Compute delta x,y,z parameters */
+		usejoy( dm_values.dv_xjoy * 6 * degtorad,
+			dm_values.dv_yjoy * 6 * degtorad,
+			dm_values.dv_zjoy * 6 * degtorad );
+	}
+
+	/*
+	 * Use data tablet inputs.
+	 */		 
+	if( dm_values.dv_penpress )
+		non_blocking++;	/* to catch transition back to 0 */
+
+	switch( dm_values.dv_penpress )  {
+	case DV_INZOOM:
+		Viewscale *= 0.5;
+		new_mats();
+		break;
+
+	case DV_OUTZOOM:
+		Viewscale *= 2.0;
+		new_mats();
+		break;
+
+	case DV_SLEW:		/* Move view center to here */
+		{
+			vect_t tabvec;
+			tabvec[X] =  dm_values.dv_xpen / 2047.0;
+			tabvec[Y] =  dm_values.dv_ypen / 2047.0;
+			tabvec[Z] = 0;
+			slewview( tabvec );
+		}
+		break;
+
+	case DV_PICK:		/* transition 0 --> 1 */
+	case 0:			/* transition 1 --> 0 */
+		usepen();
+		break;
+	default:
+		(void)fprintf(outfile, "pen(%d,%d,x%x) -- bad dm press code\n",
+		dm_values.dv_xpen,
+		dm_values.dv_ypen,
+		dm_values.dv_penpress);
+		break;
+	}
+
+	/*
+	 * Set up window so that drawing does not run over into the
+	 * status line area, and menu area (if present).
+	 */
+	windowbounds[1] = XMIN;		/* XLR */
+	if( illump != SOLID_NULL )
+		windowbounds[1] = MENUXLIM;
+	windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
+	dmp->dmr_window(windowbounds);	/* hack */
+
+	/* Apply the knob slew factor to the view center */
+	if( dm_values.dv_xslew != 0.0 || dm_values.dv_yslew != 0.0
+	  || dm_values.dv_zslew != 0.0 )  {
+		/* slew 1/10th of the view per update */
+		knobvec[X] = -dm_values.dv_xslew / 10;
+		knobvec[Y] = -dm_values.dv_yslew / 10;
+		knobvec[Z] = -dm_values.dv_zslew / 10;
+		slewview( knobvec );
+		non_blocking++;
+	}
+
+	/* Apply zoom rate input to current view window size */
+	if( dm_values.dv_zoom != 0 )  {
+#define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
+
+		Viewscale *= 1.0 - (dm_values.dv_zoom / 10);
+		if( Viewscale < MINVIEW )
+			Viewscale = MINVIEW;
+		else  {
+			non_blocking++;
+		}
+		new_mats();
+		dmaflag = 1;
+	}
+
+	/* See if the angle/distance cursor is doing anything */
+	if(  adcflag && dm_values.dv_flagadc )
+		dmaflag = 1;	/* Make refresh call dozoom */
+
+	return( non_blocking );
 }
 
 /*			R E F R E S H
