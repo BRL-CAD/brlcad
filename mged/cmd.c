@@ -678,7 +678,7 @@ mged_setup()
 
 	bu_vls_init(&str);
 	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 \
-                             %stclscripts/mged %stclscripts %s/lib/iwidgets/scripts]",
+                             %stclscripts/mged %stclscripts %slib/iwidgets/scripts]",
 		      filename, filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
