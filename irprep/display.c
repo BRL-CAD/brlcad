@@ -57,7 +57,6 @@ struct table		/*  Table for region name & temperature.  */
 };
 struct table *info;	/*  Dimension later with malloc.  */
 
-extern void * malloc(unsigned int);
 /*  Variables needed for rt_shootray.  */
 struct application ap;	/*  Application struct, passed between functions.  */
 extern int hit();	/*  User supplied hit function.  */
@@ -185,7 +184,7 @@ char *argv[];
    (void)fflush(stdout);
 
    /*  Malloc arrays.  */
-   info = malloc( numreg * sizeof (*info) );
+   info = (struct table *)malloc( numreg * sizeof (struct table) );
 
    /*  Zero all arrays.  */
    for(i=0; i<numreg; i++)
