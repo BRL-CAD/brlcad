@@ -263,7 +263,7 @@ char **argv;
 
 /*
  * SYNOPSIS
- *	rset res_type res vals
+ *	rset [res_type [res [vals]]]
  *
  * DESCRIPTION
  *	Provides a mechanism to set resource values for some resource.
@@ -283,19 +283,34 @@ char    **argv;
 
   bu_vls_init(&vls);
 
-  if (argc < 2) {
-    bu_vls_printf(&vls, "help rset");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
+  /* print values for all resources */
+  if (argc == 1) {
+    mged_vls_struct_parse(&vls, "Axes", axes_vparse,
+			  (CONST char *)axes_state, argc, argv);
+    bu_vls_printf(&vls, "\n");
+    mged_vls_struct_parse(&vls, "Color Schemes", color_scheme_vparse,
+			  (CONST char *)color_scheme, argc, argv);
+    bu_vls_printf(&vls, "\n");
+    mged_vls_struct_parse(&vls, "Grid", grid_vparse,
+			  (CONST char *)grid_state, argc, argv);
+    bu_vls_printf(&vls, "\n");
+    mged_vls_struct_parse(&vls, "Rubber Band", rubber_band_vparse,
+			  (CONST char *)rubber_band, argc, argv);
+    bu_vls_printf(&vls, "\n");
+    mged_vls_struct_parse(&vls, "mged variables", mged_vparse,
+			  (CONST char *)mged_variables, argc, argv);
 
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
-    return TCL_ERROR;
+
+    return TCL_OK;
   }
 
   switch (argv[1][0]) {
   case 'a':
   case 'A':
     if (argv[1][1] == 'd' || argv[1][1] == 'D')
-      bu_vls_printf(&vls, "rset: no support available for the 'adc' resource");
+      bu_vls_printf(&vls, "rset: use the adc command for the 'adc' resource");
     else if (argv[1][1] == 'x' || argv[1][1] == 'X')
       mged_vls_struct_parse(&vls, "Axes", axes_vparse,
 			    (CONST char *)axes_state, argc-1, argv+1);
