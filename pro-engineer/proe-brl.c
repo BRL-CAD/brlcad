@@ -1,5 +1,7 @@
 #include <unistd.h>
 #include "prodevelop.h"
+#include "profiles.h"
+#include "proincludes.h"
 
 extern int errno;
 
@@ -63,6 +65,7 @@ FILE *fd_out;
 char *obj;
 char *name;
 {
+	char *tmpnam_return;
 	char tmp_file_name[256];
 	wchar_t wtmp_file_name[256];
 	FILE *fd_tmp;
@@ -72,7 +75,14 @@ char *name;
 	int c;
 
 	/* Create a temporary file to store the render format for this part */
-	strcpy( tmp_file_name , tempnam( NULL , "proe_brl" ) );
+	tmpnam_return = tempnam( NULL , "proe_brl" );
+	if( tmpnam_return == NULL )
+	{
+		fprintf( stderr , "Cannot create temporary file name for part %s!!!\n" , name );
+		promsg_print( MSGFIL , "USER_TEMPNAM" ,  name );
+		return;
+	}
+	strcpy( tmp_file_name , tmpnam_return );
 
 	/* It appears that pro_export_file_from_pro changes the file name given to all
 	 * lower case, so change them first
@@ -84,7 +94,12 @@ char *name;
 	pro_str_to_wstr( wtmp_file_name , tmp_file_name );
 
 	/* Output the part in render format to the temporary file */
-	pro_export_file_from_pro( wtmp_file_name , obj , PRO_RENDER_FILE , NULL , &quality , NULL , NULL );
+	if( !pro_export_file_from_pro( wtmp_file_name , obj , PRO_RENDER_FILE , NULL , &quality , NULL , NULL ) )
+	{
+		fprintf( stderr , "Failed to export part (%s) to file (%s)\n" , name , tmp_file_name );
+		promsg_print( MSGFIL , "USER_EXPORT_FAILED" , tmp_file_name , name );
+		return;
+	}
 
 	if( (fd_tmp = fopen( tmp_file_name , "r" )) == NULL )
 	{
