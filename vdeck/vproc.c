@@ -1,6 +1,6 @@
 /*
- *	@(#) vproc.c		retrieved 8/13/86 at 08:22:56,
- *	@(#) version 1.3		  created 2/24/83 at 13:10:04.
+ *	@(#) vproc.c		retrieved 8/13/86 at 08:23:14,
+ *	@(#) version 1.4		  created 3/29/83 at 10:55:05.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -337,7 +337,6 @@ toc() {
 
 	for( i = 0; dp < ep; )	toc_list[i++] = (dp++)->d_namep;
 	toc_ct = i;
-	sort( toc_list, toc_ct );
 }
 
 /*	==== l o o k u p ( )
