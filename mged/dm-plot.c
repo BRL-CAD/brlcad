@@ -95,7 +95,8 @@ Plot_open()
 	char line[64];
 
 	(void)printf("UNIX-Plot filter [pl-fb]? ");
-	(void)gets( line );		/* Null terminated */
+	(void)fgets( line, sizeof(line), stdin ); /* \n, Null terminated */
+	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
 		if( (up_fp = popen( line, "w" )) == NULL )  {

@@ -647,7 +647,8 @@ char	*name;
 	/* Load the font to use */
 	/* Answering this extra question all the time is irritating */
 	(void)printf("Font [6x10]? ");
-	(void)gets( line );		/* Null terminated */
+	(void)fgets( line, sizeof(line), stdin );
+	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( line[0] != NULL )
 		cp = line;
 	else

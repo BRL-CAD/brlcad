@@ -94,7 +94,8 @@ PS_open()
 	char line[64];
 
 	(void)printf("PostScript file? ");
-	(void)gets( line );		/* Null terminated */
+	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
+	line[strlen(line)-1] = '\0';		/* remove newline */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
 		if( (ps_fp = fopen( line, "w" )) == NULL )  {
