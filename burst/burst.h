@@ -9,6 +9,11 @@
 #ifndef INCL_BURST
 #define INCL_BURST
 
+/* NSIG not always defined in <signal.h> */
+#ifndef NSIG
+#define NSIG 64
+#endif
+
 /* Some useful stuff from Doug Gwyn's std.h. */
 /* Extended data types */
 typedef int bool;			/* Boolean data */
