@@ -303,6 +303,7 @@ yysquare()
 		fprintf(stderr, "%s, %d: unescaped newline inside a command\n", yyfile, yylineno);
 
 	exit_cake(FALSE);
+	return("--error--");			/* BRL */
 }
 
 /*
@@ -357,6 +358,7 @@ yycurly()
 		fprintf(stderr, "%s, %d: unescaped newline inside a command\n", yyfile, yylineno);
 
 	exit_cake(FALSE);
+	return("--error--");			/* BRL */
 }
 
 check_actlen()
