@@ -258,5 +258,6 @@ char ** argv;
 		}
 		fb_write( fbp, xbase, i, scan_buf, x_len );
 	}
+	fb_close( fbp );
 	exit(0);
 }
