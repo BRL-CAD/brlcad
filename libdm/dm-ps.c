@@ -67,7 +67,6 @@ struct dm dm_ps = {
   ps_drawVList,
   ps_setFGColor,
   Nu_int0,
-  Nu_int0,
   ps_setLineAttr,
   ps_setWinBounds,
   ps_debug,
@@ -78,7 +77,8 @@ struct dm dm_ps = {
   0,
   0,				/* no displaylist */
   0,                            /* no stereo */
-  PLOTBOUND,
+  PLOTBOUND,			/* zoom-in limit */
+  1,				/* bound flag */
   "ps",
   "Screen to PostScript",
   DM_TYPE_PS,
@@ -92,7 +92,13 @@ struct dm dm_ps = {
   {0, 0},
   0,
   0,
-  0
+  0,
+  0,
+  0,
+  0,				/* clipmin */
+  0,				/* clipmax */
+  0,				/* no debugging */
+  0				/* no zclipping */
 };
 
 char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inches]\
@@ -223,7 +229,11 @@ char *argv[];
       }
       break;
     case 'z':
+#if 0
       ((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
+#else
+      dmp->dm_zclip = 1;
+#endif
       break;
     default:
       Tcl_AppendResult(interp, ps_usage, (char *)0);
@@ -530,8 +540,8 @@ double perspective;
 	break;
       }
 
-      if(vclip( start, fin, ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin,
-		((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax ) == 0)
+      if(vclip( start, fin, dmp->dm_clipmin,
+		dmp->dm_clipmax ) == 0)
 	continue;
 
       fprintf(((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp,
@@ -648,7 +658,7 @@ fastf_t x, y;
 static int
 ps_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
-register short r, g, b;
+unsigned char r, g, b;
 int strict;
 {
   return TCL_OK;
@@ -676,6 +686,7 @@ static int
 ps_debug(dmp, lvl)
 struct dm *dmp;
 {
+  dmp->dm_debugLevel = lvl;
   return TCL_OK;
 }
 
@@ -685,17 +696,21 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[0] = w[0] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[0] = w[1] / 2047.;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[1] = w[2] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[1] = w[3] / 2047.;
+  dmp->dm_clipmin[0] = w[0] / 2048.;
+  dmp->dm_clipmax[0] = w[1] / 2047.;
+  dmp->dm_clipmin[1] = w[2] / 2048.;
+  dmp->dm_clipmax[1] = w[3] / 2047.;
 
+#if 0
   if(((struct ps_vars *)dmp->dm_vars.priv_vars)->zclip){
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = w[4] / 2048.;
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = w[5] / 2047.;
+#else
+  if (dmp->dm_zclip) {
+#endif
+    dmp->dm_clipmin[2] = w[4] / 2048.;
+    dmp->dm_clipmax[2] = w[5] / 2047.;
   }else{
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = -1.0e20;
-    ((struct ps_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = 1.0e20;
+    dmp->dm_clipmin[2] = -1.0e20;
+    dmp->dm_clipmax[2] = 1.0e20;
   }
 
   return TCL_OK;

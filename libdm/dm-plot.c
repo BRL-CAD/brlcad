@@ -67,7 +67,6 @@ struct dm dm_plot = {
   plot_drawVList,
   plot_setFGColor,
   Nu_int0,
-  Nu_int0,
   plot_setLineAttr,
   plot_setWinBounds,
   plot_debug,
@@ -76,9 +75,10 @@ struct dm dm_plot = {
   Nu_int0,
   Nu_int0,
   0,
-  0,			/* no displaylist */
-  0,                    /* no stereo */
-  PLOTBOUND,
+  0,				/* no displaylist */
+  0,				/* no stereo */
+  PLOTBOUND,			/* zoom-in limit */
+  1,				/* bound flag */
   "plot",
   "Screen to UNIX-Plot",
   DM_TYPE_PLOT,
@@ -92,7 +92,13 @@ struct dm dm_plot = {
   {0, 0},
   0,
   0,
-  0
+  0,
+  0,
+  0,
+  0,				/* clipmin */
+  0,				/* clipmax */
+  0,				/* no debugging */
+  0				/* no zclipping */
 };
 
 struct plot_vars head_plot_vars;
@@ -153,7 +159,11 @@ char *argv[];
     case 'Z':
       /* Enable Z clipping */
       Tcl_AppendResult(interp, "Clipped in Z to viewing cube\n", (char *)NULL);
+#if 0
       ((struct plot_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
+#else
+      dmp->dm_zclip = 1;
+#endif
       break;
     default:
       Tcl_AppendResult(interp, "bad PLOT option ", argv[0], "\n", (char *)NULL);
@@ -436,8 +446,7 @@ double perspective;
 	VMOVE( last, fin );
 	break;
       }
-      if(vclip(start, fin, ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin,
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax) == 0)
+      if(vclip(start, fin, dmp->dm_clipmin, dmp->dm_clipmax) == 0)
 	continue;
 
       if(((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D)
@@ -541,7 +550,7 @@ fastf_t x, y;
 static int
 plot_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
-register short r, g, b;
+unsigned char r, g, b;
 int strict;
 {
   pl_color( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,  (int)r, (int)g, (int)b );
@@ -571,6 +580,7 @@ static int
 plot_debug(dmp, lvl)
 struct dm *dmp;
 {
+  dmp->dm_debugLevel = lvl;
   (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
   Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 
@@ -583,17 +593,17 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[0] = w[0] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[0] = w[1] / 2047.;
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[1] = w[2] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[1] = w[3] / 2047.;
+  dmp->dm_clipmin[0] = w[0] / 2048.;
+  dmp->dm_clipmax[0] = w[1] / 2047.;
+  dmp->dm_clipmin[1] = w[2] / 2048.;
+  dmp->dm_clipmax[1] = w[3] / 2047.;
 
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->zclip){
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = w[4] / 2048.;
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = w[5] / 2047.;
+  if (dmp->dm_zclip) {
+    dmp->dm_clipmin[2] = w[4] / 2048.;
+    dmp->dm_clipmax[2] = w[5] / 2047.;
   }else{
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = -1.0e20;
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = 1.0e20;
+    dmp->dm_clipmin[2] = -1.0e20;
+    dmp->dm_clipmax[2] = 1.0e20;
   }
 
   return TCL_OK;

@@ -71,7 +71,7 @@ static int      X_drawString2D();
 static int	X_drawLine2D();
 static int      X_drawPoint2D();
 static int	X_drawVList();
-static int      X_setFGColor(), X_setBGColor(), X_getBGColor();
+static int      X_setFGColor(), X_setBGColor();
 static int	X_setLineAttr();
 static int	X_setWinBounds(), X_debug();
 
@@ -87,7 +87,6 @@ struct dm dm_X = {
   X_drawVList,
   X_setFGColor,
   X_setBGColor,
-  X_getBGColor,
   X_setLineAttr,
   X_setWinBounds,
   X_debug,
@@ -98,7 +97,8 @@ struct dm dm_X = {
   0,
   0,				/* no displaylist */
   0,                            /* no stereo */
-  PLOTBOUND,
+  PLOTBOUND,			/* zoom-in limit */
+  1,				/* bound flag */
   "X",
   "X Window System (X11)",
   DM_TYPE_X,
@@ -112,7 +112,13 @@ struct dm dm_X = {
   {0, 0},
   0,
   0,
-  0
+  0,
+  0,
+  0,
+  0,				/* clipmin */
+  0,				/* clipmax */
+  0,				/* no debugging */
+  0				/* no zclipping */
 };
 
 fastf_t min_short = (fastf_t)SHRT_MIN;
@@ -120,8 +126,6 @@ fastf_t max_short = (fastf_t)SHRT_MAX;
 
 /* Currently, the application must define these. */
 extern Tk_Window tkwin;
-
-static mat_t xmat;
 
 /*
  *			X _ O P E N
@@ -200,9 +204,6 @@ char *argv[];
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
   dmp->dm_aspect = 1.0;
-
-  /* initialize modifiable variables */
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip = 1;
 
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
@@ -425,7 +426,7 @@ Skip_dials:
 			 ((struct x_vars *)dmp->dm_vars.priv_vars)->bg);
   Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
-  bn_mat_idn(xmat);
+  bn_mat_idn(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat);
 
   return dmp;
 }
@@ -472,9 +473,7 @@ struct dm *dmp;
 }
 
 /*
- *			X _ P R O L O G
- *
- * There are global variables which are parameters to this routine.
+ *			X _ D R A W B E G I N
  */
 static int
 X_drawBegin(dmp)
@@ -482,7 +481,7 @@ struct dm *dmp;
 {
   XGCValues       gcv;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_drawBegin()\n");
 
   /* clear pixmap */
@@ -496,6 +495,12 @@ struct dm *dmp;
 		 0, dmp->dm_width + 1,
 		 dmp->dm_height + 1);
 
+  /* reset foreground */
+  gcv.foreground = ((struct x_vars *)dmp->dm_vars.priv_vars)->fg;
+  XChangeGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
+	    GCForeground, &gcv);
+
   return TCL_OK;
 }
 
@@ -506,7 +511,7 @@ static int
 X_drawEnd(dmp)
 struct dm *dmp;
 {
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_drawEnd()\n");
 
   XCopyArea(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -514,7 +519,7 @@ struct dm *dmp;
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 	    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	      0, 0, dmp->dm_width,
-	    dmp->dm_height, 0, 0);
+ 	    dmp->dm_height, 0, 0);
 
   /* Prevent lag between events and updates */
   XSync(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 0);
@@ -535,7 +540,7 @@ struct dm *dmp;
 mat_t mat;
 int which_eye;
 {
-  if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+  if(dmp->dm_debugLevel){
     bu_log("X_loadMatrix()\n");
 
     bu_log("which eye = %d\t", which_eye);
@@ -553,7 +558,7 @@ int which_eye;
 #endif
   }
 
-  bn_mat_copy(xmat, mat);
+  bn_mat_copy(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
   return TCL_OK;
 }
 
@@ -578,14 +583,16 @@ double perspective;
     register point_t *pt_prev = NULL;
     fastf_t 	 dist_prev=1.0;
 
-    if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+    if (dmp->dm_debugLevel) {
       bu_log("X_drawVList()\n");
+      bu_log("vp - %lu, perspective - %g\n", vp, perspective);
+    }
 
     /* delta is used in clipping to insure clipped endpoint is slightly
      * in front of eye plane (perspective mode only).
      * This value is a SWAG that seems to work OK.
      */
-    delta = xmat[15]*0.0001;
+    delta = ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15]*0.0001;
     if( delta < 0.0 )
 	delta = -delta;
     if( delta < SQRT_SMALL_FASTF )
@@ -612,7 +619,7 @@ double perspective;
 	    case RT_VLIST_POLY_MOVE:
 	    case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		if(dmp->dm_debugLevel > 2){
 		  bu_log("before transformation:\n");
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
@@ -622,7 +629,7 @@ double perspective;
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 	    		 */
-	    		dist = VDOT( *pt, &xmat[12] ) + xmat[15];
+	    		dist = VDOT(*pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12]) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
 	    		if( dist <= 0.0 )
 	    		{
 	    			pt_prev = pt;
@@ -631,13 +638,13 @@ double perspective;
 	    		}
 	    		else
 	    		{
-	    			MAT4X3PNT( lpnt, xmat, *pt );
+	    			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
 	    			dist_prev = dist;
 	    			pt_prev = pt;
 	    		}
 	    	}
 		else
-			MAT4X3PNT( lpnt, xmat, *pt );
+			MAT4X3PNT(lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt);
 
 		lpnt[0] *= 2047;
 		lpnt[1] *= 2047 * dmp->dm_aspect;
@@ -647,7 +654,7 @@ double perspective;
 	    case RT_VLIST_POLY_END:
 	    case RT_VLIST_LINE_DRAW:
 		/* draw */
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+		if(dmp->dm_debugLevel > 2){
 		  bu_log("before transformation:\n");
 		  bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		}
@@ -657,8 +664,8 @@ double perspective;
 	    		/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 	    		 */
-	    		dist = VDOT( *pt, &xmat[12] ) + xmat[15];
-			if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug )
+	    		dist = VDOT( *pt, &((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[12] ) + ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat[15];
+			if(dmp->dm_debugLevel > 2)
 	    			bu_log( "dist=%g, dist_prev=%g\n", dist, dist_prev );
 	    		if( dist <= 0.0 )
 	    		{
@@ -679,7 +686,7 @@ double perspective;
 	    				VSUB2( diff, *pt, *pt_prev );
 	    				alpha = (dist_prev - delta) / ( dist_prev - dist );
 	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( pnt, xmat, tmp_pt );
+	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt );
 	    			}
 	    		}
 	    		else
@@ -694,20 +701,20 @@ double perspective;
 	    				VSUB2( diff, *pt, *pt_prev );
 	    				alpha = (-dist_prev + delta) / ( dist - dist_prev );
 	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( lpnt, xmat, tmp_pt );
+	    				MAT4X3PNT( lpnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, tmp_pt );
 	    				lpnt[0] *= 2047;
 	    				lpnt[1] *= 2047 * dmp->dm_aspect;
 	    				lpnt[2] *= 2047;
-	    				MAT4X3PNT( pnt, xmat, *pt );
+	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
 	    			}
 	    			else
 	    			{
-	    				MAT4X3PNT( pnt, xmat, *pt );
+	    				MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
 	    			}
 	    		}
 	    	}
 		else
-			MAT4X3PNT( pnt, xmat, *pt );
+			MAT4X3PNT( pnt, ((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, *pt );
 
 		pnt[0] *= 2047;
 		pnt[1] *= 2047 * dmp->dm_aspect;
@@ -718,24 +725,24 @@ double perspective;
 	    	pt_prev = pt;
 	    	dist_prev = dist;
 
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug) {
+		if(dmp->dm_debugLevel > 2) {
 		  bu_log("before clipping:\n");
 		  bu_log("clipmin - %lf %lf %lf\n",
-			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[X],
-			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[Y],
-			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[Z]);
+			 dmp->dm_clipmin[X],
+			 dmp->dm_clipmin[Y],
+			 dmp->dm_clipmin[Z]);
 		  bu_log("clipmax - %lf %lf %lf\n",
-			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[X],
-			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[Y],
-			 ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[Z]);
+			 dmp->dm_clipmax[X],
+			 dmp->dm_clipmax[Y],
+			 dmp->dm_clipmax[Z]);
 		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
 		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		}
 
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip){
+		if (dmp->dm_zclip) {
 		  if(vclip(lpnt, pnt,
-			   ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin,
-			   ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax) == 0){
+			   dmp->dm_clipmin,
+			   dmp->dm_clipmax) == 0){
 		    VMOVE(lpnt, spnt);
 		    continue;
 		  }
@@ -756,7 +763,7 @@ double perspective;
 		  }
 		}
 
-		if(((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug) {
+		if(dmp->dm_debugLevel > 2) {
 		  bu_log("after clipping:\n");
 		  bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
 		  bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
@@ -803,7 +810,7 @@ static int
 X_normal(dmp)
 struct dm *dmp;
 {
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_normal()\n");
 
   return TCL_OK;
@@ -826,14 +833,14 @@ int use_aspect;
 {
   int sx, sy;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug){
+  if (dmp->dm_debugLevel){
     bu_log("X_drawString2D():\n");
     bu_log("\tstr - %s\n", str);
-    bu_log("\tx - %lf\n", x);
-    bu_log("\ty - %lf\n", y);
+    bu_log("\tx - %g\n", x);
+    bu_log("\ty - %g\n", y);
     bu_log("\tsize - %d\n", size);
     if(use_aspect){
-      bu_log("\tuse_aspect - %d\t\taspect ratio - %lf\n", use_aspect, dmp->dm_aspect);
+      bu_log("\tuse_aspect - %d\t\taspect ratio - %g\n", use_aspect, dmp->dm_aspect);
     }else
       bu_log("\tuse_aspect - 0");
   }
@@ -857,13 +864,18 @@ fastf_t x2, y2;
 {
   int	sx1, sy1, sx2, sy2;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    bu_log("X_drawLine2D()\n");
-
   sx1 = dm_Normal2Xx(dmp, x1);
   sx2 = dm_Normal2Xx(dmp, x2);
   sy1 = dm_Normal2Xy(dmp, y1, 0);
   sy2 = dm_Normal2Xy(dmp, y2, 0);
+
+  if (dmp->dm_debugLevel) {
+    bu_log("X_drawLine2D()\n");
+    bu_log("x1 = %g, y1 = %g\n", x1, y1);
+    bu_log("x2 = %g, y2 = %g\n", x2, y2);
+    bu_log("sx1 = %d, sy1 = %d\n", sx1, sy1);
+    bu_log("sx2 = %d, sy2 = %d\n", sx2, sy2);
+  }
 
   XDrawLine( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	     ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -880,11 +892,14 @@ fastf_t x, y;
 {
   int   sx, sy;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    bu_log("X_drawPoint2D()\n");
-
   sx = dm_Normal2Xx(dmp, x);
   sy = dm_Normal2Xy(dmp, y, 0);
+
+  if (dmp->dm_debugLevel) {
+    bu_log("X_drawPoint2D()\n");
+    bu_log("x = %g, y = %g\n", x, y);
+    bu_log("sx = %d, sy = %d\n", sx, sy);
+  }
 
   XDrawPoint( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	      ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -896,13 +911,17 @@ fastf_t x, y;
 static int
 X_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
-register short r, g, b;
+unsigned char r, g, b;
 int strict;
 {
   XGCValues gcv;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_setFGColor()\n");
+
+  dmp->dm_fg[0] = r;
+  dmp->dm_fg[1] = g;
+  dmp->dm_fg[2] = b;
 
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
     XColor color;
@@ -915,8 +934,12 @@ int strict;
 		&color);
     gcv.foreground = color.pixel;
   }else
-    gcv.foreground = dm_get_pixel(r, g, b, ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
+    gcv.foreground = dm_get_pixel(r, g, b,
+				  ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
 				  CUBE_DIMENSION);
+
+  /* save foreground pixel */
+  ((struct x_vars *)dmp->dm_vars.priv_vars)->fg = gcv.foreground;
 
   XChangeGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
@@ -928,14 +951,20 @@ int strict;
 static int
 X_setBGColor(dmp, r, g, b)
 struct dm *dmp;
-int r, g, b;
+unsigned char r, g, b;
 {
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_setBGColor()\n");
 
+  dmp->dm_bg[0] = r;
+  dmp->dm_bg[1] = g;
+  dmp->dm_bg[2] = b;
+
+#if 0
   ((struct x_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
   ((struct x_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
   ((struct x_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
+#endif
 
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
     XColor color;
@@ -955,24 +984,6 @@ int r, g, b;
 }
 
 static int
-X_getBGColor(dmp, interp)
-struct dm *dmp;
-Tcl_Interp *interp;
-{
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "%d %d %d",
-		(int)(((struct x_vars *)dmp->dm_vars.priv_vars)->r * 255.0),
-		(int)(((struct x_vars *)dmp->dm_vars.priv_vars)->g * 255.0),
-		(int)(((struct x_vars *)dmp->dm_vars.priv_vars)->b * 255.0));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  return TCL_OK;
-}
-
-static int
 X_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
@@ -980,7 +991,7 @@ int style;
 {
   int linestyle;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_setLineAttr()\n");
 
   dmp->dm_lineWidth = width;
@@ -1007,7 +1018,7 @@ X_debug(dmp, lvl)
 struct dm *dmp;
 int lvl;
 {
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug = lvl;
+  dmp->dm_debugLevel = lvl;
   XFlush(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
   bu_log("flushed\n");
 
@@ -1019,15 +1030,15 @@ X_setWinBounds(dmp, w)
 struct dm *dmp;
 register int w[6];
 {
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+  if (dmp->dm_debugLevel)
     bu_log("X_setWinBounds()\n");
 
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[0] = w[0];
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[1] = w[2];
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = w[4];
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[0] = w[1];
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[1] = w[3];
-  ((struct x_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = w[5];
+  dmp->dm_clipmin[0] = w[0];
+  dmp->dm_clipmin[1] = w[2];
+  dmp->dm_clipmin[2] = w[4];
+  dmp->dm_clipmax[0] = w[1];
+  dmp->dm_clipmax[1] = w[3];
+  dmp->dm_clipmax[2] = w[5];
 
   return TCL_OK;
 }
@@ -1040,14 +1051,16 @@ struct dm *dmp;
   XFontStruct     *newfontstruct;
   XGCValues       gcv;
 
-  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    bu_log("X_configureWindowShape()\n");
-
   XGetWindowAttributes( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
   dmp->dm_height = xwa.height;
   dmp->dm_width = xwa.width;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+  if (dmp->dm_debugLevel) {
+    bu_log("X_configureWindowShape()\n");
+    bu_log("width = %d, height = %d", dmp->dm_width, dmp->dm_height);
+  }
 
   Tk_FreePixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		((struct x_vars *)dmp->dm_vars.priv_vars)->pix);

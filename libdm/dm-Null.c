@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include "machine.h"
 #include "bu.h"
+#include "vmath.h"
 #include "dm.h"
 #include "dm-Null.h"
 
@@ -34,11 +35,11 @@ struct dm dm_Null = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
-  Nu_int0,
   0,
-  0,			/* no displaylist */
-  0,                    /* no stereo */
-  PLOTBOUND,
+  0,				/* no displaylist */
+  0,				/* no stereo */
+  PLOTBOUND,			/* zoom-in limit */
+  1,				/* bound flag */
   "nu",
   "Null Display",
   DM_TYPE_NULL,
@@ -52,7 +53,13 @@ struct dm dm_Null = {
   {0, 0},
   0,
   0,
-  0
+  0,
+  0,
+  0,
+  0,				/* clipmin */
+  0,				/* clipmax */
+  0,				/* no debugging */
+  0				/* no zclipping */
 };
 
 int Nu_int0() { return TCL_OK; }
