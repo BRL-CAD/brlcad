@@ -65,11 +65,9 @@
 
 extern Tk_Window tkwin;
 
-void	ogl_configure_window_shape();
-void    ogl_establish_perspective();
-void    ogl_set_perspective();
-void	ogl_establish_lighting();
-void	ogl_establish_zbuffer();
+void	ogl_configureWindowShape();
+void	ogl_lighting();
+void	ogl_zbuffer();
 
 static XVisualInfo *ogl_set_visual();
 
@@ -140,10 +138,9 @@ struct dm dm_ogl = {
 
 /* ogl stuff */
 struct ogl_vars head_ogl_vars;
-int perspective_table[] = {
-	30, 45, 60, 90 };
 
 static fastf_t default_viewscale = 1000.0;
+static int perspective_mode = 0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
 static double	ylim_view = 1.0;
 
@@ -161,7 +158,7 @@ static float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 static float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
 
 void
-ogl_do_fog(dmp)
+ogl_fogHint(dmp)
 struct dm *dmp;
 {
   glHint(GL_FOG_HINT,
@@ -192,18 +189,13 @@ char *argv[];
   XEventClass e_class[15];
   XInputClassInfo *cip;
   struct bu_vls str;
-  struct bu_vls top_vls;
   struct bu_vls init_proc_vls;
   Display *tmp_dpy;
-  fastf_t tmp_vp;
   struct dm *dmp;
 
   BU_GETSTRUCT(dmp, dm);
   if(dmp == DM_NULL)
     return DM_NULL;
-
-  *dmp = dm_ogl; /* struct copy */
-  dmp->dm_vp = &tmp_vp;
 
   /* Only need to do this once for this display manager */
   if(!count){
@@ -211,18 +203,22 @@ char *argv[];
     BU_LIST_INIT( &head_ogl_vars.l );
   }
 
-  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "ogl_open: ogl_vars");
+  *dmp = dm_ogl; /* struct copy */
+  BU_GETSTRUCT(dmp->dm_vars, ogl_vars);
   if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "ogl_open: dmp");
     return DM_NULL;
   }
+
+  dmp->dm_vp = &default_viewscale;
+  ((struct ogl_vars *)dmp->dm_vars)->perspective_mode = &perspective_mode;
 
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
   bu_vls_init(&dmp->dm_dName);
   bu_vls_init(&init_proc_vls);
 
-  i = dm_process_options(dmp, &init_proc_vls, --argc, ++argv);
+  i = dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0)
      bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
@@ -243,7 +239,6 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->devmotionnotify = LASTEvent;
   ((struct ogl_vars *)dmp->dm_vars)->devbuttonpress = LASTEvent;
   ((struct ogl_vars *)dmp->dm_vars)->devbuttonrelease = LASTEvent;
-  ((struct ogl_vars *)dmp->dm_vars)->perspective_angle = 3;
   dmp->dm_aspect = 1.0;
 
   /* initialize modifiable variables */
@@ -251,7 +246,6 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.zclipping_on = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on = 1;
-  ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fogdensity = 1.0;
 
@@ -262,9 +256,19 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->fontstruct = NULL;
 
   if((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
-    bu_vls_free(&str);
+    bu_vls_free(&init_proc_vls);
     (void)ogl_close(dmp);
     return DM_NULL;
+  }
+
+  {
+    int return_val;
+
+    if(!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)){
+      bu_vls_free(&init_proc_vls);
+      (void)ogl_close(dmp);
+      return DM_NULL;
+    }
   }
 
   if(dmp->dm_width == 0){
@@ -291,7 +295,6 @@ char *argv[];
 
   XCloseDisplay(tmp_dpy);
 
-  bu_vls_init(&top_vls);
   if(dmp->dm_top){
     /* Make xtkwin a toplevel window */
     ((struct ogl_vars *)dmp->dm_vars)->xtkwin =
@@ -300,22 +303,22 @@ char *argv[];
 			      bu_vls_addr(&dmp->dm_pathName),
 			      bu_vls_addr(&dmp->dm_dName));
     ((struct ogl_vars *)dmp->dm_vars)->top = ((struct ogl_vars *)dmp->dm_vars)->xtkwin;
-    bu_vls_printf(&top_vls, "%S", &dmp->dm_pathName);
   }else{
      char *cp;
 
      cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
      if(cp == bu_vls_addr(&dmp->dm_pathName)){
        ((struct ogl_vars *)dmp->dm_vars)->top = tkwin;
-       bu_vls_strcpy(&top_vls, ".");
      }else{
+       struct bu_vls top_vls;
+
+       bu_vls_init(&top_vls);
        bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
 		     bu_vls_addr(&dmp->dm_pathName));
        ((struct ogl_vars *)dmp->dm_vars)->top =
 	 Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+       bu_vls_free(&top_vls);
      }
-
-     bu_vls_free(&top_vls);
 
      /* Make xtkwin an embedded window */
      ((struct ogl_vars *)dmp->dm_vars)->xtkwin =
@@ -327,6 +330,7 @@ char *argv[];
     Tcl_AppendResult(interp, "dm-Ogl: Failed to open ",
 		     bu_vls_addr(&dmp->dm_pathName),
 		     "\n", (char *)NULL);
+    bu_vls_free(&init_proc_vls);
     (void)ogl_close(dmp);
     return DM_NULL;
   }
@@ -340,6 +344,7 @@ char *argv[];
 		&dmp->dm_pathName);
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
     (void)ogl_close(dmp);
     return DM_NULL;
@@ -364,10 +369,6 @@ char *argv[];
     return DM_NULL;
   }
 
-#if 0
-  Tk_MoveToplevelWindow(((struct ogl_vars *)dmp->dm_vars)->xtkwin,
-			1276 - 976, 0);
-#endif
   Tk_MakeWindowExist(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
 
   ((struct ogl_vars *)dmp->dm_vars)->win =
@@ -466,7 +467,7 @@ Done:
     return DM_NULL;
   }
 
-  /* display list (fontOffset + char) will displays a given ASCII char */
+  /* display list (fontOffset + char) will display a given ASCII char */
   if ((((struct ogl_vars *)dmp->dm_vars)->fontOffset = glGenLists(128))==0){
     Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
     (void)ogl_close(dmp);
@@ -486,7 +487,7 @@ Done:
     glDrawBuffer(GL_FRONT);
 
   /* do viewport, ortho commands and initialize font */
-  ogl_configure_window_shape(dmp);
+  ogl_configureWindowShape(dmp);
 
   /* Lines will be solid when stippling disabled, dashed when enabled*/
   glLineStipple( 1, 0xCF33);
@@ -601,7 +602,7 @@ struct dm *dmp;
       fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dmp->dm_vars)->mvars.fogdensity/
 			    (*dmp->dm_vp));
       glFogf(GL_FOG_DENSITY, fogdepth);
-      glFogi(GL_FOG_MODE, ((struct ogl_vars *)dmp->dm_vars)->mvars.perspective_mode ?
+      glFogi(GL_FOG_MODE, *((struct ogl_vars *)dmp->dm_vars)->perspective_mode ?
 	     GL_EXP : GL_LINEAR);
     }
     if (((struct ogl_vars *)dmp->dm_vars)->mvars.lighting_on){
@@ -753,7 +754,6 @@ int which_eye;
 
   return TCL_OK;
 }
-
 
 
 /*
@@ -934,6 +934,9 @@ ogl_drawPoint2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_drawPoint2D()\n", (char *)NULL);
+
   glBegin(GL_POINTS);
   glVertex2f(GED2IRIS(x), GED2IRIS(y));
   glEnd();
@@ -949,6 +952,9 @@ register short r, g, b;
 int strict;
 {
   register int nvec;
+
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_setColor()\n", (char *)NULL);
 
   if(strict){
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
@@ -984,6 +990,9 @@ struct dm *dmp;
 int width;
 int style;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_setLineAttr()\n", (char *)NULL);
+
   dmp->dm_lineWidth = width;
   dmp->dm_lineStyle = style;
 
@@ -1166,13 +1175,16 @@ Tk_Window tkwin;
  * also change font size if necessary
  */
 void
-ogl_configure_window_shape(dmp)
+ogl_configureWindowShape(dmp)
 struct dm *dmp;
 {
   int		npix;
   GLint mm; 
   XWindowAttributes xwa;
   XFontStruct	*newfontstruct;
+
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_configureWindowShape()\n", (char *)NULL);
 
   XGetWindowAttributes( ((struct ogl_vars *)dmp->dm_vars)->dpy,
 			((struct ogl_vars *)dmp->dm_vars)->win, &xwa );
@@ -1187,9 +1199,9 @@ struct dm *dmp;
 #endif
 
   if( ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on )
-    ogl_establish_zbuffer(dmp);
+    ogl_zbuffer(dmp);
 
-  ogl_establish_lighting(dmp);
+  ogl_lighting(dmp);
 
 #if 0
   glDrawBuffer(GL_FRONT_AND_BACK);
@@ -1303,9 +1315,12 @@ struct dm *dmp;
 }
 
 void	
-ogl_establish_lighting(dmp)
+ogl_lighting(dmp)
 struct dm *dmp;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_lighting()\n", (char *)NULL);
+
   if (!((struct ogl_vars *)dmp->dm_vars)->mvars.lighting_on) {
     /* Turn it off */
     glDisable(GL_LIGHTING);
@@ -1335,9 +1350,12 @@ struct dm *dmp;
 }	
 
 void	
-ogl_establish_zbuffer(dmp)
+ogl_zbuffer(dmp)
 struct dm *dmp;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_zbuffer()\n", (char *)NULL);
+
   if( ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuf == 0 ) {
     Tcl_AppendResult(interp, "dm-Ogl: This machine has no Zbuffer to enable\n",
 		     (char *)NULL);
@@ -1352,60 +1370,14 @@ struct dm *dmp;
   }
 }
 
-void
-ogl_establish_perspective(dmp)
-struct dm *dmp;
-{
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-  bu_vls_printf( &vls, "set perspective %d\n",
-		 ((struct ogl_vars *)dmp->dm_vars)->mvars.perspective_mode ?
-		 perspective_table[((struct ogl_vars *)dmp->dm_vars)->perspective_angle] :
-		 -1 );
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-}
-
-/*
-  This routine will toggle the perspective_angle if the
-  dummy_perspective value is 0 or less. Otherwise, the
-  perspective_angle is set to the value of (dummy_perspective - 1).
-*/
-void
-ogl_set_perspective(dmp)
-struct dm *dmp;
-{
-  /* set perspective matrix */
-  if(((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective > 0)
-    ((struct ogl_vars *)dmp->dm_vars)->perspective_angle =
-      ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective <= 4 ?
-      ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective - 1: 3;
-  else if (--((struct ogl_vars *)dmp->dm_vars)->perspective_angle < 0) /* toggle perspective matrix */
-    ((struct ogl_vars *)dmp->dm_vars)->perspective_angle = 3;
-
-  if(((struct ogl_vars *)dmp->dm_vars)->mvars.perspective_mode){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf( &vls, "set perspective %d\n",
-		   perspective_table[((struct ogl_vars *)dmp->dm_vars)->perspective_angle] );
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-  }
-
-  /*
-     Just in case the "!" is used with the set command. This
-     allows us to toggle through more than two values.
-   */
-  ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
-}
-
 int
 ogl_beginDList(dmp, list)
 struct dm *dmp;
 unsigned int list;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_beginDList()\n", (char *)NULL);
+
   if (!glXMakeCurrent(((struct ogl_vars *)dmp->dm_vars)->dpy,
 		      ((struct ogl_vars *)dmp->dm_vars)->win,
 		      ((struct ogl_vars *)dmp->dm_vars)->glxc)){
@@ -1422,6 +1394,9 @@ int
 ogl_endDList(dmp)
 struct dm *dmp;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_endDList()\n", (char *)NULL);
+
   glEndList();
   return TCL_OK;
 }
@@ -1431,6 +1406,9 @@ ogl_drawDList(dmp, list)
 struct dm *dmp;
 unsigned int list;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_drawDList()\n", (char *)NULL);
+
   glCallList(dmp->dm_displaylist + list);
   return TCL_OK;
 }
@@ -1441,6 +1419,9 @@ struct dm *dmp;
 unsigned int list;
 int range;
 {
+  if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "ogl_freeDLists()\n", (char *)NULL);
+
   glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
   return TCL_OK;
 }
