@@ -75,6 +75,7 @@ int		nobjs;			/* Number of cmd-line treetops */
 char		**objtab;		/* array of treetop strings */
 int		matflag = 0;		/* read matrix from stdin */
 int		desiredframe = 0;	/* frame to start at */
+int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number */
 char		*outputfile = (char *)0;/* name of base of output file */
 int		interactive = 0;	/* human is watching results */
@@ -98,7 +99,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"E:SJ:H:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:g:G:r"
+	"E:SJ:H:F:D:K:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iIU:V:g:G:r"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -127,6 +128,9 @@ register char **argv;
 			break;
 		case 'D':
 			desiredframe = atoi( optarg );
+			break;
+		case 'K':
+			finalframe = atoi( optarg );
 			break;
 		case 'M':
 			matflag = 1;

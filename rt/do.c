@@ -86,6 +86,7 @@ extern char	**objtab;		/* array of treetop strings */
 extern char	*beginptr;		/* sbrk() at start of program */
 extern int	matflag;		/* read matrix from stdin */
 extern int	desiredframe;		/* frame to start at */
+extern int	finalframe;		/* frame to halt at */
 extern int	curframe;		/* current frame number */
 extern char	*outputfile;		/* name of base of output file */
 extern int	interactive;		/* human is watching results */
@@ -145,6 +146,8 @@ FILE *fp;
 
 	curframe = 0;
 	do {
+		if( finalframe >= 0 && curframe > finalframe )
+			return(1);
 		if( curframe >= desiredframe )
 			do_frame( curframe );
 		curframe++;
@@ -195,6 +198,8 @@ char	**argv;
 	int	frame;
 
 	frame = atoi(argv[1]);
+	if( finalframe >= 0 && frame > finalframe )
+		return(-1);	/* Indicate EOF -- user declared a halt */
 	if( frame >= desiredframe )  {
 		curframe = frame;
 		return(0);
@@ -211,6 +216,8 @@ char	**argv;
 		while( *cp && isspace(*cp) )  cp++;	/* skip spaces */
 		frame = atoi(cp);
 		rt_free( buf, "cmd buf (skiping frames)" );
+		if( finalframe >= 0 && frame > finalframe )
+			return(-1);			/* "EOF" */
 		if( frame >= desiredframe )  {
 			curframe = frame;
 			return(0);
