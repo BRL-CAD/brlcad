@@ -149,7 +149,7 @@ proc apply_color {} {
 	# However, change the inmem database too, for consistency.
 	node_send \
 	  sh_directchange_rgb {[get_rtip]} $sun_region_name $red $grn $blu ";" \
-	  .inmem adjust $sun_region_name rgb $red $grn $blu
+	    .inmem adjust $sun_region_name rgb "{" $red $grn $blu "}"
 
 	# Have MGED update it's color too.  This doesn't work.
 	#vrmgr_send .inmem adjust $sun_region_name rgb $red $grn $blu ";" \
