@@ -38,6 +38,7 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <sys/resource.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 #endif
 
 #ifdef __FreeBSD__
@@ -255,6 +256,7 @@ int	sec;
 #endif
 }
 
+
 /*
  *			B U _ A V A I L _ C P U S
  *
@@ -266,7 +268,8 @@ bu_avail_cpus()
 {
 	int	ret = 1;
 
-#ifdef linux 
+#if 0
+	//#ifdef linux 
 #define CPUINFO_FILE "/proc/cpuinfo"
 	FILE *fp;
 	char buf[128];
@@ -351,7 +354,8 @@ bu_avail_cpus()
  * These machines may or may not have posix threads, but (more importantly)
  * they do have other mechanisms for determining cpu count
  */
-#if defined(linux)
+#if 0
+	/* old linux method */
 	/*
 	 * Ultra-kludgey way to determine the number of cpus in a 
 	 * linux box--count the number of processor entries in 
@@ -389,6 +393,14 @@ bu_avail_cpus()
 	      }
 	  }
 #         define RT_AVAIL_CPUS
+#else
+	/* new linux method */
+	/* get_nprocs_conf() will return the number of configured processors */
+	if ( (ret = get_nprocs()) ) {
+	  perror("get_nprocs");
+	}
+	/* this should also work: sysconf(_SC_NPROCESSORS_CONF);  */
+#	define RT_AVAIL_CPUS
 #endif
 
 #if defined(n16)
