@@ -794,11 +794,13 @@ combbld()
 	if( temp_nflag )  {
 		fgets( buf, BUFSIZE, ifp );
 		zap_nl();
+		bzero( matname, sizeof(matname) );
 		strncpy( matname, buf, sizeof(matname)-1 );
 	}
 	if( temp_pflag )  {
 		fgets( buf, BUFSIZE, ifp );
 		zap_nl();
+		bzero( matparm, sizeof(matparm) );
 		strncpy( matparm, buf, sizeof(matparm)-1 );
 	}
 
