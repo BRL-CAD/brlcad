@@ -1342,13 +1342,8 @@ char	**argv;
 	RT_CHECK_DBI(dbip);
 
 	/* Establish tolerances */
-	mged_initial_tree_state.ts_ttol = &mged_ttol;
-	mged_initial_tree_state.ts_tol = &mged_tol;
-
-	mged_ttol.magic = RT_TESS_TOL_MAGIC;
-	mged_ttol.abs = mged_abs_tol;
-	mged_ttol.rel = mged_rel_tol;
-	mged_ttol.norm = mged_nrm_tol;
+	mged_initial_tree_state.ts_ttol = &wdbp->wdb_ttol;
+	mged_initial_tree_state.ts_tol = &wdbp->wdb_tol;
 
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
