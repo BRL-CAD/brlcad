@@ -195,8 +195,7 @@ benchmark: all
 bench: benchmark
 
 regression: all
-	@cd regress
-	@make regression
+	@cd regress && make regression
 
 regress: regression
 
