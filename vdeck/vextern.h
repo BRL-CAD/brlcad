@@ -54,7 +54,7 @@
 #define MAXLN	80	/* max length of input line */
 #define MAXRR	100	/* max regions to remember */
 #define MAXSOL	4000	/* max solids in description */
-#define NDIR	8000	/* max objects in input */
+#define NDIR	9000	/* max objects in input */
 #define MAXPATH	32	/* max level of hierarchy */
 #define MAXARG	20	/* max arguments on command line */
 #define ARGSZ	32	/* max length of command line argument */
