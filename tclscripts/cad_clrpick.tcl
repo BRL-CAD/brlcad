@@ -21,10 +21,11 @@
 #		*- no grab
 #		*- dynamic update
 #		*- resize correctly
-#		*- supports both RGB and HSV
+#		*- supports both RGB and HSV, color modes menu
 #		*- new options: -ok and -cancel
 #		*- more than one color widget allowed
 #		*- original names changed to protect the innocent
+#		*- use center of color segment to determine color
 #
 
 # cadColorWidget --
@@ -90,6 +91,9 @@ proc cadColorWidget { mode parent args } {
     # so we know how big it wants to be.
     wm withdraw $w
     update idletasks
+
+    set minsize [winfo reqheight $w]
+    wm minsize $w $minsize $minsize
 
     # If possible, center color tool under the pointer.
     set pxy [winfo pointerxy $w]
@@ -170,6 +174,10 @@ proc cadColorWidget_InitValues { w doColor } {
 	set data(hue) [lindex $hsv 0]
 	set data(saturation) [lindex $hsv 1]
 	set data(value) [lindex $hsv 2]
+
+	if { $data(hue) < 0 } {
+	    set data(hue) 0
+	}
     }
 }
 
@@ -271,8 +279,6 @@ proc cadColorWidget_Build { w mode } {
 	} else {
 	    bind $data($colorBar,col) <Configure> "cadColorWidget_DrawColorScale $w $colorBar 1"
 	}
-#	bind $data($colorBar,col) <Configure> "cadColorWidget_DrawColorScale $w $colorBar 1"
-#	    bind $data($colorBar,col) <Configure> "cadColorWidget_ResizeColorBars $w"
 
 	bind $data($colorBar,col) <Enter> \
 	    "cadColorWidget_EnterColorBar $w $colorBar"
@@ -415,6 +421,10 @@ proc cadColorWidget_SetRGBValue { w rgb } {
     set data(hue) [lindex $hsv 0]
     set data(saturation) [lindex $hsv 1]
     set data(value) [lindex $hsv 2]
+
+    if { $data(hue) < 0 } {
+	set data(hue) 0
+    }
 
     cadColorWidget_RedrawColorBars $w all
 
@@ -672,8 +682,7 @@ proc cadColorWidget_DrawRGBColorBars { w colorBar create l } {
 
 # cadColorWidget_CreateSelector --
 #
-#	Creates and draws the selector polygon at the position
-#	$data($c,intensity).
+#	Creates and draws the selector polygon at position $data($colorBar,x).
 #
 proc cadColorWidget_CreateSelector { w sel colorBar } {
     upvar #0 $w data
@@ -683,22 +692,39 @@ proc cadColorWidget_CreateSelector { w sel colorBar } {
 	$data(PLGN_WIDTH) $data(PLGN_HEIGHT) \
 	$data(indent) 0]
 
-    switch $colorBar {
-	colorBar1 {
-	    set data($colorBar,x) [cadColorWidget_RgbToX $w $data(red)]
+    switch $data(colorModel) {
+	RGB {
+	    switch $colorBar {
+		colorBar1 {
+		    set data($colorBar,x) [cadColorWidget_ColorToX $w $data(red) $data(rgbToX)]
+		}
+		colorBar2 {
+		    set data($colorBar,x) [cadColorWidget_ColorToX $w $data(green) $data(rgbToX)]
+		}
+		colorBar3 {
+		    set data($colorBar,x) [cadColorWidget_ColorToX $w $data(blue) $data(rgbToX)]
+		}
+	    }
 	}
-	colorBar2 {
-	    set data($colorBar,x) [cadColorWidget_RgbToX $w $data(green)]
-	}
-	colorBar3 {
-	    set data($colorBar,x) [cadColorWidget_RgbToX $w $data(blue)]
+	HSV {
+	    switch $colorBar {
+		colorBar1 {
+		    set data($colorBar,x) [cadColorWidget_ColorToX $w $data(hue) $data(hueToX)]
+		}
+		colorBar2 {
+		    set data($colorBar,x) [cadColorWidget_ColorToX $w $data(saturation) $data(normalToX)]
+		}
+		colorBar3 {
+		    set data($colorBar,x) [cadColorWidget_ColorToX $w $data(value) $data(normalToX)]
+		}
+	    }
 	}
     }
 
     $sel move $data($colorBar,index) $data($colorBar,x) 0
 }
 
-# cadColorWidget_RedrawFinalColor
+# cadColorWidget_RedrawFinalColor --
 #
 #	Combines the intensities of the three colors into the final color
 #
@@ -826,6 +852,10 @@ proc cadColorWidget_ReleaseMouse {w sel colorBar x delta} {
 	    switch $colorBar {
 		colorBar1 {
 		    set data(hue) [cadColorWidget_XToColor $w $x $data(xToHue)]
+
+		    if { $data(hue) < 0 } {
+			set data(hue) 0
+		    }
 		}
 		colorBar2 {
 		    set data(saturation) [cadColorWidget_XToColor $w $x $data(xToNormal)]
@@ -858,8 +888,6 @@ proc cadColorWidget_ResizeColorBars {w} {
     cadColorWidget_InitValues $w 0
 
     foreach colorBar { colorBar1 colorBar2 colorBar3 } {
-#	$data($colorBar,sel) conf -width $data(COLORBARS_WIDTH)
-#	$data($colorBar,sel) conf -width $data(canvasWidth)
 	cadColorWidget_DrawColorScale $w $colorBar 1
     }
 }
@@ -1009,6 +1037,10 @@ proc cadColorWidget_AdjustColors { w } {
 	    set data(hue) [lindex $hsv 0]
 	    set data(saturation) [lindex $hsv 1]
 	    set data(value) [lindex $hsv 2]
+
+	    if { $data(hue) < 0 } {
+		set data(hue) 0
+	    }
 	}
 	HSV {
 	    set rgb [bu_hsv_to_rgb $data(hue) $data(saturation) $data(value)]
