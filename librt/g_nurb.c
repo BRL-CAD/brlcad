@@ -5,7 +5,7 @@
  *	Intersect a ray with a Non Uniform Rational B-Spline
  *
  *  Authors -
-	Paul R. Stay
+ *	Paul R. Stay
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -28,16 +28,8 @@ static char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "nmg.h"
 #include "nurb.h"
+#include "rtgeom.h"
 #include "./debug.h"
-
-struct rt_nurb_internal {
-	long	magic;
-	int 	nsrf;	/* number of surfaces */
-	struct snurb ** srfs;
-};
-
-#define RT_NURB_INTERNAL_MAGIC	0x002b2bdd
-#define RT_NURB_CK_MAGIC( _p) RT_CKMAG(_p,RT_NURB_INTERNAL_MAGIC,"rt_nurb_internal");
 
 struct nurb_specific {
 	struct nurb_specific *  next;	/* next surface in the the solid */
@@ -925,6 +917,7 @@ double			mm2local;
 	rt_vls_strcat( str, "Non Uniform Rational B-Spline solid (NURB)\n");
 	
 	rt_vls_printf( str, "\t%d surfaces\n", sip->nsrf);
+	if( verbose < 2 )  return;
 
 	for( surf = 0; surf < sip->nsrf; surf++)
 	{
@@ -942,12 +935,21 @@ double			mm2local;
 			surf, np->order[0], np->order[1],
 			np->s_size[0], np->s_size[1]);
 
-		rt_vls_printf( str, "\t\tV (%g, %g, %g)\n",
+		rt_vls_printf( str, "\t\tVert (%g, %g, %g)\n",
 			mp[X] * mm2local, 
 			mp[Y] * mm2local, 
 			mp[Z] * mm2local);
 
-		if( !verbose ) continue;
+		if( verbose < 3 ) continue;
+
+		/* Print out the knot vectors */
+		rt_vls_printf( str, "\tU: ");
+		for( i=0; i < np->u_knots.k_size; i++ )
+			rt_vls_printf( str, "%g, ", np->u_knots.knots[i] );
+		rt_vls_printf( str, "\n\tV: ");
+		for( i=0; i < np->v_knots.k_size; i++ )
+			rt_vls_printf( str, "%g, ", np->v_knots.knots[i] );
+		rt_vls_printf( str, "\n");
 		
 		/* print out all the points */
 		for(i=0; i < np->s_size[0]; i++)
