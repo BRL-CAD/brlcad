@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 long	bin[256];
 int	verbose = 0;
+FBIO	*fbp;
 
 static char *Usage = "usage: bwhist [-v] [file.bw]\n";
 
@@ -81,16 +82,21 @@ char **argv;
 	/* Display the max? */
 	printf( "Full screen = %d pixels\n", max );
 
-	fbopen( 0, 0 );
+	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
+		exit(12);
+	}
 
 	/* Display them */
 	for( i = 0; i < 256; i++ ) {
 		int	value;
 		value = (float)bin[i]/(float)max * 511;
 		if( value == 0 && bin[i] != 0 ) value = 1;
-		fbwrite( 0, 2*i, &white[0], value );
-		fbwrite( 0, 2*i+1, &white[0], value );
+		fb_write( fbp, 0, 2*i, &white[0], value );
+		fb_write( fbp, 0, 2*i+1, &white[0], value );
 		if( verbose )
 			printf( "%3d: %10d (%10f)\n", i, bin[i], (float)bin[i]/(float)max );
 	}
+	fb_close( fbp );
+	exit(0);
 }
