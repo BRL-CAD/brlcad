@@ -71,6 +71,8 @@ extern "C" {
 #define rt_hist_pr		bu_hist_pr
 
 /* list.c */
+#define rt_list_len		bu_list_len
+#define rt_list_reverse		bu_list_reverse
 #define rt_list			bu_list		/* struct */
 #define RT_LIST_HEAD_MAGIC	BU_LIST_HEAD_MAGIC
 #define RT_LIST_NULL		BU_LIST_NULL
