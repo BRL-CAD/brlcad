@@ -45,7 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 struct model *
 nmg_find_model( magic_p_arg )
-long	*magic_p_arg;
+CONST long	*magic_p_arg;
 {
 	register long	*magic_p = magic_p_arg;
 
