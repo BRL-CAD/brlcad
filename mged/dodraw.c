@@ -760,6 +760,7 @@ struct solid		*existing_sp;
 	if( !existing_sp )  {
 		/* Take note of the base color */
 		if( mged_wireframe_color_override ) {
+		        /* a user specified the color, so arrange to use it */
 			sp->s_useBaseColor = 1;
 			sp->s_basecolor[0] = mged_wireframe_color[0];
 			sp->s_basecolor[1] = mged_wireframe_color[1];

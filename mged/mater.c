@@ -351,6 +351,7 @@ color_soltab()
 
 	FOR_ALL_SOLIDS( sp, &HeadSolid.l )  {
 		if( sp->s_useBaseColor ) {
+		        /* the user specified the color, so use it */
 			sp->s_color[0] = sp->s_basecolor[0];
 			sp->s_color[1] = sp->s_basecolor[1];
 			sp->s_color[2] = sp->s_basecolor[2];
