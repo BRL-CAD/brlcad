@@ -235,10 +235,13 @@ keywords:
 "xlate", "translate" which take 3 arguments
 and pass them to the macro MAT_DELTAS,
 "rot" which takes 3 arguments and passes them to bn_mat_angles(),
+"scale" which takes one argument as a uniform scale factor
+(e.g. a value of 2 makes the subtree twice as large, scaled around
+the origin)
 and
 "scale_about" which passes 4 arguments (point and scale factor)
 and calls bn_mat_scale_about_pt().
-An example looks like this:
+An example of making an ellipse 1/5th the original size looks like this:
 .sp .5
    anim ellipse.r/ellipse.s matrix rarc
       scale_about 16.1309 46.6556 -3.72252    0.2;
