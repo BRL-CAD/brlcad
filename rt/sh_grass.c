@@ -382,6 +382,12 @@ struct grass_hit *h;		/* return information */
 	h->alt = ldist[1];
 	h->noise = val;
 
+	/* XXX we really should look at how much of the ray footprint
+	 * is occupied by the blade, and potentially march on collecting
+	 * more information about other points hit.  This would allow
+	 * better color selection.
+	 */
+
 	return 1;
 }
 
@@ -591,7 +597,7 @@ struct grass_specific *grass_sp;
 
 #if 1
 	colorscale = h->alt/h->len;
-	if (colorscale > 0.85) {
+	if (colorscale > 0.9) {
 		/* XXX a hack to turn the grass tips brown */
 		VSET(swp->sw_color, .4, .31, .18);
 	} else {
