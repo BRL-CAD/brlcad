@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtcheck is ignoring fastgen tagged geometry since no multioverlap
+  handler is set.
+
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
 * bwmod gives a divide by zero error whenever you use the "-d" option
