@@ -745,12 +745,20 @@ cmd_rt(ClientData	clientData,
        int		argc,
        char		**argv)
 {
+    char *ptr, buf[256];
+
 	CHECK_DBI_NULL;
 
 	/* skip past _mged_ */
 	if (argv[0][0] == '_' && argv[0][1] == 'm' &&
 	    strncmp(argv[0], "_mged_", 6) == 0)
 		argv[0] += 6;
+
+	ptr = bu_brlcad_path("bin", 1);
+	if (ptr) {
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+	    argv[0] = buf;
+	}
 
 	return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 }
@@ -869,7 +877,15 @@ cmd_rtcheck(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
+    char *ptr, buf[256];
 	CHECK_DBI_NULL;
+
+	ptr = bu_brlcad_path("bin", 1);
+	if (ptr) {
+	    sprintf(buf, "%s/%s", ptr, argv[0]);
+	    argv[0] = buf;
+	}
+
 
 	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
 }
