@@ -48,6 +48,7 @@ extern int ars_prep(),  ars_print(), ars_norm(), ars_uv();
 extern int rec_prep(),	rec_print(), rec_norm(), rec_uv();
 extern int pg_prep(),	pg_print(),  pg_norm(),  pg_uv();
 extern int spl_prep(),	spl_print(), spl_norm(), spl_uv();
+extern int sph_prep(),	sph_print(), sph_norm(), sph_uv();
 
 extern int nul_curve(), nul_class(), nul_free(), nul_plot();
 extern int tor_curve(), tor_class(), tor_free(), tor_plot();
@@ -59,6 +60,7 @@ extern int ars_curve(), ars_class(), ars_free(), ars_plot();
 extern int rec_curve(), rec_class(), rec_free(), rec_plot();
 extern int pg_curve(),  pg_class(),  pg_free(),  pg_plot();
 extern int spl_curve(), spl_class(), spl_free(), spl_plot();
+extern int sph_curve(), sph_class(), sph_free(), sph_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -70,6 +72,7 @@ extern struct seg *hlf_shot();
 extern struct seg *rec_shot();
 extern struct seg *pg_shot();
 extern struct seg *spl_shot();
+extern struct seg *sph_shot();
 
 struct rt_functab rt_functab[] = {
 	"ID_NULL",	0,
@@ -122,6 +125,11 @@ struct rt_functab rt_functab[] = {
 		spl_uv,		spl_curve,	spl_class,	spl_free,
 		spl_plot,
 
+	"ID_SPH",	1,
+		sph_prep,	sph_shot,	sph_print,	sph_norm,
+		sph_uv,		sph_curve,	sph_class,	sph_free,
+		sph_plot,
+
 	">ID_NULL",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
 		nul_uv,		nul_curve,	nul_class,	nul_free,
@@ -141,7 +149,7 @@ DEF(nul_plot);
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
 	ID_NULL,	/* undefined, 0 */
-	ID_NULL,	/*  RPP	1 axis-aligned rectangular parallelopiped */
+	ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
 	ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
 	ID_NULL,	/* RAW	3 right-angle wedge */
 	ID_NULL,	/* ARB4	4 tetrahedron */
@@ -153,7 +161,7 @@ static char idmap[] = {
 	ID_NULL,	/* ELL1	10 another ellipsoid ? */
 	ID_NULL,	/* SPH	11 sphere */
 	ID_NULL,	/* RCC	12 right circular cylinder */
-	ID_NULL,	/* REC	13 right elliptic sylinder */
+	ID_NULL,	/* REC	13 right elliptic cylinder */
 	ID_NULL,	/* TRC	14 truncated regular cone */
 	ID_NULL,	/* TEC	15 truncated elliptic cone */
 	ID_TOR,		/* TOR	16 toroid */
