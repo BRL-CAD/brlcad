@@ -254,23 +254,3 @@ register ColorMap	*cmap;
 	}
 	return;
 }
-
-/*
- *  Check for a color map being linear in R, G, and B.
- *  Returns 1 for linear map, 0 for non-linear map
- *  (ie, non-identity map).
- */
-is_linear_cmap( cmap )
-register ColorMap *cmap;
-{
-	register int i;
-	unsigned short v;
-
-	for( i=0; i<256; i++ )  {
-		v = (unsigned short)(i<<8);
-		if( cmap->cm_red[i] != v )  return(0);
-		if( cmap->cm_green[i] != v )  return(0);
-		if( cmap->cm_blue[i] != v )  return(0);
-	}
-	return(1);
-}
