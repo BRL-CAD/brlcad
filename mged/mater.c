@@ -9,7 +9,6 @@
  *	f_prcolor	Print color & material table
  *	f_color		Add a color & material table entry
  *	f_edcolor	Invoke text editor on color table
- *	color_addrec	Called by dir_build on startup
  *	color_soltab	Apply colors to the solid table
  *
  *  Author -
@@ -33,8 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
@@ -42,7 +41,6 @@ extern char	*mktemp();
 
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
-extern int	read_only;	/* database is read-only */
 
 /*
  *  It is expected that entries on this mater list will be sorted
@@ -51,7 +49,7 @@ extern int	read_only;	/* database is read-only */
  */
 extern struct mater *MaterHead;	/* now defined in librt/mater.c */
 
-void color_addrec(), color_putrec(), color_zaprec();
+void color_putrec(), color_zaprec();
 
 static void
 pr_mater( mp )
@@ -85,119 +83,6 @@ f_prcolor()
 }
 
 /*
- *  			I N S E R T _ C O L O R
- *
- *  While any additional database records are created and written here,
- *  it is the responsibility of the caller to color_putrec(newp) if needed.
- */
-static void
-insert_color( newp )
-register struct mater *newp;
-{
-	register struct mater *mp;
-	register struct mater *zot;
-
-	if( MaterHead == MATER_NULL || newp->mt_high < MaterHead->mt_low )  {
-		/* Insert at head of list */
-		newp->mt_forw = MaterHead;
-		MaterHead = newp;
-		return;
-	}
-	if( newp->mt_low < MaterHead->mt_low )  {
-		/* Insert at head of list, check for redefinition */
-		newp->mt_forw = MaterHead;
-		MaterHead = newp;
-		goto check_overlap;
-	}
-	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
-		if( mp->mt_low == newp->mt_low  &&
-		    mp->mt_high <= newp->mt_high )  {
-			(void)printf("dropping overwritten entry:\n");
-			newp->mt_forw = mp->mt_forw;
-			pr_mater( mp );
-			color_zaprec( mp );
-			*mp = *newp;		/* struct copy */
-			free( newp );
-			newp = mp;
-			goto check_overlap;
-		}
-		if( mp->mt_low  < newp->mt_low  &&
-		    mp->mt_high > newp->mt_high )  {
-			/* New range entirely contained in old range; split */
-			(void)printf("Splitting into 3 ranges\n");
-			GETSTRUCT( zot, mater );
-			*zot = *mp;		/* struct copy */
-			zot->mt_daddr = MATER_NO_ADDR;
-			/* zot->mt_high = mp->mt_high; */
-			zot->mt_low = newp->mt_high+1;
-			mp->mt_high = newp->mt_low-1;
-			/* mp, newp, zot */
-			/* zot->mt_forw = mp->mt_forw; */
-			newp->mt_forw = zot;
-			mp->mt_forw = newp;
-			color_putrec( mp );
-			color_putrec( zot );	/* newp put by caller */
-			pr_mater( mp );
-			pr_mater( newp );
-			pr_mater( zot );
-			return;
-		}
-		if( mp->mt_high > newp->mt_low )  {
-			/* Overlap to the left: Shorten preceeding entry */
-			(void)printf("Shortening lhs range, from:\n");
-			pr_mater( mp );
-			(void)printf("to:\n");
-			mp->mt_high = newp->mt_low-1;
-			color_putrec( mp );		/* it was changed */
-			pr_mater( mp );
-			/* Now append */
-			newp->mt_forw = mp->mt_forw;
-			mp->mt_forw = newp;
-			goto check_overlap;
-		}
-		if( mp->mt_forw == MATER_NULL ||
-		    newp->mt_low < mp->mt_forw->mt_low )  {
-			/* Append */
-			newp->mt_forw = mp->mt_forw;
-			mp->mt_forw = newp;
-			goto check_overlap;
-		}
-	}
-	(void)printf("fell out of insert_color loop, append to end\n");
-	/* Append at end */
-	newp->mt_forw = MATER_NULL;
-	mp->mt_forw = newp;
-	f_prcolor();
-	return;
-
-	/* Check for overlap, ie, redefinition of following colors */
-check_overlap:
-	while( newp->mt_forw != MATER_NULL &&
-	       newp->mt_high >= newp->mt_forw->mt_low )  {
-		if( newp->mt_high >= newp->mt_forw->mt_high )  {
-			/* Drop this mater struct */
-			zot = newp->mt_forw;
-			newp->mt_forw = zot->mt_forw;
-			(void)printf("dropping overlaping entry:\n");
-			pr_mater( zot );
-			color_zaprec( zot );
-			free( zot );
-			continue;
-		}
-		if( newp->mt_high >= newp->mt_forw->mt_low )  {
-			/* Shorten this mater struct, then done */
-			(void)printf("Shortening rhs range, from:\n");
-			pr_mater( newp->mt_forw );
-			(void)printf("to:\n");
-			newp->mt_forw->mt_low = newp->mt_high+1;
-			color_putrec( newp->mt_forw );
-			pr_mater( newp->mt_forw );
-			continue;	/* more conservative than returning */
-		}
-	}
-}
-
-/*
  *  			F _ C O L O R
  *  
  *  Add a color table entry.
@@ -214,7 +99,7 @@ f_color()
 	newp->mt_g = atoi( cmd_args[4] );
 	newp->mt_b = atoi( cmd_args[5] );
 	newp->mt_daddr = MATER_NO_ADDR;		/* not in database yet */
-	insert_color( newp );
+	rt_insert_color( newp );
 	color_putrec( newp );			/* write to database */
 	dmp->dmr_colorchange();
 }
@@ -273,7 +158,7 @@ f_edcolor()
 		zot = MaterHead;
 		MaterHead = MaterHead->mt_forw;
 		color_zaprec( zot );
-		free( zot );
+		rt_free( zot, "mater rec" );
 	}
 
 	while( fgets(line, sizeof (line), fp) != NULL )  {
@@ -293,34 +178,12 @@ f_edcolor()
 		mp->mt_g = g;
 		mp->mt_b = b;
 		mp->mt_daddr = MATER_NO_ADDR;
-		insert_color( mp );
+		rt_insert_color( mp );
 		color_putrec( mp );
 	}
 	(void)fclose(fp);
 	(void)unlink( tempfile );
 	dmp->dmr_colorchange();
-}
-
-/*
- *  			C O L O R _ A D D R E C
- *  
- *  Called from dir_build() when initially scanning database.
- */
-void
-color_addrec( recp, addr )
-union record *recp;
-long addr;
-{
-	register struct mater *mp;
-
-	GETSTRUCT( mp, mater );
-	mp->mt_low = recp->md.md_low;
-	mp->mt_high = recp->md.md_hi;
-	mp->mt_r = recp->md.md_r;
-	mp->mt_g = recp->md.md_g;
-	mp->mt_b = recp->md.md_b;
-	mp->mt_daddr = addr;
-	insert_color( mp );
 }
 
 /*
@@ -336,7 +199,7 @@ register struct mater *mp;
 	struct directory dir;
 	union record rec;
 
-	if( read_only )
+	if( dbip->dbi_read_only )
 		return;
 	rec.md.md_id = ID_MATERIAL;
 	rec.md.md_low = mp->mt_low;
@@ -349,13 +212,13 @@ register struct mater *mp;
 	dir.d_namep = "color_putrec";
 	if( mp->mt_daddr == MATER_NO_ADDR )  {
 		/* Need to allocate new database space */
-		db_alloc( &dir, 1 );
+		db_alloc( dbip, &dir, 1 );
 		mp->mt_daddr = dir.d_addr;
 	} else {
 		dir.d_addr = mp->mt_daddr;
 		dir.d_len = 1;
 	}
-	db_putrec( &dir, &rec, 0 );
+	db_put( dbip, &dir, &rec, 0, 1 );
 }
 
 /*
@@ -369,12 +232,12 @@ register struct mater *mp;
 {
 	struct directory dir;
 
-	if( read_only || mp->mt_daddr == MATER_NO_ADDR )
+	if( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
 		return;
 	dir.d_namep = "color_zaprec";
 	dir.d_len = 1;
 	dir.d_addr = mp->mt_daddr;
-	db_delete( &dir );
+	db_delete( dbip, &dir );
 	mp->mt_daddr = MATER_NO_ADDR;
 }
 
