@@ -2614,6 +2614,7 @@ BU_EXTERN(void			nmg_pr_sa, (CONST struct shell_a *sa, char *h) );
 BU_EXTERN(void			nmg_pr_lg, (CONST struct loop_g *lg, char *h) );
 BU_EXTERN(void			nmg_pr_fg, (CONST long *magic, char *h) );
 BU_EXTERN(void			nmg_pr_s, (CONST struct shell *s, char *h) );
+BU_EXTERN(void 			nmg_pr_s_briefly, (CONST struct shell *s, char *h));
 BU_EXTERN(void			nmg_pr_f, (CONST struct face *f, char *h) );
 BU_EXTERN(void			nmg_pr_fu, (CONST struct faceuse *fu, char *h) );
 BU_EXTERN(void			nmg_pr_fu_briefly, (CONST struct faceuse *fu,	char *h) );
@@ -2624,12 +2625,36 @@ BU_EXTERN(void			nmg_pr_eg, (CONST long *eg, char *h) );
 BU_EXTERN(void			nmg_pr_e, (CONST struct edge *e, char *h) );
 BU_EXTERN(void			nmg_pr_eu, (CONST struct edgeuse *eu, char *h) );
 BU_EXTERN(void			nmg_pr_eu_briefly, (CONST struct edgeuse *eu, char *h) );
+BU_EXTERN(void 			nmg_pr_eu_endpoints, (CONST struct edgeuse *eu,
+				char *h));
 BU_EXTERN(void			nmg_pr_vg, (CONST struct vertex_g *vg, char *h) );
 BU_EXTERN(void			nmg_pr_v, (CONST struct vertex *v, char *h) );
 BU_EXTERN(void			nmg_pr_vu, (CONST struct vertexuse *vu, char *h) );
 BU_EXTERN(void			nmg_pr_vu_briefly, (CONST struct vertexuse *vu, char *h) );
 BU_EXTERN(void			nmg_pr_vua, (CONST long *magic_p, char *h) );
 BU_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
+BU_EXTERN(void			nmg_pr_ptbl, (CONST char *title,
+				CONST struct bu_ptbl *tbl,
+				int verbose));
+BU_EXTERN(void			nmg_pr_ptbl_vert_list, (CONST char *str,
+				CONST struct bu_ptbl *tbl,
+				CONST fastf_t *mag));
+BU_EXTERN(void			nmg_pr_one_eu_vecs,
+				(CONST struct edgeuse	*eu,
+				CONST vect_t		xvec,
+				CONST vect_t		yvec,
+				CONST vect_t		zvec,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_pr_fu_around_eu_vecs,
+				(CONST struct edgeuse	*eu,
+				CONST vect_t		xvec,
+				CONST vect_t		yvec,
+				CONST vect_t		zvec,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_pr_fu_around_eu, (CONST struct edgeuse *eu,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_pl_lu_around_eu, (CONST struct edgeuse *eu));
+BU_EXTERN(void			nmg_pr_fus_in_fg, (CONST long *fg_magic));
 
 /* From nmg_misc.c */
 BU_EXTERN(int			bu_ptbl, (struct bu_ptbl *b, int func, long *p) );
