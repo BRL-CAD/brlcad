@@ -18,7 +18,6 @@ brlcadinclude_required = \
 brlcadinclude_wanted = \
 	XtndRunsv.h \
 	anim.h \
-	brlregex.h \
 	cmd.h \
 	compat4.h \
 	db.h \
@@ -60,6 +59,7 @@ brlcadinclude_wanted = \
 	pngconf.h \
 	pyramid.h \
 	redblack.h \
+	regex.h \
 	rle.h \
 	rle_code.h \
 	rle_config.h \
