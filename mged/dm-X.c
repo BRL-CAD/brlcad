@@ -56,6 +56,8 @@ extern int ged_pipe[];
 static void	label();
 static void	draw();
 static int	xsetup();
+static void     establish_perspective();
+static void     set_perspective();
 
 /* Display Manager package interface */
 
@@ -98,6 +100,18 @@ extern struct device_values dm_values;	/* values read from devices */
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
+/*
+ * These variables are visible and modifiable via a "dm set" command.
+ */
+static int focus = 0;        /* send key events to the command window */
+static int      dummy_perspective = 1;
+static int      perspective_mode = 0;	/* Perspective flag */
+/* End modifiable variables */
+
+static int perspective_angle = 3;	/* Angle of perspective */
+static int perspective_table[] = { 
+	30, 45, 60, 90 };
+
 static int height, width;
 static Tcl_Interp *xinterp;
 static Tk_Window xtkwin;
@@ -115,10 +129,11 @@ static GC	gc;			/* X Graphics Context */
 static int	is_monochrome = 0;
 static XFontStruct *fontstruct;		/* X Font */
 
-static int focus = 0;        /* send key events to the command window */
 static int	no_faceplate = 0;
 
 struct structparse X_vparse[] = {
+  {"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
+  {"%d",  1, "set_perspective",(int)&dummy_perspective,  set_perspective },
   {"%d",  1, "focus",             (int)&focus,            FUNC_NULL },
   {"",    0,  (char *)0,          0,                      FUNC_NULL }
 };
@@ -787,57 +802,6 @@ register int w[];
 #endif
 }
 
-int
-X_dm(argc, argv)
-int argc;
-char *argv[];
-{
-  struct rt_vls   vls;
-
-  if( !strcmp( argv[0], "set" )){
-    rt_vls_init(&vls);
-
-    if( argc < 2 )  {
-      /* Bare set command, print out current settings */
-      rt_structprint("dm_X internal variables", X_vparse, (char *)0 );
-      rt_log("%s", rt_vls_addr(&vls) );
-    } else if( argc == 2 ) {
-      rt_vls_name_print( &vls, X_vparse, argv[1], (char *)0 );
-      rt_log( "%s\n", rt_vls_addr(&vls) );
-    } else {
-      rt_vls_printf( &vls, "%s=\"", argv[1] );
-      rt_vls_from_argv( &vls, argc-2, argv+2 );
-      rt_vls_putc( &vls, '\"' );
-      rt_structparse( &vls, X_vparse, (char *)0 );
-    }
-
-    rt_vls_free(&vls);
-    return CMD_OK;
-  }
-
-  if( !strcmp( argv[0], "mouse")){
-    int up;
-    int xpos, ypos;
-
-    if( argc < 4){
-      rt_log("dm: need more parameters\n");
-      rt_log("mouse 1|0 xpos ypos\n");
-      return CMD_BAD;
-    }
-
-    up = atoi(argv[1]);
-    xpos = atoi(argv[2]);
-    ypos = atoi(argv[3]);
-
-    rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
-		  up, Xx_TO_GED(xpos), Xy_TO_GED(ypos));
-    return CMD_OK;
-  }
-
-  rt_log("dm: bad command - %s\n", argv[0]);
-  return CMD_BAD;
-}
-
 /*********XXX**********/
 /*
  *  Called for 2d_line, and dot at center of screen.
@@ -1050,4 +1014,94 @@ char	*name;
     Tk_SetWindowBackground(xtkwin, bg);
     Tk_MapWindow(xtkwin);
     return 0;
+}
+
+static void
+establish_perspective()
+{
+  rt_vls_printf( &dm_values.dv_string,
+		"set perspective %d\n",
+		perspective_mode ?
+		perspective_table[perspective_angle] :
+		-1 );
+  dmaflag = 1;
+}
+
+/*
+   This routine will toggle the perspective_angle if the
+   dummy_perspective value is 0 or less. Otherwise, the
+   perspective_angle is set to the value of (dummy_perspective - 1).
+*/
+static void
+set_perspective()
+{
+  /* set perspective matrix */
+  if(dummy_perspective > 0)
+    perspective_angle = dummy_perspective <= 4 ? dummy_perspective - 1: 3;
+  else if (--perspective_angle < 0) /* toggle perspective matrix */
+    perspective_angle = 3;
+
+  if(perspective_mode)
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective %d\n",
+		  perspective_table[perspective_angle] );
+
+  /*
+     Just in case the "!" is used with the set command. This
+     allows us to toggle through more than two values.
+   */
+  dummy_perspective = 1;
+
+  dmaflag = 1;
+}
+
+int
+X_dm(argc, argv)
+int argc;
+char *argv[];
+{
+  struct rt_vls   vls;
+
+  if( !strcmp( argv[0], "set" )){
+    rt_vls_init(&vls);
+
+    if( argc < 2 )  {
+      /* Bare set command, print out current settings */
+      rt_structprint("dm_X internal variables", X_vparse, (char *)0 );
+      rt_log("%s", rt_vls_addr(&vls) );
+    } else if( argc == 2 ) {
+      rt_vls_name_print( &vls, X_vparse, argv[1], (char *)0 );
+      rt_log( "%s\n", rt_vls_addr(&vls) );
+    } else {
+      rt_vls_printf( &vls, "%s=\"", argv[1] );
+      rt_vls_from_argv( &vls, argc-2, argv+2 );
+      rt_vls_putc( &vls, '\"' );
+      rt_structparse( &vls, X_vparse, (char *)0 );
+    }
+
+    rt_vls_free(&vls);
+    return CMD_OK;
+  }
+
+  if( !strcmp( argv[0], "mouse")){
+    int up;
+    int xpos, ypos;
+
+    if( argc < 4){
+      rt_log("dm: need more parameters\n");
+      rt_log("mouse 1|0 xpos ypos\n");
+      return CMD_BAD;
+    }
+
+    up = atoi(argv[1]);
+    xpos = atoi(argv[2]);
+    ypos = atoi(argv[3]);
+
+    rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
+		  up, Xx_TO_GED(xpos), Xy_TO_GED(ypos));
+    return CMD_OK;
+  }
+
+  rt_log("dm: bad command - %s\n", argv[0]);
+  return CMD_BAD;
 }
