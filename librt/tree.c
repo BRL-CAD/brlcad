@@ -254,7 +254,7 @@ genptr_t			client_data;
 	rp->reg_bit = rtip->nregions++;	/* Assign bit vector pos. */
 	bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
 
-	if( tbl && bu_avs_get( &tsp->ts_attrs, "ORCA_comp" ) ) {
+	if( tbl && bu_avs_get( &tsp->ts_attrs, "ORCA_Comp" ) ) {
 		int newentry;
 
 		inv_mat = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "inv_mat" );
@@ -698,7 +698,7 @@ struct soltab	*stp;
  *		  array of "bu_mro" objects containing the attribute values will be attached to region
  *		  structures ("attr_values")
  *	tbl	- Uninitialized Tcl_HashTable to hold matrices for transforming hits
- *		  on regions with a non-NULL "ORCA_comp" attribute to the standard ORCA standing man
+ *		  on regions with a non-NULL "ORCA_Comp" attribute to the standard ORCA standing man
  *	argc	- number of trees to get
  *	argv	- array of char pointers to the names of the tree tops
  *	ncpus	- number of cpus to use
@@ -762,7 +762,7 @@ int		ncpus;
 		if( tbl ) {
 			if( num_attrs == 0 )
 				bu_avs_init( &tree_state.ts_attrs, 1, "tree_state" );
-			bu_avs_add( &tree_state.ts_attrs, "ORCA_comp", (char *)NULL );
+			bu_avs_add( &tree_state.ts_attrs, "ORCA_Comp", (char *)NULL );
 		}
 
 		i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
