@@ -249,7 +249,7 @@ char **argv;
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&fbop->fbo_name),
-				fbo_cmd,
+				(Tcl_CmdProc *)fbo_cmd,
 				(ClientData)fbop,
 				fbo_deleteProc);
 
