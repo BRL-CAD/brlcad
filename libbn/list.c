@@ -210,11 +210,11 @@ float	*size;
 	if( *flag & TP_LINE )
 		F2LIST( fp, x, y, np );
 	if( *flag & TP_MARK )  {
-		tp_2marker( *fp, mark, *x++, *y++, *size );
+		tp_2marker( *fp, *mark, *x++, *y++, *size );
 		counter = 1;			/* We already plotted one */
 		for( i=1; i<npoints; i++ )  {
 			if( counter >= *interval )  {
-				tp_2marker( *fp, mark, *x, *y, *size );
+				tp_2marker( *fp, *mark, *x, *y, *size );
 				counter = 0;	/* Made a mark */
 			}
 			x++; y++;
