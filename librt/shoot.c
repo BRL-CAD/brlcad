@@ -50,6 +50,7 @@ register struct ray *rayp;
 	if(debug&DEBUG_ALLRAYS) {
 		VPRINT("\nRay Start", rayp->r_pt);
 		VPRINT("Ray Direction", rayp->r_dir);
+		fflush(stdout);		/* In case of instant death */
 	}
 
 	HeadSeg = SEG_NULL;	/* Should check, actually */
