@@ -495,6 +495,7 @@ The tick spacing will be a power of 10 in local units." } }
     grid rowconfigure $top 1 -weight 1
 
     grid_control_reset $id
+    grid_control_autosize $id
     set grid_control($id,square) 1
     set_grid_square $id
 
