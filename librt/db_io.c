@@ -371,8 +371,6 @@ struct bu_external	*ep;
 struct directory	*dp;
 struct db_i		*dbip;
 {
-	union record		*rec;
-	int	ngran;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
@@ -387,30 +385,38 @@ struct db_i		*dbip;
 		return(-1);
 	}
 
-	BU_ASSERT_LONG( dbip->dbi_version, <=, 4 );
+	if( dbip->dbi_version <= 4 )  {
+		union record		*rec;
+		int	ngran;
 
-	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
-	if( ngran != dp->d_len )  {
-		if( ngran < dp->d_len )  {
-			if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
-			    	return(-2);
-		} else if( ngran > dp->d_len )  {
-			if( db_delete( dbip, dp ) < 0 || 
-			    db_alloc( dbip, dp, ngran ) < 0 )  {
-			    	return(-3);
+		ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
+		if( ngran != dp->d_len )  {
+			if( ngran < dp->d_len )  {
+				if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
+				    	return(-2);
+			} else if( ngran > dp->d_len )  {
+				if( db_delete( dbip, dp ) < 0 || 
+				    db_alloc( dbip, dp, ngran ) < 0 )  {
+				    	return(-3);
+				}
 			}
 		}
-	}
-	/* Sanity check */
-	if( ngran != dp->d_len )  {
-		bu_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
-			dp->d_namep, ngran, dp->d_len );
-		bu_bomb("db_io.c: db_put_external()");
-	}
+		/* Sanity check */
+		if( ngran != dp->d_len )  {
+			bu_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
+				dp->d_namep, ngran, dp->d_len );
+			bu_bomb("db_io.c: db_put_external()");
+		}
 
-	/* Add name.  Depends on solid names always being in the same place */
-	rec = (union record *)ep->ext_buf;
-	NAMEMOVE( dp->d_namep, rec->s.s_name );
+		/* Add name.  Depends on solid names always being in the same place */
+		rec = (union record *)ep->ext_buf;
+		NAMEMOVE( dp->d_namep, rec->s.s_name );
+	} else if( dbip->dbi_version == 5 )  {
+		if( ep->ext_nbytes != dp->d_len )
+			db_realloc5( dbip, dp, ep );
+		BU_ASSERT_LONG( ep->ext_nbytes, ==, dp->d_len );
+	} else
+		bu_bomb("db_put_external(): unknown dbi_version\n");
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
 		bcopy( (char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes );
