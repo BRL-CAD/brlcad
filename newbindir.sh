@@ -45,7 +45,7 @@ for i in \
 	fb/cat-fb.c canon/canonserver.c \
 	mged/cmd.c \
 	brlman/awf brlman/brlman \
-	libtcl/Cakefile libtk/Cakefile \
+	libtcl/Cakefile libtk/Cakefile
 do
 	chmod 775 $i
 	ed - $i << EOF
