@@ -20,7 +20,7 @@
 			facedef arb set animedit db comb_std \
 			comb_bool_parse bool_rewrite solids_on_ray history \
 			TCP_FILES attach dm-tek dm-plot dm-ps \
-			dm-tek4109 MGED_OBJS
+			dm-tek4109 MGED_OBJS drawline
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
