@@ -54,9 +54,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 
-union record	record;
-static union record zapper;		/* Zeros, for erasing records */
-
 void	killtree();
 
 static void printnode();
@@ -831,6 +828,7 @@ char	**argv;
 	register int	i,j,k;	
 	register union record *rp;
 	register struct directory *dp;
+	union record	record;
 
 	if( strlen(argv[2]) > NAMESIZE ) {
 		(void)printf("ERROR: name length limited to %d characters\n",
