@@ -463,7 +463,7 @@ struct nmg_bool_state *bs;
 				/* Kill by demoting loop to edges */
 				if( nmg_demote_lu( lu ) )
 					rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
@@ -493,7 +493,7 @@ struct nmg_bool_state *bs;
 			    nextfu == fu->fumate_p )
 				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
 			nmg_kfu( fu );		/* kill face & mate */
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
 		}
@@ -551,7 +551,7 @@ struct nmg_bool_state *bs;
 			/* kill loop & mate */
 			if( nmg_demote_lu( lu ) )
 				rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
@@ -570,26 +570,25 @@ struct nmg_bool_state *bs;
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 	eu = RT_LIST_FIRST( edgeuse, &s->eu_hd );
 	while( RT_LIST_NOT_HEAD( eu, &s->eu_hd ) )  {
-		nexteu = RT_LIST_PNEXT( edgeuse, eu );
+		nexteu = RT_LIST_PNEXT( edgeuse, eu );	/* may be head */
 
 		/* Consider this edge */
+		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE( eu->e_p );
 		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse (and mate) into vertices */
-			if( RT_LIST_NOT_HEAD(eu, &s->eu_hd) &&
-			    nexteu == eu->eumate_p )
+			if( nexteu == eu->eumate_p )
 				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
 			if( nmg_demote_eu( eu ) )
 				rt_log("nmg_eval_shell() nmg_demote_eu(x%x) fail\n", eu);
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
 			continue;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
 			if( eu->up.s_p == bs->bs_dest )  break;
-			if( RT_LIST_NOT_HEAD(eu, &s->eu_hd) &&
-			    nexteu == eu->eumate_p )
+			if( nexteu == eu->eumate_p )
 				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
 			eu = nexteu;
@@ -943,8 +942,7 @@ struct shell	*s;
 			nexteu = RT_LIST_PNEXT( edgeuse, eu );
 			if( nmg_find_edge_in_facelist( eu->e_p, &s->fu_hd ) )  {
 				/* Dispose of wire edge (and mate) */
-				if( RT_LIST_NOT_HEAD(eu, &s->eu_hd) &&
-				    nexteu == eu->eumate_p )
+				if( nexteu == eu->eumate_p )
 					nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
 				nmg_keu(eu);
 			}
@@ -961,8 +959,7 @@ struct shell	*s;
 		nexteu = RT_LIST_PNEXT( edgeuse, eu );
 		if( nmg_find_edge_in_looplist( eu->e_p, &s->lu_hd ) )  {
 			/* Kill edge use and mate */
-			if( RT_LIST_NOT_HEAD(eu, &s->eu_hd) &&
-			    nexteu == eu->eumate_p )
+			if( nexteu == eu->eumate_p )
 				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
 			nmg_keu(eu);
 		}
