@@ -7,7 +7,7 @@
 			(301)278-6647 or AV-298-6647
 */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -400,6 +400,7 @@ int	fd;
 /*	s a v e _ F i l _ S t a t ( )
 	Save file status flags for 'fd'.
  */
+int
 save_Fil_Stat( fd )
 int	fd;
 	{
@@ -410,6 +411,7 @@ int	fd;
 	Restore file status flags for file desc. 'fd' to what they were the
 	last time saveFilStat(fd) was called.
  */
+int
 reset_Fil_Stat( fd )
 int	fd;
 	{
@@ -419,6 +421,7 @@ int	fd;
 /*	s e t _ O _ N D E L A Y ( )
 	Set non-blocking read on 'fd'.
  */
+int
 set_O_NDELAY( fd )
 int	fd;
 	{
