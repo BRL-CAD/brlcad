@@ -741,49 +741,49 @@ menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
 hoc_register_menu_data "View" "Top" "Top View"\
 	{ { summary "View of the top (i.e. azimuth = 270, elevation = 90)." }
           { accelerator "t" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Bottom" -underline 0\
 	-command "mged_apply $id \"press bottom\""
 hoc_register_menu_data "View" "Bottom" "Bottom View"\
 	{ { summary "View of the bottom (i.e. azimuth = 270 , elevation = -90)." }
           { accelerator "b" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Right" -underline 0\
 	-command "mged_apply $id \"press right\""
 hoc_register_menu_data "View" "Right" "Right View"\
 	{ { summary "View of the right side (i.e. azimuth = 270, elevation = 0)." }
           { accelerator "r" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Left" -underline 0\
 	-command "mged_apply $id \"press left\""
 hoc_register_menu_data "View" "Left" "Left View"\
 	{ { summary "View of the left side (i.e. azimuth = 90, elevation = 0)." }
           { accelerator "l" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Front" -underline 0\
 	-command "mged_apply $id \"press front\""
 hoc_register_menu_data "View" "Front" "Front View"\
 	{ { summary "View of the front (i.e. azimuth = 0, elevation = 0)." }
           { accelerator "f" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Rear" -underline 1\
 	-command "mged_apply $id \"press rear\""
 hoc_register_menu_data "View" "Rear" "Rear View"\
 	{ { summary "View of the rear (i.e. azimuth = 180, elevation = 0)." }
           { accelerator "R" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "az35,el25" -underline 2\
 	-command "mged_apply $id \"press 35,25\""
 hoc_register_menu_data "View" "az35,el25" "View - 35,25"\
 	{ { summary "View with an azimuth of 35 and an elevation of 25." }
           { accelerator "3" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "az45,el45" -underline 2\
 	-command "mged_apply $id \"press 45,45\""
 hoc_register_menu_data "View" "az45,el45" "View - 45,45"\
 	{ { summary "View with an azimuth of 45 and an elevation of 45." }
           { accelerator "4" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add separator
 .$id.menubar.view add command -label "Zoom In" -underline 5\
 	-command "mged_apply $id \"zoom 2\""
@@ -800,7 +800,7 @@ hoc_register_menu_data "View" "Zoom Out" "Zoom Out"\
 	-underline 0 -command "mged_apply $id \"press reset\""
 hoc_register_menu_data "View" "Default" "Default View"\
 	{ { summary "Same as top (i.e. azimuth = 270, elevation = 90)." }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Multipane Defaults"\
 	-underline 0 -command "set_default_views $id"
 hoc_register_menu_data "View" "Multipane Defaults" "Multipane Default Views"\
@@ -809,7 +809,7 @@ hoc_register_menu_data "View" "Multipane Defaults" "Multipane Default Views"\
 \tupper right\taz = 35, el = 25
 \tlower left\taz = 0, el = 0
 \tlower right\taz = 90, el = 0" }
-          { see_also "press, ae, view, viewset, viewget" } }
+          { see_also "press, ae, view" } }
 .$id.menubar.view add command -label "Zero" -underline 0\
 	-command "mged_apply $id \"knob zero\""
 hoc_register_menu_data "View" "Zero" "Zero Knobs"\
@@ -1938,7 +1938,7 @@ frame .$id.status.illum
 label .$id.status.cent -textvar mged_display($mged_gui($id,active_dm),center) -anchor w
 hoc_register_data .$id.status.cent "View Center"\
 	{ { summary "These numbers indicate the view center in\nmodel coordinates (local units)." }
-          { see_also "center, view, viewget, viewset" } }
+          { see_also "center, view" } }
 label .$id.status.size -textvar mged_display($mged_gui($id,active_dm),size) -anchor w
 hoc_register_data .$id.status.size "View Size"\
 	{ { summary "This number indicates the view size (local units)." }
@@ -1950,7 +1950,7 @@ hoc_register_data .$id.status.units "Units"\
 label .$id.status.aet -textvar mged_display($mged_gui($id,active_dm),aet) -anchor w
 hoc_register_data .$id.status.aet "View Orientation"\
 	{ { summary "These numbers indicate the view orientation using azimuth,\nelevation and twist." }
-        { see_also "ae, view, viewget, viewset" } }
+        { see_also "ae, view" } }
 label .$id.status.ang -textvar mged_display($mged_gui($id,active_dm),ang) -anchor w -padx 4
 hoc_register_data .$id.status.ang "Rateknobs"\
 	{ { summary "These numbers give some indication of\nrate of rotation about the x,y,z axes." }
