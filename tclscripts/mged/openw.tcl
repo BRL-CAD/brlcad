@@ -117,6 +117,10 @@ if ![info exists tk_version] {
     loadtk
 }
 
+#if ![info exists mged_default(text_font)] {
+#    mged_font_init
+#}
+
 ##
 # Set the class bindings for use with help. This requires the
 # widget to register its data using hoc_register_data. Also, for now,
@@ -1882,7 +1886,8 @@ or the ADC attributes." } }
 
 frame .$id.tf
 if {$comb} {
-    text .$id.t -height $mged_gui($id,num_lines) -relief sunken -bd 2 -yscrollcommand ".$id.s set"
+    text .$id.t -height $mged_gui($id,num_lines) \
+	    -relief sunken -bd 2 -yscrollcommand ".$id.s set"
 } else {
     text .$id.t -relief sunken -bd 2 -yscrollcommand ".$id.s set"
 }
