@@ -259,7 +259,6 @@ static int elem_match[4]={1,2,4,8};
 
 #define NMG_PUSH( _ptr , _stack )       bu_ptbl_ins_unique( _stack , (long *) _ptr )
 
-
 struct fast_fus *
 Find_fus( fu )
 struct faceuse *fu;
@@ -2810,7 +2809,7 @@ CONST fastf_t thick;
 		{
 			if( debug )
 			{
-				rt_log( "Moving face_g x%x ( %f %f %f %f ) from face x%x\n" ,
+				rt_log( "Moving face_g x%x ( %f %f %f %f ) from face x%x" ,
 					fu->f_p->g.plane_p,
 					V4ARGS( fu->f_p->g.plane_p->N ) ,
 					fu->f_p );
@@ -2820,6 +2819,8 @@ CONST fastf_t thick;
 				fg_p->N[3] -= thick;
 			else
 				fg_p->N[3] += thick;
+			if( debug )
+				rt_log( " to (%f %f %f %f)\n", V4ARGS( fu->f_p->g.plane_p->N ) );
 		}
 	}
 
@@ -4446,6 +4447,8 @@ make_nmg_objects()
 	{
 		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
 		{
+			if( debug )
+				bu_log( "shell x%x", s );
 			nmg_tbl( &faces, TBL_RST, (long *)NULL );
 			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 			{
@@ -4456,6 +4459,8 @@ make_nmg_objects()
 
 				nmg_tbl( &faces , TBL_INS , (long *)fu );
 			}
+			if( debug )
+				bu_log( " has %d faces\n", BU_PTBL_END( &faces ) );
 			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), &tol );
 		}
 	}
@@ -4534,7 +4539,8 @@ make_nmg_objects()
 								nmg_orientation( lu->orientation ) );
 							rt_bomb( "make_nmg_objects: found loop with bad orientation after triangulation\n" );
 						}
-
+						if( debug )
+							bu_log( "Breaking a loop into its own face\n" );
 						/* make new face */
 						new_fu = nmg_mk_new_face_from_loop( lu );
 						NMG_GET_FU_PLANE( pl, fu );
@@ -4731,31 +4737,59 @@ make_nmg_objects()
 				if( debug )
 					bu_log( "%d edge_g's fused\n", count );
 
+		/* count number of shells in this component */
+		count = 0;
 		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			NMG_CK_REGION( r );
 			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
 			{
-				int tmp_id;
-
-				NMG_CK_SHELL( s );
-
-				count = Unbreak_shell_edges( s );
-				if( debug )
-					bu_log( "%d edges mended by Unbreak_shell_edges()\n", count );
-
-				if( debug )
-					nmg_pr_s_briefly( s, "" );
-
-				sol_count++;
-				tmp_id = group_id * 1000 + comp_id;
-				sprintf( tmp_name, "s.%d.%d", tmp_id, sol_count );
-				make_unique_name( tmp_name );
-				write_shell_as_polysolid( fdout , tmp_name , s );
-				mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
+				count++;
 			}
 		}
-		mk_lcomb( fdout, name, &tmp_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+
+		if( count > 1 )
+		{
+			for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+			{
+				NMG_CK_REGION( r );
+				for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+				{
+					int tmp_id;
+
+					NMG_CK_SHELL( s );
+
+					count = Unbreak_shell_edges( s );
+					if( debug )
+						bu_log( "%d edges mended by Unbreak_shell_edges()\n", count );
+
+					if( debug )
+						nmg_pr_s_briefly( s, "" );
+
+					sol_count++;
+					tmp_id = group_id * 1000 + comp_id;
+					sprintf( tmp_name, "s.%d.%d", tmp_id, sol_count );
+					make_unique_name( tmp_name );
+					write_shell_as_polysolid( fdout , tmp_name , s );
+					mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
+				}
+			}
+			mk_lcomb( fdout, name, &tmp_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
+		}
+		else
+		{
+			r = RT_LIST_FIRST( nmgregion,  &m->r_hd );
+			s = RT_LIST_FIRST( shell,  &r->s_hd );
+			count = 0;
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+			{
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					continue;
+				count++;
+			}
+			write_shell_as_polysolid( fdout , name , s );
+		}
 	}
 	else
 	{
@@ -6409,7 +6443,7 @@ char *argv[];
 
 	max_cos = cos( MIN_ANG*bn_pi/180.0 );
 
-	while( (c=getopt( argc , argv , "a:dnwx:X:D:P:" ) ) != EOF )
+	while( (c=getopt( argc , argv , "a:dnwx:b:X:D:P:" ) ) != EOF )
 	{
 		switch( c )
 		{
@@ -6433,6 +6467,9 @@ char *argv[];
 				sscanf( optarg, "%x", &nmg_debug );
 				rt_g.NMG_debug = nmg_debug;
 				break;
+			case 'b':
+				sscanf( optarg, "%x", &bu_debug );
+				break;
 			case 'D':
 				tol.dist = atof( optarg );
 				rt_log( "tolerance distance set to %f\n" , tol.dist );
@@ -6449,6 +6486,9 @@ char *argv[];
 				break;
 		}
 	}
+
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+		bu_log( "doing memory checking\n" );
 
 	if( argc-optind != 2 )
 		rt_bomb( usage );
