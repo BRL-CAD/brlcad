@@ -16,5 +16,7 @@ cd `dirname $1`
 
 NONUM=`basename $1 | sed -e 's/\\.so\\..*/.so/`
 
-rm -f $NONUM
-ln -s $1 $NONUM
+if [ $1 != $NONUM ] ; then
+	rm -f $NONUM
+	ln -s $1 $NONUM
+fi
