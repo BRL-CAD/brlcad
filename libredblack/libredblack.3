@@ -23,6 +23,13 @@ libredblack \- red-black tree subroutines
 .B int (**order_funcs)();
 .\"
 .PP
+.B void *rb_curr (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.\"
+.PP
 .B rb_tree *rb_create1 (description, order_func)
 .br
 .B char *description;
@@ -359,6 +366,17 @@ the node most recently accessed
 (e.g., inserted or discovered in a search).
 The following commands make use of
 this current node:
+.PP
+.I rb_curr
+returns a pointer to the data in the current node in 
+.I order.
+The macro
+.I rb_curr1(tree),
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it returns a pointer to the data in the current node
+in the first (perhaps only) order.
 .PP
 .I rb_delete
 removes a block of application data from
