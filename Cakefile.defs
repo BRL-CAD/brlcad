@@ -370,7 +370,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sharedlibvers.sh
@@ -398,12 +398,13 @@ set -S2 "/bin/sh"
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 
 #if 1
 #	define	LIBDM_OBJS	dm-X dm-ogl
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #else
 #	define  LIBDM_OBJS      dm-X
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X 
 #endif
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	MGED_OBJS	dm-X dm-ogl
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/m/cad/tclscripts\\\\"
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM -L''XLIBDIR -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
