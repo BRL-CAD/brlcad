@@ -239,7 +239,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		rt_tabdata_constval( lp->lt_spectrum, 1.0 );
 	}
 	/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
-	rt_spect_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity );
+	rt_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity );
 #else
 	if( rp->reg_mater.ma_override )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
@@ -349,7 +349,7 @@ mat_t	v2m;
 #if RT_MULTISPECTRAL
 		RT_GET_TABDATA(lp->lt_spectrum, spectrum);
 		rt_spect_reflectance_rgb( lp->lt_spectrum, color );
-		rt_spect_scale( lp->lt_spectrum, lp->lt_spectrum, 1000.0 );
+		rt_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum, 1000.0 );
 #else
 		VMOVE( lp->lt_color, color );
 #endif
@@ -781,10 +781,10 @@ struct seg *finished_segs;
 	reason = "after filtering";
 out:
 #if RT_MULTISPECTRAL
-	if( ms_filter_color ) rt_free_tabdata( ms_filter_color );
-	if( sw.msw_color )  rt_free_tabdata( sw.msw_color );
-	if( sw.msw_basecolor ) rt_free_tabdata( sw.msw_basecolor );
-	if( sub_ap.a_spectrum )  rt_free_tabdata( sub_ap.a_spectrum );
+	if( ms_filter_color ) rt_tabdata_free( ms_filter_color );
+	if( sw.msw_color )  rt_tabdata_free( sw.msw_color );
+	if( sw.msw_basecolor ) rt_tabdata_free( sw.msw_basecolor );
+	if( sub_ap.a_spectrum )  rt_tabdata_free( sub_ap.a_spectrum );
 	if( rdebug & RDEBUG_LIGHT )  {
 		bu_log("light vis=%d %s %s %s  ",
 			light_visible,
