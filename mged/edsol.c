@@ -2043,10 +2043,18 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
 
     if(EDIT_ROTATE){
       es_edclass = EDIT_CLASS_ROTATE;
-      VSETALL( edit_absolute_rotate, 0.0 );
+      VSETALL( edit_absolute_model_rotate, 0.0 );
+      VSETALL( edit_absolute_object_rotate, 0.0 );
+      VSETALL( edit_absolute_view_rotate, 0.0 );
+      VSETALL( last_edit_absolute_model_rotate, 0.0 );
+      VSETALL( last_edit_absolute_object_rotate, 0.0 );
+      VSETALL( last_edit_absolute_view_rotate, 0.0 );
     }else if(EDIT_TRAN){
       es_edclass = EDIT_CLASS_TRAN;
-      VSETALL( edit_absolute_tran, 0.0 );
+      VSETALL( edit_absolute_model_tran, 0.0 );
+      VSETALL( edit_absolute_view_tran, 0.0 );
+      VSETALL( last_edit_absolute_model_tran, 0.0 );
+      VSETALL( last_edit_absolute_view_tran, 0.0 );
     }else if(EDIT_SCALE){
       es_edclass = EDIT_CLASS_SCALE;
 
@@ -2170,10 +2178,25 @@ init_sedit()
 	build_tcl_edit_menu();
 
 	bn_mat_idn(acc_rot_sol);
-	VSETALL( edit_absolute_rotate, 0.0 );
-	VSETALL( edit_absolute_tran, 0.0 );
+
+	VSETALL( edit_absolute_model_rotate, 0.0 );
+	VSETALL( edit_absolute_object_rotate, 0.0 );
+	VSETALL( edit_absolute_view_rotate, 0.0 );
+	VSETALL( last_edit_absolute_model_rotate, 0.0 );
+	VSETALL( last_edit_absolute_object_rotate, 0.0 );
+	VSETALL( last_edit_absolute_view_rotate, 0.0 );
+	VSETALL( edit_absolute_model_tran, 0.0 );
+	VSETALL( edit_absolute_view_tran, 0.0 );
+	VSETALL( last_edit_absolute_model_tran, 0.0 );
+	VSETALL( last_edit_absolute_view_tran, 0.0 );
 	edit_absolute_scale = 0;
 	acc_sc_sol = 1;
+
+	VSETALL( edit_rate_model_rotate, 0 );
+	VSETALL( edit_rate_object_rotate, 0 );
+	VSETALL( edit_rate_view_rotate, 0 );
+	VSETALL( edit_rate_model_tran, 0 );
+	VSETALL( edit_rate_view_tran, 0 );
 
 	set_e_axes_pos(1);
 #endif
@@ -4655,8 +4678,8 @@ CONST vect_t	mousevec;
       point_t	pt;
       vect_t	delta;
       mat_t	xlatemat;
-#ifdef TRY_EDIT_NEW_WAY
-      MAT4X3PNT( pos_view, model2view, e_axes_pos );
+
+      MAT4X3PNT( pos_view, model2view, es_keypoint );
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       MAT4X3PNT( pt, view2model, pos_view );
@@ -4669,22 +4692,6 @@ CONST vect_t	mousevec;
       VSUB2( delta, raw_kp, raw_mp );
       bn_mat_idn( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
-#else
-	MAT4X3PNT( temp, es_mat, es_keypoint );
-	MAT4X3PNT( pos_view, model2view, temp );
-	pos_view[X] = mousevec[X];
-	pos_view[Y] = mousevec[Y];
-	MAT4X3PNT( temp, view2model, pos_view );
-	MAT4X3PNT( pt, es_invmat, temp );
-
-	/* Need vector from current vertex/keypoint
-	 * to desired new location.
-	 */
-
-	VSUB2( delta, es_keypoint, pt );
-	bn_mat_idn( xlatemat );
-	MAT_DELTAS_VEC_NEG( xlatemat, delta );
-#endif
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
     }
 
@@ -4699,7 +4706,7 @@ CONST vect_t	mousevec;
      */
 
 #ifdef TRY_EDIT_NEW_WAY
-    MAT4X3PNT( pos_view, model2view, e_axes_pos );
+    MAT4X3PNT( pos_view, model2view, curr_e_axes_pos );
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT( temp, view2model, pos_view );
@@ -4726,7 +4733,7 @@ CONST vect_t	mousevec;
       RT_TGC_CK_MAGIC(tgc);
 
 #ifdef TRY_EDIT_NEW_WAY
-      MAT4X3PNT(pos_view, model2view, e_axes_pos);
+      MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       /* Do NOT change pos_view[Z] ! */
@@ -4751,7 +4758,7 @@ CONST vect_t	mousevec;
     /* move an arb point to indicated point */
     /* point is located at es_values[es_menu*3] */
 #ifdef TRY_EDIT_NEW_WAY
-    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4777,7 +4784,7 @@ CONST vect_t	mousevec;
     break;
   case EARB:
 #ifdef TRY_EDIT_NEW_WAY
-    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4793,7 +4800,7 @@ CONST vect_t	mousevec;
     break;
   case ECMD_ARB_MOVE_FACE:
 #ifdef TRY_EDIT_NEW_WAY
-    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4833,7 +4840,7 @@ CONST vect_t	mousevec;
       tmp_tol.para = 1 - tmp_tol.perp;
 
 #ifdef TRY_EDIT_NEW_WAY
-      MAT4X3PNT( pos_view, model2view, e_axes_pos );
+      MAT4X3PNT( pos_view, model2view, curr_e_axes_pos );
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       if( (e = nmg_find_e_nearest_pt2( &m->magic, pos_view,
@@ -4879,7 +4886,7 @@ CONST vect_t	mousevec;
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
 #ifdef TRY_EDIT_NEW_WAY
-    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
@@ -4913,11 +4920,12 @@ vect_t pos_view;
 
   MAT4X3PNT(model_pos, view2model, pos_view);
   VSUB2(diff, model_pos, e_axes_pos);
-  VSCALE(edit_absolute_tran, diff, inv_Viewscale);
+  VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
+  VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
 
-  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
-  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
-  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Z]));
 }
 
 void
@@ -5102,9 +5110,11 @@ vect_t tvec;
   }
 
   sedit();
+#if 0
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
+#endif
 }
 
 #define MGED_SMALL_SCALE 1.0e-10
@@ -5205,32 +5215,20 @@ CONST vect_t	mousevec;
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
-#if 0
-    MAT4X3PNT(pos_model, modelchanges, es_keypoint);
-#else
     MAT4X3PNT(temp, es_mat, es_keypoint);
     MAT4X3PNT(pos_model, modelchanges, temp);
-#endif
     wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
     bn_mat_idn( incr_change );
-#ifdef DO_NEW_EDIT_MATS
     new_edit_mats();
-#else
-    new_mats();
-#endif
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
   }  else if( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
 
     /* Vector from object keypoint to cursor */
-#if 0
-    VMOVE( temp, es_keypoint );
-    MAT4X3PNT( pos_view, model2objview, es_keypoint );
-#else
     MAT4X3PNT( temp, es_mat, es_keypoint );
     MAT4X3PNT( pos_view, model2objview, temp );
-#endif
+
     if( movedir & RARROW )
       pos_view[X] = mousevec[X];
     if( movedir & UARROW )
@@ -5245,11 +5243,7 @@ CONST vect_t	mousevec;
     bn_mat_mul( modelchanges, incr_change, oldchanges );
 
     bn_mat_idn( incr_change );
-#ifdef DO_NEW_EDIT_MATS
     new_edit_mats();
-#else
-    new_mats();
-#endif
 
     update_edit_absolute_tran(pos_view);
   }  else  {
@@ -5270,11 +5264,7 @@ point_t tvec;
   mat_t oldchanges;	/* temporary matrix */
 
   bn_mat_idn( incr_mat );
-#if 0
-  VMOVE(temp, es_keypoint);
-#else
   MAT4X3PNT( temp, es_mat, es_keypoint );
-#endif
   MAT4X3PNT( pos_model, view2model, tvec );/* NOT objview */
   MAT4X3PNT( tr_temp, modelchanges, temp );
   VSUB2( tr_temp, pos_model, tr_temp );
@@ -5283,15 +5273,13 @@ point_t tvec;
   bn_mat_copy( oldchanges, modelchanges );
   bn_mat_mul( modelchanges, incr_mat, oldchanges );
 
-#ifdef DO_NEW_EDIT_MATS
   new_edit_mats();
-#else
-  new_mats();
-#endif
 
+#if 0
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
+#endif
 }
 
 
@@ -5358,11 +5346,7 @@ oedit_abs_scale()
 #endif
   wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
-#ifdef DO_NEW_EDIT_MATS
   new_edit_mats();
-#else
-  new_mats();
-#endif
 
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
 }
@@ -6208,9 +6192,18 @@ init_objedit()
 
 	set_e_axes_pos(1);
 
-	VSETALL( edit_absolute_rotate, 0.0 );
-	VSETALL( edit_absolute_tran, 0.0 );
+	VSETALL( edit_absolute_model_rotate, 0.0 );
+	VSETALL( edit_absolute_object_rotate, 0.0 );
+	VSETALL( edit_absolute_view_rotate, 0.0 );
+	VSETALL( edit_absolute_model_tran, 0.0 );
+	VSETALL( edit_absolute_view_tran, 0.0 );
 	edit_absolute_scale = 0;
+
+	VSETALL( edit_rate_model_rotate, 0 );
+	VSETALL( edit_rate_object_rotate, 0 );
+	VSETALL( edit_rate_view_rotate, 0 );
+	VSETALL( edit_rate_model_tran, 0 );
+	VSETALL( edit_rate_view_tran, 0 );
 
 	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "do_edit_menu {}");
@@ -6605,9 +6598,10 @@ vect_t argvect;
     fastf_t inv_Viewscale = 1/Viewscale;
 		    
     VSUB2(diff, es_para, e_axes_pos);
-    VSCALE(edit_absolute_tran, diff, inv_Viewscale);
+    VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
+    VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
   }else if(SEDIT_ROTATE){
-    VMOVE(edit_absolute_rotate, es_para);
+    VMOVE(edit_absolute_model_rotate, es_para);
   }else if(SEDIT_SCALE){
     edit_absolute_scale = acc_sc_sol - 1.0;
     if(edit_absolute_scale > 0)
@@ -6704,11 +6698,7 @@ double	xangle, yangle, zangle;
 #endif
 	wrt_point(modelchanges, incr_change, modelchanges, point);
 
-#ifdef DO_NEW_EDIT_MATS
 	new_edit_mats();
-#else
-	new_mats();
-#endif
 
 	return 1;
 }
