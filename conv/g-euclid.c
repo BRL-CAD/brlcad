@@ -175,11 +175,10 @@ genptr_t		client_data;
 }
 
 static union tree *
-leaf_stub( tsp, pathp, ep, id, client_data )
+leaf_stub( tsp, pathp, ip, client_data )
 struct db_tree_state    *tsp;
 struct db_full_path     *pathp;
-struct bu_external      *ep;
-int                     id;
+struct rt_db_internal	*ip;
 genptr_t		client_data;
 {
 	bu_log( "leaf stub called, this shouldn't happen\n" );
