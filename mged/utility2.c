@@ -216,70 +216,72 @@ int argc;
 char **argv;
 {
 
-	register struct directory *dp;
+	struct directory *dp;
+	struct rt_external external,new_ext;
+	struct rt_db_internal internal,new_int;
+	mat_t	start_mat;
+	int	id;
 	int	i;
-	int	j;
-	int	k;
-	int	kk = 1;
-	int	ngran;
-	int	pos_in;
-	vect_t	vec;
 
-	prflag = 0;
-	pos_in = argc;
+	if( argc < 3 )
+	{
+		printf( "Enter new_solid_name and full path to old_solid (seperate path components with spaces not /)\n" );
+		return CMD_MORE;
+	}
 
-	printf("The copyeval command is currently being reconstructed.\n\
-Sorry for the inconvenience.\n");
+	/* check if new solid name already exists in description */
+	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) != DIR_NULL )
+	{
+		(void)printf("%s: already exists\n",argv[1]);
+		return CMD_BAD;
+	}
 
-#if 0
-	argcnt = 0;
+	mat_idn( start_mat );
 
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
 
-	/* get the path - ignore any input so far */
-	(void)printf("Enter the complete path: ");
-	argcnt = getcmd(args);
-	args += argcnt;
-	objpos = argcnt;
-
 	/* build directory pointer array for desired path */
-	for(i=0; i<objpos; i++) {
-		if( (obj[i] = db_lookup( dbip, cmd_args[pos_in+i], LOOKUP_NOISY)) == DIR_NULL)
+	for(i=2; i<argc; i++)
+	{
+		if( (obj[i-2] = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			return CMD_BAD;
 	}
 
-	/* check if last path member is a solid */
-	if( db_get( dbip,  obj[objpos-1], &record, 0, 1) < 0 ) {
+	/* Make sure that final component in path is a solid */
+	RT_INIT_EXTERNAL( &external );
+	if( db_get_external( &external , obj[argc-3] , dbip ) )
+	{
+		db_free_external( &external );
 		READ_ERR;
-		return;
+		return CMD_BAD;
 	}
-	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A &&
-		record.u_id != ID_BSOLID && record.u_id != ID_P_HEAD) {
-		(void)printf("Bottom of path is not a solid\n");
+	RT_CK_EXTERNAL( &external );
+
+	if( (id=rt_id_solid( &external )) == ID_NULL )
+	{
+		rt_log( "Final name in full path must be a solid, %s is not a solid\n",
+			argv[argc-1] );
+		db_free_external( &external );
 		return CMD_BAD;
 	}
 
-	/* get the new solid name */
-	(void)printf("Enter the new solid name: ");
-	argcnt = getcmd(args);
-
-	/* check if new solid name already exists in description */
-	if( db_lookup( dbip, cmd_args[args], LOOKUP_QUIET) != DIR_NULL ) {
-		(void)printf("%s: already exists\n",cmd_args[args]);
+	RT_INIT_DB_INTERNAL( &internal );
+	if( rt_functab[id].ft_import( &internal, &external, identity ) < 0 )
+	{
+		rt_log( "solid import failure on %s\n" , argv[argc-1] );
+		db_free_external( &external );
 		return CMD_BAD;
 	}
 
-	mat_idn( identity );
-	mat_idn( xform );
-
-	trace(obj[0], 0, identity, CPEVAL);
+	trace(obj[0], 0, start_mat, CPEVAL);
 
 	if(prflag == 0) {
 		(void)printf("PATH:  ");
 		for(i=0; i<objpos; i++)
 			(void)printf("/%s",obj[i]->d_namep);
 		(void)printf("  NOT FOUND\n");
+		db_free_external( &external );
 		return CMD_BAD;
 	}
 
@@ -290,83 +292,42 @@ Sorry for the inconvenience.\n");
 	/* xform matrix calculated in trace() */
 
 	/* create the new solid */
-	if(saverec.u_id == ID_ARS_A) {
-		NAMEMOVE(cmd_args[args], saverec.a.a_name);
-		ngran = saverec.a.a_totlen;
-		if( (dp = db_diradd( dbip, saverec.a.a_name, -1, ngran+1, DIR_SOLID)) == DIR_NULL ||
-		    db_alloc( dbip, dp, ngran+1 ) < 0 )  {
-		    	ALLOC_ERR;
-			return CMD_BAD;
-		}
-		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 ) {
-			WRITE_ERR;
-			return CMD_BAD;
-		}
-
-		/* apply transformation to the b-records */
-		for(i=1; i<=ngran; i++) {
-			if( db_get( dbip, obj[objpos-1], &record, i , 1) < 0 ) {
-				READ_ERR;
-				return CMD_BAD;
-			}
-			if(i == 1) {
-				/* vertex */
-				MAT4X3PNT( vec, xform,
-						&record.b.b_values[0] );
-				VMOVE(&record.b.b_values[0], vec);
-				kk = 1;
-			}
-
-
-			/* rest of the vectors */
-			for(k=kk; k<8; k++) {
-				MAT4X3VEC( vec, xform,
-						&record.b.b_values[k*3] );
-				VMOVE(&record.b.b_values[k*3], vec);
-			}
-			kk = 0;
-
-			/* write this b-record */
-			if( db_put( dbip, dp, &record, i, 1) < 0 ) {
-				WRITE_ERR;
-				return CMD_BAD;
-			}
-		}
-		return CMD_OK;
-	}
-
-	if(saverec.u_id == ID_BSOLID) {
-		(void)printf("B-SPLINEs not implemented\n");
+	RT_INIT_DB_INTERNAL( &new_int );
+	if( rt_generic_xform( &new_int, xform , &internal , 0 ) )
+	{
+		db_free_external( &external );
+		rt_log( "f_copyeval: rt_generic_xform failed\n" );
 		return CMD_BAD;
 	}
 
-	if(saverec.u_id == ID_P_HEAD) {
-		(void)printf("POLYGONs not implemented\n");
+	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0 ) )
+	{
+		db_free_external( &new_ext );
+		db_free_external( &external );
+		rt_log( "f_copyeval: export failure for new solid\n" );
 		return CMD_BAD;
 	}
 
-	if(saverec.u_id == ID_SOLID) {
-		NAMEMOVE(cmd_args[args], saverec.s.s_name);
-		if( (dp = db_diradd( dbip, saverec.s.s_name, -1, 1, DIR_SOLID)) == DIR_NULL ||
-		    db_alloc( dbip, dp, 1 ) < 0 )  {
-			ALLOC_ERR;
-			return CMD_BAD;
-		}
-		MAT4X3PNT( vec, xform, &saverec.s.s_values[0] );
-		VMOVE(&saverec.s.s_values[0], vec);
-		for(i=3; i<=21; i+=3) {
-			MAT4X3VEC( vec, xform, &saverec.s.s_values[i] );
-			VMOVE(&saverec.s.s_values[i], vec);
-		}
-		if( db_put( dbip, dp, &saverec, 0, 1 ) < 0 ){
-			WRITE_ERR;
-			return CMD_BAD;
-		}
-		return CMD_OK;
+	if( (dp=db_diradd( dbip, argv[1], -1, obj[argc-3]->d_len, obj[argc-3]->d_flags)) == DIR_NULL ||
+	    db_alloc( dbip, dp, obj[argc-3]->d_len ) < 0 )
+	{
+		db_free_external( &new_ext );
+		db_free_external( &external );
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	}
-#endif
 
-	return CMD_BAD;
+	if (db_put_external( &new_ext, dp, dbip ) < 0 )
+	{
+		db_free_external( &new_ext );
+		db_free_external( &external );
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+	db_free_external( &external );
+	db_free_external( &new_ext );
+
+	return CMD_OK;
 }
 
 
