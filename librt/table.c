@@ -266,6 +266,12 @@ BU_EXTERN(int rt_parsetab_tclform, (CONST struct rt_functab *ftp,
 BU_EXTERN(void rt_generic_make, (CONST struct rt_functab *ftp,
 		struct rt_db_internal *intern, double diameter));
 
+/* PIPE solid */
+BU_EXTERN(int rt_pipe_tclget, (Tcl_Interp *interp,
+		CONST struct rt_db_internal *intern, CONST char *attr));
+BU_EXTERN(int rt_pipe_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv));
+
 /* BOT solid */
 BU_EXTERN(int rt_bot_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
@@ -554,7 +560,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_pipe_import,	rt_pipe_export,	rt_pipe_ifree,
 		rt_pipe_describe,rt_pipe_xform,	NULL,
 		sizeof(struct rt_pipe_internal), RT_PIPE_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_pipe_tclget, rt_pipe_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 

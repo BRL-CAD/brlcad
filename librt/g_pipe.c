@@ -23,6 +23,7 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "tcl.h"
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
@@ -33,6 +34,8 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "./debug.h"
+
+BU_EXTERN( char *next_tok, (char *str ) );
 
 struct id_pipe
 {
@@ -3695,4 +3698,230 @@ next_pt:
 		bu_log( "bend radius of %gmm\n", prev->pp_bendradius );
 	}
 	return( error_count );
+}
+
+
+/*
+ *			R T _ P I P E _ T C L _ G E T
+ *
+ *  Examples -
+ *	db get name V#			get coordinates for vertex #
+ *	db get name I#			get inner radius for vertex #
+ *	db get name O#			get outer radius for vertex #
+ *	db get name R#			get bendradius for vertex #
+ *	db get name P#			get all data for vertex #
+ *	db get name N			get number of vertices
+ */
+
+int
+rt_pipe_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+CONST struct rt_db_internal	*intern;
+CONST char			*attr;
+{
+	register struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)intern->idb_ptr;
+	struct wdb_pipept *ptp;
+	Tcl_DString	ds;
+	struct bu_vls	vls;
+	int		status=TCL_OK;
+	int		seg_no;
+	int		num_segs=0;
+
+	RT_PIPE_CK_MAGIC( pipe );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	/* count segments */
+	for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) )
+		num_segs++;
+
+	if( attr == (char *)NULL )
+	{
+		bu_vls_strcat( &vls, "pipe");
+
+		seg_no = 0;
+		for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) ) {
+			bu_vls_printf( &vls, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
+				      seg_no, V3ARGS( ptp->pp_coord ),
+				      seg_no, ptp->pp_id,
+				      seg_no, ptp->pp_od,
+				      seg_no, ptp->pp_bendradius );
+			seg_no++;
+		}
+	}
+	else if( attr[0] == 'N' )
+	{
+		bu_vls_printf( &vls, "%d", num_segs );
+		goto out;
+	}
+	else
+	{
+		int curr_seg=0;
+
+		seg_no = atoi( &attr[1] );
+		if( seg_no < 0 || seg_no >= num_segs ) {
+			bu_vls_printf( &vls, "segment number out of range (0 - %d)", num_segs-1 );
+			status = TCL_ERROR;
+			goto out;
+		}
+
+		/* find the desired vertex */
+		for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) ) {
+			if( curr_seg == seg_no )
+				break;
+			curr_seg++;
+		}
+
+		switch( attr[0] ) {
+			case 'V':
+				bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( ptp->pp_coord ) );
+				break;
+			case 'I':
+				bu_vls_printf( &vls, "%.25G", ptp->pp_id );
+				break;
+			case 'O':
+				bu_vls_printf( &vls, "%.25G", ptp->pp_od );
+				break;
+			case 'R':
+				bu_vls_printf( &vls, "%.25G", ptp->pp_bendradius );
+				break;
+			case 'P':
+				bu_vls_printf( &vls, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
+					      seg_no, V3ARGS( ptp->pp_coord ),
+					      seg_no, ptp->pp_id,
+					      seg_no, ptp->pp_od,
+					      seg_no, ptp->pp_bendradius );
+				break;
+			default:
+				bu_vls_printf( &vls, "unrecognized attribute (%c), choices are V, I, O, R, or P", attr[0] );
+				status = TCL_ERROR;
+				break;
+		}
+	}
+out:
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+
+	return( status );
+
+}
+
+int
+rt_pipe_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_pipe_internal		*pipe;
+	struct wdb_pipept		*ptp;
+	Tcl_Obj				*obj, *list;
+	int				seg_no;
+	int				num_segs;
+	int				curr_seg;
+	fastf_t				tmp;
+	char				*v_str;
+	
+
+	RT_CK_DB_INTERNAL( intern );
+	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
+	RT_PIPE_CK_MAGIC( pipe );
+
+	while( argc >= 2 ) {
+
+		/* count vertices */
+		num_segs = 0;
+		for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) )
+			num_segs++;
+		
+		if( !isdigit( argv[0][1] ) ) {
+			Tcl_SetResult( interp, "no vertex number specified", TCL_STATIC );
+			return( TCL_ERROR );
+		}
+
+		seg_no = atoi( &argv[0][1] );
+		if( seg_no < 0 || seg_no >= num_segs ) {
+			Tcl_SetResult( interp, "vertex number out of range", TCL_STATIC );
+			return( TCL_ERROR );
+		}
+
+		/* get the specified vertex */
+		curr_seg = 0;
+		for( BU_LIST_FOR( ptp, wdb_pipept, &pipe->pipe_segs_head ) ) {
+			if( curr_seg == seg_no )
+				break;
+			curr_seg++;
+		}
+		
+
+		switch( argv[0][0] ) {
+			case 'V':
+				obj = Tcl_NewStringObj( argv[1], -1 );
+				list = Tcl_NewListObj( 0, NULL );
+				Tcl_ListObjAppendList( interp, list, obj );
+				v_str = Tcl_GetStringFromObj( list, NULL );
+				while( isspace( *v_str ) ) v_str++;
+				if( *v_str == '\0' ) {
+					Tcl_SetResult( interp, "incomplete vertex specification", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+				ptp->pp_coord[0] = atof( v_str );
+				v_str = next_tok( v_str );
+				if( *v_str == '\0' ) {
+					Tcl_SetResult( interp, "incomplete vertex specification", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+				ptp->pp_coord[1] = atof( v_str );
+				v_str = next_tok( v_str );
+				if( *v_str == '\0' ) {
+					Tcl_SetResult( interp, "incomplete vertex specification", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+				ptp->pp_coord[2] = atof( v_str );
+				Tcl_DecrRefCount( list );
+				break;
+			case 'I':
+				tmp = atof( argv[1] );
+				if( tmp >= ptp->pp_od ) {
+					Tcl_SetResult( interp, "inner diameter must be less than outer diameter", TCL_STATIC );
+					return( TCL_ERROR );
+				}
+				ptp->pp_id = tmp;
+				break;
+			case 'O':
+				tmp = atof( argv[1] );
+				if( tmp <= 0.0 ) {
+					Tcl_SetResult( interp, "outer diameter cannot be 0.0 or less", TCL_STATIC );
+					return( TCL_ERROR );
+				}
+				if( tmp <= ptp->pp_id ) {
+					Tcl_SetResult( interp, "outer diameter must be greater than inner diameter", TCL_STATIC );
+					return( TCL_ERROR );
+				}
+				ptp->pp_od = tmp;
+				break;
+			case 'R':
+				tmp = atof( argv[1] );
+				if( tmp < ptp->pp_od * 0.5 ) {
+					Tcl_SetResult( interp, "cannot set bend radius to less than outer radius", TCL_STATIC );
+					return( TCL_ERROR );
+				}
+				ptp->pp_bendradius = tmp;
+				break;
+			default:
+				Tcl_SetResult( interp, "unrecognized attribute, choices are V, I, O, or R", TCL_STATIC );
+				return( TCL_ERROR );
+		}
+
+		argc -= 2;
+		argv += 2;
+	}
+
+	return( TCL_OK );
 }
