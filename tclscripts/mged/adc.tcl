@@ -21,6 +21,12 @@ proc init_adc_control { id } {
     global mged_gui
     global mged_adc_control
 
+    if {[opendb] == ""} {
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
     winset $mged_gui($id,active_dm)
     set top .$id.adc_control
 
@@ -580,4 +586,17 @@ proc adc_clear { id } {
     set mged_adc_control($id,anchor_a1) 0
     set mged_adc_control($id,anchor_a2) 0
     set mged_adc_control($id,anchor_dst) 0
+}
+
+proc adc_CBHandler { id } {
+    global mged_gui
+
+    if {[opendb] == ""} {
+	set mged_gui($id,adc_draw) 0
+	cad_dialog .$id.uncool $mged_gui($id,screen) "No database." \
+		"No database has been opened!" info 0 OK
+	return
+    }
+
+    mged_apply $id "adc draw $mged_gui($id,adc_draw)"
 }
