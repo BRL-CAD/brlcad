@@ -81,14 +81,14 @@
 /*
  * Routines
  */
-RT_EXTERN( void			rt_spect_make_CIE_XYZ, (
+BU_EXTERN( void			rt_spect_make_CIE_XYZ, (
 					struct rt_tabdata **x,
 					struct rt_tabdata **y,
 					struct rt_tabdata **z,
 					CONST struct rt_table *tabp));
 
-RT_EXTERN( void			rt_spect_black_body, (struct rt_tabdata *data,
+BU_EXTERN( void			rt_spect_black_body, (struct rt_tabdata *data,
 					double temp, unsigned int n));
-RT_EXTERN( void			rt_spect_black_body_fast, (
+BU_EXTERN( void			rt_spect_black_body_fast, (
 					struct rt_tabdata *data,
 					double temp));
