@@ -21,24 +21,42 @@
 #	define	RTDIR	../rt
 #endif
 
-#define	RT_PIECES	RTDIR/text.o RTDIR/cloud.o \
+#ifdef CRAY1
+#define REMRT_PIECES	\
+		RTDIR/opt.o \
+		-lbsd \
+		LIB_PRE''LIBFB LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES
+#else
+#define REMRT_PIECES	\
+		RTDIR/opt.o \
+		LIB_PRE''LIBFB LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES
+#endif
+
+#define	RTSRV_PIECES	\
+		RTDIR/opt.o \
+		RTDIR/shade.o \
+		RTDIR/sh_text.o RTDIR/sh_cloud.o \
 		RTDIR/worker.o RTDIR/wray.o \
-		RTDIR/material.o RTDIR/refract.o RTDIR/stack.o \
-		RTDIR/plastic.o RTDIR/cook.o \
-		RTDIR/mathtab.o RTDIR/marble.o RTDIR/stxt.o \
-		RTDIR/spm.o RTDIR/light.o RTDIR/cmd.o RTDIR/do.o \
+		RTDIR/material.o RTDIR/refract.o RTDIR/sh_stack.o \
+		RTDIR/sh_plastic.o RTDIR/sh_cook.o \
+		RTDIR/mathtab.o RTDIR/sh_marble.o RTDIR/sh_stxt.o \
+		RTDIR/sh_points.o \
+		RTDIR/sh_spm.o RTDIR/sh_light.o RTDIR/do.o \
+		LIBRT LIBFB RT_LIBES LIBMALLOC LIBES
+
+#define OBJS	inout.o
 
 /* Explicit composition of each product */
 
-remrt:	remrt.o LIBFB LIBMALLOC
-	CC LDFLAGS -o remrt remrt.o LIBFB LIBMALLOC LIBES
+/* LIBRT is needed to get htond, parser, etc */
+remrt:	remrt.o OBJS LIBFB LIBRT LIBMALLOC
+	CC LDFLAGS -o remrt remrt.o OBJS REMRT_PIECES
 
 /* Specially compiled version of RT view.c */
 view.o:	../rt/view.c
 	CC CFLAGS -DRTSRV -c ../rt/view.c
 
-rtsrv:	rtsrv.o view.o LIBRT LIBFB LIBMALLOC
-	CC LDFLAGS -o rtsrv rtsrv.o view.o RT_PIECES \
-		LIBRT LIBFB RT_LIBES LIBMALLOC LIBES
+rtsrv:	rtsrv.o view.o OBJS LIBRT LIBFB LIBMALLOC
+	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
 
 #include "../Cakefile.rules"
