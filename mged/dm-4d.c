@@ -636,12 +636,6 @@ Ir_normal()
 	}
 
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
-#ifdef never
-	/* Doing this here affects the redraw speed, due to the
-	 * slow serial line running out to the keyboard!
-	 */
-	kblights();
-#endif
 }
 
 /*
@@ -1147,7 +1141,6 @@ checkevents()  {
 				/* toggle depthcueing and remake colormap */
 				cueing_on = cueing_on ? 0 : 1;
 				Ir_colorchange();
-				kblights();
 				continue;
 			} else if(ret == F2KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1159,7 +1152,6 @@ checkevents()  {
 				/* toggle zclipping */
 				zclipping_on = zclipping_on ? 0 : 1;
 				dmaflag = 1;
-				kblights();
 				continue;
 			} else if(ret == F3KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1170,7 +1162,6 @@ checkevents()  {
 				}
 				perspective_mode = 1-perspective_mode;
 				dmaflag = 1;
-				kblights();
 				continue;
 			} else if(ret == F4KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1188,7 +1179,6 @@ checkevents()  {
 				zbuffer( zbuffer_on );
 				if( zbuffer_on) lsetdepth(0, 0x007fffff);
 				dmaflag = 1;
-				kblights();
 				continue;
 			} else if(ret == F5KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1279,7 +1269,6 @@ checkevents()  {
 				/* Toggle faceplate on/off */
 				no_faceplate = !no_faceplate;
 				dmaflag = 1;
-				kblights();
 				continue;
 			}
 			/*
@@ -1819,6 +1808,7 @@ int c;
 	}
 }
 
+#ifdef never
 /*
  *  Update the PF key lights.
  */
@@ -1835,7 +1825,7 @@ kblights()
 	lampon(lights);
 	lampoff(lights^0xf);
 }
-
+#endif
 /*
  *  Compute a perspective matrix.
  *  Reference: SGI Graphics Reference Appendix C
