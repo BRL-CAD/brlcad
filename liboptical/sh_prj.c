@@ -708,6 +708,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 #endif
 		VSCALE(sh_color, sh_color, cs);
 		weight = VDOT( r_N, img_sp->i_plane );
+		if( img_sp->i_through )
+			weight = (weight < 0.0 ? -weight : weight );
 		if( weight > 0.0 )
 		{
 			VJOIN1(final_color, final_color, weight, sh_color);
