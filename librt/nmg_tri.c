@@ -1963,11 +1963,18 @@ CONST struct bn_tol	*tol;
 	}
 	/* check to see if we're joining two loops that share a vertex */
 	if (p1->vu_p->v_p == p2->vu_p->v_p) {
+#if 1
 		struct vertexuse *vu;
-	bu_log("Joining two loops that share a vertex at (%g %g %g)\n",
-			V3ARGS(p1->vu_p->v_p->vg_p->coord) );
-		vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
 
+		if (rt_g.NMG_debug & DEBUG_TRI)
+			bu_log("Joining two loops that share a vertex at (%g %g %g)\n",
+				V3ARGS(p1->vu_p->v_p->vg_p->coord) );
+		vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
+#else
+		if (rt_g.NMG_debug & DEBUG_TRI)
+			bu_log("NOT Joining two loops that share a vertex at (%g %g %g)\n",
+				V3ARGS(p1->vu_p->v_p->vg_p->coord) );
+#endif
 		return;
 	}
 
@@ -2138,6 +2145,7 @@ CONST struct faceuse	*fu;
 CONST struct bn_tol	*tol;
 {
 	struct trap *tp;
+	int cut_count=0;
 
 	static CONST int cut_color[3] = {255, 80, 80};
 	static CONST int join_color[3] = {80, 80, 255};
@@ -2204,13 +2212,48 @@ CONST struct bn_tol	*tol;
 			/* if points are the same, this is a split-loop op */
 			if (tp->top->vu_p->v_p == tp->bot->vu_p->v_p) {
 
-				if (rt_g.NMG_debug & DEBUG_TRI)
-					bu_log("splitting self-touching loop at (%g %g %g)\n",
-					V3ARGS(tp->bot->vu_p->v_p->vg_p->coord) );
+				int touching_jaunt=0;
+				struct edgeuse *eu1, *eu2, *eu1_prev, *eu2_prev;
 
-				nmg_split_touchingloops(toplu, tol);
+				eu1 = tp->top->vu_p->up.eu_p;
+				eu2 = tp->bot->vu_p->up.eu_p;
+
+				eu1_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu1->l );
+				eu2_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu2->l );
+				if( NMG_ARE_EUS_ADJACENT( eu1, eu1_prev ) )
+					touching_jaunt = 1;
+				else if( NMG_ARE_EUS_ADJACENT( eu2, eu2_prev ) )
+					touching_jaunt = 1;
+
+				if( touching_jaunt )
+				{
+					if (rt_g.NMG_debug & DEBUG_TRI)
+						bu_log("splitting self-touching jaunt loop at (%g %g %g)\n",
+						V3ARGS(tp->bot->vu_p->v_p->vg_p->coord) );
+
+					nmg_loop_split_at_touching_jaunt(toplu, tol);
+				}
+				else
+				{
+					if (rt_g.NMG_debug & DEBUG_TRI)
+						bu_log("splitting self-touching loop at (%g %g %g)\n",
+						V3ARGS(tp->bot->vu_p->v_p->vg_p->coord) );
+
+					nmg_split_touchingloops(toplu, tol);
+				}
 				for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
 					nmg_lu_reorient(lu);
+
+				if (rt_g.NMG_debug & DEBUG_TRI)
+				{
+					char fname[32];
+
+					sprintf( fname, "split%d.g", cut_count );
+					nmg_stash_model_to_file( fname,
+						nmg_find_model( &toplu->l.magic ),
+						"after split_touching_loop()" );
+					cut_count++;
+				}
 
 			} else {
 
@@ -2218,6 +2261,18 @@ CONST struct bn_tol	*tol;
 
 				(void)cut_mapped_loop(tbl2d, tp->top,
 					tp->bot, cut_color, tol, 1);
+
+				if (rt_g.NMG_debug & DEBUG_TRI)
+				{
+					char fname[32];
+
+					sprintf( fname, "cut%d.g", cut_count );
+					nmg_stash_model_to_file( fname,
+						nmg_find_model( &toplu->l.magic ),
+						"after cut_mapped_loop()" );
+					cut_count++;
+				}
+
 			}
 
 #if 0
@@ -2270,6 +2325,18 @@ CONST struct bn_tol	*tol;
 
 			join_mapped_loops(tbl2d, tp->top, tp->bot, join_color, tol);
 			NMG_CK_LOOPUSE(toplu);
+
+			if (rt_g.NMG_debug & DEBUG_TRI)
+			{
+				char fname[32];
+
+				sprintf( fname, "join%d.g", cut_count );
+				nmg_stash_model_to_file( fname,
+					nmg_find_model( &toplu->l.magic ),
+					"after join_mapped_loop()" );
+				cut_count++;
+			}
+
 		}
 
 		if (rt_g.NMG_debug & DEBUG_TRI) {
@@ -2379,7 +2446,17 @@ CONST struct bn_tol *tol;
 			 * create a new loop.
 			 */
 			NMG_CK_LOOPUSE(lu);
+			if (rt_g.NMG_debug & DEBUG_TRI)
+			{
+				bu_log( "Before cut loop:\n" );
+				nmg_pr_fu_briefly( lu->up.fu_p, "" );
+			}
 			current = cut_mapped_loop(tbl2d, next, prev, cut_color, tol, 0);
+			if (rt_g.NMG_debug & DEBUG_TRI)
+			{
+				bu_log( "After cut loop:\n" );
+				nmg_pr_fu_briefly( lu->up.fu_p, "" );
+			}
 			verts--;
 			NMG_CK_LOOPUSE(lu);
 
@@ -2559,6 +2636,24 @@ triangulate:
 	/* convert 3D face to face in the X-Y plane */
 	tbl2d = nmg_flatten_face(fu, TformMat);
 
+	/* avoid having a hole start as the first point */
+	{
+		struct pt2d *pt1, *pt2;
+
+		pt1 = BU_LIST_FIRST( pt2d, tbl2d );
+		pt2 = BU_LIST_PNEXT( pt2d, &pt1->l );
+
+		if( vtype2d( pt1, tbl2d, tol ) == HOLE_START &&
+		    pt1->vu_p->v_p == pt2->vu_p->v_p )
+		{
+			/* swap first and second points */
+			if (rt_g.NMG_debug & DEBUG_TRI)
+				bu_log( "Swapping first two points on vertex list (first one was a HOLE_START)\n" );
+
+			BU_LIST_DEQUEUE( &pt1->l );
+			BU_LIST_APPEND( &pt2->l, &pt1->l );
+		}
+	}
 
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 		struct pt2d *pt;
@@ -2591,6 +2686,16 @@ triangulate:
 		nmg_stash_model_to_file(db_name,
 			nmg_find_model(&fu->s_p->l.magic),
 			"trangles and unimonotones");
+	}
+
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
+		(void)nmg_loop_split_at_touching_jaunt(lu, tol);
+
+	if (rt_g.NMG_debug & DEBUG_TRI) {
+		sprintf(db_name, "uni_sj%d.g", iter);
+		nmg_stash_model_to_file(db_name,
+			nmg_find_model(&fu->s_p->l.magic),
+			"after split_at_touching_jaunt");
 	}
 
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
