@@ -69,8 +69,10 @@ int	argc;
 char	*argv[];
 {
     register struct directory	*dp;
+#if 0
     struct bu_external		ext;
     struct db5_raw_internal	raw;
+#endif
     struct stat			stat_buf;
     int				major_code, minor_code;
     unsigned char		majc, minc;
@@ -257,10 +259,14 @@ char	*argv[];
     struct bu_external		ext;
     struct db5_raw_internal	raw;
     struct rt_db_internal	intern;
+#if 0
     struct stat			stat_buf;
+#endif
     struct rt_binunif_internal	*bip;
     struct bu_vls		vls;
+#if 0
     int				status;
+#endif
 
     CHECK_DBI_NULL;
 
