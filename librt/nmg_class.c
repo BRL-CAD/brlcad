@@ -22,16 +22,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -500,6 +504,116 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		rt_log("nmg_class_pt_f\tdist=%g, return=%s\n",
+			closest.dist,
+			nmg_class_name(closest.class) );
+	}
+	return closest.class;
+}
+
+/*
+ *			N M G _ C L A S S _ L U _ F U
+ *
+ *  This is intended as an internal routine to support nmg_lu_reorient().
+ *
+ *  Given a loopuse in a face, pick one of it's vertexuses, and classify
+ *  that point with respect to all the rest of the loopuses in the face.
+ *  The containment status of that point is the status of the loopuse.
+ *
+ *  The algorithm used is to find the edge which the point is closest
+ *  to, and classifiy with respect to that.
+ *
+ *  If the first vertex chosen is "ON" another loop boundary,
+ *  choose the next vertex and try again.  Only return an "ON"
+ *  status if _all_ the vertices are ON.
+ *
+ *  The point is "A", and the face is "B".
+ *
+ *  Returns -
+ *	NMG_CLASS_AinB		lu is INSIDE the area of the face.
+ *	NMG_CLASS_AonBshared	ALL of lu is ON other loop boundaries.
+ *	NMG_CLASS_AoutB		lu is OUTSIDE the area of the face.
+ */
+int
+nmg_class_lu_fu(lu, tol)
+CONST struct loopuse	*lu;
+CONST struct rt_tol	*tol;
+{
+	CONST struct faceuse	*fu;
+	struct vertexuse	*vu;
+	CONST fastf_t	*pt;
+	struct loopuse *lu2;
+	struct neighbor closest;
+	struct edgeuse	*eu;
+	struct edgeuse	*eu_first;
+	fastf_t		dist;
+	plane_t		n;
+
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
+
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_FACE_G(fu->f_p->fg_p);
+
+	/* Pick first vertex in loopuse, for point */
+	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		eu = (struct edgeuse *)NULL;
+	} else {
+		eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
+		NMG_CK_EDGEUSE(eu);
+		vu = eu->vu_p;
+	}
+	eu_first = eu;
+again:
+	NMG_CK_VERTEXUSE(vu);
+	NMG_CK_VERTEX(vu->v_p);
+	NMG_CK_VERTEX_G(vu->v_p->vg_p);
+	pt = vu->v_p->vg_p->coord;
+
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		VPRINT("nmg_class_lu_fu\tPt:", pt);
+	}
+
+	/* Validate distance from point to plane */
+	NMG_GET_FU_PLANE( n, fu );
+	if( (dist=fabs(DIST_PT_PLANE( pt, n ))) > tol->dist )  {
+		rt_log("nmg_class_lu_fu() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
+			V3ARGS(pt), dist );
+	}
+
+	/* find the closest approach in this face to the projected point */
+	closest.dist = MAX_FASTF;
+	closest.p.eu = (struct edgeuse *)NULL;
+	closest.class = NMG_CLASS_AoutB;	/* default return */
+
+	for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
+		/* Do not use the supplied loopuse in the comparison! */
+		if( lu2 == lu )  continue;
+
+		/* Any other OT_UNSPEC or OT_BOOLPLACE lu's don't help either */
+		if( lu2->orientation != OT_SAME && lu2->orientation != OT_OPPOSITE )  {
+			rt_log("nmg_class_lu_fu() WARNING:  skipping %s lu=x%x in fu=x%x!\n",
+				nmg_orientation(lu2->orientation), lu2, fu);
+			continue;
+		}
+
+		/* XXX Any point to doing a topology search first? */
+		nmg_class_pt_l( &closest, pt, lu2, tol );
+
+		/* If this vertex lies ON loop edge, must check all others. */
+		if( closest.class == NMG_CLASS_AonBshared )  {
+			if( !eu_first )  break;  /* was self-loop */
+			eu = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+			if( eu == eu_first )  break;	/* all match */
+			vu = eu->vu_p;
+			goto again;
+		}
+	}
+
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		rt_log("nmg_class_lu_fu\tdist=%g, return=%s\n",
 			closest.dist,
 			nmg_class_name(closest.class) );
 	}
