@@ -72,7 +72,7 @@ char *filename;
 			continue;
 		}
 		if( record.u_id != COMB )  {
-			(void)printf( "dir_build:  unknown record %c (0%o)\n",
+			fprintf(stderr, "dir_build:  unknown record %c (0%o)\n",
 				record.u_id, record.u_id );
 			/* skip this record */
 			continue;
@@ -112,7 +112,7 @@ register char *str;
 	}
 
 	if( noisy )
-		(void)printf("dir_lookup:  could not find '%s'\n", str );
+		fprintf(stderr, "dir_lookup:  could not find '%s'\n", str );
 	return( DIR_NULL );
 }
 
