@@ -22,6 +22,11 @@ static const char RCSid[] = "$Id$";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -261,6 +266,7 @@ void merge()
 /* 
  *			M A I N
  */
+int
 main(argc, argv)
 int argc;
 char **argv;
