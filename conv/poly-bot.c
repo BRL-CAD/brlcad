@@ -67,6 +67,9 @@ char *argv[];
 	int polys=0;
 	int frees=0;
 	int others=0;
+	int bots=0;
+	int i;
+	int num_rec;
 
 	ifp = stdin;
 	ofp = stdout;
@@ -111,6 +114,111 @@ top:
 			case ID_FREE:
 				frees++;
 				continue;
+
+			case DBID_SKETCH:
+				num_rec = bu_glong( (CONST unsigned char *)&record.skt.skt_count );
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying a SKETCH\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case DBID_EXTR:
+				num_rec = bu_glong( (CONST unsigned char *)&record.extr.ex_count );
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying an EXTUSION\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case DBID_NMG:
+				num_rec = bu_glong( (CONST unsigned char *)&record.nmg.N_count );
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying an ARBN\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case DBID_PIPE:
+				num_rec = bu_glong( (CONST unsigned char *)&record.pwr.pwr_count );
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying a PIPE\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case DBID_ARBN:
+				num_rec = bu_glong( (CONST unsigned char *)&record.n.n_grans );
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying an ARBN\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case DBID_STRSOL:
+				num_rec = DB_SS_NGRAN - 1;
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying a STRSOL\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case ID_BSURF:
+				num_rec = record.d.d_nknots + record.d.d_nctls;
+				others += num_rec + 1;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying a NURB\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
+			case DBID_BOT:
+				bots++;
+				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+					bu_bomb( "Write failed!!!\n" );
+				num_rec = bu_glong( (CONST unsigned char *)&record.bot.bot_nrec );
+				for( i=0 ; i<num_rec ; i++ )
+				{
+					if( fread( (char *)&record, sizeof record, 1, ifp ) != 1 )
+						bu_bomb( "Unexpected EOF encountered while copying a BOT\n" );
+					if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
+						bu_bomb( "Write failed!!!\n" );
+				}
+				break;
 			case ID_P_HEAD:
 			{
 				struct rt_db_internal intern;
@@ -217,6 +325,7 @@ top:
 	}
 
 	bu_log( "%d polysolids converted to BOT solids\n", polys );
+	bu_log( "%d BOT solids copied without change\n", bots );
 	bu_log( "%d other records copied without change\n", others );
 	bu_log( "%d free records skipped\n", frees );
 }
