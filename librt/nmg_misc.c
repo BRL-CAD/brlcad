@@ -920,56 +920,6 @@ struct rt_tol *tol;
 }
 
 /*
- *	N M G _ M E R G E _ S H E L L S
- *
- *	Move everything from source shell to destination
- *	shell, then destroy source shell
- *
- */
-void
-nmg_merge_shells( dst , src )
-struct shell *dst;
-struct shell *src;
-{
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	struct vertexuse *vu;
-
-	NMG_CK_SHELL( src );
-	NMG_CK_SHELL( dst );
-
-	while( RT_LIST_NON_EMPTY( &src->fu_hd ) )
-	{
-		fu = RT_LIST_FIRST( faceuse , &src->fu_hd );
-		NMG_CK_FACEUSE( fu );
-		nmg_mv_fu_between_shells( dst , src , fu );
-	}
-
-	while( RT_LIST_NON_EMPTY( &src->lu_hd ) )
-	{
-		lu = RT_LIST_FIRST( loopuse , &src->lu_hd );
-		NMG_CK_LOOPUSE( lu );
-		nmg_mv_lu_between_shells( dst , src , lu );
-	}
-
-	while( RT_LIST_NON_EMPTY( &src->eu_hd ) )
-	{
-		eu = RT_LIST_FIRST( edgeuse , &src->eu_hd );
-		NMG_CK_EDGEUSE( eu );
-		nmg_mv_eu_between_shells( dst , src , eu );
-	}
-
-	if( src->vu_p )
-	{
-		NMG_CK_VERTEXUSE( src->vu_p );
-		nmg_mv_vu_between_shells( dst , src , src->vu_p );
-	}
-
-	nmg_ks( src );
-}
-
-/*
  *	N M G _ D U P _ S H E L L
  *
  *	Duplicate a shell and return the new copy. New shell is
@@ -1730,6 +1680,7 @@ struct loopuse *lu;
 struct nmg_split_loops_state
 {
 	long		*flags;		/* index based array of flags for model */
+	struct rt_tol	*tol;
 	int		split;		/* count of faces split */
 };
 /* state for nmg_unbreak_edge */
@@ -1743,6 +1694,7 @@ int after;
 	struct faceuse *fu;
 	struct nmg_split_loops_state *state;
 	struct loopuse *lu;
+	struct rt_tol *tol;
 	int otsame_loops=0;
 	int otopp_loops=0;
 
@@ -1750,6 +1702,7 @@ int after;
 	NMG_CK_FACEUSE( fu );
 
 	state = (struct nmg_split_loops_state *)sl_state;
+	tol = state->tol;
 
 	if( !NMG_INDEX_TEST_AND_SET( state->flags , fu ) )  return;
 
@@ -1774,11 +1727,70 @@ int after;
 		}
 	}
 
-	if( otsame_loops < 2 )
-		return;
-
-	if( otopp_loops == 0 )
+	if( otopp_loops && otsame_loops )
 	{
+		struct faceuse *new_fu;
+		struct loopuse *lu1;
+		int first=1;
+
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
+		{
+			struct loopuse *next_lu;
+
+			next_lu = RT_LIST_PNEXT( loopuse , &lu->l );
+			if( lu->orientation == OT_OPPOSITE )
+			{
+				struct loopuse *lu1;
+				int inside=0;
+
+				/* check if this loop is within another loop */
+				for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+				{
+					int class;
+
+					if( lu == lu1 || lu1->orientation != OT_SAME )
+						continue;
+
+					class = nmg_classify_lu_lu( lu , lu1 , tol );
+					if( class == NMG_CLASS_AinB )
+					{
+						inside = 1;
+						break;
+					}
+				}
+
+				if( !inside )
+				{
+					/* this loop is not a hole inside another loop
+					 * so make it a face of its own */
+					plane_t plane;
+
+					NMG_GET_FU_PLANE( plane , fu->fumate_p );
+					new_fu = nmg_mk_new_face_from_loop( lu );
+					nmg_face_g( new_fu , plane );
+					nmg_lu_reorient( lu , tol );
+				}
+			}
+			else
+			{
+				plane_t plane;
+
+				if( first )
+					first = 0;
+				else
+				{
+					NMG_GET_FU_PLANE( plane , fu );
+					new_fu = nmg_mk_new_face_from_loop( lu );
+					nmg_face_g( new_fu , plane );
+				}
+			}
+			lu = next_lu;
+		}
+	}
+	else
+	{
+		/* all loops are of the same orientation, just make a face for every loop */
 		int first=1;
 		struct faceuse *new_fu;
 
@@ -1795,7 +1807,14 @@ int after;
 			{
 				plane_t plane;
 
-				NMG_GET_FU_PLANE( plane , fu );
+				if( lu->orientation == OT_SAME )
+				{
+					NMG_GET_FU_PLANE( plane , fu );
+				}
+				else
+				{
+					NMG_GET_FU_PLANE( plane , fu->fumate_p );
+				}
 				new_fu = nmg_mk_new_face_from_loop( lu );
 				nmg_face_g( new_fu , plane );
 			}
@@ -1815,8 +1834,9 @@ int after;
  *	Returns the number of faces modified.
  */
 int
-nmg_split_loops_into_faces( magic_p )
+nmg_split_loops_into_faces( magic_p , tol )
 long		*magic_p;
+struct rt_tol	*tol;
 {
 	struct model *m;
 	struct nmg_visit_handlers htab;
@@ -1825,13 +1845,16 @@ long		*magic_p;
 	int count;
 
 	m = nmg_find_model( magic_p );
-	NMG_CK_MODEL( m );	
+	NMG_CK_MODEL( m );
+
+	RT_CK_TOL( tol );
 
 	htab = nmg_visit_handlers_null;		/* struct copy */
 	htab.aft_faceuse = nmg_split_loops_handler;
 
 	sl_state.split = 0;
 	sl_state.flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
+	sl_state.tol = tol;
 
 	nmg_visit( magic_p , &htab , (genptr_t *)&sl_state );
 
@@ -1854,8 +1877,9 @@ long		*magic_p;
  *		additional shells in the passed in shell's region.
  */
 int
-nmg_decompose_shell( s )
+nmg_decompose_shell( s , tol )
 struct shell *s;
+struct rt_tol *tol;
 {
 	int missed_faces;
 	int no_of_shells=1;
@@ -1875,7 +1899,9 @@ struct shell *s;
 
 	NMG_CK_SHELL( s );
 
-	(void)nmg_split_loops_into_faces( &s->l.magic );
+	RT_CK_TOL( tol );
+
+	(void)nmg_split_loops_into_faces( &s->l.magic , tol );
 
 	/* Make an index table to insure we visit each face once and only once */
 	r = s->r_p;
@@ -3647,40 +3673,46 @@ CONST struct rt_tol *tol;
 		{
 			struct loopuse *lu1;
 			plane_t plane;
-			int done=0;
+			int split_loop=0;
 
 			if( fu->orientation != OT_SAME )
 				continue;
 
 			NMG_GET_FU_PLANE( plane , fu );
-			while( !done )
+
+			lu = RT_LIST_LAST( loopuse , &fu->lu_hd );
+			while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
 			{
-				done = 1;
+				struct loopuse *new_lu;
+				struct faceuse *new_fu;
+				int orientation;
 
-				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				/* check this loop */
+				while( (vu=(struct vertexuse *)nmg_loop_touches_self( lu ) ) != (struct vertexuse *)NULL )
 				{
-					struct loopuse *new_lu;
-					struct faceuse *new_fu;
-
-					/* check this loop */
-					if( (vu=(struct vertexuse *)nmg_loop_touches_self( lu ) ) == (struct vertexuse *)NULL )
-						continue;
-
-					/* this loop touches itself */
-					done = 0;
-
-					/* split loop */
+					/* Split this touching loop, but give both resulting loops
+					 * the same orientation as the original. This will result
+					 * in the part of the loop that needs to be discarded having
+					 * an incorrect orientation with respect to the face.
+					 * This incorrect orientation will be discovered later by
+					 * "nmg_bad_face_normals" and will result in the undesirable
+					 * portion's demise
+					 */
+					orientation = lu->orientation;
 					new_lu = nmg_split_lu_at_vu( lu , vu );
-
-					/* make a new face from the new loop */
-					new_fu = nmg_mk_new_face_from_loop( new_lu );
-					nmg_face_g( new_fu , plane );
-
-					/* Determine new orientations */
-					nmg_lu_reorient( lu, tol );
-					nmg_lu_reorient( new_lu, tol );
+					new_lu->orientation = orientation;
+					lu->orientation = orientation;
+					new_lu->lumate_p->orientation = orientation;
+					lu->lumate_p->orientation = orientation;
+					split_loop = 1;
 				}
+
+				lu = RT_LIST_PLAST( loopuse , &lu->l );
 			}
+
+			/* make new faces from the new loops, if any */
+			if( split_loop )
+				nmg_split_loops_into_faces( &fu->l.magic , tol );
 		}
 	}
 
@@ -3726,7 +3758,7 @@ CONST struct rt_tol *tol;
 			rt_bomb( "nmg_extrude_shell: Nothing got moved to new region\n" );
 
 		/* now decompose our shell */
-		if( (inside_shells=nmg_decompose_shell( is )) < 2 )
+		if( (inside_shells=nmg_decompose_shell( is , tol )) < 2 )
 		{
 			/* if we still have only one shell,
 			 * just move it back
@@ -3744,7 +3776,6 @@ CONST struct rt_tol *tol;
 			while( RT_LIST_NOT_HEAD( &s_tmp->l , &new_r->s_hd ) )
 			{
 				struct shell *next_s;
-
 				next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
 
 				/* check for a shell with bad faceuse normals */
@@ -3780,7 +3811,7 @@ CONST struct rt_tol *tol;
 					continue;
 				}
 
-				nmg_merge_shells( is , s_tmp );
+				nmg_js( is , s_tmp );
 				s_tmp = next_s;
 			}
 
@@ -4189,7 +4220,7 @@ CONST struct rt_tol *tol;
 		}
 	}
 
-	nmg_merge_shells( dst , src );
+	nmg_js( dst , src );
 
 	/* now glue it all together */
 	nmg_tbl( &faces , TBL_INIT , NULL );
@@ -4388,14 +4419,14 @@ CONST struct rt_tol *tol;
 			}
 
 			/* now merge the inside and outside shells */
-			nmg_merge_shells( s , is );
+			nmg_js( s , is );
 		}
 		else
 		{
 			if( nmg_ck_closed_surf( is , tol ) )
 			{
 				rt_log( "nmg_extrude_shell: inside shell is closed, outer isn't!!\n" );
-				nmg_merge_shells( s , is );
+				nmg_js( s , is );
 			}
 			else
 			{
