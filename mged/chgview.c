@@ -590,6 +590,18 @@ f_ill()
 	dmaflag = 1;
 }
 
+/* Simulate pressing "Solid Edit" and doing an ILLuminate command */
+void
+f_sed()
+{
+	if( state != ST_VIEW )  {
+		state_err("keyboard solid edit start");
+		return;
+	}
+	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
+	f_ill();		/* Illuminate named solid --> ST_S_EDIT */
+}
+
 /* Simulate a knob twist.  "knob id val" */
 void
 f_knob()
