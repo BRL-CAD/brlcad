@@ -2473,11 +2473,20 @@ top:
  *  Force the geometry structure for a given edge to be that of
  *  the intersection line between the two faces.
  *
+ *  Note that sometimes a vertex can appear to lie on more than one
+ *  line.  It is important to refer to geometry here, to make sure
+ *  that the edgeuse is not mistakenly fused to the wrong edge geometry.
+ *
+ *  XXX This has the byproduct that not all edgeuses "on" the line
+ *  XXX of intersection will share rs->eg_p.
+ *
+ *  See the comments in nmg_radial_join_eu() for the rationale.
  */
 void
-nmg_edge_geom_isect_line( eu, rs )
+nmg_edge_geom_isect_line( eu, rs, reason )
 struct edgeuse		*eu;
 struct nmg_ray_state	*rs;
+CONST char		*reason;
 {
 	register struct edge_g_lseg	*eg;
 
@@ -2485,11 +2494,14 @@ struct nmg_ray_state	*rs;
 	NMG_CK_RAYSTATE(rs);
 
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at start\n",
-			eu, eu->g.magic_p, rs->eg_p);
+		rt_log("nmg_edge_geom_isect_line(eu=x%x, %s)\n eu->g=x%x, rs->eg=x%x at START\n",
+			eu, reason,
+			eu->g.magic_p, rs->eg_p);
 	}
 	if( !eu->g.magic_p )  {
-		/* This edgeuse has No edge geometry so far.  How??? */
+		/* This edgeuse has No edge geometry so far.
+		 * It may be a new edge formed by a CUTJOIN operation.
+		 */
 		if( !rs->eg_p )  {
 			nmg_edge_g( eu );
 			eg = eu->g.lseg_p;
@@ -2505,7 +2517,7 @@ struct nmg_ray_state	*rs;
 	/* Edge has edge geometry */
 	if( eu->g.lseg_p == rs->eg_p )  return;	/* nothing changes */
 	if( !rs->eg_p )  {
-		/* This is first edge_g on line, remember it */
+		/* This is first edge_g found on isect line, remember it */
 		eg = eu->g.lseg_p;
 		NMG_CK_EDGE_G_LSEG(eg);
 		rs->eg_p = eg;
@@ -2515,11 +2527,13 @@ struct nmg_ray_state	*rs;
 	 * Edge has an edge geometry struct, different from that of isect line.
 	 * Force all uses of this edge geom to take on isect line's geometry.
 	 * Everywhere eu->g.lseg_p is seen, replace with rs->eg_p.
+	 *
+	 *  XXX This is DUBIOUS, as the angle might be very different.
 	 */
 	nmg_jeg( rs->eg_p, eu->g.lseg_p );
 out:
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at end\n",
+		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at END\n",
 			eu, eu->g.magic_p, rs->eg_p);
 	}
 }
@@ -2868,18 +2882,14 @@ int			other_rs_state;
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log("force prev eu to ray\n");
-			nmg_edge_geom_isect_line( eu, rs );
+			nmg_edge_geom_isect_line( eu, rs, "force ON_REV to line" );
 		}
 	}
 	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
 		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
-			if(rt_g.NMG_debug&DEBUG_FCUT)
-				rt_log("force next eu to ray\n");
-			nmg_edge_geom_isect_line( eu, rs );
+			nmg_edge_geom_isect_line( eu, rs, "force ON_FORW to line" );
 		}
 	}
 
@@ -3012,7 +3022,7 @@ int			other_rs_state;
 			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 		} else {
 			/* Break edge, force onto isect line */
-			nmg_edge_geom_isect_line( eu, rs );
+			nmg_edge_geom_isect_line( eu, rs, "LONE_V_ESPLIT, before edge split" );
 			rs->vu[pos] = nmg_ebreaker( vu->v_p, eu, rs->tol )->vu_p;
 		}
 		/* Kill lone vertex loop (and vertexuse) */
@@ -3049,7 +3059,7 @@ int			other_rs_state;
 
 		/*  We know edge geom is null, make it be the isect line */
 		first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, rs->vu[pos]->up.eu_p);
-		nmg_edge_geom_isect_line( first_new_eu, rs );
+		nmg_edge_geom_isect_line( first_new_eu, rs, "LONE_V_JAUNT, new edge" );
 
 		/* Fusing to this new edge will happen in nmg_face_cutjoin() */
 
@@ -3114,7 +3124,7 @@ int			other_rs_state;
 					rt_bomb("nmg_face_state_transition() cut loop bafflement\n");
 				}
 				/* Fuse new edge to intersect line, old edge */
-				nmg_edge_geom_isect_line( first_new_eu, rs );
+				nmg_edge_geom_isect_line( first_new_eu, rs, "CUTJOIN, new edge after loop cut" );
 				if( old_eu )  nmg_radial_join_eu( old_eu, first_new_eu, rs->tol );
 			}
 
@@ -3193,7 +3203,7 @@ int			other_rs_state;
 		NMG_CK_EDGEUSE(first_new_eu);
 		if( eu == first_new_eu )  {
 			if( old_eu )  nmg_radial_join_eu( old_eu, eu, rs->tol );
-			nmg_edge_geom_isect_line( first_new_eu, rs );
+			nmg_edge_geom_isect_line( first_new_eu, rs, "CUTJOIN new edge" );
 		}
 
 		/* Recompute loop geometry.  Bounding box may have expanded */
