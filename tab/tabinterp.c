@@ -35,10 +35,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
+#include "externs.h"
+#include "bu.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bn.h"
 #include "raytrace.h"
 
 #include "../librt/debug.h"
@@ -97,6 +104,11 @@ void		pr_ichan();
 void		next_interpolate();
 void		step_interpolate();
 void		quat_interpolate();
+int get_args(int argc, char **argv);
+int create_chan( char *num, int len, char *itag );
+int chan_not_loaded_or_specified( int ch );
+int spline( struct chan *chp, fastf_t *times );
+
 
 struct command_tab cmdtab[] = {
 	{"file", "filename chan_num(s)", "load channels from file",
@@ -130,10 +142,6 @@ char	**argv;
 {
 	register char	*buf;
 	register int	ret;
-
-#if 0
-	rt_g.debug = DEBUG_MEM;
-#endif
 
 	get_args(argc,argv);
 	/*
@@ -320,10 +328,7 @@ out:
  *			C R E A T E _ C H A N
  */
 int
-create_chan( num, len, itag )
-char	*num;
-int	len;
-char	*itag;
+create_chan( char *num, int len, char *itag )
 {
 	int	n;
 
@@ -343,7 +348,7 @@ char	*itag;
 				max_chans *= 2;
 			if(verbose) bu_log("reallocating from %d to %d chans\n",
 				prev, max_chans);
-			chan = (struct chan *)rt_realloc( (char *)chan,
+			chan = (struct chan *)bu_realloc( (char *)chan,
 				max_chans * sizeof(struct chan),
 				"chan[]" );
 			bzero( (char *)(&chan[prev]),
@@ -842,9 +847,7 @@ register fastf_t	*times;
  *	1	OK
  */
 int
-spline( chp, times )
-register struct chan	*chp;
-fastf_t			*times;
+spline( register struct chan *chp, fastf_t *times )
 {
 	double	d,s;
 	double	u = 0;
@@ -1226,8 +1229,7 @@ char	*argv[];
  *	 1 if no data, or interpolator already set (message printed)
  */
 int
-chan_not_loaded_or_specified( ch )
-int	ch;
+chan_not_loaded_or_specified( int ch )
 {
 	if( ch < 0 || ch >= nchans )  return -1;
 	if( chan[ch].c_ilen <= 0 )  {
@@ -1242,9 +1244,7 @@ int	ch;
 }
 
 #define OPT_STR "q"
-int get_args(argc,argv)
-int argc;
-char **argv;
+int get_args(int argc, char **argv)
 {
 	int c;
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
