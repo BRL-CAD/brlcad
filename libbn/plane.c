@@ -2391,14 +2391,21 @@ fail:
 	return 0;
 }
 
+/*
+ *			B N _ D O E S _ R A Y _ I S E C T _ T R I
+ *
+ *  Returns -
+ *	0	No intersection
+ *	1	Intersection, 'inter' has intersect point.
+ */
 int
-bn_does_ray_isect_tri( pt, dir, V, A, B, inter )
-CONST point_t pt;
-CONST vect_t dir;
-CONST point_t V;
-CONST point_t A;
-CONST point_t B;
-point_t inter;			/* output variable */
+bn_does_ray_isect_tri(
+	const point_t pt,
+	const vect_t dir,
+	const point_t V,
+	const point_t A,
+	const point_t B,
+	point_t	inter)			/* output variable */
 {
 	vect_t VP, VA, VB, AB, AP, N;
 	fastf_t NdotDir;

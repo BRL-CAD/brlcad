@@ -490,6 +490,13 @@ BU_EXTERN(double	bn_dist_pt2_along_line2, (CONST point_t p,
 				CONST vect_t d, CONST point_t x));
 BU_EXTERN(int		bn_between, (double left, double mid,
 				double right, CONST struct bn_tol *tol));
+int bn_does_ray_isect_tri(
+	const point_t pt,
+	const vect_t dir,
+	const point_t V,
+	const point_t A,
+	const point_t B,
+	point_t	inter);
 BU_EXTERN(int		bn_hlf_class, (CONST plane_t half_eqn,
 				       CONST vect_t min, CONST vect_t max,
 				       CONST struct bn_tol *tol));
