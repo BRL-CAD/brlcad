@@ -70,6 +70,9 @@ static int	width;			/* input width */
 
 static int	thresh = -1;		/* Threshold */
 
+static int	page_xoff = 150;	/* 150=0.5", 192=0.75" */
+static int	page_yoff = 80;		/* 80=0.25", 544=1.75" */
+
 #define MAXWIDTH	2600
 long		swath[32][MAXWIDTH/32];	/* assumes long has 32 bits */
 unsigned char	line[MAXWIDTH];		/* grey-scale input buffer */
@@ -86,7 +89,7 @@ void	im_write();
 
 char usage[] = "\
 Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
-	[-t thresh] [file.bw] > impress\n";
+	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
 bool
 get_args( argc, argv )
@@ -94,7 +97,7 @@ register char	**argv;
 {
 	register int	c;
 
-	while ( (c = getopt( argc, argv, "hDs:n:w:t:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hDs:n:w:t:X:Y:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -116,6 +119,12 @@ register char	**argv;
 			break;
 		case 't':
 			thresh = atoi(optarg);
+			break;
+		case 'X':
+			page_xoff = atoi(optarg);
+			break;
+		case 'Y':
+			page_yoff = atoi(optarg);
 			break;
 
 		default:		/* '?' */
@@ -203,11 +212,11 @@ im_header()
 	(void)putchar(205);		/* SET_HV_SYSTEM (whole page) */
 	(void)putchar(0x54);
 	(void)putchar(135);		/* SET_ABS_H (left margin) */
-	(void)putchar(0);		/* 0,192 gave approx 3/4" margin */
-	(void)putchar(150);		/* 1/2" margin */
+	(void)putchar((page_xoff>>8)&0xFF);
+	(void)putchar(page_xoff&0xFF);
 	(void)putchar(137);		/* SET_ABS_V (top margin) */
-	(void)putchar(0);		/* Was 2,32;  gave 1.75" top margin */
-	(void)putchar(80);		/* 1/2" top margin */
+	(void)putchar((page_yoff>>8)&0xFF);
+	(void)putchar(page_yoff&0xFF);
 	(void)putchar(205);		/* SET_HV_SYSTEM (set origin) */
 	(void)putchar(0x74);
 	(void)putchar(206);		/* SET_ADV_DIRS (normal raster scan) */
