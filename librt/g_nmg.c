@@ -424,14 +424,7 @@ struct disk_rt_list  {
 struct disk_model {
 	unsigned char		magic[4];
 	unsigned char		version[4];	/* unused */
-	disk_index_t		ma_p;
 	struct disk_rt_list	r_hd;
-};
-
-/* XXX This is another unused structure! */
-#define DISK_MODEL_A_MAGIC	0x4e6d5f61	/* Nm_a */
-struct disk_model_a {
-	unsigned char		magic[4];
 };
 
 #define DISK_REGION_MAGIC	0x4e726567	/* Nreg */
@@ -625,27 +618,27 @@ struct disk_double_array  {
 /* ---------------------------------------------------------------------- */
 /* All these arrays and defines have to use the same implicit index values */
 #define NMG_KIND_MODEL		0
-#define NMG_KIND_MODEL_A	1
-#define NMG_KIND_NMGREGION	2
-#define NMG_KIND_NMGREGION_A	3
-#define NMG_KIND_SHELL		4
-#define NMG_KIND_SHELL_A	5
-#define NMG_KIND_FACEUSE	6
-#define NMG_KIND_FACE		7
-#define NMG_KIND_FACE_G_PLANE	8
-#define NMG_KIND_FACE_G_SNURB	9
-#define NMG_KIND_LOOPUSE	10
-#define NMG_KIND_LOOP		11
-#define NMG_KIND_LOOP_G		12
-#define NMG_KIND_EDGEUSE	13
-#define NMG_KIND_EDGE		14
-#define NMG_KIND_EDGE_G_LSEG	15
-#define NMG_KIND_EDGE_G_CNURB	16
-#define NMG_KIND_VERTEXUSE	17
-#define NMG_KIND_VERTEXUSE_A_PLANE	18
-#define NMG_KIND_VERTEXUSE_A_CNURB	19
-#define NMG_KIND_VERTEX		20
-#define NMG_KIND_VERTEX_G	21
+#define NMG_KIND_NMGREGION	1
+#define NMG_KIND_NMGREGION_A	2
+#define NMG_KIND_SHELL		3
+#define NMG_KIND_SHELL_A	4
+#define NMG_KIND_FACEUSE	5
+#define NMG_KIND_FACE		6
+#define NMG_KIND_FACE_G_PLANE	7
+#define NMG_KIND_FACE_G_SNURB	8
+#define NMG_KIND_LOOPUSE	9
+#define NMG_KIND_LOOP		10
+#define NMG_KIND_LOOP_G		11
+#define NMG_KIND_EDGEUSE	12
+#define NMG_KIND_EDGE		13
+#define NMG_KIND_EDGE_G_LSEG	14
+#define NMG_KIND_EDGE_G_CNURB	15
+#define NMG_KIND_VERTEXUSE	16
+#define NMG_KIND_VERTEXUSE_A_PLANE	17
+#define NMG_KIND_VERTEXUSE_A_CNURB	18
+#define NMG_KIND_VERTEX		19
+#define NMG_KIND_VERTEX_G	20
+/* 21 through 24 are unassigned, and reserved for future use */
 
 #define NMG_KIND_DOUBLE_ARRAY	25		/* special, variable sized */
 
@@ -655,7 +648,6 @@ struct disk_double_array  {
 
 CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_model),		/* 0 */
-	sizeof(struct disk_model_a),
 	sizeof(struct disk_nmgregion),
 	sizeof(struct disk_nmgregion_a),
 	sizeof(struct disk_shell),
@@ -664,8 +656,8 @@ CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_face),
 	sizeof(struct disk_face_g_plane),
 	sizeof(struct disk_face_g_snurb),
-	sizeof(struct disk_loopuse),		/* 10 */
-	sizeof(struct disk_loop),
+	sizeof(struct disk_loopuse),
+	sizeof(struct disk_loop),		/* 10 */
 	sizeof(struct disk_loop_g),
 	sizeof(struct disk_edgeuse),
 	sizeof(struct disk_edge),
@@ -674,8 +666,9 @@ CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_vertexuse),
 	sizeof(struct disk_vertexuse_a_plane),
 	sizeof(struct disk_vertexuse_a_cnurb),
-	sizeof(struct disk_vertex),		/* 20 */
-	sizeof(struct disk_vertex_g),
+	sizeof(struct disk_vertex),
+	sizeof(struct disk_vertex_g),		/* 20 */
+	0,
 	0,
 	0,
 	0,
@@ -683,7 +676,6 @@ CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 };
 CONST char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 	"model",				/* 0 */
-	"model_a",
 	"nmgregion",
 	"nmgregion_a",
 	"shell",
@@ -692,8 +684,8 @@ CONST char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 	"face",
 	"face_g_plane",
 	"face_g_snurb",
-	"loopuse",				/* 10 */
-	"loop",
+	"loopuse",
+	"loop",					/* 10 */
 	"loop_g",
 	"edgeuse",
 	"edge",
@@ -702,8 +694,9 @@ CONST char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 	"vertexuse",
 	"vertexuse_a_plane",
 	"vertexuse_a_cnurb",
-	"vertex",				/* 20 */
-	"vertex_g",
+	"vertex",
+	"vertex_g",				/* 20 */
+	"k21",
 	"k22",
 	"k23",
 	"k24",
@@ -725,8 +718,6 @@ register long	magic;
 	switch(magic)  {
 	case NMG_MODEL_MAGIC:
 		return NMG_KIND_MODEL;
-	case NMG_MODEL_A_MAGIC:
-		return NMG_KIND_MODEL_A;
 	case NMG_REGION_MAGIC:
 		return NMG_KIND_NMGREGION;
 	case NMG_REGION_A_MAGIC:
@@ -1019,17 +1010,7 @@ double		local2mm;
 			NMG_CK_MODEL(m);
 			PUTMAGIC( DISK_MODEL_MAGIC );
 			rt_plong( d->version, 0 );
-			INDEX( d, m, ma_p );
 			INDEXL( d, m, r_hd );
-		}
-		return;
-	case NMG_KIND_MODEL_A:
-		{
-			struct model_a	*ma = (struct model_a *)ip;
-			struct disk_model_a	*d;
-			d = &((struct disk_model_a *)op)[oindex];
-			NMG_CK_MODEL_A(ma);
-			PUTMAGIC( DISK_MODEL_A_MAGIC );
 		}
 		return;
 	case NMG_KIND_NMGREGION:
@@ -1396,17 +1377,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			d = &((struct disk_model *)ip)[iindex];
 			NMG_CK_MODEL(m);
 			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_MAGIC );
-			INDEX( d, m, model_a, ma_p );
 			INDEXL_HD( d, m, r_hd, m->r_hd );
-		}
-		return 0;
-	case NMG_KIND_MODEL_A:
-		{
-			struct model_a	*ma = (struct model_a *)op;
-			struct disk_model_a	*d;
-			d = &((struct disk_model_a *)ip)[iindex];
-			NMG_CK_MODEL_A(ma);
-			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_A_MAGIC );
 		}
 		return 0;
 	case NMG_KIND_NMGREGION:
@@ -1804,14 +1775,6 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				/* Keep disk indices & new indices equal... */
 				m->maxindex++;
 				ptrs[subscript] = (long *)m;
-				break;
-			case NMG_KIND_MODEL_A:
-				{
-					struct model_a	*ma;
-					GET_MODEL_A( ma, m );
-					ma->magic = NMG_MODEL_A_MAGIC;
-					ptrs[subscript] = (long *)ma;
-				}
 				break;
 			case NMG_KIND_NMGREGION:
 				{

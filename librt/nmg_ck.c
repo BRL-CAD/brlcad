@@ -616,9 +616,6 @@ nmg_vmodel(m)
 struct model *m;
 {
 	NMG_CK_MODEL(m);
-	if (m->ma_p) {
-		NMG_CK_MODEL_A(m->ma_p);
-	}
 	nmg_vregion( &m->r_hd, m);
 }
 

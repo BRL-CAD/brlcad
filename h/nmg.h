@@ -163,7 +163,6 @@ struct nmg_ptbl {
  *  Magic Numbers.
  */
 #define NMG_MODEL_MAGIC 	0x12121212
-#define NMG_MODEL_A_MAGIC	0x68652062
 #define NMG_REGION_MAGIC	0x23232323
 #define NMG_REGION_A_MAGIC	0x696e6720
 #define NMG_SHELL_MAGIC 	0x71077345	/* shell oil */
@@ -205,7 +204,6 @@ struct nmg_ptbl {
 	}
 
 #define NMG_CK_MODEL(_p)	NMG_CKMAG(_p, NMG_MODEL_MAGIC, "model")
-#define NMG_CK_MODEL_A(_p)	NMG_CKMAG(_p, NMG_MODEL_A_MAGIC, "model_a")
 #define NMG_CK_REGION(_p)	NMG_CKMAG(_p, NMG_REGION_MAGIC, "region")
 #define NMG_CK_REGION_A(_p)	NMG_CKMAG(_p, NMG_REGION_A_MAGIC, "region_a")
 #define NMG_CK_SHELL(_p)	NMG_CKMAG(_p, NMG_SHELL_MAGIC, "shell")
@@ -288,15 +286,9 @@ struct knot_vector {
  */
 struct model {
 	long			magic;
-	struct model_a		*ma_p;
 	struct rt_list		r_hd;	/* list of regions */
 	long			index;	/* struct # in this model */
 	long			maxindex; /* # of structs so far */
-};
-
-struct model_a {
-	long			magic;
-	long			index;	/* struct # in this model */
 };
 
 /*
@@ -655,7 +647,7 @@ struct vertexuse_a_cnurb {
 #define NMG_INCR_INDEX(_p,_m)	\
 	NMG_CK_MODEL(_m); (_p)->index = ((_m)->maxindex)++
 
-#define GET_MODEL_A(p,m)    {NMG_GETSTRUCT(p, model_a); NMG_INCR_INDEX(p,m);}
+#define GET_MODEL_A(p,m)    bogus_get_model_a;
 #define GET_REGION(p,m)	    {NMG_GETSTRUCT(p, nmgregion); NMG_INCR_INDEX(p,m);}
 #define GET_REGION_A(p,m)   {NMG_GETSTRUCT(p, nmgregion_a); NMG_INCR_INDEX(p,m);}
 #define GET_SHELL(p,m)	    {NMG_GETSTRUCT(p, shell); NMG_INCR_INDEX(p,m);}
@@ -684,7 +676,7 @@ struct vertexuse_a_cnurb {
 #define GET_VERTEXUSE_A_CNURB(p,m) {NMG_GETSTRUCT(p, vertexuse_a_cnurb); NMG_INCR_INDEX(p,m);}
 
 #define FREE_MODEL(p)	    NMG_FREESTRUCT(p, model)
-#define FREE_MODEL_A(p)	    NMG_FREESTRUCT(p, model_a)
+#define FREE_MODEL_A(p)	    bogus_free_model_a;
 #define FREE_REGION(p)	    NMG_FREESTRUCT(p, nmgregion)
 #define FREE_REGION_A(p)    NMG_FREESTRUCT(p, nmgregion_a)
 #define FREE_SHELL(p)	    NMG_FREESTRUCT(p, shell)
@@ -802,7 +794,6 @@ struct nmg_boolstruct {
 struct nmg_struct_counts {
 	/* Actual structure counts (Xuse, then X) */
 	long	model;
-	long	model_a;
 	long	region;
 	long	region_a;
 	long	shell;
@@ -892,8 +883,6 @@ struct nmg_struct_counts {
 struct nmg_visit_handlers {
 	void	(*bef_model) NMG_ARGS((long *, genptr_t, int));
 	void	(*aft_model) NMG_ARGS((long *, genptr_t, int));
-
-	void	(*vis_model_a) NMG_ARGS((long *, genptr_t, int));
 
 	void	(*bef_region) NMG_ARGS((long *, genptr_t, int));
 	void	(*aft_region) NMG_ARGS((long *, genptr_t, int));

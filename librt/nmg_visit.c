@@ -272,8 +272,6 @@ genptr_t			*state;		/* Handler's private state */
 	for( RT_LIST_FOR( r, nmgregion, &model->r_hd ) )  {
 		nmg_visit_region( r, htab, state );
 	}
-	if(htab->vis_model_a && model->ma_p)
-		htab->vis_model_a( (long *)model->ma_p, state, 0 );
 
 	if(htab->aft_model) htab->aft_model( (long *)model, state, 1 );
 }

@@ -101,12 +101,8 @@ static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
  *	edge_g		(to track edge subdivision heritage, for linear edges)
  *	vertex_g	(Cartesian coordinates)
  * The uses of those objects can optionally have attributes:
- *	model_a		(not used)
  *	nmgregion_a	(region bounding box)	[nmgregions have no uses]
  *	shell_a		(shell bounding box)	[shells have no uses]
- *	faceuse_a	(not used)
- *	loopuse_a	(not used)
- *	edgeuse_a	(not used)
  *	vertexuse_a	(special surface normal, for normal interpolation)
  *
  * Consider for example a simple cube.
@@ -245,7 +241,6 @@ nmg_mm()
 
 	NMG_GETSTRUCT( m, model );
 
-	m->ma_p = (struct model_a *)NULL;
 	RT_LIST_INIT( &m->r_hd );
 	m->index = 0;
 	m->maxindex = 1;
@@ -1613,9 +1608,6 @@ struct model *m;
 	while( RT_LIST_NON_EMPTY( &m->r_hd ) )
 		(void)nmg_kr( RT_LIST_FIRST( nmgregion, &m->r_hd ) );
 
-	if (m->ma_p) {
-		FREE_MODEL_A(m->ma_p);
-	}
 	FREE_MODEL(m);
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_km(m=x%x)\n", m);

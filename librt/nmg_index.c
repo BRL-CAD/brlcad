@@ -47,8 +47,6 @@ register long	*p;
 	switch(*p)  {
 	case NMG_MODEL_MAGIC:
 		return ((struct model *)p)->index;
-	case NMG_MODEL_A_MAGIC:
-		return ((struct model_a *)p)->index;
 	case NMG_REGION_MAGIC:
 		return ((struct nmgregion *)p)->index;
 	case NMG_REGION_A_MAGIC:
@@ -181,7 +179,6 @@ struct model	*m;
 
 	NMG_CK_MODEL(m);
 	NMG_MARK_INDEX(m);
-	if( m->ma_p )  NMG_MARK_INDEX(m->ma_p);
 
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
@@ -344,7 +341,6 @@ register long	newindex;
 	 */
 
 	NMG_ASSIGN_NEW_INDEX(m);
-	if( m->ma_p )  NMG_ASSIGN_NEW_INDEX(m->ma_p);
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
 		NMG_ASSIGN_NEW_INDEX(r);
@@ -479,7 +475,6 @@ CONST struct nmg_struct_counts	*ctr;
 
 	rt_vls_printf(str, " Actual structure counts:\n");
 	rt_vls_printf(str, "\t%6d model\n", ctr->model);
-	rt_vls_printf(str, "\t%6d model_a\n", ctr->model_a);
 	rt_vls_printf(str, "\t%6d region\n", ctr->region);
 	rt_vls_printf(str, "\t%6d region_a\n", ctr->region_a);
 	rt_vls_printf(str, "\t%6d shell\n", ctr->shell);
@@ -592,10 +587,6 @@ CONST struct model			*m;
 	ptrs = (long **)rt_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
 
 	NMG_UNIQ_INDEX(m, model);
-	if(m->ma_p)  {
-		NMG_CK_MODEL_A(m->ma_p);
-		NMG_UNIQ_INDEX(m->ma_p, model_a);
-	}
 	ctr->max_structs = m->maxindex;
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		NMG_CK_REGION(r);
