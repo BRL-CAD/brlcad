@@ -232,7 +232,7 @@ char **argv;
 			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
 				int i;
 
-				fprintf( ofp, "attr %s", dp->d_namep );
+				fprintf( ofp, "attr set %s", dp->d_namep );
 				for( i=0 ; i<avs->count ; i++ ) {
 					fprintf( ofp, " %s {%s}", avs->avp[i].name, avs->avp[i].value );
 				}
