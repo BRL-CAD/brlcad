@@ -340,17 +340,28 @@ int y_top;
 	    else
 	      xpos = 0;
 
+#ifdef USE_LIBDM
+	    dmp->dmr_puts( dmp, mptr->scroll_string,
+			   xpos, y-SCROLL_DY/2, 0, DM_RED );
+	    dmp->dmr_2d_line(dmp, XMAX, y, MENUXLIM, y, 0);
+#else
 	    dmp->dmr_puts( mptr->scroll_string,
 			   xpos, y-SCROLL_DY/2, 0, DM_RED );
 	    dmp->dmr_2d_line(XMAX, y, MENUXLIM, y, 0);
+#endif
 	  }
 	}
 
 
 	if( y != y_top )  {
 		/* Sliders were drawn, so make left vert edge */
+#ifdef USE_LIBDM
+		dmp->dmr_2d_line( dmp, MENUXLIM, scroll_top-1,
+			MENUXLIM, y, 0 );
+#else
 		dmp->dmr_2d_line( MENUXLIM, scroll_top-1,
 			MENUXLIM, y, 0 );
+#endif
 	}
 	return( y );
 }
