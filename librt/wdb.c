@@ -37,6 +37,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+/* XXX move to raytrace.h */
+#define RT_CK_WDB(_p)		BU_CKMAG( _p , RT_WDB_MAGIC , "rt_wdb" )
+
 /*
  *			W D B _ F O P E N
  *
@@ -254,3 +257,30 @@ double		local2mm;
 	db_free_external( &ext );
 	return(0);
 }
+
+/*
+ *			W D B _ C L O S E
+ *
+ *  Release from associated database "file", destroy dyanmic data structure.
+ */
+void
+wdb_close( wdbp )
+struct rt_wdb	*wdbp;
+{
+
+	RT_CK_WDB(wdbp);
+	if( wdbp->type == RT_WDB_TYPE_FILE )  {
+		fclose( wdbp->fp );
+	} else {
+		/* dbip */
+		/*
+		 *  All these uses reference an existing dbip that
+		 *  somebody else opened with db_open().
+		 *  Since the db_i structure isn't use counted,
+		 *  just walk away from it here, and allow caller to
+		 *  free it in their own good time.
+		 */
+	}
+	bu_free( (genptr_t)wdbp, "struct rt_wdb");
+}
+
