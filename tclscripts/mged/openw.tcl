@@ -805,64 +805,11 @@ the same as MGED 4.5 and earlier. See the table below.\n\n
 \t\t2\t\tCenter View
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
-.$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_gui($id,mouse_behavior)\
-	-label "Paint Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Paint Rectangle Area" "Paint Rectangle Area"\
-	{ { synopsis "Enter paint rectangle mode." }
-          { description "If the framebuffer is active, the rectangular area
-as specified by the user is painted with the contents of the
-framebuffer. Otherwise, only the rectangle is drawn.\n
-\tMouse Button\t\t\tBehavior
-\t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tDraw paint rectangle
-\t\t3\t\tZoom in by a factor of 2" }
-          { see_also "rset, vars" } }
-.$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_gui($id,mouse_behavior)\
-	-label "Raytrace Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Raytrace Rectangle Area" "Raytrace Rectangle Area"\
-	{ { synopsis "Enter raytrace rectangle mode." }
-          { description "If the framebuffer is active, the rectangular area as
-specified by the user is raytraced. The rectangular area is
-also painted with the contents of the framebuffer. Otherwise,
-only the rectangle is drawn.\n
-\tMouse Button\t\t\tBehavior
-\t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tDraw raytrace rectangle
-\t\t3\t\tZoom in by a factor of 2" }
-          { see_also "rset, vars" } }
-.$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_gui($id,mouse_behavior)\
-	-label "Zoom Rectangle Area" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Zoom Rectangle Area" "Zoom Rectangle Area"\
-	{ { synopsis "Enter zoom rectangle mode." }
-          { description "The rectangular area as specified by the user is used
-to zoom the view. Note - as the user stretches out the rubber band
-rectangle, the rectangle is constrained to be the same shape as the
-window. This insures that the user gets what he or she sees.\n
-\tMouse Button\t\t\tBehavior
-\t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tDraw zoom rectangle
-\t\t3\t\tZoom in by a factor of 2" }
-          { see_also "rset, vars" } }
-.$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_gui($id,mouse_behavior)\
-	-label "Query Ray" -underline 0\
-	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Query Ray" "Query Ray"\
-	{ { synopsis "Enter query ray mode." }
-          { description "In this mode, the mouse is used to fire rays. The data
-from the fired rays can be viewed textually, graphically
-or both.\n
-\tMouse Button\t\t\tBehavior
-\t\t1\t\tZoom out by a factor of 2
-\t\t2\t\tFire query ray
-\t\t3\t\tZoom in by a factor of 2" }
-          { see_also "nirt, qray, rset, vars" } }
+.$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_gui($id,mouse_behavior)\
-	-label "Solid Edit Ray" -underline 0\
+	-label "Pick edit-solid" -underline 10\
 	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Solid Edit Ray" "Solid Edit Ray"\
+hoc_register_menu_data "Mouse Behavior" "Pick edit-solid" "Pick edit-solid"\
 	{ { synopsis "Enter solid edit ray mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a solid to edit. If more than one solid is hit, a listbox of the hit
@@ -881,9 +828,9 @@ released. To select a solid, double click with the left mouse button.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "nirt, qray, rset, sed, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value m -variable mged_gui($id,mouse_behavior)\
-	-label "Matrix Edit Ray" -underline 0\
+	-label "Pick edit-matrix" -underline 10\
 	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Matrix Edit Ray" "Matrix Edit Ray"\
+hoc_register_menu_data "Mouse Behavior" "Pick edit-matrix" "Pick edit-matrix"\
 	{ { synopsis "Enter matrix edit ray mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a matrix to edit. If more than one solid is hit, a listbox of the
@@ -906,9 +853,9 @@ the left mouse button.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_gui($id,mouse_behavior)\
-	-label "Combination Edit Ray" -underline 0\
+	-label "Pick edit-combination" -underline 10\
 	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
-hoc_register_menu_data "Mouse Behavior" "Combination Edit Ray" "Combination Edit Ray"\
+hoc_register_menu_data "Mouse Behavior" "Pick edit-combination" "Pick edit-combination"\
 	{ { synopsis "Enter combination edit ray mode." }
         { description "In this mode, the mouse is used to fire rays for selecting
 a combination to edit. If more than one combination is hit, a listbox of the
@@ -925,6 +872,70 @@ the left mouse button.\n
 \tMouse Button\t\t\tBehavior
 \t\t1\t\tZoom out by a factor of 2
 \t\t2\t\tFire combination edit ray
+\t\t3\t\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
+.$id.menubar.settings.mouse_behavior add separator
+.$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_gui($id,mouse_behavior)\
+	-label "Sweep raytrace-rectangle" -underline 6\
+	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Sweep raytrace-rectangle" "Sweep raytrace-rectangle"\
+	{ { synopsis "Enter raytrace rectangle mode." }
+          { description "If the framebuffer is active, the rectangular area as
+specified by the user is raytraced. The rectangular area is
+also painted with the contents of the framebuffer. Otherwise,
+only the rectangle is drawn.\n
+\tMouse Button\t\t\tBehavior
+\t\t1\t\tZoom out by a factor of 2
+\t\t2\t\tDraw raytrace rectangle
+\t\t3\t\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
+.$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_gui($id,mouse_behavior)\
+	-label "Pick raytrace-object(s)" -underline 14\
+	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Pick raytrace-object(s)" "Pick raytrace-object(s)"\
+	{ { synopsis "Enter raytrace-object mode." }
+          { description "Pick an object for raytracing or for adding to the\
+list of objects to be raytraced." }
+          { see_also "rset, vars" } }
+.$id.menubar.settings.mouse_behavior add separator
+.$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_gui($id,mouse_behavior)\
+	-label "Query ray" -underline 0\
+	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Query Ray" "Query Ray"\
+	{ { synopsis "Enter query ray mode." }
+          { description "In this mode, the mouse is used to fire rays. The data
+from the fired rays can be viewed textually, graphically
+or both.\n
+\tMouse Button\t\t\tBehavior
+\t\t1\t\tZoom out by a factor of 2
+\t\t2\t\tFire query ray
+\t\t3\t\tZoom in by a factor of 2" }
+          { see_also "nirt, qray, rset, vars" } }
+.$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_gui($id,mouse_behavior)\
+	-label "Sweep paint-rectangle" -underline 6\
+	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Sweep paint-rectangle" "Sweep paint-rectangle"\
+	{ { synopsis "Enter paint rectangle mode." }
+          { description "If the framebuffer is active, the rectangular area
+as specified by the user is painted with the contents of the
+framebuffer. Otherwise, only the rectangle is drawn.\n
+\tMouse Button\t\t\tBehavior
+\t\t1\t\tZoom out by a factor of 2
+\t\t2\t\tDraw paint rectangle
+\t\t3\t\tZoom in by a factor of 2" }
+          { see_also "rset, vars" } }
+.$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_gui($id,mouse_behavior)\
+	-label "Sweep zoom-rectangle" -underline 6\
+	-command "mged_apply $id \"set mouse_behavior \$mged_gui($id,mouse_behavior); refresh\""
+hoc_register_menu_data "Mouse Behavior" "Sweep zoom-rectangle" "Sweep zoom-rectangle"\
+	{ { synopsis "Enter zoom rectangle mode." }
+          { description "The rectangular area as specified by the user is used
+to zoom the view. Note - as the user stretches out the rubber band
+rectangle, the rectangle is constrained to be the same shape as the
+window. This insures that the user gets what he or she sees.\n
+\tMouse Button\t\t\tBehavior
+\t\t1\t\tZoom out by a factor of 2
+\t\t2\t\tDraw zoom rectangle
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 
@@ -1038,7 +1049,7 @@ top of the framebuffer data)." }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,fb)\
 	-label "Framebuffer Active" -underline 0\
-	-command "set_fb $id; update_Raytrace $id"
+	-command "set_fb $id"
 hoc_register_menu_data "Framebuffer" "Framebuffer Active" "Framebuffer Active"\
 	{ { summary "This activates/deactivates the framebuffer." }
           { see_also "rset, vars" } }
@@ -1347,7 +1358,7 @@ solids/matrices." }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,fb)\
 	-label "Framebuffer Active" -underline 0 \
-	-command "set_fb $id; update_Raytrace $id"
+	-command "set_fb $id"
 hoc_register_menu_data "Modes" "Framebuffer Active" "Framebuffer Active"\
 	{ { summary "This activates/deactivates the framebuffer." }
           { see_also "rset, vars" } }
@@ -1365,7 +1376,7 @@ data." }
           { see_also "rset, vars" } }
 .$id.menubar.modes add separator
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rubber_band)\
-	-label "Persistent Rubber Band" -underline 0\
+	-label "Persistent sweep rectangle" -underline 0\
 	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
 hoc_register_menu_data "Modes" "Persistent Rubber Band" "Persistent Rubber Band"\
 	{ { summary "Toggle drawing the rubber band while idle." }
@@ -1598,16 +1609,25 @@ hoc_register_menu_data "Tools" "Color Editor..." "Color Editor"\
 #	-command "toggle_button_menu $id"
 
 menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.help add command -label "About" -underline 0\
+.$id.menubar.help add command -label "About MGED" -underline 0\
 	-command "do_About_MGED $id"
-hoc_register_menu_data "Help" "About" "About MGED"\
+hoc_register_menu_data "Help" "About MGED" "About MGED"\
 	{ { summary "Information about MGED" } }
+.$id.menubar.help add command -label "Help on context..." -underline 0\
+	-command "hoc_dialog .$id.menubar.help \"Help,Help on context...\""
+hoc_register_menu_data "Help" "Help on context..." "Help on context"\
+	{ { summary "The new GUI provides \"Help on Context\". This is always available via
+the right mouse button (i.e. button 3). The user can right mouse click
+on some feature of the GUI and a message window pops up with information
+about the feature. This behavior works everywhere except in the drawing
+panes (i.e. display manager windows) where a right mouse button is bound
+to \"zoom 2.0\"." } }
 .$id.menubar.help add command -label "Getting Started..." -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Getting Started Document\""
 hoc_register_menu_data "Help" "Getting Started..." "Getting Started"\
 	{ { summary "This document contains information to help the user
 quickly get started using MGED." } }
-hoc_register_menu_data "Help" "Getting Started Document" "Getting Started Document"\
+hoc_register_menu_data "Help" "Getting Started Document" "Getting Started"\
 	{ { synopsis "mged \[-c\] \[-d display\] \[-h\] \[-r\] \[-x#\] \[-X#\]\
 \[database \[command\]\]" }
 { description "The -c (Classic MGED) option causes MGED to start in the usual way, that is by
@@ -2189,9 +2209,6 @@ proc set_active_dm { id } {
     # update query ray control panel
     qray_reset $id
 
-    # update raytrace control panel
-    update_Raytrace $id
-
     set dbname [_mged_opendb]
     set_wm_title $id $dbname
 }
@@ -2603,6 +2620,9 @@ proc set_fb { id } {
 	.$id.menubar.modes entryconfigure 4 -state disabled
 	set mged_gui($id,listen) 0
     }
+
+    # update raytrace control panel
+    update_Raytrace $id
 }
 
 proc get_font_height { w } {
