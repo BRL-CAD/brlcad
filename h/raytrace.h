@@ -933,16 +933,16 @@ struct animate {
  *
  *	Structure for use by pmalloc()
  */
-#define NBUCKETS        18
+#define RT_PM_NBUCKETS        18
 
-struct qelem {
-        struct qelem *q_forw;
-        struct qelem *q_back;
+struct rt_qelem {
+        struct rt_qelem *q_forw;
+        struct rt_qelem *q_back;
 };
 
-struct pm_res {
-	struct qelem buckets[NBUCKETS];
-	struct qelem adjhead;
+struct rt_pm_res {
+	struct rt_qelem buckets[RT_PM_NBUCKETS];
+	struct rt_qelem adjhead;
 };
 
 /*
