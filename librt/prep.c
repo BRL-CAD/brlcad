@@ -374,10 +374,14 @@ struct soltab		*stp;
  *	that rt_free_resource() deallocates.
  */
 void
-rt_init_resource( resp )
+rt_init_resource( resp, cpu_num )
 struct resource *resp;
+int		cpu_num;
 {
-	RT_CK_RESOURCE(resp);
+	resp->re_magic = RESOURCE_MAGIC;
+	resp->re_cpu = cpu_num;
+
+	rand_init( resp->re_randptr, cpu_num );
 
 	if( !BU_LIST_UNINITIALIZED( &resp->re_seg ) )
 		BU_LIST_INIT( &resp->re_seg )
@@ -414,6 +418,9 @@ struct resource *resp;
  *
  *  Some care is required, as rt_uniresource may not be fully initialized
  *  before it gets freed.
+ *
+ *  Note that the resource struct's storage is not freed (it may be static),
+ *  but it is zeroed.
  */
 void
 rt_free_resource( rtip, resp )
@@ -483,6 +490,9 @@ struct resource	*resp;
 		resp->re_boolstack = NULL;
 		resp->re_boolslen = 0;
 	}
+
+	/* Zero out storage.  Prevent any residue */
+	bzero( (char *)resp, sizeof(*resp) );
 }
 
 /*
