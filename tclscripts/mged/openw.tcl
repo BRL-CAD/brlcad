@@ -1,4 +1,4 @@
-# Author -
+ Author -
 #	Bob Parker
 #
 # Source -
@@ -82,6 +82,14 @@ if ![info exists mged_default_comb] {
 
 if ![info exists mged_default_edit_style] {
     set mged_default_edit_style emacs
+}
+
+if ![info exists mged_gui_create] {
+    set mged_gui_create gui_create_default
+}
+
+if ![info exists mged_default_gui_destroy] {
+    set mged_gui_destroy gui_destroy_default
 }
 
 set do_tearoffs 0
@@ -333,7 +341,7 @@ if {$comb} {
     set mv_size [expr $win_size($id) / 2 - 4]
 
     if [catch { openmv $id $mged_top($id) $mged_dmc($id) $screen $dtype $mv_size } result] {
-	gui_destroy $id
+	gui_destroy_default $id
 	return $result
     }
 } else {
@@ -346,7 +354,7 @@ if {$comb} {
     set win_size($id) $win_size($id,big)
     set mv_size [expr $win_size($id) / 2 - 4]
     if [catch { openmv $id $mged_top($id) $mged_dmc($id) $gscreen $dtype $mv_size } result] {
-	gui_destroy $id
+	gui_destroy_default $id
 	return $result
     }
 }
@@ -376,7 +384,7 @@ menu .$id.m.file.m -tearoff $do_tearoffs
 .$id.m.file.m add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
 .$id.m.file.m add cascade -label "Save View As" -menu .$id.m.file.m.cm_saveview
 .$id.m.file.m add separator
-.$id.m.file.m add command -label "Close" -underline 0 -command "gui_destroy $id"
+.$id.m.file.m add command -label "Close" -underline 0 -command "gui_destroy_default $id"
 .$id.m.file.m add command -label "Exit" -command quit -underline 0
 
 menu .$id.m.file.m.cm_saveview -tearoff $do_tearoffs
@@ -798,7 +806,7 @@ share_menu $mged_top($id).ul $mged_top($id).lr
 do_rebind_keys $id
 set_active_dm $id
 
-wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy $id"
+wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy_default $id"
 wm geometry $mged_top($id) -0+0
 }
 
