@@ -166,7 +166,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -685,6 +685,10 @@ set -S2 "/bin/sh"
 #	define 	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
+#	define  XMGED_ALLOCA    alloca
+#	define	XMGED_OBJS	dm-4d dm-X Xmgl
+#	define	XMGED_CONFIG	-Wf,-XNl7000 GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#	define	XMGED_LIBES	-L''XLIBDIR -lXm -lXt -lXext -lX11
 #	define	FC	/usr/convex/fc
 /*	Must run in IEEE mode, not native mode */
 #	define	CC_OPTS -D__STDC__=1
