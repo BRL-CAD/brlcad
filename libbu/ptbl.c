@@ -212,11 +212,12 @@ CONST long	*p;
 	BU_CK_PTBL(b);
 	for (l = b->end-1 ; l >= 0 ; --l)  {
 		if (pp[l] == p){
-			/* delete occurrence(s) of p */
+			/* delete consecutive occurrence(s) of p */
 			ndel++;
 
 			j=l+1;
-			while (pp[l-1] == p) --l, ndel++;
+			while (l >= 1 && pp[l-1] == p) --l, ndel++;
+			/* pp[l] through pp[j-1] match p */
 
 			end -= j - l;
 #			include "noalias.h"
