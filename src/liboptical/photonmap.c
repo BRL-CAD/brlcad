@@ -261,7 +261,7 @@ void SpecularReflect(vect_t normal, vect_t rdir) {
 void DiffuseReflect(vect_t normal, vect_t rdir) {
   /* Allow Photons to get a random direction at most 60 degrees to the normal */
   do {
-#ifdef WIN32
+#ifndef HAVE_DRAND48
     rdir[0]= 2.0*rand()/(double)RAND_MAX-1.0;
     rdir[1]= 2.0*rand()/(double)RAND_MAX-1.0;
     rdir[2]= 2.0*rand()/(double)RAND_MAX-1.0;
