@@ -84,8 +84,9 @@ int		line;
 /*
  *		B U _ S T R U C T P A R S E _ G E T _ T E R S E _ F O R M
  *
- *  Convert the "form" of a bu_structparse tabel into a TCL result string,
+ *  Convert the "form" of a bu_structparse table into a TCL result string,
  *  with parameter-name data-type pairs:
+ *
  *	V {%f %f %f} A {%f %f %f}
  *
  *  A different routine should build a more general 'form', along the
@@ -666,6 +667,13 @@ char **argv;
  *  indicated values.
  *
  *	example:  bu_get_all_keyword_values az 35 elev 25 temp 9.6
+ *
+ *  This is much faster than writing this in raw Tcl 8 as:
+ *
+ *	foreach {keyword value} $list {
+ *		set $keyword $value
+ *		lappend retval $keyword
+ *	}
  *
  *  If only one argument is given it is interpreted
  *  as a list in the same format.
