@@ -156,6 +156,11 @@
 
 #if defined(WIN32)
 /* Microsoft VisualC++ 6.0 on WinNT 4.0 */
+/*
+ * Ensure that Project Settings / Project Options includes
+ *	/Za		for ANSI C
+ *	/D "WIN32"	to fire this rule
+ */
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1
 #	define HAVE_STRING_H	1
