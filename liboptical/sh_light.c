@@ -246,9 +246,14 @@ mat_t	v2m;
 		MAT4X3VEC( lp->lt_pos, v2m, temp );
 		VMOVE( lp->lt_vec, lp->lt_pos );
 		VUNITIZE( lp->lt_vec );
+
+		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;
 		lp->lt_radius = 10.0;		/* 10 mm */
 		lp->lt_explicit = 0;		/* NOT explicitly modeled */
+		lp->lt_shadows = 1;		/* casts shadows */
+		lp->lt_angle = 180;		/* spherical emission */
+		lp->lt_cosangle = -1;		/* cos(180) */
 		lp->lt_forw = LightHeadp;
 		LightHeadp = lp;
 	}
