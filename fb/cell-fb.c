@@ -254,29 +254,42 @@ char	**argv;
     } while ((view_flag == 0) && ! feof(filep) && get_OK());
 }
 
+#define	STATE_VIEW_TOP		0
+#define	STATE_IN_HEADER		1
+#define	STATE_IN_DATA		2
+#define	STATE_BEYOND_DATA	3
+
 STATIC long read_Cell_Data()
 {	
     static char		linebuf[MAX_LINE];
+    static char		*lbp = NULL;
     static char		format[MAX_LINE];
-    register int	past_data = false;
-    static int		past_header = false;
+    register int	state = STATE_VIEW_TOP;
     int			i;
     register Cell	*gp = grid;
     int			view_ct = 1;
 
-    /* Build the format for sscanf() */
-    (void) strcpy(format, "%lf %lf");
-    if (color_flag)
-	(void) strcat(format, " %d %d %d");
-    else
+    /*
+     * First time through...
+     *  1) initailize line-buffer pointer and try to fill the line buffer 
+     *  2) build the format for sscanf()
+     */
+    if (lbp == NULL)
     {
-	for (i = 1; i < field; i++)
-	    (void) strcat(format, " %*lf");	/* Skip to field of interest */
-	(void) strcat(format, " %lf");
+	lbp = linebuf;
+        fgets(lbp, MAX_LINE, filep);
+	(void) strcpy(format, "%lf %lf");
+	if (color_flag)
+	    (void) strcat(format, " %d %d %d");
+	else
+	{   /* Skip to field of interest */
+	    for (i = 1; i < field; i++)
+		(void) strcat(format, " %*lf");
+	    (void) strcat(format, " %lf");
+	}
     }
-
     /* EOF encountered before we found the desired view? */
-    if (! past_header && fgets(linebuf, MAX_LINE, filep) == NULL)
+    if (feof(filep))
 	return (0);
 
     /* Read the data */
@@ -301,32 +314,34 @@ STATIC long read_Cell_Data()
 	    }
 	    gp = grid + ncells;
 	}
-	/* Read in a line of input */
-	while ((color_flag &&
-		(sscanf(linebuf, format, &x, &y, &r, &g, &b) != 5))
+	/* Process any non-data (i.e. view-header) lines */
+	while ((state != STATE_BEYOND_DATA) &&
+	       (color_flag &&
+		(sscanf(lbp, format, &x, &y, &r, &g, &b) != 5))
 	    || (! color_flag &&
-		(sscanf(linebuf, format, &x, &y, &value.v_scalar) != 3)))
+		(sscanf(lbp, format, &x, &y, &value.v_scalar) != 3)))
 	{
-	    if (past_header)
-		past_data = true;
-	    if(feof(filep) ||	fgets(linebuf, MAX_LINE, filep) == NULL)
+	    if (state == STATE_VIEW_TOP)
+		state = STATE_IN_HEADER;
+	    else if (state == STATE_IN_DATA)
+		state = STATE_BEYOND_DATA;
+	    if(feof(filep) || fgets(lbp, MAX_LINE, filep) == NULL)
 		return (gp - grid);
 	}
-	if (color_flag)
+	/*
+	 *	At this point we know we have a line of cell data,
+	 *	though it might be the first line of the next view.
+	 */
+	if (state == STATE_BEYOND_DATA)
 	{
-	    value.v_color[RED] = r;
-	    value.v_color[GRN] = g;
-	    value.v_color[BLU] = b;
-	}
-	if (past_data)
+	    state = STATE_VIEW_TOP;
 	    if ((view_flag == 0) || (view_flag == view_ct++))
 		return (gp - grid);
 	    else	/* Not the selected view, read the next one. */
-	    {
-		past_data = false;
 		continue;
-	    }
-	past_header = true;
+	}
+	else
+	    state = STATE_IN_DATA;
 
 	/* If user has selected a view, only store values for that view. */
 	if ((view_flag == 0) || (view_flag == view_ct))
@@ -343,13 +358,15 @@ STATIC long read_Cell_Data()
 	    gp->c_y = y;
 	    if (color_flag)
 	    {
-		COPYRGB(gp->c_val.v_color, value.v_color);
+		gp->c_val.v_color[RED] = r;
+		gp->c_val.v_color[GRN] = g;
+		gp->c_val.v_color[BLU] = b;
 	    }
 	    else
 		gp->c_val.v_scalar = value.v_scalar;
 	    gp++;
 	}
-    } while (fgets(linebuf, MAX_LINE, filep) != NULL);
+    } while (fgets(lbp, MAX_LINE, filep) != NULL);
     return (gp - grid);
 }
 
