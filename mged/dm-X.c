@@ -47,6 +47,7 @@ extern void dm_var_init();		/* defined in attach.c */
 
 static int X_dm();
 static void dirty_hook();
+static void zclip_hook();
 
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc X_doevent;
@@ -57,7 +58,7 @@ static int X_doevent();
 struct bu_structparse X_vparse[] = {
   {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
   {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
-  {"%d",  1, "zclip",		 DM_O(dm_zclip),	dirty_hook},
+  {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook},
   {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
   {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
 };
@@ -177,4 +178,11 @@ static void
 dirty_hook()
 {
 	dirty = 1;
+}
+
+static void
+zclip_hook()
+{
+	view_state->vs_vop->vo_zclip = dmp->dm_zclip;
+	dirty_hook();
 }

@@ -263,6 +263,7 @@ static void
 zclip_hook()
 {
 	dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
+	view_state->vs_vop->vo_zclip = dmp->dm_zclip;
 	dirty_hook();
 }
 
