@@ -249,21 +249,8 @@ esac
 # in architecture-specific entry in Cakefile.defs
 case "${MACHINE}" in
 	li|fbsd)
-		tclsh8.0 << EOF
-exit
-EOF
-		if test $? -eq 0
-		then 
-			BDIRS=`echo ${BDIRS} | \
-				sed -e  's/libtcl//' -e 's/libtk//'`
-		fi
-
-		if test -f /usr/lib/libz.a
-		then
-			BDIRS=`echo ${BDIRS} | sed -e  's/libz//'`
-		fi
-
-
+		BDIRS=`echo ${BDIRS} | \
+			sed -e  's/libtcl//' -e 's/libtk//' -e 's/libz//'`
 		;;
 	m4i65)
 		# Be sure to look in /usr/lib64, not /usr/lib!
