@@ -640,6 +640,8 @@ static CONST char *nmg_wedge2_string[] = {
  *	WEDGE2_AB_IN_CD		AB is inside CD
  *	WEDGE2_CD_IN_AB		CD is inside AB
  *	WEDGE2_IDENTICAL		AB == CD
+ *  XXX Would there be any value to detecting non-overlapping wedges
+ *  XXX that share an edge?
  */
 static int
 nmg_compare_2_wedges( a, b, c, d )
@@ -1090,7 +1092,29 @@ again:
 
 	rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
 
+	if( outer_lu->orientation == inner_lu->orientation )  {
+		/* Different loops with same orientation.  If they are exactly
+		 * the same wedge, then join them.
+		 * Otherwise, this is an error condition.
+		 */
+		int	other_way_round;
+		not_these[outer_wedge] = 0;	/* temporary reset */
+		other_way_round = nmg_find_vu_in_wedge( vs, start, end,
+			vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang,
+			wclass, not_these );
+		if( other_way_round != outer_wedge )  {
+			rt_log("outer=%d, inner=%d, other_way_round=%d\n",
+				outer_wedge, inner_wedge, other_way_round);
+			rt_bomb("nmg_special_wedge_processing: touching loops have same orientation, but are not exactly the same wedge\n");
+		}
+		rt_log("joining loops\n");
+		vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
+			vs[inner_wedge].vu );
+		return 1;
+	}
+
 	/* Recurse on inner wedge */
+/* XXX Need to not process wedges already done (like, outer_wedge) */
 	if( nmg_special_wedge_processing( vs, start, end,
 	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass ) )
 		return 1;	/* An inner wedge was cut */
