@@ -249,7 +249,7 @@ int *base;		/* base address of users structure */
 				*((int *)loc) );
 			break;
 		case 'f':
-			rt_log( " %s=%f\n", mp->mp_name,
+			rt_log( " %s=%g\n", mp->mp_name,
 				*((double *)loc) );
 			break;
 		case 'C':
