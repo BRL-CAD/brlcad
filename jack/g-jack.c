@@ -39,10 +39,11 @@ struct vertex	**init_heap();
 void		heap_increase();
 
 
-static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
+static int	debug_plots;	/* Make debugging plots */
 int		heap_cur_sz;	/* Next free spot in heap. */
 static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
@@ -50,11 +51,15 @@ static struct db_i	*dbip;
 static struct model		*the_model;
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
-static char			*base_seg;
+static struct rt_vls		base_seg;
 
 static int	regions_tried = 0;
 static int	regions_done = 0;
 
+/*
+ *			M A I N
+ */
+int
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -78,12 +83,16 @@ char	*argv[];
 	tol.para = 1 - tol.perp;
 
 	the_model = nmg_mm();
+	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:p:r:vx:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:dn:p:r:vx:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			break;
+		case 'd':
+			debug_plots = 1;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
@@ -148,7 +157,7 @@ char	*argv[];
 	if ((fp_fig = fopen(fig_file, "w")) == NULL)
 		perror(fig_file);
 	fprintf(fp_fig, "figure {\n");
-	base_seg = NULL;	/* .fig figure file's main segment. */
+	rt_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
 	/* Walk indicated tree(s).  Each region will be output separately */
 	ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
@@ -158,11 +167,11 @@ char	*argv[];
 		do_region_end,
 		do_leaf);
 
-	fprintf(fp_fig, "\troot=%s_seg.base;\n", base_seg);
+	fprintf(fp_fig, "\troot=%s_seg.base;\n", rt_vls_addr(&base_seg));
 	fprintf(fp_fig, "}\n");
 	fclose(fp_fig);
 	rt_free(fig_file, "st");
-	rt_free(base_seg, "s");
+	rt_vls_free(&base_seg);
 
 	percent = 0;
 	if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
@@ -363,20 +372,22 @@ union tree		*curtree;
 	if (r != 0) {
 		FILE	*fp_psurf;
 		int	i;
+		struct rt_vls	file_base;
 		struct rt_vls	file;
 
+		rt_vls_init(&file_base);
 		rt_vls_init(&file);
-		rt_vls_strcpy(&file, prefix);
-		rt_vls_strcat(&file, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
+		rt_vls_strcpy(&file_base, prefix);
+		rt_vls_strcat(&file_base, DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
 		/* Dots confuse Jack's Peabody language.  Change to '_'. */
-		for (i = 0; i < file.vls_len; i++)
-			if (file.vls_str[i] == '.')
-				file.vls_str[i] = '_';
+		for (i = 0; i < file_base.vls_len; i++)
+			if (file_base.vls_str[i] == '.')
+				file_base.vls_str[i] = '_';
 
 		/* Write color attribute to .fig figure file. */
 		if (tsp->ts_mater.ma_override != 0) {
 			fprintf(fp_fig, "\tattribute %s {\n",
-				rt_vls_addr(&file));
+				rt_vls_addr(&file_base));
 			fprintf(fp_fig, "\t\trgb = (%f, %f, %f);\n",
 				V3ARGS(tsp->ts_mater.ma_color));
 			fprintf(fp_fig, "\t\tambient = 0.18;\n");
@@ -385,37 +396,62 @@ union tree		*curtree;
 		}
 
 		/* Write segment attributes to .fig figure file. */
-		fprintf(fp_fig, "\tsegment %s_seg {\n", rt_vls_addr(&file));
-		fprintf(fp_fig, "\t\tpsurf=\"%s.pss\";\n", rt_vls_addr(&file));
+		fprintf(fp_fig, "\tsegment %s_seg {\n", rt_vls_addr(&file_base));
+		fprintf(fp_fig, "\t\tpsurf=\"%s.pss\";\n", rt_vls_addr(&file_base));
 		if (tsp->ts_mater.ma_override != 0)
 			fprintf(fp_fig,
-				"\t\tattribute=%s;\n", rt_vls_addr(&file));
+				"\t\tattribute=%s;\n", rt_vls_addr(&file_base));
 		fprintf(fp_fig, "\t\tsite base->location=trans(0,0,0);\n");
 		fprintf(fp_fig, "\t}\n");
 
-		if (!base_seg) {
-			base_seg = rt_malloc(1+sizeof(rt_vls_addr(&file)), "s");
-			strcpy(base_seg, rt_vls_addr(&file));
+		if( rt_vls_strlen(&base_seg) <= 0 )  {
+			rt_vls_vlscat( &base_seg, &file_base );
 		} else {
 			fprintf(fp_fig, "\tjoint %s_jt {\n",
-				rt_vls_addr(&file));
+				rt_vls_addr(&file_base));
 			fprintf(fp_fig,
 				"\t\tconnect %s_seg.base to %s_seg.base;\n",
-				rt_vls_addr(&file), base_seg);
+				rt_vls_addr(&file_base),
+				rt_vls_addr(&base_seg) );
 			fprintf(fp_fig, "\t}\n");
 		}
 
+		rt_vls_vlscat(&file, &file_base);
 		rt_vls_strcat(&file, ".pss");	/* Required Jack suffix. */
 
 		/* Write psurf to .pss file. */
 		if ((fp_psurf = fopen(rt_vls_addr(&file), "w")) == NULL)
 			perror(rt_vls_addr(&file));
 		else {
-			if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
 			nmg_to_psurf(r, fp_psurf);
 			fclose(fp_psurf);
+			if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
 		}
 		rt_vls_free(&file);
+
+		/* Also write as UNIX-plot file, if desired */
+		if( debug_plots )  {
+			FILE	*fp;
+			rt_vls_vlscat(&file, &file_base);
+			rt_vls_strcat(&file, ".pl");
+
+			if ((fp = fopen(rt_vls_addr(&file), "w")) == NULL)
+				perror(rt_vls_addr(&file));
+			else {
+				struct rt_list	vhead;
+				pl_color( fp,
+					(int)(tsp->ts_mater.ma_color[0] * 255),
+					(int)(tsp->ts_mater.ma_color[1] * 255),
+					(int)(tsp->ts_mater.ma_color[2] * 255) );
+				/* nmg_pl_r( fp, r ); */
+				RT_LIST_INIT( &vhead );
+				nmg_r_to_vlist( &vhead, r, 0 );
+				rt_vlist_to_uplot( fp, &vhead );
+				fclose(fp);
+				if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
+			}
+			rt_vls_free(&file);
+		}
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);
