@@ -24,7 +24,7 @@ int zoom;		/* Zoom Factor.			*/
 int xPan, yPan;		/* Pan Location.		*/
 int xoff, yoff;		/* Ikonas farbling */
 
-char Usage[] = "Usage: mov [-h] width nframes [fps]\n";
+char Usage[] = "Usage: mov [-h] [-p#pass] width nframes [fps]\n";
 
 main(argc, argv )
 char **argv;
@@ -32,21 +32,38 @@ char **argv;
 	register int w, n;
 	register int i;
 	register int im_line;
-	int fps;
+	int fps;			/* frames/sec */
+	int passes = 100;		/* limit on number of passes */
 
 	if( argc < 3 )  {
 		printf(Usage);
 		exit(12);
 	}
-	if( strcmp( argv[1], "-h" ) == 0 )  {
+
+	pix_line = 512;
+	while( argv[1][0] == '-' )  {
+		switch( argv[1][1] )  {
+		case 'h':
+			ikhires = 1;
+			pix_line = 1024;
+			break;
+		case 'p':
+			passes = atoi(&argv[1][2]);
+			if(passes<1)  passes=1;
+			break;
+		default:
+			printf(Usage);
+			exit(12);
+		}
 		argc--;
 		argv++;
-		ikhires = 1;
-		pix_line = 1024;
-	} else {
-		pix_line = 512;
 	}
+
 	w = atoi(argv[1]);
+	if( w < 4 || w > 256 )  {
+		printf("w of %d out of range\n");
+		exit(12);
+	}
 	n = atoi(argv[2]);
 	if( argc == 4 )
 		fps = atoi(argv[3]);
@@ -68,7 +85,7 @@ char **argv;
 
 	ikzoom( zoom-1, zoom-1 );
 
-	while(1)  for( i=0; i<n; i++ )  {
+	while(passes-- > 0)  for( i=0; i<n; i++ )  {
 		xPan = (i%im_line)*w;
 		yPan = (i/im_line)*w;
 		if( fps < 6 )
