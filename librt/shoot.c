@@ -42,6 +42,7 @@ char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991 by the United States 
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./debug.h"
 
@@ -129,7 +130,7 @@ register struct shootray_status	*ssp;
 
 	if( ssp->lastcut == &(ap->a_rt_i->rti_inf_box) )  {
 	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-	     		rt_log("rt_advance_to_next_cell(): finished infinite solids\n");
+	     		bu_log("rt_advance_to_next_cell(): finished infinite solids\n");
 	     	}
 		return(CUTTER_NULL);
 	}
@@ -150,9 +151,9 @@ register struct shootray_status	*ssp;
 			VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
 				ssp->dist_corr, ap->a_ray.r_dir );
 			if( rt_g.debug&DEBUG_ADVANCE) {
-				rt_log("rt_advance_to_next_cell() dist_corr=%g\n",
+				bu_log("rt_advance_to_next_cell() dist_corr=%g\n",
 					ssp->dist_corr );
-				rt_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
+				bu_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
 					V3ARGS( ssp->newray.r_pt ) );
 			}
 
@@ -188,7 +189,7 @@ register struct shootray_status	*ssp;
 			ssp->igrid[X] = x;
 			ssp->igrid[Y] = y;
 			ssp->igrid[Z] = z;
-if(rt_g.debug&DEBUG_ADVANCE)rt_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
+if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
 
 			/* tv[] has intercepts with walls of first cell on ray path */
 			NUGRID_T_SETUP( X, x );
@@ -211,7 +212,7 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->i
 				ssp->t0 = ssp->tv[Z];
 			}
 if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Entry tv[]", ssp->tv);
-if(rt_g.debug&DEBUG_ADVANCE)rt_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), ssp->t0);
+if(rt_g.debug&DEBUG_ADVANCE)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), ssp->t0);
 
 			/* Advance to next exits */
 			NUGRID_T_ADV( X, x );
@@ -221,34 +222,34 @@ if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Exit tv[]", ssp->tv);
 
 			/* XXX?Ensure that next exit is after first entrance */
 			while( ssp->tv[X] < ssp->t0 && ap->a_ray.r_dir[X] != 0.0 )  {
-				rt_log("*** at t=%g, pt[X]=%g\n",
+				bu_log("*** at t=%g, pt[X]=%g\n",
 					ssp->tv[X], ssp->newray.r_pt[X] + ssp->tv[X] *
 					ap->a_ray.r_dir[X] );
 				NUGRID_T_ADV( X, x );
-				rt_log("*** advancing tv[X] to %g\n", ssp->tv[X]);
-				rt_log("*** at t=%g, pt[X]=%g\n",
+				bu_log("*** advancing tv[X] to %g\n", ssp->tv[X]);
+				bu_log("*** at t=%g, pt[X]=%g\n",
 					ssp->tv[X], ssp->newray.r_pt[X] + ssp->tv[X] *
 					ap->a_ray.r_dir[X] );
 				rt_bomb("advancing\n");
 			}
 			while( ssp->tv[Y] < ssp->t0 && ap->a_ray.r_dir[Y] != 0.0 )  {
-				rt_log("*** at t=%g, pt[Y]=%g\n",
+				bu_log("*** at t=%g, pt[Y]=%g\n",
 					ssp->tv[Y], ssp->newray.r_pt[Y] + ssp->tv[Y] *
 					ap->a_ray.r_dir[Y] );
 				NUGRID_T_ADV( Y, y );
-				rt_log("*** advancing tv[Y] to %g\n", ssp->tv[Y]);
-				rt_log("*** at t=%g, pt[Y]=%g\n",
+				bu_log("*** advancing tv[Y] to %g\n", ssp->tv[Y]);
+				bu_log("*** at t=%g, pt[Y]=%g\n",
 					ssp->tv[Y], ssp->newray.r_pt[Y] + ssp->tv[Y] *
 					ap->a_ray.r_dir[Y] );
 				rt_bomb("advancing\n");
 			}
 			while( ssp->tv[Z] < ssp->t0 && ap->a_ray.r_dir[Z] != 0.0 )  {
-				rt_log("*** at t=%g, pt[Z]=%g\n",
+				bu_log("*** at t=%g, pt[Z]=%g\n",
 					ssp->tv[Z], ssp->newray.r_pt[Z] + ssp->tv[Z] *
 					ap->a_ray.r_dir[Z] );
 				NUGRID_T_ADV( Z, z );
-				rt_log("*** advancing tv[Z] to %g\n", ssp->tv[Z]);
-				rt_log("*** at t=%g, pt[Z]=%g\n",
+				bu_log("*** advancing tv[Z] to %g\n", ssp->tv[Z]);
+				bu_log("*** at t=%g, pt[Z]=%g\n",
 					ssp->tv[Z], ssp->newray.r_pt[Z] + ssp->tv[Z] *
 					ap->a_ray.r_dir[Z] );
 				rt_bomb("advancing\n");
@@ -265,7 +266,7 @@ if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Exit tv[]", ssp->tv);
 				if( --(ssp->igrid[ssp->out_axis]) < 0 )
 					break;
 			}
-if(rt_g.debug&DEBUG_ADVANCE)rt_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
+if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
 			/* XXX This too can be optimized */
 			cutp = RT_NUGRID_CELL( rt_nu_grid,
 				ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z] );
@@ -288,7 +289,7 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->i
 				ssp->t1 = ssp->tv[Y];
 			}
 		}
-if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X ? "X" : (ssp->out_axis==Y?"Y":"Z"), ssp->t1);
+if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X ? "X" : (ssp->out_axis==Y?"Y":"Z"), ssp->t1);
 
 		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
@@ -310,9 +311,9 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 		VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
 			ssp->dist_corr, ap->a_ray.r_dir );
 		if( rt_g.debug&DEBUG_ADVANCE) {
-			rt_log("rt_advance_to_next_cell() dist_corr=%g\n",
+			bu_log("rt_advance_to_next_cell() dist_corr=%g\n",
 				ssp->dist_corr );
-			rt_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
+			bu_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
 				V3ARGS( ssp->newray.r_pt ) );
 		}
 
@@ -322,7 +323,7 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 		ssp->box_start = ssp->first_box_start + ssp->t0;
 		ssp->box_end = ssp->first_box_start + ssp->t1;
 	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-			rt_log("rt_advance_to_next_cell() box=(%g, %g)\n",
+			bu_log("rt_advance_to_next_cell() box=(%g, %g)\n",
 				ssp->box_start, ssp->box_end );
 	     	}
 		return(cutp);
@@ -331,14 +332,14 @@ if(rt_g.debug&DEBUG_ADVANCE)rt_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 # if 0
 	if( ap->a_rt_i->rti_inf_box.bn.bn_len > 0 )  {
 	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-	     		rt_log("rt_advance_to_next_cell(): escaped model RPP, checking infinite solids\n");
+	     		bu_log("rt_advance_to_next_cell(): escaped model RPP, checking infinite solids\n");
 	     	}
 		ssp->lastcut = &(ap->a_rt_i->rti_inf_box);
 		return &(ap->a_rt_i->rti_inf_box);
 	}
 # endif
      	if( rt_g.debug & DEBUG_ADVANCE )  {
-     		rt_log("rt_advance_to_next_cell(): escaped model RPP\n");
+     		bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
      	}
 	return(CUTTER_NULL);
 }
@@ -388,7 +389,7 @@ top:
 		py = ap->a_ray.r_pt[Y] + ssp->dist_corr * ap->a_ray.r_dir[Y];
 		pz = ap->a_ray.r_pt[Z] + ssp->dist_corr * ap->a_ray.r_dir[Z];
 		if( rt_g.debug&DEBUG_ADVANCE) {
-			rt_log("rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
+			bu_log("rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
 				ssp->dist_corr, px, py, pz );
 		}
 
@@ -426,12 +427,12 @@ top:
 		if( px < cutp->bn.bn_min[X] || px > cutp->bn.bn_max[X] ||
 		    py < cutp->bn.bn_min[Y] || py > cutp->bn.bn_max[Y] ||
 		    pz < cutp->bn.bn_min[Z] || pz > cutp->bn.bn_max[Z] )  {
-			rt_log("rt_advance_to_next_cell(): point not in cell, advancing\n");
+			bu_log("rt_advance_to_next_cell(): point not in cell, advancing\n");
 #if 0
-		    	rt_log(" pt (%.20e,%.20e,%.20e)\n", px, py, pz );
-		    	rt_log("  min (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_min) );
-		    	rt_log("  max (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_max) );
-			rt_log("pt=(%g,%g,%g)\n", px, py, pz );
+		    	bu_log(" pt (%.20e,%.20e,%.20e)\n", px, py, pz );
+		    	bu_log("  min (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_min) );
+		    	bu_log("  max (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_max) );
+			bu_log("pt=(%g,%g,%g)\n", px, py, pz );
 		     	rt_pr_cut( cutp, 0 );
 #endif
 			/*
@@ -445,16 +446,16 @@ top:
 		if( cutp==ssp->lastcut )  {
 push:			;
 #if 0
-			rt_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
+			bu_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
 				ap->a_x, ap->a_y,
 				ssp->odist_corr, ssp->dist_corr, ssp->model_end );
-			rt_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
+			bu_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
 				ssp->obox_start, ssp->box_start,
 				ssp->obox_end, ssp->box_end );
 #endif
 #if 0
 			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			rt_log("Point=(%g,%g,%g)\n", px, py, pz );
+			bu_log("Point=(%g,%g,%g)\n", px, py, pz );
 			VPRINT("Dir", ssp->newray.r_dir);
 		     	rt_pr_cut( cutp, 0 );
 #endif
@@ -464,14 +465,14 @@ push:			;
 			 */
 			fraction = frexp( ssp->box_end, &exponent );
 #if 0
-rt_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+bu_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
 #endif
 			if( exponent <= 0 )  {
 				/* Never advance less than 1mm */
 				ssp->box_start = ssp->box_end + 1.0;
 			} else {
 				if( rt_g.debug & DEBUG_ADVANCE )  {
-					rt_log("exp=%d, fraction=%.20e\n", exponent, fraction);
+					bu_log("exp=%d, fraction=%.20e\n", exponent, fraction);
 				}
 				if( sizeof(fastf_t) <= 4 )
 					fraction += 1.0e-5;
@@ -479,11 +480,11 @@ rt_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 					fraction += 1.0e-14;
 				ssp->box_start = ldexp( fraction, exponent );
 #if 0
-rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+bu_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
 #endif
 			}
 			if( rt_g.debug & DEBUG_ADVANCE )  {
-				rt_log("push: was=%.20e, now=%.20e\n",
+				bu_log("push: was=%.20e, now=%.20e\n",
 					ssp->box_end, ssp->box_start);
 			}
 			push_flag++;
@@ -492,7 +493,7 @@ rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 		if( push_flag )  {
 			push_flag = 0;
 #if 0
-			rt_log("%d,%d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
+			bu_log("%d,%d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
 				ap->a_x, ap->a_y, push_flag,
 				ssp->dist_corr, ssp->box_start, ssp->box_end );
 #endif
@@ -505,7 +506,7 @@ rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 
 		if( !rt_in_rpp(&ssp->newray, ssp->inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-			rt_log("\nrt_advance_to_next_cell():  MISSED BOX\nrmin,rmax(%.20e,%.20e) box(%.20e,%.20e)\n",
+			bu_log("\nrt_advance_to_next_cell():  MISSED BOX\nrmin,rmax(%.20e,%.20e) box(%.20e,%.20e)\n",
 				ssp->newray.r_min, ssp->newray.r_max,
 				ssp->box_start, ssp->box_end);
 		     	goto push;
@@ -516,14 +517,14 @@ rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 		ssp->box_start = ssp->dist_corr + ssp->newray.r_min;
 		ssp->box_end = ssp->dist_corr + ssp->newray.r_max;
 	     	if( rt_g.debug & DEBUG_ADVANCE )  {
-			rt_log("rt_advance_to_next_cell() box=(%g, %g)\n",
+			bu_log("rt_advance_to_next_cell() box=(%g, %g)\n",
 				ssp->box_start, ssp->box_end );
 	     	}
 		return(cutp);
 	}
 	/* Off the end of the model RPP */
      	if( rt_g.debug & DEBUG_ADVANCE )  {
-     		rt_log("rt_advance_to_next_cell(): escaped model RPP\n");
+     		bu_log("rt_advance_to_next_cell(): escaped model RPP\n");
      	}
 	return(CUTTER_NULL);
 }
@@ -580,7 +581,7 @@ register struct application *ap;
 	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
-		if(rt_g.debug)rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
+		if(rt_g.debug)bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
 	}
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
@@ -589,19 +590,19 @@ register struct application *ap;
 	RT_RESOURCE_CHECK(resp);
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
-		rt_g.rtg_logindent += 2;
-		rt_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+		bu_log_indent(2);
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
-		rt_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
 			V3ARGS(ap->a_ray.r_pt),
 			ap->a_onehit );
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
 	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
-		rt_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
@@ -639,7 +640,7 @@ register struct application *ap;
 		}
 		diff = f - 1;
 		if( !NEAR_ZERO( diff, 0.0001 ) )  {
-			rt_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
+			bu_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
 				ap->a_x, ap->a_y, ap->a_level );
 			f = 1/f;
 			VSCALE( ap->a_ray.r_dir, ap->a_ray.r_dir, f );
@@ -687,7 +688,7 @@ register struct application *ap;
 			register struct soltab *stp = *stpp;
 
 			/* Shoot a ray */
-			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
+			if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
 			resp->re_shots++;
 			if( rt_functab[stp->st_id].ft_shot( 
@@ -789,18 +790,18 @@ register struct application *ap;
 			if( rt_functab[stp->st_id].ft_use_rpp )  {
 				if( !rt_in_rpp( &ss.newray, ss.inv_dir,
 				    stp->st_min, stp->st_max ) )  {
-					if(debug_shoot)rt_log("rpp miss %s\n", stp->st_name);
+					if(debug_shoot)bu_log("rpp miss %s\n", stp->st_name);
 					resp->re_prune_solrpp++;
 					continue;	/* MISS */
 				}
 				if( ss.dist_corr + ss.newray.r_max < BACKING_DIST )  {
-					if(debug_shoot)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, ss.dist_corr, ss.newray.r_max);
+					if(debug_shoot)bu_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, ss.dist_corr, ss.newray.r_max);
 					resp->re_prune_solrpp++;
 					continue;	/* MISS */
 				}
 			}
 
-			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
+			if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
 			resp->re_shots++;
 			RT_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
@@ -941,11 +942,8 @@ out:
 
 	/* Terminate any logging */
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
-		if( rt_g.rtg_logindent > 0 )
-			rt_g.rtg_logindent -= 2;
-		else
-			rt_g.rtg_logindent = 0;
-		rt_log("----------shootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
+		bu_log_indent(-2);
+		bu_log("----------shootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
 			resp->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
@@ -1113,8 +1111,8 @@ register struct resource *res;
 	size = rtip->rti_bv_bytes;
 	if( size < 1 )  rt_bomb("rt_get_bitv");
 	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
-	bytes = rt_byte_roundup(16*size);
-	cp = rt_malloc(bytes, "rt_get_bitv");
+	bytes = bu_malloc_len_roundup(16*size);
+	cp = (char *)bu_malloc(bytes, "rt_get_bitv");
 
 	while( bytes >= size )  {
 		((union bitv_elem *)cp)->be_next = res->re_bitv;
@@ -1148,26 +1146,26 @@ VPRINT("max  ", max);
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
 		sv = (*min - *pt) * *invdir;
-rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
+bu_log("sv=%g, r_max=%g\n", sv, rp->r_max);
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		st = (*max - *pt) * *invdir;
-rt_log("st=%g, r_min=%g\n", st, rp->r_min);
+bu_log("st=%g, r_min=%g\n", st, rp->r_min);
 		if( rp->r_min < st )
 			rp->r_min = st;
-rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	}  else if( rp->r_dir[X] > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
 		st = (*max - *pt) * *invdir;
-rt_log("st=%g, r_max=%g\n", st, rp->r_max);
+bu_log("st=%g, r_max=%g\n", st, rp->r_max);
 		if(rp->r_max > st)
 			rp->r_max = st;
 		sv = (*min - *pt) * *invdir;
-rt_log("sv=%g, r_min=%g\n", sv, rp->r_min);
+bu_log("sv=%g, r_min=%g\n", sv, rp->r_min);
 		if( rp->r_min < sv )
 			rp->r_min = sv;
-rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	}  else  {
 		/*
 		 *  Direction cosines along this axis is NEAR 0,
@@ -1184,26 +1182,26 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
 		sv = (*min - *pt) * *invdir;
-rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
+bu_log("sv=%g, r_max=%g\n", sv, rp->r_max);
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		st = (*max - *pt) * *invdir;
-rt_log("st=%g, r_min=%g\n", st, rp->r_min);
+bu_log("st=%g, r_min=%g\n", st, rp->r_min);
 		if( rp->r_min < st )
 			rp->r_min = st;
-rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	}  else if( rp->r_dir[Y] > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
 		st = (*max - *pt) * *invdir;
-rt_log("st=%g, r_max=%g\n", st, rp->r_max);
+bu_log("st=%g, r_max=%g\n", st, rp->r_max);
 		if(rp->r_max > st)
 			rp->r_max = st;
 		sv = (*min - *pt) * *invdir;
-rt_log("sv=%g, r_min=%g\n", sv, rp->r_min);
+bu_log("sv=%g, r_min=%g\n", sv, rp->r_min);
 		if( rp->r_min < sv )
 			rp->r_min = sv;
-rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	}  else  {
 		if( (*min > *pt) || (*max < *pt) )
 			goto miss;
@@ -1215,26 +1213,26 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
 		sv = (*min - *pt) * *invdir;
-rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
+bu_log("sv=%g, r_max=%g\n", sv, rp->r_max);
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		st = (*max - *pt) * *invdir;
-rt_log("st=%g, r_min=%g\n", st, rp->r_min);
+bu_log("st=%g, r_min=%g\n", st, rp->r_min);
 		if( rp->r_min < st )
 			rp->r_min = st;
-rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	}  else if( rp->r_dir[Z] > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
 		st = (*max - *pt) * *invdir;
-rt_log("st=%g, r_max=%g\n", st, rp->r_max);
+bu_log("st=%g, r_max=%g\n", st, rp->r_max);
 		if(rp->r_max > st)
 			rp->r_max = st;
 		sv = (*min - *pt) * *invdir;
-rt_log("sv=%g, r_min=%g\n", sv, rp->r_min);
+bu_log("sv=%g, r_min=%g\n", sv, rp->r_min);
 		if( rp->r_min < sv )
 			rp->r_min = sv;
-rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+bu_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	}  else  {
 		if( (*min > *pt) || (*max < *pt) )
 			goto miss;
@@ -1243,10 +1241,10 @@ rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
 	/* If equal, RPP is actually a plane */
 	if( rp->r_min > rp->r_max )
 		goto miss;
-	rt_log("HIT:  %g..%g\n", rp->r_min, rp->r_max );
+	bu_log("HIT:  %g..%g\n", rp->r_min, rp->r_max );
 	return(1);		/* HIT */
 miss:
-	rt_log("MISS\n");
+	bu_log("MISS\n");
 	return(0);		/* MISS */
 }
 
@@ -1291,7 +1289,7 @@ struct application	*ap; /* pointer to an application */
 void
 rt_pr_library_version()
 {
-	rt_log("%s", rt_version);
+	bu_log("%s", rt_version);
 }
 
 /*

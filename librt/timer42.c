@@ -25,7 +25,8 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #include <sys/resource.h>
 
 #include "machine.h"
-#include "rtstring.h"
+#include "externs.h"
+#include "bu.h"
 
 static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
@@ -60,7 +61,7 @@ rt_prep_timer()
  */
 double
 rt_get_timer( vp, elapsed )
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 double		*elapsed;
 {
 	struct timeval timedol;
@@ -89,11 +90,11 @@ double		*elapsed;
 	if( elapsed )  *elapsed = elapsed_secs;
 
 	if( vp )  {
-		rt_vls_printf( vp, "cpu = %g sec, elapsed = %g sec\n",
+		bu_vls_printf( vp, "cpu = %g sec, elapsed = %g sec\n",
 			user_cpu_secs, elapsed_secs );
-		rt_vls_strcat( vp, "    parent: " );
+		bu_vls_strcat( vp, "    parent: " );
 		prusage(&ru0, &ru1, &timedol, &time0, vp);
-		rt_vls_strcat( vp, "\n  children: ");
+		bu_vls_strcat( vp, "\n  children: ");
 		prusage(&ru0c, &ru1c, &timedol, &time0, vp);
 	}
 
@@ -104,7 +105,7 @@ static void
 prusage(r0, r1, e, b, vp)
 register struct rusage *r0, *r1;
 struct timeval *e, *b;
-struct rt_vls	*vp;	
+struct bu_vls	*vp;	
 {
 	struct timeval tdiff;
 	register time_t t;
@@ -123,17 +124,17 @@ struct rt_vls	*vp;
 	cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
 	for (; *cp; cp++)  {
 		if (*cp != '%')
-			rt_vls_putc( vp, *cp );
+			bu_vls_putc( vp, *cp );
 		else if (cp[1]) switch(*++cp) {
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			rt_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			bu_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			rt_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+			bu_vls_printf(vp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
 			break;
 
 		case 'E':
@@ -141,50 +142,50 @@ struct rt_vls	*vp;
 			break;
 
 		case 'P':
-			rt_vls_printf(vp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
+			bu_vls_printf(vp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
 			break;
 
 		case 'W':
 			i = r1->ru_nswap - r0->ru_nswap;
-			rt_vls_printf(vp, "%d", i);
+			bu_vls_printf(vp, "%d", i);
 			break;
 
 		case 'X':
-			rt_vls_printf(vp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+			bu_vls_printf(vp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
 			break;
 
 		case 'D':
-			rt_vls_printf(vp, "%d", t == 0 ? 0 :
+			bu_vls_printf(vp, "%d", t == 0 ? 0 :
 			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
 			break;
 
 		case 'K':
-			rt_vls_printf(vp, "%d", t == 0 ? 0 :
+			bu_vls_printf(vp, "%d", t == 0 ? 0 :
 			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
 			    (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
 			break;
 
 		case 'M':
-			rt_vls_printf(vp, "%d", r1->ru_maxrss/2);
+			bu_vls_printf(vp, "%d", r1->ru_maxrss/2);
 			break;
 
 		case 'F':
-			rt_vls_printf(vp, "%d", r1->ru_majflt-r0->ru_majflt);
+			bu_vls_printf(vp, "%d", r1->ru_majflt-r0->ru_majflt);
 			break;
 
 		case 'R':
-			rt_vls_printf(vp, "%d", r1->ru_minflt-r0->ru_minflt);
+			bu_vls_printf(vp, "%d", r1->ru_minflt-r0->ru_minflt);
 			break;
 
 		case 'I':
-			rt_vls_printf(vp, "%d", r1->ru_inblock-r0->ru_inblock);
+			bu_vls_printf(vp, "%d", r1->ru_inblock-r0->ru_inblock);
 			break;
 
 		case 'O':
-			rt_vls_printf(vp, "%d", r1->ru_oublock-r0->ru_oublock);
+			bu_vls_printf(vp, "%d", r1->ru_oublock-r0->ru_oublock);
 			break;
 		case 'C':
-			rt_vls_printf(vp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
+			bu_vls_printf(vp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
 				r1->ru_nivcsw-r0->ru_nivcsw );
 			break;
 		}
@@ -218,23 +219,23 @@ tvsub(tdiff, t1, t0)
 static void
 psecs(l, vp)
 long		l;
-struct rt_vls	*vp;
+struct bu_vls	*vp;
 {
 	register int i;
 
 	i = l / 3600;
 	if (i) {
 		register int	j;
-		rt_vls_printf(vp, "%d:", i);
+		bu_vls_printf(vp, "%d:", i);
 		i = l % 3600;
 		j = i / 60;
-		rt_vls_printf(vp, "%d%d", j / 10, j % 10);
+		bu_vls_printf(vp, "%d%d", j / 10, j % 10);
 	} else {
 		i = l;
-		rt_vls_printf(vp, "%d", i / 60);
+		bu_vls_printf(vp, "%d", i / 60);
 	}
 	i = i % 60; /* GSM: bug in Alliant CE optimization prohibits "%=" here */
-	rt_vls_printf(vp, ":%d%d", i / 10, i % 10);
+	bu_vls_printf(vp, ":%d%d", i / 10, i % 10);
 }
 
 /*
@@ -246,17 +247,17 @@ double
 rt_read_timer(str,len)
 char *str;
 {
-	struct rt_vls	vls;
+	struct bu_vls	vls;
 	double		cpu;
 	int		todo;
 
-	if( !str )  return  rt_get_timer( (struct rt_vls *)0, (double *)0 );
+	if( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
 
-	rt_vls_init( &vls );
+	bu_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
-	todo = rt_vls_strlen( &vls );
+	todo = bu_vls_strlen( &vls );
 	if( todo > len )  todo = len-1;
-	strncpy( str, rt_vls_addr(&vls), todo );
+	strncpy( str, bu_vls_addr(&vls), todo );
 	str[todo] = '\0';
 	return cpu;
 }
