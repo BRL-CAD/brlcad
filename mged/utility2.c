@@ -44,6 +44,7 @@ void		push();
 extern struct rt_tol	mged_tol;	/* from ged.c */
 
 RT_EXTERN( struct shell *nmg_dup_shell, ( struct shell *s, long ***trans_tbl ) );
+RT_EXTERN( struct rt_i *rt_new_rti, (struct db_i *dbip) );
 
 int
 f_shells( argc, argv )
@@ -1587,4 +1588,245 @@ char *argv[];
 	}
 	rt_log( "simplification to %s is not yet supported\n", argv[1] );
 	return CMD_BAD;
+}
+
+static void
+Get_region_rpp( rtip,  pathp, reg_min, reg_max )
+struct rt_i	*rtip;
+struct db_full_path *pathp;
+point_t reg_min;
+point_t reg_max;
+{
+	struct region *regp;
+	char *path;
+
+	VSETALL( reg_min, MAX_FASTF );
+	VREVERSE( reg_max, reg_min );
+
+	path = db_path_to_string( pathp );
+	for( regp = rtip->HeadRegion ; regp != REGION_NULL; regp = regp->reg_forw )
+	{
+		if( !strcmp( path, regp->reg_name ) )
+			break;
+	}
+
+	if( !regp )
+	{
+		rt_log( "Could not find region %s\n", path );
+		return;
+	}
+
+	if( rt_bound_tree( regp->reg_treetop, reg_min, reg_max ) )
+	{
+		rt_log( "rt_bound_tree failed for %s\n",path );
+		return;
+	}
+	rt_free( path, "Get_region_rpp: path" );
+}
+
+static void
+Get_comb_rpp( rtip, dp, pathp, comb_min, comb_max )
+struct rt_i		*rtip;
+struct directory	*dp;
+struct db_full_path	*pathp;
+vect_t			comb_min;
+vect_t			comb_max;
+{
+	union record *rec;
+	int i;
+	vect_t tmp_min, tmp_max;
+
+	if( (dp->d_flags & DIR_SOLID) || (dp->d_flags & DIR_REGION ) )
+	{
+		rt_log( "Get_comb_rpp called for region or solid (%s)\n", dp->d_namep );
+		rt_bomb(  "Get_comb_rpp called for region or solid" );
+	}
+
+	VSETALL( comb_min, MAX_FASTF );
+	VREVERSE( comb_max, comb_min );
+	VSETALL( tmp_min, MAX_FASTF );
+	VREVERSE( tmp_max, tmp_min );
+
+	rec = db_getmrec( dbip, dp );
+	for( i=1 ; i<dp->d_len ; i++ )
+	{
+		struct directory *dp2;
+		struct db_full_path tmp_pathp;
+		vect_t sub_min, sub_max;
+
+		if( rec[i].u_id != ID_MEMB )
+		{
+			rt_log( "didn't get member records for %s\n", dp->d_namep );
+			continue;
+		}
+
+		dp2 = db_lookup( dbip, rec[i].M.m_instname, LOOKUP_NOISY );
+		if( dp2 == DIR_NULL )
+			rt_bomb( "db_lookup failed" );
+
+		db_full_path_init( &tmp_pathp );
+		db_dup_full_path( &tmp_pathp, pathp );
+		db_add_node_to_full_path( &tmp_pathp, dp2 );
+
+		if( rec[i].M.m_relation != '-' )
+		{
+			if( (dp2->d_flags & DIR_SOLID) || (dp2->d_flags & DIR_REGION) )
+				Get_region_rpp( rtip, &tmp_pathp, sub_min, sub_max );
+			else
+				Get_comb_rpp( rtip, dp2, &tmp_pathp, sub_min, sub_max );
+
+		}
+		db_free_full_path( &tmp_pathp );
+
+		switch( rec[i].M.m_relation )
+		{
+			case 'u':
+				VMIN( tmp_min, sub_min );
+				VMAX( tmp_max, sub_max );
+				VMIN( comb_min, tmp_min );
+				VMAX( comb_max, tmp_max );
+				VSETALL( tmp_min, MAX_FASTF );
+				VREVERSE( tmp_max, tmp_min );
+				break;
+			case '-':
+				break;
+			case '+':
+				VMAX( tmp_min, sub_min );
+				VMIN( tmp_max, sub_max );
+				break;
+			default:
+				rt_log( "Illegal operation (%c) in combination (%s) for member (%s)\n",
+					rec[i].M.m_relation, dp->d_namep, rec[i].M.m_instname );
+				break;
+		}
+		if( sub_min[X] < MAX_FASTF )
+		{
+			VMIN( tmp_min, sub_min );
+			VMAX( tmp_max, sub_max );
+			VMIN( comb_min, tmp_min );
+			VMAX( comb_max, tmp_max );
+		}
+	}
+	rt_free( (char *)rec, "Get_comb_rpp: rec" );
+}
+
+int
+f_make_bb( argc, argv )
+int argc;
+char **argv;
+{
+	struct rt_i		*rtip;
+	int			i;
+	point_t			rpp_min,rpp_max;
+	struct db_full_path	path;
+	struct directory	*dp;
+	struct rt_arb_internal	arb;
+	struct rt_db_internal	new_intern;
+	struct rt_external	new_extern;
+	int			ngran;
+	char			*new_name;
+
+	if( argc < 3 )
+	{
+		rt_log( "Usage: make_bb new_solid_name object1 [object2 object3 ...]\n" );
+		return CMD_BAD;
+	}
+
+	new_name = argv[1];
+	if( db_lookup( dbip, new_name, LOOKUP_QUIET ) != DIR_NULL )
+	{
+		rt_log( "%s already exists\n", new_name );
+		return CMD_BAD;
+	}
+
+	if( (rtip=rt_new_rti( dbip ) ) == RTI_NULL )
+	{
+		rt_log( "rt_dirbuild failure for %s\n", dbip->dbi_filename );
+		return CMD_BAD;
+	}
+
+	if( rt_gettrees( rtip, argc-2, (CONST char **)&argv[2], 1 ) )
+	{
+		rt_log( "rt_gettrees failed\n" );
+		rt_clean( rtip );
+		rt_free( (char *)rtip, "f_make_bb: rtip" );
+		return CMD_BAD;
+	}
+
+	VSETALL( rpp_min, MAX_FASTF );
+	VREVERSE( rpp_max, rpp_min );
+	for( i=2 ; i<argc ; i++ )
+	{
+		union tree *final_tree;
+
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY ) ) == DIR_NULL )
+			exit( 1 );
+
+		if( (dp->d_flags & DIR_REGION) || (dp->d_flags & DIR_SOLID) )
+		{
+			vect_t reg_min, reg_max;
+
+			db_full_path_init( &path );
+			db_add_node_to_full_path( &path, dp );
+			Get_region_rpp( rtip, &path, reg_min, reg_max );
+			db_free_full_path( &path );
+			VMINMAX( rpp_min, rpp_max, reg_min );
+			VMINMAX( rpp_min, rpp_max, reg_max );
+		}
+		else
+		{
+			vect_t comb_min,comb_max;
+
+			db_full_path_init( &path );
+			db_add_node_to_full_path( &path, dp );
+			Get_comb_rpp( rtip, dp, &path, comb_min, comb_max );
+			VMINMAX( rpp_min, rpp_max, comb_min );
+			VMINMAX( rpp_min, rpp_max, comb_max );
+			db_free_full_path( &path );
+		}
+	}
+
+	VMOVE( arb.pt[0], rpp_min );
+	VSET( arb.pt[1], rpp_min[X], rpp_min[Y], rpp_max[Z] );
+	VSET( arb.pt[2], rpp_min[X], rpp_max[Y], rpp_max[Z] );
+	VSET( arb.pt[3], rpp_min[X], rpp_max[Y], rpp_min[Z] );
+	VSET( arb.pt[4], rpp_max[X], rpp_min[Y], rpp_min[Z] );
+	VSET( arb.pt[5], rpp_max[X], rpp_min[Y], rpp_max[Z] );
+	VMOVE( arb.pt[6], rpp_max );
+	VSET( arb.pt[7], rpp_max[X], rpp_max[Y], rpp_min[Z] );
+	arb.magic = RT_ARB_INTERNAL_MAGIC;
+
+	RT_INIT_DB_INTERNAL( &new_intern );
+	new_intern.idb_type = ID_ARB8;
+	new_intern.idb_ptr = (genptr_t)(&arb);
+	RT_INIT_EXTERNAL( &new_extern );
+
+	if( rt_functab[new_intern.idb_type].ft_export( &new_extern, &new_intern, 1.0 ) < 0 )
+	{
+		rt_log( "f_make_bb: export failure\n" );
+		rt_functab[new_intern.idb_type].ft_ifree( &new_intern );
+		return CMD_BAD;
+	}
+
+	ngran = (new_extern.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
+	if( (dp = db_diradd( dbip, new_name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
+		db_alloc( dbip, dp, 1 ) < 0 )
+	{
+		db_free_external( &new_extern );
+	    	ALLOC_ERR;
+		return CMD_BAD;
+	}
+
+	if (db_put_external( &new_extern, dp, dbip ) < 0 )
+	{
+		db_free_external( &new_extern );
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+	db_free_external( &new_extern );
+
+	rt_clean( rtip );
+	rt_free( (char *)rtip, "f_make_bb: rtip" );
+
+	return f_edit( 2, argv );
 }
