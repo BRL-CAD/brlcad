@@ -42,30 +42,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #include <errno.h>
 
-#include "./pkg.h"
+#include "../h/pkg.h"
 
 extern char *malloc();
+extern void perror();
 extern int errno;
 
-/*
- *  Format of the message header as it is transmitted over the network
- *  connection.  Internet network order is used.
- */
-#define PKG_MAGIC	0x41FE
-struct pkg_header {
-	unsigned short	pkg_magic;		/* Ident */
-	unsigned short	pkg_type;		/* Message Type */
-	long		pkg_len;		/* Byte count of remainder */
-};
+#define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
+			fprintf(stderr,"pkg: bad pointer x%x\n",p);abort();}}
 
 /*
  *			P K G _ O P E N
  *
  *  We are a client.  Make a connection to the server.
  *
- *  Returns fd (>=0) if connected, -1 on error.
+ *  Returns PKC_NULL on error.
  */
-int
+struct pkg_conn *
 pkg_open( host, service )
 char *host;
 char *service;
@@ -73,8 +66,8 @@ char *service;
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
 	register struct hostent *hp;
-	int netfd;
-	int port;
+	register int netfd;
+	register struct pkg_conn *pc;
 
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
@@ -85,9 +78,9 @@ char *service;
 	} else {
 		register struct servent *sp;
 		if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-			fb_log( "pkg_open(%s,%s): unknown service\n",
+			fprintf(stderr,"pkg_open(%s,%s): unknown service\n",
 				host, service );
-			return(-1);
+			return(PKC_NULL);
 		}
 		sinhim.sin_port = sp->s_port;
 	}
@@ -99,33 +92,41 @@ char *service;
 		sinhim.sin_addr.s_addr = inet_addr(host);
 	} else {
 		if( (hp = gethostbyname(host)) == NULL )  {
-			fb_log( "pkg_open(%s,%s): unknown host\n",
+			fprintf(stderr,"pkg_open(%s,%s): unknown host\n",
 				host, service );
-			return(-1);
+			return(PKC_NULL);
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
 	}
 
 	if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {
-		fb_log( "pkg_open : client socket failure.\n" );
-		return(-1);
+		perror("pkg_open:  client socket");
+		return(PKC_NULL);
 	}
 	sinme.sin_port = 0;		/* let kernel pick it */
 
-	if( bind(netfd, &sinme, sizeof(sinme)) < 0 )  {
-		fb_log( "pkg_open : bind failure.\n" );
-		return(-1);
+	if( bind(netfd, (char *)&sinme, sizeof(sinme)) < 0 )  {
+		perror("pkg_open: bind");
+		return(PKC_NULL);
 	}
 
-	if( connect(netfd, &sinhim, sizeof(sinhim), 0) < 0 )  {
-		fb_log( "pkg_open : client connect failure.\n" );
-		return(-1);
+	if( connect(netfd, (char *)&sinhim, sizeof(sinhim), 0) < 0 )  {
+		perror("pkg_open: client connect");
+		return(PKC_NULL);
 	}
-	return(netfd);
+	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
+		fprintf(stderr,"pkg_open: malloc failure\n");
+		return(PKC_NULL);
+	}
+	pc->pkc_magic = PKG_MAGIC;
+	pc->pkc_fd = netfd;
+	pc->pkc_left = -1;
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+
+	return(pc);
 }
-
-static int pkg_listenfd;
 
 /*
  *  			P K G _ I N I T S E R V E R
@@ -149,25 +150,25 @@ int backlog;
 
 	/* Determine port for service */
 	if( (sp = getservbyname( service, "tcp" )) == NULL )  {
-		fb_log( "pkg_initserver(%s,%d): unknown service\n",
+		fprintf(stderr,"pkg_initserver(%s,%d): unknown service\n",
 			service, backlog );
 		return(-1);
 	}
 
 	sinme.sin_port = sp->s_port;
 	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
-		fb_log( "pkg_initserver : socket failure.\n" );
+		perror("pkg_initserver:  socket");
 		return(-1);
 	}
 
 	if( bind(pkg_listenfd, &sinme, sizeof(sinme)) < 0 )  {
-		fb_log( "pkg_initserver : bind failure.\n" );
+		perror("pkg_initserver: bind");
 		return(-1);
 	}
 
 	if( backlog > 5 )  backlog = 5;
 	if( listen(pkg_listenfd, backlog) < 0 )  {
-		fb_log( "pkg_initserver : listen failure.\n" );
+		perror("pkg_initserver:  listen");
 		return(-1);
 	}
 	return(pkg_listenfd);
@@ -176,28 +177,28 @@ int backlog;
 /*
  *			P K G _ G E T C L I E N T
  *
- *  Given an fd with a listen outstanding, accept the connection
- *  and return the connection's fd.
+ *  Given an fd with a listen outstanding, accept the connection.
  *  When poll == 0, accept is allowed to block.
  *  When poll != 0, accept will not block.
  *
  *  Returns -
- *	>=0	fd of newly accepted connection
- *	-1	accept would block, try again later
- *	-2	fatal error
+ *	>0		ptr to pkg_conn block of new connection
+ *	PKC_NULL	accept would block, try again later
+ *	PKC_ERROR	fatal error
  */
-int
+struct pkg_conn *
 pkg_getclient(fd, nodelay)
 {
 	struct sockaddr_in from;
 	register int s2;
 	auto int fromlen = sizeof (from);
 	auto int onoff;
+	register struct pkg_conn *pc;
 
 	if(nodelay)  {
 		onoff = 1;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
-			fb_log( "pkg_getclient : FIONBIO 1 failed.\n" );
+			perror("pkg_getclient: FIONBIO 1");
 	}
 	do  {
 		s2 = accept(fd, (char *)&from, &fromlen);
@@ -205,30 +206,46 @@ pkg_getclient(fd, nodelay)
 			if(errno == EINTR)
 				continue;
 			if(errno == EWOULDBLOCK)
-				return(-1);
-			fb_log( "pkg_getclient : accept failed.\n" );
-			return(-2);
+				return(PKC_NULL);
+			perror("pkg_getclient: accept");
+			return(PKC_ERROR);
 		}
 	}  while( s2 < 0);
 	if(nodelay)  {		
 		onoff = 0;
 		if( ioctl(fd, FIONBIO, &onoff) < 0 )
-			fb_log( "pkg_getclient : FIONBIO 2 failed.\n" );
+			perror("pkg_getclient: FIONBIO 2");
 		if( ioctl(s2, FIONBIO, &onoff) < 0 )
-			fb_log( "pkg_getclient : FIONBIO 3 failed.\n" );
+			perror("pkg_getclient: FIONBIO 3");
 	}
-	return(s2);
+	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
+		fprintf(stderr,"pkg_getclient: malloc failure\n");
+		return(PKC_ERROR);
+	}
+	pc->pkc_magic = PKG_MAGIC;
+	pc->pkc_fd = s2;
+	pc->pkc_left = -1;
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+	return(pc);
 }
 
 /*
  *  			P K G _ C L O S E
  *  
- *  Gracefully release the connection.
+ *  Gracefully release the connection block and close the connection.
  */
 void
-pkg_close(fd)
+pkg_close(pc)
+register struct pkg_conn *pc;
 {
-	(void)close(fd);
+	PKG_CK(pc);
+	(void)close(pc->pkc_fd);
+	pc->pkc_fd = -1;		/* safety */
+	if( pc->pkc_buf )
+		(void)free(pc->pkc_buf);
+	pc->pkc_buf = (char *)0;	/* safety */
+	(void)free(pc->pkc_buf);
 }
 
 /*
@@ -244,15 +261,15 @@ int
 pkg_mread(fd, bufp, n)
 int fd;
 register char	*bufp;
-unsigned	n;
+int	n;
 {
-	register unsigned	count = 0;
-	register int		nread;
+	register int	count = 0;
+	register int	nread;
 
 	do {
-		nread = read(fd, bufp, n-count);
+		nread = read(fd, bufp, (unsigned)n-count);
 		if(nread < 0)  {
-			fb_log( "pkg_mread : read failed.\n" );
+			perror("pkg_mread");
 			return(-1);
 		}
 		if(nread == 0)
@@ -263,12 +280,6 @@ unsigned	n;
 
 	return((int)count);
 }
-
- int pkg_left = -1;	/* number of bytes pkg_get still expects */
-/* negative -> read new header, 0 -> it's all here, >0 -> more to come */
-static char *pkg_buf;		/* start of dynamic buffer for pkg_get */
-static char *pkg_curpos;	/* pkg_get current position in pkg_buf */
-static struct pkg_header hdr;	/* hdr of cur msg, pkg_waitfor/pkg_get */
 
 /*
  *  			P K G _ S E N D
@@ -283,11 +294,11 @@ static struct pkg_header hdr;	/* hdr of cur msg, pkg_waitfor/pkg_get */
  *  Returns number of bytes of user data actually sent.
  */
 int
-pkg_send( type, buf, len, fd )
+pkg_send( type, buf, len, pc )
 int type;
 char *buf;
 int len;
-int fd;
+register struct pkg_conn *pc;
 {
 	static struct iovec cmdvec[2];
 	static struct pkg_header hdr;
@@ -295,24 +306,25 @@ int fd;
 	long bits;
 	register int i;
 
+	PKG_CK(pc);
 	if( len < 0 )  len=0;
 
 	do  {
 		/* Finish any partially read message */
-		if( pkg_left > 0 )
-			if( pkg_block(fd) < 0 )
+		if( pc->pkc_left > 0 )
+			if( pkg_block(pc) < 0 )
 				return(-1);
 #ifdef never
 		/* Check socket for more input */
 		tv.tv_sec = 0;
 		tv.tv_usec = 0;		/* poll */
-		bits = 1<<fd;
-		i = select( fd+1, &bits, (char *)0, (char *)0, &tv );
+		bits = 1<<pc->pkc_fd;
+		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
 		if( i > 0 && bits )
-			if( pkg_block(fd) < 0 )
+			if( pkg_block(pc) < 0 )
 				return(-1);
 #endif
-	} while( pkg_left > 0 );
+	} while( pc->pkc_left > 0 );
 
 	hdr.pkg_magic = htons(PKG_MAGIC);
 	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
@@ -328,12 +340,13 @@ int fd;
 	 * loop in select() waiting for capacity to go out, and
 	 * reading input as well.  Prevents deadlocking.
 	 */
-	if( (i = writev( fd, cmdvec, (len>0)?2:1 )) != len+sizeof(hdr) )  {
+	if( (i = writev( pc->pkc_fd, cmdvec, (len>0)?2:1 )) != len+sizeof(hdr) )  {
 		if( i < 0 )  {
-			fb_log( "pkg_send : write failed.\n" );
+			perror("pkg_send: write");
 			return(-1);
 		}
-		fb_log( "pkg_send of %d+%d, wrote %d\n", sizeof(hdr), len, i );
+		fprintf(stderr,"pkg_send of %d+%d, wrote %d\n",
+			sizeof(hdr), len, i);
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 	return(len);
@@ -348,50 +361,51 @@ int fd;
  *  All messages of any other type are processed by pkg_get() and
  *  handed off to the handler for that type message in pkg_switch[].
  *
- *  NOTE that this routine and pkg_get() share lots of state via
- *  4 external (static) variables.
- *
  *  Returns the length of the message actually received, or -1 on error.
  */
 int
-pkg_waitfor( type, buf, len, fd )
+pkg_waitfor( type, buf, len, pc )
 int type;
 char *buf;
 int len;
-int fd;
+register struct pkg_conn *pc;
 {
 	register int i;
-/*	fb_log( "pkg_waitfor(%d,%d,%d,%d)\n", type, buf, len, fd );*/
+
+	PKG_CK(pc);
 again:
-	if( pkg_left >= 0 )
-		if( pkg_block( fd ) < 0 )
+	if( pc->pkc_left >= 0 )
+		if( pkg_block( pc ) < 0 )
 			return(-1);
 
-	if( pkg_gethdr( fd, buf ) < 0 )  return(-1);
-	if( hdr.pkg_type != type )  {
+	if( pkg_gethdr( pc, buf ) < 0 )  return(-1);
+	if( pc->pkc_hdr.pkg_type != type )  {
 		/* A message of some other type has unexpectedly arrived. */
-		if( hdr.pkg_len > 0 )  {
-			pkg_buf = malloc(hdr.pkg_len+2);
-			pkg_curpos = pkg_buf;
+		if( pc->pkc_hdr.pkg_len > 0 )  {
+			pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2);
+			pc->pkc_curpos = pc->pkc_buf;
 		}
 		goto again;
 	}
-	pkg_left = -1;
-	if( hdr.pkg_len == 0 )
+	pc->pkc_left = -1;
+	if( pc->pkc_hdr.pkg_len == 0 )
 		return(0);
-	if( hdr.pkg_len > len )  {
+	if( pc->pkc_hdr.pkg_len > len )  {
 		register char *bp;
 		int excess;
-		fb_log( "pkg_waitfor:  message %d exceeds buffer %d\n",
-			hdr.pkg_len, len );
-		if( (i = pkg_mread( fd, buf, len )) != len )  {
-			fb_log( "pkg_waitfor:  pkg_mread %d gave %d\n", len, i );
+		fprintf(stderr,
+			"pkg_waitfor:  message %d exceeds buffer %d\n",
+			pc->pkc_hdr.pkg_len, len );
+		if( (i = pkg_mread( pc->pkc_fd, buf, len )) != len )  {
+			fprintf(stderr,
+				"pkg_waitfor:  pkg_mread %d gave %d\n", len, i );
 			return(-1);
 		}
-		excess = hdr.pkg_len - len;	/* size of excess message */
+		excess = pc->pkc_hdr.pkg_len - len;	/* size of excess message */
 		bp = malloc(excess);
-		if( (i = pkg_mread( fd, bp, excess )) != excess )  {
-			fb_log( "pkg_waitfor: pkg_mread of excess, %d gave %d\n",
+		if( (i = pkg_mread( pc->pkc_fd, bp, excess )) != excess )  {
+			fprintf(stderr,
+				"pkg_waitfor: pkg_mread of excess, %d gave %d\n",
 				excess, i );
 			(void)free(bp);
 			return(-1);
@@ -401,11 +415,12 @@ again:
 	}
 
 	/* Read the whole message into the users buffer */
-	if( (i = pkg_mread( fd, buf, hdr.pkg_len )) != hdr.pkg_len )  {
-		fb_log( "pkg_waitfor:  pkg_mread %d gave %d\n", hdr.pkg_len, i );
+	if( (i = pkg_mread( pc->pkc_fd, buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
+		fprintf(stderr,
+			"pkg_waitfor:  pkg_mread %d gave %d\n", pc->pkc_hdr.pkg_len, i );
 		return(-1);
 	}
-	return( hdr.pkg_len );
+	return( pc->pkc_hdr.pkg_len );
 }
 
 /*
@@ -418,36 +433,35 @@ again:
  *  handed off to the handler for that type message in pkg_switch[].
  *  The buffer to contain the actual message is acquired via malloc().
  *
- *  NOTE that this routine and pkg_get() share lots of state via
- *  4 external (static) variables.
- *
  *  Returns pointer to message buffer, or NULL.
  */
 char *
-pkg_bwaitfor( type, fd )
+pkg_bwaitfor( type, pc )
 int type;
-int fd;
+register struct pkg_conn *pc;
 {
 	register int i;
 
+	PKG_CK(pc);
 	do  {
 		/* Finish any unsolicited msg */
-		if( pkg_left >= 0 )
-			if( pkg_block(fd) < 0 )
+		if( pc->pkc_left >= 0 )
+			if( pkg_block(pc) < 0 )
 				return((char *)0);
-		if( pkg_gethdr( fd, (char *)0 ) < 0 )
+		if( pkg_gethdr( pc, (char *)0 ) < 0 )
 			return((char *)0);
-	}  while( hdr.pkg_type != type );
+	}  while( pc->pkc_hdr.pkg_type != type );
 
-	pkg_left = -1;
-	if( hdr.pkg_len == 0 )
+	pc->pkc_left = -1;
+	if( pc->pkc_hdr.pkg_len == 0 )
 		return((char *)0);
 
 	/* Read the whole message into the dynamic buffer */
-	if( (i = pkg_mread( fd, pkg_buf, hdr.pkg_len )) != hdr.pkg_len )  {
-		fb_log( "pkg_bwaitfor:  pkg_mread %d gave %d\n", hdr.pkg_len, i );
+	if( (i = pkg_mread( pc->pkc_fd, pc->pkc_buf, pc->pkc_hdr.pkg_len )) != pc->pkc_hdr.pkg_len )  {
+		fprintf(stderr,
+			"pkg_bwaitfor:  pkg_mread %d gave %d\n", pc->pkc_hdr.pkg_len, i );
 	}
-	return( pkg_buf );
+	return( pc->pkc_buf );
 }
 
 /*
@@ -464,46 +478,46 @@ int fd;
  *  assembled, and there is no input on the network connection, it will
  *  block, waiting for the arrival of the header.
  *
- *  NOTE that this routine and pkg_waitfor() share lots of state via
- *  4 external (static) variables.
- *
  *  Returns -1 on error, 0 if more data comming, 1 if user handler called.
  *  The user handler is responsible for calling free()
  *  on the message buffer when finished with it.
  */
 int
-pkg_get(fd)
+pkg_get(pc)
+register struct pkg_conn *pc;
 {
 	register int i;
 	struct timeval tv;
 	auto long bits;
 
-	if( pkg_left < 0 )  {
-		if( pkg_gethdr( fd, (char *)0 ) < 0 )  return(-1);
+	PKG_CK(pc);
+	if( pc->pkc_left < 0 )  {
+		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
+		if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
 
 		/* See if any message body has arrived yet */
 		tv.tv_sec = 0;
 		tv.tv_usec = 20000;	/* 20 ms */
-		bits = (1<<fd);
-		i = select( fd+1, &bits, (char *)0, (char *)0, &tv );
+		bits = (1<<pc->pkc_fd);
+		i = select( pc->pkc_fd+1, (char *)&bits, (char *)0, (char *)0, &tv );
 		if( i <= 0 )  return(0);	/* timed out */
 		if( !bits )  return(0);		/* no input */
 	}
 
 	/* read however much is here already, and remember our position */
-	if( pkg_left > 0 )  {
-		if( (i = read( fd, pkg_curpos, pkg_left )) < 0 )  {
-			pkg_left = -1;
-			fb_log( "pkg_get : read failed.\n" );
+	if( pc->pkc_left > 0 )  {
+		if( (i = read( pc->pkc_fd, pc->pkc_curpos, pc->pkc_left )) <= 0 )  {
+			pc->pkc_left = -1;
+			perror("pkg_get: read");
 			return(-1);
 		}
-		pkg_curpos += i;
-		pkg_left -= i;
-		if( pkg_left > 0 )
+		pc->pkc_curpos += i;
+		pc->pkc_left -= i;
+		if( pc->pkc_left > 0 )
 			return(0);		/* more is on the way */
 	}
 
-	return( pkg_dispatch() );
+	return( pkg_dispatch(pc) );
 }
 
 /*
@@ -514,36 +528,39 @@ pkg_get(fd)
  *  Returns -1 on fatal error, 0 on no handler, 1 if all's well.
  */
 int
-pkg_dispatch()
+pkg_dispatch(pc)
+register struct pkg_conn *pc;
 {
 	register int i;
 
-	if( pkg_left != 0 )  return(-1);
+	PKG_CK(pc);
+	if( pc->pkc_left != 0 )  return(-1);
 
 	/* Whole message received, process it via switchout table */
 	for( i=0; i < pkg_swlen; i++ )  {
 		register char *tempbuf;
 
-		if( pkg_switch[i].pks_type != hdr.pkg_type )
+		if( pkg_switch[i].pks_type != pc->pkc_hdr.pkg_type )
 			continue;
 		/*
 		 * NOTICE:  User Handler must free() message buffer!
 		 * WARNING:  Handler may recurse back to pkg_get() --
-		 * reset all global state variables first!
+		 * reset all connection state variables first!
 		 */
-		tempbuf = pkg_buf;
-		pkg_buf = (char *)0;
-		pkg_curpos = (char *)0;
-		pkg_left = -1;		/* safety */
-		pkg_switch[i].pks_handler(hdr.pkg_type, tempbuf, hdr.pkg_len);
+		tempbuf = pc->pkc_buf;
+		pc->pkc_buf = (char *)0;
+		pc->pkc_curpos = (char *)0;
+		pc->pkc_left = -1;		/* safety */
+		/* pc->pkc_hdr.pkg_type, pc->pkc_hdr.pkg_len are preserved */
+		pkg_switch[i].pks_handler(pc, tempbuf);
 		return(1);
 	}
-	fb_log( "pkg_get:  no handler for message type %d, len %d\n",
-		hdr.pkg_type, hdr.pkg_len );
-	(void)free(pkg_buf);
-	pkg_buf = (char *)0;
-	pkg_curpos = (char *)0;
-	pkg_left = -1;		/* safety */
+	fprintf(stderr,"pkg_get:  no handler for message type %d, len %d\n",
+		pc->pkc_hdr.pkg_type, pc->pkc_hdr.pkg_len );
+	(void)free(pc->pkc_buf);
+	pc->pkc_buf = (char *)0;
+	pc->pkc_curpos = (char *)0;
+	pc->pkc_left = -1;		/* safety */
 	return(0);
 }
 /*
@@ -555,47 +572,50 @@ pkg_dispatch()
  *	-1	on fatal errors
  */
 int
-pkg_gethdr( fd, buf )
+pkg_gethdr( pc, buf )
+register struct pkg_conn *pc;
 char *buf;
 {
 	register int i;
 
-	if( pkg_left >= 0 )  return(1);	/* go get it! */
+	PKG_CK(pc);
+	if( pc->pkc_left >= 0 )  return(1);	/* go get it! */
 
 	/*
 	 *  At message boundary, read new header.
 	 *  This will block until the new header arrives (feature).
 	 */
-	if( (i = pkg_mread( fd, &hdr, sizeof(hdr) )) != sizeof(hdr) )  {
+	if( (i = pkg_mread( pc->pkc_fd, &(pc->pkc_hdr),
+	    sizeof(struct pkg_header) )) != sizeof(struct pkg_header) )  {
 		if(i > 0)
-			fb_log( "pkg_gethdr: header read of %d?\n", i);
+			fprintf(stderr,"pkg_gethdr: header read of %d?\n", i);
 		return(-1);
 	}
-	while( hdr.pkg_magic != htons(PKG_MAGIC ) )  {
-		fb_log("pkg_gethdr: skipping noise x%x %c\n",
-			*((unsigned char *)&hdr),
-			*((unsigned char *)&hdr) );
+	while( pc->pkc_hdr.pkg_magic != htons(PKG_MAGIC ) )  {
+		fprintf(stderr,"pkg_gethdr: skipping noise\n");
 		/* Slide over one byte and try again */
-		bcopy( ((char *)&hdr)+1, (char *)&hdr, sizeof(hdr)-1);
-		if( (i=read( fd, ((char *)&hdr)+sizeof(hdr)-1, 1 )) != 1 )  {
-			fb_log("pkg_gethdr: hdr read=%d?\n",i);
+		bcopy( ((char *)&pc->pkc_hdr)+1, (char *)&pc->pkc_hdr, sizeof(struct pkg_header)-1);
+		if( (i=read( pc->pkc_fd,
+		    ((char *)&pc->pkc_hdr)+sizeof(struct pkg_header)-1,
+		    1 )) != 1 )  {
+			fprintf(stderr,"pkg_gethdr: hdr read=%d?\n",i);
 			return(-1);
 		}
 	}
-	hdr.pkg_type = ntohs(hdr.pkg_type);	/* host order */
-	hdr.pkg_len = ntohl(hdr.pkg_len);
-	if( hdr.pkg_len < 0 )  hdr.pkg_len = 0;
-	pkg_buf = (char *)0;
-	pkg_left = hdr.pkg_len;
-	if( pkg_left == 0 )  return(1);		/* msg here, no data */
+	pc->pkc_hdr.pkg_type = ntohs(pc->pkc_hdr.pkg_type);	/* host order */
+	pc->pkc_hdr.pkg_len = ntohl(pc->pkc_hdr.pkg_len);
+	if( pc->pkc_hdr.pkg_len < 0 )  pc->pkc_hdr.pkg_len = 0;
+	pc->pkc_buf = (char *)0;
+	pc->pkc_left = pc->pkc_hdr.pkg_len;
+	if( pc->pkc_left == 0 )  return(1);		/* msg here, no data */
 
 	if( buf )  {
-		pkg_buf = buf;
+		pc->pkc_buf = buf;
 	} else {
 		/* Prepare to read message into dynamic buffer */
-		pkg_buf = malloc(hdr.pkg_len+2);
+		pc->pkc_buf = malloc(pc->pkc_hdr.pkg_len+2);
 	}
-	pkg_curpos = pkg_buf;
+	pc->pkc_curpos = pc->pkc_buf;
 	return(1);			/* something ready */
 }
 
@@ -614,93 +634,25 @@ char *buf;
  *  Returns -1 on error, etc.
  */
 int
-pkg_block(fd)
+pkg_block(pc)
+register struct pkg_conn *pc;
 {
 	register int i;
 
-	if( pkg_left == 0 )  return( pkg_dispatch() );
+	PKG_CK(pc);
+	if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
 
 	/* If no read outstanding, start one. */
-	if( pkg_left < 0 )  {
-		if( pkg_gethdr( fd, (char *)0 ) < 0 )  return(-1);
-		if( pkg_left <= 0 )  return( pkg_dispatch() );
+	if( pc->pkc_left < 0 )  {
+		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
+		if( pc->pkc_left <= 0 )  return( pkg_dispatch(pc) );
 	}
 
 	/* Read the rest of the message, blocking in read() */
-	if( pkg_left > 0 && pkg_mread( fd, pkg_curpos, pkg_left ) != pkg_left )  {
-		pkg_left = -1;
+	if( pc->pkc_left > 0 && pkg_mread( pc->pkc_fd, pc->pkc_curpos, pc->pkc_left ) != pc->pkc_left )  {
+		pc->pkc_left = -1;
 		return(-1);
 	}
-	pkg_left = 0;
-	return( pkg_dispatch() );
-}
-
-
-/*
- *  			R A W _ P K G _ S E N D
- *
- *  Send an iovec list of "raw packets", i.e. user is responsible
- *   for putting on magic headers, network byte order, etc.
- *
- *  Note that the whole message should be transmitted by
- *  TCP with only one TCP_PUSH at the end, due to the use of writev().
- *
- *  Returns number of bytes of user data actually sent.
- */
-int
-raw_pkg_send( buf, len, fd )
-struct iovec buf[];
-int len;
-int fd;
-{
-	struct timeval tv;
-	long bits;
-	register int i;
-	int start;
-
-	if( len < 0 )  len=0;
-
-	do  {
-		/* Finish any partially read message */
-		if( pkg_left > 0 )
-			if( pkg_block(fd) < 0 )
-				return(-1);
-#ifdef never
-		/* Check socket for more input */
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;		/* poll */
-		bits = 1<<fd;
-		i = select( fd+1, &bits, (char *)0, (char *)0, &tv );
-		if( i > 0 && bits )
-			if( pkg_block(fd) < 0 )
-				return(-1);
-#endif
-	} while( pkg_left > 0 );
-
-#ifdef NEVER
-	hdr.pkg_magic = htons(PKG_MAGIC);
-	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
-	hdr.pkg_len = htonl(len);
-
-	cmdvec[0].iov_base = (caddr_t)&hdr;
-	cmdvec[0].iov_len = sizeof(hdr);
-	cmdvec[1].iov_base = (caddr_t)buf;
-	cmdvec[1].iov_len = len;
-#endif NEVER
-
-	/*
-	 * TODO:  set this FD to NONBIO.  If not all output got sent,
-	 * loop in select() waiting for capacity to go out, and
-	 * reading input as well.  Prevents deadlocking.
-	 */
-	start = 0;
-	while( len > 0 ) {
-		if( (i = writev( fd, &buf[start], (len>8?8:len) )) < 0 )  {
-			fb_log( "pkg_send : write failed.\n" );
-			return(-1);
-		}
-		len -= 8;
-		start += 8;
-	}
-	return(len);
+	pc->pkc_left = 0;
+	return( pkg_dispatch(pc) );
 }
