@@ -81,10 +81,15 @@ then
 		4)	MACHINE=5d;;
 		5)	MACHINE=6d;;
 		6)	MACHINE=7d;;
-		7)	MACHINE=8d;;
+		7)	MACHINE=9d;;
 		*)	echo ERROR unknown SGI software version `uname -a` 1>&2;;
 		esac;;
-	IRIX64)	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1; MACHINE=7d;;
+	IRIX64)	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
+		PROCESSOR=` hinv | sed -n -e 's/^CPU: MIPS \(.*\) Proc.*$/\1/p' `
+		case "$PROCESSOR" in
+		R4000|R4400)	MACHINE=7d;;
+		R8000|R10000)	MACHINE=8d;;
+		esac;;
 	esac; fi
 fi
 
