@@ -504,16 +504,16 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
   $ACLOCAL $SEARCH_DIRS
 
-  [ ! $? = 0 ] && $ECHO "ERROR: $ACLOCAL failed" && exit 2
+  if [ ! $? = 0 ] ; then $ECHO "ERROR: $ACLOCAL failed" && exit 2 ; fi
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
     $VERBOSE_ECHO "$LIBTOOLIZE --automake -c -f"
     $LIBTOOLIZE --automake -c -f
-    [ ! $? = 0 ] && $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2
+    if [ ! $? = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
   else
     if [ "x$HAVE_ALTLIBTOOLIZE" = "xyes" ] ; then
       $VERBOSE_ECHO "$LIBTOOLIZE --automake --copy --force"
       $LIBTOOLIZE --automake --copy --force
-      [ ! $? = 0 ] && $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2
+      if [ ! $? = 0 ] ; then $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2 ; fi
     fi
   fi
 
@@ -536,6 +536,7 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     fi
   fi
 
+  $VERBOSE_ECHO
   $VERBOSE_ECHO "$AUTOCONF -f"
   autoconf_output=`$AUTOCONF -f 2>&1`
   if [ ! $? = 0 ] ; then
@@ -554,8 +555,8 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
 	$ECHO
 	$ECHO "Restarting the configuration steps with a local libtool.m4"
 
-	$VERBOSE_ECHO $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
-	$0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	$VERBOSE_ECHO sh $0 "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
+	sh "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9"
 	exit $?
       fi
     fi
@@ -568,11 +569,11 @@ EOF
 
   $VERBOSE_ECHO "$AUTOHEADER"
   $AUTOHEADER
-  [ ! $? = 0 ] && $ECHO "ERROR: $AUTOHEADER failed" && exit 2
+  if [ ! $? = 0 ] ; then $ECHO "ERROR: $AUTOHEADER failed" && exit 2 ; fi
 
   $VERBOSE_ECHO "$AUTOMAKE -a -c -f"
   $AUTOMAKE -a -c -f
-  [ ! $? = 0 ] && $ECHO "ERROR: $AUTOMAKE failed" && exit 2
+  if [ ! $? = 0 ] ; then $ECHO "ERROR: $AUTOMAKE failed" && exit 2 ; fi
 fi
 
 
@@ -581,18 +582,18 @@ fi
 #########################################
 if test "x$HAVE_SED" = "xyes" ; then
     for file in COPYING INSTALL ; do
-	curr="$$file"
-	if ! test -f "$curr" ; then
+	curr="$file"
+	if test ! -f "$curr" ; then
 	    continue
 	fi
-	back="${aux_dir}/${file}.backup"
-	if ! test -f "$back" ; then
+	back="${_aux_dir}/${file}.backup"
+	if test ! -f "$back" ; then
 	    continue
 	fi
 
 	current="`cat $curr`"
 	backup="`cat $back`"
-	if ! test "x$current" = "x$backup" ; then
+	if test "x$current" != "x$backup" ; then
 	    current_rev=`grep '$Revision' "$curr" | sed 's/.*[^0-9]\([0-9][0-9]*\.[0-9][0-9]*\)[^0-9].*/\1/' | sed 's/\.//g'`
 	    if test "x$current_rev" = "x" ; then
 		current_rev=0
@@ -623,7 +624,11 @@ $ECHO
 ###############################################
 # check for help arg, and bypass running make #
 ###############################################
-[ "x$HAVE_SED" = "xyes" ] && [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] && _help=yes
+if [ "x$HAVE_SED" = "xyes" ] ; then
+  if [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] ; then
+    _help=yes
+  fi
+fi
 if [ "x$HELP" = "xyes" ] ; then
   echo "Help was requested.  No configuration and compilation will be done."
   echo "Running: $PATH_TO_AUTOGEN/configure $ARGS"
