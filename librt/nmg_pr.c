@@ -730,6 +730,31 @@ CONST struct edgeuse	*eu;
 	rt_log("%s (%g, %g, %g -> %g, %g, %g)\n", str, eup[0], eup[1], eup[2],
 		matep[0], matep[1], matep[2]);
 }
+/*
+ *			N M G _ P R _ P T B L
+ *
+ *  Print an nmg_ptbl array for inspection.
+ */
+void
+nmg_pr_ptbl( title, tbl, verbose )
+CONST char		*title;
+CONST struct nmg_ptbl	*tbl;
+int			verbose;
+{
+	register long	**lp;
+
+	NMG_CK_PTBL(tbl);
+	rt_log("%s: nmg_ptbl array with %d entries\n",
+		title, tbl->end );
+
+	if( !verbose )  return;
+
+	for( lp = (long **)NMG_TBL_BASEADDR(tbl);
+	     lp <= (long **)NMG_TBL_LASTADDR(tbl); lp++
+	)  {
+		rt_log("  %.8x %s\n", *lp, rt_identify_magic(**lp) );
+	}
+}
 
 /*
  *			N M G _ P R _ P T B L _ V E R T _ L I S T

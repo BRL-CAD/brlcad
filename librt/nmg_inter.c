@@ -2651,33 +2651,6 @@ struct faceuse		*fu2;
 	nmg_enlist_vu( is, vu1, 0 );
 }
 
-/* XXX move to nmg_pr.c */
-/*
- *			N M G _ P R _ P T B L
- *
- *  Print an nmg_ptbl array for inspection.
- */
-void
-nmg_pr_ptbl( title, tbl, verbose )
-CONST char		*title;
-CONST struct nmg_ptbl	*tbl;
-int			verbose;
-{
-	register long	**lp;
-
-	NMG_CK_PTBL(tbl);
-	rt_log("nmg_pr_ptbl(%s) %d entries (%d allocated)\n",
-		title, tbl->end, tbl->blen );
-
-	if( !verbose )  return;
-
-	for( lp = (long **)NMG_TBL_BASEADDR(tbl);
-	     lp <= (long **)NMG_TBL_LASTADDR(tbl); lp++
-	)  {
-		rt_log("  %.8x %s\n", *lp, rt_identify_magic(**lp) );
-	}
-}
-
 /*
  *  NEWLINE2
  *
