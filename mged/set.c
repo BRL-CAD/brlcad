@@ -45,6 +45,8 @@ struct mged_variables mged_variables = {
 /* v_axis */    	        0,
 /* e_axis */            	0,
 /* predictor */			0,
+/* focus */                     0,
+/* view */                      0,
 /* predictor_advance */		1.0,
 /* predictor_length */		2.0,
 /* perspective */		-1,
@@ -54,6 +56,13 @@ struct mged_variables mged_variables = {
 /* intersection lexeme */	"n",
 /* difference lexeme */		"-"
 };
+
+
+#define VIEW_TABLE_SIZE 7
+static int current_view = 0;
+static mat_t view_table[VIEW_TABLE_SIZE];
+static void     set_view();
+
 
 /*
  *  Cause screen to be refreshed when all cmds have been processed.
@@ -83,6 +92,9 @@ struct structparse mged_vparse[] = {
 	{"%d",  1, "w_axis",            MV_O(w_axis),           refresh_hook },
 	{"%d",  1, "v_axis",            MV_O(v_axis),           refresh_hook },
 	{"%d",  1, "e_axis",            MV_O(e_axis),           refresh_hook },
+	{"%d",  1, "view",              MV_O(view),             set_view },
+	{"%d",  1, "focus",             MV_O(focus),            FUNC_NULL },
+
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
@@ -199,6 +211,7 @@ mged_variable_setup(interp)
 Tcl_Interp *interp;    
 {
     register struct structparse *sp;
+    register int i;
 
     for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
 	read_var( (ClientData)sp, interp, sp->sp_name, NULL, 0 );
@@ -209,6 +222,11 @@ Tcl_Interp *interp;
 	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
 		      unset_var, (ClientData)sp );
     }
+
+
+    /* Initialize view_table */
+    for(i = 0; i < VIEW_TABLE_SIZE; ++i)
+      mat_idn(view_table[i]);
 }
 
 int
@@ -239,4 +257,25 @@ char *av[];
 	return bad ? CMD_BAD : CMD_OK;
 }
 
+static void
+set_view()
+{
+  /* save current view */
+  mat_copy(view_table[current_view], Viewrot);
 
+  /* toggle forward */
+  if(mged_variables.view){
+    if(++current_view > VIEW_TABLE_SIZE - 1)
+      current_view = 0;
+  }else{
+    /* toggle backward */
+    if(--current_view < 0)
+            current_view = VIEW_TABLE_SIZE - 1;
+  }
+
+  /* restore previously saved view */
+  mat_copy(Viewrot, view_table[current_view]);
+  new_mats();
+
+  dmaflag = 1;
+}
