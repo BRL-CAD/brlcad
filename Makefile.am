@@ -31,6 +31,7 @@ SUBDIRS=\
 	bwish\
 	comgeom-g\
 	conv\
+        db\
 	doc\
 	fb\
 	fbed\
