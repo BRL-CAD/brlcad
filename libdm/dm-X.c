@@ -301,7 +301,7 @@ char *argv[];
   if(X_set_visual(((struct x_vars *)dmp->dm_vars)->dpy,
 		  ((struct x_vars *)dmp->dm_vars)->xtkwin,
 		  &((struct x_vars *)dmp->dm_vars)->cmap,
-		  &((struct x_vars *)dmp->dm_vars)->depth) == NULL){
+		  &((struct x_vars *)dmp->dm_vars)->depth) == 0){
     Tcl_AppendResult(interp, "X_open: Can't get an appropriate visual.\n", (char *)NULL);
     (void)X_close(dmp);
     return DM_NULL;
@@ -935,7 +935,7 @@ int *depth;
       }
     }
 
-    return(NULL); /* failure */
+    return(0); /* failure */
   }
 }
 
