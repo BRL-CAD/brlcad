@@ -1919,6 +1919,11 @@ int void_ok;
 	return find_pt2d(tbl2d, eu->vu_p);
 }
 
+/*
+ *
+ *	Join 2 loops (one forms a hole in the other usually )
+ *
+ */
 static void
 join_mapped_loops(tbl2d, p1, p2, color, tol)
 struct rt_list *tbl2d;
@@ -1942,6 +1947,8 @@ CONST struct rt_tol	*tol;
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
 
+	if (rt_g.NMG_debug & DEBUG_TRI)
+		rt_log("join_mapped_loops()\n");
 	if (p1 == p2) {
 		rt_log("%s %d: Attempting to join loop to itself at (%g %g %g)?\n",
 			__FILE__, __LINE__,
@@ -1955,6 +1962,11 @@ CONST struct rt_tol	*tol;
 	}
 
 	pick_pt2d_for_cutjoin(tbl2d, &p1, &p2, tol);
+
+	vu1 = p1->vu_p;
+	vu2 = p2->vu_p;
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_VERTEXUSE(vu2);
 
 	if (p1 == p2) {
 		rt_log("%s: %d I'm a fool...\n\ttrying to join a vertexuse (%g %g %g) to itself\n",
@@ -1984,6 +1996,21 @@ CONST struct rt_tol	*tol;
 	 * the new "next" edge/vertexuse
 	 */
 	eu = RT_LIST_PPREV_CIRC(edgeuse, vu2->up.eu_p);
+
+
+    	if (rt_g.NMG_debug & DEBUG_TRI) {
+    		struct edgeuse *pr1_eu;
+    		struct edgeuse *pr2_eu;
+
+    		pr1_eu = RT_LIST_PNEXT_CIRC(edgeuse, vu1->up.eu_p);
+    		pr2_eu = RT_LIST_PNEXT_CIRC(edgeuse, vu2->up.eu_p);
+
+    		rt_log("joining loops between:\n\t%g %g %g -> (%g %g %g)\n\tand%g %g %g -> (%g %g %g)\n",
+			V3ARGS(vu1->v_p->vg_p->coord),
+			V3ARGS(pr1_eu->vu_p->v_p->vg_p->coord),
+			V3ARGS(vu2->v_p->vg_p->coord),
+			V3ARGS(pr2_eu->vu_p->v_p->vg_p->coord) );
+    	}
 
 	vu = nmg_join_2loops(vu1, vu2);
 	if (plot_fd) {
