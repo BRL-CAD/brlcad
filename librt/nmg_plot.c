@@ -206,6 +206,10 @@ CONST vectp_t		normal;
 				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
 			}
 		}
+
+		if( !eu->g.magic_p )
+			continue;
+
 		/* If cnurb edgeuse, draw points interior to the curve here */
 		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )  continue;
 
