@@ -69,9 +69,9 @@ transform = s,^,iwidgets_,
 
 install-data-hook:
 	@for manpage in $(mann_MANS) ; do \
-		echo "Configuring $(mandir)/mann/$$manpage" ; \
-		sed -e '/man\.macros/r $(top_srcdir)/src/other/iwidgets/doc/man.macros' -e '/man\.macros/d' $(mandir)/mann/iwidgets_$$manpage > $(mandir)/mann/iwidgets_$$manpage.new ; \
-		mv $(mandir)/mann/iwidgets_$$manpage.new $(mandir)/mann/iwidgets_$$manpage ; \
+		echo "Configuring $(DESTDIR)$(mandir)/mann/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/iwidgets/doc/man.macros' -e '/man\.macros/d' $(DESTDIR)$(mandir)/mann/iwidgets_$$manpage > $(DESTDIR)$(mandir)/mann/iwidgets_$$manpage.new ; \
+		mv $(DESTDIR)$(mandir)/mann/iwidgets_$$manpage.new $(DESTDIR)$(mandir)/mann/iwidgets_$$manpage ; \
 	done
 
 MAINTAINERCLEANFILES = Makefile.in

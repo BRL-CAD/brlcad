@@ -15,9 +15,9 @@ EXTRA_DIST = \
 
 install-data-hook:
 	@for manpage in $(mann_MANS) ; do \
-		echo "Configuring $(mandir)/mann/$$manpage" ; \
-		sed -e '/man\.macros/r $(top_srcdir)/src/other/incrTcl/itk/doc/man.macros' -e '/man\.macros/d' $(mandir)/mann/$$manpage > $(mandir)/mann/$$manpage.new ; \
-		mv $(mandir)/mann/$$manpage.new $(mandir)/mann/$$manpage ; \
+		echo "Configuring $(DESTDIR)$(mandir)/mann/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/incrTcl/itk/doc/man.macros' -e '/man\.macros/d' $(DESTDIR)$(mandir)/mann/$$manpage > $(DESTDIR)$(mandir)/mann/$$manpage.new ; \
+		mv $(DESTDIR)$(mandir)/mann/$$manpage.new $(DESTDIR)$(mandir)/mann/$$manpage ; \
 	done
 
 MAINTAINERCLEANFILES = Makefile.in

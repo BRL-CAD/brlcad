@@ -56,11 +56,11 @@ all-am: Makefile
 install-data-local:
 	@if test -f .libs/proe-brl ; then \
 		@ECHO@ "Installing proe-brl" ; \
-		$(INSTALL) .libs/proe-brl $(proebindir)/proe-brl ; \
+		$(INSTALL) .libs/proe-brl $(DESTDIR)$(proebindir)/proe-brl ; \
 	fi
 	@if test -f libproe2brl.so ; then \
 		@ECHO@ "Installing libproe2brl.so" ; \
-		$(INSTALL) libproe2brl.so $(proelibdir)/libproe2brl.so ; \
+		$(INSTALL) libproe2brl.so $(DESTDIR)$(proelibdir)/libproe2brl.so ; \
 	fi
 
 unlock: proe-brl libproe2brl.la

@@ -159,19 +159,19 @@ EXTRA_DIST = \
 
 install-data-hook:
 	@for manpage in $(man1_MANS) ; do \
-		echo "Configuring $(mandir)/man1/$$manpage" ; \
-		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(mandir)/man1/$$manpage > $(mandir)/man1/$$manpage.new ; \
-		mv $(mandir)/man1/$$manpage.new $(mandir)/man1/$$manpage ; \
+		echo "Configuring $(DESTDIR)$(mandir)/man1/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(DESTDIR)$(mandir)/man1/$$manpage > $(DESTDIR)$(mandir)/man1/$$manpage.new ; \
+		mv $(DESTDIR)$(mandir)/man1/$$manpage.new $(DESTDIR)$(mandir)/man1/$$manpage ; \
 	done
 	@for manpage in $(man3_MANS) ; do \
-		echo "Configuring $(mandir)/man3/$$manpage" ; \
-		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(mandir)/man3/$$manpage > $(mandir)/man3/$$manpage.new ; \
-		mv $(mandir)/man3/$$manpage.new $(mandir)/man3/$$manpage ; \
+		echo "Configuring $(DESTDIR)$(mandir)/man3/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(DESTDIR)$(mandir)/man3/$$manpage > $(DESTDIR)$(mandir)/man3/$$manpage.new ; \
+		mv $(DESTDIR)$(mandir)/man3/$$manpage.new $(DESTDIR)$(mandir)/man3/$$manpage ; \
 	done
 	@for manpage in $(mann_MANS) ; do \
-		echo "Configuring $(mandir)/mann/$$manpage" ; \
-		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(mandir)/mann/$$manpage > $(mandir)/mann/$$manpage.new ; \
-		mv $(mandir)/mann/$$manpage.new $(mandir)/mann/$$manpage ; \
+		echo "Configuring $(DESTDIR)$(mandir)/mann/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(DESTDIR)$(mandir)/mann/$$manpage > $(DESTDIR)$(mandir)/mann/$$manpage.new ; \
+		mv $(DESTDIR)$(mandir)/mann/$$manpage.new $(DESTDIR)$(mandir)/mann/$$manpage ; \
 	done
 
 MAINTAINERCLEANFILES = Makefile.in
