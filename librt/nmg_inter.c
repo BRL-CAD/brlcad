@@ -2472,6 +2472,7 @@ struct faceuse		*fu2;
 	struct vertex	*hit_v;
 	int		code;
 	int		n_colinear;
+	fastf_t		min_dist_sq;
 
 	eutab.magic = 0;
 
@@ -2531,7 +2532,7 @@ struct faceuse		*fu2;
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
-		fastf_t		a, b;
+		FAST fastf_t		a, b;
 
 		NMG_CK_EDGEUSE(*eup);
 
@@ -2600,8 +2601,59 @@ struct faceuse		*fu2;
 
 	/*
 	 *  Found the ONE point in 2D where the two lines intersect.
+	 *  Before we believe that the rt_isect_line2_line2()'s hit point
+	 *  is the place to break our edge, search for the vertex
+	 *  closest to the line.  If it's within tolerance, use *that*
+	 *  rather than breaking the edge.
 	 */
 not_colinear:
+	min_dist_sq = INFINITY;
+	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
+	)  {
+		FAST fastf_t		d;
+
+		NMG_CK_EDGEUSE(*eup);
+
+		vu1a = (*eup)->vu_p;
+		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
+		NMG_CK_VERTEXUSE(vu1a);
+		NMG_CK_VERTEXUSE(vu1b);
+
+		d = rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord );
+		if( d < min_dist_sq )  {
+			min_dist_sq = d;
+			hit_v = vu1a->v_p;
+		}
+		d = rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord );
+		if( d < min_dist_sq )  {
+			min_dist_sq = d;
+			hit_v = vu1b->v_p;
+		}
+	}
+	if( min_dist_sq < is->tol.dist_sq )  {
+		/* Found the vertex.  Enlist all uses of it on this edge_g. */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tExisting v=x%x is intersect point, dist=%g\n",
+				hit_v, sqrt(min_dist_sq) );
+		}
+		for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+		     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
+		)  {
+			NMG_CK_EDGEUSE(*eup);
+			vu1a = (*eup)->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
+			NMG_CK_VERTEXUSE(vu1a);
+			NMG_CK_VERTEXUSE(vu1b);
+			if( vu1a->v_p == hit_v )
+				nmg_enlist_vu(is, vu1a, 0);
+			if( vu1b->v_p == hit_v )
+				nmg_enlist_vu(is, vu1b, 0);
+		}
+		ret = 0;
+		goto out;
+	}
+
 	VJOIN1( hit3d, is->pt, dist[0], is->dir );
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 		VPRINT("\t2 lines intersect at", hit3d);
