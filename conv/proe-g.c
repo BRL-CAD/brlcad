@@ -32,6 +32,7 @@ static char RCSid[] = "$Header$";
 
 #include <stdio.h>
 #include <math.h>
+#include <libgen.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -50,7 +51,10 @@ static char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
+RT_EXTERN( fastf_t mat_determinant , ( mat_t m ) );
+RT_EXTERN( fastf_t mat_det3 , ( mat_t m ) );
 
+extern char *__loc1;	/* used by regex */
 extern char *optarg;
 extern int optind,opterr,optopt;
 extern int errno;
@@ -60,12 +64,21 @@ static int polysolid=0;		/* Flag for polysolid output rather than NMG's */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
+static int air_no=1;		/* Air numbers */
 static int debug=0;		/* Debug flag */
-static char *usage="proe-g [-p] [-d] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
+static int cut_count=0;		/* count of assembly cut HAF solids created */
+static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
+static char *reg_cmp=(char *)NULL;		/* compiled regular expression */
+static char *usage="proe-g [-p] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -p option is to create polysolids rather than NMG's.\n\
 	The -d option prints additional debugging information.\n\
+	The -u option indicates that portions of object names that match the regular expression\n\
+		'reg_exp' shouold be ignored.\n\
+	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
+	The -r option indicates that the model should not be re-oriented,\n\
+		but left in the same orientation as it was in Pro/E.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n\
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
 static FILE *fd_in;		/* input file (from Pro/E) */
@@ -73,6 +86,10 @@ static FILE *fd_out;		/* Resulting BRL-CAD file */
 static struct nmg_ptbl null_parts; /* Table of NULL solids */
 static float conv_factor=1.0;	/* conversion factor from model units to mm */
 static int top_level=1;		/* flag to catch top level assembly or part */
+static mat_t re_orient;		/* rotation matrix to put model in BRL-CAD orientation
+				 * (+x towards front +z is up ) */
+static int do_air=0;		/* When set, all regions are BRL-CAD "air" regions */
+static int do_reorient=1;	/* When set, reorient entire model to BRL-CAD style */
 
 struct render_verts
 {
@@ -91,6 +108,34 @@ struct name_conv_list
 	struct name_conv_list *next;
 } *name_root=(struct name_conv_list *)NULL;
 
+struct ptc_plane
+{
+	double  e1[3], e2[3], e3[3], origin[3];
+};
+
+struct ptc_cylinder
+{
+	double  e1[3], e2[3], e3[3], origin[3];
+	double  radius;
+};
+
+union ptc_surf
+{
+	struct ptc_plane plane;
+	struct ptc_cylinder cylinder;
+};
+
+struct ptc_surf_list
+{
+	struct rt_list	l;
+	int type;
+	union ptc_surf	surf;
+} *surf_root=(struct ptc_surf_list *)NULL;
+
+/* for type in struct ptc_plane and struct ptc_cylinder */
+#define	SURF_PLANE	1
+#define	SURF_CYLINDER	2
+
 #define	MAX_LINE_LEN	512
 
 #define	UNKNOWN_TYPE	0
@@ -104,8 +149,12 @@ int type;
 {
 	struct name_conv_list *ptr,*ptr2;
 	char tmp_name[NAMESIZE];
-	int len;
+	int suffix_insert;
 	char try_char='@';
+	char *after_match;
+
+	if( debug )
+		rt_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
 
 	if( type != ASSEMBLY_TYPE && type != PART_TYPE )
 	{
@@ -113,35 +162,71 @@ int type;
 		rt_bomb( "Add_new_name\n" );
 	}
 
+
 	/* Add a new name */
 	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
 	strncpy( ptr->name , name, 80 );
 	ptr->obj = obj;
-	strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
+	if( do_regex )
+	{
+		after_match = regex( reg_cmp, ptr->name );
+		if( after_match && *after_match != '\0' )
+		{
+			if( __loc1 == ptr->name )
+				strncpy( ptr->brlcad_name , after_match , NAMESIZE-2 );
+			else
+			{
+				char *str;
+				int i=0;
+
+				str = ptr->name;
+				while( str != __loc1 && i<NAMESIZE )
+					ptr->brlcad_name[i++] = *str++;
+				strncpy( str, after_match, NAMESIZE-2-i );
+			}
+		}
+		else
+			strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
+		if( debug )
+			rt_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
+	}
+	else
+		strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
 	ptr->brlcad_name[NAMESIZE-2] = '\0';
 	ptr->solid_use_no = 0;
 	ptr->comb_use_no = 0;
 
 	/* make sure brlcad_name is unique */
-	len = strlen( ptr->brlcad_name );
-	if( len >= NAMESIZE )
-		len = NAMESIZE - 1;
+	suffix_insert = strlen( ptr->brlcad_name );
+	if( suffix_insert > NAMESIZE - 3 )
+		suffix_insert = NAMESIZE - 3;
 
 	NAMEMOVE( ptr->brlcad_name, tmp_name );
+	if( debug )
+		rt_log( "\tMaking sure %s is a unique name\n", tmp_name );
 	ptr2 = name_root;
 	while( ptr2 )
 	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE-2 ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE-2 ) )
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
 		{
+			if( debug )
+				rt_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
 			try_char++;
 			if( try_char == '[' )
 				try_char = 'a';
+			if( debug )
+				rt_log( "\t\t\ttry_char = %c\n", try_char );
 			if( try_char == '{' )
+			{
 				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
+				exit(1);
+			}
 
 			NAMEMOVE( ptr->brlcad_name, tmp_name );
-			sprintf( &tmp_name[len-2] , "_%c" , try_char );
+			sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
+			if( debug )
+				rt_log( "\t\tNew name to try is %s\n", tmp_name );
 			ptr2 = name_root;
 		}
 		else
@@ -158,30 +243,41 @@ int type;
 	else
 	{
 		strcpy( ptr->solid_name , "s." );
-		strncpy( &ptr->solid_name[2] , name , NAMESIZE-4 );
+		strncpy( &ptr->solid_name[2] , ptr->brlcad_name , NAMESIZE-4 );
 		ptr->solid_name[NAMESIZE-1] = '\0';
 	}
 
 	/* make sure solid name is unique */
-	len = strlen( ptr->solid_name );
-	if( len >= NAMESIZE )
-		len = NAMESIZE - 1;
+	suffix_insert = strlen( ptr->solid_name );
+	if( suffix_insert > NAMESIZE - 3 )
+		suffix_insert = NAMESIZE - 3;
 
 	NAMEMOVE( ptr->solid_name, tmp_name );
+	if( debug )
+		rt_log( "\tMaking sure %s is a unique solid name\n", tmp_name );
 	ptr2 = name_root;
 	try_char = '@';
 	while( ptr2 )
 	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE-2 ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE-2 ) )
+		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
 		{
+			if( debug )
+				rt_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
 			try_char++;
 			if( try_char == '[' )
 				try_char = 'a';
+			if( debug )
+				rt_log( "\t\t\ttry_char = %c\n", try_char );
 			if( try_char == '{' )
-				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
+			{
+				rt_log( "Too many solids with same name (%s)\n" , ptr->solid_name );
+				exit(1);
+			}
 
 			NAMEMOVE( ptr->solid_name, tmp_name );
-			sprintf( &tmp_name[len-2] , "_%c" , try_char );
+			sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
+			if( debug )
+				rt_log( "\t\tNew name to try is %s\n", tmp_name );
 			ptr2 = name_root;
 		}
 		else
@@ -321,6 +417,9 @@ char line[MAX_LINE_LEN];
 				for( RT_LIST_FOR( wp, wmember, &head.l ) )
 					rt_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
 			}
+			else
+				rt_log( "\tUsing name: %s\n", brlcad_name );
+
 			mk_lcomb( fd_out , brlcad_name , &head , 0 ,
 			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
 			break;
@@ -357,22 +456,43 @@ char line[MAX_LINE_LEN];
 			}
 
 			/* convert this matrix to seperate scale factor into element #15 */
-			scale = MAGNITUDE( &wmem->wm_mat[0] );
+/*			scale = MAGNITUDE( &wmem->wm_mat[0] ); */
+			scale = pow( mat_det3( wmem->wm_mat ), 1.0/3.0 );
+			if( debug )
+			{
+				mat_print( brlcad_name, wmem->wm_mat );
+				rt_log( "\tscale = %g, conv_factor = %g\n", scale, conv_factor );
+			}
 			if( scale != 1.0 )
 			{
 				inv_scale = 1.0/scale;
 				for( j=0 ; j<3 ; j++ )
 					HSCALE( &wmem->wm_mat[j*4], &wmem->wm_mat[j*4], inv_scale )
 
-				if( top_level )
+				if( top_level)
 					wmem->wm_mat[15] *= (inv_scale/conv_factor);
+				else
+					wmem->wm_mat[15] *= inv_scale;
 			}
 			else if( top_level )
 				wmem->wm_mat[15] /= conv_factor;
+
+			if( top_level && do_reorient )
+			{
+				/* apply re_orient transformation here */
+				if( debug )
+				{
+					rt_log( "Applying re-orient matrix to member %s\n", brlcad_name );
+					mat_print( "re-orient matrix", re_orient );
+				}
+				mat_mul2( re_orient, wmem->wm_mat );
+			}
+			if( debug )
+				mat_print( "final matrix", wmem->wm_mat );
 		}
 		else
 		{
-			fprintf( stderr , "Unrecognized line in assembly (%s)\n%s\n" , name , line1 );
+			rt_log( "Unrecognized line in assembly (%s)\n%s\n" , name , line1 );
 		}
 	}
 
@@ -385,6 +505,82 @@ char line[MAX_LINE_LEN];
 
 	top_level = 0;
 
+}
+
+static int
+do_modifiers( line1, start, head, name )
+char *line1;
+int *start;
+struct wmember *head;
+char *name;
+{
+	struct wmember *wmem;
+
+	while( strncmp( &line1[*start], "endmodifiers", 12 ) )
+	{
+		if( !strncmp( &line1[*start], "plane", 5 ) )
+		{
+			char haf_name[NAMESIZE+1];
+			double dist;
+			point_t plane_origin;
+			vect_t plane_norm;
+			double x,y,z;
+			int orient;
+
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
+			VSET( plane_origin, x, y, z );
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
+			VSET( plane_norm, x, y, z );
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%lf %lf", &x, &y );
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%lf %lf", &x, &y );
+			fgets( line1, MAX_LINE_LEN, fd_in );
+			sscanf( line1, "%d", &orient );
+
+			cut_count++;
+
+			dist = VDOT( plane_norm, plane_origin );
+			sprintf( haf_name, "s.haf.%d", cut_count );
+			if( mk_half( fd_out, haf_name, plane_norm, dist ) )
+				rt_log( "Failed to create HAF solid for Assembly cut in part %s\n", name );
+			else
+			{
+				/* Add this cut to the region */
+				if( orient == (-1) )
+					wmem = mk_addmember( haf_name, head,
+							WMOP_SUBTRACT );
+				else
+					wmem = mk_addmember( haf_name, head,
+							WMOP_INTERSECT );
+
+				if( top_level && do_reorient )
+				{
+					/* apply re_orient transformation here */
+					if( debug )
+					{
+						rt_log( "Applying re-orient matrix to solid %s\n", haf_name );
+						mat_print( "re-orient matrix", re_orient );
+					}
+					mat_mul2( re_orient, wmem->wm_mat );
+				}
+				
+			}
+		}
+		else if( !strncmp( &line1[*start], "cylinder", 8 ) )
+		{
+rt_log( "Cyinder\n" );
+		}
+		fgets( line1, MAX_LINE_LEN, fd_in );
+		(*start) = (-1);
+		while( isspace( line1[++(*start)] ) );
+	}
 }
 
 void
@@ -404,10 +600,13 @@ char line[MAX_LINE_LEN];
 	struct render_verts verts[3];
 	struct vertex   **vts[3];
 	float colr[3];
+	float part_conv_factor;
 	unsigned char color[3];
 	char *brlcad_name;
 	struct wmember head;
+	struct wmember *wmem;
 	vect_t normal;
+	int solid_in_region=0;
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 		rt_prmem( "At start of Conv_prt():\n" );
@@ -450,12 +649,25 @@ char line[MAX_LINE_LEN];
 	name[++i] = '\0';
 
 	/* get object id */
-	sscanf( &line[start] , "%x %f" , &obj );
+#if 0
+	sscanf( &line[start] , "%x %f" , &obj, &part_conv_factor );
+#else
+	sscanf( &line[start] , "%x" , &obj );
+#endif
 
 	rt_log( "Converting Part: %s\n" , name );
 
 	if( debug )
+#if 0
+		rt_log( "Conv_part %s x%x %g\n" , name , obj, part_conv_factor );
+#else
 		rt_log( "Conv_part %s x%x\n" , name , obj );
+#endif
+
+	solid_count++;
+	solid_name = Get_solid_name( name , obj );
+
+	rt_log( "\tUsing solid name: %s\n" , solid_name );
 
 	if( rt_g.debug & DEBUG_MEM || rt_g.debug & DEBUG_MEM_FULL )
 		rt_prmem( "At start of Convert_part()" );
@@ -572,6 +784,25 @@ char line[MAX_LINE_LEN];
 			else
 				(void)nmg_kfu( fu );
 		}
+		else if( !strncmp( &line1[start], "modifiers", 9 ) )
+		{
+			if( face_count )
+			{
+				wmem = mk_addmember( solid_name , &head , WMOP_UNION );
+				if( top_level && do_reorient )
+				{
+					/* apply re_orient transformation here */
+					if( debug )
+					{
+						rt_log( "Applying re-orient matrix to solid %s\n", solid_name );
+						mat_print( "re-orient matrix", re_orient );
+					}
+					mat_mul2( re_orient, wmem->wm_mat );
+				}
+				solid_in_region = 1;
+			}
+			do_modifiers( line1, &start, &head, name );
+		}
 	}
 
 	/* Check if this part has any solid parts */
@@ -665,12 +896,6 @@ char line[MAX_LINE_LEN];
 
 		nmg_rebound( m , &tol );
 
-	solid_count++;
-	solid_name = Get_solid_name( name , obj );
-
-	if( debug )
-		rt_log( "Writing solid (%s)\n" , solid_name );
-
 	if( polysolid )
 	{
 		rt_log( "\tWriting polysolid\n" );
@@ -684,15 +909,38 @@ char line[MAX_LINE_LEN];
 
 	nmg_km( m );
 
-	mk_addmember( solid_name , &head , WMOP_UNION );
-
+	if( face_count && !solid_in_region )
+	{
+		wmem = mk_addmember( solid_name , &head , WMOP_UNION );
+		if( top_level && do_reorient )
+		{
+			/* apply re_orient transformation here */
+			if( debug )
+			{
+				rt_log( "Applying re-orient matrix to solid %s\n", solid_name );
+				mat_print( "re-orient matrix", re_orient );
+			}
+			mat_mul2( re_orient, wmem->wm_mat );
+		}
+	}
 	brlcad_name = Get_unique_name( name , obj , PART_TYPE );
-	if( debug )
-		rt_log( "\tMake region (%s)\n" , brlcad_name );
 
-	mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
-	color, id_no, 0, 1, 100, 0 );
-	id_no++;
+	if( do_air )
+	{
+		rt_log( "\tMaking air region (%s)\n" , brlcad_name );
+
+		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
+		color, 0, air_no, 1, 100, 0 );
+		air_no++;
+	}
+	else
+	{
+		rt_log( "\tMaking region (%s)\n" , brlcad_name );
+
+		mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
+		color, id_no, 0, 1, 100, 0 );
+		id_no++;
+	}
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 	{
@@ -737,7 +985,7 @@ Convert_input()
 		else if( !strncmp( line , "solid" , 5 ) )
 			Convert_part( line );
 		else
-			fprintf( stderr , "Unrecognized line:\n%s\n" , line );
+			rt_log( "Unrecognized line:\n%s\n" , line );
 	}
 }
 
@@ -849,12 +1097,12 @@ char	*argv[];
 
 	if( argc < 2 )
 	{
-		fprintf(stderr, usage, argv[0]);
+		rt_log( usage, argv[0]);
 		exit(1);
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "dx:X:p")) != EOF) {
+	while ((c = getopt(argc, argv, "rdax:X:pu:")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -872,8 +1120,24 @@ char	*argv[];
 		case 'p':
 			polysolid = 1;
 			break;
+		case 'u':
+			do_regex = 1;
+			reg_cmp = regcmp( optarg, (char *)0 );
+			if( reg_cmp == (char *)NULL )
+			{
+				rt_log( "proe-g: Bad regular expression (%s)\n", optarg );
+				rt_log( usage, argv[0] );
+				exit( 1 );
+			}
+			break;
+		case 'a':
+			do_air = 1;
+			break;
+		case 'r':
+			do_reorient = 0;
+			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
+			rt_log( usage, argv[0]);
 			exit(1);
 			break;
 		}
@@ -881,7 +1145,7 @@ char	*argv[];
 
 	if( (fd_in=fopen( argv[optind], "r")) == NULL )
 	{
-		fprintf( stderr, "Cannot open input file (%s)\n" , argv[optind] );
+		rt_log( "Cannot open input file (%s)\n" , argv[optind] );
 		perror( argv[0] );
 		exit( 1 );
 	}
@@ -889,12 +1153,15 @@ char	*argv[];
 	brlcad_file = argv[optind];
 	if( (fd_out=fopen( brlcad_file, "w")) == NULL )
 	{
-		fprintf( stderr, "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
+		rt_log( "Cannot open BRL-CAD file (%s)\n" , brlcad_file );
 		perror( argv[0] );
 		exit( 1 );
 	}
 
 	mk_id_units( fd_out , "Conversion from Pro/Engineer" , "in" );
+
+	/* Create re-orient matrix */
+	mat_angles( re_orient, 0.0, 90.0, 90.0 );
 
 	Convert_input();
 
