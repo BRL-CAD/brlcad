@@ -1,8 +1,8 @@
 /*
- *			N U R B  _ C I N T E R P . C
+ *			N U R B  _  I N T E R P . C
  *
- * nurb_interp.c - Interpolatopn routines for fitting NURB curves to
- *				existing data.
+ * nurb_interp.c - Interpolatopn routines for fitting NURB curves and
+ * and surfaces to existing data.
  *			
  *
  * Author:  Paul R. Stay
@@ -181,8 +181,13 @@ int		xmax;		/* ncol = max X */
 	srf->l.magic = RT_SNURB_MAGIC;
 	srf->pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_PT_XYZ,RT_NURB_PT_NONRAT);
 
-	rt_nurb_kvknot(&srf->u_knots, order, 0.0, 1.0, xmax - order);
-	rt_nurb_kvknot(&srf->v_knots, order, 0.0, 1.0, ymax - order);
+	/* the U knot vector replates to the points in a row
+	 * therefore you want to determin how many cols there are
+	 * similar for the V knot vector
+	 */
+
+	rt_nurb_kvknot(&srf->u_knots, order, 0.0, 1.0, ymax - order);
+	rt_nurb_kvknot(&srf->v_knots, order, 0.0, 1.0, xmax - order);
 
 	srf->ctl_points = (fastf_t *) rt_malloc(
 		sizeof(fastf_t) * xmax * ymax * 3,
