@@ -290,21 +290,13 @@ set_view()
   }else{
     /* toggle backward */
     if(--current_view < 0)
-            current_view = VIEW_TABLE_SIZE - 1;
+      current_view = VIEW_TABLE_SIZE - 1;
   }
 
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
-#endif
   /* restore previously saved view and Viewscale */
   bn_mat_copy(Viewrot, viewrot_table[current_view]);
   Viewscale = viewscale_table[current_view];
   new_mats();
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
-#endif
 
   if(absolute_slew[X] != 0.0 ||
      absolute_slew[Y] != 0.0 ||
