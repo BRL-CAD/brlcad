@@ -564,6 +564,8 @@ int		full_path;
     /*
      *	Initialize the application
      */
+    ap.a_magic = RT_AP_MAGIC;
+    ap.a_ray.magic = RT_RAY_MAGIC;
     ap.a_hit = rpt_hits_mike;
     ap.a_miss = rpt_miss;
     ap.a_resource = RESOURCE_NULL;
