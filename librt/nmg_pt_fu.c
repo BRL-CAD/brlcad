@@ -98,7 +98,6 @@ struct edgeuse	*eu;
 			fpi->eu_func(eu, fpi);
 
 		return;
-		break;
 	case NMG_FPI_MISSED:
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT) )
 			rt_log ("\teu previously missed\n");
@@ -588,12 +587,9 @@ char			*priv;		/* private data for [ev]u_func */
 CONST int		allhits;		/* return after finding first hit */
 CONST struct rt_tol	*tol;
 {
-	struct vertexuse	*vu_p;
-	struct edgeuse		*eu;
 	struct loopuse		*lu;
 	struct fu_pt_info	*fpi;
 	fastf_t			dist;
-	vect_t			vupt_v;
 	struct model		*m;
 
 	NMG_CK_FACEUSE(fu);
