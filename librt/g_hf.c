@@ -297,7 +297,8 @@ int			xCell, yCell;
 	register struct hf_specific *hfp =
 		(struct hf_specific *)stp->st_specific;
 
-	fastf_t dn, abs_dn, k1st, k2nd , alpha, beta, dn1st;
+	fastf_t dn, abs_dn, k1st, k2nd , alpha, beta;
+	int dir1st, dir2nd;
 	vect_t wxb, xp;
 	vect_t tri_wn1st, tri_wn2nd, tri_BA1st, tri_BA2nd;
 	vect_t tri_CA1st, tri_CA2nd;
@@ -417,7 +418,6 @@ int			xCell, yCell;
 	if (beta < 0.0 || beta > abs_dn) goto other_half;
 	if (alpha + beta > abs_dn) goto other_half;
 	k1st = VDOT(wxb, tri_wn1st) / dn;
-	dn1st = dn;
 	fnd1 = 1;
 #else
 	/* Ray triangle intersection.  
@@ -425,7 +425,13 @@ int			xCell, yCell;
 	 */
 
 	dn = VDOT(tri_wn1st, rp->r_dir); /* wn1st points out */
-	abs_dn = (dn >= 0.0) ? dn : (-dn);
+	if (dn >= 0.0) {
+		dir1st = 1;
+		abs_dn=dn;
+	} else {
+		dir1st = 0;
+		abs_dn = -dn;
+	}
 
 	/* make sure ray not parallel to plane of triangle */
 	if (abs_dn >= SQRT_SMALL_FASTF) {
@@ -453,7 +459,6 @@ int			xCell, yCell;
 			if (beta >= 0.0 && beta <= abs_dn) {
 				if (alpha + beta <= abs_dn) {
 					k1st = VDOT(wxb, tri_wn1st) / dn;
-					dn1st = dn;
 					fnd1 = 1;
 				}
 			}
@@ -468,7 +473,13 @@ other_half:
 
 	/* XXX This is really hard to read.  Need to fix this like above */
 	dn = VDOT(tri_wn2nd, rp->r_dir);
-	abs_dn = ( dn >= 0.0) ? dn : (-dn);
+	if (dn >= 0.0) {
+		dir2nd = 1;
+		abs_dn = dn;
+	} else {
+		dir2nd = 0;
+		abs_dn = -dn;
+	}
 	if (abs_dn < SQRT_SMALL_FASTF) goto leave;
 	VSUB2(wxb, tri_A, rp->r_pt);
 	VCROSS(xp, wxb, rp->r_dir);
@@ -489,6 +500,8 @@ leave:
 	}
 
 	/*
+	 * XXX - This is now wrong.
+	 *
 	 * We have now done the ray-triangle intersection.  dn1st
 	 * and dn tell us the direction of the normal, <0 is in
 	 * and >0 is out.  k1st and k2nd tell us the distance from
@@ -533,6 +546,18 @@ leave:
 		return 1;
 	}
 #else
+	/*
+	 * This is the two hit situation which can cause interesting
+	 * problems.  Three are basicly five different cases that must
+	 * be dealt with and each one requires that the ray be classified
+	 *
+	 * 1) The ray has hit two different planes at two different
+	 *    locations (k1st != k2nd).  Return both hit points.
+	 * 2) The ray is going from inside to outside, return one hit point.
+	 * 3) The ray is going from outside to inside, return one hit point.
+	 * 4) The ray is going from inside to inside, return two hit points.
+	 * 5) The ray is going from outside to outside, return two hit points.
+	 */
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k1st;
 	VMOVE(hitp->hit_normal, tri_wn1st);
@@ -540,7 +565,8 @@ leave:
 	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
 	hitp++;
 
-	if (fabs(k1st-k2nd) < SMALL_FASTF) return 1;
+	if ((fabs(k1st-k2nd) < SMALL_FASTF) &&
+	    (dir1st + dir2nd != 1)) return 1;
 
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k2nd;
@@ -615,7 +641,7 @@ int *nhits;
 		xx = loc[X] - CellX* xWidth;
 		break;
 	}
-#if 0 /* What does this indicate that it generates so much noise? */
+#if 1 /* What does this indicate that it generates so much noise? */
 	if (xx < 0) {
 		bu_log("hf: xx < 0, plane = %d\n", plane);
 	}
@@ -661,19 +687,6 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 		if ((*nhits)++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -783,21 +796,21 @@ bzero(hits,sizeof(hits));
 
 		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
 			allDist[allIndex] = s = dxbdn/dn;
-			if (rt_g.debug & DEBUG_HF) {
-				bu_log("s=%g\n", s);
-			}
 			if ( out > s ) {
 				out = s;
 				oplane = j;
 			}
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("s=%g out=%g\n", s, out);
+			}
 		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
 			allDist[allIndex] = s = dxbdn/dn;
-			if (rt_g.debug & DEBUG_HF) {
-				bu_log("s=%g\n", s);
-			}
 			if ( in < s ) {
 				in = s;
 				iplane = j;
+			}
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("s=%g in=%g\n", s, in);
 			}
 		} else {
 			/*
@@ -991,13 +1004,14 @@ bu_log("aray[Y]/aray[X]=%g\n", delta);
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 			minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
 			if (rt_g.debug & DEBUG_HF) {
-				bu_log("hf: cell %d,%d [%g -- %g] ",
+				bu_log("hf: cell %d,%d [%g -- %g]",
 				xCell, yCell, minZ, maxZ);
 			}
 			/*
 			 * Are we on the grid yet?  If not, then
 			 * we will check for a side step and inc.
 			 */
+/* CTJ - Or maxZ < hf->hf_min  then no chance to hit */
 			if (yCell < 0 || yCell > hf->hf_n-2) {
 				if (error > -SQRT_SMALL_FASTF) {
 					if (yCell >= -1) goto skip_first;
@@ -1087,7 +1101,7 @@ skip_first:
 			if (error > SQRT_SMALL_FASTF) {
 				yCell += signY;
 				if (rt_g.debug & DEBUG_HF) {
-					bu_log("hf: cell %d,%d \n", xCell, yCell);
+					bu_log("hf: cell %d,%d ", xCell, yCell);
 				}
 				if ((yCell < 0) || yCell > hf->hf_n-2) {
 					error -= 1.0;
@@ -1255,7 +1269,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 			   delta, error, xCell, yCell);
 		}
 
-
+		deltaZ = (aray[Z] < 0) ? -aray[Z] : aray[Z];
 		do {
 			farZ = curloc[Z] + aray[Z];
 			maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
@@ -1264,6 +1278,7 @@ bu_log("aray[X]/aray[Y]=%g\n", delta);
 				bu_log("hf: cell %d,%d [%g -- %g] ",
 				xCell, yCell, minZ, maxZ);
 			}
+/* CTJ - Or maxZ < hf->hf_min */
 			if (xCell < 0 || xCell > hf->hf_w-2) {
 				if (error > -SQRT_SMALL_FASTF) {
 					if (xCell >= -1) goto skip_2nd;
@@ -1932,7 +1947,7 @@ err1:
 		out_cookie = bu_cv_cookie("hus");
 	} else {
 		mp->apbuflen = sizeof(float) * count;
-		out_cookie = bu_cv_cookie("hf");
+		out_cookie = bu_cv_cookie("hd");
 	}
 
 	if( bu_cv_optimize(in_cookie) == bu_cv_optimize(out_cookie) )  {
