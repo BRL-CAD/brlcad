@@ -128,47 +128,27 @@ struct rt_i		*rtip;
 	prod_ab = mag_a * mag_b;
 	prod_cd = mag_c * mag_d;
 
-	/*
-	 *  Unfortunately, to prevent divide-by-zero, some tolerancing
-	 *  needs to be introduced.
-	 *  TGC_LEN_TOL is the shortest length, in mm, that can be stood.
-	 *  Can probably become at least SMALL.
-	 *  Dot products smaller than TGC_DOT_TOL are considered to have
-	 *  a dot product of zero, ie, the angle is effectively zero.
-	 *  asin(0.1   ) = 5.73917 degrees
-	 *  asin(0.01  ) = 0.572967
-	 *  asin(0.001 ) = 0.0572958 degrees
-	 *  asin(0.0001) = 0.00572958 degrees
-	 *
-	 *  sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
-	 *
-	 *  Many TGCs will fail if DOT_TOL is much smaller than 0.001,
-	 *  which establishes a 1/20th degree tolerance.
-	 *  The intent is to eliminate grossly bad TGCs, not pick nits.
-	 */
-#define TGC_LEN_TOL	(1.0e-8)
-#define TGC_DOT_TOL	(0.001)
-	if( NEAR_ZERO( magsq_h, TGC_LEN_TOL ) ) {
+	if( NEAR_ZERO( mag_h, RT_LEN_TOL ) ) {
 		rt_log("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that figure is not two-dimensional			*/
-	if( NEAR_ZERO( magsq_a, TGC_LEN_TOL ) &&
-	     NEAR_ZERO( magsq_c, TGC_LEN_TOL ) ) {
+	if( NEAR_ZERO( mag_a, RT_LEN_TOL ) &&
+	     NEAR_ZERO( mag_c, RT_LEN_TOL ) ) {
 		rt_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
-	if( NEAR_ZERO( magsq_b, TGC_LEN_TOL ) &&
-	    NEAR_ZERO( magsq_d, TGC_LEN_TOL ) ) {
+	if( NEAR_ZERO( mag_b, RT_LEN_TOL ) &&
+	    NEAR_ZERO( mag_d, RT_LEN_TOL ) ) {
 		rt_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
 	/* Validate that both ends are not degenerate */
-	if( prod_ab <= TGC_LEN_TOL )  {
+	if( prod_ab <= SMALL )  {
 		/* AB end is degenerate */
-		if( prod_cd <= TGC_LEN_TOL )  {
+		if( prod_cd <= SMALL )  {
 			rt_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
 			return(1);		/* BAD */
 		}
@@ -186,7 +166,7 @@ struct rt_i		*rtip;
 	/* Ascertain whether H lies in A-B plane 			*/
 	VCROSS( work, A, B );
 	f = VDOT( Hv, work ) / ( prod_ab*mag_h );
-	if ( NEAR_ZERO(f, TGC_DOT_TOL) ) {
+	if ( NEAR_ZERO(f, RT_DOT_TOL) ) {
 		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
 	}
@@ -194,7 +174,7 @@ struct rt_i		*rtip;
 	if( prod_ab > SMALL )  {
 		/* Validate that A.B == 0 */
 		f = VDOT( A, B ) / prod_ab;
-		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not perpendicular to B, f=%g\n",
 				stp->st_name, f);
 			rt_log("tgc: dot=%g / a*b=%g\n",
@@ -205,7 +185,7 @@ struct rt_i		*rtip;
 	if( prod_cd > SMALL )  {
 		/* Validate that C.D == 0 */
 		f = VDOT( C, D ) / prod_cd;
-		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  C not perpendicular to D, f=%g\n",
 				stp->st_name, f);
 			rt_log("tgc: dot=%g / c*d=%g\n",
@@ -217,7 +197,7 @@ struct rt_i		*rtip;
 	if( mag_a * mag_c > SMALL )  {
 		/* Validate that  A || C */
 		f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
-		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not parallel to C, f=%g\n",
 				stp->st_name, f);
 			return(1);		/* BAD */
@@ -227,7 +207,7 @@ struct rt_i		*rtip;
 	if( mag_b * mag_d > SMALL )  {
 		/* Validate that  B || D, for parallel planes	*/
 		f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
-		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  B not parallel to D, f=%g\n",
 				stp->st_name, f);
 			return(1);		/* BAD */
@@ -551,7 +531,7 @@ struct application	*ap;
 	t_scale = 1/MAGNITUDE( dprime );
 	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-	if( NEAR_ZERO( dprime[Z], 1.0e-10 ) )
+	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
 		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
@@ -794,7 +774,7 @@ struct application	*ap;
 		return(SEG_NULL);
 
 	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
-	if ( NEAR_ZERO( dir, TGC_DOT_TOL ) )
+	if ( NEAR_ZERO( dir, RT_DOT_TOL ) )
 		return( SEG_NULL );
 
 	b = ( -pprime[Z] )/dprime[Z];
