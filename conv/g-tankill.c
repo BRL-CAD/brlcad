@@ -46,7 +46,17 @@ static char RCSid[] = "$Header$";
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage:\n\
+	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
+		v - verbose\n\
+		x - librt debug level\n\
+		X - NMG debug level\n\
+		a - absolute tolerance for tesselation\n\
+		r - relative tolerance for tesselation\n\
+		n - surface normal tolerance for tesselation\n\
+		s - surroundings code to use in tankill file\n\
+		i - assign new idents sequentially and output ident list\n\
+		o - TANKILL output file\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
