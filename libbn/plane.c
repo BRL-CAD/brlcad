@@ -293,13 +293,13 @@ vect_t	rpp_min;
 
 	if( abs_dir[X] >= abs_dir[Y] )  {
 		if( abs_dir[X] >= abs_dir[Z] )  {
-			VSET( pl, 1, 0, 0 );
+			VSET( pl, 1, 0, 0 );	/* X */
 			pl[3] = rpp_min[X];
 			if( dir[X] < 0 )  {
 				VREVERSE( dir, dir );
 			}
 		} else {
-			VSET( pl, 0, 0, 1 );
+			VSET( pl, 0, 0, 1 );	/* Z */
 			pl[3] = rpp_min[Z];
 			if( dir[Z] < 0 )  {
 				VREVERSE( dir, dir );
@@ -307,14 +307,14 @@ vect_t	rpp_min;
 		}
 	} else {
 		if( abs_dir[Y] >= abs_dir[Z] )  {
-			VSET( pl, 0, 1, 0 );
+			VSET( pl, 0, 1, 0 );	/* Y */
 			pl[3] = rpp_min[Y];
 			if( dir[Y] < 0 )  {
 				VREVERSE( dir, dir );
 			}
 		} else {
-			VSET( pl, 0, 0, 1 );
-			pl[3] = rpp_min[Y];
+			VSET( pl, 0, 0, 1 );	/* Z */
+			pl[3] = rpp_min[Z];
 			if( dir[Z] < 0 )  {
 				VREVERSE( dir, dir );
 			}
