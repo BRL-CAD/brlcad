@@ -793,7 +793,7 @@ struct vertexuse *vu;
 	eu1->orientation = eu2->orientation = OT_NONE;
 	/* XXX Why not OT_UNSPEC? */
 	eu1->vu_p = vu;
-	/* vu->up needs to be set but we can't do that until we recovered *
+	/* vu->up needs to be set but we can't do that until we recover */
 	/* the shell or loopuse from the up pointer. */
 
 	eu2->vu_p = (struct vertexuse *) NULL;
