@@ -297,3 +297,19 @@ struct mem_map **pp;
 	for( curp = *pp; curp; curp = curp->m_nxtp )
 		rt_log(" a=x%lx, l=%d\n", curp->m_addr, curp->m_size );
 }
+
+/*
+ *			M E M C L O S E
+ *
+ *  Return all the storage used by the freemap.
+ */
+void
+memclose()
+{
+	register struct mem_map *mp;
+
+	while( (mp = freemap) != MAP_NULL )  {
+		freemap = mp->m_nxtp;
+		rt_free( (char *)mp, "struct mem_map" );
+	}
+}
