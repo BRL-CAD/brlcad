@@ -126,6 +126,7 @@ char	*name;
 	register struct ihost	*ihp;
 
 	GETSTRUCT( ihp, ihost );
+	ihp->l.magic = IHOST_MAGIC;
 
 	/* Make private copy of host name -- callers have static buffers */
 	ihp->ht_name = rt_strdup( name );
@@ -209,4 +210,25 @@ int	enter;
 		return( IHOST_NULL );
 	}
 	return( host_lookup_by_hostent( addr, enter ) );
+}
+
+/*
+ *			H O S T _ L O O K U P _ O F _ F D
+ */
+struct ihost *
+host_lookup_of_fd(fd)
+int	fd;
+{
+	struct ihost	*ihp;
+	int		on = 1;
+	auto int	fromlen;
+	struct sockaddr_in from;
+
+	fromlen = sizeof (from);
+	if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
+		perror("getpeername");
+		return IHOST_NULL;
+	}
+
+	return host_lookup_by_addr( &from, 1 );
 }

@@ -52,3 +52,4 @@ extern struct ihost	*host_lookup_by_addr();
 extern struct ihost	*host_lookup_by_hostent();
 extern struct ihost	*make_default_host();
 extern char		*get_our_hostname();
+extern struct ihost	*host_lookup_of_fd();
