@@ -155,7 +155,7 @@ int			do_old_matter;
 			handler( dbip, record.s.s_name, addr, nrec,
 				DIR_SOLID );
 			break;
-		case ID_STRSOL:
+		case DBID_STRSOL:
 			handler( dbip, record.ss.ss_name, addr, nrec,
 				DIR_SOLID );
 			break;
