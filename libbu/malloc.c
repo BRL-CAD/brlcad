@@ -45,6 +45,11 @@ static const char RCSmalloc[] = "@(#)$Header$ (ARL)";
 
 int	bu_debug = 0;
 
+/* These counters are not semaphore-protected, and thus are only estimates */
+long	bu_n_malloc = 0;
+long	bu_n_free = 0;
+long	bu_n_realloc = 0;
+
 #define MDB_MAGIC	0x12348969
 struct memdebug {
 	long		magic;		/* corruption can be everywhere */
@@ -208,6 +213,7 @@ CONST char	*str;
 
 		*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
 	}
+	bu_n_malloc++;
 	return(ptr);
 }
 
@@ -247,6 +253,7 @@ CONST char	*str;
 #if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
+	bu_n_free++;
 }
 
 /*
@@ -305,6 +312,7 @@ CONST char		*str;
 		*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
+	bu_n_realloc++;
 	return(ptr);
 }
 
