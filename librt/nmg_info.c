@@ -33,6 +33,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+static CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
+
 /************************************************************************
  *									*
  *				MODEL Routines				*
@@ -101,6 +103,38 @@ top:
 		rt_bomb("nmg_find_model() failure\n");
 	}
 	return( (struct model *)NULL );
+}
+
+/*
+ *			N M G _ F I N D _ P T _ I N _ M O D E L
+ *
+ *  Brute force search of the entire model to find a vertex that
+ *  matches this point.
+ */
+struct vertex *
+nmg_find_pt_in_model( m, pt, tol )
+CONST struct model	*m;
+CONST point_t		pt;
+CONST struct rt_tol	*tol;
+{
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct vertex		*v;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+			if( (v = nmg_find_pt_in_shell( s, pt, tol )) )  {
+				NMG_CK_VERTEX(v);
+				return v;
+			}
+		}
+	}
+	return (struct vertex *)NULL;
 }
 
 /************************************************************************
@@ -1213,7 +1247,6 @@ CONST struct rt_tol	*tol;
 	return( (struct vertex *)0 );
 }
 
-static CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 struct vf_state {
 	char		*visited;
 	struct nmg_ptbl	*tabl;
