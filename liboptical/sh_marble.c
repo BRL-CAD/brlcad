@@ -57,7 +57,7 @@ struct	mfuncs marble_mfuncs[] = {
 HIDDEN double	n[IPOINTS+1][IPOINTS+1][IPOINTS+1];
 
 /*
- * (marble_setup)
+ *			M A R B L E _ S E T U P
  *
  * Initialize the table of noise points
  */
@@ -87,6 +87,7 @@ char	**dpp;
 	 *  beyond the last three faces so we can interpolate
 	 *  back to zero.  NOT DONE YET.
 	 */
+	return(1);
 }
 
 /*
@@ -165,7 +166,7 @@ char	*dp;
 {
 	register struct marble_specific *mp =
 		(struct marble_specific *)dp;
-	double	newx, value, sin();
+	double	newx, value;
 	fastf_t x, y, z;
 	vect_t min, max;
 	fastf_t xd, yd, zd;
