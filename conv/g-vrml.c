@@ -41,7 +41,6 @@ static char RCSid[] = "$Header$";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
-#include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "bu.h"
@@ -122,7 +121,9 @@ struct db_full_path		*pathp;
 union tree			*curtree;
 {
 	struct directory *dp;
-	union record rec;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	int id;
 
 	RT_CK_FULL_PATH( pathp );
 	dp = DB_FULL_PATH_CUR_DIR( pathp );
@@ -130,16 +131,33 @@ union tree			*curtree;
 	if( !(dp->d_flags & DIR_COMB) )
 		return( -1 );
 
-	if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
+	id = rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL );
+	if( id < 0 )
 	{
-		rt_log( "Cannot get header record for %s\n", dp->d_namep );
+		rt_log( "Cannot internal form of %s\n", dp->d_namep );
 		return( -1 );
 	}
 
-	if( !strcmp( rec.c.c_matname, "light" ) )
-		return( 0 );
-	else
+	if( id != ID_COMBINATION )
+	{
+		bu_log( "Directory/database mismatch!!\n\t is '%s' a combination or not???\n",
+			dp->d_namep );
 		return( -1 );
+	}
+
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB( comb );
+
+	if( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
+	{
+		rt_db_free_internal( &intern );
+		return( 0 );
+	}
+	else
+	{
+		rt_db_free_internal( &intern );
+		return( -1 );
+	}
 }
 
 static int
@@ -148,25 +166,7 @@ register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
 union tree			*curtree;
 {
-	struct directory *dp;
-	union record rec;
-
-	RT_CK_FULL_PATH( pathp );
-	dp = DB_FULL_PATH_CUR_DIR( pathp );
-
-	if( !(dp->d_flags & DIR_COMB) )
-		return( 0 );
-
-	if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
-	{
-		rt_log( "Cannot get header record for %s\n", dp->d_namep );
-		return( -1 );
-	}
-
-	if( !strcmp( rec.c.c_matname, "light" ) )
-		return( -1 );
-	else
-		return( 0 );
+	return( !select_lights( tsp, pathp, curtree ) );
 }
 
 /*
@@ -371,8 +371,13 @@ struct mater_info *mater;
 		r = g = b = 0.5;
 	}
 
-	tok = strtok( mater->ma_shader, tok_sep );
-	strcpy( mat.shader, tok );
+	if( mater->ma_shader )
+	{
+		tok = strtok( mater->ma_shader, tok_sep );
+		strcpy( mat.shader, tok );
+	}
+	else
+		mat.shader[0] = '\0';
 	mat.shininess = -1;
 	mat.transparency = -1.0;
 	mat.lt_fraction = -1.0;
