@@ -489,6 +489,7 @@ DoFile( )	/* returns vpl status code */
 					if( !immediate )
 						over = 1;
 				}
+				firsterase = false;
 				break;	/* next frame */
 
 			case 'f':	/* linemod */
