@@ -563,6 +563,8 @@ got_loop:
 	/* Copy new vu's back to main array */
 	for( i=0; i < nvu; i++ )  {
 		rs->vu[start+i] = vs[i].vu;
+		rt_log(" vu[%]=x%x, v=x%x\n",
+			start+i, rs->vu[start+i], rs->vu[start+i]->v_p );
 	}
 	return start+nvu;
 }
@@ -679,6 +681,7 @@ rt_log("interval from %d to %d\n", i, j );
 				nmg_face_plot( fu1 );
 			}
 			vu[j-1] = vu[m-1]; /* for next iteration's lookback */
+			rt_log("vu[%d] set to x%x\n", j-1, vu[j-1] );
 		}
 	}
 
@@ -859,8 +862,9 @@ int			multi;
 		stp = &nmg_state_is_in[assessment];
 		break;
 	}
-rt_log("nmg_face_state_transition(vu x%x)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-vu, nmg_state_names[old], nmg_v_assessment_names[assessment],
+rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
+vu, pos,
+nmg_state_names[old], nmg_v_assessment_names[assessment],
 nmg_state_names[stp->new_state], action_names[stp->action] );
 rt_log("This loopuse, before action: ");
 nmg_face_lu_plot(nmg_lu_of_vu(vu));
