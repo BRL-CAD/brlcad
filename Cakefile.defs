@@ -374,6 +374,7 @@ set -S2 "/bin/sh"
 #		define	LIBVERS		../sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -o
 #		define	RANLIB	true
+#		define	STANDARD_LIBES	-L''LIBDIR -lm
 #	else
 /*		Using the Gnu C Compiler */
 #		define	CC	gcc
