@@ -217,7 +217,8 @@ register struct bu_vls	*vp;
 	  *p = ' ';
     }
 #endif
-    DM_DRAW_STRING_2D(dmp, start, xbase, y, 0, 0);
+    DM_DRAW_STRING_2D(dmp, start,
+		      GED2PM1(xbase), GED2PM1(y), 0, 0);
     start = end+1;
     y += TEXT0_DY;
   }
@@ -333,23 +334,32 @@ struct bu_vls *overlay_vls;
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
 			DM_DRAW_STRING_2D( dmp, pl[i].str,
-				((int)(pl[i].pt[X]*2048))+15,
-				((int)(pl[i].pt[Y]*2048))+15, 0, 1 );
+					   GED2PM1(((int)(pl[i].pt[X]*2048))+15),
+					   GED2PM1(((int)(pl[i].pt[Y]*2048))+15), 0, 1 );
 		}
 	}
 
 if(mged_variables->faceplate){
 	/* Line across the bottom, above two bottom status lines */
 	DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	DM_DRAW_LINE_2D( dmp, XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
-			      TITLE_YBASE-TEXT1_DY );
+	DM_DRAW_LINE_2D( dmp,
+			 GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
+			 GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY) );
 
 	if(mged_variables->orig_gui){
 	  /* Enclose window in decorative box.  Mostly for alignment. */
-	  DM_DRAW_LINE_2D( dmp, XMIN, YMIN, XMAX, YMIN );
-	  DM_DRAW_LINE_2D( dmp, XMAX, YMIN, XMAX, YMAX );
-	  DM_DRAW_LINE_2D( dmp, XMAX, YMAX, XMIN, YMAX );
-	  DM_DRAW_LINE_2D( dmp, XMIN, YMAX, XMIN, YMIN );
+	  DM_DRAW_LINE_2D( dmp,
+			   GED2PM1(XMIN), GED2PM1(YMIN),
+			   GED2PM1(XMAX), GED2PM1(YMIN) );
+	  DM_DRAW_LINE_2D( dmp,
+			   GED2PM1(XMAX), GED2PM1(YMIN),
+			   GED2PM1(XMAX), GED2PM1(YMAX) );
+	  DM_DRAW_LINE_2D( dmp,
+			   GED2PM1(XMAX), GED2PM1(YMAX),
+			   GED2PM1(XMIN), GED2PM1(YMAX) );
+	  DM_DRAW_LINE_2D( dmp,
+			   GED2PM1(XMIN), GED2PM1(YMAX),
+			   GED2PM1(XMIN), GED2PM1(YMIN) );
 
 	  /* Display scroll bars */
 	  scroll_ybot = scroll_display( SCROLLY ); 
@@ -358,9 +368,12 @@ if(mged_variables->faceplate){
 
 	  /* Display state and local unit in upper right corner, boxed */
 #define YPOS	(MENUY - MENU_DY - 75 )
-	  DM_DRAW_LINE_2D(dmp, MENUXLIM, YPOS, MENUXLIM, YMAX);	/* vert. */
+	  DM_DRAW_LINE_2D(dmp,
+			  GED2PM1(MENUXLIM), GED2PM1(YPOS),
+			  GED2PM1(MENUXLIM), GED2PM1(YMAX));	/* vert. */
 	  DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-	  DM_DRAW_STRING_2D(dmp, state_str[state], MENUX, MENUY - MENU_DY, 1, 0 );
+	  DM_DRAW_STRING_2D(dmp, state_str[state],
+			    GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0 );
 #undef YPOS
 	}else{
 	  scroll_ybot = SCROLLY;
@@ -376,11 +389,13 @@ if(mged_variables->faceplate){
 	  for( i=0; i <= illump->s_last; i++ )  {
 	    if( i == ipathpos  &&  state == ST_O_PATH )  {
 	      DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-	      DM_DRAW_STRING_2D( dmp, "[MATRIX]", x, y, 0, 0 );
+	      DM_DRAW_STRING_2D( dmp, "[MATRIX]",
+				 GED2PM1(x), GED2PM1(y), 0, 0 );
 	      y += MENU_DY;
 	    }
 	    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	    DM_DRAW_STRING_2D( dmp, illump->s_path[i]->d_namep, x, y, 0, 0 );
+	    DM_DRAW_STRING_2D( dmp, illump->s_path[i]->d_namep,
+			       GED2PM1(x), GED2PM1(y), 0, 0 );
 	    y += MENU_DY;
 	  }
 	}
@@ -398,18 +413,24 @@ if(mged_variables->faceplate){
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
 		DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-		DM_DRAW_LINE_2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
-				 yloc-TEXT0_DY);
-		DM_DRAW_LINE_2D(dmp, xloc-TEXT0_DY, yloc-TEXT0_DY, xloc+TEXT0_DY,
-				 yloc+TEXT0_DY);
-		DM_DRAW_LINE_2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
-				 yloc+TEXT0_DY);
-		DM_DRAW_LINE_2D(dmp, xloc+TEXT0_DY, yloc-TEXT0_DY, xloc-TEXT0_DY,
-				 yloc-TEXT0_DY);
-		DM_DRAW_LINE_2D(dmp, xloc+TEXT0_DY, yloc+TEXT0_DY, xloc+TEXT0_DY,
-				 yloc-TEXT0_DY);
-		DM_DRAW_LINE_2D(dmp, xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
-				 yloc-TEXT0_DY);
+		DM_DRAW_LINE_2D(dmp,
+				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc+TEXT0_DY),
+				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc-TEXT0_DY));
+		DM_DRAW_LINE_2D(dmp,
+				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc-TEXT0_DY),
+				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc+TEXT0_DY));
+		DM_DRAW_LINE_2D(dmp,
+				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc+TEXT0_DY),
+				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc+TEXT0_DY));
+		DM_DRAW_LINE_2D(dmp,
+				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc-TEXT0_DY),
+				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc-TEXT0_DY));
+		DM_DRAW_LINE_2D(dmp,
+				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc+TEXT0_DY),
+				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc-TEXT0_DY));
+		DM_DRAW_LINE_2D(dmp,
+				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc+TEXT0_DY),
+				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc-TEXT0_DY));
 	      }
 	}
 
@@ -437,7 +458,8 @@ if(mged_variables->faceplate){
 		      curr_dm_list->s_info->twist,
 		      ang_x, ang_y, ang_z);
 	DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
-	DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE, TITLE_YBASE, 1, 0 );
+	DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
+			   GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE), 1, 0 );
 } /* if faceplate !0 */
 
 	/*
@@ -475,8 +497,8 @@ if(mged_variables->faceplate){
 			(curs_y / 2047.0) *Viewscale*base2local );
 		if(mged_variables->faceplate){
 		  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-					TITLE_YBASE + TEXT1_DY, 1, 0 );
+		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
+				     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 		}
 		Tcl_SetVar(interp, bu_vls_addr(&adc_name),
 			    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
@@ -498,8 +520,8 @@ if(mged_variables->faceplate){
 			 es_keypoint[Z] * base2local);
 	  if(mged_variables->faceplate && ss_line_not_drawn){
 	    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&kp_vls), TITLE_XBASE,
-				  TITLE_YBASE + TEXT1_DY, 1, 0 );
+	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&kp_vls),
+			       GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	    ss_line_not_drawn = 0;
 	  }
 
@@ -527,8 +549,8 @@ if(mged_variables->faceplate){
 	      bu_vls_printf(&vls, "/%s", illump->s_path[i]->d_namep);
 	    }
 	    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-				  TITLE_YBASE + TEXT1_DY, 1, 0 );
+	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
+			       GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 
 	    ss_line_not_drawn = 0;
 	  }
@@ -538,8 +560,8 @@ if(mged_variables->faceplate){
 	bu_vls_printf(&vls, "%.2f fps", 1/frametime );
 	if(mged_variables->faceplate && ss_line_not_drawn){
 	  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
-	  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls), TITLE_XBASE,
-				TITLE_YBASE + TEXT1_DY, 1, 0 );
+	  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
+			     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	}
 	Tcl_SetVar(interp, bu_vls_addr(&fps_name),
 		    bu_vls_addr(&vls), TCL_GLOBAL_ONLY);
