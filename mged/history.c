@@ -384,7 +384,7 @@ char **argv;
 
     vp = history_prev();
     if (vp == NULL)
-	vp = &(curr_cmd_list->cur_hist->command);
+      return TCL_ERROR;
 
     Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
     return TCL_OK;
@@ -417,7 +417,7 @@ char **argv;
 
     vp = history_next();
     if (vp == NULL)
-	vp = &(curr_cmd_list->cur_hist->command);
+      return TCL_ERROR;
 
     Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
     return TCL_OK;
