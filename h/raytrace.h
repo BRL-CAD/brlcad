@@ -1981,6 +1981,11 @@ BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
 
+/* dir.c */
+BU_EXTERN(int rt_db_get_internal, (struct rt_db_internal *ip, struct directory *dp,
+	struct db_i *dbip, CONST mat_t mat));
+
+
 /* db_comb.c */
 
 /* g_epa.c */
@@ -2089,10 +2094,23 @@ BU_EXTERN(void			nmg_km, (struct model *m) );
 /*	Geometry and Attribute routines */
 BU_EXTERN(void			nmg_vertex_gv, (struct vertex *v, CONST point_t pt) );
 BU_EXTERN(void			nmg_vertex_g, (struct vertex *v, fastf_t x, fastf_t y, fastf_t z) );
+BU_EXTERN(void			nmg_vertexuse_nv, (struct vertexuse *vu, CONST vect_t norm));
+BU_EXTERN(void			nmg_vertexuse_a_cnurb, (struct vertexuse *vu, CONST vect_t uvw));
 BU_EXTERN(void			nmg_edge_g, (struct edgeuse *eu) );
+BU_EXTERN(void			nmg_edge_g_cnurb, (struct edgeuse *eu,
+				int order, int n_knots, fastf_t *kv,
+				int n_pts, int pt_type, fastf_t *points));
+BU_EXTERN(void			nmg_edge_g_cnurb_plinear, (struct edgeuse *eu));
 BU_EXTERN(int			nmg_use_edge_g, (struct edgeuse *eu, long *eg) );
 BU_EXTERN(void			nmg_loop_g, (struct loop *l, CONST struct bn_tol *tol) );
 BU_EXTERN(void			nmg_face_g, (struct faceuse *fu, CONST plane_t p) );
+BU_EXTERN(void			nmg_face_new_g, (struct faceuse *fu, CONST plane_t pl));
+BU_EXTERN(void			nmg_face_g_snurb, (struct faceuse *fu,
+				int u_order, int v_order,
+				int n_u_knots, int n_v_knots,
+				fastf_t *ukv, fastf_t *vkv,
+				int n_rows, int n_cols,
+				int pt_type, fastf_t *mesh));
 BU_EXTERN(void			nmg_face_bb, (struct face *f, CONST struct bn_tol *tol) );
 BU_EXTERN(void			nmg_shell_a, (struct shell *s, CONST struct bn_tol *tol) );
 BU_EXTERN(void			nmg_region_a, (struct nmgregion *r, CONST struct bn_tol *tol) );
@@ -2105,6 +2123,7 @@ BU_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
 BU_EXTERN(void			nmg_je, (struct edgeuse *eudst, struct edgeuse *eusrc) );
 BU_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
 BU_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
+BU_EXTERN(void			nmg_jfg, (struct face *f1, struct face *f2));
 BU_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
 				struct edge_g_lseg *src_eg) );
 
