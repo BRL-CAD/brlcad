@@ -7,14 +7,8 @@ items are on top, older topics are on the bottom.
 
 THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
-* write up initial README
-
-* remove license speak for an immediate preliminary release
-
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
-
-* modify file headers to add license info
 
 * Update libpng to address CERT Technical Cyber Security Alert
   TA04-217A
@@ -32,9 +26,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * handle multiple threading models (irix) via configure
 
 * obliterate compilation warnings
-
-* clean up code comments, add more of them, and doxygenify them 
-  (minimally, use /** */ in major comment blocks)
 
 * add checks for system libs and optionally build our libs only if
   they don't have suitable system libs (namely, libtcl)
