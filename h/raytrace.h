@@ -3941,6 +3941,12 @@ BU_EXTERN(int			db5_type_codes_from_descrip,
 				unsigned char			*minor,
 				CONST char			*descrip));
 
+BU_EXTERN(size_t		db5_type_sizeof_h_binu,
+				(CONST unsigned char		minor));
+
+BU_EXTERN(size_t		db5_type_sizeof_n_binu,
+				(CONST unsigned char		minor));
+
 #endif
 
 /*
