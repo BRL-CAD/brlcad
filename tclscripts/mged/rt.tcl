@@ -181,7 +181,7 @@ proc init_Raytrace { id } {
 	    -command "set rt_color($id) \"220 0 220\"; rt_set_colorMB $id"
     $top.colorMB.colorM add separator
     $top.colorMB.colorM add command -label "Color Tool..."\
-	    -command "rt_choose_color $id"
+	    -command "rt_choose_color $id $top"
 
     button $top.advancedB -relief raised -text "Advanced Settings..."\
 	    -command "do_Advanced_Settings $id"
@@ -433,33 +433,26 @@ proc rt_set_file_state { id } {
     focus $top.filenameE
 }
 
-proc rt_choose_color { id } {
+proc rt_choose_color { id parent } {
     global player_screen
     global rt_color
 
-    set top .$id.do_rt
+    set child bgColor
 
-    cadColorWidget dialog $top -title "Raytrace Background Color"\
-	    -initialcolor [$top.colorMB cget -background]\
-	    -ok "rt_color_ok $id $top.colorWidget"\
-	    -cancel "rt_color_cancel $id $top.colorWidget"
+    cadColorWidget dialog $parent $child\
+	    -title "Raytrace Background Color"\
+	    -initialcolor [$parent.colorMB cget -background]\
+	    -ok "rt_color_ok $id $parent $parent.$child"\
+	    -cancel "cadColorWidget_destroy $parent.$child"
 }
 
-proc rt_color_ok { id w } {
+proc rt_color_ok { id parent w } {
     global rt_color
 
     upvar #0 $w data
 
-    set top .$id.do_rt
-    $top.colorMB configure -bg $data(finalColor)
+    $parent.colorMB configure -bg $data(finalColor)
     set rt_color($id) "$data(red) $data(green) $data(blue)"
-
-    destroy $w
-    unset data
-}
-
-proc rt_color_cancel { id w } {
-    upvar #0 $w data
 
     destroy $w
     unset data

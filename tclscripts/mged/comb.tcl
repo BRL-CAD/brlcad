@@ -108,7 +108,7 @@ proc init_comb { id } {
 	    -command "set comb_color($id) \"220 0 220\"; comb_set_colorMB $id"
     $top.colorMB.m add separator
     $top.colorMB.m add command -label "Color Tool..."\
-	    -command "comb_choose_color $id"
+	    -command "comb_choose_color $id $top"
 
     label $top.shaderL -text "Shader" -anchor w
     entry $top.shaderE -relief flat -width 12 -textvar comb_shader($id)
@@ -431,33 +431,25 @@ proc comb_toggle_isRegion { id } {
     grid $top.gridF
 }
 
-proc comb_choose_color { id } {
+proc comb_choose_color { id parent } {
     global player_screen
-    global comb_color
 
-    set top .$id.comb
+    set child color
 
-    cadColorWidget dialog $top -title "Combination Color"\
-	    -initialcolor [$top.colorMB cget -background]\
-	    -ok "comb_color_ok $id $top.colorWidget"\
-	    -cancel "comb_color_cancel $id $top.colorWidget"
+    cadColorWidget dialog $parent $child\
+	    -title "Combination Color"\
+	    -initialcolor [$parent.colorMB cget -background]\
+	    -ok "comb_color_ok $id $parent $parent.$child"\
+	    -cancel "cadColorWidget_destroy $parent.$child"
 }
 
-proc comb_color_ok { id w } {
+proc comb_color_ok { id parent w } {
     global comb_color
 
     upvar #0 $w data
 
-    set top .$id.comb
-    $top.colorMB configure -bg $data(finalColor)
+    $parent.colorMB configure -bg $data(finalColor)
     set comb_color($id) "$data(red) $data(green) $data(blue)"
-
-    destroy $w
-    unset data
-}
-
-proc comb_color_cancel { id w } {
-    upvar #0 $w data
 
     destroy $w
     unset data

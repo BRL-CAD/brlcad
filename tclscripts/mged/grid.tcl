@@ -486,29 +486,25 @@ proc init_grid_control { id } {
     wm title $top "Grid Control Panel"
 }
 
-proc grid_control_choose_color { id top } {
+proc grid_control_choose_color { id parent } {
     global grid_control_color
 
-    cadColorWidget dialog $top -title "Grid Color"\
-	    -initialcolor [$top.colorMB cget -background]\
-	    -ok "grid_color_ok $id $top $top.colorWidget"\
-	    -cancel "grid_color_cancel $id $top.colorWidget"
+    set child color
+
+    cadColorWidget dialog $parent $child\
+	    -title "Grid Color"\
+	    -initialcolor [$parent.colorMB cget -background]\
+	    -ok "grid_color_ok $id $parent $parent.$child"\
+	    -cancel "cadColorWidget_destroy $parent.$child"
 }
 
-proc grid_color_ok { id top w } {
+proc grid_color_ok { id parent w } {
     global grid_control_color
 
     upvar #0 $w data
 
-    $top.colorMB configure -bg $data(finalColor)
+    $parent.colorMB configure -bg $data(finalColor)
     set grid_control_color($id) "$data(red) $data(green) $data(blue)"
-
-    destroy $w
-    unset data
-}
-
-proc grid_color_cancel { id w } {
-    upvar #0 $w data
 
     destroy $w
     unset data
