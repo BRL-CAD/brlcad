@@ -225,18 +225,18 @@ Size orig_size=nbytes;
 	/* obtain additional memory from system */
 	{
 		register Size i;
-		int ret;
+		long ret;
 
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		p = (struct overhead *)CURBRK;
 		i = ((Size)p)&(NALIGN-1);
 		if (i != 0)
 			p = (struct overhead *)((char *)p + NALIGN - i);
-		ret = BRK(((char *)p) + nbytes);
+		ret = (long)BRK(((char *)p) + nbytes);
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
 		if( ret )
-			bu_bomb( "rt_pmalloc: Insufficient memory available!\n" );
+			bu_bomb( "rt_pmalloc: brk() failure. Insufficient memory available!\n" );
 
 		p->ov_length = nbytes;
 		surplus = 0;

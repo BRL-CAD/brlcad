@@ -328,7 +328,7 @@ struct directory *dp;
 
 	/* have a combination that is not a region */
 
-	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
 	{
 		bu_log( "Cannot get internal form of combination (%s)\n", dp->d_namep );
 		return;
