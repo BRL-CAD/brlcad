@@ -3,8 +3,8 @@
  */
 #include "../../../Cakefile.defs"
 
-#define PRODUCTS	*.html *.gif *.jpg
-#define STATIC_PRODUCTS	*.html *.gif *.jpg
+#define PRODUCTS	*.html
+#define STATIC_PRODUCTS	*.html
 #define SRCDIR	libdm
 #undef BINDIR
 #define BINDIR	BASEDIR/html/manuals/libdm
