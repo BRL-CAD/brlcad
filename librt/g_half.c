@@ -1,5 +1,5 @@
 /*
- *  			H A L F . C
+ *			G _ H A L F . C
  *  
  *  Function -
  *  	Intersect a ray with a Halfspace
@@ -56,10 +56,10 @@ struct half_specific  {
 #define HALF_NULL	((struct half_specific *)0)
 
 /*
- *  			H L F _ P R E P
+ *  			R T _ H L F _ P R E P
  */
 int
-hlf_prep( stp, rec, rtip )
+rt_hlf_prep( stp, rec, rtip )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
@@ -73,8 +73,8 @@ struct rt_i	*rtip;
 	GETSTRUCT( halfp, half_specific );
 	stp->st_specific = (genptr_t)halfp;
 
-	if( hlf_import( halfp->half_eqn, rec, stp->st_pathmat ) < 0 )  {
-		rt_log("hlf_prep(%s): db import failure\n", stp->st_name);
+	if( rt_hlf_import( halfp->half_eqn, rec, stp->st_pathmat ) < 0 )  {
+		rt_log("rt_hlf_prep(%s): db import failure\n", stp->st_name);
 		rt_free( (char *)halfp, "half_specific" );
 		return(1);	/* BAD */
 	}
@@ -97,10 +97,10 @@ struct rt_i	*rtip;
 }
 
 /*
- *  			H L F _ P R I N T
+ *  			R T _ H L F _ P R I N T
  */
 void
-hlf_print( stp )
+rt_hlf_print( stp )
 register struct soltab *stp;
 {
 	register struct half_specific *halfp =
@@ -117,7 +117,7 @@ register struct soltab *stp;
 }
 
 /*
- *			H L F _ S H O T
+ *			R T _ H L F _ S H O T
  *  
  * Function -
  *	Shoot a ray at a HALFSPACE
@@ -130,7 +130,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-hlf_shot( stp, rp, ap )
+rt_hlf_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -177,12 +177,12 @@ struct application	*ap;
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 /*
- *			H L F _ V S H O T
+ *			R T _ H L F _ V S H O T
  *
  *  This is the Becker vector version
  */
 void
-hlf_vshot( stp, rp, segp, n, resp)
+rt_hlf_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -232,13 +232,13 @@ struct resource         *resp; /* pointer to a list of free segs */
 }
 
 /*
- *  			H L F _ N O R M
+ *  			R T _ H L F _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  *  The normal is already filled in.
  */
 void
-hlf_norm( hitp, stp, rp )
+rt_hlf_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -256,7 +256,7 @@ register struct xray *rp;
 	/* We are expected to compute hit_point here.  May be infinite. */
 	f = hitp->hit_dist;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("hlf_norm:  dist=INFINITY, pt=?\n");
+		rt_log("rt_hlf_norm:  dist=INFINITY, pt=?\n");
 		VSETALL( hitp->hit_point, INFINITY );
 	} else {
 		VJOIN1( hitp->hit_point, rp->r_pt, f, rp->r_dir );
@@ -264,14 +264,14 @@ register struct xray *rp;
 }
 
 /*
- *			H L F _ C U R V E
+ *			R T _ H L F _ C U R V E
  *
  *  Return the "curvature" of the halfspace.
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
 void
-hlf_curve( cvp, hitp, stp )
+rt_hlf_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -284,7 +284,7 @@ struct soltab *stp;
 }
 
 /*
- *  			H L F _ U V
+ *  			R T _ H L F _ U V
  *  
  *  For a hit on a face of an HALF, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
@@ -294,7 +294,7 @@ struct soltab *stp;
  *  0 up to 1 and then back down to 0 again.
  */
 void
-hlf_uv( ap, stp, hitp, uvp )
+rt_hlf_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -308,8 +308,8 @@ register struct uvcoord *uvp;
 
 	f = hitp->hit_dist;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("hlf_uv:  infinite dist\n");
-		rt_pr_hit( "hlf_uv", hitp );
+		rt_log("rt_hlf_uv:  infinite dist\n");
+		rt_pr_hit( "rt_hlf_uv", hitp );
 		uvp->uv_u = uvp->uv_v = 0;
 		uvp->uv_du = uvp->uv_dv = 0;
 		return;
@@ -318,9 +318,9 @@ register struct uvcoord *uvp;
 
 	f = VDOT( P_A, halfp->half_Xbase )/10000;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("hlf_uv:  bad X vdot\n");
+		rt_log("rt_hlf_uv:  bad X vdot\n");
 		VPRINT("Xbase", halfp->half_Xbase);
-		rt_pr_hit( "hlf_uv", hitp );
+		rt_pr_hit( "rt_hlf_uv", hitp );
 		VPRINT("st_center", stp->st_center );
 		f = 0;
 	}
@@ -333,9 +333,9 @@ register struct uvcoord *uvp;
 
 	f = VDOT( P_A, halfp->half_Ybase )/10000;
 	if( f <= -INFINITY || f >= INFINITY )  {
-		rt_log("hlf_uv:  bad Y vdot\n");
+		rt_log("rt_hlf_uv:  bad Y vdot\n");
 		VPRINT("Xbase", halfp->half_Ybase);
-		rt_pr_hit( "hlf_uv", hitp );
+		rt_pr_hit( "rt_hlf_uv", hitp );
 		VPRINT("st_center", stp->st_center );
 		f = 0;
 	}
@@ -357,16 +357,16 @@ register struct uvcoord *uvp;
 	uvp->uv_du = uvp->uv_dv =
 		(ap->a_rbeam + ap->a_diverge * hitp->hit_dist) / (10000/2);
 	if( uvp->uv_du < 0 || uvp->uv_dv < 0 )  {
-		rt_pr_hit( "hlf_uv", hitp );
+		rt_pr_hit( "rt_hlf_uv", hitp );
 		uvp->uv_du = uvp->uv_dv = 0;
 	}
 }
 
 /*
- *			H L F _ F R E E
+ *			R T _ H L F _ F R E E
  */
 void
-hlf_free( stp )
+rt_hlf_free( stp )
 struct soltab *stp;
 {
 	register struct half_specific *halfp =
@@ -376,13 +376,13 @@ struct soltab *stp;
 }
 
 int
-hlf_class()
+rt_hlf_class()
 {
 	return(0);
 }
 
 /*
- *			H L F _ P L O T
+ *			R T _ H L F _ P L O T
  *
  *  The representation of a halfspace is an OUTWARD pointing
  *  normal vector, and the distance of the plane from the origin.
@@ -392,8 +392,8 @@ hlf_class()
  *  We just make a cross in the plane, with the outward normal
  *  drawn shorter.
  */
-void
-hlf_plot( rp, mat, vhead, dp )
+int
+rt_hlf_plot( rp, mat, vhead, dp )
 union record	*rp;
 mat_t		mat;
 struct vlhead	*vhead;
@@ -406,9 +406,9 @@ struct directory *dp;
 	vect_t y1, y2;
 	vect_t tip;
 
-	if( hlf_import( eqn, rp, mat ) < 0 )  {
-		rt_log("hlf_plot(%s): db import failure\n", dp->d_namep);
-		return;
+	if( rt_hlf_import( eqn, rp, mat ) < 0 )  {
+		rt_log("rt_hlf_plot(%s): db import failure\n", dp->d_namep);
+		return(-1);
 	}
 
 	/* Invent a "center" point on the plane -- point closets to origin */
@@ -442,6 +442,7 @@ struct directory *dp;
 	VADD2( tip, cent, tip );
 	ADD_VL( vhead, cent, 0 );
 	ADD_VL( vhead, tip, 1 );
+	return(0);
 }
 
 /*
@@ -452,7 +453,7 @@ struct directory *dp;
  *	 0	success
  */
 int
-hlf_import( eqn, rp, mat )
+rt_hlf_import( eqn, rp, mat )
 plane_t		eqn;
 union record	*rp;
 mat_t		mat;
@@ -463,7 +464,7 @@ mat_t		mat;
 	register double	f,t;
 
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("hlf_import: defective record, id=x%x\n", rp->u_id);
+		rt_log("rt_hlf_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
@@ -485,7 +486,7 @@ mat_t		mat;
 	/* Verify that normal has unit length */
 	f = MAGNITUDE( eqn );
 	if( f < SMALL )  {
-		rt_log("hlf_import:  bad normal, len=%g\n", f );
+		rt_log("rt_hlf_import:  bad normal, len=%g\n", f );
 		return(-1);		/* BAD */
 	}
 	t = f - 1.0;
@@ -496,4 +497,13 @@ mat_t		mat;
 		eqn[3] *= f;
 	}
 	return(0);			/* OK */
+}
+
+/*
+ *			R T _ H L F _ T E S S
+ */
+int
+rt_hlf_tess()
+{
+	return(-1);
 }

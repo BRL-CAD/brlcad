@@ -1,5 +1,5 @@
 /*
- *			R E C . C
+ *			G _ R E C . C
  *
  *  Purpose -
  *	Intersect a ray with a Right Eliptical Cylinder.
@@ -166,11 +166,11 @@ struct rec_specific {
  *  Implicit return -
  *  	A struct rec_specific is created,
  *	and it's address is stored in
- *  	stp->st_specific for use by rec_shot().
+ *  	stp->st_specific for use by rt_rec_shot().
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
 int
-rec_prep( stp, rp, rtip )
+rt_rec_prep( stp, rp, rtip )
 struct soltab		*stp;
 union record		*rp;
 struct rt_i		*rtip;
@@ -373,7 +373,7 @@ struct rt_i		*rtip;
  *  			R E C _ P R I N T
  */
 void
-rec_print( stp )
+rt_rec_print( stp )
 register struct soltab *stp;
 {
 	register struct rec_specific *rec =
@@ -385,15 +385,17 @@ register struct soltab *stp;
 	mat_print("invR o S", rec->rec_invRoS );
 }
 
-/* To be clean, hit_private (a char *), is set to one of these */
-static char rec_compute[4];
+/* To be clean, hit_private (a genptr_t), is set to one of these */
+#define	REC_NORM_BODY	((genptr_t)0)
+#define	REC_NORM_TOP	((genptr_t)1)	/* copy tgc_N */
+#define	REC_NORM_BOT	((genptr_t)2)	/* copy reverse tgc_N */
 
 /*
  *  			R E C _ S H O T
  *  
  *  Intersect a ray with a right elliptical cylinder,
  *  where all constant terms have
- *  been precomputed by rec_prep().  If an intersection occurs,
+ *  been precomputed by rt_rec_prep().  If an intersection occurs,
  *  a struct seg will be acquired and filled in.
  *  
  *  Returns -
@@ -401,7 +403,7 @@ static char rec_compute[4];
  *  	segp	HIT
  */
 struct seg *
-rec_shot( stp, rp, ap )
+rt_rec_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -449,14 +451,14 @@ struct application	*ap;
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		hitp->hit_private = &rec_compute[0];	/* compute N */
+		hitp->hit_private = REC_NORM_BODY;	/* compute N */
 		hitp++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		hitp->hit_private = &rec_compute[0];	/* compute N */
+		hitp->hit_private = REC_NORM_BODY;	/* compute N */
 		hitp++;
 	}
 
@@ -473,7 +475,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
-			hitp->hit_private = &rec_compute[2];	/* -H */
+			hitp->hit_private = REC_NORM_BOT;	/* -H */
 			hitp++;
 		}
 
@@ -481,7 +483,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			hitp->hit_private = &rec_compute[1];	/* +H */
+			hitp->hit_private = REC_NORM_TOP;	/* +H */
 			hitp++;
 		}
 	}
@@ -517,7 +519,7 @@ check_plates:
  *  This is the Becker vector version
  */
 void
-rec_vshot( stp, rp, segp, n, resp)
+rt_rec_vshot( stp, rp, segp, n, resp)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -572,14 +574,14 @@ struct resource         *resp; /* pointer to a list of free segs */
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
 		if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 			hitp->hit_dist = k1;
-			hitp->hit_private = &rec_compute[0];	/* compute N */
+			hitp->hit_private = REC_NORM_BODY;	/* compute N */
 			hitp++;
 		}
 
 		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 		if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			hitp->hit_private = &rec_compute[0];	/* compute N */
+			hitp->hit_private = REC_NORM_BODY;	/* compute N */
 			hitp++;
 		}
 
@@ -596,7 +598,7 @@ check_plates:
 			if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 			    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 				hitp->hit_dist = k1;
-				hitp->hit_private = &rec_compute[2];	/* -H */
+				hitp->hit_private = REC_NORM_BOT;	/* -H */
 				hitp++;
 			}
 
@@ -604,7 +606,7 @@ check_plates:
 			if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 			    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 				hitp->hit_dist = k2;
-				hitp->hit_private = &rec_compute[1];	/* +H */
+				hitp->hit_private = REC_NORM_TOP;	/* +H */
 				hitp++;
 			}
 		}
@@ -643,7 +645,7 @@ check_plates:
  *  hit_private is a flag indicating if normal needs to be computed or not.
  */
 void
-rec_norm( hitp, stp, rp )
+rt_rec_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -652,22 +654,22 @@ register struct xray *rp;
 		(struct rec_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( hitp->hit_private-rec_compute )  {
-	case 0:
+	switch( (int)(hitp->hit_private) )  {
+	case 0:	/* REC_NORM_BODY */
 		/* compute it */
 		hitp->hit_vpriv[Z] = 0.0;
 		MAT4X3VEC( hitp->hit_normal, rec->rec_invRoS,
 			hitp->hit_vpriv );
 		VUNITIZE( hitp->hit_normal );
 		break;
-	case 1:
+	case 1:	/* REC_NORM_TOP */
 		VMOVE( hitp->hit_normal, rec->rec_Hunit );
 		break;
-	case 2:
+	case 2:	/* REC_NORM_BOT */
 		VREVERSE( hitp->hit_normal, rec->rec_Hunit );
 		break;
 	default:
-		rt_log("rec_norm: bad flag x%x\n", (int)hitp->hit_private);
+		rt_log("rt_rec_norm: bad flag x%x\n", (int)hitp->hit_private);
 		break;
 	}
 }
@@ -681,7 +683,7 @@ register struct xray *rp;
  *  Normal must have been computed before calling this routine.
  */
 void
-rec_curve( cvp, hitp, stp )
+rt_rec_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -691,8 +693,8 @@ struct soltab *stp;
 	vect_t	uu;
 	fastf_t	ax, bx, q;
 
-	switch( hitp->hit_private-rec_compute )  {
-	case 0:
+	switch( (int)(hitp->hit_private) )  {
+	case 0:	/* REC_NORM_BODY */
 		/* This could almost certainly be simpler if we used
 		 * inverse A rather than inverse A squared, right Ed?
 		 */
@@ -704,13 +706,13 @@ struct soltab *stp;
 		q = sqrt( ax * ax * rec->rec_iAsq + bx * bx * rec->rec_iBsq );
 		cvp->crv_c2 = - rec->rec_iAsq * rec->rec_iBsq / (q*q*q);
 		break;
-	case 1:
-	case 2:
+	case 1:	/* REC_NORM_TOP */
+	case 2:	/* REC_NORM_BOT */
 		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
 	default:
-		rt_log("rec_curve: bad flag x%x\n", (int)hitp->hit_private);
+		rt_log("rt_rec_curve: bad flag x%x\n", (int)hitp->hit_private);
 		break;
 	}
 }
@@ -725,7 +727,7 @@ struct soltab *stp;
  *  v is the displacement along H.
  */
 void
-rec_uv( ap, stp, hitp, uvp )
+rt_rec_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -743,19 +745,19 @@ register struct uvcoord *uvp;
 	VSUB2( work, hitp->hit_point, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, work );
 
-	switch( hitp->hit_private-rec_compute )  {
-	case 0:
+	switch( (int)(hitp->hit_private) )  {
+	case 0:	/* REC_NORM_BODY */
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
 		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
-	case 1:
+	case 1:	/* REC_NORM_TOP */
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
-	case 2:
+	case 2:	/* REC_NORM_BOT */
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
@@ -774,7 +776,7 @@ register struct uvcoord *uvp;
  *			R E C _ F R E E
  */
 void
-rec_free( stp )
+rt_rec_free( stp )
 struct soltab *stp;
 {
 	register struct rec_specific *rec =
@@ -784,12 +786,9 @@ struct soltab *stp;
 }
 
 int
-rec_class()
+rt_rec_class()
 {
 	return(0);
 }
 
-void
-rec_plot()
-{
-}
+/* plot and tess are handled by g_tgc.c */

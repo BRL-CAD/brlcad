@@ -1,5 +1,5 @@
 /*
- *			A R S . C
+ *			G _ A R S . C
  *
  *  Function -
  *	Intersect a ray with an ARS (Arbitrary faceted solid)
@@ -33,19 +33,19 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
-extern fastf_t *rd_curve();
+HIDDEN fastf_t	*rt_ars_rd_curve();
 
-HIDDEN void	ars_hitsort();
-extern int	arsface();
+HIDDEN void	rt_ars_hitsort();
+extern int	rt_ars_face();
 
 /*
- *			A R S _ R E A D I N
+ *			R T _ A R S _ R E A D I N
  *
  *  Read all the curves in as a two dimensional array.
  *  The caller is responsible for freeing the dynamic memory.
  */
 HIDDEN fastf_t **
-ars_readin( rp, mat )
+rt_ars_readin( rp, mat )
 union record	*rp;
 matp_t		mat;
 {
@@ -66,7 +66,7 @@ matp_t		mat;
 	curves = (fastf_t **)rt_malloc( i, "ars curve ptrs" );
 	currec = 1;
 	for( i=0; i < ncurves; i++ )  {
-		curves[i] = rd_curve( &rp[currec], pts_per_curve );
+		curves[i] = rt_ars_rd_curve( &rp[currec], pts_per_curve );
 		currec += (pts_per_curve+7)/8;
 	}
 
@@ -99,7 +99,7 @@ matp_t		mat;
 }
 
 /*
- *			A R S _ P R E P
+ *			R T _ A R S _ P R E P
  *  
  *  This routine is used to prepare a list of planar faces for
  *  being shot at by the ars routines.
@@ -112,7 +112,7 @@ matp_t		mat;
  *  database records to obtain all the necessary information.
  */
 int
-ars_prep( stp, rp, rtip )
+rt_ars_prep( stp, rp, rtip )
 struct soltab	*stp;
 union record	*rp;
 struct rt_i	*rtip;
@@ -127,7 +127,7 @@ struct rt_i	*rtip;
 	ncurves = rp[0].a.a_m;
 	pts_per_curve = rp[0].a.a_n;
 
-	curves = ars_readin( rp, stp->st_pathmat );
+	curves = rt_ars_readin( rp, stp->st_pathmat );
 
 	/*
 	 * Compute bounding sphere.
@@ -162,7 +162,7 @@ struct rt_i	*rtip;
 
 	/*
 	 *  Compute planar faces
-	 *  Will examine curves[i][pts_per_curve], provided by rd_curve.
+	 *  Will examine curves[i][pts_per_curve], provided by rt_ars_rd_curve.
 	 */
 	for( i = 0; i < ncurves-1; i++ )  {
 		register fastf_t *v1, *v2;
@@ -172,11 +172,11 @@ struct rt_i	*rtip;
 		for( j = 0; j < pts_per_curve;
 		    j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT )  {
 		    	/* carefully make faces, w/inward pointing normals */
-			arsface( stp,
+			rt_ars_face( stp,
 				&v1[0],
 				&v2[ELEMENTS_PER_VECT],
 				&v1[ELEMENTS_PER_VECT] );
-			arsface( stp,
+			rt_ars_face( stp,
 				&v2[0],
 				&v2[ELEMENTS_PER_VECT],
 				&v1[0] );
@@ -195,13 +195,13 @@ struct rt_i	*rtip;
 }
 
 /*
- *			R D _ C U R V E
+ *			R T _ A R S _ R D _ C U R V E
  *
- *  rd_curve() reads a set of ARS B records and returns a pointer
+ *  rt_ars_rd_curve() reads a set of ARS B records and returns a pointer
  *  to a malloc()'ed memory area of fastf_t's to hold the curve.
  */
 fastf_t *
-rd_curve(rp, npts)
+rt_ars_rd_curve(rp, npts)
 union record	*rp;
 int		npts;
 {
@@ -221,7 +221,7 @@ int		npts;
 	for( ; npts > 0; npts -= 8 )  {
 		rr = &rp[rec++];
 		if( rr->b.b_id != ID_ARS_B )  {
-			rt_log("ars.c/rd_curve():  non-ARS_B record!\n");
+			rt_log("rt_ars_rd_curve():  non-ARS_B record!\n");
 			break;
 		}
 		lim = (npts>8) ? 8 : npts;
@@ -235,7 +235,7 @@ int		npts;
 }
 
 /*
- *			A R S F A C E
+ *			R T _ A R S _ F A C E
  *
  *  This function is called with pointers to 3 points,
  *  and is used to prepare ARS faces.
@@ -246,7 +246,7 @@ int		npts;
  *	#pts	(3) if a valid plane resulted.
  */
 int
-arsface( stp, ap, bp, cp )
+rt_ars_face( stp, ap, bp, cp )
 struct soltab *stp;
 pointp_t ap, bp, cp;
 {
@@ -288,10 +288,10 @@ pointp_t ap, bp, cp;
 }
 
 /*
- *  			A R S _ P R I N T
+ *  			R T _ A R S _ P R I N T
  */
 void
-ars_print( stp )
+rt_ars_print( stp )
 register struct soltab *stp;
 {
 	register struct tri_specific *trip =
@@ -312,7 +312,7 @@ register struct soltab *stp;
 }
 
 /*
- *			A R S _ S H O T
+ *			R T _ A R S _ S H O T
  *  
  * Function -
  *	Shoot a ray at an ARS.
@@ -322,7 +322,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-ars_shot( stp, rp, ap )
+rt_ars_shot( stp, rp, ap )
 struct soltab *stp;
 register struct xray *rp;
 struct application	*ap;
@@ -404,7 +404,7 @@ struct application	*ap;
 		return(SEG_NULL);		/* MISS */
 
 	/* Sort hits, Near to Far */
-	ars_hitsort( hits, nhits );
+	rt_ars_hitsort( hits, nhits );
 
 	if( nhits&1 )  {
 		register int i;
@@ -465,10 +465,10 @@ struct application	*ap;
 }
 
 /*
- *			A R S _ H I T S O R T
+ *			R T _ A R S _ H I T S O R T
  */
 HIDDEN void
-ars_hitsort( h, nh )
+rt_ars_hitsort( h, nh )
 register struct hit h[];
 register int nh;
 {
@@ -487,12 +487,12 @@ register int nh;
 }
 
 /*
- *  			A R S _ N O R M
+ *  			R T _ A R S _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-ars_norm( hitp, stp, rp )
+rt_ars_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -505,14 +505,14 @@ register struct xray *rp;
 }
 
 /*
- *			A R S _ C U R V E
+ *			R T _ A R S _ C U R V E
  *
  *  Return the "curvature" of the ARB face.
  *  Pick a principle direction orthogonal to normal, and 
  *  indicate no curvature.
  */
 void
-ars_curve( cvp, hitp, stp )
+rt_ars_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -525,7 +525,7 @@ struct soltab *stp;
 }
 
 /*
- *  			A R S _ U V
+ *  			R T _ A R S _ U V
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
@@ -533,7 +533,7 @@ struct soltab *stp;
  *  v extends along the "Ybasis" direction defined by (B-A)xN.
  */
 void
-ars_uv( ap, stp, hitp, uvp )
+rt_ars_uv( ap, stp, hitp, uvp )
 struct application *ap;
 struct soltab *stp;
 register struct hit *hitp;
@@ -554,7 +554,7 @@ register struct uvcoord *uvp;
 	uvp->uv_v = 1.0 - ( VDOT( P_A, trip->tri_CA ) * yylen );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("ars_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
+			rt_log("rt_ars_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
@@ -565,10 +565,10 @@ register struct uvcoord *uvp;
 }
 
 /*
- *			A R S _ F R E E
+ *			R T _ A R S _ F R E E
  */
 void
-ars_free( stp )
+rt_ars_free( stp )
 register struct soltab *stp;
 {
 	register struct tri_specific *trip =
@@ -583,16 +583,16 @@ register struct soltab *stp;
 }
 
 int
-ars_class()
+rt_ars_class()
 {
 	return(0);
 }
 
 /*
- *			A R S _ P L O T
+ *			R T _ A R S _ P L O T
  */
-void
-ars_plot( rp, mat, vhead, dp )
+int
+rt_ars_plot( rp, mat, vhead, dp )
 union record	*rp;
 mat_t		mat;
 struct vlhead	*vhead;
@@ -607,7 +607,7 @@ struct directory *dp;
 	ncurves = rp[0].a.a_m;
 	pts_per_curve = rp[0].a.a_n;
 
-	curves = ars_readin( rp, mat );
+	curves = rt_ars_readin( rp, mat );
 
 	/*
 	 *  Draw the "waterlines", by tracing each curve.
@@ -639,4 +639,11 @@ struct directory *dp;
 		rt_free( (char *)curves[i], "ars curve" );
 	}
 	rt_free( (char *)curves, "ars curves[]" );
+	return(0);
+}
+
+int
+rt_ars_tess()
+{
+	return(-1);
 }

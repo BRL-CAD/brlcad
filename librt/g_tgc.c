@@ -40,10 +40,10 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 #include "./polyno.h"
 
-extern int	rec_prep();
+extern int	rt_rec_prep();
 
-static void	tgc_rotate(), tgc_shear();
-static void	tgc_scale();
+static void	rt_tgc_rotate(), rt_tgc_shear();
+static void	rt_tgc_scale();
 void rt_pt_sort();
 
 struct  tgc_specific {
@@ -77,7 +77,7 @@ struct tgc_internal {
 
 
 /*
- *			T G C _ P R E P
+ *			R T _ T G C _ P R E P
  *
  *  Given the parameters (in vector form) of a truncated general cone,
  *  compute the constant terms and a transformation matrix needed for
@@ -88,7 +88,7 @@ struct tgc_internal {
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
 int
-tgc_prep( stp, rec, rtip )
+rt_tgc_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
@@ -110,10 +110,10 @@ struct rt_i		*rtip;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
-	if( rec_prep( stp, rec, rtip ) == 0 )
+	if( rt_rec_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
 
-	if( tgc_import( &ti, rec, stp->st_pathmat ) < 0 )
+	if( rt_tgc_import( &ti, rec, stp->st_pathmat ) < 0 )
 		return(-1);		/* BAD */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
@@ -154,9 +154,9 @@ struct rt_i		*rtip;
 		 */
 		VADD2( ti.v, ti.v, ti.h );
 		VREVERSE( ti.h, ti.h );
-#define VXCH( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
-		VXCH( ti.a, ti.c, work );
-		VXCH( ti.b, ti.d, work );
+#define VEXCHANGE( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
+		VEXCHANGE( ti.a, ti.c, work );
+		VEXCHANGE( ti.b, ti.d, work );
 		rt_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
 	}
 
@@ -237,7 +237,7 @@ struct rt_i		*rtip;
 	 */
 	f = rt_reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
 	tgc->tgc_AD_CB = (f < 0.0001);		/* A*D == C*B */
-	tgc_rotate( ti.a, ti.b, ti.h, Rot, iRot, tgc );
+	rt_tgc_rotate( ti.a, ti.b, ti.h, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, ti.h );
 	tgc->tgc_sH = nH[Z];
 
@@ -256,8 +256,8 @@ struct rt_i		*rtip;
 	 *	Fold in scaling transformation into the transformation to std.
 	 *		space from target space (tgc_ScShR).
 	 */
-	tgc_shear( nH, Z, Shr, tShr, iShr );
-	tgc_scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
+	rt_tgc_shear( nH, Z, Shr, tShr, iShr );
+	rt_tgc_scale( tgc->tgc_A, tgc->tgc_B, tgc->tgc_sH, Scl, iScl );
 
 	mat_mul( tmp, Shr, Rot );
 	mat_mul( tgc->tgc_ScShR, Scl, tmp );
@@ -317,7 +317,7 @@ struct rt_i		*rtip;
 
 
 /*
- *		>>>  r o t a t e ( )  <<<
+ *			R T _ T G C _ R O T A T E
  *
  *  To rotate vectors  A  and  B  ( where  A  is perpendicular to  B )
  *  to the X and Y axes respectively, create a rotation matrix
@@ -337,7 +337,7 @@ struct rt_i		*rtip;
  *  the normal for the planar sections of the truncated cone.
  */
 static void
-tgc_rotate( A, B, Hv, Rot, Inv, tgc )
+rt_tgc_rotate( A, B, Hv, Rot, Inv, tgc )
 vect_t		A, B, Hv;
 mat_t		Rot, Inv;
 struct tgc_specific	*tgc;
@@ -381,7 +381,7 @@ struct tgc_specific	*tgc;
 }
 
 /*
- *		>>>  s h e a r ( )  <<<
+ *			R T _ T G C _ S H E A R
  *
  *  To shear the H vector to the Z axis, every point must be shifted
  *  in the X direction by  -(Hx/Hz)*z , and in the Y direction by
@@ -394,7 +394,7 @@ struct tgc_specific	*tgc;
  * Begin changes GSM, EOD -- Added INVERSE (Inv) calculation.
  */
 static void
-tgc_shear( vect, axis, Shr, Trn, Inv )
+rt_tgc_shear( vect, axis, Shr, Trn, Inv )
 vect_t	vect;
 int	axis;
 mat_t	Shr, Trn, Inv;
@@ -415,10 +415,11 @@ mat_t	Shr, Trn, Inv;
 	}
 }
 
-/*	s c a l e ( )
+/*
+ *			R T _ T G C _ S C A L E
  */
 static void
-tgc_scale( a, b, h, Scl, Inv )
+rt_tgc_scale( a, b, h, Scl, Inv )
 fastf_t	a, b, h;
 mat_t	Scl, Inv;
 {
@@ -434,10 +435,10 @@ mat_t	Scl, Inv;
 }
 
 /*
- *  			T G C _ P R I N T
+ *  			R T _ T G C _ P R I N T
  */
 void
-tgc_print( stp )
+rt_tgc_print( stp )
 register struct soltab	*stp;
 {
 	register struct tgc_specific	*tgc =
@@ -465,14 +466,16 @@ register struct soltab	*stp;
 	rt_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
 }
 
-/* To be clean, hit_private (a char *), is set to one of these */
-static char tgc_compute[4];
+/* To be clean, hit_private (a genptr_t), is set to one of these */
+#define	TGC_NORM_BODY	((genptr_t)0)
+#define	TGC_NORM_TOP	((genptr_t)1)	/* copy tgc_N */
+#define	TGC_NORM_BOT	((genptr_t)2)	/* copy reverse tgc_N */
 
 /*
- *			T G C _ S H O T
+ *			R T _ T G C _ S H O T
  *
  *  Intersect a ray with a truncated general cone, where all constant
- *  terms have been computed by tgc_prep().
+ *  terms have been computed by rt_tgc_prep().
  *
  *  NOTE:  All lines in this function are represented parametrically
  *  by a point,  P( Px, Py, Pz ) and a unit direction vector,
@@ -493,7 +496,7 @@ static char tgc_compute[4];
  *  the points of intersection in the original coordinate system.
  */
 struct seg *
-tgc_shot( stp, rp, ap )
+rt_tgc_shot( stp, rp, ap )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -686,17 +689,17 @@ struct application	*ap;
 		segp->seg_stp = stp;
 
 		segp->seg_in.hit_dist = pt[IN] * t_scale;
-		segp->seg_in.hit_private = &tgc_compute[0];	/* compute N */
+		segp->seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[IN], dprime );
 
 		segp->seg_out.hit_dist = pt[OUT] * t_scale;
-		segp->seg_out.hit_private = &tgc_compute[0];	/* compute N */
+		segp->seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 
 		return( segp );
 	}
 	if ( intersect == 1 )  {
-		char *nflag;	/* tgc_compute[1] = normal, [2] = reverse normal */
+		genptr_t	nflag;
 		/*
 		 *  If only one between-plane intersection exists (pt[OUT]),
 		 *  then the other intersection must be on
@@ -726,10 +729,10 @@ struct application	*ap;
 
 		if ( alf1 <= 1.0 ){
 			pt[IN] = b;
-			nflag = &tgc_compute[2]; /* copy reverse normal */
+			nflag = TGC_NORM_BOT; /* copy reverse normal */
 		} else if ( alf2 <= 1.0 ){
 			pt[IN] = t;
-			nflag = &tgc_compute[1];	/* copy normal */
+			nflag = TGC_NORM_TOP;	/* copy normal */
 		} else {
 			/* intersection apparently invalid  */
 			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
@@ -744,13 +747,13 @@ struct application	*ap;
 			segp->seg_in.hit_private = nflag;
 
 			segp->seg_out.hit_dist = pt[OUT] * t_scale;
-			segp->seg_out.hit_private = &tgc_compute[0];	/* compute N */
+			segp->seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
 			/* transform-space vector needed for normal */
 			VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 		} else {
 			segp->seg_in.hit_dist = pt[OUT] * t_scale;
 			/* transform-space vector needed for normal */
-			segp->seg_in.hit_private = &tgc_compute[0];	/* compute N */
+			segp->seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
 			VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[OUT], dprime );
 
 			segp->seg_out.hit_dist = pt[IN] * t_scale;
@@ -803,16 +806,16 @@ struct application	*ap;
 	 */
 	if ( dir > 0.0 ){
 		segp->seg_in.hit_dist = b * t_scale;
-		segp->seg_in.hit_private = &tgc_compute[2];	/* reverse normal */
+		segp->seg_in.hit_private = TGC_NORM_BOT;	/* reverse normal */
 
 		segp->seg_out.hit_dist = t * t_scale;
-		segp->seg_out.hit_private = &tgc_compute[1];	/* normal */
+		segp->seg_out.hit_private = TGC_NORM_TOP;	/* normal */
 	} else {
 		segp->seg_in.hit_dist = t * t_scale;
-		segp->seg_in.hit_private = &tgc_compute[1];	/* normal */
+		segp->seg_in.hit_private = TGC_NORM_TOP;	/* normal */
 
 		segp->seg_out.hit_dist = b * t_scale;
-		segp->seg_out.hit_private = &tgc_compute[2];	/* reverse normal */
+		segp->seg_out.hit_private = TGC_NORM_BOT;	/* reverse normal */
 	}
 	return( segp );
 }
@@ -820,12 +823,12 @@ struct application	*ap;
 
 #define SEG_MISS(SEG)           (SEG).seg_stp=(struct soltab *) 0;
 /*
- *			T G C _ V S H O T
+ *			R T _ T G C _ V S H O T
  *
  *  The Homer vectorized version.
  */
 void
-tgc_vshot( stp, rp, segp, n, resp )
+rt_tgc_vshot( stp, rp, segp, n, resp )
 struct soltab		*stp[];
 register struct xray	*rp[];
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -1119,14 +1122,14 @@ struct resource         *resp; /* pointer to a list of free segs */
 		 *  the hit points for the ray.
 		 */
 		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
-		segp[ix].seg_in.hit_private = &tgc_compute[0];	/* compute N */
+		segp[ix].seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime );
 
 		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
-		segp[ix].seg_out.hit_private = &tgc_compute[0];	/* compute N */
+		segp[ix].seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 	} else if ( intersect == 1 ) {
-		char *nflag;	/* tgc_compute[1] = normal, [2] = reverse normal */
+		genptr_t	nflag;
 		/*
 		 *  If only one between-plane intersection exists (pt[OUT]),
 		 *  then the other intersection must be on
@@ -1159,10 +1162,10 @@ struct resource         *resp; /* pointer to a list of free segs */
 
 		if ( alf1 <= 1.0 ){
 			pt[IN] = b;
-			nflag = &tgc_compute[2]; /* copy reverse normal */
+			nflag = TGC_NORM_BOT; /* copy reverse normal */
 		} else if ( alf2 <= 1.0 ){
 			pt[IN] = t;
-			nflag = &tgc_compute[1];	/* copy normal */
+			nflag = TGC_NORM_TOP;	/* copy normal */
 		} else {
 			/* intersection apparently invalid  */
 #if 0
@@ -1178,13 +1181,13 @@ struct resource         *resp; /* pointer to a list of free segs */
 			segp[ix].seg_in.hit_private = nflag;
 
 			segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
-			segp[ix].seg_out.hit_private = &tgc_compute[0];	/* compute N */
+			segp[ix].seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
 			/* transform-space vector needed for normal */
 			VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 		} else {
 			segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
 			/* transform-space vector needed for normal */
-			segp[ix].seg_in.hit_private = &tgc_compute[0];	/* compute N */
+			segp[ix].seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
 			VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime );
 
 			segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
@@ -1239,16 +1242,16 @@ struct resource         *resp; /* pointer to a list of free segs */
 	 */
 	if ( dir > 0.0 ){
 		segp[ix].seg_in.hit_dist = b * t_scale;
-		segp[ix].seg_in.hit_private = &tgc_compute[2];	/* reverse normal */
+		segp[ix].seg_in.hit_private = TGC_NORM_BOT;	/* reverse normal */
 
 		segp[ix].seg_out.hit_dist = t * t_scale;
-		segp[ix].seg_out.hit_private = &tgc_compute[1];	/* normal */
+		segp[ix].seg_out.hit_private = TGC_NORM_TOP;	/* normal */
 	} else {
 		segp[ix].seg_in.hit_dist = t * t_scale;
-		segp[ix].seg_in.hit_private = &tgc_compute[1];	/* normal */
+		segp[ix].seg_in.hit_private = TGC_NORM_TOP;	/* normal */
 
 		segp[ix].seg_out.hit_dist = b * t_scale;
-		segp[ix].seg_out.hit_private = &tgc_compute[2];	/* reverse normal */
+		segp[ix].seg_out.hit_private = TGC_NORM_BOT;	/* reverse normal */
 	}
 	}
     } /* end for each ray/cone pair */
@@ -1281,7 +1284,7 @@ int npts;
 
 
 /*
- *			T G C _ N O R M
+ *			R T _ T G C _ N O R M
  *
  *  Compute the normal to the cone, given a point on the STANDARD
  *  CONE centered at the origin of the X-Y plane.
@@ -1332,7 +1335,7 @@ int npts;
  *  the above expressions.
  */
 void
-tgc_norm( hitp, stp, rp )
+rt_tgc_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -1347,14 +1350,14 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 	/* Hits on the end plates are easy */
-	switch( hitp->hit_private-tgc_compute )  {
-	case 1:
+	switch( (int)(hitp->hit_private) )  {
+	case 1:	/* TGC_NORM_TOP */
 		VMOVE( hitp->hit_normal, tgc->tgc_N );
 		break;
-	case 2:
+	case 2:	/* TGC_NORM_BOT */
 		VREVERSE( hitp->hit_normal, tgc->tgc_N );
 		break;
-	case 0:
+	case 0:	/* TGC_NORM_BODY */
 		/* Compute normal, given hit point on standard (unit) cone */
 		R = 1 + tgc->tgc_CdAm1 * hitp->hit_vpriv[Z];
 		Q = 1 + tgc->tgc_DdBm1 * hitp->hit_vpriv[Z];
@@ -1369,29 +1372,66 @@ register struct xray *rp;
 		VUNITIZE( hitp->hit_normal );
 		break;
 	default:
-		rt_log("tgc_norm: bad flag x%x\n", (int)hitp->hit_private);
+		rt_log("rt_tgc_norm: bad flag x%x\n", (int)hitp->hit_private);
 		break;
 	}
 }
 
+/*
+ *			R T _ T G C _ U V
+ */
 void
-tgc_uv( ap, stp, hitp, uvp )
+rt_tgc_uv( ap, stp, hitp, uvp )
 struct application	*ap;
 struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	/* Do nothing.  Really, should do what REC does. */
-	uvp->uv_u = uvp->uv_v = 0;
+	register struct tgc_specific	*tgc =
+		(struct tgc_specific *)stp->st_specific;
+	LOCAL vect_t work;
+	LOCAL vect_t pprime;
+	FAST fastf_t len;
+
+	/* hit_point is on surface;  project back to unit cylinder,
+	 * creating a vector from vertex to hit point.
+	 */
+	VSUB2( work, hitp->hit_point, tgc->tgc_V );
+	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
+
+	switch( (int)(hitp->hit_private) )  {
+	case 0:	/* TGC_NORM_BODY */
+		/* Skin.  x,y coordinates define rotation.  radius = 1 */
+		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
+		uvp->uv_v = pprime[Z];		/* height */
+		break;
+	case 1:	/* TGC_NORM_TOP */
+		/* top plate */
+		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
+		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		uvp->uv_v = len;		/* rim v = 1 */
+		break;
+	case 2:	/* TGC_NORM_BOT */
+		/* bottom plate */
+		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
+		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		uvp->uv_v = 1 - len;	/* rim v = 0 */
+		break;
+	}
+	/* Handle other half of acos() domain */
+	if( pprime[X] < 0 )
+		uvp->uv_u = 1.0 - uvp->uv_u;
+
+	/* uv_du should be relative to rotation, uv_dv relative to height */
 	uvp->uv_du = uvp->uv_dv = 0;
 }
 
 
 /*
- *			T G C _ F R E E
+ *			R T _ T G C _ F R E E
  */
 void
-tgc_free( stp )
+rt_tgc_free( stp )
 struct soltab *stp;
 {
 	register struct tgc_specific	*tgc =
@@ -1401,20 +1441,20 @@ struct soltab *stp;
 }
 
 int
-tgc_class()
+rt_tgc_class()
 {
 	return(0);
 }
 
 
 /*
- *			T G C _ I M P O R T
+ *			R T _ T G C _ I M P O R T
  *
  *  Import a TGC from the database format to the internal format.
  *  Apply modeling transformations as well.
  */
 int
-tgc_import( tip, rp, mat )
+rt_tgc_import( tip, rp, mat )
 struct tgc_internal	*tip;
 union record		*rp;
 register mat_t		mat;
@@ -1423,7 +1463,7 @@ register mat_t		mat;
 
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("tgc_import: defective record\n");
+		rt_log("rt_tgc_import: defective record\n");
 		return(-1);
 	}
 
@@ -1442,10 +1482,10 @@ register mat_t		mat;
 }
 
 /*
- *			T G C _ P L O T
+ *			R T _ T G C _ P L O T
  */
 int
-tgc_plot( rp, mat, vhead, dp )
+rt_tgc_plot( rp, mat, vhead, dp )
 union record	*rp;
 register mat_t	mat;
 struct vlhead	*vhead;
@@ -1458,7 +1498,7 @@ struct directory *dp;
 	LOCAL fastf_t		points[3*8];
 	LOCAL struct tgc_internal	ti;
 
-	if( tgc_import( &ti, rp, mat ) < 0 )  return(-1);
+	if( rt_tgc_import( &ti, rp, mat ) < 0 )  return(-1);
 
 	ell_16pts( bottom, ti.v, ti.a, ti.b );
 	VADD2( work, ti.v, ti.h );
@@ -1485,12 +1525,12 @@ struct directory *dp;
 }
 
 /*
- *			T G C _ C U R V E
+ *			R T _ T G C _ C U R V E
  *
  *  Return the curvature of the TGC.
  */
 void
-tgc_curve( cvp, hitp, stp )
+rt_tgc_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit *hitp;
 struct soltab *stp;
@@ -1503,7 +1543,7 @@ struct soltab *stp;
 	fastf_t	a, b, c, scale;
 	vect_t	vec1, vec2;
 
-	if( hitp->hit_private > tgc_compute ) {
+	if( hitp->hit_private != TGC_NORM_BODY ) {
 		/* We hit an end plate.  Choose any tangent vector. */
 		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -1564,7 +1604,7 @@ struct soltab *stp;
 }
 
 /*
- *			T G C _ T E S S
+ *			R T _ T G C _ T E S S
  *
  *  Preliminary tesselation of the TGC, same algorithm as vector list.
  *
@@ -1573,7 +1613,7 @@ struct soltab *stp;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-tgc_tess( r, m, rp, mat, dp )
+rt_tgc_tess( r, m, rp, mat, dp )
 struct nmgregion	**r;
 struct model		*m;
 union record	*rp;
@@ -1596,8 +1636,8 @@ struct directory *dp;
 	int			face;
 	plane_t			plane;
 
-	if( tgc_import( &ti, rp, mat ) < 0 )  {
-		rt_log("tgc_tess(%s): import failure\n", dp->d_namep);
+	if( rt_tgc_import( &ti, rp, mat ) < 0 )  {
+		rt_log("rt_tgc_tess(%s): import failure\n", dp->d_namep);
 		return(-1);
 	}
 
