@@ -1418,6 +1418,104 @@ struct vertexuse	*vu2;
 	return vu2;
 }
 
+/* XXX These should be included in nmg_join_2loops, or be called by it */
+/*
+ *			N M G _ J O I N _ S I N G V U _ L O O P
+ *
+ *  vu1 is in a regular loop, vu2 is in a loop of a single vertex
+ *  A jaunt is taken from vu1 to vu2 and back to vu1, and the
+ *  old loop at vu2 is destroyed.
+ *  Return is the new vu that replaces vu2.
+ */
+struct vertexuse *
+nmg_join_singvu_loop( vu1, vu2 )
+struct vertexuse	*vu1, *vu2;
+{
+    	struct edgeuse	*eu1;
+	struct edgeuse	*first_new_eu, *second_new_eu;
+	struct loopuse	*lu2;
+
+	NMG_CK_VERTEXUSE( vu1 );
+	NMG_CK_VERTEXUSE( vu2 );
+
+#if 0
+	rt_log("nmg_join_singvu_loop( x%x, x%x )\n", vu1, vu2 );
+#endif
+
+	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  rt_bomb("nmg_join_singvu_loop bad args\n");
+
+	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_singvu_loop same vertex\n");
+
+    	/* Take jaunt from vu1 to vu2 and back */
+    	eu1 = vu1->up.eu_p;
+    	NMG_CK_EDGEUSE(eu1);
+
+    	/* Insert 0 length edge */
+    	first_new_eu = nmg_eins(eu1);
+	/* split the new edge, and connect it to vertex 2 */
+	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+	first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
+	/* Make the two new edgeuses share just one edge */
+	nmg_moveeu( second_new_eu, first_new_eu );
+
+	/* Kill loop lu2 associated with vu2 */
+	lu2 = vu2->up.lu_p;
+	NMG_CK_LOOPUSE(lu2);
+	nmg_klu(lu2);
+	return second_new_eu->vu_p;
+}
+
+/*
+ *			N M G _ J O I N _ 2 S I N G V U _ L O O P S
+ *
+ *  Both vertices are part of single vertex loops.
+ *  Converts loop on vu1 into a real loop that connects them together,
+ *  with a single edge (two edgeuses).
+ *  Loop on vu2 is killed.
+ *  Returns replacement vu for vu2.
+ *  Does not change the orientation.
+ */
+struct vertexuse *
+nmg_join_2singvu_loops( vu1, vu2 )
+struct vertexuse	*vu1, *vu2;
+{
+    	struct edgeuse	*eu1;
+	struct edgeuse	*first_new_eu, *second_new_eu;
+	struct loopuse	*lu1, *lu2;
+
+#if 0
+	rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
+#endif
+
+	NMG_CK_VERTEXUSE( vu1 );
+	NMG_CK_VERTEXUSE( vu2 );
+
+	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *vu1->up.magic_p != NMG_LOOPUSE_MAGIC )  rt_bomb("nmg_join_2singvu_loops bad args\n");
+
+	if( vu1->v_p == vu2->v_p )  rt_bomb("nmg_join_2singvu_loops same vertex\n");
+
+    	/* Take jaunt from vu1 to vu2 and back */
+	/* Make a 0 length edge on vu1 */
+	first_new_eu = nmg_meonvu(vu1);
+	/* split the new edge, and connect it to vertex 2 */
+	second_new_eu = nmg_eusplit( vu2->v_p, first_new_eu );
+	first_new_eu = RT_LIST_PLAST_CIRC(edgeuse, second_new_eu);
+	/* Make the two new edgeuses share just one edge */
+	nmg_moveeu( second_new_eu, first_new_eu );
+
+	/* Kill loop lu2 associated with vu2 */
+	lu2 = vu2->up.lu_p;
+	NMG_CK_LOOPUSE(lu2);
+	nmg_klu(lu2);
+
+	lu1 = vu1->up.eu_p->up.lu_p;
+	NMG_CK_LOOPUSE(lu1);
+
+	return second_new_eu->vu_p;
+}
+
 /*			N M G _ S I M P L I F Y _ L O O P
  *
  *	combine adjacent loops within the same parent
@@ -2365,4 +2463,211 @@ struct shell *s;
 	rt_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
 
 	return(new_fu);
+}
+
+/*
+ *			N M G _ L O O P _ I S _ A _ C R A C K
+ *
+ *  Returns -
+ *	 0	Loop is not a "crack"
+ *	!0	Loop *is* a "crack"
+ */
+int
+nmg_loop_is_a_crack( lu )
+struct loopuse	*lu;
+{
+	struct edgeuse	*cur_eu;
+	struct edgeuse	*cur_eumate;
+	struct vertexuse *cur_vu;
+	struct vertex	*cur_v;
+	struct vertexuse *next_vu;
+	struct vertex	*next_v;
+	struct faceuse	*fu;
+	struct vertexuse *test_vu;
+	struct edgeuse	*test_eu;
+	struct loopuse	*test_lu;
+
+	NMG_CK_LOOPUSE(lu);
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return 0;
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	for( RT_LIST_FOR( cur_eu, edgeuse, &lu->down_hd ) )  {
+		NMG_CK_EDGEUSE(cur_eu);
+		cur_eumate = cur_eu->eumate_p;
+		NMG_CK_EDGEUSE(cur_eumate);
+		cur_vu = cur_eu->vu_p;
+		NMG_CK_VERTEXUSE(cur_vu);
+		cur_v = cur_vu->v_p;
+		NMG_CK_VERTEX(cur_v);
+
+		next_vu = cur_eumate->vu_p;
+		NMG_CK_VERTEXUSE(next_vu);
+		next_v = next_vu->v_p;
+		NMG_CK_VERTEX(next_v);
+		/* XXX It might be more efficient to walk the radial list */
+		/* See if the next vertex has an edge pointing back to cur_v */
+		for( RT_LIST_FOR( test_vu, vertexuse, &next_v->vu_hd ) )  {
+			if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			test_eu = test_vu->up.eu_p;
+			NMG_CK_EDGEUSE(test_eu);
+			if( test_eu == cur_eu )  continue;	/* skip self */
+			if( test_eu == cur_eumate )  continue;	/* skip mates */
+			if( *test_eu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			test_lu = test_eu->up.lu_p;
+			if( test_lu != lu )  continue;
+			/* Check departing edgeuse's NEXT vertex */
+			if( test_eu->eumate_p->vu_p->v_p == cur_v )  goto match;
+		}
+		/* No path back, this can't be a crack, abort */
+		return 0;
+		
+		/* One edgeuse matched, all the others have to as well */
+match:		;
+	}
+	return 1;
+}
+
+/*
+ *			N M G _ L O O P _ I S _ C C W
+ *
+ *  Returns -
+ *	+1	Loop is CCW, should be exterior loop.
+ *	-1	Loop is CW, should be interior loop.
+ *	 0	Unable to tell, error.
+ */
+int
+nmg_loop_is_ccw( lu, norm, tol )
+struct loopuse	*lu;
+CONST plane_t	norm;
+CONST struct rt_tol	*tol;
+{
+	vect_t		edge1, edge2;
+	vect_t		left;
+	struct edgeuse	*eu;
+	struct edgeuse	*next_eu;
+	struct vertexuse *this_vu, *next_vu, *third_vu;
+	fastf_t		theta = 0;
+	fastf_t		x,y;
+	fastf_t		rad;
+
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
+		this_vu = eu->vu_p;
+		next_vu = eu->eumate_p->vu_p;
+		third_vu = next_eu->eumate_p->vu_p;
+
+		/* Skip topological 0-length edges */
+		if( this_vu->v_p == next_vu->v_p )  continue;
+		if( next_vu->v_p == third_vu->v_p )  continue;
+
+		/* Skip edges with calculated edge lengths near 0 */
+		VSUB2( edge1, next_vu->v_p->vg_p->coord, this_vu->v_p->vg_p->coord );
+		if( MAGSQ(edge1) < tol->dist_sq )  continue;
+		VSUB2( edge2, third_vu->v_p->vg_p->coord, next_vu->v_p->vg_p->coord );
+		if( MAGSQ(edge2) < tol->dist_sq )  continue;
+		VUNITIZE(edge1);
+		VUNITIZE(edge2);
+
+		/* Compute (loop)inward pointing "left" vector */
+		VCROSS( left, norm, edge1 );
+		y = VDOT( edge2, left );
+		x = VDOT( edge2, edge1 );
+		rad = atan2( y, x );
+#if 0
+VPRINT("vu1", this_vu->v_p->vg_p->coord);
+VPRINT("vu2", next_vu->v_p->vg_p->coord);
+VPRINT("edge1", edge1);
+VPRINT("edge2", edge2);
+VPRINT("left", left);
+rt_log("atan2(%g,%g) = %g\n", y, x, rad);
+#endif
+		theta += rad;
+	}
+#if 0
+	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+#endif
+nmg_face_lu_plot( lu, this_vu, this_vu );
+nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
+
+	rad = theta * rt_inv2pi;
+	x = rad-1;
+	/* Value is in radians, tolerance here is 1% */
+	if( NEAR_ZERO( x, 0.05 ) )  {
+		/* theta = two pi, loop is CCW */
+		return 1;
+	}
+	x = rad + 1;
+	if( NEAR_ZERO( x, 0.05 ) )  {
+		/* theta = -two pi, loop is CW */
+		return -1;
+	}
+	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
+		theta, rad );
+	return 0;
+}
+
+/*
+ *			N M G _ S E T _ L U _ O R I E N T A T I O N
+ */
+void
+nmg_set_lu_orientation( lu, is_opposite )
+struct loopuse	*lu;
+int		is_opposite;
+{
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_LOOPUSE(lu->lumate_p);
+	if( is_opposite )  {
+		/* Interior (crack) loop */
+		lu->orientation = OT_OPPOSITE;
+		lu->lumate_p->orientation = OT_OPPOSITE;
+	} else {
+		/* Exterior loop */
+		lu->orientation = OT_SAME;
+		lu->lumate_p->orientation = OT_SAME;
+	}
+}
+
+/*
+ *			N M G _ L U _ R E O R I E N T
+ *
+ *  Based upon a geometric calculation, reorient a loop and it's mate,
+ *  if the stored orientation differs from the geometric one.
+ */
+void
+nmg_lu_reorient( lu, norm, tol )
+struct loopuse	*lu;
+CONST plane_t		norm;
+CONST struct rt_tol	*tol;
+{
+	int	ccw;
+	int	geom_orient;
+
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
+
+	ccw = nmg_loop_is_ccw( lu, norm, tol );
+	if( ccw == 0 )  {
+		rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
+		/* rt_bomb("nmg_lu_reorient"); */
+		return;
+	}
+	if( ccw > 0 )  {
+		geom_orient = OT_SAME;	/* same as face */
+	} else {
+		geom_orient = OT_OPPOSITE;
+	}
+
+	if( lu->orientation == geom_orient )  return;
+	rt_log("nmg_lu_reorient(x%x):  changing loop orientation from %s to %s\n",
+		lu, nmg_orientation(lu->orientation), nmg_orientation(geom_orient) );
+
+	lu->orientation = geom_orient;
+	lu->lumate_p->orientation = geom_orient;
 }
