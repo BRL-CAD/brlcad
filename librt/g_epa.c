@@ -149,8 +149,6 @@ static char RCSepa[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-#define PI	3.14159265358979323264
-
 struct epa_specific {
 	point_t	epa_V;		/* vector to epa origin */
 	vect_t	epa_Hunit;	/* unit H vector */
@@ -215,14 +213,12 @@ struct rt_i		*rtip;
 	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
 		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
 		|| r1 < 0.0 || r2 < 0.0 )  {
-fprintf(stderr, "mag_h = %g, mag_a = %g, r1 = %g, r2 = %g\n", mag_h,mag_a,r1,r2);
 		return(1);		/* BAD, too small */
 	}
 
 	/* Check for A.H == 0 */
 	f = VDOT( xip->epa_Au, xip->epa_H ) / mag_h;
 	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
-fprintf(stderr, "f = %g\n", f);
 		return(1);		/* BAD */
 	}
 
@@ -230,12 +226,13 @@ fprintf(stderr, "f = %g\n", f);
 	 *  EPA is ok
 	 */
 	stp->st_id = ID_EPA;		/* set soltab ID */
-	epa->epa_h = mag_h;
-	epa->epa_inv_r1sq = 1 / (r1 * r1);
-	epa->epa_inv_r2sq = 1 / (r2 * r2);
 
 	GETSTRUCT( epa, epa_specific );
 	stp->st_specific = (genptr_t)epa;
+
+	epa->epa_h = mag_h;
+	epa->epa_inv_r1sq = 1 / (r1 * r1);
+	epa->epa_inv_r2sq = 1 / (r2 * r2);
 
 	/* make unit vectors in A, H, and BxH directions */
 	VMOVE(    epa->epa_Hunit, xip->epa_H );
@@ -244,6 +241,10 @@ fprintf(stderr, "f = %g\n", f);
 	VCROSS(   epa->epa_Bunit, epa->epa_Aunit, epa->epa_Hunit );
 
 	VMOVE( epa->epa_V, xip->epa_V );
+VPRINT("prep: V",xip->epa_V);
+VPRINT("H",xip->epa_H);
+VPRINT("Au",xip->epa_Au);
+fprintf(stderr,"r1 = %g, r2 = %g\n",xip->epa_r1,xip->epa_r2);
 
 	/* Compute R and Rinv matrices */
 	mat_idn( R );
@@ -618,7 +619,6 @@ rt_epa_class()
 	return(0);
 }
 
-
 /*
  *			R T _ E P A _ P L O T
  */
@@ -629,115 +629,16 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	LOCAL struct rt_epa_internal	*xip;
-        fastf_t top[16*3];
-        fastf_t front[9*3];
-	fastf_t back[9*3];
-	fastf_t r1, r2, b, n, y, z;
-	int	i, j;
-	vect_t	Bunit, Hunit, Aunit, R1, R2;
-
-	RT_CK_DB_INTERNAL(ip);
-	xip = (struct rt_epa_internal *)ip->idb_ptr;
-	RT_EPA_CK_MAGIC(xip);
-	
-	VREVERSE( Hunit, xip->epa_H );
-	VUNITIZE( Hunit );
-	VMOVE(    Aunit, xip->epa_Au );		/* make B positive z axis */
-	VCROSS(   Bunit, Aunit, Hunit );	/* make R positive y axis */
-	r1 = xip->epa_r1;
-	r2 = xip->epa_r2;
-	VSCALE(R1, Aunit, r1);
-	VSCALE(R2, Bunit, r2);
-	rt_ell_16pts( top, xip->epa_V, R1, R2 );
-	b = sqrt(MAGSQ(xip->epa_H));
-	n = b / (r1 * r1);
-	for (i = 0; i < 9; i++) {
-		j = i * 3;
-		y = r1 * (i * 0.25 - 1);	/* 9 pts on y axis */
-		z = n * y * y - b;
-		VBLEND2(front+j, y, Aunit, z, Hunit);
-		VADD2(front+j, front+j, xip->epa_V);
-	}
-	n = b / (r2 * r2);
-	for (i = 0; i < 9; i++) {
-		j = i * 3;
-		y = r2 * (i * 0.25 - 1);	/* 9 pts on x axis */
-		z = n * y * y - b;
-		VBLEND2(back+j, y, Bunit, z, Hunit);
-		VADD2(back+j, back+j, xip->epa_V);
-	}
-
-	/* Draw the top */
-	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-	for( i = 0; i < 16; i++ )  {
-		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
-	}
-
-	/* Draw the front */
-	RT_ADD_VLIST( vhead, &front[0], RT_VLIST_LINE_MOVE );
-	for( i = 1; i < 9; i++ )  {
-		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
-	}
-
-	/* Draw the back */
-	RT_ADD_VLIST( vhead, &back[0], RT_VLIST_LINE_MOVE );
-	for( i = 1; i < 9; i++ )  {
-		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
-	}
-
-	return(0);
-}
-
-#define ELLOUT(n)	ov+(n-1)*3
-
-rt_ell( ov, V, A, B, sides )
-register fastf_t	*ov;
-register fastf_t	*V;
-fastf_t			*A, *B;
-int			sides;
-{
-	fastf_t	ang, theta, x, y;
-	int	n;
-	
-	theta = 2 * PI / sides;
-	ang = 0.;
-	for (n = 1; n <= sides; n++, ang += theta) {
-		x = cos( ang );
-		y = sin( ang );
-		VJOIN2( ELLOUT(n), V, x, A, y, B );
-	}
-	VMOVE(ELLOUT(n), ELLOUT(1));
-}
-
-/*
- *			R T _ E P A _ T E S S
- *
- *  Returns -
- *	-1	failure
- *	 0	OK.  *r points to nmgregion that holds this tessellation.
- */
-int
-rt_epa_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
-{
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2, theta;
-	fastf_t		**ellipses, n_dist, n_norm;
-	int		face, i, j, nseg;
+	fastf_t		**ellipses, theta_new, theta_prev, ell_ang();
+	int		*pts_dbl, face, i, j, nseg, tmpseg;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
 	LOCAL struct rt_epa_internal	*xip;
+	point_t		p1;
 	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
-	struct shell	*s;
-	struct faceuse	**outfaceuses;
-	struct edgeuse	*eu, *eu2;
-	struct vertex	*vertp[3], ***vells;
-	vect_t		A, Au, B, Bu, Hu, V;
+	vect_t		A, Au, B, Bu, Hu, V, Work;
 	
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -804,7 +705,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = PI;
+		ntol = rt_pi;
 
 	/*
 	 *	build epa from 2 parabolas
@@ -884,43 +785,401 @@ struct rt_tol		*tol;
 		pos_b->next = NULL;
 	}
 	
-	n_norm = PI / ntol;		/* # segs to satisfy norm tol */
-	n_dist = PI / acos( 1 - dtol / r2 );	/* & dist tol */
-	nseg = (fastf_t)(n_norm > n_dist ? n_norm+1 : n_dist+1);
 	/* make array of ptrs to epa ellipses */
 	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
-	/* number of faces needed for epa */
-	face = nseg*(1 + 3*((1 << (nell-1)) - 1));
-	/* array for each triangular face */
-	outfaceuses = (struct faceuse **)
-		rt_malloc( (face+1) * sizeof(struct faceuse *), "faceuse []" );
-	if (!outfaceuses || !ellipses) {
-		fprintf(stderr, "rt_epa_tess: no mem!\n");
-		goto fail;
-	}
+	/* keep track of whether pts in each ellipse are doubled or not */
+	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
 
 	/* make ellipses at each z level */
 	i = 0;
+	nseg = 0;
+	theta_prev = rt_twopi;
 	pos_a = pts_a->next;	/* skip over apex of epa */
 	pos_b = pts_b->next;
-	theta = 2 * PI / nseg;
 	while (pos_a) {
-		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
-			"pts ell");
-		if (!ellipses[i]) {
-			fprintf(stderr, "rt_epa_tess: no mem!\n");
-			goto fail;
-		}
 		VSCALE( A, Au, pos_a->p[Y] );	/* semimajor axis */
 		VSCALE( B, Bu, pos_b->p[Y] );	/* semiminor axis */
 		VJOIN1( V, xip->epa_V, -pos_a->p[Z], Hu );
-		rt_ell( ellipses[i], V, A, B, nseg );
-		nseg *= 2;		/* double pts for next ellipse */
+
+		VSET( p1, 0., pos_b->p[Y], 0. );
+		theta_new = ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+		if (nseg == 0) {
+			nseg = (int)(rt_twopi / theta_new) + 1;
+			pts_dbl[i] = 0;
+		} else if (theta_new < theta_prev) {
+			nseg *= 2;
+			pts_dbl[i] = 1;
+		} else
+			pts_dbl[i] = 0;
+		theta_prev = theta_new;
+
+		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
+			"pts ell");
+		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		
 		i++;
 		pos_a = pos_a->next;
 		pos_b = pos_b->next;
 	}
-	nseg /= 2;	/* # segs in top ellipse */
+	/* Draw the top ellipse */
+	RT_ADD_VLIST( vhead,
+		&ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
+		RT_VLIST_LINE_MOVE );
+	for( i = 0; i < nseg; i++ )  {
+		RT_ADD_VLIST( vhead,
+			&ellipses[nell-1][i*ELEMENTS_PER_VECT],
+			RT_VLIST_LINE_DRAW );
+	}
+
+	/* connect ellipses */
+	for (i = nell-2; i >= 0; i--) {	/* skip top ellipse */
+		int bottom, top;
+
+		top = i + 1;
+		bottom = i;
+		if (pts_dbl[top])
+			nseg /= 2;	/* # segs in 'bottom' ellipse */
+
+		/* Draw the current ellipse */
+		RT_ADD_VLIST( vhead,
+			&ellipses[bottom][(nseg-1)*ELEMENTS_PER_VECT],
+			RT_VLIST_LINE_MOVE );
+		for( j = 0; j < nseg; j++ )  {
+			RT_ADD_VLIST( vhead,
+				&ellipses[bottom][j*ELEMENTS_PER_VECT],
+				RT_VLIST_LINE_DRAW );
+		}
+
+		/* make connections between ellipses */
+		for (j = 0; j < nseg; j++) {
+			if (pts_dbl[top])
+				jj = j + j;	/* top ellipse index */
+			else
+				jj = j;
+			RT_ADD_VLIST( vhead,
+				&ellipses[bottom][j*ELEMENTS_PER_VECT],
+				RT_VLIST_LINE_MOVE );
+			RT_ADD_VLIST( vhead,
+				&ellipses[top][jj*ELEMENTS_PER_VECT],
+				RT_VLIST_LINE_DRAW );
+		}
+	}
+
+	VADD2( Work, xip->epa_V, xip->epa_H );
+	for (i = 0; i < nseg; i++) {
+		/* Draw connector */
+		RT_ADD_VLIST( vhead, Work, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead,
+			&ellipses[0][i*ELEMENTS_PER_VECT],
+			RT_VLIST_LINE_DRAW );
+	}
+
+	/* free mem */
+	for (i = 0; i < nell; i++) {
+		rt_free( (char *)ellipses[i], "pts ell");
+	}
+	rt_free( (char *)ellipses, "fastf_t ell[]");
+	rt_free( (char *)pts_dbl, "dbl ints" );
+
+	return(0);
+}
+
+#define ELLOUT(n)	ov+(n-1)*3
+
+rt_ell( ov, V, A, B, sides )
+register fastf_t	*ov;
+register fastf_t	*V;
+fastf_t			*A, *B;
+int			sides;
+{
+	fastf_t	a, ang, b, theta, x, y;
+	int	n, ret	;
+	point_t	p0, p1;
+	
+	theta = 2 * rt_pi / sides;
+	ang = 0.;
+	/* make ellipse regardless of whether it meets req's */
+	for (n = 1; n <= sides; n++, ang += theta) {
+		x = cos( ang );
+		y = sin( ang );
+		VJOIN2( ELLOUT(n), V, x, A, y, B );
+	}
+	VMOVE(ELLOUT(n), ELLOUT(1));
+	return(ret);
+}
+
+/*
+ *	E L L _ A N G
+ *
+ *	Return angle required for smallest side to fall within
+ *	tolerances for ellipse.  Smallest side is a side with
+ *	an endpoint at (a, 0, 0) where a is the semi-major axis.
+ */
+fastf_t
+ell_ang( p1, a, b, dtol, ntol )
+fastf_t	a, b, dtol, ntol;
+point_t	p1;
+{
+	fastf_t	dist, intr, m, theta0, theta1;
+	int	n, ret;
+	point_t	mpt, p0;
+	vect_t	norm_line, norm_ell;
+	
+	VSET( p0, a, 0., 0. );
+	/* slope and intercept of segment */
+	m = ( p1[Y] - p0[Y] ) / ( p1[X] - p0[X] );
+	intr = p0[Y] - m * p0[X];
+	/* point on ellipse with max dist between ellipse and line */
+	mpt[X] = a / sqrt( b*b / (m*m*a*a) + 1 );
+	mpt[Y] = b * sqrt( 1 - mpt[X] * mpt[X] / (a*a) );
+	mpt[Z] = 0;
+	/* max distance between that point and line */
+	dist = fabs( m * mpt[X] - mpt[Y] + intr ) / sqrt( m * m + 1 );
+	/* angles between normal of line and of ellipse at line endpoints */
+	VSET( norm_line, m, -1., 0.);
+	VSET( norm_ell, b * b * p0[X], a * a * p0[Y], 0. );
+	VUNITIZE( norm_line );
+	VUNITIZE( norm_ell );
+	theta0 = fabs( acos( VDOT( norm_line, norm_ell )));
+	VSET( norm_ell, b * b * p1[X], a * a * p1[Y], 0. );
+	VUNITIZE( norm_ell );
+	theta1 = fabs( acos( VDOT( norm_line, norm_ell )));
+	/* split segment at widest point if not within error tolerances */
+	if ( dist > dtol || theta0 > ntol || theta1 > ntol ) {
+		/* split segment */
+		return( ell_ang( mpt, a, b, dtol, ntol ) );
+	} else
+		return( acos( VDOT(p0, p1)
+			/ ( MAGNITUDE(p0) * MAGNITUDE(p1) ) ));
+}
+
+/*
+ *			R T _ E P A _ T E S S
+ *
+ *  Returns -
+ *	-1	failure
+ *	 0	OK.  *r points to nmgregion that holds this tessellation.
+ */
+int
+rt_epa_tess( r, m, ip, ttol, tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
+{
+	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
+	fastf_t		**ellipses, theta_new, theta_prev;
+	int		*pts_dbl, face, i, j, nseg, tmpseg;
+	int		jj, na, nb, nell, recalc_b;
+	LOCAL mat_t	R;
+	LOCAL mat_t	invR;
+	LOCAL struct rt_epa_internal	*xip;
+	point_t		p1;
+	struct pt_node	*old, *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
+	struct shell	*s;
+	struct faceuse	**outfaceuses;
+	struct edgeuse	*eu, *eu2;
+	struct vertex	*vertp[3], ***vells;
+	vect_t		A, Au, B, Bu, Hu, V;
+	
+	RT_CK_DB_INTERNAL(ip);
+	xip = (struct rt_epa_internal *)ip->idb_ptr;
+	RT_EPA_CK_MAGIC(xip);
+
+	/*
+	 *	make sure epa description is valid
+	 */
+	 
+	/* compute |A| |H| */
+	mag_a = MAGSQ( xip->epa_Au );	/* should already be unit vector */
+	mag_h = MAGNITUDE( xip->epa_H );
+	r1 = xip->epa_r1;
+	r2 = xip->epa_r2;
+	/* Check for |H| > 0, |A| == 1, r1 > 0, r2 > 0 */
+	if( NEAR_ZERO(mag_h, RT_LEN_TOL)
+		|| !NEAR_ZERO(mag_a - 1.0, RT_LEN_TOL)
+		|| r1 <= 0.0 || r2 <= 0.0 )  {
+		return(-2);		/* BAD */
+	}
+
+	/* Check for A.H == 0 */
+	f = VDOT( xip->epa_Au, xip->epa_H ) / mag_h;
+	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+		return(-2);		/* BAD */
+	}
+
+	/* make unit vectors in A, H, and BxH directions */
+	VMOVE(    Hu, xip->epa_H );
+	VUNITIZE( Hu );
+	VMOVE(    Au, xip->epa_Au );
+	VCROSS(   Bu, Au, Hu );
+
+	/* Compute R and Rinv matrices */
+	mat_idn( R );
+	VREVERSE( &R[0], Bu );
+	VMOVE(    &R[4], Au );
+	VREVERSE( &R[8], Hu );
+	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/*
+	 *  Establish tolerances
+	 */
+	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )
+		dtol = 0.0;		/* none */
+	else
+		/* Convert rel to absolute by scaling by smallest side */
+		dtol = ttol->rel * 2 * r2;
+	if( ttol->abs <= 0.0 )  {
+		if( dtol <= 0.0 )
+			/* No tolerance given, use a default */
+			dtol = 2 * 0.10 * r2;	/* 10% */
+		else
+			/* Use absolute-ized relative tolerance */
+			;
+	} else {
+		/* Absolute tolerance was given, pick smaller */
+		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+			dtol = ttol->abs;
+	}
+
+	/* To ensure normal tolerance, remain below this angle */
+	if( ttol->norm > 0.0 )
+		ntol = ttol->norm;
+	else
+		/* tolerate everything */
+		ntol = rt_pi;
+
+	/*
+	 *	build epa from 2 parabolas
+	 */
+	 
+	/* approximate positive half of parabola along semi-minor axis */
+	pts_b = rt_ptalloc();
+	pts_b->next = rt_ptalloc();
+	pts_b->next->next = NULL;
+	VSET( pts_b->p,       0, 0, -mag_h);
+	VSET( pts_b->next->p, 0, r2, 0);
+	/* 2 endpoints in 1st approximation */
+	nb = 2;
+	/* recursively break segment 'til within error tolerances */
+	nb += rt_mk_parabola( pts_b, r2, mag_h, dtol, ntol );
+	nell = nb - 1;	/* # of ellipses needed */
+
+	/* construct positive half of parabola along semi-major axis
+	 * of epa using same z coords as parab along semi-minor axis
+	 */
+	pts_a = rt_ptalloc();
+	VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
+	pts_a->next = NULL;
+	pos_b = pts_b->next;
+	pos_a = pts_a;
+	while (pos_b) {
+		/* copy node from b_parabola to a_parabola */
+		pos_a->next = rt_ptalloc();
+		pos_a = pos_a->next;
+		pos_a->p[Z] = pos_b->p[Z];
+		/* at given z, find y on parabola */
+		pos_a->p[Y] = r1*sqrt( pos_a->p[Z] / mag_h + 1 );
+		pos_a->p[X] = 0;
+		pos_b = pos_b->next;
+	}
+	pos_a->next = NULL;
+	
+	/* see if any segments need further breaking up */
+	recalc_b = 0;
+	na = 0;
+	pos_a = pts_a;
+	while (pos_a->next) {
+		na = rt_mk_parabola( pos_a, r1, mag_h, dtol, ntol );
+		if (na != 0) {
+			recalc_b = 1;
+			nell += na;
+		}
+		pos_a = pos_a->next;
+	}
+	/* if any were broken, recalculate parabola 'a' */
+	if ( recalc_b ) {
+		/* free mem for old approximation of parabola */
+		pos_b = pts_b;
+		while ( pos_b ) {
+			old = pos_b;
+			rt_free( (char *)pos_b, "pt_node" );
+			pos_b = pos_b->next;
+		}
+		/* construct parabola along semi-major axis of epa
+		 * using same z coords as parab along semi-minor axis
+		 */
+		pts_b = rt_ptalloc();
+		pts_b->p[Z] = pts_a->p[Z];
+		pts_b->next = NULL;
+		pos_a = pts_a->next;
+		pos_b = pts_b;
+		while (pos_a) {
+			/* copy node from a_parabola to b_parabola */
+			pos_b->next = rt_ptalloc();
+			pos_b = pos_b->next;
+			pos_b->p[Z] = pos_a->p[Z];
+			/* at given z, find y on parabola */
+			pos_b->p[Y] = r2*sqrt( pos_b->p[Z] / mag_h + 1 );
+			pos_b->p[X] = 0;
+			pos_a = pos_a->next;
+		}
+		pos_b->next = NULL;
+	}
+	
+	/* make array of ptrs to epa ellipses */
+	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
+	/* keep track of whether pts in each ellipse are doubled or not */
+	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
+	if (!ellipses) {
+		fprintf(stderr, "rt_epa_tess: no mem!\n");
+		goto fail;
+	}
+	
+	/* make array of ptrs to epa ellipses */
+	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
+	/* keep track of whether pts in each ellipse are doubled or not */
+	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
+
+	/* make ellipses at each z level */
+	i = 0;
+	nseg = 0;
+	theta_prev = rt_twopi;
+	pos_a = pts_a->next;	/* skip over apex of epa */
+	pos_b = pts_b->next;
+	while (pos_a) {
+		VSCALE( A, Au, pos_a->p[Y] );	/* semimajor axis */
+		VSCALE( B, Bu, pos_b->p[Y] );	/* semiminor axis */
+		VJOIN1( V, xip->epa_V, -pos_a->p[Z], Hu );
+
+		VSET( p1, 0., pos_b->p[Y], 0. );
+		theta_new = ell_ang(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+		if (nseg == 0) {
+			nseg = (int)(rt_twopi / theta_new) + 1;
+			pts_dbl[i] = 0;
+			/* maximum number of faces needed for epa */
+			face = nseg*(1 + 3*((1 << (nell-1)) - 1));
+			/* array for each triangular face */
+			outfaceuses = (struct faceuse **)
+			rt_malloc( (face+1) * sizeof(struct faceuse *), "faceuse []" );
+		} else if (theta_new < theta_prev) {
+			nseg *= 2;
+			pts_dbl[i] = 1;
+		} else
+			pts_dbl[i] = 0;
+		theta_prev = theta_new;
+
+		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
+			"pts ell");
+		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		
+		i++;
+		pos_a = pos_a->next;
+		pos_b = pos_b->next;
+	}
+	if (pts_dbl[i-1])
+		nseg /= 2;	/* # segs in top ellipse */
 
 	/*
 	 *	put epa geometry into nmg data structures
@@ -944,7 +1203,8 @@ struct rt_tol		*tol;
 			fprintf(stderr, "rt_epa_tess: no memory\!");
 			goto fail;
 		}
-		j /= 2;
+		if (i && pts_dbl[i])
+			j /= 2;
 	}
 
 	/* top face of epa */
@@ -966,46 +1226,74 @@ struct rt_tol		*tol;
 
 		top = i + 1;
 		bottom = i;
-		nseg /= 2;	/* # segs in 'bottom' ellipse */
+		if (pts_dbl[top])
+			nseg /= 2;	/* # segs in 'bottom' ellipse */
 		vertp[0] = (struct vertex *)0;
 
 		/* make triangular faces */
 		for (j = 0; j < nseg; j++) {
 			jj = j + j;	/* top ellipse index */
 		
-			/* first triangle */
-		        vertp[1] = vells[top][jj+1];
-		        vertp[2] = vells[top][jj];
-			if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-				rt_log("rt_epa_tess() failure\n");
-				goto fail;
-			}
-			if (j == 0)
-			        vells[bottom][j] = vertp[0];
+			if (pts_dbl[top]) {
+				/* first triangle */
+			        vertp[1] = vells[top][jj+1];
+			        vertp[2] = vells[top][jj];
+				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+					rt_log("rt_epa_tess() failure\n");
+					goto fail;
+				}
+				if (j == 0)
+				        vells[bottom][j] = vertp[0];
 
-			/* second triangle */
-		        vertp[2] = vertp[1];
-			if (j == nseg-1)
-				vertp[1] = vells[bottom][0];
+				/* second triangle */
+			        vertp[2] = vertp[1];
+				if (j == nseg-1)
+					vertp[1] = vells[bottom][0];
+				else
+					vertp[1] = (struct vertex *)0;
+				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+					rt_log("rt_epa_tess() failure\n");
+					goto fail;
+				}
+				if (j != nseg-1)
+					vells[bottom][j+1] = vertp[1];
 
-			else
-				vertp[1] = (struct vertex *)0;
-			if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-				rt_log("rt_epa_tess() failure\n");
-				goto fail;
-			}
-			if (j != nseg-1)
-				vells[bottom][j+1] = vertp[1];
+				/* third triangle */
+				vertp[0] = vertp[1];
+				if (j == nseg-1)
+					vertp[1] = vells[top][0];
+				else
+					vertp[1] = vells[top][jj+2];
+				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+					rt_log("rt_epa_tess() failure\n");
+					goto fail;
+				}
+			} else {
+				/* first triangle */
+				if (j == nseg-1)
+					vertp[1] = vells[top][0];
+				else
+				        vertp[1] = vells[top][j+1];
+			        vertp[2] = vells[top][j];
+				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+					rt_log("rt_epa_tess() failure\n");
+					goto fail;
+				}
+				if (j == 0)
+				        vells[bottom][j] = vertp[0];
 
-			/* third triangle */
-			vertp[0] = vertp[1];
-			if (j == nseg-1)
-				vertp[1] = vells[top][0];
-			else
-				vertp[1] = vells[top][jj+2];
-			if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
-				rt_log("rt_epa_tess() failure\n");
-				goto fail;
+				/* second triangle */
+			        vertp[2] = vertp[0];
+				if (j == nseg-1)
+					vertp[0] = vells[bottom][0];
+				else
+					vertp[0] = (struct vertex *)0;
+				if ( (outfaceuses[face++] = nmg_cface(s, vertp, 3)) == 0) {
+					rt_log("rt_epa_tess() failure\n");
+					goto fail;
+				}
+				if (j != nseg-1)
+					vells[bottom][j+1] = vertp[0];
 			}
 		}
 
@@ -1028,7 +1316,7 @@ struct rt_tol		*tol;
 	}
 	/* associate geometry with topology */
 	NMG_CK_VERTEX(vertp[0]);
-	nmg_vertex_gv( vertp[0], (fastf_t *)&V );
+	nmg_vertex_gv( vertp[0], (fastf_t *)V );
 	/* create rest of faces around apex */
 	for (i = 1; i < nseg; i++) {
 		vertp[2] = vertp[1];
@@ -1065,6 +1353,7 @@ fail:
 	        rt_free( (char *)vells[i], "vertex []");
 	}
 	rt_free( (char *)ellipses, "fastf_t ell[]");
+	rt_free( (char *)pts_dbl, "dbl ints" );
 	rt_free( (char *)vells, "vertex [][]");
 
 	return(0);
@@ -1104,7 +1393,13 @@ register CONST mat_t		mat;
 	VMOVE( xip->epa_H, &rp->s.s_values[1*3] );
 	VMOVE( xip->epa_Au, &rp->s.s_values[2*3] );
 	xip->epa_r1 = rp->s.s_values[3*3];
-	xip->epa_r2 = rp->s.s_values[4*3];
+	xip->epa_r2 = rp->s.s_values[3*3+1];
+VPRINT("import: V",xip->epa_V);
+VPRINT("H",xip->epa_H);
+VPRINT("Au",xip->epa_Au);
+fprintf(stderr,"r1 = %g, r2 = %g\n",xip->epa_r1,xip->epa_r2);
+#if 0
+#endif
 
 	return(0);			/* OK */
 }
@@ -1141,7 +1436,7 @@ double				local2mm;
 	VMOVE( &epa->s.s_values[1*3], xip->epa_H );
 	VMOVE( &epa->s.s_values[2*3], xip->epa_Au );
 	epa->s.s_values[3*3] = xip->epa_r1;
-	epa->s.s_values[4*3] = xip->epa_r2;
+	epa->s.s_values[3*3+1] = xip->epa_r2;
 
 	return(0);
 }
@@ -1173,13 +1468,6 @@ double			mm2local;
 		xip->epa_V[Z] * mm2local );
 	rt_vls_strcat( str, buf );
 
-	sprintf(buf, "\tAu (%g, %g, %g) mag=%g\n",
-		xip->epa_Au[X] * mm2local,
-		xip->epa_Au[Y] * mm2local,
-		xip->epa_Au[Z] * mm2local,
-		MAGNITUDE(xip->epa_Au) * mm2local);
-	rt_vls_strcat( str, buf );
-
 	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
 		xip->epa_H[X] * mm2local,
 		xip->epa_H[Y] * mm2local,
@@ -1187,10 +1475,10 @@ double			mm2local;
 		MAGNITUDE(xip->epa_H) * mm2local);
 	rt_vls_strcat( str, buf );
 	
-	sprintf(buf, "\tr1=%g\n", xip->epa_r1);
+	sprintf(buf, "\tA=%g\n", xip->epa_r1 * mm2local);
 	rt_vls_strcat( str, buf );
 	
-	sprintf(buf, "\tr2=%g\n", xip->epa_r2);
+	sprintf(buf, "\tB=%g\n", xip->epa_r2 * mm2local);
 	rt_vls_strcat( str, buf );
 
 	return(0);

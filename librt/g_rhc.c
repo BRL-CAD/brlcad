@@ -675,66 +675,142 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
+	int		i, n;
+	fastf_t		b, c, *back, f, *front, h, rh;
+	fastf_t		dtol, ntol;
+	point_t 	p1, p2;
+	vect_t		Bu, Hu, Ru;
+	LOCAL mat_t	R;
+	LOCAL mat_t	invR;
 	LOCAL struct rt_rhc_internal	*xip;
-        fastf_t front[9*3];
-	fastf_t back[9*3];
-	fastf_t b, c, rad, y, z;
-	int	i, j;
-	vect_t	Bunit, Hunit, Runit;
+	struct pt_node	*old, *pos, *pts, *rt_ptalloc();
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_rhc_internal *)ip->idb_ptr;
 	RT_RHC_CK_MAGIC(xip);
-	
-	VMOVE(    Hunit, xip->rhc_H );
-	VUNITIZE( Hunit );
-	VREVERSE( Bunit, xip->rhc_B );		/* make B positive z axis */
-	VUNITIZE( Bunit );
-	VCROSS(   Runit, Bunit, Hunit );	/* make R positive y axis */
-	b = sqrt(MAGSQ(xip->rhc_B));
-	c = xip->rhc_c;
-	for (i = 0; i < 4; i++) {
-		z = -b * i * 0.25;
-		rad = ( (z+b+c)*(z+b+c) - c*c ) / ( b*(b + 2*c) );
-		rad = sqrt(rad);
-		/* first point */
-		y = xip->rhc_r * rad;
-		j = (8 - i) * 3;
-		VBLEND2(front+j, y, Runit, z, Bunit);
-		VADD2(front+j, front+j, xip->rhc_V);
-		VADD2(back+j,  front+j, xip->rhc_H);
-		/* second point */
-		y = -y;
-		j = i * 3;
-		VBLEND2(front+j, y, Runit, z, Bunit);
-		VADD2(front+j, front+j, xip->rhc_V);
-		VADD2(back+j,  front+j, xip->rhc_H);
+
+	/* compute |B| |H| */
+	b = MAGNITUDE( xip->rhc_B );	/* breadth */
+	rh = xip->rhc_r;		/* rectangular halfwidth */
+	h = MAGNITUDE( xip->rhc_H );	/* height */
+	c = xip->rhc_c;			/* dist to asympt origin */
+
+	/* Check for |H| > 0, |B| > 0, rh > 0, c > 0 */
+	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
+	 || NEAR_ZERO(rh, RT_LEN_TOL) || NEAR_ZERO(c, RT_LEN_TOL))  {
+		rt_log("rt_rhc_plot:  zero length H, B, c, or rh\n");
+		return(-2);		/* BAD */
 	}
-	/* tip of hyperbola */
-	y = 0.0;
-	z = -b;
-	j = 4 * 3;
-	VBLEND2(front+j, y, Runit, z, Bunit);
-	VADD2(front+j, front+j, xip->rhc_V);
-	VADD2(back+j,  front+j, xip->rhc_H);
+
+	/* Check for B.H == 0 */
+	f = VDOT( xip->rhc_B, xip->rhc_H ) / (b * h);
+	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+		rt_log("rt_rhc_plot: B not perpendicular to H, f=%f\n", f);
+		return(-3);		/* BAD */
+	}
+
+	/* make unit vectors in B, H, and BxH directions */
+	VMOVE(    Hu, xip->rhc_H );
+	VUNITIZE( Hu );
+	VMOVE(    Bu, xip->rhc_B );
+	VUNITIZE( Bu );
+	VCROSS(   Ru, Bu, Hu );
+
+	/* Compute R and Rinv matrices */
+	mat_idn( R );
+	VREVERSE( &R[0], Hu );
+	VMOVE(    &R[4], Ru );
+	VREVERSE( &R[8], Bu );
+	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/*
+	 *  Establish tolerances
+	 */
+	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+		dtol = 0.0;		/* none */
+	} else {
+		/* Convert rel to absolute by scaling by smallest side */
+		if (rh < b)
+			dtol = ttol->rel * 2 * rh;
+		else
+			dtol = ttol->rel * 2 * b;
+	}
+	if( ttol->abs <= 0.0 )  {
+		if( dtol <= 0.0 )  {
+			/* No tolerance given, use a default */
+			if (rh < b)
+				dtol = 2 * 0.10 * rh;	/* 10% */
+			else
+				dtol = 2 * 0.10 * b;	/* 10% */
+		} else {
+			/* Use absolute-ized relative tolerance */
+		}
+	} else {
+		/* Absolute tolerance was given, pick smaller */
+		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+			dtol = ttol->abs;
+	}
+
+	/* To ensure normal tolerance, remain below this angle */
+	if( ttol->norm > 0.0 )
+		ntol = ttol->norm;
+	else
+		/* tolerate everything */
+		ntol = rt_pi;
+
+	/* initial hyperbola approximation is a single segment */
+	pts = rt_ptalloc();
+	pts->next = rt_ptalloc();
+	pts->next->next = NULL;
+	VSET( pts->p,       0, -rh, 0);
+	VSET( pts->next->p, 0,  rh, 0);
+	/* 2 endpoints in 1st approximation */
+	n = 2;
+	/* recursively break segment 'til within error tolerances */
+	n += rt_mk_hyperbola( pts, rh, b, c, dtol, ntol );
+
+	/* get mem for arrays */
+	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fast_t");
+	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fast_t");
+	
+	/* generate front & back plates in world coordinates */
+	pos = pts;
+	i = 0;
+	while (pos) {
+		/* rotate back to original position */
+		MAT4X3VEC( &front[i], invR, pos->p );
+		/* move to origin vertex origin */
+		VADD2( &front[i], &front[i], xip->rhc_V );
+		/* extrude front to create back plate */
+		VADD2( &back[i], &front[i], xip->rhc_H );
+		i += 3;
+		old = pos;
+		pos = pos->next;
+		rt_free ( (char *)old, "pt_node" );
+	}
 
 	/* Draw the front */
-	RT_ADD_VLIST( vhead, &front[8*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-	for( i = 0; i < 9; i++ )  {
+	RT_ADD_VLIST( vhead, &front[(n-1)*ELEMENTS_PER_VECT],
+		RT_VLIST_LINE_MOVE );
+	for( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the back */
-	RT_ADD_VLIST( vhead, &back[8*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-	for( i = 0; i < 9; i++ )  {
+	RT_ADD_VLIST( vhead, &back[(n-1)*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	for( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
-	for( i = 0; i < 9; i += 4 )  {
+	for( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
+
+	/* free mem */
+	rt_free( (char *)front, "fastf_t");
+	rt_free( (char *)back, "fastf_t");
 
 	return(0);
 }
@@ -755,6 +831,7 @@ struct pt_node *pts;
 	vect_t	norm_line, norm_hyperb;
 	struct pt_node *new, *rt_ptalloc();
 	
+#define MIKE_TOL .0001
 	/* endpoints of segment approximating hyperbola */
 	VMOVE( p0, pts->p );
 	VMOVE( p1, pts->next->p );
@@ -769,13 +846,17 @@ struct pt_node *pts;
 	C = j*j*k - c*c;
 	discr = sqrt(B*B - 4*A*C);
 	z0 = (-B + discr) / (2. * A);
-	if ( z0 >= -b )		/* use top sheet of hyperboloid */
+	if ( z0+MIKE_TOL >= -b )	/* use top sheet of hyperboloid */
 		mpt[Z] = z0;
 	else
 		mpt[Z] = (-B - discr) / (2. * A);
+	if (NEAR_ZERO( mpt[Z], MIKE_TOL))
+		mpt[Z] = 0.;
 	mpt[X] = 0;
-	mpt[Y] = r * sqrt( ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c*c)
-		/ (b*(b + 2*c)) );
+	mpt[Y] = ((mpt[Z] + b + c) * (mpt[Z] + b + c) - c*c) / (b*(b + 2*c));
+	if (NEAR_ZERO( mpt[Y], MIKE_TOL ))
+		mpt[Y] = 0.;
+	mpt[Y] = r * sqrt( mpt[Y] );
 	if (p0[Y] < 0.)
 		mpt[Y] = -mpt[Y];
 	/* max distance between that point and line */
@@ -907,7 +988,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = 3.1416;
+		ntol = rt_pi;
 
 	/* initial hyperbola approximation is a single segment */
 	pts = rt_ptalloc();
@@ -921,8 +1002,8 @@ struct rt_tol		*tol;
 	n += rt_mk_hyperbola( pts, rh, b, c, dtol, ntol );
 
 	/* get mem for arrays */
-	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fast_f");
-	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fast_f");
+	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
 	vfront = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vback = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
 	vtemp = (struct vertex **)rt_malloc((n+1) * sizeof(struct vertex *), "vertex *");
@@ -1050,7 +1131,7 @@ register CONST mat_t		mat;
 	VMOVE( xip->rhc_H, &rp->s.s_values[1*3] );
 	VMOVE( xip->rhc_B, &rp->s.s_values[2*3] );
 	xip->rhc_r = rp->s.s_values[3*3];
-	xip->rhc_c = rp->s.s_values[4*3];
+	xip->rhc_c = rp->s.s_values[3*3+1];
 
 	return(0);			/* OK */
 }
@@ -1087,7 +1168,7 @@ double				local2mm;
 	VMOVE( &rhc->s.s_values[1*3], xip->rhc_H );
 	VMOVE( &rhc->s.s_values[2*3], xip->rhc_B );
 	rhc->s.s_values[3*3] = xip->rhc_r;
-	rhc->s.s_values[4*3] = xip->rhc_c;
+	rhc->s.s_values[3*3+1] = xip->rhc_c;
 
 	return(0);
 }
@@ -1133,10 +1214,10 @@ double			mm2local;
 		MAGNITUDE(xip->rhc_H) * mm2local);
 	rt_vls_strcat( str, buf );
 	
-	sprintf(buf, "\tr=%g\n", xip->rhc_r);
+	sprintf(buf, "\tr=%g\n", xip->rhc_r * mm2local);
 	rt_vls_strcat( str, buf );
 	
-	sprintf(buf, "\tc=%g\n", xip->rhc_c);
+	sprintf(buf, "\tc=%g\n", xip->rhc_c * mm2local);
 	rt_vls_strcat( str, buf );
 
 	return(0);

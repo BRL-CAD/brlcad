@@ -639,49 +639,179 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	LOCAL struct rt_rpc_internal	*xip;
-        fastf_t front[9*3];
-	fastf_t back[9*3];
-	fastf_t b, n, r, y, z;
-	int	i, j;
-	vect_t	Bunit, Hunit, Runit;
+        fastf_t *front;
+	fastf_t *back;
+	fastf_t b, dtol, f, h, ntol, rh;
+	int	i, n;
+	LOCAL mat_t	R;
+	LOCAL mat_t	invR;
+	struct pt_node	*old, *pos, *pts, *rt_ptalloc();
+	vect_t	Bu, Hu, Ru;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_rpc_internal *)ip->idb_ptr;
 	RT_RPC_CK_MAGIC(xip);
-	
-	VMOVE( Hunit, xip->rpc_H );
-	VUNITIZE( Hunit );
-	VREVERSE( Bunit, xip->rpc_B );	/* make B positive z axis */
-	VUNITIZE( Bunit );
-	VCROSS( Runit, Bunit, Hunit );	/* make R positive y axis */
-	b = sqrt(MAGSQ(xip->rpc_B));
-	n = b / (xip->rpc_r * xip->rpc_r);
-	for (i = 0; i < 9; i++) {
-		y = xip->rpc_r * (i * 0.25 - 1);	/* 9 pts on y axis */
-		z = n * y * y - b;
-		j = i * 3;
-		VBLEND2(front+j, y, Runit, z, Bunit);
-		VADD2(front+j, front+j, xip->rpc_V);
-		VADD2(back+j,  front+j, xip->rpc_H);
+
+	/* compute |B| |H| */
+	b = MAGNITUDE( xip->rpc_B );	/* breadth */
+	rh = xip->rpc_r;		/* rectangular halfwidth */
+	h = MAGNITUDE( xip->rpc_H );	/* height */
+
+	/* Check for |H| > 0, |B| > 0, |R| > 0 */
+	if( NEAR_ZERO(h, RT_LEN_TOL) || NEAR_ZERO(b, RT_LEN_TOL)
+	 || NEAR_ZERO(rh, RT_LEN_TOL) )  {
+		rt_log("rt_rpc_tess():  zero length H, B, or rh\n");
+		return(-2);		/* BAD */
 	}
 
+	/* Check for B.H == 0 */
+	f = VDOT( xip->rpc_B, xip->rpc_H ) / (b * h);
+	if( ! NEAR_ZERO(f, RT_DOT_TOL) )  {
+		rt_log("rt_rpc_tess(): B not perpendicular to H, f=%f\n", f);
+		return(-3);		/* BAD */
+	}
+
+	/* make unit vectors in B, H, and BxH directions */
+	VMOVE(    Hu, xip->rpc_H );
+	VUNITIZE( Hu );
+	VMOVE(    Bu, xip->rpc_B );
+	VUNITIZE( Bu );
+	VCROSS(   Ru, Bu, Hu );
+
+	/* Compute R and Rinv matrices */
+	mat_idn( R );
+	VREVERSE( &R[0], Hu );
+	VMOVE(    &R[4], Ru );
+	VREVERSE( &R[8], Bu );
+	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/*
+	 *  Establish tolerances
+	 */
+	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+		dtol = 0.0;		/* none */
+	} else {
+		/* Convert rel to absolute by scaling by smallest side */
+		if (rh < b)
+			dtol = ttol->rel * 2 * rh;
+		else
+			dtol = ttol->rel * 2 * b;
+	}
+	if( ttol->abs <= 0.0 )  {
+		if( dtol <= 0.0 )  {
+			/* No tolerance given, use a default */
+			if (rh < b)
+				dtol = 2 * 0.10 * rh;	/* 10% */
+			else
+				dtol = 2 * 0.10 * b;	/* 10% */
+		} else {
+			/* Use absolute-ized relative tolerance */
+		}
+	} else {
+		/* Absolute tolerance was given, pick smaller */
+		if( ttol->rel <= 0.0 || dtol > ttol->abs )
+			dtol = ttol->abs;
+	}
+
+	/* To ensure normal tolerance, remain below this angle */
+	if( ttol->norm > 0.0 )
+		ntol = ttol->norm;
+	else
+		/* tolerate everything */
+		ntol = rt_pi;
+
+#if 1
+	/* initial parabola approximation is a single segment */
+	pts = rt_ptalloc();
+	pts->next = rt_ptalloc();
+	pts->next->next = NULL;
+	VSET( pts->p,       0, -rh, 0);
+	VSET( pts->next->p, 0,  rh, 0);
+	/* 2 endpoints in 1st approximation */
+	n = 2;
+	/* recursively break segment 'til within error tolerances */
+	n += rt_mk_parabola( pts, rh, b, dtol, ntol );
+
+	/* get mem for arrays */
+	front = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
+	back  = (fastf_t *)rt_malloc(3*n * sizeof(fastf_t), "fastf_t");
+
+	/* generate front & back plates in world coordinates */
+	pos = pts;
+	i = 0;
+	while (pos) {
+		/* rotate back to original position */
+		MAT4X3VEC( &front[i], invR, pos->p );
+		/* move to origin vertex origin */
+		VADD2( &front[i], &front[i], xip->rpc_V );
+		/* extrude front to create back plate */
+		VADD2( &back[i], &front[i], xip->rpc_H );
+		i += 3;
+		old = pos;
+		pos = pos->next;
+		rt_free( (char *)old, "pt_node" );
+	}
+#else
+	/* initial parabola approximation is a single segment */
+	pts = rt_ptalloc();
+	pts->next = rt_ptalloc();
+	pts->next->next = NULL;
+	VSET( pts->p,       0,   0, -b);
+	VSET( pts->next->p, 0,  rh,  0);
+	/* 2 endpoints in 1st approximation */
+	n = 2;
+	/* recursively break segment 'til within error tolerances */
+	n += rt_mk_parabola( pts, rh, b, dtol, ntol );
+
+	/* get mem for arrays */
+	front = (fastf_t *)rt_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
+	back  = (fastf_t *)rt_malloc((2*3*n-1) * sizeof(fastf_t), "fastf_t");
+
+	/* generate front & back plates in world coordinates */
+	pos = pts;
+	i = 0;
+	while (pos) {
+		/* rotate back to original position */
+		MAT4X3VEC( &front[i], invR, pos->p );
+		/* move to origin vertex origin */
+		VADD2( &front[i], &front[i], xip->rpc_V );
+		/* extrude front to create back plate */
+		VADD2( &back[i], &front[i], xip->rpc_H );
+		i += 3;
+		old = pos;
+		pos = pos->next;
+		rt_free( (char *)old, "pt_node" );
+	}
+	for (i = 3*n; i < 6*n-3; i+=3) {
+		VMOVE( &front[i], &front[6*n-i-6] );
+		front[i+1] = -front[i+1];
+		VMOVE( &back[i], &back[6*n-i-6] );
+		back[i+1] = -back[i+1];
+	}
+	n = 2*n - 1;
+#endif
+
 	/* Draw the front */
-	RT_ADD_VLIST( vhead, &front[8*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-	for( i = 0; i < 9; i++ )  {
+	RT_ADD_VLIST( vhead, &front[(n-1)*ELEMENTS_PER_VECT],
+		RT_VLIST_LINE_MOVE );
+	for( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the back */
-	RT_ADD_VLIST( vhead, &back[8*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
-	for( i = 0; i < 9; i++ )  {
+	RT_ADD_VLIST( vhead, &back[(n-1)*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+	for( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
-	for( i = 0; i < 9; i += 4 )  {
+	for( i = 0; i < n; i++ )  {
 		RT_ADD_VLIST( vhead, &front[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 		RT_ADD_VLIST( vhead, &back[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
+	
+	rt_free( (char *)front, "fastf_t" );
+	rt_free( (char *)back,  "fastf_t" );
                                                                                                         
 	return(0);
 }
@@ -706,6 +836,7 @@ struct pt_node *pts;
 	vect_t	norm_line, norm_parab;
 	struct pt_node *new, *rt_ptalloc();
 	
+#define MIKE_TOL .0001
 	/* endpoints of segment approximating parabola */
 	VMOVE( p0, pts->p );
 	VMOVE( p1, pts->next->p );
@@ -715,7 +846,11 @@ struct pt_node *pts;
 	/* point on parabola with max dist between parabola and line */
 	mpt[X] = 0;
 	mpt[Y] = (r * r * m) / (2 * b);
+	if (NEAR_ZERO( mpt[Y], MIKE_TOL))
+		mpt[Y] = 0.;
 	mpt[Z] = (mpt[Y] * m / 2) - b;
+	if (NEAR_ZERO( mpt[Z], MIKE_TOL))
+		mpt[Z] = 0.;
 	/* max distance between that point and line */
 	dist = fabs( mpt[Z] + b + b + intr ) / sqrt( m * m + 1 );
 	/* angles between normal of line and of parabola at line endpoints */
@@ -858,7 +993,7 @@ struct rt_tol		*tol;
 		ntol = ttol->norm;
 	else
 		/* tolerate everything */
-		ntol = 3.1416;
+		ntol = rt_pi;
 
 	/* initial parabola approximation is a single segment */
 	pts = rt_ptalloc();
@@ -1032,10 +1167,10 @@ double				local2mm;
 	rpc->s.s_type = RPC;
 
 	/* Warning:  type conversion */
-	VMOVE( &rpc->s.s_values[0*3], xip->rpc_V );
-	VMOVE( &rpc->s.s_values[1*3], xip->rpc_H );
-	VMOVE( &rpc->s.s_values[2*3], xip->rpc_B );
-	rpc->s.s_values[3*3] = xip->rpc_r;
+	VSCALE( &rpc->s.s_values[0*3], xip->rpc_V, local2mm );
+	VSCALE( &rpc->s.s_values[1*3], xip->rpc_H, local2mm );
+	VSCALE( &rpc->s.s_values[2*3], xip->rpc_B, local2mm );
+	rpc->s.s_values[3*3] = xip->rpc_r * local2mm;
 
 	return(0);
 }
@@ -1081,7 +1216,7 @@ double			mm2local;
 		MAGNITUDE(xip->rpc_H) * mm2local);
 	rt_vls_strcat( str, buf );
 	
-	sprintf(buf, "\tr=%g\n", xip->rpc_r);
+	sprintf(buf, "\tr=%g\n", xip->rpc_r * mm2local);
 	rt_vls_strcat( str, buf );
 
 	return(0);
