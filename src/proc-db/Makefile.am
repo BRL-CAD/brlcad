@@ -38,6 +38,8 @@ noinst_HEADERS = \
 	tea.h \
 	vegitation.h
 
+man_MANS = picket_fence.1
+
 
 apply_mdb_SOURCES = apply-mdb.c 
 apply_mdb_LDADD = @WDB@
@@ -127,7 +129,3 @@ wdb_example_SOURCES = wdb_example.c
 wdb_example_LDADD = @WDB@
 
 AM_CFLAGS = -I$(top_srcdir)/h
-
-man_MANS = picket_fence.1
-
-EXTRA_DIST = $(man_MANS)
