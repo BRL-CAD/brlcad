@@ -18,7 +18,7 @@
 #include <math.h>
 #include "machine.h"		/* BRL-CAD specific machine data types */
 #include "vmath.h"		/* BRL-CAD Vector macros */
-#include "./b_spline.h"		/* BRL-CAD Spline data structures */
+#include "nurb.h"
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 #include "wdb.h"
@@ -40,10 +40,9 @@ int entityno;
 	fastf_t *params; /* Surface parameters */
 	int	sol_num; /* IGES solid type number */
 	int	n1, n2, a, b, c;
-
 	int	i, j;
 	fastf_t	*dp;
-	struct b_spline *b_patch;
+	struct snurb *b_patch;
 
 	/* Acquiring Data */
 
@@ -87,23 +86,23 @@ int entityno;
 	 *	num_cols	num control points in U direction
 	 *	point_size	number of values in a point (e.g. 3 or 4)
 	 */
-	b_patch = (struct b_spline *) spl_new(
+	b_patch = rt_nurb_new_snurb(
 		m1+1, m2+1,
 		n1+2*m1+1, n2+2*m2+1,
 		k2+1, k1+1, 4);
 
 	/* U knot vector */
 	for (i = 0; i <= n1+2*m1; i++) {
-		b_patch->u_kv->knots[i] = params[10+i];
+		b_patch->u_knots->knots[i] = params[10+i];
 	}
 
 	/* V knot vector */
 	for (i = 0; i <= n2+2*m2; i++) {
-		b_patch->v_kv->knots[i] = params[11+a+i];
+		b_patch->v_knots->knots[i] = params[11+a+i];
 	}
 
 	/* control points */
-	dp = b_patch->ctl_mesh->mesh;
+	dp = b_patch->mesh->ctl_points;
 	for (i = 0; i <= k2; i++) {
 		for (j = 0; j <= k1; j++) {
 			fastf_t	x, y, z, w;
