@@ -872,6 +872,9 @@ nmg_state_names[stp->new_state], action_names[stp->action] );
 		rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
 		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
 		/* Print the faceuse for later analysis */
+		rt_log("Loop with the offending vertex\n");
+		nmg_pr_lu_briefly(lu, (char *)0);
+		rt_log("The whole face\n");
 		nmg_pr_fu(lu->up.fu_p, (char *)0);
 		/* Explode */
 		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
@@ -891,8 +894,8 @@ nmg_state_names[stp->new_state], action_names[stp->action] );
 		case OT_SAME:
 			break;
 		default:
-			rt_log("nmg_face_state_transition: VFY_EXT got orientation=%d\n",
-				lu->orientation );
+			rt_log("nmg_face_state_transition: VFY_EXT got orientation=%s\n",
+				nmg_orientation(lu->orientation) );
 			break;
 		}
 		break;
@@ -902,6 +905,7 @@ nmg_state_names[stp->new_state], action_names[stp->action] );
 		 *  If not, the table entry is illegal.
 		 */
 		if( multi )  break;
+		rt_log("nmg_face_state_transition: VFY_MULTI had only 1 vertex\n");
 		goto bomb;
 	case NMG_ACTION_LONE_V_ESPLIT:
 		/*
@@ -989,6 +993,11 @@ rt_log("nmg_cut_loop\n");
  *  Intended to join an interior and exterior loop together,
  *  by building a bridge between the two indicated vertices.
  *
+ *  This routine can be used to join two exterior loops which do not
+ *  overlap, and it can also be used to join an exterior loop with
+ *  a loop of oposite orientation that lies entirely within it.
+ *  This restriction is important, but not checked for.
+ *
  *XXX Should move to nmg_mod.c
  */
 int
@@ -1014,12 +1023,15 @@ struct vertexuse	*vu2;
 	NMG_CK_LOOPUSE(lu1);
 	NMG_CK_LOOPUSE(lu2);
 
-rt_log("nmg_join_2loops\n");
+rt_log("nmg_join_2loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n", vu1, vu2, lu1, lu2 );
+	/* Drop a plot file */
+	rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
+	nmg_pl_comb_fu( 10, 11, lu1->up.fu_p );
+
 	if( lu1 == lu2 || lu1->l_p == lu2->l_p )
 		rt_bomb("nmg_join_2loops: can't join loop to itself\n");
 
-	if( lu1->orientation == lu2->orientation )
-		rt_bomb("nmg_join_2loops: can't join loops of same orientation\n");
+rt_log("lu1=%s lu2=%s\n", nmg_orientation(lu1->orientation), nmg_orientation(lu2->orientation) );
 
 	if( lu1->up.fu_p != lu2->up.fu_p )
 		rt_bomb("nmg_join_2loops: can't join loops in different faces\n");
@@ -1037,10 +1049,11 @@ rt_log("nmg_join_2loops\n");
 
 	/*
 	 *  Gobble edges off of loop2, and insert them into loop1,
-	 *  immediately after first_new_eu.
+	 *  between first_new_eu and second_new_eu.
 	 *  The final edge from loop 2 will then be followed by
 	 *  second_new_eu.
 	 */
+	/* Same orientation */
 	final_eu2 = RT_LIST_PLAST_CIRC(edgeuse, eu2 );
 	while( RT_LIST_NON_EMPTY( &lu2->down_hd ) )  {
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, final_eu2);
@@ -1051,13 +1064,15 @@ rt_log("nmg_join_2loops\n");
 
 		RT_LIST_DEQUEUE(&eu2->eumate_p->l);
 		RT_LIST_APPEND(&second_new_eu->eumate_p->l, &eu2->eumate_p->l);
-		eu2->eumate_p->up.lu_p = lu1;
+		eu2->eumate_p->up.lu_p = lu1->lumate_p;
 	}
 
-	/* Kill entire loop associated with lu2 */
-rt_log("Here is what will be killed\n");
-nmg_pr_lu(lu2, (char *)0);
+	nmg_pl_comb_fu( 11, 12, lu1->up.fu_p );
+
+	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
+
+	nmg_pl_comb_fu( 12, 13, lu1->up.fu_p );
 }
 
 nmg_face_plot( fu )
