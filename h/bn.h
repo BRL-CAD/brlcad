@@ -219,8 +219,8 @@ BU_EXTERN(int		mat_is_equal, (CONST mat_t a, CONST mat_t b,
 #define BN_UNIF_MAGIC	12481632
 #define BN_GAUSS_MAGIC 512256128
 
-#define BN_CK_UNIF(_p) RT_CKMAG(_p, BN_UNIF_MAGIC, "msr_unif")
-#define BN_CK_GAUSS(_p) RT_CKMAG(_p, BN_GAUSS_MAGIC, "msr_gauss")
+#define BN_CK_UNIF(_p) RT_CKMAG(_p, BN_UNIF_MAGIC, "bn_unif")
+#define BN_CK_GAUSS(_p) RT_CKMAG(_p, BN_GAUSS_MAGIC, "bn_gauss")
 
 struct bn_unif {
 	long	magic;
