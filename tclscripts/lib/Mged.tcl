@@ -20,6 +20,10 @@
 #	The Mged class inherits from QuadDisplay and contains
 #       a Database object.
 #
+
+option add *Mged.width 400 widgetDefault
+option add *Mged.height 400 widgetDefault
+
 class Mged {
     inherit QuadDisplay
 
