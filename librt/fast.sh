@@ -108,6 +108,7 @@ cake \
 cake \
  nmg_mod.o \
  storage.o \
+ spectrum.o \
  table.o \
  timer42.o \
  vlist.o \
