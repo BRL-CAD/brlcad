@@ -32,6 +32,9 @@
 
 #include "conf.h"
 
+#if __sgi
+#     define  __EXTENSIONS__          1       /* To define "stdout" */
+#endif
 #include <stdio.h>
 
 #include "machine.h"
