@@ -1,15 +1,24 @@
-/*
-	Author:		Gary S. Moss
-			U. S. Army Ballistic Research Laboratory
-			Aberdeen Proving Ground
-			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
-*/
-#ifndef lint
-static const char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
-/*
- *			E R R O R
+/*                         E R R O R . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file error.c
  *
  *  Ray Tracing library and Framebuffer library, error handling routines.
  *
@@ -19,11 +28,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	fb_log		Called to log FB library events.
  *
  *	Idea originated by Mike John Muuss
- */
+ *
+	Author:		Gary S. Moss
+			U. S. Army Ballistic Research Laboratory
+			Aberdeen Proving Ground
+			Maryland 21005-5066
+			(301)278-6647 or AV-298-6647
+*/
+#ifndef lint
+static const char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include "common.h"
-
-
 
 #include <stdio.h>
 #if defined(HAVE_STDARG_H)
