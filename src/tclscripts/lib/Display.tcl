@@ -44,7 +44,11 @@
     keep -linewidth
     keep -rscale
     keep -sscale
+    keep -usePhony
     keep -type
+
+    keep -primitiveLabels
+    keep -primitiveLabelColor
 
     keep -centerDotEnable
     keep -centerDotColor
@@ -81,8 +85,13 @@
     itk_option define -rscale rscale Rscale 0.4
     itk_option define -sscale sscale Sscale 2.0
 
+    itk_option define -usePhony usePhony UsePhony 0
+
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
     itk_option define -centerDotColor centerDotColor CenterDotColor {255 255 0}
+
+    itk_option define -primitiveLabels primitiveLabels PrimitiveLabels {}
+    itk_option define -primitiveLabelColor primitiveLabelColor PrimitiveLabelColor {255 255 0}
 
     itk_option define -modelAxesEnable modelAxesEnable AxesEnable 0
     itk_option define -modelAxesLineWidth modelAxesLineWidth AxesLineWidth 0
@@ -191,6 +200,8 @@
     protected variable minAxesLineWidth 0
     protected variable minAxesTickLength 1
     protected variable minAxesTickMajorLength 1
+    protected variable minMouse -20
+    protected variable maxMouse 20
 
     private variable x ""
     private variable y ""
@@ -239,6 +250,29 @@
     set r [lindex $itk_option(-centerDotColor) 0]
     set g [lindex $itk_option(-centerDotColor) 1]
     set b [lindex $itk_option(-centerDotColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+        ![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+::itcl::configbody Display::primitiveLabelColor {
+    if {[llength $itk_option(-primitiveLabelColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-primitiveLabelColor) 0]
+    set g [lindex $itk_option(-primitiveLabelColor) 1]
+    set b [lindex $itk_option(-primitiveLabelColor) 2]
 
     # validate color
     if {![string is digit $r] ||
@@ -604,6 +638,15 @@
 
 	Dm::normal
 
+	if {$itk_option(-primitiveLabels) != {}} {
+	    ####
+	    #XXX At the moment primitive labels are only supported
+	    #    for the first drawable geometry object in the list.
+	    #
+	    set geo [lindex $geolist 0]
+	    eval Dm::drawLabels $geo [list $itk_option(-primitiveLabelColor)] $itk_option(-primitiveLabels)
+	}
+
 	if {$itk_option(-viewAxesEnable) ||
 	    $itk_option(-modelAxesEnable)} {
 		set vsize [expr {[View::local2base] * [View::size]}]
@@ -800,9 +843,13 @@
 ::itcl::body Display::autoview {{g_index 0}} {
     if {$g_index < [llength $geolist]} {
 	set geo [lindex $geolist $g_index]
-	set aview [$geo get_autoview]
-	eval [lrange $aview 0 1]
-	eval [lrange $aview 2 3]
+	if {$itk_option(-usePhony)} {
+	    set aview [$geo get_autoview -p]
+	} else {
+	    set aview [$geo get_autoview]
+	}
+	catch {eval [lrange $aview 0 1]}
+	catch {eval [lrange $aview 2 3]}
     }
 }
 
@@ -1132,9 +1179,25 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Display::handle_rotation {_x _y} {
-    set dx [expr ($y - $_y) * $itk_option(-rscale)]
-    set dy [expr ($x - $_x) * $itk_option(-rscale)]
-    vrot $dx $dy 0
+    set dx [expr {$y - $_y}]
+    set dy [expr {$x - $_x}]
+
+    if {$dx < $minMouse} {
+	set dx $minMouse
+    } elseif {$maxMouse < $dx} {
+	set dx $maxMouse
+    }
+
+    if {$dy < $minMouse} {
+	set dy $minMouse
+    } elseif {$maxMouse < $dy} {
+	set dy $maxMouse
+    }
+
+    set dx [expr {$dx * $itk_option(-rscale)}]
+    set dy [expr {$dy * $itk_option(-rscale)}]
+
+    catch {vrot $dx $dy 0}
 
     #update instance variables x and y
     set x $_x
@@ -1142,9 +1205,25 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Display::handle_translation {_x _y} {
-    set dx [expr {($x - $_x) * $invWidth * [View::size]}]
-    set dy [expr {($_y - $y) * $invWidth * [View::size]}]
-    vtra $dx $dy 0
+    set dx [expr {$x - $_x}]
+    set dy [expr {$_y - $y}]
+
+    if {$dx < $minMouse} {
+	set dx $minMouse
+    } elseif {$maxMouse < $dx} {
+	set dx $maxMouse
+    }
+
+    if {$dy < $minMouse} {
+	set dy $minMouse
+    } elseif {$maxMouse < $dy} {
+	set dy $maxMouse
+    }
+
+    set dx [expr {$dx * $invWidth * [View::size]}]
+    set dy [expr {$dy * $invWidth * [View::size]}]
+
+    catch {vtra $dx $dy 0}
 
     #update instance variables x and y
     set x $_x
@@ -1152,8 +1231,23 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Display::handle_scale {_x _y} {
-    set dx [expr {($_x - $x) * $invWidth * $itk_option(-sscale)}]
-    set dy [expr {($y - $_y) * $invWidth * $itk_option(-sscale)}]
+    set dx [expr {$_x - $x}]
+    set dy [expr {$y - $_y}]
+
+    if {$dx < $minMouse} {
+	set dx $minMouse
+    } elseif {$maxMouse < $dx} {
+	set dx $maxMouse
+    }
+
+    if {$dy < $minMouse} {
+	set dy $minMouse
+    } elseif {$maxMouse < $dy} {
+	set dy $maxMouse
+    }
+
+    set dx [expr {$dx * $invWidth * $itk_option(-sscale)}]
+    set dy [expr {$dy * $invWidth * $itk_option(-sscale)}]
 
     if {[expr {abs($dx) > abs($dy)}]} {
 	set f [expr 1.0 + $dx]
@@ -1161,7 +1255,7 @@ if {$tcl_platform(os) != "Windows NT"} {
 	set f [expr 1.0 + $dy]
     }
 
-    zoom $f
+    catch {zoom $f}
 
     #update instance variables x and y
     set x $_x
@@ -1169,8 +1263,23 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Display::handle_constrain_rot {coord _x _y} {
-    set dx [expr {($x - $_x) * $itk_option(-rscale)}]
-    set dy [expr {($_y - $y) * $itk_option(-rscale)}]
+    set dx [expr {$x - $_x}]
+    set dy [expr {$_y - $y}]
+
+    if {$dx < $minMouse} {
+	set dx $minMouse
+    } elseif {$maxMouse < $dx} {
+	set dx $maxMouse
+    }
+
+    if {$dy < $minMouse} {
+	set dy $minMouse
+    } elseif {$maxMouse < $dy} {
+	set dy $maxMouse
+    }
+
+    set dx [expr {$dx * $itk_option(-rscale)}]
+    set dy [expr {$dy * $itk_option(-rscale)}]
 
     if [expr abs($dx) > abs($dy)] {
 	set f $dx
@@ -1179,13 +1288,13 @@ if {$tcl_platform(os) != "Windows NT"} {
     }
     switch $coord {
 	x {
-	    rot $f 0 0
+	    catch {rot $f 0 0}
 	}
 	y {
-	    rot 0 $f 0
+	    catch {rot 0 $f 0}
 	}
 	z {
-	    rot 0 0 $f
+	    catch {rot 0 0 $f}
 	}
     }
 
@@ -1195,8 +1304,23 @@ if {$tcl_platform(os) != "Windows NT"} {
 }
 
 ::itcl::body Display::handle_constrain_tran {coord _x _y} {
-    set dx [expr {($x - $_x) * $invWidth * [View::size]}]
-    set dy [expr {($_y - $y) * $invWidth * [View::size]}]
+    set dx [expr {$x - $_x}]
+    set dy [expr {$_y - $y}]
+
+    if {$dx < $minMouse} {
+	set dx $minMouse
+    } elseif {$maxMouse < $dx} {
+	set dx $maxMouse
+    }
+
+    if {$dy < $minMouse} {
+	set dy $minMouse
+    } elseif {$maxMouse < $dy} {
+	set dy $maxMouse
+    }
+
+    set dx [expr {$dx * $invWidth * [View::size]}]
+    set dy [expr {$dy * $invWidth * [View::size]}]
 
     if {[expr {abs($dx) > abs($dy)}]} {
 	set f $dx
@@ -1205,13 +1329,13 @@ if {$tcl_platform(os) != "Windows NT"} {
     }
     switch $coord {
 	x {
-	    tra $f 0 0
+	    catch {tra $f 0 0}
 	}
 	y {
-	    tra 0 $f 0
+	    catch {tra 0 $f 0}
 	}
 	z {
-	    tra 0 0 $f
+	    catch {tra 0 0 $f}
 	}
     }
 
