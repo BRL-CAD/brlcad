@@ -1,4 +1,3 @@
-#define NO_SEARCH	0	/* Don't search for a vert for nmg_ebreak() */
 #define NEWLINE 1	/* "New" algorithm:  isect line with 2 faces in 2d */
 
 /* XXX Move to nmg.h */
@@ -688,11 +687,7 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 	 * Otherwise, re-use the existing one.
 	 * Can't just search other face, might miss relevant vert.
 	 */
-#if NO_SEARCH
-	v2 = (struct vertex *)NULL;
-#else
 	v2 = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
-#endif
 	if (v2) {
 		/* the other face has a convenient vertex for us */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1345,11 +1340,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			struct vertex		*new_v2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("\t\tBreaking eu2 at intersect point", hit_pt);
-#if NO_SEARCH
-			new_v2 = (struct vertex *)NULL;
-#else
 			new_v2 = nmg_find_pt_in_model(m, hit_pt, &(is->tol) );
-#endif
 			new_vu2 = nmg_ebreak( new_v2, eu2 )->vu_p;
 			if( !new_v2 )  {
 				/* A new vertex was created, assign geom */
@@ -2673,11 +2664,7 @@ if( !rt_between(vu1a->v_p->vg_p->coord[X], hit_pt[X], vu1b->v_p->vg_p->coord[X],
 		 * Otherwise, re-use the existing one.
 		 * Can't just search other face, might miss relevant vert.
 		 */
-#if NO_SEARCH
-		new_v = (struct vertex *)NULL;
-#else
 		new_v = nmg_find_pt_in_model(fu2->s_p->r_p->m_p, hit_pt, &(is->tol));
-#endif
 		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
 		ret = 1;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1_final->l.magic);
