@@ -39,14 +39,18 @@ register complex	roots[];	/* space to put roots found	*/
 		CxCons( &roots[n], 0.0, SMALL );
 	}
 
-	/* Remove leading coefficients which are too close to zero.
+	/* Remove leading coefficients which are too close to zero,
+	 * to prevent the polynomial factoring from blowing up, below.
 	 */
-	while ( Abs(eqn->cf[0]) <= SMALL ){
+#ifdef ALMOST_ZERO	(1.0e-12)
+	while( eqn->cf[0] > -ALMOST_ZERO && eqn->cf[0] < ALMOST_ZERO )  {
+fprintf(stderr,"polyRoots:  Leading coeff too small:"); pr_poly(eqn);
 		for ( n=0; n <= eqn->dgr; n++ ){
 			eqn->cf[n] = eqn->cf[n+1];
 		}
 		if ( --eqn->dgr <= 0 )
 			return 0;
+fprintf(stderr,"polyRoots:  After discarding coeff..."); pr_poly(eqn);
 	}
 
 	/* Factor the polynomial so the first coefficient is one
