@@ -140,7 +140,7 @@ static int invisible=0;
 #define LINELEN	2050
 char line[LINELEN];
 
-static char *usage="dxf-g [-v] [-t tolerance] input_dxf_file output_file.g\n";
+static char *usage="dxf-g [-d] [-v] [-t tolerance] input_dxf_file output_file.g\n";
 
 static FILE *dxf;
 static struct rt_wdb *out_fp;
