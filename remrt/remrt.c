@@ -642,6 +642,7 @@ FILE *fp;
 	}
 	if( strcmp( cmd_args[0], "attach" ) == 0 )  {
 		register struct frame *fr;
+		int maxx, maxy;
 
 		if( init_fb(cmd_args[1]) < 0 )  return;
 
@@ -650,10 +651,18 @@ FILE *fp;
 		/* Draw the accumulated image */
 		if( fr->fr_picture == (char *)0 )  return;
 		size_display(fr->fr_size);
-		for( i=0; i<fr->fr_size; i++ )
-			draw_pixline( fr->fr_picture + 
-				(fr->fr_size-i-1)*fr->fr_size*3,
-				fr->fr_size*3, i );
+		if( fbp == FBIO_NULL ) return;
+		/* Trim to what can be drawn */
+		maxx = maxy = fr->fr_size;
+		if( maxx > fb_getwidth(fbp) )
+			maxx = fb_getwidth(fbp);
+		if( maxy > fb_getheight(fbp) )
+			maxy = fb_getheight(fbp);
+		for( i=0; i<maxy; i++ )  {
+			fb_write( fbp, 0, i,
+				fr->fr_picture + (fr->fr_size-i-1)*fr->fr_size*3,
+				maxx );
+		}
 		return;
 	}
 	if( strcmp( cmd_args[0], "release" ) == 0 )  {
@@ -1086,9 +1095,13 @@ char *buf;
 		(fr->fr_size-line-1)*fr->fr_size*3, i );
 
 	/* If display attached, also draw it */
-	if( fbp != FBIO_NULL )  {
+	if( fbp != FBIO_NULL && line < fb_getheight(fbp) )  {
+		int maxx;
+		maxx = i/3;
+		if( maxx > fb_getwidth(fbp) )
+			maxx = fb_getwidth(fbp);
 		size_display(fr->fr_size);
-		draw_pixline( buf+2, i, line );
+		fb_write( fbp, 0, line, buf+2, maxx );
 	}
 	if(buf) (void)free(buf);
 
@@ -1096,17 +1109,6 @@ char *buf;
 	list_remove( &(sp->sr_work), line );
 	if( running && sp->sr_work.li_forw == &(sp->sr_work) )
 		schedule();
-}
-
-/* We now depend on the fact the the libfb RGBpixel is the format
- * used internally by this routine.
- */
-draw_pixline( cp, bytes, line )
-register char *cp;
-register int bytes;
-int line;
-{
-	fb_write( fbp, 0, line, cp, bytes/3 );
 }
 
 /* Given pointer to head of list of ranges, remove the item that's done */
@@ -1168,9 +1170,8 @@ register int n;
 	if( fbp == FBIO_NULL )
 		return;
 	if( n > fb_getwidth(fbp) )  {
-		printf("current fb not big enough for %d pixels, releasing\n", n );
-		fb_close(fbp);
-		fbp = FBIO_NULL;
+		printf("Warning:  fb not big enough for %d pixels, display truncated\n", n );
+		cur_fbsize = n;
 		return;
 	}
 	cur_fbsize = n;

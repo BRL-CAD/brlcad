@@ -209,7 +209,7 @@ char *buf;
 		case 'f':
 			/* "Fast" -- just a few pixels.  Or, arg's worth */
 			npts = atoi( &cp[2] );
-			if( npts < 2 || npts > 1024 )  {
+			if( npts < 2 || npts > 8*1024 )  {
 				npts = 50;
 			}
 			break;
