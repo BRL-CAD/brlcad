@@ -171,10 +171,12 @@ struct rtnode {
 	struct ihost	*host;
 	int		state;
 	int		ncpus;		/* Ready when > 0, for now */
-	int		busy;		/* !0 -> # lines assigned */
+	int		busy;		/* !0 -> still working */
+	int		lump;		/* # of lines in last assignment */
 	struct timeval	time_start;
 	fastf_t		time_delta;
-	fastf_t		lps;		/* # scanlines per second */
+	fastf_t		i_lps;		/* instantaneous # lines per sec */
+	fastf_t		w_lps;		/* weighted # lines per sec */
 	Tcl_File	tcl_file;	/* Tcl's name for this fd */
 };
 #define MAX_NODES	32
@@ -297,9 +299,10 @@ char **argv;
 	}
 	i = atoi(argv[1]);
 	if( i < 0 || i >= MAX_NODES )  {
-		Tcl_AppendResult(interp, "get_rtnode ",
-			argv[1], " is out of range\n", NULL);
-		return TCL_ERROR;
+		/* Use this as a signal to generate a title. */
+		Tcl_AppendResult(interp,
+			"CP i_lps w_lps lump busy state", NULL);
+		return TCL_OK;
 	}
 	if( rtnodes[i].fd <= 0 )  {
 		Tcl_AppendResult(interp, "get_rtnode ",
@@ -307,9 +310,11 @@ char **argv;
 		return TCL_ERROR;
 	}
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "%2d %4g %s %9s %s",
+	bu_vls_printf(&str, "%2.2d %5.5g %5.5g %4.4d %s %9s %s",
 		rtnodes[i].ncpus,
-		rtnodes[i].lps,
+		rtnodes[i].i_lps,
+		rtnodes[i].w_lps,
+		rtnodes[i].lump,
 		rtnodes[i].busy ? "BUSY" : "wait",
 		states[rtnodes[i].state],
 		rtnodes[i].host->ht_name );
@@ -742,18 +747,7 @@ char	*argv[];
 	/* Don't insist on a click to position the window, just make it */
 	(void)Tcl_Eval( interp, "wm geometry . =+1+1");
 
-	/* Let main window pop up before running script */
-	while( Tcl_DoOneEvent(TCL_DONT_WAIT) != 0 ) ;
-# if 0
-	(void)Tcl_Eval( interp, "wm withdraw .");
-# endif
-	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )  {
-		bu_log("%s\n",
-			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
-		bu_log("\n*** Startup Script Aborted ***\n\n");
-	}
-
-	/* Incorporate built-in commands */
+	/* Incorporate built-in commands.  BEFORE running script. */
 	(void)Tcl_CreateCommand(interp, "vrmgr_send", vrmgr_send,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "node_send", node_send,
@@ -766,6 +760,17 @@ char	*argv[];
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "get_rtnode", get_rtnode,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+
+	/* Let main window pop up before running script */
+	while( Tcl_DoOneEvent(TCL_DONT_WAIT) != 0 ) ;
+# if 0
+	(void)Tcl_Eval( interp, "wm withdraw .");
+# endif
+	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )  {
+		bu_log("%s\n",
+			Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		bu_log("\n*** Startup Script Aborted ***\n\n");
+	}
 
 	/* Accept commands on stdin */
 	if( isatty(fileno(stdin)) )  {
@@ -859,6 +864,7 @@ ClientData clientData;
 	int		start_line;
 	int		lowest_index = 0;
 	char		buf[32];
+	double		total_lps;
 
 	if( !pending_pov )  return;
 
@@ -889,11 +895,29 @@ ClientData clientData;
 	last_pov = pending_pov;
 	pending_pov = NULL;
 
-	/* Have some CPUS! Parcel up 'height' scanlines. */
+	/* We have some CPUS! Parcel up 'height' scanlines. */
+	/*
+	 *  First, tally up the measurements of the weighted lines/sec
+	 *  to determine total compute capability.
+	 */
+	total_lps = 0;
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  continue;
+		total_lps += rtnodes[i].w_lps;
+	}
+
+	/* Second, allocate work as a fraction of that capability */
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  continue;
+		rtnodes[i].lump = (int)ceil(height * rtnodes[i].w_lps / total_lps);
+	}
+
+	/* Third, actually dispatch the work */
 	start_line = 0;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		int	end_line;
-		int	count;
 		struct bu_vls	msg;
 
 		if( start_line >= height )  break;
@@ -903,9 +927,7 @@ ClientData clientData;
 		if( i <= lowest_index )  {
 			end_line = height-1;
 		} else {
-			count = (int)ceil( ((double)rtnodes[i].ncpus) /
-				cpu_count * height );
-			end_line = start_line + count;
+			end_line = start_line + rtnodes[i].lump-1;
 			if( end_line > height-1 )  end_line = height-1;
 		}
 
@@ -919,13 +941,13 @@ ClientData clientData;
 			bu_vls_free(&msg);
 			continue;	/* Don't update start_line */
 		}
+		(void)gettimeofday( &rtnodes[i].time_start, (struct timezone *)NULL );
 		if( debug )
 			bu_log("%s sending %d..%d to %s\n", stamp(), start_line, end_line, rtnodes[i].host->ht_name);
 
 		bu_vls_free(&msg);
-		start_line = end_line + 1;
 		rtnodes[i].busy = 1;
-		(void)gettimeofday( &rtnodes[i].time_start, (struct timezone *)NULL );
+		start_line = end_line + 1;
 	}
 }
 
@@ -1273,6 +1295,11 @@ char			*buf;
 		if( change_state( i, STATE_DIRBUILT, STATE_PREPPED ) < 0 )
 			return;
 
+		/* Initialize some key variables */
+		rtnodes[i].busy = 0;
+		rtnodes[i].lump = 0;
+		rtnodes[i].w_lps = 1;
+
 		/* No more dialog, next pkg will be a POV */
 
 		return;
@@ -1304,6 +1331,10 @@ char			*buf;
 	register int	i;
 	struct timeval	time_end;
 	double		interval;
+	double		blend1, blend2;
+
+	blend1 = 0.8;
+	blend2 = 1 - blend1;
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].pkg != pc )  continue;
@@ -1312,7 +1343,9 @@ char			*buf;
 		(void)gettimeofday( &time_end, (struct timezone *)NULL );
 		interval = tvdiff( &time_end, &rtnodes[i].time_start );
 		if( interval <= 0 )  interval = 999;
-		rtnodes[i].lps = rtnodes[i].busy / interval;
+		rtnodes[i].i_lps = rtnodes[i].lump / interval;
+		rtnodes[i].w_lps = blend1 * rtnodes[i].w_lps +
+				   blend2 * rtnodes[i].i_lps;
 		rtnodes[i].time_delta = interval;
 
 		if( debug )  {
