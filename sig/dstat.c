@@ -69,8 +69,13 @@ char **argv;
 	 */
 	num_values = 0;
 	sum = sum2 = 0;
+#if (defined(__EXTENSIONS__) || defined (_POSIX_SOURCE))
+	min = HUGE_VAL;
+	max = -HUGE_VAL;
+#else
 	min = HUGE;
 	max = -HUGE;
+#endif
 	while( (n = fread(buf, sizeof(*buf), IBUFSIZE, fp)) > 0 ) {
 		num_values += n;
 		bp = &buf[0];
