@@ -3,8 +3,9 @@
 pix\(hyfb \- display a pix format RGB image file on a framebuffer
 .SH SYNOPSIS
 .B pix-fb
-.RB [ \-ahicz ]
+.RB [ \-ahicz1 ]
 .RB [ \-F\  framebuffer]
+.RB [ \-m\  #lines]
 .RB [ \-s\  squarefilesize]
 .RB [ \-w\  file_width]
 .RB [ \-n\  file_height]
@@ -90,6 +91,21 @@ and
 will offset into the file or onto the screen by the given amounts.
 The coordinate system for these offsets is first quadrant, with
 the origin at the lower left corner of the image.
+.PP
+The
+.B \-1
+flag causes the image to be written to the framebuffer one line at
+a time, using the
+.IR fb_write (3)
+routine.  This is the default behavior.
+The
+.BI \-m\  #lines
+flag can be used to specify the number of lines to be written to the
+framebuffer in rectangular blocks of scanlines, using the
+.IR fb_writerect (3)
+routine.
+In some circumstances, this can result in significantly faster image
+display, at the expense of the image being written less smoothly.
 .SH FORMAT
 A
 .IR pix (5)

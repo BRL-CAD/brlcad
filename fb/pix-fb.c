@@ -30,7 +30,7 @@ static RGBpixel *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
 static int	scanpix;		/* # of pixels of scanline */
 
-static int	streamline = 0;		/* Streamlined operation */
+static int	multiple_lines = 0;	/* Streamlined operation */
 
 static char	*framebuffer = NULL;
 static char	*file_name;
@@ -51,7 +51,7 @@ static int	inverse = 0;		/* Draw upside-down */
 static int	one_line_only = 0;	/* insist on 1-line writes */
 
 static char usage[] = "\
-Usage: pix-fb [-a -h -i -c -z -1] [-F framebuffer]\n\
+Usage: pix-fb [-a -h -i -c -z -1] [-m #lines] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.pix]\n";
@@ -61,10 +61,13 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "1ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "1m:ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case '1':
 			one_line_only = 1;
+			break;
+		case 'm':
+			multiple_lines = atoi(optarg);
 			break;
 		case 'a':
 			autosize = 1;
@@ -202,11 +205,10 @@ char **argv;
 		yout = (file_height-file_yoff);
 
 	/* Only in the simplest case use multi-line writes */
-	if( !one_line_only && !inverse && !zoom &&
+	if( !one_line_only && multiple_lines > 0 && !inverse && !zoom &&
 	    xout == file_width &&
 	    file_width <= scr_width )  {
-		streamline = 16;
-	    	scanpix *= streamline;
+	    	scanpix *= multiple_lines;
 	}
 
 	scanbytes = scanpix * sizeof(RGBpixel);
@@ -238,13 +240,13 @@ char **argv;
 
 	if( file_yoff != 0 ) skipbytes( infd, file_yoff*file_width*sizeof(RGBpixel) );
 
-	if( streamline )  {
+	if( multiple_lines )  {
 		/* Bottom to top with multi-line reads & writes */
 		int	height;
-		for( y = scr_yoff; y < scr_yoff + yout; y += streamline )  {
+		for( y = scr_yoff; y < scr_yoff + yout; y += multiple_lines )  {
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			height = streamline;
+			height = multiple_lines;
 			if( n != scanbytes )  {
 				height = (n/sizeof(RGBpixel)+xout-1)/xout;
 				if( height <= 0 )  break;
