@@ -1,6 +1,6 @@
 /*			C A T T R A C K . C
  *
- *  Caternary curve routines used by ntrack.c
+ *  Caternary curve routines used by anim_track.c
  *
  */
 
