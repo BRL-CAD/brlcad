@@ -15,7 +15,7 @@
  */
 #include "conf.h"
 
-
+/* XXX CVS checked this in */
 
 #include <stdio.h>
 #include <sys/types.h>
