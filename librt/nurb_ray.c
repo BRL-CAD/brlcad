@@ -281,33 +281,33 @@ CONST struct snurb *srf;
 int	dir;
 fastf_t param1, param2;
 {
-	int	i;
+	register int	i;
 	struct snurb *region;
 	struct knot_vector new_knots;
-	fastf_t knot_vec[20];
+	fastf_t knot_vec[40];
+
+	/* Build the new knot vector in the local array */
+	/* XXX fill in magic number here? */
+	new_knots.knots = & knot_vec[0];
 
 	if ( dir == RT_NURB_SPLIT_ROW) {
-
 		new_knots.k_size = srf->order[0] * 2;
-		new_knots.knots = & knot_vec[0];
 
 		for ( i = 0; i < srf->order[0]; i++) {
-			new_knots.knots[i] = param1;
-			new_knots.knots[i+srf->order[0]] = param2;
+			knot_vec[i] = param1;
+			knot_vec[i+srf->order[0]] = param2;
 		}
 	} else
 	 {
 		new_knots.k_size = srf->order[1] * 2;
-		new_knots.knots = (fastf_t * ) rt_malloc( sizeof (fastf_t)
-		    *srf->order[1] * 2, 
-		    "rt_nurb_region_from_srf: newknot values");
 
 		for ( i = 0; i < srf->order[1]; i++) {
-			new_knots.knots[i] = param1;
-			new_knots.knots[i+srf->order[1]] = param2;
+			knot_vec[i] = param1;
+			knot_vec[i+srf->order[1]] = param2;
 		}
 
 	}
+	if( new_knots.k_size >= 40 )  rt_bomb("rt_nurb_region_from_srf() local kv overflow\n");
 
 	region = rt_nurb_s_refine( srf, dir, &new_knots);
 
