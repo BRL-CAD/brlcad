@@ -31,22 +31,20 @@ proc init_qray_control { id } {
 	return
     }
 
-    if ![info exists qray_control($id,oddcolor)] {
-	if {$mouse_behavior == "q"} {
-	    set qray_control($id,active) 1
-	} else {
-	    set qray_control($id,active) 0
-	}
-
-	set qray_control($id,use_air) $use_air
-	set qray_control($id,cmd_echo) [qray echo]
-	set qray_control($id,effects) [qray effects]
-	set qray_control($id,basename) [qray basename]
-	set qray_control($id,oddcolor) [qray oddcolor]
-	set qray_control($id,evencolor) [qray evencolor]
-	set qray_control($id,voidcolor) [qray voidcolor]
-	set qray_control($id,overlapcolor) [qray overlapcolor]
+    if {$mouse_behavior == "q"} {
+	set qray_control($id,active) 1
+    } else {
+	set qray_control($id,active) 0
     }
+
+    set qray_control($id,use_air) $use_air
+    set qray_control($id,cmd_echo) [qray echo]
+    set qray_control($id,effects) [qray effects]
+    set qray_control($id,basename) [qray basename]
+    set qray_control($id,oddcolor) [qray oddcolor]
+    set qray_control($id,evencolor) [qray evencolor]
+    set qray_control($id,voidcolor) [qray voidcolor]
+    set qray_control($id,overlapcolor) [qray overlapcolor]
 
     set qray_control($id,padx) 4
     set qray_control($id,pady) 4
@@ -380,11 +378,11 @@ format strings that can be set." } }
 
     label $top.rayL  -text "Ray" -anchor e
     hoc_register_data $top.rayL "Ray Format String"\
-	    { { summary "Ask pjt@arl.mil about the ray format string." }
+	    { { summary "Enter/edit the ray format string." }
               { see_also "nirt" } }
     entry $top.rayE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_ray)
     hoc_register_data $top.rayE "Ray Format String"\
-	    { { summary "Enter the ray format string. Note that the
+	    { { summary "Enter/edit the ray format string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
@@ -393,11 +391,11 @@ bindings." }
 
     label $top.headL -text "Head" -anchor e
     hoc_register_data $top.headL "Head Format String"\
-	    { { summary "Ask pjt@arl.mil about the head format string." }
+	    { { summary "Enter/edit the head format string." }
               { see_also "nirt" } }
     entry $top.headE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_head)
     hoc_register_data $top.headE "Head Format String"\
-	    { { summary "Enter the head format string. Note that the
+	    { { summary "Enter/edit the head format string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
@@ -406,11 +404,11 @@ bindings." }
 
     label $top.partitionL -text "Partition" -anchor e
     hoc_register_data $top.partitionL "Partition Format String"\
-	    { { summary "Ask pjt@arl.mil about the partition format string." }
+	    { { summary "Enter/edit the partition format string." }
               { see_also "nirt" } }
     entry $top.partitionE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_partition)
     hoc_register_data $top.partitionE "Partition Format String"\
-	    { { summary "Enter the partition format string. Note that the
+	    { { summary "Enter/edit the partition format string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
@@ -419,11 +417,11 @@ bindings." }
 
     label $top.footL -text "Foot" -anchor e
     hoc_register_data $top.footL "Foot Format String"\
-	    { { summary "Ask pjt@arl.mil about the foot format string." } 
+	    { { summary "Enter/edit the foot format string." } 
               { see_also "nirt" } }
     entry $top.footE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_foot)
     hoc_register_data $top.footE "Foot Format String"\
-	    { { summary "Enter the foot format string. Note that the
+	    { { summary "Enter/edit the foot format string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
@@ -432,11 +430,11 @@ bindings." }
 
     label $top.missL -text "Miss" -anchor e
     hoc_register_data $top.missL "Miss Format String"\
-	    { { summary "Ask pjt@arl.mil about the miss format string." }
+	    { { summary "Enter/edit the miss format string." }
               { see_also "nirt" } }
     entry $top.missE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_miss)
     hoc_register_data $top.missE "Miss Format String"\
-	    { { summary "Enter the miss format string. Note that the
+	    { { summary "Enter/edit the miss format string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
@@ -445,11 +443,24 @@ bindings." }
 
     label $top.overlapL -text "Overlap" -anchor e
     hoc_register_data $top.overlapL "Overlap Format String"\
-	    { { summary "Ask pjt@arl.mil about the overlay format string." }
+	    { { summary "Enter/edit the overlay format string." }
               { see_also "nirt" } }
     entry $top.overlapE -relief sunken -bd 2 -width 80 -textvar qray_control($id,fmt_overlap)
     hoc_register_data $top.overlapE "Overlap Format String"\
-	    { { summary "Enter the overlap format string. Note that the
+	    { { summary "Enter/edit the overlap format string. Note that the
+middle mouse button can be used to scroll
+the entry widget. Also, by default, the
+entry widget supports some emacs style
+bindings." }
+              { see_also "nirt" } }
+
+    label $top.scriptL -text "Script" -anchor e
+    hoc_register_data $top.scriptL "Script String"\
+	    { { summary "Enter/edit the nirt script string." }
+              { see_also "nirt" } }
+    entry $top.scriptE -relief sunken -bd 2 -width 80 -textvar qray_control($id,script)
+    hoc_register_data $top.scriptE "Script String"\
+	    { { summary "Enter/edit the nirt script string. Note that the
 middle mouse button can be used to scroll
 the entry widget. Also, by default, the
 entry widget supports some emacs style
@@ -485,6 +496,7 @@ panel according to MGED's internal state." } }
     grid $top.footL $top.footE -sticky "nsew" -in $top.gridFF1
     grid $top.missL $top.missE -sticky "nsew" -in $top.gridFF1
     grid $top.overlapL $top.overlapE -sticky "nsew" -in $top.gridFF1
+    grid $top.scriptL $top.scriptE -sticky "nsew" -in $top.gridFF1
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid rowconfigure $top.gridFF1 1 -weight 1
     grid rowconfigure $top.gridFF1 2 -weight 1
@@ -492,6 +504,7 @@ panel according to MGED's internal state." } }
     grid rowconfigure $top.gridFF1 4 -weight 1
     grid rowconfigure $top.gridFF1 5 -weight 1
     grid rowconfigure $top.gridFF1 6 -weight 1
+    grid rowconfigure $top.gridFF1 7 -weight 1
     grid $top.gridFF1 -sticky "nsew" -in $top.gridF1 \
 	    -padx $qray_control($id,padx) -pady $qray_control($id,pady)
     grid columnconfigure $top.gridF1 0 -weight 1
@@ -529,6 +542,7 @@ proc qray_apply_fmt { id } {
     qray fmt f $qray_control($id,fmt_foot)
     qray fmt m $qray_control($id,fmt_miss)
     qray fmt o $qray_control($id,fmt_overlap)
+    qray script $qray_control($id,script)
 }
 
 proc qray_reset_fmt { id } {
@@ -542,4 +556,5 @@ proc qray_reset_fmt { id } {
     set qray_control($id,fmt_foot) [qray fmt f]
     set qray_control($id,fmt_miss) [qray fmt m]
     set qray_control($id,fmt_overlap) [qray fmt o]
+    set qray_control($id,script) [qray script]
 }
