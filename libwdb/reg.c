@@ -138,6 +138,8 @@ mk_tree_gift( struct rt_comb_internal *comb, struct bu_list *member_hd )
 			tree_list, comb->tree, OP_UNION, 1 ) - tree_list;
 		BU_ASSERT_LONG( actual_count, ==, node_count );
 		comb->tree = TREE_NULL;
+	} else {
+		actual_count = 0;
 	}
 
 	/* Add new members to the array */
