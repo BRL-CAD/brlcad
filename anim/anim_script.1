@@ -4,9 +4,10 @@ anim_script - make an animation script for one object
 .SH SYNOPSIS
 .B anim_script 
 .B [-v #] 
-.B [-rts] 
-.B [-ab # # #] 
-.B [-cd # # #] 
+.B [-r|t|s] 
+.B [-q][-p]
+.B [-a|b # # #] 
+.B [-c|d # # #] 
 .B [-f #]
 .B [objectname] 
 .B < in.table 
@@ -83,6 +84,28 @@ information only. No rotation will occur.
 is a four-column file including time and translation
 information only. The vehicle will be rotated (steered) to face the
 direction of motion.
+.TP
+.B \-q
+Quaternion orientation. Any orientation information in
+.B in.table
+will be in quaternion form, in the order x,y,z,w. The identity quaternion 
+representing no orientation change is (0,0,0,1). 
+.TP
+.B \-p
+Permuted orientation. This option indicates that transformations defined by
+the quaternions should be applied to an object which has first been placed 
+in 
+.IR rt 's
+default eye orientation. Thus, the identity quaternion represents yawing the
+object 90 degrees to the left and then pitching it 90 degrees downward.
+The quaternions produced by 
+.IR mged 's
+saveview command and used by 
+.IR rt 's
+orientation command
+are quaternions of this type. See 
+.I anim_orient 
+for more information.
 .TP
 .B \-v#
 The desired output is a view animation script, rather
