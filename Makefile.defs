@@ -158,9 +158,9 @@ LIBFB_OBJS	= if_remote.o ../libpkg/pkg.o \
 LIBFB_CONFIG	= -DIF_REMOTE \
 		  -DIF_ADAGE \
 		  -DIF_PTTY
-#USNA#		  -DIF_ADAGE -DGM256
 #SGI#		  -DIF_SGI	# -DMC_68010
 #SUN#		  -DIF_SUN
+#USNA#		  -DIF_ADAGE -DGM256
 #								#
 #################################################################
 
