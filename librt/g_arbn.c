@@ -114,8 +114,9 @@ struct rt_i	*rtip;
 next_k:				;
 			}
 			if( point_count > 2 )  {
-				rt_log("arbn(%s): warning, point_count on line=%d\n",
-					stp->st_name, point_count);
+				rt_log("arbn(%s): warning, point_count=%d on edge %d/%d\n",
+					stp->st_name, point_count,
+					i, j );
 			}
 		}
 	}
@@ -397,8 +398,9 @@ struct directory	*dp;
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
 					VSUB2( dist, pt, b );
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
-					rt_log("rt_arbn_plot(%s): warning, point_count on line=%d (is >2)\n",
-						dp->d_namep, point_count+1);
+					rt_log("rt_arbn_plot(%s): warning, point_count=%d (>2) on edge %d/%d\n",
+						dp->d_namep, point_count+1,
+						i, j );
 					VPRINT(" a", a);
 					VPRINT(" b", b);
 					VPRINT("pt", pt);
@@ -406,7 +408,11 @@ struct directory	*dp;
 				point_count++;
 next_k:				;
 			}
-			if( point_count == 1 ) rt_log("rt_arbn_plot(%s): warning, point_count=1\n", dp->d_namep);
+			if( point_count == 1 )  {
+				rt_log("rt_arbn_plot(%s): warning, point_count=1 on edge %d/%d\n",
+					dp->d_namep,
+					i, j );
+			}
 		}
 	}
 	return(0);
