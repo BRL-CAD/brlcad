@@ -319,35 +319,45 @@ checkcomb()
 	return( 0 );
 }
 
+/*
+ *  Returns -
+ *	0 if OK
+ *	1 on failure
+ */
 int clear_comb( dp )
 struct directory *dp;
 {
-
-	register int i, rec;
-	union record record;
+	register int i;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 
 	if( dp == DIR_NULL )
 		return( 1 );
 
-	/* Delete all the Member records, one at a time */
-
-	rec = dp->d_len;
-	for( i = 1; i < rec; i++ )
-	{
-		if( db_get( dbip,  dp, &record, 1 , 1) < 0 )
-		{
-		  Tcl_AppendResult(interp, "Unable to clear ", dp->d_namep,
-				   "\n", (char *)NULL);
-		  return( 1 );
-		}
-
-		if( db_delrec( dbip, dp, 1 ) < 0 )
-		{
-		  Tcl_AppendResult(interp, "Error in deleting member.\n", (char *)NULL);
-		  return( 1 );
-		}
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+		Tcl_AppendResult(interp, "clear_comb: ", dp->d_namep,
+			" is not a combination\n", (char *)NULL );
+		return 1;
 	}
-	return( 0 );
+
+	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+			") failure", (char *)NULL );
+		return 1;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+
+	if( comb->tree )  {
+		db_free_tree( comb->tree );
+		comb->tree = NULL;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+		return 1;
+	}
+	return 0;
 }
 
 int build_comb( dp )
