@@ -222,7 +222,8 @@ BDIRS="bench \
 
 TSDIRS=". mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
-HTML_DIRS="manuals manuals/shaders manuals/Anim_Tutorial manuals/libdm manuals/mged manuals/mged/animmate ReleaseNotes ReleaseNotes/Rel5.0 ReleaseNotes/Rel5.0/Summary"
+HTML_DIRS="html/manuals html/manuals/shaders html/manuals/Anim_Tutorial html/manuals/libdm html/manuals/mged html/manuals/mged/animmate html/ReleaseNotes html/ReleaseNotes/Rel5.0 html/ReleaseNotes/Rel5.0/Summary"
+INSTALL_ONLY_DIRS="sample_applications $HTML_DIRS"
 PROE_DIRS="sun4_solaris sgi_elf2 text text/fullhelp text/menus"
 
 # If there is no TCP networking, eliminate network-only directories.
@@ -386,9 +387,9 @@ install|install-nobak|uninstall)
 		echo -------------------------------- tclscripts/${dir};
 		( cd tclscripts/${dir} && cake -k ${SILENT} ${TARGET} )
 	done
-	for dir in ${HTML_DIRS}; do
-		echo -------------------------------- html/${dir};
-		( cd html/${dir} && cake -k ${SILENT} ${TARGET} )
+	for dir in ${INSTALL_ONLY_DIRS}; do
+		echo -------------------------------- ${dir};
+		( cd ${dir} && cake -k ${SILENT} ${TARGET} )
 	done
 	for dir in ${PROE_DIRS}; do
 		echo -------------------------------- pro-engineer/${dir};
