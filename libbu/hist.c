@@ -137,7 +137,7 @@ CONST char			*title;
 	if( maxcount <= 0 )  maxcount = 1;
 
 	/* Supress trailing bins with zero counts.  nbins s/b >= 1 */
-	for( nbins = histp->hg_nbins-1; nbins >= 1; nbins-- )
+	for( nbins = histp->hg_nbins; nbins >= 1; nbins-- )
 		if(histp->hg_bins[nbins] > 0)  break;
 
 	/* 12345678 12345678 123 .... */
@@ -151,6 +151,8 @@ CONST char			*title;
 	for( i=0; i <= nbins; i++ )  {
 		percent = (int)(((double)histp->hg_bins[i])*100.0/maxcount);
 		mark_count = percent*NMARKS/100;
+		if( mark_count <= 0 && histp->hg_bins[i] > 0 )
+			mark_count = 1;
 		if( mark_count <= 0 )  {
 			buf[0] = '\0';
 		} else {
