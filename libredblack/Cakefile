@@ -14,7 +14,7 @@
 		rb_rotate rb_search rb_walk
 	
 
-#define VERSION_VARIABLE	rt_version
+#define VERSION_VARIABLE	rb_version
 #define LIBRARY_TITLE		"The BRL-CAD Red-Black Library"
 
 #include "../Cakefile.lib"
