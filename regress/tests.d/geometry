@@ -26,13 +26,16 @@ if [ "x$REGRESS_DIR" = "x" ] ; then
     elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
         initializeVariable REGRESS_DIR "$LPWD"
     else
-        bomb "Unable to locate $PACKAGE_NAME"
+        warn "Unable to locate $PACKAGE_NAME (set REGRESS_DIR), using $LPWD anyways"
+        initializeVariable REGRESS_DIR "$LPWD"
     fi
 fi
 __ARCH="$ARCH"
-initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+[ -x "${REGRESS_DIR}/brlcad/sh/machinetype.sh" ] && initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
 initializeVariable ARCH "$__ARCH"
-initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
+__CADROOT="$BRLCAD_ROOT"
+[ -d "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}" ] && initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
+initializeVariable BRLCAD_ROOT "$__CADROOT"
 
 
 start ( ) {
@@ -334,22 +337,21 @@ xxx_DB_ARGS=""
 # Done
 ###
 
+clean
+PATH=$BRLCAD_ROOT/bin:$PATH
+
 for PRIM in $PRIMITIVES ; do
 
-    log ""
-    log "Evaluating $PRIM"
-    log "===================="
+    unset IN_ARGS ; IN_ARGS="echo \$${PRIM}_IN_ARGS" ; IN_ARGS=`eval $IN_ARGS`
+    unset DB_ARGS ; DB_ARGS="echo \$${PRIM}_DB_ARGS" ; DB_ARGS=`eval $DB_ARGS`
 
-    [ ! "x$TEST" = "x" ] && rm -f ${TEST}.*
-
-    if [ "x${PRIM}_IN_ARGS" = "x" ] ; then
-        warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
+    if [ "x$IN_ARGS" = "x" ] ; then
+        warn "Primitive ${PRIM} has no arguments set, skipping"
     else
 
-        unset IN_ARGS
-        unset DB_ARGS
-        initializeVariable IN_ARGS "${PRIM}_IN_ARGS"
-        initializeVariable DB_ARGS "${PRIM}_DB_ARGS"
+        log ""
+        log "Evaluating $PRIM"
+        log "===================="
 
         mged -c <<EOF
 #
@@ -361,10 +363,9 @@ set glob_compat_mode 0
 
 foreach version { 4 5 } { 
 
-    puts "Creating v\$version database"
-
     set mged_default(db_version) \$version
 
+    puts "Opening database \[${TEST}.${PRIM}.\$version.g\]"
     opendb ${TEST}.${PRIM}.\$version.g
 
     set autosize 0
@@ -378,13 +379,16 @@ foreach version { 4 5 } {
     # Edit 'in' args 
     #
     set inval "in ${PRIM}.in.s $PRIM $IN_ARGS"
+    puts "Running \[\$inval\]"
     eval \$inval
     saveview ${TEST}.${PRIM}.\$version.in.rt
 
     Z
     viewsize 100 
     ae 35 25
-    make ${PRIM}.make.s $PRIM
+    set makeval "make ${PRIM}.make.s $PRIM"
+    puts "Running \[\$makeval\]"
+    eval \$makeval
     saveview ${TEST}.${PRIM}.\$version.make.rt
 
     Z
@@ -394,8 +398,9 @@ foreach version { 4 5 } {
     #
     # Edit 'db put' args 
     #
-    set dbput "db put ${PRIM}.dbput.s $PRIM $DB_ARGS"
-    eval \$dbput
+    set dbputval "db put ${PRIM}.dbput.s $PRIM $DB_ARGS"
+    puts "Running \[\$dbputval\]"
+    eval \$dbputval
     saveview ${TEST}.${PRIM}.\$version.dbput.rt
 
     Z
@@ -425,7 +430,7 @@ q
 EOF
 
     for version in $VER ; do
-        log "Testing v$version database"
+        log "Testing v$version database for ${PRIM}"
         if [ -f ${TEST}.${PRIM}.${version}.g ] ; then
 
             [ -f ./${TEST}.${PRIM}.${version}.in.rt ] && ./${TEST}.${PRIM}.${version}.in.rt
@@ -441,9 +446,9 @@ EOF
             log "	Database diffing (g_diff)"
             g_diff -f ${TEST}.${PRIM}.${version}.asc2g.g ${TEST}.${PRIM}.5.g
         else
-            bomb "No v$version database was created"
+            bomb "No v$version database was created for ${PRIM}"
         fi
-        log "Done testing $version database"
+        log "Done testing $version database for ${PRIM}"
 
     done  
     # end loop over vers
@@ -468,6 +473,11 @@ status ( ) {
     return 0
 }
 
+clean ( ) {
+    [ ! "x$TEST" = "x" ] && rm -f ${TEST}.*
+
+    return 0
+}
 
 case "$1" in
     start )
@@ -482,6 +492,9 @@ case "$1" in
         ;;
     status )
         status
+        ;;
+    clean )
+        clean
         ;;
     * )
         log "Usage: $0 {start|stop|restart|status}"
