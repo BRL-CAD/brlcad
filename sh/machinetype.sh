@@ -101,8 +101,12 @@ cat << EOF > ${IN_FILE}
 #endif
 
 #if defined(__NetBSD__)
-/* NetBSD from Chris Demetriou and friends */
-	MACHINE=nb
+/* NetBSD 1.0 from Chris Demetriou and friends */
+#	if defined(i386)
+		MACHINE=nb86
+#	else
+		MACHINE=nb
+#	endif
 	UNIXTYPE=BSD
 	HAS_TCP=1
 	HAS_SYMLINKS=1
