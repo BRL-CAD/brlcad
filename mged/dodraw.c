@@ -1063,6 +1063,9 @@ char	**argv;
 
 	RT_CHECK_DBI(dbip);
 
+	rt_log("Please note that the NMG library used by this command is experimental.\n");
+	rt_log("A production implementation will exist in the maintenance release.\n");
+
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
 
