@@ -31,7 +31,12 @@ libfb_la_SOURCES = \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1
-libfb_la_LIBADD = ${PKG} ${X_LIBS} ${TCL} ${BU} ${GL_LIBS}
+libfb_la_LIBADD = \
+	${BU} \
+	${PKG} \
+	${TCL} \
+	${X_LIBS} \
+	${LIBGL}
 
 include_HEADERS = \
 	adage.h \

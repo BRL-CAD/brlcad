@@ -112,7 +112,6 @@ mged_LDADD = \
 	${DM} \
 	${FB} \
 	${SYSV} \
-	${GL_LIBS} \
 	${LIBPNG}
 
 cad_boundp_SOURCES = cad_boundp.c
@@ -123,7 +122,6 @@ cad_parea_LDADD = ${BU}
 
 
 INCLUDES = \
-	${GL_CFLAGS} \
 	${X_CFLAGS} \
 	-I$(top_srcdir)/include
 
