@@ -549,7 +549,7 @@ echo Build libregex .......................: yes
 echo Build libpng .........................: yes
 echo Build libz ...........................: yes
 echo 
-echo Java Developer Kit support ...........: $with_jdk
+echo Java Developer Kit support ...........: $have_java
 echo X11 support ..........................: yes
 echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
