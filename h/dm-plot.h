@@ -18,6 +18,7 @@ struct plot_vars {
   int grid;
   int is_3D;
   int is_pipe;
+  int debug;
   vect_t clipmin;
   vect_t clipmax;
   struct bu_vls vls;

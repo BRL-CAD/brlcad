@@ -14,8 +14,6 @@ struct modifiable_ogl_vars {
   int zclipping_on;
   int zbuffer_on;
   int lighting_on;
-  int perspective_mode;
-  int dummy_perspective;
   int fastfog;
   double fogdensity;
   int zbuf;
@@ -33,11 +31,11 @@ struct ogl_vars {
   Tk_Window xtkwin;
   int omx, omy;
   unsigned int mb_mask;
-  int perspective_angle;
   XFontStruct *fontstruct;
   Colormap cmap;
   GLdouble faceplate_mat[16];
   int face_flag;
+  int *perspective_mode;
   int devmotionnotify;
   int devbuttonpress;
   int devbuttonrelease;
@@ -49,12 +47,7 @@ struct ogl_vars {
   struct modifiable_ogl_vars mvars;
 };
 
-extern void ogl_configure_window_shape();
-extern void ogl_establish_zbuffer();
-extern void ogl_establish_lighting();
-extern void ogl_establish_perspective();
-extern void ogl_set_perspective();
-extern void ogl_do_fog();
+extern void ogl_fogHint();
 extern struct ogl_vars head_ogl_vars;
 
 #endif /* SEEN_DM_OGL */

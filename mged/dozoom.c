@@ -35,10 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#ifdef DM_X
-extern int X_drawString2D();
-#endif
-
 #define M_AXES 0
 #define V_AXES 1
 #define E_AXES 2

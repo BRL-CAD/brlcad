@@ -156,16 +156,19 @@ struct dm {
 #define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
 #define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
 
-extern int dm_Tcl_Init();
+extern int dm_tclInit();
 extern struct dm *dm_open();
 extern fastf_t dm_X2Normal();
 extern fastf_t dm_Y2Normal();
-extern int dm_process_options();
+extern int dm_processOptions();
 extern int dm_limit();
 extern int dm_unlimit();
 extern fastf_t dm_wrap();
 extern void Nu_void();
 extern int Nu_int0();
 extern unsigned Nu_unsign();
+extern void dm_configureWindowShape();
+extern void dm_zbuffer();
+extern void dm_lighting();
 extern Tcl_Interp *interp;   /* This must be defined by the application */
 #endif /* SEEN_DM_H */

@@ -21,8 +21,6 @@
 
 struct modifiable_x_vars {
   int zclip;
-  int perspective_mode;
-  int dummy_perspective;
   int debug;
 };
 
@@ -35,7 +33,6 @@ struct x_vars {
   int depth;
   int omx, omy;
   unsigned int mb_mask;
-  int perspective_angle;
   XFontStruct *fontstruct;
   GC gc;
   Pixmap pix;
@@ -47,13 +44,11 @@ struct x_vars {
   int devbuttonpress;
   int devbuttonrelease;
   int knobs[8];
+  vect_t clipmin;
+  vect_t clipmax;
   struct modifiable_x_vars mvars;
 };
 
-extern void X_configure_window_shape();
-extern void X_establish_perspective();
-extern void X_set_perspective();
-extern int X_drawString2D();
 extern struct x_vars head_x_vars;
 
 #endif /* SEEN_DM_X */

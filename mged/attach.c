@@ -487,18 +487,11 @@ get_attached()
     /* Not a valid choice, loop. */
   }
 
-#if 0
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "openw -s -gt %s\n", line);
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-#else
   argc = 2;
   argv[0] = "";
   argv[1] = "";
   argv[2] = (char *)NULL;
   (void)mged_attach(wp, argc, argv);
-#endif
 }
 
 
