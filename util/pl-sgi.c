@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"		/* to define "sgi" on ANSI compilers */
 
 #ifdef sgi
 # include "gl.h"
