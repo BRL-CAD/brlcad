@@ -2387,7 +2387,53 @@ fail:
 	return 0;
 }
 
-#if 1
+int
+bn_does_ray_isect_tri( pt, dir, V, A, B, inter )
+point_t pt, V, A, B, inter;
+vect_t dir;
+{
+	vect_t VP, VA, VB, AB, AP, N;
+	fastf_t NdotDir;
+	plane_t pl;
+	fastf_t dist;
+	fastf_t area;
+
+	/* insersect with plane */
+
+	VSUB2( VA, A, V );
+	VSUB2( VB, B, V );
+	VCROSS( pl, VA, VB );
+	VUNITIZE( pl );
+
+	NdotDir = VDOT( pl, dir );
+	if( NEAR_ZERO( NdotDir, SMALL_FASTF ) )
+		return( 0 );
+
+	pl[3] = VDOT( pl, V );
+
+	dist = (pl[3] - VDOT( pl, pt ))/NdotDir;
+	VJOIN1( inter, pt, dist, dir );
+
+	/* determine if point is within triangle */
+	VSUB2( VP, inter, V );
+	VCROSS( N, VA, VP );
+	if( VDOT( N, pl ) < 0.0 )
+		return( 0 );
+
+	VCROSS( N, VP, VB );
+	if( VDOT( N, pl ) < 0.0 )
+		return( 0 );
+
+	VSUB2( AB, B, A );
+	VSUB2( AP, inter, A );
+	VCROSS( N, AB, AP );
+	if( VDOT( N, pl ) < 0.0 )
+		return( 0 );
+
+	return( 1 );
+}
+
+#if 0
 /*
  *			B N _ I S E C T _ R A Y _ T R I
  *
