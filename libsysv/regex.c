@@ -81,7 +81,7 @@ re_error( n )
 #define	step	re_step
 #define	advance	re_advance
 #define getrnge	re_getrnge
-#if !sgi
+#if !defined(sgi) && !defined(i386)
 #	define ecmp	re_ecmp
 #endif
 
