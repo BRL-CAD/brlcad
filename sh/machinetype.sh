@@ -49,7 +49,7 @@ ARG="$1"
 
 #  Base directory for the entire package.
 #  Modified by newbindir.sh as part of the installation process, if needed.
-BASEDIR=/vld/bparker/cad_dev
+BASEDIR=/usr/brlcad
 
 if test -x /bin/uname -o -x /usr/bin/uname -o -x /usr/5bin/uname
 then
