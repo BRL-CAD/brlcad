@@ -98,8 +98,6 @@ char **argv;
 	while( fread( (char *)&record, sizeof record, 1, ifp ) == 1  &&
 	    !feof(ifp) )  {
 top:
-	    	if( argc > 1 )
-			(void)fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
 		/* Check record type and skip deleted records */
 	    	switch( record.u_id )  {
 	    	case ID_FREE:
