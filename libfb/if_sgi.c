@@ -693,14 +693,23 @@ int	width, height;
 		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
 		return(-1);
 	}
+
+	/* Must initialize these window state variables BEFORE calling
+		"sgi_getmem", because this function can indirectly trigger
+		a call to "sgi_repaint" (when initializing shared memory
+		after a reboot).					*/
 	ifp->if_zoomflag = 0;
 	SGI(ifp)->si_xzoom = 1;
 	SGI(ifp)->si_yzoom = 1;
 	SGI(ifp)->si_xcenter = width/2;
 	SGI(ifp)->si_ycenter = height/2;
 	ifp->if_mode = MODE_RGB;
+
 	if( sgi_getmem(ifp) < 0 )
 		return(-1);
+
+	/* Must call "is_linear_cmap" AFTER "sgi_getmem" which allocates
+		space for the color map.				*/
 	SGI(ifp)->si_cmap_flag = !is_linear_cmap(ifp);
 
 	/* Setup default cursor.					*/
@@ -1470,14 +1479,21 @@ int	width, height;
 		gconfig();	/* Must be called after singlebuffer().	*/
 	}
 
-	if( sgi_getmem(ifp) < 0 )
-		return(-1);
-
+	/* Must initialize these window state variables BEFORE calling
+		"sgi_getmem", because this function can indirectly trigger
+		a call to "sgi_repaint" (when initializing shared memory
+		after a reboot).					*/
 	ifp->if_zoomflag = 0;
 	SGI(ifp)->si_xzoom = 1;	/* for zoom fakeout */
 	SGI(ifp)->si_yzoom = 1;	/* for zoom fakeout */
 	SGI(ifp)->si_xcenter = width/2;
 	SGI(ifp)->si_ycenter = height/2;
+
+	if( sgi_getmem(ifp) < 0 )
+		return(-1);
+
+	/* Must call "is_linear_cmap" AFTER "sgi_getmem" which allocates
+		space for the color map.				*/
 	SGI(ifp)->si_cmap_flag = !is_linear_cmap(ifp);
 
 	/*
