@@ -17,7 +17,7 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-int rt_cutLen = 3;			/* normal limit on number objs per box node */
+int rt_cutLen = 3;		/* normal limit on number objs per box node */
 int rt_cutDepth = 32;		/* normal limit on depth of cut tree */
 
 HIDDEN int rt_ck_overlap(), rt_ct_box();
@@ -27,8 +27,6 @@ HIDDEN union cutter *rt_ct_get();
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
 
 HIDDEN void rt_plot_cut();
-static void space3(), plot_color(), move3(), cont3();
-static FILE *plotfp;
 
 /*
  *  			R T _ C U T _ I T
@@ -43,6 +41,7 @@ rt_cut_it(rtip)
 register struct rt_i *rtip;
 {
 	register struct soltab *stp;
+	FILE *plotfp;
 
 	rtip->rti_CutHead.bn.bn_type = CUT_BOXNODE;
 	VMOVE( rtip->rti_CutHead.bn.bn_min, rtip->mdl_min );
@@ -72,15 +71,24 @@ register struct rt_i *rtip;
 	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
 rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
+
 	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &rtip->rti_CutHead, 0 );
-	if(rt_g.debug&DEBUG_PLOTBOX && (plotfp=fopen("rtbox.plot", "w"))!=NULL) {
-		space3( 0,0,0, 4096, 4096, 4096);
+
+	if( !(rt_g.debug&DEBUG_PLOTBOX) )  return;
+
+	/* Debugging code to plot cuts, solid RRPs */
+	if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
+		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
 		/* First, all the cutting boxes */
-		rt_plot_cut( rtip, &rtip->rti_CutHead, 0 );
+		rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
+		(void)fclose(plotfp);
+	}
+	if( (plotfp=fopen("rtrpp.plot", "w"))!=NULL) {
 		/* Then, all the solid bounding boxes, in white */
-		plot_color( 255, 255, 255 );
+		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
+		pl_color( plotfp, 255, 255, 255 );
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-			rt_draw_box( rtip, stp->st_min, stp->st_max );
+			rt_draw_box( plotfp, rtip, stp->st_min, stp->st_max );
 		}
 		(void)fclose(plotfp);
 	}
@@ -501,22 +509,24 @@ register union cutter *cutp;
  *  			R T _ P L O T _ C U T
  */
 HIDDEN void
-rt_plot_cut( rtip, cutp, lvl )
+rt_plot_cut( fp, rtip, cutp, lvl )
+FILE			*fp;
 struct rt_i		*rtip;
 register union cutter	*cutp;
 int			lvl;
 {
 	switch( cutp->cut_type )  {
 	case CUT_CUTNODE:
-		rt_plot_cut( rtip, cutp->cn.cn_l, lvl+1 );
-		rt_plot_cut( rtip, cutp->cn.cn_r, lvl+1 );
+		rt_plot_cut( fp, rtip, cutp->cn.cn_l, lvl+1 );
+		rt_plot_cut( fp, rtip, cutp->cn.cn_r, lvl+1 );
 		return;
 	case CUT_BOXNODE:
 		/* Should choose color based on lvl, need a table */
-		plot_color( (AXIS(lvl)==0)?255:0,
+		pl_color( fp,
+			(AXIS(lvl)==0)?255:0,
 			(AXIS(lvl)==1)?255:0,
 			(AXIS(lvl)==2)?255:0 );
-		rt_draw_box( rtip, cutp->bn.bn_min, cutp->bn.bn_max );
+		rt_draw_box( fp, rtip, cutp->bn.bn_min, cutp->bn.bn_max );
 		return;
 	}
 	return;
@@ -526,11 +536,11 @@ int			lvl;
  *  			R T _ D R A W _ B O X
  *  
  *  Arrange to efficiently draw the edges of a box (RPP).
- *  Call on UNIX-Plot to do the actual drawing, which
- *  will fall out on plotfp.
+ *  Call on UNIX-Plot to do the actual drawing.
  */
 void
-rt_draw_box( rtip, a, b )
+rt_draw_box( fp, rtip, a, b )
+FILE			*fp;
 register struct rt_i	*rtip;
 register vect_t		a, b;
 {
@@ -551,68 +561,122 @@ register vect_t		a, b;
 	by =	(b[Y] - rtip->mdl_min[Y])*conv;
 	bz =	(b[Z] - rtip->mdl_min[Z])*conv;
 
-	move3( ax, ay, az );
-	cont3( bx, ay, az );
-	cont3( bx, by, az );
-	cont3( ax, by, az );
-
-	move3( bx, ay, az );
-	cont3( bx, ay, bz );
-	cont3( bx, by, bz );
-	cont3( bx, by, az );
-
-	move3( bx, by, bz );
-	cont3( ax, by, bz );
-	cont3( ax, ay, bz );
-	cont3( bx, ay, bz );
-
-	move3( ax, by, bz );
-	cont3( ax, by, az );
-	cont3( ax, ay, az );
-	cont3( ax, ay, bz );
+	pl_3box( fp, ax, ay, az, bx, by, bz );
 }
 
 
 /*
- *  Generate UNIX Plot in 3-D.
- *  cf. Doug Gwyn's Sys-V-standard (but-only-at-BRL) package,
- *  so we have to include the necessary sources here.
+ *			R T _ V C L I P
+ *
+ *  Clip a ray against a rectangular parallelpiped (RPP)
+ *  that has faces parallel to the coordinate planes (a clipping RPP).
+ *  The RPP is defined by a minimum point and a maximum point.
+ *  This is a very close relative to rt_in_rpp() from librt/shoot.c
+ *
+ *  Returns -
+ *	 0  if ray does not hit RPP,
+ *	!0  if ray hits RPP.
+ *
+ *  Implicit Return -
+ *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-#define putsi(a)	putc(a&0377,plotfp); putc((a>>8)&0377,plotfp)
-static void
-space3(x0,y0,z0,x1,y1,z1){
-	putc('S',plotfp);
-	putsi(x0);
-	putsi(y0);
-	putsi(z0);
-	putsi(x1);
-	putsi(y1);
-	putsi(z1);
-}
-/*
- *	plot_color -- deposit color selection in UNIX plot output file
- *	04-Jan-1984	D A Gwyn
- */
-static void
-plot_color( r, g, b )
-int	r, g, b;		/* color components, 0..255 */
+static int
+rt_vclip( a, b, min, max )
+vect_t a, b;
+register fastf_t *min, *max;
 {
-	putc( 'C', plotfp );
-	putc( r, plotfp );
-	putc( g, plotfp );
-	putc( b, plotfp );
+	static vect_t diff;
+	static double sv;
+	static double st;
+	static double mindist, maxdist;
+	register fastf_t *pt = &a[0];
+	register fastf_t *dir = &diff[0];
+	register int i;
+
+	mindist = -INFINITY;
+	maxdist = INFINITY;
+	VSUB2( diff, b, a );
+
+	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+		if( *dir < -SQRT_SMALL_FASTF )  {
+			if( (sv = (*min - *pt) / *dir) < 0.0 )
+				return(0);	/* MISS */
+			if(maxdist > sv)
+				maxdist = sv;
+			if( mindist < (st = (*max - *pt) / *dir) )
+				mindist = st;
+		}  else if( *dir > SQRT_SMALL_FASTF )  {
+			if( (st = (*max - *pt) / *dir) < 0.0 )
+				return(0);	/* MISS */
+			if(maxdist > st)
+				maxdist = st;
+			if( mindist < ((sv = (*min - *pt) / *dir)) )
+				mindist = sv;
+		}  else  {
+			/*
+			 *  If direction component along this axis is NEAR 0,
+			 *  (ie, this ray is aligned with this axis),
+			 *  merely check against the boundaries.
+			 */
+			if( (*min > *pt) || (*max < *pt) )
+				return(0);	/* MISS */;
+		}
+	}
+	if( mindist >= maxdist )
+		return(0);	/* MISS */
+
+	if( mindist > 1 || maxdist < 0 )
+		return(0);	/* MISS */
+
+	if( mindist <= 0 && maxdist >= 1 )
+		return(1);	/* HIT, no clipping needed */
+
+	/* Don't grow one end of a contained segment */
+	if( mindist < 0 )
+		mindist = 0;
+	if( maxdist > 1 )
+		maxdist = 1;
+
+	/* Compute actual intercept points */
+	VJOIN1( b, a, maxdist, diff );		/* b must go first */
+	VJOIN1( a, a, mindist, diff );
+	return(1);		/* HIT */
 }
-static void
-move3(xi,yi,zi){
-	putc('M',plotfp);
-	putsi(xi);
-	putsi(yi);
-	putsi(zi);
-}
-static void
-cont3(xi,yi,zi){
-	putc('N',plotfp);
-	putsi(xi);
-	putsi(yi);
-	putsi(zi);
+
+/*
+ *  			R T _ D R A W V E C
+ *  
+ *  Arrange to draw a vector in 3-space using UNIX-plot.
+ *  Scale to +/- 4096 range from model space.
+ */
+void
+rt_drawvec( fp, rtip, aa, bb )
+FILE	*fp;
+register struct rt_i	*rtip;
+register vect_t		aa, bb;
+{
+	int ax, ay, az;
+	int bx, by, bz;
+	double conv, f;
+	vect_t	a, b;
+
+	VMOVE( a, aa );		/* Make local copys, for vclip to change */
+	VMOVE( b, bb );
+	if( rt_vclip( a, b, rtip->mdl_min, rtip->mdl_max ) == 0 )
+		return;
+
+	conv = 4096.0 / (rtip->mdl_max[X] - rtip->mdl_min[X]);
+	f = 4096.0 / (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
+	if( f < conv )  conv = f;
+	f = 4096.0 / (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
+	if( f < conv )  conv = f;
+
+	ax =	(a[X] - rtip->mdl_min[X])*conv;
+	ay =	(a[Y] - rtip->mdl_min[Y])*conv;
+	az =	(a[Z] - rtip->mdl_min[Z])*conv;
+	bx =	(b[X] - rtip->mdl_min[X])*conv;
+	by =	(b[Y] - rtip->mdl_min[Y])*conv;
+	bz =	(b[Z] - rtip->mdl_min[Z])*conv;
+
+	pl_3line( fp, ax, ay, az, bx, by, bz );
 }
