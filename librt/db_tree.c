@@ -507,7 +507,10 @@ struct tree_state	*tsp;
 	union tree		*curtree;
 	int	i;
 	int	j;
-	struct region	*regionp = 0;	/* XXX */
+	struct region	region;
+	struct region	*regionp = &region;
+
+	region.reg_name = "DUMMY from rt_mkgift_tree()";
 
 	/* Build tree representing boolean expression in Member records */
 	if( rt_pure_boolean_expressions )  {
@@ -731,7 +734,7 @@ region_end:
 	} else {
 		rt_log("db_functree:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
-		curtree = (union tree *)0;
+		curtree = TREE_NULL;
 	}
 out:
 	if( rp )  rt_free( (char *)rp, dp->d_namep );
@@ -767,8 +770,20 @@ union tree	*tp;
 
 	switch( tp->tr_op )  {
 	case OP_SOLID:
-	case OP_REGION:
 		/* If this is a leaf, done */
+		return(new);
+	case OP_REGION:
+		/* If this is a REGION leaf, dup combined_tree_state & path */
+		{
+			struct combined_tree_state	*cts;
+			struct combined_tree_state	*ots;
+			ots = (struct combined_tree_state *)tp->tr_a.tu_stp;
+			cts=(struct combined_tree_state *)rt_malloc(
+				sizeof(struct combined_tree_state),
+				"combined region state");
+			cts->cts_s = ots->cts_s;	/* struct copy */
+			rt_dup_full_path( &(cts->cts_p), &(ots->cts_p) );
+		}
 		return(new);
 
 	case OP_NOT:
@@ -803,7 +818,7 @@ union tree	*tp;
 
 top:
 	/* If this is a leaf, done */
-	if( tp->tr_op == OP_REGION || tp->tr_op == OP_SOLID )  return;
+	if( tp->tr_op == OP_REGION )  return;
 
 	/* This node is known to be a binary op */
 	if( tp->tr_op == OP_UNION )  {
@@ -896,8 +911,6 @@ union tree	*tp;
 
 	switch( tp->tr_op )  {
 	case OP_SOLID:
-		/* This lone solid will become a region */
-		return(1);
 	case OP_REGION:
 		return(1);
 
@@ -1040,6 +1053,144 @@ int			id;
 	return(curtree);
 }
 
+static struct rt_i	*db_rtip;
+static union tree	**db_reg_trees;
+static int		db_reg_count;
+static int		db_reg_current;		/* semaphored when parallel */
+
+HIDDEN int rt_gettree_p2_region_start( tsp, pathp )
+struct tree_state	*tsp;
+struct full_path	*pathp;
+{
+
+	/* Ignore "air" regions unless wanted */
+	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		db_rtip->rti_air_discards++;
+		return(-1);	/* drop this region */
+	}
+	return(0);
+}
+
+HIDDEN union tree *rt_gettree_p2_region_end( tsp, pathp, curtree )
+register struct tree_state	*tsp;
+struct full_path	*pathp;
+union tree		*curtree;
+{
+	register struct combined_tree_state	*cts;
+	struct region		*rp;
+
+	GETSTRUCT( rp, region );
+	rp->reg_forw = REGION_NULL;
+	rp->reg_regionid = tsp->ts_regionid;
+	rp->reg_aircode = tsp->ts_aircode;
+	rp->reg_gmater = tsp->ts_gmater;
+	rp->reg_mater = tsp->ts_mater;		/* struct copy */
+	rp->reg_name = rt_path_to_string( pathp );
+#if 0
+	/* XXX how to handle this?? */
+	rp->reg_instnum = dp->d_uses++;
+#endif
+	/* XXX really should use absolute treetop here?? */
+rt_log("rt_gettree_p2_region_end() %s\n", rp->reg_name );
+	rt_add_regtree( db_rtip, rp, curtree );
+	return(curtree);
+}
+
+HIDDEN union tree *rt_gettree_p2_leaf( tsp, pathp, rp, id )
+struct tree_state	*tsp;
+struct full_path	*pathp;
+union record		*rp;
+int			id;
+{
+	struct soltab	*stp;
+	union tree	*curtree;
+	struct directory	*dp;
+
+	/* Note:  solid may not be contained by a region (yet) */
+
+	dp = pathp->fp_names[pathp->fp_len-1];
+	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat )) == SOLTAB_NULL )
+		return(TREE_NULL);
+
+	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
+	bzero( (char *)curtree, sizeof(union tree) );
+	curtree->tr_op = OP_SOLID;
+	curtree->tr_a.tu_stp = stp;
+	curtree->tr_a.tu_name = rt_path_to_string( pathp );
+/**** need regionp! XXXX */
+	curtree->tr_a.tu_regionp = (struct region *)0;
+
+rt_log("rt_gettree_p2_leaf() %s\n", curtree->tr_a.tu_name );
+
+	return(curtree);
+}
+
+void
+db_walk_subtree( tp )
+union tree	*tp;
+{
+	struct combined_tree_state	*ctsp;
+	union tree	*curtree;
+
+	switch( tp->tr_op )  {
+	/*  case OP_SOLID:*/
+	case OP_REGION:
+		/* Flesh out remainder of subtree */
+		ctsp = (struct combined_tree_state *)tp->tr_a.tu_stp;
+		ctsp->cts_s.ts_dbip = db_rtip->rti_dbip;
+		ctsp->cts_s.ts_stop_at_regions = 0;
+		ctsp->cts_s.ts_region_start_func = rt_gettree_p2_region_start;
+		ctsp->cts_s.ts_region_end_func = rt_gettree_p2_region_end;
+		ctsp->cts_s.ts_leaf_func = rt_gettree_p2_leaf;
+		curtree = db_recurse( &ctsp->cts_s, &ctsp->cts_p );
+		if( curtree == (union tree *)0 )  {
+			rt_log("db_walk_subtree()/db_recurse() FAIL\n");
+			return;
+		}
+		/* replace *tp with new subtree */
+		*tp = *curtree;		/* struct copy */
+		rt_free( (char *)ctsp, "combined region state" );
+		rt_free( (char *)curtree, "replaced tree node" );
+		return;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		db_walk_subtree( tp->tr_b.tb_left );
+		return;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		/* This node is known to be a binary op */
+		db_walk_subtree( tp->tr_b.tb_left );
+		db_walk_subtree( tp->tr_b.tb_right );
+		return;
+
+	default:
+		rt_bomb("db_walk_subtree: bad op");
+	}
+}
+
+void
+db_walk_dispatcher()
+{
+	int	mine;
+
+	while(1)  {
+		RES_ACQUIRE( &rt_g.res_worker );
+		mine = db_reg_current++;
+		RES_RELEASE( &rt_g.res_worker );
+
+		if( mine > db_reg_count )
+			break;
+
+		/* Doit */
+		db_walk_subtree( db_reg_trees[mine] );
+	}
+}
+
 /*
  * XXX  NEW NEW NEW
  *  			R T _ G E T _ T R E E
@@ -1117,6 +1268,16 @@ rt_log("new region count=%d\n", new_reg_count);
 	/*
 	 *  Fourth, in parallel, for each region, walk the tree to the leaves.
 	 */
+	/* do equivalant of rt_drawobj() && rt_add_solid */
+	db_reg_trees = reg_trees;
+	db_reg_count = new_reg_count;
+	db_reg_current = 0;
+	db_rtip = rtip;
+	if( 1 /* !rt_g.rtg_parallel */ )  {
+		db_walk_dispatcher();
+	} else {
+		rt_parallel( db_walk_dispatcher, rt_avail_cpus() );
+	}
 
 	if( rtip->nsolids <= prev_sol_count )
 		rt_log("rt_gettree(%s) warning:  no solids found\n", node);
