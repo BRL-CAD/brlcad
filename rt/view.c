@@ -936,7 +936,6 @@ CONST point_t			new_view_pt;
 {
 	register struct floatpixel	*op;
 	int	count = 1;
-	int	agelim;
 #if 0
 	static int foo;
 #endif
@@ -964,22 +963,6 @@ CONST point_t			new_view_pt;
 			return 0;	/* previous val closer to eye, leave it be. */
 		else
 			count = 0;	/* Already reproj, don't double-count */
-	}
-
-	/* If not in reproject-only mode, apply heuristics */
-	if( reproject_mode != 2 )  {
-		register int dx, dy;
-		/* Don't reproject if too pixel moved too far on the screen */
-		dx = ix - ip->ff_x;
-		dy = iy - ip->ff_y;
-		if( dx*dx + dy*dy > rt_scr_lim_dist_sq )  return 0;
-
-		/* Don't reproject for too many frame-times */
-		/* See if old pixel is more then N frames old */
-		/* Temporal load-spreading: Don't have 'em all die at the same age! */
-		agelim = ((iy+ix)&03)+4;
-		if( curframe - ip->ff_frame >= agelim )
-			return 0;
 	}
 
 	/* re-use old pixel as new pixel */
@@ -1031,10 +1014,33 @@ genptr_t	arg;
 				continue;	/* was a miss */
 			/* new model2view has been computed before here */
 			MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
+
 			/* Convert from -1..+1 range to pixel subscript */
 			ix = (new_view_pt[X] + 1) * 0.5 * width;
 			iy = (new_view_pt[Y] + 1) * 0.5 * height;
-			/* See if reprojects off of screen */
+
+			/*  If not in reproject-only mode,
+			 *  apply quality-preserving heuristics.
+			 */
+			if( reproject_mode != 2 )  {
+				register int dx, dy;
+				int	agelim;
+
+				/* Don't reproject if too pixel moved too far on the screen */
+				dx = ix - ip->ff_x;
+				dy = iy - ip->ff_y;
+				if( dx*dx + dy*dy > rt_scr_lim_dist_sq )
+					continue;	/* moved too far */
+
+				/* Don't reproject for too many frame-times */
+				/* See if old pixel is more then N frames old */
+				/* Temporal load-spreading: Don't have 'em all die at the same age! */
+				agelim = ((iy+ix)&03)+4;
+				if( curframe - ip->ff_frame >= agelim )
+					continue;	/* too old */
+			}
+
+			/* 4-way splat.  See if reprojects off of screen */
 			if( ix >= 0 && ix < width && iy >= 0 && iy < height )
 				count += reproject_splat( ix, iy, ip, new_view_pt );
 
