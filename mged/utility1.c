@@ -260,8 +260,9 @@ f_dup( )
 
 	register FILE *dupfp;
 	register int i;
-	int ndup, nchar, ncol;
+	int ndup;
 	register struct directory *tmpdp;
+	struct directory **dirp, **dirp0;
 
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 
@@ -294,7 +295,7 @@ f_dup( )
 			cmd_args[2] = '\0';
 	}
 
-	ncol = ndup = 0;
+	ndup = 0;
 	ncharadd = 0;
 	(void)strcpy(prestr, cmd_args[2]);
 	ncharadd = strlen( prestr );
@@ -307,11 +308,17 @@ f_dup( )
 		return;
 	}
 
-	(void)printf("\n*** Comparing %s with %s for duplicate names:\n",filename,cmd_args[1]);
+	(void)printf("\n*** Comparing %s with %s for duplicate names\n",filename,cmd_args[1]);
 	if( ncharadd ) {
-		(void)printf("  For comparison, all names in %s prefixed with %s\n",
+		(void)printf("  For comparison, all names in %s prefixed with:  %s\n",
 				cmd_args[1],prestr);
 	}
+
+	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
+		(void) printf( "f_dup: unable to get memory\n");
+		return(1);
+	}
+	dirp0 = dirp;
 
 	while( fread( (char *)&record, sizeof record, 1, dupfp ) == 1 && ! feof(dupfp) ) {
 
@@ -398,21 +405,12 @@ f_dup( )
 		if(tmpdp != DIR_NULL) {
 			/* have a duplicate name */
 			ndup++;
-			nchar = strlen(tmpdp->d_namep);
-			(void)printf("%s",tmpdp->d_namep);
-			if(++ncol >= 4) {
-				(void)printf("\n");
-				ncol = 0;
-			}
-			else {
-				if(nchar < 8)
-					(void)printf("\t");
-				if(nchar < 16)
-					(void)printf("\t");
-			}
+			*dirp++ = tmpdp;
 			tmpdp = DIR_NULL;
 		}
 	}
+	col_pr4v( dirp0, (int)(dirp - dirp0));
+	free( dirp0);
 	(void)printf("\n -----  %d duplicate names found  -----\n",ndup);
 	(void)fclose( dupfp );
 	return;
