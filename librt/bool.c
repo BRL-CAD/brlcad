@@ -738,6 +738,8 @@ struct bu_ptbl		*regiontable;
 struct partition	*InputHdp;
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
+	int	n_regions;
+	int	n_fastgen = 0;
 	int	code;
 	int	i;
 
@@ -748,6 +750,19 @@ struct partition	*InputHdp;
 
    	if( ap->a_overlap == RT_AFN_NULL )
    		ap->a_overlap = rt_defoverlap;
+
+	/* Count number of FASTGEN regions */
+	n_regions = BU_PTBL_LEN(regiontable);
+	for( i = n_regions-1; i >= 0; i-- )  {
+		struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+		RT_CK_REGION(regp);
+		if( regp->reg_is_fastgen )  n_fastgen++;
+	}
+
+	if( n_fastgen >= 2 )  {
+		/* Resolve all FASTGEN overlaps first. */
+		bu_log("I see %d FASTGEN overlaps in this partition\n", n_fastgen);
+	}
 
 	lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
 	RT_CK_REGION(lastregion);
