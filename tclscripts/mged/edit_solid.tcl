@@ -108,7 +108,7 @@ proc init_edit_solid { id args } {
     incr row
     set esol_row(form) $row
     esol_build_default_form $id $w.sformF
-    grid $w.sformF -row $row -column 0 -sticky nsew -padx 8 -pady 8
+    grid $w.sformF -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 1
 
     incr row
@@ -141,13 +141,13 @@ proc init_edit_solid { id args } {
     grid columnconfigure $w._F$row 0 -weight 1
     grid columnconfigure $w._F$row 1 -weight 0
     grid columnconfigure $w._F$row 2 -weight 1
-    grid $w._F$row -row $row -column 0 -sticky nsew -padx 8 -pady 4
+    grid $w._F$row -row $row -column 0 -sticky nsew -padx 8 -pady 8
     grid rowconfigure $w $row -weight 0
 
     incr row
     checkbutton $w.drawCB -relief flat -bd 2 -text "Draw"\
 	    -offvalue 0 -onvalue 1 -variable esol_draw($id)
-    grid $w.drawCB -row $row -column 0 -sticky nsew -padx 8 -pady 4
+    grid $w.drawCB -row $row -column 0 -sticky nsew -padx 8
     grid rowconfigure $w $row -weight 0
 
     incr row
@@ -175,7 +175,7 @@ proc init_edit_solid { id args } {
 
     wm protocol $w WM_DELETE_WINDOW "catch { destroy $w }"
     wm geometry $w +$x+$y
-    wm title $w "Solid Editor"
+    wm title $w "Solid Editor ($id)"
 }
 
 ## - esol_build_default_form
@@ -360,7 +360,9 @@ proc esol_do_cmd { id w sform } {
     esol_build_form $id $sform $esol_type($id) {} 0 1 0
 
     if $esol_draw($id) {
+	set lineup [_mged_who]
 	_mged_draw $esol_name($id)
+	eval _mged_draw $lineup
     }
 }
 

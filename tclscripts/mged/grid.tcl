@@ -90,7 +90,7 @@ proc do_grid_spacing { id spacing_type } {
 
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm geometry $top +$x+$y
-    wm title $top "Grid Spacing"
+    wm title $top "Grid Spacing ($id)"
 }
 
 proc do_grid_anchor { id } {
@@ -145,7 +145,7 @@ proc do_grid_anchor { id } {
 
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm geometry $top +$x+$y
-    wm title $top "Grid Anchor Point"
+    wm title $top "Grid Anchor Point ($id)"
 }
 
 proc do_grid_color { id } {
@@ -234,7 +234,7 @@ proc do_grid_color { id } {
 
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm geometry $top +$x+$y
-    wm title $top "Grid Color"
+    wm title $top "Grid Color ($id)"
 }
 
 proc init_grid_control { id } {
@@ -482,7 +482,7 @@ proc init_grid_control { id } {
 
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top; set mged_grid_control($id) 0 }"
     wm geometry $top +$x+$y
-    wm title $top "Grid Control Panel"
+    wm title $top "Grid Control Panel ($id)"
 }
 
 proc grid_control_choose_color { id parent } {

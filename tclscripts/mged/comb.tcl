@@ -222,7 +222,7 @@ proc init_comb { id } {
     set x [lindex $pxy 0]
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
-    wm title $top "Combination Editor"
+    wm title $top "Combination Editor ($id)"
 }
 
 proc comb_apply { id } {

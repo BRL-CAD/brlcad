@@ -186,7 +186,7 @@ proc init_adc_control { id } {
 
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top; set mged_adc_control($id) 0 }"
     wm geometry $top +$x+$y
-    wm title $top "ADC Control Panel"
+    wm title $top "ADC Control Panel ($id)"
 }
 
 proc adc_apply { id } {
