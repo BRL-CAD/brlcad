@@ -78,7 +78,6 @@ static int	do_skips=0;		/* flag indicating that not all components will be proce
 static int	*region_list;		/* array of region_ids to be processed */
 static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
 static int	do_plot=0;		/* flag indicating plot file should be created */
-static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
@@ -3424,8 +3423,9 @@ struct db_i *dbip;
 		case OP_DB_LEAF:
 			if( (dp=db_lookup( dbip, ptr->tr_l.tl_name, LOOKUP_QUIET)) == DIR_NULL )
 			{
-				ptr->tr_l.tl_op = OP_NOP;
-				return( ptr );
+				db_free_tree( ptr );
+				ptr = TREE_NULL;
+				return( TREE_NULL );
 			}
 
 			if( !(dp->d_flags & DIR_REGION) )
@@ -3511,6 +3511,54 @@ struct db_i *dbip;
 			/* recurse */
 			ptr->tr_b.tb_left = expand_tree( ptr->tr_b.tb_left, dbip );
 			ptr->tr_b.tb_right = expand_tree( ptr->tr_b.tb_right, dbip );
+			if( (ptr->tr_b.tb_left == TREE_NULL) && (ptr->tr_b.tb_right == TREE_NULL) )
+			{
+				ptr->tr_op = 0;
+				bu_free( (char *)ptr, "union tree" );
+				ptr = TREE_NULL;
+			}
+			else if( ptr->tr_b.tb_right == TREE_NULL )
+			{
+				if( ptr->tr_op == OP_INTERSECT )
+				{
+					/* intersection with nothing is nothing */
+					db_free_tree( ptr->tr_b.tb_left );
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = TREE_NULL;
+				}
+				else
+				{
+					union tree *save;
+
+					/* just return the left tree */
+					save = ptr->tr_b.tb_left;
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = save;
+				}
+			}
+			else if( ptr->tr_b.tb_left == TREE_NULL )
+			{
+				if( ptr->tr_op == OP_UNION )
+				{
+					union tree *save;
+
+					/* return the right tree */
+					save = ptr->tr_b.tb_right;
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = save;
+				}
+				else
+				{
+					/* result is nothing */
+					db_free_tree( ptr->tr_b.tb_right );
+					ptr->tr_op = 0;
+					bu_free( (char *)ptr, "union tree" );
+					ptr = TREE_NULL;
+				}
+			}
 			return( ptr );
 			break;
 	}
@@ -3701,7 +3749,6 @@ char *argv[];
 	grid_pts = (point_t *)bu_malloc( grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
 
 	cline_root = (struct cline *)NULL;
-	cline_last_ptr = (struct cline *)NULL;
 
 	name_root = (struct name_tree *)NULL;
 
