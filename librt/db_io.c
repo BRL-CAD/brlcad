@@ -333,5 +333,8 @@ db_free_external( ep )
 register struct rt_external	*ep;
 {
 	RT_CK_EXTERNAL(ep);
-	rt_free( ep->ext_buf, "db_external buf" );
+	if( ep->ext_buf )  {
+		rt_free( ep->ext_buf, "db_external buf" );
+		ep->ext_buf = GENPTR_NULL;
+	}
 }
