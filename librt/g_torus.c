@@ -627,7 +627,113 @@ tor_class()
 	return(0);
 }
 
+/* Names for TORUS fields */
+#define F1 	&points[0]
+#define F2	&points[3]
+#define F3	&points[6]
+#define F4	&points[9]
+#define F5	&points[12]
+#define F6	&points[15]
+#define F7	&points[18]
+#define F8	&points[21]
+
+/*
+ *			T O R _ P L O T
+ *
+ * The TORUS has the following input fields:
+ *	F1	V from origin to center
+ *	F2	Radius Vector, Normal to plane of torus
+ *	F3,F4	perpindicular, to CENTER of torus (for top, bottom)
+ *	F5,F6	perpindicular, for inner edge
+ *	F7,F8	perpindicular, for outer edge
+ *
+ * The following ellipses have to be constructed:
+ *	C1	top ellipse
+ *	C2	bottom ellipse
+ *	C3	inner ellipse
+ *	C4	outer ellipse
+ */
 void
-tor_plot()
+tor_plot( rp, matp, vhead, dp )
+union record	*rp;
+register matp_t matp;
+struct vlhead	*vhead;
+struct directory *dp;
 {
+	register int		i;
+	register fastf_t	*op;
+	register dbfloat_t	*ip;
+	fastf_t		C1[16*3];
+	fastf_t 	C2[16*3];
+	fastf_t		C3[16*3];
+	fastf_t		C4[16*3];
+	static vect_t	tempv;		/* Torus vector addition area */
+	fastf_t		points[3*8];
+
+	/*
+	 * Rotate, translate, and scale the V point.
+	 * All other vectors are merely scaled and translated.
+	 */
+	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+
+	ip = &rp[0].s.s_values[1*3];
+	op = &points[1*3];
+	for(i=1; i<8; i++)  {
+		MAT4X3VEC( op, matp, ip );
+		op += 3;
+		ip += 3;
+	}
+
+	VADD2(tempv,F1,F2);	/* center point of TOP */
+	ell_16pts(C1,tempv,F3,F4);	/* top */
+
+	VSUB2(tempv,F1,F2);
+	ell_16pts(C4,tempv,F3,F4);	/* bottom */
+ 
+	ell_16pts(C2,F1,F5,F6);	/* inner */
+	ell_16pts(C3,F1,F7,F8);	/* outer */
+ 
+	ADD_VL( vhead, &C1[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &C1[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	ADD_VL( vhead, &C2[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &C2[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	ADD_VL( vhead, &C3[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &C3[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	ADD_VL( vhead, &C4[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &C4[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	ADD_VL( vhead, &C1[0*3], 0);
+	ADD_VL( vhead, &C2[0*3], 1);
+	ADD_VL( vhead, &C4[0*3], 1);
+	ADD_VL( vhead, &C3[0*3], 1);
+	ADD_VL( vhead, &C1[0*3], 1);
+ 
+	ADD_VL( vhead, &C1[4*3], 0);
+	ADD_VL( vhead, &C2[4*3], 1);
+	ADD_VL( vhead, &C4[4*3], 1);
+	ADD_VL( vhead, &C3[4*3], 1);
+	ADD_VL( vhead, &C1[4*3], 1);
+
+	ADD_VL( vhead, &C1[8*3], 0);
+	ADD_VL( vhead, &C2[8*3], 1);
+	ADD_VL( vhead, &C4[8*3], 1);
+	ADD_VL( vhead, &C3[8*3], 1);
+	ADD_VL( vhead, &C1[8*3], 1);
+ 
+	ADD_VL( vhead, &C1[12*3], 0);
+	ADD_VL( vhead, &C2[12*3], 1);
+	ADD_VL( vhead, &C4[12*3], 1);
+	ADD_VL( vhead, &C3[12*3], 1);
+	ADD_VL( vhead, &C1[12*3], 1);
 }

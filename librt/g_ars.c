@@ -38,47 +38,36 @@ extern fastf_t *rd_curve();
 HIDDEN void	ars_hitsort();
 
 /*
- *			A R S _ P R E P
- *  
- *  This routine is used to prepare a list of planar faces for
- *  being shot at by the ars routines.
+ *			A R S _ R E A D I N
  *
- * Process an ARS, which is represented as a vector
- * from the origin to the first point, and many vectors
- * from the first point to the remaining points.
- *  
- *  This routine is unusual in that it has to read additional
- *  database records to obtain all the necessary information.
+ *  Read all the curves in as a two dimensional array.
+ *  The caller is responsible for freeing the dynamic memory.
  */
-ars_prep( vecxx, stp, mat, sp, rtip )
-fastf_t		*vecxx;
-struct soltab	*stp;
+HIDDEN fastf_t **
+ars_readin( rp, mat )
+union record	*rp;
 matp_t		mat;
-struct solidrec	*sp;
-struct rt_i	*rtip;
 {
-	LOCAL struct ars_rec *ap;	/* ARS A record pointer */
-	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
 	register fastf_t **curves;	/* array of curve base addresses */
-	LOCAL int pts_per_curve;
-	LOCAL int ncurves;
-	LOCAL vect_t base_vect;
-	LOCAL struct tri_specific *plp;
-	LOCAL int pts;			/* return from arsface() */
-	LOCAL fastf_t f;
+	LOCAL int	pts_per_curve;
+	LOCAL int	ncurves;
+	LOCAL vect_t	base_vect;
+	LOCAL fastf_t	f;
+	int		currec;
 
-	ap = (struct ars_rec *) sp;	/* PUN for record.anything */
-	ncurves = ap->a_m;
-	pts_per_curve = ap->a_n;
+	ncurves = rp[0].a.a_m;
+	pts_per_curve = rp[0].a.a_n;
 
 	/*
 	 * Read all the curves into memory, and store their pointers
 	 */
 	i = (ncurves+1) * sizeof(fastf_t **);
 	curves = (fastf_t **)rt_malloc( i, "ars curve ptrs" );
+	currec = 1;
 	for( i=0; i < ncurves; i++ )  {
-		curves[i] = rd_curve( rtip, pts_per_curve );
+		curves[i] = rd_curve( &rp[currec], pts_per_curve );
+		currec += (pts_per_curve+7)/8;
 	}
 
 	/*
@@ -94,6 +83,7 @@ struct rt_i	*rtip;
 			LOCAL vect_t	homog;
 
 			if( i==0 && j == 0 )  {
+				/* base vector */
 				VMOVE( homog, v );
 				MAT4X3PNT( base_vect, mat, homog );
 				VMOVE( v, base_vect );
@@ -105,6 +95,42 @@ struct rt_i	*rtip;
 		}
 		VMOVE( v, curves[i] );		/* replicate first point */
 	}
+	return( curves );
+}
+
+/*
+ *			A R S _ P R E P
+ *  
+ *  This routine is used to prepare a list of planar faces for
+ *  being shot at by the ars routines.
+ *
+ * Process an ARS, which is represented as a vector
+ * from the origin to the first point, and many vectors
+ * from the first point to the remaining points.
+ *  
+ *  This routine is unusual in that it has to read additional
+ *  database records to obtain all the necessary information.
+ */
+ars_prep( vecxx, stp, mat, rp, rtip, dp )
+fastf_t		*vecxx;
+struct soltab	*stp;
+matp_t		mat;
+union record	*rp;
+struct rt_i	*rtip;
+struct directory *dp;
+{
+	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
+	register int	i, j;
+	register fastf_t **curves;	/* array of curve base addresses */
+	LOCAL int	pts_per_curve;
+	LOCAL int	ncurves;
+	LOCAL int	pts;		/* return from arsface() */
+	LOCAL fastf_t	f;
+
+	ncurves = rp[0].a.a_m;
+	pts_per_curve = rp[0].a.a_n;
+
+	curves = ars_readin( rp, mat );
 
 	/*
 	 * Compute bounding sphere.
@@ -173,13 +199,13 @@ struct rt_i	*rtip;
 
 /*
  *			R D _ C U R V E
- *  
+ *
  *  rd_curve() reads a set of ARS B records and returns a pointer
  *  to a malloc()'ed memory area of fastf_t's to hold the curve.
  */
 fastf_t *
-rd_curve(rtip, npts)
-struct rt_i	*rtip;
+rd_curve(rp, npts)
+union record	*rp;
 int		npts;
 {
 	LOCAL int bytes;
@@ -187,27 +213,26 @@ int		npts;
 	LOCAL fastf_t *base;
 	register fastf_t *fp;		/* pointer to temp vector */
 	register int i;
-	LOCAL union record r;
+	LOCAL union record *rr;
+	int	rec;
 
 	/* Leave room for first point to be repeated */
-	bytes = (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT;
-	if( (fp = (fastf_t *)rt_malloc(bytes, "ars curve")) == (fastf_t *) 0 )
-		rt_bomb("ars.c/rd_curve():  malloc error");
-	base = fp;
+	base = fp = (fastf_t *)rt_malloc(
+	    (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT,
+	    "ars curve" );
 
-	while( npts > 0 )  {
-		if( fread( (char *)&r, sizeof(r), 1, rtip->fp ) != 1 )
-			rt_bomb("ars.c/rd_curve():  read error");
-
-		if( r.b.b_id != ID_ARS_B )  {
+	rec = 0;
+	for( ; npts > 0; npts -= 8 )  {
+		rr = &rp[rec++];
+		if( rr->b.b_id != ID_ARS_B )  {
 			rt_log("ars.c/rd_curve():  non-ARS_B record!\n");
 			break;
 		}
 		lim = (npts>8) ? 8 : npts;
 		for( i=0; i<lim; i++ )  {
-			VMOVE( fp, (&(r.b.b_values[i*3])) );	/* cvt from dbfloat_t, too */
+			/* cvt from dbfloat_t */
+			VMOVE( fp, (&(rr->b.b_values[i*3])) );
 			fp += ELEMENTS_PER_VECT;
-			npts--;
 		}
 	}
 	return( base );
@@ -367,7 +392,7 @@ struct application	*ap;
 		hp->hit_dist = k;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;
-		
+
 		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 		if( nhits++ >= MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
@@ -431,17 +456,8 @@ struct application	*ap;
 			newseg->seg_next = segp;
 			segp = newseg;
 			segp->seg_stp = stp;
-#if defined( alliant ) && ! defined( STRUCT_COPY_WORKS )
-			segp->seg_in.hit_dist = hits[i-2].hit_dist;
-			segp->seg_in.hit_vpriv[X] = hits[i-2].hit_vpriv[X];
-			segp->seg_in.hit_private = hits[i-2].hit_private;
-			segp->seg_out.hit_dist = hits[i-1].hit_dist;
-			segp->seg_out.hit_vpriv[X] = hits[i-1].hit_vpriv[X];
-			segp->seg_out.hit_private = hits[i-1].hit_private;
-#else
 			segp->seg_in = hits[i-2];	/* struct copy */
 			segp->seg_out = hits[i-1];	/* struct copy */
-#endif
 		}
 		return(segp);			/* HIT */
 	}
@@ -572,7 +588,54 @@ ars_class()
 	return(0);
 }
 
+/*
+ *			A R S _ P L O T
+ */
 void
-ars_plot()
+ars_plot( rp, mat, vhead, dp )
+union record	*rp;
+mat_t		mat;
+struct vlhead	*vhead;
 {
+	register int	i;
+	register int	j;
+	register fastf_t **curves;	/* array of curve base addresses */
+	int	pts_per_curve;
+	int	ncurves;
+
+	ncurves = rp[0].a.a_m;
+	pts_per_curve = rp[0].a.a_n;
+
+	curves = ars_readin( rp, mat );
+
+	/*
+	 *  Draw the "waterlines", by tracing each curve.
+	 *  n+1th point is first point replicated by code above.
+	 */
+	for( i = 0; i < ncurves; i++ )  {
+		register fastf_t *v1;
+
+		v1 = curves[i];
+		ADD_VL( vhead, v1, 0 );
+		v1 += ELEMENTS_PER_VECT;
+		for( j = 1; j <= pts_per_curve; j++, v1 += ELEMENTS_PER_VECT )
+			ADD_VL( vhead, v1, 1 );
+	}
+
+	/*
+	 *  Connect the Ith points on each curve, to make a mesh.
+	 */
+	for( i = 0; i < pts_per_curve; i++ )  {
+		ADD_VL( vhead, &curves[0][i*ELEMENTS_PER_VECT], 0 );
+		for( j = 1; j < ncurves; j++ )
+			ADD_VL( vhead, &curves[j][i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	/*
+	 *  Free storage for faces
+	 */
+	for( i = 0; i < ncurves; i++ )  {
+		rt_free( (char *)curves[i], "ars curve" );
+	}
+	rt_free( (char *)curves, "ars curves[]" );
 }

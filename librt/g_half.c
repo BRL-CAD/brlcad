@@ -25,6 +25,7 @@ static char RCShalf[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
 #include "./debug.h"
 
 
@@ -145,20 +146,20 @@ struct application	*ap;
 	out = INFINITY;
 
 	{
-		FAST fastf_t	dn;		/* Direction dot Normal */
-		FAST fastf_t	dxbdn;
+		FAST fastf_t	slant_factor;	/* Direction dot Normal */
+		FAST fastf_t	norm_dist;
 
-		dxbdn = VDOT( halfp->half_N, rp->r_pt ) - halfp->half_d;
-		if( (dn = -VDOT( halfp->half_N, rp->r_dir )) < -1.0e-10 )  {
+		norm_dist = VDOT( halfp->half_N, rp->r_pt ) - halfp->half_d;
+		if( (slant_factor = -VDOT( halfp->half_N, rp->r_dir )) < -1.0e-10 )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
-			out = dxbdn/dn;
-		} else if ( dn > 1.0e-10 )  {
+			out = norm_dist/slant_factor;
+		} else if ( slant_factor > 1.0e-10 )  {
 			/* entry point, when dir.N > 0.  in = max(in,s) */
-			in = dxbdn/dn;
+			in = norm_dist/slant_factor;
 		}  else  {
 			/* ray is parallel to plane when dir.N == 0.
 			 * If it is outside the solid, stop now */
-			if( dxbdn > 0.0 )
+			if( norm_dist > 0.0 )
 				return( SEG_NULL );	/* MISS */
 		}
 	}
@@ -327,7 +328,58 @@ hlf_class()
 	return(0);
 }
 
+/*
+ *			H L F _ P L O T
+ *
+ *  The representation of a halfspace is an OUTWARD pointing
+ *  normal vector, and the distance of the plane from the origin.
+ *
+ *  Drawing a halfspace is difficult when using a finite display.
+ *  Drawing the boundary plane is hard enough.
+ *  We just make a cross in the plane, with the outward normal
+ *  drawn shorter.
+ */
 void
-hlf_plot()
+hlf_plot( rp, mat, vhead, dp )
+union record	*rp;
+mat_t		mat;
+struct vlhead	*vhead;
+struct directory *dp;
 {
+	register int i, j;
+	vect_t cent;		/* some point on the plane */
+	vect_t xbase, ybase;	/* perpendiculars to normal */
+	vect_t x1, x2;
+	vect_t y1, y2;
+	vect_t tip;	
+
+	/* "center" point on the plane */
+	VSCALE( cent, &(rp[0].s.s_half_N), rp[0].s.s_half_d );
+	/* The use of "x" and "y" here is not related to the axis */
+	vec_perp( xbase, cent );
+	VCROSS( ybase, xbase, &(rp[0].s.s_half_N) );
+	/* Arrange for the cross to be 2 meters across */
+	VUNITIZE( xbase );
+	VUNITIZE( ybase);
+	VSCALE( xbase, xbase, 1000 );
+	VSCALE( ybase, ybase, 1000 );
+
+	VADD2( x1, cent, xbase );
+	VSUB2( x2, cent, xbase );
+	VADD2( y1, cent, ybase );
+	VSUB2( y2, cent, ybase );
+
+	ADD_VL( vhead, x1, 0 );		/* the cross */
+	ADD_VL( vhead, x2, 1 );
+	ADD_VL( vhead, y1, 0 );
+	ADD_VL( vhead, y2, 1 );
+	ADD_VL( vhead, x2, 1 );		/* the box */
+	ADD_VL( vhead, y1, 1 );
+	ADD_VL( vhead, x1, 1 );
+	ADD_VL( vhead, y2, 1 );
+
+	VSCALE( tip, &(rp[0].s.s_half_N), 500 );
+	VADD2( tip, cent, tip );
+	ADD_VL( vhead, cent, 0 );
+	ADD_VL( vhead, tip, 1 );
 }

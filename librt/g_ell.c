@@ -477,7 +477,91 @@ ell_class()
 	return(0);
 }
 
+/*
+ *			E L L _ 1 6 P T S
+ */
+#define ELLOUT(n)	ov+(n-1)*3
 void
-ell_plot()
+ell_16pts( ov, V, A, B )
+register fastf_t *ov;
+register fastf_t *V;
+fastf_t *A, *B;
 {
+	static fastf_t c, d, e, f,g,h;
+
+	e = h = .92388;
+	c = d = .707107;
+	g = f = .382683;
+
+	VADD2( ELLOUT(1), V, A );
+	VJOIN2( ELLOUT(2), V, e, A, f, B );
+	VJOIN2( ELLOUT(3), V, c, A, d, B );
+	VJOIN2( ELLOUT(4), V, g, A, h, B );
+	VADD2( ELLOUT(5), V, B );
+	VJOIN2( ELLOUT(6), V, -g, A, h, B );
+	VJOIN2( ELLOUT(7), V, -c, A, d, B );
+	VJOIN2( ELLOUT(8), V, -e, A, f, B );
+	VSUB2( ELLOUT(9), V, A );
+	VJOIN2( ELLOUT(10), V, -e, A, -f, B );
+	VJOIN2( ELLOUT(11), V, -c, A, -d, B );
+	VJOIN2( ELLOUT(12), V, -g, A, -h, B );
+	VSUB2( ELLOUT(13), V, B );
+	VJOIN2( ELLOUT(14), V, g, A, -h, B );
+	VJOIN2( ELLOUT(15), V, c, A, -d, B );
+	VJOIN2( ELLOUT(16), V, e, A, -f, B );
+}
+
+/* Names for GENELL fields */
+#define VELL	&points[0]
+#define AELL	&points[3]
+#define BELL	&points[6]
+#define CELL	&points[9]
+
+void
+ell_plot( rp, matp, vhead, dp )
+union record	*rp;
+register matp_t matp;
+struct vlhead	*vhead;
+struct directory *dp;
+{
+	register int i;
+	register fastf_t *op;
+	register dbfloat_t *ip;
+	fastf_t top[16*3];
+	fastf_t middle[16*3];
+	fastf_t bottom[16*3];
+	fastf_t	points[3*8];
+
+	/*
+	 * Rotate, translate, and scale the V point.
+	 * Simply rotate and scale the A, B, and C vectors.
+	 */
+	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+
+	ip = &rp[0].s.s_values[1*3];
+	op = &points[1*3];
+	for(i=1; i<4; i++) {
+		MAT4X3VEC( op, matp, ip );
+		op += ELEMENTS_PER_VECT;
+		ip += 3;
+	}
+
+	ell_16pts( top, VELL, AELL, BELL );
+	ell_16pts( bottom, VELL, BELL, CELL );
+	ell_16pts( middle, VELL, AELL, CELL );
+
+	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	ADD_VL( vhead, &bottom[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	ADD_VL( vhead, &middle[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &middle[i*ELEMENTS_PER_VECT], 1 );
+	}
 }

@@ -86,118 +86,121 @@ void	interp_uv();		/* XXX */
 void	n_free();		/* XXX */
 void	shot_poly();		/* XXX */
 
+#define SPL_NULL	((struct b_spline *)0)
+
+/*
+ *			S P L _ R E A D I N
+ *
+ *  Take an in-memory array of database records, and produce a
+ *  (struct b_spline) object.
+ *
+ *  Since the record granuals are not in the internal format,
+ *  we need to declare some of the variables as dbfloat_t and not
+ *  fastf_t.
+ */
+HIDDEN struct b_spline *
+spl_readin( drec, mat )
+union record	*drec;
+matp_t		mat;
+{
+	register int		i;
+	struct b_spline		*new_srf;
+	register fastf_t	*mesh_ptr;
+	int			epv;
+	register dbfloat_t	*vp;
+
+	if ( drec[0].u_id != ID_BSURF )  {
+		rt_log("spl_readin:  bad record 0%o\n", drec[0].u_id);
+		return( SPL_NULL );
+	}
+
+	/*
+	 * Allocate memory for a new surface.
+ 	 */
+	new_srf = (struct b_spline *) spl_new(
+		drec[0].d.d_order[0], drec[0].d.d_order[1],
+		drec[0].d.d_kv_size[0], drec[0].d.d_kv_size[1],
+		drec[0].d.d_ctl_size[0], drec[0].d.d_ctl_size[1],
+		drec[0].d.d_geom_type );
+
+	/* Read in the knot vectors and convert them to the 
+	 * internal representation.
+	 */
+	vp = ( dbfloat_t *) &drec[1];
+
+	/* U knots */
+	for( i = 0; i < drec[0].d.d_kv_size[0]; i++)
+		new_srf->u_kv->knots[i] = (fastf_t) *vp++;
+	/* V knots */
+	for( i = 0; i < drec[0].d.d_kv_size[1]; i++)
+		new_srf->v_kv->knots[i] =  (fastf_t) *vp++;
+
+	spl_kvnorm( new_srf->u_kv);
+	spl_kvnorm( new_srf->v_kv);
+
+	/*
+	 *  Transform the mesh control points in place,
+	 *  in the b-spline data structure.
+	 */
+	vp = (dbfloat_t *) &drec[drec[0].d.d_nknots+1];
+	mesh_ptr = new_srf->ctl_mesh->mesh;
+	epv = drec[0].d.d_geom_type;
+	i = ( drec[0].d.d_ctl_size[0] * drec[0].d.d_ctl_size[1]);
+	if( epv == P3 )  {
+		for( ; i > 0; i--)  {
+			MAT4X3PNT( mesh_ptr, mat, vp);
+			mesh_ptr += P3;
+			vp += P3;
+		}
+	} else if( epv == P4 )  {
+		for( ; i > 0; i--)  {
+			MAT4X4PNT( mesh_ptr, mat, vp);
+			mesh_ptr += P4;
+			vp += P4;
+		}
+	} else {
+		rt_log("spl_readin:  %d invalid elements-per-vect\n", epv );
+		return( SPL_NULL );	/* BAD */
+	}
+	return( new_srf );
+}
+
+
 /* 
- * S P L _ P R E P
+ *			S P L _ P R E P
  *
  * Given a pointer of a GED database record, and a transformation matrix,
  * determine if this is avalid B_spline solid, and if so prepare the
  * surface so that the subdivision works.
  */
-
-/* Since the record granuals consist of floating point values
- * we need to declare some of the read variables as dbfloat_t and not
- * fastf_t.
- */
 int
-spl_prep( vec,  stp,  mat, sp, rtip)
-register fastf_t * vec;
-struct soltab *stp;
-matp_t mat;
-struct solidrec *sp;
-struct rt_i * rtip;
+spl_prep( vec,  stp,  mat, rp, rtip, dp )
+register fastf_t *vec;
+struct soltab	*stp;
+matp_t		mat;
+union record	*rp;
+struct rt_i	*rtip;
+struct directory *dp;
 {
-	struct B_solid * bp;
 	struct b_head  *nlist = (struct b_head *) 0;
-	static union record rec;
 	register int    i;
-	int n_srfs;
+	int		n_srfs;
+	int		currec;
 
-	bp = (struct B_solid *) sp;
-
-	n_srfs = bp->B_nsurf;
+	n_srfs = rp[0].B.B_nsurf;
+	currec = 1;		/* rp[0] has header record */
 
 	while (n_srfs-- > 0) {
 		struct b_head * s_tree;
 		struct b_spline * new_srf;
 		struct b_spline * s_split;
-		int nbytes, nby;
-		dbfloat_t * vp;
-		dbfloat_t * fp;
-		fastf_t * mesh_ptr;
-		int epv;
 
-		i = fread( (char *) &rec, sizeof(rec), 1, rtip->fp );
-
-		if( i != 1 )
-			rt_bomb("spl_prep: read error");
-
-		if ( rec.u_id != ID_BSURF )
-		{
-			break;
+		if( (new_srf = spl_readin( &rp[currec], mat )) == SPL_NULL )  {
+			rt_log("spl_prep(%s):  database read error\n",
+				stp->st_name);
+			return( -1 );
 		}
-
-		/* Read in the knot vectors and convert them to the 
-		 * internal representation.
-		 */
-		nbytes = rec.d.d_nknots * sizeof( union record );
-		fp = vp = ( dbfloat_t *) rt_malloc( nbytes, "spl knots" );
-		if ( fread( (char *) vp, nbytes, 1, rtip->fp ) != 1 )
-		{
-			break;
-		}
-
-		epv = rec.d.d_geom_type;
-
-		/* If everything up to here is ok then allocate memory
-		 * for a surface.
-	 	 */
-		new_srf = (struct b_spline *) spl_new(
-			rec.d.d_order[0], rec.d.d_order[1],
-			rec.d.d_kv_size[0], rec.d.d_kv_size[1],
-			rec.d.d_ctl_size[0], rec.d.d_ctl_size[1],
-			rec.d.d_geom_type );
-
-		for( i = 0; i < rec.d.d_kv_size[0]; i++){	/* U knots */
-			new_srf->u_kv->knots[i] = (fastf_t) *vp++;
-		}
-		for( i = 0; i < rec.d.d_kv_size[1]; i++)	/* V knots */
-			new_srf->v_kv->knots[i] =  (fastf_t) *vp++;
-
-		rt_free( (char *) fp, "spl_prep: fp" );
-
-		/* Read in the mesh control points and convert them to
-		 * the b-spline data structure.
-		 */
-		nby = rec.d.d_nctls * sizeof( union record);
-		fp = vp = (dbfloat_t *) rt_malloc(nby,  "control mesh");
-		if( fread((char *) vp,  nby,  1, rtip->fp) != 1)
-			break;
-
-		spl_kvnorm( new_srf->u_kv);
-		spl_kvnorm( new_srf->v_kv);
-
-		mesh_ptr = new_srf->ctl_mesh->mesh;
-
-		i = ( rec.d.d_ctl_size[0] * rec.d.d_ctl_size[1]);
-		if( epv == P3 )  {
-			for( ; i > 0; i--)  {
-				MAT4X3PNT( mesh_ptr, mat, vp);
-				mesh_ptr += P3;
-				vp += P3;
-			}
-		} else if( epv == P4 )  {
-			for( ; i > 0; i--)  {
-				MAT4X4PNT( mesh_ptr, mat, vp);
-				mesh_ptr += P4;
-				vp += P4;
-			}
-		} else {
-			rt_log("%s:  %d not valid elements-per-vect\n",
-				stp->st_name, epv );
-			return(-1);	/* BAD */
-		}
-
-		rt_free( (char *) fp,  "free up mesh points");
+		currec += 1 + rp[currec].d.d_nknots + rp[currec].d.d_nctls;
 
 		GETSTRUCT( s_tree, b_head );
 		GETSTRUCT( s_tree->left, b_tree );
@@ -293,9 +296,86 @@ spl_class()
 	return(0);
 }
 
+/*
+ *			S P L _ P L O T
+ */
 void
-spl_plot()
+spl_plot( rp, mat, vhead, dp )
+union record	*rp;
+mat_t		mat;
+struct vlhead	*vhead;
+struct directory *dp;
 {
+	register int	i;
+	register int	j;
+	register fastf_t *vp;
+	register fastf_t *mesh;
+	int		cur_gran;
+	int		n_srfs;
+
+	n_srfs = rp[0].B.B_nsurf;
+	cur_gran = 1;
+
+	while( n_srfs-- > 0 )  {
+		register struct b_spline	*new;
+
+		if( (new = spl_readin( &rp[cur_gran], mat )) == SPL_NULL )  {
+			rt_log("spl_plot(%s):  database read error\n",
+				dp->d_namep);
+			return;
+		}
+		if ( rt_g.debug & DEBUG_SPLINE )  {
+			rt_log("%s surf %d: %d x %d\n",
+				dp->d_namep,
+				n_srfs,
+				new->ctl_mesh->mesh_size[0],
+				new->ctl_mesh->mesh_size[1] );
+		}
+		cur_gran += 1 + rp[cur_gran].d.d_nknots + rp[cur_gran].d.d_nctls;
+
+		/* Perhaps some spline refinement here? */
+
+		/* Eliminate any homogenous coordinates */
+		if( new->ctl_mesh->pt_type == P4 )  {
+			vp = new->ctl_mesh->mesh;
+			i = new->ctl_mesh->mesh_size[0] * new->ctl_mesh->mesh_size[1];
+			for( ; i>0; i--, vp += new->ctl_mesh->pt_type )  {
+				static hvect_t	homog;
+
+				HDIVIDE( vp, vp );
+				/* Leaves us with [x,y,z,1] */
+			}
+		}
+
+		/* 
+		 * Draw the control mesh, by tracing each curve.
+		 */
+#define CTL_POS(a,b)	((((a)*new->ctl_mesh->mesh_size[1])+(b))*new->ctl_mesh->pt_type)
+		vp = new->ctl_mesh->mesh;
+
+		for( i = 0; i < new->ctl_mesh->mesh_size[0]; i++) {
+			ADD_VL( vhead, vp, 0 );
+			vp += new->ctl_mesh->pt_type;
+			for( j = 1; j < new->ctl_mesh->mesh_size[1]; j++ )  {
+				/** CTL_POS( i, j ); **/
+				ADD_VL( vhead, vp, 1 );
+				vp += new->ctl_mesh->pt_type;
+			}
+		}
+
+		/*
+		 *  Connect the Ith points on each curve, to make a mesh.
+		 */
+		for( i = 0; i < new->ctl_mesh->mesh_size[1]; i++ )  {
+			vp = new->ctl_mesh->mesh+CTL_POS( 0, i );
+			ADD_VL( vhead, vp, 0 );
+			for( j = 1; j < new->ctl_mesh->mesh_size[0]; j++ )  {
+				vp = new->ctl_mesh->mesh+CTL_POS( j, i );
+				ADD_VL( vhead, vp, 1 );
+			}
+		}
+		spl_sfree( new );
+	}
 }
 
 /*

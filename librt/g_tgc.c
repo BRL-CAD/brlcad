@@ -948,9 +948,63 @@ tgc_class()
 	return(0);
 }
 
+/* Names for TGC fields */
+#define VVAL	&points[0]
+#define HVAL	&points[3]
+#define AVAL	&points[6]
+#define BVAL	&points[9]
+#define CVAL	&points[12]
+#define DVAL	&points[15]
+
+/*
+ *			T G C _ P L O T
+ */
 void
-tgc_plot()
+tgc_plot( rp, matp, vhead, dp )
+union record	*rp;
+register matp_t matp;
+struct vlhead	*vhead;
+struct directory *dp;
 {
+	register int		i;
+	register fastf_t	*op;
+	register dbfloat_t	*ip;
+	fastf_t			top[16*3];
+	fastf_t			bottom[16*3];
+	static vect_t		work;		/* Vec addition work area */
+	static fastf_t		points[3*8];
+
+	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+
+	ip = &rp[0].s.s_values[1*3];
+	op = &points[1*3];
+	for( i=1; i<6; i++ )  {
+		MAT4X3VEC( op, matp, ip );
+		op += ELEMENTS_PER_VECT;
+		ip += 3;
+	}
+
+	ell_16pts( bottom, VVAL, AVAL, BVAL );
+	VADD2( work, VVAL, HVAL );
+	ell_16pts( top, work, CVAL, DVAL );
+
+	/* Draw the top */
+	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	/* Draw the bottom */
+	ADD_VL( vhead, &bottom[15*ELEMENTS_PER_VECT], 0 );
+	for( i=0; i<16; i++ )  {
+		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
+	}
+
+	/* Draw connections */
+	for( i=0; i<16; i += 4 )  {
+		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 0 );
+		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
+	}
 }
 
 /*

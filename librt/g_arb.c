@@ -26,6 +26,7 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
 #include "./debug.h"
 
 
@@ -85,7 +86,6 @@ matp_t		mat;
 struct rt_i	*rtip;
 {
 	register fastf_t *op;		/* Used for scanning vectors */
-	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
 	LOCAL vect_t	work;		/* Vector addition work area */
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	LOCAL int	faces;		/* # of faces produced */
@@ -159,19 +159,14 @@ struct rt_i	*rtip;
 		VMINMAX( stp->st_min, stp->st_max, op );
 		op += ELEMENTS_PER_VECT;
 	}
-	VSET( stp->st_center,
-		(stp->st_max[X] + stp->st_min[X])/2,
-		(stp->st_max[Y] + stp->st_min[Y])/2,
-		(stp->st_max[Z] + stp->st_min[Z])/2 );
+	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
+	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
 
-	dx = (stp->st_max[X] - stp->st_min[X])/2;
-	f = dx;
-	dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-	if( dy > f )  f = dy;
-	dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-	if( dz > f )  f = dz;
+	f = work[X];
+	if( work[Y] > f )  f = work[Y];
+	if( work[Z] > f )  f = work[Z];
 	stp->st_aradius = f;
-	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
+	stp->st_bradius = MAGNITUDE(work);
 	return(0);		/* OK */
 }
 
@@ -564,9 +559,49 @@ register struct soltab *stp;
 	}
 }
 
+#define ARB_FACE( valp, a, b, c, d ) \
+	ADD_VL( vhead, &valp[a*3], 0 ); \
+	ADD_VL( vhead, &valp[b*3], 1 ); \
+	ADD_VL( vhead, &valp[c*3], 1 ); \
+	ADD_VL( vhead, &valp[d*3], 1 );
+
+/*
+ *  			A R B _ P L O T
+ *
+ * Plot an ARB, which is represented as a vector
+ * from the origin to the first point, and 7 vectors
+ * from the first point to the remaining points.
+ */
 void
-arb_plot()
+arb_plot( rp, matp, vhead, dp )
+register union record	*rp;
+register matp_t		matp;
+struct vlhead		*vhead;
 {
+	register int		i;
+	register dbfloat_t	*ip;
+	register fastf_t	*op;
+	static vect_t		work;
+	static fastf_t		points[3*8];
+	
+	/*
+	 * Convert from vector to point notation for drawing.
+	 */
+	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
+
+	ip = &rp[0].s.s_values[1*3];
+	op = &points[1*3];
+	for( i=1; i<8; i++ )  {
+		VADD2( work, &rp[0].s.s_values[0], ip );
+		MAT4X3PNT( op, matp, work );
+		ip += 3;
+		op += ELEMENTS_PER_VECT;
+	}
+
+	ARB_FACE( points, 0, 1, 2, 3 );
+	ARB_FACE( points, 4, 0, 3, 7 );
+	ARB_FACE( points, 5, 4, 7, 6 );
+	ARB_FACE( points, 1, 5, 6, 2 );
 }
 
 int

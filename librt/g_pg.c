@@ -33,7 +33,6 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
-void	pg_hit_sort();
 
 /*
  *			P G _ P R E P
@@ -45,64 +44,64 @@ void	pg_hit_sort();
  * from the origin to the first point, and many vectors
  * from the first point to the remaining points.
  *  
- *  This routine is unusual in that it has to read additional
- *  database records to obtain all the necessary information.
  */
 int
-pg_prep( vecxx, stp, mat, sp, rtip )
+pg_prep( vecxx, stp, mat, rp, rtip, dp )
 fastf_t		*vecxx;
 struct soltab	*stp;
 matp_t		mat;
-struct solidrec	*sp;
+union record	*rp;
 struct rt_i	*rtip;
+struct directory *dp;
 {
-	LOCAL union record rec;
-	LOCAL fastf_t dx, dy, dz;	/* For finding the bounding spheres */
-	LOCAL struct tri_specific *plp;
-	LOCAL fastf_t f;
-	LOCAL vect_t work;
-	register int	i;
+	LOCAL vect_t	work[3];
+	LOCAL vect_t	norm;
+	register int	i, j;
 
-	for( ;; )  {
-		i = fread( (char *)&rec, sizeof(rec), 1, rtip->fp );
-		if( feof(rtip->fp) )
-			break;
-		if( i != 1 )
-			rt_bomb("pg_prep():  read error");
-		if( rec.u_id != ID_P_DATA )  break;
-		if( rec.q.q_count != 3 )  {
-			rt_log("pg_prep(%s):  q_count = %d\n",
-				stp->st_name, rec.q.q_count);
+	/* rp[0] has ID_P_HEAD record */
+	for( j = 1; j < dp->d_len; j++ )  {
+		if( rp[j].u_id != ID_P_DATA )  {
+			rt_log("pg_prep(%s):  bad record 0%o\n",
+				stp->st_name, rp[j].u_id );
 			return(-1);		/* BAD */
 		}
-		for( i=0; i < rec.q.q_count; i++ )  {
-			MAT4X3PNT( work, mat, rec.q.q_verts[i] );
-			VMOVE( rec.q.q_verts[i], work );
-			VMINMAX( stp->st_min, stp->st_max, work );
+		if( rp[j].q.q_count != 3 )  {
+			rt_log("pg_prep(%s):  q_count = %d\n",
+				stp->st_name, rp[j].q.q_count);
+			return(-1);		/* BAD */
 		}
-		(void)pgface( stp,
-			&(rec.q.q_verts[0][X]),
-			&(rec.q.q_verts[1][X]),
-			&(rec.q.q_verts[2][X]),
-			&(rec.q.q_norms[0][X]) );
+		for( i=0; i < 3; i++ )  {
+			/* Should worry about importing dbfloat_t here */
+			MAT4X3PNT( work[i], mat, rp[j].q.q_verts[i] );
+			VMINMAX( stp->st_min, stp->st_max, work[i] );
+		}
+		/* Import dbfloat_t normal */
+		VMOVE( norm, &(rp[j].q.q_norms[0][X]) );
+		(void)pgface( stp, work[0], work[1], work[2], norm );
 	}
 	if( stp->st_specific == 0 )  {
 		rt_log("pg(%s):  no faces\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
-	VSET( stp->st_center,
-		(stp->st_max[X] + stp->st_min[X])/2,
-		(stp->st_max[Y] + stp->st_min[Y])/2,
-		(stp->st_max[Z] + stp->st_min[Z])/2 );
 
-	dx = (stp->st_max[X] - stp->st_min[X])/2;
-	f = dx;
-	dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-	if( dy > f )  f = dy;
-	dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-	if( dz > f )  f = dz;
-	stp->st_aradius = f;
-	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
+	{
+		LOCAL fastf_t dx, dy, dz;
+		LOCAL fastf_t	f;
+
+		VSET( stp->st_center,
+			(stp->st_max[X] + stp->st_min[X])/2,
+			(stp->st_max[Y] + stp->st_min[Y])/2,
+			(stp->st_max[Z] + stp->st_min[Z])/2 );
+
+		dx = (stp->st_max[X] - stp->st_min[X])/2;
+		f = dx;
+		dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+		if( dy > f )  f = dy;
+		dz = (stp->st_max[Z] - stp->st_min[Z])/2;
+		if( dz > f )  f = dz;
+		stp->st_aradius = f;
+		stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
+	}
 
 	return(0);		/* OK */
 }
@@ -119,9 +118,9 @@ struct rt_i	*rtip;
  *	#pts	(3) if a valid plane resulted.
  */
 pgface( stp, ap, bp, cp, np )
-struct soltab *stp;
-float *ap, *bp, *cp;
-float *np;
+struct soltab	*stp;
+fastf_t		*ap, *bp, *cp;
+fastf_t		*np;
 {
 	register struct tri_specific *trip;
 	vect_t work;
@@ -284,7 +283,20 @@ struct application	*ap;
 		return(SEG_NULL);		/* MISS */
 
 	/* Sort hits, Near to Far */
-	pg_hit_sort( hits, nhits );
+	{
+		register int i, j;
+		LOCAL struct hit temp;
+
+		for( i=0; i < nhits-1; i++ )  {
+			for( j=i+1; j < nhits; j++ )  {
+				if( hits[i].hit_dist <= hits[j].hit_dist )
+					continue;
+				temp = hits[j];		/* struct copy */
+				hits[j] = hits[i];	/* struct copy */
+				hits[i] = temp;		/* struct copy */
+			}
+		}
+	}
 
 	if( nhits&1 )  {
 		register int i;
@@ -325,25 +337,6 @@ struct application	*ap;
 		return(segp);			/* HIT */
 	}
 	/* NOTREACHED */
-}
-
-void
-pg_hit_sort( h, nh )
-register struct hit h[];
-register int nh;
-{
-	register int i, j;
-	LOCAL struct hit temp;
-
-	for( i=0; i < nh-1; i++ )  {
-		for( j=i+1; j < nh; j++ )  {
-			if( h[i].hit_dist <= h[j].hit_dist )
-				continue;
-			temp = h[j];		/* struct copy */
-			h[j] = h[i];		/* struct copy */
-			h[i] = temp;		/* struct copy */
-		}
-	}
 }
 
 /*
@@ -394,9 +387,31 @@ pg_class()
 	return(0);
 }
 
+/*
+ *			P G _ P L O T
+ */
 void
-pg_plot()
+pg_plot( rp, xform, vhead, dp )
+union record	*rp;
+mat_t		xform;
+struct vlhead	*vhead;
+struct directory *dp;
 {
+	register int	i;
+	register int	n;	/* number of P_DATA records involved */
+	static vect_t work[5];
+
+	for( n=1; n < dp->d_len; n++ )  {
+		if( rp[n].q.q_count > 5 )
+			rp[n].q.q_count = 5;
+		for( i=0; i < rp[n].q.q_count; i++ )  {
+			MAT4X3PNT( work[i], xform, rp[n].q.q_verts[i] );
+		}
+		ADD_VL( vhead, work[rp[n].q.q_count-1], 0 );
+		for( i=0; i < rp[n].q.q_count; i++ )  {
+			ADD_VL( vhead, work[i], 1 );
+		}
+	}
 }
 
 void
