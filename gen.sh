@@ -399,6 +399,7 @@ arch)
 	chmod 444 ${ARCHIVE}
 	echo "${ARCHIVE} created"
 
+	FTP_ARCHIVE=/usr/spool/ftp/tmp/cad${RELEASE}.tar
 	rm -f /tmp/cad-exclude
 	echo 'papers/*' >> /tmp/cad-exclude
 	echo 'vfont/*' >> /tmp/cad-exclude
@@ -407,15 +408,20 @@ arch)
 	echo 'doc/*' >> /tmp/cad-exclud
 	echo 'pix/*' >> /tmp/cad-exclude
 	/usr/gnu/bin/tar -cvf - -X /tmp/cad-exclude * |\
-		crypt alphabeta | compress > ${ARCHIVE}-a.Z
-	chmod 444 ${ARCHIVE}-a.Z
-	echo "${ARCHIVE}-a.Z created"
+		crypt alphabeta | compress > ${FTP_ARCHIVE}-a.Z
+		compress | crypt ${KEY} > ${FTP_ARCHIVE}-a.Z
+	echo "${FTP_ARCHIVE}-a.Z created"
 	echo "${FTP_ARCHIVE}-a.Z created (doc)"
-	/usr/gnu/bin/tar cfv - Copy* README papers dmdfb doc \
-	    pix vfont contributed zzzEND |\
-		crypt alphabeta | compress > ${ARCHIVE}-b.Z
-	chmod 444 ${ARCHIVE}-b.Z
-	echo "${ARCHIVE}-b.Z created"
+	/usr/gnu/bin/tar cfv - Copy* README doc pix zzzEND |\
+		crypt alphabeta | compress > ${FTP_ARCHIVE}-b.Z
+		compress | crypt ${KEY} > ${FTP_ARCHIVE}-b.Z
+	echo "${FTP_ARCHIVE}-b.Z created"
+	echo "${FTP_ARCHIVE}-b.Z created (core 1)"
+	/usr/gnu/bin/tar cfv - Copy* README papers dmdfb \
+	    vfont contributed zzzEND |\
+		crypt alphabeta | compress > ${FTP_ARCHIVE}-c.Z
+		compress | crypt ${KEY} > ${FTP_ARCHIVE}-c.Z
+	echo "${FTP_ARCHIVE}-c.Z created"
 	rm -f ${EXCLUDE}
 	;;
 
