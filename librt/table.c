@@ -361,12 +361,6 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,
 
-	"ID_FBM",	0,		/* 25  */
-		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
-		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
-		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-		rt_fbm_import,	rt_fbm_export,	rt_fbm_ifree,
-		rt_nul_describe,rt_nul_xform,
 
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
 
