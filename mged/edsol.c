@@ -2217,55 +2217,55 @@ sedit_menu()  {
 
 	menuflag = 0;		/* No menu item selected yet */
 
-	mmenu_set( MENU_L1, MENU_NULL );
+	mmenu_set_all( MENU_L1, MENU_NULL );
 	chg_l2menu(ST_S_EDIT);
                                                                       
 	switch( es_int.idb_type ) {
 
 	case ID_ARB8:
-		mmenu_set( MENU_L1, cntrl_menu );
+		mmenu_set_all( MENU_L1, cntrl_menu );
 		break;
 	case ID_TGC:
-		mmenu_set( MENU_L1, tgc_menu );
+		mmenu_set_all( MENU_L1, tgc_menu );
 		break;
 	case ID_TOR:
-		mmenu_set( MENU_L1, tor_menu );
+		mmenu_set_all( MENU_L1, tor_menu );
 		break;
 	case ID_ELL:
-		mmenu_set( MENU_L1, ell_menu );
+		mmenu_set_all( MENU_L1, ell_menu );
 		break;
 	case ID_ARS:
-		mmenu_set( MENU_L1, ars_menu );
+		mmenu_set_all( MENU_L1, ars_menu );
 		break;
 	case ID_BSPLINE:
-		mmenu_set( MENU_L1, spline_menu );
+		mmenu_set_all( MENU_L1, spline_menu );
 		break;
 	case ID_RPC:
-		mmenu_set( MENU_L1, rpc_menu );
+		mmenu_set_all( MENU_L1, rpc_menu );
 		break;
 	case ID_RHC:
-		mmenu_set( MENU_L1, rhc_menu );
+		mmenu_set_all( MENU_L1, rhc_menu );
 		break;
 	case ID_EPA:
-		mmenu_set( MENU_L1, epa_menu );
+		mmenu_set_all( MENU_L1, epa_menu );
 		break;
 	case ID_EHY:
-		mmenu_set( MENU_L1, ehy_menu );
+		mmenu_set_all( MENU_L1, ehy_menu );
 		break;
 	case ID_ETO:
-		mmenu_set( MENU_L1, eto_menu );
+		mmenu_set_all( MENU_L1, eto_menu );
 		break;
 	case ID_NMG:
-		mmenu_set( MENU_L1, nmg_menu );
+		mmenu_set_all( MENU_L1, nmg_menu );
 		break;
 	case ID_PIPE:
-		mmenu_set( MENU_L1, pipe_menu );
+		mmenu_set_all( MENU_L1, pipe_menu );
 		break;
 	case ID_VOL:
-		mmenu_set( MENU_L1, vol_menu );
+		mmenu_set_all( MENU_L1, vol_menu );
 		break;
 	case ID_EBM:
-		mmenu_set( MENU_L1, ebm_menu );
+		mmenu_set_all( MENU_L1, ebm_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -2335,7 +2335,7 @@ get_rotation_vertex()
   bu_vls_printf(&str, ") [%d]: ",arb_vertices[type][loc]);
 
   bu_vls_printf(&cmd, "mged_input_dialog .get_vertex %S {Need vertex for solid rotate}\
- {%s} vertex_num %d 0 OK", dName, bu_vls_addr(&str), arb_vertices[type][loc]);
+ {%s} vertex_num %d 0 OK", &dName, bu_vls_addr(&str), arb_vertices[type][loc]);
 
   while(!valid){
     if(Tcl_Eval(interp, bu_vls_addr(&cmd)) != TCL_OK){
