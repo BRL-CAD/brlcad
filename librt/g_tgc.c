@@ -1822,19 +1822,16 @@ struct soltab *stp;
 /*
  *			R T _ T G C _ T E S S
  *
- *  Preliminary tesselation of the TGC, same algorithm as vector list.
+ *  Tesselation of the TGC.
  *
  *  Returns -
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 
-#if 0
-
 struct tgc_pts
 {
-	point_t pt;
-	vect_t norm;
+	vect_t tan_axb;
 	struct vertex *v;
 };
 
@@ -1847,7 +1844,8 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
-	struct faceuse		*fu;
+	struct shell		*s;		/* shell to hold facetted TGC */
+	struct faceuse		*fu,*fu_top,*fu_base;
 	struct rt_tgc_internal	*tip;
 	fastf_t			radius;		/* bounding sphere radius */
 	fastf_t			max_radius,min_radius; /* max/min of a,b,c,d */
@@ -1855,12 +1853,18 @@ struct rt_tol		*tol;
 	fastf_t			rel,abs,norm;	/* interpreted tolerances */
 	fastf_t			alpha_tol;	/* final tolerance for ellipse parameter */
 	fastf_t			ratio;		/* L/D for narrowest triangle */
+	fastf_t			narrow;		/* width of narrowest triangle */
 	int			nsplits;	/* number of intermediate ellipse to avoid large L/D faces */
 	int			nells;		/* total number of ellipses */
+	int			nsegs;		/* number of vertices/ellipse */
 	vect_t			*A;		/* array of A vectors for ellipses */
 	vect_t			*B;		/* array of B vectors for ellipses */
+	vect_t			vtmp;
+	vect_t			normal;		/* normal vector */
+	vect_t			rev_norm;	/* reverse normal */
 	struct tgc_pts		**pts;		/* array of points (pts[ellipse#][seg#]) */
 	struct nmg_ptbl		verts;		/* table of vertices used for top and bottom faces */
+	struct nmg_ptbl		faces;		/* table of faceuses for nmg_gluefaces */
 	struct vertex		**v[3];		/* array for making triangular faces */
 	int			i;
 
@@ -1900,36 +1904,36 @@ struct rt_tol		*tol;
 	if( d < min_radius )
 		min_radius = d;
 
-	if( ttol.abs <= 0.0 && ttol.rel <= 0.0 && ttol.norm <= 0.0 )
+	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
 	{
 		/* no tolerances specified, use 10% relative tolerance */
-		alpha_tol = 2.0 * acos( 0.8 ); /* 2.0 * acos( 1.0 - (2.0*radius*.1)/radius) */
+		alpha_tol = 2.0 * acos( 1.0 - 2.0 * min_radius * 0.1 / radius );
 	}
 	else
 	{
-		if( ttol.abs > 0.0 )
-			abs = 2.0 * acos( 1.0 - ttol.abs/radius );
+		if( ttol->abs > 0.0 )
+			abs = 2.0 * acos( 1.0 - ttol->abs/radius );
 		else
 			abs = rt_halfpi;
 
-		if( ttol.rel > 0.0 )
-			rel = 2.0 * acos( 1.0 - ttol.rel * 2.0 );
+		if( ttol->rel > 0.0 )
+			rel = 2.0 * acos( 1.0 - ttol->rel * 2.0 * min_radius/radius );
 		else
 			rel = rt_halfpi;
 
-		if( ttol.norm > 0.0 )
+		if( ttol->norm > 0.0 )
 		{
 			fastf_t norm_top,norm_bot;
 
 			if( a>b )
-				norm_bot = 2.0 * atan( tan( ttol.norm ) * (a/b) );
+				norm_bot = 2.0 * atan( tan( ttol->norm ) * (a/b) );
 			else
-				norm_bot = 2.0 * atan( tan( ttol.norm ) * (b/a) );
+				norm_bot = 2.0 * atan( tan( ttol->norm ) * (b/a) );
 
 			if( c>d )
-				norm_top = 2.0 * atan( tan( ttol.norm ) * (c/d) );
+				norm_top = 2.0 * atan( tan( ttol->norm ) * (c/d) );
 			else
-				norm_top = 2.0 * atan( tan( ttol.norm ) * (d/c) );
+				norm_top = 2.0 * atan( tan( ttol->norm ) * (d/c) );
 
 			if( norm_bot < norm_top )
 				norm = norm_bot;
@@ -1981,6 +1985,18 @@ struct rt_tol		*tol;
 	VMOVE( A[nells-1] , tip->c );
 	VMOVE( B[nells-1] , tip->d );
 
+	/* make sure that AxB points in the general direction of H */
+	VCROSS( vtmp , A[0] , B[0] );
+	if( VDOT( vtmp , tip->h ) < 0.0 )
+	{
+		/* exchange A's and B's */
+		VMOVE( B[0] , tip->a );
+		VMOVE( A[0] , tip->b );
+		VMOVE( B[nells-1] , tip->c );
+		VMOVE( A[nells-1] , tip->d );
+		
+	}
+
 	/* set intermediate ellipses */
 	for( i=1 ; i<nells-1 ; i++ )
 	{
@@ -2003,21 +2019,25 @@ struct rt_tol		*tol;
 	/* Make bottom face */
 	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
-	for( i=0 ; i<nsegs ; i++ )
+	for( i=nsegs-1 ; i>=0 ; i-- ) /* reverse order to get outward normal */
 		nmg_tbl( &verts , TBL_INS , (long *)&pts[0][i].v );
 
-	fu = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	fu_base = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
+	nmg_tbl( &faces , TBL_INS , (long *)fu_base );
 
 	/* Make top face */
+	nmg_tbl( &verts , TBL_RST , (long *)NULL );
 	for( i=0 ; i<nsegs ; i++ )
 		nmg_tbl( &verts , TBL_INS , (long *)&pts[nells-1][i].v );
 
-	fu = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
-	nmg_tbl( &faces , TBL_INS , (long *)fu );
+	fu_top = nmg_cmface( s , (struct vertex ***)NMG_TBL_BASEADDR( &verts ), nsegs );
+	nmg_tbl( &faces , TBL_INS , (long *)fu_top );
+
+	/* Free table of vertices */
+	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
 
 	/* Make triangular faces */
-	for i=0 ; i<nells-1 ; i++ )
+	for( i=0 ; i<nells-1 ; i++ )
 	{
 		int j;
 
@@ -2046,127 +2066,130 @@ struct rt_tol		*tol;
 	for( i=0 ; i<nells ; i++ )
 	{
 		fastf_t h_factor;
+		int j;
 
 		h_factor = (double)i/(double)(nells-1);
 		for( j=0 ; j<nsegs ; j++ )
 		{
-			fastf_t alpha;
+			double alpha;
+			double sin_alpha,cos_alpha;
+			point_t pt_geom;
 
 			alpha = rt_twopi * (double)(2*j+1)/(double)(2*nsegs);
+			sin_alpha = sin( alpha );
+			cos_alpha = cos( alpha );
 
 			/* vertex geometry */
-			VJOIN3( pts[i][j].pt , tip->v , h_factor , tip->h , cos( alpha ) , A[i] , sin( alpha ) , B[i] );
+			VJOIN3( pt_geom , tip->v , h_factor , tip->h , cos_alpha , A[i] , sin_alpha , B[i] );
+			nmg_vertex_gv( pts[i][j].v , pt_geom );
 
-			/* normal at vertex */
+			/* Storing the tangent here while sines and cosines are available */
+			VCOMB2( pts[i][j].tan_axb , -sin_alpha , A[i] , cos_alpha , B[i] );
 		}
 	}
+
+	/* Calculate vertexuse normals */
+	for( i=0 ; i<nells ; i++ )
+	{
+		int j,k;
+
+		k = i + 1;
+		if( k == nells )
+			k = i - 1;
+
+		for( j=0 ; j<nsegs ; j++ )
+		{
+			vect_t tan_h;		/* vector tangent from one ellipse to next */
+			struct vertexuse *vu;
+
+			/* normal at vertex */
+			if( i == nells - 1 )
+				VSUB2( tan_h , pts[i][j].v->vg_p->coord , pts[k][j].v->vg_p->coord )
+			else
+				VSUB2( tan_h , pts[k][j].v->vg_p->coord , pts[i][j].v->vg_p->coord )
+
+			VCROSS( normal , pts[i][j].tan_axb , tan_h );
+			VUNITIZE( normal );
+			VREVERSE( rev_norm , normal );
+
+			for( RT_LIST_FOR( vu , vertexuse , &pts[i][j].v->vu_hd ) )
+			{
+				NMG_CK_VERTEXUSE( vu );
+
+				fu = nmg_find_fu_of_vu( vu );
+				NMG_CK_FACEUSE( fu );
+
+				if( fu->orientation == OT_SAME )
+					nmg_vertexuse_nv( vu , normal );
+				else if( fu->orientation == OT_OPPOSITE )
+					nmg_vertexuse_nv( vu , rev_norm );
+			}
+		}
+	}
+
+	/* Finished with storage, so free it */
+	rt_free( (char *)A , "rt_tgc_tess: A" );
+	rt_free( (char *)B , "rt_tgc_tess: B" );
+	for( i=0 ; i<nells ; i++ )
+		rt_free( (char *)pts[i] , "rt_tgc_tess: pts[i]" );
+	rt_free( (char *)pts , "rt_tgc_tess: pts" );
+
+	/* Associate face plane equations */
+	for( i=0 ; i<NMG_TBL_END( &faces ) ; i++ )
+	{
+		fu = (struct faceuse *)NMG_TBL_GET( &faces , i );
+		NMG_CK_FACEUSE( fu );
+
+		if( nmg_fu_planeeqn( fu , tol ) )
+		{
+			rt_log( "rt_tess_tgc: failed to calculate plane equation\n" );
+			return( -1 );
+		}
+	}
+
+	/* Normals for vertexuses in base and top faces are wrong, fix them here */
+	for( i=0 ; i<2 ; i++ )
+	{
+		struct loopuse		*lu;
+		struct edgeuse		*eu;
+
+		if( i == 0 )
+			fu = fu_top;
+		else
+			fu = fu_base;
+
+		NMG_CK_FACEUSE( fu );
+
+		NMG_GET_FU_NORMAL( normal , fu );
+		VREVERSE( rev_norm , normal );
+		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		NMG_CK_LOOPUSE( lu );
+
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		{
+			struct vertexuse *vu;
+
+			NMG_CK_EDGEUSE( eu );
+
+			vu = eu->vu_p;
+			NMG_CK_VERTEXUSE( vu );
+
+			/* OT_SAME vertexuse gets same normal as OT_SAME faceuse */
+			nmg_vertexuse_nv( vu , normal );
+
+			vu = eu->eumate_p->vu_p;
+			NMG_CK_VERTEXUSE( vu );
+
+			/* OT_OPPOSITE use gets reversed normal */
+			nmg_vertexuse_nv( vu , rev_norm );
+		}
+	}
+
+	nmg_region_a( *r , tol );
+
+	/* glue faces together */
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+
+	return( 0 );
 }
-
-#else
-
-int
-rt_tgc_tess( r, m, ip, ttol, tol )
-struct nmgregion	**r;
-struct model		*m;
-struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
-{
-	struct shell		*s;
-	register int		i;
-	LOCAL fastf_t		top[16*3];
-	struct vertex		*vtop[16+1];
-	LOCAL fastf_t		bottom[16*3];
-	struct vertex		*vbottom[16+1];
-	struct vertex		*vtemp[16+1];
-	LOCAL vect_t		work;		/* Vec addition work area */
-	LOCAL struct rt_tgc_internal	*tip;
-	struct faceuse		*outfaceuses[2*16+2];
-	struct vertex		*vertlist[4];
-	vect_t			aXb;
-	vect_t			cXd;
-
-	RT_CK_DB_INTERNAL(ip);
-	tip = (struct rt_tgc_internal *)ip->idb_ptr;
-	RT_TGC_CK_MAGIC(tip);
-
-	/* Create two 16 point ellipses
-	 *  Note that in both cases the points need to go
-	 *  counterclockwise (CCW) around the H vector.
-	 */
-	VCROSS( aXb, tip->a, tip->b );
-	VCROSS( cXd, tip->c, tip->d );
-	if( VDOT( tip->h, aXb ) < 0 )
-		VREVERSE(tip->a, tip->a );
-	if( VDOT( tip->h, cXd ) < 0 )
-		VREVERSE(tip->c, tip->c );
-
-	VADD2( work, tip->v, tip->h );
-	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
-	rt_ell_16pts( top, work, tip->c, tip->d );
-
-	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
-
-	for( i=0; i<16; i++ )  {
-		vtop[i] = vtemp[i] = (struct vertex *)0;
-	}
-
-	/* Top face topology.  Verts are considered to go CCW */
-	outfaceuses[0] = nmg_cface(s, vtop, 16);
-
-	/* Bottom face topology.  Verts must go in opposite dir (CW) */
-	outfaceuses[1] = nmg_cface(s, vtemp, 16);
-	for( i=0; i<16; i++ )  vbottom[i] = vtemp[16-1-i];
-
-	/* Duplicate [0] as [16] to handle loop end condition, below */
-	vtop[16] = vtop[0];
-	vbottom[16] = vbottom[0];
-
-	/* Build topology for all the triangular side faces (2*16 of them)
-	 * hanging down from the top face to the bottom face.
-	 * increasing indices go towards counter-clockwise (CCW).
-	 */
-	for( i=0; i<16; i++ )  {
-		vertlist[0] = vtop[i];		/* from top, */
-		vertlist[1] = vbottom[i];	/* straight down, */
-		vertlist[2] = vbottom[i+1];	/* to left & back to top */
-		outfaceuses[2+2*i] = nmg_cface(s, vertlist, 3);
-
-		vertlist[0] = vtop[i];		/* from top, */
-		vertlist[1] = vbottom[i+1];	/* down to left, */
-		vertlist[2] = vtop[i+1];	/* straight up & to right */
-		outfaceuses[2+2*i+1] = nmg_cface(s, vertlist, 3);
-	}
-
-	for( i=0; i<16; i++ )  {
-		NMG_CK_VERTEX(vtop[i]);
-		NMG_CK_VERTEX(vbottom[i]);
-	}
-
-	/* Associate the vertex geometry, CCW */
-	for( i=0; i<16; i++ )  {
-		nmg_vertex_gv( vtop[i], &top[3*(i)] );
-	}
-	for( i=0; i<16; i++ )  {
-		nmg_vertex_gv( vbottom[i], &bottom[3*(i)] );
-	}
-
-	/* Associate the face geometry */
-	for (i=0 ; i < 2*16+2 ; ++i) {
-		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
-			return -1;		/* FAIL */
-	}
-
-	/* Glue the edges of different outward pointing face uses together */
-	nmg_gluefaces( outfaceuses, 2*16+2 );
-
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( *r, tol );
-
-	/* XXX just for testing, to make up for loads of triangles ... */
-	nmg_shell_coplanar_face_merge( s, tol, 1 );
-
-	return(0);
-}
-#endif
