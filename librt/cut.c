@@ -1345,6 +1345,28 @@ fail:
 }
 
 /*
+ *			R T _ C T _ P I E C E C O U N T
+ *
+ *  Returns the total number of solids and solid "pieces" in a boxnode.
+ */
+HIDDEN int
+rt_ct_piececount( cutp )
+CONST union cutter *cutp;
+{
+	int	i;
+	int	count;
+
+	BU_ASSERT( cutp->cut_type == CUT_BOXNODE );
+
+	count = cutp->bn.bn_len;
+
+	for( i = cutp->bn.bn_piecelen-1; i >= 0; i-- )  {
+		count += cutp->bn.bn_piecelist[i].npieces;
+	}
+	return count;
+}
+
+/*
  *			R T _ C T _ O P T I M
  *  
  *  Optimize a cut tree.  Work on nodes which are over the pre-set limits,
@@ -1370,7 +1392,7 @@ int	depth;
 		return;
 	}
 
-	if( rt_g.debug&DEBUG_CUTDETAIL )  bu_log("rt_ct_optim( cutp=x%x, depth=%d ) len=%d, piecelen=%d\n", cutp, depth, cutp->bn.bn_len, cutp->bn.bn_piecelen);
+	if( rt_g.debug&DEBUG_CUTDETAIL )  bu_log("rt_ct_optim( cutp=x%x, depth=%d ) piececount=%d\n", cutp, depth, rt_ct_piececount(cutp));
 
 	/*
 	 * BOXNODE (leaf)
@@ -1408,7 +1430,7 @@ int	depth;
 	axis = AXIS(depth);
 	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
 		return;
-	oldlen = cutp->bn.bn_len;	/* save before rt_ct_box() */
+	oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
  	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
  		return;			/* not practical */
 	if( rt_ct_box( rtip, cutp, axis, where ) == 0 )  {
@@ -1417,9 +1439,8 @@ int	depth;
 		if( rt_ct_box( rtip, cutp, AXIS(depth+1), where ) == 0 )
 			return;	/* hopeless */
 	}
-/* XXX This isn't sufficient with solid pieces */
-	if( cutp->cn.cn_l->bn.bn_len >= oldlen &&
-	    cutp->cn.cn_r->bn.bn_len >= oldlen )  return;	/* hopeless */
+	if( rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
+	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen )  return; /* hopeless */
  }
 #endif
 	/* Box node is now a cut node, recurse */
