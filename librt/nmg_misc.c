@@ -1983,13 +1983,16 @@ struct edgeuse	*eu1_first;
 	 * it is not a candidate for deletion */
 	for( RT_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
-		/* Ignore vu's not in this shell */
-		if( nmg_find_s_of_vu( vu ) != s1 )  continue;
-
 		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )  {
+			/* vertex is referred to by a self-loop */
+			if( vu->up.lu_p->orientation == OT_BOOLPLACE )  {
+				/* This kind is transient, and safe to ignore */
+				continue;
+			}
 			ret = -4;
 			goto out;
 		}
+		NMG_CK_EDGE(vu->up.eu_p->e_p);
 		if( vu->up.eu_p->e_p->eg_p != eg )  {
 			ret = -5;
 			goto out;
@@ -2004,8 +2007,9 @@ struct edgeuse	*eu1_first;
 		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
 		eu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 );
 		NMG_CK_EDGEUSE(eu2);
-		if( eu2->e_p->eg_p != eg )
+		if( eu2->e_p->eg_p != eg )  {
 			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
+		}
 		if( nmg_keu( eu2 ) )
 			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
 
