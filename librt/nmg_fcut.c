@@ -734,18 +734,23 @@ out:
  *	and "this", the current one being considered.
  */
 static int
-nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass )
+nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass, skip_index )
 struct nmg_vu_stuff	*vs;
 int	start;		/* vu index of coincident range */
 int	end;
 double	lo_ang;
 double	hi_ang;
 int	wclass;
+int	skip_index;
 {
 	register int	i;
 	double	cand_lo;
 	double	cand_hi;
 	int	candidate;
+
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) START\n",
+			start, end, lo_ang, hi_ang);
 
 	candidate = -1;
 	cand_lo = lo_ang;
@@ -756,21 +761,43 @@ int	wclass;
 		int	this_wrt_orig;
 		int	this_wrt_cand;
 
+		NMG_CK_VERTEXUSE( vs[i].vu );
+		if( i == skip_index )  {
+rt_log("Skipping index %d\n", i);
+			continue;
+		}
+
 		/* Ignore wedges crossing, or on other side of line */
-		if( vs[i].wedge_class != wclass )  continue;
+		if( vs[i].wedge_class != wclass )  {
+rt_log("Seeking wedge_class=%s, [%d] has wedge_class %s\n",
+WEDGECLASS2STR(wclass), i, WEDGECLASS2STR(vs[i].wedge_class) );
+			continue;
+		}
 
 		this_wrt_orig = nmg_compare_2_wedges(
 			vs[i].lo_ang, vs[i].hi_ang,
 			lo_ang, hi_ang );
 		if( this_wrt_orig != WEDGE2_AB_IN_CD )  continue;	/* not inside */
 
+		if( candidate < 0 ) {
+			/* This wedge AB is inside original wedge.
+			 * If candidate is -1, use AB as candidate.
+			 */
+rt_log("Initial candidate %d selected\n", i);
+			candidate = i;
+			cand_lo = vs[i].lo_ang;
+			cand_hi = vs[i].hi_ang;
+			continue;
+		}
+
 		this_wrt_cand = nmg_compare_2_wedges(
 			vs[i].lo_ang, vs[i].hi_ang,
 			cand_lo, cand_hi );
 		switch( this_wrt_cand )  {
 		case WEDGE2_CD_IN_AB:
-			/* This wedge contains candidate wedge, therefore
+			/* This wedge AB contains candidate wedge CD, therefore
 			 * this wedge is closer to original wedge */
+rt_log("This candidate %d is closer\n", i);
 			candidate = i;
 			cand_lo = vs[i].lo_ang;
 			cand_hi = vs[i].hi_ang;
@@ -778,12 +805,14 @@ int	wclass;
 		case WEDGE2_NO_OVERLAP:
 			/* No overlap, but both are inside.  Take lower angle */
 			if( vs[i].lo_ang < cand_lo )  {
+rt_log("Taking lower angle %d\n", i);
 				candidate = i;
 				cand_lo = vs[i].lo_ang;
 				cand_hi = vs[i].hi_ang;
 			}
 			break;
 		default:
+rt_log("Continuing with search\n");
 			continue;
 		}
 	}
@@ -1014,16 +1043,52 @@ double	hi_ang;
 int	wclass;
 {
 	register int	i;
-	int	this_wedge;
+	int	outer_wedge;
+	int	inner_wedge;
+	struct loopuse	*outer_lu;
+	struct loopuse	*inner_lu;
 
-	this_wedge = nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass );
-	if( this_wedge <= -1 )  return 0;	/* No wedges to process */
+again:
+	/* There may be many wedges to iterate over */
+	outer_wedge = nmg_find_vu_in_wedge( vs, start, end, lo_ang, hi_ang, wclass, -1 );
+	if( outer_wedge <= -1 )  return 0;	/* No wedges to process */
 
 	/* There is at least one wedge on this side of the line */
+	outer_lu = nmg_lu_of_vu( vs[outer_wedge].vu );
+	NMG_CK_LOOPUSE(outer_lu);
 
+	inner_wedge = nmg_find_vu_in_wedge( vs, start, end,
+		vs[outer_wedge].lo_ang, vs[outer_wedge].hi_ang,
+		wclass, outer_wedge );
+	if( inner_wedge <= -1 )  {
+		/*
+		 *  See if there is another outer wedge that starts where
+		 *  outer_wedge left off.
+		 */
+		lo_ang = vs[outer_wedge].hi_ang;
+		goto again;
+	}
+	if( inner_wedge == outer_wedge )  rt_bomb("nmg_special_wedge_processing() identical vu selections?\n");
 
-	/* XXX more here */
-	rt_log("XXX special wedge processing needed\n");
+	inner_lu = nmg_lu_of_vu( vs[inner_wedge].vu );
+	NMG_CK_LOOPUSE(inner_lu);
+
+	if( outer_lu == inner_lu )  {
+		rt_log("special_wedge:  inner and outer wedges from same loop, cutting loop\n");
+		(void)nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
+		return 1;
+	}
+
+	rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
+
+	/* Recurse on inner wedge */
+	if( nmg_special_wedge_processing( vs, start, end,
+	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass ) )
+		return 1;	/* An inner wedge was cut */
+
+	rt_log("Inner wedge was not cut, need to consider cut/joinhere\n");
+
+	rt_bomb("XXX special wedge processing needed\n");
 	return 1;
 }
 
@@ -1057,6 +1122,7 @@ int			end;		/* last index + 1 */
 	ls = (struct nmg_loop_stuff *)rt_malloc( sizeof(struct nmg_loop_stuff)*num,
 		"nmg_loop_stuff" );
 
+top:
 	/* Assess each vu, create list of loopuses, find max angles */
 	nloop = 0;
 	nvu = 0;
@@ -1164,8 +1230,10 @@ got_loop:
 	/* XXX */
 
 	/* Here is where the special wedge-breaking code goes */
-	nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT );
-	nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT );
+	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT ) )
+		goto top;
+	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT ) )
+		goto top;
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 	{
@@ -1721,7 +1789,7 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
 	{ NMG_ON_FORW_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_FORW_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_FORW_ON_FORW,	NMG_STATE_IN,		NMG_ACTION_NONE },
-	{ NMG_ON_FORW_ON_REV,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_ON_FORW_ON_REV,	NMG_STATE_OUT,		NMG_ACTION_NONE },
 	{ NMG_ON_REV_LEFT,	NMG_STATE_ON_R,		NMG_ACTION_CUTJOIN },
 	{ NMG_ON_REV_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_REV_ON_FORW,	NMG_STATE_ON_B,		NMG_ACTION_CUTJOIN },
