@@ -37,7 +37,6 @@ int rt_pure_boolean_expressions = 0;
 HIDDEN int	rt_rpp_tree();
 extern char	*rt_basename();
 HIDDEN struct region *rt_getregion();
-HIDDEN struct soltab *rt_add_solid();
 HIDDEN void	rt_tree_region_assign();
 
 
@@ -57,7 +56,7 @@ static struct db_tree_state	rt_initial_tree_state = {
 	0.0, 0.0, 0.0, 1.0,
 };
 
-static struct rt_i	*db_rtip;
+static struct rt_i	*rt_tree_rtip;
 
 /*
  *			R T _ G E T T R E E _ R E G I O N _ S T A R T
@@ -70,8 +69,8 @@ struct db_full_path	*pathp;
 {
 
 	/* Ignore "air" regions unless wanted */
-	if( db_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
-		db_rtip->rti_air_discards++;
+	if( rt_tree_rtip->useair == 0 &&  tsp->ts_aircode != 0 )  {
+		rt_tree_rtip->rti_air_discards++;
 		return(-1);	/* drop this region */
 	}
 	return(0);
@@ -79,6 +78,9 @@ struct db_full_path	*pathp;
 
 /*
  *			R T _ G E T T R E E _ R E G I O N _ E N D
+ *
+ *  This routine will be called by db_walk_tree() once all the
+ *  solids in this region have been visited.
  *
  *  This routine must be prepared to run in parallel.
  */
@@ -126,10 +128,10 @@ union tree		*curtree;
 	rp->reg_instnum = dp->d_uses++;
 
 	/* Add to linked list */
-	rp->reg_forw = db_rtip->HeadRegion;
-	db_rtip->HeadRegion = rp;
+	rp->reg_forw = rt_tree_rtip->HeadRegion;
+	rt_tree_rtip->HeadRegion = rp;
 
-	rp->reg_bit = db_rtip->nregions++;	/* Assign bit vector pos. */
+	rp->reg_bit = rt_tree_rtip->nregions++;	/* Assign bit vector pos. */
 	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
 
 	if( rt_g.debug & DEBUG_REGIONS )  {
@@ -155,13 +157,88 @@ int			id;
 	struct soltab	*stp;
 	union tree	*curtree;
 	struct directory	*dp;
-
-	/* Note:  solid may not be contained by a region (yet) */
+	FAST fastf_t	f;
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
-	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat, id )) == SOLTAB_NULL )
-		return(TREE_NULL);
 
+	/*
+	 *  Check to see if this exact solid has already been processed.
+	 *  Match on leaf name and matrix.
+	 *  XXX There is a race on reading HeadSolid here, prob. not harmful.
+	 */
+	for( stp = rt_tree_rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+		register int i;
+
+		if(	dp->d_namep[0] != stp->st_name[0]  ||	/* speed */
+			dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
+			strcmp( dp->d_namep, stp->st_name ) != 0
+		)
+			continue;
+		for( i=0; i<16; i++ )  {
+			f = tsp->ts_mat[i] - stp->st_pathmat[i];
+			if( !NEAR_ZERO(f, 0.0001) )
+				goto next_one;
+		}
+		/* Success, we have a match! */
+		if( rt_g.debug & DEBUG_SOLIDS )
+			rt_log("rt_gettree_leaf:  %s re-referenced\n",
+				dp->d_namep );
+		goto found_it;
+next_one: ;
+	}
+
+	GETSTRUCT(stp, soltab);
+	stp->st_id = id;
+	stp->st_dp = dp;
+	stp->st_name = dp->d_namep;	/* st_name could be eliminated */
+	mat_copy( stp->st_pathmat, tsp->ts_mat );
+	stp->st_specific = (genptr_t)0;
+
+	/* init solid's maxima and minima */
+	VSETALL( stp->st_max, -INFINITY );
+	VSETALL( stp->st_min,  INFINITY );
+
+	/*
+	 * "rec" points to array of all relevant records, in
+	 *  database format.  xxx_prep() routine is responsible for
+	 *  import/export issues.
+	 */
+	if( rt_functab[id].ft_prep( stp, rp, rt_tree_rtip ) )  {
+		/* Error, solid no good */
+		rt_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
+		rt_free( (char *)stp, "struct soltab");
+		return( TREE_NULL );		/* BAD */
+	}
+	id = stp->st_id;	/* type may have changed in prep */
+
+	/* For now, just link them all onto the same list */
+	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
+	stp->st_forw = rt_tree_rtip->HeadSolid;
+	rt_tree_rtip->HeadSolid = stp;
+	stp->st_bit = rt_tree_rtip->nsolids++;
+
+	/*
+	 * Update the model maxima and minima
+	 *
+	 *  Don't update min & max for halfspaces;  instead, add them
+	 *  to the list of infinite solids, for special handling.
+	 *
+	 *  XXX If this solid is subtracted, don't update model RPP either.
+	 * XXX this is really wrong.  Model RPP should only be updated
+	 * XXX when adding a region.
+	 * XXX Region RPP should take into account the booleans.
+	 */
+	if( stp->st_aradius >= INFINITY )  {
+		rt_cut_extend( &rt_tree_rtip->rti_inf_box, stp );
+	}  else  {
+		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, stp->st_min );
+		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, stp->st_max );
+	}
+	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
+
+	if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
+
+found_it:
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
@@ -189,7 +266,7 @@ rt_gettree( rtip, node )
 struct rt_i	*rtip;
 char		*node;
 {
-	return( rt_gettrees( rtip, 1, &node ) );
+	return( rt_gettrees( rtip, 1, &node, 1 ) );
 }
 
 /*
@@ -202,10 +279,11 @@ char		*node;
  *	-1	On major error
  */
 int
-rt_gettrees( rtip, argc, argv )
+rt_gettrees( rtip, argc, argv, ncpus )
 struct rt_i	*rtip;
 int		argc;
 char		**argv;
+int		ncpus;
 {
 	int			prev_sol_count;
 	int			i;
@@ -218,10 +296,9 @@ char		**argv;
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
 	prev_sol_count = rtip->nsolids;
-	db_rtip = rtip;
+	rt_tree_rtip = rtip;
 
-	i = db_walk_tree( rtip->rti_dbip, argc, argv,
-		1,	/* # cpus */
+	i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
 		&rt_initial_tree_state,
 		rt_gettree_region_start,
 		rt_gettree_region_end,
@@ -232,101 +309,6 @@ char		**argv;
 	if( rtip->nsolids <= prev_sol_count )
 		rt_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
-}
-
-/*
- *			R T _ A D D _ S O L I D
- *
- *  The record pointer "rec" points to all relevant records,
- *  in a contiguous in-core array.
- */
-HIDDEN
-struct soltab *
-rt_add_solid( rtip, rec, dp, mat, id )
-struct rt_i	*rtip;
-union record	*rec;
-struct directory *dp;
-matp_t		mat;
-int		id;
-{
-	register struct soltab *stp;
-	FAST fastf_t	f;
-
-	/*
-	 *  Check to see if this exact solid has already been processed.
-	 *  Match on leaf name and matrix.
-	 */
-	for( stp = rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
-		register int i;
-
-		if(
-			dp->d_namep[0] != stp->st_name[0]  ||	/* speed */
-			dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
-			strcmp( dp->d_namep, stp->st_name ) != 0
-		)
-			continue;
-		for( i=0; i<16; i++ )  {
-			f = mat[i] - stp->st_pathmat[i];
-			if( !NEAR_ZERO(f, 0.0001) )
-				goto next_one;
-		}
-		/* Success, we have a match! */
-		if( rt_g.debug & DEBUG_SOLIDS )
-			rt_log("rt_add_solid:  %s re-referenced\n",
-				dp->d_namep );
-		return(stp);
-next_one: ;
-	}
-
-	GETSTRUCT(stp, soltab);
-	stp->st_id = id;
-	stp->st_dp = dp;
-	stp->st_name = dp->d_namep;	/* st_name could be eliminated */
-	mat_copy( stp->st_pathmat, mat );
-	stp->st_specific = (genptr_t)0;
-
-	/* init solid's maxima and minima */
-	VSETALL( stp->st_max, -INFINITY );
-	VSETALL( stp->st_min,  INFINITY );
-
-	/*
-	 * "rec" points to array of all relevant records, in
-	 *  database format.  xxx_prep() routine is responsible for
-	 *  import/export issues.
-	 */
-	if( rt_functab[id].ft_prep( stp, rec, rtip ) )  {
-		/* Error, solid no good */
-		rt_log("rt_add_solid(%s):  prep failure\n", dp->d_namep );
-		rt_free( (char *)stp, "struct soltab");
-		return( SOLTAB_NULL );		/* BAD */
-	}
-	id = stp->st_id;	/* type may have changed in prep */
-
-	/* For now, just link them all onto the same list */
-	stp->st_forw = rtip->HeadSolid;
-	rtip->HeadSolid = stp;
-
-	/*
-	 * Update the model maxima and minima
-	 *
-	 *  Don't update min & max for halfspaces;  instead, add them
-	 *  to the list of infinite solids, for special handling.
-	 *
-	 *  XXX If this solid is subtracted, don't update model RPP either.
-	 * XXX this is really wrong.  Model RPP should only be updated
-	 * XXX when adding a region.
-	 * XXX Region RPP should take into account the booleans.
-	 */
-	if( stp->st_aradius >= INFINITY )  {
-		rt_cut_extend( &rtip->rti_inf_box, stp );
-	}  else  {
-		VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_min );
-		VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_max );
-	}
-
-	stp->st_bit = rtip->nsolids++;
-	if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
-	return( stp );
 }
 
 /*
