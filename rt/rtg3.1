@@ -114,6 +114,12 @@ specifies a file name for ray data output.  This output consists of one line of 
 for each shotline in the shotline output file. Each line contains azimuth, elevation; x, y, and z of the ray start point;
 x, y, and z of the ray direction; and the corresponding line number in the shotline file.
 .TP
+.B \-c """set rt_cline_radius=#"""
+Tells
+.IR rtg3 (1)
+to use the provided number (in millimeters) as the additional radius to add to CLINE
+solids.
+.TP
 .B \-c """set save_overlaps=1"""
 Tells
 .IR rtg3 (1)
