@@ -5,17 +5,12 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) lgt.h	2.2
-		Modified: 	1/30/87 at 17:20:43	G S M
-		Retrieved: 	2/4/87 at 08:52:50
-		SCCS archive:	/vld/moss/src/lgt/s.lgt.h
-*/
-
+#ifndef INCL_LGT
 #define INCL_LGT
+
+#define OVERLAPTOL	0.25	/* Thinner overlaps won't be reported.	*/
 #define MAX_COLOR	15
-#define MAX_LGTS	10
+#define MAX_LGTS	10	/* Maximum number of light sources.	*/
 #define MAX_LGT_NM	16
 #define MAX_LN		81
 #ifndef TRUE
@@ -68,7 +63,7 @@
 #define DEBUG_REFRACT	0x100000
 #define DEBUG_NORML	0x200000
 #define DEBUG_SHADOW	0x400000
-#define DEBUG_GAUSS	0x800000
+#define DEBUG_CELLSIZE	0x800000
 #define DEBUG_OCTREE	0x1000000
 
 /* Light source (LS) specific global information.
@@ -124,3 +119,5 @@ Movie;
 
 extern Lgt_Source	lgts[];
 extern Movie		movie;
+
+#endif /* INCL_LGT */
