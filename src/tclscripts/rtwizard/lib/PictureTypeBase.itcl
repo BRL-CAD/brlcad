@@ -111,21 +111,29 @@ namespace eval RtWizard {
 	# The support directory name is the same as the 
 	# class type.
 	#
-	if { [info exists ::env(BRLCAD_ROOT)] } {
-	    set rootDir $::env(BRLCAD_ROOT)
-	} else {
-	    set rootDir [file join / usr brlcad ]
-	} 
-	set dir [ file join $rootDir tclscripts rtwizard examples \
-		$type ]
 
 	#
 	# Load the title string
 	#
-	set tmpFile [file join $dir title.txt]
-	set fd [open $tmpFile r]
-	set title [read -nonewline $fd]
-	close $fd
+	set title ""
+
+	set success 0
+
+	foreach i $::auto_path {
+	    set dir [file join $i {..} tclscripts rtwizard examples $type ]
+	    if {[file exists [file join $dir title.txt ]]} {
+		set fd [open [file join $dir title.txt] r]
+		set title [read -nonewline $fd]
+		close $fd
+		set success 1
+		break
+	    }
+	}
+
+	if { $success == 0 } {
+	    puts "Could not find tclscripts/rtwizard/examples/$type/title.txt\ninautopath:\n $::auto_path"
+	    exit
+	}
 
 	#
 	# Create an image object to hold the sample image.

@@ -417,14 +417,14 @@ namespace eval RtWizard {
 		[string match $screenOnly "false"] } {
 	    return $fbFile
 	}
-
+	set binpath [bu_brlcad_path bin]
 	#
 	# Create an on-screen buffer
 	#
 	set port [incr lastPort]
 	set ok false
 	while {[catch \
-		"exec fbserv -w $width -n $height -F /dev/X -p $port &" \
+		    "exec $binpath/fbserv -w $width -n $height -F /dev/X -p $port &" \
 		catchResult]} {
 	    puts $catchResult
 	    incr port
@@ -433,7 +433,7 @@ namespace eval RtWizard {
 	# Damn important, give the fbserv a bit o' time to fire up
 	#
 	after 1000
-	exec fbclear -F $port 0 0 0
+	exec $binpath/fbclear -F $port 0 0 0
 	set lastPort $port
 
 	return $port	

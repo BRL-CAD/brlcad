@@ -9,15 +9,15 @@
 #
 # Extend Autopath
 #
-if { [info exists ::env(BRLCAD_ROOT)] } {
-    set rootDir $::env(BRLCAD_ROOT)
-} else {
-    set rootDir [file join / usr brlcad ]
-} 
-set wizDir [ file join $rootDir tclscripts rtwizard ]
-set libDir [ file join $wizDir lib ]
+foreach i $auto_path {
+    set wizpath [file join $i {..} tclscripts rtwizard ]
+    if {  [file exists $wizpath] } {
+	lappend auto_path $wizpath
+	lappend auto_path [ file join $wizpath lib ]
+    }
+}
 
-lappend auto_path $wizDir $libDir
+
 
 #
 # All RtWizard stuff is in the RtWizard namespace

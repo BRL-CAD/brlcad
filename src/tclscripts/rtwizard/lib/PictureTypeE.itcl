@@ -164,45 +164,35 @@ namespace eval RtWizard {
 	#
 	set gamma 12 ; #[$gp getIntensity]
 
+	set binpath [bu_brlcad_path bin]
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
 	rtCmd $gp $fb $w $h
 
-	catch "exec fb-pix -F $fb -w $w -n $h > $tgi" junk
+	catch "exec $binpath/fb-pix -F $fb -w $w -n $h > $tgi" junk
 	
 	#
 	# Run rt to generate the insert
 	#
 	rtCmd $fp $fb $w $h
-	catch "exec fb-pix -F $fb -w $w -n $h > $tfci" junk
+	catch "exec $binpath/fb-pix -F $fb -w $w -n $h > $tfci" junk
 
 	#
 	# Convert to ghost image
 	#
-	catch "exec pix-bw $tgi > $tbw" junk
+	catch "exec $binpath/pix-bw $tgi > $tbw" junk
 
-	catch "exec bwmod -a 4 -d259 -r$gamma -m255 < $tbw > $tmod" junk
+	catch "exec $binpath/bwmod -a 4 -d259 -r$gamma -m255 < $tbw > $tmod" junk
 
-	catch "exec bw-pix < $tmod > $tbwpix" junk
+	catch "exec $binpath/bw-pix < $tmod > $tbwpix" junk
 
 	catch "exec pixmatte -e $tfci $bgl $tbwpix $tfci > $tmi" junk
 
 	#
 	# Finally, put the image to the framebuffer
 	#
-	catch "exec pix-fb -F $fb -w $w -n $h $tmi" junk
+	catch "exec $binpath/pix-fb -F $fb -w $w -n $h $tmi" junk
     }
 
 }; # end namespace
-
-
-
-
-
-
-
-
-
-
-
