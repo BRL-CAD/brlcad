@@ -33,16 +33,16 @@ static char RCSstorage[] = "@(#)$Header$";
 #include "conf.h"
 
 #include <stdio.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "./debug.h"
-
 #ifdef USE_STRING_H
 # include <string.h>
 #else
 # include <strings.h>
 #endif
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./debug.h"
 
 #define MDB_MAGIC	0x12348969
 struct memdebug {
