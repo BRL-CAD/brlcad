@@ -97,7 +97,7 @@ int	len;
 
 	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
 	    	return( RTI_NULL );		/* FAIL */
-	RT_CK_DB_INTERNAL(dbip);
+	RT_CK_DBI(dbip);
 
 	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )
 	    	return( RTI_NULL );		/* FAIL */
