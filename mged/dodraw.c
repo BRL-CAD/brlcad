@@ -874,9 +874,8 @@ int		copy;
 	register struct directory	*dp;
 	register struct solid		*sp;
 
-#define PHONY_ADDR	(-1L)
 	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
-		if( dp->d_addr != PHONY_ADDR )  {
+		if( dp->d_addr != RT_DIR_PHONY_ADDR )  {
 			printf("invent_solid(%s) would clobber existing database entry, ignored\n");
 			return(-1);
 		}
@@ -886,7 +885,7 @@ int		copy;
 		eraseobj(dp);
 	} else {
 		/* Need to enter phony name in directory structure */
-		dp = db_diradd( dbip,  name, PHONY_ADDR, 0, DIR_SOLID );
+		dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID );
 	}
 
 #if 0
