@@ -52,10 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-X.h"
 #include "solid.h"
 
-void     X_configure_window_shape();
-void     X_establish_perspective();
-void     X_set_perspective();
-int      X_drawString2D();
+void     X_configureWindowShape();
 
 static void	label();
 static void	draw();
@@ -68,9 +65,10 @@ static int X_set_visual();
 struct dm	*X_open();
 static int	X_close();
 static int	X_drawBegin(), X_drawEnd();
-static int	X_normal(), X_newrot();
+static int	X_normal(), X_loadMatrix();
+static int      X_drawString2D();
 static int	X_drawLine2D();
-static int      X_drawVertex2D();
+static int      X_drawPoint2D();
 static int	X_drawVList();
 static int      X_setColor(), X_setLineAttr();
 static int	X_setWinBounds(), X_debug();
@@ -80,10 +78,10 @@ struct dm dm_X = {
   X_drawBegin,
   X_drawEnd,
   X_normal,
-  X_newrot,
+  X_loadMatrix,
   X_drawString2D,
   X_drawLine2D,
-  X_drawVertex2D,
+  X_drawPoint2D,
   X_drawVList,
   X_setColor,
   X_setLineAttr,
@@ -116,14 +114,10 @@ struct dm dm_X = {
 fastf_t min_short = (fastf_t)SHRT_MIN;
 fastf_t max_short = (fastf_t)SHRT_MAX;
 
-vect_t clipmin;
-vect_t clipmax;
-
 /* Currently, the application must define these. */
 extern Tk_Window tkwin;
 
 struct x_vars head_x_vars;
-static int perspective_table[] = { 30, 45, 60, 90 };
 static mat_t xmat;
 
 /*
@@ -180,10 +174,10 @@ char *argv[];
   bu_vls_init(&dmp->dm_dName);
   bu_vls_init(&init_proc_vls);
 
-  i = dm_process_options(dmp, &init_proc_vls, --argc, ++argv);
+  i = dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0)
-    bu_vls_printf(&dmp->dm_pathName, ".dm_x%d", count);
+    bu_vls_printf(&dmp->dm_pathName, ".dm_X%d", count);
 
   ++count;
   if(bu_vls_strlen(&dmp->dm_dName) == 0){
@@ -199,12 +193,13 @@ char *argv[];
     bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
   /* initialize dm specific variables */
-  ((struct x_vars *)dmp->dm_vars)->perspective_angle = 3;
+  ((struct x_vars *)dmp->dm_vars)->devmotionnotify = LASTEvent;
+  ((struct x_vars *)dmp->dm_vars)->devbuttonpress = LASTEvent;
+  ((struct x_vars *)dmp->dm_vars)->devbuttonrelease = LASTEvent;
   dmp->dm_aspect = 1.0;
 
   /* initialize modifiable variables */
   ((struct x_vars *)dmp->dm_vars)->mvars.zclip = 1;
-  ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
 
   BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
 
@@ -272,14 +267,14 @@ char *argv[];
   if(dmp->dm_width == 0){
     dmp->dm_width =
       DisplayWidth(((struct x_vars *)dmp->dm_vars)->dpy,
-		   DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
+		   DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 30;
     ++make_square;
   }
 
   if(dmp->dm_height == 0){
     dmp->dm_height =
       DisplayHeight(((struct x_vars *)dmp->dm_vars)->dpy,
-		    DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
+		    DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 30;
     ++make_square;
   }
 
@@ -302,8 +297,6 @@ char *argv[];
 #endif
 
   a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dm_vars)->top);
-
-  Tcl_AppendResult(interp, "X_open: begin synchronous execution\n", (char *)NULL);
 
   /* must do this before MakeExist */
   if(X_set_visual(dmp) == 0){
@@ -360,6 +353,15 @@ char *argv[];
 						  ((struct x_vars *)dmp->dm_vars)->win,
 						  (GCForeground|GCBackground), &gcv);
 
+  /* First see if the server supports XInputExtension */
+  {
+    int return_val;
+
+    if(!XQueryExtension(((struct x_vars *)dmp->dm_vars)->dpy,
+		     "XInputExtension", &return_val, &return_val, &return_val))
+      goto Skip_dials;
+  }
+
   /*
    * Take a look at the available input devices. We're looking
    * for "dial+buttons".
@@ -377,7 +379,7 @@ char *argv[];
 	if((dev = XOpenDevice(((struct x_vars *)dmp->dm_vars)->dpy,
 			      list->id)) == (XDevice *)NULL){
 	  Tcl_AppendResult(interp,
-			   "Glx_open: Couldn't open the dials+buttons\n",
+			   "X_open: Couldn't open the dials+buttons\n",
 			   (char *)NULL);
 	  goto Done;
 	}
@@ -416,8 +418,9 @@ char *argv[];
 Done:
   XFreeDeviceList(olist);
 
+Skip_dials:
 #ifndef CRAY2
-  X_configure_window_shape(dmp);
+  X_configureWindowShape(dmp);
 #endif
 
   Tk_SetWindowBackground(((struct x_vars *)dmp->dm_vars)->xtkwin,
@@ -478,6 +481,9 @@ struct dm *dmp;
 {
   XGCValues       gcv;
 
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_drawBegin()\n", (char *)NULL);
+
   gcv.foreground = ((struct x_vars *)dmp->dm_vars)->bg;
   XChangeGC(((struct x_vars *)dmp->dm_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars)->gc,
@@ -498,6 +504,9 @@ static int
 X_drawEnd(dmp)
 struct dm *dmp;
 {
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_drawEnd()\n", (char *)NULL);
+
   XCopyArea(((struct x_vars *)dmp->dm_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars)->pix,
 	    ((struct x_vars *)dmp->dm_vars)->win,
@@ -512,16 +521,35 @@ struct dm *dmp;
 }
 
 /*
- *  			X _ N E W R O T
- *  Stub.
+ *  			X _ L O A D M A T R I X
+ *
+ *  Load a new transformation matrix.  This will be followed by
+ *  many calls to X_drawVList().
  */
 /* ARGSUSED */
 static int
-X_newrot(dmp, mat, which_eye)
+X_loadMatrix(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
 int which_eye;
 {
+  if(((struct x_vars *)dmp->dm_vars)->mvars.debug){
+    struct bu_vls tmp_vls;
+
+    Tcl_AppendResult(interp, "X_loadMatrix()\n", (char *)NULL);
+
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
+  }
+
   bn_mat_copy(xmat, mat);
   return TCL_OK;
 }
@@ -529,7 +557,6 @@ int which_eye;
 /*
  *  			X _ D R A W V L I S T
  *  
- *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
 
 /* ARGSUSED */
@@ -544,6 +571,9 @@ register struct rt_vlist *vp;
     XSegment *segp;			/* current segment */
     XGCValues gcv;
     int	nseg;			        /* number of segments */
+
+    if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+      Tcl_AppendResult(interp, "X_drawVList()\n", (char *)NULL);
 
     nseg = 0;
     segp = segbuf;
@@ -566,20 +596,26 @@ register struct rt_vlist *vp;
 	    case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
 		MAT4X3PNT( lpnt, xmat, *pt );
+#if 0
 		if( lpnt[0] < -1e6 || lpnt[0] > 1e6 ||
-		   lpnt[1] < -1e6 || lpnt[1] > 1e6 )
-		    continue; /* omit this point (ugh) */
+		    lpnt[1] < -1e6 || lpnt[1] > 1e6 )
+		  continue; /* omit this point (ugh) */
+#endif
+
 		lpnt[0] *= 2047 * dmp->dm_aspect;
 		lpnt[1] *= 2047;
+		lpnt[2] *= 2047;
 		continue;
 	    case RT_VLIST_POLY_DRAW:
 	    case RT_VLIST_POLY_END:
 	    case RT_VLIST_LINE_DRAW:
 		/* draw */
 		MAT4X3PNT( pnt, xmat, *pt );
+#if 0
 		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
-		   pnt[1] < -1e6 || pnt[1] > 1e6 )
-		    continue; /* omit this point (ugh) */
+		    pnt[1] < -1e6 || pnt[1] > 1e6 )
+		  continue; /* omit this point (ugh) */
+#endif
 
 		pnt[0] *= 2047 * dmp->dm_aspect;
 		pnt[1] *= 2047;
@@ -589,7 +625,9 @@ register struct rt_vlist *vp;
 		VMOVE(spnt, pnt);
 
 		if(((struct x_vars *)dmp->dm_vars)->mvars.zclip){
-		  if(vclip(lpnt, pnt, clipmin, clipmax) == 0){
+		  if(vclip(lpnt, pnt,
+			   ((struct x_vars *)dmp->dm_vars)->clipmin,
+			   ((struct x_vars *)dmp->dm_vars)->clipmax) == 0){
 		    VMOVE(lpnt, spnt);
 		    continue;
 		  }
@@ -602,7 +640,6 @@ register struct rt_vlist *vp;
 		     lpnt[1] < min_short || max_short < lpnt[1] ||
 		     pnt[0] < min_short || max_short < pnt[0] ||
 		     pnt[1] < min_short || max_short < pnt[1]){
-
 		    /* if the entire line segment will not be visible then ignore it */
 		    if(clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1){
 		      VMOVE(lpnt, spnt);
@@ -647,12 +684,14 @@ register struct rt_vlist *vp;
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
- * Turns off windowing.
  */
 static int
 X_normal(dmp)
 struct dm *dmp;
 {
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_normal()\n", (char *)NULL);
+
   return TCL_OK;
 }
 
@@ -663,7 +702,7 @@ struct dm *dmp;
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-int
+static int
 X_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
@@ -672,6 +711,9 @@ int size;
 int use_aspect;
 {
   int	sx, sy;
+
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_drawString2D()\n", (char *)NULL);
 
   if(use_aspect)
     sx = GED_TO_Xx(dmp, x * dmp->dm_aspect);
@@ -696,6 +738,9 @@ int x2, y2;
 {
   int	sx1, sy1, sx2, sy2;
 
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_drawLine2D()\n", (char *)NULL);
+
   sx1 = GED_TO_Xx(dmp, x1);
   sy1 = GED_TO_Xy(dmp, y1);
   sx2 = GED_TO_Xx(dmp, x2);
@@ -710,11 +755,14 @@ int x2, y2;
 }
 
 static int
-X_drawVertex2D(dmp, x, y)
+X_drawPoint2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
   int   sx, sy;
+
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_drawPoint2D()\n", (char *)NULL);
 
   sx = GED_TO_Xx(dmp, x );
   sy = GED_TO_Xy(dmp, y );
@@ -733,6 +781,9 @@ register short r, g, b;
 int strict;
 {
   XGCValues gcv;
+
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_setColor()\n", (char *)NULL);
 
   if(((struct x_vars *)dmp->dm_vars)->is_trueColor){
     XColor color;
@@ -763,6 +814,9 @@ int style;
 {
   int linestyle;
 
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_setLineAttr()\n", (char *)NULL);
+
   dmp->dm_lineWidth = width;
   dmp->dm_lineStyle = style;
 
@@ -785,7 +839,9 @@ int style;
 static int
 X_debug(dmp, lvl)
 struct dm *dmp;
+int lvl;
 {
+  ((struct x_vars *)dmp->dm_vars)->mvars.debug = lvl;
   XFlush(((struct x_vars *)dmp->dm_vars)->dpy);
   Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 
@@ -795,25 +851,31 @@ struct dm *dmp;
 static int
 X_setWinBounds(dmp, w)
 struct dm *dmp;
-register int w[];
+register int w[6];
 {
-  clipmin[0] = w[1];
-  clipmin[1] = w[3];
-  clipmin[2] = w[5];
-  clipmax[0] = w[0];
-  clipmax[1] = w[2];
-  clipmax[2] = w[4];
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_setWinBounds()\n", (char *)NULL);
+
+  ((struct x_vars *)dmp->dm_vars)->clipmin[0] = w[0];
+  ((struct x_vars *)dmp->dm_vars)->clipmin[1] = w[2];
+  ((struct x_vars *)dmp->dm_vars)->clipmin[2] = w[4];
+  ((struct x_vars *)dmp->dm_vars)->clipmax[0] = w[1];
+  ((struct x_vars *)dmp->dm_vars)->clipmax[1] = w[3];
+  ((struct x_vars *)dmp->dm_vars)->clipmax[2] = w[5];
 
   return TCL_OK;
 }
 
 void
-X_configure_window_shape(dmp)
+X_configureWindowShape(dmp)
 struct dm *dmp;
 {
   XWindowAttributes xwa;
   XFontStruct     *newfontstruct;
   XGCValues       gcv;
+
+  if (((struct x_vars *)dmp->dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "X_configureWindowShape()\n", (char *)NULL);
 
   XGetWindowAttributes( ((struct x_vars *)dmp->dm_vars)->dpy,
 			((struct x_vars *)dmp->dm_vars)->win, &xwa );
@@ -914,57 +976,6 @@ struct dm *dmp;
       }
     }
   }
-}
-
-void
-X_establish_perspective(dmp)
-struct dm *dmp;
-{
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-  bu_vls_printf( &vls, "set perspective %d\n",
-		 ((struct x_vars *)dmp->dm_vars)->mvars.perspective_mode ?
-		 perspective_table[((struct x_vars *)dmp->dm_vars)->perspective_angle] :
-		 -1 );
-
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-}
-
-/*
-   This routine will toggle the perspective_angle if the
-   dummy_perspective value is 0 or less. Otherwise, the
-   perspective_angle is set to the value of (dummy_perspective - 1).
-*/
-void
-X_set_perspective(dmp)
-struct dm *dmp;
-{
-  /* set perspective matrix */
-  if(((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective > 0)
-    ((struct x_vars *)dmp->dm_vars)->perspective_angle =
-      ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective <= 4 ?
-      ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective - 1: 3;
-  else if (--((struct x_vars *)dmp->dm_vars)->perspective_angle < 0) /* toggle perspective matrix */
-    ((struct x_vars *)dmp->dm_vars)->perspective_angle = 3;
-
-  if(((struct x_vars *)dmp->dm_vars)->mvars.perspective_mode){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "set perspective %d\n",
-		  perspective_table[((struct x_vars *)dmp->dm_vars)->perspective_angle]);
-
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-  }
-
-  /*
-     Just in case the "!" is used with the set command. This
-     allows us to toggle through more than two values.
-   */
-  ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
 }
 
 static int
