@@ -57,6 +57,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h (from nmg_info.c) */
+RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1, CONST struct faceuse *fu2));
+
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
 #define ISECT_SPLIT1	2
@@ -2728,7 +2731,9 @@ struct nmg_ptbl		*line_eutab;	/* optional */
 		if( line_eutab )  nmg_pr_ptbl("line_eutab from fu2", line_eutab, 1);
 	}
 
-	if( fabs(VDOT_2D(is->dir2d, eg_dir2d)) < is->tol.para )
+	/* XXX These are not unit length */
+	if( fabs(VDOT_2D(is->dir2d, eg_dir2d)) < is->tol.para *
+	    sqrt(MAGSQ_2D(is->dir2d)) * sqrt(MAGSQ_2D(eg_dir2d)) )
 		goto not_colinear;
 
 	/*
@@ -3158,6 +3163,8 @@ do_ret:
  *
  *  The line of intersection has already been computed.
  *  Handle as two 2-D line/face intersection problems
+ *
+ *  This is the HEART of the intersection code.
  */
 static void
 nmg_isect_two_face3pNEW( is, fu1, fu2 )
@@ -3168,6 +3175,7 @@ struct faceuse		*fu1, *fu2;
 	struct nmg_ptbl	on_line;	/* List of eu's on the line */
 	int	again;		/* Need to do it again? */
 	int	trips;		/* Number of trips through loop */
+	CONST struct edgeuse	*on_eu;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
@@ -3189,6 +3197,23 @@ struct faceuse		*fu1, *fu2;
 	/* Verify that line is within tolerance of both planes */
 	/* XXX */
 
+    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
+    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
+    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu1, fu2, 0 );
+    	}
+
+	/* See if 2 faces share an edge already.  If so, get edge_geom line */
+	if( (on_eu = nmg_find_edge_between_2fu(fu1, fu2)) )  {
+		/* XXX Should call nmg_is_eu_on_line3() as double-check */
+#if 0
+rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
+		VPRINT("isect ray is->pt ", is->pt);
+		VPRINT("on_eu   eg->e_pt ", on_eu->e_p->eg_p->e_pt);
+		VPRINT("isect ray is->dir", is->dir);
+		VPRINT("on_eu   eg->e_dir", on_eu->e_p->eg_p->e_dir);
+#endif
+	}
+
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
 
@@ -3198,11 +3223,6 @@ struct faceuse		*fu1, *fu2;
 	is->s2 = fu2->s_p;
 	is->fu1 = fu1;
 	is->fu2 = fu2;
-
-    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
-    	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
-    	    	nmg_pl_2fu( "Iface%d.pl", 0, fu1, fu2, 0 );
-    	}
 
 	/*  Intersect the line with everything in fu1.
 	 *  Note any colinear edgeuses in fu2 for potential sharing.
