@@ -27,7 +27,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include <unistd.h>
 #endif
                                                                                                                                                                             
-
+#include <stdlib.h>
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include	<string.h>
@@ -36,6 +36,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+
 
 #define DEFAULT_WIDTH	512
 

@@ -49,15 +49,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
 #include "machine.h"
+
 
 #define	TSIZE	(6144*24*1024)	/* # of bytes on 2400' 6250bpi reel */
 long	byteswritten = 0;	/* Number of bytes written */

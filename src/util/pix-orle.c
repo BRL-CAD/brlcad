@@ -24,13 +24,14 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
 #include "fb.h"
 #include "orle.h"
+
 
 static FILE	*outfp;
 static FILE	*infp;

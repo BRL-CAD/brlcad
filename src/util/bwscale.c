@@ -33,15 +33,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
 #include "machine.h"
+
 
 #if 0
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */

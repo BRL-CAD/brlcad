@@ -22,10 +22,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
+
 #include "machine.h"
+
 
 FILE	*out1;
 FILE	*out2;

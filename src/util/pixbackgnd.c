@@ -29,11 +29,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include <unistd.h>
 #endif
                                                                                                                                                                             
-
+#include <stdlib.h>	
 #include <stdio.h>	
 #include <math.h>
 
 #include "machine.h"
+
 
 double col[3] = {128,128,128};		/* r,g,b */
 double hsv[3];				/* h,s,v */

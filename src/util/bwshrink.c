@@ -26,9 +26,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -36,6 +37,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+
 
 /* declarations to support use of getopt() system call */
 char *options = "uhs:w:n:f:";

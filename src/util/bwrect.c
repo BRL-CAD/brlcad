@@ -22,9 +22,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "machine.h"
+
 
 int	xnum, ynum;		/* Number of pixels in new map */
 int	xorig, yorig;		/* Bottom left corner to extract from */

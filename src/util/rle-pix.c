@@ -23,18 +23,20 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
+
 #ifdef HAVE_STRING_H
-#include <string.h>
+#include	<string.h>
 #else
-#include <strings.h>
+#include	<strings.h>
 #endif
 
 #include "machine.h"
 #include "fb.h"
 #include "rle.h"
+
 
 static FILE	*infp;
 static char	*infile;

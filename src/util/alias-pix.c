@@ -8,9 +8,12 @@
  */
 #include "common.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+
 #include "machine.h"
+
 
 char *progname = "(noname)";
 void usage(void)

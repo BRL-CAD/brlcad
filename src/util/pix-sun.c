@@ -21,10 +21,11 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -32,6 +33,7 @@
 #endif
 
 #include "machine.h"
+
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:d";

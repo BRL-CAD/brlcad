@@ -24,10 +24,11 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #else
@@ -37,6 +38,7 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #include "machine.h"
 #include "fb.h"
 #include "rle.h"
+
 
 static rle_hdr	outrle;
 #define		outfp		outrle.rle_file
