@@ -1,6 +1,6 @@
 .TH RLE-FB 1V VMB
-'\"	last edit:	85/05/21	G. S. Moss
-'\"	SCCS ID:	@(#)rle-fb.1	1.4
+'\"	last edit:	85/05/29	G. S. Moss
+'\"	SCCS ID:	@(#)rle-fb.1	1.5
 .SH NAME
 rle-fb \- restore run-length encoded image onto a frame buffer
 .SH SYNOPSIS
@@ -71,12 +71,18 @@ can be any of
 .TP
 .BI \-p "x y"
 Reposition the image.
-The original lower left corner is positioned at
+The original upper left corner is positioned at
 .RI ( x\^ ", " y\^ )
 before restoring the image.
 Warning:
 a saved image should not be
-repositioned so that any saved data wraps around the X borders.
+repositioned so that any saved data wraps around the X borders.  If the
+image was originally saved in
+.B LORES
+(512x512x24) mode, and it is positioned beyond the limits of low resolution
+memory, it will be written to
+.B HIRES
+(1024x1024x24) memory.
 .TP
 .I file.rle\^
 Name of file to restore.
