@@ -1903,9 +1903,11 @@ char **argv;
 
 	/* use "e" command to get new solid displayed */
 	{
-	  char *av[] = {"e", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "e";
 	  av[1] = new_name;
+	  av[2] = NULL;
 
 	  return f_edit( clientData, interp, 2, av );
 	}

@@ -313,9 +313,11 @@ char	**argv;
 	db_free_external( &external );
 
 	{
-	  char *av[] = {"e", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "e";
 	  av[1] = argv[1]; /* depends on solid name being in argv[1] */
+	  av[2] = NULL;
 
 	  /* draw the "made" solid */
 	  return f_edit( clientData, interp, 2, av );
@@ -581,9 +583,11 @@ char	**argv;
 	db_free_external( &external );
 
 	{
-	  char *av[] = {"e", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "e";
 	  av[1] = argv[1]; /* depends on solid name being in argv[1] */
+	  av[2] = NULL;
 
 	  /* draw the "made" solid */
 	  return f_edit( clientData, interp, 2, av );

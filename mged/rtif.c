@@ -1304,7 +1304,9 @@ char	**argv;
 	   is aligned with the Z axis. The following is a temporary workaround.
 	 */
 	{
-	  vect_t neg_Z_axis = { 0.0, 0.0, -1.0 };
+	  vect_t neg_Z_axis;
+
+	  VSET(neg_Z_axis, 0.0, 0.0, -1.0);
 	  mat_fromto( rtif_viewrot, dir, neg_Z_axis);
 	}
 #else
@@ -1403,7 +1405,10 @@ int	argc;
 
 	/* If new treewalk is needed, get new objects into view. */
 	if( tree_walk_needed )  {
-	  char *av[] = {"Z", NULL};
+	  char *av[2];
+
+	  av[0] = "Z";
+	  av[1] = NULL;
 
 	  (void)f_zap( (ClientData)NULL, interp, 1, av );
 	  edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );

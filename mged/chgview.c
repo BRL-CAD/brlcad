@@ -197,7 +197,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  char *av[] = {"Z", (char *)NULL};
+  char *av[2];
+
+  av[0] = "Z";
+  av[1] = (char *)NULL;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -1314,7 +1317,11 @@ char	**argv;
     cmd = *argv;
     
     if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
-      char	*av[] = {"adc", "reset", (char *)NULL};
+      char *av[3];
+
+      av[0] = "adc";
+      av[1] = "reset";
+      av[2] = (char *)NULL;
 
       VSETALL( rate_rotate, 0 );
       VSETALL( rate_slew, 0 );
@@ -1514,8 +1521,11 @@ char	**argv;
 			goto usage;
 		}
 	} else if( strcmp( cmd, "xadc" ) == 0 )  {
-	  char    *av[] = {NULL, "x", NULL, NULL};
+	  char *av[4];
 	  char    sval[32];
+
+	  av[1] = "x";
+	  av[3] = NULL;
 
 	  if(iknob)
 	    av[0] = "iadc";
@@ -1526,8 +1536,11 @@ char	**argv;
 	  sprintf(sval, "%d", i);
 	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "yadc" ) == 0 )  {
-	  char    *av[] = {NULL, "y", NULL, NULL};
+	  char *av[4];
 	  char    sval[32];
+
+	  av[1] = "y";
+	  av[3] = NULL;
 
 	  if(iknob)
 	    av[0] = "iadc";
@@ -1538,8 +1551,11 @@ char	**argv;
 	  sprintf(sval, "%d", i);
 	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "ang1" ) == 0 )  {
-	  char    *av[] = {NULL, "a1", NULL, NULL};
+	  char *av[4];
 	  char    sval[32];
+
+	  av[1] = "a1";
+	  av[3] = NULL;
 
 	  if(iknob)
 	    av[0] = "iadc";
@@ -1550,8 +1566,11 @@ char	**argv;
 	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
 	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "ang2" ) == 0 )  {
-	  char    *av[] = {NULL, "a2", NULL, NULL};
+	  char *av[4];
 	  char    sval[32];
+
+	  av[1] = "a2";
+	  av[3] = NULL;
 
 	  if(iknob)
 	    av[0] = "iadc";
@@ -1562,8 +1581,11 @@ char	**argv;
 	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
 	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "distadc" ) == 0 )  {
-	  char    *av[] = {NULL, "dst", NULL, NULL};
+	  char *av[4];
 	  char    sval[32];
+
+	  av[1] = "dst";
+	  av[3] = NULL;
 
 	  if(iknob)
 	    av[0] = "iadc";
@@ -1738,7 +1760,11 @@ char	**argv;
 static void
 abs_zoom()
 {
-  char *av[] = {"zoom", "1", NULL};
+  char *av[3];
+
+  av[0] = "zoom";
+  av[1] = "1";
+  av[2] = NULL;
 
   /* Use initial Viewscale */
   if(-SMALL_FASTF < absolute_zoom && absolute_zoom < SMALL_FASTF)

@@ -141,9 +141,11 @@ char	**argv;
 	db_free_external( &external );
 
 	{
-	  char *av[] = {"e", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "e";
 	  av[1] = argv[2]; /* depends on solid name being in argv[2] */
+	  av[2] = NULL;
 
 	  /* draw the new object */
 	  return f_edit( clientData, interp, 2, av );
@@ -554,18 +556,22 @@ char	**argv;
 	db_free_external( &external );
 
 	{
-	  char *av[] = {"e", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "e";
 	  av[1] = argv[2]; /* depends on solid name being in argv[2] */
+	  av[2] = NULL;
 
 	  /* draw the new solid */
 	  (void)f_edit( clientData, interp, 2, av );
 	}
 
 	if(state == ST_VIEW) {
-	  char *av[] = {"sed", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "sed";
 	  av[1] = argv[2];  /* new name in argv[2] */
+	  av[2] = NULL;
 
 	  /* solid edit this new cylinder */
 	  (void)f_sed( clientData, interp, 2, av );

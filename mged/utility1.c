@@ -247,7 +247,7 @@ char	*argv[];
 {
   int i;
   int status;
-  char tmpfil[] = "/tmp/GED.aXXXXX";
+  char *tmpfil = "/tmp/GED.aXXXXX";
   char **av;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))

@@ -303,7 +303,11 @@ char **argv;
 
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
-	  char *av[] = {"q", NULL};
+	  char *av[2];
+
+	  av[0] = "q";
+	  av[1] = NULL;
+
 	  /*
 	    Call cmdline instead of calling mged_cmd directly
 	    so that access to Tcl/Tk is possible.
@@ -484,7 +488,10 @@ int mask;
 
     count = read(fd, (void *)&ch, 1);
     if (count <= 0 && feof(stdin)){
-      char *av[] = {"q", NULL};
+      char *av[2];
+
+      av[0] = "q";
+      av[1] = NULL;
 
       f_quit((ClientData)NULL, interp, 1, av);
     }
@@ -916,8 +923,11 @@ again:
       if( rateflag_zoom )  {
 #if 1
 	int status;
-	char *av[] = {"zoom", NULL, NULL};
 	struct rt_vls vls;
+	char *av[3];
+
+	av[0] = "zoom";
+	av[2] = NULL;
 
 	rt_vls_init(&vls);
 	rt_vls_printf(&vls, "%f", 1.0 / (1.0 - (rate_zoom / 10.0)));
@@ -1459,7 +1469,10 @@ char	**argv;
   static int first = 1;
 
 	if( dbip )  {
-	  char *av[] = { "zap", NULL };
+	  char *av[2];
+
+	  av[0] = "zap";
+	  av[1] = NULL;
 
 	  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	    return TCL_ERROR;
