@@ -198,11 +198,33 @@ struct mater_info	*materp;
 }
 
 /*
+ *			D B _ F R E E _ 1 A N I M
+ *
+ *  Free one animation structure
+ */
+void
+db_free_1anim( anp )
+struct animate		*anp;
+{
+	RT_CK_ANIMATE( anp );
+
+	switch( anp->an_type )  {
+	case RT_AN_MATERIAL:
+		rt_vls_free( &anp->an_u.anu_p.anp_matname );
+		rt_vls_free( &anp->an_u.anu_p.anp_matparam );
+		break;
+	}
+
+	db_free_full_path( &anp->an_path );
+	rt_free( (char *)anp, "animate");
+}
+
+/*
  *			D B _ F R E E _ A N I M
  *
  *  Release chain of animation structures
- * XXX really need another subroutine in common,
- * XXX which knows how to free the vls strings, etc.
+ *
+ *  An unfortunate choice of name.
  */
 void
 db_free_anim( dbip )
@@ -218,8 +240,7 @@ register struct db_i *dbip;
 		RT_CK_ANIMATE(anp);
 		nextanp = anp->an_forw;
 
-		db_free_full_path( &anp->an_path );
-		rt_free( (char *)anp, "struct animate");
+		db_free_1anim( anp );
 		anp = nextanp;
 	}
 	dbip->dbi_anroot = ANIM_NULL;
@@ -233,8 +254,7 @@ register struct db_i *dbip;
 				RT_CK_ANIMATE(anp);
 				nextanp = anp->an_forw;
 
-				db_free_full_path( &anp->an_path );
-				rt_free( (char *)anp, "struct animate");
+				db_free_1anim( anp );
 				anp = nextanp;
 			}
 			dp->d_animate = ANIM_NULL;
@@ -243,16 +263,17 @@ register struct db_i *dbip;
 }
 
 /*
- *			D B _ P A R S E _ A N I M
+ *			D B _ P A R S E _ 1 A N I M
  *
- *  A common parser for mged and rt.
- *  Experimental.
+ *  Parse one "anim" type command into an "animate" structure.
+ *  argv[1] must be the "a/b" path spec,
+ *  argv[2] indicates what is to be animated on that arc.
  */
-int
-db_parse_anim( dbip, argc, argv )
+struct animate	*
+db_parse_1anim( dbip, argc, argv )
 struct db_i	*dbip;
 int		argc;
-char		**argv;
+CONST char	**argv;
 {
 	struct db_tree_state	ts;
 	struct animate		*anp;
@@ -262,9 +283,6 @@ char		**argv;
 	GETSTRUCT( anp, animate );
 	anp->magic = ANIMATE_MAGIC;
 
-	if( argv[1][0] == '/' )
-		at_root = 1;
-
 	bzero( (char *)&ts, sizeof(ts) );
 	ts.ts_dbip = dbip;
 	mat_idn( ts.ts_mat );
@@ -272,9 +290,6 @@ char		**argv;
 	anp->an_path.fp_names = (struct directory **)0;
 	if( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
 		goto bad;
-
-	if( anp->an_path.fp_len > 1 )
-		at_root = 0;
 
 	if( strcmp( argv[2], "matrix" ) == 0 )  {
 		anp->an_type = RT_AN_MATRIX;
@@ -289,34 +304,50 @@ char		**argv;
 		else if( strcmp( argv[3], "rboth" ) == 0 )
 			anp->an_u.anu_m.anm_op = ANM_RBOTH;
 		else  {
-			rt_log("db_parse_anim:  Matrix op '%s' unknown\n",
+			rt_log("db_parse_1anim:  Matrix op '%s' unknown\n",
 				argv[3]);
 			goto bad;
 		}
-		for( i=0; i<16; i++ )
-			anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
+		/* Allow some shorthands for the matrix spec */
+		if( strcmp( argv[4], "translate" ) == 0 ||
+		    strcmp( argv[4], "xlate" ) == 0 )  {
+		    	if( argc < 5+2 )  {
+		    		rt_log("db_parse_1anim:  matrix %s translate does not have enough arguments, only %d\n",
+		    			argv[3], argc );
+		    		goto bad;
+		    	}
+		    	mat_idn( anp->an_u.anu_m.anm_mat );
+		    	MAT_DELTAS( anp->an_u.anu_m.anm_mat,
+		    		atof( argv[5+0] ),
+		    		atof( argv[5+1] ),
+		    		atof( argv[5+2] ) );
+		} else {
+			/* No keyword, assume full 4x4 matrix */
+			for( i=0; i<16; i++ )
+				anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
+		}
 	} else if( strcmp( argv[2], "material" ) == 0 )  {
 		anp->an_type = RT_AN_MATERIAL;
-		RT_VLS_INIT( &anp->an_u.anu_p.anp_matname );
-		RT_VLS_INIT( &anp->an_u.anu_p.anp_matparam );
+		rt_vls_init( &anp->an_u.anu_p.anp_matname );
+		rt_vls_init( &anp->an_u.anu_p.anp_matparam );
 		if( strcmp( argv[3], "rboth" ) == 0 )  {
 			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
 			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
-				argc-5, &argv[5] );
+				argc-5, (char **)&argv[5] );
 			anp->an_u.anu_p.anp_op = RT_ANP_RBOTH;
 		} else if( strcmp( argv[3], "rmaterial" ) == 0 )  {
 			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_RMATERIAL;
 		} else if( strcmp( argv[3], "rparam" ) == 0 )  {
 			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
-				argc-4, &argv[4] );
+				argc-4, (char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_RPARAM;
 		} else if( strcmp( argv[3], "append" ) == 0 )  {
 			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
-				argc-4, &argv[4] );
+				argc-4, (char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
 		} else {
-			rt_log("db_parse_anim:  material animation '%s' unknown\n",
+			rt_log("db_parse_1anim:  material animation '%s' unknown\n",
 				argv[3]);
 			goto bad;
 		}
@@ -326,17 +357,46 @@ char		**argv;
 		anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
 		anp->an_u.anu_c.anc_rgb[2] = atoi( argv[3+2] );
 	} else {
-		rt_log("db_parse_anim:  animation type '%s' unknown\n", argv[2]);
+		rt_log("db_parse_1anim:  animation type '%s' unknown\n", argv[2]);
 		goto bad;
 	}
-	if( db_add_anim( dbip, anp, at_root ) < 0 )  {
-		goto bad;
-	}
-	return(0);
+	return anp;
 bad:
-	db_free_full_path( &anp->an_path );
-	rt_free( (char *)anp, "animate");
-	return(-1);		/* BAD */
+	db_free_1anim( anp );
+	return (struct animate *)NULL;
+}
+
+/*
+ *			D B _ P A R S E _ A N I M
+ *
+ *  A common parser for mged and rt.
+ *  Experimental.
+ *  Not the best name for this.
+ */
+int
+db_parse_anim( dbip, argc, argv )
+struct db_i	*dbip;
+int		argc;
+char		**argv;
+{
+	struct db_tree_state	ts;
+	struct animate		*anp;
+	int	i;
+	int	at_root = 0;
+
+	if( !(anp = db_parse_1anim( dbip, argv )) )
+		return -1;	/* BAD */
+
+	if( argv[1][0] == '/' )
+		at_root = 1;
+
+	if( anp->an_path.fp_len > 1 )
+		at_root = 0;
+
+	if( db_add_anim( dbip, anp, at_root ) < 0 )  {
+		return -1;	/* BAD */
+	}
+	return 0;		/* OK */
 }
 void
 db_write_anim(fop, anp)
