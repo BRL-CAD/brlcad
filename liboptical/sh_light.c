@@ -170,9 +170,14 @@ genptr_t	*dpp;
 	}
 
 	/* Light is aimed down -Z in it's local coordinate system */
-	VSET( work, 0, 0, -1 );
-	MAT4X3VEC( lp->lt_aim, stp->st_pathmat, work );
-	VUNITIZE( lp->lt_aim );
+	{
+		register matp_t	matp;
+		if( (matp = stp->st_matp) == (matp_t)0 )
+			matp = rt_identity;
+		VSET( work, 0, 0, -1 );
+		MAT4X3VEC( lp->lt_aim, matp, work );
+		VUNITIZE( lp->lt_aim );
+	}
 
 	if( rp->reg_mater.ma_override )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
