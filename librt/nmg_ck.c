@@ -977,7 +977,7 @@ char *str;
  *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
  *
  *  Search for null ("worthless") edges in a face.
- *  Such edges are legitimate to have, but can be troublesom
+ *  Such edges are legitimate to have, but can be troublesome
  *  for the boolean routines.
  *
  *  Often used to see if breaking an edge at a given
@@ -999,8 +999,10 @@ CONST struct faceuse	*fu;
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 			struct edgeuse		*neu;
 			neu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
+			if( eu == neu )
+				rt_bomb("nmg_ck_face_worthless_edges() lu has only one edge?\n");
 			if( eu->vu_p == neu->vu_p )
-				rt_bomb("edge runs between two copies of vu??\n");
+				rt_bomb("nmg_ck_face_worthless_edges() edge runs between two copies of vu??\n");
 			if( eu->vu_p->v_p == neu->vu_p->v_p )  {
 #if 0
 				nmg_pr_eu( eu, NULL );
