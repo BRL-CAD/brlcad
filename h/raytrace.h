@@ -1345,7 +1345,11 @@ struct rt_functab {
 	void	(*ft_curve) RT_ARGS((struct curvature * /*cvp*/,
 			struct hit * /*hitp*/,
 			struct soltab * /*stp*/));
-	int	(*ft_classify)();
+	int	(*ft_classify) RT_ARGS((
+			CONST struct soltab * /*stp*/,
+			CONST vect_t /*min*/,
+			CONST vect_t /*max*/,
+			CONST struct bn_tol * /*tol*/));
 	void	(*ft_free) RT_ARGS((struct soltab * /*stp*/));
 	int	(*ft_plot) RT_ARGS((
 			struct bu_list * /*vhead*/,
