@@ -1,0 +1,250 @@
+                                                                 Page 1 of 4
+
+
+		Statement of Terms and Conditions for Release of
+			The BRL-CAD Package
+
+
+The Federal Government of the United States of America is
+hereinafter "THE GOVERNMENT".
+
+The U. S. Army Ballistic Research Laboratory, hereinafter "BRL",
+an agency of THE GOVERNMENT, is the originator of the BRL-CAD package.
+
+The BRL-CAD Package is a collection of computer programs, data files,
+and associated documentation, which may be provided in either or both
+electronic and printed form, hereinafter referred to as "BRL-CAD".
+
+The Survivability/Vulnerability Information Analysis Center, hereinafter
+"SURVIAC", administers the supported BRL-CAD distributions and
+information exchange programs on behalf of BRL.
+
+_______________________________________________________________________
+(enter name of corporation or private individual requesting BRL-CAD),
+
+having an office at ___________________________________________________
+
+                    ___________________________________________________
+
+		    ___________________________________________________
+is hereinafter referred to as "RECIPIENT".
+
+1.  BRL-CAD is an unpublished work that is not generally available to
+the public, except through the terms of this limited distribution. THE
+GOVERNMENT grants recipient a personal, non-exclusive, non-transferable
+license and right to use BRL-CAD.  No right is granted for any use of
+BRL-CAD by any third party.
+
+2.  RECIPIENT will be responsible for assuring that BRL-CAD will not
+be released or sold to any other party without the prior written
+approval of BRL.
+
+3.  RECIPIENT guarantees that BRL-CAD, and any modified versions
+thereof, will not be published for profit or in any manner offered
+for sale to THE GOVERNMENT. If BRL-CAD is modified or enhanced using
+funds from THE GOVERNMENT, THE GOVERNMENT owns the results, whether
+BRL-CAD is the basis of or incidental to a contract. BRL-CAD may be used
+in contracts with THE GOVERNMENT but no development charge may be made
+as part of its use.
+
+4.  BRL-CAD is provided "as is", without warranty. Neither THE
+GOVERNMENT or SURVIAC is liable or responsible for maintenance,
+updating, or correcting any errors in any materials provided. In no
+event shall THE GOVERNMENT or SURVIAC be liable for any loss or for any
+indirect, special, punitive, exemplary, incidental, or consequential
+damages arising from use, possession, or performance of BRL-CAD.
+
+5.  BRL will be credited should BRL-CAD be used in a product or written
+about in any publication.  BRL will be referenced as the original source
+in any advertisements.
+
+6.  RECIPIENT agrees that when bugs or problems are found with BRL-CAD,
+a reasonable attempt will be made to report them to SURVIAC or BRL.
+
+                                                                 Page 2 of 4
+
+7.  RECIPIENT will own full rights to any data files, databases or
+images created using BRL-CAD.
+
+8.  RECIPIENT agrees to complete and return the "Recipient Survey Form"
+attached below.
+
+By signing here, RECIPIENT signifies agreement to these terms and
+conditions of the distribution of BRL-CAD distribution as detailed
+above.
+
+
+____________________________________________________________
+					RECIPIENT's Signature
+
+____________________________________________________________
+					RECIPIENT's Printed Name
+
+____________________________________________________________
+					Title
+
+____________________________________________________________
+					Corporation
+
+____________________________________________________________
+					Mailing Address
+
+____________________________________________________________
+					City, State, Zip Code, Country
+
+____________________________________________________________
+					Phone #
+
+____________________________________________________________
+					FAX #
+
+____________________________________________________________
+					Date
+
+                                                                 Page 3 of 4
+
+			Recipient Survey Form for
+			   The BRL-CAD Package
+
+
+The information collected on this form will be used to support the
+BRL-CAD effort, and will be available only to appropriate BRL and
+SURVIAC personnel unless indicated otherwise, below.  If RECIPIENT
+grants permission to release this information, BRL and SURVIAC will make
+it available to BRL-CAD related hardware vendors and service providers.
+
+ [ ] RECIPIENT grants BRL and SURVIAC permission to release information
+     on this "Recipient Survey Form" to outside parties.
+
+Please designate a technical point-of-contact:
+
+
+____________________________________________________________
+					Printed Name
+
+____________________________________________________________
+					Title
+
+____________________________________________________________
+					Corporation
+
+____________________________________________________________
+					Mailing Address
+
+____________________________________________________________
+					City, State, Zip Code, Country
+
+____________________________________________________________
+					Phone #
+
+____________________________________________________________
+					FAX #
+
+____________________________________________________________
+					Internet E-mail Address
+
+
+Please indicate the type of your organization:
+ [ ] Academic
+ [ ] Government
+ [ ] Industry
+ [ ] Private Individual
+
+Number of people in work group _________
+
+Have you used BRL-CAD before?  _________  If yes, for how many years? _______
+
+Are you interested in participating in the BRL-CAD user group?  ________
+
+                                                                 Page 4 of 4
+Please indicate the anticipated uses of BRL-CAD at this site (check all
+that are appropriate):
+
+ [ ]	Computer Aided Design (CAD)
+ [ ]	Computer Aided Manufacturing (CAM)
+ [ ]	Vulnerability Assessment
+ [ ]	Signature Prediction and Analysis
+ [ ]	Animation
+ [ ]	Visualization
+ [ ]	Image Processing
+ [ ]	Graphic Arts
+ [ ]	Architectural Design
+ [ ]	Education
+ [ ]	Other (please elaborate)
+
+
+
+
+Please list the computer platforms that you are likely to install
+BRL-CAD on (check all that are appropriate):
+
+	Vendor		Model		OS Revision
+	======		=====		===========
+ [ ]	Sun		Sun-3
+ [ ]	Sun		Sun-4 (SPARC)
+ [ ]	Sun		Sun-386i
+ [ ]	SGI		3030
+ [ ]	SGI		4D
+ [ ]	IBM
+ [ ]	DEC
+ [ ]	Cray
+ [ ]	Convex
+ [ ]	Gould/Encore
+ [ ]	Alliant
+ [ ]	Pyramid
+ [ ]	Other (please elaborate)
+
+
+Types of BRL-CAD users at this site (check all that are appropriate):
+
+ [ ]  Management
+ [ ]  Graphic artist
+ [ ]  Engineer
+ [ ]  Image Processor
+ [ ]  Designer
+ [ ]  Draftperson
+ [ ]  Other        __________________________
+
+Anticipated use of BRL-CAD by at least one person at this site:
+
+ [ ]  >10 days/month
+ [ ]  5-10 days/month
+ [ ]  1-4 days/month
+ [ ]  several times/year
+
+If you are requesting a magnetic tape, please specify the format:
+
+ [ ]	6250 bpi 9-track half-inch tape, TAR format, 10k byte records
+ [ ]	1600 bpi 9-track half-inch tape, TAR format, 10k byte records
+ [ ]	SGI tape 1/4" tape cartridge, low density, QIC-24
+ [ ]	SGI tape 1/4" tape cartridge, high density, QIC-150
+ [ ]	Sun tape 1/4" tape cartridge, QIC-24
+ [ ]	8-mm Exabyte tape cartridge
+
+
+		Instructions for completing this form
+
+For record keeping purposes, the four pages of completed and signed form
+must be returned either (a) printed on paper, or (b) transmitted via
+facsimile machine (FAX).
+
+If you are requesting a "Free distribution with no support privileges"
+for FTP file transfer over the DARPA InterNet, please transmit the
+completed form via FAX to USA telephone (410)-278-5058, or send via
+postal mail to:
+
+	BRL-CAD Distribution
+	Attn: SLCBR-VL-V
+	APG, MD  21005-5066  USA
+
+If you are requesting a "Full service distribution", please transmit the
+completed form via FAX to USA telephone (410)-272-7417, or send via
+postal mail to:
+
+	BRL-CAD Distribution
+	SURVIAC Aberdeen Satellite Office
+	1003 Old Philadelphia Road, Suite 103
+	Aberdeen MD  21001  USA
+
+Note that USA area code 410 will not go into effect until 1-Nov-91.
+Prior to that date, please use area code 301.
