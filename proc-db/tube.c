@@ -34,7 +34,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct b_spline *spl_new();
 
 mat_t	identity;
-double degtorad = 0.0174532925199433;
+double	degtorad = 0.0174532925199433;
+double	inches2mm = 25.4;
 
 #define N_CIRCLE_KNOTS	12
 fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
@@ -45,26 +46,32 @@ fastf_t	circle_knots[N_CIRCLE_KNOTS] = {
 	4,	4,	4
 };
 
-#define MPY	100
 #define IRT2	0.70710678	/* 1/sqrt(2) */
 #define NCOLS	9
+/* When scaling, multiply only XYZ, not W */
 fastf_t poly[NCOLS*4] = {
-	0,	MPY,		0,		1,
-	0,	IRT2*MPY,	IRT2*MPY,	IRT2,
-	0,	0,		MPY,		1,
-	0,	-IRT2*MPY,	IRT2*MPY,	IRT2,
-	0,	-MPY,		0,		1,
-	0,	-IRT2*MPY,	-IRT2*MPY,	IRT2,
-	0,	0,		-MPY,		1,
-	0,	IRT2*MPY,	-IRT2*MPY,	IRT2,
-	0,	MPY,		0,		1
+	0,	1,	0,	1,
+	0,	IRT2,	IRT2,	IRT2,
+	0,	0,	1,	1,
+	0,	-IRT2,	IRT2,	IRT2,
+	0,	-1,	0,	1,
+	0,	-IRT2,	-IRT2,	IRT2,
+	0,	0,	-1,	1,
+	0,	IRT2,	-IRT2,	IRT2,
+	0,	1,	0,	1
 };
+
+point_t	sample[1024];
+
+double	radius;
+double	length;
+double	spacing;
 
 main(argc, argv)
 char	**argv;
 {
 	struct b_spline *bp;
-	int	npts = 4;
+	int	npts;
 	register int i;
 	int	nv;
 	int	cur_kv;
@@ -72,6 +79,20 @@ char	**argv;
 	register int col;
 	int	row;
 	vect_t	point;
+
+	radius = 5 * inches2mm / 2;	/* 5" diameter */
+	length = 187 * inches2mm;
+	spacing = 100;			/* mm per sample */
+	npts = ceil(length/spacing);
+	fprintf(stderr,"radius=%gmm, length=%gmm, spacing=%gmm\n", radius, length, spacing);
+
+	/* Generate some dummy sample data */
+	for( i=0; i<npts; i++ )  {
+		sample[i][X] = i * spacing;
+		sample[i][Y] = 0;
+		sample[i][Z] = 4 * radius * sin(
+			((double)i*i)/npts * 2 * 3.14159265358979323 );
+	}
 
 	/*
 	 *  This spline will look like a cylinder.
@@ -115,36 +136,35 @@ char	**argv;
 
 	/* Row 0 */
 	for( col=0; col<9; col++ )  {
-		*meshp++ = 0;	/* firstx; */
-		*meshp++ = 0;
-		*meshp++ = 0;
+		*meshp++ = sample[0][X];
+		*meshp++ = sample[0][Y];
+		*meshp++ = sample[0][Z];
 		*meshp++ = 1;
 	}
 
 	/* Rows 1..npts */
 	for( i=0; i<npts; i++ )  {
-		row = i;
-		VSET( point, row * MPY, 0, 0 );
+		/* row = i; */
+		VMOVE( point, sample[i] );
 		for( col=0; col<9; col++ )  {
 			register fastf_t h;
+
 			h = poly[col*4+H];
-			*meshp++ = poly[col*4+X] + point[X]*h;
-			*meshp++ = poly[col*4+Y] + point[Y]*h;
-			*meshp++ = poly[col*4+Z] + point[Z]*h;
+			*meshp++ = poly[col*4+X]*radius + point[X]*h;
+			*meshp++ = poly[col*4+Y]*radius + point[Y]*h;
+			*meshp++ = poly[col*4+Z]*radius + point[Z]*h;
 			*meshp++ = h;
 		}
 	}
 
 	/* Row npts+1 */
 	for( col=0; col<9; col++ )  {
-		*meshp++ = row * MPY;		/* lastx; */
-		*meshp++ = 0;
-		*meshp++ = 0;
+		*meshp++ = sample[npts-1][X];
+		*meshp++ = sample[npts-1][Y];
+		*meshp++ = sample[npts-1][Z];
 		*meshp++ = 1;
 	}
 		
-rt_pr_spl("Ta Da!", bp);
-
 	mk_id( stdout, "Spline Tube" );
 	mk_bsolid( stdout, "tube", 1, 0.1 );
 	mk_bsurf( stdout, bp );
