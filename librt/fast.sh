@@ -63,7 +63,6 @@ cake \
  global.o \
  mater.o \
  memalloc.o \
- rtassoc.o \
  tcl.o \
  &
 
