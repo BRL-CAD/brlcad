@@ -53,23 +53,31 @@ static int		right_edge = -1;
 static int		bottom_edge = -1;
 static int		top_edge = -1;
 
+#define	COLORS_NEITHER	0
+#define	COLORS_INTERIOR	1
+#define	COLORS_EXTERIOR	2
+#define	COLORS_BOTH	(COLORS_INTERIOR | COLORS_EXTERIOR)
+static int		colors_specified = COLORS_NEITHER;
+
 static unsigned char	border_rgb[3];
-static unsigned char	region_rgb[3];
+static unsigned char	exterior_rgb[3];
+static unsigned char	interior_rgb[3];
 static unsigned char	rgb_tol[3];
 
 fastf_t			border_hsv[3];
-fastf_t			region_hsv[3];
+fastf_t			exterior_hsv[3];
+fastf_t			interior_hsv[3];
 fastf_t			hsv_tol[3];
 
-#define	OPT_STRING	"ab:hi:n:s:t:w:x:y:B:I:T:X:Y:?"
+#define	OPT_STRING	"ab:e:hi:n:s:t:w:x:y:B:E:I:T:X:Y:?"
 
 #define	made_it()	fprintf(stderr, "Made it to %s:%d\n",	\
 				__FILE__, __LINE__);		\
 				fflush(stderr)
 static char usage[] = "\
-Usage: pixborder [-b 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
-                 [-B 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
-		 [-x left_edge] [-y bottom_edge]\n\
+Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
+                 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
+		 [-x left_edge]  [-y bottom_edge]\n\
 		 [-X right_edge] [-Y top_edge]\n\
                  [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
                  [file.pix]\n";
@@ -121,139 +129,6 @@ char	*buf;
     if (tmp[SAT] == 0.0)
 	tmp[HUE] = ACHROMATIC;
     VMOVE(hsvp, tmp);
-    return (1);
-}
-
-/*
- *		    G E T _ A R G S ( )
- */
-static get_args (argc, argv)
-
-int		argc;
-register char **argv;
-
-{
-    register int c;
-
-    while ((c = getopt( argc, argv, OPT_STRING)) != EOF)
-    {
-	switch (c)
-	{
-	    case 'a':
-		autosize = 1;
-		break;
-	    case 'b':
-		if (! read_rgb(border_rgb, optarg))
-		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
-		    return (0);
-		}
-		break;
-	    case 'h':
-		file_height = file_width = 1024;
-		autosize = 0;
-		break;
-	    case 'i':
-		if (! read_rgb(region_rgb, optarg))
-		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
-		    return (0);
-		}
-		break;
-	    case 'n':
-		file_height = atoi(optarg);
-		autosize = 0;
-		break;
-	    case 's':
-		file_height = file_width = atoi(optarg);
-		autosize = 0;
-		break;
-	    case 't':
-		if (! read_rgb(rgb_tol, optarg))
-		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
-		    return (0);
-		}
-		tol_using_rgb = 1;
-		break;
-	    case 'w':
-		file_width = atoi(optarg);
-		autosize = 0;
-		break;
-	    case 'x':
-		left_edge = atoi(optarg);
-		break;
-	    case 'y':
-		bottom_edge = atoi(optarg);
-		break;
-	    case 'B':
-		if (! read_hsv(border_hsv, optarg))
-		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
-		    return (0);
-		}
-		hsv_to_rgb(border_hsv, border_rgb);
-		break;
-	    case 'I':
-		if (! read_hsv(region_hsv, optarg))
-		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
-		    return (0);
-		}
-		hsv_to_rgb(region_hsv, region_rgb);
-		break;
-	    case 'T':
-		if (! read_hsv(hsv_tol, optarg))
-		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
-		    return (0);
-		}
-		tol_using_rgb = 0;
-		break;
-	    case 'X':
-		right_edge = atoi(optarg);
-		break;
-	    case 'Y':
-		top_edge = atoi(optarg);
-		break;
-	    case '?':
-		(void) fputs(usage, stderr);
-		exit (0);
-	    default:
-		return (0);
-	}
-    }
-
-    if (optind >= argc)
-    {
-	if(isatty(fileno(stdin)))
-	    return(0);
-	file_name = "stdin";
-	infp = stdin;
-    }
-    else
-    {
-	file_name = argv[optind];
-	if ((infp = fopen(file_name, "r")) == NULL)
-	{
-	    perror(file_name);
-	    (void) fprintf(stderr, "Cannot open file '%s'\n", file_name);
-	    return (0);
-	}
-	++fileinput;
-    }
-
-    if (argc > ++optind)
-	(void) fprintf(stderr, "pixborder: excess argument(s) ignored\n");
-
-    if (left_edge == -1)
-	left_edge = 0;
-    if (right_edge == -1)
-	right_edge = file_width - 1;
-    if (bottom_edge == -1)
-	bottom_edge = 0;
-    if (top_edge == -1)
-	top_edge = file_height - 1;
     return (1);
 }
 
@@ -445,15 +320,60 @@ fastf_t	*color2;
 }
 
 /*
+ *			I S _ I N T E R I O R ( )
+ */
+static int is_interior (pix_rgb)
+
+unsigned char	*pix_rgb;
+
+{
+    if (tol_using_rgb)
+	return ((colors_specified == COLORS_EXTERIOR)	?
+		(! same_rgb(pix_rgb, exterior_rgb))	:
+		   same_rgb(pix_rgb, interior_rgb));
+    else
+    {
+	fastf_t	pix_hsv[3];
+
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	return ((colors_specified == COLORS_EXTERIOR)	?
+		(! same_hsv(pix_hsv, exterior_hsv))	:
+		   same_hsv(pix_hsv, interior_hsv));
+    }
+}
+
+/*
+ *			I S _ E X T E R I O R ( )
+ */
+static int is_exterior (pix_rgb)
+
+unsigned char	*pix_rgb;
+
+{
+    if (tol_using_rgb)
+	return ((colors_specified == COLORS_INTERIOR)	?
+		(! same_rgb(pix_rgb, interior_rgb))	:
+		   same_rgb(pix_rgb, exterior_rgb));
+    else
+    {
+	fastf_t	pix_hsv[3];
+
+	rgb_to_hsv(pix_rgb, pix_hsv);
+	return ((colors_specified == COLORS_INTERIOR)	?
+		(! same_hsv(pix_hsv, interior_hsv))	:
+		   same_hsv(pix_hsv, exterior_hsv));
+    }
+}
+
+/*
  *		    I S _ B O R D E R ( )
  */
-static int is_border (prp, trp, nrp, col_nm, use_rgb)
+static int is_border (prp, trp, nrp, col_nm)
 
 unsigned char	*prp;		/* Previous row */
 unsigned char	*trp;		/* Current (this) row */
 unsigned char	*nrp;		/* Next row */
 int		col_nm;		/* Current column */
-int		use_rgb;	/* Instead of HSV? */
 
 {
     unsigned char	pix_rgb[3];
@@ -461,72 +381,190 @@ int		use_rgb;	/* Instead of HSV? */
 
     VMOVE(pix_rgb, trp + (col_nm + 1) * 3);
 
-    if (use_rgb)
-    {
-	/*
-	 *	Ensure that this pixel is in a region of interest
-	 */
-	if (! same_rgb(pix_rgb, region_rgb))
-	    return (0);
-	
-	/*
-	 *	Check its left and right neighbors
-	 */
-	 VMOVE(pix_rgb, trp + (col_nm + 0) * 3);
-	 if (! same_rgb(pix_rgb, region_rgb))
-	    return (1);
-	 VMOVE(pix_rgb, trp + (col_nm + 2) * 3);
-	 if (! same_rgb(pix_rgb, region_rgb))
-	    return (1);
-	
-	/*
-	 *	Check its upper and lower neighbors
-	 */
-	 VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
-	 if (! same_rgb(pix_rgb, region_rgb))
-	    return (1);
-	 VMOVE(pix_rgb, nrp + (col_nm + 1) * 3);
-	 if (! same_rgb(pix_rgb, region_rgb))
-	    return (1);
-    }
-    else
-    {
-	/*
-	 *	Ensure that this pixel is in a region of interest
-	 */
-	rgb_to_hsv(pix_rgb, pix_hsv);
-	if (! same_hsv(pix_hsv, region_hsv))
-	    return (0);
-	
-	/*
-	 *	Check its left and right neighbors
-	 */
-	VMOVE(pix_rgb, trp + (col_nm + 0) * 3);
-	rgb_to_hsv(pix_rgb, pix_hsv);
-	if (! same_hsv(pix_hsv, region_hsv))
-	    return (1);
-	VMOVE(pix_rgb, trp + (col_nm + 2) * 3);
-	rgb_to_hsv(pix_rgb, pix_hsv);
-	if (! same_hsv(pix_hsv, region_hsv))
-	    return (1);
-	
-	/*
-	 *	Check its upper and lower neighbors
-	 */
-	VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
-	rgb_to_hsv(pix_rgb, pix_hsv);
-	if (! same_hsv(pix_hsv, region_hsv))
-	    return (1);
-	VMOVE(pix_rgb, nrp + (col_nm + 1) * 3);
-	rgb_to_hsv(pix_rgb, pix_hsv);
-	if (! same_hsv(pix_hsv, region_hsv))
-	    return (1);
-    }
+    /*
+     *	Ensure that this pixel is in a region of interest
+     */
+    if (! is_interior(pix_rgb))
+	return (0);
+
+    /*
+     *	Check its left and right neighbors
+     */
+    VMOVE(pix_rgb, trp + (col_nm + 0) * 3);
+    if (is_exterior(pix_rgb))
+	return (1);
+    VMOVE(pix_rgb, trp + (col_nm + 2) * 3);
+    if (is_exterior(pix_rgb))
+	return (1);
+
+    /*
+     *	Check its upper and lower neighbors
+     */
+    VMOVE(pix_rgb, nrp + (col_nm + 1) * 3);
+    if (is_exterior(pix_rgb))
+	return (1);
+    VMOVE(pix_rgb, prp + (col_nm + 1) * 3);
+    if (is_exterior(pix_rgb))
+	return (1);
     
     /*
      *	All four of its neighbors are also in the region
      */
-     return (0);
+    return (0);
+}
+
+/*
+ *		    G E T _ A R G S ( )
+ */
+static get_args (argc, argv)
+
+int		argc;
+register char **argv;
+
+{
+    register int c;
+
+    while ((c = getopt( argc, argv, OPT_STRING)) != EOF)
+    {
+	switch (c)
+	{
+	    case 'a':
+		autosize = 1;
+		break;
+	    case 'b':
+		if (! read_rgb(border_rgb, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		break;
+	    case 'e':
+		if (! read_rgb(exterior_rgb, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		rgb_to_hsv(exterior_rgb, exterior_hsv);
+		colors_specified |= COLORS_EXTERIOR;
+		break;
+	    case 'h':
+		file_height = file_width = 1024;
+		autosize = 0;
+		break;
+	    case 'i':
+		if (! read_rgb(interior_rgb, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		rgb_to_hsv(interior_rgb, interior_hsv);
+		colors_specified |= COLORS_INTERIOR;
+		break;
+	    case 'n':
+		file_height = atoi(optarg);
+		autosize = 0;
+		break;
+	    case 's':
+		file_height = file_width = atoi(optarg);
+		autosize = 0;
+		break;
+	    case 't':
+		if (! read_rgb(rgb_tol, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		tol_using_rgb = 1;
+		break;
+	    case 'w':
+		file_width = atoi(optarg);
+		autosize = 0;
+		break;
+	    case 'x':
+		left_edge = atoi(optarg);
+		break;
+	    case 'y':
+		bottom_edge = atoi(optarg);
+		break;
+	    case 'B':
+		if (! read_hsv(border_hsv, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		hsv_to_rgb(border_hsv, border_rgb);
+		break;
+	    case 'E':
+		if (! read_hsv(exterior_hsv, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		hsv_to_rgb(exterior_hsv, exterior_rgb);
+		colors_specified |= COLORS_EXTERIOR;
+		break;
+	    case 'I':
+		if (! read_hsv(interior_hsv, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		hsv_to_rgb(interior_hsv, interior_rgb);
+		colors_specified |= COLORS_INTERIOR;
+		break;
+	    case 'T':
+		if (! read_hsv(hsv_tol, optarg))
+		{
+		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    return (0);
+		}
+		tol_using_rgb = 0;
+		break;
+	    case 'X':
+		right_edge = atoi(optarg);
+		break;
+	    case 'Y':
+		top_edge = atoi(optarg);
+		break;
+	    case '?':
+		(void) fputs(usage, stderr);
+		exit (0);
+	    default:
+		return (0);
+	}
+    }
+
+    if (optind >= argc)
+    {
+	if(isatty(fileno(stdin)))
+	    return(0);
+	file_name = "stdin";
+	infp = stdin;
+    }
+    else
+    {
+	file_name = argv[optind];
+	if ((infp = fopen(file_name, "r")) == NULL)
+	{
+	    perror(file_name);
+	    (void) fprintf(stderr, "Cannot open file '%s'\n", file_name);
+	    return (0);
+	}
+	++fileinput;
+    }
+
+    if (argc > ++optind)
+	(void) fprintf(stderr, "pixborder: excess argument(s) ignored\n");
+
+    if (left_edge == -1)
+	left_edge = 0;
+    if (right_edge == -1)
+	right_edge = file_width - 1;
+    if (bottom_edge == -1)
+	bottom_edge = 0;
+    if (top_edge == -1)
+	top_edge = file_height - 1;
+    return (1);
 }
 
 /*
@@ -547,9 +585,13 @@ char	*argv[];
     int			row_nm;
     int			this_row;
 
-    VSETALL(border_rgb, 1);
-    VSETALL(region_rgb, 255);
-    VSETALL(rgb_tol, 0);
+    VSETALL(border_rgb,     1);
+    rgb_to_hsv(border_rgb, border_hsv);
+    VSETALL(exterior_rgb,   1);
+    rgb_to_hsv(exterior_rgb, exterior_hsv);
+    VSETALL(interior_rgb, 255);
+    rgb_to_hsv(interior_rgb, interior_hsv);
+    VSETALL(rgb_tol,        0);
 
     if (!get_args( argc, argv ))
     {
@@ -559,7 +601,7 @@ char	*argv[];
 
     fprintf(stderr,
 	"We'll put a border of %d/%d/%d around regions of %d/%d/%d\n",
-	V3ARGS(border_rgb), V3ARGS(region_rgb));
+	V3ARGS(border_rgb), V3ARGS(interior_rgb));
     if (tol_using_rgb)
 	fprintf(stderr, "With an RGB tol of %d/%d/%d\n", V3ARGS(rgb_tol));
     else
@@ -634,7 +676,7 @@ char	*argv[];
 
 		if ((col_nm >= left_edge) && (col_nm <= right_edge)
 		 && is_border(inrow[prev_row], inrow[this_row],
-			    inrow[next_row], col_nm, tol_using_rgb))
+			    inrow[next_row], col_nm))
 		    color_ptr = border_rgb;
 		else
 		    color_ptr = inrow[this_row] + (col_nm + 1) * 3;
