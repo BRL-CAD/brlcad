@@ -429,11 +429,11 @@ TCLVER=8.4
 TCL=libtcl${TCLVER}
 case "$target" in
 	powerpc-apple-darwin*)
-		TCL_LIBS='-L${abs_top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} ${DL} ${SOCKET} -lm'
 dnl -compatibility_version 20 -current_version 20.1
 		;;
 	*)
-		TCL_LIBS='-L${abs_top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
+		TCL_LIBS='-L${top_builddir}/src/other/libtcl/unix -ltcl${TCLVER} -Wl,-rpath,${libdir} -rdynamic ${DL} ${SOCKET} -lm'
 esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
 if test "x$FRAMEWORK_BUILD" = "x1" ; then
@@ -450,7 +450,7 @@ AC_SUBST(TCL_LIBS)
 
 dnl tk
 TKVER="8.4"
-TK_LIBS='-L${abs_top_builddir}/src/other/libtk/unix -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
+TK_LIBS='-L${top_builddir}/src/other/libtk/unix -ltk${TKVER} ${TCL_LIBS} ${X_LIBS}'
 TK_LIBRARY="$prefix/tk${TKVER}"
 AC_SUBST(TKVER)
 AC_SUBST(TK_LIBRARY)
@@ -458,8 +458,8 @@ AC_SUBST(TK_LIBS)
 
 dnl itcl
 ITCL_VERSION="3.3"
-ITCL_LIBS='-L${abs_top_builddir}/src/other/incrTcl/itcl -litcl3.3'
-ITK_LIBS='-L${abs_top_builddir}/src/other/incrTcl/itk -litk3.3'
+ITCL_LIBS='-L${top_builddir}/src/other/incrTcl/itcl -litcl${ITCL_VERSION} -Wl,-rpath,${libdir}/itcl${ITCL_VERSION}'
+ITK_LIBS='-L${top_builddir}/src/other/incrTcl/itk -litk${ITCL_VERSION} -Wl,-rpath,${libdir}/itk${ITCL_VERSION}'
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
