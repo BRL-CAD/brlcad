@@ -156,13 +156,6 @@ extern int		clip(), getname(), use_pen(), drawHsolid();
 extern struct directory	*combadd(), *dir_add(), *lookup();
 extern struct solid *redraw();
 
-/* Display manager routines */
-void		dm_open(), dm_init(), dm_restart();
-void		dm_prolog(), dm_epilog(), dm_call();
-void		dm_normal(), dm_newrot(), dm_update();
-void		dm_finish(), dm_puts(), dm_2d_line();
-int		dm_getfd();
-
 #ifndef	NULL
 #define	NULL		0
 #endif
