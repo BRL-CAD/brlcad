@@ -11,9 +11,10 @@
  *	f_region	add solids to a region or create the region
  *	f_kill		remove an object or several from the description
  *	f_group		"grouping" command
- *	f_rm	delete members of a combination
+ *	f_rm		delete members of a combination
+ *	f_copy_inv	copy cyl and position at "end" of original cyl
  *
- *  Author -
+ *  Authors -
  *	Michael John Muuss
  *	Keith A Applin
  *
@@ -78,8 +79,8 @@ f_name()
 	db_putrec( dp, &record, 0 );
 }
 
-/* Copy a solid */
-/* Format: c oldname newname	*/
+/* Copy an object */
+/* Format: cp oldname newname	*/
 void
 f_copy()
 {
@@ -322,5 +323,63 @@ top:
 		db_getrec(dp, &record, 0);
 		record.c.c_length -= num_deleted;
 		db_putrec(dp, &record, 0);
+	}
+}
+
+/* Copy a cylinder and position at end of original cylinder
+ *	Used in making "wires"
+ *
+ * Format: cpi old new
+ */
+void
+f_copy_inv()
+{
+	register struct directory *proto;
+	register struct directory *dp;
+	union record record;
+	register int i;
+
+	if( (proto = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+		return;
+
+	NAMEMOVE( cmd_args[2], record.s.s_name );
+	if( lookup( record.s.s_name, LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( record.s.s_name );
+		return;
+	}
+
+	db_getrec( proto, &record, 0 );
+
+	if(record.u_id != ID_SOLID || recrod.s.s_type != GENTGC )  {
+		(void)printf("%s: Not a cylinder\n",record.s.s_name);
+		return;
+	}
+
+	if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
+		return;
+	db_alloc( dp, proto->d_len );
+
+	/* translate to end of "original" cylinder */
+	for(i=0; i<3; i++) {
+		record.s.s_values[i] += record.s.s_values[i+3];
+	}
+
+	/*
+	 * Update the disk record
+	 */
+	NAMEMOVE( cmd_args[2], record.s.s_name );
+	db_putrec( dp, &record, 0 );
+
+	/* draw the new solid */
+	drawHobj(dp, ROOT, 0, identity);
+	dmaflag = 1;
+
+	/* color the solid */
+	dmp->dmr_colorchange();
+
+	if(state == ST_VIEW) {
+		/* solid edit this new cylinder */
+		strcpy(cmd_args[1], cmd_args[2]);
+		f_sed();
 	}
 }
