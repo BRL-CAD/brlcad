@@ -311,14 +311,14 @@ double w;	/* 0..1, */
 	if (d < .7) {
 		pl->blades -= (1.0 - d) * pl->blades;
 		pl->blades = CLAMP(pl->blades, 1, BLADE_LAST);
-	} 
+	}
 
 	for (blade=0 ; blade < pl->blades ; blade++) {
 		pl->b[blade].tot_len = 0.0;
 		if (blade != BLADE_LAST)
 			pl->b[blade].width *= d;
 		else
-			d *= d;
+			d = d * d * d;
 
 		for (seg=0; seg < pl->b[blade].segs ; seg++) {
 			pl->b[blade].leaf[seg].len *= d;
@@ -424,7 +424,8 @@ struct grass_specific *grass_sp;
   grass_sp->proto.b[blade].width = grass_sp->blade_width * 0.5;
 
 
-  seg_len = 2.25 * grass_sp->t / grass_sp->proto.b[blade].segs;
+/* XXX need to get the height of the stalks to vary more somehow */
+  seg_len = 2. * grass_sp->t / grass_sp->proto.b[blade].segs;
   val = .9;
   for (seg=0 ; seg < grass_sp->proto.b[blade].segs ; seg++) {
     tmp = (double)seg / (double)BLADE_SEGS_MAX;
@@ -878,7 +879,8 @@ double radius;	/* radius of ray */
 	h = r->hit.hit_point[Z] / 400.0;
 
 	VSCALE(color, swp->sw_basecolor, 1.0 - h);
-	VJOIN1(swp->sw_color, color, h, grass_sp->brown);
+	VSCALE(tmp, grass_sp->brown, 1.4);
+	VJOIN1(swp->sw_color, color, h, tmp);
 
 	swp->sw_transmit = 0.0;
 
@@ -951,7 +953,7 @@ struct grass_specific	*grass_sp;
 			val, r->radius, r->diverge, dist_to_cell,  val*32.0,
 			V2ARGS(grass_sp->cell));
 
-	if (val > grass_sp->blade_width * 3) {
+	if (val > grass_sp->blade_width * 3.5) {
 		return stat_cell(cell_pos, r, grass_sp, swp, dist_to_cell, val);
 	}
 
