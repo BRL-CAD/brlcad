@@ -183,7 +183,7 @@ BU_EXTERN(void		bn_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
 					vect_t	vec1, vect_t vec2, fastf_t a,
 					fastf_t b, fastf_t c) );
 
-BU_EXTERN(void		bn_vec_perp, (vect_t new, CONST vect_t	old));
+BU_EXTERN(void		bn_vec_perp, (vect_t new_vec, CONST vect_t old_vec));
 BU_EXTERN(void		bn_mat_fromto, ( mat_t m, CONST vect_t from,
 					CONST vect_t to));
 BU_EXTERN(void		bn_mat_xrot, (mat_t m, double sinx, double cosx));
