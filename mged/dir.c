@@ -2,7 +2,6 @@
  *			D I R . C
  *
  * Functions -
- *	dir_build	Build directory of object file
  *	dir_getspace	Allocate memory for table of directory entry pointers
  *	dir_print	Print table-of-contents of object file
  *	f_memprint	Debug, print memory & db free maps
@@ -58,17 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 union record	record;
 static union record zapper;		/* Zeros, for erasing records */
 
-static char *units_str[] = {
-	"none",
-	"mm",
-	"cm",
-	"meters",
-	"inches",
-	"feet",
-	"extra"
-};
-
-void	conversions();
 void	killtree();
 
 static void printnode();
