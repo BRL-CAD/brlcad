@@ -38,68 +38,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern int debug_file_count;
 
-/* XXX move to nmg_info.c */
-/*
- *			N M G _ F I N D _ O T _ S A M E _ E U _ O F _ E
- *
- *  If there is an edgeuse of an OT_SAME faceuse on this edge, return it.
- *  Only return a wire edgeuse if that is all there is.
- *  Useful for selecting a "good" edgeuse to pass to nmg_eu_2vecs_perp().
- */
-struct edgeuse *
-nmg_find_ot_same_eu_of_e( e )
-CONST struct edge	*e;
-{
-	register struct edgeuse	*eu1;
-	register struct edgeuse	*eu;
-	struct faceuse		*fu;
-
-	NMG_CK_EDGE(e);
-	eu = eu1 = e->eu_p;
-	do  {
-		fu = nmg_find_fu_of_eu(eu);
-		if( fu && fu->orientation == OT_SAME )  return eu;
-
-		fu = nmg_find_fu_of_eu(eu->eumate_p);
-		if( fu && fu->orientation == OT_SAME )  return eu->eumate_p;
-		eu = eu->radial_p->eumate_p;
-	} while( eu != eu1 );
-	return eu1;		/* All wire */
-}
-
-/* XXX Move to nmg_info.c */
-/*
- *			N M G _ I S _ V E R T E X _ I N _ F A C E
- *
- *  Returns -
- *	vu	One use of vertex 'v' in face 'f'.
- *	NULL	If there are no uses of 'v' in 'f'.
- */
-struct vertexuse *
-nmg_is_vertex_in_face( v, f )
-CONST struct vertex	*v;
-CONST struct face	*f;
-{
-	struct vertexuse	*vu;
-
-	NMG_CK_VERTEX(v);
-	NMG_CK_FACE(f);
-
-	for( BU_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
-		register CONST struct edgeuse	*eu;
-		register CONST struct loopuse	*lu;
-		register CONST struct faceuse	*fu;
-
-		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
-		if( *(eu = vu->up.eu_p)->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
-		lu = eu->up.lu_p;
-		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
-		fu = lu->up.fu_p;
-		if( fu->f_p != f )  continue;
-		return vu;
-	}
-	return (struct vertexuse *)NULL;
-}
 
 /*
  *			N M G _ I S _ C O M M O N _ B I G L O O P
