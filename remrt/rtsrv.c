@@ -45,12 +45,13 @@ extern double atof();
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
-int		hex_out = 0;		/* Binary or Hex .pix output file */
-double		AmbientIntensity = 0.4;	/* Ambient light intensity */
-double		azimuth, elevation;
-int		lightmodel;		/* Select lighting model */
+extern int	hex_out;		/* Binary or Hex .pix output file */
+extern double	AmbientIntensity;	/* Ambient light intensity */
+extern double	azimuth, elevation;
+extern int	lightmodel;		/* Select lighting model */
 mat_t		view2model;
 mat_t		model2view;
+extern int	use_air;		/* Handling of air in librt */
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
@@ -58,41 +59,39 @@ extern void worker();
 
 /***** variables shared with worker() ******/
 struct application ap;
-int		stereo = 0;	/* stereo viewing */
+extern int	stereo;			/* stereo viewing */
 vect_t		left_eye_delta;
-int		hypersample=0;	/* number of extra rays to fire */
-int		jitter=0;		/* jitter ray starting positions */
-int		rt_perspective=0;	/* perspective view -vs- parallel */
-fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
-fastf_t		aspect = 1;		/* aspect ratio Y/X */
-vect_t		dx_model;	/* view delta-X as model-space vector */
-vect_t		dy_model;	/* view delta-Y as model-space vector */
-point_t		eye_model;	/* model-space location of eye */
-fastf_t         eye_backoff = 1.414;	/* dist from eye to center */
-int		width;			/* # of pixels in X */
-int		height;			/* # of lines in Y */
-mat_t		Viewrotscale;
-fastf_t		viewsize=0;
-fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
-char		*scanbuf;	/* For optional output buffering */
-int		incr_mode;		/* !0 for incremental resolution */
-int		incr_level;		/* current incremental level */
-int		incr_nlevel;		/* number of levels */
-int		npsw = MAX_PSW;		/* number of worker PSWs to run */
-struct resource	resource[MAX_PSW];	/* memory resources */
+extern int	hypersample;		/* number of extra rays to fire */
+extern int	jitter;			/* jitter ray starting positions */
+extern double	rt_perspective;		/* perspective view -vs- parallel */
+extern fastf_t	aspect;			/* aspect ratio Y/X */
+extern vect_t	dx_model;		/* view delta-X as model-space vect */
+extern vect_t	dy_model;		/* view delta-Y as model-space vect */
+extern point_t	eye_model;		/* model-space location of eye */
+extern fastf_t	eye_backoff;		/* dist from eye to center */
+extern int	width;			/* # of pixels in X */
+extern int	height;			/* # of lines in Y */
+extern mat_t	Viewrotscale;
+extern fastf_t	viewsize;
+extern char	*scanbuf;		/* For optional output buffering */
+extern int	incr_mode;		/* !0 for incremental resolution */
+extern int	incr_level;		/* current incremental level */
+extern int	incr_nlevel;		/* number of levels */
+extern int	npsw;			/* number of worker PSWs to run */
+extern struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
 
 /***** variables shared with do.c *****/
-int		pix_start = -1;		/* pixel to start at */
-int		pix_end;		/* pixel to end at */
-int		nobjs;			/* Number of cmd-line treetops */
-char		**objtab;		/* array of treetop strings */
+extern int	pix_start;		/* pixel to start at */
+extern int	pix_end;		/* pixel to end at */
+extern int	nobjs;			/* Number of cmd-line treetops */
+extern char	**objtab;		/* array of treetop strings */
 char		*beginptr;		/* sbrk() at start of program */
-int		matflag = 0;		/* read matrix from stdin */
-int		desiredframe = 0;	/* frame to start at */
-int		curframe = 0;		/* current frame number */
-char		*outputfile = (char *)0;/* name of base of output file */
-int		interactive = 0;	/* human is watching results */
+extern int	matflag;		/* read matrix from stdin */
+extern int	desiredframe;		/* frame to start at */
+extern int	curframe;		/* current frame number */
+extern char	*outputfile;		/* name of base of output file */
+extern int	interactive;		/* human is watching results */
 /***** end variables shared with do.c *****/
 
 /* Variables shared within mainline pieces */
@@ -248,108 +247,34 @@ char *buf;
 {
 	register char *cp;
 	register int i;
+	int	argc;
+	char	*argv[64];
 
 	if( debug )  fprintf(stderr,"ph_options: %s\n", buf);
 	/* Start options in a known state */
 	hypersample = 0;
 	jitter = 0;
 	rt_perspective = 0;
-	persp_angle = 90;
 	eye_backoff = 1.414;
 	aspect = 1;
 	stereo = 0;
 	width = 0;
 	height = 0;
 
-	cp = buf;
-	while( *cp )  {
-		if( *cp != '-' )  {
-			cp++;
-			continue;
-		}
+	argv[0] = "program_name";
+	if( (argc = rt_split_cmd( &argv[1], 64-1, buf )+1) <= 1 )  {
+		rt_log("rt_split_cmd error\n");
+		exit(1);
+	}
 
-		switch( cp[1] )  {
-		case 'I':
-			interactive = 1;
-			break;
-		case 'S':
-			stereo = 1;
-			break;
-		case 'J':
-			jitter = atoi( &cp[2] );
-			break;
-		case 'H':
-			hypersample = atoi( &cp[2] );
-			if( hypersample > 0 )
-				jitter = 1;
-			break;
-		case 'A':
-			AmbientIntensity = atof( &cp[2] );
-			break;
-		case 'x':
-			sscanf( &cp[2], "%x", &rt_g.debug );
-			rt_log("rt_g.debug=x%x\n", rt_g.debug);
-			break;
-		case 's':
-			/* Square size -- fall through */
-		case 'f':
-			/* "Fast" -- just a few pixels.  Or, arg's worth */
-			i = atoi( &cp[2] );
-			if( i < 2 || i > 8*1024 )
-				rt_log("square size %d out of range\n", i);
-			else
-				width = height = i;
+	if( get_args( argc, argv ) <= 0 )  {
+		rt_log("get_args error\n");
+		exit(2);
+	}
 
-			break;
-		case 'n':
-			i = atoi( &cp[2] );
-			if( i < 2 || i > MAX_WIDTH )
-				rt_log("height=%d out of range\n", i);
-			else
-				height = i;
-			break;
-		case 'w':
-			i = atoi( &cp[2] );
-			if( i < 2 || i > MAX_WIDTH )
-				rt_log("width=%d out of range\n", i);
-			else
-				width = i;
-			break;
-
-		case 'l':
-			/* Select lighting model # */
-			lightmodel = atoi( &cp[2] );
-			break;
-		case 'p':
-			rt_perspective = 1;
-			persp_angle = atof( &cp[2] );
-			if( persp_angle < 1 )  persp_angle = 90;
-			if( persp_angle > 179 )  persp_angle = 90;
-			break;
-		case 'E':
-			eye_backoff = atof( &cp[2] );
-			break;
-		case 'P':
-			/* Number of parallel workers */
-			npsw = atoi( &cp[2] );
-			if( npsw < 1 || npsw > MAX_PSW )  {
-				rt_log("npsw out of range 1..%d\n", MAX_PSW);
-				npsw = 1;
-			}
-			break;
-		case 'B':
-			/*  Remove all intentional random effects
-			 *  (dither, etc) for benchmarking.
-			 */
-			mathtab_constant();
-			break;
-		default:
-			rt_log("rtsrv: Option '%c' unknown\n", cp[1]);
-			break;
-		}
-		while( *cp && *cp++ != ' ' )
-			;
-		while( *cp == ' ' )  cp++;
+	if( width <= 0 || height <= 0 )  {
+		rt_log("ph_options:  width=%d, height=%d\n", width, height);
+		exit(3);
 	}
 	(void)free(buf);
 }
@@ -442,44 +367,7 @@ char *buf;
 	 */
 	(void)view_init( &ap, title_file, title_obj, 0 );
 
-	/* This code from do.c/do_frame() */
-	if( rtip->needprep )  {
-		register struct region *regp;
-
-		rt_prep_timer();
-		rt_prep(rtip);
-
-		/* Initialize the material library for all regions */
-		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-			if( mlib_setup( regp ) < 0 )  {
-				rt_log("mlib_setup failure on %s\n", regp->reg_name);
-			} else {
-				if(rdebug&RDEBUG_MATERIAL)
-					((struct mfuncs *)(regp->reg_mfuncs))->
-						mf_print( regp, regp->reg_udata );
-				/* Perhaps this should be a function? */
-			}
-		}
-		(void)rt_read_timer( outbuf, sizeof(outbuf) );
-		rt_log( "PREP: %s\n", outbuf );
-	}
-
-	if( rt_g.rtg_parallel && resource[0].re_seg == SEG_NULL )  {
-		register int x;
-		/* 
-		 *  Get dynamic memory to keep from having to call
-		 *  malloc(), because the portability of doing sbrk()
-		 *  sys-calls when running in parallel mode is unknown.
-		 */
-		for( x=0; x<npsw; x++ )  {
-			rt_get_seg(&resource[x]);
-			rt_get_pt(rtip, &resource[x]);
-			rt_get_bitv(rtip, &resource[x]);
-		}
-		rt_log("Additional dynamic memory used=%d. bytes\n",
-			sbrk(0)-beginptr );
-		beginptr = sbrk(0);
-	}
+	do_prep( rtip );
 
 	if( rtip->HeadSolid == SOLTAB_NULL )  {
 		rt_log("rt: No solids remain after prep.\n");
@@ -516,6 +404,8 @@ char *buf;
 {
 	register int y;
 	auto int a,b;
+	int	i;
+	register struct rt_i *rtip = ap.a_rt_i;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_start )  {
@@ -539,17 +429,23 @@ char *buf;
 		int	len;
 		char	*cp;
 
+		rtip->rti_nrays = 0;
+		rt_prep_timer();
+
 		do_run( y*width + 0, y*width + width - 1 );
 
 		info.li_y = y;
-		info.li_nrays = 0;
-		info.li_cpusec = 0.0;
-		cp = struct_export( desc_line_info, (stroff_t)&info, &len );
+		info.li_nrays = rtip->rti_nrays;
+		info.li_cpusec = rt_read_timer( (char *)0, 0 );
+
+		len = 0;
+		cp = struct_export( &len, (stroff_t)&info, desc_line_info );
 		if( cp == (char *)0 )  {
 			rt_log("struct_export failure\n");
 			break;
 		}
 
+		if(debug)fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.li_cpusec);
 		if( pkg_2send( MSG_PIXELS, cp, len,
 			scanbuf, width*3, pcsrv ) < 0 )
 			fprintf(stderr,"MSG_PIXELS send error\n");
