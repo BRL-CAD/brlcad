@@ -184,8 +184,6 @@ mged_highlight_menu_item(mptr, y)
 struct menu_item *mptr;
 int y;
 {
-  char *cp;
-
   switch(mptr->menu_arg){
   case BV_RATE_TOGGLE:
     if(mged_variables->mv_rateknobs){
