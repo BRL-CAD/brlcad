@@ -478,22 +478,22 @@ proc pattern_rect { args } {
 			error "no X, Y, or Z values provided!!!!\n$usage"
 	}
 
-	if { $num_x != 0 && $delta_x == 0 } {
+	if { $num_x > 1 && $delta_x == 0 } {
 		error "no X delta provided\n$usage"
 	}
 
-	if { $num_y != 0 && $delta_y == 0 } {
+	if { $num_y > 1 && $delta_y == 0 } {
 		error "no Y delta provided\n$usage"
 	}
 
-	if { $num_z != 0 && $delta_z == 0 } {
+	if { $num_z > 1 && $delta_z == 0 } {
 		error "no Z delta provided\n$usage"
 	}
 
 	if { $num_x } {
 		set list_x {}
 		for { set index 1 } { $index <= $num_x } { incr index } {
-			lappend list_x [vscale $xdir [expr $delta_x * $index]]
+			lappend list_x [expr $delta_x * $index]
 		}
 	} else {
 		set num_x [llength $list_x]
@@ -502,7 +502,7 @@ proc pattern_rect { args } {
 	if { $num_y } {
 		set list_y {}
 		for { set index 1 } { $index <= $num_y } { incr index } {
-			lappend list_y [vscale $ydir [expr $delta_y * $index]]
+			lappend list_y [expr $delta_y * $index]
 		}
 	} else {
 		set num_y [llength $list_y]
@@ -511,7 +511,7 @@ proc pattern_rect { args } {
 	if { $num_z } {
 		set list_z {}
 		for { set index 1 } { $index <= $num_z } { incr index } {
-			lappend list_z [vscale $zdir [expr $delta_z * $index]]
+			lappend list_z [expr $delta_z * $index]
 		}
 	} else {
 		set num_z [llength $list_z]
@@ -779,13 +779,13 @@ proc pattern_sph { args } {
 			error "No azimuth, elevation, or radii provided!!!\n$usage"
 	}
 
-	if { $num_az != 0 && $delta_az == 0 } {
+	if { $num_az > 1 && $delta_az == 0 } {
 		error "No azimuth delta provided!!!\n$usage"
 	}
-	if { $num_el != 0 && $delta_el == 0 } {
+	if { $num_el > 1 && $delta_el == 0 } {
 		error "No elevation delta provided!!!\n$usage"
 	}
-	if { $num_r != 0 && $delta_r == 0 } {
+	if { $num_r > 1 && $delta_r == 0 } {
 		error "No radius delta provided!!!\n$usage"
 	}
 
@@ -1100,14 +1100,14 @@ proc pattern_cyl { args } {
 			error "No azimuth, radii, or heights provided!!!!\n$usage"
 	}
 
-	if { $num_az != 0 && $delta_az == 0 } {
+	if { $num_az > 1 && $delta_az == 0 } {
 		error "No azimuth delta provided!!!\n$usage"
 	}
-	if { $num_r != 0 && $delta_r == 0 } {
+	if { $num_r > 1 && $delta_r == 0 } {
 		error "No radius delta provided!!!\n$usage"
 	}
-	if { $num_h != 0 && $delta_h == 0 } {
-		error "No height delta provided!!!\n$usahe"
+	if { $num_h > 1 && $delta_h == 0 } {
+		error "No height delta provided!!!\n$usage"
 	}
 
 	if { [vdot $start_az_dir $height_dir] != 0 } {
