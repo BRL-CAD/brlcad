@@ -955,20 +955,9 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if (strcmp(argv[1], "-r") == 0) {
+  if (argc > 1 && strcmp(argv[1], "-r") == 0) {
     recurse = 1;
     start_arg = 2;
-
-    if (illump == SOLID_NULL &&
-	argc <= start_arg) {
-      struct bu_vls vls;
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "help l");
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
   }
 
 #if 0
@@ -980,6 +969,10 @@ char	**argv;
   }
 #endif
 
+  /* 
+   * Here we have no usable arguments,
+   * so we better be in and edit state.
+   */
   if (argc == 1 ||
       argc == 2 && recurse) {
     int ac = 1;
@@ -1006,7 +999,7 @@ char	**argv;
       cmd_list_guts(clientData, interp, ac, av, recurse);
 
       bu_vls_free(&vls);
-    } else {
+    } else {  /* not in an edit state */
       struct bu_vls vls;
 
       bu_vls_init(&vls);
@@ -1015,7 +1008,7 @@ char	**argv;
       bu_vls_free(&vls);
       return TCL_ERROR;
     }
-  } else {
+  } else { /* Here we have usable arguments. */
     argc -= start_arg;
     argv += start_arg;
     cmd_list_guts(clientData, interp, argc, argv, recurse);
