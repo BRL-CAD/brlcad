@@ -83,27 +83,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  register struct mater *mp;
-
-  if(argc < 1 || 1 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help prcolor");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if( rt_material_head == MATER_NULL )  {
-    Tcl_AppendResult(interp, "none\n", (char *)NULL);
-    return TCL_OK;
-  }
-
-  for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )
-    pr_mater( mp );
-
-  return TCL_OK;
+	return invoke_db_wrapper(interp, argc, argv);
 }
 
 /*
