@@ -150,6 +150,11 @@ if ![info exists mged_default(doubleClickTol)] {
     set mged_default(doubleClickTol) 500
 }
 
+if ![info exists solid_data(attr,arb8)] {
+    # Call this routine to initialize the "solid_data" array
+    solid_data_init
+}
+
 ##
 # Set the class bindings for use with help. This requires the
 # widget to register its data using hoc_register_data. Also, for now,
@@ -430,7 +435,13 @@ hoc_register_menu_data "File" "Raytrace" "Raytrace View"\
 .$id.menubar.file add separator
 .$id.menubar.file add cascade -label "Preferences" -underline 0 -menu .$id.menubar.file.pref
 .$id.menubar.file add separator
-.$id.menubar.file add command -label "Close" -underline 0 -command "gui_destroy $id"
+.$id.menubar.file add command -label "Update/Create .mgedrc" -underline 0 \
+	-command "update_mgedrc"
+hoc_register_menu_data "File" "Update/Create .mgedrc" "Update/Create .mgedrc"\
+	{ { summary "Update or create the .mgedrc startup file." }
+          { see_also } }
+.$id.menubar.file add command -label "Close" -underline 0 \
+	-command "gui_destroy $id"
 hoc_register_menu_data "File" "Close" "Close Window"\
 	{ { summary "Close this graphical user interface." }
           { see_also } }
@@ -2124,11 +2135,11 @@ if { $comb } {
 set num_players [llength $mged_players]
 switch $num_players {
     1 {
-	.$id.menubar.file entryconfigure 13 -state disabled
+	.$id.menubar.file entryconfigure 14 -state disabled
     }
     2 {
 	set id [lindex $mged_players 0]
-	.$id.menubar.file entryconfigure 13 -state normal
+	.$id.menubar.file entryconfigure 14 -state normal
     }
 }
 }
@@ -2166,7 +2177,7 @@ proc gui_destroy args {
 
     if { [llength $mged_players] == 1 } {
 	set id [lindex $mged_players 0]
-	.$id.menubar.file entryconfigure 13 -state disabled
+	.$id.menubar.file entryconfigure 14 -state disabled
     }
 }
 
