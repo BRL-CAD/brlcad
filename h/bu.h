@@ -2099,7 +2099,7 @@ struct bu_hash_entry *bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl,
 					  unsigned char *key,
 					  int key_len,
 					  struct bu_hash_entry **prev,
-					  unsigned long *index );
+					  unsigned long *index2 );
 void bu_set_hash_value( struct bu_hash_entry *hsh_entry, unsigned char *value );
 unsigned char *bu_get_hash_value( struct bu_hash_entry *hsh_entry );
 struct bu_hash_entry *bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new_entry );
