@@ -220,7 +220,7 @@ struct menu_item mv7_menu[] = {
 struct menu_item mv6_menu[] = {
 	{ "ARB6 FACES", (void (*)())NULL, 0 },
 	{ "move face 1234", arb6_mv_face, 1 },
-	{ "move face 236" , arb6_mv_face, 2 },
+	{ "move face 2365", arb6_mv_face, 2 },
 	{ "move face 1564", arb6_mv_face, 3 },
 	{ "move face 125" , arb6_mv_face, 4 },
 	{ "move face 346" , arb6_mv_face, 5 },
@@ -278,7 +278,7 @@ struct menu_item rot7_menu[] = {
 struct menu_item rot6_menu[] = {
 	{ "ARB6 FACES", (void (*)())NULL, 0 },
 	{ "rotate face 1234", arb6_rot_face, 1 },
-	{ "rotate face 236" , arb6_rot_face, 2 },
+	{ "rotate face 2365", arb6_rot_face, 2 },
 	{ "rotate face 1564", arb6_rot_face, 3 },
 	{ "rotate face 125" , arb6_rot_face, 4 },
 	{ "rotate face 346" , arb6_rot_face, 5 },
@@ -336,7 +336,7 @@ struct menu_item *which_menu[] = {
 short int arb_vertices[5][24] = {
 	{ 1,2,3,0, 1,2,4,0, 2,3,4,0, 1,3,4,0, 0,0,0,0, 0,0,0,0 },	/* arb4 */
 	{ 1,2,3,4, 1,2,5,0, 2,3,5,0, 3,4,5,0, 1,4,5,0, 0,0,0,0 },	/* arb5 */
-	{ 1,2,3,4, 2,3,6,0, 1,5,6,4, 1,2,5,0, 3,4,6,0, 0,0,0,0 },	/* arb6 */
+	{ 1,2,3,4, 2,3,6,5, 1,5,6,4, 1,2,5,0, 3,4,6,0, 0,0,0,0 },	/* arb6 */
 	{ 1,2,3,4, 5,6,7,0, 1,4,5,0, 2,3,7,6, 1,2,6,5, 4,3,7,5 },	/* arb7 */
 	{ 1,2,3,4, 5,6,7,8, 1,5,8,4, 2,3,7,6, 1,2,6,5, 4,3,7,8 }	/* arb8 */
 };

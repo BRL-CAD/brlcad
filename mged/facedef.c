@@ -29,8 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern double atof();
 
 extern int numargs;   			/* number of arguments */
-int args;       			/* total number of args available */
-int argcnt;     			/* holder for number of args added later */
+extern int args;       			/* total number of args available */
+extern int argcnt;     			/* holder for number of args added later */
 extern char *cmd_args[];    		/* array of pointers to args */
 
 char *p_rotfb[] = {
@@ -206,7 +206,7 @@ f_facedef()
 			break;
 		case 'c': 
 			/* special case for arb7, because of 2 4-pt planes meeting */
-			if( es_rec.s.s_cgtype == ARB7 ){
+			if( es_rec.s.s_cgtype == ARB7 && (plane != 0 && plane != 3) ) {
 				while( args < 5 ){ 	/* total # of args under this option */
 					(void)printf("%s",p_rotfb[args-3]);
 					if( (argcnt = getcmd(args)) < 0){
@@ -219,7 +219,7 @@ f_facedef()
 				(void)printf("Fixed point is vertex five.\n");
 			}
 			else while( args < 8 ){         /* total # of args under this option */	
-				if( cmd_args[5][0] == 'v' )       /* vertex point given,stop */
+				if( args > 5 && cmd_args[5][0] == 'v' )       /* vertex point given,stop */
 					break;
 				(void)printf("%s",p_rotfb[args-3]);
 				if( (argcnt = getcmd(args)) < 0 ){
