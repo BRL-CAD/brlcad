@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#undef	VMIN
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
