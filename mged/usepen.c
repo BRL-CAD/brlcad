@@ -113,7 +113,7 @@ char	**argv;
 	mousevec[Y] =  ypos * INV_GED;
 	mousevec[Z] = 0;
 
-	if (mged_variables->faceplate && mged_variables->orig_gui && up) {
+	if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui && up) {
 	  /*
 	   * If mouse press is in scroll area, see if scrolling, and if so,
 	   * divert this mouse press.
@@ -191,9 +191,9 @@ char	**argv;
 	   */
 	  isave = ipathpos;
 	  ipathpos = illump->s_last - (
-				       (ypos+2048L) * (illump->s_last+1) / 4096);
+				       (ypos+(int)GED_MAX) * (illump->s_last+1) / (int)GED_RANGE);
 	  if( ipathpos != isave )
-	    dmaflag++;
+	    view_state->vs_flag++;
 	  return TCL_OK;
 
 	} else switch( state )  {
@@ -209,17 +209,17 @@ char	**argv;
 	case ST_O_PICK:
 	  ipathpos = 0;
 	  (void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
-	  dmaflag = 1;
+	  view_state->vs_flag = 1;
 	  return TCL_OK;
 
 	case ST_S_PICK:
 	  /* Check details, Init menu, set state */
 	  init_sedit();		/* does chg_state */
-	  dmaflag = 1;
+	  view_state->vs_flag = 1;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->transform == 'e')
+	  if((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
 	    sedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );
@@ -252,7 +252,7 @@ char	**argv;
 		return TCL_OK;
 
 	case ST_O_EDIT:
-	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->transform == 'e')
+	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
 	    objedit_mouse( mousevec );
 	  else
 	    slewview( mousevec );
@@ -283,7 +283,7 @@ illuminate( y )  {
 	 * zone number as a sequential position among solids
 	 * which are drawn.
 	 */
-	count = ( (fastf_t) y + 2048.0 ) * ndrawn / 4096.0;
+	count = ((fastf_t)y + GED_MAX) * ndrawn / GED_RANGE;
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		/* Only consider solids which are presently in view */
@@ -452,12 +452,12 @@ register matp_t out, change, in;
 {
 	static mat_t t1, t2;
 
-	bn_mat_mul( t1, toViewcenter, in );
+	bn_mat_mul( t1, view_state->vs_toViewcenter, in );
 	bn_mat_mul( t2, change, t1 );
 
 	/* Build "fromViewcenter" matrix */
 	bn_mat_idn( t1 );
-	MAT_DELTAS( t1, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ] );
+	MAT_DELTAS( t1, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ] );
 	bn_mat_mul( out, t1, t2 );
 }
 

@@ -71,16 +71,16 @@ struct pkg_conn	*pcp;
     return;
 
   for(i = MAX_CLIENTS-1; i >= 0; i--){
-    if(clients[i].fd != 0)
+    if(clients[i].c_fd != 0)
       continue;
 
     /* Found an available slot */
-    clients[i].pkg = pcp;
-    clients[i].fd = pcp->pkc_fd;
+    clients[i].c_pkg = pcp;
+    clients[i].c_fd = pcp->pkc_fd;
     setup_socket(pcp->pkc_fd);
 
-    Tcl_CreateFileHandler(clients[i].fd, TCL_READABLE,
-			  existing_client_handler, (ClientData)clients[i].fd);
+    Tcl_CreateFileHandler(clients[i].c_fd, TCL_READABLE,
+			  existing_client_handler, (ClientData)clients[i].c_fd);
 
     return;
   }
@@ -96,15 +96,15 @@ static void
 drop_client(sub)
 int sub;
 {
-  if(clients[sub].pkg != PKC_NULL)  {
-    pkg_close(clients[sub].pkg);
-    clients[sub].pkg = PKC_NULL;
+  if(clients[sub].c_pkg != PKC_NULL)  {
+    pkg_close(clients[sub].c_pkg);
+    clients[sub].c_pkg = PKC_NULL;
   }
 
-  if(clients[sub].fd != 0)  {
-    Tcl_DeleteFileHandler(clients[sub].fd);
-    close(clients[sub].fd);
-    clients[sub].fd = 0;
+  if(clients[sub].c_fd != 0)  {
+    Tcl_DeleteFileHandler(clients[sub].c_fd);
+    close(clients[sub].c_fd);
+    clients[sub].c_fd = 0;
   }
 }
 
@@ -129,64 +129,64 @@ set_port()
     netfd = 0;
   }
 
-  if(!mged_variables->listen)
+  if(!mged_variables->mv_listen)
     return;
 
-  if(!mged_variables->fb){
-    mged_variables->listen = 0;
+  if(!mged_variables->mv_fb){
+    mged_variables->mv_listen = 0;
     return;
   }
 
 #if 1
 #define MAX_PORT_TRIES 100
 
-  save_port = mged_variables->port;
-  if(mged_variables->port < 0)
-    mged_variables->port = 0;
+  save_port = mged_variables->mv_port;
+  if(mged_variables->mv_port < 0)
+    mged_variables->mv_port = 0;
 
   /* Try a reasonable number of times to hang a listen */
   for(i = 0; i < MAX_PORT_TRIES; ++i){
-    if(mged_variables->port < 1024)
-      sprintf(portname,"%d", mged_variables->port + 5559);
+    if(mged_variables->mv_port < 1024)
+      sprintf(portname,"%d", mged_variables->mv_port + 5559);
     else
-      sprintf(portname,"%d", mged_variables->port);
+      sprintf(portname,"%d", mged_variables->mv_port);
 
     /*
      * Hang an unending listen for PKG connections
      */
     if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
-      ++mged_variables->port;
+      ++mged_variables->mv_port;
     else
       break;
   }
 #else
-  if(mged_variables->port < 0){
-    mged_variables->listen = 0;
-    bu_log("set_port: invalid port number - %d\n", mged_variables->port);
+  if(mged_variables->mv_port < 0){
+    mged_variables->mv_listen = 0;
+    bu_log("set_port: invalid port number - %d\n", mged_variables->mv_port);
     return;
   }
 
-  if(mged_variables->port < 1024)
-     sprintf(portname,"%d", mged_variables->port + 5559);
+  if(mged_variables->mv_port < 1024)
+     sprintf(portname,"%d", mged_variables->mv_port + 5559);
   else
-    sprintf(portname,"%d", mged_variables->port);
+    sprintf(portname,"%d", mged_variables->mv_port);
 
   /*
    * Hang an unending listen for PKG connections
    */
   if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ){
-    bu_log("set_port: failed to hang a listen on port %d\n", mged_variables->port);
-    mged_variables->listen = 0;
+    bu_log("set_port: failed to hang a listen on port %d\n", mged_variables->mv_port);
+    mged_variables->mv_listen = 0;
 
     return;
   }
 #endif
 
   if(netfd < 0){
-    mged_variables->port = save_port;
-    mged_variables->listen = 0;
+    mged_variables->mv_port = save_port;
+    mged_variables->mv_listen = 0;
     bu_log("set_port: failed to hang a listen on ports %d - %d\n",
-	   mged_variables->port, mged_variables->port + MAX_PORT_TRIES - 1);
+	   mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
   }else
     Tcl_CreateFileHandler(netfd, TCL_READABLE,
 			  new_client_handler, (ClientData)netfd);
@@ -205,7 +205,7 @@ int mask;
   struct dm_list *scdlp;  /* save current dm_list pointer */
 
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-    if(fd == dlp->_netfd)
+    if(fd == dlp->dml_netfd)
       goto found;
 
   return;
@@ -237,7 +237,7 @@ int mask;
 
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
     for(i = MAX_CLIENTS-1; i >= 0; i--)
-      if(fd == dlp->_clients[i].fd)
+      if(fd == dlp->dml_clients[i].c_fd)
 	goto found;
   }
 
@@ -249,26 +249,26 @@ found:
 
   curr_dm_list = dlp;
   for(i = MAX_CLIENTS-1; i >= 0; i--){
-    if(clients[i].fd == 0)
+    if(clients[i].c_fd == 0)
       continue;
 
-    if((npp = pkg_process(clients[i].pkg)) < 0)
+    if((npp = pkg_process(clients[i].c_pkg)) < 0)
       bu_log("pkg_process error encountered (1)\n");
 
     if(npp > 0)
       dirty = 1;
 
-    if(clients[i].fd != fd)
+    if(clients[i].c_fd != fd)
       continue;
 
-    if(pkg_suckin(clients[i].pkg) <= 0){
+    if(pkg_suckin(clients[i].c_pkg) <= 0){
       /* Probably EOF */
       drop_client(i);
 
       continue;
     }
 
-    if((npp = pkg_process(clients[i].pkg)) < 0)
+    if((npp = pkg_process(clients[i].c_pkg)) < 0)
       bu_log("pkg_process error encountered (2)\n");
 
     if(npp > 0)

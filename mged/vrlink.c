@@ -144,19 +144,19 @@ vr_viewpoint_hook()
 	bu_vls_init_if_uninit(&old_str);
 	bu_vls_init(&str);
 
-	quat_mat2quat( orient, Viewrot );
+	quat_mat2quat( orient, view_state->vs_Viewrot );
 
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
 	bu_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
-		-toViewcenter[MDX],
-		-toViewcenter[MDY],
-		-toViewcenter[MDZ],
+		-view_state->vs_toViewcenter[MDX],
+		-view_state->vs_toViewcenter[MDY],
+		-view_state->vs_toViewcenter[MDZ],
 		V4ARGS(orient),
-		Viewscale,
+		view_state->vs_Viewscale,
 		V3ARGS(eye_pos_scr),
-		mged_variables->perspective
+		mged_variables->mv_perspective
 		);
 
 	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
@@ -210,19 +210,19 @@ char	*argv[];
 	  return TCL_ERROR;
 	}
 
-	toViewcenter[MDX] = -atof(argv[1]);
-	toViewcenter[MDY] = -atof(argv[2]);
-	toViewcenter[MDZ] = -atof(argv[3]);
+	view_state->vs_toViewcenter[MDX] = -atof(argv[1]);
+	view_state->vs_toViewcenter[MDY] = -atof(argv[2]);
+	view_state->vs_toViewcenter[MDZ] = -atof(argv[3]);
 	orient[0] = atof(argv[4]);
 	orient[1] = atof(argv[5]);
 	orient[2] = atof(argv[6]);
 	orient[3] = atof(argv[7]);
-	quat_quat2mat( Viewrot, orient );
-	Viewscale = atof(argv[8]);
+	quat_quat2mat( view_state->vs_Viewrot, orient );
+	view_state->vs_Viewscale = atof(argv[8]);
 	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
 	eye_pos_scr[Y] = atof(argv[10]);
 	eye_pos_scr[Z] = atof(argv[11]);
-	mged_variables->perspective = atof(argv[12]);
+	mged_variables->mv_perspective = atof(argv[12]);
 	new_mats();
 
 	return TCL_OK;

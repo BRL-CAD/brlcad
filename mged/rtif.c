@@ -115,7 +115,7 @@ vect_t eye_model;
 	(void)fprintf(fp, "%.9e %.9e %.9e\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
 	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.9e ", Viewrot[i] );
+		(void)fprintf( fp, "%.9e ", view_state->vs_Viewrot[i] );
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
 	}
@@ -142,13 +142,13 @@ vect_t eye_model;
 #if 0
 	(void)fprintf(fp, "viewrot ");
 	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.15e ", Viewrot[i] );
+		(void)fprintf( fp, "%.15e ", view_state->vs_Viewrot[i] );
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
 	}
 	(void)fprintf(fp, ";\n");
 #else
-	quat_mat2quat( quat, Viewrot );
+	quat_mat2quat( quat, view_state->vs_Viewrot );
 	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n",
 		V4ARGS( quat ) );
 #endif
@@ -352,11 +352,11 @@ run_rt()
 
 	(void)close( pipe_err[1] );
 
-	if(*zclip_ptr || mged_variables->perspective_mode){
+	if(*zclip_ptr || mged_variables->mv_perspective_mode){
 	  vect_t temp;
 
 	  VSET( temp, 0.0, 0.0, 1.0 );
-	  MAT4X3PNT( eye_model, view2model, temp );
+	  MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
 	}else{ /* not doing zclipping, so back out of geometry */
 	  double  t;
 	  double  t_in;
@@ -365,8 +365,8 @@ run_rt()
 	  vect_t  minus, plus;    /* vers of this solid's bounding box */
 	  vect_t  unit_H, unit_V;
 
-	  VSET(eye_model, -toViewcenter[MDX],
-	        -toViewcenter[MDY], -toViewcenter[MDZ]);
+	  VSET(eye_model, -view_state->vs_toViewcenter[MDX],
+	        -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
 
 	  for (i = 0; i < 3; ++i){
 	    extremum[0][i] = INFINITY;
@@ -382,7 +382,7 @@ run_rt()
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
 	    VMAX( extremum[1], plus );
 	  }
-	  VMOVEN(direction, Viewrot + 8, 3);
+	  VMOVEN(direction, view_state->vs_Viewrot + 8, 3);
 	  VSCALE(direction, direction, -1.0);
 	  for(i = 0; i < 3; ++i)
 	    if (NEAR_ZERO(direction[i], 1e-10))
@@ -454,8 +454,8 @@ char	**argv;
 	*vp++ = "rt";
 	*vp++ = "-s50";
 	*vp++ = "-M";
-	if( mged_variables->perspective > 0 )  {
-		(void)sprintf(pstring, "-p%g", mged_variables->perspective);
+	if( mged_variables->mv_perspective > 0 )  {
+		(void)sprintf(pstring, "-p%g", mged_variables->mv_perspective);
 		*vp++ = pstring;
 	}
 	for( i=1; i < argc; i++ )
@@ -588,7 +588,7 @@ char	**argv;
 		vect_t eye_model;
 
 		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view2model, temp );
+		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
 #if 0
 		/* This old way is no longer needed for RT */
 		rt_oldwrite(fp, eye_model );
@@ -601,7 +601,7 @@ char	**argv;
 	(void)close(i_pipe[1]);
 	fp = fdopen(i_pipe[0], "r");
 	vbp = rt_vlblock_init();
-	(void)rt_uplot_to_vlist( vbp, fp, Viewscale * 0.01 );
+	(void)rt_uplot_to_vlist( vbp, fp, view_state->vs_Viewscale * 0.01 );
 	fclose(fp);
 
 	/* Wait for program to finish */
@@ -626,7 +626,7 @@ char	**argv;
 	/* Add overlay */
 	cvt_vlblock_to_solids( vbp, "OVERLAPS", 0 );
 	rt_vlblock_free(vbp);
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
@@ -694,8 +694,8 @@ char	**argv;
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
-	if( mged_variables->perspective > 0 )
-		(void)fprintf(fp, "-p%g", mged_variables->perspective);
+	if( mged_variables->mv_perspective > 0 )
+		(void)fprintf(fp, "-p%g", mged_variables->mv_perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
@@ -726,7 +726,7 @@ char	**argv;
 		vect_t eye_model;
 
 		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view2model, temp );
+		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
 		rt_write(fp, eye_model);
 	}
 	(void)fprintf(fp,"\nEOF\n");
@@ -830,26 +830,26 @@ work:
 	    	switch(mode)  {
 	    	case -1:
 	    		/* First step:  put eye in center */
-		       	Viewscale = scale;
-		       	bn_mat_copy( Viewrot, rot );
-			MAT_DELTAS( toViewcenter,
+		       	view_state->vs_Viewscale = scale;
+		       	bn_mat_copy( view_state->vs_Viewrot, rot );
+			MAT_DELTAS( view_state->vs_toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
 				-eye_model[Z] );
 	    		new_mats();
 	    		/* Second step:  put eye in front */
 	    		VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	    		MAT4X3PNT( eye_model, view2model, xlate );
-			MAT_DELTAS( toViewcenter,
+	    		MAT4X3PNT( eye_model, view_state->vs_view2model, xlate );
+			MAT_DELTAS( view_state->vs_toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
 				-eye_model[Z] );
 	    		new_mats();
 	    		break;
 	    	case 0:
-		       	Viewscale = scale;
-			bn_mat_idn(Viewrot);	/* top view */
-			MAT_DELTAS( toViewcenter,
+		       	view_state->vs_Viewscale = scale;
+			bn_mat_idn(view_state->vs_Viewrot);	/* top view */
+			MAT_DELTAS( view_state->vs_toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
 				-eye_model[Z] );
@@ -885,7 +885,7 @@ work:
 			}
 	    		break;
 	    	}
-		dmaflag = 1;
+		view_state->vs_flag = 1;
 		refresh();	/* Draw new display */
 	}
 	if( mode == 1 )  {
@@ -918,10 +918,6 @@ work:
 
 	fclose(fp);
 	(void)mged_svbase();
-
-#ifdef DO_SCROLL_UPDATES
-	set_scroll();
-#endif
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
@@ -962,7 +958,7 @@ char	**argv;
 	 *  Eye is in conventional place.
 	 */
 	VSET( temp, 0.0, 0.0, 1.0 );
-	MAT4X3PNT( eye_model, view2model, temp );
+	MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
 
@@ -1098,7 +1094,7 @@ char	**argv;
 
 	/* Save any state variables we plan on changing */
 	rtif_saved_state = *mged_variables;	/* struct copy */
-	mged_variables->autosize = 0;
+	mged_variables->mv_autosize = 0;
 
 	rtif_delay = 0;			/* Full speed, by default */
 	rtif_mode = 1;			/* wireframe drawing */
@@ -1160,9 +1156,9 @@ char	**argv;
 	 *  Initialize the view to the current one in MGED
 	 *  in case a view specification is never given.
 	 */
-	bn_mat_copy(rtif_viewrot, Viewrot);
+	bn_mat_copy(rtif_viewrot, view_state->vs_Viewrot);
 	VSET(temp, 0.0, 0.0, 1.0);
-	MAT4X3PNT(rtif_eye_model, view2model, temp);
+	MAT4X3PNT(rtif_eye_model, view_state->vs_view2model, temp);
 
 	if( setjmp( jmp_env ) == 0 )
 	  /* If user hits ^C, preview will stop, and clean up */
@@ -1198,10 +1194,6 @@ char	**argv;
 	*mged_variables = rtif_saved_state;	/* struct copy */
 
 	(void)mged_svbase();
-
-#ifdef DO_SCROLL_UPDATES
-	set_scroll();
-#endif
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
@@ -1267,26 +1259,26 @@ char	**argv;
 	    use_input_orig = 1;
 	    argc -= 3;
 	    VSCALE(center_model, center_model, local2base);
-	  }else if(adc_draw)
+	  }else if(adc_state->adc_draw)
 	    *vp++ = "-b";
-	}else if(adc_draw)
+	}else if(adc_state->adc_draw)
 	  *vp++ = "-b";
 
-	if(mged_variables->use_air){
+	if(mged_variables->mv_use_air){
 	  *vp++ = "-u";
 	  *vp++ = "1";
 	}
 
 	/* Calculate point from which to fire ray */
-	if(!use_input_orig && adc_draw){
+	if(!use_input_orig && adc_state->adc_draw){
 	  vect_t  view_ray_orig;
 
-	  VSET(view_ray_orig, (fastf_t)dv_xadc, (fastf_t)dv_yadc, GED_MAX);
+	  VSET(view_ray_orig, (fastf_t)adc_state->adc_dv_x, (fastf_t)adc_state->adc_dv_y, GED_MAX);
 	  VSCALE(view_ray_orig, view_ray_orig, INV_GED);
-	  MAT4X3PNT(center_model, view2model, view_ray_orig);
+	  MAT4X3PNT(center_model, view_state->vs_view2model, view_ray_orig);
 	}else if(!use_input_orig){
-	  VSET(center_model, -toViewcenter[MDX],
-	       -toViewcenter[MDY], -toViewcenter[MDZ]);
+	  VSET(center_model, -view_state->vs_toViewcenter[MDX],
+	       -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
 	}
 
 	i = 0;
@@ -1294,7 +1286,7 @@ char	**argv;
 	  vect_t cml;
 
 	  VSCALE(cml, center_model, base2local);
-	  VMOVEN(dir, Viewrot + 8, 3);
+	  VMOVEN(dir, view_state->vs_Viewrot + 8, 3);
 	  VSCALE(dir, dir, -1.0);
 
 	  *vp++ = "-e";
@@ -1394,7 +1386,7 @@ done:
 			center_model[X], center_model[Y], center_model[Z]);
 	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	  bu_vls_free(&vls);
-	}else if(adc_draw)
+	}else if(adc_state->adc_draw)
 	  Tcl_AppendResult(interp, "\nFiring through angle/distance cursor...\n",
 			   (char *)NULL);
 	else
@@ -1581,7 +1573,7 @@ char    **argv;
 
   /* Calculate point from which to fire ray */
   VSCALE(view_ray_orig, view_ray_orig, sf);
-  MAT4X3PNT(center_model, view2model, view_ray_orig);
+  MAT4X3PNT(center_model, view_state->vs_view2model, view_ray_orig);
   VSCALE(center_model, center_model, base2local);
 
   bu_vls_init(&x_vls);
@@ -1629,7 +1621,7 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-	Viewscale = atof(argv[1])*0.5;
+	view_state->vs_Viewscale = atof(argv[1])*0.5;
 	return(0);
 }
 
@@ -1739,8 +1731,8 @@ int	argc;
 	}
 	
 	/* First step:  put eye at view center (view 0,0,0) */
-       	bn_mat_copy( Viewrot, rtif_viewrot );
-	MAT_DELTAS_VEC_NEG( toViewcenter, rtif_eye_model );
+       	bn_mat_copy( view_state->vs_Viewrot, rtif_viewrot );
+	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, rtif_eye_model );
 	new_mats();
 
 	/*
@@ -1749,8 +1741,8 @@ int	argc;
 	 */
 	VSET( xv, 0.05, 0.0, 0.0 );
 	VSET( yv, 0.0, 0.05, 0.0 );
-	MAT4X3PNT( xm, view2model, xv );
-	MAT4X3PNT( ym, view2model, yv );
+	MAT4X3PNT( xm, view_state->vs_view2model, xv );
+	MAT4X3PNT( ym, view_state->vs_view2model, yv );
 	RT_ADD_VLIST( vhead, xm, RT_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
 	RT_ADD_VLIST( vhead, ym, RT_VLIST_LINE_DRAW );
@@ -1760,8 +1752,8 @@ int	argc;
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
 	 */
 	VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	MAT4X3PNT( new_cent, view2model, xlate );
-	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent );
+	MAT4X3PNT( new_cent, view_state->vs_view2model, xlate );
+	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_cent );
 	new_mats();
 
 	/* If new treewalk is needed, get new objects into view. */
@@ -1775,9 +1767,9 @@ int	argc;
 	  edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
 	}
 
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 	refresh();	/* Draw new display */
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 	if( rtif_delay > 0 )  {
 		struct timeval tv;
 		fd_set readfds;
@@ -1929,8 +1921,8 @@ char		**argv;
 	return (TCL_ERROR);
     }
 
-    VSET(ray_orig, -toViewcenter[MDX],
-	-toViewcenter[MDY], -toViewcenter[MDZ]);
+    VSET(ray_orig, -view_state->vs_toViewcenter[MDX],
+	-view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
     /*
      * Compute bounding box of all objects displayed.
      * Borrowed from size_reset() in chgview.c
@@ -1951,7 +1943,7 @@ char		**argv;
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
 	    VMAX( extremum[1], plus );
     }
-    VMOVEN(ray_dir, Viewrot + 8, 3);
+    VMOVEN(ray_dir, view_state->vs_Viewrot + 8, 3);
     VSCALE(ray_dir, ray_dir, -1.0);
     for (i = 0; i < 3; ++i)
 	if (NEAR_ZERO(ray_dir[i], 1e-10))
@@ -1976,10 +1968,10 @@ char		**argv;
 	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
     }
 
-    VMOVEN(unit_H, model2view, 3);
-    VMOVEN(unit_V, model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * Viewscale * INV_GED, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * Viewscale * INV_GED, unit_V);
+    VMOVEN(unit_H, view_state->vs_model2view, 3);
+    VMOVEN(unit_V, view_state->vs_model2view + 4, 3);
+    VJOIN1(ray_orig, ray_orig, h * view_state->vs_Viewscale * INV_GED, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * view_state->vs_Viewscale * INV_GED, unit_V);
 
     /*
      *	Build a list of all the top-level objects currently displayed

@@ -54,8 +54,8 @@ static void
 init_trail(tp)
 struct trail	*tp;
 {
-	tp->cur_index = 0;
-	tp->nused = 0;
+	tp->t_cur_index = 0;
+	tp->t_nused = 0;
 }
 
 /*
@@ -68,10 +68,10 @@ push_trail(tp, pt)
 struct trail	*tp;
 point_t		pt;
 {
-	VMOVE( tp->pt[tp->cur_index], pt );
-	if( tp->cur_index >= tp->nused )  tp->nused++;
-	tp->cur_index++;
-	if( tp->cur_index >= MAX_TRAIL )  tp->cur_index = 0;
+	VMOVE( tp->t_pt[tp->t_cur_index], pt );
+	if( tp->t_cur_index >= tp->t_nused )  tp->t_nused++;
+	tp->t_cur_index++;
+	if( tp->t_cur_index >= MAX_TRAIL )  tp->t_cur_index = 0;
 }
 
 #if 0
@@ -86,18 +86,18 @@ struct bu_list	*vhead;
 struct trail	*tp;
 {
 	int	i;
-	int	todo = tp->nused;
+	int	todo = tp->t_nused;
 
 	BU_LIST_INIT( vhead );
-	if( tp->nused <= 0 )  return;
-	if( (i = tp->cur_index-1) < 0 )  i = tp->nused-1;
+	if( tp->t_nused <= 0 )  return;
+	if( (i = tp->t_cur_index-1) < 0 )  i = tp->t_nused-1;
 	for( ; todo > 0; todo-- )  {
-		if( todo == tp->nused )  {
-			RT_ADD_VLIST( vhead, tp->pt[i], RT_VLIST_LINE_MOVE );
+		if( todo == tp->t_nused )  {
+			RT_ADD_VLIST( vhead, tp->t_pt[i], RT_VLIST_LINE_MOVE );
 		}  else  {
-			RT_ADD_VLIST( vhead, tp->pt[i], RT_VLIST_LINE_DRAW );
+			RT_ADD_VLIST( vhead, tp->t_pt[i], RT_VLIST_LINE_DRAW );
 		}
-		if( (--i) < 0 )  i = tp->nused-1;
+		if( (--i) < 0 )  i = tp->t_nused-1;
 	}
 }
 #endif
@@ -116,44 +116,44 @@ struct trail	*t1;
 struct trail	*t2;
 {
 	int	i1, i2;
-	int	todo = t1->nused;
+	int	todo = t1->t_nused;
 	fastf_t	*s1, *s2;
 	vect_t	right, up;
 	vect_t	norm;
 
-	if( t2->nused < todo )  todo = t2->nused;
+	if( t2->t_nused < todo )  todo = t2->t_nused;
 
 	BU_LIST_INIT( vhead );
-	if( t1->nused <= 0 || t1->nused <= 0 )  return;
+	if( t1->t_nused <= 0 || t1->t_nused <= 0 )  return;
 
-	if( (i1 = t1->cur_index-1) < 0 )  i1 = t1->nused-1;
-	if( (i2 = t2->cur_index-1) < 0 )  i2 = t2->nused-1;
+	if( (i1 = t1->t_cur_index-1) < 0 )  i1 = t1->t_nused-1;
+	if( (i2 = t2->t_cur_index-1) < 0 )  i2 = t2->t_nused-1;
 
 	/* Get starting points, next to frame. */
-	s1 = t1->pt[i1];
-	s2 = t2->pt[i2];
-	if( (--i1) < 0 )  i1 = t1->nused-1;
-	if( (--i2) < 0 )  i2 = t2->nused-1;
+	s1 = t1->t_pt[i1];
+	s2 = t2->t_pt[i2];
+	if( (--i1) < 0 )  i1 = t1->t_nused-1;
+	if( (--i2) < 0 )  i2 = t2->t_nused-1;
 	todo--;
 
 	for( ; todo > 0; todo-- )  {
-		/* Go from s1 to s2 to t2->pt[i2] to t1->pt[i1] */
+		/* Go from s1 to s2 to t2->t_pt[i2] to t1->t_pt[i1] */
 		VSUB2( up, s1, s2 );
-		VSUB2( right, t1->pt[i1], s1 );
+		VSUB2( right, t1->t_pt[i1], s1 );
 		VCROSS( norm, right, up );
 
 		RT_ADD_VLIST( vhead, norm, RT_VLIST_POLY_START );
 		RT_ADD_VLIST( vhead, s1, RT_VLIST_POLY_MOVE );
 		RT_ADD_VLIST( vhead, s2, RT_VLIST_POLY_DRAW );
-		RT_ADD_VLIST( vhead, t2->pt[i2], RT_VLIST_POLY_DRAW );
-		RT_ADD_VLIST( vhead, t1->pt[i1], RT_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, t2->t_pt[i2], RT_VLIST_POLY_DRAW );
+		RT_ADD_VLIST( vhead, t1->t_pt[i1], RT_VLIST_POLY_DRAW );
 		RT_ADD_VLIST( vhead, s1, RT_VLIST_POLY_END );
 
-		s1 = t1->pt[i1];
-		s2 = t2->pt[i2];
+		s1 = t1->t_pt[i1];
+		s2 = t2->t_pt[i2];
 
-		if( (--i1) < 0 )  i1 = t1->nused-1;
-		if( (--i2) < 0 )  i2 = t2->nused-1;
+		if( (--i1) < 0 )  i1 = t1->t_nused-1;
+		if( (--i2) < 0 )  i2 = t2->t_nused-1;
 	}
 }
 
@@ -163,7 +163,7 @@ predictor_init()
   register int i;
 
   for(i = 0; i < NUM_TRAILS; ++i)
-    init_trail(&curr_dm_list->trails[i]);
+    init_trail(&curr_dm_list->dml_trails[i]);
 }
 
 /*
@@ -172,7 +172,7 @@ predictor_init()
 void
 predictor_kill()
 {
-  RT_FREE_VLIST(&curr_dm_list->p_vlist);
+  RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
   predictor_init();
 }
 
@@ -222,28 +222,30 @@ predictor_frame()
 	vect_t	right, up;
 	vect_t	norm;
 
-	if( rateflag_rotate == 0 && rateflag_tran == 0 && rateflag_scale == 0 ){
+	if( view_state->vs_rateflag_rotate == 0 &&
+	    view_state->vs_rateflag_tran == 0 &&
+	    view_state->vs_rateflag_scale == 0 ){
 	  predictor_kill();
 	  return;
 	}
 
-	RT_FREE_VLIST(&curr_dm_list->p_vlist);
+	RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
 
 	/* Advance into the future */
-	nframes = (int)(mged_variables->predictor_advance / frametime);
+	nframes = (int)(mged_variables->mv_predictor_advance / frametime);
 	if( nframes < 1 )  nframes = 1;
 
 	/* Build view2model matrix for the future time */
 	bn_mat_idn( predictor );
 	for( i=0; i < nframes; i++ )  {
-		bn_mat_mul2( ModelDelta, predictor );
+		bn_mat_mul2( view_state->vs_ModelDelta, predictor );
 	}
-	bn_mat_mul( predictorXv2m, predictor, view2model );
+	bn_mat_mul( predictorXv2m, predictor, view_state->vs_view2model );
 
-	MAT_DELTAS_GET_NEG( center_m, toViewcenter );
+	MAT_DELTAS_GET_NEG( center_m, view_state->vs_toViewcenter );
 	MAT4X3PNT( framecenter_m, predictor, center_m );
 #if 0
-	MAT4X3PNT( framecenter_v, model2view, framecenter_m );
+	MAT4X3PNT( framecenter_v, view_state->vs_model2view, framecenter_m );
 #endif
 
 	/*
@@ -253,8 +255,8 @@ predictor_frame()
 	/* Centering dot */
 	VSETALL( delta_v, 0.0 );
 	TF_VL( m, delta_v );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, m, RT_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, m, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, m, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, m, RT_VLIST_LINE_DRAW );
 
 	/* The exterior rectangle */
 	VSET( delta_v, -TF_X, -TF_Y, 0.0 );
@@ -300,56 +302,56 @@ predictor_frame()
 	VCROSS( norm, right, up );
 	VUNITIZE(norm);
 
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, norm, RT_VLIST_POLY_START );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mA, RT_VLIST_POLY_MOVE );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mB, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mF, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mE, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mA, RT_VLIST_POLY_END );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mA, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mB, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mF, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mE, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mA, RT_VLIST_POLY_END );
 
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, norm, RT_VLIST_POLY_START );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mE, RT_VLIST_POLY_MOVE );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mI, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mL, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mH, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mE, RT_VLIST_POLY_END );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mE, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mI, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mL, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mH, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mE, RT_VLIST_POLY_END );
 
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, norm, RT_VLIST_POLY_START );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mH, RT_VLIST_POLY_MOVE );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mG, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mC, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mD, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mH, RT_VLIST_POLY_END );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mH, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mG, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mC, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mD, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mH, RT_VLIST_POLY_END );
 
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, norm, RT_VLIST_POLY_START );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mJ, RT_VLIST_POLY_MOVE );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mF, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mG, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mK, RT_VLIST_POLY_DRAW );
-	RT_ADD_VLIST( &curr_dm_list->p_vlist, mJ, RT_VLIST_POLY_END );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mJ, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mF, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mG, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mK, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &curr_dm_list->dml_p_vlist, mJ, RT_VLIST_POLY_END );
 
-	push_trail( &curr_dm_list->trails[0], mA );
-	push_trail( &curr_dm_list->trails[1], mB );
-	push_trail( &curr_dm_list->trails[2], mC );
-	push_trail( &curr_dm_list->trails[3], mD );
+	push_trail( &curr_dm_list->dml_trails[0], mA );
+	push_trail( &curr_dm_list->dml_trails[1], mB );
+	push_trail( &curr_dm_list->dml_trails[2], mC );
+	push_trail( &curr_dm_list->dml_trails[3], mD );
 
-	push_trail( &curr_dm_list->trails[4], mE );
-	push_trail( &curr_dm_list->trails[5], mF );
-	push_trail( &curr_dm_list->trails[6], mG );
-	push_trail( &curr_dm_list->trails[7], mH );
+	push_trail( &curr_dm_list->dml_trails[4], mE );
+	push_trail( &curr_dm_list->dml_trails[5], mF );
+	push_trail( &curr_dm_list->dml_trails[6], mG );
+	push_trail( &curr_dm_list->dml_trails[7], mH );
 
 	/* Draw the trails */
-	poly_trail( &trail, &curr_dm_list->trails[0], &curr_dm_list->trails[4] );
-	BU_LIST_APPEND_LIST(&curr_dm_list->p_vlist, &trail);
-	poly_trail( &trail, &curr_dm_list->trails[1], &curr_dm_list->trails[5] );
-	BU_LIST_APPEND_LIST(&curr_dm_list->p_vlist, &trail);
-	poly_trail( &trail, &curr_dm_list->trails[6], &curr_dm_list->trails[2] );
-	BU_LIST_APPEND_LIST(&curr_dm_list->p_vlist, &trail);
-	poly_trail( &trail, &curr_dm_list->trails[7], &curr_dm_list->trails[3] );
-	BU_LIST_APPEND_LIST(&curr_dm_list->p_vlist, &trail);
+	poly_trail( &trail, &curr_dm_list->dml_trails[0], &curr_dm_list->dml_trails[4] );
+	BU_LIST_APPEND_LIST(&curr_dm_list->dml_p_vlist, &trail);
+	poly_trail( &trail, &curr_dm_list->dml_trails[1], &curr_dm_list->dml_trails[5] );
+	BU_LIST_APPEND_LIST(&curr_dm_list->dml_p_vlist, &trail);
+	poly_trail( &trail, &curr_dm_list->dml_trails[6], &curr_dm_list->dml_trails[2] );
+	BU_LIST_APPEND_LIST(&curr_dm_list->dml_p_vlist, &trail);
+	poly_trail( &trail, &curr_dm_list->dml_trails[7], &curr_dm_list->dml_trails[3] );
+	BU_LIST_APPEND_LIST(&curr_dm_list->dml_p_vlist, &trail);
 
 	/* Done */
-	bn_mat_idn( ModelDelta );
+	bn_mat_idn( view_state->vs_ModelDelta );
 }
 
 /*
@@ -360,7 +362,7 @@ predictor_frame()
 void
 predictor_hook()
 {
-  if(mged_variables->predictor > 0)
+  if(mged_variables->mv_predictor > 0)
     predictor_init();
   else
     predictor_kill();

@@ -70,7 +70,7 @@ char	**argv;
 	}
 
 	vbp = rt_vlblock_init();
-	ret = rt_uplot_to_vlist( vbp, fp, Viewscale * 0.01 );
+	ret = rt_uplot_to_vlist( vbp, fp, view_state->vs_Viewscale * 0.01 );
 	fclose(fp);
 	if( ret < 0 )  {
 		rt_vlblock_free(vbp);
@@ -80,7 +80,7 @@ char	**argv;
 	cvt_vlblock_to_solids( vbp, name, 0 );
 
 	rt_vlblock_free(vbp);
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 	return TCL_OK;
 }
 
@@ -113,7 +113,7 @@ char	**argv;
 
 	vbp = rt_vlblock_init();
 	bn_mat_idn(mat);
-	bn_mat_inv( mat, Viewrot );
+	bn_mat_inv( mat, view_state->vs_Viewrot );
 	scale = VIEWSIZE / 100;		/* divide by # chars/screen */
 
 	for( i=1; i<argc; i++ )  {
@@ -135,6 +135,6 @@ char	**argv;
 	cvt_vlblock_to_solids( vbp, "_LABELVERT_", 0 );
 
 	rt_vlblock_free(vbp);
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 	return TCL_OK;
 }

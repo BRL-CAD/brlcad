@@ -658,7 +658,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	MAT_DELTAS_GET_NEG(pos, toViewcenter);
+	MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
 	sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
@@ -685,7 +685,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	sprintf(result_string,"%.12e", Viewscale);
+	sprintf(result_string,"%.12e", view_state->vs_Viewscale);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
 
@@ -718,23 +718,23 @@ char **argv;
 	c = argv[1][0];
 	switch(	c ) {
 	case 'c': 	/*center*/
-		MAT_DELTAS_GET_NEG(pos, toViewcenter);
+		MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
 		sprintf(result_string,"%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 's':	/*size*/
 		/* don't use base2local, because rt doesn't */
-		sprintf(result_string,"%.12g", Viewscale * 2.0);
+		sprintf(result_string,"%.12g", view_state->vs_Viewscale * 2.0);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'e':	/*eye*/
 		VSET(temp, 0.0, 0.0, 1.0);
-		MAT4X3PNT(pos, view2model, temp);
+		MAT4X3PNT(pos, view_state->vs_view2model, temp);
 		sprintf(result_string,"%.12g %.12g %.12g",pos[0],pos[1],pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'y':	/*ypr*/
-		bn_mat_trn( mymat, Viewrot);
+		bn_mat_trn( mymat, view_state->vs_Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) { 
@@ -746,7 +746,7 @@ char **argv;
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'a': 	/* aet*/
-		bn_mat_trn(mymat,Viewrot);
+		bn_mat_trn(mymat,view_state->vs_Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) { 
@@ -762,7 +762,7 @@ char **argv;
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'q':	/*quat*/
-		quat_mat2quat(quat,Viewrot);
+		quat_mat2quat(quat,view_state->vs_Viewrot);
 		sprintf(result_string,"%.12g %.12g %.12g %.12g", quat[0],quat[1],quat[2],quat[3]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
@@ -905,7 +905,7 @@ char **argv;
 	/* do size set - don't use units (local2base) because rt doesn't */
 	if (in_size) {
 		if (size < 0.0001) size = 0.0001;
-		Viewscale = size * 0.5;
+		view_state->vs_Viewscale = size * 0.5;
 	}
 
 
@@ -915,34 +915,34 @@ char **argv;
 	}
 
 	if (in_quat) {
-		quat_quat2mat( Viewrot, quat);
+		quat_quat2mat( view_state->vs_Viewrot, quat);
 	} else if (in_ypr) {
 		anim_dy_p_r2mat(mymat, ypr[0], ypr[1], ypr[2]);
 		anim_v_permute(mymat);
-		bn_mat_trn(Viewrot, mymat);
+		bn_mat_trn(view_state->vs_Viewrot, mymat);
 	} else if (in_aet) {
 		anim_dy_p_r2mat(mymat, aet[0]+180.0, -aet[1], -aet[2]);
 		anim_v_permute(mymat);
-		bn_mat_trn(Viewrot, mymat);
+		bn_mat_trn(view_state->vs_Viewrot, mymat);
 	} else if (in_center && in_eye) {
 		VSUB2( dir, center, eye);
-		Viewscale = MAGNITUDE(dir);
-		if (Viewscale < 0.00005) Viewscale = 0.00005;
+		view_state->vs_Viewscale = MAGNITUDE(dir);
+		if (view_state->vs_Viewscale < 0.00005) view_state->vs_Viewscale = 0.00005;
 		/* use current eye norm as backup if dir vertical*/
-		VSET(norm, -Viewrot[0], -Viewrot[1], 0.0);
+		VSET(norm, -view_state->vs_Viewrot[0], -view_state->vs_Viewrot[1], 0.0);
 		anim_dirn2mat(mymat, dir, norm);
 		anim_v_permute(mymat);
-		bn_mat_trn(Viewrot, mymat);
+		bn_mat_trn(view_state->vs_Viewrot, mymat);
 	}
 
 	if (in_center) {
-		MAT_DELTAS_VEC_NEG( toViewcenter, center);
+		MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, center);
 	} else if (in_eye) {
-		VSET(temp, 0.0, 0.0, Viewscale);
-		bn_mat_trn(mymat, Viewrot);
+		VSET(temp, 0.0, 0.0, view_state->vs_Viewscale);
+		bn_mat_trn(mymat, view_state->vs_Viewrot);
 		MAT4X3PNT( dir, mymat, temp);
 		VSUB2(temp, dir, eye);
-		MAT_DELTAS_VEC( toViewcenter, temp);
+		MAT_DELTAS_VEC( view_state->vs_toViewcenter, temp);
 	}
 
 	new_mats();

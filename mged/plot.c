@@ -140,12 +140,12 @@ char	**argv;
 
 	if( floating )  {
 		pd_3space( fp,
-			-toViewcenter[MDX] - Viewscale,
-			-toViewcenter[MDY] - Viewscale,
-			-toViewcenter[MDZ] - Viewscale,
-			-toViewcenter[MDX] + Viewscale,
-			-toViewcenter[MDY] + Viewscale,
-			-toViewcenter[MDZ] + Viewscale );
+			-view_state->vs_toViewcenter[MDX] - view_state->vs_Viewscale,
+			-view_state->vs_toViewcenter[MDY] - view_state->vs_Viewscale,
+			-view_state->vs_toViewcenter[MDZ] - view_state->vs_Viewscale,
+			-view_state->vs_toViewcenter[MDX] + view_state->vs_Viewscale,
+			-view_state->vs_toViewcenter[MDY] + view_state->vs_Viewscale,
+			-view_state->vs_toViewcenter[MDZ] + view_state->vs_Viewscale );
 		Dashing = 0;
 		pl_linmod( fp, "solid" );
 		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
@@ -185,9 +185,9 @@ char	**argv;
 	}
 
 	if( Three_D )
-		pl_3space( fp, -2048, -2048, -2048, 2048, 2048, 2048 );
+		pl_3space( fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX, (int)GED_MAX );
 	else
-		pl_space( fp, -2048, -2048, 2048, 2048 );
+		pl_space( fp, (int)GED_MIN, (int)GED_MIN, (int)GED_MAX, (int)GED_MAX );
 	pl_erase( fp );
 	Dashing = 0;
 	pl_linmod( fp, "solid");
@@ -212,13 +212,13 @@ char	**argv;
 				case RT_VLIST_POLY_MOVE:
 				case RT_VLIST_LINE_MOVE:
 					/* Move, not draw */
-					MAT4X3PNT( last, model2view, *pt );
+					MAT4X3PNT( last, view_state->vs_model2view, *pt );
 					continue;
 				case RT_VLIST_POLY_DRAW:
 				case RT_VLIST_POLY_END:
 				case RT_VLIST_LINE_DRAW:
 					/* draw */
-					MAT4X3PNT( fin, model2view, *pt );
+					MAT4X3PNT( fin, view_state->vs_model2view, *pt );
 					VMOVE( start, last );
 					VMOVE( last, fin );
 					break;
@@ -391,13 +391,13 @@ char	**argv;
 	      case RT_VLIST_POLY_MOVE:
 	      case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
-		MAT4X3VEC( last, Viewrot, *pt );
+		MAT4X3VEC( last, view_state->vs_Viewrot, *pt );
 		continue;
 	      case RT_VLIST_POLY_DRAW:
 	      case RT_VLIST_POLY_END:
 	      case RT_VLIST_LINE_DRAW:
 		/* draw.  */
-		MAT4X3VEC( fin, Viewrot, *pt );
+		MAT4X3VEC( fin, view_state->vs_Viewrot, *pt );
 		break;
 	      }
 

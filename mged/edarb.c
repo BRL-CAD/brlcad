@@ -716,7 +716,7 @@ char	**argv;
 	arb.magic = RT_ARB_INTERNAL_MAGIC;
 
 	/* put vertex of new solid at center of screen */
-	VSET( arb.pt[0] , -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ] );
+	VSET( arb.pt[0] , -view_state->vs_toViewcenter[MDX] , -view_state->vs_toViewcenter[MDY] , -view_state->vs_toViewcenter[MDZ] );
 
 	/* calculate normal vector defined by rot,fb */
 	norm1[0] = cos(fb) * cos(rota);
@@ -953,7 +953,7 @@ char	**argv;
 
 	/* draw the updated solid */
 	replot_editing_solid();
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 
 	return TCL_OK;
 }
@@ -1361,7 +1361,7 @@ char	**argv;
 
     /* draw the updated solid */
     replot_editing_solid();
-    dmaflag = 1;
+    view_state->vs_flag = 1;
 
     return TCL_OK;
 }

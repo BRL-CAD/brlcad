@@ -38,7 +38,10 @@
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-extern int doMotion;	/* defined in dm-generic.c */
+extern int doMotion;			/* defined in dm-generic.c */
+extern void rect_view2image();		/* defined in rect.c */
+extern void rect_image2view();
+extern void rb_set_dirty_flag();
 
 static void motion_event_handler();
 static void dials_event_handler();
@@ -118,6 +121,7 @@ XEvent *eventPtr;
     XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
     dm_configureWindowShape(dmp);
+    rect_image2view();
     dirty = 1;
 
     if(fbp)
@@ -208,17 +212,19 @@ XMotionEvent *xmotion;
       bu_vls_printf( &cmd, "M 1 %d %d\n",
 		     (int)(dm_Xx2Normal(dmp, mx) * GED_MAX),
 		     (int)(dm_Xy2Normal(dmp, my, 0) * GED_MAX) );
-    else if(rubber_band_active){
+    else if(rubber_band->rb_active){
       fastf_t x = dm_Xx2Normal(dmp, mx);
       fastf_t y = dm_Xy2Normal(dmp, my, 1);
 
-      if(mged_variables->grid_snap)
+      if(grid_state->gr_snap)
 	snap_to_grid(&x, &y);
 
-      rect_width = x - rect_x;
-      rect_height = y - rect_y;
+      rubber_band->rb_width = x - rubber_band->rb_x;
+      rubber_band->rb_height = y - rubber_band->rb_y;
 
-      dirty = 1;
+      rect_view2image();
+      rb_set_dirty_flag();
+
       goto handled;
     }else if(doMotion)
       /* do the regular thing */
@@ -232,11 +238,11 @@ XMotionEvent *xmotion;
     break;
   case AMM_ROT:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       char save_coords;
 
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'v';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -247,7 +253,7 @@ XMotionEvent *xmotion;
 	edobj = BE_O_ROTATE;
       }
 
-      if(mged_variables->rateknobs)
+      if(mged_variables->mv_rateknobs)
 	bu_vls_printf(&cmd, "knob -i x %lf y %lf\n",
 		      dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
 		      dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
@@ -255,12 +261,12 @@ XMotionEvent *xmotion;
 	bu_vls_printf(&cmd, "knob -i ax %lf ay %lf\n",
 		      dy * 0.25, dx * 0.25);
       (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       goto reset_edflag;
     }
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf(&cmd, "knob -i -v x %lf y %lf\n",
 		    dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
 		    dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
@@ -274,11 +280,11 @@ XMotionEvent *xmotion;
     fy = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
       
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       char save_coords;
 
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'v';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -289,10 +295,10 @@ XMotionEvent *xmotion;
 	edobj = BE_O_XY;
       }
 
-      if(mged_variables->rateknobs)
+      if(mged_variables->mv_rateknobs)
 	bu_vls_printf(&cmd, "knob -i X %lf Y %lf\n", fx, fy);
       else{
-	if(mged_variables->grid_snap){
+	if(grid_state->gr_snap){
 	  point_t view_pt;
 	  point_t model_pt;
 	  point_t vcenter, diff;
@@ -306,28 +312,28 @@ XMotionEvent *xmotion;
 	  view_pt[Z] = 0.0;
 	  round_to_grid(&view_pt[X], &view_pt[Y]);
 
-	  MAT4X3PNT(model_pt, view2model, view_pt);
-	  MAT_DELTAS_GET_NEG(vcenter, toViewcenter);
+	  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+	  MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
 	  VSUB2(diff, model_pt, vcenter);
 	  VSCALE(diff, diff, base2local);
 	  VADD2(model_pt, dml_work_pt, diff);
 	  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
 	}else
 	  bu_vls_printf(&cmd, "knob -i aX %lf aY %lf\n",
-			fx*Viewscale*base2local, fy*Viewscale*base2local);
+			fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local);
       }
 
       (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       goto reset_edflag;
     }
 
     /* otherwise, drag to translate the view */
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i -v X %lf Y %lf\n", fx, fy );
     else{
-      if(mged_variables->grid_snap){
+      if(grid_state->gr_snap){
 	/* accumulate distance mouse moved since starting to translate */
 	dml_mouse_dx += dx;
 	dml_mouse_dy += dy;
@@ -338,13 +344,13 @@ XMotionEvent *xmotion;
 	goto handled;
       }else
 	bu_vls_printf( &cmd, "knob -i -v aX %lf aY %lf\n",
-		       fx*Viewscale*base2local, fy*Viewscale*base2local );
+		       fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local );
     }
 
     break;
   case AMM_SCALE:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT && !SEDIT_SCALE){
 	save_edflag = es_edflag;
 	es_edflag = SSCALE;
@@ -359,21 +365,21 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i S %f\n", f / (fastf_t)dmp->dm_height );
     else
       bu_vls_printf( &cmd, "knob -i aS %f\n", f / (fastf_t)dmp->dm_height );
 
     break;
   case AMM_ADC_ANG1:
-    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - dv_xadc;
-    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - dv_yadc;
+    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - adc_state->adc_dv_x;
+    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - adc_state->adc_dv_y;
     bu_vls_printf(&cmd, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
 
     break;
   case AMM_ADC_ANG2:
-    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - dv_xadc;
-    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - dv_yadc;
+    fx = dm_Xx2Normal(dmp, mx) * GED_MAX - adc_state->adc_dv_x;
+    fy = dm_Xy2Normal(dmp, my, 1) * GED_MAX - adc_state->adc_dv_y;
     bu_vls_printf(&cmd, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
 
     break;
@@ -384,25 +390,25 @@ XMotionEvent *xmotion;
 
       VSET(view_pt, dm_Xx2Normal(dmp, mx), dm_Xy2Normal(dmp, my, 1), 0.0);
 
-      if(mged_variables->grid_snap)
+      if(grid_state->gr_snap)
 	snap_to_grid(&view_pt[X], &view_pt[Y]);
 
-      MAT4X3PNT(model_pt, view2model, view_pt);
+      MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
       bu_vls_printf(&cmd, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
     }
 
     break;
   case AMM_ADC_DIST:
-    fx = (dm_Xx2Normal(dmp, mx) * GED_MAX - dv_xadc) * Viewscale * base2local * INV_GED;
-    fy = (dm_Xy2Normal(dmp, my, 1) * GED_MAX - dv_yadc) * Viewscale * base2local * INV_GED;
+    fx = (dm_Xx2Normal(dmp, mx) * GED_MAX - adc_state->adc_dv_x) * view_state->vs_Viewscale * base2local * INV_GED;
+    fy = (dm_Xy2Normal(dmp, my, 1) * GED_MAX - adc_state->adc_dv_y) * view_state->vs_Viewscale * base2local * INV_GED;
     td = sqrt(fx * fx + fy * fy);
     bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
     break;
   case AMM_CON_ROT_X:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_ROTATE)
@@ -418,7 +424,7 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i x %f\n",
 		     f / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0 );
     else
@@ -427,7 +433,7 @@ XMotionEvent *xmotion;
     break;
   case AMM_CON_ROT_Y:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_ROTATE)
@@ -443,7 +449,7 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i y %f\n",
 		     f / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0 );
     else
@@ -452,7 +458,7 @@ XMotionEvent *xmotion;
     break;
   case AMM_CON_ROT_Z:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_ROTATE)
@@ -468,7 +474,7 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i z %f\n",
 		     f / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0 );
     else
@@ -477,7 +483,7 @@ XMotionEvent *xmotion;
     break;
   case AMM_CON_TRAN_X:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_TRAN)
@@ -493,15 +499,15 @@ XMotionEvent *xmotion;
     else
       f = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i X %f\n", f);
     else
-      bu_vls_printf( &cmd, "knob -i aX %f\n", f*Viewscale*base2local);
+      bu_vls_printf( &cmd, "knob -i aX %f\n", f*view_state->vs_Viewscale*base2local);
 
     break;
   case AMM_CON_TRAN_Y:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_TRAN)
@@ -517,15 +523,15 @@ XMotionEvent *xmotion;
     else
       f = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i Y %f\n", f);
     else
-      bu_vls_printf( &cmd, "knob -i aY %f\n", f*Viewscale*base2local);
+      bu_vls_printf( &cmd, "knob -i aY %f\n", f*view_state->vs_Viewscale*base2local);
 
     break;
   case AMM_CON_TRAN_Z:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_TRAN)
@@ -541,15 +547,15 @@ XMotionEvent *xmotion;
     else
       f = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i Z %f\n", f);
     else
-      bu_vls_printf( &cmd, "knob -i aZ %f\n", f*Viewscale*base2local);
+      bu_vls_printf( &cmd, "knob -i aZ %f\n", f*view_state->vs_Viewscale*base2local);
 
     break;
   case AMM_CON_SCALE_X:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_SCALE)
@@ -565,7 +571,7 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i S %f\n", f / (fastf_t)dmp->dm_height );
     else
       bu_vls_printf( &cmd, "knob -i aS %f\n", f / (fastf_t)dmp->dm_height );
@@ -573,7 +579,7 @@ XMotionEvent *xmotion;
     break;
   case AMM_CON_SCALE_Y:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_SCALE)
@@ -589,7 +595,7 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i S %f\n", f / (fastf_t)dmp->dm_height );
     else
       bu_vls_printf( &cmd, "knob -i aS %f\n", f / (fastf_t)dmp->dm_height );
@@ -597,7 +603,7 @@ XMotionEvent *xmotion;
     break;
   case AMM_CON_SCALE_Z:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->transform == 'e'){
+       mged_variables->mv_transform == 'e'){
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
 	if(!SEDIT_SCALE)
@@ -613,7 +619,7 @@ XMotionEvent *xmotion;
     else
       f = -dy;
 
-    if(mged_variables->rateknobs)
+    if(mged_variables->mv_rateknobs)
       bu_vls_printf( &cmd, "knob -i S %f\n", f / (fastf_t)dmp->dm_height );
     else
       bu_vls_printf( &cmd, "knob -i aS %f\n", f / (fastf_t)dmp->dm_height );
@@ -626,7 +632,7 @@ XMotionEvent *xmotion;
       f = -dy;
 
     bu_vls_printf( &cmd, "knob -i xadc %f\n",
-		   f / (fastf_t)dmp->dm_width * 4095.0 );
+		   f / (fastf_t)dmp->dm_width * GED_RANGE );
     break;
   case AMM_CON_YADC:
     if(abs(dx) >= abs(dy))
@@ -635,7 +641,7 @@ XMotionEvent *xmotion;
       f = -dy;
 
     bu_vls_printf( &cmd, "knob -i yadc %f\n",
-		   f / (fastf_t)dmp->dm_height * 4095.0 );
+		   f / (fastf_t)dmp->dm_height * GED_RANGE );
     break;
   case AMM_CON_ANG1:
     if(abs(dx) >= abs(dy))
@@ -662,7 +668,7 @@ XMotionEvent *xmotion;
       f = -dy;
 
     bu_vls_printf( &cmd, "knob -i distadc %f\n",
-		   f / (fastf_t)dmp->dm_width * 4095.0 );
+		   f / (fastf_t)dmp->dm_width * GED_RANGE );
     break;
   }
 
@@ -694,7 +700,7 @@ XDeviceMotionEvent *dmep;
   fastf_t f;
 
   if(button0){
-    common_dbtext((adc_draw ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
+    common_dbtext((adc_state->adc_draw ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
     return;
   }
 
@@ -702,22 +708,22 @@ XDeviceMotionEvent *dmep;
 
   switch(DIAL0 + dmep->first_axis){
   case DIAL0:
-    if(adc_draw){
+    if(adc_state->adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
-	 !dv_1adc )
+	 !adc_state->adc_dv_a1 )
 	dml_knobs[dmep->first_axis] +=
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
       else
 	dml_knobs[dmep->first_axis] =
-	  dm_unlimit(dv_1adc) + dmep->axis_data[0] - knob_values[dmep->first_axis];
+	  dm_unlimit(adc_state->adc_dv_a1) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob ang1 %f\n",
 		     45.0 - 45.0*((double)setting) * INV_GED);
     }else{
-      if(mged_variables->rateknobs){
-	f = rate_model_rotate[Z];
+      if(mged_variables->mv_rateknobs){
+	f = view_state->vs_rate_model_rotate[Z];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -731,7 +737,7 @@ XDeviceMotionEvent *dmep;
 	setting = dm_limit(dml_knobs[dmep->first_axis]);
 	bu_vls_printf( &cmd, "knob -m z %f\n", setting / 512.0 );
       }else{
-	f = absolute_model_rotate[Z];
+	f = view_state->vs_absolute_model_rotate[Z];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -748,11 +754,11 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL1:
-    if(mged_variables->rateknobs){
-      if(EDIT_SCALE && mged_variables->transform == 'e')
+    if(mged_variables->mv_rateknobs){
+      if(EDIT_SCALE && mged_variables->mv_transform == 'e')
 	f = edit_rate_scale;
       else
-	f = rate_scale;
+	f = view_state->vs_rate_scale;
 
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -765,10 +771,10 @@ XDeviceMotionEvent *dmep;
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob S %f\n", setting / 512.0 );
     }else{
-      if(EDIT_SCALE && mged_variables->transform == 'e')
+      if(EDIT_SCALE && mged_variables->mv_transform == 'e')
 	f = edit_absolute_scale;
       else
-	f = absolute_scale;
+	f = view_state->vs_absolute_scale;
 
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -784,24 +790,24 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL2:
-    if(adc_draw){
+    if(adc_state->adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
-	 !dv_2adc )
+	 !adc_state->adc_dv_a2 )
 	dml_knobs[dmep->first_axis] +=
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
       else
 	dml_knobs[dmep->first_axis] =
-	  dm_unlimit(dv_2adc) + dmep->axis_data[0] - knob_values[dmep->first_axis];
+	  dm_unlimit(adc_state->adc_dv_a2) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob ang2 %f\n",
 		     45.0 - 45.0*((double)setting) * INV_GED);
     }else {
-      if(mged_variables->rateknobs){
+      if(mged_variables->mv_rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    f = edit_rate_model_rotate[Z];
 	    break;
@@ -822,10 +828,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = rate_model_rotate[Z];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_rate_model_rotate[Z];
 	else
-	  f = rate_rotate[Z];
+	  f = view_state->vs_rate_rotate[Z];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -840,8 +846,8 @@ XDeviceMotionEvent *dmep;
 	bu_vls_printf( &cmd, "knob z %f\n", setting / 512.0 );
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    f = edit_absolute_model_rotate[Z];
 	    break;
@@ -862,10 +868,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = absolute_model_rotate[Z];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_absolute_model_rotate[Z];
 	else
-	  f = absolute_rotate[Z];
+	  f = view_state->vs_absolute_rotate[Z];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -882,23 +888,23 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL3:
-    if(adc_draw){
+    if(adc_state->adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
-	 !dv_distadc)
+	 !adc_state->adc_dv_dist)
 	dml_knobs[dmep->first_axis] +=
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
       else
 	dml_knobs[dmep->first_axis] =
-	  dm_unlimit(dv_distadc) + dmep->axis_data[0] - knob_values[dmep->first_axis];
+	  dm_unlimit(adc_state->adc_dv_dist) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob distadc %d\n", setting );
     }else {
-      if(mged_variables->rateknobs){
+      if(mged_variables->mv_rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	  case 'o':
 	    f = edit_rate_model_tran[Z];
@@ -917,10 +923,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = rate_model_tran[Z];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_rate_model_tran[Z];
 	else
-	  f = rate_tran[Z];
+	  f = view_state->vs_rate_tran[Z];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -935,8 +941,8 @@ XDeviceMotionEvent *dmep;
 	bu_vls_printf( &cmd, "knob Z %f\n", setting / 512.0 );
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	  case 'o':
 	    f = edit_absolute_model_tran[Z];
@@ -955,10 +961,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = absolute_model_tran[Z];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_absolute_model_tran[Z];
 	else
-	  f = absolute_tran[Z];
+	  f = view_state->vs_absolute_tran[Z];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE &&
@@ -971,28 +977,28 @@ XDeviceMotionEvent *dmep;
 	    dmep->axis_data[0] - knob_values[dmep->first_axis];
 
 	setting = dm_limit(dml_knobs[dmep->first_axis]);
-	bu_vls_printf(&cmd, "knob aZ %f\n", setting / 512.0 * Viewscale * base2local);
+	bu_vls_printf(&cmd, "knob aZ %f\n", setting / 512.0 * view_state->vs_Viewscale * base2local);
       }
     }
     break;
   case DIAL4:
-    if(adc_draw){
+    if(adc_state->adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
-	 !dv_yadc)
+	 !adc_state->adc_dv_y)
 	dml_knobs[dmep->first_axis] +=
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
       else
 	dml_knobs[dmep->first_axis] =
-	  dm_unlimit(dv_yadc) + dmep->axis_data[0] - knob_values[dmep->first_axis];
+	  dm_unlimit(adc_state->adc_dv_y) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob yadc %d\n", setting );
     }else{
-      if(mged_variables->rateknobs){
+      if(mged_variables->mv_rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    f = edit_rate_model_rotate[Y];
 	    break;
@@ -1013,10 +1019,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = rate_model_rotate[Y];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_rate_model_rotate[Y];
 	else
-	  f = rate_rotate[Y];
+	  f = view_state->vs_rate_rotate[Y];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1031,8 +1037,8 @@ XDeviceMotionEvent *dmep;
 	bu_vls_printf( &cmd, "knob y %f\n", setting / 512.0 );
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    f = edit_absolute_model_rotate[Y];
 	    break;
@@ -1053,10 +1059,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = absolute_model_rotate[Y];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_absolute_model_rotate[Y];
 	else
-	  f = absolute_rotate[Y];
+	  f = view_state->vs_absolute_rotate[Y];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE &&
@@ -1074,10 +1080,10 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL5:
-    if(mged_variables->rateknobs){
+    if(mged_variables->mv_rateknobs){
       if((state == ST_S_EDIT || state == ST_O_EDIT)
-	 && mged_variables->transform == 'e'){
-	switch(mged_variables->coords){
+	 && mged_variables->mv_transform == 'e'){
+	switch(mged_variables->mv_coords){
 	case 'm':
 	case 'o':
 	  f = edit_rate_model_tran[Y];
@@ -1096,10 +1102,10 @@ XDeviceMotionEvent *dmep;
 	  save_edflag = edobj;
 	  edobj = BE_O_XY;
 	}
-      }else if(mged_variables->coords == 'm')
-	f = rate_model_tran[Y];
+      }else if(mged_variables->mv_coords == 'm')
+	f = view_state->vs_rate_model_tran[Y];
       else
-	f = rate_tran[Y];
+	f = view_state->vs_rate_tran[Y];
 
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1114,8 +1120,8 @@ XDeviceMotionEvent *dmep;
       bu_vls_printf( &cmd, "knob Y %f\n", setting / 512.0 );
     }else{
       if((state == ST_S_EDIT || state == ST_O_EDIT)
-	 && mged_variables->transform == 'e'){
-	switch(mged_variables->coords){
+	 && mged_variables->mv_transform == 'e'){
+	switch(mged_variables->mv_coords){
 	case 'm':
 	case 'o':
 	  f = edit_absolute_model_tran[Y];
@@ -1134,10 +1140,10 @@ XDeviceMotionEvent *dmep;
 	  save_edflag = edobj;
 	  edobj = BE_O_XY;
 	}
-      }else if(mged_variables->coords == 'm')
-	f = absolute_model_tran[Y];
+      }else if(mged_variables->mv_coords == 'm')
+	f = view_state->vs_absolute_model_tran[Y];
       else
-	f = absolute_tran[Y];
+	f = view_state->vs_absolute_tran[Y];
 
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1150,27 +1156,27 @@ XDeviceMotionEvent *dmep;
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
-      bu_vls_printf(&cmd, "knob aY %f\n", setting / 512.0 * Viewscale * base2local);
+      bu_vls_printf(&cmd, "knob aY %f\n", setting / 512.0 * view_state->vs_Viewscale * base2local);
     }
     break;
   case DIAL6:
-    if(adc_draw){
+    if(adc_state->adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
-	 !dv_xadc)
+	 !adc_state->adc_dv_x)
 	dml_knobs[dmep->first_axis] +=
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
       else
 	dml_knobs[dmep->first_axis] =
-	  dm_unlimit(dv_xadc) + dmep->axis_data[0] - knob_values[dmep->first_axis];
+	  dm_unlimit(adc_state->adc_dv_x) + dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
       bu_vls_printf( &cmd, "knob xadc %d\n", setting );
     }else{
-      if(mged_variables->rateknobs){
+      if(mged_variables->mv_rateknobs){
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    f = edit_rate_model_rotate[X];
 	    break;
@@ -1191,10 +1197,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = rate_model_rotate[X];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_rate_model_rotate[X];
 	else
-	  f = rate_rotate[X];
+	  f = view_state->vs_rate_rotate[X];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1209,8 +1215,8 @@ XDeviceMotionEvent *dmep;
 	bu_vls_printf( &cmd, "knob x %f\n", setting / 512.0);
       }else{
 	if((state == ST_S_EDIT || state == ST_O_EDIT)
-	   && mged_variables->transform == 'e'){
-	  switch(mged_variables->coords){
+	   && mged_variables->mv_transform == 'e'){
+	  switch(mged_variables->mv_coords){
 	  case 'm':
 	    f = edit_absolute_model_rotate[X];
 	    break;
@@ -1231,10 +1237,10 @@ XDeviceMotionEvent *dmep;
 	    save_edflag = edobj;
 	    edobj = BE_O_ROTATE;
 	  }
-	}else if(mged_variables->coords == 'm')
-	  f = absolute_model_rotate[X];
+	}else if(mged_variables->mv_coords == 'm')
+	  f = view_state->vs_absolute_model_rotate[X];
 	else
-	  f = absolute_rotate[X];
+	  f = view_state->vs_absolute_rotate[X];
 
 	if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	   dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1251,10 +1257,10 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL7:
-    if(mged_variables->rateknobs){
+    if(mged_variables->mv_rateknobs){
       if((state == ST_S_EDIT || state == ST_O_EDIT)
-	 && mged_variables->transform == 'e'){
-	switch(mged_variables->coords){
+	 && mged_variables->mv_transform == 'e'){
+	switch(mged_variables->mv_coords){
 	case 'm':
 	case 'o':
 	  f = edit_rate_model_tran[X];
@@ -1273,10 +1279,10 @@ XDeviceMotionEvent *dmep;
 	  save_edflag = edobj;
 	  edobj = BE_O_XY;
 	}
-      }else if(mged_variables->coords == 'm')
-	f = rate_model_tran[X];
+      }else if(mged_variables->mv_coords == 'm')
+	f = view_state->vs_rate_model_tran[X];
       else
-	f = rate_tran[X];
+	f = view_state->vs_rate_tran[X];
 
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1291,8 +1297,8 @@ XDeviceMotionEvent *dmep;
       bu_vls_printf( &cmd, "knob X %f\n", setting / 512.0 );
     }else{
       if((state == ST_S_EDIT || state == ST_O_EDIT)
-	 && mged_variables->transform == 'e'){
-	switch(mged_variables->coords){
+	 && mged_variables->mv_transform == 'e'){
+	switch(mged_variables->mv_coords){
 	case 'm':
 	case 'o':
 	  f = edit_absolute_model_tran[X];
@@ -1311,10 +1317,10 @@ XDeviceMotionEvent *dmep;
 	  save_edflag = edobj;
 	  edobj = BE_O_XY;
 	}
-      }else if(mged_variables->coords == 'm')
-	f = absolute_model_tran[X];
+      }else if(mged_variables->mv_coords == 'm')
+	f = view_state->vs_absolute_model_tran[X];
       else
-	f = absolute_tran[X];
+	f = view_state->vs_absolute_tran[X];
 
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE && !f)
@@ -1326,7 +1332,7 @@ XDeviceMotionEvent *dmep;
 	  dmep->axis_data[0] - knob_values[dmep->first_axis];
 
       setting = dm_limit(dml_knobs[dmep->first_axis]);
-      bu_vls_printf(&cmd, "knob aX %f\n", setting / 512.0 * Viewscale * base2local);
+      bu_vls_printf(&cmd, "knob aX %f\n", setting / 512.0 * view_state->vs_Viewscale * base2local);
     }
     break;
   default:

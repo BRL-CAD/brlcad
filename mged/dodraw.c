@@ -798,7 +798,7 @@ struct solid		*existing_sp;
 #else
 	save_dmlp = curr_dm_list;
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
+	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
 	    curr_dm_list = dmlp;
 	    createDList(sp);
 	  }
@@ -1096,7 +1096,7 @@ CONST mat_t			mat;
 		rt_memfree( &(dmp->dm_map), bytes, (unsigned long)addr );
 #endif
 
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 	return(0);
 }
 
@@ -1136,7 +1136,7 @@ int			copy;
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
+	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
 	    save_dmlp = curr_dm_list;
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
@@ -1229,7 +1229,7 @@ int		copy;
 #else
 	save_dmlp = curr_dm_list;
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
+	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
 	    curr_dm_list = dmlp;
 	    createDList(sp);
 	  }
@@ -1854,7 +1854,7 @@ char	**argv;
 #ifdef DO_SINGLE_DISPLAY_LIST
 	save_dmlp = curr_dm_list;
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
+	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
 	  }

@@ -62,17 +62,17 @@ char *argv[];
   int i;
   struct bu_vls vls;
 
+  dm_var_init(o_dm_list);
+
   /* register application provided routines */
   cmd_hook = X_dm;
 
-  dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
   if((dmp = dm_open(DM_TYPE_X, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
 
   zclip_ptr = &((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip;
   eventHandler = X_doevent;
-  curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);
 

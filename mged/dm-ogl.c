@@ -81,21 +81,21 @@ char *argv[];
   int i;
   struct bu_vls vls;
 
+  dm_var_init(o_dm_list);
+
   /* register application provided routines */
   cmd_hook = Ogl_dm;
 
-  dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 
   if((dmp = dm_open(DM_TYPE_OGL, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
 
   /*XXXX this eventually needs to move into Ogl's private structure */
-  dmp->dm_vp = &Viewscale;
-  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->perspective_mode = &mged_variables->perspective_mode;
+  dmp->dm_vp = &view_state->vs_Viewscale;
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->perspective_mode = &mged_variables->mv_perspective_mode;
   zclip_ptr = &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
   eventHandler = Ogl_doevent;
-  curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);
 
@@ -242,28 +242,28 @@ Ogl_colorchange()
     glDisable(GL_FOG);
   }
 
-  ++dmaflag;
+  ++view_state->vs_flag;
 }
 
 static void
 establish_zbuffer()
 {
   dm_zbuffer(dmp);
-  ++dmaflag;
+  ++view_state->vs_flag;
 }
 
 static void
 establish_lighting()
 {
   dm_lighting(dmp);
-  ++dmaflag;
+  ++view_state->vs_flag;
 }
 
 static void
 do_fogHint()
 {
   ogl_fogHint(dmp);
-  ++dmaflag;
+  ++view_state->vs_flag;
 }
 
 static void

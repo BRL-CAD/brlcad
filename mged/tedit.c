@@ -111,7 +111,7 @@ char **argv;
 
 		/* Update the display */
 		replot_editing_solid();
-		dmaflag = 1;
+		view_state->vs_flag = 1;
 		Tcl_AppendResult(interp, "done\n", (char *)NULL);
 	}
 	(void)unlink(tmpfil);

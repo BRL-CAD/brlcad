@@ -1,7 +1,8 @@
 /*
  *				S H A R E . C
  *
- * Routines for sharing resources among display managers.
+ * Description -
+ *	Routines for sharing resources among display managers.
  *
  * Functions -
  *	f_share				command to share/unshare resources

@@ -409,20 +409,21 @@ struct funtab {
 };
 
 struct mged_hist {
-  struct bu_list l;
-  struct bu_vls command;
-  struct timeval start, finish;
-  int status;
+  struct bu_list	l;
+  struct bu_vls		mh_command;
+  struct timeval	mh_start;
+  struct timeval	mh_finish;
+  int			mh_status;
 };
 
 /* internal variables related to the command window(s) */
 struct cmd_list {
-  struct bu_list l;
-  struct dm_list *aim;        /* the drawing window being aimed at */
-  struct mged_hist *cur_hist;
-  struct bu_vls more_default;
-  struct bu_vls name;
-  int quote_string;
+  struct bu_list	l;
+  struct dm_list	*cl_tie;        /* the drawing window that we're tied to */
+  struct mged_hist	*cl_cur_hist;
+  struct bu_vls		cl_more_default;
+  struct bu_vls		cl_name;
+  int			cl_quote_string;
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
@@ -431,82 +432,11 @@ extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 
-/* mged command variables for affecting the user environment */
-struct _mged_variables {
-	int	autosize;
-	int	rateknobs;
-        int	slidersflag;
-    	int	sgi_win_size;
-	int	sgi_win_origin[2];
-	int	faceplate;
-        int	orig_gui;
-	int	rt_output;
-	int	m_axes;  /* model axes */
-	int	m_axes_size;
-	int	m_axes_linewidth;
-	fastf_t	m_axes_pos[3];
-	int	v_axes;  /* view axes */
-	int	v_axes_size;
-	int	v_axes_linewidth;
-	int	v_axes_pos[2]; /* view axes position */
-	int	e_axes;  /* edit axes */
-	int	e_axes_size1;
-	int	e_axes_size2;
-	int	e_axes_linewidth1;
-	int	e_axes_linewidth2;
-        int	linewidth;
-	char	linestyle;
-        int	send_key;
-        int	hot_key;
-        int	context;
-	int	dlist;
-	int	use_air;
-	int	listen;		/* nonzero to listen on port */
-	int	port;		/* port to listen on */
-	int	fb;		/* toggle image on/off */
-	int	fb_all;		/* 0 - use part of image as defined by the rectangle     1 - use the entire image */
-	int	fb_overlay;	/* 0 - underlay     1 - overlay */
-	int	rubber_band;	/* draw rubber band rectangle */
-	int	rubber_band_linewidth;
-	char	rubber_band_linestyle;
-	int	grid_draw;		/* draw grid */
-	int	grid_snap;		/* snap to grid */
-	fastf_t grid_anchor[3];
-	fastf_t	grid_res_h;		/* grid resolution in h */
-	fastf_t grid_res_v;		/* grid resolution in v */
-	int grid_res_major_h;		/* major grid resolution in h */
-	int grid_res_major_v;		/* major grid resolution in v */
-	char	mouse_behavior;
-	char	coords;
-	char	rotate_about;
-        char    transform;
-	int	predictor;
-	double	predictor_advance;
-	double	predictor_length;
-	double	perspective;	/* used to directly set the perspective angle */
-        int     perspective_mode; /* used to toggle perspective viewing on/off */
-        int     toggle_perspective; /* used to toggle through values in perspective_table[] */
-	double	nmg_eu_dist;
-	double	eye_sep_dist;	/* >0 implies stereo.  units = "room" mm */
-	char	union_lexeme[1024];
-	char	intersection_lexeme[1024];
-	char	difference_lexeme[1024];
-};
-
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
 #define MGED_PROMPT "\rmged> "
 
-/* Flags indicating whether the ogl and sgi display managers have been
- * attached. Defined in dm-ogl.c. 
- * These are necessary to decide whether or not to use direct rendering
- * with ogl.
- */
-extern	char	ogl_ogl_used;
-extern	char	ogl_sgi_used;
-
 /* Command return codes */
-
 #define CMD_OK		919
 #define CMD_BAD		920
 #define CMD_MORE	921

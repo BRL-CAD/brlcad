@@ -1218,26 +1218,22 @@ char	**argv;
 	save_cmd_list = curr_cmd_list;
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
 	  curr_dm_list = dmlp;
-	  if(curr_dm_list->aim)
-	    curr_cmd_list = curr_dm_list->aim;
+	  if(curr_dm_list->dml_tie)
+	    curr_cmd_list = curr_dm_list->dml_tie;
 	  else
 	    curr_cmd_list = &head_cmd_list;
 
 	  /* If we went from blank screen to non-blank, resize */
-	  if (mged_variables->autosize  && initial_blank_screen &&
+	  if (mged_variables->mv_autosize  && initial_blank_screen &&
 	      BU_LIST_NON_EMPTY(&HeadSolid.l)) {
-	    struct view_list *vlp;
+	    struct view_ring *vrp;
 
 	    size_reset();
 	    new_mats();
 	    (void)mged_svbase();
 
-#ifdef DO_SCROLL_UPDATES
-	    set_scroll();
-#endif
-
-	    for(BU_LIST_FOR(vlp, view_list, &headView.l))
-	      vlp->vscale = Viewscale;
+	    for(BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
+	      vrp->vr_scale = view_state->vs_Viewscale;
 	  }
 
 	  color_soltab();

@@ -45,7 +45,6 @@ extern struct menu_item second_menu[], sed_menu[];
 void set_menucurrent();
 int set_arrowloc();
 
-
 int
 cmd_mmenu_get(clientData, interp, argc, argv)
 ClientData clientData;
@@ -72,7 +71,7 @@ char **argv;
 	    return TCL_ERROR;
 	}
 
-	m = menu_array+index;
+	m = menu_state->ms_menus+index;
 	if (*m == MENU_NULL)
 	    return TCL_OK;
 
@@ -85,8 +84,8 @@ char **argv;
 
 	bu_vls_init(&result);
 	bu_vls_strcat(&result, "list");
-	for (m = menu_array; m - menu_array < NMENU; m++)
-	    bu_vls_printf(&result, " [%s %d]", argv[0], m-menu_array);
+	for (m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++)
+	    bu_vls_printf(&result, " [%s %d]", argv[0], m-menu_state->ms_menus);
 
 	status = Tcl_Eval(interp, bu_vls_addr(&result));
 	bu_vls_free(&result);
@@ -106,10 +105,10 @@ char **argv;
 void
 mmenu_init()
 {
-	menuflag = 0;
-	menu_array[MENU_L1] = MENU_NULL;
-	menu_array[MENU_L2] = MENU_NULL;
-	menu_array[MENU_GEN] = MENU_NULL;
+	menu_state->ms_flag = 0;
+	menu_state->ms_menus[MENU_L1] = MENU_NULL;
+	menu_state->ms_menus[MENU_L2] = MENU_NULL;
+	menu_state->ms_menus[MENU_GEN] = MENU_NULL;
 #if 0
 	(void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
@@ -133,13 +132,13 @@ struct menu_item *value;
     Tcl_DString ds_menu;
     struct bu_vls menu_string;
 
-    menu_array[index] = value;  /* Change the menu internally */
+    menu_state->ms_menus[index] = value;  /* Change the menu internally */
 
     bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
     bu_vls_printf(&menu_string, "mmenu_set .mmenu%S %S %d ",
-		  &curr_cmd_list->name, &curr_cmd_list->name, index);
+		  &curr_cmd_list->cl_name, &curr_cmd_list->cl_name, index);
 
     Tcl_DStringStartSublist(&ds_menu);
     if (value != MENU_NULL)
@@ -154,10 +153,10 @@ struct menu_item *value;
     bu_vls_free(&menu_string);
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l){
-      if(curr_dm_list->menu_vars == dlp->menu_vars &&
-	 dlp->_mged_variables->faceplate &&
-	 dlp->_mged_variables->orig_gui)
-	dlp->_dirty = 1;
+      if(menu_state == dlp->dml_menu_state &&
+	 dlp->dml_mged_variables->mv_faceplate &&
+	 dlp->dml_mged_variables->mv_orig_gui)
+	dlp->dml_dirty = 1;
     }
 }
 
@@ -173,8 +172,8 @@ struct menu_item *value;
   save_cmd_list = curr_cmd_list;
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-    if(p->aim)
-      curr_cmd_list = p->aim;
+    if(p->dml_tie)
+      curr_cmd_list = p->dml_tie;
 
     curr_dm_list = p;
     mmenu_set( index, value );
@@ -193,30 +192,30 @@ int y;
 
   switch(mptr->menu_arg){
   case BV_RATE_TOGGLE:
-    if(mged_variables->rateknobs){
+    if(mged_variables->mv_rateknobs){
       DM_SET_FGCOLOR(dmp,
-		     color_scheme->fp_menu_text1[0],
-		     color_scheme->fp_menu_text1[1],
-		     color_scheme->fp_menu_text1[2], 1);
+		     color_scheme->cs_menu_text1[0],
+		     color_scheme->cs_menu_text1[1],
+		     color_scheme->cs_menu_text1[2], 1);
       DM_DRAW_STRING_2D(dmp, "Rate",
 			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       DM_SET_FGCOLOR(dmp,
-		     color_scheme->fp_menu_text2[0],
-		     color_scheme->fp_menu_text2[1],
-		     color_scheme->fp_menu_text2[2], 1);
+		     color_scheme->cs_menu_text2[0],
+		     color_scheme->cs_menu_text2[1],
+		     color_scheme->cs_menu_text2[2], 1);
       DM_DRAW_STRING_2D(dmp, "/Abs",
 			GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
     }else{
       DM_SET_FGCOLOR(dmp,
-		     color_scheme->fp_menu_text2[0],
-		     color_scheme->fp_menu_text2[1],
-		     color_scheme->fp_menu_text2[2], 1);
+		     color_scheme->cs_menu_text2[0],
+		     color_scheme->cs_menu_text2[1],
+		     color_scheme->cs_menu_text2[2], 1);
       DM_DRAW_STRING_2D(dmp, "Rate/",
 			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       DM_SET_FGCOLOR(dmp,
-		     color_scheme->fp_menu_text1[0],
-		     color_scheme->fp_menu_text1[1],
-		     color_scheme->fp_menu_text1[2], 1);
+		     color_scheme->cs_menu_text1[0],
+		     color_scheme->cs_menu_text1[1],
+		     color_scheme->cs_menu_text1[2], 1);
       DM_DRAW_STRING_2D(dmp, "Abs",
 			GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
     }
@@ -230,7 +229,7 @@ int y;
  *			M M E N U _ D I S P L A Y
  *
  *  Draw one or more menus onto the display.
- *  If "menuflag" is non-zero, then the last selected
+ *  If "menu_state->ms_flag" is non-zero, then the last selected
  *  menu item will be indicated with an arrow.
  */
 void
@@ -242,21 +241,21 @@ int y_top;
   register struct menu_item	*mptr;
   register int y = y_top;
 
-  menu_top = y - MENU_DY / 2;
+  menu_state->ms_top = y - MENU_DY / 2;
   DM_SET_FGCOLOR(dmp,
-		 color_scheme->fp_menu_line[0],
-		 color_scheme->fp_menu_line[1],
-		 color_scheme->fp_menu_line[2], 1);
+		 color_scheme->cs_menu_line[0],
+		 color_scheme->cs_menu_line[1],
+		 color_scheme->cs_menu_line[2], 1);
 #if 1
-  DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
+  DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 #else
   DM_SET_LINE_ATTR(dmp, 1, 0);
 #endif
   DM_DRAW_LINE_2D(dmp,
-		  GED2PM1(MENUXLIM), GED2PM1(menu_top),
-		  GED2PM1(XMIN), GED2PM1(menu_top));
+		  GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
+		  GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
-  for( menu=0, m = menu_array; m - menu_array < NMENU; m++,menu++ )  {
+  for( menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
     if( *m == MENU_NULL )  continue;
     for( item=0, mptr = *m;
 	 mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
@@ -275,30 +274,30 @@ int y_top;
       else{
 	if(mptr == *m)
 	  DM_SET_FGCOLOR(dmp,
-			 color_scheme->fp_menu_title[0],
-			 color_scheme->fp_menu_title[1],
-			 color_scheme->fp_menu_title[2], 1);
+			 color_scheme->cs_menu_title[0],
+			 color_scheme->cs_menu_title[1],
+			 color_scheme->cs_menu_title[2], 1);
 	else
 	  DM_SET_FGCOLOR(dmp,
-			 color_scheme->fp_menu_text2[0],
-			 color_scheme->fp_menu_text2[1],
-			 color_scheme->fp_menu_text2[2], 1);
+			 color_scheme->cs_menu_text2[0],
+			 color_scheme->cs_menu_text2[1],
+			 color_scheme->cs_menu_text2[2], 1);
 	DM_DRAW_STRING_2D(dmp, mptr->menu_string,
 			  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       }
       DM_SET_FGCOLOR(dmp,
-		     color_scheme->fp_menu_line[0],
-		     color_scheme->fp_menu_line[1],
-		     color_scheme->fp_menu_line[2], 1);
+		     color_scheme->cs_menu_line[0],
+		     color_scheme->cs_menu_line[1],
+		     color_scheme->cs_menu_line[2], 1);
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 		      GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
-      if( cur_item == item && cur_menu == menu && menuflag )  {
+      if( menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag )  {
 	/* prefix item selected with "==>" */
 	DM_SET_FGCOLOR(dmp,
-		       color_scheme->fp_menu_arrow[0],
-		       color_scheme->fp_menu_arrow[1],
-		       color_scheme->fp_menu_arrow[2], 1);
+		       color_scheme->cs_menu_arrow[0],
+		       color_scheme->cs_menu_arrow[1],
+		       color_scheme->cs_menu_arrow[2], 1);
 	DM_DRAW_STRING_2D(dmp, "==>",
 			  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
       }
@@ -309,16 +308,16 @@ int y_top;
     return;	/* no active menus */
 
   DM_SET_FGCOLOR(dmp,
-		 color_scheme->fp_menu_line[0],
-		 color_scheme->fp_menu_line[1],
-		 color_scheme->fp_menu_line[2], 1);
+		 color_scheme->cs_menu_line[0],
+		 color_scheme->cs_menu_line[1],
+		 color_scheme->cs_menu_line[2], 1);
 #if 1
-  DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
+  DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 #else
   DM_SET_LINE_ATTR(dmp, 1, 0);
 #endif
   DM_DRAW_LINE_2D( dmp,
-		   GED2PM1(MENUXLIM), GED2PM1(menu_top-1),
+		   GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
 		   GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)) );
 }
 
@@ -341,16 +340,16 @@ int do_func;
 	register struct menu_item	*mptr;
 	register int			yy;
 
-	if( pen_y > menu_top )
+	if( pen_y > menu_state->ms_top )
 		return(-1);	/* pen above menu area */
 
 	/*
 	 * Start at the top of the list and see if the pen is
 	 * above here.
 	 */
-	yy = menu_top;
+	yy = menu_state->ms_top;
 
-	for( menu=0, m=menu_array; m - menu_array < NMENU; m++,menu++ )  {
+	for( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';
@@ -358,10 +357,10 @@ int do_func;
 			yy += MENU_DY;
 			if( pen_y <= yy )
 				continue;	/* pen is below this item */
-			cur_item = item;
-			cur_menu = menu;
-			menuflag = 1;
-		     	/* It's up to the menu_func to set menuflag=0
+			menu_state->ms_cur_item = item;
+			menu_state->ms_cur_menu = menu;
+			menu_state->ms_flag = 1;
+		     	/* It's up to the menu_func to set menu_state->ms_flag=0
 		     	 * if no arrow is desired */
 			if( do_func && mptr->menu_func != ((void (*)())0) )
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
@@ -377,116 +376,13 @@ int do_func;
  *
  *  Routine to allow user to reset the arrow to any menu & item desired.
  *  Example:  menu_pntr( MENU_L1, 3 ).
- *  The arrow can always be eliminated by setting menuflag=0, dmaflag=1.
+ *  The arrow can always be eliminated by setting menu_state->ms_flag=0, view_state->flag=1.
  */
 void
 mmenu_pntr( menu, item )
 {
-	cur_menu = menu;
-	cur_item = item;
-	if( cur_menu >= 0 )
-		menuflag = 1;
-}
-
-int
-f_share_menu(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-  struct dm_list *dlp1, *dlp2, *dlp3;
-  struct menu_vars *save_mvp;
-
-  if(argc != 3){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help share_menu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
-    if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
-      break;
-
-  if(dlp1 == &head_dm_list){
-     Tcl_AppendResult(interp, "f_share_menu: unrecognized pathName - ",
-		      argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
-    if(!strcmp(argv[2], bu_vls_addr(&dlp2->_dmp->dm_pathName)))
-      break;
-
-  if(dlp2 == &head_dm_list){
-     Tcl_AppendResult(interp, "f_share_menu: unrecognized pathName - ",
-		      argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(dlp1 == dlp2)
-    return TCL_OK;
-
-  /* already sharing a menu */
-  if(dlp1->menu_vars == dlp2->menu_vars)
-    return TCL_OK;
-
-
-  save_mvp = dlp2->menu_vars;
-  dlp2->menu_vars = dlp1->menu_vars;
-
-  /* check if save_mvp is being used elsewhere */
-  FOR_ALL_DISPLAYS(dlp3, &head_dm_list.l)
-    if(save_mvp == dlp3->menu_vars)
-      break;
-
-  /* save_mvp is not being used */
-  if(dlp3 == &head_dm_list)
-    bu_free((genptr_t)save_mvp, "f_share_menu: save_mvp");
-
-  /* need to redraw this guy */
-  dlp2->_dirty = 1;
-
-  return TCL_OK;
-}
-
-int
-f_unshare_menu(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-  struct dm_list *dlp1, *dlp2;
-
-  if(argc != 2){
-    return TCL_ERROR;
-  }
-
-  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
-    if(!strcmp(argv[1], bu_vls_addr(&dlp1->_dmp->dm_pathName)))
-      break;
-
-  if(dlp1 == &head_dm_list){
-     Tcl_AppendResult(interp, "f_unshare_menu: unrecognized pathName - ",
-		      argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
-    if(dlp1 != dlp2 && dlp1->menu_vars == dlp2->menu_vars)
-      break;
-
-  /* not sharing a menu ---- nothing to do */
-  if(dlp2 == &head_dm_list)
-    return TCL_OK;
-
-  BU_GETSTRUCT(dlp1->menu_vars, menu_vars);
-  *dlp1->menu_vars = *dlp2->menu_vars;  /* struct copy */
-
-  return TCL_OK;
+	menu_state->ms_cur_menu = menu;
+	menu_state->ms_cur_item = item;
+	if( menu_state->ms_cur_menu >= 0 )
+		menu_state->ms_flag = 1;
 }
