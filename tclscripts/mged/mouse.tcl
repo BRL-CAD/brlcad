@@ -50,14 +50,17 @@ proc mouse_get_spath { x y } {
     create_listbox $top $screen Solid $paths "mouse_spath_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
+    bind_listbox $top "<B1-Motion>"\
+	    "set item \[get_listbox_entry %W %x %y\];\
+	    solid_illum \$item"
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[get_listbox_entry %W %x %y\];\
-	    solid_illum \$item; break"
+	    solid_illum \$item"
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_path) \[get_listbox_entry %W %x %y\];\
-	    destroy $top; break"
+	    destroy $top"
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end; _mged_press reject; break"
+	    "%W selection clear 0 end; _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_destroy $id $top"
 
@@ -103,16 +106,21 @@ proc mouse_get_spath_and_pos { x y } {
     create_listbox $top $screen Matrix $path_components "mouse_spath_and_pos_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
+    bind_listbox $top "<B1-Motion>"\
+	    "set item \[%W index @%x,%y\];\
+	    _mged_press oill;\
+	    _mged_ill \$mged_gui($id,mgs_path);\
+	    _mged_matpick -n \$item"
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[%W index @%x,%y\];\
 	    _mged_press oill;\
 	    _mged_ill \$mged_gui($id,mgs_path);\
-	    _mged_matpick -n \$item; break"
+	    _mged_matpick -n \$item"
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_pos) \[%W index @%x,%y\];\
-	    destroy $top; break"
+	    destroy $top"
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end; _mged_press reject; break"
+	    "%W selection clear 0 end; _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_spath_and_pos_destroy $id $top"
 
@@ -177,17 +185,22 @@ proc mouse_get_comb { x y } {
     create_listbox $top $screen Combination $combs "mouse_comb_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
+    bind_listbox $top "<B1-Motion>"\
+	    "set comb \[%W get @%x,%y\];\
+	    set spath \[comb_get_solid_path \$comb\];\
+	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
+	    matrix_illum \$spath \$path_pos"
     bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
-	    matrix_illum \$spath \$path_pos; break"
+	    matrix_illum \$spath \$path_pos"
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgc_comb) \[%W get @%x,%y\];\
-	    destroy $top; break"
+	    destroy $top"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
-	    _mged_press reject; break"
+	    _mged_press reject"
 
     wm protocol $top WM_DELETE_WINDOW "mouse_comb_destroy $id $top"
 
