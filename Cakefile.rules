@@ -240,7 +240,7 @@ dist-clobber&:
 clobber&:	clean noprod
 
 clean&:
-	-rm -f core *~ *.o EXTRA_CLEAN SRCDIR.out SRCDIR.err SRCDIR.xref SRCDIR.flow SRCDIR.lint
+	-rm -f core *.core *~ *.o EXTRA_CLEAN SRCDIR.out SRCDIR.err SRCDIR.xref SRCDIR.flow SRCDIR.lint
 
 #if defined(LIBRARY_TITLE)
 /*
