@@ -2461,13 +2461,13 @@ int *hari_kari;
 			break;
 		}
 	} else {
-		/* since we didn't hit anything in the positive direction,
+		/* since we didn't hit anything in this direction,
 		 * we've got to be outside, since we don't allow infinite
 		 * NMG's
 		 */
 		if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
 			rt_log("Nothing in the minus direction\n");
-		pt_class = NMG_CLASS_Unknown; /* XXX not AoutB? */
+		pt_class = NMG_CLASS_AoutB;
 	}
 
 	return pt_class;
@@ -2640,20 +2640,8 @@ struct rt_tol *tol;
 		plus_class = NMG_CLASS_Unknown;
 		goto out;
 	}
-	/*
-	 *  If there is no geometry behind (or in front of) the start point,
-	 *  the classification in that direction will be NMG_CLASS_Unknown.
-	 *  This isn't an error.
-	 */
-#if 1
-	if( minus_class == NMG_CLASS_Unknown && plus_class != NMG_CLASS_Unknown )
-		goto out;
-#endif
-	if( plus_class == NMG_CLASS_Unknown && minus_class != NMG_CLASS_Unknown )  {
-		plus_class = minus_class;
-		goto out;
-	}
-	if (plus_class != minus_class) {
+	if (plus_class != minus_class || plus_class == NMG_CLASS_Unknown ||
+	    minus_class == NMG_CLASS_Unknown ) {
 		nmg_rt_print_hitlist(&rd.rd_hit);
 		rt_log("minus_class = (%s) %d, hari_kari=%d\n", nmg_class_name(minus_class), minus_class, hari_kari_minus);
 		rt_log("plus_class = (%s)\n", nmg_class_name(plus_class));
