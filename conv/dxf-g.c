@@ -185,10 +185,12 @@ char *argv[];
 		struct vertex *vp[4];
 		point_t pt[4];
 		int no_of_pts;
+		int line_entity=0;
+		int face_entity=0;
 
 		if( fgets( line , LINELEN , dxf ) == NULL )
 			rt_bomb( "Unexpected EOF in input file\n" );
-		while( strncmp( line , "3DFACE" , 6 ) )
+		while( strncmp( line , "3DFACE" , 6 ) && strncmp( line, "LINE", 4 ) )
 		{
 			if( !strncmp( line , "ENDSEC" , 6 ) )
 			{
@@ -212,8 +214,22 @@ char *argv[];
 		if( done )
 			break;
 
+		if( !strncmp( line, "3DFACE", 6 ) )
+			face_entity = 1;
+		else if( !strncmp( line, "LINE", 4 ) )
+			line_entity = 1;
+		else
+		{
+			rt_log(  "Unknown entity type (%s), skipping\n" , line );
+			continue;
+		}
 		if( verbose )
-			rt_log( "Found 3DFACE\n" );
+		{
+			if( face_entity )
+				rt_log( "Found 3DFACE\n" );
+			else if( line_entity )
+				rt_log( "Found LINE\n" );
+		}
 
 		no_of_pts = (-1);
 		group_code = 1;
@@ -280,44 +296,67 @@ char *argv[];
 							}
 						}
 					}
-					if( no_of_pts != 3 && no_of_pts != 4 )
+					if( face_entity)
 					{
-						rt_log( "Skipping face with %d vertices\n" , no_of_pts );
-						break;
+						if( no_of_pts != 3 && no_of_pts != 4 )
+						{
+							rt_log( "Skipping face with %d vertices\n" , no_of_pts );
+							break;
+						}
 					}
 
 					if( verbose )
-						rt_log( "FACE:\n" );
+					{
+						if( face_entity )
+							rt_log( "FACE:\n" );
+						else if( line_entity )
+							rt_log( "LINE:\n" );
+					}
 					for( i=0 ; i<no_of_pts ; i++ )
 					{
 						if( verbose )
 							rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) );
 						vp[i] = (struct vertex *)NULL;
 					}
-					fu = nmg_cface( s , vp , no_of_pts );
-					nmg_tbl( &faces , TBL_INS , (long *)fu );
-					for( i=0 ; i<no_of_pts ; i++ )
+
+					if( face_entity )
 					{
-						if( vp[i]->vg_p == NULL )
+						fu = nmg_cface( s , vp , no_of_pts );
+						nmg_tbl( &faces , TBL_INS , (long *)fu );
+
+						for( i=0 ; i<no_of_pts ; i++ )
 						{
-							nmg_vertex_gv( vp[i] , pt[i] );
-							nmg_tbl( &vertices , TBL_INS , (long *)vp[i] );
+							if( vp[i]->vg_p == NULL )
+							{
+								nmg_vertex_gv( vp[i] , pt[i] );
+								nmg_tbl( &vertices , TBL_INS , (long *)vp[i] );
+							}
+						}
+						for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+						{
+							fastf_t area;
+							plane_t pl;
+
+							area = nmg_loop_plane_area( lu , pl );
+							if( area > 0.0 )
+							{
+								if( lu->orientation == OT_OPPOSITE )
+									HREVERSE( pl , pl );
+								nmg_face_g( fu , pl );
+								break;
+							}
 						}
 					}
-
-					for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+					else if( line_entity )
 					{
-						fastf_t area;
-						plane_t pl;
+						struct edgeuse *eu;
 
-						area = nmg_loop_plane_area( lu , pl );
-						if( area > 0.0 )
+						for( i=1 ; i<no_of_pts ; i++ )
 						{
-							if( lu->orientation == OT_OPPOSITE )
-								HREVERSE( pl , pl );
-							nmg_face_g( fu , pl );
-							break;
+							eu = nmg_me( vp[i-1], vp[i], s );
+							nmg_vertex_gv( eu->vu_p->v_p, pt[i-1] );
 						}
+						nmg_vertex_gv( eu->eumate_p->vu_p->v_p, pt[no_of_pts-1] );
 					}
 					break;
 				default:
