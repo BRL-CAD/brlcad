@@ -455,7 +455,7 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			N M G _ C L A S S _ P T _ F
+ *			N M G _ C L A S S _ P T _ F _ E X C E P T
  *
  *  This is intended as a general user interface routine.
  *  Given the Cartesian coordinates for a point which is known to
@@ -465,6 +465,10 @@ CONST struct rt_tol	*tol;
  *  The algorithm used is to find the edge which the point is closest
  *  to, and classifiy with respect to that.
  *
+ *  "ignore_lu" is optional.  When non-null, it points to a loopuse (and it's
+ *  mate) which will not be considered in the assessment of this point.
+ *  This is used by nmg_lu_reorient() to work on one lu in the face.
+ *
  *  The point is "A", and the face is "B".
  *
  *  Returns -
@@ -473,9 +477,10 @@ CONST struct rt_tol	*tol;
  *	NMG_CLASS_AoutB		pt is OUTSIDE the area of the face.
  */
 int
-nmg_class_pt_f(pt, fu, tol)
+nmg_class_pt_f_except(pt, fu, ignore_lu, tol)
 CONST point_t		pt;
 CONST struct faceuse	*fu;
+CONST struct loopuse	*ignore_lu;
 CONST struct rt_tol	*tol;
 {
 	struct loopuse *lu;
@@ -489,6 +494,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
 	NMG_CK_FACE_G(fu->f_p->fg_p);
+	if(ignore_lu) NMG_CK_LOOPUSE(ignore_lu);
 	RT_CK_TOL(tol);
 
 	/* Validate distance from point to plane */
@@ -504,6 +510,9 @@ CONST struct rt_tol	*tol;
 	closest.class = NMG_CLASS_AoutB;	/* default return */
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		if( ignore_lu && (ignore_lu == lu || ignore_lu == lu->lumate_p) )
+			continue;
+
 		nmg_class_pt_l( &closest, pt, lu, tol );
 		/* If point lies ON loop edge, we are done */
 		if( closest.class == NMG_CLASS_AonBshared )  break;
@@ -515,6 +524,20 @@ CONST struct rt_tol	*tol;
 			nmg_class_name(closest.class) );
 	}
 	return closest.class;
+}
+
+/*
+ *			N M G _ C L A S S _ P T _ F
+ *
+ *  Compatability wrapper.
+ */
+int
+nmg_class_pt_f(pt, fu, tol)
+CONST point_t		pt;
+CONST struct faceuse	*fu;
+CONST struct rt_tol	*tol;
+{
+	return nmg_class_pt_f_except(pt, fu, (struct loopuse *)0, tol);
 }
 
 /*
