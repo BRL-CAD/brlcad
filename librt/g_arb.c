@@ -1081,11 +1081,11 @@ register struct uvcoord *uvp;
 	VJOIN1( UV_dir, rev_dir, -dot_N, norm )
 	VUNITIZE( UV_dir )
 	uvp->uv_du = r * VDOT( UV_dir, ofp->arb_U ) / dot_N;
+	uvp->uv_dv = r * VDOT( UV_dir, ofp->arb_V ) / dot_N;
 	if( uvp->uv_du < 0.0 )
 		uvp->uv_du = -uvp->uv_du;
 	if( uvp->uv_du < min_r_U )
 		uvp->uv_du = min_r_U;
-	uvp->uv_dv = r * VDOT( UV_dir, ofp->arb_V ) / dot_N;
 	if( uvp->uv_dv < 0.0 )
 		uvp->uv_dv = -uvp->uv_dv;
 	if( uvp->uv_dv < min_r_V )
