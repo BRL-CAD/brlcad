@@ -84,6 +84,7 @@ extern int	incr_nlevel;		/* number of levels */
 extern int	pix_start;		/* pixel to start at */
 
 extern int	max_bounces;		/* from refract.c */
+extern int	max_ireflect;		/* from refract.c */
 
 extern struct region	env_region;	/* from text.c */
 
@@ -99,6 +100,14 @@ static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
 static int	*npix_left;	/* only used in buf_mode=2 */
 
 void	shade_inputs();
+
+/* Viewing module specific "set" variables */
+struct matparse view_parse[] = {
+	"bounces",	(mp_off_ty)&max_bounces,		"%d",
+	"ireflect",	(mp_off_ty)&max_ireflect,		"%d",
+	"background",	(mp_off_ty)background,			"%V",
+	(char *)0,	(mp_off_ty)0,				(char *)0
+};
 
 /*
  *  			V I E W _ P I X E L
