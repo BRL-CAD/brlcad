@@ -116,6 +116,7 @@ register char	**argv;
 				override_background = 1;
 			}
 			break;
+		default:
 		case '?':
 			return	0;
 		}
