@@ -462,7 +462,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_rec_uv,	rt_rec_curve,	rt_rec_class,	rt_rec_free,
 		rt_tgc_plot,	rt_rec_vshot,	rt_tgc_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_tgc_import5, rt_tgc_export5,
 		rt_tgc_import,	rt_tgc_export,	rt_tgc_ifree,
 		rt_tgc_describe,rt_rec_xform,	rt_tgc_parse,
 		sizeof(struct rt_tgc_internal), RT_TGC_INTERNAL_MAGIC,
