@@ -859,7 +859,7 @@ struct rt_db_internal	*ip;
 	int			major, minor;
 	int			ret;
 
-	RT_CK_DIRECTORY(dp);
+	RT_CK_DIR(dp);
 	RT_CK_DBI(dbip);
 	RT_CK_DB_INTERNAL( ip );
 
