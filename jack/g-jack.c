@@ -274,8 +274,11 @@ union tree		*curtree;
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
 		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic != -1L )
+		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
 			nmg_km(*tsp->ts_m);
+		} else {
+			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+		}
 	
 		/* Now, make a new, clean model structure for next pass. */
 		*tsp->ts_m = nmg_mm();
