@@ -882,7 +882,7 @@ int				depth;		/* # arcs in new_path to use */
 		/* Found it, state has been applied, sofar applied,
 		 * member's directory entry pushed onto total_path
 		 */
-		intern.idb_meth->ft_ifree( &intern );
+		rt_db_free_internal( &intern );
 
 		/* If member is a leaf, handle leaf processing too. */
 		if( (dp->d_flags & DIR_COMB) == 0 )  {
@@ -1240,7 +1240,7 @@ region_end:
 		curtree = TREE_NULL;
 	}
 out:
-	if( intern.idb_ptr )  intern.idb_meth->ft_ifree( &intern );
+	rt_db_free_internal( &intern );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() return curtree=x%x, pathp='%s', *statepp=x%x\n",

@@ -106,7 +106,7 @@ CONST mat_t		mat;
 	if( rt_functab[id].ft_import( ip, &ext, mat, dbip ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
-	    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
+	    	rt_db_free_internal( ip );
 		db_free_external( &ext );
 		return -1;		/* FAIL */
 	}
@@ -213,7 +213,7 @@ rt_db_free_internal( struct rt_db_internal *ip )
 {
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_FUNCTAB( ip->idb_meth );
-    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
+	if( ip->idb_ptr )  ip->idb_meth->ft_ifree;
 	RT_INIT_DB_INTERNAL(ip);
 }
 

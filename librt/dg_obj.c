@@ -1624,8 +1624,7 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 		Tcl_AppendResult(dgcdp->interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 				 ":  solid import failure\n", (char *)NULL);
 
-		if (intern.idb_ptr)
-			rt_functab[id].ft_ifree( &intern );
+		rt_db_free_internal( &intern );
 		return (TREE_NULL);		/* ERROR */
 	}
 	RT_CK_DB_INTERNAL(&intern);
@@ -1636,7 +1635,7 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 				   tsp->ts_tol) < 0) {
 		Tcl_AppendResult(dgcdp->interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 				 ": plot failure\n", (char *)NULL);
-		rt_functab[id].ft_ifree(&intern);
+		rt_db_free_internal(&intern);
 		return (TREE_NULL);		/* ERROR */
 	}
 
@@ -1661,7 +1660,7 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 	} else {
 		dgo_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	}
-	rt_functab[id].ft_ifree(&intern);
+	rt_db_free_internal(&intern);
 
 	/* Indicate success by returning something other than TREE_NULL */
 	BU_GETUNION(curtree, tree);

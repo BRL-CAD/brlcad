@@ -661,7 +661,7 @@ genptr_t		client_data;
 			rt_functab[id].ft_name,
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 
-		if( intern.idb_ptr )  intern.idb_meth->ft_ifree( &intern );
+		rt_db_free_internal( &intern );
 		return(TREE_NULL);		/* ERROR */
 	}
 	RT_CK_DB_INTERNAL( &intern );
@@ -674,11 +674,11 @@ genptr_t		client_data;
 			rt_functab[id].ft_name,
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 
-		rt_functab[id].ft_ifree( &intern );
+		rt_db_free_internal( &intern );
 		return(TREE_NULL);		/* ERROR */
 	}
 
-	intern.idb_meth->ft_ifree( &intern );
+	rt_db_free_internal( &intern );
 
 	/* Indicate success by returning something other than TREE_NULL */
 	BU_GETUNION( curtree, tree );
