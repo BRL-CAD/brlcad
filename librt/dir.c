@@ -60,7 +60,6 @@ int	len;
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->rti_dbip = dbip;
 	rtip->needprep = 1;
-	rtip->file = rt_strdup( filename );
 
 	VSETALL( rtip->mdl_min,  INFINITY );
 	VSETALL( rtip->mdl_max, -INFINITY );
