@@ -24,6 +24,7 @@
 #include "solid.h"
 #include "dir.h"
 #include "vmath.h"
+#include "dm.h"
 
 extern int	read();
 extern long	lseek();
@@ -230,7 +231,7 @@ register struct directory *dp;
 		nsp = sp->s_forw;
 		for( i=0; i<=sp->s_last; i++ )  {
 			if( sp->s_path[i] == dp )  {
-				freevgcore( sp->s_addr, sp->s_bytes );
+				memfree( &(dmp->dmr_map), sp->s_addr, sp->s_bytes );
 				DEQUEUE_SOLID( sp );
 				FREE_SOLID( sp );
 				break;

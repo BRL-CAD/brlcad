@@ -31,6 +31,13 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
+struct mem_map {
+	struct mem_map	*m_nxtp;	/* Linking pointer to next element */
+	unsigned	 m_size;	/* Size of this free element */
+	unsigned	 m_addr;	/* Address of start of this element */
+};
+#define MAP_NULL	((struct mem_map *) 0)
+
 /* Interface to a specific Display Manager */
 struct dm {
 	void	(*dmr_open)();
@@ -51,6 +58,7 @@ struct dm {
 	float	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
 	char	*dmr_lname;		/* long name of device */
+	struct mem_map *dmr_map;	/* displaylist mem map */
 };
 extern struct dm *dmp;			/* ptr to current display mgr */
 

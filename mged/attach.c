@@ -56,11 +56,10 @@ release()
 
 	/* Delete all references to display processor memory */
 	FOR_ALL_SOLIDS( sp )  {
-		freevgcore( sp->s_addr, sp->s_bytes );
+		memfree( &(dmp->dmr_map), sp->s_bytes, sp->s_addr );
 		sp->s_bytes = 0;
 	}
-
-	/* NEED TO CHANGE DISPLAY PROCESSOR MEMORY MAPS! */
+	mempurge( &(dmp->dmr_map) );
 
 	dmp->dmr_close();
 	dmp = &dm_Null;
@@ -80,15 +79,16 @@ char *name;
 		dmp = *dp;
 		printf("attach(%s) %s\n",
 			dmp->dmr_name, dmp->dmr_lname);
-		/* NEED TO CHANGE MEMORY MAPS HERE */
+
 		dmp->dmr_open();
 
 		FOR_ALL_SOLIDS( sp )  {
 			/* Write vector subs into new display processor */
 			sp->s_bytes = dmp->dmr_cvtvecs( sp->s_vlist,
-				sp->s_center, sp->s_size, sp->s_soldash );
+				sp->s_center, sp->s_size,
+				sp->s_soldash, sp->s_vlen );
 
-			sp->s_addr = memalloc( sp->s_bytes );
+			sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 			if( sp->s_addr == 0 )  break;
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
 		}

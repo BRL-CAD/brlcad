@@ -3,7 +3,6 @@
  *
  * Functions -
  *	drawHsolid	Manage the drawing of a COMGEOM solid
- *	freevgcore	De-allocate display processor memory
  *  
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -184,11 +183,11 @@ union record *recordp;
 	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
-	sp->s_bytes = dmp->dmr_cvtvecs( &veclist[0],
-		sp->s_center, sp->s_size, dashflag );
+	sp->s_bytes = dmp->dmr_cvtvecs( sp->s_vlist,
+		sp->s_center, sp->s_size, dashflag, sp->s_vlen );
 
 	/* Allocate displaylist storage for object */
-	sp->s_addr = memalloc( sp->s_bytes );
+	sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 	if( sp->s_addr == 0 )  {
 		no_memory = 1;
 		(void)printf("draw: out of Displaylist\n");
@@ -228,25 +227,6 @@ union record *recordp;
 
 	return(1);		/* OK */
 }
-
-/*
- *			F R E E V G C O R E
- *
- * This routine is used to recycle displaylist memory.
- */
-void
-freevgcore( addr, bytes )
-unsigned	addr;
-unsigned	bytes;
-{
-	memfree( bytes, addr );
-
-	/* reset memory used up flag */
-	no_memory = 0;
-	return;		/* OK */
-}
-
-
 
 #ifdef never
 /*

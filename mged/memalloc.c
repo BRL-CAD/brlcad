@@ -1,26 +1,22 @@
-/*	SCCSID	%W%	%E%	*/
 /*
- *	memalloc.c -- displaylist memory allocation routines
- */
-
-/*
- * Structure of the coremap array.
+ *			M E M A L L O C . C
+ *
+ * Structure of the displaylist memory map chains.
  * Consists of non-zero count and base address of that many contiguous units.
  * The addresses are increasing and the list is terminated with the
  * first zero link.
  *
- * memalloc() and memfree() use these tables to allocate memory
+ * memalloc() and memfree() use these tables to allocate displaylist memory.
  */
-struct map {
-	struct map	*m_nxtp;	/* Linking pointer to next element */
-	unsigned	 m_size;	/* Size of this free element */
-	unsigned	 m_addr;	/* Address of start of this element */
-};
-#define MAP_NULL	((struct map *) 0)
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
+#include <stdio.h>
+#include "dm.h"		/* for struct mem_map */
 
 /* Allocation/Free spaces */
-static struct map *coremap = MAP_NULL;	/* Working map queues -- freespace */
-static struct map *freemap = MAP_NULL;	/* Freelist of buffers */
+static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
 
 /*
  *	A little better memory allocator		=GET=
@@ -35,15 +31,6 @@ static struct map *freemap = MAP_NULL;	/* Freelist of buffers */
  *	the mapping buffer is taken off from the respective queue and
  *	returned to the `freemap' queue.
  *
- *
- *		R E V I S I O N   H I S T O R Y
- *
- *	07/04/80  GET	Original version  (JHU 6.79)
- *
- *	07/15/80  MJM	Modified to have unique names, since calling
- *			sequences are not unique  (BRL 6.85)
- *
- *	09-Sep-83 DAG	Overhauled.
  */
 
 
@@ -71,17 +58,18 @@ static struct map *freemap = MAP_NULL;	/* Freelist of buffers */
  *	Algorithm is first fit.
  */
 unsigned
-memalloc( size )
+memalloc( pp, size )
+struct mem_map **pp;
 register unsigned size;
 {
-	register struct map *prevp = MAP_NULL;
-	register struct map *curp;
+	register struct mem_map *prevp = MAP_NULL;
+	register struct mem_map *curp;
 	unsigned	addr;
 
 	if( size == 0 )
 		return( 1 );	/* Anything non-zero */
 
-	for( curp = coremap; curp; curp = (prevp=curp)->m_nxtp )  {
+	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
 		if( curp->m_size >= size )
 			break;
 	}
@@ -100,7 +88,7 @@ register unsigned size;
 		if( prevp )
 			prevp->m_nxtp = curp->m_nxtp;
 		else
-			coremap = curp->m_nxtp;	/* Click list down at start */
+			*pp = curp->m_nxtp;	/* Click list down at start */
 		curp->m_nxtp = freemap;		/* Link it in */
 		freemap = curp;			/* Make it the start */
 	}
@@ -120,21 +108,22 @@ register unsigned size;
  *	or changing addresses.  Other wrap-around conditions are flagged.
  */
 void
-memfree( size, addr )
+memfree( pp, size, addr )
+struct mem_map **pp;
 unsigned size;
 unsigned addr;
 {
 	register int type = {0};
-	register struct map *prevp = MAP_NULL;
-	register struct map *curp;
+	register struct mem_map *prevp = MAP_NULL;
+	register struct mem_map *curp;
 	long il;
-	struct map *tmap;
+	struct mem_map *tmap;
 
 	if( size == 0 )
 		return;		/* Nothing to free */
 
 	/* Find the position in the list such that (prevp)<(addr)<(curp) */
-	for( curp = coremap; curp; curp = (prevp=curp)->m_nxtp )
+	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )
 		if( addr < curp->m_addr )
 			break;
 
@@ -196,17 +185,44 @@ unsigned addr;
 
 	default:		/* No matches; allocate and insert */
 		if( (tmap=freemap) == MAP_NULL )
-			tmap = (struct map *)malloc(sizeof(struct map));
+			tmap = (struct mem_map *)malloc(sizeof(struct mem_map));
 		else
 			freemap = freemap->m_nxtp;	/* Click one off */
 
 		if( prevp )
 			prevp->m_nxtp = tmap;
 		else
-			coremap = tmap;
+			*pp = tmap;
 
 		tmap->m_size = size;
 		tmap->m_addr = addr;
 		tmap->m_nxtp = curp;
 	}
+}
+
+/*
+ *			M E M P U R G E
+ *
+ *  Take everything on the current memory chain, and place it on
+ *  the freelist.
+ */
+void
+mempurge( pp )
+struct mem_map **pp;
+{
+	register struct mem_map *prevp = MAP_NULL;
+	register struct mem_map *curp;
+
+	if( *pp == MAP_NULL )
+		return;
+
+	/* Find the end of the (busy) list */
+	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )
+		;
+
+	/* Put the whole busy list onto the free list */
+	prevp->m_nxtp = freemap;
+	freemap = *pp;
+
+	*pp = MAP_NULL;
 }

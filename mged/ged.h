@@ -136,7 +136,7 @@ extern void		dir_build(), buildHrot(), button(), dozoom(),
 			pr_solids();
 extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
 			drawHobj(), eraseobj(), finish(), slewview(),
-			freevgcore(), htov_move(), mat_copy(), mat_idn(),
+			htov_move(), mat_copy(), mat_idn(),
 			mat_inv(), mat_mul(), mat_zero(), matXvec(),
 			menu_init(), moveHinstance(), moveHobj(), pr_solid(),
 			quit(), refresh(), rej_sedit(), sedit(),
@@ -147,7 +147,7 @@ extern char		*addname(), *strdup();
 extern int		clip(), getname(), use_pen(), drawHsolid();
 extern struct directory	*combadd(), *dir_add(), *lookup();
 extern struct solid *redraw();
-extern void		ellipse(), memfree();
+extern void		ellipse(), memfree(), mempurge();
 extern unsigned		memalloc();
 
 #ifndef	NULL

@@ -161,7 +161,7 @@ union record *recp;
 	}
 
 	/* Release previous chunk of displaylist, and rewrite control list */
-	freevgcore( addr, bytes );
+	memfree( &(dmp->dmr_map), addr, bytes );
 	dmaflag = 1;
 	return( sp );
 }

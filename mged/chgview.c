@@ -291,7 +291,7 @@ f_zap()
 
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
-		freevgcore( sp->s_addr, sp->s_bytes );
+		memfree( &(dmp->dmr_map), sp->s_addr, sp->s_bytes );
 		nsp = sp->s_forw;
 		DEQUEUE_SOLID( sp );
 		FREE_SOLID( sp );
