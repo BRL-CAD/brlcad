@@ -898,10 +898,7 @@ char	*framename;
 		ap->a_overlap = RT_AFN_NULL;
 	else
 		ap->a_overlap = rt_overlap_quietly;
-	if (use_air)
-		ap->a_onehit = 3;
-	else
-		ap->a_onehit = 1;
+	ap->a_onehit = -1;		/* Require at least one non-air hit */
 	if (rpt_dist)
 		pwidth = 3+8;
 	else

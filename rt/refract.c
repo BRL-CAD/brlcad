@@ -373,7 +373,7 @@ do_reflection:
 		/* Mirror reflection */
 		sub_ap = *ap;		/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
-		sub_ap.a_onehit = 1;
+		sub_ap.a_onehit = -1;	/* Require at least one non-air hit */
 		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 		VREVERSE( to_eye, ap->a_ray.r_dir );
 		f = 2 * VDOT( to_eye, swp->sw_hit.hit_normal );
