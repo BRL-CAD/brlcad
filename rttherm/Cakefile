@@ -4,7 +4,7 @@
 #define CONFIGDEFS	RT_CONFIG
 
 #define SRCDIR	rt
-#define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck
+#define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck rtg3
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -14,18 +14,19 @@
 /* light.h material.h mathtab.h rad.h rdebug.h */
 #define FILES	\
 	rtshot \
-	rt do worker \
-	view viewpp viewray viewrad viewcheck \
+	rt opt do worker \
+	view viewpp viewray viewrad viewcheck viewg3 \
+	regionfix \
 	text cloud mathtab \
 	material refract stack \
-	plastic cook wray spm light cmd \
-	marble stxt
+	plastic cook wray spm light \
+	marble stxt points
 
 /* Explicit composition of each product */
 
-#define	RT_OBJ	rt.o do.o worker.o text.o cloud.o view.o wray.o \
+#define	RT_OBJ	rt.o opt.o do.o worker.o text.o cloud.o view.o wray.o \
 		mathtab.o material.o refract.o stack.o plastic.o \
-		cook.o spm.o light.o cmd.o marble.o stxt.o
+		cook.o spm.o light.o marble.o stxt.o points.o
 
 #if defined(old_CRAY1)
 /* XMP UNICOS version, sigh */
@@ -35,42 +36,63 @@
 
 rt:	RT_OBJ LIBRT
 	echo "nodeflib;symbols=off;map=stat;stack=200000+60000;heap=50000+50000" >segldr.cmds
-	segldr -ort RT_OBJ LIBRT LIBFB LIBSYSV LIBMALLOC XMP_MULTI segldr.cmds
+	segldr -ort RT_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB LIBSYSV LIBMALLOC XMP_MULTI segldr.cmds
 #else
 
 rt:	RT_OBJ LIBRT
-	CC LDFLAGS RT_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rt
+	CC LDFLAGS RT_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rt
 
 #endif
 
-#define RTRAY_OBJ	rt.o do.o worker.o viewray.o \
-			wray.o mathtab.o cmd.o material.o
+#define RTRAY_OBJ	rt.o opt.o do.o worker.o viewray.o regionfix.o \
+			wray.o mathtab.o material.o
 
 rtray:	RTRAY_OBJ LIBRT
-	CC LDFLAGS RTRAY_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtray
+	CC LDFLAGS RTRAY_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtray
 
-#define RTPP_OBJ	rt.o do.o worker.o viewpp.o mathtab.o \
-			cmd.o material.o
+#define RTPP_OBJ	rt.o opt.o do.o worker.o viewpp.o mathtab.o \
+			material.o
 
 rtpp:	RTPP_OBJ LIBRT
-	CC LDFLAGS RTPP_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtpp
+	CC LDFLAGS RTPP_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtpp
 
-#define RTRAD_OBJ	rt.o do.o worker.o viewrad.o mathtab.o \
-			cmd.o material.o
+#define RTRAD_OBJ	rt.o opt.o do.o worker.o mathtab.o \
+			material.o viewrad.o
 
 rtrad:	RTRAD_OBJ LIBRT
-	CC LDFLAGS RTRAD_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtrad
+	CC LDFLAGS RTRAD_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtrad
 
-#define RTCHECK_OBJ	rt.o do.o worker.o viewcheck.o \
-			mathtab.o cmd.o material.o
+#define RTCHECK_OBJ	rt.o opt.o do.o worker.o viewcheck.o \
+			mathtab.o material.o
 
 rtcheck: RTCHECK_OBJ LIBRT
-	CC LDFLAGS RTCHECK_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtcheck
+	CC LDFLAGS RTCHECK_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtcheck
 
 rtshot:	rtshot.o LIBRT
-	CC LDFLAGS rtshot.o LIBRT RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtshot
+	CC LDFLAGS rtshot.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o rtshot
 
 rtwalk:	rtwalk.o LIBRT
-	CC LDFLAGS rtwalk.o LIBRT RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtwalk
+	CC LDFLAGS rtwalk.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o rtwalk
+
+#define RTG3_OBJ	rt.o opt.o do.o worker.o viewg3.o regionfix.o \
+			mathtab.o material.o
+
+rtg3:	RTG3_OBJ LIBRT
+	CC LDFLAGS RTG3_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtg3
+
+#define RTHIDE_OBJ	rt.o opt.o do.o worker.o viewhide.o regionfix.o \
+			mathtab.o material.o
+
+rthide:	RTHIDE_OBJ LIBRT
+	CC LDFLAGS RTHIDE_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rthide
+
+#define RTDUMMY_OBJ	rt.o opt.o do.o worker.o viewdummy.o regionfix.o \
+			mathtab.o material.o
+
+rtdummy:	RTDUMMY_OBJ LIBRT
+	CC LDFLAGS RTDUMMY_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtdummy
+
+rtexample:	LIBRT rtexample.o
+	CC LDFLAGS rtexample.o LIB_PRE''LIBRT LIB_PRE''LIBFB RT_LIBES LIBMALLOC LIBES -o rtexample
 
 #include "../Cakefile.rules"
