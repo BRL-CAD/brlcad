@@ -72,6 +72,8 @@ int			ncpu;
 	/* This table is used for discovering the per-cpu resource structures */
 	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
 
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
+
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
 			rt_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );
@@ -372,6 +374,9 @@ struct soltab		*stp;
  *	solid_bitv freelist
  *	region_ptbl freelist
  *	re_boolstack
+ *
+ *  Some care is required, as rt_uniresource may not be fully initialized
+ *  before it gets freed.
  */
 void
 rt_free_resource( rtip, resp )
@@ -383,7 +388,7 @@ struct resource	*resp;
 
 	/* The 'struct seg' guys are malloc()ed in blocks, not individually */
 	RT_LIST_INIT( &resp->re_seg );	/* abandon the list of individuals */
-	{
+	if( !RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
 		struct seg **spp;
 		BU_CK_PTBL( &resp->re_seg_blocks );
 		for( BU_PTBL_FOR( spp, (struct seg **), &resp->re_seg_blocks ) )  {
@@ -394,7 +399,7 @@ struct resource	*resp;
 	}
 
 	/* The 'struct partition' guys are individually malloc()ed */
-	{
+	if( !RT_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
 		struct partition *pp;
 		while( RT_LIST_WHILE( pp, partition, &resp->re_parthead ) )  {
 			RT_CK_PT(pp);
@@ -405,7 +410,7 @@ struct resource	*resp;
 	}
 
 	/* The 'struct bu_bitv' guys on re_solid_bitv are individually malloc()ed */
-	{
+	if( !RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )  {
 		struct bu_bitv	*bvp;
 		while( RT_LIST_WHILE( bvp, bu_bitv, &resp->re_solid_bitv ) )  {
 			BU_CK_BITV( bvp );
@@ -415,7 +420,7 @@ struct resource	*resp;
 	}
 
 	/* The 'struct bu_ptbl' guys on re_region_ptbl are individually malloc()ed */
-	{
+	if( !RT_LIST_UNINITIALIZED( &resp->re_region_ptbl ) )  {
 		struct bu_ptbl	*tabp;
 		while( RT_LIST_WHILE( tabp, bu_ptbl, &resp->re_region_ptbl ) )  {
 			BU_CK_PTBL(tabp);
@@ -535,6 +540,7 @@ register struct rt_i *rtip;
 		}
 	}
 	bu_ptbl_free( &rtip->rti_resources );
+	rt_free_resource(rtip, &rt_uniresource );	/* Used for rt_optim_tree() */
 
 	/*
 	 *  Re-initialize everything important.
