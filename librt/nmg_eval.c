@@ -27,6 +27,8 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+void		(*nmg_plot_anim_upcall)();	/* For I/F with MGED */
+
 struct nmg_counter {
 	long	regions;
 	long	shells;
@@ -522,7 +524,6 @@ struct nmg_bool_state *bs;
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
 				nmg_reverse_face( fu );
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			}
 		} else {
 			if( loops_retained > 0 )  {
@@ -539,7 +540,6 @@ struct nmg_bool_state *bs;
 			    nextfu == fu->fumate_p )
 				nextfu = NMG_LIST_PNEXT(faceuse, nextfu);
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
 		}
@@ -576,7 +576,6 @@ struct nmg_bool_state *bs;
 		case BACTION_RETAIN_AND_FLIP:
 			if( lu->up.s_p == bs->bs_dest )  break;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			lu = nextlu;
 			continue;
 		}
@@ -611,7 +610,6 @@ struct nmg_bool_state *bs;
 			    nexteu == eu->eumate_p )
 				nexteu = NMG_LIST_PNEXT(edgeuse, nexteu);
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
-	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
 			continue;
 		}
@@ -651,7 +649,6 @@ struct nmg_bool_state *bs;
 			    nextlu == lu->lumate_p )
 				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
-	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
@@ -661,7 +658,6 @@ struct nmg_bool_state *bs;
 			    nextlu == lu->lumate_p )
 				nextlu = NMG_LIST_PNEXT(loopuse, nextlu);
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
-	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			lu = nextlu;
 			continue;
 		}
@@ -671,7 +667,6 @@ struct nmg_bool_state *bs;
 	/*
 	 * Final case:  shell of a single vertexuse
 	 */
-	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 	if( vu = s->vu_p )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
@@ -685,7 +680,6 @@ struct nmg_bool_state *bs;
 		case BACTION_RETAIN_AND_FLIP:
 			if( vu->up.s_p == bs->bs_dest )  break;
 			nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
-	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		}
@@ -1076,8 +1070,14 @@ int		delay;
 	char	fname[128];
 	struct faceuse	*fu;
 	struct nmg_ptbl b;
+	int	do_plot = 0;
+	int	do_anim = 0;
 
-	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM)
+		do_plot = 1;
+	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
+
+	if( !do_plot && !do_anim )  return;
 
 	/* get space for list of items processed */
 	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
@@ -1096,21 +1096,20 @@ int		delay;
 
 	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
-#if 1
-	/* XXX MGED_only hack -- will not link with other applications */
-	/* Cause animation of boolean operation as it proceeds! */
-	{
-		char	buf[128];
-		sprintf( buf, "overlay %s\n", fname);
-		cmdline( buf );
-		event_check( 1 );	/* Take any device events */
-		refresh();		/* Force screen update */
-		if(delay)  {
-			/* delay 1/4 second */
-			(void)bsdselect( 0, 0, 250000 );
+	if( do_anim )  {
+		/* Cause animation of boolean operation as it proceeds! */
+		if( nmg_plot_anim_upcall )  {
+			/* if requested, delay 1/4 second */
+			(*nmg_plot_anim_upcall)( fname,
+				delay ? 250000 : 0 );
+		} else {
+			rt_log("null nmg_plot_anim_upcall, no animation\n");
 		}
-		/* Save on disk space */
-		(void)unlink(fname);
+		if( !do_plot )  {
+			/* Plot was just for animation, delete it to
+			 * save on disk space
+			 */
+			(void)unlink(fname);
+		}
 	}
-#endif
 }
