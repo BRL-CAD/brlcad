@@ -118,6 +118,8 @@ static struct scanline {
 	char	*sl_buf;		/* ptr to buffer for scanline */
 } *scanline;
 
+static int	pwidth;			/* Width of each pixel (in bytes) */
+
 #if CRAY
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
@@ -156,16 +158,10 @@ register struct application *ap;
 	register char	*pixelp;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
-	register int	pwidth;		/* Width of each pixel (in bytes) */
 	unsigned char	dist[8];	/* pixel distance (in IEEE format) */
 
 	if (rpt_dist)
-	{
-	    pwidth = 3+8;
 	    htond(dist, &(ap->a_dist), 1);
-	}
-	else
-	    pwidth = 3;
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
@@ -233,12 +229,23 @@ register struct application *ap;
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
 		/* Multi-pixel buffer */
-		pixelp = scanbuf+ 3 * 
+		pixelp = scanbuf+ pwidth * 
 			((ap->a_y*width) + ap->a_x - srv_startpix);
 		RES_ACQUIRE( &rt_g.res_results );
 		*pixelp++ = r ;
 		*pixelp++ = g ;
 		*pixelp++ = b ;
+		if (rpt_dist)
+		{
+		    *pixelp++ = dist[0];
+		    *pixelp++ = dist[1];
+		    *pixelp++ = dist[2];
+		    *pixelp++ = dist[3];
+		    *pixelp++ = dist[4];
+		    *pixelp++ = dist[5];
+		    *pixelp++ = dist[6];
+		    *pixelp++ = dist[7];
+		}
 		RES_RELEASE( &rt_g.res_results );
 		return;
 #endif
@@ -253,12 +260,23 @@ register struct application *ap;
 		slp = &scanline[ap->a_y];
 		RES_ACQUIRE( &rt_g.res_results );
 		if( slp->sl_buf == (char *)0 )  {
-			slp->sl_buf = rt_calloc( width, 3, "sl_buf scanline buffer" );
+			slp->sl_buf = rt_calloc( width, pwidth, "sl_buf scanline buffer" );
 		}
-		pixelp = slp->sl_buf+(ap->a_x*3);
+		pixelp = slp->sl_buf+(ap->a_x*pwidth);
 		*pixelp++ = r ;
 		*pixelp++ = g ;
 		*pixelp++ = b ;
+		if (rpt_dist)
+		{
+		    *pixelp++ = dist[0];
+		    *pixelp++ = dist[1];
+		    *pixelp++ = dist[2];
+		    *pixelp++ = dist[3];
+		    *pixelp++ = dist[4];
+		    *pixelp++ = dist[5];
+		    *pixelp++ = dist[6];
+		    *pixelp++ = dist[7];
+		}
 		if( --(slp->sl_left) <= 0 )
 			do_eol = 1;
 		RES_RELEASE( &rt_g.res_results );
@@ -277,13 +295,24 @@ register struct application *ap;
 				slp = &scanline[ap->a_y+dy];
 				if( slp->sl_buf == (char *)0 )
 					slp->sl_buf = rt_calloc( width+32,
-						3, "sl_buf scanline buffer" );
+						pwidth, "sl_buf scanline buffer" );
 
-				pixelp = slp->sl_buf+(ap->a_x*3);
+				pixelp = slp->sl_buf+(ap->a_x*pwidth);
 				for( dx=0; dx<spread; dx++ )  {
 					*pixelp++ = r ;
 					*pixelp++ = g ;
 					*pixelp++ = b ;
+					if (rpt_dist)
+					{
+					    *pixelp++ = dist[0];
+					    *pixelp++ = dist[1];
+					    *pixelp++ = dist[2];
+					    *pixelp++ = dist[3];
+					    *pixelp++ = dist[4];
+					    *pixelp++ = dist[5];
+					    *pixelp++ = dist[6];
+					    *pixelp++ = dist[7];
+					}
 				}
 			}
 			/* First 3 incremental iterations are boring */
@@ -337,12 +366,12 @@ register struct application *ap;
 			int	count;
 
 			RES_ACQUIRE( &rt_g.res_syscall );
-			if( fseek( outfp, ap->a_y*width*3L, 0 ) != 0 )
+			if( fseek( outfp, ap->a_y*width*pwidth, 0 ) != 0 )
 				rt_log("fseek error\n");
 			count = fwrite( scanline[ap->a_y].sl_buf,
-				sizeof(char), width*3, outfp );
+				sizeof(char), width*pwidth, outfp );
 			RES_RELEASE( &rt_g.res_syscall );
-			if( count != width*3 )
+			if( count != width*pwidth )
 				rt_bomb("view_pixel:  fwrite failure\n");
 		}
 		rt_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
@@ -888,6 +917,10 @@ char	*framename;
 		ap->a_onehit = 3;
 	else
 		ap->a_onehit = 1;
+	if (rpt_dist)
+		pwidth = 3+8;
+	else
+		pwidth = 3;
 
 	/* Always allocate the scanline[] array
 	 * (unless we already have one in incremental mode)
@@ -920,7 +953,7 @@ char	*framename;
 		break;	
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
-		scanbuf = rt_malloc( srv_scanlen*3 + sizeof(long),
+		scanbuf = rt_malloc( srv_scanlen*pwidth + sizeof(long),
 			"scanbuf [multi-line]" );
 		break;
 #endif
