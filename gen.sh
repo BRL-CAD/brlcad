@@ -430,7 +430,9 @@ arch)
 	echo "${ARCHIVE} created"
 
 	FTP_ARCHIVE=/usr/spool/ftp/tmp/cad${RELEASE}.tar
-	KEY=notreally		# Encryption key
+	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel4.3/src/cad${RELEASE}.tar
+	echo "Enter encryption key:"
+	read KEY
 	echo "encryption key is /$KEY/"
 	EXCLUDE=/tmp/cad-exclude
 	rm -f ${EXCLUDE}
