@@ -204,12 +204,15 @@ BU_EXTERN(int		bn_mat_scale_about_pt, (mat_t mat, CONST point_t pt,
 BU_EXTERN(void		bn_mat_xform_about_pt, (mat_t mat, 
 					CONST mat_t xform,
 					CONST point_t pt));
+BU_EXTERN(int		bn_mat_is_equal, (CONST mat_t a, CONST mat_t b, 
+					CONST struct bn_tol *tol));
 BU_EXTERN(int		bn_mat_is_identity, (CONST mat_t m));
 BU_EXTERN(void		bn_mat_arb_rot, ( mat_t m, CONST point_t pt,
 					CONST vect_t dir, CONST fastf_t ang));
 BU_EXTERN(matp_t	bn_mat_dup, (CONST mat_t in));
-BU_EXTERN(int		bn_mat_is_equal, (CONST mat_t a, CONST mat_t b, 
-					CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_mat_ck, (CONST char *title, CONST mat_t m));
+BU_EXTERN(fastf_t	bn_mat_det3, (CONST mat_t m));
+BU_EXTERN(fastf_t	bn_mat_determinant, (CONST mat_t m));
 
 /*----------------------------------------------------------------------*/
 /* msr.c */
