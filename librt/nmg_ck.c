@@ -1473,7 +1473,6 @@ CONST struct rt_tol	*tol;
 			nmg_pr_fu_around_eu( eu_orig, tol );
 
 			rt_log("nmg_check_radial: unclosed space\n");
-rt_bomb("aborting");
 			return(2);
 		}
 
