@@ -290,7 +290,7 @@ struct application *ap;
 */
 		fastf_t *item_wt;
 		MAX_ITEM++;
-		item_wt = (fastf_t *) malloc( sizeof(fastf_t) * MAX_ITEM );
+		item_wt = (fastf_t *) malloc( sizeof(fastf_t) * (MAX_ITEM + 1) );
 		for( i=1; i<=MAX_ITEM; i++ )
 			item_wt[i] = -1.0;
 		fprintf(outfp,"Weight by item number (in %s):\n\n",units);
