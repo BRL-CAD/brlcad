@@ -1,9 +1,22 @@
 /*		T E A . C
  *
  * Convert the Utah Teapot description from the IEEE CG&A database to the
- * BRL-CAD NMG TNURB format. (Note that this has the closed bottom)
+ * BRL-CAD t-NURBS NMG format. (Note that this has the closed bottom)
  *
+ *  Authors -
+ *	John R. Anderson
+ *	Paul R. Stay
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 /* Header files which are used for this example */
 
@@ -37,9 +50,9 @@ main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
 {
 	struct nmgregion *r;
-	char * id_name = "NMG TNURB Example";
+	char * id_name = "BRL-CAD t-NURBS NMG Example";
 	char * tea_name = "UtahTeapot";
-	char * uplot_name = "teapot.upl";
+	char * uplot_name = "teapot.pl";
 	struct rt_list vhead;
 	struct rt_tol tol;
 	FILE *fp;
@@ -89,9 +102,10 @@ int argc; char *argv[];
 		dump_patch( patches[i] );
 	}
 
-/*	(void)nmg_model_fuse( m , &tol );	*/
+	/* Connect up the coincident vertexuses and edges */
+	(void)nmg_model_fuse( m , &tol );
 
-	/* Make a vlist for the model */
+	/* Make a vlist drawing of the model */
 	RT_LIST_INIT( &vhead );
 	nmg_m_to_vlist( &vhead , m , 0 );
 
@@ -220,6 +234,10 @@ pt patch;
 		fastf_t *kv=NULL;
 		fastf_t *points=NULL;
 
+#if 0
 		nmg_edge_g_cnurb( eu , 4 , 0 , kv , 2 , pt_type , points );
+#else
+		nmg_edge_g_cnurb_plinear( eu );
+#endif
 	}
 }
