@@ -1069,7 +1069,7 @@ CONST struct rt_tabdata	*in;
 	if( in->ny != out->ny )
 		rt_bomb("rt_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (char *)in->y, (char *)out->y, RT_SIZEOF_TABDATA(in) );
+	bcopy( (char *)in->y, (char *)out->y, RT_SIZEOF_TABDATA(in->table) );
 }
 
 /*
@@ -1084,7 +1084,7 @@ CONST struct rt_tabdata	*in;
 	RT_CK_TABDATA( in );
 	RT_GET_TABDATA( data, in->table );
 
-	bcopy( (char *)in->y, (char *)data->y, RT_SIZEOF_TABDATA(in) );
+	bcopy( (char *)in->y, (char *)data->y, RT_SIZEOF_TABDATA(in->table) );
 	return data;
 }
 
