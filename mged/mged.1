@@ -3,7 +3,7 @@
 mged \- multi-display interactive combinatorial solid geometry editor
 .SH SYNOPSIS
 .B mged
-database.g
+[-r] database.g [mged_command]
 .SH DESCRIPTION
 .I mged\^
 interactively edits the specified database file
@@ -79,6 +79,12 @@ will defeat the automatic resizing of the view when the screen is empty.
 .br
 can be used (\fIbefore\fR attaching to the SGI display manager) to
 establish a preference for the size and location of the window to be opened.
+.PP
+The
+.I -r
+option to
+.I mged
+opens the database in a read-only mode.
 .SH "X11 NOTES"
 When using
 .I mged\^
