@@ -335,7 +335,7 @@ char **argv;
 	else
 	  bu_log("%s", interp->result);
 
-	if( read_only_flag && !dbip->dbi_read_only )
+	if( read_only_flag || dbip->dbi_read_only )
 	{
 		dbip->dbi_read_only = 1;
 		bu_log( "Opened in READ ONLY mode\n" );
