@@ -1382,8 +1382,12 @@ struct faceuse	*fu2;
  *  intersect with all the other edges of that face.
  *  This edge represents a line of intersection, and so a
  *  cutjoin/mesh pass will be needed for each one.
- * XXX How to really treat this edge as a ray, so that the state machine
- * XXX knows how to get in and out of loops?
+ *
+ *  Note that nmg_isect_edge2p_edge2p() completely conducts the
+ *  intersection operation, so that edges may come and go, loops
+ *  may join or split, each time it is called.
+ *  This imposes special requirements on handling the march through
+ *  the linked lists in this routine.
  */
 static void
 nmg_isect_edge2p_face2p( is, eu, fu, eu_fu )
@@ -1394,6 +1398,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 {
 	struct nmg_ptbl vert_list1, vert_list2;
 	struct loopuse	*lu;
+	struct vertexuse	*vu1;
+	struct vertexuse	*vu2;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu);
@@ -1404,14 +1410,21 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 		rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x)\n", eu, fu);
 
 	/* See if this edge is topologically on other face already */
-	/* XXX Is it safe to assume that since both endpoints are
-	 * XXX already registered in the other face that the edge
-	 * XXX has been fully intersected already?
-	 */
-	if( nmg_find_v_in_face( eu->vu_p->v_p, fu ) &&
-	    nmg_find_v_in_face( eu->eumate_p->vu_p->v_p, fu ) )  {
+	if( (vu1 = nmg_find_v_in_face( eu->vu_p->v_p, fu )) &&
+	    (vu2 = nmg_find_v_in_face( eu->eumate_p->vu_p->v_p, fu )) )  {
 #if 0
 		rt_log("edge: (%g,%g,%g) (%g,%g,%g)\n", V3ARGS(eu->vu_p->v_p->vg_p->coord), V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
+#endif
+	    	/* Even though the endpoints are shared, ensure that
+	    	 * the edge is also shared.
+	    	 * XXX As the intersection progresses, the edges are not
+	    	 * XXX initially shared.
+	    	 * XXX Is there any merit to calling nmg_radial_join_eu()
+	    	 * XXX here, or can it wait?
+	    	 */
+#if 0
+	    	if( !nmg_is_edge_in_looplist( eu->e_p, &fu->lu_hd ) )
+			rt_log("nmg_isect_edge2p_face2p() edge is not shared with other face\n");
 #endif
 		return;
 	}
@@ -1508,26 +1521,41 @@ struct faceuse		*fu1, *fu2;
 		rt_log("nmg_isect_two_face2p\n");
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
+f1_again:
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			nmg_isect_vert2p_face2p( is, vu, fu2 );
 			continue;
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			NMG_CK_EDGEUSE(eu);
 			nmg_isect_edge2p_face2p( is, eu, fu2, fu1 );
+			/* "eu" may have moved to another loop,
+			 * need to abort for() to avoid getting
+			 * RT_LIST_NEXT on wrong linked list!
+			 */
+			NMG_CK_EDGEUSE(eu);
+			if(eu->up.lu_p != lu)  goto f1_again;
 		}
 	}
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
+f2_again:
 	for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 			vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
 			nmg_isect_vert2p_face2p( is, vu, fu1 );
 			continue;
 		}
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			NMG_CK_EDGEUSE(eu);
 			nmg_isect_edge2p_face2p( is, eu, fu1, fu2 );
+			/* "eu" may have moved to another loop */
+			NMG_CK_EDGEUSE(eu);
+			if(eu->up.lu_p != lu )  goto f2_again;
 		}
 	}
 }
