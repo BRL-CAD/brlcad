@@ -48,10 +48,12 @@ char	**argv;
 	depth = atoi( argv[1] );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
-	mk_id( stdout, "Triangles" );
+	mk_id( stdout, "3-D Pyramids" );
 
 	do_leaf("leaf");
+#if 0
 	do_pleaf("polyleaf");
+#endif
 	do_tree("tree", "leaf", depth);
 
 	return 0;
@@ -161,10 +163,13 @@ char	*lname;
 int	level;
 {
 	register int i;
-	mat_t m;
 	char nm[64];
 	char *leafp;
 	int scale;
+	struct wmember	head;
+	struct wmember	*wp;
+
+	BU_LIST_INIT(&head.l);
 
 	if( level <= 1 )
 		leafp = lname;
@@ -175,24 +180,24 @@ int	level;
 	for( i=1; i<level; i++ )
 		scale *= 2;
 
-	/* len = 4, set region on lowest level */
-	mk_fcomb( stdout, name, 4, level<=1 );
-
-	bn_mat_idn( m );
 	sprintf(nm, "%sL", name);
-	mk_memb( stdout, leafp, m, WMOP_UNION );
+	wp = mk_addmember( leafp, &head, WMOP_UNION );
+	bn_mat_idn( wp->wm_mat );
 
-	MAT_DELTAS( m, 1*scale, 0, 0 );
 	sprintf(nm, "%sR", name);
-	mk_memb( stdout, leafp, m, WMOP_UNION );
+	wp = mk_addmember( leafp, &head, WMOP_UNION );
+	MAT_DELTAS( wp->wm_mat, 1*scale, 0, 0 );
 
-	MAT_DELTAS( m, 0.5*scale, sin60*scale, 0 );
 	sprintf(nm, "%sB", name);
-	mk_memb( stdout, leafp, m, WMOP_UNION );
+	wp = mk_addmember( leafp, &head, WMOP_UNION );
+	MAT_DELTAS( wp->wm_mat, 0.5*scale, sin60*scale, 0 );
 
-	MAT_DELTAS( m, 0.5*scale, sin60/3*scale, sin60*scale );
 	sprintf(nm, "%sT", name);
-	mk_memb( stdout, leafp, m, WMOP_UNION );
+	wp = mk_addmember( leafp, &head, WMOP_UNION );
+	MAT_DELTAS( wp->wm_mat, 0.5*scale, sin60/3*scale, sin60*scale );
+
+	/* Set region flag on lowest level */
+	mk_lcomb( stdout, name, &head, level<=1, NULL, NULL, NULL, 0 );
 
 	/* Loop for children if level > 1 */
 	if( level <= 1 )
