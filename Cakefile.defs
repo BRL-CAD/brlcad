@@ -558,7 +558,7 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	LIBRT_TIMER	timer42
-#	if 1
+#	if 0	/* PRODUCTION=0 */
 /*		Under Irix 4.0.5, the SGI-provided LEX and YACC don't work */
 #		define	LEX	/usr/gnu/bin/flex
 #		define	YACC	/usr/gnu/bin/bison
@@ -573,7 +573,7 @@ set -S2 "/bin/sh"
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
-#		define	OPTIMIZER	-O2 -woff 658 -Wl,-w
+#		define	OPTIMIZER	-O2 -woff 658 -Wl,-w2
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
@@ -621,12 +621,6 @@ set -S2 "/bin/sh"
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
 #	define	LIBRT_TIMER	timer42
-#	if 1
-/*		Under Irix 5.1, SGI-provided LEX and YACC don't provide yywrap and yyless needed for XMGED */
-#		define	LEX	/usr/gnu/bin/flex
-#		define	YACC	/usr/gnu/bin/bison
-#		define	YACC_OPTS	-y -d
-#	endif
 #endif
 
 #if defined(__CAKE__irix6)
@@ -639,8 +633,8 @@ set -S2 "/bin/sh"
 /*		Warning 1032 is "expression must have arithmetic type". */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
-					-woff 1032,1174 -Wl,-w
-/*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+					-woff 1032,1174 -Wl,-w2
+/*		-Wl,-S doesn't work! use -Wl,-w2.  SGI case #0390575. */
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
@@ -656,7 +650,6 @@ set -S2 "/bin/sh"
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath /usr/lib64:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-/*		-Wl,-S supresses non-fatal LD errors.  LD has gotten chatty. */
 #		define	LD_OPTS		GFLAG
 #	else
 /*		Static linked executables */
