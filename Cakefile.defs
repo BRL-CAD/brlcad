@@ -72,7 +72,6 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-#define	NFS	1
 
 /****************************************************************
  *								*
@@ -153,7 +152,6 @@ set -S2 "/bin/sh"
 
 #ifdef alliant
 /*	Alliant FX/8.  Compile all programs for the CEs */
-/*	Tested only under Concentrix 3.0 */
 #	undef	fx
 #	undef	alliant
 #	define	MTYPE	fx
@@ -165,8 +163,8 @@ set -S2 "/bin/sh"
 #	else
 #		if 1
 /*			FX/C, -l option puts listing on stdout. */
-#			define	CC	/usr/local/fxc2.0.16/fxc
-#			define	CC_OPTS	-ce -DVECTORIZE
+#			define	CC	/bin/fxc
+#			define	CC_OPTS	-ce
 #			define	OPTIMIZER -Ogiv
 #		else
 /*			GNU C */
@@ -197,7 +195,7 @@ set -S2 "/bin/sh"
 #		define	CC_OPTS	-g
 #		define	LD_OPTS	-m 8 -g
 #	endif
-#	if 0
+#	if 1
 /*		Normal Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
 #		define	LIBFB_OBJS	if_remote pkg if_ptty
@@ -230,6 +228,7 @@ set -S2 "/bin/sh"
 /*		mged_config:  append -DMC68010 for non-turbo 2400 */
 /*		mged_config:  append -DNOBLOCK for XNS kernels */
 #	ifdef	Version3_4
+/*		This has not been tested */
 #		define	LIBPKG_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
 #		define	LIBPKG_SETUP	cp /usr/lib/libsocket.a PRODUCTS
 #		define	LIBFB_OBJS	if_remote pkg sgiselect.o if_sgi
@@ -301,8 +300,6 @@ set -S2 "/bin/sh"
 /*		Non-shared binaries, automatic PostScript startoff for rfbd */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
 #	endif
-#	if 1
-/*	Use /usr/tmp */
 #	define	LIBFB_SETUP	(rm -fr /usr/tmp/libfb; \
 			mkdir /usr/tmp/libfb; \
 			cp *.o /usr/tmp/libfb; \
@@ -314,16 +311,6 @@ set -S2 "/bin/sh"
 			AR u libfb.a * ); \
 			mv /usr/tmp/libfb/libfb.a . ; \
 			rm -fr /usr/tmp/libfb );
-#	else
-#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libgl''SHARED.a; \
-			mv in_addr.o sgi_addr.o;\
-			rm -f select.o *EBEB*; \
-			AR x /usr/lib/libbsd.a; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
-#	endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
@@ -394,14 +381,14 @@ set -S2 "/bin/sh"
 			AR x /usr/lib/libsuntool.a; \
 			AR x /usr/lib/libsunwindow.a; \
 			AR x /usr/lib/libpixrect.a; \
-			AR x /usr/brl/lib/libX.a; \
+			AR x /usr/lib/libX11.a; \
 			rm -f __.SYMDEF; \
 			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
 #		define	MGED_OBJS	dm-sun dm-X
 #		define	MGED_CONFIG	-DDM_SUNPW -DDM_X
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			/usr/brl/lib/libX11.a
+			/usr/lib/libX11.a
 #	endif
 #endif
 
@@ -452,16 +439,15 @@ set -S2 "/bin/sh"
 /*	Cray X-M/P running UNICOS 3.  Define CRAY_COS for use on COS. */
 #	undef	xmp
 #	undef	cray
+#	define	MTYPE	xmp
 #	define	HAS_TCP	1
 /*	-g -hnobtreg for debugging */
 #	if 1
 #		define	CC_DEFS -hvector,olevel_3
-#		define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
+#	else
 /*		Cray C 4.0 (experimental) */
 #		define	CC_DEFS -hvector,olevel_3,vmesg_2
 #		define	CC	/bin/ncc
-#	define	LIBPKG_CONFIG	-DBSD=42
-#	define	RFBD_CONFIG	-DBSD=42
 #	endif
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
@@ -471,12 +457,23 @@ set -S2 "/bin/sh"
 #	define	LIBTERMLIB	-lcurses
 #	if 1
 /*		On XMP UNICOS 4.0, archives finally end in .a */
+#		define	ARCH_SUF	a
+#		define	FC	/bin/cf77
+#		define	AR	../cray-ar.sh
 #		define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
-/*		On XMP UNICOS 3.0, archives still end in .o */
-#		define	ARCH_SUF	o
-#		define	FC	/bin/cc
+#		define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
+#	else
+#		if 1
+/*			XMP UNICOS 5.0 */
+#			define	LIBPKG_CONFIG	-DBSD=43
+#			define	RFBD_CONFIG	-DBSD=43
+#		else
+/*			On XMP UNICOS 3.0, archives still end in .o */
+#			define	ARCH_SUF	o
+#			define	FC	/bin/cc
+#			define	AR	../cray-ar.sh
+#			define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
 #			define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
-#	define	AR	../cray-ar.sh
 #		endif
 #	endif
 #	define	RANLIB	echo
@@ -489,16 +486,16 @@ set -S2 "/bin/sh"
 #	undef	cr2
 #	undef	cray
 #	define	MTYPE	cr2
-#		define	CC_DEFS -hvector,olevel_3
+#	define	HAS_TCP	1
+#	if 1
+/*		Cray ANSI Standard C */
 #		define	CC	/bin/scc
-#		if 0
+#		define	CC_DEFS	-hvreport
+#	else
+#		if 1
 #			define	CC_DEFS -hvector,olevel_3
-#			define	CC_DEFS -hvector,olevel_3,vmesg_2 -DVECTORIZE
-/*			Cray C 4.0 (experimental) */
 #		else
-/*			Cray ANSI Standard C */
-#			define	CC	/bin/scc
-#			define	CC_DEFS	-hvreport
+/*			Cray C 4.0 (experimental) */
 #			define	CC_DEFS -hvector,olevel_3,vmesg_2
 #			define	CC	/bin/ncc
 #		endif
@@ -508,8 +505,15 @@ set -S2 "/bin/sh"
 #	define	RANLIB	echo
 #	define	LIBSYSV_SETUP	( \
 		AR x /usr/lib/libnet.a select.o socket.o; \
-#	define	LIBPKG_CONFIG	-DBSD=42
-#	define	RFBD_CONFIG	-DBSD=42
+		AR u libsysv.a select.o socket.o )
+#	define	LIBMALLOC	/* use vendor library */
+#	if 1
+/*		UNICOS 4.0 */
+#		define	LIBPKG_CONFIG	-DBSD=42 -DOLDTCP
+#		define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
+#	else
+/*		UNICOS 5.0 */
+#		define	LIBPKG_CONFIG	-DBSD=43
 #		define	RFBD_CONFIG	-DBSD=43
 #	endif
 #	define	LIBRT_TIMER	timerunix
@@ -544,7 +548,7 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote pkg if_ptty
 #	define	LIBRT_TIMER	timer42
 #	define	FC	/usr/convex/fc
-/*	Optional vectorizing C compiler */
+/*	libplot3/htond.c depends on running in native mode (CC_OPTS= -fn) */
 #	if 0
 /*		Optional vectorizing C compiler */
 #		define	OPTIMIZER	-O2
@@ -922,7 +926,6 @@ set -S2 "/bin/sh"
 #define	DISTRIBUTION	/m/dist
 
 /* Symbols that should be defined in individual Cakefiles */
-#undef	SHFILES ??
 /* PRODUCTS */
 /* MANSECTION */
 /* CONFIGDEFS */
