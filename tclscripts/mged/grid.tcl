@@ -118,7 +118,7 @@ proc do_grid_anchor { id } {
     entry $top.anchorE -relief sunken -bd 2 -width 12 -textvar grid_control_anchor($id)
 
     button $top.applyB -relief raised -text "Apply"\
-	    -command "doit $id \"set grid_anchor \\\$grid_control_anchor($id)\""
+	    -command "mged_apply $id \"set grid_anchor \\\$grid_control_anchor($id)\""
     button $top.loadB -relief raised -text "Load"\
 	    -command "winset \$mged_active_dm($id); set grid_control_anchor($id) \$grid_anchor"
     button $top.dismissB -relief raised -text "Dismiss"\
@@ -197,7 +197,7 @@ proc do_grid_color { id } {
 	    -command "grid_control_choose_color $id $top"
 
     button $top.applyB -relief raised -text "Apply"\
-	    -command "doit $id \"set grid_color \\\$grid_control_color($id)\""
+	    -command "mged_apply $id \"set grid_color \\\$grid_control_color($id)\""
     button $top.loadB -relief raised -text "Load"\
 	    -command "winset \$mged_active_dm($id);\
 	    set grid_control_color($id) \$grid_color;\
@@ -423,7 +423,7 @@ proc grid_control_choose_color { id top } {
     }
 
     if {[llength $colors] != 2} {
-	mged_dialog .$id.redDialog $player_screen($id)\
+	mged_dialog .$id.gridDialog $player_screen($id)\
 		"Error choosing a color!"\
 		"Error choosing a color!"\
 		"" 0 OK
@@ -463,22 +463,22 @@ proc grid_control_apply { id } {
     global grid_control_square
 
     winset $mged_active_dm($id)
-    doit $id "set grid_draw \$grid_control_draw($id)"
-    doit $id "set grid_snap \$grid_control_snap($id)"
-    doit $id "set grid_color \$grid_control_color($id)"
-    doit $id "set grid_anchor \$grid_control_anchor($id)"
+    mged_apply $id "set grid_draw \$grid_control_draw($id)"
+    mged_apply $id "set grid_snap \$grid_control_snap($id)"
+    mged_apply $id "set grid_color \$grid_control_color($id)"
+    mged_apply $id "set grid_anchor \$grid_control_anchor($id)"
 
-    doit $id "set grid_res_h \$grid_control_h($id)"
-    doit $id "set grid_res_major_h \$grid_control_maj_h($id)"
+    mged_apply $id "set grid_res_h \$grid_control_h($id)"
+    mged_apply $id "set grid_res_major_h \$grid_control_maj_h($id)"
 
     if {$grid_control_square($id)} {
-	doit $id "set grid_res_v \$grid_control_h($id)"
-	doit $id "set grid_res_major_v \$grid_control_maj_h($id)"
-	doit $id "set grid_control_v($id) \$grid_control_h($id)"
-	doit $id "set grid_control_maj_v($id) \$grid_control_maj_h($id)"
+	mged_apply $id "set grid_res_v \$grid_control_h($id)"
+	mged_apply $id "set grid_res_major_v \$grid_control_maj_h($id)"
+	mged_apply $id "set grid_control_v($id) \$grid_control_h($id)"
+	mged_apply $id "set grid_control_maj_v($id) \$grid_control_maj_h($id)"
     } else {
-	doit $id "set grid_res_v \$grid_control_v($id)"
-	doit $id "set grid_res_major_v \$grid_control_maj_v($id)"
+	mged_apply $id "set grid_res_v \$grid_control_v($id)"
+	mged_apply $id "set grid_res_major_v \$grid_control_maj_v($id)"
     }
 
     set mged_grid_draw($id) $grid_control_draw($id)

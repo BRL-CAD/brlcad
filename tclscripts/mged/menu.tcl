@@ -69,8 +69,8 @@ proc mmenu_init { id } {
 	listbox $w.f$i.l -bd 2 -exportselection false
         pack $w.f$i.l -side left -fill both -expand yes
 
-	bind $w.f$i.l <Button-1> "handle_select %W %y; doit_press $id %W"
-	bind $w.f$i.l <Button-2> "handle_select %W %y; doit_press $id %W"
+	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W"
+	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W"
 
 	mmenu_set $w $id $i $menu
 
@@ -84,7 +84,7 @@ proc mmenu_init { id } {
     return
 }
 
-proc doit_press { id w } {
+proc mged_press { id w } {
     cmd_set $id
     press [$w get [$w curselection]]
 }
@@ -110,8 +110,8 @@ proc reconfig_mmenu { id } {
 	listbox $w.f$i.l -bd 2 -exportselection false
         pack $w.f$i.l -side left -fill both -expand yes
 
-	bind $w.f$i.l <Button-1> "handle_select %W %y; doit_press $id %W"
-	bind $w.f$i.l <Button-2> "handle_select %W %y; doit_press $id %W"
+	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W"
+	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W"
 
 	mmenu_set $w $id $i $menu
 
@@ -140,11 +140,11 @@ proc do_arb_edit_menu { menu1 menu2 menu3 } {
 
 	.$id.m.settings.m.cm_coord entryconfigure 2 -state normal
 	set mged_coords($id) "o"
-	doit $id "set coords $mged_coords($id)"
+	mged_apply $id "set coords $mged_coords($id)"
 
 	.$id.m.settings.m.cm_origin entryconfigure 3 -state normal
 	set mged_rotate_about($id) "k"
-	doit $id "set rotate_about $mged_rotate_about($id)"
+	mged_apply $id "set rotate_about $mged_rotate_about($id)"
 
 	.$id.m.edit.m entryconfigure 0 -state disabled
 	.$id.m.edit.m entryconfigure 1 -state disabled
@@ -223,11 +223,11 @@ proc do_edit_menu { menu1 } {
 
 	.$id.m.settings.m.cm_coord entryconfigure 2 -state normal
 	set mged_coords($id) "o"
-	doit $id "set coords $mged_coords($id)"
+	mged_apply $id "set coords $mged_coords($id)"
 
 	.$id.m.settings.m.cm_origin entryconfigure 3 -state normal
 	set mged_rotate_about($id) "k"
-	doit $id "set rotate_about $mged_rotate_about($id)"
+	mged_apply $id "set rotate_about $mged_rotate_about($id)"
 
 	.$id.m.edit.m entryconfigure 0 -state disabled
 	.$id.m.edit.m entryconfigure 1 -state disabled
@@ -352,13 +352,13 @@ proc undo_edit_menu {} {
 	.$id.m.settings.m.cm_coord entryconfigure 2 -state disabled
 	if {$mged_coords($id) == "o"} {
 	    set mged_coords($id) "v"
-	    doit $id "set coords $mged_coords($id)"
+	    mged_apply $id "set coords $mged_coords($id)"
 	}
 
 	.$id.m.settings.m.cm_origin entryconfigure 3 -state disabled
 	if {$mged_rotate_about($id) == "k"} {
 	    set mged_rotate_about($id) "v"
-	    doit $id "set rotate_about $mged_rotate_about($id)"
+	    mged_apply $id "set rotate_about $mged_rotate_about($id)"
 	}
     }
 }
