@@ -20,6 +20,14 @@
 #	As the name indicates, instances of CellPlot are intended
 #       to be used for cell plots.
 #
+
+#
+# Usual options.
+#
+itk::usual CellPlot {
+    keep -range -plotWidth -plotHeight
+}
+
 class cadwidgets::CellPlot {
     inherit iwidgets::Scrolledcanvas
 
@@ -27,8 +35,11 @@ class cadwidgets::CellPlot {
     destructor {}
 
     itk_option define -range range Range {0.0 1.0}
+    itk_option define -plotWidth plotWidth PlotWidth 512
+    itk_option define -plotHeight plotHeight PlotHeight 512
 
     public method createCell {x1 y1 x2 y2 args}
+    public method createCellInCanvas {c x1 y1 x2 y2 args}
 
     private method transform {x1 y1 x2 y2}
 
@@ -74,7 +85,11 @@ body cadwidgets::CellPlot::constructor {args} {
 # then draw the cell in the specified color.
 #
 body cadwidgets::CellPlot::createCell {x1 y1 x2 y2 args} {
-    eval create rectangle [transform $x1 $y1 $x2 $y2] $args
+    eval cadwidgets::CellPlot::createCellInCanvas $this $x1 $y1 $x2 $y2 $args
+}
+
+body cadwidgets::CellPlot::createCellInCanvas {c x1 y1 x2 y2 args} {
+    eval $c create rectangle [transform $x1 $y1 $x2 $y2] $args
 }
 
 ## - transform
@@ -82,11 +97,11 @@ body cadwidgets::CellPlot::createCell {x1 y1 x2 y2 args} {
 # Transform data coordinates into canvas coordinates.
 #
 body cadwidgets::CellPlot::transform {x1 y1 x2 y2} {
-    set tx1 [expr {($x1 - $min) * $sf * $itk_option(-width)}]
-    set tx2 [expr {($x2 - $min) * $sf * $itk_option(-width)}]
-    set ty1 [expr {$itk_option(-height) - \
-	    (($y1 - $min) * $sf * $itk_option(-width))}]
-    set ty2 [expr {$itk_option(-height) - \
-	    (($y2 - $min) * $sf * $itk_option(-width))}]
+    set tx1 [expr {($x1 - $min) * $sf * $itk_option(-plotWidth)}]
+    set tx2 [expr {($x2 - $min) * $sf * $itk_option(-plotWidth)}]
+    set ty1 [expr {$itk_option(-plotHeight) - \
+	    (($y1 - $min) * $sf * $itk_option(-plotWidth))}]
+    set ty2 [expr {$itk_option(-plotHeight) - \
+	    (($y2 - $min) * $sf * $itk_option(-plotWidth))}]
     return "$tx1 $ty1 $tx2 $ty2"
 }
