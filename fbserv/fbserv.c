@@ -69,7 +69,7 @@ int argc; char **argv;
 		/*
 		 * Listen for PKG connections, no /etc/inetd
 		 */
-		if( (netfd = pkg_initserver("mfb", 0, comm_error)) < 0 )
+		if( (netfd = pkg_initserver("remotefb", 0, comm_error)) < 0 )
 			continue;
 		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
 		if( rem_pcp == PKC_ERROR )
