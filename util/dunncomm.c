@@ -75,6 +75,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  endif /* SYSV */
 
 #endif /* _POSIX_SOURCE */
+
+#ifndef OCRNL
+#define OCRNL 0x00000008
+#endif
+
+#ifndef TAB1
+#define TAB1 0x00000400
+#endif
+
+#ifndef TAB2
+#define TAB2 0x00000800
+#endif
+
 #ifndef	XTABS
 #	define	XTABS	(TAB1 | TAB2)
 #endif /* XTABS */
