@@ -1511,9 +1511,7 @@ CONST struct loopuse *lu;
 plane_t pl;
 {
 	struct edgeuse *eu;
-	point_t ave_pt;
-	fastf_t pt_count=0.0;
-	fastf_t inv_count;
+	fastf_t hmin,hmax;
 
 	NMG_CK_LOOPUSE( lu );
 
@@ -1528,8 +1526,6 @@ plane_t pl;
 	if( nmg_loop_is_a_crack( lu ) )
 		return;
 
-	VSETALL( ave_pt, 0.0 );
-
 	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		return;
 
@@ -1540,11 +1536,7 @@ plane_t pl;
 		struct vertex_g *vg_next;
 
 		vg = eu->vu_p->v_p->vg_p;
-		VADD2( ave_pt, ave_pt, vg->coord );
-		pt_count += 1.0;
-
 		eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
-
 		vg_next = eu_next->vu_p->v_p->vg_p;
 
 		pl[X] += ( vg->coord[Y] - vg_next->coord[Y]) * ( vg->coord[Z] + vg_next->coord[Z] );
@@ -1554,9 +1546,23 @@ plane_t pl;
 
 	VUNITIZE( pl );
 
-	inv_count = 1.0/pt_count;
-	VSCALE( ave_pt, ave_pt, inv_count );
-	pl[H] = VDOT( pl, ave_pt );
+	hmin = MAX_FASTF;
+	hmax = (-hmin);
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		fastf_t htest;
+
+		vg = eu->vu_p->v_p->vg_p;
+		htest = VDOT( vg->coord, pl );
+		if( htest > hmax )
+			hmax = htest;
+		if( htest < hmin )
+			hmin = htest;
+	}
+
+	pl[H] = (hmax + hmin)/2.0;
 
 	if( lu->orientation == OT_OPPOSITE )
 		HREVERSE( pl, pl );
@@ -2264,6 +2270,16 @@ long *p;
 			if (pp[k] == p) return(k);
 
 		return(-1);
+	} else if( func == TBL_ZERO ) {
+		/* set all occurrences of "p" to zero */
+		register int	k;
+		register long	**pp = b->buffer;
+
+		NMG_CK_PTBL(b);
+#		include "noalias.h"
+		for( k = b->end-1; k >= 0; k-- )
+			if (pp[k] == p) pp[k] = (long *)0;
+		return( 0 );
 	} else if (func == TBL_INS_UNIQUE) {
 		/* we do this a great deal, so make it go as fast as possible.
 		 * this is the biggest argument I can make for changing to an
@@ -8933,7 +8949,88 @@ struct shell *s;
 		rt_log( "nmg_kill_cracks( s=%x )\n" , s );
 
 	NMG_CK_SHELL( s );
+#if 1
+	/* Loops may be inadvertently connected with a crack,
+	 * this code is to dissconnect them and kill the connecting crack.
+	 * Look for cracks that are two EU's from one loop that 
+	 * share the same edge, but are not consectutive in the loop.
+	 * This will require a split_lu to handle.
+	 */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+		int empty_face=0;
+		NMG_CK_FACEUSE( fu );
 
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+again:
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct edgeuse *eu2;
+
+				NMG_CK_EDGEUSE( eu );
+
+				for( RT_LIST_FOR( eu2, edgeuse, &lu->down_hd ) )
+				{
+					struct loopuse *new_lu1;
+					struct loopuse *new_lu2;
+
+					if( eu == eu2 )
+						continue;
+
+					/* check if eu and eu2 share an edge */
+					if( eu->e_p != eu2->e_p )
+						continue;
+
+					if( eu2 == RT_LIST_PNEXT_CIRC( edgeuse, &eu->l ) )
+					{
+						/* this is just a regular crack, catch it later */
+						continue;
+					}
+					if( eu2 == RT_LIST_PPREV_CIRC( edgeuse, &eu->l ) )
+					{
+						/* this is just a regular crack, catch it later */
+						continue;
+					}
+
+					if( eu->vu_p->v_p == eu2->vu_p->v_p )
+					{
+						/* This must be part of an accordion, catch it later */
+						continue;
+					}
+
+					if( eu->eumate_p->vu_p->v_p != eu2->vu_p->v_p )
+					{
+						/* this is a problem!!! */
+						rt_log( "nmg_kill_cracks: found a strange crack at eu1=x%x, eu2=x%x\n", eu, eu2 );
+						nmg_pr_lu_briefly( lu, "" );
+						rt_bomb( "nmg_kill_cracks: found a strange crack\n" );
+					}
+
+					new_lu1 = nmg_split_lu_at_vu( lu, eu->vu_p );
+					new_lu2 = nmg_split_lu_at_vu( new_lu1, eu2->vu_p );
+
+					nmg_klu( new_lu2 );
+
+					nmg_lu_reorient( lu );
+					nmg_lu_reorient( new_lu1 );
+
+					goto again;
+				}
+			}
+		}
+	}
+#endif
 	fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
 	while( RT_LIST_NOT_HEAD( fu, &s->fu_hd ) )
 	{
@@ -9006,6 +9103,14 @@ crack_top:
 		}
 		fu = fu_next;
 	}
+
+	if( empty_shell )
+	{
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "nmg_kill_cracks: ret = %d\n" , empty_shell );
+		return( empty_shell );
+	}
+
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_kill_cracks: ret = %d\n" , empty_shell );
