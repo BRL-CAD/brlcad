@@ -1026,7 +1026,8 @@ register struct uvcoord *uvp;
 			return;
 		}
 		if( rt_arb_import( &intern, &ext,
-		    stp->st_matp ? stp->st_matp : bn_mat_identity ) < 0 )  {
+		    stp->st_matp ? stp->st_matp : bn_mat_identity,
+		    ap->a_rt_i->rti_dbip ) < 0 )  {
 			bu_log("rt_arb_uv(%s) database import error\n",
 				stp->st_name);
 			db_free_external( &ext );
@@ -1183,10 +1184,11 @@ CONST struct bn_tol    *tol;
  *  by rotating each vector and adding in the base vector.
  */
 int
-rt_arb_import( ip, ep, mat )
+rt_arb_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST  mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rp;
