@@ -765,6 +765,9 @@ extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
 /*----------------------------------------------------------------------*/
 /*
  * Section for BU_DEBUG values
+ *
+ * These can be set from the command-line of RT-compatible programs
+ * using the "-! ###" option.
  */
 extern int	bu_debug;
 /* These definitions are each for one bit */
