@@ -14,7 +14,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -79,13 +79,15 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
  *  and write out free objects for both.
  *  The caller is expected to re-write new data on the first one.
  *
- *  If the object is getting larger, see if it can be extended in place.
- *  If yes, write a free object that fits the new size,
- *  and a new free object for any remaining space.
+ *  If the object is getting larger, seek a suitable "hole" large enough
+ *  to hold it, throwing back any surplus, properly marked.
  *
- *  If the ojbect is getting larger and there is no suitable "hole"
+ *  If the object is getting larger and there is no suitable "hole"
  *  in the database, extend the file, write a free object in the
  *  new space, and write a free object in the old space.
+ *
+ *  There is no point to trying to extend in place, that would require
+ *  two searches through the memory map, and doesn't save any disk I/O.
  *
  *  Returns -
  *	0	OK
@@ -94,6 +96,9 @@ db5_write_free( struct db_i *dbip, struct directory *dp, long length )
 int
 db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 {
+	long	baseaddr;
+	long	baselen;
+
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
@@ -101,6 +106,11 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 		dp->d_namep, dbip, dp, ep->ext_nbytes );
 
 	BU_ASSERT_LONG( ep->ext_nbytes&7, ==, 0 );
+
+	if( ep->ext_nbytes == dp->d_len )  return 0;
+
+	baseaddr = dp->d_addr;
+	baselen = dp->d_len;
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
 		if( dp->d_un.ptr )  {
@@ -114,24 +124,74 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	}
 
 	if( dbip->dbi_read_only )  {
-		bu_log("db5_realloc on READ-ONLY file\n");
+		bu_log("db5_realloc(%s) on READ-ONLY file\n", dp->d_namep);
 		return(-1);
 	}
 
-	/* Simple algorithm -- zap old copy, extend file for new copy */
-	if( dp->d_addr != -1L )  {
+	/* If the object is getting smaller... */
+	if( ep->ext_nbytes < dp->d_len )  {
+		if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) object is getting smaller\n", dp->d_namep);
+
+		/* First, erase front half of storage to desired size. */
+		dp->d_len = ep->ext_nbytes;
+		if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
+
+		/* Second, erase back half of storage to remainder. */
+		dp->d_addr = baseaddr + ep->ext_nbytes;
+		dp->d_len = baselen - ep->ext_nbytes;
+		if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
+
+		/* Finally, update tables */
 		rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
-		db5_write_free( dbip, dp, dp->d_len );
-		dp->d_addr = -1L;	/* sanity */
+		dp->d_addr = baseaddr;
+		dp->d_len = ep->ext_nbytes;
+		return 0;
 	}
-	/* extend */
+
+	/* The object is getting larger... */
+
+	/* Start by zapping existing database object into a free object */
+	if( dp->d_addr != -1L )  {
+		if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) releasing storage at x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
+
+		rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
+		if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
+		baseaddr = dp->d_addr = -1L;	/* sanity */
+	}
+
+	/* Can we obtain a free block somewhere else? */
+	{
+		struct mem_map	*mmp;
+
+		if( (mmp = rt_memalloc_nosplit( &(dbip->dbi_freep), ep->ext_nbytes )) != MAP_NULL )  {
+			if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) obtained free block at x%x, len=%d\n", dp->d_namep, mmp->m_addr, mmp->m_size );
+			BU_ASSERT_LONG( mmp->m_size, >=, ep->ext_nbytes );
+			if( mmp->m_size == ep->ext_nbytes )  {
+				/* No need to reformat, existing free object is perfect */
+				dp->d_addr = mmp->m_addr;
+				dp->d_len = ep->ext_nbytes;
+				return 0;
+			}
+			if( mmp->m_size > ep->ext_nbytes )  {
+				/* Reformat and free the surplus */
+				dp->d_addr = mmp->m_addr + ep->ext_nbytes;
+				dp->d_len = mmp->m_size - ep->ext_nbytes;
+				if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
+				rt_memfree( &(dbip->dbi_freep), dp->d_len, dp->d_addr );
+			}
+			dp->d_addr = mmp->m_addr;
+			dp->d_len = ep->ext_nbytes;
+			/* Erase the new place */
+			if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
+			return 0;
+		}
+	}
+
+	/* No free storage of the desired size, extend the database */
 	dp->d_addr = dbip->dbi_eof;
 	dbip->dbi_eof += ep->ext_nbytes;
 	dp->d_len = ep->ext_nbytes;
-	db5_write_free( dbip, dp, dp->d_len );
+	if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) extending database addr=x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
+	if( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
 	return 0;
-
-#if 0
-	bu_bomb("db5_realloc() not fully implemented\n");
-#endif
 }
