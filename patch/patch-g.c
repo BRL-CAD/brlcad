@@ -2734,6 +2734,7 @@ int cnt;
 	char shflg,mrflg,ctflg;
 	int count=0;
 	int make_basic_solids;
+	int scratch_num;
 	char scratch_name1[17];
 	char scratch_name2[17];
 	char scratch_name3[17];
