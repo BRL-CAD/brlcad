@@ -428,7 +428,7 @@ reg	Node	*node;
 		print_act(act);
 		cdebug("\n");
 	}
-	if( act->a_str == NULL || strlen(act->a_str) <= 0 )  {	/* BRL */
+	if( act->a_str == NULL || strlen(act->a_str) == 0 )  {	/* BRL */
 		printf("NOTE:  Null action skipped\n");
 		code = 0;
 		return(code);
