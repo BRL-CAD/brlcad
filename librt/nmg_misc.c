@@ -3822,16 +3822,16 @@ CONST struct bn_tol *tol;
 	BN_CK_TOL( tol );
 
 	m = s->r_p->m_p;
-	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_fix_normals: flags" );
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "nmg_fix_decomposed_shell_normals: flags" );
 
 missed:
 	/* find the top face */
 	f_top = nmg_find_top_face( s, &dir , flags );
 	if( f_top == (struct face *)NULL )
 	{
-		bu_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
+		bu_log( "nmg_fix_decomposed_shell_normals: Could not get a top face from nmg_find_top_face()\n" );
 		bu_log( "\tWARNING: continuing without fixing normals!!!!\n" );
-		bu_free( (char *)flags, "nmg_fix_normals: flags" );
+		bu_free( (char *)flags, "nmg_fix_decomposed_shell_normals: flags" );
 		return;
 	}
 	if( *f_top->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
@@ -3850,15 +3850,15 @@ missed:
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
 	{
-		bu_log( "nmg_fix_normals: no OT_SAME use of top face\n" );
-		bu_free( (char *)flags , "nmg_fix_normals: flags" );
+		bu_log( "nmg_fix_decomposed_shell_normals: no OT_SAME use of top face\n" );
+		bu_free( (char *)flags , "nmg_fix_decomposed_shell_normals: flags" );
 		return;
 	}
 	NMG_GET_FU_NORMAL( normal , fu );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 	{
-		bu_log( "\tnmg_fix_normals: top face is x%x in %d direction, OT_SAME use is x%x\n", f_top, dir, fu );
+		bu_log( "\tnmg_fix_decomposed_shell_normals: top face is x%x in %d direction, OT_SAME use is x%x\n", f_top, dir, fu );
 		bu_log( "\toutward normal = ( %g %g %g )\n" , V3ARGS( normal ) );
 	}
 
@@ -3867,7 +3867,7 @@ missed:
 	if( normal[dir] < 0.0 )
 	{
 		if( rt_g.NMG_debug & DEBUG_BASIC )
-			bu_log( "nmg_fix_normals: reversing fu x%x\n" , fu );
+			bu_log( "nmg_fix_decomposed_shell_normals: reversing fu x%x\n" , fu );
 
 		nmg_reverse_face_and_radials( fu, tol );
 	}
@@ -3890,7 +3890,7 @@ missed:
 		vect_t new_norm;
 
 		NMG_GET_FU_NORMAL( new_norm , fu );
-		bu_log( "nmg_fix_normals: After propagation top faceuse normal is ( %g %g %g )\n",
+		bu_log( "nmg_fix_decomposed_shell_normals: After propagation top faceuse normal is ( %g %g %g )\n",
 			V3ARGS( new_norm ) );
 	}
 
@@ -7831,7 +7831,8 @@ CONST struct bn_tol *tol;
  */
 int
 nmg_faces_are_radial( fu1 , fu2 )
-CONST struct faceuse *fu1,*fu2;
+CONST struct faceuse *fu1;
+CONST struct faceuse *fu2;
 {
 	struct edgeuse *eu,*eu_tmp;
 	struct loopuse *lu;
@@ -11314,7 +11315,7 @@ CONST struct bn_tol *tol;
 int
 nmg_simplify_shell_edges( s, tol )
 struct shell *s;
-struct bn_tol *tol;
+CONST struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	int count=0;

@@ -2639,6 +2639,58 @@ BU_EXTERN(void			nmg_rebound, (struct model *m, CONST struct bn_tol *tol) );
 BU_EXTERN(void			nmg_count_shell_kids, (CONST struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
 BU_EXTERN(void			nmg_stash_model_to_file, (CONST char *filename,
 				CONST struct model *m, CONST char *title) );
+BU_EXTERN(void			nmg_fix_normals, (struct shell *s_orig,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_make_faces_at_vert, (struct vertex *new_v,
+				struct bu_ptbl *int_faces,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_kill_cracks_at_vertex, (CONST struct vertex *vp));
+BU_EXTERN(int			nmg_bad_face_normals, (CONST struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_faces_are_radial,
+				(CONST struct faceuse *fu1,
+				CONST struct faceuse *fu2));
+BU_EXTERN(int			nmg_move_edge_thru_pt, (struct edgeuse *mv_eu,
+				CONST point_t pt, CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_vlist_to_wire_edges, (struct shell *s,
+				struct bu_list *vhead));
+BU_EXTERN(void			nmg_glue_face_in_shell,
+				(CONST struct faceuse *fu,
+				struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_in_vert,
+				(struct vertex *new_v,
+				CONST int approximate,
+				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_mirror_model, (struct model *m));
+BU_EXTERN(int			nmg_kill_cracks, (struct shell *s));
+BU_EXTERN(int			nmg_kill_zero_length_edgeuses, (struct model *m));
+BU_EXTERN(void			nmg_make_faces_within_tol, (struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(struct edge_g_cnurb *rt_join_cnurbs, (struct bu_list *crv_head));
+BU_EXTERN(int			nmg_break_edge_at_verts, (struct edge *e,
+				struct bu_ptbl *verts, CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_break_edges, (long *magic_p,
+				struct bn_tol *tol));
+BU_EXTERN(int			nmg_lu_is_convex, (struct loopuse *lu,
+				CONST struct bn_tol *tol));
+
+#ifdef SEEN_RTGEOM_H
+BU_EXTERN(int			nmg_to_arb, (CONST struct model *m,
+				struct rt_arb_internal *arb_int));
+BU_EXTERN(int			nmg_to_tgc, (CONST struct model *m,
+				struct rt_tgc_internal *tgc_int,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_to_poly, (CONST struct model *m,
+				struct rt_pg_internal *poly_int,
+				CONST struct bn_tol *tol));
+#endif
+BU_EXTERN(int			nmg_simplify_shell_edges, (struct shell *s,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
+				CONST struct bn_tol *tol,
+				CONST fastf_t tol_coll,
+				CONST fastf_t min_angle));
 
 /* From nmg_tri.c */
 BU_EXTERN(void			nmg_triangulate_model, (struct model *m, CONST struct bn_tol   *tol) );
