@@ -14,6 +14,9 @@
  *	noise_perlin	Robert Skinner's Perlin-style "Noise" function
  *	noise_vec	Vector-valued noise
  *
+ *  Spectral Noise functions
+ *	noise_fbm	fractional Brownian motion.  Based on noise_perlin
+ *	noise_turb	turbulence.  Based on noise_perlin
  *
  *  Author - Lee A. Butler
  *  
@@ -102,33 +105,105 @@ static unsigned char perm[TABSIZE] = {
 	230,  61,  95, 192
 };
 
-/* Coefficients of basis matrix. */
+/* Coefficients of (Catmull spline) basis matrix. */
 #define CR00	-0.5
 #define CR01	 1.5
 #define CR02	-1.5
 #define CR03	 0.5
+
 #define CR10	 1.0
 #define CR11	-2.5
 #define CR12	 2.0
 #define CR13	-0.5
+
 #define CR20	-0.5
 #define CR21	 0.0
 #define CR22	 0.5
 #define CR23	 0.0
+
 #define CR30	 0.0
 #define CR31	 1.0
 #define CR32	 0.0
 #define CR33	 0.0
 
+
+static double
+spline(x, nknots, knot)
+double x;
+int nknots;
+double *knot;
+{
+	int span;
+	int nspans = nknots - 3;
+	double c0, c1, c2, c3;	/* coefficients of the cubic.*/
+
+	if (nspans < 1) {  /* illegal */
+		/*	   fprintf(stderr, "Spline has too few knots.\n"); */
+		abort();
+		return 0;
+	}
+
+	/* Find the appropriate 4-point span of the spline. */
+	x = CLAMP(x, 0, 1) * nspans;
+	span = (int) x;
+	if (span >= nknots - 3)
+		span = nknots - 3;
+	x -= span;
+	knot += span;
+
+	/* Evaluate the span cubic at x using Horner's rule.
+	 * Note: Coefficients which are 0 are not calculated
+	 */
+	c3 = CR00*knot[0]   + CR01*knot[1]   + CR02*knot[2]  + CR03*knot[3];
+	c2 = CR10*knot[0]   + CR11*knot[1]   + CR12*knot[2]  + CR13*knot[3];
+	c1 = CR20*knot[0] /* +CR21*knot[1]*/ + CR22*knot[2]/*+ CR23*knot[3]*/;
+	c0 =/*CR30*knot[0]+*/ CR31*knot[1] /*+ CR32*knot[2] + CR33*knot[3] */;
+
+	return ((c3*x + c2)*x + c1)*x + c0;
+}
+
+static double
+catrom2(d)
+double d;
+{
+#define SAMPRATE 100
+#define NENTRIES (4*SAMPRATE+1)
+	double x;
+	int i;
+	static double table[NENTRIES];
+	static int initialized=0;
+
+	if (d >= 4.) return 0;
+
+	if (!initialized) {
+		initialized = 1;
+		for (i=0 ; i < NENTRIES ; i++) {
+			x = sqrt(  (double)i / (double)SAMPRATE  );
+			if (x < 1)
+				table[i] = 0.5 * (2.+x*x*(-5+x*3));
+			else
+				table[i] = 0.5 * (4+x*(-8+x*(5-x)));
+		}
+	}
+
+	d = d*SAMPRATE + 0.5;
+	i = FLOOR(d);
+	if (i >= NENTRIES) return 0.;
+	return table[i];
+}
+
+#define RT_RAND_TABSIZE 4096
+extern float rt_rndtable[RT_RAND_TABSIZE];
+#define RT_RANDSEED( _i, _seed )        _i = _seed % RT_RAND_TABSIZE
+#define RT_RANDOM( _i )         rt_rndtable[ _i = (_i+1) % RT_RAND_TABSIZE ]
+
 /* 
  * This is our table of random numbers.  Rather than calling drand48() or
- * random() or rand() we just pick numbers out of this table.  The maximum
- * number of calls for random numbers is in Ken Musgrave's code which
- * calls for up to 4096 random numbers.  Hence, this table has 4096 entries.
- * This version of rndtable was generated via calls to drand48() on a machine
- * which provided that function.
+ * random() or rand() we just pick numbers out of this table.  This table 
+ * has 4096 entries.  This version of rndtable was generated via calls to 
+ * drand48() on a machine which provided that function.
  */
-static float rndtable[] = {
+float rt_rndtable[RT_RAND_TABSIZE] = {
     0.39646477, 0.84048537, 0.35333610, 0.44658343, 0.31869277, 0.88642843,
     0.01558285, 0.58409022, 0.15936863, 0.38371587, 0.69100437, 0.05885891,
     0.89985431, 0.16354595, 0.15907150, 0.53306471, 0.60414419, 0.58269902,
@@ -814,78 +889,6 @@ static float rndtable[] = {
     0.15166367, 0.76687850, 0.62507295, 0.33458056
 };
 
-#define RNDTABSIZ (sizeof(rndtable) / sizeof(float))
-#define RANDNBR	rndtable[rndtabi = (rndtabi+1) % RNDTABSIZ ]
-#define RANDSEED(_s) rndtabi = _s % RNDTABSIZ
-
-
-static double
-spline(x, nknots, knot)
-double x;
-int nknots;
-double *knot;
-{
-	int span;
-	int nspans = nknots - 3;
-	double c0, c1, c2, c3;	/* coefficients of the cubic.*/
-
-	if (nspans < 1) {  /* illegal */
-		/*	   fprintf(stderr, "Spline has too few knots.\n"); */
-		abort();
-		return 0;
-	}
-
-	/* Find the appropriate 4-point span of the spline. */
-	x = CLAMP(x, 0, 1) * nspans;
-	span = (int) x;
-	if (span >= nknots - 3)
-		span = nknots - 3;
-	x -= span;
-	knot += span;
-
-	/* Evaluate the span cubic at x using Horner's rule. */
-	c3 = CR00*knot[0] + CR01*knot[1]
-	    + CR02*knot[2] + CR03*knot[3];
-	c2 = CR10*knot[0] + CR11*knot[1]
-	    + CR12*knot[2] + CR13*knot[3];
-	c1 = CR20*knot[0] + CR21*knot[1]
-	    + CR22*knot[2] + CR23*knot[3];
-	c0 = CR30*knot[0] + CR31*knot[1]
-	    + CR32*knot[2] + CR33*knot[3];
-
-	return ((c3*x + c2)*x + c1)*x + c0;
-}
-
-static double
-catrom2(d)
-double d;
-{
-#define SAMPRATE 100
-#define NENTRIES (4*SAMPRATE+1)
-	double x;
-	int i;
-	static double table[NENTRIES];
-	static int initialized=0;
-
-	if (d >= 4.) return 0;
-
-	if (!initialized) {
-		initialized = 1;
-		for (i=0 ; i < NENTRIES ; i++) {
-			x = sqrt(  (double)i / (double)SAMPRATE  );
-			if (x < 1)
-				table[i] = 0.5 * (2.+x*x*(-5+x*3));
-			else
-				table[i] = 0.5 * (4+x*(-8+x*(5-x)));
-		}
-	}
-
-	d = d*SAMPRATE + 0.5;
-	i = FLOOR(d);
-	if (i >= NENTRIES) return 0.;
-	return table[i];
-}
-
 
 /*
  *	Value Noise
@@ -902,15 +905,15 @@ long seed;
 {
 	register double *table = valueTab;
 	register int i;
-	int rndtabi = RNDTABSIZ - 1;
+	int rndtabi = RT_RAND_TABSIZE - 1;
 
 	if (valueTabInitialized) return;
 	valueTabInitialized = 1;
 
-	RANDSEED(seed);
+	RT_RANDSEED(rndtabi, seed);
 
 	for (i=0 ; i < TABSIZE ; i++ )
-		*table++ = 1. - 2.* RANDNBR;
+		*table++ = 1. - 2.* RT_RANDOM(rndtabi);
 }
 
 double
@@ -995,24 +998,24 @@ long seed;
 	double *table = gradientTab;
 	double r, z, theta;
 	int i;
-	int rndtabi = RNDTABSIZ - 1;
+	int rndtabi = RT_RAND_TABSIZE - 1;
 
 	if (gradientTabInitialized) return;
 	gradientTabInitialized = 1;
 
-	RANDSEED(seed);
+	RT_RANDSEED(rndtabi, seed);
 
 	for (i=0 ; i < TABSIZE ; i++) {
 
 		/* z is [-1:1] */
-		z = 1. - 2. * RANDNBR;
+		z = 1. - 2. * RT_RANDOM(rndtabi);
 
 
 		/* r is radius of x,y circle */
 		r = sqrt(1 - z*z);
 
 		/* theta is agnle in (x,y) */
-		theta = 2 * rt_pi * RANDNBR;
+		theta = 2 * rt_pi * RT_RANDOM(rndtabi);
 
 		*table++ = r * cos(theta);
 		*table++ = r * sin(theta);
@@ -1100,18 +1103,18 @@ long seed;
 {
 	int i;
 	double *f = impulseTab;
-	int rndtabi = RNDTABSIZ - 1;
+	int rndtabi = RT_RAND_TABSIZE - 1;
 
 	if (impulseTabInitialized) return;
 	impulseTabInitialized = 1;
 
-	RANDSEED(seed);
+	RT_RANDSEED(rndtabi, seed);
 
 	for (i = 0; i < TABSIZE; i++) {
-		*f++ = RANDNBR;
-		*f++ = RANDNBR;
-		*f++ = RANDNBR;
-		*f++ = 1. - 2.*RANDNBR;
+		*f++ = RT_RANDOM(rndtabi);
+		*f++ = RT_RANDOM(rndtabi);
+		*f++ = RT_RANDOM(rndtabi);
+		*f++ = 1. - 2.*RT_RANDOM(rndtabi);
 	}
 
 }
@@ -1289,7 +1292,7 @@ noise_init()
 {
 	point_t rp;
 	int i, j, k, temp;
-	int rndtabi = RNDTABSIZ - 1;
+	int rndtabi = RT_RAND_TABSIZE - 1;
 	
 	RES_ACQUIRE(&rt_g.res_model);
 
@@ -1300,14 +1303,14 @@ noise_init()
 
 	hashTableValid = 1;
 
-	RANDSEED( (RNDTABSIZ-1) );
+	RT_RANDSEED(rndtabi, (RT_RAND_TABSIZE-1) );
 	hashTable = (short *) rt_malloc(4096*sizeof(short int), "noise hashTable");
 	for (i = 0; i < 4096; i++)
 		hashTable[i] = i;
 
 	/* scramble the hash table */
 	for (k = 0, i = 4095; i > 0; i--, k++) {
-		j = (int)(RANDNBR * 4096.0);
+		j = (int)(RT_RANDOM(rndtabi) * 4096.0);
 
 		temp = hashTable[i];
 		hashTable[i] = hashTable[j];
@@ -1646,7 +1649,7 @@ double octaves;
 
 	return( value );
 
-} /* fBm() */
+} /* noise_fbm() */
 
 
 /*
@@ -1683,6 +1686,8 @@ double octaves;
 	 * possible future use
 	 */
 
+#define CACHE_SPECTRAL_WGTS 1
+#ifdef CACHE_SPECTRAL_WGTS
 	FIND_SPEC_WGT(ep, h_val, lacunarity, octaves);
 
 	/* now we're ready to compute the fBm value */
@@ -1709,7 +1714,27 @@ double octaves;
 		 */
             value += remainder * noise_perlin( pt ) * spec_wgts[i];
 	}
+#else
+	PCOPY(pt, point);	
 
+	value = 0.0;            /* initialize vars to proper values */
+	frequency = 1.0;
+
+	oct=(int)octaves; /* save repeating double->int cast */
+	for (i=0 ; i < oct ; i++) {
+		value += fabs(noise_perlin( pt )) * pow(frequency, -h_val);
+		frequency *= lacunarity;
+		PSCALE(pt, lacunarity);
+	}
+	
+	remainder = octaves - (int)octaves;
+	if ( remainder ) {
+		/* add in ``octaves''  remainder
+		 * ``i''  and spatial freq. are preset in loop above
+		 */
+            value += remainder * noise_perlin( pt ) * pow(frequency, -h_val);
+	}
+#endif
 	return( value );
 
-} /* fbm_turb() */
+} /* noise_turb() */
