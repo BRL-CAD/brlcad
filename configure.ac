@@ -788,6 +788,7 @@ AC_CONFIG_FILES([
 	doc/html/manuals/mged/Makefile
 	doc/html/manuals/mged/animmate/Makefile
 	doc/html/manuals/shaders/Makefile
+	doc/legal/Makefile
 	include/Makefile
 	misc/Makefile
 	misc/macosx/Makefile
