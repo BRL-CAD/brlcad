@@ -499,7 +499,7 @@ getsolid()
 		struct	wdb_pipeseg	head;		/* all ow a whole struct for head */
 
 		/* This might be getint( solid_type, 3, 2 ); for non-V5 */
-		numpts = getint( scard, 9, 2 );
+		numpts = getint( scard, 8, 2 );
 		num = numpts * 3 + 1;			/* 3 entries per pt */
 		
 		/* allocate space for the points array */
