@@ -27,6 +27,8 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
+#define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
+
 /*
  *  It is necessary to have a representation of 1.0/0.0, or "infinity"
  *  that fits within the dynamic range of the machine being used.
@@ -168,23 +170,35 @@ struct uvcoord {
  * a ray through a torus).
  */
 struct seg {
+	long		seg_magic;	/* sanity checking */
 	struct hit	seg_in;		/* IN information */
 	struct hit	seg_out;	/* OUT information */
 	struct soltab	*seg_stp;	/* pointer back to soltab */
 	struct seg	*seg_next;	/* non-zero if more segments */
 };
 #define SEG_NULL	((struct seg *)0)
+#define SEG_MAGIC	0x98bcdef1
+
+#define RT_CHECK_SEG(_p)	{ if( (_p)->seg_magic != SEG_MAGIC )  { \
+				rt_log("RT_CHECK_SEG(x%x) magic was x%x, s/b x%x, %s line %d\n", \
+					(_p), (_p)->seg_magic, SEG_MAGIC, \
+					__FILE__, __LINE__ ); \
+				rt_bomb("bad seg ptr\n"); \
+			} }
 
 #define GET_SEG(p,res)    { \
 			while( ((p)=res->re_seg) == SEG_NULL ) \
 				rt_get_seg(res); \
 			res->re_seg = (p)->seg_next; \
-			p->seg_next = SEG_NULL; \
+			(p)->seg_next = SEG_NULL; \
+			(p)->seg_magic = SEG_MAGIC; \
 			res->re_segget++; }
 
 #define FREE_SEG(p,res)  { \
+			RT_CHECK_SEG(p); \
 			(p)->seg_next = res->re_seg; \
 			res->re_seg = (p); \
+			(p)->seg_magic = 0; \
 			res->re_segfree++; }
 
 
@@ -344,6 +358,10 @@ struct region  {
  *
  *  NOTE:  rt_get_pt allows enough storage at the end of the partition
  *  for a bit vector of "rt_i.nsolids" bits in length.
+ *
+ *  NOTE:  The number of solids in a model can change from frame to frame
+ *  due to the effect of animations, so partition structures can be expected
+ *  to change length over the course of a single application program.
  */
 #define RT_HIT_NORM( hitp, stp, rayp )  { \
 	register int id = (stp)->st_id; \
@@ -354,6 +372,7 @@ struct region  {
 	rt_functab[id].ft_norm(hitp, stp, rayp); }
 
 struct partition {
+	long		pt_magic;		/* sanity check */
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
 	struct hit	*pt_inhit;		/* IN hit pointer */
 	struct seg	*pt_outseg;		/* OUT seg pointer */
@@ -363,26 +382,42 @@ struct partition {
 	struct partition *pt_back;		/* backwards link */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
+	int		pt_len;			/* rti_pt_bytes when created */
 	bitv_t		pt_solhit[1];		/* VAR bit array:solids hit */
 };
 #define PT_NULL		((struct partition *)0)
+#define PT_MAGIC	0x87687681
+
+#define RT_CHECK_PT(_p)	{ if( (_p)->pt_magic != PT_MAGIC )  { \
+				rt_log("RT_CHECK_PT(x%x) magic was x%x, s/b x%x, %s line %d\n", \
+					(_p), (_p)->pt_magic, PT_MAGIC, \
+					__FILE__, __LINE__ ); \
+				rt_bomb("bad partition ptr\n"); \
+			} }
 
 #define COPY_PT(ip,out,in)	{ \
 	bcopy((char *)in, (char *)out, ip->rti_pt_bytes); }
 
 /* Initialize all the bits to FALSE, clear out structure */
 #define GET_PT_INIT(ip,p,res)	{\
-	GET_PT(ip,p,res); bzero( ((char *) (p)), (ip)->rti_pt_bytes ); }
+	GET_PT(ip,p,res); \
+	bzero( ((char *) (p)), (ip)->rti_pt_bytes ); \
+	(p)->pt_len = (ip)->rti_pt_bytes; \
+	(p)->pt_magic = PT_MAGIC; }
 
 #define GET_PT(ip,p,res)   { \
-			while( ((p)=res->re_part) == PT_NULL ) \
+			while( res->re_parthead.pt_forw == PT_NULL || \
+			    ((p) = res->re_parthead.pt_forw) == &(res->re_parthead) || \
+			    (p)->pt_len != (ip)->rti_pt_bytes ) \
 				rt_get_pt(ip, res); \
-			res->re_part = (p)->pt_forw; \
+			(p)->pt_magic = PT_MAGIC; \
+			DEQUEUE_PT(p); \
 			res->re_partget++; }
 
 #define FREE_PT(p,res)  { \
-			(p)->pt_forw = res->re_part; \
-			res->re_part = (p); \
+			RT_CHECK_PT(p); \
+			(p)->pt_magic = 0; /* sanity */ \
+			APPEND_PT( (p), &(res->re_parthead) ); \
 			res->re_partfree++; }
 
 /* Insert "new" partition in front of "old" partition */
@@ -605,7 +640,7 @@ struct resource {
 	long		re_seglen;
 	long		re_segget;
 	long		re_segfree;
-	struct partition *re_part;	/* Head of freelist */
+	struct partition re_parthead;	/* Head of freelist */
 	long		re_partlen;
 	long		re_partget;
 	long		re_partfree;
@@ -623,7 +658,7 @@ struct resource {
 #define RESOURCE_MAGIC	0x83651835
 #define RT_RESOURCE_CHECK(_resp)	\
 	{if((_resp)->re_magic != RESOURCE_MAGIC) {\
-		rt_log("resp=x%x, magic s/b x%x was x%x, file %s line %d\n", \
+		rt_log("resp=x%x, magic s/b x%x was x%x, %s line %d\n", \
 			(_resp), RESOURCE_MAGIC, (_resp)->re_magic, \
 			__FILE__, __LINE__ ); \
 		rt_bomb("bad resource struct"); } }
@@ -765,9 +800,17 @@ struct rt_i {
 	struct soltab	**rti_sol_by_type[ID_MAXIMUM+1];
 	int		rti_nsol_by_type[ID_MAXIMUM+1];
 	int		rti_maxsol_by_type;
+	int		rti_air_discards;/* # of air regions discarded */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
+
+#define RT_CHECK_RTI(_p) { if( (_p)->rti_magic != RTI_MAGIC )  { \
+				rt_log("RT_CHECK_RTI(x%x) magic was x%x, s/b x%x, %s line %d\n", \
+					(_p), (_p)->rti_magic, RTI_MAGIC, \
+					__FILE__, __LINE__ ); \
+				rt_bomb("bad rti pointer\n"); \
+			} }
 
 /*
  *			V L I S T
