@@ -1995,8 +1995,12 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	int			another_pass;
 	int			total_splits = 0;
 	int			ret = 0;
+#if !HEART
 	struct nmg_ptbl		eutab;
+#endif
 	struct edgeuse		**eup;
+	struct nmg_ptbl		eu1_list;
+	struct nmg_ptbl		eu2_list;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu1);
@@ -2029,6 +2033,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
+	(void)nmg_tbl(&eu1_list, TBL_INIT,(long *)NULL);
+	(void)nmg_tbl(&eu2_list, TBL_INIT,(long *)NULL);
 
 	is->on_eg = eu1->e_p->eg_p;
     	is->l1 = &vert_list1;
@@ -2109,6 +2115,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		nmg_region_v_unique( is->s2->r_p, &is->tol );
 	}
 
+#if !HEART
 	/*
 	 *  The line of intersection is defined by the geometry of this
 	 *  edgeuse.  Therefore, all edgeuses which share edge geometry
@@ -2122,7 +2129,6 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	nmg_edgeuse_with_eg_tabulate( &eutab,
 		fu1 ? &fu1->l.magic : eu1->up.magic_p,
 		eu1->e_p->eg_p );
-#if !HEART
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
@@ -2135,19 +2141,27 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	}
 #endif
 
+	/* Build list of all edgeuses in eu1/fu1 and fu2 */
+	if( fu1 )  {
+		nmg_edgeuse_tabulate( &eu1_list, &fu1->l.magic );
+	} else {
+		nmg_edgeuse_tabulate( &eu1_list, &eu1->l.magic );
+	}
+	nmg_edgeuse_tabulate( &eu2_list, &fu2->l.magic );
+
 	/* Run infinite line containing eu1 through fu2 */
 #if HEART
 	total_splits = 1;
-	nmg_isect_line2_face2pNEW( is, fu2 );
+	nmg_isect_line2_face2pNEW( is, fu2, &eu2_list, &eu1_list );
 #else
 	total_splits = nmg_isect_line2_face2p( is, fu2, eu1, &eutab );
 #endif
 
-	/* Now, run line through fu1, if eu1 is not wire */
+	/* If eu1 is a wire, there is no fu1 to run line through. */
 	if( fu1 )  {
 		/* We are intersecting with ourself */
 #if HEART
-		nmg_isect_line2_face2pNEW( is, fu1 );
+		nmg_isect_line2_face2pNEW( is, fu1, &eu1_list, &eu2_list );
 #else
 		total_splits += nmg_isect_line2_face2p( is, fu1, 0, 0 );
 #endif
@@ -2155,7 +2169,9 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	if (rt_g.NMG_debug & DEBUG_POLYSECT )
 		rt_log("nmg_isect_edge2p_face2p(): total_splits=%d\n", lu, total_splits);
 
+#if !HEART
 	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
+#endif
 	if( total_splits <= 0 )  goto out;
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
@@ -2182,6 +2198,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&eu1_list, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&eu2_list, TBL_FREE, (long *)NULL);
 
 do_ret:
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
@@ -3280,11 +3298,12 @@ struct vertexuse		*hit_vu;	/* often will be NULL */
  *  at either 0 or 1 points, and no more.
  */
 void
-nmg_isect_line2_face2pNEW( is, fu1 )
+nmg_isect_line2_face2pNEW( is, fu1, eu1_list, eu2_list )
 struct nmg_inter_struct	*is;
 struct faceuse		*fu1;
+struct nmg_ptbl		*eu1_list;
+struct nmg_ptbl		*eu2_list;
 {
-	struct nmg_ptbl		eu_list;
 	struct nmg_ptbl		eg_list;
 	struct edge_g		**eg1;
 	struct edgeuse		**eu1;
@@ -3298,6 +3317,8 @@ struct faceuse		*fu1;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
+	NMG_CK_PTBL(eu1_list);
+	NMG_CK_PTBL(eu2_list);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_line2_face2pNEW(, fu1=x%x)\n", fu1);
@@ -3308,11 +3329,8 @@ struct faceuse		*fu1;
 	MAT4X3PNT( is->pt2d, is->proj, is->pt );
 	MAT4X3VEC( is->dir2d, is->proj, is->dir );
 
-	/* Build list of all edgeuses in fu1 */
-	nmg_edgeuse_tabulate( &eu_list, &fu1->l.magic );
-
 	/* Build list of all edge_g's in fu1 */
-	/* XXX This could be more cheaply done by cooking down eu_list */
+	/* XXX This could be more cheaply done by cooking down eu1_list */
 	nmg_edge_g_tabulate( &eg_list, &fu1->l.magic );
 
 	/* Process each distinct line in the face */
@@ -3335,27 +3353,28 @@ colinear:
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 				rt_log("\tThis edge_geom generated the line.  Enlisting.\n");
 			}
-			for( eu1 = (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list);
-			     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+			for( eu1 = (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list);
+			     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
 			     eu1++
 			)  {
 				register struct edgeuse	**eu2;
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != is->on_eg )  continue;
+				/* *eu1 is from fu1 */
 
-				for( eu2 = eu1+1;
-				     eu2 <= (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
+				for( eu2 = (struct edgeuse **)NMG_TBL_BASEADDR(eu2_list);
+				     eu2 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu2_list);
 				     eu2++
 				)  {
 					NMG_CK_EDGEUSE(*eu2);
 					if( (*eu2)->e_p->eg_p != is->on_eg )  continue;
-					/*  Perform intersection.
-					 *  New edgeuses are added to eu_list.
+					/*
+					 *  *eu2 is from fu2.
+					 *  Perform intersection.
+					 *  New edgeuses are added to lists.
 					 */
-					if( nmg_find_fu_of_eu(*eu1) ==
-					    nmg_find_fu_of_eu(*eu2) )  continue;
 					(void)nmg_isect_2colinear_edge2p( *eu1, *eu2,
-						fu1, is, &eu_list, &eu_list);
+						fu1, is, eu1_list, eu2_list);
 				}
 
 				/* For the case where only 1 face is involved */
@@ -3394,8 +3413,8 @@ colinear:
 		/* If on_eg was specified, do a topology search */
 		if( is->on_eg )  {
 			/* See if any vu along eg1 is used by edge from on_eg */
-			for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
-			     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list); eu1--
+			for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
+			     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list); eu1--
 			)  {
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != *eg1 )  continue;
@@ -3443,8 +3462,8 @@ colinear:
 		if( hit_vu )  hit_v = hit_vu->v_p;
 
 		/* Search all eu's on eg1 for vu's to enlist.  May be many. */
-		for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(&eu_list);
-		     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(&eu_list); eu1--
+		for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
+		     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list); eu1--
 		)  {
 			struct vertexuse	*vu1a, *vu1b;
 			struct vertexuse	*vu1_midpt;
@@ -3528,7 +3547,7 @@ hit_b:
 						rt_bomb("About to make 0-length edge!\n");
 				}
 				new_eu = nmg_ebreak(hit_v, *eu1);
-				nmg_tbl( &eu_list, TBL_INS_UNIQUE, &new_eu->l.magic );
+				nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 				vu1_midpt = new_eu->vu_p;
 				if( !hit_v )  {
 					hit_v = vu1_midpt->v_p;
@@ -3561,7 +3580,6 @@ hit_b:
 		nmg_isect_line2_vertex2( is, vu1, fu1 );
 		/* Only potential result is a use of vu1 added to the other face */
 	}
-	nmg_tbl( &eu_list, TBL_FREE, (long *)0 );
 	nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 }
 
@@ -3587,6 +3605,8 @@ struct faceuse		*fu1, *fu2;
 	int	again;		/* Need to do it again? */
 	int	trips;		/* Number of trips through loop */
 	CONST struct edgeuse	*on_eu;
+	struct nmg_ptbl		eu1_list;	/* all eu's in fu1 */
+	struct nmg_ptbl		eu2_list;	/* all eu's in fu2 */
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
@@ -3636,6 +3656,10 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
 
+	/* Build list of all edgeuses in fu1 and fu2 */
+	nmg_edgeuse_tabulate( &eu1_list, &fu1->l.magic );
+	nmg_edgeuse_tabulate( &eu2_list, &fu2->l.magic );
+
     	is->l1 = &vert_list1;
     	is->l2 = &vert_list2;
 	is->s1 = fu1->s_p;
@@ -3647,7 +3671,7 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 	 *  Note any colinear edgeuses in fu2 for potential sharing.
 	 */
 #if HEART
-	nmg_isect_line2_face2pNEW(is, fu1);
+	nmg_isect_line2_face2pNEW(is, fu1, &eu1_list, &eu2_list);
 #else
 	/* XXX Should these guys be made to share edge geometry? */
 	nmg_edgeuse_on_line_tabulate( &on_line, &fu2->l.magic,
@@ -3686,7 +3710,7 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 	is->fu2 = fu1;
 	is->fu1 = fu2;
 #if HEART
-	nmg_isect_line2_face2pNEW(is, fu2);
+	nmg_isect_line2_face2pNEW(is, fu2, &eu2_list, &eu1_list);
 #else
 	nmg_edgeuse_on_line_tabulate( &on_line, &fu1->l.magic,
 		is->pt, is->dir, &(is->tol) );
@@ -3744,6 +3768,8 @@ rt_log("Wow!  Found shared edge on_eu=x%x\n", on_eu);
 out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&eu1_list, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&eu2_list, TBL_FREE, (long *)NULL);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
