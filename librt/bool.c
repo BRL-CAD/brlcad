@@ -957,7 +957,6 @@ struct partition	*InputHdp;
 			RT_CK_REGION(regp);
 			if( regp->reg_is_fastgen != REGION_NON_FASTGEN )  n_fastgen++;
 		}
-		if( n_fastgen > 1 )  bu_log("WARNING: no code to resolve FASTGEN plate/plate overlaps (Yet)\n");
 
 		/* Compress out any null pointers in the table */
 		bu_ptbl_rm( regiontable, (long *)NULL );
@@ -2150,6 +2149,9 @@ int			rebuild_fastgen_plates_only;
 		for( i=0 ; i<BU_PTBL_END( &open_parts ) ; i++ )
 		{
 			int keep_open=0;
+
+			if( !pp )
+				break;
 
 			pp_open = (struct partition *)BU_PTBL_GET( &open_parts, i );
 			if( !pp_open )
