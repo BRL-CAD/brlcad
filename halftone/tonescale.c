@@ -7,7 +7,7 @@ extern int Debug;
 typedef struct Cubic {
 	double	x,A,B,C,D;
 } C;
-extern struct Cubic *EqCubics;
+static struct Cubic	*EqCubics=0;
 int eq_cubic();
 
 /*	tonescale	Given a raw pixel value, return a scaled value
@@ -42,6 +42,9 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 2.1  90/04/13  01:23:27  cjohnson
+ * First Relese.
+ * 
  * Revision 1.3  90/04/13  01:13:52  cjohnson
  * Cleanup the comments.
  * 
@@ -105,7 +108,6 @@ int 		(*eqptr)();
 	}
 }
 
-static struct Cubic	*EqCubics=0;
 /* eq_cubic	default tone scale alorithm
  *
  * impliment
