@@ -242,6 +242,11 @@ int call_dm;
 		    (char *)rt_units_string(dbip->dbi_local2base),
 		    TCL_GLOBAL_ONLY);
 
+#if 1
+	sprintf(azimuth,   "%3.2f", curr_dm_list->s_info->azimuth);
+	sprintf(elevation, "%2.2f", curr_dm_list->s_info->elevation);
+	sprintf(twist,     "%3.2f", curr_dm_list->s_info->twist);
+#else
 	/* Find current azimuth, elevation, and twist angles */
 	VSET( work , 0 , 0 , 1 );	/* view z-direction */
 	MAT4X3VEC( temp , view2model , work );
@@ -255,6 +260,7 @@ int call_dm;
 	sprintf(azimuth,   "%3.2f", az);
 	sprintf(elevation, "%2.2f", el);
 	sprintf(twist,     "%3.2f", tw);
+#endif
 	
 	Tcl_SetVar2(interp, MGED_DISPLAY_VAR, "azimuth", azimuth,
 		    TCL_GLOBAL_ONLY);
@@ -293,7 +299,11 @@ int call_dm;
 
 		label_edited_solid( pl, 8+1, xform, &es_int );
 
+#if 0
 		dmp->dm_setColor(dmp, DM_WHITE, 1);
+#else
+		dmp->dm_setColor(dmp, DM_YELLOW, 1);
+#endif
 		for( i=0; i<8+1; i++ )  {
 			if( pl[i].str[0] == '\0' )  break;
 			dmp->dm_drawString2D( dmp, pl[i].str,
