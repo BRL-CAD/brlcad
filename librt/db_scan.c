@@ -92,6 +92,7 @@ int			do_old_matter;
 	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_scan( x%x, x%x )\n", dbip, handler);
 
+	/* XXXX Note that this ignores dbip->dbi_inmem */
 	/* In a portable way, read the header (even if not rewound) */
 	rewind( dbip->dbi_fp );
 	if( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) != 1  ||
