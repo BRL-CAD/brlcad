@@ -21,6 +21,8 @@
 
 #include "machine.h"
 #include "externs.h"		/* For atoi */
+#include "vmath.h"
+#include "raytrace.h"
 #include "msr.h"
 struct msr_gauss *gp;
 struct msr_unif *up;
