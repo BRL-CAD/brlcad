@@ -8,7 +8,7 @@
 #
 
 # include standard utility functions
-. ./library
+. `dirname $0`/library
 
 
 # DEFAULT PUBLIC VARIABLE INITIALIZATION
@@ -56,7 +56,7 @@ initializeVariable SYSTEMS_D systems.d
 initializeVariable TESTS_D tests.d
 
 # current working directory
-initializeVariable START_PWD $PWD
+initializeVariable START_PWD $LPWD
 
 # cvs log file (do not change unless modify status.sh as well)
 initializeVariable CVS_LOGFILE .cvs-${HOSTNAME}.log
@@ -181,7 +181,7 @@ export LOG=$TLOG
 
 log "R E G R E S S I O N   M A S T E R" $TLOG
 log "=================================" $TLOG
-log "Running [$0] with PID [$$] from [$PWD] on [$HOSTNAME]" $TLOG
+log "Running [$0] with PID [$$] from [$LPWD] on [$HOSTNAME]" $TLOG
 log "Date is [`date`]" $TLOG
 log "Public Settings:" $TLOG
 log "\tREGRESS_DIR=$REGRESS_DIR" $TLOG
@@ -192,7 +192,7 @@ log "\tWAIT_FOR_LOCK_TIMEOUT=$WAIT_FOR_LOCK_TIMEOUT" $TLOG
 log "\tNO_WARNINGS=$NO_WARNINGS" $TLOG
 log "\tLOGFILE=$LOGFILE" $TLOG
 log "Private Settings:" $TLOG
-log "\tPWD=$PWD" $TLOG
+log "\tLPWD=$LPWD" $TLOG
 log "\tHOSTNAME=$HOSTNAME" $TLOG
 log "\tLOG=$LOG" $TLOG
 

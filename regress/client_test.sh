@@ -4,7 +4,7 @@
 #  from the client_wait.sh script.  That is how the environment variables
 #  get set.
 
-. ./library
+. `dirname $0`/library
 
 initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
 initializeVariable TESTS_DIR "$PWD/tests.d"

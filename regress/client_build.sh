@@ -3,7 +3,7 @@
 #  This script is intended to be run only by the client_build.sh script.
 #  That is where the necessary environment variables are set.
 
-. ./library
+. `dirname $0`/library
 
 
 args=`getopt b:d:e:qr:u: $*`

@@ -5,7 +5,7 @@
 #
 
 # include standard utility functions
-. ./library
+. `dirname $0`/library
 
 echo "client_wait.sh"
 echo "=============="
