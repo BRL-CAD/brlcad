@@ -79,6 +79,8 @@ static void toggle_perspective();
 void set_dirty_flag();
 void set_scroll();
 void set_absolute_tran();
+void set_absolute_view_tran();
+void set_absolute_model_tran();
 
 /*
  *  Cause screen to be refreshed when all cmds have been processed.
@@ -180,6 +182,8 @@ int flags;
     (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),
 		     (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
 
+    bu_vls_free(&str);
+
     return NULL;
 }
 
@@ -209,6 +213,8 @@ int flags;
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
     }
+
+    bu_vls_free(&str);
     return read_var(clientData, interp, name1, name2,
 		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
 }
@@ -342,6 +348,25 @@ set_scroll()
 void
 set_absolute_tran()
 {
+  /* calculate absolute_tran */
+  set_absolute_view_tran();
+
+  /* calculate absolute_model_tran */
+  set_absolute_model_tran();
+}
+
+void
+set_absolute_view_tran()
+{
+  /* calculate absolute_tran */
+  MAT4X3PNT(absolute_tran, model2view, orig_pos);
+  /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
+  VMOVE(last_absolute_tran, absolute_tran);
+}
+
+void
+set_absolute_model_tran()
+{
   point_t new_pos;
   point_t diff;
 
@@ -351,11 +376,6 @@ set_absolute_tran()
   VSCALE(absolute_model_tran, diff, 1/Viewscale);
   /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
   VMOVE(last_absolute_model_tran, absolute_model_tran);
-
-  /* calculate absolute_tran */
-  MAT4X3PNT(absolute_tran, model2view, orig_pos);
-  /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
-  VMOVE(last_absolute_tran, absolute_tran);
 }
 
 static void
