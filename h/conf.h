@@ -1,6 +1,9 @@
 #ifndef CONF_H
 #define CONF_H seen
 
+/* !!! Fuckers clobbered everything else -- need to merge manually with the full conf.h ... */
+#error "useless conf.h on non-windows"
+
 /*
  *			C O N F . H
  *
