@@ -197,6 +197,8 @@ brl-virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
 brl-vista	SGI 3030, w/FP chip, UNIX release 3.5
 brl-vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
 brl-vhs	Silicon Graphics 4D/60T, 12.5 Mhz clock 8MB memory
+brl-voyage	Silicon Graphics 4D/120, 16.7 Mhz clock 16 MB memory 
+brl-taylor	Silicon Graphics 4D/220, 25 Mhz clock 16 MB memory
 c1east	T{
 Convex C1 XP (2 IOPs, 4 Multibus, 64 Mbytes),
 S/W 6.0.1.12
@@ -540,6 +542,15 @@ Abs	vgr	121.89	54.47	45.17	40.35	49.02	62.18	BSD 4.3
 _
 Abs	spark	435.69	208.59	176.76	177.69	174.67	234.68	UTX 2.0
 *vgr	spark	3.53	3.61	4.17	4.29	3.40	3.80	no MACC
+_
+Abs	voyage	1969.57	1001.21	862.77	809.61	786.11	1085.85	Irix 3.1
+*vgr	voyage	15.31	18.38	19.10	20.06	16.03	17.77	-P2
+_
+Abs	taylor	2446.98	1076.24	912.03	837.56	799.58	1214.47	Irix 3.1
+*vgr	taylor	19.02	19.75	20.19	20.75	16.31	19.20	-P 1
+_
+Abs	taylor	4730.05	2225.56	1742.09	1590.57	1551.78	2368.01	Irix 3.1
+*vgr	taylor	36.76	40.85	38.56	39.41	31.65	37.44	-P 2
 .TE
 .NH 1
 ADDITIONAL STATISTICS
