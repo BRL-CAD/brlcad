@@ -60,6 +60,7 @@ extern fastf_t	aspect;			/* view aspect ratio X/Y */
 extern vect_t	dx_model;		/* view delta-X as model-space vect */
 extern vect_t	dy_model;		/* view delta-Y as model-space vect */
 extern point_t	eye_model;		/* model-space location of eye */
+extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
 /*****/
@@ -78,7 +79,6 @@ FILE            *plotfp;		/* optional plotting file */
 extern FILE	*outfp;			/* optional output file */
 
 extern double	azimuth, elevation;
-extern vect_t	dx_model;		/* view delta-X as model-space vect */
 
 char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
@@ -301,11 +301,11 @@ register struct partition *PartHeadp;
 	 *  would have generated this are:
 	 *  410	write(1,411) hcen,vcen,h,v,ncomp,dfirst,dlast,a,e
 	 *  411	format(2f7.1,2f9.3,i3,2f8.2,' A',f6.1,' E',f6.1)
-	 *
-	 *  NOTE:  azimuth and elevation should really be computed
-	 *  from ap->a_ray.r_dir;  for now, assume all rays are parallel.
 	 */
 #define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n"
+	if( rt_perspective > 0 )  {
+		ae_vec( &azimuth, &elevation, ap->a_ray.r_dir );
+	}
 	fprintf(outfp, SHOT_FMT,
 		hcen * MM2IN, vcen * MM2IN,
 		h * MM2IN, v * MM2IN,
