@@ -5,7 +5,7 @@
 #define SRCDIR	util
 #define PRODUCTS	fbanim loop pix-fb fb-pix \
 		pixbustup pixdiff pixinterp2x pixtile pixuntile \
-		pixflip-fb pixfade \
+		pixflip-fb pixfade pixfields \
 		pp-fb fbclear fbgrid \
 		orle-fb fb-orle orle-pix pix-orle \
 		rle-fb fb-rle rle-pix pix-rle \
@@ -17,13 +17,13 @@
 		gencolor pix-bw pix-bw3 pixfilter pixhist \
 		pixhist3d pixhist3d-pl \
 		pixrect pixrot pixscale pixstat fbcbars \
-		sun-pix mac-pix pixmerge op-bw \
+		sun-pix mac-pix pixmerge pixmatte op-bw \
 		pl-sgi pldebug plgetframe plrot \
 		dunncolor dunnsnap cat-fb \
 		buffer files-tape \
 		plcolor plline2 pl-pl pl-ps \
 		spm-fb pix-spm \
-		fbhelp gif2fb pix3filter \
+		fbfree fbhelp gif2fb pix3filter \
 		fbfade fbstretch gif-fb \
 		pix-sun pix-alias alias-pix pixcolors hd
 
@@ -59,6 +59,9 @@ sun-pix:	sun-pix.o
 pixmerge:	pixmerge.o
 	CC LDFLAGS -o pixmerge pixmerge.o LIBES
 
+pixmatte:	pixmatte.o
+	CC LDFLAGS -o pixmatte pixmatte.o LIBES
+
 fbcbars:	fbcbars.o LIBFB
 	CC LDFLAGS -o fbcbars fbcbars.o LIB_PRE''LIBFB LIBES
 
@@ -74,6 +77,9 @@ pixbustup:	pixbustup.o
 /* The difficulty here is obtaining the random number tables */
 pixfade:	pixfade.o
 	CC LDFLAGS -o pixfade pixfade.o CFLAGS ../rt/mathtab.c LIBES
+
+pixfields:	pixfields.o
+	CC LDFLAGS -o pixfields pixfields.o LIBES
 
 pixdiff:	pixdiff.o
 	CC LDFLAGS -o pixdiff pixdiff.o LIBES
@@ -95,6 +101,9 @@ pp-fb:		pp-fb.o LIBFB LIBTERMIO
 
 fbclear:	fbclear.o LIBFB
 	CC LDFLAGS -o fbclear fbclear.o LIB_PRE''LIBFB LIBES
+
+fbfree:	fbfree.o LIBFB
+	CC LDFLAGS -o fbfree fbfree.o LIB_PRE''LIBFB LIBES
 
 fbhelp:	fbhelp.o LIBFB
 	CC LDFLAGS -o fbhelp fbhelp.o LIB_PRE''LIBFB LIBES
