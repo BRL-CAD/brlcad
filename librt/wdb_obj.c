@@ -16,12 +16,15 @@
  *  Distribution Notice -
  *	Re-distribution of this software is restricted, as described in
  *	your "Statement of Terms and Conditions for the Release of
- *	The BRL-CAD Package" agreement.
+ *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 2000 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static const char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 #ifdef USE_STRING_H
