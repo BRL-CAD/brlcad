@@ -213,6 +213,7 @@ int regionid;
 		for( i=0; i<=sp->s_last; i++ )
 			sp->s_path[i] = path[i];
 	}
+	sp->s_materp = (char *)0;
 	sp->s_regionid = regionid;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;
@@ -237,11 +238,11 @@ int regionid;
 	if( sp != illump )  {
 		/* Add to linked list of solid structs */
 		APPEND_SOLID( sp, HeadSolid.s_back );
-		dmp->dmr_viewchange( 1, sp );		/* ADD solid */
+		dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 	} else {
 		/* replacing illuminated solid -- struct already linked in */
 		sp->s_iflag = UP;
-		dmp->dmr_viewchange( 3, sp );		/* REPLACE solid */
+		dmp->dmr_viewchange( DM_CHGV_REPL, sp );
 	}
 
 	return(1);		/* OK */
