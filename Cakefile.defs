@@ -164,7 +164,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(__CAKE__irix5)
+#if defined(__CAKE__6d) || defined(__CAKE__irix5)
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
 #	define	MTYPE	6d
@@ -238,7 +238,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #endif
 
-#if defined(__CAKE__irix6)
+#if defined(__CAKE__7d) || defined(__CAKE__irix6)
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a MIPS-3 32-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
@@ -589,7 +589,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #   endif
 #endif
 
-#if defined(sparc) && defined(__CAKE__SunOS5)
+#if defined(sparc) && (defined(__CAKE__sun5) || defined(__CAKE__SunOS5))
 /*	Sun "SparcStation" hardware, running Solaris (SunOS 5) */
 /*	SunOS 5, aka Solaris 2 support.  Looks like a SysV.  */
 #	undef	sun
@@ -900,7 +900,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
  *								*
  ****************************************************************/
 
-#if defined(__CAKE__irix4) || (defined(__sgi) && defined(__mips))
+#if defined(__CAKE__5d) || defined(__CAKE__irix4)
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
