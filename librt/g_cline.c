@@ -189,7 +189,15 @@ struct seg		*seghead;
 
 	cosa = VDOT( rp->r_dir, cline->h );
 
-	if( bn_distsq_line3_line3( dist, cline->V, cline->height, rp->r_pt, rp->r_dir, pt1, pt2 ) )
+	if( cosa > 0.0 )
+		tmp = cosa - 1.0;
+	else
+		tmp = cosa + 1.0;
+
+	(void)bn_distsq_line3_line3( dist, cline->V, cline->height,
+				     rp->r_pt, rp->r_dir, pt1, pt2 );
+
+	if( NEAR_ZERO( tmp, RT_DOT_TOL ) )
 	{
 		/* ray is parallel to CLINE */
 
@@ -362,6 +370,12 @@ register struct xray	*rp;
 		VREVERSE( hitp->hit_normal, hitp->hit_normal )
 	else if( dot >  0.0 && hitp->hit_surfno > 0 )
 		VREVERSE( hitp->hit_normal, hitp->hit_normal )
+
+	if( MAGNITUDE( hitp->hit_normal ) < 0.9 ) {
+		bu_log( "BAD normal for solid %s for ray -p %g %g %g -d %g %g %g\n",
+			stp->st_name, V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
+		bu_bomb( "BAD normal\n" );
+	}
 }
 
 /*
