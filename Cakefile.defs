@@ -148,19 +148,28 @@ set -S2 "/bin/sh"
 /*	Apple MAC II running A/UX 1.0 */
 #	undef	aux
 #	define	MTYPE	aux
-#       define  CC      /usr/local/bin/gcc
+#	if 0
+#		define  CC      /bin/cc
+#		define	OPTIMIZER	-O
+#	else
+#	       define  CC      /usr/local/bin/gcc
+#	       define  OPTIMIZER       -O -fstrength-reduce -fomit-frame-pointer -finline-functions
+#	endif
 #	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
 #	define	CC_OPTS	-Daux
-#       define  OPTIMIZER       -O -fstrength-reduce -fomit-frame-pointer -finline-functions
 #	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-/*      The next two defines are for rfbd version of libfb. */
-/* #    define  LIBFB_OBJS      if_remote if_X pkg */
-/* #    define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X */
+#	if	0
+/*      These defines are for rfbd version of libfb. */
+#		define  LIBFB_OBJS      if_remote if_X pkg
+#		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -lX11
+#	else
 /*      And the next two are for all the rest. */
-#       define  LIBFB_OBJS      if_remote pkg
-#       define  LIBFB_CONFIG    -DIF_REMOTE
-#	define	LIBFB_LIBES	LIBPKG -lX11
+#		define  LIBFB_OBJS      if_remote pkg
+#		define  LIBFB_CONFIG    -DIF_REMOTE
+#		define	LIBFB_LIBES	LIBPKG
+#	endif
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X
 #	define	MGED_LIBES	-lX11
@@ -288,8 +297,14 @@ set -S2 "/bin/sh"
 /*		This version for debugging:  DBX & PIXIE */
 #		define	OPTIMIZER	-g
 #		define	GFLAG		-G 16
-/*		To use PIXIE, you have to use the non-shared libraries */
-#		define	SHARED	/**/
+#		if 1
+/*			To use PIXIE, you have to use the non-shared libraries */
+#			define	SHARED	/**/
+#		else
+/*			DBX seems to work OK with shared libraries */
+/*			*bug: shared lampon() causes core dump */
+#			define	SHARED	_s
+#		endif
 #	endif
 #	define	MTYPE	4d
 #	define  CC_OPTS		GFLAG
@@ -430,11 +445,18 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 /*	-g -hnobtreg for debugging */
 #	if 1
-#		define	CC_DEFS -hvector,olevel_3
+/*		Cray ANSI Standard C */
+#		define	CC	/bin/scc
+#		define CC_DEFS	-hvreport
 #	else
-/*		Cray C 4.0 (experimental) */
-#		define	CC_DEFS -hvector,olevel_3,vmesg_2
-#		define	CC	/bin/ncc
+#		if 1
+/*			Plain old /bin/cc */
+#			define	CC_DEFS -hvector,olevel_3
+#		else
+/*			Cray C 4.0 (experimental) */
+#			define	CC_DEFS -hvector,olevel_3,vmesg_2
+#			define	CC	/bin/ncc
+#		endif
 #	endif
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
