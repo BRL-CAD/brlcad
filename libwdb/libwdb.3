@@ -9,7 +9,7 @@ mk_id( fp, title )
 FILE	*fp;
 char	*title;
 .sp
-mk_half( fp, name, norm, d)
+mk_half( fp, name, norm, d )
 FILE	*fp;
 char	*name;
 double	d;
@@ -30,13 +30,13 @@ FILE	*fp;
 char	*name;
 point_t	pts[];
 .sp
-mk_sph( fp, name, center, radius)
+mk_sph( fp, name, center, radius )
 FILE	*fp;
 char	*name;
 point_t	center;
 fastf_t	radius;
 .sp
-mk_ell( fp, name, center, a, b, c)
+mk_ell( fp, name, center, a, b, c )
 FILE	*fp;
 char	*name;
 point_t	center;
@@ -75,24 +75,35 @@ int	op;
 .sp
 mk_addmember( name, headp )
 char	*name;
-register struct wmember *headp;
+struct	wmember *headp;
 .sp
 mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
+struct	wmember *headp;
 char	*matname;
 char	*matparm;
 char	*rgb;
+.sp
+mk_lfcomb( fp, name, headp, region )
+FILE	*fp;
+char	*name;
+struct	wmember *headp;
 .sp
 mk_polysolid( fp, name )
 FILE	*fp;
 char	*name;
 .sp
-mk_facet( fp, npts, vert, norm )
+mk_poly( fp, npts, vert, norm )
 FILE	*fp;
 int	npts;
 fastf_t	vert[][3];
 fastf_t	norm[][3];
+.sp
+mk_fpoly( fp, npts, vert )
+FILE	*fp;
+int	npts;
+fastf_t	vert[][3];
 .sp
 mk_bsolid( fp, name, nsurf, res )
 FILE    *fp;
@@ -224,17 +235,20 @@ combination and member records all at once, rather than in two
 calls, as in 
 .I mk_comb\^
 and
-.I mk_memb\^
+.I mk_memb\^.
+.I mk_lfcomb\^
+is the linked list equivalent of
+.I mk_fcomb\^.
 .PP
 .I mk_polysolid\^
 writes the header record for a polygon solid called ``name'',
 which must be immediately
 followed by one or more
-.I mk_facet\^
+.I mk_poly\^
 calls before using any other
 .I mk_*\^
 routines.
-.I mk_facet\^
+.I mk_poly\^
 is called with ``npts'' (3 to 5) vertices in the ``vert'' array,
 with a matching number of normals in the ``norm'' array.
 All vertices must be coplanar.
@@ -242,6 +256,13 @@ For the present, note that librt/pg.c only uses the first normal
 in the ``norm'' array, although the intention is to do optional
 normal interpolation for those occasions where it may be desirable
 to have curved-looking polygons.
+.I mk_fpoly\^
+is like
+.I mk_poly\^
+except no normals are given.  It is a ``fast'' or ``flat'' form
+of the poly routine.  This function computes normals for you from
+the given vertices by assuming a counter clockwise ordering of the
+verticies as viewed from the top (outside).
 .PP
 The routine
 .I mk_bsolid\^
@@ -282,4 +303,4 @@ This software is Copyright (C) 1987 by the United States Army.
 All rights reserved.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
