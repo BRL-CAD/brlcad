@@ -134,7 +134,7 @@ register struct command_tab	*tp;
 			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
 		return(-1);		/* ERROR */
 	}
-	fprintf(stderr,"rt_do_cmd(%s):  command not found\n", cmd_args[0]);
+	rt_log("rt_do_cmd(%s):  command not found\n", cmd_args[0]);
 	return(-1);			/* ERROR */
 }
 
