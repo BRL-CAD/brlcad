@@ -184,8 +184,8 @@ union record  {
 		char	c_name[NAMESIZE];	/* unique name */
 		short	c_regionid;		/* region ID code */
 		short	c_aircode;		/* air space code */
-		short	c_length;		/* # of members (depricated) */
-		short	c_num;			/* DEPRECATED */
+		short	c_pad1;		/* was c_length, DEPRECATED: # of members */
+		short	c_pad2;		/* was c_num, DEPRECATED */
 		short	c_material;		/* (GIFT) material code */
 		short	c_los;			/* equivalent LOS estimate */
 		char	c_override;		/* non-0 ==> c_rgb is color */
@@ -206,7 +206,7 @@ union record  {
 		char	m_instname[NAMESIZE];	/* name of referred-to obj. */
 		short	m_pad1;
 		dbfloat_t m_mat[16];		/* homogeneous trans matrix */
-		short	m_num;			/* DEPRECATED: COMGEOM solid # ref */
+		short	m_pad2;	/* was m_num, DEPRECATED: COMGEOM solid # ref */
 	}  M;
 
 	struct material_rec {		/* whole record is DEPRECATED */
