@@ -3,14 +3,34 @@
 iges-g \- IGES Translator (IGES CSG to BRL-CAD)
 .SH SYNOPSIS
 .B iges-g
-file.iges database.g
+[-n|d|t] -o database.g file.iges
 .SH DESCRIPTION
 .I iges-g\^
 converts the specified
 .I file.iges
 to a BRL-CAD
 .I database.g
-file. The IGES file is expected to conform to IGES 5.1. All IGES CSG objects are converted to BRL-CAD
+file. The IGES file is expected to conform to IGES 5.1.
+The
+.I -n
+option specifies that all rational B-spline surfaces in the IGES file should be
+combined into one BRL-CAD spline solid.
+The
+.I -d
+option indicates that IGES drawings should be converted to BRL-CAD NMG objects.
+Theses objects will be 2-dimensional drawings, not solids.
+The
+.I -t
+option requests all the trimmed surfaces in the IGES file to be converted to
+BRL-CAD NMG solids. This option is experimental at this time.
+The absence of any of the
+.I -n
+, 
+.I -d
+, or
+.I -t
+options results in the default behavior where
+all IGES CSG and planar face BREP objects are converted to BRL-CAD
 equivalents. Most conversions are exact, with the exceptions of the solid of
 revolution and the solid of linear extrusion. These solids do not exist in BRL-CAD
 and are therefore approximated. The solid of revolution is built from a series of
@@ -19,12 +39,9 @@ of straight line segements. The extrusion is similarly handled by approximating 
 curve to be extruded with straight line segments and using that to build a BRL-CAD
 polysolid.  Planar faced IGES BREP objects are converted to BRLCAD NMG structures.
 Non-planar faced BREP objects are not yet supported in BRLCAD.
-IGES non-uniform rational B-spline surfaces (NURBS) are also converted, but
-all NURBS are combined into
-a single BRLCAD spline solid named "nurb.s".
 .SH EXAMPLE
 .RS
-$ \|\fIiges-g \|sample.iges \|sample.g\fP
+$ \|\fIiges-g \|-o sample.g \|sample.iges\fP
 .RE
 .SH "SEE ALSO"
 .I
