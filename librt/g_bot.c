@@ -1749,10 +1749,10 @@ CONST char			*attr;
 				}
 				else
 				{
-					i = atoi( &attr[2] ) - 1;
+					i = atoi( &attr[2] );
 					if( i < 0 || i >=bot->num_faces )
 					{
-						bu_vls_strcat( &vls, "face number out of range" );
+						bu_vls_printf( &vls, "face number %d out of range (0..%d)", i, bot->num_faces-1 );
 						status = TCL_ERROR;
 					}
 					else
@@ -1768,10 +1768,10 @@ CONST char			*attr;
 		{
 			if( attr[1] != '\0' )
 			{
-				i = atoi( &attr[1] ) - 1;
+				i = atoi( &attr[1] );
 				if( i < 0 || i >=bot->num_vertices )
 				{
-					bu_vls_strcat( &vls, "vertex number out of range" );
+					bu_vls_printf( &vls, "vertex number %d out of range (0..%d)", i, bot->num_vertices-1 );
 					status = TCL_ERROR;
 				}
 				else
@@ -1801,10 +1801,10 @@ CONST char			*attr;
 			}
 			else
 			{
-				i = atoi( &attr[1] ) - 1;
+				i = atoi( &attr[1] );
 				if( i < 0 || i >=bot->num_faces )
 				{
-					bu_vls_strcat( &vls, "face number out of range" );
+					bu_vls_printf( &vls, "face number %d out of range (0..%d)", i, bot->num_faces-1 );
 					status = TCL_ERROR;
 				}
 				else
@@ -1818,11 +1818,21 @@ CONST char			*attr;
 		else if( attr[0] == 'f' )
 		{
 			int indx;
-			/* Retrieve one face, as coordinates */
+			/* Retrieve one face, as list of 3tuple coordinates */
 			if( attr[1] == '\0' )
 			{
 				for( i=0 ; i<bot->num_faces ; i++ )  {
 					indx = bot->faces[i*3];
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						bot->vertices[indx*3],
+						bot->vertices[indx*3+1],
+						bot->vertices[indx*3+2] );
+					indx = bot->faces[i*3+1];
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						bot->vertices[indx*3],
+						bot->vertices[indx*3+1],
+						bot->vertices[indx*3+2] );
+					indx = bot->faces[i*3+2];
 					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
 						bot->vertices[indx*3],
 						bot->vertices[indx*3+1],
@@ -1835,12 +1845,22 @@ CONST char			*attr;
 				i = atoi( &attr[1] ) - 1;
 				if( i < 0 || i >=bot->num_faces )
 				{
-					bu_vls_printf( &vls, "face number %d out of range", i );
+					bu_vls_printf( &vls, "face number %d out of range (0..%d)", i, bot->num_faces-1 );
 					status = TCL_ERROR;
 				}
 				else
 				{
 					indx = bot->faces[i*3];
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						bot->vertices[indx*3],
+						bot->vertices[indx*3+1],
+						bot->vertices[indx*3+2] );
+					indx = bot->faces[i*3+1];
+					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
+						bot->vertices[indx*3],
+						bot->vertices[indx*3+1],
+						bot->vertices[indx*3+2] );
+					indx = bot->faces[i*3+2];
 					bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
 						bot->vertices[indx*3],
 						bot->vertices[indx*3+1],
@@ -1866,10 +1886,10 @@ CONST char			*attr;
 				}
 				else
 				{
-					i = atoi( &attr[1] ) - 1;
+					i = atoi( &attr[1] );
 					if( i < 0 || i >=bot->num_faces )
 					{
-						bu_vls_strcat( &vls, "face number out of range" );
+						bu_vls_printf( &vls, "face number %d out of range (0..%d)", i, bot->num_faces-1 );
 						status = TCL_ERROR;
 					}
 					else
@@ -1902,7 +1922,7 @@ CONST char			*attr;
 		}
 		else
 		{
-			bu_vls_strcat( &vls, "no such attribute" );
+			bu_vls_printf( &vls, "BoT has no attribute '%s'", attr );
 			status = TCL_ERROR;
 		}
 	}
