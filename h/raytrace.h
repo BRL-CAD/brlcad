@@ -732,8 +732,10 @@ struct rt_comb_internal  {
 	char		inherit;
 };
 #define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
-#define RT_CK_COMB(_p)		BU_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
-
+#define RT_CHECK_COMB(_p)		BU_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
+#define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
+#define RT_CHECK_COMB_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p,RT_COMB_MAGIC, "rt_comb_internal" )
+#define RT_CK_COMB_TCL(_interp,_p)	RT_CHECK_COMB_TCL(_interp,_p)
 
 /*
  *			R T _ W D B
