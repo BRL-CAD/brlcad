@@ -1,6 +1,7 @@
 /*
  *			rt/Cakefile
  */
+#define CONFIGDEFS	RT_CONFIG
 
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck
@@ -20,59 +21,56 @@
 	plastic cook wray spm light cmd \
 	marble stxt
 
-#ifndef	RT_CONFIG
-#	define	RT_CONFIG	/**/
-#endif
-
 /* Explicit composition of each product */
 
 #define	RT_OBJ	rt.o do.o worker.o text.o cloud.o view.o wray.o \
-		material.o refract.o stack.o plastic.o cook.o mathtab.o \
-		spm.o light.o cmd.o marble.o stxt.o
+		mathtab.o material.o refract.o stack.o plastic.o \
+		cook.o spm.o light.o cmd.o marble.o stxt.o
 
-#if defined(CRAY1)
+#if defined(old_CRAY1)
 /* XMP UNICOS version, sigh */
 #	define	XMP_MULTI	/lib/multi/libc.o \
 		/lib/multi/libu.o \
 		/lib/multi/libm.o 
 
 rt:	RT_OBJ LIBRT
-	CC CFLAGS RT_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rt
 	echo "nodeflib;symbols=off;map=stat;stack=200000+60000;heap=50000+50000" >segldr.cmds
 	segldr -ort RT_OBJ LIBRT LIBFB LIBSYSV LIBMALLOC XMP_MULTI segldr.cmds
 #else
 
 rt:	RT_OBJ LIBRT
-	CC CFLAGS RT_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rt
+	CC LDFLAGS RT_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rt
 
 #endif
 
 #define RTRAY_OBJ	rt.o do.o worker.o viewray.o \
-			wray.o mathtab.o cmd.o 
+			wray.o mathtab.o cmd.o material.o
 
 rtray:	RTRAY_OBJ LIBRT
-	CC CFLAGS RTRAY_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rtray
+	CC LDFLAGS RTRAY_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtray
 
-#define RTPP_OBJ	rt.o do.o worker.o viewpp.o mathtab.o cmd.o
+#define RTPP_OBJ	rt.o do.o worker.o viewpp.o mathtab.o \
+			cmd.o material.o
 
 rtpp:	RTPP_OBJ LIBRT
-	CC CFLAGS RTPP_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rtpp
+	CC LDFLAGS RTPP_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtpp
 
-#define RTRAD_OBJ	rt.o do.o worker.o viewrad.o mathtab.o cmd.o 
+#define RTRAD_OBJ	rt.o do.o worker.o viewrad.o mathtab.o \
+			cmd.o material.o
 
 rtrad:	RTRAD_OBJ LIBRT
-	CC CFLAGS RTRAD_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rtrad
+	CC LDFLAGS RTRAD_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtrad
 
 #define RTCHECK_OBJ	rt.o do.o worker.o viewcheck.o \
-			mathtab.o cmd.o 
+			mathtab.o cmd.o material.o
 
 rtcheck: RTCHECK_OBJ LIBRT
-	CC CFLAGS RTCHECK_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rtcheck
+	CC LDFLAGS RTCHECK_OBJ LIBRT LIBFB RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtcheck
 
 rtshot:	rtshot.o LIBRT
-	CC CFLAGS rtshot.o LIBRT RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rtshot
+	CC LDFLAGS rtshot.o LIBRT RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtshot
 
 rtwalk:	rtwalk.o LIBRT
-	CC CFLAGS rtwalk.o LIBRT RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rtwalk
+	CC LDFLAGS rtwalk.o LIBRT RT_LIBES LIBSYSV LIBMALLOC LIBES -o rtwalk
 
 #include "../Cakefile.rules"
