@@ -1014,9 +1014,7 @@ CONST struct rt_tol		*tol;
 		nmg_tbl( &edgeuses, TBL_FREE, 0 );
 		edgeuses = new_edgeuses;		/* struct copy */
 	}
-#if 0
 	if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC) )
-#endif
 		rt_log("nmg_model_break_e_on_v() broke %d edges\n", count);
 	return count;
 }
@@ -1592,24 +1590,29 @@ CONST struct edgeuse	*eu;
 }
 
 /*
- *			N M G _ F I N D _ N E X T _ U S E _ O F _ E _ I N _ L U
+ *			N M G _ F I N D _ N E X T _ U S E _ O F _ 2 E _ I N _ L U
+ *
+ *  Find the next use of either of two edges in the loopuse.
+ *  The second edge pointer may be NULL.
  */
 CONST struct edgeuse *
-nmg_find_next_use_of_e_in_lu( eu )
+nmg_find_next_use_of_2e_in_lu( eu, e1, e2 )
 CONST struct edgeuse	*eu;
+CONST struct edge	*e1;
+CONST struct edge	*e2;		/* may be NULL */
 {
 	CONST register struct edgeuse	*neu;
 	CONST register struct edge	*e;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_LOOPUSE(eu->up.lu_p);	/* sanity */
-	e = eu->e_p;
-	NMG_CK_EDGE(e);
+	NMG_CK_EDGE(e1);
+	if(e2) NMG_CK_EDGE(e2);
 
 	neu = eu;
 	do  {
 		neu = RT_LIST_PNEXT_CIRC( edgeuse, &neu->l );
-	} while( neu->e_p != e );
+	} while( neu->e_p != e1 && neu->e_p != e2 );
 	return neu;
 
 }
@@ -1631,8 +1634,10 @@ CONST struct edgeuse	*eu;
  *  in the loopuses's edgeuse order.
  */
 void
-nmg_radial_mark_cracks( hd, tol )
+nmg_radial_mark_cracks( hd, e1, e2, tol )
 struct rt_list		*hd;
+CONST struct edge	*e1;
+CONST struct edge	*e2;		/* may be NULL */
 CONST struct rt_tol	*tol;
 {
 	struct nmg_radial	*rad;
@@ -1643,6 +1648,8 @@ CONST struct rt_tol	*tol;
 	int			outie;
 
 	RT_CK_LIST_HEAD(hd);
+	NMG_CK_EDGE(e1);
+	if(e2) NMG_CK_EDGE(e2);
 	RT_CK_TOL(tol);
 
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
@@ -1711,19 +1718,27 @@ CONST struct rt_tol	*tol;
 		/* Mark off pairs of edgeuses, one per trip through loop. */
 		eu = rad->eu;
 		for( ; uses >= 2; uses-- )  {
-			eu = nmg_find_next_use_of_e_in_lu( eu );
-			if( eu == rad->eu )
+			eu = nmg_find_next_use_of_2e_in_lu( eu, e1, e2 );
+rt_log("rad->eu=x%x, eu=x%x, uses=%d\n", rad->eu, eu, uses);
+			if( eu == rad->eu )  {
+				nmg_pr_lu_briefly( lu, 0 );
+				nmg_pr_radial_list( hd, tol );
 				rt_bomb("nmg_radial_mark_cracks() loop too short!\n");
+			}
 
 			other = nmg_find_radial_eu( hd, eu );
 			/* Mark 'em as "outies" */
 			other->is_crack = 1;
 			other->is_outie = 1;
 		}
+
 		/* Should only be one left, this one is an "innie":  it borders surface area */
-		eu = nmg_find_next_use_of_e_in_lu( eu );
-		if( eu != rad->eu )
+		eu = nmg_find_next_use_of_2e_in_lu( eu, e1, e2 );
+		if( eu != rad->eu )  {
+			nmg_pr_lu_briefly( lu, 0 );
+			nmg_pr_radial_list( hd, tol );
 			rt_bomb("nmg_radial_mark_cracks() loop didn't return to start\n");
+		}
 
 		rad->is_crack = 1;
 		rad->is_outie = 0;		/* "innie" */
@@ -2202,7 +2217,7 @@ CONST struct rt_tol	*tol;
 	nmg_radial_merge_lists( &list1, &list2, tol );
 	nmg_radial_verify_monotone( &list1, tol );
 
-	nmg_radial_mark_cracks( &list1, tol );
+	nmg_radial_mark_cracks( &list1, eu1->e_p, eu2->e_p, tol );
 
 	for( sp = (struct shell **)NMG_TBL_LASTADDR(&shell_tbl);
  	     sp >= (struct shell **)NMG_TBL_BASEADDR(&shell_tbl); sp-- 
@@ -2388,7 +2403,7 @@ CONST struct rt_tol	*tol;
 	/* In bad cases, this routine may rt_bomb() */
 	nmg_radial_build_list( &list, NULL, 1, eu, xvec, yvec, zvec, tol );
 
-	nmg_radial_mark_cracks( &list, tol );
+	nmg_radial_mark_cracks( &list, eu->e_p, NULL, tol );
 
 	nflip = nmg_radial_mark_flips( &list, s, tol );
 	if( nflip )  {
