@@ -1841,7 +1841,8 @@ struct rt_functab {
 			struct rt_piecelist * /*plp*/,
 			double /* dist_correction to apply to hit distances */,
 			struct xray * /* ray transformed to be near cut cell */,
-			struct application * /*ap*/));	/* has resource */
+			struct application * /*ap*/,	/* has resource */
+			struct seg * /*seghead*/));	/* used only for PLATE mode hits */
 	void 	(*ft_piece_hitsegs) BU_ARGS((
 			struct rt_piecestate * /*psp*/,
 			struct seg * /*seghead*/,
