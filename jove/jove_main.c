@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.9  87/05/05  21:04:12  dpk
+ * Simplified getchar code. Now all systems use the read loop
+ * 
  * Revision 2.8  87/04/14  20:14:21  dpk
  * Added SIGHUP fix.
  * 
@@ -170,7 +173,7 @@ finish(code)
 	byebye(code);
 }
 
-#define NTOBUF	20		/* Should never get that far ahead */
+#define NTOBUF	256		/* Should never get that far ahead */
 static char	smbuf[NTOBUF],
 		*bp = smbuf;
 static int	nchars = 0;
@@ -244,9 +247,9 @@ charp()
 		 */
 		flags = fcntl( Input, F_GETFL, 0);
 		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
-		c = read(Input, smbuf, sizeof smbuf);
+		c = read(Input, smbuf+nchars, sizeof(smbuf)-nchars);
 		if (c > 0)
-			nchars = c;
+			nchars += c;
 		(void)fcntl( Input, F_SETFL, flags );
 #else SYS5
 		int c;
