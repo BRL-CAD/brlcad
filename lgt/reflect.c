@@ -16,6 +16,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <fcntl.h>
 #include <math.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -562,6 +567,66 @@ struct partition *pt_headp;
 	return	1;
 	}
 
+#define MA_WHITESP ", \t"	/* seperators for parameter list */
+#define MA_MID	   "mid"
+#define MA_LENPARM 512 /* Must be 1 byte longer than length of ma_matparm
+			field of mater_info struct in raytrace.h; last
+			time I looked it was 60, but I anticipate that
+			we will outgrow that soon.  A defined constant
+			in raytrace.h would be nice, but no-o-o-o. */
+/*
+	bool getMaMID( struct mater_info *map, int *id )
+
+	This is a kludge to permit material ids to be assigned to groups
+	in 'mged'.  Since the mater_info struct can be inherited down the
+	tree, we will use it.  If the string MA_MID=<digits> appears in the
+	ma_matparm array, we will assign those digits to the material id
+	of this region.
+ */
+_LOCAL_ bool
+getMaMID( map, id )
+struct mater_info *map;
+int *id;
+	{	char matparm[MA_LENPARM];
+		char *name;
+		char *value;
+		register char *p;
+	if( map->ma_matname[0] == '\0' )
+		return	false;
+	/* guard against changes to length of ma_matparm field */
+	if( sizeof(map->ma_matparm) > MA_LENPARM-1 )
+		{
+		rt_log( "BUG: Must lengthen MA_LENPARM to be %u bytes.\n",
+			sizeof( map->ma_matparm ) );
+		return	false;
+		}
+	/* copy parameter string to scratch buffer and null terminate */
+	(void) strncpy( matparm, map->ma_matparm, sizeof(map->ma_matparm) );
+	matparm[sizeof(map->ma_matparm)] = '\0';
+	/* get <name>=<value> string */
+	if( (name = strtok( matparm, MA_WHITESP )) == NULL )
+		return	false;
+	do
+		{
+		/* break it down into name and value */
+		for( p = name; *p != '\0'; p++ )
+			if( *p == '=' )
+				{
+				value = p+1;
+				*p = '\0';
+				break;
+				}
+		/* if we have a material id, get it and return */
+		if(	strcmp( name, MA_MID ) == 0
+		    &&	sscanf( value, "%d", id ) == 1 )
+			return	true;
+		}
+	/* keep trying for rest of parameter string */
+	while( (name = strtok( NULL, MA_WHITESP )) != NULL );
+	return	false;		
+	}
+
+
 /*	f _ M o d e l ( )
 	'Hit' application specific routine for 'rt_shootray()' from
 	observer or a bounced ray.
@@ -618,7 +683,8 @@ struct partition *pt_headp;
 	}
 
 	/* Get material id as index into material database.		*/
-	material_id = (int)(pp->pt_regionp->reg_gmater);
+	if( ! getMaMID( &pp->pt_regionp->reg_mater, &material_id ) )
+		material_id = (int)(pp->pt_regionp->reg_gmater);
 
 	/* Get material database entry.					*/
 	if( ir_mapping )

@@ -19,6 +19,10 @@
 #define TRUE		1
 #define FALSE		0
 #endif
+#ifndef true
+#define true		1
+#define false		0
+#endif
 #define Toggle(f)	(f) = !(f)
 #define Malloc_Bomb( _bytes_ ) \
 		fb_log( "\"%s\"(%d) : allocation of %d bytes failed.\n", \
@@ -68,6 +72,8 @@
 #define DEBUG_CELLSIZE	0x800000
 #define DEBUG_OCTREE	0x1000000
 
+typedef int	bool;
+
 /* Light source (LS) specific global information.
 	Directions are with respect to the center of the model as calculated
 	by 'librt.a'.
@@ -90,8 +96,6 @@ typedef struct
 	}
 Lgt_Source;
 #define LGT_NULL	(Lgt_Source *) NULL
-
-typedef int	bool;
 
 typedef struct
 	{
