@@ -171,7 +171,7 @@ struct dm dm_XGL = {
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	PLOTBOUND,
-	"XGL", "XGL (X11)",
+	"xgl", "XGL (X11)",
 	0,
 	XGL_dm,
 };
