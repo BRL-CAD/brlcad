@@ -113,7 +113,7 @@ struct bu_vls	*vp;
 	register int i;
 	int ms;
 
-	RT_VLS_CHECK(vp);
+	BU_CK_VLS(vp);
 
 	t = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
 	    (r1->ru_utime.tv_usec-r0->ru_utime.tv_usec)/10000+
