@@ -24,6 +24,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "db.h"
 #include "./debug.h"
 
 struct rt_g rt_g;				/* All global state */
@@ -41,6 +42,7 @@ extern int	spl_prep(), spl_class();
 extern int	sph_prep(), sph_class();
 extern int	ebm_prep(), ebm_class();
 extern int	vol_prep(), vol_class();
+extern int	arbn_prep(), arbn_class();
 
 extern void	nul_print(), nul_norm(), nul_uv();
 extern void	tor_print(), tor_norm(), tor_uv();
@@ -55,6 +57,7 @@ extern void	spl_print(), spl_norm(), spl_uv();
 extern void	sph_print(), sph_norm(), sph_uv();
 extern void	ebm_print(), ebm_norm(), ebm_uv();
 extern void	vol_print(), vol_norm(), vol_uv();
+extern void	arbn_print(), arbn_norm(), arbn_uv();
 
 extern void	nul_curve(), nul_free(), nul_plot();
 extern void	tor_curve(), tor_free(), tor_plot();
@@ -69,6 +72,7 @@ extern void	spl_curve(), spl_free(), spl_plot();
 extern void	sph_curve(), sph_free(), sph_plot();
 extern void	ebm_curve(), ebm_free(), ebm_plot();
 extern void	vol_curve(), vol_free(), vol_plot();
+extern void	arbn_curve(), arbn_free(), arbn_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -83,6 +87,7 @@ extern struct seg *spl_shot();
 extern struct seg *sph_shot();
 extern struct seg *ebm_shot();
 extern struct seg *vol_shot();
+extern struct seg *arbn_shot();
 
 extern void	nul_vshot();
 extern void	ell_vshot();
@@ -92,6 +97,7 @@ extern void	rec_vshot();
 extern void	arb_vshot();
 extern void	tgc_vshot();
 extern void	tor_vshot();
+extern void	arbn_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
 
 extern void	nul_tess();
@@ -108,6 +114,7 @@ extern void	tor_tess();
 extern void	ebm_tess();
 extern void	vol_tess();
 #endif
+extern void	arbn_tess();
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
@@ -180,6 +187,11 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		vol_uv,		vol_curve,	vol_class,	vol_free,
 		vol_plot,	rt_vstub,	nul_tess,
 
+	"ID_ARBN",	0,
+		arbn_prep,	arbn_shot,	arbn_print,	arbn_norm,
+		arbn_uv,	arbn_curve,	arbn_class,	arbn_free,
+		arbn_plot,	arbn_vshot,	arbn_tess,
+
 	">ID_MAXIMUM",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
 		nul_uv,		nul_curve,	nul_class,	nul_free,
@@ -204,3 +216,89 @@ void DEF(nul_free)
 void DEF(nul_plot)
 void DEF(nul_vshot)
 void DEF(nul_tess);
+
+/* Map for database solidrec objects to internal objects */
+static char idmap[] = {
+	ID_NULL,	/* undefined, 0 */
+	ID_NULL,	/* RPP	1 axis-aligned rectangular parallelopiped */
+	ID_NULL,	/* BOX	2 arbitrary rectangular parallelopiped */
+	ID_NULL,	/* RAW	3 right-angle wedge */
+	ID_NULL,	/* ARB4	4 tetrahedron */
+	ID_NULL,	/* ARB5	5 pyramid */
+	ID_NULL,	/* ARB6	6 extruded triangle */
+	ID_NULL,	/* ARB7	7 weird 7-vertex shape */
+	ID_NULL,	/* ARB8	8 hexahedron */
+	ID_NULL,	/* ELL	9 ellipsoid */
+	ID_NULL,	/* ELL1	10 another ellipsoid ? */
+	ID_NULL,	/* SPH	11 sphere */
+	ID_NULL,	/* RCC	12 right circular cylinder */
+	ID_NULL,	/* REC	13 right elliptic cylinder */
+	ID_NULL,	/* TRC	14 truncated regular cone */
+	ID_NULL,	/* TEC	15 truncated elliptic cone */
+	ID_TOR,		/* TOR	16 toroid */
+	ID_NULL,	/* TGC	17 truncated general cone */
+	ID_TGC,		/* GENTGC 18 supergeneralized TGC; internal form */
+	ID_ELL,		/* GENELL 19: V,A,B,C */
+	ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
+	ID_NULL,	/* HACK: ARS 21: arbitrary triangular-surfaced polyhedron */
+	ID_NULL,	/* HACK: ARSCONT 22: extension record type for ARS solid */
+	ID_NULL,	/* ELLG 23:  gift-only */
+	ID_HALF,	/* HALFSPACE 24:  halfspace */
+	ID_NULL,	/* HACK: SPLINE 25 */
+	ID_NULL		/* n+1 */
+};
+
+/*
+ *			R T _ I D _ S O L I D
+ *
+ *  Given a database record, determine the proper rt_functab subscript.
+ *  Used by MGED as well as internally to librt.
+ *
+ *  Returns ID_xxx if successful, or ID_NULL upon failure.
+ */
+int
+rt_id_solid( rec )
+register union record *rec;
+{
+	register int id;
+
+	switch( rec->u_id )  {
+	case ID_SOLID:
+		id = idmap[rec->s.s_type];
+		break;
+	case ID_ARS_A:
+		id = ID_ARS;
+		break;
+	case ID_P_HEAD:
+		id = ID_POLY;
+		break;
+	case ID_BSOLID:
+		id = ID_BSPLINE;
+		break;
+	case ID_STRSOL:
+		/* XXX This really needs to be some kind of table */
+		if( strncmp( rec->ss.ss_str, "ebm", 3 ) == 0 )  {
+			id = ID_EBM;
+			break;
+		} else if( strncmp( rec->ss.ss_str, "vol", 3 ) == 0 )  {
+			id = ID_VOL;
+			break;
+		}
+		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
+			rec->ss.ss_name, rec->ss.ss_str );
+		id = ID_NULL;		/* BAD */
+		break;
+	case DBID_ARBN:
+		id = ID_ARB8;
+		break;
+	default:
+		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
+		id = ID_NULL;		/* BAD */
+		break;
+	}
+	if( id < ID_NULL || id > ID_MAXIMUM )  {
+		rt_log("rt_id_solid: internal error, id=%d?\n", id);
+		id = ID_NULL;		/* very BAD */
+	}
+	return(id);
+}
