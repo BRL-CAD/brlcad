@@ -160,7 +160,7 @@ long		*novote;
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )
 		EUPRINT("Hard question time", eu);
 
-	rt_log("nmg intersection: assuming miss\n");
+	rt_log("joint_hitmiss2: NO CODE HERE, assuming miss\n");
 	rt_log(" eu_rinf=x%x, eu->eumate_p=x%x, eu=x%x\n", eu_rinf, eu->eumate_p, eu);
 	rt_log(" eu lu orient=%s, eu_rinf lu orient=%s\n",
 		nmg_orientation(eu->up.lu_p->orientation),
