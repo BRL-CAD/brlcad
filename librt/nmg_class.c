@@ -196,6 +196,11 @@ long		*novote;
 		VPRINT("pt_hitmis_e\tProjected pt", pt);
 		EUPRINT("          \tVS. eu", eu);
 	}
+	/*
+	 * XXX Note here that "pca" will be one of the endpoints,
+	 * except in the case of a near miss.
+	 * Even if "pt" is far, far away.  This can be confusing.
+	 */
 	dist = rt_dist_pt_lseg(pca, eupt, matept, pt, tol);
 	if( dist < 0.0 )  rt_log("pt_hitmis_e: neg dist=%g?\n", dist);
 
@@ -208,7 +213,7 @@ long		*novote;
 
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 				EUPRINT("\t\tcloser to edgeuse", eu);
-				rt_log("\t\tdistance: %g\n", dist);
+				rt_log("\t\tdistance: %g (closest=%g)\n", dist, closest->dist);
 		}
 
 		if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
@@ -416,6 +421,8 @@ CONST struct rt_tol	*tol;
 	struct faceuse	*fu;
 	struct model	*m;
 	long		*novote; /* faces that can't vote in a hit list */
+	vect_t		region_diagonal;
+	fastf_t		region_diameter;
 
 	RT_CK_TOL(tol);
 
@@ -432,9 +439,12 @@ CONST struct rt_tol	*tol;
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
 	novote = (long *)rt_calloc( m->maxindex, sizeof(long), "pt_inout_s novote[]" );
+	NMG_CK_REGION_A(s->r_p->ra_p);
+	VSUB2( region_diagonal, s->r_p->ra_p->max_pt, s->r_p->ra_p->min_pt );
+	region_diameter = MAGNITUDE(region_diagonal);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		VPRINT("\tFiring vector:", projection_dir);
+		rt_log("\tPt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n", V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
 
 	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
 	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd)) {
@@ -476,9 +486,12 @@ CONST struct rt_tol	*tol;
 		}
 
 		if (stat >= 0 && dist >= 0) {
-			/* compare extent of face to projection of pt on plane
-			*/
-			if (pt[Y] >= fu->f_p->fg_p->min_pt[Y] &&
+			/* compare extent of face to projection of pt on plane */
+			if( dist > region_diameter )  {
+				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+					rt_log("\tpt_inout_s: hit plane outside region, skipping\n");
+			} else if(
+			    pt[Y] >= fu->f_p->fg_p->min_pt[Y] &&
 			    pt[Y] <= fu->f_p->fg_p->max_pt[Y] &&
 			    pt[Z] >= fu->f_p->fg_p->min_pt[Z] &&
 			    pt[Z] <= fu->f_p->fg_p->max_pt[Z]) {
@@ -495,10 +508,7 @@ CONST struct rt_tol	*tol;
 						rt_log("\tnon-manifold face\n");
 					return(0);
 				}
-
-
 			}
-
 		}
 
 		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
