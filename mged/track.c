@@ -23,8 +23,6 @@
 #include "./dm.h"
 
 extern void aexists();
-extern int atoi();
-extern char *strcat(), *strcpy();
 
 extern int 	numargs;
 extern char	*cmd_args[];

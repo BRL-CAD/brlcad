@@ -38,9 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern int	atoi();
-extern long	time();
-
 int		drawreg;	/* if > 0, process and draw regions */
 int		regmemb;	/* # of members left to process in a region */
 int		reg_pathpos;	/* pathpos of a processed region */

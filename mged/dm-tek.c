@@ -31,8 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./solid.h"
 
-extern void	perror();
-
 typedef unsigned char u_char;
 
 /* Display Manager package interface */
@@ -113,7 +111,7 @@ Tek_open()
 	line[strlen(line)-1] = '\0';			/* remove newline */
 	if( feof(stdin) )  quit();
 	if( line[0] != '\0' )  {
-		char *p, *strchr();
+		char *p;
 
 		/* check for blit emualtor flag */
 		if (p=strchr(line, ' ')) {

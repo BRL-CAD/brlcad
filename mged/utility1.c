@@ -47,8 +47,6 @@ extern void f_quit();
 
 extern char	*local_unit[];
 
-extern struct passwd *getpwuid();
-
 void		tables(), edcodes(), changes(), prfield();
 
 /* structure to distinguish new solids from existing (old) solids */
@@ -80,7 +78,7 @@ char operate;
 int regflag, numreg, lastmemb, numsol, old_or_new, oper_ok;
 int discr[MAXSOL], idfd, rd_idfd;
 int flag;	/* which type of table to make */
-FILE *fopen(), *tabptr;
+FILE	*tabptr;
 
 void
 f_tables( argc, argv )
@@ -699,11 +697,12 @@ register char *a, *b;
 
 int item, air, mat, los;	/* temp values */
 
+int
 editline(dp)
 struct directory	*dp;
 {
 
-	char c;
+	int	c;
 	int field, lpos, eflag, i;
 	int elflag, maxpos[4];
  	lpos = eflag = field = elflag = 0;
@@ -718,8 +717,8 @@ struct directory	*dp;
 	mat = record.c.c_material;
 	los = record.c.c_los;
 
-	while(1) {
-		switch( (c = getchar()) ) {
+	while( c = getchar() ) {
+		switch( c )  {
 
 			case TAB:
 			case BLANK:

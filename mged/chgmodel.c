@@ -57,8 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern char	*strchr();
-
 void	aexists();
 void	ext4to6();
 

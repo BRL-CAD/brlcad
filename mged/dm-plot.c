@@ -35,8 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./solid.h"
 
-extern void	perror();
-
 typedef unsigned char u_char;
 
 /* Display Manager package interface */
@@ -75,7 +73,6 @@ struct dm dm_Plot = {
 };
 
 extern struct device_values dm_values;	/* values read from devices */
-extern FILE	*popen();	/* stdio pipe open routine */
 
 static vect_t clipmin, clipmax;		/* for vector clipping */
 static FILE	*up_fp;

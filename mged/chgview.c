@@ -486,9 +486,6 @@ sol_com:
 	case ID_ELL:
 		dbpr_ell( &rp[0].s, dp );
 		goto sol_com;
-	case ID_HALF:
-		dbpr_half( &rp[0].s, dp );
-		goto sol_com;
 	case ID_TOR:
 		dbpr_torus( &rp[0].s, dp );
 		goto sol_com;
@@ -521,6 +518,7 @@ sol_com:
 	case ID_VOL:
 		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
 		break;
+	case ID_HALF:
 	case ID_PARTICLE:
 	case ID_PIPE:
 	case ID_ARBN:

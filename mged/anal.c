@@ -32,8 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern int	atoi();
-
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 extern void	arb_center();

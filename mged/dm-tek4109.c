@@ -55,8 +55,6 @@ is different from the factory default.
 #include "./dm.h"
 #include "./solid.h"
 
-extern void	perror();
-
 typedef unsigned char u_char;
 
 /* Display Manager package interface */

@@ -43,7 +43,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
-extern int	atoi();
 void	aexists();
 
 /* Rename an object */
