@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
 
-#include "./machine.h"	/* special copy */
+#include "../h/machine.h"	/* special copy */
 #include "vmath.h"
 #include "mater.h"
 #include "./ged.h"
