@@ -1,50 +1,44 @@
-.TH FB-RLE 1V VMB
-'\"	last edit:	85/10/01	G. S. Moss
-'\"	SCCS ID:	@(#)fb-rle.1	1.6
+.TH FB-RLE 1 BRL/CAD
 .SH NAME
 fb-rle \- save a frame buffer image in run-length encoded form
 .SH SYNOPSIS
 .B fb-rle
-[
-.B \-CShvw
-] [
-.B \-c
-x ] [
-.B \-l
-x y ] [
-.B \-p
-x y ] [ file.rle ]
+.RB [ \-CShvw ]
+.RB [ \-c { rgbwBG }]
+.RB [ \-l
+x y]
+.RB [ \-p
+x y] [file.rle]
 .SH DESCRIPTION
 .I Fb-rle\^
-saves a frame buffer image in a file, using the Alpha_1 standard
-Run-Length Encoded (RLE) form.
-By default, the device
-.B /dev/ik0l
-is used for input.
-This may be changed by setting the environment
+saves a frame buffer image in a file, using the
+University of Utah standard
+Run-Length Encoded (RLE) format.
+The environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name
-and exporting it before execution of 
-.IR fb-rle\^ .
-Images may be read from disk or any supported frame buffer device.
+is used to select the display device (see
+.IR brlcad(1) ).
+If this variable is not set, the default device for your system will
+be used.
 If
 .I file.rle\^
-is not specified, the encoded file is written to the standard output.
+is not specified, the encoded file is written to standard output.
 .I Fb-rle\^
 attempts to compress flat-colored areas
 as much as possible.
-This means that it is reasonable to save the entire
-screen, since it will not take up much more file space than saving only the
+This means that it is generally reasonable to save an entire
+image, since in RLE format it will not take up much more file space
+than extracting and saving only the
 interesting portion of the image.
-The default action is to save only data
+The default action is to encode only data
 pixels and to save the background color separately, so that when the image
 is restored all non-image pixels will be set to the background pixel value
 stored in the RLE header.
 Images saved in this mode may be displayed normally, or in ``overlay''
 mode by the RLE decoder program (see
-.IR rle-fb\^ (1V)).
+.IR rle-fb\^ (1)).
 Alternatively, the
 .B \-S
 option may be used to RLE encode the background as well (recommended only
@@ -54,16 +48,18 @@ if you don't have a flat background).
 Convert (``crunch'') an image with a non-standard color map so that the
 RLE file created will redisplay with a standard color map.
 Useful to preserve dramatic images created with wierd color maps
-so that Gamma correction (for film) can also be applied.
+so that Gamma correction (for film) can then also be applied.
 This option is recommended when producing images for export to other
-display systems, so that variations in the processing of color maps
-between display hardware do not affect the displayed image.
+display systems, so that variations in the interpretation of color maps
+between different types of display hardware do
+not affect the displayed image.
 .TP
 .B \-w
 Convert the color image to black and white, and RLE encode that.
 The red, green, and blue components of each
 pixel are combined via the NTSC transform to get an intensity value (Y) which
-is saved.
+is saved.  A more versatile tool for this is
+.IR pix-bw (1).
 .TP
 .B \-S
 Save all data in RLE format,
@@ -92,59 +88,29 @@ Specify the upper left corner of the saved portion
 of the image.
 .TP
 .B \-v
-(Verbose mode.)
+Verbose mode.
 The program will provide voluminous status information
 on its standard error as it proceeds through encoding the image.
 .TP
 .B \-h
-.SM
-.B HIRES
-mode.
-This flag causes the image in the frame buffer to be read back
-in
-.SM
-.B HIRES
-(1024x1024x24) mode;
-the default is to read the image back
-in
-.SM
-.B LORES
-(512x512x24) mode.
-.TP
-.I file.rle
-Output file.
+``hires'' flag.  Set both the height and width of the framebuffer
+to 1024.  The default is 512x512.
 .SH EXAMPLE
 .RS
-$ \fIFB_FILE=/dev/ik1h \|export \|FB_FILE\fR
-.br
-$ \fIfb-rle \|\-h \|tank.rle\fR
+\fIfb-rle \|\-h \|tank.rle\fR
 .RE
-.SH WARNING
-If no output file is specified, the user should be careful to re-direct
-the output to a file or pipe, as the encoded form is in binary.
-In doing
-so, be sure not to merge the standard error with the standard output as
-this will potentially foil the decoding step, especially if the
-verbose option was used.
-.SH FILES
-/vld/lib/librle.a
-.br
-/vld/lib/libfb.a
 .SH AUTHORS
-Gary S. Moss, BRL-VLD
+Gary S. Moss
 .br
-Michael John Muuss, BRL-SECAD
-.SH SEE ALSO
-rle-fb(1V).
-.SH BUGS
-The ability to save less than the whole image is not presently implemented.
-It would be nice if this program could determine the mode
-.RB ( \s-1HIRES\s0
-.I vs.\^
-.BR \s-1LORES\s0 )
-of the frame buffer, rather than needing the
-.B \-h
-flag.
-Unfortunately,
-the hardware control registers may be write-only (as with the Ikonas),
-so there is no way of telling.
+Michael John Muuss
+.SH "SEE ALSO"
+rle-fb(1), rle-pix(1), pix-rle(1), librle(3).
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.

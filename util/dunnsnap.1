@@ -1,0 +1,39 @@
+.TH DUNNSNAP 1 BRL/CAD
+.SH NAME
+dunnsnap \- expose film in a Dunn Model 631 camera
+.SH SYNOPSIS
+.B dunnsnap
+[num_frames]
+.SH DESCRIPTION
+.I Dunnsnap
+checks the status of the Dunn Instruments Model 631 camera and
+then attempts to take
+.I
+num_frames
+exposures.  If
+.I
+num_frames
+is not supplied, the number of frames exposed defaults to one.
+Status of the camera is checked before every exposure.
+Limits on
+.I
+num_frames
+include your film budget and the mean time between
+failures of your computer, framebuffer and camera.
+.SH DIAGNOSTICS
+Diagnostics are intended to be self-explanatory.
+.SH FILES
+/dev/camera
+.SH "SEE ALSO"
+brlcad(1), dunncolor(1)
+.SH AUTHOR
+Don Merritt
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 394
+.br
+The U. S. Army Ballistic Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.ARPA>.
