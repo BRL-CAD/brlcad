@@ -4197,7 +4197,7 @@ struct nmg_ptbl		*eu2_list;
 		}
 	}
 
-	nmg_tbl( &verts2, TBL_RST, (long *)NULL );
+	nmg_tbl( &verts2, TBL_FREE, (long *)NULL );
 	nmg_vertex_tabulate( &verts1, &fu1->l.magic );
 
 	/* now intersect fu2 edgeuses */
@@ -4219,7 +4219,7 @@ struct nmg_ptbl		*eu2_list;
 	}
 
 	/* check for existing vertices along intersection */
-	nmg_tbl( &verts1, TBL_RST, (long *)NULL );
+	nmg_tbl( &verts1, TBL_FREE, (long *)NULL );
 
 	/* XXXX this is the second time this tabulate is being done,
 	 * but for now it's safer this way
