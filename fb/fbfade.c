@@ -60,14 +60,20 @@ static char	RCSid[] =		/* for "what" utility */
 
 #include	<signal.h>
 #include	<stdio.h>
+#ifdef BSD
+#include	<strings.h>
+#else
 #include	<string.h>
+#endif
 #if __STDC__
 #include	<stdarg.h>
 #include	<stdlib.h>
 #define	SIZE_T	size_t
+#ifndef CRAY	/* CRAY defines getopt in stdlib.h! */
 extern int	getopt( int, char const * const *, char const * );
+#endif
 extern double	drand48( void );	/* in UNIX System V C library */
-#else
+#else /* !__STDC__ */
 #ifdef NO_STRRCHR
 #define	strrchr( s, c )	rindex( s, c )
 #endif
@@ -77,7 +83,7 @@ extern void	exit();
 extern char	*malloc();
 extern int	atoi(), getopt();
 extern double	drand48();
-#endif
+#endif /* !__STDC__ */
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
 #endif
