@@ -225,6 +225,38 @@ long *p;
 	return(-1);/* this is here to keep lint happy */
 }
 
+/*				N M G _ I N _ O R _ R E F
+ *
+ *	if the given vertexuse "vu" is in the table given by "b" or if "vu"
+ *	references a vertex which is refernced by a vertexuse in the table,
+ *	then we return 1.  Otherwise, we return 0.
+ */
+int nmg_in_or_ref(vu, b)
+struct vertexuse *vu;
+struct nmg_ptbl *b;
+{
+	union {
+		struct vertexuse **vu;
+		long **magic_p;
+	} p;
+	int i;
+
+	p.magic_p = b->buffer;
+	for (i=0 ; i < b->end ; ++i) {
+		if (p.vu[i] && *p.magic_p[i] == NMG_VERTEXUSE_MAGIC &&
+		    (p.vu[i] == vu || p.vu[i]->v_p == vu->v_p))
+			return(1);
+	}
+	return(0);
+}
+
+
+
+
+
+
+
+
 
 
 /*	Print the orientation in a nice, english form
@@ -889,7 +921,8 @@ struct nmgregion *r;
 		NMG_CK_EDGEUSE(eu);
 		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
 		    NMG_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
-		    NMG_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord ) )  {
+		    NMG_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
+		    1.0e-6 ) )  {
 			rt_log("At %d in %s\n", __LINE__, __FILE__);
 			rt_bomb("polytonmg() cannot make plane equation\n");
 		}
@@ -902,4 +935,151 @@ struct nmgregion *r;
 	}
 	rt_free( (char *)v, "vertex array");
 	return(s);
+}
+
+/*				N M G _ L U _ O F _ V U 
+ *
+ *	Given a vertexuse, return the loopuse somewhere above
+ */
+struct loopuse *nmg_lu_of_vu(vu)
+struct vertexuse *vu;
+{
+	NMG_CK_VERTEXUSE(vu);
+	
+	if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
+		*vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
+			return(vu->up.eu_p->up.lu_p);
+	else if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("NMG vertexuse has no loopuse ancestor\n");
+
+	return(vu->up.lu_p);		
+}
+
+/*				N M G _ L U P S
+ *
+ *	return parent shell for loopuse
+ */
+struct shell *nmg_lups(lu)
+struct loopuse *lu;
+{
+	if (*lu->up.magic_p == NMG_SHELL_MAGIC) return(lu->up.s_p);
+	else if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) 
+		rt_bomb("bad parent for loopuse\n");
+
+	return(lu->up.fu_p->s_p);
+}
+
+/*				N M G _ E U P S 
+ *
+ *	return parent shell of edgeuse
+ */
+struct shell *nmg_eups(eu)
+struct edgeuse *eu;
+{
+	if (*eu->up.magic_p == NMG_SHELL_MAGIC) return(eu->up.s_p);
+	else if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC)
+		rt_bomb("bad parent for edgeuse\n");
+
+	return(nmg_lups(eu->up.lu_p));
+}
+
+/*				N M G _ F A C E R A D I A L
+ *
+ *	Looking radially around an edge, find another edge in the same
+ *	face as the current edge. (this could be the mate to the current edge)
+ */
+struct edgeuse *nmg_faceradial(eu)
+struct edgeuse *eu;
+{
+	struct faceuse *fu;
+	struct edgeuse *eur;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_LOOPUSE(eu->up.lu_p);
+	NMG_CK_FACEUSE(eu->up.lu_p->up.fu_p);
+	fu = eu->up.lu_p->up.fu_p;
+
+	eur = eu->radial_p;
+
+	while (*eur->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *eur->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
+	    eur->up.lu_p->up.fu_p->f_p != fu->f_p)
+	    	eur = eur->eumate_p->radial_p;
+
+	return(eur);
+}
+
+
+/*	N M G _ M A N I F O L D _ F A C E
+ *
+ *	Determine if a face is a manifold or non-manifold
+ *
+ *	Return
+ *	1	face is manifold
+ *	0	face is non-manifold (has dangling edge)
+ */
+int nmg_manifold_face(fu)
+struct faceuse *fu;
+{
+	struct loopuse *lu;
+	struct edgeuse *eu, *eur;
+
+	for(NMG_LIST(lu, loopuse, &fu->lu_hd)) {
+	    NMG_CK_LOOPUSE(lu);
+
+	    if (NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
+	        /* go looking around each edge for a face of the same
+	         * shell which isn't us and isn't our mate.  If we
+	         * find us or our mate before another face of this
+	         * shell, we are non-manifold.
+	         */
+
+	    	for (NMG_LIST(eu, edgeuse, &lu->down_hd)) {
+
+	            eur = eu->radial_p;
+	            if ( eur == eu->eumate_p) return(0);
+
+	            do {
+
+		    	if (eur == eu->eumate_p)
+		    		return(0);
+
+	                if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
+			    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+			    eur->up.lu_p->up.fu_p->s_p == fu->s_p)
+	            		break;
+
+	                eur = eur->eumate_p->radial_p;
+	            } while (eur != eu->radial_p);
+		}
+	    }
+	}
+
+	return(1);
+}
+
+/*
+ *			N M G _ E U P R I N T
+ */
+void nmg_euprint(str, eu)
+char *str;
+struct edgeuse *eu;
+{
+	pointp_t eup, matep;
+	
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+
+	eup = eu->vu_p->v_p->vg_p->coord;
+	matep = eu->eumate_p->vu_p->v_p->vg_p->coord;
+
+	rt_log("%s (%g, %g, %g -> %g, %g, %g)\n", str, eup[0], eup[1], eup[2],
+		matep[0], matep[1], matep[2]);
 }
