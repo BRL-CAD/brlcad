@@ -645,7 +645,10 @@ struct db_i  {
 struct directory  {
 	long		d_magic;		/* Magic number */
 	char		*d_namep;		/* pointer to name string */
-	long		d_addr;			/* disk address in obj file */
+	union {
+		long	file_offset;		/* disk address in obj file */
+		genptr_t ptr;			/* ptr to in-memory-only obj */
+	} d_un;
 	struct directory *d_forw;		/* link to next dir entry */
 	struct animate	*d_animate;		/* link to animation */
 	long		d_uses;			/* # uses, from instancing */
@@ -658,11 +661,13 @@ struct directory  {
 #define RT_DIR_MAGIC	0x05551212		/* Directory assistance */
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
+#define d_addr	d_un.file_offset
 #define RT_DIR_PHONY_ADDR	(-1L)	/* Special marker for d_addr field */
 
 #define DIR_SOLID	0x1		/* this name is a solid */
 #define DIR_COMB	0x2		/* combination */
 #define DIR_REGION	0x4		/* region */
+#define RT_DIR_INMEM	0x100		/* object is in memory (only) */
 
 /* Args to db_lookup() */
 #define LOOKUP_NOISY	1
