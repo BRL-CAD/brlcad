@@ -190,6 +190,22 @@ proc apply_air {} {
 	refresh
 }
 
+# The Update CPU Status button, in it's own window
+toplevel .status
+button .status.button -text "Update CPU Status" -command update_cpu_status
+listbox .status.list -width 48
+pack .status.button .status.list -side top -in .status
+
+proc update_cpu_status {} {
+	set nodes [list_rtnodes]
+
+	.status.list delete 0 end
+	.status.list configure -height [llength $nodes]
+	foreach node $nodes {
+		.status.list insert end [get_rtnode $node]
+	}
+}
+
 proc net_speed_test {val} {
 	node_send \
 		set test_fb_speed $val ";" \
@@ -202,6 +218,9 @@ proc space_partitioning {val} {
 		set curframe 0
 	reprep
 }
+
+# Create independent status window.  All further creates happen here.
+frame .statusbut_fr; pack .statusbut_fr -side top
 
 # Allow "send rtsync _stuff_" directives to reach us.
 tk appname rtsync
