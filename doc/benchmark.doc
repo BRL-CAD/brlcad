@@ -216,7 +216,7 @@ R2000 CPU rev 5.0, R2010 FP rev 2.0
 T}
 multiflow	Multiflow Trace 7/200 (PRELIMINARY)
 snm2	Cray 1-M, SN2, UNICOS 2.0
-sws1	Convex C1, ConvexOS 9.1
+sws1	Convex C1, ConvexOS 9.1 48MB memory
 tek4132	Tektronix 4132, 32082 fpp, UTek 2.3
 utah-gr	VAX 785, FPA, 4.3 BSD
 utah-cs	VAX 8600, FPA, 4.3 BSD
