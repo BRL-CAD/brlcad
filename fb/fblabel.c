@@ -22,7 +22,7 @@
 #include <ctype.h>
 #include "fb.h"
 
-#if defined(vax)
+#if defined(vax) || defined(pdp11)
 #	define	LITTLEENDIAN	1
 #else
 #	define BIGENDIAN	1
@@ -98,6 +98,7 @@ static RGBpixel pixcolor;
 static int xpos;
 static int ypos;
 char * textstring;
+static int	debug;
 
 void	do_char(), do_line(), squash(), fill_buf(), clear_buf();
 
@@ -111,8 +112,11 @@ register char **argv;
 	pixcolor[GRN]  = 255;
 	pixcolor[BLU]  = 255;
 
-	while ( (c = getopt( argc, argv, "hcF:f:r:g:b:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "dhcF:f:r:g:b:" )) != EOF )  {
 		switch( c )  {
+		case 'd':
+			debug = 1;
+			break;
 		case 'h':
 			/* high-res */
 			file_height = file_width = 1024;
@@ -145,9 +149,10 @@ register char **argv;
 	xpos = atoi( argv[optind++]);
 	ypos = atoi( argv[optind++]);
 	textstring = argv[optind++];
+	if(debug) (void)fprintf(stderr,"fblabel %d %d %s\n", xpos, ypos, textstring);
 
 	if ( argc > optind )
-		(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
+		(void)fprintf( stderr, "fblabel: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
 }
@@ -172,7 +177,10 @@ char **argv;
 		fb_wmap( fbp, COLORMAP_NULL );
 	}
 
-	get_font(font1);
+	if( get_font(font1) == 0 )  {
+		fprintf(stderr, "fblabel:  Can't get font\n");
+		exit(1);
+	}
 
 	do_line( textstring);
 
@@ -199,8 +207,9 @@ register char	*line;
 		char_id = (int) line[char_count] & 0377;
 
 		/* Obtain the dimensions for the character */
-		width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
-		height = SWABV(dir[char_id].up) + SWABV(dir[char_id].down);
+		width = dir[char_id].right + dir[char_id].left;
+		height = dir[char_id].up + dir[char_id].down;
+		if(debug) fprintf(stderr,"%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
 
 		/*
 		 *  Space characters are frequently not represented
@@ -208,11 +217,11 @@ register char	*line;
 		 */
 	 	if( width <= 1 )  {
 	 		char_id = 'n';	/* 1-en space */
-			width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
+			width = dir[char_id].right + dir[char_id].left;
 	 		if( width <= 1 )  {
 		 		char_id = 'N';	/* 1-en space */
-				width = SWABV(dir[char_id].right) +
-					SWABV(dir[char_id].left);
+				width = (dir[char_id].right) +
+					(dir[char_id].left);
 	 			if( width <= 1 )
 	 				width = 16;	/* punt */
 	 		}
@@ -231,8 +240,10 @@ register char	*line;
 			 return;
 		}
 
-		if( currx + width > fb_getwidth(fbp) - 1 )
-			 break;		/* won't fit on screen */
+		if( currx + width > fb_getwidth(fbp) - 1 )  {
+			fprintf(stderr,"fblabel:  Ran off screen\n");
+			break;
+		}
 
 		do_char( char_id, currx, ypos, dir[char_id].down%2 );
 		currx += SWABV(dir[char_id].width) + 2;
@@ -273,10 +284,10 @@ int x, y, odd;
 	 for (i = height + base; i >= base; i--)
 	 {
 		 squash(	filterbuf[i - 1],	/* filter info */
-		 filterbuf[i],
-		 filterbuf[i + 1],
-		 resbuf,
-		 totwid + 4
+			 filterbuf[i],
+			 filterbuf[i + 1],
+			 resbuf,
+			 totwid + 4
 		     );
 		 fb_read( fbp, x, y - down + i, fbline, totwid+3);
 		 for (j = 0; j < (totwid + 3) - 1; j++)
