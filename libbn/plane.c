@@ -180,7 +180,20 @@ CONST struct rt_tol	*tol;
 	VSCALE( plane, plane, mag );
 
 	/* Find distance from the origin to the plane */
+	/* XXX Should do with pt that has smallest magnitude (closest to origin) */
 	plane[3] = VDOT( plane, a );
+
+#if 0
+	/* Check to be sure that angle between A-Origin and N vect < 89 degrees */
+	/* XXX Could complain for pts on axis-aligned plane, far from origin */
+	mag = MAGSQ(a);
+	if( mag > tol->dist_sq )  {
+		/* cos(89 degrees) = 0.017452406, reciprocal is 57.29 */
+		if( plane[3]/sqrt(mag) < 0.017452406 )  {
+			rt_log("rt_mk_plane_3pts() WARNING: plane[3] value is suspect\n");
+		}
+	}
+#endif
 	return(0);		/* OK */
 }
 
