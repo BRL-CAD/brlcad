@@ -766,7 +766,7 @@ char **argv;
 	/* Do not specify -v option to rt; batch jobs must print everything. -Mike */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
 	if( view_state->vs_vop->vo_perspective > 0 )
-		(void)fprintf(fp, "-p%g", view_state->vs_vop->vo_perspective);
+		(void)fprintf(fp, "-p%g ", view_state->vs_vop->vo_perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
