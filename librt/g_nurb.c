@@ -1074,7 +1074,101 @@ struct rt_external	 	* ep;
 CONST struct rt_db_internal	* ip;
 double				local2mm;
 {
-	return -1;		/* XXXXX */
+	register int		rec_ptr;
+	struct rt_nurb_internal	* sip;
+	union record		* rec;
+	point_t			base_pt;
+	int			s;
+	int			grans;
+	int			total_grans;
+	int			rt_nurb_grans();
+	double			* vp;
+	int			n;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_BSOLID) return(-1);
+	sip = (struct rt_nurb_internal *) ip->idb_ptr;
+	RT_NURB_CK_MAGIC(sip);
+
+	/* Figure out how many recs to buffer by
+	 * walking through the surfaces and
+	 * calculating the number of granuels
+	 * needed for storage and add it to the total
+	 */
+
+	for( s = 0; s < sip->nsrf; s++)
+	{
+		total_grans += rt_nurb_grans(sip->srfs[s]);
+	}
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = (1 + grans ) * sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc(1,ep->ext_nbytes,"nurb external");
+	rec = (union record *)ep->ext_buf;
+
+	rec[0].B.B_id = ID_BSOLID;
+	rec[0].B.B_nsurf = sip->nsrf;
+	
+	rec_ptr = 1;
+
+	for( s = 0; s < sip->nsrf; s++)
+	{
+		grans = rt_nurb_grans( sip->srfs[s]);
+
+		rec[rec_ptr].d.d_id = ID_BSURF;
+		rec[rec_ptr].d.d_order[0] = sip->srfs[s]->order[0];
+		rec[rec_ptr].d.d_order[1] = sip->srfs[s]->order[1];
+		rec[rec_ptr].d.d_kv_size[0] = sip->srfs[s]->u_knots->k_size;
+		rec[rec_ptr].d.d_kv_size[1] = sip->srfs[s]->v_knots->k_size;
+		rec[rec_ptr].d.d_ctl_size[0] = 	sip->srfs[s]->mesh->s_size[0];
+		rec[rec_ptr].d.d_ctl_size[1] = 	sip->srfs[s]->mesh->s_size[1];
+		rec[rec_ptr].d.d_geom_type = 
+			EXTRACT_COORDS(sip->srfs[s]->mesh->pt_type);
+
+		vp = (double *) &rec[rec_ptr +1];
+		for(n = 0; n < rec[rec_ptr].d.d_kv_size[0]; n++)
+		{
+			*vp++ = sip->srfs[s]->u_knots->knots[n];
+		}
+
+		for(n = 0; n < rec[rec_ptr].d.d_kv_size[1]; n++)
+		{
+			*vp++ = sip->srfs[s]->v_knots->knots[n];
+		}
+		
+		vp = (double *) &rec[(rec[rec_ptr].d.d_kv_size[0] + 
+			rec[rec_ptr].d.d_kv_size[0] + 7) /8];
+
+		for( n = 0; n < (rec[rec_ptr].d.d_ctl_size[0] + 
+			rec[rec_ptr].d.d_ctl_size[1]) * 
+			rec[rec_ptr].d.d_geom_type; n++)
+			*vp++ = sip->srfs[s]->mesh->ctl_points[n];
+
+		rec_ptr += grans;
+		total_grans -= grans;
+	}
+	return(0);
+
+}
+int 
+rt_nurb_grans( srf )
+struct snurb * srf;
+{
+	int grans = 0;
+	int total_knots, total_points;
+
+	grans++;
+	total_knots = srf->u_knots->k_size +
+		srf->v_knots->k_size;
+	grans += (total_knots+7)/8;
+
+	total_points = EXTRACT_COORDS(srf->mesh->pt_type) *
+		(srf->mesh->s_size[0] +
+		srf->mesh->s_size[1]);
+
+	grans += (total_points + 7)/8;
+
+	return grans;
 }
 
 void
