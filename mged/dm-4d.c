@@ -115,8 +115,8 @@ static int irlimit();			/* provides knob dead spot */
  *  Labels for knobs in help mode.
  */
 char	*kn1_knobs[] = {
-	/* 0 */ "adc <2",	/* 1 */ "zoom", 
-	/* 2 */ "adc <1",	/* 3 */ "adc dist",
+	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 2 */ "adc <2",	/* 3 */ "adc dist",
 	/* 4 */ "adc y",	/* 5 */ "y slew",
 	/* 6 */ "adc x",	/* 7 */	"x slew"
 };
