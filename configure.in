@@ -216,6 +216,7 @@ dnl REGEX
 dnl BSDGETTIMEOFDAY
 
 AC_OUTPUT([
+	Makefile
 	anim/Makefile
 	awf/Makefile
 	bench/Makefile
@@ -225,33 +226,33 @@ AC_OUTPUT([
 	comgeom-g/Makefile
 	conv/Makefile
 	doc/Makefile
-	fbed/Makefile
 	fb/Makefile
+	fbed/Makefile
 	fbserv/Makefile
 	gtools/Makefile
-	halftone/Makefile
 	h/Makefile
+	halftone/Makefile
 	html/Makefile
-	html/manuals/Anim_Tutorial/Makefile
-	html/manuals/cadwidgets/Makefile
-	html/manuals/libbu/Makefile
-	html/manuals/libdm/Makefile
-	html/manuals/librt/Makefile
-	html/manuals/Makefile
-	html/manuals/mged/animmate/Makefile
-	html/manuals/mged/Makefile
-	html/manuals/ReleaseNotes/Makefile
-	html/manuals/shaders/Makefile
 	html/ReleaseNotes/Makefile
 	html/ReleaseNotes/Rel5.0/Makefile
 	html/ReleaseNotes/Rel5.0/Summary/Makefile
 	html/ReleaseNotes/Rel6.0/Makefile
+	html/manuals/Anim_Tutorial/Makefile
+	html/manuals/Makefile
+	html/manuals/ReleaseNotes/Makefile
+	html/manuals/cadwidgets/Makefile
+	html/manuals/libbu/Makefile
+	html/manuals/libdm/Makefile
+	html/manuals/librt/Makefile
+	html/manuals/mged/Makefile
+	html/manuals/mged/animmate/Makefile
+	html/manuals/shaders/Makefile
 	iges/Makefile
 	irprep/Makefile
+	iwidgets4.0.1/Makefile
 	iwidgets4.0.1/doc/Makefile
 	iwidgets4.0.1/generic/Makefile
 	iwidgets4.0.1/iwidgets.tcl
-	iwidgets4.0.1/Makefile
 	iwidgets4.0.1/pkgIndex.tcl
 	jack/Makefile
 	jove/Makefile
@@ -262,52 +263,53 @@ AC_OUTPUT([
 	libdm/Makefile
 	libfb/Makefile
 	libfft/Makefile
+	libitcl3.2/Makefile
+	libitcl3.2/itcl/Makefile
 	libitcl3.2/itcl/doc/Makefile
 	libitcl3.2/itcl/generic/Makefile
 	libitcl3.2/itcl/library/Makefile
-	libitcl3.2/itcl/Makefile
 	libitcl3.2/itcl/unix/Makefile
+	libitcl3.2/itk/Makefile
 	libitcl3.2/itk/doc/Makefile
 	libitcl3.2/itk/generic/Makefile
 	libitcl3.2/itk/library/Makefile
-	libitcl3.2/itk/Makefile
 	libitcl3.2/itk/unix/Makefile
-	libitcl3.2/Makefile
 	liboptical/Makefile
 	liborle/Makefile
 	libpkg/Makefile
 	libpng/Makefile
 	librt/Makefile
 	libsysv/Makefile
+	libtcl8.4/Makefile
 	libtcl8.4/doc/Makefile
 	libtcl8.4/generic/Makefile
+	libtcl8.4/library/Makefile
 	libtcl8.4/library/dde/Makefile
 	libtcl8.4/library/encoding/Makefile
-	libtcl8.4/library/http1.0/Makefile
 	libtcl8.4/library/http/Makefile
-	libtcl8.4/library/Makefile
+	libtcl8.4/library/http1.0/Makefile
 	libtcl8.4/library/msgcat/Makefile
 	libtcl8.4/library/opt/Makefile
 	libtcl8.4/library/reg/Makefile
 	libtcl8.4/library/tcltest/Makefile
-	libtcl8.4/Makefile
 	libtcl8.4/unix/Makefile
+	libtcl8.4/unix/tclConfig.sh
 	libtermio/Makefile
+	libtk8.4/Makefile
 	libtk8.4/bitmaps/Makefile
 	libtk8.4/doc/Makefile
 	libtk8.4/generic/Makefile
-	libtk8.4/library/demos/images/Makefile
-	libtk8.4/library/demos/Makefile
-	libtk8.4/library/images/Makefile
 	libtk8.4/library/Makefile
+	libtk8.4/library/demos/Makefile
+	libtk8.4/library/demos/images/Makefile
+	libtk8.4/library/images/Makefile
 	libtk8.4/library/msgs/Makefile
-	libtk8.4/Makefile
 	libtk8.4/unix/Makefile
+	libtk8.4/unix/tkConfig.sh
 	libtk8.4/xlib/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
 	libz/Makefile
-	Makefile
 	mged/Makefile
 	mk/Makefile
 	nirt/Makefile
@@ -325,12 +327,13 @@ AC_OUTPUT([
 	sh/Makefile
 	sig/Makefile
 	tab/Makefile
+	tclscripts/Makefile
 	tclscripts/geometree/Makefile
 	tclscripts/lib/Makefile
-	tclscripts/Makefile
 	tclscripts/mged/Makefile
 	tclscripts/nirt/Makefile
 	tclscripts/pl-dm/Makefile
+	tclscripts/rtwizard/Makefile
 	tclscripts/rtwizard/examples/Makefile
 	tclscripts/rtwizard/examples/PictureTypeA/Makefile
 	tclscripts/rtwizard/examples/PictureTypeB/Makefile
@@ -339,7 +342,6 @@ AC_OUTPUT([
 	tclscripts/rtwizard/examples/PictureTypeE/Makefile
 	tclscripts/rtwizard/examples/PictureTypeF/Makefile
 	tclscripts/rtwizard/lib/Makefile
-	tclscripts/rtwizard/Makefile
 	tclscripts/util/Makefile
 	tools/Makefile
 	unigraphics/Makefile
