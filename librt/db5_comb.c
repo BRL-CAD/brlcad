@@ -357,9 +357,19 @@ rt_comb_export5(
 		bu_avs_init( avsp, 32, "rt_comb v5 attributes" );
 	if( comb->region_flag )  {
 		/* Presence of this attribute means this comb is a region. */
-		/* Current code values are 0, 1, and 2; all are regions. */
+		/* Current code values are 0, 1, and 2; all are regions.
+		 * See raytrace.h for meanings of different values
+		 */
 		bu_vls_trunc( &value, 0 );
-		bu_vls_printf( &value, "%d", comb->is_fastgen );
+		switch (comb->is_fastgen) {
+		case REGION_FASTGEN_PLATE:
+		    bu_vls_printf(&value, "P");		break;
+		case REGION_FASTGEN_VOLUME:
+		    bu_vls_printf(&value, "V");		break;
+		case REGION_NON_FASTGEN: /* fallthrough */
+		default:
+		    bu_vls_printf(&value, "R");		break;
+		}
 		bu_avs_add_vls( avsp, "region", &value );
 	} else
 		bu_avs_remove( avsp, "region" );
@@ -382,10 +392,12 @@ rt_comb_export5(
 	else
 		bu_avs_remove( avsp, "oshader" );
 
+#if 0
 	if( bu_vls_strlen( &comb->material ) > 0 )
 		bu_avs_add_vls( avsp, "material", &comb->material );
 	else
 		bu_avs_remove( avsp, "material" );
+#endif
 
 	if( comb->temperature > 0 )  {
 		bu_vls_trunc( &value, 0 );
@@ -396,32 +408,32 @@ rt_comb_export5(
 
 	/* GIFT compatability */
 	if( comb->region_id != 0 )  {
-		bu_vls_trunc( &value, 0 );
-		bu_vls_printf( &value, "%d", comb->region_id );
-		bu_avs_add_vls( avsp, "region_id", &value );
+	    bu_vls_trunc( &value, 0 );
+	    bu_vls_printf( &value, "%d", comb->region_id );
+	    bu_avs_add_vls( avsp, "region_id", &value );
 	} else
-		bu_avs_remove( avsp, "region_id" );
+	    bu_avs_remove( avsp, "region_id" );
 
 	if( comb->aircode != 0 )  {
-		bu_vls_trunc( &value, 0 );
-		bu_vls_printf( &value, "%d", comb->aircode );
-		bu_avs_add_vls( avsp, "aircode", &value );
+	    bu_vls_trunc( &value, 0 );
+	    bu_vls_printf( &value, "%d", comb->aircode );
+	    bu_avs_add_vls( avsp, "aircode", &value );
 	} else
-		bu_avs_remove( avsp, "aircode" );
+	    bu_avs_remove( avsp, "aircode" );
 
 	if( comb->GIFTmater != 0 )  {
-		bu_vls_trunc( &value, 0 );
-		bu_vls_printf( &value, "%d", comb->GIFTmater );
-		bu_avs_add_vls( avsp, "giftmater", &value );
+	    bu_vls_trunc( &value, 0 );
+	    bu_vls_printf( &value, "%d", comb->GIFTmater );
+	    bu_avs_add_vls( avsp, "material_id", &value );
 	} else
-		bu_avs_remove( avsp, "giftmater" );
+	    bu_avs_remove( avsp, "material_id" );
 
 	if( comb->los != 0 )  {
-		bu_vls_trunc( &value, 0 );
-		bu_vls_printf( &value, "%d", comb->los );
-		bu_avs_add_vls( avsp, "los", &value );
+	    bu_vls_trunc( &value, 0 );
+	    bu_vls_printf( &value, "%d", comb->los );
+	    bu_avs_add_vls( avsp, "los", &value );
 	} else
-		bu_avs_remove( avsp, "los" );
+	    bu_avs_remove( avsp, "los" );
 
 	bu_vls_free( &value );
 	return 0;	/* OK */
@@ -676,30 +688,36 @@ finish:
 		comb->inherit = atoi( ap );
 	}
 	if( (ap = bu_avs_get( &ip->idb_avs, "region" )) != NULL )  {
-		int	ibuf[1];
-		if( sscanf( ap, "%d", ibuf ) == 1 )  {
-			/* Presence of this attribute implies it is a region  */
-			comb->region_flag = 1;
-			/* Value of this parameter is the FASTGEN code */
-			comb->is_fastgen = ibuf[0];
+	    /* Presence of this attribute implies it is a region */
+	    comb->region_flag = 1;
 
-			/* get the other "region" attributes */
-			if( (ap = bu_avs_get( &ip->idb_avs, "region_id" )) != NULL )  {
-				comb->region_id = atoi( ap );
-			}
-			if( (ap = bu_avs_get( &ip->idb_avs, "aircode" )) != NULL )  {
-				comb->aircode = atoi( ap );
-			}
-			if( (ap = bu_avs_get( &ip->idb_avs, "giftmater" )) != NULL )  {
-				comb->GIFTmater = atoi( ap );
-				bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
-			}
-			if( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
-				comb->los = atoi( ap );
-			}
-		} else {
-			bu_log("unable to parse 'region' attribute '%s'\n", ap);
-		}
+	    /* Determine if this is a FASTGEN region */
+	    if (! strcmp("V", ap)) {
+		comb->is_fastgen = REGION_FASTGEN_VOLUME;
+	    } else if (! strcmp("P", ap)) {
+		comb->is_fastgen = REGION_FASTGEN_PLATE;
+	    } else if (! strcmp("R", ap)) {
+		comb->is_fastgen = REGION_NON_FASTGEN;
+	    } else {
+		bu_log("unable to parse 'region' attribute '%s'\n", ap);
+	    }
+
+	    /* get the other GIFT "region" attributes */
+	    if( (ap = bu_avs_get( &ip->idb_avs, "region_id" )) != NULL )  {
+		comb->region_id = atoi( ap );
+	    }
+	    if( (ap = bu_avs_get( &ip->idb_avs, "aircode" )) != NULL )  {
+		comb->aircode = atoi( ap );
+	    }
+	    if( (ap = bu_avs_get( &ip->idb_avs, "material_id" )) != NULL )  {
+		comb->GIFTmater = atoi( ap );
+#if 0
+		bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
+#endif
+	    }
+	    if( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
+		comb->los = atoi( ap );
+	    }
 	}
 	if( (ap = bu_avs_get( &ip->idb_avs, "oshader" )) != NULL )  {
 		bu_vls_strcat( &comb->shader, ap );

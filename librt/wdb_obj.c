@@ -8354,9 +8354,9 @@ wdb_combadd(Tcl_Interp			*interp,
 		comb->magic = RT_COMB_MAGIC;
 		bu_vls_init(&comb->shader);
 		bu_vls_init(&comb->material);
-		comb->region_id = -1;
+		comb->region_id = 0;  /* This makes a comb/group by default */
 		comb->tree = TREE_NULL;
-
+		
 		if (region_flag) {
 			struct bu_vls tmp_vls;
 
@@ -8373,8 +8373,9 @@ wdb_combadd(Tcl_Interp			*interp,
 					wdbp->wdb_los_default);
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
+		} else {
+			comb->region_flag = 0;
 		}
-
 		RT_GET_TREE( tp, &rt_uniresource );
 		tp->magic = RT_TREE_MAGIC;
 		tp->tr_l.tl_op = OP_DB_LEAF;
