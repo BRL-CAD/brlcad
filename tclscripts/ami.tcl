@@ -34,8 +34,14 @@ else
 	exit 1
 # this is a comment \
 fi
+# this is a comment \
+DOLLAR_ZERO="$0" ; DOLLAR_AT="$@" ; EXEC_COMMAND="$BTCLSH $DOLLAR_ZERO $DOLLAR_AT"
+# this is a comment \
+echo "Running \`exec $EXEC_COMMAND\`"
 # the next line restarts using btclsh \
-exec $BTCLSH "$0" "$@"
+exec $EXEC_COMMAND
+
+# exec $BTCLSH "$0" "$@"
 
 foreach arg $argv {
     catch {auto_mkindex $arg *.tcl *.itcl}
