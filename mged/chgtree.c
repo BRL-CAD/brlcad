@@ -621,14 +621,14 @@ char	**argv;
 
 	/* Load the combination into memory */
 	dp = anp->an_path.fp_names[0];
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 	if( (rec = db_getmrec( dbip, dp )) == (union record *)NULL )  {
 	  TCL_READ_ERR;
 	  db_free_1anim( anp );
 	  return TCL_ERROR;
-	}
-	if( rec[0].u_id != ID_COMB )  {
-	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	  goto fail;
 	}
 
 	/* Search for first mention of arc */
