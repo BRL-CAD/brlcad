@@ -197,6 +197,14 @@ double				val;
 {
 	struct rt_vls cmd;
 
+	if( val < -SL_TOL )   {
+		val += SL_TOL;
+	} else if( val > SL_TOL )   {
+		val -= SL_TOL;
+	} else {
+		val = 0.0;
+	}
+
 	rt_vls_init( &cmd );
 	rt_vls_printf( &cmd, "%s %d\n", mptr->scroll_cmd, (int)(val * 2047.0) );
 	(void)cmdline( &cmd, FALSE );
