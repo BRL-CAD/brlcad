@@ -48,10 +48,33 @@ typedef	int	Cast;
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-D__stardent=1"
 #endif
+
+/*
+ *  The SGI story:
+ *	On Irix 3, "cc main.c" does only sgi, and not __sgi.
+ *	On Irix 4, "cc main.c" does not have __STDC__ defined.
+ *	On Irix 5, "cc main.c" has sgi=1, __sgi=1, __STDC__=1.
+ *  Use this fact to pass a flag on to Cakefile.defs.
+ *  cc -E appends a bloody space after each substitution.
+ */
+#if defined(sgi) || defined(__sgi)
+#	define	CPP		"/lib/cpp"
+#	if __STDC__
+#		define	CPP_OPTIONS	"-D__CAKE__irix5"
+#	else
+#		if defined(__sgi)
+#			define	CPP_OPTIONS	"-D__CAKE__irix4"
+#		else
+#			define	CPP_OPTIONS	"-D__CAKE__irix3"
+#		endif
+#	endif
+#endif
+
 #if !defined(CPP)
 #    if 1
 	/*
-	 *  All BRL systems handle cc -E quite nicely.
+	 *  Some systems handle cc -E quite nicely, and don't
+	 *  append spaces after each substitution.
 	 *  Using cc gets you more configuration flags than cpp these days.
 	 */
 #	define	CPP		"cc"
