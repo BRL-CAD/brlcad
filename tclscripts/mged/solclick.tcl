@@ -1,5 +1,5 @@
 proc solclick { } {
-    echo Shoot a ray by clicking the middle mouse button.
+    echo \nShoot a ray by clicking the middle mouse button.
     # Replace mouse event handler
     proc M { up x y } {
 	# Reset mouse event handler
@@ -9,23 +9,18 @@ proc solclick { } {
 	catch { destroy .solclick }
 
 	set solids [solids_on_ray $x $y]
-	set len [llength $solids]
-	echo \"solids_on_ray $x $y\" sees $len solid(s)
-	if { $len<=0 } then return
-	echo Solid list: $solids
 	
 	toplevel .solclick
 	wm title .solclick "Solid edit"
 	set i 0
 	foreach solid $solids {
-	    button .solclick.s$i -text $solid \
+	    button .solclick.s$i -text [lindex [split $solid /] end] \
 		    -command "destroy .solclick; sed $solid"
-	    pack .solclick.s$i -side top -fill x
+	    pack .solclick.s$i -side top -fill x -expand yes
 	    incr i
 	}
-	button .solclick.s$i -text "CANCEL" \
-	    -command "destroy .solclick"
-	pack .solclick.s$i -side top -fill x
+	button .solclick.s$i -text "CANCEL" -command "destroy .solclick"
+	pack .solclick.s$i -side top -fill x -expand yes
     }
 }
 
@@ -34,4 +29,4 @@ catch { destroy .metasolclick }
 toplevel .metasolclick
 wm title .metasolclick "My 1st menu"
 button .metasolclick.s0 -text "SOLID CLICK" -command "solclick"
-pack .metasolclick.s0 -side top -fill x
+pack .metasolclick.s0 -side top -fill x -fill y -expand yes
