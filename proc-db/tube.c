@@ -215,6 +215,7 @@ char	**argv;
 
 		fprintf( stderr, "%d, ", frame );  fflush(stderr);
 	}
+	fflush(stdout); fflush(stderr);
 	system("cat ke.g");	/* XXX need library routine */
 	exit(0);
 }
