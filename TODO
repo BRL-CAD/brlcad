@@ -13,8 +13,6 @@ THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
 * write up initial README
 
-* write up initial HACKING
-
 * write up the history of brlcad
 
 * revise cvs policy document to reflect desired and practical public
@@ -22,8 +20,7 @@ THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
 * modify file headers to add license info
 
-* make make dist work (need to add distdir target to Makefile.in files
-  in libtcl/libtk for starters)
+* make make dist work
 
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
