@@ -1090,13 +1090,17 @@ CONST struct rt_tol	*tol;
 
 /*
  *			N M G _ F I N D _ V E R T E X _ I N _ E D G E L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
  */
 int
 nmg_find_vertex_in_edgelist( v, hd )
-register struct vertex	*v;
-struct rt_list		*hd;
+register CONST struct vertex	*v;
+CONST struct rt_list		*hd;
 {
-	register struct edgeuse	*eu;
+	register CONST struct edgeuse	*eu;
 
 	NMG_CK_VERTEX(v);
 	for( RT_LIST_FOR( eu, edgeuse, hd ) )  {
@@ -1108,13 +1112,20 @@ struct rt_list		*hd;
 	return(0);
 }
 
+/*
+ *			N M G _ F I N D _ V E R T E X _ I N _ L O O P L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
+ */
 int
 nmg_find_vertex_in_looplist( v, hd, singletons )
-register struct vertex	*v;
-struct rt_list		*hd;
-int			singletons;
+register CONST struct vertex	*v;
+CONST struct rt_list		*hd;
+int				singletons;
 {
-	register struct loopuse	*lu;
+	register CONST struct loopuse	*lu;
 	long			magic1;
 
 	NMG_CK_VERTEX(v);
@@ -1122,7 +1133,7 @@ int			singletons;
 		NMG_CK_LOOPUSE(lu);
 		magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 		if( magic1 == NMG_VERTEXUSE_MAGIC )  {
-			register struct vertexuse	*vu;
+			register CONST struct vertexuse	*vu;
 			if( !singletons )  continue;
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd );
 			NMG_CK_VERTEXUSE(vu);
@@ -1138,12 +1149,19 @@ int			singletons;
 	return(0);
 }
 
+/*
+ *			N M G _ F I N D _ V E R T E X _ I N _ F A C E L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
+ */
 int
 nmg_find_vertex_in_facelist( v, hd )
-register struct vertex	*v;
-struct rt_list		*hd;
+register CONST struct vertex	*v;
+CONST struct rt_list		*hd;
 {
-	register struct faceuse	*fu;
+	register CONST struct faceuse	*fu;
 
 	NMG_CK_VERTEX(v);
 	for( RT_LIST_FOR( fu, faceuse, hd ) )  {
@@ -1154,12 +1172,19 @@ struct rt_list		*hd;
 	return(0);
 }
 
+/*
+ *			N M G _ F I N D _ E D G E _ I N _ E D G E L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
+ */
 int
 nmg_find_edge_in_edgelist( e, hd )
-struct edge	*e;
-struct rt_list	*hd;
+CONST struct edge	*e;
+CONST struct rt_list	*hd;
 {
-	register struct edgeuse	*eu;
+	register CONST struct edgeuse	*eu;
 
 	NMG_CK_EDGE(e);
 	for( RT_LIST_FOR( eu, edgeuse, hd ) )  {
@@ -1170,12 +1195,19 @@ struct rt_list	*hd;
 	return(0);
 }
 
+/*
+ *			N M G _ F I N D _ E D G E _ I N _ L O O P L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
+ */
 int
 nmg_find_edge_in_looplist( e, hd )
-struct edge	*e;
-struct rt_list	*hd;
+CONST struct edge	*e;
+CONST struct rt_list	*hd;
 {
-	register struct loopuse	*lu;
+	register CONST struct loopuse	*lu;
 	long			magic1;
 
 	NMG_CK_EDGE(e);
@@ -1195,12 +1227,19 @@ struct rt_list	*hd;
 	return(0);
 }
 
+/*
+ *			N M G _ F I N D _ E D G E _ I N _ F A C E L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
+ */
 int
 nmg_find_edge_in_facelist( e, hd )
-struct edge	*e;
-struct rt_list	*hd;
+CONST struct edge	*e;
+CONST struct rt_list	*hd;
 {
-	register struct faceuse	*fu;
+	register CONST struct faceuse	*fu;
 
 	NMG_CK_EDGE(e);
 	for( RT_LIST_FOR( fu, faceuse, hd ) )  {
@@ -1211,13 +1250,20 @@ struct rt_list	*hd;
 	return(0);
 }
 
+/*
+ *			N M G _ F I N D _ L O O P _ I N _ F A C E L I S T
+ *
+ *  Returns -
+ *	1	If found
+ *	0	If not found
+ */
 int
 nmg_find_loop_in_facelist( l, fu_hd )
-struct loop	*l;
-struct rt_list	*fu_hd;
+CONST struct loop	*l;
+CONST struct rt_list	*fu_hd;
 {
-	register struct faceuse	*fu;
-	register struct loopuse	*lu;
+	register CONST struct faceuse	*fu;
+	register CONST struct loopuse	*lu;
 
 	NMG_CK_LOOP(l);
 	for( RT_LIST_FOR( fu, faceuse, fu_hd ) )  {
@@ -1501,7 +1547,7 @@ struct edgeuse *eu;
 	 * Kill the one remaining use of the "shared" edge and
 	 * voila: one contiguous loop.
 	 */
-	nmg_keu(eu);
+	if( nmg_keu(eu) )  rt_bomb("nmg_jl() loop vanished?\n");
 }
 
 /*
@@ -1821,8 +1867,8 @@ struct loopuse *lu;
 
 			if (! RT_LIST_NOT_HEAD(vu, &v->vu_hd) ) {
 				/* this is the tail of a snake! */
-				nmg_keu(eu_r);
-				nmg_keu(eu);
+				(void)nmg_keu(eu_r);
+				if( nmg_keu(eu) )  return 1; /* kill lu */
 				if( RT_LIST_IS_EMPTY( &lu->down_hd ) )
 					return 1;	/* loopuse is empty */
 				eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
@@ -2047,7 +2093,7 @@ struct shell	*s;
 				/* Dispose of wire edge (and mate) */
 				if( nexteu == eu->eumate_p )
 					nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
-				nmg_keu(eu);
+				(void)nmg_keu(eu);
 			}
 			eu = nexteu;
 		}
@@ -2064,7 +2110,7 @@ struct shell	*s;
 			/* Kill edge use and mate */
 			if( nexteu == eu->eumate_p )
 				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
-			nmg_keu(eu);
+			(void)nmg_keu(eu);
 		}
 		eu = nexteu;
 	}
