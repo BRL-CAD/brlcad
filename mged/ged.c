@@ -132,6 +132,15 @@ char **argv;
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
+	/*
+	 *  Sample and hold current SIGINT setting, so any commands that
+	 *  might be run (e.g., by .mgedrc) which establish cur_sigint
+	 *  as their signal handler get the initial behavior.
+	 *  This will change after setjmp() is called, below.
+	 */
+	cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
+	(void)signal( SIGINT, cur_sigint );		/* restore */
+
 	/* Get input file */
 	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
 	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
@@ -252,7 +261,7 @@ char **argv;
 	/* Caught interrupts take us back here, via longjmp() */
 	if( setjmp( jmp_env ) == 0 )  {
 		/* First pass, determine SIGINT handler for interruptable cmds */
-		if( signal( SIGINT, SIG_IGN ) == SIG_IGN )
+		if( cur_sigint == (void (*)())SIG_IGN )
 			cur_sigint = (void (*)())SIG_IGN; /* detached? */
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
