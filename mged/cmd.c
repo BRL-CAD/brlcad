@@ -47,8 +47,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef MGED_TCL
 #  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-#  include "/usr/brl/include/tcl.h"
-#  include "/usr/brl/include/tk.h"
+#  include "tcl.h"
+#  include "tk.h"
 #endif
 
 extern void	sync();
