@@ -48,6 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "../librt/debug.h"
 #include "./patch-g.h"
 #include "../rt/mathtab.h"
 
@@ -82,7 +83,226 @@ Usage: patch-g [options] > model.g\n\
 	-m mat.file	specify materials information source file\n\
 	-r		reverse normals for plate mode triangles\n\
 	-d #		debug level\n\
+	-x #		librt debug flag\n\
+	-X #		librt NMG debug flags\n\
 Note: fastgen.rp is the pre-processed (through rpatch) fastgen file\n";
+
+void
+nmg_tmp_vu( vu )
+CONST struct vertexuse *vu;
+{
+	struct vertex *v;
+	struct vertex_g *vg;
+
+	NMG_CK_VERTEXUSE( vu );
+	rt_log( "vertexuse magic_p = x%x , magic = x%x , index = %d\n" , &vu->l.magic , vu->l.magic , vu->index );
+
+	v = vu->v_p;
+
+	NMG_CK_VERTEX( v );
+	rt_log( "vertex magic_p = x%x , magic = x%x , index = %d\n" , &v->magic , v->magic , v->index );
+
+	vg = v->vg_p;
+
+	NMG_CK_VERTEX_G( vg );
+	rt_log( "vertex_g magic_p = x%x , magic = x%x , index = %d\n" , &vg->magic , vg->magic , vg->index );
+}
+
+void
+nmg_tmp_eu( eu )
+CONST struct edgeuse *eu;
+{
+	struct edge *e;
+	struct edge_g *eg;
+	struct edgeuse_a *eua;
+	struct vertexuse *vu;
+	struct edgeuse *eu1;
+
+	NMG_CK_EDGEUSE( eu );
+	rt_log( "edgeuse magic_p = x%x , magic = x%x , index = %d\n" , &eu->l.magic , eu->l.magic , eu->index );
+
+	e = eu->e_p;
+	NMG_CK_EDGE( e );
+	rt_log( "edge magic_p = x%x , magic = x%x , index = %d\n" , &e->magic , e->magic , e->index );
+	eu1 = e->eu_p;
+	if( eu1->l.magic != NMG_EDGEUSE_MAGIC )
+	{
+		rt_log( "Found bad edgeuse:\n" );
+		rt_log( "e->eu_p should be x%x, but is x%x\n" , eu , eu1 );
+		rt_log( "( %f %f %f ) to ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+	}
+
+	eg = e->eg_p;
+	if( eg )
+	{
+		NMG_CK_EDGE_G( eg );
+		rt_log( "edge_g magic_p = x%x , magic = x%x , index = %d\n" , &eg->magic , eg->magic , eg->index );
+	}
+	else
+		rt_log( "\tNo edge_g\n" );
+
+	eua = eu->eua_p;
+	if( eua )
+	{
+		NMG_CK_EDGEUSE_A( eua );
+		rt_log( "edgeuse_a magic_p = x%x , magic = x%x , index = %d\n" , &eua->magic , eua->magic , eua->index );
+	}
+	else
+		rt_log( "\tNo edgeuse_a\n" );
+
+	vu = eu->vu_p;
+	nmg_tmp_vu( vu );
+}
+
+void
+nmg_tmp_lu( lu )
+CONST struct loopuse *lu;
+{
+	struct loop *l;
+	struct loopuse_a *lua;
+	struct loop_g *lg;
+
+	NMG_CK_LOOPUSE( lu );
+        rt_log( "loopuse magic_p = x%x , magic = x%x , index = %d\n" , &lu->l.magic , lu->l.magic , lu->index );
+
+	l = lu->l_p;
+	NMG_CK_LOOP( l );
+        rt_log( "loop magic_p = x%x , magic = x%x , index = %d\n" , &l->magic , l->magic , l->index );
+
+	lua = lu->lua_p;
+	if( lua )
+	{
+		NMG_CK_LOOPUSE_A( lua );
+	        rt_log( "loopuse_a magic_p = x%x , magic = x%x , index = %d\n" , &lua->magic , lua->magic , lua->index );
+	}
+	else
+		rt_log( "\tNo loopuse_a\n" );
+
+	lg = l->lg_p;
+	if( lg )
+	{
+		NMG_CK_LOOP_G( lg );
+	        rt_log( "loop_g magic_p = x%x , magic = x%x , index = %d\n" , &lg->magic , lg->magic , lg->index );
+	}
+	else
+		rt_log( "\tNo loop_g\n" );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+	{
+		struct edgeuse *eu;
+
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			nmg_tmp_eu( eu );
+	}
+	else if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+	{
+		struct vertexuse *vu;
+
+		vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
+		nmg_tmp_vu( vu );
+	}
+}
+void
+nmg_tmp_fu( fu )
+CONST struct faceuse *fu;
+{
+	struct face *f;
+	struct faceuse_a *fua;
+	struct face_g *fg;
+	struct loopuse *lu;
+
+	NMG_CK_FACEUSE( fu );
+        rt_log( "faceuse magic_p = x%x , magic = x%x , index = %d\n" , &fu->l.magic , fu->l.magic , fu->index );
+
+	fua = fu->fua_p;
+	if( fua )
+	{
+		NMG_CK_FACEUSE_A( fua );
+		rt_log( "faceuse_a magic_p = x%x , magic = x%x , index = %d\n" , &fua->magic , fua->magic , fua->index );
+	}
+	else
+		rt_log( "\tNo faceuse_a\n" );
+
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	rt_log( "face magic_p = x%x , magic = x%x , index = %d\n" , &f->l.magic , f->l.magic , f->index );
+
+	fg = f->fg_p;
+	if( fg )
+	{
+		NMG_CK_FACE_G( fg );
+		rt_log( "face_g magic_p = x%x , magic = x%x , index = %d\n" , &fg->magic , fg->magic , fg->index );
+	}
+	else
+		rt_log( "\tNo face_g\n" );
+
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		nmg_tmp_lu( lu );
+}
+
+void
+nmg_tmp( m )
+CONST struct model *m;
+{
+	struct nmgregion *r;
+	struct model_a *ma;
+
+	NMG_CK_MODEL( m );
+	rt_log( "model magic_p = x%x , magic = x%x , index = %d\n" , &m->magic , m->magic , m->index );
+	ma = m->ma_p;
+	if( ma )
+	{
+		NMG_CK_MODEL_A( ma );
+	        rt_log( "model_a magic_p = x%x , magic = x%x , index = %d\n" , &ma->magic , ma->magic , ma->index );
+	}
+	else
+		rt_log( "\tNo model_a\n" );
+
+	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
+	{
+		struct shell *s;
+		struct nmgregion_a *ra;
+
+		NMG_CK_REGION( r );
+
+		rt_log( "region magic_p = x%x , magic = x%x , index = %d\n" , &r->l.magic , r->l.magic , r->index );
+		ra = r->ra_p;
+		if( ra )
+		{
+			NMG_CK_REGION_A( ra );
+	                rt_log( "region_a magic_p = x%x , magic = x%x , index = %d\n" , &ra->magic , ra->magic , ra->index );
+		}
+		else
+			rt_log( "\tNo region_a\n" );
+
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		{
+			struct shell_a *sa;
+			struct faceuse *fu;
+			struct loopuse *lu;
+			struct edgeuse *eu;
+			struct vertexuse *vu;
+
+			NMG_CK_SHELL( s );
+	                rt_log( "shell magic_p = x%x , magic = x%x , index = %d\n" , &s->l.magic , s->l.magic , s->index );
+			sa = s->sa_p;
+			if( sa )
+			{
+				NMG_CK_SHELL_A( sa );
+		                rt_log( "shell_a magic_p = x%x , magic = x%x , index = %d\n" , &sa->magic , sa->magic , sa->index );
+			}
+			else
+				rt_log( "\tNo shell_a\n" );
+
+			vu = s->vu_p;
+			if( vu != NULL )
+				nmg_tmp_vu( vu );
+
+			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+				nmg_tmp_fu( fu );
+		}
+	}
+}
 
 main(argc,argv)
 int	argc;
@@ -126,6 +346,18 @@ char	*argv[];
 
 	while (argc > 0 && argv[0][0] == '-') {
 		switch (argv[0][1]) {
+
+		case 'x':  /* librt debug flags */
+
+			argc--,argv++;
+			sscanf( *argv , "%x" , &rt_g.debug );
+			break;
+
+		case 'X':  /* librt NMG debug flags */
+
+			argc--,argv++;
+			sscanf( *argv , "%x" , &rt_g.NMG_debug );
+			break;
 
 		case 'p':  /* polysolid output */
 
@@ -205,7 +437,6 @@ char	*argv[];
 
 			argc--,argv++;
 			debug = atoi(*argv); /* Debug level */
-			fprintf(stderr,"Debug = %d\n",debug);
 			break;
 
 		default:
@@ -214,6 +445,20 @@ char	*argv[];
 		}
 		argc--, argv++;
 
+	}
+
+	if( debug )
+		rt_log( "debug level = %d\n" , debug );
+
+	if( rt_g.debug )
+	{
+		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		rt_log( "\n" );
+	}
+
+	if( rt_g.NMG_debug )
+	{
+		rt_log( "librt rt_g.NMG_debug = x%x\n" , rt_g.NMG_debug );
 	}
 
 	/*     This section opens input files - the data file defaults to standard
@@ -374,13 +619,15 @@ char	*argv[];
                     ((in[i].surf_type > 3 || in[i-1].surf_type > 3) &&
                     (in[i].surf_type != in[i-1].surf_type)) ) {
 
-                    	if( debug )
-                    		fprintf( stderr , "component code #%d\n" , in[i-1].cc );
+               		rt_log( "component code #%d\n" , in[i-1].cc );
 
 			if( debug > 2 ) {
 				for( j=0; j<i; j++ )
 					fprintf(stderr,"IN: %f %f %f\n",in[j].x,in[j].y,in[j].z);
 			}
+
+                    	if( rt_g.debug&DEBUG_MEM_FULL )
+                    		rt_prmem( "At start of component" );
 
 			switch(in[i-1].surf_type){    /* Key on surface types. */
 
@@ -457,6 +704,9 @@ char	*argv[];
 
 			in[0] = in[i];
 			i = 0;
+
+                    	if( rt_g.debug&DEBUG_MEM_FULL )
+                    		rt_prmem( "At end of component" );
 
 		}       /* end "processing" if */
 	}
@@ -826,8 +1076,6 @@ struct rt_tol *tol;
 	tol_tmp.perp = 0.0;
 	tol_tmp.para = 1.0;
 
-	rt_g.NMG_debug = 0;
-
 	if( debug )
 		rt_log( "%s\n" , name );
 
@@ -909,7 +1157,7 @@ struct rt_tol *tol;
 			}
 
 			if( debug > 2 )
-				rt_log( "Make face: (%g , %g , %g) (%g , %g , %g) (%g , %g , %g)\n",
+				rt_log( "Make face: (%f %f %f) (%f %f %f) (%f %f %f)\n",
 					V3ARGS( verts[k].coord ),
 					V3ARGS( verts[k+1].coord ),
 					V3ARGS( verts[k+2].coord ));
@@ -979,7 +1227,7 @@ struct rt_tol *tol;
                 NMG_CK_FACEUSE( fu );
                 if( fu->orientation == OT_SAME )
                 {
-                        if( nmg_fu_planeeqn( fu , &tol_tmp ) )
+                        if( nmg_fu_planeeqn( fu , tol ) )
                 	{
                                 rt_log( "Build_solid: Failed to calculate plane eqn for outside fu x%x:\n" , fu );
                 		nmg_pr_fu_briefly( fu , (char *)NULL );
@@ -991,13 +1239,21 @@ struct rt_tol *tol;
 	/* don't need the verts array any more */
 	rt_free( (char *)verts , "build_solid: verts" );
 
+	/* FASTGEN targets may have vertices that should be part of
+	 * an adjoining edge. Use nmg_break_long_edges to fix this
+	 */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	i = nmg_break_long_edges( s , tol );
+	if( debug > 2 )
+		rt_log( "nmg_break_long_edges broke %d edges\n" , i );
+
 	/* glue all the faces together */
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
 	if( !plate_mode )
 	{
 		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
-			nmg_fix_normals( s );
+			nmg_fix_normals( s , tol );
 
 		/* free the memory for the face list */
 		nmg_tbl( &faces , TBL_FREE , NULL );
@@ -1110,6 +1366,18 @@ struct rt_tol *tol;
 
 	if( nmg_simplify_shell( s ) )
 		return( 1 );
+
+	/* Calculate bounding boxes */
+	nmg_region_a( r , tol );
+
+	if( debug > 4 )
+	{
+		char tmp_name[17];
+
+		sprintf( tmp_name , "out.%s" , name );
+		mk_nmg( stdout , tmp_name , m );
+		fflush( stdout );
+	}
 
 	/* Duplicate shell */
 	is = nmg_dup_shell( s , &copy_tbl );
@@ -1255,19 +1523,15 @@ struct rt_tol *tol;
 	/* done moving, get rid of table */
 	nmg_tbl( &verts_to_move , TBL_FREE , (long *)NULL );
 
-	/* check for faces with less than three edges
-	 * could have been created by killing of eu's
-	 */
-	if( nmg_kill_short_lus( r ) )
+	if( debug > 4 )
 	{
-		/* It's all gone!!! */
-		nmg_km( m );
-		rt_free( (char *)flags , "build_solid: flags" );
-		rt_free( (char *)copy_tbl , "build_solid: copy_tbl" );
-		nmg_tbl( &verts_to_move , TBL_FREE , (long *)NULL );
-		rt_log( "Build_solid: %s is empty\n" , name );
-		return( 1 );
+		char tmp_name[32];
+
+		sprintf( tmp_name , "open.%s" , name );
+		mk_nmg( stdout , tmp_name , m );
+		fflush( stdout );
 	}
+
 
 	/* Close shell */
 	if( debug )
@@ -1292,6 +1556,9 @@ struct rt_tol *tol;
 	rt_free( (char *)flags , "Build_solid: flags" );
 	rt_free( (char *)copy_tbl , "Build_solid: copy_tbl" );
 
+#if 0
+	if( debug )
+		rt_log( "Recalculate plane equations\n" );
 	/* recalculate plane equations, since some of the vertices we calculated
 	 * may not be exactly on the plane */
 	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
@@ -1300,14 +1567,26 @@ struct rt_tol *tol;
 		{
 			if( fu->orientation == OT_SAME )
 			{
-	                        if( nmg_fu_planeeqn( fu , &tol_tmp ) )
+plane_t pl1,pl2;
+
+NMG_GET_FU_PLANE( pl1 , fu );
+	                        if( nmg_fu_planeeqn( fu , tol ) )
 	                	{
-	                                rt_log( "Build_solid: Failed to calculate plane eqn for fu x%x:\n" , fu );
+NMG_GET_FU_PLANE( pl2 , fu );
+	                                rt_log( "Build_solid: Failed to re-calculate plane eqn for fu x%x:\n" , fu );
 	                		nmg_pr_fu_briefly( fu , (char *)NULL );
+	                		rt_g.NMG_debug |= DEBUG_MESH;
+	                		nmg_ck_fu_verts( fu , fu->f_p , tol );
+rt_log( "Old plane was ( %f %f %f %f )\n" , V4ARGS( pl1 ) );
+rt_log( "New plane is ( %f %f %f %f )\n" , V4ARGS( pl2 ) );
+nmg_face_g( fu , pl1 );
+	                		nmg_ck_fu_verts( fu , fu->f_p , tol );
+	                		rt_g.NMG_debug &= ~DEBUG_MESH;
 	                	}
 			}
 		}
 	}
+#endif
 
 	nmg_tbl( &faces , TBL_RST , NULL );
 
@@ -1321,13 +1600,15 @@ struct rt_tol *tol;
 		if( fu->orientation == OT_SAME )
 			nmg_tbl( &faces , TBL_INS , (long *)fu );
 	}
+	if( debug )
+		rt_log( "Re-glue faces\n" );
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 	nmg_tbl( &faces , TBL_FREE , NULL );
 
 	/* Calculate bounding boxes */
+	if( debug )
+		rt_log( "nmg_region_a( r = x%x )\n" , r );
 	nmg_region_a( r , tol );
-
-	nmg_vmodel( m );
 
 	if( debug )
 		rt_log( "writing %s to BRLCAD DB\n" , name );
@@ -1342,7 +1623,8 @@ struct rt_tol *tol;
 		nmg_shell_coplanar_face_merge( s , tol , 0 );
 		if( !nmg_simplify_shell( s ) )
 		{
-			nmg_m_reindex( m );
+			if( debug > 3 )
+				nmg_tmp( m );
 			mk_nmg( stdout , name , m );
 		}
 	}
@@ -1350,17 +1632,17 @@ struct rt_tol *tol;
 	/* if this solid is mirrored, don't go through the entire process again */
 	if( mirror_name[0] )
 	{
+		if( debug )
+			rt_log( "Mirror model\n" );
 		nmg_mirror_model( m );
 
 		if( debug )
-			rt_log( "writing  %s (nirrored) to BRLCAD DB\n" , mirror_name );
+			rt_log( "writing  %s (mirrored) to BRLCAD DB\n" , mirror_name );
 		
 		if( polysolid )
 			write_shell_as_polysolid( stdout , mirror_name , s );
 		else
-		{
 			mk_nmg( stdout , mirror_name , m );
-		}
 	}
 
 	/* Kill the model */
@@ -1526,7 +1808,7 @@ int cnt;
         tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
+        tol.para = 1.0 - tol.perp;
 
 	if( in[cnt-1].cc != last_cc )
 	{
