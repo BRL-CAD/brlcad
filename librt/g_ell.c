@@ -193,6 +193,8 @@ struct rt_i		*rtip;
 	magsq_a = MAGSQ( eip->a );
 	magsq_b = MAGSQ( eip->b );
 	magsq_c = MAGSQ( eip->c );
+
+	/* XXX this coded constant stuff will bite us someday soon */
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
 		rt_log("sph(%s):  zero length A(%g), B(%g), or C(%g) vector\n",
 			stp->st_name, magsq_a, magsq_b, magsq_c );
