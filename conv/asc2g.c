@@ -1496,7 +1496,7 @@ pipebld()
 	register char		*cp;
 	register char		*np;
 	struct wdb_pipept	*sp;
-	struct wdb_pipept	head;
+	struct bu_list		head;
 
 	/* Process the first buffer */
 
@@ -1513,7 +1513,7 @@ pipebld()
 
 	/* Read data lines and process */
 
-	BU_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head );
 	fgets( buf, BUFSIZE, ifp);
 	while( strncmp (buf , "END_PIPE", 8 ) )
 	{
@@ -1536,7 +1536,7 @@ pipebld()
 		sp->pp_bendradius = bendradius;
 		VSET( sp->pp_coord, x, y, z );
 
-		BU_LIST_INSERT( &head.l, &sp->l);
+		BU_LIST_INSERT( &head, &sp->l);
 		fgets( buf, BUFSIZE, ifp);
 	}
 
