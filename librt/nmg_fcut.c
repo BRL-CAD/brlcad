@@ -1975,7 +1975,7 @@ CONST struct rt_tol	*tol;
 	NMG_CK_PTBL(b);
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
-	if(eg)  NMG_CK_EDGE_G_LSEG(rs->eg_p);
+	if(eg)  NMG_CK_EDGE_G_LSEG(eg);
 
 	bzero( (char *)rs, sizeof(*rs) );
 	rs->magic = NMG_RAYSTATE_MAGIC;
@@ -2146,6 +2146,403 @@ int		other_rs_state;
 	if(rt_g.NMG_debug&DEBUG_FCUT)
 		rt_log("nmg_face_next_vu_interval() vu[%d] set to x%x\n", j-1, rs->vu[j-1] );
 	return j;
+}
+
+#define	VAVERAGE( a, b, c )	{ \
+	(a)[X] = ((b)[X] + (c)[X]) * 0.5;\
+	(a)[Y] = ((b)[Y] + (c)[Y]) * 0.5;\
+	(a)[Z] = ((b)[Z] + (c)[Z]) * 0.5;\
+	}
+/*
+ *			N M G _ E D G E _ G E O M _ I S E C T _ L I N E
+ *
+ *  Force the geometry structure for a given edge to be that of
+ *  the intersection line between the two faces.
+ *
+ *  Note that sometimes a vertex can appear to lie on more than one
+ *  line.  It is important to refer to geometry here, to make sure
+ *  that the edgeuse is not mistakenly fused to the wrong edge geometry.
+ *
+ *  XXX This has the byproduct that not all edgeuses "on" the line
+ *  XXX of intersection will share rs->eg_p.
+ *
+ *  See the comments in nmg_radial_join_eu() for the rationale.
+ */
+void
+nmg_edge_geom_isect_line( eu, rs, reason )
+struct edgeuse		*eu;
+struct nmg_ray_state	*rs;
+CONST char		*reason;
+{
+	register struct edge_g_lseg	*eg;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_RAYSTATE(rs);
+	if(eu->g.lseg_p) NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
+	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_edge_geom_isect_line(eu=x%x, %s)\n eu->g=x%x, rs->eg=x%x at START\n",
+			eu, reason,
+			eu->g.magic_p, rs->eg_p);
+	}
+	if( !eu->g.magic_p )  {
+		/* This edgeuse has No edge geometry so far.
+		 * It may be a new edge formed by a CUTJOIN operation.
+		 */
+		if( !rs->eg_p )  {
+			nmg_edge_g( eu );
+			eg = eu->g.lseg_p;
+			NMG_CK_EDGE_G_LSEG(eg);
+			VMOVE( eg->e_pt, rs->pt );
+			VMOVE( eg->e_dir, rs->dir );
+			rs->eg_p = eg;
+		} else {
+			NMG_CK_EDGE_G_LSEG(rs->eg_p);
+			nmg_use_edge_g( eu, (long *)rs->eg_p );
+		}
+		goto out;
+	}
+	/* Edge has edge geometry */
+	if( eu->g.lseg_p == rs->eg_p )  return;	/* nothing changes */
+	if( !rs->eg_p )  {
+		/* This is first edge_g found on isect line, remember it */
+		eg = eu->g.lseg_p;
+		NMG_CK_EDGE_G_LSEG(eg);
+		rs->eg_p = eg;
+		goto out;
+	}
+	/*
+	 * Edge has an edge geometry struct, different from that of isect line.
+	 * Force all uses of this edge geom to take on isect line's geometry.
+	 * Everywhere eu->g.lseg_p is seen, replace with rs->eg_p.
+	 *
+	 *  XXX This is DUBIOUS, as the angle might be very different.
+	 */
+	nmg_jeg( rs->eg_p, eu->g.lseg_p );
+out:
+	NMG_CK_EDGE_G_LSEG(rs->eg_p);
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at END\n",
+			eu, eu->g.magic_p, rs->eg_p);
+	}
+}
+
+
+HIDDEN void
+nmg_fcut_face( rs )
+struct nmg_ray_state *rs;
+{
+	register int	cur;
+	struct vertexuse *vu1,*vu2;
+	struct loopuse *lu;
+	struct loopuse *new_lu;
+	struct edgeuse *new_eu1,*new_eu2;
+	struct edgeuse *old_eu;
+
+	NMG_CK_RAYSTATE(rs);
+	RT_CK_TOL(rs->tol);
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		rt_log("nmg_face_combine()\n");
+
+	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
+
+#if PLOT_BOTH_FACES
+	nmg_2face_plot( rs->fu1, rs->fu2 );
+#else
+	nmg_face_plot( rs->fu1 );
+	nmg_face_plot( rs->fu2 );
+#endif
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+	{
+		rt_log( "rs->fu1 = x%x\n", rs->fu1 );
+		rt_log( "rs->fu2 = x%x\n", rs->fu2 );
+		nmg_pr_fu_briefly( rs->fu1, "" );
+		rt_log( "%d vertices on intersect line\n", rs->nvu );
+		for( cur=0 ; cur<rs->nvu ; cur++ )
+		rt_log( "\tvu=x%x, v=x%x, lu=x%x\n", rs->vu[cur], rs->vu[cur]->v_p, nmg_find_lu_of_vu( rs->vu[cur] ) );
+	}
+
+	if( rs->nvu < 2 )
+		return;
+
+	vu2 = rs->vu[0];
+	for( cur=1 ; cur<rs->nvu ; cur++ )
+	{
+		struct loopuse *lu1,*lu2;
+		point_t mid_pt;
+		int class;
+		int orient1,orient2;
+
+		vu1 = vu2;
+		vu2 = rs->vu[cur];
+
+		if( vu1->v_p == vu2->v_p )
+			continue;
+
+		/* See if there is an edge joining the 2 vertices already */
+		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
+			(struct edgeuse *)NULL, 0);
+
+		VAVERAGE( mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord )
+		class = nmg_class_pt_fu_except( mid_pt, rs->fu1, (struct loopuse *)NULL,
+			(void *)NULL, (void *)NULL, (char *)NULL, 0, rs->tol );
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+		{
+			rt_log( "vu1=x%x (%g %g %g ), vu2=x%x (%g %g %g)\n",
+				vu1, V3ARGS( vu1->v_p->vg_p->coord ),
+				vu2, V3ARGS( vu2->v_p->vg_p->coord ) );
+			rt_log( "\tmid_pt = (%g %g %g)\n", V3ARGS( mid_pt ) );
+			rt_log( "class for mid point is %s\n", nmg_class_name(class) );
+		}
+
+		if( class == NMG_CLASS_AoutB )
+			continue;
+
+		if( nmg_find_eu_in_face( vu1->v_p, vu2->v_p, rs->fu1,
+			(struct edgeuse *)NULL, 0 ) )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "Already an edge here\n" );
+			continue;
+		}
+
+		if( nmg_find_eu_in_face( vu1->v_p, vu2->v_p, rs->fu1->fumate_p,
+			(struct edgeuse *)NULL, 0 ) )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "Already an edge here\n" );
+			continue;
+		}
+
+		lu1 = nmg_find_lu_of_vu( vu1 );
+		lu2 = nmg_find_lu_of_vu( vu2 );
+		orient1 = lu1->orientation;
+		orient2 = lu2->orientation;
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+			rt_log( "lu1=x%x (mate=x%x), lu2=x%x (mate=x%x)\n", lu1, lu1->lumate_p, lu2, lu2->lumate_p );
+
+		if( lu1 != lu2 )
+		{
+			struct loopuse *match_lu=(struct loopuse *)NULL;
+			struct loopuse *prior_lu,*next_lu;
+			struct vertexuse *prior_vu, *next_vu;
+			int prior_start,prior_end;
+			int next_start,next_end;
+			int i,j;
+			int done=0;
+
+			/* check if any conicident VU's can give us a loop to cut */
+			prior_start = cur;
+			prior_end = cur;
+			next_start = cur;
+			next_end = cur;
+
+			while( prior_start > 0 && rs->vu[--prior_start]->v_p == vu1->v_p );
+			if( rs->vu[prior_start]->v_p != vu1->v_p )
+				prior_start++;
+
+			while( next_end < rs->nvu-1 && rs->vu[++next_end]->v_p == vu2->v_p );
+			if( rs->vu[next_end]->v_p == vu2->v_p )
+				next_end++;
+
+if( prior_end - prior_start > 1 ||  next_end - next_start > 1 )
+{
+
+	rt_log( "coincident VU's at %d:\n", cur );
+	for( i=0 ; i<rs->nvu ; i++ )
+		rt_log( "\tvu=x%x, v=x%x, lu=x%x\n", rs->vu[i], rs->vu[i]->v_p, nmg_find_lu_of_vu( rs->vu[i] ) );
+}
+
+			match_lu = (struct loopuse *)NULL;
+			while( !done )
+			{
+				done = 1;
+				for( i=prior_start ; i < prior_end ; i++ )
+				{
+					prior_lu = nmg_find_lu_of_vu( rs->vu[i] );
+					for( j=next_start ; j < next_end ; j++ )
+					{
+						next_lu = nmg_find_lu_of_vu( rs->vu[j] );
+						if( prior_lu == next_lu )
+						{
+							if( !match_lu )
+							{
+								match_lu = next_lu;
+								continue;
+							}
+							class = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
+							if( class == NMG_CLASS_AinB )
+							{
+								match_lu = next_lu;
+								done = 0;
+							}
+						}
+					}
+				}
+			}
+
+			if( match_lu )
+			{
+rt_log( "\t\tx%x is the innermost matching lu\n", match_lu );
+				lu1 = match_lu;
+				for( i=prior_start ; i < prior_end ; i++ )
+				{
+					if( nmg_find_lu_of_vu( rs->vu[i] ) == lu1 )
+					{
+						vu1 = rs->vu[i];
+						break;
+					}
+				}
+				lu2 = match_lu;
+				for( i=next_start ; i < next_end ; i++ )
+				{
+					if( nmg_find_lu_of_vu( rs->vu[i] ) == lu2 )
+					{
+						vu2 = rs->vu[i];
+						break;
+					}
+				}
+rt_log( "\t\tUse vu1=x%x, vu2=x%x\n", vu1, vu2 );
+			}
+		}
+
+		if( lu1 == lu2 )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tcut loop\n" );
+
+			new_lu = nmg_cut_loop( vu1, vu2 );
+			new_eu1 = RT_LIST_LAST( edgeuse, &new_lu->down_hd );
+			NMG_CK_EDGEUSE( new_eu1 );
+
+			nmg_loop_g( lu1->l_p, rs->tol );
+			nmg_loop_g( new_lu->l_p, rs->tol );
+
+			nmg_lu_reorient( lu1, rs->tol );
+			nmg_lu_reorient( new_lu, rs->tol );
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\t\t new_eu = x%x\n", new_eu1 );
+#if 0
+			/* Fuse new edge to intersect line, old edge */
+			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+#endif
+			if( old_eu ) nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			continue;
+		}
+
+		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
+		    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tjoin 2 singvu loops\n" );
+
+			vu2 = nmg_join_2singvu_loops( vu1, vu2 );
+			new_eu1 = vu2->up.eu_p;
+			NMG_CK_EDGEUSE( new_eu1 );
+
+			nmg_loop_g( lu1->l_p, rs->tol );
+			lu1->orientation = OT_SAME;
+			lu1->lumate_p->orientation = OT_SAME;
+#if 0			
+			/* Fuse new edge to intersect line, old edge */
+			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+#endif
+			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			continue;
+		}
+
+		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
+		    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_EDGEUSE_MAGIC )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tjoin loops vu1 (x%x) is sing vu loop\n", vu1 );
+
+			vu1 = nmg_join_singvu_loop( vu2, vu1 );
+			new_eu1 = vu1->up.eu_p;
+			NMG_CK_EDGEUSE( new_eu1 );
+
+			nmg_loop_g( lu2->l_p, rs->tol );
+			lu2->orientation = orient2;
+			lu2->lumate_p->orientation = orient2;
+#if 0			
+			/* Fuse new edge to intersect line, old edge */
+			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+#endif
+			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			continue;
+		}
+
+		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_EDGEUSE_MAGIC &&
+		    RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\tjoin loops vu2 (x%x) is sing vu loop\n", vu2 );
+
+			vu2 = nmg_join_singvu_loop( vu1, vu2 );
+			new_eu1 = vu2->up.eu_p;
+			NMG_CK_EDGEUSE( new_eu1 );
+
+			nmg_loop_g( lu1->l_p, rs->tol );
+			lu1->orientation = orient1;
+			lu1->lumate_p->orientation = orient1;
+#if 0			
+			/* Fuse new edge to intersect line, old edge */
+			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+#endif
+
+			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			continue;
+		}
+
+		if( lu1 != lu2 )
+		{
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "\t join 2 loops\n" );
+
+			vu2 = nmg_join_2loops( vu1, vu2 );
+			new_eu1 = vu2->up.eu_p;
+			NMG_CK_EDGEUSE( new_eu1 );
+
+			nmg_loop_g( lu1->l_p, rs->tol );
+#if 0
+			/* Fuse new edge to intersect line, old edge */
+			nmg_edge_geom_isect_line( new_eu1, rs, "CUTJOIN, new edge after loop cut" );
+#endif
+
+			if( old_eu )  nmg_radial_join_eu( old_eu, new_eu1, rs->tol );
+
+			continue;
+		}
+
+		rt_log( "ERROR in face cutter: something should have been cut!!\n" );
+		rt_log( "vu1=x%x, vu2=x%x\n", vu1, vu2 );
+		nmg_pr_fu_briefly( rs->fu1, "" );
+		rt_bomb( "ERROR: face cutter didn't cut anything" );
+	}
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)
+		nmg_pr_fu_briefly( rs->fu1, "" );
+}
+
+HIDDEN void
+nmg_face_combine_jra(rs1, mag1, rs2, mag2)
+struct nmg_ray_state	*rs1;
+fastf_t			*mag1;
+struct nmg_ray_state	*rs2;
+fastf_t			*mag2;
+{
+	nmg_fcut_face( rs1 );
+	nmg_fcut_face( rs2 );
 }
 
 /*
@@ -2399,13 +2796,96 @@ doit:
 				omag[k] = omag[k+count];
 		}
 		nmg_tbl(ob, TBL_RM, 0 );
+#if 0
 rt_bomb("nmg_onon_fix(): check the intersector\n");
+#endif
 		return 1;
 	}
 
 	return 0;
 }
+#if 0
+void
+nmg_sort_coincident_vus( tbl, tol )
+struct nmg_ptbl *tbl;
+CONST struct rt_tol *tol;
+{
+	int curr_vu=0;
+	int start1,end1;
+	int start2,end2;
+	struct vertexuse *vu1;
+	struct vertexuse *vu2;
+	struct loopuse **matching_lus;
+	int match_count=0;
 
+	RT_CK_TOL( tol );
+	NMG_CK_PTBL( tbl );
+
+	if( NMG_TBL_END( tbl ) < 3 )
+		return;
+
+	matching_lus = (struct loopuse **)rt_calloc( NMG_TBL_END( tbl ), 
+		sizeof( struct loopuse *), "nmg_sort_coincident_vus: matching_lus" );
+
+	/* look for coincident vu's */
+	while( curr_vu < NMG_TBL_END( tbl )-1 )
+	{
+		struct loopuse *lu1,*lu2;
+
+		vu1 = (struct vertexuse *)NMG_TBL_GET( tbl, curr_vu );
+		start1 = curr_vu;
+		end1 = start1;
+		vu2 = (struct vertexuse *)NMG_TBL_GET( tbl, start1 + 1 );
+		if( vu1->v-p != vu2->v_p )
+		{
+			/* not coincident */
+			curr_vu++;
+			continue;
+		}
+		while( vu2->v_p == vu1->v_p )
+		{
+			end1++;
+			vu2 = (struct vertexuse *)NMG_TBL_GET( tbl, end1 + 1 );
+		}
+
+		/*
+		 * get next vu after coincident list
+		 * might be another list of coincident VU's
+		 */
+		start2 = end1 + 1;
+		end2 = start2;
+		vu1 = (struct vertexuse *)NMG_TBL_GET( tbl, start2 );
+		vu2 = (struct vertexuse *)NMG_TBL_GET( tbl, start2+1 );
+		while( vu2->v_p == vu1->v_p )
+		{
+			end2++;
+			vu2 = (struct vertexuse *)NMG_TBL_GET( tbl, end2+1 );
+		}
+
+		match_count = 0;
+		for( i=start1 ; i<=end1 ; i++ )
+		{
+			vu1 = (struct vertexuse *)NMG_TBL_GET( tbl, i );
+			lu1 = nmg_find_lu_of_vu( vu1 );
+			if( !lu1 )
+				continue;
+
+			/* look for same LU in next list */
+			for( j=start1 ; j<= end1 ; j++ )
+			{
+				vu2 = (struct vertexuse *)NMG_TBL_GET( tbl, j );
+				lu2 = nmg_find_lu_of_vu( vu2 );
+				if( lu2 == lu1 )
+				{
+					matching_lus[match_count] = lu1;
+					match_count++;
+				}
+			}
+		}
+	}
+}
+
+#endif
 /*
  *			N M G _ F A C E _ C U T J O I N
  *
@@ -2543,11 +3023,16 @@ top:
 
 	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir, eg, tol );
 	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, eg, tol );
-
+#if 0
 	/* Ensure that small angles don't plunk vertexuses down onto the intersection line */
 	if( nmg_onon_fix( &rs1, b1, b2, mag1, mag2 ) || nmg_onon_fix( &rs2, b2, b1, mag2, mag1 ) )  goto top;
+#endif
 
+#if 0
 	nmg_face_combineX( &rs1, mag1, &rs2, mag2 );
+#else
+	nmg_face_combine_jra( &rs1, mag1, &rs2, mag2 );
+#endif
 
 	/* Can't do simplifications here,
 	 * because the caller's linked lists & pointers might get disrupted.
@@ -2566,79 +3051,31 @@ top:
 	return rs1.eg_p;
 }
 
-/*
- *			N M G _ E D G E _ G E O M _ I S E C T _ L I N E
- *
- *  Force the geometry structure for a given edge to be that of
- *  the intersection line between the two faces.
- *
- *  Note that sometimes a vertex can appear to lie on more than one
- *  line.  It is important to refer to geometry here, to make sure
- *  that the edgeuse is not mistakenly fused to the wrong edge geometry.
- *
- *  XXX This has the byproduct that not all edgeuses "on" the line
- *  XXX of intersection will share rs->eg_p.
- *
- *  See the comments in nmg_radial_join_eu() for the rationale.
- */
 void
-nmg_edge_geom_isect_line( eu, rs, reason )
-struct edgeuse		*eu;
-struct nmg_ray_state	*rs;
-CONST char		*reason;
+nmg_fcut_face_2d( vu_list, mag, fu1, fu2, tol )
+struct nmg_ptbl *vu_list;
+fastf_t *mag;
+struct faceuse *fu1;
+struct faceuse *fu2;
+struct rt_tol *tol;
 {
-	register struct edge_g_lseg	*eg;
+	struct nmg_ray_state rs;
+	point_t pt;
+	vect_t dir;
+	struct edge_g_lseg *eg;
 
-	NMG_CK_EDGEUSE(eu);
-	NMG_CK_RAYSTATE(rs);
-	if(eu->g.lseg_p) NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
-	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
+	NMG_CK_FACEUSE( fu1 );
+	NMG_CK_FACEUSE( fu2 );
+	RT_CK_TOL( tol );
+	NMG_CK_PTBL( vu_list );
 
-	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_edge_geom_isect_line(eu=x%x, %s)\n eu->g=x%x, rs->eg=x%x at START\n",
-			eu, reason,
-			eu->g.magic_p, rs->eg_p);
-	}
-	if( !eu->g.magic_p )  {
-		/* This edgeuse has No edge geometry so far.
-		 * It may be a new edge formed by a CUTJOIN operation.
-		 */
-		if( !rs->eg_p )  {
-			nmg_edge_g( eu );
-			eg = eu->g.lseg_p;
-			NMG_CK_EDGE_G_LSEG(eg);
-			VMOVE( eg->e_pt, rs->pt );
-			VMOVE( eg->e_dir, rs->dir );
-			rs->eg_p = eg;
-		} else {
-			NMG_CK_EDGE_G_LSEG(rs->eg_p);
-			nmg_use_edge_g( eu, (long *)rs->eg_p );
-		}
-		goto out;
-	}
-	/* Edge has edge geometry */
-	if( eu->g.lseg_p == rs->eg_p )  return;	/* nothing changes */
-	if( !rs->eg_p )  {
-		/* This is first edge_g found on isect line, remember it */
-		eg = eu->g.lseg_p;
-		NMG_CK_EDGE_G_LSEG(eg);
-		rs->eg_p = eg;
-		goto out;
-	}
-	/*
-	 * Edge has an edge geometry struct, different from that of isect line.
-	 * Force all uses of this edge geom to take on isect line's geometry.
-	 * Everywhere eu->g.lseg_p is seen, replace with rs->eg_p.
-	 *
-	 *  XXX This is DUBIOUS, as the angle might be very different.
-	 */
-	nmg_jeg( rs->eg_p, eu->g.lseg_p );
-out:
-	NMG_CK_EDGE_G_LSEG(rs->eg_p);
-	if(rt_g.NMG_debug&DEBUG_FCUT)  {
-		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at END\n",
-			eu, eu->g.magic_p, rs->eg_p);
-	}
+	VSETALL( pt, 0.0 );
+	VSET( dir, 1.0, 0.0 ,0.0 );
+	eg = (struct edge_g_lseg *)NULL;
+
+	nmg_face_rs_init( &rs, vu_list, fu1, fu2, pt,  dir, eg, tol );
+
+	nmg_fcut_face( &rs );
 }
 
 /*
