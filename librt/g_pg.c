@@ -33,10 +33,6 @@ static char RCSpg[] = "@(#)$Header$ (BRL)";
 
 /* Describe algorithm here */
 
-#define PGMINMAX(a,b,c)	{ FAST fastf_t ftemp;\
-			if( (ftemp = (c)) < (a) )  a = ftemp;\
-			if( ftemp > (b) )  b = ftemp; }
-
 /*
  *			P G _ P R E P
  *  
@@ -79,9 +75,7 @@ struct rt_i	*rtip;
 		for( i=0; i < rec.q.q_count; i++ )  {
 			MAT4X3PNT( work, mat, rec.q.q_verts[i] );
 			VMOVE( rec.q.q_verts[i], work );
-			PGMINMAX( stp->st_min[X], stp->st_max[X], work[X] );
-			PGMINMAX( stp->st_min[Y], stp->st_max[Y], work[Y] );
-			PGMINMAX( stp->st_min[Z], stp->st_max[Z], work[Z] );
+			VMINMAX( stp->st_min, stp->st_max, work );
 		}
 		(void)pgface( stp,
 			&(rec.q.q_verts[0][X]),
@@ -238,10 +232,11 @@ struct application	*ap;
 		if( rt_g.debug & DEBUG_ARB8 )
 			rt_log("Face N.Dir=%f\n", dn );
 		/*
-		 *  If ray lies directly along the face, drop this face.
+		 *  If ray lies directly along the face, (ie, dot product
+		 *  is zero), drop this face.
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn <= 0.0001 )
+		if( abs_dn < SQRT_SMALL_FASTF )
 			continue;
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
 		VCROSS( xp, wxb, rp->r_dir );
