@@ -5,10 +5,10 @@
  *  and asynchronous messages across stream connections.
  *
  *  Functions -
- *	pkg_open	Open a network connection to a host
- *	pkg_initserver	Create a network server, and listen for connection
- *	pkg_getclient	As network server, accept a new connection
- *	pkg_makeconn	Make a pkg_conn structure
+ *	pkg_open	Open a network connection to a host/server
+ *	pkg_transerver	Become a transient network server
+ *	pkg_permserver	Create a network server, and listen for connection
+ *	pkg_getclient	As permanent network server, accept a new connection
  *	pkg_close	Close a network connection
  *	pkg_send	Send a message on the connection
  *	pkg_2send	Send a two part message on the connection
@@ -73,6 +73,7 @@ extern int errno;
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 
 /* Internal Functions */
+static struct pkg_conn *pkg_makeconn();
 static void pkg_errlog();
 static void pkg_perror();
 static int pkg_mread();
@@ -95,9 +96,12 @@ static char errbuf[80];
  *  Returns PKC_ERROR on error.
  */
 struct pkg_conn *
-pkg_open( host, service, switchp, errlog )
+pkg_open( host, service, protocol, uname, passwd, switchp, errlog )
 char *host;
 char *service;
+char *protocol;
+char *uname;
+char *passwd;
 struct pkg_switch *switchp;
 void (*errlog)();
 {
@@ -196,7 +200,30 @@ void (*errlog)();
 }
 
 /*
- *  			P K G _ I N I T S E R V E R
+ *  			P K G _ T R A N S E R V E R
+ *  
+ *  Become a one-time server on the open connection.
+ *  A client has already called and we have already answered.
+ *  This will be a servers starting condition if he was created
+ *  by a process like the UNIX inetd.
+ *
+ *  Returns PKC_ERROR or a pointer to a pkg_conn structure.
+ */
+struct pkg_conn *
+pkg_transerver( switchp, errlog )
+struct pkg_switch *switchp;
+void (*errlog)();
+{
+	/*
+	 * XXX - Somehow the system has to know what connection
+	 * was accepted, it's protocol, etc.  For UNIX/inetd
+	 * we use stdin.
+	 */
+	return( pkg_makeconn( fileno(stdin), switchp, errlog ) );
+}
+
+/*
+ *  			P K G _ P E R M S E R V E R
  *  
  *  We are now going to be a server for the indicated service.
  *  Hang a LISTEN, and return the fd to select() on waiting for
@@ -205,8 +232,9 @@ void (*errlog)();
  *  Returns fd to listen on (>=0), -1 on error.
  */
 int
-pkg_initserver( service, backlog, errlog )
+pkg_permserver( service, protocol, backlog, errlog )
 char *service;
+char *protocol;
 int backlog;
 void (*errlog)();
 {
@@ -328,22 +356,23 @@ void (*errlog)();
 	}
 
 	/* Hopefully, once-only XXX */
-	return( pkg_makeconn( fd, switchp, errlog) );
+	return( pkg_makeconn(fd, switchp, errlog) );
 #endif
 }
 
 /*
  *			P K G _ M A K E C O N N
  *
+ *  Internal.
  *  Malloc and initialize a pkg_conn structure.
- *  Assumes a client has already been accepted on the given file
- *  descriptor.  This is the case with processes spawned by inetd,
- *  or those comming from pkg_getclient.
+ *  We have already connected to a client or server on the given
+ *  file descriptor.
  *
  *  Returns -
  *	>0		ptr to pkg_conn block of new connection
  *	PKC_ERROR	fatal error
  */
+static
 struct pkg_conn *
 pkg_makeconn(fd, switchp, errlog)
 struct pkg_switch *switchp;
