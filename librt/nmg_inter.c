@@ -3070,6 +3070,7 @@ force_isect:
 			nmg_get_2d_vertex( hit2d, hit_v, is, fu1 );
 		}
 
+eu_search:
 		/* Search all eu's on eg1 for vu's to enlist.  May be many. */
 		for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
 		     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list); eu1--
@@ -3178,8 +3179,9 @@ hit_b:
 						rt_bomb("About to make 0-length edge!\n");
 				}
 				new_eu = nmg_ebreaker(hit_v, *eu1, &is->tol);
-				/* XXX What about realloc() moving the array? */
+				/* WARNING: realloc() may move the array */
 				nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
+				/* "eu1" must now be considered invalid */
 				vu1_midpt = new_eu->vu_p;
 				if( !hit_v )  {
 					hit_v = vu1_midpt->v_p;
@@ -3205,6 +3207,8 @@ hit_b:
 				}
 				nmg_enlist_vu(is, vu1_midpt, 0);
 				/* Neither old nor new edgeuse need further handling */
+				/* Because "eu1" is now invalid, restart loop. */
+				goto eu_search;
 			}
 		}
 	}
