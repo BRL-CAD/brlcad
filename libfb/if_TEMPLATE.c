@@ -3,18 +3,19 @@
  *
  *  Copy this file to if_devname.c
  *  Do a global replace of DEVNAME with your devname.
- *   (In the interest of non-flexnames, DEVNAME should be
- *   about three characters; except for DEVNAME_interface)
+ *   (In the interest of non-flexnames, DEVNAME should be no more
+ *   than three characters; except perhaps for DEVNAME_interface)
  *  Fill in the device description, max width and height,
  *   default width and height, and shortname (what you will
  *   look it up as).
  *  Set the unimplemented functions to "fb_null"
  *   (and remove the skeletons if you're tidy)
- *  Go add an "ifdef IF_DEVNAME" to fb_generic.c.
- *  Fix Makefile.loc in 3 places.
+ *  Go add an "ifdef IF_DEVNAME" to fb_generic.c (two places).
+ *  Add defines to ../Cakefile.defs.
  *  Replace this header.
  */
 
+#include "fb.h"
 #include "./fblocal.h"
 
 _LOCAL_ int	DEVNAME_dopen(),
@@ -71,18 +72,21 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
+	return(0);
 }
 
 _LOCAL_ int
 DEVNAME_dclose( ifp )
 FBIO	*ifp;
 {
+	return(0);
 }
 
 _LOCAL_ int
 DEVNAME_dreset( ifp )
 FBIO	*ifp;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -90,6 +94,7 @@ DEVNAME_dclear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -99,6 +104,7 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	return(count);
 }
 
 _LOCAL_ int
@@ -108,6 +114,7 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	return(count);
 }
 
 _LOCAL_ int
@@ -115,6 +122,7 @@ DEVNAME_cmread( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -122,6 +130,7 @@ DEVNAME_cmwrite( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -129,6 +138,7 @@ DEVNAME_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -136,6 +146,7 @@ DEVNAME_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -143,6 +154,7 @@ DEVNAME_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -152,6 +164,7 @@ unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -160,6 +173,7 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	return(0);
 }
 
 _LOCAL_ int
@@ -168,4 +182,5 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	return(0);
 }
