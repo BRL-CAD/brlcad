@@ -1467,6 +1467,14 @@ char			*buf;
 				   blend2 * rtnodes[i].i_lps;
 		rtnodes[i].time_delta = interval;
 
+		if( rtnodes[i].ncpus != atoi(buf) )  {
+			bu_log(" %s %s NCPUs changed from %d to %s\n",
+				stamp(), rtnodes[i].host->ht_name,
+				rtnodes[i].ncpus, buf);
+			rtnodes[i].ncpus = atoi(buf);
+			Tcl_Eval( interp, "update_cpu_status" );
+		}
+
 		if( debug )  {
 			bu_log("%s DONE %s (%g ms)\n", stamp(),
 				rtnodes[i].host->ht_name,
