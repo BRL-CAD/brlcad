@@ -1621,17 +1621,56 @@ struct bu_vls *vls;
 
 		if( !strncmp( shader, "stack", 5 ) )
 		{
-			bu_vls_strcpy( vls, "stack {" );
-			is_stack = 1;
-			next = iptr;
-			continue;
+			/* stack shader, loop through all shaders in stack */
+			int done=0;
+			int multi=0;
+			char *c;
+
+			c = iptr;
+			while( *++c )
+			{
+				if( *c == ';' )
+				{
+					multi = 1;
+					break;
+				}
+			}
+
+			bu_vls_strcat( vls, "stack {" );
+
+			while( !done )
+			{
+				char *shade1;
+
+				while( isspace( *iptr ) )
+					iptr++;
+				if( *iptr == '\0' )
+					break;
+				shade1 = iptr;
+				while( *iptr && *iptr != ';' )
+					iptr++;
+				if( *iptr == '\0' )
+					done = 1;
+				*iptr = '\0';
+				if( multi )
+					bu_vls_putc( vls, '{' );
+				if( bu_shader_to_tcl_list( shade1, vls ) )
+					return( 1 );
+				if( multi )
+					bu_vls_strcat( vls, "} " );
+				if( !done )
+					iptr++;
+			}
+			bu_vls_putc( vls, '}' );
+			return( 0 );
 		}
 		else if( !strncmp( shader, "envmap", 6 ) )
 		{
-			bu_vls_strcpy( vls, "envmap {" );
-			is_stack = 1;
-			next = iptr;
-			continue;
+			bu_vls_strcat( vls, "envmap {" );
+			if( bu_shader_to_tcl_list( iptr, vls ) )
+				return( 1 );
+			bu_vls_putc( vls, '}' );
+			return( 0 );
 		}
 
 		if( is_stack )
@@ -1877,6 +1916,7 @@ char *in;
 struct bu_vls *vls;
 {
 	int len;
+	int ret=0;
 	char *shader;
 	char *params;
 
@@ -1890,7 +1930,9 @@ struct bu_vls *vls;
 	if( len == 1 )
 	{
 		/* shader with no parameters */
-		bu_vls_strcpy( vls, in );
+		if( bu_vls_strlen( vls ) )
+			bu_vls_putc( vls, ' ' );
+		bu_vls_strcat( vls, in );
 		return( 0 );
 	}
 
@@ -1903,22 +1945,25 @@ struct bu_vls *vls;
 	shader = bu_list_elem( in, 0 );
 	params = bu_list_elem( in, 1 );
 
-	if( strcmp( shader, "stack" ) && strcmp( shader, "envmap" ) )
+	if( !strcmp( shader, "envmap" ) )
 	{
-		bu_vls_strcpy( vls, shader );
-		if( bu_key_val_to_vls( vls, params ) )
-			return( 1 );
+		/* environment map */
+
+		if( bu_vls_strlen( vls ) )
+			bu_vls_putc( vls, ' ' );
+		bu_vls_strcat( vls, "envmap" );
+
+		bu_shader_to_key_eq( params, vls );
 	}
-	else
+	else if( !strcmp( shader, "stack" ) )
 	{
 		/* stacked shaders */
 
 		int i,j;
 
-		bu_vls_strcpy( vls, shader );
-		bu_vls_putc( vls, ' ' );
-
-		bu_free( shader, "bu_shader_to_key_eq:shader" );
+		if( bu_vls_strlen( vls ) )
+			bu_vls_putc( vls, ' ' );
+		bu_vls_strcat( vls, "stack " );
 
 		/* get number of shaders in the stack */
 		len = bu_tcl_list_length( params );
@@ -1932,44 +1977,22 @@ struct bu_vls *vls;
 			/* each parameter must be a shader specification in itself */
 			shader1 = bu_list_elem( params, i );
 
-			len1 = bu_tcl_list_length( shader1 );
-			if( len1 == 0 )
-			{
-				bu_free( shader1, "shader1" );
-				continue;
-			}
-			else if( len1 == 1 )
-			{
-				if( i>0 && i<len )
-					bu_vls_putc( vls, ';' );
-				shade1_name = bu_list_elem( shader1, 0 );
-				bu_vls_strcat( vls, shade1_name );
-				bu_free( shader1, "shader1" );
-				continue;
-			}
-			else if( len1 != 2 )
-			{
-				bu_log( "bu_shader_to_key_eq: Error: shader must have two elements!! (not %d)\n\t%s\n", len1, in );
-				return 1;
-			}
-
-			shade1_name = bu_list_elem( shader1, 0 );
-			params1 = bu_list_elem( shader1, 1 );
-
-			if( i>0 && i<len )
+			if( i > 0 ) 
 				bu_vls_putc( vls, ';' );
-
-			bu_vls_strcat( vls, shade1_name );
+			bu_shader_to_key_eq( shader1, vls );
 			bu_free( shader1, "shader1" );
-			if( bu_key_val_to_vls( vls, params1 ) )
-			{
-				bu_free( params1, "params1" );
-				return( 1 );
-			}
-
-			bu_free( params1, "params1" );
 		}
 	}
+	else
+	{
+		if( bu_vls_strlen( vls ) )
+			bu_vls_putc( vls, ' ' );
+		bu_vls_strcat( vls, shader );
+		ret = bu_key_val_to_vls( vls, params );
+	}
 
-	return 0;
+	bu_free( shader, "shader" );
+	bu_free( params, "params" );
+
+	return( ret );
 }
