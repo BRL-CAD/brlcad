@@ -626,7 +626,7 @@ wdb_get_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 
 	status = intern.idb_meth->ft_tclget(interp, &intern, argv[2]);
-	intern.idb_meth->ft_ifree(&intern);
+	rt_db_free_internal(&intern);
 	return status;
 }
 
@@ -1237,7 +1237,7 @@ wdb_list_tcl(clientData, interp, argc, argv)
 			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local) < 0)
 				Tcl_AppendResult(interp, dp->d_namep, ": describe error", (char *)NULL);
 
-			rt_functab[id].ft_ifree(&intern);
+			rt_db_free_internal(&intern);
 		} else {
 			if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 				continue;
@@ -1996,7 +1996,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 			if (changed) {
 				if (rt_db_put_internal(dp, wdbp->dbip, &intern)) {
 					bu_ptbl_free( &stack );
-					rt_comb_ifree( &intern );
+					rt_db_free_internal( &intern );
 					Tcl_AppendResult(interp,
 							 "Database write error, aborting",
 							 (char *)NULL);
@@ -2004,7 +2004,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 				}
 			}
 			else
-				rt_comb_ifree(&intern);
+				rt_db_free_internal(&intern);
 		}
 	}
 
@@ -2762,7 +2762,7 @@ wdb_find_tcl(clientData, interp, argc, argv)
 			for (k=2; k<argc; k++)
 				db_tree_funcleaf(wdbp->dbip, comb, comb->tree, wdb_find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)interp);
 
-			rt_comb_ifree(&intern);
+			rt_db_free_internal(&intern);
 		}
 	}
 
@@ -2901,7 +2901,7 @@ wdb_which_tcl(clientData, interp, argc, argv)
 				}
 			}
 
-			rt_comb_ifree(&intern);
+			rt_db_free_internal(&intern);
 		}
 	}
 
@@ -3084,7 +3084,7 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 		}
 		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
 	}
-	rt_comb_ifree(&intern);
+	rt_db_free_internal(&intern);
 }
 
 /*
@@ -3766,7 +3766,7 @@ wdb_push_tcl(clientData, interp, argc, argv)
 		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat, wdbp->dbip) < 0 ) {
 			Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 					 "): solid import failure\n", (char *)NULL);
-			if (es_int.idb_ptr) rt_functab[id].ft_ifree( &es_int);
+			rt_db_free_internal( &es_int);
 			db_free_external( &es_ext);
 			continue;
 		}
@@ -3777,8 +3777,7 @@ wdb_push_tcl(clientData, interp, argc, argv)
 		} else {
 			db_put_external(&es_ext, pip->pi_dir, wdbp->dbip);
 		}
-		if (es_int.idb_ptr)
-			rt_functab[id].ft_ifree(&es_int);
+		rt_db_free_internal(&es_int);
 		db_free_external(&es_ext);
 	}
 
@@ -3856,7 +3855,7 @@ wdb_whatid_tcl(clientData, interp, argc, argv)
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%d", comb->region_id);
-	rt_comb_ifree(&intern);
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -4368,7 +4367,7 @@ wdb_do_list(dbip, interp, outstrp, dp, verbose)
 	if (rt_functab[id].ft_describe(outstrp, &intern,
 				       verbose, dbip->dbi_base2local) < 0)
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_functab[id].ft_ifree(&intern);
+	rt_db_free_internal(&intern);
 }
 
 /*
@@ -4484,7 +4483,7 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 		db_non_union_push(comb->tree);
 		if (db_ck_v4gift_tree(comb->tree) < 0) {
 			Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
-			rt_comb_ifree(comb);
+			rt_db_free_internal(&intern);
 			return DIR_NULL;
 		}
 	}

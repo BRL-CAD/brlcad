@@ -563,7 +563,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 			comb->region_flag = 0;
 
 		if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
-			rt_comb_ifree(&intern);
+			rt_db_free_internal(&intern);
 			Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
 			return TCL_ERROR;
 		}
@@ -617,7 +617,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 				if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 					wdb_free_tokens(&tok_hd.l);
 					if (dp != DIR_NULL)
-						rt_comb_ifree(&intern);
+						rt_db_free_internal(&intern);
 					return TCL_ERROR;
 				}
 				ptr++;
@@ -629,7 +629,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 				if (name_len < 1) {
 					wdb_free_tokens(&tok_hd.l);
 					if (dp != DIR_NULL)
-						rt_comb_ifree(&intern);
+						rt_db_free_internal(&intern);
 					return TCL_ERROR;
 				}
 				last_tok = WDB_TOK_TREE;
@@ -639,7 +639,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 				if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 					wdb_free_tokens(&tok_hd.l);
 					if (dp != DIR_NULL)
-						rt_comb_ifree(&intern);
+						rt_db_free_internal(&intern);
 					return TCL_ERROR;
 				}
 				ptr++;
@@ -653,7 +653,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 				if (name_len < 1) {
 					wdb_free_tokens(&tok_hd.l);
 					if (dp != DIR_NULL)
-						rt_comb_ifree(&intern);
+						rt_db_free_internal(&intern);
 					return TCL_ERROR;
 				}
 				last_tok = WDB_TOK_TREE;
@@ -693,7 +693,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 
 					tok->tp = comb1->tree;
 					comb1->tree = (union tree *)NULL;
-					rt_comb_ifree(&intern1);
+					rt_db_free_internal(&intern1);
 				}
 				break;
 			default:
