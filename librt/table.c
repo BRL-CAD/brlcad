@@ -43,6 +43,8 @@ extern int	rt_sph_prep(), rt_sph_class();
 extern int	ebm_prep(), ebm_class();
 extern int	vol_prep(), vol_class();
 extern int	rt_arbn_prep(), rt_arbn_class();
+extern int	rt_part_prep(), rt_part_class();
+extern int	rt_pipe_prep(), rt_pipe_class();
 
 extern void	rt_nul_print(), rt_nul_norm(), rt_nul_uv();
 extern void	rt_tor_print(), rt_tor_norm(), rt_tor_uv();
@@ -58,6 +60,8 @@ extern void	rt_sph_print(), rt_sph_norm(), rt_sph_uv();
 extern void	ebm_print(), ebm_norm(), ebm_uv();
 extern void	vol_print(), vol_norm(), vol_uv();
 extern void	rt_arbn_print(), rt_arbn_norm(), rt_arbn_uv();
+extern void	rt_part_print(), rt_part_norm(), rt_part_uv();
+extern void	rt_pipe_print(), rt_pipe_norm(), rt_pipe_uv();
 
 extern void	rt_nul_curve(), rt_nul_free();
 extern void	rt_tor_curve(), rt_tor_free();
@@ -73,6 +77,8 @@ extern void	rt_sph_curve(), rt_sph_free();
 extern void	ebm_curve(), ebm_free();
 extern void	vol_curve(), vol_free();
 extern void	rt_arbn_curve(), rt_arbn_free();
+extern void	rt_part_curve(), rt_part_free();
+extern void	rt_pipe_curve(), rt_pipe_free();
 
 extern int	rt_nul_plot();
 extern int	rt_tor_plot();
@@ -86,6 +92,8 @@ extern int	rt_spl_plot();
 extern int	ebm_plot();
 extern int	vol_plot();
 extern int	rt_arbn_plot();
+extern int	rt_part_plot();
+extern int	rt_pipe_plot();
 
 extern int	rt_nul_shot();
 extern int	rt_tor_shot();
@@ -101,6 +109,8 @@ extern int	rt_sph_shot();
 extern int	ebm_shot();
 extern int	vol_shot();
 extern int	rt_arbn_shot();
+extern int	rt_part_shot();
+extern int	rt_pipe_shot();
 
 extern void	rt_nul_vshot();
 extern void	rt_ell_vshot();
@@ -111,6 +121,8 @@ extern void	rt_arb_vshot();
 extern void	rt_tgc_vshot();
 extern void	rt_tor_vshot();
 extern void	rt_arbn_vshot();
+extern void	rt_part_vshot();
+extern void	rt_pipe_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
 
 extern int	rt_nul_tess();
@@ -127,6 +139,8 @@ extern int	ebm_tess();
 extern int	vol_tess();
 #endif
 extern int	rt_arbn_tess();
+extern int	rt_part_tess();
+extern int	rt_pipe_tess();
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_NULL",	0,
@@ -203,6 +217,16 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_arbn_prep,	rt_arbn_shot,	rt_arbn_print,	rt_arbn_norm,
 		rt_arbn_uv,	rt_arbn_curve,	rt_arbn_class,	rt_arbn_free,
 		rt_arbn_plot,	rt_arbn_vshot,	rt_arbn_tess,
+
+	"ID_PIPE",	0,
+		rt_pipe_prep,	rt_pipe_shot,	rt_pipe_print,	rt_pipe_norm,
+		rt_pipe_uv,	rt_pipe_curve,	rt_pipe_class,	rt_pipe_free,
+		rt_pipe_plot,	rt_pipe_vshot,	rt_pipe_tess,
+
+	"ID_PARTICLE",	0,
+		rt_part_prep,	rt_part_shot,	rt_part_print,	rt_part_norm,
+		rt_part_uv,	rt_part_curve,	rt_part_class,	rt_part_free,
+		rt_part_plot,	rt_part_vshot,	rt_part_tess,
 
 	">ID_MAXIMUM",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
@@ -303,6 +327,12 @@ register union record *rec;
 		break;
 	case DBID_ARBN:
 		id = ID_ARBN;
+		break;
+	case DBID_PIPE:
+		id = ID_PIPE;
+		break;
+	case DBID_PARTICLE:
+		id = ID_PARTICLE;
 		break;
 	default:
 		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
