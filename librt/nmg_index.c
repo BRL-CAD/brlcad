@@ -439,11 +439,16 @@ char				*str;
 
 /*
  *			N M G _ M _ S T R U C T _ C O U N T
+ *
+ *  Returns -
+ *	Pointer to magic-number/structure-base pointer array,
+ *	indexed by nmg structure index.
+ *	Caller is responsible for freeing it.
  */
-void
+long **
 nmg_m_struct_count( ctr, m )
-struct nmg_struct_counts	*ctr;
-struct model			*m;
+register struct nmg_struct_counts	*ctr;
+struct model				*m;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -455,15 +460,15 @@ struct model			*m;
 	struct edge		*e;
 	struct vertexuse	*vu;
 	struct vertex		*v;
-	long			*flags;
+	register long		**ptrs;
 
 #define NMG_UNIQ_INDEX(_p,_type)	\
-	if( flags[(_p)->index] == 0 )  { \
-		flags[(_p)->index] = 1; \
+	if( ptrs[(_p)->index] == (long *)0 )  { \
+		ptrs[(_p)->index] = (long *)(_p); \
 		ctr->_type++; \
 	}
 
-	flags = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_m_count flags[]");
+	ptrs = (long **)rt_calloc( m->maxindex+1, sizeof(long *), "nmg_m_count ptrs[]" );
 
 	NMG_CK_MODEL(m);
 	NMG_UNIQ_INDEX(m, model);
@@ -667,5 +672,6 @@ struct model			*m;
 			}
 		}
 	}
-	rt_free( (char *)flags, "flags[]" );
+	/* Caller must free them */
+	return ptrs;
 }
