@@ -88,11 +88,10 @@ int			noisy;
 {
 	register struct directory *dp;
 	static char local[NAMESIZE+2];
-	register int i;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_lookup:  bad dbip\n");
 
-	if( (i=strlen(name)) > NAMESIZE )  {
+	if( strlen(name) > NAMESIZE )  {
 		(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
 		local[NAMESIZE] = '\0';			/* ensure null termination */
 		name = local;
@@ -138,8 +137,9 @@ int			flags;
 	if(rt_g.debug&DEBUG_DB) rt_log("db_diradd( x%x, %s, addr=x%x, len=%d, flags=x%x)\n", dbip, name, laddr, len, flags);
 
 	if( (dupdp = db_lookup( dbip, name, 0 )) != DIR_NULL )  {
-		rt_log("db_diradd( x%x, %s, addr=x%x, len=%d, flags=x%x) duplicates entry x%x d_addr=x%x\n",
-			dbip, name, laddr, len, flags,
+		rt_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
+			dbip, name, laddr, len, flags );
+		rt_log("Attempt to duplicate existing entry x%x d_addr=x%x with same name, ignored\n",
 			dupdp, dupdp->d_addr );
 		return( DIR_NULL );
 	}
