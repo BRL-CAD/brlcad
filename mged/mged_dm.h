@@ -91,6 +91,7 @@ struct shared_info {
   mat_t   _view2model;
   mat_t   _model2objview;
   mat_t   _objview2model;
+  mat_t   _ModelDelta;       /* changes to Viewrot this frame */
 
   struct view_list _headView;
   struct view_list *_current_view;
@@ -179,11 +180,19 @@ struct menu_vars {
   struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
 };
 
+#define NUM_TRAILS 8
+#define MAX_TRAIL  32
+struct trail {
+  int cur_index;      /* index of first free entry */
+  int nused;          /* max index in use */
+  point_t pt[MAX_TRAIL];
+};
+
 struct dm_list {
   struct bu_list l;
   struct dm *_dmp;
-/* New stuff to allow more than one active display manager */
-  struct shared_info *s_info;  /* info that can be used by display managers that are tied */
+/* New members to allow more than one active display manager */
+  struct shared_info *s_info;  /* info that can be used by display managers that share their views */
   int _dirty;      /* true if received an expose or configuration event */
   int _mapped;
   int _owner;      /* true if owner of the shared info */
@@ -192,8 +201,10 @@ struct dm_list {
   double _frametime;/* time needed to draw last frame */
   struct bu_vls _fps_name;
   struct cmd_list *aim;
-  struct _mged_variables _mged_variables;
+  struct _mged_variables *_mged_variables;
   struct menu_vars *menu_vars;
+  struct bu_list p_vlist; /* predictor vlist */
+  struct trail trails[NUM_TRAILS];
 
 /* Slider stuff */
   int _scroll_top;
@@ -203,7 +214,6 @@ struct dm_list {
   struct scroll_item *_scroll_array[6];
   struct bu_vls _scroll_edit_vls;
 
-  int _last_v_axes;
   void (*_knob_hook)();
   void (*_axes_color_hook)();
   int (*_cmd_hook)();
@@ -297,6 +307,7 @@ extern struct dm_list *curr_dm_list;
 #define view2model curr_dm_list->s_info->_view2model
 #define model2objview curr_dm_list->s_info->_model2objview
 #define objview2model curr_dm_list->s_info->_objview2model
+#define ModelDelta curr_dm_list->s_info->_ModelDelta
 #define headView curr_dm_list->s_info->_headView
 #define current_view curr_dm_list->s_info->_current_view
 #define last_view curr_dm_list->s_info->_last_view
@@ -337,8 +348,6 @@ extern struct dm_list *curr_dm_list;
 #define scroll_edit curr_dm_list->_scroll_edit
 #define scroll_array curr_dm_list->_scroll_array
 #define scroll_edit_vls curr_dm_list->_scroll_edit_vls
-
-#define last_v_axes curr_dm_list->_last_v_axes
 
 #define MINVIEW		0.001				
 #define VIEWSIZE	(2.0*Viewscale)	/* Width of viewing cube */
@@ -422,5 +431,8 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 /* indices into which_dm[] */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
+
+#define FOR_ALL_DISPLAYS(p,hp) \
+	for(BU_LIST_FOR(p,dm_list,hp))
 
 #endif /* SEEN_MGED_DM_H */
