@@ -124,6 +124,9 @@ FBIO *_if_list[] = {
 	(FBIO *) 0
 };
 
+/*
+ *			F B _ O P E N
+ */
 FBIO *
 fb_open( file, width, height )
 char	*file;
@@ -131,6 +134,9 @@ int	width, height;
 {
 	register FBIO	*ifp;
 	int	i;
+
+	if( width < 0 || height < 0 )
+		return	FBIO_NULL;
 
 	if( (ifp = (FBIO *) calloc( sizeof(FBIO), 1 )) == FBIO_NULL ) {
 		Malloc_Bomb( sizeof(FBIO) );
