@@ -1,3 +1,4 @@
+#define NO_MATER 0
 /*
  *	./rttherm -P1 -s64 -o mtherm ../.db.6d/moss.g all.g
  *
@@ -93,13 +94,12 @@ Options:\n\
  -R		Do not report overlaps\n\
 ";
 
-int	max_bounces = 3;
-
-#if NO_MATER
+extern int	max_bounces;		/* from refract.c */
+extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
 extern fastf_t	frame_delta_t;		/* from main.c */
-extern struct region	env_region;	/* from text.c */
-#endif
+
+struct region	env_region;		/* environment map region */
 
 void		free_scanlines();
 
@@ -273,7 +273,7 @@ struct rt_i	*rtip;
 	 */
 #if NO_MATER
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-		switch( mlib_setup( regp, rtip ) )  {
+		switch( mlib_setup( &mfHead, regp, rtip ) )  {
 		case -1:
 		default:
 			rt_log("mlib_setup failure on %s\n", regp->reg_name);
@@ -419,7 +419,7 @@ struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-#if 0
+#if NO_MATER
 	struct shadework sw;
 #endif
 	fastf_t		degK;
@@ -517,7 +517,8 @@ struct seg *finished_segs;
 		}
 	}
 
-#if 0
+#if NO_MATER
+/* XXX This is the right way to do this, but isn't quite ready yet. */
 	bzero( (char *)&sw, sizeof(sw) );
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
@@ -541,8 +542,9 @@ struct seg *finished_segs;
 	rt_tabdata_copy( ap->a_spectrum, sw.msw_color );
 	bu_free( sw.msw_color, "sw.msw_color");
 	bu_free( sw.msw_basecolor, "sw.msw_basecolor");
-#endif
+#else
 
+	/* XXX This is all temporary and doesn't belong here */
 	/* +++++ Something was hit, get the power from it. ++++++ */
 	/*
 	 *  The temperature gives us the radiant emittance in W/cm**2.
@@ -595,6 +597,8 @@ powerfrac = 1;
 	/* XXX Even a little Beers Law would be tasty here */
 
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+#endif
+
 out:
 	if(rdebug&RDEBUG_HITS)  {
 		rt_log("colorview: lvl=%d ret a_user=%d %s\n",
