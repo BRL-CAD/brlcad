@@ -2335,6 +2335,9 @@ BU_EXTERN(void rt_free_soltab, (struct soltab   *stp));
 BU_EXTERN(int rt_gettree, (struct rt_i *rtip, const char *node) );
 BU_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
 	int argc, const char **argv, int ncpus));
+BU_EXTERN(int rt_gettrees_and_attrs, (struct rt_i *rtip, const char **attrs,
+				      int argc, const char **argv, int ncpus ) );
+BU_EXTERN(int rt_load_attrs, ( struct rt_i *rtip, char **attrs ) );
 					/* Print seg struct */
 BU_EXTERN(void rt_pr_seg, (const struct seg *segp) );
 					/* Print the partitions */
