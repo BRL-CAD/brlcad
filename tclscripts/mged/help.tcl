@@ -66,7 +66,7 @@ set mged_help_data(edgedir)	{{[delta_x delta_y delta_z]|[rot fb]}	{define direct
 set mged_help_data(edmater)	{{comb(s)}	{edit combination materials}}
 set mged_help_data(erase)	{{<objects>}	{remove objects from the screen}}
 set mged_help_data(erase_all)	{{<objects>}	{remove all occurrences of object(s) from the screen}}
-set mged_help_data(ev)		{{[-dnqstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
+set mged_help_data(ev)		{{[-dfnqstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set mged_help_data(eqn)		{{A B C}	{planar equation coefficients}}
 set mged_help_data(exit)	{{}	{exit}}
 set mged_help_data(extrude)	{{#### distance}	{extrude dist from face}}
