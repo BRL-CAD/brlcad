@@ -1,25 +1,28 @@
 /*
- *			J O V E _ M A R K S . C 
+ *			J O V E _ M A R K S . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:18  mike
+ * Release_4.4
+ *
  * Revision 10.2  93/10/26  06:07:55  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:54:01  mike
  * Release_4.0
- * 
+ *
  * Revision 2.1  91/08/30  17:54:36  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.0  84/12/26  16:46:58  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:08:53  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -27,7 +30,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
-  
+
    jove_marks.c
 
    Creation of marks, and routines to adjust the marks after insertion
@@ -231,6 +234,6 @@ register LINE	*line1,
 				else
 					m->m_char = char2 + (m->m_char - char1);
 			}
-		} 
+		}
 	}
 }

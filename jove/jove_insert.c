@@ -1,25 +1,28 @@
 /*
- *			J O V E _ I N S E R T . C 
+ *			J O V E _ I N S E R T . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:15  mike
+ * Release_4.4
+ *
  * Revision 10.2  93/10/26  03:48:09  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:53:59  mike
  * Release_4.0
- * 
+ *
  * Revision 2.1  91/08/30  17:54:34  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.0  84/12/26  16:46:25  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:08:22  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -27,7 +30,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5/25/83
-  
+
    Insert routines: the routine to Yank from the kill buffer
    and to insert lines, and characters into the buffer.  */
 
@@ -58,10 +61,10 @@ LINE	*after;
 		if (buf)
 			buf->b_dol = newline;
 	return newline;
-}	
+}
 
 /* Global variables aren't that bad.  There is a point where one
- * can go too far in trying to eliminate global variables on a 
+ * can go too far in trying to eliminate global variables on a
  * principle.  After all this isn't LISP or anything like that.
  */
 
@@ -97,7 +100,7 @@ LineInsert()
 		ForChar();
 	SetModified(curbuf);
 	IFixMarks(olddot, oldchar, curline, curchar);
-}	
+}
 
 LineAI()
 {
@@ -180,7 +183,7 @@ Insert(c)
 	insert(c, linebuf, curchar, exp, LBSIZE);
 	IFixMarks(curline, curchar, curline, curchar + exp);
 	curchar += exp;
-}	
+}
 
 /*
  * Tab in to the right place for c mode
@@ -213,7 +216,7 @@ char	*line;
 }
 
 /* Insert the paren.  If in C mode and c is a '}' then insert the
- * '}' in the "right" place for C indentation; that is indented 
+ * '}' in the "right" place for C indentation; that is indented
  * the same amount as the matching '{' is indented.
  */
 
@@ -231,7 +234,7 @@ DoParen()
 			DelWtSpace();	/* Delete white space */
 			c_indent();	/* insert the white space */
 		}
-	
+
 	if(IsFlagSet(globflags, OVERWRITE))
 		if (!eolp())
 			DelNChar();

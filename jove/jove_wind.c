@@ -1,34 +1,37 @@
 /*
- *			J O V E _ W I N D . C 
+ *			J O V E _ W I N D . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:25  mike
+ * Release_4.4
+ *
  * Revision 10.2  93/10/26  05:25:22  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:54:07  mike
  * Release_4.0
- * 
+ *
  * Revision 2.4  91/09/23  03:15:30  mike
  * two  return / return(expr) warnings
- * 
+ *
  * Revision 2.3  91/08/30  19:17:49  mike
  * Stardent ANSI lint
- * 
+ *
  * Revision 2.2  91/08/30  18:11:09  mike
  * Made explicit that termcap.h to be used is the local version
- * 
+ *
  * Revision 2.1  91/08/30  17:54:41  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.0  84/12/26  16:49:18  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:09:58  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -104,7 +107,7 @@ WINDOW *
 getwind()
 {
 	WINDOW	*wp;
-	
+
 	wp = (WINDOW *)emalloc(sizeof (WINDOW));
 	return wp;
 }
@@ -126,7 +129,7 @@ WINDOW	*wp;
 
 	wp->w_prev->w_next = wp->w_next;
 	wp->w_next->w_prev = wp->w_prev;
-	
+
 	if (fwind == wp) {
 		fwind = wp->w_next;
 		fwind->w_height += wp->w_height;
