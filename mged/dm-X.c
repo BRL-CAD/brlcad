@@ -67,8 +67,6 @@ extern point_t e_axes_pos;
 
 static void	X_statechange();
 static int     X_dm();
-static void     establish_perspective();
-static void     set_perspective();
 static void     dirty_hook();
 static void     set_knob_offset();
 
@@ -84,8 +82,6 @@ extern Tk_Window tkwin;
 
 struct bu_structparse X_vparse[] = {
   {"%d",  1, "zclip",             X_MV_O(zclip),            dirty_hook },
-  {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
-  {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
   {"%d",  1, "debug",             X_MV_O(debug),            BU_STRUCTPARSE_FUNC_NULL },
   {"",    0, (char *)0,           0,                        BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -169,7 +165,7 @@ char *argv[];
   eventHandler = X_doevent;
   curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-  X_configure_window_shape(dmp);
+  dm_configureWindowShape(dmp);
 
   return TCL_OK;
 }
@@ -214,7 +210,7 @@ XEvent *eventPtr;
 
     goto handled;
   }else if(eventPtr->type == ConfigureNotify){
-    X_configure_window_shape(dmp);
+    dm_configureWindowShape(dmp);
     dirty = 1;
 
     goto handled;
@@ -1860,20 +1856,6 @@ end:
 
   Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
   return TCL_ERROR;
-}
-
-static void
-establish_perspective()
-{
-  X_establish_perspective(dmp);
-  ++dmaflag;
-}
-
-static void
-set_perspective()
-{
-  X_set_perspective(dmp);
-  ++dmaflag;
 }
 
 #if IR_KNOBS
