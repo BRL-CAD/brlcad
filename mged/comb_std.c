@@ -173,25 +173,28 @@ char	**argv;
 
     if ((region_flag != -1) && (argc == 0))
     {
+    	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+
 	/*
 	 *	Set/Reset the REGION flag of an existing combination
 	 */
 	if ((dp = db_lookup(dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
 	  return TCL_ERROR;
-	if (db_get(dbip, dp, &record, 0, 1) < 0)
-	{
-	  TCL_READ_ERR_return;
-	}
-	if (record.u_id != ID_COMB )
-	{
-	  Tcl_AppendResult(interp, comb_name, ":  not a combination\n", (char *)NULL);
-	  return TCL_OK;
-	}
-	record.c.c_flags = region_flag ? 'R' : ' ';
-	if (db_put(dbip, dp, &record, 0, 1) < 0)
-	{
-	    TCL_WRITE_ERR_return;
-	}
+
+    	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+    		TCL_READ_ERR_return;
+    	comb = (struct rt_comb_internal *)intern.idb_ptr;
+    	RT_CK_COMB( comb );
+
+    	if( region_flag )
+    		comb->region_flag = 1;
+    	else
+    		comb->region_flag = 0;
+
+    	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+    		TCL_WRITE_ERR_return;
+
 	return TCL_OK;
     }
     /*
