@@ -148,9 +148,6 @@ char *argv[];
   Display *tmp_dpy;
   struct dm *dmp;
 
-fprintf(stderr, "X_open: enter\n");
-fflush(stderr);
-
   BU_GETSTRUCT(dmp, dm);
   if(dmp == DM_NULL)
     return DM_NULL;
