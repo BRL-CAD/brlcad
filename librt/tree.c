@@ -271,6 +271,9 @@ struct rt_i			*rtip;
 			stp = RT_LIST_MAIN_PTR( soltab, mid, l2 );
 			RT_CK_SOLTAB(stp);
 
+			/* Don't instance this solid in some other model instance */
+			if( stp->st_rtip != rtip )  continue;
+
 			if( mat == (matp_t)0 )  {
 				if( stp->st_matp == (matp_t)0 )  {
 					have_match = 1;
@@ -308,6 +311,7 @@ struct rt_i			*rtip;
 		GETSTRUCT(stp, soltab);
 		stp->l.magic = RT_SOLTAB_MAGIC;
 		stp->l2.magic = RT_SOLTAB2_MAGIC;
+		stp->st_rtip = rtip;
 		stp->st_uses = 1;
 		stp->st_dp = dp;
 		dp->d_uses++;
@@ -555,6 +559,8 @@ struct soltab	*stp;
  *  			R T _ G E T T R E E
  *
  *  User-called function to add a tree hierarchy to the displayed set.
+ *
+ *  This function is not multiply re-entrant.
  *  
  *  Returns -
  *  	0	Ordinarily
@@ -572,6 +578,9 @@ CONST char	*node;
  *  			R T _ G E T T R E E S
  *
  *  User-called function to add a set of tree hierarchies to the active set.
+ *
+ *  This function may run in parallel, but is not multiply re-entrant itself,
+ *  because db_walk_tree() isn't multiply re-entrant.
  *
  *  Semaphores used for critical sections in parallel mode:
  *	res_model	protects rti_solidheads[] lists
