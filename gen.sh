@@ -408,8 +408,9 @@ dist)
 	do
 		rm -fr ${DISTDIR}/$i
 		mkdir ${DISTDIR}/$i
-		# Get everything except the RCS subdirs
-		cp $i/[!R]* ${DISTDIR}/$i/.
+		# Get everything (recursively) except the RCS subdirs
+		# XXX Note that this rule will also miss README files
+		cp -r $i/[!R]* ${DISTDIR}/$i/.
 	done
 	for i in ${TOP_FILES}
 	do
