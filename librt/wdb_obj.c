@@ -75,6 +75,7 @@ HIDDEN int wdb_list_tcl();
 HIDDEN int wdb_pathsum_tcl();
 HIDDEN int wdb_expand_tcl();
 HIDDEN int wdb_kill_tcl();
+HIDDEN int wdb_killall_tcl();
 HIDDEN int wdb_killtree_tcl();
 HIDDEN void wdb_killtree_callback();
 
@@ -122,6 +123,7 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"paths",	wdb_pathsum_tcl,
 	"expand",	wdb_expand_tcl,
 	"kill",		wdb_kill_tcl,
+	"killall",	wdb_killall_tcl,
 	"killtree",	wdb_killtree_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
@@ -140,7 +142,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"i",		wdb_instance_tcl,
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
-	"killall",	wdb_killall_tcl,
 	"mv",		wdb_move_tcl,
 	"mvall",	wdb_move_all_tcl,
 	"pathlist",	wdb_pathlist_tcl,
@@ -1544,6 +1545,102 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 }
 
 /*
+ * Kill object[s] and remove all references to the object[s].
+ *
+ * Usage:
+ *        procname killall arg(s)
+ */
+HIDDEN int
+wdb_killall_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+
+	register int	i,k;
+	register struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	int			ret;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if(argc < 3 || MAXARGS < argc){
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib  wdb_killall");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	ret = TCL_OK;
+
+	/* Examine all COMB nodes */
+	for (i = 0; i < RT_DBNHASH; i++) {
+		for (dp = wdbop->wdb_wp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw) {
+			if (!(dp->d_flags & DIR_COMB))
+				continue;
+
+			if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
+				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+					") failure", (char *)NULL );
+				ret = TCL_ERROR;
+				continue;
+			}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			RT_CK_COMB(comb);
+
+			for (k=2; k<argc; k++) {
+				int	code;
+
+				code = db_tree_del_dbleaf(&(comb->tree), argv[k]);
+				if (code == -1)
+					continue;	/* not found */
+				if (code == -2)
+					continue;	/* empty tree */
+				if (code < 0) {
+					Tcl_AppendResult(interp, "  ERROR_deleting ",
+						dp->d_namep, "/", argv[k],
+						"\n", (char *)NULL);
+					ret = TCL_ERROR;
+				} else {
+					Tcl_AppendResult(interp, "deleted ",
+						dp->d_namep, "/", argv[k],
+						"\n", (char *)NULL);
+				}
+			}
+
+			if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+				Tcl_AppendResult(interp,
+						 "ERROR: Unable to write new combination into database.\n",
+						 (char *)NULL);
+				ret = TCL_ERROR;
+				continue;
+			}
+		}
+	}
+
+	if (ret != TCL_OK) {
+		Tcl_AppendResult(interp,
+				 "KILL skipped because of earlier errors.\n",
+				 (char *)NULL);
+		return ret;
+	}
+
+	/* ALL references removed...now KILL the object[s] */
+	/* reuse argv[] */
+	argv[1] = "kill";
+	return wdb_kill_tcl(clientData, interp, argc, argv);
+}
+
+/*
  * Kill all paths belonging to an object.
  *
  * Usage:
@@ -1566,13 +1663,13 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 	}
 
 	if (argc < 3 || MAXARGS < argc) {
-	  struct bu_vls vls;
+		struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "helplib wdb_killtree");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_killtree");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
 	}
 
 	curr_interp = interp;
@@ -1586,6 +1683,8 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 			continue;
 		db_functree(wdbop->wdb_wp->dbip, dp, wdb_killtree_callback, wdb_killtree_callback);
 	}
+
+	return TCL_OK;
 }
 
 /*
@@ -1596,19 +1695,20 @@ wdb_killtree_callback(dbip, dp)
 struct db_i	*dbip;
 register struct directory *dp;
 {
-  if (dbip == DBI_NULL)
-    return;
+	if (dbip == DBI_NULL)
+		return;
 
-  Tcl_AppendResult(curr_interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
-		   ":  ", dp->d_namep, "\n", (char *)NULL);
+	Tcl_AppendResult(curr_interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+			 ":  ", dp->d_namep, "\n", (char *)NULL);
 
-  dgo_eraseobjall_callback(curr_interp, dbip, dp);
+	/* notify drawable geometry objects associated with this database object */
+	dgo_eraseobjall_callback(curr_interp, dbip, dp);
 
-  if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
-    Tcl_AppendResult(curr_interp,
-		     "an error occurred while deleting ",
-		     dp->d_namep, "\n", (char *)NULL);
-  }
+	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		Tcl_AppendResult(curr_interp,
+				 "an error occurred while deleting ",
+				 dp->d_namep, "\n", (char *)NULL);
+	}
 }
 
 #if 0
