@@ -4679,6 +4679,7 @@ BU_EXTERN(int	wdb_dump_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc,
 BU_EXTERN(int	wdb_dbip_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_ls_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_list_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_pathlist_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_pathsum_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_expand_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_kill_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
@@ -4765,7 +4766,7 @@ BU_EXTERN(int	vo_zoom,		(struct view_obj *vop, Tcl_Interp *interp, fastf_t sf));
 BU_EXTERN(int	vo_zoom_cmd,		(struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	vo_orientation_cmd,	(struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	vo_lookat_cmd,		(struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv));
-BU_EXTERN(void	vo_setview,		(struct view_obj *vop, Tcl_Interp *interp, double a1, double a2, double a3));
+BU_EXTERN(void	vo_setview,		(struct view_obj *vop, Tcl_Interp *interp, vect_t rvec));
 BU_EXTERN(int	vo_setview_cmd,		(struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	vo_eye_cmd,		(struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	vo_eye_pos_cmd,		(struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv));
