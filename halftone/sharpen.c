@@ -39,6 +39,10 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 1.2  90/04/13  00:46:54  cjohnson
+ * Clean up comments.
+ * Fix error on second line.
+ * 
  * Revision 1.1  90/04/13  00:31:49  cjohnson
  * Initial revision
  * 

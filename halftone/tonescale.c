@@ -42,6 +42,9 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 1.3  90/04/13  01:13:52  cjohnson
+ * Cleanup the comments.
+ * 
  * Revision 1.2  90/04/10  03:29:34  cjohnson
  * Bug fixes to allow Tonescale to be used.
  * added debug to print Cubics

@@ -44,6 +44,10 @@ static unsigned char	ordered[4][4] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.4  90/04/13  01:03:32  cjohnson
+ * Add random numbers.
+ * Clean comments.
+ * 
  * Revision 1.3  90/04/10  16:46:35  cjohnson
  * Fix Intensity methods 
  * 

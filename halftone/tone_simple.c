@@ -35,6 +35,9 @@ extern int RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.5  90/04/11  15:26:23  cjohnson
+ * Add random number processing.
+ * 
  * Revision 1.4  90/04/10  16:46:38  cjohnson
  * Fix Intensity methods 
  * 

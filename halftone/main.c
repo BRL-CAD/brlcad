@@ -47,6 +47,10 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.6  90/04/13  00:29:10  cjohnson
+ * Add sharpening.
+ * Clean up comments.
+ * 
  * Revision 1.5  90/04/10  05:22:54  cjohnson
  * add Floyd-Steinburg dither
  * Add Surpentine processing.

@@ -48,6 +48,9 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.6  90/04/13  00:51:47  cjohnson
+ * Comment clean up.
+ * 
  * Revision 1.5  90/04/12  17:36:46  cjohnson
  * Add Random number processing.
  * 
