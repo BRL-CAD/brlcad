@@ -57,6 +57,7 @@ struct mged_hist mged_hist_head;
 
 FILE *journalfp;
 int firstjournal;
+int journal_delay = 0;
 
 void history_journalize();
 
@@ -125,12 +126,16 @@ struct mged_hist *hptr;
     struct mged_hist *lasthptr;
 
     lasthptr = BU_LIST_PREV(mged_hist, &(hptr->l));
-    if (timediff(&tvdiff, &(lasthptr->finish), &(hptr->start)) >= 0)
+
+    if (journal_delay && timediff(&tvdiff, &(lasthptr->finish), &(hptr->start)) >= 0)
 	fprintf(journalfp, "delay %d %d\n", tvdiff.tv_sec, tvdiff.tv_usec);
-    
+
     if (hptr->status == CMD_BAD)
 	fprintf(journalfp, "# ");
     fprintf(journalfp, "%s", bu_vls_addr(&hptr->command));
+
+    if (journal_delay)
+      fprintf(journalfp, "mged_update\n");
 }
 
 /*
@@ -155,8 +160,14 @@ char **argv;
     if (journalfp != NULL)
       fclose(journalfp);
     journalfp = NULL;
+    journal_delay = 0;
     return TCL_OK;
   } else {
+    if(argv[1][0] == '-' && argv[1][1] == 'd'){
+      journal_delay = 1;
+      ++argv;
+    }
+
     if (journalfp != NULL) {
       Tcl_AppendResult(interp, "First shut off journaling with \"journal\" (no args)\n",
 		       (char *)NULL);
