@@ -13,44 +13,46 @@
 #define FILES	anim anim_script chan_permute anim_orient anim_fly anim_lookat anim_keyread anim_offset anim_sort anim_hardtrack anim_turn
 
 /* Explicit composition of each product */
-
-add_chan: add_chan.o
-	CC LDFLAGS add_chan.o -o add_chan
-
-anim_script: anim_script.o anim.o
-	CC LDFLAGS anim_script.o anim.o LIBRT -lm -lmpc -o anim_script
-
-chan_permute: chan_permute.o
-	CC LDFLAGS chan_permute.o -o chan_permute
-
-anim_orient: anim_orient.o anim.o
-	CC LDFLAGS anim_orient.o anim.o -lm -o anim_orient
+anim_cascade: anim_cascade.o anim.o
+	CC LDFLAGS anim_cascade.o anim.o LIBRT -lm -lmpc -o anim_cascade
 
 anim_fly: anim_fly.o
 	CC LDFLAGS anim_fly.o -lm -o anim_fly
 
-anim_lookat: anim_lookat.o anim.o
-	CC LDFLAGS anim_lookat.o anim.o -lm -o anim_lookat
+anim_hardtrack: anim_hardtrack.o anim.o
+	CC LDFLAGS anim_hardtrack.o anim.o LIBRT -lm -lmpc -o anim_hardtrack
 
 anim_keyread: anim_keyread.o anim.o
 	CC LDFLAGS anim_keyread.o anim.o LIBES -o anim_keyread
 
-mult_chan: mult_chan.o
-	CC LDFLAGS mult_chan.o -o mult_chan
-
-anim_track: anim_track.o cattrack.o anim.o
-	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT -lm -lmpc -o anim_track
+anim_lookat: anim_lookat.o anim.o
+	CC LDFLAGS anim_lookat.o anim.o -lm -o anim_lookat
 
 anim_offset: anim_offset.o anim.o
 	CC LDFLAGS anim_offset.o anim.o -lm -o anim_offset
 
+anim_orient: anim_orient.o anim.o
+	CC LDFLAGS anim_orient.o anim.o -lm -o anim_orient
+
+anim_script: anim_script.o anim.o
+	CC LDFLAGS anim_script.o anim.o LIBRT -lm -lmpc -o anim_script
+
 anim_sort: anim_sort.o
 	CC LDFLAGS anim_sort.o -o anim_sort
 
-anim_hardtrack: anim_hardtrack.o anim.o
-	CC LDFLAGS anim_hardtrack.o anim.o LIBRT -lm -lmpc -o anim_hardtrack
+anim_track: anim_track.o cattrack.o anim.o
+	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT -lm -lmpc -o anim_track
 
 anim_turn: anim_turn.o anim.o
 	CC LDFLAGS anim_turn.o anim.o LIBRT -lm -lmpc -o anim_turn
+
+chan_add: chan_add.o
+	CC LDFLAGS chan_add.o -o chan_add
+
+chan_mult: chan_mult.o
+	CC LDFLAGS chan_mult.o -o chan_mult
+
+chan_permute: chan_permute.o
+	CC LDFLAGS chan_permute.o -o chan_permute
 
 #include "../Cakefile.rules"
