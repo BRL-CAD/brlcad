@@ -1,21 +1,98 @@
-# $Id$
+## $Id$#
 
-SUBDIRS = \
-	resource \
-	sgi_mips4 \
-	text
+EXTRA_PROGRAMS = proe-brl
+EXTRA_LTLIBRARIES = libproe2brl.la
 
-stuffdir = $(prefix)/pro-engineer
+PRO_MACHINE_TYPE = sgi_mips4
+PROTOOL_SRC = /opt/ptc/proe2001/protoolkit
+PROTOOL_SYS = $(PROTOOL_SRC)/$(PRO_MACHINE_TYPE)
+PRODEV_SRC  = /opt/ptc/proe2001/prodevelop
+PRODEV_SYS  = $(PRODEV_SRC)/$(PRO_MACHINE_TYPE)
 
-stuff_DATA = \
+PDLIB       = $(PRODEV_SYS)/obj/prodevelop.a
+PDLIB_DLL   = $(PRODEV_SYS)/obj/prodev_dll.a
+PTLIB       = $(PROTOOL_SYS)/obj/protoolkit.a
+PTLIB_DLL   = $(PROTOOL_SYS)/obj/protk_dll.a
+PTCLIBS     = $(PTLIB) $(PDLIB)
+PTCLIBS_DLL = $(PTLIB_DLL) $(PDLIB_DLL)
+BRLLIBS     = $(BU) $(BN) $(TCL)
+SYSLIBS     = -lc -lm -lw
+
+AM_LDFLAGS = $(BRLLIBS) $(SYSLIBS)
+AM_CPPFLAGS = \
+	-DPRO_MACHINE=23 -DPRO_OS=3 \
+	-I$(PROTOOL_SRC)/protk_appls/includes \
+	-I$(PROTOOL_SRC)/includes \
+	-I$(PRODEV_SRC)/includes
+
+proe_brl_CFLAGS = $(AM_CFLAGS)
+proe_brl_LDADD = $(PTLIB) $(PDLIB) $(SYSLIBS)
+proe_brl_SOURCES = proe-brl.c
+bindir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+
+#cc -n32 -mips4 -woff 1521 -multigot -Wl,-wall  -rpath /usr/brlcad/lib -Wl,-hiddens_file,/dev/null -shared -T10000000 -B symbolic -o proe-brl.dll proe-brl.o /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a -L/usr/brlcad/lib -lbu -lbn -ltcl -lc -lm -lw
+
+#gcc -shared  libproe2brl_la-proe-brl.o   -L/vld/morrison/brlcad/src/libbu/.libs -L/vld/morrison/brlcad/src/other/libtcl/.libs /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a ../../src/libbu/.libs/libbu.so ../../src/libbn/.libs/libbn.so ../../src/other/libtcl/.libs/libtcl8.4.so -lc -lm -lw -lmx -lmalloc    -lc  -Wl,-soname -Wl,libproe2brl.so.1 `test -n "sgi1.0" && echo -Wl,-set_version -Wl,sgi1.0` -Wl,-update_registry -Wl,.libs/so_locations -o .libs/libproe2brl.so.1.0
+
+libproe2brl_la_SOURCES = proe-brl.c
+libproe2brl_la_CFLAGS = $(AM_CFLAGS)
+libproe2brl_la_LDFLAGS = -multigot -rpath $(libdir) -T10000000 -B symbolic
+libproe2brl_la_LIBADD = $(PTLIB_DLL) $(PDLIB_DLL) $(BRLLIBS) $(SYSLIBS) 
+libdir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+
+all-am: Makefile
+	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
+	  @ECHO@ "---" ; \
+	  @ECHO@ "Run 'make plugin' from misc/pro-engineer before 'make install' to build the Pro-Engineer plugin." ; \
+	  @ECHO@ ; \
+	fi
+
+install-data-local:
+	@if test -f proe-brl ; then \
+		$(INSTALL) .libs/proe-brl $(bindir)/proe-brl ; \
+	fi
+	@if test -f libproe2brl.la ; then \
+		$(INSTALL) .libs/libproe2brl.so $(libdir)/libproe2brl.so ; \
+	fi
+
+unlock: proe-brl libproe2brl.la
+	@if test -f $(bindir)/proe-brl ; then \
+		/usr/proe/bin/protk_unlock $(bindir)/proe-brl ; \
+	fi
+	@if test -f $(libdir)/libproe2brl.so ; then \
+		/usr/proe/bin/protk_unlock $(libdir)/libproe2brl.so ; \
+	fi
+
+plugin: proe-brl libproe2brl.la
+	@@ECHO@ "---"
+	@@ECHO@ "Run 'make unlock' to unlock the Pro-Engineer plugin for distribution"
+	@@ECHO@ "Run 'make install' to install the Pro-Engineer plugin into @PRO_ENGINEER_DIR@"
+	@@ECHO@
+
+unlock: plugin
+
+proedir = @PRO_ENGINEER_DIR@
+tmsgdir = @PRO_ENGINEER_DIR@/text/usascii/
+rsrcdir = @PRO_ENGINEER_DIR@/text/usascii/resource/
+
+proe_DATA = \
 	install.doc \
 	protk.dat
 
-EXTRA_DIST = \
-	install.doc \
-	protk.dat \
-	protk.in
+tmsg_DATA = usermsg.txt
 
-protk.dat: protk.in Makefile.am
-	sed -e "s&${prefix}&BASEDIR&" < ${top_srcdir}/misc/pro-engineer/protk.in > protk.dat
+rsrc_DATA = \
+	proe_brl.res \
+	proe_brl_error.res \
+	proe_brl_gen_error.res
+
+EXTRA_DIST = \
+	$(proe_DATA) \
+	$(rsrc_DATA) \
+	$(tmsg_DATA) \
+	protk.dat.in
+
+CLEANFILES = libproe2brl.la proe-brl
+
+MAINTAINERCLEANFILES = Makefile.in
 
