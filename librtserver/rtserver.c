@@ -936,7 +936,7 @@ rtserver_thread( void *num )
 	int thread_no=(int)(num);
 
 	if( verbose ) {
-		fprintf( stderr, "starting thread x%lx (%d)\n", pthread_self(), thread_no );
+		fprintf( stderr, "starting thread x%lx (%d)\n", (long unsigned int)pthread_self(), thread_no );
 	}
 
 	/* set up our own application structure */
@@ -1007,7 +1007,7 @@ rtserver_thread( void *num )
 
 					if( verbose ) {
 						fprintf( stderr, "thread x%lx (%d) got job %d\n",
-							 pthread_self(), thread_no, ajob->rtjob_id );
+							 (unsigned long int)pthread_self(), thread_no, ajob->rtjob_id );
 					}
 
 					/* shoot this ray at each rt_i structure for this session */
