@@ -1,7 +1,12 @@
 /*
  *			T R E E
  *
- * Ray Tracing program, GED tree tracer.
+ *  Ray Tracing library database tree walker.
+ *  Collect and prepare regions and solids for subsequent ray-tracing.
+ *
+ *  Parallel Note -
+ *	res_model	used for interlocking HeadSolid list
+ *	res_results	used for interlocking HeadRegion list
  *
  *  Author -
  *	Michael John Muuss
@@ -34,7 +39,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 int rt_pure_boolean_expressions = 0;
 
-HIDDEN int	rt_rpp_tree();
+int		rt_bound_tree();	/* used by rt/sh_light.c */
 extern char	*rt_basename();
 HIDDEN struct region *rt_getregion();
 HIDDEN void	rt_tree_region_assign();
@@ -92,6 +97,7 @@ union tree		*curtree;
 	register struct combined_tree_state	*cts;
 	struct region		*rp;
 	struct directory	*dp;
+	vect_t			region_min, region_max;
 
 	GETSTRUCT( rp, region );
 	rp->reg_forw = REGION_NULL;
@@ -106,6 +112,22 @@ union tree		*curtree;
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_pr_tree( curtree, 0 );
+	}
+
+	/*
+	 *  Find region RPP, and update the model maxima and minima
+	 *
+	 *  Don't update min & max for halfspaces;  instead, add them
+	 *  to the list of infinite solids, for special handling.
+	 */
+	if( rt_bound_tree( curtree, region_min, region_max ) < 0 )  {
+		rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
+	}
+	if( region_max[X] >= INFINITY )  {
+		/* skip infinite region */
+	} else {
+		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_min );
+		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_max );
 	}
 
 	/*
@@ -212,29 +234,11 @@ next_one: ;
 	id = stp->st_id;	/* type may have changed in prep */
 
 	/* For now, just link them all onto the same list */
-	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
+	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 	stp->st_forw = rt_tree_rtip->HeadSolid;
 	rt_tree_rtip->HeadSolid = stp;
 	stp->st_bit = rt_tree_rtip->nsolids++;
-
-	/*
-	 * Update the model maxima and minima
-	 *
-	 *  Don't update min & max for halfspaces;  instead, add them
-	 *  to the list of infinite solids, for special handling.
-	 *
-	 *  XXX If this solid is subtracted, don't update model RPP either.
-	 * XXX this is really wrong.  Model RPP should only be updated
-	 * XXX when adding a region.
-	 * XXX Region RPP should take into account the booleans.
-	 */
-	if( stp->st_aradius >= INFINITY )  {
-		rt_cut_extend( &rt_tree_rtip->rti_inf_box, stp );
-	}  else  {
-		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, stp->st_min );
-		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, stp->st_max );
-	}
-	RES_RELEASE( &rt_g.res_results );	/* leave critical section */
+	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
 
 	if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
 
@@ -346,51 +350,79 @@ int		noisy;
 }
 
 /*
- *			R T _ R P P _ T R E E
+ *			R T _ B O U N D _ T R E E
  *
- *	Calculate the bounding RPP of the region whose boolean tree is 'tp'.
- *	Depends on caller having initialized min_rpp and max_rpp.
- *	Returns 0 for failure (and prints a diagnostic), or 1 for success.
+ *  Calculate the bounding RPP of the region whose boolean tree is 'tp'.
+ *  The bounding RPP is returned in tree_min and tree_max, which need
+ *  not have been initialized first.
+ *
+ *  Returns -
+ *	0	success
+ *	-1	failure (tree_min and tree_max may have been altered)
  */
-HIDDEN int
-rt_rpp_tree( tp, min_rpp, max_rpp )
-register union tree *tp;
-register fastf_t *min_rpp, *max_rpp;
+int
+rt_bound_tree( tp, tree_min, tree_max )
+register union tree	*tp;
+vect_t			tree_min;
+vect_t			tree_max;
 {	
+	vect_t	r_min, r_max;		/* rpp for right side of tree */
 
 	if( tp == TREE_NULL )  {
-		rt_log( "librt/rt_rpp_tree: NULL tree pointer.\n" );
-		return(0);
+		rt_log( "rt_bound_tree(): NULL tree pointer.\n" );
+		return(-1);
 	}
 
 	switch( tp->tr_op )  {
 
 	case OP_SOLID:
-		VMINMAX( min_rpp, max_rpp, tp->tr_a.tu_stp->st_min );
-		VMINMAX( min_rpp, max_rpp, tp->tr_a.tu_stp->st_max );
-		return(1);
+		{
+			register struct soltab	*stp;
+
+			stp = tp->tr_a.tu_stp;
+
+			if( stp->st_aradius >= INFINITY )  {
+				VSETALL( tree_min, -INFINITY );
+				VSETALL( tree_max,  INFINITY );
+				return(0);
+			}
+			VMOVE( tree_min, stp->st_min );
+			VMOVE( tree_max, stp->st_max );
+			return(0);
+		}
 
 	default:
-		rt_log( "librt/rt_rpp_tree: unknown op=x%x\n", tp->tr_op );
-		return(0);
+		rt_log( "rt_bound_tree(x%x): unknown op=x%x\n",
+			tp, tp->tr_op );
+		return(-1);
 
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
 	case OP_XOR:
-		/* BINARY type */
-		if( !rt_rpp_tree( tp->tr_b.tb_left, min_rpp, max_rpp )  ||
-		    !rt_rpp_tree( tp->tr_b.tb_right, min_rpp, max_rpp )  )
-			return	0;
+	case OP_UNION:
+		/* BINARY type -- expand to contain both */
+		if( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
+		    rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
+			return(-1);
+		VMIN( tree_min, r_min );
+		VMAX( tree_max, r_max );
 		break;
-	case OP_NOT:
-	case OP_GUARD:
-		/* UNARY tree */
-		if( ! rt_rpp_tree( tp->tr_b.tb_left, min_rpp, max_rpp ) )
-			return	0;
+	case OP_INTERSECT:
+		/* BINARY type -- find common area only */
+		if( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
+		    rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
+			return(-1);
+		/* min = largest min, max = smallest max */
+		VMAX( tree_min, r_min );
+		VMIN( tree_max, r_max );
+		break;
+	case OP_SUBTRACT:
+		/* BINARY type -- just use left tree */
+		if( rt_bound_tree( tp->tr_b.tb_left, tree_min, tree_max ) < 0 ||
+		    rt_bound_tree( tp->tr_b.tb_right, r_min, r_max ) < 0 )
+			return(-1);
+		/* Discard right rpp */
 		break;
 	}
-	return	1;
+	return(0);
 }
 
 /*
@@ -453,18 +485,19 @@ register char	*reg_name;
  */
 int
 rt_rpp_region( rtip, reg_name, min_rpp, max_rpp )
-struct rt_i		*rtip;
-char			*reg_name;
-register fastf_t	*min_rpp, *max_rpp;
+struct rt_i	*rtip;
+char		*reg_name;
+fastf_t		*min_rpp, *max_rpp;
 {	
-	register struct region	*regp = rt_getregion( rtip, reg_name );
+	register struct region	*regp;
 
 	RT_CHECK_RTI(rtip);
 
+	regp = rt_getregion( rtip, reg_name );
 	if( regp == REGION_NULL )  return(0);
-	VMOVE( min_rpp, rtip->mdl_max );
-	VMOVE( max_rpp, rtip->mdl_min );
-	return( rt_rpp_tree( regp->reg_treetop, min_rpp, max_rpp ) );
+	if( rt_bound_tree( regp->reg_treetop, min_rpp, max_rpp ) < 0)
+		return(0);
+	return(1);
 }
 
 /*
