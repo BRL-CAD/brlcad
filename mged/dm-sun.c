@@ -87,6 +87,7 @@ struct dm dm_SunPw = {
 void		input_eater();
 extern struct device_values dm_values;	/* values read from devices */
 static int	peripheral_input;	/* !0 => unprocessed input */
+static int	mouse_motion;		/* !0 => MGED pen tracking mode */
 
 static vect_t   clipmin, clipmax;	/* for vector clipping */
 static int	height, width;
@@ -554,10 +555,16 @@ int	noblock;	/* !0 => poll */
 		if( readfds & (1 << cmd_fd) ) {
 			/*printf("Returning command\n");*/
 			return (1);		/* command awaits */
-		} else if( peripheral_input ) {
-			peripheral_input = 0;
+		}
+		if( peripheral_input ) {
 			/*printf("Returning peripherals\n");*/
+			peripheral_input = 0;
 			return (0);		/* just peripheral stuff */
+		}
+		if( readfds & (1 << sun_win_fd) ) {
+			/* check for more input events before redisplay */
+			/*printf("Loop d'loop\n");*/
+			continue;
 		}
 		if( noblock ) {
 			/*printf("Returning noblock\n");*/
@@ -595,19 +602,26 @@ caddr_t	*arg;
 	dm_values.dv_penpress = 0;
 	dm_values.dv_xpen = SUNPWx_TO_GED(event_x(event));
 	dm_values.dv_ypen = -SUNPWy_TO_GED(event_y(event));
-	/*printf("Event %d at (%d %d)\n",id,event_x(event),event_y(event));*/
+	if( sun_debug )
+		printf("Event %d at (%d %d)\n",id,event_x(event),event_y(event));
 	switch(id) {
 	case MS_LEFT:
-		if (event_is_down(event))
+		if (event_is_down(event)) {
 			dm_values.dv_penpress = DV_OUTZOOM;
+			peripheral_input++;
+		}
 		break;
 	case MS_MIDDLE:
-		if (event_is_down(event))
+		if (event_is_down(event)) {
 			dm_values.dv_penpress = DV_PICK;
+			peripheral_input++;
+		}
 		break;
 	case MS_RIGHT:
-		if (event_is_down(event))
+		if (event_is_down(event)) {
 			dm_values.dv_penpress = DV_INZOOM;
+			peripheral_input++;
+		}
 		break;
 	case LOC_DRAG:
 		break;
@@ -624,6 +638,7 @@ caddr_t	*arg;
 			yval = 1.0;
 		for( button = 0; button < NBUTTONS; button++ ) {
 			if( sun_buttons[button] ) {
+				peripheral_input++;
 				switch(button) {
 				case ZOOM_BUTTON:
 					dm_values.dv_zoom = (yval*yval) / 2;
@@ -651,6 +666,8 @@ caddr_t	*arg;
 				}
 			}
 		}
+		if( mouse_motion )
+			peripheral_input++;	/* MGED wants to know */
 		break;
 	case KEY_TOP(ZOOM_BUTTON):
 		sun_key(event, ZOOM_BUTTON);
@@ -700,6 +717,7 @@ caddr_t	*arg;
 		sun_pw = canvas_pixwin(canvas);
 		sun_win_rect = *((Rect *)window_get(canvas, WIN_RECT));
 		window_default_event_proc( win, event, arg );
+		peripheral_input++;
 		break;
 	case LOC_WINENTER:
 	case LOC_WINEXIT:
@@ -717,7 +735,6 @@ caddr_t	*arg;
 		break;
 	}
 
-	peripheral_input++;
 	/*
 	 * Used to do a notify_stop() here to wake up the
 	 * bsdselect() if blocked, but this seems to be unsafe
@@ -771,8 +788,35 @@ unsigned	addr, count;
 }
 
 void
-SunPw_statechange()
+SunPw_statechange( a, b )
+int	a, b;
 {
+	/*
+	 *  Based upon new state, possibly do extra stuff,
+	 *  including enabling continuous tablet tracking,
+	 *  object highlighting
+	 */
+	switch( b )  {
+	case ST_VIEW:
+		/* constant tracking OFF */
+		mouse_motion = 0;
+		break;
+	case ST_S_PICK:
+	case ST_O_PICK:
+	case ST_O_PATH:
+		/* constant tracking ON */
+		mouse_motion = 1;
+		break;
+	case ST_O_EDIT:
+	case ST_S_EDIT:
+		/* constant tracking OFF */
+		mouse_motion = 0;
+		break;
+	default:
+		(void)printf("SunPw_statechange: unknown state %s\n", state_str[b]);
+		break;
+	}
+	/*SunPw_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
 }
 
 void
