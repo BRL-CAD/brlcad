@@ -765,26 +765,29 @@ EndOfFile
 	#
 	#  The "png" package includes both libpng and libz
 	#
+	#  Note that the FreeBSD pkg system does not properly handle symbolic links
+	#    so "brlcad/lib/iwidgets" must be created and detroyed using @exec and @unexec
 	#########################################
 
 cat > contents << EOF
 @name brlcad-$RELEASE
-@pkgdep png-1.0.3
-@cwd /usr
+@pkgdep png-1.0.8_1
 @cwd /usr
 @owner bin
 @group bin
+@unexec /bin/rm -f %D/brlcad/lib/iwidgets
 EOF
 
 
-find /usr/brlcad \! -type d -print | sed 's,/usr/,,' >> contents
+find /usr/brlcad \! -type d -print | sed 's,/usr/,,' | grep -v 'iwidgets$' >> contents
 
 cat >> contents << EOF
 @exec /usr/bin/env OBJFORMAT=elf /sbin/ldconfig -m /usr/brlcad/lib
+@exec /bin/ln -s %D/brlcad/lib/iwidgets3.0.1 %D/brlcad/lib/iwidgets
 @unexec /usr/bin/env OBJFORMAT=elf /sbin/ldconfig -R
 EOF
 
-find /usr/brlcad -type d -print | sort -r | sed "s,/usr/,@dirrm ," >> contents
+find -d /usr/brlcad -type d -print | sed "s,/usr/,@dirrm ," >> contents
 
 	##############################
 	#
