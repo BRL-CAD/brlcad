@@ -1965,12 +1965,10 @@ CONST struct bn_tol	*tol;
 	/* check to see if we're joining two loops that share a vertex */
 	if (p1->vu_p->v_p == p2->vu_p->v_p) {
 #if 1
-		struct vertexuse *vu;
-
 		if (rt_g.NMG_debug & DEBUG_TRI)
 			bu_log("Joining two loops that share a vertex at (%g %g %g)\n",
 				V3ARGS(p1->vu_p->v_p->vg_p->coord) );
-		vu = nmg_join_2loops(p1->vu_p,  p2->vu_p);
+		(void)nmg_join_2loops(p1->vu_p,  p2->vu_p);
 #else
 		if (rt_g.NMG_debug & DEBUG_TRI)
 			bu_log("NOT Joining two loops that share a vertex at (%g %g %g)\n",
