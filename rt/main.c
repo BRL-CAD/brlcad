@@ -85,7 +85,7 @@ fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;	/*** Output buffering, for parallelism */
 #endif
 
-int		npsw = MAX_PSW;		/* number of worker PSWs to run */
+int		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() */
 
@@ -413,6 +413,11 @@ char **argv;
 		Diawrite( &work_word, -1 );
 	fprintf(stderr,"rt: exit\n");
 #endif
+
+	/* Release the framebuffer, if any */
+	if( fbp != FBIO_NULL )
+		fb_close(fbp);
+
 	return(0);
 }
 
@@ -640,9 +645,11 @@ int framenumber;
 	do_run( 0, npts*npts - 1 );
 	utime = rt_read_timer( outbuf, sizeof(outbuf) );
 
-#ifndef PARALLEL
-	view_end( &ap );		/* End of application */
-#endif
+	/*
+	 *  End of application.  Done outside of timing section.
+	 *  Typically, writes any remaining results out.
+	 */
+	view_end( &ap );
 
 	/*
 	 *  All done.  Display run statistics.
@@ -697,12 +704,6 @@ int framenumber;
 		remark(message);	/* Send to log files */
 #endif CRAY_COS
 	}
-
-#ifdef PARALLEL
-	/* No live fb display yet */
-	if( fbp )
-		fb_write( fbp, 0, 0, scanbuf, npts*npts );
-#endif PARALLEL
 
 #ifdef STAT_PARALLEL
 	lock_pr();

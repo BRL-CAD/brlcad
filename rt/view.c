@@ -66,7 +66,7 @@ extern FILE	*outfp;		/* optional output file */
 extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
 extern mat_t model2view;
-
+extern int npts;
 extern int hex_out;		/* Output format, 0=binary, !0=hex */
 
 #ifdef RTSRV
@@ -258,9 +258,9 @@ register struct application *ap;
 		/* .pix files go bottom to top */
 #ifdef RTSRV
 		/* Here, the buffer is only one line long */
-		pixelp = scanbuf+a.a_x*3;
+		pixelp = scanbuf+ap->a_x*3;
 #else RTSRV
-		pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
+		pixelp = scanbuf+((ap->a_y*npts)+ap->a_x)*3;
 #endif RTSRV
 		/* Don't depend on interlocked hardware byte-splice */
 		RES_ACQUIRE( &rt_g.res_worker );	/* XXX need extra semaphore */
@@ -364,17 +364,25 @@ struct partition *PartHeadp;
  *  This routine is called by main when the end of a scanline is
  *  reached.
  */
-view_eol()
+view_eol(ap)
+register struct application *ap;
 {
+#ifdef PARALLEL
+	if( fbp ==FBIO_NULL )
+		return;
+	/* We make no guarantee that the last few pixels are done */
+	RES_ACQUIRE( &rt_g.res_malloc );
+	fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*npts*3, npts );
+	RES_RELEASE( &rt_g.res_malloc );
+#endif PARALLEL
 }
 
 /*
  *			V I E W _ E N D
  */
-view_end()
+view_end(ap)
+struct application *ap;
 {
-	if( fbp != FBIO_NULL )
-		fb_close(fbp);
 }
 
 /*
