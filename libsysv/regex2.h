@@ -87,26 +87,26 @@ typedef long sopno;
 #define	SOP(op, opnd)	((op)|(opnd))
 /* operators			   meaning	operand			*/
 /*						(back, fwd are offsets)	*/
-#define	OEND	0x08000000 /* (1L<<OPSHIFT)	/* endmarker	-			*/
-#define	OCHAR	0x10000000 /* (2L<<OPSHIFT)	/* character	unsigned char		*/
-#define	OBOL	0x18000000 /* (3L<<OPSHIFT)	/* left anchor	-			*/
-#define	OEOL	0x20000000 /* (4L<<OPSHIFT)	/* right anchor	-			*/
-#define	OANY	0x28000000 /* (5L<<OPSHIFT)	/* .		-			*/
-#define	OANYOF	0x30000000 /* (6L<<OPSHIFT)	/* [...]	set number		*/
-#define	OBACK_	0x38000000 /* (7L<<OPSHIFT)	/* begin \d	paren number		*/
-#define	O_BACK	0x40000000 /* (8L<<OPSHIFT)	/* end \d	paren number		*/
-#define	OPLUS_	0x48000000 /* (9L<<OPSHIFT)	/* + prefix	fwd to suffix		*/
-#define	O_PLUS	0x50000000 /* (10L<<OPSHIFT)	/* + suffix	back to prefix		*/
-#define	OQUEST_	0x58000000 /* (11L<<OPSHIFT)	/* ? prefix	fwd to suffix		*/
-#define	O_QUEST	0x60000000 /* (12L<<OPSHIFT)	/* ? suffix	back to prefix		*/
-#define	OLPAREN	0x68000000 /* (13L<<OPSHIFT)	/* (		fwd to )		*/
-#define	ORPAREN	0x70000000 /* (14L<<OPSHIFT)	/* )		back to (		*/
-#define	OCH_	0x78000000 /* (15L<<OPSHIFT)	/* begin choice	fwd to OOR2		*/
-#define	OOR1	0x80000000 /* (16L<<OPSHIFT)	/* | pt. 1	back to OOR1 or OCH_	*/
-#define	OOR2	0x88000000 /* (17L<<OPSHIFT)	/* | pt. 2	fwd to OOR2 or O_CH	*/
-#define	O_CH	0x90000000 /* (18L<<OPSHIFT)	/* end choice	back to OOR1		*/
-#define	OBOW	0x98000000 /* (19L<<OPSHIFT)	/* begin word	-			*/
-#define	OEOW	0xa0000000 /* (20L<<OPSHIFT)	/* end word	-			*/
+#define	OEND	0x08000000 /* (1L<<OPSHIFT)	_* endmarker	-			*/
+#define	OCHAR	0x10000000 /* (2L<<OPSHIFT)	_* character	unsigned char		*/
+#define	OBOL	0x18000000 /* (3L<<OPSHIFT)	_* left anchor	-			*/
+#define	OEOL	0x20000000 /* (4L<<OPSHIFT)	_* right anchor	-			*/
+#define	OANY	0x28000000 /* (5L<<OPSHIFT)	_* .		-			*/
+#define	OANYOF	0x30000000 /* (6L<<OPSHIFT)	_* [...]	set number		*/
+#define	OBACK_	0x38000000 /* (7L<<OPSHIFT)	_* begin \d	paren number		*/
+#define	O_BACK	0x40000000 /* (8L<<OPSHIFT)	_* end \d	paren number		*/
+#define	OPLUS_	0x48000000 /* (9L<<OPSHIFT)	_* + prefix	fwd to suffix		*/
+#define	O_PLUS	0x50000000 /* (10L<<OPSHIFT)	_* + suffix	back to prefix		*/
+#define	OQUEST_	0x58000000 /* (11L<<OPSHIFT)	_* ? prefix	fwd to suffix		*/
+#define	O_QUEST	0x60000000 /* (12L<<OPSHIFT)	_* ? suffix	back to prefix		*/
+#define	OLPAREN	0x68000000 /* (13L<<OPSHIFT)	_* (		fwd to )		*/
+#define	ORPAREN	0x70000000 /* (14L<<OPSHIFT)	_* )		back to (		*/
+#define	OCH_	0x78000000 /* (15L<<OPSHIFT)	_* begin choice	fwd to OOR2		*/
+#define	OOR1	0x80000000 /* (16L<<OPSHIFT)	_* | pt. 1	back to OOR1 or OCH_	*/
+#define	OOR2	0x88000000 /* (17L<<OPSHIFT)	_* | pt. 2	fwd to OOR2 or O_CH	*/
+#define	O_CH	0x90000000 /* (18L<<OPSHIFT)	_* end choice	back to OOR1		*/
+#define	OBOW	0x98000000 /* (19L<<OPSHIFT)	_* begin word	-			*/
+#define	OEOW	0xa0000000 /* (20L<<OPSHIFT)	_* end word	-			*/
 
 
 
