@@ -56,6 +56,7 @@ extern char	version[];
 static int do_splines=0;
 static int do_drawings=0;
 static int trimmed_surf=0;
+int do_polysolids=0;
 
 static char *iges_file;
 
@@ -133,7 +134,7 @@ char *argv[];
 	int c;
 	char *output_file=(char *)NULL;
 
-	while( (c=getopt( argc , argv , "dnto:" )) != EOF )
+	while( (c=getopt( argc , argv , "dntpo:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -148,6 +149,9 @@ char *argv[];
 				break;
 			case 't':
 				trimmed_surf = 1;
+				break;
+			case 'p':
+				do_polysolids = 1;
 				break;
 		}
 	}

@@ -20,6 +20,7 @@ extern int ntypes; /* Number of different types of IGES entities recognized by
 			this code */
 extern int brlcad_att_de; /* DE sequence number for BRLCAD attribute
 		definition entity */
+extern int do_polysolids; /* flag indicating NMG solids should be written as polysolids */
 extern FILE *fd; /* file pointer for IGES file */
 extern FILE *fdout; /* file pointer for BRLCAD output file */
 extern char brlcad_file[]; /* name of brlcad output file (".g" file) */

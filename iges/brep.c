@@ -110,11 +110,24 @@ int entityno;
 		nmg_invert_shell( void_shells[i] , &tol );
 	}
 
-	/* Compute "geometry" for region and shell */
-	nmg_region_a( r , &tol );
+	if( do_polysolids )
+	{
+		/* Merge all shells into one */
+		for( i=0 ; i<num_of_voids ; i++ )
+			nmg_js( s_outer, void_shells[i], &tol );
 
-	if( mk_nmg( fdout , dir[entityno]->name , m ) )
-		goto err;
+		/* write out polysolid */
+		write_shell_as_polysolid( fdout, dir[entityno]->name, s_outer );
+	}
+	else
+	{
+		/* Compute "geometry" for region and shell */
+		nmg_region_a( r , &tol );
+
+		/* Write NMG solid */
+		if( mk_nmg( fdout , dir[entityno]->name , m ) )
+			goto err;
+	}
 
 	if( num_of_voids )
 	{

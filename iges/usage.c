@@ -25,6 +25,7 @@ char *message="Usage:  iges-g [-n|d|t] -o file.g file.iges\n\
 	-d - Convert IGES drawings to NMG objects (and ignore solid objects)\n\
 	-t - Convert all trimmed surfaces to NMG trimmed NURBS\n\
 	-o - Specify BRLCAD output file\n\
+	-p - Write BREP objects as polysolids rather than NMG's\n\
 The n, d, and t options are mutually exclusive.\n\
 With none of the n, d, or t options specified, the default action\n\
 is to convert only IGES solid model entities (CSG and planar face BREP)\n";
