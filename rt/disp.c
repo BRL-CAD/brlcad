@@ -42,6 +42,11 @@ struct rt_spect_sample	*atmosphere_orig;
 struct rt_spect_sample	*atmosphere;
 int			use_atmosphere = 0;	/* Linked with TCL */
 
+struct rt_spect_sample	*cie_x;
+struct rt_spect_sample	*cie_y;
+struct rt_spect_sample	*cie_z;
+int			use_cie_xyz = 0;	/* Linked with TCL */
+
 char	*pixels;		/* en-route to framebuffer */
 
 fastf_t	maxval, minval;				/* Linked with TCL */
@@ -222,6 +227,7 @@ Tcl_Interp	*inter;
 	Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "use_cie_xyz", (char *)&use_cie_xyz, TCL_LINK_INT );
 
 	/* Source the TCL part of this lashup */
 	tcl_RcFileName = "./disp.tcl";
@@ -229,12 +235,52 @@ Tcl_Interp	*inter;
 	return TCL_OK;
 }
 
-main( argc, argv )
-char	**argv;
+/*
+ */
+struct rt_spect_sample *
+rt_spect_sample_binary_read( filename, num, spect )
+CONST char			*filename;
+int				num;
+CONST struct rt_spectrum	*spect;
 {
+	struct rt_spect_sample	*ss;
+	char	*cp;
+	int	nbytes;
 	int	len;
 	int	fd;
 	int	i;
+
+	RT_CK_SPECTRUM(spect);
+
+	nbytes = RT_SIZEOF_SPECT_SAMPLE(spect);
+	len = num * nbytes;
+	ss = (struct rt_spect_sample *)rt_malloc( len+8, "rt_spect_sample[]" );
+
+	if( (fd = open(basename, 0)) <= 0 )  {
+		perror(basename);
+		rt_bomb("Unable to open spectral samples\n");
+	}
+	if( read( fd, (char *)ss, len ) != len )  {
+		rt_bomb("Read of spectral samples failed\n");
+	}
+	close(fd);
+
+	/* Connect ss[i].spectrum pointer to spect */
+	cp = (char *)ss;
+	for( i = num-1; i >= 0; i--, cp += nbytes )  {
+		register struct rt_spect_sample	*sp;
+
+		sp = (struct rt_spect_sample *)cp;
+		RT_CK_SPECT_SAMPLE(sp);
+		sp->spectrum = spect;
+	}
+
+	return ss;
+}
+
+main( argc, argv )
+char	**argv;
+{
 
 	rt_g.debug = 1;
 
@@ -255,19 +301,11 @@ char	**argv;
 	rt_spectrum_scale( atmosphere_orig->spectrum, 1000.0 );
 	atmosphere = rt_spect_resample( spectrum, atmosphere_orig );
 
-	len = width * height * RT_SIZEOF_SPECT_SAMPLE(spectrum);
-	ss = (struct rt_spect_sample *)rt_malloc( len, "rt_spect_sample" );
+	/* Allocate and read 2-D spectrum array */
+	ss = rt_spect_sample_binary_read( basename, width*height, spectrum );
+
+	/* Allocate framebuffer image buffer */
 	pixels = rt_malloc( width * height * 3, "pixels[]" );
-
-	if( (fd = open(basename, 0)) <= 0 )  {
-		perror(basename);
-		rt_bomb("Unable to open spectral samples\n");
-	}
-	if( read( fd, (char *)ss, len ) != len )  {
-		rt_bomb("Read of spectral samples failed\n");
-	}
-	close(fd);
-
 
 	find_minmax();
 	rt_log("min = %g, max=%g Watts\n", minval, maxval );
@@ -319,7 +357,10 @@ char		*argv[];
 		wl,
 		spectrum->wavel[wl] * 0.001,
 		spectrum->wavel[wl+1] * 0.001 );
-	rescale(wl);
+	if( use_cie_xyz )
+		show_color(wl);
+	else
+		rescale(wl);
 	fb_writerect( fbp, 0, 0, width, height, pixels );
 	fb_poll(fbp);
 
@@ -404,4 +445,74 @@ int	wav;
 		else if( val < 0 ) val = 0;
 		pp[0] = pp[1] = pp[2] = val;
 	}
+}
+
+
+/*
+ *			S H O W _ C O L O R
+ *
+ *  Create color image from spectral curve,
+ *  given current min & max values, and frequency offset (in nm).
+ *  Go via CIE XYZ space.
+ */
+show_color(off)
+int	off;
+{
+	char		*cp;
+	char		*pp;
+	int		todo;
+	int		nbytes;
+	fastf_t		scale;
+	struct rt_spect_sample	*xyzsamp;
+
+	cp = (char *)ss;
+	nbytes = RT_SIZEOF_SPECT_SAMPLE(spectrum);
+
+	pp = pixels;
+	RT_GET_SPECT_SAMPLE(xyzsamp, spectrum);
+
+	scale = 255 / (maxval - minval);
+
+	/* Build CIE curves */
+	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
+
+	if( use_atmosphere )  {
+		rt_spect_mul( cie_x, cie_x, atmosphere );
+		rt_spect_mul( cie_y, cie_y, atmosphere );
+		rt_spect_mul( cie_z, cie_z, atmosphere );
+	}
+
+	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
+		struct rt_spect_sample	*sp;
+		fastf_t			x, y, z;
+		register int		val;
+
+		sp = (struct rt_spect_sample *)cp;
+		RT_CK_SPECT_SAMPLE(sp);
+
+		rt_spect_mul( xyzsamp, sp, cie_x );
+		x = rt_spect_area1( xyzsamp );
+
+		rt_spect_mul( xyzsamp, sp, cie_y );
+		y = rt_spect_area1( xyzsamp );
+
+		rt_spect_mul( xyzsamp, sp, cie_z );
+		z = rt_spect_area1( xyzsamp );
+
+		val = (x - minval) * scale;
+		if( val > 255 )  val = 255;
+		else if( val < 0 ) val = 0;
+		pp[0] = val;
+
+		val = (y - minval) * scale;
+		if( val > 255 )  val = 255;
+		else if( val < 0 ) val = 0;
+		pp[1] = val;
+
+		val = (z - minval) * scale;
+		if( val > 255 )  val = 255;
+		else if( val < 0 ) val = 0;
+		pp[2] = val;
+	}
+	rt_free( (char *)xyzsamp, "xyz sample");
 }
