@@ -46,7 +46,6 @@ extern struct resource	rt_uniresource;		/* from shoot.c */
 
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
 
-
 /*
  *			R T _ N E W _ R T I
  *
@@ -241,7 +240,7 @@ int			ncpu;
 			rtip->rti_dbip->dbi_uses);
 	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		/* Ensure bit numbers are unique */
-		BU_ASSERT(rtip->Regions[regp->reg_bit] == REGION_NULL);
+		BU_ASSERT_PTR(rtip->Regions[regp->reg_bit], ==, REGION_NULL);
 		rtip->Regions[regp->reg_bit] = regp;
 		rt_optim_tree( regp->reg_treetop, resp );
 		rt_solid_bitfinder( regp->reg_treetop, regp, resp );
@@ -273,7 +272,14 @@ int			ncpu;
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		/* Ensure bit numbers are unique */
 		register struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
-		BU_ASSERT(*ssp == SOLTAB_NULL);
+		if( *ssp != SOLTAB_NULL )  {
+			bu_log("rti_Solids[%d] is non-empty! rtip=x%x\n", stp->st_bit, rtip);
+			bu_log("Existing entry is (st_rtip=x%x):\n", (*ssp)->st_rtip);
+			rt_pr_soltab(*ssp);
+			bu_log("2nd soltab also claiming that bit is (st_rtip=x%x):\n", stp->st_rtip);
+			rt_pr_soltab(stp);
+		}
+		BU_ASSERT_PTR(*ssp, ==, SOLTAB_NULL);
 		*ssp = stp;
 		rtip->rti_nsol_by_type[stp->st_id]++;
 	} RT_VISIT_ALL_SOLTABS_END
