@@ -39,6 +39,9 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 2.2  90/04/13  03:09:03  cjohnson
+ * Back off code to reduce number of floating point multiblies.
+ * 
  * Revision 2.1  90/04/13  01:23:12  cjohnson
  * First Relese.
  * 
@@ -62,7 +65,7 @@ unsigned char *Map;
 	static unsigned char *last,*cur=0,*next;
 	static int linelen;
 	int result;
-
+	register int newvalue;
 	register  int i,value;
 
 /*
@@ -163,13 +166,20 @@ unsigned char *Map;
 	if (!last) {
 		i=0;
 		value=next[i] + cur[i+1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = next[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+			newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+			    255: newvalue;
 		}
 		value=next[i] + cur[i-1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		    255: newvalue;
+
 /*
  *		first time through so we will need this buffer space
  *		the next time through.
@@ -181,27 +191,39 @@ unsigned char *Map;
 	} else if (!next) {
 		i=0;
 		value=last[i] + cur[i+1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = last[i] + cur[i-1] + cur[i+1] - cur[i]*3;
-			buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+			newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+			    255: newvalue;
 		}
 		value=last[i] + cur[i-1] - cur[i]*2;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*2);
+		newvalue = cur[i] - Beta*value*cur[i]/(255*2);
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		    255: newvalue;
 /*
  *	all other lines.
  */
 	} else {
 		i=0;
 		value=last[i] + next[i] + cur[i+1] - cur[i]*3;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+		newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		    255: newvalue;
 		for (; i < linelen-1; i++) {
 			value = last[i] + next[i] + cur[i-1] + cur[i+1]
 			     - cur[i]*4;
-			buf[i] = cur[i] - Beta*value*cur[i]/(255*4);
+			newvalue = cur[i] - Beta*value*cur[i]/(255*4);
+			buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+			    255: newvalue;
 		}
 		value=last[i] + next[i] + cur[i-1] - cur[i]*3;
-		buf[i] = cur[i] - Beta*value*cur[i]/(255*3);
+		newvalue = cur[i] - Beta*value*cur[i]/(255*3);
+		buf[i] = (newvalue < 0) ? 0 : (newvalue > 255) ? 
+		    255: newvalue;
 	}
 	return(linelen);
 }
