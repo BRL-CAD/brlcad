@@ -19,7 +19,7 @@ TR/REC-html40/loose.dtd">
 <br>
 
 <dl>
-<dt><b>New database file format</b>
+<dt><b>New Database File Format</b>
 <dd>This is probably the most significant change in this release.
 It introduces a large number of new capabilities in BRLCAD.
 The significant features this introduces include:
@@ -27,16 +27,16 @@ The significant features this introduces include:
 	<dt><b>Machine-independent data</b></dt>
 	<dd>The geometry in the new file format is stored in an 
 	architecture-independent fashion.  This removes the need to convert
-	the geometry file to ascii representation and back to binary when 
-	moving between machines of different architectures (eg. between 
-	Big-Endian/Little-Endian machines)</dd>
+	the geometry file to ASCII representation and back to binary when 
+	moving between machines of different architectures (e.g. between 
+	Big-Endian/Little-Endian machines).</dd>
 
 	<dt><b>Unlimited Length Object Names</b></dt>
 	<dd>Names of objects in the geometry database were previously limited
 	to 16 characters.  This restriction was burdensome when constructing
 	complex systems.  The new database format (and MGED/rt) allows for
 	unlimited length names for objects.  The only limits remaining are 
-	usability/human factors (you may wish to thing twice before using 
+	usability/human factors (you may wish to think twice before using 
 	1024-character names for all your objects).</dd>
 
 	<dt><b>Object Attributes</b></dt>
@@ -59,8 +59,8 @@ The significant features this introduces include:
 	external disk files.</dd>
 
 	<dt><b>Reduced Disk space requirements</b></dt>
-	<dd>The new file format is much more agressive about space utilization.
-	Many primitives now occupy sigificantly less disk space.</dd>
+	<dd>The new file format is more aggressive about space utilization.
+	Many primitives now occupy significantly less disk space.</dd>
 	
 	<dt><b>New <i>dbupgrade</i> utility for easy migration</b></dt>
 	<dd>The dbupgrade command has been created to bring old 
@@ -76,13 +76,13 @@ The significant features this introduces include:
 	<dd>It is now possible to mark objects in the database as "hidden".
 	These will not be listed in ordinary displays of database content.
 	This allows users to keep objects such as Opaque Binary Objects from
-	cluttering listings</dd>
+	cluttering listings.</dd>
 
 	<dt><b>Deprecation of obsolete "hf" primitive</b></dt>
 	<dd>The dsp primitive (Displacement Map) is functionally equivalent
 	and offers substantial performance advantages.  The bot primitive 
 	(Bag 'o Triangles) is a likewise a substantial improvement over the 
-	existing "poly" primitve.  The dbupgrade utility converts existing 
+	existing "poly" primitive.  The dbupgrade utility converts existing 
 	hf and poly primitives into dsp and bot primitives, respectively.  
 	Both hf and poly primitives are deprecated.</dd>
 
@@ -97,7 +97,6 @@ The significant features this introduces include:
 	</dd>
 
 	<dt><b>New ASCII file format for new binary file format</b></dt>
-
 	<dd>This new ASCII format is based upon the Tcl scripting language.
 	It allows more convenient processing and manipulation of the ASCII
 	format.</dd>
@@ -105,7 +104,7 @@ The significant features this introduces include:
 </dd>
 <dt><b>MGED Geometry Editor Improvements</b></dt>
 <dd>In addition to supporting both the old and new geometry file formats, there
-have been numerous improvements.  This include:
+have been numerous improvements.  These include:
     <dl>
 	<dt><b>New User's Manual</b></dt>
 	<dd>A completely updated tutorial introduction to MGED and modeling
@@ -138,7 +137,7 @@ have been numerous improvements.  This include:
 	<dt><b>Extended Primitive Auto-Generation</b></dt>
 	<dd>Several primitive types can now be auto-generated using the 
 	<i>make</i> command from within MGED.  These include:<ul>
-		<li>rectangular parallelopipeds (rpp)</li>
+		<li>rectangular parallelepipeds (rpp)</li>
 		<li>arbitrary faceted (ars)</li>
 		<li>and arbitrary regular polyhedron (arbn)</li></ul>
 	Primitives created with this command take their initial parameters
@@ -162,7 +161,7 @@ have been numerous improvements.  This include:
 		<li><b>pathlist</b> Lists all existing paths that start from the specified combinations and end at a primitive</li>
 		<li><b>rtedge</b> Command line interface to the rtedge program for generating line drawings</li>
 		<li><b>shells</b> Separates an NMG primitive into many objects, 1 object per NMG shell.</li>
-		<li><b>showmats</b> List transformation matricies on a path</li>
+		<li><b>showmats</b> List transformation matrices on a path</li>
 		<li><b>summary</b> Provide database statistics</li>
 		<li><b>xpush</b> An extended push that attempts to avoid degenerate conditions in matrix propagation.</li>
 	</ul>
@@ -201,7 +200,7 @@ have been numerous improvements.  This include:
     <li>Object attributes:  store arbitrary name/value pairs with any database object</li>
     <li>Hidden geometry support.</li>
     <li>Texture shader and dsp primitive can access binary objects as their data source in addition to external files</li>
-    <li>Tcl-based ascii database file format for new binary file format.</li>
+    <li>Tcl-based ASCII database file format for new binary file format.</li>
     <li>Improved terrain performance (dbupgrade converts slower hf primitives to dsp primitive)</li>
     <li>Improved performance when ray-tracing bot primitives (rt_pieces)</li>
     <li>Improved performance when ray-tracing dsp primitive (octtree based cell traversal)</li>
@@ -213,7 +212,7 @@ have been numerous improvements.  This include:
   <li>An "extrusion" primitive which allows linear 
   	extrusion of closed planar 2D sketch primitives into 3D shapes.</li>
   <li>Improved overall raytrace performance</li>
-  <li>Ascii support for extruded bitmap (ebm) and volume (vol) primitives</li>
+  <li>ASCII support for extruded bitmap (ebm) and volume (vol) primitives</li>
   <li>General bug fixes, security enhancements, and speed improvements</li>
 
   <li>Multi-device Geometry Editor (MGED) improvements
@@ -222,7 +221,7 @@ have been numerous improvements.  This include:
     <li>Improved menu and interface layout</li>
     <li>New "Introduction to MGED" user manual</li>
     <li>'in' command support for kinematics control (grip), sketch extrusion (extrude), arbitrary regular polyhedron (arbn), and binary object (binunif) primitives</li>
-    <li>'make' command support for rectangular parallelopipeds (rpp), arbitrary faceted (ars), and arbitrary regular polyhedron (arbn) primitives</li>
+    <li>'make' command support for rectangular parallelepipeds (rpp), arbitrary faceted (ars), and arbitrary regular polyhedron (arbn) primitives</li>
     <li>New commands include: adjust, autoview, attr, attr_rm, copyeval, hide, lt, nmg_collapse, nmg_simplify, pathlist, shells, showmats, summary, unhide, version, xpush, rtedge, E, bot_face_sort</li>
     <li>Bezier curves are interactive display support</li>
     <li>New "Build Pattern Tool" for duplicating geometry in a pattern</li>
@@ -289,7 +288,6 @@ have been numerous improvements.  This include:
 
 <a name="removed"><h2>Unsupported Features and Utilities</h2></a><tiny><a href="index.html">[back]</a></tiny>
 <ul>
-  <li>Standard input/output redirection is no longer supported for g2asc, asc2g</li>
 
   <!-- include specific commands that did this --->
   <li>Standard input/output redirection is no longer supported for g2asc and asc2g</li>
