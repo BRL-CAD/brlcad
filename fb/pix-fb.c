@@ -131,10 +131,11 @@ register char **argv;
 	} else {
 		file_name = argv[optind];
 		if( (infd = open(file_name, 0)) < 0 )  {
+			perror(file_name);
 			(void)fprintf( stderr,
 				"pix-fb: cannot open \"%s\" for reading\n",
 				file_name );
-			return(0);
+			exit(1);
 		}
 		fileinput++;
 	}
