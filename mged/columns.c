@@ -4,10 +4,9 @@
  *  A set of routines for printing columns of data.
  *
  * Functions -
- *	col_init	Called to initialize a new table
  *	col_item	Called to print an item
  *	col_putchar	Called to annotate an item
- *	col_end		Called to finish printing the table
+ *	col_eol		Called to end a line
  *
  * Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -18,16 +17,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include "db.h"		/* for NAMESIZE */
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
 #define	COLUMNS	((80 + NAMESIZE - 1) / NAMESIZE)
-
-col_init() {
-	col_count = 0;
-	col_len = 0;
-}
 
 col_item(cp)
 register char *cp;
@@ -42,12 +37,13 @@ register char *cp;
 			(void)putchar( '\t' );
 		while ( (col_len += 8) < NAMESIZE );
 	}
-	/* Output name and save length for next tab. */
+	/* Output string and save length for next tab. */
 	col_len = 0;
-	do {
+	while ( *cp != '\0' )  {
 		(void)putchar( *cp++ );
 		++col_len;
-	}  while ( *cp != '\0' );
+	}
+	col_count++;
 #undef	COLUMNS
 }
 
@@ -58,8 +54,10 @@ char c;
 	col_len++;
 }
 
-col_end()
+col_eol()
 {
 	if ( col_count != 0 )		/* partial line */
 		(void)putchar( '\n' );
+	col_count = 0;
+	col_len = 0;
 }
