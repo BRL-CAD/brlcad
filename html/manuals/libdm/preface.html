@@ -1,0 +1,34 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+
+<HEAD>
+<title>Preface</title>
+</HEAD>
+
+<BODY BGCOLOR="#E0D8c8" Text="#000000">
+<H1>Preface</H1>
+
+<p>
+LIBDM provides the
+<a href="api.html">API</a>
+for accessing BrlCad's display managers.
+Display managers can be thought of as configurable drawing machines
+that grind away on generic drawing commands called vlists resulting
+in display manager specific drawing actions.
+Vlists are capable of specifying points, lines and polygons in 3D.
+Display managers are also capable of drawing 2D points, lines, and strings.
+</p>
+
+The following DM (display manager) types are supported:<br><br>
+<center>
+<TABLE COLS=2 RULES=all BORDER=1 CELLPADDING=10>
+	<TR><TH ALIGN=LEFT>DM Type	<TH ALIGN=LEFT>  Canvas Type
+	<TR><TD ALIGN=LEFT>X	<TD ALIGN=LEFT>  X window
+	<TR><TD ALIGN=LEFT>ogl	<TD ALIGN=LEFT>  mixed X/OpenGl window
+	<TR><TD ALIGN=LEFT>ps	<TD ALIGN=LEFT>  postscript file
+	<TR><TD ALIGN=LEFT>plot	<TD ALIGN=LEFT>  unix plot file
+</TABLE>
+</center>
+
+</BODY>
+</HTML>
