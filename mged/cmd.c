@@ -50,7 +50,7 @@ char *cmd_args[MAXARGS + 1];	/* array of pointers to args */
 
 extern int	cmd_glob();
 
-static void	f_help(), f_param(), f_comm();
+static void	f_help(), f_fhelp(), f_param(), f_comm();
 void	do_cmd();
 void	f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
@@ -73,7 +73,7 @@ void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in(), f_tables(), f_edcodes(), f_dup(), f_cat();
 void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack();
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
-void	f_overlay(), f_rtcheck();
+void	f_overlay(), f_rtcheck(), f_comb();
 
 static struct funtab {
 	char *ft_name;
@@ -85,7 +85,7 @@ static struct funtab {
 } funtab[] = {
 
 "?", "", "summary of available commands",
-	f_help,0,MAXARGS,
+	f_fhelp,0,MAXARGS,
 "help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,
 "e", "<objects>", "edit objects",
@@ -110,6 +110,8 @@ static struct funtab {
 	f_instance,3,4,
 "r", "region <operation solid>", "create region",
 	f_region,4,MAXARGS,
+"comb", "comb solid <operation solid>", "create combination w/booleans",
+	f_comb,3,MAXARGS,
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,
 "mater", "comb [material]", "assign/delete material to combination",
@@ -495,21 +497,17 @@ f_quit()
 	/* NOTREACHED */
 }
 
-/* Print a help message */
+/*
+ *			H E L P C O M M
+ *
+ *  Common code for help commands
+ */
 static void
-f_help()
+helpcomm()
 {
 	register struct funtab *ftp;
 	register int	i;
 
-	if( numargs <= 1 )  {
-		(void)printf("The following commands are available:\n");
-		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
-			col_item(ftp->ft_name);
-		}
-		col_eol();
-		return;
-	}
 	/* Help command(s) */
 	for( i=1; i<numargs; i++ )  {
 		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
@@ -522,6 +520,51 @@ f_help()
 		if( ftp == &funtab[NFUNC] )
 			(void)printf("%s: no such command, type ? for help\n", cmd_args[i] );
 	}
+}
+
+/*
+ *			F _ H E L P
+ *
+ *  Print a help message, two lines for each command.
+ *  Or, help with the indicated commands.
+ */
+static void
+f_help()
+{
+	register struct funtab *ftp;
+	register int	i;
+
+	if( numargs <= 1 )  {
+		(void)printf("The following commands are available:\n");
+		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+			(void)printf("%s %s\n", ftp->ft_name, ftp->ft_parms);
+			(void)printf("\t(%s)\n", ftp->ft_comment);
+		}
+		return;
+	}
+	helpcomm();
+}
+
+/*
+ *			F _ F H E L P
+ *
+ *  Print a fast help message;  just tabulate the commands available.
+ *  Or, help with the indicated commands.
+ */
+static void
+f_fhelp()
+{
+	register struct funtab *ftp;
+
+	if( numargs <= 1 )  {
+		(void)printf("The following commands are available:\n");
+		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+			col_item(ftp->ft_name);
+		}
+		col_eol();
+		return;
+	}
+	helpcomm();
 }
 
 /* Hook for displays with no buttons */

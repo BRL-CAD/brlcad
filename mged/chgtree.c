@@ -252,6 +252,63 @@ f_region()
 	}
 }
 
+/*
+ *			F _ C O M B
+ *
+ *  Create or add to the end of a combination, with one or more solids,
+ *  with explicitly specified operations.
+ *
+ *  Format: comb comb_name sol1 opr2 sol2 ... oprN solN
+ */
+void
+f_comb()
+{
+	register struct directory *dp;
+	char	*comb_name;
+	register int	i;
+	char	oper;
+
+	/* Check for odd number of arguments */
+	if( !(numargs & 01) )  {
+		(void)printf("error in number of args!\n");
+		return;
+	}
+
+	/* Save combination name, for use inside loop */
+	comb_name = cmd_args[1];
+
+	/* Fake up first operation as a UNION, to be tidy */
+	cmd_args[1] = "u";
+
+	/* Get operation and solid name for each solid */
+	for( i = 1; i < numargs; i += 2 )  {
+		if( cmd_args[i][1] != '\0' )  {
+			(void)printf("bad operation: %s skip member: %s\n",
+				cmd_args[i], cmd_args[i+1] );
+			continue;
+		}
+		oper = cmd_args[i][0];
+		if( (dp = lookup( cmd_args[i + 1], LOOKUP_NOISY )) == DIR_NULL )  {
+			(void)printf("skipping %s\n", cmd_args[i + 1] );
+			continue;
+		}
+
+		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
+			(void)printf("bad operation: %c skip member: %s\n",
+				oper, dp->d_namep );
+			continue;
+		}
+
+		if( combadd( dp, comb_name, 0, oper, 0, 0 ) == DIR_NULL )  {
+			(void)printf("error in combadd\n");
+			return;
+		}
+	}
+
+	if( lookup(comb_name, LOOKUP_QUIET) == DIR_NULL )
+		(void)printf("Error:  %s not created\n", comb_name );
+}
+
 /* Remove an object or several from the description */
 /* Format: k object1 object2 .... objectn	*/
 void
