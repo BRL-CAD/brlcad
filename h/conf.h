@@ -112,7 +112,7 @@
  *	HAVE_UNIX_DOMAIN_SOCKETS
  */
 
-#if !defined(__convex__)
+#if !defined(__convex__) && !defined(__bsdi__)
 #	define HAVE_DRAND48	1
 #endif
 
