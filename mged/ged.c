@@ -273,7 +273,8 @@ char **argv;
 	/* Set up linked lists */
 	BU_LIST_INIT(&HeadSolid.l);
 	BU_LIST_INIT(&FreeSolid.l);
-	BU_LIST_INIT( &rt_g.rtg_vlfree );
+	BU_LIST_INIT(&rt_g.rtg_vlfree);
+	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	BU_LIST_INIT(&head_cmd_list.l);

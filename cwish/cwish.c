@@ -54,6 +54,7 @@ main(argc, argv)
 
 	/* initialize RT's global state */
 	BU_LIST_INIT(&rt_g.rtg_vlfree);
+	BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
