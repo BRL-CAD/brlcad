@@ -74,6 +74,7 @@ void	f_saveview(), f_savekey();
 void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
+void	f_permute();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
@@ -255,6 +256,8 @@ static struct funtab {
 	f_param,2,4,
 "paths", "pattern", "lists all paths matching input path",
 	f_pathsum, 1, MAXARGS,
+"permute", "###", "permute vertices of an ARB8",
+	f_permute,2,2,
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,
 "polybinout", "file", "store vlist polygons into polygon file (experimental)",
