@@ -62,7 +62,7 @@ then
 		4)  UNIXTYPE=BSD; MACHINE=sun4;;
 		5)  UNIXTYPE=SYSV; MACHINE=sun5;;
 		esac;;
-	alpha)  MACHINE=alpha; UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;;
+	alpha)  MACHINE=alpha; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	esac
 fi
 
@@ -431,7 +431,7 @@ x-d)
 	# This option is used primarily when building CAKE.
 	# This depends on `machinetype.sh -d` discarding the newline.
 	if test ${UNIXTYPE} = BSD
-	then	echo "-D__BSD -DBSD"
+	then	echo "-D__BSD -D_BSD -DBSD"
 	else	echo "-D__SYSV -DATT -DSYSV"
 	fi
 	echo "-D__MACHINETYPE__${MACHINE}"
