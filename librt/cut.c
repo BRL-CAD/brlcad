@@ -39,10 +39,6 @@ HIDDEN int		rt_ck_overlap RT_ARGS((CONST vect_t min,
 HIDDEN int		rt_ct_box RT_ARGS((struct rt_i *rtip,
 					   union cutter *cutp,
 					   int axis, double where));
-HIDDEN void		rt_ct_add RT_ARGS((union cutter *cutp,
-					   struct soltab *stp,
-					   vect_t min, vect_t max, int depth,
-					   CONST struct rt_i *rtip));
 HIDDEN void		rt_ct_optim RT_ARGS((struct rt_i *rtip,
 					     union cutter *cutp, int depth));
 HIDDEN void		rt_ct_free RT_ARGS((struct rt_i *rtip,
@@ -872,60 +868,14 @@ int			ncpu;
 	}
 }
 
-		
-
-
-/*
- *			R T _ C T _ A D D
- *  
- *  Add a solid to the cut tree, extending the tree as necessary,
- *  but without being paranoid about obeying the rtip->rti_cutlen limits,
- *  so as to retain O(depth) performance.
- */
-HIDDEN void
-rt_ct_add( cutp, stp, min, max, depth, rtip )
-register union cutter *cutp;
-struct soltab *stp;	/* should be object handle & routine addr */
-vect_t min, max;
-int depth;
-CONST struct rt_i *rtip;
-{
-	if(rt_g.debug&DEBUG_CUTDETAIL)bu_log("rt_ct_add(x%x, %s, %d)\n",
-		cutp, stp->st_name, depth);
-	if( cutp->cut_type == CUT_CUTNODE )  {
-		vect_t temp;
-
-		/* Cut to the left of point */
-		VMOVE( temp, max );
-		temp[cutp->cn.cn_axis] = cutp->cn.cn_point;
-		if( rt_ck_overlap( min, temp, stp, rtip ) )
-			rt_ct_add( cutp->cn.cn_l, stp, min, temp, depth+1,
-				   rtip );
-
-		/* Cut to the right of point */
-		VMOVE( temp, min );
-		temp[cutp->cn.cn_axis] = cutp->cn.cn_point;
-		if( rt_ck_overlap( temp, max, stp, rtip ) )
-			rt_ct_add( cutp->cn.cn_r, stp, temp, max, depth+1,
-				   rtip );
-		return;
-	}
-	if( cutp->cut_type != CUT_BOXNODE )  {
-		bu_log("rt_ct_add:  node type =x%x\n",cutp->cut_type);
-		return;
-	}
-	/* BOX NODE */
-
-	/* Just add to list at this box node */
-	rt_cut_extend( cutp, stp, rtip );
-}
-
 /*
  *			R T _ C U T _ E X T E N D
  *
  *  Add a solid into a given boxnode, extending the list there.
+ *  This is used only for building the root node, which will then
+ *  be subdivided.
  *
- *  The solid it put onto the main list whether or not it has pieces.
+ *  The solid is put onto the main list whether or not it has pieces.
  */
 void
 rt_cut_extend( cutp, stp, rtip )
@@ -933,31 +883,26 @@ register union cutter	*cutp;
 struct soltab		*stp;
 CONST struct rt_i	*rtip;
 {
+	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(rtip);
 
 	if( cutp->bn.bn_len >= cutp->bn.bn_maxlen )  {
 		/* Need to get more space in list.  */
 		if( cutp->bn.bn_maxlen <= 0 )  {
 			/* Initial allocation */
-			if( rtip->rti_cutlen > 6 )
+			if( rtip->rti_cutlen > rtip->nsolids )
 				cutp->bn.bn_maxlen = rtip->rti_cutlen;
 			else
-				cutp->bn.bn_maxlen = 6;
+				cutp->bn.bn_maxlen = rtip->nsolids + 2;
 			cutp->bn.bn_list = (struct soltab **)bu_malloc(
 				cutp->bn.bn_maxlen * sizeof(struct soltab *),
 				"rt_cut_extend: initial list alloc" );
 		} else {
-			register char *newlist;
-
-			newlist = bu_malloc(
-				sizeof(struct soltab *) * cutp->bn.bn_maxlen * 2,
+			cutp->bn.bn_maxlen *= 8;
+			cutp->bn.bn_list = (struct soltab **) bu_realloc(
+				(genptr_t)cutp->bn.bn_list,
+				sizeof(struct soltab *) * cutp->bn.bn_maxlen,
 				"rt_cut_extend: list extend" );
-			bcopy( cutp->bn.bn_list, newlist,
-				cutp->bn.bn_maxlen * sizeof(struct soltab *));
-			cutp->bn.bn_maxlen *= 2;
-			bu_free( (char *)cutp->bn.bn_list,
-				"rt_cut_extend: list extend (old list)");
-			cutp->bn.bn_list = (struct soltab **)newlist;
 		}
 	}
 	cutp->bn.bn_list[cutp->bn.bn_len++] = stp;
