@@ -495,6 +495,11 @@ CONST struct bn_tol	*tol;
         return(0);
 }
 
+struct cline_vert {
+	point_t pt;
+	struct vertex *v;
+};
+
 /*
  *			R T _ C L I N E _ T E S S
  *
@@ -510,13 +515,282 @@ struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 CONST struct bn_tol	*tol;
 {
-	LOCAL struct rt_cline_internal	*cline_ip;
+	struct shell			*s;
+	struct rt_cline_internal	*cline_ip;
+	fastf_t				ang_tol, abs_tol, norm_tol, rel_tol;
+	int				nsegs, seg_no, i;
+	struct cline_vert		*base_outer, *base_inner, *top_outer, *top_inner;
+	struct cline_vert		base_center, top_center;
+	vect_t				v1, v2;
+	point_t				top;
+	struct bu_ptbl			faces;
 
 	RT_CK_DB_INTERNAL(ip);
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
 	RT_CLINE_CK_MAGIC(cline_ip);
 
-	return(-1);
+	*r = nmg_mrsv( m );
+	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+
+	ang_tol = bn_halfpi;
+	abs_tol = bn_halfpi;
+	rel_tol = bn_halfpi;
+	norm_tol = bn_halfpi;
+
+	if( ttol->abs <= 0.0 && ttol->rel <= 0.0 && ttol->norm <= 0.0 )
+	{
+		/* no tolerances specified, use 10% relative tolerance */
+		ang_tol = 2.0 * acos( 0.9 );
+	}
+	else
+	{
+		if( ttol->abs > 0.0 && ttol->abs < cline_ip->radius )
+			abs_tol = 2.0 * acos( 1.0 - ttol->abs / cline_ip->radius );
+		if( ttol->rel > 0.0 && ttol->rel < 1.0 )
+			rel_tol = 2.0 * acos( 1.0 - ttol->rel );
+		if( ttol->norm > 0.0 )
+			norm_tol = 2.0 * ttol->norm;
+	}
+
+	if( abs_tol < ang_tol )
+		ang_tol = abs_tol;
+	if( rel_tol < ang_tol )
+		ang_tol = rel_tol;
+	if( norm_tol < ang_tol )
+		ang_tol = norm_tol;
+
+	/* get number of segments per quadrant */
+	nsegs = (int)(bn_halfpi / ang_tol + 0.9999);
+	if( nsegs < 2 )
+		nsegs = 2;
+
+	ang_tol = bn_halfpi / nsegs;
+
+	/* and for complete circle */
+	nsegs *= 4;
+
+	/* allocate memory for arrays of vertices */
+	base_outer = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "base outer vertices" );
+	top_outer = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "top outer vertices" );
+
+	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	{
+		base_inner = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "base inner vertices" );
+		top_inner = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "top inner vertices" );
+	}
+
+	/* calculate geometry for each vertex */
+	bn_vec_ortho( v1, cline_ip->h );
+	VCROSS( v2, cline_ip->h, v1 );
+	VUNITIZE( v2 );
+	VADD2( top, cline_ip->v, cline_ip->h );
+	for( seg_no = 0; seg_no < nsegs ; seg_no++ )
+	{
+		fastf_t a, b, c, d, angle;
+
+		angle = ang_tol * seg_no;
+
+		a = cos( angle );
+		b = sin( angle );
+
+		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		{
+			c = a * (cline_ip->radius - cline_ip->thickness);
+			d = b * (cline_ip->radius - cline_ip->thickness);
+		}
+
+		a *= cline_ip->radius;
+		b *= cline_ip->radius;
+
+		VJOIN2( base_outer[seg_no].pt, cline_ip->v, a, v1, b, v2 );
+		VADD2( top_outer[seg_no].pt, base_outer[seg_no].pt, cline_ip->h );
+
+		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		{
+			VJOIN2( base_inner[seg_no].pt, cline_ip->v, c, v1, d, v2 );
+			VADD2( top_inner[seg_no].pt, base_inner[seg_no].pt, cline_ip->h );
+		}
+	}
+
+	bu_ptbl_init( &faces , 64, "faces");
+	/* build outer faces */
+	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	{
+		int next_seg;
+		struct vertex **verts[3];
+		struct faceuse *fu;
+
+		next_seg = seg_no + 1;
+		if( next_seg == nsegs )
+			next_seg = 0;
+
+		verts[2] = &top_outer[seg_no].v;
+		verts[1] = &top_outer[next_seg].v;
+		verts[0] = &base_outer[seg_no].v;
+
+		fu = nmg_cmface( s, verts, 3 );
+		bu_ptbl_ins( &faces , (long *)fu );
+
+		verts[2] = &base_outer[seg_no].v;
+		verts[1] = &top_outer[next_seg].v;
+		verts[0] = &base_outer[next_seg].v;
+
+		fu = nmg_cmface( s, verts, 3 );
+		bu_ptbl_ins( &faces , (long *)fu );
+	}
+
+	/* build inner faces */
+	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	{
+		for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+		{
+			int next_seg;
+			struct vertex **verts[3];
+			struct faceuse *fu;
+
+			next_seg = seg_no + 1;
+			if( next_seg == nsegs )
+				next_seg = 0;
+
+			verts[0] = &top_inner[seg_no].v;
+			verts[1] = &top_inner[next_seg].v;
+			verts[2] = &base_inner[seg_no].v;
+
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+
+			verts[0] = &base_inner[seg_no].v;
+			verts[1] = &top_inner[next_seg].v;
+			verts[2] = &base_inner[next_seg].v;
+
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+		}
+	}
+
+	/* build top faces */
+	top_center.v = (struct vertex *)NULL;
+	VMOVE( top_center.pt, top );
+	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	{
+		int next_seg;
+		struct vertex **verts[3];
+		struct faceuse *fu;
+
+		next_seg = seg_no + 1;
+		if( next_seg == nsegs )
+			next_seg = 0;
+
+		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		{
+			verts[2] = &top_outer[seg_no].v;
+			verts[1] = &top_inner[seg_no].v;
+			verts[0] = &top_inner[next_seg].v;
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+
+			verts[2] = &top_inner[next_seg].v;
+			verts[1] = &top_outer[next_seg].v;
+			verts[0] = &top_outer[seg_no].v;
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+		}
+		else
+		{
+			verts[2] = &top_outer[seg_no].v;
+			verts[1] = &top_center.v;
+			verts[0] = &top_outer[next_seg].v;
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+		}
+	}
+
+	/* build base faces */
+	base_center.v = (struct vertex *)NULL;
+	VMOVE( base_center.pt, cline_ip->v );
+	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	{
+		int next_seg;
+		struct vertex **verts[3];
+		struct faceuse *fu;
+
+		next_seg = seg_no + 1;
+		if( next_seg == nsegs )
+			next_seg = 0;
+
+		if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+		{
+			verts[0] = &base_outer[seg_no].v;
+			verts[1] = &base_inner[seg_no].v;
+			verts[2] = &base_inner[next_seg].v;
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+
+			verts[0] = &base_inner[next_seg].v;
+			verts[1] = &base_outer[next_seg].v;
+			verts[2] = &base_outer[seg_no].v;
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+		}
+		else
+		{
+			verts[0] = &base_outer[seg_no].v;
+			verts[1] = &base_center.v;
+			verts[2] = &base_outer[next_seg].v;
+			fu = nmg_cmface( s, verts, 3 );
+			bu_ptbl_ins( &faces , (long *)fu );
+		}
+	}
+
+	/* assign vertex geometry */
+	if( top_center.v )
+		nmg_vertex_gv( top_center.v, top_center.pt );
+	if( base_center.v )
+		nmg_vertex_gv( base_center.v, base_center.pt );
+
+	for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+	{
+		nmg_vertex_gv( top_outer[seg_no].v, top_outer[seg_no].pt );
+		nmg_vertex_gv( base_outer[seg_no].v, base_outer[seg_no].pt );
+	}
+
+	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	{
+		for( seg_no=0 ; seg_no<nsegs ; seg_no++ )
+		{
+			nmg_vertex_gv( top_inner[seg_no].v, top_inner[seg_no].pt );
+			nmg_vertex_gv( base_inner[seg_no].v, base_inner[seg_no].pt );
+		}
+	}
+
+	bu_free( (char *)base_outer, "base outer vertices" );
+	bu_free( (char *)top_outer, "top outer vertices" );
+	if( cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius )
+	{
+		bu_free( (char *)base_inner, "base inner vertices" );
+		bu_free( (char *)top_inner, "top inner vertices" );
+	}
+
+	/* Associate face plane equations */
+	for( i=0 ; i<BU_PTBL_END( &faces ) ; i++ )
+	{
+		struct faceuse *fu;
+
+		fu = (struct faceuse *)BU_PTBL_GET( &faces , i );
+		NMG_CK_FACEUSE( fu );
+
+		if( nmg_calc_face_g( fu ) )
+		{
+			bu_log( "rt_tess_cline: failed to calculate plane equation\n" );
+			nmg_pr_fu_briefly( fu, "" );
+			return( -1 );
+		}
+	}
+
+	nmg_region_a( *r , tol );
+	bu_ptbl_free( &faces );
+
+	return(0);
 }
 
 /*
