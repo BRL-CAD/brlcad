@@ -3,6 +3,7 @@
 pixscale \- change the size of a color pix file
 .SH SYNOPSIS
 .B pixscale
+.RB [ \-h ]
 .RB [ \-r ]
 .RB [ \-s\  squareinsize]
 .RB [ \-w\  in_width]
@@ -51,6 +52,15 @@ pixel replication.
 .PP
 For 2X interpolation, a much faster alternative is
 .IR pixinterp2x (1).
+.PP
+The
+.B \-h
+flag causes the frame buffer to be
+used in high resolution mode (1024x1024).
+This is important for frame buffers such as the Adage which operate
+differently depending on the display size.  Without this flag
+the default size for the selected device will be used (usually
+the entire screen).
 .SH "SEE ALSO"
 brlcad(1), pixcrop(1), pixrect(1), pixinterp2x(1), pix(5).
 .SH BUGS
