@@ -12,9 +12,7 @@
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
-#define NOISE 32		/* Size of dead spot on knob */
 #define NSLOTS		4080	/* The mostest possible - may be fewer */
-#define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {
