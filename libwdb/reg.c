@@ -111,7 +111,7 @@ int		len;
 int		region;
 CONST char	*matname;
 CONST char	*matparm;
-CONST char	*rgb;
+CONST unsigned char	*rgb;
 int		id;
 int		air;
 int		material;
