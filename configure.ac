@@ -346,6 +346,16 @@ AC_PROG_CC
 AM_PROG_CC_STDC
 AC_PROG_CPP
 
+AC_PROG_INSTALL
+AC_PROG_LIBTOOL
+AM_PROG_LEX
+
+dnl check for basic shell facilities
+AC_PATH_PROG(SH, sh)
+AC_PATH_PROG(MV, mv)
+AC_PATH_PROG(CP, cp)
+AC_PATH_PROG(RM, rm)
+
 dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
    AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
@@ -356,10 +366,6 @@ If we get here, we are using the MIPSPro compiler (and the link should fail).
    ], [using_mipspro=no], [using_mipspro=yes])
    AC_MSG_RESULT($using_mipspro)
 fi
-
-AC_PROG_INSTALL
-AC_PROG_LIBTOOL
-AM_PROG_LEX
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
