@@ -22,10 +22,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include <stdio.h>
-#include "vfont-if.h"
+#include "conf.h"
 
-extern char	*malloc();
+#include <stdio.h>
+#include "machine.h"
+#include "externs.h"
+#include "vfont-if.h"
 
 #define FONTDIR1	"/usr/brlcad/vfont"
 #define FONTDIR2	"/usr/lib/vfont"
