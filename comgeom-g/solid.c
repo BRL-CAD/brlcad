@@ -438,13 +438,6 @@ getsolid()
 }
 
 
-#define Xmin	iv[0]
-#define Xmax	iv[1]
-#define Ymin	iv[2]
-#define Ymax	iv[3]
-#define Zmin	iv[4]
-#define Zmax	iv[5]
-
 /*
  * Input Vector Fields
  */
@@ -505,15 +498,14 @@ char	*name;
 	switch( in->s_type )  {
 
 	case RPP:
-		VSET( O1, Xmax, Ymin, Zmin );
-		VSET( O2, Xmax, Ymax, Zmin );
-		VSET( O3, Xmax, Ymax, Zmax );
-		VSET( O4, Xmax, Ymin, Zmax );
-		VSET( O5, Xmin, Ymin, Zmin );
-		VSET( O6, Xmin, Ymax, Zmin );
-		VSET( O7, Xmin, Ymax, Zmax );
-		VSET( O8, Xmin, Ymin, Zmax );
-		goto ccommon;
+		{
+			double	min[3], max[3];
+
+			VSET( min, iv[0], iv[2], iv[4] );
+			VSET( max, iv[1], iv[3], iv[5] );
+			mk_rpp( outfp, name, min, max );
+			return;
+		}
 
 	case BOX:
 		VMOVE( O1, F1 );
@@ -689,45 +681,17 @@ char	*name;
 		break;
 
 	case TOR:
-		r1=iv[6];	/* Dist from end of V to center of (solid portion) of TORUS */
-		r2=iv[7];	/* Radius of solid portion of TORUS */
-		r3=r1-r2;	/* Radius to inner circular edge */
-		r4=r1+r2;	/* Radius to outer circular edge */
+		{
+			double	center[3], norm[3], r1, r2;
 
-		/*
-		 * To allow for V being (0,0,0), for VCROSS purposes only,
-		 * we add (PI,PI,PI).  THIS DOES NOT GO OUT INTO THE FILE!!
-		 */
-		VMOVE(work,F1);
-		work[0] +=PI;
-		work[1] +=PI;
-		work[2] +=PI;
+			VMOVE( center, &iv[0] );
+			VMOVE( norm, &iv[3] );
+			r1=iv[6];	/* Dist from end of V to center of (solid portion) of TORUS */
+			r2=iv[7];	/* Radius of solid portion of TORUS */
 
-		m2 = MAGNITUDE( F2 );	/* F2 is NORMAL to Torus, with Radius length */
-		VSCALE( F2, F2, r2/m2 );
-
-		/* F3, F4 are perpendicular, goto center of Torus (solid part), for top/bottom */
-		VCROSS(F3,work,F2);
-		m1=MAGNITUDE(F3);
-		VSCALE(F3,F3,r1/m1);
- 
-		VCROSS(F4,F3,F2);
-		m3=MAGNITUDE(F4);
-		VSCALE(F4,F4,r1/m3);
-
-		m5 = MAGNITUDE(F3);
-		m6 = MAGNITUDE( F4 );
-
-		/* F5, F6 are perpindicular, goto inner edge of ellipse */
-		VSCALE( F5, F3, r3/m5 );
-		VSCALE( F6, F4, r3/m6 );
-
-		/* F7, F8 are perpendicular, goto outer edge of ellipse */
-		VSCALE( F7, F3, r4/m5 );
-		VSCALE( F8, F4, r4/m6 );
- 
-		in->s_type=TOR;
-		break;
+			mk_tor( outfp, name, center, norm, r1, r2 );
+			return;
+		}
 
 	default:
 		/*
