@@ -67,11 +67,36 @@ int 			debug;
 
 FILE	*ifp;
 struct rt_wdb	*ofp;
+static int ars_ncurves=0;
+static int ars_ptspercurve=0;
+static int ars_curve=0;
+static int ars_pt=0;
+static char *ars_name;
+static fastf_t **ars_curves=NULL;
 
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
  Convert an ASCII v4 BRL-CAD database to binary form\n\
 ";
+
+int
+incr_ars_pt()
+{
+	int ret=0;
+
+	ars_pt++;
+	if( ars_pt >= ars_ptspercurve )
+	{
+		ars_curve++;
+		ars_pt = 0;
+		ret = 1;
+	}
+
+	if( ars_curve >= ars_ncurves )
+		return( 2 );
+
+	return( ret );
+}
 
 /*
  *			M A I N
@@ -928,49 +953,33 @@ struct bu_list	*headp;
 void
 arsabld()
 {
-#if 0
-	register char *cp;
-	register char *np;
+	char *cp;
+	char *np;
+	int i;
 
+	if( ars_name )
+		bu_free( (char *)ars_name, "ars_name" );
 	cp = buf;
-	record.a.a_id = *cp++;
-	cp = nxt_spc( cp );		/* skip the space */
-
-	record.a.a_type = (char)atoi( cp );
+	cp = nxt_spc( cp );
 	cp = nxt_spc( cp );
 
-	np = record.a.a_name;
-	while( *cp != ' ' )  {
-		*np++ = *cp++;
+	np = cp;
+	while( *(++cp) != ' ' );
+	*cp++ = '\0';
+	ars_name = bu_strdup( np );
+	ars_ncurves = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	ars_ptspercurve = (short)atoi( cp );
+
+	ars_curves = (fastf_t **)bu_calloc( (ars_ncurves+1), sizeof(fastf_t *), "ars_curves" );
+	for( i=0 ; i<ars_ncurves ; i++ )
+	{
+		ars_curves[i] = (fastf_t *)bu_calloc( ars_ptspercurve + 1,
+			sizeof( fastf_t ) * ELEMENTS_PER_VECT, "ars_curve" );
 	}
-	cp = nxt_spc( cp );
 
-	record.a.a_m = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.a.a_n = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.a.a_curlen = (short)atoi( cp );
-	cp = nxt_spc( cp );
-	record.a.a_totlen = (short)atoi( cp );
-	cp = nxt_spc( cp );
-
-	record.a.a_xmax = atof( cp );
-	cp = nxt_spc( cp );
-	record.a.a_xmin = atof( cp );
-	cp = nxt_spc( cp );
-	record.a.a_ymax = atof( cp );
-	cp = nxt_spc( cp );
-	record.a.a_ymin = atof( cp );
-	cp = nxt_spc( cp );
-	record.a.a_zmax = atof( cp );
-	cp = nxt_spc( cp );
-	record.a.a_zmin = atof( cp );
-
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
-#else
-	bu_bomb("arsabld() needs to be upgraded to v5\n");
-#endif
+	ars_pt = 0;
+	ars_curve = 0;
 }
 
 /*		A R S B L D
@@ -981,30 +990,41 @@ arsabld()
 void
 arsbbld()
 {
-#if 0
-	register char *cp;
-	register int i;
+	char *cp;
+	int i;
+	int incr_ret;
 
 	cp = buf;
-	record.b.b_id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
-
-	record.b.b_type = (char)atoi( cp );
 	cp = nxt_spc( cp );
-	record.b.b_n = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.b.b_ngranule = (short)atoi( cp );
-
-	for( i = 0; i < 24; i++ )  {
+	for( i = 0; i < 8; i++ )  {
 		cp = nxt_spc( cp );
-		record.b.b_values[i] = atof( cp );
-	}
+		ars_curves[ars_curve][ars_pt*3] = atof( cp );
+		cp = nxt_spc( cp );
+		ars_curves[ars_curve][ars_pt*3 + 1] = atof( cp );
+		cp = nxt_spc( cp );
+		ars_curves[ars_curve][ars_pt*3 + 2] = atof( cp );
+		if( ars_curve > 0 || ars_pt > 0 )
+			VADD2( &ars_curves[ars_curve][ars_pt*3], &ars_curves[ars_curve][ars_pt*3], &ars_curves[0][0] )
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
-#else
-	bu_bomb("arbbbld() needs to be upgraded to v5\n");
-#endif
+		incr_ret = incr_ars_pt();
+		if( incr_ret == 2 )
+		{
+			/* finished, write out the ARS solid */
+			if( mk_ars( ofp, ars_name, ars_ncurves, ars_ptspercurve, ars_curves ) )
+			{
+				bu_log( "Failed trying to make ARS (%s)\n", ars_name );
+				bu_bomb( "Failed trying to make ARS\n" );
+			}
+			return;
+		}
+		else if( incr_ret == 1 )
+		{
+			/* end of curve, ignore remainder of reocrd */
+			return;
+		}
+	}
 }
 
 
