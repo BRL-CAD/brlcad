@@ -63,13 +63,34 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 CONST double	mat_degtorad = 0.0174532925199433;
 CONST double	mat_radtodeg = 57.29577951308230698802;
 
-#if USE_PROTOTYPES
-extern void	mat_print(CONST char *title, CONST mat_t m);
-extern void	mat_vec_perp(vect_t new, CONST vect_t old);
-#else
-extern void	mat_print();
-extern void	mat_vec_perp();
-#endif
+/*
+ *			M A T _ P R I N T
+ */
+void
+mat_print( title, m )
+CONST char	*title;
+CONST mat_t	m;
+{
+	register int	i;
+	char		obuf[1024];	/* sprintf may be non-PARALLEL */
+	register char	*cp;
+
+	sprintf(obuf, "MATRIX %s:\n  ", title);
+	cp = obuf+strlen(obuf);
+	for(i=0; i<16; i++)  {
+		sprintf(cp, " %8.3f", m[i]);
+		cp += strlen(cp);
+		if( i == 15 )  {
+			break;
+		} else if( (i&3) == 3 )  {
+			*cp++ = '\n';
+			*cp++ = ' ';
+			*cp++ = ' ';
+		}
+	}
+	*cp++ = '\0';
+	rt_log("%s\n", obuf);
+}
 
 /*
  *			M A T _ A T A N 2
@@ -368,34 +389,6 @@ register CONST vect_t	h;
 	}
 }
 
-/*
- *			M A T _ P R I N T
- */
-void
-mat_print( title, m )
-CONST char	*title;
-CONST mat_t	m;
-{
-	register int	i;
-	char		obuf[1024];	/* sprintf may be non-PARALLEL */
-	register char	*cp;
-
-	sprintf(obuf, "MATRIX %s:\n  ", title);
-	cp = obuf+strlen(obuf);
-	for(i=0; i<16; i++)  {
-		sprintf(cp, " %8.3f", m[i]);
-		cp += strlen(cp);
-		if( i == 15 )  {
-			break;
-		} else if( (i&3) == 3 )  {
-			*cp++ = '\n';
-			*cp++ = ' ';
-			*cp++ = ' ';
-		}
-	}
-	*cp++ = '\0';
-	rt_log("%s\n", obuf);
-}
 
 /*
  *			M A T _ T R N
@@ -655,6 +648,32 @@ fastf_t	a, b, c;
 	}
 	VUNITIZE( vec1 );
 	VSET( vec2, -vec1[Y], vec1[X], 0.0 );	/* vec1 X vec2 = +Z */
+}
+
+/*
+ *			M A T _ V E C _ P E R P
+ *
+ *  Given a vector, create another vector which is perpendicular to it.
+ *  The output vector will have unit length only if the input vector did.
+ */
+void
+mat_vec_perp( new, old )
+vect_t		new;
+CONST vect_t	old;
+{
+	register int i;
+	LOCAL vect_t another;	/* Another vector, different */
+
+	i = X;
+	if( fabs(old[Y])<fabs(old[i]) )  i=Y;
+	if( fabs(old[Z])<fabs(old[i]) )  i=Z;
+	VSETALL( another, 0 );
+	another[i] = 1.0;
+	if( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
+		VMOVE( new, another );
+	} else {
+		VCROSS( new, another, old );
+	}
 }
 
 /*
@@ -956,31 +975,6 @@ register CONST vect_t	in;
 	out[k] =  in[j]*f;
 }
 
-/*
- *			M A T _ V E C _ P E R P
- *
- *  Given a vector, create another vector which is perpendicular to it.
- *  The output vector will have unit length only if the input vector did.
- */
-void
-mat_vec_perp( new, old )
-vect_t		new;
-CONST vect_t	old;
-{
-	register int i;
-	LOCAL vect_t another;	/* Another vector, different */
-
-	i = X;
-	if( fabs(old[Y])<fabs(old[i]) )  i=Y;
-	if( fabs(old[Z])<fabs(old[i]) )  i=Z;
-	VSETALL( another, 0 );
-	another[i] = 1.0;
-	if( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
-		VMOVE( new, another );
-	} else {
-		VCROSS( new, another, old );
-	}
-}
 
 /*
  *			M A T _ S C A L E _ A B O U T _ P T
