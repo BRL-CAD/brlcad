@@ -1162,6 +1162,7 @@ double				local2mm;
 {
 	struct rt_rpc_internal	*xip;
 	union record		*rpc;
+	fastf_t			f,mag_b,mag_h;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_RPC )  return(-1);
@@ -1175,17 +1176,18 @@ double				local2mm;
 
 	rpc->s.s_id = ID_SOLID;
 	rpc->s.s_type = RPC;
+
+	mag_b = MAGNITUDE( xip->rpc_B );
+	mag_h = MAGNITUDE( xip->rpc_H );
 	
-	if (MAGNITUDE(xip->rpc_B) < RT_LEN_TOL
-		|| MAGNITUDE(xip->rpc_H) < RT_LEN_TOL
-		|| xip->rpc_r < RT_LEN_TOL) {
+	if( mag_b < RT_LEN_TOL || mag_h < RT_LEN_TOL || xip->rpc_r < RT_LEN_TOL) {
 		rt_log("rt_rpc_export: not all dimensions positive!\n");
 		return(-1);
 	}
-	
-	if ( !NEAR_ZERO( VDOT(xip->rpc_B, xip->rpc_H), RT_DOT_TOL) ) {
-		rt_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n",
-				VDOT(xip->rpc_B, xip->rpc_H));
+
+	f = VDOT(xip->rpc_B, xip->rpc_H) / (mag_b * mag_h );
+	if ( !NEAR_ZERO( f , RT_DOT_TOL) ) {
+		rt_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n",f );
 		return(-1);
 	}
 
