@@ -49,6 +49,7 @@ static char	delims[] = " \t/";	/* allowable delimiters */
 void put_rgb_into_comb();
 void restore_comb();
 int editit();
+static int make_tree();
 int clear_comb(),build_comb(),save_comb();
 
 int
@@ -367,242 +368,177 @@ char *line;
 
 HIDDEN int
 put_tree_into_comb(comb, dp, old_name, new_name, str)
-struct rt_comb_internal *comb;
-struct directory *dp;
-char *old_name;
-char *new_name;
-char *str;
+     struct rt_comb_internal	*comb;
+     struct directory		*dp;
+     char			*old_name;
+     char			*new_name;
+     char			*str;
 {
-  int i;
-  int done;
-  char *line;
-  char *ptr;
-  char relation;
-  char name[NAMESIZE+1];
-  struct rt_tree_array *rt_tree_array;
-  struct line_list *llp;
-  int node_count = 0;
-  int tree_index = 0;
-  union tree *tp;
-  union tree *final_tree;
-  struct rt_db_internal intern;
-  matp_t matrix;
-  struct bu_vls vls;
+	int			i;
+	int			done;
+	char			*line;
+	char			*ptr;
+	char			relation;
+	char			name[NAMESIZE+1];
+	struct rt_tree_array	*rt_tree_array;
+	struct line_list	*llp;
+	int			node_count = 0;
+	int			tree_index = 0;
+	union tree		*tp;
+	union tree		*final_tree;
+	struct rt_db_internal	intern;
+	matp_t			matrix;
+	struct bu_vls		vls;
+	int			result;
 
-  if(str == (char *)NULL)
-    return TCL_ERROR;
+	if (str == (char *)NULL)
+		return TCL_ERROR;
 
-  BU_LIST_INIT(&HeadLines.l);
+	BU_LIST_INIT(&HeadLines.l);
 
-  /* break str into lines */
-  line = str;
-  ptr = strchr(str, '\n');
-  if (ptr != NULL)
-    *ptr = '\0';
-  bu_vls_init(&vls);
-  while (line != (char *)NULL) {
-    int n;
+	/* break str into lines */
+	line = str;
+	ptr = strchr(str, '\n');
+	if (ptr != NULL)
+		*ptr = '\0';
+	bu_vls_init(&vls);
+	while (line != (char *)NULL) {
+		int n;
 
-    bu_vls_strcpy(&vls, line);
+		bu_vls_strcpy(&vls, line);
 
-    if ((n = count_nodes(bu_vls_addr(&vls))) < 0) {
-      bu_vls_free(&vls);
-      bu_list_free(&HeadLines.l);
-      return TCL_ERROR;
-    } else if (n > 0) {
-      BU_GETSTRUCT(llp, line_list);
-      BU_LIST_INSERT(&HeadLines.l, &llp->l);
-      llp->line = line;
+		if ((n = count_nodes(bu_vls_addr(&vls))) < 0) {
+			bu_vls_free(&vls);
+			bu_list_free(&HeadLines.l);
+			return TCL_ERROR;
+		} else if (n > 0) {
+			BU_GETSTRUCT(llp, line_list);
+			BU_LIST_INSERT(&HeadLines.l, &llp->l);
+			llp->line = line;
 
-      node_count += n;
-    } /* else blank line */
+			node_count += n;
+		} /* else blank line */
 
-    if (ptr != NULL && *(ptr+1) != '\0') {
-      /* leap frog past EOS */
-      line = ptr + 1;
+		if (ptr != NULL && *(ptr+1) != '\0') {
+			/* leap frog past EOS */
+			line = ptr + 1;
 
-      ptr = strchr(line, '\n');
-      if (ptr != NULL)
-	*ptr = '\0';
-    } else {
-      line = NULL;
-    }
-  }
-  bu_vls_free(&vls);
+			ptr = strchr(line, '\n');
+			if (ptr != NULL)
+				*ptr = '\0';
+		} else {
+			line = NULL;
+		}
+	}
+	bu_vls_free(&vls);
 
-  /* build tree list */
-  if (node_count)
-    rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list" );
-  else
-    rt_tree_array = (struct rt_tree_array *)NULL;
+	/* build tree list */
+	if (node_count)
+		rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list" );
+	else
+		rt_tree_array = (struct rt_tree_array *)NULL;
 
-  for(BU_LIST_FOR(llp, line_list, &HeadLines.l)){
-    done = 0;
-    ptr = strtok(llp->line, delims);
-    while (!done) {
-      if ( !ptr )
-	break;
+	for (BU_LIST_FOR(llp, line_list, &HeadLines.l)) {
+		done = 0;
+		ptr = strtok(llp->line, delims);
+		while (!done) {
+			if (!ptr)
+				break;
 
-      /* First non-white is the relation operator */
-      relation = (*ptr);
-      if (relation == '\0')
-	break;
+			/* First non-white is the relation operator */
+			relation = (*ptr);
+			if (relation == '\0')
+				break;
 
-      /* Next must be the member name */
-      ptr = strtok((char *)NULL, delims);
-      if (ptr == (char *)NULL) {
+			/* Next must be the member name */
+			ptr = strtok((char *)NULL, delims);
+			if (ptr == (char *)NULL) {
+				bu_list_free(&HeadLines.l);
+				if (rt_tree_array)
+					bu_free((char *)rt_tree_array, "red: tree list");
+				bu_log("no name specified\n");
+				return TCL_ERROR;
+			}
+			strncpy(name , ptr, NAMESIZE);
+			name[NAMESIZE] = '\0';
+
+			/* Eliminate trailing white space from name */
+			i = NAMESIZE;
+			while(isspace(name[--i]))
+				name[i] = '\0';
+
+			/* Check for existence of member */
+			if ((db_lookup(dbip , name , LOOKUP_QUIET)) == DIR_NULL)
+				bu_log("\tWARNING: ' %s ' does not exist\n", name);
+
+			/* get matrix */
+			ptr = strtok((char *)NULL, delims);
+			if (ptr == (char *)NULL) {
+				matrix = (matp_t)NULL;
+				done = 1;
+			} else if (*ptr == 'u' ||
+				   (*ptr == '-' && *(ptr+1) == '\0') ||
+				   (*ptr == '+' && *(ptr+1) == '\0')) {
+				/* assume another relational operator */
+				matrix = (matp_t)NULL;
+			} else {
+				int k;
+
+				matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
+				matrix[0] = atof(ptr);
+				for (k=1 ; k<16 ; k++) {
+					ptr = strtok((char *)NULL, delims);
+					if (!ptr) {
+						bu_log("incomplete matrix for member %s - No changes made\n", name);
+						bu_free( (char *)matrix, "red: matrix" );
+						if(rt_tree_array)
+							bu_free((char *)rt_tree_array, "red: tree list");
+						bu_list_free(&HeadLines.l);
+						return TCL_ERROR;
+					}
+					matrix[k] = atof( ptr );
+				}
+				if (bn_mat_is_identity( matrix )) {
+					bu_free((char *)matrix, "red: matrix");
+					matrix = (matp_t)NULL;
+				}
+
+				ptr = strtok((char *)NULL, delims);
+				if (ptr == (char *)NULL)
+					done = 1;
+			}
+
+			/* Add it to the combination */
+			switch (relation) {
+			case '+':
+				rt_tree_array[tree_index].tl_op = OP_INTERSECT;
+				break;
+			case '-':
+				rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
+				break;
+			default:
+				bu_log("unrecognized relation (assume UNION)\n");
+			case 'u':
+				rt_tree_array[tree_index].tl_op = OP_UNION;
+				break;
+			}
+
+			BU_GETUNION(tp, tree);
+			rt_tree_array[tree_index].tl_tree = tp;
+			tp->tr_l.magic = RT_TREE_MAGIC;
+			tp->tr_l.tl_op = OP_DB_LEAF;
+			tp->tr_l.tl_name = bu_strdup( name );
+			tp->tr_l.tl_mat = matrix;
+			tree_index++;
+		}
+	}
+
 	bu_list_free(&HeadLines.l);
-	if(rt_tree_array)
-	  bu_free( (char *)rt_tree_array, "red: tree list" );
-	bu_log("no name specified\n");
-	return TCL_ERROR;
-      }
-      strncpy(name , ptr, NAMESIZE);
-      name[NAMESIZE] = '\0';
-
-      /* Eliminate trailing white space from name */
-      i = NAMESIZE;
-      while(isspace(name[--i]))
-      name[i] = '\0';
-
-      /* Check for existence of member */
-      if ((db_lookup(dbip , name , LOOKUP_QUIET)) == DIR_NULL)
-      bu_log("\tWARNING: ' %s ' does not exist\n", name);
-
-      /* get matrix */
-      ptr = strtok((char *)NULL, delims);
-      if (ptr == (char *)NULL) {
-	matrix = (matp_t)NULL;
-	done = 1;
-      }else if(*ptr == 'u' ||
-	       (*ptr == '-' && *(ptr+1) == '\0') ||
-	       (*ptr == '+' && *(ptr+1) == '\0')) {
-	/* assume another relational operator */
-	matrix = (matp_t)NULL;
-      } else {
-	int k;
-
-	matrix = (matp_t)bu_calloc(16, sizeof(fastf_t), "red: matrix");
-	matrix[0] = atof(ptr);
-	for (k=1 ; k<16 ; k++) {
-	  ptr = strtok((char *)NULL, delims);
-	  if (!ptr) {
-	    bu_log("incomplete matrix for member %s - No changes made\n", name);
-	    bu_free( (char *)matrix, "red: matrix" );
-	    if(rt_tree_array)
-	      bu_free((char *)rt_tree_array, "red: tree list");
-	    bu_list_free(&HeadLines.l);
-	    return TCL_ERROR;
-	  }
-	  matrix[k] = atof( ptr );
-	}
-	if (bn_mat_is_identity( matrix )) {
-	  bu_free((char *)matrix, "red: matrix");
-	  matrix = (matp_t)NULL;
-	}
-
-	ptr = strtok((char *)NULL, delims);
-	if (ptr == (char *)NULL)
-	  done = 1;
-      }
-
-      /* Add it to the combination */
-      switch (relation) {
-      case '+':
-	rt_tree_array[tree_index].tl_op = OP_INTERSECT;
-	break;
-      case '-':
-	rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
-	break;
-      default:
-	bu_log("unrecognized relation (assume UNION)\n");
-      case 'u':
-	rt_tree_array[tree_index].tl_op = OP_UNION;
-	break;
-      }
-
-      BU_GETUNION(tp, tree);
-      rt_tree_array[tree_index].tl_tree = tp;
-      tp->tr_l.magic = RT_TREE_MAGIC;
-      tp->tr_l.tl_op = OP_DB_LEAF;
-      tp->tr_l.tl_name = bu_strdup( name );
-      tp->tr_l.tl_mat = matrix;
-      tree_index++;
-    }
-  }
-
-  bu_list_free(&HeadLines.l);
-
-  if( tree_index )
-    final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
-  else
-    final_tree = (union tree *)NULL;
-
-  RT_INIT_DB_INTERNAL( &intern );
-  intern.idb_type = ID_COMBINATION;
-  intern.idb_meth = &rt_functab[ID_COMBINATION];
-  intern.idb_ptr = (genptr_t)comb;
-  comb->tree = final_tree;
-
-  if( strncmp( new_name, old_name, NAMESIZE ) ){
-    int flags;
-
-    if( comb->region_flag )
-      flags = DIR_COMB | DIR_REGION;
-    else
-      flags = DIR_COMB;
-
-    if( dp != DIR_NULL ){
-      if(  db_delete( dbip, dp ) || db_dirdelete( dbip, dp ) ){
-	bu_log("ERROR: Unable to delete directory entry for %s\n", old_name);
-	rt_comb_ifree( &intern );
-	return( 1 );
-      }
-    }
-
-    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL ){
-      bu_log("Cannot add %s to directory, no changes made\n", new_name);
-      rt_comb_ifree( &intern );
-      return( 1 );
-    }
-
-    if( db_alloc( dbip, dp, node_count+1) ){
-      bu_log("Cannot allocate file space for %s\n", new_name);
-      rt_comb_ifree( &intern );
-      return( 1 );
-    }
-  }else if( dp == DIR_NULL ){
-    int flags;
-
-    if( comb->region_flag )
-      flags = DIR_COMB | DIR_REGION;
-    else
-      flags = DIR_COMB;
-
-    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL ){
-      bu_log("Cannot add %s to directory, no changes made\n", new_name);
-      rt_comb_ifree( &intern );
-      return TCL_ERROR;
-    }
-
-    if( db_alloc( dbip, dp, node_count+1) ){
-      bu_log("Cannot allocate file space for %s\n", new_name);
-      rt_comb_ifree( &intern );
-      return TCL_ERROR;
-    }
-  }else {
-  	if( comb->region_flag )
-  		dp->d_flags |= DIR_REGION;
-  	else
-  		dp->d_flags &= ~DIR_REGION;
-  }
-
-  if( rt_db_put_internal( dp, dbip, &intern ) < 0 ){
-    bu_log("ERROR: Unable to write new combination into database.\n");
-    return TCL_ERROR;
-  }
-
-  return TCL_OK;
+	result = make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+	if (result == 0)
+		return TCL_OK;
+	else
+		return TCL_ERROR;
 }
 
 int
@@ -1285,6 +1221,97 @@ checkcomb()
 	return( node_count );
 }
 
+static int
+make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
+     struct rt_comb_internal	*comb;
+     struct directory		*dp;
+     int			node_count;
+     char			*old_name;
+     char			*new_name;
+     struct rt_tree_array	*rt_tree_array;
+     int			tree_index;
+{
+	struct rt_db_internal	intern;
+	union tree		*final_tree;
+
+	if (tree_index)
+		final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
+	else
+		final_tree = (union tree *)NULL;
+
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_COMBINATION;
+	intern.idb_meth = &rt_functab[ID_COMBINATION];
+	intern.idb_ptr = (genptr_t)comb;
+	comb->tree = final_tree;
+
+	if (strncmp(new_name, old_name, NAMESIZE)) {
+		int flags;
+
+		if (comb->region_flag)
+			flags = DIR_COMB | DIR_REGION;
+		else
+			flags = DIR_COMB;
+
+		if (dp != DIR_NULL) {
+			if (db_delete(dbip, dp) || db_dirdelete(dbip, dp)) {
+				Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
+						 old_name, "\n", (char *)NULL);
+				rt_comb_ifree(&intern);
+				return(1);
+			}
+		}
+
+		if ((dp=db_diradd(dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL) {
+			Tcl_AppendResult(interp, "Cannot add ", new_name,
+					 " to directory, no changes made\n", (char *)NULL);
+			rt_comb_ifree(&intern);
+			return(1);
+		}
+
+		if (db_alloc(dbip, dp, node_count+1)) {
+			Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
+				"\n", (char *)NULL);
+			rt_comb_ifree(&intern);
+			return(1);
+		}
+	} else if( dp == DIR_NULL ) {
+		int flags;
+
+		if (comb->region_flag)
+			flags = DIR_COMB | DIR_REGION;
+		else
+			flags = DIR_COMB;
+
+		if ((dp=db_diradd(dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL) {
+			Tcl_AppendResult(interp, "Cannot add ", new_name,
+					 " to directory, no changes made\n", (char *)NULL);
+			rt_comb_ifree( &intern );
+			return(1);
+		}
+
+		if (db_alloc( dbip, dp, node_count+1)) {
+			Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
+				"\n", (char *)NULL);
+			rt_comb_ifree(&intern);
+			return(1);
+		}
+	} else {
+		if (comb->region_flag)
+			dp->d_flags |= DIR_REGION;
+		else
+			dp->d_flags &= ~DIR_REGION;
+	}
+
+	if (rt_db_put_internal(dp, dbip, &intern) < 0) {
+		Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+		return 1;
+	}
+
+	return(0);
+}
+
+
 int build_comb( comb, dp, node_count, old_name )
 struct rt_comb_internal *comb;
 struct directory *dp;
@@ -1307,8 +1334,6 @@ char *old_name;
 	struct rt_tree_array *rt_tree_array;
 	int tree_index=0;
 	union tree *tp;
-	union tree *final_tree;
-	struct rt_db_internal intern;
 	matp_t matrix;
 
 	if(dbip == DBI_NULL)
@@ -1593,90 +1618,7 @@ char *old_name;
 
 	fclose( fp );
 
-
-	if( tree_index )
-		final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
-	else
-		final_tree = (union tree *)NULL;
-
-	RT_INIT_DB_INTERNAL( &intern );
-	intern.idb_type = ID_COMBINATION;
-	intern.idb_meth = &rt_functab[ID_COMBINATION];
-	intern.idb_ptr = (genptr_t)comb;
-	comb->tree = final_tree;
-
-	if( strncmp( new_name, old_name, NAMESIZE ) )
-	{
-		int flags;
-
-		if( comb->region_flag )
-			flags = DIR_COMB | DIR_REGION;
-		else
-			flags = DIR_COMB;
-
-		if( dp != DIR_NULL )
-		{
-			if(  db_delete( dbip, dp ) || db_dirdelete( dbip, dp ) )
-			{
-				Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
-					old_name, "\n", (char *)NULL );
-				rt_comb_ifree( &intern );
-				return( 1 );
-			}
-		}
-
-		if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL )
-		{
-		  Tcl_AppendResult(interp, "Cannot add ", new_name,
-				   " to directory, no changes made\n", (char *)NULL);
-		  rt_comb_ifree( &intern );
-		  return( 1 );
-		}
-
-		if( db_alloc( dbip, dp, node_count+1) )
-		{
-			Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
-				"\n", (char *)NULL );
-			rt_comb_ifree( &intern );
-			return( 1 );
-		}
-	}
-	else if( dp == DIR_NULL )
-	{
-		int flags;
-
-		if( comb->region_flag )
-			flags = DIR_COMB | DIR_REGION;
-		else
-			flags = DIR_COMB;
-
-		if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL )
-		{
-		  Tcl_AppendResult(interp, "Cannot add ", new_name,
-				   " to directory, no changes made\n", (char *)NULL);
-		  rt_comb_ifree( &intern );
-		  return( 1 );
-		}
-
-		if( db_alloc( dbip, dp, node_count+1) )
-		{
-			Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
-				"\n", (char *)NULL );
-			rt_comb_ifree( &intern );
-			return( 1 );
-		}
-	}else {
-		if( comb->region_flag )
-			dp->d_flags |= DIR_REGION;
-		else
-			dp->d_flags &= ~DIR_REGION;
-	}
-
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
-		Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
-		return 1;
-	}
-	return( 0 );
+	return make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
 }
 
 void
