@@ -47,7 +47,6 @@ static char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "db.h"
 #include "../librt/debug.h"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
@@ -71,14 +70,14 @@ static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
 static char *reg_cmp=(char *)NULL;		/* compiled regular expression */
-static char *usage="proe-g [-p] [-s] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
+static char *usage="proe-g [-psdar] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -p option is to create polysolids rather than NMG's.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -u option indicates that portions of object names that match the regular expression\n\
-		'reg_exp' shouold be ignored.\n\
+		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
 	The -r option indicates that the model should not be re-oriented or scaled,\n\
 		but left in the same orientation as it was in Pro/E.\n\
@@ -95,6 +94,8 @@ static mat_t re_orient;		/* rotation matrix to put model in BRL-CAD orientation
 				 * (+x towards front +z is up ) */
 static int do_air=0;		/* When set, all regions are BRL-CAD "air" regions */
 static int do_reorient=1;	/* When set, reorient entire model to BRL-CAD style */
+
+#define NAMESIZE	16	/* from db.h */
 
 struct render_verts
 {
@@ -212,7 +213,7 @@ int type;
 		if( suffix_insert > NAMESIZE - 3 )
 			suffix_insert = NAMESIZE - 3;
 
-		NAMEMOVE( ptr->brlcad_name, tmp_name );
+		strncpy( tmp_name, ptr->brlcad_name, NAMESIZE );
 		if( debug )
 			rt_log( "\tMaking sure %s is a unique name\n", tmp_name );
 		ptr2 = name_root;
@@ -233,7 +234,7 @@ int type;
 					exit(1);
 				}
 
-				NAMEMOVE( ptr->brlcad_name, tmp_name );
+				strncpy( tmp_name, ptr->brlcad_name, NAMESIZE );
 				sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
 				if( debug )
 					rt_log( "\t\tNew name to try is %s\n", tmp_name );
@@ -243,7 +244,7 @@ int type;
 				ptr2 = ptr2->next;
 		}
 
-		NAMEMOVE( tmp_name, ptr->brlcad_name );
+		strncpy( ptr->brlcad_name, tmp_name, NAMESIZE );
 	}
 
 	if( type == ASSEMBLY_TYPE )
@@ -269,7 +270,7 @@ int type;
 	if( suffix_insert > NAMESIZE - 3 )
 		suffix_insert = NAMESIZE - 3;
 
-	NAMEMOVE( ptr->solid_name, tmp_name );
+	strncpy( tmp_name, ptr->solid_name, NAMESIZE );
 	if( debug )
 		rt_log( "\tMaking sure %s is a unique solid name\n", tmp_name );
 	ptr2 = name_root;
@@ -291,7 +292,7 @@ int type;
 				exit(1);
 			}
 
-			NAMEMOVE( ptr->solid_name, tmp_name );
+			strncpy( tmp_name, ptr->solid_name, NAMESIZE );
 			sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
 			if( debug )
 				rt_log( "\t\tNew name to try is %s\n", tmp_name );
@@ -301,7 +302,7 @@ int type;
 			ptr2 = ptr2->next;
 	}
 
-	NAMEMOVE( tmp_name, ptr->solid_name );
+	strncpy( ptr->solid_name, tmp_name, NAMESIZE );
 
 	return( ptr );
 }
@@ -889,7 +890,7 @@ char line[MAX_LINE_LEN];
 		rt_log( "\t%s has no solid parts, ignoring\n" , name );
 		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "proe-g: save_name" );
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
-		NAMEMOVE( brlcad_name, save_name );
+		strncpy( save_name, brlcad_name, NAMESIZE );
 		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
 		nmg_km( m );
 		return;
@@ -1062,7 +1063,7 @@ empty_model:
 		rt_log( "\t%s is empty, ignoring\n" , name );
 		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "proe-g: save_name" );
 		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
-		NAMEMOVE( brlcad_name, save_name );
+		strncpy( save_name, brlcad_name, NAMESIZE );
 		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
 		nmg_km( m );
 		return;
@@ -1108,7 +1109,7 @@ Rm_nulls()
 		return;
 	}
 
-	if( debug )
+	if( debug || NMG_TBL_END( &null_parts )  )
 	{
 		rt_log( "Deleting references to the following null parts:\n" );
 		for( i=0 ; i<NMG_TBL_END( &null_parts ) ; i++ )
@@ -1127,21 +1128,51 @@ Rm_nulls()
 
 		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
 		{
-			union record *rp;
+			struct rt_tree_array	*tree_list;
+			struct rt_db_internal	intern;
+			struct rt_comb_internal	*comb;
 			int j;
+			int node_count,actual_count;
+			int changed=0;
 
 			/* skip solids */
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
 top:
-			if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
+			if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 1 )
 			{
-				rt_log( "Cannot get records for combination %s\n" , dp->d_namep );
+				bu_log( "Cannot get internal form of combination %s\n", dp->d_namep );
 				continue;
 			}
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			RT_CK_COMB( comb );
+			if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
+			{
+				db_non_union_push( comb->tree );
+				if( db_ck_v4gift_tree( comb->tree ) < 0 )
+				{
+					bu_log( "Cannot flatten tree (%s) for editing\n", dp->d_namep );
+					continue;
+				}
+			}
+			node_count = db_tree_nleaves( comb->tree );
+			if( node_count > 0 )
+			{
+				tree_list = (struct rt_tree_array *)bu_calloc( node_count,
+					sizeof( struct rt_tree_array ), "tree list" );
+				actual_count = (struct rt_tree_array *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+				if( actual_count > node_count )  bu_bomb("Rm_nulls() array overflow!");
+				if( actual_count < node_count )  bu_log("WARNING Rm_nulls() array underflow! %d < %d", actual_count, node_count);
+			}
+			else
+			{
+				tree_list = (struct rt_tree_array *)NULL;
+				actual_count = 0;
+			}
 
-			for( j=1; j<dp->d_len; j++ )
+
+			for( j=0; j<actual_count; j++ )
 			{
 				int k;
 				int found=0;
@@ -1151,7 +1182,7 @@ top:
 					char *save_name;
 
 					save_name = (char *)NMG_TBL_GET( &null_parts, k );
-					if( !strncmp( save_name, rp[j].M.m_instname, NAMESIZE ) )
+					if( !strncmp( save_name, tree_list[j].tl_tree->tr_l.tl_name, NAMESIZE ) )
 					{
 						found = 1;
 						break;
@@ -1160,22 +1191,56 @@ top:
 				if( found )
 				{
 					/* This is a NULL part, delete the reference */
-					if( debug )
+/*					if( debug ) */
 						rt_log( "Deleting reference to null part (%s) from combination %s\n",
-							rp[j].M.m_instname, dp->d_namep );
-					if( db_delrec( dbip, dp, j ) < 0 )
-					{
-						rt_log( "Error in deleting reference to null part (%s)\n", rp[j].M.m_instname );
-						rt_log( "Your database should still be O.K., but there may be\n" );
-						rt_log( "references to NULL parts (just a nuisance)\n" );
-						exit( 1 );
-					}
-					rt_free( (char *)rp, "Rm_nulls: rp" );
-					goto top;
+							tree_list[j].tl_tree->tr_l.tl_name, dp->d_namep );
+
+					db_free_tree( tree_list[j].tl_tree );
+
+					for( k=j+1 ; k<actual_count ; k++ )
+						tree_list[k-1] = tree_list[k]; /* struct copy */
+
+					actual_count--;
+					j--;
+					changed = 1;
 				}
 			}
 
-			rt_free( (char *)rp, "Rm_nulls: rp" );
+			if( changed )
+			{
+				union tree *final_tree;
+				char name[NAMESIZE+1];
+				int flags;
+
+				strncpy( name, dp->d_namep, NAMESIZE );
+				flags = dp->d_flags;
+
+				if( actual_count )
+					comb->tree = (union tree *)db_mkgift_tree( tree_list, actual_count, (struct db_tree_state *)NULL );
+				else
+					comb->tree = (union tree *)NULL;
+
+				if( db_delete( dbip, dp ) || db_dirdelete( dbip, dp ) )
+				{
+					bu_log( "Failed to delete combination (%s)\n", dp->d_namep );
+					rt_comb_ifree( &intern );
+					continue;
+				}
+				if( (dp=db_diradd( dbip, name, -1, 0, flags)) == DIR_NULL )
+				{
+					bu_log( "Could not add modified '%s' to directory\n", dp->d_namep );
+					rt_comb_ifree( &intern );
+					continue;
+				}
+
+				if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+				{
+					bu_log( "Unable to write modified combination '%s' to database\n", dp->d_namep );
+					rt_comb_ifree( &intern );
+					continue;
+				}
+			}
+			bu_free( (char *)tree_list, "tree_list" );
 		}
 	}
 	db_close( dbip );
