@@ -208,7 +208,7 @@ set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
 set mged_help_data(unhide)        {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set mged_help_data(units)	{{[mm|cm|m|in|ft|...]}	{change units}}
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
-set mged_help_data(vdraw)	{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
+set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Expermental drawing (cnuzman)}}
 set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
