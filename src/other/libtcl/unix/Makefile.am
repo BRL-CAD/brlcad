@@ -1,5 +1,6 @@
 # $Id$
 
+tcllibdir = ${libdir}
 tcllib_DATA = tclConfig.sh
 
 EXTRA_DIST = \
