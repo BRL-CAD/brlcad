@@ -35,10 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./sedit.h"
 
-extern void	perror();
-extern int	read();
-extern long	lseek();
-
 int	adcflag;	/* angle/distance cursor in use */
 
 /* This flag indicates that SOLID editing is in effect.
