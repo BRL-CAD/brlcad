@@ -357,13 +357,33 @@ struct faceuse_a {
 	long			index;	/* struct # in this model */
 };
 
+/* Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu)	{ \
-	NMG_CK_FACEUSE(_fu); \
-	if( (fu->orientation != OT_SAME) != (fu->f_p->flip != 0) )  { \
-		VREVERSE(_N, fu->f_p->fg_p->N); \
-		_N[3] = fu->f_p->fg_p->N[3]; \
+	register struct faceuse	*_fu1 = (_fu); \
+	register struct face_g	*_fg; \
+	NMG_CK_FACEUSE(_fu1); \
+	NMG_CK_FACE(_fu1->f_p); \
+	_fg = _fu1->f_p->fg_p; \
+	NMG_CK_FACE_G(_fg); \
+	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
+		VREVERSE( _N, _fg->N); \
 	} else { \
-		HMOVE( _N, fu->f_p->fg_p->N ); \
+		VMOVE( _N, _fg->N ); \
+	} }
+
+/* Returns a 4-tuple (plane_t), given faceuse and state of flip flags */
+#define NMG_GET_FU_PLANE(_N, _fu)	{ \
+	register struct faceuse	*_fu1 = (_fu); \
+	register struct face_g	*_fg; \
+	NMG_CK_FACEUSE(_fu1); \
+	NMG_CK_FACE(_fu1->f_p); \
+	_fg = _fu1->f_p->fg_p; \
+	NMG_CK_FACE_G(_fg); \
+	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
+		VREVERSE( _N, _fg->N); \
+		(_N)[3] = _fg->N[3]; \
+	} else { \
+		HMOVE( _N, _fg->N ); \
 	} }
 
 /*
