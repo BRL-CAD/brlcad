@@ -50,6 +50,35 @@ extern char	*cmd_args[];	/* array of pointers to args */
 void		setup_rt();
 
 /*
+ *			P R _ W A I T _ S T A T U S
+ *
+ *  Interpret the status return of a wait() system call,
+ *  for the edification of the watching luser.
+ *  Warning:  This may be somewhat system specific, most especially
+ *  on non-UNIX machines.
+ */
+pr_wait_status( status )
+int	status;
+{
+	int	sig = status & 0x7f;
+	int	core = status & 0x80;
+	int	ret = status >> 8;
+
+	if( status == 0 )  {
+		(void)printf("Normal exit\n");
+		return;
+	}
+	(void)printf("Abnormal exit x%x", status);
+	if( core )
+		(void)printf(", core dumped");
+	if( sig )
+		(void)printf(", terminating signal = %d", sig );
+	else
+		(void)printf(", return (exit) code = %d", ret );
+	(void)putchar('\n');
+}
+
+/*
  *  			R T _ O L D W R I T E
  *  
  *  Write out the information that RT's -M option needs to show current view.
@@ -226,7 +255,7 @@ run_rt()
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
 	if( retcode != 0 )
-		(void)printf("Abnormal exit status x%x\n", retcode);
+		pr_wait_status( retcode );
 	(void)signal(SIGINT, cur_sigint);
 
 	FOR_ALL_SOLIDS( sp )
@@ -245,6 +274,7 @@ f_rt()
 	register int i;
 	int retcode;
 	char *dm;
+	int	needs_reattach;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 		return;
@@ -254,8 +284,8 @@ f_rt()
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	dm = dmp->dmr_name;
-	if(dmp->dmr_releasedisplay)
-		release();
+	if( needs_reattach = dmp->dmr_releasedisplay )
+		release();		/* changes dmp */
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
@@ -273,7 +303,7 @@ f_rt()
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
-	if(dmp->dmr_releasedisplay)
+	if( needs_reattach )
 		attach( dm );
 }
 
@@ -291,6 +321,7 @@ f_rrt()
 	register int i;
 	int	retcode;
 	char	*dm;
+	int	needs_reattach;
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 		return;
@@ -300,8 +331,8 @@ f_rrt()
 	 * display, so let display go.  We will try to reattach at the end.
 	 */
 	dm = dmp->dmr_name;
-	if(dmp->dmr_releasedisplay)
-		release();
+	if( needs_reattach = dmp->dmr_releasedisplay )
+		release();		/* changes dmp */
 
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < numargs; i++ )
@@ -316,7 +347,7 @@ f_rrt()
 		while( getchar() != '\n' )
 			/* NIL */  ;
 	}
-	if(dmp->dmr_releasedisplay)
+	if( needs_reattach )
 		attach( dm );
 }
 
@@ -392,7 +423,7 @@ f_rtcheck()
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;	/* NULL */
 	if( retcode != 0 )
-		(void)printf("Abnormal exit status x%x\n", retcode);
+		pr_wait_status( retcode );
 	(void)signal(SIGINT, cur_sigint);
 
 	FOR_ALL_SOLIDS( sp )
