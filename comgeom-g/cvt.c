@@ -130,20 +130,19 @@ char **argv;
 		exit( 1 );
 	}
 
-	if( version == 5 )
-		printf("\n**** CVT5: 12Jun84 ****\n\n");
-	else
-		printf("\n**** CVT4: 12Jun84 ****\n\n");
+	printf("Reading version %d COMGEOM file\n", version );
 
-	printf("COMGEOM input file must have this format:\n");
-	printf("     1.  title card\n");
-	printf("     2.  control card\n");
-	printf("     3.  solid table\n");
-	printf("     4.  region table\n");
-	printf("     5.  -1\n");
-	if( version == 4 )
-		printf("     6.  blank\n");
-   	printf("     7.  region ident table\n\n");
+	if( verbose )  {
+		printf("COMGEOM input file must have this format:\n");
+		printf("     1.  title card\n");
+		printf("     2.  control card\n");
+		printf("     3.  solid table\n");
+		printf("     4.  region table\n");
+		printf("     5.  -1\n");
+		if( version == 4 )
+			printf("     6.  blank\n");
+	   	printf("     7.  region ident table\n\n");
+	}
 
 	group_init();
 
@@ -156,7 +155,8 @@ char **argv;
 	}
 
 	/* First 2 chars are units */
-	printf("Units: %2.2s  Title: %s\n",ctitle, ctitle+2);
+	printf("Units: %2.2s\n", ctitle);
+	printf("Title: %s\n", ctitle+2);
 
 	mk_id( outfp, ctitle+2 );
 
