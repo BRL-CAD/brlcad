@@ -3,6 +3,7 @@
  *
  */
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -10,6 +11,7 @@
 #include "./nmg_rt.h"
 
 
+static void
 nmg_class_pt_eu(fpi, eu)
 struct fu_pt_info	*fpi;
 struct edgeuse	*eu;
@@ -29,6 +31,9 @@ struct edgeuse	*eu;
 	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+
+	if (rt_g.NMG_debug)
+		rt_log("nmg_class_pt_eu()\n");
 
 	/* if this edgeuse's vertexuse is on a previously processed & touched
 	 * vertex:
@@ -239,14 +244,14 @@ CONST struct loopuse	*lu;
 	NMG_CK_LOOP_G(lg);
 	NMG_CK_FPI(fpi);
 
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	if (rt_g.NMG_debug)
 		VPRINT("nmg_class_pt_lu\tPt:", fpi->pt);
 
 	if (lu->up.fu_p != fpi->fu_p || NMG_INDEX_TEST(fpi->tbl, lu))
 		return;
  
 	if( !V3PT_IN_RPP_TOL( fpi->pt, lg->min_pt, lg->max_pt, fpi->tol ) )  {
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		if (rt_g.NMG_debug )
 			rt_log("\tPoint is outside loop RPP\n");
 		NMG_INDEX_SET(fpi->tbl, lu);
 		NMG_INDEX_SET(fpi->tbl, lu->lumate_p);
@@ -305,7 +310,7 @@ CONST struct loopuse	*lu;
 				nmg_pr_orient(lu->orientation, "\t");
 				rt_bomb("nmg_class_pt_lu: bad orientation for face loopuse(vertex)\n");
 			}
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+			if (rt_g.NMG_debug )
 				rt_log("\t\t closer to loop pt (%g, %g, %g)\n",
 					V3ARGS(lu_pt) );
 
@@ -320,7 +325,7 @@ CONST struct loopuse	*lu;
 	NMG_INDEX_SET(fpi->tbl, lu);
 	NMG_INDEX_SET(fpi->tbl, lu->lumate_p);
 
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	if (rt_g.NMG_debug )
 		rt_log("nmg_class_pt_lu\treturning, closest=%g %s\n",
 			fpi->dist_in_plane, nmg_class_name(fpi->pt_class) );
 }
@@ -365,6 +370,9 @@ struct vertexuse *vu_p;
     	struct faceuse *fu;
     	struct vertexuse *vu;
 	struct edgeuse *eu;
+
+	if (rt_g.NMG_debug)
+		rt_log("Tanenbaum_patch()\n");
 
 
     	/* First we form the unit vector PV */
@@ -439,6 +447,12 @@ struct fu_pt_info *fpi;
 	struct loopuse		*lu;
 	vect_t			left;
 	vect_t			vupt_v;
+
+	NMG_CK_FPI(fpi);
+
+	if (rt_g.NMG_debug)
+		rt_log("deduce_pt_class()\n");
+
 
 	/* compute in/out based upon closest element */
 	if (*fpi->closest == NMG_EDGEUSE_MAGIC) {
@@ -529,7 +543,8 @@ struct fu_pt_info *fpi;
  *	2	find all elements pt touches, call user routine for each use
  */
 struct fu_pt_info *
-nmg_class_pt_fu_except(pt, fu, ignore_lu, eu_func, vu_func, priv, allhits, tol)
+nmg_class_pt_fu_except(pt, fu, ignore_lu, 
+			eu_func, vu_func, priv, allhits, tol)
 point_t			pt;
 CONST struct faceuse	*fu;
 CONST struct loopuse	*ignore_lu;
@@ -554,12 +569,15 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 
+	if (rt_g.NMG_debug)
+		rt_log("nmg_class_pt_fu_except()\n");
+
 	fpi = (struct fu_pt_info *)rt_malloc(sizeof(*fpi), "struct fu_pt_info");
 	/* Validate distance from point to plane */
 	NMG_GET_FU_PLANE( fpi->norm, fu );
 	if( (dist=fabs(DIST_PT_PLANE( pt, fpi->norm ))) > tol->dist )  {
-		rt_log("nmg_class_pt_f() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
-			V3ARGS(pt), dist );
+		rt_log("nmg_class_pt_fu_except() ERROR, point (%g,%g,%g)\nnot on face %g %g %g %g,\ndist=%g\n",
+			V3ARGS(pt), V4ARGS(fpi->norm), dist );
 	}
 	m = nmg_find_model((CONST long *)fu);
 	fpi->tbl = rt_calloc(m->maxindex, 1, "nmg_class_pt_fu_except() proc tbl");
@@ -581,7 +599,7 @@ CONST struct rt_tol	*tol;
 		if( ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p) )
 			continue;
 
-		class_pt_lu(fpi, lu);
+		nmg_class_pt_lu(fpi, lu);
 
 		/* If point lies ON loop edge, we are done */
 		if( allhits == NMG_FPI_FIRST && 
@@ -601,7 +619,13 @@ CONST struct rt_tol	*tol;
 		rt_bomb("");
 	}
 
-	deduce_pt_class(fpi);
+	if (fpi->closest == (long *)NULL) {
+		/* The plane point was never within a bounding RPP of a loop.
+		 * Therefore, we are decidedly OUTside the area of the face.
+		 */
+		fpi->pt_class = NMG_CLASS_AoutB;
+	} else
+		deduce_pt_class(fpi);
 
 	return fpi;
 }
