@@ -330,7 +330,7 @@ dotitles()
 	 * General status information on the next to last line
 	 */
 	(void)sprintf( &linebuf[0],
-		" view:  cent=(%.3f, %.3f, %.3f), sz=%.3f, ",
+		" cent=(%.3f, %.3f, %.3f), sz=%.3f, ",
 		-toViewcenter[MDX]*base2local,
 		-toViewcenter[MDY]*base2local,
 		-toViewcenter[MDZ]*base2local,
@@ -349,7 +349,7 @@ dotitles()
 	 */
 	if (adcflag)  {
 		(void)sprintf( &linebuf[0],
-" cursor:  angle1=%.1f,  angle2=%.1f,  dist=%.3f,  cent=(%.3f, %.3f)",
+" curs:  ang1=%.1f,  ang2=%.1f,  dist=%.3f,  cent=(%.3f, %.3f)",
 				angle1 * radtodeg, angle2 * radtodeg,
 				(c_tdist / 2047.0) / VIEWFACTOR*base2local,
 				(curs_x / 2047.0) / VIEWFACTOR*base2local,
