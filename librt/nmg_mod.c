@@ -34,6 +34,38 @@ RT_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
 				CONST struct shell *s,
 				CONST struct edge *ep));
 
+void
+nmg_merge_regions( r1, r2, tol )
+struct nmgregion *r1;
+struct nmgregion *r2;
+CONST struct rt_tol *tol;
+{
+	struct model *m;
+
+	NMG_CK_REGION( r1 );
+	NMG_CK_REGION( r2 );
+	RT_CK_TOL( tol );
+
+	m = r1->m_p;
+	NMG_CK_MODEL( m );
+
+	if( r2->m_p != m )
+		rt_bomb( "nmg_merge_regions: Tried to merge regions from different models!!" );
+
+	/* move all of r2's faces into r1 */
+	while( RT_LIST_NON_EMPTY( &r2->s_hd ) )
+	{
+		struct shell *s;
+
+		s = RT_LIST_FIRST( shell, &r2->s_hd );
+		RT_LIST_DEQUEUE( &s->l );
+		s->r_p = r1;
+		RT_LIST_APPEND( &r1->s_hd, &s->l );
+	}
+
+	(void)nmg_kr( r2 );
+	nmg_rebound( m, tol );
+}
 
 /************************************************************************
  *									*
