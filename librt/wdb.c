@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *			W D B _ F O P E N
  *
  *  Create a libwdb output stream destined for a disk file.
+ *  The stream is established in "append-only" mode.
  */
 struct rt_wdb *
 wdb_fopen( filename )
@@ -48,8 +49,13 @@ CONST char *filename;
 {
 	struct rt_wdb	*wdbp;
 	FILE		*fp;
+	struct db_i	*dbip;
 
-	if( (fp = fopen( filename, "wb" )) == NULL )
+	if( (dbip = db_create( filename )) == DBI_NULL )
+		return RT_WDB_NULL;
+	db_close(dbip);
+
+	if( (fp = fopen( filename, "ab" )) == NULL )
 		return RT_WDB_NULL;
 
 	GETSTRUCT(wdbp, rt_wdb);
@@ -156,6 +162,129 @@ CONST mat_t			mat;
 }
 
 /*
+ *			W D B _ E X P O R T _ E X T E R N A L
+ *
+ *  The caller must free "ep".
+ *
+ *  Returns -
+ *	 0	OK
+ *	<0	error
+ */
+int
+wdb_export_external( wdbp, ep, name, flags )
+struct rt_wdb		*wdbp;
+struct bu_external	*ep;
+CONST char		*name;
+int			flags;
+{
+	struct directory	*dp;
+
+	RT_CK_WDB(wdbp);
+	BU_CK_EXTERNAL(ep);
+	switch( wdbp->type )  {
+
+	case RT_WDB_TYPE_FILE:
+		{
+			union record	*rec;
+
+			/* v4: Depends on solid names always being in the same place */
+			rec = (union record *)ep->ext_buf;
+			NAMEMOVE( name, rec->s.s_name );
+		}
+
+		if( fwrite( ep->ext_buf, ep->ext_nbytes, 1, wdbp->fp ) != 1 )  {
+			bu_log("wdb_export_external(%s): fwrite error\n",
+				name );
+			return(-3);
+		}
+		break;
+
+	case RT_WDB_TYPE_DB_DISK:
+		if( wdbp->dbip->dbi_read_only )  {
+			bu_log("wdb_export_external(%s): read-only database, write aborted\n");
+			return -5;
+		}
+		/* If name already exists, that object will be updated. */
+		if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL &&
+		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
+			bu_log("wdb_export_external(%s): db_diradd error\n",
+				name );
+			return -3;
+		}
+		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
+			bu_log("wdb_export_external(%s): db_put_external error\n",
+				name );
+			return -3;
+		}
+		break;
+
+	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
+		if( wdbp->dbip->dbi_read_only )  {
+			bu_log("wdb_export_external(%s): read-only database, write aborted\n");
+			return -5;
+		}
+		/* If name already exists, new non-conflicting name will be generated */
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
+			bu_log("wdb_export_external(%s): db_diradd error\n",
+				name );
+			return -3;
+		}
+		if( db_put_external( ep, dp, wdbp->dbip ) < 0 )  {
+			bu_log("wdb_export_external(%s): db_put_external error\n",
+				name );
+			return -3;
+		}
+		break;
+
+	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
+		if( (dp = db_lookup( wdbp->dbip, name, 0 )) != DIR_NULL )  {
+			bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n",
+				name );
+			return -3;
+		}
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
+			bu_log("wdb_export_external(%s): db_diradd error\n",
+				name );
+			return -3;
+		}
+
+		/* Stash name into external representation */
+		if( db_wrap_v4_external( ep, ep, dp ) < 0 )  {
+			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
+				name );
+			return -4;
+		}
+
+		db_inmem( dp, ep, flags );
+		/* ep->buf has been stolen, replaced with null. */
+		break;
+
+	case RT_WDB_TYPE_DB_INMEM:
+		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
+			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
+				bu_log("wdb_export_external(%s): db_diradd error\n",
+					name );
+				db_free_external( ep );
+				return -3;
+			}
+		}
+
+		/* Stash name into external representation */
+		if( db_wrap_v4_external( ep, ep, dp ) < 0 )  {
+			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
+				name );
+			db_free_external( ep );
+			return -4;
+		}
+
+		db_inmem( dp, ep, flags );
+		/* ep->buf has been stolen, replaced with null. */
+		break;
+	}
+	return 0;
+}
+
+/*
  *			W D B _ E X P O R T
  *
  *  The caller must free "gp".
@@ -167,15 +296,14 @@ CONST mat_t			mat;
 int
 wdb_export( wdbp, name, gp, id, local2mm )
 struct rt_wdb	*wdbp;
-char		*name;
+CONST char	*name;
 genptr_t	gp;
 int		id;
 double		local2mm;
 {
 	struct rt_db_internal	intern;
 	struct rt_external	ext;
-	struct directory	*dp;
-	int			flags;
+	int			ret;
 
 	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
 		rt_log("wdb_export(%s): id=%d bad\n",
@@ -195,118 +323,9 @@ double		local2mm;
 	}
 	RT_CK_EXTERNAL( &ext );
 
-	switch( wdbp->type )  {
-
-	case RT_WDB_TYPE_FILE:
-		{
-			union record	*rec;
-
-			/* v4: Depends on solid names always being in the same place */
-			rec = (union record *)ext.ext_buf;
-			NAMEMOVE( name, rec->s.s_name );
-		}
-
-		if( fwrite( ext.ext_buf, ext.ext_nbytes, 1, wdbp->fp ) != 1 )  {
-			bu_log("wdb_export(%s): fwrite error\n",
-				name );
-			db_free_external( &ext );
-			return(-3);
-		}
-		break;
-
-	case RT_WDB_TYPE_DB_DISK:
-		if( wdbp->dbip->dbi_read_only )  {
-			bu_log("wdb_export(%s): read-only database, write aborted\n");
-			return -5;
-		}
-		flags = db_flags_internal( &intern );
-		/* If name already exists, that object will be updated. */
-		if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL &&
-		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
-			bu_log("wdb_export(%s): db_diradd error\n",
-				name );
-			db_free_external( &ext );
-			return -3;
-		}
-		if( db_put_external( &ext, dp, wdbp->dbip ) < 0 )  {
-			bu_log("wdb_export(%s): db_put_external error\n",
-				name );
-			db_free_external( &ext );
-			return -3;
-		}
-		break;
-
-	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
-		if( wdbp->dbip->dbi_read_only )  {
-			bu_log("wdb_export(%s): read-only database, write aborted\n");
-			return -5;
-		}
-		flags = db_flags_internal( &intern );
-		/* If name already exists, new non-conflicting name will be generated */
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
-			bu_log("wdb_export(%s): db_diradd error\n",
-				name );
-			db_free_external( &ext );
-			return -3;
-		}
-		if( db_put_external( &ext, dp, wdbp->dbip ) < 0 )  {
-			bu_log("wdb_export(%s): db_put_external error\n",
-				name );
-			db_free_external( &ext );
-			return -3;
-		}
-		break;
-
-	case RT_WDB_TYPE_DB_INMEM_APPEND_ONLY:
-		if( (dp = db_lookup( wdbp->dbip, name, 0 )) != DIR_NULL )  {
-			bu_log("wdb_export(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n",
-				name );
-			db_free_external( &ext );
-			return -3;
-		}
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
-			bu_log("wdb_export(%s): db_diradd error\n",
-				name );
-			db_free_external( &ext );
-			return -3;
-		}
-
-		/* Stash name into external representation */
-		if( db_wrap_v4_external( &ext, &ext, dp ) < 0 )  {
-			bu_log("wdb_export(%s): db_wrap_v4_external error\n",
-				name );
-			db_free_external( &ext );
-			return -4;
-		}
-
-		db_inmem( dp, &ext, db_flags_internal(&intern) );
-		/* ext->buf has been taken; extra free call is harmless */
-		break;
-
-	case RT_WDB_TYPE_DB_INMEM:
-		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
-				bu_log("wdb_export(%s): db_diradd error\n",
-					name );
-				db_free_external( &ext );
-				return -3;
-			}
-		}
-
-		/* Stash name into external representation */
-		if( db_wrap_v4_external( &ext, &ext, dp ) < 0 )  {
-			bu_log("wdb_export(%s): db_wrap_v4_external error\n",
-				name );
-			db_free_external( &ext );
-			return -4;
-		}
-
-		db_inmem( dp, &ext, db_flags_internal(&intern) );
-		/* ext->buf has been taken; extra free call is harmless */
-		break;
-	}
+	ret = wdb_export_external( wdbp, &ext, name, db_flags_internal( &intern ) );
 	db_free_external( &ext );
-	return(0);
+	return ret;
 }
 
 /*
@@ -323,14 +342,8 @@ struct rt_wdb	*wdbp;
 	if( wdbp->type == RT_WDB_TYPE_FILE )  {
 		fclose( wdbp->fp );
 	} else {
-		/* dbip */
-		/*
-		 *  All these uses reference an existing dbip that
-		 *  somebody else opened with db_open().
-		 *  Since the db_i structure isn't use counted,
-		 *  just walk away from it here, and allow caller to
-		 *  free it in their own good time.
-		 */
+		/* db_i is use counted */
+		db_close( wdbp->dbip );
 	}
 	bu_free( (genptr_t)wdbp, "struct rt_wdb");
 }

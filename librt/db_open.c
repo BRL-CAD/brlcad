@@ -49,6 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
+#include "wdb.h"
 
 #include "./debug.h"
 
@@ -95,8 +96,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 struct db_i *
 db_open( name, mode )
-char	*name;
-char	*mode;
+CONST char	*name;
+CONST char	*mode;
 {
 	register struct db_i	*dbip;
 	register int		i;
@@ -209,7 +210,7 @@ fail:
  */
 struct db_i *
 db_create( name )
-char *name;
+CONST char *name;
 {
 	union record new;
 
@@ -294,4 +295,47 @@ register struct db_i	*dbip;
 	}
 
 	bu_free( (char *)dbip, "struct db_i" );
+}
+
+/*
+ *			D B _ D U M P
+ *
+ *  Dump a full copy of one database into another.
+ *  This is a good way of committing a ".inmem" database to a ".g" file.
+ *  The input is a database instance, the output is a LIBWDB object,
+ *  which could be a disk file or another database instance.
+ *
+ *  Returns -
+ *	-1	error
+ *	0	success
+ */
+int
+db_dump( wdbp, dbip )
+struct rt_wdb	*wdbp;		/* output */
+struct db_i	*dbip;		/* input */
+{
+	register int		i;
+	register struct directory *dp, *nextdp;
+	struct bu_external	ext;
+
+	RT_CK_DBI(dbip);
+	RT_CK_WDB(wdbp);
+
+	/* Output all directory entries */
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			RT_CK_DIR(dp);
+			if( db_get_external( &ext, dp, dbip ) < 0 )  {
+				bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
+				continue;
+			}
+			if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags ) < 0 )  {
+				bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
+				db_free_external( &ext );
+				return -1;
+			}
+			db_free_external( &ext );
+		}
+	}
+	return 0;
 }

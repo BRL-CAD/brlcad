@@ -1660,6 +1660,52 @@ char	      **argv;
 
 }
 
+/*
+ *			R T _ D B _ D U M P
+ *
+ *  Write the current state of a database object out to a file.
+ *
+ *  Example:
+ *	.inmem dump "/tmp/foo.g"
+ */
+int
+rt_db_dump( clientData, interp, argc, argv )
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
+{
+	struct rt_wdb	*wdp = (struct rt_wdb *)clientData;
+	struct rt_wdb	*op;
+	int		ret;
+
+	RT_CK_WDB_TCL( wdp );
+	RT_CK_DBI_TCL( wdp->dbip );
+
+	if( argc != 3 )  {
+		Tcl_AppendResult( interp,
+			"dump: wrong # args: should be \"",
+			argv[0], "dump filename.g\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( (op = wdb_fopen( argv[2] )) == RT_WDB_NULL )  {
+		Tcl_AppendResult( interp,
+			argv[0], " dump:  ", argv[2], ": cannot create\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+	ret = db_dump( op, wdp->dbip );
+	wdb_close( op );
+	if( ret < 0 )  {
+		Tcl_AppendResult( interp,
+			argv[0], " dump ", argv[2], ": db_dump() error\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+	return TCL_OK;
+}
+
 static struct dbcmdstruct rt_db_cmds[] = {
 	"match",	rt_db_match,
 	"get",		rt_db_get,
@@ -1668,6 +1714,7 @@ static struct dbcmdstruct rt_db_cmds[] = {
 	"form",		rt_db_form,
 	"tops",		rt_db_tops,
 	"rt_gettrees",	rt_db_rt_gettrees,
+	"dump",		rt_db_dump,
 	(char *)0,	(int (*)())0
 };
 
