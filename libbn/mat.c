@@ -1112,6 +1112,17 @@ CONST struct bn_tol	*tol;
 	tperp = tol->perp;
 
 	/*
+	 * First, check that the translation part of the matrix (dist) are
+	 * within the distance tolerance.
+	 * Because most instancing involves translation and no rotation,
+	 * doing this first should detect most non-equal cases rapidly.
+	 */
+	for (i=3; i<12; i+=4) {
+		f = a[i] - b[i];
+		if ( !NEAR_ZERO(f, tdist)) return 0;
+	}
+
+	/*
 	 * Check that the rotation part of the matrix (cosines) are within
 	 * the perpendicular tolerance.
 	 */
@@ -1131,14 +1142,6 @@ CONST struct bn_tol	*tol;
 	f = a[15] - a[15];
 	if ( !NEAR_ZERO(f, tperp)) return 0;
 
-	/*
-	 * Last, check that the translation part of the matrix (dist) are within
-	 * the distance tolerance.
-	 */
-	for (i=3; i<12; i+=4) {
-		f = a[i] - b[i];
-		if ( !NEAR_ZERO(f, tdist)) return 0;
-	}
 	return 1;
 }
 
