@@ -3,8 +3,15 @@
  *
  * Functions -
  *
- * The U. S. Army Ballistic Research Laboratory
+ *
+ * Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<math.h>
 #include	<stdio.h>
@@ -91,14 +98,21 @@ f_analyze()
 	}
 
 	/* analyze each face */
-	(void)printf("FACE     DIR COSINES   ROT   FB      EQN COEFs       SURFACE AREA\n");
+	(void)printf("\n----------------------------------------------------------------------\n");
+	(void)printf("| FACE |   ROT     FB  |        PLANE EQUATION        | SURFACE AREA |\n");
+	(void)printf("|------|---------------|------------------------------|--------------|\n");
 	for(i=0; i<6; i++) 
 		anal_face( i );
 
+	(void)printf("----------------------------------------------------------------------\n");
+
 	/* analyze each edge */
-	(void)printf("EDGE   LENGTH\n");
+	(void)printf("  | EDGE     LEN  | EDGE     LEN  | EDGE     LEN  | EDGE     LEN  |\n");
+	(void)printf("  |---------------|---------------|---------------|---------------|\n");
 	for(i=0; i<12; i++)
 		anal_edge( i );
+
+	(void)printf("  -----------------------------------------------------------------\n");
 }
 
 /* face definition array */
@@ -136,7 +150,7 @@ int face;
 	register int i, j, k;
 	static int a, b, c, d;		/* 4 points of face to look at */
 	static float angles[5];	/* direction cosines, rot, fb */
-	static float temp, area[2], len[5];
+	static float temp, area[2], len[6];
 	static vect_t v_temp;
 
 	a = nface[face][0];
@@ -146,7 +160,7 @@ int face;
 
 	/* find plane eqn for this face */
 	if( plane(a, b, c, d, &temp_rec.s) >= 0 ) {
-		(void)printf("Analyze: face %d%d%d%d not a plane\n",
+		(void)printf("| %d%d%d%d    ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
 		return;
 	}
@@ -178,12 +192,10 @@ int face;
 		area[i] = sqrt(temp * (temp - len[j]) * (temp - len[j+1]) * (temp - len[j+2]));
 	}
 
-	(void)printf("%d%d%d%d  ",a+1,b+1,c+1,d+1);
-	(void)printf("%5.2f %5.2f %5.2f  %5.2f %5.2f    ",angles[0],angles[1],
-			angles[2],angles[3],angles[4],angles[5]);
-	(void)printf("%.4f %.4f %.4f %.4f   ",es_plant[0],es_plant[1],
-			es_plant[2],es_plant[3]);
-	(void)printf("%.3f\n",area[0]+area[1]);
+	(void)printf("| %d%d%d%d |",a+1,b+1,c+1,d+1);
+	(void)printf(" %6.2f %6.2f | %5.2f %5.2f %5.2f %10.2f |",angles[3],angles[4],
+			es_plant[0],es_plant[1],es_plant[2],es_plant[3]*base2local);
+	(void)printf("   %9.3f  |\n",(area[0]+area[1])*base2local);
 }
 
 /*	Analyzes arb edges - finds lengths */
@@ -198,8 +210,11 @@ int edge;
 	b = nedge[edge][1];
 
 	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
+	(void)printf("  |  %d%d   %7.2f ",a+1,b+1,MAGNITUDE(v_temp)*base2local);
 
-	(void)printf(" %d%d    %10.2f\n",
-		a+1, b+1,
-		MAGNITUDE(v_temp)*base2local );
+	if( ++edge%4 == 0 )
+		(void)printf("|\n");
+
 }
+
+
