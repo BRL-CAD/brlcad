@@ -193,6 +193,7 @@ int scanlen;
 	if( max > 4096) max = 4096;
 
 	buflines = max;
+	buf_start = (-buflines);
 	if ((buffer = (unsigned char *)malloc( buflines * scanlen ))
 	  == (unsigned char *)NULL) {
 		fprintf(stderr, "Cannot allocate buffer\n");
