@@ -270,6 +270,7 @@ AC_OUTPUT([
 	libpkg/Makefile
 	libpng/Makefile
 	librt/Makefile
+	librtserver/Makefile
 	libsysv/Makefile
 	libtcl8.4/Makefile
 	libtcl8.4/doc/Makefile

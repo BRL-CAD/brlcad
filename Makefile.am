@@ -18,6 +18,7 @@ SUBDIRS=\
 	liboptical\
 	liborle\
 	librt\
+	librtserver\
 	libsysv\
 	libtermio\
 	libutahrle\
