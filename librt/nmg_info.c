@@ -1348,6 +1348,8 @@ CONST struct edgeuse	*eu;
 	CONST struct faceuse	*fu;
 	vect_t			Norm;
 	vect_t			edgevect;
+	vect_t			edge_unit;
+	fastf_t			dot;
 
 	NMG_CK_EDGEUSE(eu);
 	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )  return -1;
@@ -1365,8 +1367,95 @@ CONST struct edgeuse	*eu;
 	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord,
 		eu->vu_p->v_p->vg_p->coord );
 
+	VMOVE( edge_unit, edgevect );
+	VUNITIZE( edge_unit );
+
+	dot = 1.0 - fabs( VDOT( edge_unit, Norm ) );
+	if( dot < 0.0001 && dot > (-0.0001) )
+	{
+		CONST struct edgeuse *eu_next;
+		CONST struct edgeuse *eu_prev;
+		vect_t next_left;
+		vect_t prev_left;
+		vect_t other_edge;
+		int other_edge_is_parallel=1;
+		fastf_t other_dot;
+
+		rt_log( "WARNING: eu x%x (%f %f %f) parallel to normal (%f %f %f)\n", eu, V3ARGS( edgevect ), V3ARGS( Norm ) );
+
+		eu_next = eu;
+		while( other_edge_is_parallel )
+		{
+			eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu_next->l );
+			if( eu_next == eu )
+				break;
+			VSUB2( other_edge, eu_next->eumate_p->vu_p->v_p->vg_p->coord,
+		                eu_next->vu_p->v_p->vg_p->coord );
+			VUNITIZE( other_edge );
+			other_dot = 1.0 - fabs( VDOT( other_edge, Norm ) );
+			if( dot < .5 )
+				other_edge_is_parallel = 0;
+		}
+		if( other_edge_is_parallel )
+		{
+			rt_log( "Cannot find edge (starting eu =x%x) that is not parallel to face normal!!!\n", eu );
+			nmg_pr_fu_briefly( fu, (char *)NULL );
+			rt_bomb( "Cannot find edge that is not parallel to face normal!!!\n" );
+		}
+
+		VCROSS( next_left, Norm, other_edge );
+		VUNITIZE( next_left );
+
+		eu_prev = eu;
+		while( other_edge_is_parallel )
+		{
+			eu_prev = RT_LIST_PPREV_CIRC( edgeuse, &eu_prev->l );
+			if( eu_prev == eu )
+				break;
+			VSUB2( other_edge, eu_prev->eumate_p->vu_p->v_p->vg_p->coord,
+		                eu_prev->vu_p->v_p->vg_p->coord );
+			VUNITIZE( other_edge );
+			other_dot = 1.0 - fabs( VDOT( other_edge, Norm ) );
+			if( dot < .5 )
+				other_edge_is_parallel = 0;
+		}
+		if( other_edge_is_parallel )
+		{
+			rt_log( "Cannot find edge (starting eu =x%x) that is not parallel to face normal!!!\n", eu );
+			nmg_pr_fu_briefly( fu, (char *)NULL );
+			rt_bomb( "Cannot find edge that is not parallel to face normal!!!\n" );
+		}
+
+		VCROSS( prev_left, Norm, other_edge );
+		VUNITIZE( prev_left );
+
+		VBLEND2( left, 0.5, next_left, 0.5, prev_left );
+		VUNITIZE( left );
+
+		rt_log( "\tUnitized left=(%f %f %f)\n", V3ARGS( left ) );
+
+		return 0;
+	}
+
 	VCROSS( left, Norm, edgevect );
+	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+		vect_t edge_unit;
+		vect_t norm_x_edge;
+
+		VMOVE( edge_unit, edgevect );
+		VUNITIZE( edge_unit );
+		VCROSS( norm_x_edge, Norm, edge_unit );
+		rt_log( "for eu x%x from fu x%x v1=x%x, v2=x%x:\n", eu, fu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p );
+		rt_log( "\t(%.10f %.10f %.10f) <-> (%.10f %.10f %.10f)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ), V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+		rt_log( "\tedge dot norm = %.10f\n", VDOT( edge_unit, Norm ) );
+		rt_log( "\tnorm X edge = (%.10f %.10f %.10f)\n", V3ARGS( norm_x_edge ) );
+		rt_log( "\tnorm=(%.10f %.10f %.10f), edgevect=(%.10f %.10f %.10f), left=(%.10f %.10f %.10f )\n",
+			V3ARGS( Norm ), V3ARGS( edgevect ), V3ARGS( left ) );
+	}
 	VUNITIZE( left );
+	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
+		rt_log( "\tUnitized left=(%f %f %f)\n", V3ARGS( left ) );
+	}
 	return 0;
 }
 
