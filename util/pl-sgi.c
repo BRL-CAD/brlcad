@@ -38,8 +38,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define XMAX170	645
 #	define YMAX170	484
 #   endif
+#ifdef SPACEBALL
+# include "gl/spaceball.h"
+#endif
 
-#define	HUGE	1.0e10	/* for near/far clipping */
+#define	HUGEVAL	1.0e10	/* for near/far clipping */
 
 #define Min( x1, x2 )	((x1) < (x2) ? (x1) : (x2))
 #define Max( x1, x2 )	((x1) > (x2) ? (x1) : (x2))
@@ -57,7 +60,8 @@ Matrix	viewpersp;	/* perspective viewing projection */
 Matrix	identmat;	/* identity */
 Matrix	centermat;	/* center screen matrix */
 Coord	viewsize;
-double	globalscale[3];
+Matrix	g_rot;		/* Global Rotations and Translations */
+double	g_scal[3];	/* Global Scales */
 
 int	ntsc = 0;	/* use NTSC display, for video recording */
 int	axis = 0;	/* display coord axis */
@@ -181,14 +185,14 @@ char	**argv;
 			/* Compensate for the rectangular display surface */
 #ifdef mips
 			ortho( -1.25*viewsize, 1.25*viewsize,
-				-viewsize, viewsize, -HUGE, HUGE );
+				-viewsize, viewsize, -HUGEVAL, HUGEVAL );
 #else
 			ortho( -1.33*viewsize, 1.33*viewsize,
-				-viewsize, viewsize, -HUGE, HUGE );
+				-viewsize, viewsize, -HUGEVAL, HUGEVAL );
 #endif
 		} else {
 			ortho( -viewsize, viewsize, -viewsize, viewsize,
-				-HUGE, HUGE );
+				-HUGEVAL, HUGEVAL );
 		}
 		getmatrix( viewortho );
 		perspective( 900, 1.0, 0.01, 1.0e10 );
@@ -197,7 +201,7 @@ char	**argv;
 	} else {
 		/* Compensate for the rectangular display surface */
 		ortho( -1.33*viewsize, 1.33*viewsize,
-			-viewsize, viewsize, -HUGE, HUGE );
+			-viewsize, viewsize, -HUGEVAL, HUGEVAL );
 		getmatrix( viewortho );
 		perspective( 900, 1.0, 0.01, 1.0e10 );
 		/*polarview( 1.414, 0, 0, 0 );*/
@@ -270,180 +274,235 @@ char	**argv;
 #define	MENU_EXIT	5
 char *menustring = "Center|Axis|Info|DunnSnap|Exit";
 
-/*XXX*/
-float	tran[3];	/* xyz screen space translate */
+/*XXX - global because it is shared with the menu/mouse input function */
+float	d_tran[3];	/* Delta Translations */
+
+process_input()
+{
+	Device	event;
+	short	val;
+	Coord	fval;
+	long	menuval;
+	Matrix	d_rot;		/* Delta Rotations */
+	float	d_scal[3];	/* Delta Scales */
+	int	done;
+#ifdef SPACEBALL
+	float	sbrx, sbry, sbrz;
+	float	sbtx, sbty, sbtz;
+	float	sbperiod;
+	static float sbtransrate = 0.00001;
+	static float sbrotrate = 0.000001;
+#endif
+
+	done = 0;
+	/*if( qtest() )*/
+	event = qread( &val );
+	fval = val;
+	/*printf("event %d: value %d\n", event, val);*/
+	/* Ignore all zero val's? XXX */
+
+	loadmatrix ( identmat );
+	d_tran[0] = d_tran[1] = d_tran[2] = 0;
+	d_scal[0] = d_scal[1] = d_scal[2] = 1;
+
+	switch (event) {
+#ifdef SPACEBALL
+	case SBTX:
+		/*printf("SBTX\n");*/
+		sbtx = fval;
+		break;
+	case SBTY:
+		sbty = fval;
+		break;
+	case SBTZ:
+		sbtz = fval;
+		break;
+	case SBRX:
+		sbrx = fval;
+		break;
+	case SBRY:
+		sbry = fval;
+		break;
+	case SBRZ:
+		sbrz = fval;
+		break;
+	case SBPERIOD:
+		sbperiod = fval;
+		d_tran[0] = sbperiod * sbtransrate * sbtx;
+		d_tran[1] = sbperiod * sbtransrate * sbty;
+		d_tran[2] = sbperiod * sbtransrate * sbtz;
+		rotarbaxis( sbperiod*sbrotrate, sbrx, sbry, sbrz, d_rot );
+		loadmatrix( d_rot );
+		break;
+	case SBPICK:
+		/* reset - clear out the global rot/trans matrix */
+		loadmatrix( centermat );
+		getmatrix( g_rot );
+		loadmatrix( identmat );
+		break;
+#endif
+	case ROTX:
+		fval *= 5.0;
+		rotate( (Angle) fval, 'x' );
+		setvaluator(ROTX, 0, -360, 360);
+		break;
+	case ROTY:
+		fval *= 5.0;
+		rotate( (Angle) fval, 'y' );
+		setvaluator(ROTY, 0, -360, 360);
+		break;
+	case ROTZ:
+		fval *= 5.0;
+		rotate( (Angle) fval, 'z' );
+		setvaluator(ROTZ, 0, -360, 360);
+		break;
+	case TRANX:
+		/* XXX PROBLEM - TRAN[XYZ] vary with zoom, i.e. it takes more
+		 * knob twist to move a tiny object across the screen than
+		 * a large one.  Also quantization courseness.
+		 */
+		/*fval *= viewsize/200.0;*/
+		fval *= 0.50;
+		d_tran[0] += fval;
+		setvaluator(TRANX, 0, -10, 10);
+		break;
+	case TRANY:
+		/*fval *= viewsize/200.0;*/
+		fval *= 0.50;
+		d_tran[1] += fval;
+		setvaluator(TRANY, 0, -10, 10);
+		break;
+	case TRANZ:
+		/*fval *= viewsize/200.0;*/
+		fval *= 0.50;
+		d_tran[2] += fval;
+		setvaluator(TRANZ, 0, -10, 10);
+		break;
+	case ZOOM:
+		fval = 1.0 + fval / 1100.0;
+		d_scal[0] *= fval;
+		d_scal[1] *= fval;
+		d_scal[2] *= fval;
+		setvaluator(ZOOM, 1, -1000, 1000);
+		break;
+	case LEFTMOUSE:
+		if( val == 0 )
+			break;
+		fval = 0.5;
+		d_scal[0] *= fval;
+		d_scal[1] *= fval;
+		d_scal[2] *= fval;
+		break;
+	case RIGHTMOUSE:
+	/*case MIDDLEMOUSE:*/
+		if( val == 0 )
+			break;
+		menuval = dopup( menu );
+		if( menuval == MENU_EXIT )
+			done = 1;
+		else
+			domenu( menuval );
+		break;
+	case MIDDLEMOUSE:
+	/*case RIGHTMOUSE:*/
+		if( val == 0 )
+			break;
+		fval = 2.0;
+		d_scal[0] *= fval;
+		d_scal[1] *= fval;
+		d_scal[2] *= fval;
+		break;
+	case ORTHO:
+		if( val == 0 )
+			break;
+		viewmat = (Matrix *)viewortho;
+		break;
+	case PERSP:
+		if( val == 0 )
+			break;
+		viewmat = (Matrix *)viewpersp;
+		break;
+	case RESET:
+		if( val == 0 )
+			break;
+		/* reset */
+		loadmatrix( centermat );
+		getmatrix( g_rot );
+		loadmatrix( identmat );
+		break;
+	case BOTTOM:
+		if( val != 0 )
+		setview( g_rot, 180, 0, 0 );
+		break;
+	case TOP:
+		if( val != 0 )
+		setview( g_rot, 0, 0, 0 );
+		break;
+	case REAR:
+		if( val != 0 )
+		setview( g_rot, 270, 0, 90 );
+		break;
+	case V4545:
+		if( val != 0 )
+		setview( g_rot, 270+45, 0, 270-45 );
+		break;
+	case RIGHT:
+		if( val != 0 )
+		setview( g_rot, 270, 0, 0 );
+		break;
+	case FRONT:
+		if( val != 0 )
+		setview( g_rot, 270, 0, 270 );
+		break;
+	case LEFT:
+		if( val != 0 )
+		setview( g_rot, 270, 0, 180 );
+		break;
+	case V3525:
+		if( val != 0 )
+		setview( g_rot, 270+25, 0, 270-35 );
+		break;
+	case ESCKEY:
+		done = 1;
+		break;
+	}
+
+	/*qreset();XXX*/
+	getmatrix( d_rot );
+	newview( g_rot, d_rot, d_tran, d_scal, viewmat );
+	return( done );
+}
 
 view_loop()
 {
-	Matrix	m;		/* our overall composite orientation matrix */
-	Device	event;
-	short	val;
-	int	end_it = 0;
-	int	o = 1;
-	long	menuval;
-	Matrix	rot;		/* rotations for this pass thru the loop */
-	float	scal[3];	/* scale */
-
+	int	done = 0;
+	int	redisplay = 1;
+	int	o = 1;		/* object number */
 
 	/* Initial translate/rotate/scale matrix */
 	loadmatrix( centermat );
-	getmatrix( m );
-	tran[0] = tran[1] = tran[2] = 0;
-	scal[0] = scal[1] = scal[2] = 1;
-	globalscale[0] = globalscale[1] = globalscale[2] = 1;
+	getmatrix( g_rot );
+	g_scal[0] = g_scal[1] = g_scal[2] = 1;
 
 	/*depthcue(1);*/
 	/*cursoff();XXX*/
 
 	/*
-	 *  Each time through this loop, m holds the current
+	 *  Each time through this loop, g_rot holds the current
 	 *  orientation matrix.  An identity matrix is placed
 	 *  on the stack and acted on by device inputs.
-	 *  After inputs, m = oldm * stack.
-	 *  The stack is then replaced by m*viewmat for drawing.
+	 *  After inputs, g_rot = oldm * stack.
+	 *  The stack is then replaced by g_rot*viewmat for drawing.
 	 */
-	while( 1 ) {
-		Coord		fval;
+	while( !done ) {
 
-		if( qtest() )
-			event = qread( &val );
-		fval = val;
+		if( redisplay ) {
+			redisplay = 0;
 
-		loadmatrix ( identmat );
-		tran[0] = tran[1] = tran[2] = 0;
-		scal[0] = scal[1] = scal[2] = 1;
-
-		switch (event) {
-		case ROTX:
-			fval *= 5.0;
-			rotate( (Angle) fval, 'x' );
-			setvaluator(ROTX, 0, -360, 360);
-			break;
-		case ROTY:
-			fval *= 5.0;
-			rotate( (Angle) fval, 'y' );
-			setvaluator(ROTY, 0, -360, 360);
-			break;
-		case ROTZ:
-			fval *= 5.0;
-			rotate( (Angle) fval, 'z' );
-			setvaluator(ROTZ, 0, -360, 360);
-			break;
-		case TRANX:
-			fval *= viewsize/200.0;
-			tran[0] += fval;
-			/*translate( fval, 0.0, 0.0 );*/
-			setvaluator(TRANX, 0, -10, 10);
-			break;
-		case TRANY:
-			fval *= viewsize/200.0;
-			tran[1] += fval;
-			/*translate( 0.0, fval, 0.0 );*/
-			setvaluator(TRANY, 0, -10, 10);
-			break;
-		case TRANZ:
-			fval *= viewsize/200.0;
-			tran[2] += fval;
-			/*translate( 0.0, 0.0, fval );*/
-			setvaluator(TRANZ, 0, -10, 10);
-			break;
-		case ZOOM:
-			fval = 1.0 + fval / 1100.0;
-			scal[0] *= fval;
-			scal[1] *= fval;
-			scal[2] *= fval;
-			/*scale( fval, fval, fval );*/
-			setvaluator(ZOOM, 1, -1000, 1000);
-			break;
-		case LEFTMOUSE:
-			if( val == 0 )
-				break;
-			fval = 0.5;
-			scal[0] *= fval;
-			scal[1] *= fval;
-			scal[2] *= fval;
-			/*scale( fval, fval, fval );*/
-			break;
-		case RIGHTMOUSE:
-		/*case MIDDLEMOUSE:*/
-			if( val == 0 )
-				break;
-			menuval = dopup( menu );
-			if( menuval == MENU_EXIT )
-				end_it = 1;
-			else
-				domenu( menuval );
-			break;
-		case MIDDLEMOUSE:
-		/*case RIGHTMOUSE:*/
-			if( val == 0 )
-				break;
-			fval = 2.0;
-			scal[0] *= fval;
-			scal[1] *= fval;
-			scal[2] *= fval;
-			/*scale( fval, fval, fval );*/
-			break;
-		case ORTHO:
-			if( val == 0 )
-				break;
-			viewmat = (Matrix *)viewortho;
-			break;
-		case PERSP:
-			if( val == 0 )
-				break;
-			viewmat = (Matrix *)viewpersp;
-			break;
-		case RESET:
-			if( val == 0 )
-				break;
-			/* reset */
-			loadmatrix( centermat );
-			getmatrix( m );
-			loadmatrix( identmat );
-			break;
-		case BOTTOM:
-			if( val != 0 )
-			setview( m, 180, 0, 0 );
-			break;
-		case TOP:
-			if( val != 0 )
-			setview( m, 0, 0, 0 );
-			break;
-		case REAR:
-			if( val != 0 )
-			setview( m, 270, 0, 90 );
-			break;
-		case V4545:
-			if( val != 0 )
-			setview( m, 270+45, 0, 270-45 );
-			break;
-		case RIGHT:
-			if( val != 0 )
-			setview( m, 270, 0, 0 );
-			break;
-		case FRONT:
-			if( val != 0 )
-			setview( m, 270, 0, 270 );
-			break;
-		case LEFT:
-			if( val != 0 )
-			setview( m, 270, 0, 180 );
-			break;
-		case V3525:
-			if( val != 0 )
-			setview( m, 270+25, 0, 270-35 );
-			break;
-		}
-		if (end_it == 1)
-			break;
-
-		if( event ) {
-			event = 0;
-			qreset();
-
-			getmatrix( rot );
-			newview( m, rot, tran, scal, viewmat );
+			/* Setup current view */
+			loadmatrix( viewmat );
+			scale( g_scal[0], g_scal[1], g_scal[2] );
+			multmatrix( g_rot );
 
 			/* draw the object(s) */
 			cursoff();
@@ -463,6 +522,14 @@ view_loop()
 			curson();
 			swapbuffers();
 		}
+
+		do {
+			done = process_input();
+		} while(qtest());
+#ifdef SPACEBALL
+		sbprompt();
+#endif
+		redisplay = 1;	/*XXX*/
 
 		/* Check for more objects to be read */
 		if( !file_input && !feof(stdin) /* && select()*/ ) {
@@ -573,6 +640,9 @@ init_display()
 		mapcolor( 1, 255, 000, 000 );	/* RED */
 	}
 
+	/* enable ESC to exit program */
+	qdevice(ESCKEY);
+
 	/* enable the mouse */
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
@@ -586,6 +656,21 @@ init_display()
 	for (i = DIAL0; i < DIAL8; i++) {
 		qdevice(i);
 	}
+#ifdef SPACEBALL
+        /* INIT Spaceball */
+	qdevice(SBTX);
+	qdevice(SBTY);
+	qdevice(SBTZ);
+	qdevice(SBRX);
+	qdevice(SBRY);
+	qdevice(SBRZ);
+	qdevice(SBRZ);
+	qdevice(SBPERIOD);
+	qdevice(SBPICK);
+
+	/* Put daemon in Spaceball mode */
+	sbcommand("do Fdo enter_spaceball_mode");
+#endif
 
 	/*
 	 * SGI Dials: 1024 steps per rev
@@ -917,9 +1002,9 @@ float	tran[3], scal[3];
 	 * combine new operations with old
 	 *  orient = orient * scal * trans * rot * view
 	 */
-	globalscale[0] *= scal[0];
-	globalscale[1] *= scal[1];
-	globalscale[2] *= scal[2];
+	g_scal[0] *= scal[0];
+	g_scal[1] *= scal[1];
+	g_scal[2] *= scal[2];
 	loadmatrix( rot );
 	translate( tran[0], tran[1], tran[2] );
 	multmatrix( orient );
@@ -927,14 +1012,14 @@ float	tran[3], scal[3];
 
 	/* set up total viewing transformation */
 	loadmatrix( viewmat );
-	scale( globalscale[0], globalscale[1], globalscale[2] );
+	scale( g_scal[0], g_scal[1], g_scal[2] );
 	multmatrix( orient );
 
 	if( info ) {
 		double	xrot, yrot, zrot, cosyrot;
 		printf( "(%f %f %f) scale %f\n",
 			orient[3][0], orient[3][1], orient[3][2],
-			globalscale[0] );
+			g_scal[0] );
 		yrot = asin(orient[2][0]);
 		cosyrot = cos(yrot);
 		zrot = asin(orient[1][0]/-cosyrot);
@@ -962,8 +1047,8 @@ int	n;
 		getorigin( &left, &bottom );
 		fx = 0.5 - (x - left) / (double)winx_size;
 		fy = 0.5 - (y - bottom) / (double)winy_size;
-		tran[0] += fx * 2.0 * viewsize;
-		tran[1] += fy * 2.0 * viewsize;
+		d_tran[0] += fx * 2.0 * viewsize;
+		d_tran[1] += fy * 2.0 * viewsize;
 		break;
 	case MENU_AXIS:
 		if( axis == 0 )
