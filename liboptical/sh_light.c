@@ -26,6 +26,9 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STRING_H
+# include <string.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -1719,7 +1722,7 @@ int have;
 			bu_log("computing for light %d\n", i);
 		swp->sw_lightfract[i] = 0.0;
 
-		if (lsp->lt_infinite )	tot_vis_rays = 1;
+		if (lsp->lt_infinite || lsp->lt_shadows == 0) tot_vis_rays = 1;
 		else			tot_vis_rays = lsp->lt_shadows;
 
 		los.lsp = lsp;
