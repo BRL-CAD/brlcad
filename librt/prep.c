@@ -331,7 +331,7 @@ register struct rt_i *rtip;
 	}
 
 	/* Free animation structures */
-	rt_fr_anim(rtip);
+	db_free_anim(rtip->rti_dbip);
 
 	/*
 	 *  Re-initialize everything important.
