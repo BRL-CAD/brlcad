@@ -771,6 +771,102 @@ got_loop:
 }
 
 /*
+ *			N M G _ F A C E _ R S _ I N I T
+ *
+ *  Set up nmg_ray_state structure.
+ *  "left" is a vector that lies in the plane of the face
+ *  which contains the loops being operated on.
+ *  It points in the direction "left" of the ray.
+ */
+HIDDEN void
+nmg_face_rs_init( rs, b, fu1, fu2, pt, dir )
+struct nmg_ray_state	*rs;
+struct nmg_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
+struct faceuse	*fu1;		/* face being worked */
+struct faceuse	*fu2;		/* for plane equation */
+point_t		pt;
+vect_t		dir;
+{
+	rs->vu = (struct vertexuse **)b->buffer;
+	rs->nvu = b->end;
+	rs->eg_p = (struct edge_g *)NULL;
+	rs->sA = fu1->s_p;
+	rs->sB = fu2->s_p;
+	VMOVE( rs->pt, pt );
+	VMOVE( rs->dir, dir );
+	VCROSS( rs->left, fu1->f_p->fg_p->N, dir );
+	switch( fu1->orientation )  {
+	case OT_SAME:
+		break;
+	case OT_OPPOSITE:
+		VREVERSE(rs->left, rs->left);
+		break;
+	default:
+		rt_bomb("nmg_face_rs_init: bad orientation\n");
+	}
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("\tfu->orientation=%s\n", nmg_orientation(fu1->orientation) );
+		HPRINT("\tfg N", fu1->f_p->fg_p->N);
+		VPRINT("\t  pt", pt);
+		VPRINT("\t dir", dir);
+		VPRINT("\tleft", rs->left);
+	}
+	rs->state = NMG_STATE_OUT;
+
+	/* For measuring angle CCW around plane from -dir */
+	VREVERSE( rs->ang_x_dir, dir );
+	VREVERSE( rs->ang_y_dir, rs->left );
+}
+
+/*
+ *  Return value is where next interval starts.
+ *  *end is 1 beyond where current interval ends, e.g. from [cur ... *end - 1]
+ */
+HIDDEN int
+nmg_face_next_vu_interval( end, rs, cur, b, mag )
+int		*end;
+struct nmg_ray_state	*rs;
+int		cur;
+struct nmg_ptbl	*b;
+fastf_t		*mag;
+{
+	int	j;
+	int	k;
+	int	m;
+	struct vertex	*v;
+	struct vertexuse	**vu;
+
+	if( cur == b->end-1 || mag[cur+1] != mag[cur] )  {
+		/* Single vertexuse at this dist */
+		if(rt_g.NMG_debug&DEBUG_COMBINE)
+			rt_log("single vertexuse at index %d\n", cur);
+		*end = cur+1;
+		return cur+1;
+	}
+
+	/* Find range of vertexuses at this distance */
+	for( j = cur+1; j < b->end; j++ )  {
+		if( mag[j] != mag[cur] )  break;
+	}
+
+	/* vu Interval runs from [cur] to [j-1] inclusive */
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+		rt_log("vu's on list interval [%d] to [%d] equal\n", cur, j-1 );
+
+	/* Ensure that all vu's point to same vertex */
+	vu = (struct vertexuse **)b->buffer;
+	v = vu[cur]->v_p;
+	for( k = cur+1; k < j; k++ )  {
+		if( vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
+	}
+	/* All vu's point to the same vertex, sort them */
+	m = nmg_face_coincident_vu_sort( rs, cur, j );
+
+	*end = m;	/* This can be less than j */
+	return j;
+}
+
+/*
  *			N M G _ F A C E _ C O M B I N E
  *
  *	collapse loops,vertices within face fu1 (relative to fu2)
@@ -797,43 +893,8 @@ fastf_t		*mag;
 		nmg_pr_fu_briefly(fu1,(char *)0);
 	}
 
-	/*
-	 *  Set up nmg_ray_state structure.
-	 *  "left" is a vector that lies in the plane of the face
-	 *  which contains the loops being operated on.
-	 *  It points in the direction "left" of the ray.
-	 */
 	vu = (struct vertexuse **)b->buffer;
-	rs.vu = vu;
-	rs.nvu = b->end;
-	rs.eg_p = (struct edge_g *)NULL;
-	rs.sA = fu1->s_p;
-	rs.sB = fu2->s_p;
-	VMOVE( rs.pt, pt );
-	VMOVE( rs.dir, dir );
-	VCROSS( rs.left, fu1->f_p->fg_p->N, dir );
-	switch( fu1->orientation )  {
-	case OT_SAME:
-		break;
-	case OT_OPPOSITE:
-		VREVERSE(rs.left, rs.left);
-		break;
-	default:
-		rt_bomb("nmg_face_combine: bad orientation\n");
-	}
-	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-		rt_log("\tfu->orientation=%s\n", nmg_orientation(fu1->orientation) );
-		HPRINT("\tfg N", fu1->f_p->fg_p->N);
-		VPRINT("\t  pt", pt);
-		VPRINT("\t dir", dir);
-		VPRINT("\tleft", rs.left);
-	}
-	rs.state = NMG_STATE_OUT;
-
-	/* For measuring angle CCW around plane from -dir */
-	VREVERSE( rs.ang_x_dir, dir );
-	VREVERSE( rs.ang_y_dir, rs.left );
-
+	nmg_face_rs_init( &rs, b, fu1, fu2, pt, dir );
 	nmg_face_plot( fu1 );
 
 	/*
@@ -843,31 +904,13 @@ fastf_t		*mag;
 	 *
 	 *  Two cases:  lone vertexuse, and range of vertexuses.
 	 */
-	for( i = 0; i < b->end; i = j )  {
-		if( i == b->end-1 || mag[i+1] != mag[i] )  {
+	for( i=0; i < b->end; i = j )  {
+		j = nmg_face_next_vu_interval( &m, &rs, i, b, mag );
+		if( j == i + 1 )  {
 			/* Single vertexuse at this dist */
-			if(rt_g.NMG_debug&DEBUG_COMBINE)
-				rt_log("single vertexuse at index %d\n", i);
 			nmg_face_state_transition( vu[i], &rs, i, 0 );
 			nmg_face_plot( fu1 );
-			j = i+1;
 		} else {
-			/* Find range of vertexuses at this distance */
-			struct vertex	*v;
-
-			for( j = i+1; j < b->end; j++ )  {
-				if( mag[j] != mag[i] )  break;
-			}
-			/* vu Interval runs from [i] to [j-1] inclusive */
-			if(rt_g.NMG_debug&DEBUG_COMBINE)
-				rt_log("vu's on list interval [%d] to [%d] equal\n", i, j-1 );
-			/* Ensure that all vu's point to same vertex */
-			v = vu[i]->v_p;
-			for( k = i+1; k < j; k++ )  {
-				if( vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
-			}
-			/* All vu's point to the same vertex, sort them */
-			m = nmg_face_coincident_vu_sort( &rs, i, j );
 			/* Process vu list, up to cutoff index 'm' */
 			for( k = i; k < m; k++ )  {
 				nmg_face_state_transition( vu[k], &rs, k, 1 );
