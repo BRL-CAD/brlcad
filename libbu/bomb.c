@@ -34,6 +34,19 @@ static const char RCSbomb[] = "@(#)$Header$ (ARL)";
 #include <fcntl.h>
 #endif
 
+#if 1
+struct bu_hook_list bu_bomb_hook_list = {
+	{	BU_LIST_HEAD_MAGIC, 
+		&bu_log_hook_list.l, 
+		&bu_log_hook_list.l
+	}, 
+	BUHOOK_NULL,
+	GENPTR_NULL
+};
+#else
+struct bu_hook_list bu_bomb_hook_list;
+#endif
+
 /*
  * These variables are global because BU_SETJUMP() *must* be a macro.
  * If you replace this version of bu_bomb() with one of your own,
@@ -52,8 +65,12 @@ void
 bu_bomb(str)
 CONST char *str;
 {
-	fprintf(stderr,"\n%s\n", str);
-	fflush(stderr);
+	if (BU_LIST_IS_EMPTY(&bu_bomb_hook_list.l)) {
+		fprintf(stderr,"\n%s\n", str);
+		fflush(stderr);
+	} else {
+		bu_call_hook(&bu_bomb_hook_list, (genptr_t)str);
+	}
 
 	if( bu_setjmp_valid )  {
 		/* Application is catching fatal errors */
