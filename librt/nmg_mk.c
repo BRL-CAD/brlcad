@@ -667,8 +667,12 @@ struct faceuse *fu1;
 
 /*	N M G _ K L U
  *	Kill loopuse
- *	if the loop contains any edgeuses they are placed in the parent shell
+ *
+ *	if the loop contains any edgeuses or vertexuses they are killed
  *	before the loop is deleted.
+ *
+ *	We support the concept of killing a loop with no children to
+ *	support the routine "nmg_demote_lu"
  */
 void nmg_klu(lu1)
 struct loopuse *lu1;
@@ -688,56 +692,18 @@ struct loopuse *lu1;
 	if (*lu1->up.magic_p != *lu2->up.magic_p)
 		rt_bomb("loopuses do not have same type of parent!\n");
 
-	if (*lu1->down.magic_p != *lu2->down.magic_p)
+	if (lu1->down.magic_p && *lu1->down.magic_p != *lu2->down.magic_p)
 		rt_bomb("loopuses do not have same type of child!\n");
 
 	/* deal with the children */
-	if (*lu1->down.magic_p == NMG_VERTEXUSE_MAGIC) {
+	if (lu1->down.magic_p && *lu1->down.magic_p == NMG_VERTEXUSE_MAGIC) {
 		nmg_kvu(lu1->down.vu_p);
 		nmg_kvu(lu2->down.vu_p);
 	}
-	else if (*lu1->down.magic_p == NMG_EDGEUSE_MAGIC) {
-#if 0
-		/* get the parent shell */
-		if (*lu1->up.magic_p == NMG_SHELL_MAGIC)
-			s = lu1->up.s_p;
-		else if (*lu1->up.magic_p == NMG_FACEUSE_MAGIC) {
-			if (lu1->up.fu_p->s_p->magic != NMG_SHELL_MAGIC)
-				rt_bomb("faceuse of loopuse does't have shell for parent\n");
-			else
-				s = lu1->up.fu_p->s_p;
-		} else {
-			rt_bomb("Cannot identify parent\n");
-		}
-
-		/* move all edgeuses (&mates) to shell (in order so that we
-		 * can )
-		 */
-		while (lu1->down.eu_p) {
-			/* move edgeuse & mate to parent shell */
-			DLLRM(lu1->down.eu_p, eu1);
-			if (lu1->down.eu_p == eu1)
-				lu1->down.eu_p = (struct edgeuse *)NULL;
-
-			if (eu1->eumate_p->up.lu_p != lu2)
-				rt_bomb("edgeuse mates don't share loop\n");
-
-			lu2->down.eu_p = eu1->eumate_p;
-			DLLRM(lu2->down.eu_p, eu2);
-			if (lu2->down.eu_p == eu2)
-				lu2->down.eu_p = (struct edgeuse *)NULL;
-
-			eu1->up.s_p = eu2->up.s_p = s;
-			DLLINS(s->eu_p, eu2);
-			DLLINS(s->eu_p, eu1);
-		}
-		if (lu2->down.eu_p)
-			rt_bomb("loopuse mates don't have same # of edges\n");
-#else
+	else if (lu1->down.magic_p && *lu1->down.magic_p == NMG_EDGEUSE_MAGIC) {
 		/* delete all edgeuse in the loopuse (&mate) */
 		while (lu1->down.eu_p)
 			nmg_keu(lu1->down.eu_p);
-#endif
 	}
 	else
 		rt_bomb("unknown type for loopuse child\n");
@@ -757,7 +723,7 @@ struct loopuse *lu1;
 	else if (*lu1->up.magic_p == NMG_FACEUSE_MAGIC) {
 		fu = lu1->up.fu_p;
 		fu->lu_p = lu1;
-		DLLRM(fu->lu_p, p);
+ 		DLLRM(fu->lu_p, p);
 		if (fu->lu_p == p) fu->lu_p = (struct loopuse *)NULL;
 
 		fu = lu2->up.fu_p;
