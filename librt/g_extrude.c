@@ -769,7 +769,7 @@ struct seg		*seghead;
 					for( j=0 ; j<dist_count ; j++ ) {
 						point2d_t to_pt;
 						V2SUB2( to_pt, intercept[j], ray_start );
-						dists[j] = VDOT( to_pt, ray_dir_unit) / diff;
+						dists[j] = V2DOT( to_pt, ray_dir_unit) / diff;
 					}
 					bu_free( (char *)intercept, "Bezier intercept" );
 					surfno = BEZIER_SEG;
