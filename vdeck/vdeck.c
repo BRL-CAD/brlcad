@@ -25,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	Derived from KARDS, written by Keith Applin.
 
 	Generate a COM-GEOM card images suitable for input to gift5
-	(also gift(1V)) from a vged(1V) target description.
+	(also gift(1V)) from an mged(1V) target description.
 
 	There are 3 files generated at a time, the Solid table, Region table,
 	and Ident table, which when concatenated in that order, make a
@@ -618,9 +618,11 @@ next_one:
 		addhalf( &sol, (struct rt_half_internal *)intern.idb_ptr,
 		    dp->d_namep, stp->st_bit+delsol );
 		break;
-	case ID_PIPE:
-		/* XXX */
 	case ID_ARBN:
+		addarbn( &sol, (struct rt_arbn_internal *)intern.idb_ptr,
+		    dp->d_namep, stp->st_bit+delsol );
+		break;
+	case ID_PIPE:
 		/* XXX */
 	default:
 		(void) fprintf( stderr,
@@ -723,6 +725,42 @@ int			num;
 	vls_blanks( v, 2*10 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n" );
+}
+
+/*
+ *			A D D A R B N
+ */
+addarbn( v, gp, name, num )
+struct rt_vls		*v;
+struct rt_arbn_internal	*gp;
+char			*name;
+int			num;
+{
+	register int	i;
+
+	RT_VLS_CHECK(v);
+	RT_ARBN_CK_MAGIC(gp);
+
+	/* nverts, nverts_index_nums, nplane_eqns, naz_el */
+	vls_itoa( v, num, 5 );
+	rt_vls_strcat( v, "arbn " );		/* 5 */
+	vls_itoa( v, 0, 10 );			/* vertex points, 2/card */
+	vls_itoa( v, 0, 10 );			/* vertex index #, 6/card */
+	vls_itoa( v, gp->neqn, 10 );		/* plane eqn, 1/card */
+	vls_itoa( v, 0, 10 );			/* az/el & index #, 2/card */
+	vls_blanks( v, 20 );
+	rt_vls_strcat( v, name );
+	rt_vls_strcat( v, "\n" );
+
+	for( i=0; i < gp->neqn; i++ )  {
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_vec( v, gp->eqn[i], 10, 4 );
+		vls_ftoa_cvt( v, gp->eqn[i][3], 10, 4 );
+		vls_blanks( v, 2*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+	}
 }
 
 static void
@@ -936,24 +974,18 @@ int			num;
 	mcxd = MAGNITUDE( cxd );
 	mh = MAGNITUDE( gp->h );
 
-	/* Tec if ratio top and bot vectors equal and base parallel to top.
+	if( ma <= 0.0 || mb <= 0.0 )  {
+		fprintf(stderr, "addtgc(%s): ma=%e, mb=%e, skipping\n", ma, mb );
+		return;
+	}
+
+	/* TEC if ratio top and bot vectors equal and base parallel to top.
 	 */
-	if( mc == 0.0 )  {
-		(void) fprintf( stderr,
-		    "Error in TGC, C vector has zero magnitude!\n"
-		    );
-		return;
-	}
-	if( md == 0.0 )  {
-		(void) fprintf( stderr,
-		    "Error in TGC, D vector has zero magnitude!\n"
-		    );
-		return;
-	}
-	if(	fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON
-	    &&  fabs( fabs(VDOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
-	    )
+	if( mc != 0.0 && md != 0.0 &&
+	    fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON &&
+	    fabs( fabs(VDOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON )  {
 		cgtype = TEC;
+	}
 
 	/* Check for right cylinder.					*/
 	if( fabs( fabs(VDOT(gp->h,axb)) - (mh*maxb) ) < CONV_EPSILON )  {
@@ -1206,7 +1238,7 @@ register char *prefix;
 	ewrite( solfp, LF, 1 );
 
 	/* Save space for number of solids and regions.			*/
-	savsol = lseek( solfp, 0L, 1 );
+	savsol = ftell( solfp );
 	blank_fill( solfp, 10 );
 	ewrite( solfp, LF, 1 );
 
@@ -1254,7 +1286,7 @@ register char *prefix;
 	}
 
 	/* Go back, and add number of solids and regions on second card. */
-	(void) lseek( solfp, savsol, 0 );
+	fseek( solfp, savsol, 0 );
 	itoa( nns, buff, 5 );
 	ewrite( solfp, buff, 5 );
 	itoa( nnr, buff, 5 );
