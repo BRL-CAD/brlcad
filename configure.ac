@@ -1272,7 +1272,7 @@ AC_C_CONST
 AC_C_VOLATILE
 AC_C_INLINE
 AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), 
-	       AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique),
+	       AC_DEFINE(REVERSE_IEEE,,64b floating point storage technique),
 	       AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
 	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
 
