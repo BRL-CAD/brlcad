@@ -44,7 +44,7 @@ static void		DupCursorObjProc _ANSI_ARGS_((Tcl_Obj *srcObjPtr,
 			    Tcl_Obj *dupObjPtr));
 static void		FreeCursor _ANSI_ARGS_((TkCursor *cursorPtr));
 static void		FreeCursorObjProc _ANSI_ARGS_((Tcl_Obj *objPtr));
-static TkCursor *	GetCursor _ANSI_ARGS_((Tcl_Interp *interp,
+static TkCursor *	TkcGetCursor _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window tkwin, CONST char *name));
 static TkCursor *	GetCursorFromObj _ANSI_ARGS_((Tk_Window tkwin,
 			    Tcl_Obj *objPtr));
@@ -147,10 +147,10 @@ Tk_AllocCursorFromObj(interp, tkwin, objPtr)
     }
 
     /*
-     * Still no luck.  Call GetCursor to allocate a new TkCursor object.
+     * Still no luck.  Call TkcGetCursor to allocate a new TkCursor object.
      */
 
-    cursorPtr = GetCursor(interp, tkwin, Tcl_GetString(objPtr));
+    cursorPtr = TkcGetCursor(interp, tkwin, Tcl_GetString(objPtr));
     objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) cursorPtr;
     if (cursorPtr == NULL) {
 	return None;
@@ -192,7 +192,7 @@ Tk_GetCursor(interp, tkwin, string)
     Tk_Uid string;		/* Description of cursor.  See manual entry
 				 * for details on legal syntax. */
 {
-    TkCursor *cursorPtr = GetCursor(interp, tkwin, string);
+    TkCursor *cursorPtr = TkcGetCursor(interp, tkwin, string);
     if (cursorPtr == NULL) {
 	return None;
     }
@@ -202,7 +202,7 @@ Tk_GetCursor(interp, tkwin, string)
 /*
  *----------------------------------------------------------------------
  *
- * GetCursor --
+ * TkcGetCursor --
  *
  *	Given a string describing a cursor, locate (or create if necessary)
  *	a cursor that fits the description. This routine returns the
@@ -227,7 +227,7 @@ Tk_GetCursor(interp, tkwin, string)
  */
 
 static TkCursor *
-GetCursor(interp, tkwin, string)
+TkcGetCursor(interp, tkwin, string)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting. */
     Tk_Window tkwin;		/* Window in which cursor will be used. */
     CONST char *string;		/* Description of cursor.  See manual entry

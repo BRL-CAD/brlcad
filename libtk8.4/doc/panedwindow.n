@@ -83,11 +83,7 @@ Add one or more windows to the panedwindow, each in a separate pane.
 The arguments consist of the names of one or more windows
 followed by pairs of arguments that specify how to manage the windows.
 \fIOption\fR may have any of the values accepted by the
-\fBconfigure\fR subcommand.  When adding a new window that has not yet
-been mapped, and \fBupdate idletasks\fR call is required for that window
-to report its default requested geometry correctly to the panedwindow
-widget.  This is not necessary if you are specifying \fI\-width\fR and
-\fI\-height\fR.
+\fBconfigure\fR subcommand.
 .TP
 \fIpathName \fBcget \fIoption\fR
 Returns the current value of the configuration option given by

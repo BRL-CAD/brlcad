@@ -547,7 +547,7 @@ fi
 TK_VERSION=8.4
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=4
-TK_PATCH_LEVEL=".2"
+TK_PATCH_LEVEL=".4"
 VERSION=${TK_VERSION}
 LOCALES="cs de el en en_gb es fr it nl ru"
 
@@ -3467,7 +3467,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-  LIBS="-lieee  $LIBS"
+LIBS="-lieee  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 3473 "configure"
 #include "confdefs.h"
@@ -3491,7 +3491,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-#  MATH_LIBS="-lieee $MATH_LIBS" -- sp3 hack
+  MATH_LIBS="-lieee $MATH_LIBS"
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -4458,7 +4458,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-# LIBS="-lXbsd  $LIBS" -- sp3 hack 
+LIBS="-lXbsd  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 4464 "configure"
 #include "confdefs.h"
@@ -4482,7 +4482,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-#  LIBS="$LIBS -lXbsd" -- sp3 hack
+  LIBS="$LIBS -lXbsd"
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -4831,7 +4831,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-# LIBS="-lieee  $LIBS" -- sp3 hack 
+LIBS="-lieee  $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 4837 "configure"
 #include "confdefs.h"
@@ -4855,7 +4855,7 @@ LIBS="$ac_save_LIBS"
 fi
 if eval "test \"`echo '$ac_cv_lib_'$ac_lib_var`\" = yes"; then
   echo "$ac_t""yes" 1>&6
-#   MATH_LIBS="-lieee $MATH_LIBS" -- sp3 hack 
+  MATH_LIBS="-lieee $MATH_LIBS"
 else
   echo "$ac_t""no" 1>&6
 fi

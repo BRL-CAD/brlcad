@@ -424,6 +424,14 @@ Tk_PanedWindowObjCmd(clientData, interp, objc, objv)
     }
 
     pwPtr->proxywin = Tk_CreateAnonymousWindow(interp, parent, (char *) NULL);
+    /*
+     * The proxy window has to be able to share GCs with the main
+     * panedwindow despite being children of windows with potentially
+     * different characteristics, and it looks better that way too.
+     * [Bug 702230]
+     */
+    Tk_SetWindowVisual(pwPtr->proxywin,
+	    Tk_Visual(tkwin), Tk_Depth(tkwin), Tk_Colormap(tkwin));
     Tk_CreateEventHandler(pwPtr->proxywin, ExposureMask, ProxyWindowEventProc,
 	    (ClientData) pwPtr);
 
@@ -1518,14 +1526,21 @@ PanedWindowReqProc(clientData, tkwin)
     Tk_Window tkwin;		/* Other Tk-related information
 				 * about the window. */
 {
-    Slave *panePtr = (Slave *) clientData;
-    PanedWindow *pwPtr = (PanedWindow *) (panePtr->masterPtr);
+    Slave *slavePtr = (Slave *) clientData;
+    PanedWindow *pwPtr = (PanedWindow *) (slavePtr->masterPtr);
     if (Tk_IsMapped(pwPtr->tkwin)) {
 	if (!(pwPtr->flags & RESIZE_PENDING)) {
 	    pwPtr->flags |= RESIZE_PENDING;
 	    Tcl_DoWhenIdle(ArrangePanes, (ClientData) pwPtr);
 	}
     } else {
+	int doubleBw = 2 * Tk_Changes(slavePtr->tkwin)->border_width;
+	if (slavePtr->width <= 0) {
+	    slavePtr->paneWidth = Tk_ReqWidth(slavePtr->tkwin) + doubleBw;
+	}
+	if (slavePtr->height <= 0) {
+	    slavePtr->paneHeight = Tk_ReqHeight(slavePtr->tkwin) + doubleBw;
+	}
 	ComputeGeometry(pwPtr);
     }
 }
@@ -1636,9 +1651,12 @@ ArrangePanes(clientData)
 	if (pwPtr->orient == ORIENT_HORIZONTAL) {
 	    paneWidth = slavePtr->paneWidth;
 	    if (i == pwPtr->numSlaves - 1 && Tk_IsMapped(pwPtr->tkwin)) {
-		if (Tk_Width(pwPtr->tkwin) > Tk_ReqWidth(pwPtr->tkwin)) {
+		if (Tk_Width(pwPtr->tkwin) != Tk_ReqWidth(pwPtr->tkwin)) {
 		    paneWidth += Tk_Width(pwPtr->tkwin) -
 			Tk_ReqWidth(pwPtr->tkwin);
+		    if (paneWidth < 0) {
+			paneWidth = 0;
+		    }
 		}
 	    }
 	    paneHeight = Tk_Height(pwPtr->tkwin) - (2 * slavePtr->pady) -
@@ -1646,9 +1664,12 @@ ArrangePanes(clientData)
 	} else {
 	    paneHeight = slavePtr->paneHeight;
 	    if (i == pwPtr->numSlaves - 1 && Tk_IsMapped(pwPtr->tkwin)) {
-		if (Tk_Height(pwPtr->tkwin) > Tk_ReqHeight(pwPtr->tkwin)) {
+		if (Tk_Height(pwPtr->tkwin) != Tk_ReqHeight(pwPtr->tkwin)) {
 		    paneHeight += Tk_Height(pwPtr->tkwin) -
 			Tk_ReqHeight(pwPtr->tkwin);
+		    if (paneHeight < 0) {
+			paneHeight = 0;
+		    }
 		}
 	    }
 	    paneWidth = Tk_Width(pwPtr->tkwin) - (2 * slavePtr->padx) -

@@ -116,6 +116,11 @@ TkpOpenDisplay(
     display->display_name = macScreenName;
     display->qlen = 0;
     display->fd = fd;
+    display->proto_major_version = 10;
+    Gestalt(gestaltQuickdrawVersion, (long*)&display->proto_minor_version);
+    display->proto_minor_version -= gestaltMacOSXQD;
+    display->vendor = "Apple";
+    Gestalt(gestaltSystemVersion, (long*)&display->release);
     
     screen->root = ROOT_ID;
     screen->display = display;
@@ -648,9 +653,9 @@ TkGetServerInfo(
     char buffer[8 + TCL_INTEGER_SPACE * 2];
     char buffer2[TCL_INTEGER_SPACE];
 
-    sprintf(buffer, "X%dR%d ", ProtocolVersion(Tk_Display(tkwin)),
+    sprintf(buffer, "QD%dR%x ", ProtocolVersion(Tk_Display(tkwin)),
 	    ProtocolRevision(Tk_Display(tkwin)));
-    sprintf(buffer2, " %d", VendorRelease(Tk_Display(tkwin)));
+    sprintf(buffer2, " %x", VendorRelease(Tk_Display(tkwin)));
     Tcl_AppendResult(interp, buffer, ServerVendor(Tk_Display(tkwin)),
 	    buffer2, (char *) NULL);
 }

@@ -2953,7 +2953,6 @@ Initialize(interp)
 	while (1) {
 	    master = Tcl_GetMaster(master);
 	    if (master == NULL) {
-		Tcl_DStringFree(&ds);
 		Tcl_AppendResult(interp, "NULL master", (char *) NULL);
 		Tcl_MutexUnlock(&windowMutex);
 		return TCL_ERROR;

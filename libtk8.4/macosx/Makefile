@@ -10,7 +10,12 @@
 INSTALL_ROOT	?=
 
 BUILD_DIR	?= ${CURDIR}/../../build
+SYMROOT		?= ${BUILD_DIR}/${PROJECT}
 
+TCL_FRAMEWORK_DIR	?= ${BUILD_DIR}/tcl
+TCLSH_DIR	?= ${TCL_FRAMEWORK_DIR}
+
+PROJECT		= tk
 TARGET		= Wish
 
 DEVBUILDSTYLE	= Development
@@ -18,7 +23,9 @@ DEPBUILDSTYLE	= Deployment
 
 PBXBUILD	= /usr/bin/pbxbuild
 
-BUILD		= ${PBXBUILD} SYMROOT="${BUILD_DIR}" -target "${TARGET}"
+BUILD		= ${PBXBUILD} SYMROOT="${SYMROOT}" -target "${TARGET}" \
+			TCL_FRAMEWORK_DIR="${TCL_FRAMEWORK_DIR}" \
+			TCLSH_DIR="${TCLSH_DIR}"
 
 DEVBUILD	= ${BUILD} -buildstyle "${DEVBUILDSTYLE}"
 DEPBUILD	= ${BUILD} -buildstyle "${DEPBUILDSTYLE}"
@@ -73,10 +80,6 @@ clean-deploy:
 
 ################################################################################
 
-forceRelink:
-	@-cd ${BUILD_DIR}; \
-	rm -rf Tk.framework Wish\ Shell.app libtkstub8.4.a
-
 cleanup-embedded:
 	@-cd ${INSTALL_ROOT}; \
 	chmod -RH u+w Library/Frameworks/Tcl.framework; \
@@ -89,7 +92,6 @@ cleanup-embedded:
 
 .PHONY: all install embedded clean develop deploy install-develop install-deploy \
 embedded-develop embedded-deploy install-embedded-develop install-embedded-deploy \
-clean-develop clean-deploy forceRelinkTcl \
-cleanup-embedded
+clean-develop clean-deploy cleanup-embedded
 
 ################################################################################

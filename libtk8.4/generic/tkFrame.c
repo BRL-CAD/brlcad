@@ -594,7 +594,7 @@ CreateFrame(clientData, interp, objc, objv, type, appName)
     if (useOption == NULL) {
 	useOption = Tk_GetOption(new, "use", "Use");
     }
-    if (useOption != NULL) {
+    if ((useOption != NULL) && (*useOption != 0)) {
 	if (TkpUseWindow(interp, new, useOption) != TCL_OK) {
 	    goto error;
 	}
@@ -604,6 +604,9 @@ CreateFrame(clientData, interp, objc, objv, type, appName)
     }
     if (colormapName == NULL) {
 	colormapName = Tk_GetOption(new, "colormap", "Colormap");
+    }
+    if ((colormapName != NULL) && (*colormapName == 0)) {
+	colormapName = NULL;
     }
     if (visualName != NULL) {
 	visual = Tk_GetVisual(interp, new, visualName, &depth,

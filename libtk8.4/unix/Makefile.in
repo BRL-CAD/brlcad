@@ -1069,10 +1069,8 @@ DISTNAME =	tk${VERSION}${PATCH_LEVEL}
 ZIPNAME =	tk${MAJOR_VERSION}${MINOR_VERSION}${PATCH_LEVEL}-src.zip
 DISTDIR =	$(DISTROOT)/$(DISTNAME)
 TCLDIR = 	@TCL_SRC_DIR@
-$(UNIX_DIR)/configure: $(UNIX_DIR)/configure.in
-	autoconf $(UNIX_DIR)/configure.in > $(UNIX_DIR)/configure
 
-dist:   $(UNIX_DIR)/configure mklinks
+dist: mklinks
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)
 	mkdir $(DISTDIR)/unix

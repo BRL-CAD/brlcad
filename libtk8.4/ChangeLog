@@ -1,3 +1,315 @@
+2003-07-21  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	*** 8.4.4 TAGGED FOR RELEASE ***
+
+	* changes: updated for 8.4.4 release
+
+2003-07-20  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/buildTkConfig.tcl: fix to TK_BUILD_* ref generation
+	broken by changes to tcl buildsystem.
+
+2003-07-19  Pat Thoyts  <patthoyts@users.sourceforge.net>
+
+	* library/scale.tcl: Fix for bug 706765 to correctly handle the 
+	-sliderrelief option while moving the thumb.
+
+2003-07-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* unix/tkUnixFont.c (Tk_DrawChars): do not make XGetGeometry call
+	that prevents overwidth lines as it requires a roundtrip call to
+	the X server for every string drawn.  Hard-code max width to 32768
+	until a beter solution to get max width is made.
+
+	* library/panedwindow.tcl: use widget-specific Priv slots for
+	pwAfterId and panecursor items to correctly handle cursor changes
+	with adjacant panedwindows.
+
+	* generic/tkEvent.c (Tk_HandleEvent): correct XCreateIC call for
+	TK_XIM_SPOT usage. [Bug 742660] (takahashi)
+
+	* win/tkWinCursor.c (TkGetCursorByName): Fix bug 420510 to provide
+	consistency between unix and windows -cursor option. (thoyts)
+
+	* win/tkWinDialog.c: doubled the TK_MULTI_MAX_PATH value to ~10K.
+	This is a short-term solution until the -multiple option is
+	extended.  [Bug 641261]
+
+2003-07-18  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* tests/panedwindow.test (panedwindow-30.2): 
+	* generic/tkPanedWindow.c (Tk_PanedWindowObjCmd): Ensure that we
+	can share GCs between a panedwindow and its sash proxy, even if
+	the panedwindow is in a toplevel with a different visual. [Bug 702230]
+
+2003-07-17  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Makefile: Changes for new tcl buildsystem.
+
+	* macosx/Wish.pbproj/jingham.pbxuser:
+	* macosx/Wish.pbproj/project.pbxproj:
+	Changes for new tcl buildsystem.
+	Changed build to include tk specific html help in Tk.framework
+	instead of Tcl.framework.
+	Set default SYMROOT in target options to simplify setting up PB
+	(manually setting common build folder for tcl & tk no longer needed).
+
+	* macosx/README: Updated info for changes to buildsystem,
+	html help location and PB setup.
+
+2003-07-17  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* doc/photo.n: [$photo put] has been able to take rectangles of
+	pixel colours, specified as lists of lists, for years.  Now this
+	is a documented feature.  [Bug 728952]
+
+	* generic/tkPanedWindow.c (PanedWindowReqProc): Fix from Eric
+	Boudaillier so panedwindows get their geometry right even when
+	their children don't know their size initially. [Bug 738143]
+	* doc/panedwindow.n: Removed sentences about the use of [update
+	idletasks] with this command, as that is no longer necessary with
+	the fix from Bug 738143. [Bug 747814]
+
+	* generic/tkImgPhoto.c (ImgPhotoCmd): Rewrote subcommand processing
+	to never jump to the end of the switch.  I find that confusing as
+	I can't see whether there's processing still to be done from a
+	quick glance at the code, unlike with a direct return. [Bug 771988]
+	(ImgPhotoCmd, ImgPhotoSetSize, ImgPhotoInstanceSetSize): Try harder
+	to avoid zero-length mallocs()... [Bug 404421]
+
+2003-07-16  Don Porter  <dgp@users.sourceforge.net>
+
+	* generic/tkPack.c (ConfigureSlaves): silence compiler warning
+	[Bug 771982]
+
+2003-07-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* win/tkWinImage.c (XGetImage): correct init of biSizeImage in
+	bitmap header. [Bug 703697] (cap)
+
+2003-07-17  Peter Spjuth  <peter.spjuth@space.se>
+
+	* tests/frame.test:
+	* generic/tkFrame.c (CreateFrame): Make sure all options can be set
+	to their default value. [Bug #697652]
+
+2003-07-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkPanedWindow.c (ArrangePanes): Ensure that the last pane
+	* tests/panedwindow.test: shrinks instead of being clipped when
+	resized below the reqsize. [Bug 748277] (spjuth)
+
+	* generic/tkWindow.c (Initialize): do not free uninit'ed dstring.
+	[Bug 755906] (mistachkin)
+
+2003-07-15  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* unix/tkUnixEvent.c (TkpCloseDisplay): Don't
+	test for XCloseIM bug when the XFree86 version
+	is newer than 4.0 since the layout of the
+	XIM structure has changed. The check is not
+	needed for newer XFree86 releases since
+	the bug we are checking for was fixed in
+	the 4.2.99.2 release. [Bug 755530]
+
+2003-07-15  Don Porter  <dgp@users.sourceforge.net>
+
+	* README:		Bumped patchlevel to 8.4.4 in preparation
+	* generic/tk.h:		for the Tk 8.4.4 release.
+	* macosx/Wish.pbproj/project.pbxproj:
+	* unix/configure.in:
+	* unix/tk.spec:
+	* win/configure.in:
+
+	* unix/configure:	autoconf (2.13)
+	* win/configure:
+
+2003-07-15  Vince Darley <vincentdarley@users.sourceforge.net>
+
+	* generic/tkMenu.c
+	* generic/tkMenu.h
+	* generic/tkMenuDraw.c: 
+	* tests/menu.test: fixed complex bug in menu clone cleanup
+	[Bug#465324] and removed 'knownBug' from a test.
+        (This was applied to cvs head on 2003-05-03).
+	
+2003-07-09  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* tests/send.test: Strengthened constraints to stop accidental
+	smashing of Xserver access; some systems (*ahem* mine *ahem*)
+	require xhost-style security for all use...  :^/
+
+2003-07-07  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* generic/tkImage.c (TkDeleteAllImages,etc.): Stopped the deleting
+	of hash entries from a table that has just been deleted by this
+	function when some images are Tcl_Preserve()d...  [Bug 749353]
+
+2003-05-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	*** 8.4.3 TAGGED FOR RELEASE ***
+
+	* changes: updated for 8.4.3
+
+	* unix/Makefile.in: do not run autoconf during 'make dist' as the
+	configure is now a CVS-maintained file and should be up-to-date.
+
+2003-05-19  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Wish.pbproj/project.pbxproj: changed tkConfig.sh location
+	in versioned framework subdirectories to be identical to location
+	in framework toplevel; fixed stub library symbolic links to be
+	tk version specific.
+
+2003-05-15  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* README:            Bumped version to 8.4.3
+	* generic/tk.h:
+	* macosx/Wish.pbproj/project.pbxproj:
+	* unix/configure:
+	* unix/configure.in:
+	* unix/tk.spec:
+	* win/configure:
+	* win/configure.in:
+
+	* unix/tkUnixFont.c: use gb2312-raw as the alias for gb2312*
+	charset fonts.  gb2312.enc was made to be euc-cn for Tcl because
+	that is what is most often meant, but X really wants the original
+	(-raw) gb2312 encoding. [Bug 557030]
+
+2003-05-14  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/msgs/fr.msg: updated msg catalog. [Bug #737790] (zolli)
+
+2003-05-13  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/tkMacOSXInit.c (TkpInit): use new versioned bundle 
+	resource API to get tk runtime library for TK_VERSION. [Bug 736774]
+
+2003-05-13  Daniel Steffen  <das@users.sourceforge.net>
+
+	backport of Mac OS X specific changes on trunk since 8.4.2:
+	
+	* macosx/tkMacOSXClipboard.c (TkSelGetSelection): Convert
+	'\r' to '\n' on the way into Tcl. (ingham)
+
+	* macosx/tkMacOSXMenu.c (EventuallyInvokeMenu): New function,
+	used to invoke menu commands at idle time.
+	(TkMacOSXDispatchMenuEvent): Don't immediately dispatch menu
+	commands, wait till the idle loop to do so.  This is more like
+	what is done on Windows, and avoids the crash from destroying
+	a menu in it's command. (ingham)
+
+	* macosx/tkMacOSXHLEvents.c (ReallyKillMe): Don't force the shell
+	to exit.  According to the OS X HI guidelines, it should be
+	possible to cancel an attempt to quit, and if we force the kill,
+	here, it would not be possible to implement this. (ingham)
+
+	* macosx/tkMacOSXApplication.r (removed):
+	* macosx/tkMacOSXLibrary.r (removed):
+	* macosx/tkMacOSXResource.r (removed):
+	* macosx/Wish.pbproj/project.pbxproj:
+	* macosx/tkAboutDlg.r: updated copyrights, cleaned up about box,
+	removed obsolete unused resource files. (steffen)
+
+2003-05-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkCanvPoly.c (PolygonToPostscript):
+	* tests/canvPs.test: correct crash when generating postscript for
+	a single-line polygon (point) with no color. [Bug #734498] (wilm)
+
+2003-04-30  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* macosx/tkMacOSXButton.c (TkpDisplayButton): correct typo for
+	stippleGC [Bug #730124].
+
+2003-04-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkButton.h:                         Rewrote the handling
+	* generic/tkButton.c (TkButtonWorldChanged):  of compound *buttons
+	* mac/tkMacButton.c (TkpDisplayButton):       to correctly display
+	* macosx/tkMacOSXButton.c (TkpDisplayButton): mixture of disabledfg,
+	* unix/tkUnixButton.c (TkpDisplayButton):     selectcolor, indicator,
+	* win/tkWinButton.c (TkpDisplayButton):       etc.  *buttons will
+	now only stipple the image, unless no disabledfg is given, in which 
+	case it will stipple the whole button.
+
+	* library/bgerror.tcl: make bgerror dialog topmost on Windows to
+	prevent it being covered by other windows.
+
+	* unix/tkUnixButton.c (TkpDisplayButton): Use the normalTextGc when
+	* win/tkWinButton.c (TkpDisplayButton):   displaying disabled text
+	that have images, as they get a gray50 stipple as well and the
+	disabledGc is not set up correctly for font drawing. [Bug #477740]
+
+2003-04-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkCanvBmap.c: s/CreateBitmap/TkcCreateBitmap as Windows
+	has a CreateBitmap function already.
+
+	* generic/tkCursor.c: s/GetCursor/TkcGetCursor as Windows has a
+	GetCursor func already, which causes compiler warnings.
+
+2003-04-02  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* win/configure: Regen.
+	* win/configure.in: Set stub lib flag based
+	on new LIBFLAGSUFFIX variable.
+	* win/tcl.m4: Update from Tcl to get new
+	LIBFLAGSUFFIX variable.
+
+2003-04-02  Mo DeJong  <mdejong@users.sourceforge.net>
+
+	* win/configure: Regen.
+	* win/configure.in: Don't set TCL_DLL_FILE,
+	TCL_LIB_FILE, TCL_STUB_LIB_FILE, TCL_STUB_LIB_FLAG,
+	and TCL_BUILD_STUB_LIB_SPEC. These variables are
+	already set in tclConfig.sh.
+	[Bug 691908]
+
+2003-03-22  Kevin Kenny  <kennykb@acm.org>
+
+	* win/makefile.vc:
+	* win/rules.vc: Corrected several problems that prevented
+	OPTS=symbols from building properly. [Patch 707792] Thanks
+	to Joe Mistachkin for the fixes.
+	
+2003-03-18  Don Porter  <dgp@users.sourceforge.net>
+
+	* tests/unixWm.test (unixWm-41.2): Corrected typo in 2003-03-13
+	commit.  Thanks Larry Virden.  [Bug 705567]
+
+2003-03-18  Daniel Steffen  <das@users.sourceforge.net>
+
+	* macosx/Wish.pbproj/project.pbxproj:
+	* macosx/Makefile:
+	* macosx/README: added support for giving 'make' the location
+	of Tcl.framework and tclsh to build and link against.
+
+	* macosx/tkMacOSXXStubs.c: fixed crash in [winfo server].
+
+2003-03-14  Donal K. Fellows  <fellowsd@cs.man.ac.uk>
+
+	* library/msgbox.tcl (Tk::MessageBox): Stop buttons from being
+	very wide when a messageBox has a lot of content. [Bug #701812]
+
+2003-03-13  Don Porter  <dgp@users.sourceforge.net>
+
+	* tests/unixWm.test:  Constrained all tests older than revision 1.21
+	to run only on Unix.  Alternative approach did not match maintainer
+	habits.
+	* tests/spinbox.test (spinbox-17.4): Avoid long failure message.
+
+2003-03-13  Kevin Kenny  <kennykb@users.sourceforge.net>
+
+	* win/makefile.vc: Backed the version to 8.4 on the 8.4 branch.
+	(I just loathe sticky tags).
+	
+2002-03-11  Kevin Kenny  <kennykb@users.sourceforge.net>
+
+	* win/makefile.vc: Backported the code that makes the makefile
+	build pkgIndex.tcl as part of the install step.
+	
 2003-03-03  Jeff Hobbs  <jeffh@ActiveState.com>
 
 	*** 8.4.2 TAGGED FOR RELEASE ***

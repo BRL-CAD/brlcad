@@ -140,7 +140,10 @@ proc ::tk::dialog::error::bgerror err {
     wm iconname .bgerrorDialog ErrorDialog
     wm protocol .bgerrorDialog WM_DELETE_WINDOW { }
 
-    if {($tcl_platform(platform) eq "macintosh") 
+    if {$tcl_platform(platform) eq "windows"} {
+	wm attributes .bgerrorDialog -topmost 1
+    }
+    if {($tcl_platform(platform) eq "macintosh")
             || ([tk windowingsystem] eq "aqua")} {
 	::tk::unsupported::MacWindowStyle style .bgerrorDialog dBoxProc
     }

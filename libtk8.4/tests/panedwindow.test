@@ -1874,7 +1874,28 @@ test panedwindow-22.11 {ArrangePanes, panes with width <= 0 are unmapped} {
     destroy .p .p.f1 .p.f2
     set result
 } {1 0}
-    
+test panedwindow-22.12 {ArrangePanes, last pane shrinks} {
+    panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 2
+    .p add [frame .f1 -width 20 -height 20 -bg blue] \
+	    [frame .f2 -width 20 -height 20 -bg red] -sticky nsew
+    place .p -width 40 -x 0 -y 0
+    update
+    set result [winfo width .f2]
+    destroy .p .f1 .f2
+    set result
+} 18
+test panedwindow-22.13 {ArrangePanes, last pane shrinks} {
+    panedwindow .p -showhandle false -borderwidth 0 -sashpad 0 -sashwidth 2 \
+            -orient vertical
+    .p add [frame .f1 -width 20 -height 20 -bg blue] \
+	    [frame .f2 -width 20 -height 20 -bg red] -sticky nsew
+    place .p -height 40 -x 0 -y 0
+    update
+    set result [winfo height .f2]
+    destroy .p .f1 .f2
+    set result
+} 18
+
 test panedwindow-23.1 {PanedWindowReqProc, react to slave geometry changes} {
     # Basically just want to make sure that the PanedWindowReqProc is called
     panedwindow .p -borderwidth 0 -sashpad 0 -sashwidth 2
@@ -2468,6 +2489,23 @@ test panedwindow-30.1 {display on depths other than the default one} {
 	toplevel .t -visual {truecolor 24}
 	pack [panedwindow .t.p]
 	.t.p add [frame .t.p.f1] [frame .t.p.f2]
+	update
+	# If we got here, we didn't crash and that's good
+    }
+    -cleanup {destroy .t}
+    -result {}
+}
+test panedwindow-30.2 {display on depths other than the default one} {
+    -constraints {pseudocolor8 haveTruecolor24}
+    -body {
+	toplevel .t -visual {pseudocolor 8}
+	pack [frame .t.f -visual {truecolor 24}]
+	pack [panedwindow .t.f.p]
+	.t.f.p add [frame .t.f.p.f1 -width 5] [frame .t.f.p.f2 -width 5]
+	update
+	.t.f.p proxy place 1 1
+	update
+	.t.f.p proxy forget
 	update
 	# If we got here, we didn't crash and that's good
     }

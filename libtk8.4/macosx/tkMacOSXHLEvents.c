@@ -404,13 +404,11 @@ ScriptHandler (const AppleEvent * event, AppleEvent * reply, long handlerRefcon)
  *
  * ReallyKillMe --
  *
- *        This proc tries to kill the shell by running exit, and if that 
- *      has not succeeded (e.g. because someone has renamed the exit 
- *      command), calls Tcl_Exit to really kill the shell.  Called from 
- *      an event scheduled by the "Quit" AppleEvent handler.
+ *      This proc tries to kill the shell by running exit,
+ *      called from an event scheduled by the "Quit" AppleEvent handler.
  *
  * Results:
- *        Kills the shell.
+ *        Runs the "exit" command which might kill the shell.
  *
  * Side effects:
  *        None.
@@ -425,7 +423,6 @@ ReallyKillMe(Tcl_Event *eventPtr, int flags)
     if (interp != NULL) {
         Tcl_GlobalEval(interp, "exit");
     }
-    Tcl_Exit(0);
     
     return 1;
 }

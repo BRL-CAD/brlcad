@@ -245,9 +245,13 @@ Sets pixels in \fI imageName\fR to the data specified in \fIdata\fR.
 This command first searches the list of image file format handlers for
 a handler that can interpret the data in \fIdata\fR, and then reads
 the image encoded within into \fIimageName\fR (the destination image).
-Note that \fIdata\fR may also be a single color name if you wish to
-fill a rectangular region with that color.  The following options may
-be specified:
+If \fIdata\fR does not match any known format, an attempt to interpret
+it as a (top-to-bottom) list of scan-lines is made, with each
+scan-line being a (left-to-right) list of pixel colors (see
+\fBTk_GetColor\fR for a description of valid colors.)  Every scan-line
+must be of the same length.  Note that when \fIdata\fR is a single
+color name, you are instructing Tk to fill a rectangular region with
+that color.  The following options may be specified:
 .RS
 .TP
 \fB\-format \fIformat-name\fR
@@ -257,10 +261,13 @@ Specifically, only image file format handlers whose names begin with
 format handler to read the data.
 .TP
 \fB\-to \fIx1 y1\fR ?\fIx2 y2\fR?
-Specifies the coordinates of the top-left corner (\fIx1\fR,\fIy1\fR) of the
-region of \fIimageName\fR into which data from \fIfilename\fR are to be
-read.  The default is (0,0).  If \fIx2\fR,\fIy2\fR is given and \fIdata\fR
-is one color value, then a region extending to the bottom-right corner
+Specifies the coordinates of the top-left corner (\fIx1\fR,\fIy1\fR)
+of the region of \fIimageName\fR into which data from \fIfilename\fR
+are to be read.  The default is (0,0).  If \fIx2\fR,\fIy2\fR is given
+and \fIdata\fR is not large enough to cover the rectangle specified by
+this option, the image data extracted will be tiled so it covers the
+entire destination rectangle.  Note that if \fIdata\fR specifies a
+single color value, then a region extending to the bottom-right corner
 represented by (\fIx2\fR,\fIy2\fR) will be filled with that color.
 .RE
 .TP
@@ -320,6 +327,7 @@ the photo image.  Several subcommands are available:
 \fIimageName \fBtransparency get \fIx y\fR
 Returns a boolean indicating if the pixel at (\fIx\fR,\fIy\fR) is
 transparent.
+.TP
 \fIimageName \fBtransparency set \fIx y boolean\fR
 Makes the pixel at (\fIx\fR,\fIy\fR) transparent if \fIboolean\fR is
 true, and makes that pixel opaque otherwise.

@@ -373,9 +373,17 @@ cflags = $(cflags) -QIA64_Bx
 !endif
 
 !if $(MSVCRT)
-crt = -MD$(DBGX)
+!if "$(DBGX)" == ""
+crt = -MD
 !else
-crt = -MT$(DBGX)
+crt = -MDd
+!endif
+!else
+!if "$(DBGX)" == ""
+crt = -MT
+!else
+crt = -MTd
+!endif
 !endif
 
 BASE_CLFAGS	= $(cdebug) $(cflags) $(crt) $(TK_INCLUDES)
@@ -450,9 +458,9 @@ test: setup $(TKTEST) $(TKLIB) $(CAT32)
 	set PATH=$(_TCLDIR)\win\$(BUILDDIRTOP);$(PATH)
 !endif
 !if "$(OS)" == "Windows_NT"  || "$(MSVCDIR)" == "IDE"
-	$(TKTEST) $(ROOT)/tests/all.tcl $(TESTFLAGS) | $(CAT32)
+	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
 !else
-	$(TKTEST) $(ROOT)/tests/all.tcl $(TESTFLAGS) | $(CAT32)
+	$(TKTEST) "$(ROOT)/tests/all.tcl" $(TESTFLAGS) | $(CAT32)
 !endif
 
 runtest: setup $(TKTEST) $(TKLIB) $(CAT32)
@@ -520,6 +528,13 @@ install-binaries:
 !endif
 	@$(CPY) "$(TKIMPLIB)" "$(LIB_INSTALL_DIR)\"
 	@$(CPY) "$(TKSTUBLIB)" "$(LIB_INSTALL_DIR)\"
+!if !$(STATIC_BUILD)
+	@echo Creating package index "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	-del "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo if {[package vcompare [package provide Tcl] $(TCL_DOTVERSION)] != 0} { return } > "$(OUT_DIR)\pkgIndex.tcl"
+	echo package ifneeded Tk $(DOTVERSION) [list load [file join $$dir .. .. bin $(TKLIBNAME)] Tk] >>"$(OUT_DIR)\pkgIndex.tcl"
+	$(CPY) "$(OUT_DIR)\pkgIndex.tcl" "$(SCRIPT_INSTALL_DIR)\"
+!endif
 
 install-libraries:
 	@$(CPY) "$(GENERICDIR)\tk.h" "$(INCLUDE_INSTALL_DIR)\"

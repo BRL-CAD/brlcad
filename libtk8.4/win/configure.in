@@ -11,7 +11,7 @@ AC_PREREQ(2.13)
 TK_VERSION=8.4
 TK_MAJOR_VERSION=8
 TK_MINOR_VERSION=4
-TK_PATCH_LEVEL=".2"
+TK_PATCH_LEVEL=".4"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -155,15 +155,8 @@ eval "TK_STUB_LIB_FILE=${LIBPREFIX}tkstub${VER}${LIBSUFFIX}"
 # I left out the other vars that also need to get defined here.
 # we also need to double check about including DBGX in lib names
 # and spaces in file or directory names for the eval
-eval "TK_STUB_LIB_FLAG=\"-ltkstub${VER}${TCL_DBGX}\""
+eval "TK_STUB_LIB_FLAG=\"-ltkstub${VER}${LIBFLAGSUFFIX}\""
 eval "TK_BUILD_STUB_LIB_SPEC=\"-L`pwd` ${TK_STUB_LIB_FLAG}\""
-
-eval "TCL_DLL_FILE=\"tcl$VER${DLLSUFFIX}\""
-eval "TCL_LIB_FILE=\"${LIBPREFIX}tcl$VER${LIBSUFFIX}\""
-
-eval "TCL_STUB_LIB_FILE=\"${LIBPREFIX}tclstub${VER}${LIBSUFFIX}\""
-eval "TCL_STUB_LIB_FLAG=\"-ltclstub${VER}${TCL_DBGX}\""
-eval "TCL_BUILD_STUB_LIB_SPEC=\"-L`pwd` ${TCL_STUB_LIB_FLAG}\""
 
 eval "DLLSUFFIX=${DLLSUFFIX}"
 eval "LIBPREFIX=${LIBPREFIX}"

@@ -156,7 +156,7 @@ test send-5.4 {ValidateName procedure} {secureserver testsend} {
     winfo interps
 } {test}
 
-if {[testConstraint xhost]} {
+if {[testConstraint nonPortable] && [testConstraint xhost]} {
     winfo interps
     tk appname tktest
     update
@@ -171,12 +171,12 @@ test send-6.1 {ServerSecure procedure} {nonPortable secureserver} {
     set a 44
     list [dobg [list send [tk appname] set a 55]] $a
 } {55 55}
-test send-6.2 {ServerSecure procedure} {nonPortable secureserver} {
+test send-6.2 {ServerSecure procedure} {nonPortable secureserver xhost} {
     set a 22
     exec xhost [exec hostname]
     list [catch {dobg [list send [tk appname] set a 33]} msg] $a $msg
 } {0 22 {X server insecure (must use xauth-style authorization); command ignored}}
-test send-6.3 {ServerSecure procedure} {nonPortable secureserver} {
+test send-6.3 {ServerSecure procedure} {nonPortable secureserver xhost} {
     set a abc
     exec xhost - [exec hostname]
     list [dobg [list send [tk appname] set a new]] $a

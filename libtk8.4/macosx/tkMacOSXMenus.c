@@ -209,7 +209,6 @@ TkMacOSXInitMenus(
     }
     
     DrawMenuBar();
-    TkMacOSXSetHelpMenuItemCount();
     return;
 }
 

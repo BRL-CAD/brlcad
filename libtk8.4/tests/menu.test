@@ -2423,7 +2423,7 @@ test menu-32.7 {DeleteMenuCloneEntries - one entry} {
     .m1 add command -label Hello
     list [catch {.m1 delete Hello} msg] $msg [destroy .m1]
 } {0 {} {}}
-test menu-32.8 {Ensure all menu clone commands are deleted} {knownBug} {
+test menu-32.8 {Ensure all menu clone commands are deleted} {
     # SF bug #465324
     catch {destroy .menubar}
     catch {destroy .menubar.test}

@@ -769,15 +769,26 @@ TkMenuEventProc(clientData, eventPtr)
 	}
     } else if (eventPtr->type == DestroyNotify) {
 	if (menuPtr->tkwin != NULL) {
-	    TkDestroyMenu(menuPtr);
+	    if (!(menuPtr->menuFlags & MENU_DELETION_PENDING)) {
+		TkDestroyMenu(menuPtr);
+	    }
 	    menuPtr->tkwin = NULL;
+	}
+	if (menuPtr->menuFlags & MENU_WIN_DESTRUCTION_PENDING) {
+	    return;
+	}
+	menuPtr->menuFlags |= MENU_WIN_DESTRUCTION_PENDING;
+	if (menuPtr->widgetCmd != NULL) {
 	    Tcl_DeleteCommandFromToken(menuPtr->interp, menuPtr->widgetCmd);
+	    menuPtr->widgetCmd = NULL;
 	}
 	if (menuPtr->menuFlags & REDRAW_PENDING) {
 	    Tcl_CancelIdleCall(DisplayMenu, (ClientData) menuPtr);
+	    menuPtr->menuFlags &= ~REDRAW_PENDING;
 	}
 	if (menuPtr->menuFlags & RESIZE_PENDING) {
 	    Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
+	    menuPtr->menuFlags &= ~RESIZE_PENDING;
 	}
 	Tcl_EventuallyFree((ClientData) menuPtr, TCL_DYNAMIC);
     }

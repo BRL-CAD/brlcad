@@ -699,6 +699,7 @@ ButtonCreate(clientData, interp, objc, objv, type)
     butPtr->normalTextGC = None;
     butPtr->activeTextGC = None;
     butPtr->disabledGC = None;
+    butPtr->stippleGC = None;
     butPtr->gray = None;
     butPtr->copyGC = None;
     butPtr->widthPtr = NULL;
@@ -979,6 +980,9 @@ DestroyButton(butPtr)
     }
     if (butPtr->disabledGC != None) {
 	Tk_FreeGC(butPtr->display, butPtr->disabledGC);
+    }
+    if (butPtr->stippleGC != None) {
+	Tk_FreeGC(butPtr->display, butPtr->stippleGC);
     }
     if (butPtr->gray != None) {
 	Tk_FreeBitmap(butPtr->display, butPtr->gray);
@@ -1337,20 +1341,15 @@ TkButtonWorldChanged(instanceData)
 	butPtr->activeTextGC = newGC;
     }
 
-    /*
-     * Allocate the disabled graphics context, for drawing the widget in
-     * its disabled state
-     */
     gcValues.background = Tk_3DBorderColor(butPtr->normalBorder)->pixel;
-    if ((butPtr->disabledFg != NULL) && (butPtr->imagePtr == NULL)) {
-	gcValues.foreground = butPtr->disabledFg->pixel;
-	mask = GCForeground | GCBackground | GCFont;
-    } else {
+
+    /*
+     * Create the GC that can be used for stippling
+     */
+
+    if (butPtr->stippleGC == None) {
 	gcValues.foreground = gcValues.background;
 	mask = GCForeground;
-	if (butPtr->compound != COMPOUND_NONE) {
-	    mask |= GCFont;
-	}
 	if (butPtr->gray == None) {
 	    butPtr->gray = Tk_GetBitmap(NULL, butPtr->tkwin, "gray50");
 	}
@@ -1359,6 +1358,19 @@ TkButtonWorldChanged(instanceData)
 	    gcValues.stipple = butPtr->gray;
 	    mask |= GCFillStyle | GCStipple;
 	}
+	butPtr->stippleGC = Tk_GetGC(butPtr->tkwin, mask, &gcValues);
+    }
+
+    /*
+     * Allocate the disabled graphics context, for drawing text in
+     * its disabled state.
+     */
+
+    mask = GCForeground | GCBackground | GCFont;
+    if (butPtr->disabledFg != NULL) {
+	gcValues.foreground = butPtr->disabledFg->pixel;
+    } else {
+	gcValues.foreground = gcValues.background;
     }
     newGC = Tk_GetGC(butPtr->tkwin, mask, &gcValues);
     if (butPtr->disabledGC != None) {

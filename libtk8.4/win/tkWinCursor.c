@@ -98,7 +98,7 @@ TkGetCursorByName(interp, tkwin, string)
     if (Tcl_SplitList(interp, string, &argc, &argv) != TCL_OK) {
 	return NULL;
     }
-    if (argc != 1) {
+    if (argc == 0) {
 	goto badCursorSpec;
     }
 

@@ -29,7 +29,7 @@ static Tcl_ThreadDataKey dataKey;
 #if defined(TK_USE_INPUT_METHODS) && defined(PEEK_XCLOSEIM)
 /*
  * Structure used to peek into internal XIM data structure.
- * Enabled only on systems where we are sure it works.
+ * This is only known to work with XFree86.
  */
 struct XIMPeek {
     void *junk1, *junk2;
@@ -185,17 +185,47 @@ TkpCloseDisplay(dispPtr)
 #endif
     if (dispPtr->inputMethod) {
 	/*
-	 * This caused core dumps on some systems (Solaris 2.3 1/6/95).
-	 * The most likely cause of this is a bug in X that accesses
-	 * memory that was already deallocated inside XCloseIM().
-	 * One can work around this issue by making sure a XDestroyIC()
-	 * gets invoked for each XCreateIC().
+	 * Calling XCloseIM with an input context that has not
+	 * been freed can cause a crash. This crash has been
+	 * reproduced under Linux systems with XFree86 3.3
+	 * and may have also been seen under Solaris 2.3.
+	 * The crash is caused by a double free of memory
+	 * inside the X library. Memory that was already
+	 * deallocated may be accessed again inside XCloseIM.
+	 * This bug can be avoided by making sure that a
+	 * call to XDestroyIC is made for each XCreateIC call.
+	 * This bug has been fixed in XFree86 4.2.99.2.
+	 * The internal layout of the XIM structure changed
+	 * in the XFree86 4.2 release so the test should
+	 * not be run for with these new releases.
 	 */
 
 #if defined(TK_USE_INPUT_METHODS) && defined(PEEK_XCLOSEIM)
-	struct XIMPeek *peek = (struct XIMPeek *) dispPtr->inputMethod;
-	if (peek->ic_chain != NULL)
-	    panic("input contexts not freed before XCloseIM");
+	int do_peek = 0;
+	struct XIMPeek *peek;
+
+	if (strstr(ServerVendor(dispPtr->display), "XFree86")) {
+	    int vendrel = VendorRelease(dispPtr->display);
+	    if (vendrel < 336) {
+	        /* 3.3.4 and 3.3.5 */
+	        do_peek = 1;
+	    } else if (vendrel < 3900) {
+	        /* Other 3.3.x versions */
+	        do_peek = 1;
+	    } else if (vendrel < 40000000) {
+	        /* 4.0.x versions */
+	        do_peek = 1;
+	    } else {
+	        /* Newer than 4.0 */
+	        do_peek = 0;
+	    }
+	}
+
+	if (do_peek) {
+	    peek = (struct XIMPeek *) dispPtr->inputMethod;
+	    if (peek->ic_chain != NULL)
+	        panic("input contexts not freed before XCloseIM");
+	}
 #endif
 	XCloseIM(dispPtr->inputMethod);
     }

@@ -451,17 +451,21 @@ typedef struct TkMenuOptionTables {
  * RESIZE_PENDING:		Non-zero means a call to ComputeMenuGeometry
  *				has already been scheduled.
  * MENU_DELETION_PENDING	Non-zero means that we are currently destroying
- *				this menu. This is useful when we are in the 
- *				middle of cleaning this master menu's chain of 
- *				menus up when TkDestroyMenu was called again on
- *				this menu (via a destroy binding or somesuch).
+ *				this menu's internal structures. This is useful 
+ *				when we are in the middle of cleaning
+ *				this master menu's chain of menus up when
+ *				TkDestroyMenu was called again on this
+ *				menu (via a destroy binding or somesuch).
+ * MENU_WIN_DESTRUCTION_PENDING Non-zero means we are in the middle of 
+ *                              destroying this menu's Tk_Window.
  * MENU_PLATFORM_FLAG1...	Reserved for use by the platform-specific menu
  *				code.
  */
 
-#define REDRAW_PENDING		1
-#define RESIZE_PENDING		2
-#define MENU_DELETION_PENDING	4
+#define REDRAW_PENDING		        1
+#define RESIZE_PENDING		        2
+#define MENU_DELETION_PENDING	        4
+#define MENU_WIN_DESTRUCTION_PENDING	8
 #define MENU_PLATFORM_FLAG1	(1 << 30)
 #define MENU_PLATFORM_FLAG2	(1 << 29)
 #define MENU_PLATFORM_FLAG3	(1 << 28)
@@ -511,7 +515,7 @@ EXTERN TkMenuReferences *
 EXTERN TkMenuReferences *
 			TkFindMenuReferencesObj _ANSI_ARGS_((
 			    Tcl_Interp *interp, Tcl_Obj *namePtr));
-EXTERN void		TkFreeMenuReferences _ANSI_ARGS_((
+EXTERN int		TkFreeMenuReferences _ANSI_ARGS_((
 			    TkMenuReferences *menuRefPtr));
 EXTERN Tcl_HashTable *	TkGetMenuHashTable _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int		TkGetMenuIndex _ANSI_ARGS_((Tcl_Interp *interp,

@@ -1272,6 +1272,7 @@ test spinbox-17.3 {SpinboxUpdateScrollbar procedure} {
 } {0.315789 0.842105}
 test spinbox-17.4 {SpinboxUpdateScrollbar procedure} {
     destroy .e
+    set x "Background error did not happen"
     proc bgerror msg {
 	global x
 	set x $msg
