@@ -60,6 +60,7 @@ struct partition 	*part_head;
 		    + r_exit(Y) * cos(er) * sin(ar)
 		    + r_exit(Z) * sin(er);
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
+	ValTab[VTI_PATH_NAME].value.sval = part -> pt_regionp -> reg_name;
 	ValTab[VTI_REG_NAME].value.sval =
 	    basename(part -> pt_regionp -> reg_name);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;

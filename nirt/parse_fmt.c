@@ -38,6 +38,7 @@ outval		ValTab[] =
 		    { "z_out", VTI_Z_OUT, OIT_FLOAT },
 		    { "d_out", VTI_D_OUT, OIT_FLOAT },
 		    { "los", VTI_LOS, OIT_FLOAT },
+		    { "path_name", VTI_PATH_NAME, OIT_STRING },
 		    { "reg_name", VTI_REG_NAME, OIT_STRING },
 		    { "reg_id", VTI_REG_ID, OIT_INT },
 		    { "obliq_in", VTI_OBLIQ_IN, OIT_FNOUNIT },

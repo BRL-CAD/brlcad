@@ -88,25 +88,26 @@ extern FILE	*fopenrc();
 #define		VTI_Z_OUT	18
 #define		VTI_D_OUT	19
 #define		VTI_LOS		20
-#define		VTI_REG_NAME	21
-#define		VTI_REG_ID	22
-#define		VTI_OBLIQ_IN	23
-#define		VTI_OBLIQ_OUT	24
-#define		VTI_OV_REG1_NAME 25
-#define		VTI_OV_REG1_ID	26
-#define		VTI_OV_REG2_NAME 27
-#define		VTI_OV_REG2_ID	28
-#define		VTI_OV_SOL_IN	29
-#define		VTI_OV_SOL_OUT	30
-#define		VTI_OV_LOS	31
-#define		VTI_OV_X_IN	32
-#define		VTI_OV_Y_IN	33
-#define		VTI_OV_Z_IN	34
-#define		VTI_OV_D_IN	35
-#define		VTI_OV_X_OUT	36
-#define		VTI_OV_Y_OUT	37
-#define		VTI_OV_Z_OUT	38
-#define		VTI_OV_D_OUT	39
+#define		VTI_PATH_NAME	21
+#define		VTI_REG_NAME	22
+#define		VTI_REG_ID	23
+#define		VTI_OBLIQ_IN	24
+#define		VTI_OBLIQ_OUT	25
+#define		VTI_OV_REG1_NAME 26
+#define		VTI_OV_REG1_ID	27
+#define		VTI_OV_REG2_NAME 28
+#define		VTI_OV_REG2_ID	29
+#define		VTI_OV_SOL_IN	30
+#define		VTI_OV_SOL_OUT	31
+#define		VTI_OV_LOS	32
+#define		VTI_OV_X_IN	33
+#define		VTI_OV_Y_IN	34
+#define		VTI_OV_Z_IN	35
+#define		VTI_OV_D_IN	36
+#define		VTI_OV_X_OUT	37
+#define		VTI_OV_Y_OUT	38
+#define		VTI_OV_Z_OUT	39
+#define		VTI_OV_D_OUT	40
 
 #define		direct(i)	(ValTab[VTI_X_DIR + i].value.fval)
 #define		target(i)	(ValTab[VTI_X_ORIG + i].value.fval)
