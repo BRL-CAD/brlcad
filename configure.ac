@@ -116,7 +116,7 @@ dnl ============================================================
 
 
 AC_DEFINE(DM_X,1,[Display for X])
-GL_CFLAGS="-DUSE_MESA_GL"
+AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)]))
 LEX_CFLAGS="-Dyylex=cmd_nop"
 X_CFLAGS="-I/usr/X11R6/include"
 
@@ -191,7 +191,6 @@ AC_SUBST(DL)
 AC_SUBST(DM)
 AC_SUBST(FB)
 AC_SUBST(FFT)
-AC_SUBST(GL_CFLAGS)
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
