@@ -259,12 +259,16 @@ char	**argv;
 #define	STATE_IN_DATA		2
 #define	STATE_BEYOND_DATA	3
 
+#define zgets(ln, s,n,stream)						\
+    ((result=fgets((s), (n), (stream))), printf("%d: when in state %d fgots(%s)\n", (ln),state,(s)), result)
+
 STATIC long read_Cell_Data()
 {	
     static char		linebuf[MAX_LINE];
     static char		*lbp = NULL;
     static char		format[MAX_LINE];
     register int	state = STATE_VIEW_TOP;
+    char		*result;
     int			i;
     register Cell	*gp = grid;
     int			view_ct = 1;
@@ -277,7 +281,7 @@ STATIC long read_Cell_Data()
     if (lbp == NULL)
     {
 	lbp = linebuf;
-        fgets(lbp, MAX_LINE, filep);
+        zgets(__LINE__, lbp, MAX_LINE, filep);
 	(void) strcpy(format, "%lf %lf");
 	if (color_flag)
 	    (void) strcat(format, " %d %d %d");
@@ -299,6 +303,7 @@ STATIC long read_Cell_Data()
 	int		r, g, b;
 	cell_val	value;
 
+	printf("%d: %d: %s", __LINE__, gp - grid, lbp);
 	/* Have we run out of room for the cells?  If so reallocate memory */
 	if (gp - grid >= maxcells)
 	{	
@@ -316,22 +321,29 @@ STATIC long read_Cell_Data()
 	}
 	/* Process any non-data (i.e. view-header) lines */
 	while ((state != STATE_BEYOND_DATA) &&
-	       (color_flag &&
+	       ((color_flag &&
 		(sscanf(lbp, format, &x, &y, &r, &g, &b) != 5))
 	    || (! color_flag &&
-		(sscanf(lbp, format, &x, &y, &value.v_scalar) != 3)))
+		(sscanf(lbp, format, &x, &y, &value.v_scalar) != 3))))
 	{
+	    if (state == STATE_BEYOND_DATA)
+	    {
+		printf("What the heck?");
+		exit(1);
+	    }
 	    if (state == STATE_VIEW_TOP)
 		state = STATE_IN_HEADER;
 	    else if (state == STATE_IN_DATA)
 		state = STATE_BEYOND_DATA;
-	    if(feof(filep) || fgets(lbp, MAX_LINE, filep) == NULL)
+	    if(feof(filep) ||	zgets(__LINE__, lbp, MAX_LINE, filep) == NULL)
 		return (gp - grid);
+	    printf("%d: after zgets() state=%d\n", __LINE__, state);
 	}
 	/*
 	 *	At this point we know we have a line of cell data,
 	 *	though it might be the first line of the next view.
 	 */
+	printf("%d: after non-data lines state=%d\n", __LINE__, state);
 	if (state == STATE_BEYOND_DATA)
 	{
 	    state = STATE_VIEW_TOP;
@@ -342,8 +354,11 @@ STATIC long read_Cell_Data()
 	}
 	else
 	    state = STATE_IN_DATA;
+	printf("%d: should be in data, state=%d\n", __LINE__, state);
 
 	/* If user has selected a view, only store values for that view. */
+	printf("%d: view_flag=%d, view_ct=%d\n",
+	    __LINE__, view_flag, view_ct);
 	if ((view_flag == 0) || (view_flag == view_ct))
 	{
 	    MinMax(xmin, xmax, x);
@@ -365,8 +380,13 @@ STATIC long read_Cell_Data()
 	    else
 		gp->c_val.v_scalar = value.v_scalar;
 	    gp++;
+	    printf("%d: OK, when gp was <%x>... %d %d %d\n",
+		__LINE__, gp-1,
+		(gp-1)->c_val.v_color[RED],
+		(gp-1)->c_val.v_color[GRN],
+		(gp-1)->c_val.v_color[BLU]);
 	}
-    } while (fgets(lbp, MAX_LINE, filep) != NULL);
+    } while (zgets(__LINE__, lbp, MAX_LINE, filep) != NULL);
     return (gp - grid);
 }
 
