@@ -592,8 +592,8 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS		GFLAG
 #	define	RANLIB	ranlib5.sh
 #	define	GETHOST	hostname
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
+#	define	LIBPKG_CONFIG	-DBSD=43
+#	define	RFBD_CONFIG	-DBSD=43
 #	define	LIBRT_TIMER	timer42
 #endif
 
