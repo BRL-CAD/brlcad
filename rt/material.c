@@ -127,7 +127,7 @@ register struct region *rp;
 			mfp->mf_magic, MF_MAGIC );
 		return;
 	}
-	mfp->mf_free( rp->reg_udata );
+	if( mfp->mf_free ) mfp->mf_free( rp->reg_udata );
 	rp->reg_mfuncs = (char *)0;
 	rp->reg_udata = (char *)0;
 }
