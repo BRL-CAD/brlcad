@@ -133,7 +133,7 @@ extern struct veclist *vlend;	/* pointer to first invalid veclist element */
 #define BE_O_XSCALE	6
 #define BE_O_YSCALE	5
 #define BE_O_ZSCALE	4
-#define BV_90_90	1
+#define BV_45_45	1
 #define BV_35_25	0+32
 
 #define BV_SHIFT	1+32
