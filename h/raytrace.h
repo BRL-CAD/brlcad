@@ -83,6 +83,9 @@ extern char	*realloc();
 #	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
 #endif
 
+#define	RT_BADNUM(n)	(!((n) >= -INFINITY && (n) <= INFINITY))
+#define RT_BADVEC(v)	(RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
+
 /*
  *  Unfortunately, to prevent divide-by-zero, some tolerancing
  *  needs to be introduced.
@@ -1302,7 +1305,12 @@ struct rt_vlist  {
 #define RT_VLIST_POLY_DRAW	4	/* subsequent poly vertex */
 #define RT_VLIST_POLY_END	5	/* last vert (repeats 1st), draw poly */
 
-/* Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL */
+/* XXX Note that RT_GET_VLIST and RT_FREE_VLIST are non-PARALLEL */
+/*
+ *  Applications that are going to use RT_ADD_VLIST and RT_GET_VLIST
+ *  are required to execute this macro once, first:
+ *		RT_LIST_INIT( &rt_g.rtg_vlfree );
+ */
 #define RT_GET_VLIST(p) {\
 		(p) = RT_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree ); \
 		if( RT_LIST_IS_HEAD( (p), &rt_g.rtg_vlfree ) )  { \
@@ -1331,6 +1339,8 @@ struct rt_vlist  {
 	VMOVE( _vp->pt[_vp->nused], (pnt) ); \
 	_vp->cmd[_vp->nused++] = (draw); \
 	}
+
+/* Macro RT_CK_LIST_HEAD() is defined in rtlist.h */
 
 /* For NMG plotting, a way of separating vlists into colorer parts */
 struct rt_vlblock {
@@ -2015,6 +2025,8 @@ RT_EXTERN(int			nmg_loop_is_a_crack, (CONST struct loopuse *lu) );
 RT_EXTERN(int			nmg_loop_is_ccw, (CONST struct loopuse *lu,
 				CONST plane_t norm, CONST struct rt_tol *tol) );
 RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
+RT_EXTERN(int			nmg_2lu_identical, (CONST struct edgeuse *eu1,
+				CONST struct edgeuse *eu2));
 
 	/* Edge routines */
 RT_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct vertex *v2,
