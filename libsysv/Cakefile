@@ -16,6 +16,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
+#define VERSION_VARIABLE	libsysv_version
+#define LIBRARY_TITLE		"BRL-CAD System V Compatibility Library"
+
 #include "../Cakefile.defs"
 
 #ifdef	LIBSYSV_SETUP
