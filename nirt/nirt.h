@@ -40,7 +40,9 @@
 /*	MACROS WITH ARGUMENTS	*/
 #define    max(a,b)             (((a)>(b))?(a):(b))
 #define    min(a,b)             (((a)<(b))?(a):(b))
-#define    abs(a)               ((a)>=0 ? (a):(-a))
+#if !defined(abs)
+# define    abs(a)               ((a)>=0 ? (a):(-a))
+#endif
 #define    getmem(S)            (S*)malloc(sizeof(S))
 #define    com_usage(c)         fprintf (stderr, "Usage:  %s %s\n", \
 				    c -> com_name, c -> com_args);
