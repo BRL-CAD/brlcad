@@ -381,7 +381,7 @@ int		cpu_num;
 	resp->re_magic = RESOURCE_MAGIC;
 	resp->re_cpu = cpu_num;
 
-	rand_init( resp->re_randptr, cpu_num );
+	/* XXX resp->re_randptr is an "application" (rt) level field. For now. */
 
 	if( !BU_LIST_UNINITIALIZED( &resp->re_seg ) )
 		BU_LIST_INIT( &resp->re_seg )
