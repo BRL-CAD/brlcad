@@ -235,7 +235,7 @@ char **argv;
 #ifdef BSD
 	setlinebuf( stderr );
 #endif BSD
-#if defined( SYSV) && !defined( sgi )
+#if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2)
 	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
 #endif SYSV
 
@@ -267,6 +267,9 @@ char **argv;
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 
+#ifndef PARALLEL
+	npsw = 1;		/* serial */
+#endif
 	if( npsw > 1 )
 		parallel = 1;
 	if( parallel )
