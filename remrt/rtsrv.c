@@ -63,6 +63,7 @@ mat_t		view2model;
 mat_t		model2view;
 int		srv_startpix;		/* offset for view_pixel */
 int		srv_scanlen = 8*1024;	/* max assignment */
+char		*scanbuf;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup();
