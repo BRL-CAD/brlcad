@@ -33,12 +33,13 @@
  */
 struct rt_tor_internal {
 	long	magic;
-	point_t	v;
-	vect_t	h;		/* r_h length */
-	vect_t	a;		/* r_a length */
-	vect_t	b;		/* r_b length */
+	point_t	v;		/* center point */
+	vect_t	h;		/* normal, r_h length */
 	fastf_t	r_h;		/* radius in H direction */
 	fastf_t	r_a;		/* radius in A direction */
+	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
+	vect_t	a;		/* r_a length */
+	vect_t	b;		/* r_b length */
 	fastf_t	r_b;		/* radius in B direction (typ == r_a) */
 };
 #define RT_TOR_INTERNAL_MAGIC	0x9bffed87
