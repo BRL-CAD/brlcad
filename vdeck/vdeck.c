@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c			retrieved: 8/13/86 at 08:06:17,
- *	@(#) version 1.9		last edit: 10/11/83 at 10:57:24.
+ *	@(#) vdeck.c			retrieved: 8/13/86 at 08:06:38,
+ *	@(#) version 1.10		last edit: 10/28/83 at 17:36:12.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -191,8 +191,7 @@ matp_t	old_xlate;
 			for( j = 1; j <= nnr; j++ ) {
 				readF( rd_rrfd, name, 16 );
 				if( strcmp( name, rec.c.c_name ) == 0 ) {
-					/* region is #j
-					 */
+					/* Region is #j.		*/
 					itoa( j+delreg, buf, 4 );
 					write( regfd, buf, 4 );
 					break;
@@ -448,13 +447,11 @@ matp_t	old_xlate;
 	 */
 	notrans[3]  = notrans[7]  = notrans[11] = 0.0;
 
-	/* write solid #
-	 */
+	/* Write solid #.						*/
 	itoa( nnt+delsol, buf, 3 );
 	write( solfd, buf, 3 );
 
-	/* process appropriate solid type
-	 */
+	/* Process appropriate solid type.				*/
 	switch( rec.s.s_type ) {
 	case TOR :
 		addtor( &rec );
@@ -488,8 +485,7 @@ notnew:	/* sent here if solid already in solid table
 		 * if negative then is the last solid in this region */
 		if(	(isave % 9 ==  1 && isave >  1)
 		    ||	(isave % 9 == -1 && isave < -1) ) {
-			/* new line
-			 */
+			/* New line.					*/
 			write( regfd, buff, strlen( buff ) );
 			write( regfd, LF, 1 );
 			blank_fill( regfd, 6 );
@@ -585,8 +581,7 @@ Record *rec;
 
 	j = jk = 0;
 	for( i = 0; i < npts*3; i += 3 )  {
-		/* write 3 points
-		 */
+		/* Write 3 points.					*/
 		for( k = i; k <= i+2; k++ ) {
 			ftoascii( rec->s.s_values[k], &buf[jk*10], 10, 4 );
 			++jk;
