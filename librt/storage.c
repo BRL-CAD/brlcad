@@ -315,8 +315,8 @@ char *str;
 	register int *ip;
 
 	rt_log("\nrt_prmem(): LIBRT memory use (%s)\n", str);
-	if( rt_g.debug&DEBUG_MEM_FULL == 0 )  {
-		rt_log("\tMemory debugging is now off\n");
+	if( (rt_g.debug&DEBUG_MEM_FULL) == 0 )  {
+		rt_log("\tMemory debugging is now OFF\n");
 	}
 	rt_log("\t%d elements in memdebug table\n", rt_memdebug_len);
 	if( rt_memdebug_len <= 0 )  return;
