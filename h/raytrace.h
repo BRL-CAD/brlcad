@@ -1052,8 +1052,13 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray	a_ray;		/* Actual ray to be shot */
+#if defined ( __cplusplus )
+	int		(*a_hit)( struct application *, struct partition *);	/* called when shot hits model */
+	int		(*a_miss)( struct application *);	/* called when shot misses */
+#else
 	int		(*a_hit)();	/* called when shot hits model */
 	int		(*a_miss)();	/* called when shot misses */
+#endif
 	int		a_onehit;	/* flag to stop on first hit */
 	fastf_t		a_ray_length;	/* distance from ray start to end intersections */
 	struct rt_i	*a_rt_i;	/* this librt instance */
@@ -1925,11 +1930,6 @@ RT_EXTERN(struct rt_vlblock *rt_vlblock_init, () );
 RT_EXTERN(void rt_vlblock_free, (struct rt_vlblock *vbp) );
 RT_EXTERN(struct bu_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
-
-/* plane.c */
- 
-/* bn_cx_div, CxSqrt */
-extern void bn_pr_roots();		/* print complex roots */
 
 /* rtassoc.c */
 RT_EXTERN(struct bu_vls *rt_assoc, (char *fname, char *value, int field_sep));
