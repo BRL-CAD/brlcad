@@ -9,7 +9,7 @@
  *	regexp_match	Does regular exp match given string?
  *	dir_summary	Summarize contents of directory by categories
  *	f_tops		Prints top level items in database
- *	cmd_glob	Does regular expression expansion on cmd_args[]
+ *	cmd_glob	Does regular expression expansion
  *	f_prefix	Prefix each occurence of a specified object name
  *	f_keep		Save named objects in specified file
  *	f_tree		Print out a tree of all members of an object
@@ -366,30 +366,31 @@ char	**argv;
  *			C M D _ G L O B
  *  
  *  Assist routine for command processor.  If the current word in
- *  the cmd_args[] array contains "*", "?", "[", or "\" then this word
+ *  the argv[] array contains "*", "?", "[", or "\" then this word
  *  is potentially a regular expression, and we will tromp through the
  *  entire in-core directory searching for a match. If no match is
  *  found, the original word remains untouched and this routine was an
  *  expensive no-op.  If any match is found, it replaces the original
  *  word. Escape processing is also done done in this module.  If there
  *  are no matches, but there are escapes, the current word is modified.
- *  All matches are sought for, up to the limit of the cmd_args[] array.
+ *  All matches are sought for, up to the limit of the argv[] array.
  *
  *  Returns 0 if no expansion happened, !0 if we matched something.
  */
 int
-cmd_glob()
+cmd_glob(argcp, argv, maxargs)
+int  *argcp;
+char *argv[];
+int   maxargs;
 {
-	extern int numargs, maxargs;		/* defined in cmd.c */
-	extern char *cmd_args[];		/* defined in cmd.c */
 	static char word[64];
 	register char *pattern;
 	register struct directory	*dp;
 	register int i;
 	int escaped = 0;
-	int orig_numargs = numargs;
+	int orig_numargs = *argcp;
 
-	strncpy( word, cmd_args[numargs], sizeof(word)-1 );
+	strncpy( word, argv[*argcp], sizeof(word)-1 );
 	/* If * ? [ or \ are present, this is a regular expression */
 	pattern = word;
 	do {
@@ -411,10 +412,10 @@ cmd_glob()
 
 	/* Search for pattern matches.
 	 * First, save the pattern (in word), and remove it from
-	 * cmd_args, as it will be overwritten by the expansions.
+	 * argv, as it will be overwritten by the expansions.
 	 * If any matches are found, we do not have to worry about
 	 * '\' escapes since the match coming from dp->d_namep is placed
-	 * into cmd_args.  Only in the case of no matches do we have
+	 * into argv.  Only in the case of no matches do we have
 	 * to do escape crunching.
 	 */
 
@@ -424,24 +425,24 @@ cmd_glob()
 				continue;
 			/* Successful match */
 			/* See if already over the limit */
-			if( numargs >= maxargs )  {
+			if( *argcp >= maxargs )  {
 				(void)printf("%s: expansion stopped after %d matches (%d args)\n",
-					word, numargs-orig_numargs, maxargs);
+					word, *argcp-orig_numargs, maxargs);
 				break;
 			}
-			cmd_args[numargs++] = dp->d_namep;
+			argv[(*argcp)++] = dp->d_namep;
 		}
 	}
-	/* If one or matches occurred, decrement final numargs,
+	/* If one or matches occurred, decrement final argc,
 	 * otherwise, do escape processing if needed.
 	 */
 
-	if( numargs > orig_numargs )  {
-		numargs--;
+	if( *argcp > orig_numargs )  {
+		(*argcp)--;
 		return(1);
 	} else if(escaped) {
 		char *temp;
-		temp = pattern = cmd_args[numargs];
+		temp = pattern = argv[*argcp];
 		do {
 			if(*pattern != '\\') {
 				*temp = *pattern;
@@ -454,8 +455,8 @@ cmd_glob()
 		} while(*pattern++);
 
 		/* Elide the rare pattern which becomes null ("\<NULL>") */
-		if(*(cmd_args[numargs]) == '\0')
-			numargs--;
+		if(*(argv[*argcp]) == '\0')
+			(*argcp)--;
 	}
 	return(0);		/* found nothing */
 }
