@@ -78,7 +78,7 @@ char *argv[];
 
   eventHandler = X_doevent;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-  dm_configureWindowShape(dmp);
+  (void)DM_CONFIGURE_WIN(dmp);
 
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
