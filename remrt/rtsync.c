@@ -471,6 +471,31 @@ char **argv;
 }
 
 /*
+ *			A L L _ S E N D
+ *
+ *  Arrange to send a string to ALL rtnode processes,
+ *  and over the VGMGR link to MGED.
+ *
+ *  This exists as a built-in primarily to keep down the amount of traffic
+ *  that Dynamic Geometry clients need to "send" to us.
+ */
+int
+all_send( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	if( argc < 2 )  {
+		Tcl_AppendResult(interp, "Usage: all_send command(s)\n", NULL);
+		return TCL_ERROR;
+	}
+
+	(void)node_send( clientData, interp, argc, argv );
+	return vrmgr_send( clientData, interp, argc, argv );
+}
+
+/*
  *			R E P R E P
  *
  *  Make all the nodes re-prep.
@@ -817,6 +842,8 @@ char	*argv[];
 	(void)Tcl_Eval( interp, "wm geometry . =+1+1");
 
 	/* Incorporate built-in commands.  BEFORE running script. */
+	(void)Tcl_CreateCommand(interp, "all_send", all_send,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "vrmgr_send", vrmgr_send,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "node_send", node_send,
