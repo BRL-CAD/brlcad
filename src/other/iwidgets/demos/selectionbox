@@ -1,0 +1,12 @@
+# ----------------------------------------------------------------------
+#  DEMO: selectionbox in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+option add *textBackground seashell
+
+iwidgets::selectionbox .sb -selectionlabel "Font:" -height 2i
+pack .sb
+
+.sb insert items end Ariel Courier Helvetica Knarly Lucida \
+    Rumpus Symbol Times "Zapf Dingbats"
