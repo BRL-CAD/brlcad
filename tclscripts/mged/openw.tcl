@@ -428,8 +428,6 @@ menu .$id.menubar.file.pref -tearoff $do_tearoffs
 	-menu .$id.menubar.file.pref.units
 .$id.menubar.file.pref add cascade -label "Command Line Edit" -underline 0\
 	-menu .$id.menubar.file.pref.cle
-.$id.menubar.file.pref add cascade -label "View Axes Position" -underline 0\
-	-menu .$id.menubar.file.pref.vap
 .$id.menubar.file.pref add cascade -label "Special Characters" -underline 0\
 	-menu .$id.menubar.file.pref.special_chars
 
@@ -459,23 +457,6 @@ menu .$id.menubar.file.pref.cle -tearoff $do_tearoffs
 	-label "emacs" -underline 0 -command "set_text_key_bindings $id"
 .$id.menubar.file.pref.cle add radiobutton -value vi -variable mged_edit_style($id)\
 	-label "vi" -underline 0 -command "set_text_key_bindings $id"
-
-menu .$id.menubar.file.pref.vap -tearoff $do_tearoffs
-.$id.menubar.file.pref.vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
-	-label "Center" -underline 0\
-	-command "mged_apply $id \"set v_axes_pos {0 0}\""
-.$id.menubar.file.pref.vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
-	-label "Lower Left" -underline 2\
-	-command "mged_apply $id \"set v_axes_pos {-1750 -1750}\""
-.$id.menubar.file.pref.vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
-	-label "Upper Left" -underline 6\
-	-command "mged_apply $id \"set v_axes_pos {-1750 1750}\""
-.$id.menubar.file.pref.vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
-	-label "Upper Right" -underline 6\
-	-command "mged_apply $id \"set v_axes_pos {1750 1750}\""
-.$id.menubar.file.pref.vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
-	-label "Lower Right" -underline 3\
-	-command "mged_apply $id \"set v_axes_pos {1750 -1750}\""
 
 menu .$id.menubar.file.pref.special_chars -tearoff $do_tearoffs
 .$id.menubar.file.pref.special_chars add radiobutton -value 0 -variable glob_compat_mode\
@@ -579,6 +560,8 @@ menu .$id.menubar.settings -tearoff $do_tearoffs
 	-menu .$id.menubar.settings.fb
 .$id.menubar.settings add cascade -label "Pane Background Color" -underline 5\
 	-menu .$id.menubar.settings.bgColor
+.$id.menubar.settings add cascade -label "View Axes Position" -underline 0\
+	-menu .$id.menubar.settings.vap
 
 menu .$id.menubar.settings.applyTo -tearoff $do_tearoffs
 .$id.menubar.settings.applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
@@ -683,6 +666,23 @@ menu .$id.menubar.settings.bgColor -tearoff $do_tearoffs
 .$id.menubar.settings.bgColor add separator
 .$id.menubar.settings.bgColor add command -label "Color Tool..." -underline 6\
 	-command "choosePaneColor $id"
+
+menu .$id.menubar.settings.vap -tearoff $do_tearoffs
+.$id.menubar.settings.vap add radiobutton -value 0 -variable mged_v_axes_pos($id)\
+	-label "Center" -underline 0\
+	-command "mged_apply $id \"set v_axes_pos {0 0}\""
+.$id.menubar.settings.vap add radiobutton -value 1 -variable mged_v_axes_pos($id)\
+	-label "Lower Left" -underline 2\
+	-command "mged_apply $id \"set v_axes_pos {-1750 -1750}\""
+.$id.menubar.settings.vap add radiobutton -value 2 -variable mged_v_axes_pos($id)\
+	-label "Upper Left" -underline 6\
+	-command "mged_apply $id \"set v_axes_pos {-1750 1750}\""
+.$id.menubar.settings.vap add radiobutton -value 3 -variable mged_v_axes_pos($id)\
+	-label "Upper Right" -underline 6\
+	-command "mged_apply $id \"set v_axes_pos {1750 1750}\""
+.$id.menubar.settings.vap add radiobutton -value 4 -variable mged_v_axes_pos($id)\
+	-label "Lower Right" -underline 3\
+	-command "mged_apply $id \"set v_axes_pos {1750 -1750}\""
 
 menu .$id.menubar.settings.grid -tearoff $do_tearoffs
 .$id.menubar.settings.grid add command -label "Anchor..." -underline 0\
