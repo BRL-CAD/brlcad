@@ -360,9 +360,9 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	 */
 	if (is_edge (&me, &left, &below)) {
 	    bu_semaphore_acquire (RT_SEM_RESULTS);	
-	    	scanline[ap->a_x*3+RED] = 0;
-		scanline[ap->a_x*3+GRN] = 0;
-		scanline[ap->a_x*3+BLU] = 200;
+	    	scanline[ap->a_x*3+RED] = 255;
+		scanline[ap->a_x*3+GRN] = 255;
+		scanline[ap->a_x*3+BLU] = 255;
 	    bu_semaphore_release (RT_SEM_RESULTS);
 	} else {
 	    bu_semaphore_acquire (RT_SEM_RESULTS);
@@ -374,4 +374,9 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	return edge;
 }
 
-void application_init () {}
+void application_init () {
+
+
+
+
+}
