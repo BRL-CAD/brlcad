@@ -54,7 +54,7 @@ FBIO disk_interface =
 		fb_null,		/* viewport_set */
 		fb_null,		/* window_set */
 		fb_null,		/* zoom_set */
-		fb_null,		/* cinit_bitmap */
+		fb_null,		/* curs_set */
 		fb_null,		/* cmemory_addr */
 		fb_null,		/* cscreen_addr */
 		"Disk File Interface",
