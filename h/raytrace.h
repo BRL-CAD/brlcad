@@ -1312,6 +1312,8 @@ RT_EXTERN(int rt_overlap_quietly, (struct application *ap,
 					/* Shoot a ray */
 RT_EXTERN(int rt_shootray, (struct application *ap) );
 					/* Get expr tree for object */
+RT_EXTERN(CONST char *	rt_basename, (CONST char *str));
+RT_EXTERN(void rt_free_soltab, (struct soltab   *stp));
 RT_EXTERN(int rt_gettree, (struct rt_i *rtip, CONST char *node) );
 RT_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
 	int argc, CONST char **argv, int ncpus));
@@ -1396,7 +1398,7 @@ RT_EXTERN(void rt_color_addrec, () );
 					/* extend a cut box */
 RT_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
 					/* find RPP of one region */
-RT_EXTERN(int rt_rpp_region, (struct rt_i *rtip, char *reg_name,
+RT_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp) );
 
 /* The database library */
@@ -1417,8 +1419,9 @@ RT_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
 RT_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
 RT_EXTERN(void db_region_mat, (mat_t m, CONST struct db_i *dbip,
 				CONST char *name) );
-RT_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct db_i *dbip,
-				CONST struct region *rp) );
+RT_EXTERN(void db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
+				CONST struct region *rp, point_t p_min,
+				point_t p_max) );
 /* db_open.c */
 					/* open an existing model database */
 RT_EXTERN(struct db_i *db_open, ( char *name, char *mode ) );
