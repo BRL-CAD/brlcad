@@ -72,7 +72,8 @@ point2d_t *verts;
 	if( skt->vert_count )
 	{
 		skt->verts = (point2d_t *)bu_realloc( skt->verts, (skt->vert_count + vert_count)*sizeof( point2d_t), "sketch verts" );
-		bcopy( verts, &skt->verts[skt->vert_count] );
+		bcopy( verts, &skt->verts[skt->vert_count],
+			vert_count*sizeof( point2d_t) );
 		skt->vert_count += vert_count;
 	}
 	else
