@@ -77,7 +77,11 @@ compare&: [[SUB X X.compare PRODUCTS]]
 %.compare&:	%
 	cmp BINDIR/% %
 
+#if !defined(DONT_INSTALL)
 uninstall&:  uninstall-prod uninstall-man uninstall-stub
+#else
+uninstall&:
+#endif
 
 #ifdef PRODUCTS
 uninstall-prod&: [[SUB X X.uninstall-prod PRODUCTS]]
