@@ -1002,6 +1002,8 @@ struct rt_tol *tol;
 	/* glue all the faces together */
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
+	nmg_make_faces_within_tol( s, tol );
+
 	if( !plate_mode )
 	{
 		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
@@ -1284,6 +1286,7 @@ struct rt_tol *tol;
 		fflush( stdout );
 	}
 
+	nmg_make_faces_within_tol( is, tol );
 
 	/* Close shell */
 	if( debug )
@@ -1490,9 +1493,9 @@ int cnt;
 
         /* XXX These need to be improved */
         tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.005;
+        tol.dist = 0.01;
         tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
+        tol.perp = 0.001;
         tol.para = 1 - tol.perp;
 
 
