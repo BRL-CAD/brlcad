@@ -1,5 +1,5 @@
 /*
- *	./rttherm -P1 -s8 -o mtherm ../.db.6d/moss.g all.g
+ *	./rttherm -P1 -s64 -o mtherm ../.db.6d/moss.g all.g
  *
  *			V I E W T H E R M . C
  *
@@ -54,6 +54,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./material.h"
 #include "./mathtab.h"
 #include "./light.h"
+
+/* XXX Move to raytrace.h when routine goes into LIBRT */
+RT_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
+				CONST struct hit *hitp));
+
 
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -124,6 +129,9 @@ register struct application *ap;
 {
 	register struct scanline	*slp;
 
+	RT_AP_CHECK(ap);
+	RT_CK_RTI(ap->a_rt_i);
+
 	if( ap->a_uptr )  {
 		RT_CK_SPECT_SAMPLE( ap->a_uptr );
 		return;
@@ -154,14 +162,27 @@ view_pixel(ap)
 register struct application *ap;
 {
 	register int	r,g,b;
-	register char	*pixelp;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
 
+	RT_AP_CHECK(ap);
+	RT_CK_RTI(ap->a_rt_i);
+
 	if( ap->a_user == 0 )  {
-		/* Shot missed the model, don't dither */
+		fastf_t	dist;
+		fastf_t	radius;
+		fastf_t	cm2;
+
+		/* Shot missed the model */
+		dist = 10000000.0;	/* 10 Km */
+		radius = ap->a_rbeam + dist * ap->a_diverge;
+		cm2 = 4 * radius * radius * 0.01;	/* mm2 to cm2 */
+
 		curve_attach(ap);
-		rt_spect_copy( (struct rt_spect_sample *)ap->a_uptr, ss_bg );
+
+		/* XXX This should be attenuated by some atmosphere now */
+		/* At least it's in proper power units */
+		rt_spect_scale( (struct rt_spect_sample *)ap->a_uptr, ss_bg, cm2 );
 	} else {
 		if( !ap->a_uptr )
 			rt_bomb("view_pixel called with no spectral curve associated\n");
@@ -384,7 +405,13 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
+#if 0
 	struct shadework sw;
+#endif
+	fastf_t		degK;
+	fastf_t		cm2;
+	fastf_t		powerfrac;
+	struct rt_spect_sample	*pixelp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -499,9 +526,37 @@ struct partition *PartHeadp;
 #endif
 
 	/* +++++ Something was hit, get the power from it. ++++++ */
-rt_bomb("colorview: not written\n");
+	/*
+	 *  The temperature gives us the radiant emittance in W/cm**2.
+	 *  The ray footprint indicates how many mm**2.
+	 *  The solid angle of the pixel from the hit point / 4pi
+	 *  says how much of the emitted power is going our way.
+	 */
+	if( !ap->a_uptr )  curve_attach(ap);
+	pixelp = (struct rt_spect_sample *)ap->a_uptr;
+	RT_CK_SPECT_SAMPLE(pixelp);
 
+	degK = 700;	/* XXX extract from region! */
 
+	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
+		hitp->hit_dist, ap->a_ray.r_dir );
+	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+	if( pp->pt_inflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+		pp->pt_inflip = 0;	/* shouldnt be needed */
+	}
+	cm2 = rt_pixel_footprint(ap, hitp) * 0.01;	/* mm**2 to cm**2 */
+
+	powerfrac = 0.2;		/* XXX from solid angle */
+
+	rt_spect_black_body( pixelp, degK, 3 );
+	rt_spect_scale( pixelp, pixelp, cm2 * powerfrac );
+
+	/* Spectrum is now in terms of Watts of power radiating
+	 * on the path to this pixel.
+	 * Next, it should encounter some atmosphere along the way.
+	 */
+	/* XXX Even a little Beers Law would be tasty here */
 
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
 out:
@@ -645,4 +700,90 @@ char	*framename;
 void application_init ()
 {
     rpt_overlap = 1;
+}
+
+
+/* --- */
+
+/*
+ *
+ *  hitp->hit_point and hitp->hit_normal must be computed by caller.
+ * 
+ *  Return -
+ *	area of ray footprint, in mm**2 (square milimeters).
+ */
+double
+rt_pixel_footprint(ap, hitp)
+CONST struct application *ap;
+CONST struct hit	*hitp;
+{
+	plane_t	perp;
+	plane_t	surf_tan;
+	fastf_t	h_radius, v_radius;
+	point_t	corners[4];
+	fastf_t	norm_dist;
+	fastf_t	area;
+	int	i;
+
+	/*  If surface normal is nearly perpendicular to ray,
+	 *  (i.e. ray is parallel to surface), abort
+	 */
+	if( fabs(VDOT(ap->a_ray.r_dir, hitp->hit_normal)) <= 1.0e-10 )  {
+parallel:
+		rt_log("rt_pixel_footprint() ray parallel to surface\n");	/* debug */
+		return 0;
+	}
+
+	/*  Compute H and V "radius" of the footprint along
+	 *  a plane perpendicular to the ray direction.
+	 *  Find the 4 corners of the footprint on this perpendicular plane.
+	 */
+	mat_vec_perp( perp, ap->a_ray.r_dir );
+	perp[3] = VDOT( perp, hitp->hit_point );
+
+	h_radius = ap->a_rbeam + hitp->hit_dist * ap->a_diverge;
+	v_radius = ap->a_rbeam + hitp->hit_dist * ap->a_diverge * cell_width / cell_height;
+
+	VJOIN2( corners[0], hitp->hit_point,
+		 h_radius, dx_model,  v_radius, dy_model );	/* UR */
+	VJOIN2( corners[1], hitp->hit_point,
+		-h_radius, dx_model,  v_radius, dy_model );	/* UL */
+	VJOIN2( corners[2], hitp->hit_point,
+		-h_radius, dx_model, -v_radius, dy_model );	/* LL */
+	VJOIN2( corners[3], hitp->hit_point,
+		 h_radius, dx_model, -v_radius, dy_model );	/* LR */
+
+	/* Approximate surface at hit point by a (tangent) plane */
+	VMOVE( surf_tan, hitp->hit_normal );
+	surf_tan[3] = VDOT( surf_tan, hitp->hit_point );
+
+	/*
+	 *  Form a line from ray start point to each corner point,
+	 *  compute intersection with tangent plane,
+	 *  replace corner point with new point on tangent plane.
+	 */
+	norm_dist = DIST_PT_PLANE( ap->a_ray.r_pt, surf_tan );
+	for( i=0; i<4; i++ )  {
+		fastf_t		slant_factor;	/* Direction dot Normal */
+		vect_t		dir;
+		fastf_t		dist;
+
+		VSUB2( dir, corners[i], ap->a_ray.r_pt );
+		VUNITIZE(dir);
+		if( (slant_factor = -VDOT( surf_tan, dir )) < -1.0e-10 ||
+		     slant_factor > 1.0e-10 )  {
+			dist = norm_dist / slant_factor;
+			if( !NEAR_ZERO(dist, INFINITY) )
+				goto parallel;
+		} else {
+			goto parallel;
+		}
+		VJOIN1( corners[i], ap->a_ray.r_pt, dist, dir );
+	}
+
+	/* Find area of 012, and 230 triangles */
+	area = rt_area_of_triangle( corners[0], corners[1], corners[2] );
+	area += rt_area_of_triangle( corners[2], corners[3], corners[0] );
+rt_log("rt_pixel_footprint() area=%g mm**2\n", area);
+	return area;
 }
