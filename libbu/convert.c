@@ -414,7 +414,7 @@ int	count;
 		if (remaining < work_count) work_count = remaining;
 
 		from = in;
-		(char *)in = (char *) in + work_count * insize;
+		in = ((char *) in) + work_count * insize;
 
 		if (invert != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
@@ -446,38 +446,44 @@ int	count;
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i< work_count; i++) {
-					(*(double *)to)++ = 
-					    (*(signed char *)from)++;
+					*((double *)to) = *((signed char *)from);
+					to = ((double *)to) + 1;
+					from = ((char *)from) + 1;
 				}
 				break;
 			case CV_8:
 				for(i=0; i < work_count; i++) {
-					(*(double *)to)++ = 
-					    (*(unsigned char *)from)++;
+					*((double *)to) = *((unsigned char *)from);
+					to = ((double *)to) + 1;
+					from = ((unsigned char *)from) + 1;
 				}
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i < work_count; i++) {
-					(*(double *)to)++ =
-					    (*(signed short *)from)++;
+					*((double *)to) = *((signed short *)from);
+					to = ((double *)to) + 1;
+					from = ((signed short *)from) + 1;
 				}
 				break;
 			case CV_16:
 				for (i=0; i < work_count; i++) {
-					(*(double *)to)++ =
-					    (*(unsigned short *)from)++;
+					*((double *)to) = *((unsigned short *)from);
+					to = ((double *)to) + 1;
+					from = ((unsigned short *)from) + 1;
 				}
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i < work_count; i++) {
-					(*(double *)to)++ =
-					    (*(signed long int *)from)++;
+					*((double *)to) = *((signed long int *)from);
+					to = ((double *)to) + 1;
+					from =  ((signed long int *)from) + 1;
 				}
 				break;
 			case CV_32:
 				for (i=0; i < work_count; i++) {
-					(*(double *)to)++ =
-					    (*(unsigned long int *)from)++;
+					*((double *)to) = *((unsigned long int *) from);
+					to = ((double *)to) + 1;
+					from = ((unsigned long int *)from) + 1;
 				}
 				break;
 			}
@@ -506,28 +512,51 @@ int	count;
 
 			switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
-				(*(signed char *)to)++ =
-				    (*(double *)from)++;
+				for (i=0; i<work_count; i++) {
+					*((signed char *)to) = *((double *)from);
+					to = ((signed char *)to) + 1;
+					from = ((double *)from) + 1;
+				}
 				break;
 			case CV_8:
-				(*(unsigned char *)to)++ =
-				    (*(double *)from++;
+				for (i=0; i<work_count; i++) {
+					*((unsigned char *)to) =
+					    *((double *)from);
+					to = ((unsigned char *)to) + 1;
+					from = ((double *)from) + 1;
+				}
 				break;
 			case CV_SIGNED_MASK | CV_16:
-				(*(signed short *)to)++ =
-				    (*(double *)from)++;
+				for (i=0; i<work_count; i++) {
+					*((signed short int *)to) =
+					    *((double *)from);
+					to = ((signed short int *)to) + 1;
+					from = ((double *)from) + 1;
+				}
 				break;
 			case CV_16:
-				(*(unsigned short *)to)++ =
-				    (*(double *)from++;
+				for (i=0; i<work_count; i++) {
+					*((unsigned short int *)to) =
+					    *((double *)from);
+					to = ((unsigned short int *)to) + 1;
+					from = ((double *)from) + 1;
+				}
 				break;
 			case CV_SIGNED_MASK | CV_32:
-				(*(signed long int *)to)++ =
-				    (*(double *)from)++;
+				for (i=0; i<work_count; i++) {
+					*((signed long int *)to) =
+					    *((double *)from);
+					to = ((signed long int *)to) + 1;
+					from = ((double *)from) + 1;
+				}
 				break;
 			case CV_32:
-				(*(unsigned long int *)to)++ =
-				    (*(double *)from++;
+				for (i=0; i<work_count; i++) {
+					*((unsigned long int *)to) =
+					    *((double *)from);
+					to = ((unsigned long int *)to) + 1;
+					from = ((double *)from) + 1;
+				}
 				break;
 			}
 			from = to;
@@ -545,14 +574,14 @@ int	count;
 			}
 					
 		}
-		out += work_count * outsize;
+		out = ((char *)out) + work_count * outsize;
 		size -= work_count * outsize;
 		number_done += work_count;
 	}
 	rt_free(t1, "vert.c: t1");
 	rt_free(t2, "vert.c: t2");
 	rt_free(t3, "vert.c: t3");
-	return(work_done);
+	return(number_done);
 }
 
 /*	ntohss	Network TO Host Signed Short
@@ -591,7 +620,7 @@ int			count;
 
 	for (i=0; i<count; i++) {
 		*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
-		in+=2;
+		in = ((char *)in) + 2;
 	}
 	return(count);
 }
@@ -609,8 +638,9 @@ int			count;
 	if (limit < count) count = limit;
 
 	for (i=0; i<count; i++) {
-		*out++ = ((unsigned char *)in)[0]<<8 | ((unsigned char *)in)[1]);
-		in += 2;
+		*out++ = ((unsigned char *)in)[0]<<8 |
+		    ((unsigned char *)in)[1];
+		in = ((char *)in) + 2;
 	}
 	return(count);
 }
@@ -632,7 +662,7 @@ int				count;
 		    ((unsigned char *)in)[1] << 16 | 
 		    ((unsigned char *)in)[2] << 8  |
 		    ((unsigned char *)in)[3];
-		in += 4;
+		in = ((char *)in) + 4;
 	}
 	return(count);
 }
@@ -654,7 +684,7 @@ int				count;
 		    ((unsigned char *)in)[1] << 16 |
 		    ((unsigned char *)in)[2] <<  8 |
 		    ((unsigned char *)in)[3];
-		int += 4;
+		in = ((char *)in) + 4;
 	}
 	return(count);
 }
