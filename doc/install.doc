@@ -215,13 +215,24 @@ dm-X	X Window System (X11R4, R5)
 dm-xgl	SUN XGL interface
 .TE
 .NH 1
-LOADING THE SOFTWARE
-.IP 1)
-Find a disk with 100-150 Mbytes of free space that you can use.
+DISK STORAGE REQUIREMENTS
+.PP
 The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
-For example, the final Sun-4 executables alone total more than 54 Mbytes.
+.PP
+The TAR archive of the source materials requires about 35 MBytes.
+You will need about 250 MBytes of free space to compile in. On an SGI
+Irix 4.0.5 system, the installed /usr/brlcad tree requires 165 MBytes.
+On an SGI Irix 5.2 system, the installed /usr/brlcad tree requires only
+21 MBytes.  On a Sun-4 system, the installed /usr/brlcad tree requires
+only 20 MBytes.  The difference is due to the availability of shared
+library support in the later operating systems.
+(More on shared libraries, below).
+.NH 1
+LOADING THE SOFTWARE
+.IP 1)
+Find a disk with at least 300 Mbytes of free space that you can use.
 .IP 2)
 Mount the distribution tape on the tape drive.
 Make certain that the tape is write protected.
@@ -237,6 +248,9 @@ position.
 For the Exabyte 8mm style tape cartridges,
 be certain that the write protect tab has been slid so that the red portion
 is visible.
+For the DAT 4mm style tape cartridges,
+be certain that the write enable tab has been slid so that the white
+portion is not visible.
 .IP 3)
 Change directory to the place where you want the source code to go, and
 run these two commands:
@@ -517,9 +531,6 @@ are installed.
 MANDIR is where the manual page subdirectories are installed.
 INCDIR is where all the include files are installed,
 so that programs which you write can reference them.
-A non-production installation only requires that BINDIR exist.
-LIBDIR and ETCDIR are made the same as BINDIR, in case an accidental
-\fBcake install\fR is performed.
 .PP
 In all cases, it is necessary for the BINDIR string to be in your
 search path, before the BRL-CAD software can be set up.
@@ -527,7 +538,7 @@ search path, before the BRL-CAD software can be set up.
 INSTALLATION DIRECTORIES \(em BENCHMARKING or EXPLORATION USE
 .PP
 For benchmark use, and for exploratory use, the binary directory should
-probably be set to your personal "bin" (or ".bin") directory.
+probably be set to some directory beneath your home directory.
 Note that the the traditional UNIX
 style is to name a personal directory for binary programs "bin",
 but you can substitute any name here, if you prefer.
@@ -586,6 +597,10 @@ update the definitions for BINDIR,
 LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
 "cray.sh", "cake/Makefile", and "cakeaux/Makefile".
 Then, add your choice for BINDIR to your search path. 
+XXX newbindir.sh will do this.
+.PP
+Running setup.sh will cause all the necessary directories to be
+created.
 .NH 2
 Updating Your Search Path \(em Bourne Shell (/bin/sh)
 .PP
@@ -1376,6 +1391,49 @@ To be ultra conservative,
 after each major change of a configuration file,
 it would be wise to run \fBcake clobber\fR in the top directory,
 and then recompile.
+.NH 1
+LIVING WITH SHARED LIBRARIES
+.PP
+Many modern versions of UNIX offer shared libraries, and
+this BRL-CAD release takes advantage of them on the Sun and SGI platforms.
+For BRL-CAD modelers, shared libraries save a lot of disk space
+and represent only a minute performance loss.
+For BRL-CAD developers who are making changes to the libraries,
+shared libraries offer an additional detail to keep track of.
+In particular, when a new shared library is installed, all the
+programs will start using it the next time they are run, even
+without being explicitly recompiled.  If data structures in raytrace.h
+were changed, this could be disasterous.
+There are several different ways developers can cope with this:
+.IP 1)
+Disable shared library support in Cakefile.defs, and run
+.sp .5
+	cake clobber
+.br
+	cake install
+.sp .5
+to build non-shared libraries and programs.
+.IP 2)
+In /usr/brlcad/lib, make symlinks from your_source_dir/librt/librt.so to
+/usr/brlcad/lib, e.g.:
+.sp .5
+	cd /usr/brlcad/lib
+.br
+	ln -s your_source_dir/librt/librt.so .
+.sp .5
+for each of the libraries that you plan to be working on.
+Note that this makes the system "installed" version of the library
+your development copy.  This is only a reasonable policy if
+the developer(s) are the only users of this particular machine.
+.IP 3)
+On SunOS 4 machines \fIonly\fP, the development tree executables
+are able to find the development tree libraries automaticly.
+E.g. your_source_dir/rt/rt will automaticly attempt to use ../librt/librt.so
+before resorting to the installed version in /usr/brlcad/lib/librt.so.
+Sadly, this feature does not work on SunOS 5 and SGI platforms.
+.IP 4)
+You can attempt to play games with your environment variable
+LD_LIBRARY_PATH, to control which library versions you are using.
 .NH 1
 KNOWN PROBLEMS
 .NH 2
