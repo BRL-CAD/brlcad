@@ -2350,14 +2350,6 @@ struct nmg_ray_state *rs;
 			if( rs->vu[next_end]->v_p == vu2->v_p )
 				next_end++;
 
-if( prior_end - prior_start > 1 ||  next_end - next_start > 1 )
-{
-
-	rt_log( "coincident VU's at %d:\n", cur );
-	for( i=0 ; i<rs->nvu ; i++ )
-		rt_log( "\tvu=x%x, v=x%x, lu=x%x\n", rs->vu[i], rs->vu[i]->v_p, nmg_find_lu_of_vu( rs->vu[i] ) );
-}
-
 			match_lu = (struct loopuse *)NULL;
 			while( !done )
 			{
@@ -2388,7 +2380,6 @@ if( prior_end - prior_start > 1 ||  next_end - next_start > 1 )
 
 			if( match_lu )
 			{
-rt_log( "\t\tx%x is the innermost matching lu\n", match_lu );
 				lu1 = match_lu;
 				for( i=prior_start ; i < prior_end ; i++ )
 				{
@@ -2407,7 +2398,6 @@ rt_log( "\t\tx%x is the innermost matching lu\n", match_lu );
 						break;
 					}
 				}
-rt_log( "\t\tUse vu1=x%x, vu2=x%x\n", vu1, vu2 );
 			}
 		}
 
@@ -2543,6 +2533,7 @@ fastf_t			*mag2;
 {
 	nmg_fcut_face( rs1 );
 	nmg_fcut_face( rs2 );
+
 }
 
 /*
