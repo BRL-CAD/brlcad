@@ -34,26 +34,24 @@
 /* 	$Id$	 */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Id$";
+static char RCSid[] = "(#)$Header$";
 #endif /* lint */
 
 #include "conf.h"
-#include "tk.h"
-#include <X11/keysym.h> 
-#include <X11/StringDefs.h> 
-#include <GL/glx.h>
-#include <GL/gl.h> 
-#include <GL/glu.h> 
+
 #include <stdio.h> 
 #include <stdlib.h>  
-
-
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <signal.h>
 #include <errno.h>
+#include <X11/keysym.h> 
+#include <X11/StringDefs.h> 
+#include <GL/glx.h>
+#include <GL/gl.h> 
+#include <GL/glu.h> 
 #undef RED
 
 #include "machine.h"
@@ -62,7 +60,7 @@ static char RCSid[] = "@(#)$Id$";
 #include "fb.h"
 #include "./fblocal.h"
 
-#define CJDEBUG 0
+#define CJDEBUG 1
 
 /*WWW these come from Iris gl gl.h*/
 #define XMAXSCREEN	1279
@@ -72,7 +70,7 @@ static char RCSid[] = "@(#)$Id$";
 #define XMAX170		645
 #define YMAX170		484
 
-static XColor curs_color = {
+_LOCAL_ XColor curs_color = {
 		0,		/* unused */
 		0xFFFF,		/* red */
 		0x0000,		/* green */
@@ -87,16 +85,16 @@ struct ogl_cursor {		/* for reading in default cursors from file*/
 	char bits[MAX_CURS_BYTES];
 };
 
-static struct ogl_cursor arr_data = {	/* default arrow cursor */
+_LOCAL_ struct ogl_cursor arr_data = {	/* default arrow cursor */
 #include "./oglcursor.h"
 };
 
-static struct ogl_cursor nil_data = {	/* default blank cursor */
+_LOCAL_ struct ogl_cursor nil_data = {	/* default blank cursor */
 #include "./nilcursor.h"
 };
-static Cursor nil_cursor;
+_LOCAL_ Cursor nil_cursor;
 
-char *visual_class[] = {
+_LOCAL_ char *visual_class[] = {
 	"StaticGray",
 	"GrayScale",
 	"StaticColor",
@@ -106,28 +104,24 @@ char *visual_class[] = {
 };
 
 /* Internal callbacks etc.*/
-static int input();
-static int expose_callback();
-static int CloseCB();
-static int PostIt();
+_LOCAL_ void		expose_callback();
 
 /* Other Internal routines */
-void ogl_clipper();
-_LOCAL_ int ogl_getmem();
+_LOCAL_ void		ogl_clipper();
+_LOCAL_ int		ogl_getmem();
 _LOCAL_ void		backbuffer_to_screen();
 _LOCAL_ void		ogl_cminit();
 _LOCAL_ void		reorder_cursor();
 _LOCAL_ Pixmap  	make_bitmap();
 _LOCAL_ XVisualInfo *	ogl_choose_visual();
-static int		is_linear_cmap();
+_LOCAL_ int		is_linear_cmap();
 
-static int	ogl_nwindows = 0; 	/* number of open windows*/
-static int	multiple_windows = 0;	/* someone wants to be ready
+_LOCAL_ int	ogl_nwindows = 0; 	/* number of open windows*/
+_LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
 					 * for multiple windows, at the
 					 * expense of speed.
 					 */
 _LOCAL_	XColor	color_cell[256];		/* used to set colormap */
-
 
 _LOCAL_ int	ogl_open(),
 		ogl_close(),
@@ -254,14 +248,11 @@ struct sgiinfo {
  *  Per window state information particular to the OpenGL interface
  */
 struct oglinfo {
-  Tcl_Interp *interp;
-  Tk_Window main_tkwin;
-  Tk_Window tkwin;
-  GLXContext glxc;
-  Display *dispp;
-  Window wind;
-	short 		firstTime;	/* first time exposed */
-	short 		close_me; 	/* flag set by popup close button */
+	GLXContext	glxc;
+	Display	       *dispp;		/* pointer to X display connection */
+	Window		wind;		/* Window identifier */
+	int		firstTime;	/* flag for setup */
+	long		event_mask;	/* event types to be received */
 	short		front_flag;	/* front buffer being used (b-mode) */
 	short		copy_flag;	/* pan and zoom copied from backbuffer */
 	short		soft_cmap_flag;	/* use software colormapping */
@@ -272,7 +263,7 @@ struct oglinfo {
 	int		vp_height;	/* actual viewport height */
 	struct ogl_clip	clip;		/* current view clipping */
 	Cursor		cursor;		/* user's cursor */
-	XVisualInfo	*vip;		/* pointer to info on current visual*/
+	XVisualInfo    *vip;		/* pointer to info on current visual*/
 	Colormap	xcmap;		/* xstyle color map */
 };
 
@@ -321,7 +312,7 @@ struct oglinfo {
 #define MODE_4NODITH	(1<<3)		/* suppress any dithering */
 
 #define MODE_5MASK	(1<<4)
-#define MODE_5NORMAL	(1<<4)		/* fast - assume no multiple windows */
+#define MODE_5NORMAL	(1<<4) /* 1? */	/* fast - assume no multiple windows */
 #define MODE_5MULTI	(1<<4)		/* be ready for multiple windows */
 
 #define MODE_7MASK	(1<<6)
@@ -340,7 +331,7 @@ struct oglinfo {
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)		/* zap the shared memory segment */
 
-static struct modeflags {
+_LOCAL_ struct modeflags {
 	char	c;
 	long	mask;
 	long	value;
@@ -402,7 +393,7 @@ static struct modeflags {
  *  In the initial version of this routine, that prevented subsequent
  *  calls to malloc() from succeeding, quite a drawback.  The work-around
  *  used here is to increase the current break to a large value,
- *  attach to the shared memory, and then return the break to it's
+ *  attach to the shared memory, and then return the break to its
  *  original value.  This should allow most reasonable requests for
  *  memory to be satisfied.  In special cases, the values used here
  *  might need to be increased.
@@ -549,7 +540,7 @@ ogl_zapmem()
  */
 static void
 #if _XOPEN_SOURCE
-sigkid(pid)
+sigkid( pid )
 int pid;
 #else
 sigkid()
@@ -727,6 +718,8 @@ int	width, height;
 	FBIO 		*client_data1;
 	GLXContext 	client_data2;
 	XEvent 		event;
+	long		valuemask;
+	XSetWindowAttributes swa;
 	int fargc = 0;
 
 	FB_CK_FBIO(ifp);
@@ -887,7 +880,7 @@ int	width, height;
 	}
 
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRL libfb /dev/ogl %s, %s",
+	(void)sprintf( title, "BRLGGG libfb /dev/ogl %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win":
 			"Lingering Win",
@@ -904,43 +897,22 @@ int	width, height;
 	ifp->if_ycenter = height/2;
 	SGI(ifp)->mi_pid = getpid();
 
-
 	/* Attach to shared memory, potentially with a screen repaint */
 	if( ogl_getmem(ifp) < 0 )
 		return(-1);
 
-
-	OGL(ifp)->interp = Tcl_CreateInterp();
-
-	/* This runs the init.tcl script */
-	if( Tcl_Init(OGL(ifp)->interp) == TCL_ERROR ){
-	  fb_log("Tcl_Init error %s\n", OGL(ifp)->interp->result);
-	  return (-1);
+	/* Open an X connection to the display.  Sending NULL to XOpenDisplay
+	   tells it to use the DISPLAY environment variable. */
+	if( (OGL(ifp)->dispp = XOpenDisplay(NULL)) == NULL ) {
+		fb_log("ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
+		return (-1);
 	}
+	ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
 
-	if (Tk_Init(OGL(ifp)->interp) == TCL_ERROR){
-	  fb_log("Tk_Init error %s\n", OGL(ifp)->interp->result);
-	  return (-1);
-	}
-
-	if((OGL(ifp)->main_tkwin = Tk_MainWindow(OGL(ifp)->interp)) == NULL){
-	  fb_log("ogl_open: Failed to get main window.\n");
-	  return (-1);
-	}
-
-	if((OGL(ifp)->tkwin = Tk_CreateWindowFromPath(OGL(ifp)->interp,
-						      OGL(ifp)->main_tkwin,
-						      ".ogl", NULL)) == NULL){
-	  fb_log("ogl_open: Failed to create window.\n");
-	  return (-1);
-	}
-
-	OGL(ifp)->dispp = Tk_Display(OGL(ifp)->tkwin);
-
-	/* Choose an appropriate visual */
-	if ((OGL(ifp)->vip = ogl_choose_visual(ifp))==NULL){
-	  fb_log("ogl_open: Couldn't find an appropriate visual. Exiting.\n");
-	  exit(-1);
+	/* Choose an appropriate visual. */
+	if( (OGL(ifp)->vip = ogl_choose_visual(ifp)) == NULL ) {
+		fb_log("ogl_open: Couldn't find an appropriate visual.  Exiting.\n");
+		return (-1);
 	}
 
 	/* Open an OpenGL context with this visual*/
@@ -977,95 +949,157 @@ int	width, height;
 	    		color_cell[i].blue = CMB(ifp)[i];
 	    		color_cell[i].flags = DoRed | DoGreen | DoBlue;
 	    	}
-    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell, 256);
+    		XStoreColors(OGL(ifp)->dispp, OGL(ifp)->xcmap, color_cell,256);
 	} else { /* read only colormap */
+		if( CJDEBUG ) {
+			printf("Allocating read-only colormap:");
+		}
 		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp,
 					RootWindow(OGL(ifp)->dispp,
-						OGL(ifp)->vip->screen),
+						   OGL(ifp)->vip->screen),
 					OGL(ifp)->vip->visual,
 					AllocNone);
+		if( CJDEBUG ) {
+			printf(" %08X.\n", OGL(ifp)->xcmap);
+		}
 	}
 
-	/* count windows */
-	ogl_nwindows++;
-
-	Tk_GeometryRequest(OGL(ifp)->main_tkwin, ifp->if_width, ifp->if_height);
-	Tk_ResizeWindow(OGL(ifp)->tkwin, ifp->if_width, ifp->if_height);
-	Tk_SetWindowVisual(OGL(ifp)->tkwin, OGL(ifp)->vip->visual,
-			   OGL(ifp)->vip->depth, OGL(ifp)->xcmap);
-	Tk_MakeWindowExist(OGL(ifp)->tkwin);
-	OGL(ifp)->wind = Tk_WindowId(OGL(ifp)->tkwin);
-
-	{
-	  char *str;
-	  struct bu_vls vls;
-	  int status;
-
-	  str = (char *)malloc( strlen( title ) + 40 );
-	  sprintf( str, "wm title . \"%s\"; wm resizable . 0 0", title );
-	  status = Tcl_Eval(OGL(ifp)->interp, str);
-	  free( str );
-	}
-	
 	/* 
 	 * Cursor set-up:
 	 * create the default cursor and an invisible cursor for when the
 	 * cursor is off
 	 */
-	src_bitmap = make_bitmap(ifp, arr_data.bits, 
-				arr_data.xbits, arr_data.ybits);
+	src_bitmap = make_bitmap(ifp, OGL(ifp)->vip->visual, arr_data.bits, 
+				 arr_data.xbits, arr_data.ybits);
 	/* (complication in last parameter is conversion from 
 	 *  first quadrant to third quadrant coordinates)
 	 */
 	OGL(ifp)->cursor = XCreatePixmapCursor(OGL(ifp)->dispp, src_bitmap,
-			src_bitmap, &curs_color, &curs_color, 
-			arr_data.xorig, arr_data.ybits - arr_data.yorig - 1);
-	XFreePixmap(OGL(ifp)->dispp,src_bitmap);
+					       src_bitmap, &curs_color,
+					       &curs_color, arr_data.xorig,
+					       arr_data.ybits -
+					       arr_data.yorig - 1);
+	XFreePixmap(OGL(ifp)->dispp, src_bitmap);
 
 	/* only need one copy of null cursor for all open windows*/
-	if (ogl_nwindows < 2) {
-		nil_bitmap = make_bitmap(ifp, nil_data.bits,nil_data.xbits, nil_data.ybits);
+	if( ogl_nwindows < 2 ) {
+		nil_bitmap = make_bitmap(ifp, OGL(ifp)->vip->visual,
+					 nil_data.bits, nil_data.xbits,
+					 nil_data.ybits);
 		nil_cursor = XCreatePixmapCursor(OGL(ifp)->dispp, nil_bitmap,
-			nil_bitmap, &curs_color, &curs_color, 
-			nil_data.xorig, nil_data.ybits - nil_data.yorig -1);
+						 nil_bitmap, &curs_color,
+						 &curs_color, nil_data.xorig,
+						 nil_data.ybits -
+						 nil_data.yorig - 1);
 		XFreePixmap(OGL(ifp)->dispp,nil_bitmap);
 	}
 
-	if ( SGI(ifp)->mi_curs_on == 0 ) {
-		XDefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind,nil_cursor);
-	} else {
-		XDefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->cursor);
-	}
+ 	XSync(OGL(ifp)->dispp, 0);
 
-	Tk_CreateGenericHandler(expose_callback, (ClientData)ifp);
-	Tk_MapWindow(OGL(ifp)->tkwin);
-	Tk_MapWindow(OGL(ifp)->main_tkwin);
-	ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
+	/* Create a window. */
+	memset(&swa, 0, sizeof(swa));
+
+	valuemask = CWBackPixmap | CWBackPixel | CWBorderPixmap |
+		CWBorderPixel | CWEventMask /* | CWColormap */ | CWCursor;
+
+	swa.background_pixmap = None;
+	swa.background_pixel = BlackPixel(OGL(ifp)->dispp,
+					  OGL(ifp)->vip->screen);
+	swa.border_pixmap = None;
+	swa.border_pixel = BlackPixel(OGL(ifp)->dispp,
+				      OGL(ifp)->vip->screen);
+	swa.event_mask = OGL(ifp)->event_mask =
+		ExposureMask | KeyPressMask | KeyReleaseMask |
+ 		ButtonPressMask | ButtonReleaseMask;
+/*	swa.colormap = OGL(ifp)->xcmap; */
+	swa.cursor = OGL(ifp)->cursor;
+
+#define XCreateWindowDebug(display, parent, x, y, width, height, \
+			   border_width, depth, class, visual, valuemask, \
+			   attributes) \
+	(printf("XCreateWindow( display = %08X,\n", (long)display), \
+	printf("                parent = %08X,\n", (long)parent), \
+	printf("                     x = %d,\n", x), \
+	printf("                     y = %d,\n", y), \
+	printf("                 width = %d,\n", width), \
+	printf("                height = %d,\n", height), \
+	printf("          border_width = %d,\n", border_width), \
+	printf("                 depth = %d,\n", depth), \
+	printf("                 class = %d,\n", class), \
+	printf("                visual = %08X,\n", (long)visual), \
+        printf("             valuemask = %08X,\n", valuemask), \
+	printf("            attributes = {"), \
+	(valuemask & CWBackPixmap) ? printf(" background_pixmap = %08X ", (long)((attributes)->background_pixmap)) : 0, \
+	(valuemask & CWBackPixel) ? printf(" background_pixel = %08X ", (attributes)->background_pixel) : 0, \
+	(valuemask & CWBorderPixmap) ? printf(" border_pixmap = %08X ", (long)((attributes)->border_pixmap)) : 0, \
+	(valuemask & CWBorderPixel) ? printf(" border_pixel = %08X ", (attributes)->border_pixel) : 0, \
+	(valuemask & CWBitGravity) ? printf(" bit_gravity = %d ", (attributes)->bit_gravity) : 0, \
+	(valuemask & CWWinGravity) ? printf(" win_gravity = %d ", (attributes)->win_gravity) : 0, \
+	(valuemask & CWBackingStore) ? printf(" backing_store = %d ", (attributes)->backing_store) : 0, \
+	(valuemask & CWBackingPlanes) ? printf(" backing_planes = %d ", (attributes)->backing_planes) : 0, \
+	(valuemask & CWBackingPixel) ? printf(" backing_pixel = %08X ", (attributes)->backing_pixel) : 0, \
+	(valuemask & CWOverrideRedirect) ? printf(" override_redirect = %d ", (attributes)->override_redirect) : 0, \
+	(valuemask & CWSaveUnder) ? printf(" save_under = %d ", (attributes)->save_under) : 0, \
+	(valuemask & CWEventMask) ? printf(" event_mask = %08X ", (attributes)->event_mask) : 0, \
+	(valuemask & CWDontPropagate) ? printf(" do_not_propagate_mask = %08X ", (attributes)->do_not_propagate_mask) : 0, \
+	(valuemask & CWColormap) ? printf(" colormap = %08X ", (long)((attributes)->colormap)) : 0, \
+	(valuemask & CWCursor) ? printf(" cursor = %08X ", (long)((attributes)->cursor)) : 0, \
+	printf(" }\n")) > 0 ? XCreateWindow(display, parent, x, y, width, height, border_width, depth, class, visual, valuemask, attributes) : -1;
+
+#if 0	
+	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
+				       RootWindow(OGL(ifp)->dispp,
+						  OGL(ifp)->vip->screen),
+				       0, 0, ifp->if_width, ifp->if_height, 0,
+				       OGL(ifp)->vip->depth,
+				       InputOutput,
+				       OGL(ifp)->vip->visual,
+				       valuemask, &swa);
+#else	
+	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
+				       RootWindow(OGL(ifp)->dispp,
+						  OGL(ifp)->vip->screen),
+				       0, 0, ifp->if_width, ifp->if_height, 0,
+				       CopyFromParent,
+				       InputOutput,
+				       CopyFromParent,
+				       valuemask, &swa);
+#endif
+	printf("\nOGL(ifp)->wind = %08X\n\n", OGL(ifp)->wind);
+	XStoreName(OGL(ifp)->dispp, OGL(ifp)->wind, title);
+
+	/* count windows */
+	ogl_nwindows++;
+
+	XMapRaised(OGL(ifp)->dispp, OGL(ifp)->wind);
+
+	OGL(ifp)->firstTime = 1;
 
 	/* Loop through events until first exposure event is processed */
-	OGL(ifp)->firstTime = 1;
-	while(OGL(ifp)->firstTime){
-	  Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+	while (1) {
+		XWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
+			     OGL(ifp)->event_mask, &event);
+		if (event.type == Expose) break;
 	}
-
 	return 0;
 }
-
-
 
 _LOCAL_ int 
 ogl_final_close( ifp )
 FBIO	*ifp;
 {
-
 	XEvent event;
 	
-	XUndefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind);
-	Tk_DestroyWindow(OGL(ifp)->main_tkwin);
-	XFreeCursor(OGL(ifp)->dispp,OGL(ifp)->cursor);
-	XFreeColormap(OGL(ifp)->dispp,OGL(ifp)->xcmap);
-	if (ogl_nwindows < 2){
-		XFreeCursor(OGL(ifp)->dispp,nil_cursor);
+	XUndefineCursor(OGL(ifp)->dispp, OGL(ifp)->wind);
+	if( CJDEBUG ) {
+		printf("ogl_final_close: All done...goodbye!\n");
+		sleep(5);
+	}
+	XDestroyWindow(OGL(ifp)->dispp, OGL(ifp)->wind);
+	XFreeCursor(OGL(ifp)->dispp, OGL(ifp)->cursor);
+	XFreeColormap(OGL(ifp)->dispp, OGL(ifp)->xcmap);
+	if (ogl_nwindows < 2) {
+		XFreeCursor(OGL(ifp)->dispp, nil_cursor);
 	}
 
 	if( SGIL(ifp) != NULL ) {
@@ -1073,7 +1107,8 @@ FBIO	*ifp;
 		if( SGI(ifp)->mi_shmid != -1 ) {
 			/* detach from shared memory */
 			if( shmdt( ifp->if_mem ) == -1 ) {
-				fb_log("ogl_close shmdt failed, errno=%d\n", errno);
+				fb_log("ogl_close shmdt failed, errno=%d\n",
+				       errno);
 				return -1;
 			}
 		} else {
@@ -1085,7 +1120,7 @@ FBIO	*ifp;
 		SGIL(ifp) = NULL;
 	}
 
-	if ( OGLL(ifp) != NULL) {
+	if( OGLL(ifp) != NULL) {
 		(void) free( (char *)OGLL(ifp) );
 		OGLL(ifp) = NULL;
 	}
@@ -1093,7 +1128,6 @@ FBIO	*ifp;
 	ogl_nwindows--;
 	return(0);
 }
-
 
 
 _LOCAL_ int
@@ -1157,7 +1191,25 @@ FBIO	*ifp;
 {
 	XEvent event;
 
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+	while (XCheckWindowEvent(OGL(ifp)->dispp, OGL(ifp)->wind,
+				 OGL(ifp)->event_mask, &event)) {
+		switch (event.type) {
+		case Expose:
+			expose_callback(ifp);
+			break;
+		case ButtonPress:
+			break;
+		case ButtonRelease:
+			/* XXX Quit under certain conditions. */
+			break;
+		case KeyPress:
+			break;
+		case KeyRelease:
+			/* XXX Quit under certain conditions. */
+			break;
+		}
+	}
+
 	return(0);
 }
 
@@ -1190,20 +1242,17 @@ FBIO	*ifp;
 unsigned char	*pp;		/* pointer to beginning of memory segment*/
 {
 	struct ogl_pixel		bg;
-	register struct ogl_pixel	*oglp;
-	register int	cnt;
-	register int	y;
+	register struct ogl_pixel      *oglp;
+	register int			cnt;
+	register int			y;
 	XEvent event;
 
-	if(CJDEBUG) printf("entering ogl_clear\n");
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
+	if( CJDEBUG ) printf("entering ogl_clear\n");
 
 	if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_clear: glXMakeCurrent unsuccessful.\n");
-	}
+		}
 	}
 
 	/* Set clear colors */
@@ -1253,8 +1302,8 @@ unsigned char	*pp;		/* pointer to beginning of memory segment*/
 	}
 
 	if (multiple_windows) {
-	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+		/* unattach context for other threads to use */
+		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 	}
 
 	return(0);
@@ -1274,9 +1323,7 @@ int	xzoom, yzoom;
 	XEvent event;
 
 	if(CJDEBUG) printf("entering ogl_view\n");
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
+
 	if( xzoom < 1 ) xzoom = 1; 
 	if( yzoom < 1 ) yzoom = 1;
 	if( ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
@@ -1301,9 +1348,9 @@ int	xzoom, yzoom;
 
 
 	if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
-		fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
-	}
+		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+			fb_log("Warning, ogl_view: glXMakeCurrent unsuccessful.\n");
+		}
 	}
 
 	/* Set clipping matrix  and zoom level */
@@ -1332,8 +1379,8 @@ int	xzoom, yzoom;
 	}
 
 	if (multiple_windows) {
-	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+		/* unattach context for other threads to use */
+		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 	}
 
 	return(0);
@@ -1350,9 +1397,7 @@ int	*xzoom, *yzoom;
 {
 	XEvent event;
 	if(CJDEBUG) printf("entering ogl_getview\n");
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
+
 	*xcenter = ifp->if_xcenter;
 	*ycenter = ifp->if_ycenter;
 	*xzoom = ifp->if_xzoom;
@@ -1505,17 +1550,10 @@ int	count;
 			break;
 	}
 
-	/*
-	 * Handle events after updating the memory, and
-	 * before updating the screen
-	 */
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
 	if (multiple_windows) {
-	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
-		fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
-	}
+		if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
+			fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
+		}
 	}
 
 	if( xstart + count <= ifp->if_width  )  {
@@ -1548,8 +1586,8 @@ int	count;
 	}
 
 	if (multiple_windows) {
-	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+		/* unattach context for other threads to use */
+		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
 	}
 
 	return(ret);
@@ -1599,13 +1637,6 @@ CONST unsigned char	*pp;
 		}
 	}
 
-	/*
-	 * Handle events after updating the memory, and
-	 * before updating the screen
-	 */
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif	
 	if (multiple_windows) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
 		fb_log("Warning, ogl_writerect: glXMakeCurrent unsuccessful.\n");
@@ -1703,9 +1734,7 @@ register CONST ColorMap	*cmp;
     	int num;
 	
 	if(CJDEBUG) printf("entering ogl_wmap\n");
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
+
 	prev = SGI(ifp)->mi_cmap_flag;
 	if ( cmp == COLORMAP_NULL)  {
 		ogl_cminit( ifp );
@@ -1792,12 +1821,9 @@ CONST unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
-	XEvent event;
 	Pixmap new_bitmap;
 	Cursor new_cursor;
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
+
 	/* Check size of cursor */
 	if( xbits < 0 )
 		return	-1;
@@ -1808,7 +1834,8 @@ int	xorig, yorig;
 	if( ybits > 16 )
 		ybits = 16;
 
-	new_bitmap = make_bitmap(ifp,bits, xbits, ybits);
+	new_bitmap = make_bitmap(ifp, OGL(ifp)->vip->visual, bits, xbits,
+				 ybits);
 	
 	/* complication in last parameter is conversion from 
 	 * first quadrant to third quadrant coordinates
@@ -1844,9 +1871,7 @@ int	mode;
 int	x, y;
 {
 	XEvent event;
-#if 0
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-#endif
+
 	/* set values into FBIO structure */
 	fb_sim_cursor(ifp, mode, x, y);
 
@@ -1866,9 +1891,7 @@ _LOCAL_ int
 ogl_flush( ifp )
 FBIO	*ifp;
 {
-	XEvent event;
-
-	while(Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+	XFlush(OGL(ifp)->dispp);
 	return(0);
 }
 
@@ -1962,71 +1985,42 @@ register FBIO	*ifp;
  */
 
 
-/* INPUT - The only thing this does is exit on <ESC> */
-#ifndef FB_USING_TCL_TK
-static void 
-input(Widget w, XtPointer client_data,    XtPointer call) 
-{    
-	char buffer[1];    
-	KeySym keysym;    
-	XmDrawingAreaCallbackStruct *call_data;     
-
-	if(CJDEBUG) printf("entering input()\n");
-
-
-	call_data = (XmDrawingAreaCallbackStruct *) call;     
-	switch(call_data->event->type)    {    
-	case KeyRelease:      /* It is necessary to convert the keycode       * to a keysym before it is possible to check       * if it is an escape.       */      
-		if (XLookupString( (XKeyEvent *)                         
-			call_data->event, buffer, 1, &keysym,
-			(XComposeStatus *)NULL) == 1 &&
-			keysym == (KeySym)XK_Escape)        
-		exit(0);    
-		break;     
-	default:    
-		break;    
-	} 
-
-	return;
-}   
-#endif
-  
-static int
-expose_callback(client_data, eventPtr)
-ClientData client_data;
+static void
+expose_callback(ifp, eventPtr)
+FBIO *ifp;
 XEvent *eventPtr;
 {    
-  XWindowAttributes xwa;
-	FBIO *ifp;
+	XWindowAttributes xwa;
 	struct ogl_clip *clp;
 
-	if(CJDEBUG) printf("entering expose_callback()\n");
+	if( CJDEBUG ) printf("entering expose_callback()\n");
 
-	ifp = (FBIO *) client_data;     
 
-	if (multiple_windows || OGL(ifp)->firstTime) {
-	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
-		fb_log("Warning, libfb/expose_callback: glXMakeCurrent unsuccessful.\n");
+	if( multiple_windows || OGL(ifp)->firstTime ) {
+		if( glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind,
+				   OGL(ifp)->glxc) == False) {
+			fb_log("Warning, libfb/expose_callback: glXMakeCurrent unsuccessful.\n");
+		}
 	}
-	}
 
-	if (OGL(ifp)->firstTime){
+	if( OGL(ifp)->firstTime ) {
 		OGL(ifp)->firstTime = 0;
 		
 		/* just in case the configuration is double buffered but
 		 * we want to pretend it's not
 		 */
-		if ( !SGI(ifp)->mi_doublebuffer ){
+
+		if( !SGI(ifp)->mi_doublebuffer ) {
 			glDrawBuffer(GL_FRONT);
 		}
 
-		if ((ifp->if_mode & MODE_4MASK)==MODE_4NODITH){
+		if( (ifp->if_mode & MODE_4MASK) == MODE_4NODITH ) {
 			glDisable(GL_DITHER);
 		}
 
 		/* set copy mode if possible and requested */
-		if (SGI(ifp)->mi_doublebuffer && 
-			((ifp->if_mode & MODE_11MASK)==MODE_11COPY)){
+		if( SGI(ifp)->mi_doublebuffer && 
+		    ((ifp->if_mode & MODE_11MASK)==MODE_11COPY) ) {
 			/* Copy mode only works if there are two 
 			 * buffers to use. It conflicts with
 			 * double buffering
@@ -2044,7 +2038,7 @@ XEvent *eventPtr;
 		OGL(ifp)->win_height = xwa.height;
 
 		/* clear entire window */
-		glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
+		glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);
 		glClearColor(0,0,0,0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
@@ -2059,12 +2053,12 @@ XEvent *eventPtr;
 		ifp->if_ycenter = OGL(ifp)->vp_height/2;
 
 		/* center viewport in window */
-		SGI(ifp)->mi_xoff = (OGL(ifp)->win_width - OGL(ifp)->vp_width)/2;
-		SGI(ifp)->mi_yoff = (OGL(ifp)->win_height - OGL(ifp)->vp_height)/2;
-		glViewport(	SGI(ifp)->mi_xoff,
-				SGI(ifp)->mi_yoff,
-				OGL(ifp)->vp_width,
-				OGL(ifp)->vp_height);
+		SGI(ifp)->mi_xoff=(OGL(ifp)->win_width-OGL(ifp)->vp_width)/2;
+		SGI(ifp)->mi_yoff=(OGL(ifp)->win_height-OGL(ifp)->vp_height)/2;
+		glViewport(SGI(ifp)->mi_xoff,
+			   SGI(ifp)->mi_yoff,
+			   OGL(ifp)->vp_width,
+			   OGL(ifp)->vp_height);
 		/* initialize clipping planes and zoom */
 		ogl_clipper(ifp);
 		clp = &(OGL(ifp)->clip);
@@ -2073,84 +2067,58 @@ XEvent *eventPtr;
 		glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop,
 				-1.0,1.0);
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
-	} else if 
-	((OGL(ifp)->win_width > ifp->if_width) || 
-	 (OGL(ifp)->win_height > ifp->if_height)) {
+	} else if( (OGL(ifp)->win_width > ifp->if_width) || 
+		   (OGL(ifp)->win_height > ifp->if_height) ) {
 		/* clear whole buffer if window larger than framebuffer */
-	 	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag){
+	 	if( OGL(ifp)->copy_flag && !OGL(ifp)->front_flag ) {
 	 		glDrawBuffer(GL_FRONT);
-			glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
+			glViewport(0, 0, OGL(ifp)->win_width,
+				   OGL(ifp)->win_height);      
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 		glDrawBuffer(GL_BACK);
 	 	} else {
-			glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
+			glViewport(0, 0, OGL(ifp)->win_width,
+				   OGL(ifp)->win_height);      
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 	}
 	 	/* center viewport */
-		glViewport(	SGI(ifp)->mi_xoff,
-				SGI(ifp)->mi_yoff,
-				OGL(ifp)->vp_width,
-				OGL(ifp)->vp_height);
+		glViewport(SGI(ifp)->mi_xoff,
+			   SGI(ifp)->mi_yoff,
+			   OGL(ifp)->vp_width,
+			   OGL(ifp)->vp_height);
 	}
 
 	/* repaint entire image */
 	ogl_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-	if(SGI(ifp)->mi_doublebuffer){
+	if( SGI(ifp)->mi_doublebuffer ) {
 		glXSwapBuffers( OGL(ifp)->dispp, OGL(ifp)->wind);
-	} else if (OGL(ifp)->copy_flag) {
+	} else if( OGL(ifp)->copy_flag ) {
 		backbuffer_to_screen(ifp,-1);
 	}
 
-if(CJDEBUG) {
-	int dbb,db,view[4],getster,getaux;
-	glGetIntegerv(GL_VIEWPORT, view);
-	glGetIntegerv(GL_DOUBLEBUFFER,&dbb);
-	glGetIntegerv(GL_DRAW_BUFFER,&db);
-	printf("Viewport: x %d y %d width %d height %d\n",view[0],view[1],view[2],view[3]);
-	printf("expose: double buffered: %d, draw buffer %d\n",dbb,db);
-	printf("front %d\tback%d\n",GL_FRONT,GL_BACK);
-	glGetIntegerv(GL_STEREO,&getster);
-	glGetIntegerv(GL_AUX_BUFFERS,&getaux);
-	printf("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
-}
-
-	if (multiple_windows) {
-	/* unattach context for other threads to use */
-	glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	if( CJDEBUG ) {
+		int dbb,db,view[4],getster,getaux;
+		glGetIntegerv(GL_VIEWPORT, view);
+		glGetIntegerv(GL_DOUBLEBUFFER,&dbb);
+		glGetIntegerv(GL_DRAW_BUFFER,&db);
+		printf("Viewport: x %d y %d width %d height %d\n",view[0],
+		       view[1],view[2],view[3]);
+		printf("expose: double buffered: %d, draw buffer %d\n",dbb,db);
+		printf("front %d\tback%d\n",GL_FRONT,GL_BACK);
+		glGetIntegerv(GL_STEREO,&getster);
+		glGetIntegerv(GL_AUX_BUFFERS,&getaux);
+		printf("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
 	}
 
-	return TCL_OK;
+	if( multiple_windows ) {
+		/* unattach context for other threads to use */
+		glXMakeCurrent(OGL(ifp)->dispp,None,NULL);
+	}
 }  
 
  
-#ifndef FB_USING_TCL_TK
-void PostIt(Widget w, XtPointer client_data, XButtonEvent *event)
-{
-	FBIO *ifp;
-
-	if(CJDEBUG) printf("entering PostIt\n");
-
-	if (event->button != Button3)
-		return;
-
-	ifp = (FBIO *) client_data;
-
-	XmMenuPosition(popup, event);
-	XtManageChild(popup);
-	XtAddCallback(popup,XmNentryCallback, CloseCB, (XtPointer) ifp);
-}
-
-void CloseCB(Widget w, XtPointer client_data, XtPointer call_data)
-{
-	FBIO *ifp;
-
-	if(CJDEBUG) printf("entering CloseCB\n");
-	ifp =  (FBIO *) client_data;     
-	OGL(ifp)->close_me = 1;
-}
-#endif
 
 
 /* reorder_cursor - reverses the order of the scanlines. 
@@ -2179,15 +2147,15 @@ reorder_cursor(char *dst,char *src, int xbits, int ybits)
 
 
 _LOCAL_ Pixmap 
-make_bitmap(ifp, data, xbits, ybits)
+make_bitmap(ifp, visual, data, xbits, ybits)
 FBIO *ifp;
+Visual *visual;
 char *data;
 int xbits;
 int ybits;
 {
 	Display *display;
 	Window window;
-	XWindowAttributes wa;
 	XImage *xip;
 	GC pgc;
 	int xbytes;
@@ -2196,7 +2164,6 @@ int ybits;
 	char rdata[MAX_CURS_BYTES];	
 
 	display = OGL(ifp)->dispp;
-	window = OGL(ifp)->wind;
 
 	/* calculate number of bytes per scanline */
 	if( ( xbytes = xbits/8 ) * 8 != xbits)
@@ -2211,16 +2178,16 @@ int ybits;
 
 	reorder_cursor(rdata, data, xbits, ybits);
 
-	XGetWindowAttributes(display, window, &wa);
-
-	xip = XCreateImage(display, wa.visual, 1, XYBitmap, 0, rdata, 
+	xip = XCreateImage(display, visual, 1, XYBitmap, 0, rdata, 
 				xbits, ybits, 8, xbytes);
 
 	/* note - this works on SGI servers so far. In a server with
 	 * another endian-ness, the bits might be in the wrong order.
 	 * watch out in the future.
 	 */
-	pmap = XCreatePixmap(display, window, xbits, ybits,1);
+	pmap = XCreatePixmap(display, RootWindow(OGL(ifp)->dispp,
+						 OGL(ifp)->vip->screen),
+			     xbits, ybits,1);
 
 	/* create a GC specifically to do the putting */
 	gcval.foreground = 1;
@@ -2397,9 +2364,6 @@ FBIO *ifp;
 			/* set flags and return choice */
 			OGL(ifp)->soft_cmap_flag = !m_hard_cmap;
 			SGI(ifp)->mi_doublebuffer = m_doub_buf;
-
-#ifdef FB_USING_TCL_TK
-#endif
 
 			if (CJDEBUG) {
 				printf("Selected visual: %s depth=%d colormap=%d\n",visual_class[maxvip->class],maxvip->depth,maxvip->colormap_size);
