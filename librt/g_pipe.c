@@ -360,8 +360,6 @@ struct rt_i		*rtip;
 			rt_linear_pipe_prep( stp, head, curr_pt, curr_id, curr_od,
 				pp2->pp_coord, pp2->pp_id, pp2->pp_od );
 			VMOVE( curr_pt, pp2->pp_coord );
-			curr_id = pp2->pp_id;
-			curr_od = pp2->pp_od;
 			goto next_pt;
 		}
 
@@ -382,12 +380,12 @@ struct rt_i		*rtip;
 		VCROSS( v2, v1, norm );
 		VJOIN1( bend_center, bend_start, -pp2->pp_bendradius, v1 );
 		rt_bend_pipe_prep( stp, head, bend_center, bend_start, bend_end, pp2->pp_bendradius, angle,
-			v1, v2, curr_od, curr_id );
+			v1, v2, pp2->pp_od, pp2->pp_id );
 
 		VMOVE( curr_pt, bend_end );
+next_pt:
 		curr_id = pp2->pp_id;
 		curr_od = pp2->pp_od;
-next_pt:
 		pp1 = pp2;
 		pp2 = pp3;
 		pp3 = RT_LIST_NEXT( wdb_pipept, &pp3->l );
