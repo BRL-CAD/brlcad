@@ -48,7 +48,7 @@ void	read_data(), process_sphere();
 
 struct wmember head;
 
-CONST static char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
+static CONST char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
 
 main(argc, argv)
 int argc;
