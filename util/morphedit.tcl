@@ -23,7 +23,7 @@ exec bwish "$0" "$@"
 #       Utility for creating lines files for the pixmorph utility.
 #
 # Note: this utility needs to be run under BRL-CAD's "bwish" environment, as
-# it needs the PIX image type and the pix_common_file_size functions.
+# it needs the PIX image type and the bn_common_file_size functions.
 
 set PIXFB pix-fb
 set PIXMORPH pixmorph
@@ -87,9 +87,9 @@ if { $width<=0 && $height>0 } then {
 }
 
 if { $width<=0 && $height<=0 } then {
-    set result [pix_common_file_size $file0name]
+    set result [bn_common_file_size $file0name]
     if { $result=="0 0" } then {
-	set result [pix_common_file_size $file1name]
+	set result [bn_common_file_size $file1name]
 	if { $result=="0 0" } then {
 	    puts "Cannot determine dimensions of images.  Use -w or -n."
 	    exit
