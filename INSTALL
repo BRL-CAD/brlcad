@@ -227,3 +227,10 @@ operates.
 `configure' also accepts some other, not widely useful, options.  Run
 `configure --help' for more details.
 
+
+
+On IRIX
+	./configure CC=cc CFLAGS=-64 LDFLAGS=-64 --enable-64bit-build
+or
+	./configure CC=cc 
+
