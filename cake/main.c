@@ -27,7 +27,13 @@ extern	Pwent	*getpwuid();
 #if __STDC__ && !defined(CRAY2)
 extern char	*tempnam(const char *, const char *);
 #else
+# if defined(ATT)
 extern char	*tempnam();
+# else
+/* On non-ANSI BSD systems, use mktemp instead */
+#  define USE_MKTEMP	1
+static char	template[] = "/tmp/cakeXXXXX";
+# endif
 #endif
 
 int	Gflag = FALSE;
@@ -462,8 +468,13 @@ char	**argv;
 		char	*newbase;
 		char	cmd[256];
 
+#if USE_MKTEMP
+		(void)mktemp(template);
+		newbase = template;
+#else
 		newbase = tempnam((char *)NULL, "cakef");
 		if( newbase == NULL )  exit(17);
+#endif
 		newcakefile = malloc(strlen(newbase)+3);	/* room for .c */
 		if( newcakefile == NULL )  exit(18);
 		strcpy( newcakefile, newbase );
