@@ -1,3 +1,0 @@
-# Tcl package index file, version 1.0
-
-package ifneeded Itk @VERSION@ [list load [file join $dir "@itk_LIB_FILE@"] Itk]
