@@ -55,8 +55,11 @@ extern struct dm dm_Tek, dm_Ir;
 #ifdef BSD42
 extern struct dm dm_Mg, dm_Vg, dm_Tek, dm_Rat, dm_Mer;
 #endif
-#ifdef PS300
+#ifdef DM_PS
 extern struct dm_Ps;
+#endif
+#ifdef DM_IR
+extern struct dm_Ir;
 #endif
 
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
@@ -65,16 +68,18 @@ struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 static struct dm *which_dm[] = {
 	&dm_Null,		/* This should go first */
 	&dm_Tek,
+#ifdef DM_IR
 	&dm_Ir,
+#endif
 #ifdef BSD42
 	&dm_Mg,
 	&dm_Vg,
 	&dm_Rat,
 	&dm_Mer,
 #endif
-#ifdef PS300
+#ifdef DM_PS
 	&dm_Ps,
-#endif PS300
+#endif
 	0
 };
 
