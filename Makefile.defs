@@ -303,12 +303,15 @@ RANLIB		= ranlib
 #4D32#RANLIB	= ar ts
 
 # Place to install binary executable
-BINDIR		= /usr/brl/bin
+BINDIR		= /usr/brlcad/bin
 #VLD#BINDIR	= /vld/bin
 
 # Place to install (and find) libraries
-LIBDIR		= /usr/brl/lib
+LIBDIR		= /usr/brlcad/lib
 #VLD#LIBDIR	= /vld/lib
+
+# Place to install daemons and other non-user-command type programs
+ETCDIR		= /usr/brlcad/etc
 
 # Suffix for archives.  Won't change for most UNIX machines, but...
 ARCH_SUF	= a
