@@ -895,7 +895,17 @@ register struct frame *fr;
 /*
  *			S C H E D U L E
  *
- *  If there is work to do, and a free server, send work
+ *  If there is work to do, and a free server, send work.
+ *  One assignment will be given to each free server.  If there are
+ *  servers that do not have a proper number of assignments (to ensure
+ *  good pipelining), then additional passes will be made, untill all
+ *  servers have a proper number of assignments.
+ *
+ *  There could be some difficulties with the linked lists changing
+ *  while in an unsolicited pkg receive that happens when a pkg send
+ *  operation is performed under here.  scheduler_going flag is
+ *  insurance against unintended recursion, which should be enough.
+ *
  *  When done, we leave the last finished frame around for attach/release.
  */
 schedule()
@@ -904,29 +914,37 @@ schedule()
 	register struct servers *sp;
 	register struct frame *fr;
 	int a,b;
-	int going;			/* number of servers still going */
+	int		servers_going;		/* # servers still going */
 	register struct frame *fr2;
+	int		len;
+	int		another_pass;
+	static int	scheduler_going = 0;	/* recursion protection */
 
-	if( start_cmd[0] == '\0' )  return;
-	going = 0;
+	if( scheduler_going )  {
+		printf("note: recurion prevented in schedule()\n");
+		return;
+	}
+	scheduler_going = 1;
+
+	if( start_cmd[0] == '\0' )  goto out;
+	servers_going = 0;
 
 	/* Look for finished frames */
 	fr = FrameHead.fr_forw;
 	while( fr != &FrameHead )  {
 		if( (lp = fr->fr_todo.li_forw) != &(fr->fr_todo) )
-			goto next_frame;	/* still work to be done */
+			goto next_frame;	/* unassigned work remains */
 
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( sp->sr_curframe != fr )  continue;
 			if( sp->sr_work.li_forw != &(sp->sr_work) )  {
-				going++;
+				servers_going++;
 				goto next_frame;
 			}
 		}
 
-		/* This server has just completed a frame */
-		sp->sr_curframe = FRAME_NULL;
+		/* No servers are still working on this frame */
 		fr2 = fr->fr_forw;
 		DEQUEUE_FRAME(fr);
 		frame_is_done( fr );
@@ -939,26 +957,25 @@ next_frame: ;
 	}
 	if( running == 0 || FrameHead.fr_forw == &FrameHead )  {
 		/* No more work to send out */
-		if( going > 0 )
-			return;
+		if( servers_going > 0 )
+			goto out;
 		/* Nothing to do, and nobody still working */
 		running = 0;
 		printf("REMRT:  All work done!\n");
 		if( detached )  exit(0);
-		return;
+		goto out;
 	}
 
 	/* Find first piece of work */
-	if( !running )  return;
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
-top:
-		if( (lp = fr->fr_todo.li_forw) == &(fr->fr_todo) )
+		if( fr->fr_todo.li_forw == &(fr->fr_todo) )
 			continue;	/* none waiting here */
 
 		/*
-		 *  Look for a server with fewer than XXX outstanding
-		 *  assignments to dispatch work to
+		 *  Look for a server with fewer than N_SERVER_ASSIGNMENTS
+		 *  outstanding assignments.   Dispatch 1 unit of work to it.
 		 */
+		another_pass = 0;
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			if( sp->sr_started == SRST_NEW )  {
@@ -968,8 +985,14 @@ top:
 			}
 			if( sp->sr_started != SRST_READY )
 				continue;	/* not running yet */
-			if( sp->sr_work.li_forw != &(sp->sr_work) )
-				continue;	/* busy */
+			len = server_q_len( sp );
+#define N_SERVER_ASSIGNMENTS	3
+			if( len >= N_SERVER_ASSIGNMENTS )
+				continue;	/* plenty busy */
+
+			/* See if server will need more than 1 assignment */
+			if( len < N_SERVER_ASSIGNMENTS-1 )
+				another_pass = 1;
 
 			if( fr->fr_servinit[sp->sr_index] == 0 )  {
 				send_matrix( sp, fr );
@@ -977,10 +1000,18 @@ top:
 				sp->sr_curframe = fr;
 			}
 
-#define ASSIGNMENT_TIME		5	/* seconds */
+#define ASSIGNMENT_TIME		5	/* desired seconds between results */
 			sp->sr_lump = ASSIGNMENT_TIME / sp->sr_w_elapsed;
 			if( sp->sr_lump < 32 )  sp->sr_lump = 32;
 			if( sp->sr_lump > fr->fr_width )  sp->sr_lump = fr->fr_width;
+
+			if( (lp = fr->fr_todo.li_forw) == &(fr->fr_todo) )  {
+				/*  No more work to assign in this frame,
+				 *  on next pass, will advance to next frame.
+				 */
+				another_pass = 1;
+				break;
+			}
 
 			a = lp->li_start;
 			b = a+sp->sr_lump-1;	/* work increment */
@@ -1005,10 +1036,34 @@ top:
 				(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
 			}
 			send_do_lines( sp, a, b, fr->fr_number );
-			goto top;
 		}
-		if( sp >= &servers[MAXSERVERS] )  return;	/* no free servers */
+		if( another_pass == 0 )  {
+			/* all servers have full assignments */
+			goto out;
+		}
 	}
+	/* No work remains to be assigned */
+out:
+	scheduler_going = 0;
+	return;
+}
+
+/*
+ *			S E R V E R _ Q _ L E N
+ *
+ *  Report number of assignments that a server has
+ */
+server_q_len( sp )
+register struct servers	*sp;
+{
+	register struct list	*lp;
+	register int		count;
+
+	count = 0;
+	for( lp = sp->sr_work.li_forw; lp != &(sp->sr_work); lp = lp->li_forw )  {
+		count++;
+	}
+	return(count);
 }
 
 /*
@@ -1197,7 +1252,9 @@ info.li_nrays, info.li_cpusec );
 
 	/* Remove from work list */
 	list_remove( &(sp->sr_work), info.li_startpix, info.li_endpix );
-	if( running && sp->sr_work.li_forw == &(sp->sr_work) )
+
+	/* May be a recursive invocation;  but this is not a problem */
+	if( running )
 		schedule();
 }
 
@@ -1459,7 +1516,7 @@ start_helper()
 				break;
 			/* */
 			sprintf(cmd,
-				"cd cad/remrt; rtsrv %s %d",
+				"rtsrv %s %d",
 				ourname, port );
 			if( fork() == 0 )  {
 				/* 1st level child */
