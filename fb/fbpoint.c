@@ -39,7 +39,7 @@ char	*yprefix = NULL;
 char	null_str = '\0';
 
 char usage[] = "\
-Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]]\n";
+Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]] [-X init_x] [-Y init_y]\n";
 
 static char *help = "\
 Char:   Command:                                                \r\n\
@@ -122,6 +122,7 @@ char **argv;
 
 	setbuf( stderr, malloc( BUFSIZ ) );
 	width = height = 0;
+	curX = curY = -1;
 
 	while( argc > 1 ) {
 		if( strcmp( argv[1], "-h" ) == 0 ) {
@@ -134,6 +135,22 @@ char **argv;
 			if( yflag++ != 0 )
 				break;
 			yprefix = &argv[1][2];
+		} else if( strncmp( argv[1], "-X", 2 ) == 0 ) {
+			if( strlen(argv[1]) > 2 )
+				curX = atoi( &argv[1][2] );
+			else if( argc > 1 ) {
+				curX = atoi( argv[2] );
+				argc--; argv++;
+			} else
+				;	/* no value given */
+		} else if( strncmp( argv[1], "-Y", 2 ) == 0 ) {
+			if( strlen(argv[1]) > 2 )
+				curY = atoi( &argv[1][2] );
+			else if( argc > 1 ) {
+				curY = atoi( argv[2] );
+				argc--; argv++;
+			} else
+				;	/* no value given */
 		} else
 			break;
 		argc--;
@@ -155,8 +172,11 @@ char **argv;
 
 	JumpSpeed = fb_getwidth(fbp)/16;
 	if( JumpSpeed < 2 )  JumpSpeed = 2;
-	curX = fb_getwidth(fbp)/2;
-	curY = fb_getheight(fbp)/2;
+	/* check for default starting positions */
+	if( curX < 0 )
+		curX = fb_getwidth(fbp)/2;
+	if( curY < 0 )
+		curY = fb_getheight(fbp)/2;
 	oldX = oldY = -1;
 
 	/* Set RAW mode */
