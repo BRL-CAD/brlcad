@@ -6,7 +6,6 @@ export BIN
 rm -f spdi.g spdi.log spdi spdi.pix
 
 $BIN/mged -c spdi.g << EOF
-y
 
 
 set glob_compat_mode 0
@@ -39,7 +38,7 @@ set glob_compat_mode 1
 
 in light1.s ell -464 339 2213 0 100 0 0 0 100 100 0 0
 r light1.r u light1.s
-mater light1.r "light {i 1 s 0 v 0}" 255 255 255 0
+mater light1.r "light {i 1 s 1 v 0}" 255 255 255 0
 g all.g light1.r
 
 Z

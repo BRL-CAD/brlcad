@@ -878,7 +878,7 @@ r ebm.r u ebm.s
 #
 # Displacement map
 #
-db put dsp.s dsp src f name dsp.dat w 33 n 33 sm 0 cut a stom {20 0 0 -1687 0 20 0 -2432 0 0 0.003906250 0 0 0 0 1}
+db put dsp.s dsp src f name dsp.dat w 33 n 33 sm 0 cut a stom {20 0 0 -1687 0 20 0 -2432 0 0 0.3906250 0 0 0 0 1}
 r dsp.r u dsp.s
 
 #
@@ -936,7 +936,7 @@ else
 fi
 
 echo "rendering moss..."
-$BIN/rt -P 1 -B -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
+$BIN/rt -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 
