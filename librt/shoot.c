@@ -211,25 +211,6 @@ register struct application *ap;
 				seg2->seg_next = waitsegs;
 				waitsegs = newseg;
 			}
-			/* Would be even better done by per-partition bitv */
-			{
-				register int words;
-				register bitv_t *in = stp->st_regions;
-				register bitv_t *out = regionbits;
-				/* BITS2BYTES() / sizeof(bitv_t) */
-				words = (stp->st_maxreg+BITV_MASK)>>BITV_SHIFT;
-#				ifdef VECTORIZE
-#					include "noalias.h"
-					for( ; words > 0; words-- )
-						regionbits[words-1] |= in[words-1];
-#				else
-					while( words-- > 0 )
-						*out++ |= *in++;
-#				endif
-			}
-
-			if(rt_g.debug&DEBUG_PARTITION)
-				rt_pr_bitv( "shoot Regionbits", regionbits, ap->a_rt_i->nregions);
 			ap->a_rt_i->nhits++;
 		}
 	}
@@ -466,26 +447,6 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				waitsegs = newseg;
 			}
 			trybool++;	/* flag to rerun bool, below */
-
-			/* Would be even better done by per-partition bitv */
-			{
-				register int words;
-				register bitv_t *in = stp->st_regions;
-				register bitv_t *out = regionbits;
-				/* BITS2BYTES() / sizeof(bitv_t) */
-				words = (stp->st_maxreg+BITV_MASK)>>BITV_SHIFT;
-#				ifdef VECTORIZE
-#					include "noalias.h"
-					for( ; words > 0; words-- )
-						regionbits[words-1] |= in[words-1];
-#				else
-					while( words-- > 0 )
-						*out++ |= *in++;
-#				endif
-			}
-
-			if(rt_g.debug&DEBUG_PARTITION)
-				rt_pr_bitv( "shoot Regionbits", regionbits, ap->a_rt_i->nregions);
 			ap->a_rt_i->nhits++;
 		}
 

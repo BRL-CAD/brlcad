@@ -416,8 +416,10 @@ struct application *ap;
 	register int hitcnt;
 	LOCAL struct region *TrueRg[2];
 	register int i;
+	struct soltab	*stp;
 
-	if( ap->a_rt_i->rti_magic != RTI_MAGIC )  rt_bomb("rt_boolweave:  bad rtip\n");
+	RT_CHECK_RTI(ap->a_rt_i);
+
 	pp = InputHdp->pt_forw;
 	while( pp != InputHdp )  {
 		RT_CHECK_PT(pp);
@@ -459,6 +461,32 @@ struct application *ap;
 			FREE_PT(zappp, ap->a_resource);
 			continue;
 		}
+
+		/*
+		 *  For each solid that lies in this partition,
+		 *  set (OR) that solid's region bits into "regionbits".
+		 */
+		bzero( (char *)regionbits, BITS2BYTES(ap->a_rt_i->nregions) );
+		for( stp=ap->a_rt_i->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+
+			if( !BITTEST( pp->pt_solhit, stp->st_bit ) )  continue;
+
+			{
+				register int words;
+				register bitv_t *in = stp->st_regions;
+				register bitv_t *out = regionbits;
+
+				/* BITS2BYTES() / sizeof(bitv_t) */
+				words = (stp->st_maxreg+BITV_MASK)>>BITV_SHIFT;
+
+#				include "noalias.h"
+				while( words-- > 0 )
+					*out++ |= *in++;
+			}
+		}
+
+		if(rt_g.debug&DEBUG_PARTITION)
+			rt_pr_bitv( "regionbits", regionbits, ap->a_rt_i->nregions);
 
 		/* Evaluate the boolean trees of any regions involved */
 		for( i=0; i < ap->a_rt_i->nregions; i++ )  {
