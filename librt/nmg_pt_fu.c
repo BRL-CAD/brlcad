@@ -737,6 +737,8 @@ struct fpi	*fpi;
 			return NMG_CLASS_AoutB;
 		else if (lu->orientation == OT_OPPOSITE)
 			return NMG_CLASS_AinB;
+		else if (lu->orientation == OT_UNSPEC)
+			return NMG_CLASS_Unknown;
 			
 	}
 
@@ -785,6 +787,9 @@ struct fpi	*fpi;
 		case OT_OPPOSITE:
 			/* Why even call nmg_class_pt_vu() here, if return isn't used? */
 				lu_class = NMG_CLASS_AinB;
+			break;
+		case OT_UNSPEC:
+				lu_class = NMG_CLASS_Unknown;
 			break;
 		default:
 			rt_log("nmg_class_pt_lu() hit %s loop at vu=x%x\n",
