@@ -66,12 +66,12 @@ noprod&:
 
 #ifdef NFS
 clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE clean
+	make -f Makefile.MTYPE distclean
 	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish
-	rm -rf itcl itk iwidgets*	# Only for NFS case
+	rm -rf itcl itk iwidgets*	# Only for \N\F\S case
 #else
 clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE clean
+	make -f Makefile.MTYPE distclean
 	rm -f *.MTYPE *.o config.log config.status Makefile lib* itclsh itkwish
 #endif
 
