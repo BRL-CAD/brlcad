@@ -1991,7 +1991,9 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 	int dbb;
 	Arg args[1];
         XVisualInfo *vi;
+	int use, rgba, red, green, blue, alpha, dbfr, stereo;
 	FBIO *ifp;
+
 	if(CJDEBUG) printf("entering init_window\n");
 
 	ifp = (FBIO *) client_data;
@@ -2001,13 +2003,31 @@ init_window(Widget w, XtPointer client_data, XtPointer call)
 	OGL(ifp)->vip = vi;
         OGL(ifp)->glxc = glXCreateContext(XtDisplay(w), vi, 0, GL_FALSE);
 	
+	if(CJDEBUG) {
+
+
+
+		printf("HERE ");
+
+		glXGetConfig(XtDisplay(w),vi,GLX_USE_GL,&use);
+		printf("GL %d ",use);
+		glXGetConfig(XtDisplay(w),vi,GLX_RGBA,&rgba);
+		glXGetConfig(XtDisplay(w),vi,GLX_RED_SIZE,&red);
+		glXGetConfig(XtDisplay(w),vi,GLX_GREEN_SIZE,&green);
+		glXGetConfig(XtDisplay(w),vi,GLX_BLUE_SIZE,&blue);
+		glXGetConfig(XtDisplay(w),vi,GLX_ALPHA_SIZE,&alpha);
+		glXGetConfig(XtDisplay(w),vi,GLX_DOUBLEBUFFER,&dbfr);
+		glXGetConfig(XtDisplay(w),vi,GLX_STEREO,&stereo);
+		printf("GL %d rgba %d %d/%d/%d/%d dbfr %d stereo %d\n",use,rgba,red,green,blue,alpha,dbfr,stereo);
+		printf("CLass is %d\n",vi->class);
+	}
 	/* Determine whether the selected visual supports hardware cmapping.
 	 * This may never happen. In future, choose our own visual to find one
 	 * which does support hardware mapping
 	 */
 	if ((vi->class == DirectColor)&&(vi->depth == 24)&&(vi->colormap_size>=256)){
 		OGL(ifp)->cmap_size = vi->colormap_size;
-		OGL(ifp)->xcmap = XCreateColormap(OGL(ifp)->dispp, OGL(ifp)->wind,
+		OGL(ifp)->xcmap = XCreateColormap(XtDisplay(w), OGL(ifp)->wind,
 				vi->visual, AllocNone);
 	} else {
 		/* any cmapping must be done by software */
