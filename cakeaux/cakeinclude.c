@@ -197,7 +197,7 @@ char *av[];
 	/* This part might be done in a loop, to match usage message? */
 
 	if ((fd = fopen(av[arg_index], "r")) == (FILE *)NULL) {
-		perror(progname);
+		perror(av[arg_index]);
 		exit(-1);
 	}
 
