@@ -22,8 +22,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #ifdef HAVE_STDARG_H
 #	include <stdarg.h>
-#elif HAVE_VARARGS_H
+#else
+# if HAVE_VARARGS_H
 #	include <varargs.h>
+# endif
 #endif
 
 #include "machine.h"
@@ -45,7 +47,8 @@ fb_log( char *fmt, ... )
 	va_end(ap);
 }
 
-#elif defined(HAVE_VARARGS_H)
+#else  /* defined(HAVE_STDARG_H) */
+# if defined(HAVE_VARARGS_H)
 
 /* VARARGS */
 void
@@ -63,7 +66,7 @@ va_dcl
 	return;
 	}
 
-#else 
+# else /* defined(HAVE_VARARGS_H) */
 
 void
 fb_log( fmt, a,b,c,d,e,f,g,h,i )
@@ -72,5 +75,5 @@ char	*fmt;
 	fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
 }
 
-#endif
-
+# endif	/* defined(HAVE_VARARGS_H) */
+#endif  /* defined(HAVE_STDARG_H) */
