@@ -23,3 +23,5 @@ extern int debug;
 #define DEBUG_PARTITION	0x40	/* Print ray partitioning process */
 
 #define DEBUG_TESTING	0x80	/* One-shot debugging flag */
+
+#define DEBUG_MEM	0x100	/* Debug dynamic memory operations */
