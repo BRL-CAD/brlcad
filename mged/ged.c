@@ -308,10 +308,6 @@ int	non_blocking;
 {
 	fd_set		input;
 	vect_t		knobvec;	/* knob slew */
-	int		i;
-	int		len;
-	int		formerly_non_blocking = non_blocking;
-	static int	need_penup = 0;
 
 	/*
 	 * dmr_input() will suspend until some change has occured,
