@@ -100,7 +100,7 @@ set helplib_data(wdb_paths)		{{pattern}	{lists all paths matching input path}}
 set helplib_data(wdb_prcolor)		{{} {print color table}}
 set helplib_data(wdb_push)		{{object(s)} {push object(s) path transformations to solids}}
 set helplib_data(wdb_put)		{{object type attrs} {create a database object}}
-set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region}}
+set helplib_data(wdb_region)		{{op object(s)} {create or append objects to a region}}
 set helplib_data(wdb_remove)		{{comb object(s)} {remove members from a combination}}
 set helplib_data(wdb_reopen)		{{[filename]} {open a database}}
 set helplib_data(wdb_rt_gettrees)	{{procname [-i] [-u] treetops...} {create an rt instance object}}
