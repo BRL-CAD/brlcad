@@ -533,9 +533,20 @@ int mask;
 	return;
     }
 
-    /* Grab single character from stdin */
+/*XXXXX*/
+#define TRY_STDIN_INPUT_HACK
+#ifdef TRY_STDIN_INPUT_HACK
+    /* Grab everything --- assuming everything is <= 4096 */
+    {
+      char buf[4096];
+      int index;
 
+      count = read((int)fd, (void *)buf, 4096);
+#else
+    /* Grab single character from stdin */
     count = read((int)fd, (void *)&ch, 1);
+#endif
+
     if (count <= 0 && feof(stdin)){
       char *av[2];
 
@@ -563,7 +574,10 @@ int mask;
 #define DELETE      127
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
-
+#ifdef TRY_STDIN_INPUT_HACK
+    /* Process everything in buf */
+    for(index = 0, ch = buf[index]; index < count; ch = buf[++index]){
+#endif
     /* ANSI arrow keys */
     
     if (escaped && bracketed) {
@@ -954,7 +968,10 @@ int mask;
 	escaped = bracketed = 0;
 	break;
     }
-	
+#ifdef TRY_STDIN_INPUT_HACK
+    }
+    }
+#endif	
 }
 
 static void
