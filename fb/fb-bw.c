@@ -25,14 +25,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-int	fb_fd;
-char *framebuffer = NULL;	/* Default Framebuffer */
+FBIO	*fbp;
 
 Pixel	inbuf[1024];
 unsigned char	obuf[1024];
 int	size, initx, inity;
 
-char	*Usage = "usage: fb-bw [-h -i] [size] [xorig] [yorig] > file.bw\n";
+char	Usage[] = "usage: fb-bw [-h -i] [size] [xorig] [yorig] > file.bw\n";
 
 main( argc, argv )
 int argc; char **argv;
@@ -48,7 +47,6 @@ int argc; char **argv;
 		switch( argv[1][1] )  {
 		case 'h':
 			default_size = 1024;
-			fbsetsize(1024);
 			break;
 		case 'i':
 			inverted++;
@@ -68,14 +66,14 @@ int argc; char **argv;
 	inity = ( argc > 3 ) ? (default_size-1 - atoi( argv[3] )) : default_size-1;
 
 	/* Open Display Device */
-	if ((fb_fd = fbopen(framebuffer, APPEND)) < 0) {
-		perror (framebuffer == NULL ? "$FB_FILE" : framebuffer);
-		exit( 0 );
+	if ((fbp = fb_open( NULL, default_size, default_size )) == NULL ) {
+		fprintf( stderr, "fb_open failed\n");
+		exit( 1 );
 	}
 
 	if( !inverted ) {
 		for( y = inity; y > (inity-size); y-- ) {
-			fbread( initx, y, &inbuf[0], size );
+			fb_read( fbp, initx, y, &inbuf[0], size );
 			for( x = 0; x < size; x++ ) {
 				obuf[x] = (inbuf[x].red + inbuf[x].green
 					+ inbuf[x].blue) / 3;
@@ -84,7 +82,7 @@ int argc; char **argv;
 		}
 	} else {
 		for( y = (inity-size-1); y <= inity; y++ ) {
-			fbread( initx, y, &inbuf[0], size );
+			fb_read( fbp, initx, y, &inbuf[0], size );
 			for( x = 0; x < size; x++ ) {
 				obuf[x] = (inbuf[x].red + inbuf[x].green
 					+ inbuf[x].blue) / 3;
@@ -92,4 +90,6 @@ int argc; char **argv;
 			fwrite( &obuf[0], sizeof( char ), size, stdout );
 		}
 	}
+
+	fb_close( fbp );
 }
