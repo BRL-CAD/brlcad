@@ -1,20 +1,28 @@
-/*			C V T . C
+/*
+ *			C V T . C
+ *
  *	This is the mainline for converting COM-GEOM
  * cards to a GED style database.
- * Ballistic Research Laboratory
- * February, 1980
-Date	Name	REVISION HISTORY
-March 81  CAS	Added processing for ARS
-09/22/81  MJM	Converted to matrix transformations.
-8205.20	Bob S.	Fixed the name generation.  It seems that when a zero
-			is encountered CVT skips the rest of the digits
-			when converting from an integer to a string.
-			I am useing F2A to do the conversion.
-			Also Keith wants a string appended to the
-			output name. QED
-8205.21 Bob S.	Appending the string to the g recoreds.
-			I did this one the hard way.
+ *
+ *  Author -
+ *	Michael John Muuss
+ *
+ *  Original Version -
+ *	February, 1980
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1989 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <math.h>

@@ -1,23 +1,29 @@
-#
 /*
  *			S O L I D . C
  *
- *	Conversion subroutine for CVT program, used to convert
- * COMGEOM card decks into GED object files.  This conversion routine
- * is used to translate between COMGEOM object types, and the
- * more general GED object types.
+ *  Subroutine to convert solids from
+ *  COMGEOM card decks into GED object files.  This conversion routine
+ *  is used to translate between COMGEOM solids, and the
+ *  more general GED solids.
  *
- * Michael Muuss
- * Ballistic Research Laboratory
- * March, 1980
+ *  Author -
+ *	Michael John Muuss
  *
- *		R E V I S I O N   H I S T O R Y
- *
- *	Feb, 1981 Chuck Stanley	Added code to process TORUS (TOR)
- *
- *	02/26/81  MJM	Fixed bug in TORUS code...(PI,PI,PI) was being
- *			added to F1, and put in the file.
+ *  Original Version -
+ *	March, 1980
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1989 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <ctype.h>
