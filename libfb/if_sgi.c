@@ -780,6 +780,9 @@ int	count;
 				*op++ = *cp++;
 				*op++ = *cp++;
 			}
+			count -= scan_count;
+			xpos = 0;
+			ypos++;
 			continue;
 		}
 
