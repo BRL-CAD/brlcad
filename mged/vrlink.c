@@ -188,7 +188,10 @@ f_vrmgr( argc, argv )
 int	argc;
 char	*argv[];
 {
-	char	*role;
+	struct rt_vls	str;
+	char		*role;
+
+	rt_vls_init(&str);
 
 	if( vrmgr != PKC_NULL )  {
 		fprintf(stderr,"Closing link to VRmgr %s\n", vr_host);
@@ -217,8 +220,15 @@ char	*argv[];
 		return;
 	}
 
+	rt_vls_from_argv( &str, argc-2, argv+2 );
+
 	/* Send initial message declaring our role */
-	(void)pkg_send( VRMSG_ROLE, role, strlen(role)+1, vrmgr );
+	if( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {
+		printf("pkg_send VRMSG_ROLE failed, disconnecting\n");
+		pkg_close(vrmgr);
+		vrmgr = NULL;
+		return;
+	}
 
 	/* Establish appropriate hooks */
 	if( strcmp( role, "master" ) == 0 )  {
@@ -230,6 +240,7 @@ char	*argv[];
 	}
 	extrapoll_fd = vrmgr->pkc_fd;
 	extrapoll_hook = vr_input_hook;
+	rt_vls_free( &str );
 }
 
 /*
