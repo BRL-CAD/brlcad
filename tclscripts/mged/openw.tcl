@@ -577,10 +577,10 @@ menu .$id.menubar.viewring -tearoff $do_tearoffs
 .$id.menubar.viewring add command -label "Prev View" -underline 0 -command "do_prev_view $id"
 .$id.menubar.viewring add command -label "Last View" -underline 0 -command "do_toggle_view $id"
 
-menu .$id.menubar.viewring.select -tearoff $do_tearoffs
+menu .$id.menubar.viewring.select -tearoff $do_tearoffs -postcommand "do_view_ring_labels $id"
 do_view_ring_entries $id s
 set view_ring($id) 1
-menu .$id.menubar.viewring.delete -tearoff $do_tearoffs
+menu .$id.menubar.viewring.delete -tearoff $do_tearoffs -postcommand "do_view_ring_labels $id"
 do_view_ring_entries $id d
 
 menu .$id.menubar.settings -tearoff $do_tearoffs
@@ -1908,6 +1908,33 @@ proc do_view_ring_entries { id m } {
     } else {
 	puts "Usage: do_view_ring_entries w s|d"
     }
+}
+
+proc do_view_ring_labels { id } {
+    global mged_active_dm
+    global view_ring
+
+    winset $mged_active_dm($id)
+    set save_view [get_view]
+    set views [get_view -a]
+    set llen [llength $views]
+
+    set ws .$id.menubar.viewring.select
+    set wd .$id.menubar.viewring.delete
+    for {set i 0} {$i < $llen} {incr i} {
+	goto_view [lindex $views $i]
+	set aet [view aet]
+	set aet [format "az=%.2f el=%.2f tw=%.2f"\
+		[lindex $aet 0] [lindex $aet 1] [lindex $aet 2]]
+	set center [view center]
+	set center [format "cent=(%.3f %.3f %.3f)"\
+		[lindex $center 0] [lindex $center 1] [lindex $center 2]]
+	set size [format "size=%.3f" [view size]]
+	$ws entryconfigure $i -label "$center $size $aet"
+	$wd entryconfigure $i -label "$center $size $aet"
+    }
+
+    goto_view $save_view
 }
 
 proc toggle_status_bar { id } {
