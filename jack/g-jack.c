@@ -69,6 +69,19 @@ char	*argv[];
 	register int	c;
 	double		percent;
 
+#ifdef BSD
+	setlinebuf( stderr );
+#else
+#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2) && \
+	 !defined(n16)
+		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
+#	endif
+#	if defined(sgi) && defined(mips)
+		if( setlinebuf( stderr ) != 0 )
+			perror("setlinebuf(stderr)");
+#	endif
+#endif
+
 	ttol.magic = RT_TESS_TOL_MAGIC;
 	/* Defaults, updated by command line options. */
 	ttol.abs = 0.0;
