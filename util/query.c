@@ -40,7 +40,7 @@ int	Done = 0;
 extern 	int errno;
 
 static char usage[] = "\
-Usage: %s [-v] [-t seconds] [-r response | -l ]\n";
+Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
 
 extern char *optarg;
 
@@ -66,9 +66,6 @@ register char **argv;
 		default:		/* '?' */
 			return(0);
 		}
-	}
-	if (Loop && Response != Yes_Response) {
-		return(0);
 	}
 	if (Timeout < 0) Timeout = 0;
 	if (Loop & Timeout <= 0) Timeout=5;
