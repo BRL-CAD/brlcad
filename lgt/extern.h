@@ -156,15 +156,14 @@ extern int		ir_mapping;
 extern int		lgt_db_size;
 extern int		li;
 extern int		max_bounce;
-#ifdef PARALLEL
 extern int		npsw;
-#endif
 extern int		pix_buffered;
 extern int		query_region;
 extern int		report_overlaps;
 extern int		save_view_flag;
 extern int		sgi_console;
 extern int		sgi_usemouse;
+extern int		shadowing;
 extern int		tracking_cursor;
 extern int		tty;
 extern int		user_interrupt;
@@ -176,9 +175,7 @@ extern unsigned char	menucursor[];
 extern unsigned char	sweeportrack[];
 extern unsigned char	target1[];
 
-#ifdef PARALLEL
 extern struct resource	resource[];
-#endif
 extern struct rt_i	*rt_ip;
 
 #define C_TAGPIXEL	0

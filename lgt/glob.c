@@ -142,11 +142,10 @@ int	query_region = FALSE;	/* If (true) spit out region info.	*/
 int	report_overlaps = TRUE;	/* If (false) shut-up about overlaps.	*/
 int	sgi_console = FALSE;	/* Logged in to IRIS console.		*/
 int	sgi_usemouse = FALSE;	/* User wants to use the IRIS mouse.	*/
+int	shadowing = TRUE;	/* If (false) no shadows are computed.	*/
 int	x_fb_origin = 0;/* Display origin left-most pixel to display.	*/
 int	y_fb_origin = 0;/* Display origin top-most pixel to display.	*/
 int	li;		/* Number of lines in window.			*/
-#ifdef PARALLEL
 int	npsw = MAX_PSW;	/* Number of worker PSWs to run.		*/
 struct resource	resource[MAX_PSW]; /* Memory resources.			*/
-#endif
 struct rt_i	*rt_ip;	/* Globals from RT library.			*/
