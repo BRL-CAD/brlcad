@@ -48,29 +48,30 @@ void		wrt_view(), wrt_point();
 static void	illuminate();
 
 /*
- *			U S E P E N
+ *			F _ M O U S E
  *
  * X and Y are expected to be in -2048 <= x,y <= +2047 range.
- * Pressval is !0 when pen is pressed, DV_{PICK,INZOOM,OUTZOOM,SLEW}.
+ * The "up" flag is 1 on the not-pressed to pressed transition,
+ * and 0 on the pressed to not-pressed transition.
  *
  * Note -
- *  The data tablet is the focus of much of the editing activity in GED.
+ *  The mouse is the focus of much of the editing activity in GED.
  *  The editor operates in one of seven basic editing states, recorded
  *  in the variable called "state".  When no editing is taking place,
  *  the editor is in state ST_VIEW.  There are two paths out of ST_VIEW:
  *  
  *  BE_S_ILLUMINATE, when pressed, takes the editor into ST_S_PICK,
- *  where the tablet is used to pick a solid to edit, using our
- *  unusual "illuminate" technique.  Moving the pen varies the solid
- *  being illuminated.  When the pen is pressed, the editor moves into
+ *  where the mouse is used to pick a solid to edit, using our
+ *  unusual "illuminate" technique.  Moving the mouse varies the solid
+ *  being illuminated.  When the mouse is pressed, the editor moves into
  *  state ST_S_EDIT, and solid editing may begin.  Solid editing is
  *  terminated via BE_ACCEPT and BE_REJECT.
  *  
  *  BE_O_ILLUMINATE, when pressed, takes the editor into ST_O_PICK,
- *  again performing the illuminate procedure.  When the pen is pressed,
- *  the editor moves into state ST_O_PATH.  Now, moving the pen allows
+ *  again performing the illuminate procedure.  When the mouse is pressed,
+ *  the editor moves into state ST_O_PATH.  Now, moving the mouse allows
  *  the user to choose the portion of the path relation to be edited.
- *  When the pen is pressed, the editor moves into state ST_O_EDIT,
+ *  When the mouse is pressed, the editor moves into state ST_O_EDIT,
  *  and object editing may begin.  Object editing is terminated via
  *  BE_ACCEPT and BE_REJECT.
  *  
@@ -78,27 +79,36 @@ static void	illuminate();
  *  is by completing the sequence, or pressing BE_REJECT.
  */
 void
-usepen()
+f_mouse( argc, argv )
+int	argc;
+char	**argv;
 {
-	static fastf_t scale;
-	register struct solid *sp;
-	static vect_t pos_view;	 	/* Unrotated view space pos */
-	static vect_t pos_model;	/* Rotated screen space pos */
-	static vect_t tr_temp;		/* temp translation vector */
-	static vect_t tabvec;		/* tablet vector */
-	static vect_t temp;
-	int isave;
+	fastf_t			scale;
+	register struct solid	*sp;
+	vect_t	pos_view;	 	/* Unrotated view space pos */
+	vect_t	pos_model;	/* Rotated screen space pos */
+	vect_t	tr_temp;		/* temp translation vector */
+	vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
+	vect_t	temp;
+	int	isave;
+	int	up = atoi(argv[1]);
+	int	xpos = atoi(argv[2]);
+	int	ypos = atoi(argv[3]);
+
+	/* Build floating point mouse vector, -1 to +1 */
+	mousevec[X] =  xpos / 2047.0;
+	mousevec[Y] =  ypos / 2047.0;
+	mousevec[Z] = 0;
 
 	/*
-	 * If pen press is in scroll area, see if scrolling, and if so,
-	 * divert this pen press.
+	 * If mouse press is in scroll area, see if scrolling, and if so,
+	 * divert this mouse press.
 	 */
-	if( (dm_values.dv_xpen >= MENUXLIM) &&
-	    dm_values.dv_penpress)  {
+	if( (xpos >= MENUXLIM) && up )  {
 		register int i;
 
-		if( (i = scroll_select(dm_values.dv_xpen, dm_values.dv_ypen )) < 0 )  {
-			(void)printf("pen press outside valid scroll area\n");
+		if( (i = scroll_select(xpos, ypos )) < 0 )  {
+			(void)printf("mouse press outside valid scroll area\n");
 			return;
 		} 
 		if( i > 0 )  {
@@ -109,15 +119,13 @@ usepen()
 	}
 
 	/*
-	 * If menu is active, and pen press is in menu area,
-	 * divert this pen press for menu purposes.
+	 * If menu is active, and mouse press is in menu area,
+	 * divert this mouse press for menu purposes.
 	 */
-	if( dm_values.dv_xpen < MENUXLIM &&
-		dm_values.dv_penpress
-	)  {
+	if( xpos < MENUXLIM && up )  {
 		register int i;
-		if( (i = mmenu_select( dm_values.dv_ypen )) < 0 )  {
-			(void)printf("pen press outside valid menu\n");
+		if( (i = mmenu_select( ypos )) < 0 )  {
+			(void)printf("mouse press outside valid menu\n");
 			return;
 		}
 		if( i > 0 )  {
@@ -132,11 +140,11 @@ usepen()
 	
 	/*
 	 *  In the best of all possible worlds, nothing should happen
-	 *  when the pen is not pressed;  this would relax the requirement
-	 *  for the host being informed when the pen changes position.
+	 *  when the mouse is not pressed;  this would relax the requirement
+	 *  for the host being informed when the mouse changes position.
 	 *  However, for now, illuminate mode makes this impossible.
 	 */
-	if( dm_values.dv_penpress == 0 )  switch( state )  {
+	if( up == 0 )  switch( state )  {
 
 	case ST_VIEW:
 	case ST_S_EDIT:
@@ -147,9 +155,9 @@ usepen()
 	case ST_O_PICK:
 	case ST_S_PICK:
 		/*
-		 * Use the tablet for illuminating a solid
+		 * Use the mouse for illuminating a solid
 		 */
-		illuminate( dm_values.dv_ypen );
+		illuminate( ypos );
 		return;
 
 	case ST_O_PATH:
@@ -158,7 +166,7 @@ usepen()
 		 */
 		isave = ipathpos;
 		ipathpos = illump->s_last - (
-			(dm_values.dv_ypen+2048L) * (illump->s_last+1) / 4096);
+			(ypos+2048L) * (illump->s_last+1) / 4096);
 		if( ipathpos != isave )
 			dmaflag++;
 		return;
@@ -170,16 +178,12 @@ usepen()
 		 * Use the DT for moving view center.
 		 * Make indicated point be new view center (NEW).
 		 */
-		tabvec[X] =  dm_values.dv_xpen / 2047.0;
-		tabvec[Y] =  dm_values.dv_ypen / 2047.0;
-		tabvec[Z] = 0;
-
-		slewview( tabvec );
+		slewview( mousevec );
 		return;
 
 	case ST_O_PICK:
 		ipathpos = 0;
-		(void)chg_state( ST_O_PICK, ST_O_PATH, "Pen press");
+		(void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
 		dmaflag = 1;
 		return;
 
@@ -198,12 +202,12 @@ usepen()
 
 		case SSCALE:
 		case PSCALE:
-			/* use pen to get a scale factor */
+			/* use mouse to get a scale factor */
 			es_scale = 1.0 + 0.25 * ((fastf_t)
-				(dm_values.dv_ypen > 0 ?
-					dm_values.dv_ypen :
-					-dm_values.dv_ypen) / 2047);
-			if ( dm_values.dv_ypen <= 0 )
+				(ypos > 0 ?
+					ypos :
+					-ypos) / 2047);
+			if ( ypos <= 0 )
 				es_scale = 1.0 / es_scale;
 
 			/* accumulate scale factor */
@@ -213,7 +217,7 @@ usepen()
 			return;
 		case STRANS:
 			/* 
-			 * Use pen to change solid's location.
+			 * Use mouse to change solid's location.
 			 * Project solid's V point into view space,
 			 * replace X,Y (but NOT Z) components, and
 			 * project result back to model space.
@@ -221,20 +225,20 @@ usepen()
 			/* XXX this makes bad assumptions about format of es_rec !! */
 			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 			MAT4X3PNT( pos_view, model2view, temp );
-			pos_view[X] = dm_values.dv_xpen / 2047.0;
-			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			pos_view[X] = xpos / 2047.0;
+			pos_view[Y] = ypos / 2047.0;
 			MAT4X3PNT( temp, view2model, pos_view );
 			MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
 			sedraw = 1;
 			return;
 		case MOVEH:
 		case MOVEHH:
-			/* Use pen to change location of point V+H */
+			/* Use mouse to change location of point V+H */
 			VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
 			MAT4X3PNT(pos_model, es_mat, temp);
 			MAT4X3PNT( pos_view, model2view, pos_model );
-			pos_view[X] = dm_values.dv_xpen / 2047.0;
-			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			pos_view[X] = xpos / 2047.0;
+			pos_view[Y] = ypos / 2047.0;
 			/* Do NOT change pos_view[Z] ! */
 			MAT4X3PNT( temp, view2model, pos_view );
 			MAT4X3PNT( tr_temp, es_invmat, temp );
@@ -247,8 +251,8 @@ usepen()
 			VADD2(temp, es_rec.s.s_values, &es_rec.s.s_values[es_menu*3]);
 			MAT4X3PNT(pos_model, es_mat, temp);
 			MAT4X3PNT(pos_view, model2view, pos_model);
-			pos_view[X] = dm_values.dv_xpen / 2047.0;
-			pos_view[Y] = dm_values.dv_ypen / 2047.0;
+			pos_view[X] = xpos / 2047.0;
+			pos_view[Y] = ypos / 2047.0;
 			MAT4X3PNT(temp, view2model, pos_view);
 			MAT4X3PNT(pos_model, es_invmat, temp);
 			editarb( pos_model );
@@ -256,10 +260,10 @@ usepen()
 			return;
 		case EARB:
 			/* move arb edge, through indicated point */
-			tabvec[X] = dm_values.dv_xpen / 2047.0;
-			tabvec[Y] = dm_values.dv_ypen / 2047.0;
-			tabvec[Z] = 0;
-			MAT4X3PNT( temp, view2model, tabvec );
+			mousevec[X] = xpos / 2047.0;
+			mousevec[Y] = ypos / 2047.0;
+			mousevec[Z] = 0;
+			MAT4X3PNT( temp, view2model, mousevec );
 			/* apply inverse of es_mat */
 			MAT4X3PNT( pos_model, es_invmat, temp );
 			editarb( pos_model );
@@ -267,10 +271,10 @@ usepen()
 			return;
 		case MVFACE:
 			/* move arb face, through  indicated  point */
-			tabvec[X] = dm_values.dv_xpen / 2047.0;
-			tabvec[Y] = dm_values.dv_ypen / 2047.0;
-			tabvec[Z] = 0;
-			MAT4X3PNT( temp, view2model, tabvec );
+			mousevec[X] = xpos / 2047.0;
+			mousevec[Y] = ypos / 2047.0;
+			mousevec[Z] = 0;
+			MAT4X3PNT( temp, view2model, mousevec );
 			/* apply inverse of es_mat */
 			MAT4X3PNT( pos_model, es_invmat, temp );
 			/* change D of planar equation */
@@ -281,7 +285,7 @@ usepen()
 			return;
 			
 		default:
-			(void)printf("Pen press undefined in this solid edit mode\n");
+			(void)printf("mouse press undefined in this solid edit mode\n");
 			break;
 		}
 		return;
@@ -312,7 +316,7 @@ usepen()
 			if( j == ipathpos+1 )
 				sp->s_iflag = UP;
 		}
-		(void)chg_state( ST_O_PATH, ST_O_EDIT, "Pen press" );
+		(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
 		chg_l2menu(ST_O_EDIT);
 
 		/* begin object editing - initialize */
@@ -329,10 +333,9 @@ usepen()
 		scale = 1;
 		if( movedir & SARROW )  {
 			/* scaling option is in effect */
-			scale = 1.0 + (fastf_t)(dm_values.dv_ypen > 0 ?
-				dm_values.dv_ypen :
-				-dm_values.dv_ypen) / (2047);
-			if ( dm_values.dv_ypen <= 0 )
+			scale = 1.0 + (fastf_t)(ypos > 0 ?
+				ypos : -ypos) / (2047);
+			if ( ypos <= 0 )
 				scale = 1.0 / scale;
 
 			/* switch depending on scaling option selected */
@@ -373,16 +376,16 @@ usepen()
 			MAT4X3PNT(pos_model, modelchanges, temp);
 			wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 		}  else if( movedir & (RARROW|UARROW) )  {
-			static mat_t oldchanges;	/* temporary matrix */
+			mat_t oldchanges;	/* temporary matrix */
 
 			/* Vector from object center to cursor */
 			/* XXX should have an es_keypoint for this */
 			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 			MAT4X3PNT( pos_view, model2objview, temp );
 			if( movedir & RARROW )
-				pos_view[X] = dm_values.dv_xpen / 2047.0;
+				pos_view[X] = xpos / 2047.0;
 			if( movedir & UARROW )
-				pos_view[Y] = dm_values.dv_ypen / 2047.0;
+				pos_view[Y] = ypos / 2047.0;
 
 			MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
 			MAT4X3PNT( tr_temp, modelchanges, temp );
@@ -392,7 +395,7 @@ usepen()
 			mat_copy( oldchanges, modelchanges );
 			mat_mul( modelchanges, incr_change, oldchanges );
 		}  else  {
-			(void)printf("No object edit mode selected;  pen press ignored\n");
+			(void)printf("No object edit mode selected;  mouse press ignored\n");
 			return;
 		}
 		mat_idn( incr_change );
@@ -400,7 +403,7 @@ usepen()
 		return;
 
 	default:
-		state_err( "Pen press" );
+		state_err( "mouse press" );
 		return;
 	}
 	/* NOTREACHED */
@@ -418,7 +421,7 @@ illuminate( y )  {
 	saveillump = illump;
 
 	/*
-	 * Divide the tablet into 'ndrawn' VERTICAL zones, and use the
+	 * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
 	 * zone number as a sequential position among solids
 	 * which are drawn.
 	 */

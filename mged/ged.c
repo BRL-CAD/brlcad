@@ -328,6 +328,9 @@ int	non_blocking;
 	vect_t		knobvec;	/* knob slew */
 	int		i;
 	int		len;
+	int		formerly_non_blocking = non_blocking;
+	static int	need_penup = 0;
+	static struct device_values	old_values;
 
 	/*
 	 * dmr_input() will suspend until some change has occured,
@@ -352,11 +355,115 @@ int	non_blocking;
 			}
 		}
 	}
-
 	non_blocking = 0;
+
+	/********************************
+	 *  Begin compatability code	*
+	 ********************************/
+
+	/* Process any function button presses */
+	if( dm_values.dv_buttonpress )  {
+		rt_vls_strcat( &dm_values.dv_string, "press " );
+		rt_vls_strcat( &dm_values.dv_string,
+			label_button(dm_values.dv_buttonpress) );
+		rt_vls_strcat( &dm_values.dv_string, "\n" );
+		dm_values.dv_buttonpress = 0;
+	}
+
+	/* Detect any joystick activity */
+	if( dm_values.dv_xjoy != old_values.dv_xjoy )  {
+		sprintf(input_line, "knob x %f\n", dm_values.dv_xjoy );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+	if( dm_values.dv_yjoy != old_values.dv_yjoy )  {
+		sprintf(input_line, "knob y %f\n", dm_values.dv_yjoy );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+	if( dm_values.dv_zjoy != old_values.dv_zjoy )  {
+		sprintf(input_line, "knob z %f\n", dm_values.dv_zjoy );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+
+	/*
+	 * Use pen input.
+	 */		 
+	switch( dm_values.dv_penpress )  {
+	case DV_INZOOM:
+		rt_vls_strcat( &dm_values.dv_string, "zoom 2\n" );
+		break;
+
+	case DV_OUTZOOM:
+		rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n" );
+		break;
+
+	case DV_SLEW:		/* Move view center to here */
+		{
+			vect_t tabvec;
+			tabvec[X] =  dm_values.dv_xpen / 2047.0;
+			tabvec[Y] =  dm_values.dv_ypen / 2047.0;
+			tabvec[Z] = 0;
+			slewview( tabvec );
+			/* XXX still needs conversion to a command */
+		}
+		break;
+
+	case DV_PICK:		/* transition 0 --> 1 */
+		sprintf(input_line, "M 1 %d %d\n",
+			dm_values.dv_xpen, dm_values.dv_ypen);
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+		non_blocking++;	/* to catch transition back to 0 */
+		need_penup = 1;
+		break;
+	case 0:			/* transition 1 --> 0 */
+		if( need_penup && formerly_non_blocking )  {
+			need_penup = 0;
+			sprintf(input_line, "M 0 %d %d\n",
+				dm_values.dv_xpen, dm_values.dv_ypen);
+			rt_vls_strcat( &dm_values.dv_string, input_line);
+		}
+		break;
+	default:
+		(void)fprintf(outfile, "pen(%d,%d,x%x) -- bad dm press code\n",
+		dm_values.dv_xpen,
+		dm_values.dv_ypen,
+		dm_values.dv_penpress);
+		break;
+	}
+
+	/*
+	 * Apply the knob slew factor to the view center
+	 */
+	if( dm_values.dv_xslew != old_values.dv_xslew )  {
+		sprintf(input_line, "knob X %f\n", dm_values.dv_xslew );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+	if( dm_values.dv_yslew != old_values.dv_yslew )  {
+		sprintf(input_line, "knob Y %f\n", dm_values.dv_yslew );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+	if( dm_values.dv_zslew != old_values.dv_zslew )  {
+		sprintf(input_line, "knob Z %f\n", dm_values.dv_zslew );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+
+	/* Apply zoom rate input to current view window size */
+	if( dm_values.dv_zoom != old_values.dv_zoom )  {
+		sprintf(input_line, "knob S %f\n", dm_values.dv_zoom );
+		rt_vls_strcat( &dm_values.dv_string, input_line);
+	}
+
+	/* See if the angle/distance cursor is doing anything */
+	/* XXX still needs conversion to a command */
+	if(  adcflag && dm_values.dv_flagadc )
+		dmaflag = 1;	/* Make refresh call dozoom */
+
+	/********************************
+	 *  End compatability code	*
+	 ********************************/
 
 	/*
 	 *  Process any "string commands" sent to us by the display manager.
+	 *  (Or "invented" here, for compatability with old dm's).
 	 *  Each one is expected to be newline terminated.
 	 */
 	if( (len = rt_vls_strlen( &dm_values.dv_string )) > 0 )  {
@@ -378,70 +485,14 @@ int	non_blocking;
 			/* Copy one cmd, incl newline.  Null terminate */
 			rt_vls_strncpy( &cmd, cp, ep-cp+1 );
 			/* cmdline insists on ending with newline&null */
+#if 0
+printf("cmd: %s", rt_vls_addr(&cmd) );
+#endif
 			(void)cmdline( rt_vls_addr(&cmd) );
 			cp = ep+1;
 		}
 		rt_vls_trunc( &dm_values.dv_string, 0 );
 		rt_vls_free( &cmd );
-	}
-
-	/* Process any function button presses */
-	if( dm_values.dv_buttonpress )
-		button( dm_values.dv_buttonpress );
-
-	/* Process any joystick activity */
-	if(	dmaflag
-	   ||	dm_values.dv_xjoy != 0.0
-	   ||	dm_values.dv_yjoy != 0.0
-	   ||	dm_values.dv_zjoy != 0.0
-	)  {
-		non_blocking++;
-
-		/* Compute delta x,y,z parameters */
-		usejoy( dm_values.dv_xjoy * 6 * degtorad,
-			dm_values.dv_yjoy * 6 * degtorad,
-			dm_values.dv_zjoy * 6 * degtorad );
-	}
-
-	/*
-	 * Use data tablet inputs.
-	 */		 
-	if( dm_values.dv_penpress )
-		non_blocking++;	/* to catch transition back to 0 */
-
-	switch( dm_values.dv_penpress )  {
-	case DV_INZOOM:
-		if( Viewscale > SMALL_FASTF )
-			Viewscale *= 0.5;
-		new_mats();
-		break;
-
-	case DV_OUTZOOM:
-		if( Viewscale < INFINITY )
-			Viewscale *= 2.0;
-		new_mats();
-		break;
-
-	case DV_SLEW:		/* Move view center to here */
-		{
-			vect_t tabvec;
-			tabvec[X] =  dm_values.dv_xpen / 2047.0;
-			tabvec[Y] =  dm_values.dv_ypen / 2047.0;
-			tabvec[Z] = 0;
-			slewview( tabvec );
-		}
-		break;
-
-	case DV_PICK:		/* transition 0 --> 1 */
-	case 0:			/* transition 1 --> 0 */
-		usepen();
-		break;
-	default:
-		(void)fprintf(outfile, "pen(%d,%d,x%x) -- bad dm press code\n",
-		dm_values.dv_xpen,
-		dm_values.dv_ypen,
-		dm_values.dv_penpress);
-		break;
 	}
 
 	/*
@@ -454,19 +505,27 @@ int	non_blocking;
 	windowbounds[3] = TITLE_YBASE-TEXT1_DY;	/* YLR */
 	dmp->dmr_window(windowbounds);	/* hack */
 
-	/* Apply the knob slew factor to the view center */
-	if( dm_values.dv_xslew != 0.0 || dm_values.dv_yslew != 0.0
-	  || dm_values.dv_zslew != 0.0 )  {
-		/* slew 1/10th of the view per update */
-		knobvec[X] = -dm_values.dv_xslew / 10;
-		knobvec[Y] = -dm_values.dv_yslew / 10;
-		knobvec[Z] = -dm_values.dv_zslew / 10;
-		slewview( knobvec );
+	/*********************************
+	 *  Handle rate-based processing *
+	 *********************************/
+	if( rateflag_rotate )  {
 		non_blocking++;
-	}
 
-	/* Apply zoom rate input to current view window size */
-	if( dm_values.dv_zoom != 0 )  {
+		/* Compute delta x,y,z parameters */
+		usejoy( rate_rotate[X] * 6 * degtorad,
+			rate_rotate[Y] * 6 * degtorad,
+			rate_rotate[Z] * 6 * degtorad );
+	}
+	if( rateflag_slew )  {
+		non_blocking++;
+
+		/* slew 1/10th of the view per update */
+		knobvec[X] = -rate_slew[X] / 10;
+		knobvec[Y] = -rate_slew[Y] / 10;
+		knobvec[Z] = -rate_slew[Z] / 10;
+		slewview( knobvec );
+	}
+	if( rateflag_zoom )  {
 #define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
 
 		Viewscale *= 1.0 - (dm_values.dv_zoom / 10);
@@ -479,9 +538,8 @@ int	non_blocking;
 		dmaflag = 1;
 	}
 
-	/* See if the angle/distance cursor is doing anything */
-	if(  adcflag && dm_values.dv_flagadc )
-		dmaflag = 1;	/* Make refresh call dozoom */
+	/* Keep a copy of knob values, for later comparison */
+	old_values = dm_values;	/* struct copy */
 
 	return( non_blocking );
 }

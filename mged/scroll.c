@@ -46,13 +46,13 @@ struct scroll_item *scroll_array[6];	/* Active scroll bar definitions */
 static void sl_tol();
 
 struct scroll_item scr_menu[] = {
-	{ "xslew",	sl_tol,		&dm_values.dv_xslew },
-	{ "yslew",	sl_tol,		&dm_values.dv_yslew },
-	{ "zslew",	sl_tol,		&dm_values.dv_zslew },
-	{ "zoom",	sl_tol,		&dm_values.dv_zoom },
-	{ "xrot",	sl_tol,		&dm_values.dv_xjoy },
-	{ "yrot",	sl_tol,		&dm_values.dv_yjoy },
-	{ "zrot",	sl_tol,		&dm_values.dv_zjoy },
+	{ "xslew",	sl_tol,		&rate_slew[X] },
+	{ "yslew",	sl_tol,		&rate_slew[Y] },
+	{ "zslew",	sl_tol,		&rate_slew[Z] },
+	{ "zoom",	sl_tol,		&rate_zoom },
+	{ "xrot",	sl_tol,		&rate_rotate[X] },
+	{ "yrot",	sl_tol,		&rate_rotate[Y] },
+	{ "zrot",	sl_tol,		&rate_rotate[Z] },
 	{ "",		(void (*)())NULL, 0 }
 };
 
@@ -136,6 +136,7 @@ register struct scroll_item     *mptr;
 	} else {
 		*(mptr->scroll_val) = 0.0;
 	}
+	check_nonzero_rates();
 }
 
 static void sl_xadc( mptr )

@@ -1068,6 +1068,9 @@ checkevents()  {
 	static	button0  = 0;	/*  State of button 0 */
 	static	knobs[8];	/*  Save values of dials  */
 	static	pending_middlemouse = 0;	/* state variable */
+	static	pending_middleval = 0;
+	static	pending_x = 0;
+	static	pending_y = 0;
 
 #if IR_WIDGETS
 	n = fl_usrblkqread( values, NVAL );/* n is # of shorts returned */
@@ -1431,25 +1434,24 @@ checkevents()  {
 #else
 		switch( ret )  {
 		case LEFTMOUSE:
-			if( valp[1] && dm_values.dv_penpress != DV_PICK )
-				dm_values.dv_penpress = DV_OUTZOOM;
+			if( valp[1] )
+				rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
+			break;
+		case RIGHTMOUSE:
+			if( valp[1] )
+				rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
 			break;
 		case MIDDLEMOUSE:
 			/* Will also get MOUSEX and MOUSEY hits */
-			if( valp[1] ) {
-				pending_middlemouse = 1;
-				/* Don't signal DV_PICK until MOUSEY event */
-			}
-			break;
-		case RIGHTMOUSE:
-			if( valp[1] && dm_values.dv_penpress != DV_PICK )
-				dm_values.dv_penpress = DV_INZOOM;
+			pending_middlemouse = 1;
+			pending_middleval = (int)valp[1] ? 1 : 0;
+			/* Don't signal DV_PICK until MOUSEY event */
 			break;
 		case MOUSEX:
-			dm_values.dv_xpen = irisX2ged( (int)valp[1] );
+			pending_x = irisX2ged( (int)valp[1] );
 			break;
 		case MOUSEY:
-			dm_values.dv_ypen = irisY2ged( (int)valp[1] );
+			pending_y = irisY2ged( (int)valp[1] );
 			/*
 			 *  Thanks to the tie() call, when a MIDDLEMOUSE
 			 *  event is signalled, it will be (eventually)
@@ -1463,7 +1465,11 @@ checkevents()  {
 			 *  may need multiple trips through this subroutine.
 			 */
 			if( pending_middlemouse )  {
-				dm_values.dv_penpress = DV_PICK;
+				char	input_line[64];
+				sprintf(input_line, "M %d %d %d\n",
+					pending_middleval,
+					pending_x, pending_y);
+				rt_vls_strcat( &dm_values.dv_string, input_line);
 				pending_middlemouse = 0;
 			}
 			break;

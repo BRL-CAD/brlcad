@@ -81,6 +81,8 @@ void	f_polybinout();
 void	f_facetize();
 void	f_adc();
 void	f_set();
+void	f_zoom();
+void	f_mouse();
 
 static struct funtab {
 	char *ft_name;
@@ -202,6 +204,8 @@ static struct funtab {
 	f_pathsum, 1, MAXARGS,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS,
+"M", "1|0 xpos ypos", "handle a mouse event",
+	f_mouse, 4,4,
 "make", "name <arb8|sph|ellg|tor|tgc>", "create a primitive",
 	f_make,3,3,
 "mater", "comb [material]", "assign/delete material to combination",
@@ -316,6 +320,8 @@ static struct funtab {
 	f_debug, 1,2,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,
+"zoom", "scale_factor", "zoom view in or out",
+	f_zoom, 2,2,
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 
