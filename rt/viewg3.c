@@ -384,9 +384,8 @@ register struct partition *PartHeadp;
 			putc( ' ', outfp );
 		}
 		comp_thickness *= MM2IN;
-		air_thickness *= MM2IN;
 		/* Check thickness fields for format overflow */
-		if( comp_thickness > 999.99 || air_thickness > 999.9 )
+		if( comp_thickness > 999.99 || air_thickness*MM2IN > 999.9 )
 			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
@@ -394,7 +393,7 @@ register struct partition *PartHeadp;
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,
-			air_id, air_thickness );
+			air_id, air_thickness*MM2IN );
 		card_count++;
 		if( card_count >= 3 )  {
 			putc( '\n', outfp );
