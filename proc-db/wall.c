@@ -926,19 +926,14 @@ void
 mortar_brick(fd)
 FILE *fd;
 {
+	struct wmember wm_hd;
+#if 0
 	int horiz_bricks;
 	int vert_bricks;
 	double mortar_height;
 	double mortar_width;
 	point_t pts[8];
-	struct wmember wm_hd;
 	
-	RT_LIST_INIT(&wm_hd.l);
-
-	rt_log("Not Yet Implemented\n");
-	exit(0);
-
-#if 0
 	horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
 
 	/* compute excess distance to be used in mortar */
@@ -1019,6 +1014,12 @@ FILE *fd;
 	*sol_name = 'r';
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		mortar_color, 0);
+#else
+	RT_LIST_INIT(&wm_hd.l);
+
+	rt_log("Not Yet Implemented\n");
+	exit(0);
+
 #endif
 }
 
@@ -1027,20 +1028,15 @@ void
 brick(fd)
 FILE *fd;
 {
+	struct wmember wm_hd;
+#if 0
 	int horiz_bricks;
 	int vert_bricks;
 	double mortar_height;
 	double mortar_width;
 	point_t pts[8];
-	struct wmember wm_hd;
 	char proto_brick[64];
 	
-	RT_LIST_INIT(&wm_hd.l);
-
-	rt_log("Not Yet Implemented\n");
-	exit(0);
-
-#if 0
 	if (!color) color = brick_color;
 
 	horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
@@ -1070,6 +1066,12 @@ FILE *fd;
 
 	mk_lcomb(fd, proto_brick, &wm_hd, 1, (char *)NULL, (char *)NULL,
 			(char *)NULL, 0);
+#else
+	RT_LIST_INIT(&wm_hd.l);
+
+	rt_log("Not Yet Implemented\n");
+	exit(0);
+
 #endif
 }
 
@@ -1084,13 +1086,12 @@ int main(ac,av)
 int ac;
 char *av[];
 {
-	int arg_index;
 	struct opening *op;
 	FILE *db_fd;
 
 	ol_hd.ex = ol_hd.ez = 0.0;
 
-	if ((arg_index=parse_args(ac, av)) < ac)
+	if ((parse_args(ac, av)) < ac)
 		usage("excess command line arguments\n");
 
 	if (ac < 2) usage((char *)NULL);

@@ -38,7 +38,6 @@ int argc;
 char *argv[];
 {
 	point_t min, max;
-	fastf_t thickness;
 
 	mk_id( stdout, "Plate mode test" );
 

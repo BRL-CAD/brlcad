@@ -102,7 +102,7 @@ main( argc, argv )
 int	argc;
 char	**argv;
 {
-	int	i, n;
+	int	n;
 	register spm_map_t	*mp;
 
 	if ( !get_args( argc, argv ) )  {
@@ -140,8 +140,7 @@ void
 spm_fb( mapp )
 spm_map_t *mapp;
 {
-	register int	i, j;
-	RGBpixel rgb;
+	register int	j;
 
 	for( j = 0; j < mapp->ny; j++ ) {
 		fb_write( fbp, 0, j, mapp->xbin[j], mapp->nx[j] );

@@ -102,12 +102,8 @@ void
 interpolate_data()
 {
 	struct face_g_snurb srf;
-	struct face_g_snurb *srf2, *srf3;
-	struct knot_vector new_kv;
 	fastf_t * data;
 	fastf_t rt_nurb_par_edge();
-	fastf_t step;
-	fastf_t tess;
 
 	data = &grid[0][0][0];
 

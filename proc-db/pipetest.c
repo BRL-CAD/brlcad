@@ -143,8 +143,6 @@ double	bend;
 double	od;
 {
 	struct wdb_pipept	head;
-	vect_t			prev, next;
-	point_t			my_end, next_start;
 	int			i;
 
 	mk_pipe_init( &head );

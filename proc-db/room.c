@@ -68,22 +68,15 @@ char	**argv;
 {
 	vect_t	norm;
 	unsigned char	rgb[3];
-	int	ix, iy;
-	double	x, y;
+	int	ix;
+	double	x;
 	double	size;
-	double	base;
 	int	quant;
-	char	name[64];
-	vect_t	pos, aim;
-	char	white[3];
-	int	n;
-	double	height, maxheight, minheight;
 	struct wmember head;
 	vect_t	bmin, bmax, bthick;
 	vect_t	r1min, r1max, r1thick;
 	vect_t	lwh;		/* length, width, height */
 	vect_t	pbase;
-	float	*randp;
 
 	RT_LIST_INIT( &head.l );
 
