@@ -30,9 +30,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
@@ -40,6 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "rtprivate.h"
+
 
 int		rdebug;			/* RT program debugging */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
