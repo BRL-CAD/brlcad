@@ -14,6 +14,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+#include <ctype.h>
+
 struct insert_data {
 	fastf_t scale[3];
 	fastf_t rotation;
@@ -449,6 +451,25 @@ static unsigned char rgb[]={
 	255, 255, 255 };
 
 
+static char *
+make_brlcad_name( char *line )
+{
+	char *name;
+	char *c;
+
+	name = bu_strdup( line );
+
+	c = name;
+	while( *c != '\0' ) {
+		if( *c == '/' || *c == '[' || *c == ']' || *c == '*' || isspace( *c ) ) {
+			*c = '_';
+		}
+		c++;
+	}
+
+	return( name );
+}
+
 static void
 get_layer()
 {
@@ -723,7 +744,7 @@ process_tables_layer_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 62:	/* layer color */
 		curr_color = atoi( line );
@@ -850,7 +871,7 @@ process_point_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 10:
 	case 20:
@@ -888,7 +909,7 @@ process_entities_polyline_vertex_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 70:	/* vertex flag */
 		vertex_flag = atoi( line );
@@ -1102,7 +1123,7 @@ process_entities_polyline_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	}
 		
@@ -1236,7 +1257,7 @@ process_insert_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 2:		/* block name */
 		for( BU_LIST_FOR( blk, block_list, &block_head ) ) {
@@ -1319,7 +1340,7 @@ process_line_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 10:
 	case 20:
@@ -1382,7 +1403,7 @@ process_circle_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 10:
 	case 20:
@@ -1477,7 +1498,7 @@ process_dimension_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 2:	/* block name */
 		block_name = bu_strdup( line );
@@ -1542,7 +1563,7 @@ process_arc_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 10:
 	case 20:
@@ -1680,7 +1701,7 @@ process_3dface_entities_code( int code )
 		if( curr_layer_name ) {
 			bu_free( curr_layer_name, "curr_layer_name" );
 		}
-		curr_layer_name = bu_strdup( line );
+		curr_layer_name = make_brlcad_name( line );
 		break;
 	case 10:
 	case 20:
