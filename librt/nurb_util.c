@@ -16,6 +16,8 @@
  *	All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
