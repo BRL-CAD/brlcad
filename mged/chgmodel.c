@@ -1325,6 +1325,7 @@ f_make(ClientData	clientData,
 	int i;
 	struct rt_db_internal	internal;
 	struct rt_arb_internal	*arb_ip;
+	struct rt_ars_internal	*ars_ip;
 	struct rt_tgc_internal	*tgc_ip;
 	struct rt_ell_internal	*ell_ip;
 	struct rt_tor_internal	*tor_ip;
@@ -1352,6 +1353,7 @@ f_make(ClientData	clientData,
 	    Tcl_AppendElement(interp, "arb5");
 	    Tcl_AppendElement(interp, "arb4");
 	    Tcl_AppendElement(interp, "arbn");
+	    Tcl_AppendElement(interp, "ars");
 	    Tcl_AppendElement(interp, "bot");
 	    Tcl_AppendElement(interp, "ehy");
 	    Tcl_AppendElement(interp, "ell");
@@ -1558,6 +1560,57 @@ f_make(ClientData	clientData,
 			arbn_ip->eqn[i][3] +=
 				VDOT( view_center, arbn_ip->eqn[i] );
 		}
+	} else if( strcmp( argv[2], "ars" ) == 0 )  {
+	        int curve;
+		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		internal.idb_type = ID_ARS;
+		internal.idb_meth = &rt_functab[ID_ARS];
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ars_internal) , "rt_ars_internal" );
+		ars_ip = (struct rt_ars_internal *)internal.idb_ptr;
+		ars_ip->magic = RT_ARS_INTERNAL_MAGIC;
+		ars_ip->ncurves = 3;
+		ars_ip->pts_per_curve = 3;
+		ars_ip->curves = (fastf_t **)bu_malloc((ars_ip->ncurves+1) * sizeof(fastf_t **), "ars curve ptrs" );
+		
+		for ( curve=0 ; curve < ars_ip->ncurves ; curve++ ) {
+		    ars_ip->curves[curve] = (fastf_t *)bu_calloc(
+			     (ars_ip->pts_per_curve + 1) * 3,
+			     sizeof(fastf_t), "ARS points");
+
+		    if (curve == 0) {
+			VSET( &(ars_ip->curves[0][0]),
+			      -view_state->vs_vop->vo_center[MDX],
+			      -view_state->vs_vop->vo_center[MDY],
+			      -view_state->vs_vop->vo_center[MDZ] );
+			VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
+			VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
+		    } else if (curve == (ars_ip->ncurves - 1) ) {
+			VSET( &(ars_ip->curves[curve][0]),
+			      -view_state->vs_vop->vo_center[MDX],
+			      -view_state->vs_vop->vo_center[MDY],
+			      -view_state->vs_vop->vo_center[MDZ]+curve*(0.25*view_state->vs_vop->vo_scale));
+			VMOVE(&(ars_ip->curves[curve][3]), &(ars_ip->curves[curve][0]));
+			VMOVE(&(ars_ip->curves[curve][6]), &(ars_ip->curves[curve][0]));
+
+		    } else {
+			fastf_t x, y, z;
+			x = -view_state->vs_vop->vo_center[MDX]+curve*(0.25*view_state->vs_vop->vo_scale);
+			y = -view_state->vs_vop->vo_center[MDY]+curve*(0.25*view_state->vs_vop->vo_scale);
+			z = -view_state->vs_vop->vo_center[MDZ]+curve*(0.25*view_state->vs_vop->vo_scale);
+
+			VSET(&ars_ip->curves[curve][0], 
+			      -view_state->vs_vop->vo_center[MDX],
+			      -view_state->vs_vop->vo_center[MDY],
+			     z);
+			VSET(&ars_ip->curves[curve][3], 
+			     x,
+			      -view_state->vs_vop->vo_center[MDY],
+			     z);
+			VSET(&ars_ip->curves[curve][6], 
+			     x, y, z);
+		    }
+		}
+
 	} else if( strcmp( argv[2], "sph" ) == 0 )  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ELL;
