@@ -30,14 +30,12 @@ static char RCSregionfix[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "externs.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./material.h"
 
 #include "rdebug.h"
-
-extern char	*strchr();
-extern char	*re_comp();
-extern int	re_exec();
 
 /*
  *			R E G I O N F I X
