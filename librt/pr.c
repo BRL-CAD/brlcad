@@ -35,6 +35,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+BU_EXTERN(void		rt_pr_seg_vls, (struct bu_vls *, CONST struct seg *));
+
 /*
  *			R T _ P R _ S O L T A B
  */
@@ -111,11 +113,13 @@ CONST char			*title;
 	bu_vls_strcat( &v, "------" );
 	bu_vls_strcat( &v, title );
 	bu_vls_strcat( &v, "\n" );
+	bu_log_indent_delta( 2 );
 
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
 		RT_CHECK_PT(pp);
 		rt_pr_pt_vls( &v, rtip, pp );
 	}
+	bu_log_indent_delta( -2 );
 	bu_log_indent_vls( &v );
 	bu_vls_strcat( &v, "------\n");
 
@@ -172,6 +176,15 @@ register CONST struct partition *pp;
 	}
 	bu_vls_strcat( v, "\n" );
 
+	bu_log_indent_vls( v );
+	bu_vls_strcat( v, "  Untrimmed Segments Contributing:\n" );
+	bu_log_indent_delta( 4 );
+	for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
+		RT_CK_SEG(*segpp)
+		rt_pr_seg_vls( v, *segpp );
+	}
+	bu_log_indent_delta( -4 );
+
 	if( pp->pt_regionp )  {
 		RT_CK_REGION( pp->pt_regionp );
 		bu_log_indent_vls( v );
@@ -198,19 +211,42 @@ register CONST struct partition *pp;
 }
 
 /*
+ *			R T _ P R _ S E G _ V L S
+ */
+void
+rt_pr_seg_vls( v, segp )
+struct bu_vls			*v;
+register CONST struct seg	*segp;
+{
+	BU_CK_VLS(v);
+	RT_CK_SEG(segp);
+
+	bu_log_indent_vls( v );
+	bu_vls_printf(v,
+		"%.8x: SEG %s (%g,%g) st_bit=%d xray#=%d\n",
+		segp,
+		segp->seg_stp->st_dp->d_namep,
+		segp->seg_in.hit_dist,
+		segp->seg_out.hit_dist,
+		segp->seg_stp->st_bit,
+		segp->seg_in.hit_rayp->index );
+}
+
+/*
  *			R T _ P R _ S E G
  */
 void
 rt_pr_seg(segp)
 register CONST struct seg *segp;
 {
-	RT_CHECK_SEG(segp);
-	bu_log("%.8x: SEG %s (%g,%g) bit=%d\n",
-		segp,
-		segp->seg_stp->st_dp->d_namep,
-		segp->seg_in.hit_dist,
-		segp->seg_out.hit_dist,
-		segp->seg_stp->st_bit );
+	struct bu_vls		v;
+
+	RT_CK_SEG(segp);
+
+	bu_vls_init( &v );
+	rt_pr_seg_vls( &v, segp );
+	bu_log("%s", bu_vls_addr( &v ) );
+	bu_vls_free( &v );
 }
 
 /*
