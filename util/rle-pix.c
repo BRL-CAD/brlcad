@@ -28,9 +28,9 @@ extern char	*getenv();
 
 extern char	*malloc();
 
-static FILE	*infp = stdin;
+static FILE	*infp;
 static char	*infile;
-static FILE	*outfp = stdout;
+static FILE	*outfp;
 
 static int	background[3];
 static int	override_background;
@@ -155,6 +155,8 @@ char ** argv;
 	int	screen_xlen;		/* clipped len of rectangle */
 	int	ncolors;
 
+	infp = stdin;
+	outfp = stdout;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );

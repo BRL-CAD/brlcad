@@ -44,7 +44,7 @@ char	*argv[];
     char	sarg[BUF_LEN];
     static char	*fm[] = { "r", "w" };
     double	darg[6];
-    static FILE	*fp[] = { stdin, stdout };
+    static FILE	*fp[2];
     int		i;
     int		iarg[6];
     int		line_nm;
@@ -56,6 +56,8 @@ char	*argv[];
 	printusage();
 	exit (1);
     }
+    fp[0] = stdin;
+    fp[1] = stdout;
     for (i = 0; (i < 2) && (--argc > 0); ++i)
     {
 	if ((**++argv == '-') && (*(*argv + 1) == '\0'))

@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-FILE	*infp = stdin;
+FILE	*infp;
 
 int	file_width = 512;
 int	file_height = 512;
@@ -97,6 +97,7 @@ char **argv;
 	register int iny, outy;
 	unsigned char *inbuf;
 
+	infp = stdin;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );

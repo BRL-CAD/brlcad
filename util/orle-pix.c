@@ -30,7 +30,7 @@ static char	*usage[] =
 0
 	};
 
-static FILE	*fp = stdin;
+static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
 static int	pars_Argv();
@@ -53,6 +53,7 @@ char	*argv[];
 	int		get_flags;
 	int		scan_bytes;
 
+	fp = stdin;
 	if( ! pars_Argv( argc, argv ) || isatty(fileno(stdout)) )  {
 		prnt_Usage();
 		return	1;

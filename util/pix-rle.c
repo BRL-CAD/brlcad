@@ -37,7 +37,7 @@ extern char			*getenv();
 extern char	*malloc();
 extern char	*strdup();
 
-static FILE	*infp = stdin;
+static FILE	*infp;
 static char	*infile;
 
 static int	background[3];

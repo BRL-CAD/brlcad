@@ -84,7 +84,7 @@ struct colors {
 struct colors Cmap[256];
 
 static char	*file_name;
-static FILE	*fp = stdin;
+static FILE	*fp;
 
 char	usage[] = "\
 Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
@@ -172,6 +172,7 @@ char **argv;
 	register int	n;
 	unsigned char	buf[4096];
 
+	fp = stdin;
 	if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
