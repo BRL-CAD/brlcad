@@ -29,11 +29,14 @@ status)
     echo "CHECKING STATUS"
     ;;
 *)
-    /bin/echo 'must specify "master" or "status" argument'
-    exit -1
+    echo 'must specify "master" or "status" argument'
+    exit 1
     ;;
 esac
 
+if [ -d brlcad/regress ] ; then 
+    rm -rf brlcad/regress
+fi
 cvs -q -d /c/CVS export -D today -N brlcad/regress
 cd brlcad/regress
 cp nightly.sh ../..
@@ -46,7 +49,7 @@ elif [ "x#TASK" = "xstatus" ] ; then
     echo "DONE CHECKING STATUS"
 else
     echo "INTERNAL ERROR -- not master or status"
-    exit -1
+    exit 1
 fi
 
 exit 0
