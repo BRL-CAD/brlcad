@@ -828,8 +828,9 @@ struct bu_color
     long	buc_magic;
     fastf_t	buc_rgb[3];
 };
-#define	BU_COLOR_MAGIC	0x6275636c
-#define	BU_COLOR_NULL	((struct bu_color *) 0)
+#define	BU_COLOR_MAGIC		0x6275636c
+#define	BU_COLOR_NULL		((struct bu_color *) 0)
+#define BU_CK_COLOR(_bp)	BU_CKMAG(_bp, BU_COLOR_MAGIC, "bu_color")
 
 /*----------------------------------------------------------------------*/
 /* Miscellaneous macros */
@@ -1068,9 +1069,24 @@ BU_EXTERN(void bu_mm_cvt, (register CONST struct bu_structparse	*sdp,
 		register CONST char *name,  char *base, CONST char *value) );
 
 /* color.c */
-BU_EXTERN(void			bu_rgb_to_hsv, (unsigned char *rgb, fastf_t *hsv) );
-BU_EXTERN(int			bu_hsv_to_rgb, (fastf_t *hsv, unsigned char *rgb) );
-BU_EXTERN(int			bu_str_to_rgb, (char *str, unsigned char *rgb) );
+BU_EXTERN(void		bu_rgb_to_hsv,		(unsigned char *rgb,
+						    fastf_t *hsv) );
+BU_EXTERN(int		bu_hsv_to_rgb,		(fastf_t *hsv,
+						    unsigned char *rgb) );
+BU_EXTERN(int		bu_str_to_rgb,		(char *str,
+						    unsigned char *rgb) );
+BU_EXTERN(void		bu_color_of_rgb_chars,	(struct bu_color *cp,
+						    unsigned char *rgb) );
+BU_EXTERN(int		bu_color_to_rgb_chars,	(struct bu_color *cp,
+						    unsigned char *rgb) );
+BU_EXTERN(int		bu_color_of_rgb_floats,	(struct bu_color *cp,
+						    fastf_t *rgb) );
+BU_EXTERN(int		bu_color_to_rgb_floats,	(struct bu_color *cp,
+						    fastf_t *rgb) );
+BU_EXTERN(int		bu_color_of_hsv_floats,	(struct bu_color *cp,
+						    fastf_t *hsv) );
+BU_EXTERN(int		bu_color_to_hsv_floats,	(struct bu_color *cp,
+						    fastf_t *hsv) );
 
 
 
