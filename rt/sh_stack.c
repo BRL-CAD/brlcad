@@ -38,7 +38,6 @@ struct mfuncs stk_mfuncs[] = {
 };
 
 struct stk_specific {
-	char	st_file[128];	/* Filename */
 	struct	mfuncs	*mfuncs[16];
 	char	*udata[16];
 };
@@ -46,7 +45,6 @@ struct stk_specific {
 #define STK_O(m)	offsetof(struct stk_specific, m)
 
 struct structparse stk_parse[] = {
-	"%s",	"file",		offsetofarray(struct stk_specific, st_file),		FUNC_NULL,
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
 
@@ -70,7 +68,6 @@ char	**dpp;		/* pointer to user data pointer */
 	GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
-	sp->st_file[0] = '\0';
 	/*rt_structparse( matparm, stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL)
@@ -113,9 +110,9 @@ char	**dpp;		/* pointer to user data pointer */
 
 	/* Request only those input bits needed by subordinate shaders */
 	GETSTRUCT( mfp, mfuncs );
-	bcopy( rp->reg_mfuncs, (char *)mfp, sizeof(*mfp) );
+	bcopy( (char *)rp->reg_mfuncs, (char *)mfp, sizeof(*mfp) );
 	mfp->mf_inputs = inputs;
-	rp->reg_mfuncs = (char *)mfp;
+	rp->reg_mfuncs = (genptr_t)mfp;
 	return( 1 );
 }
 
@@ -136,6 +133,9 @@ char	*dp;
 	int	i;
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
+		if( rdebug&RDEBUG_SHADE && i > 0 )  {
+			pr_shadework( "before next stacked mf_render", swp );
+		}
 		(void)(sp->mfuncs[i]->mf_render( ap, pp, swp, sp->udata[i] ));
 	}
 	return(1);
@@ -149,7 +149,18 @@ stk_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	rt_structprint(rp->reg_name, stk_parse, (char *)dp);
+	register struct stk_specific *sp =
+		(struct stk_specific *)dp;
+	int	i;
+
+	rt_log("~~~~starting stack print\n");
+
+	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
+		rt_log("~~~~stack entry %d:\n", i);
+		sp->mfuncs[i]->mf_print( rp, sp->udata[i] );
+	}
+
+	rt_log("~~~~ending stack print\n");
 }
 
 /*
@@ -174,7 +185,7 @@ extern struct mfuncs *mfHead;	/* Head of list of materials */
 
 dosetup( cp, rp, dpp, mpp )
 char	*cp;
-char	*rp;
+struct region	*rp;
 char	**dpp;		/* udata pointer address */
 char	**mpp;		/* mfuncs pointer address */
 {
