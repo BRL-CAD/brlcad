@@ -2,6 +2,7 @@ class Sketch_editor {
 	inherit itk::Toplevel
 
 	private variable sketch_name
+        private variable sketch_path
 	private variable V
 	private variable A
 	private variable B
@@ -29,7 +30,8 @@ class Sketch_editor {
 	common rad2deg  [expr {360.0 / $pi2}]
 
 	constructor { args } {
-		if { [llength $args] == 0 } {
+	    set num_args [llength $args]
+		if { $num_args == 0 } {
 			set sketch_name ""
 			set sketch_info {}
 			set SL {}
@@ -43,10 +45,25 @@ class Sketch_editor {
 			set B(1) 1.0
 			set B(2) 0.0
 			$this configure -title "Sketch Editor: Untitled"
-		    } elseif { [llength $args] == 1 } {
+		    } elseif { $num_args == 1 } {
 			# get the tcl version of the sketch
-			set sketch_path [split [string trim $args] "/"]
-			set sketch_name [lindex $sketch_path [expr [llength $sketch_path] - 1]]
+			set sketch_path $args
+			set path [split [string trim $args] "/"]
+			set sketch_name [lindex $path [expr [llength $path] - 1]]
+			if { [catch {db get $sketch_name} sketch_info] } {
+				tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
+					-message $sketch_info
+				destroy $itk_component(hull)
+				return
+			}
+			if { [lindex $sketch_info 0] != "sketch" } {
+				tk_messageBox -icon error -type ok -title "$name is not a sketch" -message "$name is not a sketch"
+				destroy $itk_component(hull)
+				return
+			}
+		    } elseif { $num_args == 2 } {
+			set sketch_name [lindex $args 0]
+			set sketch_path [lindex $args 1]
 			if { [catch {db get $sketch_name} sketch_info] } {
 				tk_messageBox -icon error -title "Cannot Get Sketch" -type ok \
 					-message $sketch_info
@@ -191,7 +208,7 @@ class Sketch_editor {
 		grid $itk_component(coords).radius -row 1 -column 1 -sticky w
 
 		itk_component add status_line {
-			label $itk_interior.stat -height 3 -text ""
+			label $itk_interior.stat -height 4 -text ""
 		}
 		bind $itk_component(canvas) <Configure> [code $this draw_segs]
 		bind $itk_component(canvas) <Motion> [code $this show_coords %x %y]
@@ -609,6 +626,7 @@ class Sketch_editor {
 	method do_save {} {
 		set obj_name [$save_entry get]
 		write_sketch_to_db $obj_name [check_name $obj_name]
+	        draw $sketch_path
 	}
 
 	method do_scale { scale_factor } {
