@@ -97,7 +97,7 @@ register char **argv;
 					= (unsigned char *)pixcolor;
 
 				/* premature null => atoi gives zeros */
-				for( c=0; c < width; c++ )  {
+				for( c=0; c < 3; c++ )  {
 					*conp++ = atoi(cp);
 					while( *cp && *cp++ != '/' ) ;
 				}
