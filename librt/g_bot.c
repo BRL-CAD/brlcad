@@ -47,6 +47,11 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "tcl.h"
 #include "machine.h"
@@ -1464,13 +1469,13 @@ CONST char			*attr;
 
 	if( attr == (char *)NULL )
 	{
-		bu_vls_strcpy( &vls, "BOT" );
+		bu_vls_strcpy( &vls, "bot" );
 		bu_vls_printf( &vls, " mode %s orient %s V {",
 				modes[bot->mode], orientation[bot->orientation] );
 		for( i=0 ; i<bot->num_vertices ; i++ )
 			bu_vls_printf( &vls, " { %.25G %.25G %.25G }",
 				V3ARGS( &bot->vertices[i*3] ) );
-		bu_vls_strcat( &vls, " } F { " );
+		bu_vls_strcat( &vls, " } F {" );
 		for( i=0 ; i<bot->num_faces ; i++ )
 			bu_vls_printf( &vls, " { %d %d %d }",
 				V3ARGS( &bot->faces[i*3] ) );
@@ -1634,6 +1639,21 @@ CONST char			*attr;
 	return( status );
 }
 
+char *
+next_tok( str )
+char *str;
+{
+  char *ret;
+
+  ret = str;
+  while( !isspace( *ret ) && *ret !='\0' )
+    ret++;
+  while( isspace( *ret ) )
+    ret++;
+
+  return( ret );
+}
+
 int
 rt_bot_tcladjust( interp, intern, argc, argv )
 Tcl_Interp		*interp;
@@ -1642,8 +1662,9 @@ int			argc;
 char			**argv;
 {
 	struct rt_bot_internal *bot;
-	Tcl_Obj *obj, *list;
+	Tcl_Obj *obj, *list, **obj_array;
 	int len;
+	int i;
 
 	RT_CK_DB_INTERNAL( intern );
 	bot = (struct rt_bot_internal *)intern->idb_ptr;
@@ -1655,23 +1676,321 @@ char			**argv;
 		list = Tcl_NewListObj( 0, NULL );
 		Tcl_ListObjAppendList( interp, list, obj );
 
-		if( !strcmp( argv[0], "fm" ) )
+		if( !strncmp( argv[0], "fm", 2 ) )
 		{
-			bu_log( "fm=%s\n", argv[1] );
+			if( argv[0][2] == '\0' )
+			{
+				bu_log( "fm=%s\n", argv[1] );
+				if( bot->face_mode )
+					bu_free( (char *)bot->face_mode, "bot->face_mode" );
+				bot->face_mode = bu_hex_to_bitv( argv[1] );
+			}
+			else
+			{
+				i = atoi( &(argv[0][2]) ) - 1;
+				if( i < 0 || i >= bot->num_faces )
+				{
+					Tcl_SetResult( interp, "Face number out of range", TCL_STATIC );
+					Tcl_DecrRefCount( list );
+					return( TCL_ERROR );
+				}
+
+				if( isdigit( *argv[1] ) )
+				  {
+				    if( atoi( argv[1] ) == 0 )
+					BU_BITCLR( bot->face_mode, i );
+				    else
+					BU_BITSET( bot->face_mode, i );
+				  }
+				else if( !strcmp( argv[1], "append" ) )
+					BU_BITSET( bot->face_mode, i );
+				else
+				        BU_BITCLR( bot->face_mode, i );
+			}
+		}
+		else if( argv[0][0] == 'V' )
+		{
+		  char *v_str;
+
+		  if( argv[0][1] == '\0' )
+		    {
+		      (void)Tcl_ListObjGetElements( interp, list, &len, &obj_array );
+		      if( len <= 0 )
+			{
+			  Tcl_SetResult( interp, "Must provide at least one vertex!!!", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      bot->num_vertices = len;
+		      bu_free( (char *)bot->vertices, "BOT vertices" );
+		      bot->vertices = (fastf_t *)bu_calloc( len*3, sizeof( fastf_t ), "BOT vertices" );
+		      for( i=0 ; i<len ; i++ )
+			{
+			  v_str = Tcl_GetStringFromObj( obj_array[i], NULL );
+			  if( *v_str == '\0' )
+			    {
+			      Tcl_SetResult( interp, "incomplete list of vertices", TCL_STATIC );
+			      Tcl_DecrRefCount( list );
+			      return( TCL_ERROR );
+			    }
+			  bot->vertices[i*3] = atof( v_str );
+			  v_str = next_tok( v_str );
+			  if( *v_str == '\0' )
+			    {
+			      Tcl_SetResult( interp, "incomplete list of vertices", TCL_STATIC );
+			      Tcl_DecrRefCount( list );
+			      return( TCL_ERROR );
+			    }
+			  bot->vertices[i*3+1] = atof( v_str );
+			  v_str = next_tok( v_str );
+			  if( *v_str == '\0' )
+			    {
+			      Tcl_SetResult( interp, "incomplete list of vertices", TCL_STATIC );
+			      Tcl_DecrRefCount( list );
+			      return( TCL_ERROR );
+			    }
+			  bot->vertices[i*3+2] = atof( v_str );
+			  Tcl_DecrRefCount( obj_array[i] );
+			}
+		    }
+		  else
+		    {
+		      i = atoi( &argv[0][1] ) - 1;
+		      if( i < 0 || i >= bot->num_vertices )
+			{
+			  Tcl_SetResult( interp, "vertex number out of range!!!", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      v_str = Tcl_GetStringFromObj( list, NULL );
+		      bot->vertices[i*3] = atof( v_str );
+		      v_str = next_tok( v_str );
+		      if( *v_str == '\0' )
+			{
+			  Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      bot->vertices[i*3+1] = atof( v_str );
+		      v_str = next_tok( v_str );
+		      if( *v_str == '\0' )
+			{
+			  Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
+			  Tcl_DecrRefCount( list );
+			  return( TCL_ERROR );
+			}
+		      bot->vertices[i*3+2] = atof( v_str );
+		    }
+		}
+		else if( argv[0][0] == 'F' )
+		  {
+		    char *f_str;
+
+		    if( argv[0][1] == '\0' )
+		      {
+			(void)Tcl_ListObjGetElements( interp, list, &len, &obj_array );
+			if( len <= 0 )
+			  {
+			    Tcl_SetResult( interp, "Must provide at least one face!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->num_faces = len;
+			bu_free( (char *)bot->faces, "BOT faces" );
+			bot->faces = (int *)bu_calloc( len*3, sizeof( int ), "BOT faces" );
+			for( i=0 ; i<len ; i++ )
+			  {
+			    f_str = Tcl_GetStringFromObj( obj_array[i], NULL );
+			    if( *f_str == '\0' )
+			      {
+				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
+				Tcl_DecrRefCount( list );
+				return( TCL_ERROR );
+			      }
+			    bot->faces[i*3] = atoi( f_str );
+			    f_str = next_tok( f_str );
+			    if( *f_str == '\0' )
+			      {
+				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
+				Tcl_DecrRefCount( list );
+				return( TCL_ERROR );
+			      }
+			    bot->faces[i*3+1] = atoi( f_str );
+			    f_str = next_tok( f_str );
+			    if( *f_str == '\0' )
+			      {
+				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
+				Tcl_DecrRefCount( list );
+				return( TCL_ERROR );
+			      }
+			    bot->faces[i*3+2] = atoi( f_str );
+			  }
+		      }
+		    else
+		      {
+			i = atoi( &argv[0][1] ) - 1;
+			if( i < 0 || i >= bot->num_faces )
+			  {
+			    Tcl_SetResult( interp, "face number out of range!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			f_str = Tcl_GetStringFromObj( list, NULL );
+			bot->faces[i*3] = atoi( f_str );
+			f_str = next_tok( f_str );
+			if( *f_str == '\0' )
+			  {
+			    Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->faces[i*3+1] = atoi( f_str );
+			f_str = next_tok( f_str );
+			if( *f_str == '\0' )
+			  {
+			    Tcl_SetResult( interp, "incomplete vertex", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->faces[i*3+2] = atoi( f_str );
+		      }
+		  }
+		else if( argv[0][0] ==  'T' )
+		  {
+		    char *t_str;
+
+		    if( argv[0][1] == '\0' )
+		      {
+			(void)Tcl_ListObjGetElements( interp, list, &len, &obj_array );
+			if( len <= 0 )
+			  {
+			    Tcl_SetResult( interp, "Must provide at least one thickness!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			if( len > bot->num_faces )
+			  {
+			    Tcl_SetResult( interp, "Too many thicknesses (there are not that many faces)!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			for( i=0 ; i<len ; i++ )
+			  {
+			    bot->thickness[i] = atof( Tcl_GetStringFromObj( obj_array[i], NULL ) );
+			    Tcl_DecrRefCount( obj_array[i] );
+			  }
+		      }
+		    else
+		      {
+			i = atoi( &argv[0][1] ) - 1;
+			if( i < 0 || i >= bot->num_faces )
+			  {
+			    Tcl_SetResult( interp, "face number out of range!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			t_str = Tcl_GetStringFromObj( list, NULL );
+			bot->thickness[i] = atof( t_str );
+		      }
+		  }
+		else if( !strcmp( argv[0], "mode" ) )
+		  {
+		    char *m_str;
+
+		    m_str = Tcl_GetStringFromObj( list, NULL );
+		    if( isdigit( *m_str ) )
+		      {
+			int mode;
+
+			mode = atoi( m_str );
+			if( mode < RT_BOT_SURFACE || mode > RT_BOT_PLATE )
+			  {
+			    Tcl_SetResult( interp, "unrecognized mode!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->mode = mode;
+		      }
+		    else
+		      {
+			if( !strncmp( m_str, modes[RT_BOT_SURFACE], 4 ) )
+			  bot->mode = RT_BOT_SURFACE;
+			else if( !strcmp( m_str, modes[RT_BOT_SOLID] ) )
+			  bot->mode = RT_BOT_SOLID;
+			else if( !strcmp( m_str, modes[RT_BOT_PLATE] ) )
+			  bot->mode = RT_BOT_PLATE;
+			else
+			  {
+			    Tcl_SetResult( interp, "unrecognized mode!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+		      }
+		    if( bot->mode != RT_BOT_PLATE )
+		      {
+			if( bot->thickness )
+			  {
+			    bu_free( (char *)bot->thickness, "BOT thickness" );
+			    bot->thickness = (fastf_t *)NULL;
+			  }
 			if( bot->face_mode )
-				bu_free( (char *)bot->face_mode, "bot->face_mode" );
-			bot->face_mode = bu_hex_to_bitv( argv[1] );
-		}
-		else if( *argv[0] == 'V' )
-		{
-			bu_log( "V: %s\n", argv[1] );
-			(void)Tcl_ListObjLength( interp, list, &len );
-			bu_log( "Length = %d\n", len );
-		}
+			  {
+			    bu_free( (char *)bot->face_mode, "BOT facemode" );
+			    bot->face_mode = (bitv_t)NULL;
+			  }
+		      }
+		  }
+		else if( !strncmp( argv[0], "orient", 6 ) )
+		  {
+		    char *o_str;
+
+		    o_str = Tcl_GetStringFromObj( list, NULL );
+		    if( isdigit( *o_str ) )
+		      {
+			int orientation;
+
+			orientation = atoi( o_str );
+			if( orientation < RT_BOT_UNORIENTED || orientation > RT_BOT_CW )
+			  {
+			    Tcl_SetResult( interp, "unrecognized orientation!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+			bot->orientation = orientation;
+		      }
+		    else
+		      {
+			if( !strcmp( o_str, orientation[RT_BOT_UNORIENTED] ) )
+			  bot->orientation = RT_BOT_UNORIENTED;
+			else if( !strcmp( o_str, orientation[RT_BOT_CCW] ) )
+			  bot->orientation = RT_BOT_CCW;
+			else if( !strcmp( o_str, orientation[RT_BOT_CW] ) )
+			  bot->orientation = RT_BOT_CW;
+			else
+			  {
+			    Tcl_SetResult( interp, "unrecognized orientation!!!", TCL_STATIC );
+			    Tcl_DecrRefCount( list );
+			    return( TCL_ERROR );
+			  }
+		      }
+		  }
 
 		Tcl_DecrRefCount( list );
 
 		argc -= 2;
 		argv += 2;
 	}
+
+	if( bot->mode == RT_BOT_PLATE )
+	  {
+	    if( !bot->thickness )
+	      bot->thickness = (fastf_t *)bu_calloc( bot->num_faces, sizeof( fastf_t ), "BOT thickness" );
+	    if( !bot->face_mode )
+	      {
+		bot->face_mode = bu_bitv_new( bot->num_faces );
+		bu_bitv_clear( bot->face_mode );
+	      }
+	  }
+
+	return( TCL_OK );
 }
