@@ -136,10 +136,13 @@ long	us;		/* microseconds of extra delay */
 	(void)cmdline( &str );
 	rt_vls_free( &str );
 
-	event_check( 1 );	/* Take any device events */
+	do {
+		event_check( 1 );	/* Take any device events */
+		refresh();		/* Force screen update */
+		us -= frametime * 1000000;
+	} while (us > 0);
 
-	refresh();		/* Force screen update */
-
+#if 0
 	/* Extra delay between screen updates, for more viewing time */
 	/* Use /dev/tty to select on, because stdin may be a file */
 	if(us)  {
@@ -151,6 +154,7 @@ long	us;		/* microseconds of extra delay */
 			close(fd);
 		}
 	}
+#endif
 }
 
 /*
@@ -171,10 +175,13 @@ int		copy;
 
 	cvt_vlblock_to_solids( vbp, "_PLOT_OVERLAY_", copy );
 
-	event_check( 1 );	/* Take any device events */
 
-	refresh();		/* Force screen update */
-
+	do  {
+		event_check( 1 );	/* Take any device events */
+		refresh();		/* Force screen update */
+		us -= frametime * 1000000;
+	} while (us > 0);
+#if 0
 	/* Extra delay between screen updates, for more viewing time */
 	/* Use /dev/tty to select on, because stdin may be a file */
 	if(us)  {
@@ -186,6 +193,7 @@ int		copy;
 			close(fd);
 		}
 	}
+#endif
 }
 static void
 hack_for_lee()
