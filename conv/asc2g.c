@@ -27,9 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 
 extern void	exit();
-extern int	close(), creat(), open(), read(), write();
 extern int	printf(), fprintf(), sscanf();		/* bzero()? */
-extern long	lseek();
 extern char	*strcpy();
 
 void	identbld(), polyhbld(), polydbld();
@@ -37,10 +35,11 @@ void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
 void	materbld(), bsplbld(), bsurfbld();
 
 static union record	record;		/* GED database record */
-#define BUFSIZE		1000		/* Record input buffer size */
+#define BUFSIZE		1024		/* Record input buffer size */
 static char buf[BUFSIZE];		/* Record input buffer */
 
-main()
+main(argc, argv)
+char **argv;
 {
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
@@ -49,6 +48,8 @@ main()
 		(void)bzero( (char *)&record, sizeof(record) );
 
 		/* Check record type */
+		if( argc > 1 )
+			fprintf(stderr,"0%o (%c)\n", buf[0], buf[0] );
 		if( buf[0] == ID_SOLID )  {
 			/* Build the record */
 			solbld();
@@ -141,7 +142,7 @@ solbld()	/* Build Solid record */
 	record.s.s_cgtype = (short)temp2;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -196,7 +197,7 @@ combbld()	/* Build Combination record */
 	}
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -230,7 +231,7 @@ membbld()	/* Build Member record */
 	record.M.m_num = (short)temp1;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -260,7 +261,7 @@ arsabld()	/* Build ARS A record */
 	record.a.a_totlen = (short)temp5;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -304,7 +305,7 @@ arsbbld()	/* Build ARS B record */
 	record.b.b_ngranule = (short)temp3;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 zap_nl()
@@ -337,7 +338,7 @@ identbld()	/* Build Ident record */
 	(void)strcpy( &record.i.i_title[0], buf );
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -349,7 +350,7 @@ polyhbld()	/* Build Polyhead record */
 	);
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -396,7 +397,7 @@ polydbld()	/* Build Polydata record */
 	record.q.q_count = (char)temp1;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 #endif
 }
 
@@ -418,7 +419,7 @@ materbld()
 	record.md.md_b = (unsigned char)b;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -435,7 +436,7 @@ bsplbld()	/* Build B-spline solid record */
 	record.B.B_nsurf = (short)temp1;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
 void
@@ -470,7 +471,7 @@ bsurfbld()	/* Build d-spline surface description record */
 	record.d.d_nctls = (short)temp9;
 
 	/* Write out the record */
-	(void)write( 1, (char *)&record, sizeof record );
+	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 
 	/* 
 	 * The b_surf_head record is followed by
@@ -503,7 +504,7 @@ bsurfbld()	/* Build d-spline surface description record */
 		(void)sscanf( buf, "%e", vp++);
 	}
 	/* Write out the information */
-	(void)write( 1, (char *)fp, nbytes );
+	(void)fwrite( (char *)&fp, nbytes, 1, stdout );
 
 	/* Free the knot data memory */
 	(void)free( (char *)fp );
@@ -524,7 +525,7 @@ bsurfbld()	/* Build d-spline surface description record */
 		(void)sscanf( buf, "%e", vp++);
 	}
 	/* Write out the information */
-	(void)write( 1, (char *)fp, nbytes );
+	(void)fwrite( (char *)&fp, nbytes, 1, stdout );
 
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
