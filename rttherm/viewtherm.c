@@ -1,4 +1,3 @@
-#define NO_MATER 1
 /*
  *	./rttherm -P1 -s64 -o mtherm ../.db.6d/moss.g all.g
  *
@@ -336,7 +335,6 @@ struct rt_i	*rtip;
 	 *  itself.  This is a slight layering violation;  later it
 	 *  may be clear how to repackage this operation.
 	 */
-#if NO_MATER
 	regp = BU_LIST_FIRST( region, &rtip->HeadRegion );
 	while( BU_LIST_NOT_HEAD( regp, &rtip->HeadRegion ) )  {
 		switch( mlib_setup( &mfHead, regp, rtip ) )  {
@@ -366,7 +364,6 @@ struct rt_i	*rtip;
 		}
 		regp = BU_LIST_NEXT( region, &regp->l );
 	}
-#endif
 }
 
 /*
@@ -381,7 +378,7 @@ struct rt_i	*rtip;
 	register struct region	*regp;
 
 	RT_CHECK_RTI(rtip);
-#if NO_MATER
+
 	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 		mlib_free( regp );
 	}
@@ -392,7 +389,6 @@ struct rt_i	*rtip;
 	}
 
 	light_cleanup();
-#endif
 }
 
 /*
@@ -415,7 +411,6 @@ register struct application *ap;
 		pdv_3line( stdout, ap->a_ray.r_pt, out );
 	}
 
-#if NO_MATER
 	if( env_region.reg_mfuncs )  {
 		struct gunk {
 			struct partition part;
@@ -466,7 +461,6 @@ register struct application *ap;
 		ap->a_uptr = (genptr_t)&env_region;
 		return(1);
 	}
-#endif
 
 	ap->a_user = 0;		/* Signal view_pixel:  MISS */
 	background_radiation(ap);	/* In case someone looks */
@@ -487,13 +481,9 @@ struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
-#if NO_MATER
 	struct shadework sw;
-#endif
 
-#if NO_MATER
 	sw.msw_color = BN_TABDATA_NULL;
-#endif
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -601,7 +591,6 @@ struct seg *finished_segs;
 		}
 	}
 
-#if NO_MATER
 	if( !ap->a_spectrum )  curve_attach(ap);
 /* XXX This is the right way to do this, but isn't quite ready yet. */
 	bzero( (char *)&sw, sizeof(sw) );
@@ -640,62 +629,6 @@ if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework after viewshade", &sw);
 
 	bu_free( sw.msw_color, "sw.msw_color");
 	bu_free( sw.msw_basecolor, "sw.msw_basecolor");
-#else
-
-	/* XXX This is all temporary and doesn't belong here */
-	/* +++++ Something was hit, get the power from it. ++++++ */
-	/*
-	 *  The temperature gives us the radiant emittance in W/cm**2.
-	 *  The ray footprint indicates how many mm**2.
-	 *  The solid angle of the pixel from the hit point / 4pi
-	 *  says how much of the emitted power is going our way.
-	 */
-	if( !ap->a_spectrum )  curve_attach(ap);
-	pixelp = ap->a_spectrum;
-	BN_CK_TABDATA(pixelp);
-
-	degK = 10000;	/* XXX extract from region! */
-degK = 700;
-
-	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
-		hitp->hit_dist, ap->a_ray.r_dir );
-	RT_HIT_NORMAL( normal, hitp, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip );
-
-	cm2 = rt_pixel_footprint(ap, hitp, pp->pt_inseg, normal) * 0.01;	/* mm**2 to cm**2 */
-
-	/* To convert slanted surface to equivalent perp area */
-	cosine = -VDOT( normal, ap->a_ray.r_dir );
-	if( cosine < 0 )  rt_log("cosine = %g < 0\n", cosine);
-
-	/*  Fraction of a surrounding sphere which the pixel occupies,
-	 *  from point of view of the hit point.  (Solid angle)
-	 *  For long distances, this is ~= area of pixel / (4pi * r**2)
-	 *  Since surface only radiates on one side, use hemisphere (2pi).
-	 */
-	powerfrac = cell_width * cell_height /
-		(hitp->hit_dist * hitp->hit_dist * rt_twopi);
-	if( powerfrac > 1 )  {
-		rt_log("powerfrac = %g\n", powerfrac);
-		powerfrac = 1;
-	}
-
-	rt_spect_black_body( pixelp, degK, 3 );
-#if 1
-if( cosine < 0.2 ) rt_log("@@@@@@\n");
-if( cm2 > 10 ) rt_log("****\n");
-rt_log("area=%g, cos = %g, a*c = %g, pfrac = %g\n", cm2, cosine, cm2*cosine, powerfrac );
-powerfrac = 1;
-#endif
-	bn_tabdata_scale( pixelp, pixelp, cm2 * cosine * powerfrac );
-
-	/* Spectrum is now in terms of Watts of power radiating
-	 * on the path to this pixel.
-	 * Next, it should encounter some atmosphere along the way.
-	 */
-	/* XXX Even a little Beers Law would be tasty here */
-
-	ap->a_user = 1;		/* Signal view_pixel:  HIT */
-#endif
 
 out:
 	RT_CK_REGION(ap->a_uptr);
@@ -802,21 +735,17 @@ char	*framename;
 	switch( lightmodel )  {
 	case 0:
 		ap->a_hit = colorview;
-#if NO_MATER
 		/* If present, use user-specified light solids */
 		if( RT_LIST_IS_EMPTY( &(LightHead.l) )  ||
 		    RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
 			if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
 			light_maker(1, view2model);
 		}
-#endif
 		break;
 	default:
 		rt_bomb("bad lighting model #");
 	}
-#if NO_MATER
 	ap->a_rt_i->rti_nlights = light_init();
-#endif
 
 	/* Compute radiant emittance of background */
 	/* XXX This is wrong, need actual power (radiant flux) emitted */
