@@ -53,7 +53,6 @@ point_t	eye_pos_scr = { 0, 0, 1 };
 struct solid	FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
 
-/* changed near - near1, far - far1*/
 
 /*
  *			P E R S P _ M A T
@@ -63,7 +62,7 @@ struct solid	HeadSolid;	/* Head of solid table */
  *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
  */
 static void
-persp_mat(mat_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fastf_t backoff)
+persp_mat(mat_t m, fastf_t fovy, fastf_t aspect, fastf_t near1, fastf_t far1, fastf_t backoff)
 {
 	mat_t	m2, tran;
 
@@ -81,7 +80,7 @@ persp_mat(mat_t *m, fastf_t fovy, fastf_t aspect, fastf_t near, fastf_t far, fas
 	/* Move eye to origin, then apply perspective */
 	MAT_IDN( tran );
 	tran[11] = -backoff;
-	bn_mat_mul( m, m2, tran );
+	bn_mat_mul(m, m2, tran );
 }
 
 /*
@@ -329,7 +328,7 @@ if( mged_variables->mv_faceplate > 0 )  {
 			if( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
 				persp_mat( perspective_mat, view_state->vs_vop->vo_perspective,
-					1.0, 0.01, 1.0e10, 1.0 );
+					(fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f );
 			} else {
 				/* This way does not have reasonable Z-clipping,
 				 * but includes shear, for GDurf's testing.
