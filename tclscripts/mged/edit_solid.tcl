@@ -303,7 +303,8 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	    }
 
 	    switch -glob $fe_type {
-		%*s {
+		# bu_vls type arguments are %S, char arrays are %s.
+		{%*[sS]} {
 		    if $do_gui {
 			entry $sform._$attr\E$num -relief sunken
 			grid $sform._$attr\E$num - - -row $row -column 1 -sticky nsew
