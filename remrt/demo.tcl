@@ -310,12 +310,16 @@ register toltec "toltec.nvl.army.mil"
 #register olmec "olmec.nvl.army.mil"		# Only 1 200Mhz cpu
 register octopus "octopus.nvl.army.mil"
 
+frame .button1_fr
+frame .button2_fr
 button .sense_button -text "SENSE" -command sense_servers
-button .reconnect_button -text "RECONNECT" -command reconnect
 button .find_button -text "FIND_DB" -command find_db
 button .rtnode_button -text "Start NODES" -command start_nodes
+pack .sense_button .find_button .rtnode_button -side left -in .button1_fr
+button .reconnect_button -text "RECONNECT" -command reconnect
 button .restart_button -text "(Restart RTMON)" -command restart_rtmon
-pack .sense_button .reconnect_button .find_button .rtnode_button .restart_button -side left -in .button_fr
+pack .reconnect_button .restart_button -side left -in .button2_fr
+pack .button1_fr .button2_fr -side top -in .button_fr
 
 proc restart_rtmon {} {
 	global nodes
