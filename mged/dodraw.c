@@ -1090,7 +1090,7 @@ matp_t matp;
 
 			db_tree_funcleaf( dbip, comb, comb->tree, Do_getmat,
 				(genptr_t)xmat, (genptr_t)kidp->d_namep, (genptr_t)&found );
-			rt_comb_ifree( &intern );
+			rt_db_free_internal( &intern );
 
 			if( found )
 			{
@@ -1199,7 +1199,7 @@ CONST mat_t			mat;
 			   ": re-plot failure\n", (char *)NULL);
 	  return(-1);
 	}
-    	if( intern.idb_ptr )  rt_functab[ip->idb_type].ft_ifree( &intern );
+	rt_db_free_internal( &intern );
 
 	/* Write new displaylist */
 	drawH_part2( sp->s_soldash, &vhead,

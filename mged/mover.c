@@ -70,7 +70,7 @@ matp_t xlate;
 	{
 		Tcl_AppendResult(interp, "rt_db_get_internal() failed for ", dp->d_namep,
 			(char *)NULL );
-		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		rt_db_free_internal( &intern );
 		READ_ERR_return;
 	}
 
@@ -78,7 +78,7 @@ matp_t xlate;
 	{
 		Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
 			   "):  solid export failure\n", (char *)NULL);
-		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		rt_db_free_internal( &intern );
 		TCL_WRITE_ERR;
 		return;
 	}

@@ -568,7 +568,7 @@ int flag;
 	bu_vls_printf( &str, "%16s:\n", dp->d_namep );
 	if( rt_functab[id].ft_describe( &str, &intern, 1, base2local ) < 0 )
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_functab[id].ft_ifree( &intern );
+	rt_db_free_internal( &intern );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 }

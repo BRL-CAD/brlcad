@@ -1087,7 +1087,7 @@ char	**argv;
 				{
 					Tcl_AppendResult(interp, "Sorry, Can only mirror NMG solids with planar faces", (char *)0 );
 					bu_ptbl_free( &table );
-					rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+					rt_db_free_internal( &internal );
 					return TCL_ERROR;
 				}
 
@@ -1114,7 +1114,7 @@ char	**argv;
 				{
 					Tcl_AppendResult(interp, "nmg_calc_face_g() failed", (char *)0 );
 					bu_ptbl_free( &table );
-					rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+					rt_db_free_internal( &internal );
 					return TCL_ERROR;
 				}
 
@@ -1122,7 +1122,7 @@ char	**argv;
 				{
 					Tcl_AppendResult(interp, "nmg_calc_face_g() failed", (char *)0 );
 					bu_ptbl_free( &table );
-					rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+					rt_db_free_internal( &internal );
 					return TCL_ERROR;
 				}
 			}
@@ -1212,7 +1212,7 @@ char	**argv;
 		}
 		default:
 		{
-			rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
+			rt_db_free_internal( &internal );
 			Tcl_AppendResult(interp, "Cannot mirror this solid type\n", (char *)NULL);
 			return TCL_ERROR;
 		}

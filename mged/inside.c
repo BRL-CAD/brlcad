@@ -713,7 +713,7 @@ plane_t	planes[6];
 		if( rt_functab[ip->idb_type].ft_tessellate( &r , m , ip , &ttol , &mged_tol ) )
 		{
 		  Tcl_AppendResult(interp, "Cannot tessellate arb7\n", (char *)NULL);
-		  rt_functab[ip->idb_type].ft_ifree( ip );
+		  rt_db_free_internal( ip );
 		  return( 1 );
 		}
 
