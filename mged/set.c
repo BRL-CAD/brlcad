@@ -35,13 +35,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void predictor_hook();		/* in ged.c */
 
 extern void set_port();
-extern void mged_fb_open();
-extern void mged_fb_close();
 extern void set_scroll();
 
 static void set_dirty_flag();
 static void nmg_eu_dist_set();
-static void set_fb();
 static void set_dlist();
 static void set_perspective();
 static void establish_perspective();
@@ -109,7 +106,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "use_air",		MV_O(mv_use_air),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "listen",		MV_O(mv_listen),		set_port },
 	{"%d",  1, "port",		MV_O(mv_port),		set_port },
-	{"%d",  1, "fb",		MV_O(mv_fb),		set_fb },
+	{"%d",  1, "fb",		MV_O(mv_fb),		set_dirty_flag },
 	{"%d",  1, "fb_all",		MV_O(mv_fb_all),		set_dirty_flag },
 	{"%d",  1, "fb_overlay",	MV_O(mv_fb_overlay),	set_dirty_flag },
 	{"%c",  1, "mouse_behavior",	MV_O(mv_mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
@@ -471,21 +468,6 @@ toggle_perspective()
     return;
 
   mged_variables->mv_perspective = perspective_table[perspective_angle];
-
-  set_dirty_flag();
-}
-
-static void
-set_fb()
-{
-  if(mged_variables->mv_fb && !fbp){
-    mged_fb_open();
-    if(!fbp)
-      mged_variables->mv_fb = 0;
-  }else if(!mged_variables->mv_fb && fbp){
-    set_port();
-    mged_fb_close();
-  }
 
   set_dirty_flag();
 }

@@ -374,6 +374,7 @@ char *argv[];
 #endif
 
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
+  mged_fb_open();
 
   return TCL_OK;
 

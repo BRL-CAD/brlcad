@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+extern int _X24_open_existing();	/* defined in libfb/if_ogl.c */
 extern int common_dm();			/* defined in dm-generic.c */
 extern void dm_var_init();		/* defined in attach.c */
 
@@ -90,29 +91,28 @@ char *argv[];
 void
 X_fb_open()
 {
-  int status;
-  struct bu_vls vls;
+  char *X_name = "/dev/X";
 
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "fb_open_existing /dev/X %lu %lu %lu %lu %d %d %lu",
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-		(unsigned long)((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-		dmp->dm_width, dmp->dm_height,
-		(unsigned long)((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
-  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+  if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+    Tcl_AppendResult(interp, "X_dm_init: failed to allocate framebuffer memory\n",
+		     (char *)NULL);
+    return;
+  }
 
-  if(status == TCL_OK){
-    if(sscanf(interp->result, "%lu", (unsigned long *)&fbp) != 1){
-      fbp = (FBIO *)0;   /* sanity */
-      Tcl_AppendResult(interp, "X_fb_open: failed to get framebuffer pointer\n",
-		       (char *)NULL);
-    }
-  }else
-    Tcl_AppendResult(interp, "X_fb_open: failed to get framebuffer\n", (char *)NULL);
+  *fbp = X24_interface; /* struct copy */
+  fbp->if_name = malloc((unsigned)strlen(X_name) + 1);
+  (void)strcpy(fbp->if_name, X_name);
 
-  bu_vls_free(&vls);
+  /* Mark OK by filling in magic number */
+  fbp->if_magic = FB_MAGIC;
+
+  _X24_open_existing(fbp,
+		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		     ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
+		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
+		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+		     dmp->dm_width, dmp->dm_height,
+		     ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
 }
 
 /*
