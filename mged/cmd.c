@@ -282,7 +282,7 @@ static struct funtab funtab[] = {
 	f_edcomb,6,7,
 "edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4,
-"ev",	"[-w] [-n] [-P#] [-T] <objects>", "evaluate objects via NMG tessellation",
+"ev",	"[-dnqsuvwT] [-P #] <objects>", "evaluate objects via NMG tessellation",
 	f_ev, 2, MAXARGS,
 "eqn", "A B C", "planar equation coefficients",
 	f_eqn, 4, 4,
