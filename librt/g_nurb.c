@@ -23,6 +23,11 @@ static const char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -1245,3 +1250,188 @@ double			mm2local;
 	return 0;
 }
 
+
+int
+rt_nurb_tclget( interp, intern, attr )
+Tcl_Interp			*interp;
+const struct rt_db_internal	*intern;
+const char			*attr;
+{
+	struct rt_nurb_internal *nurb=(struct rt_nurb_internal *)intern->idb_ptr;
+	Tcl_DString		ds;
+	struct bu_vls		vls;
+	struct face_g_snurb	*srf;
+	int			i, j, k;
+	int			coords;
+	int			status;
+
+	RT_NURB_CK_MAGIC( nurb );
+
+	Tcl_DStringInit( &ds );
+	bu_vls_init( &vls );
+
+	if( attr == (char *)NULL ) {
+		bu_vls_strcpy( &vls, "bspline" );
+		bu_vls_printf( &vls, " N %d S {", nurb->nsrf );
+		for( i=0 ; i<nurb->nsrf ; i++ ) {
+			srf = nurb->srfs[i];
+			bu_vls_printf( &vls, " { O {%d %d} s {%d %d} T %d u {",
+				       srf->order[0], srf->order[1],
+				       srf->s_size[0], srf->s_size[1],
+				       srf->pt_type, srf->u.k_size );
+			for( j=0 ; j<srf->u.k_size ; j++ ) {
+				bu_vls_printf( &vls, " %.25G", srf->u.knots[j] );
+			}
+			bu_vls_printf( &vls, "} v {", srf->v.k_size );
+			for( j=0 ; j<srf->v.k_size ; j++ ) {
+				bu_vls_printf( &vls, " %.25G", srf->v.knots[j] );
+			}
+			bu_vls_strcat( &vls, "} P {" );
+			
+			coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+			for( j=0 ; j<srf->s_size[0]*srf->s_size[1] ; j++ ) {
+				for( k=0 ; k<coords ; k++ ) {
+					bu_vls_printf( &vls, " %.25G",
+						       srf->ctl_points[j*coords + k] );
+				}
+			}
+			bu_vls_strcat( &vls, " } }" );
+		}
+		bu_vls_printf( &vls, " }" );
+		status = TCL_OK;
+	} else {
+		bu_vls_printf( &vls, "Nurb has no attribute '%s'", attr );
+		status = TCL_ERROR;
+	}
+
+	Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &vls );
+
+	return( status );
+}
+
+int
+rt_nurb_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	struct rt_nurb_internal *nurb;
+	int srf_no;
+	Tcl_Obj *obj, *list, **srf_array, **srf_param_array;
+	struct face_g_snurb *srf;
+	int i;
+	char *key;
+	int len;
+
+	RT_CK_DB_INTERNAL( intern );
+	nurb = (struct rt_nurb_internal *)intern->idb_ptr;
+	RT_NURB_CK_MAGIC( nurb );
+
+	while( argc >= 2 ) {
+		obj = Tcl_NewStringObj( argv[1], -1 );
+		list = Tcl_NewListObj( 0, NULL );
+		if( Tcl_ListObjAppendList( interp, list, obj ) != TCL_OK ) {
+			return( TCL_ERROR );
+		}
+
+		if( !strcmp( argv[0], "N" ) ) {
+			if( nurb->srfs ) {
+				for( i=0 ; i<nurb->nsrf ; i++ )
+					rt_nurb_free_snurb( nurb->srfs[i], NULL );
+				bu_free( (char *)nurb->srfs, "nurb surfaces" );
+			}
+			nurb->nsrf = atoi( argv[1] );
+			nurb->srfs = (struct face_g_snurb **) bu_calloc(
+				nurb->nsrf, sizeof( struct face_g_snurb *), "nurb srfs[]");
+		} else if( !strcmp( argv[0], "S" ) ) {
+			(void)Tcl_ListObjGetElements( interp, list, &len, &srf_array );
+			for( srf_no=0 ; srf_no < nurb->nsrf ; srf_no++ ) {
+				int n_params=0;
+				int *order=NULL, *s_size=NULL, u_size=0, v_size=0, pt_type=0;
+				fastf_t *u_pts=NULL, *v_pts=NULL;
+
+				(void)Tcl_ListObjGetElements( interp, srf_array[srf_no], &n_params,
+							      &srf_param_array );
+				
+				for( i=0 ; i<n_params ; i+= 2 ) {
+					int tmp_len;
+
+					key = Tcl_GetStringFromObj( srf_param_array[i], NULL );
+					if( !strcmp( key, "O" ) ) {
+						tmp_len = 0;
+						if( tcl_obj_to_int_array( interp, srf_param_array[i+1],
+							      &order, &tmp_len ) != 2 ) {
+							Tcl_SetResult( interp,
+							      "ERROR: unable to parse surface\n",
+							       TCL_STATIC );
+							return( TCL_ERROR );
+						}
+					} else if( !strcmp( key, "s" ) ) {
+						tmp_len = 0;
+						if( tcl_obj_to_int_array( interp, srf_param_array[i+1],
+							      &s_size, &tmp_len ) != 2 ) {
+							Tcl_SetResult( interp,
+							      "ERROR: unable to parse surface\n",
+							       TCL_STATIC );
+							return( TCL_ERROR );
+						}
+					} else if( !strcmp( key, "T" ) ) {
+						pt_type = atoi( Tcl_GetStringFromObj(
+								     srf_param_array[i+1], NULL ) );
+					} else if( !strcmp( key, "u" ) ) {
+						tcl_obj_to_fastf_array( interp, srf_param_array[i+1], &u_pts,
+									&u_size );
+					} else if( !strcmp( key, "v" ) ) {
+						tcl_obj_to_fastf_array( interp, srf_param_array[i+1], &v_pts,
+									&v_size );
+					} else if( !strcmp( key, "P" ) ) {
+						int tmp2;
+
+						if( !order || !s_size || !u_pts || !v_pts ||
+						    u_size == 0 || v_size == 0 || pt_type == 0 ) {
+							Tcl_SetResult( interp,
+							    "ERROR: Need all other details set before ctl points\n",
+							    TCL_STATIC );
+							return( TCL_ERROR );
+						}
+						nurb->srfs[srf_no] = (struct face_g_snurb *) rt_nurb_new_snurb(
+						      order[0],order[1],
+						      u_size,v_size,
+						      s_size[0],s_size[1],
+						      pt_type, (struct resource *)NULL);
+						srf = nurb->srfs[srf_no];
+						bu_free( (char *)order, "order" );
+						bu_free( (char *)s_size, "s_size" );
+						(void)memcpy( srf->u.knots, u_pts,
+							      srf->u.k_size * sizeof( fastf_t ) );
+						(void)memcpy( srf->v.knots, v_pts,
+							      srf->v.k_size * sizeof( fastf_t ) );
+						bu_free( (char *)u_pts, "u_pts" );
+						bu_free( (char *)v_pts, "v_pts" );
+						tmp_len = srf->s_size[0] * srf->s_size[1] * 
+							RT_NURB_EXTRACT_COORDS(srf->pt_type );
+						tmp2 = tmp_len;
+						if( tcl_obj_to_fastf_array( interp, srf_param_array[i+1],
+							   &srf->ctl_points, &tmp_len ) != tmp2 ) {
+							Tcl_SetResult( interp,
+							      "ERROR: unable to parse surface\n",
+							       TCL_STATIC );
+							return( TCL_ERROR );
+						}
+					}
+				}
+			}
+		}
+
+		Tcl_DecrRefCount( list );
+
+		argc -= 2;
+		argv += 2;
+	}
+
+	return( TCL_OK );
+}

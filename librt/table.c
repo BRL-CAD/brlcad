@@ -369,6 +369,13 @@ BU_EXTERN(int rt_pipe_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
 
+/* BSPLINE solid */
+BU_EXTERN(int rt_nurb_tclget, (Tcl_Interp *interp,
+		const struct rt_db_internal *intern, const char *attr));
+BU_EXTERN(int rt_nurb_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv,
+		struct resource *resp));
+
 /* NMG solid */
 BU_EXTERN(int rt_nmg_tclget, (Tcl_Interp *interp,
 		const struct rt_db_internal *intern, const char *attr));
@@ -608,7 +615,7 @@ const struct rt_functab rt_functab[] = {
 		rt_nurb_import,	rt_nurb_export,	rt_nurb_ifree,
 		rt_nurb_describe,rt_nurb_xform,	NULL,
 		sizeof(struct rt_nurb_internal), RT_NURB_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_nurb_tclget, rt_nurb_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
