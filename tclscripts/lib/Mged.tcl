@@ -23,8 +23,8 @@
 class Mged {
     inherit QuadDisplay
 
-    constructor {file {type X} args} {
-	eval QuadDisplay::constructor $type
+    constructor {file args} {
+	eval QuadDisplay::constructor
     } {}
     destructor {}
 
@@ -87,7 +87,7 @@ class Mged {
     private variable dg ""
 }
 
-body Mged::constructor {file {type X} args} {
+body Mged::constructor {file args} {
     set db [Database #auto $file]
     set dg [$db Drawable::get_dgname]
     addall $dg

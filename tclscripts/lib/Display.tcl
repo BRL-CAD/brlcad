@@ -37,8 +37,8 @@ class Display {
     itk_option define -rscale rscale Rscale 0.4
     itk_option define -sscale sscale Sscale 2.0
 
-    constructor {{type X} args} {
-	eval Dm::constructor -type $type
+    constructor {args} {
+	Dm::constructor
 	View::constructor
     } {}
     destructor {}
@@ -97,7 +97,7 @@ class Display {
 
 ########################### Public/Interface Methods ###########################
 
-body Display::constructor {{type X} args} {
+body Display::constructor {args} {
     attach_view
     doBindings
     handle_configure

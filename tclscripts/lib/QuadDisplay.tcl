@@ -30,7 +30,7 @@ class QuadDisplay {
     itk_option define -pane pane Pane ur
     itk_option define -multi_pane multi_pane Multi_pane 1
 
-    constructor {{type X} args} {}
+    constructor {args} {}
     destructor {}
 
     public method pane {args}
@@ -86,7 +86,7 @@ class QuadDisplay {
     private variable priv_multi_pane 1
 }
 
-body QuadDisplay::constructor {{type X} args} {
+body QuadDisplay::constructor {args} {
     iwidgets::Panedwindow::add upper
     iwidgets::Panedwindow::add lower
 
@@ -114,25 +114,25 @@ body QuadDisplay::constructor {{type X} args} {
 
     # create four instances of Display
     itk_component add ul {
-	Display [$itk_component(upw) childsite ulp].display $type
+	Display [$itk_component(upw) childsite ulp].display
     } {
 	usual
     }
 
     itk_component add ur {
-	Display [$itk_component(upw) childsite urp].display $type
+	Display [$itk_component(upw) childsite urp].display
     } {
 	usual
     }
 
     itk_component add ll {
-	Display [$itk_component(lpw) childsite llp].display $type
+	Display [$itk_component(lpw) childsite llp].display
     } {
 	usual
     }
 
     itk_component add lr {
-	Display [$itk_component(lpw) childsite lrp].display $type
+	Display [$itk_component(lpw) childsite lrp].display
     } {
 	usual
     }
