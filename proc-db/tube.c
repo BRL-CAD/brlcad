@@ -127,7 +127,7 @@ char	**argv;
 	mk_half( stdout, "cut", normal, 0.0 );
 	VSET( normal, 0, 1, 0 );
 	mk_half( stdout, "bg.s", normal, -1000.0 );
-	(void)mk_addmember( "bg.s", &head );	/* temp use of "head" */
+	(void)mk_addmember( "bg.s", &head, WMOP_UNION );	/* temp use of "head" */
 	mk_lcomb( stdout, "bg.r", &head, 1,
 		"texture", "file=movie128bw.pix w=128",
 		(char *)0, 0 );
@@ -173,13 +173,13 @@ char	**argv;
 #define build_spline build_cyl
 		sprintf( name, "tube%do", frame);
 		build_spline( name, nsamples, oradius );
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 
 		sprintf( name, "tube%di", frame);
 		build_spline( name, nsamples, iradius );
-		mk_addmember( name, &head )->wm_op = SUBTRACT;
+		mk_addmember( name, &head, WMOP_SUBTRACT );
 
-		mk_addmember( "cut", &head )->wm_op = SUBTRACT;
+		mk_addmember( "cut", &head, WMOP_SUBTRACT );
 
 		sprintf( name, "tube%d", frame);
 		mk_lcomb( stdout, name, &head, 1,
@@ -190,8 +190,8 @@ char	**argv;
 		 *  The origin of the ammo is expected to be the center
 		 *  of the rearmost plate.
 		 */
-		mk_addmember( name, &ghead );
-		matp = mk_addmember( "ke", &ghead )->wm_mat;
+		mk_addmember( name, &ghead, WMOP_UNION );
+		matp = mk_addmember( "ke", &ghead, WMOP_UNION )->wm_mat;
 
 		VSET( from, 0, -1, 0 );
 		VSET( to, 1, 0, 0 );		/* to X axis */
@@ -207,8 +207,8 @@ char	**argv;
 		mat_mul( rot3, rot2, rot1 );
 		mat_mul( matp, xlate, rot3 );
 
-		(void)mk_addmember( "light.r", &ghead );
-		(void)mk_addmember( "bg.r", &ghead );
+		(void)mk_addmember( "light.r", &ghead, WMOP_UNION );
+		(void)mk_addmember( "bg.r", &ghead, WMOP_UNION );
 
 		sprintf( gname, "g%d", frame);
 		mk_lcomb( stdout, gname, &ghead, 0,
@@ -464,7 +464,7 @@ double	radius;
 
 		sprintf( name, "%s%d", cname, i );
 		mk_tgc( stdout, name, v, h, a, b, a, b );
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 	}
 	mk_lfcomb( stdout, cname, &head, 0 );
 }

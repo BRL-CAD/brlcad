@@ -109,7 +109,7 @@ char	**argv;
 	rgb[2] = 64;
 	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
 	mk_memb( stdout, "plane", identity, UNION );
-	(void)mk_addmember( "plane.r", &head );
+	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the display pillars */
 	size = 4000;	/* separation between centers */
@@ -162,14 +162,14 @@ struct wmember *headp;
 
 	sprintf( name, "o%s", rname );
 	mk_rpp( stdout, name, omin, omax );
-	(void)mk_addmember( name, &head );
+	(void)mk_addmember( name, &head, WMOP_UNION );
 
 	sprintf( name, "i%s", rname );
 	mk_rpp( stdout, name, imin, imax );
-	mk_addmember( name, &head )->wm_op = SUBTRACT;
+	mk_addmember( name, &head, WMOP_SUBTRACT );
 
 	mk_lfcomb( stdout, rname, 1, &head );
-	(void)mk_addmember( rname, headp );
+	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
 
 void
@@ -237,11 +237,11 @@ struct wmember *headp;
 			break;
 		}
 		mk_rpp( stdout, name, wmin, wmax );
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 	}
 
 	mk_lfcomb( stdout, rname, 1, &head );
-	(void)mk_addmember( rname, headp );
+	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
 
 void
@@ -280,12 +280,12 @@ struct wmember *headp;
 		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	mk_memb( stdout, sname, identity, UNION );
 
-	(void)mk_addmember( rname, &head );
-	wp = mk_addmember( oname, &head );
+	(void)mk_addmember( rname, &head, WMOP_UNION );
+	wp = mk_addmember( oname, &head, WMOP_UNION );
 	MAT_DELTAS( wp->wm_mat, center[X], center[Y], center[Z]+lwh[Z] );
 	mk_lfcomb( stdout, pilname, &head, 0 );
 
-	(void)mk_addmember( pilname, headp );
+	(void)mk_addmember( pilname, headp, WMOP_UNION );
 }
 
 void
@@ -312,5 +312,5 @@ struct wmember *headp;
 		(char *)0, 0 );
 	mk_memb( stdout, sname, identity, UNION );
 
-	(void)mk_addmember( rname, headp );
+	(void)mk_addmember( rname, headp, WMOP_UNION );
 }

@@ -86,7 +86,7 @@ char	**argv;
 	mat_idn( identity );
 	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
 	mk_memb( stdout, "plane", identity, UNION );
-	(void)mk_addmember( "plane.r", &head );
+	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the detail cells */
 	size = 1000;	/* mm */
@@ -99,10 +99,10 @@ char	**argv;
 			y = base + iy*size;
 			sprintf( name, "Bx%dy%d", ix, iy );
 			do_plate( name, x, y, size );
-			(void)mk_addmember( name, &head );
+			(void)mk_addmember( name, &head, WMOP_UNION );
 
 			sprintf( name, "x%dy%d", ix, iy );
-			(void)mk_addmember( name, &head );
+			(void)mk_addmember( name, &head, WMOP_UNION );
 			n = rand() & 03;
 			switch(n)  {
 			case 0:
@@ -123,7 +123,7 @@ char	**argv;
 	minheight = size/2;
 	VSET( pos, 0, 0, size/4 );
 	do_rings( "rings", pos, 2*size*quant/2, size/4, size, 4 );
-	(void)mk_addmember( "rings", &head );
+	(void)mk_addmember( "rings", &head, WMOP_UNION );
 
 	if( maxheight < minheight ) maxheight = minheight;
 
@@ -175,7 +175,7 @@ double	size;
 
 	for( i=0; i<3; i++ )  {
 		sprintf( name, "%sL%c", cname, 'a'+i);
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 		VSET( center, xc, yc, size/2*i );
 		nsolids = 3 + (rand() & 7);
 
@@ -282,7 +282,7 @@ int	nsolids;	/* number of solids for this layer */
 
 		sprintf( name, "%s%d", crname, index++ );
 		mk_arb8( stdout, name, pt );
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 
 		for( i=0; i<8; i++ )  {
 			if( pt[i][Z] > height )
@@ -344,7 +344,7 @@ double	size;
 		sprintf( name, "%s%c", bname, 'A'+i );
 		VSET( center, xc, yc, size/2+i*size );
 		mk_sph( stdout, name, center, esz/2 );
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 	}
 
 	/* Build the combination */
@@ -384,7 +384,7 @@ double	size;
 	n = (rand()&7)+1;
 	for( nobj=0; nobj<n; nobj++ )  {
 		sprintf( name, "%s%c", pname, 'A'+nobj );
-		(void)mk_addmember( name, &head );
+		(void)mk_addmember( name, &head, WMOP_UNION );
 		height = ((rand()&7)+1)*size/3;
 		i = rand()%5;
 		switch(i)  {
@@ -463,7 +463,7 @@ int	n;
 		get_rgb(rgb);
 		mk_comb( stdout, rname, 1, 1, "", "", rgb, 0 );
 		mk_memb( stdout, sname, identity, UNION );
-		(void)mk_addmember( rname, &head );
+		(void)mk_addmember( rname, &head, WMOP_UNION );
 	}
 
 	/* Build the group that holds all the regions */

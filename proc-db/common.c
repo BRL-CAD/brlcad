@@ -110,5 +110,5 @@ struct wmember	*headp;
 
 	mk_comb( stdout, name, 1, 1, "light", "shadows=1", rgb, 0 );
 	mk_memb( stdout, nbuf, both, UNION );
-	(void)mk_addmember( name, headp );
+	(void)mk_addmember( name, headp, WMOP_UNION );
 }
