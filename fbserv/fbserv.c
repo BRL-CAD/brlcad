@@ -1,7 +1,28 @@
 /*
- *		R F B D . C
+ *			F B S E R V . C
  *
- *  Remote libfb server.
+ *  Remote libfb server (formerly rfbd).
+ *
+ *  There are three ways this program can be run:
+ *  Inetd Daemon - every PKG connection invokes a new copy of us,
+ *	courtesy of inetd.  We process a single frame buffer
+ *	open/process/close cycle and then exit.  A full installation
+ *	includes setting up inetd and /etc/services to start one
+ *	of these.
+ *  Stand-Alone Daemon - once started we run forever, forking a
+ *	copy of ourselves for each new connection.  Each child is
+ *	essentially like above, i.e. one open/process/close cycle.
+ *	Useful for running a daemon on a totally "unmodified" system,
+ *	or when inetd is not available.
+ *  Single-Frame-Buffer Server - we open a particular frame buffer
+ *	at invocation time and leave it open.  We will accept
+ *	multiple connections for this frame buffer, one at a time.
+ *	Frame buffer open and close requests are effectively ignored.
+ *	Major purpose is to create "reattachable" frame buffers when
+ *	using libfb on a window system.  In this case there is no
+ *	hardware to preserve "state" information (image data, color
+ *	maps, etc.).  By leaving the frame buffer open, the daemon
+ *	keeps this state in memory.
  *
  *  Authors -
  *	Phillip Dykstra
@@ -43,7 +64,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "pkg.h"
 
 #include "../libfb/pkgtypes.h"
-#include "./rfbd.h"
+#include "./fbserv.h"
 
 #define NET_LONG_LEN	4	/* # bytes to network long */
 
@@ -51,15 +72,110 @@ extern	char	*malloc();
 extern	int	_disk_enable;
 
 static	void	comm_error();
+static	void	do1();
+static	void	init_syslog();
+static	int	use_syslog;	/* error messages to stderr if 0 */
 
 static	struct	pkg_conn *rem_pcp;
+
+static	char	*framebuffer = NULL;	/* frame buffer name */
+static	int	width = 0;		/* use default size */
+static	int	height = 0;
+static	int	port = 0;
+static	int	port_set;		/* !0 if user supplied port num */
 static	FBIO	*fbp;
+static	int	single_fb;	/* !0 => we are holding a reusable FB open */
+static	int	got_fb_free;	/* !0 => we have received an fb_free */
+
+/* Hidden args: -p<port_num> -F<frame_buffer> */
+static char usage[] = "\
+Usage: fbserv port_num\n\
+          (for a stand-alone daemon)\n\
+   or  fbserv [-h] [-S squaresize]\n\
+          [-W width] [-N height] port_num frame_buffer\n\
+          (for a single-frame-buffer server)\n\
+";
+
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hF:s:w:n:S:W:N:p:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			height = width = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 's':
+		case 'S':
+			height = width = atoi(optarg);
+			break;
+		case 'w':
+		case 'W':
+			width = atoi(optarg);
+			break;
+		case 'n':
+		case 'N':
+			height = atoi(optarg);
+			break;
+		case 'p':
+			port = atoi(optarg);
+			port_set = 1;
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+	/* If no "-p port", port comes from 1st extra */
+	if( (optind < argc) && (port_set == 0) ) {
+		port = atoi(argv[optind++]);
+		port_set = 1;
+	}
+	/* If no "-F framebuffer", fb comes from 2nd extra */
+	if( (optind < argc) && (framebuffer == NULL) ) {
+		framebuffer = argv[optind++];
+	}
+	if( argc > optind )
+		return(0);	/* print usage */
+
+	return(1);		/* OK */
+}
+
+#ifdef BSD
+/*
+ * Determine if a file descriptor corresponds to an open socket.
+ * Used to detect when we are started from INETD which gives us an
+ * open socket connection on fd 0.
+ */
+int
+is_socket(fd)
+int fd;
+{
+	struct sockaddr saddr;
+	int namelen;
+
+	if( getsockname(fd,&saddr,&namelen) == 0 )
+		return	1;
+	else
+		return	0;
+}
+#endif /* BSD */
 
 main( argc, argv )
 int argc; char **argv;
 {
-	int	on = 1;
 	int	netfd;
+	char	portname[32];
+
 
 	/* No disk files on remote machine */
 	_disk_enable = 0;
@@ -67,45 +183,127 @@ int argc; char **argv;
 	(void)signal( SIGPIPE, SIG_IGN );
 
 #ifdef BSD
-	/* Transient server, started by /etc/inetd, network fd=0 */
+	/*
+	 * Inetd Daemon.
+	 * Check to see if we were invoked by /etc/inetd.  If so
+	 * we will have an open network socket on fd=0.  Become
+	 * a Transient PKG server if this is so.
+	 */
 	netfd = 0;
-	rem_pcp = pkg_transerver( pkg_switch, comm_error );
-#else
-	while(1)  {
+	if( is_socket(netfd) ) {
+		init_syslog();
+		rem_pcp = pkg_transerver( pkg_switch, comm_error );
+		do1( netfd );
+		exit(0);
+	}
+#endif /* BSD */
+
+	/* for now, make them set a port_num, for usage message */
+	if ( !get_args( argc, argv ) || !port_set ) {
+		(void)fputs(usage, stderr);
+		exit( 1 );
+	}
+
+	/* Single-Frame-Buffer Server */
+	if( framebuffer != NULL ) {
+		single_fb = 1;	/* don't ever close the frame buffer */
+
+		/* open a frame buffer */
+		if( (fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
+			exit(1);
+
+		/* check/default port */
+		if( port_set ) {
+			if( port < 1024 )
+				port += 5559;
+		}
+		sprintf(portname,"%d",port);
+
+		/*
+		 * Listen for PKG connections
+		 */
+		if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
+			exit(-1);
+
+		/* loop forever handling clients */
+		while( !got_fb_free ) {
+			rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
+			if( rem_pcp == PKC_ERROR )
+				break;
+			/*printf("Accepted connection 0x%x\n", rem_pcp);*/
+			do1(netfd);
+			/*printf("Closed connection 0x%x\n", rem_pcp);*/
+		}
+		exit(0);
+	}
+	/*
+	 * Stand-Alone Daemon
+	 */
+	/* check/default port */
+	if( port_set ) {
+		if( port < 1024 )
+			port += 5559;
+		sprintf(portname,"%d",port);
+	} else {
+		sprintf(portname,"%s","remotefb");
+	}
+	while(1) {
 		int stat;
 		/*
 		 * Listen for PKG connections, no /etc/inetd
 		 */
-		if( (netfd = pkg_permserver("remotefb", 0, 0, comm_error)) < 0 )
+		/*init_syslog();/*XXX*/
+/*printf("permserver start\n");fflush(stdout);*/
+		if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ) {
+			sleep(5);
 			continue;
+			/*exit(1);*/
+		}
+printf("getting client\n");fflush(stdout);
 		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
 		if( rem_pcp == PKC_ERROR )
-			continue;
+			exit(2);	/* continue?! */
+printf("forking\n");fflush(stdout);
 		if( fork() == 0 )  {
 			/* Child */
 			if( fork() == 0 )  {
 				/* 2nd level child -- start work! */
-				break;
+				do1();
+printf("2nd child back from do1, exiting\n");fflush(stdout);
+				exit(0);
 			} else {
 				/* 1st level child -- vanish */
 				exit(1);
 			}
 		} else {
 			/* Original server daemon */
+printf("parent closing netfd\n");fflush(stdout);
 			(void)close(netfd);
 			(void)wait( &stat );
 		}
 	}
-#endif
+}
+
+static void
+init_syslog()
+{
+	use_syslog = 1;
+#if defined(BSD) && !defined(CRAY2)
+#   ifdef LOG_DAEMON
+	openlog( "fbserv", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
+#   else
+	openlog( "fbserv", LOG_PID );				/* 4.2 style */
+#   endif
+#endif /* BSD && !CRAY2 */
+}
+
+static void
+do1(netfd)
+int netfd;
+{
+	int	on = 1;
 
 #ifdef BSD
-# ifndef CRAY2
-#   ifdef LOG_DAEMON
-	openlog( "rfbd", LOG_PID|LOG_NOWAIT, LOG_DAEMON );	/* 4.3 style */
-#   else
-	openlog( "rfbd", LOG_PID );				/* 4.2 style */
-#   endif
-# endif
 	if( setsockopt( netfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
 #		ifndef CRAY2
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
@@ -113,6 +311,7 @@ int argc; char **argv;
 	}
 #endif
 #if BSD >= 43
+	/* try to set our receive buffer to 32k bytes */
 	{
 		int	n;
 		int	val = 32767;
@@ -122,14 +321,14 @@ int argc; char **argv;
 	}
 #endif
 
+/*printf("child: into pkg loop\n");fflush(stdout);*/
 	while( pkg_block(rem_pcp) > 0 )
 		;
 
-	if( fbp != FBIO_NULL )
+	if( !single_fb && fbp != FBIO_NULL )
 		fb_close(fbp);
 	if( rem_pcp != PKC_NULL )
 		pkg_close( rem_pcp );
-	exit(0);
 }
 
 /*
@@ -145,9 +344,12 @@ comm_error( str )
 char *str;
 {
 #if defined(BSD) && !defined(CRAY2)
-	syslog( LOG_ERR, str );
+	if( use_syslog )
+		syslog( LOG_ERR, str );
+	else
+		fprintf( stderr, "%s", str );
 #else
-	fprintf( stderr, "%s\n", str );
+	fprintf( stderr, "%s", str );
 #endif
 }
 
@@ -159,7 +361,7 @@ pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	fb_log( "rfbd: unable to handle message type %d\n",
+	fb_log( "fbserv: unable to handle message type %d\n",
 		pcp->pkc_type );
 	(void)free(buf);
 }
@@ -178,10 +380,13 @@ char *buf;
 	width = pkg_glong( &buf[0*NET_LONG_LEN] );
 	height = pkg_glong( &buf[1*NET_LONG_LEN] );
 
-	if( strlen(&buf[8]) == 0 )
-		fbp = fb_open( NULL, width, height );
-	else
-		fbp = fb_open( &buf[8], width, height );
+	/*printf("fbserv: I have been asked to open \"%s\"\n", &buf[8]);*/
+	if( fbp == FBIO_NULL ) {
+		if( strlen(&buf[8]) == 0 )
+			fbp = fb_open( NULL, width, height );
+		else
+			fbp = fb_open( &buf[8], width, height );
+	}
 
 #if 0
 	{	char s[81];
@@ -190,6 +395,7 @@ fb_log(s);
 	}
 #endif
 	if( fbp == FBIO_NULL )  {
+fail:
 		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], -1 );	/* ret */
 		(void)pkg_plong( &rbuf[1*NET_LONG_LEN], 0 );
 		(void)pkg_plong( &rbuf[2*NET_LONG_LEN], 0 );
@@ -215,12 +421,37 @@ struct pkg_conn *pcp;
 char *buf;
 {
 	char	rbuf[NET_LONG_LEN+1];
-
-	(void)pkg_plong( &rbuf[0], fb_close( fbp ) );
+	
+	if( single_fb ) {
+		/*
+		 * We are playing FB server so we don't really close the
+		 * frame buffer.  We should flush output however.
+		 */
+		(void)fb_flush( fbp );
+		(void)pkg_plong( &rbuf[0], 0 );		/* return success */
+	} else {
+		(void)pkg_plong( &rbuf[0], fb_close( fbp ) );
+		fbp = FBIO_NULL;
+	}
 	if( pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp ) != NET_LONG_LEN )
 		comm_error("pkg_send fb_close reply\n");
 	if( buf ) (void)free(buf);
+}
+
+void
+rfbfree(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	char	rbuf[NET_LONG_LEN+1];
+	
+	(void)pkg_plong( &rbuf[0], fb_free( fbp ) );
 	fbp = FBIO_NULL;
+	if( pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp ) != NET_LONG_LEN )
+		comm_error("pkg_send fb_free reply\n");
+	if( buf ) (void)free(buf);
+
+	got_fb_free = 1;
 }
 
 void
@@ -388,6 +619,23 @@ char *buf;
 }
 
 void
+rfbscursor(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	mode, x, y;
+	char	rbuf[NET_LONG_LEN+1];
+
+	mode = pkg_glong( &buf[0*NET_LONG_LEN] );
+	x = pkg_glong( &buf[1*NET_LONG_LEN] );
+	y = pkg_glong( &buf[2*NET_LONG_LEN] );
+
+	(void)pkg_plong( &rbuf[0], fb_scursor( fbp, mode, x, y ) );
+	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	if( buf ) (void)free(buf);
+}
+
+void
 rfbwindow(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -473,6 +721,23 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
+rfbflush(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	ret;
+	char	rbuf[NET_LONG_LEN+1];
+
+	ret = fb_flush( fbp );
+
+	if( pcp->pkc_type < MSG_NORETURN ) {
+		(void)pkg_plong( rbuf, ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
 /*
  *  At one time at least we couldn't send a zero length PKG
  *  message back and forth, so we receive a dummy long here.
@@ -520,6 +785,12 @@ fb_log( char *fmt, ... )
 	(void)vsprintf( outbuf, fmt, ap );
 	va_end(ap);
 
+	if( rem_pcp == PKC_NULL ) {
+		/* PKG connection not open yet! */
+		printf("%s", outbuf);
+		fflush(stdout);
+		return;
+	}
 	want = strlen(outbuf)+1;
 	if( (got = pkg_send( MSG_ERROR, outbuf, want, rem_pcp )) != want )  {
 		comm_error("pkg_send error in fb_log, message was:\n");
@@ -625,6 +896,12 @@ va_dcl
 	va_end(ap);
 
 	*op = NULL;
+	if( rem_pcp == PKC_NULL ) {
+		/* PKG connection not open yet! */
+		printf("%s", outbuf);
+		fflush(stdout);
+		return;
+	}
 	want = strlen(outbuf)+1;
 	if( (got = pkg_send( MSG_ERROR, outbuf, want, rem_pcp )) != want )  {
 		comm_error("pkg_send error in fb_log, message was:\n");
