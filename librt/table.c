@@ -487,13 +487,13 @@ struct rt_external	*ep;
 		break;
 	case DBID_STRSOL:
 		/* XXX This really needs to be some kind of table */
-		if( strncmp( rec->ss.ss_keyword, "ebm", 3 ) == 0 )  {
+		if( strcmp( rec->ss.ss_keyword, "ebm" ) == 0 )  {
 			id = ID_EBM;
 			break;
-		} else if( strncmp( rec->ss.ss_keyword, "vol", 3 ) == 0 )  {
+		} else if( strcmp( rec->ss.ss_keyword, "vol" ) == 0 )  {
 			id = ID_VOL;
 			break;
-		} else if( strncmp( rec->ss.ss_keyword, "hf", 2 ) == 0 )  {
+		} else if( strcmp( rec->ss.ss_keyword, "hf" ) == 0 )  {
 			id = ID_HF;
 			break;
 		}
