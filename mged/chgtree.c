@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
+#include "wdb.h"
 #include "./sedit.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -183,10 +183,10 @@ char	**argv;
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
 
-	oper = UNION;
+	oper = WMOP_UNION;
 	if( argc == 4 )
 		oper = argv[3][0];
-	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
+	if(oper != WMOP_UNION && oper != WMOP_SUBTRACT &&	oper != WMOP_INTERSECT) {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
@@ -254,7 +254,7 @@ char	**argv;
 		  continue;
 		}
 
-		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
+		if(oper != WMOP_UNION && oper != WMOP_SUBTRACT &&	oper != WMOP_INTERSECT) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
@@ -332,7 +332,7 @@ char	**argv;
 		  continue;
 		}
 
-		if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
+		if(oper != WMOP_UNION && oper != WMOP_SUBTRACT &&	oper != WMOP_INTERSECT) {
 		  struct bu_vls tmp_vls;
 
 		  bu_vls_init(&tmp_vls);
@@ -416,7 +416,7 @@ char	**argv;
 	for( i = 2; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL )  {
 			if( combadd( dp, argv[1], 0,
-				     UNION, 0, 0) == DIR_NULL )
+				     WMOP_UNION, 0, 0) == DIR_NULL )
 			  return TCL_ERROR;
 		}  else
 		  Tcl_AppendResult(interp, "skip member ", argv[i], "\n", (char *)NULL);
