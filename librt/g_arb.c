@@ -118,6 +118,7 @@ struct rt_i	*rtip;
 	LOCAL int	faces;		/* # of faces produced */
 	register int	i;
 	register int	j;
+	register int	k;
 	LOCAL fastf_t	f;
 	register struct arb_specific *arbp;
 
@@ -161,9 +162,26 @@ struct rt_i	*rtip;
 
 		arb_npts = 0;
 		for( j=0; j<4; j++ )  {
+			register pointp_t point;
+
+			point = &vec[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT];
+
+			/* Verify that this point is not the same
+			 * as an earlier point
+			 */
+			for( k=0; k < arb_npts; k++ )  {
+				VSUB2( work, point, arb_points[k] );
+				if( MAGSQ( work ) < 0.005 )  {
+					/* the same -- skip it */
+					goto next_pt;
+				}
+			}
+			VMOVE( arb_points[arb_npts], point );
+
 			arb_add_pt(
-				&vec[arb_info[i].ai_sub[j]*ELEMENTS_PER_VECT],
+				point,
 				stp, arbp, arb_info[i].ai_title );
+next_pt:		;
 		}
 
 		if( arb_npts < 3 )  {
@@ -215,54 +233,6 @@ struct rt_i	*rtip;
 }
 
 /*
- *			A R B _ F A C E
- *
- *  This function is called with pointers to 4 points,
- *  and is used to prepare both ARS and ARB8 faces.
- *  a,b,c,d are "index" values, merely decorative.
- *  ap, bp, cp, dp point to vect_t points.
- *  noise is non-zero for ARB8, for non-planar face complaints.
- *
- * Return -
- *	0	if the 4 points didn't form a plane (eg, colinear, etc).
- *	#pts	(>=3) if a valid plane resulted.  # valid pts is returned.
- */
-HIDDEN int
-arb_face( stp, ap, bp, cp, dp, title )
-struct soltab *stp;
-pointp_t ap, bp, cp, dp;
-char	*title;
-{
-	register struct arb_specific *arbp;
-
-	while( (arbp=FreeArb) == ARB_NULL )  arb_getarb();
-	FreeArb = arbp->arb_forw;
-
-	arb_npts = 0;
-	arb_add_pt( ap, stp, arbp, title );
-	arb_add_pt( bp, stp, arbp, title );
-	arb_add_pt( cp, stp, arbp, title );
-	arb_add_pt( dp, stp, arbp, title );
-
-	if( arb_npts < 3 )  {
-		arbp->arb_forw = FreeArb;
-		FreeArb = arbp;
-		return(0);				/* BAD */
-	}
-
-	/* Scale U and V basis vectors by the inverse of Ulen and Vlen */
-	arbp->arb_Ulen = 1.0 / arbp->arb_Ulen;
-	arbp->arb_Vlen = 1.0 / arbp->arb_Vlen;
-	VSCALE( arbp->arb_U, arbp->arb_U, arbp->arb_Ulen );
-	VSCALE( arbp->arb_V, arbp->arb_V, arbp->arb_Vlen );
-
-	/* Add this face onto the linked list for this solid */
-	arbp->arb_forw = (struct arb_specific *)stp->st_specific;
-	stp->st_specific = (int *)arbp;
-	return(arb_npts);					/* OK */
-}
-
-/*
  *			A R B _ A D D _ P T
  *
  *  Add another point to a struct arb_specific, checking for unique pts.
@@ -282,14 +252,7 @@ char	*title;
 	LOCAL vect_t P_A;		/* new point - A */
 	FAST fastf_t f;
 
-	/* Verify that this point is not the same as an earlier point */
-	for( i=0; i < arb_npts; i++ )  {
-		VSUB2( work, point, arb_points[i] );
-		if( MAGSQ( work ) < 0.005 )
-			return(0);			/* BAD */
-	}
 	i = arb_npts++;		/* Current point number */
-	VMOVE( arb_points[i], point );
 
 	/* The first 3 points are treated differently */
 	switch( i )  {
