@@ -55,6 +55,7 @@ extern int	hex_out;		/* Binary or Hex .pix output file */
 extern double	azimuth, elevation;
 extern mat_t	view2model;
 extern mat_t	model2view;
+extern int	using_mlib;		/* !0 = material routines used */
 /***** end of sharing with viewing model *****/
 
 extern void	grid_setup();
@@ -486,7 +487,7 @@ int framenumber;
 		 *  may be clear how to repackage this operation.
 		 */
 		for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-			switch( mlib_setup( regp ) )  {
+			if(using_mlib) switch( mlib_setup( regp ) )  {
 			case -1:
 			default:
 				rt_log("mlib_setup failure on %s\n", regp->reg_name);
