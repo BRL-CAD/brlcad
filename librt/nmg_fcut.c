@@ -4,6 +4,11 @@
  *  After two faces have been intersected, cut or join loops crossed
  *  by the line of intersection.
  *
+ *  XXX A better name than nmg_face_combine() might be
+ *  XXX nmg_face_loop_partition() or nmg_face_loop_split() or something,
+ *  XXX since the main goal is not combining faces, but spliting the loops
+ *  XXX across the line of intersection.
+ *
  *  The line of intersection ("ray") will divide the face into two sets
  *  of loops.  No one loop may cross the ray after this routine is finished.
  *
@@ -271,12 +276,16 @@ vect_t	y_dir;
 	gamma = atan2( yproj, xproj );	/* -pi..+pi */
 	ang = rt_pi + gamma;		/* 0..+2pi */
 	if( ang < 0 )  {
+#if 0
 rt_log("angle = %e < 0, setting to %e (%g deg)\n",
 ang, rt_twopi + ang, (rt_twopi + ang) * rt_radtodeg );
+#endif
 		return rt_twopi + ang;
 	} else if( ang > rt_twopi )  {
+#if 0
 rt_log("angle = %e > 2pi, setting to %e (%g deg)\n",
 ang, ang - rt_twopi, (ang - rt_twopi) * rt_radtodeg );
+#endif
 		return ang - rt_twopi;
 	}
 	return ang;
@@ -323,11 +332,13 @@ int			assessment;
 	 */
 	entry_ass = NMG_V_ASSESSMENT_PREV( assessment );
 	if( entry_ass == NMG_E_ASSESSMENT_ON_FORW )  {
-rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=0\n");
+		if(rt_g.NMG_debug&DEBUG_COMBINE)
+			rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=0\n");
 		return 0;		/* zero angle */
 	}
 	if( entry_ass == NMG_E_ASSESSMENT_ON_REV )  {
-rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=180\n");
+		if(rt_g.NMG_debug&DEBUG_COMBINE)
+			rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=180\n");
 		return rt_pi;		/* 180 degrees */
 	}
 
@@ -340,14 +351,16 @@ rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=180\n");
 	do {
 		prev_eu = RT_LIST_PLAST_CIRC( edgeuse, prev_eu );
 		if( prev_eu == this_eu )  {
-rt_log("nmg_vu_angle_measure: prev eu is this eu, ang=0\n");
+		if(rt_g.NMG_debug&DEBUG_COMBINE)
+			rt_log("nmg_vu_angle_measure: prev eu is this eu, ang=0\n");
 			return 0;	/* Unable to compute 'vec' */
 		}
 		/* Skip any edges that stay on this vertex */
 	} while( prev_eu->vu_p->v_p == this_eu->vu_p->v_p );
 	VSUB2( vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord );
 	ang = rt_angle_measure( vec, x_dir, y_dir );
-rt_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*rt_radtodeg);
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+		rt_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*rt_radtodeg);
 
 	/*
 	 *  Since the entry edge is not on the ray, ensure the
@@ -386,7 +399,8 @@ rt_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*rt_radtodeg);
 				nmg_e_assessment_names[entry_ass] );
 		}
 	}
-rt_log("ang=%g (%e), vec=(%g,%g,%g)\n", ang*rt_radtodeg, ang*rt_radtodeg, V3ARGS(vec) );
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+		rt_log("ang=%g (%e), vec=(%g,%g,%g)\n", ang*rt_radtodeg, ang*rt_radtodeg, V3ARGS(vec) );
 	return ang;
 }
 
@@ -441,6 +455,8 @@ int			pos;
 	for( i=rs->nvu-1; i >= 0; i-- )  {
 		if( rs->vu[i]->v_p != otherv )  continue;
 		/* Edge is on the ray.  Which way does it go? */
+/* XXX How to detect leaving the current vertex groups? */
+if(rt_g.NMG_debug&DEBUG_COMBINE)
 rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n", pos, rs->vu[pos], otherv, i );
 		if( forw )  {
 			/* Edge goes from v to otherv */
@@ -471,11 +487,13 @@ rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n", pos, rs->vu[pos], otherv, i );
 		ret = NMG_E_ASSESSMENT_LEFT;
 	}
 out:
-	rt_log("nmg_assess_eu(x%x, fw=%d, pos=%d) v=x%x otherv=x%x: %s\n",
-		eu, forw, pos, v, otherv,
-		nmg_e_assessment_names[ret] );
-	rt_log(" v(%g,%g,%g) other(%g,%g,%g)\n",
-		V3ARGS(v->vg_p->coord), V3ARGS(otherv->vg_p->coord) );
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("nmg_assess_eu(x%x, fw=%d, pos=%d) v=x%x otherv=x%x: %s\n",
+			eu, forw, pos, v, otherv,
+			nmg_e_assessment_names[ret] );
+		rt_log(" v(%g,%g,%g) other(%g,%g,%g)\n",
+			V3ARGS(v->vg_p->coord), V3ARGS(otherv->vg_p->coord) );
+	}
 	return ret;
 }
 
@@ -505,8 +523,10 @@ int			pos;
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
 	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
 	ass = NMG_V_ASSESSMENT_COMBINE( prev_ass, next_ass );
-	rt_log("nmg_assess_vu() vu[%d]=x%x, v=x%x: %s\n",
-		pos, vu, vu->v_p, nmg_v_assessment_names[ass] );
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("nmg_assess_vu() vu[%d]=x%x, v=x%x: %s\n",
+			pos, vu, vu->v_p, nmg_v_assessment_names[ass] );
+	}
 	return ass;
 }
 
@@ -568,7 +588,8 @@ int			end;		/* last index + 1 */
 	int		ass;
 	int		l;
 
-rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+		rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
 	num = end - start;
 	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
 		"nmg_vu_stuff" );
@@ -581,7 +602,8 @@ rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
 	for( i = end-1; i >= start; i-- )  {
 		lu = nmg_lu_of_vu( rs->vu[i] );
 		ass = nmg_assess_vu( rs, i );
-		rt_log("vu[%d]=x%x v=x%x assessment=%s\n",
+		if(rt_g.NMG_debug&DEBUG_COMBINE)
+		   rt_log("vu[%d]=x%x v=x%x assessment=%s\n",
 			i, rs->vu[i], rs->vu[i]->v_p, nmg_v_assessment_names[ass] );
 		/*  Ignore lone vertices, unless that is all that there is,
 		 *  in which case, let just one through.  (return 'start+1');
@@ -612,6 +634,7 @@ got_loop:
 			ls[l].max_angle = vs[nvu].vu_angle;
 		nvu++;
 	}
+#if 0
 	rt_log("Loop table (before sort):\n");
 	for( l=0; l < nloop; l++ )  {
 		rt_log("  index=%d, lu=x%x, max_angle=%g\n",
@@ -622,21 +645,25 @@ got_loop:
 		rt_log("  vu=x%x, loop_index=%d, vu_angle=%g\n",
 			vs[i].vu, vs[i].loop_index, vs[i].vu_angle );
 	}
+#endif
 
 	/* Sort the vertexuse table into appropriate order */
 	qsort( (genptr_t)vs, nvu, sizeof(*vs), nmg_face_vu_compare );
 
-	rt_log("Vertexuse table (after sort):\n");
-	for( i=0; i < nvu; i++ )  {
-		rt_log("  vu=x%x, loop_index=%d, vu_angle=%g\n",
-			vs[i].vu, vs[i].loop_index, vs[i].vu_angle );
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("Vertexuse table (after sort):\n");
+		for( i=0; i < nvu; i++ )  {
+			rt_log("  vu=x%x, loop_index=%d, vu_angle=%g\n",
+				vs[i].vu, vs[i].loop_index, vs[i].vu_angle );
+		}
 	}
 
 	/* Copy new vu's back to main array */
 	for( i=0; i < nvu; i++ )  {
 		rs->vu[start+i] = vs[i].vu;
-		rt_log(" vu[%d]=x%x, v=x%x\n",
-			start+i, rs->vu[start+i], rs->vu[start+i]->v_p );
+		if(rt_g.NMG_debug&DEBUG_COMBINE)
+			rt_log(" vu[%d]=x%x, v=x%x\n",
+				start+i, rs->vu[start+i], rs->vu[start+i]->v_p );
 	}
 	return start+nvu;
 }
@@ -664,8 +691,10 @@ vect_t		dir;
 	fastf_t		dist_tol = 0.005;	/* XXX */
 	struct nmg_ray_state	rs;
 
-rt_log("\nnmg_face_combine(fu1=x%x, fu2=x%x)\n", fu1, fu2);
-nmg_pr_fu_briefly(fu1,(char *)0);
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("\nnmg_face_combine(fu1=x%x, fu2=x%x)\n", fu1, fu2);
+		nmg_pr_fu_briefly(fu1,(char *)0);
+	}
 	mag = (fastf_t *)rt_calloc(b->end, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
 
@@ -686,10 +715,12 @@ nmg_pr_fu_briefly(fu1,(char *)0);
 	rs.nvu = b->end;
 	VMOVE( rs.pt, pt );
 	VMOVE( rs.dir, dir );
+if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 rt_log("fu->orientation=%s\n", nmg_orientation(fu1->orientation) );
 VPRINT("fg_p->N", fu1->f_p->fg_p->N);
 VPRINT(" pt", pt);
 VPRINT("dir", dir);
+}
 	VCROSS( rs.left, fu1->f_p->fg_p->N, dir );
 	switch( fu1->orientation )  {
 	case OT_SAME:
@@ -700,7 +731,9 @@ VPRINT("dir", dir);
 	default:
 		rt_bomb("nmg_face_combine: bad orientation\n");
 	}
+if(rt_g.NMG_debug&DEBUG_COMBINE) {
 VPRINT("left", rs.left);
+}
 	rs.state = NMG_STATE_OUT;
 
 	/* For measuring angle CCW around plane from -dir */
@@ -710,10 +743,12 @@ VPRINT("left", rs.left);
 	nmg_face_plot( fu1 );
 
 	/* Print list of intersections */
-	rt_log("Ray vu intersection list:\n");
-	for( i=0; i < b->end; i++ )  {
-		rt_log(" %d %e ", i, mag[i] );
-		nmg_pr_vu_briefly( vu[i], (char *)0 );
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("Ray vu intersection list:\n");
+		for( i=0; i < b->end; i++ )  {
+			rt_log(" %d %e ", i, mag[i] );
+			nmg_pr_vu_briefly( vu[i], (char *)0 );
+		}
 	}
 
 	/*
@@ -726,7 +761,8 @@ VPRINT("left", rs.left);
 	for( i = 0; i < b->end; i = j )  {
 		if( i == b->end-1 || mag[i+1] != mag[i] )  {
 			/* Single vertexuse at this dist */
-rt_log("single vertexuse at index %d\n", i);
+			if(rt_g.NMG_debug&DEBUG_COMBINE)
+				rt_log("single vertexuse at index %d\n", i);
 			nmg_face_state_transition( vu[i], &rs, i, 0 );
 			nmg_face_plot( fu1 );
 			j = i+1;
@@ -738,7 +774,8 @@ rt_log("single vertexuse at index %d\n", i);
 				if( mag[j] != mag[i] )  break;
 			}
 			/* vu Interval runs from [i] to [j-1] inclusive */
-rt_log("interval from %d to %d\n", i, j );
+			if(rt_g.NMG_debug&DEBUG_COMBINE)
+				rt_log("interval from [%d] to [%d]\n", i, j-1 );
 			/* Ensure that all vu's point to same vertex */
 			v = vu[i]->v_p;
 			for( k = i+1; k < j; k++ )  {
@@ -752,7 +789,8 @@ rt_log("interval from %d to %d\n", i, j );
 				nmg_face_plot( fu1 );
 			}
 			vu[j-1] = vu[m-1]; /* for next iteration's lookback */
-			rt_log("vu[%d] set to x%x\n", j-1, vu[j-1] );
+			if(rt_g.NMG_debug&DEBUG_COMBINE)
+				rt_log("vu[%d] set to x%x\n", j-1, vu[j-1] );
 		}
 	}
 
@@ -933,12 +971,14 @@ int			multi;
 		stp = &nmg_state_is_in[assessment];
 		break;
 	}
-rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-vu, pos,
-nmg_state_names[old], nmg_v_assessment_names[assessment],
-nmg_state_names[stp->new_state], action_names[stp->action] );
-rt_log("This loopuse, before action: ");
-nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
+			vu, pos,
+			nmg_state_names[old], nmg_v_assessment_names[assessment],
+			nmg_state_names[stp->new_state], action_names[stp->action] );
+		rt_log("This loopuse, before action: ");
+		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
+	}
 
 	switch( stp->action )  {
 	default:
@@ -1039,8 +1079,10 @@ nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
 		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
 		/* Kill lone vertex loop */
 		nmg_klu(lu);
+if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 rt_log("After LONE_V_ESPLIT, the final loop: ");
 nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+}
 		break;
 	case NMG_ACTION_LONE_V_JAUNT:
 		/*
@@ -1071,8 +1113,10 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 
 		/* Because vu changed, update vu table, for next action */
 		rs->vu[pos] = second_new_eu->vu_p;
+if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 rt_log("After LONE_V_JAUNT, the final loop: ");
 nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+}
 		break;
 	case NMG_ACTION_CUTJOIN:
 		/*
@@ -1091,11 +1135,14 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		NMG_CK_LOOPUSE(prev_lu);
 		if( lu->l_p == prev_lu->l_p )  {
 			/* Same loop, cut into two */
+if(rt_g.NMG_debug&DEBUG_COMBINE)
 rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
 			nmg_cut_loop( prev_vu, vu );
+if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 rt_log("After CUT, the final loop: ");
 nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
 nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+}
 			break;
 		}
 		/* Different loops, join into one. */
@@ -1112,7 +1159,8 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		 */
 		if( eu->radial_p->up.lu_p == prev_lu &&
 		    eu->eumate_p->radial_p->up.lu_p == prev_lu )  {
-rt_log("using nmg_jl( lu=x%x, eu=x%x\n", lu, eu );
+			if(rt_g.NMG_debug&DEBUG_COMBINE)
+				rt_log("using nmg_jl( lu=x%x, eu=x%x\n", lu, eu );
 			nmg_jl( lu, eu );
 #if 0
 rt_log("After nmg_jl, before nmg_kill_snakes: ");
@@ -1125,8 +1173,10 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,
 				prev_vu->up.eu_p)->vu_p;
 		}
-rt_log("After JOIN, the final loop: ");
-nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+			rt_log("After JOIN, the final loop: ");
+			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+		}
 		break;
 	}
 
@@ -1169,15 +1219,19 @@ struct vertexuse	*vu2;
 	NMG_CK_LOOPUSE(lu1);
 	NMG_CK_LOOPUSE(lu2);
 
-rt_log("nmg_join_2loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n", vu1, vu2, lu1, lu2 );
-	/* Drop a plot file */
-	rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
-	nmg_pl_comb_fu( 10, 11, lu1->up.fu_p );
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("nmg_join_2loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
+			vu1, vu2, lu1, lu2 );
+#if 0
+		/* Drop a plot file */
+		rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
+		nmg_pl_comb_fu( 10, 11, lu1->up.fu_p );
+#endif
+		rt_log("lu1=%s lu2=%s\n", nmg_orientation(lu1->orientation), nmg_orientation(lu2->orientation) );
+	}
 
 	if( lu1 == lu2 || lu1->l_p == lu2->l_p )
 		rt_bomb("nmg_join_2loops: can't join loop to itself\n");
-
-rt_log("lu1=%s lu2=%s\n", nmg_orientation(lu1->orientation), nmg_orientation(lu2->orientation) );
 
 	if( lu1->up.fu_p != lu2->up.fu_p )
 		rt_bomb("nmg_join_2loops: can't join loops in different faces\n");
@@ -1216,16 +1270,23 @@ rt_log("lu1=%s lu2=%s\n", nmg_orientation(lu1->orientation), nmg_orientation(lu2
 		eu2->eumate_p->up.lu_p = lu1->lumate_p;
 	}
 
-	nmg_pl_comb_fu( 11, 12, lu1->up.fu_p );
+#if 0
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+		nmg_pl_comb_fu( 11, 12, lu1->up.fu_p );
+#endif
 
 	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
 
-	nmg_pl_comb_fu( 12, 13, lu1->up.fu_p );
-	rt_log("final lu1\n");
-	nmg_pr_lu_briefly( lu1, (char *)0);
-	rt_log("final lu1mate\n");
-	nmg_pr_lu_briefly( lu1->lumate_p, (char *)0);
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+#if 0
+		nmg_pl_comb_fu( 12, 13, lu1->up.fu_p );
+#endif
+		rt_log("final lu1\n");
+		nmg_pr_lu_briefly( lu1, (char *)0);
+		rt_log("final lu1mate\n");
+		nmg_pr_lu_briefly( lu1->lumate_p, (char *)0);
+	}
 }
 
 nmg_face_plot( fu )
@@ -1279,6 +1340,8 @@ struct nmg_ray_state	*rs;
 	long		*b;
 	char		buf[128];
 	static int	num = 0;
+
+	if(!(rt_g.NMG_debug&DEBUG_PLOTEM)) return;
 
 	NMG_CK_LOOPUSE(lu);
 	m = nmg_find_model((long *)lu);
