@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  20:07:34  dpk
+ * Changed to support Crays.
+ * 
  * Revision 2.1  86/09/23  22:28:37  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -42,7 +45,7 @@
 #define	OFFMSK	01777
 #define	SHFT	0
 
-#else VMUNIX
+#else 
 
 #define	BLKMSK	01777
 #define	BNDRY	16
@@ -53,8 +56,7 @@
 #define	OFFMSK	077
 #define	SHFT	3
 
-#endif VMUNIX
-
+#endif 
 
 extern char	ibuff1[BSIZ],	/* Holds block `iblock1' of the tmp file */
 	ibuff2[BSIZ],	/*   "     "   `iblock2' of the tmp file */
