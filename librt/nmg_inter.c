@@ -116,13 +116,12 @@ CONST struct faceuse	*fu;	/* for plane equation */
 	v2d[2] = pt2d[2] = 0;		/* flag */
 
 	if( !NEAR_ZERO( pt[2], is->tol.dist ) )  {
-		rt_log("nmg_get_2d_vertex ERROR %d (%g,%g,%g) becomes (%g,%g) %g != zero!\n",
+		rt_log("nmg_get_2d_vertex ERROR #%d (%g,%g,%g) becomes (%g,%g) %g != zero!\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
-		mat_print("is->proj", is->proj);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n",
+		rt_log("2d #%d (%g,%g,%g) becomes (%g,%g) %g\n",
 			v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 	}
 }
@@ -158,7 +157,8 @@ struct face		*f1;
 	NMG_CK_FACE(f1);
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
-rt_log("nmg_isect2d_prep()\n");
+rt_log("nmg_isect2d_prep(f=x%x)\n", f1);
+PLPRINT("N", fg->N);
 
 	m = nmg_find_model( &f1->magic );
 
@@ -711,16 +711,14 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 			vu1a, vu1b, vu2a, vu2b,
 			vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p );
 
-	/* First, a topology check. */
-	if( vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p || vu2a->v_p == vu1b->v_p || vu2b->v_p == vu1b->v_p )  {
-		/* These edges intersect, topologically.  No work. */
-		/* XXX True if both endpoints match.
-		 * XXX True if not co-linear.
-		 * XXX what about co-linear case, with only one matching
-		 * XXX endpoint to start with?
-		 */
+	/*
+	 *  Topology check.
+	 *  If both endpoints of both edges match, this is a trivial accept.
+	 */
+	if( (vu1a->v_p == vu2a->v_p && vu1b->v_p == vu2b->v_p) ||
+	    (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("edge2p_edge2p: shared topology x%x--x%x, x%x--x%x\n", vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p);
+			rt_log("edge2p_edge2p: shared edge topology, both ends\n");
 		goto topo;
 	}
 
@@ -755,6 +753,20 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		rt_log("\trt_isect_lseg2_lseg2()=%d, dist: %g, %g\n",
 			status, dist[0], dist[1] );
 	}
+
+	/*
+	 *  If one endpoint matches, and edges are not colinear,
+	 *  then accept the one shared vertex as the intersection point.
+	 */
+	if( status != 0 && (
+	    vu1a->v_p == vu2a->v_p || vu1a->v_p == vu2b->v_p ||
+	    vu2a->v_p == vu1b->v_p || vu2b->v_p == vu1b->v_p )
+	)  {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("edge2p_edge2p: non-colinear edges share one vertex (topology)\n");
+		goto topo;
+	}
+
 	if (status < 0)  return;	/* No geometric intersection */
 
 	if( status == 0 )  {
@@ -1124,7 +1136,6 @@ struct faceuse *fu;
 				status);
 	}
 	if( status == 0 )  {
-#if 0
 		struct nmg_inter_struct	is;
 		struct nmg_ptbl		t1, t2;
 		point_t	foo;
@@ -1144,10 +1155,10 @@ struct faceuse *fu;
 		VPRINT("edge_vect", edge_vect);
 		PLPRINT("N", fu->f_p->fg_p->N);
 		rt_g.NMG_debug |= DEBUG_POLYSECT;
-		nmg_get_2d_vertex( foo, eu->vu_p->v_p, &is, nmg_find_fu_of_eu(eu) );
+		nmg_get_2d_vertex( foo, eu->vu_p->v_p, &is, fu );
 		VPRINT("eu_v1", eu->vu_p->v_p->vg_p->coord );
 		VPRINT("eu_v1 2d", foo);
-		nmg_get_2d_vertex( foo, eu->eumate_p->vu_p->v_p, &is, nmg_find_fu_of_eu(eu) );
+		nmg_get_2d_vertex( foo, eu->eumate_p->vu_p->v_p, &is, fu );
 		VPRINT("eu_v2", eu->eumate_p->vu_p->v_p->vg_p->coord );
 		VPRINT("eu_v2 2d", foo);
 		mat_print("is->proj", is.proj);
@@ -1157,15 +1168,14 @@ struct faceuse *fu;
 
 		if( is.vert2d )  rt_free( (char *)is.vert2d, "vert2d");
 
-		/* See if starting vertex is now shared */
+		/* See if start vertex is now shared */
 		if (vu_other=nmg_find_v_in_face(eu->vu_p->v_p, fu)) {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("\tEdge start vertex lies on other face (2d topology).\n");
 			(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		}
 		goto out;
-#else
-		rt_bomb("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen'\n");
-#endif
 	}
 
 	/*
