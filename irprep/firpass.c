@@ -2284,7 +2284,7 @@ char *argv[];
    return(0);
 }
 
-
+int
 hit(ap_p,PartHeadp)
 register struct application *ap_p;
 struct partition *PartHeadp;
@@ -2710,6 +2710,7 @@ struct partition *PartHeadp;
 	return (1);
 }
 
+int
 miss(ap_p)
 
 /*  User supplied miss function.  */
@@ -2723,6 +2724,7 @@ register struct application *ap_p;
 	return (0);
 }
 
+int
 ovrlap(ap_p,PartHeadp,reg1,reg2)
 
 /*  User supplied overlap function.  */

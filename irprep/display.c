@@ -562,7 +562,7 @@ char *argv[];
 
 
 /****************************************************************************/
-
+int
 hit(ap_p,PartHeadp)
 
 /*  User supplied hit function.  */
@@ -590,7 +590,7 @@ struct partition *PartHeadp;
 }
 
 /****************************************************************************/
-
+int
 miss(ap_p)
 
 /*  User supplied miss function.  */
@@ -608,7 +608,7 @@ register struct application *ap_p;
 }
 
 /****************************************************************************/
-
+int
 overlap(ap_p,PartHeadp)
 
 /*  User supplied overlap function.  */
