@@ -162,6 +162,7 @@ void	*data;
     int			result = 0;
     struct rb_node	*node;
     struct rb_package	*package;
+    struct rb_list	*rblp;
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
 
@@ -182,15 +183,23 @@ void	*data;
 
     /*
      *	Make a new package
+     *	and add it to the list of all packages.
      */
     package = (struct rb_package *)
 		rt_malloc(sizeof(struct rb_package), "red-black package");
     package -> rbp_node = (struct rb_node **)
 		rt_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black package nodes");
+    rblp = (struct rb_list *)
+		rt_malloc(sizeof(struct rb_list), "red-black list element");
+    rblp -> rbl_magic = RB_LIST_MAGIC;
+    rblp -> rbl_package = package;
+    RT_LIST_PUSH(&(tree -> rbt_packages.l), rblp);
+    package -> rbp_list_pos = rblp;
 
     /*
      *	Make a new node
+     *	and add it to the list of all nodes.
      */
     node = (struct rb_node *)
 		rt_malloc(sizeof(struct rb_node), "red-black node");
@@ -209,6 +218,12 @@ void	*data;
     node -> rbn_package = (struct rb_package **)
 		rt_malloc(nm_orders * sizeof(struct rb_package *),
 			    "red-black packages");
+    rblp = (struct rb_list *)
+		rt_malloc(sizeof(struct rb_list), "red-black list element");
+    rblp -> rbl_magic = RB_LIST_MAGIC;
+    rblp -> rbl_node = node;
+    RT_LIST_PUSH(&(tree -> rbt_nodes.l), rblp);
+    node -> rbn_list_pos = rblp;
 
     /*
      *	Fill in the package
