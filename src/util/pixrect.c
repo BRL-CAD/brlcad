@@ -198,7 +198,7 @@ main(register int argc, register char **argv)
 
 	outbytes = xnum * bytes_per_pixel;
 
-	if ((buf = malloc(outbytes)) == NULL) {
+	if ((buf = (char *)malloc(outbytes)) == NULL) {
 		fprintf(stderr, "pixrect: malloc failed!\n");
 		exit(1);
 	}

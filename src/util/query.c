@@ -88,7 +88,8 @@ get_args(int argc, register char **argv)
 
 	return(1);
 }
-void handler(void);
+
+void handler(int);
 
 int
 main(int argc, char **argv)
@@ -155,7 +156,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 void
-handler(void)
+handler(int sig)
 {
 	Done = 1;
 }

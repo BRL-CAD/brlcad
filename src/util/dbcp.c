@@ -96,7 +96,7 @@ char	**argv;
 	size = 512 * atoi(argv[optind]);
 
 	setbuf (stderr, errbuf);
-	if ((buffer = malloc(size)) == NULL) {
+	if ((buffer = (char *)malloc(size)) == NULL) {
 		fprintf(stderr, "dbcp: Insufficient buffer memory\n");
 		exit (88);
 	}

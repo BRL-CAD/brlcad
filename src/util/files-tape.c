@@ -113,7 +113,7 @@ main(int argc, char **argv)
 	}
 
 	/* Obtain output buffer */
-	if( (buf = malloc( bufsize )) == NULL )  {
+	if( (buf = (char *)malloc( bufsize )) == NULL )  {
 		perror("malloc");
 		exit(1);
 	}

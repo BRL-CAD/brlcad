@@ -72,7 +72,7 @@ void doit(void)
 	bufsize=(x*y*3);
 
 	/* allocate a buffer for the image */
-	if ((image = malloc(bufsize)) == (char *)NULL) {
+	if ((image = (char *)malloc(bufsize)) == (char *)NULL) {
 		(void) fprintf(stderr, "Error: Insufficient memory for image buffer\n");
 		exit(-2);
 	}

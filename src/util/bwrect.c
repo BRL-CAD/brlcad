@@ -61,7 +61,7 @@ main(int argc, char **argv)
 	printf( "Scan line length of input file " );
 	scanf( "%d", &linelen );
 
-	buf = malloc( xnum );
+	buf = (char *)malloc( xnum );
 
 	/* Move all points */
 	for (row = 0+yorig; row < ynum+yorig; row++) {

@@ -184,9 +184,9 @@ main(int argc, char **argv)
 		fprintf( stderr, " bg\n" );
 	}
 
-	if( (b1 = malloc( width*CHUNK )) == (char *)0 ||
-	    (b2 = malloc( width*CHUNK )) == (char *)0 ||
-	    (b3 = malloc( width*CHUNK )) == (char *)0 ) {
+	if( (b1 = (char *)malloc( width*CHUNK )) == (char *)0 ||
+	    (b2 = (char *)malloc( width*CHUNK )) == (char *)0 ||
+	    (b3 = (char *)malloc( width*CHUNK )) == (char *)0 ) {
 	    	fprintf(stderr, "pixmerge:  malloc failure\n");
 	    	exit(3);
 	}
