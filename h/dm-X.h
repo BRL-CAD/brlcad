@@ -20,8 +20,7 @@
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
 
 struct modifiable_x_vars {
-  int linewidth;
-  int linestyle;
+  int zclip;
   int perspective_mode;
   int dummy_perspective;
   int debug;
@@ -41,7 +40,6 @@ struct x_vars {
   GC gc;
   Pixmap pix;
   int is_trueColor;
-  unsigned long black,gray,white,yellow,red,blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
   Colormap cmap;
   unsigned long pixels[NUM_PIXELS];
