@@ -83,9 +83,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define	NATURAL_IEEE	yes
 #endif
 
-#if defined(n16) || defined(i860)
+#if defined(n16) || (defined(alliant) && defined(i860)) || defined(__stardent)
 	/* These systems operate in IEEE format, using little-endian order */
 #	define	REVERSED_IEEE	yes
+#endif
+
+#if defined(NATURAL_IEEE) && defined(REVERSED_IEEE)
+# include "htond.c:  ERROR, two IEEE conversions defined for this machine type"
 #endif
 
 /*
