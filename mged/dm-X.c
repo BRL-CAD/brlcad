@@ -431,9 +431,8 @@ int		noblock;
 
 #if defined(_SC_OPEN_MAX)
 	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
-#else
-		width = 32;
 #endif
+		width = 32;
 
 	files = *input;		/* save, for restore on each loop */
 	FD_SET( dpy->fd, &files );	/* check X fd too */
