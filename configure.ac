@@ -97,6 +97,19 @@ else
 fi
 AM_CONFIG_HEADER(include/config.h)
 
+# a secondary automated automake may blow away COPYING, so restore it
+if test -f "$srcdir/misc/COPYING.backup" ; then
+	AC_MSG_CHECKING([whether the COPYING file needs to be restored])
+	copyingcontent="`cat $srcdir/COPYING`"
+	backupcopying="`cat $srcdir/misc/COPYING.backup`"
+	if test "x$copyingcontent" = "x$backupcopying" ; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		cp -pr $srcdir/misc/COPYING.backup $srcdir/COPYING
+	fi
+fi
+
 # automatically enable and load our configure cache file if available
 AC_MSG_CHECKING([whether a configure cache exists])
 if test "x$cache_file" = "x/dev/null" ; then
@@ -1550,9 +1563,10 @@ AC_SUBST(TCL_PACKAGE_PATH)
 TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
 AC_SUBST(TCL)
 TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
+AC_SUBST(TCLSTUB)
 
 dnl XXX -- hack to make unfixed libtk behave when reading tclConfig.sh
-AC_SUBST(TCLSTUB)
+dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
 AC_SUBST(CC)
 AC_SUBST(DEFS)
 AC_SUBST(TCL_DBGX)
@@ -1574,7 +1588,6 @@ TCL_NEEDS_EXP_FILE=0
 AC_SUBST(TCL_NEEDS_EXP_FILE)
 AC_SUBST(SHLIB_CFLAGS)
 AC_SUBST(CFLAGS_WARNING)
-dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
 AC_SUBST(EXTRA_CFLAGS)
 AC_SUBST(SHLIB_LD)
 AC_SUBST(SHLIB_SUFFIX)
@@ -1618,8 +1631,8 @@ TK_LIBRARY='${prefix}/lib/tk${TK_VERSION}'
 AC_SUBST(TK_LIBRARY)
 TK='${top_builddir}/src/other/libtk/libtk${TK_VERSION}.la'
 AC_SUBST(TK)
-dnl TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
-dnl AC_SUBST(TKSTUB)
+TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
+AC_SUBST(TKSTUB)
 
 dnl itcl/itk
 ITCL_VERSION="3.3"
@@ -1763,7 +1776,6 @@ AC_CONFIG_FILES([
 	src/remrt/Makefile
 	src/rt/Makefile
 	src/rttherm/Makefile
-	src/sample_applications/Makefile
 	src/sig/Makefile
 	src/tab/Makefile
 	src/tclscripts/Makefile
