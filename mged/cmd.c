@@ -173,6 +173,7 @@ static struct cmdtab cmdtab[] = {
 	{"bot_face_sort", cmd_bot_face_sort},
 	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
+	{"bot_decimate", cmd_bot_decimate},
 	{"bottom",	bv_bottom},
 	{"c", cmd_comb_std},
 	{"cat", cmd_cat},
@@ -3307,5 +3308,16 @@ cmd_bot_face_sort( ClientData	clientData,
 	int     	argc,
 	char    	**argv)
 {
+	CHECK_DBI_NULL;
 	return wdb_bot_face_sort_cmd( wdbp, interp, argc, argv );
+}
+
+int
+cmd_bot_decimate( ClientData	clientData,
+	Tcl_Interp	*interp,
+	int     	argc,
+	char    	**argv)
+{
+	CHECK_DBI_NULL;
+	return wdb_bot_decimate_cmd( wdbp, interp, argc, argv );
 }

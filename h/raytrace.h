@@ -4707,6 +4707,7 @@ BU_EXTERN(size_t		db5_type_sizeof_n_binu,
 BU_EXTERN(int	wdb_get_tcl,		(ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_init_obj,		(Tcl_Interp *interp, struct rt_wdb *wdbp, char *oname));
 BU_EXTERN(int	wdb_bot_face_sort_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_bot_decimate_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_close_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_reopen_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_match_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));

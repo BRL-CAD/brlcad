@@ -165,6 +165,7 @@ extern int wdb_comb_std_tcl();
 
 /* from librt/g_bot.c */
 extern int rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece );
+extern int rt_bot_decimate( struct rt_bot_internal *bot, fastf_t max_chord_error, fastf_t max_normal_error );
 
 /* from db5_scan.c */
 HIDDEN int db5_scan();
@@ -239,6 +240,7 @@ static int wdb_lt_tcl();
 static int wdb_version_tcl();
 static int wdb_binary_tcl();
 static int wdb_bot_face_sort_tcl();
+static int wdb_bot_decimate_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -266,6 +268,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"attr_rm",	wdb_attr_rm_tcl},
 	{"binary",	wdb_binary_tcl},
 	{"bot_face_sort", wdb_bot_face_sort_tcl},
+	{"bot_decimate", wdb_bot_decimate_tcl},
 	{"c",		wdb_comb_std_tcl},
 	{"cat",		wdb_cat_tcl},
 #if 0
@@ -8645,4 +8648,112 @@ wdb_pathlist_leaf_func(struct db_tree_state	*tsp,
 
 	bu_free((genptr_t)str, "path string");
 	return TREE_NULL;
+}
+
+/*
+ *			W D B _ B O T _ D E C I M A T E _ C M D
+ */
+
+int
+wdb_bot_decimate_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+	struct rt_db_internal intern;
+	struct rt_bot_internal *bot;
+	struct directory *dp;
+	fastf_t max_chord_error;
+	fastf_t max_normal_error=90.0;
+
+	if( argc < 4 || argc > 5 ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* make sure new solid does no already exist */
+	if( (dp=db_lookup( wdbp->dbip, argv[1], LOOKUP_QUIET ) ) != DIR_NULL ) {
+	  Tcl_AppendResult(interp, argv[1], "already exists!!\n", (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	/* make sure current solid does exist */
+	if( (dp=db_lookup( wdbp->dbip, argv[2], LOOKUP_QUIET ) ) == DIR_NULL ) {
+		Tcl_AppendResult(interp, argv[2], " Does not exist\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* import the current solid */
+	RT_INIT_DB_INTERNAL( &intern );
+	if( rt_db_get_internal( &intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp ) < 0 ) {
+		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[1],
+				 "\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* make sure this is a BOT solid */
+	if( intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
+	    intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
+		Tcl_AppendResult(interp, argv[1], " is not a BOT solid\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	bot = (struct rt_bot_internal *)intern.idb_ptr;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	/* convert maximum error to mm */
+	max_chord_error = atof( argv[3] ) * wdbp->dbip->dbi_local2base;
+
+	if( max_chord_error <= 0.0 ) {
+		Tcl_AppendResult(interp, "maximum chord error must be greater than zero\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	if( argc == 4 ) {
+		max_normal_error = atof( argv[4] );
+		if( max_normal_error < 0.0 || max_normal_error > 90.0 ) {
+			Tcl_AppendResult(interp, "maximum normal error must be between 0.0 and 90.0\n",
+					 (char *)NULL );
+			rt_db_free_internal( &intern, wdbp->wdb_resp );
+			return TCL_ERROR;
+		}
+	}
+
+	/* do the decimation */
+	if( rt_bot_decimate( bot, max_chord_error, max_normal_error) < 0 ) {
+		Tcl_AppendResult(interp, "Decimation Error\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	/* save the result to the database */
+	if( wdb_put_internal( wdbp, argv[1], &intern, 1.0 ) < 0 ) {
+		Tcl_AppendResult(interp, "Failed to write decimated BOT back to database\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname 
+ */
+static int
+wdb_bot_decimate_tcl(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_bot_decimate_cmd(wdbp, interp, argc-1, argv+1);
 }

@@ -3240,3 +3240,357 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 
 	return( 0 );
 }
+
+/*
+ *			D E C I M A T E _ E D G E
+ *
+ *	Routine to perform the actual edge decimation step
+ *	The edge from v1 to v2 is eliminated by moving v1 to v2.
+ *	Faces that used this edge are eliminated.
+ *	Faces that used v1 will have that reference changed to v2.
+ */
+
+static int
+decimate_edge( int v1, int v2, int *faces, int num_faces )
+{
+	int i, j, k;
+	int count;		/* number of references to v1 or v2 in the current face */
+	int deleted_faces=0;
+
+	for( i=0 ; i<num_faces*3 ; i += 3 ) {
+		count = 0;
+		for( j=0 ; j<3 ; j++ ) {
+			k = i+j;
+			if( faces[k] == v2 ) {
+				/* a reference to v2, count it */
+				count++;
+			} else if( faces[k] == v1 ) {
+				/* a reference to v1, count it and change it to v2 */
+				faces[k] = v2;
+				count++;
+			}
+		}
+		if( count > 1 ) {
+			/* eliminate this face */
+			deleted_faces++;
+			for( j=0 ; j<3 ; j++ ) {
+				faces[i+j] = -1;
+			}
+		}
+	}
+
+	return deleted_faces;
+}
+
+/*
+ *				E D G E _ C A N _ B E _ D E C I M A T E D
+ *
+ *	Routine to determine if the specified edge can be eliminated within the given constraints
+ *		"faces" is the current working version of the BOT face list.
+ *		"v1" and "v2" are the indices into the BOT vertex list, they define the edge.
+ *		"max_chord_error" is the maximum distance allowed between the old surface and new.
+ *		"max_normal_error" is actually the minimum dot product allowed between old and new
+ *			surface normals (cosine).
+ *	returns 1 if edge can be eliminated without breaking conatraints, 0 otherwise
+ */
+
+/* for simplicity, only consider vertices that are shared with less than MAX_AFFECTED_FACES */
+#define MAX_AFFECTED_FACES	128
+
+static int
+edge_can_be_decimated( struct rt_bot_internal *bot,
+		       int *faces,
+		       int v1,
+		       int v2,
+		       fastf_t max_chord_error,
+		       fastf_t max_normal_error )
+{
+	int i, j, k;
+	int num_faces=bot->num_faces;
+	int count, v1_count;
+	int face_del1, face_del2;
+	int affected_count=0;
+	vect_t v01, v02, v12;
+	fastf_t *vertices=bot->vertices;
+	int faces_affected[MAX_AFFECTED_FACES];
+
+	if( v1 < 0 || v2 < 0 ) {
+		return 0;
+	}
+
+	/* find faces to be deleted or affected */
+	face_del1 = -1;
+	face_del2 = -1;
+	for( i=0 ; i<num_faces*3 ; i += 3 ) {
+		count = 0;
+		v1_count = 0;
+		for( j=0 ; j<3 ; j++ ) {
+			k = i + j;
+			if( faces[k] == v1 ) {
+				/* found a reference to v1, count it */
+				count++;
+				v1_count++;
+			} else if( faces[k] == v2 ) {
+				/* found a reference to v2, count it */
+				count++;
+			}
+		}
+		if( count > 1 ) {
+			/* this face will get deleted */
+			if( face_del1 > -1 ) {
+				face_del2 = i;
+			} else {
+				face_del1 = i;
+			}
+		} else if( v1_count ) {
+			/* this face will be affected */
+			faces_affected[affected_count] = i;
+			affected_count++;
+			if( affected_count >= MAX_AFFECTED_FACES ) {
+				return 0;
+			}
+		}
+	}
+
+	/* if only one face will be deleted, do not decimate
+	 * this may be a free edge
+	 */
+	if( face_del2 < 0 ) {
+	  return 0;
+	}
+
+	/* calculate edge vector */
+	VSUB2( v12, &vertices[v1*3], &vertices[v2*3] );
+
+	/* check if surface is within max_chord_error of vertex to be eliminated */
+	/* loop through all affected faces */
+	for( i=0 ; i<affected_count ; i++ ) {
+	        fastf_t dist;
+                fastf_t dot;
+		plane_t pla, plb;
+		int va, vb, vc;
+
+		/* calculate plane of this face before and after adjustment
+		*  if the normal changes too much, do not decimate
+		*/
+
+		/* first calculate original face normal (use original BOT face list) */
+		va = bot->faces[faces_affected[i]];
+		vb = bot->faces[faces_affected[i]+1];
+		vc = bot->faces[faces_affected[i]+2];
+		VSUB2( v01, &vertices[vb*3], &vertices[va*3] );
+		VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
+		VCROSS( plb, v01, v02 );
+		VUNITIZE( plb );
+		plb[3] = VDOT( &vertices[va*3], plb );
+
+		/* do the same using the working face list */
+		va = faces[faces_affected[i]];
+		vb = faces[faces_affected[i]+1];
+		vc = faces[faces_affected[i]+2];
+		/* make the proposed decimation changes */
+		if( va == v1 ) {
+		  va = v2;
+		} else if( vb == v1 ) {
+		  vb = v2;
+		} else if( vc == v1 ) {
+		  vc = v2;
+		}
+		VSUB2( v01, &vertices[vb*3], &vertices[va*3] );
+		VSUB2( v02, &vertices[vc*3], &vertices[va*3] );
+		VCROSS( pla, v01, v02 );
+		VUNITIZE( pla );
+		pla[3] = VDOT( &vertices[va*3], pla );
+
+		/* max_normal_error is actually a minimum dot product */
+		dot = VDOT( pla, plb );
+		if( dot < max_normal_error ) {
+			return 0;
+		}
+
+		/* check the distance between this new plane and vertex v1 */
+		dist = fabs( DIST_PT_PLANE( &vertices[v1*3], pla ) );
+		if( dist > max_chord_error ) {
+		  return 0;
+		}
+	}
+
+	return 1;
+}
+
+struct bot_edge {
+  int v;
+  struct bot_edge *next;
+};
+
+
+/*
+ *				R T _ B O T _ D E C I M A T E
+ *
+ *	routine to reduce the number of triangles in a BOT by edges decimation
+ *		max_chord_error is the maximum error distance allowed
+ *		max_normal_error is the maximum change in surface normal allowed
+ */
+int
+rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
+		 fastf_t max_chord_error,	/* maximum allowable chord error (mm) */
+		 fastf_t max_normal_error )	/* maximum allowable normal error (degrees) */
+{
+	int *faces;
+	struct bot_edge **edges;
+	int edges_deleted=0;
+	int edge_count=0;
+	int face_count;
+	int actual_count;
+	int deleted;
+	int v1, v2;
+	int i, j;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	if( max_chord_error <= SMALL_FASTF )
+		return 0;
+
+	if( max_normal_error <= SMALL_FASTF )
+		return 0 ;
+
+	/* convert normal error to something useful (a minimum dot product) */
+	max_normal_error = cos( max_normal_error * M_PI / 180.0 );
+
+	/* make a working copy of the face list */
+	faces = (int *)bu_malloc( sizeof( int ) * bot->num_faces * 3, "faces" );
+	for( i=0 ; i<bot->num_faces*3 ; i++ ) {
+		faces[i] = bot->faces[i];
+	}
+	face_count = bot->num_faces;
+
+	/* make a list of edges in the BOT
+	 * each edge will be in the list for its lower numbered vertex index
+	 */
+	edges = (struct bot_edge **)bu_calloc( bot->num_vertices,
+				     sizeof( struct bot_edge *), "edges" );
+
+	/* loop through all the faces building the edge lists */
+	for( i=0 ; i<bot->num_faces*3 ; i += 3 ) {
+	  for( j=0 ; j<3 ; j++ ) {
+	    struct bot_edge *ptr;
+	    int k;
+
+	    k = j + 1;
+	    if( k > 2 ) {
+	      k = 0;
+	    }
+	    /* v1 is starting vertex index for this edge
+	     * v2 is the ending vertex index
+	     */
+	    v1 = faces[i+j];
+	    v2 = faces[i+k];
+
+	    /* make sure the lower index is v1 */
+	    if( v2 < v1 ) {
+	      int tmp;
+
+	      tmp = v1;
+	      v1 = v2;
+	      v2 = tmp;
+	    }
+
+	    /* store this edge in the appropiate list */
+	    ptr = edges[v1];
+	    if( !ptr ) {
+	      ptr = bu_malloc( sizeof( struct bot_edge ), "edges[v1]" );
+	      edges[v1] = ptr;
+	    } else {
+	      while( ptr->next && ptr->v != v2 ) ptr = ptr->next;
+	      if( ptr->v == v2 ) {
+		continue;
+	      }
+	      ptr->next = bu_malloc( sizeof( struct bot_edge ), "ptr->next" );
+	      ptr = ptr->next;
+	    }
+	    edge_count++;
+	    ptr->v = v2;
+	    ptr->next = NULL;
+	  }
+	}
+
+	/* visit each edge */
+	for( i=0 ; i<bot->num_vertices ; i++ ) {
+	  struct bot_edge *ptr;
+
+	  ptr = edges[i];
+	  while( ptr ) {
+
+	    /* try to avoid making 2D objects */
+	    if( face_count < 5 )
+	      break;
+
+	    /* check if this edge can be eliminated (try both directions) */
+	    if( edge_can_be_decimated( bot, faces, i, ptr->v,
+				       max_chord_error, max_normal_error )) {
+	      face_count -= decimate_edge( i, ptr->v, faces, bot->num_faces );
+	      edges_deleted++;
+	    } else if( edge_can_be_decimated( bot, faces, ptr->v, i,
+				       max_chord_error, max_normal_error )) {
+	      face_count -= decimate_edge( ptr->v, i, faces, bot->num_faces );
+	      edges_deleted++;
+	    }
+	    ptr = ptr->next;
+	  }
+	}
+
+	/* free some memory */
+	for( i=0 ; i<bot->num_vertices ; i++ ) {
+	  struct bot_edge *ptr, *ptr2;
+
+	  ptr = edges[i];
+	  while( ptr ) {
+	    ptr2 = ptr;
+	    ptr = ptr->next;
+	    bu_free( (char *)ptr2, "ptr->edges" );
+	  }
+	}
+	bu_free( (char *)edges, "edges" );
+
+	/* condense the face list */
+	actual_count = 0;
+	deleted = 0;
+	for( i=0 ; i<bot->num_faces*3 ; i++ ) {
+		if( faces[i] < 0 ) {
+			deleted++;
+			continue;
+		}
+		if( deleted ) {
+			faces[i-deleted] = faces[i];
+		}
+		actual_count++;
+	}
+
+	if( actual_count % 3 ) {
+		bu_log( "rt_bot_decimate: face vertices count is not a multilple of 3!!\n" );
+		bu_free( ( char *)faces, "faces" );
+		return -1;
+	}
+
+	bu_log( "original face count = %d, edge count = %d\n",
+		bot->num_faces, edge_count );
+	bu_log( "\tedges deleted = %d\n", edges_deleted );
+	bu_log( "\tnew face_count = %d\n", face_count );
+
+	actual_count /= 3;
+
+	if( face_count != actual_count ) {
+		bu_log( "rt_bot_decimate: Face count is confused!!\n" );
+		bu_free( ( char *)faces, "faces" );
+		return -2;
+	}
+
+	bu_free( (char *)bot->faces, "bot->faces" );
+	bot->faces = (int *)bu_realloc( faces, sizeof( int ) * face_count * 3, "bot->faces" );
+	bot->num_faces = face_count;
+
+	/* removed unused vertices */
+	(void)rt_bot_condense( bot );
+
+	return edges_deleted;
+}
