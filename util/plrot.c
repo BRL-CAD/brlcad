@@ -94,34 +94,34 @@ register char **argv;
 			break;
 		case 'g':
 			bn_mat_angles( tmp, -90.0, 0.0, -90.0 );
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'a':
 			bn_mat_angles( tmp, 0.0, 0.0, -atof(optarg) );
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			rpp++;
 			break;
 		case 'e':
 			bn_mat_angles( tmp, 0.0, -atof(optarg), 0.0 );
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			rpp++;
 			break;
 		case 'x':
 			bn_mat_angles( tmp, atof(optarg), 0.0, 0.0 );
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'y':
 			bn_mat_angles( tmp, 0.0, atof(optarg), 0.0 );
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'z':
 			bn_mat_angles( tmp, 0.0, 0.0, atof(optarg) );
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'm':
@@ -144,19 +144,19 @@ register char **argv;
 		case 'X':
 			MAT_IDN( tmp );
 			tmp[MDX] = atof(optarg);
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Y':
 			MAT_IDN( tmp );
 			tmp[MDY] = atof(optarg);
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 'Z':
 			MAT_IDN( tmp );
 			tmp[MDZ] = atof(optarg);
-			bn_mat_copy( m, rmat );
+			MAT_COPY( m, rmat );
 			bn_mat_mul( rmat, tmp, m );
 			break;
 		case 's':
@@ -171,7 +171,7 @@ register char **argv;
 			if( !rpp )  {
 				MAT_IDN( tmp );
 				tmp[15] = 1/scale;
-				bn_mat_copy( m, rmat );
+				MAT_COPY( m, rmat );
 				bn_mat_mul( rmat, tmp, m );
 				scale = 1.0;
 			}
@@ -475,7 +475,7 @@ CONST point_t	min, max;
 		resize[15] = 1/scale;
 		bn_mat_mul( t1, resize, xlate );
 		bn_mat_mul( t2, rmat, t1 );
-		bn_mat_copy( rmat, t2 );
+		MAT_COPY( rmat, t2 );
 		if( verbose )  {
 			bn_mat_print("rmat", rmat);
 		}

@@ -438,7 +438,7 @@ int which_eye;
 		bu_vls_free(&tmp_vls);
 	}
 
-	bn_mat_copy(psmat, mat);
+	MAT_COPY(psmat, mat);
 
 	Tcl_SetObjResult(dmp->dm_interp, obj);
 	return TCL_OK;

@@ -338,7 +338,7 @@ char	*descript;
 	 * MAT_DELTAS to 0, and set the scale to 1.
 	 */
 
-	bn_mat_copy(v2symbol, v2mod);
+	MAT_COPY(v2symbol, v2mod);
 	MAT_DELTAS(v2symbol, 0, 0, 0);
 	v2symbol[15] = 1;
 

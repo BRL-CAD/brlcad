@@ -617,7 +617,7 @@ int which_eye;
 #endif
   }
 
-  bn_mat_copy(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
+  MAT_COPY(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
   return TCL_OK;
 }
 

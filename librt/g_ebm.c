@@ -580,7 +580,7 @@ CONST struct db_i		*dbip;
 
 	/* Apply any modeling transforms to get final matrix */
 	bn_mat_mul( tmat, mat, eip->mat );
-	bn_mat_copy( eip->mat, tmat );
+	MAT_COPY( eip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
 	if( !(mp = bu_open_mapped_file_with_path( dbip->dbi_filepath, eip->file, "ebm" )) )  {
@@ -729,7 +729,7 @@ CONST struct db_i		*dbip;
 
 	/* Apply any modeling transforms to get final matrix */
 	bn_mat_mul( tmat, mat, eip->mat );
-	bn_mat_copy( eip->mat, tmat );
+	MAT_COPY( eip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
 	if( !(mp = bu_open_mapped_file_with_path( dbip->dbi_filepath, eip->file, "ebm" )) )  {

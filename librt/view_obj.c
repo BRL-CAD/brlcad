@@ -448,7 +448,7 @@ vo_rmat_tcl(clientData, interp, argc, argv)
 		if (bn_decode_mat(rotation, argv[2]) != 16)
 			return TCL_ERROR;
 
-		bn_mat_copy(vop->vo_rotation, rotation);
+		MAT_COPY(vop->vo_rotation, rotation);
 		vo_update(vop, interp , 1);
 
 		return TCL_OK;

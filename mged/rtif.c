@@ -978,7 +978,7 @@ work:
 	    	case -1:
 	    		/* First step:  put eye in center */
 		       	view_state->vs_Viewscale = scale;
-		       	bn_mat_copy( view_state->vs_Viewrot, rot );
+		       	MAT_COPY( view_state->vs_Viewrot, rot );
 			MAT_DELTAS( view_state->vs_toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
@@ -1302,7 +1302,7 @@ char	**argv;
 	 *  Initialize the view to the current one in MGED
 	 *  in case a view specification is never given.
 	 */
-	bn_mat_copy(rtif_viewrot, view_state->vs_Viewrot);
+	MAT_COPY(rtif_viewrot, view_state->vs_Viewrot);
 	VSET(temp, 0.0, 0.0, 1.0);
 	MAT4X3PNT(rtif_eye_model, view_state->vs_view2model, temp);
 
@@ -1902,7 +1902,7 @@ int	argc;
 	}
 	
 	/* First step:  put eye at view center (view 0,0,0) */
-       	bn_mat_copy( view_state->vs_Viewrot, rtif_viewrot );
+       	MAT_COPY( view_state->vs_Viewrot, rtif_viewrot );
 	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, rtif_eye_model );
 	new_mats();
 

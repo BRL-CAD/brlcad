@@ -72,7 +72,7 @@ CONST matp_t	mat;		/* convert solid coords to model space */
 
 	dsp->dsp_xcnt = xdim;
 	dsp->dsp_ycnt = ydim;
-	mat_copy( dsp->dsp_stom, mat );
+	MAT_COPY( dsp->dsp_stom, mat );
 
 	return wdb_export( fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm );
 }
@@ -98,7 +98,7 @@ CONST matp_t	mat;		/* convert local coords to model space */
 	ebm->xdim = xdim;
 	ebm->ydim = ydim;
 	ebm->tallness = tallness;
-	mat_copy( ebm->mat , mat );
+	MAT_COPY( ebm->mat , mat );
 
 	return wdb_export( fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm );
 }
@@ -130,7 +130,7 @@ CONST matp_t	mat;		/* convert local coords to model space */
 	vol->lo = lo;
 	vol->hi = hi;
 	VMOVE( vol->cellsize , cellsize );
-	mat_copy( vol->mat , mat );
+	MAT_COPY( vol->mat , mat );
 
 	return wdb_export( fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm );
 }

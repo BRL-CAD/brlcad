@@ -243,7 +243,7 @@ struct resource *resp;
 
 		MAT_DELTAS_VEC(mp, ell_p->v);
 
-		bn_mat_copy(dbint->ell2model, mp);
+		MAT_COPY(dbint->ell2model, mp);
 		bn_mat_inv(dbint->model2ell, mp);
 
 

@@ -955,10 +955,12 @@ genptr_t                user_ptr1, user_ptr2, user_ptr3;
 	found = (int *)user_ptr3;
 
 	(*found) = 1;
-	if( comb_leaf->tr_l.tl_mat )
-		bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
-	else
+	if( comb_leaf->tr_l.tl_mat ) {
+		MAT_COPY( xmat, comb_leaf->tr_l.tl_mat );
+	}
+	else {
 		MAT_IDN( xmat );
+	}
 }
 
 /*
@@ -1009,7 +1011,7 @@ pathHmat(
 #endif
 #endif
 
-	bn_mat_copy( matp, ts.ts_mat );	/* implicit return */
+	MAT_COPY( matp, ts.ts_mat );	/* implicit return */
 
 	db_free_db_tree_state( &ts );
 }

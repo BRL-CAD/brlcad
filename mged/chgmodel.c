@@ -1171,7 +1171,7 @@ char	**argv;
 			RT_EBM_CK_MAGIC( ebm );
 
 			bn_mat_mul( temp, mirmat, ebm->mat );
-			bn_mat_copy( ebm->mat, temp );
+			MAT_COPY( ebm->mat, temp );
 
 			break;
 		}
@@ -1183,7 +1183,7 @@ char	**argv;
 			RT_DSP_CK_MAGIC( dsp );
 			
 			bn_mat_mul( temp, mirmat, dsp->dsp_mtos);
-			bn_mat_copy( dsp->dsp_mtos, temp);
+			MAT_COPY( dsp->dsp_mtos, temp);
 			
 			break;
 		}
@@ -1195,7 +1195,7 @@ char	**argv;
 			RT_VOL_CK_MAGIC( vol );
 
 			bn_mat_mul( temp, mirmat, vol->mat );
-			bn_mat_copy( vol->mat, temp );
+			MAT_COPY( vol->mat, temp );
 
 			break;
 		}
@@ -1991,7 +1991,7 @@ vect_t argvect;
   MAT_IDN(temp);
   MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
   temp[15] = modelchanges[15];
-  bn_mat_copy(modelchanges, temp);
+  MAT_COPY(modelchanges, temp);
 
   /* build new rotation matrix */
   MAT_IDN(temp);
@@ -2005,7 +2005,7 @@ vect_t argvect;
     bn_mat_mul2(acc_rot_sol, temp);
   }
 
-  /*XXX*/ bn_mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
+  /*XXX*/ MAT_COPY(acc_rot_sol, temp); /* used to rotate solid/object axis */
   
   /* Record the new rotation matrix into the revised
    *	modelchanges matrix wrt "point"
@@ -2219,7 +2219,7 @@ char	**argv;
 	MAT4X3PNT(ed_sol_pt, modelchanges, model_sol_pt);
 	VSUB2(model_incr, new_vertex, ed_sol_pt);
 	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
-	bn_mat_copy(old,modelchanges);
+	MAT_COPY(old,modelchanges);
 	bn_mat_mul(modelchanges, incr, old);
 #ifdef DO_NEW_EDIT_MATS
 	new_edit_mats();
@@ -2564,7 +2564,7 @@ char	**argv;
 	MAT_IDN(temp);
 	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
 	temp[15] = modelchanges[15];
-	bn_mat_copy(modelchanges, temp);
+	MAT_COPY(modelchanges, temp);
 
 	/* build new rotation matrix */
 	MAT_IDN(temp);

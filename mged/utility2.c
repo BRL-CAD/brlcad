@@ -398,7 +398,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	if( comb_leaf->tr_l.tl_mat )  {
 		bn_mat_mul( new_xlate, old_xlate, comb_leaf->tr_l.tl_mat );
 	} else {
-		bn_mat_copy( new_xlate, old_xlate );
+		MAT_COPY( new_xlate, old_xlate );
 	}
 	if( (nextdp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -467,7 +467,7 @@ int flag;
 	}
 
 	/* have the desired path up to objpos */
-	bn_mat_copy(xform, old_xlate);
+	MAT_COPY(xform, old_xlate);
 	prflag = 1;
 
 	if(flag == CPEVAL)
@@ -612,7 +612,7 @@ genptr_t		client_data;
 	    "Push ident");
 	pip->magic = MAGIC_PUSH_ID;
 	pip->pi_dir = dp;
-	bn_mat_copy(pip->pi_mat, tsp->ts_mat);
+	MAT_COPY(pip->pi_mat, tsp->ts_mat);
 	pip->back = pi_head.back;
 	pi_head.back = pip;
 	pip->forw = &pi_head;
@@ -963,7 +963,7 @@ mat_t xform;
 
 		found = use->dp;
 		use->used = 1;
-		bn_mat_copy( use->xform, xform );
+		MAT_COPY( use->xform, xform );
 		break;
 	}
 
@@ -1024,7 +1024,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	if( comb_leaf->tr_l.tl_mat )  {
 		bn_mat_mul( new_xform, xform, comb_leaf->tr_l.tl_mat );
 	} else {
-		bn_mat_copy( new_xform, xform );
+		MAT_COPY( new_xform, xform );
 	}
 
 	/* Copy member with current tranform matrix */
@@ -1091,7 +1091,7 @@ mat_t xform;
 			continue;	/* already used */
 		found = use->dp;
 		use->used = 1;
-		bn_mat_copy( use->xform, xform );
+		MAT_COPY( use->xform, xform );
 		break;
 	}
 
@@ -1338,7 +1338,7 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 		mat_t tmp_mat;
 		if( comb_leaf->tr_l.tl_mat )  {
 			bn_mat_mul( tmp_mat, acc_matrix, comb_leaf->tr_l.tl_mat );
-			bn_mat_copy( acc_matrix, tmp_mat );
+			MAT_COPY( acc_matrix, tmp_mat );
 		}
 	}
 

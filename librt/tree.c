@@ -378,7 +378,7 @@ more_checks:
 
 	if( mat )  {
 		stp->st_matp = (matp_t)bu_malloc( sizeof(mat_t), "st_matp" );
-		bn_mat_copy( stp->st_matp, mat );
+		MAT_COPY( stp->st_matp, mat );
 	} else {
 		stp->st_matp = (matp_t)0;
 	}

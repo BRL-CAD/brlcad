@@ -399,8 +399,8 @@ bv_vrestore(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   /* restore to saved view */
   if ( vsaved )  {
     view_state->vs_Viewscale = sav_vscale;
-    bn_mat_copy( view_state->vs_Viewrot, sav_viewrot );
-    bn_mat_copy( view_state->vs_toViewcenter, sav_toviewcenter );
+    MAT_COPY( view_state->vs_Viewrot, sav_viewrot );
+    MAT_COPY( view_state->vs_toViewcenter, sav_toviewcenter );
     new_mats();
 
     (void)mged_svbase();
@@ -413,8 +413,8 @@ bv_vsave(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
   /* save current view */
   sav_vscale = view_state->vs_Viewscale;
-  bn_mat_copy( sav_viewrot, view_state->vs_Viewrot );
-  bn_mat_copy( sav_toviewcenter, view_state->vs_toViewcenter );
+  MAT_COPY( sav_viewrot, view_state->vs_Viewrot );
+  MAT_COPY( sav_toviewcenter, view_state->vs_toViewcenter );
   vsaved = 1;
   return TCL_OK;
 }
@@ -850,7 +850,7 @@ char *str;
       fastf_t o_Viewscale;
 
       /* save toViewcenter and Viewscale */
-      bn_mat_copy(o_toViewcenter, view_state->vs_toViewcenter);
+      MAT_COPY(o_toViewcenter, view_state->vs_toViewcenter);
       o_Viewscale = view_state->vs_Viewscale;
 
       /* get new orig_pos */
@@ -858,7 +858,7 @@ char *str;
       MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
 
       /* restore old toViewcenter and Viewscale */
-      bn_mat_copy(view_state->vs_toViewcenter, o_toViewcenter);
+      MAT_COPY(view_state->vs_toViewcenter, o_toViewcenter);
       view_state->vs_Viewscale = o_Viewscale;
     }
 #endif

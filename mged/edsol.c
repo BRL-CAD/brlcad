@@ -2651,7 +2651,7 @@ int idx;
 
 	RT_DSP_CK_MAGIC(dsp);
 
-	mat_idn(m);
+	MAT_IDN(m);
 
 	if (es_mvalid) {
 		bu_log("es_mvalid %g %g %g\n", V3ARGS(es_mparam));
@@ -2669,10 +2669,10 @@ int idx;
 	bn_mat_xform_about_pt(scalemat, m, es_keypoint);
 
 	bn_mat_mul(m, dsp->dsp_stom, scalemat);
-	bn_mat_copy(dsp->dsp_stom, m);
+	MAT_COPY(dsp->dsp_stom, m);
 
 	bn_mat_mul(m, scalemat, dsp->dsp_mtos);
-	bn_mat_copy(dsp->dsp_mtos, m);
+	MAT_COPY(dsp->dsp_mtos, m);
 
 }
 /*
@@ -3573,7 +3573,7 @@ sedit()
 					es_para[0] * degtorad,
 					es_para[1] * degtorad,
 					es_para[2] * degtorad );
-				bn_mat_copy(acc_rot_sol, modelchanges);
+				MAT_COPY(acc_rot_sol, modelchanges);
 
 #ifdef TRY_EDIT_NEW_WAY
 				/* Borrow incr_change matrix here */
@@ -4004,7 +4004,7 @@ sedit()
 					es_para[2] * degtorad );
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				bn_mat_copy(acc_rot_sol, modelchanges);
+				MAT_COPY(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
@@ -4082,7 +4082,7 @@ sedit()
 					es_para[2] * degtorad );
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				bn_mat_copy(acc_rot_sol, modelchanges);
+				MAT_COPY(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
@@ -4139,7 +4139,7 @@ sedit()
 					es_para[2] * degtorad );
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				bn_mat_copy(acc_rot_sol, modelchanges);
+				MAT_COPY(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
@@ -4196,7 +4196,7 @@ sedit()
 					es_para[2] * degtorad );
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				bn_mat_copy(acc_rot_sol, modelchanges);
+				MAT_COPY(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
@@ -4265,7 +4265,7 @@ sedit()
 					es_para[2] * degtorad );
 				/* Borrow incr_change matrix here */
 				bn_mat_mul( incr_change, modelchanges, invsolr );
-				bn_mat_copy(acc_rot_sol, modelchanges);
+				MAT_COPY(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to solid */
 				/*  Clear out solid rotation */
@@ -6344,7 +6344,7 @@ objedit_mouse( const vect_t mousevec )
     VSUB2( tr_temp, pos_model, tr_temp );
     MAT_DELTAS(incr_change,
 	       tr_temp[X], tr_temp[Y], tr_temp[Z]);
-    bn_mat_copy( oldchanges, modelchanges );
+    MAT_COPY( oldchanges, modelchanges );
     bn_mat_mul( modelchanges, incr_change, oldchanges );
 
     MAT_IDN( incr_change );
@@ -6379,7 +6379,7 @@ point_t tvec;
   VSUB2( tr_temp, pos_model, tr_temp );
   MAT_DELTAS(incr_mat,
 	     tr_temp[X], tr_temp[Y], tr_temp[Z]);
-  bn_mat_copy( oldchanges, modelchanges );
+  MAT_COPY( oldchanges, modelchanges );
   bn_mat_mul( modelchanges, incr_mat, oldchanges );
 
   new_edit_mats();
@@ -7886,7 +7886,7 @@ double	xangle, yangle, zangle;
 
 	/* accumulate the translations */
 	bn_mat_mul(tempp, incr_change, acc_rot_sol);
-	bn_mat_copy(acc_rot_sol, tempp);
+	MAT_COPY(acc_rot_sol, tempp);
 
 	/* sedit() will use incr_change or acc_rot_sol ?? */
 	sedit();	/* change es_int only, NOW */

@@ -1008,8 +1008,8 @@ STATIC void log_Run()
 	 * matrix and use that to find the orientation.
 	 */
 
-	mat_idn( model2hv );
-	mat_idn( hv2model );
+	MAT_IDN( model2hv );
+	MAT_IDN( hv2model );
 
 	/* Print out the "view" just to keep rtregis from belly-aching */
 

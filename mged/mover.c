@@ -119,7 +119,7 @@ matp_t xlate;
 			else
 			{
 				tp->tr_l.tl_mat = (matp_t)bu_malloc( 16 * sizeof( fastf_t ), "tl_mat" );
-				bn_mat_copy( tp->tr_l.tl_mat, xlate );
+				MAT_COPY( tp->tr_l.tl_mat, xlate );
 			}
 			if( rt_db_put_internal( cdp, dbip, &intern, &rt_uniresource ) < 0 )
 			{

@@ -167,7 +167,7 @@ fastf_t od, id;
 	VMOVE( &R[4], pipe->bend_rb );
 	VMOVE( &R[8], pipe->bend_N );
 	bn_mat_inv( pipe->bend_invR, R );
-	bn_mat_copy( pipe->bend_SoR, R );
+	MAT_COPY( pipe->bend_SoR, R );
 	pipe->bend_SoR[15] *= pipe->bend_radius;
 
 	/* bounding box for entire torus */

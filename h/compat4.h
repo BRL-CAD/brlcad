@@ -160,7 +160,7 @@ extern "C" {
 #define mat_atan2	bn_atan2
 #define mat_zero	MAT_ZERO
 #define mat_idn		MAT_IDN
-#define mat_copy	bn_mat_copy
+#define mat_copy	MAT_COPY
 #define mat_mul		bn_mat_mul
 #define mat_mul2	bn_mat_mul2
 #define matXvec		bn_matXvec

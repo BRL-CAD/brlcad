@@ -6,7 +6,7 @@
  *	bn_atan2()			Wrapper for library atan2()
  *(deprecated) bn_mat_zero( &m )		Fill matrix m with zeros
  *(deprecated) bn_mat_idn( &m )		Fill matrix m with identity matrix
- *	bn_mat_copy( &o, &i )		Copy matrix i to matrix o
+ *(deprecated) bn_mat_copy( &o, &i )		Copy matrix i to matrix o
  *	bn_mat_mul( &o, &i1, &i2 )	Multiply i1 by i2 and store in o
  *	bn_mat_mul2( &i, &o )
  *	bn_matXvec( &ov, &m, &iv )	Multiply m by vector iv, store in ov
@@ -179,6 +179,7 @@ register CONST mat_t	src;
 
 	/* Copy all elements */
 #	include "noalias.h"
+	bu_log("libbn/mat.c:  bn_mat_copy() is deprecated, use MAT_COPY()\n");
 	for( i=15; i>=0; i--)
 		dest[i] = src[i];
 }
@@ -236,7 +237,7 @@ register mat_t		o;
 	mat_t	temp;
 
 	bn_mat_mul( temp, i, o );
-	bn_mat_copy( o, temp );
+	MAT_COPY( o, temp );
 }
 
 /*
@@ -331,7 +332,7 @@ CONST mat_t	input;
 	LOCAL fastf_t	b[4];			/* Temporary */
 	LOCAL fastf_t	c[4];			/* Temporary */
 	
-	bn_mat_copy( output, input );	/* Duplicate */
+	MAT_COPY( output, input );	/* Duplicate */
 
         /* Initialization */
 	for( j = 0; j < 4; j++ )
@@ -982,7 +983,7 @@ int		yflip;
 	if( hypot_xy < 1.0e-10 )  {
 		bu_log("Warning: bn_mat_lookat:  unable to twist correct, hypot=%g\n", hypot_xy);
 		VPRINT( "xproj", xproj );
-		bn_mat_copy( rot, prod12 );
+		MAT_COPY( rot, prod12 );
 		return;
 	}
 	bn_mat_zrot( third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy );
@@ -993,7 +994,7 @@ int		yflip;
 		MAT4X3VEC( zproj, rot, z );
 		/* If original Z inverts sign, flip sign on resulting Y */
 		if( zproj[Y] < 0.0 )  {
-			bn_mat_copy( prod12, rot );
+			MAT_COPY( prod12, rot );
 			MAT_IDN( third );
 			third[5] = -1;
 			bn_mat_mul( rot, third, prod12 );

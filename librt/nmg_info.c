@@ -1264,7 +1264,7 @@ CONST struct bn_tol	*tol;
 	st.visited = (char *)bu_calloc(m->maxindex+1, sizeof(char), "visited[]");
 	st.mindist = INFINITY;
 	VMOVE( st.pt2, pt2 );
-	bn_mat_copy( st.mat, mat );
+	MAT_COPY( st.mat, mat );
 	st.ep = (struct edge *)NULL;
 	st.tol = tol;
 

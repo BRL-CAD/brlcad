@@ -380,7 +380,7 @@ struct grass_specific *grass_sp;
    * a rotation/scale of this first one.
    */
   bn_mat_zrot(r, sin(bn_degtorad*137.0), cos(bn_degtorad*137.0));
-  bn_mat_copy(m,r);
+  MAT_COPY(m,r);
 
   seg_delta_angle = (87.0 / (double)BLADE_SEGS_MAX);
 

@@ -212,7 +212,7 @@ mat_t	regismat;
 	 * deltas are used.   This will be implemented later.
 	 */
 
-	bn_mat_copy( regismat, mat2);
+	MAT_COPY( regismat, mat2);
 	bn_mat_print("regismat", regismat);
 	return(1);				/* OK */
 }

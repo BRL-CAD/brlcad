@@ -454,7 +454,7 @@ CONST struct db_i		*dbip;
 
 	/* Apply any modeling transforms to get final matrix */
 	bn_mat_mul( tmat, mat, vip->mat );
-	bn_mat_copy( vip->mat, tmat );
+	MAT_COPY( vip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
 	nbytes = (vip->xdim+VOL_XWIDEN*2)*
@@ -593,7 +593,7 @@ CONST struct db_i		*dbip;
 
 	/* Apply any modeling transforms to get final matrix */
 	bn_mat_mul( tmat, mat, vip->mat );
-	bn_mat_copy( vip->mat, tmat );
+	MAT_COPY( vip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
 	nbytes = (vip->xdim+VOL_XWIDEN*2)*

@@ -631,7 +631,7 @@ next_one:
 	stp->st_dp = dp;
 	if( mat )  {
 		stp->st_matp = (matp_t)rt_malloc( sizeof(mat_t), "st_matp" );
-		mat_copy( stp->st_matp, mat );
+		MAT_COPY( stp->st_matp, mat );
 	} else {
 		stp->st_matp = mat;
 	}
@@ -1345,7 +1345,7 @@ register char *prefix;
 	ewrite( ridfp, LF, 1 );
 
 	/* Initialize matrices.						*/
-	mat_idn( identity );
+	MAT_IDN( identity );
 
 	if( !sol_hd.l.magic )  RT_LIST_INIT( &sol_hd.l );
 

@@ -1883,7 +1883,7 @@ Ogl_configure_window_shape()
 
 	xlim_view = 1.0;
 	ylim_view = 1.0;
-	mat_idn(aspect_corr);
+	MAT_IDN(aspect_corr);
 
 #if 1
 	XGetWindowAttributes( dpy, win, &xwa );

@@ -3338,7 +3338,7 @@ struct joint *jp;
 		 * Build matrix.
 		 */
 		quat_quat2mat(m2,q1);
-		bn_mat_copy(m1, ANIM_MAT);
+		MAT_COPY(m1, ANIM_MAT);
 		bn_mat_mul(ANIM_MAT, m2, m1);
 		/*
 		 * rmult matrix into the mat we are building.
@@ -3367,7 +3367,7 @@ struct joint *jp;
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
 		}
-		bn_mat_copy(m1, ANIM_MAT);
+		MAT_COPY(m1, ANIM_MAT);
 		bn_mat_mul(ANIM_MAT, m2, m1);
 	}
 	/*
@@ -3375,7 +3375,7 @@ struct joint *jp;
 	 */
 	MAT_IDN(m2);
 	MAT_DELTAS_VEC(m2, jp->location);
-	bn_mat_copy(m1, ANIM_MAT);
+	MAT_COPY(m1, ANIM_MAT);
 	bn_mat_mul(ANIM_MAT,m2,m1);
 	if (joint_debug & DEBUG_J_MOVE) {
 		bn_mat_print("joint move: ANIM_MAT", ANIM_MAT);

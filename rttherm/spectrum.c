@@ -275,7 +275,7 @@ mat_t		rgb2xyz;
 	white[2] = cspace[WHITE][Z] / cspace[WHITE][Y];
 
 #define tmat(a,b)	t_mat[(a)*4+(b)]
-	mat_idn(t_mat);
+	MAT_IDN(t_mat);
 	for (ii=0; ii<=2; ii++) {
 		tmat(0,ii) = cspace[ii][X];
 		tmat(1,ii) = cspace[ii][Y];

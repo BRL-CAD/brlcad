@@ -359,11 +359,13 @@ CONST union tree	*tp;
 
 	db_add_node_to_full_path( pathp, mdp );
 
-	bn_mat_copy( old_xlate, tsp->ts_mat );
-	if( tp->tr_l.tl_mat )
-		bn_mat_copy( xmat, tp->tr_l.tl_mat );
-	else
+	MAT_COPY( old_xlate, tsp->ts_mat );
+	if( tp->tr_l.tl_mat ) {
+		MAT_COPY( xmat, tp->tr_l.tl_mat );
+	}
+	else {
 		MAT_IDN( xmat );
+	}
 
 	/*  If the owning region it above this node in the tree,
 	 *  it is not possible to animation region-material properties
@@ -692,7 +694,7 @@ db_tree_mul_dbleaf( union tree *tp, const mat_t mat )
 			return;
 		}
 		bn_mat_mul( temp, mat, tp->tr_l.tl_mat );
-		bn_mat_copy( tp->tr_l.tl_mat, temp );
+		MAT_COPY( tp->tr_l.tl_mat, temp );
 		break;
 
 	case OP_UNION:
@@ -833,7 +835,7 @@ db_follow_path(
 				RT_CK_ANIMATE(anp);
 				if( dp != anp->an_path.fp_names[0] )
 					continue;
-				bn_mat_copy( old_xlate, tsp->ts_mat );
+				MAT_COPY( old_xlate, tsp->ts_mat );
 				MAT_IDN( xmat );
 				db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
 				bn_mat_mul( tsp->ts_mat, old_xlate, xmat );
@@ -2359,7 +2361,7 @@ db_path_to_mat(
 
 	ret = db_follow_path( &ts, &null_path, pathp, LOOKUP_NOISY, depth );
 	db_free_full_path( &null_path );
-	bn_mat_copy( mat, ts.ts_mat );	/* implicit return */
+	MAT_COPY( mat, ts.ts_mat );	/* implicit return */
 	db_free_db_tree_state( &ts );
 
 	if( ret < 0 )  {

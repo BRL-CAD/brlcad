@@ -295,7 +295,7 @@ Ir_configure_window_shape()
 
 	xlim_view = 1.0;
 	ylim_view = 1.0;
-	mat_idn(aspect_corr);
+	MAT_IDN(aspect_corr);
 
 	getsize( &winx_size, &winy_size);
 	getorigin( &win_l, & win_b );
@@ -939,7 +939,7 @@ mat_t	mat;
 	if( ! mvars.zclipping_on ) {
 		mat_t	nozclip;
 
-		mat_idn( nozclip );
+		MAT_IDN( nozclip );
 		nozclip[10] = 1.0e-20;
 		mat_mul( newm, nozclip, mat );
 		mptr = newm;

@@ -125,24 +125,24 @@ struct mater_info	*materp;
 		}
 		switch( anp->an_u.anu_m.anm_op )  {
 		case ANM_RSTACK:
-			bn_mat_copy( stack, anp->an_u.anu_m.anm_mat );
+			MAT_COPY( stack, anp->an_u.anu_m.anm_mat );
 			break;
 		case ANM_RARC:
-			bn_mat_copy( arc, anp->an_u.anu_m.anm_mat );
+			MAT_COPY( arc, anp->an_u.anu_m.anm_mat );
 			break;
 		case ANM_RBOTH:
-			bn_mat_copy( stack, anp->an_u.anu_m.anm_mat );
+			MAT_COPY( stack, anp->an_u.anu_m.anm_mat );
 			MAT_IDN( arc );
 			break;
 		case ANM_LMUL:
 			/* arc = DELTA * arc */
 			bn_mat_mul( temp, anp->an_u.anu_m.anm_mat, arc );
-			bn_mat_copy( arc, temp );
+			MAT_COPY( arc, temp );
 			break;
 		case ANM_RMUL:
 			/* arc = arc * DELTA */
 			bn_mat_mul( temp, arc, anp->an_u.anu_m.anm_mat );
-			bn_mat_copy( arc, temp );
+			MAT_COPY( arc, temp );
 			break;
 		default:
 			return(-1);		/* BAD */

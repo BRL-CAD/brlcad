@@ -114,7 +114,7 @@ grid_setup()
 		mat_t		hv2model;
 
 		/* Build model2hv matrix, including mm2inches conversion */
-		bn_mat_copy( model2hv, Viewrotscale );
+		MAT_COPY( model2hv, Viewrotscale );
 		model2hv[15] = gift_grid_rounding;
 		bn_mat_inv( hv2model, model2hv );
 

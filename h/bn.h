@@ -239,11 +239,32 @@ BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 	(_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
 	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
-
   /*
 #define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (CONST void *)bn_mat_identity, sizeof(mat_t))
   */
+
+#define bn_mat_copy( _d, _s )	{ \
+	bu_log("%s:%d bn_mat_copy() is deprecated, use MAT_COPY()\n", \
+			__FILE__, __LINE__); \
+	(_d)[0] = (_s)[0];\
+	(_d)[1] = (_s)[1];\
+	(_d)[2] = (_s)[2];\
+	(_d)[3] = (_s)[3];\
+	(_d)[4] = (_s)[4];\
+	(_d)[5] = (_s)[5];\
+	(_d)[6] = (_s)[6];\
+	(_d)[7] = (_s)[7];\
+	(_d)[8] = (_s)[8];\
+	(_d)[9] = (_s)[9];\
+	(_d)[10] = (_s)[10];\
+	(_d)[11] = (_s)[11];\
+	(_d)[12] = (_s)[12];\
+	(_d)[13] = (_s)[13];\
+	(_d)[14] = (_s)[14];\
+	(_d)[15] = (_s)[15]; }
+  /*
 #define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (CONST void *)(_s), sizeof(mat_t))
+  */
 #endif /* deprecated */
 
 BU_EXTERN(void		bn_mat_mul, (register mat_t o, register CONST mat_t a,

@@ -1103,7 +1103,7 @@ char	**argv;
      *	(N.B. I use VMOVEN() here instead of VMOVE() to emphasize that
      *	 each call copies exactly three elements of the array).
      */
-    mat_idn(view2model);
+    MAT_IDN(view2model);
     mat_ae(view2model, azimuth, elevation);
     mat_inv(model2view, view2model);
     VMOVEN(unit_D, model2view, 3);

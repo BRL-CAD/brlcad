@@ -222,7 +222,7 @@ done:
 	submodel->magic = RT_SUBMODEL_SPECIFIC_MAGIC;
 	stp->st_specific = (genptr_t)submodel;
 
-	bn_mat_copy( submodel->subm2m, sip->root2leaf );
+	MAT_COPY( submodel->subm2m, sip->root2leaf );
 	bn_mat_inv( submodel->m2subm, sip->root2leaf );
 	submodel->rtip = sub_rtip;
 
@@ -750,7 +750,7 @@ CONST struct bn_tol	*tol;
 	state = rt_initial_tree_state;	/* struct copy */
 	state.ts_ttol = ttol;
 	state.ts_tol = tol;
-	bn_mat_copy( state.ts_mat, sip->root2leaf );
+	MAT_COPY( state.ts_mat, sip->root2leaf );
 
 	state.ts_m = (struct model **)&good;	/* hack -- passthrough to rt_submodel_wireframe_leaf() */
 	good.vheadp = vhead;
@@ -851,7 +851,7 @@ CONST struct db_i		*dbip;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 	sip->dbip = dbip;
 
-	bn_mat_copy( sip->root2leaf, mat );
+	MAT_COPY( sip->root2leaf, mat );
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
@@ -955,7 +955,7 @@ CONST struct db_i		*dbip;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 	sip->dbip = dbip;
 
-	bn_mat_copy( sip->root2leaf, mat );
+	MAT_COPY( sip->root2leaf, mat );
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, ep->ext_buf );

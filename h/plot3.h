@@ -24,7 +24,7 @@
 
 #define	pl_mat_idn( _mat )		MAT_IDN( _mat )
 #define pl_mat_zero( _mat )		MAT_ZERO( _mat )
-#define pl_mat_copy( _mat1, _mat2 )	bn_mat_copy( _mat1, _mat2 )
+#define pl_mat_copy( _mat1, _mat2 )	MAT_COPY( _mat1, _mat2 )
 
 /*
  *  The basic UNIX-plot routines.

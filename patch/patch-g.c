@@ -319,7 +319,7 @@ char	*argv[];
 	     statement into the for loop and made a check flag "done" to verify
 	     that all elements are processed prior to falling out of the "for".      */
 
-	mat_idn(m);
+	MAT_IDN(m);
 
 	/* FASTGEN targets are always in inches */
 	mk_id_units(outfp, title, "in");
@@ -1905,7 +1905,7 @@ fastf_t *x,*y,*z;
 	fastf_t det;
 
 	/* build matrix */
-	mat_zero( matrix );
+	MAT_ZERO( matrix );
 	VSET( vsum , 0.0 , 0.0 , 0.0 );
 
 	one_over_vertex_count = 1.0/(double)(num_pts);

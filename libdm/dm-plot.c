@@ -340,7 +340,7 @@ plot_loadMatrix(dmp, mat, which_eye)
 		bu_vls_free(&tmp_vls);
 	}
 
-	bn_mat_copy(plotmat, mat);
+	MAT_COPY(plotmat, mat);
 	Tcl_SetObjResult(dmp->dm_interp, obj);
 	return TCL_OK;
 }

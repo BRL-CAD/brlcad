@@ -1332,7 +1332,7 @@ wdb_do_trace(struct db_i		*dbip,
 	if (comb_leaf->tr_l.tl_mat) {
 		bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
 	} else {
-		bn_mat_copy(new_xlate, old_xlate);
+		MAT_COPY(new_xlate, old_xlate);
 	}
 
 	wdb_trace(nextdp, (*pathpos)+1, new_xlate, wtdp);
@@ -1399,7 +1399,7 @@ wdb_trace(register struct directory	*dp,
 	}
 
 	/* have the desired path up to objpos */
-	bn_mat_copy(wtdp->wtd_xform, old_xlate);
+	MAT_COPY(wtdp->wtd_xform, old_xlate);
 	wtdp->wtd_prflag = 1;
 
 	if (wtdp->wtd_flag == WDB_CPEVAL)
@@ -4194,7 +4194,7 @@ wdb_push_leaf(tsp, pathp, ip, client_data)
 	pip = (struct wdb_push_id *) bu_malloc(sizeof(struct wdb_push_id), "Push ident");
 	pip->magic = WDB_MAGIC_PUSH_ID;
 	pip->pi_dir = dp;
-	bn_mat_copy(pip->pi_mat, tsp->ts_mat);
+	MAT_COPY(pip->pi_mat, tsp->ts_mat);
 	pip->back = wpdp->pi_head.back;
 	wpdp->pi_head.back = pip;
 	pip->forw = &wpdp->pi_head;

@@ -2898,7 +2898,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 	mat_t				tmp;
 
 	/* Apply Modeling transform */
-	bn_mat_copy(tmp, dsp_ip->dsp_stom);
+	MAT_COPY(tmp, dsp_ip->dsp_stom);
 	bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
 	
 	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);

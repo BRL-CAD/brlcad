@@ -723,7 +723,7 @@ int *old;
 
 	bzero( &idbuf1, sizeof( struct identt ) );
 	(void)strncpy(idbuf1.i_name, name, NAMESIZE);
-	bn_mat_copy(idbuf1.i_mat, matrix);
+	MAT_COPY(idbuf1.i_mat, matrix);
 
 	for( i=0 ; i<numsol ; i++ )
 	{
@@ -870,7 +870,7 @@ int flag;
 						bn_mat_mul( temp_mat, old_mat,
 							tree_list[i].tl_tree->tr_l.tl_mat );
 					} else {
-						bn_mat_copy( temp_mat, old_mat );
+						MAT_COPY( temp_mat, old_mat );
 					}
 					if( rt_db_get_internal( &sol_intern, sol_dp, dbip, temp_mat, &rt_uniresource ) < 0 )
 					{
@@ -935,7 +935,7 @@ int flag;
 			if( tree_list[i].tl_tree->tr_l.tl_mat )  {
 				bn_mat_mul( new_mat, old_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 			} else {
-				bn_mat_copy( new_mat, old_mat );
+				MAT_COPY( new_mat, old_mat );
 			}
 			new_tables( nextdp, cur_path, new_mat, flag );
 			bu_ptbl_trunc( cur_path, cur_length );

@@ -4875,8 +4875,8 @@ struct _view_state *vsp2;
       /* append to last list element */
       BU_LIST_APPEND(vsp1->vs_headView.l.back, &vrp1->l);
 
-      bn_mat_copy(vrp1->vr_rot_mat, vrp2->vr_rot_mat);
-      bn_mat_copy(vrp1->vr_tvc_mat, vrp2->vr_tvc_mat);
+      MAT_COPY(vrp1->vr_rot_mat, vrp2->vr_rot_mat);
+      MAT_COPY(vrp1->vr_tvc_mat, vrp2->vr_tvc_mat);
       vrp1->vr_scale = vrp2->vr_scale;
       vrp1->vr_id = vrp2->vr_id;
 
@@ -4954,10 +4954,10 @@ char    **argv;
     }
 
     /* save current Viewrot */
-    bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
+    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
 
     /* save current toViewcenter */
-    bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
+    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
@@ -4992,10 +4992,10 @@ char    **argv;
       return TCL_OK;
 
     /* save current Viewrot */
-    bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
+    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
 
     /* save current toViewcenter */
-    bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
+    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
@@ -5006,8 +5006,8 @@ char    **argv;
     if(BU_LIST_IS_HEAD(view_state->vs_current_view, &view_state->vs_headView.l))
       view_state->vs_current_view = BU_LIST_FIRST(view_ring, &view_state->vs_headView.l);
 
-    bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
+    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
+    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
 
     new_mats();
@@ -5031,10 +5031,10 @@ char    **argv;
       return TCL_OK;
 
     /* save current Viewrot */
-    bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
+    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
 
     /* save current toViewcenter */
-    bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
+    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
@@ -5045,8 +5045,8 @@ char    **argv;
     if(BU_LIST_IS_HEAD(view_state->vs_current_view, &view_state->vs_headView.l))
       view_state->vs_current_view = BU_LIST_LAST(view_ring, &view_state->vs_headView.l);
 
-    bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
+    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
+    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
 
     new_mats();
@@ -5067,10 +5067,10 @@ char    **argv;
     }
 
     /* save current Viewrot */
-    bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
+    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
 
     /* save current toViewcenter */
-    bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
+    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
@@ -5078,8 +5078,8 @@ char    **argv;
     save_last_view = view_state->vs_last_view;
     view_state->vs_last_view = view_state->vs_current_view;
     view_state->vs_current_view = save_last_view;
-    bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
+    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
+    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
 
     new_mats();
@@ -5124,8 +5124,8 @@ char    **argv;
       }else
 	view_state->vs_current_view = view_state->vs_last_view;
 
-      bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-      bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
+      MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
+      MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
       view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
       new_mats();
       (void)mged_svbase();
@@ -5165,18 +5165,18 @@ char    **argv;
       return TCL_OK;
 
     /* save current Viewrot */
-    bn_mat_copy(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
+    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
 
     /* save current toViewcenter */
-    bn_mat_copy(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
+    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
 
     view_state->vs_last_view = view_state->vs_current_view;
     view_state->vs_current_view = vrp;
-    bn_mat_copy(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    bn_mat_copy(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
+    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
+    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
 
     new_mats();
@@ -5257,7 +5257,7 @@ mat_t newrot;
       es_edflag = SROT;
 
     inpara = 0;
-    bn_mat_copy(incr_change, newrot);
+    MAT_COPY(incr_change, newrot);
     bn_mat_mul2(incr_change, acc_rot_sol);
     sedit();
 

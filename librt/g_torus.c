@@ -238,7 +238,7 @@ struct rt_i		*rtip;
 	bn_mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */
-	bn_mat_copy( tor->tor_SoR, R );
+	MAT_COPY( tor->tor_SoR, R );
 	tor->tor_SoR[15] *= tor->tor_r1;
 
 	VMOVE( stp->st_center, tor->tor_V );

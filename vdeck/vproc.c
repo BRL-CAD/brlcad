@@ -120,7 +120,7 @@ register char *prefix;
 	ewrite( ridfd, LF, 1 );
 
 	/* Initialize matrices.						*/
-	mat_idn( identity );
+	MAT_IDN( identity );
 
 	/* Check integrity of list against directory and build card deck.	*/
 	for( i = 0; i < curr_ct; i++ )
