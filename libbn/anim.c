@@ -111,8 +111,8 @@ int mat2zyx(angle,viewrot)
 mat_t viewrot;
 vect_t angle;
 {
-        int i, return_value;
-        fastf_t sinx, sinz, cosx, cosz;
+        int i, return_value, id_x, id_z;
+        fastf_t sin_x, sin_z, cos_x, cos_z, big_x, big_z;
         static fastf_t previous[3];
 
         if ((viewrot[1]==0.0) && (viewrot[0]==0.0)){
@@ -127,23 +127,35 @@ vect_t angle;
                 angle[0] = atan2(-viewrot[6],viewrot[10]);
         }
 
-        sinx = sin(angle[0]);
-        sinz = sin(angle[2]);
-        cosx = cos(angle[0]);
-        cosz = cos(angle[2]);
+        sin_x = sin(angle[0]);
+        sin_z = sin(angle[2]);
+        cos_x = cos(angle[0]);
+        cos_z = cos(angle[2]);
 
-        if ( (sinx*cosz) != 0.0 )
-                angle[1]=atan2( (viewrot[4] - cosx*sinz)/(sinx*cosz), -viewrot[6]/sinx);
-        else if ( (cosx*cosz) != 0.0 )
-                angle[1]=atan2( (-viewrot[8] + sinx*sinz)/(cosx*cosz), viewrot[0]/cosz);
-        else if ( (sinx*sinz) != 0.0 )
-                angle[1]=atan2( (-viewrot[5] + cosx*cosz)/(sinx*sinz), -viewrot[1]/sinz);
-        else if ( (cosx*sinz) != 0.0 )
-                angle[1]=atan2( (viewrot[9] - sinx*cosz)/(cosx*sinz), viewrot[10]/cosx);
-        else {
-                /* unable to calculate y rotation */
+	/* in principle, we can use the sin_x or cos_x with sin_z or cos_z to
+	 * figure out angle[1], as long as they are non-zero. To avoid
+	 * ill-conditioning effects, we choose the two that are greatest in
+	 * absolute value
+	 */
+
+	id_z  = (fabs(sin_z) > fabs(cos_z)) ? 1 : 0;
+	big_z = id_z ? sin_z : cos_z;
+	id_x  = (fabs(sin_x) > fabs(cos_x)) ? 1 : 0;
+	big_x = id_x ? sin_x : cos_x;
+
+	if (fabs(big_x*big_z) < VDIVIDE_TOL){ /* this should be impossible*/
+                /* unable to calculate pitch*/
                 return(ERROR2);
         }
+        else if ( id_x && (!id_z) )
+                angle[1]=atan2( (viewrot[4] - cos_x*sin_z)/(sin_x*cos_z), -viewrot[6]/sin_x);
+        else if ( (!id_x) && (!id_z) )
+                angle[1]=atan2( (-viewrot[8] + sin_x*sin_z)/(cos_x*cos_z), viewrot[0]/cos_z);
+        else if ( id_x && id_z )
+                angle[1]=atan2( (-viewrot[5] + cos_x*cos_z)/(sin_x*sin_z), -viewrot[1]/sin_z);
+        else if ( (!id_x) && id_z )
+                angle[1]=atan2( (viewrot[9] - sin_x*cos_z)/(cos_x*sin_z), viewrot[10]/cos_x);
+
 
         /* assume the smallest possible arc-length from frame to frame */
         for (i=0; i<3; i++) {
@@ -168,8 +180,8 @@ int mat2ypr(angle,viewrot)
 mat_t viewrot;
 vect_t angle;
 {
-        int i, return_value;
-        fastf_t sin_y, sin_r, cos_y, cos_r;
+        int i, return_value, id_y, id_r;
+        fastf_t sin_y, sin_r, cos_y, cos_r, big_y, big_r;
         static fastf_t prev_angle[3];
 
         if ((viewrot[9]==0.0) && (viewrot[10]==0.0)){
@@ -189,18 +201,30 @@ vect_t angle;
         cos_y = cos(angle[0]);
         cos_r = cos(angle[2]);
 
-        if ( (cos_y*sin_r) != 0.0 )
-                angle[1] = atan2( -(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r),viewrot[9]/sin_r);
-        else if ( (sin_y*cos_r) != 0.0)
-                angle[1] = atan2( -(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r),viewrot[10]/cos_r);
-        else if ( (sin_y*sin_r) != 0.0)
-                angle[1] = atan2( -(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r),viewrot[4]/sin_y);
-        else if ( (cos_y*cos_r) != 0.0)
-                angle[1] = atan2( -(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r),viewrot[0]/cos_y);
-        else {
+	/* in principle, we can use sin_y or cos_y with sin_r or cos_r to
+	 * figure out angle[1], as long as they are non-zero. To avoid
+	 * ill-conditioning effects, we choose the two that are greatest in
+	 * absolute value
+	 */
+
+	id_y  = (fabs(sin_y) > fabs(cos_y)) ? 1 : 0;
+	big_y = id_y ? sin_y : cos_y;
+	id_r  = (fabs(sin_r) > fabs(cos_r)) ? 1 : 0;
+	big_r = id_r ? sin_r : cos_r;
+ 
+	if (fabs(big_y*big_r) < VDIVIDE_TOL){ /* this should not happen */
                 /* unable to calculate pitch*/
                 return(ERROR2);
         }
+        else if ( (!id_y) && id_r )
+                angle[1] = atan2( -(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r),viewrot[9]/sin_r);
+        else if ( id_y && (!id_r) )
+                angle[1] = atan2( -(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r),viewrot[10]/cos_r);
+        else if ( id_y && id_r )
+                angle[1] = atan2( -(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r),viewrot[4]/sin_y);
+        else if ( (!id_y) && (!id_r) )
+                angle[1] = atan2( -(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r),viewrot[0]/cos_y);
+
 
         /* assume the smallest possible arc-length from frame to frame */
         for (i=0; i<3; i++) {
