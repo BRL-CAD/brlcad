@@ -1655,8 +1655,8 @@ rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
 		NMG_CK_LOOPUSE(inner_lu);
 		nmg_loop_g( inner_lu->l_p, tol );
 		nmg_loop_g( new_lu->l_p, tol );
-		nmg_lu_reorient(inner_lu, tol);
-		nmg_lu_reorient(new_lu, tol);
+		nmg_lu_reorient(inner_lu);
+		nmg_lu_reorient(new_lu);
 		return 1;		/* cutjoin was done */
 	}
 
@@ -2864,8 +2864,8 @@ struct nmg_ray_state *rs;
 			nmg_loop_g( lu1->l_p, rs->tol );
 			nmg_loop_g( new_lu->l_p, rs->tol );
 
-			nmg_lu_reorient( lu1, rs->tol );
-			nmg_lu_reorient( new_lu, rs->tol );
+			nmg_lu_reorient( lu1 );
+			nmg_lu_reorient( new_lu );
 
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 			{
@@ -4201,8 +4201,8 @@ int			other_rs_state;
 			nmg_loop_g( lu->l_p, rs->tol );
 			nmg_loop_g( prev_lu->l_p, rs->tol );
 
-			nmg_lu_reorient( lu, rs->tol );
-			nmg_lu_reorient( prev_lu, rs->tol );
+			nmg_lu_reorient( lu );
+			nmg_lu_reorient( prev_lu );
 
 			if(rt_g.NMG_debug&DEBUG_FCUT)  {
 				rt_log("After CUT, the final loop:\n");
