@@ -59,7 +59,7 @@ bin_PROGRAMS = \
 bin_SCRIPTS = font.c
 BUILT_SOURCES = font.c
 
-LDADD = ${RLE} ${BU}
+LDADD = ${RLE}
 noinst_HEADERS = font.h rletogif.h
 
 applymap_SOURCES = applymap.c

@@ -47,6 +47,7 @@ SUBDIRS = \
 	awf \
 	${JOVEDIR} \
 	libutahrle \
+	URToolkit \
 	libtcl \
 	libtk \
 	incrTcl \

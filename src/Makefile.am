@@ -52,7 +52,6 @@ kitchensink_dirs = \
 	sig \
 	tab \
 	tclscripts \
-	tools \
 	unigraphics \
 	util \
 	vas4 \

@@ -1953,6 +1953,7 @@ AC_CONFIG_FILES([
 	src/nirt/Makefile
 	src/off/Makefile
 	src/other/Makefile
+	src/other/URToolkit/Makefile
 	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
@@ -2026,7 +2027,6 @@ AC_CONFIG_FILES([
 	src/tclscripts/rtwizard/examples/PictureTypeF/Makefile
 	src/tclscripts/rtwizard/lib/Makefile
 	src/tclscripts/util/Makefile
-	src/tools/Makefile
 	src/unigraphics/Makefile
 	src/util/Makefile
 	src/vas4/Makefile
