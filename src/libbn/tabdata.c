@@ -48,7 +48,6 @@ static const char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include <strings.h>
 #endif
 
-#include "externs.h"
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"

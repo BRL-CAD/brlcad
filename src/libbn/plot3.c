@@ -42,7 +42,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "externs.h"
 #include "plot3.h"
 
 /* For the sake of efficiency, we trust putc() to write only one byte */

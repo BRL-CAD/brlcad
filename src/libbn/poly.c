@@ -27,7 +27,6 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include <signal.h>
 #include "machine.h"
-#include "externs.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"

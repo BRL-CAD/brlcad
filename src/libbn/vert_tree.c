@@ -41,7 +41,6 @@ static const char bn_RCSvert_tree[] = "@(#)$Header$ (ARL)";
 #include <errno.h>
 
 #include "machine.h"
-#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 
