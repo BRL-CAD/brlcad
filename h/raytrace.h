@@ -2175,23 +2175,23 @@ BU_EXTERN(int db_tally_subtree_regions, (union tree *tp,
 	union tree **reg_trees, int cur, int lim));
 BU_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
 	int ncpu, CONST struct db_tree_state *init_state,
-	int (*reg_start_func) BU_ARGS((
+	int (*reg_start_func) (
 		struct db_tree_state * /*tsp*/,
 		struct db_full_path * /*pathp*/,
 		CONST struct rt_comb_internal * /* combp */,
-		genptr_t client_data
-	)), union tree * (*reg_end_func) BU_ARGS((
+		genptr_t client_data ),
+	union tree * (*reg_end_func) (
 		struct db_tree_state * /*tsp*/,
 		struct db_full_path * /*pathp*/,
 		union tree * /*curtree*/,
-		genptr_t client_data
-	)), union tree * (*leaf_func) BU_ARGS((
+		genptr_t client_data ),
+	union tree * (*leaf_func) (
 		struct db_tree_state * /*tsp*/,
 		struct db_full_path * /*pathp*/,
 		struct bu_external * /*ep*/,
 		int /*id*/,
-		genptr_t client_data
-	)), genptr_t client_data ));
+		genptr_t client_data ),
+	genptr_t client_data ));
 BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 	mat_t mat, int depth));
 BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
