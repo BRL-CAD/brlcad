@@ -23,6 +23,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include <math.h>
 #ifdef BSD
 #include <strings.h>
