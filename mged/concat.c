@@ -172,7 +172,7 @@ int			flags;
 	register struct directory *input_dp;
 	register struct directory *dp;
 	union record		*rec;
-	char			local[NAMESIZE+2];
+	char			local[NAMESIZE+2+2];
 
 	if( input_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("mged_dir_add:  bad dbip\n");
 
@@ -188,11 +188,13 @@ int			flags;
 	/* Look up this new name in the existing (main) database */
 	if( (dp = db_lookup( dbip, local, LOOKUP_QUIET )) != DIR_NULL )  {
 		register int	c;
+		char		loc2[NAMESIZE+2+2];
 
 		/* This object already exists under the (prefixed) name */
+		(void)strncpy( loc2, local, NAMESIZE );
 		/* Shift name right two characters, and further prefix */
-		strncpy( local+2, name, NAMESIZE-2 );
-		local[1] = '@';			/* distinctive separater */
+		strncpy( local+2, loc2, NAMESIZE-2 );
+		local[1] = '_';			/* distinctive separater */
 		local[NAMESIZE] = '\0';		/* ensure null termination */
 
 		for( c = 'A'; c <= 'Z'; c++ )  {
@@ -206,7 +208,7 @@ int			flags;
 			return 0;
 		}
 		rt_log("mged_dir_add: Duplicate of '%s' given new name '%s'\n",
-			name, local );
+			loc2, local );
 	}
 
 	/* First, register this object in input database */
@@ -232,7 +234,7 @@ int			flags;
 		register int i;
 		char	mref[NAMESIZE+2];
 
-		printf("adding comb '%s'\n", local );
+		printf("adding  comb '%s'\n", local );
 		NAMEMOVE( local, rec->c.c_name );
 
 		/* Update all the member records */
