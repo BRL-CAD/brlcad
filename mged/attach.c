@@ -182,6 +182,9 @@ release()
 	register struct solid *sp;
 #ifdef MULTI_ATTACH
 	struct dm_list *p;
+
+	if( curr_dm_list == &head_dm_list )
+	  return;
 #endif
 
 	/* Delete all references to display processor memory */
@@ -195,13 +198,20 @@ release()
 	dmp->dmr_close();
 
 #ifdef MULTI_ATTACH
-	if( curr_dm_list == &head_dm_list )
-	  return;
-
 	p = curr_dm_list;
 	curr_dm_list = (struct dm_list *)curr_dm_list->l.forw;
+
 	RT_LIST_DEQUEUE( &p->l );
 	rt_free( (char *)p, "release: curr_dm_list" );
+
+	/* 
+	 * If there are any more active displays other than that which is
+         * found in head_dm_list, then assign that as the current dm_list.
+	 */
+	if( curr_dm_list == &head_dm_list &&
+	    (struct dm_list *)head_dm_list.l.forw != &head_dm_list)
+	  curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
+	  
 #else
 	dmp = &dm_Null;
 #endif
