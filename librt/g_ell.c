@@ -30,6 +30,7 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 
 extern int sph_prep();
@@ -121,6 +122,47 @@ struct ell_specific {
 	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 };
 
+/* Should be in a header file to share betwee g_ell.c and g_sph.c */
+struct ell_internal  {
+	point_t	v;
+	vect_t	a;
+	vect_t	b;
+	vect_t	c;
+};
+
+/*
+ *			E L L _ I M P O R T
+ *
+ *  Import an ellipsoid/sphere from the database format to
+ *  the internal structure.
+ *  Apply modeling transformations as well.
+ */
+int
+ell_import( eip, rp, mat )
+struct ell_internal	*eip;
+union record		*rp;
+register mat_t		mat;
+{
+	LOCAL fastf_t	vec[3*4];
+
+	/* Check record type */
+	if( rp->u_id != ID_SOLID )  {
+		rt_log("ell_import: defective record\n");
+		return(-1);
+	}
+
+	/* Convert from database to internal format */
+	rt_fastf_float( vec, rp->s.s_values, 4 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( eip->v, mat, &vec[0*3] );
+	MAT4X3VEC( eip->a, mat, &vec[1*3] );
+	MAT4X3VEC( eip->b, mat, &vec[2*3] );
+	MAT4X3VEC( eip->c, mat, &vec[3*3] );
+
+	return(0);		/* OK */
+}
+
 /*
  *  			E L L _ P R E P
  *  
@@ -148,11 +190,11 @@ struct rt_i		*rtip;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	SS;
 	LOCAL mat_t	mtemp;
-	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
-	fastf_t		vec[3*4];
+	struct ell_internal ei;
+	int		i;
 
 	/*
 	 *  For a fast way out, hand this solid off to the SPH routine.
@@ -162,27 +204,23 @@ struct rt_i		*rtip;
 	if( sph_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
 
-	rt_fastf_float( (fastf_t *)vec, rec->s.s_values, 4 );
-
-#define ELL_V	&vec[0*ELEMENTS_PER_VECT]
-#define ELL_A	&vec[1*ELEMENTS_PER_VECT]
-#define ELL_B	&vec[2*ELEMENTS_PER_VECT]
-#define ELL_C	&vec[3*ELEMENTS_PER_VECT]
-
-	/*
-	 * Apply rotation only to A,B,C
-	 */
-	MAT4X3VEC( A, stp->st_pathmat, ELL_A );
-	MAT4X3VEC( B, stp->st_pathmat, ELL_B );
-	MAT4X3VEC( C, stp->st_pathmat, ELL_C );
+	if( rec == (union record *)0 )  {
+		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
+		i = ell_import( &ei, rec, stp->st_pathmat );
+		rt_free( (char *)rec, "ell record" );
+	} else {
+		i = ell_import( &ei, rec, stp->st_pathmat );
+	}
+	if( i < 0 )  {
+		rt_log("ell_setup(%s): db import failure\n", stp->st_name);
+		return(-1);		/* BAD */
+	}
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( A );
-	magsq_b = MAGSQ( B );
-	magsq_c = MAGSQ( C );
-	if( NEAR_ZERO(magsq_a, 0.005) ||
-	     NEAR_ZERO(magsq_b, 0.005) ||
-	     NEAR_ZERO(magsq_c, 0.005) ) {
+	magsq_a = MAGSQ( ei.a );
+	magsq_b = MAGSQ( ei.b );
+	magsq_c = MAGSQ( ei.c );
+	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
 		rt_log("ell(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
@@ -190,11 +228,11 @@ struct rt_i		*rtip;
 
 	/* Create unit length versions of A,B,C */
 	f = 1.0/sqrt(magsq_a);
-	VSCALE( Au, A, f );
+	VSCALE( Au, ei.a, f );
 	f = 1.0/sqrt(magsq_b);
-	VSCALE( Bu, B, f );
+	VSCALE( Bu, ei.b, f );
 	f = 1.0/sqrt(magsq_c);
-	VSCALE( Cu, C, f );
+	VSCALE( Cu, ei.c, f );
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -217,8 +255,7 @@ struct rt_i		*rtip;
 	GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (int *)ell;
 
-	/* Apply full 4x4mat to V */
-	MAT4X3PNT( ell->ell_V, stp->st_pathmat, ELL_V );
+	VMOVE( ell->ell_V, ei.v );
 
 	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 	VMOVE( ell->ell_Au, Au );
@@ -245,12 +282,12 @@ struct rt_i		*rtip;
 	mat_mul( ell->ell_invRSSR, Rinv, mtemp );
 
 	/* Compute SoR */
-	VSCALE( &ell->ell_SoR[0], A, ell->ell_invsq[0] );
-	VSCALE( &ell->ell_SoR[4], B, ell->ell_invsq[1] );
-	VSCALE( &ell->ell_SoR[8], C, ell->ell_invsq[2] );
+	VSCALE( &ell->ell_SoR[0], ei.a, ell->ell_invsq[0] );
+	VSCALE( &ell->ell_SoR[4], ei.b, ell->ell_invsq[1] );
+	VSCALE( &ell->ell_SoR[8], ei.c, ell->ell_invsq[2] );
 
 	/* Compute bounding sphere */
-	VMOVE( stp->st_center, ell->ell_V );
+	VMOVE( stp->st_center, ei.v );
 	f = magsq_a;
 	if( magsq_b > f )
 		f = magsq_b;
@@ -562,9 +599,17 @@ fastf_t *A, *B;
 {
 	static fastf_t c, d, e, f,g,h;
 
-	e = h = .92388;
-	c = d = .707107;
-	g = f = .382683;
+	e = h = .92388;			/* cos(22.5) */
+	c = d = .707107;		/* cos(45) */
+	g = f = .382683;		/* cos(67.5) */
+
+	/*
+	 * For angle theta, compute surface point as
+	 *
+	 *	V  +  cos(theta) * A  + sin(theta) * B
+	 *
+	 * note that sin(theta) is cos(90-theta).
+	 */
 
 	VADD2( ELLOUT(1), V, A );
 	VJOIN2( ELLOUT(2), V, e, A, f, B );
@@ -584,12 +629,9 @@ fastf_t *A, *B;
 	VJOIN2( ELLOUT(16), V, e, A, -f, B );
 }
 
-/* Names for GENELL fields */
-#define VELL	&points[0]
-#define AELL	&points[3]
-#define BELL	&points[6]
-#define CELL	&points[9]
-
+/*
+ *			E L L _ P L O T
+ */
 void
 ell_plot( rp, matp, vhead, dp )
 union record	*rp;
@@ -597,32 +639,21 @@ register matp_t matp;
 struct vlhead	*vhead;
 struct directory *dp;
 {
-	register int i;
-	register fastf_t *op;
-	register dbfloat_t *ip;
+	register int		i;
+	struct ell_internal	ei;
 	fastf_t top[16*3];
 	fastf_t middle[16*3];
 	fastf_t bottom[16*3];
 	fastf_t	points[3*8];
 
-	/*
-	 * Rotate, translate, and scale the V point.
-	 * Simply rotate and scale the A, B, and C vectors.
-	 */
-	MAT4X3PNT( &points[0], matp, &rp[0].s.s_values[0] );
-
-	ip = &rp[0].s.s_values[1*3];
-	op = &points[1*3];
-#	include "noalias.h"
-	for(i=1; i<4; i++) {
-		MAT4X3VEC( op, matp, ip );
-		op += ELEMENTS_PER_VECT;
-		ip += 3;
+	if( ell_import( &ei, rp, matp ) < 0 )  {
+		rt_log("ell_plot(%s): db import failure\n", dp->d_namep);
+		return;
 	}
 
-	ell_16pts( top, VELL, AELL, BELL );
-	ell_16pts( bottom, VELL, BELL, CELL );
-	ell_16pts( middle, VELL, AELL, CELL );
+	ell_16pts( top, ei.v, ei.a, ei.b );
+	ell_16pts( bottom, ei.v, ei.b, ei.c );
+	ell_16pts( middle, ei.v, ei.a, ei.c );
 
 	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
 	for( i=0; i<16; i++ )  {
@@ -640,3 +671,347 @@ struct directory *dp;
 	}
 }
 
+#define XPLUS 0
+#define XMIN  1
+#define YPLUS 2
+#define YMIN  3
+#define ZPLUS 4
+#define ZMIN  5
+
+/* Vertices of a unit octahedron */
+/* These need to be organized properly to give reasonable normals */
+static struct usvert {
+	int	a;
+	int	b;
+	int	c;
+} octahedron[8] = {
+    { XPLUS, ZPLUS, YPLUS },
+    { YPLUS, ZPLUS, XMIN  },
+    { XMIN , ZPLUS, YMIN  },
+    { YMIN , ZPLUS, XPLUS },
+    { XPLUS, YPLUS, ZMIN  },
+    { YPLUS, XMIN , ZMIN  },
+    { XMIN , YMIN , ZMIN  },
+    { YMIN , XPLUS, ZMIN  }
+};
+
+/*
+ *			E L L _ T E S S
+ *
+ *  Tessellate an ellipsoid.
+ */
+int
+ell_tess( s, rp, mat, dp )
+struct shell		*s;
+register union record	*rp;
+register mat_t		mat;
+struct directory	*dp;
+{
+	struct ell_internal	ei;
+	register int		i;
+	struct faceuse		*outfaceuses[8];
+	struct vertex		*verts[6];
+	struct vertex		*vertlist[6];
+	struct edgeuse		*eu;
+	int			face;
+	plane_t			plane;
+	point_t			pt;
+
+	if( ell_import( &ei, rp, mat ) < 0 )  {
+		rt_log("ell_tess(%s): import failure\n", dp->d_namep);
+		return;
+	}
+
+	for( i=0; i<6; i++ )  verts[i] = (struct vertex *)0;
+
+	/* Build all 8 faces of the octahedron, 3 verts each */
+	for( i=0; i<8; i++ )  {
+		register struct usvert *ohp = &octahedron[i];
+		vertlist[0] = verts[ohp->a];
+		vertlist[1] = verts[ohp->b];
+		vertlist[2] = verts[ohp->c];
+		outfaceuses[i] = nmg_cface(s, vertlist, 3 );
+		verts[ohp->a] = vertlist[0];
+		verts[ohp->b] = vertlist[1];
+		verts[ohp->c] = vertlist[2];
+	}
+
+	/* Associate initial vertex geometry:
+	 * Six points lying on the ellipsoid.
+	 */
+	VADD2( pt, ei.v, ei.a );
+	nmg_vertex_gv(verts[XPLUS], pt );
+	VSUB2( pt, ei.v, ei.a );
+	nmg_vertex_gv(verts[XMIN], pt );
+
+	VADD2( pt, ei.v, ei.b );
+	nmg_vertex_gv(verts[YPLUS], pt );
+	VSUB2( pt, ei.v, ei.b );
+	nmg_vertex_gv(verts[YMIN], pt );
+
+	VADD2( pt, ei.v, ei.c );
+	nmg_vertex_gv(verts[ZPLUS], pt );
+	VSUB2( pt, ei.v, ei.c );
+	nmg_vertex_gv(verts[ZMIN], pt );
+
+	/* Associate face geometry */
+	for (i=0 ; i < 8 ; ++i) {
+		eu = outfaceuses[i]->lu_p->down.eu_p;
+		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+					eu->next->vu_p->v_p->vg_p->coord,
+					eu->last->vu_p->v_p->vg_p->coord)) {
+			rt_log("At %d in %s\n", __LINE__, __FILE__);
+			rt_bomb("cannot make plane equation\n");
+		}
+		else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+			rt_log("Bad plane equation from rt_mk_plane_3pts at %d in %s\n",
+					__LINE__, __FILE__);
+			rt_bomb("BAD Plane Equation");
+		}
+		else nmg_face_g(outfaceuses[i], plane);
+	}
+
+	/* Glue the edges of different outward pointing face uses together */
+	nmg_gluefaces( outfaceuses, 8 );
+
+	return(0);
+}
+
+#if 0
+/*
+ * sphere - generate a polygon mesh approximating a sphere by
+ *  recursive subdivision. First approximation is an octahedron;
+ *  each level of refinement increases the number of polygons by
+ *  a factor of 4.
+ * Level 3 (128 polygons) is a good tradeoff if gouraud
+ *  shading is used to render the database.
+ *
+ * Usage: sphere [level]
+ *	level is an integer >= 1 setting the recursion level (default 1).
+ *
+ * Notes:
+ *
+ *  The triangles are generated with vertices in clockwise order as
+ *  viewed from the outside in a right-handed coordinate system.
+ *  To reverse the order, compile with COUNTERCLOCKWISE defined.
+ *
+ *  Shared vertices are not retained, so numerical errors may produce
+ *  cracks between polygons at high subdivision levels.
+ *
+ *  The subroutines print_object() and print_triangle() should
+ *  be changed to generate whatever the desired database format is.
+ *  If UNC is defined, a PPHIGS text archive is generated.
+ *
+ * Jon Leech 3/24/89
+ */
+#include <stdio.h>
+#include <math.h>
+#include <gl.h>
+
+typedef struct {
+    double  x, y, z;
+} point;
+
+typedef struct {
+    point     pt[3];	/* Vertices of triangle */
+    double    area;	/* Unused; might be used for adaptive subdivision */
+} triangle;
+
+typedef struct {
+    int       npoly;	/* # of polygons in object */
+    triangle *poly;	/* Polygons in no particular order */
+} object;
+
+/* Six equidistant points lying on the unit sphere */
+#define XPLUS {  1,  0,  0 }	/*  X */
+#define XMIN  { -1,  0,  0 }	/* -X */
+#define YPLUS {  0,  1,  0 }	/*  Y */
+#define YMIN  {  0, -1,  0 }	/* -Y */
+#define ZPLUS {  0,  0,  1 }	/*  Z */
+#define ZMIN  {  0,  0, -1 }	/* -Z */
+
+/* Vertices of a unit octahedron */
+triangle octahedron[] = {
+    { XPLUS, ZPLUS, YPLUS }, 0.0,
+    { YPLUS, ZPLUS, XMIN  }, 0.0,
+    { XMIN , ZPLUS, YMIN  }, 0.0,
+    { YMIN , ZPLUS, XPLUS }, 0.0,
+    { XPLUS, YPLUS, ZMIN  }, 0.0,
+    { YPLUS, XMIN , ZMIN  }, 0.0,
+    { XMIN , YMIN , ZMIN  }, 0.0,
+    { YMIN , XPLUS, ZMIN  }, 0.0
+};
+
+/* An octahedron */
+object oct = {
+    sizeof(octahedron) / sizeof(octahedron[0]),
+    &octahedron[0]
+};
+
+/* Forward declarations */
+point *normalize(/* point *p */);
+point *midpoint(/* point *a, point *b */);
+void print_object(/* object *obj, int level */);
+void print_triangle(/* triangle *t */);
+double sqr(/* double x */);
+double area_of_triangle(/* triangle *t */);
+
+extern char *malloc(/* unsigned */);
+object *old;
+int maxlevels;
+void disp_object();
+
+main(ac, av)
+int ac;
+char *av[];
+{
+    object *new;
+    int     i, level;
+    double min[3], max[3];
+    maxlevels = 1;
+
+    if (ac > 1)
+	if ((maxlevels = atoi(av[1])) < 1) {
+	    fprintf(stderr, "%s: # of levels must be >= 1\n", av[0]);
+	    exit(1);
+	}
+
+    
+
+#ifdef COUNTERCLOCKWISE
+    /* Reverse order of points in each triangle */
+    for (i = 0; i < oct.npoly; i++) {
+	point tmp;
+		      tmp = oct.poly[i].pt[0];
+	oct.poly[i].pt[0] = oct.poly[i].pt[2];
+	oct.poly[i].pt[2] = tmp;
+    }
+#endif
+
+    old = &oct;
+
+    /* Subdivide each starting triangle (maxlevels - 1) times */
+    for (level = 1; level < maxlevels; level++) {
+	/* Allocate a new object */
+	new = (object *)malloc(sizeof(object));
+	if (new == NULL) {
+	    fprintf(stderr, "%s: Out of memory on subdivision level %d\n",
+		av[0], level);
+	    exit(1);
+	}
+	new->npoly = old->npoly * 4;
+
+	/* Allocate 4* the number of points in the current approximation */
+	new->poly  = (triangle *)malloc(new->npoly * sizeof(triangle));
+	if (new->poly == NULL) {
+	    fprintf(stderr, "%s: Out of memory on subdivision level %d\n",
+		av[0], level);
+	    exit(1);
+	}
+
+	/* Subdivide each polygon in the old approximation and normalize
+	 *  the new points thus generated to lie on the surface of the unit
+	 *  sphere.
+	 * Each input triangle with vertices labelled [0,1,2] as shown
+	 *  below will be turned into four new triangles:
+	 *
+	 *			Make new points
+	 *			    a = (0+2)/2
+	 *			    b = (0+1)/2
+	 *			    c = (1+2)/2
+	 *	  1
+	 *	 /\		Normalize a, b, c
+	 *	/  \
+	 *    b/____\ c		Construct new triangles
+	 *    /\    /\		    [0,b,a]
+	 *   /	\  /  \		    [b,1,c]
+	 *  /____\/____\	    [a,b,c]
+	 * 0	  a	2	    [a,c,2]
+	 */
+	for (i = 0; i < old->npoly; i++) {
+	    triangle
+		 *oldt = &old->poly[i],
+		 *newt = &new->poly[i*4];
+	    point a, b, c;
+
+	    a = *normalize(midpoint(&oldt->pt[0], &oldt->pt[2]));
+	    b = *normalize(midpoint(&oldt->pt[0], &oldt->pt[1]));
+	    c = *normalize(midpoint(&oldt->pt[1], &oldt->pt[2]));
+
+	    newt->pt[0] = oldt->pt[0];
+	    newt->pt[1] = b;
+	    newt->pt[2] = a;
+	    newt++;
+
+	    newt->pt[0] = b;
+	    newt->pt[1] = oldt->pt[1];
+	    newt->pt[2] = c;
+	    newt++;
+
+	    newt->pt[0] = a;
+	    newt->pt[1] = b;
+	    newt->pt[2] = c;
+	    newt++;
+
+	    newt->pt[0] = a;
+	    newt->pt[1] = c;
+	    newt->pt[2] = oldt->pt[2];
+	}
+
+	if (level > 1) {
+	    free(old->poly);
+	    free(old);
+	}
+
+	/* Continue subdividing new triangles */
+	old = new;
+    }
+
+    disp_Init();
+	
+    min[0] = -2;
+    min[1] = -2;
+    min[2] = -2;
+
+    max[0] = 2;
+    max[1] = 2;
+    max[2] = 2;
+
+    disp_Autoscale(min, max);
+    /* Print out resulting approximation */
+    disp_Viewloop( disp_object);
+
+}
+
+/* Normalize a point p */
+point *normalize(p)
+point *p;
+{
+    static point r;
+    double mag;
+
+    r = *p;
+    mag = r.x * r.x + r.y * r.y + r.z * r.z;
+    if (mag != 0.0) {
+	mag = 1.0 / sqrt(mag);
+	r.x *= mag;
+	r.y *= mag;
+	r.z *= mag;
+    }
+
+    return &r;
+}
+
+/* Return the average of two points */
+point *midpoint(a, b)
+point *a, *b;
+{
+    static point r;
+
+    r.x = (a->x + b->x) * 0.5;
+    r.y = (a->y + b->y) * 0.5;
+    r.z = (a->z + b->z) * 0.5;
+
+    return &r;
+}
+#endif
