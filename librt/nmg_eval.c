@@ -1,3 +1,4 @@
+#define PARANOID_VERIFY 0
 /*
  *			N M G _ E V A L . C
  *
@@ -462,6 +463,10 @@ struct nmg_bool_state *bs;
 
 	NMG_CK_SHELL(s);
 
+#if PARANOID_VERIFY
+	nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
+
 	/*
 	 *  For each face in the shell, process all the loops in the face,
 	 *  and then handle the face and all loops as a unit.
@@ -490,6 +495,9 @@ struct nmg_bool_state *bs;
 					/* loop of single vertex */
 					nmg_klu( lu );	/* removes from fu list */
 				}
+#if PARANOID_VERIFY
+				nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
@@ -521,6 +529,9 @@ struct nmg_bool_state *bs;
 			    nextfu == fu->fumate_p )
 				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
 			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
+#if PARANOID_VERIFY
+			nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
@@ -557,6 +568,9 @@ struct nmg_bool_state *bs;
 		}
 		fu = nextfu;
 	}
+#if PARANOID_VERIFY
+	nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 
 	/*
 	 *  For each loop in the shell, process.
@@ -594,6 +608,9 @@ struct nmg_bool_state *bs;
 		}
 		lu = nextlu;
 	}
+#if PARANOID_VERIFY
+	nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 
 	/*
 	 *  For each wire-edge in the shell, ...
@@ -679,6 +696,9 @@ struct nmg_bool_state *bs;
 		}
 		lu = nextlu;
 	}
+#if PARANOID_VERIFY
+	nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 
 	/*
 	 * Final case:  shell of a single vertexuse
@@ -702,6 +722,9 @@ struct nmg_bool_state *bs;
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 	}
+#if PARANOID_VERIFY
+	nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 }
 
@@ -962,8 +985,7 @@ struct shell	*s;
 			if( nmg_find_loop_in_facelist( lu->l_p, &s->fu_hd ) )  {
 				/* Dispose of wire loop (and mate)
 				 * which match face loop */
-				if( RT_LIST_NOT_HEAD(lu, &lu->down_hd) &&
-				    nextlu == lu->lumate_p )
+				if( nextlu == lu->lumate_p )
 					nextlu = RT_LIST_PNEXT(loopuse, nextlu);
 				nmg_klu( lu );
 			}
@@ -1022,13 +1044,13 @@ struct shell	*s;
 		    nmg_find_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
 		    nmg_find_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
 		    	/* Kill lu and mate */
-			if( RT_LIST_NOT_HEAD(lu, &lu->down_hd) &&
-			    nextlu == lu->lumate_p )
+			if( nextlu == lu->lumate_p )
 				nextlu = RT_LIST_PNEXT(loopuse, nextlu);
 			nmg_klu( lu );
 			lu = nextlu;
 			continue;
 		}
+		lu = nextlu;
 	}
 
 	/* There really shouldn't be a lone vertex by now */
@@ -1039,6 +1061,8 @@ struct shell	*s;
  *			N M G _ E V A L _ P L O T
  *
  *  Called from nmg_eval_shell
+ *
+ *  Located here because definition of nmg_bool_state is local to this module.
  */
 static void
 nmg_eval_plot( bs, num, delay )
