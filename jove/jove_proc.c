@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:03  mike
+ * Release_4.0
+ * 
  * Revision 2.10  91/09/23  03:16:45  mike
  * Eliminated return / return(expr) warning.
  * Removed some dead code
@@ -81,6 +84,8 @@ int	MakeAll = 0,		/* Not make -k */
 
 extern char	*StdShell;
 extern char	*ProcTmp;
+
+void		SpParse();
 
 /* Add an error to the end of the list of errors.  This is used for
  * parse-C/LINT-errors and for the spell-buffer command
@@ -194,7 +199,7 @@ SpellCom()
 /* There is one word per line in the current buffer.  Read that word
    and ask the user whether he wants us to search for it (if it is a
    big buffer he may not want to if he thinks it is spelled correctly). */
-
+void
 SpParse(err, buf)
 WINDOW	*err,
 	*buf;
