@@ -178,6 +178,7 @@ char	**argv;
 		(void)printf("Color = (No color specified)\n");
 	(void)printf("Color R G B (0..255)? ('del' to delete, CR to skip) ");
 	fflush(stdout);
+	/* XXX This is bad!!!  Should use CMD_MORE return*/
 	(void)fgets(line,sizeof(line),stdin);
 	if( strncmp(line, "del", 3) == 0 ) {
 		record.c.c_override = 0;
@@ -229,6 +230,53 @@ out:
 
 	return CMD_OK;
 }
+
+/*
+ *			F _ S H A D E R
+ *
+ *  Simpler, command-line version of 'mater' command.
+ *  Usage: shader combination shader_material [shader_argument(s)]
+ */
+int
+f_shader( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct directory *dp;
+	union record		record;
+	struct rt_vls		args;
+
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+		return CMD_BAD;
+
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
+
+	if( record.u_id != ID_COMB )  {
+		(void)printf("%s: not a combination\n", dp->d_namep );
+		return CMD_BAD;
+	}
+
+	strncpy( record.c.c_matname, argv[2], sizeof(record.c.c_matname)-1 );
+	record.c.c_matname[sizeof(record.c.c_matname)-1] = '\0';
+
+	/* Bunch up the rest of the args, space separated */
+	rt_vls_init( &args );
+	rt_vls_from_argv( &args, argc-3, argv+3 );
+	rt_vls_trunc( &args, sizeof(record.c.c_matparm)-1 );
+	strcpy( record.c.c_matparm, rt_vls_addr( &args ) );
+	rt_vls_free( &args );
+
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+
+	return CMD_OK;
+}
+
 
 /* Mirror image */
 /* Format: m oldobject newobject axis	*/
