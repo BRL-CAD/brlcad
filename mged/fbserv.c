@@ -206,7 +206,7 @@ new_client_handler(clientData, mask)
 ClientData clientData;
 int mask;
 {
-  int fd = (int)clientData;
+  int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
   struct dm_list *dlp;
   struct dm_list *scdlp;  /* save current dm_list pointer */
 
@@ -236,7 +236,7 @@ ClientData clientData;
 int mask;
 {
   register int i;
-  int fd = (int)clientData;
+  int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
   int npp;			/* number of processed packages */
   struct dm_list *dlp;
   struct dm_list *scdlp;  /* save current dm_list pointer */
