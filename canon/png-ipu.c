@@ -84,7 +84,7 @@ int	n;
 	return((int)count);
 }
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
@@ -109,7 +109,6 @@ char *av[];
 	int arg_index;
 	struct dsreq *dsp;
 	u_char	*img_buffer = (u_char *)NULL;
-	int	img_bytes;
 	int i;
 	/**/
 	png_structp png_p;
@@ -260,7 +259,7 @@ char *av[];
 	}
 
 	if (ipu_debug)
-		fprintf(stderr, "Image is %dx%d (%d)\n", file_width, file_height, img_bytes);
+		fprintf(stderr, "Image is %dx%d\n", file_width, file_height);
 
 	if (conv == IPU_RESOLUTION) {
 		if (scr_width)

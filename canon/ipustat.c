@@ -12,7 +12,7 @@
 #include <strings.h>
 #endif
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>

@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "externs.h"
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include "./canon.h"
 
 # define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */

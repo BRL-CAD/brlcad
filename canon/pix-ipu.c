@@ -87,7 +87,7 @@ int	n;
 	return((int)count);
 }
 
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 #include "./canon.h"
 
 # define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */

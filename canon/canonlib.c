@@ -61,7 +61,7 @@ int	src;
 	dest[2] = (u_char)(src >> 8);
 	dest[3] = (u_char)src;
 }
-#if defined(IRIX) && (IRIX == 4 || IRIX == 5)
+#if defined(IRIX) && (IRIX == 4 || IRIX == 5 || IRIX == 6)
 static void scsi_perror(int val, struct dsreq *dsp)
 {
 	fprintf(stderr, "doscsicmd retuns: %d ds_ret: 0x%02x   ds_status: 0x%02x  ds_msg: 0x%02x\n",
@@ -1096,12 +1096,12 @@ ipu_get_conf_long(struct dsreq *dsp)
  *  If 'cmap' is non-NULL, then it points to a 768 byte array
  *  arranged as r0, g0, b0, r1, g1, b1, ...
  */
-int
+void
 ipu_set_palette( dsp, cmap )
 struct dsreq	*dsp;
 unsigned char	*cmap;		/* NULL or [768] */
 {
-	register u_char *p;
+	register caddr_t p;
 	unsigned char	linear[768];
 	int		i;
 	int		ret;
