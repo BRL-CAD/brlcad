@@ -109,7 +109,7 @@ register struct mater *newp;
 			newp->mt_forw = mp->mt_forw;
 			rt_pr_mater( mp );
 			*mp = *newp;		/* struct copy */
-			rt_free( newp, "getstruct mater" );
+			rt_free( (char *)newp, "getstruct mater" );
 			newp = mp;
 			goto check_overlap;
 		}
@@ -168,7 +168,7 @@ check_overlap:
 			newp->mt_forw = zot->mt_forw;
 			rt_log("dropping overlaping region-id based material property entry:\n");
 			rt_pr_mater( zot );
-			rt_free( zot, "getstruct mater" );
+			rt_free( (char *)zot, "getstruct mater" );
 			continue;
 		}
 		if( newp->mt_high >= newp->mt_forw->mt_low )  {
