@@ -128,6 +128,7 @@ int	width, height;
 		return(-1);
 	}
 	tpoff();		/* Turn off textport */
+	cursoff();
 
 	blanktime( 67 * 60 * 60L );	/* 1 hour blanking when fb open */
 
