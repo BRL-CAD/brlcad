@@ -331,7 +331,7 @@ specified by the destination." } }
 	    { { summary "Clear the framebuffer specified by the
 destination to the background color." } }
     button $top.abortB -relief raised -text "Abort" \
-	    -command "rt_abort"
+	    -command "rtabort"
     hoc_register_data $top.abortB "Abort Raytrace"\
 	    { { summary "Abort all raytraces initiated by MGED." } }
     button $top.dismissB -relief raised -text "Dismiss" \
