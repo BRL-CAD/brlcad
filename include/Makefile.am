@@ -91,6 +91,7 @@ brlcadinclude_wanted = \
 	noalias-prag.h \
 	noalias.h \
 	nurb.h \
+	optical.h \
 	orle.h \
 	photonmap.h \
 	pkg.h \
