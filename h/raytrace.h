@@ -2085,7 +2085,7 @@ RT_EXTERN(void			nmg_pr_m, (CONST struct model *m) );
 RT_EXTERN(void			nmg_pr_r, (CONST struct nmgregion *r, char *h) );
 RT_EXTERN(void			nmg_pr_sa, (CONST struct shell_a *sa, char *h) );
 RT_EXTERN(void			nmg_pr_lg, (CONST struct loop_g *lg, char *h) );
-RT_EXTERN(void			nmg_pr_fg, (CONST struct face_g *fg, char *h) );
+RT_EXTERN(void			nmg_pr_fg, (CONST long *magic, char *h) );
 RT_EXTERN(void			nmg_pr_s, (CONST struct shell *s, char *h) );
 RT_EXTERN(void			nmg_pr_f, (CONST struct face *f, char *h) );
 RT_EXTERN(void			nmg_pr_fu, (CONST struct faceuse *fu, char *h) );
@@ -2284,11 +2284,14 @@ RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST str
 /* From nmg_index.c */
 RT_EXTERN(int			nmg_index_of_struct, (long *p) );
 RT_EXTERN(void			nmg_m_reindex, (struct model *m, long newindex) );
+RT_EXTERN(void			nmg_vls_struct_counts, (struct rt_vls *str,
+				CONST struct nmg_struct_counts *ctr));
 RT_EXTERN(void			nmg_pr_struct_counts, 
-				(CONST struct nmg_struct_counts *ctr, char *str) );
+				(CONST struct nmg_struct_counts *ctr,
+				CONST char *str) );
 RT_EXTERN(long			**nmg_m_struct_count,
 				(struct nmg_struct_counts *ctr,
-				struct model *m) );
+				CONST struct model *m) );
 RT_EXTERN(void			nmg_merge_models, (struct model *m1,
 							struct model *m2) );
 /* From nmg_rt.c */
