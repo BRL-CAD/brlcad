@@ -487,7 +487,7 @@ int y_top;
 	xpos = 0;
 
       dmp->dm_drawString2D( dmp, mptr->scroll_string,
-			    xpos, y-SCROLL_DY/2, 0 );
+			    xpos, y-SCROLL_DY/2, 0, 0 );
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
       dmp->dm_drawLine2D(dmp, XMAX, y, MENUXLIM, y);
     }

@@ -169,27 +169,27 @@ int y;
   case BV_RATE_TOGGLE:
     if(mged_variables.rateknobs){
       dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "Rate", MENUX, y-15 );
+      dmp->dm_drawString2D( dmp, "Rate", MENUX, y-15, 0, 0 );
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "/Abs", MENUX+4*40, y-15 );
+      dmp->dm_drawString2D( dmp, "/Abs", MENUX+4*40, y-15, 0, 0 );
     }else{
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "Rate/", MENUX, y-15 );
+      dmp->dm_drawString2D( dmp, "Rate/", MENUX, y-15, 0, 0 );
       dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "Abs", MENUX+5*40, y-15 );
+      dmp->dm_drawString2D( dmp, "Abs", MENUX+5*40, y-15, 0, 0 );
     }
     break;
   case BV_EDIT_TOGGLE:
     if(mged_variables.edit){
       dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "Edit", MENUX, y-15 );
+      dmp->dm_drawString2D( dmp, "Edit", MENUX, y-15, 0, 0 );
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "/View", MENUX+4*40, y-15 );
+      dmp->dm_drawString2D( dmp, "/View", MENUX+4*40, y-15, 0, 0 );
     }else{
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
-      dmp->dm_drawString2D( dmp, "Edit/", MENUX, y-15 );
+      dmp->dm_drawString2D( dmp, "Edit/", MENUX, y-15, 0, 0 );
       dmp->dm_setColor(dmp, DM_WHITE, 1);
-      dmp->dm_drawString2D( dmp, "View", MENUX+5*40, y-15 );
+      dmp->dm_drawString2D( dmp, "View", MENUX+5*40, y-15, 0, 0 );
     }
     break;
 #if 0
@@ -199,7 +199,7 @@ int y;
     else
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
 
-    dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15 );
+    dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15, 0, 0 );
     break;
 #endif
   default:
@@ -247,7 +247,7 @@ int y_top;
 	  dmp->dm_setColor(dmp, DM_RED, 1);
 	else
 	  dmp->dm_setColor(dmp, DM_YELLOW, 1);
-	dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15 );
+	dmp->dm_drawString2D( dmp, mptr->menu_string, MENUX, y-15, 0, 0 );
       }
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
       dmp->dm_drawLine2D(dmp, MENUXLIM, y+(MENU_DY/2), XMIN,
@@ -255,7 +255,7 @@ int y_top;
       if( cur_item == item && cur_menu == menu && menuflag )  {
 	/* prefix item selected with "==>" */
 	dmp->dm_setColor(dmp, DM_WHITE, 1);
-	dmp->dm_drawString2D(dmp, "==>", XMIN, y-15);
+	dmp->dm_drawString2D(dmp, "==>", XMIN, y-15, 0, 0);
       }
     }
   }
