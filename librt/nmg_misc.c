@@ -981,7 +981,7 @@ CONST struct rt_tol *tol;
 	/* get rid of the temporary shell */
 	nmg_ks( s_fu );
 
-
+	nmg_tbl( &fus, TBL_FREE, (long *)NULL );
 }
 
 /*	N M G _ N E X T _ R A D I A L _ E D G E U S E
