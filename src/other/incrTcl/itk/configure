@@ -8342,18 +8342,19 @@ fi
 #--------------------------------------------------------------------
 
 
+
     if test "${TEA_PLATFORM}" = "windows" -a "$GCC" != "yes"; then
-	MAKE_STATIC_LIB="\${STLIB_LD} -out:\$@ \$(\$(PACKAGE)_OBJECTS)"
-	MAKE_SHARED_LIB="\${SHLIB_LD} \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS} \$(LDFLAGS) -out:\$@ \$(\$(PACKAGE)_OBJECTS)"
-	MAKE_STUB_LIB="\${STLIB_LD} -out:\$@ \$(\$(PACKAGE)stub_OBJECTS)"
+	MAKE_STATIC_LIB="\${STLIB_LD} -out:\$@ \$(${PACKAGE}_OBJECTS)"
+	MAKE_SHARED_LIB="\${SHLIB_LD} \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS} \$(LDFLAGS) -out:\$@ \$(${PACKAGE}_OBJECTS)"
+	MAKE_STUB_LIB="\${STLIB_LD} -out:\$@ \$(${PACKAGE}stub_OBJECTS)"
     else
-	MAKE_STATIC_LIB="\${STLIB_LD} \$@ \$(\$(PACKAGE)_OBJECTS)"
-	MAKE_SHARED_LIB="\${SHLIB_LD} -o \$@ \$(\$(PACKAGE)_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS}"
-	if test "x$RANLIB" = "x" ; then
-		MAKE_STUB_LIB="\${STLIB_LD} \$@ \$(\$(PACKAGE)stub_OBJECTS)"
-	else
-		MAKE_STUB_LIB="\${STLIB_LD} \$@ \$(\$(PACKAGE)stub_OBJECTS) ; $RANLIB \$@"
-	fi
+	MAKE_STATIC_LIB="\${STLIB_LD} \$@ \$(${PACKAGE}_OBJECTS)"
+	MAKE_SHARED_LIB="\${SHLIB_LD} -o \$@ \$(${PACKAGE}_OBJECTS) \${SHLIB_LDFLAGS} \${SHLIB_LD_LIBS}"
+#	if test "x$RANLIB" = "x" ; then
+		MAKE_STUB_LIB="\${STLIB_LD} \$@ \$(${PACKAGE}stub_OBJECTS)"
+#	else
+#		MAKE_STUB_LIB="\${STLIB_LD} \[$]@ \$(${PACKAGE}stub_OBJECTS) ; $RANLIB \[$]@"
+#	fi
     fi
 
     if test "${SHARED_BUILD}" = "1" ; then

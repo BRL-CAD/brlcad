@@ -323,25 +323,25 @@ dllEntryPoint.$(OBJEXT): $(WIN_DIR)/dllEntryPoint.c
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
 
 tclAppInit.o: $(PLATFORM_DIR)/tclAppInit.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/tclAppInit.c` -o $@
 
 itk_cmds.o: $(GENERIC_DIR)/itk_cmds.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itk_cmds.c` -o $@
 
 itk_option.o: $(GENERIC_DIR)/itk_option.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itk_option.c` -o $@
 
-itk_archtype.o: $(GENERIC_DIR)/itk_archetype.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+itk_archetype.o: $(GENERIC_DIR)/itk_archetype.c
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itk_archetype.c` -o $@
 
 itk_util.o: $(GENERIC_DIR)/itk_util.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itk_util.c` -o $@
 
 itkStubInit.o: $(GENERIC_DIR)/itkStubInit.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itkStubInit.c` -o $@
 
 itkStubLib.o: $(GENERIC_DIR)/itkStubLib.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itkStubLib.c` -o $@
 
 
 #========================================================================

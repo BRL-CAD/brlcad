@@ -320,53 +320,47 @@ VPATH = @itcl_SRC_DIR@/generic:$(PLATFORM_DIR)
 dllEntryPoint.$(OBJEXT): $(WIN_DIR)/dllEntryPoint.c
 	$(COMPILE) -c `@CYGPATH@ $(WIN_DIR)/dllEntryPoint.c` -o $@
 
-itcl_cmds.$(OBJEXT): $(GENERIC_DIR)/itcl_cmds.c Makefile
-	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_cmds.c` -o $@
-
-itcl_ensemble.$(OBJEXT): $(GENERIC_DIR)/itcl_ensemble.c Makefile
-	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_ensemble.c` -o $@
-
 .c.$(OBJEXT):
 	$(COMPILE) -c `@CYGPATH@ $<` -o $@
 
 itclStubInit.o: $(GENERIC_DIR)/itclStubInit.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itclStubInit.c` -o $@
 
 itclStubLib.o: $(GENERIC_DIR)/itclStubLib.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itclStubLib.c` -o $@
 
 itcl_bicmds.o: $(GENERIC_DIR)/itcl_bicmds.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_bicmds.c` -o $@
 
 itcl_class.o: $(GENERIC_DIR)/itcl_class.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_class.c` -o $@
 
 itcl_cmds.o: $(GENERIC_DIR)/itcl_cmds.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_cmds.c` -o $@
 
 itcl_ensemble.o: $(GENERIC_DIR)/itcl_ensemble.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_ensemble.c` -o $@
 
 itcl_linkage.o: $(GENERIC_DIR)/itcl_linkage.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_linkage.c` -o $@
 
 itcl_methods.o: $(GENERIC_DIR)/itcl_methods.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_methods.c` -o $@
 
 itcl_migrate.o: $(GENERIC_DIR)/itcl_migrate.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_migrate.c` -o $@
 
 itcl_objects.o: $(GENERIC_DIR)/itcl_objects.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_objects.c` -o $@
 
 itcl_parse.o: $(GENERIC_DIR)/itcl_parse.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_parse.c` -o $@
 
 itcl_util.o: $(GENERIC_DIR)/itcl_util.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(GENERIC_DIR)/itcl_util.c` -o $@
 
 tclAppInit.o: $(PLATFORM_DIR)/tclAppInit.c
-	$(COMPILE) -c `@CYGPATH@ $<` -o $@
+	$(COMPILE) -c `@CYGPATH@ $(PLATFORM_DIR)/tclAppInit.c` -o $@
 
 
 #========================================================================
