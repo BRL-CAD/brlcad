@@ -593,7 +593,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -612,7 +612,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -636,7 +636,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -655,7 +655,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -669,7 +669,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -691,7 +691,7 @@ int arg;
 			es_edflag = ECMD_EBM_HEIGHT;
 			break;
 	}
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -719,7 +719,7 @@ int arg;
 			es_edflag = ECMD_VOL_THRESH_HI;
 			break;
 	}
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -816,7 +816,7 @@ int arg;
 			es_edflag = ECMD_PIPE_PT_DEL;
 		break;
 	}
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -834,7 +834,7 @@ int arg;
 	if(arg == MENU_TGC_MV_HH)
 		es_edflag = ECMD_TGC_MV_HH;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 
@@ -845,7 +845,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -858,7 +858,7 @@ int arg;
 	else
 		es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -868,7 +868,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -878,7 +878,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -888,7 +888,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -898,7 +898,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -908,7 +908,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -922,7 +922,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -936,7 +936,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }		
 
 static void
@@ -950,7 +950,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -964,7 +964,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -978,7 +978,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -1080,7 +1080,7 @@ int arg;
 	es_edflag = arg;
 	sedraw = 1;
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 /*
  *			N M G _ E D
@@ -1871,7 +1871,9 @@ mat_t		mat;
 
 
 void
-set_e_axes_pos()
+set_e_axes_pos(both)
+int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
+	      set e_axes_pos and curr_e_axes_pos */
 {
   int	i;
 
@@ -1952,13 +1954,8 @@ set_e_axes_pos()
 	break;
       }
 
-#if 1
-    MAT4X3PNT(e_axes_pos, es_mat,
+    MAT4X3PNT(curr_e_axes_pos, es_mat,
 	      ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
-    VMOVE(curr_e_axes_pos, e_axes_pos);
-#else
-    VMOVE(e_axes_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
-#endif
     break;
   case ID_TGC:
   case ID_REC:
@@ -1966,25 +1963,30 @@ set_e_axes_pos()
        es_edflag == ECMD_TGC_MV_HH){
       struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
 
-      VADD2(e_axes_pos, tgc->h, tgc->v);
+      VADD2(curr_e_axes_pos, tgc->h, tgc->v);
+      MAT4X3PNT(curr_e_axes_pos, es_mat, curr_e_axes_pos);
       break;
     }
   default:
-    VMOVE(e_axes_pos, es_keypoint);
+    VMOVE(curr_e_axes_pos, es_keypoint);
     break;
   }
 
-  if(EDIT_ROTATE)
-    VSETALL( edit_absolute_rotate, 0.0 )
-  else if(EDIT_TRAN)
-    VSETALL( edit_absolute_tran, 0.0 )
-  else if(SEDIT_SCALE)
-    edit_absolute_scale = 0;
+  if(both){
+    VMOVE(e_axes_pos, curr_e_axes_pos);
 
-  mat_idn(acc_rot_sol);
+    if(EDIT_ROTATE)
+      VSETALL( edit_absolute_rotate, 0.0 )
+    else if(EDIT_TRAN)
+      VSETALL( edit_absolute_tran, 0.0 )
+    else if(SEDIT_SCALE)
+      edit_absolute_scale = 0;
 
-  mged_variables.edit = 0;
-  bv_edit_toggle();
+    mat_idn(acc_rot_sol);
+
+    mged_variables.edit = 0;
+    bv_edit_toggle();
+  }
 }
 
 
@@ -2771,7 +2773,7 @@ sedit()
 		fixv--;
 		es_edflag = ECMD_ARB_ROTATE_FACE;
 		dmaflag = 1;	/* draw arrow, etc */
-		set_e_axes_pos();
+		set_e_axes_pos(1);
 		break;
 
 	case ECMD_ARB_ROTATE_FACE:
@@ -4001,6 +4003,7 @@ sedit()
 			for( i=0 ; i<ars->ncurves ; i++ )
 				VADD2( &ars->curves[i][es_ars_col*3],
 					&ars->curves[i][es_ars_col*3], diff );
+
 		}
 		break;
 	case ECMD_ARS_MOVE_CRV:
@@ -4052,6 +4055,7 @@ sedit()
 			for( i=0 ; i<ars->pts_per_curve ; i++ )
 				VADD2( &ars->curves[es_ars_crv][i*3],
 					&ars->curves[es_ars_crv][i*3], diff );
+
 		}
 		break;
 	case ECMD_ARS_MOVE_PT:
@@ -4125,6 +4129,7 @@ sedit()
 	if (! es_keyfixed)
 		get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 
+	set_e_axes_pos(0);
 	replot_editing_solid();
 
 	inpara = 0;
@@ -5641,7 +5646,7 @@ init_objedit()
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
 
-	set_e_axes_pos();
+	set_e_axes_pos(1);
 }
 
 void
