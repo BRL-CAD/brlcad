@@ -87,6 +87,8 @@ class QuadDisplay {
     public method listen {args}
     public method perspective {args}
     public method perspective_angle {args}
+    public method nirt {args}
+    public method qray {args}
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
@@ -539,6 +541,14 @@ body QuadDisplay::fb_active {args} {
 
 body QuadDisplay::fb_observe {args} {
     eval $itk_component($itk_option(-pane)) fb_observe $args
+}
+
+body QuadDisplay::nirt {args} {
+    eval $itk_component($itk_option(-pane)) nirt $args
+}
+
+body QuadDisplay::qray {args} {
+    eval $itk_component($itk_option(-pane)) qray $args
 }
 
 body QuadDisplay::rt {args} {

@@ -45,6 +45,8 @@ class Display {
 
     public method update {obj}
     public method refresh {}
+    public method nirt {args}
+    public method qray {args}
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
@@ -134,6 +136,44 @@ body Display::refresh {} {
 	Dm::refreshfb
     }
     Dm::drawEnd
+}
+
+body Display::nirt {args} {
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
+    } else {
+	set geo [lindex $geolist 0]
+    }
+
+    if {$geo == ""} {
+	return "nirt: bad geometry index"
+    }
+
+    set v_obj [View::get_viewname]
+
+    eval $geo nirt $v_obj $args
+}
+
+body Display::qray {args} {
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
+    } else {
+	set geo [lindex $geolist 0]
+    }
+
+    if {$geo == ""} {
+	return "qray: bad geometry index"
+    }
+
+    eval $geo qray $args
 }
 
 body Display::rt {args} {

@@ -38,9 +38,11 @@ class Drawable {
     public method get_dgname {}
     public method illum {obj}
     public method label {obj}
+    public method nirt {args}
     public method observer {args}
     public method overlay {args}
     public method report {args}
+    public method qray {args}
     public method rt {args}
     public method rtabort {args}
     public method rtcheck {args}
@@ -122,6 +124,10 @@ body Drawable::label {args} {
     eval $dg label $args
 }
 
+body Drawable::nirt {args} {
+    eval $dg nirt $args
+}
+
 body Drawable::observer {args} {
     eval $dg observer $args
 }
@@ -132,6 +138,10 @@ body Drawable::overlay {args} {
 
 body Drawable::report {args} {
     eval $dg report $args
+}
+
+body Drawable::qray {args} {
+    eval $dg qray $args
 }
 
 body Drawable::rt {args} {
