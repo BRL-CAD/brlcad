@@ -3,35 +3,63 @@
 #
 # A quick way of recompiling RT using multiple processors.
 #
+# Optional flag:  -s	for silent running
+#
 #  $Header$
 
-cake \
+SILENT="$1"
+
+cake ${SILENT} \
  do.o \
  material.o \
  opt.o \
  refract.o &
 
-cake \
+cake ${SILENT} \
  view.o \
  viewcheck.o \
  viewg3.o &
 
-cake \
+cake ${SILENT} \
  viewpp.o \
  viewrad.o \
  viewray.o &
 
-cake \
+cake ${SILENT} \
  shade.o \
  worker.o \
  wray.o &
 
-cake \
+cake ${SILENT} \
  main.o \
- bomb.o \
  rtshot.o \
  rtwalk.o &
 
 wait
-echo --- Collecting any stragglers.
-cake rt
+if test "${SILENT}" = ""
+then
+	echo --- Building the programs
+fi
+
+cake ${SILENT} \
+ rt &
+
+cake ${SILENT} \
+ rtrad rtpp rtray rtweight &
+
+cake ${SILENT} \
+ rtshot rtwalk rtcheck rtg3 &
+
+cake ${SILENT} \
+ rtcell rtxray rthide rtfrac &
+
+cake ${SILENT} \
+ rtrange rtregis rtscale rtsil &
+
+
+wait
+if test "${SILENT}" = ""
+then
+	echo --- Collecting any stragglers.
+fi
+cake ${SILENT}
