@@ -116,18 +116,10 @@ extern mat_t	incr_change;		/* change(s) from last cycle */
  */
 extern mat_t	identity;
 
-/* defined in chgview.c */
-extern int	drawreg;	/* if > 0, process and draw regions */
-
 /* defined in buttons.c */
 extern fastf_t	acc_sc_sol;	/* accumulate solid scale factor */
 extern fastf_t	acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
-
-/* defined in path.c */
-extern int	regmemb;	/* # of members left to process in a region */
-extern char	memb_oper;	/* op for present member of proc region */
-extern int	reg_pathpos;	/* pathpos of a processed region */
 
 /* defined in dodraw.c */
 extern int	no_memory;	/* flag indicating memory for drawing is used up */
@@ -153,7 +145,7 @@ extern FILE *outfile;
  */
 extern void		dir_build(), buildHrot(), button(), dozoom(),
 			pr_schain();
-extern void		drawHobj(), eraseobj(), finish(), slewview(),
+extern void		eraseobj(), finish(), slewview(),
 			htov_move(), mat_copy(), mat_idn(),
 			mat_inv(), mat_mul(), mat_zero(), matXvec(),
 			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
