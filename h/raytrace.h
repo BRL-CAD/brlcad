@@ -822,6 +822,12 @@ struct rt_wdb  {
 #define RT_WDB_TYPE_DB_INMEM			4
 #define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	5
 
+struct wdb_obj {
+  struct bu_list	l;
+  struct bu_vls		wdb_name;	/* database name */
+  struct rt_wdb		*wdb_wp;
+};
+
 /*
  *			D B _ T R E E _ S T A T E
  *
