@@ -1,5 +1,24 @@
-/*
- *			F B . H
+/*                            F B . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file fb.h
  *
  *  BRL "Generic" Framebuffer Library Interface Defines.
  *  
@@ -7,9 +26,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
- *  Status -
- *	Public Domain, Distribution Unlimited
  *
  *  Include Sequencing -
  *	#include <stdio.h>

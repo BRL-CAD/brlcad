@@ -1,5 +1,24 @@
-/*
- *			W D B . H
+/*                           W D B . H
+ * BRL-CAD
+ *
+ * Copyright (c) 1988-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file wdb.h
  *
  *  Interface structures and routines for libwdb
  *
@@ -15,10 +34,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
- *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1988-2004 by the United States Army.
- *	All rights reserved.
  *
  *  Include Sequencing -
  *	#include <stdio.h>	/_* For FILE * *_/

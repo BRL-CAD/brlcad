@@ -1,3 +1,7 @@
+/** @file pyramid.h
+ *
+ */
+
 /* 
  * pyramid.h - Types, constants, globals, routine decls for pyramids
  * 

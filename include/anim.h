@@ -1,5 +1,24 @@
-/*
- *			A N I M . H
+/*                          A N I M . H
+ * BRL-CAD
+ *
+ * Copyright (c) 1993-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file anim.h
  *
  *  Author -
  *	Carl J. Nuzman
@@ -7,15 +26,6 @@
   Source -
  *      The U. S. Army Research Laboratory
  *      Aberdeen Proving Ground, Maryland  21005-5068  USA
- *  
- *  Distribution Notice -
- *      Re-distribution of this software is restricted, as described in
- *      your "Statement of Terms and Conditions for the Release of
- *      The BRL-CAD Pacakge" agreement.
- *
- *  Copyright Notice -
- *      This software is Copyright (C) 1993-2004 by the United States Army
- *      in all countries except the USA.  All rights reserved.
  */
 
 /* 
