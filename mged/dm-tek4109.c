@@ -114,7 +114,7 @@ static FILE *outfp;		/* Tektronix device to output on */
 static char ttybuf[BUFSIZ];
 
 static void	t49move(), t49cont();
-static void	get_cursor(), cancel_cursor();
+static void	t49get_cursor(), t49cancel_cursor();
 static void	t49label(), t49point(), t49linemod();
 
 /*
@@ -124,8 +124,8 @@ static void	t49label(), t49point(), t49linemod();
  */
  
 
-#define	GED_TO_TEK(x)	(((x)+2048) * 780 / 1024)
-#define TEK_TO_GED(x)	(((x) * 1024 / 780) - 2048)
+#define	GED_TO_TEK4109(x)	(((x)+2048) * 780 / 1024)
+#define TEK4109_TO_GED(x)	(((x) * 1024 / 780) - 2048)
 
 /*
  *			T E K _ O P E N
@@ -192,7 +192,7 @@ T49_open()
 void
 T49_close()
 {
-	cancel_cursor();
+	t49cancel_cursor();
 	fprintf(outfp,"%cLZ", ESC);	/* clear screen */
 	fprintf(outfp,"%cLLA8",ESC);	/* NRTC - Set Dialog to 24 Lines */
 	fprintf(outfp,"%c%%!1",ESC);	/* NRTC - Place in ANSI mode */
@@ -232,7 +232,7 @@ T49_prolog()
 	(void)putc(ESC,outfp);			/* clear screen area */
 	(void)putc(FF,outfp);
 	(void)fflush(outfp);
-	cancel_cursor();
+	t49cancel_cursor();
 	ohix = ohiy = oloy = oextra = -1;
 
 	/* Put the center point up */
@@ -390,7 +390,7 @@ int dashed;
  *  (The terminal is assumed to be in cooked mode)
  */
 static void
-get_cursor()
+t49get_cursor()
 {
 	register char *cp;
 	char ibuf[64];
@@ -421,8 +421,8 @@ get_cursor()
 	/* Tek positioning is 0..4096,
 	 * The desired range is -2048 <= x,y <= +2048.
 	 */
-	dm_values.dv_xpen = TEK_TO_GED(hix|lox);
-	dm_values.dv_ypen = TEK_TO_GED(hiy|loy);
+	dm_values.dv_xpen = TEK4109_TO_GED(hix|lox);
+	dm_values.dv_ypen = TEK4109_TO_GED(hiy|loy);
 	if( dm_values.dv_xpen < -2048 || dm_values.dv_xpen > 2048 )
 		dm_values.dv_xpen = 0;
 	if( dm_values.dv_ypen < -2048 || dm_values.dv_ypen > 2048 )
@@ -491,7 +491,7 @@ T49_input( cmd_fd, noblock )
 
 	dm_values.dv_penpress = 0;
 	if( second_fd && readfds & (1<<second_fd) )
-		get_cursor();
+		t49get_cursor();
 
 	if( readfds & (1<<cmd_fd) )
 		return(1);		/* command awaits */
@@ -564,8 +564,8 @@ register int x,y;
 	int hix,hiy,lox,loy,extra;
 	int n;
 
-	x = GED_TO_TEK(x);
-	y = GED_TO_TEK(y);
+	x = GED_TO_TEK4109(x);
+	y = GED_TO_TEK4109(y);
 
 	hix=(x>>7) & 037;
 	hiy=(y>>7) & 037;
@@ -612,7 +612,7 @@ t49move(xi,yi)
 }
 
 static void
-cancel_cursor()
+t49cancel_cursor()
 {
 	extern unsigned sleep();
 	(void)fprintf(outfp, "%cKC", ESC);	/* Cancel crosshairs */
