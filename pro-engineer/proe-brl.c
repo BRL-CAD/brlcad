@@ -58,10 +58,10 @@ char *obj;
 }
 
 void
-Output_part( fd_out , obj , name , type , path )
+Output_part( fd_out , obj , name )
 FILE *fd_out;
 char *obj;
-char *name,*type,*path;
+char *name;
 {
 	char tmp_file_name[256];
 	wchar_t wtmp_file_name[256];
@@ -95,7 +95,7 @@ char *name,*type,*path;
 	}
 
 	/* write the start of the render format to the final output file */
-	fprintf( fd_out , "solid %s %s %s\n" , name , type , path );
+	fprintf( fd_out , "solid %s %x\n" , name , obj );
 
 	/* skip the first line in the temporary file (similar to above line, but less info */
 	while( (c=fgetc( fd_tmp )) != '\n' && c != EOF );
@@ -125,7 +125,6 @@ char *obj;
 	Pro_object_info obj_info;
 	char name[80];
 	char type[10];
-	char path[256];
 
 	if( !prodb_get_object_info( obj , &obj_info ) )
 	{
@@ -138,19 +137,16 @@ char *obj;
 
 	pro_wstr_to_str( name , obj_info.name );
 	pro_wstr_to_str( type , obj_info.type );
-	pro_wstr_to_str( path , obj_info.path );
 
 	if( !strncmp( type , "ASM" , 3 ) )
 	{
 		int memb_id;
 
-		fprintf( fd_out , "assembly %s %s %s\n" , name , type , path );
+		fprintf( fd_out , "assembly %s %x\n" , name , obj );
 		memb_id = prodb_first_member( obj );
 		while( memb_id != (-1) )
 		{
 			char memb_name[80];
-			char memb_type[10];
-			char memb_path[256];
 			char *memb_obj;
 			Pro_object_info memb_info;
 			double x[3],y[3],z[3],origin[3];
@@ -159,9 +155,7 @@ char *obj;
 			if( prodb_get_object_info( memb_obj , &memb_info ) )
 			{
 				pro_wstr_to_str( memb_name , memb_info.name );
-				pro_wstr_to_str( memb_type , memb_info.type );
-				pro_wstr_to_str( memb_path , memb_info.path );
-				fprintf( fd_out , " member %s %s %s\n" , memb_name , memb_type , memb_path );
+				fprintf( fd_out , " member %s %x\n" , memb_name , memb_obj );
 
 				if( prodb_member_transform( obj , memb_id , x , y , z , origin ) )
 				{
@@ -188,7 +182,7 @@ char *obj;
 	}
 	else if( !strncmp( type , "PRT" , 3 ) )
 	{
-		Output_part( fd_out , obj , name , type , path );
+		Output_part( fd_out , obj , name );
 	}
 	else
 	{
