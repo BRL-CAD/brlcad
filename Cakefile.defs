@@ -253,29 +253,23 @@ set -S2 "/bin/sh"
 
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
-/*	Here are the values of SGI_TYPE, set by "setup.sh":
- *		1)  [4gt] 4D-GT hw on SGI sw Release 3.1
- *		2)  [4d] non-GT hw on SGI sw Release 3.1
- *		3)  [4d] non-GT hw on SGI sw Release 2
+/*
+ *	NOTE:  "IRIX 3.1" is the ONLY software release supported.
+ *	NOTE:  If the shared library is used, then all machine types can
+ *	use the same binary programs, and no type discrimination is
+ *	necessary.  However, this prevents PIXIE from working...
  */
 #	undef	sgi
 #	define	GFLAG		-G 16
-
-/* SGI_4D_TYPE_MARKER: don't alter this comment, setup.sh needs it when changing next line */
-#	define	SGI_TYPE	1
-
-
-#	if SGI_TYPE == 1
-/******		Graphics Turbo is installed */
-#		define	MTYPE	4gt
-#		define  CC_OPTS		GFLAG -DSGI4D_GT
-#		define	RT_LIBES	-lmpc
-#		define	MGED_LIBES	-lbsd -lgl_s
-#		define	LGT_CONFIG	GFLAG -lmpc
-#		define	LIBMALLOC	/* needs malloc() from -lmpc */
-#		define	LIBFB_OBJS	if_remote pkg if_gt
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_GT
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
+#	define	MTYPE	4d
+#	define  CC_OPTS		GFLAG
+#	define	RT_LIBES	-lmpc
+#	define	MGED_LIBES	-lbsd -lgl
+#	define	LGT_CONFIG	GFLAG -lmpc
+#	define	LIBMALLOC	/* needs malloc() from -lmpc */
+#	define	LIBFB_OBJS	if_remote pkg if_4d
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
+#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
 			rm -f libfb.a; cd tmp; \
 			AR x /usr/lib/libgl.a; \
 			mv in_addr.o sgi_addr.o;\
@@ -283,50 +277,14 @@ set -S2 "/bin/sh"
 			AR x /usr/lib/libbsd.a; \
 			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
-#	endif
-#	if SGI_TYPE == 2
-/******		No Graphics Turbo, but has NeWS, SGI sw Release 3 */
-#		define	MTYPE	4d
-#		define  CC_OPTS		GFLAG
-#		define	RT_LIBES	-lmpc
-#		define	MGED_LIBES	-lgl_s
-#		define	LGT_CONFIG	GFLAG -lmpc
-#		define	LIBMALLOC	/* need parallel malloc() */
-#		define	LIBFB_OBJS	if_remote pkg if_4d
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libgl.a; \
-			mv in_addr.o sgi_addr.o;\
-			rm -f select.o *EBEB*; \
-			AR x /usr/lib/libbsd.a; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
-#	endif
-#	if SGI_TYPE == 3
-/******		No Graphics Turbo, no News, SGI sw Release 2 */
-#		define	MTYPE	4d2
-#		define  CC_OPTS		GFLAG -DSGI4D_Rel2
-#		define	MGED_LIBES	-lbsd -lgl
-#		define	LGT_CONFIG	GFLAG
-#		define	LIBFB_OBJS	if_remote pkg if_4d
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_4D
-#		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
-			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libgl.a; \
-			rm -f select.o *EBEB*; \
-			AR x /usr/lib/libbsd.a; \
-			AR u ../libfb.a *; \
-			cd ..; rm -fr tmp)
-#	endif
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	LD_OPTS		GFLAG
 #	define	OPTIMIZER	-O2
 #	define	RANLIB	ar ts
 #	define	GETHOST	hostname
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
+#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=43
+#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=43
 #	define	LIBRT_TIMER	timerunix
 #	define	MGED_OBJS	dm-4d
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
@@ -414,14 +372,13 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #endif
 
-#	undef	sun3
 #if defined(apollo)
 #	undef	apollo
 #	define	MTYPE	apollo
 #	define	UNIXTYPE	SYSV
 #	define	HAS_TCP	1
 #	define  CC_OPTS
-#	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
+#	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* may be able to use local libmalloc */
 #	define	LIBRT_TIMER	timerunix
@@ -429,7 +386,6 @@ set -S2 "/bin/sh"
 #	define	LIBFB_CONFIG
 #	define	LIBFB_SETUP
 #	define	MGED_OBJS
-#	define	RANLIB	/usr/ucb/ranlib
 #	define	MGED_CONFIG
 #	define	MGED_LIBES
 #endif
