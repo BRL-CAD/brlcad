@@ -1,34 +1,16 @@
 /*
-  *			util/Cakefile
+  *			fb/Cakefile
  */
 
-#define SRCDIR	util
-#define PRODUCTS	fbanim loop pix-fb fb-pix fb-fb \
-		pixbustup pixdiff pixinterp2x pixtile pixuntile \
-		pixflip-fb pixfade pixfields \
-		pp-fb fbclear fbgrid \
-		cell-fb \
-		orle-fb fb-orle orle-pix pix-orle \
-		rle-fb fb-rle rle-pix pix-rle \
-		fbcmap fb-cmap cmap-fb fbgamma \
-		fbscanplot fbzoom fbpoint fblabel fbline\
-		pl-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
-		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-imp bw-ps \
-		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
-		bw-a gencolor pix-bw pix-bw3 pixfilter pixhist \
-		pixhist3d pixhist3d-pl \
-		pixrect pixrot pixscale pixstat fbcbars \
-		sun-pix mac-pix pixmerge pixmatte op-bw \
-		pl-sgi pldebug plgetframe plrot \
-		dunncolor dunnsnap cat-fb polar-fb \
-		buffer files-tape \
-		plcolor plline2 pl-pl pl-ps pl-hpgl \
-		spm-fb pix-spm \
-		fbfree fbhelp gif2fb pix3filter \
-		fbfade fbstretch gif-fb \
-		pix-sun pix-alias alias-pix pixcolors hd sgi-pix \
-		pixsaturate query pixshrink bwshrink pixhalve \
-		pix-ps plstat pl-asc asc-pl xyz-pl azel bwthresh
+#define SRCDIR	fb
+#define PRODUCTS	\
+	bw-fb cat-fb cell-fb cmap-fb \
+	fb-bw fb-cmap fb-fb fb-orle fb-pix fb-rle \
+	fbanim fbcbars fbclear fbcmap fbcmrot fbcolor \
+	fbfade fbframe fbfree fbgamma fbgrid fbhelp \
+	fblabel fbline fbpoint fbscanplot fbstretch fbzoom \
+	gif-fb gif2fb orle-fb pix-fb pixflip-fb \
+	pl-fb polar-fb pp-fb rle-fb spm-fb
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
