@@ -11,6 +11,9 @@
  *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "";
+#endif
 
 #include "conf.h"
 
@@ -75,7 +78,8 @@ static void     establish_lighting();
 static void     establish_perspective();
 static void     set_perspective();
 static void     refresh_hook();
-static void     do_linewidth();
+static void     set_linewidth();
+static void     set_linestyle();
 static void     do_fog();
 
 #if IR_KNOBS
@@ -102,13 +106,14 @@ static unsigned char bmap[IR_BUTTONS] = {
 #endif
 
 struct bu_structparse Ogl_vparse[] = {
+	{"%d",  1, "linewidth",		Ogl_MV_O(linewidth),	set_linewidth },
+	{"%d",  1, "linestyle",		Ogl_MV_O(linestyle),	set_linestyle },
 	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
 	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
 	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
  	{"%d",  1, "perspective",       Ogl_MV_O(perspective_mode), establish_perspective },
 	{"%d",  1, "set_perspective",   Ogl_MV_O(dummy_perspective),  set_perspective },
-	{"%d",  1, "linewidth",		Ogl_MV_O(linewidth),	do_linewidth },
 	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fog },
 	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
 	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
@@ -175,7 +180,7 @@ char *argv[];
   /*XXXX this eventually needs to move into Ogl's private structure */
   dmp->dm_vp = &Viewscale;
   dmp->dm_eventHandler = Ogl_doevent;
-  curr_dm_list->s_info->opp = &tkName;
+  curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(Ogl_doevent, (ClientData)DM_TYPE_OGL);
   ogl_configure_window_shape(dmp);
 
@@ -183,7 +188,6 @@ char *argv[];
 }
 
 static int
-
 Ogl_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
@@ -1021,9 +1025,20 @@ set_perspective()
 }
 
 static void
-do_linewidth()
+set_linewidth()
 {
-  dmp->dm_setLineAttr(dmp, ((struct ogl_vars *)dmp->dm_vars)->mvars.linewidth, 0);
+  dmp->dm_setLineAttr(dmp,
+		      ((struct ogl_vars *)dmp->dm_vars)->mvars.linewidth,
+		      dmp->dm_lineStyle);
+  ++dmaflag;
+}
+
+static void
+set_linestyle()
+{
+  dmp->dm_setLineAttr(dmp,
+		      dmp->dm_lineWidth,
+		      ((struct ogl_vars *)dmp->dm_vars)->mvars.linestyle);
   ++dmaflag;
 }
 
