@@ -34,29 +34,23 @@ extern int	reg_total;
 extern int	version;
 extern int	verbose;
 
-struct rcard  {
-	char	rc_num[5];
-	char	rc_null;
-	struct	rcfields  {
-		char	rcf_null;
-		char	rcf_or;
-		char	rcf_solid[5];
-	}  
-	rc_fields[9];
-	char	rc_remark[11+3+100];
-} rcard;
+char	rcard[128];
 
 /*
  *			G E T R E G I O N
  *
  *  Use wmp[region_number] as head for each region.
+ *
+ *  Returns -
+ *	-1	error
+ *	 0	done
  */
 getregion()
 {
 	int i, j;
 	int card;
 	int	op;
-	int reg_reg_flag;
+	int	reg_reg_flag;
 	int	reg_num;
 	char	inst_name[32];
 	int	inst_num;
@@ -65,12 +59,12 @@ getregion()
 	reg_num = 0;		/* safety */
 
 	/* Pre-load very first region card */
-	if( getline( &rcard, sizeof(rcard), "region card" ) == EOF )  {
+	if( getline( rcard, sizeof(rcard), "region card" ) == EOF )  {
 		printf("getregion: premature EOF\n");
 		return( -1 );
 	}
-	if( getint( &rcard, 0, 5 ) != 1 )  {
-		printf("First region card not #1\ncard='%s'\n", &rcard);
+	if( getint( rcard, 0, 5 ) != 1 )  {
+		printf("First region card not #1\ncard='%s'\n", rcard);
 		return(-1);
 	}
 
@@ -80,7 +74,7 @@ top:
 	for( card=0; ; card++ )  {
 		if( card == 0 )  {
 			/* First card is already in input buffer */
-			reg_num = getint( &rcard, 0, 5 );
+			reg_num = getint( rcard, 0, 5 );
 
 			/* -1 region number terminates table */
 			if( reg_num < 0 ) 
@@ -94,54 +88,57 @@ top:
 
 			namecvt( reg_num, wmp[reg_num].wm_name, 'r' );
 		} else {
-			if( getline( &rcard, sizeof(rcard), "region card" ) == EOF )  {
+			if( getline( rcard, sizeof(rcard), "region card" ) == EOF )  {
 				printf("getregion: premature EOF\n");
 				return( -1 );
 			}
-			if( getint( &rcard, 0, 5 ) != 0 )  {
+			if( strcmp( rcard, "  end" ) == 0 ||
+			    strcmp( rcard, "  END" ) == 0 )  {
+			    	/* Version 1, DoE/MORSE */
+			    	reg_total = reg_num;
+			    	return(0);	/* done */
+			}
+			if( getint( rcard, 0, 5 ) != 0 )  {
 				/* finished with this region */
 				break;
 			}
 		}
 
-		cp = (char *) rcard.rc_fields;
+		if( version == 1 )  {
+			cp = rcard + 10;
+		} else {
+			cp = rcard + 6;
+		}
 
 		/* Scan each of the 9 fields on the card */
-		for( i=0; i<9; i++ )  {
+		for( i=0; i<9; i++, cp += 7 )  {
 			struct wmember	*membp;
+			char	nbuf[32];
+			char	*np;
 
-			cp[7] = 0;	/* clobber succeeding 'O' pos */
-
-			/* check for "-    5" field which atoi will
-			 *	return a zero
-			 */
-			if(cp[2] == '-' || cp[2] == '+') {
-				/* remove any followin blanks */
-				for(j=3; j<6; j++) {
-					if(cp[j] == ' ') {
-						cp[j] = cp[j-1];
-						cp[j-1] = ' ';
-					}
-				}
+			/* Remove all spaces from the number */
+			np = nbuf;
+			for( j=2; j<7; j++ )  {
+				if( !isascii( cp[j] ) ) *np++ = '?';
+				else if( isspace( cp[j] ) )  continue;
+				*np++ = cp[j];
 			}
-
-			inst_num = atoi( cp+2 );
+			*np = '\0';
 
 			/* Check for null field -- they are to be skipped */
-			if( inst_num == 0 )  {
-				cp += 7;
-				continue;	/* zeros are allowed as placeholders */
+			if( (inst_num = atoi(nbuf)) == 0 )  {
+				/* zeros are allowed as placeholders */
+				continue;
 			}
 
 			if( version == 5 )  {
 				/* Region references region in Gift5 */
-				if(rcard.rc_fields[i].rcf_or == 'g' ||
-				   rcard.rc_fields[i].rcf_or == 'G')
+				if( cp[1] == 'g' || cp[1] == 'G' ) {
 					reg_reg_flag = 1;
-
-				if( cp[1] == 'R' || cp[1] == 'r' ) 
+				} else if( cp[1] == 'R' || cp[1] == 'r' )  {
+					/* 'OR' */
 					op = WMOP_UNION;
-				else {
+				} else {
 					if( inst_num < 0 )  {
 						op = WMOP_SUBTRACT;
 						inst_num = -inst_num;
@@ -173,8 +170,6 @@ top:
 
 			membp = mk_addmember( inst_name, &wmp[reg_num] );
 			membp->wm_op = op;
-
-			cp += 7;
 		}
 	}
 
@@ -200,7 +195,6 @@ getid()
 	int los= -2;
 	char buff[11];
 	int	buflen;
-	register struct wmember	*wp;
 	char	idcard[132];
 
 	while(1)  {
@@ -229,28 +223,37 @@ getid()
 			printf("\ngetid:  region_id %d encountered, stoping\n", reg_num);
 			return(0);
 		}
+
+		region_register( reg_num, id, air, mat, los );
+	}
+}
+
+region_register( reg_num, id, air, mat, los )
+{
+	register struct wmember	*wp;
+
 #if 0
 printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 #endif
 
-		wp = &wmp[reg_num];
-		if( wp->wm_forw == wp )  {
+	wp = &wmp[reg_num];
+	if( wp->wm_forw == wp )  {
+		if( verbose )  {
 			char	paren[32];
-			if( !verbose)  continue;
+
 			/* Denote an empty region */
 			sprintf( paren, "(%s)", wp->wm_name );
 			col_pr( paren );
-			continue;
 		}
-
-		mk_lrcomb( outfp, wp->wm_name, wp, reg_num,
-			"", "", (char *)0, id, air, mat, los, 0 );
-
-		/* Add region to the one group that it belongs to. */
-		group_add( id, wp->wm_name );
-
-		if(verbose) col_pr( wp->wm_name );
+		return;
 	}
+
+	mk_lrcomb( outfp, wp->wm_name, wp, reg_num,
+		"", "", (char *)0, id, air, mat, los, 0 );
+		/* Add region to the one group that it belongs to. */
+	group_add( id, wp->wm_name );
+
+	if(verbose) col_pr( wp->wm_name );
 }
 
 #define NGROUPS	21
