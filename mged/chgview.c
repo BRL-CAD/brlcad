@@ -251,20 +251,28 @@ register struct directory *dp;
 	db_getrec( dp, &record, 0 );
 
 	if( record.u_id == ID_SOLID )  {
-		(void)printf("%s:  %s",
-			dp->d_namep,record.s.s_type==GENARB8 ? "GENARB8" :
-			record.s.s_type==GENTGC ? "GENTGC" :
-			record.s.s_type==GENELL ? "GENELL": "TOR" );
-
-		if(record.s.s_type == GENARB8) {
-			if( (i=record.s.s_cgtype) < 0 )
-				i *= -1;
-			(void)printf(" (%s)",i==ARB4 ? "ARB4" :
-				i==ARB5 ? "ARB5" : i==ARB6 ? "ARB6" :
-				i==ARB7 ? "ARB7" : i==RAW ? "ARB6" : "ARB8");
+		switch( record.s.s_type )  {
+		case GENARB8:
+			dbpr_arb( record.s.s_type, dp );
+			break;
+		case GENTGC:
+			dbpr_tgc( record.s.s_type, dp );
+			break;
+		case GENELL:
+			dbpr_ell( record.s.s_type, dp );
+			break;
+		case HALFSPACE:
+			dbpr_half( record.s.s_type, dp );
+			break;
+		case TOR:
+			dbpr_torus( record.s.s_type, dp );
+			break;
+		default:
+			printf("bad solid type %d\n", record.s.s_type );
+			break;
 		}
-		(void)printf("\n");
 
+		/* This stuff ought to get pushed into the dbpr_xx code */
 		pr_solid( &record.s );
 
 		for( i=0; i < es_nlines; i++ )

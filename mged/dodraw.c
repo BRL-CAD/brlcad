@@ -133,7 +133,11 @@ int regionid;
 				break;
 
 			case TOR:
-				draw_tor( &recordp->s, xform );
+				draw_torus( &recordp->s, xform );
+				break;
+
+			case HALFSPACE:
+				draw_half( &recordp->s, xform );
 				break;
 
 			default:
