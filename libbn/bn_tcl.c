@@ -44,6 +44,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 /* Support routines for the math functions */
 
+/* XXX Really need a decode_array function that uses atof(),
+ * XXX so that junk like leading { and commas between inputs
+ * XXX don't spoil the conversion.
+ */
+
 int
 bn_decode_mat(m, str)
 mat_t m;
