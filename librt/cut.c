@@ -872,7 +872,7 @@ int			ncpu;
 	if( rtip->rti_cutlen < 3 )  rtip->rti_cutlen = 3;
 	if( rtip->rti_cutdepth < 12 )  rtip->rti_cutdepth = 12;
 	if( rtip->rti_cutdepth > 24 )  rtip->rti_cutdepth = 24;     /* !! */
-	/*	if( RT_G_DEBUG&DEBUG_CUT ) */
+	if( RT_G_DEBUG&DEBUG_CUT )
 		bu_log( "Before Space Partitioning: Max Tree Depth=%d, Cuttoff primitive count=%d\n",
 			rtip->rti_cutdepth, rtip->rti_cutlen );
 
