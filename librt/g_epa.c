@@ -1134,10 +1134,6 @@ struct rt_tol		*tol;
 	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
 	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
-	if (!ellipses || !pts_dbl) {
-		fprintf(stderr, "rt_epa_tess: no mem!\n");
-		goto fail;
-	}
 	
 	/* make ellipses at each z level */
 	i = 0;
@@ -1170,6 +1166,7 @@ struct rt_tol		*tol;
 		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
 		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+	}
 
 	/*
 	 *	put epa geometry into nmg data structures
@@ -1181,18 +1178,10 @@ struct rt_tol		*tol;
 	/* vertices of ellipses of epa */
 	vells = (struct vertex ***)
 		rt_malloc(nell*sizeof(struct vertex **), "vertex [][]");
-	if (!vells) {
-		fprintf(stderr, "rt_epa_tess: no memory!\n");
-		goto fail;
-	}
 	j = nseg;
 	for (i = nell-1; i >= 0; i--) {
 	        vells[i] = (struct vertex **)
 	        	rt_malloc(j*sizeof(struct vertex *), "vertex []");
-		if (!vells[i]) {
-			fprintf(stderr, "rt_epa_tess: no memory!\n");
-			goto fail;
-		}
 		if (i && pts_dbl[i])
 			j /= 2;
 	}
