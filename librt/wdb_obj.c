@@ -240,6 +240,7 @@ static int wdb_version_tcl();
 static int wdb_binary_tcl();
 static int wdb_bot_face_sort_tcl();
 static int wdb_bot_decimate_tcl();
+static int wdb_smooth_bot_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -314,6 +315,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"rt_gettrees",	wdb_rt_gettrees_tcl},
 	{"shells",	wdb_shells_tcl},
 	{"showmats",	wdb_showmats_tcl},
+	{"smooth_bot",	wdb_smooth_bot_tcl},
 	{"summary",	wdb_summary_tcl},
 	{"title",	wdb_title_tcl},
 	{"tol",		wdb_tol_tcl},
@@ -7931,6 +7933,140 @@ wdb_pathlist_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_pathlist_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_smooth_bot_cmd(struct rt_wdb	*wdbp,
+	       Tcl_Interp	*interp,
+	       int		argc,
+	       char 		**argv)
+{
+	char *new_bot_name, *old_bot_name;
+	struct directory *dp_old, *dp_new;
+	struct rt_bot_internal *old_bot;
+	struct rt_db_internal intern;
+	fastf_t tolerance_angle=180.0;
+	int arg_index=1;
+	int id;
+
+	/* check that we are using a version 5 database */
+	if( wdbp->dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "This is an older database version.\n",
+			"It does not support BOT surface normals.\n",
+			"Use \"dbupgrade\" to upgrade this database to the current version.\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( argc < 2 ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	while( *argv[arg_index] == '-' ) {
+		/* this is an option */
+		if( !strcmp( argv[arg_index], "-t" ) ) {
+			arg_index++;
+			tolerance_angle = atof( argv[arg_index] );
+		} else {
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+		arg_index++;
+	}
+
+	if( arg_index >= argc ) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias wdb_smooth_bot %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	old_bot_name = argv[arg_index++];
+
+	if( arg_index < argc ) {
+		new_bot_name = argv[arg_index];
+	} else {
+		new_bot_name = old_bot_name;
+	}
+
+	if( (dp_old=db_lookup( wdbp->dbip, old_bot_name, LOOKUP_QUIET ) ) == DIR_NULL ) {
+		Tcl_AppendResult(interp, old_bot_name, " does not exist!!\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( strcmp( old_bot_name, new_bot_name ) ) {
+
+		if( (dp_new=db_lookup( wdbp->dbip, new_bot_name, LOOKUP_QUIET ) ) != DIR_NULL ) {
+			Tcl_AppendResult(interp, new_bot_name, " already exists!!\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+	} else {
+		dp_new = dp_old;
+	}
+
+	if( (id=rt_db_get_internal( &intern, dp_old, wdbp->dbip, NULL, wdbp->wdb_resp ) ) < 0 ) {
+		Tcl_AppendResult(interp, "Failed to get internal form of ", old_bot_name, "\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( id != ID_BOT ) {
+		Tcl_AppendResult(interp, old_bot_name, " is not a BOT primitive\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	old_bot = (struct rt_bot_internal *)intern.idb_ptr;
+	RT_BOT_CK_MAGIC( old_bot );
+
+	if( rt_smooth_bot( old_bot, old_bot_name, wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
+		Tcl_AppendResult(interp, "Failed to smooth ", old_bot_name, "\n", (char *)NULL );
+		rt_db_free_internal( &intern, wdbp->wdb_resp );
+		return TCL_ERROR;
+	}
+
+	if( dp_new == DIR_NULL ) {
+		if( (dp_new=db_diradd( wdbp->dbip, new_bot_name, -1L, 0, DIR_SOLID,
+				   (genptr_t)&intern.idb_type)) == DIR_NULL ) {
+			rt_db_free_internal(&intern, wdbp->wdb_resp);
+			Tcl_AppendResult(interp, "Cannot add ", new_bot_name, " to directory\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+	}
+
+	if( rt_db_put_internal( dp_new, wdbp->dbip, &intern, wdbp->wdb_resp ) < 0 ) {
+		rt_db_free_internal(&intern, wdbp->wdb_resp);
+		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	rt_db_free_internal( &intern, wdbp->wdb_resp );
+
+	return TCL_OK;
+}
+
+static int
+wdb_smooth_bot_tcl(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_smooth_bot_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int
