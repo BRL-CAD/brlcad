@@ -1678,7 +1678,9 @@ char	**argv;
 
 	if(first){
 	  first = 0;
-	  get_attached();
+
+	  if( interactive )
+	    get_attached();
 #if 0
 	  Tcl_AppendResult(interp, "Note: the attach command can be used\n",
 			   "      to open a display window.\n\n", (char *)NULL);
