@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			fatal_error = TRUE; \
 			return; \
 			}
-extern char	*malloc();
 _LOCAL_ OcList	*copy_OcList();
 _LOCAL_ OcList	*match_Trie();
 

@@ -26,8 +26,8 @@ static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #else
 #include <string.h>
 #endif
+#include "./extern.h"
 #include "./hmenu.h"
-extern char	*malloc();
 extern int	LI, CO;
 #ifndef _LOCAL_
 #define _LOCAL_ static
