@@ -41,7 +41,7 @@ echo
 for i in \
 	Cakefile.defs setup.sh gen.sh cray.sh machinetype.sh \
 	cake/Makefile cakeaux/Makefile \
-	remrt/remrt.c libfont/vfont.c \
+	remrt/remrt.c libbu/vfont.c \
 	fb/cat-fb.c canon/canonserver.c \
 	h/tcl.h libtk/tkInt.h \
 	brlman/awf brlman/brlman
