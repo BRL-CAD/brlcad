@@ -123,11 +123,11 @@ char *argv[];
 			} else {
 				(void) fputs(Response, stdout);
 				(void) putchar('\n');
-				exit(0);
+				break;
 			}
 		} else if (flag == NULL) {
 			(void) fputs(Response, stdout);
-			exit(0);
+			break;
 		} else { /* good response */
 			eol = strlen(line) + line;
 			if (*(eol-1) == '\n') {
@@ -140,9 +140,10 @@ char *argv[];
 				(void) fputs(line, stdout);
 			}
 			(void)putchar('\n');
-			exit(0);
+			break;
 		}
 	}
+	exit(0);
 }
 void
 handler()
