@@ -23,6 +23,7 @@
 	asize \
 	anim \
 	tabdata \
+	sphmap \
 	plot3 fortran font \
 	axis list marker number \
 	scale vectfont symbol vector \
