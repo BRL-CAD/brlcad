@@ -31,7 +31,6 @@
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */

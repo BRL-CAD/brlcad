@@ -92,8 +92,7 @@ pixbustup:	pixbustup.o
 
 /* The difficulty here is obtaining the random number tables */
 pixfade:	pixfade.o
-	CC CFLAGS -c ../rt/mathtab.c
-	CC LDFLAGS -o pixfade pixfade.o mathtab.o LIBES
+	CC LDFLAGS -o pixfade pixfade.o LIBBN LIBBU LIBBU_LIBES LIBES
 
 pixfields:	pixfields.o
 	CC LDFLAGS -o pixfields pixfields.o LIBES

@@ -604,8 +604,9 @@ bn_cmd_noise_perlin(ClientData clientData,
 
 	return TCL_OK;
 }
+
 /*
- *  usage: bn_noise_fbm pt h_val lacunarity octaves
+ *  usage: bn_noise_fbm X Y Z h_val lacunarity octaves
  *
  *
  *
@@ -657,7 +658,8 @@ bn_cmd_noise(ClientData clientData,
 /*
  *	usage: noise_slice xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]
  *
- *
+ *	The idea here is to get a whole slice of noise at once, thereby
+ *	avoiding the overhead of doing this in Tcl.
  */
 int
 bn_cmd_noise_slice(ClientData clientData,

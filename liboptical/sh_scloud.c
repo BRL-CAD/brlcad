@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
 

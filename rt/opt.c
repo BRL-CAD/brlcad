@@ -345,7 +345,7 @@ register char **argv;
 			 *  (dither, etc) for benchmarking purposes.
 			 */
 			benchmark = 1;
-			mathtab_constant();
+			bn_mathtab_constant();
 			break;
 		case 'b':
 			/* Specify a single pixel to be done */

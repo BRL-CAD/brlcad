@@ -29,7 +29,6 @@ static char RCScloud[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
 struct cloud_specific {
@@ -80,23 +79,23 @@ fastf_t Contrast, initFx, initFy;
 	 */
 	Fx = bn_twopi * initFx;
 	Fy = bn_twopi * initFy;
-	Px = bn_halfpi * tab_sin( 0.5 * Fy * y );
-	Py = bn_halfpi * tab_sin( 0.5 * Fx * x );
+	Px = bn_halfpi * bn_tab_sin( 0.5 * Fy * y );
+	Py = bn_halfpi * bn_tab_sin( 0.5 * Fx * x );
 	C = 1.0;	/* ??? */
 
 	for( i = 0; i < NUMSINES; i++ ) {
 		/*
 		 * Compute one term of each summation.
 		 */
-		t1 += C * tab_sin( Fx * x + Px ) + Contrast;
-		t2 += C * tab_sin( Fy * y + Py ) + Contrast;
+		t1 += C * bn_tab_sin( Fx * x + Px ) + Contrast;
+		t2 += C * bn_tab_sin( Fy * y + Py ) + Contrast;
 
 		/*
 		 * Compute the new phases and frequencies.
 		 * N.B. The phases shouldn't vary the same way!
 		 */
-		Px = bn_halfpi * tab_sin( Fy * y );
-		Py = bn_halfpi * tab_sin( Fx * x );
+		Px = bn_halfpi * bn_tab_sin( Fy * y );
+		Py = bn_halfpi * bn_tab_sin( Fx * x );
 		Fx *= 2.0;
 		Fy *= 2.0;
 		C  *= 0.707;

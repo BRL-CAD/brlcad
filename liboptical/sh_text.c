@@ -32,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
+/*#include "../rt/mathtab.h"*/
 #include "../rt/rdebug.h"
 
 extern struct region	env_region;		/* import from view.c */
@@ -676,16 +676,16 @@ struct shadework	*swp;
 char	*dp;
 {
 	/* Probably want to diddle parameters based on what part of sky */
-	if( rand0to1(ap->a_resource->re_randptr) >= 0.98 )  {
+	if( bn_rand0to1(ap->a_resource->re_randptr) >= 0.98 )  {
 		register int i;
 		FAST fastf_t f;
 		i = (sizeof(star_colors)-1) / sizeof(star_colors[0]);
 
 		/* "f" used for intermediate result to avoid an SGI compiler error */
-		f = rand0to1(ap->a_resource->re_randptr);
+		f = bn_rand0to1(ap->a_resource->re_randptr);
 		i = ((double)i) * f;
 
-		f = rand0to1(ap->a_resource->re_randptr);
+		f = bn_rand0to1(ap->a_resource->re_randptr);
 		VSCALE( swp->sw_color, star_colors[i], f );
 	} else {
 		VSETALL( swp->sw_color, 0 );

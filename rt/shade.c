@@ -37,7 +37,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "shadework.h"
 #include "./ext.h"
 #include "./rdebug.h"
-#include "./mathtab.h"
 #include "./light.h"
 
 HIDDEN void	shade_inputs();

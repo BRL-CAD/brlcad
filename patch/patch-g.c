@@ -46,13 +46,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
+#include "bu.h"
+#include "bn.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "../librt/debug.h"
 #include "./patch-g.h"
-#include "../rt/mathtab.h"
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl, struct bn_tol *tol ) );
 RT_EXTERN( fastf_t mat_determinant, ( CONST mat_t m ) );

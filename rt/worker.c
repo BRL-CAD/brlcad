@@ -30,7 +30,6 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "./mathtab.h"
 #include "./rdebug.h"
 
 int		per_processor_chunk = 0;	/* how many pixels to do at once */
@@ -319,8 +318,10 @@ genptr_t	arg;
 			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
 				if( jitter & JITTER_CELL )  {
 					FAST fastf_t dx, dy;
-					dx = a.a_x + rand_half(a.a_resource->re_randptr);
-					dy = a.a_y + rand_half(a.a_resource->re_randptr);
+					dx = a.a_x + 
+						bn_rand_half(a.a_resource->re_randptr);
+					dy = a.a_y + 
+						bn_rand_half(a.a_resource->re_randptr);
 					VJOIN2( point, viewbase_model,
 						dx, dx_model, dy, dy_model );
 				}  else  {

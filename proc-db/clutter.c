@@ -76,7 +76,9 @@ char	**argv;
 	bu_debug = BU_DEBUG_COREDUMP;
 	rbuf = bn_unif_init( 0, 0 );
 
-#define rand0to1(p)	(BN_UNIF_DOUBLE(p)+0.5)
+#define rand_num(p)	(BN_UNIF_DOUBLE(p)+0.5)
+
+
 
 	BU_LIST_INIT( &head.l );
 
@@ -138,13 +140,13 @@ char	**argv;
 	white[0] = white[1] = white[2] = 255;
 	base = size*(quant/2+1);
 	VSET( aim, 0, 0, 0 );
-	VSET( pos, base, base, minheight+maxheight*rand0to1(rbuf) );
+	VSET( pos, base, base, minheight+maxheight*rand_num(rbuf) );
 	do_light( "l1", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, base, minheight+maxheight*rand0to1(rbuf) );
+	VSET( pos, -base, base, minheight+maxheight*rand_num(rbuf) );
 	do_light( "l2", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, -base, minheight+maxheight*rand0to1(rbuf) );
+	VSET( pos, -base, -base, minheight+maxheight*rand_num(rbuf) );
 	do_light( "l3", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, base, -base, minheight+maxheight*rand0to1(rbuf) );
+	VSET( pos, base, -base, minheight+maxheight*rand_num(rbuf) );
 	do_light( "l4", pos, aim, 1, 100.0, white, &head );
 
 	/* Build the overall combination */
@@ -187,8 +189,8 @@ double	size;
 
 		high = crystal_layer( name, center, size/2,
 			maj, min,
-			rand0to1(rbuf) * 90.0,
-			rand0to1(rbuf) * 8.0 + 2.0,
+			rand_num(rbuf) * 90.0,
+			rand_num(rbuf) * 8.0 + 2.0,
 			nsolids );
 		if( high > height )  height = high;
 	}
@@ -243,7 +245,7 @@ int	nsolids;	/* number of solids for this layer */
 	BU_LIST_INIT( &head.l );
 
 	for( todo = nsolids-1; todo >= 0; todo-- )  {
-		cos_var = cos( var*rand0to1(rbuf) );
+		cos_var = cos( var*rand_num(rbuf) );
 		m_cos_var = 1 - cos_var;
 		/* Blend together two original axes for new orthog. set */
 		if( rand() & 1 )  {
@@ -265,10 +267,10 @@ int	nsolids;	/* number of solids for this layer */
 
 		/* dither center position */
 		VMOVE(loc_cent, center );
-		loc_cent[X] += BN_UNIF_DOUBLE(rbuf) * radius;
-		loc_cent[Y] += BN_UNIF_DOUBLE(rbuf) * radius;
+		loc_cent[X] += rand_num(rbuf) * radius;
+		loc_cent[Y] += rand_num(rbuf) * radius;
 
-		length = radius * rand0to1(rbuf);
+		length = radius * rand_num(rbuf);
 		width = length / ratio;
 
 		VJOIN1( a, loc_cent, length, long_axis );

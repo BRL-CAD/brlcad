@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "spm.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
 #define PT_NAME_LEN 128

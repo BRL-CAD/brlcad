@@ -497,7 +497,34 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
 
 /* BN_RANDHALF gives numbers between -0.5 and 0.5 */
 #define BN_RANDHALF( _i ) (bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]-0.5)
+#define BN_RANDHALF_INIT(_p) _p = bn_rand_table
 
+/* XXX This should move to compat4 */
+/* #define rand_half bn_rand_half */
+/* #define rand_init bn_rand_init */
+/* #define rand0to1  bn_rand0to1 */
+
+#define bn_rand_half(_p)	\
+	( (++(_p) >= &bn_rand_halftab[BN_RANDHALFTABSIZE] || (_p) < bn_rand_halftab) ? \
+		*((_p) = bn_rand_halftab) : *(_p))
+
+#define bn_rand_init(_p, _seed)	\
+	(_p) = &bn_rand_halftab[(int)((bn_rand_halftab[(_seed)%BN_RANDHALFTABSIZE] + \
+		0.5)*(BN_RANDHALFTABSIZE-1))]
+
+#define bn_rand0to1(_q)	(bn_rand_half(_q)+0.5)
+
+extern double bn_sin_scale;
+#define bn_tab_sin(_a)	(((_a) > 0) ? \
+	( bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) :\
+	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) )
+
+#define BN_RANDHALFTABSIZE	2047	/* Powers of two give streaking */
+#define	BN_SINTABSIZE		2048
+
+
+extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
+extern CONST float bn_sin_table[BN_SINTABSIZE];
 extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 
 /*----------------------------------------------------------------------*/

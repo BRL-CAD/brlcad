@@ -37,8 +37,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include "machine.h"
+#include "vmath.h"
 #include "externs.h"		/* For getopt */
-#include "../rt/mathtab.h"
+#include "bu.h"
+#include "bn.h"
 
 int	max = 255;
 double	multiplier = 1.0;
@@ -112,10 +114,12 @@ int argc;
 char *argv[];
 {
 	int	i;
-	register float	*randp = rand_tab;
+	register float	*randp;
 	struct color_rec {
 		unsigned char red,green,blue;
 	} cur_color;
+
+	bn_rand_init( randp, 0);
 
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
@@ -131,19 +135,19 @@ char *argv[];
 		if( fread(&cur_color,1,3,inp) != 3 )  break;
 		if( feof(inp) )  break;
 
-		t = cur_color.red * multiplier + rand_half(randp);
+		t = cur_color.red * multiplier + bn_rand_half(randp);
 		if (t > max)
 			cur_color.red   = max;
 		else
 			cur_color.red = t;
 
-		t = cur_color.green * multiplier + rand_half(randp);
+		t = cur_color.green * multiplier + bn_rand_half(randp);
 		if (t > max)
 			cur_color.green = max;
 		else
 			cur_color.green = t;
 
-		t = cur_color.blue * multiplier + rand_half(randp);
+		t = cur_color.blue * multiplier + bn_rand_half(randp);
 		if (t > max)
 			cur_color.blue  = max;
 		else

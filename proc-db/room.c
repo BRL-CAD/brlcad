@@ -24,12 +24,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "vmath.h"
+#include "externs.h"
+#include "bu.h"
+#include "bn.h"
 #include "db.h"
 #include "vmath.h"
 #include "rtlist.h"
 #include "wdb.h"
 
-#include "../rt/mathtab.h"
 
 #define HEIGHT	4000		/* 4 meter high walls */
 
@@ -130,13 +133,13 @@ char	**argv;
 	white[0] = white[1] = white[2] = 255;
 	base = size*(quant/2+1);
 	VSET( aim, 0, 0, 0 );
-	VSET( pos, base, base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, base, base, minheight+maxheight*bn_rand0to1(randp) );
 	do_light( "l1", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, -base, base, minheight+maxheight*bn_rand0to1(randp) );
 	do_light( "l2", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, -base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, -base, -base, minheight+maxheight*bn_rand0to1(randp) );
 	do_light( "l3", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, base, -base, minheight+maxheight*rand0to1(randp) );
+	VSET( pos, base, -base, minheight+maxheight*bn_rand0to1(randp) );
 	do_light( "l4", pos, aim, 1, 100.0, white, &head );
 #endif
 

@@ -33,7 +33,6 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
 
@@ -876,13 +875,13 @@ int have;
 		 */
 		f = lp->lt_radius * 0.9;
 		tolight[X] = lp->lt_pos[X] +
-			rand_half(ap->a_resource->re_randptr)*f -
+			bn_rand_half(ap->a_resource->re_randptr)*f -
 			swp->sw_hit.hit_point[X];
 		tolight[Y] = lp->lt_pos[Y] +
-			rand_half(ap->a_resource->re_randptr)*f -
+			bn_rand_half(ap->a_resource->re_randptr)*f -
 			swp->sw_hit.hit_point[Y];
 		tolight[Z] = lp->lt_pos[Z] +
-			rand_half(ap->a_resource->re_randptr)*f -
+			bn_rand_half(ap->a_resource->re_randptr)*f -
 			swp->sw_hit.hit_point[Z];
 #endif
 

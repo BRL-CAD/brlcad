@@ -52,7 +52,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 #include "../librt/debug.h"
-#include "../rt/mathtab.h"
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
 
@@ -315,7 +314,7 @@ char **argv;
 	 */
 	for( n=0; n < MAX_PSW; n++ )  {
 		rt_init_resource( &resource[n], n );
-		rand_init( resource[n].re_randptr, n );
+		bn_rand_init( resource[n].re_randptr, n );
 	}
 
 	BU_LIST_INIT( &WorkHead );

@@ -24,7 +24,6 @@
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "../rt/ext.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
 #define prj_MAGIC 0x70726a00	/* "prj" */

@@ -38,7 +38,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "./mathtab.h"
 #include "./ext.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
@@ -288,7 +287,7 @@ char **argv;
 	 */
 	for( i=0; i < MAX_PSW; i++ )  {
 		rt_init_resource( &resource[i], i );
-		rand_init( resource[i].re_randptr, i );
+		bn_rand_init( resource[i].re_randptr, i );
 	}
 
 #ifdef HAVE_SBRK

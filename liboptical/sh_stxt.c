@@ -31,7 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();

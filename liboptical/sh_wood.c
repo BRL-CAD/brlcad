@@ -27,7 +27,7 @@
  *	is summed into Tom's interpolation routine, thereby allowing each
  *	wood-shaded combination to have a different noise pattern, and prevents
  *	all similar combinations from looking alike.  The "dither" field is
- *	initialized with the "rand0to1" routine before calling the parser, so
+ *	initialized with the "bn_rand0to1" routine before calling the parser, so
  *	default values can be used.  However, (obviously) the user can override
  *	the defaults if desired.
  *
@@ -77,7 +77,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#include "../rt/mathtab.h"
+/*#include "../rt/mathtab.h"*/
 #include "../rt/rdebug.h"
 
 /*
@@ -350,9 +350,9 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	wd->phase     = 5;
 	wd->depth     = 0;
 
-	wd->dither[0] = rand0to1 (resp->re_randptr);
-	wd->dither[1] = rand0to1 (resp->re_randptr);
-	wd->dither[2] = rand0to1 (resp->re_randptr);
+	wd->dither[0] = bn_rand0to1 (resp->re_randptr);
+	wd->dither[1] = bn_rand0to1 (resp->re_randptr);
+	wd->dither[2] = bn_rand0to1 (resp->re_randptr);
 
 	VSETALL (wd->rot, 0);
 	VSETALL (wd->vertex, 0);
@@ -498,16 +498,16 @@ struct wood_specific *wd;
 				}
 			/* Z component is [2] */
 			a_vertex[2] = ((wd->b_max[2] - wd->b_min[2]) * 
-					(rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
+					(bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
 			a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) * 
-					(rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
+					(bn_rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
 			}
 		   else {
 			for (i=0; i<3; i++) {
 				a_vertex[i] = ((wd->b_max[i] - wd->b_min[i]) * 
-						(rand0to1(resp->re_randptr) * wd->dd)) + wd->b_min[i];
+						(bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_min[i];
 				a_dir[i]    = ((wd->b_max[i] - wd->b_min[i]) * 
-						(rand0to1(resp->re_randptr) * wd->dd)) + wd->b_max[i];
+						(bn_rand0to1(resp->re_randptr) * wd->dd)) + wd->b_max[i];
 				}
 			}
 		MAT4X3PNT (wd->vertex, xlate, a_vertex);
@@ -617,15 +617,15 @@ struct wood_specific *wd;
 		scale = (double)i / (double)wd->ns;
 
 		a = (x * scale) +
-		    (rand_half (resp->re_randptr) * wd->jitter) +
+		    (bn_rand_half (resp->re_randptr) * wd->jitter) +
 		    wd->dither[X];
 
 		b = (y * scale) +
-		    (rand_half (resp->re_randptr) * wd->jitter) +
+		    (bn_rand_half (resp->re_randptr) * wd->jitter) +
 		    wd->dither[Y];
 
 		c = (z * scale) +
-		    (rand_half (resp->re_randptr) * wd->jitter) +
+		    (bn_rand_half (resp->re_randptr) * wd->jitter) +
 		    wd->dither[Z];
 
 		turb += wood_noise (a, b, c, wd);
