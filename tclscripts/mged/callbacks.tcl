@@ -20,9 +20,9 @@
 
 ## - new_db_callback
 #
-# This is called upon opening a new database.
+# This is called upon opening a database.
 #
-proc new_db_callback { dbname } {
+proc opendb_callback { dbname } {
     global mged_players
 
     if ![info exists mged_players] {
@@ -31,6 +31,7 @@ proc new_db_callback { dbname } {
 
     foreach id $mged_players {
 	set_wm_title $id $dbname
+	rt_opendb_callback $id
     }
 }
 
@@ -107,4 +108,16 @@ proc end_edit_callback {} {
 proc output_callback { str } {
     distribute_text {} {} $str
     mged_update 1
+}
+
+proc solid_list_callback {} {
+    global mged_players
+
+    if ![info exists mged_players] {
+	return
+    }
+
+    foreach id $mged_players {
+	rt_solid_list_callback $id
+    }
 }
