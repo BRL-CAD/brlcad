@@ -24,8 +24,6 @@ bin_SCRIPTS = \
 	pixread.sh \
 	pixwrite.sh \
 	sgisnap.sh \
-	sharedliblink.sh \
-	sharedlibvers.sh \
 	show.sh \
 	vers.sh
 
