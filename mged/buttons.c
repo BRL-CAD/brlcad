@@ -66,7 +66,7 @@ fastf_t	acc_sc_sol;
 fastf_t	acc_sc_obj;     /* global object scale factor --- accumulations */
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
-void bv_edit_toggle();
+static void bv_edit_toggle(), bv_eyerot_toggle();
 static void be_s_context();
 static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
 static void bv_top(), bv_bottom(), bv_right();
@@ -120,6 +120,7 @@ struct buttons  {
 	BV_ZOOM_OUT,	"zoomout",	bv_zoomout,
 	BV_RATE_TOGGLE, "rate",		bv_rate_toggle,
 	BV_EDIT_TOGGLE, "edit",		bv_edit_toggle,
+	BV_EYEROT_TOGGLE, "eyerot",     bv_eyerot_toggle,
 	-1,		"-end-",	be_reject
 };
 
@@ -155,6 +156,7 @@ struct menu_item second_menu[] = {
 	{ "Sliders", sl_toggle_scroll, 0 },
 	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
 	{ "Edit/View", btn_item_hit, BV_EDIT_TOGGLE },
+	{ "Rotate About Eye", btn_item_hit, BV_EYEROT_TOGGLE },
 	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
 	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
@@ -333,7 +335,7 @@ bv_zoomout()
   (void)mged_zoom(0.5);
 }
 
-void
+static void
 bv_edit_toggle()
 {
   mged_variables.edit = !mged_variables.edit;
@@ -345,6 +347,14 @@ bv_rate_toggle()
 {
   mged_variables.rateknobs = !mged_variables.rateknobs;
   set_scroll();
+}
+
+static void
+bv_eyerot_toggle()
+{
+  mged_variables.eyerot = !mged_variables.eyerot;
+
+  ++dmaflag;
 }
 
 static void
@@ -405,6 +415,8 @@ bv_vrestore()
     bn_mat_copy( Viewrot, sav_viewrot );
     bn_mat_copy( toViewcenter, sav_toviewcenter );
     new_mats();
+
+    (void)mged_svbase();
   }
 }
 
