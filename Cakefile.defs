@@ -33,8 +33,10 @@
  *  all comments must start in the first column, or CPP will
  *  leave the leading tabs in place, and confuse Cake.
  */
+#ifndef	DEFINES_ONLY
 set -S1 "/bin/sh -c"
 set -S2 "/bin/sh"
+#endif
 
 /* Program to run to obtain the "sub" substitution effect */
 #define SUB	cakesub
@@ -77,6 +79,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
+#define	NFS	1
 
 /****************************************************************
  *								*
@@ -138,6 +141,22 @@ set -S2 "/bin/sh"
 #	define	MGED_OBJS	dm-mg dm-vg
 #	define	MGED_CONFIG	-DDM_MG -DDM_VG
 #	define	MGED_LIBES	/**/
+#endif
+
+#if defined(unix) && defined(m68k)
+/*	Apple MAC II running AUX */
+#	undef	aux
+#	define	MTYPE	aux
+#	define	UNIXTYPE	SYSV
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
+#	define	CC_OPTS	-ZcI
+#	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=BSD
+#	define	LIBFB_OBJS	if_remote pkg
+#	define	LIBFB_CONFIG	-DIF_REMOTE
+#	define	MGED_OBJS	dm-qd filters
+#	define	MGED_CONFIG	-DDM_QD
+#	define	MANDIR	/usr/catman/u_man/man
 #endif
 
 #ifdef alliant
@@ -216,7 +235,7 @@ set -S2 "/bin/sh"
 #		define	MGED_LIBES	../libfb/sgiselect.o -lgl2
 #	else
 /*		Versions 3.5 and 3.6 */
-#		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD
+#		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=BSD
 #		define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
 #		define	LIBFB_OBJS	if_remote pkg if_sgi
 #		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
@@ -228,7 +247,7 @@ set -S2 "/bin/sh"
 			rm -f __.SYMDEF; \
 			AR u ../libfb.a *; \
 			cd ..; rm -fr tmp)
-#		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
+#		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=BSD
 #		define	MGED_LIBES	-lbsd -lgl2
 #	endif
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SGI
@@ -246,7 +265,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-G 16
 
 /* SGI_4D_TYPE_MARKER: don't alter this comment, setup.sh needs it when changing next line */
-#	define	SGI_TYPE	3
+#	define	SGI_TYPE	1
 
 
 #	if SGI_TYPE == 1
@@ -261,7 +280,7 @@ set -S2 "/bin/sh"
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_GT
 #		define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \
 			rm -f libfb.a; cd tmp; \
-			AR x /usr/lib/libgl_s.a; \
+			AR x /usr/lib/libgl.a; \
 			mv in_addr.o sgi_addr.o;\
 			rm -f select.o *EBEB*; \
 			AR x /usr/lib/libbsd.a; \
@@ -310,10 +329,9 @@ set -S2 "/bin/sh"
 #	define	OPTIMIZER	-O2
 #	define	RANLIB	ar ts
 #	define	GETHOST	hostname
-#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD
-#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD
+#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=BSD
+#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=BSD
 #	define	LIBRT_TIMER	timerunix
-#	define	RT_CONFIG	GFLAG
 #	define	MGED_OBJS	dm-4d
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D
 #endif
@@ -326,13 +344,15 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 /*	If using GNU GCC, also add -traditional flag */
 /*	Select correct floating point flag, -fswitch if unsure */
-#	if 1
+#	if 0
 /*		Normal Sun configuration */
 #		define	CC_OPTS	-fswitch
 #	else
 /*		Model-specific floating point options */
 /*#		define	CC_OPTS	-ffpa */
-#		define	CC_OPTS	-f68881
+/*#		define	CC_OPTS	-f68881 -pg*/
+#		define	CC_OPTS	-f68881 -g
+/*#		define	CC	gcc -traditional*/
 #	endif
 #	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS
@@ -410,16 +430,22 @@ set -S2 "/bin/sh"
 /*		Cray C 4.0 (experimental) */
 #		define	CC_DEFS -hvector,olevel_3,vmesg_2
 #		define	CC	/bin/ncc
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
-#	define	RFBD_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
+#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
 #	define	LIBRT_TIMER	timercray
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
 #	define	RT_LIBES	-L/lib/multi -lu
-/*	 On XMP UNICOS 3.0, archives still end in .o */
-#	define	ARCH_SUF	o
+#	define	LGT_CONFIG	-Dcray
+/*		On XMP UNICOS 3.0, archives still end in .o */
+#		define	ARCH_SUF	o
+#		define	FC	/bin/cft77
+#	else
+/*		On XMP UNICOS 4.0, archives finally end in .a */
+#		define	ARCH_SUF	a
+#		define	FC	/bin/cft77
+#			define	RFBD_CONFIG	-DBSD=42 -DOLDTCP
 #	define	AR	../cray-ar.sh
-#	define	FC	/bin/cft77
 #	endif
 #	define	RANLIB	echo
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
@@ -439,8 +465,8 @@ set -S2 "/bin/sh"
 #			define	CC	/bin/ncc
 #	define	FC	/bin/cft77
 		AR x /usr/lib/libnet.a select.o socket.o; \
-#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
-#	define	RFBD_CONFIG	-I/usr/win-include -DBSD -DSHORT_IDENT
+#	define	LIBPKG_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
+#	define	RFBD_CONFIG	-I/usr/win-include -DBSD=BSD -DSHORT_IDENT
 #		define	RFBD_CONFIG	-DBSD=43
 #	endif
 #	define	LIBRT_TIMER	timerunix
@@ -689,23 +715,20 @@ set -S2 "/bin/sh"
  *  as is needed in a multi-machine NFS environment,
  *  For the purposes of Cray-2 LIB_PRE, there can only be ONE tab
  *  character between the symbol name and the definition.
-/**
-#if MTYPE == bench
-#	undef	NFS
-#endif
-**/
+ */
 /**GAK, no string compares in #if */
 
-#	define	LIBFB	../libfb/libfb.ARCH_SUF
-#	define	LIBRT	../librt/librt.ARCH_SUF
-#	define	LIBPLOT	../libplot3/libplot3.ARCH_SUF
-#	define	LIBORLE	../liborle/liborle.ARCH_SUF
-#	define	LIBRLE	../librle/librle.ARCH_SUF
+#	define	LIBFB		../libfb/libfb.ARCH_SUF
+#	define	LIBRT		../librt/librt.ARCH_SUF
+#	define	LIBPLOT		../libplot3/libplot3.ARCH_SUF
+#	define	LIBORLE		../liborle/liborle.ARCH_SUF
+#	define	LIBRLE		../librle/librle.ARCH_SUF
+#	define	LIBWDB		../libwdb/libwdb.ARCH_SUF
+#	define	LIBSPL		../libspl/libspl.ARCH_SUF
 #	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
 #	define	LIBSPL	../libspl/libspl.ARCH_SUF
-#	define	LIBWDB	../libwdb/libwdb.ARCH_SUF
-#	define	LIBSPL	../libspl/libspl.ARCH_SUF
-#	define	LIBFONT	../libfont/libfont.ARCH_SUF
+#	define	LIBFONT		../libfont/libfont.ARCH_SUF
+#	define	LIBSYSV		../libsysv/libsysv.ARCH_SUF
 #	define	LIBFONT	../libfont/libfont.ARCH_SUF
 #	define	LIBSYSV	../libsysv/libsysv.ARCH_SUF
 #	ifndef	LIBMALLOC
@@ -715,23 +738,19 @@ set -S2 "/bin/sh"
 #		define	LIBPKG	../libpkg/libpkg.ARCH_SUF
 #	else
 #		define	LIBPKG	/**/
-#	if UNIXTYPE == BSD
-#		define	LIBSYSV		../libsysv/libsysv.ARCH_SUF
-#	else
-#		define	LIBSYSV		/**/
-#	endif
 #	endif
 
-#	define	LIBFB	../.libfb.MTYPE/libfb.ARCH_SUF
-#	define	LIBRT	../.librt.MTYPE/librt.ARCH_SUF
-#	define	LIBPLOT	../.libplot3.MTYPE/libplot3.ARCH_SUF
-#	define	LIBORLE	../.liborle.MTYPE/liborle.ARCH_SUF
-#	define	LIBRLE	../.librle.MTYPE/librle.ARCH_SUF
+#	define	LIBFB		../.libfb.MTYPE/libfb.ARCH_SUF
+#	define	LIBRT		../.librt.MTYPE/librt.ARCH_SUF
+#	define	LIBPLOT		../.libplot3.MTYPE/libplot3.ARCH_SUF
+#	define	LIBORLE		../.liborle.MTYPE/liborle.ARCH_SUF
+#	define	LIBRLE		../.librle.MTYPE/librle.ARCH_SUF
+#	define	LIBWDB		../.libwdb.MTYPE/libwdb.ARCH_SUF
+#	define	LIBSPL		../.libspl.MTYPE/libspl.ARCH_SUF
 #	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
 #	define	LIBSPL	../.libspl.MTYPE/libspl.ARCH_SUF
-#	define	LIBWDB	../.libwdb.MTYPE/libwdb.ARCH_SUF
-#	define	LIBSPL	../.libspl.MTYPE/libspl.ARCH_SUF
-#	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
+#	define	LIBFONT		../.libfont.MTYPE/libfont.ARCH_SUF
+#	define	LIBSYSV		../.libsysv.MTYPE/libsysv.ARCH_SUF
 #	define	LIBFONT	../.libfont.MTYPE/libfont.ARCH_SUF
 #	define	LIBSYSV	../.libsysv.MTYPE/libsysv.ARCH_SUF
 #	ifndef	LIBMALLOC
@@ -740,12 +759,6 @@ set -S2 "/bin/sh"
 #	if HAS_TCP
 #		define	LIBPKG	../.libpkg.MTYPE/libpkg.ARCH_SUF
 #	else
-
-#	if UNIXTYPE == BSD
-#		define	LIBSYSV		../.libsysv.MTYPE/libsysv.ARCH_SUF
-#	else
-#		define	LIBSYSV		/**/
-#	endif
 #		define	LIBPKG	/**/
 #	endif
 #endif
@@ -778,7 +791,7 @@ set -S2 "/bin/sh"
 #	define	CONFIGDEFS	/**/
 #endif
 #if UNIXTYPE == BSD
-#	define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR -DBSD CC_DEFS CONFIGDEFS
+/* C compiler flags */
 #ifdef BSD
 #	define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR -DBSD=BSD CC_DEFS CONFIGDEFS
 #else
@@ -792,7 +805,7 @@ set -S2 "/bin/sh"
 #define FFLAGS	OPTIMIZER FC_OPTS
 
 #if UNIXTYPE == BSD
-#	define	LFLAGS	-abchx -DBSD CC_DEFS CONFIGDEFS
+#define	LINT	lint
 #ifdef BSD
 #	define	LFLAGS	-abchx -DBSD=BSD CC_DEFS CONFIGDEFS
 #else
