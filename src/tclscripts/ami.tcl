@@ -46,6 +46,6 @@ exec $EXEC_COMMAND
 # exec $BTCLSH "$0" "$@"
 
 foreach arg $argv {
-    catch {auto_mkindex $arg *.tcl *.itcl *.itk}
+    catch {auto_mkindex $arg *.tcl *.itcl *.itk *.sh}
     puts $arg
 }
