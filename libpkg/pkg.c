@@ -338,7 +338,8 @@ void (*errlog)();
 	struct sockaddr_in sinhim;		/* Server */
 #endif
 	register struct servent *sp;
-	int pkg_listenfd;
+	int	pkg_listenfd;
+	int	on = 1;
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -372,6 +373,11 @@ void (*errlog)();
 	if( (pkg_listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_permserver:  socket" );
 		return(-1);
+	}
+
+	if( setsockopt( pkg_listenfd, SOL_SOCKET, SO_REUSEADDR,
+	    (char *)&on, sizeof(on) ) < 0 )  {
+		pkg_perror( errlog, "pkg_permserver: setsockopt SO_REUSEADDR" );
 	}
 
 	if( bind(pkg_listenfd, &sinme, sizeof(sinme)) < 0 )  {
