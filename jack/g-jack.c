@@ -78,6 +78,7 @@ char	*argv[];
 #	endif
 #endif
 
+rt_g.debug |= DEBUG_MEM_FULL;
 	jack_tree_state = rt_initial_tree_state;	/* struct copy */
 	jack_tree_state.ts_tol = &tol;
 	jack_tree_state.ts_ttol = &ttol;
@@ -202,6 +203,13 @@ char	*argv[];
 	if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
 	printf("Tried %d regions, %d converted successfully.  %g%%\n",
 		regions_tried, regions_done, percent);
+
+	/* Release dynamic storage */
+	nmg_km(the_model);
+	rt_vlist_cleanup();
+	db_close(dbip);
+
+rt_prmem("After complete conversion");
 
 	return 0;
 }
@@ -344,6 +352,7 @@ union tree		*curtree;
 				nmg_r_to_vlist( &vhead, r, 0 );
 				rt_vlist_to_uplot( fp, &vhead );
 				fclose(fp);
+				RT_FREE_VLIST( &vhead );
 				if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
 			}
 			rt_vls_free(&file);
@@ -351,6 +360,7 @@ union tree		*curtree;
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);
+		rt_vls_free(&file_base);
 	}
 
 	/*
