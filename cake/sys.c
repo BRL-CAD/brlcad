@@ -86,7 +86,7 @@ reg	int	which;
 	else
 		shell_opt[which] = NULL;
 
-	if (*s != NULL)
+	if (*s != '\0')
 	{
 		fprintf(stderr, "cake: cannot parse shell command '%s'\n", shell);
 		exit_cake(FALSE);

@@ -58,7 +58,7 @@ reg	Cast	key;
 	}
 
 	put_trail("lookup_table", "finish");
-	return NULL;
+	return (Cast)NULL;
 }
 
 /*

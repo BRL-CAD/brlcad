@@ -58,7 +58,7 @@ reg	char	*str;
 	reg	Cast	old;
 	reg	char	*copy;
 
-	if ((old = lookup_table(name_tab, str)) != NULL)
+	if ((old = lookup_table(name_tab, str)) != (Cast)NULL)
 		return (char *) old;
 
 	copy = (char *) newmem(strlen(str) + 1);
