@@ -468,7 +468,7 @@ f_comm()
 		(void)signal( SIGINT, SIG_DFL );
 		(void)execl("/bin/sh","-",(char *)NULL);
 		perror("/bin/sh");
-		finish( 11 );
+		mged_finish( 11 );
 	}
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;

@@ -11,7 +11,7 @@
  *	setview		Set the current view
  *	slewview	Slew the view
  *	log_event	Log an event in the log file
- *	finish		Terminate with logging.  To be used instead of exit().
+ *	mged_finish	Terminate with logging.  To be used instead of exit().
  *	quit		General Exit routine
  *	sig2		user interrupt catcher
  *	new_mats	derive inverse and editing matrices, as required
@@ -543,7 +543,7 @@ char *arg;
  * the (ugh) logfile, also to remove the device access lock.
  */
 void
-finish( exitcode )
+mged_finish( exitcode )
 int	exitcode;
 {
 	char place[64];
@@ -567,7 +567,7 @@ quit()
 	int off = 0;
 	(void)ioctl( 0, FIONBIO, &off );
 #endif
-	finish(0);
+	mged_finish(0);
 	/* NOTREACHED */
 }
 

@@ -189,7 +189,7 @@ char *file;
 	/* System V */
 	register pid, xpid;
 	int stat;
-	int (*s2)(), (*s3)();
+	void (*s2)(), (*s3)();
 
 	s2 = signal( SIGINT, SIG_IGN );
 	s3 = signal( SIGQUIT, SIG_IGN );

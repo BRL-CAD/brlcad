@@ -214,13 +214,13 @@ dir_build()  {
 	(void)lseek( objfd, 0L, 0 );
 	if( read( objfd, (char *)&record, sizeof record ) != sizeof record ) {
 		(void)printf("dir_build:  database header read error\n");
-		finish(5);
+		mged_finish(5);
 		return;
 	}
 	if( record.u_id != ID_IDENT )  {
 		(void)printf("ERROR:  %s looks nothing like a GED database\n",
 			filename);
-		finish(6);
+		mged_finish(6);
 		return;
 	}
 	if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
