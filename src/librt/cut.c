@@ -922,13 +922,14 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 			}
 		}
 #endif
+#if 0
 		/* one more pass to find cells that are mostly empty */
 		num_splits = rt_split_mostly_empty_cells( rtip,  &rtip->rti_CutHead );
 
 		if( RT_G_DEBUG&DEBUG_CUT ) {
 			bu_log( "rt_split_mostly_empty_cells(): split %d cells\n", num_splits );
 		}
-
+#endif
 		break; }
 	default:
 		rt_bomb( "rt_cut_it: unknown space partitioning method\n" );
