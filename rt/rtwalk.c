@@ -3,9 +3,7 @@
  *
  *  Demonstration Ray Tracing main program, using RT library.
  *  Walk a path *without running into any geometry*,
- *  given any two of these three parameters:
- *	start point
- *	at point
+ *  given the start and goal points.
  *
  *  Authors -
  *	Michael John Muuss
@@ -85,8 +83,6 @@ double		max_dist_togo;
 
 extern int hit(), miss();
 
-static double deg2rad = 57.29577951125853957129;
-
 FILE		*plotfp = stdout;
 FILE		*outfp = NULL;
 
@@ -102,7 +98,7 @@ char **argv;
 	char	*title_file;
 	char	idbuf[132];		/* First ID record info */
 	int	curstep;
-	vect_t	first_dir;	/* First dir chosen on a step */
+	vect_t	first_dir;		/* First dir chosen on a step */
 
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
@@ -123,7 +119,6 @@ char **argv;
 		argc -= 2;
 		argv += 2;
 		break;
-
 
 	case 'p':
 		if( argc < 4 )  goto err;
@@ -228,8 +223,15 @@ err:
 		mat_t	mat;
 		int	failed_try;
 
-		/* Record this step */
-		if(debug>=3) {VPRINT("pos", ap.a_ray.r_pt);}
+		/*
+		 *  In order to be able to compute deltas from the
+		 *  previous to the current step, here we handle
+		 *  the results of the last iteration.
+		 *  The first and last iterations result in no output
+		 */
+		if(debug>=3) {
+			VPRINT("pos", ap.a_ray.r_pt);
+		}
 		if( curstep > 0 )  {
 			if( curstep&1 )
 				pl_color( plotfp, 0, 255, 0 );
@@ -332,7 +334,7 @@ err:
 				if(debug>=3)fprintf(stderr,"Try el %d\n", i);
 				mat_ae( mat, 0.0, i*45.0 );
 			} else {
-				fprintf(stderr,"giving up on escape\n");
+				fprintf(stderr,"trapped, giving up on escape\n");
 				exit(1);
 			}
 			MAT4X3VEC( ap.a_ray.r_dir, mat, first_dir );
@@ -497,93 +499,3 @@ bzero(str,n)
 }
 #endif
 #endif
-
-/* wrapper for atan2.  On SGI (and perhaps others), x==0 returns infinity */
-double
-xatan2(y,x)
-double	y,x;
-{
-	if( x > -1.0e-20 && x < 1.0e-20 )  {
-		/* X is equal to zero, check Y */
-		if( y < -1.0e-20 )  return( -3.14159265358979323/2 );
-		if( y >  1.0e-20 )  return(  3.14159265358979323/2 );
-		return(0.0);
-	}
-	return( atan2( y, x ) );
-}
-/*
- *			M A T _ F R O M T O
- *
- *  Given two vectors, compute a rotation matrix that will transform
- *  space by the angle between the two.  Since there are many
- *  candidate matricies, the method used here is to convert the vectors
- *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
- *  take the difference, and form the rotation matrix.
- *  See mat_ae for that algorithm.
- *
- *  The input 'from' and 'to' vectors must be unit length.
- */
-mat_fromto( m, from, to )
-mat_t	m;
-vect_t	from;
-vect_t	to;
-{
-	double	az, el;
-	LOCAL double sin_az, sin_el;
-	LOCAL double cos_az, cos_el;
-
-	az = xatan2( to[Y], to[X] ) - xatan2( from[Y], from[X] );
-	el = asin( to[Z] ) - asin( from[Z] );
-
-	sin_az = sin(az);
-	cos_az = cos(az);
-	sin_el = sin(el);
-	cos_el = cos(el);
-
-	m[0] = cos_el * cos_az;
-	m[1] = -sin_az;
-	m[2] = -sin_el * cos_az;
-	m[3] = 0;
-
-	m[4] = cos_el * sin_az;
-	m[5] = cos_az;
-	m[6] = -sin_el * sin_az;
-	m[7] = 0;
-
-	m[8] = sin_el;
-	m[9] = 0;
-	m[10] = cos_el;
-	m[11] = 0;
-
-	m[12] = m[13] = m[14] = 0;
-	m[15] = 1.0;
-}
-
-/*
- *			M A T _ L O O K A T
- *
- *  Given a direction vector D, product a matrix suitable for use
- *  as a "model2view" matrix that transforms the vector D
- *  into the -Z ("view") axis.
- *
- *  Note that due to the special property of mat_fromto()
- *  that prevents "twist" on the vector by orienting on the X-Y
- *  plane, we must first find the transformation that maps
- *  D into the +X axis, and then rotate to the -Z axis.
- */
-mat_lookat( rot, dir )
-mat_t rot;
-vect_t dir;
-{
-	mat_t	second;
-	mat_t	first;
-	vect_t	x;
-
-	/* Rotate from Dir to +X */
-	VSET( x, 1, 0, 0 );
-	mat_fromto( first, dir, x );
-
-	/* Rotate so that +X is now -Z axis */
-	mat_angles( second, -90.0, 0.0, 90.0 );
-	mat_mul( rot, second, first );
-}
