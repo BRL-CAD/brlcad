@@ -129,7 +129,13 @@ static char RCSrtstring[] = "@(#)$Header$ (BRL)";
 char	dmy_eos = '\0';
 BU_FILE	bu_iob[1] = {
     {
-	BU_FILE_MAGIC, stdin, "stdin",
+	BU_FILE_MAGIC,
+#if defined(stdin)
+	stdin,
+#else
+    	NULL,
+#endif
+	"stdin",
 	{
 	    BU_VLS_MAGIC, (char *) 0, 0, 0, 0
 	},
@@ -1010,6 +1016,8 @@ char	*argv[];
 
     extern int	optind;			/* index from getopt(3C) */
     extern char	*optarg;		/* argument from getopt(3C) */
+
+    bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
     while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
