@@ -41,6 +41,9 @@ mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
 
+/* How should this be implemented????? */
+point_t	recip_vanishing_point = { 0, 0, -1 };
+
 struct solid	*FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
 int		ndrawn;
@@ -65,6 +68,7 @@ fastf_t	fovy, aspect, near, far, backoff;
 	m2[0] = m2[5]/aspect;
 	m2[10] = -(far+near) / (far-near);	/* negate Z! */
 	m2[11] = -2*far*near / (far-near);
+
 	m2[14] = -1;
 	m2[15] = 0;
 
