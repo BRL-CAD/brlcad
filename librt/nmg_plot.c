@@ -145,7 +145,7 @@ void
 nmg_lu_to_vlist( vhead, lu, poly_markers, normal )
 struct rt_list		*vhead;
 CONST struct loopuse	*lu;
-int			poly_markers;
+int			poly_markers;		/* bit vector! */
 CONST vectp_t		normal;
 {
 	CONST struct edgeuse		*eu;
@@ -153,6 +153,7 @@ CONST vectp_t		normal;
 	CONST struct vertex		*v;
 	register CONST struct vertex_g	*vg;
 	CONST struct vertex_g		*first_vg;
+	CONST struct vertexuse		*first_vu;
 	int		isfirst;
 	point_t		centroid;
 	int		npoints;
@@ -170,6 +171,7 @@ CONST vectp_t		normal;
 	/* Consider all the edges in the loop */
 	isfirst = 1;
 	first_vg = (struct vertex_g *)0;
+	first_vu = (struct vertexuse *)0;
 	npoints = 0;
 	VSETALL( centroid, 0 );
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -188,9 +190,15 @@ CONST vectp_t		normal;
 		VADD2( centroid, centroid, vg->coord );
 		npoints++;
 		if (isfirst) {
-			if( poly_markers) {
+			if( poly_markers & NMG_VLIST_STYLE_POLYGON ) {
 				/* Insert a "start polygon, normal" marker */
 				RT_ADD_VLIST( vhead, normal, RT_VLIST_POLY_START );
+				if( poly_markers & NMG_VLIST_STYLE_USE_VU_NORMALS
+				    && vu->a.magic_p ) {
+					RT_ADD_VLIST( vhead,
+						vu->a.plane_p->N,
+						RT_VLIST_POLY_VERTNORM );
+				}
 				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_MOVE );
 			} else {
 				/* move */
@@ -198,8 +206,15 @@ CONST vectp_t		normal;
 			}
 			isfirst = 0;
 			first_vg = vg;
+			first_vu = vu;
 		} else {
-			if( poly_markers) {
+			if( poly_markers & NMG_VLIST_STYLE_POLYGON ) {
+				if( poly_markers & NMG_VLIST_STYLE_USE_VU_NORMALS
+				    && vu->a.magic_p ) {
+					RT_ADD_VLIST( vhead,
+						vu->a.plane_p->N,
+						RT_VLIST_POLY_VERTNORM );
+				}
 				RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_DRAW );
 			} else {
 				/* Draw */
@@ -214,21 +229,28 @@ CONST vectp_t		normal;
 		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )  continue;
 
 		/* XXX only use poly markers when face is planar, not snurb */
-		nmg_cnurb_to_vlist( vhead, eu, 10,  poly_markers ?
-			RT_VLIST_POLY_DRAW : RT_VLIST_LINE_DRAW );
+		nmg_cnurb_to_vlist( vhead, eu, 10,
+			(poly_markers & NMG_VLIST_STYLE_POLYGON ) ?
+				RT_VLIST_POLY_DRAW : RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw back to the first vertex used */
 	if( !isfirst && first_vg )  {
-		if( poly_markers )  {
+		if( poly_markers & NMG_VLIST_STYLE_POLYGON  )  {
 			/* Draw, end polygon */
+			if( poly_markers & NMG_VLIST_STYLE_USE_VU_NORMALS
+			    && first_vu->a.magic_p ) {
+				RT_ADD_VLIST( vhead,
+					first_vu->a.plane_p->N,
+					RT_VLIST_POLY_VERTNORM );
+			}
 			RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_POLY_END );
 		} else {
 			/* Draw */
 			RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_LINE_DRAW );
 		}
 	}
-	if( poly_markers > 1 && npoints > 2 )  {
+	if( (poly_markers  & NMG_VLIST_STYLE_VISUALIZE_NORMALS) && npoints > 2 )  {
 		/* Draw surface normal as a little vector */
 		double	f;
 		vect_t	tocent;
