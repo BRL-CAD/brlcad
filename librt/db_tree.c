@@ -1640,7 +1640,7 @@ int depth;			/* number of arcs */
 	 */
 	if (depth == 1) return 1;
 
-	for (i=0; i < i< depth; i++) {
+	for (i=0; i < depth; i++) {
 		parentp = pathp->fp_names[i];
 		kidp = pathp->fp_names[i+1];
 		if (!(parentp->d_flags & DIR_COMB)) {
