@@ -362,6 +362,7 @@ struct seg {
 struct soltab {
 	struct rt_list	l;		/* links, headed by rti_headsolid */
 	struct rt_list	l2;		/* links, headed by st_dp->d_use_hd */
+	struct rt_i	*st_rtip;	/* "up" pointer to rt_i */
 	int		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
 	vect_t		st_center;	/* Centroid of solid */
