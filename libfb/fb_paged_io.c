@@ -46,7 +46,7 @@ fb_ioinit( ifp )
 register FBIO	*ifp;
 	{
 	ifp->if_pno = -1;		/* Force _pagein() initially.	*/
-	ifp->if_pcurpos = 0L;	/* Initialize pixel number.	*/
+	ifp->if_pixcur = 0L;	/* Initialize pixel number.	*/
 	if( ifp->if_pbase == PIXEL_NULL )
 		{ /* Only allocate buffer once.				*/
 		ifp->if_pbytes = MAX_BYTES_DMA;	/* Bytes/page.	*/
@@ -71,7 +71,7 @@ int	x, y;
 	{	long	pos;
 		long	pagepos;
 	/* fb_log( "fb_seek( %d, %d )\n", x, y ); */
-	if( x < 0 || y < 0 || x > 1024 || y > 4096 )
+	if( x < 0 || y < 0 || x > 8*1024 || y > 8*1024 )
 		{
 		fb_log(	"fb_seek : illegal address <%d,%d>.\n",
 				x, y
@@ -88,10 +88,10 @@ int	x, y;
 		if( _pagein( ifp, (int) (pos / (long) ifp->if_pbytes)) == -1 )
 			return	-1;
 		}
-	ifp->if_pcurpos = ((long) y * (long) ifp->if_width) + x;
+	ifp->if_pixcur = ((long) y * (long) ifp->if_width) + x;
 	/* Compute new pixel pointer into page.				*/
 	ifp->if_pcurp = ifp->if_pbase +
-			(ifp->if_pcurpos % ifp->if_ppixels);
+			(ifp->if_pixcur % ifp->if_ppixels);
 	return	0;
 	}
 
@@ -100,8 +100,8 @@ fb_tell( ifp, xp, yp )
 register FBIO	*ifp;
 int	*xp, *yp;
 	{
-	*yp = (int) (ifp->if_pcurpos / ifp->if_width);
-	*xp = (int) (ifp->if_pcurpos % ifp->if_width);
+	*yp = (int) (ifp->if_pixcur / ifp->if_width);
+	*xp = (int) (ifp->if_pixcur % ifp->if_width);
 	return	0;
 	}
 
@@ -111,11 +111,11 @@ register FBIO	*ifp;
 Pixel 	*pixelp;
 	{
 	if( ifp->if_pno == -1 )
-		if( _pagein( ifp, ifp->if_pcurpos / ifp->if_ppixels ) == -1 )
+		if( _pagein( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
 			return	-1;
 	*(ifp->if_pcurp++) = *pixelp;
 	ifp->if_pref = 1;
-	ifp->if_pcurpos++;
+	ifp->if_pixcur++;
 	if( ifp->if_pcurp >= ifp->if_pendp )
 		{
 		if( _pageout( ifp ) == -1 )
@@ -131,10 +131,10 @@ register FBIO	*ifp;
 Pixel			*pixelp;
 	{
 	if( ifp->if_pno == -1 )
-		if( _pagein( ifp, ifp->if_pcurpos / ifp->if_ppixels ) == -1 )
+		if( _pagein( ifp, ifp->if_pixcur / ifp->if_ppixels ) == -1 )
 			return	-1;
 	*pixelp = *(ifp->if_pcurp++);
-	ifp->if_pcurpos++;
+	ifp->if_pixcur++;
 	if( ifp->if_pcurp >= ifp->if_pendp )
 		{
 		if( _pageout( ifp ) == -1 )
