@@ -414,7 +414,7 @@ Usage: wdb_open\n\
        wdb_open newprocname disk_append $dbip\n\
        wdb_open newprocname inmem $dbip\n\
        wdb_open newprocname inmem_append $dbip\n\
-       wdb_open newprocname db filename\n
+       wdb_open newprocname db filename\n\
        wdb_open newprocname filename\n",
 				 NULL);
 		return TCL_ERROR;
