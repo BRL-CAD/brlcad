@@ -90,6 +90,195 @@ struct view_list {
   int     vid;
 };
 
+/*XXX for future use */
+struct adc_state {
+  int		adc_rc;
+  int		adc_dv_x;
+  int		adc_dv_y;
+  int		adc_dv_1;
+  int		adc_dv_2;
+  int		adc_dv_dist;
+  int		adc_draw;
+  fastf_t	adc_pos_model[3];
+  fastf_t	adc_pos_view[3];
+  fastf_t	adc_pos_grid[3];
+  fastf_t	adc_a1;
+  fastf_t	adc_a2;
+  fastf_t	adc_dst;
+  int		adc_anchor_pos;
+  int		adc_anchor_a1;
+  int		adc_anchor_a2;
+  int		adc_anchor_dst;
+  fastf_t	adc_anchor_pt_a1[3];
+  fastf_t	adc_anchor_pt_a2[3];
+  fastf_t	adc_anchor_pt_dst[3];
+};
+
+/*XXX for future use */
+struct view_state {
+  fastf_t	vs_Viewscale;
+  fastf_t	vs_i_Viewscale;
+  fastf_t	vs_az;
+  fastf_t	vs_el;
+  fastf_t	vs_tw;
+  mat_t		vs_Viewrot;
+  mat_t		vs_toViewcenter;
+  mat_t		vs_model2view;
+  mat_t		vs_view2model;
+  mat_t		vs_model2objview;
+  mat_t		vs_objview2model;
+  mat_t		vs_ModelDelta;       /* changes to Viewrot this frame */
+
+  struct view_list	vs_headView;
+  struct view_list	*vs_current_view;
+  struct view_list	*vs_last_view;
+
+  /* Rate stuff */
+  int		vs_rateflag_model_tran;
+  vect_t	vs_rate_model_tran;
+
+  int		vs_rateflag_model_rotate;
+  vect_t	vs_rate_model_rotate;
+  char		vs_rate_model_origin;
+
+  int		vs_rateflag_tran;
+  vect_t	vs_rate_tran;
+
+  int		vs_rateflag_rotate;
+  vect_t	vs_rate_rotate;
+  char		vs_rate_origin;
+	
+  int		vs_rateflag_scale;
+  fastf_t	vs_rate_scale;
+
+  /* Absolute stuff */
+  vect_t	vs_absolute_tran;
+  vect_t	vs_absolute_model_tran;
+  vect_t	vs_last_absolute_tran;
+  vect_t	vs_last_absolute_model_tran;
+  vect_t	vs_absolute_rotate;
+  vect_t	vs_absolute_model_rotate;
+  vect_t	vs_last_absolute_rotate;
+  vect_t	vs_last_absolute_model_rotate;
+  fastf_t	vs_absolute_scale;
+
+  /* Virtual trackball stuff */
+  point_t	vs_orig_pos;
+
+  /* Tcl variable names for display info */
+  struct bu_vls	vs_aet_name;
+  struct bu_vls	vs_ang_name;
+  struct bu_vls	vs_center_name;
+  struct bu_vls	vs_size_name;
+  struct bu_vls	vs_adc_name;
+
+  /* other stuff */
+  int		vs_rc;
+  int		vs_flag;
+  struct bu_vls	*vs_opp;	/* pointer to owner's dm_pathName */
+};
+
+struct _color_scheme {
+  int	rc;
+  int	active;
+  int	bg[3];
+  int	bg_a[3];
+  int	bg_ia[3];
+  int	adc_line[3];
+  int	adc_line_a[3];
+  int	adc_line_ia[3];
+  int	adc_tick[3];
+  int	adc_tick_a[3];
+  int	adc_tick_ia[3];
+  int	geo_def[3];
+  int	geo_def_a[3];
+  int	geo_def_ia[3];
+  int	geo_hl[3];
+  int	geo_hl_a[3];
+  int	geo_hl_ia[3];
+  int	geo_label[3];
+  int	geo_label_a[3];
+  int	geo_label_ia[3];
+  int	model_axes[3];
+  int	model_axes_a[3];
+  int	model_axes_ia[3];
+  int	model_axes_label[3];
+  int	model_axes_label_a[3];
+  int	model_axes_label_ia[3];
+  int	view_axes[3];
+  int	view_axes_a[3];
+  int	view_axes_ia[3];
+  int	view_axes_label[3];
+  int	view_axes_label_a[3];
+  int	view_axes_label_ia[3];
+  int	edit_axes1[3];
+  int	edit_axes1_a[3];
+  int	edit_axes1_ia[3];
+  int	edit_axes_label1[3];
+  int	edit_axes_label1_a[3];
+  int	edit_axes_label1_ia[3];
+  int	edit_axes2[3];
+  int	edit_axes2_a[3];
+  int	edit_axes2_ia[3];
+  int	edit_axes_label2[3];
+  int	edit_axes_label2_a[3];
+  int	edit_axes_label2_ia[3];
+  int	rubber_band[3];
+  int	rubber_band_a[3];
+  int	rubber_band_ia[3];
+  int	grid[3];
+  int	grid_a[3];
+  int	grid_ia[3];
+  int	predictor[3];
+  int	predictor_a[3];
+  int	predictor_ia[3];
+  int	fp_menu_line[3];
+  int	fp_menu_line_a[3];
+  int	fp_menu_line_ia[3];
+  int	fp_slider_line[3];
+  int	fp_slider_line_a[3];
+  int	fp_slider_line_ia[3];
+  int	fp_other_line[3];
+  int	fp_other_line_a[3];
+  int	fp_other_line_ia[3];
+  int	fp_status_text1[3];
+  int	fp_status_text1_a[3];
+  int	fp_status_text1_ia[3];
+  int	fp_status_text2[3];
+  int	fp_status_text2_a[3];
+  int	fp_status_text2_ia[3];
+  int	fp_slider_text1[3];
+  int	fp_slider_text1_a[3];
+  int	fp_slider_text1_ia[3];
+  int	fp_slider_text2[3];
+  int	fp_slider_text2_a[3];
+  int	fp_slider_text2_ia[3];
+  int	fp_menu_text1[3];
+  int	fp_menu_text1_a[3];
+  int	fp_menu_text1_ia[3];
+  int	fp_menu_text2[3];
+  int	fp_menu_text2_a[3];
+  int	fp_menu_text2_ia[3];
+  int	fp_menu_title[3];
+  int	fp_menu_title_a[3];
+  int	fp_menu_title_ia[3];
+  int	fp_menu_arrow[3];
+  int	fp_menu_arrow_a[3];
+  int	fp_menu_arrow_ia[3];
+  int	fp_state_text1[3];
+  int	fp_state_text1_a[3];
+  int	fp_state_text1_ia[3];
+  int	fp_state_text2[3];
+  int	fp_state_text2_a[3];
+  int	fp_state_text2_ia[3];
+  int	fp_edit_info[3];
+  int	fp_edit_info_a[3];
+  int	fp_edit_info_ia[3];
+  int	fp_center_dot[3];
+  int	fp_center_dot_a[3];
+  int	fp_center_dot_ia[3];
+};
+
 struct shared_info {
   fastf_t _Viewscale;
   fastf_t _i_Viewscale;
@@ -195,13 +384,25 @@ struct shared_info {
   struct bu_vls *opp;
 };
 
+#if 0
+/*XXX for future use */
+struct menu_state {
+  int	menu_rc;
+  int	menu_flag;
+  int	menu_top;
+  int	menu_cur;
+  int	menu_cur_item;
+  struct menu_item	*menu_array[NMENU];    /* base of menu items array */
+};
+#else
 struct menu_vars {
   int _menuflag;
   int _menu_top;
   int _cur_menu;
   int _cur_menu_item;
-  struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
+  struct menu_item *_menu_array[NMENU];    /* base of menu items array */
 };
+#endif
 
 #define NUM_TRAILS 8
 #define MAX_TRAIL 32
@@ -238,6 +439,7 @@ struct dm_list {
   struct menu_vars *menu_vars;
   struct bu_list p_vlist; /* predictor vlist */
   struct trail trails[NUM_TRAILS];
+  struct _color_scheme *_color_scheme;
 
   int _rubber_band_active;
   fastf_t _rect_x;		/* Corner of rectangle in normalized     */
@@ -298,6 +500,7 @@ struct dm_char_queue {
 #define viewpoint_hook curr_dm_list->_viewpoint_hook
 #define eventHandler curr_dm_list->_eventHandler
 #define mged_variables curr_dm_list->_mged_variables
+#define color_scheme curr_dm_list->_color_scheme
 
 #define menu_array curr_dm_list->menu_vars->_menu_array
 #define menuflag curr_dm_list->menu_vars->_menuflag
