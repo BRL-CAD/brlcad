@@ -26,7 +26,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./tree.h"
 #include "./screen.h"
 #include "./extern.h"
-extern void	rt_parallel();
+#define TWO_PI		6.28318530717958647692528676655900576839433879875022
+#define RI_AIR		1.0  /* refractive index of air */
+
+/* These are used by the hidden-line drawing routines. */
+#define COSTOL		0.91
+#define is_Odd(_a)	((_a)&01)
+#define ARCTAN_87	19.08
+
 
 #ifndef FLIPPED_NORMALS_BUG
 #define FLIPPED_NORMALS_BUG	FALSE /* Keep an eye out for dark spots. */
@@ -87,40 +94,39 @@ extern void	rt_parallel();
 #define Check_Oflip( _pp, _normal, _rdir, _stp )	;
 #endif
 
-#define TWO_PI		6.28318530717958647692528676655900576839433879875022
-#define RI_AIR		1.0	/* Refractive index of air.		*/
+/* default material property entry */
 static Mat_Db_Entry	mat_tmp_entry =
 				{
-				0,		/* Material id.		*/
-				4,		/* Shininess.		*/
-				0.6,		/* Specular weight.	*/
-				0.3,		/* Diffuse weight.	*/
-				0.0,		/* Reflectivity.	*/
-				0.0,		/* Transmission.	*/
-				1.0,		/* Refractive index.	*/
-				255, 255, 255,	/* Diffuse RGB values.	*/
-				MF_USED,	/* Mode flag.		*/
-				"(default)"	/* Material name.	*/
+				0,		/* Material id. */
+				4,		/* Shininess. */
+				0.6,		/* Specular weight. */
+				0.4,		/* Diffuse weight. */
+				0.0,		/* Reflectivity. */
+				0.0,		/* Transmission. */
+				1.0,		/* Refractive index. */
+				255, 255, 255,	/* Diffuse RGB values. */
+				MF_USED,	/* Mode flag. */
+				"(default)"	/* Material name. */
 				};
 
-/* Collect statistics on refraction.					*/
+/* Collect statistics on refraction. */
 static int		refrac_missed;
 static int		refrac_inside;
 static int		refrac_total;
 
-/* Collect statistics on shadowing.					*/
+/* Collect statistics on shadowing. */
 static int		hits_shadowed;
 static int		hits_lit;
 
-/* Local communication with worker().					*/
-static int curr_scan;		/* Current scan line number.		*/
-static int last_scan;		/* Last scan.				*/
-static int nworkers;		/* Number of workers now running.	*/
+/* Local communication with worker(). */
+static int curr_scan;		/* Current scan line number. */
+static int last_scan;		/* Last scan. */
+static int nworkers;		/* Number of workers now running. */
 static int a_gridsz;
 static fastf_t	grid_dh[3], grid_dv[3];
-static struct application ag;	/* Global application structure.	*/
+static struct application ag;	/* Global application structure. */
 
-/* Bit map for hidden line drawing.					*/
+/* Bit map for hidden line drawing. */
 #ifndef BITSPERBYTE
 #define BITSPERBYTE	8
 #endif
@@ -132,7 +138,8 @@ static struct application ag;	/* Global application structure.	*/
 #define HL_TSTBIT(_x,_y)	(HL_BITVWORD(_x,_y) & HL_BITVMASK(_x))
 #define ZeroPixel(_p)		((_p)[RED]==0 && (_p)[GRN]==0 && (_p)[BLU]==0)
 static bitv_t	hl_bits[1024][1024/HL_BITVBITS];
-static short	*hl_regmap = NULL;
+static short		*hl_regmap = NULL;
+static unsigned short	*hl_dstmap = NULL;
 
 #define BEHIND_ME_TOL	0.001	/* Is object behind me. */
 #define PT_EMPTY	0
@@ -232,13 +239,17 @@ int	frame;
 	else
 	if( hiddenln_draw )
 		{
-		if( (hl_regmap = (short *) malloc( (unsigned)(grid_sz*grid_sz)*sizeof(short) ))
+		if( (hl_regmap = (short *)
+			malloc( (unsigned)(grid_sz*grid_sz)*sizeof(short) ))
 			== (short *) NULL
 			)
-			{
-			Malloc_Bomb( grid_sz*grid_sz*sizeof(short) );
-			return;
-			}
+			rt_log( "Warning, no memory for region map.\n" );
+		if( (hl_dstmap = (unsigned short *)
+			malloc( (unsigned)
+				(grid_sz*grid_sz)*sizeof(unsigned short) ))
+			== (unsigned short *) NULL
+			)
+			rt_log( "Warning, no memory for distance map.\n" );
 		ag.a_hit = f_HL_Hit;
 		ag.a_miss = f_HL_Miss;
 		ag.a_overlap = report_overlaps ? f_Overlap : f_NulOverlap;
@@ -508,7 +519,10 @@ f_HL_Miss( ap )
 register struct application *ap;
 	{
 	VSETALL( ap->a_color, 0.0 );
-	hl_regmap[ap->a_y*grid_sz+ap->a_x] = 0;
+	if( hl_regmap != NULL )
+		hl_regmap[ap->a_y*grid_sz+ap->a_x] = 0;
+	if( hl_dstmap != NULL )
+		hl_dstmap[ap->a_y*grid_sz+ap->a_x] = 0;
 	return	0;
 	}
 
@@ -532,7 +546,12 @@ struct partition *pt_headp;
 		V_Print( "normal", ihitp->hit_normal, rt_log );
 		V_Print( "acolor", ap->a_color, rt_log );
 		}
-	hl_regmap[ap->a_y*grid_sz+ap->a_x] = pp->pt_regionp->reg_regionid;
+	if( hl_regmap != NULL )
+		hl_regmap[ap->a_y*grid_sz+ap->a_x] =
+			pp->pt_regionp->reg_regionid;
+	if( hl_dstmap != NULL )
+		hl_dstmap[ap->a_y*grid_sz+ap->a_x] =
+			(unsigned short) ihitp->hit_dist;
 	return	1;
 	}
 
@@ -1517,13 +1536,29 @@ register int	n;
 	return	result;
 	}
 
-#define COSTOL	0.91
-#define is_Odd(_a)	((_a)&01)
+hl_Dst_Diff( x0, y0, x1, y1, maxdist )
+register int	x0, y0, x1, y1;
+register unsigned short	maxdist;
+	{	short	distance;
+	distance = hl_dstmap[y0*grid_sz+x0] - hl_dstmap[y1*grid_sz+x1];
+	distance = Abs( distance );
+#if FALSE
+	if( y0 == grid_sz/2 )
+	rt_log( "hl_Dst_Diff({<%4d,%4d>,<%4d,%4d>}) %4d-%4d=%4d > %d?\n",
+		x0, y0, x1, y1,
+		hl_dstmap[y0*grid_sz+x0],
+		hl_dstmap[y1*grid_sz+x1],
+		distance,
+		maxdist
+		);
+#endif
+	return distance > maxdist;
+	}
 
 hl_Reg_Diff( x0, y0, x1, y1 )
 register int	x0, y0, x1, y1;
 	{
-#if 0
+#if FALSE
 	rt_log( "hl_Reg_Diff({<%4d,%4d>,<%4d,%4d>}) %4d != %4d\n",
 		x0, y0, x1, y1,
 		hl_regmap[y0*grid_sz+x0],
@@ -1590,6 +1625,7 @@ hl_Postprocess()
 		static RGBpixel	white_pixel = { 255, 255, 255 };
 		static RGBpixel bufa[1024], bufb[1024];
 		register int	x, y;
+		unsigned short	maxdist = (cell_sz*ARCTAN_87)+2;
 	prnt_Event( "Making hidden-line drawing..." );
 	for( y = 0; y < grid_sz && ! user_interrupt; y++ )
 		{	static RGBpixel	*rpixp;
@@ -1617,10 +1653,14 @@ hl_Postprocess()
 				else
 					HL_SETBIT( x, y );
 			else
-			if(	hl_Reg_Diff( x, y, x-1, y )
-			     ||	hl_Reg_Diff( x, y, x, y-1 )
-			     ||	hl_Norm_Diff( rpixp[x], rpixp[x-1] )
-			     ||	hl_Norm_Diff( rpixp[x], lpixp[x] )
+			if(  (hl_regmap != NULL &&
+				(hl_Reg_Diff( x, y, x-1, y )
+			     ||	 hl_Reg_Diff( x, y, x, y-1 )))
+			  || (hl_dstmap != NULL &&
+				(hl_Dst_Diff( x, y, x-1, y, maxdist )
+			     ||	 hl_Dst_Diff( x, y, x, y-1, maxdist )))
+			  ||	hl_Norm_Diff( rpixp[x], rpixp[x-1] )
+			  ||	hl_Norm_Diff( rpixp[x], lpixp[x] )
 				)
 				HL_CLRBIT( x, y );
 			else
@@ -1842,7 +1882,16 @@ view_end()
 		{
 		if( ! user_interrupt )
 			hl_Postprocess();
-		free( (char *) hl_regmap );
+		if( hl_regmap != NULL )
+			{
+			free( (char *) hl_regmap );
+			hl_regmap = NULL;
+			}
+		if( hl_dstmap != NULL )
+			{
+			free( (char *) hl_dstmap );
+			hl_dstmap = NULL;
+			}
 		}
 	prnt_Timer( "VIEW" );
 	return;
