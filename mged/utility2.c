@@ -474,7 +474,11 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	old_xlate = (matp_t)user_ptr2;
 	flag = (int *)user_ptr3;
 
-	bn_mat_mul( new_xlate, old_xlate, comb_leaf->tr_l.tl_mat );
+	if( comb_leaf->tr_l.tl_mat )  {
+		bn_mat_mul( new_xlate, old_xlate, comb_leaf->tr_l.tl_mat );
+	} else {
+		bn_mat_copy( new_xlate, old_xlate );
+	}
 	if( (nextdp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
@@ -939,6 +943,9 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	RT_CK_DBI( dbip );
 	RT_CK_TREE( comb_leaf );
 
+	if( !comb_leaf->tr_l.tl_mat )  {
+		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat" );
+	}
 	bn_mat_idn( comb_leaf->tr_l.tl_mat );
 	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -1255,7 +1262,11 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	xform = (matp_t)user_ptr1;
 
 	/* apply transform matrix for this arc */
-	bn_mat_mul( new_xform, xform, comb_leaf->tr_l.tl_mat );
+	if( comb_leaf->tr_l.tl_mat )  {
+		bn_mat_mul( new_xform, xform, comb_leaf->tr_l.tl_mat );
+	} else {
+		bn_mat_copy( new_xform, xform );
+	}
 
 	/* Copy member with current tranform matrix */
 	if( (dp_new=Copy_object( dp, new_xform )) == DIR_NULL )
@@ -1270,6 +1281,9 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	comb_leaf->tr_l.tl_name = bu_strdup( dp_new->d_namep );
 
 	/* make transform for this arc the identity matrix */
+	if( !comb_leaf->tr_l.tl_mat )  {
+		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat" );
+	}
 	bn_mat_idn( comb_leaf->tr_l.tl_mat );
 }
 
@@ -1518,8 +1532,10 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
 	if( *count == 1 )
 	{
 		mat_t tmp_mat;
-		bn_mat_mul( tmp_mat, acc_matrix, comb_leaf->tr_l.tl_mat );
-		MAT_COPY( acc_matrix, tmp_mat );
+		if( comb_leaf->tr_l.tl_mat )  {
+			bn_mat_mul( tmp_mat, acc_matrix, comb_leaf->tr_l.tl_mat );
+			bn_mat_copy( acc_matrix, tmp_mat );
+		}
 	}
 
 }
