@@ -290,6 +290,10 @@ register struct soltab *stp;
 		(struct ell_specific *)stp->st_specific;
 
 	VPRINT("V", ell->ell_V);
+	VPRINT("Au", ell->ell_Au);
+	VPRINT("Bu", ell->ell_Bu);
+	VPRINT("Cu", ell->ell_Cu);
+	VPRINT("invsq", ell->ell_invsq);
 	mat_print("S o R", ell->ell_SoR );
 	mat_print("invRSSR", ell->ell_invRSSR );
 }
