@@ -29,6 +29,146 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "externs.h"
 
+/************************************************************************
+ *									*
+ *			Generic VLBLOCK routines			*
+ *									*
+ ************************************************************************/
+
+struct rt_vlblock *
+rt_vlblock_init()
+{
+	struct rt_vlblock *vbp;
+	int	i;
+
+	if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
+		RT_LIST_INIT( &rt_g.rtg_vlfree );
+
+	GETSTRUCT( vbp, rt_vlblock );
+	vbp->magic = RT_VLBLOCK_MAGIC;
+	vbp->max = 32;
+	vbp->head = (struct rt_list *)rt_calloc( vbp->max,
+		sizeof(struct rt_list), "head[]" );
+	vbp->rgb = (long *)rt_calloc( vbp->max,
+		sizeof(long), "rgb[]" );
+
+	for( i=0; i < vbp->max; i++ )  {
+		vbp->rgb[i] = 0;	/* black, unused */
+		RT_LIST_INIT( &(vbp->head[i]) );
+	}
+	vbp->rgb[0] = 0xFFFF00L;	/* Yellow, default */
+	vbp->rgb[1] = 0xFFFFFFL;	/* White */
+	vbp->nused = 2;
+
+	return(vbp);
+}
+
+void
+rt_vlblock_free(vbp)
+struct rt_vlblock *vbp;
+{
+	int	i;
+
+	RT_CK_VLBLOCK(vbp);
+	for( i=0; i < vbp->nused; i++ )  {
+		/* Release any remaining vlist storage */
+		if( vbp->rgb[i] == 0 )  continue;
+		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		RT_FREE_VLIST( &(vbp->head[i]) );
+	}
+
+	rt_free( (char *)(vbp->head), "head[]" );
+	rt_free( (char *)(vbp->rgb), "rgb[]" );
+	rt_free( (char *)vbp, "rt_vlblock" );
+}
+
+struct rt_list *
+rt_vlblock_find( vbp, r, g, b )
+struct rt_vlblock *vbp;
+int	r, g, b;
+{
+	long	new;
+	int	n;
+
+	RT_CK_VLBLOCK(vbp);
+
+	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
+
+	/* Map black plots into default color (yellow) */
+	if( new == 0 ) return( &(vbp->head[0]) );
+
+	for( n=0; n < vbp->nused; n++ )  {
+		if( vbp->rgb[n] == new )
+			return( &(vbp->head[n]) );
+	}
+	if( vbp->nused < vbp->max )  {
+		/* Allocate empty slot */
+		n = vbp->nused++;
+		vbp->rgb[n] = new;
+		return( &(vbp->head[n]) );
+	}
+	/*  RGB does not match any existing entry, and table is full.
+	 *  Eventually, enlarge table.
+	 *  For now, just default to yellow.
+	 */
+	return( &(vbp->head[0]) );
+}
+
+/*
+ *			R T _ P L O T _ V L B L O C K
+ *
+ *  Output a rt_vlblock object in extended UNIX-plot format,
+ *  including color.
+ */
+void
+rt_plot_vlblock( fp, vbp )
+FILE			*fp;
+CONST struct rt_vlblock	*vbp;
+{
+	int	i;
+
+	RT_CK_VLBLOCK(vbp);
+
+	for( i=0; i < vbp->nused; i++ )  {
+		if( vbp->rgb[i] == 0 )  continue;
+		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		pl_color( fp,
+			(vbp->rgb[i]>>16) & 0xFF,
+			(vbp->rgb[i]>> 8) & 0xFF,
+			(vbp->rgb[i]    ) & 0xFF );
+		rt_vlist_to_uplot( fp, &(vbp->head[i]) );
+	}
+}
+
+/*
+ *			R T _ V L I S T _ C L E A N U P
+ *
+ *  The macro RT_FREE_VLIST() simply appends to the list &rt_g.rtg_vlfree.
+ *  Now, give those structures back to rt_free().
+ */
+void
+rt_vlist_cleanup()
+{
+	register struct rt_vlist	*vp;
+
+	if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))  {
+		RT_LIST_INIT( &rt_g.rtg_vlfree );
+		return;
+	}
+
+	while( RT_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
+		RT_CK_VLIST( vp );
+		RT_LIST_DEQUEUE( &(vp->l) );
+		rt_free( (char *)vp, "rt_vlist" );
+	}
+}
+
+/************************************************************************
+ *									*
+ *			Binary VLIST import/export routines		*
+ *									*
+ ************************************************************************/
+
 /*
  *			R T _ V L I S T _ E X P O R T
  *
@@ -134,23 +274,11 @@ CONST unsigned char	*buf;
 	}
 }
 
-/*
- *			R T _ V L I S T _ C L E A N U P
- *
- *  The macro RT_FREE_VLIST() simply appends to the list &rt_g.rtg_vlfree.
- *  Now, give those structures back to rt_free().
- */
-void
-rt_vlist_cleanup()
-{
-	register struct rt_vlist	*vp;
-
-	while( RT_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
-		RT_CK_VLIST( vp );
-		RT_LIST_DEQUEUE( &(vp->l) );
-		rt_free( (char *)vp, "rt_vlist" );
-	}
-}
+/************************************************************************
+ *									*
+ *			UNIX-Plot VLIST import/export routines		*
+ *									*
+ ************************************************************************/
 
 /*
  *			R T _ V L I S T _ T O _ U P L O T
