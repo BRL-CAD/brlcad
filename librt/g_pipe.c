@@ -251,11 +251,10 @@ struct rt_tol		*tol;
 			}
 			break;
 		default:
+			rt_log("rt_pipe_plot: unknown ps_type=%d\n", psp->ps_type);
 			return(-1);
 		}
 	}
-
-	rt_pipe_ifree( ip );
 	return(0);
 }
 
