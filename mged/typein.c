@@ -448,7 +448,6 @@ f_in()
 		return;		/* failure */
 	}
 
-do_update:
 	/* don't allow interrupts while we update the database! */
 	(void)signal( SIGINT, SIG_IGN);
  
