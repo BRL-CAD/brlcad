@@ -2,8 +2,6 @@
  *			C O L O R _ S C H E M E . C
  *
  * Functions -
- *	f_cs_set		set/get color scheme values
- *	f_cs_def		set/get default color scheme values
  *	cs_set_dirty_flag	mark any display managers using the current color_scheme as dirty
  *	cs_update		update all colors according to the mode
  *	cs_set_bg		tell the display manager what color to use for the background
@@ -297,59 +295,3 @@ cs_set_bg()
   bu_vls_free(&vls);
   curr_dm_list = save_curr_dmlp;
 }
-
-#if 0
-int
-f_cs_set (clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
-{
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-
-  if(argc < 1 || 5 < argc){
-    bu_vls_printf(&vls, "help cs_set");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  mged_vls_struct_parse(&vls, "Color Schemes", color_scheme_vparse,
-			(CONST char *)color_scheme, argc, argv);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  return TCL_OK;
-}
-
-int
-f_cs_def (clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
-{
-  struct bu_vls vls;
-
-  bu_vls_init(&vls);
-
-  if(argc < 1 || 5 < argc){
-    bu_vls_printf(&vls, "help cs_def");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  mged_vls_struct_parse(&vls, "Default Color Scheme", color_scheme_vparse,
-			(CONST char *)&default_color_scheme, argc, argv);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  return TCL_OK;
-}
-#endif
