@@ -1,13 +1,14 @@
 #!/bin/sh
-#			mged/newvers.sh
+#			N E W V E R S . S H
 #
 # Update the "version" file, and create a new "vers.c" from it.
+# May be run in any (first-level) subdirectory of the source tree.
 #
 #  Optional args:
 #	variable name to put version string in (default="version")
 #	title
 #
-#	@(#)$Header$ (BRL)
+# @(#)$Header$ (BRL)
 
 if test $# -gt 0
 then
@@ -58,6 +59,6 @@ rm -f vers.c
 cat << EOF > vers.c
 char ${VARIABLE}[] = "\\
 @(#) BRL-CAD Release ${RELEASE}   ${TITLE}\n\\
-	${DATE}, Compilation ${VERSION}\n\\
-	${USER}@${HOST}:${DIR}\n";
+    ${DATE}, Compilation ${VERSION}\n\\
+    ${USER}@${HOST}:${DIR}\n";
 EOF
