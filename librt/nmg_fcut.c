@@ -110,6 +110,8 @@ struct nmg_ray_state {
 	vect_t			ang_y_dir;	/* y axis for angle measure */
 };
 
+RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct nmg_ray_state *rs) );
+
 /*
  *			P T B L _ V S O R T
  *
@@ -948,7 +950,7 @@ int			multi;
 {
 	int			assessment;
 	int			old;
-	struct state_transitions	*stp;
+	CONST struct state_transitions	*stp;
 	struct vertexuse	*prev_vu;
 	struct edgeuse		*eu;
 	struct loopuse		*lu;

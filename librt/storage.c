@@ -177,8 +177,8 @@ char	*new_str;
  */
 char *
 rt_malloc(cnt, str)
-unsigned int cnt;
-char	*str;
+unsigned int	cnt;
+CONST char	*str;
 {
 	register char *ptr;
 
@@ -220,8 +220,8 @@ char	*str;
  */
 void
 rt_free(ptr,str)
-char	*ptr;
-char	*str;
+char		*ptr;
+CONST char	*str;
 {
 	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
 	if(ptr == (char *)0 || (int)ptr == -1)  {
@@ -252,9 +252,9 @@ char	*str;
  */
 char *
 rt_realloc(ptr, cnt, str)
-register char *ptr;
-unsigned int cnt;
-char *str;
+register char	*ptr;
+unsigned int	cnt;
+CONST char	*str;
 {
 	char	*original_ptr = ptr;
 
@@ -301,7 +301,7 @@ char *
 rt_calloc( nelem, elsize, str )
 unsigned int	nelem;
 unsigned int	elsize;
-char		*str;
+CONST char	*str;
 {
 	unsigned	len;
 	char		*ret;
@@ -354,7 +354,7 @@ char *str;
  */
 char *
 rt_strdup( cp )
-register char *cp;
+register CONST char *cp;
 {
 	register char	*base;
 	register int	len;

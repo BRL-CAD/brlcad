@@ -29,27 +29,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 
-NMG_EXTERN(void		joint_hitmiss2, (struct edgeuse	*eu, point_t pt,
-			struct neighbor *closest, long *novote) );
-NMG_EXTERN(void		pt_hitmis_e, (point_t pt, struct edgeuse *eu,
-			struct neighbor	*closest, CONST struct rt_tol *tol,
-			long *novote) );
-NMG_EXTERN(void		pt_hitmis_l, (point_t pt, struct loopuse *lu,
-			struct neighbor	*closest, CONST struct rt_tol *tol,
-			long *novote) );
-NMG_EXTERN(int		nmg_pt_hitmis_f, (point_t pt, struct faceuse *fu,
-			CONST struct rt_tol *tol, long *novote) );
-NMG_EXTERN(int		pt_inout_s, (point_t pt, struct shell *s,
-			CONST struct rt_tol *tol) );
-NMG_EXTERN(int		class_vu_vs_s, (struct vertexuse *vu, struct shell *sB,
-			long *classlist[4], CONST struct rt_tol	*tol) );
-NMG_EXTERN(int		class_eu_vs_s, (struct edgeuse *eu, struct shell *s,
-			long *classlist[4], CONST struct rt_tol	*tol) );
-NMG_EXTERN(int		class_lu_vs_s, (struct loopuse *lu, struct shell *s,
-			long *classlist[4], CONST struct rt_tol	*tol) );
-NMG_EXTERN(void		class_fu_vs_s, (struct faceuse *fu, struct shell *s,
-			long *classlist[4], CONST struct rt_tol	*tol) );
-
 #define INSIDE	32
 #define ON_SURF	64
 #define OUTSIDE	128
@@ -66,7 +45,29 @@ struct neighbor {
 	int inout;	/* what the neighbor thought about the point */
 };
 
+static void	joint_hitmiss2 RT_ARGS( (struct edgeuse	*eu, point_t pt,
+			struct neighbor *closest, long *novote) );
+static void	pt_hitmis_e RT_ARGS( (point_t pt, struct edgeuse *eu,
+			struct neighbor	*closest, CONST struct rt_tol *tol,
+			long *novote) );
+static void	pt_hitmis_l RT_ARGS( (point_t pt, struct loopuse *lu,
+			struct neighbor	*closest, CONST struct rt_tol *tol,
+			long *novote) );
+RT_EXTERN(int		nmg_pt_hitmis_f, (point_t pt, struct faceuse *fu,
+			CONST struct rt_tol *tol, long *novote) );
+static int	pt_inout_s RT_ARGS( (point_t pt, struct shell *s,
+			CONST struct rt_tol *tol) );
+static int	class_vu_vs_s RT_ARGS( (struct vertexuse *vu, struct shell *sB,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+static int	class_eu_vs_s RT_ARGS( (struct edgeuse *eu, struct shell *s,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
+			long *classlist[4], CONST struct rt_tol	*tol) );
+
 static vect_t projection_dir = { 1.0, 0.0, 0.0 };
+
 #define FACE_HIT 256
 #define FACE_MISS 512
 

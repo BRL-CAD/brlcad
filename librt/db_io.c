@@ -50,8 +50,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 union record *
 db_getmrec( dbip, dp )
-struct db_i	*dbip;
-struct directory *dp;
+struct db_i		*dbip;
+CONST struct directory	*dp;
 {
 	union record	*where;
 
@@ -87,7 +87,7 @@ struct directory *dp;
 int
 db_get( dbip, dp, where, offset, len )
 struct db_i	*dbip;
-struct directory *dp;
+CONST struct directory *dp;
 union record	*where;
 int		offset;
 int		len;
@@ -129,7 +129,7 @@ int		len;
 int
 db_put( dbip, dp, where, offset, len )
 struct db_i	*dbip;
-struct directory *dp;
+CONST struct directory *dp;
 union record	*where;
 int		offset;
 int		len;
@@ -225,7 +225,7 @@ long		offset;		/* byte offset from start of file */
 int
 db_write( dbip, addr, count, offset )
 struct db_i	*dbip;
-genptr_t	addr;
+CONST genptr_t	addr;
 long		count;
 long		offset;
 {
@@ -276,7 +276,7 @@ long		offset;
 int
 db_get_external( ep, dp, dbip )
 register struct rt_external	*ep;
-struct directory		*dp;
+CONST struct directory		*dp;
 struct db_i			*dbip;
 {
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get_external:  bad dbip\n");
@@ -310,7 +310,7 @@ struct db_i			*dbip;
 int
 db_put_external( ep, dp, dbip )
 struct rt_external	*ep;
-struct directory	*dp;
+CONST struct directory	*dp;
 struct db_i		*dbip;
 {
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put_external:  bad dbip\n");

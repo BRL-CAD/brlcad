@@ -34,7 +34,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct rt_db_internal *ip, struct rt_i *rtip )); \
 	RT_EXTERN(int rt_##name##_shot, (struct soltab *stp, struct xray *rp, \
 			struct application *ap, struct seg *seghead )); \
-	RT_EXTERN(void rt_##name##_print, (struct soltab *stp)); \
+	RT_EXTERN(void rt_##name##_print, (CONST struct soltab *stp)); \
 	RT_EXTERN(void rt_##name##_norm, (struct hit *hitp, \
 			struct soltab *stp, struct xray *rp)); \
 	RT_EXTERN(void rt_##name##_uv, (struct application *ap, \
@@ -56,9 +56,9 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			CONST struct rt_tess_tol *ttol, \
 			struct rt_tol *tol)); \
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
-			struct rt_external *ep, mat_t mat)); \
+			CONST struct rt_external *ep, CONST mat_t mat)); \
 	RT_EXTERN(int rt_##name##_export, (struct rt_external *ep, \
-			struct rt_db_internal *ip, \
+			CONST struct rt_db_internal *ip, \
 			double local2mm)); \
 	RT_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_##name##_describe, (struct rt_vls *str, \
@@ -70,7 +70,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct rt_db_internal *ip, struct rt_i *rtip )); \
 	RT_EXTERN(int rt_/**/name/**/_shot, (struct soltab *stp, struct xray *rp, \
 			struct application *ap, struct seg *seghead )); \
-	RT_EXTERN(void rt_/**/name/**/_print, (struct soltab *stp)); \
+	RT_EXTERN(void rt_/**/name/**/_print, (CONST struct soltab *stp)); \
 	RT_EXTERN(void rt_/**/name/**/_norm, (struct hit *hitp, \
 			struct soltab *stp, struct xray *rp)); \
 	RT_EXTERN(void rt_/**/name/**/_uv, (struct application *ap, \
@@ -92,9 +92,9 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			CONST struct rt_tess_tol *ttol, \
 			struct rt_tol *tol)); \
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
-			struct rt_external *ep, mat_t mat)); \
+			CONST struct rt_external *ep, CONST mat_t mat)); \
 	RT_EXTERN(int rt_/**/name/**/_export, (struct rt_external *ep, \
-			struct rt_db_internal *ip, \
+			CONST struct rt_db_internal *ip, \
 			double local2mm)); \
 	RT_EXTERN(void rt_/**/name/**/_ifree, (struct rt_db_internal *ip)); \
 	RT_EXTERN(int rt_/**/name/**/_describe, (struct rt_vls *str, \
@@ -271,7 +271,7 @@ int IDEF(rt_nul_shot,(struct soltab *stp,
 			struct xray *rp,
 			struct application *ap,
 			struct seg *seghead))
-void DEF(rt_nul_print,(struct soltab *stp))
+void DEF(rt_nul_print,(CONST struct soltab *stp))
 void DEF(rt_nul_norm,(struct hit *hitp,
 			struct soltab *stp,
 			struct xray *rp))
@@ -298,10 +298,10 @@ int NDEF(rt_nul_tess,(struct nmgregion **r,
 			CONST struct rt_tess_tol *ttol,
 			struct rt_tol *tol))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
-			struct rt_external *ep,
-			mat_t mat))
+			CONST struct rt_external *ep,
+			CONST mat_t mat))
 int NDEF(rt_nul_export,(struct rt_external *ep,
-			struct rt_db_internal *ip,
+			CONST struct rt_db_internal *ip,
 			double local2mm))
 void DEF(rt_nul_ifree,(struct rt_db_internal *ip))
 int NDEF(rt_nul_describe,(struct rt_vls *str,

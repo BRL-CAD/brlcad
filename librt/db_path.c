@@ -63,8 +63,8 @@ register struct directory	*dp;
  */
 void
 db_dup_full_path( newp, oldp )
-register struct db_full_path	*newp;
-register struct db_full_path	*oldp;
+register struct db_full_path		*newp;
+register CONST struct db_full_path	*oldp;
 {
 	newp->fp_maxlen = oldp->fp_maxlen;
 	if( (newp->fp_len = oldp->fp_len) <= 0 )  {
@@ -86,7 +86,7 @@ register struct db_full_path	*oldp;
  */
 char *
 db_path_to_string( pp )
-register struct db_full_path	*pp;
+register CONST struct db_full_path	*pp;
 {
 	register char	*cp;
 	char	*buf;

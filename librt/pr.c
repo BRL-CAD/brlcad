@@ -32,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 void
 rt_pr_soltab( stp )
-register struct soltab	*stp;
+register CONST struct soltab	*stp;
 {
 	register int	id = stp->st_id;
 
@@ -58,7 +58,7 @@ register struct soltab	*stp;
  */
 void
 rt_pr_region( rp )
-register struct region *rp;
+register CONST struct region *rp;
 {
 	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
 	rt_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
@@ -84,11 +84,11 @@ register struct region *rp;
  */
 void
 rt_pr_partitions( rtip, phead, title )
-struct rt_i		*rtip;
-register struct partition *phead;
-char *title;
+CONST struct rt_i		*rtip;
+CONST register struct partition *phead;
+CONST char *title;
 {
-	register struct partition *pp;
+	register CONST struct partition *pp;
 
 	RT_CHECK_RTI(rtip);
 
@@ -105,8 +105,8 @@ char *title;
  *			R T _ P R _ P T
  */
 void
-struct rt_i		*rtip;
-register struct partition *pp;
+rt_pr_pt( rtip, pp )
+CONST register struct partition *pp;
 register CONST struct partition *pp;
 
 	RT_CHECK_RTI(rtip);
@@ -131,9 +131,9 @@ register CONST struct partition *pp;
  */
 void
 rt_pr_bitv( str, bv, len )
-char *str;
-register bitv_t *bv;
-register int len;
+CONST char		*str;
+register CONST bitv_t	*bv;
+register int		len;
 {
 	register int i;
 	rt_log("%s: ", str);
@@ -148,7 +148,7 @@ register int len;
  *			R T _ P R _ S E G
  */
 void
-register struct seg *segp;
+rt_pr_seg(segp)
 register CONST struct seg *segp;
 {
 	rt_log("%.8x: SEG %s (%g,%g) bit=%d\n",
@@ -164,8 +164,8 @@ register CONST struct seg *segp;
  *			R T _ P R _ H I T
  */
 void
-char *str;
-register struct hit *hitp;
+rt_pr_hit( str, hitp )
+CONST char			*str;
 register CONST struct hit	*hitp;
 	rt_log("HIT %s dist=%g (surf %d)\n",
 		str, hitp->hit_dist, hitp->hit_surfno );
@@ -187,7 +187,7 @@ register CONST struct hit	*hitp;
  *  this subroutine may overwhelm the stack on complex expressions.
  */
 void
-register union tree *tp;
+rt_pr_tree( tp, lvl )
 register CONST union tree *tp;
 int lvl;			/* recursion level */
 {
@@ -269,8 +269,8 @@ int lvl;			/* recursion level */
  *	2	bit number
  */
 void
-register union tree	*tp;		/* Tree to print */
-struct partition	*partp;		/* Partition to evaluate */
+rt_pr_tree_val( tp, partp, pr_name, lvl )
+register CONST union tree *tp;		/* Tree to print */
 CONST struct partition	*partp;		/* Partition to evaluate */
 int			pr_name;	/* 1=print name, 0=print value */
 int			lvl;		/* Recursion level */
@@ -377,9 +377,9 @@ int			lvl;		/* Recursion level */
  */
 void
 rt_printb(s, v, bits)
-char *s;
-register unsigned long v;
-register char *bits;
+CONST char		*s;
+register unsigned long	v;
+register CONST char	*bits;
 {
 	register int i, any = 0;
 	register char c;

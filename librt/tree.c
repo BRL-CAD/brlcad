@@ -69,8 +69,8 @@ static struct rt_i	*rt_tree_rtip;
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN int rt_gettree_region_start( tsp, pathp )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
+CONST struct db_tree_state	*tsp;
+CONST struct db_full_path	*pathp;
 {
 
 	/* Ignore "air" regions unless wanted */
@@ -90,9 +90,9 @@ struct db_full_path	*pathp;
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
+register CONST struct db_tree_state	*tsp;
+CONST struct db_full_path	*pathp;
+union tree			*curtree;
 {
 	struct region		*rp;
 	struct directory	*dp;
@@ -112,7 +112,7 @@ union tree		*curtree;
 	rp->reg_mater = tsp->ts_mater;		/* struct copy */
 	rp->reg_name = db_path_to_string( pathp );
 
-	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
@@ -177,15 +177,15 @@ union tree		*curtree;
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ep, id )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_external	*ep;
-int			id;
+CONST struct db_tree_state	*tsp;
+CONST struct db_full_path	*pathp;
+CONST struct rt_external	*ep;
+int				id;
 {
 	register fastf_t	f;
 	register struct soltab	*stp;
 	union tree		*curtree;
-	struct directory	*dp;
+	CONST struct directory	*dp;
 	struct rt_db_internal	intern;
 	register int		i;
 	register matp_t		mat;
@@ -202,7 +202,7 @@ int			id;
 	}
 	if( i < 16 )  {
 		/* Not identity matrix */
-		mat = tsp->ts_mat;
+		mat = (matp_t)tsp->ts_mat;
 	} else {
 		/* Identity matrix */
 		mat = (matp_t)0;
@@ -347,7 +347,7 @@ found_it:
 int
 rt_gettree( rtip, node )
 struct rt_i	*rtip;
-char		*node;
+CONST char	*node;
 {
 	return( rt_gettrees( rtip, 1, &node, 1 ) );
 }
@@ -370,7 +370,7 @@ int
 rt_gettrees( rtip, argc, argv, ncpus )
 struct rt_i	*rtip;
 int		argc;
-char		**argv;
+CONST char	**argv;
 int		ncpus;
 {
 	int			prev_sol_count;
@@ -458,9 +458,9 @@ int		noisy;
  */
 int
 rt_bound_tree( tp, tree_min, tree_max )
-register union tree	*tp;
-vect_t			tree_min;
-vect_t			tree_max;
+register CONST union tree	*tp;
+vect_t				tree_min;
+vect_t				tree_max;
 {	
 	vect_t	r_min, r_max;		/* rpp for right side of tree */
 
@@ -558,7 +558,7 @@ struct rt_i	*rtip;
 register char	*reg_name;
 {	
 	register struct region	*regp = rtip->HeadRegion;
-	register char *reg_base = rt_basename(reg_name);
+	register CONST char *reg_base = rt_basename(reg_name);
 
 	for( ; regp != REGION_NULL; regp = regp->reg_forw )  {	
 		register char	*cp;
@@ -607,7 +607,7 @@ fastf_t		*min_rpp, *max_rpp;
 void
 rt_fastf_float( ff, fp, n )
 register fastf_t *ff;
-register dbfloat_t *fp;
+register CONST dbfloat_t *fp;
 register int n;
 {
 #	include "noalias.h"
@@ -627,7 +627,7 @@ register int n;
 void
 rt_mat_dbmat( ff, dbp )
 register fastf_t *ff;
-register dbfloat_t *dbp;
+register CONST dbfloat_t *dbp;
 {
 
 	*ff++ = *dbp++;
@@ -659,7 +659,7 @@ register dbfloat_t *dbp;
 void
 rt_dbmat_mat( dbp, ff )
 register dbfloat_t *dbp;
-register fastf_t *ff;
+register CONST fastf_t *ff;
 {
 
 	*dbp++ = *ff++;
@@ -692,16 +692,18 @@ register fastf_t *ff;
  */
 struct soltab *
 rt_find_solid( rtip, name )
-struct rt_i *rtip;
-register char *name;
+CONST struct rt_i	*rtip;
+register CONST char	*name;
 {
 	register struct soltab	*stp;
-	register char		*cp;
+	register CONST char	*cp;
+	int			c;
 
 	RT_CHECK_RTI(rtip);
+	c = name[0];
 
 	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
-		if( *(cp = stp->st_name) == *name  &&
+		if( *(cp = stp->st_dp->d_namep) == c  &&
 		    strcmp( cp, name ) == 0 )  {
 			return(stp);
 		}
@@ -781,20 +783,20 @@ struct resource		*resp;
 HIDDEN void
 rt_tree_region_assign( tp, regionp )
 register union tree	*tp;
-register struct region	*regionp;
+register CONST struct region	*regionp;
 {
 	switch( tp->tr_op )  {
 	case OP_NOP:
 		return;
 
 	case OP_SOLID:
-		tp->tr_a.tu_regionp = regionp;
+		tp->tr_a.tu_regionp = (struct region *)regionp;
 		return;
 
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-		tp->tr_b.tb_regionp = regionp;
+		tp->tr_b.tb_regionp = (struct region *)regionp;
 		rt_tree_region_assign( tp->tr_b.tb_left, regionp );
 		return;
 
@@ -802,7 +804,7 @@ register struct region	*regionp;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-		tp->tr_b.tb_regionp = regionp;
+		tp->tr_b.tb_regionp = (struct region *)regionp;
 		rt_tree_region_assign( tp->tr_b.tb_left, regionp );
 		rt_tree_region_assign( tp->tr_b.tb_right, regionp );
 		return;

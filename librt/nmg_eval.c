@@ -29,6 +29,19 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+struct nmg_bool_state  {
+	struct shell	*bs_dest;
+	struct shell	*bs_src;
+	int		bs_isA;		/* true if A, else doing B */
+	long		**bs_classtab;
+	int		*bs_actions;
+};
+
+static void nmg_eval_shell RT_ARGS( (struct shell *s,
+		struct nmg_bool_state *bs));
+static void nmg_eval_plot RT_ARGS( (struct nmg_bool_state *bs,
+		int num, int delay));
+
 /*
  *			N M G _ R E V E R S E _ F A C E
  *
@@ -308,14 +321,6 @@ static int		intersect_actions[8] = {
 	BACTION_KILL
 };
 
-struct nmg_bool_state  {
-	struct shell	*bs_dest;
-	struct shell	*bs_src;
-	int		bs_isA;		/* true if A, else doing B */
-	long		**bs_classtab;
-	int		*bs_actions;
-};
-
 /*
  *			N M G _ E V A L U A T E _ B O O L E A N
  *
@@ -416,7 +421,7 @@ static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
  *  Descend the "great chain of being" from the face to loop to edge
  *  to vertex, saving or demoting along the way.
  */
-void
+static void
 nmg_eval_shell( s, bs )
 register struct shell	*s;
 struct nmg_bool_state *bs;
@@ -1001,7 +1006,7 @@ struct shell	*s;
  *
  *  Called from nmg_eval_shell
  */
-void
+static void
 nmg_eval_plot( bs, num, delay )
 struct nmg_bool_state	*bs;
 int		num;

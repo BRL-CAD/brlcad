@@ -83,7 +83,7 @@ CONST char	*str;
 {
 	register char	*ip;
 	register int	c;
-	register struct cvt_tab	*tp;
+	register CONST struct cvt_tab	*tp;
 	char		ubuf[64];
 	int		len;
 
@@ -114,11 +114,11 @@ CONST char	*str;
 	return(0.0);		/* Unable to find it */
 }
 
-char *
+CONST char *
 rt_units_string(mm)
 register CONST double	mm;
 {
-	register struct cvt_tab	*tp;
+	register CONST struct cvt_tab	*tp;
 
 	/* Search for this string in the table */
 	for( tp=rt_units_tab; tp->name[0]; tp++ )  {

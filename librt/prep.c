@@ -246,6 +246,7 @@ struct soltab		*stp;
 	int				rnum;
 	struct rt_tess_tol		ttol;
 	struct rt_tol			tol;
+	matp_t				mat;
 
 	RT_LIST_INIT( &vhead );
 
@@ -255,8 +256,10 @@ struct soltab		*stp;
 		return(-1);			/* FAIL */
 	}
 
+	if( !(mat = stp->st_matp) )
+		mat = (matp_t)rt_identity;
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
 		rt_log("rt_plot_solid(%s):  solid import failure\n",
 			stp->st_name );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
@@ -376,7 +379,7 @@ register struct rt_i *rtip;
 		register struct region *nextregp = regp->reg_forw;
 
 		rt_fr_tree( regp->reg_treetop );
-		rt_free( regp->reg_name, "region name str");
+		rt_free( (char *)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
 		rt_free( (char *)regp, "struct region");
 		regp = nextregp;
@@ -488,7 +491,7 @@ register struct region *delregp;
 	return(-1);
 zot:
 	rt_fr_tree( delregp->reg_treetop );
-	rt_free( delregp->reg_name, "region name str");
+	rt_free( (char *)delregp->reg_name, "region name str");
 	delregp->reg_name = (char *)0;
 	rt_free( (char *)delregp, "struct region");
 	return(0);

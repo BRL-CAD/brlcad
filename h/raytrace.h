@@ -392,7 +392,7 @@ struct soltab {
 	fastf_t		st_aradius;	/* Radius of APPROXIMATING sphere */
 	fastf_t		st_bradius;	/* Radius of BOUNDING sphere */
 	genptr_t	st_specific;	/* -> ID-specific (private) struct */
-	struct directory *st_dp;	/* Directory entry of solid */
+	CONST struct directory *st_dp;	/* Directory entry of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bit;		/* solids bit vector index (const) */
@@ -452,7 +452,7 @@ struct mater_info {
  */
 struct region  {
 	long		reg_magic;
-	char		*reg_name;	/* Identifying string */
+	CONST char	*reg_name;	/* Identifying string */
 	union tree	*reg_treetop;	/* Pointer to boolean tree */
 	short		reg_bit;	/* constant index into Regions[] */
 	short		reg_regionid;	/* Region ID code.  If <=0, use reg_aircode */
@@ -1273,7 +1273,7 @@ struct rt_functab {
 			struct xray * /*rp*/,
 			struct application * /*ap*/,
 			struct seg * /*seghead*/ ));
-	void	(*ft_print) RT_ARGS((struct soltab * /*stp*/));
+	void	(*ft_print) RT_ARGS((CONST struct soltab * /*stp*/));
 	void	(*ft_norm) RT_ARGS((struct hit * /*hitp*/,
 			struct soltab * /*stp*/,
 			struct xray * /*rp*/));
@@ -1311,10 +1311,10 @@ struct rt_functab {
 			struct rt_tol * /*tol*/));
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
-			struct rt_external * /*ep*/,
-			mat_t /*mat*/));
+			CONST struct rt_external * /*ep*/,
+			CONST mat_t /*mat*/));
 	int	(*ft_export) RT_ARGS((struct rt_external * /*ep*/,
-			struct rt_db_internal * /*ip*/,
+			CONST struct rt_db_internal * /*ip*/,
 			double /*local2mm*/));
 	void	(*ft_ifree) RT_ARGS((struct rt_db_internal * /*ip*/));
 	int	(*ft_describe) RT_ARGS((struct rt_vls * /*str*/,
@@ -1344,16 +1344,19 @@ RT_EXTERN(void rt_prep, (struct rt_i *rtip) );
 					/* Shoot a ray */
 RT_EXTERN(int rt_shootray, (struct application *ap) );
 					/* Get expr tree for object */
-RT_EXTERN(int rt_gettree, (struct rt_i *rtip, char *node) );
+RT_EXTERN(int rt_gettree, (struct rt_i *rtip, CONST char *node) );
+RT_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
+	int argc, CONST char **argv, int ncpus));
 					/* Print seg struct */
-RT_EXTERN(void rt_pr_seg, (struct seg *segp) );
+RT_EXTERN(void rt_pr_seg, (CONST struct seg *segp) );
 					/* Print the partitions */
-RT_EXTERN(void rt_pr_partitions, (struct rt_i *rtip,
-	struct partition *phead, char *title) );
+RT_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
+	CONST struct partition *phead, CONST char *title) );
 					/* Find solid by leaf name */
-RT_EXTERN(void rt_printb, (char *s, unsigned long v, char *bits) );
+RT_EXTERN(void rt_printb, (CONST char *s, unsigned long v, CONST char *bits) );
 					/* Print a bit vector */
-RT_EXTERN(struct soltab *rt_find_solid, (struct rt_i *rtip, char *name) );
+RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
+	CONST char *name) );
 					/* Parse arbitrary data structure */
 RT_EXTERN(int rt_structparse, (struct rt_vls *vls, struct structparse *tab, char *base ) );
 		/* Print arbitrary data structure for human consuption*/
@@ -1418,15 +1421,15 @@ RT_EXTERN(void mat_vec_perp, (vect_t dest, CONST vect_t src) );
  *****************************************************************/
 
 					/* visible malloc() */
-RT_EXTERN(char *rt_malloc, (unsigned int cnt, char *str) );
+RT_EXTERN(char *rt_malloc, (unsigned int cnt, CONST char *str) );
 					/* visible free() */
-RT_EXTERN(void rt_free, (char *ptr, char *str) );
+RT_EXTERN(void rt_free, (char *ptr, CONST char *str) );
 					/* visible realloc() */
-RT_EXTERN(char *rt_realloc, (char *ptr, unsigned int cnt, char *str) );
+RT_EXTERN(char *rt_realloc, (char *ptr, unsigned int cnt, CONST char *str) );
 					/* visible calloc() */
-RT_EXTERN(char *rt_calloc, (unsigned nelem, unsigned elsize, char *str) );
+RT_EXTERN(char *rt_calloc, (unsigned nelem, unsigned elsize, CONST char *str) );
 					/* Duplicate str w/malloc */
-RT_EXTERN(char *rt_strdup, (char *cp) );
+RT_EXTERN(char *rt_strdup, (CONST char *cp) );
 
 					/* Weave segs into partitions */
 RT_EXTERN(void rt_boolweave, (struct seg *out_hd, struct seg *in_hd,
@@ -1446,17 +1449,20 @@ RT_EXTERN(int rt_fdiff, (double a, double b) );
 					/* Relative Difference */
 RT_EXTERN(double rt_reldiff, (double a, double b) );
 					/* Print a soltab */
-RT_EXTERN(void rt_pr_soltab, (struct soltab *stp) );
+RT_EXTERN(void rt_pr_soltab, (CONST struct soltab *stp) );
 					/* Print a region */
-RT_EXTERN(void rt_pr_region, (struct region *rp) );
+RT_EXTERN(void rt_pr_region, (CONST struct region *rp) );
 					/* Print an expr tree */
-RT_EXTERN(void rt_pr_tree, (union tree *tp, int lvl) );
+RT_EXTERN(void rt_pr_tree, (CONST union tree *tp, int lvl) );
+					/* Print value of tree for a partition */
+RT_EXTERN(void rt_pr_tree_val, (CONST union tree *tp,
+	CONST struct partition *partp, int pr_name, int lvl));
 					/* Print a partition */
-RT_EXTERN(void rt_pr_pt, (struct rt_i *rtip, struct partition *pp) );
+RT_EXTERN(void rt_pr_pt, (CONST struct rt_i *rtip, CONST struct partition *pp) );
 					/* Print a bit vector */
-RT_EXTERN(void rt_pr_bitv, (char *str, bitv_t *bv, int len) );
+RT_EXTERN(void rt_pr_bitv, (CONST char *str, CONST bitv_t *bv, int len) );
 					/* Print a hit point */
-RT_EXTERN(void rt_pr_hit, (char *str, struct hit *hitp) );
+RT_EXTERN(void rt_pr_hit, (CONST char *str, CONST struct hit *hitp) );
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
  * declarations moved to h/db.h */
 					/* storage obtainers */
@@ -1470,7 +1476,7 @@ RT_EXTERN(void rt_bitv_or, (bitv_t *out, bitv_t *in, int nbits) );
 					/* space partitioning */
 RT_EXTERN(void rt_cut_it, (struct rt_i *rtip) );
 					/* print cut node */
-RT_EXTERN(void rt_pr_cut, (union cutter *cutp, int lvl) );
+RT_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
 					/* free a cut tree */
 RT_EXTERN(void rt_fr_cut, (union cutter *cutp) );
 					/* regionid-driven color override */
@@ -1495,8 +1501,8 @@ RT_EXTERN(void db_free_anim, (struct db_i *dbip) );
 RT_EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
 	struct directory *dp) );
 RT_EXTERN(void db_dup_full_path, (struct db_full_path *newp,
-	struct db_full_path *oldp) );
-RT_EXTERN(char *db_path_to_string, (struct db_full_path *pp) );
+	CONST struct db_full_path *oldp) );
+RT_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
 RT_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
 
 /* db_open.c */
@@ -1514,27 +1520,27 @@ RT_EXTERN(void db_close, ( struct db_i *dbip ) );
  */
 #if defined(RECORD_DEFINED)
 					/* malloc & read records */
-RT_EXTERN(union record *db_getmrec, ( struct db_i *, struct directory *dp ) );
+RT_EXTERN(union record *db_getmrec, ( struct db_i *, CONST struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, union record *where,
-	int offset, int len ) );
+RT_EXTERN(int db_get, (struct db_i *, CONST struct directory *dp,
+	union record *where, int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, union record *where,
+RT_EXTERN(int db_put, ( struct db_i *, CONST struct directory *dp, union record *where,
 	int offset, int len ) );
 #else /* RECORD_DEFINED */
 					/* malloc & read records */
-RT_EXTERN(genptr_t db_getmrec, ( struct db_i *, struct directory *dp ) );
+RT_EXTERN(genptr_t db_getmrec, ( struct db_i *, CONST struct directory *dp ) );
 					/* get several records from db */
-RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, genptr_t where,
-	int offset, int len ) );
+RT_EXTERN(int db_get, (struct db_i *, CONST struct directory *dp,
+	genptr_t where, int offset, int len ) );
 					/* put several records into db */
-RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, genptr_t where,
-	int offset, int len ) );
+RT_EXTERN(int db_put, ( struct db_i *, CONST struct directory *dp,
+	genptr_t where, int offset, int len ) );
 #endif /* RECORD_DEFINED */
 RT_EXTERN(int db_get_external, ( struct rt_external *ep,
-	struct directory *dp, struct db_i *dbip ) );
+	CONST struct directory *dp, struct db_i *dbip ) );
 RT_EXTERN(int db_put_external, ( struct rt_external *ep,
-	struct directory *dp, struct db_i *dbip ) );
+	CONST struct directory *dp, struct db_i *dbip ) );
 RT_EXTERN(void db_free_external, ( struct rt_external *ep ) );
 
 /* db_scan.c */
@@ -1563,6 +1569,37 @@ RT_EXTERN(int db_delrec, ( struct db_i *, struct directory *dp, int recnum ) );
 RT_EXTERN(int db_delete, ( struct db_i *, struct directory *dp ) );
 					/* write FREE records from 'start' */
 RT_EXTERN(int db_zapper, ( struct db_i *, struct directory *dp, int start ) );
+
+/* db_tree.c */
+RT_EXTERN(struct combined_tree_state *db_new_combined_tree_state,
+	(CONST struct db_tree_state *tsp, CONST struct db_full_path *pathp));
+RT_EXTERN(struct combined_tree_state *db_dup_combined_tree_state,
+	(CONST struct combined_tree_state *old));
+RT_EXTERN(void db_free_combined_tree_state,
+	(struct combined_tree_state *ctsp));
+RT_EXTERN(void db_pr_tree_state, (CONST struct db_tree_state *tsp));
+RT_EXTERN(void db_pr_combined_tree_state,
+	(CONST struct combined_tree_state *ctsp));
+RT_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
+	CONST struct db_full_path *pathp, CONST struct rt_external *ep));
+RT_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
+	struct db_full_path *pathp, CONST struct member	*mp));
+RT_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
+	struct db_full_path *pathp, CONST char *orig_str, int noisy));
+RT_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
+	struct db_full_path *pathp,
+	struct combined_tree_state **region_start_statepp));
+RT_EXTERN(union tree *db_dup_subtree, (CONST union tree	*tp));
+RT_EXTERN(void db_free_tree, (union tree *tp));
+RT_EXTERN(void db_non_union_push, (union tree *tp));
+RT_EXTERN(int db_count_subtree_regions, (CONST union tree *tp));
+RT_EXTERN(int db_tally_subtree_regions, (union tree *tp,
+	union tree **reg_trees, int cur));
+RT_EXTERN(int db_walk_tree, (struct db_i *dbip, int argc, CONST char **argv,
+	int ncpu, CONST struct db_tree_state *init_state,
+	int (*reg_start_func)(), union tree * (*reg_end_func)(),
+	union tree * (*leaf_func)() ));
+
 
 /* machine.c */
 					/* change to new "nice" value */
@@ -1599,7 +1636,7 @@ RT_EXTERN(int rt_mkpoint_3planes, (point_t pt, CONST plane_t a,
 RT_EXTERN(int rt_isect_ray_plane, (fastf_t *dist, CONST point_t pt,
 	CONST vect_t dir, CONST plane_t plane) );
 RT_EXTERN(int rt_isect_2planes, (point_t pt, vect_t dir, CONST plane_t a,
-	CONST plane_t b, CONST vect_t  rpp_min, CONST struct rt_tol *tol) );
+	CONST plane_t b, CONST vect_t rpp_min, CONST struct rt_tol *tol) );
 RT_EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, CONST point_t p,
 	CONST vect_t d, CONST point_t a, CONST vect_t c,
 	CONST struct rt_tol *tol) );
@@ -1639,7 +1676,7 @@ RT_EXTERN(char *rt_identify_magic, (long magic));
 
 /* units.c */
 RT_EXTERN(double rt_units_conversion, (CONST char *str) );
-RT_EXTERN(char *rt_units_string, (CONST double mm) );
+RT_EXTERN(CONST char *rt_units_string, (CONST double mm) );
 
 /************************************************************************
  *									*
@@ -1818,14 +1855,22 @@ RT_EXTERN(void			nmg_face_combine, (struct nmg_ptbl *b,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir) );
 RT_EXTERN(void			nmg_face_plot, ( struct faceuse *fu) );
+#if 0
+/* Can't be here, because nmg_ray_state is defined in nmg_comb.c */
 RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct nmg_ray_state *rs) );
+#endif
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
-RT_EXTERN(void			nmg_eval_shell, ( register struct shell *s, struct nmg_bool_state *bs ) );
 RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s ) );
-RT_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs, int num, int delay) );
+#if 0
+/* These can't be included because struct nmg_bool_state is in nmg_eval.c */
+RT_EXTERN(void			nmg_eval_shell, (struct shell *s,
+				struct nmg_bool_state *bs ) );
+RT_EXTERN(void			nmg_eval_plot, (struct nmg_bool_state *bs,
+				int num, int delay) );
+#endif
 
 
 

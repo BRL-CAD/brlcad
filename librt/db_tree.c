@@ -96,7 +96,7 @@ register struct combined_tree_state	*ctsp;
  */
 void
 db_pr_tree_state( tsp )
-register struct db_tree_state	*tsp;
+register CONST struct db_tree_state	*tsp;
 {
 	rt_log("db_pr_tree_state(x%x):\n", tsp);
 	rt_log(" ts_dbip=x%x\n", tsp->ts_dbip);
@@ -119,7 +119,7 @@ register struct db_tree_state	*tsp;
  */
 void
 db_pr_combined_tree_state( ctsp )
-register struct combined_tree_state	*ctsp;
+register CONST struct combined_tree_state	*ctsp;
 {
 	char	*str;
 
@@ -144,11 +144,11 @@ register struct combined_tree_state	*ctsp;
  */
 int
 db_apply_state_from_comb( tsp, pathp, ep )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-struct rt_external	*ep;
+struct db_tree_state		*tsp;
+CONST struct db_full_path	*pathp;
+CONST struct rt_external	*ep;
 {
-	register union record	*rp;
+	register CONST union record	*rp;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -228,7 +228,7 @@ int
 db_apply_state_from_memb( tsp, pathp, mp )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-struct member		*mp;
+CONST struct member	*mp;
 {
 	register struct directory *mdp;
 	mat_t			xmat;
@@ -314,7 +314,7 @@ int
 db_follow_path_for_state( tsp, pathp, orig_str, noisy )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-char			*orig_str;
+CONST char		*orig_str;
 int			noisy;
 {
 	struct rt_external	ext;
@@ -649,7 +649,7 @@ struct combined_tree_state	**region_start_statepp;
 		return(TREE_NULL);		/* FAIL */
 
 	if( dp->d_flags & DIR_COMB )  {
-		register union record	*rp = (union record *)ext.ext_buf;
+		register CONST union record	*rp = (union record *)ext.ext_buf;
 		struct db_tree_state	nts;
 		int			is_region;
 
@@ -693,7 +693,7 @@ struct combined_tree_state	**region_start_statepp;
 			"tree_list array" );
 
 		for( i=1; i < dp->d_len; i++ )  {
-			register struct member *mp;
+			register CONST struct member *mp;
 			struct db_tree_state	memb_state;
 
 			memb_state = nts;	/* struct copy */
@@ -846,7 +846,7 @@ fail:
  */
 union tree *
 db_dup_subtree( tp )
-union tree	*tp;
+CONST union tree	*tp;
 {
 	union tree	*new;
 
@@ -1040,7 +1040,7 @@ top:
  */
 int
 db_count_subtree_regions( tp )
-union tree	*tp;
+CONST union tree	*tp;
 {
 	int	cnt;
 
@@ -1313,9 +1313,9 @@ int
 db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func )
 struct db_i	*dbip;
 int		argc;
-char		**argv;
+CONST char	**argv;
 int		ncpu;
-struct db_tree_state *init_state;
+CONST struct db_tree_state *init_state;
 int		(*reg_start_func)();
 union tree *	(*reg_end_func)();
 union tree *	(*leaf_func)();
