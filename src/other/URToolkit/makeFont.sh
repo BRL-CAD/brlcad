@@ -6,7 +6,7 @@ awk '$1=="C" && length($2) == 1 { chr = $2 ; num = 0;okay=1}
 			     num++}}' $1 |
 sort -n +0n -1n +1n -2n|
 awk 'BEGIN { ind=0; count=0;pr = 0
-	     print "#include \"../tools/font.h\""
+	     print "#include \"./font.h\""
 	     print "move_t Moves[] = {" }
      $2==0 { for ( ; ind+32<$1 ; ind++) Base[ind] = count;
 	     if ( pr%4 != 0 )
