@@ -25,9 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 
 #include "machine.h"
+#include "externs.h"	/* needed for things like strtod() */
 /* 
 #include "vmath.h"
-#include "externs.h"
+
 #include "raytrace.h"
 */
 
