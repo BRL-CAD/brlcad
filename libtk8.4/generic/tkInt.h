@@ -17,9 +17,9 @@
 #ifndef _TKINT
 #define _TKINT
 
-#ifndef _TK
+
 #include "tk.h"
-#endif
+
 #ifndef _TCL
 #include "tcl.h"
 #endif
@@ -810,7 +810,7 @@ typedef struct TkWindow {
      * Information used by widget classes.
      */
 
-    Tk_ClassProcs *classProcsPtr;
+    struct Tk_ClassProcs *classProcsPtr;
     ClientData instanceData;
 
     /*

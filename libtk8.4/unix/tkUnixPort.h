@@ -19,6 +19,10 @@
 
 #define __UNIX__ 1
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 /*
  * Macro to use instead of "void" for arguments that must have
  * type "void *" in ANSI C;  maps them to type "char *" in

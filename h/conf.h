@@ -616,6 +616,9 @@
 #  define NO_DEBUG_CHECKING	1	/* Don't use the rt_g.debug facilities */
 #endif
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #endif /* CONF_H */
 

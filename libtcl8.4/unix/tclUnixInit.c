@@ -10,6 +10,10 @@
  * RCS: @(#) $Id$
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #if defined(HAVE_CFBUNDLE)
 #include <CoreFoundation/CoreFoundation.h>
 #endif

@@ -454,7 +454,11 @@ CopyFile(src, dst, statBufPtr)
 #ifndef NO_FSTATFS
     {
 	struct statfs fs;
-	if (fstatfs(srcFd, &fs, sizeof(fs), 0) == 0) {
+	if (fstatfs(srcFd, &fs
+#ifndef linux
+			, sizeof(fs), 0
+#endif				
+				) == 0) {
 	    blockSize = fs.f_bsize;
 	} else {
 	    blockSize = 4096;

@@ -48,10 +48,21 @@ dnl 	*)
 dnl 		TCL_LIBS="-ltcl8.4"
 dnl 		;;
 dnl esac
-TCL_LIBS='$(top_builddir)'/libtcl8.4/libtcl.la
+TCL_LIBS='${top_builddir}'"/libtcl8.4/libtcl.la -ldl -lm"
 TCL=libtcl8.4
 AC_SUBST(TCL)
 AC_SUBST(TCL_LIBS)
+
+if test "$FRAMEWORK_BUILD" = "1" ; then
+    TCL_PACKAGE_PATH="${libdir}/Resources/Scripts"
+elif test "$prefix" != "$exec_prefix"; then
+    TCL_PACKAGE_PATH="${libdir} ${prefix}/lib"
+else
+    TCL_PACKAGE_PATH="${prefix}/lib"
+fi
+TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$(TCL_PACKAGE_PATH)\\\" -DTCL_LIBRARY=\\\"$(prefix)/lib/tcl8.4\\\""
+AC_SUBST(TCL_BUILD_CFLAGS)
+
 
 dnl itcl
 case "$target" in
@@ -67,7 +78,7 @@ AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL)
 
 dnl tk
-TK_LIBS="-ltk8.4"
+TK_LIBS='${top_builddir}'"/libtk8.4/libtk.la"
 TK=
 AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
@@ -88,7 +99,8 @@ AC_SUBST(PNG_LIBS)
 
 dnl headers
 AC_HEADER_STDC
-AC_CHECK_HEADERS(config.h float.h getopt.h sys/ioctl_compat.h limits.h memory.h stdarg.h stdlib.h string.h sys/machd.h sys/mman.h sys/select.h sys/socket.h termcap.h termios.h unistd.h varargs.h xosdefs.h)
+AC_CHECK_HEADERS(config.hfloat.h getopt.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/time.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h limits.h)
+AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h)
 
 X_CFLAGS="-I/usr/X11R6/include"
 AC_SUBST(X_CFLAGS)
@@ -109,9 +121,13 @@ AC_SUBST(ITCL_CFLAGS)
 AC_SUBST(TK_CFLAGS)
 AC_SUBST(ITK_CFLAGS)
 
+dnl ===
+AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
+
 dnl typedefs
 dnl functions
 AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex)
+AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,,Lacking fstatfs)])
 
 dnl POSIX_REGEXEC
 dnl CALTECH_MALLOC
@@ -150,23 +166,20 @@ AC_OUTPUT([
 	fb/Makefile
 	h/Makefile
 	html/Makefile
-	html/ReleaseNotes/Makefile
-	html/ReleaseNotes/Rel5.0/Makefile
-	html/ReleaseNotes/Rel5.0/Summary/Makefile
-	html/ReleaseNotes/Rel6.0/Makefile
 	html/manuals/Anim_Tutorial/Makefile
-	html/manuals/Makefile
-	html/manuals/ReleaseNotes/Makefile
 	html/manuals/cadwidgets/Makefile
 	html/manuals/libbu/Makefile
 	html/manuals/libdm/Makefile
 	html/manuals/librt/Makefile
-	html/manuals/mged/Makefile
+	html/manuals/Makefile
 	html/manuals/mged/animmate/Makefile
+	html/manuals/mged/Makefile
+	html/manuals/ReleaseNotes/Makefile
 	html/manuals/shaders/Makefile
-	libtcl8.4/Makefile
-	libtcl8.4/generic/Makefile
-	libtcl8.4/unix/Makefile
+	html/ReleaseNotes/Makefile
+	html/ReleaseNotes/Rel5.0/Makefile
+	html/ReleaseNotes/Rel5.0/Summary/Makefile
+	html/ReleaseNotes/Rel6.0/Makefile
 	libbn/Makefile
 	libbu/Makefile
 	libdm/Makefile
@@ -177,20 +190,25 @@ AC_OUTPUT([
 	libpkg/Makefile
 	librt/Makefile
 	libsysv/Makefile
+	libtcl8.4/generic/Makefile
+	libtcl8.4/Makefile
+	libtcl8.4/unix/Makefile
 	libtermio/Makefile
+	libtk8.4/generic/Makefile
+	libtk8.4/Makefile
+	libtk8.4/unix/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
 	mged/Makefile
 	rt/Makefile
 	sh/Makefile
 	sig/Makefile
-	tclscripts/Makefile
 	tclscripts/geometree/Makefile
 	tclscripts/lib/Makefile
+	tclscripts/Makefile
 	tclscripts/mged/Makefile
 	tclscripts/nirt/Makefile
 	tclscripts/pl-dm/Makefile
-	tclscripts/rtwizard/Makefile
 	tclscripts/rtwizard/examples/Makefile
 	tclscripts/rtwizard/examples/PictureTypeA/Makefile
 	tclscripts/rtwizard/examples/PictureTypeB/Makefile
@@ -199,6 +217,7 @@ AC_OUTPUT([
 	tclscripts/rtwizard/examples/PictureTypeE/Makefile
 	tclscripts/rtwizard/examples/PictureTypeF/Makefile
 	tclscripts/rtwizard/lib/Makefile
+	tclscripts/rtwizard/Makefile
 	tclscripts/util/Makefile
 	util/Makefile
 ])

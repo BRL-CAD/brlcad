@@ -2,6 +2,7 @@
 SUBDIRS=@TCL@ @TK@ @ITCL@\
 	h\
 	libtcl8.4\
+	libtk8.4\
 	libbn\
 	libbu\
 	libdm\
