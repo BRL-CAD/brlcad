@@ -63,7 +63,7 @@ struct db_i	*dbip;
 	RT_CK_DBI( dbip );
 
 	/* XXX Move to rt_global_init() ? */
-	if( BU_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
+	if( BU_LIST_FIRST( bu_list, &rt_g.rtg_vlfree ) == 0 )  {
 		BU_LIST_INIT( &rt_g.rtg_vlfree );
 	}
 
