@@ -32,6 +32,7 @@ struct solid  {
   char s_iflag;	        /* UP = illuminated, DOWN = regular */
   char s_soldash;	/* solid/dashed line flag */
   char s_Eflag;	        /* flag - not a solid but an "E'd" region */
+  char s_useBaseColor;
   unsigned char	s_basecolor[3];	/* color from containing region */
   unsigned char	s_color[3];	/* color to draw as */
   short	s_regionid;	/* region ID */
