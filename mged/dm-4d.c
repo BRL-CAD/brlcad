@@ -354,7 +354,8 @@ Ir_open()
 			if( inv->state & INV_GR1ZBUF24 )
 				ir_has_zbuf = 1;
 			break;
-		case INV_GMDEV:
+		case INV_VGXT:			/* VGX Turbo and SkyWriter */
+		case INV_GMDEV:			/* GT graphics */
 			ir_is_gt = 1;
 			ir_has_zbuf = 1;
 			ir_has_rgb = 1;
