@@ -85,7 +85,7 @@ int
 mk_pipe( fp, name, headp )
 struct rt_wdb		*fp;
 const char			*name;
-struct wdb_pipept	*headp;
+struct bu_list	*headp;
 {
 	struct rt_pipe_internal		*pipe;
 	int				ret;
@@ -100,12 +100,12 @@ struct wdb_pipept	*headp;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT( &pipe->pipe_segs_head );
 	/* "borrow" linked list from caller */
-	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, &headp->l );
+	BU_LIST_APPEND_LIST( &pipe->pipe_segs_head, headp );
 
 	ret = wdb_export( fp, name, (genptr_t)&pipe, ID_PIPE, mk_conv2mm );
 
 	/* "return" linked list to caller */
-	BU_LIST_APPEND_LIST( &headp->l, &pipe->pipe_segs_head );
+	BU_LIST_APPEND_LIST( headp, &pipe->pipe_segs_head );
 	return ret;
 }
 
@@ -116,11 +116,11 @@ struct wdb_pipept	*headp;
  *  The head is left in initialized state (ie, forward & back point to head).
  */
 void
-mk_pipe_free( struct wdb_pipept *headp )
+mk_pipe_free( struct bu_list *headp )
 {
 	register struct wdb_pipept	*wp;
 
-	while( BU_LIST_WHILE( wp, wdb_pipept, &headp->l ) )  {
+	while( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
 		BU_LIST_DEQUEUE( &wp->l );
 		bu_free( (char *)wp, "mk_pipe_free" );
 	}
@@ -135,7 +135,7 @@ mk_pipe_free( struct wdb_pipept *headp )
  */
 void
 mk_add_pipe_pt(
-	struct wdb_pipept *headp,
+	struct bu_list *headp,
 	const point_t coord,
 	double od,
 	double id,
@@ -151,7 +151,7 @@ mk_add_pipe_pt(
 	new->pp_id = id;
 	new->pp_bendradius = bendradius;
 	VMOVE( new->pp_coord, coord );
-	BU_LIST_INSERT( &headp->l, &new->l );
+	BU_LIST_INSERT( headp, &new->l );
 }
 
 /*
@@ -160,9 +160,8 @@ mk_add_pipe_pt(
  *	initialize a linked list of pipe segments with the first segment
  */
 void
-mk_pipe_init( struct wdb_pipept *head )
+mk_pipe_init( struct bu_list *headp )
 {
-	BU_LIST_INIT( &head->l );
-	head->l.magic = WDB_PIPESEG_MAGIC;
+	BU_LIST_INIT( headp );
+	headp->magic = WDB_PIPESEG_MAGIC;
 }
-

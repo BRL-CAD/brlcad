@@ -1701,11 +1701,16 @@ int	exitcode;
 	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
 
+	/* Release all displays */
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 	  curr_dm_list = p;
 
 	  DM_CLOSE(dmp);
 	}
+
+	/* Be certain to close the database cleanly before exiting */
+	if( wdbp )  wdb_close(wdbp);
+	if( dbip )  db_close(dbip);
 
 	if (cbreak_mode > 0)
 	    reset_Tty(fileno(stdin)); 
@@ -2124,6 +2129,7 @@ char	**argv;
 	(void)Tcl_Eval( interp, bu_vls_addr(&vls) );
 
 	/* Provide LIBWDB C access to the on-disk database */
+	if( wdbp )  wdb_close(wdbp);
 	if( (wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )  {
 		Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
 		return TCL_ERROR;

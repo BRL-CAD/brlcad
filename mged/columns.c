@@ -213,10 +213,10 @@ int sflag;	/* print solids */
 
     /* print list item i */
     if (aflag ||
-	!cflag && !rflag && !sflag ||
-	cflag && isComb ||
-	rflag && isRegion ||
-	sflag && isSolid) {
+	(!cflag && !rflag && !sflag) ||
+	(cflag && isComb) ||
+	(rflag && isRegion) ||
+	(sflag && isSolid)) {
       bu_vls_printf(vls,  "%s ", list_of_names[i]->d_namep);
     }
   }

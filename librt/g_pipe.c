@@ -3730,7 +3730,7 @@ struct rt_db_internal	*ip;
  *		LINEAR sections are collinear.
  */
 int
-rt_pipe_ck( const struct wdb_pipept *headp )
+rt_pipe_ck( const struct bu_list *headp )
 {
 	int error_count=0;
 	struct wdb_pipept *cur,*prev,*next;
@@ -3738,7 +3738,7 @@ rt_pipe_ck( const struct wdb_pipept *headp )
 	fastf_t new_bend_dist;
 	fastf_t v2_len=0.0;
 
-	prev = BU_LIST_FIRST( wdb_pipept, &headp->l );
+	prev = BU_LIST_FIRST( wdb_pipept, headp );
 	if( prev->pp_bendradius < prev->pp_od * 0.5 )
 	{
 		bu_log( "Bend radius (%gmm) is less than outer radius at ( %g %g %g )\n",
@@ -3747,7 +3747,7 @@ rt_pipe_ck( const struct wdb_pipept *headp )
 	}
 	cur = BU_LIST_NEXT( wdb_pipept, &prev->l );
 	next = BU_LIST_NEXT( wdb_pipept, &cur->l );
-	while( BU_LIST_NOT_HEAD( &next->l, &headp->l ) )
+	while( BU_LIST_NOT_HEAD( &next->l, headp ) )
 	{
 		vect_t v1, v2, norm;
 		fastf_t v1_len;

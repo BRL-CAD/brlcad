@@ -1277,33 +1277,30 @@ char			*promp[];
  *					1 if unsuccessful read
  */
 int
-half_in(cmd_argvs, intern)
+half_in(cmd_argvs, intern, name)
 char			*cmd_argvs[];
 struct rt_db_internal	*intern;
+const char		*name;
 {
-	int			i;
-	struct rt_half_internal	*hip;
+	vect_t norm;
+	double d;
 
 	CHECK_DBI_NULL;
 
-	intern->idb_type = ID_HALF;
-	intern->idb_meth = &rt_functab[ID_HALF];
-	intern->idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_half_internal),
-		"rt_half_internal" );
-	hip = (struct rt_half_internal *)intern->idb_ptr;
-	hip->magic = RT_HALF_INTERNAL_MAGIC;
+	norm[X] = atof(cmd_argvs[3+0]);
+	norm[Y] = atof(cmd_argvs[3+1]);
+	norm[Z] = atof(cmd_argvs[3+2]);
+	d = atof(cmd_argvs[3+3]) * local2base;
 
-	for (i = 0; i < ELEMENTS_PER_PLANE; i++) {
-		hip->eqn[i] = atof(cmd_argvs[3+i]) * local2base;
-	}
-	VUNITIZE( hip->eqn );
-	
-	if (MAGNITUDE(hip->eqn) < RT_LEN_TOL) {
+	if (MAGNITUDE(norm) < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, normal vector is too small!\n", (char *)NULL);
 	  return(1);	/* failure */
 	}
-	
-	return(0);	/* success */
+
+	VUNITIZE( norm );
+	if( mk_half( wdbp, name, norm, d ) < 0 )
+		return 1;	/* failure */
+	return 0;	/* success */
 }
 
 /*   A R B _ I N ( ) :   	reads arb parameters from keyboard

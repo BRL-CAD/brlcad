@@ -248,18 +248,15 @@ int mk_cline(
 /* pipe.c */
 WDB_EXTERN(int mk_particle, (struct rt_wdb *fp, const char *name, point_t vertex,
 			vect_t height, double vradius, double hradius) );
-WDB_EXTERN(int mk_pipe, (struct rt_wdb *fp, const char *name, struct wdb_pipept *headp) );
-void mk_pipe_free( struct wdb_pipept *headp );
+WDB_EXTERN(int mk_pipe, (struct rt_wdb *fp, const char *name, struct bu_list *headp) );
+void mk_pipe_free( struct bu_list *headp );
 void mk_add_pipe_pt(
-	struct wdb_pipept *headp,
+	struct bu_list *headp,
 	const point_t coord,
 	double od,
 	double id,
 	double bendradius );
-void mk_pipe_init( struct wdb_pipept *head );
-
-/* g_pipe.c */
-int rt_pipe_ck( const struct wdb_pipept *headp );
+void mk_pipe_init( struct bu_list *headp );
 
 /* strsol.c */
 WDB_EXTERN(int mk_dsp, (struct rt_wdb *fp, const char *name, const char *file,
