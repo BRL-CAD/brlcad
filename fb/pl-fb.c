@@ -1,5 +1,5 @@
 /*
- *			F B P L O T . C
+ *			P L - F B . C
  *
  *	Program to take 3-D UNIX plot data and output on a framebuffer.
  *
@@ -154,13 +154,18 @@ typedef struct descr
 
 /*	Global data allocations:	*/
 
-STATIC struct
-	{
-	int		left;		/* window edges */
-	int		bottom;
-	int		right;
-	int		top;
-	}	space;	 		/* plot scale data */
+/* Space is used strictly to compute delta and deltao2
+ * and to compute integer screen coordinates from them.
+ * We thus make these variables only floating point.
+ */
+STATIC struct {
+	double		left;		/* window edges */
+	double		bottom;
+	double		right;
+	double		top;
+} space;
+STATIC double	delta;			/* larger window dimension */
+STATIC double	deltao2;		/* delta / 2 */
 
 struct	relvect {
 	short	x,y;			/* x, y values (255,255 is end) */
@@ -232,9 +237,6 @@ STATIC struct vectorchar {
 STATIC int	Nscanlines = 512;
 STATIC int	Npixels = 512;
 
-STATIC long	delta;			/* larger window dimension */
-STATIC long	deltao2;		/* delta / 2 */
-
 struct band  {
 	stroke	*first;
 	stroke	*last;
@@ -297,7 +299,7 @@ register long v;
 	return( w | v );
 }
 
-char usage[] = "Usage: plot-fb [-h] [-d] [-o] [-i] [file.plot]\n";
+char usage[] = "Usage: pl-fb [-h] [-d] [-o] [-i] [file.plot]\n";
 
 /*
  *  M A I N
@@ -364,7 +366,7 @@ char **argv;
 
 	/* Open frame buffer, adapt to slightly smaller ones */
 	if( (fbp = fb_open( NULL, Npixels, Nscanlines )) == FBIO_NULL )  {
-		fprintf(stderr,"plot-fb: fb_open failed\n");
+		fprintf(stderr,"pl-fb: fb_open failed\n");
 		exit(1);
 	}
 	Npixels = fb_getwidth(fbp);
@@ -391,19 +393,19 @@ char **argv;
 
 	buffersize = lines_per_band*Npixels*sizeof(RGBpixel);
 	if( (buffer = (RGBpixel *)malloc(buffersize)) == RGBPIXEL_NULL)  {
-		fprintf(stderr,"plot-fb:  malloc error\n");
+		fprintf(stderr,"pl-fb:  malloc error\n");
 		exit(1);
 	}
 	band = (struct band *)malloc(BANDS*sizeof(struct band));
 	if( band == (struct band *)0 )  {
-		fprintf(stderr,"plot-fb: malloc error2\n");
+		fprintf(stderr,"pl-fb: malloc error2\n");
 		exit(1);
 	}
 	bzero( (char *)band, BANDS*sizeof(struct band) );
 	bandEnd = &band[BANDS];
 
 	if( debug )
-		fprintf(stderr, "plot-fb output of %s\n", filename);
+		fprintf(stderr, "pl-fb output of %s\n", filename);
 
 	SetSigs();			/* set signal catchers */
 
@@ -543,6 +545,105 @@ DoFile( )	/* returns vpl status code */
 				virpos = newpos;
 				continue;
 
+			/* IEEE */
+			case 'V':
+			case 'O':
+				if ( !Get3DCoords( &newpos ) )
+					return Foo( -8 );
+				virpos = newpos;
+				if( c == 'O'  )  {
+					if( debug )
+						fprintf( stderr,"dMove3\n");
+					continue;
+				}
+				if( debug )
+					fprintf( stderr,"dLine3\n");
+
+			case 'Q':	/* continue3 */
+			case 'X':	/* point3 */
+				if ( !Get3DCoords( &newpos ) )
+					return Foo( -9 );
+				if ( c == 'X' )  {
+					if( debug )
+						fprintf( stderr,"dpoint3\n");
+					virpos = newpos;
+				} else
+					if( debug )
+						fprintf( stderr,"dcont3\n");
+
+				if ( !BuildStr( &virpos, &newpos ) )
+					return Foo( -10 );
+				plotted = true;
+				virpos = newpos;
+				continue;
+			
+			case 'v':	/* line */
+			case 'o':	/* move */
+				if ( !GetDCoords( &newpos ) )
+					return Foo( -8 );
+				virpos = newpos;
+				if ( c == 'o' )  {
+					if( debug )
+						fprintf( stderr,"dmove\n");
+					continue;
+				}
+				/* line: fall through */
+				if( debug )
+					fprintf( stderr,"dline\n");
+
+			case 'q':	/* cont */
+			case 'x':	/* point */
+				if ( !GetDCoords( &newpos ) )
+					return Foo( -9 );
+				if ( c == 'x' )  {
+					if( debug )
+						fprintf( stderr,"dpoint\n");
+					virpos = newpos;
+				} else
+					if( debug )
+						fprintf( stderr,"dcont\n");
+
+				if ( !BuildStr( &virpos, &newpos ) )
+					return Foo( -10 );
+				plotted = true;
+				virpos = newpos;
+				continue;
+
+			case 'W':
+				{
+				char	in[6*8];
+				double	out[6];
+				if( debug )
+					fprintf( stderr,"dspace3\n");
+				if( fread( in, sizeof(in), 1, pfin) != 1 )
+				  	return Foo( -11 );
+				ntohd( out, in, 5 );
+				/* Only need X and Y, ignore Z */
+				space.left  = out[0]; /* x1 */
+				space.bottom= out[1]; /* y1 */
+				/* z1 */
+				space.right = out[3]; /* x2 */
+				space.top   = out[4]; /* y2 */
+				/* z2 */
+				goto spacend;
+				}
+				
+			case 'w':	/* space */
+				{
+				char	in[4*8];
+				double	out[4];
+				if( debug )
+					fprintf( stderr,"dspace\n");
+				if( fread( in, sizeof(in), 1, pfin) != 1 )
+				  	return Foo( -11 );
+				ntohd( out, in, 4 );
+				space.left  = out[0]; /* x1 */
+				space.bottom= out[1]; /* y1 */
+				space.right = out[2]; /* x2 */
+				space.top   = out[3]; /* y2 */
+				goto spacend;
+				}
+
 			case 'S':
 				{
 				if( debug )
@@ -578,19 +679,17 @@ DoFile( )	/* returns vpl status code */
 				}
 
 spacend:
-				delta = (long)space.right
-				      - (long)space.left;
-				deltao2 = (long)space.top
-					- (long)space.bottom;
+				delta = space.right - space.left;
+				deltao2 = space.top - space.bottom;
 				if ( deltao2 > delta )
 					delta = deltao2;
 				if( delta <= 0 )  {
-					fprintf( stderr, "plot-fb: delta = %d, bad space()\n", delta);
+					fprintf( stderr, "pl-fb: delta = %g, bad space()\n", delta );
 					return Foo( -42 );
 				}
-				deltao2 = (delta + 1L) / 2L;
+				deltao2 = delta / 2.0;
 				if( debug )
-					fprintf( stderr,"Space: X=(%d,%d) Y=(%d,%d) delta=%d\n",
+					fprintf( stderr,"Space: X=(%g,%g) Y=(%g,%g) delta=%g\n",
 						space.left, space.right,
 						space.bottom, space.top,
 						delta );
@@ -623,10 +722,47 @@ spacend:
 				plotted = true;
 				virpos = newpos;
 				continue;
-				
-			default:
+
+			/* discard the deadwood */
+			case 'c':
+				{
+				char buf[3*2];
+				if( fread(buf, sizeof(buf), 1, pfin) != 1 )
+					return Foo( -11 );
 				if( debug )
-					fprintf( stderr,"action %c ignored\n", c);
+					fprintf( stderr,"circle ignored\n" );
+				continue;
+				}
+			case 'i':
+				{
+				char buf[3*8];
+				if( fread(buf, sizeof(buf), 1, pfin) != 1 )
+					return Foo( -11 );
+				if( debug )
+					fprintf( stderr,"d_circle ignored\n" );
+				continue;
+				}
+			case 'a':
+				{
+				char buf[6*2];
+				if( fread(buf, sizeof(buf), 1, pfin) != 1 )
+					return Foo( -11 );
+				if( debug )
+					fprintf( stderr,"arc ignored\n" );
+				continue;
+				}
+			case 'r':
+				{
+				char buf[6*8];
+				if( fread(buf, sizeof(buf), 1, pfin) != 1 )
+					return Foo( -11 );
+				if( debug )
+					fprintf( stderr,"d_arc ignored\n" );
+				continue;
+				}
+
+			default:
+				fprintf( stderr,"bad command '%c' (0x%02x)\n", c, c );
 					
 				return Foo( -12 );	/* bad input */
 			}
@@ -709,10 +845,10 @@ register coords	*coop;
 
 STATIC bool
 GetCoords( coop )
-	register coords	*coop;		/* -> input coordinates */
-	{
+register coords	*coop;		/* -> input coordinates */
+{
 	unsigned char buf[4];
-	register long x,y;
+	double	x, y;
 
 	/* read coordinates */
 	if ( fread( (char *)buf, (int)sizeof (buf), 1, pfin ) != 1 )
@@ -721,7 +857,7 @@ GetCoords( coop )
 
 	x = sxt16((buf[1]<<8) | buf[0]);
 	y = sxt16((buf[3]<<8) | buf[2]);
-	if( debug )  fprintf(stderr,"Coord: (%d,%d) ", x, y);
+	if( debug )  fprintf(stderr,"Coord: (%g,%g) ", x, y);
 
 	/* limit left, bottom */
 	if ( (x -= space.left) < 0 )
@@ -730,8 +866,8 @@ GetCoords( coop )
 		y = 0;
 
 	/* convert to device pixels */
-	coop->x = (short)((x * Npixels + deltao2) / delta);
-	coop->y = (short)((y * Nscanlines + deltao2) / delta);
+	coop->x = (short)(x * Npixels / (double)delta + 0.5);
+	coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
 	/* limit right, top */
 	if ( coop->x > XMAX )
@@ -743,7 +879,58 @@ GetCoords( coop )
 		fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
 		
 	return true;
-	}
+}
+
+/* IEEE coordinates */
+STATIC bool Get3DCoords( coop )
+register coords	*coop;
+{
+	char	trash[8];
+	register bool	ret;
+
+	ret = GetDCoords( coop );
+	fread( trash, sizeof(trash), 1, pfin );
+	return( ret );
+}
+
+STATIC bool
+GetDCoords( coop )
+register coords	*coop;		/* -> input coordinates */
+{
+	char	in[2*8];
+	double	out[2];
+	double	x,y;
+
+	/* read coordinates */
+	if ( fread( in, sizeof(in), 1, pfin ) != 1 )
+		return false;
+	ntohd( out, in, 2 );
+	x = out[0];
+	y = out[1];
+
+	if( debug )  fprintf(stderr,"Coord: (%g,%g) ", x, y);
+
+	/* limit left, bottom */
+	if ( (x -= space.left) < 0 )
+		x = 0;
+	if ( (y -= space.bottom) < 0 )
+		y = 0;
+
+	/* convert to device pixels */
+	coop->x = (short)(x * Npixels / (double)delta + 0.5);
+	coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
+
+	/* limit right, top */
+	if ( coop->x > XMAX )
+		coop->x = XMAX;
+	if ( coop->y > YMAX )
+		coop->y = YMAX;
+
+	if( debug )
+		fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
+		
+	return true;
+}
 
 /*
 	InitDesc - initialize stroke descriptor lists
@@ -936,7 +1123,7 @@ OutBuild()				/* returns true if successful */
 	    	if( overlay )  {
 	    		/* Read in current band */
 		    	if( fb_read( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
-	    			fprintf(stderr,"plot-fb:  band read error\n");
+	    			fprintf(stderr,"pl-fb:  band read error\n");
 	    	} else {
 			/* clear pixels in the band */
 			bzero( (char *)buffer, buffersize );
