@@ -2117,7 +2117,8 @@ long		*magic_p;
 		if( fabs(deg) > 2 )  {
 			VPRINT( "dir_src ", dir_src );
 			VPRINT( "dir_dest", dir_dest );
-			rt_log("WARNING Angle between old & new lines is %g degrees\n", deg );
+			rt_log("nmg_use_edge_g() NOTICE Angle between old=x%x & new=x%x lines was %g deg.",
+				old, eg, deg );
 #if 0
 			rt_bomb("nmg_use_edge_g() angle between old & new lines is excessive\n");
 #endif
