@@ -369,28 +369,38 @@ char **argv;
 
 do_more:
 	if( !matflag )  {
-		vect_t	view_min;	/* view position of rtip->mdl_min */
-		vect_t	view_max;	/* view position of rtip->mdl_max */
+		vect_t	diag;
 		mat_t	toEye;
-		fastf_t	f;
 
+		/*
+		 *  Compute the rotation specified by the azimuth and
+		 *  elevation parameters.  First, note that these are
+		 *  specified relative to the GIFT "front view", ie,
+		 *  model (X,Y,Z) is view (Z,X,Y):  looking down X axis.
+		 *  Then, a positive azimuth represents rotating the *model*
+		 *  around the Y axis, or, rotating the *eye* in -Y.
+		 *  A positive elevation represents rotating the *model*
+		 *  around the X axis, or, rotating the *eye* in -X.
+		 *  This is the "Gwyn compatable" azim/elev interpretation.
+		 *  Note that GIFT azim/elev values are the negatives of
+		 *  this interpretation.
+		 */
 		mat_idn( Viewrotscale );
 		mat_angles( Viewrotscale, 270.0-elevation, 0.0, 270.0+azimuth );
 		fprintf(stderr,"Viewing %g azimuth, %g elevation off of front view\n",
 			azimuth, elevation);
 
-		rt_viewbounds( view_min, view_max, Viewrotscale );
-		viewsize = (view_max[X]-view_min[X]);
-		f = (view_max[Y]-view_min[Y]);
-		if( f > viewsize )  viewsize = f;
-		f = (view_max[Z]-view_min[Z]);
-		if( f > viewsize )  viewsize = f;
-
-		/* First, go to view center, then back off for eye pos */
+		/* Look at the center of the model */
 		mat_idn( toEye );
-		toEye[MDX] = -(view_max[X]+view_min[X])/2;
-		toEye[MDY] = -(view_max[Y]+view_min[Y])/2;
-		toEye[MDZ] = -(view_max[Z]+view_min[Z])/2;
+		toEye[MDX] = -(rtip->mdl_max[X]+rtip->mdl_min[X])/2;
+		toEye[MDY] = -(rtip->mdl_max[Y]+rtip->mdl_min[Y])/2;
+		toEye[MDZ] = -(rtip->mdl_max[Z]+rtip->mdl_min[Z])/2;
+
+		/* Fit a sphere to the model RPP, diameter is viewsize */
+		VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
+		viewsize = MAGNITUDE( diag );
+		fprintf(stderr,"view size = %g\n", viewsize);
+
 		Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
 		mat_mul( model2view, Viewrotscale, toEye );
 		mat_inv( view2model, model2view );
