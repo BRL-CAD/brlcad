@@ -56,12 +56,14 @@ HIDDEN struct bu_cmdtab cwish_cmds[] =
 
 int
 cmdInit(interp)
+     Tcl_Interp *interp;
 {
 	/* Register cwish commands */
 	bu_register_cmds(interp, cwish_cmds);
 
 	/* initialize command history */
 	historyInit();
+	return TCL_OK;
 }
 
 /***************************** CWISH COMMANDS *****************************/
@@ -74,6 +76,8 @@ cmd_quit(clientData, interp, argc, argv)
      char **argv;
 {
 	quit(0);
+	/* NOTREACHED */
+	return TCL_OK;
 }
 
 void
