@@ -76,7 +76,7 @@ set mged_help_data(find)	{{[-s] <objects>}	{find all references to objects}}
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		{{groupname <objects>}	{group objects}}
 set mged_help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
-set mged_helpdevel_data(gui)	{{[-config b|c|g] [-d display string]
+set mged_help_data(gui)	{{[-config b|c|g] [-d display string]
         [-gd graphics display string] [-dt graphics type]
         [-id name] [-c -h -j -s]}	{create display/command window pair}}
 set mged_help_data(help)	{{[commands]}	{give usage message for given commands}}
