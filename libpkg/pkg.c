@@ -666,8 +666,10 @@ register struct pkg_conn *pc;
 	}
 
 	if( pc->pkc_buf != (char *)0 )  {
-		pc->pkc_errlog("pkg_close(x%x):  buf=x%x clash\n",
+		sprintf(errbuf,"pkg_close(x%x):  partial input pkg discarded, buf=x%x\n",
 			pc, pc->pkc_buf);
+		pc->pkc_errlog(errbuf);
+		(void)free( pc->pkc_buf );
 	}
 	(void)close(pc->pkc_fd);
 	pc->pkc_fd = -1;		/* safety */
@@ -1037,7 +1039,7 @@ again:
 		/* A message of some other type has unexpectedly arrived. */
 		if( pc->pkc_len > 0 )  {
 			if( (pc->pkc_buf = (char *)malloc(pc->pkc_len+2)) == NULL )  {
-				pkg_perror(pc->pkc_errlog, "pkg_waitfor: malloc");
+				pkg_perror(pc->pkc_errlog, "pkg_waitfor: malloc failed");
 				return(-1);
 			}
 			pc->pkc_curpos = pc->pkc_buf;
@@ -1062,7 +1064,7 @@ again:
 		}
 		excess = pc->pkc_len - len;	/* size of excess message */
 		if( (bp = (char *)malloc(excess)) == NULL )  {
-			pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess malloc");
+			pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess message, malloc failed");
 			return(-1);
 		}
 		if( (i = pkg_mread( pc, bp, excess )) != excess )  {
@@ -1347,7 +1349,7 @@ char *buf;
 	} else {
 		/* Prepare to read message into dynamic buffer */
 		if( (pc->pkc_buf = (char *)malloc(pc->pkc_len+2)) == NULL )  {
-			pkg_perror(pc->pkc_errlog, "pkg_gethdr: malloc");
+			pkg_perror(pc->pkc_errlog, "pkg_gethdr: malloc fail");
 			return(-1);
 		}
 	}
