@@ -747,6 +747,8 @@ CONST struct face_g_plane *fg;
 
 	NMG_CK_FACE_G_PLANE( fg );
 
+	nmg_tbl( tab, TBL_INIT, (long *)0 );
+
 	/* loop through all faces using fg */
 	for( RT_LIST_FOR( f , face , &fg->f_hd ) )
 	{
@@ -8189,7 +8191,6 @@ struct shell *s;
 		{
 			struct edgeuse *eu;
 			struct edgeuse *eu_next;
-			struct edgeuse *eu_prev;
 			int empty_loop=0;
 
 			NMG_CK_LOOPUSE( lu );
@@ -8202,8 +8203,8 @@ struct shell *s;
 				continue;
 			}
 
-			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
-			while( RT_LIST_NOT_HEAD( eu, &lu->down_hd ) )
+crack_top:
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
 				NMG_CK_EDGEUSE( eu );
 
@@ -8216,11 +8217,6 @@ struct shell *s;
 					continue;
 				}
 
-				if( eu != RT_LIST_FIRST( edgeuse, &lu->down_hd ) )
-					eu_prev = RT_LIST_PREV( edgeuse, &eu->l );
-				else
-					eu_prev = (struct edgeuse *)NULL;
-
 				if( nmg_keu( eu ) )
 					empty_loop = 1;
 				else if( nmg_keu( eu_next ) )
@@ -8229,10 +8225,7 @@ struct shell *s;
 				if( empty_loop )
 					break;
 
-				if( eu_prev )
-					eu = eu_prev;
-				else
-					eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+				goto crack_top;
 			}
 			if( empty_loop )
 			{
@@ -8486,4 +8479,115 @@ CONST struct rt_tol *tol;
 	}
 
 	nmg_tbl( &faceuses, TBL_FREE, (long *)NULL );
+}
+
+void
+nmg_intersect_loops_self( s, tol )
+struct shell *s;
+struct rt_tol *tol;
+{
+	struct faceuse *fu;
+	struct nmg_ptbl edgeuses;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	nmg_tbl( &edgeuses, TBL_INIT, (long *)0 );
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+			int i,j;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+top:
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				nmg_tbl( &edgeuses, TBL_INS, (long *)eu );
+
+			for( i=0 ; i<NMG_TBL_END( &edgeuses ); i++ )
+			{
+				vect_t eu_dir;
+
+				eu = (struct edgeuse *)NMG_TBL_GET( &edgeuses, i );
+				VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
+
+				for( j=i+1 ; j<NMG_TBL_END( &edgeuses ) ; j++ )
+				{
+					struct edgeuse *eu2;
+					struct edgeuse *new_eu=(struct edgeuse *)NULL;
+					struct vertex *v;
+					vect_t eu2_dir;
+					point_t int_pt;
+					fastf_t dist[2];
+					int code;
+
+					eu2 = (struct edgeuse *)NMG_TBL_GET( &edgeuses, j );
+					VSUB2( eu2_dir, eu2->eumate_p->vu_p->v_p->vg_p->coord, eu2->vu_p->v_p->vg_p->coord );
+
+					code = rt_isect_lseg3_lseg3( dist, eu->vu_p->v_p->vg_p->coord, eu_dir,
+						eu2->vu_p->v_p->vg_p->coord, eu2_dir, tol );
+
+					if( code < 0 )	/* no intersection */
+						continue;
+
+					if( code == 0 )
+					{
+						if( dist[0] > 0.0 && dist[0] != 1.0 )
+						{
+							VJOIN1( int_pt, eu->vu_p->v_p->vg_p->coord, dist[0], eu_dir );
+							v = (struct vertex *)NULL;
+							new_eu = nmg_ebreaker( v, eu, tol );
+							nmg_vertex_gv( new_eu->vu_p->v_p, int_pt );
+						}
+						if( dist[1] > 0.0 && dist[1] != 1.0 )
+						{
+							VJOIN1( int_pt, eu->vu_p->v_p->vg_p->coord, dist[1], eu_dir );
+							v = (struct vertex *)NULL;
+							new_eu = nmg_ebreaker( v, eu, tol );
+							nmg_vertex_gv( new_eu->vu_p->v_p, int_pt );
+						}
+					}
+					else
+					{
+						if( dist[0] != 0.0 && dist[0] != 1.0 )
+						{
+							VJOIN1( int_pt, eu->vu_p->v_p->vg_p->coord, dist[0], eu_dir );
+							v = (struct vertex *)NULL;
+							new_eu = nmg_ebreaker( v, eu, tol );
+							nmg_vertex_gv( new_eu->vu_p->v_p, int_pt );
+						}
+						if( dist[1] != 0.0 && dist[1] != 1.0 )
+						{
+							VJOIN1( int_pt, eu2->vu_p->v_p->vg_p->coord, dist[1], eu2_dir );
+							v = (struct vertex *)NULL;
+							new_eu = nmg_ebreaker( v, eu2, tol );
+							nmg_vertex_gv( new_eu->vu_p->v_p, int_pt );
+						}
+
+					}
+					if( new_eu )
+					{
+						nmg_tbl( &edgeuses, TBL_RST, (long *)0 );
+						goto top;
+					}
+				}
+			}
+
+			nmg_tbl( &edgeuses, TBL_RST, (long *)0 );
+		}
+	}
+
+	nmg_tbl( &edgeuses, TBL_FREE, (long *)0 );
 }
