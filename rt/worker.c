@@ -31,6 +31,8 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+int		per_processor_chunk = 0;	/* how many pixels to do at once */
+
 fastf_t		gift_grid_rounding = 0;		/* set to 25.4 for inches */
 
 point_t		viewbase_model;	/* model-space location of viewplane corner */
@@ -236,12 +238,17 @@ worker()
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
 	LOCAL vect_t colorsum;
-	register int com;
+	int	pixel_start;
+	int	pixelnum;
+	int	samplenum;
 	int	cpu;			/* our CPU (PSW) number */
 
 	RES_ACQUIRE( &rt_g.res_worker );
 	cpu = nworkers_started++;
 	RES_RELEASE( &rt_g.res_worker );
+
+	/* The more CPUs at work, the bigger the bites we take */
+	if( per_processor_chunk <= 0 )  per_processor_chunk = npsw;
 
 	if( cpu >= MAX_PSW )  rt_bomb("rt/worker() cpu > MAXPSW, array overrun\n");
 	resource[cpu].re_cpu = cpu;
@@ -250,90 +257,94 @@ worker()
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
-		com = cur_pixel++;
+		pixel_start = cur_pixel;
+		cur_pixel += per_processor_chunk;
 		RES_RELEASE( &rt_g.res_worker );
 
-		if( com > last_pixel )
+		if( pixel_start > last_pixel )
 			break;
 
-		/* Obtain fresh copy of application struct */
-		a = ap;				/* struct copy */
-		a.a_resource = &resource[cpu];
+		for( pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++ )  {
 
-		if( incr_mode )  {
-			register int i = 1<<incr_level;
-			a.a_x = com%i;
-			a.a_y = com/i;
-			if( incr_level != 0 )  {
-				/* See if already done last pass */
-				if( ((a.a_x & 1) == 0 ) &&
-				    ((a.a_y & 1) == 0 ) )
-					continue;
-			}
-			a.a_x <<= (incr_nlevel-incr_level);
-			a.a_y <<= (incr_nlevel-incr_level);
-		} else {
-			a.a_x = com%width;
-			a.a_y = com/width;
-		}
-		VSETALL( colorsum, 0 );
-		for( com=0; com<=hypersample; com++ )  {
-			if( jitter )  {
-				FAST fastf_t dx, dy;
-				dx = a.a_x + rand_half(a.a_resource->re_randptr);
-				dy = a.a_y + rand_half(a.a_resource->re_randptr);
-				VJOIN2( point, viewbase_model,
-					dx, dx_model, dy, dy_model );
-			}  else  {
-				VJOIN2( point, viewbase_model,
-					a.a_x, dx_model,
-					a.a_y, dy_model );
-			}
-			if( rt_perspective > 0.0 )  {
-				VSUB2( a.a_ray.r_dir,
-					point, eye_model );
-				VUNITIZE( a.a_ray.r_dir );
-				VMOVE( a.a_ray.r_pt, eye_model );
+			/* Obtain fresh copy of application struct */
+			a = ap;				/* struct copy */
+			a.a_resource = &resource[cpu];
+
+			if( incr_mode )  {
+				register int i = 1<<incr_level;
+				a.a_x = pixelnum%i;
+				a.a_y = pixelnum/i;
+				if( incr_level != 0 )  {
+					/* See if already done last pass */
+					if( ((a.a_x & 1) == 0 ) &&
+					    ((a.a_y & 1) == 0 ) )
+						continue;
+				}
+				a.a_x <<= (incr_nlevel-incr_level);
+				a.a_y <<= (incr_nlevel-incr_level);
 			} else {
-				VMOVE( a.a_ray.r_pt, point );
-			 	VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
+				a.a_x = pixelnum%width;
+				a.a_y = pixelnum/width;
 			}
-			a.a_level = 0;		/* recursion level */
-			a.a_purpose = "main ray";
-			rt_shootray( &a );
-
-			if( stereo )  {
-				FAST fastf_t right,left;
-
-				right = CRT_BLEND(a.a_color);
-
-				VSUB2(  point, point,
-					left_eye_delta );
+			VSETALL( colorsum, 0 );
+			for( samplenum=0; samplenum<=hypersample; samplenum++ )  {
+				if( jitter )  {
+					FAST fastf_t dx, dy;
+					dx = a.a_x + rand_half(a.a_resource->re_randptr);
+					dy = a.a_y + rand_half(a.a_resource->re_randptr);
+					VJOIN2( point, viewbase_model,
+						dx, dx_model, dy, dy_model );
+				}  else  {
+					VJOIN2( point, viewbase_model,
+						a.a_x, dx_model,
+						a.a_y, dy_model );
+				}
 				if( rt_perspective > 0.0 )  {
 					VSUB2( a.a_ray.r_dir,
 						point, eye_model );
 					VUNITIZE( a.a_ray.r_dir );
-					VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
+					VMOVE( a.a_ray.r_pt, eye_model );
 				} else {
 					VMOVE( a.a_ray.r_pt, point );
+				 	VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
 				}
 				a.a_level = 0;		/* recursion level */
-				a.a_purpose = "left eye ray";
+				a.a_purpose = "main ray";
 				rt_shootray( &a );
 
-				left = CRT_BLEND(a.a_color);
-				VSET( a.a_color, left, 0, right );
+				if( stereo )  {
+					FAST fastf_t right,left;
+
+					right = CRT_BLEND(a.a_color);
+
+					VSUB2(  point, point,
+						left_eye_delta );
+					if( rt_perspective > 0.0 )  {
+						VSUB2( a.a_ray.r_dir,
+							point, eye_model );
+						VUNITIZE( a.a_ray.r_dir );
+						VADD2( a.a_ray.r_pt, eye_model, left_eye_delta );
+					} else {
+						VMOVE( a.a_ray.r_pt, point );
+					}
+					a.a_level = 0;		/* recursion level */
+					a.a_purpose = "left eye ray";
+					rt_shootray( &a );
+
+					left = CRT_BLEND(a.a_color);
+					VSET( a.a_color, left, 0, right );
+				}
+				VADD2( colorsum, colorsum, a.a_color );
 			}
-			VADD2( colorsum, colorsum, a.a_color );
+			if( hypersample )  {
+				FAST fastf_t f;
+				f = 1.0 / (hypersample+1);
+				VSCALE( a.a_color, colorsum, f );
+			}
+			view_pixel( &a );
+			if( a.a_x == width-1 )
+				view_eol( &a );		/* End of scan line */
 		}
-		if( hypersample )  {
-			FAST fastf_t f;
-			f = 1.0 / (hypersample+1);
-			VSCALE( a.a_color, colorsum, f );
-		}
-		view_pixel( &a );
-		if( a.a_x == width-1 )
-			view_eol( &a );		/* End of scan line */
 	}
 	RES_ACQUIRE( &rt_g.res_worker );
 	nworkers_finished++;
