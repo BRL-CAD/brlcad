@@ -362,7 +362,8 @@ int			in;	/* 1 = inbound edge, 0 = outbound edge */
 	/*
 	 *  Compute the angle
 	 */
-	lu = nmg_lu_of_vu(vu);
+	lu = nmg_find_lu_of_vu(vu);
+	NMG_CK_LOOPUSE(lu);
 	this_eu = nmg_find_eu_with_vu_in_lu( lu, vu );
 	prev_eu = this_eu;
 	do {
@@ -549,7 +550,7 @@ int			pos;
 	if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 		return NMG_V_ASSESSMENT_LONE;
 	}
-	if( (lu = nmg_lu_of_vu(vu)) == (struct loopuse *)0 )
+	if( (lu = nmg_find_lu_of_vu(vu)) == (struct loopuse *)0 )
 		rt_bomb("nmg_assess_vu: no lu\n");
 	this_eu = nmg_find_eu_with_vu_in_lu( lu, vu );
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
@@ -1329,7 +1330,7 @@ CONST struct rt_tol	*tol;
 		b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_special_wedge_processing flag[]" );
 		vbp = rt_vlblock_init();
 		for( i=start; i < end; i++ )  {
-			nmg_vlblock_lu(vbp, nmg_lu_of_vu(vs[i].vu), b,
+			nmg_vlblock_lu(vbp, nmg_find_lu_of_vu(vs[i].vu), b,
 				255, 0, 0, 0 );
 		}
 		sprintf(buf, "wedge%d.pl", num++);
@@ -1356,7 +1357,7 @@ again:
 	exclude[outer_wedge] = 1;	/* Don't return this wedge again */
 
 	/* There is at least one wedge on this side of the line */
-	outer_lu = nmg_lu_of_vu( vs[outer_wedge].vu );
+	outer_lu = nmg_find_lu_of_vu( vs[outer_wedge].vu );
 	NMG_CK_LOOPUSE(outer_lu);
 
 	inner_wedge = nmg_find_vu_in_wedge( vs, start, end,
@@ -1372,7 +1373,7 @@ again:
 	}
 	if( inner_wedge == outer_wedge )  rt_bomb("nmg_special_wedge_processing() identical vu selections?\n");
 
-	inner_lu = nmg_lu_of_vu( vs[inner_wedge].vu );
+	inner_lu = nmg_find_lu_of_vu( vs[inner_wedge].vu );
 	NMG_CK_LOOPUSE(inner_lu);
 
 	if( outer_lu == inner_lu )  {
@@ -1467,7 +1468,8 @@ top:
 	nloop = 0;
 	nvu = 0;
 	for( i = end-1; i >= start; i-- )  {
-		lu = nmg_lu_of_vu( rs->vu[i] );
+		lu = nmg_find_lu_of_vu( rs->vu[i] );
+		NMG_CK_LOOPUSE(lu);
 		ass = nmg_assess_vu( rs, i );
 		if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		   rt_log("vu[%d]=x%x v=x%x assessment=%s\n",
@@ -2440,8 +2442,8 @@ int			other_rs_state;
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d) START\n",
 			vu, pos);
 		rt_log("Plotting this loopuse, before action:\n");
-		nmg_pr_lu_briefly(nmg_lu_of_vu(vu), (char *)0);
-		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
+		nmg_pr_lu_briefly(nmg_find_lu_of_vu(vu), (char *)0);
+		nmg_face_lu_plot(nmg_find_lu_of_vu(vu), rs->vu[0], rs->vu[rs->nvu-1] );
 	}
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
@@ -2512,7 +2514,7 @@ nmg_fu_touchingloops(rs->fu2);
 	 *  to use the edge_g structure of the intersection line (ray).
 	 */
 	if( NMG_V_ASSESSMENT_PREV(assessment) == NMG_E_ASSESSMENT_ON_REV )  {
-		eu = nmg_find_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
+		eu = nmg_find_eu_with_vu_in_lu( nmg_find_lu_of_vu(vu), vu );
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
@@ -2521,7 +2523,7 @@ rt_log("force prev eu to ray\n");
 		}
 	}
 	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
-		eu = nmg_find_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
+		eu = nmg_find_eu_with_vu_in_lu( nmg_find_lu_of_vu(vu), vu );
 		NMG_CK_EDGEUSE(eu);
 		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
 rt_log("force next eu to ray\n");
@@ -2544,7 +2546,8 @@ rt_log("force next eu to ray\n");
 			nmg_state_names[new_state], action_names[action] );
 	     if( rt_g.debug || rt_g.NMG_debug )  {
 		/* First, print this faceuse */
-		lu = nmg_lu_of_vu( vu );
+		lu = nmg_find_lu_of_vu( vu );
+	     	NMG_CK_LOOPUSE(lu);
 		/* Drop a plot file */
 		rt_g.NMG_debug |= DEBUG_FCUT|DEBUG_PLOTEM;
 		nmg_pl_comb_fu( 0, 1, lu->up.fu_p );
@@ -2578,7 +2581,8 @@ rt_log("force next eu to ray\n");
 		break;
 	case NMG_ACTION_VFY_EXT:
 		/* Verify loop containing this vertex has external orientation */
-		lu = nmg_lu_of_vu( vu );
+		lu = nmg_find_lu_of_vu( vu );
+		NMG_CK_LOOPUSE(lu);
 		switch( lu->orientation )  {
 		case OT_SAME:
 			break;
@@ -2608,12 +2612,12 @@ rt_log("force next eu to ray\n");
 		 *  so it may be necessary to look back a ways to find
 		 *  the vertexuse which started this ON edge.
 		 */
-		lu = nmg_lu_of_vu( vu );
+		lu = nmg_find_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
 		for( e_pos = pos-1; e_pos >= 0; e_pos-- )  {
 			prev_vu = rs->vu[e_pos];
 			NMG_CK_VERTEXUSE(prev_vu);
-			prev_lu = nmg_lu_of_vu( prev_vu );
+			prev_lu = nmg_find_lu_of_vu( prev_vu );
 			/* lu is lone vert loop; l_p is distinct from prev_lu->l_p */
 			if( *prev_vu->up.magic_p == NMG_EDGEUSE_MAGIC )
 				break;
@@ -2656,8 +2660,10 @@ rt_log("force next eu to ray\n");
 		nmg_klu(lu);
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After LONE_V_ESPLIT, the final loop:\n");
-			nmg_pr_lu(nmg_lu_of_vu(rs->vu[pos]), "   ");
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
+			lu = nmg_find_lu_of_vu(rs->vu[pos]);
+			NMG_CK_LOOPUSE(lu);
+			nmg_pr_lu(lu, "   ");
+			nmg_face_lu_plot(lu, rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
 	case NMG_ACTION_LONE_V_JAUNT:
@@ -2674,7 +2680,8 @@ rt_log("force next eu to ray\n");
 			/* Both prev and current are lone vertex loops */
 			rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
 		    	/* Set orientation */
-			lu = nmg_lu_of_vu(rs->vu[pos]);
+			lu = nmg_find_lu_of_vu(rs->vu[pos]);
+			NMG_CK_LOOPUSE(lu);
 			/* If state is IN, this is a "crack" loop */
 			nmg_set_lu_orientation( lu, old_state==NMG_STATE_IN );
 		} else {
@@ -2688,12 +2695,12 @@ rt_log("force next eu to ray\n");
 		/* Fusing to this new edge will happen in nmg_face_cutjoin() */
 
 		/* Recompute loop geometry.  Bounding box may have expanded */
-		nmg_loop_g(nmg_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
+		nmg_loop_g(nmg_find_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
 
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
-			nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
+			nmg_pr_lu_briefly(nmg_find_lu_of_vu(rs->vu[pos]), (char *)0);
+			nmg_face_lu_plot(nmg_find_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 		}
 		break;
 	case NMG_ACTION_CUTJOIN:
@@ -2705,13 +2712,13 @@ rt_log("force next eu to ray\n");
 		 *  then cut the loop into two, otherwise
 		 *  join the two loops into one.
 		 */
-		lu = nmg_lu_of_vu( vu );
+		lu = nmg_find_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
 		prev_vu = rs->vu[pos-1];
 		NMG_CK_VERTEXUSE(prev_vu);
-		prev_lu = nmg_lu_of_vu( prev_vu );
+		prev_lu = nmg_find_lu_of_vu( prev_vu );
 		NMG_CK_LOOPUSE(prev_lu);
 
 		if( lu->l_p == prev_lu->l_p )  {
@@ -2729,8 +2736,8 @@ rt_log("force next eu to ray\n");
 
 			if(rt_g.NMG_debug&DEBUG_FCUT)  {
 				rt_log("After CUT, the final loop:\n");
-				nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
-				nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
+				nmg_pr_lu_briefly(nmg_find_lu_of_vu(rs->vu[pos]), (char *)0);
+				nmg_face_lu_plot(nmg_find_lu_of_vu(rs->vu[pos]), rs->vu[0], rs->vu[rs->nvu-1] );
 			}
 			break;
 		}
@@ -2786,7 +2793,8 @@ rt_log("force next eu to ray\n");
 			    		rt_log( "\tprev_vu and vu are vertex loops\n" );
 				vu = rs->vu[pos] = nmg_join_2singvu_loops( prev_vu, vu );
 			    	/* Set orientation */
-				lu = nmg_lu_of_vu(vu);
+				lu = nmg_find_lu_of_vu(vu);
+				NMG_CK_LOOPUSE(lu);
 				nmg_set_lu_orientation( lu, old_state==NMG_STATE_IN );
 			}
 		} else {
@@ -2797,7 +2805,8 @@ rt_log("force next eu to ray\n");
 		 * force it's geometry to lie on the ray.
 		 */
 		vu = rs->vu[pos];
-		lu = nmg_lu_of_vu(vu);
+		lu = nmg_find_lu_of_vu(vu);
+		NMG_CK_LOOPUSE(lu);
 		prev_vu = rs->vu[pos-1];
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
