@@ -38,6 +38,14 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 /lib/cpp << EOF > ${FILE}
 #line 1 "$0"
 
+#if defined(unix) && defined(m68k)
+#	undef	aux
+	MACHINE=aux;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+	HAS_SYMLINKS=1;
+#endif
+
 #ifdef vax
 #	undef	vax
 	MACHINE=vax;
