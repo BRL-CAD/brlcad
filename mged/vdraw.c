@@ -854,4 +854,7 @@ char **argv;
 	}
 
 	new_mats();
+
+	return TCL_OK;
+
 }
