@@ -55,6 +55,7 @@ struct rb_node	*new_node;
     rb_parent(new_node, order) =
     rb_left_child(new_node, order) =
     rb_right_child(new_node, order) = rb_null(tree);
+    rb_size(node, order) = 1;
 
     /*
      *	Perform vanilla-flavored binary-tree insertion
@@ -215,6 +216,9 @@ void	*data;
     node -> rbn_color = (char *)
 		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 			    "red-black colors");
+    node -> rbn_size = (int *)
+		rt_malloc(nm_orders * sizeof(int),
+			    "red-black subtree sizes");
     node -> rbn_package = (struct rb_package **)
 		rt_malloc(nm_orders * sizeof(struct rb_package *),
 			    "red-black packages");
