@@ -53,7 +53,7 @@ int	len;
 	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
 	    	return( RTI_NULL );		/* FAIL */
 
-	if( db_scan( dbip, (int (*)())db_diradd ) < 0 )
+	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )
 	    	return( RTI_NULL );		/* FAIL */
 
 	GETSTRUCT( rtip, rt_i );
