@@ -21,11 +21,13 @@ BINDIR=/usr/brlcad/bin
 
 echo "  BINDIR = ${BINDIR}"
 
+############################################################################
 #
 # Sanity check
 # Make sure that BINDIR is in the current user's search path
 # For this purpose, specifically exclude "dot" from the check.
 #
+############################################################################
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
@@ -56,11 +58,64 @@ then
 	exit 1		# Die
 fi
 
+############################################################################
+#
 # Acquire current machine type, etc.
+#
+############################################################################
 eval `sh machinetype.sh -b`
 
-#  Ensure that machinetype.sh and Cakefile.defs are set up the same way.
-#  This is just a double-check on people porting to new machines.
+############################################################################
+#
+# Install the necessary shell scripts in BINDIR
+#
+############################################################################
+SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
+
+for i in ${SCRIPTS}
+do
+	if test -f ${BINDIR}/${i}
+	then
+		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
+	fi
+	cp ${i} ${BINDIR}/.
+done
+
+############################################################################
+#
+# Handle any vendor-specific configurations and setups.
+# This is messy, and should be avoided where possible.
+#
+############################################################################
+chmod 664 Cakefile.defs
+
+case X$MACHINE in
+
+X4gt|X4d|X4d2)
+	# SGI 4D foolishness
+	case $MACHINE in
+	4gt)	SGI_TYPE=1;;
+	4d)	SGI_TYPE=2;;
+	4d2)	SGI_TYPE=3;;
+	esac
+	ed - Cakefile.defs << EOF
+g/define	SGI_TYPE/d
+/SGI_4D_TYPE_MARKER/a
+#	define	SGI_TYPE	$SGI_TYPE
+.
+w
+EOF
+#	End of SGI stuff
+
+esac
+
+############################################################################
+#
+#  Finally, after potentially having edited Cakefile.defs, 
+#  ensure that machinetype.sh and Cakefile.defs are set up the same way.
+#  This is mostly a double-check on people porting to new machines.
+#
+############################################################################
 FILE=/tmp/cadsetup$$
 trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
@@ -93,23 +148,14 @@ then
 	exit 1		# Die
 fi
 
-# Install the necessary shell scripts in BINDIR
 
-SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
-
-for i in ${SCRIPTS}
-do
-	if test -f ${BINDIR}/${i}
-	then
-		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
-	fi
-	cp ${i} ${BINDIR}/.
-done
-
+############################################################################
+#
+# Make and install "cake" and "cakeaux"
+#
+############################################################################
 if test x$1 != x-f
 then
-	# Make and install "cake" and "cakeaux"
-
 	cd cake
 	make clobber
 	make install
@@ -126,28 +172,3 @@ then
 	make clobber
 	cd ..
 fi
-
-#
-# Handle any vendor-specific configurations and setups.
-# This is messy, and should be avoided where possible.
-chmod 664 Cakefile.defs
-
-case X$MACHINE in
-
-X4gt|X4d|X4d2)
-	# SGI 4D foolishness
-	case $MACHINE in
-	4gt)	SGI_TYPE=1;;
-	4d)	SGI_TYPE=2;;
-	4d2)	SGI_TYPE=3;;
-	esac
-	ed - Cakefile.defs << EOF
-g/define	SGI_TYPE/d
-/SGI_4D_TYPE_MARKER/a
-#	define	SGI_TYPE	$SGI_TYPE
-.
-w
-EOF
-#	End of SGI stuff
-
-esac
