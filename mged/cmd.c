@@ -146,6 +146,7 @@ int     f_bindkey();
 #if 1
 extern int cmd_vdraw();
 extern int cmd_read_center();
+extern int cmd_read_scale();
 #endif
 
 extern void sync();
@@ -593,6 +594,8 @@ static struct funtab funtab[] = {
 	cmd_vdraw, 2, 7, TRUE,
 "read_center", "", "Experimental - return coords of view center",
 	cmd_read_center, 1, 1, TRUE,
+"read_scale", "", "Experimental - return coords of view scale",
+	cmd_read_scale, 1, 1, TRUE,
 #endif
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
 	f_vrmgr, 3, MAXARGS,FALSE,
