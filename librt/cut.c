@@ -117,6 +117,8 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 		pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
 		pl_color( plotfp, 255, 255, 255 );
 		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+			if( stp->st_aradius >= INFINITY )
+				continue;
 			rt_draw_box( plotfp, rtip, stp->st_min, stp->st_max );
 		}
 		(void)fclose(plotfp);
