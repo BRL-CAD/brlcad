@@ -44,7 +44,10 @@
 #
 # $(#)$Header$ (BRL)
 
-CONFIG_TIME="$*"
+ARGS="$*"
+ARG_2="$2"
+ARG_4="$4"
+CONFIG_TIME="$ARGS"
 
 # make sure an argument is given
 if test "x$CONFIG_TIME" = "x" ; then
@@ -54,23 +57,14 @@ if test "x$CONFIG_TIME" = "x" ; then
 fi
 
 # if there is no second argument, assume it's just the time
-if test "x$2" = "x" ; then
-	CONFIG_TIME="`echo $* | tr : ' '`"
+if test "x$ARG_2" = "x" ; then
+	CONFIG_TIME="`echo $ARGS | tr : ' '`"
 fi
 
 # if there is a fourth, assume date format string
-if test ! "x$4" = "x" ; then
-	CONFIG_TIME="`echo $* | awk '{print $4}' | tr : ' '`"
+if test ! "x$ARG_4" = "x" ; then
+	CONFIG_TIME="`echo $ARGS | awk '{print $4}' | tr : ' '`"
 fi
-
-# parse the start time and convert to a seconds count
-time_elapsed=""
-pre_hour="`echo $CONFIG_TIME | awk '{print $1}'`"
-pre_min="`echo $CONFIG_TIME | awk '{print $2}'`"
-pre_sec="`echo $CONFIG_TIME | awk '{print $3}'`"
-hour_seconds_before="`expr $pre_hour \* 60 \* 60`"
-min_seconds_before="`expr $pre_min \* 60`"
-total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
 
 # parse the end time and convert to a seconds count
 post_conf_time="`date '+%H %M %S'`"
@@ -80,6 +74,29 @@ post_sec="`echo $post_conf_time | awk '{print $3}'`"
 hour_seconds_after="`expr $post_hour \* 60 \* 60`"
 min_seconds_after="`expr $post_min \* 60`"
 total_post="`expr $hour_seconds_after + $min_seconds_after + $post_sec`"
+
+if test "x$CONFIG_TIME" = "x" ; then
+    CONFIG_TIME="$post_conf_time"
+fi
+
+# parse the start time and convert to a seconds count
+pre_hour="`echo $CONFIG_TIME | awk '{print $1}'`"
+pre_min="`echo $CONFIG_TIME | awk '{print $2}'`"
+pre_sec="`echo $CONFIG_TIME | awk '{print $3}'`"
+if test "x$pre_hour" = "x" ; then
+    pre_hour="$post_hour"
+fi
+if test "x$pre_min" = "x" ; then
+    pre_min="$post_min"
+fi
+if test "x$pre_sec" = "x" ; then
+    pre_sec="$post_sec"
+fi
+
+hour_seconds_before="`expr $pre_hour \* 60 \* 60`"
+min_seconds_before="`expr $pre_min \* 60`"
+total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
+
 
 # if the end time is smaller than the start time, we have gone back in
 # time so assume that the clock turned over a day.
@@ -103,6 +120,7 @@ if test ! "x$min_elapsed" = "x0" ; then
 fi
 
 # generate a human-readable elapsed time message
+time_elapsed=""
 if test ! "x$hour_elapsed" = "x0" ; then
 	if test "x$hour_elapsed" = "x1" ; then
 		time_elapsed="$hour_elapsed hour"
