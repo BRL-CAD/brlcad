@@ -151,7 +151,7 @@ bomb ( ) {
     fi
 
     # need a check if dollar three is a number...
-    if [ "x$3" = "x" ] ; then local CODE=1 ; else local CODE="$3" ; fi
+    if [ "x$3" = "x" ] ; then CODE=1 ; else CODE="$3" ; fi
 
     # turn off log debugging
     if [ ! "x$DEBUG" = x ] ; then export _TEMP_DEBUG_OFF=1 ; fi
@@ -189,7 +189,7 @@ warn ( ) {
     fi
 
     # should check if dollar three is a number...
-    local BOMB=0
+    BOMB=0
     if [ ! x$NO_WARNINGS = x ] ; then BOMB=$NO_WARNINGS ; fi
     if [ ! "x$3" = "x" ] ; then BOMB=1 ; fi
 
@@ -252,14 +252,14 @@ setHostName ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "setHostName( \$1=[${1}] \$2=[${2}] )" ; fi
 
     if [ "x$1" = x ] ; then 
-	local VAR="HOSTNAME"
+	VAR="HOSTNAME"
     else 
-	local VAR=$1
+	VAR=$1
 	# do not forget to check system
 	initializeVariable $VAR "$HOST"
 	if [ x$VAR = x ] ; then export $VAR=$HOSTNAME ; fi
     fi
-    if [ "x$2" = x ] ; then local DEFVAL="unknown" ; else local DEFVAL=$2 ; fi
+    if [ "x$2" = x ] ; then DEFVAL="unknown" ; else DEFVAL=$2 ; fi
 
     # multiple inits work (without the ifthen mess) since the set should
     # not clobber a variable that already has a non-empty value set
@@ -268,7 +268,7 @@ setHostName ( ) {
     if [ x$VAR = x ] ; then initializeVariable $VAR `uname -n` ; fi
     if [ x$VAR = x ] ; then initializeVariable $VAR $DEFVAL ; fi
 
-    local VARVAL="echo \$$VAR"
+    VARVAL="echo \$$VAR"
     if [ ! "x$DEBUG" = x ] ; then log "setHostName: ${VAR}=[`eval $VARVAL`]" ; fi
 
     # return value is only useful if DEBUG is off (since echo'd values are return values)
@@ -286,19 +286,19 @@ setHostName ( ) {
 acquireLock ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "acquireLock( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
 
-    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
-    if [ "x$2" = x ] ; then local RETRY=1 ; else local RETRY=$2 ; fi
-    if [ "x$3" = x ] ; then local WAIT=0 ; else local WAIT=$3 ; fi
+    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then RETRY=1 ; else RETRY=$2 ; fi
+    if [ "x$3" = x ] ; then WAIT=0 ; else WAIT=$3 ; fi
     if [ "x$4" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$4" ; else local PREFIX="${4}/" ; fi
+	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$4" ; else PREFIX="${4}/" ; fi
     fi
-    local LOCK="${NAME}.lock"
+    LOCK="${NAME}.lock"
 
     while [ -f ${PREFIX}$LOCK ] ; do
 	RETRY=`expr $RETRY - 1`
@@ -326,18 +326,18 @@ acquireLock ( ) {
 releaseLock ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseLock( \$1=[$1] \$2=[$2] )" ; fi
 
-    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
+    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
     if [ "x$2" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
 	if [ ! "x$DEBUG" = x ] ; then log "releaseLock: SWS=[$SWS]" ; fi
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$2" ; else local PREFIX="${2}/" ; fi
+	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$2" ; else PREFIX="${2}/" ; fi
     fi
-    local LOCK="${NAME}.lock"
+    LOCK="${NAME}.lock"
 
     if [ ! "x$DEBUG" = x ] ; then log "releaseLock: PREFIX=[$PREFIX] LOCK=[$LOCK]" ; fi
 
@@ -345,7 +345,7 @@ releaseLock ( ) {
 	warn "Lock [$LOCK] is already released"
 	# make sure the lock is not registered 
 	if [ ! "x$_ACQUIRED_LOCKS" = "x" ] ; then
-	    local NEW_AL
+	    NEW_AL=""
 	    for CL in $_ACQUIRED_LOCKS ; do
 		if [ ! "x$CL" = "x${PREFIX}$NAME" ] ; then
 		    NEW_AL="$NEW_AL $CL"
@@ -358,8 +358,8 @@ releaseLock ( ) {
     rm ${PREFIX}$LOCK
     # unregister the lock with the _ACQUIRED_LOCKS var
     if [ ! "x$_ACQUIRED_LOCKS" = "x" ] ; then
-	local NEW_AL
-	local FOUND_LOCK=0
+	NEW_AL=""
+	FOUND_LOCK=0
 	for CL in $_ACQUIRED_LOCKS ; do
 	    if [ "x$CL" = "x${PREFIX}$NAME" ] ; then
 		FOUND_LOCK=1
@@ -397,19 +397,19 @@ releaseAllLocks ( ) {
 acquireSemaphore ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "acquireSemaphore( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4] )" ; fi
 
-    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
-    if [ "x$2" = x ] ; then local RETRY=1 ; else local RETRY=$2 ; fi
-    if [ "x$3" = x ] ; then local WAIT=0 ; else local WAIT=$3 ; fi
+    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
+    if [ "x$2" = x ] ; then RETRY=1 ; else RETRY=$2 ; fi
+    if [ "x$3" = x ] ; then WAIT=0 ; else WAIT=$3 ; fi
     if [ "x$4" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$4" ; else local PREFIX="${4}/" ; fi
+	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$4" ; else PREFIX="${4}/" ; fi
     fi
-    local SEMAPHORE="${NAME}.semaphore"
+    SEMAPHORE="${NAME}.semaphore"
 
     while [ ! -f ${PREFIX}$SEMAPHORE ] ; do
 	RETRY=`expr $RETRY - 1`
@@ -436,23 +436,23 @@ acquireSemaphore ( ) {
 releaseSemaphore ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "releaseSemaphore( \$1=[$1] \$2=[$2] )" ; fi
 
-    if [ "x$1" = x ] ; then local NAME="local" ; else local NAME="${1}" ; fi
+    if [ "x$1" = x ] ; then NAME="local" ; else NAME="${1}" ; fi
     if [ "x$2" = x ] ; then 
 	# if we start with a slash, prefix is nothing (rooted name), otherwise use a relative path
-	local SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
-	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then local PREFIX="" ; else local PREFIX="./" ; fi
+	SWS=`echo $NAME | sed 's/^\/.*/___ROOTED_NAME___/'`
+	if [ "x$SWS" = "x___ROOTED_NAME___" ] ; then PREFIX="" ; else PREFIX="./" ; fi
     else 
 	# if we end with a slash, no worries, otherwise, append one
-	local SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
-	if [ "x$SWS" = "x___END_SLASH___" ] ; then local PREFIX="$2" ; else local PREFIX="${2}/" ; fi
+	SWS=`echo $NAME | sed 's/.*\/$/___END_SLASH___/'`
+	if [ "x$SWS" = "x___END_SLASH___" ] ; then PREFIX="$2" ; else PREFIX="${2}/" ; fi
     fi
-    local SEMAPHORE="${NAME}.semaphore"
+    SEMAPHORE="${NAME}.semaphore"
 
     if [ -f ${PREFIX}$SEMAPHORE ] ; then
 	warn "Semaphore [$SEMAPHORE] is already released"
 	# make sure the semaphore is not registered 
 	if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
-	    local NEW_AS
+	    NEW_AS=""
 	    for SEM in $_ACQUIRED_SEMAPHORES ; do
 		if [ ! "x$SEM" = "x${PREFIX}$NAME" ] ; then
 		    NEW_AS="$NEW_AS $SEM"
@@ -467,8 +467,8 @@ releaseSemaphore ( ) {
     log "CREATOR PID: $$" "${PREFIX}${SEMAPHORE}"
     # unregister the semaphore with the _ACQUIRED_SEMAPHORES var
     if [ ! "x$_ACQUIRED_SEMAPHORES" = "x" ] ; then
-	local NEW_AS
-	local FOUND_SEM=0
+	NEW_AS=""
+	FOUND_SEM=0
 	for SEM in $_ACQUIRED_SEMAPHORES ; do
 	    if [ "x$SEM" = "x${PREFIX}$NAME" ] ; then
 		FOUND_SEM=1
