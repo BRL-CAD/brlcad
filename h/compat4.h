@@ -153,6 +153,17 @@ extern "C" {
 #define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
 #define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
 
+/* msr.c */
+#define msr_unif	bn_unif		/* structure */
+#define msr_gauss	bn_gauss	/* structure */
+#define MSR_CK_UNIF	BN_CK_UNIF
+#define MSR_CK_GAUSS	BN_CK_GAUSS
+#define MSR_UNIF_LONG	BN_UNIF_LONG
+#define MSR_UNIF_DOUBLE	BN_UNIF_DOUBLE
+#define MSR_UNIF_CIRCLE	BN_UNIF_CIRCLE
+#define MSR_UNIF_SPHERE	BN_UNIF_SPHERE
+#define MSR_GAUSS_DOUBLE BN_GAUSS_DOUBLE
+
 /* noise.c */
 #define noise_init	bn_noise_init
 #define noise_perlin	bn_noise_perlin
