@@ -101,6 +101,7 @@ CONST union tree	*tp;
 		bu_log("db_tree_nleaves: bad op %d\n", tp->tr_op);
 		rt_bomb("db_tree_nleaves\n");
 	}
+	return( -1 );	/* for the compiler */
 }
 
 /*
@@ -137,6 +138,8 @@ int			op;
 		bu_log("db_flatten_tree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_flatten_tree\n");
 	}
+
+	return( (struct tree_list *)NULL ); /* for the compiler */
 }
 
 /*
@@ -430,7 +433,7 @@ int
 rt_get_comb( ip, dp, matp, dbip )
 struct rt_db_internal	*ip;
 CONST struct directory	*dp;
-CONST mat_t		*matp;
+CONST matp_t		matp;
 CONST struct db_i	*dbip;
 {
 	struct bu_external	ext;
@@ -762,6 +765,8 @@ CONST struct db_wrapper		*wp;
 	/* Second, compress compressible portion */
 
 	/* Third, add non-compressible portion of wrapper (header) */
+
+	return( 0 );
 }
 
 /*
