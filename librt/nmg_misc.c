@@ -3697,6 +3697,9 @@ CONST struct nmg_ptbl *faces;
 	if( failed )
 		rt_log( "nmg_simple_vertex_solve: Failed to determine new coordinates for vertex at ( %f %f %f )\n",
 			V3ARGS( new_v->vg_p->coord ) );
+	else if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_simple_vertex_solve: new coords = ( %f %f %f )\n",
+			V3ARGS( new_v->vg_p->coord ) );
 
 	return( failed );
 }
@@ -5735,6 +5738,10 @@ CONST struct rt_tol *tol;
 			return( 1 );
 		}
 		rt_free( (char *) planes , "nmg_complex_vertex_solve: planes" );
+
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "nmg_complex_vertex_solve: new coords = ( %f %f %f )\n",
+				V3ARGS( new_v->vg_p->coord ) );
 		return( 0 );
 	}
 
@@ -5796,6 +5803,11 @@ CONST struct rt_tol *tol;
 		rt_free( (char *)i_fus , "nmg_complex_vertex_solve: intersect_fus struct\n" );
 	}
 	nmg_tbl( &int_faces , TBL_FREE , (long *)NULL );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_co,mplex_vertex_solve: new coords = ( %f %f %f )\n",
+			V3ARGS( new_v->vg_p->coord ) );
+
 	return( 0 );
 }
 
@@ -6909,7 +6921,7 @@ CONST struct rt_tol *tol;
 	int i;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_in_vert( new_v=x%x )\n" , new_v );
+		rt_log( "nmg_in_vert( new_v=x%x at ( %f %f %f) )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
