@@ -547,14 +547,14 @@ set -S2 "/bin/sh"
 #	if 0
 /*		Shared library support */
 #		define	ARCH_SUF	so
-#		define	LIBVERS		../sharedlibvers.sh
+#		define	LIBVERS		sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-L''LIBDIR -lm
 #	else
 /*		Static libraries */
 #		define	ARCH_SUF	a
-#		define	LIBVERS		../newvers.sh
+#		define	LIBVERS		newvers.sh
 #		define	STANDARD_LIBES	-lm
 #		define	RANLIB	ranlib
 #	endif
