@@ -611,7 +611,7 @@ arch)
 
 # On a Linux system, bundle up /usr/brlcad binary tree as an RPM.
 rpm)
-	REV=1
+	REV=`date '+%m%d' `
 	RPM_BASE=brlcad-${RELEASE}-${REV}.i386
 	SPEC=/tmp/${RPM_BASE}.spec
 	rm -f $SPEC
