@@ -41,6 +41,8 @@ static char RCSbool[] = "@(#)$Header$ (BRL)";
 #define FALSE	0
 #define TRUE	1
 
+void	rt_grow_boolstack();
+
 /*
  *			R T _ B O O L W E A V E
  *
@@ -598,7 +600,7 @@ struct resource	*resp;		/* resource pointer for this CPU */
 	else
 		trueregp[0] = trueregp[1] = REGION_NULL;
 	while( (sp = resp->re_boolstack) == (union tree **)0 )
-		(void)rt_grow_boolstack( resp );
+		rt_grow_boolstack( resp );
 	stackend = &(resp->re_boolstack[resp->re_boolslen]);
 	*sp++ = TREE_NULL;
 stack:
@@ -730,7 +732,6 @@ register struct partition *phead;
 char *title;
 {
 	register struct partition *pp;
-	register int i;
 
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_partitions:  bad rtip\n");
 
@@ -913,6 +914,7 @@ register struct hit *hitp;
  *  when the size is increased.
  *  Return the new pointer for what was previously the last element.
  */
+void
 rt_grow_boolstack( resp )
 register struct resource	*resp;
 {
