@@ -97,16 +97,53 @@ struct thrm_seg {
  */
 struct tthrm_specific {
 	long			magic;	
-	char			*tt_name;
+	char			tt_name[64];
 	long			tt_max_seg;
-	float			tt_min_temp;
-	float			tt_max_temp;
+	fastf_t			tt_min_temp;
+	fastf_t			tt_max_temp;
 	float			tt_temp_scale;
 	struct bu_list		*tt_br;
 	struct thrm_seg		*tt_segs;
 	mat_t	tthrm_m_to_sh;	/* model to shader space matrix */
 };
 
+
+
+/* The default values for the variables in the shader specific structure */
+#define SHDR_NULL	((struct tthrm_specific *)0)
+#define SHDR_O(m)	offsetof(struct tthrm_specific, m)
+#define SHDR_AO(m)	offsetofarray(struct tthrm_specific, m)
+
+
+/* description of how to parse/print the arguments to the shader
+ * There is at least one line here for each variable in the shader specific
+ * structure above
+ */
+struct bu_structparse tthrm_parse[] = {
+	{"%f",	1, "l",			SHDR_O(tt_min_temp),	FUNC_NULL },
+	{"%f",	1, "h", 		SHDR_O(tt_max_temp),	FUNC_NULL },
+	{"%s",	64, "file",		SHDR_O(tt_name),	FUNC_NULL },
+	{"",	0, (char *)0,		0,			FUNC_NULL }
+};
+
+HIDDEN int	tthrm_setup(), tthrm_render();
+HIDDEN void	tthrm_print(), tthrm_free();
+
+/* The "mfuncs" structure defines the external interface to the shader.
+ * Note that more than one shader "name" can be associated with a given
+ * shader by defining more than one mfuncs struct in this array.
+ * See sh_phong.c for an example of building more than one shader "name"
+ * from a set of source functions.  There you will find that "glass" "mirror"
+ * and "plastic" are all names for the same shader with different default
+ * values for the parameters.
+ */
+struct mfuncs tthrm_mfuncs[] = {
+	{MF_MAGIC,	"tthrm",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
+	tthrm_setup,	tthrm_render,	tthrm_print,	tthrm_free },
+
+	{0,		(char *)0,	0,		0,		0,
+	0,		0,		0,		0 }
+};
 void
 print_thrm_seg(ts)
 struct thrm_seg *ts;
@@ -130,51 +167,6 @@ struct thrm_seg *ts;
 	}
 }
 
-
-/* The default values for the variables in the shader specific structure */
-#define SHDR_NULL	((struct tthrm_specific *)0)
-#define SHDR_O(m)	offsetof(struct tthrm_specific, m)
-#define SHDR_AO(m)	offsetofarray(struct tthrm_specific, m)
-
-
-/* description of how to parse/print the arguments to the shader
- * There is at least one line here for each variable in the shader specific
- * structure above
- */
-#if 0
-struct bu_structparse tthrm_print_tab[] = {
-	{"%f",  1, "val",		SHDR_O(tthrm_val),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(tthrm_delta),	FUNC_NULL },
-	{"%f",  3, "max",		SHDR_AO(tthrm_max),	FUNC_NULL },
-	{"%f",  3, "min",		SHDR_AO(tthrm_min),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
-
-};
-struct bu_structparse tthrm_parse_tab[] = {
-	{"i",	bu_byteoffset(tthrm_print_tab[0]), "tthrm_print_tab", 0, FUNC_NULL },
-	{"%f",  1, "v",			SHDR_O(tthrm_val),	FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(tthrm_delta),	FUNC_NULL },
-	{"",	0, (char *)0,		0,			FUNC_NULL }
-};
-#endif
-HIDDEN int	tthrm_setup(), tthrm_render();
-HIDDEN void	tthrm_print(), tthrm_free();
-
-/* The "mfuncs" structure defines the external interface to the shader.
- * Note that more than one shader "name" can be associated with a given
- * shader by defining more than one mfuncs struct in this array.
- * See sh_phong.c for an example of building more than one shader "name"
- * from a set of source functions.  There you will find that "glass" "mirror"
- * and "plastic" are all names for the same shader with different default
- * values for the parameters.
- */
-struct mfuncs tthrm_mfuncs[] = {
-	{MF_MAGIC,	"tthrm",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
-	tthrm_setup,	tthrm_render,	tthrm_print,	tthrm_free },
-
-	{0,		(char *)0,	0,		0,		0,
-	0,		0,		0,		0 }
-};
 
 void
 tree_parse(br, tr)
@@ -256,11 +248,22 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	*dpp = (char *)tthrm_sp;
 	tthrm_sp->magic = tthrm_MAGIC;
 
-	tthrm_sp->tt_name = bu_vls_strdup( matparm );
+	tthrm_sp->tt_name[0] = '\0';
+	tthrm_sp->tt_min_temp = tthrm_sp->tt_max_temp = 0.0;
 
-	tt_file = bu_open_mapped_file(bu_vls_addr(matparm), (char *)NULL);
+	bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
+	if( bu_struct_parse( matparm, tthrm_parse, (char *)tthrm_sp ) < 0 ) {
+		bu_bomb(__FILE__);
+	}
+	if (tthrm_sp->tt_name[0] == '\0') {
+		bu_log("Must specify file for tthrm shader on %s (got \"%s\"\n",
+		       rp->reg_name, bu_vls_addr(matparm));
+		bu_bomb(__FILE__);
+	}
+
+	tt_file = bu_open_mapped_file( tthrm_sp->tt_name, (char *)NULL);
 	if (!tt_file) {
-		bu_log("Error mapping \"%s\"\n", bu_vls_addr(matparm));
+		bu_log("Error mapping \"%s\"\n",  tthrm_sp->tt_name);
 		bu_bomb("shader tthrm: can't get thermal data");
 	}
 	tt_data = tt_file->buf;
@@ -359,8 +362,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	bu_close_mapped_file(tt_file);
 
-	tthrm_sp->tt_min_temp = min_temp;
-	tthrm_sp->tt_max_temp = max_temp;
+	if (tthrm_sp->tt_min_temp == 0.0 && tthrm_sp->tt_max_temp == 0.0 ) {
+		tthrm_sp->tt_min_temp = min_temp;
+		tthrm_sp->tt_max_temp = max_temp;
+		bu_log("computed temp min/max on %s: %g/%g\n", rp->reg_name, min_temp, max_temp);
+	} else {
+		min_temp =tthrm_sp->tt_min_temp;
+		max_temp = tthrm_sp->tt_max_temp;
+		bu_log("taking user specified on %s: min/max %g/%g\n", rp->reg_name, min_temp, max_temp);
+	}
 
 	if (max_temp != min_temp) {
 		tthrm_sp->tt_temp_scale = 1.0 / (max_temp - min_temp);
@@ -423,7 +433,7 @@ char *cp;
 	bu_free(tthrm_sp->tt_name, "bu_vls_strdup");
 
 	tthrm_sp->tt_segs = (struct thrm_seg *)NULL;
-	tthrm_sp->tt_name = (char *)NULL;
+	tthrm_sp->tt_name[0] = '\0';
 	tthrm_sp->magic = 0;
 
 	rt_free( cp, "tthrm_specific" );
