@@ -49,7 +49,7 @@ typedef long	bitv_t;		/* largest integer type */
 #endif
 
 
-#ifdef alliant
+#if defined(alliant) && !defined(i860)
 /********************************
  *				*
  *	Alliant FX/8		*
@@ -64,10 +64,33 @@ typedef long	bitv_t;		/* largest integer type */
 
 /* All FX/8's have parallel capability -- compile the locking in always */
 #define RES_INIT(ptr)		RES_RELEASE(ptr)
-/* RES_ACQUIRE is a function in rt.c, using tas instruction */
+/* RES_ACQUIRE is a function */
 #define RES_RELEASE(ptr)	*(ptr)=0;
 
 #define MAX_PSW		8	/* Max number of processors */
+#define DEFAULT_PSW	MAX_PSW
+#define PARALLEL	1
+
+#endif
+
+
+#if defined(alliant) && defined(i860)
+/********************************
+ *				*
+ *	Alliant FX/2800		*
+ *				*
+ ********************************/
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+/* All Alliant machines have parallel capability */
+/* RES_INIT, RES_ACQUIRE, and RES_RELASE are all subroutines */
+
+#define MAX_PSW		28	/* Max number of processors */
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 
@@ -133,7 +156,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
-#if	(defined(sgi) && defined(mips) && !defined(SGI4D_Rel2))
+#if	(defined(sgi) && defined(mips))
 /********************************
  *				*
  *  SGI 4D, multi-processor	*
@@ -148,7 +171,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
 #define MAX_PSW		8
-#define DEFAULT_PSW	1	/* until libgl runs in parallel */
+#define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 #endif
 
