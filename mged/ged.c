@@ -48,6 +48,10 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States Arm
 #else
 #include <time.h>
 #endif
+#ifdef NONBLOCK
+#include <termio.h>
+#undef VMIN	/* also used in vmath.h */
+#endif
 #ifdef sgi
 struct timeval {
 	long	tv_sec;		/* seconds */
@@ -235,8 +239,8 @@ char **argv;
 		 */
 		i = dmp->dmr_input( 0, rateflag );	/* fd 0 for cmds */
 		if( i )  {
-			cmdline();
-			pr_prompt();
+			if( cmdline() )
+				pr_prompt();
 		}
 
 		rateflag = 0;
@@ -559,6 +563,10 @@ int	exitcode;
 void
 quit()
 {
+#ifdef NONBLOCK
+	int off = 0;
+	(void)ioctl( 0, FIONBIO, &off );
+#endif
 	finish(0);
 	/* NOTREACHED */
 }
