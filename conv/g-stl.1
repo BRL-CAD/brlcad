@@ -41,15 +41,25 @@ option requests binary output (the default in ASCII).
 In the case of ASCII output, the region name is specified
 on the "solid" line of the STL file. In the case of binary output, all the regions are output
 as a single STL part.
+The
 .I -o
 option specifies the name of the file to receive the output
 (stdout is the default).
 The
 .I -m
 option specifies the name of a directory where the output files will be placed.
-In this case each region converted is written to a separate file (named according to the
-region name) and placed in this directory. If this option is not specified, then all the
-regions are written to the same file.
+In this case each region converted is written to a separate file 
+and placed in this directory. The file names are constructed from the full path
+names of each region (path from the specified object to the region). Any "/" characters
+in the path name are replaced by "@" characters, and "." and white space are replaced by
+"_" characters. If the
+.I -m
+option is not specified, then all the
+regions are written to the same file. The
+.I -o
+and
+.I -m
+options are mutually exclusive.
 .SH EXAMPLE
 .RS
 $ \|\fIg-stl \|-o sample.stl \|sample.g \|sample_object\fP
