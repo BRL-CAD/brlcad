@@ -7,10 +7,9 @@
 #include "dm.h"
 
 int
-dm_process_options(dmp, width, height, argc, argv)
+dm_process_options(dmp, init_proc_vls, argc, argv)
 struct dm *dmp;
-int *width;
-int *height;
+struct bu_vls *init_proc_vls;
 int argc;
 char *argv[];
 {
@@ -20,19 +19,19 @@ char *argv[];
   while((c = bu_getopt(argc, argv, "N:S:W:d:i:n:t:")) != EOF){
     switch(c){
     case 'N':
-      *height = atoi(bu_optarg);
+      dmp->dm_height = atoi(bu_optarg);
       break;
     case 'S':
-      *width = *height = atoi(bu_optarg);
+      dmp->dm_width = dmp->dm_height = atoi(bu_optarg);
       break;
     case 'W':
-      *width = atoi(bu_optarg);
+      dmp->dm_width = atoi(bu_optarg);
       break;
     case 'd':
       bu_vls_strcpy(&dmp->dm_dName, bu_optarg);
       break;
     case 'i':
-      bu_vls_strcpy(&dmp->dm_initWinProc, bu_optarg);
+      bu_vls_strcpy(init_proc_vls, bu_optarg);
       break;
     case 'n':
       if(*bu_optarg != '.')
