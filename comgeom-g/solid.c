@@ -505,7 +505,7 @@ getsolid()
 		double			dia;
 		double			*pts;		/* 3 entries per pt */
 		struct	wdb_pipept	*ps;
-		struct	wdb_pipept	head;		/* allow a whole struct for head */
+		struct	bu_list		head;		/* allow a whole struct for head */
 
 		/* This might be getint( solid_type, 3, 2 ); for non-V5 */
 		numpts = getint( scard, 8, 2 );
@@ -525,7 +525,7 @@ getsolid()
 		/* allocate nodes on a list and store all information in
 		 * the appropriate location.
 		 */
-		RT_LIST_INIT( &head.l );
+		RT_LIST_INIT( &head );
 		for( i = 0; i < numpts; i++ )  {
 			/* malloc a new structure */
 			if( (ps = (struct wdb_pipept *)malloc( 
@@ -538,7 +538,7 @@ getsolid()
 			ps->pp_id = 0;				/* solid */
 			ps->pp_od = dia;
 			ps->pp_bendradius = dia;
-			RT_LIST_INSERT( &head.l, &ps->l );
+			RT_LIST_INSERT( &head, &ps->l );
 		}
 
 		if( mk_pipe( outfp, name, &head ) < 0 )
