@@ -255,13 +255,30 @@ CONST vectp_t		normal;
 		double	f;
 		vect_t	tocent;
 		point_t	tip;
+		struct faceuse *fu;
+		struct face *fp;
+
+		if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )
+		{
+			fu = lu->up.fu_p;
+			NMG_CK_FACEUSE( fu );
+
+			fp = fu->f_p;
+		}
+		else
+			fp = (struct face *)NULL;
+
 		f = 1.0 / npoints;
 		VSCALE( centroid, centroid, f );
-		RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
 		VSUB2( tocent, first_vg->coord, centroid );
 		f = MAGNITUDE( tocent ) * 0.5;
-		VJOIN1( tip, centroid, f, normal );
-		RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+		if( *fp->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+		{
+			/* snurb normals are plotted in nmg_snurb_fu_to_vlist() */
+			RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
+			VJOIN1( tip, centroid, f, normal );
+			RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+		}
 
 		/* For any vertexuse attributes with normals, draw them too */
 		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -301,6 +318,32 @@ int			poly_markers;
 
 	/* XXX For now, draw the whole surface, not just the interior */
 	nmg_snurb_to_vlist( vhead, fg, 10 );
+
+	if( poly_markers & NMG_VLIST_STYLE_VISUALIZE_NORMALS )
+	{
+		fastf_t f;
+		point_t uv_centroid;
+		point_t mid_srf;
+		point_t corner;
+		vect_t fu_norm;
+		vect_t tocent;
+		point_t tip;
+
+		uv_centroid[0] = (fg->u.knots[fg->u.k_size-1] - fg->u.knots[0])/2.0;
+		uv_centroid[1] = (fg->v.knots[fg->v.k_size-1] - fg->v.knots[0])/2.0;
+		uv_centroid[2] = 1.0;
+
+		nmg_snurb_fu_get_norm( fu, uv_centroid[0], uv_centroid[1], fu_norm );
+		nmg_snurb_fu_eval( fu, uv_centroid[0], uv_centroid[1], mid_srf );
+
+		nmg_snurb_fu_eval( fu, fg->u.knots[0], fg->v.knots[0], corner );
+		VSUB2( tocent, corner, mid_srf );
+		f = MAGNITUDE( tocent ) * 0.5;
+
+		RT_ADD_VLIST( vhead, mid_srf, RT_VLIST_LINE_MOVE );
+		VJOIN1( tip, mid_srf, f, fu_norm );
+		RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
+	}
 }
 
 /*
