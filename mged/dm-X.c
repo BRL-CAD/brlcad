@@ -50,9 +50,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "dm-X.h"
 
-
+extern void dm_var_init();
 extern void mged_print_result();
-struct dm     *X_dm_init();
 
 static void	X_statechange();
 static int     X_dm();
@@ -77,15 +76,16 @@ struct bu_structparse X_vparse[] = {
 
 static int XdoMotion = 0;
 
-struct dm *
-X_dm_init(argc, argv)
+int
+X_dm_init(o_dm_list, argc, argv)
+struct dm_list *o_dm_list;
 int argc;
 char *argv[];
 {
   int i;
 #if 0
-  char **av;
   struct dm *xdmp;
+  char **av;
 
   /* register application provided routines */
   cmd_hook = X_dm;
@@ -112,8 +112,18 @@ char *argv[];
   argv[i-2] = "-i";
   argv[i-1] = "mged_bind_dm";
 
-#if 0
-  return X_open(X_doevent, argc, argv);
+#if DO_NEW_LIBDM_OPEN
+  dm_var_init(o_dm_list);
+  Tk_DeleteGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
+  if((dmp = X_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
+    return TCL_ERROR;
+
+  dmp->dm_eventHandler = X_doevent;
+  curr_dm_list->s_info->opp = &pathName;
+  Tk_CreateGenericHandler(X_doevent, (ClientData)DM_TYPE_X);
+  X_configure_window_shape(dmp);
+
+  return TCL_OK;
 #else
   dmp->dm_eventHandler = X_doevent;
   return X_open(dmp, argc, argv);
