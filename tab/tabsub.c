@@ -114,11 +114,11 @@ char	*file;
 char	linebuf[NCHANS*10];
 int	line;				/* input line number */
 
-char	**chanwords[NCHANS+1];
+char	*chanwords[NCHANS+1];
 int	nwords;				/* # words in chanwords[] */
 
 #define NTOKENWORDS	16
-char	**tokenwords[NTOKENWORDS+1];
+char	*tokenwords[NTOKENWORDS+1];
 
 do_lines( fp )
 FILE	*fp;
@@ -236,6 +236,7 @@ FILE	*fp;
  *
  *  To signal an error, 0 is returned;  this will index the time column.
  */
+int
 str2chan_index( s )
 char	*s;
 {
