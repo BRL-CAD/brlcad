@@ -601,55 +601,10 @@ mat_t		m;
 CONST vect_t	from;
 CONST vect_t	to;
 {
-	double	az, el;
-	LOCAL double sin_az, sin_el;
-	LOCAL double cos_az, cos_el;
 	vect_t	test_to;
 	vect_t	unit_from, unit_to;
 	fastf_t	dot;
 
-#if 0
-	/*
-	 *  The method used here is to convert the vectors
-	 *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
-	 *  take the difference, and form the rotation matrix.
-	 *  See mat_ae for that algorithm.
-	 *
-	 *  This algorithm fails when transforming (0,-1,0) to (0,0,1),
-	 *  and probably elsewhere.
-	 */
-	az = mat_atan2( to[Y], to[X] ) - mat_atan2( from[Y], from[X] );
-	el = mat_atan2( to[Z], hypot( to[X], to[Y] ) ) -
-	     mat_atan2( from[Z], hypot( from[X], from[Y] ) );
-
-	sin_az = sin(az);
-	cos_az = cos(az);
-	sin_el = sin(el);
-	cos_el = cos(el);
-
-	m[0] = cos_el * cos_az;
-	m[1] = -sin_az;
-	m[2] = -sin_el * cos_az;
-	m[3] = 0;
-
-	m[4] = cos_el * sin_az;
-	m[5] = cos_az;
-	m[6] = -sin_el * sin_az;
-	m[7] = 0;
-
-	m[8] = sin_el;
-	m[9] = 0;
-	m[10] = cos_el;
-	m[11] = 0;
-
-	m[12] = m[13] = m[14] = 0;
-	m[15] = 1.0;
-
-	VMOVE( unit_from, from );
-	VUNITIZE( unit_from );
-	VMOVE( unit_to, to );
-	VUNITIZE( unit_to );
-#else
 	/*
 	 *  The method used here is from Graphics Gems, A. Glasner, ed.
 	 *  page 531, "The Use of Coordinate Frames in Computer Graphics",
@@ -706,16 +661,14 @@ CONST vect_t	to;
 	mat_mul( A, Qt, temp );
 	mat_trn( m, A );		/* back to post-multiply style */
 
-#endif
-
 	/* Verify that it worked */
 	MAT4X3VEC( test_to, m, unit_from );
 	dot = VDOT( unit_to, test_to );
 	if( dot < 0.98 || dot > 1.02 )  {
-		rt_log("mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g, az=%g, el=%g?\n",
+		rt_log("mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g?\n",
 			V3ARGS(from),
 			V3ARGS(to),
-			V3ARGS( test_to ), dot, az, el );
+			V3ARGS( test_to ), dot );
 	}
 }
 
