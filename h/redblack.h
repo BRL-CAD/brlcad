@@ -126,7 +126,7 @@ RB_EXTERN(rb_tree *rb_create1,	(char		*description,
 RB_EXTERN(void rb_delete,	(rb_tree	*tree,
 				 int		order
 				));
-#define		rb_delete1(t)	rb_walk((t), 0)
+#define		rb_delete1(t)	rb_delete((t), 0)
 RB_EXTERN(void rb_diagnose_tree,(rb_tree	*tree,
 				 int		order,
 				 int		trav_type
