@@ -48,13 +48,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "mater.h"
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
+#include "../librt/debug.h"	/* XXX */
+
 extern int	atoi();
 extern long	time();
+
+extern long	nvectors;	/* from dodraw.c */
 
 int		drawreg;	/* if > 0, process and draw regions */
 extern int	numargs;	/* number of args */
@@ -134,14 +138,64 @@ f_edit()
 	eedit();
 }
 
-/* Evaluated Edit something (add to visible display) */
-/* E object */
+/*
+ *			F _ E V E D I T
+ *
+ *  The "Big E" command.
+ *  Evaluated Edit something (add to visible display)
+ *  Usage: E object(s)
+ */
 void
 f_evedit()
 {
 	drawreg = 1;
 	regmemb = -1;
 	eedit();
+}
+
+/*
+ *			S I Z E _ R E S E T
+ *
+ *  Reset view size and view center so that all solids in the solid table
+ *  are in view.
+ *  Caller is responsible for calling new_mats().
+ */
+void
+size_reset()
+{
+	register struct solid	*sp;
+	vect_t		min, max;
+	vect_t		minus, plus;
+	vect_t		center;
+	vect_t		radial;
+
+	VSETALL( min,  INFINITY );
+	VSETALL( max, -INFINITY );
+
+	FOR_ALL_SOLIDS( sp )  {
+		minus[X] = sp->s_center[X] - sp->s_size;
+		minus[Y] = sp->s_center[Y] - sp->s_size;
+		minus[Z] = sp->s_center[Z] - sp->s_size;
+		VMIN( min, minus );
+		plus[X] = sp->s_center[X] + sp->s_size;
+		plus[Y] = sp->s_center[Y] + sp->s_size;
+		plus[Z] = sp->s_center[Z] + sp->s_size;
+		VMAX( max, plus );
+	}
+
+	if( HeadSolid.s_forw == &HeadSolid )  {
+		/* Nothing is in view */
+		VSETALL( center, 0 );
+		VSETALL( radial, 1 );
+	} else {
+		VADD2SCALE( center, max, min, 0.5 );
+		VSUB2( radial, max, center );
+	}
+	mat_idn( toViewcenter );
+	MAT_DELTAS( toViewcenter, -center[X], -center[Y], -center[Z] );
+	Viewscale = radial[X];
+	MAX( Viewscale, radial[Y] );
+	MAX( Viewscale, radial[Z] );
 }
 
 /*
@@ -153,12 +207,14 @@ static void
 eedit()
 {
 	register struct directory *dp;
-	register int i;
-	static long stime, etime;	/* start & end times */
+	register int	i;
+	long		stime, etime;	/* start & end times */
+	static int	first_time = 1;
 
+	nvectors = 0;
 	(void)time( &stime );
 	for( i=1; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
+		if( (dp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
 		if( dmp->dmr_displaylist )  {
@@ -189,12 +245,13 @@ eedit()
 		regmemb = -1;
 	}
 	(void)time( &etime );
-	if( Viewscale == .125 )  {	/* also in ged.c */
-		Viewscale = maxview;
+	if( first_time && HeadSolid.s_forw != &HeadSolid)  {
+		first_time = 0;
+		size_reset();
 		new_mats();
 	}
 
-	(void)printf("vectorized in %ld sec\n", etime - stime );
+	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
 }
@@ -208,7 +265,7 @@ f_delobj()
 	register int i;
 
 	for( i = 1; i < numargs; i++ )  {
-		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )
+		if( (dp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )
 			eraseobj( dp );
 	}
 	no_memory = 0;
@@ -236,38 +293,49 @@ f_regdebug()
 }
 
 void
+f_debuglib()
+{
+	if( numargs >= 2 )  {
+		sscanf( cmd_args[1], "%x", &rt_g.debug );
+	}
+	rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+	rt_log("\n");
+}
+
+void
 do_list( dp )
 register struct directory *dp;
 {
-	register int i;
-	union record record;
+	register int	i;
+	register union record	*rp;
 
-	db_getrec( dp, &record, 0 );
+	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+		return;
 
-	if( record.u_id == ID_SOLID )  {
-		switch( record.s.s_type )  {
+	if( rp[0].u_id == ID_SOLID )  {
+		switch( rp[0].s.s_type )  {
 		case GENARB8:
-			dbpr_arb( &record.s, dp );
+			dbpr_arb( &rp[0].s, dp );
 			break;
 		case GENTGC:
-			dbpr_tgc( &record.s, dp );
+			dbpr_tgc( &rp[0].s, dp );
 			break;
 		case GENELL:
-			dbpr_ell( &record.s, dp );
+			dbpr_ell( &rp[0].s, dp );
 			break;
 		case HALFSPACE:
-			dbpr_half( &record.s, dp );
+			dbpr_half( &rp[0].s, dp );
 			break;
 		case TOR:
-			dbpr_torus( &record.s, dp );
+			dbpr_torus( &rp[0].s, dp );
 			break;
 		default:
-			printf("bad solid type %d\n", record.s.s_type );
+			printf("bad solid type %d\n", rp[0].s.s_type );
 			break;
 		}
 
 		/* This stuff ought to get pushed into the dbpr_xx code */
-		pr_solid( &record.s );
+		pr_solid( &rp[0].s );
 
 		for( i=0; i < es_nlines; i++ )
 			(void)printf("%s\n",&es_display[ES_LINELEN*i]);
@@ -276,68 +344,65 @@ register struct directory *dp;
 		if(state == ST_S_EDIT)
 			pr_solid(&es_rec.s);
 
-		return;
+		goto out;
 	}
 
-	if( record.u_id == ID_ARS_A )  {
+	if( rp[0].u_id == ID_ARS_A )  {
 		(void)printf("%s:  ARS\n", dp->d_namep );
-		db_getrec( dp, &record, 0 );
-		(void)printf(" num curves  %d\n", record.a.a_m );
-		(void)printf(" pts/curve   %d\n", record.a.a_n );
-		db_getrec( dp, &record, 1 );
+		(void)printf(" num curves  %d\n", rp[0].a.a_m );
+		(void)printf(" pts/curve   %d\n", rp[0].a.a_n );
 		/* convert vertex from base unit to the local unit */
 		(void)printf(" vertex      %.4f %.4f %.4f\n",
-			record.b.b_values[0]*base2local,
-			record.b.b_values[1]*base2local,
-			record.b.b_values[2]*base2local );
-		return;
+			rp[1].b.b_values[0]*base2local,
+			rp[1].b.b_values[1]*base2local,
+			rp[1].b.b_values[2]*base2local );
+		goto out;
 	}
-	if( record.u_id == ID_BSOLID ) {
+	if( rp[0].u_id == ID_BSOLID ) {
 		dbpr_spline( dp );
-		return;
+		goto out;
 	}
-	if( record.u_id == ID_P_HEAD )  {
+	if( rp[0].u_id == ID_P_HEAD )  {
 		(void)printf("%s:  %d granules of polygon data\n",
 			dp->d_namep, dp->d_len-1 );
-		return;
+		goto out;
 	}
-	if( record.u_id != ID_COMB )  {
+	if( rp[0].u_id != ID_COMB )  {
 		(void)printf("%s: unknown record type!\n",
 			dp->d_namep );
-		return;
+		goto out;
 	}
 
 	/* Combination */
 	(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
-	if( record.c.c_flags == 'R' )
+	if( rp[0].c.c_flags == 'R' )
 		(void)printf("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
-			record.c.c_regionid,
-			record.c.c_aircode,
-			record.c.c_los,
-			record.c.c_material );
+			rp[0].c.c_regionid,
+			rp[0].c.c_aircode,
+			rp[0].c.c_los,
+			rp[0].c.c_material );
 	(void)printf("--\n");
-	if( record.c.c_matname[0] )
+	if( rp[0].c.c_matname[0] )
 		(void)printf("Material '%s' '%s'\n",
-			record.c.c_matname,
-			record.c.c_matparm);
-	if( record.c.c_override == 1)
+			rp[0].c.c_matname,
+			rp[0].c.c_matparm);
+	if( rp[0].c.c_override == 1)
 		(void)printf("Color %d %d %d\n",
-			record.c.c_rgb[0],
-			record.c.c_rgb[1],
-			record.c.c_rgb[2]);
-	if( record.c.c_matname[0] || record.c.c_override )  {
-		if( record.c.c_inherit == DB_INH_HIGHER )
+			rp[0].c.c_rgb[0],
+			rp[0].c.c_rgb[1],
+			rp[0].c.c_rgb[2]);
+	if( rp[0].c.c_matname[0] || rp[0].c.c_override )  {
+		if( rp[0].c.c_inherit == DB_INH_HIGHER )
 			(void)printf("(These material properties override all lower ones in the tree)\n");
 	}
 
 	for( i=1; i < dp->d_len; i++ )  {
 		mat_t	xmat;
 
-		db_getrec( dp, &record, i );
-		rt_mat_dbmat( xmat, record.M.m_mat );
+		rt_mat_dbmat( xmat, rp[i].M.m_mat );
 
 		(void)printf("  %c %s",
-			record.M.m_relation, record.M.m_instname );
+			rp[i].M.m_relation, rp[i].M.m_instname );
 
 		if( xmat[0] != 1.0 || xmat[5] != 1.0 || xmat[10] != 1.0 )
 			(void)printf(" (Rotated)");
@@ -355,6 +420,8 @@ register struct directory *dp;
 				xmat[12], xmat[13], xmat[14] );
 		(void)putchar('\n');
 	}
+out:
+	rt_free( (char *)rp, "do_list records");
 }
 
 /* List object information */
@@ -367,7 +434,7 @@ f_list()
 	
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 	for( arg = 1; arg < numargs; arg++ )  {
-		if( (dp = lookup( cmd_args[arg], LOOKUP_NOISY )) == DIR_NULL )
+		if( (dp = db_lookup( dbip,  cmd_args[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
 		do_list( dp );
@@ -405,7 +472,6 @@ void
 f_status()
 {
 	(void)printf("STATE=%s, ", state_str[state] );
-	(void)printf("maxview=%f, ", maxview*base2local);
 	(void)printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
 	(void)printf("base2local=%f\n", base2local);
 	mat_print("toViewcenter", toViewcenter);
@@ -537,7 +603,7 @@ f_ill()
 	register int i;
 	int nmatch;
 
-	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 	if( state != ST_O_PICK && state != ST_S_PICK )  {
 		state_err("keyboard illuminate pick");
