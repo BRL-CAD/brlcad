@@ -64,7 +64,7 @@ struct temp_specific {
 #define TX_O(m)	offsetof(struct temp_specific, m)
 
 struct bu_structparse temp_parse[] = {
-	{"%s",	TXT_NAME_LEN, "file", offsetofarray(struct temp_specific, t_file),		FUNC_NULL },
+	{"%s",	TXT_NAME_LEN, "file", bu_offsetofarray(struct temp_specific, t_file),		FUNC_NULL },
 	{"%d",	1, "w",		TX_O(t_w),		FUNC_NULL },
 	{"%d",	1, "n",		TX_O(t_n),		FUNC_NULL },
 	{"%d",	1, "l",		TX_O(t_n),		FUNC_NULL }, /*compat*/
@@ -249,8 +249,8 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	register struct temp_specific *tp;
 	int		pixelbytes = 8;
 
-	RT_VLS_CHECK( matparm );
-	GETSTRUCT( tp, temp_specific );
+	BU_CK_VLS( matparm );
+	BU_GETSTRUCT( tp, temp_specific );
 	*dpp = (char *)tp;
 
 	tp->t_file[0] = '\0';
