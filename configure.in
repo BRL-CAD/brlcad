@@ -108,7 +108,7 @@ AC_SUBST(PNG_LIBS)
 
 dnl headers
 AC_HEADER_STDC
-AC_CHECK_HEADERS(config.hfloat.h getopt.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/time.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h limits.h)
+AC_CHECK_HEADERS(float.h getopt.h limits.h limits.h memory.h stdarg.h stdlib.h string.h sys/ioctl_compat.h sys/machd.h sys/mman.h sys/select.h sys/socket.h sys/stat.h sys/time.h sys/types.h termcap.h termios.h time.h unistd.h varargs.h xosdefs.h)
 AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h)
 AC_STRUCT_ST_BLKSIZE
 
@@ -131,6 +131,64 @@ fi
 dnl ============================================================
 
 AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld",AC_ERROR(No dynamic loader found)))])
+
+
+X_CFLAGS="-I/usr/X11R6/include"
+AC_SUBST(X_CFLAGS)
+AC_DEFINE(DM_X,,[Display for X])
+
+GL_CFLAGS="-DUSE_MESA_GL"
+AC_SUBST(GL_CFLAGS)
+
+LEX_CFLAGS="-Dyylex=cmd_nop"
+AC_SUBST(LEX_CFLAGS)
+
+TCL_CFLAGS=
+ITCL_CFLAGS=
+TK_CFLAGS=
+ITK_CFLAGS=
+AC_SUBST(TCL_CFLAGS)
+AC_SUBST(ITCL_CFLAGS)
+AC_SUBST(TK_CFLAGS)
+AC_SUBST(ITK_CFLAGS)
+
+dnl ===
+AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
+
+dnl typedefs
+dnl functions
+AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex)
+AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,,Lacking fstatfs)])
+AC_CHECK_DECL(sys_errlist,AC_DEFINE(HAVE_SYS_ERRLIST_DECL,1,sys_errlist[]),,[# include <stdio.h>])
+AC_CHECK_FUNC(popen,AC_DEFINE(HAVE_POPEN_DECL,1,popen))
+AC_CHECK_FUNC(strdup,[AC_DEFINE(HAVE_STRDUP_DECL,1,strdup) AC_DEFINE(HAVE_STRDUP,1,strdup)])
+AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique)
+AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,,Fix this, sys/types.h and sys/stat.h ...))
+
+dnl POSIX_REGEXEC
+dnl CALTECH_MALLOC
+dnl DRAND
+dnl DLOPEN
+dnl GETHOSTNAME
+dnl SHELL_ESCAPE
+dnl VPRINTF
+dnl SBRK
+dnl VFORK
+dnl SBRK_DECL
+dnl POPEN_DECL
+dnl GETOPT_DECL
+dnl REGEX_DECL
+dnl XOPEN
+dnl BZERO
+dnl STRCHR
+dnl MATHERR
+dnl UNIX_DOMAIN_SOCKETS
+dnl FLOAT
+dnl GETOPT
+dnl OFF_T
+dnl WRITEV
+dnl REGEX
+dnl BSDGETTIMEOFDAY
 
 BN='${top_builddir}/libbn/libbn.la ${BU}'
 BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS} -lm ${DL}'
@@ -161,62 +219,6 @@ AC_SUBST(RT)
 AC_SUBST(SYSV)
 AC_SUBST(TERMIO)
 AC_SUBST(WDB)
-
-X_CFLAGS="-I/usr/X11R6/include"
-AC_SUBST(X_CFLAGS)
-AC_DEFINE(DM_X,,[Display for X])
-
-GL_CFLAGS="-DUSE_MESA_GL"
-AC_SUBST(GL_CFLAGS)
-
-LEX_CFLAGS="-Dyylex=cmd_nop"
-AC_SUBST(LEX_CFLAGS)
-
-TCL_CFLAGS=
-ITCL_CFLAGS=
-TK_CFLAGS=
-ITK_CFLAGS=
-AC_SUBST(TCL_CFLAGS)
-AC_SUBST(ITCL_CFLAGS)
-AC_SUBST(TK_CFLAGS)
-AC_SUBST(ITK_CFLAGS)
-
-dnl ===
-AC_DEFINE(HAVE_TM_ZONE,,string in time zone)
-
-dnl typedefs
-dnl functions
-AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex)
-AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,,Lacking fstatfs)])
-
-dnl POSIX_REGEXEC
-dnl CALTECH_MALLOC
-dnl DRAND
-dnl DLOPEN
-dnl GETHOSTNAME
-dnl SHELL_ESCAPE
-dnl VPRINTF
-dnl SBRK
-dnl VFORK
-dnl SBRK_DECL
-dnl POPEN_DECL
-dnl STRDUP_DECL
-dnl GETOPT_DECL
-dnl SYS_ERRLIST_DECL
-dnl REGEX_DECL
-dnl XOPEN
-dnl UNIX_IO
-dnl BZERO
-dnl STRDUP
-dnl STRCHR
-dnl MATHERR
-dnl UNIX_DOMAIN_SOCKETS
-dnl FLOAT
-dnl GETOPT
-dnl OFF_T
-dnl WRITEV
-dnl REGEX
-dnl BSDGETTIMEOFDAY
 
 AC_OUTPUT([
 	Makefile
