@@ -213,7 +213,7 @@ rt_db_free_internal( struct rt_db_internal *ip )
 {
 	RT_CK_DB_INTERNAL( ip );
 	RT_CK_FUNCTAB( ip->idb_meth );
-	if( ip->idb_ptr )  ip->idb_meth->ft_ifree;
+	if( ip->idb_ptr )  ip->idb_meth->ft_ifree(ip);
 	RT_INIT_DB_INTERNAL(ip);
 }
 

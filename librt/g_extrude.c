@@ -1449,8 +1449,7 @@ struct db_i *dbip;
 	{
 		eop->skt = eip->skt;
 		eip->skt = (struct rt_sketch_internal *)NULL;
-		rt_functab[ip->idb_type].ft_ifree( ip );
-		ip->idb_ptr = (genptr_t) 0;
+		rt_db_free_internal( ip );
 	}
 	else if( eip->skt )
 		eop->skt = rt_copy_sketch( eip->skt );
