@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  86/01/11  03:01:51  gwyn
+ * fixed window size code
+ * 
  * Revision 2.2  85/05/14  01:44:41  dpk
  * Added changes to support System V (conditional on SYS5)
  * 
@@ -318,6 +321,7 @@ ttsetup() {
 #else SYS5
 	newtty.c_iflag &= ~(INLCR|ICRNL);
 	newtty.c_lflag &= ~(ISIG|ICANON|ECHO);
+	newtty.c_oflag &= ~(OLCUC|ONLCR|OCRNL|ONOCR|ONLRET|OFILL);	/* DAG -- bug fix (was missing) */
 	newtty.c_cc[VMIN] = 0;
 	newtty.c_cc[VTIME] = 0;
 #endif SYS5
