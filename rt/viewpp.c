@@ -168,3 +168,5 @@ char *file, *obj;
 }
 
 view_2init()  {;}
+
+mlib_setup() { return(1); }
