@@ -683,13 +683,16 @@ genptr_t	arg;
 		 * RAM is allocated only to those pages used.
 		 * On the other hand, don't be too generous, because each
 		 * proc needs this much space on, e.g. a 64 processor system.
+		 * Don't go quite for an even number of megabytes,
+		 * in the hopes of creating a small 32k "buffer zone"
+		 * to catch stack overflows.
 		 */
 		new = sprocsp( (void (*)(void *, size_t))bu_parallel_interface,
 			PR_SALL, 0, NULL,
 #			if IRIX64
-				8*1024*1024
+				8*1024*1024 - 32*1024
 #			else
-				4*1024*1024
+				4*1024*1024 - 32*1024
 #			endif
 			);
 #endif
