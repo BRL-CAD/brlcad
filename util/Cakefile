@@ -20,7 +20,7 @@
 	pix-ppm pcd-pix \
 	pix-yuv yuv-pix \
 	pix3filter pixbackgnd pixbgstrip pixbustup pixcolors pixdiff \
-	pixfade pixfields pixfieldsep pixfilter pixhalve pixhist \
+	pixdsplit pixfade pixfields pixfieldsep pixfilter pixhalve pixhist \
 	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
 	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
 	pixtile pixuntile pixembed \
@@ -324,6 +324,9 @@ azel:	azel.o
 
 bary:	bary.o
 	CC LDFLAGS -o bary bary.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixdsplit:	pixdsplit.o
+	CC LDFLAGS -o pixdsplit pixdsplit.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
