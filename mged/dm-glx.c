@@ -1,8 +1,8 @@
 /*
    Just a note:
 
-   DM-4D.C currently uses the commands below. These particular commands
-   should not be used in mixed mode programming.
+   These particular commands should not be used in
+   mixed mode programming.
 
    qdevice
    blkqread
@@ -24,14 +24,10 @@
 /*
  *			D M - G L X . C
  *
- *  This version for the SGI 4-D Iris, both regular and GT versions.
- *
- *  Uses library -lgl
+ *  This display manager started out with the guts from DM-4D which
+ *  was modified to use the glx widget.
  *
  *  Authors -
- *	Paul R. Stay
- *	Michael John Muuss
- *	Robert J. Reschly
  *      Robert G. Parker
  *  
  *  Source -
@@ -48,7 +44,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 /* Experimental */
-#define MIXED_MODE 1
 #define TRY_PIPES 1
 
 #include "conf.h"
@@ -118,17 +113,15 @@ unsigned Glx_cvtvecs(), Glx_load();
 void	Glx_statechange(), Glx_viewchange(), Glx_colorchange();
 void	Glx_window(), Glx_debug();
 int	Glx_dm();
-#if MIXED_MODE
+
 int   Glx_loadGLX();
 #ifdef USE_PROTOTYPES
 Tk_GenericProc Glx_checkevents;
 #else
 int Glxcheckevents();
 #endif
-#else
-void    Glx_checkevents();
-#endif
 
+#ifndef MULTI_ATTACH
 /*
  * These variables are visible and modifiable via a "dm set" command.
  */
@@ -145,21 +138,17 @@ static int      perspective_mode = 0;	/* Perspective flag */
  * These are derived from the hardware inventory -- user can change them,
  * but the results may not be pleasing.  Mostly, this allows them to be seen.
  */
-static int	glx_is_gt;		/* 0 for non-GT machines */
-static int	glx_has_zbuf;		/* 0 if no Z buffer */
-static int	glx_has_rgb;		/* 0 if mapped mode must be used */
-static int	glx_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
+static int    glx_is_gt;              /* 0 for non-GT machines */
+static int    glx_has_zbuf;           /* 0 if no Z buffer */
+static int    glx_has_rgb;            /* 0 if mapped mode must be used */
+static int    glx_has_doublebuffer;   /* 0 if singlebuffer mode must be used */
+
 static int	min_scr_z;		/* based on getgdesc(GD_ZMIN) */
 static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
+#endif
 
 static int irsetup();
-GLXconfig glxConfig [] = {
-  { GLX_NORMAL, GLX_DOUBLE, TRUE },
-  { GLX_NORMAL, GLX_RGB, TRUE },
-  { GLX_NORMAL, GLX_ZSIZE, GLX_NOCONFIG },
-  { 0, 0, 0 }
-};
 
 #ifdef MULTI_ATTACH
 #define dpy (((struct glx_vars *)dm_vars)->_dpy)
@@ -176,24 +165,44 @@ GLXconfig glxConfig [] = {
 #define devbuttonpress (((struct glx_vars *)dm_vars)->_devbuttonpress)
 #define devbuttonrelease (((struct glx_vars *)dm_vars)->_devbuttonrelease)
 #define knobs (((struct glx_vars *)dm_vars)->_knobs)
-#define knobs_offset (((struct glx_vars *)dm_vars)->_knobs_offset)
 #define stereo_is_on (((struct glx_vars *)dm_vars)->_stereo_is_on)
 #define ref (((struct glx_vars *)dm_vars)->_ref)
+#define glx_is_gt (((struct glx_vars *)dm_vars)->_glx_is_gt)
+#define aspect (((struct glx_vars *)dm_vars)->_aspect)
+#define mvars (((struct glx_vars *)dm_vars)->_mvars)
+
+struct modifiable_glx_vars {
+  int cueing_on;
+  int zclipping_on;
+  int zbuffer_on;
+  int lighting_on;
+  int perspective_mode;
+  int dummy_perspective;
+  int zbuf;
+  int rgb;
+  int doublebuffer;
+  int min_scr_z;       /* based on getgdesc(GD_ZMIN) */
+  int max_scr_z;       /* based on getgdesc(GD_ZMAX) */
+  int debug;
+  int linewidth;
+};
 
 struct glx_vars {
   Display *_dpy;
   Window _win;
   Tk_Window _xtkwin;
-  long _win_l, _win_b, _wind_r, _win_t;
+  long _win_l, _win_b, _win_r, _win_t;
   long _winx_size, _winy_size;
   int _perspective_angle;
   int _devmotionnotify;
   int _devbuttonpress;
   int _devbuttonrelease;
   int _knobs[8];
-  int _knobs_offset[8];
   int _stereo_is_on;
   char *_ref;
+  int _glx_is_gt;
+  fastf_t _aspect;
+  struct modifiable_glx_vars _mvars;
 };
 
 void glx_var_init();
@@ -213,15 +222,12 @@ static int knobs_offset[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 static int	stereo_is_on = 0;
 #endif
 
-static int	glx_fd;			/* GL file descriptor to select() on */
-static CONST char glx_title[] = "BRL MGED";
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
 static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
-static mat_t	aspect_corr;
 
 void		glx_colorit();
 
@@ -316,6 +322,26 @@ refresh_hook()
 {
 	dmaflag = 1;
 }
+
+#ifdef MULTI_ATTACH
+#define GLX_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
+struct structparse Glx_vparse[] = {
+	{"%d",	1, "depthcue",		GLX_MV_O(cueing_on),	Glx_colorchange },
+	{"%d",  1, "zclip",		GLX_MV_O(zclipping_on),	refresh_hook },
+	{"%d",  1, "zbuffer",		GLX_MV_O(zbuffer_on),	establish_zbuffer },
+	{"%d",  1, "lighting",		GLX_MV_O(lighting_on),	establish_lighting },
+	{"%d",  1, "perspective",       GLX_MV_O(perspective_mode), establish_perspective },
+	{"%d",  1, "set_perspective",GLX_MV_O(dummy_perspective),  set_perspective },
+	{"%d",  1, "has_zbuf",		GLX_MV_O(zbuf),	refresh_hook },
+	{"%d",  1, "has_rgb",		GLX_MV_O(rgb),	Glx_colorchange },
+	{"%d",  1, "has_doublebuffer",	GLX_MV_O(doublebuffer), refresh_hook },
+	{"%d",  1, "min_scr_z",		GLX_MV_O(min_scr_z),	refresh_hook },
+	{"%d",  1, "max_scr_z",		GLX_MV_O(max_scr_z),	refresh_hook },
+	{"%d",  1, "debug",		GLX_MV_O(debug),	FUNC_NULL },
+	{"%d",  1, "linewidth",		GLX_MV_O(linewidth),	refresh_hook },
+	{"",	0,  (char *)0,		0,			FUNC_NULL }
+};
+#else
 struct structparse Glx_vparse[] = {
 	{"%d",  1, "depthcue",		(int)&cueing_on,	Glx_colorchange },
 	{"%d",  1, "zclip",		(int)&zclipping_on,	refresh_hook },
@@ -333,7 +359,7 @@ struct structparse Glx_vparse[] = {
 	{"%d",  1, "linewidth",		(int)&glx_linewidth,	refresh_hook },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
-
+#endif
 
 static int	glx_oldmonitor;		/* Old monitor type */
 static long gr_id;
@@ -350,37 +376,14 @@ static int
 irisX2ged(x)
 register int x;
 {
-#if MIXED_MODE
-	x = (x/(double)winx_size - 0.5) * 4095;
-#else
-	if( x <= win_l )  return(-2048);
-	if( x >= win_r )  return(2047);
-
-	x -= win_l;
-	x = ( x / (double)winx_size)*4096.0;
-	x -= 2048;
-#endif
-
-	return(x);
+  return ((x/(double)winx_size - 0.5) * 4095);
 }
 
 static int
 irisY2ged(y)
 register int y;
 {
-#if MIXED_MODE
-	y = (0.5 - y/(double)winy_size) * 4095;
-#else
-	if( y <= win_b )  return(-2048);
-	if( y >= win_t )  return(2047);
-
-	y -= win_b;
-	if( stereo_is_on )  y = (y%512)<<1;
-	y = ( y / (double)winy_size)*4096.0;
-	y -= 2048;
-#endif
-
-	return(y);
+  return ((0.5 - y/(double)winy_size) * 4095);
 }
 
 /* 
@@ -393,111 +396,37 @@ register int y;
 static void
 Glx_configure_window_shape()
 {
-	int		npix;
-#if MIXED_MODE
-	XWindowAttributes xwa;
-#endif
+  int		npix;
+  XWindowAttributes xwa;
 
-	xlim_view = 1.0;
-	ylim_view = 1.0;
-	mat_idn(aspect_corr);
+  XGetWindowAttributes( dpy, win, &xwa );
+  winx_size = xwa.width;
+  winy_size = xwa.height;
 
-#if MIXED_MODE
-	XGetWindowAttributes( dpy, win, &xwa );
-	winx_size = xwa.width;
-	winy_size = xwa.height;
-#else
-	getsize( &winx_size, &winy_size);
-	getorigin( &win_l, & win_b );
+  /* Write enable all the bloody bits after resize! */
+  viewport(0, winx_size, 0, winy_size);
 
-	win_r = win_l + winx_size;
-	win_t = win_b + winy_size;
-#endif
-	/* Write enable all the bloody bits after resize! */
-	viewport(0, winx_size, 0, winy_size);
+  if( mvars.zbuf )
+    establish_zbuffer();
 
-	if( glx_has_zbuf ) establish_zbuffer();
-	establish_lighting();
+  establish_lighting();
 	
-	if( glx_has_doublebuffer)
-	{
-		/* Clear out image from windows underneath */
-		frontbuffer(1);
-		glx_clear_to_black();
-		frontbuffer(0);
-		glx_clear_to_black();
-	} else
-		glx_clear_to_black();
+  if( mvars.doublebuffer){
+    /* Clear out image from windows underneath */
+    frontbuffer(1);
+    glx_clear_to_black();
+    frontbuffer(0);
+    glx_clear_to_black();
+  } else
+    glx_clear_to_black();
 
-#if MIXED_MODE
-#else
-	switch( getmonitor() )  {
-	default:
-		break;
-	case NTSC:
-		/* Only use the central square part, due to overscan */
-		npix = YMAX170-30;
-		winx_size = npix * 4 / 3;	/* NTSC aspect ratio */
-		winy_size = npix;
-		win_l = (XMAX170 - winx_size)/2;
-		win_r = win_l + winx_size;
-		win_b = (YMAX170-winy_size)/2;
-		win_t = win_b + winy_size;
-
-		if( no_faceplate )  {
-			/* Use the whole screen, for VR & visualization */
-			viewport( 0, XMAX170, 0, YMAX170 );
-		} else {
-			/* Only use the central (square) faceplate area */
-			/*
-			 * XXX Does this viewport() call do anything?  (Write enable pixels maybe?)
-			 * XXX (1) the first frame (only) is shrunken oddly in X, and
-			 * XXX (2) the drawing overflows the boundaries.
-			 * XXX Perhaps XY clipping could be used?
-			 * At least the aspect ratio is right!
-			 */
-			/* XXXXX See page 8-9 in the manual.
-			 * XXX The best way to do the masking in NTSC mode is to
-			 * XXX just set a Z-buffer write mask of 0 on the parts we don't
-			 * XXX want to have written.
-			 */
-			viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
-			    (YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
-		}
-		/* Aspect ratio correction is needed either way */
-		xlim_view = XMAX170 / (double)YMAX170;
-		ylim_view = 1;	/* YMAX170 / YMAX170 */
-
-		glx_linewidth = 3;
-		blanktime(0);	/* don't screensave while recording video! */
-		break;
-	case PAL:
-		/* Only use the central square part */
-		npix = YMAXPAL-30;
-		winx_size = npix;	/* What is PAL aspect ratio? */
-		winy_size = npix;
-		win_l = (XMAXPAL - winx_size)/2;
-		win_r = win_l + winx_size;
-		;
-		win_b = (YMAXPAL-winy_size)/2;
-		win_t = win_b + winy_size;
-		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
-		    (YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
-		glx_linewidth = 3;
-		blanktime(0);	/* don't screensave while recording video! */
-		break;
-	}
-#endif
-
-	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
-	/* The ortho() call really just makes this matrix: */
-	aspect_corr[0] = 1/xlim_view;
-	aspect_corr[5] = 1/ylim_view;
+  ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
+  aspect = (fastf_t)winy_size/(fastf_t)winx_size;
 }
 
 #define CMAP_BASE	32
 #define CMAP_RAMP_WIDTH	16
-#define MAP_ENTRY(x)	((cueing_on) ? \
+#define MAP_ENTRY(x)	((mvars.cueing_on) ? \
 			((x) * CMAP_RAMP_WIDTH + CMAP_BASE) : \
 			((x) + CMAP_BASE) )
 
@@ -544,7 +473,7 @@ Glx_open()
 	}
 
 	/* Ignore the old scrollbars and menus */
-	ignore_scroll_and_menu = 1;
+	mged_variables.show_menu = 0;
 
 	knob_offset_hook = set_knob_offset;
 
@@ -581,101 +510,115 @@ char *name;
   rt_vls_printf(&pathName, ".%s.glx", ref);
 
 	  
-	rt_vls_init(&str);
-	rt_vls_printf(&str, "loadtk %s\n", name);
+  rt_vls_init(&str);
+  rt_vls_printf(&str, "loadtk %s\n", name);
 
-	if(tkwin == NULL){
-	  if(cmdline(&str, FALSE) == CMD_BAD){
-	    rt_vls_free(&str);
-	    return -1;
-	  }
-	}
+  if(tkwin == NULL){
+    if(cmdline(&str, FALSE) == CMD_BAD){
+      rt_vls_free(&str);
+      return -1;
+    }
+  }
 	
-	(void)TkGLX_Init(interp, tkwin);
+  (void)TkGLX_Init(interp, tkwin);
 
-	/* Invoke script to create button and key bindings */
-	if( Glx_loadGLX() )
-	  return -1;
+  /* Invoke script to create button and key bindings */
+  if( Glx_loadGLX() )
+    return -1;
+
+  mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
+  mvars.zclipping_on = 1;       /* Z Clipping flag */
+  mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
+  mvars.lighting_on = 0;        /* Lighting model on */
+  mvars.linewidth = 1;      /* Line drawing width */
+  mvars.dummy_perspective = 1;
+  mvars.perspective_mode = 0;   /* Perspective flag */
+
+  if((tmp_dpy = XOpenDisplay(name)) == NULL)
+    return -1;
+
+  winx_size = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  winy_size = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+
+  /* Make window square */
+  if( winy_size < winx_size )
+    winx_size = winy_size;
+  else /* we have a funky shaped monitor */ 
+    winy_size = winx_size;
+
+  XCloseDisplay(tmp_dpy);
+
+  /*
+   * Create the glx widget by calling create_glx which
+   * is defined in glxinit.tk
+   */
+  rt_vls_strcpy(&str, "create_glx ");
+  rt_vls_printf(&str, "%s .%s glx %s %d %d true true\n", name,
+		ref, ref, winx_size, winy_size);
 
 #if 0
-	dpy = Tk_Display(tkwin);
-	winx_size = DisplayWidth(dpy, Tk_ScreenNumber(tkwin)) - 20;
-	winy_size = DisplayHeight(dpy, Tk_ScreenNumber(tkwin)) - 20;
-#else
-	if((tmp_dpy = XOpenDisplay(name)) == NULL)
-	  return -1;
-
-	winx_size = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-	winy_size = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-
-	XCloseDisplay(tmp_dpy);
+  /*
+   * Call bindem to bind key and mouse events. Bindem is defined
+   * in glxinit.tk
+   */
+  rt_vls_printf(&str, "bindem .%s\n", ref);
 #endif
-	if(winx_size > winy_size)
-	  winx_size = winy_size;
-	else
-	  winy_size = winx_size;
 
-	rt_vls_strcpy(&str, "create_glx ");
-	rt_vls_printf(&str, "%s .%s glx %s %d %d true true\n", name,
-		      ref, ref, winx_size, winy_size);
-	rt_vls_printf(&str, "bindem .%s\n", ref);
-#if 0
-	rt_vls_printf(&str, "pack .%s -expand 1 -fill both\n", ref);
-#endif
-	if(cmdline(&str, FALSE) == CMD_BAD){
-	  rt_vls_free(&str);
-	  return -1;
-	}
+  if(cmdline(&str, FALSE) == CMD_BAD){
+    rt_vls_free(&str);
+    return -1;
+  }
 
-	rt_vls_free(&str);
+  rt_vls_free(&str);
 
-	if(TkGLXwin_RefExists(ref)){
-	  xtkwin = TkGLXwin_RefGetTkwin(ref);
-	  if(xtkwin == NULL)
-	    return -1;
+  if(TkGLXwin_RefExists(ref)){
+    xtkwin = TkGLXwin_RefGetTkwin(ref);
+    if(xtkwin == NULL)
+      return -1;
 
-	  dpy = Tk_Display(xtkwin);
-	}else{
-	  rt_log("Glx_open: ref - %s doesn't exist!!!\n", ref);
-	  return -1;
-	}
+    dpy = Tk_Display(xtkwin);
+  }else{
+    rt_log("Glx_open: ref - %s doesn't exist!!!\n", ref);
+    return -1;
+  }
 
-	/* Do this now to force a GLXlink */
-	Tk_MapWindow(xtkwin);
+  /* Do this now to force a GLXlink */
+  Tk_MapWindow(xtkwin);
 
-	Tk_MakeWindowExist(xtkwin);
-	win = Tk_WindowId(xtkwin);
+  Tk_MakeWindowExist(xtkwin);
+  win = Tk_WindowId(xtkwin);
 
-	glx_is_gt = 1;
+  glx_is_gt = 1;
 
-	{
-	  GLXconfig *glx_config, *p;
+  {
+    GLXconfig *glx_config, *p;
 
-	  glx_config = TkGLXwin_RefGetConfig(ref);
-	
-	  for(p = glx_config; p->buffer; ++p){
+    glx_config = TkGLXwin_RefGetConfig(ref);
+
+    /* set configuration variables */
+    for(p = glx_config; p->buffer; ++p){
 	    switch(p->buffer){
 	    case GLX_NORMAL:
 	      switch(p->mode){
 	      case GLX_ZSIZE:
 		if(p->arg)
-		  glx_has_zbuf = 1;
+		  mvars.zbuf = 1;
 		else
-		  glx_has_zbuf = 0;
+		  mvars.zbuf = 0;
 
 		break;
 	      case GLX_RGB:
 		if(p->arg)
-		  glx_has_rgb = 1;
+		  mvars.rgb = 1;
 		else
-		  glx_has_rgb = 0;
+		  mvars.rgb = 0;
 
 		break;
 	      case GLX_DOUBLE:
 		if(p->arg)
-		  glx_has_doublebuffer = 1;
+		  mvars.doublebuffer = 1;
 		else
-		  glx_has_doublebuffer = 0;
+		  mvars.doublebuffer = 0;
 
 		break;
 	      case GLX_STEREOBUF:
@@ -706,11 +649,6 @@ char *name;
 	  free((void *)glx_config);
 	}
 
-#if 0
-	/* Start out with the usual window */
-/*XXX Not supposed to be using this guy in mixed mode. */
-	foreground();
-#endif
 	
 	if (mged_variables.sgi_win_size > 0)
 		win_size = mged_variables.sgi_win_size;
@@ -742,13 +680,9 @@ char *name;
 	 */
 	glcompat( GLC_ZRANGEMAP, 0 );
 	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
-#if 1
-	min_scr_z = getgdesc(GD_ZMIN)+15;
-	max_scr_z = getgdesc(GD_ZMAX)-15;
-#else
-	min_scr_z = 0;
-	max_scr_z = 0;
-#endif
+
+	mvars.min_scr_z = getgdesc(GD_ZMIN)+15;
+	mvars.max_scr_z = getgdesc(GD_ZMAX)-15;
 
 	Glx_configure_window_shape();
 
@@ -756,7 +690,10 @@ char *name;
 	deflinestyle( 1, 0xCF33 );
 	setlinestyle( 0 );
 
-/* Take a look at the available input devices */
+	/*
+	 * Take a look at the available input devices. We're looking
+	 * for "dial+buttons".
+	 */
 	olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
 
 	/* IRIX 4.0.5 bug workaround */
@@ -796,7 +733,8 @@ char *name;
 	}
 Done:
 	XFreeDeviceList(olist);
-	Tk_CreateGenericHandler(Glx_checkevents, (ClientData)NULL);
+	Tk_CreateGenericHandler(Glx_checkevents,
+				(ClientData)rt_vls_addr(&pathName));
 	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
 		     KeyPressMask|StructureNotifyMask);
 
@@ -813,13 +751,13 @@ Glx_loadGLX()
   int     found;
   int bogus;
 
-#define DM_GLX_ENVRC "MGED_DM_GLX_RCFILE"
+/*XXX*/
 #define DM_GLX_RCFILE "glxinit2.tk"
 
   found = 0;
   rt_vls_init( &str );
 
-  if((path = getenv(DM_GLX_ENVRC)) != (char *)NULL ){
+  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
     if ((fp = fopen(path, "r")) != NULL ) {
       rt_vls_strcpy( &str, path );
       found = 1;
@@ -880,38 +818,30 @@ Glx_loadGLX()
 void
 Glx_close()
 {
-	if(cueing_on) depthcue(0);
+  if(mvars.cueing_on)
+    depthcue(0);
 
-	lampoff( 0xf );
+  lampoff( 0xf );
 
-	/* avoids error messages when reattaching */
-	mmode(MVIEWING);	
-	lmbind(LIGHT2,0);
-	lmbind(LIGHT3,0);
-	lmbind(LIGHT4,0);
-	lmbind(LIGHT5,0);
+  /* avoids error messages when reattaching */
+  mmode(MVIEWING);	
+  lmbind(LIGHT2,0);
+  lmbind(LIGHT3,0);
+  lmbind(LIGHT4,0);
+  lmbind(LIGHT5,0);
 
 
-	frontbuffer(1);
-	glx_clear_to_black();
-	frontbuffer(0);
+  frontbuffer(1);
+  glx_clear_to_black();
+  frontbuffer(0);
 
-#if MIXED_MODE
-	Tk_DestroyWindow(xtkwin);
-#else
-	if( getmonitor() != glx_oldmonitor )
-		setmonitor(glx_oldmonitor);
-
-	winclose(gr_id);
-#endif
-
-	/* Stop ignoring the old scrollbars and menus */
-	ignore_scroll_and_menu = 0;
-
-	knob_offset_hook = NULL;
-	rt_free(dm_vars, "dm_vars");
-	rt_vls_free(&pathName);
-	free(ref);
+  Tk_DestroyWindow(Tk_Parent(xtkwin));
+  Tk_DeleteGenericHandler(Glx_checkevents,
+			  (ClientData)rt_vls_addr(&pathName));
+  knob_offset_hook = NULL;
+  rt_free(dm_vars, "glx_close: dm_vars");
+  rt_vls_free(&pathName);
+  free(ref);
 }
 
 /*
@@ -925,33 +855,14 @@ Glx_close()
 void
 Glx_prolog()
 {
-  struct rt_vls str;
+  TkGLXwin_RefWinset(ref, GLX_NORMAL);
 
-  rt_vls_init(&str);
-  rt_vls_printf(&str, "%s winset\n", rt_vls_addr(&pathName));
+  if (mvars.debug)
+    rt_log( "Glx_prolog\n");
 
-  if(cmdline(&str, FALSE) == CMD_BAD){
-    rt_vls_free(&str);
-    rt_log("Glx_prolog: winset failed\n");
-    return;
-  }
-
-  rt_vls_free(&str);
-
-	if (glx_debug)
-		rt_log( "Glx_prolog\n");
-#if 0
-	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
-#else
-	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
-#endif
-
-	if( dmaflag && !glx_has_doublebuffer )
-	{
-		glx_clear_to_black();
-		return;
-	}
-	linewidth(glx_linewidth);
+  ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
+  glx_clear_to_black();
+  linewidth(mvars.linewidth);
 }
 
 /*
@@ -964,20 +875,16 @@ Glx_prolog()
 void
 Glx_normal()
 {
-	if (glx_debug)
-		rt_log( "Glx_normal\n");
+  if (mvars.debug)
+    rt_log( "Glx_normal\n");
 
-	if( glx_has_rgb )  {
-		RGBcolor( (short)0, (short)0, (short)0 );
-	} else {
-		color(BLACK);
-	}
+  if( mvars.rgb )  {
+    RGBcolor( (short)0, (short)0, (short)0 );
+  } else {
+    color(BLACK);
+  }
 
-#if 0
-	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
-#else
-	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
-#endif
+  ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 }
 
 /*
@@ -986,21 +893,18 @@ Glx_normal()
 void
 Glx_epilog()
 {
-	if (glx_debug)
-		rt_log( "Glx_epilog\n");
-	/*
-	 * A Point, in the Center of the Screen.
-	 * This is drawn last, to always come out on top.
-	 */
-	Glx_2d_line( 0, 0, 0, 0, 0 );
-	/* End of faceplate */
+  if (mvars.debug)
+    rt_log( "Glx_epilog\n");
 
-	if(glx_has_doublebuffer )
-	{
-		swapbuffers();
-		/* give Graphics pipe time to work */
-		glx_clear_to_black();
-	}
+  /*
+   * A Point, in the Center of the Screen.
+   * This is drawn last, to always come out on top.
+   */
+  Glx_2d_line( 0, 0, 0, 0, 0 );
+  /* End of faceplate */
+
+  if(mvars.doublebuffer )
+    swapbuffers();
 }
 
 /*
@@ -1038,7 +942,7 @@ mat_t	mat;
 	mat_t	newm;
 	int	i;
 
-	if (glx_debug)
+	if (mvars.debug)
 		rt_log( "Glx_newrot()\n");
 
 	switch(which_eye)  {
@@ -1056,7 +960,7 @@ mat_t	mat;
 		break;
 	}
 
-	if( ! zclipping_on ) {
+	if( ! mvars.zclipping_on ) {
 		mat_t	nozclip;
 
 		mat_idn( nozclip );
@@ -1066,23 +970,16 @@ mat_t	mat;
 	} else {
 		mptr = mat;
 	}
-#if 0
-	for(i= 0; i < 4; i++) {
-		gtmat[0][i] = *(mptr++);
-		gtmat[1][i] = *(mptr++);
-		gtmat[2][i] = *(mptr++);
-		gtmat[3][i] = *(mptr++);
-	}
-#else
-	gtmat[0][0] = *(mptr++) * aspect_corr[0];
-	gtmat[1][0] = *(mptr++) * aspect_corr[0];
-	gtmat[2][0] = *(mptr++) * aspect_corr[0];
-	gtmat[3][0] = *(mptr++) * aspect_corr[0];
 
-	gtmat[0][1] = *(mptr++) * aspect_corr[5];
-	gtmat[1][1] = *(mptr++) * aspect_corr[5];
-	gtmat[2][1] = *(mptr++) * aspect_corr[5];
-	gtmat[3][1] = *(mptr++) * aspect_corr[5];
+	gtmat[0][0] = *(mptr++) * aspect;
+	gtmat[1][0] = *(mptr++) * aspect;
+	gtmat[2][0] = *(mptr++) * aspect;
+	gtmat[3][0] = *(mptr++) * aspect;
+
+	gtmat[0][1] = *(mptr++);
+	gtmat[1][1] = *(mptr++);
+	gtmat[2][1] = *(mptr++);
+	gtmat[3][1] = *(mptr++);
 
 	gtmat[0][2] = *(mptr++);
 	gtmat[1][2] = *(mptr++);
@@ -1093,7 +990,6 @@ mat_t	mat;
 	gtmat[1][3] = *(mptr++);
 	gtmat[2][3] = *(mptr++);
 	gtmat[3][3] = *(mptr++);
-#endif
 
 	/*
 	 *  Convert between MGED's right handed coordinate system
@@ -1142,7 +1038,7 @@ int		white;
 	int first;
 	int i,j;
 
-	if (glx_debug)
+	if (mvars.debug)
 		rt_log( "Glx_Object()\n");
 
 	/*
@@ -1166,7 +1062,7 @@ int		white;
 	if (sp->s_soldash)
 		setlinestyle( 1 );		/* set dot-dash */
 
-	if( glx_has_rgb )  {
+	if( mvars.rgb )  {
 		register short	r, g, b;
 		if( white )  {
 			r = g = b = 230;
@@ -1175,13 +1071,13 @@ int		white;
 			g = (short)sp->s_color[1];
 			b = (short)sp->s_color[2];
 		}
-		if(cueing_on)  {
+		if(mvars.cueing_on)  {
 			lRGBrange(
 			    r/10, g/10, b/10,
 			    r, g, b,
-			    min_scr_z, max_scr_z );
+			    mvars.min_scr_z, mvars.max_scr_z );
 		} else
-		if(lighting_on && glx_is_gt)
+		if(mvars.lighting_on && glx_is_gt)
 		{
 			/* Ambient = .2, Diffuse = .6, Specular = .2 */
 
@@ -1210,9 +1106,9 @@ int		white;
 		if( white ) {
 			ovec = nvec = MAP_ENTRY(DM_WHITE);
 			/* Use the *next* to the brightest white entry */
-			if(cueing_on)  {
+			if(mvars.cueing_on)  {
 				lshaderange(nvec+1, nvec+1,
-				    min_scr_z, max_scr_z );
+				    mvars.min_scr_z, mvars.max_scr_z );
 			}
 			color( nvec );
 		} else {
@@ -1222,9 +1118,9 @@ int		white;
 				 * The code will use the "reserved" color map entries
 				 * to display it when in depthcued mode.
 				 */
-				if(cueing_on)  {
+				if(mvars.cueing_on)  {
 					lshaderange(nvec+1, nvec+14,
-					    min_scr_z, max_scr_z );
+					    mvars.min_scr_z, mvars.max_scr_z );
 				}
 				color( nvec );
 				ovec = nvec;
@@ -1302,7 +1198,7 @@ int		white;
 void
 Glx_update()
 {
-	if (glx_debug)
+	if (mvars.debug)
 		rt_log( "Glx_update()\n");
 	if( !dmaflag )
 		return;
@@ -1319,10 +1215,10 @@ Glx_puts( str, x, y, size, colour )
 register char *str;
 int x,y,size, colour;
 {
-	if (glx_debug)
+	if (mvars.debug)
 		rt_log( "Glx_puts()\n");
 	cmov2( GED2IRIS(x), GED2IRIS(y));
-	if( glx_has_rgb )  {
+	if( mvars.rgb )  {
 		RGBcolor( (short)glx_rgbtab[colour].r,
 		    (short)glx_rgbtab[colour].g,
 		    (short)glx_rgbtab[colour].b );
@@ -1344,21 +1240,21 @@ int dashed;
 {
 	register int nvec;
 
-	if (glx_debug)
+	if (mvars.debug)
 		rt_log( "Glx_2d_line()\n");
-	if( glx_has_rgb )  {
+	if( mvars.rgb )  {
 		/* Yellow */
-		if(cueing_on)  {
+		if(mvars.cueing_on)  {
 			lRGBrange(
 			    255, 255, 0,
 			    255, 255, 0,
-			    min_scr_z, max_scr_z );
+			    mvars.min_scr_z, mvars.max_scr_z );
 		}
 		RGBcolor( (short)255, (short)255, (short) 0 );
 	} else {
 		if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
-			if(cueing_on) lshaderange(nvec, nvec,
-			    min_scr_z, max_scr_z );
+			if(mvars.cueing_on) lshaderange(nvec, nvec,
+			    mvars.min_scr_z, mvars.max_scr_z );
 			color( nvec );
 			ovec = nvec;
 		}
@@ -1390,81 +1286,16 @@ Glx_input( input, noblock )
 fd_set		*input;
 int		noblock;
 {
-	static int cnt;
-	register int i;
-	struct timeval	tv;
-	fd_set		files;
-	int		width;
-
-#if MIXED_MODE
-/* Don't need to do this because Glx_input never gets called anyway */
-#else
-	if (glx_debug)
-		rt_log( "Glx_input()\n");
-	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
-		width = 32;
-	files = *input;		/* save, for restore on each loop */
-	FD_SET( glx_fd, &files );
-
-	/*
-	 * Check for input on the keyboard or on the polled registers.
-	 *
-	 * Suspend execution until either
-	 *  1)  User types a full line
-	 *  2)  A change in peripheral status occurs
-	 *  3)  The timelimit on SELECT has expired
-	 *
-	 * If a RATE operation is in progress (zoom, rotate, slew)
-	 * in which the peripherals (rate setting) may not be changed,
-	 * but we still have to update the display,
-	 * do not suspend execution.
-	 */
-	do  {
-		cnt = 0;
-		i = qtest();
-		if( i != 0 )  {
-			FD_ZERO( input );
-			FD_SET( glx_fd, input );
-			break;		/* There is device input */
-		}
-		*input = files;
-
-		tv.tv_sec = 0;
-		if( noblock )  {
-			tv.tv_usec = 0;
-		}  else {
-			/* 1/20th second */
-			tv.tv_usec = 50000;
-		}
-		cnt = select( width, input, (fd_set *)0,  (fd_set *)0, &tv );
-		if( cnt < 0 )  {
-			perror("dm-4d.c/select");
-			break;
-		}
-		if( noblock )  break;
-		for( i=0; i<width; i++ )  {
-			if( FD_ISSET(i, input) )  goto input_waiting;
-		}
-	} while( noblock == 0 );
-
-input_waiting:
-	/*
-	 * Set device interface structure for GED to "rest" state.
-	 * First, process any messages that came in.
-	 */
-
-	if( FD_ISSET( glx_fd, input ) )
-		Glx_checkevents();
-#endif
-	return;
+  return;
 }
 
 
 /*
-   This routine does not get key events. The key events are
-   being processed via the TCL/TK bind command. Eventually, I'd also
-   like to do the dials+buttons that way. That would leave this
-   routine to handle only events like Expose and ConfigureNotify.
+   This routine does not handle mouse button or key events. The key
+   events are being processed via the TCL/TK bind command or are being
+   piped to ged.c/stdin_input(). Eventually, I'd also like to have the
+   dials+buttons bindable. That would leave this routine to handle only
+   events like Expose and ConfigureNotify.
 */
 int
 Glx_checkevents(clientData, eventPtr)
@@ -1475,7 +1306,10 @@ XEvent *eventPtr;
   static int button0  = 0;   /*  State of button 0 */
   static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 #ifdef MULTI_ATTACH
+  static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   register struct dm_list *save_dm_list;
+  register struct dm_list *save_dm_list2;
+  register struct dm_list *p;
   struct rt_vls cmd;
 
 /*XXX still drawing too much!!!
@@ -1513,20 +1347,15 @@ annoying when running remotely. */
     Glx_configure_window_shape();
 
     dmaflag = 1;
-    if( glx_has_doublebuffer) /* to fix back buffer */
-      refresh();
-    dmaflag = 1;
+    refresh();
+    goto end;
   }else if( eventPtr->type == ConfigureNotify ){
       /* Window may have moved */
       Glx_configure_window_shape();
 
-      if (eventPtr->xany.window != win)
-	goto end;
-
       dmaflag = 1;
-      if( glx_has_doublebuffer) /* to fix back buffer */
-	refresh();
-      dmaflag = 1;
+      refresh();
+      goto end;
   }else if( eventPtr->type == MotionNotify ) {
     int x, y;
 
@@ -1541,14 +1370,14 @@ annoying when running remotely. */
     M = (XDeviceMotionEvent * ) eventPtr;
 
     if(button0){
-      knobs_during_help[M->first_axis] = M->axis_data[0];
       glx_dbtext(
 		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
       goto end;
-    }else{
-      knobs[M->first_axis] = M->axis_data[0];
-      setting = irlimit(knobs[M->first_axis] - knobs_offset[M->first_axis]);
     }
+
+    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+    setting = irlimit(knobs[M->first_axis]);
+    knob_values[M->first_axis] = M->axis_data[0];
 
     switch(DIAL0 + M->first_axis){
     case DIAL0:
@@ -1628,19 +1457,12 @@ annoying when running remotely. */
 
     B = (XDeviceButtonEvent * ) eventPtr;
 
-    if(B->button == 1){
-      int i;
-
+    if(B->button == 1)
       button0 = 0;
-
-      /* update the offset */
-      for(i = 0; i < 8; ++i)
-	knobs_offset[i] += knobs_during_help[i] - knobs[i];
-    }
   }
 
-end:
   (void)cmdline(&cmd, FALSE);
+end:
   rt_vls_free(&cmd);
   curr_dm_list = save_dm_list;
 #else
@@ -1672,7 +1494,7 @@ annoying when running remotely. */
     Glx_configure_window_shape();
 
     dmaflag = 1;
-    if( glx_has_doublebuffer) /* to fix back buffer */
+    if( mvars.doublebuffer) /* to fix back buffer */
       refresh();
     dmaflag = 1;
   }else if( eventPtr->type == ConfigureNotify ){
@@ -1680,7 +1502,7 @@ annoying when running remotely. */
       Glx_configure_window_shape();
 
       dmaflag = 1;
-      if( glx_has_doublebuffer) /* to fix back buffer */
+      if( mvars.doublebuffer ) /* to fix back buffer */
 	refresh();
       dmaflag = 1;
   }else if( eventPtr->type == MotionNotify ) {
@@ -1863,13 +1685,12 @@ unsigned addr, count;
 void
 Glx_statechange( a, b )
 {
-	if( glx_debug ) rt_log("statechange %d %d\n", a, b );
+	if( mvars.debug ) rt_log("statechange %d %d\n", a, b );
 	/*
 	 *  Based upon new state, possibly do extra stuff,
 	 *  including enabling continuous tablet tracking,
 	 *  object highlighting
 	 */
-#if MIXED_MODE
  	switch( b )  {
 	case ST_VIEW:
 	  /* constant tracking OFF */
@@ -1889,25 +1710,6 @@ Glx_statechange( a, b )
 	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
 		       KeyPressMask|StructureNotifyMask);
 	  break;
-#else
-	switch( b )  {
-	case ST_VIEW:
-		unqdevice( MOUSEY );	/* constant tracking OFF */
-		/* This should not affect the tie()'d MOUSEY events */
-		break;
-
-	case ST_S_PICK:
-	case ST_O_PICK:
-	case ST_O_PATH:
-		/*  Have all changes of MOUSEY generate an event */
-		qdevice( MOUSEY );	/* constant tracking ON */
-		break;
-	case ST_O_EDIT:
-	case ST_S_EDIT:
-	case ST_S_VPICK:
-		unqdevice( MOUSEY );	/* constant tracking OFF */
-		break;
-#endif
 	default:
 		rt_log("Glx_statechange: unknown state %s\n", state_str[b]);
 		break;
@@ -1921,7 +1723,7 @@ Glx_viewchange( cmd, sp )
 register int cmd;
 register struct solid *sp;
 {
-	if( glx_debug ) rt_log("viewchange( %d, x%x )\n", cmd, sp );
+	if( mvars.debug ) rt_log("viewchange( %d, x%x )\n", cmd, sp );
 	switch( cmd )  {
 	case DM_CHGV_ADD:
 		break;
@@ -1939,7 +1741,7 @@ register struct solid *sp;
 void
 Glx_debug(lvl)
 {
-	glx_debug = lvl;
+	mvars.debug = lvl;
 }
 
 void
@@ -1962,7 +1764,7 @@ Glx_colorchange()
 	register int i;
 	register int nramp;
 
-	if( glx_debug )  rt_log("colorchange\n");
+	if( mvars.debug )  rt_log("colorchange\n");
 
 	/* Program the builtin colors */
 	glx_rgbtab[0].r=0; 
@@ -1980,8 +1782,8 @@ Glx_colorchange()
 	glx_rgbtab[4].r = glx_rgbtab[4].g = glx_rgbtab[4].b = 255; /* White */
 	slotsused = 5;
 
-	if( glx_has_rgb )  {
-		if(cueing_on) {
+	if( mvars.rgb )  {
+		if(mvars.cueing_on) {
 			depthcue(1);
 		} else {
 			depthcue(0);
@@ -1996,13 +1798,13 @@ Glx_colorchange()
 	}
 
 	glx_nslots = getplanes();
-	if(cueing_on && (glx_nslots < 7)) {
+	if(mvars.cueing_on && (glx_nslots < 7)) {
 		rt_log("Too few bitplanes: depthcueing disabled\n");
-		cueing_on = 0;
+		mvars.cueing_on = 0;
 	}
 	glx_nslots = 1<<glx_nslots;
 	if( glx_nslots > NSLOTS )  glx_nslots = NSLOTS;
-	if(cueing_on) {
+	if(mvars.cueing_on) {
 		/* peel off reserved ones */
 		glx_nslots = (glx_nslots - CMAP_BASE) / CMAP_RAMP_WIDTH;
 		depthcue(1);
@@ -2034,7 +1836,7 @@ glx_colorit()
 	register int i;
 	register int r,g,b;
 
-	if( glx_has_rgb )  return;
+	if( mvars.rgb )  return;
 
 	FOR_ALL_SOLIDS( sp )  {
 		r = sp->s_color[0];
@@ -2130,44 +1932,12 @@ int i;
  *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
  *	Non depthcued mode skips the first CMAP_BASE colormap entries.
  *
- *	This routine is not called at all if glx_has_rgb is set.
+ *	This routine is not called at all if mvars.rgb is set.
  */
 glx_gen_color(c)
 int c;
 {
-#if MIXED_MODE
-#else
-	if(cueing_on) {
-
-		/*  Not much sense in making a ramp for DM_BLACK.  Besides
-		 *  which, doing so, would overwrite the bottom color
-		 *  map entries, which is a no-no.
-		 */
-		if( c != DM_BLACK) {
-			register int i;
-			fastf_t r_inc, g_inc, b_inc;
-			fastf_t red, green, blue;
-
-			r_inc = glx_rgbtab[c].r/16;
-			g_inc = glx_rgbtab[c].g/16;
-			b_inc = glx_rgbtab[c].b/16;
-
-			red = glx_rgbtab[c].r;
-			green = glx_rgbtab[c].g;
-			blue = glx_rgbtab[c].b;
-
-			for(i = 15; i >= 0;
-			    i--, red -= r_inc, green -= g_inc, blue -= b_inc)
-				mapcolor( MAP_ENTRY(c) + i,
-				    (short)red,
-				    (short)green,
-				    (short)blue );
-		}
-	} else {
-		mapcolor(c+CMAP_BASE,
-		    glx_rgbtab[c].r, glx_rgbtab[c].g, glx_rgbtab[c].b);
-	}
-#endif
+  return 0;
 }
 
 #ifdef never
@@ -2179,10 +1949,10 @@ kblights()
 {
 	char	lights;
 
-	lights = (cueing_on)
-	    | (zclipping_on << 1)
-	    | (perspective_mode << 2)
-	    | (zbuffer_on << 3);
+	lights = (mvars.cueing_on)
+	    | (mvars.zclipping_on << 1)
+	    | (mvars.perspective_mode << 2)
+	    | (mvars.zbuffer_on << 3);
 
 	lampon(lights);
 	lampoff(lights^0xf);
@@ -2194,7 +1964,7 @@ establish_perspective()
 {
   rt_vls_printf( &dm_values.dv_string,
 		"set perspective %d\n",
-		perspective_mode ?
+		mvars.perspective_mode ?
 		perspective_table[perspective_angle] :
 		-1 );
   dmaflag = 1;
@@ -2209,12 +1979,12 @@ static void
 set_perspective()
 {
   /* set perspective matrix */
-  if(dummy_perspective > 0)
-    perspective_angle = dummy_perspective <= 4 ? dummy_perspective - 1: 3;
+  if(mvars.dummy_perspective > 0)
+    perspective_angle = mvars.dummy_perspective <= 4 ? mvars.dummy_perspective - 1: 3;
   else if (--perspective_angle < 0) /* toggle perspective matrix */
     perspective_angle = 3;
 
-  if(perspective_mode)
+  if(mvars.perspective_mode)
     rt_vls_printf( &dm_values.dv_string,
 		  "set perspective %d\n",
 		  perspective_table[perspective_angle] );
@@ -2223,7 +1993,7 @@ set_perspective()
      Just in case the "!" is used with the set command. This
      allows us to toggle through more than two values.
    */
-  dummy_perspective = 1;
+  mvars.dummy_perspective = 1;
 
   dmaflag = 1;
 }
@@ -2231,14 +2001,14 @@ set_perspective()
 static void
 establish_zbuffer()
 {
-	if( glx_has_zbuf == 0 )  {
+	if( mvars.zbuf == 0 )  {
 		rt_log("dm-4d: This machine has no Zbuffer to enable\n");
-		zbuffer_on = 0;
+		mvars.zbuffer_on = 0;
 	}
-	zbuffer( zbuffer_on );
-	if( zbuffer_on)  {
+	zbuffer( mvars.zbuffer_on );
+	if( mvars.zbuffer_on)  {
 		/* Set screen coords of near and far clipping planes */
-		lsetdepth(min_scr_z, max_scr_z);
+		lsetdepth(mvars.min_scr_z, mvars.max_scr_z);
 	}
 	dmaflag = 1;
 }
@@ -2248,15 +2018,15 @@ glx_clear_to_black()
 	/* Re-enable the full viewport */
 	viewport(0, winx_size, 0, winy_size);
 
-	if( zbuffer_on )  {
+	if( mvars.zbuffer_on )  {
 		zfunction( ZF_LEQUAL );
-		if( glx_has_rgb )  {
-			czclear( 0x000000, max_scr_z );
+		if( mvars.rgb )  {
+			czclear( 0x000000, mvars.max_scr_z );
 		} else {
-			czclear( BLACK, max_scr_z );
+			czclear( BLACK, mvars.max_scr_z );
 		}
 	} else {
-		if( glx_has_rgb )  {
+		if( mvars.rgb )  {
 			RGBcolor( (short)0, (short)0, (short)0 );
 		} else {
 			color(BLACK);
@@ -2285,7 +2055,7 @@ taskcreate()	{
 static void
 establish_lighting()
 {
-	if( !lighting_on )  {
+	if( !mvars.lighting_on )  {
 		/* Turn it off */
 		mmode(MVIEWING);
 		lmbind(MATERIAL,0);
@@ -2293,9 +2063,9 @@ establish_lighting()
 		mmode(MSINGLE);
 	} else {
 		/* Turn it on */
-		if( cueing_on )  {
+		if( mvars.cueing_on )  {
 			/* Has to be off for lighting */
-			cueing_on = 0;
+			mvars.cueing_on = 0;
 			Glx_colorchange();
 		}
 
@@ -2740,16 +2510,20 @@ char	**argv;
 	  rt_vls_init(&vls);
 	  if( argc < 2 )  {
 	    /* Bare set command, print out current settings */
+#ifdef MULTI_ATTACH
+	    rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
+#else
 	    rt_structprint("dm_4d internal variables", Glx_vparse, (char *)0 );
+#endif
 	    rt_log("%s", rt_vls_addr(&vls) );
 	  } else if( argc == 2 ) {
-	    rt_vls_name_print( &vls, Glx_vparse, argv[1], (char *)0 );
+	    rt_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
 	    rt_log( "%s\n", rt_vls_addr(&vls) );
 	  } else {
 	    rt_vls_printf( &vls, "%s=\"", argv[1] );
 	    rt_vls_from_argv( &vls, argc-2, argv+2 );
 	    rt_vls_putc( &vls, '\"' );
-	    rt_structparse( &vls, Glx_vparse, (char *)0 );
+	    rt_structparse( &vls, Glx_vparse, (char *)&mvars);
 	  }
 	  rt_vls_free(&vls);
 	  return CMD_OK;
@@ -2784,7 +2558,11 @@ set_knob_offset()
   int i;
 
   for(i = 0; i < 8; ++i){
+#if 0
     knobs_offset[i] = knobs[i];
+#else
+    knobs[i] = 0;
+#endif
   }
 }
 
@@ -2794,6 +2572,7 @@ glx_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct glx_vars),
 					    "glx_vars");
+  bzero((void *)dm_vars, sizeof(struct glx_vars));
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;
   devbuttonrelease = LASTEvent;
@@ -2808,10 +2587,7 @@ Window window;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(window == ((struct glx_vars *)p->_dm_vars)->_win){
-      rt_vls_init(&str);
-      rt_vls_printf(&str, "%s winset\n", rt_vls_addr(&pathName));
-      cmdline(&str, FALSE);
-      rt_vls_free(&str);
+      TkGLXwin_RefWinset(((struct glx_vars *)p->_dm_vars)->_ref, GLX_NORMAL);
       return p;
     }
   }
