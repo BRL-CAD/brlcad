@@ -105,3 +105,5 @@ proc apply_color {} {
 }
 
 puts "done rtsync.tcl"
+
+# node_send sh_opt -P1 -x1 -X1
