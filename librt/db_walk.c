@@ -125,15 +125,13 @@ genptr_t	client_data;
 		} else {
 			struct rt_db_internal in;
 			struct rt_comb_internal *comb;
-			union tree *tp;
-			int id;
 
-			if( (id=rt_db_get_internal5( &in, dp, dbip, NULL, resp )) < 0 )
+			if( rt_db_get_internal5( &in, dp, dbip, NULL, resp ) < 0 )
 				return;
 
 			comb = (struct rt_comb_internal *)in.idb_ptr;
-			tp = comb->tree;
-			db_functree_subtree( dbip, tp, comb_func, leaf_func, resp, client_data );
+			db_functree_subtree( dbip, comb->tree, comb_func,
+				leaf_func, resp, client_data );
 			rt_db_free_internal( &in, resp );
 		}
 
