@@ -27,6 +27,7 @@ extern int	rdebug;
 #define RDEBUG_HITS	0x00000001	/* Print hits used by view() */
 #define RDEBUG_MATERIAL	0x00000002	/* Material properties */
 #define RDEBUG_SHOWERR	0x00000004	/* Colorful markers on errors */
+#define RDEBUG_RTMEM	0x00000008	/* Debug librt mem after startup */
 #define RDEBUG_PARALLEL	0x00000010	/* Debug parallelism */
 
 /* These will cause binary debugging output */

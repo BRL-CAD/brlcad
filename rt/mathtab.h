@@ -19,6 +19,8 @@
  *
  *  $Header$
  */
+extern double pi, twopi, halfpi;
+
 #define RANDTABSIZE	2048
 #define	SINTABSIZE	2048
 
