@@ -804,6 +804,13 @@ double			norm_tol;
 	int		nstrips;
 	struct vert_strip	*strips;
 	int		j;
+	struct vertex		**vertp[4];
+	int	faceno;
+	int	stripno;
+	int	boff;		/* base offset */
+	int	toff;		/* top offset */
+	int	blim;		/* base subscript limit */
+	int	tlim;		/* top subscrpit limit */
 
 	if( rt_ell_import( &state.ei, rp, mat ) < 0 )  {
 		rt_log("rt_ell_tess(%s): import failure\n", dp->d_namep);
@@ -947,8 +954,8 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 	 *  nsegs for each hemisphere, plus the equator.
 	 */
 	nstrips = 2 * nsegs + 1;
-	strips = (struct vert_strip *)rt_malloc(
-		nstrips * sizeof(struct vert_strip), "strips[]" );
+	strips = (struct vert_strip *)rt_calloc( nstrips,
+		sizeof(struct vert_strip), "strips[]" );
 
 	/* North pole */
 	strips[0].nverts = 1;
@@ -990,61 +997,70 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 	}
 
 	/* First, build the triangular mesh topology */
-	/* XXX top half only -- other half is upside-down! */
-	for( i = 1; i < nsegs+1; i++ )  {
-		int	faceno = 0;
-		int	stripno;
-		int	boff;		/* base offset */
-		int	toff;		/* top offset */
-		struct vertex		**vertp[4];
-
-#if 0
-rt_log("\n*** STRIP i=%d, nverts=%d, nverts_per_strip=%d, nfaces=%d, nfaces_per_strip=%d\n",
-i, strips[i].nverts, strips[i].nverts_per_strip,
-strips[i].nfaces, strips[i].nfaces_per_strip );
-#endif
+	/* Do the top. "toff" in i-1 is UP, towards +B */
+	for( i = 1; i <= nsegs; i++ )  {
+		faceno = 0;
+		tlim = strips[i-1].nverts;
+		blim = strips[i].nverts;
 		for( stripno=0; stripno<4; stripno++ )  {
 			toff = stripno * strips[i-1].nverts_per_strip;
 			boff = stripno * strips[i].nverts_per_strip;
 
 			/* Connect this quarter strip */
 			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
-#if 0
-rt_log("  i=%d, stripno=%d, boff=%d, toff=%d, j=%d\n", i, stripno, boff, toff, j);
-#endif
 
 				/* "Right-side-up" triangle */
 				vertp[0] = &(strips[i].vp[j+boff]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%strips[i-1].nverts]);
-				vertp[2] = &(strips[i].vp[(j+1+boff)%strips[i].nverts]);
-#if 0
-rt_log("\t%d/%d\\%d\n",
-	j+boff, (j+toff)%strips[i-1].nverts, (j+1+boff)%strips[i].nverts );
-#endif
+				vertp[1] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
 				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_ell_tess() nmg_cmface failure\n");
-					faceno--;
+					goto fail;
 				}
 				if( j+1 >= strips[i].nverts_per_strip )  break;
 
 				/* Follow with interior "Up-side-down" triangle */
-				vertp[0] = &(strips[i].vp[(j+1+boff)%strips[i].nverts]);
-				vertp[1] = &(strips[i-1].vp[(j+toff)%strips[i-1].nverts]);
-				vertp[2] = &(strips[i-1].vp[(j+1+toff)%strips[i-1].nverts]);
-#if 0
-rt_log("\t\t%d\\%d/%d\n",
-	(j+1+boff)%strips[i].nverts,
-	(j+toff)%strips[i-1].nverts,
-	(j+1+toff)%strips[i-1].nverts );
-#endif
+				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[1] = &(strips[i-1].vp[(j+1+toff)%tlim]);
+				vertp[2] = &(strips[i-1].vp[(j+toff)%tlim]);
 				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
 					rt_log("rt_ell_tess() nmg_cmface failure\n");
-					faceno--;
+					goto fail;
 				}
 			}
 		}
-		if( faceno != strips[i].nfaces )  {
-			rt_log("seg=%d, faceno=%d != nfaces=%d\n", i, faceno, strips[i].nfaces );
+	}
+	/* Do the bottom.  Everything is upside down. "toff" in i+1 is DOWN */
+	for( i = nsegs; i < nstrips; i++ )  {
+		faceno = 0;
+		tlim = strips[i+1].nverts;
+		blim = strips[i].nverts;
+		for( stripno=0; stripno<4; stripno++ )  {
+			toff = stripno * strips[i+1].nverts_per_strip;
+			boff = stripno * strips[i].nverts_per_strip;
+
+			/* Connect this quarter strip */
+			for( j = 0; j < strips[i].nverts_per_strip; j++ )  {
+
+				/* "Right-side-up" triangle */
+				vertp[0] = &(strips[i].vp[j+boff]);
+				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
+				vertp[2] = &(strips[i].vp[(j+1+boff)%blim]);
+				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+				if( j+1 >= strips[i].nverts_per_strip )  break;
+
+				/* Follow with interior "Up-side-down" triangle */
+				vertp[0] = &(strips[i].vp[(j+1+boff)%blim]);
+				vertp[1] = &(strips[i+1].vp[(j+toff)%tlim]);
+				vertp[2] = &(strips[i+1].vp[(j+1+toff)%tlim]);
+				if( (strips[i].fu[faceno++] = nmg_cmface(state.s, vertp, 3 )) == 0 )  {
+					rt_log("rt_ell_tess() nmg_cmface failure\n");
+					goto fail;
+				}
+			}
 		}
 	}
 
@@ -1052,21 +1068,15 @@ rt_log("\t\t%d\\%d/%d\n",
 	 *  Start with the location in the unit sphere, and project back.
 	 *  i=0 is "straight up" along +B.
 	 */
-	/* XXX top half only */
-	for( i=0; i < nsegs+1; i++ )  {
+	for( i=0; i < nstrips; i++ )  {
 		double	alpha;		/* decline down from B to A */
 		double	beta;		/* angle around equator (azimuth) */
 		fastf_t		cos_alpha, sin_alpha;
 		fastf_t		cos_beta, sin_beta;
-		point_t		P, Q;
 
 		alpha = (((double)i) / (nstrips-1));
 		cos_alpha = cos(alpha*rt_pi);
 		sin_alpha = sin(alpha*rt_pi);
-		VSET( P, sin_alpha, cos_alpha, 0 );
-		VSET( Q,         0, cos_alpha, sin_alpha );
-VPRINT("P", P);
-VPRINT("Q", Q);
 		for( j=0; j < strips[i].nverts; j++ )  {
 			point_t		sphere_pt;
 			point_t		model_pt;
@@ -1081,24 +1091,14 @@ VPRINT("Q", Q);
 			/* Convert from ideal sphere coordinates */
 			MAT4X3PNT( model_pt, state.invRinvS, sphere_pt );
 			VADD2( model_pt, model_pt, state.ei.v );
-rt_log("    i=%d, j=%d, alpha=%g, beta=%g, cos_beta=%g, sin_beta=%g\n",
-i, j, alpha, beta, cos_beta, sin_beta );
-VPRINT("	sphere_pt", sphere_pt);
 			/* Associate vertex geometry */
 			if( strips[i].vp[j] )
-				nmg_vertex_gv( strips[i].vp[j], sphere_pt );
+				nmg_vertex_gv( strips[i].vp[j], model_pt );
 		}
 	}
-	{
-		/* Hack for spike at +B */
-		point_t	p;
-		VSETALL( p, 0 );
-		VPRINT("+B vertex", strips[0].vp[0]->vg_p->coord );
-		nmg_vertex_gv(strips[0].vp[0], p );
-	}
 
-	/* Associate face geometry */
-	for( i=1; i < nsegs+1; i++ )  {
+	/* Associate face geometry.  Poles have no faces "above" them. */
+	for( i=1; i < nstrips-1; i++ )  {
 		for( j=0; j < strips[i].nfaces; j++ )  {
 			if( strips[i].fu[j] )
 				rt_mk_nmg_planeeqn( strips[i].fu[j] );
@@ -1107,370 +1107,28 @@ VPRINT("	sphere_pt", sphere_pt);
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
-rt_log("ell done\n");
 
+	/* Release memory */
+	/* All strips have vertices */
+	for( i=0; i<nstrips; i++ )  {
+		rt_free( (char *)strips[i].vp, "strip vertex[]" );
+	}
+	/* All strips have faces, except for the poles */
+	for( i=1; i < nstrips-1; i++ )  {
+		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+	}
+	rt_free( (char *)strips, "strips[]" );
 	return(0);
+fail:
+	/* Release memory */
+	/* All strips have vertices */
+	for( i=0; i<nstrips; i++ )  {
+		rt_free( (char *)strips[i].vp, "strip vertex[]" );
+	}
+	/* All strips have faces, except for the poles */
+	for( i=1; i < nstrips-1; i++ )  {
+		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
+	}
+	rt_free( (char *)strips, "strips[]" );
+	return(-1);
 }
-
-#if 0
-
-extern struct vertex *rt_nmg_find_pt_in_shell(); /* XXX from g_pg.c */
-
-struct faceuse *
-rt_ell_generate_face( a, b, c, s )
-struct vertex	**a, **b, **c;
-struct shell	*s;
-{
-	struct vertex		**vertp[4];
-	struct faceuse		*fu;
-
-	vertp[0] = a;
-	vertp[1] = b;
-	vertp[2] = c;
-	if( (fu = nmg_cmface(s, vertp, 3 )) == 0 )  {
-		rt_log("rt_ell_generate_face() nmg_cmface failure\n");
-		return(NULL);
-	}
-	return(fu);
-}
-
-rt_ell_refine( a, b, c, statep, lvl )
-point_t	a;
-point_t	b;
-point_t	c;
-struct ell_state	*statep;
-int	lvl;
-{
-	point_t			d, e, f;
-	struct vertex		*verts[6];
-	struct faceuse		*fu1, *fu2, *fu3, *fu4;
-	point_t			model[6];
-	int			i;
-	point_t			midpt;
-	fastf_t			max_theta;
-	fastf_t			dot, cos_max_theta, rhs;
-
-rt_log("rt_ell_refine(%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
-a[X], a[Y], a[Z], b[X], b[Y], b[Z], c[X], c[Y], c[Z] );
-	VADD2SCALE( d, a, b, 0.5 );
-	VADD2SCALE( e, b, c, 0.5 );
-	VADD2SCALE( f, a, c, 0.5 );
-	/* Normalize */
-	VUNITIZE( d );
-	VUNITIZE( e );
-	VUNITIZE( f );
-
-	/* At the midpoint between D and E, find the appropriate
-	 * angular tolerance to use.  X in the unit sphere is A in
-	 * model space, and Y -> B, Z -> C.  Thus, the correct angular
-	 * tolerance is a linear combination of the tolerances needed
-	 * when exactly along the A, B, or C axis.
-	 */
-	VADD2SCALE( midpt, d, e, 0.5 );
-	VUNITIZE( midpt );
-	if( midpt[X] < 0 )  midpt[X] = -midpt[X];
-	if( midpt[Y] < 0 )  midpt[Y] = -midpt[Y];
-	if( midpt[Z] < 0 )  midpt[Z] = -midpt[Z];
-	/* Reduction sum of product of elements, not a vector dot product */
-	max_theta = VDOT( midpt, statep->theta_tol );
-
-	/* Account for normal tolerance */
-	if( max_theta > statep->normal_theta )  max_theta = statep->normal_theta;
-
-	/*  Measure angle between D and E in model space.
-	 *  Don't bother adding and then subtracting the center, V.
-	 *  If angle is greater than the angle tolerance, recurse.
-	 */
-	MAT4X3PNT( model[3], statep->invRinvS, d );
-	MAT4X3PNT( model[4], statep->invRinvS, e );
-	{
-		point_t	p3, p4;
-		VMOVE( p3, model[3] );
-		VMOVE( p4, model[4] );
-		VUNITIZE( p3 );
-		VUNITIZE( p4 );
-		dot = VDOT( p3, p4 );
-		/* as 'dot' becomes less than 1, the angle increases */
-	}
-	cos_max_theta = cos(max_theta);
-	rhs = cos_max_theta;
-
-	if( lvl < 4 && dot < cos_max_theta )  {
-		/* Refine further */
-		rt_ell_refine( a, d, f, statep, lvl+1 );
-		rt_ell_refine( d, b, e, statep, lvl+1 );
-		rt_ell_refine( e, c, f, statep, lvl+1 );
-		rt_ell_refine( f, d, e, statep, lvl+1 );
-		return;
-	}
-
-	/* Convert rest of points to model space */
-	MAT4X3PNT( model[0], statep->invRinvS, a );
-	MAT4X3PNT( model[1], statep->invRinvS, b );
-	MAT4X3PNT( model[2], statep->invRinvS, c );
-	/* 3 and 4 are already done */
-	MAT4X3PNT( model[5], statep->invRinvS, f );
-	for( i=0; i<6; i++ )  {
-		VADD2( model[i], model[i], statep->ei.v );
-	}
-
-	/* Attempt to share vertices with other faces */
-	for( i=0; i<6; i++ )  {
-		verts[i] = rt_nmg_find_pt_in_shell( statep->s, model[i], statep->hunt_tol_sq );
-	}
-
-	/* Generate the 4 faces, 3 verts each */
-	fu1 = rt_ell_generate_face( &verts[0], &verts[3], &verts[5], statep->s );
-	fu2 = rt_ell_generate_face( &verts[3], &verts[1], &verts[4], statep->s );
-	fu3 = rt_ell_generate_face( &verts[4], &verts[2], &verts[5], statep->s );
-	fu4 = rt_ell_generate_face( &verts[5], &verts[3], &verts[4], statep->s );
-
-	/* Associate vertex geometry */
-	for( i=0; i<6; i++ )  {
-		if( ! verts[i]->vg_p )  nmg_vertex_gv( verts[i], model[i] );
-	}
-
-	/* Associate face geometry */
-	rt_mk_nmg_planeeqn( fu1 );
-	rt_mk_nmg_planeeqn( fu2 );
-	rt_mk_nmg_planeeqn( fu3 );
-	rt_mk_nmg_planeeqn( fu4 );
-}
-
-/*
- * sphere - generate a polygon mesh approximating a sphere by
- *  recursive subdivision. First approximation is an octahedron;
- *  each level of refinement increases the number of polygons by
- *  a factor of 4.
- * Level 3 (128 polygons) is a good tradeoff if gouraud
- *  shading is used to render the database.
- *
- * Usage: sphere [level]
- *	level is an integer >= 1 setting the recursion level (default 1).
- *
- * Notes:
- *
- *  The triangles are generated with vertices in clockwise order as
- *  viewed from the outside in a right-handed coordinate system.
- *  To reverse the order, compile with COUNTERCLOCKWISE defined.
- *
- *  Shared vertices are not retained, so numerical errors may produce
- *  cracks between polygons at high subdivision levels.
- *
- *  The subroutines print_object() and print_triangle() should
- *  be changed to generate whatever the desired database format is.
- *  If UNC is defined, a PPHIGS text archive is generated.
- *
- * Jon Leech 3/24/89
- */
-#include <stdio.h>
-#include <math.h>
-#include <gl.h>
-
-typedef struct {
-    double  x, y, z;
-} point;
-
-typedef struct {
-    point     pt[3];	/* Vertices of triangle */
-    double    area;	/* Unused; might be used for adaptive subdivision */
-} triangle;
-
-typedef struct {
-    int       npoly;	/* # of polygons in object */
-    triangle *poly;	/* Polygons in no particular order */
-} object;
-
-/* Six equidistant points lying on the unit sphere */
-#define XPLUS {  1,  0,  0 }	/*  X */
-#define XMIN  { -1,  0,  0 }	/* -X */
-#define YPLUS {  0,  1,  0 }	/*  Y */
-#define YMIN  {  0, -1,  0 }	/* -Y */
-#define ZPLUS {  0,  0,  1 }	/*  Z */
-#define ZMIN  {  0,  0, -1 }	/* -Z */
-
-/* Vertices of a unit octahedron */
-triangle octahedron[] = {
-    { XPLUS, ZPLUS, YPLUS }, 0.0,
-    { YPLUS, ZPLUS, XMIN  }, 0.0,
-    { XMIN , ZPLUS, YMIN  }, 0.0,
-    { YMIN , ZPLUS, XPLUS }, 0.0,
-    { XPLUS, YPLUS, ZMIN  }, 0.0,
-    { YPLUS, XMIN , ZMIN  }, 0.0,
-    { XMIN , YMIN , ZMIN  }, 0.0,
-    { YMIN , XPLUS, ZMIN  }, 0.0
-};
-
-/* An octahedron */
-object oct = {
-    sizeof(octahedron) / sizeof(octahedron[0]),
-    &octahedron[0]
-};
-
-/* Forward declarations */
-point *normalize(/* point *p */);
-point *midpoint(/* point *a, point *b */);
-void print_object(/* object *obj, int level */);
-void print_triangle(/* triangle *t */);
-double sqr(/* double x */);
-double area_of_triangle(/* triangle *t */);
-
-extern char *malloc(/* unsigned */);
-object *old;
-int maxlevels;
-void disp_object();
-
-main(ac, av)
-int ac;
-char *av[];
-{
-    object *new;
-    int     i, level;
-    double min[3], max[3];
-    maxlevels = 1;
-
-    if (ac > 1)
-	if ((maxlevels = atoi(av[1])) < 1) {
-	    fprintf(stderr, "%s: # of levels must be >= 1\n", av[0]);
-	    exit(1);
-	}
-
-    
-
-#ifdef COUNTERCLOCKWISE
-    /* Reverse order of points in each triangle */
-    for (i = 0; i < oct.npoly; i++) {
-	point tmp;
-		      tmp = oct.poly[i].pt[0];
-	oct.poly[i].pt[0] = oct.poly[i].pt[2];
-	oct.poly[i].pt[2] = tmp;
-    }
-#endif
-
-    old = &oct;
-
-    /* Subdivide each starting triangle (maxlevels - 1) times */
-    for (level = 1; level < maxlevels; level++) {
-	/* Allocate a new object */
-	new = (object *)malloc(sizeof(object));
-	if (new == NULL) {
-	    fprintf(stderr, "%s: Out of memory on subdivision level %d\n",
-		av[0], level);
-	    exit(1);
-	}
-	new->npoly = old->npoly * 4;
-
-	/* Allocate 4* the number of points in the current approximation */
-	new->poly  = (triangle *)malloc(new->npoly * sizeof(triangle));
-	if (new->poly == NULL) {
-	    fprintf(stderr, "%s: Out of memory on subdivision level %d\n",
-		av[0], level);
-	    exit(1);
-	}
-
-	/* Subdivide each polygon in the old approximation and normalize
-	 *  the new points thus generated to lie on the surface of the unit
-	 *  sphere.
-	 * Each input triangle with vertices labelled [0,1,2] as shown
-	 *  below will be turned into four new triangles:
-	 *
-	 *			Make new points
-	 *			    a = (0+2)/2
-	 *			    b = (0+1)/2
-	 *			    c = (1+2)/2
-	 *	  1
-	 *	 /\		Normalize a, b, c
-	 *	/  \
-	 *    b/____\ c		Construct new triangles
-	 *    /\    /\		    [0,b,a]
-	 *   /	\  /  \		    [b,1,c]
-	 *  /____\/____\	    [a,b,c]
-	 * 0	  a	2	    [a,c,2]
-	 */
-	for (i = 0; i < old->npoly; i++) {
-	    triangle
-		 *oldt = &old->poly[i],
-		 *newt = &new->poly[i*4];
-	    point a, b, c;
-
-	    a = *normalize(midpoint(&oldt->pt[0], &oldt->pt[2]));
-	    b = *normalize(midpoint(&oldt->pt[0], &oldt->pt[1]));
-	    c = *normalize(midpoint(&oldt->pt[1], &oldt->pt[2]));
-
-	    newt->pt[0] = oldt->pt[0];
-	    newt->pt[1] = b;
-	    newt->pt[2] = a;
-	    newt++;
-
-	    newt->pt[0] = b;
-	    newt->pt[1] = oldt->pt[1];
-	    newt->pt[2] = c;
-	    newt++;
-
-	    newt->pt[0] = a;
-	    newt->pt[1] = b;
-	    newt->pt[2] = c;
-	    newt++;
-
-	    newt->pt[0] = a;
-	    newt->pt[1] = c;
-	    newt->pt[2] = oldt->pt[2];
-	}
-
-	if (level > 1) {
-	    free(old->poly);
-	    free(old);
-	}
-
-	/* Continue subdividing new triangles */
-	old = new;
-    }
-
-    disp_Init();
-	
-    min[0] = -2;
-    min[1] = -2;
-    min[2] = -2;
-
-    max[0] = 2;
-    max[1] = 2;
-    max[2] = 2;
-
-    disp_Autoscale(min, max);
-    /* Print out resulting approximation */
-    disp_Viewloop( disp_object);
-
-}
-
-/* Normalize a point p */
-point *normalize(p)
-point *p;
-{
-    static point r;
-    double mag;
-
-    r = *p;
-    mag = r.x * r.x + r.y * r.y + r.z * r.z;
-    if (mag != 0.0) {
-	mag = 1.0 / sqrt(mag);
-	r.x *= mag;
-	r.y *= mag;
-	r.z *= mag;
-    }
-
-    return &r;
-}
-
-/* Return the average of two points */
-point *midpoint(a, b)
-point *a, *b;
-{
-    static point r;
-
-    r.x = (a->x + b->x) * 0.5;
-    r.y = (a->y + b->y) * 0.5;
-    r.z = (a->z + b->z) * 0.5;
-
-    return &r;
-}
-#endif
