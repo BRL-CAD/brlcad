@@ -190,12 +190,16 @@ struct application *ap;
 	struct db_i *dbp = ap->a_rt_i->rti_dbip;
 	fastf_t conversion = 1.0;	/* Conversion factor for mass */
 	fastf_t volume = 0;
-	static char units[] = { "grams" };
-	static char unit2[] = { "in." };
+	char units[128] = {0};
+	char unit2[128] = {0};
 	int MAX_ITEM = 0;
 	time_t clock;
 	struct tm *locltime;
 	char *timeptr;
+
+	/* default units */
+	strcpy(units, "grams");
+	strcpy(unit2, "in.");
 
 	(void) time( &clock );
 	locltime = localtime( &clock );
@@ -226,12 +230,12 @@ struct application *ap;
 		strcpy( unit2, "in." );
 	} else {
 		bu_log("Warning: base2mm=%g, using default of %s--%s\n",
-			units, unit2 );
+		       dbp->dbi_base2local, units, unit2 );
 	}
 	
 	if( noverlaps )
 		bu_log( "%d overlap%c detected.\n\n", noverlaps,
-			noverlaps==1 ? (char) 0 : 's' );
+			noverlaps==1 ? '\0' : 's' );
 
 	fprintf( outfp, "RT Check Program Output:\n" );
 	fprintf( outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title );
@@ -245,6 +249,7 @@ struct application *ap;
 		} }
 
 	if( rpt_overlap ) {
+		/* ^L is char code for FormFeed/NewPage */
 		fprintf( outfp, "Weight by region (in %s, density given in g/cm^3):\n\n", units );
 		fprintf( outfp, "  Weight Matl LOS  Material Name  Density Name\n" );
 		fprintf( outfp, " ------- ---- --- --------------- ------- -------------\n" );
