@@ -9,15 +9,16 @@
  *	Phillip Dykstra
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
- *
- *  $Header$
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #ifndef PKG_H_SEENYET
 #define PKG_H_SEENYET
 
@@ -66,6 +67,11 @@ struct pkg_conn {
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1L))
+
+
+#define pkg_send_vls(type,vlsp,pkg)	\
+	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
+
 
 extern struct pkg_conn *pkg_open();
 extern struct pkg_conn *pkg_transerver();
