@@ -508,8 +508,8 @@ RT_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
  */
 int
 f_arced( argc, argv )
-int		argc;
-CONST char	**argv;
+int	argc;
+char	**argv;
 {
 	struct animate		*anp;
 	struct directory	*dp;
@@ -524,7 +524,7 @@ CONST char	**argv;
 		rt_log("arced: bad path specification '%s'\n", argv[1]);
 		return CMD_BAD;
 	}
-	if( !(anp = db_parse_1anim( dbip, argc, argv ) ) )  {
+	if( !(anp = db_parse_1anim( dbip, argc, (CONST char **)argv ) ) )  {
 		rt_log("arced: unable to parse command\n");
 		return CMD_BAD;
 	}
