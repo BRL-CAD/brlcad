@@ -1085,6 +1085,7 @@ struct application  {
 	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
 	int		a_user;		/* application-specific value */
 	genptr_t	a_uptr;		/* application-specific pointer */
+	genptr_t	a_spectrum;	/* application-specific rt_tabdata prointer */
 	fastf_t		a_color[3];	/* application-specific color */
 	fastf_t		a_dist;		/* application-specific distance */
 	vect_t		a_uvec;		/* application-specific vector */
