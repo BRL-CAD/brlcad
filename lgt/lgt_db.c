@@ -44,7 +44,7 @@ int		id;
 		prnt_Scroll( "LIGHT SOURCE [%d] %s\n", id, entry->name );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "       manual overide\t(%s)\n", entry->over ? "ON" : "OFF" );
+		prnt_Scroll( "       manual override\t(%s)\n", entry->over ? "ON" : "OFF" );
 		if( entry->stp == SOLTAB_NULL || entry->over )
 			{
 			if( --lines <= 0 && ! do_More( &lines ) )
@@ -146,7 +146,7 @@ int	id;
 	(void) sprintf( prompt, "light source name ? (%s) ", entry->name );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		(void) strncpy( entry->name, input_buf, MAX_LGT_NM-1 );
-	(void) sprintf( prompt, "manual overide ? [y|n](%c) ",
+	(void) sprintf( prompt, "manual override ? [y|n](%c) ",
 			entry->over ? 'y' : 'n' );
 	if( get_Input( input_buf, MAX_LN, prompt ) != NULL )
 		entry->over = input_buf[0] != 'n';
