@@ -521,6 +521,7 @@ struct application  {
 	struct xray	a_ray;		/* Actual ray to be shot */
 	int		(*a_hit)();	/* called when shot hits model */
 	int		(*a_miss)();	/* called when shot misses */
+	int		(*a_overlap)();	/* called when overlaps occur */
 	int		a_level;	/* recursion level (for printing) */
 	int		a_onehit;	/* flag to stop on first hit */
 	struct rt_i	*a_rt_i;	/* this librt instance */
@@ -536,6 +537,7 @@ struct application  {
 	vect_t		a_uvec;		/* application-specific vector */
 	vect_t		a_vvec;		/* application-specific vector */
 };
+#define RT_AFN_NULL	((int (*)())0)
 
 /*
  *			R T _ G
