@@ -1,6 +1,6 @@
 /*
- *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:13,
- *	@(#) version 2.1		last edit: 6/1/84 at 14:05:13.
+ *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:19,
+ *	@(#) version 2.2		last edit: 1/31/85 at 15:00:12.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -10,6 +10,7 @@
 #include "./3d.h"
 #include "./vdeck.h"
 
+extern double	unit_conversion;
 extern int	debug;
 extern char	*usage[], *cmd[];
 extern mat_t	xform, notrans, identity;
@@ -22,12 +23,13 @@ extern char	dir_names[], *dir_last;
 
 extern int	discr[];
 
+extern char		*malloc();
 extern long		lseek();
 extern int		abort(), quit();
 extern Directory	*lookup(), *diradd();
+extern void		toc(), list_toc();
 
 extern char	*toc_list[];
-extern int	toc_ct;
 extern char	*curr_list[];
 extern int	curr_ct;
 extern char	*arg_list[];
@@ -50,7 +52,7 @@ extern int		isave;
 extern char		buff[],	name[];
 extern char		operate;
 extern long		savsol;
-extern struct		ident ident, idbuf;
+extern struct		deck_ident d_ident, idbuf;
 
 #include <setjmp.h>
 extern jmp_buf		env;
