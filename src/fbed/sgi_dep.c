@@ -36,8 +36,6 @@ static const char RCSid[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, ar
 
 #include "common.h"
 
-
-
 #if HAS_SGIGL
 
 #include <stdio.h>

@@ -28,7 +28,7 @@ noinst_HEADERS = \
 	std.h \
 	try.h
 
-fbed_LDADD = ${FB} ${TERMIO} ${CURSOR} ${CURSES} ${SGIGL}
+fbed_LDADD = ${FB} ${TERMIO} ${CURSOR} ${CURSES} ${LIBGL}
 
 man_MANS = fbed.1
 

@@ -276,7 +276,7 @@ pixhist3d_pl_LDADD = ${BN}
 # pl_dm_LDADD = ${BU} ${DM}
 
 pl_sgi_SOURCES = pl-sgi.c
-pl_sgi_LDADD = ${SGIGL} ${BU}
+pl_sgi_LDADD = ${LIBGL} ${BU}
 
 pl_ps_SOURCES = pl-ps.c
 pl_ps_LDADD = ${BU}
@@ -328,7 +328,7 @@ pixcolors_SOURCES = pixcolors.c
 hd_SOURCES = hd.c
 
 sgi_pix_SOURCES = sgi-pix.c
-sgi_pix_LDADD = ${SGIGL}
+sgi_pix_LDADD = ${LIBGL}
 
 pixsaturate_SOURCES = pixsaturate.c
 
