@@ -423,7 +423,7 @@ reg	Node	*node;
 	reg	char	*after;
 
 	if( cakedebug )  {			/* BRL */
-		cdebug("action(): ", act->a_str, node);
+		cdebug("action(): %s, node=x%x", act->a_str, node);
 		print_act(act);
 		cdebug("\n");
 	}
