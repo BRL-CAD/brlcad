@@ -162,6 +162,7 @@ char *argv[];
   }
 
   bu_free(av, "X_dm_init: av");
+  zclip_ptr = &((struct x_vars *)dmp->dm_vars)->mvars.zclip;
   eventHandler = X_doevent;
   curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
@@ -191,6 +192,7 @@ XEvent *eventPtr;
   if(mged_variables->send_key && eventPtr->type == KeyPress){
     char buffer[2];
     KeySym keysym;
+    struct dm_char_queue *dcqp;
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
 		  &keysym, (XComposeStatus *)NULL);
@@ -198,6 +200,9 @@ XEvent *eventPtr;
     if(keysym == mged_variables->hot_key)
       return TCL_OK;
 
+    BU_GETSTRUCT(dcqp, dm_char_queue);
+    dcqp->dlp = curr_dm_list;
+    BU_LIST_PUSH(&head_dm_char_queue.l, &dcqp->l);
     write(dm_pipe[1], buffer, 1);
 
     /* Use this so that these events won't propagate */
@@ -1533,6 +1538,7 @@ char *argv[];
       int x;
       int y;
       int old_orig_gui;
+      int stolen = 0;
 
       old_orig_gui = mged_variables->orig_gui;
 
@@ -1542,14 +1548,20 @@ char *argv[];
       if(mged_variables->faceplate &&
 	 mged_variables->orig_gui){
 #define        MENUXLIM        (-1250)
-	if(scroll_active)
-	   goto end;
-
-	if(x >= MENUXLIM && scroll_select( x, y, 0 ))
+	if(scroll_active){
+	  stolen = 1;
 	  goto end;
+	}
 
-	if(x < MENUXLIM && mmenu_select( y, 0))
+	if(x >= MENUXLIM && scroll_select( x, y, 0 )){
+	  stolen = 1;
 	  goto end;
+	}
+
+	if(x < MENUXLIM && mmenu_select( y, 0)){
+	  stolen = 1;
+	  goto end;
+	}
       }
 
       mged_variables->orig_gui = 0;
@@ -1557,7 +1569,24 @@ char *argv[];
 
 end:
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
+      if(mged_variables->mouse_nirt && !stolen){
+	point_t view_pt;
+	point_t model_pt;
+	fastf_t sf = 1.0/2047.0;
+
+	VSET(view_pt, x, y, 2047.0);
+	VSCALE(view_pt, view_pt, sf);
+	MAT4X3PNT(model_pt, view2model, view_pt);
+	VSCALE(model_pt, model_pt, base2local);
+	if(*zclip_ptr)
+	  bu_vls_printf(&vls, "nirt %lf %lf %lf",
+			model_pt[X], model_pt[Y], model_pt[Z]);
+	else
+	  bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
+			model_pt[X], model_pt[Y], model_pt[Z]);
+      }else
+	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
+
       status = Tcl_Eval(interp, bu_vls_addr(&vls));
       mged_variables->orig_gui = old_orig_gui;
       bu_vls_free(&vls);
@@ -1881,3 +1910,4 @@ set_knob_offset()
   for(i = 0; i < 8; ++i)
     ((struct x_vars *)dmp->dm_vars)->knobs[i] = 0;
 }
+
