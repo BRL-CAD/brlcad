@@ -80,7 +80,7 @@
  *
  *	HAVE_DLOPEN		Dynamic library loading support.
  *
- *      HAVE_STRCASECMP		Has stricmp()
+ *      HAVE_STRCASECMP		Has strcasecmp()
  *
  *  $Header$
  */
@@ -465,7 +465,6 @@
 #       define HAVE_VFORK                       1
 #       define HAVE_VPRINTF             1
 #       define HAVE_WRITEV              1
-#	define HAVE_STRCASECMP		1
 #endif
 
 #if defined(__sp3__)
@@ -599,6 +598,10 @@
 #	define HAVE_UNIX_DOMAIN_SOCKETS	1
 #endif
 
+#if defined(BSD)
+#	define HAVE_STRCASECMP		1
+#endif
+
 /*
  *	Posix and XOpen terminal-handling features.
  *
@@ -660,6 +663,10 @@
 
 #if 1
 #	define HAVE_STRDUP	1
+#endif
+
+#if 1
+#	define HAVE_STRERROR_R	1
 #endif
 
 /* We need sys/types.h for definitions and prototypes that will appear 
