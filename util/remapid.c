@@ -201,7 +201,6 @@ int	region_id;
     struct curr_id	*qcip;	/* The query */
     struct curr_id	*cip;	/* Value to return */
 
-    bu_log("Looking up %d\n", region_id);
     /*
      *	Prepare the query
      */
@@ -393,15 +392,30 @@ char	*sf_name;
 	    break;
 	}
 
-	bu_log("The guys to get mapped to %d\n", newid);
+	/*
+	 *	Tell each of these current regionids
+	 *	about it's going to get the new regionid value
+	 */
 	while (BU_LIST_WHILE(cip, curr_id, &cids))
 	{
 	    cip -> ci_newid = newid;
-	    print_curr_id(cip, 1);
 	    BU_LIST_DEQUEUE(&(cip -> l));
 	}
-	bu_log("-------------------------\n");
     }
+}
+
+void record_region (region_name, region_id)
+
+char	*region_name;
+int	region_id;
+
+{
+    struct curr_id	*cip;
+    struct remap_reg	*rp;
+
+    cip = lookup_curr_id(region_id);
+    rp = mk_remap_reg(region_name);
+    BU_LIST_INSERT(&(cip -> ci_regions), &(rp -> l));
 }
 
 /*
@@ -479,4 +493,16 @@ char	*argv[];
 
     if (debug)
 	rb_walk1(assignment, print_curr_id, INORDER);
+
+    record_region("USA", 1776);
+    record_region("Will", 7);
+    record_region("Griff", 8);
+    record_region("Jake", 11);
+    record_region("Chad", 11);
+
+    if (debug)
+    {
+	bu_log(" . . . . . . . . . . .. .\n");
+	rb_walk1(assignment, print_curr_id, INORDER);
+    }
 }
