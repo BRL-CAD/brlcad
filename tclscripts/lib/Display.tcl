@@ -97,12 +97,10 @@ class Display {
 ########################### ###########################
 ########################### Public/Interface Methods ###########################
 body Display::update {obj} {
-#puts "Display::update: obj - $obj" 
     refresh
 }
 
 body Display::refresh {} {
-#puts "Display::refresh - enter, [get_name]"
     Dm::drawBegin
 
     if {$itk_option(-perspective)} {
@@ -252,14 +250,17 @@ body Display::slew {x1 y1} {
 
     set _x [expr ($x1 - $x2) * $sf]
     set _y [expr (-1.0 * $y1 + $y2) * $sf]
-
+	
     View::slew $_x $_y
 }
 
 body Display::fb_active {args} {
-    eval Dm::fb_active $args
-    refresh
-    return $itk_option(-fb_active)
+    if {$args == ""} {
+	return $itk_option(-fb_active)
+    } else {
+	eval Dm::fb_active $args
+	refresh
+    }
 }
 
 body Display::zclip {args} {
