@@ -65,11 +65,11 @@ grid_setup()
 	if( viewsize <= 0.0 )
 		rt_bomb("viewsize <= 0");
 	/* model2view takes us to eye_model location & orientation */
-	mat_idn( toEye );
+	bn_mat_idn( toEye );
 	MAT_DELTAS_VEC_NEG( toEye, eye_model );
 	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-	mat_mul( model2view, Viewrotscale, toEye );
-	mat_inv( view2model, model2view );
+	bn_mat_mul( model2view, Viewrotscale, toEye );
+	bn_mat_inv( view2model, model2view );
 
 	/* Determine grid cell size and number of pixels */
 	if( cell_newsize ) {
@@ -100,9 +100,9 @@ grid_setup()
 		mat_t		hv2model;
 
 		/* Build model2hv matrix, including mm2inches conversion */
-		mat_copy( model2hv, Viewrotscale );
+		bn_mat_copy( model2hv, Viewrotscale );
 		model2hv[15] = gift_grid_rounding;
-		mat_inv( hv2model, model2hv );
+		bn_mat_inv( hv2model, model2hv );
 
 		VSET( v_ll, -1, -1, 0 );
 		MAT4X3PNT( m_ll, view2model, v_ll );
@@ -113,8 +113,8 @@ grid_setup()
 		MAT4X3PNT( m_delta, hv2model, hv_delta );
 		VSUB2( eye_model, eye_model, m_delta );
 		MAT_DELTAS_VEC_NEG( toEye, eye_model );
-		mat_mul( model2view, Viewrotscale, toEye );
-		mat_inv( view2model, model2view );
+		bn_mat_mul( model2view, Viewrotscale, toEye );
+		bn_mat_inv( view2model, model2view );
 	}
 
 	/* Create basis vectors dx and dy for emanation plane (grid) */
@@ -129,7 +129,7 @@ grid_setup()
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
 		VSET( temp, -63.5*2.0/viewsize, 0, 0 );
-		rt_log("red eye: moving %f relative screen (left)\n", temp[X]);
+		bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
 		MAT4X3VEC( left_eye_delta, view2model, temp );
 		VPRINT("left_eye_delta", left_eye_delta);
 	}
@@ -166,7 +166,7 @@ grid_setup()
 		fastf_t		ang;	/* radians */
 		fastf_t		dx, dy;
 
-		ang = curframe * frame_delta_t * rt_twopi / 10;	/* 10 sec period */
+		ang = curframe * frame_delta_t * bn_twopi / 10;	/* 10 sec period */
 		dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 		dy = sin(ang) * 0.5;
 		VJOIN2( viewbase_model, viewbase_model,
@@ -176,12 +176,12 @@ grid_setup()
 
 	if( cell_width <= 0 || cell_width >= INFINITY ||
 	    cell_height <= 0 || cell_height >= INFINITY )  {
-		rt_log("grid_setup: cell size ERROR (%g, %g) mm\n",
+		bu_log("grid_setup: cell size ERROR (%g, %g) mm\n",
 			cell_width, cell_height );
 	    	rt_bomb("cell size");
 	}
 	if( width <= 0 || height <= 0 )  {
-		rt_log("grid_setup: ERROR bad image size (%d, %d)\n",
+		bu_log("grid_setup: ERROR bad image size (%d, %d)\n",
 			width, height );
 		rt_bomb("bad size");
 	}
@@ -213,7 +213,7 @@ do_run( a, b )
 		/*
 		 *  Parallel case.
 		 */
-		rt_parallel( worker, npsw );
+		bu_parallel( worker, npsw );
 	}
 	/*
 	 *  Ensure that all the workers are REALLY finished.
@@ -221,18 +221,18 @@ do_run( a, b )
 	 *  the gang keeps going, so this can actually happen (sigh).
 	 */
 	if( nworkers_finished != npsw )  {
-		rt_log("\n***ERROR: %d workers did not finish!\n\n",
+		bu_log("\n***ERROR: %d workers did not finish!\n\n",
 			npsw - nworkers_finished);
 	}
 	if( nworkers_started != npsw )  {
-		rt_log("\nNOTICE:  only %d workers started, expected %d\n",
+		bu_log("\nNOTICE:  only %d workers started, expected %d\n",
 			nworkers_started, npsw );
 	}
 
 	/* Tally up the statistics */
 	for( cpu=0; cpu < npsw; cpu++ )  {
 		if( resource[cpu].re_magic != RESOURCE_MAGIC )  {
-			rt_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
 			continue;
 		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
