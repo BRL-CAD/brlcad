@@ -3647,7 +3647,8 @@ CONST struct rt_tol	*tol;
 				rt_bomb("nmg_lu_reorient() no 2nd vertex?\n");
 found:
 				VADD2SCALE( mid, v1->vg_p->coord, v2->vg_p->coord, 0.5 );
-				class = nmg_class_pt_f_except( mid, fu, lu, tol );
+				class = nmg_class_pt_fu_except( mid, fu, lu,
+					NULL, NULL, NULL, 0, tol );
 #if 0
 rt_log("nmg_lu_reorient() eu midpoint=(%g, %g, %g), class=%s\n", V3ARGS(mid), nmg_class_name(class) );
 #endif
