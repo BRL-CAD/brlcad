@@ -697,11 +697,11 @@ start_face_loops:
 				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
 			}
 		}
-		if( fu->last->s_p != bs->bs_dest )  {
+		if( fu->s_p != bs->bs_dest )  {
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x moved to A shell\n", fu);
-			nmg_mv_fu_between_shells( bs->bs_dest, s, fu->last );
-			goto start_face_loops;	/* lost our place */
+			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
+			goto start_faces;	/* lost our place */
 		}
 		fu = fu->next;
 	} while (fu != fu_end);
@@ -725,12 +725,12 @@ start_wire_loop:
 		switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
-			(void)nmg_demote_lu( lu->last );/* kill loop & mate */
+			(void)nmg_demote_lu( lu );/* kill loop & mate */
 			goto start_wire_loop;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( lu->last->up.s_p == bs->bs_dest )  break;
-			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
+			if( lu->up.s_p == bs->bs_dest )  break;
+			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
 			goto start_wire_loop;
 		}
 		lu = lu->next;
@@ -748,12 +748,12 @@ start_wire_edge:
 		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse into vertices */
-			(void)nmg_demote_eu( eu->last );	/* and mate */
+			(void)nmg_demote_eu( eu );	/* and mate */
 			goto start_wire_edge;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( eu->last->up.s_p == bs->bs_dest )  break;
-			nmg_mv_eu_between_shells( bs->bs_dest, s, eu->last );
+			if( eu->up.s_p == bs->bs_dest )  break;
+			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
 			goto start_wire_edge;
 		}
 		eu = eu->next;
@@ -787,12 +787,12 @@ start_vertex_loops:
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			/* Simply eliminate the loopuse */
-			nmg_klu( lu->last );	/* kill loop & mate */
+			nmg_klu( lu );	/* kill loop & mate */
 			goto start_vertex_loops;
 		case BACTION_RETAIN:
 		case BACTION_RETAIN_AND_FLIP:
-			if( lu->last->up.s_p == bs->bs_dest )  break;
-			nmg_mv_lu_between_shells( bs->bs_dest, s, lu->last );
+			if( lu->up.s_p == bs->bs_dest )  break;
+			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
 			goto start_vertex_loops;
 		}
 		lu = lu->next;
