@@ -79,7 +79,11 @@ XGLUE(rt_botface_w_normals_,TRI_TYPE)(struct soltab	*stp,
 	if( (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && (bot->bot_flags & RT_BOT_USE_NORMALS) && vertex_normals ) {
 		trip->tri_normals = (NORM_TYPE *)bu_malloc( 9 * sizeof( NORM_TYPE ), "trip->tri_normals" );
 		for( i=0 ; i<3 ; i++ ) {
-			VMOVE( &trip->tri_normals[i*3], &vertex_normals[i*3] );
+			int j;
+
+			for( j=0 ; j<3 ; j++ ) {
+				trip->tri_normals[i*3+j] = vertex_normals[i*3+j] * NORMAL_SCALE;
+			}
 		}
 	} else {
 		trip->tri_normals = (NORM_TYPE *)NULL;
@@ -157,14 +161,6 @@ XGLUE(rt_bot_prep_pieces_,TRI_TYPE)(struct bot_specific	*bot,
 
 	fap[surfno] = trip;
 
-	/* It is critical that the surfno's used in
-	 * rt error messages (from hit_surfno) match
-	 * the tri_surfno values, so that mged users who
-	 * run "db get name f#" to see that triangle
-	 * get the triangle they're expecting!
-	 */
-	BU_ASSERT_LONG( trip->tri_surfno, ==, surfno );
-
 	if (bot->bot_mode == RT_BOT_PLATE ||
 	   bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
 	    if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
@@ -204,25 +200,6 @@ XGLUE(rt_bot_prep_pieces_,TRI_TYPE)(struct bot_specific	*bot,
 
     }
 
-#if 0
-    for (surfno=ntri-1 ; surfno >= 0; surfno-- )  {
-	trip = bot->bot_facearray[surfno];
-	if (trip->tri_surfno != surfno) {
-	    bu_log("trip->tri_surfno:%d != piecenum%d\n", 
-		   trip->tri_surfno, surfno);
-	    bu_bomb("");
-	}
-    }
-
-    trip = bot->bot_facelist;
-    while( trip ) {
-	    if( trip->tri_surfno < 0 || trip->tri_surfno >= ntri ) {
-		    bu_log( "%s:\n", stp->st_dp->d_namep );
-		    bu_log( "\ttrip->tri_surfno = %d\n", trip->tri_surfno );
-	    }
-	    trip = trip->tri_forw;
-    }
-#endif
 }
 
 /*
@@ -294,7 +271,7 @@ struct rt_i		*rtip;
 				}
 			}
 			if( default_normal < 0 ) {
-				if( rt_botface( stp, bot, p1, p2, p3, ntri, tol ) > 0 )
+				if( rt_botface( stp, bot, p1, p2, p3, tri_index, tol ) > 0 )
 					ntri++;
 			} else {
 				fastf_t normals[9];
@@ -309,11 +286,11 @@ struct rt_i		*rtip;
 						VMOVE( &normals[i*3], &bot_ip->normals[index*3] );
 					}
 				}
-				if( rt_botface_w_normals( stp, bot, p1, p2, p3, normals, ntri, tol ) > 0 )
+				if( rt_botface_w_normals( stp, bot, p1, p2, p3, normals, tri_index, tol ) > 0 )
 					ntri++;
 			}
 		} else {
-			if( rt_botface( stp, bot, p1, p2, p3, ntri, tol ) > 0 )
+			if( rt_botface( stp, bot, p1, p2, p3, tri_index, tol ) > 0 )
 				ntri++;
 		}
 	}
@@ -1130,14 +1107,6 @@ struct seg		*seghead;
 		for( trinum=0 ; trinum<tris_in_piece ;
 		     trinum++, trip=bot->bot_facearray[face_array_index+trinum] ) {
 			fastf_t dN, abs_dN;
-
-		    if (trip->tri_surfno < (piecenum*bot->bot_tri_per_piece) ||
-			trip->tri_surfno >= 
-			((piecenum + 1) * bot->bot_tri_per_piece )) {
-			    bu_log("trip->tri_surfno:%d != piecenum%d\n", 
-				   trip->tri_surfno, piecenum);
-		    }
-
 		    /*
 		     *  Ray Direction dot N.  (N is outward-pointing normal)
 		     *  wn points inwards, and is not unit length.
@@ -1245,9 +1214,11 @@ register struct xray	*rp;
 		u = 1.0 - v - w;
 		if( u < 0.0 ) u = 0.0;
 		VSETALL( hitp->hit_normal, 0.0 );
+
 		for( i=X ; i<=Z ; i++ ) {
-			hitp->hit_normal[i] = u*trip->tri_normals[i] + v*trip->tri_normals[i+3] + w*trip->tri_normals[i+6];
+			hitp->hit_normal[i] = u*trip->tri_normals[i]*ONE_OVER_SCALE + v*trip->tri_normals[i+3]*ONE_OVER_SCALE + w*trip->tri_normals[i+6]*ONE_OVER_SCALE;
 		}
+		VUNITIZE( hitp->hit_normal );
 
 		if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS ) {
 			if( VDOT( old_norm, hitp->hit_normal ) < 0.0 ) {
