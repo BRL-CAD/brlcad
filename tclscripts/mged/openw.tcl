@@ -1622,10 +1622,14 @@ hoc_register_menu_data "Tools" "Color Editor..." "Color Editor"\
 #	-label "Classic Menu Tool..." -underline 0\
 #	-command "toggle_button_menu $id"
 .$id.menubar.tools add separator
-.$id.menubar.tools add command -label "Command Window" -underline 0\
+.$id.menubar.tools add command -label "Command Window" -underline 6\
 	-command "raise .$id"
-.$id.menubar.tools add command -label "Geometry Window" -underline 0\
+hoc_register_menu_data "Tools" "Command Window" "Command Window"\
+	{ { summary "Raise the command window." } }
+.$id.menubar.tools add command -label "Geometry Window" -underline 7\
 	-command "raise $mged_gui($id,top)"
+hoc_register_menu_data "Tools" "Geometry Window" "Geometry Window"\
+	{ { summary "Raise the geometry window." } }
 
 menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.help add command -label "About MGED" -underline 0\
