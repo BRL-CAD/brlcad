@@ -65,6 +65,9 @@ If you need to install the software somewhere other than /usr/brlcad,
 	sh gen.sh install
 .ft R
 .fi
+.sp .5
+Please note that the binary directory must not be the same
+as the location of the source tree.
 .NH 1
 DISTRIBUTION TERMS
 .PP
@@ -126,19 +129,12 @@ center box;
 l l l l l.
 MTYPE	Hardware	Software	Framebuffer	MGED
 _
-c1	Convex C1	UNIX 6.2.32.2	net	-
-xmp	Cray X-MP,Y-MP,C-90	UNICOS 8	net,X11	X11
-cr2	Cray-2	UNICOS 7	net,X11	X11
-alpha	DEC Alpha	OSF/1 V3.0	net,X11	X11
-vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	net	-
 li	IBM PC	Linux	net,X11	X11
-bsdi	IBM PC	BSDI	net,X11	X11
-nb86	IBM PC  NetBSD/i386 1.0	net,X11	X11
-5d	SGI 4D	Irix 4.0.5	sgi,net,X11	sgi,X11
+fbsd	IBM PC	FreeBSD 3.x	net,X11	X11
 6d	SGI 4D	Irix 5.2	sgi,net,X11	sgi,X11
-7d	SGI 4D/TFP	Irix 6	sgi,net,X11	X11
-sun3	Sun-3/*	SunOS 4.1.X	net,X11	X11
-sun4	Sun-4/*	SunOS 4.1.X	net,X11	X11
+7d	SGI 4D	Irix 6	ogl,net,X11	ogl,X11
+m4i64	SGI	IRIX64 6.4	ogl,net,X11	ogl,X11
+m4i65	SGI	IRIX64 6.5	ogl,net,X11	ogl,X11
 sun5	Sun-4/*	SunOS 5.3,5.4	net,X11	xgl,X11
 .TE
 For high-performance graphics, the SGI and Sun (GX) platforms
@@ -153,6 +149,17 @@ being used.
 center box;
 l l l l l.
 MTYPE	Hardware	Software
+_
+c1	Convex C1	UNIX 6.2.32.2	net	-
+xmp	Cray X-MP,Y-MP,C-90	UNICOS 8	net,X11	X11
+cr2	Cray-2	UNICOS 7	net,X11	X11
+alpha	DEC Alpha	OSF/1 V3.0	net,X11	X11
+vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	net	-
+bsdi	IBM PC	BSDI	net,X11	X11
+nb86	IBM PC  NetBSD/i386 1.0	net,X11	X11
+5d	SGI 4D	Irix 4.0.5	sgi,net,X11	sgi,X11
+sun3	Sun-3/*	SunOS 4.1.X	net,X11	X11
+sun4	Sun-4/*	SunOS 4.1.X	net,X11	X11
 _
 3d	SGI 3030	Version 3.5, 3.6
 apollo	Apollo	SR10.1
@@ -170,7 +177,6 @@ pyr	Pyramid 9820	OSx Version 4.1	net	-
 sel	Gould PN6080, PN9080
 stad	Stardent VISTRA	System V
 stl	Stellar	System V
-vax	DEC VAX-11	Berkeley 4.1 BSD
 .TE
 These systems are not considered ``supported'', but should work with
 little or no effort.
@@ -186,17 +192,19 @@ Optional framebuffer support is:
 .TS
 center box;
 l l.
+if_ogl	OpenGL display
+if_X	X Window System (X11R3, R4, R5)
 if_ab	Abekas A60 videodisk (ethernet)
+if_remote	Network access to remote display
+_
+if_sgi	SGI Iris 3-D display
 if_adage	Adage RDS-3000 ("Ikonas")
 if_ptty	AT&T 5620 w/special Moss layer
 if_sun	SunView interface
 if_ts	TekSource VME framebuffer
 if_rat	Raster Technology One/80
-if_remote	Network access to remote display
-if_sgi	SGI Iris 3-D display
 if_4d	SGI 4-D display
 if_ug	Ultra Graphics
-if_X	X Window System (X11R3, R4, R5)
 .TE
 .PP
 At present, all versions of \fBmged\fR have support for these types of
@@ -313,9 +321,9 @@ in order to have the Sun workstation read the tape using the industry
 standard QIC-24 format, rather than the default Sun behavior of reading
 the tape in QIC-11 format.
 .IP 5)
-Apply all the relevant errata sheets.  They are stored on the
-anonymous FTP server host ftp.arl.mil, in the directory brl-cad,
-and are named "errata4.0-irix4" and the like.
+Apply all the relevant errata sheets.
+Check for them at the URL
+http://ftp.arl.mil/brlcad/
 .NH 1
 SOFTWARE ORGANIZATION
 .PP
@@ -1979,13 +1987,7 @@ public inspection on the World-Wide-Web.  The URL to access this
 (and other online BRL-CAD) release information is:
 .sp .5
 .ti +1i
-http://ftp.arl.mil/brl-cad/
-.sp .5
-The URL to access general information and published reports on BRL-CAD is:
-.sp .5
-.ti +1i
-http://web.arl.mil/software/brlcad/
-.sp .5
+http://ftp.arl.mil/brlcad/
 .PP
-It is our intention to make substantial additional use of the
-World-Wide-Web in the comming months.
+The World-Wide-Web is now our primary means of providing
+software and documentation to our user community.
