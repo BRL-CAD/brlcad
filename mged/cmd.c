@@ -77,7 +77,7 @@ void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack(
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
-void	f_ev(), f_nmgtest(), f_debugnmg();
+void	f_ev(), f_debugnmg();
 void	f_tol();
 void	f_debugdir();
 
@@ -210,8 +210,6 @@ static struct funtab {
 	f_name,3,3,
 "mvall", "oldname newname", "rename object everywhere",
 	f_mvall, 3, 3,
-"nmgtest", "solid <op solid>", "test booleans on NMG (experimental)",
-	f_nmgtest, 2, MAXARGS,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
 	f_overlay, 2, 3,
 "p", "dx [dy dz]", "set parameters",
