@@ -3,7 +3,7 @@
 stl-g \- Stereolithography Translator (STL to BRL-CAD)
 .SH SYNOPSIS
 .B stl-g
-[-da] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-u reg_exp] [-x RT_DEBUG_FLAG] file.stl file.g
+[-dab] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-u reg_exp] [-x RT_DEBUG_FLAG] file.stl file.g
 .SH DESCRIPTION
 .I stl-g\^
 converts the specified
@@ -11,6 +11,9 @@ converts the specified
 to a BRL-CAD
 .I file.g
 file.
+Use the
+.I -b
+option if you have a binary STL file (the default is ASCII).
 The
 .I -d
 option prints debugging information.
