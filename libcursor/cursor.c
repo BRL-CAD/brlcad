@@ -19,11 +19,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <string.h>
-#if ! defined( BSD ) && ! defined( sgi )
+#ifndef cray
+#if ! defined( BSD ) && ! defined( SYSV )
 #include <sys/_ioctl.h>
 #else
 #include <sys/ioctl.h>
 #define _winsize winsize	/* For compatibility with _ioctl.h.	*/
+#endif
 #endif
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
