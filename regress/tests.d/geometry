@@ -41,7 +41,7 @@ initializeVariable BRLCAD_ROOT "$__CADROOT"
 start ( ) {
     
 #
-# these should be the brlcad "database" names that are used to create geometry in a geometry editor
+# these should be the brlcad "database names" that are used to create geometry in a geometry editor
 #
 PRIMITIVES="arb4 arb5 arb6 arb7 arb8 arbn ars bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
 #
@@ -51,9 +51,6 @@ VER="4 5"
 
 #
 # Start of Primitive Arguments
-#
-# Add 1) the full name of the primitive, 2) the 'in' command arg description,
-#     3) 'in' command arguments, & 4) 'db put' command arguments.
 ###
 
 #
@@ -335,7 +332,7 @@ xxx_IN_ARGS=""
 xxx_DB_ARGS=""
 
 #
-# Done
+# End of Primitive Arguments
 ###
 
 clean
@@ -537,7 +534,7 @@ case "$1" in
         clean
         ;;
     * )
-        log "Usage: $0 {start|stop|restart|status}"
+        log "Usage: $0 {start|stop|restart|status|clean}"
         exit 1
 esac
 
