@@ -369,8 +369,8 @@ char	**argv;
 	*vp++ = "rt";
 	*vp++ = "-s50";
 	*vp++ = "-M";
-	if( mged_variables.perspective > 0 )  {
-		(void)sprintf(pstring, "-p%g", mged_variables.perspective);
+	if( mged_variables->perspective > 0 )  {
+		(void)sprintf(pstring, "-p%g", mged_variables->perspective);
 		*vp++ = pstring;
 	}
 	for( i=1; i < argc; i++ )
@@ -609,8 +609,8 @@ char	**argv;
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
-	if( mged_variables.perspective > 0 )
-		(void)fprintf(fp, "-p%g", mged_variables.perspective);
+	if( mged_variables->perspective > 0 )
+		(void)fprintf(fp, "-p%g", mged_variables->perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
@@ -966,7 +966,7 @@ int	num;
 	write( 2, "rtif_sigint\n", 12);
 
 	/* Restore state variables */
-	mged_variables = rtif_saved_state;	/* struct copy */
+	*mged_variables = rtif_saved_state;	/* struct copy */
 
 	if(rtif_vbp)  {
 		rt_vlblock_free(rtif_vbp);
@@ -1008,8 +1008,8 @@ char	**argv;
 	  return TCL_ERROR;
 
 	/* Save any state variables we plan on changing */
-	rtif_saved_state = mged_variables;	/* struct copy */
-	mged_variables.autosize = 0;
+	rtif_saved_state = *mged_variables;	/* struct copy */
+	mged_variables->autosize = 0;
 
 	rtif_delay = 0;			/* Full speed, by default */
 	rtif_mode = 1;			/* wireframe drawing */
@@ -1106,7 +1106,7 @@ char	**argv;
 	db_free_anim(dbip);	/* Forget any anim commands */
 
 	/* Restore state variables */
-	mged_variables = rtif_saved_state;	/* struct copy */
+	*mged_variables = rtif_saved_state;	/* struct copy */
 
 	(void)mged_svbase();
 
@@ -1185,7 +1185,7 @@ char	**argv;
 	{
 		VSET(center_model, -toViewcenter[MDX],
 		    -toViewcenter[MDY], -toViewcenter[MDZ]);
-		if (mged_variables.adcflag)
+		if (mged_variables->adcflag)
 		{
 		   Tcl_AppendResult(interp, "Firing through angle/distance cursor...\n",
 				    (char *)NULL);
