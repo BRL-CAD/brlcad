@@ -20,6 +20,7 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -557,6 +558,7 @@ struct rt_vls *matparm;
 char	**dpp;
 {
 	register char	*cp;
+	struct rt_vls	material;
 
 	RT_VLS_CHECK( matparm );
 	if( env_region.reg_mfuncs )  {
@@ -566,22 +568,20 @@ char	**dpp;
 	env_region = *rp;		/* struct copy */
 	env_region.reg_mfuncs = (char *)0;
 
+	rt_vls_init( &material );
+	rt_vls_vlscat( &material, matparm );
 	/* Expect "material SPACE args", find space */
-	cp = RT_VLS_ADDR( matparm );
-	while( *cp != '\0' && *cp != ' ' )
+	cp = RT_VLS_ADDR( &material );
+	while( *cp != '\0' && isascii(*cp) && !isspace(*cp) )
 		cp++;
 	*cp++ = '\0';
 
-	strncpy( env_region.reg_mater.ma_matparm, cp++,
+	strncpy( env_region.reg_mater.ma_matname, RT_VLS_ADDR(&material),
+		sizeof(rp->reg_mater.ma_matname) );
+	strncpy( env_region.reg_mater.ma_matparm, cp,
 		sizeof(rp->reg_mater.ma_matparm) );
 
-	/* truncate the string to just the material name */
-	rt_vls_trunc( matparm, (int)(--cpp - RT_VLS_ADDR(matparm)) );
-
-	strncpy( env_region.reg_mater.ma_matname, RT_VLS_ADDR(matparm),
-		sizeof(rp->reg_mater.ma_matname) );
-
-
 	(void)mlib_setup( &env_region );
+	rt_vls_free( &material );
 	return(0);		/* This region should be dropped */
 }
