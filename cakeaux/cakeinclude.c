@@ -201,6 +201,9 @@ label:	for (k = bufpos ;
 	return(k);
 }
 
+/*
+ *			G E T _ I N C L U D E S
+ */
 get_includes(s)
 char *s;
 {
@@ -268,6 +271,11 @@ char *av[];
 	 * left over for processing.
 	 */
 	if ((arg_index = parse_args(ac, av)) >= ac) usage();
+
+	if( debug )  {
+		if( incdir )  fprintf(stderr, "include dir = '%s'\n", incdir );
+		if( srcdir )  fprintf(stderr, "source dir  = '%s'\n", srcdir );
+	}
 
 	get_includes(av[arg_index]);
 	return(0);
