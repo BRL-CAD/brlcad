@@ -567,8 +567,9 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#	undef	sun_no_opts
-#	define	sun_x11
+#	define	sun_no_opts	/* Production configuration */
+#	undef	sun_x11
+#	undef	sun_openwin
 #	undef	sun_x11_gds
 #	ifdef sun_no_opts
 /*		Normal Sun configuration */
@@ -869,6 +870,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifdef pyr
+/*	Pyramid with OSx */
 #	undef	pyr
 #	define	MTYPE	pyr
 #	define	BSD	42
