@@ -257,6 +257,27 @@ register struct vertexuse	*vu;
 #define BACTION_RETAIN			2
 #define BACTION_RETAIN_AND_FLIP		3
 
+static char	*nmg_baction_names[] = {
+	"*undefined 0*",
+	"BACTION_KILL",
+	"BACTION_RETAIN",
+	"BACTION_RETAIN_AND_FLIP",
+	"*undefined 4*"
+};
+
+#define NMG_CLASS_BAD		8
+static char	*nmg_class_names[] = {
+	"AinB",
+	"AonBshared",
+	"AonBanti",
+	"AoutB",
+	"BinA",
+	"BonAshared",
+	"BonAanti",
+	"BoutA",
+	"*BAD*"
+};
+
 /*
  *			N M G _ A C T _ O N _ L O O P
  *
@@ -496,16 +517,6 @@ struct nmg_bool_state  {
 	int		*bs_actions;
 };
 
-#define NMG_CLASS_AinB		0
-#define NMG_CLASS_AonBshared	1
-#define NMG_CLASS_AonBanti	2
-#define NMG_CLASS_AoutB		3
-#define NMG_CLASS_BinA		4
-#define NMG_CLASS_BonAshared	5
-#define NMG_CLASS_BonAanti	6
-#define NMG_CLASS_BoutA		7
-
-
 /*
  *			N M G _ E V A L U A T E _ B O O L E A N
  *
@@ -617,7 +628,7 @@ struct nmg_bool_state *bs;
 			NMG_CK_LOOPUSE(lu);
 			eu = lu->down.eu_p;
 			NMG_CK_EDGEUSE(eu);
-			if( nmg_action( (genptr_t)lu->l_p, bs ) == BACTION_KILL )  {
+			if( nmg_eval_action( (genptr_t)lu->l_p, bs ) == BACTION_KILL )  {
 				/* Kill by demoting loop to edges */
 				register struct loopuse	*nextlu = lu->next;
 				if( lu->lumate_p == nextlu )  rt_log("lumate?\n");
@@ -681,7 +692,7 @@ struct nmg_bool_state *bs;
 			continue;
 		}
 		NMG_CK_LOOP( lu->l_p );
-		switch( nmg_action( (genptr_t)lu->l_p, bs ) )  {
+		switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
 			{
@@ -713,7 +724,7 @@ struct nmg_bool_state *bs;
 		/* Consider this edge */
 		if( !eu )  break;
 		NMG_CK_EDGE( eu->e_p );
-		switch( nmg_action( (genptr_t)eu->e_p, bs ) )  {
+		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse into vertices */
 			{
@@ -759,7 +770,7 @@ struct nmg_bool_state *bs;
 		vu = lu->down.vu_p;
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
-		switch( nmg_action( (genptr_t)vu->v_p, bs ) )  {
+		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			/* Simply eliminate the loopuse */
 			{
@@ -789,7 +800,7 @@ struct nmg_bool_state *bs;
 	if( vu = s->vu_p )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
-		switch( nmg_action( (genptr_t)vu->v_p, bs ) )  {
+		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			nmg_kvu( vu );
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
@@ -806,6 +817,8 @@ struct nmg_bool_state *bs;
 }
 
 /*
+ *			N M G _ E V A L _ A C T I O N
+ *
  *  Given a pointer to some NMG data structure,
  *  search the 4 classification lists to determine it's classification.
  *  (XXX In the future, this should be done with 1 tagged list
@@ -813,36 +826,73 @@ struct nmg_bool_state *bs;
  *  Then, return the action code for an item of that classification.
  */
 int
-nmg_action( ptr, bs )
+nmg_eval_action( ptr, bs )
 genptr_t			ptr;
 register struct nmg_bool_state	*bs;
 {
+	register int	ret;
+	register int	class;
+
 	if( bs->bs_isA )  {
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AinB], TBL_LOC, ptr ) >= 0 )
-			return( bs->bs_actions[NMG_CLASS_AinB] );
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AonBshared], TBL_LOC, ptr ) >= 0 )
-			return( bs->bs_actions[NMG_CLASS_AonBshared] );
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AonBanti], TBL_LOC, ptr ) >= 0 )
-			return( bs->bs_actions[NMG_CLASS_AonBanti] );
-		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AoutB], TBL_LOC, ptr ) >= 0 )
-			return( bs->bs_actions[NMG_CLASS_AoutB] );
-		rt_log("nmg_action(ptr=x%x) %s has no A classification, retaining\n",
+		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AinB], TBL_LOC, ptr ) >= 0 )  {
+			class = NMG_CLASS_AinB;
+			ret = bs->bs_actions[NMG_CLASS_AinB];
+			goto out;
+		}
+		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AonBshared], TBL_LOC, ptr ) >= 0 )  {
+			class = NMG_CLASS_AonBshared;
+			ret = bs->bs_actions[NMG_CLASS_AonBshared];
+			goto out;
+		}
+		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AonBanti], TBL_LOC, ptr ) >= 0 )  {
+			class = NMG_CLASS_AonBanti;
+			ret = bs->bs_actions[NMG_CLASS_AonBanti];
+			goto out;
+		}
+		if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_AoutB], TBL_LOC, ptr ) >= 0 )  {
+			class = NMG_CLASS_AoutB;
+			ret = bs->bs_actions[NMG_CLASS_AoutB];
+			goto out;
+		}
+		rt_log("nmg_eval_action(ptr=x%x) %s has no A classification, retaining\n",
 			ptr, nmg_identify_magic( *((long *)ptr) ) );
-		return( BACTION_RETAIN );
+		ret = BACTION_RETAIN;
+		goto out;
 	}
 
 	/* is B */
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BinA], TBL_LOC, ptr ) >= 0 )
-		return( bs->bs_actions[NMG_CLASS_BinA] );
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BonAshared], TBL_LOC, ptr ) >= 0 )
-		return( bs->bs_actions[NMG_CLASS_BonAshared] );
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BonAanti], TBL_LOC, ptr ) >= 0 )
-		return( bs->bs_actions[NMG_CLASS_BonAanti] );
-	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BoutA], TBL_LOC, ptr ) >= 0 )
-		return( bs->bs_actions[NMG_CLASS_BoutA] );
-	rt_log("nmg_action(ptr=x%x) %s has no B classification, retaining\n",
+	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BinA], TBL_LOC, ptr ) >= 0 )  {
+		class = NMG_CLASS_BinA;
+		ret = bs->bs_actions[NMG_CLASS_BinA];
+		goto out;
+	}
+	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BonAshared], TBL_LOC, ptr ) >= 0 )  {
+		class = NMG_CLASS_BonAshared;
+		ret = bs->bs_actions[NMG_CLASS_BonAshared];
+		goto out;
+	}
+	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BonAanti], TBL_LOC, ptr ) >= 0 )  {
+		class = NMG_CLASS_BonAanti;
+		ret = bs->bs_actions[NMG_CLASS_BonAanti];
+		goto out;
+	}
+	if( nmg_tbl( &bs->bs_classtab[NMG_CLASS_BoutA], TBL_LOC, ptr ) >= 0 )  {
+		class = NMG_CLASS_BoutA;
+		ret = bs->bs_actions[NMG_CLASS_BoutA];
+		goto out;
+	}
+	rt_log("nmg_eval_action(ptr=x%x) %s has no B classification, retaining\n",
 		ptr, nmg_identify_magic( *((long *)ptr) ) );
-	return( BACTION_RETAIN );
+	ret = BACTION_RETAIN;
+out:
+	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
+		rt_log("nmg_eval_action(ptr=x%x) %s %s %s action=%s\n",
+			ptr, bs->bs_isA ? "A" : "B",
+			nmg_identify_magic( *((long *)ptr) ),
+			nmg_class_names[class],
+			nmg_baction_names[ret] );
+	}
+	return(ret);
 }
 
 #endif
