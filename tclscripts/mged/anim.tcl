@@ -160,9 +160,9 @@ proc sketch_popup_draw { p } {
 	toplevel $root
 	place_near_mouse $root
 	wm title $root "MGED AnimMate curve editor"
-	button $root.b0 -text "Add" -command {sketch_add [viewget center] $mged_sketch_node}
-	button $root.b1 -text "Insert" -command {sketch_insert [viewget center] $mged_sketch_node}
-	button $root.b2 -text "Move" -command {sketch_move [viewget center] $mged_sketch_node}
+	button $root.b0 -text "Add" -command {sketch_add [view center] $mged_sketch_node}
+	button $root.b1 -text "Insert" -command {sketch_insert [view center] $mged_sketch_node}
+	button $root.b2 -text "Move" -command {sketch_move [view center] $mged_sketch_node}
 	button $root.b3 -text "Delete" -command {sketch_delete $mged_sketch_node}
 	frame  $root.f1
 	label  $root.f1.l0 -text "Node "
@@ -396,7 +396,7 @@ proc sketch_highlight { } {
 
 	if {$mged_sketch_node == ""} return
 
-	set offset [expr [viewget size] * 0.01]
+	set offset [expr [view size] * 0.01]
 	set oldname [vdraw r n]
 	set vertex [eval [concat vdraw r $mged_sketch_node]]
 
@@ -1246,7 +1246,7 @@ proc sketch_get_view_line { time {mode 0}} {
 
 	set line "\t$time"
 	foreach cmd $mged_sketch_vparams {
-		set new [join [viewget $cmd] "\t"]
+		set new [join [view $cmd] "\t"]
 		append line "\t$new"
 	}
 	if { $mode == "nl" } {
@@ -2543,15 +2543,15 @@ proc sketch_popup_objanim { p {mode obj} } {
 		wm title $root "MGED AnimMate View Animation"
 		label $root.l$mode -text "Create View Animation"
 		button $root.f2.l0 -text "View Size:" -command \
-			{set mged_sketch_objvsize [viewget size]}
+			{set mged_sketch_objvsize [view size]}
 		entry $root.f2.e0 -width 20 -textvariable mged_sketch_objvsize
 		frame $root.f9
 		button $root.f9.b0 -text "Eye Point:" \
-			-command { set mged_sketch_eyecen [viewget eye] }
+			-command { set mged_sketch_eyecen [view eye] }
 		entry $root.f9.e0 -width 20 -textvariable mged_sketch_eyecen
 		frame $root.f10
 		button $root.f10.b0 -text "Eye Yaw,Pitch,Roll: " \
-			-command { set mged_sketch_eyeori [viewget ypr] }
+			-command { set mged_sketch_eyeori [view ypr] }
 		entry $root.f10.e0 -width 20 -textvariable mged_sketch_eyeori
 		set if_view "$root.f9 $root.f10"
 		checkbutton $root.cb0 -text "Read View Size from Source" \
@@ -2577,11 +2577,11 @@ proc sketch_popup_objanim { p {mode obj} } {
 	}
 	frame $root.f3
 	button $root.f3.b0 -text "Object Center:" \
-		-command { set mged_sketch_objcen [viewget center] }
+		-command { set mged_sketch_objcen [view center] }
 	entry $root.f3.e0 -width 20 -textvariable mged_sketch_objcen
 	frame $root.f4
 	button $root.f4.b0 -text "Object Yaw,Pitch,Roll: " \
-		-command { set mged_sketch_objori [viewget ypr] }
+		-command { set mged_sketch_objori [view ypr] }
 	entry $root.f4.e0 -width 20 -textvariable mged_sketch_objori
 	checkbutton $root.cb3 -text "No Translation" \
 		-variable mged_sketch_objrotonly -command "sketch_script_update $mode"
@@ -3105,11 +3105,11 @@ proc sketch_popup_track_anim { p } {
 		-command "sketch_track_get_length \$mged_sketch_track_wsrc"
 	frame $root.f6
 	button $root.f6.b0 -text "Vehicle Center:" \
-			-command { set mged_sketch_objcen [viewget center] }
+			-command { set mged_sketch_objcen [view center] }
 	entry $root.f6.e0 -width 20 -textvariable mged_sketch_objcen
 	frame $root.f7
 	button $root.f7.b0 -text "Vehicle Yaw,Pitch,Roll: " \
-			-command { set mged_sketch_objori [viewget ypr] }
+			-command { set mged_sketch_objori [view ypr] }
 	entry $root.f7.e0 -width 20 -textvariable mged_sketch_objori
 	frame $root.f8
 	label $root.f8.l0 -text "First Frame:"
@@ -3493,9 +3493,9 @@ proc sketch_init_preview {} {
 	uplevel #0 {set mged_sketch_prevs ""}
 	uplevel #0 {set mged_sketch_preve ""}
 	uplevel #0 {set mged_sketch_prevp ""}
-	uplevel #0 {set mged_sketch_prev_size [viewget size]}
-	uplevel #0 {set mged_sketch_prev_center [viewget center]}
-	uplevel #0 {set mged_sketch_prev_quat [viewget quat]}
+	uplevel #0 {set mged_sketch_prev_size [view size]}
+	uplevel #0 {set mged_sketch_prev_center [view center]}
+	uplevel #0 {set mged_sketch_prev_quat [view quat]}
 	uplevel #0 {set mged_sketch_prev_fps "30"}
 	#dependencies
 	foreach dep {main} {
@@ -3584,9 +3584,9 @@ proc sketch_preview { filename } {
 		lappend clist [string range $name 5 end]
 	}
 
-	set mged_sketch_prev_size [viewget size]
-	set mged_sketch_prev_center [viewget center]
-	set mged_sketch_prev_quat [viewget quat]
+	set mged_sketch_prev_size [view size]
+	set mged_sketch_prev_center [view center]
+	set mged_sketch_prev_quat [view quat]
 
 	if {($mged_sketch_prevs == "first")||($mged_sketch_prevs == "")} {
 		set arg1 ""
