@@ -213,7 +213,6 @@ char	*dp;
 	vect_t h_dir;
 	vect_t to_eye;
 	vect_t	work;
-	vect_t	reflected;
 	vect_t	cprod;			/* color product */
 	point_t	matcolor;		/* Material color */
 	struct brdf_specific *ps =
