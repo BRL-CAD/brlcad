@@ -1430,6 +1430,7 @@ char	**argv;
 	register int i, j;
 	int nmatch;
 	int	nm_pieces;
+	int	illum_only = 0;
 	char	**path_piece = 0;
 	char	*basename;
 	char	*sname;
@@ -1437,7 +1438,7 @@ char	**argv;
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
-	if(argc < 2 || 2 < argc){
+	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -1447,93 +1448,94 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if (state == ST_S_PICK)
-	{
-	    path_piece = path_parse(argv[1]);
-	    for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
-		;
-
-	    if (nm_pieces == 0)
-	    {
-	      Tcl_AppendResult(interp, "Bad solid path: '", argv[1], "'\n", (char *)NULL);
-	      goto bail_out;
-	    }
-	    basename = path_piece[nm_pieces - 1];
+	if(!strcmp("-n", argv[1])){
+	  illum_only = 1;
+	  --argc;
+	  ++argv;
 	}
-	else
-	    basename = argv[1];
+
+	if(argc != 2){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help ill");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	if(state != ST_S_PICK && state != ST_O_PICK){
+	  state_err("keyboard illuminate pick");
+	  goto bail_out;
+	}
+
+	path_piece = path_parse(argv[1]);
+	for (nm_pieces = 0; path_piece[nm_pieces] != 0; ++nm_pieces)
+	  ;
+
+	if(nm_pieces == 0){
+	  Tcl_AppendResult(interp, "Bad solid path: '", argv[1], "'\n", (char *)NULL);
+	  goto bail_out;
+	}
+
+	basename = path_piece[nm_pieces - 1];
 
 	if( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL )
 		goto bail_out;
 
 	nmatch = 0;
-	switch (state)
-	{
-	    case ST_S_PICK:
-		if (!(dp -> d_flags & DIR_SOLID))
-		{
-		  Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
-		  goto bail_out;
-		}
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l)
-		{
-		    int	a_new_match;
-
-		    i = sp -> s_last;
-		    if (sp -> s_path[i] == dp)
-		    {
-			a_new_match = 1;
-			j = nm_pieces - 1;
-			for ( ; a_new_match && (i >= 0) && (j >= 0); --i, --j)
-			{
-			    sname = sp -> s_path[i] -> d_namep;
-			    if ((*sname != *(path_piece[j]))
-			     || strcmp(sname, path_piece[j]))
-			        a_new_match = 0;
-			}
-			if (a_new_match && ((i >= 0) || (j < 0)))
-			{
-			    lastfound = sp;
-			    ++nmatch;
-			}
-		    }
-		    sp->s_iflag = DOWN;
-		}
-		break;
-	    case ST_O_PICK:
-		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-			for( i=0; i<=sp->s_last; i++ )  {
-				if( sp->s_path[i] == dp )  {
-					lastfound = sp;
-					nmatch++;
-					break;
-				}
-			}
-			sp->s_iflag = DOWN;
-		}
-		break;
-	    default:
-		state_err("keyboard illuminate pick");
-		goto bail_out;
+	if(!(dp -> d_flags & DIR_SOLID)){
+	  Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
+	  goto bail_out;
 	}
+
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l){
+	  int	a_new_match;
+
+	  i = sp -> s_last;
+	  if(sp -> s_path[i] == dp){
+	    a_new_match = 1;
+	    j = nm_pieces - 1;
+	    for(; a_new_match && (i >= 0) && (j >= 0); --i, --j){
+	      sname = sp -> s_path[i] -> d_namep;
+	      if ((*sname != *(path_piece[j]))
+		  || strcmp(sname, path_piece[j]))
+		a_new_match = 0;
+	    }
+
+	    if(a_new_match && ((i >= 0) || (j < 0))){
+	      lastfound = sp;
+	      ++nmatch;
+	    }
+	  }
+
+	  sp->s_iflag = DOWN;
+	}
+
 	if( nmatch <= 0 )  {
 	  Tcl_AppendResult(interp, argv[1], " not being displayed\n", (char *)NULL);
 	  goto bail_out;
 	}
+
 	if( nmatch > 1 )  {
 	  Tcl_AppendResult(interp, argv[1], " multiply referenced\n", (char *)NULL);
 	  goto bail_out;
 	}
+
 	/* Make the specified solid the illuminated solid */
 	illump = lastfound;
 	illump->s_iflag = UP;
-	if( state == ST_O_PICK )  {
-		ipathpos = 0;
-		(void)chg_state( ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
-	} else {
-		/* Check details, Init menu, set state=ST_S_EDIT */
-		init_sedit();
+
+	if(!illum_only){
+	  if( state == ST_O_PICK )  {
+	    ipathpos = 0;
+	    (void)chg_state( ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
+	  } else {
+	    /* Check details, Init menu, set state=ST_S_EDIT */
+	    init_sedit();
+	  }
 	}
+
 	update_views = 1;
 	if (path_piece)
 	{
