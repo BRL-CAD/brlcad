@@ -49,9 +49,10 @@ is different from the factory default.
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./ged.h"
-#include "./dm.h"
 #include "externs.h"
+#include "./ged.h"
+#include "./titles.h"
+#include "./dm.h"
 #include "./solid.h"
 
 extern void	perror();
