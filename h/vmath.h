@@ -608,6 +608,15 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define HPRINT(a,b)	\
 	(void)fprintf(stderr,"%s (%g, %g, %g, %g)\n", a, V4ARGS(b) );
 
+#ifdef __cplusplus
+#define CPP_V3PRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
+	(_p)[X] << ", " << (_p)[Y] << ")\n";
+#define CPP_VPRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
+	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ")\n";
+#define CPP_HPRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
+	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << "," << (_p)[W]<< ")\n";
+#endif
+
 /* Vector element multiplication.  Really: diagonal matrix X vect */
 #ifdef SHORT_VECTORS
 #define VELMUL(a,b,c) \
