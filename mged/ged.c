@@ -2081,7 +2081,7 @@ f_opendb(
 		}
 
 	    	/* File does not exist, and should be created */
-		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+		if( (dbip = db_create( argv[1], 5 )) == DBI_NULL )  {
 			dbip = save_dbip; /* restore previous database */
 			bu_vls_free(&vls);
 			bu_vls_free(&msg);

@@ -2509,7 +2509,7 @@ extern void db_sync( struct db_i	*dbip );
 					/* open an existing model database */
 BU_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
 					/* create a new model database */
-BU_EXTERN(struct db_i *db_create, ( CONST char *name ) );
+struct db_i *db_create( CONST char *name, int version );
 					/* close a model database */
 BU_EXTERN(void db_close_client, (struct db_i *dbip, long *client));
 BU_EXTERN(void db_close, ( struct db_i *dbip ) );
