@@ -46,10 +46,12 @@ static int	inverse = 0;		/* Draw upside-down */
 int	screen_height;			/* input height */
 int	screen_width;			/* input width */
 
+double	out_gamma = 1.0;		/* Gamma the image was created at */
+
 extern void	cmap_crunch();
 
 char usage[] = "\
-Usage: fb-png [-h -i -c] [-F framebuffer]\n\
+Usage: fb-png [-h -i -c] [-F framebuffer] [-g gamma]\n\
 	[-s squaresize] [-w width] [-n height] [file.png]\n";
 
 get_args( argc, argv )
@@ -57,7 +59,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "chiF:s:w:n:g:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
@@ -81,6 +83,9 @@ register char **argv;
 			break;
 		case 'n':
 			screen_height = atoi(optarg);
+			break;
+		case 'g':
+			out_gamma = atof(optarg);
 			break;
 
 		default:		/* '?' */
@@ -163,7 +168,7 @@ char **argv;
 		PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
-	png_set_gAMA( png_p, info_p, 1.0 );
+	png_set_gAMA( png_p, info_p, out_gamma );
 
 	png_write_info( png_p, info_p );
 
