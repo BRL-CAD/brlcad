@@ -22,7 +22,7 @@
 
 
 #ifndef lint
-static char RCSraydir[] = "@(#)$Header$";
+static const char RCSraydir[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"

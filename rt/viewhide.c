@@ -33,7 +33,7 @@
 
 
 #ifndef lint
-static char RCSrayhide[] = "@(#)$Header$ (BRL)";
+static const char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

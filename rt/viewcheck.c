@@ -30,7 +30,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScheckview[] = "@(#)$Header$ (BRL)";
+static const char RCScheckview[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

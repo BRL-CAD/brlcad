@@ -23,7 +23,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSppview[] = "@(#)$Header$ (BRL)";
+static const char RCSppview[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

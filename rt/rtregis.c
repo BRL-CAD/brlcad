@@ -39,7 +39,7 @@
 *	All rights reserved.
 */
 #ifndef lint
-static char RCSregis[] = "@(#)$Header$";
+static const char RCSregis[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"

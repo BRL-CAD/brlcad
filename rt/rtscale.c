@@ -39,7 +39,7 @@
 *	All rights reserved.
 */
 #ifndef lint
-static char RCSscale[] = "@(#)$Header$ (BRL)";
+static const char RCSscale[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -25,7 +25,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSviewxray[] = "@(#)$Header$ (BRL)";
+static const char RCSviewxray[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSmaterial[] = "@(#)$Header$ (BRL)";
+static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

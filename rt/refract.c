@@ -14,7 +14,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSrefract[] = "@(#)$Header$ (BRL)";
+static const char RCSrefract[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

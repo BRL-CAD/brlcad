@@ -21,7 +21,7 @@
 *	All rights reserved.
 */
 #ifndef lint
-static char RCSreadfile[] = "@(#)$Header$";
+static const char RCSreadfile[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"

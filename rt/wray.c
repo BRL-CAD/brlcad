@@ -24,7 +24,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSwray[] = "@(#)$Header$ (BRL)";
+static const char RCSwray[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -15,7 +15,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  */
 #ifndef lint
-static char RCSview[] = "@(#)$Header$ (BRL)";
+static const char RCSview[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

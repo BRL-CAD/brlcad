@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSworker[] = "@(#)$Header$ (BRL)";
+static const char RCSworker[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -32,7 +32,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSrayg3[] = "@(#)$Header$ (BRL)";
+static const char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -22,7 +22,7 @@
 
 
 #ifndef lint
-static char RCSrayrange[] = "@(#)$Header$";
+static const char RCSrayrange[] = "@(#)$Header$";
 #endif
 
 #include "conf.h"
