@@ -478,9 +478,6 @@ point_t		base;
 struct edgeuse	*eu;
 vect_t		face_normal;
 {
-	pointp_t	cur_pt_p;
-	pointp_t	next_pt_p;
-	pointp_t	prev_pt_p;
 	vect_t		eu_vec;	/* from cur_pt to next_pt */
 	struct edgeuse	*prev_eu;
 	struct edgeuse	*this_eu;
@@ -488,8 +485,10 @@ vect_t		face_normal;
 	vect_t		prev_left;
 	vect_t		eu_left;
 	vect_t		delta_vec;
-
-
+	struct vertex	*this_v;
+	struct vertex	*mate_v;
+	struct vertex	*prev_v;
+	struct vertex_g	*this_vg, *mate_vg, *prev_vg;
 
 	bzero(delta_vec, sizeof(vect_t)),
 	prev_eu = RT_LIST_PLAST_CIRC( edgeuse, eu ); 
@@ -500,30 +499,35 @@ vect_t		face_normal;
 
 		NMG_CK_EDGEUSE(this_eu);
 		NMG_CK_VERTEXUSE(this_eu->vu_p);
-		NMG_CK_VERTEX(this_eu->vu_p->v_p);
-		NMG_CK_VERTEX_G(this_eu->vu_p->v_p->vg_p);
+	    	this_v = this_eu->vu_p->v_p;
+		NMG_CK_VERTEX(this_v);
+	    	this_vg = this_v->vg_p;
+		NMG_CK_VERTEX_G(this_vg);
+
 		NMG_CK_EDGEUSE(this_eu->eumate_p);
 		NMG_CK_VERTEXUSE(this_eu->eumate_p->vu_p);
-		NMG_CK_VERTEX(this_eu->eumate_p->vu_p->v_p);
-		NMG_CK_VERTEX_G(this_eu->eumate_p->vu_p->v_p->vg_p);
+	    	mate_v = this_eu->eumate_p->vu_p->v_p;
+		NMG_CK_VERTEX(mate_v);
+	    	mate_vg = mate_v->vg_p;
+		NMG_CK_VERTEX_G(mate_vg);
+
 		NMG_CK_EDGEUSE(prev_eu);
 		NMG_CK_VERTEXUSE(prev_eu->vu_p);
-		NMG_CK_VERTEX(prev_eu->vu_p->v_p);
-		NMG_CK_VERTEX_G(prev_eu->vu_p->v_p->vg_p);
+	    	prev_v = prev_eu->vu_p->v_p;
+		NMG_CK_VERTEX(prev_v);
+	    	prev_vg = prev_v->vg_p;
+		NMG_CK_VERTEX_G(prev_vg);
 
 		if (prev_eu->e_p == this_eu->e_p)
 			continue;
 
 		/* get "left" vector for edgeuse */
-		cur_pt_p = this_eu->vu_p->v_p->vg_p->coord;
-		next_pt_p = this_eu->eumate_p->vu_p->v_p->vg_p->coord;
-		VSUB2(eu_vec, next_pt_p, cur_pt_p); 
+		VSUB2(eu_vec, mate_vg->coord, this_vg->coord); 
 		VUNITIZE(eu_vec);
 		VCROSS(eu_left, face_normal, eu_vec);
 
 		/* get "left" vector for previous edgeuse */
-		prev_pt_p = prev_eu->vu_p->v_p->vg_p->coord;
-		VSUB2(prev_vec, cur_pt_p, prev_pt_p);
+		VSUB2(prev_vec, this_vg->coord, prev_vg->coord);
 		VUNITIZE(prev_vec);
 		VCROSS(prev_left, face_normal, prev_vec);
 
@@ -533,11 +537,11 @@ vect_t		face_normal;
 
 	if (MAGSQ(delta_vec) > VDIVIDE_TOL) {
 		VUNITIZE(delta_vec);
-		VJOIN2(base, cur_pt_p,
+		VJOIN2(base, this_vg->coord,
 			(nmg_eue_dist*1.3),delta_vec,
 			(nmg_eue_dist*0.8),face_normal);
 	} else {
-		VJOIN2(base, cur_pt_p,
+		VJOIN2(base, this_vg->coord,
 			(nmg_eue_dist*1.3),eu_left,
 			(nmg_eue_dist*0.8),face_normal);
 	}
@@ -1901,4 +1905,130 @@ char	*a_string;
 		rt_free((char *)broken_tab, "broken_tab");
 		broken_tab = (long *)NULL;
 	}
+}
+
+/*
+ *			N M G _ F A C E _ P L O T
+ */
+void
+nmg_face_plot( fu )
+struct faceuse	*fu;
+{
+	extern void (*nmg_vlblock_anim_upcall)();
+	struct model		*m;
+	struct rt_vlblock	*vbp;
+	struct face_g	*fg;
+	long		*tab;
+	int		fancy;
+
+	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
+
+	NMG_CK_FACEUSE(fu);
+
+	m = nmg_find_model( (long *)fu );
+	NMG_CK_MODEL(m);
+
+	/* get space for list of items processed */
+	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+		"nmg_face_plot tab[]");
+
+	vbp = rt_vlblock_init();
+
+	fancy = 3;	/* show both types of edgeuses */
+	nmg_vlblock_fu(vbp, fu, tab, fancy );
+
+	/* Cause animation of boolean operation as it proceeds! */
+	if( nmg_vlblock_anim_upcall )  {
+		/* if requested, delay 3/4 second */
+		(*nmg_vlblock_anim_upcall)( vbp,
+			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+			0 );
+	} else {
+		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
+	}
+	rt_vlblock_free(vbp);
+	rt_free( (char *)tab, "nmg_face_plot tab[]" );
+
+}
+
+/*
+ *			N M G _ F A C E _ P L O T
+ *
+ *  Just like nmg_face_plot, except it draws two faces each iteration.
+ */
+void
+nmg_2face_plot( fu1, fu2 )
+struct faceuse	*fu1, *fu2;
+{
+	extern void (*nmg_vlblock_anim_upcall)();
+	struct model		*m;
+	struct rt_vlblock	*vbp;
+	struct face_g	*fg;
+	long		*tab;
+	int		fancy;
+
+	if( ! (rt_g.NMG_debug & DEBUG_PL_ANIM) )  return;
+
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_FACEUSE(fu2);
+
+	m = nmg_find_model( (long *)fu1 );
+	NMG_CK_MODEL(m);
+
+	/* get space for list of items processed */
+	tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+		"nmg_2face_plot tab[]");
+
+	vbp = rt_vlblock_init();
+
+	fancy = 3;	/* show both types of edgeuses */
+	nmg_vlblock_fu(vbp, fu1, tab, fancy );
+	nmg_vlblock_fu(vbp, fu2, tab, fancy );
+
+	/* Cause animation of boolean operation as it proceeds! */
+	if( nmg_vlblock_anim_upcall )  {
+		/* if requested, delay 3/4 second */
+		(*nmg_vlblock_anim_upcall)( vbp,
+			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? 750000 : 0,
+			0 );
+	} else {
+		rt_log("null nmg_vlblock_anim_upcall, no animation\n");
+	}
+	rt_vlblock_free(vbp);
+	rt_free( (char *)tab, "nmg_2face_plot tab[]" );
+
+}
+
+/*
+ *			N M G _ F A C E _ L U _ P L O T
+ */
+void
+nmg_face_lu_plot( lu, vu1, vu2 )
+struct loopuse		*lu;
+struct vertexuse	*vu1, *vu2;
+{
+	FILE	*fp;
+	struct model	*m;
+	long		*b;
+	char		buf[128];
+	static int	num = 0;
+
+	if(!(rt_g.NMG_debug&DEBUG_PLOTEM)) return;
+
+	NMG_CK_LOOPUSE(lu);
+	NMG_CK_VERTEXUSE(vu1);
+	NMG_CK_VERTEXUSE(vu2);
+
+	m = nmg_find_model((long *)lu);
+	sprintf(buf, "loop%d.pl", num++ );
+
+	fp = fopen(buf, "w");
+	b = (long *)rt_calloc( m->maxindex, sizeof(long), "nmg_face_lu_plot flag[]" );
+	nmg_pl_lu(fp, lu, b, 255, 0, 0);
+	/* A yellow line for the ray */
+	pl_color(fp, 255, 255, 0);
+	pdv_3line(fp, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord );
+	fclose(fp);
+	rt_log("wrote %s\n", buf);
+	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
 }
