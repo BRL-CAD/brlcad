@@ -42,6 +42,7 @@ extern struct application ap;
 extern int	stereo;			/* stereo viewing */
 extern vect_t	left_eye_delta;
 extern int	hypersample;		/* number of extra rays to fire */
+extern int	jitter;			/* jitter ray starting positions */
 extern int	rt_perspective;		/* perspective view -vs- parallel */
 extern fastf_t	aspect;			/* view aspect ratio X/Y */
 extern fastf_t	persp_angle;		/* perspective angle (degrees X) */
@@ -207,7 +208,7 @@ int cpu;
 		}
 		VSETALL( colorsum, 0 );
 		for( com=0; com<=hypersample; com++ )  {
-			if( hypersample )  {
+			if( jitter )  {
 				FAST fastf_t dx, dy;
 				dx = a.a_x + rand_half();
 				dy = a.a_y + rand_half();
