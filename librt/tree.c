@@ -820,6 +820,9 @@ again:
 	 */
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		if( stp->st_npieces > 1 )  {
+			/* all pieces must be within model bounding box for pieces to work correctly */
+			VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_min );
+			VMINMAX( rtip->mdl_min, rtip->mdl_max, stp->st_max );
 			stp->st_piecestate_num = rtip->rti_nsolids_with_pieces++;
 		}
 		if(RT_G_DEBUG&DEBUG_SOLIDS)
