@@ -337,7 +337,10 @@ mat_t mat;
     }
   }
 
-  return(useful);
+  if(useful)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 
 /*
