@@ -452,6 +452,7 @@ char *argv[];
 
   color_soltab();
   ++dirty;
+  adc_auto = 1;
   grid_auto_size = 1;
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
 
@@ -966,7 +967,7 @@ struct dm_list *initial_dm_list;
   owner = 1;
   frametime = 1;
   mapped = 1;
-  adc_a1_deg = adc_a2_deg = 45.0;
+  mged_variables->adc_a1 = mged_variables->adc_a2 = 45.0;
   mged_view_init(curr_dm_list);
 
   BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
@@ -1195,10 +1196,6 @@ struct dm_list *p;
 	      (char *)&p->s_info->_dv_xadc, TCL_LINK_INT);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_yadc_vls),
 	      (char *)&p->s_info->_dv_yadc, TCL_LINK_INT);
-  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_ang1_vls),
-	      (char *)&p->s_info->_adc_a1_deg, TCL_LINK_DOUBLE);
-  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_ang2_vls),
-	      (char *)&p->s_info->_adc_a2_deg, TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_distadc_vls),
 	      (char *)&p->s_info->_dv_distadc, TCL_LINK_INT);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_Viewscale_vls),
