@@ -30,13 +30,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	Abs( a )	((a) >= 0 ? (a) : -(a))
 
 static int	stdTorus();
-static void	PtSort();
+static void	PtSort(), alignZ(), Zrotat(), Yrotat();
 
 /*
  * The TORUS has the following input fields:
  *	V	V from origin to center
  *	H	Radius Vector, Normal to plane of torus.  |H| = R2
- *	A,B	perpindicular, to CENTER of torus (for top, bottom) |A|==|B|==R1
+ *	A,B	perpindicular, to CENTER of torus.  |A|==|B|==R1
  *	F5,F6	perpindicular, for inner edge (unused)
  *	F7,F8	perpindicular, for outer edge (unused)
  *
@@ -60,7 +60,7 @@ static void	PtSort();
  *  
  *  X' = S(R( X - V ))
  *  
- *  where R(X) =  ( A/(|A|) )
+ *  where R(X) =  ( A/(|A|) )		WRONG!!
  *  		 (  B/(|B|)  ) . X
  *  		  ( H/(|H|) )
  *  
@@ -82,44 +82,50 @@ static void	PtSort();
  *  
  *  Where W' = k D' + P'.
  *  
------ cut here.
- *  Let dp = D' dot P'
- *  Let dd = D' dot D'
- *  Let pp = P' dot P'
- *  
- *  and k = [ -dp +/- sqrt( dp*dp - dd * (pp - 1) ) ] / dd
- *  which is constant.
- *  
- *  Now, D' = S( R( D ) )
- *  and  P' = S( R( P - V ) )
- *  
- *  Substituting,
- *  
- *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *    = V + invR( ( k * R( D ) ) + R( P - V ) )
- *    = V + k * D + P - V
- *    = k * D + P
- *  
- *  Note that ``k'' is constant, and is the same in the formulations
- *  for both W and W'.
+ *
+ *  Given a line and a ratio, alpha, finds the equation of the
+ *  unit torus in terms of the variable 't'.
+ *
+ *  The equation for the torus is:
+ *
+ *      [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ *  First, find X, Y, and Z in terms of 't' for this line, then
+ *  substitute them into the equation above.
+ *
+ *  	Wx = Dx*t + Px
+ *
+ *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+ *
+ *  The real roots of the equation in 't' are the intersect points
+ *  along the parameteric line.
  *  
  *  NORMALS.  Given the point W on the torus, what is the vector
  *  normal to the tangent plane at that point?
  *  
- *  Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
+ *  Map W onto the unit torus, ie:  W' = S( R( W - V ) ).
+ *  In this case, we find W' by solving the parameteric line given k.
  *  
- *  Plane on unit sphere at W' has a normal vector of the same value(!).
- *  
- *  The plane transforms back to the tangent plane at W, and this
- *  new plane (on the torus) has a normal vector of N, viz:
- *  
- *  N = inverse[ transpose(invR o invS) ] ( W' )
- *    = inverse[ transpose(invS) o transpose(invR) ] ( W' )
- *    = inverse[ inverse(S) o R ] ( W' )
- *    = invR o S ( W' )
- *    = invR( S( S( R( W - V ) ) ) )
+ *  The gradient of the torus at W' is in fact the
+ *  normal vector.
+ *
+ *  Given that the equation for the unit torus is:
+ *
+ *	[ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ *  let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
+ *
+ *	w**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ *  For f(x,y,z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ *
+ *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
+ *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
+ *	df/dz = 2 * w * 2 * z		= 4 * w * z
  *
  *  Note that the normal vector produced above will not have unit length.
+ *  Also, to make this useful for the original torus, it will have
+ *  to be rotated back to the orientation of the original torus.
  */
 
 struct tor_specific {
@@ -153,7 +159,6 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static fastf_t	magsq_a, magsq_b, magsq_h;
 	static mat_t	R;
 	static vect_t	A, B, H;
-	static vect_t	inv;	/* [ 1/(|A|), 1/(|B|), 1/(|H|) ] */
 	static vect_t	work;
 	FAST fastf_t	f;
 	static fastf_t	r1, r2;	/* primary and secondary radius */
@@ -217,34 +222,30 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	GETSTRUCT( tor, tor_specific );
 	stp->st_specific = (int *)tor;
 
-	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==1. */
+	/* Apply full 4x4mat to V */
 	VMOVE( work, SP_V );
 	work[3] = 1;
 	matXvec( tor->tor_V, mat, work );
+	htov_move( tor->tor_V, tor->tor_V );
 
 	tor->tor_alpha = r2/r1;
 
 	/* Compute R and invR matrices */
-	mat_zero( R );
-	inv[0] = 1.0/sqrt(magsq_a);
-	VSCALE( &R[0], A, inv[0] );
-	inv[1] = 1.0/sqrt(magsq_b);
-	VSCALE( &R[4], B, inv[1] );
-	inv[2] = 1.0/sqrt(magsq_h);
-	VSCALE( &R[8], H, inv[2] );
-	mat_trn( tor->tor_invR, R );		/* inv of rot mat is trn */
+	VUNITIZE( H );
+	alignZ( R, H );
+	mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */
 	mat_copy( tor->tor_SoR, R );
 	f = 1.0 / r1;
 	tor->tor_SoR[0] *= f;
 	tor->tor_SoR[5] *= f;
-	tor->tor_SoR[14] *= f;
+	tor->tor_SoR[10] *= f;
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, tor->tor_V );
 	f = r1 + r2;
-	stp->st_radsq = f * f * 1.1;	/* debug */
+	stp->st_radsq = f * f;
 
 	return(0);			/* OK */
 }
@@ -268,26 +269,26 @@ register struct soltab *stp;
  *  been precomputed by tor_prep().  If an intersection occurs,
  *  one or two struct seg(s) will be acquired and filled in.
  *
- *	NOTE:	All lines in this function are represented parametrically
- *		by a point,  P( x0, y0, z0 ) and a direction normal,
- *		D = ax + by + cz.  Any point on a line can be expressed
- *		by one variable 't', where
+ *  NOTE:  All lines in this function are represented parametrically
+ *  by a point,  P( x0, y0, z0 ) and a direction normal,
+ *  D = ax + by + cz.  Any point on a line can be expressed
+ *  by one variable 't', where
  *
- *				X = a*t + x0,	X = Dx*t + Px
- *				Y = b*t + y0,
- *				Z = c*t + z0.
+ *	X = a*t + x0,	eg,  X = Dx*t + Px
+ *	Y = b*t + y0,
+ *	Z = c*t + z0.
  *
- *	First, convert the line to the coordinate system of a "stan-
- *	dard" torus.  This is a torus which lies in the X-Y plane,
- *	circles the origin, and whose primary radius is one.  The
- *	secondary radius is  alpha = ( R2/R1 )  of the original torus
- *	where  ( 0 < alpha <= 1 ).
+ *  First, convert the line to the coordinate system of a "stan-
+ *  dard" torus.  This is a torus which lies in the X-Y plane,
+ *  circles the origin, and whose primary radius is one.  The
+ *  secondary radius is  alpha = ( R2/R1 )  of the original torus
+ *  where  ( 0 < alpha <= 1 ).
  *
- *	Then find the equation of that line and the standard torus,
- *	which turns out to be a quartic equation in 't'.  Solve the
- *	equation using a general polynomial root finder.  Use those
- *	values of 't' to compute the points of intersection in the
- *	original coordinate system.
+ *  Then find the equation of that line and the standard torus,
+ *  which turns out to be a quartic equation in 't'.  Solve the
+ *  equation using a general polynomial root finder.  Use those
+ *  values of 't' to compute the points of intersection in the
+ *  original coordinate system.
  *  
  *  Returns -
  *  	0	MISS
@@ -303,15 +304,14 @@ register struct ray *rp;
 	register struct seg *segp;
 	static vect_t	dprime;		/* D' */
 	static vect_t	pprime;		/* P' */
-	static vect_t	xlated;		/* translated vector */
+	static vect_t	work;		/* temporary vector */
 	static double	k[4];		/* possible intersections */
-	int		npts;		/* # intersection points */
-	FAST fastf_t	w;
+	static int	npts;		/* # intersection points */
 
 	/* out, Mat, vect */
 	MAT3XVEC( dprime, tor->tor_SoR, rp->r_dir );
-	VSUB2( xlated, rp->r_pt, tor->tor_V );
-	MAT3XVEC( pprime, tor->tor_SoR, xlated );
+	VSUB2( work, rp->r_pt, tor->tor_V );
+	MAT3XVEC( pprime, tor->tor_SoR, work );
 
 	npts = stdTorus( pprime, dprime, tor->tor_alpha, k);
 	if( npts <= 0 )
@@ -325,14 +325,6 @@ register struct ray *rp;
 	/* Most distant to least distant */
 	PtSort( k, npts );
 
-if(debug&DEBUG_TESTING)  {
-	register int i;
-	printf("npts=%d\n", npts);
-	for(i=0; i<npts; i++)
-		printf("k=%f, ", k[i]);
-	printf("\n");
-}
-
 	/* Will be either 2 or 4 hit points */
 	/* k[1] is entry point, and k[0] is exit point */
 	GET_SEG(segp);
@@ -343,40 +335,23 @@ if(debug&DEBUG_TESTING)  {
 	segp->seg_out.hit_dist = k[0];
 	segp->seg_flag = SEG_IN | SEG_OUT;
 
-	/* Intersection point, exiting */
-	VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k[1], rp->r_dir );
-
-	/* Normal at that point, pointing out */
-#define hp	segp->seg_in.hit_point
-#define X	0
-#define Y	1
-#define Z	2
-	w = hp[X]*hp[X] + hp[Y]*hp[Y] + hp[Z]*hp[Z] +
-	    1.0 - tor->tor_alpha*tor->tor_alpha;
-	VSET( xlated,
-		4.0 * hp[X] * w - 8.0 * hp[X],
-		4.0 * hp[Y] * w - 8.0 * hp[Y],
-		4.0 * hp[Z] * w );
-	VUNITIZE( xlated );
-	MAT3XVEC( segp->seg_in.hit_normal, tor->tor_invR, xlated );
-
 	/* Intersection point, entering */
+	VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k[1], rp->r_dir );
+	VCOMPOSE1( work, pprime, k[1], dprime );
+	tornormal( segp->seg_in.hit_normal, work, tor );
+
+	/* Intersection point, exiting */
 	VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k[0], rp->r_dir );
-	w = hp[X]*hp[X] + hp[Y]*hp[Y] + hp[Z]*hp[Z] +
-	    1.0 - tor->tor_alpha*tor->tor_alpha;
-	VSET( xlated,
-		4.0 * hp[X] * w - 8.0 * hp[X],
-		4.0 * hp[Y] * w - 8.0 * hp[Y],
-		4.0 * hp[Z] * w );
-	VUNITIZE( xlated );
-	MAT3XVEC( segp->seg_in.hit_normal, tor->tor_invR, xlated );
+	VCOMPOSE1( work, pprime, k[0], dprime );
+	tornormal( segp->seg_out.hit_normal, work, tor );
+
 	if( npts == 2 )
 		return(segp);			/* HIT */
-
+				
 	/* 4 points */
 	/* k[3] is entry point, and k[2] is exit point */
 	{
-		struct seg *seg2p;		/* XXX */
+		register struct seg *seg2p;		/* XXX */
 		/* Attach last hit (above) to segment chain */
 		GET_SEG(seg2p);
 		seg2p->seg_next = segp;
@@ -387,53 +362,84 @@ if(debug&DEBUG_TESTING)  {
 	segp->seg_out.hit_dist = k[2];
 	segp->seg_flag = SEG_IN | SEG_OUT;
 
-	/* Intersection point, exiting */
-	VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k[3], rp->r_dir );
-
-	/* Normal at that point, pointing out */
-	w = hp[X]*hp[X] + hp[Y]*hp[Y] + hp[Z]*hp[Z] +
-	    1.0 - tor->tor_alpha*tor->tor_alpha;
-	VSET( xlated,
-		4.0 * hp[X] * w - 8.0 * hp[X],
-		4.0 * hp[Y] * w - 8.0 * hp[Y],
-		4.0 * hp[Z] * w );
-	VUNITIZE( xlated );
-	MAT3XVEC( segp->seg_in.hit_normal, tor->tor_invR, xlated );
-
 	/* Intersection point, entering */
+	VCOMPOSE1( segp->seg_in.hit_point, rp->r_pt, k[3], rp->r_dir );
+	VCOMPOSE1( work, pprime, k[3], dprime );
+	tornormal( segp->seg_in.hit_normal, work, tor );
+
+	/* Intersection point, exiting */
 	VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k[2], rp->r_dir );
-	w = hp[X]*hp[X] + hp[Y]*hp[Y] + hp[Z]*hp[Z] +
-	    1.0 - tor->tor_alpha*tor->tor_alpha;
-	VSET( xlated,
-		4.0 * hp[X] * w - 8.0 * hp[X],
-		4.0 * hp[Y] * w - 8.0 * hp[Y],
-		4.0 * hp[Z] * w );
-	VUNITIZE( xlated );
-	MAT3XVEC( segp->seg_in.hit_normal, tor->tor_invR, xlated );
+	VCOMPOSE1( work, pprime, k[2], dprime );
+	tornormal( segp->seg_out.hit_normal, work, tor );
 
 	return(segp);			/* HIT */
 }
 
+#define X	0
+#define Y	1
+#define Z	2
+/*
+ *			T O R N O R M A L
+ *
+ *  Compute the normal to the torus,
+ *  given a point on the UNIT TORUS centered at the origin on the X-Y plane.
+ *  The gradient of the torus at that point is in fact the
+ *  normal vector, which will have to be given unit length.
+ *  To make this useful for the original torus, it will have
+ *  to be rotated back to the orientation of the original torus.
+ *
+ *  Given that the equation for the unit torus is:
+ *
+ *	[ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ *  let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
+ *
+ *	w**2 - 4*( X**2 + Y**2 )  =  0
+ *
+ *  For f(x,y,z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ *
+ *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
+ *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
+ *	df/dz = 2 * w * 2 * z		= 4 * w * z
+ */
+tornormal( norm, hit, tor )
+register vectp_t norm, hit;
+register struct tor_specific *tor;
+{
+	FAST fastf_t w;
+	static vect_t work;
 
+	w = hit[X]*hit[X] + hit[Y]*hit[Y] + hit[Z]*hit[Z] +
+	    1.0 - tor->tor_alpha*tor->tor_alpha;
+	VSET( work,
+		(4.0 * w - 8.0 ) * hit[X],
+		(4.0 * w - 8.0 ) * hit[Y],
+		4.0 * w * hit[Z] );
+	VUNITIZE( work );
+	MAT3XVEC( norm, tor->tor_invR, work );
+}
 
-/*	>>>  s t d T o r u s ( )  <<<
- *	Given a line and a ratio, alpha, finds the roots of the
- *	equation for that torus and line.
- *	Returns the number of real roots found.
+/*
+ *	>>>  s t d T o r u s ( )  <<<
  *
- *	Given a line and a ratio, alpha, finds the equation of the
- *	torus in terms of the variable 't'.  Returns a pointer to
- *	the polynomial.  The equation for the torus is
+ *  Given a line and a ratio, alpha, finds the roots of the
+ *  equation for that unit torus and line.
+ *  Returns the number of real roots found.
  *
- *	    0 = [ X^2 + Y^2 + Z^2 + (1 - alpha^2) ]^2 - 4*( X^2 + Y^2 ).
+ *  Given a line and a ratio, alpha, finds the equation of the
+ *  unit torus in terms of the variable 't'.
  *
- *	First, find X, Y, and Z in terms of 't' for this line, then
- *	substitute them into the equation above.
+ *  The equation for the torus is:
  *
- *		Wx = Dx*t + Px
+ *      [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
  *
- *		Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
- *			[0]                [1]           [2]    dgr=2
+ *  First, find X, Y, and Z in terms of 't' for this line, then
+ *  substitute them into the equation above.
+ *
+ *  	Wx = Dx*t + Px
+ *
+ *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+ *  		[0]                [1]           [2]    dgr=2
  */
 static int
 stdTorus(Point,Direc,alpha,t)
@@ -445,7 +451,7 @@ double	alpha, t[];
 	register int	i, l, npts;
 	static poly	tfun, tsqr[3];
 	static poly	A, Asqr;
-	static poly	X2_Y2;		/* X^2 + Y^2 */
+	static poly	X2_Y2;		/* X**2 + Y**2 */
 	static int	m;
 
 	/*  Express each variable (X, Y, and Z) as a linear equation
@@ -492,12 +498,11 @@ double	alpha, t[];
 	return npts;
 }
 
-
-
 /*	>>>  s o r t ( )  <<<
- *	Sorts the values of 't' in descending order.  The sort is
- *	simplified to deal with only 4 values.  Returns the address
- *	of the first 't' in the array.
+ *
+ *  Sorts the values of 't' in descending order.  The sort is
+ *  simplified to deal with only 4 values.  Returns the address
+ *  of the first 't' in the array.
  */
 static void
 PtSort( t, npts )
@@ -525,4 +530,53 @@ register double	t[];
 		}
 	}
 	return;
+}
+
+/*
+ *			A L I G N z
+ *
+ *  Find the rotation matrix to the Z axis using the components
+ *  of the vector normal to the plane of the torus.
+ */
+static void
+alignZ( rot, Norm )
+matp_t 		rot;
+register vectp_t Norm;
+{
+	mat_t		rotZ, rotY;
+	double		h;
+
+	h = sqrt(Norm[X]*Norm[X] + Norm[Y]*Norm[Y]);
+
+	mat_idn( rot );
+	if ( NEAR_ZERO(h) )
+		return;		/* No rotation required */
+
+	Zrotat( rotZ, Norm[X]/h, Norm[Y]/h );
+	Yrotat( rotY, Norm[Z], h );
+	mat_mul( rot, rotZ, rotY );
+}
+
+/* Here, theta == Azimuth, like in mat_ae() */
+static void
+Zrotat(mat, cs_theta, sn_theta )
+matp_t	mat;
+double	cs_theta, sn_theta;
+{
+	mat_idn( mat );
+
+	mat[0] =  mat[5] = cs_theta;
+	mat[1] = -(mat[4] = sn_theta);
+}
+
+/* phi here is like elevation in mat_ae(). */
+static void
+Yrotat( mat, cs_phi, sn_phi )
+matp_t	mat;
+double	cs_phi, sn_phi;
+{
+	mat_idn( mat );
+
+	mat[0] =  mat[10] = cs_phi;
+	mat[8] = -(mat[2] = sn_phi);
 }
