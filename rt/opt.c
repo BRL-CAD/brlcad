@@ -76,6 +76,7 @@ int		desiredframe = 0;	/* frame to start at */
 int		curframe = 0;		/* current frame number */
 char		*outputfile = (char *)0;/* name of base of output file */
 int		interactive = 0;	/* human is watching results */
+int		benchmark = 0;		/* No random numbers:  benchmark */
 /***** end variables shared with do.c *****/
 
 char		*framebuffer;		/* desired framebuffer */
@@ -207,6 +208,7 @@ register char **argv;
 			/*  Remove all intentional random effects
 			 *  (dither, etc) for benchmarking.
 			 */
+			benchmark = 1;
 			mathtab_constant();
 			break;
 		case 'b':
