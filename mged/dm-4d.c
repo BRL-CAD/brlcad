@@ -447,9 +447,13 @@ double ratio;
 	 * otherwise it can (and does) fall off the shading ramp.
 	 */
 	
-	GEWAIT;
-	im_passcmd(2, FBClinestyle);
-	im_last_outshort( 0xFFFF );
+
+	if (sp->s_soldash)
+	{
+		GEWAIT;
+		im_passcmd(2, FBClinestyle);
+		im_last_outshort( 0xCF33 );
+	}
 
 	if( white || sp->s_materp == (char *)0 ) {
 		ovec = nvec = map_entry(DM_WHITE);
@@ -486,8 +490,12 @@ double ratio;
 
 	GEWAIT;
 
-	im_passcmd(2, FBClinestyle);
-	im_last_outshort( 0xFFFF );
+	if (sp->s_soldash)
+	{
+		GEWAIT;
+		im_passcmd(2, FBClinestyle);
+		im_last_outshort( 0xFFFF );
+	}
 
 	return(1);	/* OK */
 }
