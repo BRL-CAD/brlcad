@@ -565,7 +565,7 @@ struct partition *pt_headp;
 		prnt_Scroll(	"\tmaterial info \"%s\"\n",
 				regp->reg_mater.ma_shader
 				);
-		if( regp->reg_mater.ma_override )
+		if( regp->reg_mater.ma_color_valid )
 			prnt_Scroll(	"\t\t\tcolor: {%5.2f,%5.2f,%5.2f}\n",
 					regp->reg_mater.ma_color[0],
 					regp->reg_mater.ma_color[1],

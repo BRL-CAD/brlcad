@@ -218,7 +218,7 @@ union tree		*curtree;
 			nmg_kr(r);
 
 		/* Now make a normal brlcad region */
-		if( tsp->ts_mater.ma_override )
+		if( tsp->ts_mater.ma_color_valid )
 		{
 			rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
 			rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);

@@ -360,7 +360,7 @@ struct mater_info *mater;
 
 	full_path = db_path_to_string( pathp );
 
-	if( mater->ma_override )
+	if( mater->ma_color_valid )
 	{
 		r = mater->ma_color[0];
 		g = mater->ma_color[1];

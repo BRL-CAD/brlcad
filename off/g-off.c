@@ -286,7 +286,7 @@ union tree		*curtree;
 				file_base.vls_str[i] = '_';
 
 		/* Write color attribute to .fig figure file. */
-		if (tsp->ts_mater.ma_override != 0) {
+		if (tsp->ts_mater.ma_color_valid != 0) {
 			fprintf(fp_fig, "\tattribute %s {\n",
 				rt_vls_addr(&file_base));
 			fprintf(fp_fig, "\t\trgb = (%f, %f, %f);\n",
@@ -299,7 +299,7 @@ union tree		*curtree;
 		/* Write segment attributes to .fig figure file. */
 		fprintf(fp_fig, "\tsegment %s_seg {\n", rt_vls_addr(&file_base));
 		fprintf(fp_fig, "\t\tpsurf=\"%s.pss\";\n", rt_vls_addr(&file_base));
-		if (tsp->ts_mater.ma_override != 0)
+		if (tsp->ts_mater.ma_color_valid != 0)
 			fprintf(fp_fig,
 				"\t\tattribute=%s;\n", rt_vls_addr(&file_base));
 		fprintf(fp_fig, "\t\tsite base->location=trans(0,0,0);\n");
