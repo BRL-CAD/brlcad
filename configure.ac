@@ -489,6 +489,7 @@ AC_CHECK_HEADERS( \
 	limits.h \
 	limits.h \
 	memory.h \
+	pthread.h \
 	stdarg.h \
 	stdlib.h \
 	string.h \
@@ -500,6 +501,7 @@ AC_CHECK_HEADERS( \
 	sys/stat.h \
 	sys/time.h \
 	sys/types.h \
+	sys/unistd.h \
 	termcap.h \
 	termios.h \
 	time.h \
@@ -581,9 +583,6 @@ dnl *** Check for types/structures ***
 dnl **********************************
 
 AC_STRUCT_TM
-
-AC_DEFINE(HAS_POSIX_THREADS,1,[Posix Threading API])
-
 
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped?
 dnl ============================================================
