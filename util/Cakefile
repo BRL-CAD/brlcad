@@ -4,7 +4,6 @@
  *  $Header$
  */
 
-#define STATIC_PRODUCTS morphedit.tcl
 #define SRCDIR	util
 #define PRODUCTS	\
 	alias-pix ap-pix asc-pl azel bary buffer dbcp \
@@ -31,7 +30,7 @@
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
 	pixborder mst texturescale pixclump pixcount imgdims remapid \
-	wavelet pixsubst terrain
+	wavelet pixsubst terrain morphedit.tcl
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -410,5 +409,9 @@ imgdims:	imgdims.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 terrain:	terrain.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 	CC LDFLAGS -o terrain terrain.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
 
+morphedit.tcl:	../SRCDIR/morphedit.tcl
+	#ifdef NFS
+	cp ../SRCDIR/morphedit.tcl morphedit.tcl
+	#endif
 
 #include "../Cakefile.rules"
