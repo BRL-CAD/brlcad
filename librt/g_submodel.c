@@ -54,6 +54,10 @@ static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
+/* XXX move to vmath.h */
+#define MAT4XSCALOR(o,m,i) \
+	{(o) = (i) / (m)[15];}
+
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
 CONST struct bu_structparse rt_submodel_parse[] = {
@@ -878,10 +882,6 @@ register struct xray	*rp;
 	VMOVE( sub_norm, hitp->hit_normal );
 	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, sub_norm );
 }
-
-/* XXX move to vmath.h */
-#define MAT4X3SCALOR(o,m,i) \
-	{(o) = (i) / (m)[15];}
 
 /*
  *			R T _ S U B M O D E L H O O K _ C U R V E
