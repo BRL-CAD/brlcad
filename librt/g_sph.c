@@ -395,7 +395,9 @@ register struct uvcoord *uvp;
 	/* Assert that pprime has unit length */
 
 	/* U is azimuth, atan() range: -pi to +pi */
-	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
+	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi;
+	if( uvp->uv_u < 0 )
+		uvp->uv_u += 1.0;
 	/*
 	 *  V is elevation, atan() range: -pi/2 to +pi/2,
 	 *  because sqrt() ensures that X parameter is always >0
