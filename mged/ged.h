@@ -212,12 +212,6 @@ extern void start_catching_output(), stop_catching_output();
 #endif
 
 /*
- * "Standard" flag settings
- */
-#define UP	0
-#define DOWN	1
-
-/*
  * Pointer to solid in solid table to be illuminated. - defined in usepen.c
  */
 extern struct solid	*illump;/* == 0 if none, else points to ill. solid */
