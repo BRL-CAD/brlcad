@@ -12,6 +12,9 @@
 	(void) write(2, errbuf, 2);}
 
 extern int strcmp();
+#ifdef BSD
+#define strchr index
+#endif BSD
 extern char *strchr();
 
 int	opterr = 1;
