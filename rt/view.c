@@ -126,6 +126,7 @@ register struct application *ap;
 	register char	*pixelp;
 	register struct scanline	*slp;
 	register int	do_eol = 0;
+	int		npix;
 
 	if( ap->a_user == 0 )  {
 		/* Shot missed the model, don't dither */
@@ -178,8 +179,10 @@ register struct application *ap;
 			if( fbp != FBIO_NULL )  {
 				/* Framebuffer output */
 				RES_ACQUIRE( &rt_g.res_syscall );
-				fb_write( fbp, ap->a_x, ap->a_y, (char *)p, 1 );
+				npix = fb_write( fbp, ap->a_x, ap->a_y,
+					(char *)p, 1 );
 				RES_RELEASE( &rt_g.res_syscall );
+				if( npix < 1 )  rt_bomb("pixel fb_write error");
 			}
 		}
 		return;
@@ -266,11 +269,13 @@ register struct application *ap;
 			RES_ACQUIRE( &rt_g.res_syscall );
 			for( dy=spread; dy >= 0; dy-- )  {
 				yy = ap->a_y + dy;
-				fb_write( fbp, 0, yy,
+				npix = fb_write( fbp, 0, yy,
 					scanline[yy].sl_buf,
 					width );
+				if( npix != width )  break;
 			}
 			RES_RELEASE( &rt_g.res_syscall );
+			if( npix != width )  rt_bomb("fb_write error (incremental res)");
 			for( dy=spread; dy >= 0; dy-- )  {
 				yy = ap->a_y + dy;
 				rt_free( scanline[yy].sl_buf, "scanline buf" );
@@ -282,9 +287,10 @@ register struct application *ap;
 	case BUFMODE_DYNAMIC:
 		if( fbp != FBIO_NULL )  {
 			RES_ACQUIRE( &rt_g.res_syscall );
-			fb_write( fbp, 0, ap->a_y,
+			npix = fb_write( fbp, 0, ap->a_y,
 			    scanline[ap->a_y].sl_buf, width );
 			RES_RELEASE( &rt_g.res_syscall );
+			if( npix < width )  rt_bomb("scanline fb_write error");
 		}
 		if( outfp != NULL )  {
 			int	count;
