@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.6
- *	Last edit: 	11/29/84 at 12:32:28
- *	Retrieved: 	8/13/86 at 08:11:32
+ *	SCCS id:	@(#) vdeck.c	2.7
+ *	Last edit: 	12/11/84 at 14:20:06
+ *	Retrieved: 	8/13/86 at 08:11:57
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.6	last edit 11/29/84 at 12:32:28";
+char	sccsTag[] = "@(#) vdeck.c	2.7	last edit 12/11/84 at 14:20:06";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -65,8 +65,8 @@ char			regBuffer[BUFSIZ], *regBufPtr;
 			    	write( regfd, regBuffer, strlen( regBuffer ) );\
 			    	regBufPtr = regBuffer;
 
-#define putSpaces( s, n ) {	register int i;\
-				for( i = 0; i < (n); i++ ) *s++ = ' ';\
+#define putSpaces( s, xx ) {	register int i;\
+				for( i = 0; i < (xx); i++ ) *s++ = ' ';\
 			  }
 
 /*	==== m a i n ( )
@@ -208,6 +208,15 @@ matp_t	old_xlate;
 		if( regflag > 0 ) {
 			/* record is part of a region
 			 */
+			if( rec.c.c_flags != 'R' )
+				{
+				(void) fprintf( stderr,
+	"Illegal combination, group '%s' is a member of a region (%s)",
+						rec.c.c_name,
+						buff
+						);
+				return;
+				}
 			if( operate == UNION ) {
 				fprintf( stderr,
 					"Region: %s is member of ",
@@ -268,7 +277,7 @@ matp_t	old_xlate;
 			if( isave < 0 ) { int	n;
 				isave = -isave;
 				regflag = 0;
-				n = 69 - strlen( regBuffer );
+				n = 69 - (regBufPtr - regBuffer);
 				putSpaces( regBufPtr, n );
 				endRegion( buff );
 			}
@@ -300,7 +309,7 @@ matp_t	old_xlate;
 			/* check for dummy region
 			 */
 			if( nparts == 0 ) { int	n;
-				n = 69 - strlen( regBuffer );
+				n = 69 - (regBufPtr - regBuffer);
 				putSpaces( regBufPtr, n );
 				endRegion( "" );
 				regflag = 0;
@@ -404,17 +413,6 @@ matp_t	old_xlate;
 			 */
 			cgobj( nextdp, pathpos+1, new_xlate );
 		}
-#ifdef NEVER_FOO
-		/* check for end of this region
-		 */
-		if( isave < 0 ) { int	n;
-			isave = -isave;
-			regflag = 0;
-			n = 69 - strlen( regBuffer );
-			putSpaces( regBufPtr, n );
-			endRegion( buff );
-		}
-#endif NEVER_FOO
 		lseek( objfd, savepos, 0 );
 		return;
 	}
@@ -545,7 +543,7 @@ notnew:	/* sent here if solid already in solid table
 		if(	(isave % 9 ==  1 && isave >  1)
 		    ||	(isave % 9 == -1 && isave < -1) ) { int	n;
 			/* New line.					*/
-		    	n = 69 - strlen( regBuffer );
+		    	n = 69 - (regBufPtr - regBuffer);
 		    	putSpaces( regBufPtr, n );
 		    	endRegion( buff );
 			putSpaces( regBufPtr, 6 );
@@ -566,7 +564,7 @@ notnew:	/* sent here if solid already in solid table
 		if( isave < 0 ) {  int	n; /* end this region */
 			isave = -isave;
 			regflag = 0;
-			n = 69 - strlen( regBuffer );
+			n = 69 - (regBufPtr - regBuffer);
 			putSpaces( regBufPtr, n );
 			endRegion( buff );
 		}
@@ -625,7 +623,7 @@ notnew:	/* sent here if solid already in solid table
 		}
 		write( ridfd, LF, 1 );
 		{ int	n;
-			n = 69 - strlen( regBuffer );
+			n = 69 - (regBufPtr - regBuffer);
 			putSpaces( regBufPtr, n );
 			endRegion( "" );
 		}
