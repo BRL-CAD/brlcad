@@ -67,7 +67,8 @@ static int		wanted;		/* LT|EQ|GT conditions */
 static long		true_cnt = 0;
 static long		false_cnt = 0;
 
-static char usage[] = "\
+
+static char usage_msg[] = "\
 Usage: pixmatte [-w bytes_wide] {-g -l -e -n -a}\n\
 	in1 in2 true_out false_out > output\n\
 \n\
@@ -75,6 +76,16 @@ where each of the 4 streams is either a file name, a constant of the\n\
 form =r/g/b with each byte specified in decimal, or '-' for stdin.\n\
 The default width is 3 bytes, suitable for processing .pix files.\n\
 ";
+
+void
+usage(s, n)
+char *s;
+{
+	if (s && *s) (void)fputs(s, stderr);
+	
+	(void)fputs(usage_msg, stderr);
+	exit(n);
+}
 
 /*
  *			O P E N _ F I L E
@@ -128,7 +139,7 @@ char	*name;
 /*
  *			G E T _ A R G S
  */
-int
+void
 get_args( argc, argv )
 register char	**argv;
 {
@@ -164,35 +175,40 @@ register char	**argv;
 				width = c;
 			break;
 		default:		/* '?' */
-			return(0);	/* FAIL */
+			usage("unknown option\n", 1);
+			break;
 		}
 	}
 
-	if( !seen_formula )  return(0);	/* FAIL */
+	if( !seen_formula )  
+		usage("No formula specified\n", 1);
+
 
 	if( optind+NFILES > argc )
-		return(0);		/* FAIL */
+		usage("insufficient number of input/output channels\n", 1);
+
 
 	for( i=0; i < NFILES; i++ )  {
 		if( open_file( i, argv[optind++] ) < 0 )
-			return(0);	/* FAIL */
+			usage((char *)NULL, 1);
 	}
 
 	if ( argc > optind )
 		(void)fprintf( stderr, "pixmatte: excess argument(s) ignored\n" );
 
-	return(1);			/* OK */
 }
 
+int
 main(argc, argv)
 int argc;
 char **argv;
 {
 
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
-		(void)fputs(usage, stderr);
-		exit( 1 );
-	}
+	get_args(argc, argv);
+
+	if ( isatty(fileno(stdout)) )
+		usage( "Cannot write image to tty\n", 1);
+
 
 	fprintf(stderr, "pixmatte:\tif( %s ", file_name[0] );
 	if( wanted & LT )  {
@@ -335,5 +351,5 @@ fail:
 	}
 	fprintf( stderr, "pixmatte: %d element comparisons true, %d false\n",
 		true_cnt, false_cnt );
-	exit(0);
+	return(0);
 }
