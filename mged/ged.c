@@ -487,12 +487,12 @@ char **argv;
 	refresh();			/* Put up faceplate */
 
 	(void)pipe(dm_pipe);
-	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
-			      TCL_READABLE, dm_pipe_input, (ClientData)dm_pipe[0]);
+	Tcl_CreateFileHandler(dm_pipe[0], TCL_READABLE,
+			      dm_pipe_input, (ClientData)dm_pipe[0]);
 
 	if(classic_mged){
-	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
-				TCL_READABLE, stdin_input, (ClientData)STDIN_FILENO);
+	  Tcl_CreateFileHandler(STDIN_FILENO, TCL_READABLE,
+				stdin_input, (ClientData)STDIN_FILENO);
 
 	  (void)signal( SIGINT, SIG_IGN );
 
@@ -504,10 +504,10 @@ char **argv;
 	    clr_Echo(fileno(stdin));
 	  }
 	}else{
-	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)pipe_out[0], TCL_UNIX_FD),
-				TCL_READABLE, std_out_or_err, (ClientData)pipe_out[0]);
-	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)pipe_err[0], TCL_UNIX_FD),
-				TCL_READABLE, std_out_or_err, (ClientData)pipe_err[0]);
+	  Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
+				std_out_or_err, (ClientData)pipe_out[0]);
+	  Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
+				std_out_or_err, (ClientData)pipe_err[0]);
 	}
 
 	/****************  M A I N   L O O P   *********************/
@@ -1172,6 +1172,7 @@ int mask;
   char line[2];
   struct dm_char_queue *dcqp;
   struct dm_list *dlp;
+  struct dm_list *save_curr_dlp;
 
   /* Get data from dm_pipe */
   if((count = read((int)fd, line, 1)) == 0)
@@ -1180,10 +1181,8 @@ int mask;
   line[count] = '\0';
 
   BU_LIST_POP(dm_char_queue, &head_dm_char_queue.l, dcqp);
-  if(dcqp == (struct dm_char_queue *)0){
-    bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
+  if(dcqp == (struct dm_char_queue *)0)
     return;
-  }
 
   /* search for dcqp->dlp in list of valid displays */
   FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
@@ -1196,6 +1195,8 @@ int mask;
     return;
   }
 
+  /* save curr_dm_list */
+  save_curr_dlp = curr_dm_list;
   curr_dm_list = dlp;
 
   bu_vls_init(&vls);
@@ -1203,6 +1204,9 @@ int mask;
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
   bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
+
+  /* restore */
+  curr_dm_list = save_curr_dlp;
 
   if(classic_mged){
     /* not claimed by insert_char */
