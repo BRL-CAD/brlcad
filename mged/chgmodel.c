@@ -1930,7 +1930,7 @@ char	**argv;
 		sketch_ip->curves[0].segments = (genptr_t *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( genptr_t ), "sketch_ip->curves[0].segments" );
 
 		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[0] = lsg;
+		sketch_ip->curves[0].segments[0] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = 0;
 		lsg->end = 1;
@@ -1938,7 +1938,7 @@ char	**argv;
 		lsg->curves = &sketch_ip->curves;
 
 		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[1] = lsg;
+		sketch_ip->curves[0].segments[1] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = 1;
 		lsg->end = 2;
@@ -1946,7 +1946,7 @@ char	**argv;
 		lsg->curves = &sketch_ip->curves;
 
 		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[2] = lsg;
+		sketch_ip->curves[0].segments[2] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = 2;
 		lsg->end = 3;
@@ -1954,7 +1954,7 @@ char	**argv;
 		lsg->curves = &sketch_ip->curves;
 
 		lsg = (struct line_seg *)bu_calloc( 1, sizeof( struct line_seg ), "segments" );
-		sketch_ip->curves[0].segments[3] = lsg;
+		sketch_ip->curves[0].segments[3] = (genptr_t)lsg;
 		lsg->magic = CURVE_LSEG_MAGIC;
 		lsg->start = 3;
 		lsg->end = 0;
