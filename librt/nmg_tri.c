@@ -727,8 +727,8 @@ struct rt_list *tlist;
 
 	NMG_CK_TBL2D(tbl2d);
 	NMG_CK_PT2D(pt);
-	pnext = PT2D_NEXT(tbl2d, pt);
-	plast = PT2D_PREV(tbl2d, pt);
+	pnext = PT2D_NEXT(&tbl2d->l, pt);
+	plast = PT2D_PREV(&tbl2d->l, pt);
 	if (rt_g.NMG_debug & DEBUG_TRI) {
 		rt_log( "%g %g is polygon side vertex\n",
 			pt->coord[X], pt->coord[Y]);
@@ -1111,7 +1111,7 @@ struct rt_list *tbl2d, *tlist;
 		NMG_CK_PT2D(pt);
 		switch(vtype2d(pt, tbl2d)) {
 		case POLY_SIDE:
-			poly_side_vertex(pt, tbl2d, tlist);
+			poly_side_vertex(pt, (struct pt2d *)tbl2d, tlist);
 			break;
 		case HOLE_START:
 			hole_start_vertex(pt, tbl2d, tlist);
@@ -1188,7 +1188,7 @@ struct vertex *v;
 struct vertexuse **vu_last, **vu_first;
 struct faceuse *fu;
 int *max_dir, *min_dir;	/* 1: forward -1 reverse */
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 vect_t dir;
 {
 	struct vertexuse *vu;
@@ -1458,7 +1458,7 @@ struct vertexuse **first_vu;
 struct vertexuse **last_vu;
 vect_t 		dir;
 struct faceuse	*fu;
-struct rt_tol	*tol;
+CONST struct rt_tol	*tol;
 {
 	struct vertexuse *vu_first, *vu_last;
 	int max_dir, min_dir;	/* 1: forward -1 reverse */
@@ -1721,7 +1721,7 @@ static struct pt2d *
 cut_mapped_loop(tbl2d, p1, p2, color, tol, void_ok)
 struct rt_list *tbl2d;
 struct pt2d *p1, *p2;
-int color[3];
+CONST int color[3];
 CONST struct rt_tol	*tol;
 int void_ok;
 {
@@ -1833,7 +1833,7 @@ static void
 join_mapped_loops(tbl2d, p1, p2, color, tol)
 struct rt_list *tbl2d;
 struct pt2d *p1, *p2;
-int color[3];
+CONST int color[3];
 CONST struct rt_tol	*tol;
 {
 	struct vertexuse *vu1, *vu2;
@@ -2165,7 +2165,6 @@ CONST struct rt_tol *tol;
 	struct edgeuse *eu;
 	int verts=0;
 	static CONST int cut_color[3] = { 90, 255, 90};
-	static CONST int join_color[3] = { 190, 255, 190};
 
 	NMG_CK_TBL2D(tbl2d);
 	RT_CK_TOL(tol);
