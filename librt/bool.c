@@ -2302,7 +2302,7 @@ int			rebuild_fastgen_plates_only;
 			}
 			else
 			{
-				if( pp->pt_regionp == pp_open->pt_regionp )
+				if( pp->pt_regionp == pp_open->pt_regionp && pp->pt_inhit->hit_dist <= pp_open->pt_outhit->hit_dist )
 				{
 					/* add this partition to pp_open */
 					pp_open->pt_outseg = pp->pt_outseg;
