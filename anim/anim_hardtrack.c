@@ -262,10 +262,10 @@ char **argv;
 			        	}
 			        	if (print_mode==TRACK_ANIM) {
 						printf("anim %s.%d matrix %s\n", *(argv+link_nindex),count,link_cmd);
-			        		anim_mat_printf(wmat,"%.10g ","\n",";\n");
+			        		anim_mat_printf(stdout,wmat,"%.10g ","\n",";\n");
 			        	} else if (print_mode==TRACK_ARCED) {
 			        		printf("arced %s.%d matrix %s ", *(argv+link_nindex),count,link_cmd);
-			        		anim_mat_printf(wmat,"%.10g ","","\n");
+			        		anim_mat_printf(stdout,wmat,"%.10g ","","\n");
 			        	}
 				}
 			}
@@ -280,10 +280,10 @@ char **argv;
 			        	}
 			        	if (print_mode==TRACK_ANIM) {
 						printf("anim %s.%d matrix %s\n",*(argv+wheel_nindex),count,wheel_cmd);
-			        		anim_mat_printf(wmat,"%.10g ","\n",";\n");
+			        		anim_mat_printf(stdout,wmat,"%.10g ","\n",";\n");
 			        	} else if (print_mode==TRACK_ARCED) {
 						printf("arced %s.%d matrix %s ",*(argv+wheel_nindex),count,wheel_cmd);
-			        		anim_mat_printf(wmat,"%.10g ","","\n");
+			        		anim_mat_printf(stdout,wmat,"%.10g ","","\n");
 			        	}
 				}
 			}

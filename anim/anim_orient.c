@@ -173,7 +173,7 @@ char **argv;
 			printf("%.12g\t%.12g\t%.12g\t%.12g\n",quat[0],quat[1],quat[2],quat[3]);
 			break;
 		case MAT:
-			anim_mat_print(matrix,0);
+			anim_mat_print(stdout,matrix,0);
 			printf("\n");
 		}
 

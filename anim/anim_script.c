@@ -150,7 +150,7 @@ char **argv;
 			printf("start %d;\n", frame);
 			printf("clean;\n");
 			printf("anim %s matrix %s\n", *(argv+optind), mat_cmd);
-			anim_mat_print(a,1);
+			anim_mat_print(stdout,a,1);
 			printf("end;\n");
 		}
 		frame++;
