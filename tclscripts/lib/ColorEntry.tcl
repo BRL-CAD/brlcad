@@ -26,68 +26,73 @@ class cadwidgets::ColorEntry {
     constructor {args} {}
     destructor {}
 
-    public method rgbvalid {r g b}
+    public method rgbValid {r g b}
+    public method getColor {}
+    public method setColor {r g b}
 
     private method chooser {}
-    private method setcolor {r g b}
-    private method setMBcolor {}
-    private method colorok {}
+    private method updateColor {}
+    private method colorOK {}
 }
 
 body cadwidgets::ColorEntry::constructor {args} {
     $itk_component(menu) add command -label black \
-	    -command [code $this setcolor 0 0 0]
+	    -command [code $this setColor 0 0 0]
     $itk_component(menu) add command -label white \
-	    -command [code $this setcolor 255 255 255]
+	    -command [code $this setColor 255 255 255]
     $itk_component(menu) add command -label red \
-	    -command [code $this setcolor 255 0 0]
+	    -command [code $this setColor 255 0 0]
     $itk_component(menu) add command -label green \
-	    -command [code $this setcolor 0 255 0]
+	    -command [code $this setColor 0 255 0]
     $itk_component(menu) add command -label blue\
-	    -command [code $this setcolor 0 0 255]
+	    -command [code $this setColor 0 0 255]
     $itk_component(menu) add command -label yellow \
-	    -command [code $this setcolor 255 255 0]
+	    -command [code $this setColor 255 255 0]
     $itk_component(menu) add command -label cyan \
-	    -command [code $this setcolor 0 255 255]
+	    -command [code $this setColor 0 255 255]
     $itk_component(menu) add command -label magenta \
-	    -command [code $this setcolor 255 0 255]
+	    -command [code $this setColor 255 0 255]
     $itk_component(menu) add separator
     $itk_component(menu) add command -label "Color Tool..." \
 	    -command [code $this chooser]
 
     eval itk_initialize $args
-    bind $itk_component(entry) <Return> [code $this setMBcolor]
+    bind $itk_component(entry) <Return> [code $this updateColor]
 }
 
 body cadwidgets::ColorEntry::chooser {} {
     cadColorWidget dialog $itk_interior color \
 	    -title "Color Chooser" \
 	    -initialcolor [$itk_component(menubutton) cget -background] \
-	    -ok [code $this colorok] \
+	    -ok [code $this colorOK] \
 	    -cancel "cadColorWidget_destroy $itk_interior.color"
 }
 
-body cadwidgets::ColorEntry::setcolor {r g b} {
-    if {![rgbvalid $r $g $b]} {
+body cadwidgets::ColorEntry::getColor {} {
+    return [getText]
+}
+
+body cadwidgets::ColorEntry::setColor {r g b} {
+    if {![rgbValid $r $g $b]} {
 	error "Improper color specification - $r $g $b"
     }
 
-    settext "$r $g $b"
+    setText "$r $g $b"
     $itk_component(menubutton) configure \
 	    -bg [format "#%02x%02x%02x" $r $g $b]
 }
 
-body cadwidgets::ColorEntry::setMBcolor {} {
-    eval setcolor [gettext]
+body cadwidgets::ColorEntry::updateColor {} {
+    eval setColor [getText]
 }
 
-body cadwidgets::ColorEntry::colorok {} {
+body cadwidgets::ColorEntry::colorOK {} {
     upvar #0 $itk_interior.color data
-    setcolor $data(red) $data(green) $data(blue)
+    setColor $data(red) $data(green) $data(blue)
     cadColorWidget_destroy $itk_interior.color
 }
 
-body cadwidgets::ColorEntry::rgbvalid {r g b} {
+body cadwidgets::ColorEntry::rgbValid {r g b} {
     if {![string is integer $r]} {
 	    return 0
     }

@@ -31,14 +31,16 @@ class cadwidgets::ComboBox {
     # menu stuff
     public method add {args}
     public method delete {args}
-    public method entryconfigure {args}
+    public method menuConfigure {args}
+    public method menuEntryConfigure {args}
     public method index {args}
     public method insert {args}
     public method type {index}
 
     # entry stuff
-    public method gettext {}
-    public method settext {val}
+    public method entryConfigure {args}
+    public method getText {}
+    public method setText {val}
 
     private variable entrytext ""
 }
@@ -93,7 +95,11 @@ body cadwidgets::ComboBox::delete {args} {
     eval $itk_component(menu) delete $args
 }
 
-body cadwidgets::ComboBox::entryconfigure {args} {
+body cadwidgets::ComboBox::menuConfigure {args} {
+    eval $itk_component(menu) configure $args
+}
+
+body cadwidgets::ComboBox::menuEntryConfigure {args} {
     eval $itk_component(menu) entryconfigure $args
 }
 
@@ -105,11 +111,15 @@ body cadwidgets::ComboBox::insert {args} {
     eval $itk_component(menu) insert $args
 }
 
-body cadwidgets::ComboBox::gettext {} {
+body cadwidgets::ComboBox::entryConfigure {args} {
+    eval $itk_component(entry) configure $args
+}
+
+body cadwidgets::ComboBox::getText {} {
     return $entrytext
 }
 
-body cadwidgets::ComboBox::settext {val} {
+body cadwidgets::ComboBox::setText {val} {
     set entrytext $val
 }
 
