@@ -92,6 +92,7 @@ int argc; char **argv;
 #endif
 
 #ifdef BSD
+	openlog( "rfbd", LOG_PID|LOG_NOWAIT, LOG_DAEMON );
 	if( setsockopt( netfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
 		openlog( argv[0], LOG_PID, 0 );
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
@@ -107,16 +108,20 @@ int argc; char **argv;
 /*
  *			C O M M _ E R R O R
  *
- *  Communication error.  An error occured on the PKG link between us
- *  and the client we are serving.  We can't safely route these down
- *  that connection so for now we just blat to stderr.
- *  Should use syslog.
+ *  Communication error.  An error occured on the PKG link.
+ *  It may be local, or it may be between us and the client we are serving.
+ *  We send a copy down the wire, and another to syslog.
  */
 static void
 comm_error( str )
 char *str;
 {
-	(void)fprintf( stderr, "%s\n", str );
+#ifdef BSD
+	syslog( LOG_ERR, str );
+#else
+	fprintf( stderr, "%s\n", str );
+#endif
+/**	(void)pkg_send( MSG_ERROR, str, strlen(str)+1, rem_pcp ); **/
 }
 
 /*
