@@ -5,21 +5,35 @@
  *  necessary for interacting with the BRL-CAD LIBRT ray-tracing library.
  *
  *  Note that this header file defines many internal data structures,
- *  as well as the external (interface) data structures.  These are
+ *  as well as the library's external (interface) data structures.  These are
  *  provided for the convenience of applications builders.  However,
- *  the internal data structures are subject to change.
+ *  the internal data structures are subject to change in each release.
  *
  *  Author -
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005 USA
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1993 by the United States Army.
  *	All rights reserved.
+ *
+ *  Include Sequencing -
+ *	#include <stdio.h>
+ *	#include <math.h>
+ *	#include "machine.h"	/* For fastf_t definition on this machine *_/
+ *	#include "vmath.h"	/* For vect_t definition *_/
+ *	#include "rtlist.h"	/* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "rtstring.h"	/* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "db.h"		/* OPTIONAL, precedes raytrace.h when used *_/
+ *	#include "nmg.h"	/* OPTIONAL, precedes raytrace.h when used *_/
+ *	#include "raytrace.h"
+ *	#include "nurb.h"	/* OPTIONAL, follows raytrace.h when used *_/
+ *
+ *  Libraries Used -
+ *	LIBRT LIBRT_LIBES -lm -lc
  *
  *  $Header$
  */
@@ -718,6 +732,7 @@ struct db_i  {
  *			D I R E C T O R Y
  */
 struct directory  {
+	long		d_magic;		/* Magic number */
 	char		*d_namep;		/* pointer to name string */
 	long		d_addr;			/* disk address in obj file */
 	struct directory *d_forw;		/* link to next dir entry */
@@ -728,6 +743,8 @@ struct directory  {
 	short		d_flags;		/* flags */
 };
 #define DIR_NULL	((struct directory *)0)
+#define RT_DIR_MAGIC	0x05551212		/* Directory assistance */
+#define RT_CK_DIR(_dp)	RT_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define RT_DIR_PHONY_ADDR	(-1L)	/* Special marker for d_addr field */
 
@@ -745,6 +762,7 @@ struct directory  {
  *  For collecting paths through the database tree
  */
 struct db_full_path {
+	long		magic;
 	int		fp_len;
 	int		fp_maxlen;
 	struct directory **fp_names;	/* array of dir pointers */
@@ -876,6 +894,7 @@ struct anim_mat {
 #define ANM_RBOTH	5			/* Replace stack, arc=Idn */
 
 struct rt_anim_property {
+	/* XXX magic */
 	short		anp_op;			/* RT_ANP_RBOTH, etc */
 	struct rt_vls	anp_matname;		/* Changes for material name */
 	struct rt_vls	anp_matparam;		/* Changes for mat. params */
@@ -890,6 +909,7 @@ struct rt_anim_color {
 };
 
 struct animate {
+	/* XXX magic */
 	struct animate	*an_forw;		/* forward link */
 	struct db_full_path an_path;		/* (sub)-path pattern */
 	short		an_type;		/* AN_MATRIX, AN_COLOR... */
@@ -1242,7 +1262,7 @@ struct rt_i {
  */
 #define RT_VLIST_CHUNK	35		/* 32-bit mach => just less than 1k */
 struct rt_vlist  {
-	struct rt_list	l;
+	struct rt_list	l;			/* magic, forw, back */
 	int		nused;			/* elements 0..nused active */
 	int		cmd[RT_VLIST_CHUNK];	/* VL_CMD_* */
 	point_t		pt[RT_VLIST_CHUNK];	/* associated 3-point/vect */
@@ -1623,12 +1643,15 @@ RT_EXTERN(void db_conversions, ( struct db_i *, int units ) );
 /* db_lookup.c */
 RT_EXTERN(int db_dirhash, (CONST char *str) );
 					/* convert name to directory ptr */
-RT_EXTERN(struct directory *db_lookup,( struct db_i *, char *name, int noisy ) );
+RT_EXTERN(struct directory *db_lookup,( struct db_i *, CONST char *name, int noisy ) );
 					/* add entry to directory */
-RT_EXTERN(struct directory *db_diradd, ( struct db_i *, char *name, long laddr,
+RT_EXTERN(struct directory *db_diradd, ( struct db_i *, CONST char *name, long laddr,
 	int len, int flags ) );
 					/* delete entry from directory */
 RT_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
+RT_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );
+RT_EXTERN(void db_pr_dir, ( CONST struct db_i *dbip ) );
+
 /* db_alloc.c */
 					/* allocate "count" granules */
 RT_EXTERN(int db_alloc, ( struct db_i *, struct directory *dp, int count ) );
