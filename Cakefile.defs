@@ -300,7 +300,7 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG		-64 -KPIC
+#	define	GFLAG		-64 -KPIC -G 7
 #	define	XLIBDIR		/usr/lib64
 #	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
