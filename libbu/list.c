@@ -56,7 +56,7 @@ register struct bu_list   *hd;
 	BU_CK_LIST_HEAD( hd );
 
 	BU_LIST_INIT( &tmp_hd );
-	BU_LIST_INSEBU_LIST( &tmp_hd, hd );
+	BU_LIST_INSERT_LIST( &tmp_hd, hd );
 
 	while( BU_LIST_WHILE( ep, bu_list, &tmp_hd ) )  {
 		BU_LIST_DEQUEUE( ep );
