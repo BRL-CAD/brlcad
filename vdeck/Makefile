@@ -1,8 +1,8 @@
 #	Makefile -- for vdeck
 
-#	last edit:	85/12/20	G S Moss
+#	last edit:	86/06/17	G S Moss
 
-#	SCCSID	@(#)Makefile	2.6
+#	SCCSID	@(#)Makefile	2.7
 
 PRODUCT = vdeck
 HEADERS = ${PRODUCT}.h ged_types.h 3d.h vextern.h
@@ -74,7 +74,7 @@ compare:	all # test
 
 install:	all # test
 	${INS} ${TESTDIR}/${PRODUCT} ${BINDIR}
-	chmod 755 ${BINDIR}/${PRODUCT}
+	chmod 775 ${BINDIR}/${PRODUCT}
 	-if vax || gould; then \
 		${INS} ${TESTDIR}/${PRODUCT}.1 ${VAXMAN}/${PRODUCT}.1; \
 		chmod 664 ${VAXMAN}/${PRODUCT}.1; \
