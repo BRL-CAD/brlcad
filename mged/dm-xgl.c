@@ -21,10 +21,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-
 /*
  *	Header files
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <stdlib.h>

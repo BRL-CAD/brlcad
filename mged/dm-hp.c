@@ -12,6 +12,8 @@
  *	(205) 895-6467 Research Institute
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"

@@ -22,6 +22,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 /*  Notes:
     You almost certainly want to use this with two terminals.  Otherwise
 you can't use the crosshairs to manipulate the image.
