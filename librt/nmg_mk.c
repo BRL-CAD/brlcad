@@ -1379,13 +1379,15 @@ struct edgeuse	*eu;
 		break;
 	case NMG_EDGE_G_CNURB_MAGIC:
 		{
-			struct edge_g_cnurb	*cp;
-			cp = eu->g.cnurb_p;
+			struct edge_g_cnurb	*eg;
+			eg = eu->g.cnurb_p;
 			eu->g.magic_p = (long *)NULL;
-			if( RT_LIST_NON_EMPTY( &cp->eu_hd2 ) )  return 0;
-			rt_free( (char *)cp->k.knots, "nmg_keg cnurb knots[]");
-			rt_free( (char *)cp->ctl_points, "nmg_keg cnurb ctl_points[]");
-			FREE_EDGE_G_CNURB(cp);
+			if( RT_LIST_NON_EMPTY( &eg->eu_hd2 ) )  return 0;
+			if( eg->order != 0 )  {
+				rt_free( (char *)eg->k.knots, "nmg_keg cnurb knots[]");
+				rt_free( (char *)eg->ctl_points, "nmg_keg cnurb ctl_points[]");
+			}
+			FREE_EDGE_G_CNURB(eg);
 		}
 		break;
 	}
