@@ -39,6 +39,8 @@ static const char RCSid[] = "$Header$";
 #else
 #include <strings.h>
 #endif
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "machine.h"
 #include "externs.h"
