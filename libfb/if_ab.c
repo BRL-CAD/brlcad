@@ -422,7 +422,7 @@ FBIO	*ifp;
 _LOCAL_ int
 ab_clear( ifp, bgpp )
 FBIO		*ifp;
-RGBpixel	*bgpp;
+unsigned char	*bgpp;
 {
 	register int	r,g,b;
 	register int	count;
@@ -432,9 +432,9 @@ RGBpixel	*bgpp;
 		/* Clear to black */
 		bzero( ifp->if_rgb, 720*486*3 );
 	} else {
-		r = (*bgpp)[RED];
-		g = (*bgpp)[GRN];
-		b = (*bgpp)[BLU];
+		r = (bgpp)[RED];
+		g = (bgpp)[GRN];
+		b = (bgpp)[BLU];
 
 		cp = ifp->if_rgb;
 		for( count = 720*486-1; count >= 0; count-- )  {
@@ -456,7 +456,7 @@ ab_read( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x;
 register int	y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
@@ -517,11 +517,11 @@ _LOCAL_ int
 ab_write( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
-	register char		*cp;
+	register CONST unsigned char	*cp;
 	int			ret;
 	int			xoff, yoff;
 
@@ -547,7 +547,7 @@ int		count;
 
 	/* Copy from if_rgb[] */
 	ret = 0;
-	cp = (char *)(pixelp);
+	cp = (pixelp);
 
 	while( count )  {
 		if( y >= ifp->if_height )
@@ -559,8 +559,8 @@ int		count;
 			scan_count = count;
 
 		bcopy( cp, &ifp->if_rgb[((y+yoff)*720+(x+xoff))*3],
-			scan_count*3 );
-		cp += scan_count * 3;
+			scan_count*sizeof(RGBpixel) );
+		cp += scan_count * sizeof(RGBpixel);
 		ret += scan_count;
 		count -= scan_count;
 		/* Advance upwards */

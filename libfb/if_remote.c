@@ -384,7 +384,7 @@ FBIO	*ifp;
 _LOCAL_ int
 rem_clear( ifp, bgpp )
 FBIO	*ifp;
-RGBpixel	*bgpp;
+unsigned char	*bgpp;
 {
 	char	buf[NET_LONG_LEN+1];
 
@@ -392,9 +392,9 @@ RGBpixel	*bgpp;
 	if( bgpp == PIXEL_NULL )  {
 		buf[0] = buf[1] = buf[2] = 0;	/* black */
 	} else {
-		buf[0] = (*bgpp)[RED];
-		buf[1] = (*bgpp)[GRN];
-		buf[2] = (*bgpp)[BLU];
+		buf[0] = (bgpp)[RED];
+		buf[1] = (bgpp)[GRN];
+		buf[2] = (bgpp)[BLU];
 	}
 	if( pkg_send( MSG_FBCLEAR, buf, 3, PCP(ifp) ) < 3 )
 		return	-2;
@@ -410,7 +410,7 @@ _LOCAL_ int
 rem_read( ifp, x, y, pixelp, num )
 register FBIO	*ifp;
 int		x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int		num;
 {
 	int	ret;
@@ -443,7 +443,7 @@ _LOCAL_ int
 rem_write( ifp, x, y, pixelp, num )
 register FBIO	*ifp;
 int		x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int		num;
 {
 	int	ret;
@@ -474,7 +474,7 @@ rem_readrect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	int	num;
 	int	ret;
@@ -510,7 +510,7 @@ rem_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+CONST unsigned char	*pp;
 {
 	int	num;
 	int	ret;
@@ -588,7 +588,7 @@ int	*x, *y;
 _LOCAL_ int
 rem_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-unsigned char	*bits;
+CONST unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
 {

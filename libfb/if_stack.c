@@ -180,7 +180,7 @@ FBIO	*ifp;
 _LOCAL_ int
 stk_clear( ifp, pp )
 FBIO	*ifp;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
@@ -196,7 +196,7 @@ _LOCAL_ int
 stk_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -212,7 +212,7 @@ _LOCAL_ int
 stk_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int	count;
 {
 	register FBIO **ip = SI(ifp)->if_list;
@@ -233,7 +233,7 @@ stk_readrect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
@@ -249,7 +249,7 @@ stk_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-RGBpixel	*pp;
+CONST unsigned char	*pp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
@@ -278,7 +278,7 @@ ColorMap	*cmp;
 _LOCAL_ int
 stk_wmap( ifp, cmp )
 FBIO	*ifp;
-ColorMap	*cmp;
+CONST ColorMap	*cmp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
@@ -324,7 +324,7 @@ int	*xzoom, *yzoom;
 _LOCAL_ int
 stk_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-unsigned char *bits;
+CONST unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
