@@ -823,6 +823,7 @@ char			*buf;
 		rt_prep_timer();
 		do_run( start_line*width, end_line*width+width-1 );
 		(void)rt_read_timer( (char *)0, 0 );
+		view_end(&ap);
 	}
 
 	/*
