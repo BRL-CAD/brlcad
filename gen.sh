@@ -321,7 +321,7 @@ mkdir|relink)
 rmdir)
 	set -x
 	for dir in ${BDIRS}; do
-		rm -fr ${dir}${DIRSUF}
+		rm -fr ${DIRPRE}${dir}${DIRSUF}
 	done;;
 
 shell)
