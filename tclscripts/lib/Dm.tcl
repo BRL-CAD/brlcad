@@ -401,7 +401,8 @@ body Dm::fb_update {args} {
 
     switch $itk_option(-fb_update) {
 	0 {
-	    Dm::observer detach $this
+	    catch {Dm::observer detach $this}
+	    return ""
 	}
 	1 {
 	    Dm::observer attach $this
