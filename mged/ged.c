@@ -74,7 +74,7 @@ struct timeval {
 extern void	exit(), perror(), sync();
 extern char	*malloc(), *tempnam();
 extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
-		printf(), unlink(), write();
+		fprintf(), unlink(), write();
 extern long	time();
 
 #ifdef BSD
@@ -100,10 +100,13 @@ extern char	version[];		/* from vers.c */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
+FILE *infile = stdin;
+FILE *outfile = stdout;
+
 void
 pr_prompt()  {
-	(void)printf("mged> ");
-	(void)fflush(stdout);
+	(void)fprintf(outfile, "mged> ");
+	(void)fflush(outfile);
 }
 
 /* 
@@ -118,22 +121,23 @@ char **argv;
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
-		(void)printf("Usage:  %s database [command]\n", argv[0]);
+		(void)fprintf(outfile, "Usage:  %s database [command]\n",
+		  argv[0]);
 		return(1);		/* NOT finish() */
 	}
 
 	/* Identify ourselves if interactive */
 	if( argc == 2 )
-		(void)printf("%s\n", version+5);	/* skip @(#) */
+		(void)fprintf(outfile, "%s\n", version+5);	/* skip @(#) */
 
 	/* Get input file */
 	if( db_open( argv[1] ) < 0 )  {
 		char line[128];
 		if( !isatty(0) )
 			exit(2);		/* NOT finish */
-		(void)printf("Create new database (y|n)[n]? ");
-		fflush(stdout);
-		(void)gets( line );
+		(void)fprintf(outfile, "Create new database (y|n)[n]? ");
+		fflush(outfile);
+		(void)fgets(line, sizeof(line), infile);
 		if( line[0] != 'y' && line[0] != 'Y' )
 			exit(0);		/* NOT finish */
 		if( db_create( argv[1] ) < 0 )
@@ -220,7 +224,7 @@ char **argv;
 		else
 			cur_sigint = sig2;	/* back to here w/!0 return */
 	} else {
-		(void)printf("\nAborted.\n");
+		(void)fprintf(outfile, "\nAborted.\n");
 	}
 	(void)signal( SIGPIPE, SIG_IGN );
 	pr_prompt();
@@ -295,7 +299,7 @@ char **argv;
 			usepen();
 			break;
 		default:
-			(void)printf("pen(%d,%d,x%x) -- bad dm press code\n",
+			(void)fprintf(outfile, "pen(%d,%d,x%x) -- bad dm press code\n",
 			dm_values.dv_xpen,
 			dm_values.dv_ypen,
 			dm_values.dv_penpress);
@@ -520,7 +524,7 @@ char *arg;
 	timep = ctime( &now );	/* returns 26 char string */
 	timep[24] = '\0';	/* Chop off \n */
 
-	(void)sprintf( line, "%s [%s] time=%ld uid=%d (%s) %s\n",
+	(void)sprintf(line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 			event,
 			dmp->dmr_name,
 			now,
@@ -548,7 +552,7 @@ int	exitcode;
 {
 	char place[64];
 
-	(void)sprintf( place, "exit_status=%d", exitcode );
+	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
 	dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
 	dmp->dmr_close();
