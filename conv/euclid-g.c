@@ -408,11 +408,6 @@ int	reg_id;
 				break;
 			}
 		}
-		if( !outfaceuses[i]->f_p->fg_p )
-		{
-			nmg_pr_fu_briefly( outfaceuses[i] , (char *)NULL );
-			rt_bomb( "Cannot find plane eqn for above faceuse\n" );
-		}
 	}
 
 	/* Glue edges of outward pointing face uses together. */
