@@ -92,6 +92,10 @@ extern int	max_bounces;		/* max reflection/recursion level */
 extern int	max_ireflect;		/* max internal reflection level */
 /***** end variables shared with refract.c *****/
 
+/***** variables shared with viewg3.c *****/
+extern struct bu_vls	ray_data_file;	/* file name for ray data output */
+/***** end variables shared with viewg3.c *****/
+
 void		def_tree();
 void		do_ae();
 void		res_pr();
@@ -455,6 +459,7 @@ struct bu_structparse set_parse[] = {
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",  1, "ray_data_file", byteoffset(ray_data_file),BU_STRUCTPARSE_FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
