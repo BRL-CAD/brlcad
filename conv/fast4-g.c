@@ -50,7 +50,7 @@ static char RCSid[] = "$Header$";
 
 #define		REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
 
-static char	line[LINELEN];		/* Space for input line */
+static char	line[LINELEN+1];		/* Space for input line */
 static FILE	*fdin;			/* Input FASTGEN4 file pointer */
 static FILE	*fdout;			/* Output BRL-CAD file pointer */
 static FILE	*fd_plot=NULL;		/* file for plot output */
@@ -71,6 +71,7 @@ static int	warnings=0;		/* Flag: >0 -> Print warning messages */
 static int	debug=0;		/* Debug flag */
 static int	rt_debug=0;		/* rt_g.debug */
 static int	nmg_debug=0;		/* rt_g.NMG_debug */
+static int	quiet=0;		/* flag to not blather */
 static int	sol_count=0;		/* number of solids, used to create unique solid names */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
 static long	curr_offset=0;		/* Offset into input file for current element */
@@ -96,8 +97,9 @@ static int	int_list_count=0;	/* Number of ints in above array */
 static int	int_list_length=0;	/* Length of int_list array */
 #define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
 
-static char	*usage="Usage:\n\tfast4-g [-dw] [-c component_list] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n\
+static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n\
 	d - print debugging info\n\
+	q - quiet mode (don't say anyhing except error messages\n\
 	w - print warnings about creating default names\n\
 	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
 	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
@@ -329,7 +331,7 @@ int in;
 		if( int_list_length == 0 )
 			int_list = (int *)bu_malloc( INT_LIST_BLOCK*sizeof( int ) , "insert_id: int_list" );
 		else
-			int_list = (int *)rt_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
+			int_list = (int *)bu_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
 		int_list_length += INT_LIST_BLOCK;
 	}
 
@@ -1309,7 +1311,7 @@ do_grid()
 	while( grid_no > grid_size - 1 )
 	{
 		grid_size += GRID_BLOCK;
-		grid_pts = (point_t *)rt_realloc( (char *)grid_pts , grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
+		grid_pts = (point_t *)bu_realloc( (char *)grid_pts , grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
 	}
 
 	VSET( grid_pts[grid_no] , x*25.4 , y*25.4 , z*25.4 );
@@ -2075,6 +2077,43 @@ int comp;
 struct hole_list *ptr;
 {
 	struct holes *hole_ptr, *prev;
+	struct hole_list *hptr;
+
+	if( debug )
+	{
+		bu_log( "Adding holes for group %d, component %d:\n", gr, comp );
+		hptr = ptr;
+		while( hptr )
+		{
+			bu_log( "\t%d %d\n", hptr->group, hptr->component );
+			hptr = hptr->next;
+		}
+	}
+
+	if( do_skips )
+	{
+		if( !skip_region(gr*1000 + comp) )
+		{
+			/* add holes for this region to the list of regions to process */
+			hptr = ptr;
+			if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+				bu_log( "ERROR: bu_mem_barriercheck failed in Add_hole\n" );
+			while( hptr )
+			{
+				if( do_skips == region_list_len )
+				{
+					region_list_len += REGION_LIST_BLOCK;
+					region_list = (int *)bu_realloc( (char *)region_list, region_list_len*sizeof( int ), "region_list" );
+					if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+						bu_log( "ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)\n" );
+				}
+				region_list[do_skips++] = 1000*hptr->group + hptr->component;
+				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+					bu_log( "ERROR: bu_mem_barriercheck failed in Add_hole (after adding %d\n)\n", 1000*hptr->group + hptr->component );
+				hptr = hptr->next;
+			}
+		}
+	}
 
 	if( !hole_root )
 	{
@@ -2219,7 +2258,7 @@ int pos;
 
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 	{
-		bu_log( "Add_bot_face: ignoring degenerate triangle\n" );
+		bu_log( "Add_bot_face: ignoring degenerate triangle in group %d component %d\n", group_id, comp_id );
 		return;
 	}
 
@@ -2230,7 +2269,7 @@ int pos;
 	{
 		if( pos != POS_CENTER && pos != POS_FRONT )
 		{
-			bu_log( "Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face)\n" , pos );
+			bu_log( "Add_bot_face: illegal postion parameter (%d), must be one or two (ignoring face for group %d component %d)\n" , pos, group_id, comp_id );
 			return;
 		}
 	}
@@ -2481,8 +2520,6 @@ do_section( final )
 int final;
 {
 
-	static int	old_region_id;
-
 	if( debug )
 		bu_log( "do_section: %s\n" , line );
 
@@ -2527,18 +2564,24 @@ int final;
 
 			/* skip to start of next section */
 			section_start = ftell( fdin );
-			(void)getline();
-			while( line[0] &&  strncmp( line, "SECTION" , 7 ) )
+			if( getline() )
 			{
-				section_start = ftell( fdin );
-				(void)getline();
+				while( line[0] && strncmp( line, "SECTION" , 7 ) &&
+						strncmp( line, "HOLE", 4 ) &&
+						strncmp( line, "WALL", 4 ) &&
+						strncmp( line, "VEHICLE", 7 ) )
+				{
+					section_start = ftell( fdin );
+					if( !getline() )
+						break;
+				}
 			}
 			/* seek to start of the section */
 			fseek( fdin, section_start, SEEK_SET );
 			return;
 		}
 
-		if( pass )
+		if( pass && !quiet )
 			bu_log( "Making component %s, group #%d, component #%d\n",
 				name_name, group_id , comp_id );
 
@@ -2639,35 +2682,43 @@ do_hex1()
 	strncpy( field , &line[16] , 8 );
 	pts[7] = atoi( field );
 
-	BU_LIST_INIT( &head.l );
-
-	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
-		rt_bomb( "CHEX1: mk_addmember failed\n" );
-
-	strncpy( field , &line[56] , 8 );
-	thick = atof( field ) * 25.4;
-	if( thick <= 0.0 )
+	if( mode == PLATE_MODE )
 	{
-		bu_log( "do_hex1: illegal thickness (%f), skipping CHEX1 element\n" , thick );
-		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		return;
+		strncpy( field , &line[56] , 8 );
+		thick = atof( field ) * 25.4;
+		if( thick <= 0.0 )
+		{
+			bu_log( "do_hex1: illegal thickness (%f), skipping CHEX1 element\n" , thick );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+
+		strncpy( field , &line[64] , 8 );
+		pos = atoi( field );
+
+		if( pos == 0 )	/* use default */
+			pos = POS_FRONT;
+
+		if( pos != POS_CENTER && pos != POS_FRONT )
+		{
+			bu_log( "do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n" , pos );
+			bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
 	}
-
-	strncpy( field , &line[64] , 8 );
-	pos = atoi( field );
-
-	if( pos == 0 )	/* use default */
-		pos = POS_FRONT;
-
-	if( pos != POS_CENTER && pos != POS_FRONT )
+	else
 	{
-		bu_log( "do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n" , pos );
-		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		return;
+		pos =  POS_FRONT;
+		thick = 0.0;
 	}
 
 	for( i=0 ; i<12 ; i++ )
 		Add_bot_face( pts[hex_faces[i][0]], pts[hex_faces[i][1]], pts[hex_faces[i][2]], thick, pos );
+
+	BU_LIST_INIT( &head.l );
+
+	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
+		rt_bomb( "CHEX1: mk_addmember failed\n" );
 
 	Subtract_holes( &head, comp_id, group_id );
 
@@ -2757,6 +2808,35 @@ do_hex2()
 		bu_log( "ERROR: bu_mem_barriercheck failed in Do_hex2\n" );
 }
 
+void
+Process_hole_wall()
+{
+	if( debug )
+		bu_log( "Process_hole_wall\n" );
+	if( bu_debug & DEBUG_MEM_FULL )
+		bu_prmem( "At start of Process_hole_wall:" );
+
+	rewind( fdin );
+	while( 1 )
+	{
+		if( !strncmp( line , "HOLE" , 4 ) )
+			do_hole_wall( HOLE );
+		else if( !strncmp( line , "WALL" , 4 ) )
+			do_hole_wall( WALL );
+		else if( !strncmp( line , "ENDDATA" , 7 ) )
+			break;
+
+		if( !getline() || !line[0] )
+			break;
+	}
+
+	if( debug )
+	{
+		bu_log( "At end of Processa_hole_wall:\n" );
+		List_holes();
+	}
+}
+
 int
 Process_input( pass_number )
 int pass_number;
@@ -2764,7 +2844,8 @@ int pass_number;
 
 	if( debug )
 		bu_log( "\n\nProcess_input( pass = %d )\n" , pass_number );
-/*	bu_prmem( "At start of Process_input:" );	*/
+	if( bu_debug & DEBUG_MEM_FULL )
+		bu_prmem( "At start of Process_input:" );
 
 	if( pass_number != 0 && pass_number != 1 )
 	{
@@ -2775,17 +2856,16 @@ int pass_number;
 	region_id = 0;
 	pass = pass_number;
 	curr_offset = ftell( fdin );
-	(void)getline();
-	if( !line[0] )
+	if( !getline() || !line[0] )
 		strcpy( line, "ENDDATA" );
 	while( 1 )
 	{
 		if( !strncmp( line , "VEHICLE" , 7 ) )
 			do_vehicle();
 		else if( !strncmp( line , "HOLE" , 4 ) )
-			do_hole_wall( HOLE );
+			;
 		else if( !strncmp( line , "WALL" , 4 ) )
-			do_hole_wall( WALL );
+			;
 		else if( !strncmp( line , "SECTION" , 7 ) )
 			do_section( 0 );
 		else if( !strncmp( line , "$NAME" , 5 ) )
@@ -2818,9 +2898,13 @@ int pass_number;
 		else
 			bu_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
 
-		curr_offset = ftell( fdin );
-		(void)getline();
-		if( !line[0] )
+		if( (curr_offset = ftell( fdin )) < 0 )
+		{
+			perror( "ftell" );
+			bu_bomb( "ftell() failed!!\n" );
+		}
+
+		if( !getline() || !line[0] )
 			strcpy( line, "ENDDATA" );
 	}
 
@@ -2961,14 +3045,20 @@ char *str;
 			ptr2++;
 			start = atoi( ptr );
 			stop = atoi( ptr2 );
+			if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+				bu_log( "ERROR: bu_mem_barriercheck failed in make_region_list\n" );
 			for( i=start ; i<=stop ; i++ )
 			{
 				if( do_skips == region_list_len )
 				{
 					region_list_len += REGION_LIST_BLOCK;
-					bu_realloc( region_list, region_list_len*sizeof( int ), "region_list" );
+					region_list = (int *)bu_realloc( (char *)region_list, region_list_len*sizeof( int ), "region_list" );
+					if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+						bu_log( "ERROR: bu_mem_barriercheck failed in make_region_list (after realloc)\n" );
 				}
 				region_list[do_skips++] = i;
+				if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
+					bu_log( "ERROR: bu_mem_barriercheck failed in make_region_list (after adding %d)\n", i );
 			}
 		}
 		else
@@ -2976,7 +3066,7 @@ char *str;
 			if( do_skips == region_list_len )
 			{
 				region_list_len += REGION_LIST_BLOCK;
-				bu_realloc( region_list, region_list_len*sizeof( int ), "region_list" );
+				region_list = (int *)bu_realloc( (char *)region_list, region_list_len*sizeof( int ), "region_list" );
 			}
 			region_list[do_skips++] = atoi( ptr );
 		}
@@ -2993,10 +3083,13 @@ char *argv[];
 	char *output_file;
 	char *plot_file=NULL;
 
-	while( (c=getopt( argc , argv , "o:c:pa:dnwx:b:X:D:P:" ) ) != EOF )
+	while( (c=getopt( argc , argv , "qo:c:dwx:b:X:" ) ) != EOF )
 	{
 		switch( c )
 		{
+			case 'q':	/* quiet mode */
+				quiet = 1;
+				break;
 			case 'o':	/* output a plotfile of original FASTGEN4 elements */
 				do_plot = 1;
 				plot_file = optarg;
@@ -3012,7 +3105,7 @@ char *argv[];
 				break;
 			case 'x':
 				sscanf( optarg, "%x", &rt_debug );
-				rt_g.debug = rt_debug;
+				bu_debug = rt_debug;
 				break;
 			case 'b':
 				sscanf( optarg, "%x", &bu_debug );
@@ -3086,6 +3179,10 @@ char *argv[];
 
 	BU_LIST_INIT( &hole_head.l );
 
+	Process_hole_wall();
+
+	rewind( fdin );
+
 	Process_input( 0 );
 
 	rewind( fdin );
@@ -3106,5 +3203,6 @@ char *argv[];
 	fclose( fdout );
 	Post_process( output_file );
 
-	bu_log( "%d components converted\n", comp_count );
+	if( !quiet )
+		bu_log( "%d components converted\n", comp_count );
 }
