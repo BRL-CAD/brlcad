@@ -3,6 +3,30 @@
  *
  *  This header file defines many commonly used 3D vector math macros.
  *
+ *  Note that while many people in the computer graphics field use
+ *  post-multiplication, with column vectors, the BRL CAD system
+ *  uses the more traditional representation of row vectors.  Therefore,
+ *  when transforming a vector by a matrix, pre-multiplication is used, ie:
+ *
+ *		view_vec = model2view_mat * model_vec
+ *
+ *  Furthermore, additional transformations are multiplied on the left, ie:
+ *
+ *		vec'  =  T1 * vec
+ *		vec'' =  T2 * T1 * vec  =  T2 * vec'
+ *
+ *  The most notable implication of this is the location of the
+ *  "delta" (translation) values in the matrix, ie:
+ *
+ *        x'     ( R0   R1   R2   Dx )      x
+ *        y' =  (  R4   R5   R6   Dy  )  *  y
+ *        z'    (  R8   R9   R10  Dz  )     z
+ *        w'     (  0    0    0   1/s)      w
+ *
+ *  Note -
+ *	vect_t objects are 3-tuples
+ *	hvect_t objects are 4-tuples
+ *
  *  Author -
  *	Michael John Muuss
  *
@@ -26,14 +50,19 @@
 typedef	fastf_t	mat_t[4*4];
 typedef	fastf_t	*matp_t;
 
-#define ELEMENTS_PER_VECT	4	/* # of fastf_t's per [xyzw] */
-#define ELEMENTS_PER_PT         4
+#define ELEMENTS_PER_VECT	3	/* # of fastf_t's per vect_t */
+#define ELEMENTS_PER_PT         3
+#define HVECT_LEN		4	/* # of fastf_t's per hvect_t */
+#define HPT_LEN			4
 
 typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
 typedef	fastf_t	*vectp_t;
 
 typedef fastf_t	point_t[ELEMENTS_PER_PT];
 typedef fastf_t	*pointp_t;
+
+typedef fastf_t hvect_t[HVECT_LEN];
+typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Element names in homogeneous vector (4-tuple) */
 #define	X	0
@@ -177,6 +206,13 @@ extern double sqrt();
 	(o)[Y]=((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9] + (m)[13]) * f;\
 	(o)[Z]=((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10] + (m)[14])* f;}
 
+/* Multiply an Absolute hvect_t 4-Point by a full 4x4 matrix. */
+#define MAT4X4PNT(o,m,i) \
+	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H];\
+	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[H];\
+	(o)[X]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[H];\
+	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H];
+
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
 #define MAT4X3VEC(o,m,i) \
 	{ FAST fastf_t f;	f = 1.0/((m)[15]);\
@@ -213,5 +249,11 @@ extern double sqrt();
 #define VMIN(r,s)	{ V_MIN(r[X],s[X]); V_MIN(r[Y],s[Y]); V_MIN(r[Z],s[Z]); }
 #define VMAX(r,s)	{ V_MAX(r[X],s[X]); V_MAX(r[Y],s[Y]); V_MAX(r[Z],s[Z]); }
 #define VMINMAX( min, max, pt )	{ VMIN( min, pt ); VMAX( max, pt ); }
+
+/* Divide out homogeneous parameter from hvect_t, creating vect_t */
+#define HDIVIDE(a,b)  \
+	(a)[X] = (b)[X] / (b)[H];\
+	(a)[Y] = (b)[Y] / (b)[H];\
+	(a)[Z] = (b)[Z] / (b)[H];
 
 #endif VMATH_H
