@@ -43,6 +43,8 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
+extern void	(*nmg_plot_anim_upcall)();
+
 struct vlist	*rtg_vlFree;	/* should be rt_g.rtg_vlFree !! XXX dm.h */
 
 int	no_memory;	/* flag indicating memory for drawing is used up */
@@ -85,6 +87,35 @@ static struct db_tree_state	mged_initial_tree_state = {
 static int		mged_draw_wireframes;
 static int		mged_draw_normals;
 static struct model	*mged_nmg_model;
+
+/*
+ *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
+ *
+ *  Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
+ *  file dyanmicly overlaid on the screen.
+ *  This can be used to provide a very easy to program diagnostic
+ *  animation capability.
+ *  Alas, no wextern keyword to make this a little less indirect.
+ */
+void
+mged_plot_anim_upcall_handler( file, us )
+char	*file;
+long	us;		/* microseconds of extra delay */
+{
+	char	buf[128];
+
+	/* Overlay plot file */
+	sprintf( buf, "overlay %s\n", file );
+	cmdline( buf );
+
+	event_check( 1 );	/* Take any device events */
+
+	refresh();		/* Force screen update */
+
+	/* Extra delay between screen updates, for more viewing time */
+	if(us)
+		(void)bsdselect( 0, 0, us );
+}
 
 /*
  *			M G E D _ W I R E F R A M E _ R E G I O N _ E N D
@@ -460,6 +491,9 @@ int	kind;
 	}
 	argc -= optind;
 	argv += optind;
+
+	/* Establish upcall interfaces for use by bottom of NMG library */
+	nmg_plot_anim_upcall = mged_plot_anim_upcall_handler;
 
 	switch( kind )  {
 	default:
