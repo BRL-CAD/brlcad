@@ -17,12 +17,10 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1989 by the United States Army.
  *	All rights reserved.
  */
-#ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
-#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -325,7 +323,10 @@ char	**argv;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
-	width = height = 64;
+	fprintf(stderr,"%s: %s\n", ourname, RCSid+13);
+	fflush(stderr);
+
+	width = height = 512;			/* same size as RT */
 
 	start_helper();
 
@@ -396,8 +397,11 @@ char	**argv;
 			prep_frame(fr);
 			sprintf(buf, "ae %g %g;", azimuth, elevation);
 			vls_cat( &fr->fr_cmd, buf);
-			create_outputfilename( fr );
-			APPEND_FRAME( fr, FrameHead.fr_back );
+			if( create_outputfilename( fr ) < 0 )  {
+				FREE_FRAME(fr);
+			} else {
+				APPEND_FRAME( fr, FrameHead.fr_back );
+			}
 		} else {
 			/* if -M, read RT script from stdin */
 			clients = 0;
@@ -763,8 +767,11 @@ FILE	*fp;
 		if( body.vls_cur > 0 )  {
 			vls_2cat( &fr->fr_cmd, &body );
 		}
-		create_outputfilename( fr );
-		APPEND_FRAME( fr, FrameHead.fr_back );
+		if( create_outputfilename( fr ) < 0 )  {
+			FREE_FRAME(fr);
+		} else {
+			APPEND_FRAME( fr, FrameHead.fr_back );
+		}
 bad:
 		rt_free( buf, "command line" );
 	}
@@ -951,11 +958,21 @@ do_a_frame()
 
 /*
  *			C R E A T E _ O U T P U T F I L E N A M E
+ *
+ *  Build and save the file name.
+ *  If the file will not be able to be written,
+ *  signal error here.
+ *
+ *  Returns -
+ *	-1	error, drop this frame
+ *	 0	OK
  */
 create_outputfilename( fr )
 register struct frame	*fr;
 {
 	char	name[512];
+	struct stat	sb;
+	int		fd;
 
 	/* Always create a file name to write into */
 	if( outputfile )  {
@@ -965,31 +982,6 @@ register struct frame	*fr;
 		(void)unlink(name);	/* remove any previous one */
 	}
 	fr->fr_filename = rt_strdup( name );
-}
-
-/*
- *			F R A M E _ S T A R T
- *
- *  This code is called just before the first time work is to be
- *  assigned from this frame, to a server.
- *  In some cases, the caller will be told to skip this frame.
- *
- *  Returns -
- *	 0	OK
- *	-1	drop this frame
- */
-int
-frame_start(fr)
-register struct frame	*fr;
-{
-	struct stat	sb;
-	int		fd;
-
-	if( fr->fr_filename == (char *)0 ||
-	    fr->fr_filename[0] == '\0' )  {
-	    	rt_log("frame_start(%d):  null filename!\n",fr->fr_number);
-	    	return(-1);
-	}
 
 	/*
 	 *  There are several cases:
@@ -1006,7 +998,7 @@ register struct frame	*fr;
 			return( -1 );		/* skip this frame */
 		}
 		(void)close(fd);
-		goto begin;
+		return(0);			/* OK */
 	}
 	/* The file exists */
 	if( access( fr->fr_filename, 2 ) < 0 )  {
@@ -1018,16 +1010,12 @@ register struct frame	*fr;
 	if( stat( fr->fr_filename, &sb ) >= 0 && sb.st_size > 0 )  {
 		/* The file has existing contents, dequeue all non-black
 		 * pixels.
-xxx
+XXX
 		 */
 		rt_log("...need to scan %s for non-black pixels (deferred)\n",
 			fr->fr_filename );
 	}
-
-begin:
-	/* Note when actual work on this frame was started */
-	(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
-	return(0);			/* this frame is OK */
+	return(0);				/* OK */
 }
 
 /*
@@ -1280,6 +1268,15 @@ struct timeval		*nowp;
 	if( sp->sr_state != SRST_READY )
 		return(0);	/* not running yet */
 
+	/* Sanity check */
+	if( fr->fr_filename == (char *)0 ||
+	    fr->fr_filename[0] == '\0' )  {
+		rt_log("task_server: fr %d: null filename!\n",
+			fr->fr_number);
+		destroy_frame( fr );	/* will dequeue */
+		return(-1);		/* restart scan */
+	}
+
 	/*
 	 *  Check for tardy server.
 	 *  The assignments are estimated to take only ASSIGNMENT_TIME
@@ -1320,11 +1317,8 @@ struct timeval		*nowp;
 
 	/* Special handling for the first assignment of each frame */
 	if( fr->fr_start.tv_sec == 0 )  {
-		if( frame_start( fr ) < 0 )  {
-			/* Skip this frame after all */
-			destroy_frame( fr );	/* will dequeue */
-			return(-1);		/* restart scan */
-		}
+		/* Note when actual work on this frame was started */
+		(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
 	}
 
 	/*
@@ -1421,8 +1415,7 @@ out:
 		rt_log("EOF on frame file.\n");
 		return(-1);
 	}
-	create_outputfilename( fr );
-	return(0);	/* OK */
+	return(0);			/* OK */
 }
 
 /*
@@ -2423,6 +2416,11 @@ char	**argv;
 	outputfile = rt_strdup( argv[1] );
 }
 
+/*
+ *			C D _ M A T
+ *
+ *  Read one specific matrix from an old-format eyepoint file.
+ */
 cd_mat( argc, argv )
 int	argc;
 char	**argv;
@@ -2443,11 +2441,18 @@ char	**argv;
 		perror(argv[1]);
 		return;
 	}
-	for( i=fr->fr_number; i>=0; i-- )
+
+	/* Find the one desired frame */
+	for( i=fr->fr_number; i>=0; i-- )  {
 		if(read_matrix( fp, fr ) < 0 ) break;
+	}
 	fclose(fp);
 
-	APPEND_FRAME( fr, FrameHead.fr_back );
+	if( create_outputfilename( fr ) < 0 )  {
+		FREE_FRAME(fr);
+	} else {
+		APPEND_FRAME( fr, FrameHead.fr_back );
+	}
 }
 
 cd_movie( argc, argv )
@@ -2476,14 +2481,19 @@ char	**argv;
 		return;
 	}
 	/* Skip over unwanted beginning frames */
-	for( i=0; i<a; i++ )
+	for( i=0; i<a; i++ )  {
 		if(read_matrix( fp, &dummy_frame ) < 0 ) break;
+	}
 	for( i=a; i<b; i++ )  {
 		GET_FRAME(fr);
 		prep_frame(fr);
 		fr->fr_number = i;
 		if(read_matrix( fp, fr ) < 0 ) break;
-		APPEND_FRAME( fr, FrameHead.fr_back );
+		if( create_outputfilename( fr ) < 0 )  {
+			FREE_FRAME(fr);
+		} else {
+			APPEND_FRAME( fr, FrameHead.fr_back );
+		}
 	}
 	fclose(fp);
 	rt_log("Movie ready\n");
