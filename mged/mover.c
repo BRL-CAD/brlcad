@@ -208,8 +208,8 @@ int air;				/* Air code */
 			comb->GIFTmater = mat_default;
 			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls,
-				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
-				ident, air, los_default, mat_default );
+				"Creating region id=%d, air=%d, GIFTmaterial=%d, los=%d\n",
+				ident, air, mat_default, los_default );
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			bu_vls_free(&tmp_vls);
 		}
