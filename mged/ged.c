@@ -59,6 +59,7 @@ in all countries except the USA.  All rights reserved.";
 #include <strings.h>
 #endif
 #include <fcntl.h>
+#include <ctype.h>
 #include <signal.h>
 #include <time.h>
 #ifdef NONBLOCK
@@ -225,11 +226,7 @@ char **argv;
 		fflush(stdout);
 		
 		if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-#if 0
-		    cbreak_mode = 1;
-#else
-		    ;
-#endif
+ 		    cbreak_mode = 1;
 		}
 
 	    }
@@ -397,7 +394,7 @@ char **argv;
 void
 pr_prompt()
 {
-    rt_log("mged> ");
+    rt_log("\rmged> ");
 }
 
 /*
@@ -414,6 +411,13 @@ pr_prompt()
 
 static struct rt_vls input_str;
 static int input_str_init = 0;
+static int input_str_index = 0;
+
+/* multi_line_sig
+ * Called when the user hits ^C while typing multiple lines of input
+ * (using a backslash at the end of the line, or nested within braces.)
+ * Acts like the usual break, except it also truncates the input string.
+ */
 
 void
 multi_line_sig()
@@ -425,39 +429,100 @@ multi_line_sig()
     /* NOTREACHED */
 }
 
+/*
+ * stdin_input
+ *
+ * Called when a single character is ready for reading on standard input
+ * (or an entire line if the terminal is not in cbreak mode.)
+ */
+
 void
 stdin_input(clientData, mask)
 ClientData clientData;
 int mask;
 {
     int count;
+    char ch;
 
     if (!input_str_init) {
 	rt_vls_init(&input_str);
 	input_str_init = 1;
+	input_str_index = 0;
     }
 
-    /* Get additional input and append a newline */
-    count = rt_vls_gets(&input_str, stdin);
-    rt_vls_strcat(&input_str, "\n");
+    /* Grab single character from stdin */
 
+    count = read(fileno(stdin), (void *)&ch, 1);
     if (count <= 0 && feof(stdin))
 	f_quit(0, NULL);
 
-    if (Tcl_CommandComplete(rt_vls_addr(&input_str))) {
-	cmdline_sig = SIG_IGN;
-	if (cmdline_hook) {
-	    if ((*cmdline_hook)(&input_str))
-		pr_prompt();
+    /* Process character */
+#define CTRL_A      1
+#define CTRL_B      2
+#define CTRL_D      4
+#define CTRL_E      5
+#define CTRL_F      6
+#define CTRL_N      14
+#define CTRL_P      16
+#define BACKSPACE   '\b'
+#define DELETE      127
+    
+    switch (ch) {
+    case '\n':
+    case '\r':
+	if (cbreak_mode) rt_log("\n");
+	rt_vls_putc(&input_str, '\n');
+	if (Tcl_CommandComplete(rt_vls_addr(&input_str))) {
+	    cmdline_sig = SIG_IGN;
+	    if (cmdline_hook) {
+		if ((*cmdline_hook)(&input_str))
+		    pr_prompt();
+	    } else {
+		if (cbreak_mode) {
+		    reset_Tty(fileno(stdin));
+		}
+		if (cmdline(&input_str))
+		    pr_prompt();
+		if (cbreak_mode) {
+		    set_Cbreak(fileno(stdin));
+		    clr_Echo(fileno(stdin));
+		}
+	    }
+	    rt_vls_trunc(&input_str, 0);
 	} else {
-	    if (cmdline(&input_str))
-		pr_prompt();
+	    /* Allow the user to hit ^C */
+	    cmdline_sig = multi_line_sig;
 	}
-	rt_vls_trunc(&input_str, 0);
-    } else {
-	/* Allow the user to hit ^C */
-	cmdline_sig = multi_line_sig;
+	input_str_index = 0;
+	break;
+    case BACKSPACE:
+    case DELETE:
+	if (input_str_index <= 0) {
+	    rt_log("\a");
+	    break;
+	}
+
+	if (cbreak_mode) rt_log("\b \b");
+	rt_vls_trunc(&input_str, rt_vls_strlen(&input_str)-1);
+	--input_str_index;
+	break;
+    case CTRL_A:
+    case CTRL_B:
+    case CTRL_D:
+    case CTRL_E:
+    case CTRL_F:
+    case CTRL_N:
+    case CTRL_P:
+	break;
+    default:
+	if (!isprint(ch))
+	    break;
+	if (cbreak_mode) rt_log("%c", (int)ch);
+	rt_vls_putc(&input_str, (int)ch);
+	++input_str_index;
+	break;
     }
+	
 }
 
 /*
@@ -977,7 +1042,9 @@ do_rc()
 	    rt_log("If you are setting variables in your .mgedrc, you will ");
 	    rt_log("need to change those\ncommands.\n\n");
 	}
-	Tcl_EvalFile( interp, rt_vls_addr(&str) );
+	if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
+	    rt_log("Error reading .mgedrc: %s\n", interp->result);
+	}
 #else
 	mged_source_file( fp );
 	fclose( fp );
