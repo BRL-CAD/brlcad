@@ -336,8 +336,11 @@ struct face_g {
 	long			magic;
 	struct rt_list		f_hd;	/* list of faces sharing this surface */
 	plane_t			N;	/* Plane equation (incl normal) */
+#if 1
+/* XXX This moves to faceuse_a */
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
+#endif
 	long			index;	/* struct # in this model */
 };
 
@@ -354,6 +357,8 @@ struct faceuse {
 
 struct faceuse_a {
 	long			magic;
+	point_t			min_pt;	/* minimums of bounding box */
+	point_t			max_pt;	/* maximums of bounding box */
 	long			index;	/* struct # in this model */
 };
 
