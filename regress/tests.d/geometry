@@ -23,6 +23,26 @@ for PRIM in $PRIMITIVES ; do
     set tor_IN_ARGS "0 0 0 0 0 1 30 20"
     set tor_DB_ARGS "V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
 
+    #
+    # Sphere (sph) Arguments
+    #
+    # Note that the sph is really an ell with all radii equal.
+    # 
+    # in args => name type xvertex yvertex zvertex radius1
+    # db args =>  
+    #
+    set sph_IN_ARGS "0 0 0 45"
+    set sph_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 45 0} C {0 0 45}"
+
+    #
+    # Ellipsoid (ell) Arguments
+    #
+    # in args => name type xvertex yvertex zvertex radius1 radius2 radius3
+    # db args =>  
+    #
+    set ell_IN_ARGS "0 0 0  45 0 0  0 30 0  0 0 15"
+    set ell_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 30 0} C {0 0 15}"
+
 
     if { ! [ info exists ${PRIM}_IN_ARGS ] } {
         puts "Error: Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
@@ -88,6 +108,7 @@ for PRIM in $PRIMITIVES ; do
     } 
 
     q
+
 EOF
 
     for version in $VER ; do
