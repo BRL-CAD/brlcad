@@ -68,18 +68,18 @@ static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
 unsigned short
 bu_gshort(const unsigned char *msgp)
 {
-	register const unsigned char *p = msgp;
+    register const unsigned char *p = msgp;
 #ifdef vax
-	/*
-	 * vax compiler doesn't put shorts in registers
-	 */
-	register unsigned long u;
+    /*
+     * vax compiler doesn't put shorts in registers
+     */
+    register unsigned long u;
 #else
-	register unsigned short u;
+    register unsigned short u;
 #endif
 
-	u = *p++ << 8;
-	return ((unsigned short)(u | *p));
+    u = *p++ << 8;
+    return ((unsigned short)(u | *p));
 }
 
 /*
@@ -88,13 +88,13 @@ bu_gshort(const unsigned char *msgp)
 unsigned long
 bu_glong(const unsigned char *msgp)
 {
-	register const unsigned char *p = msgp;
-	register unsigned long u;
+    register const unsigned char *p = msgp;
+    register unsigned long u;
 
-	u = *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	u |= *p++; u <<= 8;
-	return (u | *p);
+    u = *p++; u <<= 8;
+    u |= *p++; u <<= 8;
+    u |= *p++; u <<= 8;
+    return (u | *p);
 }
 
 /*
@@ -104,9 +104,9 @@ unsigned char *
 bu_pshort(register unsigned char *msgp, register int s)
 {
 
-	msgp[1] = s;
-	msgp[0] = s >> 8;
-	return(msgp+2);
+    msgp[1] = s;
+    msgp[0] = s >> 8;
+    return(msgp+2);
 }
 
 /*
@@ -116,11 +116,11 @@ unsigned char *
 bu_plong(register unsigned char *msgp, register long unsigned int l)
 {
 
-	msgp[3] = l;
-	msgp[2] = (l >>= 8);
-	msgp[1] = (l >>= 8);
-	msgp[0] = l >> 8;
-	return(msgp+4);
+    msgp[3] = l;
+    msgp[2] = (l >>= 8);
+    msgp[1] = (l >>= 8);
+    msgp[0] = l >> 8;
+    return(msgp+4);
 }
 
 #if 0
@@ -135,25 +135,25 @@ typedef unsigned char ext_timeval_t[8+4];	/* storage for on-wire format */
 
 void
 bu_gtimeval( tvp, msgp )
-struct timeval *tvp;
-const unsigned char *msgp;
+     struct timeval *tvp;
+     const unsigned char *msgp;
 {
-	tvp->tv_sec = (((time_t)BU_GLONG( msgp+0 )) << 32) |
-		BU_GLONG( msgp+4 );
-	tvp->tv_usec = BU_GLONG( msgp+8 );
+    tvp->tv_sec = (((time_t)BU_GLONG( msgp+0 )) << 32) |
+	BU_GLONG( msgp+4 );
+    tvp->tv_usec = BU_GLONG( msgp+8 );
 }
 
 unsigned char *
 bu_ptimeval( msgp, tvp )
-const struct timeval *tvp;
-unsigned char *msgp;
+     const struct timeval *tvp;
+     unsigned char *msgp;
 {
-	long upper = (long)(tvp->tv_sec >> 32);
-	long lower = (long)(tvp->tv_sec & 0xFFFFFFFFL);
+    long upper = (long)(tvp->tv_sec >> 32);
+    long lower = (long)(tvp->tv_sec & 0xFFFFFFFFL);
 
-	(void)bu_plong( msgp+0, upper );
-	(void)bu_plong( msgp+4, lower );
-	return bu_plong( msgp+8, tvp->tv_usec );
+    (void)bu_plong( msgp+0, upper );
+    (void)bu_plong( msgp+4, lower );
+    return bu_plong( msgp+8, tvp->tv_usec );
 }
 #endif
 
