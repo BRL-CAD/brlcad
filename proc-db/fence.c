@@ -3,6 +3,15 @@
  *
  *      This program generages a chain-link fence.  Every parameter of
  *      the fence may be adjusted.  Default values are held in fence.h
+ *      Be wary of long fences...  
+ *
+ *      Note: It would be much more optimal for there to be a fence
+ *      object type (or a mesh object type) so that memory usage is 
+ *      minimized.  I.e. instead of creating a thousand little
+ *      translations, rotations, and copies of basic primitives for a
+ *      short 5 foot fence, we would just store the height, width, 
+ *      and mesh parameters (angle of twists in xyz, vertical separation,
+ *      horizontal separation, and depth).
  *
  *  Author -
  *      Christopher Sean Morrison
@@ -23,10 +32,6 @@
  ***********************************************************************/
 
 #include "./fence.h"
-
-#ifndef M_PI
-#define M_PI            3.14159265358979323846
-#endif
 
 /* command-line options are described in the parseArguments function
  */
@@ -117,12 +122,15 @@ void argumentHelp(fp, progname, message)
      char *progname;
      char *message;
 {
-  if (message) (void) fputs(strcat(message, "\n"), fp);
+  if (message) {
+    fprintf(fp, "%s\n", message);
+  }
 
   fprintf(fp, "Usage Format: \n%s %s\n\n", progname, \
 	   "-[ivdonuhHlLrRjatTbBcCfpmwseEgGxXzZ]" \
 	  );
   fprintf(fp, "\t-[ivd]\n\t\tspecifies interactive, verbose, and/or debug modes\n");
+  fprintf(fp, "\t-[IVD]\n\t\ttoggles interactive, verbose, and/or debug modes\n");
   fprintf(fp, "\t-o filename\n\t\tspecifies the name of the file to output to\n");
   fprintf(fp, "\t-n 'string'\n\t\tthe 'string' name of the csg database\n");
   fprintf(fp, "\t-u 'units'\n\t\tthe units of the data in the csg database\n");
@@ -133,8 +141,8 @@ void argumentHelp(fp, progname, message)
   fprintf(fp, "\t-a angle\n\t\tthe primary angle of the wire 'zig-zagging'\n");
   fprintf(fp, "\t-j distance\n\t\tthe maximum spacing between the poles\n");
   fprintf(fp, "\t-[tT] 'material'\n\t\tthe material of the fence (t) or \n\t\tthe material of all generated regions (T)\n");
-  fprintf(fp, "\n-[bB] 'parameters'\n\t\tthe parameter string for the fence material(b)\n\t\tor of all region materials (B)\n");
-  fprintf(fp, "\n-[cC] 'rval gval bval'\b\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= vlaues <= 255)\n"); 
+  fprintf(fp, "\t-[bB] 'parameters'\n\t\tthe parameter string for the fence material(b)\n\t\tor of all region materials (B)\n");
+  fprintf(fp, "\t-[cC] 'rval gval bval'\b\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= values <= 255)\n"); 
   fprintf(fp, "\t-f fencename\n\t\tthe base name of the fence objects in the database\n");
   fprintf(fp, "\t-p polename\n\t\tthe base name of the pole objects in the database\n");
   fprintf(fp, "\t-m meshname\n\t\tthe base name of the mesh objects in the database\n");
@@ -144,7 +152,7 @@ void argumentHelp(fp, progname, message)
   fprintf(fp, "\t-[gG] [fpm]\n\t\tspecifies which parts of the fence object(s) to generate\n\t\t'g' specifies to generate the object(s)\n\t\t'G' specifies to do the opposite of the default(s)\n");
   fprintf(fp, "\t-[xX]\n\t\tdisplays some command-line parameter examples\n");
   fprintf(fp, "\t-[zZ]\n\t\tdisplays the default settings\n");
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   return;
 }
@@ -255,12 +263,18 @@ int parseArguments(argc, argv)
   double d=0.0;
   char *progname;
   int color[3];
-  progname = calloc(64,sizeof(char));
 
-  if ((progname = strrchr(*argv, '/')))
-    progname++;
-  else
-    progname = *argv;
+  if ((progname = (char *) calloc(DEFAULT_MAXNAMELENGTH,sizeof(char))) == NULL) {
+    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "parseArguments:(char *)progname calloc FAILED\n");
+    exit(1);
+  }
+
+	if (argc > 1) {
+		strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
+	}
+	else {
+		strncpy(progname, "fence\0", 6);
+	}
 
   opterr = 0;
 

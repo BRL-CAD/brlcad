@@ -67,7 +67,7 @@
 
 /* this is the name of the default output file name
  */
-#define DEFAULT_OUTPUTFILENAME "untitled.csg"
+#define DEFAULT_OUTPUTFILENAME "fence.g"
 
 /* this is the default measuring units for the database file
  */
@@ -212,10 +212,24 @@
  */
 #define DEFAULT_MAXNAMELENGTH 64
 
-/* this macro does the standard conversion of an angle to a radian
- * value.  the value of pi defined in M_PI is pulled from math.h
+/* use a high precision value for pi if it is available, otherwise
+ * use the standard value (if available).  last resort, use mine
  */
-#define RADIAN(x) (((x)*M_PI)/180.0)
+#ifdef M_PIl
+#define _PI M_PIl
+#else
+#ifdef M_PI
+#define _PI M_PI
+#else
+#define _PI            3.14159265358979323846
+#endif
+#endif
+
+/* this macro does the standard conversion of an angle to a radian
+ * value.  the value of pi defined in _PI is pulled from math.h if
+ * available
+ */
+#define RADIAN(x) (((x)*_PI)/180.0)
 
 /*****************/
 
