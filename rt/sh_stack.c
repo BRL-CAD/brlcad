@@ -56,10 +56,12 @@ struct structparse stk_parse[] = {
  *  Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-stk_setup( rp, matparm, dpp )
+stk_setup( rp, matparm, dpp, mf_p, rtip )
 register struct region *rp;
 struct rt_vls	*matparm;	/* parameter string */
-char	**dpp;		/* pointer to user data pointer */
+char		**dpp;		/* pointer to user data pointer */
+struct mfuncs	*mf_p;
+struct rt_i	*rtip;
 {
 	register struct stk_specific *sp;
 	char	*cp, *start;
@@ -85,7 +87,8 @@ char	**dpp;		/* pointer to user data pointer */
 				return( 0 );
 			}
 			/* add one */
-			if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )  {
+			if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
+				rtip) == 0 )  {
 				inputs |= sp->mfuncs[i]->mf_inputs;
 				i++;
 			} else {
@@ -103,7 +106,8 @@ char	**dpp;		/* pointer to user data pointer */
 			return( 0 );
 		}
 		/* add one */
-		if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i]) == 0 )  {
+		if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
+		    rtip ) == 0 )  {
 			inputs |= sp->mfuncs[i]->mf_inputs;
 			i++;
 		} else {
@@ -186,11 +190,12 @@ char *cp;
 
 extern struct mfuncs *mfHead;	/* Head of list of materials */
 
-dosetup( cp, rp, dpp, mpp )
+dosetup( cp, rp, dpp, mpp, rtip )
 char	*cp;
 struct region	*rp;
 char	**dpp;		/* udata pointer address */
 char	**mpp;		/* mfuncs pointer address */
+struct rt_i	*rtip;
 {
 	register struct mfuncs *mfp;
 	struct rt_vls	arg;
@@ -228,7 +233,7 @@ found:
 	*dpp = (char *)0;
 	RT_VLS_INIT( &arg );
 	rt_vls_strcat( &arg, cp );
-	if( mfp->mf_setup( rp, &arg, dpp, mfp ) < 0 )  {
+	if( mfp->mf_setup( rp, &arg, dpp, mfp, rtip ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}
