@@ -165,11 +165,8 @@ struct faceuse *fu;
 
 	/* check the topology first */	
 	if (vup=vertex_on_face(vu->v_p, fu)) {
-		if (nmg_tbl(bs->l1, TBL_LOC, &vu->l.magic) < 0)
-			(void)nmg_tbl(bs->l1, TBL_INS, &vu->l.magic);
-		if (nmg_tbl(bs->l2, TBL_LOC, &vup->l.magic) < 0)
-			(void)nmg_tbl(bs->l2, TBL_INS, &vup->l.magic);
-
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
 	}
 
@@ -181,14 +178,12 @@ struct faceuse *fu;
 	dist = NMG_DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
 
 	if (NEAR_ZERO(dist, bs->tol) &&
-	    nmg_tbl(bs->l1, TBL_LOC, &vu->l.magic) < 0) {
-
-		(void)nmg_tbl(bs->l1, TBL_INS, &vu->l.magic);
-
+	    nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic) < 0) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		    	VPRINT("Making vertexloop", vu->v_p->vg_p->coord);
 
 		plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
+	    	/* XXX should this be TBL_INS_UNIQUE? */
 	    	(void)nmg_tbl(bs->l2, TBL_INS,
 			&NMG_LIST_FIRST_MAGIC(&plu->down_hd) );
 	}
@@ -269,10 +264,8 @@ struct faceuse *fu;
 			rt_log("\tvertex topologically on intersection plane\n");
 		}
 
-		if (nmg_tbl(bs->l1, TBL_LOC, &eu->vu_p->l.magic) < 0)
-			(void)nmg_tbl(bs->l1, TBL_INS, &eu->vu_p->l.magic);
-		if (nmg_tbl(bs->l2, TBL_LOC, &vu->l.magic) < 0)
-			(void)nmg_tbl(bs->l2, TBL_INS, &vu->l.magic);
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu->l.magic);
 		return;
 	} else if (vu=vertex_on_face(eu->eumate_p->vu_p->v_p, fu)) {
 
@@ -352,8 +345,7 @@ struct faceuse *fu;
 			rt_log("\tedge starts at plane intersect\n");
 
 		/* Add to list of verts on intersection line */
-		if (nmg_tbl(bs->l1, TBL_LOC, &eu->vu_p->l.magic) < 0)
-			(void)nmg_tbl(bs->l1, TBL_INS, &eu->vu_p->l.magic);
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 
 		/* If face doesn't have a "very similar" point, give it one */
 		vu = nmg_find_vu_in_face(p1, fu, bs->tol);
@@ -363,8 +355,7 @@ struct faceuse *fu;
 			 * Add vertex to face's list of vertices on
 			 * intersection line.
 			 */
-			if (nmg_tbl(bs->l2, TBL_LOC, &vu->l.magic) < 0)
-				(void)nmg_tbl(bs->l2, TBL_INS, &vu->l.magic);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu->l.magic);
 
 			/* new coordinates are the midpoint between
 			 * the two existing coordinates
@@ -389,6 +380,7 @@ struct faceuse *fu;
 			/* make sure this vertex is in other face's list of
 			 * points to deal with
 			 */
+			/* Should this be TBL_INS_UNIQUE? */
 			(void)nmg_tbl(bs->l2, TBL_INS,
 				&NMG_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
@@ -418,8 +410,7 @@ struct faceuse *fu;
 				rt_log("re-using vertex from other face\n");
 
 			(void)nmg_esplit(vu->v_p, eu->e_p);
-			if (nmg_tbl(bs->l2, TBL_LOC, &vu->l.magic) < 0)
-				(void)nmg_tbl(bs->l2, TBL_INS, &vu->l.magic);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu->l.magic);
 		} else {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("Making new vertex\n");
