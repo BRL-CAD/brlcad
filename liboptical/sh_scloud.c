@@ -210,7 +210,7 @@ char *cp;
 
 
 /*
- *	T C L O U D _ R E N D E R
+ *	T S P L A T _ R E N D E R
  *
  *	Sort of a surface spot transparency shader.  Picks transparency
  *	based upon noise value of surface spot.
