@@ -84,11 +84,10 @@ struct nurb_hit * rt_return_nurb_hit();
  */
 
 int
-rt_nurb_prep( stp, ip, rtip, tol )
+rt_nurb_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal 	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_nurb_internal	*sip;
 	struct nurb_specific 	*nurbs;
@@ -190,16 +189,16 @@ register struct soltab *stp;
  */
 
 int
-rt_nurb_shot( stp, rp, ap, seghead, tol )
+rt_nurb_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct nurb_specific * nurb =
 		(struct nurb_specific *)stp->st_specific;
 	register struct seg *segp;
+	CONST struct rt_tol	*tol = &ap->a_rt_i->rti_tol;
 	point_t p1, p2, p3, p4;
 	vect_t dir1, dir2;
 	plane_t	plane1, plane2;
@@ -345,15 +344,14 @@ CONST struct rt_tol	*tol;
  *  Vectorized version.
  */
 void
-rt_nurb_vshot( stp, rp, segp, n, resp, tol )
+rt_nurb_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
-	rt_vstub( stp, rp, segp, n, resp, tol );
+	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*
@@ -702,11 +700,10 @@ struct rt_tol		*tol;
  *			R T _ N U R B _ T E S S
  */
 int
-rt_nurb_tess( r, m, rp, dp, ttol, tol )
+rt_nurb_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
-union record		*rp;
-struct directory	*dp;
+struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {

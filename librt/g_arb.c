@@ -107,8 +107,6 @@ static struct arb_info {
 	{ "4378", 7, 6, 2, 3 }
 };
 
-static struct rt_tol	rt_arb_tol;
-
 RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
 /*
@@ -396,12 +394,11 @@ skip_pt:		;
  *	!0	failure
  */
 HIDDEN int
-rt_arb_setup( stp, aip, rtip, uv_wanted, tol )
+rt_arb_setup( stp, aip, rtip, uv_wanted )
 struct soltab		*stp;
 struct rt_arb_internal	*aip;
 struct rt_i		*rtip;
 int			uv_wanted;
-CONST struct rt_tol	*tol;
 {
 	register int		i;
 	struct prep_arb		pa;
@@ -409,7 +406,7 @@ CONST struct rt_tol	*tol;
 	RT_ARB_CK_MAGIC(aip);
 
 	pa.pa_doopt = uv_wanted;
-	pa.pa_tol_sq = tol->dist_sq;
+	pa.pa_tol_sq = rtip->rti_tol.dist_sq;
 
 	if( rt_arb_mk_planes( &pa, aip ) < 0 )  {
 		return(-2);		/* Error */
@@ -488,20 +485,17 @@ CONST struct rt_tol	*tol;
  *	!0	failure
  */
 int
-rt_arb_prep( stp, ip, rtip, tol )
+rt_arb_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_arb_internal	*aip;
 
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	if( rt_arb_tol.para <= 0 )  rt_arb_tol = *tol;	/* struct copy */
-
-	return( rt_arb_setup( stp, aip, rtip, 0, tol ) );
+	return( rt_arb_setup( stp, aip, rtip, 0 ) );
 }
 
 /*
@@ -553,12 +547,11 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_arb_shot( stp, rp, ap, seghead, tol )
+rt_arb_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
 	LOCAL int		iplane, oplane;
@@ -632,13 +625,12 @@ CONST struct rt_tol	*tol;
  *  This is the Becker vector version
  */
 void
-rt_arb_vshot( stp, rp, segp, n, resp, tol)
+rt_arb_vshot( stp, rp, segp, n, ap)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		 	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
 	register int    j, i;
 	register struct arb_specific *arbp;
@@ -789,7 +781,8 @@ register struct uvcoord *uvp;
 				stp->st_name);
 			return;
 		}
-		if( rt_arb_import( &intern, &ext, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
+		if( rt_arb_import( &intern, &ext,
+		    stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
 			rt_log("rt_arb_uv(%s) database import error\n",
 				stp->st_name);
 			db_free_external( &ext );
@@ -807,7 +800,7 @@ register struct uvcoord *uvp;
 		 */
 		RES_ACQUIRE( &rt_g.res_model );
 		if( arbp->arb_opt == (struct oface *)0 )  {
-			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1, &rt_arb_tol);
+			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1 );
 		}
 		RES_RELEASE( &rt_g.res_model );
 

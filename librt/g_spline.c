@@ -106,11 +106,10 @@ struct local_hit	*rt_spl_ray_poly();
  * surface so that the subdivision works.
  */
 int
-rt_spl_prep( stp, ip, rtip, tol )
+rt_spl_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_spl_internal	*sip;
 	struct b_head		*nlist = (struct b_head *) 0;
@@ -647,12 +646,11 @@ register struct xray *rp;
 struct b_head * curr_tree;
 
 int
-rt_spl_shot( stp,  rp, ap, seghead, tol )
+rt_spl_shot( stp,  rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	struct b_head * nlist = ( struct b_head *) stp->st_specific;
 	auto vect_t invdir;

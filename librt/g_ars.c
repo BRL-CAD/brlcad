@@ -290,11 +290,10 @@ struct rt_db_internal	*ip;
  *  database records to obtain all the necessary information.
  */
 int
-rt_ars_prep( stp, ip, rtip, tol )
+rt_ars_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
@@ -492,12 +491,11 @@ register struct soltab *stp;
  *  	!0	HIT
  */
 int
-rt_ars_shot( stp, rp, ap, seghead, tol )
+rt_ars_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;

@@ -106,12 +106,12 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-epa_vshot( stp, rp, segp, n, resp)
+epa_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
+struct application	*ap;
 {
 	register struct epa_specific *epa;
 }

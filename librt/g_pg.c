@@ -52,11 +52,10 @@ HIDDEN int rt_pgface();
  *  
  */
 int
-rt_pg_prep( stp, ip, rtip, tol )
+rt_pg_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_pg_internal	*pgp;
 	register int	i;
@@ -84,7 +83,7 @@ CONST struct rt_tol	*tol;
 
 			/* output a face */
 			(void)rt_pgface( stp,
-				work[0], work[1], work[2], norm, tol );
+				work[0], work[1], work[2], norm, &rtip->rti_tol );
 
 			/* Chop off a triangle, and continue */
 			VMOVE( work[1], work[2] );
@@ -211,12 +210,11 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_pg_shot( stp, rp, ap, seghead, tol )
+rt_pg_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;

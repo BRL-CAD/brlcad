@@ -652,8 +652,7 @@ register struct application *ap;
 			BITSET( solidbits->be_v, stp->st_bit );
 			l_nshots++;
 			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ap->a_ray, ap, &waiting_segs,
-			    &rtip->rti_tol ) <= 0 )  {
+			    stp, &ap->a_ray, ap, &waiting_segs ) <= 0 )  {
 				l_nmiss++;
 				continue;	/* MISS */
 			}
@@ -769,8 +768,7 @@ register struct application *ap;
 			l_nshots++;
 			RT_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ss.newray, ap, &new_segs,
-			    &rtip->rti_tol ) <= 0 )  {
+			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
 				l_nmiss++;
 				continue;	/* MISS */
 			}
@@ -1215,14 +1213,13 @@ miss:
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 
 /* Stub function which will "similate" a call to a vector shot routine */
-/*void*/
-rt_vstub( stp, rp, segp, n, ap, tol )
+void
+rt_vstub( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct application        *ap; /* pointer to an application */
-CONST struct rt_tol	*tol;
+struct application	*ap; /* pointer to an application */
 {
 	register int    i;
 	register struct seg *tmp_seg;
@@ -1234,7 +1231,7 @@ CONST struct rt_tol	*tol;
 	for (i = 0; i < n; i++) {
 		if (stp[i] != 0){ /* skip call if solid table pointer is NULL */
 			/* do scalar call, place results in segp array */
-			if( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead, tol) <= 0 )  {
+			if( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead) <= 0 )  {
 				SEG_MISS(segp[i]);
 			} else {
 				tmp_seg = RT_LIST_FIRST(seg, &(seghead.l) );

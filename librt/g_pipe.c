@@ -53,11 +53,10 @@ RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
  *  	stp->st_specific for use by pipe_shot().
  */
 int
-rt_pipe_prep( stp, ip, rtip, tol )
+rt_pipe_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	register struct pipe_specific *pipe;
 	struct rt_pipe_internal	*pip;
@@ -94,37 +93,35 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_pipe_shot( stp, rp, ap, seghead, tol )
+rt_pipe_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct pipe_specific *pipe =
 		(struct pipe_specific *)stp->st_specific;
 	register struct seg *segp;
 
-	return(2);			/* HIT */
+	return(0);			/* MISS */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	
 
 /*
- *			S P H _ V S H O T
+ *			R T_ P I P E _ V S H O T
  *
  *  Vectorized version.
  */
 void
-rt_pipe_vshot( stp, rp, segp, n, resp, tol )
+rt_pipe_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
-	rt_vstub( stp, rp, segp, n, resp, tol );
+	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*

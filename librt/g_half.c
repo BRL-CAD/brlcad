@@ -60,11 +60,10 @@ struct half_specific  {
  *  			R T _ H L F _ P R E P
  */
 int
-rt_hlf_prep( stp, ip, rtip, tol )
+rt_hlf_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_half_internal	*hip;
 	register struct half_specific *halfp;
@@ -134,12 +133,11 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_hlf_shot( stp, rp, ap, seghead, tol )
+rt_hlf_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
@@ -189,13 +187,12 @@ CONST struct rt_tol	*tol;
  *  This is the Becker vector version
  */
 void
-rt_hlf_vshot( stp, rp, segp, n, resp, tol )
+rt_hlf_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
 	register int    i;
 	register struct half_specific *halfp;

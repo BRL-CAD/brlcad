@@ -653,11 +653,10 @@ struct rt_db_internal	*ip;
  *	in stp->st_specific for use by rt_ebm_shot().
  */
 int
-rt_ebm_prep( stp, ip, rtip, tol )
+rt_ebm_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_ebm_internal	*eip;
 	register struct rt_ebm_specific *ebmp;
@@ -737,12 +736,11 @@ register struct soltab	*stp;
  *	>0	HIT
  */
 int
-rt_ebm_shot( stp, rp, ap, seghead, tol )
+rt_ebm_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;

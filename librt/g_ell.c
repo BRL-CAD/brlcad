@@ -35,7 +35,7 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
-	struct rt_i *rtip, CONST struct rt_tol *tol));
+	struct rt_i *rtip));
 
 /*
  *  Algorithm:
@@ -157,11 +157,10 @@ struct ell_specific {
  *  	stp->st_specific for use by rt_ell_shot().
  */
 int
-rt_ell_prep( stp, ip, rtip, tol )
+rt_ell_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	register struct ell_specific *ell;
 	struct rt_ell_internal	*eip;
@@ -183,7 +182,7 @@ CONST struct rt_tol	*tol;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( rt_sph_prep( stp, ip, rtip, tol ) == 0 )
+	if( rt_sph_prep( stp, ip, rtip ) == 0 )
 		return(0);		/* OK */
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
@@ -325,12 +324,11 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_ell_shot( stp, rp, ap, seghead, tol )
+rt_ell_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -377,13 +375,12 @@ CONST struct rt_tol	*tol;
  *  This is the Becker vector version.
  */
 void
-rt_ell_vshot( stp, rp, segp, n, resp, tol )
+rt_ell_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
 	register int    i;
 	register struct ell_specific *ell;

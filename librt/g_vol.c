@@ -109,12 +109,11 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *
  */
 int
-rt_vol_shot( stp, rp, ap, seghead, tol )
+rt_vol_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
@@ -585,11 +584,10 @@ struct rt_db_internal	*ip;
  *	in stp->st_specific for use by rt_vol_shot().
  */
 int
-rt_vol_prep( stp, ip, rtip, tol )
+rt_vol_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_vol_internal	*vip;
 	register struct rt_vol_specific *volp;

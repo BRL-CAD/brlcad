@@ -42,7 +42,7 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./polyno.h"
 
 RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
-	struct rt_i *rtip, CONST struct rt_tol *tol));
+	struct rt_i *rtip));
 
 static void	rt_tgc_rotate(), rt_tgc_shear();
 static void	rt_tgc_scale();
@@ -80,11 +80,10 @@ struct  tgc_specific {
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
 int
-rt_tgc_prep( stp, ip, rtip, tol )
+rt_tgc_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_tgc_internal	*tip;
 	register struct tgc_specific *tgc;
@@ -106,7 +105,7 @@ CONST struct rt_tol	*tol;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
-	if( rt_rec_prep( stp, ip, rtip, tol ) == 0 )
+	if( rt_rec_prep( stp, ip, rtip ) == 0 )
 		return(0);		/* OK */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
@@ -489,12 +488,11 @@ register struct soltab	*stp;
  *  the points of intersection in the original coordinate system.
  */
 int
-rt_tgc_shot( stp, rp, ap, seghead, tol )
+rt_tgc_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
@@ -895,13 +893,12 @@ CONST struct rt_tol	*tol;
  *  The Homer vectorized version.
  */
 void
-rt_tgc_vshot( stp, rp, segp, n, resp, tol )
+rt_tgc_vshot( stp, rp, segp, n, ap )
 struct soltab		*stp[];
 register struct xray	*rp[];
 struct  seg            segp[]; /* array of segs (results returned) */
 int                         n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
 	register struct tgc_specific	*tgc;
 	register int		ix;

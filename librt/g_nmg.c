@@ -75,11 +75,10 @@ struct ef_data {
  *  	stp->st_specific for use by nmg_shot().
  */
 int
-rt_nmg_prep( stp, ip, rtip, tol )
+rt_nmg_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct model		*m;
 	register struct nmg_specific	*nmg;
@@ -268,6 +267,10 @@ int		filled;
 		    		fu_p = vu_p->up.eu_p->up.lu_p->up.fu_p;
 		    	else if (*vu_p->up.magic_p == NMG_LOOPUSE_MAGIC)
 		    		fu_p = vu_p->up.lu_p->up.fu_p;
+	    		else  {
+	    			rt_bomb("vertex_hit: bad vu->up\n");
+	    			/* NOTREACHED */
+	    		}
 
 		    	if (VDOT(fu_p->f_p->fg_p->N, rp->r_dir) > 0.0) {
 				VREVERSE(seg_p->seg_in.hit_normal,
@@ -381,13 +384,14 @@ static void
 edge_outin(ef_hd, li, lo, ri, ro)
 struct ef_data *ef_hd, **li, **lo, **ri, **ro;
 {
-	struct ef_data *left_in, *right_in, *left_out, *right_out, *efd;
+	struct ef_data *left_in = (struct ef_data *)NULL;
+	struct ef_data *right_in = (struct ef_data *)NULL;
+	struct ef_data *left_out = (struct ef_data *)NULL;
+	struct ef_data *right_out = (struct ef_data *)NULL;
+	struct ef_data *efd;
 	register struct ef_data *pefd;
 
     	/* find the 2 exit faces */
-    	left_out = (struct ef_data *)NULL;
-    	right_out = (struct ef_data *)NULL;
-
 	for ( RT_LIST_FOR(efd, ef_data, &(ef_hd->l)) ) {
     	    if (efd->ndot >= 0.0) {
     		/* face has rayward normal */
@@ -446,13 +450,14 @@ static void
 edge_inout(ef_hd, li, lo, ri, ro)
 struct ef_data *ef_hd, **li, **lo, **ri, **ro;
 {
-	struct ef_data *left_in, *right_in, *left_out, *right_out, *efd;
+	struct ef_data *left_in = (struct ef_data *)NULL;
+	struct ef_data *right_in = (struct ef_data *)NULL;
+	struct ef_data *left_out = (struct ef_data *)NULL;
+	struct ef_data *right_out = (struct ef_data *)NULL;
+	struct ef_data *efd;
 	register struct ef_data *pefd;
 
     	/* find the 2 entry faces */
-    	left_in = (struct ef_data *)NULL;
-    	right_in = (struct ef_data *)NULL;
-
 	for ( RT_LIST_FOR(efd, ef_data, &(ef_hd->l)) ) {
     	    if (efd->ndot < 0.0) {
     		/* face has anti-rayward normal */
@@ -858,12 +863,11 @@ struct soltab		*stp;
  *	>0	HIT
  */
 int
-rt_nmg_shot( stp, rp, ap, seghead, tol )
+rt_nmg_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;	/* info about the ray */
 struct application	*ap;	
 struct seg		*seghead;	/* intersection w/ ray */
-CONST struct rt_tol	*tol;
 {
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
@@ -901,7 +905,7 @@ CONST struct rt_tol	*tol;
 		rp->r_dir[Z] = 0.0;
 	}
 
-	hl = nmg_isect_ray(rp, nmg->nmg_invdir, nmg->nmg_model, &tol);
+	hl = nmg_isect_ray(rp, nmg->nmg_invdir, nmg->nmg_model, &ap->a_rt_i->rti_tol);
 
 	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
@@ -967,15 +971,14 @@ CONST struct rt_tol	*tol;
  *  Vectorized version.
  */
 void
-rt_nmg_vshot( stp, rp, segp, n, resp, tol )
+rt_nmg_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
-	rt_vstub( stp, rp, segp, n, resp, tol );
+	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*

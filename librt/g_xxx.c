@@ -54,14 +54,14 @@ struct xxx_specific {
  *  	stp->st_specific for use by xxx_shot().
  */
 int
-rt_xxx_prep( stp, ip, rtip, tol )
+rt_xxx_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
-CONST struct rt_tol	*tol;
 {
 	struct rt_xxx_internal		*xip;
 	register struct xxx_specific	*xxx;
+	CONST struct rt_tol		*tol = &rtip->rti_tol;
 
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_xxx_internal *)ip->idb_ptr;
@@ -91,18 +91,18 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_xxx_shot( stp, rp, ap, seghead, tol )
+rt_xxx_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
-CONST struct rt_tol	*tol;
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 	register struct seg *segp;
+	CONST struct rt_tol	*tol = &rtip->rti_tol;
 
-	return(2);			/* HIT */
+	return(0);			/* MISS */
 }
 
 #define RT_XXX_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
@@ -113,15 +113,14 @@ CONST struct rt_tol	*tol;
  *  Vectorized version.
  */
 void
-rt_xxx_vshot( stp, rp, segp, n, resp, tol )
+rt_xxx_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
-struct resource         *resp; /* pointer to a list of free segs */
-CONST struct rt_tol	*tol;
+struct application	*ap;
 {
-	rt_vstub( stp, rp, segp, n, resp );
+	rt_vstub( stp, rp, segp, n, ap );
 }
 
 /*

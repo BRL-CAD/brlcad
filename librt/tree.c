@@ -186,19 +186,11 @@ int			id;
 	union tree		*curtree;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
-	struct rt_tol		tol;
 	register int		i;
 	register matp_t		mat;
 
 	RT_CK_EXTERNAL(ep);
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 	/* Determine if this matrix is an identity matrix */
 	for( i=0; i<16; i++ )  {
@@ -291,7 +283,7 @@ next_one: ;
     	 *  If the ft_prep routine wants to keep the internal structure,
     	 *  that is OK, as long as idb_ptr is set to null.
     	 */
-	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip, &tol ) )  {
+	if( rt_functab[id].ft_prep( stp, &intern, rt_tree_rtip ) )  {
 		/* Error, solid no good */
 		rt_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
@@ -376,6 +368,7 @@ int		ncpus;
 		rt_gettree_region_end,
 		rt_gettree_leaf );
 
+	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
 	if( i < 0 )  return(-1);
 
 	if( rtip->nsolids <= prev_sol_count )
