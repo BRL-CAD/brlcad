@@ -398,7 +398,7 @@ register CONST char *cp;
 	if(rt_g.debug&DEBUG_MEM) rt_log("rt_strdup(%s) x%x\n", cp, cp);
 
 	len = strlen( cp )+2;
-	if( (base = rt_malloc( len, "rt_strdup" )) == (char *)0 )
+	if( (base = rt_malloc( len, "rt_strdup duplicate string" )) == (char *)0 )
 		rt_bomb("rt_strdup:  unable to allocate memory");
 
 	memcpy( base, cp, len );
