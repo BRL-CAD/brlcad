@@ -17,11 +17,11 @@
 #define PRODUCTS	bldg391.g crod.g demo.g \
 	ktank.g moss.g prim.g \
 	star.g truck.g world.g cube.g axis.g \
-	woodsman.g
+	woodsman.g m35.g lgt-test.g
 #define STATIC_PRODUCTS	bldg391.asc crod.asc demo.asc \
 	ktank.asc moss.asc prim.asc \
 	star.asc truck.asc world.asc cube.asc axis.asc \
-	woodsman.asc
+	woodsman.asc m35.asc lgt-test.asc
 
 #define SRCDIR	db
 #define FILES	/**/
