@@ -547,7 +547,6 @@ genptr_t			client_data;
 		bu_free(sofar, "path string");
 	}
 
-#if 0
 	if(rt_g.debug&DEBUG_SOLIDS)  {
 		struct bu_vls	str;
 		bu_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
@@ -560,7 +559,6 @@ genptr_t			client_data;
 		bu_log( "%s:  %s", dp->d_namep, bu_vls_addr( &str ) );
 		bu_vls_free( &str );
 	}
-#endif
 
 	/* Release internal version */
     	if( intern.idb_ptr )  stp->st_meth->ft_ifree( &intern );
