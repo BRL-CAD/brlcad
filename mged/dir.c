@@ -613,6 +613,12 @@ char	**argv;
 			dp->d_nref = 0;
 	}
 
+	/* Alert user if named file already exists */
+	if( (keepfp = fopen( argv[1], "r" ) ) != NULL )  {
+		(void)printf("keep:  appending to '%s'\n", argv[1] );
+		fclose(keepfp);
+	}
+
 	if( (keepfp = fopen( argv[1], "a" ) ) == NULL )  {
 		perror( argv[1] );
 		return;
