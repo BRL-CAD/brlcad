@@ -140,6 +140,7 @@ char **argv;
 	bu_vls_printb( &str, argv[1], atoi(argv[2]), argv[3] );
 	Tcl_SetResult( interp, bu_vls_addr(&str), TCL_VOLATILE );
 	bu_vls_free(&str);
+	return TCL_OK;
 }
 
 /*
