@@ -27,7 +27,7 @@
 #
 proc rcc-cap {args} {
     set usage "Usage: rcc-cap rccname newname \[height\] \[v|h\] \n \
-	       \t(create a cap at an end of an RCC)"
+	       \t(create a cap at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 2 || $argc > 4} {
 	error "$usage"
@@ -88,7 +88,7 @@ proc rcc-cap {args} {
 #
 proc rcc-tgc {args} {
     set usage "Usage: rcc-tgc rccname newname x y z \[v|h\] \n   \
-               \t(create a TGC with the specified apex at an end of an RCC)"
+               \t(create a tgc with the specified apex at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 5 || $argc > 6} {
 	error "$usage"
@@ -135,7 +135,7 @@ proc rcc-tgc {args} {
 #
 proc tor-rcc {args} {
     set usage "Usage: tor-rcc torname newname \n \
-	       \t(create an RCC from a TOR)"
+	       \t(create an rcc from a tor)"
     set argc [llength $args]
     if {$argc < 2 || $argc > 2} {
 	error "$usage"
@@ -168,7 +168,7 @@ proc tor-rcc {args} {
 #   
 proc rcc-tor {args} {
     set usage "Usage: rcc-tor rccname newname \n \
-	       \t(create a TOR from an RCC)"
+	       \t(create a tor from an rcc)"
     set argc [llength $args]
     if {$argc < 2 || $argc > 2} {
 	error "$usage"
@@ -205,7 +205,7 @@ proc rcc-tor {args} {
 #
 proc rcc-blend {args} {
     set usage "Usage: rcc-blend rccname newname thickness \[v|h\] \n \
-	       \t(create a flange at an end of an RCC)"
+	       \t(create a flange at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 3 || $argc > 4} {
 	error "$usage"
@@ -270,7 +270,7 @@ proc rpp-cap {args} {
 # first and fourth points and the midpoint between the second and third points
 # of the specified face
     set usage "Usage: rpp-cap rppname newname face height \[0|1\] \n \
-	       \t(create a cap (ARB6) at face of an RPP)"
+	       \t(create a cap (arb6) at a face of an rpp)"
     set argc [llength $args]
     if {$argc < 4 || $argc > 5} {
 	error "$usage"
@@ -362,7 +362,7 @@ proc rpp-cap {args} {
 #
 proc rpp-arch {args} {
     set usage "Usage: rpp-arch rppname newname face \n \
-	       \t(create an arch at a face of an RPP)"
+	       \t(create an arch at a face of an rpp)"
     set argc [llength $args]
     if {$argc < 3 || $argc > 3} {
 	error "$usage"
@@ -394,7 +394,7 @@ proc rpp-arch {args} {
 #
 proc sph-part {args} {
     set usage "Usage: sph-part sph1 sph2 newname \n \
-	       \t(create a PART from two SPHs)"
+	       \t(create a part from two sph's)"
     set argc [llength $args]
     if {$argc < 3 || $argc > 3} {
 	error "$usage"
