@@ -9,7 +9,7 @@
  *  Authors -
  *  	Charles M Kennedy
  *  	Michael J Muuss
- *      Gary S Moss (minor bug fixes)
+ *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
@@ -18,12 +18,6 @@
  *  Copyright Notice -
  *	This software is Copyright (C) 1985 by the United States Army.
  *	All rights reserved.
- */
-/*	WARNING:  The implementation of "atof()" provided here is not fully
-	general.  It assumes that the %e format as specified in "g2asc" has
-	been used for printing the floats.  There is a work around for this
-	by using some #ifdef'd out code that uses "scanf()", see "polydbld()"
-	for my note and an example. [GSM]
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -440,7 +434,7 @@ polyhbld()	/* Build Polyhead record */
 	while( *cp != '\0' )  {
 		*np++ = *cp++;
 	}
-	*(np-1) = '\0';			/* Clobber new-line. [GSM] */
+
 #ifdef never
 	(void)sscanf( buf, "%c %s",
 		&record.p.p_id,
@@ -455,12 +449,8 @@ polyhbld()	/* Build Polyhead record */
 void
 polydbld()	/* Build Polydata record */
 {
-#if 1	/* The following does not always work, it seems atof() is not
-		a fully general implementation.  As long as the file
-		was created with G2ASC, you're OK. [GSM]
-	 */
-	register int i, j;
 	register char *cp;
+	register int i, j;
 
 	cp = buf;
 	record.q.q_id = *cp++;
@@ -482,7 +472,7 @@ polydbld()	/* Build Polydata record */
 		}
 	}
 
-#else
+#ifdef never
 	int temp1;
 
 		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 */
@@ -617,6 +607,13 @@ bsurfbld()	/* Build d-spline surface description record */
 	cp = nxt_spc( cp );
 	record.d.d_nctls = (short)atoi( cp );
 
+	record.d.d_nknots = 
+		ngran( record.d.d_kv_size[0] + record.d.d_kv_size[1] );
+
+	record.d.d_nctls = 
+		ngran( record.d.d_ctl_size[0] * record.d.d_ctl_size[1] 
+			* record.d.d_geom_type);
+
 #ifdef never
 	int temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9;
 
@@ -715,6 +712,15 @@ register char *cp;
 		cp++;
 	}
 	return( cp );
+}
+
+ngran( nfloat )
+{
+	register int gran;
+	/* Round up */
+	gran = nfloat + ((sizeof(union record)-1) / sizeof(float) );
+	gran = (gran * sizeof(float)) / sizeof(union record);
+	return(gran);
 }
 
 #ifdef SYSV
