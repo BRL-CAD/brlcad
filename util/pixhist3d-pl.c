@@ -48,22 +48,21 @@ char **argv;
 	}
 
 	/* Initialize plot */
-	space3( 0, 0, 0, 128, 128, 128 );
-	openpl();
-	color( 255, 0, 0 );
-	line3( 0, 0, 0, 127, 0, 0 );
-	color( 0, 255, 0 );
-	line3( 0, 0, 0, 0, 127, 0 );
-	color( 0, 0, 255 );
-	line3( 0, 0, 0, 0, 0, 127 );
-	color( 255, 255, 255 );
+	pl_3space( stdout, 0, 0, 0, 128, 128, 128 );
+	pl_color( stdout, 255, 0, 0 );
+	pl_3line( stdout, 0, 0, 0, 127, 0, 0 );
+	pl_color( stdout, 0, 255, 0 );
+	pl_3line( stdout, 0, 0, 0, 0, 127, 0 );
+	pl_color( stdout, 0, 0, 255 );
+	pl_3line( stdout, 0, 0, 0, 0, 0, 127 );
+	pl_color( stdout, 255, 255, 255 );
 
 	while( (n = fread(&scan[0], sizeof(*scan), 512, stdin)) > 0 ) {
 		for( x = 0; x < n; x++ ) {
 			bmask = 1 << ((scan[x].blue >> 1) & 7);
 			if( (bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] & bmask) == 0 ) {
 				/* New color: plot it and mark it */
-				point3( scan[x].red>>1, scan[x].green>>1, scan[x].blue>>1 );
+				pl_3point( stdout, scan[x].red>>1, scan[x].green>>1, scan[x].blue>>1 );
 				bin[ scan[x].red>>1 ][ scan[x].green>>1 ][ scan[x].blue>>4 ] |= bmask;
 			}
 		}
