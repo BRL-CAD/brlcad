@@ -592,11 +592,11 @@ char	**argv;
 		if (interactive) work_allocate_method = OPT_FRAME;
 
 		/* take note of database name and treetops */
-		if( optind+2 > argc )  {
+		if( bu_optind+2 > argc )  {
 			fprintf(stderr,"remrt:  insufficient args\n");
 			exit(2);
 		}
-		build_start_cmd( argc, argv, optind );
+		build_start_cmd( argc, argv, bu_optind );
 
 		/* Read .remrtrc file to acquire servers */
 		read_rc_file();
