@@ -69,7 +69,7 @@ FBIO abekas_interface = {
 	ab_wmap,
 	ab_view,
 	ab_getview,
-	fb_null,			/* setcursor */
+	fb_null_setcursor,		/* setcursor */
 	ab_cursor,
 	ab_getcursor,
 	fb_sim_readrect,
