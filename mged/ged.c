@@ -509,6 +509,14 @@ char **argv;
 	    clr_Echo(fileno(stdin));
 	  }
 	}else{
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "output_hook output_callback");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+
+	  /* to catch output from routines that do not use bu_log */
 	  Tcl_CreateFileHandler(pipe_out[0], TCL_READABLE,
 				std_out_or_err, (ClientData)pipe_out[0]);
 	  Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
@@ -1170,7 +1178,7 @@ int mask;
   line[count] = '\0';
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "distribute_text {} {} {%s}", line);
+  bu_vls_printf(&vls, "output_callback {%s}", line);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }
