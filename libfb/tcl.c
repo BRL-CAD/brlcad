@@ -715,3 +715,22 @@ int w, h;
 
   return TCL_OK;
 }
+
+void
+fb_configureWindow(ifp, width, height)
+FBIO *ifp;
+int width, height;
+{
+  char *X_name = "/dev/X";
+#ifdef IF_OGL
+  char *ogl_name = "/dev/ogl";
+#endif
+
+  if(!strcmp(ifp->if_name, X_name))
+    X24_configureWindow(ifp, width, height);
+#ifdef IF_OGL
+  else if(!strcmp(ifp->if_name, ogl_name))
+    ogl_configureWindow(ifp, width, height);
+#endif
+}
+
