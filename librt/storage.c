@@ -34,7 +34,7 @@ static char RCSstorage[] = "@(#)$Header$";
 #include "raytrace.h"
 #include "./debug.h"
 
-#define MEMDEBUG 1
+/** #define MEMDEBUG 1 **/
 
 #ifdef MEMDEBUG
 #define MDB_SIZE	500
