@@ -7,7 +7,7 @@
 .SH NAME
 nirt \- interactively ray trace an MGED model
 .SH SYNOPSIS
-.BR "nirt  [ -M ] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
+.BR "nirt  [ -M ] [-s] [ -u " n " ] [ -x " v " ] " "model.g objects ..."
 .SH DESCRIPTION
 .I Nirt
 operates on the specified
@@ -44,6 +44,14 @@ to be called directly from within
 using the
 .BR nirt " and " rrt
 commands.
+Given the
+.B -s
+option,
+.I nirt
+runs in short (that is, non-verbose) mode.
+In this mode, it does not print its initial lines of output or the prompt.
+Short-mode output, useful for piping to other programs,
+is also produced whenever standard input has been redirected.
 The
 .BI -u " n"
 option sets the \fIuseair\fR member

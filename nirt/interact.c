@@ -15,6 +15,7 @@ static char RCSid[] = "$Header$";
 #include "./usrfmt.h"
 
 extern com_table	ComTab[];
+extern int		silent_flag;
 
 /*	               I N T E R A C T ( )
  *
@@ -40,7 +41,7 @@ FILE	*fPtr;
 	{
 		in_cmt = 0;
 		key_len = 0;
-		if (fPtr == stdin)
+		if ((fPtr == stdin) && (! silent_flag))
 		    (void) fputs(NIRT_PROMPT, stdout);     
 		while (((Ch = fgetc(fPtr)) == ' ') OR (Ch == '\t'));
 		if (Ch == '\n')

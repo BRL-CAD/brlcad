@@ -73,6 +73,7 @@ com_table	ComTab[] =
 		    { "?", show_menu, "display this help menu" },
 		    { 0 }
 		};
+int		silent_flag = 0;	/* Refrain from babbling? */
 
 /* Parallel structures needed for operation w/ and w/o air */
 struct rt_i		*rti_tab[2];
@@ -132,6 +133,9 @@ char **argv;
 	    case 'M':
 		mat_flag = 1;
 		break;
+	    case 's':
+		silent_flag = 1;
+		break;
             case 'x':
 		sscanf( optarg, "%x", &rt_g.debug );
 		break;
@@ -160,10 +164,15 @@ char **argv;
 	use_of_air = 1;
     }
     db_name = argv[optind];
+    if (! isatty(0))
+	silent_flag = 1;
 
     /* build directory for target object */
-    printf("Database file:  '%s'\n", db_name);
-    printf("Building the directory...");
+    if (! silent_flag)
+    {
+	printf("Database file:  '%s'\n", db_name);
+	printf("Building the directory...");
+    }
     if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL)
     {
 	fflush(stdout);
@@ -172,10 +181,10 @@ char **argv;
     }
     rti_tab[use_of_air] = rtip;
     rti_tab[1 - use_of_air] = RTI_NULL;
-    putchar('\n');
     rtip -> useair = use_of_air;
 
-    printf("Prepping the geometry...");
+    if (! silent_flag)
+	printf("\nPrepping the geometry...");
     while (++optind < argc)    /* prepare the objects that are to be included */
 	do_rt_gettree( rtip, argv[optind], 1 );
  
@@ -223,15 +232,18 @@ char **argv;
 	fclose(fPtr);
     }
 
-    printf("Database title: '%s'\n", db_title);
-    printf("Database units: '%s'\n", local_u_name);
-    printf("model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
-	rtip -> mdl_min[X] * base2local,
-	rtip -> mdl_min[Y] * base2local,
-	rtip -> mdl_min[Z] * base2local,
-	rtip -> mdl_max[X] * base2local,
-	rtip -> mdl_max[Y] * base2local,
-	rtip -> mdl_max[Z] * base2local);
+    if (! silent_flag)
+    {
+	printf("Database title: '%s'\n", db_title);
+	printf("Database units: '%s'\n", local_u_name);
+	printf("model_min = (%g, %g, %g)    model_max = (%g, %g, %g)\n",
+	    rtip -> mdl_min[X] * base2local,
+	    rtip -> mdl_min[Y] * base2local,
+	    rtip -> mdl_min[Z] * base2local,
+	    rtip -> mdl_max[X] * base2local,
+	    rtip -> mdl_max[Y] * base2local,
+	    rtip -> mdl_max[Z] * base2local);
+    }
 
     /* Perform the user interface */
     if (mat_flag)
@@ -247,8 +259,9 @@ char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
  -M      read matrix, cmds on stdin\n\
+ -s      run in short (non-verbose) mode\n\
  -u n    set use_air=n (default 0)\n\
- -x f    set diagnostic flag=n\n\
+ -x v    set librt(3) diagnostic flag=v\n\
 ";
 #if 0
 char	usage[] = "\
@@ -290,6 +303,6 @@ int		save;		/* Add object_name to object_list? */
 	if (op != NULL)
 	    op -> obj_next = NULL;
     }
-    putchar('\n');
-    printf("Object '%s' processed\n", object_name);
+    if (! silent_flag)
+	printf("\nObject '%s' processed\n", object_name);
 }

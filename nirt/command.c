@@ -27,6 +27,7 @@ double		base2local;		/* from db_i struct, not fastf_t */
 double		local2base;		/* from db_i struct, not fastf_t */
 
 extern fastf_t			bsphere_diameter;
+extern int			silent_flag;
 extern struct application	ap;
 extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
 extern struct resource		res_tab[];	/* For use w/ and w/o air */
@@ -274,7 +275,8 @@ com_table		*ctp;
 
 void quit()
 {
-	(void) fputs("Quitting...\n", stdout);
+	if (! silent_flag)
+	    (void) fputs("Quitting...\n", stdout);
 	exit (0);
 }
 
