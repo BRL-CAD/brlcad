@@ -104,6 +104,13 @@
 #define	ECMD_FGP_THICK		62	/* scale FGP plate thickness */
 #define	ECMD_FGP_MODE		63	/* set FGP mode (center or front face) */
 
+#define	ECMD_BOT_PICKV		64	/* pick a BOT vertex */
+#define	ECMD_BOT_PICKE		65	/* pick a BOT edge */
+#define	ECMD_BOT_PICKT		66	/* pick a BOT triangle */
+#define	ECMD_BOT_MOVEV		67	/* move a BOT vertex */
+#define	ECMD_BOT_MOVEE		68	/* move a BOT edge */
+#define	ECMD_BOT_MOVET		69	/* move a BOT triangle */
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
@@ -149,7 +156,10 @@
 		     es_edflag == ECMD_PIPE_PT_INS || \
 		     es_edflag == ECMD_ARS_MOVE_PT || \
 		     es_edflag == ECMD_ARS_MOVE_CRV || \
-		     es_edflag == ECMD_ARS_MOVE_COL)
+		     es_edflag == ECMD_ARS_MOVE_COL || \
+		     es_edflag == ECMD_BOT_MOVEV || \
+		     es_edflag == ECMD_BOT_MOVEE || \
+		     es_edflag == ECMD_BOT_MOVET)
 #define OEDIT_TRAN (state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
@@ -159,7 +169,10 @@
 #define SEDIT_PICK (state == ST_S_EDIT && \
 		    (es_edflag == ECMD_NMG_EPICK || \
 		     es_edflag == ECMD_PIPE_PICK || \
-		     es_edflag == ECMD_ARS_PICK))
+		     es_edflag == ECMD_ARS_PICK || \
+		     es_edflag == ECMD_BOT_PICKV || \
+		     es_edflag == ECMD_BOT_PICKE || \
+		     es_edflag == ECMD_BOT_PICKT))
 
 extern vect_t edit_absolute_model_rotate; 
 extern vect_t edit_absolute_object_rotate;

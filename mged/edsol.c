@@ -69,7 +69,7 @@ extern short earb7[12][18];
 extern short earb8[12][18];
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), fgp_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed(), fgp_ed(), bot_ed();
 static void	rpc_ed(), rhc_ed(), part_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -105,6 +105,8 @@ fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t	es_m[3];		/* edge(line) slope */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
+
+int bot_verts[3];		/* vertices for the BOT solid */
 
 point_t	es_keypoint;		/* center of editing xforms */
 char	*es_keytag;		/* string identifying the keypoint */
@@ -206,6 +208,12 @@ int	es_menu;		/* item selected from menu */
 #define MENU_FGP_SOLID		91
 #define MENU_FGP_THICK		92
 #define MENU_FGP_MODE		93
+#define MENU_BOT_PICKV		94
+#define	MENU_BOT_PICKE		95
+#define	MENU_BOT_PICKT		96
+#define	MENU_BOT_MOVEV		97
+#define	MENU_BOT_MOVEE		98
+#define	MENU_BOT_MOVET		99
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -586,6 +594,17 @@ struct menu_item fgp_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item bot_menu[] = {
+	{ "BOT MENU", (void (*)())NULL, 0 },
+	{ "pick vertex", bot_ed, ECMD_BOT_PICKV },
+	{ "pick edge", bot_ed, ECMD_BOT_PICKE },
+	{ "pick triangle", bot_ed, ECMD_BOT_PICKT },
+	{ "move vertex", bot_ed, ECMD_BOT_MOVEV },
+	{ "move edge", bot_ed, ECMD_BOT_MOVEE },
+	{ "move triangle", bot_ed, ECMD_BOT_MOVET },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -719,6 +738,16 @@ fgp_ed( arg )
 			es_edflag = ECMD_FGP_MODE;
 			break;
 	}
+
+	sedit();
+	set_e_axes_pos(1);
+}
+
+static void
+bot_ed( arg )
+{
+	es_menu = arg;
+	es_edflag = arg;
 
 	sedit();
 	set_e_axes_pos(1);
@@ -2432,6 +2461,9 @@ sedit_menu()  {
 		break;
 	case ID_FGP:
 		mmenu_set_all( MENU_L1, fgp_menu );
+		break;
+	case ID_BOT:
+		mmenu_set_all( MENU_L1, bot_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -4786,6 +4818,96 @@ sedit()
 			VMOVE( &ars->curves[es_ars_crv][es_ars_col*3] , new_pt );
 		}
 		break;
+	case ECMD_BOT_MOVEV:
+		{
+			struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+			int vert;
+			point_t new_pt;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot_verts[0] < 0 )
+			{
+				bu_log( "No BOT point selected\n" );
+				break;
+			}
+			vert = bot_verts[0];
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables->mv_context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
+				VMOVE( new_pt , es_para )
+#endif
+			}
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			VMOVE( &bot->vertices[vert*3] , new_pt );
+		}
+		break;
+	case ECMD_BOT_MOVEE:
+		{
+			struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+			int v1, v2;
+			vect_t diff;
+			point_t new_pt;
+
+			RT_BOT_CK_MAGIC( bot );
+
+			if( bot_verts[0] < 0 || bot_verts[1] < 0 )
+			{
+				bu_log( "No BOT edge selected\n" );
+				break;
+			}
+			v1 = bot_verts[0];
+			v2 = bot_verts[1];
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables->mv_context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
+				VMOVE( new_pt , es_para )
+#endif
+			}
+			else if( inpara && inpara != 3 )
+			{
+			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
+			  break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			
+
+			VSUB2( diff, new_pt, &bot->vertices[v1*3] );
+			VMOVE( &bot->vertices[v1*3] , new_pt );
+			VADD2( &bot->vertices[v2*3], &bot->vertices[v2*3], diff );
+		}
+		break;
+	case ECMD_BOT_PICKV:
+	case ECMD_BOT_PICKE:
+	case ECMD_BOT_PICKT:
+		break;
 	default:
 	  {
 	    struct bu_vls tmp_vls;
@@ -4985,6 +5107,61 @@ CONST vect_t	mousevec;
     }
 
     break;
+  case ECMD_BOT_PICKV:
+    {
+  	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+  	int tmp_vert;
+    	char tmp_msg[256];
+
+  	RT_BOT_CK_MAGIC( bot );
+
+	MAT4X3PNT( pos_view, view_state->vs_model2view, curr_e_axes_pos );
+	pos_view[X] = mousevec[X];
+	pos_view[Y] = mousevec[Y];
+
+  	tmp_vert = bot_find_v_nearest_pt2( bot, pos_view, view_state->vs_model2view );
+  	if( tmp_vert < 0 )
+  	{
+  		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!!!\n", (char *)NULL );
+  		mged_print_result( TCL_ERROR );
+  		return;
+  	}
+
+  	bot_verts[0] = tmp_vert;
+  	bot_verts[1] = -1;
+  	bot_verts[2] = -1;
+	sprintf( tmp_msg, "picked point at (%g %g %g)\n", V3ARGS( &bot->vertices[tmp_vert*3] ) );
+    	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
+	mged_print_result( TCL_OK );
+    }
+    break;
+  case ECMD_BOT_PICKE:
+    {
+  	struct rt_bot_internal *bot = (struct rt_bot_internal *)es_int.idb_ptr;
+    	int vert1, vert2;
+    	char tmp_msg[256];
+
+    	RT_BOT_CK_MAGIC( bot );
+
+	MAT4X3PNT( pos_view, view_state->vs_model2view, curr_e_axes_pos );
+	pos_view[X] = mousevec[X];
+	pos_view[Y] = mousevec[Y];
+
+    	if( bot_find_e_nearest_pt2( &vert1, &vert2, bot, pos_view, view_state->vs_model2view ) )
+  	{
+  		Tcl_AppendResult(interp, "ECMD_BOT_PICKE: unable to find an edge!!!\n", (char *)NULL );
+  		mged_print_result( TCL_ERROR );
+  		return;
+  	}
+
+  	bot_verts[0] = vert1;
+  	bot_verts[1] = vert2;
+  	bot_verts[2] = -1;
+	sprintf( tmp_msg, "picked edge from (%g %g %g) to (%g %g %g)\n", V3ARGS( &bot->vertices[vert1*3] ), V3ARGS( &bot->vertices[vert2*3] ) );
+    	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
+	mged_print_result( TCL_OK );
+    }
+    break;
   case ECMD_NMG_EPICK:
     /* XXX Should just leave desired location in es_mparam for sedit() */
     {
@@ -5042,6 +5219,9 @@ CONST vect_t	mousevec;
   case ECMD_ARS_MOVE_PT:
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
+  case ECMD_BOT_MOVEV:
+  case ECMD_BOT_MOVEE:
+  case ECMD_BOT_MOVET:
     MAT4X3PNT(pos_view, view_state->vs_model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
