@@ -4672,6 +4672,14 @@ BU_EXTERN(int	wdb_units_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc
 BU_EXTERN(int	wdb_hide_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_unhide_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_attr_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_summary_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_comb_std_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_nmg_collapse_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_nmg_simplify_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_shells_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_xpush_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_showmats_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_copyeval_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 
 /*
  *  Constants provided and used by the RT library.
