@@ -202,6 +202,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 	rd.ap = ap;
 	rd.stp = stp;
 	rd.seghead = seghead;
+	rd.classifying_ray = 0;
 	
 	/* create a table to keep track of which elements have been
 	 * processed before and which haven't.  Elements in this table
