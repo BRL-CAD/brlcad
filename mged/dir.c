@@ -116,15 +116,18 @@ char	**argv;
   register int i;
   struct directory **dirp;
   struct directory **dirp0 = (struct directory **)NULL;
+  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
+  bu_vls_init(&vls);
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);	/* allow interupts */
   else{
     if(dirp0)
       bu_free( (genptr_t)dirp0, "dir_getspace dp[]" );
+    bu_vls_free(&vls);
 
     return TCL_OK;
   }
@@ -155,9 +158,11 @@ char	**argv;
 	*dirp++ = dp;
   }
 
-  col_pr4v( dirp0, (int)(dirp - dirp0));
-  bu_free( (genptr_t)dirp0, "dir_getspace dp[]" );
+  vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   (void)signal( SIGINT, SIG_IGN );
+  bu_vls_free(&vls);
+  bu_free( (genptr_t)dirp0, "dir_getspace dp[]" );
   return TCL_OK;
 }
 
@@ -220,7 +225,7 @@ dir_nref( )
 				    LOOKUP_QUIET)) != DIR_NULL )
 					newdp->d_nref++;
 			}
-			bu_free( (char *)rp, "dir_nref recs" );
+			bu_free( (genptr_t)rp, "dir_nref recs" );
 		}
 	}
 }
@@ -344,12 +349,15 @@ dir_summary(flag)
 	static int sol, comb, reg;
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
+	struct bu_vls vls;
 
+	bu_vls_init(&vls);
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);	/* allow interupts */
 	else{
 	  if(dirp0)
 	    bu_free( (genptr_t)dirp0, "dir_getspace" );
+	  bu_vls_free(&vls);
 
 	  return;
 	}	  
@@ -389,9 +397,12 @@ dir_summary(flag)
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
 			if( dp->d_flags & flag )
 				*dirp++ = dp;
-	col_pr4v( dirp0, (int)(dirp - dirp0));
-	bu_free( (char *)dirp0, "dir_getspace" );
+
+	vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	(void)signal( SIGINT, SIG_IGN );
+	bu_vls_free(&vls);
+	bu_free( (genptr_t)dirp0, "dir_getspace" );
 }
 
 /*
@@ -411,15 +422,18 @@ char	**argv;
 	register int i;
 	struct directory **dirp;
 	struct directory **dirp0 = (struct directory **)NULL;
+	struct bu_vls vls;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
+	bu_vls_init(&vls);
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);	/* allow interupts */
 	else{
 	  if(dirp0)
-	    bu_free( (char *)dirp0, "dir_getspace" );
+	    bu_free( (genptr_t)dirp0, "dir_getspace" );
+	  bu_vls_free(&vls);
 
 	  return TCL_OK;
 	}
@@ -442,10 +456,12 @@ char	**argv;
 			} else {
 				*dirp++ = dp;
 			}
-	col_pr4v( dirp0, (int)(dirp - dirp0));
-	bu_free( (char *)dirp0, "dir_getspace" );
 
+	vls_col_pr4v(&vls, dirp0, (int)(dirp - dirp0));
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	(void)signal( SIGINT, SIG_IGN );
+	bu_vls_free(&vls);
+	bu_free( (genptr_t)dirp0, "dir_getspace" );
 	return TCL_OK;
 }
 
@@ -674,7 +690,7 @@ char	**argv;
     (void)signal( SIGINT, sig3);	/* allow interupts */
   else{
     if(rp)
-      bu_free( (char *)rp, "dir_nref recs" );
+      bu_free( (genptr_t)rp, "dir_nref recs" );
 
     return TCL_OK;
   }
@@ -701,7 +717,7 @@ char	**argv;
 			   "\n", (char *)NULL);
 	}
       }
-      bu_free( (char *)rp, "dir_nref recs" );
+      bu_free( (genptr_t)rp, "dir_nref recs" );
     }
   }
 
@@ -792,7 +808,7 @@ char	**argv;
 					}
 				}
 			}
-			bu_free( (char *)rp, "dir_nref recs" );
+			bu_free( (genptr_t)rp, "dir_nref recs" );
 		}
 	}
 	return TCL_OK;
@@ -822,7 +838,7 @@ register struct directory *dp;
 	want = dp->d_len*sizeof(union record);
 	if( fwrite( (char *)rp, want, 1, keepfp ) != 1 )
 		perror("keep fwrite");
-	bu_free( (char *)rp, "keep rec[]" );
+	bu_free( (genptr_t)rp, "keep rec[]" );
 }
 
 int
@@ -978,7 +994,7 @@ char prefix;
   Tcl_AppendResult(interp, "\n", (char *)NULL);
 
   if( !(dp->d_flags & DIR_COMB) )  {
-    bu_free( (char *)rp, "printnode recs");
+    bu_free( (genptr_t)rp, "printnode recs");
     return;
   }
 
@@ -994,7 +1010,7 @@ char prefix;
     prefix = rp[i].M.m_relation;
     printnode ( nextdp, pathpos+1, prefix );
   }
-  bu_free( (char *)rp, "printnode recs");
+  bu_free( (genptr_t)rp, "printnode recs");
 }
 
 
@@ -1076,7 +1092,7 @@ char	**argv;
 					}
 				}
 			}
-			bu_free( (char *)rp, "dir_nref recs" );
+			bu_free( (genptr_t)rp, "dir_nref recs" );
 		}
 	}
 	return TCL_OK;

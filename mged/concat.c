@@ -104,17 +104,16 @@ char	**argv;
   struct db_i		*newdbp = DBI_NULL;
   struct directory	**dirp0 = (struct directory **)NULL;
   int status = TCL_OK;
-  struct bu_vls tmp_vls;
+  struct bu_vls vls;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  bu_vls_init(&tmp_vls);
-
+  bu_vls_init(&vls);
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);	/* allow interupts */
   else{
-    bu_vls_free(&tmp_vls);
+    bu_vls_free(&vls);
 
     if(dirp0)
       bu_free( (genptr_t)dirp0, "dir_getspace array" );
@@ -170,15 +169,15 @@ char	**argv;
     goto end;
   }
 
-  col_pr4v( dirp0, (int)(dup_dirp - dirp0));
-  bu_vls_printf(&tmp_vls, "\n -----  %d duplicate names found  -----\n",num_dups);
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  vls_col_pr4v(&vls, dirp0, (int)(dup_dirp - dirp0));
+  bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n",num_dups);
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_free( (genptr_t)dirp0, "dir_getspace array" );
   db_close( newdbp );
 
 end:
-  bu_vls_free(&tmp_vls);
   (void)signal( SIGINT, SIG_IGN );
+  bu_vls_free(&vls);
   return status;
 }
 
@@ -294,7 +293,7 @@ int			flags;
 	if( db_put( dbip, dp, rec, 0, len ) < 0 )
 		return(-1);
 
-	bu_free( (char *)rec, "db_getmrec rec" );
+	bu_free( (genptr_t)rec, "db_getmrec rec" );
 	return 0;
 }
 
