@@ -32,6 +32,7 @@
 #define DEBUG_REGIONS	0x00000040	/* Print regions & boolean trees */
 #define DEBUG_ARB8	0x00000080	/* Print voluminus ARB8 details */
 #define DEBUG_SPLINE	0x00000100	/* Splines */
+#define DEBUG_ANIM	0x00000200	/* Animation */
 
 /* Options useful for debugging the library */
 #define DEBUG_ROOTS	0x00001000	/* Print rootfinder details */
