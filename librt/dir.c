@@ -17,7 +17,7 @@ static char RCSid[] = "@(#)$Header$";
 
 #include "vmath.h"
 #include "db.h"
-#include "dir.h"
+#include "rtdir.h"
 #include "debug.h"
 
 extern char	*malloc();

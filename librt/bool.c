@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "debug.h"
 
 /* Boolean values.  Not easy to change, but defined symbolicly */
