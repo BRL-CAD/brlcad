@@ -1,5 +1,7 @@
 /* 
- * mol.c - Create a molecule from G. Adams format
+ *			M O L E C U L E . C
+ *
+ * Create a molecule from G. Adams format
  * 
  * Author:	Paul R. Stay
  * 		Ballistic Research Labratory

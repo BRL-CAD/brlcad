@@ -1,5 +1,5 @@
 /*
- *			T R I . C
+ *			P Y R A M I D . C
  *
  *  Program to generate recursive 3-d pyramids (arb4).
  *  Inspired by the SigGraph paper of Glasser.
