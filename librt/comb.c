@@ -223,13 +223,8 @@ char *argv[];
 		bu_vls_printf( &file, "/tmp/%s.b", argv[i] );
 		bu_mem_barriercheck();
 
-		rt_comb_v4_export( &ep, &ip, 1.0 );
+		rt_v4_export( &ep, &ip, 1.0, dp );
 		bu_mem_barriercheck();
-		{
-			union record *rec;
-			rec = (union record *)ep.ext_buf;
-			NAMEMOVE( dp->d_namep, rec->s.s_name );
-		}
 
 		if( (fp = fopen(bu_vls_addr(&file), "w")) != NULL )  {
 			fwrite( ep.ext_buf, ep.ext_nbytes, 1, fp );
