@@ -275,7 +275,7 @@ set -S2 "/bin/sh"
 #	define	BUILD_LIBRARY	ld -x -Bshareable -Bforcearchive -o
 #	define	LIBVERS	../sharedlibvers.sh
 #	define	ARCH_SUF	so
-#	define	RANLIB	/**/
+#	define	RANLIB	true
 
 	/* i386 users have XFree86, usually */
 #	if defined(i386)
@@ -538,7 +538,7 @@ set -S2 "/bin/sh"
 /*		should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
 #		define	LIBVERS echo
 #		define	BUILD_LIBRARY	ld -shared -o
-#		define	RANLIB		/**/
+#		define	RANLIB	true
 /*		Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
 #		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
@@ -607,7 +607,7 @@ set -S2 "/bin/sh"
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -o
-#		define	RANLIB		/**/
+#		define	RANLIB	true
 #	else
 /*		Using the Gnu C Compiler */
 #		define	CC	gcc
@@ -712,7 +712,7 @@ set -S2 "/bin/sh"
 #	define	ARCH_SUF	so
 #	define	LIBVERS		../sharedlibvers.sh
 #	define	BUILD_LIBRARY	ld -Bdynamic -o
-#	define	RANLIB		/**/
+#	define	RANLIB	true
 #	define	STANDARD_LIBES	-L''LIBDIR -lm
 #	define	LIBRT_TIMER	timer42
 
@@ -904,7 +904,7 @@ set -S2 "/bin/sh"
 #			define	CC	/bin/ncc
 #		endif
 #	endif
-#	define	RANLIB	echo
+#	define	RANLIB	true
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-L/lib/multi -lu -lio
@@ -959,7 +959,7 @@ set -S2 "/bin/sh"
 #		endif
 #	endif
 #	define	FC	/bin/cf77
-#	define	RANLIB	echo
+#	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
