@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 
-#include "../libnurb/nurb.h"
+#include "nurb.h"
 #define B_SPLINE_DEFINED 1		/* currently wdb.h needs this */
 
 #include "wdb.h"
