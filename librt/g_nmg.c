@@ -375,8 +375,10 @@ struct disk_face {
 struct disk_face_g {
 	char			magic[4];
 	char			N[4*8];
-	char			min_pt[3*8];
-	char			max_pt[3*8];
+	/*
+	 * Note that min_pt and max_pt are not stored on disk,
+	 * regardless of "compact" flag setting.
+	 */
 };
 
 #define DISK_FACEUSE_MAGIC	0x4e667520	/* Nfu */
@@ -665,7 +667,8 @@ struct nmg_exp_counts	*ecnt;
 	return( ret );
 }
 
-#define INDEX(o,i,elem)		(void)rt_plong( (o)->elem, rt_nmg_reindex((genptr_t)((i)->elem), ecnt) )
+#define INDEX(o,i,elem)	\
+	(void)rt_plong((o)->elem, rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo,ii,elem)	{ \
 	(void)rt_plong( (oo)->elem.forw, rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt) ); \
 	(void)rt_plong( (oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt) ); }
@@ -815,10 +818,6 @@ double		local2mm;
 			VMOVE( plane, fg->N );
 			plane[3] = fg->N[3] * local2mm;
 			htond( d->N, plane, 4 );
-			VSCALE( min, fg->min_pt, local2mm );
-			VSCALE( max, fg->max_pt, local2mm );
-			htond( d->min_pt, min, 3 );
-			htond( d->max_pt, max, 3 );
 		}
 		return;
 	case NMG_KIND_LOOPUSE:
@@ -1139,10 +1138,7 @@ mat_t		mat;
 			NMG_CK_FACE_G(fg);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_MAGIC );
 			ntohd( plane, d->N, 4 );
-			ntohd( min, d->min_pt, 3 );
-			ntohd( max, d->max_pt, 3 );
 			rt_rotate_plane( fg->N, mat, plane );
-			rt_rotate_bbox( fg->min_pt, fg->max_pt, mat, min, max );
 		}
 		return;
 	case NMG_KIND_LOOPUSE:
@@ -1557,10 +1553,11 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
  *	 0	indicates that a null pointer should be used.
  */
 int
-rt_nmg_import_internal( ip, ep, mat )
+rt_nmg_import_internal( ip, ep, mat, rebound )
 struct rt_db_internal	*ip;
 struct rt_external	*ep;
 register mat_t		mat;
+int			rebound;
 {
 	struct model			*m;
 	union record			*rp;
@@ -1614,8 +1611,20 @@ register mat_t		mat;
 		cp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
 
-	/* XXX Perhaps bounding boxes should be recomputed here? */
-	/* XXX Perhaps _a structures need not be stored to disk? */
+	if( rebound )  {
+		/* Recompute all bounding boxes in model */
+		nmg_rebound(m);
+	} else {
+		/*
+		 *  Need to recompute bounding boxes for the faces here.
+		 *  Other bounding boxes will exist and be intact if NMG
+		 *  exporter wrote the _a structures.
+		 */
+		for( i=1; i < maxindex; i++ )  {
+			if( ecnt[i].kind != NMG_KIND_FACE )  continue;
+			nmg_face_bb( (struct face *)ptrs[i] );
+		}
+	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_NMG;
@@ -1633,7 +1642,9 @@ register mat_t		mat;
  *  The name is added by the caller, in the usual place.
  *
  *  When the "compact" flag is set, bounding boxes from (at present)
- *	nmgregion_a, shell_a, and loop_g
+ *	nmgregion_a
+ *	shell_a
+ *	loop_g
  *  are not converted for storage in the database.
  *  They should be re-generated at import time.
  *  (Saving space in face_g is problematic).
@@ -1678,15 +1689,35 @@ int			compact;
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
 	for( i = 0; i < NMG_N_KINDS; i++ )
 		kind_counts[i] = 0;
-	subscript = 1;
+	subscript = 1;		/* must be larger than DISK_INDEX_NULL */
 	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
 		kind = rt_nmg_magic_to_kind( *(ptrs[i]) );
 		ecnt[i].per_struct_index = kind_counts[kind]++;
 		ecnt[i].kind = kind;
 	}
+	if( compact )  {
+		kind_counts[NMG_KIND_NMGREGION_A] = 0;
+		kind_counts[NMG_KIND_SHELL_A] = 0;
+		kind_counts[NMG_KIND_LOOP_G] = 0;
+	}
+
 	/* Assign new subscripts to ascending guys of same kind */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		if( compact && ( kind == NMG_KIND_NMGREGION_A ||
+		    kind == NMG_KIND_SHELL_A ||
+		    kind == NMG_KIND_LOOP_G ) )  {
+			/*
+			 * Don't assign any new subscripts for them.
+		    	 * Instead, use DISK_INDEX_NULL, yielding null ptrs.
+		    	 */
+			for( i=0; i < m->maxindex; i++ )  {
+				if( ptrs[i] == (long *)0 )  continue;
+				if( ecnt[i].kind != kind )  continue;
+				ecnt[i].new_subscript = DISK_INDEX_NULL;
+			}
+			continue;
+		}
 		for( i=0; i < m->maxindex; i++ )  {
 			if( ptrs[i] == (long *)0 )  continue;
 			if( ecnt[i].kind != kind )  continue;
@@ -1694,6 +1725,7 @@ int			compact;
 		}
 	}
 
+	/* Sanity checking */
 #if DEBUG
 rt_log("Mapping of old index to new index, and kind\n");
 #endif
@@ -1750,6 +1782,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 	for( i = m->maxindex-1; i >= 0; i-- )  {
 		if( ptrs[i] == (long *)0 )  continue;
 		kind = ecnt[i].kind;
+		if( kind_counts[kind] <= 0 )  continue;
 		rt_nmg_edisk( (genptr_t)(disk_arrays[kind]),
 			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
@@ -1784,13 +1817,11 @@ register mat_t		mat;
 		return(-1);
 	}
 
-	if( rt_nmg_import_internal( ip, ep, mat ) < 0 )
+	if( rt_nmg_import_internal( ip, ep, mat, 1 ) < 0 )
 		return(-1);
 
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
-
-	/* XXX Perhaps bounding boxes should be recomputed here? */
 
 	return(0);			/* OK */
 }
@@ -1815,10 +1846,8 @@ double			local2mm;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	/* XXX Perhaps some _a structures need not be stored to disk? */
-
 	/* The "compact" flag is used to save space in the database */
-	return  rt_nmg_export_internal( ep, ip, local2mm, 0 );
+	return  rt_nmg_export_internal( ep, ip, local2mm, 1 );
 }
 
 /*
