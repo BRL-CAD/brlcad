@@ -163,6 +163,7 @@ int		width, height;
 {
 	register char	*cp;
 	register int	i;
+	char	message[128];
 	int	mode;
 
 	mode = 0;
@@ -241,6 +242,18 @@ int		width, height;
 		return(-1);
 	}
 
+	/* Handle size defaulting and checking */
+	if( width <= 0 )
+		width = ifp->if_width;
+	if( height <= 0 )
+		height = ifp->if_height;
+	if ( width > ifp->if_max_width )
+		width = ifp->if_max_width;
+	if ( height > ifp->if_max_height)
+		height = ifp->if_max_height;
+	ifp->if_width = width;
+	ifp->if_height = height;
+
 	/* X and Y offsets if centering & non-full size */
 	ifp->if_xyoff = 0;
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1CENTER )  {
@@ -259,7 +272,23 @@ int		width, height;
 		if( ab_readframe(ifp) < 0 )  return(-1);
 	}
 
-	ab_log(ifp, "ab_open");
+	/*
+	 *  If "output-only" mode was set, clear the frame to black.
+	 */
+	if( (ifp->if_mode & MODE_2MASK) == MODE_2OUTONLY )  {
+		(void)ab_clear( ifp, PIXEL_NULL );
+		/* This sets STATE_USER_HAS_WRITTEN */
+	}
+
+	if( ifp->if_xyoff )  {
+		sprintf(message,"ab_open %x*%d offset=%d,%d\n",
+			ifp->if_width, ifp->if_height,
+			ifp->if_xyoff>>16, ifp->if_xyoff&0xFFFF );
+	} else {
+		sprintf(message,"ab_open %d*%d\n",
+			ifp->if_width, ifp->if_height);
+	}
+	ab_log(ifp, message);
 
 	return( 0 );			/* OK */
 }
@@ -475,13 +504,20 @@ int		count;
 		return(-1);
 
 	/*
-	 *  If "output-only" mode was set and this is the first
-	 *  time we have written anything, then clear the frame
-	 *  to black.
+	 *  If nothing has been written yet, and nothing has been
+	 *  read yet, and this does not seem to
+	 *  be a "well behaved" sequential write, read the frame first.
+	 *  Otherwise, just clear the frame to black.
 	 */
 	if( (ifp->if_mode & STATE_FRAME_WAS_READ) == 0 &&
 	    (ifp->if_mode & STATE_USER_HAS_WRITTEN) == 0 )  {
-		(void)ab_clear( ifp, PIXEL_NULL );
+		if( x != 0 || y != 0 )  {
+	    		/* Try to read in the frame */
+			(void)ab_readframe(ifp);
+		} else {
+			/* Just clear to black and proceed */
+			(void)ab_clear( ifp, PIXEL_NULL );
+		}
 	}
 
 	xoff = ifp->if_xyoff>>16;
