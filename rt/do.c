@@ -782,7 +782,6 @@ int framenumber;
 		 */
 		{
 			struct		stat	sb;
-			int			n;
 			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 				/* File exists, with partial results */
 				register int	fd;
@@ -794,7 +793,7 @@ int framenumber;
 				}
 				/* Read existing pix data into the frame buffer */
 				if (sb.st_size) {
-					n= fread(pixmap,1,sb.st_size,outfp);
+					(void)fread(pixmap,1,sb.st_size,outfp);
 				}
 			}
 		}
