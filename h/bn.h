@@ -82,6 +82,9 @@ extern "C" {
  *		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
  *		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
  *
+ *  Note:
+ *	tol->dist_sq = tol->dist * tol->dist;
+ *	tol->para = 1 - tol->perp;
  */
 struct bn_tol {
 	unsigned long	magic;
