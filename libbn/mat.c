@@ -589,11 +589,8 @@ fastf_t	a, b, c;
  *			M A T _ F R O M T O
  *
  *  Given two vectors, compute a rotation matrix that will transform
- *  space by the angle between the two.  Since there are many
- *  candidate matricies, the method used here is to convert the vectors
- *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
- *  take the difference, and form the rotation matrix.
- *  See mat_ae for that algorithm.
+ *  space by the angle between the two.  There are many
+ *  candidate matricies.
  *
  *  The input 'from' and 'to' vectors need not be unit length.
  *  MAT4X3VEC( to, m, from ) is the identity that is created.
@@ -611,6 +608,16 @@ CONST vect_t	to;
 	vect_t	unit_from, unit_to;
 	fastf_t	dot;
 
+#if 0
+	/*
+	 *  The method used here is to convert the vectors
+	 *  to azimuth/elevation form (azimuth is +X, elevation is +Z),
+	 *  take the difference, and form the rotation matrix.
+	 *  See mat_ae for that algorithm.
+	 *
+	 *  This algorithm fails when transforming (0,-1,0) to (0,0,1),
+	 *  and probably elsewhere.
+	 */
 	az = mat_atan2( to[Y], to[X] ) - mat_atan2( from[Y], from[X] );
 	el = mat_atan2( to[Z], hypot( to[X], to[Y] ) ) -
 	     mat_atan2( from[Z], hypot( from[X], from[Y] ) );
@@ -638,11 +645,55 @@ CONST vect_t	to;
 	m[12] = m[13] = m[14] = 0;
 	m[15] = 1.0;
 
-	/* Verify that it worked */
 	VMOVE( unit_from, from );
 	VUNITIZE( unit_from );
 	VMOVE( unit_to, to );
 	VUNITIZE( unit_to );
+#else
+	/*
+	 *  The method used here is from Graphics Gems, A. Glasner, ed.
+	 *  page 531, "The Use of Coordinate Frames in Computer Graphics",
+	 *  by Ken Turkowski, Example 6.
+	 */
+	mat_t	Q, Qt;
+	mat_t	R;
+	mat_t	A;
+	mat_t	temp;
+	vect_t	N, M;
+	vect_t	w_prime;		/* image of "to" ("w") in Qt */
+
+	VMOVE( unit_from, from );
+	VUNITIZE( unit_from );		/* aka "v" */
+	VMOVE( unit_to, to );
+	VUNITIZE( unit_to );		/* aka "w" */
+
+	VCROSS( N, unit_from, unit_to );
+	VUNITIZE( N );			/* should be unnecessary */
+	VCROSS( M, N, unit_from );
+	VUNITIZE( M );			/* should be unnecessary */
+
+	/* Almost everything here is done with pre-multiplys:  vector * mat */
+	mat_idn( Q );
+	VMOVE( &Q[0], unit_from );
+	VMOVE( &Q[4], M );
+	VMOVE( &Q[8], N );
+	mat_trn( Qt, Q );
+
+	/* w_prime = w * Qt */
+	MAT4X3VEC( w_prime, Q, unit_to );	/* post-multiply by transpose */
+
+	mat_idn( R );
+	VMOVE( &R[0], w_prime );
+	VSET( &R[4], -w_prime[Y], w_prime[X], w_prime[Z] );
+	VSET( &R[8], 0, 0, 1 );		/* is unnecessary */
+
+	mat_mul( temp, R, Q );
+	mat_mul( A, Qt, temp );
+	mat_trn( m, A );		/* back to post-multiply style */
+
+#endif
+
+	/* Verify that it worked */
 	MAT4X3VEC( test_to, m, unit_from );
 	dot = VDOT( unit_to, test_to );
 	if( dot < 0.98 || dot > 1.02 )  {
