@@ -260,8 +260,8 @@ struct region  {
 	char		*reg_name;	/* Identifying string */
 	union tree	*reg_treetop;	/* Pointer to boolean tree */
 	short		reg_bit;	/* constant index into Regions[] */
-	short		reg_regionid;	/* Region ID code;  index to ? */
-	short		reg_aircode;	/* ?? */
+	short		reg_regionid;	/* Region ID code.  If <=0, use reg_aircode */
+	short		reg_aircode;	/* Region ID AIR code */
 	short		reg_gmater;	/* GIFT Material code */
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
