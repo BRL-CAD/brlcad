@@ -46,7 +46,7 @@ void		*data;
     while (1)
     {
 	if (root == rb_null(root -> rbn_tree))
-	    return (root);
+	    break;
 	if ((result = (*order)(data, rb_data(root, order_nm))) == 0)
 	    break;
 	else if (result < 0)
