@@ -334,6 +334,12 @@ union tree		*curtree;
 			return (union tree *)NULL;
 		}
 	}
+	else if( curtree->tr_op != OP_NMG_TESS )
+	{
+		rt_log( "Cannot use '-d' option when Boolean evaluation is required\n" );
+		db_free_tree( curtree );
+		return (union tree *)NULL;
+	}
 	r = curtree->tr_d.td_r;
 	NMG_CK_REGION(r);
 
