@@ -23,7 +23,7 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "rtlist.h"
-#include "/m/cad/librt/debug.h"
+#include "./debug.h"
 
 /*
  *	E x t r u d e _ N M G _ F a c e
