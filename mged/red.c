@@ -590,6 +590,11 @@ char *str;
       rt_comb_ifree( &intern );
       return TCL_ERROR;
     }
+  }else {
+  	if( comb->region_flag )
+  		dp->d_flags |= DIR_REGION;
+  	else
+  		dp->d_flags &= ~DIR_REGION;
   }
 
   if( rt_db_put_internal( dp, dbip, &intern ) < 0 ){
@@ -758,6 +763,10 @@ char **argv;
   }
 }
 
+/*
+ *  Usage:  put_comb comb_name is_Region id air material los color
+ *			shader inherit boolean_expr
+ */
 int
 cmd_put_comb(clientData, interp, argc, argv)
 ClientData clientData;
