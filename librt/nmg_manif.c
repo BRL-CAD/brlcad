@@ -125,6 +125,9 @@ out:
 		rt_log("nmg_dangling_face(fu=x%x, manifolds=x%x) dangling_eu=x%x\n", fu, manifolds, eur);
 		if( eur )  nmg_pr_fu_around_eu( eur, &tol );
 	}
+	if ((rt_g.NMG_debug & DEBUG_MANIF) && (eur != (CONST struct edgeuse *)NULL) )
+		rt_log( "\tdangling eu x%x\n", eur );
+
 	return eur != (CONST struct edgeuse *)NULL;
 }
 
@@ -142,7 +145,7 @@ int paint_color;
 	struct edgeuse *eu;
 	CONST struct edgeuse *eur;
 
-#if 0
+#if 1
 	if (rt_g.NMG_debug & DEBUG_MANIF)
 		rt_log("nmg_paint_face(%08x, %d)\n", fu, paint_color);
 #endif
@@ -153,6 +156,9 @@ int paint_color;
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 
+		if (rt_g.NMG_debug & DEBUG_MANIF)
+			rt_log( "\tlu=x%x\n", lu );
+
 		NMG_CK_LOOPUSE( lu );
 		RT_LIST_LINK_CHECK( &lu->l );
 
@@ -160,12 +166,17 @@ int paint_color;
 			continue;
 
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			if (rt_g.NMG_debug & DEBUG_MANIF)
+				rt_log( "\t\teu=x%x\n", eu );
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			eur = nmg_radial_face_edge_in_shell(eu);
 			NMG_CK_EDGEUSE(eur);
 			NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
 			newfu = eur->up.lu_p->up.fu_p;
+
+			if (rt_g.NMG_debug & DEBUG_MANIF)
+				rt_log( "\t\t\teur=x%x, newfu=x%x\n", eur, newfu );
 
 			RT_LIST_LINK_CHECK( &eu->l );
 			RT_LIST_LINK_CHECK( &eur->l );
@@ -175,14 +186,22 @@ int paint_color;
 				eur = nmg_radial_face_edge_in_shell(
 							eur->eumate_p);
 				newfu = eur->up.lu_p->up.fu_p;
+
+				if (rt_g.NMG_debug & DEBUG_MANIF)
+					rt_log( "\t\t\teur=x%x, newfu=x%x\n", eur, newfu );
 			}
 
-			if (newfu->orientation == OT_SAME)
+			if( newfu == fu->fumate_p )
+				continue;
+			else if (newfu->orientation == OT_SAME)
 				paint_face(newfu,paint_table,paint_color,
 					paint_meaning,tbl);
 			else {
 				/* mark this group as being interior */
 				paint_meaning[paint_color] = PAINT_INTERIOR;
+
+				if (rt_g.NMG_debug & DEBUG_MANIF)
+					rt_log( "\t---- Painting fu x%x as interior, new_fu = x%x, eu=x%x, eur=x%x\n", fu, newfu, eu, eur );
 			}
 		}
 	}
