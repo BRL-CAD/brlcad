@@ -58,7 +58,7 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 #define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
 	((((_z)*rt_nu_cells_per_axis[Y])+(_y))*rt_nu_cells_per_axis[X])+(_x) ])
 
-struct rt_nu_axis {
+struct nu_axis {
 	fastf_t	nu_spos;	/* cell start pos */
 	fastf_t	nu_epos;	/* cell end pos */
 	fastf_t	nu_width;	/* voxel size (end-start) */
@@ -70,7 +70,7 @@ extern union cutter	*rt_nu_grid;
 #define NUGRID_T_SETUP(_ax,_cno)	\
 	if( ap->a_ray.r_dir[_ax] == 0.0 )  { \
 		ssp->tv[_ax] = INFINITY; \
-	} else if( ap->a_ray.r_dir[_ax] < 0 ) { \
+	} else if( ap->a_ray.r_dir[_ax] > 0 ) { \
 		ssp->tv[_ax] = (rt_nu_axis[_ax][_cno].nu_epos - ssp->newray.r_pt[_ax]) * \
 			ssp->inv_dir[_ax]; \
 	} else { \
@@ -196,69 +196,12 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->i
 			NUGRID_T_SETUP( Y, y );
 			NUGRID_T_SETUP( Z, z );
 
-			/*
-			 *  Find face (axis) of entry into first cell
-			 *  using Cyrus&Beck -- max initial t value.
-			 */
-			if( ssp->tv[X] >= ssp->tv[Y] && ssp->tv[X] < INFINITY )  {
-				in_axis = X;
-				ssp->t0 = ssp->tv[X];
-			} else {
-				in_axis = Y;
-				ssp->t0 = ssp->tv[Y];
-			}
-			if( ssp->tv[Z] > ssp->t0 && ssp->tv[Z] < INFINITY)  {
-				in_axis = Z;
-				ssp->t0 = ssp->tv[Z];
-			}
-if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Entry tv[]", ssp->tv);
-if(rt_g.debug&DEBUG_ADVANCE)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), ssp->t0);
-
-			/* Advance to next exits */
-			NUGRID_T_ADV( X, x );
-			NUGRID_T_ADV( Y, y );
-			NUGRID_T_ADV( Z, z );
-if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Exit tv[]", ssp->tv);
-
-			/* XXX?Ensure that next exit is after first entrance */
-			while( ssp->tv[X] < ssp->t0 && ap->a_ray.r_dir[X] != 0.0 )  {
-				bu_log("*** at t=%g, pt[X]=%g\n",
-					ssp->tv[X], ssp->newray.r_pt[X] + ssp->tv[X] *
-					ap->a_ray.r_dir[X] );
-				NUGRID_T_ADV( X, x );
-				bu_log("*** advancing tv[X] to %g\n", ssp->tv[X]);
-				bu_log("*** at t=%g, pt[X]=%g\n",
-					ssp->tv[X], ssp->newray.r_pt[X] + ssp->tv[X] *
-					ap->a_ray.r_dir[X] );
-				rt_bomb("advancing\n");
-			}
-			while( ssp->tv[Y] < ssp->t0 && ap->a_ray.r_dir[Y] != 0.0 )  {
-				bu_log("*** at t=%g, pt[Y]=%g\n",
-					ssp->tv[Y], ssp->newray.r_pt[Y] + ssp->tv[Y] *
-					ap->a_ray.r_dir[Y] );
-				NUGRID_T_ADV( Y, y );
-				bu_log("*** advancing tv[Y] to %g\n", ssp->tv[Y]);
-				bu_log("*** at t=%g, pt[Y]=%g\n",
-					ssp->tv[Y], ssp->newray.r_pt[Y] + ssp->tv[Y] *
-					ap->a_ray.r_dir[Y] );
-				rt_bomb("advancing\n");
-			}
-			while( ssp->tv[Z] < ssp->t0 && ap->a_ray.r_dir[Z] != 0.0 )  {
-				bu_log("*** at t=%g, pt[Z]=%g\n",
-					ssp->tv[Z], ssp->newray.r_pt[Z] + ssp->tv[Z] *
-					ap->a_ray.r_dir[Z] );
-				NUGRID_T_ADV( Z, z );
-				bu_log("*** advancing tv[Z] to %g\n", ssp->tv[Z]);
-				bu_log("*** at t=%g, pt[Z]=%g\n",
-					ssp->tv[Z], ssp->newray.r_pt[Z] + ssp->tv[Z] *
-					ap->a_ray.r_dir[Z] );
-				rt_bomb("advancing\n");
+			ssp->t0 = 0; /* XXX somebody please doublecheck this */
 			}
 		} else {
 			/* Advance from previous cell to next cell */
 			/* Take next step, finding ray entry distance */
 			ssp->t0 = ssp->t1;
-			NUGRID_T_ADV( ssp->out_axis, ssp->igrid[ssp->out_axis] );
 			if( ap->a_ray.r_dir[ssp->out_axis] > 0 ) {
 				if( ++(ssp->igrid[ssp->out_axis]) >= rt_nu_cells_per_axis[ssp->out_axis] )
 					break;
@@ -266,6 +209,7 @@ if(rt_g.debug&DEBUG_ADVANCE) VPRINT("Exit tv[]", ssp->tv);
 				if( --(ssp->igrid[ssp->out_axis]) < 0 )
 					break;
 			}
+			NUGRID_T_ADV( ssp->out_axis, ssp->igrid[ssp->out_axis] );
 if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
 			/* XXX This too can be optimized */
 			cutp = RT_NUGRID_CELL( rt_nu_grid,

@@ -224,10 +224,14 @@ int			ncpu;
 	struct bu_hist zhist;
 	struct bu_hist start_hist[3];	/* where solid RPPs start */
 	struct bu_hist end_hist[3];	/* where solid RPPs end */
+	struct bu_hist nu_hist_cellsize;
+	struct boxnode nu_xbox, nu_ybox, nu_zbox;
+	
 	int	nu_ncells;		/* # cells along one axis */
 	int	nu_sol_per_cell;	/* avg # solids per cell */
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
-	int	i;
+	int	i, xp, yp, zp;
+	vect_t	xmin, xmax, ymin, ymax, zmin, zmax;
 
 	/* For plotting, compute a slight enlargement of the model RPP,
 	 * to allow room for rays clipped to the model RPP to be depicted.
@@ -335,7 +339,7 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	 *  cell, nu_sol_per_cell = (nsolids / nu_ncells).
 	 */
 	for( i=0; i<3; i++ )  {
-		int	pos;		/* Current interval start pos */
+		fastf_t	pos;		/* Current interval start pos */
 		int	nstart = 0;
 		int	nend = 0;
 		struct bu_hist	*shp = &start_hist[i];
@@ -389,7 +393,7 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	}
 
 #if NUgrid
-	bu_hist_init( &nu_hist_cellsize, 0.0, 399.0, 400 );
+	bu_hist_init( &nu_hist_cellsize, 0.0, 400.0, 400 );
 	/* For the moment, re-use "union cutter" */
 	rt_nu_grid = (union cutter *)rt_malloc(
 		rt_nu_cells_per_axis[X] * rt_nu_cells_per_axis[Y] *
@@ -512,6 +516,8 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 
+#if !NUgrid		  
+
 	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids, "rti_cuts_waiting ptbl" );
 
 	/*  Dynamic decisions on tree limits.
@@ -608,6 +614,7 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		/* Produce a voluminous listing of the cut tree */
 		rt_pr_cut( &rtip->rti_CutHead, 0 );
 	}
+#endif	
 
 	/*  Finished with temporary data structures */
 	for( i=0; i<3; i++ )  {
