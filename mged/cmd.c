@@ -60,8 +60,6 @@ extern int wireframe_highlight_color[];
 #define WIREFRAME_HIGHLIGHT_COLOR 2
 
 
-int get_more_default();
-int set_more_default();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 void mged_global_variable_setup();
@@ -69,11 +67,11 @@ char *handle_global_variable_read_traces();
 char *handle_global_variable_write_traces();
 char *handle_global_variable_unset_traces();
 
-extern int cmd_get_comb(), cmd_put_comb();	/* in red.c */
 extern void set_scroll();			/* in set.c */
 extern void sync();
-extern int gui_setup();				/* in attach.c */
 extern void init_qray();			/* in qray.c */
+extern int gui_setup();				/* in attach.c */
+extern int get_edit_solid_menus();		/* in edsol.c */
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
@@ -183,6 +181,10 @@ static struct cmdtab cmdtab[] = {
 	"c", f_comb_std,
 	"cat", f_cat,
 	"center", f_center,
+	"cmd_close", cmd_close,
+	"cmd_get", cmd_get,
+	"cmd_init", cmd_init,
+	"cmd_set", cmd_set,
 	"color", f_color,
 	"comb", f_comb,
 	"comb_color", f_comb_color,
@@ -192,7 +194,7 @@ static struct cmdtab cmdtab[] = {
 	"cpi", f_copy_inv,
 	"d", f_erase,
 	"dall", f_erase_all,
-/*	"db", cmd_db, */
+	"db_glob", cmd_mged_glob,
 	"dbconcat", f_concat,
 	"debugbu", f_debugbu,
 	"debugdir", f_debugdir,
@@ -228,7 +230,10 @@ static struct cmdtab cmdtab[] = {
 	"find", f_find,
 	"fracture", f_fracture,
 	"g", f_group,
+	"get_comb", cmd_get_comb,
 	"get_dm_list", f_get_dm_list,
+	"get_edit_solid", f_get_edit_solid,
+	"get_more_default", cmd_get_more_default,
 	"get_rect", f_get_rect, 
 	"get_view", f_get_view,
 	"goto_view", f_goto_view,
@@ -274,6 +279,8 @@ static struct cmdtab cmdtab[] = {
 	"memprint", f_memprint,
 	"mirface", f_mirface,
 	"mirror", f_mirror,
+	"mmenu_get", cmd_mmenu_get,
+	"mmenu_set", cmd_nop,
 	"model2grid_lu", f_model2grid_lu,
 	"model2view", f_model2view,
 	"model2view_lu", f_model2view_lu,
@@ -304,6 +311,8 @@ static struct cmdtab cmdtab[] = {
 	"press", f_press,
 	"ps", f_ps,
 	"push", f_push,
+	"put_edit_solid", f_put_edit_solid,
+	"put_comb", cmd_put_comb,
 	"putmat", f_putmat,
 	"q", f_quit,
 	"qray", f_qray,
@@ -322,6 +331,7 @@ static struct cmdtab cmdtab[] = {
 	"regdef", f_regdef,
 	"regions", f_tables,
 	"release", f_release,
+	"reset_edit_solid", f_reset_edit_solid,
 	"rfarb", f_rfarb,
 	"rm", f_rm,
 	"rmater", f_rmater,
@@ -339,7 +349,8 @@ static struct cmdtab cmdtab[] = {
 	"sca", f_sca,
 	"showmats", f_showmats,
 	"sed", f_sed,
-	"set_rect", f_set_rect, 
+	"set_rect", f_set_rect,
+	"set_more_default", cmd_set_more_default,
 	"setview", f_setview,
 	"shells", f_shells,
 	"shader", f_shader,
@@ -351,6 +362,7 @@ static struct cmdtab cmdtab[] = {
 	"solids", f_tables,
 	"solids_on_ray", cmd_solids_on_ray,
 	"status", f_status,
+	"stuff_str", cmd_stuff_str,
 	"summary", f_summary,
 	"sv", f_slewview,
 	"svb", f_svbase,
@@ -381,6 +393,7 @@ static struct cmdtab cmdtab[] = {
 	"view2model", f_view2model,
 	"view2model_vec", f_view2model_vec,
 	"view2model_lu", f_view2model_lu,
+	"viewsize", f_size,
 	"vnirt", f_vnirt,
 	"vquery_ray", f_vnirt,
 	"vrmgr", f_vrmgr,
@@ -735,11 +748,6 @@ mged_setup()
 	/* register commands */
 	cmd_setup();
 
-	(void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "mmenu_get", cmd_mmenu_get,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
 	history_setup();
 	mged_global_variable_setup(interp);
 #if !TRY_NEW_MGED_VARS
@@ -886,7 +894,7 @@ mged_setup()
 #ifdef BRLCAD_TCL_LIBRARY
 	filename = BRLCAD_TCL_LIBRARY;
 #else
-	filename = "/vld/bparker/cad_dev/tclscripts";
+	filename = "/usr/brlcad/tclscripts";
 #endif
 	bu_vls_init(&str);
 	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s/mged %s]",
@@ -894,7 +902,8 @@ mged_setup()
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */
-	bu_vls_strcpy( &str, "mged_display(state)" );
+	bu_vls_trunc( &str, 0 );
+	bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
 	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state],
 		   TCL_GLOBAL_ONLY);
 
@@ -936,31 +945,10 @@ cmd_setup()
 	}
 	bu_vls_free(&temp);
 
-	(void)Tcl_CreateCommand(interp, "db_glob", cmd_mged_glob,
+	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr,
+				(ClientData)&dbip, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "get_edit_solid_menus", get_edit_solid_menus,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "cmd_init", cmd_init, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "cmd_close", cmd_close, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "cmd_set", cmd_set, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "cmd_get", cmd_get, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "get_more_default", get_more_default, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "set_more_default", set_more_default, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr, (ClientData)&dbip, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "get_comb", cmd_get_comb,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "put_comb", cmd_put_comb,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-
-	/* A synonym, to allow cut-n-paste of rt animation scripts into mged */
-	(void)Tcl_CreateCommand(interp, "viewsize", f_view, (ClientData)NULL,
-				(Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode,
 		    TCL_LINK_BOOLEAN);
@@ -1132,7 +1120,7 @@ cmd_set(clientData, interp, argc, argv)
 }
 
 int
-get_more_default(clientData, interp, argc, argv)
+cmd_get_more_default(clientData, interp, argc, argv)
 	ClientData clientData;
 	Tcl_Interp *interp;
 	int argc;
@@ -1150,7 +1138,7 @@ get_more_default(clientData, interp, argc, argv)
 }
 
 int
-set_more_default(clientData, interp, argc, argv)
+cmd_set_more_default(clientData, interp, argc, argv)
 	ClientData clientData;
 	Tcl_Interp *interp;
 	int argc;
