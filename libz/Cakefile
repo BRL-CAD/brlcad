@@ -24,6 +24,8 @@ PRODUCTS: Makefile.MTYPE
 
 Makefile.in:	if not exist Makefile.in
 	cp ../SRCDIR/Makefile.in .
+	cp ../SRCDIR/zlib.h .
+	cp ../SRCDIR/zconf.h .
 
 Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
 	( \C\C=\"CC\"; \
