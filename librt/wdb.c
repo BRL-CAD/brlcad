@@ -59,7 +59,7 @@ CONST char *filename;
 		return RT_WDB_NULL;
 
 	BU_GETSTRUCT(wdbp, rt_wdb);
-	wdbp->magic = RT_WDB_MAGIC;
+	wdbp->l.magic = RT_WDB_MAGIC;
 	wdbp->type = RT_WDB_TYPE_FILE;
 	wdbp->fp = fp;
 	return wdbp;
@@ -98,7 +98,7 @@ int		mode;
 	}
 
 	BU_GETSTRUCT(wdbp, rt_wdb);
-	wdbp->magic = RT_WDB_MAGIC;
+	wdbp->l.magic = RT_WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
 
