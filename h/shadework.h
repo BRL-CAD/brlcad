@@ -46,16 +46,23 @@ struct mfuncs {
  */
 #define MFI_NORMAL	0x01		/* Need normal */
 #define MFI_UV		0x02		/* Need uv */
+#define MFI_LIGHT	0x04		/* Need light visibility */
+
+
+#define SW_NLIGHTS	16		/* Max # of light sources */
 
 /*
  *			S H A D E W O R K
  */
 struct shadework {
-	fastf_t		sw_transmit;	/* Moss "transparency" */
-	fastf_t		sw_reflect;	/* Moss "transmission" */
+	fastf_t		sw_transmit;
+	fastf_t		sw_reflect;
 	fastf_t		sw_refrac_index;
 	fastf_t		sw_color[3];	/* shaded color */
 	fastf_t		sw_basecolor[3]; /* base color */
 	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
 	struct uvcoord	sw_uv;
+	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
+	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
+	int		sw_xmitonly;	/* flag: need sw_transmit only */
 };
