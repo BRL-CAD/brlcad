@@ -1207,13 +1207,20 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	/* Now, evaluate the boolean tree into ONE region */
-	Tcl_AppendResult(interp, "facetize:  evaluating boolean expressions\n", (char *)NULL);
+	if( mged_facetize_tree )
+	{
+		/* Now, evaluate the boolean tree into ONE region */
+		Tcl_AppendResult(interp, "facetize:  evaluating boolean expressions\n", (char *)NULL);
 
-	failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol );
+		failed = nmg_boolean( mged_facetize_tree, mged_nmg_model, &mged_tol );
+	}
+	else
+		failed = 1;
+
 	if( failed )  {
 	  Tcl_AppendResult(interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
-	  db_free_tree( mged_facetize_tree );
+	  if( mged_facetize_tree )
+		db_free_tree( mged_facetize_tree );
 	  mged_facetize_tree = (union tree *)NULL;
 	  nmg_km( mged_nmg_model );
 	  mged_nmg_model = (struct model *)NULL;
@@ -1466,13 +1473,21 @@ char	**argv;
 			op = ' ';
 
 	}
-	/* Now, evaluate the boolean tree into ONE region */
-	Tcl_AppendResult(interp, "bev:  evaluating boolean expressions\n", (char *)NULL);
 
-	failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol );
+	if( tmp_tree )
+	{
+		/* Now, evaluate the boolean tree into ONE region */
+		Tcl_AppendResult(interp, "bev:  evaluating boolean expressions\n", (char *)NULL);
+
+		failed = nmg_boolean( tmp_tree, mged_nmg_model, &mged_tol );
+	}
+	else
+		failed = 1;
+
 	if( failed )  {
 	  Tcl_AppendResult(interp, "bev:  no resulting region, aborting\n", (char *)NULL);
-	  db_free_tree( tmp_tree );
+	  if( tmp_tree )
+		db_free_tree( tmp_tree );
 	  tmp_tree = (union tree *)NULL;
 	  nmg_km( mged_nmg_model );
 	  mged_nmg_model = (struct model *)NULL;
