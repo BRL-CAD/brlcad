@@ -94,8 +94,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set dsp_IN_ARGS ""
+    set dsp_DB_ARGS ""
 
     #
     # () Arguments
@@ -103,8 +103,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set ebm_IN_ARGS ""
+    set ebm_DB_ARGS ""
 
     #
     # () Arguments
@@ -112,8 +112,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set ehy_IN_ARGS ""
+    set ehy_DB_ARGS ""
 
     #
     # () Arguments
@@ -121,8 +121,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set epa_IN_ARGS ""
+    set epa_DB_ARGS ""
 
     #
     # () Arguments
