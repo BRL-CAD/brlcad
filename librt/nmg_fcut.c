@@ -1012,7 +1012,7 @@ nmg_face_vu_compare( aa, bb )
 	hi_equal = NEAR_ZERO( a->hi_ang - b->hi_ang, 0.001 );
 	/* If both have the same assessment & angles match, => tie */
 	if( a->wedge_class == b->wedge_class && lo_equal && hi_equal ) {
-	    	/* XXX tie break */
+		/* Break the tie */
 tie_break:
 		if( a->loop_index == b->loop_index )  {
 			/* Within a loop, sort by vu sequence number */
@@ -1020,16 +1020,16 @@ tie_break:
 			if( a->seq == b->seq )  AB_EQUAL;
 			B_WINS;
 		}
-	    	/* XXX what about loop orientation? */
-	    	rt_log("XXX nmg_face_vu_compare(): tie break\n");
+		/* Select smallest inbound angle
 		diff = a->in_vu_angle - b->in_vu_angle;
-		if( diff < 0 )  A_WINS;
-		if( diff == 0 )  {
+		if( NEAR_ZERO( diff, 0.001 ) )  {
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
 				a->in_vu_angle);
+			rt_bomb("nmg_face_vu_compare():  can't decide\n");
 			AB_EQUAL;
 		}
+		if( diff < 0 )  A_WINS;
 		B_WINS;
 	}
 	switch( a->wedge_class )  {
@@ -1100,8 +1100,8 @@ tie_break:
 	}
 out:
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
-		rt_log("nmg_face_vu_compare(x%x, x%x) %s %s, %s\n",
-			a, b,
+		rt_log("nmg_face_vu_compare(vu=x%x, vu=x%x) %s %s, %s\n",
+			a->vu, b->vu,
 			WEDGECLASS2STR(a->wedge_class),
 			WEDGECLASS2STR(b->wedge_class),
 			ret==(-1) ? "A<B" : (ret==0 ? "A==B" : "A>B") );
@@ -1352,9 +1352,9 @@ top:
 
 		vs[nvu].wedge_class = nmg_wedge_class( vs[nvu].in_vu_angle, vs[nvu].out_vu_angle );
 		if(rt_g.NMG_debug&DEBUG_VU_SORT) rt_log("nmg_wedge_class = %d %s\n", vs[nvu].wedge_class, WEDGECLASS2STR(vs[nvu].wedge_class));
-		/* Sort the angles */
-		if( (vs[nvu].wedge_class == WEDGE_LEFT  && vs[nvu].in_vu_angle > vs[nvu].out_vu_angle) ||
-		    (vs[nvu].wedge_class == WEDGE_RIGHT && vs[nvu].in_vu_angle < vs[nvu].out_vu_angle) )  {
+		/* Sort the angles (Don't forget to sort for CROSS case too) */
+		if( (vs[nvu].wedge_class == WEDGE_LEFT && vs[nvu].in_vu_angle > vs[nvu].out_vu_angle) ||
+		    (vs[nvu].wedge_class != WEDGE_LEFT && vs[nvu].in_vu_angle < vs[nvu].out_vu_angle) )  {
 			vs[nvu].lo_ang = vs[nvu].in_vu_angle;
 			vs[nvu].hi_ang = vs[nvu].out_vu_angle;
 		} else {
