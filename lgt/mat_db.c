@@ -128,7 +128,7 @@ int		material_id;
 		prnt_Scroll( "        refractive index\t(%g)\n", entry->refrac_index );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		if( strncmp( "texture ", entry->name, 8 ) != 0 )
+		if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 			prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
 					entry->df_rgb[0],
 					entry->df_rgb[1],
@@ -234,7 +234,7 @@ int	id;
 #else
 		(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 #endif
-	if( strncmp( "texture ", entry->name, 8 ) != 0 )
+	if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) != 0 )
 		{
 		(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
 				entry->df_rgb[RED],
