@@ -54,7 +54,11 @@ SRCS = \
 	xdr.c
 
 libbu_la_LDFLAGS = -version-info 19:1
-libbu_la_LIBADD = ${PTHREAD_LIBS} ${TCL}
+libbu_la_LIBADD = \
+	${LIBMALLOC} \
+	${PTHREAD_LIBS} \
+	${TCL}
+
 libbu_la_SOURCES = \
 	$(SRCS) \
 	vers.c
