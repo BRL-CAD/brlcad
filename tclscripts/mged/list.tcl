@@ -70,10 +70,12 @@ proc lbdcHack {w x y t id type path} {
 	c1 -
 	c2 -
 	c3 -
-	m1 -
-	m2 -
 	bf {
 	    set item [get_listbox_entry $w $x $y]
+	}
+	m1 -
+	m2 {
+	    set item [$w index @$x,$y]
 	}
 	default {
 	    error "lbdcHack: bad type - $type"
