@@ -73,16 +73,23 @@ struct edgeuse	*eu;
 	case NMG_FPI_TOUCHED:
 		/* The edgeuse has been pre-determined to be touching.
 		 * This was a touch on the edge span.
+		 *
 		 * If the user wants to get called for each use, make the
 		 * call for this edgeuse.
 		 */
 		if (fpi->eu_func && fpi->allhits == NMG_FPI_PERUSE)
 			fpi->eu_func(eu, fpi);
+
 		/* fallthrough */
+
 	case NMG_FPI_MISSED:
 		return;
 	}
 
+
+	/* The edgeuse was not previously processed, 
+	 * so it's time to do it now.
+	 */
 
 	status = rt_dist_pt3_lseg3(&dist, pca,
 		eu->vu_p->v_p->vg_p->coord,
@@ -164,11 +171,11 @@ struct edgeuse	*eu;
 			fpi->closest = &eu->vu_p->l.magic;
 			fpi->PCA_loc = NMG_PCA_EDGE_VERTEX;
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\vu of eu is new \"closest to plane_pt\" (new dist %g)\n",
+				rt_log("\tvu of eu is new \"closest to plane_pt\" (new dist %g)\n",
 					fpi->dist_in_plane);
 		} else {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\vu of eu is PCA (dist %g).  keeping old dist %g\n",
+				rt_log("\tvu of eu is PCA (dist %g).  keeping old dist %g\n",
 					dist, fpi->dist_in_plane);
 		}
 		NMG_INDEX_ASSIGN(fpi->tbl, eu->e_p, NMG_FPI_MISSED);
@@ -184,7 +191,7 @@ struct edgeuse	*eu;
 					fpi->dist_in_plane);
 		} else {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\vu of next(eu) is PCA (dist %g).  keeping old dist %g\n",
+				rt_log("\tvu of next(eu) is PCA (dist %g).  keeping old dist %g\n",
 					dist, fpi->dist_in_plane);
 		}
 		NMG_INDEX_ASSIGN(fpi->tbl, eu->vu_p->v_p, NMG_FPI_MISSED);
@@ -244,9 +251,11 @@ CONST struct loopuse	*lu;
 	NMG_CK_LOOP_G(lg);
 	NMG_CK_FPI(fpi);
 
-	if (rt_g.NMG_debug)
+	if (rt_g.NMG_debug) {
 		VPRINT("nmg_class_pt_lu\tPt:", fpi->pt);
-
+		rt_log("\tinitial class is %s\n",
+			nmg_class_name(fpi->pt_class));
+	}
 	if (lu->up.fu_p != fpi->fu_p || NMG_INDEX_TEST(fpi->tbl, lu))
 		return;
  
@@ -595,6 +604,7 @@ CONST struct rt_tol	*tol;
 	fpi->priv = priv;
 	fpi->magic = NMG_FPI_MAGIC;
 
+
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if( ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p) )
 			continue;
@@ -626,6 +636,10 @@ CONST struct rt_tol	*tol;
 		fpi->pt_class = NMG_CLASS_AoutB;
 	} else
 		deduce_pt_class(fpi);
+
+	if (rt_g.NMG_debug)
+		rt_log("nmg_class_pt_fu_except(): point is classed %s\n",
+			nmg_class_name(fpi->pt_class));
 
 	return fpi;
 }
