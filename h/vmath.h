@@ -201,6 +201,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(a)[Y] = -(b)[Y]; \
 			(a)[Z] = -(b)[Z]; }
 
+/* Same as VREVERSE, but for a 4-tuple.  Also useful on plane_t objects */
+#define HREVERSE(a,b)	{ \
+			(a)[X] = -(b)[X]; \
+			(a)[Y] = -(b)[Y]; \
+			(a)[Z] = -(b)[Z]; \
+			(a)[W] = -(b)[W]; }
+
 /* Add vectors at `b' and `c', store result at `a' */
 #ifdef SHORT_VECTORS
 #define VADD2(a,b,c) VADD2N(a,b,c, 3)
