@@ -111,6 +111,7 @@ int argc;
 char *argv[];
 {
 	int	i;
+	register float	*randp;
 	struct color_rec {
 		unsigned char red,green,blue;
 	} cur_color;
@@ -129,19 +130,19 @@ char *argv[];
 		if( fread(&cur_color,1,3,inp) != 3 )  break;
 		if( feof(inp) )  break;
 
-		t = cur_color.red * multiplier + rand_half();
+		t = cur_color.red * multiplier + rand_half(randp);
 		if (t > max)
 			cur_color.red   = max;
 		else
 			cur_color.red = t;
 
-		t = cur_color.green * multiplier + rand_half();
+		t = cur_color.green * multiplier + rand_half(randp);
 		if (t > max)
 			cur_color.green = max;
 		else
 			cur_color.green = t;
 
-		t = cur_color.blue * multiplier + rand_half();
+		t = cur_color.blue * multiplier + rand_half(randp);
 		if (t > max)
 			cur_color.blue  = max;
 		else
