@@ -65,6 +65,7 @@ void mged_print_result();
 
 extern mat_t    ModelDelta;
 
+extern int mged_vrot();
 extern int gui_setup();
 extern int cmd_stuff_str();
 extern int f_decompose();
@@ -2566,57 +2567,45 @@ int iflag;
   point_t model_pos;
   point_t new_pos;
   int status;
-  char *av[6];
-  struct bu_vls xval, yval, zval;
 
-  bu_vls_init(&xval);
-  bu_vls_init(&yval);
-  bu_vls_init(&zval);
-  bu_vls_printf(&xval, "%f", x);
-  bu_vls_printf(&yval, "%f", y);
-  bu_vls_printf(&zval, "%f", z);
-  av[1] = bu_vls_addr(&xval);
-  av[2] = bu_vls_addr(&yval);
-  av[3] = bu_vls_addr(&zval);
-  av[4] = NULL;
-
-  /* if in view state or not doing a solid rotate then allow the view to be rotated */
   if(state == ST_VIEW || !EDIT_ROTATE){
-    if(EDIT_TRAN)
-      MAT4X3PNT(model_pos, view2model, absolute_slew);
+    status = mged_vrot(x, y, z);
+  }else{
+    char *av[6];
+    struct bu_vls xval, yval, zval;
 
-    av[0] = "vrot";
-    status = f_vrot((ClientData)NULL, interp, 4, av);
+    bu_vls_init(&xval);
+    bu_vls_init(&yval);
+    bu_vls_init(&zval);
+    bu_vls_printf(&xval, "%f", x);
+    bu_vls_printf(&yval, "%f", y);
+    bu_vls_printf(&zval, "%f", z);
+    av[1] = bu_vls_addr(&xval);
+    av[2] = bu_vls_addr(&yval);
+    av[3] = bu_vls_addr(&zval);
+    av[4] = NULL;
 
-    if(EDIT_TRAN){
-      MAT4X3PNT(absolute_slew, model2view, model_pos);
-    }else{
-      VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-      MAT4X3PNT(absolute_slew, model2view, new_pos);
+    if(state == ST_S_EDIT){
+      av[0] = "p";
+      status = f_param((ClientData)NULL, interp, 4, av);
+    }else if(state == ST_O_EDIT){
+      av[0] = "orot";
+      if(iflag){
+	av[1] = "-i";
+	av[2] = bu_vls_addr(&xval);
+	av[3] = bu_vls_addr(&yval);
+	av[4] = bu_vls_addr(&zval);
+	av[5] = NULL;
+	status = f_rot_obj((ClientData)NULL, interp, 5, av);
+      }else
+	status = f_rot_obj((ClientData)NULL, interp, 4, av);
     }
-  }else if(state == ST_S_EDIT){
-    av[0] = "p";
-    status = f_param((ClientData)NULL, interp, 4, av);
-  }else if(state == ST_O_EDIT){
-    av[0] = "orot";
-    if(iflag){
-      av[1] = "-i";
-      av[2] = bu_vls_addr(&xval);
-      av[3] = bu_vls_addr(&yval);
-      av[4] = bu_vls_addr(&zval);
-      av[5] = NULL;
-      status = f_rot_obj((ClientData)NULL, interp, 5, av);
-    }else
-      status = f_rot_obj((ClientData)NULL, interp, 4, av);
+
+    bu_vls_free(&xval);
+    bu_vls_free(&yval);
+    bu_vls_free(&zval);
   }
 
-  bu_vls_free(&xval);
-  bu_vls_free(&yval);
-  bu_vls_free(&zval);
-
-  if(status == TCL_OK)
-    return CMD_OK;
-
-  return CMD_BAD;
+  return status;
 }
 
