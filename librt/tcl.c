@@ -84,6 +84,8 @@ extern struct bu_structparse rt_hf_parse[];
 extern struct bu_structparse rt_dsp_parse[];
 /* COMB -- supported below */
 
+static struct db_i *dbip = DBI_NULL;
+
 /* XXX This should probably become part of the rt_functab in librt/table.c */
 
 struct rt_solid_type_lookup {
@@ -2109,6 +2111,32 @@ char		**argv;
 	return TCL_OK;
 }
 
+int
+rt_tcl_db_open( clientData, interp, argc, argv )
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+char		**argv;
+{
+  char buf[128];
+
+  if(argc != 2)
+    return TCL_ERROR;
+
+  if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+      ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+    return TCL_ERROR;
+  }
+
+  /* --- Scan geometry database and build in-memory directory --- */
+  db_scan( dbip, (int (*)())db_diradd, 1);
+
+  sprintf( buf, "%ld", (long)(*((void **)&dbip)) );
+  Tcl_AppendResult( interp, buf, (char *)NULL );
+
+  return TCL_OK;
+}
+
 /*
  *			R T _ T C L _ S E T U P
  *
@@ -2120,6 +2148,8 @@ rt_tcl_setup(interp)
 Tcl_Interp *interp;
 {
 	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "rt_db_open", rt_tcl_db_open,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "db_follow_path", db_tcl_follow_path,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
