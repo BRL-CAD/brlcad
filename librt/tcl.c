@@ -742,6 +742,9 @@ CONST char		*item;
 
 /*
  *			D B _ T C L _ C O M B _ A D J U S T
+ *
+ *  Invocation:
+ *	rgb "1 2 3" ...
  */
 
 int
@@ -755,13 +758,13 @@ char			      **argv;
 	int	i;
 	
 	RT_CK_COMB( comb );
-	
-
-	for( i=0; i<128 && argv[0]!=0; i++ )
-		buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
-	buf[i] = 0;
 
 	while( argc >= 2 ) {
+		/* Force to lower case */
+		for( i=0; i<128 && argv[0][i]!='\0'; i++ )
+			buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
+		buf[i] = 0;
+
 		if( strcmp(buf, "region")==0 ) {
 			if( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
 				return TCL_ERROR;
@@ -793,8 +796,13 @@ char			      **argv;
 				comb->rgb_valid = 0;
 			} else {
 				unsigned int r, g, b;
-				sscanf( argv[1], "%u %u %u",
+				i = sscanf( argv[1], "%u %u %u",
 					&r, &g, &b );
+				if( i != 3 )   {
+					Tcl_AppendResult( interp, "adjust rgb ",
+						argv[1], ": not valid rgb 3-tuple\n", (char *)NULL );
+					return TCL_ERROR;
+				}
 				comb->rgb[0] = (unsigned char)r;
 				comb->rgb[1] = (unsigned char)g;
 				comb->rgb[2] = (unsigned char)b;
@@ -816,7 +824,7 @@ char			      **argv;
 		} else if( strcmp(buf, "tree" )==0 ) {
 			;
 		} else {
-			Tcl_AppendResult( interp, argv[0],
+			Tcl_AppendResult( interp, buf,
 					  ": no such attribute",
 					  (char *)NULL );
 			return TCL_ERROR;
@@ -1154,7 +1162,7 @@ char	      **argv;
 			(struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 
-		status = db_tcl_comb_adjust( comb, interp, argc+2, argv-2 );
+		status = db_tcl_comb_adjust( comb, interp, argc-2, argv+2 );
 	} else if( rt_get_parsetab_by_id(id) == NULL ||
 		   (sp=rt_get_parsetab_by_id(id)->parsetab) == NULL ) {
 		Tcl_AppendResult( interp,
