@@ -7,10 +7,16 @@ see that file and the CVS log for more historic information.  The
 entire history of the project is available through CVS.
 
 ----------------------------------------------------------------------
---- 2005-02-XX  Release 7.2.0                                      ---
+--- 2005-04-XX  Release 7.2.1                                      ---
 ----------------------------------------------------------------------
 
 * fixed non-square window mged illumination selection - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2005-03-05  Release 7.2.0                                      ---
+----------------------------------------------------------------------
+
 * fixed libpng link bug on Irix64bit - Lee Butler
 * fixed locale build bug - Thierry Thomas & Pedro Giffuni
 * fixed g-iges stdout header bug - Manfred Spraul
