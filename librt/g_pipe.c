@@ -204,7 +204,6 @@ point_t pt2;
 fastf_t id2;
 fastf_t od2;
 {
-	fastf_t dx,dy,dz,f;
 	register struct lin_pipe *pipe;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
@@ -488,14 +487,11 @@ struct hit_list		*hit_headp;
 int			*hit_count;
 int			seg_no;
 {
-	register struct seg *segp;
 	LOCAL vect_t	dprime;		/* D' */
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
 	LOCAL bn_poly_t	C;		/* The final equation */
 	LOCAL bn_complex_t	val[4];	/* The complex roots */
-	LOCAL double	k[4];		/* The real roots */
-	register int	i;
 	LOCAL int	j;
 	LOCAL int	root_count=0;
 	LOCAL bn_poly_t	A, Asqr;
@@ -727,11 +723,9 @@ int			seg_no;
 	LOCAL point_t	work_pt;
 	LOCAL point_t	ray_start;
 	LOCAL vect_t	ray_dir;
-	LOCAL point_t	hit_pt;
 	LOCAL double	t_tmp;
 	LOCAL double	a,b,c;
 	LOCAL double	descrim;
-	LOCAL double	radius_sq;
 
 	if( pipe->pipe_is_bend )
 	{
@@ -877,9 +871,6 @@ struct hit_list		*hit_headp;
 int			*hit_count;
 int			seg_no;
 {
-	point_t work_pt;
-	point_t ray_start;
-	vect_t ray_dir;
 	point_t hit_pt;
 	fastf_t t_tmp;
 	fastf_t radius_sq;
@@ -961,9 +952,6 @@ struct hit_list		*hit_headp;
 int			*hit_count;
 int			seg_no;
 {
-	point_t work_pt;
-	point_t ray_start;
-	vect_t ray_dir;
 	point_t hit_pt;
 	fastf_t t_tmp;
 	fastf_t radius_sq;
@@ -1049,12 +1037,10 @@ int			*nh;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register int i, j;
 	struct hit_list *hitp;
 	struct hit_list *first;
 	struct hit_list *second;
 	struct hit_list *prev;
-	LOCAL struct hit temp;
 
 	hitp = BU_LIST_FIRST( hit_list, &h->l );
 	while( BU_LIST_NEXT_NOT_HEAD( &hitp->l, &h->l ) )
@@ -1286,8 +1272,6 @@ struct seg		*seghead;
 	register struct bu_list		*head =
 		(struct bu_list *)stp->st_specific;
 	register struct id_pipe		*pipe_id;
-	register struct lin_pipe	*pipe_lin;
-	register struct bend_pipe	*pipe_bend;
 	register struct seg		*segp;
 	LOCAL struct hit_list		hit_head;
 	LOCAL struct hit_list		*hitp;
@@ -1445,9 +1429,10 @@ void
 rt_pipe_free( stp )
 register struct soltab *stp;
 {
+#if 0
 	register struct bu_list *pipe =
 		(struct bu_list *)stp->st_specific;
-#if 0
+
 	/* free linked list */
 	while( BU_LIST_NON_EMPTY( &pipe->id.l ) )
 	{
@@ -1516,9 +1501,6 @@ int			full_circle;
 	RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
 	for( i=0 ; i<seg_count ; i++ )
 	{
-		vect_t radial_dir;
-		fastf_t local_radius;
-
 		xnew = x*cos_del - y*sin_del;
 		ynew = x*sin_del + y*cos_del;
 		VJOIN2( pt, center, xnew, v1, ynew, v2 );
@@ -1684,9 +1666,6 @@ CONST struct bn_tol		*tol;
 	register struct wdb_pipept		*nextp;
 	LOCAL struct rt_pipe_internal		*pip;
 	LOCAL point_t				current_point;
-	LOCAL point_t				last_pt;
-	LOCAL fastf_t				delta_ang;
-	LOCAL fastf_t				cos_delta, sin_delta;
 	LOCAL vect_t				f1,f2,f3;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -1702,10 +1681,6 @@ CONST struct bn_tol		*tol;
 
 	if( BU_LIST_IS_HEAD( &curp->l , &pip->pipe_segs_head ) )
 		return( 0 );	/* nothing to plot */
-
-	delta_ang = 2.0*bn_pi/ARC_SEGS;
-	cos_delta = cos( delta_ang );
-	sin_delta = sin( delta_ang );
 
 	VMOVE( current_point, prevp->pp_coord );
 
@@ -1723,7 +1698,6 @@ CONST struct bn_tol		*tol;
 	{
 		LOCAL vect_t n1,n2;
 		LOCAL vect_t norm;
-		LOCAL point_t pt;
 
 		if( BU_LIST_IS_HEAD( &nextp->l, &pip->pipe_segs_head ) )
 		{
@@ -1756,8 +1730,6 @@ CONST struct bn_tol		*tol;
 			LOCAL point_t bend_start;
 			LOCAL point_t bend_end;
 			LOCAL vect_t v1,v2;
-			LOCAL mat_t mat;
-			LOCAL vect_t tmp_vec;
 
 			VUNITIZE( n1 );
 			VUNITIZE( n2 );
@@ -1815,7 +1787,6 @@ struct bn_tol *tol;
 	fastf_t ir;
 	fastf_t x,y,xnew,ynew;
 	vect_t n;
-	struct vertex ***verts;
 	int i;
 
 	NMG_CK_SHELL( s );
@@ -1935,7 +1906,6 @@ vect_t r1, r2;
 struct shell *s;
 struct bn_tol *tol;
 {
-	struct wdb_pipept *next;
 	struct vertex **new_outer_loop;
 	struct vertex **new_inner_loop;
 	struct vertex **verts[3];
@@ -2726,16 +2696,10 @@ struct rt_tess_tol *ttol;
 {
 	struct vertex **new_outer_loop;
 	struct vertex **new_inner_loop;
-	struct vertex *start_v;
-	struct vertex_g *start_vg;
 	fastf_t bend_radius;
 	fastf_t bend_angle;
 	fastf_t x,y,xnew,ynew;
 	fastf_t delta_angle;
-	fastf_t start_arc_angle;
-	fastf_t xstart,ystart;
-	double cos_bend_del;
-	double sin_bend_del;
 	mat_t rot;
 	vect_t b1;
 	vect_t b2;
@@ -2744,7 +2708,6 @@ struct rt_tess_tol *ttol;
 	vect_t bend_norm;
 	vect_t to_start;
 	vect_t to_end;
-	vect_t to_start_v;
 	vect_t norm;
 	point_t origin;
 	point_t center;
@@ -2801,8 +2764,6 @@ struct rt_tess_tol *ttol;
 	}
 
 	delta_angle = bend_angle/(fastf_t)(bend_segs);
-	sin_bend_del = sin( delta_angle );
-	cos_bend_del = cos( delta_angle );
 
 	VSETALL( origin, 0.0 );
 	bn_mat_arb_rot( rot, origin, bend_norm, delta_angle);
@@ -3173,7 +3134,6 @@ struct bn_tol *tol;
 	struct wdb_pipept *prev;
 	struct faceuse *fu;
 	struct loopuse *lu;
-	int i;
 
 	NMG_CK_SHELL( s );
 	BN_CK_TOL( tol );
@@ -3359,7 +3319,7 @@ CONST struct bn_tol		*tol;
 	{
 		vect_t n1,n2;
 		vect_t norm;
-		vect_t v1,v2;
+		vect_t v1;
 		fastf_t angle;
 		fastf_t dist_to_bend;
 		point_t bend_start, bend_end, bend_center;
@@ -3410,7 +3370,6 @@ CONST struct bn_tol		*tol;
 		/* and bend section */
 		VJOIN1( bend_end, pp2->pp_coord, dist_to_bend, n2 );
 		VCROSS( v1, n1, norm );
-		VCROSS( v2, v1, norm );
 		VJOIN1( bend_center, bend_start, -pp2->pp_bendradius, v1 );
 		tesselate_pipe_bend( bend_start, bend_end, bend_center, curr_od/2.0, curr_id/2.0,
 			arc_segs, sin_del, cos_del, &outer_loop, &inner_loop,
@@ -3452,7 +3411,6 @@ CONST struct db_i		*dbip;
 	struct wdb_pipept		tmp;
 	struct rt_pipe_internal		*pipe;
 	union record			*rp;
-	int				count;
 
 	BU_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
