@@ -959,6 +959,63 @@ char *file, *obj;
 }
 
 /*
+ *			R E P R O J E C T _ S P L A T
+ */
+int
+reproject_splat( ix, iy, ip, new_view_pt )
+int	ix;
+int	iy;
+register struct floatpixel	*ip;
+CONST point_t			new_view_pt;
+{
+	register struct floatpixel	*op;
+	int	count = 1;
+	int	agelim;
+#if 0
+	static int foo;
+#endif
+
+	/* Reprojection lies on screen, see if dest pixel already occupied */
+	op = &curr_float_frame[iy*width + ix];
+
+	/* Don't reproject again if new val is more distant */
+	if( op->ff_frame >= 0 )  {
+		point_t o_pt;
+		/* Recompute both distances from current eye_pt! */
+		/* Inefficient, only need Z component. */
+		MAT4X3PNT(o_pt, model2view, op->ff_hitpt);
+#if 0
+		if( foo != curframe )  {
+			extern int print_on;
+			foo = curframe;
+			print_on = 1;
+			bu_log("  ip=(%g,%g,%g) ip_view=(%g,%g,%g)\n  op=(%g,%g,%g), o_pt=(%g,%g,%g)\n",
+				V3ARGS(ip->ff_hitpt), V3ARGS(new_view_pt),
+				V3ARGS(op->ff_hitpt), V3ARGS(o_pt) );
+		}
+#endif
+		if( o_pt[Z] > new_view_pt[Z] )
+			return 0;	/* previous val closer to eye, leave it be. */
+		else
+			count = 0;	/* Already reproj, don't double-count */
+	}
+
+	/* Don't reproject too many frame-times */
+	if( reproject_mode != 2 )  {
+		/* See if old pixel is more then N frames old */
+		/* Temporal load-spreading: Don't have 'em all die at the same age! */
+		agelim = ((iy+ix)&03)+2;
+		if( curframe - ip->ff_frame >= agelim )
+			return 0;
+	}
+
+	/* re-use old pixel as new pixel */
+	*op = *ip;	/* struct copy */
+
+	return count;
+}
+
+/*
  *  			V I E W 2 _ I N I T
  *
  *  Called each time a new image is about to be done.
@@ -1046,7 +1103,6 @@ fp->ff_color[0] = fp->ff_color[1] = 50; fp->ff_color[2] = 0;	/* orange -- sanity
 			) {
 				point_t	new_view_pt;
 				int	ix, iy;
-				int	agelim;
 
 				if( ip->ff_frame < 0 )
 					continue;	/* Not valid */
@@ -1054,46 +1110,24 @@ fp->ff_color[0] = fp->ff_color[1] = 50; fp->ff_color[2] = 0;	/* orange -- sanity
 					continue;	/* was a miss */
 				/* new model2view has been computed before here */
 				MAT4X3PNT( new_view_pt, model2view, ip->ff_hitpt );
+				/* Convert from -1..+1 range to pixel subscript */
 				ix = (new_view_pt[X] + 1) * 0.5 * width;
 				iy = (new_view_pt[Y] + 1) * 0.5 * height;
 				/* See if reprojects off of screen */
-				if( ix < 0 || ix >= width )  continue;
-				if( iy < 0 || iy >= height )  continue;
-				/* Reprojection lies on screen, see if pixel already occupied */
-				op = &curr_float_frame[iy*width + ix];
-				/* Don't reproject again if new val is more distant */
-				if( op->ff_frame >= 0 )  {
-					point_t o_pt;
-#if 0
-static int foo;
-#endif
-					/* Recompute both distances from current eye_pt! */
-					/* Inefficient, only need Z component. */
-					MAT4X3PNT(o_pt, model2view, op->ff_hitpt);
-#if 0
-if( foo != curframe )  {
-extern int print_on;
-	foo = curframe;
-	print_on = 1;
-	bu_log("  ip=(%g,%g,%g) ip_view=(%g,%g,%g)\n  op=(%g,%g,%g), o_pt=(%g,%g,%g)\n",
-		V3ARGS(ip->ff_hitpt), V3ARGS(new_view_pt),
-		V3ARGS(op->ff_hitpt), V3ARGS(o_pt) );
-}
-#endif
-					if( o_pt[Z] > new_view_pt[Z] )  continue;
-					else count--;	/* Don't double-count */
-				}
-				/* Don't reproject too many times */
-				/* See if old pixel is more then N frames old */
-#if 0
-				agelim = ((iy+ix)&03)+2;
-agelim = 30;
-				if( curframe - ip->ff_frame >= agelim )
-					continue;
-#endif
-				/* re-use old pixel as new pixel */
-				*op = *ip;	/* struct copy */
-				count++;
+				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+					count += reproject_splat( ix, iy, ip, new_view_pt );
+
+				ix++;
+				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+					count += reproject_splat( ix, iy, ip, new_view_pt );
+
+				iy++;
+				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+					count += reproject_splat( ix, iy, ip, new_view_pt );
+
+				ix--;
+				if( ix >= 0 && ix < width && iy >= 0 && iy < height )
+					count += reproject_splat( ix, iy, ip, new_view_pt );
 			}
 			reproj_cur = count;
 			reproj_max = width*height;
