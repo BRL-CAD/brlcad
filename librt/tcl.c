@@ -750,6 +750,7 @@ char	      **argv;
  ** For use with Tcl, this routine accepts as its first argument an item in
  ** the database; as its remaining arguments it takes the properties that
  ** need to be changed and their values.
+ **	.inmem adjust LIGHT V { -46 -13 5 }
  **/
 
 int
@@ -762,36 +763,34 @@ char	      **argv;
 	register struct directory	*dp;
 	register struct bu_structparse	*sp = NULL;
 	int				 id, status, i;
-	char			        *name = argv[1];
+	char				*name;
 	struct rt_db_internal		 intern;
 	mat_t				 idn;
 	char				 objecttype;
 	struct rt_wdb		        *wdb = (struct rt_wdb *)clientData;
 
-	--argc;
-	++argv;
-
-	if( argc < 4 ) {
+	if( argc < 5 ) {
 		Tcl_AppendResult( interp,
 		"wrong # args: should be \"db adjust objName attr value ?attr? ?value?...\"",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
+	name = argv[2];
 
 	/* XXX
 	   Verify that this wdb supports lookup operations (non-null dbip) */
 	RT_CK_DBI_TCL(wdb->dbip);
 
-	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
+	dp = db_lookup( wdb->dbip, name, LOOKUP_QUIET );
 	if( dp == DIR_NULL ) {
-		Tcl_AppendResult( interp, argv[1], ": not found\n",
+		Tcl_AppendResult( interp, name, ": not found\n",
 				  (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	status = rt_db_get_internal( &intern, dp, wdb->dbip, (matp_t)NULL );
 	if( status < 0 ) {
-		Tcl_AppendResult( interp, "rt_db_get_internal(", argv[1],
+		Tcl_AppendResult( interp, "rt_db_get_internal(", name,
 				  ") failure\n", (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -805,7 +804,8 @@ char	      **argv;
 			(struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 
-		status = db_tcl_comb_adjust( comb, interp, argc-2, argv+2 );
+		/* .inmem adjust light.r rgb { 255 255 255 } */
+		status = db_tcl_comb_adjust( comb, interp, argc-3, argv+3 );
 	} else if( rt_get_parsetab_by_id(id) == NULL ||
 		   (sp=rt_get_parsetab_by_id(id)->parsetab) == NULL ) {
 		Tcl_AppendResult( interp,
@@ -813,11 +813,16 @@ char	      **argv;
 				  (char *)NULL );
 		status = TCL_ERROR;
 	} else {
-		/* If we were able to find an entry in on the "cheat sheet",
-		   just use the handy parse functions to return the object. */
-
-		status = bu_structparse_argv( interp, argc-2, argv+2, sp,
+		/* If we were able to find an entry in the strutparse "cheat sheet",
+		   just use the handy parse functions to return the object.
+		   Pass first attribute as argv[0].
+		 */
+		/* .inmem adjust LIGHT V { -46 -13 5 } */
+		status = bu_structparse_argv( interp, argc-3, argv+3, sp,
 					      (char *)intern.idb_ptr );
+		if( status != TCL_OK )  Tcl_AppendResult( interp,
+			"bu_structparse_argv(", name, ") failure\n", (char *)NULL );
+		/* fall through */
 	}
 
 	if( status == TCL_OK && wdb_export( wdb, name, intern.idb_ptr,
