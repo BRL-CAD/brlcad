@@ -113,6 +113,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 			rp->reg_name,
 			mfp->mf_name,
 			"  Set air flag with \"edcodes\" in mged");
+		bu_bomb("");
 	}
 
 	if (rdebug&RDEBUG_SHADE) rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
