@@ -34,7 +34,7 @@ union ipu_prsc_param {
 
 extern int	ipu_debug;
 
-#ifdef __sgi
+#if defined(__sgi) || defined(sgi)
 #define IPU_FULL_LIB
 #include <dslib.h>
 #endif
@@ -66,7 +66,7 @@ FUNC_EXTERN(int parse_args, (int ac, char *av[]));
 FUNC_EXTERN(void usage, (char *s));
 
 extern char *progname;
-extern char *scsi_device;
+extern char scsi_device[];
 extern char gamma;
 extern char tray;
 extern char conv;
