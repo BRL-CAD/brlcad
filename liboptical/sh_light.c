@@ -1171,7 +1171,7 @@ int have;
 			bu_log("computing for light %d\n", i);
 		swp->sw_lightfract[i] = 0.0;
 
-		if (lp->lt_infinite )	tot_vis_rays = 1;
+		if (lp->lt_infinite || lp->lt_shadows == 0) tot_vis_rays = 1;
 		else			tot_vis_rays = lp->lt_shadows;
 
 		los.lp = lp;
