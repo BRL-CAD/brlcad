@@ -61,6 +61,18 @@
  *  by the application, the rest of the linked list can no longer be	*
  *  referred to.							*
  *									*
+ *  The "magic" field of the list header must be set to the constant	*
+ *  RT_LIST_HEAD_MAGIC, but the "magic" field of all list members	*
+ *  should be established by user code, to identify the type of		*
+ *  structure that the rt_list structure is embedded in.		*
+ *  It is permissible for one list to contain an arbitrarily mixed	*
+ *  set of user "magic" numbers, as long as the head is properly marked.*
+ *									*
+ *  There is a dual set of terminology used in some of the macros:	*
+ *	FIRST / LAST	from the point of view of the list head		*
+ *	NEXT / PREV	from the point of view of a list member		*
+ *	forw / back	the actual pointer names			*
+ *									*
  ************************************************************************/
 
 struct rt_list  {
@@ -101,31 +113,33 @@ struct rt_list  {
 	(cur)->forw = (cur)->back = RT_LIST_NULL;  /* sanity */ }
 
 /*
- *  "Bulk transfer" all elements attached to list headed by src
- *  the list headed by dest, without examining every element in the list.
- *  RT_LIST_INSERT_LIST places src elements at head of dest list,
- *  RT_LIST_APPEND_LIST places src elements at end of dest list.
+ *  "Bulk transfer" all elements from the list headed by src_hd
+ *  onto the list headed by dest_hd, without examining every element
+ *  in the list.  src_hd is left with a valid but empty list.
+ *  
+ *  RT_LIST_INSERT_LIST places src_hd elements at head of dest_hd list,
+ *  RT_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
-#define RT_LIST_INSERT_LIST(dest,src) \
-	if( RT_LIST_NON_EMPTY(src) )  { \
-		register struct rt_list	*_first = (src)->forw; \
-		register struct rt_list	*_last = (src)->back; \
-		(dest)->forw->back = _last; \
-		_last->forw = (dest)->forw; \
-		(dest)->forw = _first; \
-		_first->back = (dest); \
-		(src)->forw = (src)->back = (src); \
+#define RT_LIST_INSERT_LIST(dest_hp,src_hp) \
+	if( RT_LIST_NON_EMPTY(src_hp) )  { \
+		register struct rt_list	*_first = (src_hp)->forw; \
+		register struct rt_list	*_last = (src_hp)->back; \
+		(dest_hp)->forw->back = _last; \
+		_last->forw = (dest_hp)->forw; \
+		(dest_hp)->forw = _first; \
+		_first->back = (dest_hp); \
+		(src_hp)->forw = (src_hp)->back = (src_hp); \
 	}
 
-#define RT_LIST_APPEND_LIST(dest,src) \
-	if( RT_LIST_NON_EMPTY(src) )  {\
-		register struct rt_list	*_first = (src)->forw; \
-		register struct rt_list	*_last = (src)->back; \
-		_first->back = (dest)->back; \
-		(dest)->back->forw = _first; \
-		(dest)->back = _last; \
-		_last->forw = (dest); \
-		(src)->forw = (src)->back = (src); \
+#define RT_LIST_APPEND_LIST(dest_hp,src_hp) \
+	if( RT_LIST_NON_EMPTY(src_hp) )  {\
+		register struct rt_list	*_first = (src_hp)->forw; \
+		register struct rt_list	*_last = (src_hp)->back; \
+		_first->back = (dest_hp)->back; \
+		(dest_hp)->back->forw = _first; \
+		(dest_hp)->back = _last; \
+		_last->forw = (dest_hp); \
+		(src_hp)->forw = (src_hp)->back = (src_hp); \
 	}
 
 /* Test if a doubly linked list is empty, given head pointer */
@@ -187,10 +201,6 @@ struct rt_list  {
 #define RT_LIST_WHILE(p,structure,hp)	\
 	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
 
-/* compat */
-#define RT_LIST(p,structure,hp)		RT_LIST_FOR(p,structure,hp)
-#define RT_LIST_LOOP(p,structure,hp)	RT_LIST_WHILE(p,structure,hp)
-
 /* Return the magic number of the first (or last) item on a list */
 #define RT_LIST_FIRST_MAGIC(hp)		((hp)->forw->magic)
 #define RT_LIST_LAST_MAGIC(hp)		((hp)->back->magic)
@@ -218,10 +228,12 @@ struct rt_list  {
 		RT_LIST_PNEXT(structure,p) )
 
 /* Return pointer to circular last element; ie, ignoring the list head */
-#define RT_LIST_PLAST_CIRC(structure,p)	\
+#define RT_LIST_PPREV_CIRC(structure,p)	\
 	((RT_LIST_LAST_MAGIC((struct rt_list *)(p)) == RT_LIST_HEAD_MAGIC) ? \
 		RT_LIST_PLAST_PLAST(structure,(struct rt_list *)(p)) : \
 		RT_LIST_PLAST(structure,p) )
 
+/* compat */
+#define RT_LIST_PLAST_CIRC(structure,p)	RT_LIST_PPREV_CIRC(structure,p)
 
 #endif /* SEEN_RTLIST_H */
