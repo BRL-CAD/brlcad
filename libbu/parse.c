@@ -2014,6 +2014,8 @@ bu_copy_external(struct bu_external *op, const struct bu_external *ip)
 	BU_CK_EXTERNAL(ip);
 	BU_INIT_EXTERNAL(op);
 
+	if( op == ip )  return;
+
 	op->ext_nbytes = ip->ext_nbytes;
 	op->ext_buf = bu_malloc( ip->ext_nbytes, "bu_copy_external" );
 	bcopy( ip->ext_buf, op->ext_buf, ip->ext_nbytes );
