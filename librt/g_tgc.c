@@ -80,6 +80,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 {
 	register struct rec_specific *rec;
 	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
+	static double	mag_h, mag_a, mag_b, mag_c, mag_d;
 	static mat_t	R;
 	static mat_t	Rinv;
 	static mat_t	S;
@@ -97,23 +98,23 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	MAT3XVEC( D, mat, SP_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D| */
-	magsq_h = MAGSQ( H );
-	magsq_a = MAGSQ( A );
-	magsq_b = MAGSQ( B );
-	magsq_c = MAGSQ( C );
-	magsq_d = MAGSQ( D );
+	mag_h = sqrt( magsq_h = MAGSQ( H ) );
+	mag_a = sqrt( magsq_a = MAGSQ( A ) );
+	mag_b = sqrt( magsq_b = MAGSQ( B ) );
+	mag_c = sqrt( magsq_c = MAGSQ( C ) );
+	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 	if( NEAR_ZERO(magsq_h) )  {
 		printf("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
 	/* Validate that A.B == 0, C.D == 0 */
-	f = VDOT( A, B );
+	f = VDOT( A, B ) / (mag_a * mag_b);
 	if( ! NEAR_ZERO(f) )  {
 		printf("tgc(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
-	f = VDOT( C, D );
+	f = VDOT( C, D ) / (mag_c * mag_d);
 	if( ! NEAR_ZERO(f) )  {
 		printf("tgc(%s):  C not perpendicular to D\n",stp->st_name);
 		return(1);		/* BAD */
@@ -125,15 +126,15 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	 */
 
 	/* Check for H.A == 0 and H.B == 0 */
-	f = VDOT( H, A );
+	f = VDOT( H, A ) / (mag_h * mag_a);
 	if( ! NEAR_ZERO(f) )
 		goto hard;
-	f = VDOT( H, B );
+	f = VDOT( H, B ) / (mag_h * mag_b);
 	if( ! NEAR_ZERO(f) )
 		goto hard;
 
 	/* Check for |A| > 0, |B| > 0 */
-	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) )
+	if( NEAR_ZERO(mag_a) || NEAR_ZERO(mag_b) )
 		goto hard;
 
 	/* Make sure that A == C, B == D */

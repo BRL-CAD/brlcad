@@ -39,6 +39,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define FALSE	0
 #define TRUE	1
 
+extern int view_only;	/* non-zero if computation is for viewing only */
+
 struct partition *FreePart = PART_NULL;		 /* Head of freelist */
 
 /*
@@ -126,7 +128,20 @@ struct seg *segp_in;
 		}
 		for( pp=PartHd.pt_forw; pp != &PartHd; pp=pp->pt_forw ) {
 			if( fdiff(dist, pp->pt_outdist) >= 0 )  {
-				/* Seg starts after current partition */
+				/* Seg starts after current partition ends,
+				 * or exactly at the end.
+				 */
+				if( pp->pt_forw == &PartHd )  {
+					/* beyond last part. end */
+					GET_PART_INIT( newpp );
+					newpp->pt_solhit[stp->st_bin] = TRUE;
+					newpp->pt_instp = stp;
+					newpp->pt_inhit = &segp->seg_in;
+					newpp->pt_outstp = stp;
+					newpp->pt_outhit = &segp->seg_out;
+					APPEND_PART( newpp, pp );
+					goto done_weave;
+				}
 				continue;
 			}
 			i = fdiff(dist, pp->pt_indist);
@@ -135,7 +150,6 @@ equal_start:			/*
 				 * Segment and partition start at
 				 * (roughly) the same point.
 				 */
-if( debug&DEBUG_PARTITION) {pr_partitions( &PartHd, "at equal_start");printf("fdiff(%f,%f)\n", segp->seg_out.hit_dist, pp->pt_outdist);}
 				i = fdiff(segp->seg_out.hit_dist, pp->pt_outdist);
 				if( i == 0 )  {
 					/*
@@ -251,13 +265,11 @@ done_weave:	;
 				continue;
 			/* region claims partition */
 			if( ++hitcnt > 1 ) {
-				printf("ERROR: region %s overlaps region %s in range (%f,%f)\n",
+				printf("OVERLAP: %s %s (%f,%f)\n",
 					regp->reg_name,
 					lastregion->reg_name,
 					pp->pt_indist,
 					pp->pt_outdist );
-				VPRINT("ERR IN Pt", pp->pt_inhit->hit_point );
-				VPRINT("ERROUT Pt", pp->pt_outhit->hit_point);
 			} else {
 				lastregion = regp;
 			}
@@ -275,6 +287,8 @@ add_partition:	/* Add this partition to the result queue */
 			DEQUEUE_PART( newpp );
 			newpp->pt_regionp = lastregion;
 			APPEND_PART( newpp, FinalHd.pt_back );
+			/* Shameless efficiency hack */
+			if( view_only )  break;
 		}
 	}
 	if( debug&DEBUG_PARTITION )
@@ -400,6 +414,9 @@ register struct region *headp;
 	}
 }
 
+#define	Abs( a )	((a) >= 0 ? (a) : -(a))
+#define	Max( a, b )	((a) >= (b) ? (a) : (b))
+
 /*
  *  			F D I F F
  *  
@@ -416,11 +433,35 @@ fdiff( a, b )
 double a, b;
 {
 	FAST double diff;
+	FAST double d;
 
 	diff = a - b;
-	if( NEAR_ZERO(diff) )
-		return(0);
+	d = Max( Abs( a ), Abs( b ) );	/* NOTE: not efficient */
+	if( d <= EPSILON )
+		return(0);	/* both nearly zero */
+	if( Abs(diff) < EPSILON * d )
+		return( 0 );	/* relative difference is small */
 	if( a < b )
 		return(-1);
 	return(1);
+}
+
+/*
+ *			R E L D I F F
+ *
+ * Compute the relative difference of two floating point numbers.
+ *
+ * Returns -
+ *	0.0 if exactly the same, otherwise
+ *	ratio of difference, relative to the larger of the two (range 0.0-1.0)
+ */
+
+double
+reldiff( a, b )
+double	a, b;
+{
+	static double	d;
+
+	d = Max( Abs( a ), Abs( b ) );	/* NOTE: not efficient */
+	return( d == 0.0 ? 0.0 : Abs( a - b ) / d );
 }

@@ -213,33 +213,27 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		return(1);				/* OK */
 	case 2:
 		VSUB2( P_A, point, plp->pl_A );	/* C-A */
-		/* Check for co-linear, ie, abs( (B-A).(C-A) ) == mag*mag */
-		f = VDOT( plp->pl_Xbasis, P_A );
-		if( f < 0.0 )
-			f = -f;
-		f -= ( MAGNITUDE(P_A) * MAGNITUDE(plp->pl_Xbasis) );
+		/* Check for co-linear, ie, (B-A)x(C-A) == 0 */
+		VCROSS( plp->pl_N, plp->pl_Xbasis, P_A );
+		f = MAGNITUDE( plp->pl_N );
 		if( NEAR_ZERO(f) )  {
 			plp->pl_npts--;
 			plp->pl_code[2] = '\0';
 			return(0);			/* BAD */
 		}
-		VCROSS( plp->pl_N, plp->pl_Xbasis, P_A );
 		VUNITIZE( plp->pl_N );
 
 		/*
-		 *  For some reason, some (but not all) of the normals
-		 *  come out pointing inwards.  Rather than try to understand
-		 *  this, I'm just KLUDGEING it for now, because we have
-		 *  enough information to fix it up.  1000 pardons.
+		 *  If C-A is clockwise from B-A, then the normal
+		 *  points inwards, so we need to fix it here.
 		 */
 		VSUB2( work, plp->pl_A, stp->st_center );
 		f = VDOT( work, plp->pl_N );
 		if( f < 0.0 )  {
-/**			printf("WARNING: arb8(%s) face %s has bad normal!  (A-cent).N=%f\n", stp->st_name, plp->pl_code, f); * */
 			VREVERSE(plp->pl_N, plp->pl_N);	/* "fix" normal */
 		}
 		/* Generate an arbitrary Y basis perp to Xbasis & Normal */
-		VCROSS( plp->pl_Ybasis, plp->pl_N, plp->pl_Xbasis );
+		VCROSS( plp->pl_Ybasis, plp->pl_Xbasis, plp->pl_N );
 		plp->pl_NdotA = VDOT( plp->pl_N, plp->pl_A );
 		plp->pl_2d_x[2] = VDOT( P_A, plp->pl_Xbasis );
 		plp->pl_2d_y[2] = VDOT( P_A, plp->pl_Ybasis );
@@ -317,6 +311,9 @@ register struct ray *rp;
 	register struct seg *segp;
 	static struct hit in, out;
 	static int flags;
+	static vect_t	hit_pt;		/* ray hits solid here */
+	static vect_t	work;
+	static fastf_t	xt, yt;
 
 	in.hit_dist = out.hit_dist = -INFINITY;	/* 'way back behind eye */
 
@@ -324,7 +321,7 @@ register struct ray *rp;
 	/* consider each face */
 	for( ; plp; plp = plp->pl_forw )  {
 		FAST fastf_t dn;		/* Direction dot Normal */
-		static fastf_t k;	/* (NdotA - (N dot P))/ (N dot D) */
+		FAST fastf_t k;		/* (NdotA - (N dot P))/ (N dot D) */
 		FAST fastf_t f;
 		/*
 		 *  Ray Direction dot N.  (N is outward-pointing normal)
@@ -332,7 +329,11 @@ register struct ray *rp;
 		dn = VDOT( plp->pl_N, rp->r_dir );
 		if( debug & DEBUG_ARB8 )
 			printf("Shooting at face %s.  N.Dir=%f\n", plp->pl_code, dn );
-		if( NEAR_ZERO(dn) )
+		/*
+		 *  Unless *exactly* along face, need to compute this anyways,
+		 *  because other (entrance/exit) point is probably worth it.
+		 */
+		if( dn == 0.0 )
 			continue;
 
 		/* Compute distance along ray of intersection */
@@ -340,24 +341,50 @@ register struct ray *rp;
 
 		if( dn < 0 )  {
 			/* Entering solid */
-			f = k - in.hit_dist;
-			if( NEAR_ZERO( f ) )  {
+			if( flags & SEG_IN )  {
 				if( debug & DEBUG_ARB8)printf("skipping nearby entry surface, k=%f\n", k);
 				continue;
 			}
-			if( pl_shot( plp, rp, &in, k ) != 0 )
-				continue;
+			/* if( pl_shot( plp, rp, &in, k ) != 0 ) continue; */
+			VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+			VSUB2( work, hit_pt, plp->pl_A );
+			xt = VDOT( work, plp->pl_Xbasis );
+			yt = VDOT( work, plp->pl_Ybasis );
+			if( !inside(
+				&xt, &yt,
+				plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
+				plp->pl_npts )
+			)
+				continue;			/* MISS */
+
+			/* HIT is within planar face */
+			in.hit_dist = k;
+			VMOVE( in.hit_point, hit_pt );
+			VMOVE( in.hit_normal, plp->pl_N );
 			if(debug&DEBUG_ARB8) printf("arb8: entry dist=%f, dn=%f, k=%f\n", in.hit_dist, dn, k );
 			flags |= SEG_IN;
 		} else {
 			/* Exiting solid */
-			f = k - out.hit_dist;
-			if( NEAR_ZERO( f ) )  {
+			if( flags & SEG_OUT )  {
 				if( debug & DEBUG_ARB8)printf("skipping nearby exit surface, k=%f\n", k);
 				continue;
 			}
-			if( pl_shot( plp, rp, &out, k ) != 0 )
-				continue;
+			/* if( pl_shot( plp, rp, &out, k ) != 0 ) continue; */
+			VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
+			VSUB2( work, hit_pt, plp->pl_A );
+			xt = VDOT( work, plp->pl_Xbasis );
+			yt = VDOT( work, plp->pl_Ybasis );
+			if( !inside(
+				&xt, &yt,
+				plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
+				plp->pl_npts )
+			)
+				continue;			/* MISS */
+
+			/* HIT is within planar face */
+			out.hit_dist = k;
+			VMOVE( out.hit_point, hit_pt );
+			VMOVE( out.hit_normal, plp->pl_N );
 			if(debug&DEBUG_ARB8) printf("arb8: exit dist=%f, dn=%f, k=%f\n", out.hit_dist, dn, k );
 			flags |= SEG_OUT;
 		}
@@ -366,10 +393,18 @@ register struct ray *rp;
 		return(SEG_NULL);		/* MISS */
 
 	if( flags == SEG_IN )  {
-		/* it may start inside, but it can always leave */
-		printf("Error: arb8(%s) ray never exited solid!\n",
-			stp->st_name);
-		return(SEG_NULL);		/* MISS */
+		/* It can start inside, but it should always leave.
+		 * If this condition exists, it is almost certainly due to
+		 * the dn==0 check above.  Thus, we will make the
+		 * surface infinitely thin and just replicate the entry
+		 * point as the exit point.  This at least makes the
+		 * presence of this solid known.  There may be something
+		 * better we can do.
+		 */
+		out.hit_dist = in.hit_dist;
+		VMOVE( out.hit_point, in.hit_point );
+		VREVERSE( out.hit_normal, in.hit_point );
+		flags |= SEG_OUT;
 	}
 
 	/* SEG_OUT, or SEG_IN|SEG_OUT */
@@ -383,6 +418,9 @@ register struct ray *rp;
 
 /*
  *  			P L _ S H O T
+ *
+ *  This routine has been expanded in-line, but is preserved here for
+ *  study, and possible re-use elsewhere.
  */
 pl_shot( plp, rp, hitp, k )
 register struct plane_specific *plp;
@@ -392,7 +430,7 @@ double	k;			/* dist along ray */
 {
 	static vect_t	hit_pt;		/* ray hits solid here */
 	static vect_t	work;
-	FAST fastf_t	xt, yt;
+	static fastf_t	xt, yt;
 
 	VCOMPOSE1( hit_pt, rp->r_pt, k, rp->r_dir );
 	/* Project the hit point onto the plane, making this a 2-d problem */
@@ -400,10 +438,6 @@ double	k;			/* dist along ray */
 	xt = VDOT( work, plp->pl_Xbasis );
 	yt = VDOT( work, plp->pl_Ybasis );
 
-	if( debug & DEBUG_ARB8 )  {
-		printf("k = %f, xt,yt=(%f,%f), ", k, xt, yt );
-		VPRINT("hit_pt", hit_pt);
-	}
 	if( !inside(
 		&xt, &yt,
 		plp->pl_2d_x, plp->pl_2d_y, plp->pl_2d_com,
@@ -415,7 +449,6 @@ double	k;			/* dist along ray */
 	hitp->hit_dist = k;
 	VMOVE( hitp->hit_point, hit_pt );
 	VMOVE( hitp->hit_normal, plp->pl_N );
-	if( debug & DEBUG_ARB8 )  printf("\t[Above was a hit]\n");
 	return(0);				/* HIT */
 }
 

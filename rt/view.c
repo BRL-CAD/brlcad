@@ -24,8 +24,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ray.h"
 #include "debug.h"
 
-#define XOFFSET	30
-#define YOFFSET 30
+#define XOFFSET	0
+#define YOFFSET 0
 
 extern int ikfd;		/* defined in iklib.o */
 

@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct soltab *HeadSolid;
 extern struct functab functab[];
+extern int nsolids;		/* total # of solids participating */
 struct region *HeadRegion;
 
 void pr_region();
@@ -133,6 +134,7 @@ struct region *regp;
 			printf("Member of region %s\n", regp->reg_name );
 		functab[stp->st_id].ft_print( stp );
 	}
+	nsolids++;
 	return( stp );
 }
 

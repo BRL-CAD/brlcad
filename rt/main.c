@@ -66,10 +66,13 @@ UNIMPLEMENTED(null);
 UNIMPLEMENTED(tor);
 UNIMPLEMENTED(half);
 
+double timer_print();
 
 extern struct partition *bool_regions();
 
 int debug = DEBUG_OFF;
+int view_only;		/* non-zero if computation is for viewing only */
+int nsolids;		/* total # of solids participating */
 
 struct soltab *HeadSolid = SOLTAB_NULL;
 
@@ -103,6 +106,7 @@ char **argv;
 	static fastf_t distsq;
 
 	npts = 200;
+	view_only = 1;
 
 	if( argc < 1 )  {
 		printf(usage);
@@ -137,7 +141,8 @@ char **argv;
 	}
 
 	/* 4.2 BSD stdio debugging assist */
-/**	setbuffer( stdout, ttyObuf, sizeof(ttyObuf) ); */
+	if( debug )
+		setbuffer( stdout, ttyObuf, sizeof(ttyObuf) );
 
 	/* Build directory of GED database */
 	dir_build( argv[0] );
@@ -148,17 +153,24 @@ char **argv;
 		ikopen();
 		load_map(1);
 		ikclear();
-		if( npts <= 50 )  {
+		if( npts <= 64 )  {
 			ikzoom( 9, 9 );
-			ikwindow( (27-1)*4, 4063+56 );
+			ikwindow( (0)*4, 4063+30 );
+		} else if ( npts <= 256 )  {
+			ikzoom( 1, 1 );
+			ikwindow( (0)*4, 4063+17 );
 		}
 	}
 
 	/* Load the desired portion of the model */
+	timer_prep();
 	while( argc > 0 )  {
 		get_tree(argv[0]);
 		argc--; argv++;
 	}
+	(void)timer_print("PREP");
+
+	timer_prep();
 
 	if( HeadSolid == 0 )  bomb("No solids");
 
@@ -242,14 +254,13 @@ VPRINT("Light2 Vec", l2vec);
 			PartHeadp = bool_regions( HeadSeg );
 			if( PartHeadp->pt_forw == PartHeadp )  {
 				wbackground( xscreen, yscreen );
-				continue;
+			}  else  {
+				/*
+				 * Hand final partitioned intersection list
+				 * to application.
+				 */
+				viewit( PartHeadp, rayp, xscreen, yscreen );
 			}
-
-			/*
-			 * Hand final partitioned intersection list
-			 * to application.
-			 */
-			viewit( PartHeadp, rayp, xscreen, yscreen );
 
 			/*
 			 * Processing of this ray is complete.
@@ -274,6 +285,13 @@ VPRINT("Light2 Vec", l2vec);
 			if( debug )  fflush(stdout);
 		}
 	}
+	{
+		FAST double utime;
+		utime = timer_print("SHOT");
+		printf("%d solids, %d shots in %f sec = %f shots/sec\n",
+			nsolids,
+			npts*npts, utime, (double)(npts*npts/utime) );
+	}
 	return(0);
 }
 
@@ -291,26 +309,19 @@ register struct ray *rayp;
 
 	HeadSeg = SEG_NULL;	/* Should check, actually */
 
-	/* For now, shoot at all solids in model */
-	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
+	/*
+	 * For now, shoot at all solids in model.
+	 * This code is executed more often than any other part!
+	 */
+	for( stp=HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw ) {
 		register struct seg *newseg;		/* XXX */
-
-		if(debug&DEBUG_ALLRAYS)
-			printf("Shooting at %s -- ", stp->st_name);
 
 		/* Consider bounding sphere */
 		VSUB2( diff, stp->st_center, rayp->r_pt );
 		distsq = VDOT(rayp->r_dir, diff);
-		if( (distsq=(MAGSQ(diff) - distsq*distsq)) > stp->st_radsq ) {
-			if(debug&DEBUG_ALLRAYS)  printf("(Not close)\n");
+		if( (MAGSQ(diff) - distsq*distsq) > stp->st_radsq ) {
 			continue;
 		}
-		if( distsq < -EPSILON )  {
-			printf("ERROR in %s:  dist**2 = %f -- skipped\n",
-				stp->st_name, distsq );
-			continue;
-		}
-
 		newseg = functab[stp->st_id].ft_shot( stp, rayp );
 		if( newseg == SEG_NULL )
 			continue;
