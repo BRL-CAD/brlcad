@@ -1682,12 +1682,32 @@ struct shell *s;
 			"nmg_dup_face trans_tbl");
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		if (rt_g.NMG_debug & DEBUG_BASIC)
+			rt_log("nmg_dup_face() duping %s loop...",
+				nmg_orientation(lu->orientation));
 		if (new_fu) {
 			new_lu = nmg_dup_loop(lu, &new_fu->l.magic, trans_tbl);
 		} else {
 			new_lu = nmg_dup_loop(lu, &s->l.magic, trans_tbl);
 			new_fu = nmg_mf(new_lu);
+
+			/* since nmg_mf() FORCES the orientation of the
+			 * initial loop to be OT_SAME, we need to re-set
+			 * the orientation of new_lu if lu->orientation
+			 * is not OT_SAME.  In general, the first loopuse on
+			 * a faceuse's linked list will be OT_SAME, but
+			 * in some circumstances (such as after booleans)
+			 * the first loopuse MAY be OT_OPPOSITE
+			 */
+			if (lu->orientation != OT_SAME) {
+				new_lu->orientation = lu->orientation;
+				new_lu->lumate_p->orientation =
+					lu->lumate_p->orientation;
+			}
 		}
+		if (rt_g.NMG_debug & DEBUG_BASIC)
+			rt_log(".  Duped %s loop\n",
+				nmg_orientation(new_lu->orientation));
 	}
 
 	if (fu->f_p->fg_p) {
@@ -2919,6 +2939,13 @@ long	**trans_tbl;
 		/* Obtain new duplicate of old vertex.  May be null 1st time. */
 		new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
 		new_lu = nmg_mlv(parent, new_v, lu->orientation);
+		if (new_lu->orientation != lu->orientation) {
+			rt_log("%s %d: I asked for a %s loop not a %s loop.\n",
+				__FILE__, __LINE__,
+				nmg_orientation(lu->orientation),
+				nmg_orientation(new_lu->orientation));
+			rt_bomb("bombing\n");
+		}
 		if( new_v )  {
 			/* the new vertex already exists in the new model */
 			rt_log("nmg_dup_loop() existing vertex in new model\n");
@@ -2957,6 +2984,14 @@ long	**trans_tbl;
 		if (new_lu == (struct loopuse *)NULL) {
 			/* this is the first edge in the new loop */
 			new_lu = nmg_mlv(parent, new_v, lu->orientation);
+			if (new_lu->orientation != lu->orientation) {
+				rt_log("%s %d: I asked for a %s loop not a %s loop.\n",
+					__FILE__, __LINE__,
+					nmg_orientation(lu->orientation),
+					nmg_orientation(new_lu->orientation));
+				rt_bomb("bombing\n");
+			}
+
 			new_vu = RT_LIST_FIRST(vertexuse, &new_lu->down_hd);
 
 			NMG_CK_VERTEXUSE(new_vu);
@@ -3033,8 +3068,11 @@ long	**trans_tbl;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_dup_loop(lu=x%x, parent=x%x, trans_tbl=x%x) new_lu=x%x\n",
-			lu , parent , trans_tbl , new_lu );
+		rt_log(
+"nmg_dup_loop(lu=x%x(%s), parent=x%x, trans_tbl=x%x) new_lu=x%x(%s)\n",
+			lu, nmg_orientation(lu->orientation),
+			parent , trans_tbl , new_lu,
+			nmg_orientation(new_lu->orientation) );
 	}
 	return (new_lu);
 }
