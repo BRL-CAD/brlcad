@@ -148,7 +148,7 @@ struct rt_list *vhead;
 		Readflt( &slant_ang , "" );	/* not currently used */
 		Readflt( &rot_ang , "" );
 		Readint( &mirror , "" );	/* not currently used */
-		Readint( &internal_rot , "" );	/* not currently used */
+		Readint( &internal_rot , "" );
 		Readcnv( &x , "" );
 		Readcnv( &y , "" );
 		Readcnv( &z , "" );		/* not currently used */
@@ -171,20 +171,19 @@ struct rt_list *vhead;
 			double tmp_x,tmp_y;
 			double xdel,ydel;
 
-			xdel = scale * sin( rot_angle );
-			ydel = sclae * cos( rot_angle );
+			xdel = scale * sin( rot_ang );
+			ydel = scale * cos( rot_ang );
 
 			tmp_y = y;
 			tmp_x = x;
 			one_char[1] = '\0';
 
-			for( j=0 ; i<str_len ; j++ )
+			for( j=0 ; j<str_len ; j++ )
 			{
-				double tmp_x,tmp_y;
-
 				tmp_x += xdel;
 				tmp_y -= ydel;
 				one_char[0] = str[j];
+
 				rt_vlist_2string( vhead , one_char , tmp_x , tmp_y , scale,
 					(double)(rot_ang*180.0*rt_invpi) );
 			}
