@@ -5,7 +5,7 @@
 #	Ensure that all commands that this script uses without defining
 #	are provided by the calling application
 #
-check_externs "_mged_viewget"
+check_externs "_mged_view"
 
 #	XXX	kludge for edit-test cycle
 
@@ -32,7 +32,7 @@ proc do_caliper_leg {leg} {
     global cal_leg_loc
 
     if {$landmarkmode == {View center}} {
-	set cal_leg_loc($leg) [_mged_viewget center]
+	set cal_leg_loc($leg) [_mged_view center]
     } elseif {$landmarkmode == {Model origin}} {
 	set cal_leg_loc($leg) {0 0 0}
     } else {

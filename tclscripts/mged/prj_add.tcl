@@ -101,11 +101,11 @@ proc prj_add {args} {
 	puts $fd "through=$through"
 	puts $fd "antialias=$antialias"
 	puts $fd "behind=$behind"
-	puts $fd "viewsize=[viewget size]"
-	regsub -all { } [viewget eye] "," eye_pt
+	puts $fd "viewsize=[view size]"
+	regsub -all { } [view eye] "," eye_pt
 	puts $fd "eye_pt=$eye_pt"
 
-	regsub -all { } [viewget quat] "," orientation
+	regsub -all { } [view quat] "," orientation
 	puts $fd "orientation=$orientation"
 
 	close $fd
