@@ -1,5 +1,5 @@
 /*
- *			G - X X X , C
+ *			G - X X X . C
  *
  *	Sample code for converting BRL-CAD models to some other format
  *
@@ -73,7 +73,7 @@ char	*argv[];
 	register int	c;
 	double		percent;
 
-	port_setlinebuf( stderr );
+	bu_setlinebuf( stderr );
 
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
@@ -150,7 +150,7 @@ char	*argv[];
 	}
 
 	/* scan all the records in the database and build a directory */
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_dirbuild(dbip);
 
 	/* open output file */
 	if( out_file == NULL )
