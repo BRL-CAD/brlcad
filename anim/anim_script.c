@@ -41,7 +41,8 @@ extern char *optarg;
 
 int last_steer, frame; /* used by steer_mat */
    /* info from command line args */
-int relative_a, relative_c, axes, translate, rotate, steer, view, readview; /* flags*/
+int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
+int steer, view, readview, permute; /* flags*/
 int first_frame;
 fastf_t  viewsize;
 vect_t centroid, rcentroid, front;
@@ -54,6 +55,7 @@ char **argv;
 	void anim_dx_y_z2mat(), anim_add_trans();
 	fastf_t yaw, pitch, roll;
 	vect_t point, zero;
+	quat_t quat;
 	mat_t a, m_x;
 	int val, go;
 
@@ -70,7 +72,7 @@ char **argv;
 
 
 	if (!get_args(argc,argv))
-		fprintf(stderr,"anim_script: Get_args error");
+		fprintf(stderr,"anim_script: Get_args error\n");
 	
 	if (view && (viewsize > 0.0))
                 printf("viewsize %f;\n", viewsize);
@@ -78,13 +80,17 @@ char **argv;
 
 	while (1) {
 		/* read one line of table */
-		val = scanf("%*f%*[^-0123456789]"); /*ignore time and (if it exists) column of periods from tabinterp*/
+		val = scanf("%*f"); /*ignore time */
                 if (readview)
                         scanf("%lf",&viewsize);
 		if(translate)
 			val=scanf("%lf %lf %lf", point, point+1, point+2);
-		if(rotate)
+		if(rotate&&quaternion){
+			val = scanf("%lf %lf %lf %lf", quat,quat+1,quat+2,quat+3);
+			val -= 1;
+		} else if (rotate) {
 			val=scanf("%lf %lf %lf",&yaw,&pitch,&roll);
+		}
 
 		if (val < 3){ /* ie. scanf not completely successful */
 			/* with steering option, must go extra loop after end of file */
@@ -96,10 +102,19 @@ char **argv;
 		/* calculate basic rotation matrix a */
 		if (steer)
 			go = steer_mat(a,point); /* warning: point changed by steer_mat */
-		else {
+		else if (quaternion) {
+			anim_quat2mat(a,quat);
+			go = 1;
+		} else {
 			anim_dx_y_z2mat(a,roll,-pitch,yaw);/* make ypr matrix */
 			go = 1;
 		}
+
+		/* if input orientation (presumably from quaternion) was
+		 * designed to manipulate the view, first move the object
+ 		 * to the default object position */
+		if (permute)
+			anim_v_unpermute(a);
 
 		/* make final matrix, including translation etc */
 		if (axes){ /* add pre-rotation from original axes */
@@ -122,6 +137,7 @@ char **argv;
 			if (readview)
 		                printf("viewsize %f;\n", viewsize);
 	                printf("eye_pt %f %f %f;\n",a[3],a[7],a[11]);
+			/* implicit anim_v_permute */
 			printf("viewrot %f %f %f 0\n",-a[1],-a[5],-a[9]);
 	                printf("%f %f %f 0\n", a[2], a[6], a[10]);
 	                printf("%f %f %f 0\n", -a[0], -a[4],-a[8]);
@@ -140,17 +156,18 @@ char **argv;
 
 }
 
-#define OPT_STR	"a:b:c:d:f:rstv:"
+#define OPT_STR	"a:b:c:d:f:pqrstv:"
 
 int get_args(argc,argv)
 int argc;
 char **argv;
 {
 	
-	int c, i;
+	int c, i, yes;
 	double yaw,pch,rll;
 	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	rotate = translate = 1; /* defaults */
+	quaternion = permute = 0;
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		i=0;
 		switch(c){
@@ -197,6 +214,12 @@ char **argv;
 		case 'f':
 			sscanf(optarg,"%d",&first_frame);
 			break;
+		case 'p':
+			permute = 1;
+			break;
+		case 'q':
+			quaternion = 1;
+			break;
 		case 'r':
 			rotate = 1;
 			translate = 0;
@@ -213,7 +236,8 @@ char **argv;
 			rotate = 0;
 			break;
 		case 'v':
-			sscanf(optarg,"%lf",&viewsize);
+			yes = sscanf(optarg,"%lf",&viewsize);
+			if (!yes) viewsize = 0.0;
 			if (viewsize < 0.0)
 				readview = 1;
 			view = 1;
@@ -239,29 +263,26 @@ vect_t point;
 	void anim_dir2mat(), anim_add_trans(), anim_view_rev();
 	static vect_t p1, p2, p3;
 	vect_t dir, dir2;
+	static vect_t norm;
 
 	VMOVE(p1,p2);
 	VMOVE(p2,p3);
 	VMOVE(p3,point);
 	if (frame == 0){ /* first frame*/
 		VSUBUNIT(dir,p3,p2);
-		VMOVE(dir2,dir);
+		VSET(norm, 0.0, 1.0, 0.0);
 	}
 	else if (last_steer){ /*last frame*/
 		VSUBUNIT(dir,p2,p1);
-		VMOVE(dir2,dir);
 	}
 	else if (frame > 0){ /*normal*/
 		VSUBUNIT(dir,p3,p1);
-		VSUBUNIT(dir2,p2,p1);/*needed for vertical case*/
 	}
 	else return(0); /* return signal 'don't print yet */
 
-	anim_dir2mat(mat,dir,dir2); /* create basic rotation matrix */
-/*	if (view){
-		anim_view_rev(mat);
-	}
-*/
+	anim_dirn2mat(mat,dir,norm); /* create basic rotation matrix */
+	VSET(norm, mat[1], mat[5], 0.0); /* save for next time */
+
 	VMOVE(point,p2); /* for main's purposes, the current point is p2 */
 
 	return(1); /* return signal go 'ahead and print' */
