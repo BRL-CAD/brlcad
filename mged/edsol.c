@@ -3629,8 +3629,18 @@ sedit()
 
 			if( es_mvalid )
 				VMOVE( to_pt , es_mparam )
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( to_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( to_pt , es_para );
+			  }
+#else
 				VMOVE( to_pt , es_para )
+#endif
+			}
 			else if( inpara == 1 )
 				VJOIN1( to_pt, lu_keypoint, es_para[0], lu_pl )
 			else if( inpara && inpara != 3 )
@@ -3709,9 +3719,19 @@ sedit()
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
-				VMOVE( new_pt , es_para )
+			  VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
+			  VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment selection\n", (char *)NULL);
@@ -3740,9 +3760,19 @@ sedit()
 			RT_PIPE_CK_MAGIC( pipe );
 
 			if( es_mvalid )
-				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
+			  VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment split\n", (char *)NULL);
@@ -3772,8 +3802,18 @@ sedit()
 
 			if( es_mvalid )
 				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment movement\n", (char *)NULL);
@@ -3803,8 +3843,18 @@ sedit()
 
 			if( es_mvalid )
 				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
@@ -3827,8 +3877,18 @@ sedit()
 
 			if( es_mvalid )
 				VMOVE( new_pt , es_mparam )
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
@@ -3878,8 +3938,18 @@ sedit()
 
 			if( es_mvalid )
 				VMOVE( pick_pt, es_mparam )
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( pick_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( pick_pt, es_para );
+			  }
+#else
 				VMOVE( pick_pt, es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 				Tcl_AppendResult(interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
@@ -4240,8 +4310,18 @@ sedit()
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
@@ -4292,8 +4372,18 @@ sedit()
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
@@ -4343,8 +4433,18 @@ sedit()
 				dist = DIST_PT_PLANE( es_mparam, view_pl );
 				VJOIN1( new_pt, es_mparam, -dist, view_pl );
 			}
-			else if( inpara == 3 )
+			else if( inpara == 3 ){
+#ifdef TRY_EDIT_NEW_WAY
+			  if(mged_variables.context){
+			    /* apply es_invmat to convert to real model space */
+			    MAT4X3PNT( new_pt, es_invmat, es_para);
+			  }else{
+			    VMOVE( new_pt , es_para );
+			  }
+#else
 				VMOVE( new_pt , es_para )
+#endif
+			}
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
