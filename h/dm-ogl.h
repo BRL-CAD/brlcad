@@ -58,8 +58,6 @@ extern void ogl_establish_lighting();
 extern void ogl_establish_perspective();
 extern void ogl_set_perspective();
 extern void ogl_do_fog();
-extern int ogl_irisX2ged();
-extern int ogl_irisY2ged();
 extern struct ogl_vars head_ogl_vars;
 
 #endif /* SEEN_DM_OGL */
