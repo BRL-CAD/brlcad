@@ -3129,6 +3129,7 @@ rt_nmg_make( const struct rt_functab *ftp, struct rt_db_internal *intern, double
 
 	m = nmg_mm();
 	intern->idb_ptr = (genptr_t )m;
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern->idb_type = ID_NMG;
 	intern->idb_meth = ftp;
 }

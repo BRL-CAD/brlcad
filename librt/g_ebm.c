@@ -2116,6 +2116,7 @@ double			diameter;
 {
 	struct rt_ebm_internal *ebm;
 
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern->idb_type = ID_EBM;
 	BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
 

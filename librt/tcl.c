@@ -1419,6 +1419,7 @@ double			diameter;
 {
 	struct rt_comb_internal *comb;
 
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern->idb_type = ID_COMBINATION;
 	intern->idb_meth = &rt_functab[ID_COMBINATION];
 	intern->idb_ptr = bu_calloc( sizeof(struct rt_comb_internal), 1,
@@ -1454,6 +1455,7 @@ struct rt_db_internal	*intern;
 double			diameter;
 {
 	intern->idb_type = ftp - rt_functab;
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
 
 	intern->idb_meth = ftp;
