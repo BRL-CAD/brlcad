@@ -78,7 +78,11 @@ register CONST char	*units;
  *  If the user is editing in unusual units (like 2.5feet), don't
  *  fail to create the database header.
  *
- *  In the v5 database, the conversion factor should be stored intact.
+ *  In the v5 database, the conversion factor will be stored intact.
+ *
+ *  Note that the database-layer header record
+ *  will have already been written by db_create().
+ *  All we have to do here is update it.
  *
  *  Returns -
  *	<0	error
@@ -86,11 +90,10 @@ register CONST char	*units;
  */
 int
 mk_id_editunits(
-	struct rt_wdb *fp,
+	struct rt_wdb *wdbp,
 	const char *title,
 	double local2mm )
 {
-	if( mk_version <= 4 )
-		return db_fwrite_ident( fp, title, local2mm );
-	return db5_fwrite_ident( fp, title, local2mm );
+	RT_CK_WDB(wdbp);
+	return db_update_ident( wdbp->dbip, title, local2mm );
 }
