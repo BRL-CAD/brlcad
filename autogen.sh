@@ -156,7 +156,9 @@ fi
 # protect COPYING from overwrite #
 ##################################
 if test -f COPYING ; then
-  cp -pf COPYING misc/COPYING.backup
+  if test ! -f misc/COPYING.backup
+    cp -pf COPYING misc/COPYING.backup
+  fi
 fi
 
 
