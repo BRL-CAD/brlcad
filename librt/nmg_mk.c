@@ -424,9 +424,11 @@ long *upptr;
  *
  *	If both vertices were specified, and the shell also had a
  *	vertexuse pointer, the vertexuse in the shell is killed.
+ *	XXX Why?
  *
- *	Explicit Return:
- *		edgeuse whose vertex use is v1, whose eumate has vertex v2
+ *  Explicit Return -
+ *	An edgeuse in shell "s" whose vertexuse refers to vertex v1.
+ *	The edgeuse mate's vertexuse refers to vertex v2
  *
  *  Implicit Returns -
  *	1)  If the shell had a lone vertex in vu_p, it is destroyed,
@@ -496,7 +498,7 @@ struct shell *s;
 
 	if( s->vu_p )  {
 		/* Ensure shell no longer has any stored vertexuse */
-		nmg_kvu( s->vu_p );
+		(void)nmg_kvu( s->vu_p );
 		s->vu_p = (struct vertexuse *)NULL;
 	}
 
@@ -759,17 +761,36 @@ struct shell *s;
 
 /*			N M G _ K V U
  *
- *	Kill vertexuse
+ *	Kill vertexuse, and null out parent's vu_p.
+ *
+ *  This routine is not intented for general use by applications,
+ *  because it requires cooperation on the part of the caller
+ *  to properly dispose of or fix the now *quite* illegal parent.
+ *  (Illegal because the parent's vu_p is NULL).
+ *  It exists primarily as a support routine for "mopping up" after
+ *  nmg_klu(), nmg_keu(), nmg_ks(), and nmg_mv_vu_between_shells().
+ *
+ *  It is also used in a particularly ugly way in 
+ *  nmg_cut_loop() and nmg_split_lu_at_vu()
+ *  as part of their method for obtaining an "empty" loopuse/loop set.
+ *
+ *  It is worth noting that all these callers ignore the return code,
+ *  because they *all* exist to intentionally empty out the parent, but
+ *  the return code is provided anyway, in the name of [CTJ] symmetry.
+ *
+ *  Returns -
+ *	0	If all is well in the parent
+ *	1	If parent is empty, and is thus "illegal"
  */
-void
+int
 nmg_kvu(vu)
 register struct vertexuse *vu;
 {
 	struct vertex	*v;
+	int		ret = 0;
 
 	NMG_CK_VERTEXUSE(vu);
 
-	/* ditch any attributes */
 	if (vu->vua_p) FREE_VERTEXUSE_A(vu->vua_p);
 
 	v = vu->v_p;
@@ -785,15 +806,19 @@ register struct vertexuse *vu;
 	/* erase existence of this vertexuse from parent */
 	if (*vu->up.magic_p == NMG_SHELL_MAGIC)  {
 		vu->up.s_p->vu_p = (struct vertexuse *)NULL;
+		ret = nmg_is_shell_empty(vu->up.s_p);
 	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		/* Reset the hack */
 		RT_LIST_INIT( &vu->up.lu_p->down_hd );
+		ret = 1;
 	} else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC)  {
 		vu->up.eu_p->vu_p = (struct vertexuse *)NULL;
+		ret = 1;
 	} else
 		rt_bomb("nmg_kvu() killing vertexuse of unknown parent?\n");
 
 	FREE_VERTEXUSE(vu);
+	return ret;
 }
 
 
@@ -904,8 +929,8 @@ struct loopuse *lu1;
 	if( magic1 == NMG_VERTEXUSE_MAGIC )  {
 		/* Follow the vertex-loop hack downward,
 		 * nmg_kvu() will clean up */
-		nmg_kvu( RT_LIST_FIRST(vertexuse, &lu1->down_hd) );
-		nmg_kvu( RT_LIST_FIRST(vertexuse, &lu2->down_hd) );
+		(void)nmg_kvu( RT_LIST_FIRST(vertexuse, &lu1->down_hd) );
+		(void)nmg_kvu( RT_LIST_FIRST(vertexuse, &lu2->down_hd) );
 	} else if ( magic1 == NMG_EDGEUSE_MAGIC) {
 		/* delete all edgeuse in the loopuse (&mate) */
 		while( RT_LIST_NON_EMPTY( &lu1->down_hd ) )  {
@@ -1051,10 +1076,10 @@ register struct edgeuse *eu1;
 
 	/* kill the vertexuses associated with these edgeuses */
 	if (eu1->vu_p) {
-		nmg_kvu(eu1->vu_p);
+		(void)nmg_kvu(eu1->vu_p);
 	}
 	if (eu2->vu_p) {
-		nmg_kvu(eu2->vu_p);
+		(void)nmg_kvu(eu2->vu_p);
 	}
 
 	FREE_EDGEUSE(eu1);
@@ -1608,14 +1633,14 @@ struct loopuse *lu1;
 		rt_bomb("nmg_demote_lu: loopuse mates don't have same # of edges\n");
 
 	/* XXX What to do if fu went empty? */
-	nmg_klu(lu1);
+	if( nmg_klu(lu1) )  rt_log("nmg_demote_lu: fu went empty\n");
 
 	return(0);
 }
 
 /*			N M G _ D E M O T E _ E U
  *
- *	Demote a wire edge into a pair of verticies
+ *	Demote a wire edge into a pair of self-loop verticies
  *
  *	Explicit Retruns
  *		1	Edge was not a wire edge.  Nothing done.
@@ -1626,6 +1651,7 @@ nmg_demote_eu(eu)
 struct edgeuse *eu;
 {
 	struct shell	*s;
+	struct vertex	*v;
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC)
 		return(1);
@@ -1633,10 +1659,14 @@ struct edgeuse *eu;
 	NMG_CK_SHELL(s);
 
 	NMG_CK_EDGEUSE(eu);
-	nmg_ensure_vertex(eu->vu_p->v_p, s);
+	v = eu->vu_p->v_p;
+	if( !nmg_is_vertex_a_selfloop_in_shell(v, s) )
+		(void)nmg_mlv(&s->l.magic, v, OT_SAME);
 
 	NMG_CK_EDGEUSE(eu->eumate_p);
-	nmg_ensure_vertex(eu->eumate_p->vu_p->v_p, s);
+	v = eu->eumate_p->vu_p->v_p;
+	if( !nmg_is_vertex_a_selfloop_in_shell(v, s) )
+		(void)nmg_mlv(&s->l.magic, v, OT_SAME);
 
 	(void)nmg_keu(eu);
 	return(0);
@@ -1756,39 +1786,6 @@ struct edgeuse *eudst, *eusrc;
 
 	eudst->radial_p->radial_p = eusrc_mate;
 	eudst->radial_p = eusrc;
-}
-
-/*
- *			N M G _ E N S U R E _ V E R T E X
- *
- *	Ensure that this shell contains a single-vertex loop
- *	on the given vertex.
- *	If it does not, then one is created.
- */
-void
-nmg_ensure_vertex(v, s)
-struct vertex	*v;
-struct shell	*s;
-{
-	struct vertexuse *vu;
-	struct loopuse	*lu;
-
-	NMG_CK_VERTEX(v);
-	NMG_CK_SHELL(s);
-
-	/* try to find the vertex in a loopuse of this shell */
-	for (RT_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
-		NMG_CK_VERTEXUSE(vu);
-		if (*vu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
-		lu = vu->up.lu_p;
-		NMG_CK_LOOPUSE(lu);
-		if( *lu->up.magic_p != NMG_SHELL_MAGIC )  continue;
-		NMG_CK_SHELL(lu->up.s_p);
-		if( lu->up.s_p == s)
-			return;
-	}
-
-	(void)nmg_mlv(&s->l.magic, v, OT_SAME);
 }
 
 /*			N M G _ U N G L U E E D G E
