@@ -50,6 +50,7 @@ Acknowledgment:
 
 #include <signal.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "fb.h"
 
 /*
@@ -575,26 +576,28 @@ register coords	*pos;
 	register struct vectorchar	*vc;
 	register struct relvect		*rv;
 
-	if( c >= 'a' && c <= 'z' )
-		c = c - 'a' + 'A';	/* xlate to upper case */
+	if( !isascii(c) )
+		c = '?';
+	if( islower(c) )
+		c = toupper(c);
 	
 	for( vc = &charset[0]; vc->ascii; vc++)
 		if( vc->ascii == c )
 			break;
 
 	if( !vc->ascii )  {
-		/* Character not found -- space over 1/2 char */
+		/* Character not found in table -- space over 1/2 char */
 		pos->x += X_CHAR_SIZE/2;
 		return;
 	}
 
 	/* have the correct character entry - start plotting */
 	start.x = vc->r[0].x + pos->x;
-	start.y = vc->r[0].y + pos->y - Y_CHAR_SIZE;
+	start.y = Y_CHAR_SIZE - vc->r[0].y + pos->y;
 
 	for( rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++ )  {
 		end.x = rv->x + pos->x;
-		end.y = rv->y + pos->y - Y_CHAR_SIZE;
+		end.y = Y_CHAR_SIZE - rv->y + pos->y;
 		edgelimit( &start );
 		edgelimit( &end );
 		BuildStr( &start, &end );	/* pixels */
@@ -656,9 +659,6 @@ GetCoords( coop )
 	coop->x = (short)((x * Npixels + deltao2) / delta);
 	coop->y = (short)((y * Nscanlines + deltao2) / delta);
 
-	/* REVERSE the y axis for those of you who like plots origin down */
-	coop->y = Nscanlines - coop->y;
-	
 	/* limit right, top */
 	if ( coop->x > XMAX )
 		coop->x = XMAX;
