@@ -382,8 +382,8 @@ hoc_register_menu_data "File" "Insert..." "Insert Database"\
 hoc_register_menu_data "File" "Extract..." "Extract Objects"\
 	{ { summary "Tool for extracting objects out of the current database." }
           { see_also keep } }
-.$id.menubar.file add command -label "g2asc..." -underline 0 -command "init_g2asc $id"
-hoc_register_menu_data "File" "g2asc..." "Convert to Ascii"\
+.$id.menubar.file add command -label "G2asc..." -underline 0 -command "init_g2asc $id"
+hoc_register_menu_data "File" "G2asc..." "Convert to Ascii"\
 	{ { summary "Convert the current database into an ascii file." } }
 .$id.menubar.file add separator
 .$id.menubar.file add command -label "Load Script..." -underline 0 \
@@ -391,8 +391,8 @@ hoc_register_menu_data "File" "g2asc..." "Convert to Ascii"\
 hoc_register_menu_data "File" "Load Script..." "Load Script"\
 	{ { summary "Browse directories for a Tcl script file to load." } }
 .$id.menubar.file add separator
-.$id.menubar.file add command -label "Raytrace..." -underline 0 -command "init_Raytrace $id"
-hoc_register_menu_data "File" "Raytrace..." "Raytrace View"\
+.$id.menubar.file add command -label "Raytrace" -underline 0 -command "init_Raytrace $id"
+hoc_register_menu_data "File" "Raytrace" "Raytrace View"\
 	{ { summary "Tool for raytracing the current view." }
           { see_also rt } }
 .$id.menubar.file add cascade -label "Save View As" -underline 0 -menu .$id.menubar.file.saveview
@@ -409,9 +409,9 @@ hoc_register_menu_data "File" "Exit" "Exit MGED"\
           { see_also "exit q quit" } }
 
 menu .$id.menubar.file.saveview -title "Save View As" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.file.saveview add command -label "RT script..." -underline 0\
+.$id.menubar.file.saveview add command -label "RT Script..." -underline 0\
 	-command "init_rtScriptTool $id"
-hoc_register_menu_data "Save View As" "RT script..." "RT Script File"\
+hoc_register_menu_data "Save View As" "RT Script..." "RT Script File"\
 	{ { summary "Save the current view as an RT script file." }
           { see_also saveview } }
 .$id.menubar.file.saveview add command -label "Plot..." -underline 1\
@@ -432,70 +432,70 @@ menu .$id.menubar.file.pref -title "Preferences" -tearoff $mged_default(tearoff_
 	-menu .$id.menubar.file.pref.cle
 .$id.menubar.file.pref add cascade -label "Special Characters" -underline 0\
 	-menu .$id.menubar.file.pref.special_chars
-.$id.menubar.file.pref add command -label "Color Schemes..." -underline 0\
+.$id.menubar.file.pref add command -label "Color Schemes" -underline 0\
 	-command "color_scheme_build $id \"Color Schemes\" [list $mged_color_scheme(primary_map)]\
 	\"Faceplate Colors\" [list $mged_color_scheme(secondary_map)]"
-hoc_register_menu_data "Preferences" "Color Schemes..." "Color Schemes"\
+hoc_register_menu_data "Preferences" "Color Schemes" "Color Schemes"\
 	{ { summary "Tool for setting colors." }
           { see_also "rset" } }
-.$id.menubar.file.pref add command -label "Fonts..." -underline 0 \
+.$id.menubar.file.pref add command -label "Fonts" -underline 0 \
 	-command "font_scheme_init $id"
-hoc_register_menu_data "Preferences" "Fonts..." "Fonts" \
+hoc_register_menu_data "Preferences" "Fonts" "Fonts" \
 	{ { summary "Tool for creating/configuring named fonts." }
           { see_also "font" } }
 
 menu .$id.menubar.file.pref.units -title "Units" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.file.pref.units add radiobutton -value um -variable mged_display(units)\
-	-label "micrometers" -underline 4 -command "do_Units $id"
-hoc_register_menu_data "Units" "micrometers" "Unit of measure - Micrometers"\
+	-label "Micrometers" -underline 4 -command "do_Units $id"
+hoc_register_menu_data "Units" "Micrometers" "Unit of Measure - Micrometers"\
 	{ { summary "Set the unit of measure to micrometers.\n1 micrometer = 1/1,000,000 meters" }
           { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value mm -variable mged_display(units)\
-	-label "millimeters" -underline 2 -command "do_Units $id"
-hoc_register_menu_data "Units" "millimeters" "Unit of measure - Millimeters"\
+	-label "Millimeters" -underline 2 -command "do_Units $id"
+hoc_register_menu_data "Units" "Millimeters" "Unit of Measure - Millimeters"\
 	{ { summary "Set the unit of measure to millimeters.\n1 millimeter = 1/1000 meters" }
           { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value cm -variable mged_display(units)\
-	-label "centimeters" -underline 0 -command "do_Units $id"
-hoc_register_menu_data "Units" "centimeters" "Unit of measure - Centimeters"\
+	-label "Centimeters" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "Centimeters" "Unit of Measure - Centimeters"\
 	{ { summary "Set the unit of measure to centimeters.\n\t1 centimeter = 1/100 meters" }
           { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value m -variable mged_display(units)\
-	-label "meters" -underline 0 -command "do_Units $id"
-hoc_register_menu_data "Units" "meters" "Unit of measure - Meters"\
+	-label "Meters" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "Meters" "Unit of Measure - Meters"\
 	{ { summary "Set the unit of measure to meters." }
           { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value km -variable mged_display(units)\
-	-label "kilometers" -underline 0 -command "do_Units $id"
-hoc_register_menu_data "Units" "kilometers" "Unit of measure - Kilometers"\
+	-label "Kilometers" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "Kilometers" "Unit of Measure - Kilometers"\
 	{ { summary "Set the unit of measure to kilometers.\n 1 kilometer = 1000 meters" }
           { see_also "units" } }
 .$id.menubar.file.pref.units add separator
 .$id.menubar.file.pref.units add radiobutton -value in -variable mged_display(units)\
-	-label "inches" -underline 0 -command "do_Units $id"
-hoc_register_menu_data "Units" "inches" "Unit of measure - Inches"\
+	-label "Inches" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "Inches" "Unit of Measure - Inches"\
 	{ { summary "Set the unit of measure to inches.\n 1 inch = 25.4 mm" }
           { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value ft -variable mged_display(units)\
-	-label "feet" -underline 0 -command "do_Units $id"
-hoc_register_menu_data "Units" "feet" "Unit of measure - Feet"\
+	-label "Feet" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "Feet" "Unit of Measure - Feet"\
 	{ { summary "Set the unit of measure to feet.\n 1 foot = 12 inches" }
           { see_also "units" } }
 .$id.menubar.file.pref.units add radiobutton -value yd -variable mged_display(units)\
-	-label "yards" -underline 0 -command "do_Units $id"
-hoc_register_menu_data "Units" "yards" "Unit of measure - Yards"\
+	-label "Yards" -underline 0 -command "do_Units $id"
+hoc_register_menu_data "Units" "Yards" "Unit of Measure - Yards"\
 	{ { summary "Set the unit of measure to yards.\n 1 yard = 36 inches" }
           { see_also "" } }
 .$id.menubar.file.pref.units add radiobutton -value mi -variable mged_display(units)\
-	-label "miles" -underline 3 -command "do_Units $id"
-hoc_register_menu_data "Units" "miles" "Unit of measure - Miles"\
+	-label "Miles" -underline 3 -command "do_Units $id"
+hoc_register_menu_data "Units" "Miles" "Unit of Measure - Miles"\
 	{ { summary "Set the unit of measure to miles.\n 1 mile = 5280 feet" }
           { see_also "units" } }
 
 menu .$id.menubar.file.pref.cle -title "Command Line Edit" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.file.pref.cle add radiobutton -value emacs -variable mged_gui($id,edit_style)\
-	-label "emacs" -underline 0 -command "set_text_key_bindings $id"
-hoc_register_menu_data "Command Line Edit" "emacs" "Command Line Edit - Emacs"\
+	-label "Emacs" -underline 0 -command "set_text_key_bindings $id"
+hoc_register_menu_data "Command Line Edit" "Emacs" "Command Line Edit - Emacs"\
 	{ { synopsis "Set the command line edit mode to emacs." }
           { description "
 \tBackSpace\tbackward delete char
@@ -521,8 +521,8 @@ hoc_register_menu_data "Command Line Edit" "emacs" "Command Line Edit - Emacs"\
 \tControl-w\tbackward delete word" }
         }
 .$id.menubar.file.pref.cle add radiobutton -value vi -variable mged_gui($id,edit_style)\
-	-label "vi" -underline 0 -command "set_text_key_bindings $id"
-hoc_register_menu_data "Command Line Edit" "vi" "Command Line Edit - Vi"\
+	-label "Vi" -underline 0 -command "set_text_key_bindings $id"
+hoc_register_menu_data "Command Line Edit" "Vi" "Command Line Edit - Vi"\
 	{ { synopsis "Set the command line edit mode to vi." }
           { description "
 \t************ VI Insert Mode ************
@@ -609,13 +609,13 @@ hoc_register_menu_data "Edit" "Solid Selection..." "Solid Selection"\
 hoc_register_menu_data "Edit" "Matrix Selection..." "Matrix Selection"\
 	{ { summary "A tool for selecting a matrix to edit." } }
 .$id.menubar.edit add separator
-.$id.menubar.edit add command -label "Solid Editor..." -underline 6 \
+.$id.menubar.edit add command -label "Solid Editor" -underline 6 \
 	-command "init_edit_solid $id"
-hoc_register_menu_data "Edit" "Solid Editor..." "Solid Editor"\
+hoc_register_menu_data "Edit" "Solid Editor" "Solid Editor"\
 	{ { summary "A tool for editing/creating solids." } }
-.$id.menubar.edit add command -label "Combination Editor..." -underline 0 \
+.$id.menubar.edit add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
-hoc_register_menu_data "Edit" "Combination Editor..." "Combination Editor"\
+hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 	{ { summary "A tool for editing/creating combinations." } }
 
 
@@ -624,24 +624,24 @@ menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 	-label "Make Solid" -underline 0 -menu .$id.menubar.create.solid
 #.$id.menubar.create add command\
 #	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
-.$id.menubar.create add command -label "Solid Editor..." -underline 0 \
+.$id.menubar.create add command -label "Solid Editor" -underline 0 \
 	-command "init_edit_solid $id"
-hoc_register_menu_data "Create" "Solid Editor..." "Solid Editor"\
+hoc_register_menu_data "Create" "Solid Editor" "Solid Editor"\
 	{ { summary "A tool for editing/creating solids." } }
-.$id.menubar.create add command -label "Combination Editor..." -underline 0 \
+.$id.menubar.create add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
-hoc_register_menu_data "Create" "Combination Editor..." "Combination Editor"\
+hoc_register_menu_data "Create" "Combination Editor" "Combination Editor"\
 	{ { summary "A tool for editing/creating combinations." } }
 
 menu .$id.menubar.create.solid -title "Make Solid" -tearoff $mged_default(tearoff_menus)
 set make_solid_types [_mged_make -t]
 foreach solid_type $make_solid_types {
-    .$id.menubar.create.solid add command -label "$solid_type"\
+    .$id.menubar.create.solid add command -label "$solid_type..."\
 	    -command "init_solid_create $id $solid_type"
 
     set ksl {}
     lappend ksl "summary \"Make a $solid_type using the values found in the tcl variable solid_data(attr,$solid_type).\"" "see_also \"make, in\""
-    hoc_register_menu_data "Make Solid" "$solid_type" "Make a $solid_type" $ksl
+    hoc_register_menu_data "Make Solid" "$solid_type..." "Make a $solid_type" $ksl
 }
 
 .$id.menubar.create.solid add separator
@@ -836,9 +836,9 @@ the same as MGED 4.5 and earlier. See the table below.\n\n
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_gui($id,mouse_behavior)\
-	-label "Pick edit-solid" -underline 10\
+	-label "Pick Edit-Solid" -underline 10\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Pick edit-solid" "Pick edit-solid"\
+hoc_register_menu_data "Mouse Behavior" "Pick Edit-Solid" "Pick Edit-Solid"\
 	{ { synopsis "Enter pick edit-solid mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a solid to edit. If more than one solid is hit, a listbox of the hit
@@ -857,9 +857,9 @@ released. To select a solid, double click with the left mouse button.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "nirt, qray, rset, sed, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value m -variable mged_gui($id,mouse_behavior)\
-	-label "Pick edit-matrix" -underline 10\
+	-label "Pick Edit-Matrix" -underline 10\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Pick edit-matrix" "Pick edit-matrix"\
+hoc_register_menu_data "Mouse Behavior" "Pick Edit-Matrix" "Pick Edit-Matrix"\
 	{ { synopsis "Enter pick edit-matrix mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a matrix to edit. If more than one solid is hit, a listbox of the
@@ -882,9 +882,9 @@ the left mouse button.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value c -variable mged_gui($id,mouse_behavior)\
-	-label "Pick edit-combination" -underline 10\
+	-label "Pick Edit-Combination" -underline 10\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Pick edit-combination" "Pick edit-combination"\
+hoc_register_menu_data "Mouse Behavior" "Pick Edit-Combination" "Pick Edit-Combination"\
 	{ { synopsis "Enter pick edit-combination mode." }
         { description "In this mode, the mouse is used to fire rays for selecting
 a combination to edit. If more than one combination is hit, a listbox of the
@@ -905,9 +905,9 @@ the left mouse button.\n
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value r -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep raytrace-rectangle" -underline 6\
+	-label "Sweep Raytrace-Rectangle" -underline 6\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Sweep raytrace-rectangle" "Sweep raytrace-rectangle"\
+hoc_register_menu_data "Mouse Behavior" "Sweep Raytrace-Rectangle" "Sweep Raytrace-Rectangle"\
 	{ { synopsis "Enter sweep raytrace-rectangle mode." }
           { description "If the framebuffer is active, the rectangular area as
 specified by the user is raytraced. The rectangular area is
@@ -919,16 +919,16 @@ only the rectangle is drawn.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value o -variable mged_gui($id,mouse_behavior)\
-	-label "Pick raytrace-object(s)" -underline 14\
+	-label "Pick Raytrace-Object(s)" -underline 14\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Pick raytrace-object(s)" "Pick raytrace-object(s)"\
+hoc_register_menu_data "Mouse Behavior" "Pick Raytrace-Object(s)" "Pick Raytrace-Object(s)"\
 	{ { synopsis "Enter pick raytrace-object mode." }
           { description "Pick an object for raytracing or for adding to the
 list of objects to be raytraced." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value q -variable mged_gui($id,mouse_behavior)\
-	-label "Query ray" -underline 0\
+	-label "Query Ray" -underline 0\
 	-command "set_mouse_behavior $id"
 hoc_register_menu_data "Mouse Behavior" "Query Ray" "Query Ray"\
 	{ { synopsis "Enter query ray mode." }
@@ -941,9 +941,9 @@ or both.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "nirt, qray, rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value p -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep paint-rectangle" -underline 6\
+	-label "Sweep Paint-Rectangle" -underline 6\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Sweep paint-rectangle" "Sweep paint-rectangle"\
+hoc_register_menu_data "Mouse Behavior" "Sweep Paint-Rectangle" "Sweep Paint-Rectangle"\
 	{ { synopsis "Enter sweep paint-rectangle mode." }
           { description "If the framebuffer is active, the rectangular area
 as specified by the user is painted with the current contents of the
@@ -954,9 +954,9 @@ framebuffer. Otherwise, only the rectangle is drawn.\n
 \t\t3\t\tZoom in by a factor of 2" }
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add radiobutton -value z -variable mged_gui($id,mouse_behavior)\
-	-label "Sweep zoom-rectangle" -underline 6\
+	-label "Sweep Zoom-Rectangle" -underline 6\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Sweep zoom-rectangle" "Sweep zoom-rectangle"\
+hoc_register_menu_data "Mouse Behavior" "Sweep Zoom-Rectangle" "Sweep Zoom-Rectangle"\
 	{ { synopsis "Enter sweep zoom-rectangle mode." }
           { description "The rectangular area as specified by the user is used
 to zoom the view. Note - as the user stretches out the zoom
@@ -986,9 +986,9 @@ only graphical output is used to represent the results
 of firing a query ray." }
           { see_also "qray" } }
 .$id.menubar.settings.qray add radiobutton -value b -variable mged_gui($id,qray_effects)\
-	-label "both" -underline 0\
+	-label "Both" -underline 0\
 	-command "mged_apply $id \"qray effects \$mged_gui($id,qray_effects)\""
-hoc_register_menu_data "Query Ray Effects" "both" "Query Ray Effects - Both"\
+hoc_register_menu_data "Query Ray Effects" "Both" "Query Ray Effects - Both"\
 	{ { summary "Set qray effects mode to 'both'. In this mode,
 both textual and graphical output is used to
 represent the results of firing a query ray." }
@@ -1134,9 +1134,9 @@ hoc_register_menu_data "View Axes Position" "Lower Right" "View Axes Position - 
           { see_also "rset" } }
 
 menu .$id.menubar.settings.grid -title "Grid" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.settings.grid add command -label "Anchor..." -underline 0\
+.$id.menubar.settings.grid add command -label "Anchor" -underline 0\
 	-command "do_grid_anchor $id"
-hoc_register_menu_data "Grid" "Anchor..." "Grid Anchor"\
+hoc_register_menu_data "Grid" "Anchor" "Grid Anchor"\
 	{ { summary "Pops up the grid anchor entry dialog." }
           { see_also "rset" } }
 .$id.menubar.settings.grid add cascade -label "Spacing" -underline 1\
@@ -1172,90 +1172,90 @@ hoc_register_menu_data "Grid Spacing" "Autosize" "Grid Spacing - Autosize"\
 The number of ticks will be between 20 and 200 in user units.
 The major spacing will be set to 10 ticks per major." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "Arbitrary..." -underline 1\
+.$id.menubar.settings.grid.spacing add command -label "Arbitrary" -underline 1\
 	-command "do_grid_spacing $id b"
-hoc_register_menu_data "Grid Spacing" "Arbitrary..." "Grid Spacing - Arbitrary"\
+hoc_register_menu_data "Grid Spacing" "Arbitrary" "Grid Spacing - Arbitrary"\
 	{ { summary "Pops up the grid spacing entry dialog. The user
 can use this to set both the horizontal and
 vertical tick spacing." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add separator
-.$id.menubar.settings.grid.spacing add command -label "micrometer" -underline 4\
+.$id.menubar.settings.grid.spacing add command -label "Micrometer" -underline 4\
 	-command "set_grid_spacing $id micrometer 1"
-hoc_register_menu_data "Grid Spacing" "micrometer" "Grid Spacing - micrometer"\
+hoc_register_menu_data "Grid Spacing" "Micrometer" "Grid Spacing - Micrometer"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 micrometer." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "millimeter" -underline 2\
+.$id.menubar.settings.grid.spacing add command -label "Millimeter" -underline 2\
 	-command "set_grid_spacing $id millimeter 1"
-hoc_register_menu_data "Grid Spacing" "millimeter" "Grid Spacing - millimeter"\
+hoc_register_menu_data "Grid Spacing" "Millimeter" "Grid Spacing - Millimeter"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 millimeter." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "centimeter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Centimeter" -underline 0\
 	-command "set_grid_spacing $id centimeter 1"
-hoc_register_menu_data "Grid Spacing" "centimeter" "Grid Spacing - centimeter"\
+hoc_register_menu_data "Grid Spacing" "Centimeter" "Grid Spacing - Centimeter"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 centimeter." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "decimeter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Decimeter" -underline 0\
 	-command "set_grid_spacing $id decimeter 1"
-hoc_register_menu_data "Grid Spacing" "decimeter" "Grid Spacing - decimeter"\
+hoc_register_menu_data "Grid Spacing" "Decimeter" "Grid Spacing - Decimeter"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 decimeter." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "meter" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Meter" -underline 0\
 	-command "set_grid_spacing $id meter 1"
-hoc_register_menu_data "Grid Spacing" "meter" "Grid Spacing - meter"\
+hoc_register_menu_data "Grid Spacing" "Meter" "Grid Spacing - Meter"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 meter." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "kilometer" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Kilometer" -underline 0\
 	-command "set_grid_spacing $id kilometer 1"
-hoc_register_menu_data "Grid Spacing" "kilometer" "Grid Spacing - kilometer"\
+hoc_register_menu_data "Grid Spacing" "Kilometer" "Grid Spacing - Kilometer"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 kilometer." }
           { see_also "rset" } }
 .$id.menubar.settings.grid.spacing add separator
-.$id.menubar.settings.grid.spacing add command -label "1/10 inch" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "1/10 Inch" -underline 0\
 	-command "set_grid_spacing $id \"1/10 inch\" 1"
-hoc_register_menu_data "Grid Spacing" "1/10 inch" "Grid Spacing - 1/10 inch"\
+hoc_register_menu_data "Grid Spacing" "1/10 Inch" "Grid Spacing - 1/10 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1/10 inches." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "1/4 inch" -underline 2\
+.$id.menubar.settings.grid.spacing add command -label "1/4 Inch" -underline 2\
 	-command "set_grid_spacing $id \"1/4 inch\" 1"
-hoc_register_menu_data "Grid Spacing" "1/4 inch" "Grid Spacing - 1/4 inch"\
+hoc_register_menu_data "Grid Spacing" "1/4 Inch" "Grid Spacing - 1/4 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1/4 inches." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "1/2 inch" -underline 2\
+.$id.menubar.settings.grid.spacing add command -label "1/2 Inch" -underline 2\
 	-command "set_grid_spacing $id \"1/2 inch\" 1"
-hoc_register_menu_data "Grid Spacing" "1/2 inch" "Grid Spacing - 1/2 inch"\
+hoc_register_menu_data "Grid Spacing" "1/2 Inch" "Grid Spacing - 1/2 Inch"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1/2 inches." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "inch" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Inch" -underline 0\
 	-command "set_grid_spacing $id inch 1"
-hoc_register_menu_data "Grid Spacing" "inch" "Grid Spacing - inch"\
+hoc_register_menu_data "Grid Spacing" "Inch" "Grid Spacing - Inch"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 inch." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "foot" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Foot" -underline 0\
 	-command "set_grid_spacing $id foot 1"
-hoc_register_menu_data "Grid Spacing" "foot" "Grid Spacing - foot"\
+hoc_register_menu_data "Grid Spacing" "Foot" "Grid Spacing - Foot"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 foot." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "yard" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Yard" -underline 0\
 	-command "set_grid_spacing $id yard 1"
-hoc_register_menu_data "Grid Spacing" "yard" "Grid Spacing - yard"\
+hoc_register_menu_data "Grid Spacing" "Yard" "Grid Spacing - Yard"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 yard." }
           { see_also "rset" } }
-.$id.menubar.settings.grid.spacing add command -label "mile" -underline 0\
+.$id.menubar.settings.grid.spacing add command -label "Mile" -underline 3\
 	-command "set_grid_spacing $id mile 1"
-hoc_register_menu_data "Grid Spacing" "mile" "mile"\
+hoc_register_menu_data "Grid Spacing" "Mile" "Grid Spacing - Mile"\
 	{ { summary "Set the horizontal and vertical tick
 spacing to 1 mile." }
           { see_also "rset" } }
@@ -1266,35 +1266,35 @@ spacing to 1 mile." }
 menu .$id.menubar.settings.grid_spacing -title "Grid Spacing" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.settings.grid_spacing add command -label "Autosize" -underline 0\
 	-command "grid_spacing_autosize $id; grid_spacing_apply $id b"
-.$id.menubar.settings.grid_spacing add command -label "Arbitrary..." -underline 1\
+.$id.menubar.settings.grid_spacing add command -label "Arbitrary" -underline 1\
 	-command "do_grid_spacing $id b"
 .$id.menubar.settings.grid_spacing add separator
-.$id.menubar.settings.grid_spacing add command -label "micrometer" -underline 4\
+.$id.menubar.settings.grid_spacing add command -label "Micrometer" -underline 4\
 	-command "set_grid_spacing $id micrometer 1"
-.$id.menubar.settings.grid_spacing add command -label "millimeter" -underline 2\
+.$id.menubar.settings.grid_spacing add command -label "Millimeter" -underline 2\
 	-command "set_grid_spacing $id millimeter 1"
-.$id.menubar.settings.grid_spacing add command -label "centimeter" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Centimeter" -underline 0\
 	-command "set_grid_spacing $id centimeter 1"
-.$id.menubar.settings.grid_spacing add command -label "decimeter" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Decimeter" -underline 0\
 	-command "set_grid_spacing $id decimeter 1"
-.$id.menubar.settings.grid_spacing add command -label "meter" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Meter" -underline 0\
 	-command "set_grid_spacing $id meter 1"
-.$id.menubar.settings.grid_spacing add command -label "kilometer" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Kilometer" -underline 0\
 	-command "set_grid_spacing $id kilometer 1"
 .$id.menubar.settings.grid_spacing add separator
-.$id.menubar.settings.grid_spacing add command -label "1/10 inch" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "1/10 Inch" -underline 0\
 	-command "set_grid_spacing $id \"1/10 inch\" 1"
-.$id.menubar.settings.grid_spacing add command -label "1/4 inch" -underline 2\
+.$id.menubar.settings.grid_spacing add command -label "1/4 Inch" -underline 2\
 	-command "set_grid_spacing $id \"1/4 inch\" 1"
-.$id.menubar.settings.grid_spacing add command -label "1/2 inch" -underline 2\
+.$id.menubar.settings.grid_spacing add command -label "1/2 Inch" -underline 2\
 	-command "set_grid_spacing $id \"1/2 inch\" 1"
-.$id.menubar.settings.grid_spacing add command -label "inch" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Inch" -underline 0\
 	-command "set_grid_spacing $id inch 1"
-.$id.menubar.settings.grid_spacing add command -label "foot" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Foot" -underline 0\
 	-command "set_grid_spacing $id foot 1"
-.$id.menubar.settings.grid_spacing add command -label "yard" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Yard" -underline 0\
 	-command "set_grid_spacing $id yard 1"
-.$id.menubar.settings.grid_spacing add command -label "mile" -underline 0\
+.$id.menubar.settings.grid_spacing add command -label "Mile" -underline 3\
 	-command "set_grid_spacing $id mile 1"
 
 menu .$id.menubar.settings.coord -title "Constraint Coords" -tearoff $mged_default(tearoff_menus)
@@ -1605,49 +1605,45 @@ lines that are farther away appear more faint." }
 }
 
 menu .$id.menubar.tools -title "Tools" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.tools add command -label "ADC Control Panel..." -underline 0\
+.$id.menubar.tools add command -label "ADC Control Panel" -underline 0\
 	-command "init_adc_control $id"
-hoc_register_menu_data "Tools" "ADC Control Panel..." "ADC Control Panel"\
+hoc_register_menu_data "Tools" "ADC Control Panel" "ADC Control Panel"\
 	{ { summary "Tool for controlling the angle distance cursor." }
           { see_also "adc" } }
-.$id.menubar.tools add command -label "Grid Control Panel..." -underline 0\
+.$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
 	-command "init_grid_control $id"
-hoc_register_menu_data "Tools" "Grid Control Panel..." "Grid Control Panel"\
+hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\
 	{ { summary "Tool for setting grid parameters." }
           { see_also "rset" } }
-.$id.menubar.tools add command -label "Query Ray Control Panel..." -underline 0\
+.$id.menubar.tools add command -label "Query Ray Control Panel" -underline 0\
 	-command "init_qray_control $id"
-hoc_register_menu_data "Tools" "Query Ray Control Panel..." "Query Ray Control Panel"\
+hoc_register_menu_data "Tools" "Query Ray Control Panel" "Query Ray Control Panel"\
 	{ { summary "Tool for setting query ray parameters." } }
-.$id.menubar.tools add command -label "Raytrace Control Panel..." -underline 0\
+.$id.menubar.tools add command -label "Raytrace Control Panel" -underline 0\
 	-command "init_Raytrace $id"
-hoc_register_menu_data "Tools" "Raytrace Control Panel..." "Raytrace Control Panel"\
+hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"\
 	{ { summary "Tool for raytracing." }
           { see_also rt } }
-.$id.menubar.tools add command -label "AnimMate Control Panel..." -underline 1\
+.$id.menubar.tools add command -label "AnimMate Control Panel" -underline 1\
 	-command "animmate .$id"
-hoc_register_menu_data "Tools" "AnimMate Control Panel..." "AnimMate Control Panel"\
+hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"\
 	{ { summary "Tool for building animation scripts." }
           { see_also animmate } }
 .$id.menubar.tools add separator
-.$id.menubar.tools add command -label "Solid Editor..." -underline 0\
+.$id.menubar.tools add command -label "Solid Editor" -underline 0\
 	-command "init_edit_solid $id"
-hoc_register_menu_data "Tools" "Solid Editor..." "Solid Editor"\
+hoc_register_menu_data "Tools" "Solid Editor" "Solid Editor"\
 	{ { summary "Tool for creating/editing solids." } }
-.$id.menubar.tools add command -label "Combination Editor..." -underline 0\
+.$id.menubar.tools add command -label "Combination Editor" -underline 0\
 	-command "init_comb $id"
-hoc_register_menu_data "Tools" "Combination Editor..." "Combination Editor"\
+hoc_register_menu_data "Tools" "Combination Editor" "Combination Editor"\
 	{ { summary "Tool for creating/editing combinations." } }
-.$id.menubar.tools add command -label "Color Editor..." -underline 1\
+.$id.menubar.tools add command -label "Color Editor" -underline 1\
 	-command "cadColorWidget tool .$id colorEditTool\
 	-title \"Color Editor\"\
 	-initialcolor black"
-hoc_register_menu_data "Tools" "Color Editor..." "Color Editor"\
-	{ { summary "Tool for displaying colors." } }
-#.$id.menubar.tools add separator
-#.$id.menubar.tools add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,classic_buttons)\
-#	-label "Classic Menu Tool..." -underline 0\
-#	-command "toggle_button_menu $id"
+hoc_register_menu_data "Tools" "Color Editor" "Color Editor"\
+	{ { summary "Tool for creating/displaying colors." } }
 .$id.menubar.tools add separator
 .$id.menubar.tools add command -label "Command Window" -underline 6\
 	-command "raise .$id"
@@ -1663,18 +1659,18 @@ menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
 	-command "do_About_MGED $id"
 hoc_register_menu_data "Help" "About MGED" "About MGED"\
 	{ { summary "Information about MGED" } }
-.$id.menubar.help add command -label "Help on context..." -underline 0\
-	-command "hoc_dialog .$id.menubar.help \"Help,Help on context...\""
-hoc_register_menu_data "Help" "Help on context..." "Help on context"\
-	{ { summary "The new GUI provides \"Help on Context\". This is always available via
+.$id.menubar.help add command -label "Help On Context" -underline 0\
+	-command "hoc_dialog .$id.menubar.help \"Help,Help On Context\""
+hoc_register_menu_data "Help" "Help On Context" "Help On Context"\
+	{ { summary "The new GUI provides \"Help On Context\". This is always available via
 the right mouse button (i.e. button 3). The user can right mouse click
 on some feature of the GUI and a message window pops up with information
 about the feature. This behavior works everywhere except in the drawing
 panes (i.e. display manager windows) where a right mouse button is bound
 to \"zoom 2.0\"." } }
-.$id.menubar.help add command -label "Getting Started..." -underline 0\
+.$id.menubar.help add command -label "Getting Started" -underline 0\
 	-command "hoc_dialog .$id.menubar.help \"Help,Getting Started Document\""
-hoc_register_menu_data "Help" "Getting Started..." "Getting Started"\
+hoc_register_menu_data "Help" "Getting Started" "Getting Started"\
 	{ { summary "This document contains information to help the user
 quickly get started using MGED." } }
 hoc_register_menu_data "Help" "Getting Started Document" "Getting Started"\
@@ -1810,14 +1806,14 @@ these transformations are constrained may be specified by the \"Constraint
 Coords\" item in the \"Settings\" menu, which allows the selection of any one of
 the model, view, and object coordinate systems.
 " } }
-.$id.menubar.help add command -label "Commands..." -underline 0\
+.$id.menubar.help add command -label "Commands" -underline 0\
 	-command "command_help $id"
-hoc_register_menu_data "Help" "Commands..." "Commands"\
+hoc_register_menu_data "Help" "Commands" "Commands"\
 	{ { summary "Tool for getting information on MGED's commands." }
           { see_also "?, help" } }
-.$id.menubar.help add command -label "Apropos..." -underline 1\
+.$id.menubar.help add command -label "Apropos" -underline 1\
 	-command "ia_apropos .$id $screen"
-hoc_register_menu_data "Help" "Apropos..." "Apropos"\
+hoc_register_menu_data "Help" "Apropos" "Apropos"\
 	{ { summary "Tool for searching for information about
 MGED's commands." }
           { see_also "apropos" } }
@@ -1858,8 +1854,8 @@ if ![info exists web_cmd] {
     }
 }
 
-.$id.menubar.help add command -label "Manual..." -underline 0 -command $web_cmd
-hoc_register_menu_data "Help" "Manual..." "Manual"\
+.$id.menubar.help add command -label "Manual" -underline 0 -command $web_cmd
+hoc_register_menu_data "Help" "Manual" "Manual"\
 	{ { summary "Start a tool for browsing the online MGED manual.
 The web browser that gets started is dependent, first, on the
 WEB_BROWSER environment variable. If this variable exists and
