@@ -178,7 +178,7 @@ struct rt_i		*rtip;
 	LOCAL mat_t	R;
 	LOCAL vect_t	P, w1;	/* for RPP calculation */
 	FAST fastf_t	f;
-	struct tor_internal	*tip;
+	struct rt_tor_internal	*tip;
 
 #if NEW_IF
 	/* All set */
@@ -192,7 +192,7 @@ struct rt_i		*rtip;
 		return(-1);		/* BAD */
 	RT_CK_DB_INTERNAL( ip );
 #endif
-	tip = (struct tor_internal *)ip->idb_ptr;
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
 	/* Validate that |A| == |B| (for now) */
@@ -964,7 +964,7 @@ double			norm_tol;
 	fastf_t		cos_alpha, sin_alpha;
 	fastf_t		cos_beta, sin_beta;
 	fastf_t		dist_to_rim;
-	struct tor_internal	*tip;
+	struct rt_tor_internal	*tip;
 	int		w;
 	int		nw = 8;
 	int		len;
@@ -988,7 +988,7 @@ double			norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	tip = (struct tor_internal *)ip->idb_ptr;
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
 	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
@@ -1113,7 +1113,7 @@ double			norm_tol;
 	fastf_t		cos_alpha, sin_alpha;
 	fastf_t		cos_beta, sin_beta;
 	fastf_t		dist_to_rim;
-	struct tor_internal	*tip;
+	struct rt_tor_internal	*tip;
 	int		w;
 	int		nw = 6;
 	int		len;
@@ -1144,7 +1144,7 @@ double			norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	tip = (struct tor_internal *)ip->idb_ptr;
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
 	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
@@ -1328,7 +1328,7 @@ struct rt_db_internal	*ip;
 struct rt_external	*ep;
 register mat_t		mat;
 {
-	struct tor_internal	*tip;
+	struct rt_tor_internal	*tip;
 	union record		*rp;
 	LOCAL fastf_t		vec[3*4];
 	vect_t			axb;
@@ -1344,8 +1344,8 @@ register mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_TOR;
-	ip->idb_ptr = rt_malloc(sizeof(struct tor_internal), "tor_internal");
-	tip = (struct tor_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc(sizeof(struct rt_tor_internal), "rt_tor_internal");
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	tip->magic = RT_TOR_INTERNAL_MAGIC;
 
 	/* Convert from database to internal format */
@@ -1387,7 +1387,7 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct tor_internal	*tip;
+	struct rt_tor_internal	*tip;
 	union record		*rec;
 	vect_t			norm;
 	vect_t			cross1, cross2;
@@ -1397,7 +1397,7 @@ double			local2mm;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_TOR )  return(-1);
-	tip = (struct tor_internal *)ip->idb_ptr;
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
 	RT_INIT_EXTERNAL(ep);
@@ -1478,8 +1478,8 @@ int			verbose;
 double			mm2local;
 {
 	register int			j;
-	register struct tor_internal	*tip =
-		(struct tor_internal *)ip->idb_ptr;
+	register struct rt_tor_internal	*tip =
+		(struct rt_tor_internal *)ip->idb_ptr;
 	char				buf[256];
 	int				i;
 	double				r3, r4;
@@ -1534,10 +1534,10 @@ void
 rt_tor_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	register struct tor_internal	*tip;
+	register struct rt_tor_internal	*tip;
 
 	RT_CK_DB_INTERNAL(ip);
-	tip = (struct tor_internal *)ip->idb_ptr;
+	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
 	rt_free( (char *)tip, "tor ifree" );

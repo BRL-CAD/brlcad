@@ -60,7 +60,7 @@ struct rt_i	*rtip;
 {
 	struct rt_external	ext, *ep;
 #endif
-	struct arbn_internal	*aip;
+	struct rt_arbn_internal	*aip;
 	struct rt_db_internal	intern, *ip;
 	vect_t		work;
 	fastf_t		f;
@@ -83,7 +83,7 @@ struct rt_i	*rtip;
 	}
 #endif
 	RT_CK_DB_INTERNAL( ip );
-	aip = (struct arbn_internal *)intern.idb_ptr;
+	aip = (struct rt_arbn_internal *)intern.idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
 
 	stp->st_specific = (genptr_t)aip;
@@ -181,8 +181,8 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register struct arbn_internal	*aip =
-		(struct arbn_internal *)stp->st_specific;
+	register struct rt_arbn_internal	*aip =
+		(struct rt_arbn_internal *)stp->st_specific;
 	register int	i;
 	LOCAL int	iplane, oplane;
 	LOCAL fastf_t	in, out;	/* ray in/out distances */
@@ -271,8 +271,8 @@ register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
 {
-	register struct arbn_internal *aip =
-		(struct arbn_internal *)stp->st_specific;
+	register struct rt_arbn_internal *aip =
+		(struct rt_arbn_internal *)stp->st_specific;
 	int	h;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
@@ -329,11 +329,11 @@ void
 rt_arbn_free( stp )
 register struct soltab *stp;
 {
-	register struct arbn_internal *aip =
-		(struct arbn_internal *)stp->st_specific;
+	register struct rt_arbn_internal *aip =
+		(struct rt_arbn_internal *)stp->st_specific;
 
-	rt_free( (char *)aip->eqn, "arbn_internal eqn[]");
-	rt_free( (char *)aip, "arbn_internal" );
+	rt_free( (char *)aip->eqn, "rt_arbn_internal eqn[]");
+	rt_free( (char *)aip, "rt_arbn_internal" );
 }
 
 /*
@@ -368,7 +368,7 @@ struct directory	*dp;
 	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern, *ip;
 #endif
-	register struct arbn_internal	*aip;
+	register struct rt_arbn_internal	*aip;
 	register int	i;
 	register int	j;
 	register int	k;
@@ -388,7 +388,7 @@ struct directory	*dp;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	aip = (struct arbn_internal *)ip->idb_ptr;
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
 
 	for( i=0; i<aip->neqn-1; i++ )  {
@@ -492,7 +492,7 @@ struct rt_external	*ep;
 register mat_t		mat;
 {
 	union record		*rp;
-	struct arbn_internal	*aip;
+	struct rt_arbn_internal	*aip;
 	register int	i;
 
 	RT_CK_EXTERNAL( ep );
@@ -504,8 +504,8 @@ register mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARBN;
-	ip->idb_ptr = rt_malloc( sizeof(struct arbn_internal), "arbn_internal");
-	aip = (struct arbn_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_arbn_internal), "rt_arbn_internal");
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	aip->magic = RT_ARBN_INTERNAL_MAGIC;
 	aip->neqn = rp->n.n_neqn;
 	if( aip->neqn <= 0 )  return(-1);
@@ -544,7 +544,7 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct arbn_internal	*aip;
+	struct rt_arbn_internal	*aip;
 	union record		*rec;
 	int			ngrans;
 	double			*sbuf;		/* scalling buffer */
@@ -553,7 +553,7 @@ double			local2mm;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_ARBN )  return(-1);
-	aip = (struct arbn_internal *)ip->idb_ptr;
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
 
 	if( aip->neqn <= 0 )  return(-1);
@@ -606,8 +606,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct arbn_internal	*aip =
-		(struct arbn_internal *)ip->idb_ptr;
+	register struct rt_arbn_internal	*aip =
+		(struct rt_arbn_internal *)ip->idb_ptr;
 	char	buf[256];
 	int	i;
 
@@ -639,14 +639,14 @@ void
 rt_arbn_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	struct arbn_internal	*aip;
+	struct rt_arbn_internal	*aip;
 
 	RT_CK_DB_INTERNAL(ip);
-	aip = (struct arbn_internal *)ip->idb_ptr;
+	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
 
-	rt_free( (char *)aip->eqn, "arbn_internal eqn[]");
-	rt_free( (char *)aip, "arbn_internal" );
+	rt_free( (char *)aip->eqn, "rt_arbn_internal eqn[]");
+	rt_free( (char *)aip, "rt_arbn_internal" );
 
 	ip->idb_ptr = (genptr_t)0;	/* sanity */
 }

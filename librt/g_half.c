@@ -76,7 +76,7 @@ struct rt_i	*rtip;
 	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern, *ip;
 #endif
-	struct half_internal	*hip;
+	struct rt_half_internal	*hip;
 	register struct half_specific *halfp;
 
 #if NEW_IF
@@ -91,7 +91,7 @@ struct rt_i	*rtip;
 		return(-1);		/* BAD */
 	RT_CK_DB_INTERNAL( ip );
 #endif
-	hip = (struct half_internal *)ip->idb_ptr;
+	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
 	/*
@@ -439,7 +439,7 @@ struct directory *dp;
 	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern, *ip;
 #endif
-	struct half_internal	*hip;
+	struct rt_half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
 	vect_t xbase, ybase;	/* perpendiculars to normal */
 	vect_t x1, x2;
@@ -460,7 +460,7 @@ struct directory *dp;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	hip = (struct half_internal *)ip->idb_ptr;
+	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
 	/* Invent a "center" point on the plane -- point closets to origin */
@@ -510,7 +510,7 @@ struct rt_db_internal	*ip;
 struct rt_external	*ep;
 mat_t			mat;
 {
-	struct half_internal	*hip;
+	struct rt_half_internal	*hip;
 	union record	*rp;
 	point_t		orig_pt;
 	point_t		pt;
@@ -526,8 +526,8 @@ mat_t			mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_HALF;
-	ip->idb_ptr = rt_malloc( sizeof(struct half_internal), "half_internal");
-	hip = (struct half_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_half_internal), "rt_half_internal");
+	hip = (struct rt_half_internal *)ip->idb_ptr;
 	hip->magic = RT_HALF_INTERNAL_MAGIC;
 
 	rt_fastf_float( orig_eqn, rp->s.s_values, 2 );	/* 2 floats too many */
@@ -570,12 +570,12 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct half_internal	*hip;
+	struct rt_half_internal	*hip;
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_HALF )  return(-1);
-	hip = (struct half_internal *)ip->idb_ptr;
+	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
 	RT_INIT_EXTERNAL(ep);
@@ -605,8 +605,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct half_internal	*hip =
-		(struct half_internal *)ip->idb_ptr;
+	register struct rt_half_internal	*hip =
+		(struct rt_half_internal *)ip->idb_ptr;
 	char	buf[256];
 
 	RT_HALF_CK_MAGIC(hip);

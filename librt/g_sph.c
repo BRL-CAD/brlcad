@@ -85,10 +85,10 @@ struct rt_i		*rtip;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL fastf_t	f;
-	struct ell_internal	*eip;
+	struct rt_ell_internal	*eip;
 	int		i;
 
-	eip = (struct ell_internal *)ip->idb_ptr;
+	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */

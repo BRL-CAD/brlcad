@@ -181,7 +181,7 @@ static char RCSpart[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 struct part_specific {
-	struct part_internal	part_int;
+	struct rt_part_internal	part_int;
 	mat_t			part_SoR;	/* Scale(Rot(vect)) */
 	mat_t			part_invRoS;	/* invRot(Scale(vect)) */
 };
@@ -228,7 +228,7 @@ struct rt_i		*rtip;
 	struct rt_db_internal	intern, *ip;
 #endif
 	register struct part_specific *part;
-	struct part_internal	*pip;
+	struct rt_part_internal	*pip;
 	int			i;
 	vect_t		Hunit;
 	vect_t		a, b;
@@ -252,7 +252,7 @@ struct rt_i		*rtip;
 	}
 #endif
 	RT_CK_DB_INTERNAL( ip );
-	pip = (struct part_internal *)ip->idb_ptr;
+	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
 	GETSTRUCT( part, part_specific );
@@ -848,7 +848,7 @@ double		norm_tol;
 	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern, *ip;
 #endif
-	struct part_internal	*pip;
+	struct rt_part_internal	*pip;
 	point_t		tail;
 	point_t		sphere_rim[16];
 	point_t		vhemi[13];
@@ -873,7 +873,7 @@ double		norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	pip = (struct part_internal *)ip->idb_ptr;
+	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
 	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
@@ -995,7 +995,7 @@ register mat_t		mat;
 	double		hrad;
 	fastf_t		maxrad, minrad;
 	union record	*rp;
-	struct part_internal	*part;
+	struct rt_part_internal	*part;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -1013,19 +1013,19 @@ register mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PARTICLE;
-	ip->idb_ptr = rt_malloc( sizeof(struct part_internal), "part_internal");
-	part = (struct part_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_part_internal), "rt_part_internal");
+	part = (struct rt_part_internal *)ip->idb_ptr;
 	part->part_magic = RT_PART_INTERNAL_MAGIC;
 
 	/* Apply modeling transformations */
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
 	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
-		rt_free( ip->idb_ptr, "part_internal" );
+		rt_free( ip->idb_ptr, "rt_part_internal" );
 		return(-2);
 	}
 	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
-		rt_free( ip->idb_ptr, "part_internal" );
+		rt_free( ip->idb_ptr, "rt_part_internal" );
 		return(-3);
 	}
 
@@ -1037,7 +1037,7 @@ register mat_t		mat;
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-		rt_free( ip->idb_ptr, "part_internal" );
+		rt_free( ip->idb_ptr, "rt_part_internal" );
 		return(-4);
 	}
 
@@ -1069,7 +1069,7 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct part_internal	*pip;
+	struct rt_part_internal	*pip;
 	union record		*rec;
 	point_t		vert;
 	vect_t		hi;
@@ -1078,7 +1078,7 @@ double			local2mm;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_PARTICLE )  return(-1);
-	pip = (struct part_internal *)ip->idb_ptr;
+	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
 
 	RT_INIT_EXTERNAL(ep);
@@ -1116,8 +1116,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct part_internal	*pip =
-		(struct part_internal *)ip->idb_ptr;
+	register struct rt_part_internal	*pip =
+		(struct rt_part_internal *)ip->idb_ptr;
 	char	buf[256];
 
 	RT_PART_CK_MAGIC(pip);

@@ -70,7 +70,7 @@ struct rt_i		*rtip;
 	struct rt_db_internal	intern, *ip;
 #endif
 	register struct pipe_specific *pipe;
-	struct pipe_internal	*pip;
+	struct rt_pipe_internal	*pip;
 	int			i;
 
 #if NEW_IF
@@ -88,7 +88,7 @@ struct rt_i		*rtip;
 	}
 #endif
 	RT_CK_DB_INTERNAL( ip );
-	pip = (struct pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	rt_pipe_ifree( ip );
@@ -256,7 +256,7 @@ double		norm_tol;
 #endif
 	register struct wdb_pipeseg	*psp;
 	register struct wdb_pipeseg	*np;
-	struct pipe_internal	*pip;
+	struct rt_pipe_internal	*pip;
 	vect_t		head, tail;
 	point_t		pt;
 	int		i;
@@ -276,7 +276,7 @@ double		norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	pip = (struct pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs_head);
@@ -344,7 +344,7 @@ register mat_t		mat;
 	register struct exported_pipeseg *exp;
 	register struct wdb_pipeseg	*psp;
 	struct wdb_pipeseg		tmp;
-	struct pipe_internal		*pipe;
+	struct rt_pipe_internal		*pipe;
 	union record			*rp;
 	int				count;
 
@@ -376,8 +376,8 @@ done:	;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_PIPE;
-	ip->idb_ptr = rt_malloc( sizeof(struct pipe_internal), "pipe_internal");
-	pipe = (struct pipe_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal");
+	pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	pipe->pipe_count = count;
 
@@ -420,7 +420,7 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct pipe_internal	*pip;
+	struct rt_pipe_internal	*pip;
 	struct rt_list		*headp;
 	register struct exported_pipeseg *eps;
 	register struct wdb_pipeseg	*psp;
@@ -432,7 +432,7 @@ double			local2mm;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_PIPE )  return(-1);
-	pip = (struct pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	headp = &pip->pipe_segs_head;
@@ -504,13 +504,13 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct pipe_internal	*pip;
+	register struct rt_pipe_internal	*pip;
 	register struct wdb_pipeseg	*psp;
 	char	buf[256];
 	int	segno = 0;
 
 	RT_CK_DB_INTERNAL(ip);
-	pip = (struct pipe_internal *)ip->idb_ptr;
+	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
 	sprintf(buf, "pipe with %d segments\n", pip->pipe_count );
@@ -569,11 +569,11 @@ void
 rt_pipe_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	register struct pipe_internal	*pipe;
+	register struct rt_pipe_internal	*pipe;
 	register struct wdb_pipeseg	*psp;
 
 	RT_CK_DB_INTERNAL(ip);
-	pipe = (struct pipe_internal*)ip->idb_ptr;
+	pipe = (struct rt_pipe_internal*)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pipe);
 
 	while( RT_LIST_WHILE( psp, wdb_pipeseg, &pipe->pipe_segs_head ) )  {

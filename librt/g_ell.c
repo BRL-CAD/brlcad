@@ -173,7 +173,7 @@ struct rt_i		*rtip;
 	struct rt_db_internal	intern, *ip;
 #endif
 	register struct ell_specific *ell;
-	struct ell_internal	*eip;
+	struct rt_ell_internal	*eip;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
 	LOCAL mat_t	R;
 	LOCAL mat_t	Rinv;
@@ -196,7 +196,7 @@ struct rt_i		*rtip;
 		return(-1);		/* BAD */
 	RT_CK_DB_INTERNAL( ip );
 #endif
-	eip = (struct ell_internal *)ip->idb_ptr;
+	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
 
 	/*
@@ -654,7 +654,7 @@ double			norm_tol;
 	struct rt_db_internal	intern, *ip;
 #endif
 	register int		i;
-	struct ell_internal	*eip;
+	struct rt_ell_internal	*eip;
 	fastf_t top[16*3];
 	fastf_t middle[16*3];
 	fastf_t bottom[16*3];
@@ -675,7 +675,7 @@ double			norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	eip = (struct ell_internal *)ip->idb_ptr;
+	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
 
 	rt_ell_16pts( top, eip->v, eip->a, eip->b );
@@ -733,7 +733,7 @@ static struct usvert {
 
 struct ell_state {
 	struct shell	*s;
-	struct ell_internal	*eip;
+	struct rt_ell_internal	*eip;
 	mat_t		invRinvS;
 	mat_t		invRoS;
 	fastf_t		theta_tol;
@@ -845,7 +845,7 @@ double			norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	state.eip = (struct ell_internal *)ip->idb_ptr;
+	state.eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(state.eip);
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
@@ -1155,7 +1155,7 @@ struct rt_db_internal	*ip;
 struct rt_external	*ep;
 register mat_t		mat;
 {
-	struct ell_internal	*eip;
+	struct rt_ell_internal	*eip;
 	union record		*rp;
 	LOCAL fastf_t	vec[3*4];
 
@@ -1169,8 +1169,8 @@ register mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ELL;
-	ip->idb_ptr = rt_malloc( sizeof(struct ell_internal), "ell_internal");
-	eip = (struct ell_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_ell_internal), "rt_ell_internal");
+	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	eip->magic = RT_ELL_INTERNAL_MAGIC;
 
 	/* Convert from database to internal format */
@@ -1194,12 +1194,12 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct ell_internal	*tip;
+	struct rt_ell_internal	*tip;
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_ELL )  return(-1);
-	tip = (struct ell_internal *)ip->idb_ptr;
+	tip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 
 	RT_INIT_EXTERNAL(ep);
@@ -1233,8 +1233,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct ell_internal	*tip =
-		(struct ell_internal *)ip->idb_ptr;
+	register struct rt_ell_internal	*tip =
+		(struct rt_ell_internal *)ip->idb_ptr;
 	fastf_t	mag_a, mag_b, mag_c;
 	char	buf[256];
 	double	angles[5];

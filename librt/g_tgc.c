@@ -95,7 +95,7 @@ struct rt_i		*rtip;
 	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern, *ip;
 #endif
-	struct tgc_internal	*tip;
+	struct rt_tgc_internal	*tip;
 	register struct tgc_specific *tgc;
 	register fastf_t	f;
 	LOCAL fastf_t	prod_ab, prod_cd;
@@ -119,7 +119,7 @@ struct rt_i		*rtip;
 		return(-1);		/* BAD */
 	RT_CK_DB_INTERNAL( ip );
 #endif
-	tip = (struct tgc_internal *)ip->idb_ptr;
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
 	/*
@@ -1479,7 +1479,7 @@ struct rt_db_internal	*ip;
 struct rt_external	*ep;
 register mat_t		mat;
 {
-	struct tgc_internal	*tip;
+	struct rt_tgc_internal	*tip;
 	union record		*rp;
 	LOCAL fastf_t	vec[3*6];
 
@@ -1493,8 +1493,8 @@ register mat_t		mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_TGC;
-	ip->idb_ptr = rt_malloc( sizeof(struct tgc_internal), "tgc_internal");
-	tip = (struct tgc_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc( sizeof(struct rt_tgc_internal), "rt_tgc_internal");
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	/* Convert from database to internal format */
@@ -1520,12 +1520,12 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct tgc_internal	*tip;
+	struct rt_tgc_internal	*tip;
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_TGC )  return(-1);
-	tip = (struct tgc_internal *)ip->idb_ptr;
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
 	RT_INIT_EXTERNAL(ep);
@@ -1561,8 +1561,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register struct tgc_internal	*tip =
-		(struct tgc_internal *)ip->idb_ptr;
+	register struct rt_tgc_internal	*tip =
+		(struct rt_tgc_internal *)ip->idb_ptr;
 	char	buf[256];
 	double	angles[5];
 	vect_t	unitv;
@@ -1666,7 +1666,7 @@ struct directory *dp;
 	struct rt_external	ext, *ep;
 	struct rt_db_internal	intern, *ip;
 #endif
-	LOCAL struct tgc_internal	*tip;
+	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
 	LOCAL fastf_t		top[16*3];
 	LOCAL fastf_t		bottom[16*3];
@@ -1688,7 +1688,7 @@ struct directory *dp;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	tip = (struct tgc_internal *)ip->idb_ptr;
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
 	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
@@ -1835,7 +1835,7 @@ struct directory *dp;
 	struct vertex		*vtemp[16+1];
 	LOCAL vect_t		work;		/* Vec addition work area */
 	LOCAL fastf_t		points[3*8];
-	LOCAL struct tgc_internal	*tip;
+	LOCAL struct rt_tgc_internal	*tip;
 	struct faceuse		*outfaceuses[2*16+2];
 	struct vertex		*vertlist[4];
 	struct edgeuse		*eu, *eu2;
@@ -1857,7 +1857,7 @@ struct directory *dp;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	tip = (struct tgc_internal *)ip->idb_ptr;
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
 	/* Create two 16 point ellipses

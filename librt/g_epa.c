@@ -27,7 +27,7 @@ static char RCSsph[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-struct epa_internal {
+struct rt_epa_internal {
 	vect_t	v;		/* Vertex */
 	vect_t	h;		/* Height Vector */
 	vect_t	a;		/* Semi-major axis (unit vector) */

@@ -27,9 +27,12 @@ static char RCSxxx[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-struct xxx_internal {
+struct rt_xxx_internal {
+	long	magic;
 	vect_t	xxx_V;
 };
+#define RT_XXX_INTERNAL_MAGIC	0xxx
+#define RT_XXX_CK_MAGIC(_p)	RT_CKMAG(_p,RT_XXX_INTERNAL_MAGIC,"rt_xxx_internal")
 
 struct xxx_specific {
 	vect_t	xxx_V;

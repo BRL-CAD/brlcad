@@ -57,7 +57,7 @@ struct rt_db_internal	*ip;
 struct rt_external	*ep;
 mat_t			mat;
 {
-	struct ars_internal *ari;
+	struct rt_ars_internal *ari;
 	union record	*rp;
 	register int	i, j;
 	LOCAL vect_t	base_vect;
@@ -72,8 +72,8 @@ mat_t			mat;
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARS;
-	ip->idb_ptr = rt_malloc(sizeof(struct ars_internal), "ars_internal");
-	ari = (struct ars_internal *)ip->idb_ptr;
+	ip->idb_ptr = rt_malloc(sizeof(struct rt_ars_internal), "rt_ars_internal");
+	ari = (struct rt_ars_internal *)ip->idb_ptr;
 	ari->magic = RT_ARS_INTERNAL_MAGIC;
 	ari->ncurves = rp[0].a.a_m;
 	ari->pts_per_curve = rp[0].a.a_n;
@@ -130,7 +130,7 @@ struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
 {
-	struct ars_internal	*arip;
+	struct rt_ars_internal	*arip;
 	union record		*rec;
 	point_t		base_pt;
 	int		per_curve_grans;
@@ -139,7 +139,7 @@ double			local2mm;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_ARS )  return(-1);
-	arip = (struct ars_internal *)ip->idb_ptr;
+	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
 
 	per_curve_grans = (arip->pts_per_curve+7)/8;
@@ -208,8 +208,8 @@ int			verbose;
 double			mm2local;
 {
 	register int			j;
-	register struct ars_internal	*arip =
-		(struct ars_internal *)ip->idb_ptr;
+	register struct rt_ars_internal	*arip =
+		(struct rt_ars_internal *)ip->idb_ptr;
 	char				buf[256];
 	int				i;
 
@@ -256,11 +256,11 @@ void
 rt_ars_ifree( ip )
 struct rt_db_internal	*ip;
 {
-	register struct ars_internal	*arip;
+	register struct rt_ars_internal	*arip;
 	register int			i;
 
 	RT_CK_DB_INTERNAL(ip);
-	arip = (struct ars_internal *)ip->idb_ptr;
+	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
 
 	/*
@@ -310,7 +310,7 @@ struct rt_i	*rtip;
 	register int	i, j;
 	register fastf_t **curves;	/* array of curve base addresses */
 	LOCAL fastf_t	f;
-	struct ars_internal	*arip;
+	struct rt_ars_internal	*arip;
 
 #if NEW_IF
 	/* All set */
@@ -324,7 +324,7 @@ struct rt_i	*rtip;
 		return(-1);		/* BAD */
 	RT_CK_DB_INTERNAL( ip );
 #endif
-	arip = (struct ars_internal *)ip->idb_ptr;
+	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
 
 	/*
@@ -805,7 +805,7 @@ double			norm_tol;
 #endif
 	register int	i;
 	register int	j;
-	struct ars_internal	*arip;
+	struct rt_ars_internal	*arip;
 
 #if NEW_IF
 	/* All set */
@@ -822,7 +822,7 @@ double			norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	arip = (struct ars_internal *)ip->idb_ptr;
+	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
 
 	/*
@@ -889,7 +889,7 @@ double			norm_tol;
 #endif
 	register int	i;
 	register int	j;
-	struct ars_internal	*arip;
+	struct rt_ars_internal	*arip;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	*fu;
@@ -911,7 +911,7 @@ double			norm_tol;
 	ip = &intern;
 #endif
 	RT_CK_DB_INTERNAL(ip);
-	arip = (struct ars_internal *)ip->idb_ptr;
+	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
 
 	/* rel_tol is hard to deal with, given we don't know the RPP yet */

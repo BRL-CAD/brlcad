@@ -169,7 +169,7 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	struct tgc_internal	*tip;
+	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
 	static double	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
 	static double	mag_h, mag_a, mag_b, mag_c, mag_d;
@@ -181,7 +181,7 @@ struct rt_i		*rtip;
 	static vect_t	work;
 	static fastf_t	f;
 
-	tip = (struct tgc_internal *)ip->idb_ptr;
+	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D| */
