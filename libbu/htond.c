@@ -75,8 +75,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	(defined(sgi) && defined(mips)) || \
 	(defined(__sgi) && defined(__mips)) || \
 	defined(pyr) || defined(apollo) || defined(aux) || \
-	defined(_AIX) || defined(NeXT) || \
-	defined(i386) || (defined(i860) && !defined(alliant))
+	defined(_AIX) || defined(NeXT)
 
 	/*  These systems already operate in
 	 *  IEEE format internally, using big-endian order.
@@ -84,7 +83,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #	define	NATURAL_IEEE	yes
 #endif
 
-#if defined(n16) || (defined(alliant) && defined(i860)) || defined(__stardent)
+#if defined(n16) || defined(i386) || defined(i860) || defined(__stardent)
 	/* These systems operate in IEEE format, using little-endian order */
 #	define	REVERSED_IEEE	yes
 #endif
