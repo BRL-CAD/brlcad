@@ -1897,7 +1897,7 @@ bu_list_elem( const char *in, int index )
 	{
 		if( !end || *end != '}' )
 		{
-			bu_log( "Error in list (uneven braces??): %s\n", in );
+			bu_log( "Error in list (uneven braces?): %s\n", in );
 			return( (char *)NULL );
 		}
 
