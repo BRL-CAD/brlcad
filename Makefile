@@ -49,6 +49,8 @@ clobber:
 	-@sh gen.sh $@
 lint:
 	-@sh gen.sh $@
+ls:
+	-@sh gen.sh $@
 print:
 	-@sh gen.sh $@
 typeset:
