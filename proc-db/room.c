@@ -168,7 +168,7 @@ struct wmember *headp;
 	mk_rpp( stdout, name, imin, imax );
 	mk_addmember( name, &head, WMOP_SUBTRACT );
 
-	mk_lfcomb( stdout, rname, 1, &head );
+	mk_lfcomb( stdout, rname, &head, 1 );
 	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
 
@@ -240,7 +240,7 @@ struct wmember *headp;
 		(void)mk_addmember( name, &head, WMOP_UNION );
 	}
 
-	mk_lfcomb( stdout, rname, 1, &head );
+	mk_lfcomb( stdout, rname, &head, 1 );
 	(void)mk_addmember( rname, headp, WMOP_UNION );
 }
 

@@ -69,7 +69,7 @@ char	**argv;
 	int	n;
 	double	height, maxheight, minheight;
 	struct wmember head;
-	float	*randp;
+	float	*randp = (float *)0;
 
 	RT_LIST_INIT( &head.l );
 
@@ -163,7 +163,7 @@ double	size;
 	char	crystalname[64];
 	vect_t	minpt, maxpt;
 	struct wmember head;
-	float	*randp;
+	float	*randp = (float *)0;
 
 	RT_LIST_INIT( &head.l );
 
@@ -233,7 +233,7 @@ int	nsolids;	/* number of solids for this layer */
 	char	name[32];
 	int	i;
 	struct wmember head;
-	float	*randp;
+	float	*randp = (float *)0;
 
 	RT_LIST_INIT( &head.l );
 
@@ -349,7 +349,7 @@ double	size;
 
 	/* Build the combination */
 	get_rgb(rgb);
-	mk_lcomb( stdout, bname, &head, (char *)0, "", rgb, 0 );
+	mk_lcomb( stdout, bname, &head, 0, (char *)0, "", rgb, 0 );
 
 	return( n*size );
 }
@@ -428,7 +428,7 @@ double	size;
 	/* Build the combination */
 	get_rgb( rgb );
 	i = PICK_MAT;
-	mk_lcomb( stdout, pname, &head,
+	mk_lcomb( stdout, pname, &head, 0,
 		mtab[i].mt_name, mtab[i].mt_param,
 		rgb, 0 );
 	return(vpos);
@@ -437,6 +437,7 @@ double	size;
 void
 do_rings( ringname, center, r1, r2, incr, n )
 char	*ringname;
+point_t	center;
 double	r1;
 double	r2;
 double	incr;
