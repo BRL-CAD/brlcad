@@ -56,10 +56,12 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #define TRUE 1
 
 char usage[] = "\
-Usage:  rtscale (width) (units) (interval)  filename > file.pl\n\
+Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
 	(width)		length of scale in model measurements\n\
 	(units)		sting denoting the unit type,\n\
-	(interval)	number of intervals on the scale\n";
+	(interval)	number of intervals on the scale\n\
+	filename	name of log file to be read\n\
+	[string]	optional, descriptive string\n";
 
 int	layout_n_plot();
 int	read_rt_file();
@@ -92,6 +94,7 @@ char	**argv;
 	char		units[BUFF_LEN];	/* string for units type */
 	char		label[BUFF_LEN];	/* string for scale labeling */
 	char		name[BUFF_LEN];		/* incoming file name */
+	char		descript[BUFF_LEN];	/* descriptive string, optional */
 	int		intervals;		/* number of intervals */
 	int		ret;			/* function return code */
 	fastf_t		m_len;			/* scale length in model size */
@@ -103,7 +106,7 @@ char	**argv;
 	 * usage message.
 	 */
 
-	if(argc != 5)  {
+	if(argc < 4)  {
 		fputs(usage, stderr);
 		exit(-1);
 	}
@@ -122,6 +125,10 @@ char	**argv;
 	strcpy(units, argv[2]);
 	strcat(label, units);
 	strcpy(name, argv[4]);
+
+	if( argv[5] != NULL )  {
+		strcpy( descript, argv[5] );
+	}
 
 	intervals = atof(argv[3]);
 
@@ -157,7 +164,7 @@ char	**argv;
 	/* Make a bounding rpp for the model and put out a space command. */
 	make_bounding_rpp(stdout, view2model);
 
-	ret = layout_n_plot(stdout, label, view2model, model2view, intervals, m_len);
+	ret = layout_n_plot(stdout, label, view2model, model2view, intervals, m_len, descript);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -179,17 +186,20 @@ char	**argv;
  *  converted to model space.
  *  It receives pointers to stdout, a label, and a view2model matrix, as 
  *  well as a number of intervals and the length of the scale on model units.
+ *  An optional, descriptive string is also taken.
  *  This makes it very general.  Lastly, it returns 0 okay, <0 failure.
  */
 
 int
-layout_n_plot(outfp, label, v2mod, m2view, intervals, m_len)
+layout_n_plot(outfp, label, v2mod, m2view, intervals, m_len, descript)
 FILE	*outfp;
 char	*label;
 mat_t	v2mod;
 mat_t	m2view;
 int	intervals;
 fastf_t	m_len;
+char	*descript;
+
 {
 
 
@@ -207,6 +217,7 @@ fastf_t	m_len;
 	float		v_free_space;	/* m_free_space's analogue in view space */
 	float		v_x_offset;	/* distance the label is offset in x */
 	float		v_y_offset;	/* distance the label is offset in y */
+	float		v_y_des_offset;	/* descriptive string offset */
 	point_t		v_offset;
 	vect_t		v_hgtv;		/* height vector for ticks, view space */
 	vect_t		m_hgtv;		/* height vector for ticks, model space */
@@ -217,6 +228,8 @@ fastf_t	m_len;
 	point_t		m_startpt;	/* starting point in model space */
 	point_t		v_label_st;	/* starting point of label, view space */
 	point_t		m_label_st;	/* starting point of label, model space */
+	point_t		v_descript_st;	/* starting point of description, view space */
+	point_t		m_descript_st;	/* starting point of description, model space */
 	point_t		centerpt;	/* point on scale where tick mark starts */
 
 
@@ -286,6 +299,18 @@ fastf_t	m_len;
 	/* Convert v_label_st to model space */
 	MAT4X3PNT(m_label_st, v2mod, v_label_st);
 
+	/* Now make the offset for the optional descriptive lable.
+	 * The lable should appear beneath the begining of the scale and
+	 * run the length of the paper if that is what it takes.
+	 */
+
+	v_y_des_offset = -( 4 * v_tick_hgt + v_char_width );
+	VSET(v_offset, 0.0, v_y_des_offset, 0.0);
+	VADD2(v_descript_st, v_startpt, v_offset);
+
+	MAT4X3PNT(m_descript_st, v2mod, v_descript_st);
+
+
 	/* Make a view to symbol matrix.  Copy the view2model matrix, set the
 	 * MAT_DELTAS to 0, and set the scale to 1.
 	 */
@@ -334,8 +359,12 @@ fastf_t	m_len;
 		mat_print("v2symbol", v2symbol);
 	}
 
-	/* Now put the label on the plot. */
+	/* Now put the label on the plot.  The first is the lable for
+	 * numbers under the scale; the second is for an optional string.
+	 */	
+
 	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
+	tp_3symbol(outfp, descript, m_descript_st, v2symbol, m_char_width);
 	return( 0 );		/* OK */
 }
 
