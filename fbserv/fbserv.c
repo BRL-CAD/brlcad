@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern	char	*malloc();
 extern	double	atof();
+extern	int	_disk_enable;
 
 static	void	comm_error();
 
@@ -47,6 +48,9 @@ int argc; char **argv;
 {
 	int	on = 1;
 	int	netfd;
+
+	/* No disk files on remote machine */
+	_disk_enable = 0;
 
 #ifdef NEVER
 	/*
@@ -64,20 +68,7 @@ int argc; char **argv;
 	}
 	(void)signal( SIGPIPE, SIG_IGN );
 
-/*	pcp = pkg_getclient( netfd, pkg_switch, 0 );*/
-	/* XXXX */
-	if( (pcp = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
-		fprintf(stderr,"pkg_getclient: malloc failure\n");
-		exit( 0 );
-	}
-	pcp->pkc_magic = PKG_MAGIC;
-	pcp->pkc_fd = netfd;
-	pcp->pkc_switch = pkg_switch;
-	pcp->pkc_errlog = comm_error;
-	pcp->pkc_left = -1;
-	pcp->pkc_buf = (char *)0;
-	pcp->pkc_curpos = (char *)0;
-	/* XXXX */
+	pcp = pkg_makeconn( netfd, pkg_switch, comm_error );
 
 	while( pkg_block(pcp) > 0 )
 		;
