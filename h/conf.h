@@ -320,6 +320,9 @@
 #	define HAVE_BZERO	1
 #endif
 
+/* Apple Mac OS X (Darwin -- not YellowDog Linux or others where __PPC__ is
+ * defined instead of __ppc__ 
+ */
 #if defined(__ppc__)
 #       define USE_PROTOTYPES   1
 #       define USE_REGCOMP      1
@@ -521,7 +524,7 @@
         defined(pyr) || defined(apollo) || defined(aux) || \
         defined(_AIX) || defined(NeXT) || defined(convex) || \
 	defined(hpux) || defined(__hppa) || defined(__convex__) || \
-	defined(__ppc__)
+	(defined(__ppc__) || defined(__PPC__))
 
         /*  These systems already operate in
          *  IEEE format internally, using big-endian order.
