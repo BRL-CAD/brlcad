@@ -20,7 +20,7 @@
 #	The Display class inherits from View and Dm. This
 #       class also maintains a list of drawable geometry objects
 #       which it can display. It now becomes possible to bind
-#       window events to view commands to automatically update the
+#       view commands to window events to automatically update the
 #       Dm window when the view changes.
 #
 class Display {
@@ -29,16 +29,10 @@ class Display {
     itk_option define -rscale rscale Rscale 0.4
     itk_option define -sscale sscale Sscale 2.0
 
-    constructor {{_type X} args} {
-	eval Dm::constructor $_type
+    constructor {args} {
+	eval Dm::constructor $args
 	View::constructor
-    } {
-	attach_view
-	doBindings
-	handle_configure
-	eval itk_initialize $args
-    }
-
+    } {}
     destructor {}
 
     public method update {obj}
@@ -86,7 +80,6 @@ class Display {
     protected method handle_expose {}
     protected method doBindings {}
 
-    private variable view ""
     private variable x ""
     private variable y ""
     private variable geolist ""
@@ -96,6 +89,13 @@ class Display {
 
 ########################### ###########################
 ########################### Public/Interface Methods ###########################
+
+body Display::constructor {args} {
+    attach_view
+    doBindings
+    handle_configure
+}
+
 body Display::update {obj} {
     refresh
 }
