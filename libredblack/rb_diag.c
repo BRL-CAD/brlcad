@@ -83,9 +83,9 @@ int	trav_type;
     rt_log("-------- Red-black tree <%x> contents --------\n", tree);
     rt_log("Description: '%s'\n", tree -> rbt_description);
     rt_log("Order:       %d of %d\n", order, tree -> rbt_nm_orders);
-    rt_log("Uniqueness:  %d\n", rb_get_uniqueness(tree, order));
     rt_log("Current:     <%x>\n", tree -> rbt_current);
     rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
+    rt_log("Uniqueness:  %d\n", rb_get_uniqueness(tree, order));
     d_order = order;
     _rb_walk(tree, order, describe_node, WALK_NODES, trav_type);
     rt_log("--------------------------------------------------\n");
@@ -112,10 +112,10 @@ rb_tree	*tree;
     rt_log("Description:      '%s'\n", tree -> rbt_description);
     rt_log("Current:          <%x>\n", tree -> rbt_current);
     rt_log("Empty node:       <%x>\n", tree -> rbt_empty_node);
-    rt_log("Size (in nodes):  <%x>\n", tree -> rbt_nm_nodes);
-    if (tree -> rbt_nm_orders <= 0)
-	rt_log("No orders\n");
-    else
+    rt_log("Size (in nodes):  %d\n", tree -> rbt_nm_nodes);
+    rt_log("Number of orders: %d\n", tree -> rbt_nm_orders);
+    rt_log("Debug bits:       <%x>\n", tree -> rbt_debug);
+    if ((tree -> rbt_nm_orders > 0) && (tree -> rbt_nm_nodes > 0))
     {
 	rt_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
