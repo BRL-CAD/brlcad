@@ -15,6 +15,9 @@
 #include <varargs.h>
 #endif
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include <string.h>
 #include "machine.h"
@@ -101,6 +104,22 @@ extern void brst_log();
 extern void prntScr();
 #endif
 extern void warning();
+extern void prntUsage();
+extern void clr_Tabs();
+extern void prntShieldComp();
+extern void qFree();
+extern void prntRegionHdr();
+extern int qAdd();
+extern void prntSeg();
+extern void gridRotate();
+extern void HmBanner();
+extern void spallInit();
+extern void readBatchInput();
+extern void set_Cbreak();
+extern void clr_Echo();
+extern void clr_Tabs();
+extern void reset_Tty();
+extern void save_Tty();
 
 #if STD_SIGNAL_DECLS
 extern void (*norml_sig)(), (*abort_sig)();

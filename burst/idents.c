@@ -17,9 +17,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "./burst.h"
 #include "./vecmath.h"
+#include "./extern.h"
 #define DEBUG_IDENTS	false
 
 bool
@@ -67,7 +69,7 @@ register Colors	*colp;
 
 	Free up linked list, except for the head node.
  */
-STATIC void
+void
 freeIdents( idp )
 register Ids *idp;
 	{

@@ -139,7 +139,7 @@ int	mode;
 		static int      lastlen = -1;
 		register int    len;
 		static char	buf[LNBUFSZ] = { 0 };
-		register char	*p;
+		register char	*p='\0';
 	if( ! tty )
 		return	false;
 	switch( mode )

@@ -11,13 +11,15 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+#include "conf.h"
 #include <stdio.h>
-#ifdef BSD
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
 #include <strings.h>
 #endif
-#ifdef SYSV
-#include <string.h>
-#endif
+
 #ifndef cray
 #if defined( VLDSYSV )
 #include <sys/_ioctl.h>
@@ -33,11 +35,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern char	*tgoto( char *cm, int destcol, int destline );
 extern char	*tgetstr( char *id, char **area );
 extern int	tgetent( char *bp, char *name );
+extern int	tgetnum( char *id );
 #else
 extern char	*tgoto();
 extern char	*tgetstr();
 extern int	tgetent();
+extern int	tgetnum();
 #endif
+extern int	tputs();
 
 /* Externals from the C library. */
 #if __STDC__
