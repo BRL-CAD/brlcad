@@ -3,7 +3,7 @@
 args=`getopt b:d:e:qr:u: $*`
 
 if [ $? != 0 ] ; then
-	echo "Usage: $0 [-r brlcad_root] [-d regress_dir] [-b begin_time] [-e end_time] [-u user]"
+	echo "Usage: $0 [-r brlcad_root] [-b begin_time] [-e end_time] [-u user] -d regress_dir "
 	exit 2
 fi
 

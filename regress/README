@@ -5,6 +5,27 @@ Every night the "master.sh" script is run on a single machine.  This deletes
 all files under the regression directory (by default "/c/regress").  It then
 checks out a copy of the target "brlcad" from /c/CVS.  For each architecture
 it creates a semaphore file "start_ARCH" (eg. start_7d).  
+Usage:
+
+	master.sh -d regression_dir [-c cvs_binary] [-R cvs_repository]
+
+The "client_wait.sh" script runs on each test architecture and waits for the
+semaphore file to be created.  It also will not run past a cutoff time.
+Usage:
+	./client_wait.sh -d regression_dir [-r brlcad_root] [-b begin_time] \
+	[-e end_time] [-u notify_user]
+
+When the client_wait.sh script detects that it is ok to run the regression
+test, it starts the client_build.sh script.
+
+
+When the client_build.sh script finishes it starts the client_test.sh to
+actually test the package.
+
+
+
+---------------- Old content here --------------------------------------
+
 
 When the "client.sh" script runs, it waits for the semaphore file to be
 created.  It also will not run past a cutoff time of 7am.  This cutoff time
