@@ -748,7 +748,7 @@ CONST mat_t			mat;
 CONST struct db_i		*dbip;
 {
 	bu_log( "Import of polysolids from a version 5 database is not allowed\n" );
-	bu_log( "\tPolysolids should be converted to BOT solids using the pg_bot() routine or g4-g5 utility.\n" );
+	bu_log( "\tPolysolids should be converted to BOT solids using the rt_pg_bot() routine or g4-g5 utility.\n" );
 	return -1;
 }
 
@@ -873,9 +873,7 @@ struct rt_db_internal	*ip;
  *	0	OK
  */
 int
-rt_pg_to_bot( ip, tol )
-struct rt_db_internal *ip;
-CONST struct bn_tol *tol;
+rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol )
 {
 	struct rt_pg_internal *ip_pg;
 	struct rt_bot_internal *ip_bot;
