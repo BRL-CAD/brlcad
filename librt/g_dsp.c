@@ -195,7 +195,7 @@ CONST struct rt_dsp_internal *dsp_ip;
 
 	bu_vls_init( vls );
 
-	bu_vls_printf( vls, "Displacement Map\n  file='%s' xs=%d ys=%d sm=%d\n",
+	bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d\n",
 		bu_vls_addr(&dsp_ip->dsp_file), dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt, dsp_ip->dsp_smooth);
 
 	VSETALL(pt, 0.0);
@@ -2659,7 +2659,70 @@ CONST struct bn_tol	*tol;
 	return(-1);
 }
 
+/*
+ *	D S P _ G E T _ D A T A
+ *
+ *  Handle things common to both the v4 and v5 database.
+ *
+ *  This include applying the modelling transform, and fetching the
+ *  actual data.
+ */
+static int
+dsp_get_data(struct rt_dsp_internal	*dsp_ip,
+	     struct rt_db_internal	*ip,
+	     const struct bu_external	*ep,
+	     register const mat_t	mat,
+	     const struct db_i		*dbip)
+{
+	mat_t				tmp;
+	struct bu_mapped_file		*mf;
+	int				count;
+	int				in_cookie, out_cookie;
 
+	/* Apply Modeling transform */
+	bn_mat_copy(tmp, dsp_ip->dsp_stom);
+	bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
+	
+	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+
+	/* get file */
+	mf = dsp_ip->dsp_mp = 
+		bu_open_mapped_file_with_path(dbip->dbi_filepath,
+			bu_vls_addr(&dsp_ip->dsp_file), "dsp");
+	if (!mf) {
+		bu_log("mapped file open failed\n");
+		return -1;
+	}
+
+	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
+		bu_log("DSP buffer wrong size");
+		return -1;
+	}
+
+	in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
+	out_cookie = bu_cv_cookie("hus");
+
+	if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
+		int got;
+		/* if we're on a little-endian machine we convert the
+		 * input file from network to host format
+		 */
+		count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
+		mf->apbuflen = count * sizeof(unsigned short);
+		mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
+
+		got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
+				     mf->buf,    in_cookie, count);
+		if (got != count) {
+			bu_log("got %d != count %d", got, count);
+			bu_bomb("\n");
+		}
+		dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
+	} else {
+		dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
+	}
+	return 0;
+}
 
 /*
  *			R T _ D S P _ I M P O R T
@@ -2729,50 +2792,14 @@ CONST struct db_i		*dbip;
 		IMPORT_FAIL("parse error");
 	}
 
-	
+
 	/* Validate parameters */
 	if (dsp_ip->dsp_xcnt == 0 || dsp_ip->dsp_ycnt == 0) {
 		IMPORT_FAIL("zero dimension on map");
 	}
 	
-	/* Apply Modeling transoform */
-	bn_mat_copy(tmp, dsp_ip->dsp_stom);
-	bn_mat_mul(dsp_ip->dsp_stom, mat, tmp);
-	
-	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
-
-	/* get file */
-	mf = dsp_ip->dsp_mp = 
-		bu_open_mapped_file_with_path(dbip->dbi_filepath,
-			bu_vls_addr(&dsp_ip->dsp_file), "dsp");
-	if (!mf) {
-		IMPORT_FAIL("unable to open");
-	}
-	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
-		IMPORT_FAIL("buffer wrong size");
-	}
-
-	in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
-	out_cookie = bu_cv_cookie("hus");
-
-	if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
-		int got;
-		/* if we're on a little-endian machine we convert the
-		 * input file from network to host format
-		 */
-		count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
-		mf->apbuflen = count * sizeof(unsigned short);
-		mf->apbuf = bu_malloc(mf->apbuflen, "apbuf");
-
-		got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
-				     mf->buf,    in_cookie, count);
-		if (got != count) {
-			bu_log("got %d != count %d", got, count);
-			bu_bomb("\n");
-		}
-		dsp_ip->dsp_buf = dsp_ip->dsp_mp->apbuf;
-	} else {
-		dsp_ip->dsp_buf = dsp_ip->dsp_mp->buf;
+	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
+		IMPORT_FAIL("DSP data");
 	}
 
 	if (rt_g.debug & DEBUG_HF) {
@@ -2857,6 +2884,7 @@ CONST struct db_i		*dbip;
 	struct rt_dsp_internal	*dsp_ip;
 	unsigned short 		name_len;
 	unsigned char		*cp;
+	mat_t			tmp;
 
 	BU_CK_EXTERNAL( ep );
 
@@ -2880,17 +2908,23 @@ CONST struct db_i		*dbip;
 	dsp_ip->dsp_ycnt = (unsigned) bu_glong( cp );
 	cp += SIZEOF_NETWORK_LONG;
 
-	/* matrix */
+	/* convert matrix */
 	ntohd((char *)dsp_ip->dsp_mtos, cp, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
+	bn_mat_inv(dsp_ip->dsp_stom, dsp_ip->dsp_mtos);
 
-	/* smooth flag */
+
+	/* convert smooth flag */
 	dsp_ip->dsp_smooth = bu_gshort( cp );
 	cp += SIZEOF_NETWORK_SHORT;
 
-	/* name of data location */
+	/* convert name of data location */
 	bu_vls_init( &dsp_ip->dsp_file );
 	bu_vls_strcpy( &dsp_ip->dsp_file, cp );
+
+	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
+		IMPORT_FAIL("DSP data");
+	}
 
 	return 0; /* OK */
 }
@@ -2923,9 +2957,11 @@ CONST struct db_i		*dbip;
 	name_len = bu_vls_strlen(&dsp_ip->dsp_file) + 1;
 
 	BU_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = 140 + name_len;
+	ep->ext_nbytes = 138 + name_len;
 	cp = (unsigned char *)ep->ext_buf = 
 		(genptr_t)bu_malloc( ep->ext_nbytes, "dsp external");
+
+	memset(ep->ext_buf, 0, ep->ext_nbytes);
 
 
 	/* Now we fill the buffer with the data, making sure everything is
@@ -2985,14 +3021,6 @@ double			mm2local;
 	dsp_print(&vls, dsp_ip);
 	bu_vls_vlscat( str, &vls );
 	bu_vls_free( &vls );
-
-#if 0
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		dsp_ip->v[X] * mm2local,
-		dsp_ip->v[Y] * mm2local,
-		dsp_ip->v[Z] * mm2local );
-	bu_vls_strcat( str, buf );
-#endif
 
 	return(0);
 }
