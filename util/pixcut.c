@@ -180,7 +180,7 @@ int argc; char **argv;
  * Make a buffer will hold a single scan line of assuming a worst
  * case cut of 1 pixel of the edge.
  */
-	if ((buffer = malloc((org_width+new_width)*3)) == NULL ) {
+	if ((buffer = (unsigned char *)malloc((org_width+new_width)*3)) == (unsigned char *)NULL ) {
 		(void) fprintf(stderr, "pixcut: Out of memory (malloc failed)\n");
 		exit(2);
 	}
