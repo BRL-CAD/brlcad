@@ -610,8 +610,6 @@ proc comb_reset { id } {
 	    set keep 0
 	} elseif { [string compare $key "inherit"] == 0 } {
 	    set keep 0
-	} elseif { [string compare $key "temp"] == 0 } {
-	    set keep 0
 	}
 
 	if { $keep } {
