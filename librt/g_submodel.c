@@ -228,6 +228,18 @@ register CONST struct soltab *stp;
 		(struct submodel_specific *)stp->st_specific;
 
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
+
+	bn_mat_print("subm2m", submodel->subm2m);
+	bn_mat_print("m2subm", submodel->m2subm);
+
+	bu_log_indent_delta(4);
+	bu_log("submodel->rtip=x%x\n", submodel->rtip);
+
+	/* Loop through submodel's solid table printing them too. */
+	RT_VISIT_ALL_SOLTABS_START( stp, submodel->rtip )  {
+		rt_pr_soltab(stp);
+	} RT_VISIT_ALL_SOLTABS_END
+	bu_log_indent_delta(-4);
 }
 
 
