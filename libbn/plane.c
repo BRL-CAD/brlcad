@@ -2388,8 +2388,12 @@ fail:
 
 int
 bn_does_ray_isect_tri( pt, dir, V, A, B, inter )
-point_t pt, V, A, B, inter;
-vect_t dir;
+CONST point_t pt;
+CONST vect_t dir;
+CONST point_t V;
+CONST point_t A;
+CONST point_t B;
+point_t inter;			/* output variable */
 {
 	vect_t VP, VA, VB, AB, AP, N;
 	fastf_t NdotDir;
