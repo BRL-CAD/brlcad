@@ -151,10 +151,16 @@ Cad_AppInit(interp)
 #endif
 
 	/* Initialize libbu */
-	Bu_Init(interp);
+	if (Bu_Init(interp) == TCL_ERROR) {
+		bu_log("Bu_Init error %s\n", interp->result);
+		return TCL_ERROR;
+	}
 
 	/* Initialize libbn */
-	Bn_Init(interp);
+	if (Bn_Init(interp) == TCL_ERROR) {
+		bu_log("Bn_Init error %s\n", interp->result);
+		return TCL_ERROR;
+	}
 
 	/* Initialize librt */
 	if (Rt_Init(interp) == TCL_ERROR) {
@@ -169,7 +175,7 @@ Cad_AppInit(interp)
 #endif
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
-	pathname = bu_brlcad_path( "" );
+	pathname = bu_brlcad_path("");
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "lappend auto_path %stclscripts %stclscripts/lib %stclscripts/util",
@@ -177,22 +183,8 @@ Cad_AppInit(interp)
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
-	/* register bwish commands */
+	/* register bwish/btclsh commands */
 	cmdInit(interp);
 
-	/*
-	 * Specify a user-specific startup file to invoke if the application
-	 * is run interactively.  Typically the startup file is "~/.apprc"
-	 * where "app" is the name of the application.  If this line is deleted
-	 * then no user-specific startup file will be run under any conditions.
-	 */
-
-#if 0
-#ifdef BWISH
-	Tcl_SetVar(interp, "tcl_rcFileName", "~/.bwishrc", TCL_GLOBAL_ONLY);
-#else
-	Tcl_SetVar(interp, "tcl_rcFileName", "~/.btclshrc", TCL_GLOBAL_ONLY);
-#endif
-#endif
 	return TCL_OK;
 }
