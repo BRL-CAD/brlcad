@@ -8,7 +8,7 @@
  *		Saul Wold
  *		John Cummings  
  *	XGL 3.X/OpenWindows 3.X support and significant other enhancements:
- *		James Fiori
+ *		James D. Fiori
  *
  *  Source -
  *	Sun Microsystems, Inc.  
@@ -56,9 +56,12 @@
  *		Lighting, Depth Cueing (for SX, ZX, S24)
  *		Anti-alias support for vectors (done in h/w for SX, ZX, s/w 
  *						for others)
- *		Hardware double-buffering for TGX, SX, ZX
- *		Colormap double-buffering for GX frame buffers
- *		No double-buffering for S24
+ *		Double-Buffering Support:
+ *			Performed in Hardware on TGX, SX, ZX
+ *			Performed in Software: when using PEX
+ *			Performed via colormap double-buffering on GX
+ *			No double buffering on S24 (unless PEX is being used as
+ *				is the case when running remotely)
  *		Function Key Support:
  *			F1 - Depth Cue Toggle
  *			F2 - Z-clip Toggle
@@ -69,6 +72,11 @@
  *						(currently not functional)
  *			F7 - Faceplate Toggle
  *			F8 - Line Anti-alias Toggle
+ *
+ * 	Known Problems:
+ *		monochrome is not supported
+ *		The GX amd TGX frame buffers are currently not being used in 
+ *		DGA (Direct Graphics Access) mode. PEX is used instead.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -393,60 +401,23 @@ XGL_epilog()
 }
 
 
+static Xgl_matrix_d3d	xgl_mat;
 static void
 apply_matrix(mat_t mat)
 {
 	int i;
-	static Xgl_matrix_d3d	xgl_mat;
         Xgl_pt               	pt;
         Xgl_pt_d3d           	pt_d3d;
 	double			w;
 
 	for (i = 0; i < 16; i++)
 		xgl_mat[i/4][i%4] = (fabs(mat[i]) < 1.0e-15) ? 0.0 : mat[i];
-	/*
-	 * The following matrix is passed in:
-	 *	1.0	0.0	0.0	Tx
-	 *	0.0	1.0	0.0	Ty
-	 *	0.0	0.0	1.0	Tz
-	 *	0.0	0.0	0.0	W
-	 *
-	 * This (for some as yet unknown reason) produces very slow DGA results.
-	 * So, we perform the rotation, translation, and scaling in 3 separate 
-	 * calls. We use the W value for the scale factor.
-	*/
 
 	/*
-	 * First, rotate it
+	 * Write the matrix into the transform, then transpose it 
 	 */
-	xgl_transform_identity(trans);
-
-	xgl_transform_write_specific (trans, xgl_mat, 
-                   		 XGL_TRANS_MEMBER_ROTATION);
-	xgl_transform_transpose(trans, trans);
-
-	/*
-	 * Next, translate it
-	 */
-	pt.pt_type = XGL_PT_D3D;
-	pt.pt.d3d = &pt_d3d;
-	pt_d3d.x = xgl_mat[0][3];
-	pt_d3d.y = xgl_mat[1][3];
-	pt_d3d.z = xgl_mat[2][3];
-	xgl_transform_translate (trans, &pt, XGL_TRANS_POSTCONCAT);
-
-	/*
-	 * Finally, scale it
-	 */
-	w = xgl_mat[3][3];
-        pt.pt_type = XGL_PT_D3D;
-        pt.pt.d3d = &pt_d3d;
-        pt_d3d.x = 1.0/w;
-        pt_d3d.y = 1.0/w;
-        pt_d3d.z = 1.0/w;
- 
-        xgl_transform_scale (trans, &pt, XGL_TRANS_POSTCONCAT);
-
+	xgl_transform_write_specific (trans, xgl_mat, NULL);
+        xgl_transform_transpose(trans, trans);
 	xgl_object_set(ctx_3d,
 		XGL_CTX_LOCAL_MODEL_TRANS, trans,
 		0);
@@ -1230,7 +1201,7 @@ XGL_setup()
 	xgl_x_win.X_window = xwin;
 	xgl_x_win.X_screen = screen_num;
 
-	win_desc.win_ras.type = XGL_WIN_X ;
+	win_desc.win_ras.type = XGL_WIN_X;
 	win_desc.win_ras.desc = &xgl_x_win;
 
 	sys_state = xgl_open(0);
@@ -1251,6 +1222,24 @@ XGL_setup()
 		frame_buffer_type = FB_ZX;
 	else if (strcmp(inq_info->name, "Sun:SX") == 0)
 		frame_buffer_type = FB_SX;
+
+	/*
+	 * HACK City!!! 12-23-94
+	 * 	The GX and TGX frame buffers have performance problems
+	 * 	and clipping problems when using DGA that have not yet been 
+	 *	resolved. Until they are, we use PEX or Xlib.
+	 */
+	if (frame_buffer_type == FB_GX || frame_buffer_type == FB_TGX) {
+		free(inq_info);
+		xgl_close(sys_state);
+		win_desc.win_ras.type = XGL_WIN_X | XGL_WIN_X_PROTO_PEX |
+			XGL_WIN_X_PROTO_XLIB ;
+		sys_state = xgl_open(0);
+		if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
+			printf("error in getting inquiry\n");
+			exit(1);
+		}
+	}
 
 	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
 	free(inq_info);
@@ -1390,7 +1379,6 @@ XGL_setup()
 	 * Set Backing store if we're not h/w double-bufferred (XGL won't
 	 * support both double-buffer AND backing store
 	 */
-
         if (dbuffering != AB_DBUFF) {
 		static XSetWindowAttributes xswa;
 
@@ -1921,7 +1909,13 @@ fk_depth_cue()
 	Xgl_color	dc_color;
 	double zvals[2] = {1.0, -1.0};	/* Z-planes between which to scale
 					 *  depth-cue */
-	float scale_factors[2] = {1.0, 0.2}; /* Depth-cue scale factors */
+	/*
+	 * Use two scale factors, one for perspective amd one for non-
+	 * perspective. We do this so the screen is not so dark with the
+	 * perspective set
+	 */
+	float scale_factors_non_persp[2] = {1.0, 0.2}; 
+	float scale_factors_persp[2]     = {1.0, 0.5};
 	
 	if (color_type == XGL_COLOR_INDEX) {
 		fprintf(stderr, 
@@ -1933,7 +1927,9 @@ fk_depth_cue()
 		xgl_object_set(ctx_3d, 
 			XGL_3D_CTX_DEPTH_CUE_MODE, XGL_DEPTH_CUE_SCALED,
 			XGL_3D_CTX_DEPTH_CUE_REF_PLANES, zvals,
-			XGL_3D_CTX_DEPTH_CUE_SCALE_FACTORS, scale_factors,
+			XGL_3D_CTX_DEPTH_CUE_SCALE_FACTORS, 
+			    perspective_mode ? scale_factors_persp :
+					       scale_factors_non_persp,
 			XGL_3D_CTX_DEPTH_CUE_INTERP, TRUE,
 			XGL_3D_CTX_DEPTH_CUE_COLOR, &dc_color,
 			NULL);
@@ -1973,6 +1969,13 @@ fk_perspective()
 	perspective_mode = 1 - perspective_mode;
         rt_vls_printf( &dm_values.dv_string, "set perspective=%d\n",
         	perspective_mode ? perspective_table[perspective_angle] : -1 );
+	/*
+	 * If depth-cueing is on, re-set the depth-cue scale factors to allow
+	 * for more light so the screen is not too dark.
+	 */
+	dcue_on = 0; /* fk_depth_cue() will turn the flag back on */
+	fk_depth_cue();
+	
 	dmaflag = 1;
 }
 static void
@@ -1999,13 +2002,25 @@ fk_lighting()
 		return;
 	}
 	if (lighting_on == 0) {
+		Xgl_pt_d3d	pos;
+		double		w;
 
-		light_switches[0] = light_switches[1] = TRUE;
+		/* 
+		 * First, set the light position to the lower-right hand
+		 * position, using the last 'w' value 
+		 */
+		w = xgl_mat[3][3];
+		pos.x = pos.y = -w;
+		pos.z = w;
+		xgl_object_set (lights[1],
+			XGL_LIGHT_POSITION, &pos,
+			NULL);
 		/*
 		 * We specify illumination of per-facet (flat shading) since
 		 * we don't have per-vertex normals we would need to do
 		 * color (gouraud) shading
 		 */
+		light_switches[0] = light_switches[1] = TRUE;
 		xgl_object_set(ctx_3d,
 			XGL_3D_CTX_LIGHT_SWITCHES, light_switches,
 			XGL_3D_CTX_SURF_FRONT_ILLUMINATION, 
@@ -2087,7 +2102,6 @@ static void
 init_lights()
 {
 	Xgl_color	lt_color;
-	Xgl_pt_d3d	pos;
 
 	SetColor (lt_color, DM_WHITE);
 	xgl_object_set (ctx_3d,
@@ -2109,13 +2123,9 @@ init_lights()
 		XGL_LIGHT_TYPE, XGL_LIGHT_AMBIENT,
 		XGL_LIGHT_COLOR, &lt_color,
 		NULL);
-	/* Put light at lower-left hand corner, out from screen */
-	pos.x = pos.y = -1.0;
-	pos.z = 1.0;
 	xgl_object_set (lights[1],
 		XGL_LIGHT_TYPE, XGL_LIGHT_POSITIONAL,
 		XGL_LIGHT_COLOR, &lt_color,
-		XGL_LIGHT_POSITION, &pos,
 		NULL);
 	light_switches[0] = FALSE;
 	light_switches[1] = FALSE;
