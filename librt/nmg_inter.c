@@ -1,3 +1,16 @@
+/* XXX Move to VMATH.h.  Use in nmg_misc.c */
+/*
+ * Compare two extents represented as RPPs.
+ * If they overlap, within tolerance distance, return true
+ */
+#define V3RPP_OVERLAP_TOL(_l1, _h1, _l2, _h2, _t) \
+    (! ((_l1)[0] > (_h2)[0] + (_t)->dist || \
+	(_l1)[1] > (_h2)[1] + (_t)->dist || \
+	(_l1)[2] > (_h2)[2] + (_t)->dist || \
+	(_l2)[0] > (_h1)[0] + (_t)->dist || \
+	(_l2)[1] > (_h1)[1] + (_t)->dist || \
+	(_l2)[2] > (_h1)[2] + (_t)->dist ) )
+
 /*
  *			N M G _ I N T E R . C
  *
@@ -1471,8 +1484,8 @@ struct faceuse	*fu2;
 			fu2lg = fu2lu->l_p->lg_p;
 			NMG_CK_LOOP_G(fu2lg);
 
-			if (! V3RPP_OVERLAP( fu2lg->min_pt, fu2lg->max_pt,
-			    lg->min_pt, lg->max_pt)) continue;
+			if (! V3RPP_OVERLAP_TOL( fu2lg->min_pt, fu2lg->max_pt,
+			    lg->min_pt, lg->max_pt, &bs->tol)) continue;
 
 			nmg_isect_loop3p_face3p(bs, lu, fu2);
 		}
@@ -1782,8 +1795,8 @@ CONST struct rt_tol	*tol;
 			pl2[0], pl2[1], pl2[2], pl2[3]);
 	}
 
-	if ( !V3RPP_OVERLAP(f2->fg_p->min_pt, f2->fg_p->max_pt,
-	    f1->fg_p->min_pt, f1->fg_p->max_pt) )  return;
+	if ( !V3RPP_OVERLAP_TOL(f2->fg_p->min_pt, f2->fg_p->max_pt,
+	    f1->fg_p->min_pt, f1->fg_p->max_pt, &bs.tol) )  return;
 
 	/* Extents of face1 overlap face2 */
 	VMOVE(min_pt, f1->fg_p->min_pt);
@@ -1858,8 +1871,8 @@ CONST struct rt_tol	*tol;
 	}
 
 	/* See if shells overlap */
-	if ( ! V3RPP_OVERLAP(sa1->min_pt, sa1->max_pt,
-	    sa2->min_pt, sa2->max_pt) )
+	if ( ! V3RPP_OVERLAP_TOL(sa1->min_pt, sa1->max_pt,
+	    sa2->min_pt, sa2->max_pt, tol) )
 		return;
 
 	flags = (long *)rt_calloc( s1->r_p->m_p->maxindex, sizeof(long),
@@ -1878,8 +1891,8 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACE_G(f1->fg_p);
 
 		/* See if face f1 overlaps shell2 */
-		if( ! V3RPP_OVERLAP(sa2->min_pt, sa2->max_pt,
-		    f1->fg_p->min_pt, f1->fg_p->max_pt) )
+		if( ! V3RPP_OVERLAP_TOL(sa2->min_pt, sa2->max_pt,
+		    f1->fg_p->min_pt, f1->fg_p->max_pt, tol) )
 			continue;
 
 		/*
