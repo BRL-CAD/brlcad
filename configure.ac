@@ -64,9 +64,19 @@ AC_SUBST(PATCH_VERSION)
 CONFIG_DATE=`date +%Y%m%d`
 CONFIG_TIME="`date '+%H %M %S'`"
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
-echo "*********************************************************"
-echo "*** Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE ***"
-echo "*********************************************************"
+
+# print out the title with a pretty box computed to wrap around
+title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
+length="`echo $title | wc -c`"
+separator=""
+while test $length -gt 1 ; do
+      separator="${separator}*"
+      length="`expr $length - 1`"
+done
+echo "****${separator}****"
+echo "*** ${title} ***"
+echo "****${separator}****"
+
 AC_SUBST(CONFIG_DATE)
 AC_SUBST(CONFIG_TIME)
 AC_SUBST(BRLCAD_VERSION)
