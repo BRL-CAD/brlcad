@@ -2393,30 +2393,33 @@ proc set_active_dm { id } {
 
 proc set_wm_title { id dbname } {
     global mged_gui
+    global version
+
+    set ver [lindex $version 2]
 
     if {$mged_gui($id,top) == $mged_gui($id,dmc)} {
 	if {$mged_gui($id,dm_loc) == "ul"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Graphics Window ($id) - $dbname - Upper Left"
-	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Upper Left"
+	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Upper Left"
+	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Upper Left"
 	} elseif {$mged_gui($id,dm_loc) == "ur"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Graphics Window ($id) - $dbname - Upper Right"
-	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Upper Right"
+	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Upper Right"
+	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Upper Right"
 	} elseif {$mged_gui($id,dm_loc) == "ll"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Graphics Window ($id) - $dbname - Lower Left"
-	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Lower Left"
+	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Lower Left"
+	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Lower Left"
 	} elseif {$mged_gui($id,dm_loc) == "lr"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Graphics Window ($id) - $dbname - Lower Right"
-	    wm title .$id "MGED 5.0 Command Window ($id) - $dbname - Lower Right"
+	    wm title $mged_gui($id,top) "MGED $ver Graphics Window ($id) - $dbname - Lower Right"
+	    wm title .$id "MGED $ver Command Window ($id) - $dbname - Lower Right"
 	}
     } else {
 	if {$mged_gui($id,dm_loc) == "ul"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Command Window ($id) - $dbname - Upper Left"
+	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Upper Left"
 	} elseif {$mged_gui($id,dm_loc) == "ur"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Command Window ($id) - $dbname - Upper Right"
+	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Upper Right"
 	} elseif {$mged_gui($id,dm_loc) == "ll"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Command Window ($id) - $dbname - Lower Left"
+	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Lower Left"
 	} elseif {$mged_gui($id,dm_loc) == "lr"} {
-	    wm title $mged_gui($id,top) "MGED 5.0 Command Window ($id) - $dbname - Lower Right"
+	    wm title $mged_gui($id,top) "MGED $ver Command Window ($id) - $dbname - Lower Right"
 	}
     }
 }
