@@ -816,7 +816,11 @@ do_frame(int framenumber)
 #endif
 
 		/* Ordinary case for creating output file */
+#if defined(WIN32) && !defined(__CYGWIN__)
+		if( outfp == NULL && (outfp = fopen( framename, "w+b" )) == NULL )  {
+#else
 		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )  {
+#endif
 			perror( framename );
 			if( matflag )  return(0);	/* OK */
 			return(-1);			/* Bad */

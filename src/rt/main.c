@@ -179,8 +179,15 @@ int main(int argc, char **argv)
 	int i;
 
 #ifdef WIN32
+#if 1
+	_setmode(_fileno(stdin), _O_BINARY);
+	_setmode(_fileno(stdout), _O_BINARY);
+	_setmode(_fileno(stderr), _O_BINARY);
+#else
 	_fmode = _O_BINARY;
 #endif
+#endif
+
 
 	bu_setlinebuf( stderr );
 
