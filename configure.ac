@@ -1,4 +1,4 @@
-dnl **************************
+ dnl **************************
 dnl ** BRL-CAD configure.ac **
 dnl **************************
 dnl $Id$
@@ -22,8 +22,10 @@ dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
 
+# XXX gcc-specific option
 CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 
+# XXX pthread lib stuff should go away (and be made proper lib check)
 case "$target" in
 	*-*-linux*)
 		PTHREAD_LIBS="-lpthread"
@@ -34,6 +36,16 @@ case "$target" in
 		AC_SUBST(PTHREAD_LIBS)
 		;;
 esac
+
+dnl autosearch fink paths
+AC_MSG_CHECKING([for fink])
+if test -d /sw ; then
+	AC_MSG_RESULT([found, adding /sw to search paths])
+	CFLAGS="$CFLAGS -I/sw/include"
+	LDFLAGS="$LDFLAGS -L/sw/lib"
+else
+	AC_MSG_RESULT([not found])
+fi
 
 JAVA_CFLAGS=
 have_java=no
@@ -208,6 +220,9 @@ dnl ***********************
 dnl *** Check for types ***
 dnl ***********************
 
+AC_C_CONST
+AC_STRUCT_TM
+
 dnl XXX - union wait testing from tcl8.4's configure.in, should be revamped?
 dnl ============================================================
 AC_MSG_CHECKING([union wait])
@@ -237,12 +252,30 @@ dnl ***************************
 dnl *** Check for functions ***
 dnl ***************************
 
-AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
-AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
-AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
-AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS( \
+	bzero \
+	dlopen \
+	drand \
+	gethostname \
+	getopt \
+	regex \
+	sbrk \
+	strcasecmp \
+	strchr \
+	strdup \
+	strdup\
+	vfork \
+	vprintf \
+	writev \
+)
 
-AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strcasecmp strchr getopt writev regex strdup)
+AC_CHECK_FUNC(fstatfs, , [AC_DEFINE(NO_FSTATFS,, Lacking fstatfs)])
+AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
+
+# XXX duplicate for decl (needs to go away)
+AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
+AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 
 AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
 AC_SUBST(SOCKET)
@@ -447,5 +480,35 @@ dnl **********************
 dnl *** Report Summary ***
 dnl **********************
 
-dnl XXX - should report significant summary configuration details (what options
-dnl and args are enabled, disabled, build settings, etc).
+echo
+echo BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE
+echo
+echo CFLAGS  = $CFLAGS
+echo LDFLAGS = $LDFLAGS
+echo
+echo Build Tcl ............................: yes
+echo Build Tk .............................: yes
+echo Build Itcl/Itk .......................: yes
+echo Build IWidgets .......................: yes
+echo Build libregex .......................: yes
+echo Build libpng .........................: yes
+echo Build libz ...........................: yes
+echo 
+echo With Java Developer Kit support ......: $with_jdk
+echo With X11 support .....................: yes
+echo With Open GL support .................: yes
+echo 
+echo Enable run-time debugging ............: yes
+echo
+echo Build static libraries ...............: $enable_static
+echo Build shared/dynamic libraries .......: $enable_shared
+echo Build debug release ..................: no
+echo Build profile release ................: no
+echo Print verbose compilation warnings ...: no
+echo
+echo Generate doxygen documentation .......: $enable_doxygen
+echo Run benchmark ........................: no
+echo
+echo ---
+echo $0 complete, type \'make\' to begin building
+echo
