@@ -25,7 +25,6 @@ struct plot_vars {
   struct bu_vls vls;
 };
 
-extern struct dm *Plot_open();
 extern struct plot_vars head_plot_vars;
 
 #endif /* SEEN_DM_PLOT */

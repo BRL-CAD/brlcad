@@ -45,12 +45,10 @@ struct x_vars {
   struct modifiable_x_vars mvars;
 };
 
-extern struct dm *X_open();
 extern void X_configure_window_shape();
 extern void X_establish_perspective();
 extern void X_set_perspective();
 extern int X_drawString2D();
-extern struct dm dm_X;
 extern struct x_vars head_x_vars;
 
 #endif /* SEEN_DM_X */
