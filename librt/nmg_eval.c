@@ -465,9 +465,10 @@ struct nmg_bool_state *bs;
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-				if( nmg_demote_lu( lu ) )
-					rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
-				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+				if( nmg_demote_lu( lu ) == 0 )
+					nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+				else
+					loops_retained++; /* loop of single vertex */
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
@@ -476,6 +477,8 @@ struct nmg_bool_state *bs;
 			case BACTION_RETAIN_AND_FLIP:
 				loops_flipped++;
 				break;
+			default:
+				rt_bomb("nmg_eval_shell() bad BACTION\n");
 			}
 			lu = nextlu;
 		}
@@ -496,7 +499,7 @@ struct nmg_bool_state *bs;
 			if( RT_LIST_NOT_HEAD(fu, &s->fu_hd) &&
 			    nextfu == fu->fumate_p )
 				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
-			nmg_kfu( fu );		/* kill face & mate */
+			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
 			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			fu = nextfu;
 			continue;
@@ -512,10 +515,12 @@ struct nmg_bool_state *bs;
 				nmg_reverse_face( fu );
 			}
 		} else {
+			/* loops_flipped <= 0 */
 			if( loops_retained > 0 )  {
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x retained\n", fu);
 			} else {
+				nmg_pr_fu(fu, "  ");
 				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
 			}
 		}
@@ -553,9 +558,8 @@ struct nmg_bool_state *bs;
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
 			/* kill loop & mate */
-			if( nmg_demote_lu( lu ) )
-				rt_log("nmg_eval_shell() nmg_demote_lu(x%x) fail\n", lu);
-			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+			if( nmg_demote_lu( lu ) == 0 )
+				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
@@ -564,6 +568,8 @@ struct nmg_bool_state *bs;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
 			lu = nextlu;
 			continue;
+		default:
+			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 		lu = nextlu;
 	}
@@ -597,6 +603,8 @@ struct nmg_bool_state *bs;
 			nmg_mv_eu_between_shells( bs->bs_dest, s, eu );
 			eu = nexteu;
 			continue;
+		default:
+			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 		eu = nexteu;
 	}
@@ -645,6 +653,8 @@ struct nmg_bool_state *bs;
 			nmg_mv_lu_between_shells( bs->bs_dest, s, lu );
 			lu = nextlu;
 			continue;
+		default:
+			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 		lu = nextlu;
 	}
@@ -658,7 +668,7 @@ struct nmg_bool_state *bs;
 		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
 		case BACTION_KILL:
 			nmg_kvu( vu );
-	nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
+			nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		case BACTION_RETAIN:
@@ -667,6 +677,8 @@ struct nmg_bool_state *bs;
 			nmg_mv_vu_between_shells( bs->bs_dest, s, vu );
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
+		default:
+			rt_bomb("nmg_eval_shell() bad BACTION\n");
 		}
 	}
 	nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
