@@ -3,40 +3,28 @@
  *
  *  Purpose -
  *	Intersect a ray with an entire subspace full of geometry,
- *	included from another .g file, as a subordinate
+ *	possibly included from another .g file, with a subordinate
  *	instance of LIBRT.
  *
- * Adding a new solid type:
- *	Design disk record
+ *  This solid is particularly useful when instancing millions of copies
+ *  of a given complex object, such as a detailed tree.
  *
- *	define rt_submodel_internal --- parameters for solid
- *	define submodel_specific --- raytracing form, possibly w/precomuted terms
  *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- *	edit db.h add solidrec s_type define
- *	edit rtgeom.h to add rt_submodel_internal
- *	edit table.c:
- *		RT_DECLARE_INTERFACE()
- *		struct rt_functab entry
- *		rt_id_solid()
- *	edit raytrace.h to make ID_SUBMODEL, increment ID_MAXIMUM
- *	edit Cakefile to add g_submodel.c to compile
- *
- *	Then:
- *	go to /cad/libwdb and create mk_submodel() routine
- *	go to /cad/mged and create the edit support
- *
- *  Authors -
+ *  Author -
+ *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
+ *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 2000 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
 static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
