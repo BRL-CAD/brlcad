@@ -77,9 +77,12 @@ char		*def_fmt[] =
 		    "\"You missed the target\n\"",
 		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
 		};
-extern double	base2local;
+
+void				free_ospec();
+
+extern double			base2local;
 extern struct application	ap;
-extern char		local_u_name[];
+extern char			local_u_name[];
 
 void format_output (buffer, ctp)
 
@@ -174,6 +177,7 @@ int	outcom_type;	/* Type of output command */
 {
     char	*of;		/* Format for current output item */
     char	*up;
+    char	*mycopy;	/* Solely for handing to rt_free() */
     char	*uos;
     int		nm_cs;		/* Number of conversion specifications */
     outitem	*oil = OUTITEM_NULL;
@@ -181,7 +185,7 @@ int	outcom_type;	/* Type of output command */
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
 
-    uos = rt_malloc(strlen(uoutspec) + 1, "uos");
+    mycopy = uos = rt_malloc(strlen(uoutspec) + 1, "uos");
     strcpy(uos, uoutspec);
     /* Break up the format specification into pieces,
      * one per conversion specification (and, hopefully)
@@ -192,6 +196,7 @@ int	outcom_type;	/* Type of output command */
 	fprintf(stderr,
 	    "parse_fmt sees first character `%c`.  Shouldn't happen.\n",
 	    *uos);
+	rt_free(mycopy, "Copy of user's output spec");
 	return;
     }
     ++uos;
@@ -199,12 +204,14 @@ int	outcom_type;	/* Type of output command */
     {
 	nm_cs = 0;
 	/* Allocate storage for the next item in the output list */
-	if  ((oip = getmem(outitem)) == OUTITEM_NULL)
+	if  ((oip = (outitem *) rt_malloc(sizeof(outitem), "output item"))
+		== OUTITEM_NULL)
 	{
 	    fflush(stdout);
 	    fprintf(stderr, "parse_fmt(): Ran out of memory\n");
 	    exit (1);
 	}
+	oip -> next = OUTITEM_NULL;
 
 	for (up = uos; *uos != '"'; ++uos)
 	{
@@ -271,6 +278,7 @@ int	outcom_type;	/* Type of output command */
 	{
 	    fprintf(stderr,
 		"Error: Fewer output items than conversion specs\n");
+	    rt_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
 	for (up = uos; (! isspace(*uos)) && (*uos != '\0'); ++uos)
@@ -290,6 +298,7 @@ int	outcom_type;	/* Type of output command */
 	if (vtp -> name == '\0')
 	{
 	    fprintf(stderr, "Error: Invalid output item '%s'\n", up);
+	    rt_free(mycopy, "Copy of user's output spec");
 	    return;
 	}
     }
@@ -299,6 +308,7 @@ int	outcom_type;	/* Type of output command */
     if (*uos != '\0')
     {
 	fprintf(stderr, "Error: More output items than conversion specs\n");
+	rt_free(mycopy, "Copy of user's output spec");
 	return;
     }
 
@@ -307,19 +317,21 @@ int	outcom_type;	/* Type of output command */
     /* We are now satisfied that oil is a valid list of output items,
      * so it's time to install it as such
      */
+    free_ospec(oi_list[outcom_type]);
     oi_list[outcom_type] = oil;
 
-    /* NOTICE - The previous contents of oi_list[outcom_type] should be
-     *		freed before oil is installed there.  We're
-     *		currently wasting memory.
-     */
+    rt_free(mycopy, "Copy of user's output spec");
 }
+
 void default_ospec ()
 {
     int	i;
 
     for (i = 0; i < FMT_NONE; ++i)
+    {
+	oi_list[i] = OUTITEM_NULL;
 	parse_fmt(def_fmt[i], i);
+    }
 }
 
 void show_ospec (oil)
@@ -749,4 +761,22 @@ com_table	*ctp;
     interact(sfPtr);
     printf("\n");
     fclose(sfPtr);
+}
+
+void free_ospec (oil)
+
+outitem		*oil;		/* List of output items */
+
+{
+    outitem	*next = oil;	/* Pointer to next output item */
+    outitem	*oip;		/* Pointer to output item to free */
+
+    while (next != OUTITEM_NULL)
+    {
+	oip = next;
+	next = oip -> next;
+	rt_free(oip -> format, "outitem.format");
+	if (oip != oil)
+	    rt_free((char *) oip, "outitem");
+    }
 }
