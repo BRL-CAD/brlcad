@@ -177,6 +177,10 @@ int		argc;
 char		*argv[];
 {
 	static char	cmd[] = "zoom 0.5\n";
+	if( argc < 2 )  {
+		Tcl_SetResult(interp, "insufficient args", TCL_STATIC);
+		return TCL_ERROR;
+	}
 	if( atoi(argv[1]) != 0 )
 		return Tcl_Eval( interp, cmd );
 	return TCL_OK;
@@ -195,6 +199,10 @@ int		argc;
 char		*argv[];
 {
 	static char	cmd[] = "zoom 2\n";
+	if( argc < 2 )  {
+		Tcl_SetResult(interp, "insufficient args", TCL_STATIC);
+		return TCL_ERROR;
+	}
 	if( atoi(argv[1]) != 0 )
 		return Tcl_Eval( interp, cmd );
 	return TCL_OK;
@@ -1575,6 +1583,11 @@ char **argv;
 {
     register struct funtab *ftp;
     char *keyword;
+
+	if( argc < 2 )  {
+		Tcl_SetResult(interp, "apropos: insufficient args", TCL_STATIC);
+		return TCL_ERROR;
+	}
 
     keyword = argv[1];
     if (keyword == NULL)
