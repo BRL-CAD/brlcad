@@ -304,7 +304,7 @@ char	**argv;
 	if( argc < 2 )  {
 		/* get the path */
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
-			   "Enter the path (space is delimiter): ", (char *)NULL);
+			   "Enter the path: ", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
@@ -314,14 +314,34 @@ char	**argv;
 	  return TCL_OK;
 
 	pos_in = 1;
-	objpos = argc-1;
 
-	/* build directory pointer array for desired path */
-	for(i=0; i<objpos; i++) {
-	  if( (obj[i] = db_lookup( dbip, argv[pos_in+i], LOOKUP_NOISY )) == DIR_NULL){
-	    (void)signal( SIGINT, SIG_IGN );
-	    return TCL_ERROR;
-	  }
+	if( argc == 2 && strchr( argv[1], '/' ) )
+	{
+		char *tok;
+		objpos = 0;
+
+		tok = strtok( argv[1], "/" );
+		while( tok )
+		{
+			if( (obj[objpos++] = db_lookup( dbip, tok, LOOKUP_NOISY )) == DIR_NULL)
+			{
+				(void)signal( SIGINT, SIG_IGN );
+				return TCL_ERROR;
+			}
+			tok = strtok( (char *)NULL, "/" );
+		}
+	}
+	else
+	{
+		objpos = argc-1;
+
+		/* build directory pointer array for desired path */
+		for(i=0; i<objpos; i++) {
+		  if( (obj[i] = db_lookup( dbip, argv[pos_in+i], LOOKUP_NOISY )) == DIR_NULL){
+		    (void)signal( SIGINT, SIG_IGN );
+		    return TCL_ERROR;
+		  }
+		}
 	}
 
 #if 0
@@ -349,8 +369,6 @@ char	**argv;
 /*   	F _ C O P Y E V A L : copys an evaluated solid
  */
 
-static union record saverec;
-
 int
 f_copyeval(clientData, interp, argc, argv)
 ClientData clientData;
@@ -365,6 +383,7 @@ char **argv;
 	mat_t	start_mat;
 	int	id;
 	int	i;
+	int	endpos;
 	int status = TCL_OK;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -373,8 +392,8 @@ char **argv;
 	if( argc < 3 )
 	{
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
-			   "Enter new_solid_name and full path to old_solid ",
-			   "(seperate path components with spaces not /)\n", (char *)NULL);
+			   "Enter new_solid_name and full path to old_solid\n",
+			   (char *)NULL);
 	  return TCL_ERROR;
 	}
 
@@ -393,17 +412,38 @@ char **argv;
 	  return TCL_OK;
 
 	/* build directory pointer array for desired path */
-	for(i=2; i<argc; i++)
+	if( argc == 3 && strchr( argv[2], '/' ) )
 	{
-	  if( (obj[i-2] = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL){
-	    (void)signal( SIGINT, SIG_IGN );
-	    return TCL_ERROR;
-	  }
+		char *tok;
+
+		endpos = 0;
+
+		tok = strtok( argv[2], "/" );
+		while( tok )
+		{
+			if( (obj[endpos++] = db_lookup( dbip, tok, LOOKUP_NOISY )) == DIR_NULL)
+			{
+				(void)signal( SIGINT, SIG_IGN );
+				return TCL_ERROR;
+			}
+			tok = strtok( (char *)NULL, "/" );
+		}
+	}
+	else
+	{
+		for(i=2; i<argc; i++)
+		{
+		  if( (obj[i-2] = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL){
+		    (void)signal( SIGINT, SIG_IGN );
+		    return TCL_ERROR;
+		  }
+		}
+		endpos = argc - 2;
 	}
 
 	/* Make sure that final component in path is a solid */
 	BU_INIT_EXTERNAL( &external );
-	if( db_get_external( &external , obj[argc-3] , dbip ) )
+	if( db_get_external( &external , obj[endpos-1] , dbip ) )
 	{
 	  db_free_external( &external );
 	  (void)signal( SIGINT, SIG_IGN );
@@ -467,8 +507,8 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp=db_diradd( dbip, argv[1], -1, obj[argc-3]->d_len, obj[argc-3]->d_flags)) == DIR_NULL ||
-	    db_alloc( dbip, dp, obj[argc-3]->d_len ) < 0 )
+	if( (dp=db_diradd( dbip, argv[1], -1, obj[endpos-1]->d_len, obj[endpos-1]->d_flags)) == DIR_NULL ||
+	    db_alloc( dbip, dp, obj[endpos-1]->d_len ) < 0 )
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
@@ -498,6 +538,33 @@ char **argv;
 /* current path being traced */
 extern struct directory *path[MAX_LEVELS];
 
+HIDDEN void
+Do_trace( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	int			*pathpos;
+	int			*flag;
+	matp_t			old_xlate;
+	mat_t			new_xlate;
+	struct directory	*nextdp;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	pathpos = (int *)user_ptr1;
+	old_xlate = (matp_t)user_ptr2;
+	flag = (int *)user_ptr3;
+
+	bn_mat_mul( new_xlate, old_xlate, comb_leaf->tr_l.tl_mat );
+	if( (nextdp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+		return;
+
+	trace( nextdp, (*pathpos)+1, new_xlate, *flag );
+}
+
 void
 trace( dp, pathpos, old_xlate, flag)
 register struct directory *dp;
@@ -508,6 +575,7 @@ int flag;
 
 	struct directory *nextdp;
 	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 	mat_t new_xlate;
 	int nparts, i, k;
 	int id;
@@ -530,25 +598,16 @@ int flag;
 	  return;
 	}
 
-	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
+	if( dp->d_flags & DIR_COMB )
+	{
+		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+			READ_ERR_return;
 
-	if( record.u_id == ID_COMB ) {
-		nparts = dp->d_len-1;
-		for(i=1; i<=nparts; i++) {
-			mat_t	xmat;
-
-			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
-			path[pathpos] = dp;
-			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
-				continue;
-
-			rt_mat_dbmat( xmat, record.M.m_mat );
-			bn_mat_mul(new_xlate, old_xlate, xmat);
-
-			/* Recursive call */
-			trace(nextdp, pathpos+1, new_xlate, flag);
-
-		}
+		path[pathpos] = dp;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		db_tree_funcleaf( dbip, comb, comb->tree, Do_trace,
+			(genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)&flag );
+		rt_comb_ifree( &intern );
 		return;
 	}
 
@@ -569,18 +628,17 @@ int flag;
 	bn_mat_copy(xform, old_xlate);
 	prflag = 1;
 
-	if(flag == CPEVAL) { 
-		/* save this record */
-		if( db_get( dbip, dp, &saverec, 0, 1) < 0 )  READ_ERR_return;
+	if(flag == CPEVAL)
 		return;
-	}
 
 	/* print the path */
 	for(k=0; k<pathpos; k++)
 	  Tcl_AppendResult(interp, "/", path[k]->d_namep, (char *)NULL);
 
 	if(flag == LISTPATH) {
-	  Tcl_AppendResult(interp, "/", record.s.s_name, "\n", (char *)NULL);
+	  bu_vls_printf( &str, "/%16s:\n", dp->d_namep );
+	  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	  bu_vls_free(&str);
 	  return;
 	}
 
@@ -597,6 +655,7 @@ int flag;
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_functab[id].ft_ifree( &intern );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
+	bu_vls_free(&str);
 }
 
 /*
@@ -936,6 +995,25 @@ char **argv;
 	return push_error ? TCL_ERROR : TCL_OK;
 }
 
+HIDDEN void
+Do_identitize( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	struct directory *dp;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	bn_mat_idn( comb_leaf->tr_l.tl_mat );
+	if( (dp = db_lookup( dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
+		return;
+
+	identitize( dp );
+}
+
 /*
  *			I D E N T I T I Z E ( ) 
  *
@@ -948,30 +1026,25 @@ struct directory *dp;
 {
 
 	struct directory *nextdp;
-	int nparts, i;
-#if 0
-	mat_t	identity;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
 
-	bn_mat_idn( identity );
-#endif
-	if( db_get( dbip, dp, &record, 0, 1) < 0 )  READ_ERR_return;
-	if( record.u_id == ID_COMB ) {
-		nparts = dp->d_len-1;
-		for(i=1; i<=nparts; i++) {
-			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
-
-			rt_dbmat_mat( record.M.m_mat, identity );
-			if( db_put( dbip, dp, &record, i, 1 ) < 0 )  WRITE_ERR_return;
-
-			if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
-				continue;
-			/* Recursive call */
-			identitize( nextdp );
-		}
+	if( dp->d_flags & DIR_SOLID )
 		return;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+		READ_ERR_return;
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if( comb->tree )
+	{
+		db_tree_funcleaf( dbip, comb, comb->tree, Do_identitize,
+			(genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL );
+		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		{
+			Tcl_AppendResult(interp, "Cannot write modified combination (", dp->d_namep,
+				") to database\n", (char *)NULL );
+			return;
+		}
 	}
-	/* bottom position */
-	return;
 }
 
 static void
