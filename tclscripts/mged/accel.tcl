@@ -22,11 +22,11 @@
 #                               R C C - C A P
 #
 #     Generate a cap on a specified RCC 
-#     Default end is "v"; Default height creates spherical cap
-#
+#     Default end is "b"; Default height creates spherical cap
+#     Assume (A=B=C=D) || (A=B && C=D)
 #
 proc rcc-cap {args} {
-    set usage "Usage: rcc-cap rccname newname \[height\] \[v|h\] \n \
+    set usage "Usage: rcc-cap rccname newname \[height\] \[b|t\] \n \
 	       \t(create a cap at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 2 || $argc > 4} {
@@ -38,11 +38,11 @@ proc rcc-cap {args} {
 	foreach {ax ay az} [lindex [db get $rccname A] 0] {}
 	set amag [expr sqrt($ax*$ax + $ay*$ay + $az*$az)]
 	set height $amag
-	set end v
+	set end b
     } elseif {$argc == 3} {
-	if { [regexp {^[0-9]+$} [lindex $args 2]]} {
+	if { [regexp {^[0-9]+.*[0-9]*$} [lindex $args 2]]} {
 	    set height [lindex $args 2]
-            set end v
+            set end b
 	} else {
 	    foreach {ax ay az} [lindex [db get $rccname A] 0] {}
 	    set amag [expr sqrt($ax*$ax + $ay*$ay + $az*$az)]
@@ -53,16 +53,16 @@ proc rcc-cap {args} {
        set height [lindex $args 2]
        set end [lindex $args 3]
     }
-  #Choices for $end are either "v" (vertex) or "h" (height)
-    if {$end != "v" && $end != "h"} {
-	error "bad end '$end' : must be v or h"
+  #Choices for $end are either "b" (base) or "t" (top)
+    if {$end != "b" && $end != "t"} {
+	error "bad end '$end' : must be b or t"
     }
   #Set Variables
     set hv [eval db get $rccname H]
     set uhv [eval vunitize $hv]
     set ellheight [eval vscale {$uhv} $height]
     set vertex [lindex [db get $rccname V] 0]
-    if {$end == "h"} {
+    if {$end == "t"} {
 	set vertex [eval vadd2 {$vertex} $hv]
         set vec1 C
         set vec2 D  
@@ -83,11 +83,11 @@ proc rcc-cap {args} {
 #                               R C C - T G C
 #
 #   Generate a TGC with a specified apex (ptx pty ptz) at a specified end of
-#   a specified RCC; Default end is "v"
+#   a specified RCC; Default end is "b"
 #
 #
 proc rcc-tgc {args} {
-    set usage "Usage: rcc-tgc rccname newname x y z \[v|h\] \n   \
+    set usage "Usage: rcc-tgc rccname newname x y z \[b|t\] \n   \
                \t(create a tgc with the specified apex at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 5 || $argc > 6} {
@@ -99,16 +99,16 @@ proc rcc-tgc {args} {
     set pty [lindex $args 3]
     set ptz [lindex $args 4]
     if {$argc == 5} {
-	set end v
+	set end b
     } else {
 	set end [lindex $args 5]
     }
-  #Choices for $end are either "v" (vertex) or "h" (height)  
-    if {$end != "v" && $end != "h"} {
-	error "bad end '$end' : must be v or h" 
+  #Choices for $end are either "b" (base) or "t" (top)  
+    if {$end != "b" && $end != "t"} {
+	error "bad end '$end' : must be b or t" 
     }
   #Set Variables
-    if {$end == "h"} {
+    if {$end == "t"} {
 	set vec1 C
 	set vec2 D
 	set vertex [vadd2 [lindex [db get $rccname V] 0] [lindex [db get $rccname H] 0]]
@@ -200,12 +200,12 @@ proc rcc-tor {args} {
 #
 #  Generate a flange at a specified base of a specified RCC
 #  The flange created is a region made up of a TOR and an RCC
-#  thickness is the thickness of the TOR; Default end is "v"
+#  thickness is the thickness of the TOR; Default end is "b"
 #
 #
 proc rcc-blend {args} {
-    set usage "Usage: rcc-blend rccname newname thickness \[v|h\] \n \
-	       \t(create a flange at an end of an rcc)"
+    set usage "Usage: rcc-blend rccname newname thickness \[b|t\] \n \
+	       \t(create a blend at an end of an rcc)"
     set argc [llength $args]
     if {$argc < 3 || $argc > 4} {
 	error "$usage"
@@ -214,13 +214,13 @@ proc rcc-blend {args} {
     set newname [lindex $args 1]
     set thickness [lindex $args 2]
     if {$argc == 3} {
-	set end v
+	set end b
     } else {
 	set end [lindex $args 3]
     }
-  #Choices for $end are either "v" (vertex) or "h" (height)
-    if {$end != "v" && $end != "h"} {
-	error "bad end '$end': must be v or h"
+  #Choices for $end are either "b" (base) or "t" (top)
+    if {$end != "b" && $end != "t"} {
+	error "bad end '$end': must be b or t"
     }
   #Get RCC coordinates
     foreach {rvx rvy rvz} [lindex [db get $rccname1 V] 0] {}
@@ -230,7 +230,7 @@ proc rcc-blend {args} {
     set amag [expr $thickness + (sqrt($rax*$rax + $ray*$ray + $raz*$raz))]
     set hmag [expr sqrt($rhx*$rhx + $rhy*$rhy + $rhz*$rhz)]
     set num [expr $hmag-$thickness] 
-    if {$end == "h"} {
+    if {$end == "t"} {
 	foreach coord {vx vy vz} vval {$rvx $rvy $rvz} hval {$rhx $rhy $rhz} {
 	    set t$coord [expr $vval + $hval * $num/$hmag]
             set r$coord [expr $vval + $num/$hmag * $hval]
@@ -393,7 +393,7 @@ proc rpp-arch {args} {
 #
 #
 proc sph-part {args} {
-    set usage "Usage: sph-part sph1 sph2 newname \n \
+    set usage "Usage: sph-part sph1name sph2name newname \n \
 	       \t(create a part from two sph's)"
     set argc [llength $args]
     if {$argc < 3 || $argc > 3} {
