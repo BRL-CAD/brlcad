@@ -629,11 +629,11 @@ finish:
 			}
 			if( (ap = bu_avs_get( &ip->idb_avs, "giftmater" )) != NULL )  {
 				comb->GIFTmater = atoi( ap );
+				bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
 			}
 			if( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
 				comb->los = atoi( ap );
 			}
-			
 		} else {
 			bu_log("unable to parse 'region' attribute '%s'\n", ap);
 		}
