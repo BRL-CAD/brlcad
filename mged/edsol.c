@@ -1013,6 +1013,16 @@ mat_t		mat;
 			*strp = "C";
 			break;
 		}
+	case ID_ARS:
+		{
+			register struct rt_ars_internal *ars =
+				(struct rt_ars_internal *)es_int.idb_ptr;
+			RT_ARS_CK_MAGIC( ars );
+
+			VMOVE( mpt , ars->curves[0] );
+			*strp = "V";
+			break;
+		}
 	case ID_NMG:
 		{
 			register struct model *m =
@@ -1184,6 +1194,7 @@ init_sedit()
 	case ID_BSPLINE:
 	case ID_NMG:
 	case ID_GRIP:
+	case ID_ARS:
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
@@ -1469,6 +1480,8 @@ sedit()
 		/* move face through definite point */
 		if(inpara) {
 			arb = (struct rt_arb_internal *)es_int.idb_ptr;
+			RT_ARB_CK_MAGIC( arb );
+
 			/* apply es_invmat to convert to real model space */
 			MAT4X3PNT(work,es_invmat,es_para);
 			/* change D of planar equation */
@@ -1480,6 +1493,7 @@ sedit()
 
 	case ECMD_ARB_SETUP_ROTFACE:
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
 
 		/* check if point 5 is in the face */
 		pnt5 = 0;
@@ -1540,6 +1554,7 @@ sedit()
 		/* rotate a GENARB8 defining plane through a fixed vertex */
 
 		arb = (struct rt_arb_internal *)es_int.idb_ptr;
+		RT_ARB_CK_MAGIC( arb );
 
 		if(inpara) {
 			static mat_t invsolr;
@@ -2078,6 +2093,7 @@ CONST vect_t	mousevec;
 		{
 			struct rt_arb_internal *arb=
 				(struct rt_arb_internal *)es_int.idb_ptr;
+			RT_ARB_CK_MAGIC( arb );
 
 			VMOVE( temp , arb->pt[es_menu] );
 		}
@@ -2108,7 +2124,16 @@ CONST vect_t	mousevec;
 		/* change D of planar equation */
 		es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
 		/* calculate new vertices, put in record as vectors */
-		calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+		if( new_way )
+		{
+			struct rt_arb_internal *arb=
+				(struct rt_arb_internal *)es_int.idb_ptr;
+
+			RT_ARB_CK_MAGIC( arb );
+			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
+		}
+		else
+			calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
 		sedraw = 1;
 		return;
 
@@ -3065,6 +3090,14 @@ init_objedit()
 	}
 	RT_CK_DB_INTERNAL( &es_int );
 
+	if( new_way )
+	{
+		char *strp="";
+		get_solid_keypoint( es_keypoint , &strp , &es_int , es_mat );
+	}
+	else
+	{
+
 	/* XXX hack:  get first granule into es_rec (ugh) */
 	bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
 
@@ -3127,7 +3160,7 @@ init_objedit()
 		printf("init_objedit() using %g,%g,%g as keypoint\n",
 			V3ARGS(es_keypoint) );
 	}
-
+	}
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat, illump->s_last-1 );
 
@@ -3135,7 +3168,8 @@ init_objedit()
 	mat_inv( es_invmat, es_mat );
 
 	/* XXX Zap out es_rec, nobody should look there any further */
-	bzero( (char *)&es_rec, sizeof(es_rec) );
+	if( !new_way )
+		bzero( (char *)&es_rec, sizeof(es_rec) );
 }
 
 void
@@ -3227,25 +3261,49 @@ char	*argv[];
 {
 	short int i;
 	vect_t tempvec;
+	struct rt_arb_internal *arb;
 
 	if( state != ST_S_EDIT ){
 		(void)printf("Eqn: must be in solid edit\n");
 		return CMD_BAD;
 	}
-	else if( es_rec.s.s_type != GENARB8 ){
+	if( new_way )
+	{
+		if( es_int.idb_type != ID_ARB8 )
+		{
+			(void)printf("Eqn: type must be GENARB8\n");
+			return CMD_BAD;
+		}
+	}
+	else
+	{
+	if( es_rec.s.s_type != GENARB8 ){
 		(void)printf("Eqn: type must be GENARB8\n");
 		return CMD_BAD;
 	}
-	else if( es_edflag != ECMD_ARB_ROTATE_FACE ){
+	}
+	if( es_edflag != ECMD_ARB_ROTATE_FACE ){
 		(void)printf("Eqn: must be rotating a face\n");
 		return CMD_BAD;
 	}
+
+	arb = (struct rt_arb_internal *)es_int.idb_ptr;
+	RT_ARB_CK_MAGIC( arb );
 
 	/* get the A,B,C from the command line */
 	for(i=0; i<3; i++)
 		es_peqn[es_menu][i]= atof(argv[i+1]);
 	VUNITIZE( &es_peqn[es_menu][0] );
 
+	if( new_way )
+	{
+		VMOVE( tempvec , arb->pt[fixv] );
+		es_peqn[es_menu][3]=VDOT( es_peqn[es_menu], tempvec );
+		if( rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol ) )
+			return CMD_BAD;
+	}
+	else
+	{
 	/* set D of planar equation to anchor at fixed vertex */
 	if( fixv ){				/* not the solid vertex */
 		VADD2( tempvec, &es_rec.s.s_values[fixv*3], &es_rec.s.s_values[0] );
@@ -3256,6 +3314,7 @@ char	*argv[];
 	es_peqn[es_menu][3]=VDOT( &es_peqn[es_menu][0], tempvec );
 	
 	calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
+	}
 
 	/* draw the new version of the solid */
 	replot_editing_solid();
@@ -3840,7 +3899,19 @@ struct rt_db_internal	*ip;
 		break;
 
 	case ID_ARS:
-		MAT4X3PNT(pos_view, xform, es_rec.s.s_values);
+		if( new_way )
+		{
+			register struct rt_ars_internal *ars=
+				(struct rt_ars_internal *)es_int.idb_ptr;
+
+			RT_ARS_CK_MAGIC( ars );
+
+			MAT4X3PNT(pos_view, xform, ars->curves[0] )
+		}
+		else
+		{
+			MAT4X3PNT(pos_view, xform, es_rec.s.s_values)
+		}
 		POINT_LABEL( pos_view, 'V' );
 		break;
 
