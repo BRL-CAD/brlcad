@@ -45,6 +45,7 @@ struct val {
 
 void	do_cell(), draw_rect(), pnorms(), do_light();
 
+int
 main(argc, argv)
 char	**argv;
 {
@@ -106,6 +107,7 @@ char	**argv;
 	mk_memb( stdout, "l3", identity, UNION );
 	mk_memb( stdout, "l4", identity, UNION );
 #endif
+	return 0;
 }
 
 void

@@ -74,7 +74,7 @@ char	**argv;
 	int	quant;
 	char	name[64];
 	vect_t	pos, aim;
-	char	white[3];
+	unsigned char	white[3];
 	int	n;
 	double	height, maxheight, minheight;
 	struct wmember head;
