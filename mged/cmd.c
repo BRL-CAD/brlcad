@@ -276,7 +276,6 @@ static struct cmdtab cmdtab[] = {
 	{"l_muves", f_l_muves},
 	{"labelvert", f_labelvert},
 	{"left",		bv_left},
-	{"listeval", cmd_pathsum},
 	{"lm", cmd_lm},
 #ifdef DM_X
 	{"loadtk", cmd_tk},
@@ -292,6 +291,7 @@ static struct cmdtab cmdtab[] = {
 	{"mater", f_mater},
 	{"matpick", f_matpick},
 	{"memprint", f_memprint},
+	{"listeval", cmd_pathsum},
 #ifdef DM_X
 	{"mged_update", f_update},
 	{"mged_wait", f_wait},
