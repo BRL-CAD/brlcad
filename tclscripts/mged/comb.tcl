@@ -84,35 +84,22 @@ contain many different materials." } }
 	    -menu $top.nameMB.m -indicatoron 1
     hoc_register_data $top.nameMB "Combination Selection"\
 	    { { summary "This pops up a menu of methods for selecting
-a combination. At the moment there are two methods.
-The first brings up a listbox containing the combinations
-currently being displayed in the geometry window. The
-user can select from among the combinations listed here.
-The second selection method allows the user to use the
-mouse to fire a ray at the combination of interest. If
-only one combination is hit, that combination is selected.
-If nothing is hit the user can simply fire another ray,
-perhaps taking better aim :-). If more than one combination
-is hit, a listbox of the hit combinations is presented
-as with the first selection method. Note - When selecting
-items from a listbox, a left buttonpress highlights the combination
-in question until the button is released. To select a combination,
-double click with the left mouse button." } }
+a combination name." } }
     menu $top.nameMB.m -title "Combination Selection Method" -tearoff 0
-    $top.nameMB.m add command -label "Select from all displayed"\
-	    -command "winset \$mged_gui($id,active_dm); build_comb_menu_all"
-    hoc_register_menu_data "Combination Selection Method" "Select from all displayed"\
+    $top.nameMB.m add command -label "Select From All Displayed"\
+	    -command "winset \$mged_gui($id,active_dm); build_comb_menu_all_displayed"
+    hoc_register_menu_data "Combination Selection Method" "Select From All Displayed"\
 	    "Select Combination From All Displayed"\
 	    { { summary "This pops up a listbox containing the combinations
 currently being displayed in the geometry window. The
 user can select from among the combinations listed here.
-Note - When selecting items from a listbox, a left buttonpress
+Note - When selecting items from this listbox, a left buttonpress
 highlights the combination in question until the button is
 released. To select a combination, double click with the left
 mouse button." } }
-    $top.nameMB.m add command -label "Select along ray"\
+    $top.nameMB.m add command -label "Select Along Ray"\
 	    -command "winset \$mged_gui($id,active_dm); set mouse_behavior c"
-    hoc_register_menu_data "Combination Selection Method" "Select along ray"\
+    hoc_register_menu_data "Combination Selection Method" "Select Along Ray"\
 	    "Select Combination Along Ray"\
 	    { { summary "This method allows the user to use the
 mouse to fire a ray at the combination of interest.
@@ -121,10 +108,34 @@ selected. If nothing is hit the user can simply fire
 another ray, perhaps taking better aim :-). If more
 than one combination is hit, a listbox of the hit
 combinations is presented. Note - When selecting
-items from a listbox, a left buttonpress highlights
+items from this listbox, a left buttonpress highlights
 the combination in question until the button is
 released. To select a combination, double click with
 the left mouse button." } }
+    $top.nameMB.m add command -label "Select From All"\
+	    -command "build_comb_menu_all"
+    hoc_register_menu_data "Combination Selection Method" "Select From All"\
+	    "Select Combination From All"\
+	    { { summary "This pops up a listbox containing all the
+combinations in the database. The user can select
+from among the combinations listed here. Note - To select
+a combination, double click with the left mouse button." } }
+    $top.nameMB.m add command -label "Select From All Regions"\
+	    -command "build_comb_menu_all_regions"
+    hoc_register_menu_data "Combination Selection Method" "Select From All Regions"\
+	    "Select Combination From All Regions"\
+	    { { summary "This pops up a listbox containing all the
+regions in the database. The user can select
+from among the regions listed here. Note - To select
+a region, double click with the left mouse button." } }
+    $top.nameMB.m add command -label "Autoname"\
+	    -command "set comb_control($id,name) \[_mged_make_name comb@\]"
+    hoc_register_menu_data "Combination Selection Method" "Autoname"\
+	    "Automatically generate a combination name."\
+	    { { summary "This automatically generates a combination
+name of the form 'comb@' where '@' represents
+the counter used by make_name." }
+              { see_also "make_name" } }
 
     label $top.idL -text "Region Id" -anchor e
     set hoc_data { { summary "The region id (i.e. item code) is a number
