@@ -31,7 +31,7 @@
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
 	pixborder mst texturescale pixclump pixcount imgdims remapid \
-	wavelet pixsubst terrain ttcp dsp_add
+	wavelet pixsubst terrain ttcp dsp_add morphedit.tcl
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -48,6 +48,8 @@
 /* NOTE that LIBPNG needs to come after the BRL-CAD products,
  * so that e.g. /usr/local/lib/libbn isn't taken over ours.
  */
+
+all&: STATIC_PRODUCTS PRODUCTS
 
 pixsubst: pixsubst.o
 	CC LDFLAGS -o pixsubst pixsubst.o
