@@ -50,6 +50,7 @@ extern void set_scroll();   /* defined in set.c */
  ************************************************************************/
 
 static void sl_tol();
+static void sl_atol();
 static void sl_rrtol();
 static void sl_artol();
 static void sl_itol();
@@ -67,9 +68,9 @@ struct scroll_item sl_menu[] = {
 };
 
 struct scroll_item sl_abs_menu[] = {
-	{ "Xslew",	sl_tol,		0,	"aX" },
-	{ "Yslew",	sl_tol,		1,	"aY" },
-	{ "Zslew",	sl_tol,		2,	"aZ" },
+	{ "Xslew",	sl_atol,	0,	"aX" },
+	{ "Yslew",	sl_atol,	1,	"aY" },
+	{ "Zslew",	sl_atol,	2,	"aZ" },
 	{ "Scale",	sl_tol,		3,	"aS" },
 	{ "Xrot",	sl_artol,	4,	"ax" },
 	{ "Yrot",	sl_artol,	5,	"ay" },
@@ -204,6 +205,27 @@ double				val;
 }
 
 static void
+sl_atol( mptr, val )
+register struct scroll_item     *mptr;
+double				val;
+{
+  struct bu_vls vls;
+
+  if( val < -SL_TOL )   {
+    val += SL_TOL;
+  } else if( val > SL_TOL )   {
+    val -= SL_TOL;
+  } else {
+    val = 0.0;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*Viewscale*base2local);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+}
+
+static void
 sl_rrtol( mptr, val )
 register struct scroll_item *mptr;
 double val;
@@ -324,7 +346,11 @@ int y_top;
   scroll_top = y_top;
   y = y_top;
 
+#if 1
+  dmp->dm_setLineAttr(dmp, mged_variables.linewidth, 0);
+#else
   dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+#endif
 
   for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
     ++second_menu;
@@ -337,10 +363,22 @@ int y_top;
 	  f = (double)dv_xadc / 2047.0;
 	else {
 	  if(EDIT_TRAN && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
-	      f = edit_rate_tran[X];
-	    else
-	      f = edit_absolute_tran[X];
+	    switch(mged_variables.coords){
+	    case 'm':
+	    case 'o':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_model_tran[X];
+	      else
+		f = edit_absolute_model_tran[X];
+	      break;
+	    case 'v':
+	    default:
+	      if(mged_variables.rateknobs)
+		f = edit_rate_view_tran[X];
+	      else
+		f = edit_absolute_view_tran[X];
+	      break;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
@@ -365,10 +403,21 @@ int y_top;
 	  f = (double)dv_yadc / 2047.0;
 	else {
 	  if(EDIT_TRAN && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
-	      f = edit_rate_tran[Y];
-	    else
-	      f = edit_absolute_tran[Y];
+	    switch(mged_variables.coords){
+	    case 'm':
+	    case 'o':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_model_tran[Y];
+	      else
+		f = edit_absolute_model_tran[Y];
+	      break;
+	    case 'v':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_view_tran[Y];
+	      else
+		f = edit_absolute_view_tran[Y];
+	      break;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
@@ -393,10 +442,21 @@ int y_top;
 	  f = (double)dv_1adc / 2047.0;
 	else {
 	  if(EDIT_TRAN && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
-	      f = edit_rate_tran[Z];
-	    else
-	      f = edit_absolute_tran[Z];
+	    switch(mged_variables.coords){
+	    case 'm':
+	    case 'o':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_model_tran[Z];
+	      else
+		f = edit_absolute_model_tran[Z];
+	      break;
+	    case 'v':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_view_tran[Z];
+	      else
+		f = edit_absolute_view_tran[Z];
+	      break;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
@@ -429,9 +489,9 @@ int y_top;
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
 	    if(mged_variables.rateknobs)
-	      f = rate_zoom;
+	      f = rate_scale;
 	    else
-	      f = absolute_zoom;
+	      f = absolute_scale;
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
 	  }
@@ -442,10 +502,25 @@ int y_top;
 	  f = (double)dv_distadc / 2047.0;
 	else {
 	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
-	      f = edit_rate_rotate[X] / RATE_ROT_FACTOR;
-	    else
-	      f = edit_absolute_rotate[X] / ABS_ROT_FACTOR;
+	    switch(mged_variables.coords){
+	    case 'm':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+	    case 'o':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
+	    case 'v':
+	    default:
+	      if(mged_variables.rateknobs)
+		f = edit_rate_view_rotate[X] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_view_rotate[X] / ABS_ROT_FACTOR;
+	      break;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
@@ -455,7 +530,10 @@ int y_top;
 	      else
 		f = rate_rotate[X] / RATE_ROT_FACTOR;
 	    }else{
-	      f = absolute_rotate[X] / ABS_ROT_FACTOR;
+	      if(mged_variables.coords == 'm')
+		f = absolute_model_rotate[X] / ABS_ROT_FACTOR;
+	      else
+		f = absolute_rotate[X] / ABS_ROT_FACTOR;
 	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
@@ -468,10 +546,27 @@ int y_top;
 			   (char *)NULL);
 	else {
 	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
-	      f = edit_rate_rotate[Y] / RATE_ROT_FACTOR;
-	    else
-	      f = edit_absolute_rotate[Y] / ABS_ROT_FACTOR;
+	    switch(mged_variables.coords){
+	    case 'm':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_model_rotate[Y] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_model_rotate[Y] / ABS_ROT_FACTOR;
+	      break;
+	    case 'o':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_object_rotate[Y] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_object_rotate[Y] / ABS_ROT_FACTOR;
+	      break;
+	    case 'v':
+	    default:
+	      if(mged_variables.rateknobs)
+		f = edit_rate_view_rotate[Y] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_view_rotate[Y] / ABS_ROT_FACTOR;
+	      break;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
@@ -481,7 +576,10 @@ int y_top;
 	      else
 		f = rate_rotate[Y] / RATE_ROT_FACTOR;
 	    }else{
-	      f = absolute_rotate[Y] / ABS_ROT_FACTOR;
+	      if(mged_variables.coords == 'm')
+		f = absolute_model_rotate[Y] / ABS_ROT_FACTOR;
+	      else
+		f = absolute_rotate[Y] / ABS_ROT_FACTOR;
 	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
@@ -494,10 +592,27 @@ int y_top;
 			   (char *)NULL);
 	else {
 	  if(EDIT_ROTATE && mged_variables.transform == 'e'){
-	    if(mged_variables.rateknobs)
-	      f = edit_rate_rotate[Z] / RATE_ROT_FACTOR;
-	    else
-	      f = edit_absolute_rotate[Z] / ABS_ROT_FACTOR;
+	    switch(mged_variables.coords){
+	    case 'm':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_model_rotate[Z] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_model_rotate[Z] / ABS_ROT_FACTOR;
+	      break;
+	    case 'o':
+	      if(mged_variables.rateknobs)
+		f = edit_rate_object_rotate[Z] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_object_rotate[Z] / ABS_ROT_FACTOR;
+	      break;
+	    case 'v':
+	    default:
+	      if(mged_variables.rateknobs)
+		f = edit_rate_view_rotate[Z] / RATE_ROT_FACTOR;
+	      else
+		f = edit_absolute_view_rotate[Z] / ABS_ROT_FACTOR;
+	      break;
+	    }
 
 	    dmp->dm_setColor(dmp, DM_WHITE, 1);
 	  }else{
@@ -507,7 +622,10 @@ int y_top;
 	      else
 		f = rate_rotate[Z] / RATE_ROT_FACTOR;
 	    }else{
-	      f = absolute_rotate[Z] / ABS_ROT_FACTOR;
+	      if(mged_variables.coords == 'm')
+		f = absolute_model_rotate[Z] / ABS_ROT_FACTOR;
+	      else
+		f = absolute_rotate[Z] / ABS_ROT_FACTOR;
 	    }
 
 	    dmp->dm_setColor(dmp, DM_RED, 1);
