@@ -96,13 +96,13 @@ typedef struct /* Old RLE format instruction.				*/
 
 #define	    XtndRMAGIC	((short)0xcc52) /* Extended RLE magic number.	*/
 
-#define STRIDE (sizeof(Pixel))	/* Distance (bytes) to next pixel.	*/
+#define STRIDE (sizeof(RGBpixel))	/* Distance (bytes) to next pixel.	*/
 
 /* Global data intended mainly for internal (library) use.		*/
 extern int	_bg_flag;
 extern int	_bw_flag;
 extern int	_cm_flag;
-extern Pixel	_bg_pixel;
+extern RGBpixel	_bg_pixel;
 
 /* Global flags for general use.					*/
 extern int	rle_debug;
