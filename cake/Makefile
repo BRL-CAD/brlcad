@@ -7,7 +7,7 @@ SHELL=/bin/sh
 #
 # For Apollo, may need to add -Tbsd4.3
 # For SunOS 5 (Solaris 2), need to add -Xc
-COPTS = -DCAKEDEBUG -DYYDEBUG -D`machinetype.sh -a`
+COPTS = -DCAKEDEBUG `machinetype.sh -d`
 
 # For Netbsd, need to add -l to get yylineno
 LEXOPTS=
