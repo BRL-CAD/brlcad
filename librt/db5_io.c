@@ -1385,7 +1385,6 @@ rt_db_external5_to_internal5(
 		bu_log("rt_db_external5_to_internal5(%s): don't yet handle major_type %d\n", name, raw.major_type);
 		return -1;
 	}
-	    raw.major_type, raw.minor_type, id);
 	/* ip has already been initialized, and should not be re-initted */
 	if( rt_functab[id].ft_import5( ip, &raw.body, mat, dbip, resp, raw.minor_type ) < 0 )  {
 		bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
