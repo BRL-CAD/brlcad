@@ -140,8 +140,8 @@ struct menu_item second_menu[] = {
 	{ "Rate/Abs", btn_item_hit, BV_RATE_TOGGLE },
 	{ "Zoom In 2X", btn_item_hit, BV_ZOOM_IN },
 	{ "Zoom Out 2X", btn_item_hit, BV_ZOOM_OUT },
-	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
-	{ "Object Illum", btn_item_hit, BE_O_ILLUMINATE },
+	{ "Prim Illum", btn_item_hit, BE_S_ILLUMINATE },
+	{ "Matrix Illum", btn_item_hit, BE_O_ILLUMINATE },
 	{ "", (void (*)())NULL, 0 }
 };
 struct menu_item sed_menu[] = {
@@ -478,11 +478,11 @@ ill_common()  {
 
 int
 be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_VIEW, "Object Illuminate" ) )
+	if( not_state( ST_VIEW, "Matrix Illuminate" ) )
 		return TCL_ERROR;
 
 	if( ill_common() )  {
-		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
+		(void)chg_state( ST_VIEW, ST_O_PICK, "Matrix Illuminate" );
 	}
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
@@ -494,18 +494,18 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 
 int
 be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_VIEW, "Solid Illuminate" ) )
+	if( not_state( ST_VIEW, "Prim Illuminate" ) )
 		return TCL_ERROR;
 
 	if( ill_common() )  {
-		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
+		(void)chg_state( ST_VIEW, ST_S_PICK, "Prim Illuminate" );
 	}
 	return TCL_OK;
 }
 
 int
 be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Scale" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_SCALE;
@@ -521,7 +521,7 @@ be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object Local X Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Local X Scale" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_XSCALE;
@@ -537,7 +537,7 @@ be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object Local Y Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Local Y Scale" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_YSCALE;
@@ -553,7 +553,7 @@ be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object Local Z Scale" ) )
+	if( not_state( ST_O_EDIT, "Matrix Local Z Scale" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_ZSCALE;
@@ -569,7 +569,7 @@ be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object X Motion" ) )
+	if( not_state( ST_O_EDIT, "Matrix X Motion" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_X;
@@ -581,7 +581,7 @@ be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object Y Motion" ) )
+	if( not_state( ST_O_EDIT, "Matrix Y Motion" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_Y;
@@ -594,7 +594,7 @@ be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object XY Motion" ) )
+	if( not_state( ST_O_EDIT, "Matrix XY Motion" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_XY;
@@ -606,7 +606,7 @@ be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-	if( not_state( ST_O_EDIT, "Object Rotation" ) )
+	if( not_state( ST_O_EDIT, "Matrix Rotation" ) )
 		return TCL_ERROR;
 
 	edobj = BE_O_ROTATE;
@@ -735,7 +735,7 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	/* solid editing */
-	if( not_state( ST_S_EDIT, "Solid Edit (Menu)" ) )
+	if( not_state( ST_S_EDIT, "Prim Edit (Menu)" ) )
 		return TCL_ERROR;
 
 	edsol = BE_S_EDIT;
@@ -746,7 +746,7 @@ be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	/* rotate solid */
-	if( not_state( ST_S_EDIT, "Solid Rotate" ) )
+	if( not_state( ST_S_EDIT, "Prim Rotate" ) )
 		return TCL_ERROR;
 
 	es_edflag = SROT;
@@ -760,7 +760,7 @@ be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	/* translate solid */
-	if( not_state( ST_S_EDIT, "Solid Translate" ) )
+	if( not_state( ST_S_EDIT, "Prim Translate" ) )
 		return TCL_ERROR;
 
 	edsol = BE_S_TRANS;
@@ -775,7 +775,7 @@ be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 int
 be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	/* scale solid */
-	if( not_state( ST_S_EDIT, "Solid Scale" ) )
+	if( not_state( ST_S_EDIT, "Prim Scale" ) )
 		return TCL_ERROR;
 
 	edsol = BE_S_SCALE;
