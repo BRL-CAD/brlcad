@@ -78,11 +78,11 @@ Note that the BRL-CAD v4 database has no place for
 storing region temperatures on disk,
 so this command won't have any effect on v4 databases.
 .SH "POST PROCESSING"
-.IR disp (1)
-is a first draft of a GUI-based tool for viewing
+.IR ssampview (1)
+is a GUI tool for viewing
 the multi-spectral output files created by
 .IR rttherm (1).
-It needs a more descriptive name.
+.LR
 In the works is a post-processing tool which will
 extract a spectral window into a conventional
 8-bit/pixel
@@ -92,7 +92,9 @@ file, probably in two steps:
 into a
 .IR dbw (5)
 (double-precision .bw file),
-and then using
+and then (2) using
+.IR cv (1)
+to perform a direct conversion, or using
 .IR dpix-pix (1)
 or similar tool to perform scaling and/or auto-ranging.
 .SH "SEE ALSO"

@@ -21,4 +21,4 @@ end;
 EOF
 
 
-echo ./disp moss.ssamp
+echo ./ssampview moss.ssamp

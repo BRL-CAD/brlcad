@@ -1,7 +1,8 @@
 /*
- *			D I S P . C
+ *			S S A M P V I E W . C
  *
- *  Quickie program to display spectral curves on the framebuffer.
+ *  Program to display spectral curves on the framebuffer.
+ *  Uses a Tcl script to handle the GUI.
  *
  *  Author -
  *	Michael John Muuss
@@ -439,8 +440,8 @@ Tcl_Interp	*inter;
 
 	/* Specify startup file to invoke when run interactively */
 	/* Source the TCL part of this lashup */
-	/* Tcl7 way:  tcl_RcFileName = "./disp.tcl"; */
-	Tcl_SetVar(interp, "tcl_rcFileName", "../rttherm/disp.tcl", TCL_GLOBAL_ONLY);
+	/* Tcl7 way:  tcl_RcFileName = "./ssampview.tcl"; */
+	Tcl_SetVar(interp, "tcl_rcFileName", "~/brlcad/rttherm/ssampview.tcl", TCL_GLOBAL_ONLY);
 
 	return TCL_OK;
 }
@@ -535,7 +536,7 @@ return;
 }
 
 static char usage[] = "\
-Usage: disp [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
+Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 		file.ssamp\n";
 
 
@@ -547,7 +548,7 @@ register char **argv;
 	while ( (c = getopt( argc, argv, "ts:w:n:" )) != EOF )  {
 		switch( c )  {
 		case 't':
-			fprintf(stderr, "disp: conducting library tests\n");
+			fprintf(stderr, "ssampview: conducting library tests\n");
 			conduct_tests();
 			first_command = "do_testing";
 			Tk_Main( 1, argv, tcl_appinit );

@@ -1,11 +1,13 @@
-#			D I S P . T C L
+#			S S A M P V I E W . T C L
 #
-# GUI for "disp" program
+# GUI for "ssampview" program.
+# Sourced from the C code.
+#
 #  -Mike Muuss, 7-Mar-96
 #
 #  $Header$
 
-puts "disp.tcl: start"
+puts "ssampview.tcl: start"
 
 set wavel 0
 global wavel
@@ -155,7 +157,7 @@ proc scanline { {foo 0} } {
 	}
 }
 
-puts "disp.tcl: about to define proc pixelplot"
+puts "ssampview.tcl: about to define proc pixelplot"
 
 
 # Draw spectral curve for one pixel.
@@ -204,7 +206,7 @@ proc pixelplot { {foo 0} } {
 }
 
 
-puts "disp.tcl: about to define proc plot_tabdata"
+puts "ssampview.tcl: about to define proc plot_tabdata"
 
 #			P L O T _ T A B D A T A
 #
@@ -271,7 +273,7 @@ proc plot_tabdata { canvas data {y_minval -1} {y_maxval -1} {screen_xmax 255} {s
 	#puts "plot_tabdata $canvas ending"
 }
 
-puts "disp.tcl: about to define proc popup_plot_tabdata"
+puts "ssampview.tcl: about to define proc popup_plot_tabdata"
 
 #			P O P U P _ P L O T _ T A B D A T A
 #
@@ -297,7 +299,7 @@ proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_xmax 255} {
 	return $popup
 }
 
-puts "disp.tcl: about to define proc do_testing"
+puts "ssampview.tcl: about to define proc do_testing"
 
 #			D O _ T E S T I N G
 #
@@ -316,7 +318,7 @@ proc do_testing {} {
 }
 
 # This variable is set by C startoff.
-puts "disp.tcl: About to run first_command= $first_command"
+puts "ssampview.tcl: About to run first_command= $first_command"
 eval $first_command
 
-puts "disp.tcl: finished"
+puts "ssampview.tcl: finished"

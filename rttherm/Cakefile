@@ -8,7 +8,7 @@
 #define CONFIGDEFS	-DRT_MULTISPECTRAL -I''XINCDIR
 
 #define SRCDIR	rttherm
-#define PRODUCTS	rttherm disp
+#define PRODUCTS	rttherm ssampview
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -17,7 +17,7 @@
 
 /* light.h material.h mathtab.h rad.h rdebug.h */
 #define FILES	\
-	viewtherm disp
+	viewtherm ssampview
 
 #if NFS
 #	define	RTDIR	../.rt.MTYPE
@@ -41,13 +41,13 @@ shade.o: ../rt/shade.c
 			refract.o shade.o
 
 rttherm:	RTTHERM_OBJ LIBMULTISPECTRAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	newvers.sh version "Thermal RT"
+	newvers.sh version "Thermal Multi-Spectral RT"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTTHERM_OBJ vers.o LIBMULTISPECTRAL LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rttherm
 
-/* Tempoary GUI to browse spectral images interactively */
-disp:	disp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
-	CC LDFLAGS disp.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBTK LIBTCL LIBTCL_LIBES LIBFB LIBFB_LIBES LIBES -o disp
+/* GUI to browse spectral images interactively */
+ssampview:	ssampview.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
+	CC LDFLAGS ssampview.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBTK LIBTCL LIBTCL_LIBES LIBFB LIBFB_LIBES LIBES -o ssampview
 
 /* Program to test identity relationship between rgb and spectral reps */
 pixtest: pixtest.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
