@@ -37,6 +37,7 @@
  *  unless the symbol "BSD" is defined.
  *  	BSD=42	For 4.2 BSD
  *	BSD=43	For 4.3 BSD
+ *	BSD=44	For 4.4 BSD
  */
 #ifndef	DEFINES_ONLY
 set -S1 "/bin/sh -c"
@@ -225,7 +226,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L/usr/X11/lib -lX11
 #endif
 
-#if defined(i386) && !defined(__bsdi__)
+#if defined(i386) && !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__386BSD__) && !defined(__FreeBSD__)
 /*	IBM PC or clone, running SysV R3 */
 #	define	MTYPE	at
 #	define	HAS_TCP	1
@@ -250,6 +251,37 @@ set -S2 "/bin/sh"
 #	define	HAS_SYMLINKS 1
 #	define	BSD	44
 #	define	LIBRT_TIMER	timer42
+#endif
+
+#if defined(__NetBSD__)
+/* system running NetBSD from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
+#	if defined(i386)
+#		define	MTYPE 		nb386
+#	else
+#		define	MTYPE		nb
+#	endif
+#	define	UNIXTYPE 	BSD
+#	define	HAS_TCP		1
+#	define	HAS_SYMLINKS 	1
+#	define	BSD		44
+#	define	LIBRT_TIMER	timer42
+#	define	CC		/usr/bin/gcc
+#	define	CC_OPTS		-pipe -O2
+#	define	STANDARD_LIBES	-lm
+	/* i386 users have XFree86, usually */
+#	if defined(i386)
+#		define	LIBFB_CONFIG	-DIF_REMOTE -I/usr/X386/include -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L/usr/X386/lib -lX11
+#		define	MGED_CONFIG	-DDM_X -I/usr/X386/include
+#		define	MGED_LIBES	-L/usr/X386/lib -lX11
+#	else
+#		define	LIBFB_CONFIG	-DIF_REMOTE -I/usr/X11/include -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L/usr/X11/lib -lX11
+#		define	MGED_CONFIG	-DDM_X -I/usr/X11/include
+#		define	MGED_LIBES	-L/usr/X11/lib -lX11
+#	endif
+#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	MGED_OBJS	dm-X
 #endif
 
 #ifdef ipsc860
@@ -520,7 +552,7 @@ set -S2 "/bin/sh"
 #	undef	sgi
 #	define	MTYPE	5d
 /*** WARNING WARNING:  *not* using -O2 on Irix 4.0.4 gives bad code ***/
-#	if 0
+#	if 1
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -584,7 +616,8 @@ set -S2 "/bin/sh"
 #	define	BUILD_LIBRARY	ld -shared -o
 #	define	RANLIB		/**/
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath LIBDIR
-#	define	LD_OPTS		-m -v
+/*				-m and -v are helpful here */
+#	define	LD_OPTS		GFLAG
 # else
 #	define	RANLIB	ranlib5.sh
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
@@ -632,7 +665,7 @@ set -S2 "/bin/sh"
 /*#			define	CC_OPTS	-PIC -f68881 -g*/
 /*#			define	CC_OPTS	-PIC -f68881 /usr/lib/f68881.il*/
 /*#			define	LD_OPTS	-PIC -f68881*/
-#			define	CC_OPTS	-PIC -f68881
+#			define	CC_OPTS	-PIC -f68881 -DHAVE_UNISTD_H=1
 #		endif
 /*		Shared library support on Sun compiler */
 #		define	ARCH_SUF	so
@@ -750,7 +783,7 @@ set -S2 "/bin/sh"
 #	define	LIBVERS		[[../sharedlibvers.sh]]
 #	define	BUILD_LIBRARY	ld -Bdynamic -o
 #	define	RANLIB		/**/
-#	define	STANDARD_LIBES	-L''LIBDIR
+#	define	STANDARD_LIBES	-L''LIBDIR -lm
 # endif
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
