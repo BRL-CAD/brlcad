@@ -143,7 +143,7 @@ char	**argv;
 
 	/* Allocate storage for one output line */
 	scanlen = 3*xout;
-	if( (obuf = malloc( scanlen )) == (unsigned char *)0 )  {
+	if( (obuf = (unsigned char *)malloc( scanlen )) == (unsigned char *)0 )  {
 		fprintf( stderr, "pixembed: malloc failure\n");
 		exit(4);
 	}

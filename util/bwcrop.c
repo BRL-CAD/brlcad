@@ -171,7 +171,7 @@ int scanlen;
 	if( max > 512 ) max = 512;
 
 	buflines = max;
-	buffer = malloc( buflines * scanlen );
+	buffer = (unsigned char *)malloc( buflines * scanlen );
 }
 
 /*

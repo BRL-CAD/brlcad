@@ -211,7 +211,7 @@ pixpaste: Copyright (C) 1992 Paladin Software\npixpaste: All rights reserved\n")
  * Make a buffer will hold a single scan line of assuming a worst
  * case paste of 1 pixel of overlap.
  */
-	if ((buffer = malloc((org_width+paste_width)*3)) == NULL ) {
+	if ((buffer = (unsigned char *)malloc((org_width+paste_width)*3)) == (unsigned char *)NULL ) {
 		(void) fprintf(stderr, "pixpaste: Out of memory (malloc failed)\n");
 		exit(2);
 	}
