@@ -590,64 +590,35 @@ refresh()
 /*
  *			U S E J O Y
  *
- * Apply the "joystick" rotation to the viewing perspective.
- *
- * Xangle = angle of rotation about the X axis, and is done 3rd.
- * Yangle = angle of rotation about the Y axis, and is done 2nd.
- * Zangle = angle of rotation about the Z axis, and is done 1st.
+ * Apply the "joystick" delta rotation to the viewing direction.
  */
 void
 usejoy( xangle, yangle, zangle )
-fastf_t xangle, yangle, zangle;
+double	xangle, yangle, zangle;
 {
-	static mat_t	newrot;		/* NEW rot matrix, from joystick */
+	mat_t	newrot;		/* NEW rot matrix, from joystick */
+	mat_t	temp;
 
 	dmaflag = 1;
 
-	/* Joystick is used for parameter or solid rotation (ST_S_EDIT) */
-	if(es_edflag == PROT || es_edflag == SROT || es_edflag == ROTFACE)  {
-		static mat_t tempp;
-
-		mat_idn( incr_change );
-		buildHrot( incr_change, xangle, yangle, zangle );
-
-		/* accumulate the translations */
-		mat_mul(tempp, incr_change, acc_rot_sol);
-		mat_copy(acc_rot_sol, tempp);
-		sedit();	/* change es_rec only, NOW */
-		return;
-	}
-	/* Joystick is used for object rotation (ST_O_EDIT) */
-	if( movedir == ROTARROW )  {
-		static mat_t tempp;
-		static vect_t point;
-
-		mat_idn( incr_change );
-		buildHrot( incr_change, xangle, yangle, zangle );
-
-		/* accumulate change matrix - do it wrt a point NOT view center */
-		mat_mul(tempp, modelchanges, es_mat);
-		/* XXX should have an es_keypoint for this */
-		MAT4X3PNT(point, tempp, es_rec.s.s_values);
-		wrt_point(modelchanges, incr_change, modelchanges, point);
-
-		new_mats();
-		return;
+	if( state == ST_S_EDIT )  {
+		if( sedit_rotate( xangle, yangle, zangle ) > 0 )
+			return;		/* solid edit claimed event */
+	} else if( state == ST_O_EDIT )  {
+		if( objedit_rotate( xangle, yangle, zangle ) > 0 )
+			return;		/* object edit claimed event */
 	}
 
 	/* NORMAL CASE.
 	 * Apply delta viewing rotation for non-edited parts.
 	 * The view rotates around the VIEW CENTER.
-	 * ***** THIS IS BROKEN!! ****** (rotation is around origin, humbug)
 	 */
 	mat_idn( newrot );
 	buildHrot( newrot, xangle, yangle, zangle );
-	{
-		static mat_t temp;
-		mat_mul( temp, newrot, Viewrot );
-		mat_copy( Viewrot, temp );
-		new_mats();
-	}
+
+	mat_mul( temp, newrot, Viewrot );
+	mat_copy( Viewrot, temp );
+	new_mats();
 }
 
 /*
