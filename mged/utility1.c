@@ -421,6 +421,7 @@ char	**argv;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	int		item;
+	int sflag = 0;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -435,6 +436,23 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if(strcmp(argv[1], "-s") == 0){
+	  --argc;
+	  ++argv;
+
+	  if(argc < 2){
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help whichid");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	  }
+
+	  sflag = 1;
+	}
+
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
@@ -442,8 +460,10 @@ char	**argv;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-		Tcl_AppendResult(interp, "Region[s] with ident ", argv[j],
-				 ":\n", (char *)NULL);
+
+		if(!sflag)
+		  Tcl_AppendResult(interp, "Region[s] with ident ", argv[j],
+				   ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -459,8 +479,11 @@ char	**argv;
 				if( comb->region_id != item )
 					continue;
 
-				Tcl_AppendResult(interp, "   ", dp->d_namep,
-						 "\n", (char *)NULL);
+				if(sflag)
+				  Tcl_AppendElement(interp, dp->d_namep);
+				else
+				  Tcl_AppendResult(interp, "   ", dp->d_namep,
+						   "\n", (char *)NULL);
 
 				rt_comb_ifree( &intern );
 			}
@@ -486,6 +509,7 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	int item;
+	int sflag = 0;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -500,6 +524,23 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if(strcmp(argv[1], "-s") == 0){
+	  --argc;
+	  ++argv;
+
+	  if(argc < 2){
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help which_shader");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	  }
+
+	  sflag = 1;
+	}
+
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
@@ -507,8 +548,10 @@ char	**argv;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-		Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
-				 ":\n", (char *)NULL);
+
+		if(!sflag)
+		  Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
+				   ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -525,8 +568,11 @@ char	**argv;
 				if( !strstr( bu_vls_addr( &comb->shader ), argv[j] ) )
 					continue;
 
-				Tcl_AppendResult(interp, "   ", dp->d_namep,
-						 "\n", (char *)NULL);
+				if(sflag)
+				  Tcl_AppendElement(interp, dp->d_namep);
+				else
+				  Tcl_AppendResult(interp, "   ", dp->d_namep,
+						   "\n", (char *)NULL);
 				rt_comb_ifree( &intern );
 			}
 		}
@@ -551,6 +597,7 @@ char	**argv;
 	int		item;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
+	int sflag = 0;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -565,6 +612,23 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if(strcmp(argv[1], "-s") == 0){
+	  --argc;
+	  ++argv;
+
+	  if(argc < 2){
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help whichair");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	  }
+
+	  sflag = 1;
+	}
+
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
@@ -572,8 +636,10 @@ char	**argv;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-		Tcl_AppendResult(interp, "Region[s] with air code ", argv[j],
-				 ":\n", (char *)NULL);
+
+		if(!sflag)
+		  Tcl_AppendResult(interp, "Region[s] with air code ", argv[j],
+				   ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -589,8 +655,11 @@ char	**argv;
 				if( comb->region_id != 0 || comb->aircode != item )
 					continue;
 
-				Tcl_AppendResult(interp, "   ", dp->d_namep,
-						 "\n", (char *)NULL);
+				if(sflag)
+				  Tcl_AppendElement(interp, dp->d_namep);
+				else
+				  Tcl_AppendResult(interp, "   ", dp->d_namep,
+						   "\n", (char *)NULL);
 			}
 		}
 	}
