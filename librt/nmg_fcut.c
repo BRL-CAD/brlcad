@@ -2950,7 +2950,8 @@ int			other_rs_state;
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
-			NMG_CK_EDGE_G_LSEG(rs->eg_p);
+			if( rs->eg_p )
+				NMG_CK_EDGE_G_LSEG(rs->eg_p)
 			nmg_edge_geom_isect_line( eu, rs, "force ON_REV to line" );
 		}
 	}
@@ -2958,7 +2959,8 @@ int			other_rs_state;
 		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
 		if( !rs->eg_p || eu->g.lseg_p != rs->eg_p )  {
-			NMG_CK_EDGE_G_LSEG(rs->eg_p);
+			if( rs->eg_p )
+				NMG_CK_EDGE_G_LSEG(rs->eg_p)
 			nmg_edge_geom_isect_line( eu, rs, "force ON_FORW to line" );
 		}
 	}
