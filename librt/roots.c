@@ -170,11 +170,9 @@ register complex	*nxZ;	/* initial guess for root	*/
 
 		/* Compute H for Laguerre's method. */
 		n = eqn->dgr-1;
-		cH = p1;
-		CxMul( &cH, &p1 );
+		CxMul2( &cH, &p1, &p1 );
 		CxScal( &cH, (double)(n*n) );
-		T = p0;
-		CxMul( &T, &p2 );
+		CxMul2( &T, &p2, &p0 );
 		CxScal( &T, (double)(eqn->dgr*n) );
 		CxSub( &cH, &T );
 
@@ -299,23 +297,39 @@ register complex	*b, *c, *d;	/* outputs */
 int
 rt_poly_checkroots( eqn, roots, nroots )
 register poly		*eqn;
-register complex	roots[];
+complex			roots[];
 register int		nroots;
 {
-	LOCAL complex	epoly;
-	register int	n, m;
+	register fastf_t	er, ei;		/* "epoly" */
+	register fastf_t	zr, zi;		/* Z value to evaluate at */
+	register int	n;
+	int		m;
 
 	for ( m=0; m < nroots; ++m ){
-		CxCons( &epoly, eqn->cf[0], 0.0 );
+		/* Select value of Z to evaluate at */
+		zr = CxReal( &roots[m] );
+		zi = CxImag( &roots[m] );
 
-		for ( n=1; n <= eqn->dgr; ++n)  {
-			CxMul( &epoly, &roots[m] );
-			epoly.re += eqn->cf[n];
+		/* Initialize */
+		er = eqn->cf[0];
+		/* ei = 0.0; */
+
+		/* n=1 step.  Broken out because ei = 0.0 */
+		ei = er*zi;		/* must come before er= */
+		er = er*zr + eqn->cf[1];
+
+		/* Remaining steps */
+		for ( n=2; n <= eqn->dgr; ++n)  {
+			register fastf_t	tr, ti;	/* temps */
+			tr = er*zr - ei*zi + eqn->cf[n];
+			ti = er*zi + ei*zr;
+			er = tr;
+			ei = ti;
 		}
-		if ( Abs( epoly.re ) > 1.0e-5 || Abs( epoly.im ) > 1.0e-5 )
+		if ( Abs( er ) > 1.0e-5 || Abs( ei ) > 1.0e-5 )
 			return 1;	/* FAIL */
 	}
-	/* Both real & imaginary are "zero" */
+	/* Evaluating polynomial for all Z values gives zero */
 	return 0;			/* OK */
 }
 
