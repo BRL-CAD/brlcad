@@ -181,7 +181,7 @@ char	*dp;
 		uvc.uv_v = 1.0 - uvc.uv_v;
 
 	uvc.uv_du /= tp->tx_scale[X];
-	uvc.uv_dv /= tp->tx_scale[X];
+	uvc.uv_dv /= tp->tx_scale[Y];
 
 	/*
 	 * If no texture file present, or if
@@ -430,7 +430,7 @@ char	*dp;
 		uvc.uv_v = 1.0 - uvc.uv_v;
 
 	uvc.uv_du /= tp->tx_scale[X];
-	uvc.uv_dv /= tp->tx_scale[X];
+	uvc.uv_dv /= tp->tx_scale[Y];
 
 
 	/* u is left->right index, v is line number bottom->top */
