@@ -227,7 +227,7 @@ void initializeInfo(params_t *p, int inter, int def, char *name, int depth) {
     strcpy(p->fileName, name);
   }
   p->maxRadius = DEFAULT_MAXRADIUS;
-  p->maxDepth =  DEFAULT_MAXDEPTH;
+  p->maxDepth =  (depth != 0) ? (depth) : (DEFAULT_MAXDEPTH);
   p->deltaRadius = DEFAULT_DELTARADIUS;
   p->pos[X] = DEFAULT_ORIGIN_X;
   p->pos[Y] = DEFAULT_ORIGIN_Y;
@@ -286,9 +286,6 @@ void initializeInfo(params_t *p, int inter, int def, char *name, int depth) {
 	p->matArray[i].color[2] = (char)b;
       }
     }
-  }
-  if (depth != 0) {
-    p->maxDepth = depth;
   }
   MAT_IDN(IDENT);
 }
