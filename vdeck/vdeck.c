@@ -485,7 +485,7 @@ union tree		*curtree;
 		rt_vls_strcat( &ident, fullname+1 );
 	}
 	rt_vls_strcat( &ident, "\n" );
-	ewrite( ridfp, rt_vls_addr(&ident), rt_vls_strlen(&ident) );
+	rt_vls_fwrite( ridfp, &ident );
 
 	rt_vls_free( &ident );
 	rt_vls_free( &reg );
@@ -634,7 +634,8 @@ next_one:
 		break;
 	}
 
-	ewrite( solfp, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
+	rt_vls_fwrite( solfp, &sol );
+	rt_vls_free( &sol );
 
 	/* Free storage for internal form */
 	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
