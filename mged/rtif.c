@@ -1037,6 +1037,8 @@ char	**argv;
 	/* Restore state variables */
 	mged_variables = rtif_saved_state;	/* struct copy */
 
+	(void)mged_svbase();
+
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
