@@ -249,6 +249,10 @@ char **argv;
 				height = (n/sizeof(RGBpixel)+xout-1)/xout;
 				if( height <= 0 )  break;
 			}
+			/* Don't over-write */
+			if( y + height > scr_yoff + yout )
+				height = scr_yoff + yout - y;
+			if( height <= 0 )  break;
 			m = fb_writerect( fbp, scr_xoff, y,
 				file_width, height,
 				scanline );
