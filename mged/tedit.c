@@ -221,7 +221,7 @@ static char *
 Get_next_line( fp )
 FILE *fp;
 {
-	char line[LINELEN];
+	static char line[LINELEN];
 	int i;
 	int len;
 
