@@ -201,7 +201,7 @@ struct shadework	*swp;
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
-		sub_ap.a_purpose = "internal reflection";
+		sub_ap.a_purpose = "rr internal ray seeking exit";
 		sub_ap.a_onehit = 3;
 		switch( rt_shootray( &sub_ap ) )  {
 		case 2:
@@ -299,7 +299,7 @@ do_exit:
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
-		sub_ap.a_purpose = "escaping refracted ray";
+		sub_ap.a_purpose = "rr escaping internal ray";
 		sub_ap.a_refrac_index = swp->sw_refrac_index;
 		sub_ap.a_cumlen = 0;
 		(void) rt_shootray( &sub_ap );
@@ -340,7 +340,7 @@ do_reflection:
 		VSCALE( work, swp->sw_hit.hit_normal, f );
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
-		sub_ap.a_purpose = "reflected ray";
+		sub_ap.a_purpose = "rr reflected ray";
 
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			point_t		endpt;
@@ -554,8 +554,14 @@ struct partition *PartHeadp;
 			VSETALL( sw.sw_color, 1 );
 			VSETALL( sw.sw_basecolor, 1 );
 
+			if (rdebug&RDEBUG_SHADE)
+				rt_log("rr_hit calling viewshade to discover refractive index\n");
+
 			(void)viewshade( &appl, pp->pt_forw, &sw );
 			ap->a_refrac_index = sw.sw_refrac_index;
+
+			if (rdebug&RDEBUG_SHADE)
+				rt_log("rr_hit a_refrac_index=%g\n", ap->a_refrac_index);
 		}
 	}
 
