@@ -702,6 +702,7 @@ int	width, height;
 	ifp->if_height = height;
 
 	blanktime(0);
+	foreground();		/* Direct focus here, don't detach */
 
 	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		prefposition( 0, XMAX170, 0, YMAX170 );
@@ -714,7 +715,6 @@ int	width, height;
 		MIPS(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	}
 
-	foreground();		/* Direct focus here, don't detach */
 	if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
 	{
 		fb_log( "No more graphics ports available.\n" );
@@ -742,7 +742,7 @@ int	width, height;
 			 */
 		} else if( getvideo(CG_MODE) != -1 )  {
 		    	/*
-			 *  Optional CG2 GENLOCK boark is installed.
+			 *  Optional CG2 GENLOCK board is installed.
 			 *
 			 *  Mode 2:  Internal sync generator is used.
 			 *
