@@ -139,7 +139,7 @@ register char **argv;
 		infd = 0;
 	} else {
 		file_name = argv[optind];
-		if( (infd = open(file_name, 0)) == NULL )  {
+		if( (infd = open(file_name, 0)) < 0 )  {
 			(void)fprintf( stderr,
 				"bw-fb: cannot open \"%s\" for reading\n",
 				file_name );
