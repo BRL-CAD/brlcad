@@ -600,7 +600,9 @@ struct rt_piecestate	*psp;
 	for( i=0 ; i<nhits-1 ; i++ )
 	    {
 		FAST fastf_t dist;
-		FAST fastf_t dn=hits[i].hit_vpriv[X];
+		FAST fastf_t dn;
+
+		dn = hits[i].hit_vpriv[X];
 
 		k = i + 1;
 		dist = hits[i].hit_dist - hits[k].hit_dist;
