@@ -380,8 +380,7 @@ struct faceuse_a {
 	_fg = _fu1->f_p->fg_p; \
 	NMG_CK_FACE_G(_fg); \
 	if( (_fu1->orientation != OT_SAME) != (_fu1->f_p->flip != 0) )  { \
-		VREVERSE( _N, _fg->N); \
-		(_N)[3] = _fg->N[3]; \
+		HREVERSE( _N, _fg->N); \
 	} else { \
 		HMOVE( _N, _fg->N ); \
 	} }
