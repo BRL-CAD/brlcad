@@ -52,6 +52,15 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "solid.h"
+/* XXX this should be done else where? */
+int rt_pg_plot(struct bu_list *, struct rt_db_internal *,
+	       CONST struct rt_tess_tol *, CONST struct bn_tol *);
+int rt_pg_plot_poly(struct bu_list *, struct rt_db_internal *,
+		    CONST struct rt_tess_tol *, CONST struct bn_tol *);
+int rt_bot_plot(struct bu_list *, struct rt_db_internal *,
+		    CONST struct rt_tess_tol *, CONST struct bn_tol *);
+int rt_bot_plot_poly(struct bu_list *, struct rt_db_internal *,
+		    CONST struct rt_tess_tol *, CONST struct bn_tol *);
 
 #include "./debug.h"
 
