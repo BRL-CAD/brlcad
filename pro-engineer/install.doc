@@ -32,8 +32,7 @@ to use it.
 
 	The "protk.dat" file must be located where Pro/Engineer will look for it.
 Pro/Engineer will look in your current directory and in Pro/Engineer's "text"
-directory (as well as a few other places).  For example, I have "protk.dat"
-in "/usr/proe/sgi/text/usascii" for an "sgi" machine.
+directory (as well as a few other places).
 
 	If the "protk.dat" file and the "proe-brl" executable are installed
 properly, you will see a message "BRL-CAD Export option added to Pro/E version
