@@ -52,6 +52,7 @@ static long	objfdend;		/* End+1 position of object file */
 int		objfd;			/* FD of object file */
 
 union record	record;
+static union record zapper;		/* Zeros, for erasing records */
 
 double	local2base, base2local;		/* unit conversion factors */
 int	localunit;			/* local unit currently in effect */
@@ -178,7 +179,12 @@ dir_build()  {
 		if( record.u_id != ID_COMB )  {
 			(void)printf( "dir_build:  unknown record %c (0%o)\n",
 				record.u_id, record.u_id );
-			/* skip this record */
+			/* zap this record and put in free map */
+			zapper.u_id = ID_FREE;	/* The rest will be zeros */
+			(void)lseek( objfd, addr, 0 );
+			if( !read_only )
+				(void)write(objfd, (char *)&zapper, sizeof(zapper));
+			memfree( &dbfreep, 1, addr/(sizeof(union record)) );
 			continue;
 		}
 
@@ -363,8 +369,6 @@ register struct directory *dp;
  *  Delete the indicated database record(s).
  *  Mark all records with ID_FREE.
  */
-static union record zapper;
-
 void
 db_delete( dp )
 struct directory *dp;
