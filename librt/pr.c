@@ -169,6 +169,11 @@ register CONST struct partition *pp;
 		bu_vls_strcat( v, ", " );
 	}
 	bu_vls_strcat( v, "\n" );
+
+	if( pp->pt_regionp )  {
+		RT_CK_REGION( pp->pt_regionp );
+		bu_log_indent_vls( v );
+		bu_vls_printf( v, "  Region: %s\n", pp->pt_regionp->reg_name );
 	}
 }
 
