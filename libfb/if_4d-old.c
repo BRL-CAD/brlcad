@@ -584,6 +584,7 @@ int	width, height;
 	register int i;
 	int	f;
 	int	status;
+	int 	g_status;
 	static char	title[128];
 	int	mode;
 
@@ -644,6 +645,35 @@ int	width, height;
 			MODE_5MASK | MODE_6MASK);
 	}
 	ifp->if_mode = mode;
+
+#ifndef SGI4D_Rel2
+	/*
+	 *  Now that the mode has been determined,
+	 *  ensure that the graphics system is running.
+	 */
+	if( !(g_status = ps_open_PostScript()) )  {
+		char * grcond = "/etc/gl/grcond";
+		char * newshome = "/usr/brlcad/etc";		/* XXX */
+
+		f = fork();
+		if( f < 0 )  {
+			perror("fork");
+			return(-1);		/* error */
+		}
+		if( f == 0 )  {
+			/* Child */
+			chdir( newshome );
+			execl( grcond, (char *) 0 );
+			perror( grcond );
+			_exit(1);
+			/* NOTREACHED */
+		}
+		/* Parent */
+		while( !(g_status = ps_open_PostScript()) )  {
+			sleep(1);
+		}
+	}
+#endif
 
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
