@@ -27,8 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./menu.h"
 #include "./dm.h"
@@ -295,9 +295,8 @@ static void bv_adcursor()  {
 }
 
 static void bv_reset()  {
-	/* Reset to initial viewing conditions */
-	mat_idn( toViewcenter );
-	Viewscale = maxview;
+	/* Reset view such that all solids can be seen */
+	size_reset();
 	setview( 0, 0, 0 );
 }
 
@@ -449,7 +448,7 @@ static void be_accept()  {
 		dmp->dmr_light( LIGHT_OFF, BE_ACCEPT );
 		dmp->dmr_light( LIGHT_OFF, BE_REJECT );
 		/* write editing changes out to disc */
-		db_putrec( illump->s_path[illump->s_last], &es_rec, 0 );
+		db_put( dbip, illump->s_path[illump->s_last], &es_rec, 0, 1 );
 
 		dmp->dmr_light( LIGHT_OFF, edsol );
 		edsol = 0;
@@ -527,7 +526,7 @@ static void be_accept()  {
 				continue;
 			}
 			pathHmat( sp, curmat, sp->s_last-1 );
-			recp = db_getmrec(sp->s_path[sp->s_last]);
+			recp = db_getmrec( dbip, sp->s_path[sp->s_last]);
 
 			illump = sp;	/* flag to drawHsolid! */
 			(void)redraw( sp, recp, curmat );
@@ -570,7 +569,7 @@ static void be_reject()  {
 		{
 			union record *recp;
 
-			recp = db_getmrec( illump->s_path[illump->s_last] );
+			recp = db_getmrec( dbip,  illump->s_path[illump->s_last] );
 			illump = redraw( illump, recp, es_mat );
 			free( (char *)recp );
 		}
