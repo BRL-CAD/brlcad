@@ -195,6 +195,16 @@
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
 #endif
 
+#if defined(__FreeBSD__)
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_SYS_MMAN_H	1
+#       define HAVE_FLOAT_H     1
+#       define HAVE_LIMITS_H    1
+#	define HAVE_BZERO	1
+#endif
+
 #if defined(__NetBSD__)
 #	define USE_PROTOTYPES	1
 #	define USE_STRING_H	1
