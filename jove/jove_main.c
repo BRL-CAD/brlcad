@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.11  94/10/14  17:29:25  mike
+ * SunOS 5.2
+ * 
  * Revision 10.10  94/09/22  18:53:54  butler
  * Added ifdef needed for Solaris
  * 
@@ -122,8 +125,8 @@ static char RCSid[] = "@(#)$Header$";
 #  endif
 # include <termios.h>
 # include <fcntl.h>
-# if defined(sun) || defined(sparc) || defined(__sparc)
-#   include <sys/file.h>  /* Solaris needs this for FNDELAY */
+# if defined(sun) || defined(sparc) || defined(__sparc) || defined(cray)
+#   include <sys/file.h>  /* Solaris and UNICOS need this for FNDELAY */
 # endif
 #else
 # ifndef SYS5
