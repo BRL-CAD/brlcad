@@ -17,14 +17,21 @@
 			mater plot overlay inside \
 			concat utility1 utility2 track arbs \
 			facedef arb ell half tgc torus set \
-			attach dm-tek dm-plot dm-ps \
+			TCP_FILES attach dm-tek dm-plot dm-ps \
 			dm-tek4109 MGED_OBJS
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define COMPLETE_LIBES	\
+#if HAS_TCP
+#    define COMPLETE_LIBES	\
+	LIBPKG LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBMALLOC LIBES
+#    define	TCP_FILES	vrlink
+#else
+#    define COMPLETE_LIBES	\
 	LIBWDB LIBRT LIBRT_LIBES MGED_LIBES LIBMALLOC LIBES
+#    define	TCP_FILES	/**/
+#endif
 
 mged:	OBJ LIBRT
 	sh ../newvers.sh version "Graphics Editor (MGED)"
