@@ -298,10 +298,10 @@ pcd-pix: pcd-pix.o
 	CC LDFLAGS -o pcd-pix pcd-pix.o LIBES
 
 pix-yuv: pix-yuv.o
-	CC LDFLAGS -o pix-yuv pix-yuv.o LIBES
+	CC LDFLAGS -o pix-yuv pix-yuv.o LIBFB LIBFB_LIBES LIBES
 
 yuv-pix: yuv-pix.o
-	CC LDFLAGS -o yuv-pix yuv-pix.o LIBES
+	CC LDFLAGS -o yuv-pix yuv-pix.o LIBFB LIBFB_LIBES LIBES
 
 plstat: plstat.o
 	CC LDFLAGS -o plstat plstat.o LIBPLOT LIBES
