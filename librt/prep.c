@@ -173,17 +173,26 @@ int			ncpu;
 
 	RT_CK_RTI(rtip);
 
+	if(rt_g.debug&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) START\n",
+			rtip->rti_dbip->dbi_filename,
+			rtip->rti_dbip->dbi_uses, ncpu);
+
 	bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
 	if(!rtip->needprep)  {
-		bu_log("WARNING: rt_prep() invoked a second time, ignored");
+		bu_log("WARNING: rt_prep_parallel(%s,%d) invoked a second time, ignored",
+			rtip->rti_dbip->dbi_filename,
+			rtip->rti_dbip->dbi_uses);
 		bu_semaphore_release(RT_SEM_RESULTS);
 		return;
 	}
 
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
-			bu_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );
-		rt_bomb("rt_prep:  no solids left to prep");
+			bu_log("rt_prep_parallel(%s,%d): %d solids discarded due to air regions\n",
+				rtip->rti_dbip->dbi_filename,
+				rtip->rti_dbip->dbi_uses,
+				rtip->rti_air_discards );
+		rt_bomb("rt_prep_parallel:  no solids left to prep");
 	}
 
 	/* In case everything is a halfspace, set a minimum space */
@@ -223,10 +232,15 @@ int			ncpu;
 	 *  Set this region's bit in the bit vector of every solid
 	 *  contained in the subtree.
 	 */
-	rtip->Regions = (struct region **)bu_malloc(
-		rtip->nregions * sizeof(struct region *),
+	rtip->Regions = (struct region **)bu_calloc(
+		rtip->nregions, sizeof(struct region *),
 		"rtip->Regions[]" );
+	if(rt_g.debug&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d) about to optimize regions\n",
+			rtip->rti_dbip->dbi_filename,
+			rtip->rti_dbip->dbi_uses);
 	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
+		/* Ensure bit numbers are unique */
+		BU_ASSERT(rtip->Regions[regp->reg_bit] == REGION_NULL);
 		rtip->Regions[regp->reg_bit] = regp;
 		rt_optim_tree( regp->reg_treetop, resp );
 		rt_solid_bitfinder( regp->reg_treetop, regp, resp );
@@ -236,6 +250,7 @@ int			ncpu;
 		}
 	}
 	if(rt_g.debug&DEBUG_REGIONS)  {
+		bu_log("rt_prep_parallel() printing solids' region pointers\n");
 		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 			bu_log("solid %s ", stp->st_name);
 			bu_pr_ptbl( "st_regions", &stp->st_regions, 1 );
@@ -255,7 +270,10 @@ int			ncpu;
 	 *	rti_sol_by_type[id][rti_nsol_by_type[id]-1]
 	 */
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-		rtip->rti_Solids[stp->st_bit] = stp;
+		/* Ensure bit numbers are unique */
+		register struct soltab **ssp = &rtip->rti_Solids[stp->st_bit];
+		BU_ASSERT(*ssp == SOLTAB_NULL);
+		*ssp = stp;
 		rtip->rti_nsol_by_type[stp->st_id]++;
 	} RT_VISIT_ALL_SOLTABS_END
 
@@ -280,7 +298,10 @@ int			ncpu;
 		id = stp->st_id;
 		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
 	} RT_VISIT_ALL_SOLTABS_END
-	if( rt_g.debug & DEBUG_DB )  {
+	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
+		bu_log("rt_prep_parallel(%s,%d) printing number of solids by type\n",
+			rtip->rti_dbip->dbi_filename,
+			rtip->rti_dbip->dbi_uses);
 		for( i=1; i <= ID_MAXIMUM; i++ )  {
 			bu_log("%5d %s (%d)\n",
 				rtip->rti_nsol_by_type[i],
@@ -320,6 +341,10 @@ int			ncpu;
 	}
 	rtip->needprep = 0;		/* prep is done */
 	bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
+
+	if(rt_g.debug&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s,%d,ncpu=%d) FINISH\n",
+			rtip->rti_dbip->dbi_filename,
+			rtip->rti_dbip->dbi_uses, ncpu);
 }
 
 /*
@@ -770,7 +795,7 @@ struct rt_i *rtip;
 register struct region *delregp;
 {
 	if( rt_g.debug & DEBUG_REGIONS )
-		bu_log("Del Region %s\n", delregp->reg_name);
+		bu_log("rt_del_regtree(%s): region deleted\n", delregp->reg_name);
 
 	BU_LIST_DEQUEUE(&(delregp->l));
 
