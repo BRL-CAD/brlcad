@@ -310,8 +310,8 @@ char	**argv;
 }
 
 cm_tree( argc, argv )
-int	argc;
-char	**argv;
+int		argc;
+CONST char	**argv;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
 	char outbuf[132];
@@ -495,7 +495,7 @@ register struct rt_i	*rtip;
 	}
 
 	rt_prep_timer();
-	if( rt_gettrees(rtip, nobjs, objtab, npsw) < 0 )
+	if( rt_gettrees(rtip, nobjs, (CONST char **)objtab, npsw) < 0 )
 		rt_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	rt_log("GETTREE: %s\n", outbuf);
