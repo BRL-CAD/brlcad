@@ -58,11 +58,11 @@ struct resource *res;
 
 	if( res )
 	{
-		srf->u.knots = (fastf_t *) pmalloc ( 
+		srf->u.knots = (fastf_t *) rt_pmalloc ( 
 			n_u * sizeof (fastf_t ), &res->re_pmem);
-		srf->v.knots = (fastf_t *) pmalloc ( 
+		srf->v.knots = (fastf_t *) rt_pmalloc ( 
 			n_v * sizeof (fastf_t ), &res->re_pmem);
-		srf->ctl_points = ( fastf_t *) pmalloc( 
+		srf->ctl_points = ( fastf_t *) rt_pmalloc( 
 			pnum, &res->re_pmem);
 	}
 	else
@@ -120,9 +120,9 @@ struct resource *res;
 
 	if( res )
 	{
-		pfree( (char *)srf->u.knots, &res->re_pmem );
-		pfree( (char *)srf->v.knots, &res->re_pmem );
-		pfree( (char *)srf->ctl_points, &res->re_pmem );
+		rt_pfree( (char *)srf->u.knots, &res->re_pmem );
+		rt_pfree( (char *)srf->v.knots, &res->re_pmem );
+		rt_pfree( (char *)srf->ctl_points, &res->re_pmem );
 	}
 	else
 	{
@@ -152,9 +152,9 @@ struct resource *res;
 
 	if( res )
 	{
-		pfree( (char *)srf->u.knots, &res->re_pmem );
-		pfree( (char *)srf->v.knots, &res->re_pmem );
-		pfree( (char *)srf->ctl_points, &res->re_pmem);
+		rt_pfree( (char *)srf->u.knots, &res->re_pmem );
+		rt_pfree( (char *)srf->v.knots, &res->re_pmem );
+		rt_pfree( (char *)srf->ctl_points, &res->re_pmem);
 	}
 	else
 	{

@@ -61,7 +61,7 @@ struct resource *res;
 		nurb_srf->pt_type = srf->pt_type;
 		if( res )
 			nurb_srf->ctl_points = (fastf_t *)
-				pmalloc( sizeof (fastf_t) * 
+				rt_pmalloc( sizeof (fastf_t) * 
 				nurb_srf->s_size[0] *
 				nurb_srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type),
@@ -111,7 +111,7 @@ struct resource *res;
 		nurb_srf->pt_type = srf->pt_type;
 		if( res )
 			nurb_srf->ctl_points = (fastf_t *)
-				pmalloc( sizeof (fastf_t) * 
+				rt_pmalloc( sizeof (fastf_t) * 
 				nurb_srf->s_size[0] *
 				nurb_srf->s_size[1] *
 				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type),

@@ -71,7 +71,7 @@ struct resource *res;
 	mu = 0;				/* initialize mu */
 
 	if( res )
-		head = (struct oslo_mat *) pmalloc (
+		head = (struct oslo_mat *) rt_pmalloc (
 		    sizeof( struct oslo_mat),
 		    &res->re_pmem );
 	else
@@ -87,7 +87,7 @@ struct resource *res;
 		if ( j != 0 )
 		{
 			if( res )
-				new_o = (struct oslo_mat *) pmalloc ( 
+				new_o = (struct oslo_mat *) rt_pmalloc ( 
 				    sizeof( struct oslo_mat), 
 				    &res->re_pmem );
 			else
@@ -170,7 +170,7 @@ struct resource *res;
 		}
 
 		if( res )
-			o_ptr->o_vec = (fastf_t *) pmalloc ( sizeof( fastf_t) * (v+1),
+			o_ptr->o_vec = (fastf_t *) rt_pmalloc ( sizeof( fastf_t) * (v+1),
 			    &res->re_pmem);
 		else
 			o_ptr->o_vec = (fastf_t *) rt_malloc ( sizeof( fastf_t) * (v+1),
@@ -228,8 +228,8 @@ struct resource *res;
 		om = om->next;
 		if( res )
 		{
-			pfree( (char *)omp->o_vec, &res->re_pmem);
-			pfree( (char *)omp, &res->re_pmem);
+			rt_pfree( (char *)omp->o_vec, &res->re_pmem);
+			rt_pfree( (char *)omp, &res->re_pmem);
 		}
 		else
 		{

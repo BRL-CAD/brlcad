@@ -52,7 +52,7 @@ struct resource *res;
 	new_knots->k_size = total;
 
 	if( res )
-		new_knots->knots = (fastf_t * ) pmalloc ( sizeof( fastf_t) * total,
+		new_knots->knots = (fastf_t * ) rt_pmalloc ( sizeof( fastf_t) * total,
 		    &res->re_pmem);
 	else
 		new_knots->knots = (fastf_t * ) rt_malloc ( sizeof( fastf_t) * total,
@@ -97,7 +97,7 @@ struct resource *res;
 	}
 
 	if( res )
-		check.knots = (fastf_t * ) pmalloc( sizeof(fastf_t) * check.k_size,
+		check.knots = (fastf_t * ) rt_pmalloc( sizeof(fastf_t) * check.k_size,
 		    &res->re_pmem);
 	else
 		check.knots = (fastf_t * ) rt_malloc( sizeof(fastf_t) * check.k_size,
@@ -110,7 +110,7 @@ struct resource *res;
 
 	/* free up old knot values */
 	if( res )
-		pfree((char *)check.knots, &res->re_pmem);
+		rt_pfree((char *)check.knots, &res->re_pmem);
 	else
 		rt_free((char *)check.knots, "rt_nurb_kvmult:check knots");
 }
@@ -136,7 +136,7 @@ struct resource *res;
 	kv->k_size = num;
 
 	if( res )
-		kv->knots = (fastf_t * ) pmalloc ( sizeof( fastf_t) * num, 
+		kv->knots = (fastf_t * ) rt_pmalloc ( sizeof( fastf_t) * num, 
 		    &res->re_pmem);
 	else
 		kv->knots = (fastf_t * ) rt_malloc ( sizeof( fastf_t) * num, 
@@ -166,7 +166,7 @@ struct resource *res;
 	new_knots->k_size = kv1->k_size + kv2->k_size;
 
 	if( res )
-		new_knots->knots = (fastf_t * ) pmalloc( 
+		new_knots->knots = (fastf_t * ) rt_pmalloc( 
 		    sizeof (fastf_t) * new_knots->k_size,
 		    &res->re_pmem);
 	else
@@ -225,7 +225,7 @@ struct resource *res;
 	register fastf_t *ptr;
 
 	if( res )
-		new_kv->knots = (fastf_t * ) pmalloc ( 
+		new_kv->knots = (fastf_t * ) rt_pmalloc ( 
 		    sizeof (fastf_t) * (upper - lower),
 		    &res->re_pmem );
 	else
@@ -256,7 +256,7 @@ struct resource *res;
 	new_kv->k_size = old_kv->k_size;
 
 	if( res )
-		new_kv->knots = (fastf_t * ) pmalloc( sizeof( fastf_t) * 
+		new_kv->knots = (fastf_t * ) rt_pmalloc( sizeof( fastf_t) * 
 		    new_kv->k_size, &res->re_pmem);
 	else
 		new_kv->knots = (fastf_t * ) rt_malloc( sizeof( fastf_t) * 
@@ -358,7 +358,7 @@ struct resource *res;
     new_knots->k_size = total;
 
     if( res )
-	    new_knots->knots = (fastf_t *) pmalloc ( sizeof( fastf_t) * total,
+	    new_knots->knots = (fastf_t *) rt_pmalloc ( sizeof( fastf_t) * total,
 		&res->re_pmem);
     else
 	    new_knots->knots = (fastf_t *) rt_malloc ( sizeof( fastf_t) * total,

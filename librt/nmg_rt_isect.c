@@ -2074,7 +2074,7 @@ struct face_g_snurb *fg;
 			if( u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
 			    v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1] )
 			{
-				hp = (struct rt_nurb_uv_hit *)pmalloc( sizeof( struct rt_nurb_uv_hit ), &rd->ap->a_resource->re_pmem );
+				hp = (struct rt_nurb_uv_hit *)rt_pmalloc( sizeof( struct rt_nurb_uv_hit ), &rd->ap->a_resource->re_pmem );
 				hp->next = (struct rt_nurb_uv_hit *)NULL;
 				hp->sub = 0;
 				hp->u = u;
@@ -2142,7 +2142,7 @@ struct face_g_snurb *fg;
 				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log( "\tNot a hit\n" );
 
-				pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
+				rt_pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
 				hp = next;
 				continue;
 			}
@@ -2242,7 +2242,7 @@ struct face_g_snurb *fg;
 
 			hit_ins( rd, myhit );
 
-			pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
+			rt_pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
 			hp = next;
 		}
 		rt_nurb_free_snurb( srf, rd->ap->a_resource );

@@ -95,7 +95,7 @@ struct resource *res;
 
 		if( res )
 			srf1->ctl_points = (fastf_t *)
-			pmalloc( sizeof(fastf_t) * srf1->s_size[0] *
+			rt_pmalloc( sizeof(fastf_t) * srf1->s_size[0] *
 				srf1->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				&res->re_pmem);
@@ -121,7 +121,7 @@ struct resource *res;
 
 		if( res )
 			srf2->ctl_points = (fastf_t *)
-			pmalloc( sizeof(fastf_t) * srf2->s_size[0] *
+			rt_pmalloc( sizeof(fastf_t) * srf2->s_size[0] *
 				srf2->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				&res->re_pmem);
@@ -195,7 +195,7 @@ struct resource *res;
 
 		if( res )
 			srf1->ctl_points = (fastf_t *)
-			pmalloc( sizeof(fastf_t) * srf1->s_size[0] *
+			rt_pmalloc( sizeof(fastf_t) * srf1->s_size[0] *
 				srf1->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				&res->re_pmem);
@@ -221,7 +221,7 @@ struct resource *res;
 
 		if( res )
 			srf2->ctl_points = (fastf_t *)
-			pmalloc( sizeof(fastf_t) * srf2->s_size[0] *
+			rt_pmalloc( sizeof(fastf_t) * srf2->s_size[0] *
 				srf2->s_size[1] * 
 				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				&res->re_pmem);
@@ -265,7 +265,7 @@ struct resource *res;
 
 	rt_nurb_free_oslo(oslo, res);
 	if( res )
-		pfree( (char *)new_kv.knots, &res->re_pmem);
+		rt_pfree( (char *)new_kv.knots, &res->re_pmem);
 	else
 		rt_free( (char *)new_kv.knots, "rt_nurb_s_split: new kv knots");
 
