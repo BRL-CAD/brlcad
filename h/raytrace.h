@@ -1037,6 +1037,7 @@ struct rt_wdb  {
 	struct db_tree_state	wdb_initial_tree_state;
 	struct rt_tess_tol	wdb_ttol;
 	struct bn_tol		wdb_tol;
+	int		wdb_version;	/* 4 or 5 */
 
 	/* variables for name prefixing */
 	char		wdb_prestr[RT_NAMESIZE];

@@ -30,7 +30,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "bu.h"
-#include "db.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"
@@ -53,7 +52,6 @@ CONST char *filename;
 
 	if( (dbip = db_create( filename )) == DBI_NULL )
 		return RT_WDB_NULL;
-	db_close(dbip);
 
 	if( (fp = fopen( filename, "ab" )) == NULL )
 		return RT_WDB_NULL;
@@ -62,6 +60,8 @@ CONST char *filename;
 	wdbp->l.magic = RT_WDB_MAGIC;
 	wdbp->type = RT_WDB_TYPE_FILE;
 	wdbp->fp = fp;
+	wdbp->wdb_version = dbip->dbi_version;
+	db_close(dbip);
 	return wdbp;
 }
 
@@ -101,6 +101,7 @@ int		mode;
 	wdbp->l.magic = RT_WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
+	wdbp->wdb_version = dbip->dbi_version;
 
 	dbip->dbi_uses++;
 
@@ -155,18 +156,30 @@ int			flags;
 
 	RT_CK_WDB(wdbp);
 	BU_CK_EXTERNAL(ep);
+
+	/* Stash name into external representation */
+	if( wdbp->wdb_version <= 4 )  {
+		if( db_wrap_v4_external( ep, name ) < 0 )  {
+			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
+				name );
+			return -4;
+		}
+	} else if( wdbp->wdb_version == 5 )  {
+		if( db_wrap_v5_external( ep, name ) < 0 )  {
+			bu_log("wdb_export_external(%s): db_wrap_v5_external error\n",
+				name );
+			return -4;
+		}
+	} else {
+		bu_log("wdb_export_external(%s): version %d unsupported\n",
+				name, wdbp->wdb_version );
+		return -4;
+	}
+
 	switch( wdbp->type )  {
 
 	case RT_WDB_TYPE_FILE:
-		{
-			union record	*rec;
-
-			/* v4: Depends on solid names always being in the same place */
-			rec = (union record *)ep->ext_buf;
-			NAMEMOVE( name, rec->s.s_name );
-		}
-
-		if( fwrite( ep->ext_buf, ep->ext_nbytes, 1, wdbp->fp ) != 1 )  {
+		if( bu_fwrite_external( wdbp->fp, ep ) < 0 )  {
 			bu_log("wdb_export_external(%s): fwrite error\n",
 				name );
 			return(-3);
@@ -223,13 +236,6 @@ int			flags;
 			return -3;
 		}
 
-		/* Stash name into external representation */
-		if( db_wrap_v4_external( ep, ep, dp ) < 0 )  {
-			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
-				name );
-			return -4;
-		}
-
 		db_inmem( dp, ep, flags );
 		/* ep->buf has been stolen, replaced with null. */
 		break;
@@ -244,14 +250,6 @@ int			flags;
 			}
 		} else {
 			dp->d_flags = (dp->d_flags & ~7) | flags;
-		}
-
-		/* Stash name into external representation */
-		if( db_wrap_v4_external( ep, ep, dp ) < 0 )  {
-			bu_log("wdb_export_external(%s): db_wrap_v4_external error\n",
-				name );
-			bu_free_external( ep );
-			return -4;
 		}
 
 		db_inmem( dp, ep, flags );
@@ -291,12 +289,24 @@ double		local2mm;
 	RT_INIT_DB_INTERNAL( &intern );
 	intern.idb_type = id;
 	intern.idb_ptr = gp;
+	intern.idb_meth = &rt_functab[id];
 
-	if( rt_functab[id].ft_export( &ext, &intern, local2mm, wdbp->dbip ) < 0 )  {
-		bu_log("wdb_export(%s): solid export failure\n",
-			name );
-		bu_free_external( &ext );
-		return(-2);				/* FAIL */
+	if( wdbp->wdb_version <= 4 )  {
+		ret = intern.idb_meth->ft_export( &ext, &intern, local2mm, wdbp->dbip );
+		if( ret < 0 )  {
+			bu_log("rt_db_put_internal(%s):  solid export failure\n",
+				name);
+			bu_free_external( &ext );
+			return -2;		/* FAIL */
+		}
+		db_wrap_v4_external( &ext, name );
+	} else {
+		if( rt_db_cvt_to_external5( &ext, name, &intern, local2mm, wdbp->dbip ) < 0 )  {
+			bu_log("wdb_export(%s): solid export failure\n",
+				name );
+			bu_free_external( &ext );
+			return(-2);				/* FAIL */
+		}
 	}
 	BU_CK_EXTERNAL( &ext );
 
