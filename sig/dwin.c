@@ -7,12 +7,8 @@
 #include <stdio.h>
 #include <math.h>
 
-#if defined(SYSV) && !defined(bzero)
-#	define bzero(str,n)		memset( str, '\0', n )
-#	define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
-
-double	atof();
+#include "machine.h"
+#include "externs.h"
 
 /*
  * Buffering stuff

@@ -13,11 +13,8 @@
 #include <stdio.h>
 #include <math.h>
 
-double	atof();
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#include "machine.h"
+#include "externs.h"
 
 char	*file_name;
 FILE	*infp;

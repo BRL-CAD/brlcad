@@ -106,7 +106,7 @@ int ac;
 char *av[];
 {
 	int  c, optlen, files;
-	FILE *fd, *fopen();
+	FILE *fd;
 	char *eos;
 	long newoffset;
 
