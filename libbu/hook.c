@@ -77,6 +77,8 @@ bu_call_hook(hlp, buf)
 {
 	struct bu_hook_list	*call_hook;
 
-	call_hook = BU_LIST_FIRST(bu_hook_list, &hlp->l);
-	call_hook->hookfunc(call_hook->clientdata, buf);
+	for (BU_LIST_FOR(call_hook, bu_hook_list, &hlp->l)) {
+		if( !(call_hook->hookfunc) )  abort();	/* don't call through 0! */
+		call_hook->hookfunc(call_hook->clientdata, buf);
+	}
 }
