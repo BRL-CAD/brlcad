@@ -2,7 +2,7 @@
  *			G _ C L I N E . C
  *
  *  Purpose -
- *	Intersect a ray with a FSTGEN4 CLINE element
+ *	Intersect a ray with a FASTGEN4 CLINE element
  *
  *  Authors -
  *  	John Anderson
