@@ -44,6 +44,10 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
+#define		MIN_ANG		5.0	/* 5 degrees, used in checking for acute angles
+					 * between adjacent faces in PLATE-MODE
+					 */
+
 #define		NAMESIZE	16	/* from db.h */
 
 #define		LINELEN		128	/* Length of char array for input line */
@@ -69,6 +73,7 @@ static int	debug=0;		/* Debug flag */
 static int	rt_debug=0;		/* rt_g.debug */
 static int	nmg_debug=0;		/* rt_g.NMG_debug */
 static int	polysolids=1;		/* Flag: >0 -> Build polysolids, not NMG's */
+static fastf_t	max_cos=0.0;		/* cosine of minimum allowed angle between faces in PLATE mode components */
 static int	sol_count=0;		/* number of solids, used to create unique solid names */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
 static int	conv_count=0;		/* Count of components successfully converted to BRLCAD */
@@ -86,13 +91,21 @@ static struct nmgregion	*r;		/* NMGregion */
 static struct shell	*s;		/* NMG shell */
 static struct rt_tol	tol;		/* Tolerance struct for NMG's */
 
+static struct faceuse	**dup_fu;	/* NMG faceuses that were duplicates */
+static int		dup_count=0;	/* number of faceuses in the dup_fu list */
+static int		dup_size=0;	/* size of dup_fu array */
+#define		DUP_BLOCK	64	/* Number of elements in initial dup_fu array */
+
 static int	*int_list;		/* Array of integers */
 static int	int_list_count=0;	/* Number of ints in above array */
 static int	int_list_length=0;	/* Length of int_list array */
 #define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
 
-static char	*usage="Usage:\n\tfast4-g [-dw] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
+static char	*usage="Usage:\n\tfast4-g [-dnw] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
+	a - set minimum allowed angle (degrees) between adjacent faces in PLATE mode\n\
+		components with smaller angles will be converted using ARB6 solids\n\
 	d - print debugging info\n\
+	n - produce NMG solids rather than polysolids\n\
 	w - print warnings about creating default names\n\
 	x - set RT debug flag\n\
 	X - set NMG debug flag\n\
@@ -106,6 +119,7 @@ RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CON
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
 RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop, ( struct loopuse *lu ) );
+RT_EXTERN( void Fix_normals, ( struct shell *sh ) );
 
 #define		PLATE_MODE	1
 #define		VOLUME_MODE	2
@@ -222,6 +236,7 @@ struct fast_fus
 	struct faceuse *fu;
 	fastf_t thick;
 	int pos;
+	int element;
 	struct fast_fus *next;
 } *fus_root;
 
@@ -231,6 +246,19 @@ struct adjacent_faces
 	struct edgeuse *eu1,*eu2;
 	struct adjacent_faces *next;
 } *adj_root;
+
+struct elem_list
+{
+	int element;
+	int no_pts;
+	int pt[4];
+	struct elem_list *next;
+} *elem_root;
+
+static int elem_match[4]={1,2,4,8};
+
+#define NMG_PUSH( _ptr , _stack )       bu_ptbl_ins_unique( _stack , (long *) _ptr )
+
 
 struct fast_fus *
 Find_fus( fu )
@@ -253,17 +281,747 @@ struct faceuse *fu;
 	return( (struct fast_fus *)NULL );
 }
 
+static int
+Check_acute_angles()
+{
+	struct fast_fus *fus;
+	int errors=0;
+	long *flags;
+
+	flags = (long *)bu_calloc( m->maxindex , sizeof( long ) , "Check_acute_angles: flags" );
+
+	fus = fus_root;
+	while( fus )
+	{
+		struct loopuse *lu;
+
+		NMG_INDEX_SET( flags, fus->fu )
+		NMG_INDEX_SET( flags, fus->fu->fumate_p )
+
+		for( BU_LIST_FOR( lu, loopuse, &fus->fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct edgeuse *eu_radial;
+				struct faceuse *fu;
+				vect_t eu_left;
+				vect_t rad_left;
+				fastf_t dot;
+
+				eu_radial = eu->radial_p;
+				if( eu_radial == eu->eumate_p )
+					continue;
+
+				fu = nmg_find_fu_of_eu( eu_radial );
+
+				if( NMG_INDEX_TEST( flags, fu ) )
+					continue;
+
+				if( fus->fu == fu->fumate_p || fus->fu == fu )
+					continue;
+
+				if( fus->fu->f_p == fu->f_p )
+					continue;
+
+				if( nmg_find_eu_leftvec( eu_left, eu ) )
+					continue;
+				if( nmg_find_eu_leftvec( rad_left, eu_radial ) )
+					continue;
+
+				dot = VDOT( eu_left, rad_left );
+
+				if( dot > max_cos )
+				{
+					struct fast_fus *fus2;
+					fastf_t angle;
+
+					errors++;
+
+					if( dot > 1.0 )
+						angle = 0.0;
+					else
+						angle = acos( dot ) * 180.0 / bn_pi;
+
+					fus2 = Find_fus( fu );
+					if( fus2 )
+						bu_log( "WARNING: Angle between adjancent elements (%d and %d) is only %g degrees.\n", fus->element, fus2->element, angle );
+					else
+						bu_log( "WARNING: Angle between element %d and a neighbor is only %g degrees.\n", fus->element, angle );
+				}
+			}
+		}
+		fus = fus->next;
+	}
+
+	bu_free( (char *)flags, "Check_acute_angles: flags" );
+
+	if( errors )
+	{
+		bu_log( "\tThis may cause unexpected results in PLATE-MODE components.\n" );
+		bu_log( "\tThis component will be converted using ARB6 solids.\n" );
+		return( 1 );
+	}
+	else
+		return( 0 );
+}
+
+static int
+Unbreak_shell_edges( s_in )
+struct shell *s_in;
+{
+	struct faceuse *fu;
+	int count=0;
+
+	NMG_CK_SHELL( s_in );
+
+	for( BU_LIST_FOR( fu, faceuse, &s_in->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
+			while( BU_LIST_NOT_HEAD( &eu->l, &lu->down_hd ))
+			{
+				struct edgeuse *next_eu, *prev_eu;
+
+				next_eu = BU_LIST_PNEXT( edgeuse, &eu->l );
+				prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &eu->l );
+
+				if( prev_eu == next_eu )
+					break;
+
+				if( prev_eu->g.magic_p == eu->g.magic_p )
+				{
+					if( nmg_unbreak_shell_edge_unsafe( prev_eu ) > 0 )
+						count++;
+				}
+
+				eu = next_eu;
+			}
+		}
+	}
+	return( count );
+}
+
+static struct faceuse *
+nmg_pop_fu( stack )
+struct bu_ptbl *stack;
+{
+        struct faceuse *fu;
+
+        /* return a NULL if stack is empty */
+        if( BU_PTBL_END( stack ) == 0 )
+                return( (struct faceuse *)NULL );
+
+        /* get last faceuse on the stack */
+        fu = (struct faceuse *)BU_PTBL_GET( stack , BU_PTBL_END( stack )-1 );
+
+        /* remove that faceuse from the stack */
+        bu_ptbl_rm( stack , (long *)fu );
+
+        return( fu );
+}
+
+static void
+Add_elem( element, no_pts, pt1, pt2, pt3, pt4 )
+int element;
+int no_pts;
+int pt1, pt2, pt3, pt4;
+{
+	struct elem_list *elem;
+
+	if( !elem_root )
+	{
+		elem_root = (struct elem_list *)rt_malloc( sizeof( struct elem_list ), "Add_elem: elem_root" );
+		elem = elem_root;
+	}
+	else
+	{
+		elem = elem_root;
+		while( elem->next )
+			elem = elem->next;
+
+		elem->next = (struct elem_list *)rt_malloc( sizeof( struct elem_list ), "Add_elem: elem" );
+		elem = elem->next;
+	}
+
+	elem->element = element;
+	elem->no_pts = no_pts;
+	elem->pt[0] = pt1;
+	elem->pt[1] = pt2;
+	elem->pt[2] = pt3;
+	elem->pt[3] = pt4;
+	elem->next = (struct elem_list *)NULL;
+}
+
+static int
+Check_tri_overlap( element_no, pt1, pt2, pt3 )
+int element_no;
+int pt1, pt2, pt3;
+{
+	struct elem_list *elem;
+	int matches;
+	int match[4];
+	int match_pt;
+	int i;
+
+	elem = elem_root;
+	while( elem )
+	{
+		matches = 0;
+		for( i=0 ; i<elem->no_pts ; i++ )
+		{
+			if( pt1 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt1;
+			}
+			else if( pt2 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt2;
+			}
+			else if( pt3 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt3;
+			}
+			else
+				match[i] = 0;
+
+			if( match[i] )
+				match_pt = match[i];
+		}
+
+		if( matches < 3 )
+		{
+			elem = elem->next;
+			continue;
+		}
+
+		if( elem->no_pts == 4 )
+		{
+			vect_t v0;
+
+			switch( matches )
+			{
+				case 7:
+				case 13:
+					bu_log( "Check_tri_overlap: ERROR found duplicate face!!!\n" );
+					return( elem->element );
+				case 11:
+				case 14:
+					/* overlap */
+					return( elem->element );
+				case 3:
+				case 5:
+				case 6:
+				case 9:
+				case 10:
+				case 12:
+					switch( matches )
+					{
+						case 3:
+							VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[1]].pt );
+							break;
+						case 5:
+							VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[2]].pt );
+							break;
+						case 6:
+							VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[2]].pt );
+							break;
+						case 9:
+							VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[3]].pt );
+							break;
+						case 10:
+							VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[3]].pt );
+							break;
+						case 12:
+							VSUB2( v0, grid_pts[elem->pt[2]].pt, grid_pts[elem->pt[3]].pt );
+							break;
+					}
+					/* one edge in common */
+					{
+						int found=0;
+						int odd_pt=0;
+						plane_t pl1, pl2;
+						vect_t v1, v2;
+						fastf_t dot;
+
+						if( bn_mk_plane_3pts( pl1,
+							grid_pts[pt1].pt,
+							grid_pts[pt2].pt,
+							grid_pts[pt3].pt, &tol ) )
+								break;
+
+						if( bn_mk_plane_3pts( pl2,
+							grid_pts[elem->pt[0]].pt,
+							grid_pts[elem->pt[1]].pt,
+							grid_pts[elem->pt[2]].pt, &tol ) )
+								break;
+
+						if( bn_coplanar( pl1, pl2, &tol ) < 1 )
+							break;
+
+						/* elements are coplanar,
+						 * now check if they overlap */
+						for( i=0 ; i<elem->no_pts ; i++ )
+						{
+							if( match[i] == pt1 )
+							{
+								found = 1;
+								break;
+							}
+						}
+
+						if( !found )
+							odd_pt = pt1;
+
+						if( !odd_pt )
+						{
+							found = 0;
+							for( i=0 ; i<elem->no_pts ; i++ )
+							{
+								if( match[i] == pt2 )
+								{
+									found = 1;
+									break;
+								}
+							}
+							if( !found )
+								odd_pt = pt2;
+						}
+
+
+						if( !odd_pt )
+						{
+							found = 0;
+							for( i=0 ; i<elem->no_pts ; i++ )
+							{
+								if( match[i] == pt3 )
+								{
+									found = 1;
+									break;
+								}
+							}
+							if( !found )
+								odd_pt = pt3;
+						}
+						/* odd_pt is the point not in common.
+						 * Calculate vector from match_pt to odd_pt
+						 */
+						VSUB2( v1, grid_pts[odd_pt].pt, grid_pts[match_pt].pt );
+
+						/* Calculate vector from match_pt to
+						 * an unmatched point in elem
+						 */
+						for( i=0 ; i< elem->no_pts ; i++ )
+						{
+							if( match[i] )
+								continue;
+							VSUB2( v2, grid_pts[elem->pt[i]].pt, grid_pts[match_pt].pt );
+							break;
+						}
+						VUNITIZE( v0 );
+						dot = VDOT( v1, v0 );
+						VJOIN1( v1, v1, -dot, v0 );
+
+						dot = VDOT( v2, v0 );
+						VJOIN1( v2, v2, -dot, v0 );
+
+						if( VDOT( v1, v2 ) > 0.0 )
+						{
+							bu_log( "WARNING: element %d overlaps with element %d\n",
+								element_no, elem->element );
+						}
+					}
+			}
+		}
+		else if( elem->no_pts == 3 )
+		{
+			switch( matches )
+			{
+				case 7:
+					bu_log( "Check_tri_overlap: ERROR found duplicate face!!!\n" );
+					return( elem->element );
+				case 3:
+				case 5:
+				case 6:
+					/* one edge in common */
+					break;
+			}
+
+		}
+
+		elem = elem->next;
+	}
+
+	return( 0 );
+}
+
+static int
+Check_quad_overlap( element_no, pt1, pt2, pt3, pt4 )
+int element_no;
+int pt1, pt2, pt3, pt4;
+{
+	struct elem_list *elem;
+	int matches;
+	int match[4];
+	int match_pt;
+	int i;
+
+	elem = elem_root;
+	while( elem )
+	{
+		vect_t v0;
+
+		matches = 0;
+		for( i=0 ; i<elem->no_pts ; i++ )
+		{
+			if( pt1 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt1;
+			}
+			else if( pt2 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt2;
+			}
+			else if( pt3 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt3;
+			}
+			else if( pt4 == elem->pt[i] )
+			{
+				matches += elem_match[i];
+				match[i] = pt4;
+			}
+			else
+				match[i] = 0;
+
+			if( match[i] )
+				match_pt = match[i];
+		}
+
+		if( matches < 3 )
+		{
+			elem = elem->next;
+			continue;
+		}
+
+		switch( matches )
+		{
+			case 15:
+				/* found matching CQUAD */
+				return( elem->element );
+
+			case 7:
+			case 13:
+				/* overlap, but triangle check should catch this */
+				return( 0 );
+
+			case 11:
+			case 14:
+				/* crossed overlap */
+				return( -elem->element );
+			case 3:
+			case 5:
+			case 6:
+			case 9:
+			case 10:
+			case 12:
+				switch( matches )
+				{
+					case 3:
+						VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[1]].pt );
+						break;
+					case 5:
+						VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[2]].pt );
+						break;
+					case 6:
+						VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[2]].pt );
+						break;
+					case 9:
+						VSUB2( v0, grid_pts[elem->pt[0]].pt, grid_pts[elem->pt[3]].pt );
+						break;
+					case 10:
+						VSUB2( v0, grid_pts[elem->pt[1]].pt, grid_pts[elem->pt[3]].pt );
+						break;
+					case 12:
+						VSUB2( v0, grid_pts[elem->pt[2]].pt, grid_pts[elem->pt[3]].pt );
+						break;
+				}
+				/* one edge in common */
+				{
+					int found=0;
+					int odd_pt=0;
+					plane_t pl1, pl2;
+					vect_t v1, v2;
+					fastf_t dot;
+
+					if( bn_mk_plane_3pts( pl1,
+						grid_pts[pt1].pt,
+						grid_pts[pt2].pt,
+						grid_pts[pt3].pt, &tol ) )
+							break;
+
+					if( bn_mk_plane_3pts( pl2,
+						grid_pts[elem->pt[0]].pt,
+						grid_pts[elem->pt[1]].pt,
+						grid_pts[elem->pt[2]].pt, &tol ) )
+							break;
+
+					if( bn_coplanar( pl1, pl2, &tol ) < 1 )
+						break;
+
+					/* elements are coplanar,
+					 * now check if they overlap */
+					for( i=0 ; i<elem->no_pts ; i++ )
+					{
+						if( match[i] == pt1 )
+						{
+							found = 1;
+							break;
+						}
+					}
+
+					if( !found )
+						odd_pt = pt1;
+
+					if( !odd_pt )
+					{
+						found = 0;
+						for( i=0 ; i<elem->no_pts ; i++ )
+						{
+							if( match[i] == pt2 )
+							{
+								found = 1;
+								break;
+							}
+						}
+						if( !found )
+							odd_pt = pt2;
+					}
+
+
+					if( !odd_pt )
+					{
+						found = 0;
+						for( i=0 ; i<elem->no_pts ; i++ )
+						{
+							if( match[i] == pt3 )
+							{
+								found = 1;
+								break;
+							}
+						}
+						if( !found )
+							odd_pt = pt3;
+					}
+					/* odd_pt is the point not in common.
+					 * Calculate vector from match_pt to odd_pt
+					 */
+					VSUB2( v1, grid_pts[odd_pt].pt, grid_pts[match_pt].pt );
+
+					/* Calculate vector from match_pt to
+					 * an unmatched point in elem
+					 */
+					for( i=0 ; i< elem->no_pts ; i++ )
+					{
+						if( match[i] )
+							continue;
+						VSUB2( v2, grid_pts[elem->pt[i]].pt, grid_pts[match_pt].pt );
+						break;
+					}
+					VUNITIZE( v0 );
+					dot = VDOT( v1, v0 );
+					VJOIN1( v1, v1, -dot, v0 );
+
+					dot = VDOT( v2, v0 );
+					VJOIN1( v2, v2, -dot, v0 );
+
+					if( VDOT( v1, v2 ) > 0.0 )
+					{
+						bu_log( "WARNING: element %d overlaps with element %d\n",
+							element_no, elem->element );
+					}
+				}
+		}
+		
+		elem = elem->next;
+	}
+
+	return( 0 );
+}
+
+static void
+Rm_internal_faces()
+{
+	int i;
+	int XZ_plane;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct bu_ptbl stack;
+
+	if( !dup_count )
+		return;
+
+	bu_ptbl_init( &stack, 32, "faceuse stack" );
+
+	for( i=0 ; i<dup_count ; i++ )
+	{
+		fu = dup_fu[i];
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		/* only consider faces in the XZ-plane */
+		XZ_plane = 1;
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				if( eu->vu_p->v_p->vg_p->coord[Y] != 0.0 )
+				{
+					XZ_plane = 0;
+					break;
+				}
+			}
+			if( !XZ_plane )
+				break;
+		}
+		if( !XZ_plane )
+			continue;
+
+		/* check if fu is inside by checking radial faces */
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct faceuse *fu1,*fu2;
+
+				fu1 = nmg_find_fu_of_eu( eu->radial_p );
+				fu2 = nmg_find_fu_of_eu( eu->eumate_p->radial_p );
+
+				if( fu1->fumate_p != fu2 )
+					NMG_PUSH( fu, &stack );
+			}
+		}
+	}
+
+	if( !BU_PTBL_END( &stack ) )
+	{
+		bu_ptbl_free( &stack );
+		return;
+	}
+
+	while( BU_PTBL_END( &stack ) )
+	{
+		fu = nmg_pop_fu( &stack );
+		NMG_CK_FACEUSE( fu );
+
+		/* only consider faces in the XZ-plane */
+		XZ_plane = 1;
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				if( eu->vu_p->v_p->vg_p->coord[Y] != 0.0 )
+				{
+					XZ_plane = 0;
+					break;
+				}
+			}
+			if( !XZ_plane )
+				break;
+		}
+		if( !XZ_plane )
+			continue;
+
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct faceuse *fu1,*fu2;
+
+				fu1 = nmg_find_fu_of_eu( eu->radial_p );
+				fu2 = nmg_find_fu_of_eu( eu->eumate_p->radial_p );
+
+				if( fu1->fumate_p == fu2 && fu1 != fu && fu1 != fu->fumate_p )
+				{
+					if( fu1->orientation != OT_SAME )
+						fu1 = fu1->fumate_p;
+					NMG_PUSH( fu1, &stack );
+				}
+			}
+		}
+
+		nmg_kfu( fu );
+	}
+
+	bu_ptbl_free( &stack );
+}
+
 void
-Add_fu( fu, thick, pos )
+Add_dup( fu )
+struct faceuse *fu;
+{
+	while( dup_count > dup_size-1 )
+	{
+		dup_size += DUP_BLOCK;
+		dup_fu = (struct faceuse **)bu_realloc( dup_fu, dup_size, "realloc dup_fu" );
+	}
+
+	dup_fu[dup_count] = fu;
+	dup_count++;
+}
+
+void
+Add_fu( fu, thick, pos, element_no )
 struct faceuse *fu;
 fastf_t thick;
 int pos;
+int element_no;
 {
 	struct fast_fus *fus;
 
 	if( !fus_root )
 	{
-		fus_root = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus_root" );
+		fus_root = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "fus_root" );
 		fus = fus_root;
 	}
 	else
@@ -271,7 +1029,7 @@ int pos;
 		fus = fus_root;
 		while( fus->next )
 			fus = fus->next;
-		fus->next = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus" );
+		fus->next = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "fus" );
 		fus = fus->next;
 	}
 
@@ -279,6 +1037,7 @@ int pos;
 	fus->fu = fu;
 	fus->thick = thick;
 	fus->pos = pos;
+	fus->element = element_no;
 }
 
 void
@@ -1946,7 +2705,12 @@ struct shell * new_s;
 		NMG_CK_EDGEUSE( eu );
 
 		if( eu->g.magic_p )
+		{
+			BU_LIST_DEQUEUE( &eu->l2 );
+			BU_LIST_INIT( &eu->l2 );
+			eu->l2.magic = NMG_EDGEUSE2_MAGIC;
 			nmg_keg( eu );
+		}
 	}
 
 	for( i=0 ; i<NMG_TBL_END( &list ) ; i++ )
@@ -2955,7 +3719,26 @@ Extrude_faces()
 	if( debug )
 	{
 		bu_log( "%d shells\n", shell_count );
-		nmg_stash_model_to_file( "shell.g", m, "shell" );
+		nmg_stash_model_to_file( "shell.g", m, "before fix normals" );
+	}
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		NMG_CK_REGION( r )
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			NMG_CK_SHELL( s );
+			Fix_normals( s );
+
+			if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+				rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
+		}
+	}
+
+	if( debug )
+	{
+		bu_log( "%d shells\n", shell_count );
+		nmg_stash_model_to_file( "shell1.g", m, "after fix normals" );
 	}
 
 	/* make array of shells, each with unique combination of "center postion"
@@ -2973,6 +3756,7 @@ Extrude_faces()
 
 
 	/* fill in the source shells array */
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
 	source_shells[0] = RT_LIST_FIRST( shell, &r->s_hd );
 	for( RT_LIST_FOR( s1, shell, &r->s_hd ) )
 	{
@@ -3125,14 +3909,7 @@ Extrude_faces()
 		    }
 		}
 	}
-#if 0
-	/* And kill the original shell */
-	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
-		rt_log( "Original shell should be empty, but it is not!!!\n" );
 
-	nmg_ks( s );
-	s = (struct shell *)NULL;
-#else
 	for( RT_LIST_FOR( tmp_r, nmgregion, &m->r_hd ) )
 	{
 		struct shell *next_s;
@@ -3147,7 +3924,7 @@ Extrude_faces()
 			s = next_s;
 		}
 	}
-#endif
+
 	if( debug )
 	{
 		nmg_rebound( m, &tol );
@@ -3164,49 +3941,6 @@ Extrude_faces()
 		}
 	}
 
-#if 0
-	s = (struct shell *)NULL;
-
-	/* Now reunite adjacent faces that were seperated in "Get_shell" */
-	Reunite_faces( dup_tbl );
-
-	/* Merge all shells back */
-	s1 = (struct shell *)NULL;
-	s2 = (struct shell *)NULL;
-	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
-	{
-		for( center=1 ; center<3 ; center++ )
-		{
-			if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
-				continue;
-
-			if( s1 == (struct shell *)NULL )
-			{
-				s1 = shells[ thick_no*2 + center - 1 ];
-				s2 = dup_shells[ thick_no*2 + center - 1 ];
-			}
-			else
-			{
-				nmg_js( s1 , shells[ thick_no*2 + center - 1 ] , &tol );
-				nmg_js( s2 , dup_shells[ thick_no*2 + center - 1 ] , &tol );
-			}
-		}
-	}
-	Glue_shell_faces( s1 );
-	Glue_shell_faces( s2 );
-
-	if( debug )
-	{
-		nmg_rebound( m, &tol );
-		nmg_stash_model_to_file( "error1.g", m, "unconnected shells" );
-	}
-
-	/* Now combine the final two */
-	if( debug )
-		rt_log( "Close shell\n" );
-	if( nmg_open_shells_connect( s1 , s2 , dup_tbl , &tol ) )
-		rt_bomb( "Extrude_faces: Could not connect plate mode shells.\n" );
-#endif
 	rt_free( (char *)thicks , "Extrude_faces: thicks" );
 	rt_free( (char *)shells , "Extrude_faces: shells" );
 	rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
@@ -3214,11 +3948,6 @@ Extrude_faces()
 	rt_free( (char *)source_shells, "Extrude_faces: source_shells" );
 
 	(void)nmg_kill_zero_length_edgeuses( m );
-
-#if 0
-	s = s1;
-	Glue_shell_faces( s );
-#endif
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in Extrude_faces\n" );
@@ -3241,6 +3970,9 @@ Make_arb6_obj()
 	char name[NAMESIZE+1];
 	struct wmember head;
 	struct wmember arb6_head;
+	int tmp_id;
+
+	tmp_id = group_id * 1000 + comp_id;
 
 	RT_LIST_INIT( &arb6_head.l );
 
@@ -3306,7 +4038,7 @@ Make_arb6_obj()
 		VJOIN1( pts[6] , pts[4] , fus->thick , normal );
 		VMOVE( pts[7] , pts[6] );
 
-		sprintf( arb6_name , "arb%d.%d.%d" , group_id , comp_id , arb_count );
+		sprintf( arb6_name , "arb.%d.%d" , tmp_id , arb_count );
 		arb_count++;
 
 		mk_arb8( fdout , arb6_name , &pts[0][X] );
@@ -3354,271 +4086,6 @@ Make_arb6_obj()
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_arb6_obj\n" );
-}
-
-void
-Check_face_g( s )
-struct shell *s;
-{
-	struct faceuse *fu;
-	struct face *f;
-	struct face_g_plane *fg;
-
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		NMG_CK_FACEUSE( fu );
-		f = fu->f_p;
-		NMG_CK_FACE( f );
-		fg = f->g.plane_p;
-		NMG_CK_FACE_G_PLANE( fg );
-	}
-}
-
-int
-Check_radials( s_p, max_use_count )
-struct shell *s_p;
-int max_use_count;
-{
-	struct nmg_ptbl edgeuses;
-	struct nmg_ptbl uses;
-	struct edgeuse *eu1;
-	double *angles=NULL;
-	int i;
-	int radials_ok=1;
-	int *flags;
-	int use_count;
-
-	NMG_CK_SHELL( s_p );
-
-	if( debug )
-		rt_log( "Check_radials( s_p=x%x, max_use_count=%d )\n", s_p, max_use_count );
-
-	nmg_edgeuse_tabulate( &edgeuses , &s_p->l.magic );
-	flags = (int *)rt_calloc( NMG_TBL_END( &edgeuses ) , sizeof( int ) , "Check_radials: flags" );
-
-	nmg_tbl( &uses , TBL_INIT , (long *)NULL );
-
-	for( i=0 ; i<NMG_TBL_END( &edgeuses ) ; i++ )
-	{
-		int j;
-		struct faceuse *fu;
-
-		if( flags[i] )
-			continue;
-
-		eu1 = (struct edgeuse *)NMG_TBL_GET( &edgeuses , i );
-		NMG_CK_EDGEUSE( eu1 );
-
-		fu = nmg_find_fu_of_eu( eu1 );
-		NMG_CK_FACEUSE( fu );
-		if( fu->orientation != OT_SAME )
-		{
-			flags[i] = 1;
-			continue;
-		}
-
-		use_count = 1;
-		nmg_tbl( &uses , TBL_RST , (long *)NULL );
-		nmg_tbl( &uses , TBL_INS , (long *)eu1 );
-
-		flags[i] = 1;
-
-		for( j=i+1 ; j<NMG_TBL_END( &edgeuses ) ; j++ )
-		{
-			struct edgeuse *eu2;
-
-			if( flags[j] )
-				continue;
-
-			eu2 = (struct edgeuse *)NMG_TBL_GET( &edgeuses , j );
-			NMG_CK_EDGEUSE( eu2 );
-
-			fu = nmg_find_fu_of_eu( eu2 );
-			NMG_CK_FACEUSE( fu );
-			if( fu->orientation != OT_SAME )
-			{
-				flags[j] = 1;
-				continue;
-			}
-
-			if( eu2->e_p == eu1->e_p )
-				flags[j] = 1;
-			else if( eu1->vu_p->v_p == eu2->vu_p->v_p &&
-			    eu1->eumate_p->vu_p->v_p == eu2->eumate_p->vu_p->v_p )
-				flags[j] = 1;
-			else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
-			    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )
-				flags[j] = 1;
-
-
-			if( flags[j] )
-			{
-				use_count++;
-				nmg_tbl( &uses , TBL_INS , (long *)eu2 );
-			}
-		}
-
-		if( max_use_count )
-		{
-
-			if( use_count > max_use_count )
-			{
-				if( debug )
-					rt_log( "\tUse_count=%d > max_use_count=%d\n",
-							use_count, max_use_count );
-				radials_ok = 0;
-				break;
-			}
-		}
-		
-
-		if( !max_use_count && use_count%2 )
-		{
-			if( debug )
-				rt_log( "use_count (%d), not even )\n", use_count );
-			radials_ok = 0;
-			break;
-		}
-
-		if( !max_use_count && use_count != 2 )
-		{
-			struct edgeuse *eu,*prev_eu;
-			vect_t xvec,yvec,zvec;
-			vect_t eu_dir,prev_eu_dir;
-			double ang;
-			int done=0;
-			int use_no=0;
-
-			radials_ok = 0;
-			angles = (double *)rt_calloc( use_count , sizeof( double ) , "Check_radials: angles" );
-
-			/* Check if radial orientation is O.K. */
-			if( debug )
-				rt_log( "\tChecking radial orientation\n" );
-
-			eu = (struct edgeuse *)NMG_TBL_GET( &uses , 0 );
-			NMG_CK_EDGEUSE( eu );
-			fu = nmg_find_fu_of_eu( eu );
-			NMG_CK_FACEUSE( fu );
-			if( fu->orientation != OT_SAME )
-				rt_bomb( "Check_radials: fu not OT_SAME\n" );
-			
-			nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, &tol );
-
-			for( use_no=0 ; use_no<use_count ; use_no++ )
-			{
-				vect_t norm_jra;
-
-				eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
-				NMG_CK_EDGEUSE( eu );
-				fu = nmg_find_fu_of_eu( eu );
-				NMG_CK_FACEUSE( fu );
-				if( fu->orientation != OT_SAME )
-					rt_bomb( "Check_radials: fu not OT_SAME\n" );
-
-				NMG_GET_FU_NORMAL( norm_jra, fu );			
-				angles[use_no] = nmg_measure_fu_angle( eu, xvec, yvec, zvec );
-				if( debug )
-				{
-					rt_log( "\tangles[%d] = %g (%g)\n", use_no, angles[use_no], angles[use_no]*180/rt_pi );
-					rt_log( "\t\tfu normal = ( %g %g %g )\n", V3ARGS( norm_jra ) );
-				}
-			}
-
-			ang = (-MAX_FASTF);
-			prev_eu = (struct edgeuse *)NULL;
-
-			while( !done )
-			{
-				double tmp_ang;
-				int tmp_use;
-
-				tmp_use = (-1);
-				tmp_ang = MAX_FASTF;
-				for( use_no=0 ; use_no<use_count ; use_no++ )
-				{
-					if( angles[use_no] > ang && angles[use_no] < tmp_ang )
-					{
-						tmp_use = use_no;
-						tmp_ang = angles[use_no];
-					}
-				}
-
-				if( tmp_use == (-1) )
-				{
-					int first_use;
-					double first_ang=MAX_FASTF;
-
-					/* Find eu with smallest angle */
-					for( use_no=0 ; use_no<use_count ; use_no++ )
-					{
-						if( angles[use_no] < first_ang )
-						{
-							first_use = use_no;
-							first_ang = angles[use_no];
-						}
-					}
-
-					/* one last check between last eu and first */
-					eu = (struct edgeuse *)NMG_TBL_GET( &uses , first_use );
-					VSUB2( eu_dir , eu->vu_p->v_p->vg_p->coord , eu->eumate_p->vu_p->v_p->vg_p->coord );
-					if( VDOT( eu_dir, prev_eu_dir ) > 0.0 )
-						radials_ok = 0;
-					else
-						radials_ok = 1;
-
-					done = 1;
-				}
-
-				if( !done )
-				{
-					use_no = tmp_use;
-
-					if( !prev_eu )
-					{
-						prev_eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
-						ang = angles[use_no];
-						VSUB2( prev_eu_dir , prev_eu->vu_p->v_p->vg_p->coord , prev_eu->eumate_p->vu_p->v_p->vg_p->coord );
-					}
-					else
-					{
-						eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
-						VSUB2( eu_dir , eu->vu_p->v_p->vg_p->coord , eu->eumate_p->vu_p->v_p->vg_p->coord );
-						if( VDOT( eu_dir, prev_eu_dir ) > 0.0 )
-						{
-							radials_ok = 0;
-							goto out;
-						}
-
-						ang = angles[use_no];
-						prev_eu = eu;
-						VMOVE( prev_eu_dir , eu_dir );
-					}
-				}
-			}
-			rt_free( (char *)angles , "Check_radials: angles" );
-			angles = (double *)NULL;
-		}
-	}
-
-out:
-	if( angles )
-		rt_free( (char *)angles , "Check_radials: angles" );
-	
-	nmg_tbl( &edgeuses , TBL_FREE , (long *)NULL );
-	nmg_tbl( &uses , TBL_FREE , (long *)NULL );
-	rt_free( (char *)flags , "Check_radials: flags" );
-
-	if( !radials_ok )
-	{
-		rt_log( "Check_radials: bad radials at edge from ( %g %g %g ) to ( %g %g %g )\n",
-			V3ARGS( eu1->vu_p->v_p->vg_p->coord ), V3ARGS( eu1->eumate_p->vu_p->v_p->vg_p->coord ) );
-		rt_log( "\tUse count = %d\n" , use_count );
-		if( debug )
-			nmg_stash_model_to_file( "bad_radials.g", m, "bad radials" );
-	}
-
-	return( !radials_ok );
 }
 
 void
@@ -3889,6 +4356,7 @@ make_nmg_objects()
 	struct nmg_ptbl faces;
 	struct fast_fus *fus;
 	struct adjacent_faces *adj;
+	struct elem_list *elem;
 	struct wmember head;
 	int failed=0;
 	char name[NAMESIZE+1];
@@ -3948,6 +4416,9 @@ make_nmg_objects()
 
 	if( mode == VOLUME_MODE )
 	{
+		/* check for extra internal faces based on list of duplicates */
+		Rm_internal_faces();
+
 		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
 			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
@@ -3955,6 +4426,7 @@ make_nmg_objects()
 				nmg_fix_normals( s , &tol );
 			}
 		}
+
 	}
 	else if( mode == PLATE_MODE && try_count )
 	{
@@ -4022,7 +4494,7 @@ make_nmg_objects()
 
 						/* add new face to `fus_root' list */
 						fus = Find_fus( fu );
-						Add_fu( new_fu, fus->thick, fus->pos );
+						Add_fu( new_fu, fus->thick, fus->pos, fus->element );
 					}
 				}
 			}
@@ -4032,23 +4504,14 @@ make_nmg_objects()
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after triangulation)\n" );
 
 		if( debug )
-			rt_log( "Fix normals\n" );
-
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			NMG_CK_REGION( r )
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			{
-				NMG_CK_SHELL( s );
-				Fix_normals( s );
-
-				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-					rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
-			}
-		}
-
-		if( debug )
 			rt_log( "extrude faces\n" );
+
+		if( Check_acute_angles() )
+		{
+			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+			failed = 1;
+			goto out;
+		}
 
 		if( Extrude_faces() )
 		{
@@ -4059,9 +4522,6 @@ make_nmg_objects()
 		}
 
 		nmg_rebound( m , &tol );
-
-		if(debug)
-			nmg_stash_model_to_file( "extruded.g" , m, "extruded" );
 
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after extrusion)\n" );
@@ -4185,6 +4645,7 @@ make_nmg_objects()
 		char tmp_name[NAMESIZE+1];
 		struct wmember *wmem;
 		struct wmember tmp_head;
+		int count;
 
 		RT_LIST_INIT( &tmp_head.l );
 
@@ -4194,6 +4655,7 @@ make_nmg_objects()
 			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
 			{
 				NMG_CK_SHELL( s );
+				Recalc_edge_g( s );
 
 				if( nmg_simplify_shell( s ) )
 					continue;
@@ -4202,10 +4664,43 @@ make_nmg_objects()
 					continue;
 
 				if( debug )
+					nmg_pr_s_briefly( s, "" );
+
+				if( debug )
+				{
 					nmg_stash_model_to_file( "shell", m, "shell" );
+					nmg_pr_s_briefly( s, "" );
+				}
+
+			}
+		}
+
+		if(debug)
+			nmg_stash_model_to_file( "extruded.g" , m, "extruded" );
+
+		count = nmg_model_edge_g_fuse( m, &tol );
+				if( debug )
+					bu_log( "%d edge_g's fused\n", count );
+
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			NMG_CK_REGION( r );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				int tmp_id;
+
+				NMG_CK_SHELL( s );
+
+				count = Unbreak_shell_edges( s );
+				if( debug )
+					bu_log( "%d edges mended by Unbreak_shell_edges()\n", count );
+
+				if( debug )
+					nmg_pr_s_briefly( s, "" );
 
 				sol_count++;
-				sprintf( tmp_name, "s.%d", sol_count );
+				tmp_id = group_id * 1000 + comp_id;
+				sprintf( tmp_name, "s.%d.%d", tmp_id, sol_count );
 				make_unique_name( tmp_name );
 				write_shell_as_polysolid( fdout , tmp_name , s );
 				mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
@@ -4215,23 +4710,6 @@ make_nmg_objects()
 	}
 	else
 	{
-#if 0
-		/* Check radial orientation around all edges */
-		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
-		{
-			NMG_CK_REGION( r );
-			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
-			{
-				NMG_CK_SHELL( s );
-
-				if( Check_radials( s, 0 ) )
-				{
-					rt_log( "Shell has bad radial edge orientation\n" );
-					return( 1 );
-				}
-			}
-		}
-#endif
 
 		/* Check if a valid closed shell has been produced */
 		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
@@ -4310,6 +4788,19 @@ out:	nmg_km( m );
 		rt_free( (char *)tmp , "make_nmg_objects: adj" );
 	}
 	adj_root = (struct adjacent_faces *)NULL;
+
+	elem = elem_root;
+	while( elem )
+	{
+		struct elem_list *tmp;
+
+		tmp = elem;
+		elem = elem->next;
+		rt_free( (char *)tmp, "make_nmg_objects: elem" );
+	}
+	elem_root = (struct elem_list *)NULL;
+
+	dup_count = 0;
 
 	if( failed )
 		return(1);
@@ -4980,7 +5471,7 @@ int pos;
 
 	/* save faceuse and thickness info for plate mode */
 	if( mode == PLATE_MODE )
-		Add_fu( fu, thick, pos );
+		Add_fu( fu, thick, pos, element_id );
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_fast_fu\n" );
@@ -5036,7 +5527,10 @@ int pt1, pt2, pt3;
 					}
 
 					if( vert_count == found )
+					{
+						Add_dup( fu );
 						return( 1 );
+					}
 				}
 			}
 		}
@@ -5052,6 +5546,7 @@ do_tri()
 	int pt1,pt2,pt3;
 	fastf_t thick;
 	int pos;
+	int overlap;
 
 	if( debug )
 		rt_log( "do_tri: %s\n" , line );
@@ -5117,7 +5612,17 @@ do_tri()
 			rt_log( "\tplate mode: thickness = %f\n" , thick );
 	}
 
+	overlap = Check_tri_overlap( element_id, pt1, pt2, pt3);
+	if( overlap )
+	{
+		bu_log( "WARNING: CTRI element %d overlaps with existing element %d\n",
+			element_id, overlap );
+		bu_log( "\tCTRI element %d ignored\n", element_id );
+		return;
+	}
+
 	make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
+	Add_elem( element_id, 3, pt1, pt2, pt3, -1 );
 }
 
 void
@@ -5127,6 +5632,8 @@ do_quad()
 	int pt1,pt2,pt3,pt4;
 	fastf_t thick;
 	int pos;
+	int overlap;
+	int skipped=0;
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
@@ -5177,35 +5684,89 @@ do_quad()
 		}
 	}
 
+	overlap = Check_quad_overlap( element_id, pt1, pt2, pt3, pt4 );
+	if( overlap > 0 )
+	{
+		bu_log( "WARNING: CQUAD element %d overlaps with existing CQUAD element %d\n",
+			element_id, overlap );
+		bu_log( "\tCQUAD element %d ignored\n", element_id );
+		(void)Check_for_dup_face( pt1, pt2, pt3 );
+		(void)Check_for_dup_face( pt1, pt3, pt4 );
+		return;
+	}
+	else if( overlap < 0 )
+	{
+		int i;
+
+		i = pt1;
+		pt1 = pt2;
+		pt2 = pt3;
+		pt3 = pt4;
+		pt4 = i;
+	}
+
 	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
 	{
 		rt_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
 		rt_log( "\t\t%d %d %d\n", pt1, pt2, pt3 );
 		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		skipped = 1;
 	}
 	else if( Check_for_dup_face( pt1, pt2, pt3 ) )
 	{
 		rt_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		rt_log( "\t grid points %d %d %d\n", pt1, pt2, pt3 );
 		rt_log( "\tthis face ignored\n" );
+		skipped = 1;
 	}
 	else
-		make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
+	{
+		overlap = Check_tri_overlap( element_id, pt1, pt2, pt3 );
+		if( overlap )
+		{
+			bu_log( "WARNING: CQUAD element %d overlaps with existing element %d\n",
+				element_id, overlap );
+			bu_log( "\tPart of CQUAD element %d ignored\n", element_id );
+			skipped = 1;
+		}
+		else
+			make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
+	}
 
 	if( pt1 == pt3 || pt3 == pt4 || pt1 == pt4 )
 	{
 		rt_log( "do_quad: ignoring degenerate triangular face in CQUAD element\n" );
 		rt_log( "\t\t%d %d %d\n", pt1, pt3, pt4 );
 		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		skipped += 2;
 	}
 	else if( Check_for_dup_face( pt1, pt3, pt4 ) )
 	{
 		rt_log( "Duplicate face in element %d, component %d, group %d\n" , element_id , comp_id , group_id );
 		rt_log( "\t grid points %d %d %d\n", pt1, pt3, pt4 );
 		rt_log( "\tthis face ignored\n" );
+		skipped += 2;
 	}
 	else
-		make_fast_fu( pt1 , pt3 , pt4 , element_id , thick , pos );
+	{
+		overlap = Check_tri_overlap( element_id, pt1, pt3, pt4 );
+		if( overlap )
+		{
+			bu_log( "WARNING: CQUAD element %d overlaps with existing element %d\n",
+				element_id, overlap );
+			bu_log( "\tPart of CQUAD element %d ignored\n", element_id );
+			skipped += 2;
+		}
+		else
+			make_fast_fu( pt1 , pt3 , pt4 , element_id , thick , pos );
+	}
+
+	if( !skipped )
+		Add_elem( element_id, 4, pt1, pt2, pt3, pt4 );
+	else if( skipped == 1 )
+		Add_elem( element_id, 3, pt1, pt3, pt4, -1 );
+	else if( skipped == 2 )
+		Add_elem( element_id, 3, pt1, pt2, pt3, -1 );
 }
 
 /*	cleanup from previous component and start a new one */
@@ -5231,14 +5792,14 @@ int final;
 		{
 			if( !try_count )
 				comp_count++;
-			rt_log( "Making component %s, group #%d, component #%d\n",
-					name_name, group_id , comp_id );
+
 			if( nmgs )
 			{
 			    if( (RT_SETJUMP) || make_nmg_objects() )
 			    {
 				struct fast_fus *fus;
 				struct adjacent_faces *adj;
+			    	struct elem_list *elem;
 
 				rt_log( "***********component %s, group #%d, component #%d failed\n",
 					name_name, group_id , comp_id );
@@ -5283,6 +5844,19 @@ int final;
 					rt_free( (char *)tmp , "Do_section: adj" );
 				}
 				adj_root = (struct adjacent_faces *)NULL;
+
+				elem = elem_root;
+				while( elem )
+				{
+					struct elem_list *tmp;
+
+					tmp = elem;
+					elem = elem->next;
+					rt_free( (char *)tmp, "Do_section: elem" );
+				}
+				elem_root = (struct elem_list *)NULL;
+
+			    	dup_count = 0;
 
 				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section after freeing adj_face list\n" );
@@ -5342,6 +5916,10 @@ int final;
 
 		strncpy( field , &line[16] , 8 );
 		comp_id = atoi( field );
+
+		if( pass )
+			rt_log( "Making component %s, group #%d, component #%d\n",
+				name_name, group_id , comp_id );
 
 		if( comp_id > 999 )
 		{
@@ -5780,12 +6358,20 @@ char *argv[];
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
 
-	while( (c=getopt( argc , argv , "dwx:X:D:P:" ) ) != EOF )
+	max_cos = cos( MIN_ANG*bn_pi/180.0 );
+
+	while( (c=getopt( argc , argv , "a:dnwx:X:D:P:" ) ) != EOF )
 	{
 		switch( c )
 		{
+			case 'a':	/* minimum angle */
+				max_cos = cos( atof( optarg )*bn_pi/180.0 );
+				break;
 			case 'd':	/* debug option */
 				debug = 1;
+				break;
+			case 'n':
+				polysolids = 0;
 				break;
 			case 'w':	/* print warnings */
 				warnings = 1;
@@ -5857,6 +6443,12 @@ char *argv[];
 
 	adj_root = (struct adjacent_faces *)NULL;
 
+	elem_root = (struct elem_list *)NULL;
+
+	dup_count = 0;
+	dup_fu = (struct faceuse **)rt_calloc( DUP_BLOCK, sizeof( struct faceuse *), "dup_fu" );
+	dup_size = DUP_BLOCK;
+
 	name_name[0] = '\0';
 	name_count = 0;
 
@@ -5888,6 +6480,6 @@ char *argv[];
 		List_holes();
 
 	rt_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
-	rt_log( "\t%d failures converted on second try (as a group of ARB6 solids)\n", second_chance );
+	rt_log( "\t%d rejections or failures converted on second try (as a group of ARB6 solids)\n", second_chance );
 	rt_log( "\tFor a total of %d components converted\n" , conv_count+second_chance );
 }
