@@ -1548,11 +1548,10 @@ int	n;		/* First cell is #0 */
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
 int
-rt_in_rpp( rp, invdir, min, max )
-struct xray		*rp;
-register const fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register const fastf_t *min;
-register const fastf_t *max;
+rt_in_rpp(struct xray		*rp,
+	  register const fastf_t *invdir,	/* inverses of rp->r_dir[] */
+	  register const fastf_t *min,
+	  register const fastf_t *max)
 {
 	register const fastf_t	*pt = &rp->r_pt[0];
 	register fastf_t	sv;
