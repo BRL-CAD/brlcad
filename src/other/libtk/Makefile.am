@@ -142,7 +142,7 @@ libtk@TK_VERSION@_la_LIBADD = $(libtk_la_LIBADD)
 bin_PROGRAMS = wish
 
 # moved from unix to this dir
-wish_SOURCES = tkAppInit.c
+wish_SOURCES = ${top_srcdir}/src/other/libtk/unix/tkAppInit.c
 
 wish_LDADD = $(lib_LTLIBRARIES) ${TCL}
 
