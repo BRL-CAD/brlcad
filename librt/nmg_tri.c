@@ -96,7 +96,7 @@ struct trap *p, *v;
 static struct pt2d *find_pt2d();	
 static FILE *plot_fd;
 
-void
+static void
 print_2d_eu(s, eu, tbl2d)
 char *s;
 struct edgeuse *eu;
@@ -114,7 +114,7 @@ struct rt_list *tbl2d;
 }
 
 
-void
+static void
 print_trap(tp, tbl2d)
 struct trap *tp;
 struct rt_list *tbl2d;
@@ -484,7 +484,7 @@ mat_t		TformMat;
  *      \- -/	
  *
  */
-int
+static int
 vtype2d(v, tbl2d)
 struct pt2d *v;
 struct rt_list *tbl2d;
@@ -542,7 +542,7 @@ struct rt_list *tbl2d;
  *
  *	start new trapezoid
  */
-void
+static void
 poly_start_vertex(pt, tbl2d, tlist)
 struct pt2d *pt;
 struct rt_list *tbl2d, *tlist;
@@ -577,7 +577,7 @@ struct rt_list *tbl2d, *tlist;
  *
  *	finish trapezoid from vertex, start new trapezoid from vertex
  */
-void
+static void
 poly_side_vertex(pt, tbl2d, tlist)
 struct pt2d *pt, *tbl2d;
 struct rt_list *tlist;
@@ -661,7 +661,7 @@ struct rt_list *tlist;
  *
  *	complete trapezoid
  */
-void
+static void
 poly_end_vertex(pt, tbl2d, tlist)
 struct pt2d *pt;
 struct rt_list *tbl2d, *tlist;
@@ -722,7 +722,7 @@ trap_found:
  *
  *	Finish existing trapezoid, start 2 new ones
  */
-void
+static void
 hole_start_vertex(pt, tbl2d, tlist)
 struct pt2d *pt;
 struct rt_list *tlist, *tbl2d;
@@ -820,7 +820,7 @@ gotit:
  *	start new trapezoid
  *
  */
-void
+static void
 hole_end_vertex(pt, tbl2d, tlist)
 struct pt2d *pt; 
 struct rt_list *tlist, *tbl2d;
@@ -970,7 +970,7 @@ struct vertexuse *vu_p;
 }
 
 
-void
+static void
 collect_and_sort_vu(tbl2d, p1, p2, tol)
 struct rt_list *tbl2d;
 struct pt2d **p1, **p2;
@@ -1471,7 +1471,7 @@ struct loopuse *lu;
 
 
 
-void
+static void
 nmg_plot_flat_face(fu, tbl2d)
 struct faceuse *fu;
 struct rt_list *tbl2d;
@@ -1553,7 +1553,7 @@ struct rt_list *tbl2d;
 
 
 void
-nmg_triangulate_face(fu, tol)
+nmg_triangulate_fu(fu, tol)
 struct faceuse *fu;
 struct rt_tol	*tol;
 {
@@ -1633,6 +1633,7 @@ struct rt_tol	*tol;
 	return;
 }
 
+void
 nmg_triangulate_model(m, tol)
 struct model *m;
 struct rt_tol   *tol;
@@ -1650,7 +1651,7 @@ struct rt_tol   *tol;
 			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 				NMG_CK_FACEUSE(fu);
 				if (fu->orientation == OT_SAME)
-					nmg_triangulate_face(fu, tol);
+					nmg_triangulate_fu(fu, tol);
 			}
 		}
 	}
