@@ -134,6 +134,7 @@ register int cnt;
 {
 	FAST fastf_t result;
 
+	if( d < 1e-8 )  return(0.0);
 	result = 1;
 	while( cnt-- > 0 )
 		result *= d;
@@ -533,6 +534,11 @@ colorit:
 		VSCALE( work, hitp->hit_normal, cosI1 );
 		VSUB2( reflected, work, to_light );
 		if( (cosS = VDOT( reflected, to_eye )) > 0 )  {
+			if( cosS > 1 )  {
+				rtlog("cosS=%f (x%d,y%d,lvl%d)\n", cosS,
+					ap->a_x, ap->a_y, ap->a_level);
+				cosS = 1;
+			}
 			specular = entry->wgt_specular *
 				ipow(cosS,(int)entry->shine);
 			VJOIN1( ap->a_color, ap->a_color, specular, l0color );
