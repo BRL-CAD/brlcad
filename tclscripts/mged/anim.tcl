@@ -249,10 +249,9 @@ proc sketch_post_curve_list { menu function } {
 	}
 	$menu delete 0 end
 	foreach curve [vdraw v l] {
-		$menu add command -label $curve -command "$command $curve"
-	}
-	if { $function == "open" } {
-		$menu delete _sketch_hl_
+		if { $curve != "_sketch_hl_" } {
+		  $menu add command -label $curve -command "$command $curve"
+		}
 	}
 }
 
@@ -2940,6 +2939,7 @@ proc sketch_init_track {} {
 	uplevel #0 {set mged_sketch_lnkname ""}
 	uplevel #0 set mged_sketch_numpads 1
 	uplevel #0 set mged_sketch_radii "1"
+	uplevel #0 {set mged_sketch_track_arced ""}
 	#dependencies
 	foreach dep {main objanim} {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -2995,6 +2995,9 @@ proc sketch_popup_track_anim { p } {
 	frame $root.f8
 	label $root.f8.l0 -text "First frame:"
 	entry $root.f8.e0 -width 20 -textvariable mged_sketch_objframe
+	frame $root.fa
+	label $root.fa.l0 -text "Arced frame (arced script only):"
+	entry $root.fa.e0 -width 20 -textvariable mged_sketch_track_arced
 	frame $root.f9
 	button $root.f9.b0 -text "OK" -command {sketch_do_track $mged_sketch_objscript $mged_sketch_whlsource $mged_sketch_objsource $mged_sketch_objori $mged_sketch_objcen $mged_sketch_radii $mged_sketch_numpads $mged_sketch_lnkname}
 	button $root.f9.b1 -text "Show Script" -command "sketch_popup_preview $p \$mged_sketch_objscript"
@@ -3006,7 +3009,7 @@ proc sketch_popup_track_anim { p } {
 		$root.f3 $root.fw \
 		$root.f4 $root.f5 \
 		$root.f6 $root.f7 \
-		$root.f8 $root.f9\
+		$root.f8 $root.fa $root.f9\
 		-side top -fill x -expand yes
 
 
@@ -3015,13 +3018,13 @@ proc sketch_popup_track_anim { p } {
 		$root.f3.l0 $root.fw.l0 \
 		$root.f4.l0 $root.f5.l0 \
 		$root.f6.b0 $root.f7.b0 \
-		$root.f8.l0 \
+		$root.f8.l0 $root.fa.l0 \
 		-side left -anchor w
 
 	pack \
 		$root.f0.e0 $root.f1.e0 $root.f2.e0 $root.f3.e0\
 		$root.fw.e0 $root.f4.e0 $root.f5.e0\
-		$root.f6.e0 $root.f7.e0 $root.f8.e0 \
+		$root.f6.e0 $root.f7.e0 $root.f8.e0 $root.fa.e0 \
 		-side right -anchor e
 
 	pack \
@@ -3047,8 +3050,10 @@ proc sketch_popup_track_anim { p } {
 
 proc sketch_do_track { outfile wcurve tcurve ypr center radius numpads \
 								padname} {
-	global mged_sketch_temp1 mged_sketch_anim_path
-	uplevel #0 mged_sketch_whlname wname
+	global mged_sketch_temp1 mged_sketch_anim_path \
+		mged_sketch_track_arced
+
+	upvar #0 mged_sketch_whlname wname
 
 	#check for overwriting script file
 	if {[file exists $outfile] } {
@@ -3106,7 +3111,12 @@ proc sketch_do_track { outfile wcurve tcurve ypr center radius numpads \
 	}
 	while { [llength $ypr] < 3 } { lappend ypr 0}
 	while { [llength $center] < 3 } { lappend ypr 0}
-	set fd [ open "| ${mged_sketch_anim_path}anim_hardtrack -s -b $ypr \
+	if { $mged_sketch_track_arced == "" } {
+		set arccmd ""
+	} else {
+		set arccmd "-g $mged_sketch_track_arced"
+	}
+	set fd [ open "| ${mged_sketch_anim_path}anim_hardtrack $arccmd -s -b $ypr \
 		-d $center $wcmd $lcmd $mged_sketch_temp1 > $outfile" w]
 	sketch_write_to_fd $fd $len
 	close $fd
