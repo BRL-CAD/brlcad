@@ -411,16 +411,17 @@ AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
 GL_CFLAGS="-I/usr/X11R6/include"
-GL_LIBS="-L/usr/X11R6/lib -lGL"
 AC_SUBST(GL_CFLAGS)
+GL_LIBS="-L/usr/X11R6/lib -lGL"
 AC_SUBST(GL_LIBS)
 
 LEX_CFLAGS="-Dyylex=cmd_nop"
 AC_SUBST(LEX_CFLAGS)
 
-# override the default autoconf "-O3 -g" cflags if user has not
-# modified them
+# override the default autoconf cflags if user has not modified them
 if test "x$CFLAGS" = "x" ; then
+	# an unset CFLAGS var is set to "-O2 -g" during AC_PROG_CC, so
+	# set it to something benign
 	CFLAGS=" "
 fi
 
@@ -518,6 +519,7 @@ AC_SEARCH_LIBS(initscr, ncurses curses,,
 	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 	       AC_MSG_ERROR([*** Need curses! ***]) )
 CURSES="${LIBS}"
+AC_SUBST(CURSES)
 
 LIBS=
 AC_SEARCH_LIBS(getvideo, gl, AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.))
@@ -526,17 +528,25 @@ AC_SUBST(SGIGL)
 
 LIBS="${SAVELIBS}"
 
+dnl XXX every binary doesn't need this so remove later
 AC_SEARCH_LIBS(mallopt, malloc)
+
+dnl XXX every binary doesn't need this so remove later
 AC_SEARCH_LIBS(matherr, mx)
+
+dnl XXX every binary doesn't need this so revert later
+AC_SEARCH_LIBS(sqrt, m)
+
+dnl XXX every binary doesn't need this so remove later
 AC_SEARCH_LIBS(dlopen, [dl ldl], AC_DEFINE(HAVE_DLOPEN, 1, dlopen is available))
 AC_SUBST(DL)
 
 dnl X
 X_PREFIX=/usr/X11R6
-X_CFLAGS="-I${X_PREFIX}/include"
-X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
 AC_SUBST(X_CFLAGS)
+X_CFLAGS="-I${X_PREFIX}/include"
 AC_SUBST(X_LIBS)
+X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
 AC_SUBST(X_PREFIX)
 
 dnl detect a useable system regular expression library
@@ -1202,7 +1212,6 @@ BU='${top_builddir}/src/libbu/libbu.la'
 AC_SUBST(BU)
 
 CURSOR='${top_builddir}/src/libcursor/libcursor.la'
-AC_SUBST(CURSES)
 AC_SUBST(CURSOR)
 
 DM='${top_builddir}/src/libdm/libdm.la'
@@ -1244,33 +1253,97 @@ AC_SUBST(WDB)
 dnl tcl
 dnl Need to update version number(s) in src/other/libtcl/Makefile.am
 TCL_VERSION="8.4"
-TCL_LIBRARY="'${prefix}/lib/tcl${TCL_VERSION}'"
-TCL_PACKAGE_PATH="'${libdir}'"
-TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la'
-TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 AC_SUBST(TCL_VERSION)
+TCL_MAJOR_VERSION=8
+AC_SUBST(TCL_MAJOR_VERSION)
+TCL_MINOR_VERSION=4
+AC_SUBST(TCL_MINOR_VERSION)
+TCL_PATCH_LEVEL=".6"
+AC_SUBST(TCL_PATCH_LEVEL)
+TCL_LIBRARY="'${prefix}/lib/tcl${TCL_VERSION}'"
 AC_SUBST(TCL_LIBRARY)
+TCL_PACKAGE_PATH="'${libdir}'"
 AC_SUBST(TCL_PACKAGE_PATH)
+TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la'
 AC_SUBST(TCL)
+TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
+
+dnl XXX -- hack to make unfixed libtk behave when reading tclConfig.sh
 AC_SUBST(TCLSTUB)
+AC_SUBST(CC)
+AC_SUBST(DEFS)
+AC_SUBST(TCL_DBGX)
+CFLAGS_DEBUG="-g"
+AC_SUBST(CFLAGS_DEBUG)
+CFLAGS_OPTIMIZE="-Os"
+AC_SUBST(CFLAGS_OPTIMIZE)
+AC_SUBST(LDFLAGS_DEBUG)
+AC_SUBST(LDFLAGS_OPTIMIZE)
+TCL_SHARED_BUILD=1
+AC_SUBST(TCL_SHARED_BUILD)
+AC_SUBST(CFG_TCL_EXPORT_FILE_SUFFIX)
+AC_SUBST(DL_LIBS)
+AC_SUBST(LIBS)
+AC_SUBST(MATH_LIBS)
+TCL_LIB_FILE=libtcl8.4.so
+AC_SUBST(TCL_LIB_FILE)
+TCL_NEEDS_EXP_FILE=0
+AC_SUBST(TCL_NEEDS_EXP_FILE)
+AC_SUBST(SHLIB_CFLAGS)
+AC_SUBST(CFLAGS_WARNING)
+dnl EXTRA_CFLAGS='-DMAC_OSX_TCL -DHAVE_CFBUNDLE -DUSE_VFORK -DTCL_DEFAULT_ENCODING=\"utf-8\"'
+AC_SUBST(EXTRA_CFLAGS)
+AC_SUBST(SHLIB_LD)
+AC_SUBST(SHLIB_SUFFIX)
+AC_SUBST(STLIB_LD)
+AC_SUBST(SHLIB_LD_LIBS)
+AC_SUBST(CC_SEARCH_FLAGS)
+AC_SUBST(LD_SEARCH_FLAGS)
+RANLIB=ranlib
+AC_SUBST(RANLIB)
+TCL_LIB_FLAG='-ltcl8.4'
+AC_SUBST(TCL_LIB_FLAG)
+TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
+AC_SUBST(TCL_BUILD_LIB_SPEC)
+TCL_INCLUDE_SPEC="-I${prefix}/include -I../../libtcl/generic"
+AC_SUBST(TCL_INCLUDE_SPEC)
+TCL_LIB_VERSIONS_OK='ok'
+AC_SUBST(TCL_LIB_VERSIONS_OK)
+AC_SUBST(TCL_LIB_SPEC)
+AC_SUBST(CFG_TCL_SHARED_LIB_SUFFIX)
+AC_SUBST(CFG_TCL_UNSHARED_LIB_SUFFIX)
+TCL_SRC_DIR='../../libtcl'
+AC_SUBST(TCL_SRC_DIR)
+TCL_STUB_LIB_FILE='libtclstub8.4.a'
+AC_SUBST(TCL_STUB_LIB_FILE)
+TCL_STUB_LIB_FLAG='-ltclstub8.4'
+AC_SUBST(TCL_STUB_LIB_FLAG)
+AC_SUBST(TCL_BUILD_STUB_LIB_SPEC)
+AC_SUBST(TCL_STUB_LIB_SPEC)
+TCL_BUILD_STUB_LIB_PATH="../../libtcl/.libs/libtclstub8.4.a"
+AC_SUBST(TCL_BUILD_STUB_LIB_PATH)
+TCL_STUB_LIB_PATH="${prefix}/lib/libtclstub8.4.a"
+AC_SUBST(TCL_STUB_LIB_PATH)
+TCL_THREADS=0
+AC_SUBST(TCL_THREADS)
 
 dnl tk
 dnl Need to update version number(s) in src/other/libtk/Makefile.am
 TK_VERSION="8.4"
-TK_LIBRARY="'${prefix}/lib/tk${TK_VERSION}'"
-TK='${top_builddir}/src/other/libtk/build/libtk${TK_VERSION}.so -Wl,--rpath -Wl,${libdir}'
-dnl TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 AC_SUBST(TK_VERSION)
+TK_LIBRARY="'${prefix}/lib/tk${TK_VERSION}'"
 AC_SUBST(TK_LIBRARY)
+TK='${top_builddir}/src/other/libtk/build/libtk${TK_VERSION}.so -Wl,--rpath -Wl,${libdir}'
 AC_SUBST(TK)
+dnl TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 dnl AC_SUBST(TKSTUB)
 
 dnl itcl/itk
 ITCL_VERSION="3.3"
-ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl${ITCL_VERSION}.la'
-ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
 AC_SUBST(ITCL_VERSION)
+ITCL_LIBS='${top_builddir}/src/other/incrTcl/itcl/libitcl${ITCL_VERSION}.la'
 AC_SUBST(ITCL_LIBS)
+ITK_LIBS='${top_builddir}/src/other/incrTcl/itk/libitk${ITCL_VERSION}.la'
 AC_SUBST(ITK_LIBS)
 
 
