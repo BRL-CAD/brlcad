@@ -50,6 +50,7 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 extern double	mat_radtodeg;
 
 /***** view.c variables imported from rt.c *****/
+extern int	output_is_binary;	/* !0 means output file is binary */
 extern mat_t	view2model;
 extern mat_t	model2view;
 
@@ -180,7 +181,7 @@ register struct partition *PartHeadp;
 	 *  from ap->a_ray.r_dir;  for now, assume all rays are parallel.
 	 */
 #define	SHOT_FMT	"%7.1f%7.1f%9.3f%9.3f%3d%8.2f%8.2f A%6.1f E%6.1f\n"
-	fprintf(stdout, SHOT_FMT,
+	fprintf(outfp, SHOT_FMT,
 		hcen * MM2IN, vcen * MM2IN,
 		h * MM2IN, v * MM2IN,
 		comp_count,
@@ -274,7 +275,7 @@ register struct partition *PartHeadp;
 		 *  a leading space in front of the first component.
 		 */
 		if( card_count == 0 )  {
-			putc( ' ', stdout );
+			putc( ' ', outfp );
 		}
 		comp_thickness *= MM2IN;
 		air_thickness *= MM2IN;
@@ -283,14 +284,14 @@ register struct partition *PartHeadp;
 			fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
 		else
 			fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
-		fprintf(stdout, fmt,
+		fprintf(outfp, fmt,
 			region_id,
 			comp_thickness,
 			in_obliq, out_obliq,
 			air_id, air_thickness );
 		card_count++;
 		if( card_count >= 3 )  {
-			putc( '\n', stdout );
+			putc( '\n', outfp );
 			card_count = 0;
 		}
 	}
@@ -300,7 +301,7 @@ register struct partition *PartHeadp;
 		/* May need to zero-fill unused component slots
 		 *  Not needed for COVART III, unknown for COVART II.
 		 */
-		putc( '\n', stdout );
+		putc( '\n', outfp );
 	}
 	return(0);
 }
@@ -317,8 +318,7 @@ char *file, *obj;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
 
-	if( minus_o )
-		rt_bomb("error is only to stdout\n");
+	output_is_binary = 0;		/* output is printable ascii */
 
 	/*
 	 *  Overall header, to be read by COVART format:
@@ -326,7 +326,7 @@ char *file, *obj;
 	 *	number of views, title
 	 *  Initially, do only one view per run of RTG3.
 	 */
-        fprintf(stdout,"%5d %s %s\n", 1, file, obj);
+        fprintf(outfp,"%5d %s %s\n", 1, file, obj);
 
 	return(0);		/* No framebuffer needed */
 }
@@ -348,15 +348,15 @@ void	view_eol()
 void
 view_end()
 {
-	fprintf(stdout, SHOT_FMT,
+	fprintf(outfp, SHOT_FMT,
 		999.9, 999.9,
 		999.9, 999.9,
 		1,			/* component count */
 		0.0, 0.0,
 		azimuth, elevation );
 	/* An abbreviated component record:  just give item code 0 */
-	fprintf(stdout, " %4d\n", 0 );
-	fflush(stdout);
+	fprintf(outfp, " %4d\n", 0 );
+	fflush(outfp);
 }
 
 /*
@@ -367,8 +367,8 @@ view_2init( ap )
 struct application	*ap;
 {
 
-	if( stdout == NULL )
-		rt_bomb("stdout is NULL\n");
+	if( outfp == NULL )
+		rt_bomb("outfp is NULL\n");
 
 	/*
 	 *  Header for each view, to be read by COVART format:
@@ -381,7 +381,7 @@ struct application	*ap;
 	 * NOTE that variables "azimuth and elevation" are not valid
 	 * when the -M flag is used.
 	 */
-	fprintf(stdout,
+	fprintf(outfp,
 		"     %-15.8f     %-15.8f                              %10g\n",
 		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
 
