@@ -1626,7 +1626,7 @@ double			mm2local;
 		tip->h[X] * mm2local,
 		tip->h[Y] * mm2local,
 		tip->h[Z] * mm2local,
-		Hmag );
+		Hmag * mm2local);
 	rt_vls_strcat( str, buf );
 	if( Hmag < VDIVIDE_TOL )  {
 		rt_vls_strcat( str, "H vector is zero!\n");
@@ -1641,28 +1641,28 @@ double			mm2local;
 		tip->a[X] * mm2local,
 		tip->a[Y] * mm2local,
 		tip->a[Z] * mm2local,
-		MAGNITUDE(tip->a) );
+		MAGNITUDE(tip->a) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 		tip->b[X] * mm2local,
 		tip->b[Y] * mm2local,
 		tip->b[Z] * mm2local,
-		MAGNITUDE(tip->b) );
+		MAGNITUDE(tip->b) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
 		tip->c[X] * mm2local,
 		tip->c[Y] * mm2local,
 		tip->c[Z] * mm2local,
-		MAGNITUDE(tip->c) );
+		MAGNITUDE(tip->c) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	sprintf(buf, "\tD (%g, %g, %g) mag=%g\n",
 		tip->d[X] * mm2local,
 		tip->d[Y] * mm2local,
 		tip->d[Z] * mm2local,
-		MAGNITUDE(tip->d) );
+		MAGNITUDE(tip->d) * mm2local);
 	rt_vls_strcat( str, buf );
 
 	VCROSS( unitv, tip->c, tip->d );
