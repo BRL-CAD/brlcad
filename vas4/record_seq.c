@@ -12,7 +12,11 @@
  */
 
 #include <stdio.h>
+#ifdef BSD
 #include <strings.h>
+#else
+#include <string.h>
+#endif
 
 /* #define DEBUG 1 /* Define to only print system commands */
 
