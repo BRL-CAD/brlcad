@@ -906,6 +906,7 @@ register struct soltab *stp;
 		(struct part_specific *)stp->st_specific;
 
 	bu_free( (char *)part, "part_specific" );
+	stp->st_specific = GENPTR_NULL;
 }
 
 /*
@@ -1527,12 +1528,16 @@ const struct db_i		*dbip;
 	MAT4X3PNT( part->part_V, mat, v );
 	MAT4X3VEC( part->part_H, mat, h );
 	if( (part->part_vrad = vrad / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-2);
+	  bu_log("unable to import particle, negative v radius\n");
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb->ptr=NULL;
+	  return(-2);
 	}
 	if( (part->part_hrad = hrad / mat[15]) < 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-3);
+	  bu_log("unable to import particle, negative h radius\n");
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb->ptr=NULL;
+	  return(-3);
 	}
 
 	if( part->part_vrad > part->part_hrad )  {
@@ -1543,8 +1548,10 @@ const struct db_i		*dbip;
 		minrad = part->part_vrad;
 	}
 	if( maxrad <= 0 )  {
-		bu_free( ip->idb_ptr, "rt_part_internal" );
-		return(-4);
+	  bu_log("unable to import particle, negative radius\n");
+	  bu_free( ip->idb_ptr, "rt_part_internal" );
+	  ip->idb->ptr=NULL;
+	  return(-4);
 	}
 
 	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad )  {
@@ -1599,6 +1606,8 @@ const struct db_i		*dbip;
 	vrad = pip->part_vrad * local2mm;
 	hrad = pip->part_hrad * local2mm;
 	/* pip->part_type is not converted -- internal only */
+
+	/* !!! should make sure the values are proper (no negative radius) */
 
 	rec->part.p_id = DBID_PARTICLE;
 	htond( rec->part.p_v, (unsigned char *)vert, 3 );
@@ -1715,6 +1724,8 @@ const struct db_i		*dbip;
 	VSCALE( &vec[1*3], pip->part_H, local2mm );
 	vec[2*3] = pip->part_vrad * local2mm;
 	vec[2*3+1] = pip->part_hrad * local2mm;
+
+	/* !!! should make sure the values are proper (no negative radius) */
 
 	/* Convert from internal (host) to database (network) format */
 	htond( ep->ext_buf, (unsigned char *)vec, 8 );
