@@ -61,15 +61,40 @@ fastf_t poly[NCOLS*4] = {
 	0,	1,	0,	1
 };
 
+/*
+ * X displacement table for Kathy's gun tube center of masses, in mm,
+ * with X=0 at rear of projectile (on diagram, junction between m1 & m2)
+ *  This table lists x positions of centers of mass m1..m12, which
+ *  will be used as the end-points of the cylinders
+ */
+double	dxtab[] = {
+	-555,		/* breach rear */
+	-280.5,		/* m1 */
+	341,
+	700+316,
+	700+650+246.4,
+	700+650+650+301.8,				/* m5 */
+	700+650+650+600+238.7,
+	700+650+650+600+500+178.9,
+	700+650+650+600+500+400+173.4,			/* m8 */
+	700+650+650+600+500+400+350+173.3,
+	700+650+650+600+500+400+350+350+148.7,
+	700+650+650+600+500+400+350+350+300+147.4,
+	700+650+650+600+500+400+350+350+300+300+119,	/* m12 */
+	700+650+650+600+500+400+350+350+300+300+238,	/* muzzle end */
+	0,
+};
+
 double	projectile_pos;
 point_t	sample[1024];
 int	nsamples;
 
+double	iradius, oradius;
 double	length;
 double	spacing;
 
-int	nframes = 64;
-double	delta_t = 0.15;		/* ms/step */
+int	nframes = 10;
+double	delta_t = 0.02;		/* ms/step */
 FILE	*pos_fp;
 double	cur_time;
 
@@ -80,7 +105,6 @@ char	**argv;
 	int	frame;
 	char	name[128];
 	char	gname[128];
-	double	iradius, oradius;
 	vect_t	normal;
 	struct wmember head, ghead;
 	matp_t	matp;
@@ -116,13 +140,13 @@ char	**argv;
 	oradius = iradius + (5-4.134) * inches2mm / 2;		/* 5" outer diameter */
 #endif
 	fprintf(stderr,"inner radius=%gmm, outer radius=%gmm\n", iradius, oradius);
-	fprintf(stderr,"nframes=%d\n", nframes);
 
 	length = 187 * inches2mm;
 #ifdef never
 	spacing = 100;			/* mm per sample */
 	nsamples = ceil(length/spacing);
 	fprintf(stderr,"length=%gmm, spacing=%gmm\n", length, spacing);
+	fprintf(stderr,"nframes=%d\n", nframes);
 #endif
 
 	for( frame=0;; frame++ )  {
@@ -172,7 +196,8 @@ char	**argv;
 		mat_fromto( rot1, from, to );
 
 		VSET( from, 1, 0, 0 );
-		xfinddir( to, projectile_pos, offset );
+		/* Projectile is 480mm long -- use center pt, not end */
+		xfinddir( to, projectile_pos + 480.0/2, offset );
 		mat_fromto( rot2, from, to );
 
 		mat_idn( xlate );
@@ -190,6 +215,8 @@ char	**argv;
 
 		fprintf( stderr, "%d, ", frame );  fflush(stderr);
 	}
+	system("cat ke.g");	/* XXX need library routine */
+	exit(0);
 }
 #undef build_spline
 
@@ -289,13 +316,17 @@ FILE	*fp;
 {
 	char	buf[256];
 	int	i;
+	static float	last_read_time = -5;
+	double	dx;
 
 	if( feof(fp) )
 		return(-1);
 
+#ifdef never
+	/* Phils format */
 	for( nsamples=0;;nsamples++)  {
-		if( fgets( buf, sizeof(buf), fp ) == NULL )  break;
-		if( buf[0] == '\0' )  {
+		if( fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+		if( buf[0] == '\0' || buf[0] == '\n' )
 			/* Blank line, marks break in implicit connection */
 			fprintf(stderr,"implicit break unimplemented\n");
 			continue;
@@ -309,7 +340,7 @@ FILE	*fp;
 			&sample[nsamples][Y],
 			&sample[nsamples][Z] );
 		if( i != 3 )  {
-			fprintf("input line didn't have 3 numbers: %s\n", buf);
+			fprintf(stderr, "input line didn't have 3 numbers: %s\n", buf);
 			break;
 		}
 		/* Phil's numbers are in meters, not mm */
@@ -317,9 +348,73 @@ FILE	*fp;
 		sample[nsamples][Y] *= 1000;
 		sample[nsamples][Z] *= 1000;
 	}
-	if( nsamples <= 0 )
+#else
+	/* Kurt's / Kathy's format, in inches */
+	if( cur_time <= 0 )  {
+		/* Really should use Y and Z initial conditions, too */
+		for( nsamples=0; nsamples < (sizeof(dxtab)/sizeof(dxtab[0])); nsamples++ )  {
+			sample[nsamples][X] = dxtab[nsamples];
+			sample[nsamples][Y] = sample[nsamples][Z] = 0;
+		}
+		return(0);		/* OK */
+	}
+	if( last_read_time > cur_time )
+		return(0);		/* OK, reuse last step's data */
+	/* Ferret out next time marker */
+	while(1)  {
+		if( fgets( buf, sizeof(buf), fp ) == NULL )  {
+			fprintf(stderr,"EOF?\n");
+			return(-1);
+		}
+		if( strncmp(buf, "TIME", strlen("TIME")) != 0 )  continue;
+		if( sscanf(buf, "TIME %f", &last_read_time ) < 1 )  {
+			fprintf(stderr, "bad TIME\n");
+			return(-1);
+		}
+		break;
+	}
+
+	for( nsamples=0;;nsamples++)  {
+		int	nmass;
+		float	kx, ky, kz;
+
+		buf[0] = '\0';
+		if( fgets( buf, sizeof(buf), fp ) == NULL )  return(-1);
+		/* center of mass #, +X, +Z, -Y (chg of coordinates) */
+		if( buf[0] == '\0' || buf[0] == '\n' )
+			break;		/* stop at a blank line */
+		i = sscanf( buf, "%d %f %f %f",
+			&nmass, &kx, &ky, &kz );
+		if( i != 4 )  {
+			fprintf( stderr, "input line in error: %s\n", buf );
+			return(-1);
+		}
+		if( nmass-1 != nsamples )  {
+			fprintf( stderr, "nmass %d / nsamples %d mismatch\n",
+				nmass, nsamples );
+			return(-1);
+		}
+#define EXAGERATION	(4 * oradius)
+		/* scale = EXAGERATIONmm / MAX_DEVIATIONmm */
+		/* Deviations used here manually derived */
+		dx = kx * inches2mm * EXAGERATION / (0.95 * inches2mm);
+		sample[nsamples][X] = dx + dxtab[nsamples];
+		sample[nsamples][Y] = kz * inches2mm *
+			EXAGERATION / (0.00002 * inches2mm) /5;
+		sample[nsamples][Z] = -ky * inches2mm *
+			EXAGERATION / (0.02 * inches2mm);
+	}
+	/* Extrapolate data for the right side -- end of muzzle */
+	sample[nsamples][X] = dxtab[nsamples] + dx;	/* reuse last displacement */
+	sample[nsamples][Y] = sample[nsamples-1][Y] * 2 - sample[nsamples-2][Y];
+	sample[nsamples][Z] = sample[nsamples-1][Z] * 2 - sample[nsamples-2][Z];
+	nsamples++;
+#endif
+	if( nsamples <= 4 )  {
+		fprintf(stderr,"insufficient samples\n");
 		return(-1);
-	return(0);
+	}
+	return(0);			/* OK */
 }
 
 read_pos(fp)
@@ -333,8 +428,10 @@ FILE	*fp;
 		if( feof(fp) )
 			break;
 		fscanf( fp, "%f %f", &last_read_time, &pos );
+		/* HACK:  tmax[kathy]=6.155ms, tmax[kurt]=9.17 */
+		/* we just read a Kurt number, make it a Kathy number */
+		last_read_time = last_read_time / 9.17 * 6.155;
 	}
-fprintf(stderr,"t=%g, p=%g\n", last_read_time, projectile_pos);
 
 	/* Kurt's data is in inches */
 	projectile_pos = pos * inches2mm;
@@ -385,13 +482,15 @@ point_t	loc;
 			break;
 		if( x >= sample[i+1][X] )
 			continue;
-		VSUB2( dir, sample[i+1], sample[i] );
-		ratio = (x-sample[i][X]) / (sample[i+1][X]-sample[i][X]);
-		VJOIN1( loc, sample[i], ratio, dir );
-
-		VUNITIZE( dir );
-		return;
+		goto out;
 	}
-	fprintf(stderr, "xfinddir: couldn't find x=%g\n", x);
-	VSET( dir, 1, 0, 0 );
+	fprintf(stderr, "xfinddir: x=%g is past last segment, using final direction\n", x);
+	i = nsamples-2;
+out:
+	VSUB2( dir, sample[i+1], sample[i] );
+	ratio = (x-sample[i][X]) / (sample[i+1][X]-sample[i][X]);
+	VJOIN1( loc, sample[i], ratio, dir );
+
+	VUNITIZE( dir );
+	return;
 }
