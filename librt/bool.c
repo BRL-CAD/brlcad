@@ -1197,6 +1197,7 @@ const struct partition	*InputHdp;
 	RT_CK_PT(pp);
 	BU_CK_PTBL(regiontable);
 
+
 	/* Attempt to control tremendous error outputs */
 	if( ++count > 100 )  {
 		if( (count%100) != 3 )  return;
@@ -1391,7 +1392,8 @@ const struct bu_bitv	*solidbits;
 		ap->a_multioverlap = rt_default_multioverlap;
 
 	if( !ap->a_logoverlap )
-		ap->a_logoverlap = rt_default_logoverlap;
+	    ap->a_logoverlap = rt_silent_logoverlap;
+
 
 	if( enddist <= 0 )  {
 		reason = "not done, behind start point";
