@@ -146,7 +146,6 @@ int		reg_id;
 	struct nmgregion *r;
 	struct shell *s;
 	struct rt_tol  tol;
-	struct wmember *wmem;
 	struct wmember head;
 
 	RT_LIST_INIT( &head.l );
@@ -319,7 +318,7 @@ cvt_euclid_region(fp, fpdb, reg_id)
 FILE	*fp, *fpdb;
 int	reg_id;
 {
-	int	cur_id, face, facet_type, hole_face, i, j,
+	int	cur_id, face, facet_type, hole_face, i,
 		lst[MAX_PTS_PER_FACE], np, nv;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
@@ -527,7 +526,6 @@ struct vlist	*vert;
 {
 	fastf_t	num_points, x, y, z, a, b, c, d;
 	int	i, j, k, facet_type;
-	vect_t	N;
 
 	/* Description of record. */
 	fscanf(fp, "%d %*lf %*lf %lf", &facet_type, &num_points);
