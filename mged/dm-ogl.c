@@ -146,33 +146,44 @@ int argc;
 char *argv[];
 {
   int i;
+  char **av;
 
   /* register application provided routines */
   cmd_hook = Ogl_dm;
   state_hook = Ogl_statechange;
 
-  for(i = argc-1; i-1; --i)
-    argv[i] = argv[i-1];
+  /* stuff in a default initialization script */
+  av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "Ogl_dm_init: av");
+  av[0] = "ogl_open";
+  av[1] = "-i";
+  av[2] = "mged_bind_dm";
 
-  argv[0] = "-i";
-  argv[1] = "mged_bind_dm";
+  /* copy the rest except last */
+  for(i = 1; i < argc-1; ++i)
+    av[i+2] = argv[i];
+
+  av[i+2] = (char *)NULL;
 
   dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)DM_TYPE_OGL);
-  if((dmp = Ogl_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
+  if((dmp = dm_open(DM_TYPE_OGL, DM_EVENT_HANDLER_NULL, argc+1, av)) == DM_NULL){
+    bu_free(av, "Ogl_dm_init: av");
     return TCL_ERROR;
+  }
 
+  bu_free(av, "Ogl_dm_init: av");
   /*XXXX this eventually needs to move into Ogl's private structure */
   dmp->dm_vp = &Viewscale;
   dmp->dm_eventHandler = Ogl_doevent;
   curr_dm_list->s_info->opp = &tkName;
   Tk_CreateGenericHandler(Ogl_doevent, (ClientData)DM_TYPE_OGL);
-  Ogl_configure_window_shape(dmp);
+  ogl_configure_window_shape(dmp);
 
   return TCL_OK;
 }
 
 static int
+
 Ogl_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
@@ -223,15 +234,12 @@ XEvent *eventPtr;
 
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
     glClearColor(0.0, 0.0, 0.0, 0.0);
-    if (((struct ogl_vars *)dmp->dm_vars)->mvars.zbuf)
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    else
-       glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     dirty = 1;
     goto end;
   } else if( eventPtr->type == ConfigureNotify ) {
-    Ogl_configure_window_shape(curr_dm_list->_dmp);
+    ogl_configure_window_shape(curr_dm_list->_dmp);
 
     dirty = 1;
     goto end;
@@ -245,12 +253,12 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct ogl_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
-		       Ogl_irisX2ged(dmp, mx, 0), Ogl_irisY2ged(dmp, my));
+		       ogl_irisX2ged(dmp, mx, 0), ogl_irisY2ged(dmp, my));
       else if(OgldoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	bu_vls_printf( &cmd, "M 0 %d %d\n",
-		       Ogl_irisX2ged(dmp, mx, 1), Ogl_irisY2ged(dmp, my));
+		       ogl_irisX2ged(dmp, mx, 1), ogl_irisY2ged(dmp, my));
       else /* not doing motion */
 	goto end;
 
@@ -325,8 +333,8 @@ XEvent *eventPtr;
     switch(DIAL0 + M->first_axis){
     case DIAL0:
       if(mged_variables.adcflag) {
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_1adc )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -346,8 +354,8 @@ XEvent *eventPtr;
 	else
 	  f = rate_zoom;
 
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -364,8 +372,8 @@ XEvent *eventPtr;
 	else
 	  f = absolute_zoom;
 
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -380,8 +388,8 @@ XEvent *eventPtr;
       break;
     case DIAL2:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_2adc )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -399,8 +407,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_rotate[Z];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -417,8 +425,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_rotate[Z];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -434,8 +442,8 @@ XEvent *eventPtr;
       break;
     case DIAL3:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_distadc)
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -452,8 +460,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_slew[Z];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -470,8 +478,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_slew[Z];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -487,8 +495,8 @@ XEvent *eventPtr;
       break;
     case DIAL4:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_yadc)
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -505,8 +513,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_rotate[Y];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -523,8 +531,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_rotate[Y];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -545,8 +553,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_slew[Y];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -563,8 +571,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_slew[Y];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] -
@@ -580,8 +588,8 @@ XEvent *eventPtr;
       break;
     case DIAL6:
       if(mged_variables.adcflag){
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !dv_xadc)
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -598,8 +606,8 @@ XEvent *eventPtr;
 	  else
 	    f = rate_rotate[X];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -616,8 +624,8 @@ XEvent *eventPtr;
 	  else
 	    f = absolute_rotate[X];
 
-	  if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	  if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	     ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	     !f )
 	    ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	      M->axis_data[0] - knob_values[M->first_axis];
@@ -638,8 +646,8 @@ XEvent *eventPtr;
 	else
 	  f = rate_slew[X];
 
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -656,8 +664,8 @@ XEvent *eventPtr;
 	else
 	  f = absolute_slew[X];
 
-	if(-NOISE < ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
-	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] < NOISE &&
+	if(-NOISE <= ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] &&
+	   ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] <= NOISE &&
 	   !f )
 	  ((struct ogl_vars *)dmp->dm_vars)->knobs[M->first_axis] +=
 	    M->axis_data[0] - knob_values[M->first_axis];
@@ -848,8 +856,8 @@ char	**argv;
 
       old_show_menu = mged_variables.show_menu;
 
-      x = Ogl_irisX2ged(dmp, atoi(argv[3]), 0);
-      y = Ogl_irisY2ged(dmp, atoi(argv[4]));
+      x = ogl_irisX2ged(dmp, atoi(argv[3]), 0);
+      y = ogl_irisY2ged(dmp, atoi(argv[4]));
 
       if(mged_variables.faceplate &&
 	 mged_variables.show_menu &&
@@ -865,7 +873,7 @@ char	**argv;
 	  goto end;
       }
 
-      x = Ogl_irisX2ged(dmp, atoi(argv[3]), 1);
+      x = ogl_irisX2ged(dmp, atoi(argv[3]), 1);
       mged_variables.show_menu = 0;
 end:
       bu_vls_init(&vls);
@@ -987,28 +995,28 @@ Ogl_colorchange()
 static void
 establish_zbuffer()
 {
-  Ogl_establish_zbuffer(dmp);
+  ogl_establish_zbuffer(dmp);
   ++dmaflag;
 }
 
 static void
 establish_lighting()
 {
-  Ogl_establish_lighting(dmp);
+  ogl_establish_lighting(dmp);
   ++dmaflag;
 }
 
 static void
 establish_perspective()
 {
-  Ogl_establish_perspective(dmp);
+  ogl_establish_perspective(dmp);
   ++dmaflag;
 }
 
 static void
 set_perspective()
 {
-  Ogl_set_perspective(dmp);
+  ogl_set_perspective(dmp);
   ++dmaflag;
 }
 
@@ -1022,7 +1030,7 @@ do_linewidth()
 static void
 do_fog()
 {
-  Ogl_do_fog(dmp);
+  ogl_do_fog(dmp);
   ++dmaflag;
 }
 
