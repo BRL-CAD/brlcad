@@ -391,6 +391,7 @@ struct cmd_list {
   struct mged_hist *cur_hist;
   struct bu_vls more_default;
   struct bu_vls name;
+  int quote_string;
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
