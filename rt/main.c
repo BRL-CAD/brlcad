@@ -87,6 +87,8 @@ vect_t l0vec;		/* 0th light vector */
 vect_t l1vec;		/* 1st light vector */
 vect_t l2vec;		/* 2st light vector */
 
+static char ttyObuf[4096];
+
 main(argc, argv)
 int argc;
 char **argv;
@@ -117,8 +119,9 @@ char **argv;
 		case 'f':
 			/* "Fast" -- just a few pixels.  Or, arg's worth */
 			npts = atoi( &argv[0][2] );
-			if( npts < 2 || npts > 1024 )
+			if( npts < 2 || npts > 1024 )  {
 				npts = 50;
+			}
 			break;
 		default:
 			printf("Unknown option '%c' ignored\n", argv[0][1]);
@@ -132,6 +135,10 @@ char **argv;
 		printf(usage);
 		exit(2);
 	}
+
+	/* 4.2 BSD stdio debugging assist */
+/**	setbuffer( stdout, ttyObuf, sizeof(ttyObuf) ); */
+
 	/* Build directory of GED database */
 	dir_build( argv[0] );
 	argc--; argv++;
@@ -141,6 +148,10 @@ char **argv;
 		ikopen();
 		load_map(1);
 		ikclear();
+		if( npts <= 50 )  {
+			ikzoom( 9, 9 );
+			ikwindow( (27-1)*4, 4063+56 );
+		}
 	}
 
 	/* Load the desired portion of the model */
@@ -206,6 +217,7 @@ VPRINT("Light2 Pos", tempdir);
 	MAT3XVEC( l2vec, viewrot, tempdir );
 	VUNITIZE(l2vec);
 VPRINT("Light2 Vec", l2vec);
+	fflush(stdout);
 
 	for( yscreen = npts-1; yscreen >= 0; yscreen--)  {
 		for( xscreen = 0; xscreen < npts; xscreen++)  {
@@ -259,6 +271,7 @@ VPRINT("Light2 Vec", l2vec);
 				pp = pp->pt_forw;
 				FREE_PART(newpp);
 			}
+			if( debug )  fflush(stdout);
 		}
 	}
 	return(0);
@@ -381,9 +394,10 @@ char *str;
 pr_seg(segp)
 register struct seg *segp;
 {
-	printf("SEG at %.8x:  flag=%x (%f,%f) solid=%s\n",
-		segp, segp->seg_flag,
+	printf("%.8x: SEG %s (%f,%f) bin=%d\n",
+		segp,
+		segp->seg_stp->st_name,
 		segp->seg_in.hit_dist,
 		segp->seg_out.hit_dist,
-		segp->seg_stp->st_name );
+		segp->seg_stp->st_bin );
 }

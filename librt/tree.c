@@ -115,7 +115,7 @@ struct region *regp;
 	stp->st_specific = (int *)0;
 	stp->st_regionp = regp;
 
-	if( functab[stp->st_id].ft_prep( v, stp, mat ) )  {
+	if( functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
 		/* Error, solid no good */
 		free(stp);
 		return( SOLTAB_NULL );		/* continue */
@@ -343,7 +343,9 @@ int lvl;			/* recursion level */
 	switch( tp->tr_op )  {
 
 	case OP_SOLID:
-		printf("SOLID %s\n", tp->tr_stp->st_name );
+		printf("SOLID %s (bin %d)\n",
+			tp->tr_stp->st_name,
+			tp->tr_stp->st_bin );
 		return;
 
 	default:

@@ -64,7 +64,7 @@ matp_t mat;
 	matXvec( work, mat, vec );			/* 4x4: xlate, too */
 	htov_move( vec, work );				/* divide out W */
 
-	op = &vec[1*3];
+	op = &vec[1*ELEMENTS_PER_VECT];
 	for( i=1; i<8; i++ )  {
 		MAT3XVEC( work, mat, op );		/* 3x3: rot only */
 		VADD2( op, &vec[0], work );
@@ -213,8 +213,11 @@ int noise;			/* non-0: check 4,> pts for being planar */
 		return(1);				/* OK */
 	case 2:
 		VSUB2( P_A, point, plp->pl_A );	/* C-A */
-		f = VDOT( plp->pl_Xbasis, P_A ) -
-			( MAGNITUDE(P_A) * MAGNITUDE(plp->pl_Xbasis) );
+		/* Check for co-linear, ie, abs( (B-A).(C-A) ) == mag*mag */
+		f = VDOT( plp->pl_Xbasis, P_A );
+		if( f < 0.0 )
+			f = -f;
+		f -= ( MAGNITUDE(P_A) * MAGNITUDE(plp->pl_Xbasis) );
 		if( NEAR_ZERO(f) )  {
 			plp->pl_npts--;
 			plp->pl_code[2] = '\0';

@@ -70,7 +70,6 @@ struct seg *segp_in;
 		register struct partition *newpp;		/* XXX */
 		FAST fastf_t dist;				/* XXX */
 
-		if(debug&DEBUG_PARTITION) pr_seg(segp);
 		/* Make sure seg's solid's region is on active list */
 		stp = segp->seg_stp;
 		if( stp->st_bin == 0 )  {
@@ -83,6 +82,7 @@ struct seg *segp_in;
 				ActRegHd.reg_active = regp;
 			}
 		}
+		if(debug&DEBUG_PARTITION) pr_seg(segp);
 
 		/*
 		 * Weave this segment into the existing partitions,
@@ -135,6 +135,7 @@ equal_start:			/*
 				 * Segment and partition start at
 				 * (roughly) the same point.
 				 */
+if( debug&DEBUG_PARTITION) {pr_partitions( &PartHd, "at equal_start");printf("fdiff(%f,%f)\n", segp->seg_out.hit_dist, pp->pt_outdist);}
 				i = fdiff(segp->seg_out.hit_dist, pp->pt_outdist);
 				if( i == 0 )  {
 					/*
@@ -148,7 +149,21 @@ equal_start:			/*
 					/* Seg continues beyond part. end */
 					pp->pt_solhit[stp->st_bin] = TRUE;
 					dist = pp->pt_outdist;
-					/* NEEDS HELP */
+					if( pp->pt_forw == &PartHd )  {
+						/* beyond last part. end */
+						GET_PART_INIT( newpp );
+						newpp->pt_solhit[stp->st_bin] = TRUE;
+						newpp->pt_instp = pp->pt_outstp;
+						newpp->pt_inhit = pp->pt_outhit;
+						newpp->pt_outstp = stp;
+						newpp->pt_outhit = &segp->seg_out;
+						APPEND_PART( newpp, pp );
+						goto done_weave;
+					}
+					/*
+					 * The rest of the work is done in the
+					 * dist<indist case next pass through.
+					 */
 					continue;
 				}
 				/* Segment ends before partition ends */
@@ -187,10 +202,10 @@ equal_start:			/*
 			 *
 			 *  Segment starts after partition starts,
 			 *  but before the end of the partition.
+			 *  Note:  pt_solhit will be marked in equal_start.
 			 */
 			GET_PART( newpp );
 			*newpp = *pp;			/* struct copy */
-			pp->pt_solhit[stp->st_bin] = TRUE;
 			/* new partition is span before seg joins partition */
 			newpp->pt_outstp = pp->pt_instp = stp;
 			newpp->pt_outhit = pp->pt_inhit = &segp->seg_in;
@@ -222,14 +237,16 @@ done_weave:	;
 
 		hitcnt = 0;
 		if(debug&DEBUG_PARTITION)
-			printf("considering partition x%x\n", pp );
+			printf("considering partition %.8x\n", pp );
 		if( (regp=ActRegHd.reg_active) == &ActRegHd )  {
 			lastregion = REGION_NULL;
 			goto add_partition;
 		}
 		for( ; regp != &ActRegHd; regp = regp->reg_active )  {
-			if(debug&DEBUG_PARTITION)
-				printf("considering region x%x\n", regp );
+			if(debug&DEBUG_PARTITION)  {
+				printf("%.8x: %s\n", regp, regp->reg_name );
+				pr_tree( regp->reg_treetop, 0 );
+			}
 			if( bool_eval( regp->reg_treetop, pp ) == FALSE )
 				continue;
 			/* region claims partition */
@@ -344,6 +361,7 @@ register struct partition *phead;
 char *title;
 {
 	register struct partition *pp;
+	register int i;
 
 	printf("----Partitions: %s\n", title);
 	printf("%.8x: forw=%.8x back=%.8x (HEAD)\n",
@@ -352,6 +370,7 @@ char *title;
 		printf("%.8x: forw=%.8x back=%.8x (%f,%f)\n",
 			pp, pp->pt_forw, pp->pt_back,
 			pp->pt_indist, pp->pt_outdist );
+#ifdef never
 		printf("\t Nin=[%f,%f,%f] Nout=[%f,%f,%f]\n",
 			pp->pt_inhit->hit_normal[0],
 			pp->pt_inhit->hit_normal[1],
@@ -359,6 +378,12 @@ char *title;
 			pp->pt_outhit->hit_normal[0],
 			pp->pt_outhit->hit_normal[1],
 			pp->pt_outhit->hit_normal[2] );
+#endif
+		printf("Bins: ");
+		for( i=0; i<NBINS; i++ )
+			if( pp->pt_solhit[i] )
+				printf("%d, ", i );
+		putchar('\n');
 	}
 	printf("----\n");
 }

@@ -157,8 +157,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	VMOVE( rec->rec_Hunit, H );
 	VUNITIZE( rec->rec_Hunit );
 
-	/* Apply full 4x4mat to V.  No need for htov_vec, as [15]==0. */
+	/* Apply full 4x4mat to V. */
 	VMOVE( work, SP_V );
+	work[3] = 1;
 	matXvec( rec->rec_V, mat, work );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_h );
