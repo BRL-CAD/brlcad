@@ -47,6 +47,7 @@ extern	fastf_t	viewsize;
 extern	int	lightmodel;
 extern	double	AmbientIntensity;	/* XXX - temp hack for contrast! */
 extern	int	width, height;
+extern int	per_processor_chunk;
 
 static	int pixsize = 0;		/* bytes per pixel in scanline */
 
@@ -63,7 +64,6 @@ struct cell {
 #define MISS_ID		-1
 
 static unsigned char *scanline[MAX_PSW];
-
 int   		nEdges = 0;
 int   		nPixels = 0;
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
@@ -94,7 +94,7 @@ Options:\n\
  -V #               View (pixel) aspect ratio (width/height)\n\
  -a #               Azimuth in deg\n\
  -e #               Elevation in deg\n\
- -M                 Read matrix+cmds on stdin\n\
+h -M                 Read matrix+cmds on stdin\n\
  -N #               NMG debug flags\n\
  -o model.pix       Output file, .pix format (default=fb)\n\
  -x #               librt debug flags\n\
@@ -110,127 +110,118 @@ Options:\n\
  *  Returns 1 if framebuffer should be opened, else 0.
  */
 int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
-int minus_o;
+view_init( struct application *ap, char *file, char *obj, int minus_o )
 {
-	int i;
-	
-	pixsize = 3;		/* Frame buffer */
+    /*
+     *  Allocate a scanline for each processor.
+     */
+    ap->a_hit = rayhit;
+    ap->a_miss = raymiss;
+    ap->a_onehit = 1;
 
+    per_processor_chunk = width;
+
+    if( minus_o ) {
 	/*
-	 *  Allocate a scanline for each processor.
+	 * Output is to a file stream.
+	 * Do not open a framebuffer, do not allow parallel
+	 * processing since we can't seek to the rows.
 	 */
-	for ( i = 0; i < npsw; ++i ) {
-	    if (scanline[i] == NULL) {
-	        scanline[i] = (unsigned char *)
-			bu_malloc( width*pixsize, "scanline buffer" );
-	    }	
-	}
-	
-	if( minus_o ) {
-	    /*
-	     * Output is to a file stream.
-	     * Do not open a framebuffer, do not allow parallel
-	     * processing since we can't seek to the rows.
-	     */
-	    rt_g.rtg_parallel = 0;
-	    return(0);
-	}
-	
-	return(1);		/* we need a framebuffer */
+	rt_g.rtg_parallel = 0;
+	bu_log ("view_init: deactivating parallelism due to minus_o.\n");
+	return(0);
+    }
+
+    return(1);		/* we need a framebuffer */
 }
 
 /* beginning of a frame */
 void
-view_2init( ap, framename )
-struct application *ap;
-char *framename;
+view_2init( struct application *ap )
 {
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 1;
+    int i;
+    register struct region *rp;
+    register struct rt_i *rtip = ap->a_rt_i;
+
+    pixsize = 3;		/* Frame buffer */
+    for ( i = 0; i < npsw; ++i ) {
+	if (scanline[i] == NULL) {
+	    scanline[i] = (unsigned char *)
+		bu_malloc( per_processor_chunk*pixsize, "scanline buffer" );
+	}	
+    }
+	
+    for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+        rp->reg_udata = (genptr_t) NULL;
+    }
 }
 
 /* end of each pixel */
-void
-view_pixel( ap )
-register struct application *ap;
-{
-}
+void view_pixel( struct application *ap ) { }
 
 /* end of each line */
 void
-view_eol( ap )
-register struct application *ap;
+view_eol( struct application *ap )
 {
     int		cpu = ap->a_resource->re_cpu;
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );
 	if( outfp != NULL ) {
-	    fwrite( scanline[cpu], pixsize, width, outfp );
+	    fwrite( scanline[cpu], pixsize, per_processor_chunk, outfp );
 	} else if( fbp != FBIO_NULL ) {
-	    fb_write( fbp, 0, ap->a_y, scanline[cpu], width );
+	    fb_write( fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk );
 	}
     bu_semaphore_release( BU_SEM_SYSCALL );
 }
 
-void	view_setup() {}
-/* end of a frame, called after rt_clean() */
-void	view_cleanup() {}
+void view_setup() { }
 
-/* end of each frame */
-void
-view_end()
-{
+/*
+ * end of a frame, called after rt_clean()
+ */
+void view_cleanup() { }
 
-}
-
-
-
+/*
+ * end of each frame
+ */
+void view_end() { }
 
 /*
  *			R A Y H I T
  */
-int
-rayhit (struct application *ap, register struct partition *PartHeadp,
+int rayhit (struct application *ap, register struct partition *pt,
 	struct seg *segp )
 {
-	if ( handle_main_ray(ap, PartHeadp,segp)) {
-	    ap->a_user = 1;
-	} else {
-	    ap->a_user = 0;
-	}
-	
-	return 1;
+    if ( handle_main_ray(ap, pt, segp)) {
+	ap->a_user = 1;
+    } else {
+	ap->a_user = 0;
+    }
+    return 1;
 }
 
 /*
  *			R A Y M I S S
  */
-int
-raymiss( register struct application *ap )
+int raymiss( struct application *ap )
 {
-	if ( handle_main_ray(ap, NULL, NULL)) {
-	    ap->a_user = 1;
-	} else {
-	    ap->a_user = 0;
-	}
-	
-	return 1;	
+    if ( handle_main_ray(ap, NULL, NULL)) {
+	ap->a_user = 1;
+    } else {
+	ap->a_user = 0;
+    }
+    return 0;
 }
 
 /*
  *			R A Y H I T 2
  */
-int
-rayhit2 (struct application *ap, register struct partition *PartHeadp,
+int rayhit2 (struct application *ap, register struct partition *pt,
 	struct seg *segp )
 {
-    struct partition	*pp = PartHeadp->pt_forw;
-    struct hit		*hitp = PartHeadp->pt_forw->pt_inhit;
-    struct cell *c = (struct cell *)ap->a_uptr;
+    struct partition	*pp = pt->pt_forw;
+    struct hit		*hitp = pt->pt_forw->pt_inhit;
+    struct cell 	*c = (struct cell *)ap->a_uptr;
 
     c->c_ishit = 1;
     c->c_id = pp->pt_regionp->reg_regionid;
@@ -239,23 +230,25 @@ rayhit2 (struct application *ap, register struct partition *PartHeadp,
     RT_HIT_NORMAL(c->c_normal, hitp,
 	pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
     c->c_dist = hitp->hit_dist;
+
     return(1);		
 }
 
 /*
  *			R A Y M I S S 2
  */
-int
-raymiss2( register struct application *ap )
+int raymiss2( register struct application *ap )
 {
     struct cell *c = (struct cell *)ap->a_uptr;
+
     c->c_ishit    = 0;
     c->c_dist   = MISS_DIST;
     c->c_id	    = MISS_ID;	
     VSETALL(c->c_hit, MISS_DIST);
     VSETALL(c->c_normal, 0);
     VMOVE(c->c_rdir, ap->a_ray.r_dir);
-    return(1);
+
+    return(0);
 }
 
 
@@ -264,8 +257,8 @@ raymiss2( register struct application *ap )
 #define is_Odd(_a)      ((_a)&01)
 #define ARCTAN_87       19.08
 
-int
-is_edge(struct cell *here, struct cell *left, struct cell *below)
+int is_edge(struct application *ap, struct cell *here,
+    struct cell *left, struct cell *below)
 {
     fastf_t  max_dist = (cell_width*ARCTAN_87)+2;
 
@@ -282,7 +275,7 @@ is_edge(struct cell *here, struct cell *left, struct cell *below)
     }
 
     if ( Abs(here->c_dist - left->c_dist) > max_dist ||
-	 Abs(here->c_dist - below->c_dist) > max_dist) {	
+	 Abs(here->c_dist - below->c_dist) > max_dist) {
 	return 1;
     }
 
@@ -354,6 +347,7 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	a2.a_miss = raymiss2;
 	a2.a_onehit = 1;
 	a2.a_rt_i = ap->a_rt_i;
+	a2.a_resource = ap->a_resource;
 	
 	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
@@ -369,25 +363,22 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
 	 * Finally, compare the values. If they differ, record this
 	 * point as lying on an edge.
 	 */
-	if (is_edge (&me, &left, &below)) {
+	if (is_edge (ap, &me, &left, &below)) {
 	    bu_semaphore_acquire (RT_SEM_RESULTS);	
 	    	scanline[cpu][ap->a_x*3+RED] = 255;
 		scanline[cpu][ap->a_x*3+GRN] = 255;
 		scanline[cpu][ap->a_x*3+BLU] = 255;
 	    bu_semaphore_release (RT_SEM_RESULTS);
+	    edge = 1;
 	} else {
 	    bu_semaphore_acquire (RT_SEM_RESULTS);
 	       	scanline[cpu][ap->a_x*3+RED] = 0;
 		scanline[cpu][ap->a_x*3+GRN] = 0;
 		scanline[cpu][ap->a_x*3+BLU] = 0;
 	    bu_semaphore_release (RT_SEM_RESULTS);
+	    edge = 0;
 	}
 	return edge;
 }
 
-void application_init () {
-
-
-
-
-}
+void application_init () { }
