@@ -623,6 +623,7 @@ struct model				*m;
 					if( RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
 						/* Loop of Lone vertex */
 						ctr->face_lone_verts++;
+						vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 						NMG_CK_VERTEXUSE(vu);
 						NMG_UNIQ_INDEX(vu, vertexuse);
 						if(vu->vua_p)  {
