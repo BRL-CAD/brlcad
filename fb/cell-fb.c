@@ -65,8 +65,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *		Includes offsetting the viewport anywhere on the screen.
  */
 
-#define H2CX(_h)	( ((_h) - xmin) / cell_size )
-#define V2CY(_v)	( ((_v) - ymin) / cell_size )
+#define H2CX(_h)	((int)( ((_h) - xmin) / cell_size ))
+#define V2CY(_v)	((int)( ((_v) - ymin) / cell_size ))
 
 #define CX2VPX(_cx)	( ((_cx)             ) * (wid + grid_flag) )
 #define CY2VPY(_cy)	( ((_cy) + key_height) * (hgt + grid_flag) )
@@ -720,7 +720,7 @@ register char	**argv;
 		key_height = 2.5;
 		break;
 	    case 'l':
-		if (sscanf(optarg, "%f%f", &az, &el) != 2)
+		if (sscanf(optarg, "%lf%lf", &az, &el) != 2)
 		{
 		    fb_log("Invalid view: '%s'\n", optarg);
 		    return (false);
@@ -873,34 +873,30 @@ STATIC void log_Run()
 
 	quat_mat2quat( orient, model2hv );
 
-	printf("Orientation: %g, %g, %g, %g\n", V4ARGS(orient) );
+	printf("Orientation: %.6f, %.6f, %.6f, %.6f\n", V4ARGS(orient) );
 
 	/* Now find the eye position in h, v space.  Note that the eye
 	 * is located at the center of the image; in this case, the center
 	 * of the screen space, i.e., the framebuffer. )
 	 * Also find the hv_viewsize at this time.
 	 */
-	hv_viewsize = SCRX2H( fb_width - 1 ) - SCRX2H( 0 );
-	hv_eye[0] = SCRX2H( fb_width/2 + 0.5 );
-	hv_eye[1] = SCRY2V( fb_height/2 + 0.5 );
+	hv_viewsize = SCRX2H( (double)fb_width ) - SCRX2H( 0.0 );
+	hv_eye[0] = SCRX2H( (double)fb_width/2 );
+	hv_eye[1] = SCRY2V( (double)fb_height/2 );
 	hv_eye[2] = hv_viewsize/2;
 
-printf("SCRX2H(fb_width -1) = %g; SCRX2H(0) = %g; hv_viewsize= %g\n",
-	SCRX2H(fb_width - 1), SCRX2H(0), hv_viewsize);
+	/* Debugging */
+	printf("hv_viewsize= %g\n", hv_viewsize);
+	printf("hv_eye= %.6f, %.6f, %.6f\n", V3ARGS(hv_eye) );
 
 	/* Now find the model eye_position and report on that */
-
-printf("hv_eye= %g, %g, %g\n", V3ARGS(hv_eye) );
-
 	MAT4X3PNT( m_eye, hv2model, hv_eye );
+	printf("Eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(m_eye) );
 
-	printf("Eye_pos: %g, %g, %g\n", V3ARGS(m_eye) );
-
-	/* Now find the view size in model coordinates and print that
-	 * as well.
+	/*
+	 * Find the view size in model coordinates and print that as well.
+	 * Important:  Don't use %g format, it may round to nearest integer!
 	 */
-
 	m_viewsize = hv_viewsize/hv2model[15];
-	printf("Size: %g\n", m_viewsize);
-
+	printf("Size: %.6f\n", m_viewsize);
 }
