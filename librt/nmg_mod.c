@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 
 /* XXX move to raytrace.h */
 RT_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
@@ -1727,14 +1728,33 @@ struct shell *s;
 				nmg_orientation(new_lu->orientation));
 	}
 
-	if (fu->f_p->g.plane_p) {
-		plane_t		n;
-		if( fu->orientation == OT_SAME )  {
-			NMG_GET_FU_PLANE( n, fu );
-		} else {
-			NMG_GET_FU_PLANE( n, fu->fumate_p );
+	/* Create duplicate, independently modifiable face geometry */
+	switch (*fu->f_p->g.magic_p) {
+	case NMG_FACE_G_PLANE_MAGIC:
+		nmg_face_g(new_fu, fu->f_p->g.plane_p->N);
+		break;
+	case NMG_FACE_G_SNURB_MAGIC:
+		{
+			struct face_g_snurb	*old = fu->f_p->g.snurb_p;
+			struct face_g_snurb	*new;
+			/* Create a new, duplicate snurb */
+			nmg_face_g_snurb(new_fu,
+				old->order[0], old->order[1],
+				old->u.k_size, old->v.k_size,
+				NULL, NULL,
+				old->s_size[0], old->s_size[1],
+				old->pt_type,
+				NULL );
+			new = new_fu->f_p->g.snurb_p;
+			/* Copy knots */
+			bcopy( old->u.knots, new->u.knots, old->u.k_size*sizeof(fastf_t) );
+			bcopy( old->v.knots, new->v.knots, old->v.k_size*sizeof(fastf_t) );
+			/* Copy mesh */
+			bcopy( old->ctl_points, new->ctl_points,
+				old->s_size[0] * old->s_size[1] *
+				RT_NURB_EXTRACT_COORDS(old->pt_type) *
+				sizeof(fastf_t) );
 		}
-		nmg_face_g(new_fu, n);
 	}
 	new_fu->orientation = fu->orientation;
 	new_fu->fumate_p->orientation = fu->fumate_p->orientation;
