@@ -5,3 +5,17 @@
  * 
  */
 #include "machine.h"
+
+#define CONST_DECL CONST
+
+#if __STDC__
+#	define VOID_STAR		/* for the Utah Raster Toolkit */
+#endif
+
+#if BSD && !SYSV
+#  define SYS_TIME_H	/* time_t is defined through sys/time.h not time.h */
+#endif
+
+#if !BSD && SYSV
+#	define rindex strrchr
+#endif
