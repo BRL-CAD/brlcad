@@ -145,9 +145,16 @@ struct rt_i		*rtip;
 	LOCAL mat_t	mtemp;
 	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
-	LOCAL vect_t	work;
-	LOCAL vect_t	vbc;	/* used for bounding RPP */
+	LOCAL vect_t	w1, w2, P;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
+
+	/*
+	 *  For a fast way out, hand this solid off to the SPH routine.
+	 *  If it takes it, then there is nothing to do, otherwise
+	 *  the solid is an ELL.
+	 */
+	if( sph_prep( vec, stp, mat ) == 0 )
+		return(0);		/* OK */
 
 #define ELL_V	&vec[0*ELEMENTS_PER_VECT]
 #define ELL_A	&vec[1*ELEMENTS_PER_VECT]
@@ -244,26 +251,34 @@ struct rt_i		*rtip;
 	stp->st_aradius = stp->st_bradius = sqrt(f);
 
 	/* Compute bounding RPP */
-#define ELL_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
+	VSET( w1, magsq_a, magsq_b, magsq_c );
 
-	/* There are 8 corners to the enclosing RPP;  find max and min */
-	VADD3( vbc, ell->ell_V, B, C );
-	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A + B + C */
-	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A + B + C */
+	/* X */
+	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
+	MAT3XVEC( w2, R, P );		/* map plane to local coord syst */
+	VELMUL( w2, w2, w2 );		/* square each term */
+	f = VDOT( w1, w2 );
+	f = f / sqrt(f);
+	stp->st_min[X] = ell->ell_V[X] - f;	/* V.P +/- f */
+	stp->st_max[X] = ell->ell_V[X] + f;
 
-	VSUB2( vbc, ell->ell_V, B );
-	VADD2( vbc, vbc, C );
-	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A - B + C */
-	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A - B + C */
-	
-	VSUB2( vbc, ell->ell_V, C );
-	VADD2( vbc, vbc, B );
-	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A + B - C */
-	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A + B - C */
+	/* Y */
+	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
+	MAT3XVEC( w2, R, P );		/* map plane to local coord syst */
+	VELMUL( w2, w2, w2 );		/* square each term */
+	f = VDOT( w1, w2 );
+	f = f / sqrt(f);
+	stp->st_min[Y] = ell->ell_V[Y] - f;	/* V.P +/- f */
+	stp->st_max[Y] = ell->ell_V[Y] + f;
 
-	VSUB3( vbc, ell->ell_V, B, C );
-	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A - B - C */
-	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A - B - C */
+	/* Z */
+	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
+	MAT3XVEC( w2, R, P );		/* map plane to local coord syst */
+	VELMUL( w2, w2, w2 );		/* square each term */
+	f = VDOT( w1, w2 );
+	f = f / sqrt(f);
+	stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
+	stp->st_max[Z] = ell->ell_V[Z] + f;
 
 	return(0);			/* OK */
 }
@@ -375,24 +390,6 @@ struct xray *rp;
 	fastf_t	a1, b1, c1;
 	fastf_t	aa1, bb1, dd1, aa2, bb2, dd2;
 	fastf_t	rc1sav, rc2sav;
-
-	/*
-	 * Sphere special case
-	 */
-	if( (ell->ell_invsq[X] == ell->ell_invsq[Y])
-	 && (ell->ell_invsq[X] == ell->ell_invsq[Z]) ) {
-	 	cvp->crv_c1 = sqrt(ell->ell_invsq[X]);
-	 	cvp->crv_c2 = cvp->crv_c1;
-		/* any tangent direction */
-	 	rt_orthovec( cvp->crv_pdir, hitp->hit_normal );
-
-		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
-			/* ray strikes surface from inside; make curv negative */
-			cvp->crv_c1 = - cvp->crv_c1;
-			cvp->crv_c2 = - cvp->crv_c2;
-		}
-	 	return;
-	}
 
 	VSUB2( w4, hitp->hit_point, ell->ell_V );
 	aup = ell->ell_Au;
