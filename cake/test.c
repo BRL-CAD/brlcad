@@ -45,13 +45,13 @@ Env		env;
 	switch (test->t_kind)
 	{
 
-when t_TRUE:	return TRUE;
-when t_FALSE:	return FALSE;
-when t_AND:	return eval(node, test->t_left, env) && eval(node, test->t_right, env);
-when t_OR:	return eval(node, test->t_left, env) || eval(node, test->t_right, env);
-when t_NOT:	return ! eval(node, test->t_left, env);
+case t_TRUE:	return TRUE;
+case t_FALSE:	return FALSE;
+case t_AND:	return eval(node, test->t_left, env) && eval(node, test->t_right, env);
+case t_OR:	return eval(node, test->t_left, env) || eval(node, test->t_right, env);
+case t_NOT:	return ! eval(node, test->t_left, env);
 
-when t_CMD:	if (get_stat(test->t_cmd, &status))
+case t_CMD:	if (get_stat(test->t_cmd, &status))
 		{
 			test->t_kind = (status == 0)? t_TRUE: t_FALSE;
 			cdebug("test cmd cache %s: %s\n", test->t_cmd,
@@ -69,7 +69,7 @@ when t_CMD:	if (get_stat(test->t_cmd, &status))
 			(status == 0)? "True": "False");
 		return (status == 0)? TRUE: FALSE;
 
-when t_MATCH:	text1 = (char *) first(test->t_list);	/* -vX	*/
+case t_MATCH:	text1 = (char *) first(test->t_list);	/* -vX	*/
 		text2 = (char *) last(test->t_list);	/* file	*/
 		/* e.g.	sub -vX X.c NULL file.c */
 		sprintf(buf, "sub %s %s NULL %s > /dev/null",
@@ -94,7 +94,7 @@ when t_MATCH:	text1 = (char *) first(test->t_list);	/* -vX	*/
 			(status == 0)? "True": "False");
 		return (status == 0)? TRUE: FALSE;
 
-when t_LIST:	for_list (ptr, test->t_list)
+case t_LIST:	for_list (ptr, test->t_list)
 		{
 			pat = (Pat *) ldata(ptr);
 			if (streq(test->t_pat->p_str, pat->p_str))
@@ -103,12 +103,12 @@ when t_LIST:	for_list (ptr, test->t_list)
 
 		return FALSE;
 
-when t_EXIST:	result = exist(test->t_pat->p_str);
+case t_EXIST:	result = exist(test->t_pat->p_str);
 		cdebug("test exist %s: %s\n", test->t_pat->p_str,
 			result? "True": "False");
 		return result;
 
-when t_CANDO:	chasenode = chase(test->t_pat->p_str, 0, (Entry *) NULL);
+case t_CANDO:	chasenode = chase(test->t_pat->p_str, 0, (Entry *) NULL);
 		if (on_node(chasenode, nf_ERR))
 		{
 			sprintf(scratchbuf, "cannot evaluate 'cando %s' test for %s",
@@ -121,7 +121,7 @@ when t_CANDO:	chasenode = chase(test->t_pat->p_str, 0, (Entry *) NULL);
 			result? "True": "False");
 		return result;
 
-when t_OK:	chasenode = chase(test->t_pat->p_str, 0, (Entry *) NULL);
+case t_OK:	chasenode = chase(test->t_pat->p_str, 0, (Entry *) NULL);
 		if (on_node(chasenode, nf_ERR))
 		{
 			sprintf(scratchbuf, "cannot evaluate 'ok %s' test for %s",
@@ -134,7 +134,7 @@ when t_OK:	chasenode = chase(test->t_pat->p_str, 0, (Entry *) NULL);
 			result? "True": "False");
 		return result;
 
-otherwise:	fprintf(stderr, "cake internal error: invalid test type %x in eval\n",
+default:	fprintf(stderr, "cake internal error: invalid test type %x in eval\n",
 			test->t_kind);
 		exit_cake(TRUE);
 	}
