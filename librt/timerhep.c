@@ -11,12 +11,6 @@ static char RCShep[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-/* Resource locks */
-int	rt_g.res_pt;
-int	rt_g.res_seg;
-int	rt_g.res_malloc;
-int	rt_g.res_printf;
-
 /* Standard System V stuff */
 extern long time();
 static long time0;
