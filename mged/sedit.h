@@ -39,6 +39,11 @@ int     es_edflag;		/* type of editing for this solid */
 #define	MOVEH	8
 #define MOVEHH	9
 #define PTARB	10
+#define CONTROL 11
+#define MVFACE  12
+#define ROTFACE 13
+#define CHGMENU 14
+#define SETUP_ROTFACE 15
 float	es_scale;		/* scale factor */
 float 	es_para[3];		/* keyboard input parameter changes */
 float	es_peqn[7][4];		/* ARBs defining plane equations */
@@ -60,6 +65,9 @@ int	es_menu;		/* item selected from menu */
 #define MENUCD		14
 #define MENUABCD	15
 #define MENUABC		16
+#define EDGEMENU	17
+#define MOVEMENU	18
+#define ROTMENU		19
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 int	es_nlines;		/* # lines in printed display */
