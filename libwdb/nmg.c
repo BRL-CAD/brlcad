@@ -77,18 +77,18 @@ struct shell *s;
 	int count_npts;
 	int max_count;
 	int i;
-	struct rt_tol tol;
+	struct bn_tol tol;
 
 	NMG_CK_SHELL( s );
 
 	/* XXX Yet another tol structure is "faked" */
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.005;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
 
@@ -98,10 +98,10 @@ struct shell *s;
 
 		/* count vertices in loops */
 		max_count = 0;
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
-			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+			if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 				continue;
 
 			if( lu->orientation != OT_SAME )
@@ -112,7 +112,7 @@ struct shell *s;
 			}
 
 			count_npts = 0;
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 				count_npts++;
 
 			if( count_npts > max_count )
@@ -129,27 +129,27 @@ struct shell *s;
 		/* if any loop has more than 5 vertices, triangulate the face */
 		if( max_count > 5 ) {
 			if( rt_g.NMG_debug & DEBUG_BASIC )
-				rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
-			nmg_triangulate_fu( fu, (CONST struct rt_tol *)&tol );
+				bu_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
+			nmg_triangulate_fu( fu, (CONST struct bn_tol *)&tol );
 		}
 	}
 
 	 mk_polysolid( out_fp , name );
 
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		/* only do OT_SAME faces */
 		if( fu->orientation != OT_SAME )
 			continue;
 
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
-			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+			if( BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 				continue;
 
 			count_npts = 0;
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 			{
 				for( i=0 ; i<3 ; i++ )
 					verts[count_npts][i] = eu->vu_p->v_p->vg_p->coord[i];
@@ -161,7 +161,7 @@ struct shell *s;
 
 			if( mk_fpoly( out_fp , count_npts , verts ) )
 			{
-				rt_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
+				bu_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
 				rt_bomb( "write_shell_as_polysolid: mk_fpoly failed\n" );
 			}
 		}

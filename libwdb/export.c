@@ -48,11 +48,11 @@ genptr_t	gp;
 int		id;
 {
 	struct rt_db_internal	intern;
-	struct rt_external	ext;
+	struct bu_external	ext;
 	union record		*rec;
 
 	if( (id <= 0 || id > ID_MAXIMUM) && id != ID_COMBINATION )  {
-		rt_log("mk_export_fwrite(%s): id=%d bad\n",
+		bu_log("mk_export_fwrite(%s): id=%d bad\n",
 			name, id );
 		return(-1);
 	}
@@ -63,19 +63,19 @@ int		id;
 
 	/* Scale change on export is from global "mk_conv2mm" */
 	if( rt_functab[id].ft_export( &ext, &intern, mk_conv2mm, NULL ) < 0 )  {
-		rt_log("mk_export_fwrite(%s): solid export failure\n",
+		bu_log("mk_export_fwrite(%s): solid export failure\n",
 			name );
 		db_free_external( &ext );
 		return(-2);				/* FAIL */
 	}
-	RT_CK_EXTERNAL( &ext );
+	BU_CK_EXTERNAL( &ext );
 
 	/* Depends on solid names always being in the same place */
 	rec = (union record *)ext.ext_buf;
 	NAMEMOVE( name, rec->s.s_name );
 
 	if( fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp ) != 1 )  {
-		rt_log("mk_export_fwrite(%s): fwrite error\n",
+		bu_log("mk_export_fwrite(%s): fwrite error\n",
 			name );
 		db_free_external( &ext );
 		return(-3);

@@ -91,19 +91,19 @@ struct wdb_pipept	*headp;
 
 	if( rt_pipe_ck( headp ) )
 	{
-		rt_log( "mk_pipe: BAD PIPE SOLID (%s)\n" , name );
+		bu_log( "mk_pipe: BAD PIPE SOLID (%s)\n" , name );
 		return( 1 );
 	}
 
 	pipe.pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-	RT_LIST_INIT( &pipe.pipe_segs_head );
+	BU_LIST_INIT( &pipe.pipe_segs_head );
 	/* "borrow" linked list from caller */
-	RT_LIST_APPEND_LIST( &pipe.pipe_segs_head, &headp->l );
+	BU_LIST_APPEND_LIST( &pipe.pipe_segs_head, &headp->l );
 
 	ret = mk_export_fwrite( fp, name, (genptr_t)&pipe, ID_PIPE );
 
 	/* "return" linked list to caller */
-	RT_LIST_APPEND_LIST( &headp->l, &pipe.pipe_segs_head );
+	BU_LIST_APPEND_LIST( &headp->l, &pipe.pipe_segs_head );
 	return ret;
 }
 
@@ -119,9 +119,9 @@ register struct wdb_pipept	*headp;
 {
 	register struct wdb_pipept	*wp;
 
-	while( RT_LIST_WHILE( wp, wdb_pipept, &headp->l ) )  {
-		RT_LIST_DEQUEUE( &wp->l );
-		rt_free( (char *)wp, "mk_pipe_free" );
+	while( BU_LIST_WHILE( wp, wdb_pipept, &headp->l ) )  {
+		BU_LIST_DEQUEUE( &wp->l );
+		bu_free( (char *)wp, "mk_pipe_free" );
 	}
 }
 
