@@ -59,6 +59,7 @@ struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
+	&dm_Null,		/* This should go first */
 	&dm_Mg,
 	&dm_Vg,
 	&dm_Tek,
@@ -67,7 +68,6 @@ static struct dm *which_dm[] = {
 #ifdef PS300
 	&dm_Ps,
 #endif PS300
-	&dm_Null,
 	0
 };
 
@@ -119,6 +119,7 @@ char *name;
 			}
 		}
 		dmp->dmr_colorchange();
+		color_soltab();
 		dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
 		dmaflag++;
 		return;
@@ -149,6 +150,12 @@ get_attached()
 {
 	char line[80];
 	register struct dm **dp;
+
+	/* If non-interactive, don't attach a device and don't ask */
+	if( !isatty(0) )  {
+		attach( "nu" );
+		return;
+	}
 
 	while(1)  {
 		(void)printf("attach (");
