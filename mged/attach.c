@@ -531,6 +531,9 @@ char *dstr;
     return TCL_ERROR;
   }
 
+  /* create the event handler */
+  Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+
   bu_vls_strcpy(&vls, "wm withdraw . ; tk appname mged");
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
