@@ -50,8 +50,6 @@ register struct animate *anp;
 
 	/* Could validate an_type here */
 
-rt_log("rt_add_anim(x%x) x%x, len=%d\n", anp, anp->an_path[0], anp->an_pathlen);
-rt_log("lvl 0 = %s\n", anp->an_path[0]->d_namep);
 	for( i=0; i < anp->an_pathlen; i++ )
 		if( anp->an_path[i] == DIR_NULL )
 			return(-1);	/* BAD */
@@ -84,7 +82,6 @@ struct mater_info	*materp;
 {
 	mat_t	temp;
 
-rt_log("rt_do_anim(x%x) type=%d\n", anp, anp->an_type);
 	switch( anp->an_type )  {
 	case AN_MATRIX:
 		switch( anp->an_u.anu_m.anm_op )  {
