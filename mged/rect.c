@@ -231,7 +231,6 @@ rt_rect_area()
     xmin += width;
   }
 
-  height *= dmp->dm_aspect;
   if(height >= 0){
     ymax = ymin + height;
   }else{
