@@ -22,6 +22,7 @@ static const char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <ctype.h>
 #include <unistd.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
