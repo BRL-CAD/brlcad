@@ -3,7 +3,7 @@
 halftone \- Translate a bw file to a halftoned bw file
 .SH SYNOPSIS
 .B halftone
-.RB [ \-hRS ]
+.RB [ \-hRSa ]
 .RB [ \-s\  squarefilesize]
 .RB [ \-w\  file_width]
 .RB [ \-n\  file_height]
@@ -37,6 +37,11 @@ The
 .B \-S
 flag causes a surpentine raster to be used rather than a left to right
 scan.
+.PP
+The
+.B \-a
+flag is used when automatic file sizing is wanted.  This does not work on
+pipes.
 .PP
 The
 .BI \-w\  file_width
