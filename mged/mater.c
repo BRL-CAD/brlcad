@@ -350,13 +350,16 @@ color_soltab()
 	register struct mater *mp;
 
 	FOR_ALL_SOLIDS( sp, &HeadSolid.l )  {
-		if( sp->s_useBaseColor ) {
-		        /* the user specified the color, so use it */
+		sp->s_cflag = 0;
+
+	        /* the user specified the color, so use it */
+		if( sp->s_uflag ) {
 			sp->s_color[0] = sp->s_basecolor[0];
 			sp->s_color[1] = sp->s_basecolor[1];
 			sp->s_color[2] = sp->s_basecolor[2];
 			goto done;
 		}
+
 		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 			if( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
@@ -366,15 +369,24 @@ color_soltab()
 				goto done;
 			}
 		}
+
 		/*
 		 *  There is no region-id-based coloring entry in the
 		 *  table, so use the combination-record ("mater"
-		 *  command) based color instead.
+		 *  command) based color if one was provided. Otherwise,
+		 *  use the default wireframe color.
 		 *  This is the "new way" of coloring things.
 		 */
-		sp->s_color[0] = sp->s_basecolor[0];
-		sp->s_color[1] = sp->s_basecolor[1];
-		sp->s_color[2] = sp->s_basecolor[2];
+
+		/* use wireframe_default_color */
+		if (sp->s_dflag)
+		  sp->s_cflag = 1;
+		else {
+		  /* Using a combination-record based color */
+		  sp->s_color[0] = sp->s_basecolor[0];
+		  sp->s_color[1] = sp->s_basecolor[1];
+		  sp->s_color[2] = sp->s_basecolor[2];
+		}
 done: ;
 	}
 	update_views = 1;		/* re-write control list with new colors */
