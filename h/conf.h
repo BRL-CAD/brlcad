@@ -115,6 +115,7 @@
 #	define _BSD_TYPES		1
 #	define _BSD_TIME		1	/* for good timeval */
 #	define HAVE_SBRK_DECL		1
+#	define HAVE_REGEX_DECL		1
 #endif
 
 #if defined(_AIX) || defined(__AIX)
