@@ -1,5 +1,6 @@
 # rtsync.tcl
-# A prototype GUI for rtsync
+# A prototype GUI for rtsync.
+# This file is executed by the rtsync program, not directly from the shell.
 # Depends on rtnode defining $dbip and $rtip.
 # Depends on rtnode having executed {set wdbp [wdb_open .inmem inmem $dbip]}
 # Uses various RTSYNC built-in commands, as well as LIBRT's Tcl commands.
@@ -44,7 +45,8 @@ menu .mbar.file.menu
 menu .mbar.help.menu
 .mbar.help.menu add command -label "Exit" -command "exit"
 menu .mbar.debug.menu
-.mbar.debug.menu add command -label "Net Speed Test" -command "net_speed_test"
+.mbar.debug.menu add command -label "Net Speed Test ON" -command "net_speed_test 1"
+.mbar.debug.menu add command -label "Net Speed Test OFF" -command "net_speed_test 0"
 
 # Title, across the top
 frame .words_fr
@@ -131,10 +133,13 @@ proc apply_color {} {
 	vrmgr_send refresh
 }
 
-proc net_speed_test {} {
+proc net_speed_test {val} {
 	node_send \
-		set test_fb_speed 1
+		set test_fb_speed $val
 }
+
+# Allow "send rtsync _stuff_" directives to reach us.
+tk appname rtsync
 
 puts "done rtsync.tcl"
 
