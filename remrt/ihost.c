@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "machine.h"
 #include "vmath.h"
