@@ -36,10 +36,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "externs.h"
 #include "./ged.h"
 #include "./dm.h"
-
-extern char *strcat(), *strcpy();
 
 extern int 	numargs;
 extern char	*cmd_args[];
@@ -298,8 +297,11 @@ thickagain:
 
 	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL )
 		return;
-	db_alloc( dbip, dp, 1 );
-	db_put( dbip,  dp, &record, 0, 1 );
+	if( db_alloc( dbip, dp, 1 ) < 0 || 
+	    db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
+	    	printf("error, aborting\n");
+	    	return;
+	}
 
 	/* draw the "made" solid */
 	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
@@ -321,7 +323,9 @@ char *p_rfin[] = {
  *		4. thickness
  */
 void
-f_rfarb()
+f_rfarb( argc, argv )
+int	argc;
+char	**argv;
 {
 	struct directory *dp;
 	int	i;
@@ -535,8 +539,11 @@ thckagain:
 
 	if( (dp = db_diradd( dbip, record.s.s_name, -1, 0, DIR_SOLID)) == DIR_NULL )
 		return;
-	db_alloc( dbip, dp, 1 );
-	db_put( dbip,  dp, &record, 0, 1 );
+	if( db_alloc( dbip, dp, 1 ) < 0  ||
+	    db_put( dbip,  dp, &record, 0, 1 ) < 0 )  {
+	    	printf("error, aborting\n");
+	    	return;
+	}
 
 	/* draw the "made" solid */
 	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
