@@ -69,6 +69,17 @@
 #	define _POSIX_SOURCE	1
 #endif
 
+#if defined(__alpha)
+#	define HAVE_GETOPT_H	1
+#	define HAVE_GETOPT	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define HAVE_SBRK_DECL		1
+#endif
+
 #if defined(sgi) || defined(__sgi) || defined(IRIX)
 #	if IRIX < 6
 #		define HAS_SGIGL	1	/* Old GL */
