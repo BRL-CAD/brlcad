@@ -68,6 +68,9 @@ remrt:	remrt.o ihost.o OBJS
 view.o:	../rt/view.c
 	CC CFLAGS -DRTSRV -c ../rt/view.c
 
+sh_tcl.o:	../rt/sh_tcl.c
+	CC CFLAGS -DRTSRV -c ../rt/sh_tcl.c
+
 rtsrv:	rtsrv.o view.o OBJS
 	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
 
@@ -75,7 +78,7 @@ rtsync:  rtsync.o ihost.o
 	CC LDFLAGS -o rtsync rtsync.o ihost.o LIBFB LIBFB_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
 
 /* Uses standard view.o */
-rtnode:  rtnode.o RTDIR/view.o LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP
-	CC LDFLAGS -o rtnode rtnode.o RTDIR/view.o LIBFB LIBFB_LIBES RTSRV_PIECES
+rtnode:  rtnode.o sh_tcl.o RTDIR/view.o LIBFB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o rtnode rtnode.o sh_tcl.o RTDIR/view.o LIBFB LIBFB_LIBES RTSRV_PIECES
 
 #include "../Cakefile.rules"
