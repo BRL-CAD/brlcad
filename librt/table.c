@@ -780,10 +780,10 @@ const struct rt_functab rt_functab[] = {
 		rt_grp_plot,	rt_grp_vshot,	rt_grp_tess,	rt_nul_tnurb,
 		rt_grp_import5, rt_grp_export5,
 		rt_grp_import,	rt_grp_export,	rt_grp_ifree,
-		rt_grp_describe,rt_grp_xform,	NULL,
+		rt_grp_describe,rt_grp_xform,	rt_grp_parse,
 		sizeof(struct rt_grip_internal), RT_GRIP_INTERNAL_MAGIC,
 		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
-		NULL,
+	        NULL,
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_JOINT", "joint",
