@@ -861,6 +861,10 @@ BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
 
+/* brlcad_path.c */
+BU_EXTERN(int			bu_file_exists, (CONST char *path) );
+BU_EXTERN(char			*bu_brlcad_path, (CONST char *rhs) );
+
 /* getopt.c */
 extern int			bu_opterr;
 extern int			bu_optind;
