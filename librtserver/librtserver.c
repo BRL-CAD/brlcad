@@ -101,6 +101,9 @@ static int used_session_0=0;	/* flag indicating if initial session has been used
 /* number of cpus (only used for call to rt_prep_parallel) */
 int ncpus=1;
 
+/* the title of this BRL-CAD database */
+static char *title=NULL;
+
 struct rts_resources {
 	struct bu_list rtserver_results;
 	struct bu_list ray_results;
@@ -327,7 +330,6 @@ copy_geometry( int dest, int src )
 					    sizeof( char *),
 					    "rtrti_trees" );
 		for( j=0 ; j<rts_geometry[dest]->rts_rtis[i]->rtrti_num_trees ; j++ ) {
-			fprintf( stderr, "Copying %s\n", rts_geometry[src]->rts_rtis[i]->rtrti_trees[j] );
 			rts_geometry[dest]->rts_rtis[i]->rtrti_trees[j] =
 				bu_strdup( rts_geometry[src]->rts_rtis[i]->rtrti_trees[j] );
 		}
@@ -440,12 +442,36 @@ rts_open_session()
 }
 
 void
+reset_xforms( int sessionid )
+{
+	int i;
+
+	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
+		struct rtserver_rti *rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
+
+		if( rts_rtip->rtrti_xform ) {
+			bu_free( (char *)rts_rtip->rtrti_xform, "xform" );
+			rts_rtip->rtrti_xform = NULL;
+		}
+		if( rts_rtip->rtrti_inv_xform ) {
+			bu_free( (char *)rts_rtip->rtrti_inv_xform, "inv_xform" );
+			rts_rtip->rtrti_inv_xform = NULL;
+		}
+	}
+}
+
+void
 rts_close_session( int sessionid )
 {
 	int i,j;
 
 	if( sessionid == 0 ) {
 		/* never eliminate sessionid 0 */
+		used_session_0 = 0;
+
+		/* reset any xforms */
+		reset_xforms( sessionid );
+
 		return;
 	}
 	if( sessionid >= num_geometries ) {
@@ -457,22 +483,16 @@ rts_close_session( int sessionid )
 		return;
 	}
 
+	reset_xforms( sessionid );
 	for( i=0 ; i<rts_geometry[sessionid]->rts_number_of_rtis ; i++ ) {
 		struct rtserver_rti *rts_rtip = rts_geometry[sessionid]->rts_rtis[i];
 
 		rts_rtip->rtrti_rtip = NULL;
-		if( rts_rtip->rtrti_xform ) {
-			bu_free( (char *)rts_rtip->rtrti_xform, "xform" );
-		}
-		if( rts_rtip->rtrti_inv_xform ) {
-			bu_free( (char *)rts_rtip->rtrti_inv_xform, "inv_xform" );
-		}
 		if( rts_rtip->rtrti_name ) {
 			bu_free( rts_rtip->rtrti_name, "name" );
 			rts_rtip->rtrti_name = NULL;
 		}
 		for( j=0 ; j<rts_rtip->rtrti_num_trees ; j++ ) {
-			fprintf( stderr, "Freeing %s\n", rts_rtip->rtrti_trees[j] );
 			bu_free( rts_rtip->rtrti_trees[j], "tree" );
 		}
 		bu_free( (char *)rts_rtip->rtrti_trees, "rtrti_trees" );
@@ -545,6 +565,9 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 
 	/* grab the DB instance pointer (just for convenience) */
 	dbip = rtip->rti_dbip;
+
+	/* set the title */
+	title = bu_strdup( dbip->dbi_title );
 
 	/* set the use air flags */
 	rtip->useair = use_air;
@@ -829,6 +852,8 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
 		} else {
 			ahit->comp_id = (int)Tcl_GetHashValue( entry );
 		}
+
+		ahit->regp = rp;
 
 		BU_LIST_INSERT( &ray_res->hitHead.l, &ahit->l );
 
@@ -1198,6 +1223,160 @@ get_muves_components()
 	}
 }
 
+jobject
+build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jstart_pt, jobject jdir, jclass point_class, jclass vect_class )
+{
+	jclass ray_class, rayResult_class, partition_class;
+	jmethodID ray_constructor_id, rayResult_constructor_id, point_constructor_id, partition_constructor_id, add_partition_id;
+	jobject jrayResult, jray, jpartition, jinhitPoint, jouthitPoint;
+	struct ray_result *ray_res;
+	struct ray_hit *ahit;
+
+	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Ray" )) == NULL ) {
+		fprintf( stderr, "Failed to find Ray class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+	if( (ray_constructor_id=(*env)->GetMethodID( env, ray_class, "<init>",
+	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vect;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ray constructor\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	jray = (*env)->NewObject( env, ray_class, ray_constructor_id, jstart_pt, jdir );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown creating a ray\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	if( (rayResult_class=(*env)->FindClass( env,
+	    "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
+		fprintf( stderr, "Failed to get class for RayResult\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	if( (rayResult_constructor_id=(*env)->GetMethodID( env, rayResult_class, "<init>",
+					   "(Lmil/army/arl/muves/math/Ray;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	jrayResult = (*env)->NewObject( env, rayResult_class, rayResult_constructor_id, jray );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while creating a rayResult\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	if( !aresult->got_some_hits ) {
+		RTS_FREE_RTSERVER_RESULT( aresult );
+		return( jrayResult );
+	}
+
+	if( (point_constructor_id=(*env)->GetMethodID( env, point_class, "<init>",
+							   "(DDD)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for Point constructor\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	if( (partition_class=(*env)->FindClass( env,
+	    "mil/army/arl/muves/rtserver/Partition" )) == NULL ) {
+		fprintf( stderr, "Failed to get class for Partition\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
+							   "(DFFLmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Point;Ljava/lang/String;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for Partition constructor\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	if( (add_partition_id=(*env)->GetMethodID( env, rayResult_class, "addPartition",
+				"(Lmil/army/arl/muves/rtserver/Partition;)Z" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for rayResult addPartition method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
+	for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
+		jdouble in_hit[3], out_hit[3];
+		jfloat inObl, outObl;
+		jstring regionName;
+		vect_t reverse_ray_dir;
+
+		/* get reverse ray direction for obliquity calculation */
+		VREVERSE( reverse_ray_dir, ray_res->the_ray->r_dir );
+
+		VJOIN1( in_hit, ray_res->the_ray->r_pt, ahit->hit_dist, ray_res->the_ray->r_dir );
+		VJOIN1( out_hit, ray_res->the_ray->r_pt, ahit->hit_dist + ahit->los, ray_res->the_ray->r_dir );
+		jinhitPoint = (*env)->NewObject( env, point_class, point_constructor_id,
+						 in_hit[X], in_hit[Y], in_hit[Z] );
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while creating inhit point\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+		jouthitPoint = (*env)->NewObject( env, point_class, point_constructor_id,
+						 out_hit[X], out_hit[Y], out_hit[Z] );
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while creating outhit point\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+
+		inObl = acos( VDOT( reverse_ray_dir, ahit->enter_normal ) );
+		if( inObl < 0.0 ) {
+			inObl = -inObl;
+		}
+		if( inObl > M_PI_2 ) {
+			inObl = M_PI_2;
+		}
+
+		outObl = acos( VDOT( ray_res->the_ray->r_dir, ahit->exit_normal ) );
+		if( outObl < 0.0 ) {
+			outObl = -outObl;
+		}
+		if( outObl > M_PI_2 ) {
+			outObl = M_PI_2;
+		}
+
+		/* get region name from ahit->regp */
+		regionName = (*env)->NewStringUTF(env, ahit->regp->reg_name );
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+
+		jpartition = (*env)->NewObject( env, partition_class, partition_constructor_id,
+						ahit->los, inObl, outObl,
+						jinhitPoint, jouthitPoint,
+						regionName );
+
+		if( (*env)->ExceptionOccurred(env) ) {
+			fprintf( stderr, "Exception thrown while creating a partition\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+		/* add this partition to the linked list of partitions */
+		if( (*env)->CallBooleanMethod( env, jrayResult, add_partition_id, jpartition ) != JNI_TRUE ) {
+			fprintf( stderr, "Failed to add a partition to rayResult!!!\n" );
+			(*env)->ExceptionDescribe(env);
+			return( (jobject)NULL );
+		}
+	}
+
+	return( jrayResult );
+}
+
 /* JAVA JNI bindings */
 JNIEXPORT jboolean JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
@@ -1281,128 +1460,133 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject 
 	rts_close_session( (int)sessionId );
 }
 
+JNIEXPORT jstring JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_getDbTitle(JNIEnv *env, jobject jobj )
+{
+	return( (*env)->NewStringUTF(env, title) );
+}
+
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject jobj,
 	jobject jstart_pt, jobject jdir, jint sessionId )
 {
-	jclass point_class = (*env)->GetObjectClass( env, jstart_pt );
-	jclass vect_class = (*env)->GetObjectClass( env, jdir );
-	jclass ray_class, rayResult_class, partition_class;
-	jmethodID methodid, partition_constructor_id;
+	jclass point_class, vect_class;
 	jfieldID fid;
-	jobject jrayResult, jray, jpartition;
+	jobject jrayResult;
 	struct rtserver_job *ajob;
 	struct xray *aray;
 	struct rtserver_result *aresult;
-	struct ray_result *ray_res;
-	struct ray_hit *ahit;
 
 	RTS_GET_XRAY( aray );
 	aray->index = 1;
 
 	/* extract start point */
-	fprintf( stderr, "Getting start point [X]\n" );
+	if( (point_class = (*env)->GetObjectClass( env, jstart_pt ) ) == NULL ) {
+		fprintf( stderr, "Failed to find Point class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	fid = (*env)->GetFieldID( env, point_class, "x", "D" );
-	fprintf( stderr, "Got fid\n" );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x-fid of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	aray->r_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x coord of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
 
-	fprintf( stderr, "Getting start point [Y]\n" );
 	fid = (*env)->GetFieldID( env, point_class, "y", "D" );
-	aray->r_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y-fid of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
 
-	fprintf( stderr, "Getting start point [Z]\n" );
+	aray->r_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y coord of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	fid = (*env)->GetFieldID( env, point_class, "z", "D" );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z-fid of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	aray->r_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z coord of ray start point\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
 
 	/* extract direction vector */
-	fprintf( stderr, "Getting direction vector [X]\n" );
+	if( (vect_class = (*env)->GetObjectClass( env, jdir ) ) == NULL ) {
+		fprintf( stderr, "Failed to find Vect class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	fid = (*env)->GetFieldID( env, vect_class, "x", "D" );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x-fid of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	aray->r_dir[X] = (*env)->GetDoubleField( env, jdir, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting x coord of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
 
-	fprintf( stderr, "Getting direction vector [Y]\n" );
 	fid = (*env)->GetFieldID( env, vect_class, "y", "D" );
-	aray->r_dir[Y] = (*env)->GetDoubleField( env, jdir, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y-fid of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
 
-	fprintf( stderr, "Getting direction vector [Z]\n" );
+	aray->r_dir[Y] = (*env)->GetDoubleField( env, jdir, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting y coord of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	fid = (*env)->GetFieldID( env, vect_class, "z", "D" );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z-fid of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
 	aray->r_dir[Z] = (*env)->GetDoubleField( env, jdir, fid );
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while getting z coord of ray direction\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
 
 	RTS_GET_RTSERVER_JOB( ajob );
 	ajob->rtjob_id = 1;
 	ajob->sessionid = sessionId;
 	RTS_ADD_RAY_TO_JOB( ajob, aray );
 
-	fprintf( stderr, "submitting job start_pt = (%g %g %g) dir = (%g %g %g)\n",
-		 V3ARGS(aray->r_pt), V3ARGS( aray->r_dir ) );
 	aresult = rts_submit_job_and_wait( ajob );
-	fprintf( stderr, "got a result\n" );
-
-	/* list results */
-	fprintf( stderr, "shot from (%g %g %g) in direction (%g %g %g):\n",
-		 V3ARGS( aray->r_pt ),
-		 V3ARGS( aray->r_dir ) );
-	if( !aresult->got_some_hits ) {
-		fprintf( stderr, "\tMissed\n" );
-	} else {
-		ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-		for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
-			fprintf( stderr, "\thit on comp %d at dist = %g los = %g\n",
-				 ahit->comp_id, ahit->hit_dist, ahit->los );
-		}
-	}
 
 	/* build result to return */
-	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Ray" )) == NULL ) {
-		fprintf( stderr, "Failed to find Ray class\n" );
-		exit( 1 );
-	}
-
-	if( (methodid=(*env)->GetMethodID( env, ray_class, "<init>",
-	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vect;)V" )) == NULL ) {
-		fprintf( stderr, "Failed to get method id for ray constructor\n" );
-		exit( 1 );
-	}
-
-	jray = (*env)->NewObject( env, ray_class, methodid, jstart_pt, jdir );
-
-	if( (rayResult_class=(*env)->FindClass( env,
-	    "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
-		fprintf( stderr, "Failed to get class for RayResult\n" );
-		exit( 1 );
-	}
-
-	if( (methodid=(*env)->GetMethodID( env, rayResult_class, "<init>",
-					   "(Lmil/army/arl/muves/math/Ray;)V" )) == NULL ) {
-		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
-		exit( 1 );
-	}
-
-	jrayResult = (*env)->NewObject( env, rayResult_class, methodid, jray );
-
-	if( !aresult->got_some_hits ) {
-		RTS_FREE_RTSERVER_RESULT( aresult );
-		return( jrayResult );
-	}
-
-	if( (partition_class=(*env)->FindClass( env,
-	    "mil/army/arl/muves/rtserver/Partition" )) == NULL ) {
-		fprintf( stderr, "Failed to get class for Partition\n" );
-		exit( 1 );
-	}
-
-	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
-							   "()V" )) == NULL ) {
-		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
-		exit( 1 );
-	}
-
-	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
-	for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
-		fprintf( stderr, "\thit on comp %d at dist = %g los = %g\n",
-			 ahit->comp_id, ahit->hit_dist, ahit->los );
-	
-		jpartition = (*env)->NewObject( env, partition_class, partition_constructor_id );
-	}
+	jrayResult = build_Java_RayResult( env, aresult, jstart_pt, jdir, point_class, vect_class );
 
 	RTS_FREE_RTSERVER_RESULT( aresult );
 
