@@ -1266,7 +1266,7 @@ TCL_LIBRARY='${prefix}/lib/tcl${TCL_VERSION}'
 AC_SUBST(TCL_LIBRARY)
 TCL_PACKAGE_PATH="'${libdir}'"
 AC_SUBST(TCL_PACKAGE_PATH)
-TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la'
+TCL='${top_builddir}/src/other/libtcl/libtcl${TCL_VERSION}.la '"${SOCKET}"
 AC_SUBST(TCL)
 TCLSTUB='${top_builddir}/src/other/libtcl/generic/libtclstub.la'
 
