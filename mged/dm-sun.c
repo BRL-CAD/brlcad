@@ -71,8 +71,9 @@ struct dm dm_SunPw = {
 	SunPw_colorchange,
 	SunPw_window, SunPw_debug,
 	0,			/* no displaylist */
+	0,			/* Multiwindow */
 	SUNPWBOUND,
-	"sun", "SunView 1.0/Sun release 3.x pixwin library"
+	"sun", "SunView Release 3.x pixwin library"
 };
 
 void		input_eater();
@@ -548,14 +549,13 @@ int	noblock;	/* !0 => poll */
 }
 
 #define	NBUTTONS	10
-#define	ZOOM_BUTTON	1
-#define	SLEW_BUTTON	2
-#define	X_ROT_BUTTON	3
-#define	Y_ROT_BUTTON	4
-#define	Z_ROT_BUTTON	5
-#define	XY_ROT_BUTTON	6
-#define	YZ_ROT_BUTTON	7
-#define	XZ_ROT_BUTTON	8
+#define	ZOOM_BUTTON	1	/* F1 */
+#define	Z_SLEW_BUTTON	2
+#define	X_SLEW_BUTTON	3
+#define	Y_SLEW_BUTTON	4
+#define	X_ROT_BUTTON	5
+#define	Y_ROT_BUTTON	6
+#define	Z_ROT_BUTTON	7
 int	sun_buttons[NBUTTONS];
 
 /*
@@ -608,33 +608,26 @@ caddr_t	*arg;
 			if( sun_buttons[button] ) {
 				switch(button) {
 				case ZOOM_BUTTON:
-					dm_values.dv_zoom = ((xval*xval) + (yval*yval)) / 2;
-					if (xval < 0)
+					dm_values.dv_zoom = (yval*yval) / 2;
+					if (yval < 0)
 					    dm_values.dv_zoom = -dm_values.dv_zoom;
 					break;
-				case SLEW_BUTTON:
+				case X_SLEW_BUTTON:
 					dm_values.dv_xslew = xval;
+					break;
+				case Y_SLEW_BUTTON:
+					dm_values.dv_yslew = yval;
+					break;
+				case Z_SLEW_BUTTON:
 					dm_values.dv_yslew = yval;
 					break;
 				case X_ROT_BUTTON:
-					dm_values.dv_xjoy = yval;
+					dm_values.dv_xjoy = xval;
 					break;
 				case Y_ROT_BUTTON:
 					dm_values.dv_yjoy = yval;
 					break;
 				case Z_ROT_BUTTON:
-					dm_values.dv_zjoy = yval;
-					break;
-				case XY_ROT_BUTTON:
-					dm_values.dv_xjoy = xval;
-					dm_values.dv_yjoy = yval;
-					break;
-				case YZ_ROT_BUTTON:
-					dm_values.dv_yjoy = yval;
-					dm_values.dv_zjoy = xval;
-					break;
-				case XZ_ROT_BUTTON:
-					dm_values.dv_xjoy = xval;
 					dm_values.dv_zjoy = yval;
 					break;
 				}
@@ -645,9 +638,16 @@ caddr_t	*arg;
 		sun_key(event, ZOOM_BUTTON);
 		dm_values.dv_zoom = 0.0;
 		break;
-	case KEY_TOP(SLEW_BUTTON):
-		sun_key(event, SLEW_BUTTON);
+	case KEY_TOP(X_SLEW_BUTTON):
+		sun_key(event, X_SLEW_BUTTON);
 		dm_values.dv_xslew = 0.0;
+		break;
+	case KEY_TOP(Y_SLEW_BUTTON):
+		sun_key(event, Y_SLEW_BUTTON);
+		dm_values.dv_yslew = 0.0;
+		break;
+	case KEY_TOP(Z_SLEW_BUTTON):
+		sun_key(event, Z_SLEW_BUTTON);
 		dm_values.dv_yslew = 0.0;
 		break;
 	case KEY_TOP(X_ROT_BUTTON):
@@ -667,26 +667,6 @@ caddr_t	*arg;
 		dm_values.dv_xjoy = 0.0;
 		dm_values.dv_yjoy = 0.0;
 		dm_values.dv_zjoy = 0.0;
-		break;
-	case KEY_TOP(XY_ROT_BUTTON):
-		sun_key(event, XY_ROT_BUTTON);
-		dm_values.dv_xjoy = 0.0;
-		dm_values.dv_yjoy = 0.0;
-		dm_values.dv_zjoy = 0.0;
-		break;
-	case KEY_TOP(YZ_ROT_BUTTON):
-		sun_key(event, YZ_ROT_BUTTON);
-		dm_values.dv_xjoy = 0.0;
-		dm_values.dv_yjoy = 0.0;
-		dm_values.dv_zjoy = 0.0;
-		break;
-	case KEY_TOP(XZ_ROT_BUTTON):
-		sun_key(event, XZ_ROT_BUTTON);
-		dm_values.dv_xjoy = 0.0;
-		dm_values.dv_yjoy = 0.0;
-		dm_values.dv_zjoy = 0.0;
-		break;
-	case KEY_TOP(9):
 		break;
 	/*
 	 * Gratuitous Input Events - supposed to be good for you
