@@ -1296,7 +1296,7 @@ struct bu_list	*vhead;
 long		rgb;
 int		copy;
 {
-	register struct directory	*dp;
+	struct directory		*dp;
 	register struct solid		*sp;
 
 	if(dbip == DBI_NULL)
@@ -1311,7 +1311,7 @@ int		copy;
 	  /* Name exists from some other overlay,
 	   * zap any associated solids
 	   */
-	  eraseobjall(dp);
+	  eraseobjall(&dp);
 	}
 	/* Need to enter phony name in directory structure */
 	dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL );

@@ -1378,9 +1378,9 @@ char	**argv;
  *			K I L L T R E E
  */
 void
-killtree( dbip, dp, ptr )
+killtree(dbip, dp, ptr)
 struct db_i	*dbip;
-register struct directory *dp;
+struct directory *dp;
 genptr_t	ptr;
 {
   Tcl_Interp	*interp = (Tcl_Interp *)ptr;
@@ -1391,7 +1391,7 @@ genptr_t	ptr;
   Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		   ":  ", dp->d_namep, "\n", (char *)NULL);
 
-  eraseobjall( dp );
+  eraseobjall(&dp);
 
   if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
     TCL_DELETE_ERR("");

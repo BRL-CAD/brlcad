@@ -425,8 +425,8 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register struct directory *dp;
 	register int i;
+	struct directory *dp;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
 
@@ -452,7 +452,7 @@ char	**argv;
 	for( i = 1; i < argc; i++ )  {
 		if( (dp = db_lookup( dbip,  argv[i], verbose )) != DIR_NULL )  {
 			is_phony = (dp->d_addr == RT_DIR_PHONY_ADDR);
-			eraseobjall( dp );
+			eraseobjall(&dp);
 			/* eraseobjall() does db_dirdelete() on phony entries, don't re-do. */
 			if( is_phony )  continue;
 

@@ -1951,7 +1951,6 @@ int	argc;
 char	**argv;
 {
 	int i;
-	struct directory *dp;
 	int	initial_blank_screen;
 	char perf_message[128];
 	register int    c;
@@ -2023,14 +2022,7 @@ char	**argv;
 	argv += bu_optind;
 
 	initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
-
-	for( i=0; i<argc; i++ )
-	{
-		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )
-		{
-			eraseobj( dp );
-		}
-	}
+	eraseobjpath(interp, argc, argv, LOOKUP_QUIET, 0);
 
 	mged_ttol.magic = RT_TESS_TOL_MAGIC;
 	mged_ttol.abs = mged_abs_tol;
