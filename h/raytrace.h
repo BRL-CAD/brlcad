@@ -2407,6 +2407,22 @@ BU_EXTERN(char *rt_pmalloc, (long nbytes, struct rt_pm_res *pmem));
 BU_EXTERN(void rt_pfree, (char *mem, struct rt_pm_res *pmem));
 BU_EXTERN(char *rt_prealloc, (char *mem, unsigned nbytes, struct rt_pm_res *pmem));
 
+#ifdef SEEN_RTGEOM_H
+/* g_sketch.c */
+BU_EXTERN(int				rt_check_curve,
+					(struct curve *crv,
+					struct rt_sketch_internal *skt,
+					int noisey));
+BU_EXTERN(void				rt_curve_free, (struct curve *crv));
+BU_EXTERN(void				rt_copy_curve,
+					(struct curve *crv_out,
+					CONST struct curve *crv_in));
+BU_EXTERN(struct rt_sketch_internal	*rt_copy_sketch,
+					(CONST struct rt_sketch_internal *sketch_ip));
+BU_EXTERN(int				curve_to_tcl_list,
+					(struct bu_vls *vls, struct curve *crv));
+#endif
+
 
 /************************************************************************
  *									*
