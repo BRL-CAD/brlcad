@@ -123,7 +123,7 @@ set -S2 "/bin/sh"
 
 /* Read above for the meaning and implications of each flag! */
 #define BUILD_OPTIMIZED         1
-#define BUILD_SHARED            1
+#define BUILD_SHARED            0
 #define BUILD_XWINDOWS          1
 #define BUILD_OPENGL            0
 #define BUILD_PRODUCTION        0
@@ -193,6 +193,14 @@ set -S2 "/bin/sh"
  *  lists.  Add the suffix _DEP for that, e.g. LIBRT_DEP	*
  *								*
  ****************************************************************/
+
+/* if using the gcc compiler, this will give verbose warnings when debug */
+#if BUILD_OPTIMIZED
+#	define GCC_WARNINGS /**/
+#else
+#	define GCC_WARNINGS -W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion
+/* -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror*/
+#endif
 
 
 /****************************************************************
@@ -863,7 +871,7 @@ set -S2 "/bin/sh"
 #			define  PROFILER	-pg
 #		endif
 #		define	CC_DEFS		-D_REENTRANT -DSUNOS=58
-#		define	CC_OPTS		-I''XINCDIR -Wall -pedantic
+#		define	CC_OPTS		-I''XINCDIR GCC_WARNINGS
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
@@ -1037,7 +1045,7 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	CC	gcc
-#	define	CC_DEFS -pipe -fPIC -Wall
+#	define	CC_DEFS -pipe -fPIC GCC_WARNINGS
 /*			-std=iso9899:199409 */
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
@@ -1123,7 +1131,7 @@ set -S2 "/bin/sh"
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
 #	define	CC	gcc
-#	define	CC_DEFS -pipe -fPIC -Wall -pedantic
+#	define	CC_DEFS -pipe -fPIC GCC_WARNINGS
 #	define	LEX_OPTS	-l
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
@@ -1203,17 +1211,16 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g -fno-common
 #	endif
-#	define	CC_DEFS -pipe -W -Wall -Wundef -Dlint
-/* -Wmissing-prototypes -Wstrict-prototypes  -Wmissing-declarations -W -pedantic -ansi*/
+#	define	CC_DEFS -pipe GCC_WARNINGS -Dlint
 #	if BUILD_SHARED	
-#		error "ERROR: Building with shared libraries is not supported via cake"
+/*#		error "ERROR: Building with shared libraries is not supported via cake"*/
 /*		Shared library version support.  */
 /*		PowerPC code is position-independant by default (and by design) (i.e. no nee d for -fPIC) */
 /* #		define	ARCH_SUF	so */
 #		define	ARCH_SUF	dylib
 /*#		define	LIBVERS ../sh/sharedlibvers.sh*/
 #		define	BUILD_LIBRARY	cc -dynamiclib -flat_namespace -undefined suppress -o
-/* #		define	BUILD_LIBRARY	cc -bundle -flat_namespace -undefined suppress -o */
+/*#		define	BUILD_LIBRARY	cc -bundle -flat_namespace -undefined suppress -o */
 /*#		define	BUILD_LIBRARY	libtool -dynamic -o */
 /*#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR*/
 #		define  RANLIB	true
@@ -1221,6 +1228,14 @@ set -S2 "/bin/sh"
 /*		Static linked executables */
 #		define  RANLIB	ranlib
 #		define	STANDARD_LIBES -lm -lc -framework Foundation
+#		define LIBTCL LIBTCL_DIR/libtcl''TCLTK_VERS.''ARCH_SUF
+#		define LIBTCL_DEP /**/
+#		define LIBTK LIBTK_DIR/libtk''TCLTK_VERS.''ARCH_SUF
+#		define LIBTK_DEP /**/
+#		define LIBITCL LIBITCL_DIR/../libitcl''ITCL_VERS.''ARCH_SUF
+#		define LIBITCL_DEP /**/
+#		define LIBITK LIBITK_DIR/../libitk''ITCL_VERS.''ARCH_SUF
+#		define LIBITK_DEP /**/
 #	endif
 
 #	define	LIBTERMLIB	-lcurses
@@ -2482,7 +2497,7 @@ set -S2 "/bin/sh"
 #	if !defined(LIBTK_DIR)
 #		define	LIBTK_DIR	../libtk''TCLTK_VERS
 #	endif
-# if !defined(LIBITCL)
+# 	if !defined(LIBITCL)
 #		define	LIBITCL		-L''LIBITCL_DIR -litcl''ITCL_VERS
 #		define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
 #	endif
