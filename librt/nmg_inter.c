@@ -3855,6 +3855,15 @@ hit_b:
 			rt_log("\tself-loop vu=x%x lies on line of intersection\n", vu1 );
 		}
 
+		/* Break all edgeuses in the model on line on_eg, at vu1 */
+		if( is->on_eg )  {
+			nmg_break_eg_on_v( is->on_eg, vu1->v_p, &(is->tol) );
+			nmg_enlist_vu(is, vu1, 0 );
+		}
+
+#if 1
+		/* This can probably be removed */
+		/* recent OLD WAY: */
 		/*  To prevent an OT_BOOLPLACE from being overlooked,
 		 *  break *both* sets of eu's
 		 */
@@ -3888,6 +3897,7 @@ hit_b:
 			nmg_tbl( eu2_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0 );
 		}
+#endif
 
 #if 0
 		/* OLD WAY: */
