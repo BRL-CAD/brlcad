@@ -95,10 +95,16 @@ Extract the 4Base size picture.
 Extract the 16Base size picture.
 .TP
 .B -0 | -Overview | -O
-Extract all pictures from an Overview file. A ppmfilename must be given. If the
-given name is "foo", the files are named "foonnnn", where nnnn is a 4-digit number.
-Since they are stored in Base/16 format, they are extracted in this format.
-XXXX
+Extract all pictures from an Overview file, and write them
+as a stream of Base/16 (192 by 128) images on stdout.
+The file must be "photo_cd/overview.pcd".
+For example, to view the overview images:
+.sp .5
+   pcd-pix -0 overview.pcd | pixtile -w192 -n128 -S1024 -- - | pix-fb -h
+.sp .5
+Similarly,
+.IR pixbustup (1)
+could be used to write the overview stream into a set of numbered files.
 .TP
 .B -p
 This flag causes
