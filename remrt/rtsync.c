@@ -178,7 +178,6 @@ struct rtnode {
 	fastf_t		time_delta;
 	fastf_t		i_lps;		/* instantaneous # lines per sec */
 	fastf_t		w_lps;		/* weighted # lines per sec */
-	Tcl_File	tcl_file;	/* Tcl's name for this fd */
 };
 #define MAX_NODES	32
 struct rtnode	rtnodes[MAX_NODES];
@@ -599,7 +598,7 @@ int		mask;
 
 	if( got <= 0 )  {
 		bu_log("EOF on stdin\n");
-		Tcl_DeleteFileHandler( Tcl_GetFile(clientData, TCL_UNIX_FD) );
+		Tcl_DeleteFileHandler( fd );
 		return;
 	}
 
@@ -636,8 +635,7 @@ int		mask;
 		bu_log("EOF on pkg connection\n");
 	}
 	if( val <= 0 )  {
-		Tcl_DeleteFileHandler(
-			Tcl_GetFile((ClientData)pc->pkc_fd, TCL_UNIX_FD) );
+		Tcl_DeleteFileHandler( pc->pkc_fd );
 		pkg_close(pc);
 		return;
 	}
@@ -670,8 +668,7 @@ int		mask;
 		bu_log("vrmgr: EOF on pkg connection\n");
 	}
 	if( val <= 0 )  {
-		Tcl_DeleteFileHandler(
-			Tcl_GetFile((ClientData)pc->pkc_fd, TCL_UNIX_FD) );
+		Tcl_DeleteFileHandler( pc->pkc_fd );
 		pkg_close(pc);
 		vrmgr_pc = 0;
 		vrmgr_ihost = IHOST_NULL;
@@ -745,8 +742,7 @@ int		mask;
 	/* Accept any new VRMGR connections.  Only one at a time is permitted. */
 	if( vrmgr_pc )  {
 		bu_log("New VRMGR connection received with one still active, dropping old one.\n");
-		Tcl_DeleteFileHandler(
-			Tcl_GetFile((ClientData)vrmgr_pc->pkc_fd, TCL_UNIX_FD) );
+		Tcl_DeleteFileHandler( vrmgr_pc->pkc_fd );
 		pkg_close( vrmgr_pc );
 		vrmgr_pc = 0;
 		vrmgr_ihost = IHOST_NULL;
@@ -762,7 +758,7 @@ int		mask;
 			stamp(),
 			vrmgr_ihost->ht_name, vrmgr_pc->pkc_fd);
 		Tcl_CreateFileHandler(
-			Tcl_GetFile((ClientData)vrmgr_pc->pkc_fd, TCL_UNIX_FD),
+			vrmgr_pc->pkc_fd,
 			TCL_READABLE|TCL_EXCEPTION, vrmgr_event_handler,
 			(ClientData)vrmgr_pc );
 		FD_SET(vrmgr_pc->pkc_fd, &select_list);
@@ -885,7 +881,7 @@ char	*argv[];
 	/* Accept commands on stdin */
 	if( isatty(fileno(stdin)) )  {
 		Tcl_CreateFileHandler(
-			Tcl_GetFile((ClientData)fileno(stdin), TCL_UNIX_FD),
+			fileno(stdin),
 			TCL_READABLE|TCL_EXCEPTION, stdin_event_handler,
 			(ClientData)fileno(stdin) );
 		bu_log("rtsync accepting commands on stdin\n");
@@ -909,7 +905,7 @@ char	*argv[];
 		exit(1);
 	}
 	Tcl_CreateFileHandler(
-		Tcl_GetFile((ClientData)vrmgr_listen_fd, TCL_UNIX_FD),
+		vrmgr_listen_fd,
 		TCL_READABLE|TCL_EXCEPTION, vrmgr_listen_handler,
 		(ClientData)vrmgr_listen_fd);
 
@@ -930,7 +926,7 @@ char	*argv[];
 		}
 	}
 	Tcl_CreateFileHandler(
-		Tcl_GetFile((ClientData)rtsync_listen_fd, TCL_UNIX_FD),
+		rtsync_listen_fd,
 		TCL_READABLE|TCL_EXCEPTION, rtsync_listen_handler,
 		(ClientData)rtsync_listen_fd);
 	/* Now, pkg_permport has tcp port number */
@@ -943,7 +939,7 @@ char	*argv[];
 
 	if( fbp && fbp->if_selfd > 0 )  {
 		Tcl_CreateFileHandler(
-			Tcl_GetFile((ClientData)fbp->if_selfd, TCL_UNIX_FD),
+			fbp->if_selfd,
 			TCL_READABLE|TCL_EXCEPTION, fb_event_handler,
 			(ClientData)fbp );
 	}
@@ -1097,9 +1093,8 @@ struct pkg_conn	*pcp;
 		if( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
 		setup_socket( pcp->pkc_fd );
 		rtnodes[i].host = host;
-		rtnodes[i].tcl_file = 
-			Tcl_GetFile((ClientData)pcp->pkc_fd, TCL_UNIX_FD);
-		Tcl_CreateFileHandler( rtnodes[i].tcl_file,
+		Tcl_CreateFileHandler(
+			pcp->pkc_fd,
 			TCL_READABLE|TCL_EXCEPTION, rtnode_event_handler,
 			(ClientData)i );
 		return;
@@ -1126,7 +1121,7 @@ int	sub;
 		close( rtnodes[sub].fd );
 		rtnodes[sub].fd = 0;
 	}
-	Tcl_DeleteFileHandler( rtnodes[sub].tcl_file );
+	Tcl_DeleteFileHandler( rtnodes[sub].pkg->pkc_fd );
 
 	Tcl_Eval( interp, "update_cpu_status" );
 }
