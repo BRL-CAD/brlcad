@@ -147,7 +147,6 @@ top:
 
 			membp = mk_addmember( inst_name, &wmp[reg_num] );
 			membp->wm_op = op;
-col_pr( inst_name);
 
 			cp += 7;
 		}
@@ -198,71 +197,48 @@ getid()
 	int	buflen;
 	register struct wmember	*wp;
 
-	if( getline( (char *) &idcard ) == EOF ||
-	    ((char *) &idcard)[0] == '\n' )
-		return( 0 );
+	while(1)  {
+		if( getline( (char *) &idcard ) == EOF )  {
+			printf("\ngetid:  EOF\n");
+			return(0);
+		}
+		if( ((char *) &idcard)[0] == '\n' )
+			return( 0 );
 
-	/* XXX needs to handle blanked out fields */
-	if( version == 5 )  {
-		sscanf( &idcard, "%5d%5d%5d%5d%5d",
-			&reg_num, &id, &air, &mat, &los );
-	} else {
-		sscanf( &idcard, "%10d%10d%10d%*44s%3d%3d",
-			&reg_num, &id, &air, &mat, &los );
-	}
-printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
-
+		if( version == 5 )  {
+			reg_num = getint( &idcard, 0, 5 );
+			id =	getint( &idcard, 5, 5 );
+			air =	getint( &idcard, 10, 5 );
+			mat =	getint( &idcard, 15, 5 );
+			los =	getint( &idcard, 20, 5 );
+		} else {
+			reg_num = getint( &idcard, 0, 10 );
+			id =	getint( &idcard, 10, 10 );
+			air =	getint( &idcard, 20, 10 );
+			mat =	getint( &idcard, 74, 3 );
+			los =	getint( &idcard, 77, 3 );
+		}
 #if 0
-	if( version == 5 )
-		buflen = 5;
-	else
-		buflen = 10;
-	buff[buflen] = '\0';
-
-	for(i=0; i<buflen; i++)
-		buff[i] = idcard.id_region[i];
-	reg_num = atoi( buff );
-
-	for(i=0; i<buflen; i++)
-		buff[i] = idcard.id_rid[i];
-	id = atoi( buff );
-
-	for(i=0; i<buflen; i++)
-		buff[i] = idcard.id_air[i];
-	air = atoi( buff );
-
-	if( version == 5 )  {
-		for(i=0; i<5; i++)
-			buff[i] = idcard.id_mat[i];
-		mat = atoi( buff );
-
-		for(i=0; i<5; i++)
-			buff[i] = idcard.id_los[i];
-		los = atoi( buff );
-	} else {
-		idcard.id_mat[2] = '\0';
-		mat = atoi( idcard.id_mat );
-
-		for( i=0; i<3; i++ )
-			buff[i] = idcard.id_los[i];
-		buff[3] = '\0';
-		los = atoi( buff );
-	}
+printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 #endif
 
-	wp = &wmp[reg_num];
-	if( wp->wm_forw == wp )  {
-		printf("Region %s is empty\n", wp->wm_name );
-		return(1);	/* empty region */
+		wp = &wmp[reg_num];
+		if( wp->wm_forw == wp )  {
+			char	paren[32];
+			/* Denote an empty region */
+			sprintf( paren, "(%s)", wp->wm_name );
+			col_pr( paren );
+			continue;
+		}
+
+		mk_lrcomb( outfp, wp->wm_name, wp, reg_num,
+			"", "", (char *)0, id, air, mat, los, 0 );
+
+		/* Add region to the one group that it belongs to. */
+		group_add( id, wp->wm_name );
+
+		col_pr( wp->wm_name );
 	}
-
-	mk_lrcomb( outfp, wp->wm_name, wp, reg_num,
-		"", "", (char *)0, id, air, mat, los, 0 );
-
-	/* Add region to the one group that it belongs to. */
-	group_add( id, wp->wm_name );
-
-	return( 1 );
 }
 
 #define NGROUPS	21
@@ -354,4 +330,19 @@ group_write()
 		col_pr( wp->wm_name );
 	}
 	/* Could make all-encompasing "all.g" group here */
+}
+
+int
+getint( cp, start, len )
+char	*cp;
+int	start;
+int	len;
+{
+	char	buf[128];
+
+	if( len >= sizeof(buf) )  len = sizeof(buf)-1;
+
+	strncpy( buf, cp+start, len );
+	buf[len] = '\0';
+	return atoi(buf);	
 }

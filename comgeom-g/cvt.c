@@ -29,20 +29,18 @@ int	version;	/* v4 or v5 ? */
 
 char name_it[16];	/* stores argv if it exists and appends it
 			to each name generated.*/
-long tell();
 
-#define NUMPERCOL 8
-int	nclm = 0;
+int	cur_col = 0;
 
 FILE	*infp;
 FILE	*outfp;		/* Output file descriptor */
 
-int sol_total, sol_work;	/* total num solids, num solids processed */
+int	sol_total, sol_work;	/* total num solids, num solids processed */
 int	reg_total;
 
-long regionpos;
-long endpos;
-
+/*
+ *			M A I N
+ */
 main( argc, argv )
 char **argv;
 {
@@ -135,10 +133,9 @@ char **argv;
 
 	/* REGION TABLE */
 
-	printf("processing region table\n");
+	printf("\nProcessing region table\n");
 
 	i = sizeof(struct wmember) * (reg_total+2);
-printf("malloc for %d\n", i);
 	if( (wmp = (struct wmember *)malloc(i)) == (struct wmember *)0 )  {
 		printf("malloc(%d) failed\n", i );
 		exit(42);
@@ -147,11 +144,8 @@ printf("malloc for %d\n", i);
 		wmp[i].wm_forw = wmp[i].wm_back = &wmp[i];
 	}
 
-	nclm = 0;
+	cur_col = 0;
 	if( getregion() < 0 )  exit(10);
-
-
-	/* REGION IDENT TABLE */
 
 	if( version == 4 )  {
 		char	dummy[88];
@@ -159,25 +153,29 @@ printf("malloc for %d\n", i);
 		getline( dummy );
 	}
 
-	printf("\nprocessing region ident table\n");
+	printf("\nProcessing region ident table\n");
+	getid();
 
-	while( 1 ) {
-		if( (i = getid()) == 0 )   /* finished */
-			break;
-	}
-
-	printf("producing groups\n");
-	nclm = 0;
+	printf("\nProducing groups\n");
+	cur_col = 0;
 	group_write();
 	printf("\n");
 }
 
+/*
+ *			C O L _ P R
+ */
 col_pr( str )
 char	*str;
 {
-	printf("%s \t", str);
-	if( ++nclm  >= NUMPERCOL ) {
+	printf("%s", str);
+	cur_col += strlen(str);
+	while( cur_col < 78 && ((cur_col%10) > 0) )  {
+		putchar(' ');
+		cur_col++;
+	}
+	if( cur_col >= 78 )  {
 		printf("\n");
-		nclm = 0;
+		cur_col = 0;
 	}
 }
