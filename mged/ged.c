@@ -328,7 +328,6 @@ char **argv;
 	rc = 1;
 	owner = 1;
 	frametime = 1;
-	adc_a1_deg = adc_a2_deg = 45.0;
 	curr_dm_list->s_info->opp = &pathName;
 	mged_view_init(curr_dm_list);
 	BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);

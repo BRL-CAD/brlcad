@@ -1310,10 +1310,9 @@ char	**argv;
 	/* Calculate point from which to fire ray */
 	if(!use_input_orig && mged_variables->adcflag){
 	  vect_t  view_ray_orig;
-	  fastf_t sf = 1.0/2047.0;
 
-	  VSET(view_ray_orig, curs_x, curs_y, 2047.0);
-	  VSCALE(view_ray_orig, view_ray_orig, sf);
+	  VSET(view_ray_orig, (fastf_t)dv_xadc, (fastf_t)dv_yadc, 2047.0);
+	  VSCALE(view_ray_orig, view_ray_orig, INV_GED);
 	  MAT4X3PNT(center_model, view2model, view_ray_orig);
 	}else if(!use_input_orig){
 	  VSET(center_model, -toViewcenter[MDX],
