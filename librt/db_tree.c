@@ -912,7 +912,6 @@ void
 db_non_union_push( tp )
 union tree	*tp;
 {
-	union tree	*lhs;
 
 top:
 	/* If this is a leaf, done */
