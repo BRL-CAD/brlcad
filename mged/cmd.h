@@ -60,6 +60,7 @@ MGED_EXTERN(int f_fhelp, (ClientData clientData, Tcl_Interp *interp, int argc, c
 MGED_EXTERN(int f_find, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_fix, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_fracture, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_get_rect, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_get_view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_goto_view, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_group, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -144,6 +145,7 @@ MGED_EXTERN(int f_sca, (ClientData clientData, Tcl_Interp *interp, int argc, cha
 MGED_EXTERN(int f_sc_obj, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_sed, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_set, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_set_rect, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_setview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_share_menu, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_share_vars, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
