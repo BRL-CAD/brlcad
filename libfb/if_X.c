@@ -404,7 +404,7 @@ FBIO	*ifp;
 _LOCAL_ int
 X_clear( ifp, pp )
 FBIO	*ifp;
-RGBpixel	*pp;
+unsigned char	*pp;
 {
 	unsigned char *bitbuf = XI(ifp)->bitbuf;
 	unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -413,9 +413,9 @@ RGBpixel	*pp;
 	if( pp == RGBPIXEL_NULL ) {
 		v[RED] = v[GRN] = v[BLU] = 0;
 	} else {
-		v[RED] = (*pp)[RED];
-		v[GRN] = (*pp)[GRN];
-		v[BLU] = (*pp)[BLU];
+		v[RED] = (pp)[RED];
+		v[GRN] = (pp)[GRN];
+		v[BLU] = (pp)[BLU];
 	}
 #ifdef XXX
 	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
@@ -432,8 +432,8 @@ RGBpixel	*pp;
 		}
 	}
 #endif
-	if( pp == (RGBpixel *)NULL
-	 || ((*pp)[RED] == 0 && (*pp)[GRN] == 0 && (*pp)[BLU] == 0) ) {
+	if( pp == (unsigned char *)NULL
+	 || ((pp)[RED] == 0 && (pp)[GRN] == 0 && (pp)[BLU] == 0) ) {
 		bzero( bitbuf, (ifp->if_width * ifp->if_height)/8 );
 		bzero( bytebuf, (ifp->if_width * ifp->if_height) );
 		XClearWindow( XI(ifp)->dpy, XI(ifp)->win );
@@ -446,7 +446,7 @@ _LOCAL_ int
 X_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	unsigned char *bytebuf = XI(ifp)->bytebuf;
@@ -469,9 +469,9 @@ int	count;
 	/* give then gray scale pixels - XXX - may be pseudo color */
 	cp = &bytebuf[y*ifp->if_width + x];
 	for( i = 0; i < count; i++ ) {
-		(*pixelp)[RED] = *cp;
-		(*pixelp)[GRN] = *cp;
-		(*pixelp++)[BLU] = *cp++;
+		*pixelp++ = *cp;
+		*pixelp++ = *cp;
+		*pixelp++ = *cp++;
 	}
 	return	count;
 }
@@ -587,7 +587,7 @@ _LOCAL_ int
 X_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int	count;
 {
 	int	maxcount;
@@ -636,7 +636,7 @@ _LOCAL_ int
 X_scanwrite( ifp, x, y, pixelp, count, save )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int	count;
 int	save;
 {
@@ -666,14 +666,14 @@ int	save;
 		/* Gray Scale Mode */
 		if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT )  {
 			for( i=0; i<count; i++ )  {
-				cp[i] = pixelp[i][RED];
+				cp[i] = pixelp[3*i+RED];
 			}
 			goto done;
 		}
 		/* PseudoColor Mode */
 		for( i = 0; i < count; i++ ) {
 			int value;
-			value = convRGB(pixelp[i]);
+			value = convRGB(&pixelp[3*i]);
 			cp[i] = (unsigned char) x_pixel_table[value];
 		}
 		goto done;
@@ -685,14 +685,14 @@ int	save;
 	/* XXX - note replication of Gray Scale Mode above... */
 	if( (XI(ifp)->mode&MODE_2MASK) == MODE_2_8BIT )  {
 		for( i = 0; i < count; i++ ) {
-			cp[i] = pixelp[i][RED];
+			cp[i] = pixelp[3*i+RED];
 		}
 	} else {
 		for( i = 0; i < count; i++ ) {
 			/* Best possible 8-bit NTSC weights */
 			/* Use three tables if this gets to be a bottleneck */
-			cp[i] = (77*(int)pixelp[i][RED] + 150*(int)pixelp[i][GRN]
-				+ 29*(int)pixelp[i][BLU]) >> 8;
+			cp[i] = (77*(int)pixelp[3*i+RED] + 150*(int)pixelp[3*i+GRN]
+				+ 29*(int)pixelp[3*i+BLU]) >> 8;
 		}
 	}
 
@@ -721,7 +721,7 @@ int	save;
 			mvalue = *mbuffer;
 			/* diddle its bit */
 			for( bit=rem; (bit < 8) && (col < x+count); bit++,col++ ) {
-				/*val = (30*(*pixelp)[RED] + 59*(*pixelp)[GRN] + 11*(*pixelp)[BLU] + 200) / 400;*/
+				/*val = (30*(pixelp)[RED] + 59*(pixelp)[GRN] + 11*(pixelp)[BLU] + 200) / 400;*/
 				/*pixelp++;*/
 				/*if( dither_bw(val, col, row) ) {*/
 				if( (int)*cp++ > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
@@ -790,18 +790,12 @@ ColorMap *cmp;
 _LOCAL_ int
 X_wmap( ifp, cmp )
 FBIO	*ifp;
-ColorMap	*cmp;
+CONST ColorMap	*cmp;
 {
 	register int i;
 
 	if( cmp == (ColorMap *)NULL ) {
-		/* Linear map */
-		cmp = &(XI(ifp)->rgb_cmap);
-		for( i = 0; i < 256; i++ ) {
-			cmp->cm_red[i] = i<<8;
-			cmp->cm_green[i] = i<<8;
-			cmp->cm_blue[i] = i<<8;
-		}
+		fb_make_linear_cmap( &(XI(ifp)->rgb_cmap) );
 	} else {
 		XI(ifp)->rgb_cmap = *cmp;	/* struct copy */
 	}
@@ -886,7 +880,7 @@ int	*xzoom, *yzoom;
 _LOCAL_ int
 X_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-unsigned char *bits;
+CONST unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
@@ -1301,33 +1295,33 @@ FBIO	*ifp;
  *	colormap.
  */
 static unsigned char convRGB(v)
-register RGBpixel *v;
+register unsigned char *v;
 {
 	register int r, g, b;
 
-	r = (int)( (*v)[RED]+26 ) / 51;
-	g = (int)( (*v)[GRN]+26 ) / 51;
-	b = (int)( (*v)[BLU]+26 ) / 51;
+	r = (int)( (v)[RED]+26 ) / 51;
+	g = (int)( (v)[GRN]+26 ) / 51;
+	b = (int)( (v)[BLU]+26 ) / 51;
 
-	/*printf("Pixel r = %d, g = %d, b = %d\n",(*v)[RED],(*v)[GRN],(*v)[BLU]);*/
+	/*printf("Pixel r = %d, g = %d, b = %d\n",(v)[RED],(v)[GRN],(v)[BLU]);*/
 	if ( r == g )  {
 		if( r == b )  {
 			/* all grey, take average */
-			return greyvec[( ((int)(*v)[RED]+(int)(*v)[GRN]+(int)(*v)[BLU]) / 3 ) /16];
+			return greyvec[( ((int)(v)[RED]+(int)(v)[GRN]+(int)(v)[BLU]) / 3 ) /16];
 		}
 		else if (r == 0)  {
 			/* r=g=0, all blue */
-			return bluvec[((*v)[BLU])/16];
+			return bluvec[((v)[BLU])/16];
 		}
 		else	return r + g * 6 + b * 36;
 	}
 	else if (g == b && g == 0)  {
 		/* all red */
-		return redvec[((*v)[RED])/16];
+		return redvec[((v)[RED])/16];
 	}
 	else if (r == b && r == 0)  {
 		/* all green */
-		return grnvec[((*v)[GRN])/16];
+		return grnvec[((v)[GRN])/16];
 	}
 	else
 		return r + g * 6 + b * 36;
@@ -1735,7 +1729,8 @@ int ymin, ymax;
 		int	ycenter;
 	} w;
 	/*XXX-HACK VERSION-Depend on 24bit memory buffer and use scanwrite! */
-	RGBpixel scanbuf[1024], *pp;
+	RGBpixel scanbuf[1024];
+	RGBpixel *pp;
 	if( XI(ifp)->mem == NULL )
 		return;
 
