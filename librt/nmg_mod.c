@@ -1946,8 +1946,6 @@ struct vertexuse	*vu2;
 	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
 
-	nmg_veu( &lu1->down_hd, &lu1->l.magic );	/* XXX sanity */
-
 	return vu2;
 }
 
