@@ -165,6 +165,40 @@ else
 	AC_MSG_RESULT($cache_file)
 fi
 
+# define a function that can restart configure with a given set of flags
+# BC_RESTART_CONFIGURE(CONFIGURE, FLAGS)
+AC_DEFUN([BC_RETRY_CONFIGURE], [
+	if test "x$RETRY" = "x" ; then
+		RETRY=no
+		AC_MSG_WARN([Restarting configure with additional flags])
+		AC_MSG_NOTICE([Restarting with [$1] [$2]])
+		exec [$1] [$2] RETRY=no
+		exit $?
+	fi
+])
+
+# load extra search paths for common locations
+AC_DEFUN([BC_EXTRA_SEARCH_DIRS], [
+	if test "x$ul_PATH" != "x" ; then
+		PATH="$ul_PATH:$PATH"
+	fi
+	if test "x$sw_PATH" != "x" ; then
+		PATH="$sw_PATH:$PATH"
+	fi
+	if test "x$ul_CPPFLAGS" != "x" ; then
+		CPPFLAGS="$ul_CPPFLAGS $CPPFLAGS"
+	fi
+	if test "x$sw_CPPFLAGS" != "x" ; then
+		CPPFLAGS="$sw_CPPFLAGS $CPPFLAGS"
+	fi
+	if test "x$ul_LDFLAGS" != "x" ; then
+		LDFLAGS="$ul_LDFLAGS $LDFLAGS"
+	fi
+	if test "x$sw_LDFLAGS" != "x" ; then
+		LDFLAGS="$sw_LDFLAGS $LDFLAGS"
+	fi
+])
+
 
 dnl ***********************
 dnl *** Check arguments ***
@@ -521,11 +555,15 @@ dnl compile test..
 
 dnl autosearch /usr/local
 AC_MSG_CHECKING([for /usr/local])
+ul_CPPFLAGS=
+ul_LDFLAGS=
+ul_PATH=
 if test -d /usr/local/include ; then
-	AC_MSG_RESULT([found, adding /usr/local to search paths])
-	CPPFLAGS="$CPPFLAGS -I/usr/local/include"
 	if test -d /usr/local/lib ; then
-		LDFLAGS="$LDFLAGS -L/usr/local/lib"
+		AC_MSG_RESULT([found])
+		ul_CPPFLAGS=-I/usr/local/include
+		ul_LDFLAGS=-L/usr/local/lib
+		ul_PATH=/usr/local/bin
 	fi
 else
 	AC_MSG_RESULT([not found])
@@ -533,11 +571,15 @@ fi
 
 dnl autosearch fink paths
 AC_MSG_CHECKING([for fink in /sw])
+sw_CPPFLAGS=
+sw_LDFLAGS=
+sw_PATH=
 if test -d /sw/include ; then
-	AC_MSG_RESULT([found, adding /sw to search paths])
-	CPPFLAGS="$CPPFLAGS -I/sw/include"
 	if test -d /sw/lib ; then
-		LDFLAGS="$LDFLAGS -L/sw/lib"
+		AC_MSG_RESULT([found])
+		sw_CPPFLAGS=-I/sw/include
+		sw_LDFLAGS=-L/sw/lib
+		sw_PATH=/sw/bin
 	fi
 else
 	AC_MSG_RESULT([not found])
@@ -640,6 +682,8 @@ AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 if test "x$use_doxygen" = "xyes" ; then
 	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
 	if test "x$DOXYGEN" = "x" ; then
+		BC_EXTRA_SEARCH_DIRS
+		BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_ERROR([*** Unable to find doxygen ***])
 	fi
@@ -746,6 +790,7 @@ AC_CHECK_HEADERS( \
 	netdb.h \
 	netinet/in.h \
 	pthread.h \
+	pwd.h \
 	sgtty.h \
 	stdarg.h \
 	stddef.h \
@@ -1277,8 +1322,10 @@ AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 
 AC_CHECK_FUNCS(socket, SOCKET="" ,
 	       [AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", 
-			     AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-			     AC_MSG_ERROR([*** No internet socket found ***]))
+	       		BC_EXTRA_SEARCH_DIRS
+			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_ERROR([*** No internet socket found ***]))
 	       ])
 AC_SUBST(SOCKET)
 
@@ -1295,11 +1342,16 @@ AC_PATH_XTRA
 dnl *** java ***
 
 if test "x$only_rts" != "xno" ; then
+	AC_MSG_CHECKING(if java seems to be available)
 	if test "x$with_java" = "xno" ; then
+		AC_MSG_RESULT(no)
+		BC_EXTRA_SEARCH_DIRS
+		BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
+	AC_MSG_RESULT(yes)
 fi
 
 dnl *** libm ***
@@ -1345,6 +1397,8 @@ if test "x$build_png" = "xyes" ; then
 else
 	if test "x$build_png" = "xno" ; then
 		if test "x$png_works" != "xyes" ; then
+			BC_EXTRA_SEARCH_DIRS
+			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try adding --enable-png-build])
 			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
@@ -1394,6 +1448,8 @@ if test "x$build_regex" = "xyes" ; then
 else
 	if test "x$build_regex" = "xno" ; then
 		if test "x$regex_works" != "xyes" ; then
+			BC_EXTRA_SEARCH_DIRS
+			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try adding --enable-regex-build])
 			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
@@ -1437,6 +1493,8 @@ if test "x$build_zlib" = "xyes" ; then
 else
 	if test "x$build_zlib" = "xno" ; then
 		if test "x$zlib_works" != "xyes" ; then
+			BC_EXTRA_SEARCH_DIRS
+			BC_RETRY_CONFIGURE([$0], [CPPFLAGS="$CPPFLAGS" LDFLAGS="$LDFLAGS" PATH="$PATH"])
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try adding --enable-zlib-build])
 			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression was found ***])
@@ -1467,6 +1525,11 @@ dnl *** 64-bit compilation ***
 dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
 if test "x$build_64bit" = "xyes" ; then
+	if test "x$pointer_size" != "x8" ; then
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+		AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
+		AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
+	fi
 	build_brlcad_64bit=yes
 else
 	if test "x$build_64bit" = "xno" ; then
@@ -1474,12 +1537,6 @@ else
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 			AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
 			AC_MSG_ERROR([*** Building non-64-bit was requested, yet the build seems to be 64-bit ***])
-		fi
-	elif test "x$build_64bit" = "xyes" ; then
-		if test "x$pointer_size" != "x8" ; then
-			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-			AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
-			AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
 		fi
 	fi
 
