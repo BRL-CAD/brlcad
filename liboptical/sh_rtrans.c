@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "msr.h"
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "../rt/mathtab.h"
@@ -42,14 +41,14 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 struct rtrans_specific {
 	long	magic;
 	double	threshold;
-	struct msr_unif	*msr;
+	int	next_rand;
 };
 #define CK_RTRANS_SP(_p) RT_CKMAG(_p, RTRANS_MAGIC, "rtrans_specific")
 
 static struct rtrans_specific rtrans_defaults = {
 	RTRANS_MAGIC,
 	0.5,
-	(struct msr_unif *)NULL	};
+	3 } ;
 
 #define SHDR_NULL	((struct rtrans_specific *)0)
 #define SHDR_O(m)	offsetof(struct rtrans_specific, m)
@@ -101,7 +100,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);
 
-	rtrans_sp->msr = msr_unif_init( 3, 0 );
+	BN_RANDSEED(rtrans_sp->next_rand, 3);
 
 	if( rdebug&RDEBUG_SHADE)
 		bu_struct_print( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
@@ -155,7 +154,7 @@ char	*dp;
 		bu_struct_print( "random transparency", rtrans_parse, (char *)rtrans_sp );
 
 	if( rtrans_sp->threshold >= 1.0 ||
-	    0.5 + MSR_UNIF_DOUBLE( rtrans_sp->msr ) < rtrans_sp->threshold )
+	    BN_RANDOM(rtrans_sp->next_rand)  < rtrans_sp->threshold )
 	{
 		swp->sw_transmit = 1.0;
 		swp->sw_reflect = 0.0;
