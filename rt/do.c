@@ -376,14 +376,15 @@ char	**argv;
 	return(0);
 }
 
+/* generic settable parameters */
 struct matparse set_parse[] = {
 	"width",	(mp_off_ty)&width,			"%d",
 	"height",	(mp_off_ty)&height,			"%d",
 	"angle",	(mp_off_ty)&rt_perspective,		"%f",
-	"bounces",	(mp_off_ty)&max_bounces,		"%d",
-	"ireflect",	(mp_off_ty)&max_ireflect,		"%d",
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
+/* viewing module specific variables */
+extern struct matparse view_parse[];
 
 /*
  *			C M _ S E T
@@ -395,11 +396,12 @@ int	argc;
 char	**argv;
 {
 	if( argc <= 1 ) {
-		mlib_print( "Variable Values:", set_parse, (mp_off_ty)0 );
+		mlib_print( "Application Values:", view_parse, (mp_off_ty)0 );
+		mlib_print( "Generic Values:", set_parse, (mp_off_ty)0 );
 		return(0);
 	}
 	while( argc > 1 ) {
-		mlib_parse( argv[1], set_parse, (mp_off_ty)0 );
+		mlib_parse2( argv[1], view_parse, set_parse, (mp_off_ty)0 );
 		argc--;
 		argv++;
 	}
