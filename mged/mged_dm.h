@@ -209,7 +209,6 @@ struct dm_list {
   int _netfd;       /* socket used to listen for connections */
   struct client _clients[MAX_CLIENTS];
 #endif
-/* New members to allow more than one active display manager */
   struct shared_info *s_info;  /* info that can be used by display managers that share their views */
   int _dirty;      /* true if received an expose or configuration event */
   int _mapped;
@@ -233,6 +232,11 @@ struct dm_list {
   fastf_t _rect_width;		/* Width and height of rectangle in      */
   fastf_t _rect_height;		/* ------ normalized view coordinates.   */
 #endif
+
+  int _grid_auto_size;
+  int _dml_mouse_dx;
+  int _dml_mouse_dy;
+  point_t _dml_work_pt;
 
 /* Slider stuff */
   int _scroll_top;
@@ -381,6 +385,11 @@ struct dm_char_queue {
 #define rect_height curr_dm_list->_rect_height
 #endif
 
+#define grid_auto_size curr_dm_list->_grid_auto_size
+#define dml_mouse_dx curr_dm_list->_dml_mouse_dx
+#define dml_mouse_dy curr_dm_list->_dml_mouse_dy
+#define dml_work_pt curr_dm_list->_dml_work_pt
+
 #define scroll_top curr_dm_list->_scroll_top
 #define scroll_active curr_dm_list->_scroll_active
 #define scroll_y curr_dm_list->_scroll_y
@@ -467,10 +476,6 @@ extern int update_views;   /* defined in ged.c */
 extern struct dm_list head_dm_list;  /* list of active display managers */
 extern struct dm_list *curr_dm_list;
 extern struct dm_char_queue head_dm_char_queue;
-
-#ifdef USE_FRAMEBUFFER
-extern int fb_busy_flag;
-#endif
 
 struct w_dm {
   int type;
