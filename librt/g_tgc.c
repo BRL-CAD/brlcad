@@ -34,8 +34,8 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "raytrace.h"
 #include "nmg.h"
+#include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
 #include "./complex.h"
@@ -1915,6 +1915,9 @@ struct rt_tol		*tol;
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
+
+	/* XXX just for testing, to make up for loads of triangles ... */
+	nmg_shell_coplanar_face_merge( s, tol, 1 );
 
 	return(0);
 }
