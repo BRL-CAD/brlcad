@@ -38,11 +38,13 @@ CONST char				*value;	/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
-	rt_log("%s value %s ", name, value);
+	if( rdebug&RDEBUG_SHADE)
+		rt_log("%s value %s ", name, value);
 	/* reconvert with optional units */
 	*p = rt_mm_value(value);
 
-	rt_log(" %g\n", *p);
+	if( rdebug&RDEBUG_SHADE)
+		rt_log(" %g\n", *p);
 
 }
 
