@@ -52,11 +52,6 @@
  */
 extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 
-/* found in librt/nmg_plot.c */
-extern void (*nmg_plot_anim_upcall)();
-extern void (*nmg_vlblock_anim_upcall)();
-extern void (*nmg_mged_debug_display_hack)();
-
 /* declared in vdraw.c */
 extern struct bu_cmdtab vdraw_cmds[];
 
@@ -77,9 +72,6 @@ static int dgo_blast_tcl();
 static int dgo_tol_tcl();
 static int dgo_rtcheck_tcl();
 
-static void dgo_plot_anim_upcall_handler();
-static void dgo_vlblock_anim_upcall_handler();
-static void dgo_nmg_debug_display_hack();
 static union tree *dgo_wireframe_region_end();
 static union tree *dgo_wireframe_leaf();
 static int dgo_drawtrees();
@@ -96,29 +88,7 @@ static int dgo_build_tops();
 static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
 
-/*XXXXXXXXXXXXX possibly need to get rid of these globals */
-static int dgo_draw_nmg_only;
-static int dgo_nmg_triangulate;
-static int dgo_draw_wireframes;
-static int dgo_draw_normals;
-static int dgo_draw_solid_lines_only=0;
-static int dgo_draw_no_surfaces = 0;
-static int dgo_shade_per_vertex_normals=0;
-static int dgo_wireframe_color_override;
-static int dgo_wireframe_color[3];
-static struct model	*dgo_nmg_model;
-
-static int dgo_do_not_draw_nmg_solids_during_debugging = 0;
-static int dgo_draw_edge_uses=0;
-static int dgo_enable_fastpath = 0;
-static int dgo_fastpath_count=0;	/* statistics */
-static struct bn_vlblock	*dgo_draw_edge_uses_vbp;
-
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
-static struct dg_obj *curr_dgop;	/* current drawable geometry object */
-static Tcl_Interp *curr_interp;		/* current Tcl interpreter */
-static struct db_i *curr_dbip;		/* current database instance pointer */
-static struct solid *curr_hsp;		/* current head solid pointer */
 static struct solid FreeSolid;		/* head of free solid list */
 
 static struct bu_cmdtab dgo_cmds[] = {
@@ -352,11 +322,6 @@ dgo_draw(dgop, interp, argc, argv, kind)
 	register struct directory *dp;
 	register int i;
 
-	curr_dgop = dgop;
-	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbp->dbip;
-	curr_hsp = &dgop->dgo_headSolid;
-
 	/* skip past procname and cmd */
 	argc -= 2;
 	argv += 2;
@@ -365,12 +330,12 @@ dgo_draw(dgop, interp, argc, argv, kind)
 	 *  Silently skip any leading options (which start with minus signs).
 	 */
 	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(curr_dbip,  argv[i], LOOKUP_QUIET)) != DIR_NULL) {
+		if ((dp = db_lookup(dgop->dgo_wdbp->dbip,  argv[i], LOOKUP_QUIET)) != DIR_NULL) {
 			dgo_eraseobj(dgop, interp, dp);
 		}
 	}
 
-	dgo_drawtrees(argc, argv, kind);
+	dgo_drawtrees(dgop, interp, argc, argv, kind);
 	dgo_color_soltab(&dgop->dgo_headSolid);
 }
 
@@ -648,10 +613,6 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	curr_dgop = dgop;
-	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbp->dbip;
-	curr_hsp = &dgop->dgo_headSolid;
 	dgo_overlay(dgop, interp, fp, name, char_size);
 
 	return TCL_OK;
@@ -810,11 +771,6 @@ int	argc;
 char	**argv;
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
-
-	curr_dgop = dgop;
-	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbp->dbip;
-	curr_hsp = &dgop->dgo_headSolid;
 
 	return bu_cmd(clientData, interp, argc, argv, vdraw_cmds, 2);
 }
@@ -1370,48 +1326,30 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 
 /****************** utility routines ********************/
 
-/*
- */
-static void
-dgo_plot_anim_upcall_handler(file, us)
-     char *file;
-     long us;		/* microseconds of extra delay */
-{
-	char *av[3];
-
-#if 0
-	/* Overlay plot file */
-	av[0] = "overlay";
-	av[1] = file;
-	av[2] = NULL;
-	(void)dgo_overlay((ClientData)NULL, interp, 2, av);
-#endif
-}
-
-/*
- */
-static void
-dgo_vlblock_anim_upcall_handler(vbp, us, copy)
-     struct bn_vlblock *vbp;
-     long us; /* microseconds of extra delay */
-     int copy;
-{
-	dgo_cvt_vlblock_to_solids(curr_dgop, curr_interp, vbp, "_PLOT_OVERLAY_", copy);
-}
-
-/*
- */
-static void
-dgo_nmg_debug_display_hack()
-{
-}
+struct dg_client_data {
+	struct dg_obj		*dgop;
+	Tcl_Interp		*interp;
+	int			draw_nmg_only;
+	int			nmg_triangulate;
+	int			draw_wireframes;
+	int			draw_normals;
+	int			draw_solid_lines_only;
+	int			draw_no_surfaces;
+	int			shade_per_vertex_normals;
+	int			draw_edge_uses;
+	int			wireframe_color_override;
+	int			wireframe_color[3];
+	int			fastpath_count;			/* statistics */
+	int			do_not_draw_nmg_solids_during_debugging;
+	struct bn_vlblock	*draw_edge_uses_vbp;
+};
 
 static union tree *
 dgo_wireframe_region_end(tsp, pathp, curtree, client_data)
      register struct db_tree_state	*tsp;
-     struct db_full_path	*pathp;
-     union tree		*curtree;
-     genptr_t			client_data;
+     struct db_full_path		*pathp;
+     union tree				*curtree;
+     genptr_t				client_data;
 {
 	return (curtree);
 }
@@ -1433,6 +1371,7 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
 	struct bu_list	vhead;
+	struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
@@ -1442,19 +1381,19 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 	if (rt_g.debug&DEBUG_TREEWALK) {
 		char	*sofar = db_path_to_string(pathp);
 
-		Tcl_AppendResult(curr_interp, "dgo_wireframe_leaf(", rt_functab[id].ft_name,
+		Tcl_AppendResult(dgcdp->interp, "dgo_wireframe_leaf(", rt_functab[id].ft_name,
 				 ") path='", sofar, "'\n", (char *)NULL);
 		bu_free((genptr_t)sofar, "path string");
 	}
 
-	if (dgo_draw_solid_lines_only)
+	if (dgcdp->draw_solid_lines_only)
 		dashflag = 0;
 	else
 		dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
 
 	RT_INIT_DB_INTERNAL(&intern);
-	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat, curr_dbip) < 0) {
-		Tcl_AppendResult(curr_interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
+	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat, dgcdp->dgop->dgo_wdbp->dbip) < 0) {
+		Tcl_AppendResult(dgcdp->interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 				 ":  solid import failure\n", (char *)NULL);
 
 		if (intern.idb_ptr)
@@ -1467,7 +1406,7 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 				   &intern,
 				   tsp->ts_ttol,
 				   tsp->ts_tol) < 0) {
-		Tcl_AppendResult(curr_interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
+		Tcl_AppendResult(dgcdp->interp, DB_FULL_PATH_CUR_DIR(pathp)->d_namep,
 				 ": plot failure\n", (char *)NULL);
 		rt_functab[id].ft_ifree(&intern);
 		return (TREE_NULL);		/* ERROR */
@@ -1487,12 +1426,12 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
 		tsp->ts_mater.ma_color[0] = 0;
 		tsp->ts_mater.ma_color[1] = 128;
 		tsp->ts_mater.ma_color[2] = 128;
-		dgo_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL);
+		dgo_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		tsp->ts_mater.ma_color[0] = r;
 		tsp->ts_mater.ma_color[1] = g;
 		tsp->ts_mater.ma_color[2] = b;
 	} else {
-		dgo_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL);
+		dgo_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	}
 	rt_functab[id].ft_ifree(&intern);
 
@@ -1519,10 +1458,10 @@ dgo_wireframe_leaf(tsp, pathp, ep, id, client_data)
  */
 int
 dgo_nmg_region_start(tsp, pathp, combp, client_data)
-     struct db_tree_state	*tsp;
-     struct db_full_path	*pathp;
-     CONST struct rt_comb_internal *combp;
-     genptr_t			client_data;
+     struct db_tree_state		*tsp;
+     struct db_full_path		*pathp;
+     CONST struct rt_comb_internal	*combp;
+     genptr_t				client_data;
 {
 	union tree		*tp;
 	struct directory	*dp;
@@ -1530,6 +1469,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 	mat_t			xform;
 	matp_t			matp;
 	struct bu_list		vhead;
+	struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
 
 	if (rt_g.debug&DEBUG_TREEWALK) {
 		char	*sofar = db_path_to_string(pathp);
@@ -1585,7 +1525,7 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 			pgp = (struct rt_pg_internal *)intern.idb_ptr;
 			RT_PG_CK_MAGIC(pgp);
 
-			if (dgo_draw_wireframes) {
+			if (dgcdp->draw_wireframes) {
 				for (p = 0; p < pgp->npoly; p++) {
 					register struct rt_pg_face_internal	*pp;
 
@@ -1634,10 +1574,10 @@ dgo_nmg_region_start(tsp, pathp, combp, client_data)
 out:
 	/* Successful fastpath drawing of this solid */
 	db_add_node_to_full_path(pathp, dp);
-	dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL);
+	dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	DB_FULL_PATH_POP(pathp);
 	rt_db_free_internal(&intern);
-	dgo_fastpath_count++;
+	dgcdp->fastpath_count++;
 	return -1;	/* SKIP THIS REGION */
 }
 
@@ -1647,15 +1587,16 @@ out:
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end( tsp, pathp, curtree, client_data )
+dgo_nmg_region_end(tsp, pathp, curtree, client_data)
      register struct db_tree_state	*tsp;
-     struct db_full_path	*pathp;
-     union tree		*curtree;
-     genptr_t			client_data;
+     struct db_full_path		*pathp;
+     union tree				*curtree;
+     genptr_t				client_data;
 {
 	struct nmgregion	*r;
 	struct bu_list		vhead;
 	int			failed;
+	struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
@@ -1666,21 +1607,21 @@ dgo_nmg_region_end( tsp, pathp, curtree, client_data )
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
 
-	  Tcl_AppendResult(curr_interp, "dgo_nmg_region_end() path='", sofar,
+	  Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
 			   "'\n", (char *)NULL);
 	  bu_free((genptr_t)sofar, "path string");
 	}
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	if ( !dgo_draw_nmg_only ) {
+	if ( !dgcdp->draw_nmg_only ) {
 		if( BU_SETJUMP )
 		{
 			char  *sofar = db_path_to_string(pathp);
 
 			BU_UNSETJUMP;
 
-			Tcl_AppendResult(curr_interp, "WARNING: Boolean evaluation of ", sofar,
+			Tcl_AppendResult(dgcdp->interp, "WARNING: Boolean evaluation of ", sofar,
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
 			if( curtree )
@@ -1696,26 +1637,25 @@ dgo_nmg_region_end( tsp, pathp, curtree, client_data )
 	}
 	else if( curtree->tr_op != OP_NMG_TESS )
 	{
-	  Tcl_AppendResult(curr_interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
+	  Tcl_AppendResult(dgcdp->interp, "Cannot use '-d' option when Boolean evaluation is required\n", (char *)NULL);
 	  db_free_tree( curtree );
 	  return (union tree *)NULL;
 	}
 	r = curtree->tr_d.td_r;
 	NMG_CK_REGION(r);
 
-	if( dgo_do_not_draw_nmg_solids_during_debugging && r )  {
+	if( dgcdp->do_not_draw_nmg_solids_during_debugging && r )  {
 		db_free_tree( curtree );
 		return (union tree *)NULL;
 	}
 
-	if (dgo_nmg_triangulate) {
-		if( BU_SETJUMP )
-		{
+	if (dgcdp->nmg_triangulate) {
+		if (BU_SETJUMP) {
 			char  *sofar = db_path_to_string(pathp);
 
 			BU_UNSETJUMP;
 
-			Tcl_AppendResult(curr_interp, "WARNING: Triangulation of ", sofar,
+			Tcl_AppendResult(dgcdp->interp, "WARNING: Triangulation of ", sofar,
 				" failed!!!\n", (char *)NULL );
 			bu_free((genptr_t)sofar, "path string");
 			if( curtree )
@@ -1731,28 +1671,28 @@ dgo_nmg_region_end( tsp, pathp, curtree, client_data )
 		/* Convert NMG to vlist */
 		NMG_CK_REGION(r);
 
-		if( dgo_draw_wireframes )  {
+		if (dgcdp->draw_wireframes) {
 			/* Draw in vector form */
 			style = NMG_VLIST_STYLE_VECTOR;
 		} else {
 			/* Default -- draw polygons */
 			style = NMG_VLIST_STYLE_POLYGON;
 		}
-		if( dgo_draw_normals )  {
+		if (dgcdp->draw_normals) {
 			style |= NMG_VLIST_STYLE_VISUALIZE_NORMALS;
 		}
-		if( dgo_shade_per_vertex_normals )  {
+		if (dgcdp->shade_per_vertex_normals) {
 			style |= NMG_VLIST_STYLE_USE_VU_NORMALS;
 		}
-		if( dgo_draw_no_surfaces )  {
+		if (dgcdp->draw_no_surfaces) {
 			style |= NMG_VLIST_STYLE_NO_SURFACES;
 		}
-		nmg_r_to_vlist( &vhead, r, style );
+		nmg_r_to_vlist(&vhead, r, style);
 
-		dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL );
+		dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 
-		if( dgo_draw_edge_uses )  {
-			nmg_vlblock_r(dgo_draw_edge_uses_vbp, r, 1);
+		if (dgcdp->draw_edge_uses) {
+			nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
 		}
 		/* NMG region is no longer necessary, only vlist remains */
 		db_free_tree( curtree );
@@ -1780,36 +1720,42 @@ dgo_nmg_region_end( tsp, pathp, curtree, client_data )
  *	-1	On major error
  */
 static int
-dgo_drawtrees(argc, argv, kind)
+dgo_drawtrees(dgop, interp, argc, argv, kind)
+     struct dg_obj *dgop;
+     Tcl_Interp *interp;
      int	argc;
      char	**argv;
      int	kind;
 {
 	int		ret = 0;
 	register int	c;
-	int		ncpu;
+	int		ncpu = 1;
 	int		dgo_nmg_use_tnurbs = 0;
+	int		dgo_enable_fastpath = 0;
+	struct model	*dgo_nmg_model;
+	struct dg_client_data *dgcdp;
 
-	if (curr_dbip == DBI_NULL)
-		return 0;
-
-	RT_CHECK_DBI(curr_dbip);
+	RT_CHECK_DBI(dgop->dgo_wdbp->dbip);
 
 	if (argc <= 0)
 		return(-1);	/* FAIL */
 
+	BU_GETSTRUCT(dgcdp, dg_client_data);
+	dgcdp->dgop = dgop;
+	dgcdp->interp = interp;
+
 	/* Initial values for options, must be reset each time */
-	ncpu = 1;
-	dgo_draw_nmg_only = 0;	/* no booleans */
-	dgo_nmg_triangulate = 1;
-	dgo_draw_wireframes = 0;
-	dgo_draw_normals = 0;
-	dgo_draw_edge_uses = 0;
-	dgo_draw_solid_lines_only = 0;
-	dgo_shade_per_vertex_normals = 0;
-	dgo_draw_no_surfaces = 0;
-	dgo_wireframe_color_override = 0;
-	dgo_fastpath_count = 0;
+	dgcdp->draw_nmg_only = 0;	/* no booleans */
+	dgcdp->nmg_triangulate = 1;
+	dgcdp->draw_wireframes = 0;
+	dgcdp->draw_normals = 0;
+	dgcdp->draw_solid_lines_only = 0;
+	dgcdp->draw_no_surfaces = 0;
+	dgcdp->shade_per_vertex_normals = 0;
+	dgcdp->draw_edge_uses = 0;
+	dgcdp->wireframe_color_override = 0;
+	dgcdp->fastpath_count = 0;
+
 	dgo_enable_fastpath = 0;
 
 	/* Parse options. */
@@ -1817,37 +1763,37 @@ dgo_drawtrees(argc, argv, kind)
 	while ((c = bu_getopt(argc,argv,"dfnqstuvwSTP:C:")) != EOF) {
 		switch (c) {
 		case 'u':
-			dgo_draw_edge_uses = 1;
+			dgcdp->draw_edge_uses = 1;
 			break;
 		case 's':
-			dgo_draw_solid_lines_only = 1;
+			dgcdp->draw_solid_lines_only = 1;
 			break;
 		case 't':
 			dgo_nmg_use_tnurbs = 1;
 			break;
 		case 'v':
-			dgo_shade_per_vertex_normals = 1;
+			dgcdp->shade_per_vertex_normals = 1;
 			break;
 		case 'w':
-			dgo_draw_wireframes = 1;
+			dgcdp->draw_wireframes = 1;
 			break;
 		case 'S':
-			dgo_draw_no_surfaces = 1;
+			dgcdp->draw_no_surfaces = 1;
 			break;
 		case 'T':
-			dgo_nmg_triangulate = 0;
+			dgcdp->nmg_triangulate = 0;
 			break;
 		case 'n':
-			dgo_draw_normals = 1;
+			dgcdp->draw_normals = 1;
 			break;
 		case 'P':
 			ncpu = atoi(bu_optarg);
 			break;
 		case 'q':
-			dgo_do_not_draw_nmg_solids_during_debugging = 1;
+			dgcdp->do_not_draw_nmg_solids_during_debugging = 1;
 			break;
 		case 'd':
-			dgo_draw_nmg_only = 1;
+			dgcdp->draw_nmg_only = 1;
 			break;
 		case 'f':
 			dgo_enable_fastpath = 1;
@@ -1870,10 +1816,10 @@ dgo_drawtrees(argc, argv, kind)
 				if( g < 0 || g > 255 )  g = 255;
 				if( b < 0 || b > 255 )  b = 255;
 
-				dgo_wireframe_color_override = 1;
-				dgo_wireframe_color[0] = r;
-				dgo_wireframe_color[1] = g;
-				dgo_wireframe_color[2] = b;
+				dgcdp->wireframe_color_override = 1;
+				dgcdp->wireframe_color[0] = r;
+				dgcdp->wireframe_color[1] = g;
+				dgcdp->wireframe_color[2] = b;
 			}
 			break;
 		default:
@@ -1882,8 +1828,9 @@ dgo_drawtrees(argc, argv, kind)
 
 				bu_vls_init(&vls);
 				bu_vls_printf(&vls, "help %s", argv[0]);
-				Tcl_Eval(curr_interp, bu_vls_addr(&vls));
+				Tcl_Eval(interp, bu_vls_addr(&vls));
 				bu_vls_free(&vls);
+				bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 
 				return TCL_ERROR;
 			}
@@ -1892,49 +1839,46 @@ dgo_drawtrees(argc, argv, kind)
 	argc -= bu_optind;
 	argv += bu_optind;
 
-	/* Establish upcall interfaces for use by bottom of NMG library */
-	nmg_plot_anim_upcall = dgo_plot_anim_upcall_handler;
-	nmg_vlblock_anim_upcall = dgo_vlblock_anim_upcall_handler;
-	nmg_mged_debug_display_hack = dgo_nmg_debug_display_hack;
-
 	switch (kind) {
 	default:
-	  Tcl_AppendResult(curr_interp, "ERROR, bad kind\n", (char *)NULL);
+	  Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
+	  bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 	  return(-1);
 	case 1:		/* Wireframes */
-		ret = db_walk_tree(curr_dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (CONST char **)argv,
 			ncpu,
-			&curr_dgop->dgo_initial_tree_state,
+			&dgop->dgo_initial_tree_state,
 			0,			/* take all regions */
 			dgo_wireframe_region_end,
-			dgo_wireframe_leaf, (genptr_t)NULL);
+			dgo_wireframe_leaf, (genptr_t)dgcdp);
 		break;
 	case 2:		/* Big-E */
-		Tcl_AppendResult(curr_interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
+		Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
+		bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 		return (-1);
 	case 3:
 		{
 		/* NMG */
 	  	dgo_nmg_model = nmg_mm();
-		curr_dgop->dgo_initial_tree_state.ts_m = &dgo_nmg_model;
-	  	if (dgo_draw_edge_uses) {
-		  Tcl_AppendResult(curr_interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
-		  dgo_draw_edge_uses_vbp = rt_vlblock_init();
+		dgop->dgo_initial_tree_state.ts_m = &dgo_nmg_model;
+	  	if (dgcdp->draw_edge_uses) {
+			Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
+			dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
 	  	}
 
-		ret = db_walk_tree(curr_dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (CONST char **)argv,
 				   ncpu,
-				   &curr_dgop->dgo_initial_tree_state,
+				   &dgop->dgo_initial_tree_state,
 				   dgo_enable_fastpath ? dgo_nmg_region_start : 0,
 				   dgo_nmg_region_end,
 				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-				   (genptr_t)NULL);
+				   (genptr_t)dgcdp);
 
-	  	if (dgo_draw_edge_uses) {
-	  		dgo_cvt_vlblock_to_solids(curr_dbip, curr_interp,
-						  dgo_draw_edge_uses_vbp, "_EDGEUSES_", 0);
-	  		rt_vlblock_free(dgo_draw_edge_uses_vbp);
-			dgo_draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+	  	if (dgcdp->draw_edge_uses) {
+	  		dgo_cvt_vlblock_to_solids(dgop->dgo_wdbp->dbip, interp,
+						  dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
+	  		rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
+			dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
  	  	}
 
 		/* Destroy NMG */
@@ -1942,10 +1886,12 @@ dgo_drawtrees(argc, argv, kind)
 	  	break;
 	  }
 	}
-	if (dgo_fastpath_count) {
+	if (dgcdp->fastpath_count) {
 		bu_log("%d region%s rendered through polygon fastpath\n",
-		       dgo_fastpath_count, dgo_fastpath_count==1?"":"s");
+		       dgcdp->fastpath_count, dgcdp->fastpath_count==1?"":"s");
 	}
+
+	bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 
 	if (ret < 0)
 		return (-1);
@@ -1972,13 +1918,6 @@ dgo_cvt_vlblock_to_solids(dgop, interp, vbp, name, copy)
 
 	strncpy(shortname, name, 16-6);
 	shortname[16-6] = '\0';
-
-#if 0
-	/* Remove any residue colors from a previous overlay w/same name */
-	av[0] = shortname;
-	av[1] = NULL;
-	dgo_erase(dgop, interp, 1, av);
-#endif
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
@@ -2043,7 +1982,7 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 		BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
 		BU_LIST_INIT(vhead);
 	}
-	dgo_bound_solid(sp);
+	dgo_bound_solid(interp, sp);
 
 	/* set path information -- this is a top level node */
 	sp->s_last = 0;
@@ -2070,7 +2009,8 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
 static void
-dgo_bound_solid(sp)
+dgo_bound_solid(interp, sp)
+     Tcl_Interp *interp;
      register struct solid *sp;
 {
 	register struct bn_vlist	*vp;
@@ -2109,7 +2049,7 @@ dgo_bound_solid(sp)
 
 					bu_vls_init(&tmp_vls);
 					bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
-					Tcl_AppendResult(curr_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+					Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 					bu_vls_free(&tmp_vls);
 				}
 			}
@@ -2135,12 +2075,13 @@ dgo_bound_solid(sp)
  *  This routine must be prepared to run in parallel.
  */
 static void
-dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp)
-int			dashflag;
-struct bu_list		*vhead;
-struct db_full_path	*pathp;
-struct db_tree_state	*tsp;
-struct solid		*existing_sp;
+dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
+     int			 dashflag;
+     struct bu_list		 *vhead;
+     struct db_full_path	 *pathp;
+     struct db_tree_state	 *tsp;
+     struct solid		 *existing_sp;
+     struct dg_client_data	 *dgcdp; 
 {
 	register struct solid *sp;
 	register int	i;
@@ -2151,7 +2092,7 @@ struct solid		*existing_sp;
 		if (pathp->fp_len > MAX_PATH) {
 		  char *cp = db_path_to_string(pathp);
 
-		  Tcl_AppendResult(curr_interp, "drawH_part2: path too long, solid ignored.\n\t",
+		  Tcl_AppendResult(dgcdp->interp, "drawH_part2: path too long, solid ignored.\n\t",
 				   cp, "\n", (char *)NULL);
 		  bu_free((genptr_t)cp, "Path string");
 		  return;
@@ -2160,7 +2101,7 @@ struct solid		*existing_sp;
 		GET_SOLID(sp, &FreeSolid.l);
 		/* NOTICE:  The structure is dirty & not initialized for you! */
 
-		sp->s_dlist = BU_LIST_LAST(solid, &curr_hsp->l)->s_dlist + 1;
+		sp->s_dlist = BU_LIST_LAST(solid, &dgcdp->dgop->dgo_headSolid.l)->s_dlist + 1;
 	} else {
 		/* Just updating an existing solid.
 		 *  'tsp' and 'pathpos' will not be used
@@ -2173,7 +2114,7 @@ struct solid		*existing_sp;
 	 * Compute the min, max, and center points.
 	 */
 	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
-	dgo_bound_solid(sp);
+	dgo_bound_solid(dgcdp->interp, sp);
 
 	/*
 	 *  If this solid is new, fill in it's information.
@@ -2181,13 +2122,13 @@ struct solid		*existing_sp;
 	 */
 	if (!existing_sp) {
 		/* Take note of the base color */
-		if (dgo_wireframe_color_override) {
+		if (dgcdp->wireframe_color_override) {
 		        /* a user specified the color, so arrange to use it */
 			sp->s_uflag = 1;
 			sp->s_dflag = 0;
-			sp->s_basecolor[0] = dgo_wireframe_color[0];
-			sp->s_basecolor[1] = dgo_wireframe_color[1];
-			sp->s_basecolor[2] = dgo_wireframe_color[2];
+			sp->s_basecolor[0] = dgcdp->wireframe_color[0];
+			sp->s_basecolor[1] = dgcdp->wireframe_color[1];
+			sp->s_basecolor[2] = dgcdp->wireframe_color[2];
 		} else {
 			sp->s_uflag = 0;
 			if (tsp) {
@@ -2219,7 +2160,7 @@ struct solid		*existing_sp;
 	if (!existing_sp) {
 		/* Add to linked list of solid structs */
 		bu_semaphore_acquire(RT_SEM_MODEL);
-		BU_LIST_APPEND(curr_hsp->l.back, &sp->l);
+		BU_LIST_APPEND(dgcdp->dgop->dgo_headSolid.l.back, &sp->l);
 		bu_semaphore_release(RT_SEM_MODEL);
 	} else {
 		/* replacing existing solid -- struct already linked in */
