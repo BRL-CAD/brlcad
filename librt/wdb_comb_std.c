@@ -739,10 +739,23 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 		intern.idb_ptr = (genptr_t)comb;
 
-		if ((dp=db_diradd(wdbp->dbip, comb_name, -1L, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
-			Tcl_AppendResult(interp, "Failed to add ", comb_name,
-					 " to directory, aborting\n" , (char *)NULL);
-			return TCL_ERROR;
+		if( wdbp->dbip->dbi_version < 5 ) {
+			if ((dp=db_diradd(wdbp->dbip, comb_name, -1L, 0, DIR_COMB, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+				Tcl_AppendResult(interp, "Failed to add ", comb_name,
+						 " to directory, aborting\n" , (char *)NULL);
+				return TCL_ERROR;
+			}
+		} else {
+			struct bu_attribute_value_set avs;
+
+			bu_avs_init( &avs, 1, "avs" );
+			if ((dp = db_diradd5(wdbp->dbip, comb_name, -1L, intern.idb_major_type, intern.idb_type, (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+				bu_avs_free( &avs );
+				Tcl_AppendResult(interp, "An error has occured while adding '",
+						 comb_name, "' to the database.\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+			bu_avs_free( &avs );
 		}
 
 		if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
