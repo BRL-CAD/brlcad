@@ -61,6 +61,7 @@ int cmd_get();
 int get_more_default();
 int tran(), irot();
 void set_tran(), mged_setup(), cmd_setup(), mged_compat();
+void mged_print_result();
 
 extern mat_t    ModelDelta;
 
@@ -1526,6 +1527,44 @@ end:
   bu_vls_free(&globbed);
   bu_vls_free(&tmp_vls);
   return status;
+}
+
+
+void
+mged_print_result(status)
+int status;
+{
+  int len;
+  extern void pr_prompt();
+
+  switch (status) {
+  case TCL_OK:
+    len = strlen(interp->result);
+
+    /* If the command had something to say, print it out. */	     
+    if (len > 0){
+      bu_log("%s%s", interp->result,
+	     interp->result[len-1] == '\n' ? "" : "\n");
+
+      pr_prompt();
+    }
+
+    break;
+
+  case TCL_ERROR:
+  default:
+    len = strlen(interp->result);
+    if (len > 0){
+      bu_log("%s%s", interp->result,
+	     interp->result[len-1] == '\n' ? "" : "\n");
+
+      pr_prompt();
+    }
+
+    break;
+  }
+
+  Tcl_ResetResult(interp);
 }
 
 /*
