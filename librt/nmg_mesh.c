@@ -191,6 +191,8 @@ double	t;
  *  so the issue of preserving faceuse orientation parity
  *  (SAME, OPPOSITE, OPPOSITE, SAME, ...)
  *  can't be used here -- that only applies to faceuses from the same shell.
+ *
+ *  Some of the edgeuses around both edges may be wires.
  */
 void
 nmg_radial_join_eu(eu1, eu2, tol)
@@ -200,6 +202,7 @@ CONST struct rt_tol	*tol;
 {
 	struct edgeuse	*original_eu1 = eu1;
 	struct edgeuse	*nexteu;
+	struct edgeuse	*eur;
 	int		iteration1, iteration2;
 	vect_t		xvec, yvec, zvec;
 	fastf_t		abs1;
@@ -255,6 +258,7 @@ CONST struct rt_tol	*tol;
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
 		int	code = 0;
 		struct edgeuse	*first_eu1 = eu1;
+		int	wire_skip = 0;
 		/* Resume where we left off from last eu2 insertion */
 
 		/* because faces are always created with counter-clockwise
@@ -271,18 +275,48 @@ CONST struct rt_tol	*tol;
 
 			abs1 = abs2 = absr = -rt_twopi;
 
-			fu1 = nmg_find_fu_of_eu(eu1);
+			eur = eu1->radial_p;
+			NMG_CK_EDGEUSE(eur);
+
 			fu2 = nmg_find_fu_of_eu(eu2);
-			fur = nmg_find-fu_of_eu(eu1->radial_p);
+			if( fu2 == (struct faceuse *)NULL )  {
+				/* eu2 is a wire, it can go anywhere */
+rt_log("eu2=x%x is a wire, insert after eu1=x%x\n", eu2, eu1);
+				goto insert;
+			}
+			fu1 = nmg_find_fu_of_eu(eu1);
+			if( fu1 == (struct faceuse *)NULL )  {
+				/* eu1 is a wire, skip on to real face eu */
+rt_log("eu1=x%x is a wire, skipping on\n", eu1);
+				wire_skip++;
+				goto cont;
+			}
+			fur = nmg_find_fu_of_eu(eur);
+			while( fur == (struct faceuse *)NULL )  {
+				/* eur is wire, advance eur */
+rt_log("eur=x%x is a wire, advancing to non-wire eur\n", eur);
+				eur = eur->eumate_p->radial_p;
+				wire_skip++;
+				if( eur == eu1->eumate_p )  {
+rt_log("went all the way around\n");
+					/* Went all the way around */
+					goto insert;
+				}
+				fur = nmg_find_fu_of_eu(eur);
+			}
 			NMG_CK_FACEUSE(fu1);
 			NMG_CK_FACEUSE(fu2);
 			NMG_CK_FACEUSE(fur);
 
-			/* Can't check shared fg here, need to check sides */
-
+			/*
+			 *  Can't just check for shared fg here,
+			 *  the angle changes by +/- 180 degrees,
+			 *  depending on which side of the eu the loop is on
+			 *  along this edge.
+			 */
 			abs1 = nmg_measure_fu_angle( eu1, xvec, yvec, zvec );
 			abs2 = nmg_measure_fu_angle( eu2, xvec, yvec, zvec );
-			absr = nmg_measure_fu_angle( eu1->radial_p, xvec, yvec, zvec );
+			absr = nmg_measure_fu_angle( eur, xvec, yvec, zvec );
 
 			if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
 				rt_log("  abs1=%g, abs2=%g, absr=%g\n",
@@ -339,9 +373,12 @@ CONST struct rt_tol	*tol;
 cont:
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
 			/* If eu1 is only one pair of edgeuses, done */
-			if( eu1 == eu1->radial_p->eumate_p )  break;
-			eu1 = eu1->radial_p->eumate_p;
+			if( eu1 == eur->eumate_p )  break;
+			eu1 = eur->eumate_p;
 			if( eu1 == first_eu1 )  {
+				/* If all eu's were wires, here is fine */
+				if( wire_skip >= iteration2 )  break;
+				/* Nope, something bad happened */
 				rt_bomb("nmg_radial_join_eu():  went full circle, no face insertion point.\n");
 				break;
 			}
@@ -354,6 +391,7 @@ cont:
 		 * mate are the last uses of the edge, there will be no next
 		 * edgeuse to move. (Loop termination condition).
 		 */
+insert:
 		nexteu = eu2->radial_p;
 		if (nexteu == eu2->eumate_p)
 			nexteu = (struct edgeuse *)NULL;
@@ -367,7 +405,8 @@ cont:
 
 		/*
 		 *  Make eu2 radial to eu1.
-		 *  This should insert eu2 between eu1 and eu1->radial_p.
+		 *  This should insert eu2 between eu1 and eu1->radial_p
+		 *  (which may be less far around than eur, but thats OK).
 		 */
 		nmg_moveeu(eu1, eu2);
 
@@ -591,6 +630,12 @@ nmg_region_v_unique( s2->r_p, tol );
 			count += nmg_mesh_two_faces( fu1, fu2, tol );
 		}
 	}
+
 	/* XXX What about wire edges in the shell? */
+
+	/* Visit every wire loop in shell 1 */
+
+	/* Visit every wire edge in shell 1 */
+
 	return count;
 }
