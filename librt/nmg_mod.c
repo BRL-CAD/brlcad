@@ -4052,7 +4052,7 @@ int		share_geom;
 	struct edgeuse	*eu1,
 			*eu2,
 			*oldeumate;
-	struct shell *s;
+	struct shell *s = NULL;
 	struct loopuse	*lu;
 
 	NMG_CK_EDGEUSE(oldeu);
