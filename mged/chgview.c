@@ -253,19 +253,19 @@ register struct directory *dp;
 	if( record.u_id == ID_SOLID )  {
 		switch( record.s.s_type )  {
 		case GENARB8:
-			dbpr_arb( record.s.s_type, dp );
+			dbpr_arb( &record.s, dp );
 			break;
 		case GENTGC:
-			dbpr_tgc( record.s.s_type, dp );
+			dbpr_tgc( &record.s, dp );
 			break;
 		case GENELL:
-			dbpr_ell( record.s.s_type, dp );
+			dbpr_ell( &record.s, dp );
 			break;
 		case HALFSPACE:
-			dbpr_half( record.s.s_type, dp );
+			dbpr_half( &record.s, dp );
 			break;
 		case TOR:
-			dbpr_torus( record.s.s_type, dp );
+			dbpr_torus( &record.s, dp );
 			break;
 		default:
 			printf("bad solid type %d\n", record.s.s_type );
