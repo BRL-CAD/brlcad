@@ -1157,6 +1157,7 @@ double			where;
 			olp->pieces = (long *)bu_malloc(
 				sizeof(long) * plp->npieces,
 				"olp->pieces[] (left)" );
+			olp->npieces = 0;
 
 			/* Loop for every piece of this solid */
 			for( j = plp->npieces-1; j >= 0; j-- )  {
@@ -1220,6 +1221,7 @@ double			where;
 			olp->pieces = (long *)bu_malloc(
 				sizeof(long) * plp->npieces,
 				"olp->pieces[] (right)" );
+			olp->npieces = 0;
 
 			/* Loop for every piece of this solid */
 			for( j = plp->npieces-1; j >= 0; j-- )  {
