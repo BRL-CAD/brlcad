@@ -148,6 +148,7 @@ int glob_compat_mode = 1;
 int output_as_return = 0;
 
 extern Tcl_CmdProc cmd_expand, cmd_db, cmd_prev, cmd_next, f_echo, cmd_look;
+extern Tcl_CmdProc cmd_solids_on_ray;
 
 int	mged_cmd();
 int	cmd_gui(), cmd_tk(), cmd_getknob();
@@ -501,6 +502,8 @@ static struct funtab funtab[] = {
 #endif
 "solids", "file object(s)", "make ascii summary of solid parameters",
 	f_tables, 3, MAXARGS,FALSE,
+"solids_on_ray", "h v", "List all displayed solids along a ray",
+        cmd_solids_on_ray, 1, 3, TRUE,
 #ifdef XMGED
 "source", "[beh] filename", "reads in and records and/or executes a file of commands",
 	f_source, 2, MAXARGS,FALSE,
@@ -1871,6 +1874,7 @@ char **argv;
 	return TCL_ERROR;
     }
 
+#if 0
     if (Tcl_GetDouble(interp, argv[1], &viewX) != TCL_OK) return TCL_ERROR;
     
     /* Do stuff. */
@@ -1882,6 +1886,7 @@ char **argv;
     
 
     Tcl_AppendElement(interp, "This { is really \\ fu\"nk}y.");
+#endif
     
     return TCL_OK;
 }
