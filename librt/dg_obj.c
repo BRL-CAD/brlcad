@@ -83,6 +83,7 @@ HIDDEN int dgo_invent_solid();
 HIDDEN void dgo_bound_solid();
 HIDDEN void dgo_drawH_part2();
 HIDDEN void dgo_eraseobjall();
+void dgo_eraseobjall_callback();
 HIDDEN void dgo_eraseobj();
 HIDDEN void dgo_color_soltab();
 
@@ -1603,12 +1604,29 @@ struct solid		*existing_sp;
 }
 
 /*
+ * At the moment this is being called from wdb_obj.c/wdb_kill_tcl() if the
+ * object is not phony.
+ */
+void
+dgo_eraseobjall_callback(interp, wdbop, dp)
+     Tcl_Interp *interp;
+     struct wdb_obj *wdbop;
+     struct directory *dp;
+{
+	struct dg_obj *dgop;
+
+	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+		if (dgop->dgo_wdbop == wdbop)
+			dgo_eraseobjall(interp, dgop, dp);
+}
+
+/*
  *			E R A S E O B J A L L
  *
  * This routine goes through the solid table and deletes all displays
  * which contain the specified object in their 'path'
  */
-void
+HIDDEN void
 dgo_eraseobjall(interp, dgop, dp)
      Tcl_Interp *interp;
      struct dg_obj *dgop;
@@ -1672,7 +1690,7 @@ dgo_eraseobj(interp, dgop, dp)
 	}
 
 	if (dp->d_addr == RT_DIR_PHONY_ADDR ) {
-		if( db_dirdelete(dgop->dgo_wdbop->wdb_wp->dbip, dp) < 0 ){
+		if (db_dirdelete(dgop->dgo_wdbop->wdb_wp->dbip, dp) < 0)  {
 			Tcl_AppendResult(interp, "dgo_eraseobj: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
