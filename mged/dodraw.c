@@ -82,6 +82,8 @@ static struct db_tree_state	mged_initial_tree_state = {
 static int		mged_nmg_triangulate;
 static int		mged_draw_wireframes;
 static int		mged_draw_normals;
+static int		mged_draw_solid_lines_only=0;
+static int		mged_shade_per_vertex_normals=0;
 static struct model	*mged_nmg_model;
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
@@ -234,7 +236,10 @@ int			id;
 		rt_free(sofar, "path string");
 	}
 
-	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
+	if( mged_draw_solid_lines_only )
+		dashflag = 0;
+	else
+		dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
     	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat ) < 0 )  {
@@ -333,15 +338,18 @@ union tree		*curtree;
 		/* Convert NMG to vlist */
 		NMG_CK_REGION(r);
 
-		if( mged_draw_normals )  {
-			style = 2;
-			/* 0 = vectors, 1 = w/polygon markers, 2 = polys with normals */
-		} else if( mged_draw_wireframes )  {
+		if( mged_draw_wireframes )  {
 			/* Draw in vector form */
-			style = 0;
+			style = NMG_VLIST_STYLE_VECTOR;
 		} else {
 			/* Default -- draw polygons */
-			style = 1;
+			style = NMG_VLIST_STYLE_POLYGON;
+		}
+		if( mged_draw_normals )  {
+			style |= NMG_VLIST_STYLE_VISUALIZE_NORMALS;
+		}
+		if( mged_shade_per_vertex_normals )  {
+			style |= NMG_VLIST_STYLE_USE_VU_NORMALS;
 		}
 		nmg_r_to_vlist( &vhead, r, style );
 
@@ -392,13 +400,21 @@ int	kind;
 	mged_draw_wireframes = 0;
 	mged_draw_normals = 0;
 	mged_draw_edge_uses = 0;
+	mged_draw_solid_lines_only = 0;
+	mged_shade_per_vertex_normals = 0;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"quwnTP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"nqsuvwTP:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
+			break;
+		case 's':
+			mged_draw_solid_lines_only = 1;
+			break;
+		case 'v':
+			mged_shade_per_vertex_normals = 1;
 			break;
 		case 'w':
 			mged_draw_wireframes = 1;
@@ -420,6 +436,8 @@ int	kind;
 			rt_log("Usage: ev [-uwTnq] object(s)\n\
 	-w draw wireframes (rather than polygons)\n\
 	-n draw surface normals as little 'hairs'\n\
+	-s draw solid lines only (no dot-dash for subtract and intersect)\n\
+	-v shade using per-vertex normals, when present.\n\
 	-u debug: draw edgeuses\n\
 	-T debug: disable triangulator\n");
 			break;
@@ -528,6 +546,7 @@ register struct solid *sp;
 		for( j = 0; j < nused; j++,cmd++,pt++ )  {
 			switch( *cmd )  {
 			case RT_VLIST_POLY_START:
+			case RT_VLIST_POLY_VERTNORM:
 				/* Has normal vector, not location */
 				break;
 			case RT_VLIST_LINE_MOVE:
