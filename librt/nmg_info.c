@@ -799,7 +799,7 @@ int		dangling_only;
 	}
 	eu = (struct edgeuse *)NULL;
 out:
-	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	if (rt_g.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	    	rt_log("nmg_findeu() returns x%x\n", eu);
 
 	return (struct edgeuse *)eu;
@@ -900,8 +900,93 @@ int		dangling_only;
 	}
 	eu = (struct edgeuse *)NULL;
 out:
-	if (rt_g.NMG_debug & DEBUG_FINDEU)
+	if (rt_g.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
 	    	rt_log("nmg_find_eu_in_face() returns x%x\n", eu);
+
+	return (struct edgeuse *)eu;
+}
+
+/*
+ *			N M G _ F I N D _ E
+ *
+ *  Find an edge between a given pair of vertices.
+ *
+ *  If a given shell "s" is specified, then only edges in that shell
+ *  will be considered, otherwise all edges in the model are fair game.
+ *
+ *  If a particular edge "ep" is specified, then that edge
+ *  will not be returned as a match.
+ *
+ *  Returns -
+ *	edgeuse*	Edgeuse of an edge which matches the criteria
+ *	NULL		Unable to find matching edge
+ */
+struct edgeuse *
+nmg_find_e(v1, v2, s, ep)
+CONST struct vertex	*v1;
+CONST struct vertex	*v2;
+CONST struct shell	*s;
+CONST struct edge	*ep;
+{
+	register CONST struct vertexuse	*vu;
+	register CONST struct edgeuse	*eu;
+
+	NMG_CK_VERTEX(v1);
+	NMG_CK_VERTEX(v2);
+	if(s) NMG_CK_SHELL(s);
+
+	if (rt_g.NMG_debug & DEBUG_FINDEU)  {
+		rt_log("nmg_find_e() seeking e!=%8x between (%8x, %8x)\n",
+			ep, v1, v2 );
+	}
+
+	for( RT_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if (!vu->up.magic_p)
+			rt_bomb("nmg_find_e() vertexuse in vu_hd list has null parent\n");
+
+		/* Ignore self-loops and lone shell verts */
+		if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		eu = vu->up.eu_p;
+
+		/* Ignore edgeuses which don't run between the right verts */
+		/* We know that this eu starts at v1 */
+		if( eu->eumate_p->vu_p->v_p != v2 )  continue;
+
+		if (rt_g.NMG_debug & DEBUG_FINDEU )  {
+			rt_log("nmg_find_e: check eu=%8x vertex=(%8x, %8x)\n",
+				eu, eu->vu_p->v_p,
+				eu->eumate_p->vu_p->v_p);
+		}
+
+		/* Ignore the edge to be excluded */
+		if( eu->e_p == ep )  {
+			if (rt_g.NMG_debug & DEBUG_FINDEU )
+				rt_log("\tIgnoring -- excluded edge\n");
+			continue;
+		}
+
+		/* See if this edgeuse is in the proper shell */
+		if( s && nmg_find_s_of_eu(eu) != s )  {
+		    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    		rt_log("\tIgnoring x%x -- eu in wrong shell s=%x\n", eu, eu->up.s_p);
+			continue;
+		}
+
+	    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    	rt_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
+
+		if ( *eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		     *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+		     eu->up.lu_p->up.fu_p->orientation != OT_SAME )  {
+			eu = eu->eumate_p;	/* Take other orient */
+		}
+		goto out;
+	}
+	eu = (struct edgeuse *)NULL;
+out:
+	if (rt_g.NMG_debug & (DEBUG_BASIC|DEBUG_FINDEU))
+	    	rt_log("nmg_find_e() returns x%x\n", eu);
 
 	return (struct edgeuse *)eu;
 }
