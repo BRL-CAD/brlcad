@@ -26,33 +26,6 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* XXX move to vmath.h */
-#define VADD2_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] + (c)[X];\
-			(a)[Y] = (b)[Y] + (c)[Y];}
-#define VSUB2_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] - (c)[X];\
-			(a)[Y] = (b)[Y] - (c)[Y];}
-#define MAGSQ_2D(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
-#define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
-#define VMOVE_2D(a,b)	{ \
-			(a)[X] = (b)[X];\
-			(a)[Y] = (b)[Y];}
-#define VSCALE_2D(a,b,c)	{ \
-			(a)[X] = (b)[X] * (c);\
-			(a)[Y] = (b)[Y] * (c); }
-#define VJOIN1_2D(a,b,c,d) 	{ \
-			(a)[X] = (b)[X] + (c) * (d)[X];\
-			(a)[Y] = (b)[Y] + (c) * (d)[Y]; }
-#define VUNITIZE_RET(a,ret)	{ \
-			register double _f; _f = MAGNITUDE(a); \
-			if( _f < VDIVIDE_TOL ) return(ret); \
-			_f = 1.0/_f; \
-			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
-
-
-#define PI      3.14159265358979323
-
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -644,12 +617,19 @@ rt_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
 	 */
 	{
 		point_t		hit1, hit2;
+		vect_t		diff;
+		fastf_t		dist_sq;
 
 		VJOIN1_2D( hit1, p, dist[0], d );
 		VJOIN1_2D( hit2, a, dist[1], c );
-		if( !rt_pt2_pt2_equal( hit1, hit2, tol ) )  {
-			rt_log("rt_isect_line2_line2(): BOGUS RESULT, hit1=(%g,%g), hit2=(%g,%g)\n",
-				hit1[X], hit1[Y], hit2[X], hit2[Y]);
+		VSUB2_2D( diff, hit1, hit2 );
+		dist_sq = MAGSQ_2D( diff );
+		if( dist_sq >= tol->dist_sq )  {
+			if( rt_g.debug & DEBUG_MATH || dist_sq < 100*tol->dist_sq )  {
+				rt_log("rt_isect_line2_line2(): dist=%g >%g, inconsistent solution, hit1=(%g,%g), hit2=(%g,%g)\n",
+					sqrt(dist_sq), tol->dist,
+					hit1[X], hit1[Y], hit2[X], hit2[Y]);
+			}
 			return -2;	/* s/b -1? */
 		}
 	}
