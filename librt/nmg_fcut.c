@@ -39,9 +39,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"		/* XXX just for debugging */
 #include "nmg.h"
 #include "raytrace.h"
+
+/* XXX move to raytrace.h */
+RT_EXTERN(double		rt_angle_measure, (vect_t vec, vect_t x_dir,
+				vect_t	y_dir));
+RT_EXTERN(struct edgeuse	*nmg_eu_with_vu_in_lu, (struct loopuse *lu,
+				struct vertexuse *vu));
+
 
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
@@ -104,6 +110,9 @@ struct nmg_ray_state {
 	int			nvu;		/* len of vu[] */
 	point_t			pt;		/* The ray */
 	vect_t			dir;
+	struct edge_g		*eg_p;		/* Edge geom of the ray */
+	struct shell		*sA;
+	struct shell		*sB;
 	vect_t			left;		/* points left of ray, on face */
 	int			state;
 	vect_t			ang_x_dir;	/* x axis for angle measure */
@@ -208,90 +217,6 @@ fastf_t		dist_tol;
 			}
 		}
 	}
-}
-
-/*
- *			N M G _ E U _ W I T H _ V U _ I N _ L U
- *
- * XXX should move to nmg_mod.c or nmg_misc.c
- */
-struct edgeuse *
-nmg_eu_with_vu_in_lu( lu, vu )
-struct loopuse		*lu;
-struct vertexuse	*vu;
-{
-	register struct edgeuse	*eu;
-
-	NMG_CK_LOOPUSE(lu);
-	NMG_CK_VERTEXUSE(vu);
-	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-		rt_bomb("nmg_eu_with_vu_in_lu: loop has no edges!\n");
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		NMG_CK_EDGEUSE(eu);
-		if( eu->vu_p == vu )  return eu;
-	}
-	rt_bomb("nmg_eu_with_vu_in_lu:  Unable to find vu!\n");
-	/* NOTREACHED */
-	return((struct edgeuse *)NULL);
-}
-
-/*
- *			R T _ A N G L E _ M E A S U R E
- *
- *  Using two perpendicular vectors (x_dir and y_dir) which lie
- *  in the same plane as 'vec', return the angle (in radians) of 'vec'
- *  from x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
- *
- *  Trig note -
- *
- *  theta = atan2(x,y) returns an angle in the range -pi to +pi.
- *  Here, we need an angle in the range of 0 to 2pi.
- *  This could be implemented by adding 2pi to theta when theta is negative,
- *  but this could have nasty numeric ambiguity right in the vicinity
- *  of theta = +pi, which is a very critical angle for the applications using
- *  this routine.
- *  So, an alternative formulation is to compute gamma = atan2(-x,-y),
- *  and then theta = gamma + pi.  Now, any error will occur in the
- *  vicinity of theta = 0, which can be handled much more readily.
- *
- *  If theta is negative, or greater than two pi,
- *  wrap it around.
- *  These conditions only occur if there are problems in atan2().
- *
- *  Returns -
- *	vec == x_dir returns 0,
- *	vec == y_dir returns pi/2,
- *	vec == -x_dir returns pi,
- *	vec == -y_dir returns 3*pi/2.
- */
-double
-rt_angle_measure( vec, x_dir, y_dir )
-vect_t	vec;
-vect_t	x_dir;
-vect_t	y_dir;
-{
-	fastf_t		xproj, yproj;
-	fastf_t		gamma;
-	fastf_t		ang;
-
-	xproj = -VDOT( vec, x_dir );
-	yproj = -VDOT( vec, y_dir );
-	gamma = atan2( yproj, xproj );	/* -pi..+pi */
-	ang = rt_pi + gamma;		/* 0..+2pi */
-	if( ang < 0 )  {
-#if 0
- rt_log("angle = %e < 0, setting to %e (%g deg)\n",
- ang, rt_twopi + ang, (rt_twopi + ang) * rt_radtodeg );
-#endif
-		return rt_twopi + ang;
-	} else if( ang > rt_twopi )  {
-#if 0
- rt_log("angle = %e > 2pi, setting to %e (%g deg)\n",
- ang, ang - rt_twopi, (ang - rt_twopi) * rt_radtodeg );
-#endif
-		return ang - rt_twopi;
-	}
-	return ang;
 }
 
 /*
@@ -729,6 +654,9 @@ vect_t		dir;
 	vu = (struct vertexuse **)b->buffer;
 	rs.vu = vu;
 	rs.nvu = b->end;
+	rs.eg_p = (struct edge_g *)NULL;
+	rs.sA = fu1->s_p;
+	rs.sB = fu2->s_p;
 	VMOVE( rs.pt, pt );
 	VMOVE( rs.dir, dir );
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
@@ -816,6 +744,54 @@ VPRINT("left", rs.left);
 	}
 
 	rt_free((char *)mag, "vector magnitudes");
+}
+
+/*
+ *			N M G _ E D G E _ G E O M _ I S E C T _ L I N E
+ *
+ *  Force the edge geometry structure for a given edge to be that of
+ *  the intersection line between the two faces.
+ */
+void
+nmg_edge_geom_isect_line( e, rs )
+struct edge		*e;
+struct nmg_ray_state	*rs;
+{
+	register struct edge_g	*eg;
+
+	NMG_CK_EDGE(e);
+	if( !e->eg_p )  {
+		/* No edge geometry so far */
+		if( !rs->eg_p )  {
+			nmg_edge_g( e );
+			eg = e->eg_p;
+			NMG_CK_EDGE_G(eg);
+			VMOVE( eg->e_pt, rs->pt );
+			VMOVE( eg->e_dir, rs->dir );
+			rs->eg_p = eg;
+		} else {
+			nmg_use_edge_g( e, rs->eg_p );
+		}
+		return;
+	}
+	/* Edge has edge geometry */
+	if( e->eg_p == rs->eg_p )  return;
+	if( !rs->eg_p )  {
+		/* Smash edge geom with isect line geom, and remember it */
+		eg = e->eg_p;
+		NMG_CK_EDGE_G(eg);
+		VMOVE( eg->e_pt, rs->pt );
+		VMOVE( eg->e_dir, rs->dir );
+		rs->eg_p = eg;
+		return;
+	}
+	/*
+	 * Edge has an edge geometry struct, different from that of isect line.
+	 * Force all uses of this edge geom to take on isect line's geometry.
+	 * Everywhere e->eg_p is seen, replace with rs->eg_p.
+	 */
+	nmg_move_eg( e->eg_p, rs->eg_p, rs->sA );
+	nmg_move_eg( e->eg_p, rs->eg_p, rs->sB );
 }
 
 /*
@@ -1129,6 +1105,9 @@ int			multi;
 		/* Make the two new edgeuses share just one edge */
 		nmg_moveeu( second_new_eu, first_new_eu );
 
+		/*  We know edge geom is null, make it be the isect line */
+		nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+
 		/*  Kill lone vertex loop and that vertex use.
 		 *  Vertex is still safe, being also used by new edge.
 		 */
@@ -1159,14 +1138,14 @@ int			multi;
 
 		if( lu->l_p == prev_lu->l_p )  {
 			/* Same loop, cut into two */
-		if(rt_g.NMG_debug&DEBUG_COMBINE)
-			rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
-		nmg_cut_loop( prev_vu, vu );
-		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-			rt_log("After CUT, the final loop: ");
-			nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
-			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
-		}
+			if(rt_g.NMG_debug&DEBUG_COMBINE)
+				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
+			nmg_cut_loop( prev_vu, vu );
+			if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+				rt_log("After CUT, the final loop: ");
+				nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
+				nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
+			}
 			break;
 		}
 		/*
