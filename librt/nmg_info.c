@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "./debug.h"	/* For librt debug flags, XXX temp */
 
 
 CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
@@ -468,6 +469,7 @@ CONST struct rt_tol	*tol;
 	double		n;		/* integer part of npi */
 	fastf_t		residue;	/* fractional part of npi */
 	int		n_angles=0;	/* number of edge/edge angles measured */
+	int		n_skip=0;	/* number of edges skipped */
 	int		ret;
 
 	NMG_CK_LOOPUSE(lu);
@@ -481,14 +483,24 @@ CONST struct rt_tol	*tol;
 		third_vu = next_eu->eumate_p->vu_p;
 
 		/* Skip topological 0-length edges */
-		if( this_vu->v_p == next_vu->v_p )  continue;
-		if( next_vu->v_p == third_vu->v_p )  continue;
+		if( this_vu->v_p == next_vu->v_p  ||
+		    next_vu->v_p == third_vu->v_p )  {
+		    	n_skip++;
+		    	continue;
+		}
 
 		/* Skip edges with calculated edge lengths near 0 */
 		VSUB2( edge1, next_vu->v_p->vg_p->coord, this_vu->v_p->vg_p->coord );
-		if( MAGSQ(edge1) < tol->dist_sq )  continue;
+		if( MAGSQ(edge1) < tol->dist_sq )  {
+			n_skip++;
+			continue;
+		}
 		VSUB2( edge2, third_vu->v_p->vg_p->coord, next_vu->v_p->vg_p->coord );
-		if( MAGSQ(edge2) < tol->dist_sq )  continue;
+		if( MAGSQ(edge2) < tol->dist_sq )  {
+			n_skip++;
+			continue;
+		}
+		/* XXX Should use magsq info from above */
 		VUNITIZE(edge1);
 		VUNITIZE(edge2);
 
@@ -497,17 +509,18 @@ CONST struct rt_tol	*tol;
 		y = VDOT( edge2, left );
 		x = VDOT( edge2, edge1 );
 		rad = atan2( y, x );
-#if 0
-		nmg_pr_eu_briefly(eu,NULL);
-		VPRINT("vu1", this_vu->v_p->vg_p->coord);
-		VPRINT("vu2", next_vu->v_p->vg_p->coord);
-		VPRINT("edge1", edge1);
-		VPRINT("edge2", edge2);
-		VPRINT("left", left);
-		rt_log(" e1=%g, e2=%g, n=%g, l=%g\n", MAGNITUDE(edge1),
-			MAGNITUDE(edge2), MAGNITUDE(norm), MAGNITUDE(left));
-		rt_log("atan2(%g,%g) = %g\n", y, x, rad);
-#endif
+
+		if( rt_g.debug & DEBUG_MATH )  {
+			nmg_pr_eu_briefly(eu,NULL);
+			VPRINT("vu1", this_vu->v_p->vg_p->coord);
+			VPRINT("vu2", next_vu->v_p->vg_p->coord);
+			VPRINT("edge1", edge1);
+			VPRINT("edge2", edge2);
+			VPRINT("left", left);
+			rt_log(" e1=%g, e2=%g, n=%g, l=%g\n", MAGNITUDE(edge1),
+				MAGNITUDE(edge2), MAGNITUDE(norm), MAGNITUDE(left));
+			rt_log("atan2(%g,%g) = %g\n", y, x, rad);
+		}
 		theta += rad;
 		n_angles++;
 	}
@@ -527,9 +540,18 @@ CONST struct rt_tol	*tol;
 	 *  otherwise that is an indicator of trouble in the calculation.
 	 */
 	residue = modf( npi, &n );
+	/* Sometimes, residue can be almost +/- 1.0, need to fold that in. */
+	if( NEAR_ZERO( residue-1, 0.05 ) )  {
+		residue -= 1;
+		npi += 1;
+	} else if( NEAR_ZERO( residue+1, 0.05 ) )  {
+		residue += 1;
+		npi -= 1;
+	}
+
 	if( !NEAR_ZERO( residue, 0.05 ) )  {
-		rt_log("nmg_loop_is_ccw(x%x) npi=%g, n=%g, residue=%g\n",
-			lu, npi, n, residue );
+		rt_log("nmg_loop_is_ccw(x%x) npi=%g, n=%g, residue=%e, n_skip=%d\n",
+			lu, npi, n, residue, n_skip );
 	}
 
 	/* "npi" value is normalized -1..+1, tolerance here is 1% */
@@ -543,18 +565,31 @@ CONST struct rt_tol	*tol;
 		ret = -1;
 		goto out;
 	}
-	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g*pi\n",
-		theta, npi );
+	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g, winding=%g*pi (%d angles, %d skip)\n",
+		theta, npi, n_angles, n_skip );
+
+#if 0
+	if( !(rt_g.debug & DEBUG_MATH) )  {
+		int	save = rt_g.debug;
+		/* Do it again, with details exhibited. */
+		rt_g.debug |= DEBUG_MATH;
+		(void)nmg_loop_is_ccw( lu, norm, tol );
+		rt_g.debug = save;
+	}
 	nmg_pr_lu_briefly(lu, NULL);
 	rt_log(" theta = %g, winding=%g*pi\n", theta, npi );
 	
 	rt_g.NMG_debug |= DEBUG_PLOTEM;
 	nmg_face_lu_plot( lu, this_vu, this_vu );
 	rt_bomb("nmg_loop_is_ccw()\n");
+#else
+	/* This can happen with zig-zag "crack" loops, as in Test4.r */
+	ret = 0;
+#endif
 out:
     	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_loop_is_ccw(lu=x%x) ret=%d (%d angles, winding=%g*pi)\n",
-			lu, ret, n_angles, npi);
+		rt_log("nmg_loop_is_ccw(lu=x%x) ret=%d (%d angles, %d skip, winding=%g*pi)\n",
+			lu, ret, n_angles, n_skip, npi);
     	}
 	return ret;
 }
