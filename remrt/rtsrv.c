@@ -94,6 +94,7 @@ static int seen_start, seen_matrix;	/* state flags */
 /*
  * Package Handlers.
  */
+extern int pkg_nochecking;
 int ph_unexp();	/* foobar message handler */
 int ph_start();
 int ph_matrix();
@@ -136,6 +137,7 @@ char **argv;
 		exit(1);
 	}
 
+	pkg_nochecking = 1;
 	control_host = argv[1];
 	pcsrv = pkg_open( control_host, "rtsrv", pkgswitch, rt_log );
 	if( pcsrv == PKC_ERROR &&
@@ -265,10 +267,11 @@ char *buf;
 	title_file = cmd_args[0];
 	title_obj = cmd_args[1];
 
-	RES_RELEASE( &res_pt );
-	RES_RELEASE( &res_seg );
-	RES_RELEASE( &res_malloc );
-	RES_RELEASE( &res_bitv );
+	RES_INIT( &rt_g.res_pt );
+	RES_INIT( &rt_g.res_seg );
+	RES_INIT( &rt_g.res_malloc );
+	RES_INIT( &rt_g.res_bitv );
+	RES_INIT( &rt_g.res_printf );	/* HACK: used by worker */
 
 	rt_prep_timer();		/* Start timing preparations */
 
@@ -315,24 +318,27 @@ char *buf;
 
 #ifdef PARALLEL
 	/* Get enough dynamic memory to keep from making malloc sbrk() */
-	for( x=0; x<npsw; x++ )  {
+	for( i=0; i<npsw; i++ )  {
 		rt_get_pt();
 		rt_get_seg();
 		rt_get_bitv();
 	}
+#ifdef HEP
+	/* This isn't useful with the Caltech malloc() in most systems */
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
+#endif
 
-	fprintf(stderr,"PARALLEL: %d workers\n", npsw );
-	for( x=0; x<npsw; x++ )  {
+	rt_log("PARALLEL: %d workers\n", npsw );
+	for( i=0; i<npsw; i++ )  {
 #ifdef HEP
 		Dcreate( worker );
 #endif
 #ifdef cray
-		taskcontrol[x].tsk_len = 3;
-		taskcontrol[x].tsk_value = x;
+		taskcontrol[i].tsk_len = 3;
+		taskcontrol[i].tsk_value = i;
 #endif
 	}
-	fprintf(stderr,"initial memory use=%d.\n",sbrk(0) );
+	rt_log("initial memory use=%d.\n",sbrk(0) );
 #endif
 
 	seen_start = 1;
@@ -346,33 +352,20 @@ ph_matrix(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
 {
-	static vect_t temp;
+	register int i;
+	register char *cp = buf;
 
 	/* Visible part is from -1 to +1 in view space */
-	if( sscanf( buf,
-		"%e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e",
-		&viewsize,
-		&eye_model[X],
-		&eye_model[Y],
-		&eye_model[Z],
-		&Viewrotscale[0], 
-		&Viewrotscale[1], 
-		&Viewrotscale[2], 
-		&Viewrotscale[3], 
-		&Viewrotscale[4], 
-		&Viewrotscale[5], 
-		&Viewrotscale[6], 
-		&Viewrotscale[7], 
-		&Viewrotscale[8], 
-		&Viewrotscale[9], 
-		&Viewrotscale[10], 
-		&Viewrotscale[11], 
-		&Viewrotscale[12], 
-		&Viewrotscale[13], 
-		&Viewrotscale[14], 
-		&Viewrotscale[15] ) != 20 )  {
-		rt_log("matrix: scanf failure\n");
-		exit(2);
+	viewsize = atof(cp);
+	while( *cp && *cp++ != ' ') ;
+	eye_model[X] = atof(cp);
+	while( *cp && *cp++ != ' ') ;
+	eye_model[Y] = atof(cp);
+	while( *cp && *cp++ != ' ') ;
+	eye_model[Z] = atof(cp);
+	for( i=0; i < 16; i++ )  {
+		while( *cp && *cp++ != ' ') ;
+		Viewrotscale[i] = atof(cp);
 	}
 
 	grid_setup();
@@ -472,17 +465,20 @@ char *str;
 	static char *cp = buf+1;
 
 	if( print_on == 0 )  return;
+	RES_ACQUIRE( &rt_g.res_malloc );
 	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
 	while( *cp++ )  ;		/* leaves one beyond null */
 	if( cp[-2] != '\n' )
-		return;
+		goto out;
 	if( pcsrv == PKC_NULL )  {
 		fprintf(stderr, "%s", buf+1);
-		return;
+		goto out;
 	}
 	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )
 		exit(12);
 	cp = buf+1;
+out:
+	RES_RELEASE( &rt_g.res_malloc );
 }
 
 void
@@ -599,16 +595,15 @@ double a,b;
 }
 #endif
 
-#ifdef PARALLEL
 #ifdef alliant
-
 RES_ACQUIRE(p)
 register int *p;
 {
+#ifdef PARALLEL
 	asm("loop:");
 	while( *p )  ;
 	asm("	tas	a5@");
 	asm("	bne	loop");
-}
 #endif
+}
 #endif
