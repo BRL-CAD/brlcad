@@ -456,7 +456,7 @@ getsolid()
 		/* V, H, r1, r2 */
 		if( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 			return(-1);
-		return( mk_trc( outfp, name, D(0), D(1), dd[6], dd[7] ) );
+		return( mk_trc_h( outfp, name, D(0), D(1), dd[6], dd[7] ) );
 	}
 
 	if( strcmp( solid_type, "tec" ) == 0 )  {
