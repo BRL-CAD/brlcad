@@ -363,7 +363,12 @@ struct rt_dsp_internal{
 	struct bu_vls	dsp_name;		/* name of data file */
 	unsigned int	dsp_xcnt;		/* # samples in row of data */
 	unsigned int	dsp_ycnt;		/* # of columns in data */
-	unsigned short	dsp_smooth;		/* bool: surf normal interp */
+	unsigned char	dsp_smooth;		/* bool: surf normal interp */
+    unsigned char   dsp_cuttype;		/* type of cut to make */
+#define DSP_CUT_DIR_ADAPT	0
+#define DSP_CUT_DIR_llUR	1
+#define DSP_CUT_DIR_ULlr	2
+        
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
 	mat_t		dsp_stom;		/* solid to model space 
