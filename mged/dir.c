@@ -117,11 +117,7 @@ char	**argv;
 	struct directory **dirp, **dirp0;
 	struct rt_vls	str;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint);	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2);	/* allow interupts */
-#endif
 
 	if( argc > 1) {
 		/* Just list specified names */
@@ -334,11 +330,7 @@ dir_summary(flag)
 	static int sol, comb, reg;
 	struct directory **dirp, **dirp0;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	sol = comb = reg = 0;
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -391,11 +383,7 @@ char	**argv;
 	register int i;
 	struct directory **dirp, **dirp0;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	dir_nref();
 	/*
@@ -634,11 +622,7 @@ char	**argv;
 	register struct directory *dp;
 	register union record	*rp;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -863,11 +847,7 @@ char	**argv;
 	register struct directory *dp;
 	register int j;
 
-#ifdef XMGED
-	(void) signal( SIGINT, cur_sigint);  /* Allow interrupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
@@ -941,11 +921,7 @@ char	**argv;
 	register struct directory *dp;
 	register int j;
 
-#ifdef XMGED
-	(void) signal( SIGINT, cur_sigint);  /* Allow interrupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
@@ -1103,11 +1079,7 @@ char	**argv;
 	register union record *rp;
 	register struct directory *dp;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -1162,11 +1134,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )

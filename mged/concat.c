@@ -102,11 +102,7 @@ char	**argv;
 	struct db_i		*newdbp;
 	struct directory	**dirp0;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );		/* allow interrupts */
-#else
 	(void)signal( SIGINT, sig2 );           /* allow interrupts */
-#endif
 
 	/* get any prefix */
 	if( argc < 3 ) {
