@@ -41,8 +41,6 @@ struct matparse cloud_parse[] = {
 };
 
 
-#define	PI	3.1415926535898
-#define	TWOPI	6.283185307179
 #define	NUMSINES	4
 
 /*
@@ -65,10 +63,10 @@ float Contrast, initFx, initFy;
 	 * Compute initial Phases and Frequencies
 	 * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
 	 */
-	Fx = TWOPI * initFx;
-	Fy = TWOPI * initFy;
-	Px = PI * 0.5 * tab_sin( 0.5 * Fy * y );
-	Py = PI * 0.5 * tab_sin( 0.5 * Fx * x );
+	Fx = twopi * initFx;
+	Fy = twopi * initFy;
+	Px = halfpi * tab_sin( 0.5 * Fy * y );
+	Py = halfpi * tab_sin( 0.5 * Fx * x );
 	C = 1.0;	/* ??? */
 
 	for( i = 0; i < NUMSINES; i++ ) {
@@ -82,8 +80,8 @@ float Contrast, initFx, initFy;
 		 * Compute the new phases and frequencies.
 		 * N.B. The phases shouldn't vary the same way!
 		 */
-		Px = PI / 2.0 * tab_sin( Fy * y );
-		Py = PI / 2.0 * tab_sin( Fx * x );
+		Px = halfpi * tab_sin( Fy * y );
+		Py = halfpi * tab_sin( Fx * x );
 		Fx *= 2.0;
 		Fy *= 2.0;
 		C  *= 0.707;
