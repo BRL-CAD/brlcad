@@ -325,7 +325,6 @@ after_read:
 	exit(0);
 }
 
-#include <inttypes.h>
 /*
  *			S T R S O L B L D
  *
