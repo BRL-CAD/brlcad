@@ -4049,9 +4049,10 @@ register struct edgeuse	*eu;
  *  change them to refer to 'new_eg'.
  *
  *  XXX In keeping with other names, this should probably be called nmg_jeg().
+ *  XXX The argument order should be reversed, too.
  *
- *  This algorithm does not make sense to use on edge_g_cnurb's;  they
- *  only make sense in the parameter space of their associated face.
+ *  This algorithm does not make sense if new_eg is an edge_g_cnurb;
+ *  those only make sense in the parameter space of their associated face.
  */
 void
 nmg_move_eg( old_eg, new_eg )
@@ -4068,9 +4069,10 @@ struct edge_g_lseg	*new_eg;
 			old_eg, new_eg );
 	}
 
-	nmg_ck_list( &old_eg->eu_hd2, "nmg_move_eg() eu_hd2");	/* safety */
 	while( RT_LIST_NON_EMPTY( &old_eg->eu_hd2 ) )  {
 		struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
+
+		NMG_CK_EDGE_G_LSEG(old_eg);
 
 		/* Obtain an eu from old_eg */
 		midway = RT_LIST_FIRST(rt_list, &old_eg->eu_hd2 );
@@ -4078,9 +4080,15 @@ struct edge_g_lseg	*new_eg;
 		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
 		NMG_CK_EDGEUSE(eu);
 
+		if( eu->g.lseg_p != old_eg )  {
+			rt_log("nmg_move_eg() eu=x%x, eu->g=x%x != old_eg=x%x??  new_eg=x%x\n",
+				eu, eu->g.lseg_p, old_eg, new_eg );
+			rt_bomb("nmg_move_eg() edge geometry fumble\n");
+		}
+
 		/* Associate eu and mate with new_eg. old_eg freed when unused. */
-		nmg_use_edge_g( eu, &new_eg->magic );
-		nmg_ck_list( &old_eg->eu_hd2, "nmg_move_eg() eu_hd2 B");	/* safety */
+		if( nmg_use_edge_g( eu, &new_eg->magic ) )
+			break;		/* old_eg destroyed */
 	}
 }
 
