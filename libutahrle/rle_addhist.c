@@ -60,7 +60,7 @@ register char	*argv[];
 rle_hdr *in_hdr,*out_hdr;
 {
 	register int	length,i;
-	time_t	temp;
+	long	temp;
 	static char	*histoire="HISTORY",					/* padding must give number of characters in histoire 	*/
 			*padding="\t";						/*     plus one for "="					*/
 	char	*getenv();
