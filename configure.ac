@@ -190,7 +190,7 @@ AC_MSG_CHECKING(whether to enable debug mode compilation)
 use_debug=no
 AC_ARG_ENABLE(debug,
 	AC_HELP_STRING(--enable-debug,
-		[enable debug mode compilation (default=no)]),
+		[enable debug symbols (default=no)]),
 	[if ! test "x$enable_debug" = "xno" ; then
 		use_debug=yes
 	fi]
