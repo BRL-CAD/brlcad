@@ -1,5 +1,7 @@
 # $Id$
 
+SUBDIRS = libary
+
 lib_LTLIBRARIES = \
 	libitk3.3.la \
 	libitkstub3.3.la
@@ -27,12 +29,6 @@ pkglibdir = $(libdir)/itk3.3
 
 install-data-hook:
 	@mkdir -p $(DESTDIR)$(pkglibdir)
-	@for i in $(top_srcdir)/src/other/incrTcl/itk/library/*.itk ; do \
-	    echo "Installing $$i" ; \
-	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
-	done;
 	$(INSTALL_DATA) $(top_builddir)/src/other/incrTcl/itk/pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
-	$(INSTALL_DATA) $(top_srcdir)/src/other/incrTcl/itk/library/itk.tcl $(DESTDIR)$(pkglibdir)/. 
-	$(INSTALL_DATA) $(top_srcdir)/src/other/incrTcl/itk/library/tclIndex $(DESTDIR)$(pkglibdir)/.
 
 EXTRA_DIST = pkgIndex.tcl
