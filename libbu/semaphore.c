@@ -214,8 +214,8 @@ unsigned int	nsemaphores;
 		nsemaphores,
 		sizeof(struct bu_semaphores) );
 	if( !bu_semaphores )  {
-		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %d\n",
-			nsemaphores, sizeof(struct bu_semaphores));
+		fprintf(stderr, "bu_semaphore_init(): could not allocate space for %d semaphores of len %ld\n",
+			nsemaphores, (long)sizeof(struct bu_semaphores));
 		exit(2);
 	}
 

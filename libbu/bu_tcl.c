@@ -57,14 +57,14 @@ int		line;
 	char	buf[256];
 
 	if( !(ptr) )  { 
-		sprintf(buf, "ERROR: NULL %s pointer, file %s, line %d\n", 
+		sprintf(buf, "ERROR: NULL %s pointer in TCL interface, file %s, line %d\n", 
 			str, file, line ); 
 		Tcl_AppendResult(interp, buf, NULL);
 		return;
 	}
 	if( *((long *)(ptr)) != (magic) )  { 
-		sprintf(buf, "ERROR: bad pointer x%x: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
-			ptr,
+		sprintf(buf, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n", 
+			(long)ptr,
 			str, magic,
 			bu_identify_magic( *(ptr) ), *(ptr),
 			file, line ); 
