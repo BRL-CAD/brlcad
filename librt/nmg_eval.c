@@ -1,7 +1,23 @@
 /*			N M G _ E V A L . C
  *
- *	evaluate the boolean operations on a set of faces in two shells
+ *	Evaluate boolean operations on NMG objects
+ *
+ *  Authors -
+ *	Lee A. Butler
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <math.h>
@@ -11,18 +27,19 @@
 #include "nmg.h"
 #include "raytrace.h"
 
-/*	T O S S _ L O O P
+/*
+ *			N M G _ T O S S _ L O O P S
  *
  *	throw away all loops in the loopuse list "lu"
  */
-static void toss_loops(lu, n)
+static void nmg_toss_loops(lu, n)
 struct loopuse **lu;
 int n;
 {
-	int i;
-	struct faceuse *fu;	
-	struct shell *s;
-	struct nmgregion *r;
+	int				i;
+	struct faceuse			*fu;	
+	register struct shell		*s;
+	register struct nmgregion	*r;
 
 
 	for (i=0 ; i < n ; ++i) {
@@ -39,6 +56,59 @@ int n;
 			}
 		}
 	}
+}
+
+/*
+ *			N M G _ M V _ F U _ B E T W E E N _ S H E L L S
+ *
+ *  Move faceuse from 'src' shell to 'dest' shell.
+ */
+void
+nmg_mv_fu_between_shells( dest, src, fu )
+struct shell		*dest;
+register struct shell	*src;
+register struct faceuse	*fu;
+{
+	register struct faceuse	*fumate;
+
+	NMG_CK_FACEUSE(fu);
+	fumate = fu->fumate_p;
+	NMG_CK_FACEUSE(fumate);
+
+	if (fu->s_p != src) {
+		rt_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fu->s_p=x%x isnt src shell\n",
+			dest, src, fu, fu->s_p );
+		rt_bomb("fu->s_p isnt source shell\n");
+	}
+	if (fumate->s_p != src) {
+		rt_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate->s_p=x%x isn't src shell\n",
+			dest, src, fu, fumate->s_p );
+		rt_bomb("fumate->s_p isnt source shell\n");
+	}
+
+	/* Remove fu from src shell */
+	src->fu_p = fu;
+	DLLRM(src->fu_p, fu);
+	if (src->fu_p == fu) {
+		/* This was the last fu in the list, bad news */
+		rt_log("nmg_mv_fu_between_shells(dest=x%x, src=x%x, fu=x%x), fumate=x%x not in src shell\n",
+			dest, src, fu, fumate );
+		rt_bomb("src shell emptied before finding fumate\n");
+	}
+
+	/* Remove fumate from src shell */
+	src->fu_p = fumate;
+	DLLRM(src->fu_p, fumate);
+	if (src->fu_p == fumate) {
+		/* This was the last fu in the list, tidy up */
+		src->fu_p = (struct faceuse *)NULL;
+	}
+
+	/* Add fu and fumate to dest shell */
+	DLLINS(dest->fu_p, fu);
+	fu->s_p = dest;
+	DLLINS(dest->fu_p, fumate);
+	fumate->s_p = dest;
 }
 
 /*	S U B T R A C T I O N
@@ -67,13 +137,13 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 
 	/* first we toss out the unwanted faces from both shells */
 	p.l = AinB->buffer;
-	toss_loops(p.lu, AinB->end);
+	nmg_toss_loops(p.lu, AinB->end);
 
 	p.l = BonA->buffer;
-	toss_loops(p.lu, BonA->end);
+	nmg_toss_loops(p.lu, BonA->end);
 
 	p.l = BoutA->buffer;
-	toss_loops(p.lu, BoutA->end);
+	nmg_toss_loops(p.lu, BoutA->end);
 
 	p.l = BinA->buffer;
 	for (i=0 ; i < BinA->end ; ++i) {
@@ -82,34 +152,8 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* move faceuse to new shell */
-			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused 1\n");
-			}
-
-			sB->fu_p = fu;
-			DLLRM(sB->fu_p, fu);
-			if (sB->fu_p == fu) {
-				rt_bomb("Hey, my NMG face mate isn't in this shell\n");
-			}
-			DLLINS(sA->fu_p, fu);
-			fu->s_p = sA;
-
-			/* move the fumate to new shell */
-			fu = fu->fumate_p;
-			NMG_CK_FACEUSE(fu);
-			if (fu->s_p != sB) {
-				rt_bomb("NMG shell ran out of faces!\n");
-			}
-
-			sB->fu_p = fu;
-			DLLRM(sB->fu_p, fu);
-			if (sB->fu_p == fu) {
-				sB->fu_p = (struct faceuse *)NULL;
-			}
-			DLLINS(sA->fu_p, fu);
-			fu->s_p = sA;
-
+			/* Move fu from shell B to A */
+			nmg_mv_fu_between_shells( sA, sB, fu );
 
 			/* reverse face normal vector */
 			NMG_CK_FACE(fu->f_p);
@@ -197,10 +241,10 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 
 	/* first we toss out the unwanted faces from both shells */
 	p.l = AinB->buffer;
-	toss_loops(p.lu, AinB->end);
+	nmg_toss_loops(p.lu, AinB->end);
 
 	p.l = BinA->buffer;
-	toss_loops(p.lu, BinA->end);
+	nmg_toss_loops(p.lu, BinA->end);
 
 	/* Here we handle the delicat issue of combining faces of A and B
 	 * which are "ON" each other
@@ -217,33 +261,8 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* move faceuse to new shell */
-			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused 2\n");
-			}
-
-			sB->fu_p = fu;
-			DLLRM(sB->fu_p, fu);
-			if (sB->fu_p == fu) {
-				rt_bomb("Hey, my NMG face mate isn't in this shell\n");
-			}
-			DLLINS(sA->fu_p, fu);
-			fu->s_p = sA;
-
-			/* move the fumate to new shell */
-			fu = fu->fumate_p;
-			NMG_CK_FACEUSE(fu);
-			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused 3\n");
-			}
-
-			sB->fu_p = fu;
-			DLLRM(sB->fu_p, fu);
-			if (sB->fu_p == fu) {
-				sB->fu_p = (struct faceuse *)NULL;
-			}
-			DLLINS(sA->fu_p, fu);
-			fu->s_p = sA;
+			/* Move fu from shell B to A */
+			nmg_mv_fu_between_shells( sA, sB, fu );
 		}
 	}
 
@@ -278,10 +297,10 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 
 	/* first we toss out the unwanted faces from both shells */
 	p.l = AoutB->buffer;
-	toss_loops(p.lu, AoutB->end);
+	nmg_toss_loops(p.lu, AoutB->end);
 
 	p.l = BoutA->buffer;
-	toss_loops(p.lu, BoutA->end);
+	nmg_toss_loops(p.lu, BoutA->end);
 
 	/* we need to handle the "ON" faces here
 	 *
@@ -296,33 +315,8 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
-			/* move faceuse to new shell */
-			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused 4\n");
-			}
-
-			sB->fu_p = fu;
-			DLLRM(sB->fu_p, fu);
-			if (sB->fu_p == fu) {
-				rt_bomb("Hey, my NMG face mate isn't in this shell\n");
-			}
-			DLLINS(sA->fu_p, fu);
-			fu->s_p = sA;
-
-			/* move the fumate to new shell */
-			fu = fu->fumate_p;
-			NMG_CK_FACEUSE(fu);
-			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused 5\n");
-			}
-
-			sB->fu_p = fu;
-			DLLRM(sB->fu_p, fu);
-			if (sB->fu_p == fu) {
-				sB->fu_p = (struct faceuse *)NULL;
-			}
-			DLLINS(sA->fu_p, fu);
-			fu->s_p = sA;
+			/* Move fu from shell B to A */
+			nmg_mv_fu_between_shells( sA, sB, fu );
 		}
 	}
 
