@@ -172,7 +172,7 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-lX11
 #endif
 
-#ifdef _AIX
+#if defined(_AIX)
 /*	IBM RS/6000 running AIX */
 #	undef	ibm
 #	define	MTYPE	ibm
@@ -337,14 +337,16 @@ set -S2 "/bin/sh"
 
 #if defined(sgi) && defined(mips) && !defined(__sgi)
 /*	Silicon Graphics 4D, which uses the MIPS chip.
- *	NOTE:  "IRIX 3.3 and 3.3.1" are the ONLY software releases supported.
+ *	NOTE:  "IRIX 3.3, 3.3.1, and 3.3.2" are the ONLY software releases
+ *	supported by this configuration section.  See below for 4.0.
+ *	IRIX 3.2 and older versions of the operating system can not be used.
  *	NOTE:  If the shared library is used, then all machine types can
  *	use the same binary programs, and no type discrimination is
  *	necessary.  However, this prevents PIXIE from being used...
  */
 #	undef	sgi
 #	define	MTYPE	4d
-#	if 0
+#	if 1
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -402,7 +404,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timerunix
 #endif
 
-#if defined(sgi) && defined(mips) && defined(__sgi)
+#if defined(__sgi) && defined(__mips)
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
