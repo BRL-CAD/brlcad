@@ -4,12 +4,17 @@
  *  Handle import/export of combinations (union tree) in v5 format.
  *
  *  The on-disk record looks like this:
- *	width
+ *	width byte
  *	n matricies (only non-identity matricies stored).
  *	n leaves
  *	len of RPN expression.  (len=0 signals all-union expression)
+ *	depth of stack
+ *	Section 1:  matricies
+ *	Section 2:  leaves
+ *	Section 3:  (Optional) RPN expression.
  *
- *  Encoding of a matrix is (16 * SIZEOF_NETWORK_DOUBLE)
+ *  Encoding of a matrix is (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) bytes,
+ *  in network order (big-Endian, IEEE double precision).
  *
  *  Author -
  *	Michael John Muuss
@@ -44,53 +49,65 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./debug.h"
 
 
+struct db_tree_counter_state {
+	long	magic;
+	long	n_mat;			/* # leaves with non-identity matricies */
+	long	n_leaf;			/* # leaf nodes */
+	long	n_oper;			/* # operator nodes */
+	long	namebytes;		/* # bytes for name section */
+	int	non_union_seen;		/* boolean, 1 = non-unions seen */
+};
+#define DB_TREE_COUNTER_STATE_MAGIC	0x64546373	/* dTcs */
+#define DB_CK_TREE_COUNTER_STATE(_p)	BU_CKMAG(_p, DB_TREE_COUNTER_STATE_MAGIC, "db_tree_counter_state");
+
 /*
  *			D B _ T R E E _ C O U N T E R
  *
  *  Count number of non-identity matricies,
- *  number of leaf nodes, number of operator nodes.
+ *  number of leaf nodes, number of operator nodes, etc.
  *
  *  Returns -
- *	1 if operators other than UNION were seen.
- *	0 if all operators seen were UNION.
+ *	maximum depth of stack needed to unpack this tree, if serialized.
  */
-int
-db_tree_counter( tp, noperp, nleafp, nmatp, nnamesize )
-CONST union tree	*tp;
-long			*noperp;
-long			*nleafp;
-long			*nmatp;
-long			*nnamesize;
+long
+db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
 {
-	if( tp == TREE_NULL )  return 0;
+	long	ldepth, rdepth;
+
 	RT_CK_TREE(tp);
+	DB_CK_TREE_COUNTER_STATE(tcsp);
 
 	switch( tp->tr_op )  {
 	case OP_DB_LEAF:
-		(*nleafp)++;
-		if( tp->tr_l.tl_mat )  (*nmatp)++;
-		(*nnamesize) += strlen(tp->tr_l.tl_name) + 1 + SIZEOF_NETWORK_LONG;
-		return 0;
+		tcsp->n_leaf++;
+		if( tp->tr_l.tl_mat )  tcsp->n_mat++;
+		tcsp->namebytes += strlen(tp->tr_l.tl_name) + 1 + SIZEOF_NETWORK_LONG;
+		return 1;
 
 	case OP_NOT:
 		/* Unary ops */
-		(*noperp)++;
-		return 1 | db_tree_counter( tp->tr_b.tb_left, noperp, nleafp, nmatp, nnamesize );
+		tcsp->n_oper++;
+		tcsp->non_union_seen = 1;
+		return 1 + db_tree_counter( tp->tr_b.tb_left, tcsp );
 
 	case OP_UNION:
 		/* This node is known to be a binary op */
-		(*noperp)++;
-		return	db_tree_counter( tp->tr_b.tb_left, noperp, nleafp, nmatp, nnamesize ) |
-			db_tree_counter( tp->tr_b.tb_right, noperp, nleafp, nmatp, nnamesize );
+		tcsp->n_oper++;
+		ldepth = db_tree_counter( tp->tr_b.tb_left, tcsp );
+		rdepth = db_tree_counter( tp->tr_b.tb_right, tcsp );
+		if( ldepth > rdepth )  return ldepth;
+		return rdepth;
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* This node is known to be a binary op */
-		(*noperp)++;
-		return 1 | 
-			db_tree_counter( tp->tr_b.tb_left, noperp, nleafp, nmatp, nnamesize ) |
-			db_tree_counter( tp->tr_b.tb_right, noperp, nleafp, nmatp, nnamesize );
+		tcsp->n_oper++;
+		tcsp->non_union_seen = 1;
+		ldepth = db_tree_counter( tp->tr_b.tb_left, tcsp );
+		rdepth = db_tree_counter( tp->tr_b.tb_right, tcsp );
+		if( ldepth > rdepth )  return ldepth;
+		return rdepth;
 
 	default:
 		bu_log("db_tree_counter: bad op %d\n", tp->tr_op);
@@ -98,20 +115,31 @@ long			*nnamesize;
 	}
 }
 
+struct rt_comb_v5_serialize_state  {
+	long		magic;
+	long		mat_num;
+	unsigned char	*matp;
+	unsigned char	*leafp;
+	unsigned char	*exprp;
+};
+#define RT_COMB_V5_SERIALIZE_STATE_MAGIC	0x43357373	/* C5ss */
+#define RT_CK_COMB_V5_SERIALIZE_STATE(_p)	BU_CKMAG(_p, RT_COMB_V5_SERIALIZE_STATE_MAGIC, "rt_comb_v5_serialize_state")
+
 /*
- *			R T _ C O M B _ V 5 _ S E R I A L I Z E _ L E A V E S
+ *			R T _ C O M B _ V 5 _ S E R I A L I Z E
+ *
+ *  In one single pass through the tree, serialize out all three
+ *  output sections at once.
  */
 void
-rt_comb_v5_serialize_leaves(
+rt_comb_v5_serialize(
 	const union tree	*tp,
-	long			*matnum,
-	unsigned char		**matp,
-	unsigned char		**leafp)
+	struct rt_comb_v5_serialize_state	*ssp)
 {
 	int	n;
 
-	if( tp == TREE_NULL )  return;
 	RT_CK_TREE(tp);
+	RT_CK_COMB_V5_SERIALIZE_STATE(ssp);
 
 	switch( tp->tr_op )  {
 	case OP_DB_LEAF:
@@ -121,27 +149,27 @@ rt_comb_v5_serialize_leaves(
 		 *	the matrix subscript.  -1 == identity.
 		 */
 		n = strlen(tp->tr_l.tl_name) + 1;
-		bcopy( tp->tr_l.tl_name, *leafp, n );
-		(*leafp) += n;
+		bcopy( tp->tr_l.tl_name, ssp->leafp, n );
+		ssp->leafp += n;
 
 		if( tp->tr_l.tl_mat )
-			n = (*matnum)++;
+			n = ssp->mat_num++;
 		else
 			n = -1;
-		*leafp = bu_plong( *leafp, n );
+		ssp->leafp = bu_plong( ssp->leafp, n );
 
 		/* Encoding of the matrix */
 		if( tp->tr_l.tl_mat )  {
-			htond( (*matp),
+			htond( ssp->matp,
 				(const unsigned char *)tp->tr_l.tl_mat,
-				16 );
-			(*matp) += 16 * SIZEOF_NETWORK_DOUBLE;
+				ELEMENTS_PER_MAT );
+			ssp->matp += ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE;
 		}
 		return;
 
 	case OP_NOT:
 		/* Unary ops */
-		rt_comb_v5_serialize_leaves( tp->tr_b.tb_left, matnum, matp, leafp );
+		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
 		return;
 
 	case OP_UNION:
@@ -149,13 +177,13 @@ rt_comb_v5_serialize_leaves(
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* This node is known to be a binary op */
-		rt_comb_v5_serialize_leaves( tp->tr_b.tb_left, matnum, matp, leafp );
-		rt_comb_v5_serialize_leaves( tp->tr_b.tb_right, matnum, matp, leafp );
+		rt_comb_v5_serialize( tp->tr_b.tb_left, ssp );
+		rt_comb_v5_serialize( tp->tr_b.tb_right, ssp );
 		return;
 
 	default:
-		bu_log("rt_comb_v5_serialize_leaves: bad op %d\n", tp->tr_op);
-		bu_bomb("rt_comb_v5_serialize_leaves\n");
+		bu_log("rt_comb_v5_serialize: bad op %d\n", tp->tr_op);
+		bu_bomb("rt_comb_v5_serialize\n");
 	}
 }
 
@@ -170,15 +198,13 @@ double				local2mm;
 CONST struct db_i		*dbip;
 {
 	struct rt_comb_internal	*comb;
-	long	noper=0, nleaf=0, nmat=0, nnamesize=0;
-	int	full_expression;	/* 0 = all UNION */
+	struct db_tree_counter_state		tcs;
+	struct rt_comb_v5_serialize_state	ss;
+	long	max_stack_depth;
 	long	need;
 	int	rpn_len = 0;	/* # items in RPN expression */
 	int	wid;
 	unsigned char	*cp;
-	unsigned char	*matp;
-	unsigned char	*leafp;
-	long	matnum = 0;
 
 	RT_CK_DB_INTERNAL( ip );
 
@@ -189,60 +215,77 @@ CONST struct db_i		*dbip;
 	/* First pass -- count number of non-identity matricies,
 	 * number of leaf nodes, number of operator nodes.
 	 */
-	full_expression = db_tree_counter( comb->tree, &noper,
-		&nleaf, &nmat, &nnamesize );
-bu_log("noper=%d, nleaf=%d, nmat=%d, nnamesize=%d\n", noper, nleaf, nmat, nnamesize);
+	bzero( (char *)&tcs, sizeof(tcs) );
+	tcs.magic = DB_TREE_COUNTER_STATE_MAGIC;
+	max_stack_depth = db_tree_counter( comb->tree, &tcs );
+bu_log("n_max=%d, n_leaf=%d, n_oper=%d, namebytes=%d, non_union_seen=%d, max_stack_depth=%d\n",
+tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.namebytes, tcs.non_union_seen, max_stack_depth);
 
-	if( full_expression )  {
-		/* XXX Calculate storage needs for RPN expression here */
-		rpn_len = 0;
+	if( tcs.non_union_seen )  {
+		/* RPN expression needs one byte for each leaf or operator node */
+		rpn_len = tcs.n_leaf + tcs.n_oper;
 		bu_log("Only do groups so far, sorry\n");
 		return -1;	/* FAIL */
+	} else {
+		rpn_len = 0;
 	}
 
-	wid = db5_select_length_encoding( nmat | nleaf | rpn_len );
+	wid = db5_select_length_encoding(
+		tcs.n_mat | tcs.n_leaf | rpn_len | max_stack_depth );
 
-	/* Second pass -- determine upper bound of on-disk memory needed */
+	/* Second pass -- determine amount of on-disk storage needed */
 	need =  1 +			/* width code */
 		db5_enc_len[wid] + 	/* size for nmatricies */
 		db5_enc_len[wid] +	/* size for nleaves */
 		db5_enc_len[wid] +	/* size for len of RPN */
-		nmat * (16 * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
-		nnamesize;		/* size for leaf nodes */
-	if( full_expression )  {
-		need += rpn_len * db5_enc_len[wid];
-	}
+		db5_enc_len[wid] +	/* size for max_stack_depth */
+		tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
+		tcs.namebytes +		/* size for leaf nodes */
+		rpn_len;		/* storage for RPN expression */
 
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = need;
-	ep->ext_buf = bu_malloc( need, "rt_comb_export5" );
+	ep->ext_buf = bu_malloc( need, "rt_comb_export5 ext_buf" );
 
 	/* Build combination's on-disk header section */
 	cp = (unsigned char *)ep->ext_buf;
 	*cp++ = wid;
-	cp = db5_encode_length( cp, nmat, wid );
-	cp = db5_encode_length( cp, nleaf, wid );
+	cp = db5_encode_length( cp, tcs.n_mat, wid );
+	cp = db5_encode_length( cp, tcs.n_leaf, wid );
 	cp = db5_encode_length( cp, rpn_len, wid );
+	cp = db5_encode_length( cp, max_stack_depth, wid );
 
 	/*
-	 *  Because matricies are fixed size, we can compute the pointer
-	 *  to the start of the leaf node section now,
-	 *  and output them both, together, with one tree walk
-	 *  and no temporary storage.
+	 *  The output format has three sections:
+	 *	Section 1:  matricies
+	 *	Section 2:  leaf nodes
+	 *	Section 3:  Optional RPN expression
+	 *
+	 *  We have pre-computed the exact size of all three sections,
+	 *  so they can all be searialized together in one pass.
+	 *  Establish pointers to the start of each section.
 	 */
-	matp = cp;
-	leafp = cp + nmat * (16 * SIZEOF_NETWORK_DOUBLE);
+	ss.magic = RT_COMB_V5_SERIALIZE_STATE_MAGIC;
+	ss.mat_num = 0;
+	ss.matp = cp;
+	ss.leafp = cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
+	if( rpn_len )
+		ss.exprp = ss.leafp + tcs.namebytes;
+	else
+		ss.exprp = NULL;
 
-	rt_comb_v5_serialize_leaves( comb->tree, &matnum, &matp, &leafp );
+	rt_comb_v5_serialize( comb->tree, &ss );
 bu_hexdump_external( stderr, ep, "v5comb" );
 
-	BU_ASSERT_LONG( matnum, ==, nmat );
-	BU_ASSERT_PTR( matp, ==, cp + nmat * (16 * SIZEOF_NETWORK_DOUBLE) );
-	BU_ASSERT_PTR( leafp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes );
+	BU_ASSERT_LONG( ss.mat_num, ==, tcs.n_mat );
+	BU_ASSERT_PTR( ss.matp, ==, cp + tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) );
+	BU_ASSERT_PTR( ss.leafp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes );
+	if( rpn_len )
+		BU_ASSERT_PTR( ss.exprp, <=, ((unsigned char *)ep->ext_buf) + ep->ext_nbytes );
 
 	/* How to encode all the other stuff as attributes??? */
 
-	if( full_expression == 0 )  return 0;	/* OK */
+	if( rpn_len == 0 )  return 0;	/* OK */
 
 	return -1;	/* FAIL */
 }
@@ -260,7 +303,7 @@ const struct db_i	*dbip;
 	struct rt_comb_internal	*comb;
 	unsigned char	*cp;
 	int		wid;
-	long		nmat, nleaf, rpn_len;
+	long		nmat, nleaf, rpn_len, max_stack_depth;
 	unsigned char	*matp;
 	unsigned char	*leafp;
 
@@ -281,9 +324,10 @@ const struct db_i	*dbip;
 	cp += db5_decode_length( &nmat, cp, wid );
 	cp += db5_decode_length( &nleaf, cp, wid );
 	cp += db5_decode_length( &rpn_len, cp, wid );
+	cp += db5_decode_length( &max_stack_depth, cp, wid );
 	matp = cp;
-	leafp = cp + nmat * (16 * SIZEOF_NETWORK_DOUBLE);
-bu_log("nmat=%d, nleaf=%d, rpn_len=%d\n", nmat, nleaf, rpn_len);
+	leafp = cp + nmat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE);
+bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_len, max_stack_depth);
 
 	cp = leafp;
 	if( rpn_len == 0 )  {
@@ -311,8 +355,8 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d\n", nmat, nleaf, rpn_len);
 				tp->tr_l.tl_mat = (matp_t)bu_malloc(
 					sizeof(mat_t), "v5comb mat");
 				ntohd( (unsigned char *)tp->tr_l.tl_mat,
-					&matp[mi*16*SIZEOF_NETWORK_DOUBLE],
-					16);
+					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
+					ELEMENTS_PER_MAT);
 			}
 
 			if( comb->tree == TREE_NULL )  {
