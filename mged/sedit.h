@@ -76,6 +76,12 @@
 #define ECMD_ARS_PICK_MENU	46	/* display the ARS pick menu */
 #define ECMD_ARS_EDIT_MENU	47	/* display the ARS edit menu */
 
+#define	ECMD_VOL_CSIZE		48	/* set voxel size */
+#define	ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
+#define	ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
+#define	ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
+#define	ECMD_VOL_FNAME		52	/* set VOL file name */
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
@@ -88,7 +94,10 @@
 
 #define SEDIT_SCALE (state == ST_S_EDIT && \
 		     (es_edflag == SSCALE || \
-		      es_edflag == PSCALE ))
+		      es_edflag == PSCALE || \
+		      es_edflag == ECMD_VOL_THRESH_LO || \
+		      es_edflag == ECMD_VOL_THRESH_HI || \
+		      es_edflag == ECMD_VOL_CSIZE ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \

@@ -37,6 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -67,7 +70,7 @@ extern int      savedit;
 #endif
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed();
 static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -186,6 +189,11 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_PIPE_MOV_PT	71
 #define	MENU_PIPE_PT_RADIUS	72
 #define	MENU_PIPE_SCALE_RADIUS	73
+#define	MENU_VOL_FNAME		74
+#define	MENU_VOL_FSIZE		75
+#define	MENU_VOL_CSIZE		76
+#define	MENU_VOL_THRESH_LO	77
+#define	MENU_VOL_THRESH_HI	78
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -522,6 +530,16 @@ struct menu_item pipe_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item vol_menu[] = {
+	{"VOL MENU", (void (*)())NULL, 0 },
+	{"file name", vol_ed, MENU_VOL_FNAME },
+	{"file size (X Y Z)", vol_ed, MENU_VOL_FSIZE },
+	{"voxel size (X Y Z)", vol_ed, MENU_VOL_CSIZE },
+	{"threshold (low)", vol_ed, MENU_VOL_THRESH_LO },
+	{"threshold (hi)", vol_ed, MENU_VOL_THRESH_HI },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -635,6 +653,34 @@ int arg;
 		sedraw = 1;
 	}
 
+	set_e_axes_pos();
+}
+
+static void
+vol_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	sedraw = 1;
+
+	switch( arg )
+	{
+		case MENU_VOL_FNAME:
+			es_edflag = ECMD_VOL_FNAME;
+			break;
+		case MENU_VOL_FSIZE:
+			es_edflag = ECMD_VOL_FSIZE;
+			break;
+		case MENU_VOL_CSIZE:
+			es_edflag = ECMD_VOL_CSIZE;
+			break;
+		case MENU_VOL_THRESH_LO:
+			es_edflag = ECMD_VOL_THRESH_LO;
+			break;
+		case MENU_VOL_THRESH_HI:
+			es_edflag = ECMD_VOL_THRESH_HI;
+			break;
+	}
 	set_e_axes_pos();
 }
 
@@ -2142,6 +2188,9 @@ sedit_menu()  {
 	case ID_PIPE:
 		mmenu_set( MENU_L1, pipe_menu );
 		break;
+	case ID_VOL:
+		mmenu_set( MENU_L1, vol_menu );
+		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
 	es_menu = 0;
@@ -2239,6 +2288,29 @@ get_rotation_vertex()
 #endif
 }
 
+char *
+get_file_name()
+{
+	struct bu_vls cmd;
+
+	bu_vls_init( &cmd );
+
+	bu_vls_printf( &cmd, "fs_dialog .w . * new_file" );
+	if( Tcl_Eval( interp, bu_vls_addr( &cmd ) ) )
+	{
+		bu_vls_free( &cmd );
+		return( (char *)NULL );
+	}
+	else
+	{
+		bu_vls_free( &cmd );
+		if( interp->result[0] == '1' )
+			return( Tcl_GetVar( interp, "new_file", TCL_GLOBAL_ONLY));
+		else
+			return( (char *)NULL );
+	}
+}
+
 /*
  * 			S E D I T
  * 
@@ -2273,6 +2345,165 @@ sedit()
 	  update_views = 0;
 	  break;
 
+	case ECMD_VOL_CSIZE:	/* set voxel size */
+		{
+			struct rt_vol_internal *vol =
+				(struct rt_vol_internal *)es_int.idb_ptr;
+
+			RT_VOL_CK_MAGIC( vol );
+
+			if( inpara == 3 )
+				VMOVE( vol->cellsize, es_para )
+			else if( inpara > 0 && inpara < 3 )
+			{
+				Tcl_AppendResult(interp, "x, y, and z cell sizes are required\n", (char *)NULL );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+			else if( es_scale > 0.0 )
+			{	
+				VSCALE( vol->cellsize, vol->cellsize, es_scale )
+				es_scale = 0.0;
+			}
+		}
+		break;
+
+	case ECMD_VOL_FSIZE:	/* set file size */
+		{
+			struct rt_vol_internal *vol =
+				(struct rt_vol_internal *)es_int.idb_ptr;
+			struct stat stat_buf;
+			off_t need_size;
+
+			RT_VOL_CK_MAGIC( vol );
+
+			if( inpara == 3 )
+			{
+				if( stat( vol->file, &stat_buf ) )
+				{
+					Tcl_AppendResult(interp, "Cannot get status of file ", vol->file, (char *)NULL );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				need_size = es_para[0] * es_para[1] * es_para[2] * sizeof( unsigned char );
+				if( stat_buf.st_size < need_size )
+				{
+					Tcl_AppendResult(interp, "File (", vol->file,
+						") is too small, set file name first", (char *)NULL );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				vol->xdim = es_para[0];
+				vol->ydim = es_para[1];
+				vol->zdim = es_para[2];
+			}
+			else if( inpara > 0 && inpara < 3 )
+			{
+				Tcl_AppendResult(interp, "x, y, and z file sizes are required\n", (char *)NULL );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+		}
+		break;
+
+	case ECMD_VOL_THRESH_LO:
+		{
+			struct rt_vol_internal *vol =
+				(struct rt_vol_internal *)es_int.idb_ptr;
+
+			RT_VOL_CK_MAGIC( vol );
+
+			i = vol->lo;
+			if( inpara )
+				i = es_para[0];
+			else if( es_scale > 0.0 )
+			{
+				i = vol->lo * es_scale;
+				if( i == vol->lo && es_scale > 1.0 )
+					i++;
+				else if( i == vol->lo && es_scale < 1.0 )
+					i--;
+			}
+
+			if( i < 0 )
+				i = 0;
+
+			if( i > 255 )
+				i = 255;
+
+			vol->lo = i;
+			break;
+		}
+
+	case ECMD_VOL_THRESH_HI:
+		{
+			struct rt_vol_internal *vol =
+				(struct rt_vol_internal *)es_int.idb_ptr;
+
+			RT_VOL_CK_MAGIC( vol );
+
+			i = vol->hi;
+			if( inpara )
+				i = es_para[0];
+			else if( es_scale > 0.0 )
+			{
+				i = vol->hi * es_scale;
+				if( i == vol->hi && es_scale > 1.0 )
+					i++;
+				else if( i == vol->hi && es_scale < 1.0 )
+					i--;
+			}
+
+			if( i < 0 )
+				i = 0;
+
+			if( i > 255 )
+				i = 255;
+
+			vol->hi = i;
+			break;
+		}
+
+	case ECMD_VOL_FNAME:
+		{
+			struct rt_vol_internal *vol =
+				(struct rt_vol_internal *)es_int.idb_ptr;
+			char *fname;
+			struct stat stat_buf;
+			off_t need_size;
+
+			RT_VOL_CK_MAGIC( vol );
+
+			fname = get_file_name();
+			if( fname )
+			{
+				struct bu_vls message;
+
+				if( stat( fname, &stat_buf ) )
+				{
+					bu_vls_init( &message );
+					bu_vls_printf( &message, "Cannot get status of file %s\n", fname );
+					Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE );
+					bu_vls_free( &message );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				need_size = vol->xdim * vol->ydim * vol->zdim * sizeof( unsigned char );
+				if( stat_buf.st_size < need_size )
+				{
+					bu_vls_init( &message );
+					bu_vls_printf( &message, "File (%s) is too small, adjust the file size parameters first", fname);
+					Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE);
+					bu_vls_free( &message );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				strcpy( vol->file, fname );
+			}
+
+			break;
+		}
+
 	case ECMD_ARB_MAIN_MENU:
 		/* put up control (main) menu for GENARB8s */
 		menuflag = 0;
@@ -2296,6 +2527,7 @@ sedit()
 				break;
 			default:
 			  Tcl_AppendResult(interp, "Bad menu item.\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  return;
 		}
 		break;
@@ -2428,6 +2660,7 @@ sedit()
 			else{
 			  Tcl_AppendResult(interp, "Must be < rot fb | xdeg ydeg zdeg >\n",
 					   (char *)NULL);
+				mged_print_result( TCL_ERROR );
 			  return;
 			}
 
@@ -2559,6 +2792,7 @@ sedit()
 			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
+				mged_print_result( TCL_ERROR );
 			  VSET(tgc->h, 0, 0, 1 );
 			  break;
 			}
@@ -2602,6 +2836,7 @@ sedit()
 			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
 			  Tcl_AppendResult(interp, "Zero H vector not allowed, resetting to +Z\n",
 					   (char *)NULL);
+				mged_print_result( TCL_ERROR );
 			  VSET(tgc->h, 0, 0, 1 );
 			  break;
 			}
@@ -2721,6 +2956,7 @@ sedit()
 			if( !es_eu )
 			{
 			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
@@ -2733,6 +2969,7 @@ sedit()
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge move\n",
 					   (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2767,6 +3004,7 @@ sedit()
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Move: Cannot place new point in plane of loop\n", (char *)NULL);
+					  mged_print_result( TCL_ERROR );
 						break;
 					}
 					VJOIN1( new_pt , new_pt , dist , view_dir );
@@ -2787,6 +3025,7 @@ sedit()
 			if( !es_eu )
 			{
 			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
@@ -2805,6 +3044,7 @@ sedit()
 				{
 				  /* Currently can only kill wire edges or edges in wire loops */
 				  Tcl_AppendResult(interp, "Currently, we can only kill wire edges or edges in wire loops\n", (char *)NULL);
+				  mged_print_result( TCL_ERROR );
 				  es_edflag = IDLE;
 				  break;
 				}
@@ -2823,6 +3063,7 @@ sedit()
 					   * to/from same vertex
 					   */
 					  Tcl_AppendResult(interp, "Cannot delete last edge running to/from same vertex\n", (char *)NULL);
+						mged_print_result( TCL_ERROR );
 						break;
 					}
 					NMG_CK_EDGEUSE( es_eu->eumate_p );
@@ -2871,6 +3112,7 @@ sedit()
 			if( !es_eu )
 			{
 			  Tcl_AppendResult(interp, "No edge selected!\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			NMG_CK_EDGEUSE( es_eu );
@@ -2884,6 +3126,7 @@ sedit()
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for edge split\n",
 					   (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2901,6 +3144,7 @@ sedit()
 				{
 				  Tcl_AppendResult(interp, "Currently, we can only split wire edges or edges in wire loops\n", (char *)NULL);
 					es_edflag = IDLE;
+					mged_print_result( TCL_ERROR );
 					break;
 				}
 
@@ -2921,6 +3165,7 @@ sedit()
 					{
 					  /* line does not intersect plane, don't do an esplit */
 					  Tcl_AppendResult(interp, "Edge Split: Cannot place new point in plane of loop\n", (char *)NULL);
+						mged_print_result( TCL_ERROR );
 						break;
 					}
 					VJOIN1( new_pt , new_pt , dist , view_dir );
@@ -2955,6 +3200,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for loop extrusion\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -2965,6 +3211,7 @@ sedit()
 			if( rt_isect_line3_plane( &dist , to_pt , extrude_vec , lu_pl , &mged_tol ) < 1 )
 			{
 			  Tcl_AppendResult(interp, "Cannot extrude parallel to plane of loop\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  return;
 			}
 
@@ -2982,6 +3229,7 @@ sedit()
 			if( area < 0.0 )
 			{
 			  Tcl_AppendResult(interp, "loop to be extruded as no area!!!\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  return;
 			}
 
@@ -3031,6 +3279,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment selection\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3038,7 +3287,10 @@ sedit()
 
 			es_pipept = find_pipept_nearest_pt( &pipe->pipe_segs_head, new_pt );
 			if( !es_pipept )
+			{
 			  Tcl_AppendResult(interp, "No PIPE segment selected\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
+			}
 			else
 				rt_pipept_print( es_pipept, base2local );
 		}
@@ -3058,6 +3310,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment split\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3066,6 +3319,7 @@ sedit()
 			if( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
+				mged_print_result( TCL_ERROR );
 				break;
 			}
 
@@ -3087,6 +3341,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for segment movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3095,6 +3350,7 @@ sedit()
 			if( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 
@@ -3116,6 +3372,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for 'append segment'\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3139,6 +3396,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for 'prepend segment'\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3152,6 +3410,7 @@ sedit()
 			if( !es_pipept )
 			{
 			  Tcl_AppendResult(interp, "No pipe segment selected\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			es_pipept = del_pipept( es_pipept );
@@ -3188,6 +3447,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 				Tcl_AppendResult(interp, "x y z coordinates required for 'pick point'\n", (char *)NULL);
+				mged_print_result( TCL_ERROR );
 				break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3204,6 +3464,7 @@ sedit()
 			bu_vls_init( &tmp_vls );
 			bu_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
 			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL );
+			mged_print_result( TCL_ERROR );
 			bu_vls_free( &tmp_vls );
 		}
 		break;
@@ -3228,6 +3489,7 @@ sedit()
 				bu_vls_init( &tmp_vls );
 				bu_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
 				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL );
+				mged_print_result( TCL_ERROR );
 				bu_vls_free( &tmp_vls );
 			}
 		}
@@ -3253,6 +3515,7 @@ sedit()
 				bu_vls_init( &tmp_vls );
 				bu_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
 				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL );
+				mged_print_result( TCL_ERROR );
 				bu_vls_free( &tmp_vls );
 			}
 		}
@@ -3278,6 +3541,7 @@ sedit()
 				bu_vls_init( &tmp_vls );
 				bu_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
 				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL );
+				mged_print_result( TCL_ERROR );
 				bu_vls_free( &tmp_vls );
 			}
 		}
@@ -3303,6 +3567,7 @@ sedit()
 				bu_vls_init( &tmp_vls );
 				bu_vls_printf( &tmp_vls, "Selected point #%d from curve #%d ( %f %f %f )\n", es_ars_col, es_ars_crv, V3ARGS( selected_pt ) );
 				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL );
+				mged_print_result( TCL_ERROR );
 				bu_vls_free( &tmp_vls );
 			}
 		}
@@ -3544,6 +3809,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3594,6 +3860,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3643,6 +3910,7 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 			  Tcl_AppendResult(interp, "x y z coordinates required for point movement\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  break;
 			}
 			else if( !es_mvalid && !inpara )
@@ -3658,6 +3926,7 @@ sedit()
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "sedit():  unknown edflag = %d.\n", es_edflag );
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    mged_print_result( TCL_ERROR );
 	    bu_vls_free(&tmp_vls);
 	  }
 	}
@@ -3710,6 +3979,9 @@ CONST vect_t	mousevec;
 
 	case SSCALE:
 	case PSCALE:
+	case ECMD_VOL_CSIZE:
+	case ECMD_VOL_THRESH_LO:
+	case ECMD_VOL_THRESH_HI:
 		/* use mouse to get a scale factor */
 		es_scale = 1.0 + 0.25 * ((fastf_t)
 			(mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
@@ -3874,6 +4146,7 @@ CONST vect_t	mousevec;
 			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
 			    model2view, &tmp_tol )) == (struct edge *)NULL )  {
 			  Tcl_AppendResult(interp, "ECMD_NMG_EPICK: unable to find an edge\n", (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  return;
 			}
 			es_eu = e->eu_p;
@@ -3888,6 +4161,7 @@ CONST vect_t	mousevec;
 					es_eu, V3ARGS( es_eu->vu_p->v_p->vg_p->coord ),
 					V3ARGS( es_eu->eumate_p->vu_p->v_p->vg_p->coord ) );
 			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			  mged_print_result( TCL_ERROR );
 			  bu_vls_free(&tmp_vls);
 			}
 
@@ -3918,6 +4192,7 @@ CONST vect_t	mousevec;
 		return;
 	default:
 	  Tcl_AppendResult(interp, "mouse press undefined in this solid edit mode\n", (char *)NULL);
+	  mged_print_result( TCL_ERROR );
 	  break;
 	}
 
@@ -4401,6 +4676,12 @@ pscale()
 	static fastf_t ma,mb;
 
 	switch( es_menu ) {
+
+	case MENU_VOL_CSIZE:	/* scale voxel size */
+		{
+			rt_log( "es_scale = %g\n", es_scale );
+		}
+		break;
 
 	case MENU_TGC_SCALE_H:	/* scale height vector */
 		{
@@ -5464,6 +5745,7 @@ vect_t argvect;
   case ECMD_ARS_MOVE_PT:
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
+  case ECMD_VOL_CSIZE:
 #if 0
     if(SEDIT_TRAN){
       vect_t temp;
