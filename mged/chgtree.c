@@ -994,6 +994,39 @@ char	**argv;
     return result;
 }
 
+int
+get_comb_internal (dbip, comb_name, dpp, ip, noisy)
+
+struct db_i		*dbip;
+char			*comb_name;
+struct directory	**dpp;
+struct rt_db_internal	*ip;
+int			noisy;
+
+{
+    struct directory		*dp;
+    struct rt_comb_internal	*comb;
+
+    if (comb_name == (char *) 0)
+    {
+	if (noisy == LOOKUP_NOISY)
+	    bu_log("No combination specified\n");
+	return ID_NULL;
+    }
+    if ((dp = db_lookup(dbip, comb_name, noisy)) == DIR_NULL)
+	return ID_NULL;
+    if (rt_db_get_internal(ip, dp, dbip, (mat_t *) NULL ) < 0 )
+    {
+	if (noisy == LOOKUP_NOISY)
+	    bu_log("Failed to get internal form of object '%s'\n",
+		dp -> d_namep);
+	return ID_NULL;
+    }
+
+    *dpp = dp;
+    return (ip -> idb_type);
+}
+
 /*
  *			F _ C O P Y M A T
  *
@@ -1008,10 +1041,17 @@ int argc;
 char **argv;
 {
     char			*child;
+    char			*parent;
+    struct bu_vls		pvls;
     int				i;
-    mat_t			matrix;
+    int				sep;
+    int				status;
     struct db_tree_state	ts;
+    struct directory		*dp;
+    struct rt_comb_internal	*comb;
+    struct rt_db_internal	intern;
     struct animate		*anp;
+    union tree			*tp;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
@@ -1022,17 +1062,14 @@ char **argv;
     /*
      *	Ensure that each argument contains exactly one slash
      */
-    for (i = 1; i < 2; ++i)
+    for (i = 1; i <= 2; ++i)
 	if (((child = strchr(argv[i], '/')) == NULL)
-	 || (strchr(child + 1, '/') != NULL))
+	 || (strchr(++child, '/') != NULL))
 	{
 	    Tcl_AppendResult(interp,
 		"Bad arc: '", argv[i], "'\n", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	else
-	    Tcl_AppendResult(interp,
-		"OK, we have '", argv[i], "'\n", (char *) NULL);
 
     BU_GETSTRUCT(anp, animate);
     anp -> magic = ANIMATE_MAGIC;
@@ -1045,37 +1082,69 @@ char **argv;
 	< 0 )
     {
 	Tcl_AppendResult(interp,
-	    "Cannot follow path for arc: '", argv[i], "'\n", (char *) NULL);
+	    "Cannot follow path for arc: '", argv[1], "'\n", (char *) NULL);
 	return TCL_ERROR;
     }
 
-    matrix_print(ts.ts_mat);
-    /* MAT_COPY(to,from) */
-    install_mat(matrix, argv[2]);
+    bu_vls_init(&pvls);
+    bu_vls_strcat(&pvls, argv[2]);
+    parent = bu_vls_addr(&pvls);
+    sep = strchr(parent, '/') - parent;
+    bu_vls_trunc(&pvls, sep);
+    if ((comb = get_comb_internal(dbip, parent, &dp, &intern, LOOKUP_NOISY))
+	    == ID_NULL)
+	    /* XXX check for ID_COMBINATION */
+    {
+	bu_vls_free(&pvls);
+	return TCL_ERROR;
+    }
+    if ((dp -> d_flags & DIR_COMB) == 0)
+    {
+	bu_log("Object '%s' not a combination\n", parent);
+	status = TCL_ERROR;
+	goto wrapup;
+    }
+    comb = (struct rt_comb_internal *) intern.db_ptr;
+    RT_CK_COMB(comb);
 
-    return TCL_OK;
-}
+    if ((tp = db_find_named_leaf(comb -> tree, child)) == TREE_NULL)
+    {
+	Tcl_AppendResult(interp, "Unable to find instance of '",
+		child, "' in combination '", dp -> d_namep,
+		"'\n", (char *)NULL);
+	status = TCL_ERROR;
+	goto wrapup;
+    }
 
-HIDDEN int
-accumulate_mat (matrix, path)
+    /*
+     *	Finally, copy the matrix
+     */
+    if (!bn_mat_is_identity(ts.ts_mat))
+    {
+	if (tp -> tr_l.tl_mat == NULL)
+	    tp -> tr_l.tl_mat = bn_mat_dup(ts.ts_mat);
+	else
+	    MAT_COPY(tp -> tr_l.tl_mat, ts.ts_mat);
+    }
+    else if (tp -> tr_l.tl_mat != NULL)
+    {
+	bu_free((genptr_t) tp -> tr_l.tl_mat, "tl_mat");
+	tp -> tr_l.tl_mat = (matp_t) 0;
+    }
 
-mat_t	matrix;
-char	*path;
+    if (rt_db_put_internal(dp, dbip, &intern) < 0)
+    {
+	TCL_WRITE_ERR;
+	status = TCL_ERROR;
+	goto wrapup;
+    }
 
-{
-    bu_log("Accumulating the matrices from '%s' into <%x>\n",
-	path, matrix);
-    return 1;
-}
+    status = TCL_OK;
 
-HIDDEN int
-install_mat (matrix, path)
+wrapup:
 
-mat_t	matrix;
-char	*path;
-
-{
-    bu_log("Installing the matrix <%x> into '%s'\n",
-	matrix, path);
-    return 1;
+    bu_vls_free(&pvls);
+    if (status == TCL_ERROR)
+	rt_db_free_internal(&intern);
+    return status;
 }
