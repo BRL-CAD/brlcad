@@ -118,14 +118,14 @@ int dir;
 			new_mesh_ptr = &srf1->mesh->ctl_points[
 				i * srf1->mesh->s_size[1] * 
 				EXTRACT_COORDS( srf1->mesh->pt_type)];
-			rt_nurb_maposlo( oslo, old_mesh_ptr, new_mesh_ptr,
+			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				EXTRACT_COORDS( srf->mesh->pt_type ),
 				EXTRACT_COORDS( srf1->mesh->pt_type ),
 				0, k_index, srf1->mesh->pt_type);
 			new_mesh_ptr = &srf2->mesh->ctl_points[
 				i * srf2->mesh->s_size[1] * 
 				EXTRACT_COORDS( srf2->mesh->pt_type)];
-			rt_nurb_maposlo( oslo, old_mesh_ptr, new_mesh_ptr,
+			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				EXTRACT_COORDS( srf->mesh->pt_type ),
 				EXTRACT_COORDS( srf2->mesh->pt_type ),
 				k_index, new_kv->k_size - srf2->order[0], 
@@ -203,7 +203,7 @@ int dir;
 				i * EXTRACT_COORDS( srf->mesh->pt_type)];
 			new_mesh_ptr = &srf1->mesh->ctl_points[
 				i * EXTRACT_COORDS( srf1->mesh->pt_type)];
-			rt_nurb_maposlo( oslo, old_mesh_ptr, new_mesh_ptr,
+			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				srf->mesh->s_size[1] *
 				EXTRACT_COORDS( srf->mesh->pt_type ),
 				srf1->mesh->s_size[1] * 
@@ -211,7 +211,7 @@ int dir;
 				0, k_index, srf1->mesh->pt_type);
 			new_mesh_ptr = &srf2->mesh->ctl_points[
 				i * EXTRACT_COORDS( srf2->mesh->pt_type)];
-			rt_nurb_maposlo( oslo, old_mesh_ptr, new_mesh_ptr,
+			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
 				srf->mesh->s_size[1] *
 				EXTRACT_COORDS( srf->mesh->pt_type ),
 				srf2->mesh->s_size[1] *
@@ -292,10 +292,10 @@ fastf_t param;
 			EXTRACT_COORDS( crv2->mesh->pt_type),
 			"rt_nurb_c_xsplit: crv2 row mesh control points");
 
-	rt_nurb_maposlo( oslo, crv->mesh->ctl_points, crv1->mesh->ctl_points,
+	rt_nurb_map_oslo( oslo, crv->mesh->ctl_points, crv1->mesh->ctl_points,
 		coords, coords, 0, k_index, crv->mesh->pt_type );
 
-	rt_nurb_maposlo( oslo, crv->mesh->ctl_points, crv2->mesh->ctl_points,
+	rt_nurb_map_oslo( oslo, crv->mesh->ctl_points, crv2->mesh->ctl_points,
 		coords, coords, k_index, new_kv->k_size - crv2->order, 
 		crv2->mesh->pt_type );
 
