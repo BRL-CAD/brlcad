@@ -1,7 +1,25 @@
 /*
  *  Real valued, split-radix, decimation in time FFT code generator.
+ *
+ *  Author -
+ *	Phil Dykstra
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
+
+#include <stdio.h>
 #include <math.h>
+
 #include "./complex.h"	/* for TWOPI */
 #define	INVSQ2	0.70710678118654752440
 
@@ -14,8 +32,8 @@ int	N, M;
 	int	i0, i1, i2, i3;
 	int	a0, a1, a2, a3, b0, b1, b2, b3;
 	int	s, d;
-	double	t0, t1, t2, r1, a, aa3, e, c2, c3, d2, d3;
-	double	cc1, ss1, cc3, ss3, xt;
+	double	a, aa3, e;
+	double	cc1, ss1, cc3, ss3;
 	int	i, j, k, ni;
 	int	n2, n4;
 rfft_adds = rfft_mults = 0;

@@ -1,6 +1,23 @@
 /*
- *	Split Radix Decimation in Time FFT C code generator.
+ *	Split Radix Decimation in Time
+ *	FFT C code generator.
+ *
+ *  Author -
+ *	Phil Dykstra
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
+#include "conf.h"
+
 extern int rfft_adds, rfft_mults;
 
 #include <stdio.h>
@@ -14,7 +31,7 @@ int	argc;
 char	**argv;
 {
 	double	x[4097];
-	int	i, n, m;
+	int	n, m;
 
 	if( argc != 2 ) {
 		fprintf( stderr, usage );
