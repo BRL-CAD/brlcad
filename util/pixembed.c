@@ -27,10 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 unsigned char	*obuf;
 
 int	scanlen;			/* length of infile (and buffer) scanlines */
-int	buflines;			/* Number of lines held in buffer */
-int	buf_start = -1000;		/* First line in buffer */
 
-int	bufy;				/* y coordinate in buffer */
 FILE	*buffp;
 static char	*file_name;
 
@@ -39,19 +36,28 @@ int	yin = 512;
 int	xout = 512;
 int	yout = 512;
 
-void	init_buffer(), fill_buffer(), binterp(), ninterp();
+int	border_inset = 0;		/* Sometimes border pixels are bad */
+
+void	load_buffer(), write_buffer();
 
 static	char usage[] = "\
-Usage: pixembed [-h] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: pixembed [-h] [-b border_inset] \n\
+	[-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
+/*
+ *			G E T _ A R G S
+ */
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "b:hs:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 'b':
+			border_inset = atoi(optarg);
+			break;
 		case 'h':
 			/* high-res */
 			xin = yin = 1024;
@@ -128,6 +134,11 @@ char	**argv;
 		exit(3);
 	}
 
+	if( border_inset < 0 || border_inset >= xin )  {
+		fprintf(stderr, "pixembed: border inset out of range\n");
+		exit(4);
+	}
+
 	/* Allocate storage for one output line */
 	scanlen = 3*xout;
 	if( (obuf = malloc( scanlen )) == (unsigned char *)0 )  {
@@ -174,22 +185,22 @@ load_buffer()
 		perror("pixembed fread");
 		exit(7);
 	}
-	r = obuf[inbase*3+0];
-	g = obuf[inbase*3+1];
-	b = obuf[inbase*3+2];
+	r = obuf[(inbase+border_inset)*3+0];
+	g = obuf[(inbase+border_inset)*3+1];
+	b = obuf[(inbase+border_inset)*3+2];
 
 	cp = obuf;
-	for( i=0; i<inbase; i++ )  {
+	for( i=0; i<inbase+border_inset; i++ )  {
 		*cp++ = r;
 		*cp++ = g;
 		*cp++ = b;
 	}
 
-	r = obuf[(xin+inbase-1)*3+0];
-	g = obuf[(xin+inbase-1)*3+1];
-	b = obuf[(xin+inbase-1)*3+2];
-	cp = &obuf[(xin+inbase+0)*3+0];
-	for( i=xin+inbase; i<xout; i++ )  {
+	r = obuf[(xin+inbase-1-border_inset)*3+0];
+	g = obuf[(xin+inbase-1-border_inset)*3+1];
+	b = obuf[(xin+inbase-1-border_inset)*3+2];
+	cp = &obuf[(xin+inbase+0-border_inset)*3+0];
+	for( i=xin+inbase-border_inset; i<xout; i++ )  {
 		*cp++ = r;
 		*cp++ = g;
 		*cp++ = b;
@@ -197,6 +208,11 @@ load_buffer()
 
 }
 
+/*
+ *			W R I T E _ B U F F E R
+ *
+ *  Write the buffer to stdout, with error checking.
+ */
 void
 write_buffer()
 {
