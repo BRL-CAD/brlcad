@@ -1895,14 +1895,14 @@ RT_EXTERN(struct shell		*nmg_polytonmg, (FILE *fp, struct nmgregion *r, CONST st
 RT_EXTERN(struct loopuse	*nmg_lu_of_vu, (struct vertexuse *vu) );
 RT_EXTERN(struct shell		*nmg_lups, (struct loopuse *lu) );
 RT_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
-RT_EXTERN(struct edgeuse	*nmg_faceradial, (struct edgeuse *eu) );
+RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
 RT_EXTERN(struct edgeuse	*nmg_radial_face_edge_in_shell, (struct edgeuse *eu) );
-RT_EXTERN(void			nmg_euprint, (char *str, struct edgeuse *eu) );
+RT_EXTERN(void			nmg_euprint, (CONST char *str, CONST struct edgeuse *eu) );
 RT_EXTERN(void			nmg_rebound, (struct model *m) );
 RT_EXTERN(void			nmg_count_shell_kids, (struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
 
 /* nmg_manif.c */
-RT_EXTERN(int			nmg_dangling_face, (struct faceuse *fu));
+RT_EXTERN(int			nmg_dangling_face, (CONST struct faceuse *fu));
 /* static paint_face */
 /* static set_edge_sub_manifold */
 /* static set_loop_sub_manifold */
@@ -1913,7 +1913,12 @@ RT_EXTERN(char	 		*nmg_manifolds, (struct model *m) );
 /* g_nmg.c */
 
 /* nmg_class.c */
-RT_EXTERN(int			nmg_pt_hitmis_f, (point_t pt, struct faceuse *fu, CONST struct rt_tol *tol, long *novote) );
+RT_EXTERN(int			nmg_class_pt_f, (CONST point_t pt,
+				CONST struct faceuse *fu,
+				CONST struct rt_tol *tol) );
+RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
+				CONST struct shell *s,
+				CONST struct rt_tol *tol) );
 
 /* From nmg_plot.c */
 RT_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
@@ -2007,6 +2012,7 @@ RT_EXTERN(void			nmg_stash_model_to_file, (char *filename,
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
+RT_EXTERN(CONST char		*nmg_class_name, (int class) );
 RT_EXTERN(void			nmg_rm_redundancies, (struct shell *s ) );
 #if 0
 /* These can't be included because struct nmg_bool_state is in nmg_eval.c */
