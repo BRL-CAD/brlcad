@@ -44,15 +44,26 @@ class Drawable {
     public method vdraw {args}
     public method who {args}
     public method zap {}
+
+    public method ? {}
+    public method apropos {key}
+    public method help {args}
+    public method getUserCmds {}
+
+    private method help_init {}
+
+    private variable help
 }
 
 body Drawable::constructor {db} {
     set dg [subst $this]_dg
     dg_open $dg $db
+    Drawable::help_init
 }
 
 body Drawable::destructor {} {
     $dg close
+    delete object $help
 }
 
 body Drawable::observer {args} {
@@ -129,4 +140,41 @@ body Drawable::illum {args} {
 
 body Drawable::label {args} {
     eval $dg label $args
+}
+
+body Drawable::help {args} {
+    return [eval $help get $args]
+}
+
+body Drawable::? {} {
+    return [$help ? 20 4]
+}
+
+body Drawable::apropos {key} {
+    return [$help apropos $key]
+}
+
+body Drawable::getUserCmds {} {
+    return [$help getCmds]
+}
+
+body Drawable::help_init {} {
+    set help [cadwidgets::Help #auto]
+
+    $help add blast		{{-C#/#/# <objects>} {clear screen, draw objects}}
+    $help add clear		{{} {clear screen}}
+    $help add draw		{{-C#/#/# <objects>} {draw objects}}
+    $help add erase		{{<objects>} {remove objects from the screen}}
+    $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
+    $help add ev		{{[-dfnqstuvwT] [-P #] <objects>} {evaluate objects via NMG tessellation}}
+    $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
+    $help add illum		{{name} {illuminate object}}
+    $help add label		{{} {}}
+    $help add overlay		{{file.plot [name]} {read UNIX-Plot as named overlay}}
+    $help add report		{{} {}}
+    $help add rt		{{[options] [-- objects]} {do raytrace of view or specified objects}}
+    $help add rtcheck		{{[options]} {check for overlaps in current view}}
+    $help add vdraw		{{write|insert|delete|read|length|show [args]} {vector drawing (cnuzman)}}
+    $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
+    $help add zap		{{} {clear screen}}
 }

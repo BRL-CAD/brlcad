@@ -80,6 +80,11 @@ class QuadDisplay {
     public method detach_drawable {dg}
     public method detach_drawableall {dg}
 
+    public method ? {}
+    public method apropos {key}
+    public method getUserCmds {}
+    public method help {args}
+
     protected method toggle_multi_pane {}
 
     private variable priv_pane ur
@@ -539,3 +544,20 @@ body QuadDisplay::toggle_multi_pane {} {
 	}
     }
 }
+
+body QuadDisplay::? {} {
+    return [$itk_component(ur) ?]
+}
+
+body QuadDisplay::apropos {key} {
+    return [$itk_component(ur) apropos $key]
+}
+
+body QuadDisplay::getUserCmds {} {
+    return [$itk_component(ur) getUserCmds]
+}
+
+body QuadDisplay::help {args} {
+    return [eval $itk_component(ur) help $args]
+}
+
