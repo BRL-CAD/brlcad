@@ -826,6 +826,9 @@ struct shell *s;
  *	not possible to say whether ret_e "starts" or "ends" at V.
  * XXX The question is, is this what really happens?
  *
+ *	If the call was nmg_esplit( NULL, eu->e_p );
+ *	then the new vertex created will be eu->eumate_p->vu_p->v_p;
+ *
  *  Edge on entry -
  *
  *		       oldeu
@@ -975,15 +978,35 @@ nmg_e2break( e1, e2 )
 struct edge	*e1;
 struct edge	*e2;
 {
-	struct vertex	*v;
+	struct vertex		*v;
 	struct vertexuse	*vu;
+	long			*magicp;
 
-	vu = nmg_mvvu( &e1->magic );	/* Really only want v, not vu */
+	NMG_CK_EDGE(e1);
+	NMG_CK_EDGE(e2);
+	/*
+	 * Need to get from e1 up to shell, so that the vertex can
+	 * be made in the current shell.
+	 * Otherwise, nmg_kvu() will zap our edge!
+	 */
+	magicp = e1->eu_p->up.magic_p;		/* loopuse or shell */
+	if( *magicp == NMG_LOOPUSE_MAGIC )
+		magicp = ((struct loopuse *)magicp)->up.magic_p;
+	if( *magicp == NMG_FACEUSE_MAGIC )
+		magicp = &((struct faceuse *)magicp)->s_p->l.magic;
+	if( *magicp != NMG_SHELL_MAGIC )
+		rt_bomb("nmg_e2break():  Can't find e1's shell\n");
+
+	vu = nmg_mvvu( magicp );	/* Really only want v, not vu */
 	NMG_CK_VERTEXUSE(vu);
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
 	(void)nmg_ebreak( v, e1 );
+	/* XXX If we could get the new v info here, the nmg_mvvu()
+	 * XXX gunk could be avoided. */
 	(void)nmg_ebreak( v, e2 );
+
+	/* Note:  nmg_kvu() nulls out vu->up.magic_p's down pointer! */
 	nmg_kvu( vu );			/* Kill initial (temporary) use */
 	return v;
 }
