@@ -51,7 +51,6 @@ cake \
  g_torus.o \
  g_part.o \
  g_pipe.o \
- vert.o \
  nmg_class.o \
  &
 
@@ -64,7 +63,6 @@ cake \
  global.o \
  mater.o \
  memalloc.o \
- tabdata.o \
  font.o \
  rtassoc.o \
  tcl.o \
@@ -95,7 +93,6 @@ cake \
  &
 
 cake \
- plot3.o \
  nmg_bool.o \
  nmg_fuse.o \
  prep.o \
