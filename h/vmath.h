@@ -843,10 +843,40 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *  Note that the W component will be put in the last [3] place
  *  rather than the first [0] place,
  *  so that the X, Y, Z elements will be compatible with vectors.
- *  None of the macros here depend on component locations, however.
+ *  Only QUAT_FROM_VROT macros depend on component locations, however.
  *
  *  Phillip Dykstra, 26 Sep 1985.
+ *  Lee A. Butler, 14 March 1996.
  */
+
+/*
+ * Create Quaternion from Vector and Rotation (in Radians) about vector.
+ * To produce a quaternion representing a rotation by PI radians about X-axis:
+ *
+ *	VSET(axis, 1, 0, 0);
+ *	Q_FROM_VROT_DEG( quat, M_PI, axis);
+ *
+ * Lee A. Butler
+ */
+#define QUAT_FROM_VROT_RAD(q, r, v) { \
+	register fastf_t rot = (r) * 0.5; \
+	VMOVE(q, v); \
+	VUNITIZE(q); \
+	(q)[W] = cos(rot); \
+	rot = sin(rot); \
+	VSCALE(q, q, rot ); }
+
+#define QUAT_FROM_ROT(q, r, x, y, z) {\
+	register fastf_t rot = (r) * 0.5; \
+	QSET(q, x, y, z, cos(rot)); \
+	VUNITIZE(q); \
+	rot = sin(rot); \
+	VSCALE(q, q, rot); }
+
+/*
+ * Create Quaternion from Vector and Rotation (in Degrees) about vector.
+ */
+#define QUAT_FROM_VROT_DEG(q, r, v) Q_FROM_VROT_RAD(q, ((r)*(180.0/M_PI), v)
 
 /* Set quaternion at `a' to have coordinates `b', `c', `d', `e' */
 #define QSET(a,b,c,d,e)	{ \
