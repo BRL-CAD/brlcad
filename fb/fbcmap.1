@@ -1,45 +1,47 @@
 .TH FBCMAP 1V VMB
-'\"	last edit:	85/03/28	G. S. Moss
-'\"	SCCS ID:	@(#)fbcmap.1	1.1
+'\"	last edit:	85/04/22	G. S. Moss
+'\"	SCCS ID:	@(#)fbcmap.1	1.2
 .SH NAME
-fbcmap \- change the color map of a framebuffer
+fbcmap \- change the color map of a frame buffer
 .SH SYNOPSIS
 .B fbcmap
 [
 .B \-h
-] [
-.B 1234
-]
+] [ map_number ]
 .SH DESCRIPTION
 .B Fbcmap
-is used to change the color map of a framebuffer.
-By default, the device ``/dev/ik0l'',
-is assumed.  This may be changed by setting the environment
+is used to change the color map of a frame buffer.
+By default, the device
+.B /dev/ik0l
+is assumed.
+This may be changed by setting the environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name,
+to the name of another device or file name
 and exporting it before execution of 
 .IR fbclear\^ .
 If the
 .B \-h
-options is used, the
+option is used, the
 .SM
 .B HIRES
-(1024x1024x24) color map is written, otherwise a
+(1024x1024x24) color map is written; otherwise a
 .SM
 .B LORES
 (512x512x24) device is assumed.
-If an optional color map number is given, that map is used, the default
-is the standard linear map.  There are currently 4 other maps supplied
-numbered 1 through 4 in the following order;
+If an optional color
+.I map_number\^
+is given, that map is used; the default
+is the standard linear map.
+There are currently 4 other maps supplied
+numbered 1 through 4 in the following order:
 a reverse-linear map, one corrected for Poloroid 809/891 film, a linear
 mapping in which the first 100 values are black, and a linear map with
 values 1-192 incremented by 64 to boost dim pictures.
 .SH FILE
 /vld/lib/libfb.a
 .SH AUTHORS
-.PP 
 Gary S. Moss, BRL-VLD
 .br
 Michael John Muuss, BRL-SECAD
