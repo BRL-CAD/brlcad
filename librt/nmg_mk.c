@@ -1671,8 +1671,7 @@ struct edgeuse *eu;
 
 	/* if there was vertex geometry, copy it */
 	if (eu->vu_p->v_p->vg_p) {
-		bcopy((char *)eu->vu_p->v_p->vg_p, (char *)vg1,
-		    sizeof(struct vertex_g));
+		*vg1 = *(eu->vu_p->v_p->vg_p);	/* struct copy */
 		v1->vg_p = vg1;
 	} else {
 		v1->vg_p = (struct vertex_g *)NULL;
@@ -1680,8 +1679,7 @@ struct edgeuse *eu;
 	}
 
 	if (eu->eumate_p->vu_p->v_p->vg_p) {
-		bcopy((char *)eu->eumate_p->vu_p->v_p->vg_p, (char *)vg2,
-		    sizeof(struct vertex_g));
+		*vg2 = *(eu->eumate_p->vu_p->v_p->vg_p);	/* struct copy */
 		v2->vg_p = vg2;
 	} else {
 		v2->vg_p = (struct vertex_g *)NULL;
