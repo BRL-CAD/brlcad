@@ -207,14 +207,18 @@ fastf_t		dist_tol;
 
 			NMG_CK_VERTEXUSE(vu[i]);
 			dist = rt_dist_line_point( pt, dir, vu[i]->v_p->vg_p->coord );
-			if( dist > 100*dist_tol )  {
-				rt_log("ERROR ptbl_vsort() vu=x%x point off line by %g > 100*dist_tol\n", dist);
-				rt_bomb("ptbl_vsort()\n");
-			}
 			if( dist > dist_tol )  {
 				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e %g*tol, tol=%e\n",
 					vu[i], dist,
 					dist/dist_tol, dist_tol);
+				VPRINT("  vu", vu[i]->v_p->vg_p->coord);
+				VPRINT("  pt", pt);
+				VPRINT(" dir", dir);
+			}
+			if( dist > 100*dist_tol )  {
+				rt_log("ERROR ptbl_vsort() vu=x%x point off line by %g > 100*dist_tol\n",
+					vu[i], dist);
+				rt_bomb("ptbl_vsort()\n");
 			}
 		}
 	}
@@ -1531,6 +1535,32 @@ got_loop:
 }
 
 /*
+ *			N M G _ S A N I T I Z E _ F U
+ *
+ *  Eliminate any OT_BOOLPLACE self-loops that remain behind in this face.
+ */
+void
+nmg_sanitize_fu(fu)
+struct faceuse	*fu;
+{
+	struct loopuse	*lu;
+	struct loopuse	*lunext;
+
+	NMG_CK_FACEUSE(fu);
+
+	lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+	while( RT_LIST_NOT_HEAD(lu, &fu->lu_hd) )  {
+		NMG_CK_LOOPUSE(lu);
+		lunext = RT_LIST_PNEXT(loopuse,lu);
+		if( lu->orientation == OT_BOOLPLACE )  {
+			/* XXX What to do with return code? */
+			if( nmg_klu(lu) )  rt_bomb("nmg_sanitize_fu() nmg_klu() emptied face?\n");
+		}
+		lu = lunext;
+	}
+}
+
+/*
  *			N M G _ F A C E _ R S _ I N I T
  *
  *  Set up nmg_ray_state structure.
@@ -1950,6 +1980,14 @@ CONST struct rt_tol	*tol;
 
 	rt_free((char *)mag1, "vector magnitudes");
 	rt_free((char *)mag2, "vector magnitudes");
+
+	/* Eliminate any OT_BOOLPLACE self-loops now. */
+	nmg_sanitize_fu( fu1 );
+	nmg_sanitize_fu( fu2 );
+
+	/* Eliminate stray vertices that were added along edges in this step */
+	(void)nmg_unbreak_region_edges( &fu1->l.magic );
+	(void)nmg_unbreak_region_edges( &fu2->l.magic );
 }
 
 /*
