@@ -34,7 +34,7 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "tabdata.h"
 
@@ -525,7 +525,7 @@ rt_table_read( filename )
 CONST char	*filename;
 {
 	struct rt_table	*tabp;
-	struct rt_vls		line;
+	struct bu_vls		line;
 	FILE	*fp;
 	int	nw;
 	int	j;
@@ -540,11 +540,11 @@ CONST char	*filename;
 		return NULL;
 	}
 
-	rt_vls_init(&line);
-	rt_vls_gets( &line, fp );
+	bu_vls_init(&line);
+	bu_vls_gets( &line, fp );
 	nw = 0;
-	sscanf( rt_vls_addr(&line), "%d", &nw );
-	rt_vls_free(&line);
+	sscanf( bu_vls_addr(&line), "%d", &nw );
+	bu_vls_free(&line);
 
 	if( nw <= 0 ) rt_bomb("rt_table_read() bad nw value\n");
 
@@ -620,7 +620,7 @@ CONST char	*filename;
 {
 	struct rt_table	*tabp;
 	struct rt_tabdata	*data;
-	struct rt_vls		line;
+	struct bu_vls		line;
 	FILE	*fp;
 	char	buf[128];
 	int	count = 0;
