@@ -30,6 +30,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
+#include "tcl.h"
+
+#include "mged_dm.h"
 
 static int	code();
 
@@ -110,7 +114,6 @@ fastf_t x, y;
 #define EPSILON		0.0001
 #define INFINITY	100000000.0
 
-
 /*
  *			V C L I P
  *
@@ -125,9 +128,7 @@ fastf_t x, y;
  *  Implicit Return -
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-vclip( a, b, min, max )
-vect_t a, b;
-register fastf_t *min, *max;
+int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
 {
 	static vect_t diff;
 	static double sv;
