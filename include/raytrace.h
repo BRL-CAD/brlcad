@@ -2179,9 +2179,6 @@ struct rt_shootray_status {
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  *
- *  Copyright Notice -
- *	This software is Copyright (C) 1994-2004 by the United States Army
- *	in all countries except the USA.  All rights reserved.
  *
  *  $Header$
  */

@@ -31,9 +31,6 @@
  *	Robert G. Parker
  *
  *
- *  Copyright Notice -
- *	This software is Copyright (C) 1999-2004 by the United States Army
- *	in all countries except the USA.  All rights reserved.
  */
 #include "common.h"
 

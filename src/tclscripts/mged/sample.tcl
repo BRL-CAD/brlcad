@@ -28,9 +28,6 @@
 #	Aberdeen Proving Ground, Maryland  21005
 #
 #
-# Copyright Notice -
-#       This software is Copyright (C) 1998 by the United States Army
-#       in all countries except the USA.  All rights reserved.
 #
 # Description -
 #	Routines that demonstrate the oddities of Tcl programming in MGED.

@@ -29,9 +29,6 @@
 #	Aberdeen Proving Ground, Maryland  21005
 #  
 #
-# Copyright Notice -
-#	This software is Copyright (C) 1995-2004 by the United States Army
-#	in all countries except the USA.  All rights reserved.
 #
 # Description -
 #       Program to allow automated generation and interactive placement of new

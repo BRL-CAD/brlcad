@@ -46,9 +46,6 @@
 #   Aberdeen Proving Ground, Maryland 21005-5068  USA
 #
 #
-# Copyright Notice -
-#   This software is Copyright (C) 2004 by the United States Army
-#   in all countries except the USA.  All rights reserved.
 #
 ###
 

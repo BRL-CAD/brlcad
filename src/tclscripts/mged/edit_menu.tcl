@@ -30,9 +30,6 @@
 #	Aberdeen Proving Ground, Maryland  21005
 #
 #
-# Copyright Notice -
-#       This software is Copyright (C) 1998-2004 by the United States Army
-#       in all countries except the USA.  All rights reserved.
 #
 # Description -
 #	Routines for implementing Tcl/Tk edit menus.

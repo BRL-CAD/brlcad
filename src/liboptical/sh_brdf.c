@@ -35,9 +35,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *
- *  Copyright Notice -
- *	This software is Copyright (C) 1996-2004 by the United States Army
- *	in all countries except the USA.  All rights reserved.
  *
  *	Based on the simple Isotropic Gaussian Model presented by Gregory Ward
  *	in "Measuring and Modeling Anisotropic Reflection" (Which also references

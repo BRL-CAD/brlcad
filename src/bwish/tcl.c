@@ -31,9 +31,6 @@
  *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
  *
- *  Copyright Notice -
- *	This software is Copyright (C) 1998-2004 by the United States Army
- *	in all countries except the USA.  All rights reserved.
  *
  *  Cad_Main --
  *	     Main program for wish-like applications that desire command
