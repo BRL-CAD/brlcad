@@ -195,9 +195,9 @@ char *node;
 	return(0);	/* OK */
 }
 
-static vect_t xaxis = { 1.0, 0, 0, 0 };
-static vect_t yaxis = { 0, 1.0, 0, 0 };
-static vect_t zaxis = { 0, 0, 1.0, 0 };
+static vect_t xaxis = { 1.0, 0, 0 };
+static vect_t yaxis = { 0, 1.0, 0 };
+static vect_t zaxis = { 0, 0, 1.0 };
 
 /*
  *			R T _ A D D _ S O L I D
