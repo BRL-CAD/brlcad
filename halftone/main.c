@@ -3,7 +3,9 @@ static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
 #include <ctype.h>
+#include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "msr.h"
@@ -52,6 +54,9 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.4  91/07/27  01:58:57  mike
+ * Removed ^X from end of #include directive.  IBM objects, strenuously.
+ * 
  * Revision 2.3  91/07/26  21:46:22  mike
  * Made explicit the includes of machine.h, vmath.h, and raytrace.h
  * (Butler fix)
@@ -143,7 +148,6 @@ char **argv;
 	int c;
 	int i,j;
 	int *Xlist, *Ylist;
-	double atof();
 	int	autosize = 0;
 
 	while ((c = getopt(argc, argv, "D:hsa:n:w:B:M:RSI:T:")) != EOF) {
