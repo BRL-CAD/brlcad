@@ -26,23 +26,23 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 
 struct txt_specific {
+	char	tx_transp[4];	/* RGB for transparency */
 	char	tx_file[128];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_l;		/* Length of pixels in lines */
 	char	*tx_pixels;	/* Pixel holding area */
-	char	tx_transp[4];	/* RGB for transparency */
 };
 #define TX_NULL	((struct txt_specific *)0)
 
 struct matparse txt_parse[] = {
+#ifndef cray
+	"transp",	(int)(TX_NULL->tx_transp),	"%C",
 	"file",		(int)(TX_NULL->tx_file),	"%s",
+#endif
 	"w",		(int)&(TX_NULL->tx_w),		"%d",
 	"l",		(int)&(TX_NULL->tx_l),		"%d",
 	"fw",		(int)&(TX_NULL->tx_fw),		"%d",
-#ifndef cray
-	"transp",	(int)(TX_NULL->tx_transp),	"%C",
-#endif
 	(char *)0,	0,				(char *)0
 };
 
@@ -98,7 +98,7 @@ txt_render( ap, pp )
 struct application *ap;
 struct partition *pp;
 {
-	struct txt_specific *tp =
+	register struct txt_specific *tp =
 		(struct txt_specific *)pp->pt_regionp->reg_udata;
 	auto struct uvcoord uv;
 	fastf_t xmin, xmax, ymin, ymax;
@@ -174,6 +174,8 @@ struct partition *pp;
 	 * Transparency mapping is enabled, and we hit a transparent spot.
 	 * Fire another ray to determine the actual color
 	 */
+#ifndef cray
+/* UNICOS 2.0 BUG */
 	if( tp->tx_transp[3] == 0 ||
 	    r != (tp->tx_transp[0]&0xFF) ||
 	    g != (tp->tx_transp[1]&0xFF) ||
@@ -182,6 +184,7 @@ struct partition *pp;
 		VSET( ap->a_color, r * f, g * f, b * f );
 		return(1);
 	}
+#endif
 	if( pp->pt_outhit->hit_dist >= INFINITY )  {
 		rt_log("txt_render:  transparency on infinite object?\n");
 		VSET( ap->a_color, 0, 1, 0 );
