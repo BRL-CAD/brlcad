@@ -1,3 +1,4 @@
+#define NUgrid 0
 /*
  *  			C U T . C
  *  
@@ -261,7 +262,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		}
 	}
 
-#if 1
+#if NUgrid
 	rt_hist_init( &nu_hist_cellsize, 0, 399, 400 );
 	/* For the moment, re-use "union cutter" */
 	nu_grid = (union cutter *)rt_malloc(
@@ -825,7 +826,7 @@ int	depth;
 	/**** XXX This test can be improved ****/
 	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
-#if 1
+#if 0
  /* New way */
 	/*
 	 *  Attempt to make an optimal cut
