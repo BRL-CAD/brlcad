@@ -120,7 +120,7 @@ for ref in $VGRREF ; do
     RATIO=`echo "scale=2; $cur / $ref" | bc`
   fi
         # Note: append new value and a trail TAB to existing list.
- RATIO_LIST="${RATIO_LIST}$RATIO        "
+  RATIO_LIST="${RATIO_LIST}$RATIO	"
 done
 
 # The number of plus signs must be one less than the number of elements.
@@ -145,8 +145,8 @@ fi
 
 # Note:  Both RATIO_LIST and CURVALS have an extra trailing tab.
 # The question mark is for the mean field
-echo "Abs	${HOST}	${CURVALS}${MEAN_ABS}	$NOTE1"
-echo "*vgr	${HOST}	${RATIO_LIST}${MEAN_REL}	$NOTE2"
+echo "Abs  ${HOST} ${CURVALS}${MEAN_ABS}	$NOTE1"
+echo "*vgr ${HOST} ${RATIO_LIST}${MEAN_REL}	$NOTE2"
 
 # Local Variables:
 # mode: sh
