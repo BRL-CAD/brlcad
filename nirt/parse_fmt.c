@@ -76,6 +76,9 @@ outval		ValTab[] =
 		    { "ov_d_out", VTI_OV_D_OUT, OIT_FLOAT },
 		    { "surf_num_in", VTI_SURF_NUM_IN, OIT_INT },
 		    { "surf_num_out", VTI_SURF_NUM_OUT, OIT_INT },
+		    { "claimant_count", VTI_CLAIMANT_COUNT, OIT_INT },
+		    { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
+		    { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
 		    { 0 }
 		};
 outitem		*oi_list[FMT_NONE];
@@ -100,6 +103,8 @@ void				free_ospec();
 extern double			base2local;
 extern struct application	ap;
 extern char			local_u_name[];
+extern int			overlap_claims;
+extern char			*ocname[];
 
 void format_output (buffer, ctp)
 
@@ -750,6 +755,7 @@ com_table	*ctp;
 	fputs("dest default\n", sfPtr);
     else
 	fprintf(sfPtr, "dest %s\n", dest_string);
+    fprintf(sfPtr, "overlap_claims %s\n", ocname[overlap_claims]);
 
     for (f = 0; f < FMT_NONE; ++f)
     {

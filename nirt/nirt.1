@@ -114,6 +114,21 @@ See the discussion of the
 .I useair
 command below.
 .TP
+.BI -O " n"
+causes
+.I nirt
+to handle multiple regions' claims to segments of a ray
+according to action
+.IR n "."
+The argument
+.I n
+may be any of the values 0, 1, 2, or 3,
+or their corresponding key words
+``resolve'', ``rebuild_fastgen'', ``rebuild_all'', or ``retain''.
+See the discussion of the
+.I overlap_claims
+command below.
+.TP
 .BI -x " v"
 sets the
 .IR librt (3)
@@ -211,6 +226,45 @@ If this command is invoked with no arguments,
 prints the current value of
 .I useair.
 Default is 0.
+.TP 12
+.BI "overlap_claims [" n "]"
+Specifies how to handle multiple regions' claims to segments of a ray.
+If
+.I n
+is 0 or ``resolve'',
+then all overlaps are resolved in favor of a single region
+and any other claimants are ignored.
+If
+.I n
+is 2 or ``rebuild_all'',
+then all overlaps are rebuilt,
+so any overlapping regions along the ray create individual
+(geometrically intersecting) partitions.
+If
+.I n
+is 3 or ``retain'',
+then all overlaps are retained.
+In this case, the resulting partitions are always geometrically disjoint,
+each one is owned by a single region
+according to the current overlap resolution strategy,
+but every claimant is recorded.
+If
+.I n
+is 1 or ``rebuild_fastgen'',
+then
+.I nirt
+takes on
+.I FASTGEN
+behavior,
+so overlaps of plate-mode primitives are rebuilt,
+but other overlaps are retained.
+This command is useful with the
+.I claimant_count,
+.I claimant_list,
+and
+.I claimant_listn
+output items.
+Default is ``resolve''.
 .TP 12
 .BI "units [" u "]"
 Causes
@@ -461,6 +515,19 @@ to
 .TP 18
 .B reg_id
 region ID of current region.
+.TP 18
+.B claimant_count
+number of regions claiming this partition
+(that is, participating in a retained overlap).
+.TP 18
+.B claimant_list
+space-separated list of names of regions claiming this partition
+(that is, participating in a retained overlap).
+.TP 18
+.B claimant_listn
+Same as
+.I claimant_list,
+except that it is newline-, rather than space-separated.
 .TP 18
 .B obliq_in
 entry obliquity for current region.

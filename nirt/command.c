@@ -34,6 +34,8 @@ extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
 extern struct resource		res_tab[];	/* For use w/ and w/o air */
 extern com_table		ComTab[];
 extern outval			ValTab[];
+extern int			overlap_claims;
+extern char			*ocname[];
 extern int			nirt_debug;
 
 void az_el(buffer, ctp)
@@ -287,7 +289,7 @@ char	*buffer;
 	com_table	*ctp;
 
 	for (ctp = ComTab; ctp -> com_name; ++ctp)
-	    (void) bu_log("%*s %s\n", -10, ctp -> com_name, ctp -> com_desc);
+	    (void) bu_log("%*s %s\n", -14, ctp -> com_name, ctp -> com_desc);
 }
 
 void shoot(buffer, ctp)
@@ -376,6 +378,7 @@ com_table		*ctp;
 	}
 	rti_tab[new_use] = rtip;
 	rtip -> useair = new_use;
+	rtip -> rti_save_overlaps = (overlap_claims > 0);
 
 	bu_log("Prepping the geometry...");
 	do_rt_gettrees(rtip, NULL, 0);
@@ -427,6 +430,52 @@ com_table	*ctp;
 	local2base = tmp_dbl;
 	base2local = 1.0 / tmp_dbl;
     }
+}
+
+void do_overlap_claims (buffer, ctp)
+
+char		*buffer;
+com_table	*ctp;
+
+{
+    double		tmp_dbl;
+    int			i = 0;      /* current position on the *buffer */
+    int			j;
+    extern struct rt_i	*rtip;
+
+    double		mk_cvt_factor();
+
+    while (isspace(*(buffer+i)))
+	    ++i;
+    if (*(buffer+i) == '\0')     /* display current destination */
+    {
+	bu_log("overlap_claims = '%s'\n", ocname[overlap_claims]);
+	return;
+    }
+    
+    if (strcmp(buffer + i, "?") == 0)
+    {
+	com_usage(ctp);
+	return;
+    }
+    for (j = OVLP_RESOLVE; j <= OVLP_RETAIN; ++j)
+    {
+	char	numeral[4];
+	int	k;
+
+	sprintf(numeral, "%d", j);
+	if ((strcmp(buffer + i, ocname[j]) == 0)
+	  || (strcmp(buffer + i, numeral) == 0))
+	{
+	    overlap_claims = j;
+	    for (k = 0; k < 2; ++k)
+		if (rti_tab[k] != RTI_NULL)
+		    rti_tab[k] -> rti_save_overlaps = (j > 0);
+	    return;
+	}
+    }
+
+    bu_log("Invalid overlap_claims specification: '%s'\n", buffer + i);
 }
 
 void
