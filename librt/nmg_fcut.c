@@ -31,7 +31,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1994 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -69,8 +69,10 @@ static CONST char *nmg_state_names[] = {
 #define NMG_E_ASSESSMENT_RIGHT		1
 #define NMG_E_ASSESSMENT_ON_FORW	2
 #define NMG_E_ASSESSMENT_ON_REV		3
+#define NMG_E_ASSESSMENT_ERROR		4	/* risky */
 
 #define NMG_V_ASSESSMENT_LONE		16
+#define NMG_V_ASSESSMENT_ERROR		17
 #define NMG_V_COMB(_p,_n)	(((_p)<<2)|(_n))
 
 /* Extract previous and next assessments from combined version */
@@ -95,7 +97,7 @@ static CONST char *nmg_v_assessment_names[32] = {
 	"On_Rev,On_Forw",
 	"On_Rev,On_Rev",
 	"LONE_V",		/* 16 */
-	"?17",
+	"V_ERROR",		/* 17 */
 	"?18",
 	"?19",
 	"?20",
@@ -129,11 +131,13 @@ static CONST char *nmg_v_assessment_names[32] = {
 #define NMG_ON_REV_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_REV)
 #define NMG_LONE	NMG_V_ASSESSMENT_LONE
 
-static CONST char *nmg_e_assessment_names[4] = {
+static CONST char *nmg_e_assessment_names[6] = {
 	"LEFT",
 	"RIGHT",
 	"ON_FORW",
-	"ON_REV"
+	"ON_REV",
+	"E_ERROR",
+	"E_5?"
 };
 
 /*
@@ -503,6 +507,7 @@ CONST struct vertex		*v;
 
 	NMG_CK_VERTEX(v);
 	for( i=rs->nvu-1; i >= 0; i-- )  {
+		if( !rs->vu[i] )  continue;
 		if( rs->vu[i]->v_p == v )  return i;
 	}
 	return -1;
@@ -648,16 +653,24 @@ really_on:
 		 *  endpoints.  Otherwise, something awful has happened.
 		 */
 		for( i=start; i<end; i++ )  {
+			int	j;
+			if( !rs->vu[i] )  continue;
 			if( rs->vu[i]->v_p == v ||
 			    rs->vu[i]->v_p == otherv )
 				continue;
-			rt_log("In edge interval (%d,%d), ON vertexuse [%d] = x%x appears?\n",
-				start, end, i, rs->vu[i] );
-			for( i=start-1; i<=end; i++ )  {
-				rt_log(" %d ", i);
-				nmg_pr_vu_briefly( rs->vu[i], (char *)0 );
+			if(rt_g.NMG_debug&DEBUG_FCUT)  {
+				rt_log("In edge interval (%d,%d), ON vertexuse [%d] = x%x appears?\n",
+					start-1, end, i, rs->vu[i] );
+				for( j=start-1; j<=end; j++ )  {
+					if( !rs->vu[i] )  continue;
+					rt_log(" %d ", j);
+					nmg_pr_vu_briefly( rs->vu[j], (char *)0 );
+				}
+				rt_log("nmg_assess_eu():  ON vertexuse in middle of edge?\n");
 			}
-			rt_bomb("nmg_assess_eu():  ON vertexuse in middle of edge?\n");
+			/* Leave it for nmg_onon_fix() to fix */
+			ret = NMG_E_ASSESSMENT_ERROR;
+			return -i;	/* Special flag to nmg_onon_fix() */
 		}
 		goto out;
 	}
@@ -711,9 +724,15 @@ int			pos;
 	if( (lu = nmg_find_lu_of_vu(vu)) == (struct loopuse *)0 )
 		rt_bomb("nmg_assess_vu: no lu\n");
 	this_eu = nmg_find_eu_with_vu_in_lu( lu, vu );
+	/* Couldn't this have been this_eu = vu->up.eu_p ? */
+	if( this_eu != vu->up.eu_p )  rt_log("nmg_assess_vu() eu mis-match? x%x x%x\n", this_eu, vu->up.eu_p);
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
 	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
-	ass = NMG_V_COMB( prev_ass, next_ass );
+	if( prev_ass < 0 || next_ass < 0 )  {
+		ass = NMG_V_ASSESSMENT_ERROR;
+	} else {
+		ass = NMG_V_COMB( prev_ass, next_ass );
+	}
 
 	/*
 	 *  If the vu assessment is
@@ -2165,6 +2184,95 @@ fastf_t			*mag2;
 }
 
 /*
+ *			N M G _ U N L I S T _ V
+ */
+void
+nmg_unlist_v(b, v)
+struct nmg_ptbl	*b;
+struct vertex	*v;
+{
+	register int		i;
+	struct vertexuse	*vu;
+
+	NMG_CK_PTBL(b);
+	NMG_CK_VERTEX(v);
+	for( i=0; i<NMG_TBL_END(b); i++ )  {
+		vu = (struct vertexuse *)NMG_TBL_GET(b, i);
+		if( !vu )  continue;
+		if( vu->v_p == v )  NMG_TBL_GET(b, i) = (long *)0;
+	}
+}
+
+/*
+ *			N M G _ O N O N _ F I X
+ *
+ *  An attempt to fix the condition:
+ *	nmg_assess_eu():  ON vertexuse in middle of edge?
+ *
+ *  Note that the vertexuse being zapped may have a lower subscript.
+ *
+ *  Must be called after vu list has been sorted.
+ */
+int
+nmg_onon_fix( rs, b, ob )
+struct nmg_ray_state	*rs;
+struct nmg_ptbl		*b;
+struct nmg_ptbl		*ob;	/* other rs's vu list */
+{
+	int		i;
+	int		zapped;
+	struct vertexuse	*vu;
+	struct vertex		*v;
+	int		zot;
+
+	NMG_CK_PTBL(b);
+	NMG_CK_PTBL(ob);
+
+	zapped = 0;
+	for( i=0; i<NMG_TBL_END(b); i++ )  {
+again:
+		vu = (struct vertexuse *)NMG_TBL_GET(b, i);
+		if( !vu )  continue;
+		NMG_CK_VERTEXUSE(vu);
+		if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  continue;
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		if( (zot = nmg_assess_eu( vu->up.eu_p, 0, rs, i )) < 0 )  {
+			if(rt_g.NMG_debug&DEBUG_FCUT)  {
+				rt_log("nmg_onon_fix(): vu[%d] zapped (rev)\n", -zot);
+			}
+doit:
+			vu = (struct vertexuse *)NMG_TBL_GET(b, -zot);
+			NMG_CK_VERTEXUSE(vu);
+			v = vu->v_p;
+			/* Need to null out all uses of this vertex from both lists */
+			nmg_unlist_v(b, v);
+			nmg_unlist_v(ob, v);
+			zapped++;
+			goto again;
+		}
+
+		if( (zot = nmg_assess_eu( vu->up.eu_p, 1, rs, i )) < 0 )  {
+			if(rt_g.NMG_debug&DEBUG_FCUT)  {
+				rt_log("nmg_onon_fix(): vu[%d] zapped (forw)\n", -zot);
+			}
+			goto doit;
+		}
+	}
+	if( zapped )  {
+		/* If any vertexuses got zapped, their pointer was set to NULL.
+		 *  They can all be removed from the list in one easy operation.
+		 */
+		rt_log("nmg_onon_fix(): removing %d dead vertexuses\n", zapped);
+		nmg_tbl(b, TBL_RM, 0 );
+		nmg_tbl(ob, TBL_RM, 0 );
+		return 1;
+	}
+
+	return 0;
+}
+
+/*
  *			N M G _ F A C E _ C U T J O I N
  *
  *  The main face cut handler.
@@ -2238,8 +2346,12 @@ top:
 		}
 	}
 
+	/* Check to make sure that intersector didn't miss anything */
+	if( nmg_ck_vu_ptbl( b1, fu1 ) || nmg_ck_vu_ptbl( b2, fu2 ) )  goto top;
+
 #if 0
 	/* Check to see if lists are different */
+	/* XXX Note that there may be different numbers of multiple uses in different faces.  This won't work. */
 	{
 		i = b1->end-1;
 		if( b2->end-1 < i )  i = b2->end-1;
@@ -2253,10 +2365,9 @@ top:
 	}
 #endif
 
-#if 0
 	/* this block of code checks if the two lists of intersection vertexuses
 	 * contain vertexuses from the appropriate faceuse */
-	{
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		int found1=(-1),found2=(-1); /* -1 => not set, 0 => no vertexuses from faceuse found */
 		int tmp_found;
 		struct faceuse *fu;
@@ -2300,12 +2411,12 @@ top:
 		if( !found2 )
 			rt_log( "nmg_face_cutjoin: intersection list for face 2 doesn't contain vertexuses from face 2!!!\n" );
 	}
-#endif
-	/* Check to make sure that intersector didn't miss anything */
-	if( nmg_ck_vu_ptbl( b1, fu1 ) || nmg_ck_vu_ptbl( b2, fu2 ) )  goto top;
 
 	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir, tol );
 	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, tol );
+
+	/* Ensure that small angles don't plunk vertexuses down onto the intersection line */
+	if( nmg_onon_fix( &rs1, b1, b2 ) || nmg_onon_fix( &rs2, b2, b1 ) )  goto top;
 
 	nmg_face_combineX( &rs1, mag1, &rs2, mag2 );
 
@@ -2757,10 +2868,12 @@ rt_log("force next eu to ray\n");
 		/* Print the faceuse for later analysis */
 		rt_log("Loop with the offending vertex\n");
 		nmg_pr_lu_briefly(lu, (char *)0);
+#if 0
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("The whole face\n");
 			nmg_pr_fu(lu->up.fu_p, (char *)0);
 		}
+#endif
 
 		/* Drop a plot file */
 		rt_g.NMG_debug |= DEBUG_FCUT|DEBUG_PLOTEM;
