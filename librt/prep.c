@@ -256,7 +256,7 @@ struct soltab		*stp;
 	}
 
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, stp->st_pathmat ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, &ext, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
 		rt_log("rt_plot_solid(%s):  solid import failure\n",
 			stp->st_name );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
@@ -361,6 +361,8 @@ register struct rt_i *rtip;
 			rt_bomb("rt_clean:  bad st_id");
 		rt_functab[stp->st_id].ft_free( stp );
 		rt_free( (char *)stp->st_regions, "st_regions bitv" );
+		if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
+		stp->st_matp = (matp_t)0;
 		stp->st_regions = (bitv_t *)0;
 		stp->st_dp = DIR_NULL;		/* was ptr to directory */
 		rt_free( (char *)stp, "struct soltab");

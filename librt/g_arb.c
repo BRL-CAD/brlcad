@@ -789,7 +789,7 @@ register struct uvcoord *uvp;
 				stp->st_name);
 			return;
 		}
-		if( rt_arb_import( &intern, &ext, stp->st_pathmat ) < 0 )  {
+		if( rt_arb_import( &intern, &ext, stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
 			rt_log("rt_arb_uv(%s) database import error\n",
 				stp->st_name);
 			db_free_external( &ext );
