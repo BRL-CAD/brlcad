@@ -231,6 +231,7 @@ static int wdb_nmg_simplify_tcl();
 static int wdb_summary_tcl();
 static int wdb_pathlist_tcl();
 static int wdb_lt_tcl();
+static int wdb_version_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -308,6 +309,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"tree",	wdb_tree_tcl},
 	{"unhide",	wdb_unhide_tcl},
 	{"units",	wdb_units_tcl},
+	{"version",	wdb_version_tcl},
 	{"whatid",	wdb_whatid_tcl},
 	{"whichair",	wdb_which_tcl},
 	{"whichid",	wdb_which_tcl},
@@ -4289,6 +4291,45 @@ wdb_lt_tcl(ClientData	clientData,
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 
 	return wdb_lt_cmd(wdbp, interp, argc-1, argv+1);
+}
+
+int
+wdb_version_cmd(struct rt_wdb	*wdbp,
+		Tcl_Interp	*interp,
+		int		argc,
+		char 		**argv)
+{
+	struct bu_vls	vls;
+
+	bu_vls_init(&vls);
+
+	if (argc != 1) {
+		bu_vls_printf(&vls, "helplib_alias wdb_version %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	bu_vls_printf(&vls, "%d", wdbp->dbip->dbi_version);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname version
+ */
+static int
+wdb_version_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int     	argc,
+		char    	**argv)
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_version_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 /*
