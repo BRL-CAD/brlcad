@@ -3,18 +3,6 @@
  *
  * Ray Tracing program, Boolean region evaluator.
  *
- * Inputs -
- *	Pointer to first segment in seg chain.
- *	Pointer to head of circular doubly-linked list of
- *	partitions of the original ray.
- *
- * Outputs -
- *	Final partitions, queued on doubly-linked list specified.
- *
- * Notes -
- *	It is the responsibility of the CALLER to free the seg chain,
- *	as well as the partition list that we return.
- *
  * Author -
  *	Michael John Muuss
  *  
@@ -55,6 +43,18 @@ void	rt_grow_boolstack();
  *  following it may in fact be the same edge.  This could be dealt with
  *  by giving the partition struct a COPY of the inhit and outhit rather
  *  than a pointer, but that's more cycles than the neatness is worth.
+ *
+ * Inputs -
+ *	Pointer to first segment in seg chain.
+ *	Pointer to head of circular doubly-linked list of
+ *	partitions of the original ray.
+ *
+ * Outputs -
+ *	Partitions, queued on doubly-linked list specified.
+ *
+ * Notes -
+ *	It is the responsibility of the CALLER to free the seg chain,
+ *	as well as the partition list that we return.
  */
 void
 rt_boolweave( segp_in, PartHdp, ap )
@@ -66,7 +66,8 @@ struct application	*ap;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 
-	if( ap->a_rt_i->rti_magic != RTI_MAGIC )  rt_bomb("rt_boolweave:  bad rtip\n");
+	RT_CHECK_RTI(ap->a_rt_i);
+
 	if(rt_g.debug&DEBUG_PARTITION)
 		rt_log("-------------------BOOL_WEAVE\n");
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
@@ -393,6 +394,7 @@ struct region			*reg2;
 
 /*
  *			R T _ B O O L F I N A L
+ *
  *
  * For each partition, evaluate the boolean expression tree.
  * If 0 regions result, continue with next partition.
@@ -757,69 +759,6 @@ pop:
 }
 
 /*
- *			R T _ P R _ P A R T I T I O N S
- *
- */
-void
-rt_pr_partitions( rtip, phead, title )
-struct rt_i		*rtip;
-register struct partition *phead;
-char *title;
-{
-	register struct partition *pp;
-
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_partitions:  bad rtip\n");
-
-	rt_log("------%s\n", title);
-	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
-		RT_CHECK_PT(pp);
-		rt_pr_pt(rtip, pp);
-	}
-	rt_log("------\n");
-}
-
-/*
- *			R T _ P R _ P T
- */
-void
-rt_pr_pt( rtip, pp )
-struct rt_i		*rtip;
-register struct partition *pp;
-{
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_pr_pt:  bad rtip\n");
-	RT_CHECK_PT(pp);
-
-	rt_log("%.8x: PT %s %s (%g,%g)",
-		pp,
-		pp->pt_inseg->seg_stp->st_name,
-		pp->pt_outseg->seg_stp->st_name,
-		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
-	rt_log("%s%s\n",
-		pp->pt_inflip ? " Iflip" : "",
-		pp->pt_outflip ?" Oflip" : "" );
-	rt_pr_bitv( "Solids", pp->pt_solhit, rtip->nsolids );
-}
-
-/*
- *			R T _ P R _ B I T V
- *
- *  Print the bits set in a bit vector.
- */
-void
-rt_pr_bitv( str, bv, len )
-char *str;
-register bitv_t *bv;
-register int len;
-{
-	register int i;
-	rt_log("%s: ", str);
-	for( i=0; i<len; i++ )
-		if( BITTEST(bv,i) )
-			rt_log("%d, ", i );
-	rt_log("\n");
-}
-
-/*
  *			R T _ F D I F F
  *  
  *  Compares two floating point numbers.  If they are within "epsilon"
@@ -916,35 +855,6 @@ double	a, b;
 }
 
 /*
- *			R T _ P R _ S E G
- */
-void
-rt_pr_seg(segp)
-register struct seg *segp;
-{
-	RT_CHECK_SEG(segp);
-	rt_log("%.8x: SEG %s (%g,%g) bit=%d\n",
-		segp,
-		segp->seg_stp->st_name,
-		segp->seg_in.hit_dist,
-		segp->seg_out.hit_dist,
-		segp->seg_stp->st_bit );
-}
-
-/*
- *			R T _ P R _ H I T
- */
-void
-rt_pr_hit( str, hitp )
-char *str;
-register struct hit *hitp;
-{
-	rt_log("HIT %s dist=%g\n", str, hitp->hit_dist );
-	VPRINT("HIT Point ", hitp->hit_point );
-	VPRINT("HIT Normal", hitp->hit_normal );
-}
-
-/*
  *			R T _ G R O W _ B O O L S T A C K
  *
  *  Increase the size of re_boolstack to double the previous size.
@@ -968,44 +878,4 @@ register struct resource	*resp;
 			sizeof(union tree *) * resp->re_boolslen,
 			"extend boolstack" );
 	}
-}
-
-/*
- *			R T _ P R I N T B
- *
- *  Print a value a la the %b format of the kernel's printf
- *
- *    s		title string
- *    v		the integer with the bits in it
- *    bits	a string which starts with the desired base, then followed by
- *		words preceeded with embedded low-value bytes indicating
- *		bit number plus one,
- *		in little-endian order, eg:
- *		"\010\2Bit_one\1BIT_zero"
- */
-void
-rt_printb(s, v, bits)
-char *s;
-register unsigned long v;
-register char *bits;
-{
-	register int i, any = 0;
-	register char c;
-
-	if (*bits++ == 8)
-		rt_log("%s=0%o <", s, v);
-	else
-		rt_log("%s=x%x <", s, v);
-	while (i = *bits++) {
-		if (v & (1L << (i-1))) {
-			if (any)
-				rt_log(",");
-			any = 1;
-			for (; (c = *bits) > 32; bits++)
-				rt_log("%c", c);
-		} else
-			for (; *bits > 32; bits++)
-				;
-	}
-	rt_log(">");
 }

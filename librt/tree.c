@@ -80,11 +80,7 @@ char *node;
 	struct mater_info root_mater;
 	int	prev_sol_count;
 
-	if( rtip->rti_magic != RTI_MAGIC )  {
-		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
-			rtip->rti_magic, RTI_MAGIC );
-		rt_bomb("rt_gettree:  bad rtip\n");
-	}
+	RT_CHECK_RTI(rtip);
 
 	if(!rtip->needprep)
 		rt_bomb("rt_gettree called again after rt_prep!");
@@ -710,7 +706,7 @@ int		noisy;
 	struct directory *dp;
 	struct directory **newpath;
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_plookup:  bad rtip\n");
+	RT_CHECK_RTI(rtip);
 
 	depth = 0;
 	if( *cp == '\0' )  return(-1);
@@ -741,99 +737,6 @@ int		noisy;
 		depth*sizeof(struct directory *) );
 	*dirp = newpath;
 	return( depth );
-}
-
-/*
- *			R T _ P R _ R E G I O N
- */
-void
-rt_pr_region( rp )
-register struct region *rp;
-{
-	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
-	rt_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
-		rp->reg_instnum,
-		rp->reg_regionid, rp->reg_aircode,
-		rp->reg_gmater, rp->reg_los );
-	if( rp->reg_mater.ma_override == 1 )
-		rt_log("Color %d %d %d\n",
-			(int)rp->reg_mater.ma_color[0]*255.,
-			(int)rp->reg_mater.ma_color[1]*255.,
-			(int)rp->reg_mater.ma_color[2]*255. );
-	if( rp->reg_mater.ma_matname[0] != '\0' )
-		rt_log("Material '%s' '%s'\n",
-			rp->reg_mater.ma_matname,
-			rp->reg_mater.ma_matparm );
-	rt_pr_tree( rp->reg_treetop, 0 );
-	rt_log("\n");
-}
-
-/*
- *			R T _ P R _ T R E E
- */
-void
-rt_pr_tree( tp, lvl )
-register union tree *tp;
-int lvl;			/* recursion level */
-{
-	register int i;
-
-	rt_log("%.8x ", tp);
-	for( i=lvl; i>0; i-- )
-		rt_log("  ");
-
-	if( tp == TREE_NULL )  {
-		rt_log("Null???\n");
-		return;
-	}
-
-	switch( tp->tr_op )  {
-
-	case OP_SOLID:
-		rt_log("SOLID %s (bit %d)",
-			tp->tr_a.tu_stp->st_name,
-			tp->tr_a.tu_stp->st_bit );
-		break;
-
-	default:
-		rt_log("Unknown op=x%x\n", tp->tr_op );
-		return;
-
-	case OP_UNION:
-		rt_log("UNION");
-		break;
-	case OP_INTERSECT:
-		rt_log("INTERSECT");
-		break;
-	case OP_SUBTRACT:
-		rt_log("MINUS");
-		break;
-	case OP_XOR:
-		rt_log("XOR");
-		break;
-	case OP_NOT:
-		rt_log("NOT");
-		break;
-	}
-	rt_log("\n");
-
-	switch( tp->tr_op )  {
-	case OP_SOLID:
-		break;
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-		/* BINARY type */
-		rt_pr_tree( tp->tr_b.tb_left, lvl+1 );
-		rt_pr_tree( tp->tr_b.tb_right, lvl+1 );
-		break;
-	case OP_NOT:
-	case OP_GUARD:
-		/* UNARY tree */
-		rt_pr_tree( tp->tr_b.tb_left, lvl+1 );
-		break;
-	}
 }
 
 /*
@@ -950,7 +853,7 @@ register fastf_t	*min_rpp, *max_rpp;
 {	
 	register struct region	*regp = rt_getregion( rtip, reg_name );
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_rpp_region:  bad rtip\n");
+	RT_CHECK_RTI(rtip);
 
 	if( regp == REGION_NULL )  return(0);
 	VMOVE( min_rpp, rtip->mdl_max );
@@ -1056,7 +959,7 @@ register char *name;
 	register struct soltab *stp;
 	register char *cp;
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_find_solid:  bad rtip\n");
+	RT_CHECK_RTI(rtip);
 
 	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
 		if( *(cp = stp->st_name) == *name  &&
@@ -1220,30 +1123,4 @@ struct resource		*resp;
 			break;
 		}
 	}
-}
-
-/*
- *			R T _ P R _ S O L T A B
- */
-void
-rt_pr_soltab( stp )
-register struct soltab	*stp;
-{
-	register int	id = stp->st_id;
-
-	if( id <= 0 || id > ID_MAXIMUM )  {
-		rt_log("stp=x%x, id=%d.\n", stp, id);
-		rt_bomb("rt_pr_soltab:  bad st_id");
-	}
-	rt_log("------------ %s (bit %d) %s ------------\n",
-		stp->st_name, stp->st_bit,
-		rt_functab[id].ft_name );
-	VPRINT("Bound Sph CENTER", stp->st_center);
-	rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
-	rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
-	VPRINT("Bound RPP min", stp->st_min);
-	VPRINT("Bound RPP max", stp->st_max);
-	rt_pr_bitv( "Referenced by Regions",
-		stp->st_regions, stp->st_maxreg );
-	rt_functab[id].ft_print( stp );
 }
