@@ -3191,6 +3191,7 @@ struct rt_db_internal	*ip;
 			VUNITIZE( work );
 			VSCALE( work, work,
 				MAGNITUDE(rhc->rhc_B) + rhc->rhc_c );
+			VADD2( work, work, rhc->rhc_V );
 			MAT4X3PNT(pos_view, xform, work);
 			POINT_LABEL( pos_view, 'c' );
 		}
@@ -3251,12 +3252,9 @@ struct rt_db_internal	*ip;
 			POINT_LABEL( pos_view, 'B' );
 
 			VMOVE( work, ehy->ehy_H );
-VPRINT("H", ehy->ehy_H);
 			VUNITIZE( work );
-VPRINT("Hu", work);
 			VSCALE( work, work,
 				MAGNITUDE(ehy->ehy_H) + ehy->ehy_c );
-VPRINT("c", work);
 			VADD2( work, ehy->ehy_V, work );
 			MAT4X3PNT(pos_view, xform, work);
 			POINT_LABEL( pos_view, 'c' );
