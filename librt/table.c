@@ -648,7 +648,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 	},
 
 	{RT_FUNCTAB_MAGIC, "ID_SUBMODEL", "submodel",
-		0,		/* 28 Instanced submodel */
+		1,		/* 28 Instanced submodel */
 		rt_submodel_prep,	rt_submodel_shot,	rt_submodel_print,	rt_submodel_norm,
 		rt_submodel_uv,		rt_submodel_curve,	rt_submodel_class,	rt_submodel_free,
 		rt_submodel_plot,	rt_vstub,		rt_submodel_tess,	rt_nul_tnurb,
