@@ -119,6 +119,53 @@ struct dbcmdstruct {
 };
 
 /*
+ *			R T _ T C L _ P R _ H I T
+ *
+ *  Format a hit in a TCL-friendly format.
+ *
+ *  It is possible that a solid may have been removed from the
+ *  directory after this database was prepped, so check pointers
+ *  carefully.
+ *
+ *  It might be beneficial to use some format other than %g to
+ *  give the user more precision.
+ */
+void
+rt_tcl_pr_hit( interp, hitp, segp, rayp, flipflag )
+Tcl_Interp	*interp;
+struct hit	*hitp;
+struct seg	*segp;
+struct xray	*rayp;
+int		flipflag;
+{
+	struct bu_vls	str;
+	vect_t		norm;
+	struct soltab	*stp;
+	CONST struct directory	*dp;
+
+	RT_CK_SEG(segp);
+	stp = segp->seg_stp;
+	RT_CK_SOLTAB(stp);
+	dp = stp->st_dp;
+	RT_CK_DIR(dp);
+
+	RT_HIT_NORMAL( norm, hitp, stp, rayp, flipflag );
+
+	bu_vls_init(&str);
+	bu_vls_printf( &str, " {dist %g point {", hitp->hit_dist);
+	bn_encode_vect( &str, hitp->hit_point );
+	bu_vls_printf( &str, "} normal {" );
+	bn_encode_vect( &str, norm );
+	bu_vls_printf( &str, "} surfno %d solid %s}",
+		hitp->hit_surfno,
+		dp->d_namep );
+
+	Tcl_AppendResult( interp, bu_vls_addr( &str ), (char *)NULL );
+	bu_vls_free( &str );
+}
+
+/*
+ *			R T _ T C L _ A _ H I T
  */
 int
 rt_tcl_a_hit( ap, PartHeadp, segHeadp )
@@ -127,21 +174,36 @@ struct partition	*PartHeadp;
 struct seg		*segHeadp;
 {
 	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
+	register struct partition *pp;
 
-	Tcl_AppendResult( interp, "hit!\n", (char *)NULL );
+	RT_CK_PT_HD(PartHeadp);
 
-	return 0;
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
+		RT_CK_PT(pp);
+		Tcl_AppendResult( interp, " {in ", (char *)NULL );
+		rt_tcl_pr_hit( interp, pp->pt_inhit, pp->pt_inseg,
+			&ap->a_ray, pp->pt_inflip );
+		Tcl_AppendResult( interp, " out ", (char *)NULL );
+		rt_tcl_pr_hit( interp, pp->pt_outhit, pp->pt_outseg,
+			&ap->a_ray, pp->pt_outflip );
+		Tcl_AppendResult( interp,
+			" region ",
+			pp->pt_regionp->reg_name,
+			(char *)NULL );
+		Tcl_AppendResult( interp, "}", (char *)NULL );
+	}
+
+	return 1;
 }
 
 /*
+ *			R T _ T C L _ A _ M I S S
  */
 int
 rt_tcl_a_miss( ap )
 struct application	*ap;
 {
 	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
-
-	Tcl_AppendResult( interp, "miss!\n", (char *)NULL );
 
 	return 0;
 }
@@ -150,8 +212,23 @@ struct application	*ap;
 /*
  *			R T _ T C L _ S H O O T R A Y
  *
- *  Usage:
- *	.rt shootray {P} {V}
+ *  Usage -
+ *	widgetname shootray {P} dir|at {V}
+ *
+ *  Example -
+ *	set glob_compat_mode 0
+ *	.inmem rt_gettrees .rt all.g
+ *	.rt shootray {0 0 0} dir {0 0 -1}
+ *
+ *	set tgt [bu_get_value_by_keyword V [concat type [.inmem get LIGHT]]]
+ *	.rt shootray {0 0 0} at $tgt
+ *		
+ *
+ *  Returns -
+ *	A list of zero or more partitions.
+ *	Each partition is a list containing an in, out, and region keyword.
+ *	Each segment is a list containing a
+ *		dist, point, normal, surfno, and solid keyword.
  */
 int
 rt_tcl_rt_shootray( clientData, interp, argc, argv )
@@ -163,10 +240,10 @@ char **argv;
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
 
-	if( argc != 4 )  {
+	if( argc != 5 )  {
 		Tcl_AppendResult( interp,
 				"wrong # args: should be \"",
-				argv[0], " ", argv[1], " {P} {V}\"",
+				argv[0], " ", argv[1], " {P} dir|at {V}\"",
 				(char *)NULL );
 		return TCL_ERROR;
 	}
@@ -177,9 +254,24 @@ char **argv;
 	RT_CK_RTI_TCL(rtip);
 
 	if( bn_decode_vect( ap->a_ray.r_pt,  argv[2] ) != 3 ||
-	    bn_decode_vect( ap->a_ray.r_dir, argv[3] ) != 3 )  {
+	    bn_decode_vect( ap->a_ray.r_dir, argv[4] ) != 3 )  {
 		Tcl_AppendResult( interp,
-			"badly formatted vector\n", (char *)NULL );
+			"badly formatted vector", (char *)NULL );
+		return TCL_ERROR;
+	}
+	switch( argv[3][0] )  {
+	case 'd':
+		/* [4] is direction vector */
+		break;
+	case 'a':
+		/* [4] is target point, build a vector from start pt */
+		VSUB2( ap->a_ray.r_dir, ap->a_ray.r_dir, ap->a_ray.r_pt );
+		break;
+	default:
+		Tcl_AppendResult( interp,
+				"wrong keyword: '", argv[4],
+				"', should be one of 'dir' or 'at'",
+				(char *)NULL );
 		return TCL_ERROR;
 	}
 	VUNITIZE( ap->a_ray.r_dir );	/* sanity */
@@ -187,7 +279,6 @@ char **argv;
 	ap->a_miss = rt_tcl_a_miss;
 	ap->a_uptr = (genptr_t)interp;
 
-rt_g.debug |= DEBUG_ALLRAYS;
 	(void)rt_shootray( ap );
 
 	return TCL_OK;
@@ -198,6 +289,7 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 #if 0
 	"prep",		rt_tcl_rt_prep,		/* haste | efficient */
 	"useair",	rt_tcl_useair,
+	"onehit",	rt_tcl_onehit,
 #endif
 	(char *)0,	(int (*)())0
 };
@@ -240,7 +332,6 @@ char **argv;
 	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
 		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
-	Tcl_AppendResult( interp, "\n", (char *)NULL );
 	return TCL_ERROR;
 }
 
@@ -404,7 +495,7 @@ char		*str;
 
 	if( argc <= 0 || argc > 3 )  {
 		Tcl_AppendResult( interp, "db_tcl_tree_parse: tree node does not have 1, 2 or 2 elements: ",
-			str, (char *)NULL );
+			str, "\n", (char *)NULL );
 		goto out;
 	}
 
@@ -419,7 +510,7 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 
 	if( argv[0][1] != '\0' )  {
 		Tcl_AppendResult( interp, "db_tcl_tree_parse() operator is not single character: ",
-			argv[0], "\n", (char *)NULL );
+			argv[0], (char *)NULL );
 		goto out;
 	}
 
@@ -434,7 +525,7 @@ Tcl_AppendResult( interp, "\n\n", NULL);
 			tp->tr_l.tl_mat = (matp_t)bu_malloc( sizeof(mat_t), "tl_mat");
 			if( bn_decode_mat( tp->tr_l.tl_mat, argv[2] ) != 16 )  {
 				Tcl_AppendResult( interp, "db_tcl_tree_parse: unable to parse matrix '",
-					argv[2], "', using all-zeros\n", (char *)NULL );
+					argv[2], "', using all-zeros", (char *)NULL );
 				bn_mat_zero( tp->tr_l.tl_mat );
 			}
 		}
@@ -465,7 +556,7 @@ binary:
 		if( argv[1] == (char *)NULL || argv[2] == (char *)NULL )  {
 			Tcl_AppendResult( interp, "db_tcl_tree_parse: binary operator ",
 				argv[0], " has insufficient operands in ",
-				str, "\n", (char *)NULL );
+				str, (char *)NULL );
 			bu_free( (char *)tp, "union tree" );
 			tp = TREE_NULL;
 			goto out;
