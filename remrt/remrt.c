@@ -157,6 +157,8 @@ register struct vls	*op, *ip;
 
 FBIO *fbp = FBIO_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
+int fbwidth;			/* fb width  - S command */
+int fbheight;			/* fb height - S command */
 
 int running = 0;		/* actually working on it */
 int detached = 0;		/* continue after EOF */
@@ -1855,14 +1857,13 @@ char *name;
 
 	if( fbp != FBIO_NULL )  fb_close(fbp);
 
-#if 1
-	/* Large-screen version, for demonstrations */
-	xx = yy = 1024;
-#else
-	/* one-to-one version */
-	xx = width;
-	yy = height;
-#endif
+	xx = fbwidth;
+	yy = fbheight;
+	if( xx <= 0 )
+		xx = width;
+	if( yy <= 0 )
+		yy = height;
+
 	while( xx < width )
 		xx <<= 1;
 	while( yy < width )
@@ -2457,6 +2458,19 @@ char	**argv;
 		width, height);
 }
 
+cd_S( argc, argv )
+int	argc;
+char	**argv;
+{
+	fbwidth = fbheight = atoi( argv[1] );
+	if( fbwidth < 4 || fbwidth > 16*1024 )
+		fbwidth = 512;
+	if( fbheight < 4 || fbheight > 16*1024 )
+		fbheight = 512;
+	rt_log("fb width=%d, height=%d, takes effect after next attach\n",
+		fbwidth, fbheight);
+}
+
 cd_hyper( argc, argv )
 int	argc;
 char	**argv;
@@ -2973,6 +2987,10 @@ struct command_tab cmd_tab[] = {
 		cd_rdebug,	2, 2,
 	"f", "square_size",	"set square frame size",
 		cd_f,		2, 2,
+	"s", "square_size",	"set square frame size",
+		cd_f,		2, 2,
+	"S", "square_size",	"set square frame buffer size",
+		cd_S,		2, 2,
 	"-H", "hypersample",	"set number of hypersamples/pixel",
 		cd_hyper,	2, 2,
 	"-B", "0|1",		"set benchmark flag",
