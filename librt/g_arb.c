@@ -883,32 +883,12 @@ struct directory	*dp;
 	/*  List the vertices for each face in clockwise order */
 	for( i=0; i<6; i++ )  {
 		register struct arb_info	*aip = &arb_info[i];
-#if 1
+
 		vertp[0] = &verts[aip->ai_sub[0]];
 		vertp[1] = &verts[aip->ai_sub[1]];
 		vertp[2] = &verts[aip->ai_sub[2]];
 		vertp[3] = &verts[aip->ai_sub[3]];
-
-#if 0
-		rt_log("\ni:%d\n", i);
-		for (j=0 ; j < 8 ; ++j)
-			rt_log("verts[%d]: %8x\n", j, verts[j]);
-		for (j=0 ; j < 4 ; ++j)
-			rt_log("vertp[%d]:(%8x)->%8x\n", j, vertp[j], *vertp[j]);
-#endif
 		outfaceuses[i] = nmg_cmface(s, vertp, 4);
-#else
-		struct vertex	*vertlist[4];
-		vertlist[0] = verts[aip->ai_sub[0]];
-		vertlist[1] = verts[aip->ai_sub[1]];
-		vertlist[2] = verts[aip->ai_sub[2]];
-		vertlist[3] = verts[aip->ai_sub[3]];
-		outfaceuses[i] = nmg_cface(s, vertlist, 4);
-		verts[aip->ai_sub[0]] = vertlist[0];
-		verts[aip->ai_sub[1]] = vertlist[1];
-		verts[aip->ai_sub[2]] = vertlist[2];
-		verts[aip->ai_sub[3]] = vertlist[3];
-#endif
 	}
 
 	/* Associate vertex geometry */
@@ -920,27 +900,8 @@ struct directory	*dp;
 		if(outfaceuses[i])  rt_mk_nmg_planeeqn( outfaceuses[i] );
 	}
 
-#if 0
-	/* Glue the edges of different outward pointing face uses together */
-	nmg_gluefaces( outfaceuses, 6 );
-#endif
-
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
-
-#if 0
-	{
-		FILE *file;
-		if( (file = fopen("mged.pl", "w")) == NULL )  {
-			perror("mged.pl");
-		} else {
-			nmg_pl_r( file, *r );
-			fclose( file );
-			printf("wrote mged.pl\n");
-		}
-	}
-#endif
-
 	return(0);
 }
 
