@@ -135,7 +135,7 @@ found:
  *  Given a shader/material name, try to find a DSO to supply the shader.
  *
  */
-static struct mfuncs *
+struct mfuncs *
 load_dynamic_shader(const char *material,
 		    const int mlen)
 {
