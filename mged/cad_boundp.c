@@ -42,10 +42,8 @@ static char	sccsid[] = "@(#)cad_boundp.c	1.13";
 
 #ifdef HAVE_STDARG_H
 #include	<stdarg.h>
-#elif HAVE_VARARGS_H
-#include	<varargs.h>
 #else
-#include "Need to have stdarg.h or varargs.h."
+#include	<varargs.h>
 #endif
 
 #include "machine.h"
