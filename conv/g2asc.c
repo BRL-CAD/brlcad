@@ -162,7 +162,7 @@ int			ngran;
 void
 nmg_dump()
 {
-	union record		*rec;
+	union record		rec;
 	long			i,granules;
 	long			struct_count[26];
 	int			j,k;
@@ -176,19 +176,6 @@ nmg_dump()
 
 	/* get number of granules needed for this NMG */
 	granules = rt_glong(record.nmg.N_count);
-
-	/* allocate memory to store the granules */
-	rec = (union record *)rt_calloc( granules , sizeof( union record ) , "g2asc: nmg: rec" );
-
-	/* Read the records */
-	for( i=0 ; i<granules ; i++ )
-	{
-		if( !fread( (char *)&rec[i], sizeof record, 1, stdin ) )
-		{
-			(void)fprintf( stderr , "Error reading nmg granules\n" );
-			exit( -1 );
-		}
-	}
 
 	/* get the array of structure counts */
 	for( j=0 ; j<26 ; j++ )
@@ -210,8 +197,13 @@ nmg_dump()
 	for( i=0 ; i<granules ; i++ )
 	{
 		char *cp;
-
-		cp = (char *)&rec[i];
+		/* Read the record */
+		if( !fread( (char *)&rec, sizeof record, 1, stdin ) )
+		{
+			(void)fprintf( stderr , "Error reading nmg granules\n" );
+			exit( -1 );
+		}
+		cp = (char *)&rec;
 
 		/* 32 bytes per line */
 		for( k=0 ; k<sizeof( union record)/32 ; k++ )
@@ -221,8 +213,6 @@ nmg_dump()
 			putchar( '\n' );
 		}
 	}
-
-	rt_free( (char *)rec , "g2asc: nmg: rec" );
 }
 
 void
