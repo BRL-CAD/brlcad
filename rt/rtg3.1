@@ -182,6 +182,24 @@ displayed:
 .nf
 .ce \fIcat rtrpp.plot rtg3.pl | pl-sgi\fR
 .fi
+.SH OVERLAP REPORTING
+\fIRTG3\fR shares overlap handling and reporting with the rest of the
+\fIRT\fR family of applications.  A brief description of the overlap
+reporting follows.
+.LP
+The first one hundred (100) overlaps are individually reported.  Thereafter,
+the user us notified that further overlaps, if found, are omitted.  This
+alerts the user that more overlaps exist, but that they are too numerous to
+list individually.  The general overlap message takes the following form:
+.nf
+.ce \fI"OVERLAP1: reg=region_name isol=solid_name"\fR
+.ce \fI"OVERLAP2: reg=region_name isol=solid_name"\fR
+.ce \fI"OVERLAP depth #mm at (x, y, z) x# y# lvl#"\fR
+.fi
+This means that OVERLAP1 and OVERLAP2 share a common space (depth) of
+#millimeters at the x, y, and z vector coordinated within the model, and 
+at the ray coordinates (screen coordinates) x and y.  Level refers to the
+level of recursion.
 .SH DIAGNOSTICS
 Numerous error conditions are possible, usually due to errors in
 the geometry database.
