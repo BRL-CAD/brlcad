@@ -61,20 +61,21 @@ char *av[];
 	struct dsreq *dsp;
 	int	fd;
 	int i;
-	int bufpos;
-	unsigned char	*buf = (unsigned char *)NULL;
 	int	canon_y;
 	int	pix_y;
 	int	buf_y;
-	int	x;
+	u_char	obuf[255*1024];
+
+	/* pick the LUN for the scanner this time */
+	(void)strncpy( scsi_device, "/dev/scsi/sc0d6l0", 1024 );
 
 	/* parse command flags, and make sure there are arguments
 	 * left over for processing.
 	 */
 	if ((arg_index = parse_args(ac, av)) < ac) {
-		if ((fd=open(av[arg_index], 0)) < 0) {
-			(void)fprintf(stderr, "%s: ", progname);
+		if ((fd=creat(av[arg_index], 0444)) == -1) {
 			perror(av[arg_index]);
+			(void)fprintf(stderr, "%s: ", progname);
 			return(-1);
 		}
 	} else if (isatty(fileno(stdout))) {
@@ -118,10 +119,11 @@ char *av[];
 	for( pix_y=0; pix_y < height; )  {
 		register unsigned char	*cp;
 		int	todo;	/* # scanlines to do */
+		int	buflen;
 
 		todo = 255*1024 / (3*width);	/* Limit 255 Kbytes */
-		if( !buf )  buf = (unsigned char *)malloc(todo*3*width);
 		if( height - pix_y < todo )  todo = height - pix_y;
+		buflen = todo * 3 * width;
 
 		canon_y = height - (pix_y+todo);
 
@@ -129,28 +131,34 @@ char *av[];
 
 		green = &red[width*todo];
 		blue = &red[width*todo*2];
-		cp = buf;
+
+		cp = obuf;
 
 		for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
 			int	offset;
+			register unsigned char	*rp, *gp, *bp;
+			register int		x;
 
 			offset = buf_y * width;
-			for( x=0; x < width; x++ )  {
-				*cp++ = red[offset+x];
-				*cp++ = green[offset+x];
-				*cp++ = blue[offset+x];
+			rp = &red[offset];
+			gp = &green[offset];
+			bp = &blue[offset];
+			for( x = width-1; x >= 0; x-- )  {
+				*cp++ = *rp++;
+				*cp++ = *gp++;
+				*cp++ = *bp++;
 			}
 			pix_y++;	/* Record our progress */
 		}
-		(void)free(red);
-
-		/* Large buffer write */
-		if (write(fd, buf, todo*width*3) != todo*width*3) {
+		if( write( fd, obuf, buflen ) != buflen )  {
+			perror("ipuscan write");
 			fprintf(stderr, "buffer write error, line %d\n", pix_y);
 			return(-1);
 		}
+		(void)free(red);
 	}
 
+	close(fd);
 	(void)dsclose(dsp);
 	(void)close(fd);
 	(void)chmod(av[arg_index], 0444);
