@@ -248,14 +248,14 @@ set -S2 "/bin/sh"
 /*		Warning 1032 is "expression must have arithmetic type". */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
 /*		Warning 1209 is "controlling expression is constant */
-/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1048 WAS "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 #		define	OPTIMIZER	-O3 \
 					-OPT:Olimit=4096 \
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
-					-woff 1203,1048,1110,1209
+					-woff 1203
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
