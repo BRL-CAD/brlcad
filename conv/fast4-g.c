@@ -1513,21 +1513,24 @@ do_sphere()
 		rt_bomb( "do_sphere" );
 	}
 
-	inner_radius = radius - thick;
-	if( thick > 0.0 && inner_radius <= 0.0 )
+	if( mode == PLATE_MODE )
 	{
-		rt_log( "do_sphere: illegal thickness (%f), skipping inner sphere\n" , thick );
-		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		return;
-	}
+		inner_radius = radius - thick;
+		if( thick > 0.0 && inner_radius <= 0.0 )
+		{
+			rt_log( "do_sphere: illegal thickness (%f), skipping inner sphere\n" , thick );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
 
-	make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 1 );
-	mk_sph( fdout , name , grid_pts[center_pt].pt , inner_radius );
+		make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 1 );
+		mk_sph( fdout , name , grid_pts[center_pt].pt , inner_radius );
 
-	if( mk_addmember( name , &sphere_region , WMOP_SUBTRACT ) == (struct wmember *)NULL )
-	{
-		rt_log( "do_sphere: Error in subtracting %s from sphere region\n" , name );
-		rt_bomb( "do_sphere" );
+		if( mk_addmember( name , &sphere_region , WMOP_SUBTRACT ) == (struct wmember *)NULL )
+		{
+			rt_log( "do_sphere: Error in subtracting %s from sphere region\n" , name );
+			rt_bomb( "do_sphere" );
+		}
 	}
 
 	/* subtract any holes for this component */
