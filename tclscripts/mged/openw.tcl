@@ -1629,6 +1629,12 @@ hoc_register_menu_data "Tools" "Query Ray Control Panel" "Query Ray Control Pane
 hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"\
 	{ { summary "Tool for raytracing." }
           { see_also rt } }
+
+.$id.menubar.tools add command -label "Overlap Tool" -underline 0\
+	-command "overlap_tool $id"
+hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
+	{ { summary "A tool for discovering and correcting overlapping regions." } }
+
 .$id.menubar.tools add command -label "AnimMate Control Panel" -underline 1\
 	-command "animmate $id .$id"
 hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"\
