@@ -410,7 +410,7 @@ CONST struct bn_tol	*tol;
 	register fastf_t	slant_factor;
 	register fastf_t	norm_dist;
 	register fastf_t	dot;
-	register vect_t		local_dir;
+	vect_t			local_dir;
 
 	BN_CK_TOL(tol);
 
