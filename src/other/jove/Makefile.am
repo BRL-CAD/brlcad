@@ -3,7 +3,7 @@
 bin_PROGRAMS = jove findcom
 bin_SCRIPTS = teach-jove
 
-jove_SOURCES = \
+SRCS = \
 	jove_buf.c \
 	jove_c.c \
 	jove_delete.c \
@@ -21,7 +21,10 @@ jove_SOURCES = \
 	jove_screen.c \
 	jove_term.c \
 	jove_wind.c \
-	tune.c \
+	tune.c
+
+jove_SOURCES = \
+	$(SRCS)
 	version.c
 
 jove_LDADD = @CURSES@
@@ -36,7 +39,7 @@ tune.c:	$(top_srcdir)/src/other/jove/jove_tune.c
 	rm -f tune.c
 	sed -e 's;BinDir;BINDIR;' -e 's;LibDir;LIBDIR;' < $(top_srcdir)/src/other/jove/jove_tune.c > tune.c
 
-version.c: Makefile
+version.c: $(SRCS) Makefile
 	sh $(top_srcdir)/src/other/jove/mkversion.sh
 
 version.o: version.c
