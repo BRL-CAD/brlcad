@@ -1,6 +1,6 @@
 .TH FB-RLE 1V VMB
-'\"	last edit:	85/05/21	G. S. Moss
-'\"	SCCS ID:	@(#)fb-rle.1	1.4
+'\"	last edit:	85/05/29	G. S. Moss
+'\"	SCCS ID:	@(#)fb-rle.1	1.5
 .SH NAME
 fb-rle \- save a frame buffer image in run-length encoded form
 .SH SYNOPSIS
@@ -9,7 +9,11 @@ fb-rle \- save a frame buffer image in run-length encoded form
 .B \-CShvw
 ] [
 .B \-c
-x ] [ file.rle ]
+x ] [
+.B \-l
+x y ] [
+.B \-p
+x y ] [ file.rle ]
 .SH DESCRIPTION
 .I Fb-rle\^
 saves a frame buffer image in a file, using the Alpha_1 standard
@@ -78,6 +82,14 @@ is selected from the set
 (red, green, blue, white, Black, 18% Grey).
 If this option is not specified, the pixel in the lower left corner
 of the region being saved is used as the background color.
+.TP
+.BI \-l "x y"
+Specify the size of the saved box.
+This is useful if only a portion of the image is to be saved.
+.TP
+.BI \-p "x y"
+Specify the upper left corner of the saved portion
+of the image.
 .TP
 .B \-v
 (Verbose mode.)
