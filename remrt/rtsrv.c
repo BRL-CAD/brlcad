@@ -92,7 +92,6 @@ static char *title_file, *title_obj;	/* name of file and first object */
 /*
  * Package Handlers.
  */
-extern int pkg_nochecking;
 void	ph_unexp();	/* foobar message handler */
 void	ph_enqueue();	/* Addes message to linked list */
 void	ph_start();
@@ -168,7 +167,6 @@ char **argv;
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 
-	pkg_nochecking = 1;
 	control_host = argv[1];
 	tcp_port = argv[2];
 	pcsrv = pkg_open( control_host, tcp_port, "tcp", "", "",
