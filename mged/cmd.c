@@ -53,7 +53,7 @@ static void	do_cmd();
 void	f_help(), f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
-void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
+void	f_region(), f_itemair(), f_mater(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
 void	f_rm(), f_arbdef(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
@@ -100,8 +100,8 @@ static struct funtab {
 	f_region,4,MAXARGS,
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,
-"mater", "region mat los", "modify material or los",
-	f_modify,4,4,
+"mater", "comb [material]", "assign/delete material to combination",
+	f_mater,2,3,
 "kill", "<objects>", "delete objects from file",
 	f_kill,2,MAXARGS,
 "l", "<objects>", "list attributes",
@@ -158,8 +158,8 @@ static struct funtab {
 	f_debug, 1,1,
 "regdebug", "", "toggle register print",
 	f_regdebug, 1,2,
-"edcomb", "combname flag item air mat los", "edit combination record info",
-	f_edcomb,7,7,
+"edcomb", "combname Regionflag regionid air los [GIFTmater]", "edit combination record info",
+	f_edcomb,6,7,
 "status", "", "get view status",
 	f_status, 1,1,
 "fix", "", "fix display after hardware error",
@@ -198,7 +198,7 @@ static struct funtab {
 	f_area, 1, 2,
 "ae", "azim elev", "set view using az and elev angles",
 	f_aeview, 3, 3,
-"regdef", "item [air] [material] [los]", "change next region default codes",
+"regdef", "item [air] [los] [GIFTmaterial]", "change next region default codes",
 	f_regdef, 2, 5,
 "edgedir", "edgedir delta_x delta_y delta_z", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4,
