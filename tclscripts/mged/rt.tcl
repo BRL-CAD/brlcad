@@ -12,8 +12,9 @@ proc init_Raytrace { id } {
     global mged_gui
     global fb
     global rt_control
+    global env
 
-    set top .$id.do_rt
+    set top .$id.rt
 
     if [winfo exists $top] {
 	raise $top
@@ -21,121 +22,123 @@ proc init_Raytrace { id } {
     }
 
     winset $mged_gui($id,active_dm)
-
-    if ![info exists rt_control($id,padx)] {
-
-	# set widget padding
-	set rt_control($id,padx) 4
-	set rt_control($id,pady) 2
-
-	set rt_control($id,fb_or_file) framebuffer
-
-	regsub \.g$ [_mged_opendb] .pix default_file
-	set rt_control($id,file) $default_file
-
-	set rt_control($id,size) 512
-	set rt_control($id,color) [rset cs bg]
-	set rt_control($id,nproc) 1
-	set rt_control($id,hsample) 0
-	set rt_control($id,jitter) 0
-	set rt_control($id,jitterTitle) "None"
-	set rt_control($id,lmodel) 0
-	set rt_control($id,lmodelTitle) "Full"
-    }
-
-    if {$fb} {
-	set rt_control($id,fb_or_file) "framebuffer"
-	set fb_state normal
-	set file_state disabled
-    } else {
-	set rt_control($id,fb_or_file) "filename"
-	set fb_state disabled
-	set file_state normal
-    }
+    rt_init_vars $id $top $top\AS
 
     toplevel $top -screen $mged_gui($id,screen) -menu $top.menubar
 
+    frame $top.gridF1
     frame $top.gridF2 -relief groove -bd 2
-    frame $top.gridF3 -relief groove -bd 2
+    frame $top.gridF3
     frame $top.gridF4
-    frame $top.filenameF -relief sunken -bd 2
+    frame $top.srcF -relief sunken -bd 2
+    frame $top.destF -relief sunken -bd 2
     frame $top.sizeF -relief sunken -bd 2
 
     menu $top.menubar -tearoff 0
-    $top.menubar add cascade -label "Active Pane" -underline 0 -menu $top.menubar.active
     $top.menubar add cascade -label "Framebuffer" -underline 0 -menu $top.menubar.fb
-
-    menu $top.menubar.active -title "Active Pane" -tearoff 0
-    $top.menubar.active add radiobutton -value ul -variable mged_gui($id,dm_loc)\
-	    -label "Upper Left" -underline 6\
-	    -command "set_active_dm $id"
-    hoc_register_menu_data "Active Pane" "Upper Left" "Active Pane - Upper Left"\
-	    { { summary "Set the active pane to \"Upper Left\"." } }
-    $top.menubar.active add radiobutton -value ur -variable mged_gui($id,dm_loc)\
-	    -label "Upper Right" -underline 6\
-	    -command "set_active_dm $id"
-    hoc_register_menu_data "Active Pane" "Upper Right" "Active Pane - Upper Right"\
-	    { { summary "Set the active pane to \"Upper Right\"." } }
-    $top.menubar.active add radiobutton -value ll -variable mged_gui($id,dm_loc)\
-	    -label "Lower Left" -underline 2\
-	    -command "set_active_dm $id"
-    hoc_register_menu_data "Active Pane" "Lower Left" "Active Pane - Lower Left"\
-	    { { summary "Set the active pane to \"Lower Left\"." } }
-    $top.menubar.active add radiobutton -value lr -variable mged_gui($id,dm_loc)\
-	    -label "Lower Right" -underline 3\
-	    -command "set_active_dm $id"
-    hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right"\
-	    { { summary "Set the active pane to \"Lower Right\"." } }
+    $top.menubar add cascade -label "Objects" -underline 0 -menu $top.menubar.obj
 
     menu $top.menubar.fb -title "Framebuffer" -tearoff 0
-    $top.menubar.fb add radiobutton -value 1 -variable mged_gui($id,fb_all)\
+    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable rt_control($id,fb)\
+	    -label "Active" -underline 0 \
+	    -command "rt_set_fb $id"
+    hoc_register_menu_data "Framebuffer" "Active" "Framebuffer Active"\
+	    { { summary "This activates the framebuffer." } }
+    $top.menubar.fb add separator
+    $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_all)\
 	    -label "All" -underline 0\
-	    -command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
+	    -command "rt_set_fb_all $id"
     hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	    { { summary "Use the entire pane as a framebuffer." } }
-    $top.menubar.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
+    $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_all)\
 	    -label "Rectangle Area" -underline 0\
-	    -command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
+	    -command "rt_set_fb_all $id"
     hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
 	    { { summary "Use only the rectangular area for the framebuffer." } }
     $top.menubar.fb add separator
-    $top.menubar.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
+    $top.menubar.fb add radiobutton -value 1 -variable rt_control($id,fb_overlay)\
 	    -label "Overlay" -underline 0\
-	    -command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	    -command "rt_set_fb_overlay $id"
     hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
 	    { { summary "Draw the framebuffer on top of the geometry." } }
-    $top.menubar.fb add radiobutton -value 0 -variable mged_gui($id,fb_overlay)\
+    $top.menubar.fb add radiobutton -value 0 -variable rt_control($id,fb_overlay)\
 	    -label "Underlay" -underline 0\
-	    -command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
+	    -command "rt_set_fb_overlay $id"
     hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	    { { summary "Draw the framebuffer under the geometry." } }
 
-    radiobutton $top.framebufferRB -text "Frame Buffer" -anchor w\
-	    -value framebuffer -variable rt_control($id,fb_or_file)\
-	    -command "rt_set_fb_state $id"
-    hoc_register_data $top.framebufferRB "Frame Buffer"\
-	    { { summary "This activates the framebuffer and deactivates
-the file (i.e. the results of raytracing
-will end up in the framebuffer). Note - one
-can use fb-pix to capture the contents of the
-framebuffer to a file." } }
-    label $top.framebufferL -textvariable rt_control($id,fb)
+    menu $top.menubar.obj -title "Objects" -tearoff 0
+    $top.menubar.obj add radiobutton -value one -variable rt_control($id,omode)\
+	    -label "one" -underline 0\
+	    -command "rt_set_mouse_behavior $id"
+    $top.menubar.obj add radiobutton -value several -variable rt_control($id,omode)\
+	    -label "several" -underline 0\
+	    -command "rt_set_mouse_behavior $id"
+    $top.menubar.obj add radiobutton -value all -variable rt_control($id,omode)\
+	    -label "all" -underline 0\
+	    -command "rt_set_mouse_behavior $id"
+    $top.menubar.obj add separator
+    $top.menubar.obj add command -label "edit list"\
+	    -command "rt_edit_olist $id"
+    $top.menubar.obj add command -label "clear list"\
+	    -command "set rt_control($id,olist) {}"
 
-    radiobutton $top.filenameRB -text "File Name" -anchor w\
-	    -value filename -variable rt_control($id,fb_or_file)\
-	    -command "rt_set_file_state $id"
-    hoc_register_data $top.filenameRB "File Name"\
-	    { { summary "This activates the file and deactivates
-the framebuffer (i.e. the results of raytracing
-will end up in the file)." } }
-    entry $top.filenameE -relief flat -width 12 -textvar rt_control($id,file)\
-	    -state $file_state
-    hoc_register_data $top.filenameE "File Name"\
-	    { { summary "Enter a file name. If the \"File Name\"
-radiobutton is selected, the results of
-raytracing will go to the specified file." } }
+    label $top.srcL -text "Source" -anchor e
+    entry $top.srcE -relief flat -width 12 -textvar rt_control($id,raw_src)
+    bind $top.srcE <KeyRelease> "rt_cook_src $id \$rt_control($id,raw_src)"
+    menubutton $top.srcMB -relief raised -bd 2\
+	    -menu $top.srcMB.menu -indicatoron 1
+    menu $top.srcMB.menu -title "Source" -tearoff 0
+    $top.srcMB.menu add command -label "Active Pane"\
+	    -command "rt_cook_src $id \$mged_gui($id,active_dm)"
+    $top.srcMB.menu add separator
+    $top.srcMB.menu add command -label "Upper Left"\
+	    -command "rt_cook_src $id $mged_gui($id,top).ul"
+    hoc_register_menu_data "Source" "Upper Left" "Source - Upper Left"\
+	    { { summary "Set the source to \"Upper Left\"." } }
+    $top.srcMB.menu add command -label "Upper Right"\
+	    -command "rt_cook_src $id $mged_gui($id,top).ur"
+    hoc_register_menu_data "Source" "Upper Right" "Source - Upper Right"\
+	    { { summary "Set the source to \"Upper Right\"." } }
+    $top.srcMB.menu add command -label "Lower Left"\
+	    -command "rt_cook_src $id $mged_gui($id,top).ll"
+    hoc_register_menu_data "Source" "Lower Left" "Source - Lower Left"\
+	    { { summary "Set the source to \"Lower Left\"." } }
+    $top.srcMB.menu add command -label "Lower Right"\
+	    -command "rt_cook_src $id $mged_gui($id,top).lr"
+    hoc_register_menu_data "Source" "Lower Right" "Source - Lower Right"\
+	    { { summary "Set the source to \"Lower Right\"." } }
 
-    label $top.sizeL -text "Size" -anchor w
+    label $top.destL -text "Destination" -anchor e
+    entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
+    bind $top.destE <KeyRelease> "rt_cook_dest $id \$rt_control($id,raw_dest)"
+    menubutton $top.destMB -relief raised -bd 2\
+	    -menu $top.destMB.menu -indicatoron 1
+    menu $top.destMB.menu -title "Destination" -tearoff 0
+    $top.destMB.menu add command -label "Active Pane"\
+	    -command "rt_cook_dest $id \$mged_gui($id,active_dm)"
+    $top.destMB.menu add separator
+    $top.destMB.menu add command -label "Upper Left"\
+	    -command "rt_cook_dest $id $mged_gui($id,top).ul"
+    $top.destMB.menu add command -label "Upper Right"\
+	    -command "rt_cook_dest $id $mged_gui($id,top).ur"
+    $top.destMB.menu add command -label "Lower Left"\
+	    -command "rt_cook_dest $id $mged_gui($id,top).ll"
+    $top.destMB.menu add command -label "Lower Right"\
+	    -command "rt_cook_dest $id $mged_gui($id,top).lr"
+    $top.destMB.menu add separator
+    if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
+	$top.destMB.menu add command -label "$env(FB_FILE)"\
+		-command "rt_cook_dest $id $env(FB_FILE)"
+    }
+
+    set dbname [rt_db_to_pix]
+    if {$dbname != ""} {
+	$top.destMB.menu add command -label $dbname\
+		-command "rt_cook_dest $id $dbname"
+    }
+
+    label $top.sizeL -text "Size" -anchor e
     hoc_register_data $top.sizeL "Size"\
 	    { { summary "Indicates the size of the framebuffer.
 This defaults to the size of the active pane." } }
@@ -177,7 +180,7 @@ same size as the active pane." } }
     hoc_register_menu_data "Size" 1024 "Size - 1024x1024"\
 	    { { summary "Set the framebuffer size to 1024x1024." } }
 
-    label $top.colorL -text "Background Color" -anchor w
+    label $top.colorL -text "Background Color" -anchor e
     hoc_register_data $top.colorL "Background Color"\
 	    { { summary "This refers to the background color
 used for raytracing. This is also the color
@@ -205,7 +208,7 @@ will go either to the framebuffer that lives
 in the active pane or to the file specified
 in the filename entry." } }
     button $top.clearB -relief raised -text "fbclear" \
-	    -command "do_fbclear $id" -state $fb_state
+	    -command "do_fbclear $id"
     hoc_register_data $top.clearB "Clear the Framebuffer"\
 	    { { summary "If the framebuffer of the active pane
 is enabled, it will be cleared." } }
@@ -214,44 +217,43 @@ is enabled, it will be cleared." } }
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the raytrace control panel." } }
 
-    grid $top.framebufferL $top.framebufferRB -sticky "ew"\
-	    -in $top.gridF2 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.filenameE -sticky "nsew" -in $top.filenameF
-    grid columnconfigure $top.filenameF 0 -weight 1
-    grid rowconfigure $top.filenameF 0 -weight 1
-    grid $top.filenameF $top.filenameRB -sticky "nsew"\
-	    -in $top.gridF2 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid columnconfigure $top.gridF2 0 -weight 1
-    grid rowconfigure $top.gridF2 1 -weight 1
+    grid $top.srcE $top.srcMB -sticky nsew -in $top.srcF
+    grid columnconfigure $top.srcF 0 -weight 1
+    grid rowconfigure $top.srcF 0 -weight 1
 
-    grid $top.sizeE $top.sizeMB -sticky "nsew" -in $top.sizeF
+    grid $top.destE $top.destMB -sticky nsew -in $top.destF
+    grid columnconfigure $top.destF 0 -weight 1
+    grid rowconfigure $top.destF 0 -weight 1
+
+    grid $top.sizeE $top.sizeMB -sticky nsew -in $top.sizeF
     grid columnconfigure $top.sizeF 0 -weight 1
     grid rowconfigure $top.sizeF 0 -weight 1
-    grid $top.sizeF $top.sizeL -sticky "nsew" -in $top.gridF3 \
-	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.colorF $top.colorL -sticky "nsew" -in $top.gridF3 \
-	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.advancedB - -in $top.gridF3 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid columnconfigure $top.gridF3 0 -weight 1
-    grid rowconfigure $top.gridF3 0 -weight 1
-    grid rowconfigure $top.gridF3 1 -weight 1
 
-    grid $top.okB $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF4
-    grid columnconfigure $top.gridF4 2 -weight 1 -minsize 8
-    grid columnconfigure $top.gridF4 4 -weight 1 -minsize 8
+    grid $top.srcL $top.srcF -pady 1 -sticky nsew -in $top.gridF1
+    grid $top.destL $top.destF -pady 1 -sticky nsew -in $top.gridF1
+    grid $top.sizeL $top.sizeF -pady 1 -sticky nsew -in $top.gridF1
+    grid $top.colorL $top.colorF -pady 1 -sticky nsew -in $top.gridF1
+    grid $top.advancedB - -pady 1 -sticky ns -in $top.gridF1
+    grid columnconfigure $top.gridF1 1 -weight 1
+    grid rowconfigure $top.gridF1 0 -weight 1
+    grid rowconfigure $top.gridF1 1 -weight 1
+    grid rowconfigure $top.gridF1 2 -weight 1
+    grid rowconfigure $top.gridF1 3 -weight 1
 
-    grid $top.gridF2 -sticky "nsew" \
-	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.gridF3 -sticky "nsew" \
-	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.gridF4 -sticky "nsew" \
-	    -padx $rt_control($id,padx) -pady $rt_control($id,pady)
+    grid $top.gridF1 -padx 4 -pady 4 -sticky nsew -in $top.gridF2
+    grid columnconfigure $top.gridF2 0 -weight 1
+    grid rowconfigure $top.gridF2 0 -weight 1
+
+    grid $top.okB $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF3
+    grid columnconfigure $top.gridF3 2 -weight 1
+    grid columnconfigure $top.gridF3 4 -weight 1
+
+    grid $top.gridF2 -padx 4 -pady 4 -sticky nsew
+    grid $top.gridF3 -padx 4 -pady 4 -sticky nsew
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
-    grid rowconfigure $top 1 -weight 2
 
     color_entry_update $top color $rt_control($id,color)
-    update_Raytrace $id
 
     place_near_mouse $top
     wm title $top "Raytrace Control Panel ($id)"
@@ -268,9 +270,22 @@ proc do_Raytrace { id } {
     global fb_all
     global rt_control
 
-    winset $mged_gui($id,active_dm)
-    set rt_cmd "_mged_rt"
+    if {$rt_control($id,cooked_src) == ""} {
+	return
+    }
 
+    if ![winfo exists $rt_control($id,cooked_src)] {
+	return
+    }
+
+    winset $rt_control($id,cooked_src)
+    set rt_cmd "_mged_rt" 
+
+if { 1 } {
+    if {$rt_control($id,cooked_dest) != ""} {
+	append rt_cmd " -F$rt_control($id,cooked_dest)"
+    }
+} else {
     if {$rt_control($id,fb_or_file) == "filename"} {
 	if {$rt_control($id,file) != ""} {
 	    if {[file exists $rt_control($id,file)]} {
@@ -296,10 +311,8 @@ proc do_Raytrace { id } {
 	}
     } else {
 	append rt_cmd " -F $port"
-#	if {$rt_control($id,fb) != ""} {
-#	    append rt_cmd " -F $rt_control($id,fb)"
-#	}
     }
+}
 
     if {$rt_control($id,size) != ""} {
 	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
@@ -384,15 +397,25 @@ proc do_Raytrace { id } {
 	}
     }
 
-    catch {eval $rt_cmd}
+    switch $rt_control($id,omode) {
+	one 
+	    -
+	several {
+	    catch {eval $rt_cmd -- $rt_control($id,olist)}
+	}
+	all {
+	    catch {eval $rt_cmd}
+	}
+    }
 }
 
 proc do_fbclear { id } {
     global mged_gui
-    global port
     global rt_control
 
-    winset $mged_gui($id,active_dm)
+    if {$rt_control($id,cooked_dest) == ""} {
+	return
+    }
 
     if {$rt_control($id,color) != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
@@ -410,11 +433,8 @@ proc do_fbclear { id } {
 	set blue 0
     }
 
-    if {$rt_control($id,fb) != ""} {
-	set result [catch { exec fbclear -F $port $red $green $blue & } rt_error]
-    } else {
-	set result [catch { exec fbclear $red $green $blue & } rt_error]
-    }
+    set result [catch { exec fbclear -F $rt_control($id,cooked_dest)\
+	    $red $green $blue & } rt_error]
 
     if {$result != 0} {
 	cad_dialog .$id.rtDialog $mged_gui($id,screen)\
@@ -422,51 +442,28 @@ proc do_fbclear { id } {
     }
 }
 
-proc rt_set_fb_state { id } {
-    global mged_gui
-
-    winset $mged_gui($id,active_dm)
-    set mged_gui($id,fb) 1
-    set_fb $id
-
-    set top .$id.do_rt
-    $top.clearB configure -state normal
-    $top.menubar entryconfigure 1 -state normal
-    $top.filenameE configure -state disabled
-
-    rt_set_fb_size $id
-}
-
-proc rt_set_file_state { id } {
-    global mged_gui
-
-    winset $mged_gui($id,active_dm)
-    set mged_gui($id,fb) 0
-    set_fb $id
-
-    set top .$id.do_rt
-    $top.clearB configure -state disabled
-    $top.menubar entryconfigure 1 -state disabled
-    $top.filenameE configure -state normal
-    focus $top.filenameE
-}
-
 proc rt_set_fb_size { id } {
     global mged_gui
     global rt_control
 
-    winset $mged_gui($id,active_dm)
+    if ![winfo exists $rt_control($id,half_baked_dest)] {
+	return
+    }
+
+    winset $rt_control($id,half_baked_dest)
     set size [dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
 
 proc rt_dismiss { id } {
-    set top .$id.do_rtAS
+    global rt_control
+
+    set top $rt_control($id,topAS)
     if [winfo exists $top] {
 	catch { destroy $top }
     }
 
-    set top .$id.do_rt
+    set top $rt_control($id,top)
     if [winfo exists $top] {
 	catch { destroy $top }
     }
@@ -476,7 +473,7 @@ proc do_Advanced_Settings { id } {
     global mged_gui
     global rt_control
 
-    set top .$id.do_rtAS
+    set top $rt_control($id,topAS)
     if [winfo exists $top] {
 	raise $top
 	return
@@ -484,38 +481,29 @@ proc do_Advanced_Settings { id } {
 
     toplevel $top -screen $mged_gui($id,screen)
 
-    frame $top.gridF1 -relief groove -bd 2
-    frame $top.gridF2
-
-    frame $top.nprocF
-    frame $top.nprocFF -relief sunken -bd 2
-    frame $top.hsampleF
-    frame $top.hsampleFF -relief sunken -bd 2
-    frame $top.jitterF
-    frame $top.jitterFF -relief sunken -bd 2
-    frame $top.lmodelF
-    frame $top.lmodelFF -relief sunken -bd 2
+    frame $top.gridF1
+    frame $top.gridF2 -relief groove -bd 2
 
     set hoc_data { { summary "Indicates the number of processors
 to use for raytracing." } }
-    label $top.nprocL -text "# of Processors" -anchor w
+    label $top.nprocL -text "# of Processors" -anchor e
     hoc_register_data $top.nprocL "# of Processors" $hoc_data
-    entry $top.nprocE -relief flat -width 4 -textvar rt_control($id,nproc)
+    entry $top.nprocE -relief sunken -bd 2 -width 2 -textvar rt_control($id,nproc)
     hoc_register_data $top.nprocE "# of Processors" $hoc_data
 
     set hoc_data { { summary "Hypersampling is the number of extra rays
 to fire for each pixel. The results are then
 averaged to determine the pixel value." } }
-    label $top.hsampleL -text "Hypersample" -anchor w
+    label $top.hsampleL -text "Hypersample" -anchor e
     hoc_register_data $top.hsampleL "Hypersample" $hoc_data
-    entry $top.hsampleE -relief flat -width 4 -textvar rt_control($id,hsample)
+    entry $top.hsampleE -relief sunken -bd 2 -width 2 -textvar rt_control($id,hsample)
     hoc_register_data $top.hsampleE "Hypersample" $hoc_data
 
-    label $top.jitterL -text "Jitter" -anchor w
+    label $top.jitterL -text "Jitter" -anchor e
     hoc_register_data $top.jitterL "Jitter"\
 	    { { summary "Jitter is used to randomly vary the point
 from which a ray is fired." } }
-    menubutton $top.jitterMB -relief raised -bd 2 -textvar rt_control($id,jitterTitle)\
+    menubutton $top.jitterMB -relief sunken -bd 2 -textvar rt_control($id,jitterTitle)\
 	    -menu $top.jitterMB.jitterM -indicatoron 1
     hoc_register_data $top.jitterMB "Jitter"\
 	    { { summary "Pops up a menu of jitter values." } }
@@ -542,11 +530,11 @@ be applied uniformly to each cell." } }
 	    { { summary "Randomly jitter the frame as well
 as each cell." } }
     
-    label $top.lmodelL -text "Light Model" -anchor w
+    label $top.lmodelL -text "Light Model" -anchor e
     hoc_register_data $top.lmodelL "Light Model"\
 	    { { summary "The light model determines how the
 ray tracer will handle light." } }
-    menubutton $top.lmodelMB -relief raised -bd 2\
+    menubutton $top.lmodelMB -relief sunken -bd 2\
 	    -width 24 -textvar rt_control($id,lmodelTitle)\
 	    -menu $top.lmodelMB.lmodelM -indicatoron 1
     hoc_register_data $top.lmodelMB "Light Model"\
@@ -609,88 +597,323 @@ showing the principal direction vector." } }
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the advanced raytrace panel." } }
 
-    grid $top.nprocL -sticky "ew" -in $top.nprocF
-    grid $top.nprocE -sticky "ew" -in $top.nprocFF
-    grid $top.nprocFF -sticky "ew" -in $top.nprocF
+    grid $top.nprocL $top.nprocE -sticky nsew -pady 1 -in $top.gridF1
+    grid $top.hsampleL $top.hsampleE -sticky nsew -pady 1 -in $top.gridF1
+    grid $top.jitterL $top.jitterMB -sticky nsew -pady 1 -in $top.gridF1
+    grid $top.lmodelL $top.lmodelMB -sticky nsew -pady 1 -in $top.gridF1
+    grid columnconfigure $top.gridF1 1 -weight 1
+    grid rowconfigure $top.gridF1 0 -weight 1
+    grid rowconfigure $top.gridF1 1 -weight 1
+    grid rowconfigure $top.gridF1 2 -weight 1
+    grid rowconfigure $top.gridF1 3 -weight 1
 
-    grid $top.hsampleL -sticky "ew" -in $top.hsampleF
-    grid $top.hsampleE -sticky "ew" -in $top.hsampleFF
-    grid $top.hsampleFF -sticky "ew" -in $top.hsampleF
-
-    grid $top.jitterL -sticky "ew" -in $top.jitterF
-    grid $top.jitterMB -sticky "ew" -in $top.jitterFF
-    grid $top.jitterFF -sticky "ew" -in $top.jitterF
-
-    grid $top.lmodelL -sticky "ew" -in $top.lmodelF
-    grid $top.lmodelMB -sticky "ew" -in $top.lmodelFF
-    grid $top.lmodelFF -sticky "ew" -in $top.lmodelF
-
-    grid $top.nprocF x $top.hsampleF -sticky "ew" -in $top.gridF1 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.jitterF x $top.lmodelF -sticky "ew" -in $top.gridF1 -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-
-    grid $top.dismissB -in $top.gridF2
-
-    grid $top.gridF1 -sticky "ew" -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-    grid $top.gridF2 -sticky "ew" -padx $rt_control($id,padx) -pady $rt_control($id,pady)
-
-    grid columnconfigure $top.nprocF 0 -weight 1
-    grid columnconfigure $top.nprocFF 0 -weight 1
-    grid columnconfigure $top.hsampleF 0 -weight 1
-    grid columnconfigure $top.hsampleFF 0 -weight 1
-    grid columnconfigure $top.jitterF 0 -weight 1
-    grid columnconfigure $top.jitterFF 0 -weight 1
-    grid columnconfigure $top.lmodelF 0 -weight 1
-    grid columnconfigure $top.lmodelFF 0 -weight 1
-    grid columnconfigure $top.gridF1 0 -weight 1
-    grid columnconfigure $top.gridF1 2 -weight 1
+    grid $top.gridF1 -sticky nsew -padx 8 -pady 8 -in $top.gridF2
     grid columnconfigure $top.gridF2 0 -weight 1
+    grid rowconfigure $top.gridF2 0 -weight 1
+
+    grid $top.gridF2 -sticky nsew -padx 2 -pady 2
+    grid $top.dismissB -sticky s -padx 2 -pady 2
     grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 1
 
     place_near_mouse $top
     wm title $top "Advanced Settings ($id)"
 }
 
+## - update_Raytrace
+#
+# Called by main GUI to update the Raytrace Control Panel
+#
 proc update_Raytrace { id } {
     global mged_gui
-    global fb
+    global rt_control
     global listen
     global port
-    global rt_control
+    global fb
+    global fb_all
+    global fb_overlay
 
-    set top .$id.do_rt
+    set top $rt_control($id,top)
     if ![winfo exists $top] {
 	return
     }
 
-    winset $mged_gui($id,active_dm)
-    switch $mged_gui($id,dm_loc) {
-	ul {
-	    set rt_control($id,fb) "Upper Left"
-	}
-	ur {
-	    set rt_control($id,fb) "Upper Right"
-	}
-	ll {
-	    set rt_control($id,fb) "Lower Left"
-	}
-	lr {
-	    set rt_control($id,fb) "Upper Right"
-	}
+    if {$rt_control($id,half_baked_dest) != $mged_gui($id,active_dm)} {
+	return
     }
 
-    if {$mged_gui($id,fb)} {
-	set rt_control($id,fb_or_file) "framebuffer"
-	set fb_state normal
-	set file_state disabled
-	rt_set_fb_state $id
-    } else {
-	set rt_control($id,fb_or_file) "filename"
-	set fb_state disabled
-	set file_state normal
-	rt_set_file_state $id
-    }
+    set rt_control($id,cooked_dest) $port
+    set rt_control($id,fb) $fb
+    set rt_control($id,fb_all) $fb_all
+    set rt_control($id,fb_overlay) $fb_overlay
+    set size [dm size]
+    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 
-    set tmplist [list summary "The active pane is $rt_control($id,fb)."]
+    set tmplist [list summary "The active pane is $rt_control($id,cooked_src)."]
     hoc_register_data $top.framebufferL "Active Pane"\
 	    [list $tmplist]
+}
+
+proc rt_edit_olist { id } {
+    global mged_gui
+    global rt_control
+
+    return
+}
+
+proc rt_set_mouse_behavior { id } {
+    global mged_gui
+    global rt_control
+    global mouse_behavior
+
+    if ![winfo exists $rt_control($id,half_baked_dest)] {
+	return
+    }
+
+    winset $rt_control($id,half_baked_dest)
+    switch $rt_control($id,omode) {
+	one
+	    -
+	several {
+	    set mouse_behavior o
+
+	    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+		set mged_gui($id,mouse_behavior) o
+	    }
+	}
+	all {
+	    set mouse_behavior d
+
+	    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+		set mged_gui($id,mouse_behavior) d
+	    }
+	}
+    }
+}
+
+#
+# raw	 ->	pathname, filename,
+#		ul, upper left, ur, upper right,
+#		ll, lower left, lr, lower right
+# cooked ->	port spec
+proc rt_cook_dest { id raw_dest } {
+    global mged_gui
+    global rt_control
+    global listen
+    global port
+    global fb
+    global fb_all
+    global fb_overlay
+    global mouse_behavior
+
+    if {$raw_dest == ""} {
+	return
+    }
+
+    set rt_control($id,raw_dest) $raw_dest
+    set rt_control($id,half_baked_dest) [rt_half_bake $id $raw_dest]
+
+    if ![winfo exists $rt_control($id,half_baked_dest)] {
+	set rt_control($id,cooked_dest) $raw_dest
+
+
+	# disable framebuffer menu
+	if [winfo exists $rt_control($id,top)] {
+	    $rt_control($id,top).menubar entryconfigure 0 -state disabled
+	}
+
+	return
+    }
+
+    # re-enable framebuffer menu
+    if [winfo exists $rt_control($id,top)] {
+	$rt_control($id,top).menubar entryconfigure 0 -state normal
+    }
+
+    winset $rt_control($id,half_baked_dest)
+    set fb 1
+    set fb_all 1
+    set listen 1
+    set rt_control($id,cooked_dest) $port
+    set rt_control($id,fb) 1
+    set rt_control($id,fb_all) $fb_all
+    set rt_control($id,fb_overlay) $fb_overlay
+    set size [dm size]
+    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
+
+    if {$mouse_behavior == "o"} {
+	set rt_control($id,omode) one
+    } else {
+	set rt_control($id,omode) all
+    }
+
+    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+	set mged_gui($id,fb) $fb
+	set mged_gui($id,listen) $listen
+	.$id.menubar.settings.fb entryconfigure 7 -state normal
+	.$id.menubar.modes entryconfigure 4 -state normal
+    }
+}
+
+#
+# raw	 ->	pathname,
+#		ul, upper left, ur, upper right,
+#		ll, lower left, lr, lower right
+# cooked ->	pathname
+#
+proc rt_cook_src { id raw_src } {
+    global rt_control
+
+    if {$raw_src == ""} {
+	return
+    }
+
+    set rt_control($id,raw_src) $raw_src
+    set rt_control($id,cooked_src) [rt_half_bake $id $raw_src]
+}
+
+proc rt_set_fb { id } {
+    global mged_gui
+    global rt_control
+    global fb
+
+    if ![winfo exists $rt_control($id,half_baked_dest)] {
+	return
+    }
+
+    winset $rt_control($id,half_baked_dest)
+    set fb $rt_control($id,fb)
+
+    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+	set mged_gui($id,fb) $rt_control($id,fb)
+
+	if {$mged_gui($id,fb)} {
+	    set mged_gui($id,listen) 1
+	    .$id.menubar.settings.fb entryconfigure 7 -state normal
+	    .$id.menubar.modes entryconfigure 4 -state normal
+	} else {
+	    .$id.menubar.settings.fb entryconfigure 7 -state disabled
+	    .$id.menubar.modes entryconfigure 4 -state disabled
+	    set mged_gui($id,listen) 0
+	}
+    }
+}
+
+proc rt_set_fb_all { id } {
+    global rt_control
+    global mged_gui
+    global fb_all
+
+    if ![winfo exists $rt_control($id,half_baked_dest)] {
+	return
+    }
+
+    winset $rt_control($id,half_baked_dest)
+    set fb_all $rt_control($id,fb_all)
+
+    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+	set mged_gui($id,fb_all) $rt_control($id,fb_all)
+    }
+
+}
+
+proc rt_set_fb_overlay { id } {
+    global mged_gui
+    global rt_control
+    global fb_overlay
+
+    if ![winfo exists $rt_control($id,half_baked_dest)] {
+	return
+    }
+
+    winset $rt_control($id,half_baked_dest)
+    set fb_overlay $rt_control($id,fb_overlay)
+
+    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+	set mged_gui($id,fb_overlay) $rt_control($id,fb_overlay)
+    }
+}
+
+## - rt_half_bake
+#
+# If possible, returns a valid display manager window.
+# Otherwise, returns $raw.
+#
+proc rt_half_bake { id raw } {
+    global mged_gui
+
+    switch $raw {
+	"active" 
+	    -
+	"Active" {
+	    return $mged_gui($id,active_dm)
+	}
+	"ul" 
+	    -
+	"upper left" {
+	    return $mged_gui($id,top).ul
+	}
+	"ur" 
+	    -
+	"upper right" {
+	    return $mged_gui($id,top).ur
+	}
+	"ll" 
+	    -
+	"lower left" {
+	    return $mged_gui($id,top).ll
+	}
+	"lr" 
+	    -
+	"lower right" {
+	    return $mged_gui($id,top).lr
+	}
+	default {
+	    if [winfo exists .$raw] {
+		return .$raw
+	    }
+
+	    return $raw
+	}
+    }
+}
+
+proc rt_db_to_pix {} {
+    global rt_control
+
+    regsub \.g$ [_mged_opendb] .pix default_file
+    return $default_file
+}
+
+## - rt_init_vars
+#
+# Called by init_Raytrace to initialize rt_control
+#
+proc rt_init_vars { id top topAS } {
+    global mged_gui
+    global rt_control
+    
+    # initialize once
+    if ![info exists rt_control($id,top)] {
+	set rt_control($id,top) $top
+	set rt_control($id,topAS) $topAS
+	set rt_control($id,nproc) 1
+	set rt_control($id,hsample) 0
+	set rt_control($id,jitter) 0
+	set rt_control($id,jitterTitle) "None"
+	set rt_control($id,lmodel) 0
+	set rt_control($id,lmodelTitle) "Full"
+
+	# set widget padding
+	set rt_control($id,padx) 4
+	set rt_control($id,pady) 2
+    }
+
+    # initialize everytime
+    set rt_control($id,olist) {}
+    set rt_control($id,color) [rset cs bg]
+    rt_cook_src $id $mged_gui($id,active_dm)
+    rt_cook_dest $id $mged_gui($id,active_dm)
+    set size [dm size]
+    set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
