@@ -76,14 +76,14 @@ Usage: mac-pix [-c -l -b]\n\
 	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
 	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
-	[-R #] [-G #] [-B #] [file.mac]\n";
+	[-C r/g/b] [file.mac]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:R:G:B:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			/* Center in output */
@@ -128,14 +128,18 @@ register char **argv;
 		case 'y':
 			file_yoff = atoi(optarg);
 			break;
-		case 'R':
-		        color[0] = atoi( optarg );
-			break;
-		case 'G':
-		        color[1] = atoi( optarg );
-			break;
-		case 'B':
-		        color[2] = atoi( optarg );
+		case 'C':
+			{
+				register char *cp = optarg;
+				register unsigned char *conp
+					= (unsigned char *)color;
+
+				/* premature null => atoi gives zeros */
+				for( c=0; c < 3; c++ )  {
+					*conp++ = atoi(cp);
+					while( *cp && *cp++ != '/' ) ;
+				}
+			}
 			break;
 
 		default:		/* '?' */
