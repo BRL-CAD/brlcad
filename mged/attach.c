@@ -133,7 +133,8 @@ static char *view_cmd_str[] = {
   "press top",
   "press right",
   "press front",
-  "press 45,45"
+  "press 45,45",
+  "press 35,25"
 };
 
 static struct dm *which_dm[] = {

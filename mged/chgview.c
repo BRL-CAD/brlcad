@@ -1778,10 +1778,10 @@ abs_zoom()
     Viewscale = i_Viewscale;
   else{
     /* if positive */
-    if(absolute_zoom > 0)
+    if(absolute_zoom > 0){
       /* scale i_Viewscale by values in [0.0, 1.0] range */
       Viewscale = i_Viewscale * (1.0 - absolute_zoom);
-    else/* negative */
+    }else/* negative */
       /* scale i_Viewscale by values in [1.0, 10.0] range */
       Viewscale = i_Viewscale * (1.0 + (absolute_zoom * -9.0));
   }
@@ -1820,22 +1820,8 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-#if 1
-	if( Viewscale < SMALL_FASTF ){
-	  if(val > 1.0)
-	    Viewscale = SMALL_FASTF * val;
-	  else
-	    Viewscale = SMALL_FASTF;
-	}else if( Viewscale > INFINITY ){
-	  if(val < 1.0)
-	    Viewscale = val * INFINITY;
-	  else
-	    Viewscale = INFINITY;
-	}
-#else
 	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
 	  return TCL_ERROR;
-#endif
 
 	Viewscale /= val;
 	new_mats();

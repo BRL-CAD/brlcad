@@ -55,7 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
-extern void set_e_axis_pos();
+extern void set_e_axes_pos();
 
 void set_tran();
 
@@ -553,7 +553,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -572,7 +572,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -596,7 +596,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -615,7 +615,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -629,7 +629,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -726,7 +726,7 @@ int arg;
 			es_edflag = ECMD_PIPE_PT_DEL;
 		break;
 	}
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -744,7 +744,7 @@ int arg;
 	if(arg == MENU_TGC_MV_HH)
 		es_edflag = ECMD_TGC_MV_HH;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 
@@ -755,7 +755,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -768,7 +768,7 @@ int arg;
 	else
 		es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -778,7 +778,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -788,7 +788,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -798,7 +798,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -808,7 +808,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -818,7 +818,7 @@ int arg;
 	es_menu = arg;
 	es_edflag = PSCALE;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -832,7 +832,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -846,7 +846,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }		
 
 static void
@@ -860,7 +860,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -874,7 +874,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -888,7 +888,7 @@ int arg;
 		sedraw = 1;
 	}
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -990,7 +990,7 @@ int arg;
 	es_edflag = arg;
 	sedraw = 1;
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 /*
  *			N M G _ E D
@@ -2260,7 +2260,7 @@ sedit()
 		es_edflag = ECMD_ARB_ROTATE_FACE;
 		mat_idn( acc_rot_sol );
 		dmaflag = 1;	/* draw arrow, etc */
-		set_e_axis_pos();
+		set_e_axes_pos();
 		break;
 
 	case ECMD_ARB_ROTATE_FACE:
@@ -4693,7 +4693,7 @@ init_objedit()
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 void

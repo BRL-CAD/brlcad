@@ -415,9 +415,9 @@ struct _mged_variables {
 	int	sgi_win_origin[2];
 	int	faceplate;
         int     show_menu;
-	int     w_axis;  /* world view axis */
-	int     v_axis;  /* view axis */
-	int     e_axis;  /* edit axis */
+	int     w_axes;  /* world view axes */
+	int     v_axes;  /* view axes */
+	int     e_axes;  /* edit axes */
         int     send_key;
         int     hot_key;
 	int     view;

@@ -716,7 +716,7 @@ Ir_open()
         qdevice(FOURKEY); /* press 45,45 */
 	qdevice(AKEY); /* adc */
         qdevice(BKEY); /* press bottom */
-        qdevice(EKEY); /* set e_axis ! */
+        qdevice(EKEY); /* set e_axes ! */
         qdevice(FKEY); /* press front */
         qdevice(IKEY); /* aip f */
         qdevice(LKEY); /* press left */
@@ -727,8 +727,8 @@ Ir_open()
         qdevice(SKEY); /* press sill */
         qdevice(TKEY); /* press top */
         qdevice(UKEY); /* aip b */
-        qdevice(VKEY); /* set v_axis ! */
-        qdevice(WKEY); /* set w_axis ! */
+        qdevice(VKEY); /* set v_axes ! */
+        qdevice(WKEY); /* set w_axes ! */
 
 	qdevice(F1KEY);	/* pf1 key for depthcue switching */
 	qdevice(F2KEY);	/* pf2 for Z clipping */
@@ -1639,11 +1639,11 @@ continue;
       case EKEY:
 	/*  Help mode */
 	if(button0)  {
-	  ir_dbtext("set e_axis !");
+	  ir_dbtext("set e_axes !");
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "set e_axis !\n");
+	rt_vls_strcat(&cmd, "set e_axes !\n");
 	break;
       case FKEY:
 	/*  Help mode */
@@ -1738,20 +1738,20 @@ continue;
       case VKEY:
 	/*  Help mode */
 	if(button0)  {
-	  ir_dbtext("set v_axis !");
+	  ir_dbtext("set v_axes !");
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "set v_axis !\n");
+	rt_vls_strcat(&cmd, "set v_axes !\n");
 	break;
       case WKEY:
 	/*  Help mode */
 	if(button0)  {
-	  ir_dbtext("set w_axis");
+	  ir_dbtext("set w_axes");
 	  break;
 	}
 
-	rt_vls_strcat(&cmd, "set w_axis !\n");
+	rt_vls_strcat(&cmd, "set w_axes !\n");
 	break;
       default:
 	break;

@@ -35,7 +35,7 @@ extern FILE *ps_fp;
 #define VIRTUAL_TRACKBALL_ROTATE 2 
 #define VIRTUAL_TRACKBALL_TRANSLATE 3
 #define VIRTUAL_TRACKBALL_ZOOM 4
-#define VIEW_TABLE_SIZE 4
+#define VIEW_TABLE_SIZE 5    /* enough to hold the view selections in the menu */
 
 /* Interface to a specific Display Manager */
 struct dm {
@@ -138,7 +138,7 @@ struct dm_list {
   struct cmd_list *aim;
   char _dname[80];  /* Display name */
   void (*_knob_hook)();
-  void (*_axis_color_hook)();
+  void (*_axes_color_hook)();
 };
 
 extern int update_views;   /* from dm-X.h */
@@ -153,7 +153,7 @@ extern struct dm_list *curr_dm_list;
 #define owner curr_dm_list->_owner
 #define dname curr_dm_list->_dname
 #define knob_hook curr_dm_list->_knob_hook
-#define axis_color_hook curr_dm_list->_axis_color_hook
+#define axes_color_hook curr_dm_list->_axes_color_hook
 
 #define mged_variables curr_dm_list->s_info->_mged_variables
 

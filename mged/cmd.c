@@ -79,8 +79,8 @@ extern short int fixv; /* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
-point_t e_axis_pos;
-void set_e_axis_pos();
+point_t e_axes_pos;
+void set_e_axes_pos();
 
 
 /* Carl Nuzman experimental */
@@ -525,7 +525,7 @@ static struct funtab funtab[] = {
         f_wcodes, 3, MAXARGS, TRUE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,TRUE,
-"winset", "pathname", "sets the window focus to the Tcl/Tk window with pathname",
+"winset", "pathname", "sets the current display manager to pathname",
         f_winset, 1, 2, TRUE,
 "x", "lvl", "print solid table & vector list",
 	f_debug, 1,2,TRUE,
@@ -2222,13 +2222,13 @@ char	*argv[];
 }
 
 void
-set_e_axis_pos()
+set_e_axes_pos()
 {
   int	i;
 
 #if 0
   update_views = 1;
-  VMOVE(e_axis_pos, es_keypoint);
+  VMOVE(e_axes_pos, es_keypoint);
   MAT4X3PNT( absolute_slew, model2view, es_keypoint );
 #else
   update_views = 1;
@@ -2308,7 +2308,7 @@ set_e_axis_pos()
 	break;
       }
 
-    VMOVE(e_axis_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+    VMOVE(e_axes_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
     break;
   case ID_TGC:
   case ID_REC:
@@ -2316,16 +2316,16 @@ set_e_axis_pos()
        es_edflag == ECMD_TGC_MV_HH){
       struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
 
-      VADD2(e_axis_pos, tgc->h, tgc->v);
+      VADD2(e_axes_pos, tgc->h, tgc->v);
       break;
     }
   default:
-    VMOVE(e_axis_pos, es_keypoint);
+    VMOVE(e_axes_pos, es_keypoint);
     break;
   }
 
   if(EDIT_TRAN) {
-    MAT4X3PNT( absolute_slew, model2view, e_axis_pos );
+    MAT4X3PNT( absolute_slew, model2view, e_axes_pos );
   }else{
     point_t new_pos;
 
@@ -2391,9 +2391,9 @@ fastf_t x, y, z;
   point_t new_pos;
   point_t view_pos;
 
-  diff[X] = x - e_axis_pos[X];
-  diff[Y] = y - e_axis_pos[Y];
-  diff[Z] = z - e_axis_pos[Z];
+  diff[X] = x - e_axes_pos[X];
+  diff[Y] = y - e_axes_pos[Y];
+  diff[Z] = z - e_axes_pos[Z];
   
   /* If there is more than one active view, then absolute_slew
      needs to be initialized for each view. */

@@ -665,7 +665,7 @@ be_s_edit()  {
 	dmp->dmr_light( LIGHT_ON, edsol = BE_S_EDIT );
 	sedit_menu();		/* Install appropriate menu */
 
-	set_e_axis_pos();
+	set_e_axes_pos();
 }
 
 static void
@@ -680,7 +680,7 @@ be_s_rotate()  {
 	es_edflag = SROT;
 	mat_idn(acc_rot_sol);
 
-        set_e_axis_pos();
+        set_e_axes_pos();
 }
 
 static void
@@ -694,7 +694,7 @@ be_s_trans()  {
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
-        set_e_axis_pos();
+        set_e_axes_pos();
 }
 
 static void
@@ -708,7 +708,7 @@ be_s_scale()  {
 	es_edflag = SSCALE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
-        set_e_axis_pos();
+        set_e_axes_pos();
 }
 
 /*
