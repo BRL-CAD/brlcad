@@ -478,10 +478,10 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
 #	ifdef M4I64_USE_64_BIT
-#		define	GFLAG		-64 -mips4 -KPIC -multigot
+#		define	GFLAG		-64 -mips4 -KPIC
 #		define	XLIBDIR /usr/lib64
 #	else
-#		define	GFLAG		-n32 -mips4 -KPIC -multigot
+#		define	GFLAG		-n32 -mips4 -KPIC
 #		define	XLIBDIR /usr/lib32
 #	endif
 #	define  XINCDIR /usr/include/X11
@@ -491,20 +491,20 @@ set -S2 "/bin/sh"
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		ifdef M4I64_USE_64_BIT
-#			define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#			define	BUILD_LIBRARY	ld -64 -mips4 -shared -Wl,-multigot -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 #		else
-#			define	BUILD_LIBRARY	ld -n32 -mips4 -shared -o
+#			define	BUILD_LIBRARY	ld -n32 -mips4 -shared -Wl,-multigot -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
 #		endif
 #		define	RANLIB	true
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LD_OPTS		GFLAG -Wl,-multigot -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LD_OPTS		GFLAG -Wl,-multigot -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	endif
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=64
 #	define	LGT_CONFIG	GFLAG
