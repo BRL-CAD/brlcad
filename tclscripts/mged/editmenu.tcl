@@ -146,7 +146,7 @@ proc build_solid_menu { type id paths } {
 	set screen [winfo screen $win]
     }
 
-    create_listbox $top $screen Solid $paths
+    create_listbox $top $screen Solid $paths "destroy $top"
     set mged_edit_menu($id) $top
 
     switch $type {
@@ -190,8 +190,7 @@ proc build_matrix_menu { id path } {
 
     regexp "\[^/\].*" $path match
     set path_components [split $match /]
-    create_listbox $top $screen Matrix $path_components
-
+    create_listbox $top $screen Matrix $path_components "_mged_press reject; destroy $top"
     set mged_edit_menu($id) $top
 
     bind_listbox $top "<ButtonPress-1>" "matrix_illum %W %x %y 1"
