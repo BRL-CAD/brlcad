@@ -125,6 +125,7 @@ static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X 
 	-x lvl -> sets the librt debug flag to lvl\n\
 	-X lvl -> sets the NMG debug flag to lvl\n";
 
+int
 main( argc , argv )
 int argc;
 char *argv[];
@@ -150,8 +151,9 @@ char *argv[];
 	struct comp_idents *ptr;
 	char name[NAMESIZE+1];
 	char *input_file;				/* input file name */
+	char *output_file = "tankill.g";
 	FILE *in_fp;					/* input file pointer */
-	FILE *out_fp;					/* output file pointer */
+	struct rt_wdb *out_fp;				/* output file pointer */
 	int polysolids;					/* flag indicating polysolid output */
 	int group_len[100];
 	int all_len=0;
@@ -166,7 +168,6 @@ char *argv[];
         tol.para = 1 - tol.perp;
 
 	in_fp = stdin;
-	out_fp = stdout;
 	polysolids = 0;
 	input_file = (char *)NULL;
 	id_root = (struct comp_idents *)NULL;
@@ -211,12 +212,7 @@ char *argv[];
 				strcpy( input_file , optarg );
 				break;
 			case 'o': /* output file name */
-				if( (out_fp = fopen( optarg , "w" )) == NULL )
-				{
-					fprintf( stderr , "Cannot open %s\n" , optarg );
-					perror( "tankill-g" );
-					rt_bomb( "Cannot open output file\n" );
-				}
+				output_file = optarg;
 				break;
 			default:
 				rt_bomb( usage );
@@ -224,6 +220,12 @@ char *argv[];
 		}
 	}
 
+	if( (out_fp = wdb_fopen( output_file )) == NULL )
+	{
+		perror( output_file );
+		fprintf( stderr , "tankill-g: Cannot open %s\n" , output_file );
+		rt_bomb( "Cannot open output file\n" );
+	}
 
 	/* use the input file name as the title (if available) */
 	if( input_file == (char *)NULL )
@@ -565,5 +567,6 @@ char *argv[];
 		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 ) )
 			rt_bomb( "tankill: Error in freeing region memory" );
 	}
+	wdb_close( out_fp );
 	return 0;
 }

@@ -26,12 +26,13 @@
 
 static char *usage="Usage:\n\tcy-g input_laser_scan_file output_brlcad_file.g\n";
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
 {
 	FILE *infp;
-	FILE *outfp;
+	struct rt_wdb *outfp;
 	char line[LINE_LEN];
 	char *cptr;
 	int rshift=5;
@@ -60,7 +61,7 @@ char *argv[];
 		exit( 1 );
 	}
 
-	if( (outfp = fopen( argv[2], "w" )) == NULL )
+	if( (outfp = wdb_fopen( argv[2] )) == NULL )
 	{
 		bu_log( "Cannot open output file (%s)\n", argv[2] );
 		bu_log( "%s", usage );
@@ -247,5 +248,6 @@ char *argv[];
 	 */
 	mk_id( outfp, "Laser Scan" );
 	mk_ars( outfp, "laser_scan", last_non_zero - first_non_zero + 2, nlg, &curves[first_non_zero-1] );
-	fclose( outfp );
+	wdb_close( outfp );
+	return 0;
 }

@@ -47,8 +47,9 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*afile, *bfile;
-	FILE		*fpin, *fpout;
+	char		*afile, *bfile = "nmg.g";
+	FILE		*fpin;
+	struct rt_wdb	*fpout;
 
 	/* Get ascii NMG input file name. */
 	if (optind >= argc) {
@@ -67,20 +68,20 @@ char	*argv[];
 	/* Get BRL-CAD output data base name. */
 	optind++;
 	if (optind >= argc) {
-		bfile = "-";
-		fpout = stdout;
+		bfile = "nmg.g";
 	} else {
 		bfile = argv[optind];
-		if ((fpout = fopen(bfile, "w")) == NULL) {
-			fprintf(stderr, "%s: cannot open %s for writing\n",
-				argv[0], bfile);
-			exit(1);
-		}
+	}
+	if ((fpout = wdb_fopen(bfile)) == NULL) {
+		fprintf(stderr, "%s: cannot open %s for writing\n",
+			argv[0], bfile);
+		exit(1);
 	}
 
 	ascii_to_brlcad(fpin, fpout, "nmg", NULL);
 	fclose(fpin);
-	fclose(fpout);
+	wdb_close(fpout);
+	return 0;
 }
 
 /*
@@ -90,7 +91,7 @@ char	*argv[];
  */
 void
 create_brlcad_db(fpout, m, reg_name, grp_name)
-FILE		*fpout;
+struct rt_wdb	*fpout;
 char		*grp_name, *reg_name;
 struct model	*m;
 {
@@ -117,7 +118,8 @@ struct model	*m;
  */
 static int
 ascii_to_brlcad(fpin, fpout, reg_name, grp_name)
-FILE	*fpin, *fpout;
+FILE	*fpin;
+struct rt_wdb *fpout;
 char	*reg_name, *grp_name;
 {
 	struct model	*m;

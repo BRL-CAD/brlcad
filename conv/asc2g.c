@@ -65,11 +65,10 @@ char			name[NAMESIZE + 2];
 int 			debug;
 
 FILE	*ifp;
-FILE	*ofp;
+struct rt_wdb	*ofp;
 
 static char usage[] = "\
-Usage: asc2g < file.asc > file.g\n\
-   or  asc2g file.asc file.g\n\
+Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
@@ -78,7 +77,6 @@ int argc;
 char **argv;
 {
 	ifp = stdin;
-	ofp = stdout;
 
 #if 0
 (void)fprintf(stderr, "About to call bu_log\n");
@@ -86,22 +84,23 @@ bu_log("Hello cold cruel world!\n");
 (void)fprintf(stderr, "About to begin\n");
 #endif
 
-	if( argc == 2 || argc == 4 )
+	if( strcmp( argv[1], "-d" ) == 0 )  {
+		argc--; argv++;
 		debug = 1;
+	}
 
-	if( argc >= 3 ) {
+	if( argc == 3 ) {
 		ifp = fopen(argv[1],"r");
 		if( !ifp )  perror(argv[1]);
-		ofp = fopen(argv[2],"w");
+		ofp = wdb_fopen(argv[2]);
 		if( !ofp )  perror(argv[2]);
 		if (ifp == NULL || ofp == NULL) {
 			(void)fprintf(stderr, "asc2g: can't open files.");
 			exit(1);
 		}
-	}
-	if (isatty(fileno(ofp))) {
-		(void)fprintf(stderr, usage);
-		exit(1);
+	} else {
+		fprintf(stderr, "%s", usage);
+		return 2;
 	}
 
 	/* Read ASCII input file, each record on a line */

@@ -61,13 +61,15 @@ struct viewpoint_verts
 static char *tok_sep=" ";		/* seperator used in input files */
 static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_name -o output_file_name";
 
+int
 main( argc , argv )
 int argc;
 char *argv[];
 {
 	register int c;
 	FILE *coords,*elems;		/* input file pointers */
-	FILE *out_fp;			/* output file pointers */
+	struct rt_wdb *out_fp;		/* output file pointers */
+	char *output_file = "viewpoint.g";
 	char *base_name;		/* title and top level group name */
 	char *coords_name;		/* input coordinates file name */
 	char *elems_name;		/* input elements file name */
@@ -97,7 +99,6 @@ char *argv[];
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
 
-	out_fp = stdout;
 	coords = NULL;
 	elems = NULL;
 
@@ -134,17 +135,18 @@ char *argv[];
 				}
 				break;
 			case 'o': /* output file name */
-				if( (out_fp = fopen( optarg , "w" )) == NULL )
-				{
-					bu_log( "Cannot open %s\n" , optarg );
-					perror( "tankill-g" );
-					rt_bomb( "Cannot open output file\n" );
-				}
+				output_file = optarg;
 				break;
 			default:
 				rt_bomb( usage );
 				break;
 		}
+	}
+	if( (out_fp = wdb_fopen( output_file )) == NULL )
+	{
+		perror( output_file );
+		bu_log( "tankill-g: Cannot open %s\n" , output_file );
+		rt_bomb( "Cannot open output file\n" );
 	}
 
 	/* Must have some input */

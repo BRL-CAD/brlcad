@@ -33,14 +33,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "wdb.h"
 #include "rtgeom.h"
+#include "wdb.h"
 
 static union record record;
 static struct db_i *dbip;
 static int verbose=0;
-static FILE *fdout=NULL;
-static long out_offset=0;
+static struct rt_wdb *fdout=NULL;
 
 static void
 nmg_conv()
@@ -82,7 +81,6 @@ nmg_conv()
 	{
 		BU_UNSETJUMP;
 		bu_log( "Failed to convert %s\n", record.nmg.N_name );
-		(void)fseek( fdout, out_offset, SEEK_SET );
 		rt_db_free_internal( &intern );
 		return;
 	}
@@ -91,13 +89,12 @@ nmg_conv()
 	rt_db_free_internal( &intern );
 }
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
 {
-
-	long offset=0;
-	long granules;
+	struct directory *dp;
 
 	if( argc != 3 && argc != 4 )
 	{
@@ -125,34 +122,41 @@ char *argv[];
 		bu_bomb( "Cannot open database file\n" );
 	}
 
-	if( (fdout=fopen( argv[argc-1], "w")) == NULL )
+	if( (fdout=wdb_fopen( argv[argc-1] )) == NULL )
 	{
 		bu_log( "Cannot open file (%s)\n", argv[argc-1] );
 		perror( argv[0] );	
 		bu_bomb( "Cannot open output file\n" );
 	}
+	db_dirbuild( dbip );
 
-	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
-
-	fseek( dbip->dbi_fp, 0, SEEK_SET );
-	while( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) == 1  &&
-		!feof(stdin) )
-	{
-		switch( record.u_id )
-		{
-		    	case ID_FREE:
-				break;
-		    	case DBID_NMG:
-				offset = ftell( dbip->dbi_fp );
-				out_offset = ftell( fdout );
-				granules = bu_glong(record.nmg.N_count);
-				offset += granules * sizeof( union record );
-		    		nmg_conv();
-				fseek( dbip->dbi_fp, offset, SEEK_SET );
-		    		break;
-		    	default:
-				fwrite( (char *)&record, sizeof( union record ), 1, fdout );
-		    		break;
+	/* Visit all records in input database, and spew them out,
+	 * modifying NMG objects into BoTs.
+	 */
+	FOR_ALL_DIRECTORY_START(dp, dbip)  {
+		struct rt_db_internal	intern;
+		int id;
+		int ret;
+		id = rt_db_get_internal( &intern, dp, dbip, NULL );
+		if( id < 0 )  {
+			fprintf(stderr,
+				"%s: rt_db_get_internal(%s) failure, skipping\n",
+				argv[0], dp->d_namep);
+			continue;
 		}
-	}
+		if ( id == ID_NMG ) {
+	    		nmg_conv( &intern );
+		}
+		ret = wdb_put_internal( fdout, dp->d_namep, &intern, 1.0 );
+		if( ret < 0 )  {
+			fprintf(stderr,
+				"%s: wdb_put_internal(%s) failure, skipping\n",
+				argv[0], dp->d_namep);
+			rt_db_free_internal( &intern );
+			continue;
+		}
+		rt_db_free_internal( &intern );
+	} FOR_ALL_DIRECTORY_END
+	wdb_close(fdout);
+	return 0;
 }

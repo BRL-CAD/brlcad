@@ -116,20 +116,21 @@ struct shell *s;
 	}
 }
 
+int
 main(argc, argv)
 int	argc;
 char	*argv[];
 {
 	char		*bfile, *efile;
-	FILE		*fpin, *fpout;
+	FILE		*fpin;
+	struct rt_wdb	*fpout;
 	char		title[BRLCAD_TITLE_LENGTH];	/* BRL-CAD database title */
 	register int	c;
 	int i;
 
 	fpin = stdin;
-	fpout = stdout;
 	efile = NULL;
-	bfile = NULL;
+	bfile = "euclid.g";
 	polysolids = 0;
 	debug = 0;
 
@@ -162,12 +163,6 @@ char	*argv[];
 			break;
 		case 'o':
 			bfile = optarg;
-			if ((fpout = fopen(bfile, "w")) == NULL) {
-				fprintf(stderr,	"%s: cannot open %s for writing\n",
-					argv[0], bfile);
-				perror( argv[0] );
-				exit(1);
-			}
 			break;
 		case 'p':
 			polysolids = 1;
@@ -203,6 +198,13 @@ char	*argv[];
 			strcat( title, tol_str );
 	}
 
+	if ((fpout = wdb_fopen(bfile)) == NULL) {
+		fprintf(stderr,	"%s: cannot open %s for writing\n",
+			argv[0], bfile);
+		perror( argv[0] );
+		exit(1);
+	}
+
 	mk_id( fpout, title );
 
 	for( i=0 ; i<11 ; i++ )
@@ -211,7 +213,8 @@ char	*argv[];
 	euclid_to_brlcad(fpin, fpout);
 
 	fclose(fpin);
-	fclose(fpout);
+	wdb_close(fpout);
+	return 0;
 }
 
 /*
@@ -221,7 +224,7 @@ char	*argv[];
  */
 static void
 add_nmg_to_db(fpout, m, reg_id)
-FILE		*fpout;
+struct rt_wdb	*fpout;
 struct model	*m;
 int		reg_id;
 {
@@ -295,7 +298,7 @@ int		reg_id;
 
 static void
 build_groups( fpout )
-FILE *fpout;
+struct rt_wdb *fpout;
 {
 	int i,j;
 	struct wmember head;
@@ -381,7 +384,8 @@ FILE *fpout;
  */
 void
 euclid_to_brlcad(fpin, fpout)
-FILE	*fpin, *fpout;
+FILE	*fpin;
+struct rt_wdb *fpout;
 {
 	char	str[80];
 	int	reg_id;
@@ -408,7 +412,7 @@ FILE	*fpin, *fpout;
 
 static void
 add_shells_to_db( fpout, shell_count, shells, reg_id )
-FILE *fpout;
+struct rt_wdb *fpout;
 int shell_count;
 struct shell *shells[];
 int reg_id;
@@ -495,7 +499,8 @@ int reg_id;
  */
 int
 cvt_euclid_region(fp, fpdb, reg_id)
-FILE	*fp, *fpdb;
+FILE	*fp;
+struct rt_wdb *fpdb;
 int	reg_id;
 {
 	int	cur_id, face, facet_type, hole_face, i,

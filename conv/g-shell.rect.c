@@ -26,7 +26,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "../librt/debug.h"
+#include "wdb.h"
 
 #define MAKE_TRIANGLES	0
 
@@ -95,7 +95,8 @@ static long	face_count=0;
 static fastf_t	cell_size=50.0;
 static fastf_t	cell_size_sq=2500.0;
 static fastf_t	edge_tol=0.0;
-static FILE	*fd_out=NULL, *fd_plot=NULL;
+static struct rt_wdb *fd_out=NULL;
+static FILE	*fd_plot=NULL;
 static char	*output_file=(char *)NULL;
 static char	*plotfile;
 static short	vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
@@ -1751,6 +1752,7 @@ struct seg *segs;
 	return( 1 );
 }
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -1910,7 +1912,7 @@ char *argv[];
 
 	if( output_file )
 	{
-		if( (fd_out=fopen( output_file, "w")) == NULL )
+		if( (fd_out=wdb_fopen( output_file )) == NULL )
 		{
 			bu_log( "Cannot open output file (%s)\n", output_file );
 			perror( argv[0] );
@@ -2093,4 +2095,6 @@ char *argv[];
 	}
 
 	Make_shell();
+	wdb_close(fd_out);
+	return 0;
 }

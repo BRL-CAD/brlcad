@@ -217,4 +217,5 @@ char *av[];
 		}
 		nmg_to_rib((struct model *)ip.idb_ptr );
 	}
+	return 0;
 }

@@ -101,7 +101,8 @@ static fastf_t conv[3]={
 };
 
 static int			units;		/* units flag */
-static FILE			*fdout;		/* brlcad output file */
+static char			*output_file = "nastran.g";
+static struct rt_wdb		*fdout;		/* brlcad output file */
 static FILE			*fdin;		/* NASTRAN input file */
 static FILE			*fdtmp;		/* temporary version of NASTRAN input */
 static char			*Usage="Usage:\n\t%s [-p] [-xX lvl] [-t tol.dist] -i NASTRAN_file -o brl-cad_file\n";
@@ -1171,6 +1172,7 @@ get_cbar()
 	mk_addmember( cbar_name, &pb->head, WMOP_UNION );
 }
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -1184,7 +1186,6 @@ char *argv[];
 	char *nastran_file;
 
 	fdin = (FILE *)NULL;
-	fdout = (FILE *)NULL;
 
 	units = INCHES;
 
@@ -1229,15 +1230,17 @@ char *argv[];
 				}
 				break;
 			case 'o':
-				fdout = fopen( optarg, "w" );
-				if( fdout == (FILE *)NULL )
-				{
-					bu_log( "Cannot open BRL-CAD file (%s) for writing!!!\n", optarg );
-					bu_log( "Usage", argv[0] );
-					exit( 1 );
-				}
+				output_file = optarg;
 				break;
 		}
+	}
+
+	fdout = wdb_fopen( output_file );
+	if( fdout == (FILE *)NULL )
+	{
+		bu_log( "Cannot open BRL-CAD file (%s) for writing!!!\n", output_file );
+		bu_log( "Usage", argv[0] );
+		exit( 1 );
 	}
 
 	if( !fdin || !fdout )
@@ -1509,4 +1512,6 @@ char *argv[];
 	{
 		mk_lfcomb( fdout, "all", &all_head, 0 );
 	}
+	wdb_close(fdout);
+	return 0;
 }

@@ -16,10 +16,9 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
-	FILE	*fp;
+	struct rt_wdb	*fp;
 	struct db_i	*dbip;
 	struct directory	*dp;
-	int	i;
 	long	errors = 0;
 	struct bn_tol tol;
 
@@ -42,7 +41,7 @@ char	**argv;
 		return 2;
 	}
 
-	if( (fp = fopen( argv[2], "w" )) == NULL )  {
+	if( (fp = wdb_fopen( argv[2] )) == NULL )  {
 		perror( argv[2] );
 		return 3;
 	}
@@ -50,58 +49,59 @@ char	**argv;
 	RT_CK_DBI(dbip);
 	db_dirbuild( dbip );
 
+#if 0
+	/* XXX Need wdb_ routine to update title, units, etc. */
 	db5_fwrite_ident( fp, dbip->dbi_title, dbip->dbi_local2base );
+#endif
 
 	/* Retrieve every item in the input database */
-	for( i = RT_DBNHASH-1; i >= 0; i-- )  {
-		for( dp = dbip->dbi_Head[i]; dp; dp = dp->d_forw )  {
-			struct rt_db_internal	intern;
-			int id;
-			int ret;
+	FOR_ALL_DIRECTORY_START(dp, dbip)  {
+		struct rt_db_internal	intern;
+		int id;
+		int ret;
 
-			fprintf(stderr, "%s\n", dp->d_namep );
+		fprintf(stderr, "%s\n", dp->d_namep );
 
-			id = rt_db_get_internal( &intern, dp, dbip, NULL );
-			if( id < 0 )  {
-				fprintf(stderr,
-					"%s: rt_db_get_internal(%s) failure, skipping\n",
-					argv[0], dp->d_namep);
-				errors++;
-				continue;
-			}
-			if ( id == ID_HF ) {
-				if (rt_hf_to_dsp( &intern )) {
-					fprintf(stderr,
-						"%s: Conversion from HF to DSP failed for solid %s\n",
-						argv[0], dp->d_namep );
-					errors++;
-					continue;
-				}
-			}
-			if( id == ID_POLY)
-			{
-				if( rt_pg_to_bot( &intern, &tol ) )
-				{
-					fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
-						argv[0], dp->d_namep );
-					errors++;
-					continue;
-				}
-			}
-			ret = rt_fwrite_internal5( fp, dp->d_namep, &intern, 1.0 );
-			if( ret < 0 )  {
-				fprintf(stderr,
-					"%s: rt_fwrite_internal5(%s) failure, skipping\n",
-					argv[0], dp->d_namep);
-				rt_db_free_internal( &intern );
-				errors++;
-				continue;
-			}
-			rt_db_free_internal( &intern );
+		id = rt_db_get_internal( &intern, dp, dbip, NULL );
+		if( id < 0 )  {
+			fprintf(stderr,
+				"%s: rt_db_get_internal(%s) failure, skipping\n",
+				argv[0], dp->d_namep);
+			errors++;
+			continue;
 		}
-	}
+		if ( id == ID_HF ) {
+			if (rt_hf_to_dsp( &intern )) {
+				fprintf(stderr,
+					"%s: Conversion from HF to DSP failed for solid %s\n",
+					argv[0], dp->d_namep );
+				errors++;
+				continue;
+			}
+		}
+		if( id == ID_POLY)
+		{
+			if( rt_pg_to_bot( &intern, &tol ) )
+			{
+				fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
+					argv[0], dp->d_namep );
+				errors++;
+				continue;
+			}
+		}
+		ret = wdb_put_internal( fp, dp->d_namep, &intern, 1.0 );
+		if( ret < 0 )  {
+			fprintf(stderr,
+				"%s: wdb_put_internal(%s) failure, skipping\n",
+				argv[0], dp->d_namep);
+			rt_db_free_internal( &intern );
+			errors++;
+			continue;
+		}
+		rt_db_free_internal( &intern );
+	} FOR_ALL_DIRECTORY_END
 
-	fclose( fp );
+	wdb_close( fp );
 	db_close( dbip );
 
 	fprintf(stderr, "%ld objects failed to convert\n", errors);
