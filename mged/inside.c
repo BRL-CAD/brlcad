@@ -700,6 +700,7 @@ plane_t	planes[6];
 		struct faceuse *fu;
 		struct rt_tess_tol ttol;
 		struct bu_ptbl vert_tab;
+		struct rt_bot_internal  *bot;
 
 		ttol.magic = RT_TESS_TOL_MAGIC;
 		ttol.abs = mged_abs_tol;
@@ -795,10 +796,14 @@ plane_t	planes[6];
 		/* free old ip pointer */
 		rt_db_free_internal( ip );
 
+		/* convert the NMG to a BOT */
+		bot = (struct rt_bot_internal *)nmg_bot( s, &mged_tol );
+		nmg_km( m );
+
 		/* put new solid in "ip" */
-		ip->idb_type = ID_NMG;
-		ip->idb_meth = &rt_functab[ID_NMG];
-		ip->idb_ptr = (genptr_t)m;
+		ip->idb_type = ID_BOT;
+		ip->idb_meth = &rt_functab[ID_BOT];
+		ip->idb_ptr = (genptr_t)bot;
 	}
 
 	return(0);
