@@ -436,8 +436,23 @@ C
 program:
 .PP
 .RS
-$ \|\fI/bin/cc \|program.c \|-lfb\fP
+$ \|\fI/bin/cc \|program.c \|-lfb -l\<system-library...\>\fP
 .RE
+.sp
+where
+.I <system-library>
+denotes specific libraries necesary on a particular machine.  All machines
+with networking will require the "-lpkg" option.  Machines which support the
+X Windows(tm) system will require the "-lX11" option. In addition, the following
+table lists architectures and libraries above and beyond the pkg and X11
+libraries.
+.PP
+ Architecture         Libraries
+ SGI 3030       -lbsd -ldbm -lgl2
+ SGI 4d         -lgl_s
+ Sun            -lsuntool -lsunwindow -lpixrect
+ Sun+TS         -lsuntool -lsunwindow -lpixrect -lgds
+.sp
 .SH FILES
 fb.h
 .br
