@@ -392,5 +392,76 @@ register char *bits;
 				;
 	}
 	rt_log(">");
+}
+
+/*
+/*
+ *			R T _ P R _ F A L L B A C K _ A N G L E
+ */
+void
+struct rt_vls	*str;
+char		*prefix;
+double		angles[5];
+CONST double	angles[5];
+	char		buf[256];
+	BU_CK_VLS(str);
+	sprintf(buf, "%s direction cosines=(%.1f, %1.f, %1.f)\n",
+	bu_vls_printf(str, "%s direction cosines=(%.1f, %1.f, %1.f)\n",
+	rt_vls_strcat( str, buf );
+		prefix, angles[0], angles[1], angles[2] );
+	sprintf(buf, "%s rotation angle=%1.f, fallback angle=%1.f\n",
+	bu_vls_printf(str, "%s rotation angle=%1.f, fallback angle=%1.f\n",
+	rt_vls_strcat( str, buf );
+		prefix, angles[3], angles[4] );
+}
+
+/*
+ *			R T _ F I N D _ F A L L B A C K _ A N G L E
+ *
+ *  In degrees.
+ */
+void
+rt_find_fallback_angle( angles, vec )
+vect_t		vec;
+CONST vect_t	vec;
+{
+	register double	f;
+	double		asinZ;
+
+	if( vec[X] <= -1.0 )  angles[X] = -90.0;
+	else if( vec[X] >= 1.0 )  angles[X] = 90.0;
+	else angles[X] = acos( vec[X] ) * rt_radtodeg;
+	}
+	if( vec[Y] <= -1.0 )  angles[Y] = -90.0;
+	else if( vec[Y] >= 1.0 )  angles[Y] = 90.0;
+	else angles[Y] = acos( vec[Y] ) * rt_radtodeg;
+	}
+	if( vec[Z] <= -1.0 )  angles[Z] = -90.0;
+	else if( vec[Z] >= 1.0 )  angles[Z] = 90.0;
+	else angles[Z] = acos( vec[Z] ) * rt_radtodeg;
+	}
+
+	if( vec[Z] <= -1.0 )  vec[Z] = -1.0;
+	else if( vec[Z] >= 1.0 )  vec[Z] = 1.0;
+	asinZ = asin(vec[Z]);
+	angles[4] = asinZ * rt_radtodeg;
+	angles[4] = asinZ * bn_radtodeg;
+
+	/* rotation angle */
+	/* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
+	 * with an epsilon of +/- 1.0e-17, so the tolerance below was
+	 * substituted for the original +/- 1.0e-20.
+	 */
+	if((f = cos(asinZ)) > 1.0e-16 || f < -1.0e-16 )  {
+		if( f <= -1.0 )
+		if( f <= -1.0 )  {
+		else if( f >= 1.0 )
+		} else if( f >= 1.0 ) {
+		else
+			angles[3] = rt_radtodeg * acos( f );
+	}  else
+	}  else  {
+	if( vec[Y] < 0 )
+	if( vec[Y] < 0 ) {
 		tol->perp, tol->para );
 }
