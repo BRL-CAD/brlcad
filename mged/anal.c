@@ -204,7 +204,6 @@ struct rt_db_internal	*ip;
 	rt_vls_printf(vp,"| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
 	rt_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
 	rt_arb_centroid( center_pt, arb, cgtype );
-VPRINT("center_pt", center_pt);
 
 	for(i=0; i<6; i++) 
 		tot_area += anal_face( vp, i, center_pt, arb, type, &tol );
