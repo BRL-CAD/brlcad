@@ -78,6 +78,10 @@ AC_CHECK_HEADER(sys/stat.h, AC_DEFINE(HAVE_UNIX_IO,, Fix this, sys/types.h and s
 AC_CHECK_HEADER(sys/time.h, AC_DEFINE(TIME_WITH_SYS_TIME,1,sys/time.h))
 AC_STRUCT_ST_BLKSIZE
 
+AC_ARG_WITH(jdk,
+        [  --with-jdk=path         Specify location of Java Development Kit],[
+        JAVA_CFLAGS="-I$withval/include"
+        ])
 
 dnl ============================================================
 dnl union wait testing from tcl8.4's configure.in, should be revamped?
@@ -183,6 +187,7 @@ AC_SUBST(GL_CFLAGS)
 AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
+AC_SUBST(JAVA_CFLAGS)
 AC_SUBST(LEX_CFLAGS)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
