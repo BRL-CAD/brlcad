@@ -7,6 +7,20 @@
 # The final version will be "Defiant" ;-)
 
 #
+# Extend Autopath
+#
+if { [info exists env(BRLCAD_ROOT)] } {
+    set rootDir $env(BRLCAD_ROOT)
+} else {
+    set rootDir [file join / usr brlcad ]
+} 
+set wizDir [ file join $rootDir tclscripts rtwizard ]
+set libDir [ file join $wizDir lib ]
+
+lappend auto_path $wizDir $libDir
+puts $auto_path
+
+#
 # All RtWizard stuff is in the RtWizard namespace
 #
 namespace eval RtWizard {
@@ -211,6 +225,8 @@ namespace eval RtWizard {
 # Start main
 # 
 RtWizard::main $argv
+
+
 
 
 
