@@ -72,10 +72,10 @@ struct application	*ap;
 	if(rt_g.debug&DEBUG_PARTITION)
 		rt_log("-------------------BOOL_WEAVE\n");
 	while( RT_LIST_NON_EMPTY( &(in_hd->l) ) ) {
-		register struct partition *newpp;
-		register struct seg *lastseg;
-		register struct hit *lasthit;
-		LOCAL int	lastflip;
+		register struct partition	*newpp = PT_NULL;
+		register struct seg		*lastseg = RT_SEG_NULL;
+		register struct hit		*lasthit = HIT_NULL;
+		LOCAL int			lastflip = 0;
 
 		segp = RT_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
@@ -486,6 +486,8 @@ struct application *ap;
 		}
 
 		/* Sanity checks on sorting.  Remove later. */
+		RT_CHECK_SEG(pp->pt_inseg);
+		RT_CHECK_SEG(pp->pt_outseg);
 		if( pp->pt_inhit->hit_dist >= pp->pt_outhit->hit_dist )  {
 			rt_log("rt_boolfinal: thin or inverted partition %.8x\n", pp);
 			rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
@@ -686,8 +688,8 @@ struct application *ap;
 				hits_avail += 2;
 			}
 
-			RT_CHECK_SEG(newpp->pt_inseg);
-			RT_CHECK_SEG(newpp->pt_outseg);
+			RT_CHECK_SEG(newpp->pt_inseg);		/* sanity */
+			RT_CHECK_SEG(newpp->pt_outseg);		/* sanity */
 		}
 
 		if( ap->a_onehit > 0 && HITS_TODO <= 0 )
