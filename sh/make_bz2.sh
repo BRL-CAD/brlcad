@@ -34,6 +34,12 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
+#
+# Script for compressing a tape archive binary distribution via bzip2
+#
+# Author: Christopher Sean Morrison
+#
+######################################################################
 
 PKG_NAME="$1"
 if [ "x$PKG_NAME" = "x" ] ; then
