@@ -1048,6 +1048,46 @@ top:
 }
 
 /*
+ *			D B _ C O U N T _ T R E E _ N O D E S
+ *
+ *  Return a count of the number of "union tree" nodes below "tp",
+ *  including tp.
+ */
+int
+db_count_tree_nodes( tp, count )
+register CONST union tree	*tp;
+register int			count;
+{
+	switch( tp->tr_op )  {
+	case OP_NOP:
+	case OP_SOLID:
+	case OP_REGION:
+		/* A leaf node */
+		return(count+1);
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+		/* This node is known to be a binary op */
+		count = db_count_tree_nodes( tp->tr_b.tb_left, count );
+		count = db_count_tree_nodes( tp->tr_b.tb_right, count );
+		return(count);
+
+	case OP_XOR:
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		/* This node is known to be a unary op */
+		count = db_count_tree_nodes( tp->tr_b.tb_left, count );
+		return(count);
+
+	default:
+		rt_bomb("db_count_subtree_regions: bad op\n");
+	}
+	return( 0 );
+}
+
+/*
  *			D B _ C O U N T _ S U B T R E E _ R E G I O N S
  */
 int
@@ -1452,9 +1492,10 @@ union tree *	(*leaf_func)();
 			ctsp = treep->tr_c.tc_ctsp;
 		 	RT_CK_CTS(ctsp);
 			str = db_path_to_string( &(ctsp->cts_p) );
-			rt_log("%d: path='%s'\n", i, str);
+			rt_log("%d '%s'\n", i, str);
 			rt_free( str, "path string" );
 		}
+		rt_log("end of waiting regions\n");
 	}
 
 	/*
