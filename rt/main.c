@@ -87,6 +87,8 @@ extern struct command_tab	rt_cmdtab[];
 
 extern char	version[];		/* From vers.c */
 
+extern struct resource	resource[];	/* from opt.c */
+
 /*
  *			M A I N
  */
@@ -99,6 +101,7 @@ char **argv;
 	register int	x;
 	char idbuf[132];		/* First ID record info */
 	void	application_init();
+	int i;
 
 	bu_setlinebuf( stderr );
 
@@ -172,6 +175,14 @@ char **argv;
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 	RES_INIT( &rt_g.res_model );
+
+	/* initialize per process resources */
+	for( i=0 ; i<npsw ; i++ )
+	{
+		resource[i].re_magic = RESOURCE_MAGIC;
+		rt_init_resource( &resource[i] );
+	}
+
 	/*
 	 *  Do not use rt_log() or rt_malloc() before this point!
 	 */
