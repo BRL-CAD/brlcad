@@ -411,6 +411,7 @@ extern MARK	*CurMark(),
 
 extern WINDOW
 	*windlook(),
+	*next_wind(),
 	*div_wind();
 
 extern BUFFER
