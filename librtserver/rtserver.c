@@ -119,6 +119,16 @@ struct rts_resources {
 
 static struct rts_resources rts_resource;
 
+void
+fillItemTree( jobject parent_node,
+	      struct db_i *dbip,
+	      JNIEnv *env,
+	      char *name,
+	      jclass itemTree_class,
+	      jmethodID itemTree_constructor_id,
+	      jmethodID itemTree_addcomponent_id,
+	      jmethodID itemTree_setMuvesName_id );
+
 
 /* MACRO to add a ray to a job */
 #define RTS_ADD_RAY_TO_JOB( _ajob, _aray ) bu_ptbl_ins( &(_ajob)->rtjob_rays, (long *)(_aray) );
@@ -1640,8 +1650,204 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
 	return( jrayResult );
 }
 
+void
+fillItemMembers( jobject node,
+		 struct db_i *dbip,
+		 JNIEnv *env,
+		 union tree *tp,
+		 jclass itemTree_class,
+		 jmethodID itemTree_constructor_id,
+		 jmethodID itemTree_addcomponent_id,
+		 jmethodID itemTree_setMuvesName_id )
+{
+	switch( tp->tr_op ) {
+	case OP_SOLID:
+	case OP_NOP:
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	case OP_FREE:
+		return;
+	case OP_UNION:
+	case OP_INTERSECT:
+		fillItemMembers( node, dbip, env, tp->tr_b.tb_left, itemTree_class,
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+		fillItemMembers( node, dbip, env, tp->tr_b.tb_right, itemTree_class,
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+		break;
+	case OP_SUBTRACT:
+		fillItemMembers( node, dbip, env, tp->tr_b.tb_left, itemTree_class,
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+		break;
+	case OP_DB_LEAF:
+		fillItemTree( node, dbip, env, tp->tr_l.tl_name, itemTree_class,
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+		break;
+	}
+}
+
+void
+fillItemTree( jobject parent_node,
+	      struct db_i *dbip,
+	      JNIEnv *env,
+	      char *name,
+	      jclass itemTree_class,
+	      jmethodID itemTree_constructor_id,
+	      jmethodID itemTree_addcomponent_id,
+	      jmethodID itemTree_setMuvesName_id )
+{
+	struct directory *dp;
+	int id;
+	struct rt_db_internal intern;
+	jstring nodeName;
+	jobject node;
+
+	if( (dp=db_lookup( dbip, name, LOOKUP_QUIET )) == DIR_NULL ) {
+		return;
+	}
+
+	/* create an ItemTree node for this object */
+	nodeName = (*env)->NewStringUTF( env, name );
+	node = (*env)->NewObject( env, itemTree_class, itemTree_constructor_id, nodeName );
+
+	/* check for any exceptions */
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while creating ItemTree node\n" );
+		(*env)->ExceptionDescribe(env);
+		return;
+	}
+
+	/* add this node to parent */
+	(*env)->CallVoidMethod( env, parent_node, itemTree_addcomponent_id, node );
+
+	/* check for any exceptions */
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while adding an ItemTree node\n" );
+		(*env)->ExceptionDescribe(env);
+		return;
+	}
+
+
+	if( dp->d_flags & DIR_REGION ) {
+		/* do not recurse into regions */
+		return;
+	}
+
+	if( dp->d_flags & DIR_COMB ) {
+		/* recurse into this combination */
+		struct rt_comb_internal *comb;
+		const char *muvesName;
+
+		if( (id = rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) ) < 0 ) {
+			fprintf( stderr, "Failed to get internal form of BRL-CAD object (%s)\n", name );
+			return;
+		}
+
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CHECK_COMB( comb );
+
+		/* check for MUVES_Component */
+		if( (muvesName=bu_avs_get( &intern.idb_avs, "MUVES_Component" )) != NULL ) {
+			/* add this attribute */
+			jstring jmuvesName;
+
+			jmuvesName = (*env)->NewStringUTF( env, muvesName );
+			(*env)->CallVoidMethod( env, node, itemTree_setMuvesName_id, jmuvesName );
+
+			/* check for any exceptions */
+			if( (*env)->ExceptionOccurred(env) ) {
+				fprintf( stderr, "Exception thrown while setting the ItemTree MuvesName\n" );
+				(*env)->ExceptionDescribe(env);
+				return;
+			}
+		}
+
+
+		/* add members of this combination to the ItemTree */
+		fillItemMembers( node, dbip, env, comb->tree, itemTree_class,
+				 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+		rt_db_free_internal( &intern, &rt_uniresource );
+	}
+}
+
+
 /* JAVA JNI bindings */
 
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_getItemTree(JNIEnv *env, jobject obj, jint sessionId )
+{
+	jclass itemTree_class;
+	jmethodID itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id;
+	jobject rootNode;
+	jstring nodeName;
+	struct db_i *dbip;
+	struct rtserver_geometry *rtsg;
+	int i;
+
+	if( sessionId < 0 || sessionId >= num_geometries ) {
+		fprintf( stderr, "Called getItemTree with invalid sessionId\n" );
+		return( (jobject)NULL );
+	}
+
+	/* get the JAVA ItemTree class */
+	if( (itemTree_class=(*env)->FindClass( env, "mil/army/arl/muves/rtserver/ItemTree" )) == NULL ) {
+		fprintf( stderr, "Failed to find ItemTree class\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the JAVA method id for the ItemTree class constructor */
+	if( (itemTree_constructor_id=(*env)->GetMethodID( env, itemTree_class, "<init>",
+	    "(Ljava/lang/String;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree constructor\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+	
+	/* get the JAVA method id for the ItemTree addSubcomponent method */
+	if( (itemTree_addcomponent_id=(*env)->GetMethodID( env, itemTree_class, "addSubComponent",
+	    "(Lmil/army/arl/muves/rtserver/ItemTree;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree addSubComponent method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* get the JAVA method id for the ItemTree setMuvesComponentName method */
+	if( (itemTree_setMuvesName_id=(*env)->GetMethodID( env, itemTree_class, "setMuvesComponentName",
+	     "(Ljava/lang/String;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ItemTree setMuvesComponentName method\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+	
+	/* create root node for ItemTree return */
+	nodeName = (*env)->NewStringUTF(env, "root" );
+	rootNode = (*env)->NewObject( env, itemTree_class, itemTree_constructor_id, nodeName );
+
+	/* check for any exceptions */
+	if( (*env)->ExceptionOccurred(env) ) {
+		fprintf( stderr, "Exception thrown while creating the ItemTree root node\n" );
+		(*env)->ExceptionDescribe(env);
+		return( (jobject)NULL );
+	}
+
+	/* traverse the model trees for this sessionid */
+	rtsg = rts_geometry[sessionId];
+	dbip = rtsg->rts_rtis[0]->rtrti_rtip->rti_dbip;
+	for( i=0 ; i<rtsg->rts_number_of_rtis ; i++ ) {
+		struct rtserver_rti *rts_rti=rtsg->rts_rtis[i];
+		int j;
+
+		for( j=0 ; j<rts_rti->rtrti_num_trees ; j++ ) {
+			fillItemTree( rootNode, dbip, env, rts_rti->rtrti_trees[j], itemTree_class,
+				      itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id );
+		}
+
+	}
+
+
+	return( rootNode );			      
+}
 
 /*				R t S e r v e r I m p l _ r t s I n i t
  *
