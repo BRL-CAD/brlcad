@@ -79,6 +79,53 @@ fastf_t	fovy, aspect, near, far, backoff;
 }
 
 /*
+ *  Map "display plate coordinates" (which can just be the screen viewing cube), 
+ *  into [-1,+1] coordinates, with perspective.
+ *  Per "High Resolution Virtual Reality" by Michael Deering,
+ *  Computer Graphics 26, 2, July 1992, pp 195-201.
+ *
+ *  L is lower left corner of screen, H is upper right corner.
+ *  L[Z] is the front (near) clipping plane location.
+ *  H[Z] is the back (far) clipping plane location.
+ *
+ *  This corresponds to the SGI "window()" routine, but taking into account
+ *  skew due to the eyepoint being offset parallel to the image plane.
+ */
+static void
+deering_persp_mat( m, l, h, eye )
+mat_t		m;
+CONST point_t	l;	/* lower left corner of screen */
+CONST point_t	h;	/* upper right (high) corner of screen */
+CONST point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
+{
+	vect_t	diff;	/* H - L */
+	vect_t	sum;	/* H + L */
+
+	VSUB2( diff, h, l );
+	VADD2( sum, h, l );
+
+	m[0] = 2 * eye[Z] / diff[X];
+	m[1] = 0;
+	m[2] = ( sum[X] - 2 * eye[X] ) / diff[X];
+	m[3] = -eye[Z] * sum[X] / diff[X];
+
+	m[4] = 0;
+	m[5] = 2 * eye[Z] / diff[Y];
+	m[6] = ( sum[Y] - 2 * eye[Y] ) / diff[Y];
+	m[7] = -eye[Z] * sum[Y] / diff[Y];
+
+	m[8] = 0;
+	m[9] = 0;
+	m[10] = ( sum[Z] - 2 * eye[Z] ) / diff[Z];
+	m[11] = -eye[Z] + 2 * h[Z] * eye[Z] / diff[Z];
+
+	m[12] = 0;
+	m[13] = 0;
+	m[14] = -1;
+	m[15] = eye[Z];
+}
+
+/*
  *			D O Z O O M
  *
  *	This routine reviews all of the solids in the solids table,
@@ -97,7 +144,6 @@ int	which_eye;
 	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
-	fastf_t		eye_delta;
 
 	ndrawn = 0;
 	inv_viewsize = 1 / VIEWSIZE;
@@ -108,31 +154,57 @@ int	which_eye;
 	if( mged_variables.perspective <= 0 )  {
 		mat = model2view;
 	} else {
+		/*
+		 *  There are two strategies that could be used:
+		 *  1)  Assume a standard head location w.r.t. the
+		 *  screen, and fix the perspective angle.
+		 *  2)  Based upon the perspective angle, compute
+		 *  where the head should be to achieve that field of view.
+		 *  Try strategy #2 for now.
+		 */
+		fastf_t	to_eye_scr;	/* screen space dist to eye */
+		fastf_t eye_delta_scr;	/* scr, 1/2 inter-occular dist */
+		point_t	l, h, eye;
+
+		/* Determine where eye should be */
+		to_eye_scr = 1 / tan(mged_variables.perspective * rt_degtorad * 0.5);
+
+#define SCR_WIDTH_PHYS	330	/* Assume a 330 mm wide screen */
+
+		eye_delta_scr = mged_variables.eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
+
+		VSET( l, -1, -1, 0.01 );
+		VSET( h, 1, 1, 200.0 );
+if(which_eye) {
+printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
+VPRINT("l", l);
+VPRINT("h", h);
+}
+		VSET( eye, 0, 0, to_eye_scr );
+
+		mat_idn(tmat);
+		tmat[11] = -1;
+		mat_mul( tvmat, tmat, model2view );
+
 		switch(which_eye)  {
 		case 0:
 			mat = model2view;
+			persp_mat( pmat, mged_variables.perspective,
+				1.0, 0.01, 1.0e10, 1.0 );
 			break;
 		case 1:
 			/* R */
-			/* XXX more logic needed */
-			eye_delta = mged_variables.eye_sep_dist*0.5;
-			mat_idn(tmat);
-			MAT_DELTAS(tmat, eye_delta, 0, 0);	/* view delta */
-			mat_mul(tvmat, tmat, model2view);
-			mat = tvmat;
+			mat = model2view;
+			eye[X] = eye_delta_scr;
+			deering_persp_mat( pmat, l, h, eye );
 			break;
 		case 2:
 			/* L */
-			mat_idn(tmat);
-			/* XXX more logic needed */
-			eye_delta = mged_variables.eye_sep_dist*0.5;
-			MAT_DELTAS(tmat, -eye_delta, 0, 0);	/* view delta */
-			mat_mul(tvmat, tmat, model2view);
-			mat = tvmat;
+			mat = model2view;
+			eye[X] = -eye_delta_scr;
+			deering_persp_mat( pmat, l, h, eye );
 			break;
 		}
-		persp_mat( pmat, mged_variables.perspective,
-			1.0, 0.01, 1.0e10, 1.0 );
 		mat_mul( new, pmat, mat );
 		mat = new;
 	}
