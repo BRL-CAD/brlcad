@@ -33,6 +33,7 @@ struct state_data {
 static struct bu_list state_stack;
 static struct state_data *curr_state;
 static int curr_color=7;
+static int ignore_colors=0;
 static char *curr_layer_name;
 static int color_by_layer=0;		/* flag, if set, colors are set by layer */
 
@@ -456,7 +457,7 @@ get_layer()
 	/* do we already have a layer by this name and color */
 	curr_layer = -1;
 	for( i = 1 ; i < next_layer ; i++ ) {
-		if( !color_by_layer ) {
+		if( !color_by_layer && !ignore_colors ) {
 			if( layers[i]->color_number == curr_color && !strcmp( curr_layer_name, layers[i]->name ) ) {
 				curr_layer = i;
 				break;
@@ -484,7 +485,7 @@ get_layer()
 		}
 		curr_layer = next_layer++;
 		if( verbose ) {
-			bu_log( "New layer: %s", line );
+			bu_log( "New layer: %s, color number: %d", line, curr_color );
 		}
 		layers[curr_layer]->name = bu_strdup( curr_layer_name );
 		layers[curr_layer]->vert_tree_root = create_vert_tree();
@@ -1846,10 +1847,13 @@ main( int argc, char *argv[] )
 	cos_delta = cos( delta_angle );
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "dvt:")) != EOF)
+	while ((c = getopt(argc, argv, "cdvt:")) != EOF)
 	{
 		switch( c )
 		{
+		        case 'c':	/* ignore colors */
+				ignore_colors = 1;
+				break;
 		        case 'd':	/* debug */
 				bu_debug = BU_DEBUG_COREDUMP;
 				break;
