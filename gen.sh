@@ -164,13 +164,13 @@ BDIRS="bench \
 	libnurb \
 	librt \
 	libredblack \
+	libtermio \
 	conv \
 	db \
 	rt \
 	anim \
 	mged \
 	remrt \
-	libtermio \
 	libcursor \
 	libfont \
 	liborle \
