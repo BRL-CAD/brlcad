@@ -47,6 +47,7 @@ struct bu_semaphores {
 	long	magic;
 	long	p;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif
 
 #ifdef CRAY2
@@ -61,6 +62,7 @@ struct bu_semaphores {
 	long	magic;
 	char	c;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif
 
 #if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
@@ -88,6 +90,7 @@ struct bu_semaphores {
 	long	magic;
 	ulock_t	ltp;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif /* SGI_4D */
 
 /* XXX Probably need to set _SGI_MP_SOURCE in machine.h */
@@ -98,6 +101,7 @@ struct bu_semaphores {
 	long	magic;
 	char	sem;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif
 
 #if defined(convex) || defined(__convex__)
@@ -105,6 +109,7 @@ struct bu_semaphores {
 	long	magic;
 	long	sem;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif
 
 #if defined(n16)
@@ -114,6 +119,7 @@ struct bu_semaphores {
 	long	magic;
 	char	sem;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif
 
 /*
@@ -127,6 +133,7 @@ struct bu_semaphores {
 	long	magic;
 	mutex_t	mu;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif	/* SUNOS */
 
 #if defined(HAS_POSIX_THREADS)
@@ -136,6 +143,7 @@ struct bu_semaphores {
 	long	magic;
 	pthread_mutex_t	mu;
 };
+# define DEFINED_BU_SEMAPHORES	1
 #endif	/* HAS_POSIX_THREADS */
 
 #define	BU_SEMAPHORE_MAGIC		0x62757365
@@ -222,7 +230,7 @@ unsigned int	nsemaphores;
 {
 	int	i;
 
-#if !defined(PARALLEL)
+#if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
 	return;					/* No support on this hardware */
 #else
 	if( bu_nsemaphores != 0 )  return;	/* Already called */
@@ -320,6 +328,9 @@ void
 bu_semaphore_acquire( i )
 unsigned int	i;
 {
+#if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
+	return;					/* No support on this hardware */
+#else
 	if( bu_semaphores == NULL )  {
 		/* Semaphores not initialized yet.  Must be non-parallel */
 		return;
@@ -372,6 +383,7 @@ unsigned int	i;
 		abort();
 	}
 #	endif
+#endif
 }
 
 /*
@@ -381,6 +393,9 @@ void
 bu_semaphore_release( i )
 unsigned int	i;
 {
+#if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
+	return;					/* No support on this hardware */
+#else
 	if( bu_semaphores == NULL )  {
 		/* Semaphores not initialized yet.  Must be non-parallel */
 		return;
@@ -430,4 +445,5 @@ unsigned int	i;
 		abort();
 	}
 #	endif
+#endif
 }
