@@ -4664,8 +4664,12 @@ CONST vect_t	mousevec;
     if(edit_absolute_scale > 0)
       edit_absolute_scale /= 3.0;
 
+#ifdef UPDATE_TCL_SLIDERS
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
-    goto end;
+#endif
+    sedit();
+
+    return;
   case STRANS:
     /* 
      * Use mouse to change solid's location.
@@ -4705,22 +4709,12 @@ CONST vect_t	mousevec;
      * Leave desired location in es_mparam.
      */
 
-#ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT( pos_view, model2view, curr_e_axes_pos );
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT( temp, view2model, pos_view );
     MAT4X3PNT( es_mparam, es_invmat, temp );
     es_mvalid = 1;	/* es_mparam is valid */
-#else
-    MAT4X3PNT( temp, es_mat, es_keypoint );
-    MAT4X3PNT( pos_view, model2view, temp );
-    pos_view[X] = mousevec[X];
-    pos_view[Y] = mousevec[Y];
-    MAT4X3PNT( temp, view2model, pos_view );
-    MAT4X3PNT( es_mparam, es_invmat, temp );
-    es_mvalid = 1;	/* es_mparam is valid */
-#endif
     /* Leave the rest to code in sedit() */
 
     break;
@@ -4732,7 +4726,6 @@ CONST vect_t	mousevec;
 	(struct rt_tgc_internal *)es_int.idb_ptr;
       RT_TGC_CK_MAGIC(tgc);
 
-#ifdef TRY_EDIT_NEW_WAY
       MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
@@ -4740,77 +4733,35 @@ CONST vect_t	mousevec;
       MAT4X3PNT( temp, view2model, pos_view );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( tgc->h, tr_temp, tgc->v );
-#else
-      VADD2( temp, tgc->v, tgc->h );
-      MAT4X3PNT(pos_model, es_mat, temp);
-      MAT4X3PNT( pos_view, model2view, pos_model );
-      pos_view[X] = mousevec[X];
-      pos_view[Y] = mousevec[Y];
-      /* Do NOT change pos_view[Z] ! */
-      MAT4X3PNT( temp, view2model, pos_view );
-      MAT4X3PNT( tr_temp, es_invmat, temp );
-      VSUB2( tgc->h, tr_temp, tgc->v );
-#endif
     }
 
     break;
   case PTARB:
     /* move an arb point to indicated point */
     /* point is located at es_values[es_menu*3] */
-#ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
-#else
-    {
-      struct rt_arb_internal *arb=
-	(struct rt_arb_internal *)es_int.idb_ptr;
-      RT_ARB_CK_MAGIC( arb );
-      
-      VMOVE( temp , arb->pt[es_menu] );
-    }
-
-    MAT4X3PNT(pos_model, es_mat, temp);
-    MAT4X3PNT(pos_view, model2view, pos_model);
-    pos_view[X] = mousevec[X];
-    pos_view[Y] = mousevec[Y];
-    MAT4X3PNT(temp, view2model, pos_view);
-    MAT4X3PNT(pos_model, es_invmat, temp);
-#endif
     editarb( pos_model );
 
     break;
   case EARB:
-#ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
-#else
-    /* move arb edge, through indicated point */
-    MAT4X3PNT( temp, view2model, mousevec );
-    /* apply inverse of es_mat */
-    MAT4X3PNT( pos_model, es_invmat, temp );
-#endif
     editarb( pos_model );
 
     break;
   case ECMD_ARB_MOVE_FACE:
-#ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
-#else
-    /* move arb face, through  indicated  point */
-    MAT4X3PNT( temp, view2model, mousevec );
-    /* apply inverse of es_mat */
-    MAT4X3PNT( pos_model, es_invmat, temp );
-#endif
     /* change D of planar equation */
     es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
     /* calculate new vertices, put in record as vectors */
@@ -4839,16 +4790,11 @@ CONST vect_t	mousevec;
       tmp_tol.perp = 0.0;
       tmp_tol.para = 1 - tmp_tol.perp;
 
-#ifdef TRY_EDIT_NEW_WAY
       MAT4X3PNT( pos_view, model2view, curr_e_axes_pos );
       pos_view[X] = mousevec[X];
       pos_view[Y] = mousevec[Y];
       if( (e = nmg_find_e_nearest_pt2( &m->magic, pos_view,
 				       model2view, &tmp_tol )) ==
-#else
-      if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
-				       model2view, &tmp_tol )) ==
-#endif
 	  (struct edge *)NULL )  {
 	Tcl_AppendResult(interp, "ECMD_NMG_EPICK: unable to find an edge\n",
 			 (char *)NULL);
@@ -4885,17 +4831,11 @@ CONST vect_t	mousevec;
   case ECMD_ARS_MOVE_PT:
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
-#ifdef TRY_EDIT_NEW_WAY
     MAT4X3PNT(pos_view, model2view, curr_e_axes_pos);
     pos_view[X] = mousevec[X];
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(es_mparam, es_invmat, temp);
-#else
-    MAT4X3PNT( temp, view2model, mousevec );
-    /* apply inverse of es_mat */
-    MAT4X3PNT( es_mparam, es_invmat, temp );
-#endif
     es_mvalid = 1;
 
     break;
@@ -4906,26 +4846,35 @@ CONST vect_t	mousevec;
     }
 
   update_edit_absolute_tran(pos_view);
-end:
   sedit();
 }
 
 void
-update_edit_absolute_tran(pos_view)
-vect_t pos_view;
+update_edit_absolute_tran(view_pos)
+vect_t view_pos;
 {
   vect_t model_pos;
+  vect_t ea_view_pos;
   vect_t diff;
   fastf_t inv_Viewscale = 1/Viewscale;
 
-  MAT4X3PNT(model_pos, view2model, pos_view);
+  MAT4X3PNT(model_pos, view2model, view_pos);
   VSUB2(diff, model_pos, e_axes_pos);
   VSCALE(edit_absolute_model_tran, diff, inv_Viewscale);
   VMOVE(last_edit_absolute_model_tran, edit_absolute_model_tran);
 
+  MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
+  VSUB2(edit_absolute_view_tran, view_pos, ea_view_pos);
+  VMOVE(last_edit_absolute_view_tran, edit_absolute_view_tran);
+
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[X]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Y]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_model_tran_vls[Z]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_view_tran_vls[Z]));
+#endif
 }
 
 void
@@ -6132,6 +6081,7 @@ init_objedit()
 	int			id;
 	char			*strp="";
 	struct bu_vls		vls;
+	struct menu_item        *mip;
 
 	/* for safety sake */
 	es_menu = 0;
@@ -7533,6 +7483,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_TOR:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = tor_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7540,6 +7491,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_ELL:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = ell_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7547,6 +7499,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_ARS:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = ars_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7554,6 +7507,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_BSPLINE:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = spline_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7561,6 +7515,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_RPC:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = rpc_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7568,6 +7523,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_RHC:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = rhc_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7575,6 +7531,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_EPA:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = epa_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7582,6 +7539,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_EHY:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = ehy_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7589,6 +7547,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_ETO:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = eto_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7596,6 +7555,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_NMG:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = nmg_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7603,6 +7563,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_PIPE:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = pipe_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7610,6 +7571,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_VOL:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = vol_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7617,6 +7579,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_EBM:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = ebm_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7624,6 +7587,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_DSP:
+    bu_vls_printf(&vls, "do_edit_menu {");
     mip = dsp_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
