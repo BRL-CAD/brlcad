@@ -442,7 +442,7 @@ AC_MSG_CHECKING(what cache file is set to)
 CONFIG_CACHE=""
 if test "x$cache_file" = "x/dev/null" ; then
 	if test "x$host_os" != "xirix6.5" ; then
-		compsys="`echo $CC | tr '/' ' ' | awk '{print $1}'`"
+		compsys="`echo $CC | awk '{print $1}' | tr -d '/'`"
 		if test "x$compsys" = "x" ; then
 			compsys="$compiler"
 		fi
