@@ -1,6 +1,9 @@
 /*
  *			S P E C T R U M . C
  *
+ *  This should perhaps be called the "table" package, as it's use is
+ *  really much more general than just storing spectral curves.
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -29,6 +32,25 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtstring.h"
 #include "raytrace.h"
 #include "spectrum.h"
+
+/*
+ *			R T _ C K _ S P E C T R U M
+ */
+void
+rt_ck_spectrum( spect )
+CONST struct rt_spectrum	*spect;
+{
+	register int	i;
+
+	RT_CK_SPECTRUM(spect);
+
+	if( spect->nwave < 2 ) rt_bomb("rt_ck_spectrum() less than 2 wavelengths\n");
+
+	for( i=0; i < spect->nwave; i++ )  {
+		if( spect->wavel[i] >= spect->wavel[i+1] )
+			rt_bomb("rt_ck_spectrum() wavelengths not in strictly ascending order\n");
+	}
+}
 
 /*
  *			R T _ S P E C T _ U N I F O R M
@@ -154,6 +176,29 @@ register double			scale;
 }
 
 /*
+ *			R T _ S P E C T R U M _ S C A L E
+ *
+ *  Scale the indepentent axis (wavelength) of a spectrum by 'scale'.
+ *  If input spectrum is in microns (um) and you need nanometers (nm),
+ *  this routine is just the ticket.
+ */
+void
+rt_spectrum_scale( spect, scale )
+struct rt_spectrum	*spect;
+register double		scale;
+{
+	register int		j;
+	register fastf_t	*op, *i1;
+
+	RT_CK_SPECTRUM( spect );
+
+	op = spect->wavel;
+	for( j = spect->nwave+1; j > 0; j-- )
+		*op++ *= scale;
+	/* VSCALEN( spect->wavel, spect->wavel, scale, spect->nwave+1 ); */
+}
+
+/*
  *			R T _ S P E C T _ A R E A 1
  *
  *  Following interpretation #1, where val[j] stores the total (integral
@@ -213,7 +258,7 @@ CONST struct rt_spect_sample	*in;
  *  observer with a 2-degree visual field.
  *  From Roy Hall.
  */
-static double	rt_CIE_XYZ[81][4] = {
+static CONST double	rt_CIE_XYZ[81][4] = {
     {380, 0.0014, 0.0000, 0.0065}, {385, 0.0022, 0.0001, 0.0105},
     {390, 0.0042, 0.0001, 0.0201}, {395, 0.0076, 0.0002, 0.0362},
     {400, 0.0143, 0.0004, 0.0679}, {405, 0.0232, 0.0006, 0.1102},
@@ -324,6 +369,84 @@ again:
 }
 
 /*
+ *			R T _ S P E C T _ E V A L U A T E
+ *
+ *  Return the value of the spectral curve at wavelength 'wl'.
+ *  Linearly interpolate between values in the input table.
+ *  Zero is returned for values outside the sampled range.
+ *
+ *  A binary search would be more efficient, as the wavelengths
+ *  are known to be sorted in ascending order.
+ */
+fastf_t
+rt_spect_evaluate( samp, wl )
+CONST struct rt_spect_sample	*samp;
+register double			wl;
+{
+	CONST struct rt_spectrum	*spect;
+	register int			i;
+
+	RT_CK_SPECT_SAMPLE(samp);
+	spect = samp->spectrum;
+	RT_CK_SPECTRUM(spect);
+
+	if( wl < spect->wavel[0] || wl > spect->wavel[spect->nwave] )
+		return 0;
+
+	/* Search for proper interval in input spectrum */
+	for( i = 0; i < spect->nwave-1; i++ )  {
+		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
+
+		if( wl < spect->wavel[i] )  rt_bomb("rt_spect_evaluate() assertion1 failed\n");
+		if( wl >= spect->wavel[i+1] )  continue;
+
+		/* The interval has been found */
+		fract = (wl - spect->wavel[i]) /
+			(spect->wavel[i+1] - spect->wavel[i]);
+		if( fract < 0 || fract > 1 )  rt_bomb("rt_spect_spect_evaluate() assertion2 failed\n");
+		return (1-fract) * samp->val[i] + fract * samp->val[i+1];
+	}
+
+	/* Assume value is constant in final interval. */
+	if( !( wl >= spect->wavel[spect->nwave-1] ) )
+		rt_bomb("rt_spect_evaluate() assertion3 failed\n");
+	return samp->val[spect->nwave-1];
+}
+
+/*
+ *			R T _ S P E C T _ R E S A M P L E
+ *
+ *  Given a set of sampled data 'oldsamp', resample it for different
+ *  spectral spacing, by linearly interpolating the values.
+ *
+ *  This assumes interpretation (2) of the data, i.e. that the values
+ *  are the average value across the interval.
+ */
+struct rt_spect_sample *
+rt_spect_resample( newspect, oldsamp )
+CONST struct rt_spectrum	*newspect;
+CONST struct rt_spect_sample	*oldsamp;
+{
+	CONST struct rt_spectrum	*oldspect;
+	struct rt_spect_sample		*newsamp;
+	int				i;
+
+	RT_CK_SPECTRUM(newspect);
+	RT_CK_SPECT_SAMPLE(oldsamp);
+	oldspect = oldsamp->spectrum;
+	RT_CK_SPECTRUM(oldspect);
+
+	if( oldspect == newspect )  rt_log("rt_spect_resample() old and new spectrum structs are the same\n");
+
+	RT_GET_SPECT_SAMPLE( newsamp, newspect );
+
+	for( i = 0; i < newspect->nwave; i++ )  {
+		newsamp->val[i] = rt_spect_evaluate( oldsamp, newspect->wavel[i] );
+	}
+	return newsamp;
+}
+
+/*
  *			R T _ W R I T E _ S P E C T R U M
  *
  *  Write out the spectrum structure in an ASCII file,
@@ -404,6 +527,9 @@ CONST char	*filename;
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
+
+	rt_ck_spectrum( spect );
+
 	return spect;
 }
 
@@ -448,6 +574,72 @@ CONST struct rt_spect_sample	*ss;
 	return 0;
 }
 
+/*
+ *			R T _ R E A D _ S P E C T R U M _ A N D _ S A M P L E S
+ *
+ *  Read in a file which contains two columns of numbers, the first
+ *  column being the wavelength, the second column being the sample value
+ *  at that wavelength.
+ *  A new rt_spectrum structure and one rt_spect_sample structure
+ *  are created, a pointer to the rt_spect_sample structure is returned.
+ *  The final wavelength is guessed at.
+ */
+struct rt_spect_sample *
+rt_read_spectrum_and_samples( filename )
+CONST char	*filename;
+{
+	struct rt_spectrum	*spect;
+	struct rt_spect_sample	*ss;
+	struct rt_vls		line;
+	FILE	*fp;
+	char	buf[128];
+	int	count = 0;
+	int	i;
+
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fp = fopen( filename, "r" );
+	RES_RELEASE( &rt_g.res_syscall );
+
+	if( fp == NULL )  {
+		perror(filename);
+		rt_log("rt_read_spectrum_and_samples(%s) FAILED\n", filename);
+		return NULL;
+	}
+
+	/* First pass:  Count number of lines */
+	RES_ACQUIRE( &rt_g.res_syscall );
+	for(;;)  {
+		if( fgets( buf, sizeof(buf), fp ) == NULL )  break;
+		count++;
+	}
+	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );
+
+	/* Allocate storage */
+	RT_GET_SPECTRUM( spect, count );
+	RT_GET_SPECT_SAMPLE( ss, spect );
+
+	/* Second pass:  Read only as much data as storage was allocated for */
+	RES_ACQUIRE( &rt_g.res_syscall );
+	fp = fopen( filename, "r" );
+	for( i=0; i < count; i++ )  {
+		buf[0] = '\0';
+		if( fgets( buf, sizeof(buf), fp ) == NULL )  {
+			rt_log("rt_read_spectrum_and_samples(%s) unexpected EOF on line %d\n", filename, i);
+			break;
+		}
+		sscanf( buf, "%lf %lf", &spect->wavel[i], &ss->val[i] );
+	}
+	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );
+
+	/* Complete final interval */
+	spect->wavel[count] = 2 * spect->wavel[count-1] - spect->wavel[count-2];
+
+	rt_ck_spectrum( spect );
+
+	return ss;
+}
 
 #define C1	3.7415E4    /* watts um^4 cm^-2 */
 #define C2	14387.86    /* um K */ 	
@@ -640,6 +832,7 @@ int	num;
 }
 
 /*
+ *			R T _ S P E C T _ C O P Y
  */
 void
 rt_spect_copy( out, in )
