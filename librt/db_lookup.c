@@ -329,10 +329,11 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
  *  one, stealing the external representation from 'ext'.
  */
 void
-db_inmem( dp, ext, flags )
+db_inmem( dp, ext, flags, dbip )
 struct directory	*dp;
 struct bu_external	*ext;
 int			flags;
+struct db_i		*dbip;
 {
 	BU_CK_EXTERNAL(ext);
 	RT_CK_DIR(dp);
@@ -340,7 +341,11 @@ int			flags;
 	if( dp->d_flags & RT_DIR_INMEM )
 		bu_free( dp->d_un.ptr, "db_inmem() ext ptr" );
 	dp->d_un.ptr = ext->ext_buf;
-	dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
+	if( dbip->dbi_version < 5 ) {
+		dp->d_len = ext->ext_nbytes / 128;	/* DB_MINREC granule size */
+	} else {
+		dp->d_len = ext->ext_nbytes;
+	}
 	dp->d_flags = flags | RT_DIR_INMEM;
 
 	/* Empty out the external structure, but leave it w/valid magic */
