@@ -252,7 +252,7 @@ proc help {args}	{
 proc ? {} {
 	global help_data
 
-	return [?_comm help_data 15 5]
+	return [?_comm help_data 20 4]
 }
 
 proc apropos key {
