@@ -1,24 +1,28 @@
-.TH DECK 1 VMB
-'\"	last edit:	6/14/83	G S Moss
-'\"	SCCSID		@(#)vdeck.1	1.3
+.TH VDECK 1 VMB
+'\"	last edit:	10/11/83	G S Moss
+'\"	SCCSID		@(#)vdeck.1	1.4
 .SH NAME
-Deck \- Generate COM-GEOM decks from a GED database file
+Vdeck \- Generate COM-GEOM decks from a
+.I vged
+file
 .SH SYNOPSIS
-.B deck
+.B vdeck
 {file}.g
 [
 .BI object...
 ]
 .SH DESCRIPTION
-.I Deck\^
+.I Vdeck\^
 allows the user to select a list of objects (solids,  regions,  or
-groups) from a GED database file and generate a COM-GEOM deck for them.
+groups) from a
+.I vged
+file and generate a COM-GEOM vdeck for them.
 A list of objects  can be specified when invoking the program or a list
 can be selected interactively from the table of contents. String match-
 ing operators  like  those used to specify file or directory names from
 the UNIX shell are provided for this purpose,  as well as to search for
 names in the table of contents.   A list of objects can be edited using
-the 'delete' and 'insert' operators.  A deck consists of  three  tables
+the 'delete' and 'insert' operators.  A vdeck consists of  three  tables
 (solid, region and region-id) and are saved as seperate files. Multiple
 decks can be created by specifying unique file name prefixes,  in which
 case the tables are suffixed by a ".st", ".rt" and ".id".
