@@ -33,7 +33,7 @@
  *
  * So the file looks like:
  *
- *	long	#_of_cyls
+ *	long	#_of_cyls		# Beware:  may be 4 or 8 bytes!!!!
  *
  *	short	segs	(always 1)	# 2 bytes
  *	float	x,y,z,temperature	# 4 X 4 = 16 bytes
