@@ -128,14 +128,13 @@ static void readhqt();
 static void decode();
 static void clear();
 static void druckeid();
-static void sharpit();
 static long Skip4Base();
 
 static FILE *fin=0,*fout=0;
 static char *pcdname=0,*ppmname=0;
 static char nbuf[100];
 static uBYTE sbuffer[SECSIZE];
-static int do_sharp,keep_ycc;
+static int keep_ycc;
 
 
 
@@ -281,10 +280,11 @@ void main(argc,argv)
  enum ERRORS eret;
  implane Luma, Chroma1,Chroma2;
 
- do_info=do_diff=do_overskip=do_sharp=keep_ycc=0;
+ do_info=do_diff=do_overskip=keep_ycc=0;
 
  ASKIP;
 
+	/* Argument processing */
  while((argc>0) && **argv=='-')
   {
    opt= (*argv)+1;
@@ -317,12 +317,6 @@ void main(argc,argv)
 
    if(!strcmp(opt,"d")) 
     { if (!do_diff) do_diff=1;
-      else error(E_ARG);
-      continue;
-    }
-
-   if(!strcmp(opt,"s")) 
-    { if (!do_sharp) do_sharp=1;
       else error(E_ARG);
       continue;
     }
@@ -856,7 +850,6 @@ static void ycctorgb(w,h,l,c1,c2)
   if((!c1) || (c1->iwidth != w ) || (c1->iheight != h) || (!c1->im)) error(E_INTERN);
   if((!c2) || (c2->iwidth != w ) || (c2->iheight != h) || (!c2->im)) error(E_INTERN);
 
-  if(do_sharp) sharpit(l);
   if(keep_ycc) return;
 
   if(!init)
@@ -1347,59 +1340,6 @@ static void clear(l,n)
     for (y=0; y<l->mheight;y++)
       *(ptr++)=n;
 }
-
-
-
-#define slen 3072
-
-static void sharpit(l)
-  implane *l;
- {int x,y,h,w,mw,akk;
-  uBYTE f1[slen],f2[slen],*old,*akt,*ptr,*work,*help,*optr;
-
-  if((!l) || (!l->im)) error(E_INTERN);
-  if(l->iwidth > slen) error(E_INTERN);
-
-  old=f1; akt=f2;
-  h=l->iheight;
-  w=l->iwidth;
-  mw=l->mwidth;
-
-  for(y=1;y<h-1;y++)
-   {
-    ptr=l->im+ y*mw;
-    optr=ptr-mw;
-    work=akt;
-
-    *(work++)= *(ptr++);
-    for(x=1;x<w-1;x++)
-     {  akk = 5*((int)ptr[0])- ((int)ptr[1])  - ((int)ptr[-1]) 
-                              - ((int)ptr[mw]) - ((int)ptr[-mw]);
-        NORM(akk);
-        *(work++)=akk;
-        ptr++;
-     }
-
-    *(work++)= *(ptr++);
-
-    if(y>1) bcopy(old,optr,w);
-    help=old;old=akt;akt=help;
-     
-   }
-
-
-
-  akt=optr+mw;
-  for(x=0;x<w;x++)
-    *(akt++) = *(old++);
- }
-
-
-#undef slen
-
-
-
-
 
 
 static int testbegin()
