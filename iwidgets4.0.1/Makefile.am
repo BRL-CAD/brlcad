@@ -2,7 +2,7 @@
 
 SUBDIRS = generic
 
-INSTALL_DIR = ${libdir}/iwidgets4.0.1/
+INSTALL_DIR = ${libdir}/iwidgets4.0.1
 
 FILES = iwidgets.tcl pkgIndex.tcl
 
