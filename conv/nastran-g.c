@@ -130,6 +130,9 @@ static struct shell		*nmg_shell;	/* NMG shell */
 static struct bn_tol		tol;		/* tolerance for NMG's */
 static int			polysolids=0;	/* flag fro outputting polysolids rather than NMG's */
 
+HIDDEN int get_next_record( FILE *fd, int call_input, int write_flag );
+HIDDEN int convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt );
+
 #define		INPUT_OK	0
 #define		INPUT_NULL	1
 
@@ -216,7 +219,7 @@ do_silly_nastran_shortcuts()
 
 				a = atof( prev_rec[field_no] );
 				b = atof( &curr_rec[field_no][i] );
-				sprintf( curr_rec[field_no], "%-#0.*E", FIELD_LENGTH-6, a+b );
+				sprintf( curr_rec[field_no], "%-#*E", FIELD_LENGTH-6, a+b );
 			}
 			else
 			{
@@ -440,10 +443,7 @@ int write_flag;
 }
 
 HIDDEN int
-get_next_record( fd, call_input, write_flag )
-FILE *fd;
-int call_input;
-int write_flag;
+get_next_record( FILE *fd, int call_input, int write_flag )
 {
 	char *tmp;
 	int form;
@@ -604,10 +604,7 @@ struct coord_sys *cs;
 }
 
 HIDDEN int
-convert_pt( pt, cs, out_pt )
-point_t pt;
-struct coord_sys *cs;
-point_t out_pt;
+convert_pt( const point_t pt, struct coord_sys *cs, point_t out_pt )
 {
 	point_t tmp_pt;
 	fastf_t c1, c2, c3, c4;
