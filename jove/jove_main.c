@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  1995/01/04  10:35:17  mike
+ * Release_4.4
+ *
  * Revision 10.13  94/12/29  23:02:59  mike
  * Bug #158.  Eliminated ^V doubling on DEC Alpha, and Solaris.
  * 
@@ -143,6 +146,11 @@ static char RCSid[] = "@(#)$Header$";
 # endif
 #endif
 #include <errno.h>
+
+				/* IRIX 5.x needs FNDELAY defined */
+#if IRIX >= 5
+#include <sys/file.h>
+#endif
 
 extern char	*version;
 extern char	*BinShell;
