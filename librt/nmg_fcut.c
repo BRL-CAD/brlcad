@@ -2587,7 +2587,8 @@ struct nmg_ray_state *rs;
 	{
 		class = nmg_class_pt_lu_except( other_vp->vg_p->coord, best_lu, (struct edge *)NULL, rs->tol );
 
-		if( class == NMG_CLASS_AinB )
+		if( (class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
+		    (class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE) )
 			other_is_in_best = 1;
 		else if( class == NMG_CLASS_AonBshared )
 		{
@@ -2610,6 +2611,13 @@ struct nmg_ray_state *rs;
 		if( lu != best_lu )
 		{
 			class = nmg_classify_lu_lu( lu, best_lu, rs->tol );
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+			{
+				rt_log( "lu x%x is %s\n", lu , nmg_orientation( lu->orientation ) );
+				rt_log( "best_lu x%x is %s\n", best_lu , nmg_orientation( best_lu->orientation ) );
+				rt_log( "lu x%x is %s w.r.t lu x%x\n",
+					lu, nmg_class_name( class ), best_lu );
+			}
 
 			if( other_is_in_best )
 			{
@@ -2648,7 +2656,8 @@ struct nmg_ray_state *rs;
 						class = nmg_class_pt_lu_except( other_vp->vg_p->coord,
 							best_lu, (struct edge *)NULL, rs->tol );
 
-						if( class == NMG_CLASS_AinB )
+						if( (class == NMG_CLASS_AinB && best_lu->orientation == OT_SAME) ||
+						    (class == NMG_CLASS_AoutB && best_lu->orientation == OT_OPPOSITE) )
 							other_is_in_best = 1;
 						else if( class == NMG_CLASS_AonBshared )
 						{
@@ -2660,7 +2669,6 @@ struct nmg_ray_state *rs;
 							other_is_in_best = 0;
 					}
 					if(rt_g.NMG_debug&DEBUG_FCUT)
-
 						rt_log( "\tfind_best_vu: better choice (outside) - index=%d, vu=x%x, lu=x%x, other_is_in_best=%d\n",
 							best_index, best_vu, best_lu, other_is_in_best );
 				}
@@ -2675,6 +2683,10 @@ struct nmg_ray_state *rs;
 			eu = rs->vu[i]->up.eu_p;
 			NMG_CK_EDGEUSE( eu );
 			angle = nmg_eu_angle( eu, other_vp );
+
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log( "best_angle = %f, eu=x%x, eu_angle=%f\n",
+					best_angle, eu, angle );
 			if( angle > best_angle )
 			{
 				best_angle = angle;
