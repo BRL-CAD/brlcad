@@ -233,7 +233,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	cfile = bu_vls_addr(&prj_sp->prj_cfile);
 	if ((cfd = fopen(cfile, "r")) == (FILE *)NULL) {
-		bu_log("%s %s\n", strerror(errno), cfile);
+		bu_log("%s: can't open\n", cfile);
 		bu_free((char *)prj_sp, "prj_specific");
 		return -1;
 	}
@@ -292,7 +292,7 @@ bu_vls_trunc2(&line, 0) ) {
 		if ((cfd=fopen( dfile, "r")) == (FILE*)NULL) {
 			struct slide *badslide = slide;
 
-			bu_log("%s %s\n", strerror(errno), dfile);
+			bu_log("%s: can't open\n", dfile);
 
 			/* open failed, remove this slide */
 			slide = BU_LIST_PREV(slide, &badslide->l);
