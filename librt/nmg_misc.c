@@ -1019,3 +1019,85 @@ struct edgeuse *eu;
 	rt_log("%s (%g, %g, %g -> %g, %g, %g)\n", str, eup[0], eup[1], eup[2],
 		matep[0], matep[1], matep[2]);
 }
+
+#define FIRST_TIME(p)	( flags[(p)->index]++ == 0 )
+
+/*
+ *			N M G _ R E B O U N D
+ *
+ *  Re-compute all the bounding boxes in the NMG model.
+ *  Bounding boxes are presently found in these structures:
+ *	loop_g
+ *	face_g
+ *	shell_a
+ *	nmgregion_a
+ *  The re-bounding must be performed in a bottom-up manner,
+ *  computing the loops first, and working up to the nmgregions.
+ */
+void
+nmg_rebound( m )
+struct model	*m;
+{
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct faceuse		*fu;
+	struct face		*f;
+	struct loopuse		*lu;
+	struct loop		*l;
+	register int		*flags;
+
+	NMG_CK_MODEL(m);
+
+	flags = (int *)rt_calloc( m->maxindex, sizeof(int), "rebound flags[]" );
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+
+			/* Loops in faces in shell */
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu);
+				/* Loops in face */
+				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+					NMG_CK_LOOPUSE(lu);
+					l = lu->l_p;
+					NMG_CK_LOOP(l);
+					if( FIRST_TIME(l) )
+						nmg_loop_g(l);
+				}
+			}
+			/* Faces in shell */
+			for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu);
+				f = fu->f_p;
+				NMG_CK_FACE(f);
+
+				/* Rebound the face */
+				if( FIRST_TIME(f) )
+					nmg_face_bb( f );
+			}
+
+			/* Wire loops in shell */
+			for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+				NMG_CK_LOOPUSE(lu);
+				l = lu->l_p;
+				NMG_CK_LOOP(l);
+				if( FIRST_TIME(l) )
+					nmg_loop_g(l);
+			}
+
+			/*
+			 *  Rebound the shell.
+			 *  This routine handles wire edges and lone vertices.
+			 */
+			if( FIRST_TIME(s) )
+				nmg_shell_a( s );
+		}
+
+		/* Rebound the nmgregion */
+		nmg_region_a( r );
+	}
+
+	rt_free( (char *)flags, "rebound flags[]" );
+}
