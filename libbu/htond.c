@@ -71,7 +71,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #if defined(sun) || defined(alliant) || defined(ardent) || \
 	defined(stellar) || defined(sparc) || defined(mips) || \
-	defined(pyr)
+	defined(pyr) || defined(apollo)
 
 	/*  These systems already operate in
 	 *  IEEE format internally, using big-endian order.
