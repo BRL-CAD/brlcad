@@ -461,6 +461,11 @@ struct db_i *dbip_set;
 	ttol = (*set_ttol);
 	verbose = set_verbose;
 	dbip = dbip_set;
+
+	dir_seq = 0;
+	param_seq = 0;
+	start_len = 0;
+	global_len = 0;
 }
 
 void
