@@ -19,14 +19,22 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#include "conf.h"
+
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"
+
+#include "plot3.h"
 
 char	buf[2048];
 
 int	debug = 0;
 
+int
 main( argc, argv )
 int	argc;
 char	*argv[];
@@ -50,7 +58,7 @@ char	*argv[];
 			&t, &xyz[0], &xyz[1], &xyz[2] );
 		if(debug)  {
 			fprintf(stderr,"buf=%s", buf);
-			fprintf(stderr,"%d: %lf\t%lf\t%lf\t%lf\n",
+			fprintf(stderr,"%d: %f\t%f\t%f\t%f\n",
 				i, t, xyz[0], xyz[1], xyz[2] );
 		}
 		if( i <= 0 )
@@ -62,4 +70,5 @@ char	*argv[];
 			pdv_3cont( stdout, xyz );
 		}
 	}
+	return 0;
 }

@@ -15,7 +15,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "$Id$";
+static const char RCSid[] = "$Id$";
 #endif
 #undef DEBUG 
 

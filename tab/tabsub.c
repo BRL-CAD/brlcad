@@ -57,6 +57,7 @@ void	out_mat();
  *			M A I N
  *
  */
+int
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -80,6 +81,7 @@ char	**argv;
 		}
 	}
 	do_lines( table );
+	return 0;
 }
 
 void
