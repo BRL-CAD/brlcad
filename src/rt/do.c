@@ -730,7 +730,7 @@ do_frame(int framenumber)
 	}
 
 	/* Allocate data for pixel map for rerendering of black pixels */
-	pixmap= (unsigned char*)malloc(sizeof(RGBpixel)*width*height);
+	pixmap= (unsigned char*)bu_malloc(sizeof(RGBpixel)*width*height, "pixmap allocate");
 	for (i= 0; i < width*height*sizeof(RGBpixel); i++)
 		pixmap[i]= 0;
 
@@ -788,7 +788,9 @@ do_frame(int framenumber)
 		 */
 		{
 			struct		stat	sb;
-			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
+			if( stat( framename, &sb ) >= 0 && 
+			    sb.st_size > 0 &&
+			    sb.st_size < width*height*sizeof(RGBpixel))  {
 				/* File exists, with partial results */
 				register int	fd;
 				if( (fd = open( framename, 2 )) < 0 ||
@@ -974,7 +976,7 @@ do_frame(int framenumber)
 	}
 
 	bu_log("\n");
-        free(pixmap);
+        bu_free(pixmap, "pixmap allocate");
 	return(0);		/* OK */
 }
 
