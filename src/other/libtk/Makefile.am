@@ -10,7 +10,7 @@ configure:
 		--prefix=${prefix} \
 		--x-includes=@X_PREFIX@/include \
 		--x-libraries=@X_PREFIX@/lib \
-		--with-tcl=${top_builddir}/../src/other/libtcl/build\
+		--with-tcl=${top_builddir}/../src/other/libtcl/unix \
 	)
 
 
