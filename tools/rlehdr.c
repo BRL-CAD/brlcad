@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <rle.h>
-#include "../patchlevel.h"
+/* #include "../patchlevel.h" */
 #ifdef USE_STDLIB_H
 #include <stdlib.h>
 #else
