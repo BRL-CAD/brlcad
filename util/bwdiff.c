@@ -26,6 +26,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -174,6 +175,7 @@ int argc; char **argv;
 		}
 		fwrite( &obuf[0], 1, n, stdout );
 	}
+	return 0;
 }
 
 void
