@@ -395,9 +395,9 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
  */
 int
 rt_vol_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-mat_t			mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+CONST mat_t			mat;
 {
 	union record	*rp;
 	register struct rt_vol_internal *vip;
@@ -407,6 +407,7 @@ mat_t			mat;
 	register int	y;
 	register int	z;
 	mat_t		tmat;
+	int		ret;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -456,24 +457,33 @@ mat_t			mat;
 		(vip->zdim+VOL_ZWIDEN*2);
 	vip->map = (unsigned char *)rt_calloc( 1, nbytes, "vol_import bitmap" );
 
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	if( (fp = fopen(vip->file, "r")) == NULL )  {
 		perror(vip->file);
-err:
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 		return(-1);
 	}
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	/* Because of in-memory padding, read each scanline separately */
 	for( z=0; z < vip->zdim; z++ )  {
 		for( y=0; y < vip->ydim; y++ )  {
-			if( fread( &VOL(vip, 0, y, z), vip->xdim, 1, fp ) < 1 )  {
-				rt_log("Unable to read whole VOL, y=%d, z=%d\n",
-					y, z);
+			RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+			ret = fread( &VOL(vip, 0, y, z), vip->xdim, 1, fp ); /* res_syscall */
+			RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+			if( ret < 1 )  {
+				rt_log("rt_vol_import(%s): Unable to read whole VOL, y=%d, z=%d\n",
+					vip->file, y, z);
+				RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 				fclose(fp);
-				goto err;
+				RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+				return -1;
 			}
 		}
 	}
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return( 0 );
 }
 
@@ -484,9 +494,9 @@ err:
  */
 int
 rt_vol_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
@@ -640,9 +650,9 @@ struct rt_i		*rtip;
  */
 void
 rt_vol_print( stp )
-register struct soltab	*stp;
+register CONST struct soltab	*stp;
 {
-	register struct rt_vol_specific *volp =
+	register CONST struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
 
 	rt_log("vol file = %s\n", volp->vol_i.file );

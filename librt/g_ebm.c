@@ -476,9 +476,9 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
  */
 int
 rt_ebm_import( ip, ep, mat )
-struct rt_db_internal	*ip;
-struct rt_external	*ep;
-mat_t			mat;
+struct rt_db_internal		*ip;
+CONST struct rt_external	*ep;
+CONST mat_t			mat;
 {
 	union record	*rp;
 	register struct rt_ebm_internal *eip;
@@ -487,6 +487,7 @@ mat_t			mat;
 	int		nbytes;
 	register int	y;
 	mat_t		tmat;
+	int		ret;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -530,19 +531,27 @@ mat_t			mat;
 	eip->map = (unsigned char *)rt_calloc(
 		1, nbytes, "rt_ebm_import bitmap" );
 
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	if( (fp = fopen(eip->file, "r")) == NULL )  {
 		perror(eip->file);
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 		return(-1);
 	}
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	/* Because of in-memory padding, read each scanline separately */
 	for( y=0; y < eip->ydim; y++ )  {
-		if( fread( &BIT( eip, 0, y), eip->xdim, 1, fp ) != 1 )  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		ret = fread( &BIT( eip, 0, y), eip->xdim, 1, fp ); /* res_syscall */
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		if( ret != 1 )  {
 			rt_log("rt_ebm_import(%s): fread error, y=%d\n",
 				eip->file, y );
 		}
 	}
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	fclose(fp);
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return( 0 );
 }
 
@@ -553,9 +562,9 @@ mat_t			mat;
  */
 int
 rt_ebm_export( ep, ip, local2mm )
-struct rt_external	*ep;
-struct rt_db_internal	*ip;
-double			local2mm;
+struct rt_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
 {
 	struct rt_ebm_internal	*eip;
 	struct rt_ebm_internal	ebm;	/* scaled version */
@@ -711,9 +720,9 @@ struct rt_i		*rtip;
  */
 void
 rt_ebm_print( stp )
-register struct soltab	*stp;
+register CONST struct soltab	*stp;
 {
-	register struct rt_ebm_specific *ebmp =
+	register CONST struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
 
 	rt_log("ebm file = %s\n", ebmp->ebm_i.file );
