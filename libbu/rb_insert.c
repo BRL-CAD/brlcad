@@ -42,6 +42,7 @@ struct rb_node	*new_node;
     int			(*compare)();
     int			comparison;
     int			direction;
+    int			result = 0;
 
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
@@ -66,9 +67,21 @@ struct rb_node	*new_node;
 	parent = node;
 	comparison = (*compare)(rb_data(new_node, order), rb_data(node, order));
 	if (comparison < 0)
+	{
+	    if (tree -> rbt_debug & RB_DEBUG_INSERT)
+		rt_log("_rb_insert(%x): <_%d <%x>, going left\n",
+		    new_node, order, node);
 	    node = rb_left_child(node, order);
+	}
 	else
+	{
+	    if (tree -> rbt_debug & RB_DEBUG_INSERT)
+		rt_log("_rb_insert(%x): >=_%d <%x>, going right\n",
+		    new_node, order, node);
 	    node = rb_right_child(node, order);
+	    if (comparison == 0)
+		result = 1;
+	}
     }
     rb_parent(new_node, order) = parent;
     if (parent == rb_null(tree))
@@ -119,7 +132,11 @@ struct rb_node	*new_node;
     }
     rb_set_color(rb_root(tree, order), order, RB_BLACK);
 
-    return (comparison == 0);
+    if (tree -> rbt_debug & RB_DEBUG_INSERT)
+	rt_log("_rb_insert(%x): comparison = %d, returning %d\n",
+	    new_node, comparison, result);
+
+    return (result);
 }
 
 /*			R B _ I N S E R T ( )
@@ -127,9 +144,12 @@ struct rb_node	*new_node;
  *		Applications interface to _rb_insert()
  *
  *	This function has two parameters: the tree into which to insert
- *	the new node and the contents of the node.  rb_insert() returns
- *	the number of orders for which the new node was equal to a node
- *	already in the tree.
+ *	the new node and the contents of the node.  If a uniqueness
+ *	requirement would be violated, rb_insert() does nothing but return
+ *	a number from the set {-1, -2, ..., -nm_orders} of which the
+ *	absolute value is the first order for which a violation exists.
+ *	Otherwise, it returns the number of orders for which the new node
+ *	was equal to a node already in the tree.
  */
 int rb_insert (tree, data)
 
@@ -146,6 +166,19 @@ void	*data;
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
 
     nm_orders = tree -> rbt_nm_orders;
+
+    /*
+     *	Enforce uniqueness
+     *
+     *	NOTE: The approach is that for each order that requires uniqueness,
+     *	    we look for a match.  This is not the most efficient way to do
+     *	    things, since _rb_insert() is just going to turn around and
+     *	    search the tree all over again.
+     */
+    for (order = 0; order < nm_orders; ++order)
+	if (rb_get_uniqueness(tree, order) &&
+	    (rb_search(tree, order, data) != NULL))
+		return (-(order + 1));
 
     /*
      *	Make a new package
@@ -209,10 +242,189 @@ void	*data;
 	}
     /*	Otherwise, insert the node into the tree */
     else
-	for (order = 0; order < nm_orders; ++order)
-	    result += _rb_insert(tree, order, node);
+    {
+	if (tree -> rbt_debug & RB_DEBUG_UNIQ)
+	{
+	    for (order = 0; order < nm_orders; ++order)
+		if (_rb_insert(tree, order, node))
+		{
+		    rt_log("_rb_insert(<%x>, %d, <%x>) compared SAME\n",
+			tree, order, node);
+		    ++result;
+		}
+		else
+		    rt_log("_rb_insert(<%x>, %d, <%x>) compared DIFFERENT\n",
+			tree, order, node);
+	    rt_log("rb_insert(<%x>, <%x>) will return %d\n",
+		tree, node, result);
+	}
+	else
+	    for (order = 0; order < nm_orders; ++order)
+		result += _rb_insert(tree, order, node);
+    }
 
     ++(tree -> rbt_nm_nodes);
     rb_current(tree) = node;
     return (result);
+}
+
+/*		        _ R B _ S E T _ U N I Q ( )
+ *
+ *	    Raise or lower the uniqueness flag for one linear order
+ *			    of a red-black tree
+ *
+ *	This function has three parameters: the tree, the order for which
+ *	to modify the flag, and the new value for the flag.  _rb_set_uniq()
+ *	sets the specified flag to the specified value and returns the
+ *	previous value of the flag.
+ */
+static int _rb_set_uniq (tree, order, new_value)
+
+rb_tree	*tree;
+int	order;
+int	new_value;
+
+{
+    int	prev_value;
+
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    RB_CKORDER(tree, order);
+    new_value = (new_value != 0);
+
+    prev_value = rb_get_uniqueness(tree, order);
+    rb_set_uniqueness(tree, order, new_value);
+    return (prev_value);
+}
+
+/*		         R B _ U N I Q _ O N ( )
+ *		        R B _ U N I Q _ O F F ( )
+ *
+ *		Applications interface to _rb_set_uniq()
+ *
+ *	These functions have two parameters: the tree and the order for
+ *	which to require uniqueness/permit nonuniqueness.  Each sets the
+ *	specified flag to the specified value and returns the previous
+ *	value of the flag.
+ */
+int rb_uniq_on (tree, order)
+
+rb_tree	*tree;
+int	order;
+
+{
+    return (_rb_set_uniq(tree, order, 1));
+}
+
+int rb_uniq_off (tree, order)
+
+rb_tree	*tree;
+int	order;
+
+{
+    return (_rb_set_uniq(tree, order, 0));
+}
+
+/*		         R B _ I S _ U N I Q ( )
+ *
+ *	  Query the uniqueness flag for one order of a red-black tree
+ *
+ *	This function has two parameters: the tree and the order for
+ *	which to query uniqueness.
+ */
+int rb_is_uniq (tree, order)
+
+rb_tree	*tree;
+int	order;
+
+{
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    RB_CKORDER(tree, order);
+
+    return(rb_get_uniqueness(tree, order));
+}
+
+/*		        R B _ S E T _ U N I Q V ( )
+ *
+ *	    Set the uniqueness flags for all the linear orders
+ *			    of a red-black tree
+ *
+ *	This function has two parameters: the tree and a bitv_t
+ *	encoding the flag values.  rb_set_uniqv() sets the flags
+ *	according to the bits in flag_rep.  For example, if
+ *	flag_rep = 1011_2, then the first, second, and fourth
+ *	orders are specified unique, and the third is specified
+ *	not-necessarily unique.
+ */
+void rb_set_uniqv (tree, flag_rep)
+
+rb_tree	*tree;
+bitv_t	flag_rep;
+
+{
+    int	nm_orders;
+    int	order;
+
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+
+    nm_orders = tree -> rbt_nm_orders;
+    for (order = 0; order < nm_orders; ++order)
+	rb_set_uniqueness(tree, order, 0);
+    
+    for (order = 0; (flag_rep != 0) && (order < nm_orders); flag_rep >>= 1,
+							    ++order)
+	if (flag_rep & 0x1)
+	    rb_set_uniqueness(tree, order, 1);
+
+    if (flag_rep != 0)
+	rt_log("rb_set_uniqv(): Ignoring bits beyond rightmost %d\n",
+	    nm_orders);
+}
+
+/*		    _ R B _ S E T _ U N I Q _ A L L ( )
+ *
+ *	    Raise or lower the uniqueness flags for all the linear orders
+ *			    of a red-black tree
+ *
+ *	This function has two parameters: the tree, and the new value
+ *	for all the flags.
+ */
+static void _rb_set_uniq_all (tree, new_value)
+
+rb_tree	*tree;
+int	new_value;
+
+{
+    int	nm_orders;
+    int	order;
+
+    RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+    new_value = (new_value != 0);
+
+    nm_orders = tree -> rbt_nm_orders;
+    for (order = 0; order < nm_orders; ++order)
+	rb_set_uniqueness(tree, order, new_value);
+}
+
+/*		     R B _ U N I Q _ A L L _ O N ( )
+ *		    R B _ U N I Q _ A L L _ O F F ( )
+ *
+ *	      Applications interface to _rb_set_uniq_all()
+ *
+ *	These functions have one parameter: the tree for which to
+ *	require uniqueness/permit nonuniqueness.
+ */
+void rb_uniq_all_on (tree)
+
+rb_tree	*tree;
+
+{
+    _rb_set_uniq_all(tree, 1);
+}
+
+void rb_uniq_all_off (tree)
+
+rb_tree	*tree;
+
+{
+    _rb_set_uniq_all(tree, 0);
 }
