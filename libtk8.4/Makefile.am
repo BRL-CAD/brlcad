@@ -17,3 +17,4 @@ libtk8_4_la_LDFLAGS = -version-info 1
 
 wish_SOURCES = unix/tkAppInit.c
 wish_LDADD = @TK_LIBS@
+wish_CFLAGS = @X_CFLAGS@

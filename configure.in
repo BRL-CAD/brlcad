@@ -70,7 +70,7 @@ dnl 	*)
 dnl 		TCL_LIBS="-ltcl8.4"
 dnl 		;;
 dnl esac
-TCL_LIBS='${top_builddir}/libtcl8.4/libtcl.la @DL@ -lm'
+TCL_LIBS='${top_builddir}/libtcl8.4/libtcl8.4.la @DL@ -lm'
 TCL=libtcl8.4
 AC_SUBST(TCL)
 AC_SUBST(TCL_LIBS)
@@ -92,7 +92,7 @@ AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 
 dnl tk
-TK_LIBS='${top_builddir}/libtk8.4/libtk.la ${TCL_LIBS} ${X_LIBS}'
+TK_LIBS='${top_builddir}/libtk8.4/libtk8.4.la ${TCL_LIBS} ${X_LIBS}'
 TK
 TK_LIBRARY="$prefix/tk8.4"
 AC_SUBST(TK)
