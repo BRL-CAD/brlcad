@@ -23,9 +23,15 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "bu.h"
 
 #define MAXLEN	50		/*maximum length of lines to be read */
 #define MAXLINES 30		/* maximum length of lines to be stored*/

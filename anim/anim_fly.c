@@ -27,9 +27,13 @@
  */
 
 #include "conf.h"
+
 #include <math.h>
 #include <stdio.h>
+
 #include "machine.h"
+#include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "anim.h" 
 
@@ -38,9 +42,6 @@
 #endif
 
 #define MAXN	100
-
-extern int bu_optind;
-extern char *bu_optarg;
 
 int estimate_f = 0;
 fastf_t max_bank = 0;
