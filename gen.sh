@@ -209,7 +209,7 @@ BDIRS="bench \
 	jove \
 	canon \
 	burst \
-	g_lint \
+	gtools \
 	tk \
 "			# This ends the list.
 
