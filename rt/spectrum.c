@@ -1,5 +1,7 @@
 /*
+ *			T A B L E . C
  *			S P E C T R U M . C
+    ...about to be split....
  *
  *  This should perhaps be called the "table" package, as it's use is
  *  really much more general than just storing spectral curves.
@@ -34,220 +36,217 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "spectrum.h"
 
 /*
- *			R T _ C K _ S P E C T R U M
+ *			R T _ C K _ T A B L E
  */
 void
-rt_ck_spectrum( spect )
-CONST struct rt_spectrum	*spect;
+rt_ck_table( tabp )
+CONST struct rt_table	*tabp;
 {
 	register int	i;
 
-	RT_CK_SPECTRUM(spect);
+	RT_CK_TABLE(tabp);
 
-	if( spect->nwave < 2 ) rt_bomb("rt_ck_spectrum() less than 2 wavelengths\n");
+	if( tabp->nx < 2 ) rt_bomb("rt_ck_table() less than 2 wavelengths\n");
 
-	for( i=0; i < spect->nwave; i++ )  {
-		if( spect->wavel[i] >= spect->wavel[i+1] )
-			rt_bomb("rt_ck_spectrum() wavelengths not in strictly ascending order\n");
+	for( i=0; i < tabp->nx; i++ )  {
+		if( tabp->x[i] >= tabp->x[i+1] )
+			rt_bomb("rt_ck_table() wavelengths not in strictly ascending order\n");
 	}
 }
 
 /*
- *			R T _ S P E C T _ U N I F O R M
+ *			R T _ T A B L E _ M A K E _ U N I F O R M
  *
- *  Set up a sampling of the spectrum from 'first' to 'last',
- *  inclusive, which are specified as wavelength in nm,
- *  using 'num' uniformly spaced samples.  Num >= 1.
+ *  Set up an independent "table margin" from 'first' to 'last',
+ *  inclusive, using 'num' uniformly spaced samples.  Num >= 1.
  */
-struct rt_spectrum *
-rt_spect_uniform( num, first, last )
+struct rt_table *
+rt_table_make_uniform( num, first, last )
 int	num;
 double	first;
 double	last;
 {
-	struct rt_spectrum	*spect;
+	struct rt_table	*tabp;
 	fastf_t			*fp;
 	fastf_t			delta;
 	int			j;
 
-	if( first >= last )  rt_bomb("rt_spect_uniform() first >= last\n");
+	if( first >= last )  rt_bomb("rt_table_make_uniform() first >= last\n");
 
-	RT_GET_SPECTRUM( spect, num );
+	RT_GET_TABLE( tabp, num );
 
 	delta = (last - first) / (double)num;
 
-	fp = &spect->wavel[0];
+	fp = &tabp->x[0];
 	for( j = num; j > 0; j-- )  {
 		*fp++ = first;
 		first += delta;
 	}
-	spect->wavel[num] = last;
+	tabp->x[num] = last;
 }
 
 /*
- *			R T _ S P E C T _ A D D
+ *			R T _ T A B D A T A _ A D D
  *
- *  Sum the values from two spectral samples.
+ *  Sum the values from two data tables.
  */
 void
-rt_spect_add( out, in1, in2 )
-struct rt_spect_sample		*out;
-CONST struct rt_spect_sample	*in1;
-CONST struct rt_spect_sample	*in2;
+rt_tabdata_add( out, in1, in2 )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
 {
 	register int		j;
 	register fastf_t	*op, *i1, *i2;
 
-	RT_CK_SPECT_SAMPLE( out );
-	RT_CK_SPECT_SAMPLE( in1 );
-	RT_CK_SPECT_SAMPLE( in2 );
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 );
+	RT_CK_TABDATA( in2 );
 
-	if( in1->spectrum != in2->spectrum || in1->spectrum != out->spectrum )
-		rt_bomb("rt_spect_add(): samples drawn from different spectra\n");
-	if( in1->nwave != in2->nwave || in1->nwave != out->nwave )
-		rt_bomb("rt_spect_add(): different number of wavelengths\n");
+	if( in1->table != in2->table || in1->table != out->table )
+		rt_bomb("rt_tabdata_add(): samples drawn from different tables\n");
+	if( in1->ny != in2->ny || in1->ny != out->ny )
+		rt_bomb("rt_tabdata_add(): different tabdata lengths?\n");
 
-	op = out->val;
-	i1 = in1->val;
-	i2 = in2->val;
-	for( j = in1->nwave; j > 0; j-- )
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	for( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ + *i2++;
-	/* VADD2N( out->val, i1->val, i2->val, in1->nwave ); */
+	/* VADD2N( out->y, i1->y, i2->y, in1->ny ); */
 }
 
 /*
- *			R T _ S P E C T _ M U L
+ *			R T _ T A B D A T A _ M U L
  *
- *  Element-by-element multiply the values from two spectral samples.
+ *  Element-by-element multiply the values from two data tables.
  */
 void
-rt_spect_mul( out, in1, in2 )
-struct rt_spect_sample		*out;
-CONST struct rt_spect_sample	*in1;
-CONST struct rt_spect_sample	*in2;
+rt_tabdata_mul( out, in1, in2 )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata	*in1;
+CONST struct rt_tabdata	*in2;
 {
 	register int		j;
 	register fastf_t	*op, *i1, *i2;
 
-	RT_CK_SPECT_SAMPLE( out );
-	RT_CK_SPECT_SAMPLE( in1 );
-	RT_CK_SPECT_SAMPLE( in2 );
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 );
+	RT_CK_TABDATA( in2 );
 
-	if( in1->spectrum != in2->spectrum || in1->spectrum != out->spectrum )
-		rt_bomb("rt_spect_mul(): samples drawn from different spectra\n");
-	if( in1->nwave != in2->nwave || in1->nwave != out->nwave )
-		rt_bomb("rt_spect_mul(): different number of wavelengths\n");
+	if( in1->table != in2->table || in1->table != out->table )
+		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+	if( in1->ny != in2->ny || in1->ny != out->ny )
+		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
 
-	op = out->val;
-	i1 = in1->val;
-	i2 = in2->val;
-	for( j = in1->nwave; j > 0; j-- )
+	op = out->y;
+	i1 = in1->y;
+	i2 = in2->y;
+	for( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ * *i2++;
-	/* VELMUL2N( out->val, i1->val, i2->val, in1->nwave ); */
+	/* VELMUL2N( out->y, i1->y, i2->y, in1->ny ); */
 }
 
 /*
- *			R T _ S P E C T _ S C A L E
+ *			R T _ T A B D A T A _ S C A L E
  *
- *  Multiply every element in a spectral sample by a scalar value 'scale'.
+ *  Multiply every element in a data table by a scalar value 'scale'.
  */
 void
-rt_spect_scale( out, in1, scale )
-struct rt_spect_sample		*out;
-CONST struct rt_spect_sample	*in1;
+rt_tabdata_scale( out, in1, scale )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata	*in1;
 register double			scale;
 {
 	register int		j;
 	register fastf_t	*op, *i1;
 
-	RT_CK_SPECT_SAMPLE( out );
-	RT_CK_SPECT_SAMPLE( in1 );
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in1 );
 
-	if( in1->spectrum != out->spectrum )
-		rt_bomb("rt_spect_scale(): samples drawn from different spectra\n");
-	if( in1->nwave != out->nwave )
-		rt_bomb("rt_spect_scale(): different number of wavelengths\n");
+	if( in1->table != out->table )
+		rt_bomb("rt_tabdata_scale(): samples drawn from different tables\n");
+	if( in1->ny != out->ny )
+		rt_bomb("rt_tabdata_scale(): different tabdata lengths?\n");
 
-	op = out->val;
-	i1 = in1->val;
-	for( j = in1->nwave; j > 0; j-- )
+	op = out->y;
+	i1 = in1->y;
+	for( j = in1->ny; j > 0; j-- )
 		*op++ = *i1++ * scale;
-	/* VSCALEN( out->val, in->val, scale ); */
+	/* VSCALEN( out->y, in->y, scale ); */
 }
 
 /*
- *			R T _ S P E C T R U M _ S C A L E
+ *			R T _ T A B L E _ S C A L E
  *
- *  Scale the indepentent axis (wavelength) of a spectrum by 'scale'.
- *  If input spectrum is in microns (um) and you need nanometers (nm),
- *  this routine is just the ticket.
+ *  Scale the indepentent axis of a table by 'scale'.
  */
 void
-rt_spectrum_scale( spect, scale )
-struct rt_spectrum	*spect;
+rt_table_scale( tabp, scale )
+struct rt_table	*tabp;
 register double		scale;
 {
 	register int		j;
 	register fastf_t	*op, *i1;
 
-	RT_CK_SPECTRUM( spect );
+	RT_CK_TABLE( tabp );
 
-	op = spect->wavel;
-	for( j = spect->nwave+1; j > 0; j-- )
+	op = tabp->x;
+	for( j = tabp->nx+1; j > 0; j-- )
 		*op++ *= scale;
-	/* VSCALEN( spect->wavel, spect->wavel, scale, spect->nwave+1 ); */
+	/* VSCALEN( tabp->x, tabp->x, scale, tabp->nx+1 ); */
 }
 
 /*
- *			R T _ S P E C T _ A R E A 1
+ *			R T _ T A B D A T A _ A R E A 1
  *
- *  Following interpretation #1, where val[j] stores the total (integral
+ *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
  *  This is simply totaling up the areas from each of the intervals.
  */
 double
-rt_spect_area1( in )
-CONST struct rt_spect_sample	*in;
+rt_tabdata_area1( in )
+CONST struct rt_tabdata	*in;
 {
 	FAST fastf_t		area;
 	register fastf_t	*ip;
 	register int		j;
 
-	RT_CK_SPECT_SAMPLE(in);
+	RT_CK_TABDATA(in);
 
 	area = 0;
-	ip = in->val;
-	for( j = in->nwave; j > 0; j-- )
+	ip = in->y;
+	for( j = in->ny; j > 0; j-- )
 		area += *ip++;
 
 	return area;
 }
 
 /*
- *			R T _ S P E C T _ A R E A 2
+ *			R T _ T A B D A T A _ A R E A 2
  *
- *  Following interpretation #2, where val[j] stores the average
- *  value value for the interval, return the area under
+ *  Following interpretation #2, where y[j] stores the average
+ *  value for the interval, return the area under
  *  the whole curve.  Since the iterval spacing need not be uniform,
  *  sum the areas of the rectangles.
  */
 double
-rt_spect_area2( in )
-CONST struct rt_spect_sample	*in;
+rt_tabdata_area2( in )
+CONST struct rt_tabdata	*in;
 {
-	CONST struct rt_spectrum	*spect;
+	CONST struct rt_table	*tabp;
 	FAST fastf_t		area;
 	fastf_t			width;
 	register int		j;
 
-	RT_CK_SPECT_SAMPLE(in);
-	spect = in->spectrum;
-	RT_CK_SPECTRUM(spect);
+	RT_CK_TABDATA(in);
+	tabp = in->table;
+	RT_CK_TABLE(tabp);
 
 	area = 0;
-	for( j = in->nwave-1; j >= 0; j-- )  {
-		width = spect->wavel[j+1] - spect->wavel[j];
-		area += in->val[j] * width;
+	for( j = in->ny-1; j >= 0; j-- )  {
+		width = tabp->x[j+1] - tabp->x[j];
+		area += in->y[j] * width;
 	}
 
 	return area;
@@ -317,29 +316,29 @@ static CONST double	rt_CIE_XYZ[81][4] = {
  *  and must be freed by the caller.
  */
 void
-rt_spect_make_CIE_XYZ( x, y, z, spect )
-struct rt_spect_sample		**x;
-struct rt_spect_sample		**y;
-struct rt_spect_sample		**z;
-CONST struct rt_spectrum	*spect;
+rt_spect_make_CIE_XYZ( x, y, z, tabp )
+struct rt_tabdata		**x;
+struct rt_tabdata		**y;
+struct rt_tabdata		**z;
+CONST struct rt_table	*tabp;
 {
-	struct rt_spect_sample	*a, *b, *c;
+	struct rt_tabdata	*a, *b, *c;
 	fastf_t	xyz_scale;
 	int	i;
 	int	j;
 
-	RT_CK_SPECTRUM(spect);
+	RT_CK_TABLE(tabp);
 
-	RT_GET_SPECT_SAMPLE( a, spect );
-	RT_GET_SPECT_SAMPLE( b, spect );
-	RT_GET_SPECT_SAMPLE( c, spect );
+	RT_GET_TABDATA( a, tabp );
+	RT_GET_TABDATA( b, tabp );
+	RT_GET_TABDATA( c, tabp );
 	*x = a;
 	*y = b;
 	*z = c;
 
 	/* No CIE data below 380 nm */
-	for( j=0; spect->wavel[j] < 380 && j < spect->nwave; j++ )  {
-		a->val[j] = b->val[j] = c->val[j] = 0;
+	for( j=0; tabp->x[j] < 380 && j < tabp->nx; j++ )  {
+		a->y[j] = b->y[j] = c->y[j] = 0;
 	}
 
 	/* Traverse the CIE table.  Produce as many output values as possible
@@ -349,38 +348,38 @@ CONST struct rt_spectrum	*spect;
 		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
 
 again:
-		if( j >= spect->nwave )  return;
-		if( spect->wavel[j] < rt_CIE_XYZ[i][0] ) rt_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
-		if( spect->wavel[j] >= rt_CIE_XYZ[i+1][0] )  continue;
+		if( j >= tabp->nx )  return;
+		if( tabp->x[j] < rt_CIE_XYZ[i][0] ) rt_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
+		if( tabp->x[j] >= rt_CIE_XYZ[i+1][0] )  continue;
 		/* The CIE table has 5nm spacing */
-		fract = (spect->wavel[j] - rt_CIE_XYZ[i][0] ) / 5;
+		fract = (tabp->x[j] - rt_CIE_XYZ[i][0] ) / 5;
 		if( fract < 0 || fract > 1 )  rt_bomb("rt_spect_make_CIE_XYZ assertion2 failed\n");
-		a->val[j] = (1-fract) * rt_CIE_XYZ[i][1] + fract * rt_CIE_XYZ[i+1][1];
-		b->val[j] = (1-fract) * rt_CIE_XYZ[i][2] + fract * rt_CIE_XYZ[i+1][2];
-		c->val[j] = (1-fract) * rt_CIE_XYZ[i][3] + fract * rt_CIE_XYZ[i+1][3];
+		a->y[j] = (1-fract) * rt_CIE_XYZ[i][1] + fract * rt_CIE_XYZ[i+1][1];
+		b->y[j] = (1-fract) * rt_CIE_XYZ[i][2] + fract * rt_CIE_XYZ[i+1][2];
+		c->y[j] = (1-fract) * rt_CIE_XYZ[i][3] + fract * rt_CIE_XYZ[i+1][3];
 		j++;
 		goto again;
 	}
 
 	/* No CIE data above 780 nm */
-	for( ; j < spect->nwave; j++ )  {
-		a->val[j] = b->val[j] = c->val[j] = 0;
+	for( ; j < tabp->nx; j++ )  {
+		a->y[j] = b->y[j] = c->y[j] = 0;
 	}
 
 	/* Normalize the curves so that area under Y curve is 1.0 */
-	xyz_scale = rt_spect_area2( b );
+	xyz_scale = rt_tabdata_area2( b );
 	if( fabs(xyz_scale) < VDIVIDE_TOL )  {
 		rt_log("rt_spect_make_CIE_XYZ(): Area = 0 (no luminance) in this part of the spectrum, skipping normalization step\n");
 		return;
 	}
 	xyz_scale = 1 / xyz_scale;
-	rt_spect_scale( a, a, xyz_scale );
-	rt_spect_scale( b, b, xyz_scale );
-	rt_spect_scale( c, c, xyz_scale );
+	rt_tabdata_scale( a, a, xyz_scale );
+	rt_tabdata_scale( b, b, xyz_scale );
+	rt_tabdata_scale( c, c, xyz_scale );
 }
 
 /*
- *   This is the NTSC primaries with D6500 white point for use as
+ *  These are the NTSC primaries with D6500 white point for use as
  *  the default initialization as given in sect 5.1.1 Color
  *  Correction for Display.
  *  From Roy Hall, page 228.
@@ -513,7 +512,7 @@ mat_t		rgb2xyz;
 
 
 /*
- *			R T _ S P E C T _ E V A L U A T E
+ *			R T _ T A B L E _ L I N _ I N T E R P
  *
  *  Return the value of the spectral curve at wavelength 'wl'.
  *  Linearly interpolate between values in the input table.
@@ -523,89 +522,89 @@ mat_t		rgb2xyz;
  *  are known to be sorted in ascending order.
  */
 fastf_t
-rt_spect_evaluate( samp, wl )
-CONST struct rt_spect_sample	*samp;
+rt_table_lin_interp( samp, wl )
+CONST struct rt_tabdata	*samp;
 register double			wl;
 {
-	CONST struct rt_spectrum	*spect;
+	CONST struct rt_table	*tabp;
 	register int			i;
 
-	RT_CK_SPECT_SAMPLE(samp);
-	spect = samp->spectrum;
-	RT_CK_SPECTRUM(spect);
+	RT_CK_TABDATA(samp);
+	tabp = samp->table;
+	RT_CK_TABLE(tabp);
 
-	if( wl < spect->wavel[0] || wl > spect->wavel[spect->nwave] )
+	if( wl < tabp->x[0] || wl > tabp->x[tabp->nx] )
 		return 0;
 
 	/* Search for proper interval in input spectrum */
-	for( i = 0; i < spect->nwave-1; i++ )  {
+	for( i = 0; i < tabp->nx-1; i++ )  {
 		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
 
-		if( wl < spect->wavel[i] )  rt_bomb("rt_spect_evaluate() assertion1 failed\n");
-		if( wl >= spect->wavel[i+1] )  continue;
+		if( wl < tabp->x[i] )  rt_bomb("rt_table_lin_interp() assertion1 failed\n");
+		if( wl >= tabp->x[i+1] )  continue;
 
 		/* The interval has been found */
-		fract = (wl - spect->wavel[i]) /
-			(spect->wavel[i+1] - spect->wavel[i]);
+		fract = (wl - tabp->x[i]) /
+			(tabp->x[i+1] - tabp->x[i]);
 		if( fract < 0 || fract > 1 )  rt_bomb("rt_spect_spect_evaluate() assertion2 failed\n");
-		return (1-fract) * samp->val[i] + fract * samp->val[i+1];
+		return (1-fract) * samp->y[i] + fract * samp->y[i+1];
 	}
 
 	/* Assume value is constant in final interval. */
-	if( !( wl >= spect->wavel[spect->nwave-1] ) )
-		rt_bomb("rt_spect_evaluate() assertion3 failed\n");
-	return samp->val[spect->nwave-1];
+	if( !( wl >= tabp->x[tabp->nx-1] ) )
+		rt_bomb("rt_table_lin_interp() assertion3 failed\n");
+	return samp->y[tabp->nx-1];
 }
 
 /*
- *			R T _ S P E C T _ R E S A M P L E
+ *			R T _ T A B D A T A _ R E S A M P L E
  *
- *  Given a set of sampled data 'oldsamp', resample it for different
+ *  Given a set of sampled data 'olddata', resample it for different
  *  spectral spacing, by linearly interpolating the values.
  *
  *  This assumes interpretation (2) of the data, i.e. that the values
  *  are the average value across the interval.
  */
-struct rt_spect_sample *
-rt_spect_resample( newspect, oldsamp )
-CONST struct rt_spectrum	*newspect;
-CONST struct rt_spect_sample	*oldsamp;
+struct rt_tabdata *
+rt_tabdata_resample( newtable, olddata )
+CONST struct rt_table	*newtable;
+CONST struct rt_tabdata	*olddata;
 {
-	CONST struct rt_spectrum	*oldspect;
-	struct rt_spect_sample		*newsamp;
+	CONST struct rt_table	*oldspect;
+	struct rt_tabdata		*newsamp;
 	int				i;
 
-	RT_CK_SPECTRUM(newspect);
-	RT_CK_SPECT_SAMPLE(oldsamp);
-	oldspect = oldsamp->spectrum;
-	RT_CK_SPECTRUM(oldspect);
+	RT_CK_TABLE(newtable);
+	RT_CK_TABDATA(olddata);
+	oldspect = olddata->table;
+	RT_CK_TABLE(oldspect);
 
-	if( oldspect == newspect )  rt_log("rt_spect_resample() old and new spectrum structs are the same\n");
+	if( oldspect == newtable )  rt_log("rt_tabdata_resample() old and new spectrum structs are the same\n");
 
-	RT_GET_SPECT_SAMPLE( newsamp, newspect );
+	RT_GET_TABDATA( newsamp, newtable );
 
-	for( i = 0; i < newspect->nwave; i++ )  {
-		newsamp->val[i] = rt_spect_evaluate( oldsamp, newspect->wavel[i] );
+	for( i = 0; i < newtable->nx; i++ )  {
+		newsamp->y[i] = rt_table_lin_interp( olddata, newtable->x[i] );
 	}
 	return newsamp;
 }
 
 /*
- *			R T _ W R I T E _ S P E C T R U M
+ *			R T _ T A B L E _ W R I T E 
  *
  *  Write out the spectrum structure in an ASCII file,
  *  giving the number of wavelengths (minus 1), and the
  *  actual wavelengths.
  */
 int
-rt_write_spectrum( filename, spect )
+rt_table_write( filename, tabp )
 CONST char	*filename;
-CONST struct rt_spectrum	*spect;
+CONST struct rt_table	*tabp;
 {
 	FILE	*fp;
 	int	j;
 
-	RT_CK_SPECTRUM(spect);
+	RT_CK_TABLE(tabp);
 
 	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "w" );
@@ -613,14 +612,14 @@ CONST struct rt_spectrum	*spect;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_write_spectrum(%s, x%x) FAILED\n", filename, spect);
+		rt_log("rt_table_write(%s, x%x) FAILED\n", filename, tabp);
 		return -1;
 	}
 
 	RES_ACQUIRE( &rt_g.res_syscall );
-	fprintf(fp, "  %d sample starts, and one end.\n", spect->nwave );
-	for( j=0; j <= spect->nwave; j++ )  {
-		fprintf( fp, "%g\n", spect->wavel[j] );
+	fprintf(fp, "  %d sample starts, and one end.\n", tabp->nx );
+	for( j=0; j <= tabp->nx; j++ )  {
+		fprintf( fp, "%g\n", tabp->x[j] );
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
@@ -628,17 +627,17 @@ CONST struct rt_spectrum	*spect;
 }
 
 /*
- *			R T _ R E A D _ S P E C T R U M
+ *			R T _ T A B L E _ R E A D
  *
  *  Allocate and read in the spectrum structure from an ASCII file,
  *  giving the number of wavelengths (minus 1), and the
  *  actual wavelengths.
  */
-struct rt_spectrum *
-rt_read_spectrum( filename )
+struct rt_table *
+rt_table_read( filename )
 CONST char	*filename;
 {
-	struct rt_spectrum	*spect;
+	struct rt_table	*tabp;
 	struct rt_vls		line;
 	FILE	*fp;
 	int	nw;
@@ -650,7 +649,7 @@ CONST char	*filename;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_read_spectrum(%s) FAILED\n", filename);
+		rt_log("rt_table_read(%s) FAILED\n", filename);
 		return NULL;
 	}
 
@@ -660,44 +659,44 @@ CONST char	*filename;
 	sscanf( rt_vls_addr(&line), "%d", &nw );
 	rt_vls_free(&line);
 
-	if( nw <= 0 ) rt_bomb("rt_read_spectrum() bad nw value\n");
+	if( nw <= 0 ) rt_bomb("rt_table_read() bad nw value\n");
 
-	RT_GET_SPECTRUM( spect, nw );
+	RT_GET_TABLE( tabp, nw );
 
 	RES_ACQUIRE( &rt_g.res_syscall );
-	for( j=0; j <= spect->nwave; j++ )  {
+	for( j=0; j <= tabp->nx; j++ )  {
 		/* XXX assumes fastf_t == double */
-		fscanf( fp, "%lf", &spect->wavel[j] );
+		fscanf( fp, "%lf", &tabp->x[j] );
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
 
-	rt_ck_spectrum( spect );
+	rt_ck_table( tabp );
 
-	return spect;
+	return tabp;
 }
 
 /*
- *			R T _ W R I T E _ S P E C T _ S A M P L E
+ *			R T _ P R _ T A B L E _ A N D _ T A B D A T A
  *
- *  Write out a given spectral sample into an ASCII file,
+ *  Write out a given data table into an ASCII file,
  *  suitable for input to GNUPLOT.
  *	(set term postscript)
  *	(set output "|print-postscript")
  *	(plot "filename" with lines)
  */
 int
-rt_write_spect_sample( filename, ss )
+rt_pr_table_and_tabdata( filename, data )
 CONST char			*filename;
-CONST struct rt_spect_sample	*ss;
+CONST struct rt_tabdata	*data;
 {
 	FILE	*fp;
-	CONST struct rt_spectrum	*spect;
+	CONST struct rt_table	*tabp;
 	int	j;
 
-	RT_CK_SPECT_SAMPLE(ss);
-	spect = ss->spectrum;
-	RT_CK_SPECTRUM(spect);
+	RT_CK_TABDATA(data);
+	tabp = data->table;
+	RT_CK_TABLE(tabp);
 
 	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "w" );
@@ -705,13 +704,13 @@ CONST struct rt_spect_sample	*ss;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_write_spect_sample(%s, x%x) FAILED\n", filename, ss );
+		rt_log("rt_pr_table_and_tabdata(%s, x%x) FAILED\n", filename, data );
 		return -1;
 	}
 
 	RES_ACQUIRE( &rt_g.res_syscall );
-	for( j=0; j < spect->nwave; j++ )  {
-		fprintf( fp, "%g %g\n", spect->wavel[j], ss->val[j] );
+	for( j=0; j < tabp->nx; j++ )  {
+		fprintf( fp, "%g %g\n", tabp->x[j], data->y[j] );
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
@@ -719,21 +718,21 @@ CONST struct rt_spect_sample	*ss;
 }
 
 /*
- *			R T _ R E A D _ S P E C T R U M _ A N D _ S A M P L E S
+ *			R T _ R E A D _ T A B L E _ A N D _ T A B D A T A
  *
  *  Read in a file which contains two columns of numbers, the first
- *  column being the wavelength, the second column being the sample value
+ *  column being the waveength, the second column being the sample value
  *  at that wavelength.
- *  A new rt_spectrum structure and one rt_spect_sample structure
- *  are created, a pointer to the rt_spect_sample structure is returned.
+ *  A new rt_table structure and one rt_tabdata structure
+ *  are created, a pointer to the rt_tabdata structure is returned.
  *  The final wavelength is guessed at.
  */
-struct rt_spect_sample *
-rt_read_spectrum_and_samples( filename )
+struct rt_tabdata *
+rt_read_table_and_tabdata( filename )
 CONST char	*filename;
 {
-	struct rt_spectrum	*spect;
-	struct rt_spect_sample	*ss;
+	struct rt_table	*tabp;
+	struct rt_tabdata	*data;
 	struct rt_vls		line;
 	FILE	*fp;
 	char	buf[128];
@@ -746,7 +745,7 @@ CONST char	*filename;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_read_spectrum_and_samples(%s) FAILED\n", filename);
+		rt_log("rt_read_table_and_tabdata(%s) FAILED\n", filename);
 		return NULL;
 	}
 
@@ -760,8 +759,8 @@ CONST char	*filename;
 	RES_RELEASE( &rt_g.res_syscall );
 
 	/* Allocate storage */
-	RT_GET_SPECTRUM( spect, count );
-	RT_GET_SPECT_SAMPLE( ss, spect );
+	RT_GET_TABLE( tabp, count );
+	RT_GET_TABDATA( data, tabp );
 
 	/* Second pass:  Read only as much data as storage was allocated for */
 	RES_ACQUIRE( &rt_g.res_syscall );
@@ -769,20 +768,64 @@ CONST char	*filename;
 	for( i=0; i < count; i++ )  {
 		buf[0] = '\0';
 		if( fgets( buf, sizeof(buf), fp ) == NULL )  {
-			rt_log("rt_read_spectrum_and_samples(%s) unexpected EOF on line %d\n", filename, i);
+			rt_log("rt_read_table_and_tabdata(%s) unexpected EOF on line %d\n", filename, i);
 			break;
 		}
-		sscanf( buf, "%lf %lf", &spect->wavel[i], &ss->val[i] );
+		sscanf( buf, "%lf %lf", &tabp->x[i], &data->y[i] );
 	}
 	fclose(fp);
 	RES_RELEASE( &rt_g.res_syscall );
 
 	/* Complete final interval */
-	spect->wavel[count] = 2 * spect->wavel[count-1] - spect->wavel[count-2];
+	tabp->x[count] = 2 * tabp->x[count-1] - tabp->x[count-2];
 
-	rt_ck_spectrum( spect );
+	rt_ck_table( tabp );
 
-	return ss;
+	return data;
+}
+
+/*
+ *			R T _ T A B D A T A _ B I N A R Y _ R E A D
+ */
+struct rt_tabdata *
+rt_tabdata_binary_read( filename, num, tabp )
+CONST char			*filename;
+int				num;
+CONST struct rt_table	*tabp;
+{
+	struct rt_tabdata	*data;
+	char	*cp;
+	int	nbytes;
+	int	len;
+	int	fd;
+	int	i;
+
+	RT_CK_TABLE(tabp);
+
+	nbytes = RT_SIZEOF_TABDATA(tabp);
+	len = num * nbytes;
+	data = (struct rt_tabdata *)rt_malloc( len+8, "rt_tabdata[]" );
+
+	if( (fd = open(filename, 0)) <= 0 )  {
+		perror(filename);
+		rt_bomb("Unable to open rt_tabdata file\n");
+	}
+	if( read( fd, (char *)data, len ) != len )  {
+		rt_bomb("Read of rt_tabdata failed\n");
+	}
+	close(fd);
+
+	/* Connect data[i].table pointer to tabp */
+	cp = (char *)data;
+	for( i = num-1; i >= 0; i--, cp += nbytes )  {
+		register struct rt_tabdata	*sp;
+
+		sp = (struct rt_tabdata *)cp;
+		RT_CK_TABDATA(sp);
+		sp->table = tabp;
+	}
+
+	return data;
 }
 
 #define C1	3.7415E4    /* watts um^4 cm^-2 */
@@ -806,25 +849,25 @@ CONST char	*filename;
  *  Compute at 'n-1' wavelengths evenly spaced between ax and bx.
  */
 void
-rt_spect_black_body( ss, temp, n )
-struct rt_spect_sample	*ss;
+rt_spect_black_body( data, temp, n )
+struct rt_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 unsigned int		n;		/* # wavelengths to eval at */
 {
-	CONST struct rt_spectrum	*spect;
+	CONST struct rt_table	*tabp;
 	int				j;
 
-	RT_CK_SPECT_SAMPLE(ss);
-	spect = ss->spectrum;
-	RT_CK_SPECTRUM(spect);
-if(rt_g.debug) rt_log("rt_spect_black_body( x%x, %g degK ) %g um to %g um\n", ss, temp,
-spect->wavel[0] * 0.001,	/* nm to um */
-spect->wavel[spect->nwave] * 0.001	/* nm to um */
+	RT_CK_TABDATA(data);
+	tabp = data->table;
+	RT_CK_TABLE(tabp);
+if(rt_g.debug) rt_log("rt_spect_black_body( x%x, %g degK ) %g um to %g um\n", data, temp,
+tabp->x[0] * 0.001,	/* nm to um */
+tabp->x[tabp->nx] * 0.001	/* nm to um */
 );
 
 	if( n < 3 )  n = 3;
 
-	for( j = 0; j < spect->nwave; j++ )  {
+	for( j = 0; j < tabp->nx; j++ )  {
 		double	ax;		/* starting wavelength, um */
 		double	bx;		/* ending wavelength, um */
 		double	dx;		/* wavelength interval, um */
@@ -832,8 +875,8 @@ spect->wavel[spect->nwave] * 0.001	/* nm to um */
 		double	wavlen;		/* current wavelength */
 		unsigned long i;
 
-		ax = spect->wavel[j] * 0.001;	/* nm to um */
-		bx = spect->wavel[j+1] * 0.001;	/* nm to um */
+		ax = tabp->x[j] * 0.001;	/* nm to um */
+		bx = tabp->x[j+1] * 0.001;	/* nm to um */
 		dx = (bx - ax) / (double)n;
 
 		w_sum = 0;
@@ -844,7 +887,7 @@ spect->wavel[spect->nwave] * 0.001	/* nm to um */
 		}
 		w_sum *= dx;
 
-		ss->val[j] = w_sum;
+		data->y[j] = w_sum;
 	}
 }
 
@@ -861,21 +904,21 @@ spect->wavel[spect->nwave] * 0.001	/* nm to um */
  *  With coarse spacing, or when unsure, use rt_spect_black_body().
  */
 void
-rt_spect_black_body_fast( ss, temp )
-struct rt_spect_sample	*ss;
+rt_spect_black_body_fast( data, temp )
+struct rt_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 {
-	CONST struct rt_spectrum	*spect;
+	CONST struct rt_table	*tabp;
 	int				j;
 
-	RT_CK_SPECT_SAMPLE(ss);
-	spect = ss->spectrum;
-	RT_CK_SPECTRUM(spect);
-if(rt_g.debug) rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", ss, temp );
+	RT_CK_TABDATA(data);
+	tabp = data->table;
+	RT_CK_TABLE(tabp);
+if(rt_g.debug) rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", data, temp );
 
-	for( j = 0; j < spect->nwave; j++ )  {
-		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp ) *
-			(spect->wavel[j+1] - spect->wavel[j]) * 0.001;
+	for( j = 0; j < tabp->nx; j++ )  {
+		data->y[j] = PLANCK( (tabp->x[j]*0.001), temp ) *
+			(tabp->x[j+1] - tabp->x[j]) * 0.001;
 	}
 }
 
@@ -887,109 +930,109 @@ if(rt_g.debug) rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", ss, temp );
  *  straight from Planck's black-body radiation formula.
  */
 void
-rt_spect_black_body_points( ss, temp )
-struct rt_spect_sample	*ss;
+rt_spect_black_body_points( data, temp )
+struct rt_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 {
-	CONST struct rt_spectrum	*spect;
+	CONST struct rt_table	*tabp;
 	int				j;
 
-	RT_CK_SPECT_SAMPLE(ss);
-	spect = ss->spectrum;
-	RT_CK_SPECTRUM(spect);
-if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", ss, temp );
+	RT_CK_TABDATA(data);
+	tabp = data->table;
+	RT_CK_TABLE(tabp);
+if(rt_g.debug) rt_log("rt_spect_black_body_points( x%x, %g degK )\n", data, temp );
 
-	for( j = 0; j < spect->nwave; j++ )  {
-		ss->val[j] = PLANCK( (spect->wavel[j]*0.001), temp );
+	for( j = 0; j < tabp->nx; j++ )  {
+		data->y[j] = PLANCK( (tabp->x[j]*0.001), temp );
 	}
 }
 
 #if 0
 main()
 {
-	struct rt_spect_sample	*x, *y, *z;
-	struct rt_spectrum	*spect;
+	struct rt_tabdata	*x, *y, *z;
+	struct rt_table	*tabp;
 
 #if 0
-	spect = rt_spect_uniform( 200, 360.0, 800.0 );
+	tabp = rt_table_make_uniform( 200, 360.0, 800.0 );
 
-	rt_spect_make_CIE_XYZ( &x, &y, &z, spect );
+	rt_spect_make_CIE_XYZ( &x, &y, &z, tabp );
 	
-	rt_write_spect_sample( "/tmp/x", x );
-	rt_write_spect_sample( "/tmp/y", y );
-	rt_write_spect_sample( "/tmp/z", z );
+	rt_pr_table_and_tabdata( "/tmp/x", x );
+	rt_pr_table_and_tabdata( "/tmp/y", y );
+	rt_pr_table_and_tabdata( "/tmp/z", z );
 #endif
 
-	spect = rt_spect_uniform( 100, 3.0, 3000.0 );
+	tabp = rt_table_make_uniform( 100, 3.0, 3000.0 );
 
-	RT_GET_SPECT_SAMPLE( x, spect );
+	RT_GET_TABDATA( x, tabp );
 	rt_spect_black_body_points( x, 10000.0 );
-	rt_write_spect_sample( "/tmp/x", x );
+	rt_pr_table_and_tabdata( "/tmp/x", x );
 
-	RT_GET_SPECT_SAMPLE( y, spect );
+	RT_GET_TABDATA( y, tabp );
 	rt_spect_black_body( y, 10000.0, 3 );
-	rt_write_spect_sample( "/tmp/y", y );
+	rt_pr_table_and_tabdata( "/tmp/y", y );
 
-	RT_GET_SPECT_SAMPLE( z, spect );
+	RT_GET_TABDATA( z, tabp );
 	rt_spect_black_body_fast( z, 10000.0 );
-	rt_write_spect_sample( "/tmp/z", z );
+	rt_pr_table_and_tabdata( "/tmp/z", z );
 }
 #endif
 
 /*
- *			R T _ G E T _ S P E C T _ S A M P L E _ A R R A Y
+ *			R T _ T A B D A T A _ M A L L O C _ A R R A Y
  *
- *  Allocate storage for, and initialize, an array of 'num' spectral sample
+ *  Allocate storage for, and initialize, an array of 'num' data table
  *  structures.
- *  This subroutine is provided because the rt_spect_sample structures
+ *  This subroutine is provided because the rt_tabdata structures
  *  are variable length.
  */
-struct rt_spect_sample *
-rt_get_spect_sample_array( spect, num )
-CONST struct rt_spectrum	*spect;
+struct rt_tabdata *
+rt_tabdata_malloc_array( tabp, num )
+CONST struct rt_table	*tabp;
 int	num;
 {
-	struct rt_spect_sample	*ss;
+	struct rt_tabdata	*data;
 	char	*cp;
 	int	i;
 	int	nw;
 	int	nbytes;
 
-	RT_CK_SPECTRUM(spect);
-	nw = spect->nwave;
-	nbytes = RT_SIZEOF_SPECT_SAMPLE(spect);
+	RT_CK_TABLE(tabp);
+	nw = tabp->nx;
+	nbytes = RT_SIZEOF_TABDATA(tabp);
 
-	ss = (struct rt_spect_sample *)rt_calloc( num,
-		nbytes, "struct rt_spect_sample[]" );
+	data = (struct rt_tabdata *)rt_calloc( num,
+		nbytes, "struct rt_tabdata[]" );
 
-	cp = (char *)ss;
+	cp = (char *)data;
 	for( i = 0; i < num; i++ ) {
-		register struct rt_spect_sample	*sp;
+		register struct rt_tabdata	*sp;
 
-		sp = (struct rt_spect_sample *)cp;
-		sp->magic = RT_SPECT_SAMPLE_MAGIC;
-		sp->nwave = nw;
-		sp->spectrum = spect;
+		sp = (struct rt_tabdata *)cp;
+		sp->magic = RT_TABDATA_MAGIC;
+		sp->ny = nw;
+		sp->table = tabp;
 		cp += nbytes;
 	}
-	return ss;
+	return data;
 }
 
 /*
- *			R T _ S P E C T _ C O P Y
+ *			R T _ T A B D A T A _ C O P Y
  */
 void
-rt_spect_copy( out, in )
-struct rt_spect_sample		*out;
-CONST struct rt_spect_sample	*in;
+rt_tabdata_copy( out, in )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata	*in;
 {
-	RT_CK_SPECT_SAMPLE( out );
-	RT_CK_SPECT_SAMPLE( in );
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in );
 
-	if( in->spectrum != out->spectrum )
-		rt_bomb("rt_spect_copy(): samples drawn from different spectra\n");
-	if( in->nwave != out->nwave )
-		rt_bomb("rt_spect_copy(): different number of wavelengths\n");
+	if( in->table != out->table )
+		rt_bomb("rt_tabdata_copy(): samples drawn from different tables\n");
+	if( in->ny != out->ny )
+		rt_bomb("rt_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (char *)in->val, (char *)out->val, in->nwave * sizeof(fastf_t) );
+	bcopy( (char *)in->y, (char *)out->y, in->ny * sizeof(fastf_t) );
 }
