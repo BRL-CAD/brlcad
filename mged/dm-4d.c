@@ -535,6 +535,8 @@ Ir_open()
 	}
 # if 0
 	ir_dbtext(ir_title);
+# else
+	dbtext("");
 # endif
 #endif
 
