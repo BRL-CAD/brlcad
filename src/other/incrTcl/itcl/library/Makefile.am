@@ -11,4 +11,4 @@ install-data-hook:
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
 	done;
 
-EXTRA_DIST = $(tclscripts)
+EXTRA_DIST = itcl.tcl

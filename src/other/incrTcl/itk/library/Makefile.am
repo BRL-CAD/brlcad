@@ -16,4 +16,4 @@ install-data-hook:
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir)/. ; \
 	done;
 
-EXTRA_DIST = $(itkscripts)
+EXTRA_DIST = Archetype.itk Toplevel.itk Widget.itk itk.tcl tclIndex
