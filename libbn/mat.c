@@ -1092,6 +1092,30 @@ CONST struct rt_tol	*tol;
 }
 
 
+/*
+ *			M A T _ I S _ I D E N T I T Y
+ *
+ *  This routine is intended for detecting identity matricies read in
+ *  from ascii or binary files, where the numbers are pure ones or zeros.
+ *  This routine is *not* intended for tolerance-based "near-zero"
+ *  comparisons; as such, it shouldn't be used on matrices which are
+ *  the result of calculation.
+ *
+ *  Returns -
+ *	0	non-identity
+ *	1	a perfect identity matrix
+ */
+int
+mat_is_identity( m )
+CONST mat_t	m;
+{
+	if( m[0]  != 1 || m[1]  != 0 || m[2]  != 0 || m[3]  != 0 )  return 0;
+	if( m[4]  != 0 || m[5]  != 1 || m[6]  != 0 || m[7]  != 0 )  return 0;
+	if( m[8]  != 0 || m[9]  != 0 || m[10] != 1 || m[11] != 0 )  return 0;
+	if( m[12] != 0 || m[13] != 0 || m[14] != 0 || m[15] != 1 )  return 0;
+	return 1;
+}
+
 /*	M A T _ A R B _ R O T
  *
  * Construct a transformation matrix for rotation about an arbitrary axis
