@@ -68,6 +68,10 @@ static struct bu_list	bu_mapped_file_list = {
  *
  *  If the file can not be opened, as descriptive an error message as
  *  possible will be printed, to simplify code handling in the caller.
+ *
+ *  Mapped files are always opened read-only.
+ *
+ *  If the system does not support mapped files, the data is read into memory.
  */
 struct bu_mapped_file *
 bu_open_mapped_file( name, appl )
@@ -84,6 +88,23 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	FILE			*fp;	/* stdio file pointer */
 #endif
 
+#ifdef HAVE_UNIX_IO
+	/* Obtain some initial information about the file */
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	ret = stat( name, &sb );
+	bu_semaphore_release(BU_SEM_SYSCALL);
+
+	if( ret < 0 )  {
+		perror(name);
+		goto fail;
+	}
+
+	if( sb.st_size == 0 )  {
+		bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
+		goto fail;
+	}
+#endif
+
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
 	if( BU_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
 		BU_LIST_INIT( &bu_mapped_file_list );
@@ -93,29 +114,35 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 		if( strcmp( name, mp->name ) )  continue;
 		if( appl && strcmp( appl, mp->appl ) )
 			continue;
-		/* File is already mapped */
+		/* File is already mapped -- verify size and modtime */
+#ifdef HAVE_UNIX_IO
+		if( sb.st_size != mp->buflen )  {
+			bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
+				name, mp->buflen, sb.st_size );
+			goto dont_reuse;
+		}
+		if( sb.st_mtime != mp->modtime )  {
+			bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n",
+				name);
+			goto dont_reuse;
+		}
+		/* To be completely safe, should check st_dev and st_inum */
+#endif
+		/* It is safe to reuse mp */
 		mp->uses++;
 		bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 		return mp;
+dont_reuse:
+		/* mp doesn't reflect the file any longer.  Invalidate. */
+		mp->appl = "__STALE__";
+		/* Can't invalidate old copy, it may still be in use. */
+		/* Fall through, and open the new version */
 	}
 	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 	mp = (struct bu_mapped_file *)NULL;
 
 	/* File is not yet mapped, open file read only. */
 #ifdef HAVE_UNIX_IO
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	ret = stat( name, &sb );
-	bu_semaphore_release(BU_SEM_SYSCALL);
-
-	if( ret < 0 )  {
-		perror(name);
-		goto fail;
-	}
-	if( sb.st_size == 0 )  {
-		bu_log("bu_open_mapped_file(%s) 0-length file\n", name);
-		goto fail;
-	}
-
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fd = open( name, O_RDONLY );
 	bu_semaphore_release(BU_SEM_SYSCALL);
@@ -133,6 +160,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 
 #ifdef HAVE_UNIX_IO
 	mp->buflen = sb.st_size;
+	mp->modtime = sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 
 	/* Attempt to access as memory-mapped file */
