@@ -115,9 +115,13 @@ proc lbdcHack {w x y t id type path} {
     } else {
 	switch $type {
 	    s1 {
-		set sol_data [db get $item]
-		set sol_type [lindex $sol_data 0]
-		if { $sol_type == "sketch" } {
+		if {[catch {[db get $item]} sol_data]} {
+		    set sol_type ""
+		} else {
+		    set sol_type [lindex $sol_data 0]
+		}
+
+		if {$sol_type == "sketch"} {
 		    Sketch_editor .#auto $item
 		} else {
 		    _mged_sed -i 1 $item
