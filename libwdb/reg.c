@@ -348,7 +348,7 @@ int	inherit;
 	register int len = 0;
 
 	/* Measure length of list */
-	while( RT_LIST_LOOP( wp, wmember, &headp->l ) )  {
+	for( RT_LIST( wp, wmember, &headp->l ) )  {
 		if( wp->l.magic != WMEMBER_MAGIC )  {
 			fprintf(stderr, "mk_wmcomb:  corrupted linked list\n");
 			abort();
@@ -362,7 +362,7 @@ int	inherit;
 		(void)mk_freemembers( headp );
 		return(-1);
 	}
-	while( RT_LIST_LOOP( wp, wmember, &headp->l ) )  {
+	for( RT_LIST( wp, wmember, &headp->l ) )  {
 		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
 			(void)mk_freemembers( headp );
 			return(-1);
