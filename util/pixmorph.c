@@ -417,7 +417,7 @@ char **argv;
     register int i, j;
     int autosize;
 #if 0
-    npsw = rt_avail_cpus();
+    npsw = bu_avail_cpus();
     if (npsw > DEFAULT_PSW) npsw = DEFAULT_PSW;
 #endif
 
