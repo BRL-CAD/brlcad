@@ -4783,6 +4783,230 @@ out:
 }
 
 /*
+ *			N M G _ U N B R E A K _ S H E L L _ E D G E _ U N S A F E
+ *
+ *  Undoes the effect of an unwanted nmg_ebreak().
+ *
+ *	NOTE: THIS IS LIKELY TO PRODUCE AN ILLEGAL NMG STRUCTURE!!!!
+ *	This routine is intended for use only when simplifying an NMG
+ *	prior to output in another format (such as polygons). It will
+ *	unbreak edges where nmg_unbreak_edge() will not!!!!!
+ *
+ *  Eliminate the vertex between this edgeuse and the next edge,
+ *  on all edgeuses radial to this edgeuse's edge.
+ *  The edge geometry must be shared, and all uses of the vertex, in the same shell,
+ *  to be disposed of must originate from this edge pair.
+ *  Also, the "non-B" ends of all edgeuses around e1 and e2 (in this shell) must
+ *  terminate at either A or B.
+ *
+ *
+ *		     eu1          eu2
+ *		*----------->*----------->*
+ *		A.....e1.....B.....e2.....C
+ *		*<-----------*<-----------*
+ *		    eu1mate      eu2mate
+ *
+ *  If successful, the vertex B, the edge e2, and all the edgeuses in the same shell
+ *  radial to eu2 (including eu2) will have all been killed.
+ *  The radial ordering around e1 will not change.
+ *
+ *		     eu1
+ *		*------------------------>*
+ *		A.....e1..................C
+ *		*<------------------------*
+ *		    eu1mate
+ *
+ *
+ *  No new topology structures are created by this operation.
+ *
+ *  Returns -
+ *	0	OK, edge unbroken
+ *	<0	failure, nothing changed
+ */
+int
+nmg_unbreak_shell_edge_unsafe( eu1_first )
+struct edgeuse	*eu1_first;
+{
+	struct edgeuse	*eu1;
+	struct edgeuse	*eu2;
+	struct edgeuse	*teu;
+	struct edge	*e1;
+	struct edge_g_lseg	*eg;
+	struct vertexuse *vu;
+	struct vertex	*vb = 0;
+	struct vertex	*vc;
+	struct vertex	*va;
+	struct shell	*s1;
+	int		ret = 0;
+
+	NMG_CK_EDGEUSE( eu1_first );
+	e1 = eu1_first->e_p;
+	NMG_CK_EDGE( e1 );
+
+	if( eu1_first->g.magic_p != eu1_first->eumate_p->g.magic_p )
+	{
+		ret = -10;
+		goto out;
+	}
+
+	eg = eu1_first->g.lseg_p;
+	if( !eg )  {
+		ret = -1;
+		goto out;
+	}
+	NMG_CK_EDGE_G_LSEG(eg);
+
+	/* If the edge geometry doesn't have at least four edgeuses, this
+	 * is not a candidate for unbreaking */		
+	if( rt_list_len( &eg->eu_hd2 ) < 2*2 )  {
+		ret = -2;
+		goto out;
+	}
+
+	s1 = nmg_find_s_of_eu(eu1_first);
+	NMG_CK_SHELL(s1);
+
+	eu1 = eu1_first;
+	eu2 = BU_LIST_PNEXT_CIRC( edgeuse , eu1 );
+	if( eu2->g.lseg_p != eg )  {
+		bu_log( "nmg_unbreak_edge: second eu geometry x%x does not match geometry x%x of edge1 x%x\n" ,
+			eu2->g.magic_p, eg, e1 );
+		ret = -3;
+		goto out;
+	}
+
+	va = eu1->vu_p->v_p;		/* start vertex (A) */
+	vb = eu2->vu_p->v_p;		/* middle vertex (B) */
+	vc = eu2->eumate_p->vu_p->v_p;	/* end vertex (C) */
+
+	/* all uses of this vertex (in shell s1) must be for this edge geometry, otherwise
+	 * it is not a candidate for deletion */
+	for( BU_LIST_FOR( vu , vertexuse , &vb->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+		if( *(vu->up.magic_p) != NMG_EDGEUSE_MAGIC )  {
+			/* vertex is referred to by a self-loop */
+			if( vu->up.lu_p->orientation == OT_BOOLPLACE )  {
+				/* This kind is transient, and safe to ignore */
+				continue;
+			}
+			ret = -4;
+			goto out;
+		}
+		if( nmg_find_s_of_vu( vu ) != s1 )
+			continue;
+		NMG_CK_EDGEUSE(vu->up.eu_p);
+		if( vu->up.eu_p->g.lseg_p != eg )  {
+			ret = -5;
+			goto out;
+		}
+	}
+
+	/* Visit all edgeuse pairs radial to eu1 (A--B) */
+	teu = eu1;
+	for(;;)  {
+		register struct edgeuse	*teu2;
+		NMG_CK_EDGEUSE(teu);
+		if( teu->vu_p->v_p != va || teu->eumate_p->vu_p->v_p != vb )  {
+			ret = -6;
+			goto out;
+		}
+		/* We *may* encounter a teu2 not around eu2.  Seen in BigWedge */
+		teu2 = BU_LIST_PNEXT_CIRC( edgeuse, teu );
+		NMG_CK_EDGEUSE(teu2);
+		if( teu2->vu_p->v_p != vb || teu2->eumate_p->vu_p->v_p != vc )  {
+			ret = -7;
+			goto out;
+		}
+		teu = teu->eumate_p->radial_p;
+		if( teu == eu1 )  break;
+	}
+
+	/* Visit all edgeuse pairs radial to eu2 (B--C) */
+	teu = eu2;
+	for(;;)  {
+		NMG_CK_EDGEUSE(teu);
+		if( teu->vu_p->v_p != vb || teu->eumate_p->vu_p->v_p != vc )  {
+			ret = -8;
+			goto out;
+		}
+		teu = teu->eumate_p->radial_p;
+		if( teu == eu2 )  break;
+	}
+
+	/* All preconditions are met, begin the unbreak operation */
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		bu_log("nmg_unbreak_edge va=x%x, vb=x%x, vc=x%x\n",
+			va, vb, vc );
+		bu_log("nmg_unbreak_edge A:(%g, %g, %g), B:(%g, %g, %g), C:(%g, %g, %g)\n",
+			V3ARGS( va->vg_p->coord ),
+			V3ARGS( vb->vg_p->coord ),
+			V3ARGS( vc->vg_p->coord ) );
+	}
+
+	if( va == vc )
+	{
+		/* bu_log( "nmg_unbreak_edge( eu=%x ): Trying to break a jaunt, va==vc (%x)\n", eu1_first, va ); */
+		ret = -9;
+		goto out;
+	}
+		
+
+	/* visit all the edgeuse pairs radial to eu1 */
+	for(;;)  {
+		/* Recheck initial conditions */
+		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vb )  {
+			bu_log( "nmg_unbreak_edge: eu1 does not got to/from correct vertices, x%x, %x\n", 
+				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu1, " " );
+			rt_bomb( "nmg_unbreak_edge 1\n" );
+		}
+		eu2 = BU_LIST_PNEXT_CIRC( edgeuse, eu1 );
+		NMG_CK_EDGEUSE(eu2);
+		if( eu2->g.lseg_p != eg )  {
+			rt_bomb("nmg_unbreak_edge:  eu2 geometry is wrong\n");
+		}
+		if( eu2->vu_p->v_p != vb || eu2->eumate_p->vu_p->v_p != vc )  {
+			bu_log( "nmg_unbreak_edge: about to kill eu2, but does not got to/from correct vertices, x%x, x%x\n",
+				eu2->vu_p->v_p, eu2->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu2, " " );
+			rt_bomb( "nmg_unbreak_edge 3\n" );
+		}
+
+		/* revector eu1mate's start vertex from B to C */
+		nmg_movevu( eu1->eumate_p->vu_p , vc );
+
+		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc )  {
+			bu_log( "nmg_unbreak_edge: extended eu1 does not got to/from correct vertices, x%x, x%x\n",
+				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu1, " " );
+			rt_bomb( "nmg_unbreak_edge 2\n" );
+		}
+
+		if( eu2 != BU_LIST_PNEXT_CIRC( edgeuse, eu1 ) )
+			rt_bomb("nmg_unbreak_edge eu2 unexpected altered\n");
+
+		/* Now kill off the unnecessary eu2 associated w/ cur eu1 */
+		if( nmg_keu( eu2 ) )
+			rt_bomb( "nmg_unbreak_edge: edgeuse parent is now empty!!\n" );
+
+		if( eu1->vu_p->v_p != va || eu1->eumate_p->vu_p->v_p != vc )  {
+			bu_log( "nmg_unbreak_edge: unbroken eu1 (after eu2 killed) does not got to/from correct vertices, x%x, x%x\n",
+				eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p );
+			nmg_pr_eu_briefly( eu1, " " );
+			rt_bomb( "nmg_unbreak_edge 4\n" );
+		}
+		eu1 = eu1->eumate_p->radial_p;
+		if( eu1 == eu1_first )  break;
+	}
+out:
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		bu_log("nmg_unbreak_edge(eu=x%x, vb=x%x) ret = %d\n",
+			eu1_first, vb, ret);
+	}
+	return ret;
+}
+
+/*
  *			N M G _ E I N S
  *
  *	Insert a new (zero length) edge at the begining of (ie, before)
