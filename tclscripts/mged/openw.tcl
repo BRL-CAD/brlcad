@@ -1,6 +1,6 @@
 # Author - Bob Parker
 
-check_externs "_mged_attach _mged_aim"
+check_externs "_mged_attach _mged_aim _mged_add_view _mged_delete_view _mged_get_view _mged_goto_view _mged_next_view _mged_prev_view _mged_toggle_view"
 
 if [info exists env(MGED_HTML_DIR)] {
         set mged_html_dir $env(MGED_HTML_DIR)
@@ -238,7 +238,7 @@ for {set i 0} {$i < $argc} {incr i} {
 }
 
 if {$id == "mged"} {
-    return "openw: not allowed to use id mged"
+    return "openw: not allowed to use \"mged\" as id"
 }
 
 if {$id == ""} {
@@ -285,7 +285,11 @@ if {$comb} {
     set win_size($id,small) [expr $win_size($id,big) - 80]
     set win_size($id) $win_size($id,big)
     set mv_size [expr $win_size($id) / 2 - 4]
-    openmv $mged_top($id) $mged_dmc($id) $dtype $mv_size
+
+    if [catch { openmv $mged_top($id) $mged_dmc($id) $dtype $mv_size } result] {
+	closew $id
+	return $result
+    }
 } else {
     set mged_top($id) .top$id
     set mged_dmc($id) $mged_top($id)
@@ -295,7 +299,10 @@ if {$comb} {
     set win_size($id,small) [expr $win_size($id,big) - 100]
     set win_size($id) $win_size($id,big)
     set mv_size [expr $win_size($id) / 2 - 4]
-    openmv $mged_top($id) $mged_dmc($id) $dtype $mv_size
+    if [catch { openmv $mged_top($id) $mged_dmc($id) $dtype $mv_size } result] {
+	closew $id
+	return $result
+    }
 }
 
 set mged_active_dm($id) $mged_top($id).$mged_default_pane
@@ -982,6 +989,12 @@ proc pmp {} {
 }
 
 proc aim args {
+    if { [llength $args] == 2 } {
+	if ![winfo exists .[lindex $args 0]] {
+	    return
+	}
+    }
+
     set result [eval _mged_aim $args]
     
     if { [llength $args] == 2 } {
