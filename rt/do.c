@@ -641,6 +641,21 @@ double azim, elev;
 	if( rtip->mdl_max[X] >= INFINITY || rtip->mdl_max[X] <= -INFINITY )
 		rt_bomb("do_ae called before rt_gettree");
 
+
+	/*
+	 *  Enlarge the model RPP just slightly, to avoid nasty
+	 *  effects with a solid's face being exactly on the edge
+	 *  NOTE:  This code is duplicated out of librt/tree.c/rt_prep(),
+	 *  and has to appear here to enable the viewsize calculation to
+	 *  match the final RPP.
+	 */
+	rtip->mdl_min[X] = floor( rtip->mdl_min[X] );
+	rtip->mdl_min[Y] = floor( rtip->mdl_min[Y] );
+	rtip->mdl_min[Z] = floor( rtip->mdl_min[Z] );
+	rtip->mdl_max[X] = ceil( rtip->mdl_max[X] );
+	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] );
+	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
+
 	mat_idn( Viewrotscale );
 	mat_angles( Viewrotscale, 270.0-elev, 0.0, 270.0+azim );
 	fprintf(stderr,
