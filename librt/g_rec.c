@@ -426,7 +426,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
-			hitp->hit_private = &rec_compute[1];	/* H */
+			hitp->hit_private = &rec_compute[2];	/* -H */
 			hitp++;
 		}
 
@@ -434,7 +434,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
-			hitp->hit_private = &rec_compute[2];	/* -H */
+			hitp->hit_private = &rec_compute[1];	/* +H */
 			hitp++;
 		}
 	}
