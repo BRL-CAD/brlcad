@@ -207,25 +207,6 @@ extern int	edobj;		/* object editing options */
 #define INNER	DOWN
 
 /*
- * Screen locations
- */
-#define XMIN		(-2048)
-#define XMAX		(2047)
-#define YMIN		(-2048)
-#define YMAX		(2047)
-#define	MENUXLIM	(-1250)		/* Value to set X lim to for menu */
-#define	MENUX		(-2048+115)	/* pixel position for menu, X */
-#define	MENUY		1800		/* pixel position for menu, Y */
-#define	MENU_DY		(-120)		/* Distance between menu items */
-
-#define TITLE_XBASE	(-2048)		/* pixel X of title line start pos */
-#define TITLE_YBASE	(-1920)		/* pixel pos of last title line */
-#define SOLID_XBASE	MENUXLIM	/* X to start display text */
-#define SOLID_YBASE	( 1920)		/* pixel pos of first solid line */
-#define TEXT0_DY	(  -60)		/* #pixels per line, Size 0 */
-#define TEXT1_DY	(  -90)		/* #pixels per line, Size 1 */
-
-/*
  *  Editor States
  */
 extern int state;			/* (defined in dozoom.c) */
