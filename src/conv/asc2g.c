@@ -27,10 +27,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
-
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
@@ -69,8 +66,8 @@ char		*nxt_spc(register char *cp);
 void		strsolbld(void), nmgbld(void);
 
 static union record	record;			/* GED database record */
-static char 		buf[BUFSIZE];		/* Record input buffer */
-char			name[NAMESIZE + 2];
+char 		*buf;		/* Record input buffer */
+char		name[NAMESIZE + 2];
 
 FILE	*ifp;
 struct rt_wdb	*ofp;
@@ -200,6 +197,9 @@ main(int argc, char **argv)
 		rewind( ifp );
 	}
 
+	/* allocate our input buffer */
+	buf = (char *)bu_calloc( sizeof(char), BUFSIZE, "input buffer" );
+
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
 
@@ -294,7 +294,10 @@ after_read:
 			bu_log("%s\n", buf );
 			continue;
 		}
+		memset(buf, 0, sizeof(char) * BUFSIZE);
 	}
+
+	bu_free(buf, "input buffer");
 
 	/* Now, at the end of the database, dump out the entire
 	 * region-id-based color table.
@@ -305,6 +308,7 @@ after_read:
 	exit(0);
 }
 
+#include <inttypes.h>
 /*
  *			S T R S O L B L D
  *
@@ -317,18 +321,28 @@ after_read:
 void
 strsolbld(void)
 {
-    char	*type;
-    char	*name;
-    char	*args;
+    char	*type = NULL;
+    char	*name = NULL;
+    char	*args = NULL;
     struct bu_vls	str;
+    char *buf2 = (char *)bu_malloc(sizeof(char) * BUFSIZE, "strsolbld temporary buffer");
+    char *bufp = buf2;
+
+    memcpy(buf2, buf, sizeof(char) * BUFSIZE);
 
     bu_vls_init(&str);
 
-    (void)strtok( buf, " " );
-    /* skip stringsolid_id */
-    type = strtok( NULL, " " );
+#if defined (HAVE_STRSEP)
+    (void)strsep( &buf2, " ");		/* skip stringsolid_id */
+    type = strsep( &buf2, " ");
+    name = strsep( &buf2, " " );
+    args = strsep( &buf2, "\n" );
+#else
+    (void)strtok( buf, " ");		/* skip stringsolid_id */
+    type = strtok( NULL, " ");
     name = strtok( NULL, " " );
     args = strtok( NULL, "\n" );
+#endif
 
     if( strcmp( type, "dsp" ) == 0 )  {
 	struct rt_dsp_internal *dsp;
@@ -396,6 +410,7 @@ strsolbld(void)
     }
 
  out:
+    bu_free(bufp, "strsolbld temporary buffer");
     bu_vls_free(&str);
 }
 
@@ -697,7 +712,7 @@ nmgbld(void)
 	/* mk_nmg() frees the intern.idp_ptr pointer */
 	RT_INIT_DB_INTERNAL(&intern);
 
-	bu_free( name, "nmg name" );
+	free( name );
 }
 
 /*		S O L B L D
@@ -1165,10 +1180,12 @@ identbld(void)
 	register char	*cp;
 	register char	*np;
 	char		units;		/* units code number */
-	char		version[6];
-	char		title[72];
-	char		*unit_str = "none";
+	char		version[6] = {0};
+	char		title[255] = {0};
+	char		unit_str[8] = {0};
 	double		local2mm;
+
+	strncpy(unit_str, "none", 4);
 
 	cp = buf;
 	cp++;				/* ident */
@@ -1199,38 +1216,38 @@ identbld(void)
 /* XXX Should use db_conversions() for this */
 	switch(units)  {
 	case ID_NO_UNIT:
-		unit_str = "mm";
-		break;
+	  strncpy(unit_str,"mm",4);
+	  break;
 	case ID_MM_UNIT:
-		unit_str = "mm";
-		break;
+	  strncpy(unit_str,"mm",4);
+	  break;
 	case ID_UM_UNIT:
-		unit_str = "um";
-		break;
+	  strncpy(unit_str,"um",4);
+	  break;
 	case ID_CM_UNIT:
-		unit_str = "cm";
-		break;
+	  strncpy(unit_str,"cm",4);
+	  break;
 	case ID_M_UNIT:
-		unit_str = "m";
-		break;
+	  strncpy(unit_str,"m",4);
+	  break;
 	case ID_KM_UNIT:
-		unit_str = "km";
-		break;
+	  strncpy(unit_str,"km",4);
+	  break;
 	case ID_IN_UNIT:
-		unit_str = "in";
-		break;
+	  strncpy(unit_str,"in",4);
+	  break;
 	case ID_FT_UNIT:
-		unit_str = "ft";
-		break;
+	  strncpy(unit_str,"ft",4);
+	  break;
 	case ID_YD_UNIT:
-		unit_str = "yard";
-		break;
+	  strncpy(unit_str,"yard",4);
+	  break;
 	case ID_MI_UNIT:
-		unit_str = "mile";
-		break;
+	  strncpy(unit_str,"mile",4);
+	  break;
 	default:
-		fprintf(stderr,"asc2g: unknown v4 units code = %d\n", units);
-		exit(1);
+	  fprintf(stderr,"asc2g: unknown v4 units code = %d\n", units);
+	  exit(1);
 	}
 	local2mm = bu_units_conversion(unit_str);
 	if( local2mm <= 0 )  {
