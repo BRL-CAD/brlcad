@@ -186,9 +186,10 @@ view_end()
 }
 
 static int
-radhit( ap, PartHeadp )
+radhit( ap, PartHeadp, segHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -281,7 +282,9 @@ struct partition *PartHeadp;
 }
 
 static int
-radmiss()  {
+radmiss(ap)
+struct application *ap;
+{
 	return(0);
 }
 
@@ -292,9 +295,10 @@ radmiss()  {
  *  Called via isvisible on a hit.
  */
 static int
-hiteye( ap, PartHeadp )
+hiteye( ap, PartHeadp, segHeadp )
 struct application *ap;
 struct partition *PartHeadp;
+struct seg	*segHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -341,9 +345,8 @@ struct partition *PartHeadp;
  *  Called via isvisible on a miss.
  */
 static int
-hittrue( ap, PartHeadp )
+hittrue( ap )
 struct application *ap;
-struct partition *PartHeadp;
 {
 	return(1);
 }
