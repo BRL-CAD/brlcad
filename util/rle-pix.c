@@ -15,12 +15,12 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include "fb.h"
-#include "svfb_global.h"
+#include "rle.h"
 
 extern int	optind;
 extern char	*optarg;
@@ -160,49 +160,49 @@ char ** argv;
 		exit( 1 );
 	}
 
-	sv_globals.svfb_fd = infp;
-	if( rle_get_setup( &sv_globals ) < 0 )  {
+	rle_dflt_hdr.rle_file = infp;
+	if( rle_get_setup( &rle_dflt_hdr ) < 0 )  {
 		fprintf(stderr, "rle-pix: Error reading setup information\n");
 		exit(1);
 	}
 
 	if (r_debug)  {
 		fprintf( stderr,"Image bounds\n\tmin %d %d\n\tmax %d %d\n",
-			sv_globals.sv_xmin, sv_globals.sv_ymin,
-			sv_globals.sv_xmax, sv_globals.sv_ymax );
-		fprintf(stderr, "%d color channels\n", sv_globals.sv_ncolors);
-		fprintf(stderr,"%d color map channels\n", sv_globals.sv_ncmap);
-		if ( sv_globals.sv_alpha )
+			rle_dflt_hdr.xmin, rle_dflt_hdr.ymin,
+			rle_dflt_hdr.xmax, rle_dflt_hdr.ymax );
+		fprintf(stderr, "%d color channels\n", rle_dflt_hdr.ncolors);
+		fprintf(stderr,"%d color map channels\n", rle_dflt_hdr.ncmap);
+		if ( rle_dflt_hdr.alpha )
 			fprintf( stderr, "Alpha Channel present in input, ignored.\n");
-		for( i=0; i < sv_globals.sv_ncolors; i++ )
+		for( i=0; i < rle_dflt_hdr.ncolors; i++ )
 			fprintf(stderr,"Background channel %d = %d\n",
-				i, sv_globals.sv_bg_color[i] );
+				i, rle_dflt_hdr.bg_color[i] );
 		rle_debug(1);
 	}
 
-	if( sv_globals.sv_ncmap == 0 )
+	if( rle_dflt_hdr.ncmap == 0 )
 		crunch = 0;
 
 	/* Only interested in R, G, & B */
-	SV_CLR_BIT(sv_globals, SV_ALPHA);
-	for (i = 3; i < sv_globals.sv_ncolors; i++)
-		SV_CLR_BIT(sv_globals, i);
-	ncolors = sv_globals.sv_ncolors > 3 ? 3 : sv_globals.sv_ncolors;
+	RLE_CLR_BIT(rle_dflt_hdr, RLE_ALPHA);
+	for (i = 3; i < rle_dflt_hdr.ncolors; i++)
+		RLE_CLR_BIT(rle_dflt_hdr, i);
+	ncolors = rle_dflt_hdr.ncolors > 3 ? 3 : rle_dflt_hdr.ncolors;
 
 	/* Optional background color override */
 	if( override_background )  {
 		for( i=0; i<ncolors; i++ )
-			sv_globals.sv_bg_color[i] = background[i];
+			rle_dflt_hdr.bg_color[i] = background[i];
 	}
 
-	file_width = sv_globals.sv_xmax - sv_globals.sv_xmin + 1;
+	file_width = rle_dflt_hdr.xmax - rle_dflt_hdr.xmin + 1;
 
 	/* Default screen (output) size tracks input rectangle upper right corner */
 	if( screen_width == 0 )  {
-	    	screen_width = sv_globals.sv_xmax + 1;
+	    	screen_width = rle_dflt_hdr.xmax + 1;
 	}
 	if( screen_height == 0 )  {
-	    	screen_height = sv_globals.sv_ymax + 1;
+	    	screen_height = rle_dflt_hdr.ymax + 1;
 	}
 
 	/* Report screen (output) size given image size & other options */
@@ -213,11 +213,11 @@ char ** argv;
 	}
 
 	/* Discard any scanlines which exceed screen height */
-	if( sv_globals.sv_ymax > screen_height-1 )
-		sv_globals.sv_ymax = screen_height-1;
+	if( rle_dflt_hdr.ymax > screen_height-1 )
+		rle_dflt_hdr.ymax = screen_height-1;
 
 	/* Clip left edge */
-	screen_xbase = sv_globals.sv_xmin;
+	screen_xbase = rle_dflt_hdr.xmin;
 	screen_xlen = screen_width;
 	file_skiplen = 0;
 	if( screen_xbase < 0 )  {
@@ -230,8 +230,8 @@ char ** argv;
 		screen_xlen = screen_width - screen_xbase;
 
 	if( screen_xlen <= 0 ||
-	    sv_globals.sv_ymin > screen_height ||
-	    sv_globals.sv_ymax < 0 )  {
+	    rle_dflt_hdr.ymin > screen_height ||
+	    rle_dflt_hdr.ymax < 0 )  {
 	    	fprintf(stderr,
 		"rle-pix:  Warning:  RLE image rectangle entirely off screen\n");
 		goto done;
@@ -246,9 +246,9 @@ char ** argv;
 
 	/* Fill in background buffer */
 	for( i=0; i<screen_xlen; i++ )  {
-		bg_buf[i][0] = sv_globals.sv_bg_color[0];
-		bg_buf[i][1] = sv_globals.sv_bg_color[1];
-		bg_buf[i][2] = sv_globals.sv_bg_color[2];
+		bg_buf[i][0] = rle_dflt_hdr.bg_color[0];
+		bg_buf[i][1] = rle_dflt_hdr.bg_color[1];
+		bg_buf[i][2] = rle_dflt_hdr.bg_color[2];
 	}
 
 	for( i=0; i < ncolors; i++ )
@@ -262,13 +262,13 @@ char ** argv;
 	 *  were zero, and correct them.
 	 *  XXX need to handle < 3 channels of color map, by replication.
 	 */
-	if( crunch && sv_globals.sv_ncmap > 0 )  {
-		register int maplen = (1 << sv_globals.sv_cmaplen);
+	if( crunch && rle_dflt_hdr.ncmap > 0 )  {
+		register int maplen = (1 << rle_dflt_hdr.cmaplen);
 		register int all = 0;
 		for( i=0; i<256; i++ )  {
-			cmap.cm_red[i] = sv_globals.sv_cmap[i];
-			cmap.cm_green[i] = sv_globals.sv_cmap[i+maplen];
-			cmap.cm_blue[i] = sv_globals.sv_cmap[i+2*maplen];
+			cmap.cm_red[i] = rle_dflt_hdr.cmap[i];
+			cmap.cm_green[i] = rle_dflt_hdr.cmap[i+maplen];
+			cmap.cm_blue[i] = rle_dflt_hdr.cmap[i+2*maplen];
 			all |= cmap.cm_red[i] | cmap.cm_green[i] |
 				cmap.cm_blue[i];
 		}
@@ -287,21 +287,21 @@ char ** argv;
 	}
 
 	/* Handle any lines below zero in y.  Decode and discard. */
-	for( i = sv_globals.sv_ymin; i < 0; i++ )
-		rle_getrow( &sv_globals, rows );
+	for( i = rle_dflt_hdr.ymin; i < 0; i++ )
+		rle_getrow( &rle_dflt_hdr, rows );
 
 	/* Background-fill any lines above 0, below ymin */
-	for( i=0; i < sv_globals.sv_ymin; i++ )
+	for( i=0; i < rle_dflt_hdr.ymin; i++ )
 		fwrite( (char *)bg_buf, sizeof(RGBpixel), screen_xlen, outfp );
 
-	for( ; i <= sv_globals.sv_ymax; i++)  {
+	for( ; i <= rle_dflt_hdr.ymax; i++)  {
 		register unsigned char	*pp = (unsigned char *)scan_buf;
 		register rle_pixel	*rp = &(rows[0][file_skiplen]);
 		register rle_pixel	*gp = &(rows[1][file_skiplen]);
 		register rle_pixel	*bp = &(rows[2][file_skiplen]);
 		register int		j;
 
-		rle_getrow(&sv_globals, rows );
+		rle_getrow(&rle_dflt_hdr, rows );
 
 		/* Grumble, convert from Utah layout */
 		if( !crunch )  {
