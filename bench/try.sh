@@ -5,39 +5,112 @@
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+path_to_run_sh=`dirname $0`
 
-eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
-if test -f ../.rt.$MACHINE/rt
-then
-	RT=../.rt.$MACHINE/rt
-	DB=../.db.$MACHINE
-	LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
-else
-	if test ! -f ../rt/rt
-	then
-		echo "Can't find RT"
-		exit 1
-	fi
-	RT=../rt/rt
-	DB=../db
-	LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+# sets MACHINE, UNIXTYPE, HAS_TCP
+eval `machinetype.sh -b 2> /dev/null`	
+
+if test "x$MACHINE" = "x" ; then
+  echo Looking for machinetype.sh...
+  eval `$path_to_run_sh/../sh/machinetype.sh -b 2> /dev/null`
+  if test "x$MACHINE" = "x" ; then
+    echo WARNING: could not find machinetype.sh
+    # try _something_, linux is pretty popular
+    MACHINE="li"
+  else
+    echo ...found local machinetype.sh
+  fi
 fi
-export LD_LIBRARY_PATH
 
-CMP=./pixcmp
-if test ! -f $CMP
-then
-	cake pixcmp
+echo Looking for RT...
+# find the raytracer
+# RT environment variable overrides
+if test "x${RT}" = "x" ; then
+  # see if we find the rt binary
+  if test -x "$path_to_run_sh/../src/rt" ; then
+    echo ...found $path_to_run_sh/../src/rt/rt
+    RT="$path_to_run_sh/../src/rt/rt"
+    LD_LIBRARY_PATH="$path_to_run_sh/../src/rt:$LD_LIBRARY_PATH"
+  fi
+else
+  echo ...using $RT from RT environment variable setting
+fi
+
+echo Looking for geometry database directory...
+# find geometry database directory if we do not already know where it is
+# DB environment variable overrides
+if test "x${DB}" = "x" ; then
+  if test -f "$path_to_run_sh/../db/sphflake.g" ; then
+    echo ...found $path_to_run_sh/../db
+    DB="$path_to_run_sh/../db"
+  fi
+else
+  echo ...using $DB from DB environment variable setting
+fi
+
+echo Checking for pixel comparison utility...
+# find pixel comparison utility
+# CMP environment variable overrides
+if test "x${CMP}" = "x" ; then
+  if test -x $path_to_run_sh/pixcmp ; then
+    echo ...found $path_to_run_sh/pixcmp
+    CMP="$path_to_run_sh/pixcmp"
+  else
+    if test -f "$path_to_run_sh/pixcmp.c" ; then
+      echo ...need to build pixcmp
+
+      for compiler in $CC gcc cc ; do
+	CC=$compiler
+
+	$CC "$path_to_run_sh/pixcmp.c" >& /dev/null
+	if $? = 0 ; then
+	  break
+	fi
+	if test -f "$path_to_run_sh/pixcmp" ; then
+	  break;
+	fi
+      done
+      
+      if test -f "$path_to_run_sh/pixcmp" ; then
+        echo ...built pixcmp with $CC
+        CMP="$path_to_run_sh/pixcmp"
+      fi
+    fi
+  fi
+else
+  echo ...using $CMP from CMP environment variable setting
 fi
 
 # Alliant NFS hack
-if test x${MACHINE} = xfx
-then
-	cp ${RT} /tmp/rt
-	cp ${CMP} /tmp/pixcmp
-	RT=/tmp/rt
-	CMP=/tmp/pixcmp
+if test "x${MACHINE}" = "xfx" ; then
+  cp ${RT} /tmp/rt
+  cp ${CMP} /tmp/pixcmp
+  RT=/tmp/rt
+  CMP=/tmp/pixcmp
 fi
+
+# print results or choke
+if test "x${RT}" = "x" ; then
+  echo "ERROR:  Could not find the BRL-CAD raytracer"
+  exit 1
+else
+  echo "Using [$RT] for RT"
+fi
+if test "x${DB}" = "x" ; then
+  echo "ERROR:  Could not find the BRL-CAD database directory"
+  exit 1
+else
+  echo "Using [$DB] for DB"
+fi
+if test "x${CMP}" = "x" ; then
+  echo "ERROR:  Could not find the BRL-CAD pixel comparison utility"
+  exit 1
+else
+  echo "Using [$CMP] for CMP"
+fi
+export LD_LIBRARY_PATH
+
+echo 
 
 # Run the tests
 
