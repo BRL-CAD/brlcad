@@ -54,10 +54,9 @@
 /* These functions live in libfb. */
 extern int _X24_open_existing();
 extern int X24_close_existing();
-extern int X24_refresh();
 extern int _ogl_open_existing();
 extern int ogl_close_existing();
-extern int ogl_refresh();
+extern int fb_refresh();
 
 static int dmo_open_tcl();
 static int dmo_close_tcl();
@@ -137,7 +136,7 @@ static struct bu_cmdtab dmo_cmds[] = {
 /*
  *			D M _ C M D
  *
- * Generic interface for display manager routines.
+ * Generic interface for display manager object routines.
  * Usage:
  *        procname cmd ?args?
  *
@@ -199,7 +198,7 @@ char    **argv;
 
 	if (argc != 2) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dmo_close");
+		bu_vls_printf(&vls, "helplib dm_close");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -419,7 +418,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib loadmat");
+    bu_vls_printf(&vls, "helplib dm_loadmat");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -453,7 +452,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib drawString");
+    bu_vls_printf(&vls, "helplib dm_drawString");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -482,7 +481,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib drawPoint");
+    bu_vls_printf(&vls, "helplib dm_drawPoint");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -509,7 +508,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib drawLine");
+    bu_vls_printf(&vls, "helplib dm_drawLine");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -542,7 +541,7 @@ char    **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib drawVList");
+    bu_vls_printf(&vls, "helplib dm_drawVList");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -605,7 +604,7 @@ char    **argv;
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib drawSList");
+		bu_vls_printf(&vls, "helplib dm_drawSList");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1379,7 +1378,7 @@ char    **argv;
     return TCL_OK;
   }
 
-  bu_vls_printf(&vls, "helplib listen");
+  bu_vls_printf(&vls, "helplib dm_listen");
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 
