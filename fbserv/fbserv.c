@@ -112,12 +112,14 @@ struct client {
 #define MAX_CLIENTS	32
 struct client	clients[MAX_CLIENTS];
 
+int	verbose = 0;
+
 
 /* Hidden args: -p<port_num> -F<frame_buffer> */
 static char usage[] = "\
 Usage: fbserv port_num\n\
           (for a stand-alone daemon)\n\
-   or  fbserv [-h] [-S squaresize]\n\
+   or  fbserv [-v] [-h] [-S squaresize]\n\
           [-W width] [-N height] port_num frame_buffer\n\
           (for a single-frame-buffer server)\n\
 ";
@@ -127,8 +129,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hF:s:w:n:S:W:N:p:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != EOF )  {
 		switch( c )  {
+		case 'v':
+			verbose = 1;
+			break;
 		case 'h':
 			/* high-res */
 			height = width = 1024;
@@ -510,6 +515,7 @@ char *str;
 #else
 	fprintf( stderr, "%s", str );
 #endif
+	if(verbose) fprintf( stderr, "%s", str );
 }
 
 /*
@@ -549,7 +555,7 @@ fb_log( char *fmt, ... )
 			nsent++;
 		}
 	}
-	if( nsent == 0 )  {
+	if( nsent == 0 || verbose )  {
 		/* No PKG connection open yet! */
 		fputs( outbuf, stderr );
 		fflush(stderr);
@@ -667,7 +673,7 @@ va_dcl
 			nsent++;
 		}
 	}
-	if( nsent == 0 )  {
+	if( nsent == 0 || verbose )  {
 		/* No PKG connection open yet! */
 		fputs( outbuf, stderr );
 		fflush(stderr);
