@@ -19,7 +19,8 @@ cake \
  chgview.o \
  clip.o \
  cmd.o \
- columns.o &
+ columns.o \
+ db.o &
 
 cake \
  dir.o \
