@@ -53,6 +53,7 @@ static char RCSid[] = "$Header$";
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( fastf_t mat_determinant , ( mat_t m ) );
 RT_EXTERN( fastf_t mat_det3 , ( mat_t m ) );
+RT_EXTERN( struct edgeuse *nmg_next_radial_eu, ( struct edgeuse *eu, struct shell *s, int wires ) );
 
 extern char *__loc1;	/* used by regex */
 extern char *optarg;
@@ -68,6 +69,7 @@ static int air_no=1;		/* Air numbers */
 static int debug=0;		/* Debug flag */
 static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
+static int do_simplify=0;	/* flag to try to simplify solids */
 static char *reg_cmp=(char *)NULL;		/* compiled regular expression */
 static char *usage="proe-g [-p] [-d] [-a] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
@@ -141,8 +143,9 @@ struct ptc_surf_list
 #define	UNKNOWN_TYPE	0
 #define	ASSEMBLY_TYPE	1
 #define	PART_TYPE	2
+#define	CUT_SOLID_TYPE	3
 
-struct name_conv_list *
+static struct name_conv_list *
 Add_new_name( name , obj , type )
 char *name,*obj;
 int type;
@@ -156,7 +159,7 @@ int type;
 	if( debug )
 		rt_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
 
-	if( type != ASSEMBLY_TYPE && type != PART_TYPE )
+	if( type != ASSEMBLY_TYPE && type != PART_TYPE && type != CUT_SOLID_TYPE )
 	{
 		rt_log( "Bad type for name (%s) in Add_new_name\n", name );
 		rt_bomb( "Add_new_name\n" );
@@ -168,7 +171,7 @@ int type;
 	ptr->next = (struct name_conv_list *)NULL;
 	strncpy( ptr->name , name, 80 );
 	ptr->obj = obj;
-	if( do_regex )
+	if( do_regex && type != CUT_SOLID_TYPE )
 	{
 		after_match = regex( reg_cmp, ptr->name );
 		if( after_match && *after_match != '\0' )
@@ -191,59 +194,70 @@ int type;
 		if( debug )
 			rt_log( "\tafter reg_ex, name is %s\n", ptr->brlcad_name );
 	}
+	else if( type == CUT_SOLID_TYPE )
+		ptr->brlcad_name[0] = '\0';
 	else
 		strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
 	ptr->brlcad_name[NAMESIZE-2] = '\0';
 	ptr->solid_use_no = 0;
 	ptr->comb_use_no = 0;
 
-	/* make sure brlcad_name is unique */
-	suffix_insert = strlen( ptr->brlcad_name );
-	if( suffix_insert > NAMESIZE - 3 )
-		suffix_insert = NAMESIZE - 3;
-
-	NAMEMOVE( ptr->brlcad_name, tmp_name );
-	if( debug )
-		rt_log( "\tMaking sure %s is a unique name\n", tmp_name );
-	ptr2 = name_root;
-	while( ptr2 )
+	if( type != CUT_SOLID_TYPE )
 	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
+		/* make sure brlcad_name is unique */
+		suffix_insert = strlen( ptr->brlcad_name );
+		if( suffix_insert > NAMESIZE - 3 )
+			suffix_insert = NAMESIZE - 3;
+
+		NAMEMOVE( ptr->brlcad_name, tmp_name );
+		if( debug )
+			rt_log( "\tMaking sure %s is a unique name\n", tmp_name );
+		ptr2 = name_root;
+		while( ptr2 )
 		{
-			if( debug )
-				rt_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
-			try_char++;
-			if( try_char == '[' )
-				try_char = 'a';
-			if( debug )
-				rt_log( "\t\t\ttry_char = %c\n", try_char );
-			if( try_char == '{' )
+			if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
 			{
-				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
-				exit(1);
+				if( debug )
+					rt_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
+				try_char++;
+				if( try_char == '[' )
+					try_char = 'a';
+				if( debug )
+					rt_log( "\t\t\ttry_char = %c\n", try_char );
+				if( try_char == '{' )
+				{
+					rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
+					exit(1);
+				}
+
+				NAMEMOVE( ptr->brlcad_name, tmp_name );
+				sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
+				if( debug )
+					rt_log( "\t\tNew name to try is %s\n", tmp_name );
+				ptr2 = name_root;
 			}
-
-			NAMEMOVE( ptr->brlcad_name, tmp_name );
-			sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
-			if( debug )
-				rt_log( "\t\tNew name to try is %s\n", tmp_name );
-			ptr2 = name_root;
+			else
+				ptr2 = ptr2->next;
 		}
-		else
-			ptr2 = ptr2->next;
-	}
 
-	NAMEMOVE( tmp_name, ptr->brlcad_name );
+		NAMEMOVE( tmp_name, ptr->brlcad_name );
+	}
 
 	if( type == ASSEMBLY_TYPE )
 	{
 		ptr->solid_name[0] = '\0';
 		return( ptr );
 	}
-	else
+	else if( type == PART_TYPE )
 	{
 		strcpy( ptr->solid_name , "s." );
 		strncpy( &ptr->solid_name[2] , ptr->brlcad_name , NAMESIZE-4 );
+		ptr->solid_name[NAMESIZE-1] = '\0';
+	}
+	else
+	{
+		strcpy( ptr->solid_name , "s." );
+		strncpy( &ptr->solid_name[2] , name , NAMESIZE-4 );
 		ptr->solid_name[NAMESIZE-1] = '\0';
 	}
 
@@ -289,7 +303,7 @@ int type;
 	return( ptr );
 }
 
-char *
+static char *
 Get_unique_name( name , obj , type )
 char *name,*obj;
 int type;
@@ -329,7 +343,7 @@ int type;
 	return( ptr->brlcad_name );
 }
 
-char *
+static char *
 Get_solid_name( name , obj )
 char *name,*obj;
 {
@@ -346,7 +360,174 @@ char *name,*obj;
 	return( ptr->solid_name );
 }
 
-void
+static int
+Shell_is_arb( s, tab )
+struct shell *s;
+struct nmg_ptbl *tab;
+{
+	struct faceuse *fu;
+	struct face *f;
+	int arb;
+	int four_verts=0;
+	int three_verts=0;
+	int face_count=0;
+	int loop_count;
+
+	NMG_CK_SHELL( s );
+
+	nmg_vertex_tabulate( tab, &s->l.magic );
+
+	if( NMG_TBL_END( tab ) > 8 || NMG_TBL_END( tab ) < 4 )
+		goto not_arb;
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+		vect_t fu_norm;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		f = fu->f_p;
+		NMG_CK_FACE( f );
+
+		if( *f->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+			goto not_arb;
+
+		NMG_GET_FU_NORMAL( fu_norm, fu );
+
+		loop_count = 0;
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				goto not_arb;
+
+			loop_count++;
+
+			if( loop_count > 1 )
+				goto not_arb;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct edgeuse *eu_radial;
+				struct faceuse *fu_radial;
+				struct face *f_radial;
+				vect_t norm_radial;
+				vect_t eu_dir;
+				vect_t cross;
+
+				NMG_CK_EDGEUSE( eu );
+
+				eu_radial = nmg_next_radial_eu( eu, s, 0 );
+
+				if( eu_radial == eu || eu_radial == eu->eumate_p )
+					goto not_arb;
+
+				fu_radial = nmg_find_fu_of_eu( eu_radial );
+				NMG_CK_FACEUSE( fu_radial );
+
+				if( fu_radial->orientation != OT_SAME )
+					fu_radial = fu_radial->fumate_p;
+
+				f_radial = fu_radial->f_p;
+				NMG_CK_FACE( f_radial );
+
+				if( *f_radial->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+					goto not_arb;
+
+				NMG_GET_FU_NORMAL( norm_radial, fu_radial );
+
+				VCROSS( cross, fu_norm, norm_radial );
+
+				if( eu->orientation == OT_NONE )
+				{
+					VSUB2( eu_dir, eu->vu_p->v_p->vg_p->coord, eu->eumate_p->vu_p->v_p->vg_p->coord )
+					if( eu->orientation != OT_SAME )
+						VREVERSE( eu_dir, eu_dir )
+				}
+				else
+					VMOVE( eu_dir, eu->g.lseg_p->e_dir )
+
+				if( eu->orientation == OT_SAME || eu->orientation == OT_NONE )
+				{
+					if( VDOT( cross, eu_dir ) < 0.0 )
+						goto not_arb;
+				}
+				else
+				{
+					if( VDOT( cross, eu_dir ) > 0.0 )
+						goto not_arb;
+				}
+			}
+		}
+	}
+
+	/* count face types */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+		int vert_count=0;
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		face_count++;
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				vert_count++;
+		}
+
+		if( vert_count == 3 )
+			three_verts++;
+		else if( vert_count == 4 )
+			four_verts++;
+	}
+
+	if( face_count != three_verts + four_verts )
+		goto not_arb;
+
+	switch( NMG_TBL_END( tab ) )
+	{
+		case 4:		/* each face must have 3 vertices */
+			if( three_verts != 4 || four_verts != 0 )
+				goto not_arb;
+			break;
+		case 5:		/* one face with 4 verts, four with 3 verts */
+			if( four_verts != 1 || three_verts != 4 )
+				goto not_arb;
+			break;
+		case 6:		/* three faces with 4 verts, two with 3 verts */
+			if( three_verts != 2 || four_verts != 3 )
+				goto not_arb;
+			break;
+		case 7:		/* four faces with 4 verts, two with 3 verts */
+			if( four_verts != 4 || three_verts != 2 )
+				goto not_arb;
+			break;
+		case 8:		/* each face must have 4 vertices */
+			if( four_verts != 6 || three_verts != 0 )
+				goto not_arb;
+			break;
+	}
+
+	return( NMG_TBL_END( tab ) );
+
+
+not_arb:
+	nmg_tbl( tab, TBL_FREE, (long *)NULL );
+	return( 0 );
+}
+
+static void
 Convert_assy( line )
 char line[MAX_LINE_LEN];
 {
@@ -508,64 +689,130 @@ char line[MAX_LINE_LEN];
 }
 
 static int
-do_modifiers( line1, start, head, name )
+do_modifiers( line1, start, head, name, min, max )
 char *line1;
 int *start;
 struct wmember *head;
 char *name;
+point_t min, max;
 {
 	struct wmember *wmem;
+	int i;
 
 	while( strncmp( &line1[*start], "endmodifiers", 12 ) )
 	{
 		if( !strncmp( &line1[*start], "plane", 5 ) )
 		{
+			struct name_conv_list *ptr;
 			char haf_name[NAMESIZE+1];
-			double dist;
-			point_t plane_origin;
-			vect_t plane_norm;
+			fastf_t dist;
+			fastf_t tmp_dist;
+			point_t origin;
+			plane_t plane;
+			vect_t e1,e2;
+			double u_min,u_max,v_min,v_max;
 			double x,y,z;
 			int orient;
+			point_t arb_pt[8];
+			point_t rpp_corner;
 
 			fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
-			VSET( plane_origin, x, y, z );
+			VSET( origin, x, y, z );
 			fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
+			VSET( e1, x, y, z );
 			fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
+			VSET( e2, x, y, z );
 			fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%lf %lf %lf", &x, &y, &z );
-			VSET( plane_norm, x, y, z );
+			VSET( plane, x, y, z );
 			fgets( line1, MAX_LINE_LEN, fd_in );
-			sscanf( line1, "%lf %lf", &x, &y );
+			sscanf( line1, "%lf %lf", &u_min, &v_min );
 			fgets( line1, MAX_LINE_LEN, fd_in );
-			sscanf( line1, "%lf %lf", &x, &y );
+			sscanf( line1, "%lf %lf", &u_max, &v_max );
 			fgets( line1, MAX_LINE_LEN, fd_in );
 			sscanf( line1, "%d", &orient );
 
+			plane[H] = VDOT( plane, origin );
+
+			VJOIN2( arb_pt[0], origin, u_min, e1, v_min, e2 );
+			VJOIN2( arb_pt[1], origin, u_max, e1, v_min, e2 );
+			VJOIN2( arb_pt[2], origin, u_max, e1, v_max, e2 );
+			VJOIN2( arb_pt[3], origin, u_min, e1, v_max, e2 );
+
+			/* find max distance to corner of enclosing RPP */
+			dist = 0.0;
+			VSET( rpp_corner, min[X], min[Y], min[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, min[X], min[Y], max[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, min[X], max[Y], min[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, min[X], max[Y], max[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, max[X], min[Y], min[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, max[X], min[Y], max[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, max[X], max[Y], min[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			VSET( rpp_corner, max[X], max[Y], max[Z] );
+			tmp_dist = DIST_PT_PLANE( rpp_corner, plane ) * (fastf_t)orient;
+			if( tmp_dist > dist )
+				dist = tmp_dist;
+
+			for( i=0 ; i<4 ; i++ )
+			{
+				VJOIN1( arb_pt[i+4], arb_pt[i], dist*(fastf_t)orient, plane );
+			}
+
+			if( top_level )
+			{
+				for( i=0 ; i<8 ; i++ )
+					VSCALE( arb_pt[i], arb_pt[i], conv_factor )
+			}
+
 			cut_count++;
 
-			dist = VDOT( plane_norm, plane_origin );
-			sprintf( haf_name, "s.haf.%d", cut_count );
-			if( mk_half( fd_out, haf_name, plane_norm, dist ) )
-				rt_log( "Failed to create HAF solid for Assembly cut in part %s\n", name );
+			sprintf( haf_name, "cut.%d", cut_count );
+			ptr = Add_new_name( haf_name, (char *)NULL, CUT_SOLID_TYPE );
+			if( mk_arb8( fd_out, ptr->solid_name, (fastf_t *)arb_pt ) )
+				rt_log( "Failed to create ARB8 solid for Assembly cut in part %s\n", name );
 			else
 			{
 				/* Add this cut to the region */
-				if( orient == (-1) )
-					wmem = mk_addmember( haf_name, head,
-							WMOP_SUBTRACT );
-				else
-					wmem = mk_addmember( haf_name, head,
-							WMOP_INTERSECT );
+				wmem = mk_addmember( ptr->solid_name, head,
+						WMOP_SUBTRACT );
 
 				if( top_level && do_reorient )
 				{
 					/* apply re_orient transformation here */
 					if( debug )
 					{
-						rt_log( "Applying re-orient matrix to solid %s\n", haf_name );
+						rt_log( "Applying re-orient matrix to solid %s\n", ptr->solid_name );
 						mat_print( "re-orient matrix", re_orient );
 					}
 					mat_mul2( re_orient, wmem->wm_mat );
@@ -573,17 +820,13 @@ char *name;
 				
 			}
 		}
-		else if( !strncmp( &line1[*start], "cylinder", 8 ) )
-		{
-rt_log( "Cyinder\n" );
-		}
 		fgets( line1, MAX_LINE_LEN, fd_in );
 		(*start) = (-1);
 		while( isspace( line1[++(*start)] ) );
 	}
 }
 
-void
+static void
 Convert_part( line )
 char line[MAX_LINE_LEN];
 {
@@ -607,6 +850,8 @@ char line[MAX_LINE_LEN];
 	struct wmember *wmem;
 	vect_t normal;
 	int solid_in_region=0;
+	int solid_is_written=0;
+	point_t part_max,part_min;	/* Part RPP */
 
 	if( rt_g.debug & DEBUG_MEM_FULL )
 		rt_prmem( "At start of Conv_prt():\n" );
@@ -620,6 +865,8 @@ char line[MAX_LINE_LEN];
 
 
 	RT_LIST_INIT( &head.l );
+	VSETALL( part_min, MAX_FASTF );
+	VSETALL( part_max, -MAX_FASTF );
 
 	m = nmg_mm();
 	NMG_CK_MODEL( m );
@@ -649,20 +896,12 @@ char line[MAX_LINE_LEN];
 	name[++i] = '\0';
 
 	/* get object id */
-#if 0
-	sscanf( &line[start] , "%x %f" , &obj, &part_conv_factor );
-#else
 	sscanf( &line[start] , "%x" , &obj );
-#endif
 
 	rt_log( "Converting Part: %s\n" , name );
 
 	if( debug )
-#if 0
-		rt_log( "Conv_part %s x%x %g\n" , name , obj, part_conv_factor );
-#else
 		rt_log( "Conv_part %s x%x\n" , name , obj );
-#endif
 
 	solid_count++;
 	solid_name = Get_solid_name( name , obj );
@@ -737,6 +976,7 @@ char line[MAX_LINE_LEN];
 						rt_log( "\t( %g %g %g )\n", x, y, z );
 					}
 					VSET( verts[vert_no].pt , x , y , z );
+					VMINMAX( part_min, part_max, verts[vert_no].pt );
 					vert_no++;
 
 				}
@@ -801,7 +1041,7 @@ char line[MAX_LINE_LEN];
 				}
 				solid_in_region = 1;
 			}
-			do_modifiers( line1, &start, &head, name );
+			do_modifiers( line1, &start, &head, name, part_min, part_max );
 		}
 	}
 
@@ -819,7 +1059,7 @@ char line[MAX_LINE_LEN];
 		return;
 	}
 
-	if( !polysolid )
+	if( !polysolid || do_simplify )
 	{
 		/* fuse vertices that are within tolerance of each other */
 		rt_log( "\tFusing vertices for part\n" );
@@ -896,12 +1136,255 @@ char line[MAX_LINE_LEN];
 
 		nmg_rebound( m , &tol );
 
-	if( polysolid )
+	if( do_simplify )
+	{
+		struct vertex *v;
+		struct nmg_ptbl tab;
+		int j;
+		point_t arb_pts[8];
+		struct faceuse *fu;
+		struct loopuse *lu;
+		struct edgeuse *eu;
+		struct faceuse *fu1;
+		struct faceuse *fu2;
+		struct edgeuse *eu_start;
+		int face_verts;
+		int found;
+
+		switch( Shell_is_arb( s, &tab ) )
+		{
+			case 0:
+				break;
+			case 4:
+				v = (struct vertex *)NMG_TBL_GET( &tab, 0 );
+				NMG_CK_VERTEX( v );
+				VMOVE( arb_pts[0], v->vg_p->coord );
+				v = (struct vertex *)NMG_TBL_GET( &tab, 1 );
+				NMG_CK_VERTEX( v );
+				VMOVE( arb_pts[1], v->vg_p->coord );
+				v = (struct vertex *)NMG_TBL_GET( &tab, 2 );
+				NMG_CK_VERTEX( v );
+				VMOVE( arb_pts[2], v->vg_p->coord );
+				VMOVE( arb_pts[3], v->vg_p->coord );
+				v = (struct vertex *)NMG_TBL_GET( &tab, 3 );
+				NMG_CK_VERTEX( v );
+				VMOVE( arb_pts[4], v->vg_p->coord );
+				VMOVE( arb_pts[5], v->vg_p->coord );
+				VMOVE( arb_pts[6], v->vg_p->coord );
+				VMOVE( arb_pts[7], v->vg_p->coord );
+				if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_pts ) )
+				{
+					rt_log( "mk_arb8 failed for part %s\n", name );
+					rt_bomb( "mk_arb8 failed" );
+				}
+				solid_is_written = 1;
+				nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+				break;
+			case 5:
+				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+				face_verts = 0;
+				while( face_verts != 4 )
+				{
+					face_verts = 0;
+					fu = RT_LIST_PNEXT_CIRC( faceuse, &fu->l );
+					lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+						face_verts++;
+				}
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+				NMG_CK_FACEUSE( fu );
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				j = 0;
+				eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					VMOVE( arb_pts[j], eu->vu_p->v_p->vg_p->coord )
+					j++;
+				}
+
+				eu = eu_start->radial_p;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = eu->eumate_p;
+				for( i=0 ; i<4 ; i++ )
+				{
+					VMOVE( arb_pts[j], eu->vu_p->v_p->vg_p->coord )
+					j++;
+				}
+				if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_pts ) )
+				{
+					rt_log( "mk_arb8 failed for part %s\n", name );
+					rt_bomb( "mk_arb8 failed" );
+				}
+				solid_is_written = 1;
+				nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+				break;
+			case 6:
+				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+				face_verts = 0;
+				while( face_verts != 3 )
+				{
+					face_verts = 0;
+					fu = RT_LIST_PNEXT_CIRC( faceuse, &fu->l );
+					lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+						face_verts++;
+				}
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+				NMG_CK_FACEUSE( fu );
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+
+				eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+				eu = eu_start;
+				VMOVE( arb_pts[1], eu->vu_p->v_p->vg_p->coord );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				VMOVE( arb_pts[0], eu->vu_p->v_p->vg_p->coord );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				VMOVE( arb_pts[4], eu->vu_p->v_p->vg_p->coord );
+				VMOVE( arb_pts[5], eu->vu_p->v_p->vg_p->coord );
+
+				eu = eu_start->radial_p;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = eu->radial_p->eumate_p;
+				VMOVE( arb_pts[2], eu->vu_p->v_p->vg_p->coord );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				VMOVE( arb_pts[3], eu->vu_p->v_p->vg_p->coord );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				VMOVE( arb_pts[6], eu->vu_p->v_p->vg_p->coord );
+				VMOVE( arb_pts[7], eu->vu_p->v_p->vg_p->coord );
+
+				if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_pts ) )
+				{
+					rt_log( "mk_arb8 failed for part %s\n", name );
+					rt_bomb( "mk_arb8 failed" );
+				}
+				solid_is_written = 1;
+				nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+				break;
+			case 7:
+				found = 0;
+				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+				while( !found )
+				{
+					int verts4=0,verts3=0;
+
+					lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					{
+						struct loopuse *lu1;
+						struct edgeuse *eu1;
+						int vert_count=0;
+
+						fu1 = nmg_find_fu_of_eu( eu->radial_p );
+						lu1 = RT_LIST_FIRST( loopuse, &fu1->lu_hd );
+						for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )
+							vert_count++;
+
+						if( vert_count == 4 )
+							verts4++;
+						else if( vert_count == 3 )
+							verts3++;
+					}
+
+					if( verts4 == 2 && verts3 == 2 )
+						found = 1;
+				}
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+				NMG_CK_FACEUSE( fu );
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				j = 0;
+				eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					VMOVE( arb_pts[j], eu->vu_p->v_p->vg_p->coord )
+					j++;
+				}
+
+				eu = eu_start->radial_p;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = eu->radial_p->eumate_p;
+				fu1 = nmg_find_fu_of_eu( eu );
+				if( nmg_faces_are_radial( fu, fu1 ) )
+				{
+					eu = eu_start->radial_p;
+					eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+					eu = eu->radial_p->eumate_p;
+				}
+				for( i=0 ; i<4 ; i++ )
+				{
+					VMOVE( arb_pts[j], eu->vu_p->v_p->vg_p->coord )
+					j++;
+					eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				}
+				if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_pts ) )
+				{
+					rt_log( "mk_arb8 failed for part %s\n", name );
+					rt_bomb( "mk_arb8 failed" );
+				}
+				solid_is_written = 1;
+				nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+				break;
+			case 8:
+				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+				NMG_CK_FACEUSE( fu );
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				j = 0;
+				eu_start = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					VMOVE( arb_pts[j], eu->vu_p->v_p->vg_p->coord )
+					j++;
+				}
+
+				eu = eu_start->radial_p;
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				eu = eu->radial_p->eumate_p;
+				for( i=0 ; i<4 ; i++ )
+				{
+					VMOVE( arb_pts[j], eu->vu_p->v_p->vg_p->coord )
+					j++;
+					eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				}
+				if( mk_arb8( fd_out, solid_name, (fastf_t *)arb_pts ) )
+				{
+					rt_log( "mk_arb8 failed for part %s\n", name );
+					rt_bomb( "mk_arb8 failed" );
+				}
+				solid_is_written = 1;
+				nmg_tbl( &tab, TBL_FREE, (long *)NULL );
+				break;
+			default:
+				fprintf( stderr, "Shell_is_arb returned illegal value for part %s\n", name );
+				rt_bomb( "Shell_is_arb screwed up" );
+				
+		}
+	}
+
+	if( do_simplify && !solid_is_written )
+	{
+		/* Check if this is a TGC */
+	}
+
+	if( polysolid && !solid_is_written )
 	{
 		rt_log( "\tWriting polysolid\n" );
 		write_shell_as_polysolid( fd_out , solid_name , s );
 	}
-	else
+	else if( !solid_is_written )
 	{
 		rt_log( "\tWriting NMG\n" );
 		mk_nmg( fd_out , solid_name , m );
@@ -968,7 +1451,7 @@ empty_model:
 
 }
 
-void
+static void
 Convert_input()
 {
 	char line[ MAX_LINE_LEN ];
@@ -989,7 +1472,7 @@ Convert_input()
 	}
 }
 
-void
+static void
 Rm_nulls()
 {
 	struct db_i *dbip;
@@ -1102,7 +1585,7 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "rdax:X:pu:")) != EOF) {
+	while ((c = getopt(argc, argv, "rsdax:X:pu:")) != EOF) {
 		switch (c) {
 		case 'd':
 			debug = 1;
@@ -1135,6 +1618,9 @@ char	*argv[];
 			break;
 		case 'r':
 			do_reorient = 0;
+			break;
+		case 's':
+			do_simplify = 1;
 			break;
 		default:
 			rt_log( usage, argv[0]);
