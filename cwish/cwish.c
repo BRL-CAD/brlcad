@@ -81,7 +81,6 @@ Cad_AppInit(interp)
 		bu_log("Tk_Init error %s\n", interp->result);
 		return TCL_ERROR;
 	} 
-
 	Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
 
 	/* Initialize [incr Tcl] */
@@ -89,12 +88,15 @@ Cad_AppInit(interp)
 		bu_log("Itcl_Init error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
 
 	/* Initialize [incr Tk] */
 	if (Itk_Init(interp) == TCL_ERROR) {
 		bu_log("Itk_Init error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
+
 
 	/* Import [incr Tcl] commands into the global namespace. */
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
@@ -110,9 +112,6 @@ Cad_AppInit(interp)
 		return TCL_ERROR;
 	}
 
-	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-	Tcl_StaticPackage(interp, "Itk", Itk_Init, (Tcl_PackageInitProc *) NULL);
-
 	/* Initialize the Iwidgets package */
 	if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
 		bu_log("Tcl_Eval error %s\n", interp->result);
@@ -125,6 +124,16 @@ Cad_AppInit(interp)
 		bu_log("Tcl_Import error %s\n", interp->result);
 		return TCL_ERROR;
 	}
+
+#if 0
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* ::itk::* ::iwidgets::* }") != TCL_OK) {
+	  return TCL_ERROR;
+	}
+#else
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
+	  return TCL_ERROR;
+	}
+#endif
 
 	/* Initialize libdm */
 	if (Dm_Init(interp) == TCL_ERROR) {
@@ -155,12 +164,21 @@ Cad_AppInit(interp)
 	pathname = bu_brlcad_path( "" );
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "lappend auto_path %stclscripts", pathname);
+	bu_vls_printf(&vls, "lappend auto_path %stclscripts %stclscripts/lib %stclscripts/util",
+		      pathname, pathname, pathname);
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	/* register cwish commands */
 	cmdInit(interp);
 
+	/*
+	 * Specify a user-specific startup file to invoke if the application
+	 * is run interactively.  Typically the startup file is "~/.apprc"
+	 * where "app" is the name of the application.  If this line is deleted
+	 * then no user-specific startup file will be run under any conditions.
+	 */
+
+	Tcl_SetVar(interp, "tcl_rcFileName", "~/.cwishrc", TCL_GLOBAL_ONLY);
 	return TCL_OK;
 }
