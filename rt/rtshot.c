@@ -55,7 +55,8 @@ Usage:  rtshot [options] model.g objects...\n\
  -a # # #	Set shoot-at point\n\
  -O #		Set overlap-claimant handling\n\
  -o #		Set onehit flag\n\
- -r #		Set ray length\n";
+ -r #		Set ray length\n\
+ -v \"attribute_name1 attribute_name2 ...\" Show attribute values\n";
 
 int		rdebug;			/* RT program debugging (not library) */
 static FILE	*plotfp;		/* For plotting into */
@@ -82,17 +83,53 @@ int argc;
 char **argv;
 {
 	static struct rt_i *rtip;
+	Tcl_HashTable tbl;
 	char *title_file;
 	char idbuf[132];		/* First ID record info */
+	char *ptr;
+	int attr_count=0, i;
+	char **attrs = (char **)NULL;
 
 	if( argc < 3 )  {
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
+
 	argc--;
 	argv++;
-
 	while( argv[0][0] == '-' ) switch( argv[0][1] )  {
+	case 'v':
+		/* count the number of attribute names provided */
+		ptr = argv[1];
+		while( *ptr ) {
+			while( *ptr && isspace( *ptr ) )
+				ptr++;
+			if( *ptr )
+				attr_count++;
+			while( *ptr && !isspace( *ptr ) )
+				ptr++;
+		}
+
+		if( attr_count == 0 ) {
+			bu_log( "missing list of attribute names!!!\n" );
+			(void)fputs(usage, stderr);
+			exit( 1 );
+		}
+
+		/* allocate enough for a null terminated list */
+		attrs = (char **)bu_calloc( attr_count + 1, sizeof( char *), "attrs" );
+
+		/* use strtok to actually grab the names */
+		i = 0;
+		ptr = strtok( argv[1], "\t " );
+		while( ptr && i < attr_count ) {
+			attrs[i] = bu_strdup( ptr );
+			ptr = strtok( (char *)NULL, "\t " );
+			i++;
+		}
+		argc -= 2;
+		argv += 2;
+		break;
 	case 'o':
 		sscanf( argv[1], "%d", &set_onehit );
 		argc -= 2;
@@ -221,12 +258,10 @@ err:
 	rtip->useair = use_air;
 
 	/* Walk trees */
-	while( argc > 0 )  {
-		if( rt_gettree(rtip, argv[0]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[0]);
-		argc--;
-		argv++;
-	}
+	if( rt_gettrees_muves( rtip, (const char **)attrs, &tbl, argc, (const char **)argv, 1 ) )
+	fprintf(stderr,"rt_gettrees FAILED\n");
+	ap.attrs = attrs;
+	ap.a_uptr = (genptr_t)&tbl;
 	rt_prep(rtip);
 
 	if( rdebug&RDEBUG_RAYPLOT )  {
@@ -304,10 +339,24 @@ struct partition *PartHeadp;
 		}
 	}
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
-		bu_log("\n--- Hit region %s (in %s, out %s)\n",
+		matp_t inv_mat;
+		Tcl_HashEntry *entry;
+
+		bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 			pp->pt_regionp->reg_name,
 			pp->pt_inseg->seg_stp->st_name,
-			pp->pt_outseg->seg_stp->st_name );
+			pp->pt_outseg->seg_stp->st_name,
+		        pp->pt_regionp->reg_bit);
+
+		entry = Tcl_FindHashEntry( (Tcl_HashTable *)ap->a_uptr,
+					   (char *)pp->pt_regionp->reg_bit );
+		if( !entry ) {
+			inv_mat = (matp_t)NULL;
+		}
+		else {
+			inv_mat = (matp_t)Tcl_GetHashValue( entry );
+			bn_mat_print( "inv_mat", inv_mat );
+		}
 
 		if( pp->pt_overlap_reg )
 		{
@@ -331,6 +380,13 @@ struct partition *PartHeadp;
 		bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
+		if( inv_mat ) {
+			point_t in_trans;
+
+			MAT4X3PNT( in_trans, inv_mat, inpt );
+			bu_log( "\ttranslated ORCA inhit = (%g %g %g)\n", V3ARGS( in_trans ) );
+		}
+
 		/* outhit info */
 		stp = pp->pt_outseg->seg_stp;
 		VJOIN1( outpt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
@@ -343,6 +399,13 @@ struct partition *PartHeadp;
 		bu_log(    "   PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
+		if( inv_mat ) {
+			point_t out_trans;
+
+			MAT4X3PNT( out_trans, inv_mat, outpt );
+			bu_log( "\ttranslated ORCA outhit = (%g %g %g)\n", V3ARGS( out_trans ) );
+		}
+
 		/* Plot inhit to outhit */
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
@@ -353,6 +416,26 @@ struct partition *PartHeadp;
 				ap->a_ray.r_dir );
 			pl_color( plotfp, 0, 255, 255 );
 			pdv_3line( plotfp, inpt, outpt );
+		}
+
+		{
+			struct region *regp = pp->pt_regionp;
+			int i;
+
+			if( ap->attrs ) {
+				bu_log( "\tattribute values:\n" );
+				i = 0;
+				while( ap->attrs[i] && regp->attr_values[i] ) {
+					bu_log( "\t\t%s:\n", ap->attrs[i] );
+					bu_log( "\t\t\tstring rep = %s\n",
+						BU_MRO_GETSTRING(regp->attr_values[i]));
+					bu_log( "\t\t\tlong rep = %d\n",
+						BU_MRO_GETLONG(regp->attr_values[i])); 
+					bu_log( "\t\t\tdouble rep = %f\n",
+						BU_MRO_GETDOUBLE(regp->attr_values[i]));
+					i++;
+				}
+			}
 		}
 	}
 	return(1);
