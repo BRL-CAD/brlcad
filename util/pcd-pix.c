@@ -133,7 +133,10 @@ static long bufpos;
 #define SKIP(n)  { if (fseek(fin,(n),1)) error(E_READ);}
 #define SKIPr(n) { if (fseek(fin,(n),1)) return(E_READ);}
 
-#define NORM(x) { if(x<0) x=0; else if (x>255) x=255;}
+static int clipped_low=0;
+static int clipped_high=0;
+#define NORM(x) { if(x<0) {x=0; clipped_low++;} \
+		else if (x>255) {x=255; clipped_high++;}}
 
 static void error(e)
 enum ERRORS e;
@@ -656,6 +659,11 @@ char **argv;
 	}
 
 	if( do_pixfb )  pclose(fout);
+
+	if( clipped_low || clipped_high )  {
+		fprintf(stderr, "pcd-pix: %d clipped low, %d clipped high\n",
+			clipped_low, clipped_high );
+	}
 
 	exit(0);
 }
@@ -1204,7 +1212,8 @@ int autosync;
 			if( (key = hp->key) & 0x80 )
 				key |= ((-1) & ~0x7F);
 			sum=((int)(*lptr)) + key;
-			NORM(sum);
+			/* NORM(sum); */
+			if(sum<0) sum=0; else if (sum>255) sum=255;
 			*(lptr++) = sum;
 
 			n++;
