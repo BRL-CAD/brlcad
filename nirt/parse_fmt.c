@@ -8,6 +8,9 @@ static char RCSid[] = "$Header$";
 
 #include <stdio.h>
 #include <ctype.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "./nirt.h"
 #include "./usrfmt.h"
 
@@ -173,8 +176,6 @@ int	outcom_type;	/* Type of output command */
     outitem	*oip;
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
-
-    char	*malloc();
 
     if ((uos = malloc(strlen(uoutspec) + 1)) == NULL)
     {
@@ -470,8 +471,6 @@ FILE *fopenrc()
     char	*rc_file_name;
     char	*home;
     FILE	*fPtr;
-
-    char	*getenv();
     
     if ((fPtr = fopen(DEF_RCF_NAME, "r")) == NULL)
     {
@@ -719,7 +718,7 @@ com_table	*ctp;
     fprintf(sfPtr, "%c file created by the dump command of nirt\n", CMT_CHAR);
     fprintf(sfPtr, "xyz %g %g %g\n", target(X), target(Y), target(Z));
     fprintf(sfPtr, "dir %g %g %g\n", direct(X), direct(Y), direct(Z));
-    fprintf(sfPtr, "useair %s\n", ap.a_rt_i -> useair);
+    fprintf(sfPtr, "useair=%d\n", ap.a_rt_i -> useair);
     fprintf(sfPtr, "units %s\n", local_u_name);
     if (strcmp(dest_string, "stdout") == 0)
 	fputs("dest default\n", sfPtr);
