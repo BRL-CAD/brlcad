@@ -17,6 +17,8 @@
  *
  *  $Header$
  */
+#ifndef POLYNO_H
+#define POLYNO_H seen
 
 #define		MAXP			4
 #define 	SMALL			.00000001
@@ -37,3 +39,5 @@ typedef  struct {
 extern poly	*polyAdd(), *polySub(), *polyMul(), *polyScal();
 extern void	quadratic(), synDiv(), prntpoly(), pr_poly();
 extern int	quartic(), cubic();
+
+#endif POLYNO_H

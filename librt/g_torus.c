@@ -20,7 +20,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCStorus[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -30,9 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-
-#include "./polyno.h"
-#include "./complex.h"
+#include "polyno.h"
+#include "complex.h"
 
 static void	TorPtSort();
 
@@ -170,17 +169,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
 	LOCAL fastf_t	mag_b;
 
-#define SP_V	&vec[0*ELEMENTS_PER_VECT]
-#define SP_H	&vec[1*ELEMENTS_PER_VECT]
-#define SP_A	&vec[2*ELEMENTS_PER_VECT]
-#define SP_B	&vec[3*ELEMENTS_PER_VECT]
+#define TOR_V	&vec[0*ELEMENTS_PER_VECT]
+#define TOR_H	&vec[1*ELEMENTS_PER_VECT]
+#define TOR_A	&vec[2*ELEMENTS_PER_VECT]
+#define TOR_B	&vec[3*ELEMENTS_PER_VECT]
 
 	/*
 	 * Apply 3x3 rotation mat only to A,B,H
 	 */
-	MAT4X3VEC( A, mat, SP_A );
-	MAT4X3VEC( B, mat, SP_B );
-	MAT4X3VEC( Hv, mat, SP_H );
+	MAT4X3VEC( A, mat, TOR_A );
+	MAT4X3VEC( B, mat, TOR_B );
+	MAT4X3VEC( Hv, mat, TOR_H );
 
 	magsq_a = MAGSQ( A );
 	magsq_b = MAGSQ( B );
@@ -190,7 +189,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mag_b = sqrt(magsq_b);
 
 	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
-	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_h) ) {
+	if( NEAR_ZERO(magsq_a, 0.0001) ||
+	    NEAR_ZERO(magsq_b, 0.0001) ||
+	    NEAR_ZERO(magsq_h, 0.0001) ) {
 		rt_log("tor(%s):  zero length A, B, or H vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
@@ -206,19 +207,19 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Validate that A.B == 0, B.H == 0, A.H == 0 */
 	f = VDOT( A, B )/(r1*mag_b);
 
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to B, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( B, Hv )/(mag_b*r2);
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  B not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( A, Hv )/(r1*r2);
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		rt_log("tor(%s):  A not perpendicular to H, f=%f\n",
 			stp->st_name, f);
 		return(1);		/* BAD */
@@ -237,7 +238,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	tor->tor_r1 = r1;
 
-	MAT4X3PNT( tor->tor_V, mat, SP_V );
+	MAT4X3PNT( tor->tor_V, mat, TOR_V );
 	tor->tor_alpha = r2/tor->tor_r1;
 
 	/* Compute R and invR matrices */
@@ -259,13 +260,13 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_aradius = stp->st_bradius = tor->tor_r1 + r2;
 
 	/* Compute bounding RPP */
-#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
+#define TOR_MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
-#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
-		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
-		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
+#define TOR_MM(v)	TOR_MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
+		TOR_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
+		TOR_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
 	/* Exterior radius is r1+r2;  rescale A and B here */
 	f = tor->tor_r1+r2;
@@ -277,22 +278,22 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* There are 8 corners to the enclosing RPP;  find max and min */
 	VADD3( temp, tor->tor_V, B, Hv );
-	VADD2( work, temp, A ); MM( work );	/* V + A + B + Hv */
-	VSUB2( work, temp, A ); MM( work );	/* V - A + B + Hv */
+	VADD2( work, temp, A ); TOR_MM( work );	/* V + A + B + Hv */
+	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A + B + Hv */
 
 	VSUB2( temp, tor->tor_V, B );
 	VADD2( temp, temp, Hv );
-	VADD2( work, temp, A ); MM( work );	/* V + A - B + Hv */
-	VSUB2( work, temp, A ); MM( work );	/* V - A - B + Hv */
+	VADD2( work, temp, A ); TOR_MM( work );	/* V + A - B + Hv */
+	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A - B + Hv */
 	
 	VSUB2( temp, tor->tor_V, Hv );
 	VADD2( temp, temp, B );
-	VADD2( work, temp, A ); MM( work );	/* V + A + B - Hv */
-	VSUB2( work, temp, A ); MM( work );	/* V - A + B - Hv */
+	VADD2( work, temp, A ); TOR_MM( work );	/* V + A + B - Hv */
+	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A + B - Hv */
 
 	VSUB3( temp, tor->tor_V, B, Hv );
-	VADD2( work, temp, A ); MM( work );	/* V + A - B - Hv */
-	VSUB2( work, temp, A ); MM( work );	/* V - A - B - Hv */
+	VADD2( work, temp, A ); TOR_MM( work );	/* V + A - B - Hv */
+	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A - B - Hv */
 
 	return(0);			/* OK */
 }
@@ -431,7 +432,7 @@ register struct xray *rp;
 	 *  of 't' for the intersections
 	 */
 	for ( j=0, i=0; j < 4; j++ ){
-		if( NEAR_ZERO( val[j].im ) )
+		if( NEAR_ZERO( val[j].im, 0.0001 ) )
 			k[i++] = val[j].re;
 	}
 
@@ -544,22 +545,22 @@ register double	t[];
 	LOCAL double	u;
 	register int	n;
 
-#define XCH(a,b)	{u=a; a=b; b=u;}
+#define TOR_XCH(a,b)	{u=a; a=b; b=u;}
 	if( npts == 2 )  {
 		if ( t[0] < t[1] )  {
-			XCH( t[0], t[1] );
+			TOR_XCH( t[0], t[1] );
 		}
 		return;
 	}
 
 	for ( n=0; n < 2; ++n ){
 		if ( t[n] < t[n+2] ){
-			XCH( t[n], t[n+2] );
+			TOR_XCH( t[n], t[n+2] );
 		}
 	}
 	for ( n=0; n < 3; ++n ){
 		if ( t[n] < t[n+1] ){
-			XCH( t[n], t[n+1] );
+			TOR_XCH( t[n], t[n+1] );
 		}
 	}
 	return;

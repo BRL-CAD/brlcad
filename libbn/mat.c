@@ -39,13 +39,13 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSmat[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<stdio.h>
-#include	<math.h>
-#include	"../h/machine.h"
-#include	"../h/vmath.h"
+#include <stdio.h>
+#include <math.h>
+#include "../h/machine.h"
+#include "../h/vmath.h"
 
 extern int	fprintf();
 extern double	sin(), cos();
@@ -174,8 +174,6 @@ register vectp_t iv;
  * The matrix pointed at by "im" is inverted and stored in the area
  * pointed at by "om".
  */
-#define EPSILON	0.000001
-
 /* 
  * Invert a 4-by-4 matrix using Algorithm 120 from ACM.
  * This is a modified Gauss-Jordan alogorithm
@@ -214,7 +212,7 @@ register matp_t output;
 			}
 		}
 
-		if( fabs(y) < EPSILON )  {
+		if( fabs(y) < 0.000001 )  {
 			(void)fprintf(stderr, "mat_inv:  error!\n");
 			return;		/* ERROR */
 		}

@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
 char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
@@ -32,7 +32,7 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
  *			R T _ S H O O T R A Y
  *  
  *  Given a ray, shoot it at all the relevant parts of the model,
- *  (building the HeadSeg chain), and then call rt_bool_regions()
+ *  (building the HeadSeg chain), and then call rt_boolregions()
  *  to build and evaluate the partition chain.
  *  If the ray actually hit anything, call the application's
  *  a_hit() routine with a pointer to the partition chain,
@@ -97,12 +97,12 @@ register struct application *ap;
 		f = ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y] +
 			ap->a_ray.r_dir[Z] * ap->a_ray.r_dir[Z];
-		if( NEAR_ZERO(f) )  {
+		if( NEAR_ZERO(f, 0.0001) )  {
 			rt_bomb("rt_shootray:  zero length dir vector\n");
 			return(0);
 		}
 		diff = f - 1;
-		if( !NEAR_ZERO( diff ) )  {
+		if( !NEAR_ZERO( diff, 0.0001 ) )  {
 			rt_log("rt_shootray: non-unit dir vect (x%d y%d lvl%d)\n",
 				ap->a_x, ap->a_y, ap->a_level );
 			f = 1/f;
@@ -112,19 +112,19 @@ register struct application *ap;
 
 	/* Compute the inverse of the direction cosines */
 #define ZERO_COS	1.0e-10
-	if(ap->a_ray.r_dir[X] > ZERO_COS || ap->a_ray.r_dir[X] < -ZERO_COS) {
+	if( !NEAR_ZERO( ap->a_ray.r_dir[X], ZERO_COS ) )  {
 		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
 	} else {
 		inv_dir[X] = INFINITY;
 		ap->a_ray.r_dir[X] = 0.0;
 	}
-	if(ap->a_ray.r_dir[Y] > ZERO_COS || ap->a_ray.r_dir[Y] < -ZERO_COS) {
+	if( !NEAR_ZERO( ap->a_ray.r_dir[Y], ZERO_COS ) )  {
 		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
 	} else {
 		inv_dir[Y] = INFINITY;
 		ap->a_ray.r_dir[Y] = 0.0;
 	}
-	if(ap->a_ray.r_dir[Z] > ZERO_COS || ap->a_ray.r_dir[Z] < -ZERO_COS) {
+	if( !NEAR_ZERO( ap->a_ray.r_dir[Z], ZERO_COS ) )  {
 		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
 	} else {
 		inv_dir[Z] = INFINITY;
@@ -165,14 +165,14 @@ register struct application *ap;
 	while( box_start < model_end )  {
 		register union cutter *cutp;
 		struct soltab *stp;
-		struct seg *waitsegs;	/* segs awaiting rt_bool_weave() */
+		struct seg *waitsegs;	/* segs awaiting rt_boolweave() */
 
 		waitsegs = SEG_NULL;
 
 		/* Move point (not box_start) slightly into the new box */
 		{
 			FAST fastf_t f;
-			f = box_start + EPSILON;
+			f = box_start + 0.005;
 			VJOIN1( point, ap->a_ray.r_pt, f, ap->a_ray.r_dir );
 		}
 		cutp = &CutHead;
@@ -186,11 +186,10 @@ register struct application *ap;
 		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
 			rt_bomb("leaf not boxnode");
 
-		/* Make sure we don't get stuck within the same box twice */
+		/* Don't get stuck within the same box for long */
 		if( cutp==lastcut )  {
-			rt_log("straight box push failed\n");
-			/* Advance 0.01% of last box size */
-			box_end += (box_end-box_start)*0.0001;
+			rt_log("straight box push failed %g\n", box_end);
+			box_end += 1.0;		/* Advance 1mm */
 			box_start = box_end;
 			continue;
 		}
@@ -230,7 +229,7 @@ register struct application *ap;
 			     /*  stp->st_id != ID_ARB8 && */
 			   ( !rt_in_rpp( &ap->a_ray, inv_dir,
 			      stp->st_min, stp->st_max ) ||
-			      ap->a_ray.r_max < -EPSILON )
+			      ap->a_ray.r_max < -0.005 )
 			)  {
 				rt_i.nmiss_solid++;
 				continue;	/* MISS */
@@ -259,7 +258,7 @@ register struct application *ap;
 
 			/* Discard seg entirely behind start point of ray */
 			while( newseg != SEG_NULL && 
-				newseg->seg_out.hit_dist < -EPSILON )  {
+				newseg->seg_out.hit_dist < -0.005 )  {
 				register struct seg *seg2 = newseg->seg_next;
 				FREE_SEG( newseg );
 				newseg = seg2;
@@ -270,7 +269,7 @@ register struct application *ap;
 			}
 			trybool++;	/* flag to rerun bool, below */
 
-			/* Add seg chain to list awaiting rt_bool_weave() */
+			/* Add seg chain to list awaiting rt_boolweave() */
 			{
 				register struct seg *seg2 = newseg;
 				while( seg2->seg_next != SEG_NULL )
@@ -290,7 +289,7 @@ register struct application *ap;
 		 *  Done once per box.
 		 */
 		if( waitsegs != SEG_NULL )  {
-			rt_bool_weave( waitsegs, &InitialPart );
+			rt_boolweave( waitsegs, &InitialPart );
 
 			/* Add segment chain to list of used segments */
 			{
@@ -307,7 +306,7 @@ register struct application *ap;
 		/* Only run this every three hits, to balance cost/benefit */
 		if( trybool>=3 && ap->a_onehit )  {
 			/* Evaluate regions upto box_end */
-			rt_bool_final( &InitialPart, &FinalPart,
+			rt_boolfinal( &InitialPart, &FinalPart,
 				last_bool_start, box_end, regionbits, ap );
 
 			/* If anything was found, it's a hit! */
@@ -334,7 +333,7 @@ register struct application *ap;
 	 *  All intersections of the ray with the model have
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
-	rt_bool_final( &InitialPart, &FinalPart, 0.0, model_end, regionbits, ap);
+	rt_boolfinal( &InitialPart, &FinalPart, 0.0, model_end, regionbits, ap);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ret = ap->a_miss( ap );

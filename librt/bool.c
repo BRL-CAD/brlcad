@@ -28,7 +28,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSbool[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define TRUE	1
 
 /*
- *			R T _ B O O L _ W E A V E
+ *			R T _ B O O L W E A V E
  *
  *  Weave a chain of segments into an existing set of partitions.
  *  The edge of each partition is an inhit or outhit of some solid (seg).
@@ -55,7 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  than a pointer, but that's more cycles than the neatness is worth.
  */
 void
-rt_bool_weave( segp_in, PartHdp )
+rt_boolweave( segp_in, PartHdp )
 struct seg *segp_in;
 struct partition *PartHdp;
 {
@@ -63,6 +63,34 @@ struct partition *PartHdp;
 	register struct partition *pp;
 
 	if(rt_g.debug&DEBUG_PARTITION) rt_log("-------------------BOOL_WEAVE\n");
+	/* First pass -- validity checking */
+	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
+
+		/* Totally ignore things behind the start position */
+		if( segp->seg_out.hit_dist < -0.005 )
+			continue;
+
+		/*  Eliminate very thin segments, or they will cause
+		 *  trouble below.
+		 */
+		if( rt_fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
+			rt_log(
+				"rt_boolweave: 1  Thin seg discarded: %s (%g,%g)\n",
+				segp->seg_stp->st_name,
+				segp->seg_in.hit_dist,
+				segp->seg_out.hit_dist );
+			continue;
+		}
+		if( segp->seg_in.hit_dist < -INFINITY ||
+		    segp->seg_out.hit_dist > INFINITY )  {
+		    	rt_log("rt_boolweave: 1  Defective segment %s (%g,%g)\n",
+				segp->seg_stp->st_name,
+				segp->seg_in.hit_dist,
+				segp->seg_out.hit_dist );
+			continue;
+		}
+	}
+	/* Second pass -- weaving */
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
 		register struct partition *newpp;		/* XXX */
 		register struct seg *lastseg;
@@ -72,7 +100,7 @@ struct partition *PartHdp;
 		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
 
 		/* Totally ignore things behind the start position */
-		if( segp->seg_out.hit_dist < -EPSILON )
+		if( segp->seg_out.hit_dist < -0.005 )
 			continue;
 
 		/*  Eliminate very thin segments, or they will cause
@@ -80,7 +108,15 @@ struct partition *PartHdp;
 		 */
 		if( rt_fdiff(segp->seg_in.hit_dist,segp->seg_out.hit_dist)==0 ) {
 			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_bool_weave:  Thin seg discarded: %s (%f,%f)\n",
+				"rt_boolweave: 2  Thin seg discarded: %s (%g,%g)\n",
+				segp->seg_stp->st_name,
+				segp->seg_in.hit_dist,
+				segp->seg_out.hit_dist );
+			continue;
+		}
+		if( segp->seg_in.hit_dist < -INFINITY ||
+		    segp->seg_out.hit_dist > INFINITY )  {
+		    	rt_log("rt_boolweave: 2 Defective segment %s (%g,%g)\n",
 				segp->seg_stp->st_name,
 				segp->seg_in.hit_dist,
 				segp->seg_out.hit_dist );
@@ -317,7 +353,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 }
 
 /*
- *			R T _ B O O L _ F I N A L
+ *			R T _ B O O L F I N A L
  *
  * For each partition, evaluate the boolean expression tree.
  * If 0 regions result, continue with next partition.
@@ -326,7 +362,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
  * If 2 or more regions claim the partition, then an overlap exists.
  */
 void
-rt_bool_final( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
+rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
 struct partition *InputHdp;
 struct partition *FinalHdp;
 fastf_t startdist, enddist;
@@ -344,17 +380,17 @@ struct application *ap;
 	while( pp != InputHdp )  {
 		hitcnt = 0;
 		if(rt_g.debug&DEBUG_PARTITION)  {
-			rt_log("rt_bool_final: (%f,%f)\n", startdist, enddist );
+			rt_log("rt_boolfinal: (%g,%g)\n", startdist, enddist );
 			rt_pr_pt( pp );
 		}
 
 		/* Sanity checks on sorting.  Remove later. */
 		if( pp->pt_inhit->hit_dist >= pp->pt_outhit->hit_dist )  {
-			rt_log("rt_bool_final: thin or inverted partition %.8x\n", pp);
+			rt_log("rt_boolfinal: thin or inverted partition %.8x\n", pp);
 			rt_pr_partitions( InputHdp, "With problem" );
 		}
 		if( pp->pt_forw != InputHdp && pp->pt_outhit->hit_dist > pp->pt_forw->pt_inhit->hit_dist )  {
-			rt_log("rt_bool_final:  sorting defect!\n");
+			rt_log("rt_boolfinal:  sorting defect!\n");
 			if( !(rt_g.debug & DEBUG_PARTITION) )
 				rt_pr_partitions( InputHdp, "With DEFECT" );
 			return; /* give up */
@@ -369,11 +405,11 @@ struct application *ap;
 		 * if partition ends before current box starts,
 		 * discard it, as we should never need to look back.
 		 */
-		if( pp->pt_outhit->hit_dist < -EPSILON
+		if( pp->pt_outhit->hit_dist < -0.005
 		    || pp->pt_outhit->hit_dist < startdist
 		)  {
 			register struct partition *zappp;
-			if(rt_g.debug&DEBUG_PARTITION)rt_log("rt_bool_final discarding partition x%x\n", pp);
+			if(rt_g.debug&DEBUG_PARTITION)rt_log("rt_boolfinal discarding partition x%x\n", pp);
 			zappp = pp;
 			pp = pp->pt_forw;
 			DEQUEUE_PT(zappp);
@@ -398,7 +434,7 @@ struct application *ap;
 			regp = rt_i.Regions[i];
 			if(rt_g.debug&DEBUG_PARTITION)
 				rt_log("%.8x=%s: ", regp, regp->reg_name );
-			if( rt_bool_eval( regp->reg_treetop, pp, TrueRg ) == FALSE )  {
+			if( rt_booleval( regp->reg_treetop, pp, TrueRg ) == FALSE )  {
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("FALSE\n");
 				continue;
 			} else {
@@ -429,9 +465,8 @@ struct application *ap;
 					ap->a_x, ap->a_y, ap->a_level );
 				rt_pr_pt( pp );
 			} else {
-				/* One region is air, or overlap is
-				 * within tolerance.  */
-				if( lastregion->reg_aircode == 0 )
+				/* last region is air, replace with solid */
+				if( lastregion->reg_aircode != 0 )
 					lastregion = regp;
 				hitcnt--;
 			}
@@ -441,14 +476,14 @@ struct application *ap;
 			continue;
 		}
 #else
-		if( (hitcnt = rt_bool_eval( RootTree, pp, TrueRg )) == FALSE )  {
+		if( (hitcnt = rt_booleval( RootTree, pp, TrueRg )) == FALSE )  {
 			if(rt_g.debug&DEBUG_PARTITION) rt_log("FALSE\n");
 			pp = pp->pt_forw;
 			continue;
 		}
 		if( hitcnt < 0 )  {
 			/*  GUARD error:  overlap */
-			rt_log("OVERLAP: %s %s (%f,%f)\n",
+			rt_log("OVERLAP: %s %s (%g,%g)\n",
 				TrueRg[0]->reg_name,
 				TrueRg[1]->reg_name,
 				pp->pt_inhit->hit_dist,
@@ -497,18 +532,18 @@ struct application *ap;
 		}
 	}
 	if( rt_g.debug&DEBUG_PARTITION )
-		rt_pr_partitions( FinalHdp, "rt_bool_final: Partitions returned" );
+		rt_pr_partitions( FinalHdp, "rt_boolfinal: Partitions returned" );
 	/* Caller must free both partition chains */
 }
 
 /*
- *  			R T _ B O O L _ E V A L
+ *  			R T _ B O O L E V A L
  *  
  *  Using a stack to recall state, evaluate a boolean expression
  *  without recursion.
  *
  *  For use with XOR, a pointer to the "first valid subtree" would
- *  be a useful addition, for rt_bool_regions().
+ *  be a useful addition, for rt_boolregions().
  *
  *  Returns -
  *	!0	tree is TRUE
@@ -516,7 +551,7 @@ struct application *ap;
  *	-1	tree is in error (GUARD)
  */
 int
-rt_bool_eval( treep, partp, trueregp )
+rt_booleval( treep, partp, trueregp )
 register union tree *treep;	/* Tree to evaluate */
 struct partition *partp;	/* Partition to evaluate */
 struct region **trueregp;	/* XOR true (and overlap) return */
@@ -547,13 +582,13 @@ stack:
 	case OP_XOR:
 		*sp++ = treep;
 		if( sp >= &stackpile[STACKDEPTH] )  {
-			rt_log("rt_bool_eval: stack overflow!\n");
+			rt_log("rt_booleval: stack overflow!\n");
 			return(TRUE);	/* screw up output */
 		}
 		treep = treep->tr_b.tb_left;
 		goto stack;
 	default:
-		rt_log("rt_bool_eval:  bad stack op x%x\n",treep->tr_op);
+		rt_log("rt_booleval:  bad stack op x%x\n",treep->tr_op);
 		return(TRUE);	/* screw up output */
 	}
 pop:
@@ -567,7 +602,7 @@ pop:
 	 */
 	switch( treep->tr_op )  {
 	case OP_SOLID:
-		rt_log("rt_bool_eval:  pop SOLID?\n");
+		rt_log("rt_booleval:  pop SOLID?\n");
 		return(TRUE);	/* screw up output */
 	case OP_UNION:
 		if( ret )  goto pop;	/* TRUE, we are done */
@@ -645,7 +680,7 @@ pop:
 		}
 		goto pop;
 	default:
-		rt_log("rt_bool_eval:  bad pop op x%x\n",treep->tr_op);
+		rt_log("rt_booleval:  bad pop op x%x\n",treep->tr_op);
 		return(TRUE);	/* screw up output */
 	}
 	/* NOTREACHED */
@@ -677,7 +712,7 @@ void
 rt_pr_pt( pp )
 register struct partition *pp;
 {
-	rt_log("%.8x: PT %s %s (%f,%f)",
+	rt_log("%.8x: PT %s %s (%g,%g)",
 		pp,
 		pp->pt_inseg->seg_stp->st_name,
 		pp->pt_outseg->seg_stp->st_name,
@@ -734,13 +769,12 @@ double a, b;
 	diff = a - b;
 	/* d = Max(Abs(a),Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
-	if( b >= 0.0 )
-		{
+	if( b >= 0.0 )  {
 		if( b > d )  d = b;
-		}
-	else
+	} else {
 		if( (-b) > d )  d = (-b);
-	if( d <= EPSILON )
+	}
+	if( d <= 0.0001 )
 		return(0);	/* both nearly zero */
 	if( diff < 0.0 )  diff = -diff;
 	if( diff < 0.000001 * d )
@@ -768,10 +802,11 @@ double	a, b;
 
 	/* d = Max(Abs(a),Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
-	if( b >= 0.0 )
+	if( b >= 0.0 )  {
 		if( b > d )  d = b;
-	else
+	} else {
 		if( (-b) > d )  d = (-b);
+	}
 	if( d==0.0 )
 		return( 0.0 );
 	if( (diff = a - b) < 0.0 )  diff = -diff;
@@ -785,7 +820,7 @@ void
 rt_pr_seg(segp)
 register struct seg *segp;
 {
-	rt_log("%.8x: SEG %s (%f,%f) bit=%d\n",
+	rt_log("%.8x: SEG %s (%g,%g) bit=%d\n",
 		segp,
 		segp->seg_stp->st_name,
 		segp->seg_in.hit_dist,
@@ -801,7 +836,7 @@ rt_pr_hit( str, hitp )
 char *str;
 register struct hit *hitp;
 {
-	rt_log("HIT %s dist=%f\n", str, hitp->hit_dist );
+	rt_log("HIT %s dist=%g\n", str, hitp->hit_dist );
 	VPRINT("HIT Point ", hitp->hit_point );
 	VPRINT("HIT Normal", hitp->hit_normal );
 }

@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCStree[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -32,9 +32,6 @@ struct rt_g rt_g;
 struct rt_i rt_i;	/* eventually, malloc'ed by rt_dir_build */
 
 int rt_pure_boolean_expressions = 0;
-
-#define MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
-			if( (c) > (b) )  b = (c); }
 
 HIDDEN union tree *rt_draw_obj();
 HIDDEN void rt_add_regtree();
@@ -192,7 +189,9 @@ matp_t	mat;
 	fx = VDOT( A, B );
 	fy = VDOT( B, C );
 	fz = VDOT( A, C );
-	if( ! NEAR_ZERO(fx) || ! NEAR_ZERO(fy) || ! NEAR_ZERO(fz) )  {
+	if( ! NEAR_ZERO(fx, 0.0001) ||
+	    ! NEAR_ZERO(fy, 0.0001) ||
+	    ! NEAR_ZERO(fz, 0.0001) )  {
 		rt_log("rt_add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%f, Y.Z=%f, X.Z=%f\n",
 			name, fx, fy, fz );
 		mat_print("bad matrix", mat);
@@ -214,7 +213,7 @@ matp_t	mat;
 			continue;
 		for( i=0; i<16; i++ )  {
 			f = mat[i] - nsp->st_pathmat[i];
-			if( !NEAR_ZERO(f) )
+			if( !NEAR_ZERO(f, 0.0001) )
 				goto next_one;
 		}
 		/* Success, we have a match! */
@@ -266,11 +265,14 @@ next_one: ;
 	mat_copy( stp->st_pathmat, mat );
 
 	/* Update the model maxima and minima */
-#define MMM(v)		MINMAX( rt_i.mdl_min[X], rt_i.mdl_max[X], v[X] ); \
-			MINMAX( rt_i.mdl_min[Y], rt_i.mdl_max[Y], v[Y] ); \
-			MINMAX( rt_i.mdl_min[Z], rt_i.mdl_max[Z], v[Z] )
-	MMM( stp->st_min );
-	MMM( stp->st_max );
+#define TREE_MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
+			if( (c) > (b) )  b = (c); }
+
+#define TREE_MM(v)	TREE_MINMAX( rt_i.mdl_min[X], rt_i.mdl_max[X], v[X] ); \
+		TREE_MINMAX( rt_i.mdl_min[Y], rt_i.mdl_max[Y], v[Y] ); \
+		TREE_MINMAX( rt_i.mdl_min[Z], rt_i.mdl_max[Z], v[Z] )
+	TREE_MM( stp->st_min );
+	TREE_MM( stp->st_max );
 
 	stp->st_bit = rt_i.nsolids++;
 	if(rt_g.debug&DEBUG_SOLIDS)  {
@@ -424,7 +426,7 @@ struct material *materp;
 			nrp->reg_forw = REGION_NULL;
 			nrp->reg_regionid = rec.c.c_regionid;
 			nrp->reg_aircode = rec.c.c_aircode;
-			nrp->reg_material = rec.c.c_material;
+			nrp->reg_gmater = rec.c.c_material;
 			nrp->reg_name = rt_strdup(rt_path_str(pathpos));
 			nrp->reg_mater = curmater;	/* struct copy */
 			/* Material property processing in rt_add_regtree() */
@@ -674,7 +676,7 @@ register struct region *rp;
 	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
 	rt_log("id=%d, air=%d, gift_material=%d, los=%d\n",
 		rp->reg_regionid, rp->reg_aircode,
-		rp->reg_material, rp->reg_los );
+		rp->reg_gmater, rp->reg_los );
 	if( rp->reg_mater.ma_override == 1 )
 		rt_log("Color %d %d %d\n",
 			rp->reg_mater.ma_rgb[0],

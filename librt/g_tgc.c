@@ -23,7 +23,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCStgc[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -32,9 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-
-#include "./polyno.h"
-#include "./complex.h"
+#include "polyno.h"
+#include "complex.h"
 #include <math.h>
 
 static void	tgc_rotate(), tgc_shear(), tgc_sort();
@@ -64,7 +63,7 @@ struct  tgc_specific {
 
 
 /*
- *		>>>  t g c _ p r e p ( )  <<<
+ *			T G C _ P R E P
  *
  *  Given the parameters (in vector form) of a truncated general cone,
  *  compute the constant terms and a transformation matrix needed for
@@ -98,19 +97,19 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	if( rec_prep( vec, stp, mat ) == 0 )
 		return(0);		/* OK */
 
-#define SP_V	&vec[0*ELEMENTS_PER_VECT]
-#define SP_H	&vec[1*ELEMENTS_PER_VECT]
-#define SP_A	&vec[2*ELEMENTS_PER_VECT]
-#define SP_B	&vec[3*ELEMENTS_PER_VECT]
-#define SP_C	&vec[4*ELEMENTS_PER_VECT]
-#define SP_D	&vec[5*ELEMENTS_PER_VECT]
+#define TGC_V	&vec[0*ELEMENTS_PER_VECT]
+#define TGC_H	&vec[1*ELEMENTS_PER_VECT]
+#define TGC_A	&vec[2*ELEMENTS_PER_VECT]
+#define TGC_B	&vec[3*ELEMENTS_PER_VECT]
+#define TGC_C	&vec[4*ELEMENTS_PER_VECT]
+#define TGC_D	&vec[5*ELEMENTS_PER_VECT]
 
 	/* Apply rotation to Hv, A,B,C,D */
-	MAT4X3VEC( Hv, mat, SP_H );
-	MAT4X3VEC( A, mat, SP_A );
-	MAT4X3VEC( B, mat, SP_B );
-	MAT4X3VEC( C, mat, SP_C );
-	MAT4X3VEC( D, mat, SP_D );
+	MAT4X3VEC( Hv, mat, TGC_H );
+	MAT4X3VEC( A, mat, TGC_A );
+	MAT4X3VEC( B, mat, TGC_B );
+	MAT4X3VEC( C, mat, TGC_C );
+	MAT4X3VEC( D, mat, TGC_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
 	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
@@ -119,7 +118,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 
-	if( NEAR_ZERO( magsq_h ) ) {
+	if( NEAR_ZERO( magsq_h, 0.0001 ) ) {
 		rt_log("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
@@ -127,41 +126,41 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/* Ascertain whether H lies in A-B plane 			*/
 	VCROSS( work, A, B );
 	f = VDOT( Hv, work )/ ( mag_a*mag_b*mag_h );
-	if ( NEAR_ZERO(f) ) {
+	if ( NEAR_ZERO(f, 0.0001) ) {
 		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that figure is not two-dimensional			*/
-	if ( NEAR_ZERO( magsq_a ) && NEAR_ZERO( magsq_c ) ) {
+	if ( NEAR_ZERO( magsq_a, 0.0001 ) && NEAR_ZERO( magsq_c, 0.0001 ) ) {
 		rt_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
-	if ( NEAR_ZERO( magsq_b ) && NEAR_ZERO( magsq_d ) ) {
+	if ( NEAR_ZERO( magsq_b, 0.0001 ) && NEAR_ZERO( magsq_d, 0.0001 ) ) {
 		rt_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
 	/* Validate that A.B == 0, C.D == 0				*/
 	f = VDOT( A, B ) / (mag_a * mag_b);
-	if( ! NEAR_ZERO(f) ) {
+	if( ! NEAR_ZERO(f, 0.0001) ) {
 		rt_log("tgc(%s):  A not perpendicular to B\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = VDOT( C, D ) / (mag_c * mag_d);
-	if( ! NEAR_ZERO(f) ) {
+	if( ! NEAR_ZERO(f, 0.0001) ) {
 		rt_log("tgc(%s):  C not perpendicular to D\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
 	/* Validate that  A || C  and  B || D, for parallel planes	*/
 	f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
-	if( ! NEAR_ZERO(f) ) {
+	if( ! NEAR_ZERO(f, 0.0001) ) {
 		rt_log("tgc(%s):  A not parallel to C\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 	f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
-	if( ! NEAR_ZERO(f) ) {
+	if( ! NEAR_ZERO(f, 0.0001) ) {
 		rt_log("tgc(%s):  B not parallel to D\n",stp->st_name);
 		return(1);		/* BAD */
 	}
@@ -172,7 +171,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Apply full 4X4mat to V */
 	{
-		register fastf_t *p = SP_V;
+		register fastf_t *p = TGC_V;
 		MAT4X3PNT( tgc->tgc_V, mat, p );
 	}
 
@@ -182,11 +181,11 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	tgc->tgc_D = mag_d;
 
 	/* Part of computing ALPHA() */
-	if( NEAR_ZERO(magsq_c) )
+	if( NEAR_ZERO(magsq_c, 0.0001) )
 		tgc->tgc_AAdCC = VLARGE;
 	else
 		tgc->tgc_AAdCC = magsq_a / magsq_c;
-	if( NEAR_ZERO(magsq_d) )
+	if( NEAR_ZERO(magsq_d, 0.0001) )
 		tgc->tgc_BBdDD = VLARGE;
 	else
 		tgc->tgc_BBdDD = magsq_b / magsq_d;
@@ -196,16 +195,16 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
 	f = rt_reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
-	tgc->tgc_AD_CB = (f < EPSILON);		/* A*D == C*B */
+	tgc->tgc_AD_CB = (f < 0.0001);		/* A*D == C*B */
 	tgc_rotate( A, B, Hv, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, Hv );
 	tgc->tgc_sH = nH[Z];
 
 	tgc->tgc_CA_H = tgc->tgc_C/tgc->tgc_A - 1.0;
 	tgc->tgc_DB_H = tgc->tgc_D/tgc->tgc_B - 1.0;
-	if( NEAR_ZERO( tgc->tgc_CA_H ) )
+	if( NEAR_ZERO( tgc->tgc_CA_H, 0.0001 ) )
 		tgc->tgc_CA_H = 0.0;
-	if( NEAR_ZERO( tgc->tgc_DB_H ) )
+	if( NEAR_ZERO( tgc->tgc_DB_H, 0.0001 ) )
 		tgc->tgc_DB_H = 0.0;
 
 	/*
@@ -423,7 +422,7 @@ register struct soltab	*stp;
 }
 
 /*
- *		>>>  t g c _ s h o t ( )  <<<
+ *			T G C _ S H O T
  *
  *  Intersect a ray with a truncated general cone, where all constant
  *  terms have been computed by tgc_prep().
@@ -470,8 +469,9 @@ register struct xray	*rp;
 	LOCAL poly		R, Rsqr;
 	LOCAL poly		sum;
 
-	/* find rotated point and direction				*/
+	/* find rotated point and direction */
 	MAT4X3VEC( dprime, tgc->tgc_ScShR, rp->r_dir );
+
 	/*
 	 *  A vector of unit length in model space (r_dir) changes length in
 	 *  the special unit-tgc space.  This scale factor will restore
@@ -480,7 +480,7 @@ register struct xray	*rp;
 	t_scale = 1/MAGNITUDE( dprime );
 	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-	if( NEAR_ZERO( dprime[Z] ) )
+	if( NEAR_ZERO( dprime[Z], 0.0001 ) )
 		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
@@ -532,7 +532,8 @@ register struct xray	*rp;
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CA_H) + 1.0;
 	(void) polyMul( &R, &R, &Rsqr );
 
-	/*  If the eccentricities of the two ellipses are the same,
+	/*
+	 *  If the eccentricities of the two ellipses are the same,
 	 *  then the cone equation reduces to a much simpler quadratic
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
@@ -541,6 +542,7 @@ register struct xray	*rp;
 
 		(void) polyAdd( &Xsqr, &Ysqr, &sum );
 		(void) polySub( &sum, &Rsqr, &C );
+
 		/* Find the real roots the easy way.  C.dgr==2 */
 		if( (roots = C.cf[1]*C.cf[1] - 4 * C.cf[0] * C.cf[2]) < 0 ) {
 			npts = 0;	/* no real roots */
@@ -579,7 +581,7 @@ register struct xray	*rp;
 		 *  of 't' for the intersections
 		 */
 		for ( l=0, npts=0; l < nroots; l++ ){
-			if ( NEAR_ZERO( val[l].im ) )
+			if ( NEAR_ZERO( val[l].im, 0.0001 ) )
 				k[npts++] = val[l].re;
 		}
 		/* Here, 'npts' is number of points being returned */
@@ -721,7 +723,7 @@ register struct xray	*rp;
 		return(SEG_NULL);
 
 	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
-	if ( NEAR_ZERO( dir ) )
+	if ( NEAR_ZERO( dir, 0.0001 ) )
 		return( SEG_NULL );
 
 	b = ( -pprime[Z] )/dprime[Z];
@@ -782,22 +784,22 @@ register fastf_t t[];
 	FAST fastf_t	u;
 	register int	n;
 
-#define XCH(a,b)	{ u=a; a=b; b=u; }
+#define TGC_XCH(a,b)	{ u=a; a=b; b=u; }
 	if ( npts == 2 ){
 		if ( t[0] < t[1] ){
-			XCH( t[0], t[1] );
+			TGC_XCH( t[0], t[1] );
 		}
 		return;
 	}
 
 	for ( n=0; n < 2; ++n ){
 		if ( t[n] < t[n+2] ){
-			XCH( t[n], t[n+2] );
+			TGC_XCH( t[n], t[n+2] );
 		}
 	}
 	for ( n=0; n < 3; ++n ){
 		if ( t[n] < t[n+1] ){
-			XCH( t[n], t[n+1] );
+			TGC_XCH( t[n], t[n+1] );
 		}
 	}
 }
@@ -873,7 +875,7 @@ register struct xray *rp;
 	VUNITIZE( hitp->hit_normal );
 }
 
-#define MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
+#define TGC_MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
 static void
@@ -883,9 +885,9 @@ vectp_t v;
 {
 	FAST fastf_t ftemp;
 
-	MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
-	MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
-	MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
+	TGC_MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
+	TGC_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
+	TGC_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
 }
 
 tgc_uv()

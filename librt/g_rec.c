@@ -123,7 +123,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSrec[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -141,12 +141,12 @@ struct rec_specific {
 	mat_t	rec_invRoS;	/* invRot(Scale(vect)) */
 };
 
-#define SP_V	&vec[0*ELEMENTS_PER_VECT]
-#define SP_H	&vec[1*ELEMENTS_PER_VECT]
-#define SP_A	&vec[2*ELEMENTS_PER_VECT]
-#define SP_B	&vec[3*ELEMENTS_PER_VECT]
-#define SP_C	&vec[4*ELEMENTS_PER_VECT]
-#define SP_D	&vec[5*ELEMENTS_PER_VECT]
+#define REC_V	&vec[0*ELEMENTS_PER_VECT]
+#define REC_H	&vec[1*ELEMENTS_PER_VECT]
+#define REC_A	&vec[2*ELEMENTS_PER_VECT]
+#define REC_B	&vec[3*ELEMENTS_PER_VECT]
+#define REC_C	&vec[4*ELEMENTS_PER_VECT]
+#define REC_D	&vec[5*ELEMENTS_PER_VECT]
 
 static void	rec_minmax();
 
@@ -185,11 +185,11 @@ matp_t mat;
 	static fastf_t	f;
 
 	/* Apply rotation to Hv, A,B,C,D */
-	MAT4X3VEC( Hv, mat, SP_H );
-	MAT4X3VEC( A, mat, SP_A );
-	MAT4X3VEC( B, mat, SP_B );
-	MAT4X3VEC( C, mat, SP_C );
-	MAT4X3VEC( D, mat, SP_D );
+	MAT4X3VEC( Hv, mat, REC_H );
+	MAT4X3VEC( A, mat, REC_A );
+	MAT4X3VEC( B, mat, REC_B );
+	MAT4X3VEC( C, mat, REC_C );
+	MAT4X3VEC( D, mat, REC_D );
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D| */
 	mag_h = sqrt( magsq_h = MAGSQ( Hv ) );
@@ -198,40 +198,40 @@ matp_t mat;
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
 
-	if( NEAR_ZERO(magsq_h) )  {
+	if( NEAR_ZERO(magsq_h, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 
 	/* Validate that A.B == 0 */
 	f = VDOT( A, B ) / (mag_a * mag_b);
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 
 	/* Make sure that A == C, B == D */
 	VSUB2( work, A, C );
 	f = MAGSQ( work );
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 	VSUB2( work, B, D );
 	f = MAGSQ( work );
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 
 	/* Check for H.A == 0 and H.B == 0 */
 	f = VDOT( Hv, A ) / (mag_h * mag_a);
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 	f = VDOT( Hv, B ) / (mag_h * mag_b);
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 
 	/* Check for |A| > 0, |B| > 0 */
-	if( NEAR_ZERO(mag_a) || NEAR_ZERO(mag_b) )  {
+	if( NEAR_ZERO(mag_a, 0.0001) || NEAR_ZERO(mag_b, 0.0001) )  {
 		return(1);		/* BAD */
 	}
 
@@ -247,7 +247,7 @@ matp_t mat;
 	VUNITIZE( rec->rec_Hunit );
 
 	{
-		register fastf_t *p = SP_V;
+		register fastf_t *p = REC_V;
 		MAT4X3PNT( rec->rec_V, mat, p );
 	}
 
@@ -371,7 +371,7 @@ register struct xray *rp;
 	VSUB2( xlated, rp->r_pt, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, xlated );
 
-	if( NEAR_ZERO(dprime[X]) && NEAR_ZERO(dprime[Y]) )
+	if( NEAR_ZERO(dprime[X], 0.0001) && NEAR_ZERO(dprime[Y], 0.0001) )
 		goto check_plates;
 
 	/* Find roots of the equation, using forumla for quadratic w/ a=1 */
@@ -416,7 +416,7 @@ register struct xray *rp;
 	 * Check for hitting the end plates.
 	 */
 check_plates:
-	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z]) )  {
+	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], 0.0001) )  {
 		/* 0 or 1 hits so far, this is worthwhile */
 		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
@@ -444,8 +444,6 @@ check_plates:
 		/* entry is [0], exit is [1] */
 		register struct seg *segp;
 
-		if( hits[1].hit_dist <= 0 )
-			return(SEG_NULL);	/* MISS: behind start pt */
 		GET_SEG(segp);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[0];		/* struct copy */
@@ -455,8 +453,6 @@ check_plates:
 		/* entry is [1], exit is [0] */
 		register struct seg *segp;
 
-		if( hits[0].hit_dist <= 0 )
-			return(SEG_NULL);	/* MISS: behind start pt */
 		GET_SEG(segp);
 		segp->seg_stp = stp;
 		segp->seg_in = hits[1];		/* struct copy */
@@ -466,7 +462,7 @@ check_plates:
 	/* NOTREACHED */
 }
 
-#define MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
+#define REC_MINMAX(a,b,c)	{if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
 static void
@@ -476,9 +472,9 @@ register vectp_t v;
 {
 	FAST fastf_t ftemp;
 
-	MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
-	MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
-	MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
+	REC_MINMAX( stp->st_min[X], stp->st_max[X], v[X] );
+	REC_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] );
+	REC_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] );
 }
 
 
@@ -522,7 +518,7 @@ register struct xray *rp;
  *  u is the rotation around the cylinder, and
  *  v is the displacement along H.
  */
-static double inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
+extern double rt_inv2pi;
 
 rec_uv( stp, hitp, uvp )
 struct soltab *stp;
@@ -544,19 +540,19 @@ register fastf_t *uvp;
 	switch( (int)hitp->hit_private )  {
 	case 0:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
-		uvp[0] = acos(pprime[Y]) * inv2pi;
+		uvp[0] = acos(pprime[Y]) * rt_inv2pi;
 		uvp[1] = pprime[Z];		/* height */
 		break;
 	case 1:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp[0] = acos(pprime[Y]/len) * inv2pi;
+		uvp[0] = acos(pprime[Y]/len) * rt_inv2pi;
 		uvp[1] = len;		/* rim v = 1 */
 		break;
 	case 2:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp[0] = acos(pprime[Y]/len) * inv2pi;
+		uvp[0] = acos(pprime[Y]/len) * rt_inv2pi;
 		uvp[1] = 1 - len;	/* rim v = 0 */
 		break;
 	}

@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSroots[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>

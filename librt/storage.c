@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$";
+static char RCSstorage[] = "@(#)$Header$";
 #endif
 
 #include <stdio.h>

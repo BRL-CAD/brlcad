@@ -19,7 +19,7 @@
  *  
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header $ (BRL)";
+static char RCSspline[] = "@(#)$Header $ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -29,9 +29,6 @@ static char RCSid[] = "@(#)$Header $ (BRL)";
 #include "../h/db.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-
-#undef EPSILON
-#define EPSILON	0.000001
 
 /*
  *  Algorithm:
@@ -55,9 +52,6 @@ struct surf {
 	fastf_t		spl_wlow[SUBDIVLVL];	/* list of W lower limits */
 };
 #define SPL_NULL	((struct surf *)0)
-
-#undef EPSILON
-#define EPSILON	0.005		/* More appropriate for NEAR_ZERO here */
 
 int lp1[4], lp2[4];	/* how much tosubdivide for each level */
 
@@ -771,7 +765,7 @@ double *k1;
 		}
 #endif
 
-		if( NEAR_ZERO(ddotn) )  {
+		if( NEAR_ZERO(ddotn, 0.005) )  {
 			if(wdotn < 0)  {
 				/* Line parallel, outside halfspace */
 				return(0);	/* MISS */
@@ -895,7 +889,7 @@ double pt[4][4], norm[6][4];            /* Declare Passed Variables */
 
 	for(i=1; i <= 5; i++)  {
 		for(j=1; j <= 3; j++)  {
-			if( NEAR_ZERO( norm[i][j] ) )
+			if( NEAR_ZERO( norm[i][j], 0.005 ) )
 				norm[i][j] = 0;
 		}
 	}

@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSars[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/raytrace.h"
 #include "debug.h"
 #include "rtdir.h"
+#include "plane.h"
 
 /* Describe algorithm here */
 
@@ -36,21 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			if( ftemp > (b) )  b = ftemp; }
 
 extern fastf_t *rd_curve();
-
-/*
- *  Describe the ars_specific structure.
- */
-#define MAXPTS	3
-static point_t	points[MAXPTS];		/* Actual points on plane */
-
-struct tri_specific  {
-	point_t	tri_A;			/* triangle vertex (A) */
-	vect_t	tri_BA;			/* B - A (second point) */
-	vect_t	tri_CA;			/* C - A (third point) */
-	vect_t	tri_wn;			/* facet normal (non-unit) */
-	vect_t	tri_N;			/* unit normal vector */
-	struct tri_specific *tri_forw;	/* Next facet */
-};
 
 /*
  *			A R S _ P R E P
@@ -259,8 +245,8 @@ pointp_t ap, bp, cp;
 	VSUB2( work, bp, cp );
 	m3 = MAGNITUDE( work );
 	m4 = MAGNITUDE( trip->tri_wn );
-	if( NEAR_ZERO(m1) || NEAR_ZERO(m2) ||
-	    NEAR_ZERO(m3) || NEAR_ZERO(m4) )  {
+	if( NEAR_ZERO(m1,0.0001) || NEAR_ZERO(m2,0.0001) ||
+	    NEAR_ZERO(m3,0.0001) || NEAR_ZERO(m4,0.0001) )  {
 		free( (char *)trip);
 		if( rt_g.debug & DEBUG_ARB8 )
 			(void)rt_log("ars(%s): degenerate facet\n", stp->st_name);

@@ -2,7 +2,8 @@
  *  			P L A N E . H
  *
  *  This header file describes the plane_specific structure, which
- *  is for ARS processing.
+ *  is for ARS processing, and the tri_specific structure,
+ *  which is for ARB and PG processing.
  *  
  *  Author -
  *	Michael John Muuss
@@ -18,6 +19,8 @@
  *
  *  $Header$
  */
+#ifndef PLANE_H
+#define PLANE_H seen
 
 #define MAXPTS	4			/* All we need are 4 points */
 #define pl_A	pl_points[0]		/* Synonym for A point */
@@ -35,3 +38,17 @@ struct plane_specific  {
 	struct plane_specific *pl_forw;	/* Forward link */
 	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
 };
+
+/*
+ *  Describe the tri_specific structure.
+ */
+struct tri_specific  {
+	point_t	tri_A;			/* triangle vertex (A) */
+	vect_t	tri_BA;			/* B - A (second point) */
+	vect_t	tri_CA;			/* C - A (third point) */
+	vect_t	tri_wn;			/* facet normal (non-unit) */
+	vect_t	tri_N;			/* unit normal vector */
+	struct tri_specific *tri_forw;	/* Next facet */
+};
+
+#endif PLANE_H

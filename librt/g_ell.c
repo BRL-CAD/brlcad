@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSell[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -112,9 +112,6 @@ struct ell_specific {
 	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 };
 
-#undef EPSILON
-#define EPSILON	0.005		/* More appropriate for NEAR_ZERO here */
-
 /*
  *  			E L L _ P R E P
  *  
@@ -148,23 +145,25 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	LOCAL vect_t	vbc;	/* used for bounding RPP */
 	LOCAL fastf_t	f;
 
-#define SP_V	&vec[0*ELEMENTS_PER_VECT]
-#define SP_A	&vec[1*ELEMENTS_PER_VECT]
-#define SP_B	&vec[2*ELEMENTS_PER_VECT]
-#define SP_C	&vec[3*ELEMENTS_PER_VECT]
+#define ELL_V	&vec[0*ELEMENTS_PER_VECT]
+#define ELL_A	&vec[1*ELEMENTS_PER_VECT]
+#define ELL_B	&vec[2*ELEMENTS_PER_VECT]
+#define ELL_C	&vec[3*ELEMENTS_PER_VECT]
 
 	/*
 	 * Apply rotation only to A,B,C
 	 */
-	MAT4X3VEC( A, mat, SP_A );
-	MAT4X3VEC( B, mat, SP_B );
-	MAT4X3VEC( C, mat, SP_C );
+	MAT4X3VEC( A, mat, ELL_A );
+	MAT4X3VEC( B, mat, ELL_B );
+	MAT4X3VEC( C, mat, ELL_C );
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
 	magsq_a = MAGSQ( A );
 	magsq_b = MAGSQ( B );
 	magsq_c = MAGSQ( C );
-	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_c) ) {
+	if( NEAR_ZERO(magsq_a, 0.005) ||
+	     NEAR_ZERO(magsq_b, 0.005) ||
+	     NEAR_ZERO(magsq_c, 0.005) ) {
 		rt_log("ell(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
@@ -180,17 +179,17 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.005) )  {
 		rt_log("ell(%s):  A not perpendicular to B, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.005) )  {
 		rt_log("ell(%s):  B not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
-	if( ! NEAR_ZERO(f) )  {
+	if( ! NEAR_ZERO(f, 0.005) )  {
 		rt_log("ell(%s):  A not perpendicular to C, f=%f\n",stp->st_name, f);
 		return(1);		/* BAD */
 	}
@@ -200,7 +199,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_specific = (int *)ell;
 
 	/* Apply full 4x4mat to V */
-	MAT4X3PNT( ell->ell_V, mat, SP_V );
+	MAT4X3PNT( ell->ell_V, mat, ELL_V );
 
 	VSET( invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 
@@ -238,32 +237,32 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	stp->st_aradius = stp->st_bradius = sqrt(f);
 
 	/* Compute bounding RPP */
-#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
+#define ELL_MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
-#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
-		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
-		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
+#define ELL_MM(v)	ELL_MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
+		ELL_MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
+		ELL_MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
 	/* There are 8 corners to the enclosing RPP;  find max and min */
 	VADD3( vbc, ell->ell_V, B, C );
-	VADD2( work, vbc, A ); MM( work );	/* V + A + B + C */
-	VSUB2( work, vbc, A ); MM( work );	/* V - A + B + C */
+	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A + B + C */
+	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A + B + C */
 
 	VSUB2( vbc, ell->ell_V, B );
 	VADD2( vbc, vbc, C );
-	VADD2( work, vbc, A ); MM( work );	/* V + A - B + C */
-	VSUB2( work, vbc, A ); MM( work );	/* V - A - B + C */
+	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A - B + C */
+	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A - B + C */
 	
 	VSUB2( vbc, ell->ell_V, C );
 	VADD2( vbc, vbc, B );
-	VADD2( work, vbc, A ); MM( work );	/* V + A + B - C */
-	VSUB2( work, vbc, A ); MM( work );	/* V - A + B - C */
+	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A + B - C */
+	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A + B - C */
 
 	VSUB3( vbc, ell->ell_V, B, C );
-	VADD2( work, vbc, A ); MM( work );	/* V + A - B - C */
-	VSUB2( work, vbc, A ); MM( work );	/* V - A - B - C */
+	VADD2( work, vbc, A ); ELL_MM( work );	/* V + A - B - C */
+	VSUB2( work, vbc, A ); ELL_MM( work );	/* V - A - B - C */
 
 	return(0);			/* OK */
 }
@@ -359,8 +358,8 @@ register struct xray *rp;
  *  u = azimuth
  *  v = elevation
  */
-static double inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
-static double invpi = 0.31830988618379067153;	/* 1/pi */
+double rt_inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
+double rt_invpi = 0.31830988618379067153;	/* 1/pi */
 
 ell_uv( stp, hitp, uvp )
 struct soltab *stp;
@@ -380,6 +379,6 @@ register fastf_t *uvp;
 	MAT4X3VEC( pprime, ell->ell_SoR, work );
 	/* Assert that pprime has unit length */
 
-	uvp[0] = atan2( pprime[Y], pprime[X] ) * inv2pi + 0.5;
-	uvp[1] = asin( pprime[Z] ) * invpi + 0.5;
+	uvp[0] = atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
+	uvp[1] = asin( pprime[Z] ) * rt_invpi + 0.5;
 }

@@ -6,7 +6,7 @@
  *	THIS VERSION FOR Denelcor HEP/UPX (System III-like)
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCShep[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>

@@ -26,7 +26,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSpolylib[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>

@@ -6,6 +6,10 @@
  *  Before this can be done, the model max and min must have
  *  been computed -- no incremental cutting.
  */
+#ifndef lint
+static char RCScut[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include "../h/machine.h"
@@ -210,13 +214,15 @@ register int axis;
 		if( d < 0 )  d = (-d);
 		if( d < d_close )  {
 			d_close = d;
-			pt_close = oldbox.bn.bn_list[i]->st_min[axis]+EPSILON;
+			pt_close = oldbox.bn.bn_list[i]->st_min[axis]+
+				0.0001;
 		}
 		d = oldbox.bn.bn_list[i]->st_max[axis] - cutp->cn.cn_point;
 		if( d < 0 )  d = (-d);
 		if( d < d_close )  {
 			d_close = d;
-			pt_close = oldbox.bn.bn_list[i]->st_max[axis]+EPSILON;
+			pt_close = oldbox.bn.bn_list[i]->st_max[axis]+
+				0.0001;
 		}
 	}
 	if( pt_close != oldbox.bn.bn_min[axis] )

@@ -18,7 +18,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSarb[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -32,33 +32,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *			Ray/ARB Intersection
  *
-An ARB is a convex volume bounded by
-4 (pyramid), 5 (wedge), or 6 (box) planes.
-This analysis depends on the properties of objects with convex hulls.
-Let the ray in question be defined such that any point $bold X vec$
-on the ray may be expressed as
-$bold X vec = bold P vec + k bold D vec$.
-Intersect the ray with each of the
-planes bounding the ARB as discussed above,
-and record the values of the
-parametric distance $k$ along the ray.
-With outward pointing normal vectors, note that the
-ray \fIenters\fR the half-space defined by a plane when
-$bold D vec cdot bold N vec < 0$,
-is \fIparallel\fR to the plane when $bold D vec cdot bold N vec = 0$,
-and \fIexits\fR otherwise.
-Find the \fIentry\fR point farthest away from the starting point $bold P vec$,
-i.e. it has the largest value of $k$ among the entry points.
-The ray enters the solid at this point.
-Similarly, find the \fIexit\fR point closest to point
-$bold P vec$, i.e. it has the smallest value of $k$ among the exit points.
-The ray exits the solid here.
+ *  An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6 (box)
+ *  planes.  This analysis depends on the properties of objects with convex
+ *  hulls.  Let the ray in question be defined such that any point X on the
+ *  ray may be expressed as X = P + k D.  Intersect the ray with each of the
+ *  planes bounding the ARB as discussed above, and record the values of the
+ *  parametric distance k along the ray.
+ *
+ *  With outward pointing normal vectors,
+ *  note that the ray enters the half-space defined by a plane when D cdot N <
+ *  0, is parallel to the plane when D cdot N = 0, and exits otherwise.  Find
+ *  the entry point farthest away from the starting point bold P, i.e.  it has
+ *  the largest value of k among the entry points.
+ *  The ray enters the solid at this point.
+ *  Similarly, find the exit point closest to point P, i.e. it has
+ *  the smallest value of k among the exit points.  The ray exits the solid
+ *  here.
  */
 
-#define MAXPTS	4			/* All we need are 4 points */
-static point_t	points[MAXPTS];		/* Actual points on plane */
+#define ARB_MAXPTS	4			/* All we need are 4 points */
+static point_t	arb_points[ARB_MAXPTS];		/* Actual points on plane */
 static int	arb_npts;		/* number of points on plane */
-static char	arb_code[MAXPTS+1];	/* Face code string.  Decorative. */
+static char	arb_code[ARB_MAXPTS+1];	/* Face code string.  Decorative. */
 
 struct arb_specific  {
 	float	arb_A[3];		/* "A" point */
@@ -72,12 +67,9 @@ struct arb_specific  {
 };
 #define ARB_NULL	((struct arb_specific *)0)
 
-#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
+#define ARB_MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
-
-#undef EPSILON
-#define EPSILON	0.005		/* More appropriate for NEAR_ZERO here */
 
 HIDDEN int	arb_face(), arb_add_pt();
 
@@ -163,9 +155,9 @@ matp_t mat;
 	 */
 	op = &vec[0];
 	for( i=0; i< 8; i++ ) {
-		MINMAX( stp->st_min[X], stp->st_max[X], *op++ );
-		MINMAX( stp->st_min[Y], stp->st_max[Y], *op++ );
-		MINMAX( stp->st_min[Z], stp->st_max[Z], *op++ );
+		ARB_MINMAX( stp->st_min[X], stp->st_max[X], *op++ );
+		ARB_MINMAX( stp->st_min[Y], stp->st_max[Y], *op++ );
+		ARB_MINMAX( stp->st_min[Z], stp->st_max[Z], *op++ );
 		op++;		/* Depends on ELEMENTS_PER_VECT */
 	}
 	VSET( stp->st_center,
@@ -259,12 +251,12 @@ int a;
 
 	/* Verify that this point is not the same as an earlier point */
 	for( i=0; i < arb_npts; i++ )  {
-		VSUB2( work, point, points[i] );
-		if( MAGSQ( work ) < EPSILON )
+		VSUB2( work, point, arb_points[i] );
+		if( MAGSQ( work ) < 0.005 )
 			return(0);			/* BAD */
 	}
 	i = arb_npts++;		/* Current point number */
-	VMOVE( points[i], point );
+	VMOVE( arb_points[i], point );
 	arb_code[i] = '0'+a;
 	arb_code[i+1] = '\0';
 
@@ -282,7 +274,7 @@ int a;
 		/* Check for co-linear, ie, (B-A)x(C-A) == 0 */
 		VCROSS( arbp->arb_N, arbp->arb_Xbasis, P_A );
 		f = MAGNITUDE( arbp->arb_N );
-		if( NEAR_ZERO(f) )  {
+		if( NEAR_ZERO(f,0.005) )  {
 			arb_npts--;
 			arb_code[2] = '\0';
 			return(0);			/* BAD */
@@ -307,7 +299,7 @@ int a;
 		VSUB2( P_A, point, arbp->arb_A );
 		VUNITIZE( P_A );		/* Checking direction only */
 		f = VDOT( arbp->arb_N, P_A );
-		if( ! NEAR_ZERO(f) )  {
+		if( ! NEAR_ZERO(f,0.005) )  {
 			/* Non-planar face */
 			rt_log("arb(%s): face %s non-planar, dot=%f\n",
 				stp->st_name, arb_code, f );
@@ -411,7 +403,7 @@ register struct xray *rp;
 			stp->st_name);
 		return( SEG_NULL );	/* MISS */
 	}
-	if( out < -0.005 || in >= out )
+	if( in >= out )
 		return( SEG_NULL );	/* MISS */
 
 	{
