@@ -1526,11 +1526,8 @@ char		**argv;
 	== 0)
 	return (TCL_OK);
     
-    while (*snames != 0)
-    {
-	rt_log("Appending '%s '\n", *snames);
-	Tcl_AppendResult(interp, *(snames++), " ", NULL);
-    }
+    for (i = 0; snames[i] != 0; ++i)
+	Tcl_AppendResult(interp, snames[i], " ", NULL);
     rt_free((char *) snames, "solid names");
 
 #if 0

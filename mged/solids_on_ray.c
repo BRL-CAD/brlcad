@@ -115,7 +115,6 @@ fastf_t	dist;
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = name;
     sp -> dist = dist;
-    rt_log("Created solid (%s, %g)\n", sp -> name, sp -> dist);
     return (sp);
 }
 
@@ -129,7 +128,6 @@ struct sol_name_dist	*sol;
 {
     RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    rt_log("freeing solid (%s, %g)...\n", sol -> name, sol -> dist);
     rt_free((char *) sol, "solid");
 }
 
@@ -196,7 +194,6 @@ struct partition	*ph;
 				    sol_comp_dist
 				};
 
-    rt_log("I hit it!\n");
     /*
      *	Initialize the solid list
      */
@@ -228,9 +225,6 @@ struct partition	*ph;
 	    sp = (struct seg *) sp -> l.forw)
     {
 	RT_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
-	rt_log("I saw solid %s at distance %g\n",
-	    sp -> seg_stp -> st_name,
-	    sp -> seg_in.hit_dist);
 	
 	sol = mk_solid(sp -> seg_stp -> st_name, sp -> seg_in.hit_dist);
 	if (rb_insert(solids, (void *) sol) < 0)
@@ -247,8 +241,6 @@ struct partition	*ph;
 	    }
 	}
     }
-    rt_log("\n- - - Solids along the ray - - -\n");
-    rb_walk(solids, ORDER_BY_DISTANCE, print_solid, INORDER);
 
     result = (char **)
 		rt_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
@@ -258,9 +250,7 @@ struct partition	*ph;
 	 sol = (struct sol_name_dist *) rb_succ(solids, ORDER_BY_DISTANCE), ++i)
     {
 	result[i] = sol -> name;
-	rt_log("before free_solid(%x)... '%s'\n", sol, result[i]);
 	free_solid(sol);
-	rt_log("after free_solid(%x)... '%s'\n", sol, result[i]);
     }
     result[i] = 0;
     ap -> a_uptr = (char *) result;
@@ -283,7 +273,6 @@ struct application	*ap;
 struct partition	*ph;
 
 {
-    rt_log("I missed!\n");
     ap -> a_uptr = rt_malloc(sizeof(char *), "names of solids on ray");
     *((char **) (ap -> a_uptr)) = 0;
 
