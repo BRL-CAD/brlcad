@@ -187,7 +187,7 @@ if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.bom" ] ; then
     exit 1
 fi
 
-NUM_FILES=`find "${ARCHIVE} -type f | wc | awk '{print $1}'`
+NUM_FILES=`find "${ARCHIVE}" -type f | wc | awk '{print $1}'`
 if [ "x$NUM_FILES" = "x" ] ; then
     echo "ERROR: unable to get a file count from $ARCHIVE"
     exit 1
