@@ -42,6 +42,7 @@ static void nmg_eval_shell RT_ARGS( (struct shell *s,
 static void nmg_eval_plot RT_ARGS( (struct nmg_bool_state *bs,
 		int num, int delay));
 
+/* XXX Move these routines to nmg_mod.c */
 /*
  *			N M G _ R E V E R S E _ F A C E
  *
@@ -263,7 +264,7 @@ register struct vertexuse	*vu;
 #define BACTION_RETAIN			2
 #define BACTION_RETAIN_AND_FLIP		3
 
-static char	*nmg_baction_names[] = {
+static CONST char	*nmg_baction_names[] = {
 	"*undefined 0*",
 	"BACTION_KILL",
 	"BACTION_RETAIN",
@@ -272,7 +273,7 @@ static char	*nmg_baction_names[] = {
 };
 
 #define NMG_CLASS_BAD		8
-static char	*nmg_class_names[] = {
+static CONST char	*nmg_class_names[] = {
 	"onAinB",
 	"onAonBshared",
 	"onAonBanti",
@@ -281,15 +282,33 @@ static char	*nmg_class_names[] = {
 	"onAonBshared",
 	"onAonBanti",
 	"outAonB",
-	"*BAD*"
+	"*BAD*CLASS*"
 };
 
 /*
- * Actions are listed:
+ *			N M G _ C L A S S _ N A M E
+ *
+ *  Convert an NMG_CLASS_xxx token into a string name.
+ */
+CONST char *
+nmg_class_name(class)
+int	class;
+{
+	if( class < 0 || class > NMG_CLASS_BAD )  class = NMG_CLASS_BAD;
+	return nmg_class_names[class];
+}
+
+/*
+ *		Action Table for Boolean Operations.
+ *
+ *  Each table lists what actions are to be taken for topological elements
+ *  which have have each kind of classification.
+ *
+ *  Actions are listed in this order:
  *	(Aon)	onAinB, onAonBshared, onAonBanti-shared, onAoutB,
  *	(Bon)	inAonB, onAonBshared, onAonBanti-shared, outAonB
  */
-static int		subtraction_actions[8] = {
+static CONST int		subtraction_actions[8] = {
 	BACTION_KILL,
 	BACTION_KILL,		/* shared */
 	BACTION_RETAIN,		/* anti-shared */
@@ -301,7 +320,7 @@ static int		subtraction_actions[8] = {
 	BACTION_KILL
 };
 
-static int		union_actions[8] = {
+static CONST int		union_actions[8] = {
 	BACTION_KILL,
 	BACTION_RETAIN,		/* shared */
 	BACTION_KILL,		/* anti-shared */
@@ -313,7 +332,7 @@ static int		union_actions[8] = {
 	BACTION_RETAIN
 };
 
-static int		intersect_actions[8] = {
+static CONST int		intersect_actions[8] = {
 	BACTION_RETAIN,
 	BACTION_RETAIN,		/* shared */
 	BACTION_RETAIN,		/* anti-shared ==> non-manifold result */
