@@ -1,4 +1,5 @@
-/*	   N U R B . H
+/*
+ *			N U R B . H
  *
  *  Function -
  *	Define surface and curve structures for
@@ -14,16 +15,11 @@
  * 	Aberdeen Proving Ground, Maryland 21005
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1991 by the United States Army.
  *	All rights reserved.
  *
  *  $Header$
  */
-
-#ifndef RAYTRACE_H
-# include <stdio.h>
-# include "raytrace.h"
-#endif
 
 #ifndef NURB_H
 #define NURB_H seen
@@ -31,11 +27,16 @@
 /* make sure all the prerequisite include files have been included
  */
 #ifndef MACHINE_H
-#include "machine.h"
+# include <stdio.h>
+# include "machine.h"
 #endif
 
 #ifndef VMATH_H
-#include "vmath.h"
+# include "vmath.h"
+#endif
+
+#ifndef RAYTRACE_H
+# include "raytrace.h"
 #endif
 
 /* Define parametric directions for splitting. */
