@@ -205,7 +205,7 @@ extern "C" {
 #define rt_structprint		bu_struct_print
 #define rt_vls_structprint	bu_vls_struct_print
 #if !__STDC__ && !defined(offsetof)
-# define offsetof		bu_offsetof
+# define offsetof(_t, _m)	(int)(&(((_t *)0)->_m))
 #endif
 #define offsetofarray		bu_offsetofarray
 #define FUNC_NULL		BU_STRUCTPARSE_FUNC_NULL
