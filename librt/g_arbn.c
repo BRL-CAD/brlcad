@@ -85,13 +85,12 @@ struct rt_i	*rtip;
 	for( i=0; i<aip->neqn-2; i++ )  {
 		for( j=i+1; j<aip->neqn-1; j++ )  {
 			double	dot;
-			int	point_count;	/* # points on this line */
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( aip->eqn[i], aip->eqn[j] );
 			if( !NEAR_ZERO( dot, 0.999999 ) )  continue;
 
-			point_count = 0;
+			/* Have an edge line, isect with higher numbered planes */
 			for( k=j+1; k<aip->neqn; k++ )  {
 				register int	m;
 				point_t		pt;
@@ -105,18 +104,12 @@ struct rt_i	*rtip;
 						goto next_k;
 				}
 				VMINMAX( stp->st_min, stp->st_max, pt );
-				point_count++;
 
 				/* Increment "face used" counts */
 				used[i]++;
 				used[j]++;
 				used[k]++;
 next_k:				;
-			}
-			if( point_count > 2 )  {
-				rt_log("arbn(%s): warning, point_count=%d on edge %d/%d\n",
-					stp->st_name, point_count,
-					i, j );
 			}
 		}
 	}
@@ -398,21 +391,20 @@ struct directory	*dp;
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
 					VSUB2( dist, pt, b );
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
-					rt_log("rt_arbn_plot(%s): warning, point_count=%d (>2) on edge %d/%d\n",
+					rt_log("rt_arbn_plot(%s): error, point_count=%d (>2) on edge %d/%d, non-convex\n",
 						dp->d_namep, point_count+1,
 						i, j );
 					VPRINT(" a", a);
 					VPRINT(" b", b);
 					VPRINT("pt", pt);
+					ADD_VL( vhead, pt, 1 );	/* draw it */
 				}
 				point_count++;
 next_k:				;
 			}
-			if( point_count == 1 )  {
-				rt_log("rt_arbn_plot(%s): warning, point_count=1 on edge %d/%d\n",
-					dp->d_namep,
-					i, j );
-			}
+			/* Point counts of 1 are (generally) not harmful,
+			 * occuring on pyramid peaks and the like.
+			 */
 		}
 	}
 	return(0);
