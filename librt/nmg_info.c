@@ -257,14 +257,14 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			N M G _ F I N D _ V E R T E X _ I N _ E D G E L I S T
+ *			N M G _ I S _ V E R T E X _ I N _ E D G E L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_vertex_in_edgelist( v, hd )
+nmg_is_vertex_in_edgelist( v, hd )
 register CONST struct vertex	*v;
 CONST struct rt_list		*hd;
 {
@@ -281,14 +281,14 @@ CONST struct rt_list		*hd;
 }
 
 /*
- *			N M G _ F I N D _ V E R T E X _ I N _ L O O P L I S T
+ *			N M G _ I S _ V E R T E X _ I N _ L O O P L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_vertex_in_looplist( v, hd, singletons )
+nmg_is_vertex_in_looplist( v, hd, singletons )
 register CONST struct vertex	*v;
 CONST struct rt_list		*hd;
 int				singletons;
@@ -308,24 +308,24 @@ int				singletons;
 			NMG_CK_VERTEX(vu->v_p);
 			if( vu->v_p == v )  return(1);
 		} else if( magic1 == NMG_EDGEUSE_MAGIC )  {
-			if( nmg_find_vertex_in_edgelist( v, &lu->down_hd ) )
+			if( nmg_is_vertex_in_edgelist( v, &lu->down_hd ) )
 				return(1);
 		} else {
-			rt_bomb("nmg_find_vertex_in_loopuse() bad magic\n");
+			rt_bomb("nmg_is_vertex_in_loopuse() bad magic\n");
 		}
 	}
 	return(0);
 }
 
 /*
- *			N M G _ F I N D _ V E R T E X _ I N _ F A C E L I S T
+ *			N M G _ I S _ V E R T E X _ I N _ F A C E L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_vertex_in_facelist( v, hd )
+nmg_is_vertex_in_facelist( v, hd )
 register CONST struct vertex	*v;
 CONST struct rt_list		*hd;
 {
@@ -334,21 +334,21 @@ CONST struct rt_list		*hd;
 	NMG_CK_VERTEX(v);
 	for( RT_LIST_FOR( fu, faceuse, hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		if( nmg_find_vertex_in_looplist( v, &fu->lu_hd, 1 ) )
+		if( nmg_is_vertex_in_looplist( v, &fu->lu_hd, 1 ) )
 			return(1);
 	}
 	return(0);
 }
 
 /*
- *			N M G _ F I N D _ E D G E _ I N _ E D G E L I S T
+ *			N M G _ I S _ E D G E _ I N _ E D G E L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_edge_in_edgelist( e, hd )
+nmg_is_edge_in_edgelist( e, hd )
 CONST struct edge	*e;
 CONST struct rt_list	*hd;
 {
@@ -364,14 +364,14 @@ CONST struct rt_list	*hd;
 }
 
 /*
- *			N M G _ F I N D _ E D G E _ I N _ L O O P L I S T
+ *			N M G _ I S _ E D G E _ I N _ L O O P L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_edge_in_looplist( e, hd )
+nmg_is_edge_in_looplist( e, hd )
 CONST struct edge	*e;
 CONST struct rt_list	*hd;
 {
@@ -386,24 +386,24 @@ CONST struct rt_list	*hd;
 			/* Loop of a single vertex does not have an edge */
 			continue;
 		} else if( magic1 == NMG_EDGEUSE_MAGIC )  {
-			if( nmg_find_edge_in_edgelist( e, &lu->down_hd ) )
+			if( nmg_is_edge_in_edgelist( e, &lu->down_hd ) )
 				return(1);
 		} else {
-			rt_bomb("nmg_find_edge_in_loopuse() bad magic\n");
+			rt_bomb("nmg_is_edge_in_loopuse() bad magic\n");
 		}
 	}
 	return(0);
 }
 
 /*
- *			N M G _ F I N D _ E D G E _ I N _ F A C E L I S T
+ *			N M G _ I S _ E D G E _ I N _ F A C E L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_edge_in_facelist( e, hd )
+nmg_is_edge_in_facelist( e, hd )
 CONST struct edge	*e;
 CONST struct rt_list	*hd;
 {
@@ -412,21 +412,21 @@ CONST struct rt_list	*hd;
 	NMG_CK_EDGE(e);
 	for( RT_LIST_FOR( fu, faceuse, hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		if( nmg_find_edge_in_looplist( e, &fu->lu_hd ) )
+		if( nmg_is_edge_in_looplist( e, &fu->lu_hd ) )
 			return(1);
 	}
 	return(0);
 }
 
 /*
- *			N M G _ F I N D _ L O O P _ I N _ F A C E L I S T
+ *			N M G _ I S _ L O O P _ I N _ F A C E L I S T
  *
  *  Returns -
  *	1	If found
  *	0	If not found
  */
 int
-nmg_find_loop_in_facelist( l, fu_hd )
+nmg_is_loop_in_facelist( l, fu_hd )
 CONST struct loop	*l;
 CONST struct rt_list	*fu_hd;
 {

@@ -199,7 +199,7 @@ struct shell	*s;
 			NMG_CK_LOOPUSE(lu);
 			NMG_CK_LOOP(lu->l_p);
 			nextlu = RT_LIST_PNEXT( loopuse, lu );
-			if( nmg_find_loop_in_facelist( lu->l_p, &s->fu_hd ) )  {
+			if( nmg_is_loop_in_facelist( lu->l_p, &s->fu_hd ) )  {
 				/* Dispose of wire loop (and mate)
 				 * which match face loop */
 				if( nextlu == lu->lumate_p )
@@ -216,7 +216,7 @@ struct shell	*s;
 			NMG_CK_EDGEUSE(eu);
 			NMG_CK_EDGE(eu->e_p);
 			nexteu = RT_LIST_PNEXT( edgeuse, eu );
-			if( nmg_find_edge_in_facelist( eu->e_p, &s->fu_hd ) )  {
+			if( nmg_is_edge_in_facelist( eu->e_p, &s->fu_hd ) )  {
 				/* Dispose of wire edge (and mate) */
 				if( nexteu == eu->eumate_p )
 					nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
@@ -233,7 +233,7 @@ struct shell	*s;
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE(eu->e_p);
 		nexteu = RT_LIST_PNEXT( edgeuse, eu );
-		if( nmg_find_edge_in_looplist( eu->e_p, &s->lu_hd ) )  {
+		if( nmg_is_edge_in_looplist( eu->e_p, &s->lu_hd ) )  {
 			/* Kill edge use and mate */
 			if( nexteu == eu->eumate_p )
 				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
@@ -257,9 +257,9 @@ struct shell	*s;
 		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		NMG_CK_VERTEX(vu->v_p);
-		if( nmg_find_vertex_in_facelist( vu->v_p, &s->fu_hd ) ||
-		    nmg_find_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
-		    nmg_find_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
+		if( nmg_is_vertex_in_facelist( vu->v_p, &s->fu_hd ) ||
+		    nmg_is_vertex_in_looplist( vu->v_p, &s->lu_hd,0 ) ||
+		    nmg_is_vertex_in_edgelist( vu->v_p, &s->eu_hd ) )  {
 		    	/* Kill lu and mate */
 			if( nextlu == lu->lumate_p )
 				nextlu = RT_LIST_PNEXT(loopuse, nextlu);
