@@ -1147,7 +1147,7 @@ char	**argv;
 		    rt_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
 		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls),
 				     "Usage: facetize [-tT] [-P ncpu] object(s)\n",
-				     "\t-t Perform CSG-to-tNURBS conversion\n"
+				     "\t-t Perform CSG-to-tNURBS conversion\n",
 				     "\t-T enable triangulator\n", (char *)NULL);
 		    rt_vls_free(&tmp_vls);
 		  }
@@ -1554,9 +1554,11 @@ char	**argv;
 
 
 	{
-	  char *av[] = {"e", NULL, NULL};
+	  char *av[3];
 
+	  av[0] = "e";
 	  av[1] = newname;
+	  av[2] = NULL;
 
 	  /* draw the new solid */
 	  return f_edit( clientData, interp, 2, av );

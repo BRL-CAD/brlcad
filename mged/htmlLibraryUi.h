@@ -3,7 +3,7 @@
 # Copyright (c) 1995 by Sun Microsystems
 # Version 0.1 Thu Jul 20 09:06:28 PDT 1995
 */
-char html_library_ui_str[] = "\
+char *html_library_ui_str = "\
 array set HMtag_map {\
 	a	   {Tlink link}\
 	b      {weight bold}\

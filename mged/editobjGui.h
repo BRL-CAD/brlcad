@@ -1,4 +1,4 @@
-char editobj_gui_str[] = "\
+char *editobj_gui_str = "\
 set eoname(V) \"Vertex\";\
 set eoname(A) \"A vector\";\
 set eoname(B) \"B vector\";\

@@ -1,4 +1,4 @@
-char icreate_gui_str[] = "\
+char *icreate_gui_str = "\
 set ic(winnum) 0;\
 set ic(default_type) \"\";\
 set ic(default_path) \"\";\
