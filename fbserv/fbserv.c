@@ -171,11 +171,12 @@ int fd;
 #endif /* BSD */
 
 static void *
-sigalarm()
+sigalarm(code)
+int	code;
 {
-	/*printf("alarm %s\n", fbp ? "FBP" : "NULL");*/
+	printf("alarm %s\n", fbp ? "FBP" : "NULL");
 	if( fbp != FBIO_NULL )
-		fb_flush(fbp);
+		fb_poll(fbp);
 	(void)signal( SIGALRM, sigalarm );	/* SYSV removes handler */
 	alarm(1);
 }
@@ -192,7 +193,7 @@ int argc; char **argv;
 
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );
-	alarm(1);
+	/*alarm(1)*/
 
 #ifdef BSD
 	/*
@@ -239,6 +240,14 @@ int argc; char **argv;
 
 		/* loop forever handling clients */
 		while( !got_fb_free ) {
+			int	infds, fds;
+			infds = (1<<netfd);	/*XXX (1<<fbfd) */
+			if( (fds = bsdselect( infds, 1, 0 )) == 0 ) {
+				/* Process fb events while waiting for client */
+				/*printf("select timeout waiting for client\n");*/
+				fb_poll(fbp);
+				continue;
+			}
 			rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
 			if( rem_pcp == PKC_ERROR )
 				break;
@@ -329,8 +338,40 @@ do1()
 	}
 #endif
 
-	while( pkg_block(rem_pcp) > 0 )
-		;
+	/*
+	 * This used to be simply:
+	 *	while( pkg_block(rem_pcp) > 0 ) ;
+	 * but libfb event handling requires us to break it up.
+	 */
+	for(;;) {
+		long	infds;
+		long	fds;
+		if( pkg_process( rem_pcp ) < 0 ) {
+			printf("pkg_process error encountered\n");
+			continue;
+		}
+		infds = (1<<rem_pcp->pkc_fd);
+		if( (fds = bsdselect( infds, 1, 0 )) != 0 ) {
+			/*printf("select returned %d\n", fds);*/
+			if( pkg_suckin( rem_pcp ) <= 0 ) {
+				/* Probably EOF */
+				printf("pkg_suckin error or EOF\n");
+				break;
+			}
+		} else {
+			/* Timeout - check for fb events */
+			/*printf("select timeout in do1()\n");*/
+			if( fbp != FBIO_NULL )
+				fb_poll(fbp);
+		}
+#if 0
+		if( pkg_process( rem_pcp ) < 0 ) {
+			printf("pkg_process error encountered\n");
+			continue;
+		}
+		/*do_other_stuff();*/
+#endif
+	}
 
 	if( !single_fb && fbp != FBIO_NULL )
 		fb_close(fbp);
