@@ -232,6 +232,9 @@ register int pen_y;
 		     	 * if no arrow is desired */
 			if( mptr->menu_func != ((void (*)())0) )
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
+#ifdef MULTI_ATTACH
+			update_views = 1;
+#endif
 			dmaflag = 1;
 			return( 1 );		/* menu claims pen value */
 		}
