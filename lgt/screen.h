@@ -20,7 +20,6 @@
 #define GRID_YOF_PTR		&template[ 5][67]
 #define F_RASTER_PTR		&template[ 6][16]
 #define MODEL_RA_PTR		&template[ 6][67]
-#define F_TEXTURE_PTR		&template[ 7][16]
 #define BACKGROU_PTR		&template[ 7][67]
 #define BUFFERED_PTR		&template[ 8][16]
 #define DEBUGGER_PTR		&template[ 8][29]

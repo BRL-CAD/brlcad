@@ -154,7 +154,6 @@ prnt_Status()
 	pad_Strcpy( F_RASTER_PTR, fb_file, 32 );
 	(void) sprintf( scratchbuf, "%11.4f", modl_radius );
 	(void) strncpy( MODEL_RA_PTR, scratchbuf, strlen( scratchbuf ) );
-	pad_Strcpy( F_TEXTURE_PTR, txtr_file, 32 );
 	(void) sprintf( scratchbuf, "%3d %3d %3d", background[0], background[1], background[2] );
 	(void) strncpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
 	(void) sprintf( scratchbuf,

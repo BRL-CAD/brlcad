@@ -129,11 +129,17 @@ int		material_id;
 		prnt_Scroll( "        refractive index\t(%g)\n", entry->refrac_index );
 		if( --lines <= 0 && ! do_More( &lines ) )
 			break;
-		prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
-				entry->df_rgb[0],
-				entry->df_rgb[1],
-				entry->df_rgb[2]
-				);
+		if( strncmp( "texture ", entry->name, 8 ) != 0 )
+			prnt_Scroll( "        diffuse color\t\t(%d %d %d)\n",
+					entry->df_rgb[0],
+					entry->df_rgb[1],
+					entry->df_rgb[2]
+					);
+		else
+			prnt_Scroll( "        texture map : width=%d height=%d\n",
+					entry->df_rgb[0] << 2,
+					entry->df_rgb[1] << 2
+					);
 		}
 	return	success;
 	}
@@ -229,18 +235,35 @@ int	id;
 #else
 		(void) sscanf( input_buf, "%lf", &entry->refrac_index );
 #endif
-	(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
-			entry->df_rgb[RED],
-			entry->df_rgb[GRN],
-			entry->df_rgb[BLU]
-			);
-	if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
-	     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
-		)
+	if( strncmp( "texture ", entry->name, 8 ) != 0 )
 		{
-		entry->df_rgb[0] = red;
-		entry->df_rgb[1] = grn;
-		entry->df_rgb[2] = blu;
+		(void) sprintf( prompt, "diffuse RGB values ? [0 to 255](%d %d %d) ",
+				entry->df_rgb[RED],
+				entry->df_rgb[GRN],
+				entry->df_rgb[BLU]
+				);
+		if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
+		     &&	sscanf( input_buf, "%d %d %d", &red, &grn, &blu ) == 3
+			)
+			{
+			entry->df_rgb[0] = red;
+			entry->df_rgb[1] = grn;
+			entry->df_rgb[2] = blu;
+			}
+		}
+	else
+		{
+		(void) sprintf( prompt, "texture : width and height? [0 to 1024](%d %d) ",
+				entry->df_rgb[0]<<2,
+				entry->df_rgb[1]<<2
+				);
+		if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
+	 	    &&	sscanf( input_buf, "%d %d", &red, &grn ) == 2
+			)
+			{
+			entry->df_rgb[0] = red >> 2;
+			entry->df_rgb[1] = grn >> 2;
+			}
 		}
 	entry->mode_flag = MF_USED;
 	mat_db_size = Max( mat_db_size, id+1 );

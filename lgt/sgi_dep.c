@@ -18,6 +18,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./lgt.h"
+#include "./ascii.h"
 #include "./vecmath.h"
 #undef RED
 #include "./extern.h"
@@ -577,13 +578,6 @@ char	**args;
 				fb_log( "Mouse y = %d\n", (int) val );
 				break;
 			case KEYBD :
-				qenter( KEYBD, val );
-				sgi_Read_Keyboard( args );
-				if( ! user_Cmd( args ) )
-					return;
-				prnt_Event( "" );
-				prnt_Prompt( "" );
-				(void) fflush( stdout );
 				break;
 			case INPUTCHANGE :
 				break;
@@ -1006,13 +1000,195 @@ int	fps;
 		}
 	}
 
+char *
+sgi_GetInput( inbuf, bufsz, msg )
+char	 *inbuf;
+int	 bufsz;
+char	*msg;
+	{	static char	buffer[BUFSIZ];
+		register char	*p = buffer;
+		register int	c;
+	prnt_Prompt( msg );
+	*p = NUL;
+	do
+		{		(void) fflush( stdout );
+		c = hm_getchar();
+		switch( c )
+			{
+		case Ctrl('A') : /* Cursor to beginning of line.	*/
+			if( p == buffer )
+				{
+				ring_Bell();
+				break;
+				}
+			for( ; p > buffer; p-- )
+				(void) putchar( BS );
+			break;
+		case Ctrl('B') :
+		case BS : /* Move cursor back one character.		*/
+			if( p == buffer )
+				{
+				ring_Bell();
+				break;
+				}
+			(void) putchar( BS );
+			--p;
+			break;
+		case Ctrl('D') : /* Delete character under cursor.	*/
+			{	register char	*q = p;
+			if( *p == NUL )
+				{
+				ring_Bell();
+				break;
+				}
+			for( ; *q != NUL; ++q )
+				{
+				*q = *(q+1);
+				(void) putchar( *q != NUL ? *q : SP );
+				}
+			for( ; q > p; --q )
+				(void) putchar( BS );
+			break;
+			}
+		case Ctrl('E') : /* Cursor to end of line.		*/
+			if( *p == NUL )
+				{
+				ring_Bell();
+				break;
+				}
+			(void) printf( "%s", p );
+			p += strlen( p );
+			break;
+		case Ctrl('F') : /* Cursor forward one character.	*/
+			if( *p == NUL || p-buffer >= bufsz-2 )
+				{
+				ring_Bell();
+				break;
+				}
+			putchar( *p++ );
+			break;
+		case Ctrl('G') : /* Abort input.			*/
+			ring_Bell();
+			prnt_Event( "Aborted." );
+			prnt_Prompt( "" );
+			return	NULL;
+		case Ctrl('K') : /* Erase from cursor to end of line.	*/
+			if( *p == NUL )
+				{
+				ring_Bell();
+				break;
+				}
+			ClrEOL();
+			*p = NUL;
+			break;
+		case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
+			{	register int	len = strlen( inbuf );
+			if( (p + len) - buffer >= BUFSIZ )
+				{
+				ring_Bell();
+				break;
+				}
+			(void) strncpy( p, inbuf, bufsz );
+			(void) printf( "%s", p );
+			p += len;
+			break;
+			}
+		case Ctrl('U') : /* Erase from start of line to cursor.	*/
+			if( p == buffer )
+				{
+				ring_Bell();
+				break;
+				}
+			for( ; p > buffer; --p )
+				{	register char	*q = p;
+				(void) putchar( BS );
+				for( ; *(q-1) != NUL; ++q )
+					{
+					*(q-1) = *q;
+					(void) putchar( *q != NUL ? *q : SP );
+					}
+				for( ; q > p; --q )
+					(void) putchar( BS );
+				}
+			break;
+		case Ctrl('R') : /* Print line, cursor doesn't move.	*/
+			{	register int	i;
+			if( buffer[0] == NUL )
+				break;
+			for( i = p - buffer; i > 0; i-- )
+				(void) putchar( BS );
+			(void) printf( "%s", buffer );
+			for( i = strlen( buffer ) - (p - buffer); i > 0; i-- )
+				(void) putchar( BS );
+			break;
+			}
+		case DEL : /* Delete character behind cursor.		*/
+			{	register char	*q = p;
+			if( p == buffer )
+				{
+				ring_Bell();
+				break;
+				}
+			(void) putchar( BS );
+			for( ; *(q-1) != NUL; ++q )
+				{
+				*(q-1) = *q;
+				(void) putchar( *q != NUL ? *q : SP );
+				}
+			for( ; q > p; --q )
+				(void) putchar( BS );
+			p--;
+			break;
+			}
+		case CR :
+		case LF :
+		case EOF :
+			(void) strncpy( inbuf, buffer, bufsz );
+			prnt_Prompt( "" );
+			if( inbuf[0] == '\0' )
+				return	NULL;
+			else
+				return	inbuf;
+		case Ctrl('V') :
+			/* Escape character, do not process next char.	*/
+			c = hm_getchar();
+			/* Fall through to default case!		*/
+		default : /* Insert character at cursor.		*/
+			{	register char	*q = p;
+				register int	len = strlen( p );
+			/* Print control characters as strings.		*/
+			if( c >= NUL && c < SP )
+				(void) printf( "%s", char_To_String( c ) );
+			else
+				(void) putchar( c );
+			/* Scroll characters forward.			*/
+			for( ; len >= 0; len--, q++ )
+				(void) putchar( *q == NUL ? SP : *q );
+			for( ; q > p; q-- )
+				{
+				(void) putchar( BS );
+				*q = *(q-1);
+				}
+			*p++ = c;
+			break;
+			}
+			} /* End switch. */
+		}
+	while( strlen( buffer ) < BUFSIZ );
+	(void) strncpy( inbuf, buffer, bufsz );
+	ring_Bell();
+	prnt_Event( "Buffer full." );
+	prnt_Prompt( "" );
+	return	inbuf;
+	}
+
 _LOCAL_ void
 sgi_Read_Keyboard( args )
 char	**args;
 	{	char		input_ln[BUFSIZ];
 		register int	i;
 		register char	*eof_flag;
-	get_Input( input_ln, BUFSIZ, ": " );
+	(void) get_Input( input_ln, BUFSIZ, ": " );
 	if( (args[0] = strtok( input_ln, " \t" )) == NULL )
 		{
 		args[0] = "#";

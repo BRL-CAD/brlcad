@@ -57,7 +57,6 @@ char	err_file[MAX_LN] = { 0 };    /* Error log (redirected stderr).	*/
 char	mat_db_file[MAX_LN] = { 0 }; /* Material database file.		*/
 char	lgt_db_file[MAX_LN] = { 0 }; /* Light source database file.	*/
 char	ir_db_file[MAX_LN] = { 0 };  /* IR database file.		*/
-char	txtr_file[MAX_LN] = { 0 };/* Texture map file.		*/
 char	fb_file[MAX_LN] = { 0 };     /* Raster image output.		*/
 char	ir_file[MAX_LN] = { 0 };     /* IR input data.			*/
 
@@ -112,9 +111,7 @@ int	aperture_sz = 1;	/* Size of window for over-sampling.	*/
 int	background[3];		/* Background as RGB values.		*/
 int	co;			/* Number of columns on screen/layer.	*/
 int	tracking_cursor=FALSE;	/* Cursor is on by default.		*/
-int	fb_width = 512;		/* Width of input scans in fb map.	*/
-int	fb_ulen = 512;		/* Width in pixels of fb map.		*/
-int	fb_vlen = 512;		/* Height in pixels of fb map.		*/
+
 int	grid_position = FALSE;	/* Did user set distance yet.		*/
 int	save_view_flag = FALSE;	/* View specified in "model2view".	*/
 int	hiddenln_draw = FALSE;	/* Generate hidden-line drawing.	*/
@@ -127,9 +124,7 @@ int	ir_doing_paint = FALSE;	/* Is user doing above mapping.		*/
 int	ir_offset = FALSE;	/* Has user specified auto mapping.	*/
 int	ir_mapx, ir_mapy;	/* Auto mapping offsets for above.	*/
 int	ir_mapping = IR_OFF;	/* IR mapping.				*/
-int	fb_mapping = FALSE;	/* Frame buffer image texture mapping.	*/
 int	frame_no = 0;		/* Current frame being processed.	*/
-int	icon_mapping = FALSE;	/* Icon texture mapping.		*/
 int	user_interrupt = FALSE;	/* User-level interrupt of raytrace.	*/
 int	fatal_error = FALSE;	/* Fatal error, must abort raytrace.	*/
 int	lgt_db_size = 0;	/* Current size of light data base.	*/

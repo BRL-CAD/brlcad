@@ -1,8 +1,5 @@
 .TH LGT 1 BRL/CAD
 '\"	@(#)$Header$ (BRL)
-'\"	Originally extracted from SCCS archive:
-'\"		last edit:	87/02/04	G S M
-'\"		SCCS ID:	@(#)lgt.1	2.3
 .SH NAME
 lgt \- produce a shaded image of an
 .I mged\^
@@ -15,8 +12,18 @@ model
 .I Lgt\^
 is an image rendering tool for the
 .IR mged\^ (1)
-solids modeling data base.  The program can run interactively or detached
-from a terminal session (batch mode).
+solids modeling data base.
+The program can run interactively or detached from a terminal session
+(batch mode).
+The interactive user interface consists of a terminal independent pop-up
+hierarchical menu system (though IRIS users have the option of using the
+mouse-driven graphics menus instead).
+The experienced user may wish to exit this menu system (by typing a `q')
+and use the single-letter command interface as described below.
+For information on the hierarchical menus and detailed information on the
+commands and overall usage of \fIlgt\^\fR please refer to the paper
+\fBThe ``lgt'' Lighting Model\fR which is included in the BRL CAD
+documentation.
 There are numerous command-line options.
 .SS Options
 .TP "\w'-b ``R G B\'\'\    |'u"
@@ -154,10 +161,6 @@ rather than the terminal.  The default is to write to the standard output in a
 scrolling window (sub-section of the terminal screen), if the standard
 input is attached to the terminal; or to standard error, if input has been
 redirected.
-.TP
-.BI \-T file\^
-Read texture map from
-.IR file\^ .
 .TP
 .BI \-d "``x y''"\^
 Set automatic mapping offsets to
@@ -506,6 +509,7 @@ This will run the program as a detached process by executing a saved script call
 $ \|\fItankscript \|< \|/dev/null \|&\fR
 .RE
 .SH "SEE ALSO"
+\fBThe ``lgt'' Lighting Model\fR,
 mged(1), pix-fb(1), librt(3), libfb(3)
 .SH AUTHOR
 Gary S. Moss

@@ -117,12 +117,12 @@ static struct application ag;	/* Global application structure.	*/
 static bitv_t	hl_bits[1024][1024/HL_BITVBITS];
 static short	*hl_regmap = NULL;
 
-#define BEHIND_ME_TOL	0.01	/* Is object behind me. */
+#define BEHIND_ME_TOL	0.001	/* Is object behind me. */
 #define PT_EMPTY	0
 #define PT_OHIT		1
 #define PT_BEHIND	2
 
-#define Get_Partition( pp, pt_headp )\
+#define Get_Partition( ap, pp, pt_headp, func )\
 	{	int	failure;\
 	for(	pp = pt_headp->pt_forw;\
 		(failure=PT_EMPTY, pp != pt_headp)\
@@ -130,13 +130,20 @@ static short	*hl_regmap = NULL;
 	    &&	(failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL);\
 		pp = pp->pt_forw\
 		)\
-		;\
+		{ struct partition *pt_back = pp->pt_back;\
+		DEQUEUE_PT( pp );\
+		FREE_PT( pp, ap->a_resource );\
+		pp = pt_back;\
+		}\
 	switch( failure )\
 		{\
 	case PT_EMPTY :\
 		return	ap->a_miss( ap );\
 	case PT_OHIT :\
-		rt_log( "BUG: f_Model: Bad partition returned by rt_shootray!\n" );\
+		rt_log( "BUG:%s: Bad partition returned by rt_shootray!\n",\
+			func );\
+		rt_log( "\tlevel=%d grid=<%d,%d>\n",\
+			ap->a_level, ap->a_x, ap->a_y );\
 		return	ap->a_miss( ap );\
 	case PT_BEHIND :\
 		break;\
@@ -473,7 +480,7 @@ struct partition *pt_headp;
 		register struct region		*regp;
 		register struct xray		*rayp;
 		register struct hit		*ihitp;
-	Get_Partition( pp, pt_headp );
+	Get_Partition( ap, pp, pt_headp, "f_Region" );
 	regp = pp->pt_regionp;
 	rayp = &ap->a_ray;
 	ihitp = pp->pt_inhit;
@@ -525,7 +532,7 @@ struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register struct soltab		*stp;
 		register struct hit		*ihitp;
-	Get_Partition( pp, pt_headp );
+	Get_Partition( ap, pp, pt_headp, "f_HL_Hit" );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
 	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
@@ -557,7 +564,7 @@ struct partition *pt_headp;
 		register struct hit		*ihitp;
 		int				material_id;
 		fastf_t				rgb_coefs[3];
-	Get_Partition( pp, pt_headp );
+	Get_Partition( ap, pp, pt_headp, "f_Model" );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
 	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
@@ -589,16 +596,7 @@ struct partition *pt_headp;
 	}
 
 	/* Get material id as index into material database.		*/
-#ifndef cray
-	if( icon_mapping && strncmp( stp->st_name, "TM_", 3 ) == 0 )
-		{ /* Solid has a texture map.				*/
-			struct uvcoord	uv;
-		rt_functab[stp->st_id].ft_uv( ap, stp, ihitp, &uv );
-		material_id = txtr_Val( &uv );
-		}
-	else
-#endif
-		material_id = (int)(pp->pt_regionp->reg_gmater);
+	material_id = (int)(pp->pt_regionp->reg_gmater);
 
 	/* Get material database entry.					*/
 	if( ir_mapping )
@@ -671,19 +669,21 @@ struct partition *pt_headp;
 			}
 		}
 	else
-	if( fb_mapping && strncmp( stp->st_name, "FB_", 3 ) == 0 )
-		{ /* Solid has a frame buffer image map.		*/
-			struct uvcoord	uv;
-		rt_functab[stp->st_id].ft_uv( ap, stp, ihitp, &uv );
-		if( (entry = fb_Entry( &uv )) == MAT_DB_NULL )
-			entry = &mat_dfl_entry;
-		}
-	else	/* Get material attributes from database.		*/
+	/* Get material attributes from database.		*/
 	if(	(entry = mat_Get_Db_Entry( material_id )) == MAT_DB_NULL
 	   || ! (entry->mode_flag & MF_USED)
 		)
 		entry = &mat_dfl_entry;
-
+	/* If texture mapping replace color with texture map look up. */
+	if( strncmp( TEX_KEYWORD, entry->name, TEX_KEYLEN ) == 0 )
+		{	struct uvcoord		uv;
+			Mat_Db_Entry		loc_entry;
+		/* Solid has a frame buffer image map.		*/
+		rt_functab[stp->st_id].ft_uv( ap, stp, ihitp, &uv );
+		loc_entry = *entry;
+		if( tex_Entry( &uv, &loc_entry ) )
+			entry = &loc_entry;
+		}
 	if( lgts[0].energy < 0.0 )
 		{	fastf_t	f = RGB_INVERSE;
 			/* Scale RGB values to coeffs (0.0 .. 1.0 )	*/
@@ -946,7 +946,8 @@ register Mat_Db_Entry		*entry;
 			VMOVE( ap->a_color, ap_hit.a_color );
 			if( rt_g.debug & DEBUG_REFRACT )
 				{
-				V_Print( "\t\tf_Model returned coeffs", ap->a_color, rt_log );
+				V_Print( "\t\tf_Model returned coeffs",
+					ap->a_color, rt_log );
 				}
 			return;	
 			}
@@ -958,7 +959,8 @@ register Mat_Db_Entry		*entry;
 				{
 				rt_log( "\t\tOne hit flag is %s\n",
 					ap->a_onehit ? "ON" : "OFF" );
-				V_Print( "\t\tf_Backgr returned coeffs", ap->a_color, rt_log );
+				V_Print( "\t\tf_Backgr returned coeffs",
+					ap->a_color, rt_log );
 				}
 			return;
 			}
@@ -1155,7 +1157,7 @@ struct partition *pt_headp;
 		register struct soltab		*stp;
 	if( rt_g.debug & DEBUG_RGB )
 		rt_log( "f_Probe()\n" );
-	Get_Partition( pp, pt_headp );
+	Get_Partition( ap, pp, pt_headp, "f_Probe" );
 	stp = pp->pt_outseg->seg_stp;
 	hitp = pp->pt_outhit;
 	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
@@ -1172,7 +1174,7 @@ struct partition *pt_headp;
 	Compute the refracted ray 'v_2' from the incident ray 'v_1' with
 	the refractive indices 'ri_2' and 'ri_1' respectively.
 
-	Using Schnell's Law
+	Using Snell's Law
 
 		theta_1 = angle of v_1 with surface normal
 		theta_2 = angle of v_2 with reversed surface normal
@@ -1253,7 +1255,7 @@ register struct application *ap;
 struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register Mat_Db_Entry		*entry;
-	Get_Partition( pp, pt_headp );
+	Get_Partition( ap, pp, pt_headp, "f_Shadow" );
 	if( rt_g.debug & DEBUG_SHADOW )
 		{	register struct hit	*ihitp, *ohitp;
 			register struct soltab	*istp, *ostp;
@@ -1473,11 +1475,11 @@ void
 abort_RT( sig )
 int	sig;
 	{
-RES_ACQUIRE( &rt_g.res_syscall );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	(void) signal( SIGINT, abort_RT );
 	(void) fb_flush( fbiop );
 	user_interrupt = 1;
-RES_RELEASE( &rt_g.res_syscall );
+	RES_RELEASE( &rt_g.res_syscall );
 #if defined( BSD )
 	return	sig;
 #else

@@ -5,13 +5,6 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-/*
-	Originally extracted from SCCS archive:
-		SCCS id:	@(#) mat_db.h	1.6
-		Modified: 	2/4/87 at 12:18:09
-		Retrieved: 	2/4/87 at 12:18:22
-		SCCS archive:	/vld/moss/src/libmatdb/s.mat_db.h
-*/
 #define INCL_MATDB
 #if ! defined( NULL )
 #include <stdio.h>
@@ -21,6 +14,9 @@
 #define MF_USED		1
 #undef	MF_NULL
 #define MF_NULL		0
+#define TEX_KEYWORD	"texture "
+#define TEX_KEYLEN	8		/* strlen( TEX_KEYWORD ) */
+
 typedef struct
 	{
 	int	id;		/* GED database material id handle.	*/
@@ -36,9 +32,8 @@ typedef struct
 	} Mat_Db_Entry;
 #define MAT_DB_NULL	(Mat_Db_Entry *) NULL
 
-extern Mat_Db_Entry	*fb_Entry();
-extern Mat_Db_Entry	*fb_val();
 extern Mat_Db_Entry	*mat_Get_Db_Entry();
+extern int		fb_Entry();
 extern int		mat_Print_Db();
 extern int		mat_Rd_Db();
 extern int		mat_Save_Db();
