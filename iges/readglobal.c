@@ -30,14 +30,18 @@ fastf_t cnv[]={
 		10.0,0.0000254	};
 
 /* IGES Version */
-char *iges_version[]={
+#define NO_OF_VERSIONS	10
+char *iges_version[NO_OF_VERSIONS]={
 	" ",
-	"1.0 [NBS80]",
-	"ANSI Y14.26M -1981 [ANSI81]",
-	"2.0 [NBS83]",
-	"3.0 [NBS86]",
-	"ANSI Y14.26M - 1987 [ANSI88]",
-	"4.0 [NBSIR 88-3813]" };
+	"1.0",
+	"ANSI Y14.26M - 1981",
+	"2.0",
+	"3.0",
+	"ANSI Y14.26M - 1987",
+	"4.0",
+	"ASME Y14.26M - 1989",
+	"5.0",
+	"5.1" };
 
 Readglobal()
 {
@@ -110,13 +114,13 @@ Readglobal()
 				break;
 		case 7:		Readint( &i , "Integer Bits: ");
 				break;
-		case 8:		Readint( &i , "Float Exponent Bits: " );
+		case 8:		Readint( &i , "Max Power of ten(single precision): " );
 				break;
-		case 9:		Readint( &i , "Float Mantissa Bits: " );
+		case 9:		Readint( &i , "Max significant digits (single precision): " );
 				break;
-		case 10:	Readint( &i , "Double Precision Exp Bits: " );
+		case 10:	Readint( &i , "Max Power of ten(double precision): " );
 				break;
-		case 11:	Readint( &i , "Double Precision Mantissa: " );
+		case 11:	Readint( &i , "Max significant digits (single precision): " );
 				break;
 		case 12:	Readstrg( "Product ID: ");
 				break;
@@ -143,7 +147,7 @@ Readglobal()
 				break;
 		case 17:	Readflt( &a , "Line Width: " );
 				break;
-		case 18:	Readtime();
+		case 18:	Readtime( "Exchange File Created On: " );
 				break;
 		case 19:	Readflt( &a , "Resolution: " );
 				break;
@@ -154,10 +158,14 @@ Readglobal()
 		case 22:	Readstrg( "Organization: " );
 				break;
 		case 23:	Readint( &i , "" );
-				if( i<1 || i>6 )
+				if( i<1 || i>=NO_OF_VERSIONS )
 					printf( "Unrecognized IGES version\n" );
 				else
 					printf( "IGES version: %s\n" , iges_version[i] );
+				break;
+		case 24:	Readint( &i , "" );
+				break;
+		case 25:	Readtime( "Model Last Modified: " );
 				break;
 		}
 	}

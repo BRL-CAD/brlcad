@@ -25,13 +25,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_struct.h"
 #include "./iges_types.h"
 
-char eor,eof,card[256],crdate[9],crtime[9];
+char eor,eof,card[256];
 fastf_t scale,inv_scale,conv_factor;
 int units,counter,pstart,dstart,totentities,dirarraylen;
 FILE *fd,*fdout;
+char brlcad_file[256];
 int reclen,currec,ntypes;
+int brlcad_att_de=0;
 struct iges_directory **dir;
 struct reglist *regroot;
+struct iges_edge_list *edge_root;
+struct iges_vertex_list *vertex_root;
 
 char operator[]={
 	' ',
@@ -58,12 +62,14 @@ char *argv[];
 
 	ntypes = NTYPES;
 	regroot = NULL;
+	edge_root = NULL;
+	vertex_root = NULL;
 
 	fd = fopen( *++argv , "r" );	/* open IGES file */
 	if( fd == NULL )
 	{
 		fprintf( stderr , "Cannot open %s\n" , *argv );
-		perror( "Conv-igs2g" );
+		perror( "iges-g" );
 		exit( 1 );
 	}
 
@@ -74,11 +80,13 @@ char *argv[];
 		exit(1);
 	}
 
-	fdout = fopen( *++argv , "w" );	/* open BRLCAD file	*/
+	strcpy( brlcad_file ,  *++argv );
+
+	fdout = fopen( brlcad_file , "w" );	/* open BRLCAD file */
 	if( fdout == NULL )
 	{
-		fprintf( stderr , "Cannot open %s\n" , *argv );
-		perror( "Conv-igs2g" );
+		fprintf( stderr , "Cannot open %s\n" , brlcad_file );
+		perror( "iges-g" );
 		exit( 1 );
 	}
 
@@ -99,13 +107,17 @@ char *argv[];
 
 	pstart = Findp();	/* Find start of parameter section */
 
-	Makedir();	/* Read drectory section and build a linked list of entries */
+	Makedir();	/* Read directory section and build a linked list of entries */
 
 	Summary();	/* Print a summary of what is in the IGES file */
 
 	Docolor();	/* Get color info from color definition entities */
 
+	Get_att();	/* Look for a BRLCAD attribute definition */
+
 	Evalxform();	/* Accumulate the transformation matrices */
+
+	Check_names();	/* Look for name entities */
 
 	Convinst();	/* Handle Instances */
 
@@ -116,7 +128,5 @@ char *argv[];
 	Convtree();	/* Convert Boolean Trees */
 
 	Convassem();	/* Convert solid assemblies */
-
-	Makegroup();	/* Make a top level group */
 
 }

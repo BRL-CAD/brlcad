@@ -48,7 +48,7 @@ Makegroup()
 			nurbs = 1;
 	}
 
-	if( comblen || nurbs )	/* We need to make a group */
+	if( comblen > 1 || nurbs )	/* We need to make a group */
 	{
 
 		/* Loop through everything again */

@@ -39,11 +39,15 @@ char *id,**ptr;
 
 	if( card[counter] == eof ) /* This is an empty field */
 	{
+		*ptr = (char *)NULL;
 		counter++;
 		return;
 	}
 	else if( card[counter] == eor ) /* Up against the end of record */
+	{
+		*ptr = (char *)NULL;
 		return;
+	}
 
 	if( card[72] == 'P' )
 		lencard = PARAMLEN;
@@ -67,15 +71,15 @@ char *id,**ptr;
 	}
 	num[++i] = '\0';
 	length = atoi( num );
-	*ptr = (char *)malloc( length + 1 );
+	*ptr = (char *)rt_malloc( (length + 1)*sizeof( char ) , "Readname: name" );
 	ch = *ptr;
 	for( i=0 ; i<length ; i++ )
 	{
 		if( counter > lencard )
 			Readrec( ++currec );
+		ch[i] = card[counter++];
 		if( *id != '\0' )
-			putchar( (ch[i] = card[counter]) );
-		counter++;
+			putchar( ch[i] );
 	}
 	ch[length] = '\0';
 	if( *id != '\0' )

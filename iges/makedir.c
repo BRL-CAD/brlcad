@@ -47,7 +47,7 @@ Makedir()
 		
 		entcount++;	/* increment count of entities */
 
-		if( entcount%20 == 0 )
+		if( entcount%100 == 0 )
 		{
 			sprintf( str , "\t%d%c" , entcount , CR );
 			write( 1 , str , strlen( str ) );
@@ -64,51 +64,6 @@ Makedir()
 
 		Readcols( str , 8 );	/* read entity type */
 		dir[entcount]->type = atoi( str );
-		switch( dir[entcount]->type )
-		{
-			case 150:
-				sprintf( dir[entcount]->name , "block.%d" , entcount );
-				break;
-			case 152:
-				sprintf( dir[entcount]->name , "wedge.%d" , entcount );
-				break;
-			case 154:
-				sprintf( dir[entcount]->name , "cyl.%d" , entcount );
-				break;
-			case 156:
-				sprintf( dir[entcount]->name , "cone.%d" , entcount );
-				break;
-			case 158:
-				sprintf( dir[entcount]->name , "sphere.%d" , entcount );
-				break;
-			case 160:
-				sprintf( dir[entcount]->name , "torus.%d" , entcount );
-				break;
-			case 162:
-				sprintf( dir[entcount]->name , "revolution.%d" , entcount );
-				break;
-			case 164:
-				sprintf( dir[entcount]->name , "extrusion.%d" , entcount );
-				break;
-			case 168:
-				sprintf( dir[entcount]->name , "ell.%d" , entcount );
-				break;
-			case 180:
-				sprintf( dir[entcount]->name , "region.%d" , entcount );
-				break;
-			case 184:
-				sprintf( dir[entcount]->name , "group.%d" , entcount );
-				break;
-			case 430:
-				sprintf( dir[entcount]->name , "inst.%d" , entcount );
-				break;
-			case 128:
-				sprintf( dir[entcount]->name , "nurb.%d" , entcount );
-				break;
-			default:
-				sprintf( dir[entcount]->name , "entity%d" , entcount );
-				break;
-		}
 
 		Readcols( str , 8 );	/* read pointer to parameter entry */
 
@@ -125,7 +80,16 @@ Makedir()
 			fprintf( stderr , "Entity number %d does not have a correct parameter pointer\n",
 				entcount );
 
-		counter = counter + 32;	/* skip 32 columns */
+		if( dir[entcount]->type == 422 )
+		{
+			/* This is an attribute instance, so get the definition */
+			Readcols( str , 8 );
+			dir[entcount]->referenced = (-atoi(str));
+		}
+		else
+			counter += 8;
+
+		counter += 24;	/* skip 24 columns */
 		Readcols( str , 8 );	/* read pointer to transformation entity */
 
 		/* convert it to a "dir" index */
@@ -174,7 +138,7 @@ Makedir()
 			}
 			else
 			{
-				dir[entcount]->rot = (mat_t *)malloc( sizeof( mat_t ) );
+				dir[entcount]->rot = (mat_t *)rt_malloc( sizeof( mat_t ) , "Makedir:matrix" );
 				Readmatrix( dir[entcount]->param , *dir[entcount]->rot );
 			}
 		}

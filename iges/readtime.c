@@ -36,7 +36,8 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-Readtime()
+Readtime( id )
+char *id;
 {
 	int i=(-1),length=0,lencard,done=0;
 	char num[80];
@@ -49,7 +50,8 @@ Readtime()
 	else if( card[counter] == eor ) /* Up against the end of record */
 		return;
 
-	printf( "File Created on: " );
+	if( *id != '\0' )
+		printf( "%s" , id );
 
 	if( card[72] == 'P' )
 		lencard = PARAMLEN;
@@ -85,20 +87,14 @@ Readtime()
 	}
 
 	if( length > 5 )
-	{
-		sprintf( crdate , "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
+		printf( "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
 			num[0],num[1] );
-		printf( "%s" , crdate );
-	}
 	else
 		printf( "\n" );
 
 	if( length > 12 )
-	{
-		sprintf( crtime , "%c%c:%c%c:%c%c" , num[7],num[8],num[9],
+		printf( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
 			num[10],num[11],num[12] );
-		printf( " at %s\n" , crtime );
-	}
 	else
 		printf( "\n" );
 
