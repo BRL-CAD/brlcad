@@ -503,6 +503,9 @@ BU_EXTERN(int			bu_struct_parse, (CONST struct bu_vls *in_vls,
 BU_EXTERN(void			bu_struct_print, ( CONST char *title,
 				CONST struct bu_structparse	*parsetab,
 				CONST char			*base));
+BU_EXTERN(void			bu_vls_struct_print, (struct bu_vls *vls,
+				CONST struct bu_structparse *sdp,
+				CONST char *base));
 BU_EXTERN(void			bu_vls_struct_item, (struct bu_vls *vp,
 				CONST struct bu_structparse *sdp,
 				CONST char *base,
