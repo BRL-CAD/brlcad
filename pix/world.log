@@ -1,39 +1,34 @@
+BRL-CAD Release 3.26   Ray-Tracer
+    Mon Aug 26 22:39:04 EDT 1991, Compilation 1
+    butler@vgr.brl.mil:/usr/src/tmpcad/rt
+
 db title:  Colorful version of the Moss World 
-Buffering single scanlines
-initial dynamic memory use=16576.
-GETTREE: 0.1user 0.1sys 0:00real 80% 106i+223d 191maxrss 2+47pf 2+111csw
+initial dynamic memory use=16624.
+GETTREE: 0.2user 0.3sys 0:01real 50% 167i+272d 290maxrss 41+31pf 41+8csw
+Additional dynamic memory used=17632. bytes
 
 ...................Frame     0...................
-/all.g/light.r{{0}} at (20.1576, -13.526, 5.03474), aimed at (0, 0, -1), angle=180
-PREP: 0.2user 0.1sys 0:00real 100% 157i+264d 216maxrss 0+9pf 0+145csw
+PREP: 0.2user 0.1sys 0:00real 70% 283i+379d 344maxrss 8+7pf 8+5csw
+Additional dynamic memory used=26960. bytes
 Tree: 8 solids in 7 regions
 Model: X(-500,500), Y(-500,500), Z(-500,500)
 View: 35 azimuth, 25 elevation off of front view
+Orientation: 0.248097, 0.476591, 0.748097, 0.389435
+Eye_pos: 63.7999, 32.7177, 33.6666
 Size: 157.203mm
 Grid: (0.307036, 0.307036) mm, (512, 512) pixels
 Beam: radius=0.153518 mm, divergence=0 mm/1mm
-Priority changed from 0 to 10
 Output file is 'world.pix'
+Dynamic scanline buffering
+Lighting: Ambient = 40%
+  /all.g/light.r: (20.1576, -13.526, 5.03474), aimed at (0, 0, -1)
+  /all.g/light.r: visible, casts shadows, 1000 lumens (83%), halfang=180
 
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-rt: cubic() Floating Point Error
-SHOT: 8049.6user 402.4sys 2:37:11real 89% 250i+339d 303maxrss 3+48pf 181+519101csw
-Additional dynamic memory used=57712. bytes
-1513279 solid/ray intersections: 1331126 hits + 182153 miss
-pruned 88.0%:  0 model RPP, 4417762 dups skipped, 200838 solid RPP
-Frame     0:   262144 pixels in    8049.60 sec =      32.57 pixels/sec
-Frame     0:   438451 rays   in    8049.60 sec =      54.47 rays/sec (RTFM)
+SHOT: 6538.3user 490.2sys 4:13:00real 46% 403i+485d 458maxrss 27+31pf 214+100702csw
+Additional dynamic memory used=33872. bytes
+1477224 solid/ray intersections: 1311433 hits + 165791 miss
+pruned 88.8%:  0 model RPP, 0 dups skipped, 176285 solid RPP
+Frame     0:   262144 pixels in    6538.36 sec =      40.09 pixels/sec
+Frame     0:   438449 rays   in    6538.36 sec =      67.06 rays/sec (RTFM)
 
-     9433.5 real      8050.2 user       403.1 sys  
+    15184.2 real      6539.0 user       491.2 sys  
