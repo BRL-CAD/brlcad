@@ -1478,7 +1478,7 @@ RT_EXTERN(double rt_dist_pt_lseg, (point_t pca, point_t a, point_t b, point_t p)
 extern void rt_pr_roots();		/* print complex roots */
 
 /* pr.c */
-RT_EXTERN(void rt_pr_fallback_angle, (struct rt_vls *str, char *prefix
+RT_EXTERN(void rt_pr_fallback_angle, (struct rt_vls *str, char *prefix,
 	double angles[5]));
 RT_EXTERN(void rt_find_fallback_angle, (double angles[5], vect_t vec));
 
