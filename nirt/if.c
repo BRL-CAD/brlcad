@@ -322,3 +322,13 @@ void init_ovlp()
 {
     ovlp_list.forw = ovlp_list.backw = &ovlp_list;
 }
+
+if_boverlap( ap, pp, reg1, reg2 )
+register struct application     *ap;
+register struct partition       *pp;
+struct region                   *reg1;
+struct region                   *reg2;
+
+{
+	return 1;
+}

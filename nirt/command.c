@@ -491,15 +491,16 @@ int			ctp;
 
     int		(*phc)();	/* Previous hit callback */
     int		(*pmc)();	/* Previous miss callback */
+    int		(*poc)();	/* Previous overlap callback */
     int		if_bhit();	/* Backout hit callback */
     int		if_bmiss();	/* Backout miss callback */
-
-
+    int		if_boverlap();	/* Backout overlap callback */
     /*
      *	Record previous callbacks
      */
     phc = ap.a_hit;
     pmc = ap.a_miss;
+    poc = ap.a_overlap;
 
     /*
      *	Prepare to fire the backing-out ray
@@ -511,6 +512,7 @@ int			ctp;
     }
     ap.a_hit = if_bhit;
     ap.a_miss = if_bmiss;
+    ap.a_overlap = if_boverlap;
     if (nirt_debug & DEBUG_BACKOUT)
 	bu_log("Backing out from (%g %g %g) via (%g %g %g)\n",
 	       ap.a_ray.r_pt[0] * base2local,
@@ -525,4 +527,5 @@ int			ctp;
      */
     ap.a_hit = phc;
     ap.a_miss = pmc;
+    ap.a_overlap = poc;
 }
