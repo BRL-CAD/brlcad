@@ -124,6 +124,11 @@ set -S2 "/bin/sh"
  *	LIBRT		LIBRT_LIBES	(formerly RT_LIBES)	*
  *	LIBFB		LIBFB_LIBES				*
  *								*
+ *  Also note that the symbols 'LIBRT' et.al. are not file	*
+ *  _names_, but options to the loader used to include that	*
+ *  library.  Thus, they should not occur in dependency		*
+ *  lists.							*
+ *								*
  ****************************************************************/
 
 #ifdef vax
@@ -725,7 +730,13 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-/*#	define	CC_DEFS	-DAUTOSPEC	/* What does this do? */
+#	define	CC_DEFS	-PIC	/* Position independent code, for shared libraries */
+# if 1
+#	define	ARCH_SUF	so
+#	define	LIBVERS		[[../sharedlibvers.sh]]
+#	define	BUILD_LIBRARY	ld -Bdynamic -dp -o
+#	define	RANLIB		/**/
+# endif
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
 #	if 0
@@ -1210,6 +1221,8 @@ set -S2 "/bin/sh"
  */
 /**GAK, no string compares in #if */
 
+#if 0
+
 #if !NFS
 /*	Local style, binaries in source directories */
 #	define	LIBFB	../libfb/libfb.ARCH_SUF
@@ -1260,6 +1273,60 @@ set -S2 "/bin/sh"
 #		define	LIBPKG	/**/
 #	endif
 #endif
+
+#else /* ---- */
+
+#if !NFS
+/*	Local style, binaries in source directories */
+#	define	LIBFB	-L../libfb -L''LIBDIR -lfb
+#	define	LIBRT	-L../librt -L''LIBDIR -lrt
+#	define	LIBPLOT	-L../libplot3 -L''LIBDIR -lplot3
+#	define	LIBORLE	-L../liborle -L''LIBDIR -lorle
+#	define	LIBRLE	-L../librle -L''LIBDIR -lrle
+#	define  LIBFFT	-L../libfft -L''LIBDIR -lfft
+#	define	LIBWDB	-L../libwdb -L''LIBDIR -lwdb
+#	define	LIBNURB	-L../libnurb -L''LIBDIR -lnurb
+#	define	LIBMSR	-L../libmsr -L''LIBDIR -lmsr
+#	define	LIBRAD	-L../librad -L''LIBDIR -lrad
+#	define	LIBTERMIO	-L../libtermio -L''LIBDIR -ltermio
+#	define	LIBCURSOR	-L../libcursor -L''LIBDIR -lcursor
+#	define	LIBFONT	-L../libfont -L''LIBDIR -lfont
+#	define	LIBSYSV	-L../libsysv -L''LIBDIR -lsysv
+#	ifndef	LIBMALLOC
+#		define	LIBMALLOC	-L../libmalloc -L''LIBDIR -lmalloc
+#	endif
+#	if HAS_TCP
+#		define	LIBPKG	-L../libpkg -L''LIBDIR -lpkg
+#	else
+#		define	LIBPKG	/**/
+#	endif
+
+#else
+/*	NFS style, append machine name */
+#	define	LIBFB	-L../.libfb.MTYPE -L''LIBDIR -lfb
+#	define	LIBRT	-L../.librt.MTYPE -L''LIBDIR -lrt
+#	define	LIBPLOT	-L../.libplot3.MTYPE -L''LIBDIR -lplot3
+#	define	LIBORLE	-L../.liborle.MTYPE -L''LIBDIR -lorle
+#	define	LIBRLE	-L../.librle.MTYPE -L''LIBDIR -lrle
+#	define	LIBFFT	-L../.libfft.MTYPE -L''LIBDIR -lfft
+#	define	LIBWDB	-L../.libwdb.MTYPE -L''LIBDIR -lwdb
+#	define	LIBNURB	-L../.libnurb.MTYPE -L''LIBDIR -lnurb
+#	define	LIBMSR	-L../.libmsr.MTYPE -L''LIBDIR -lmsr
+#	define	LIBRAD	-L../.librad.MTYPE -L''LIBDIR -lrad
+#	define	LIBTERMIO	-L../.libtermio.MTYPE -L''LIBDIR -ltermio
+#	define	LIBCURSOR	-L../.libcursor.MTYPE -L''LIBDIR -lcursor
+#	define	LIBFONT	-L../.libfont.MTYPE -L''LIBDIR -lfont
+#	define	LIBSYSV	-L../.libsysv.MTYPE -L''LIBDIR -lsysv
+#	ifndef	LIBMALLOC
+#		define	LIBMALLOC	-L../.libmalloc.MTYPE -L''LIBDIR -lmalloc
+#	endif
+#	if HAS_TCP
+#		define	LIBPKG	-L../.libpkg.MTYPE -L''LIBDIR -lpkg
+#	else
+#		define	LIBPKG	/**/
+#	endif
+#endif
+#endif /* ---- */
 
 #if !defined(LIBTERMLIB)
 #	define	LIBTERMLIB	-ltermlib

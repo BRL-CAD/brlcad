@@ -40,10 +40,21 @@
 #	define EXTRA_OBJ_NO_DEPENDENCY	/**/
 #endif
 
+#if !defined(LIBVERS)
 PRODUCTS::	EXTRA_OBJ OBJ
 	rm -f PRODUCTS; EXTRA_SETUP
 	AR r PRODUCTS OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY
 	RANLIB PRODUCTS
+#else
+/* Shared library support.  "EXTRA_SETUP" increments version number. */
+/* Can't list SHARED_PRODUCT in 'rm' command, or will get wrong version number.
+ * (Cake won't re-run the LIBVERS shell script)
+ */
+#define	SHARED_PRODUCT	PRODUCTS.LIBVERS
+PRODUCTS&::	EXTRA_OBJ OBJ
+	rm -f PRODUCTS*; EXTRA_SETUP
+	BUILD_LIBRARY SHARED_PRODUCT OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY
+#endif
 
 %.o&:	SRCDIR,,%,o			if exist ../SRCDIR/%.c
 
