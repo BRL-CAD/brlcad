@@ -163,6 +163,7 @@ extern struct directory	*combadd(), *dir_add(), *lookup(), **dir_getspace();
 extern struct solid *redraw();
 extern void		ellipse(), memfree(), mempurge();
 extern unsigned long	memalloc(), memget();
+extern union record	*db_getmrec();
 
 #ifndef	NULL
 #define	NULL		0
