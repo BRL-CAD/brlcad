@@ -642,7 +642,7 @@ FILE *fp;
 	}
 	if( strcmp( cmd_args[0], "attach" ) == 0 )  {
 		register struct frame *fr;
-		int maxx, maxy;
+		int maxx;
 
 		if( init_fb(cmd_args[1]) < 0 )  return;
 
@@ -653,13 +653,11 @@ FILE *fp;
 		size_display(fr->fr_size);
 		if( fbp == FBIO_NULL ) return;
 		/* Trim to what can be drawn */
-		maxx = maxy = fr->fr_size;
+		maxx = fr->fr_size;
 		if( maxx > fb_getwidth(fbp) )
 			maxx = fb_getwidth(fbp);
-		if( maxy > fb_getheight(fbp) )
-			maxy = fb_getheight(fbp);
-		for( i=0; i<maxy; i++ )  {
-			fb_write( fbp, 0, i,
+		for( i=0; i<fr->fr_size; i++ )  {
+			fb_write( fbp, 0, i%fb_getwidth(fbp),
 				fr->fr_picture + (fr->fr_size-i-1)*fr->fr_size*3,
 				maxx );
 		}
@@ -1095,13 +1093,13 @@ char *buf;
 		(fr->fr_size-line-1)*fr->fr_size*3, i );
 
 	/* If display attached, also draw it */
-	if( fbp != FBIO_NULL && line < fb_getheight(fbp) )  {
+	if( fbp != FBIO_NULL )  {
 		int maxx;
 		maxx = i/3;
 		if( maxx > fb_getwidth(fbp) )
 			maxx = fb_getwidth(fbp);
 		size_display(fr->fr_size);
-		fb_write( fbp, 0, line, buf+2, maxx );
+		fb_write( fbp, 0, line%fb_getheight(fbp), buf+2, maxx );
 	}
 	if(buf) (void)free(buf);
 
