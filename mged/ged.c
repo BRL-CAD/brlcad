@@ -702,7 +702,7 @@ int mask;
 #ifndef WIN32
     fd = (long)clientData;
 #else	
-	fd = (HANDLE)clientData;      
+    fd = (HANDLE)clientData;      
 #endif
 
     /* When not in cbreak mode, just process an entire line of input, and
@@ -775,18 +775,18 @@ int mask;
     {
       char buf[4096];
       int index;
-#ifdef WIN32
-	ReadFile(fd,buf,4096,&count,NULL);
-#else
-      count = read((int)fd, (void *)buf, 4096)
-#endif
+#  ifdef WIN32
+      ReadFile(fd,buf,4096,&count,NULL);
+#  else
+      count = read((int)fd, (void *)buf, 4096);
+#  endif
 
 #else
     /* Grab single character from stdin */
     count = read((int)fd, (void *)&ch, 1);
 #endif
 
-    if (count <= 0 && feof(stdin)){
+    if (count <= 0 && feof(stdin)) {
       char *av[2];
 
       av[0] = "q";
@@ -1301,17 +1301,9 @@ int mask;
   /* Get data from stdout or stderr */
 
 #ifndef WIN32
-#if 1
   if((count = read((int)fd, line, MAXLINE)) == 0)
 #else
-  if((count = read((int)fd, line, 5120)) == 0)
-#endif
-#else
-#if 1
   if((!ReadFile(fd, line, MAXLINE,&count,0)))
-#else
-  if((!ReadFile(fd, line, 5120,&count,0)))
-#endif
 #endif
     return;
 
