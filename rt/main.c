@@ -54,6 +54,7 @@ int		rt_verbosity = -1;	/* blather incesantly by default */
 
 /***** Variables shared with viewing model *** */
 FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
+unsigned	char	*pixmap = NULL;	/* Pixel Map for rerendering of black pixels */
 FILE		*outfp = NULL;		/* optional pixel output file */
 int		output_is_binary = 1;	/* !0 means output file is binary */
 mat_t		view2model;
@@ -215,6 +216,11 @@ int main(int argc, char **argv)
 		width = 512;
 	if( height <= 0 && cell_height <= 0 )
 		height = 512;
+
+	/* Allocate data for pixel map for rerendering of black pixels */
+	pixmap= (unsigned char*)malloc(sizeof(RGBpixel)*width*height);
+	for (i= 0; i < width*height*sizeof(RGBpixel); i++)
+		pixmap[i]= 0;
 
 	if( sub_grid_mode ) {
 		/* check that we have a legal subgrid */
@@ -451,5 +457,6 @@ int main(int argc, char **argv)
 	if( fbp != FBIO_NULL )
 		fb_close(fbp);
 
+	free(pixmap);
 	return(0);
 }
