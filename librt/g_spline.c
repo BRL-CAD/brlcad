@@ -66,14 +66,6 @@ struct local_hit {
 struct local_hit * spl_hit_head = NULLHIT;
 int hit_count;
 
-#define MINMAX(a,b,c)   { FAST fastf_t ftemp;\
-        if( (ftemp = (c)) < (a) )  a = ftemp;\
-        if( ftemp > (b) )  b = ftemp; }
-
-#define MM(v)   MINMAX( stp->st_min[0], stp->st_max[0], v[0] ); \
-                MINMAX( stp->st_min[1], stp->st_max[1], v[1] ); \
-                MINMAX( stp->st_min[2], stp->st_max[2], v[2] )
-
 /* Algorithm - Fire a ray at the bounding box of a b_spline surface.  If an
  * intersection is found then subdivide the surface creating two new
  * surfaces and freeing the original surface.  Recursively shoot at each of
@@ -98,7 +90,7 @@ int hit_count;
  */
 
 /* Since the record granuals consist of floating point values
- * we need to decalre some of the read variables as float and not
+ * we need to decalre some of the read variables as dbfloat_t and not
  * fastf_t.
  */
 
@@ -124,8 +116,8 @@ struct rt_i * rtip;
 		struct b_spline * new_srf;
 		struct b_spline * s_split;
 		int nbytes, nby;
-		float * vp;
-		float * fp;
+		dbfloat_t * vp;
+		dbfloat_t * fp;
 		fastf_t * mesh_ptr;
 		int epv;
 
@@ -143,13 +135,7 @@ struct rt_i * rtip;
 		 * internal representation.
 		 */
 		nbytes = rec.d.d_nknots * sizeof( union record );
-
-		if ( (vp = ( float *) rt_malloc( nbytes, "spl knots" ))
-		    == (float *) 0 )
-		{
-			rt_bomb("spl_prep: malloc error\n");
-		}
-
+		fp = vp = ( dbfloat_t *) rt_malloc( nbytes, "spl knots" );
 		if ( fread( (char *) vp, nbytes, 1, rtip->fp ) != 1 )
 		{
 			break;
@@ -160,13 +146,12 @@ struct rt_i * rtip;
 		/* If everything up to here is ok then allocate memory
 		 * for a surface.
 	 	 */
+		new_srf = (struct b_spline *) spl_new(
+			rec.d.d_order[0], rec.d.d_order[1],
+			rec.d.d_kv_size[0], rec.d.d_kv_size[1],
+			rec.d.d_ctl_size[0], rec.d.d_ctl_size[1],
+			rec.d.d_geom_type );
 
-		new_srf = (struct b_spline *) spl_new( rec.d.d_order[0],
-		    rec.d.d_order[1], rec.d.d_kv_size[0],rec.d.d_kv_size[1],
-		    rec.d.d_ctl_size[0], rec.d.d_ctl_size[1],
-		    rec.d.d_geom_type );
-
-		fp = vp;
 		for( i = 0; i < rec.d.d_kv_size[0]; i++){	/* U knots */
 			new_srf->u_kv->knots[i] = (fastf_t) *vp++;
 		}
@@ -175,60 +160,51 @@ struct rt_i * rtip;
 
 		rt_free( (char *) fp, "spl_prep: fp" );
 
-		spl_kvnorm( new_srf->u_kv);
-		spl_kvnorm( new_srf->v_kv);
-
 		/* Read in the mesh control points and convert them to
 		 * the b-spline data structure.
 		 */
 		nby = rec.d.d_nctls * sizeof( union record);
-
-		if (( vp = (float *) rt_malloc(nby,  "control mesh"))
-		    == (float *)0)
-		{
-			rt_bomb("spl_prep: malloc error mesh control points");
-		}
-
+		fp = vp = (dbfloat_t *) rt_malloc(nby,  "control mesh");
 		if( fread((char *) vp,  nby,  1, rtip->fp) != 1)
 			break;
 
-		fp = vp;
+		spl_kvnorm( new_srf->u_kv);
+		spl_kvnorm( new_srf->v_kv);
 
 		mesh_ptr = new_srf->ctl_mesh->mesh;
 
-		for( i = 0; 
-		     i < ( rec.d.d_ctl_size[0] * rec.d.d_ctl_size[1]);
-		     i++)
-		{
-			fastf_t tmp[4];
-
-			if ( epv == P3)
-			{
-			   MAT4X3PNT( mesh_ptr, mat, vp);
-			} else
-			{
-			   MAT4X4PNT( mesh_ptr, mat, vp);
+		i = ( rec.d.d_ctl_size[0] * rec.d.d_ctl_size[1]);
+		if( epv == P3 )  {
+			for( ; i > 0; i--)  {
+				MAT4X3PNT( mesh_ptr, mat, vp);
+				mesh_ptr += P3;
+				vp += P3;
 			}
-			mesh_ptr += epv;
-			vp += epv;
+		} else if( epv == P4 )  {
+			for( ; i > 0; i--)  {
+				MAT4X4PNT( mesh_ptr, mat, vp);
+				mesh_ptr += P4;
+				vp += P4;
+			}
+		} else {
+			rt_log("%s:  %d not valid elements-per-vect\n",
+				stp->st_name, epv );
+			return(-1);	/* BAD */
 		}
 
 		rt_free( (char *) fp,  "free up mesh points");
 
 		GETSTRUCT( s_tree, b_head );
-		s_tree->left = (struct b_tree *) 
-			rt_malloc( sizeof (struct b_tree), "left subtree");
-		s_tree->right = (struct b_tree *) 
-			rt_malloc( sizeof (struct b_tree), "right subtree");
+		GETSTRUCT( s_tree->left, b_tree );
+		GETSTRUCT( s_tree->right, b_tree );
 		s_tree->next = nlist;
 		nlist = s_tree;
 
 		s_split = (struct b_spline * ) spl_split( new_srf, 0);
-
-
 		s_tree->left->root = s_split;
 		s_tree->right->root = s_split->next;
 		s_split->next = (struct b_spline *) 0;
+
 		s_tree->left->left = s_tree->left->right = NULLTREE;
 		s_tree->right->left = s_tree->right->right = NULLTREE;
 
@@ -241,8 +217,8 @@ struct rt_i * rtip;
 		    s_tree->left->min, s_tree->left->max);
 		spl_bound( s_tree->right->root, 
 		    s_tree->right->min, s_tree->right->max);
-		MM(s_tree->min);
-		MM(s_tree->max);
+		VMINMAX( stp->st_min, stp->st_max, s_tree->min );
+		VMINMAX( stp->st_min, stp->st_max, s_tree->max );
 		if ( rt_g.debug & DEBUG_SPLINE ) {
 			rt_pr_spl( "initial surface",s_tree->root );
 			rt_pr_spl( "left  surface", s_tree->left->root );
@@ -726,61 +702,64 @@ int level;
 	if ( tree == NULLTREE)	/* Passed a null pointer  */
 		return;
 
-	if ( rt_in_rpp ( rp,  invdir,  tree->min,  tree->max))
-	{
-		pix_size = (ap->a_rbeam + ap->a_diverge * rp->r_max);
+	if ( !rt_in_rpp ( rp,  invdir,  tree->min,  tree->max))
+		return;
 
-		if ( tree->root != (struct b_spline *) 0 )
-		{
+	pix_size = (ap->a_rbeam + ap->a_diverge * rp->r_max);
 
-			flat =	spl_flat( tree->root, pix_size );
+	if ( tree->root != (struct b_spline *) 0 )  {
 
-			if (flat)
-			{
-				shot_poly( rp,  tree, level);
-				return;
-			}
-
-			sub = (struct b_spline *) 
-				spl_split( tree->root, dir);
-
-			spl_sfree( tree->root );
-			tree->root = (struct b_spline *) 0;
-
-
-			tree->left = (struct b_tree *) 
-				rt_malloc( sizeof (struct b_tree), 
-					"nshoot: left tree");
-			tree->right = (struct b_tree *) 
-				rt_malloc( sizeof (struct b_tree), 
-					"nshoot: right tree");
-
-			tree->left->root = sub;
-			spl_bound( tree->left->root,
-			    tree->left->min, tree->left->max);
-			tree->left->left =
-			tree->left->right = NULLTREE; 		
-
-			tree->right->root = sub->next; 		
-
-			spl_bound( tree->right->root,
-			    tree->right->min, tree->right->max);
-			tree->right->left =
-			tree->right->right = NULLTREE; 		
+		if( spl_check( tree->root ) < 0)  {
+			rt_pr_spl("n_shoot: bad tree root", tree->root);
+			return;
 		}
 
-		if ( rt_g.debug & DEBUG_SPLINE ) 
-		    rt_log("spline: Left tree level %d\n", level);
+		flat =	spl_flat( tree->root, pix_size );
+		if (flat)
+		{
+			shot_poly( rp,  tree, level);
+			return;
+		}
 
-		n_shoot( rp,  invdir,  tree->left, ap,
-		    OTHERDIR(dir), level+1 );
+		sub = (struct b_spline *) 
+		spl_split( tree->root, dir);
+		if( spl_check( sub ) < 0 || 
+		    spl_check( sub->next ) < 0 )  {
+		    	rt_pr_spl("error in spl_split() input:", tree->root);
+			rt_pr_spl("Left output:", sub);
+			rt_pr_spl("Right output:", sub->next);
+		    	return;
+		}
 
-		if ( rt_g.debug & DEBUG_SPLINE ) 
-		    rt_log("spline: Right tree level %d\n", level);
+		/* Record new right and left descendants */
+		GETSTRUCT( tree->left, b_tree );
+		GETSTRUCT( tree->right, b_tree );
+		tree->left->root = sub;
+		spl_bound( tree->left->root,
+		    tree->left->min, tree->left->max);
+		tree->left->left = tree->left->right = NULLTREE;
 
-		n_shoot( rp,  invdir,  tree->right, ap,
-		    OTHERDIR(dir), level+1);
+		tree->right->root = sub->next; 		
+		spl_bound( tree->right->root,
+		    tree->right->min, tree->right->max);
+		tree->right->left = tree->right->right = NULLTREE;
+
+		/* Now, release old "root" (leaf) */
+		spl_sfree( tree->root );
+		tree->root = (struct b_spline *) 0;
 	}
+
+	if ( rt_g.debug & DEBUG_SPLINE ) 
+	    rt_log("spline: Left tree level %d\n", level);
+
+	n_shoot( rp,  invdir,  tree->left, ap,
+	    OTHERDIR(dir), level+1 );
+
+	if ( rt_g.debug & DEBUG_SPLINE ) 
+	    rt_log("spline: Right tree level %d\n", level);
+
+	n_shoot( rp,  invdir,  tree->right, ap,
+	    OTHERDIR(dir), level+1);
 }
 
 shot_poly( rp, tree, level )
