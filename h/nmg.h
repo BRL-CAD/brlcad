@@ -106,6 +106,7 @@
 #define NMG_BOOL_ISECT 4	/* intsersection */
 
 /* Boolean classifications */
+#define NMG_CLASS_Unknown	-1
 #define NMG_CLASS_AinB		0
 #define NMG_CLASS_AonBshared	1
 #define NMG_CLASS_AonBanti	2
