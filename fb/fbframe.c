@@ -37,7 +37,7 @@ main(argc, argv)
 char **argv;
 {
 	register int c;
-	register int	x, y;
+	register int	x;
 	FBIO		*fbp;
 	int	xsize, ysize;
 	int		 len;

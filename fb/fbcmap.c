@@ -69,7 +69,6 @@ char *argv[];
 	register int		i;
 	register int		fudge;
 	register ColorMap	*cp = &cmap;
-	int	size;
 	FBIO *fbp;
 
 	if( ! pars_Argv( argc, argv ) ) {

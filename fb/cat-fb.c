@@ -145,7 +145,7 @@ char	asctab[128] = {
 	'-',	/*- hyphen*/
 	'w',	/*w*/
 	'q',	/*q*/
-	'/',	/*/*/
+	'/',	/* / */
 	'.',	/*.*/
 	'g',	/*g*/
 	'\023',	/*3/4*/
@@ -554,8 +554,11 @@ register FILE	*fp;
 			if (initialized)
 				goto out;
 			initialized = 1;
-/**			row = 25;	/** original value **/
+#if 0
+			row = 25;	/** original value **/
+#else
 			row = -108;	/* ignore 1/4 C/A/T inch header */
+#endif
 			xpos = CONVERT(row);
 			for (c = 0; c < BUFFER_SIZE; c++)
 				buffer[c] = 0;
@@ -701,7 +704,6 @@ register int fnum;
 register int size;
 {
 	register int i;
-	char cbuf[80];
 
 	fontwanted = 0;
 	if (fnum < 0 || fnum >= MAXF) {
@@ -732,7 +734,7 @@ register int size;
 readinfont()
 {
 	register struct vfont	*vfp;
-	register int fnum, size, font;
+	register int fnum, size;
 	char cbuf[BUFSIZ];
 
 	fnum = new_font_num;
@@ -819,10 +821,10 @@ outc(code)
 		if( readinfont() < 0 )  return(0);
 	}
 	if (railmag == SPECIALFONT) {
-		if ((c = spectab[code]) < 0)
-			return(0);
-	} else if ((c = asctab[code]) < 0)
-		return(0);
+		c = spectab[code];
+	} else {
+		c = asctab[code];
+	}
 	vdp = &fontdes[cfont].vfp->vf_dispatch[c];
 
 	if (vdp->vd_nbytes <= 0 )
@@ -875,7 +877,7 @@ outc(code)
 slop_lines(nlines)
 	int nlines;
 {
-	register int i, rlines;
+	register int rlines;
 	
 	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {

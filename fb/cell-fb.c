@@ -150,7 +150,6 @@ static char	*usage[] = {
 	0
 };
 static char	fbfile[MAX_LINE] = { 0 };/* Name of frame-buffer device */
-static char	infile[MAX_LINE] = { 0 };/* Name of input stream */
 
 static double	az;			/* To dump to log file */
 static double	bool_val;		/* Only value displayed for -b option */
@@ -204,6 +203,12 @@ static RGBpixel	colortbl[12] =		/* The map: value --> R, G, B */
     { 255,   0,   0 },		/* red */
     {   0,   0,   0 }		/* black */
 };			
+
+#if 0
+static CONST char   *mon_nam[] =
+                        { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+#endif
 
 STATIC bool	get_OK();
 STATIC bool	pars_Argv();
@@ -887,9 +892,6 @@ STATIC void prnt_Usage()
 STATIC void log_Run()
 {
     long                clock;
-    static char         *mon_nam[] =
-                        { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
     mat_t		model2hv;		/* model to h,v matrix */
     mat_t		hv2model;		/* h,v tp model matrix */
     quat_t		orient;			/* orientation */

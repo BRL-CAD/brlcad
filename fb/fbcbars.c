@@ -62,7 +62,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define MAX_LINE	(8*1024)	/* Max pixels/line */
 static unsigned char scanline[3*MAX_LINE];	/* 1 scanline pixel buffer */
-static int scanbytes;			/* # of bytes of scanline */
 
 static char	*framebuffer = NULL;
 
