@@ -25,6 +25,35 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 
 /*
+ *			R T _ 3 P T S _ D I S T I N C T
+ *
+ *  Check to see if three points are all distinct, i.e.,
+ *  ensure that there is at least sqrt(dist_tol_sq) distance
+ *  between every pair of points.
+ *
+ *  Returns (boolean) -
+ *	1	If all three points are distinct
+ *	0	If two or more points are closer together than dist_tol_sq
+ */
+int
+rt_3pts_distinct( a, b, c, dist_tol_sq )
+point_t	a, b, c;
+double	dist_tol_sq;
+{
+	vect_t	B_A;
+	vect_t	C_A;
+	vect_t	C_B;
+
+	VSUB2( B_A, b, a );
+	if( MAGSQ( B_A ) <= dist_tol_sq )  return(0);
+	VSUB2( C_A, c, a );
+	if( MAGSQ( C_A ) <= dist_tol_sq )  return(0);
+	VSUB2( C_B, c, b );
+	if( MAGSQ( C_B ) <= dist_tol_sq )  return(0);
+	return(1);
+}
+
+/*
  *			R T _ M K _ P L A N E _ 3 P T S
  *
  *  Find the equation of a plane that contains three points.
@@ -60,8 +89,6 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
  *  it might have been nice to have listed the points in clockwise
  *  order to match the convention of the NMG face creation routines.
  *
- *  XXX The tolerance here should be relative to the model diameter, not abs.
- *
  *  Explicit Return -
  *	 0	OK
  *	-1	Failure.  At least two of the points were not distinct,
@@ -71,9 +98,10 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
  *	plane	The plane equation is stored here.
  */
 int
-rt_mk_plane_3pts( plane, a, b, c )
+rt_mk_plane_3pts( plane, a, b, c, dist_tol_sq )
 plane_t	plane;
 point_t	a, b, c;
+double	dist_tol_sq;
 {
 	vect_t	B_A;
 	vect_t	C_A;
@@ -81,11 +109,11 @@ point_t	a, b, c;
 	register fastf_t mag;
 
 	VSUB2( B_A, b, a );
-	if( VNEAR_ZERO( B_A, 0.005 ) )  return(-1);
+	if( MAGSQ( B_A ) <= dist_tol_sq )  return(-1);
 	VSUB2( C_A, c, a );
-	if( VNEAR_ZERO( C_A, 0.005 ) )  return(-1);
+	if( MAGSQ( C_A ) <= dist_tol_sq )  return(-1);
 	VSUB2( C_B, c, b );
-	if( VNEAR_ZERO( C_B, 0.005 ) )  return(-1);
+	if( MAGSQ( C_B ) <= dist_tol_sq )  return(-1);
 
 	VCROSS( plane, B_A, C_A );
 
