@@ -402,8 +402,8 @@ struct rt_sketch_internal
  */
 struct rt_submodel_internal {
 	long		magic;
-	char		file[128];	/* .g filename, 0-len --> this database. */
-	char		treetop[128];	/* one treetop only */
+	struct bu_vls	file;	/* .g filename, 0-len --> this database. */
+	struct bu_vls	treetop;	/* one treetop only */
 	int		meth;		/* space partitioning method */
 	/* other option flags (lazy prep, etc.)?? */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */

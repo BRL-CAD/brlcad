@@ -781,9 +781,11 @@ struct rt_db_internal	*intern;
 	intern->idb_ptr = (genptr_t)sip;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
-	strcpy( sip->treetop, cmd_argvs[3] );
+	bu_vls_init( &sip->treetop );
+	bu_vls_strcpy( &sip->treetop, cmd_argvs[3] );
 	sip->meth = atoi( cmd_argvs[4] );
-	strcpy( sip->file, cmd_argvs[5] );
+	bu_vls_init( &sip->file );
+	bu_vls_strcpy( &sip->file, cmd_argvs[5] );
 
 	return( 0 );
 }

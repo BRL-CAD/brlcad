@@ -45,13 +45,11 @@ static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
 CONST struct bu_structparse rt_submodel_parse[] = {
-	{"%s",	128, "file",	bu_offsetofarray(struct rt_submodel_internal, file), BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",	128, "treetop", bu_offsetofarray(struct rt_submodel_internal, treetop), BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%S",	1, "treetop",	RT_SUBMODEL_O(treetop),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		BU_STRUCTPARSE_FUNC_NULL },
 	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
-
-
 
 /* ray tracing form of solid, including precomputed terms */
 struct submodel_specific {
@@ -104,12 +102,12 @@ struct rt_i		*rtip;
 	 * This code must be prepared to run in parallel
 	 * without tripping over itself.
 	 */
-	if( sip->file[0] == '\0' )  {
+	if( bu_vls_strlen( &sip->file ) == 0 )  {
 		/* No .g file name given, tree is in current .g file */
 		sub_dbip = rtip->rti_dbip;
 	} else {
 		/* db_open will cache dbip's via bu_open_mapped_file() */
-		if( (sub_dbip = db_open( sip->file, "r" )) == DBI_NULL )
+		if( (sub_dbip = db_open( bu_vls_addr( &sip->file ), "r" )) == DBI_NULL )
 		    	return -1;
 
 		/* Save the overhead of stat() calls on subsequent opens */
@@ -135,7 +133,7 @@ struct rt_i		*rtip;
 		register char	*ttp;
 		RT_CK_RTI(*rtipp);
 		ttp = (*rtipp)->rti_treetop;
-		if( ttp && strcmp( ttp, sip->treetop ) == 0 )  {
+		if( ttp && strcmp( ttp, bu_vls_addr( &sip->treetop ) ) == 0 )  {
 			/* Re-cycle an already prepped rti */
 			sub_rtip = *rtipp;
 			sub_rtip->rti_uses++;
@@ -156,7 +154,7 @@ struct rt_i		*rtip;
 	RT_CK_RTI(sub_rtip);
 
 	/* Set search term before leaving critical section */
-	sub_rtip->rti_treetop = bu_strdup(sip->treetop);
+	sub_rtip->rti_treetop = bu_vls_strdup(&sip->treetop);
 
 	bu_semaphore_release(RT_SEM_MODEL);
 
@@ -189,7 +187,7 @@ struct rt_i		*rtip;
 		sub_rtip->rti_space_partition = rtip->rti_space_partition;
 	}
 
-	argv[0] = sip->treetop;
+	argv[0] = bu_vls_addr( &sip->treetop );
 	argv[1] = NULL;
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
 		bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
@@ -201,7 +199,7 @@ struct rt_i		*rtip;
 
 	if( sub_rtip->nsolids <= 0 )  {
 		bu_log("rt_submodel_prep(%s): %s No solids found\n",
-			stp->st_dp->d_namep, sip->file );
+			stp->st_dp->d_namep, bu_vls_addr( &sip->file ) );
 		/* Can't call rt_free_rti( sub_rtip ) because it may have
 		 * already been instanced!
 		 */
@@ -757,10 +755,10 @@ CONST struct bn_tol	*tol;
 	state.ts_m = (struct model **)&good;	/* hack -- passthrough to rt_submodel_wireframe_leaf() */
 	good.vheadp = vhead;
 
-	if( sip->file[0] != '\0' )  {
+	if( bu_vls_strlen( &sip->file ) != 0 )  {
 		/* db_open will cache dbip's via bu_open_mapped_file() */
-		if( (good.dbip = db_open( sip->file, "r" )) == DBI_NULL )  {
-			bu_log("rt_submodel_plot() db_open(%s) failure\n", sip->file);
+		if( (good.dbip = db_open( bu_vls_addr( &sip->file ), "r" )) == DBI_NULL )  {
+			bu_log("rt_submodel_plot() db_open(%s) failure\n", bu_vls_addr( &sip->file ));
 			return -1;
 		}
 		if( !db_is_directory_non_empty(good.dbip) )  {
@@ -778,7 +776,7 @@ CONST struct bn_tol	*tol;
 		/* good.dbip->dbi_uses++; */	/* don't close it either */
 	}
 
-	argv[0] = sip->treetop;
+	argv[0] = bu_vls_addr( &sip->treetop );
 	argv[1] = NULL;
 	ret = db_walk_tree( good.dbip, 1, (CONST char **)argv,
 		1,
@@ -788,8 +786,8 @@ CONST struct bn_tol	*tol;
 		rt_submodel_wireframe_leaf,
 		(genptr_t)NULL );
 
-	if( ret < 0 )  bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", sip->treetop);
-	if( sip->file[0] != '\0' )
+	if( ret < 0 )  bu_log("rt_submodel_plot() db_walk_tree(%s) failure\n", bu_vls_addr( &sip->treetop ));
+	if( bu_vls_strlen( &sip->file ) != 0 )
 		db_close(good.dbip);
 	return ret;
 }
@@ -871,12 +869,12 @@ fail:
 	bu_vls_free( &str );
 
 	/* Check for reasonable values */
-	if( sip->treetop[0] == '\0' )  {
+	if( bu_vls_strlen( &sip->treetop ) == 0 )  {
 		bu_log("rt_submodel_import() treetop= must be specified\n");
 		goto fail;
 	}
 #if 0
-bu_log("import: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+bu_log("import: file='%s', treetop='%s', meth=%d\n", bu_vls_addr( &sip->file ), bu_vls_addr( &sip->treetop ), sip->meth);
 bn_mat_print("root2leaf", sip->root2leaf );
 #endif
 
@@ -904,7 +902,7 @@ CONST struct db_i		*dbip;
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 #if 0
-bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+bu_log("export: file='%s', treetop='%s', meth=%d\n", bu_vls_addr( &sip->file ), bu_vls_addr( &sip->treetop ), sip->meth);
 #endif
 
 	/* Ignores scale factor */
@@ -975,12 +973,12 @@ fail:
 	bu_vls_free( &str );
 
 	/* Check for reasonable values */
-	if( sip->treetop[0] == '\0' )  {
+	if( bu_vls_strlen( &sip->treetop ) == 0 )  {
 		bu_log("rt_submodel_import() treetop= must be specified\n");
 		goto fail;
 	}
 #if 0
-bu_log("import: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+bu_log("import: file='%s', treetop='%s', meth=%d\n", bu_vls_addr( &sip->file ), bu_vls_addr( &sip->treetop ), sip->meth);
 bn_mat_print("root2leaf", sip->root2leaf );
 #endif
 
@@ -1007,7 +1005,7 @@ CONST struct db_i		*dbip;
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 #if 0
-bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
+bu_log("export: file='%s', treetop='%s', meth=%d\n", bu_vls_addr( &sip->file ), bu_vls_addr( &sip->treetop ), sip->meth);
 #endif
 
 	/* Ignores scale factor */
@@ -1049,8 +1047,8 @@ double			mm2local;
 	bu_vls_strcat( str, "instanced submodel (SUBMODEL)\n");
 
 	bu_vls_printf(str, "\tfile='%s', treetop='%s', meth=%d\n",
-		sip->file,
-		sip->treetop,
+		bu_vls_addr( &sip->file ),
+		bu_vls_addr( &sip->treetop ),
 		sip->meth );
 
 	return(0);

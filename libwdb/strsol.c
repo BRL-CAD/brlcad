@@ -186,8 +186,10 @@ int		meth;
 
 	BU_GETSTRUCT( in, rt_submodel_internal );
 	in->magic = RT_SUBMODEL_INTERNAL_MAGIC;
-	if( file )  strncpy( in->file, file, sizeof(in->file)-1 );
-	strncpy( in->treetop, treetop, sizeof(in->treetop)-1 );
+	bu_vls_init( &in->file );
+	if( file )  bu_vls_strcpy( &in->file, file );
+	bu_vls_init( &in->treetop );
+	bu_vls_strcpy( &in->treetop, treetop );
 	in->meth = meth;
 
 	return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
