@@ -56,6 +56,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/mathtab.h"
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***trans_tbl ) );
+RT_EXTERN( fastf_t mat_determinant, ( CONST mat_t m ) );
+
+#define ABS( _x )	(( _x > 0.0 )? _x : (-_x))
 
 void	proc_plate();
 void	proc_label();
@@ -795,12 +798,13 @@ int			simplify;
 }
 
 int
-Build_solid( l, name, mirror_name, plate_mode, centroid, thickness, tol )
+Build_solid( l, name, mirror_name, plate_mode, centroid, thickness, pl1, tol )
 int l;
 char *name,*mirror_name;
 int plate_mode;
 point_t centroid;
 fastf_t thickness;
+plane_t pl1;
 struct rt_tol *tol;
 {
 	struct model *m;
@@ -820,6 +824,9 @@ struct rt_tol *tol;
 	int i,k;
 	int vert1,vert2;
 	fastf_t outdot;
+	fastf_t min_dot=MAX_FASTF;
+	vect_t norm;
+	int planar=0;
 	long *flags;
 	long **copy_tbl;
 
@@ -1057,6 +1064,38 @@ struct rt_tol *tol;
 
 	/* get the shell and the first face from our list */
 	s = RT_LIST_FIRST( shell , &r->s_hd );
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		struct faceuse *fu1;
+
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		NMG_GET_FU_NORMAL( norm , fu );
+		for( RT_LIST_FOR( fu1 , faceuse , &s->fu_hd ) )
+		{
+			vect_t norm1;
+			fastf_t dot;
+
+			if( fu1->orientation != OT_SAME )
+				continue;
+
+			if( fu == fu1 )
+				continue;
+
+			NMG_GET_FU_NORMAL( norm1 , fu1 );
+			dot = VDOT( norm, norm1 );
+			if( dot < 0.0 )
+				dot = (-dot );
+			if( dot < min_dot )
+				min_dot = dot;
+		}
+	}
+
+	if( min_dot > 0.8 )
+		planar = 1;
+
 	fu = (struct faceuse *)NMG_TBL_GET( &faces , 0 );
 	NMG_CK_FACEUSE( fu );
 
@@ -1080,21 +1119,29 @@ struct rt_tol *tol;
 			rt_bomb( "Neither faceuse nor mate have an OT_SAME side\n" );
 		NMG_GET_FU_NORMAL( normal , fu );
 
-		/* calculate "out" direction, from centroid to face */
-		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-		eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
-		VSUB2( out , eu->vu_p->v_p->vg_p->coord , centroid );
-		VUNITIZE( out );
-
-		/* if "normal" and "out" disagree, reverse normal */
-		outdot = VDOT( out , normal );
-		if( outdot <= 0.001 &&  outdot >= -0.001 )
+		if( !planar )
 		{
-			/* try model centroid */
-			VSUB2( out , eu->vu_p->v_p->vg_p->coord , Centroid );
+			/* calculate "out" direction, from centroid to face */
+			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			VSUB2( out , eu->vu_p->v_p->vg_p->coord , centroid );
 			VUNITIZE( out );
+
+			/* if "normal" and "out" disagree, reverse normal */
 			outdot = VDOT( out , normal );
+			if( outdot <= 0.001 &&  outdot >= -0.001 )
+			{
+				/* try model centroid */
+				VSUB2( out , eu->vu_p->v_p->vg_p->coord , Centroid );
+				VUNITIZE( out );
+				outdot = VDOT( out , normal );
+			}
 		}
+		else
+		{
+			outdot = VDOT( pl1, normal );
+		}
+
 		if( outdot < 0.0 )
 			nmg_reverse_face_and_radials( fu , tol );
 
@@ -1494,6 +1541,7 @@ int cnt;
 	static int mir_count=0;
 	static int last_cc=0;
 	char 	name[17],mirror_name[17];
+	plane_t pl;
 	struct rt_tol tol;
 
         /* XXX These need to be improved */
@@ -1586,7 +1634,7 @@ int cnt;
 	else
 		mirror_name[0] = '\0';
 
-	if( !Build_solid( l, name, mirror_name, 0, centroid, 0.0, &tol ) )
+	if( !Build_solid( l, name, mirror_name, 0, centroid, 0.0, pl, &tol ) )
 	{
 		count++;
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -1607,6 +1655,154 @@ int cnt;
 	}
 
 	last_cc = in[cnt-1].cc;
+}
+
+void
+Get_ave_plane( pl, num_pts, x, y, z )
+plane_t pl;
+int num_pts;
+fastf_t *x,*y,*z;
+{
+	mat_t matrix;
+	mat_t inverse;
+	double one_over_vertex_count;
+	vect_t vsum;
+	int i;
+	fastf_t det;
+	int failed=0;
+
+	/* build matrix */
+	mat_zero( matrix );
+	VSET( vsum , 0.0 , 0.0 , 0.0 );
+
+	one_over_vertex_count = 1.0/(double)(num_pts);
+
+	for( i=0 ; i<num_pts ; i++ )
+	{
+
+		matrix[0] += x[i] * x[i];
+		matrix[1] += x[i] * y[i];
+		matrix[2] += x[i] * z[i];
+		matrix[5] += y[i] * y[i];
+		matrix[6] += y[i] * z[i];
+		matrix[10] += z[i] * z[i];
+
+		vsum[X] += x[i];
+		vsum[Y] += y[i];
+		vsum[Z] += z[i];
+	}
+	matrix[4] = matrix[1];
+	matrix[8] = matrix[2];
+	matrix[9] = matrix[6];
+	matrix[15] = 1.0;
+
+
+	/* Check that we don't have a singular matrix */
+	det = mat_determinant( matrix );
+
+	rt_log( "determinant = %g\n", det );
+
+	if( !NEAR_ZERO( det , SMALL_FASTF ) )
+	{
+		fastf_t inv_len_pl;
+
+		/* invert matrix */
+		mat_inv( inverse , matrix );
+
+		/* get normal vector */
+		MAT4X3PNT( pl , inverse , vsum );
+
+		/* unitize direction vector */
+		inv_len_pl = 1.0/(MAGNITUDE( pl ));
+		HSCALE( pl , pl , inv_len_pl );
+
+		/* get average vertex coordinates */
+		VSCALE( vsum, vsum, one_over_vertex_count );
+
+		/* get distance from plane to orgin */
+		pl[H] = VDOT( pl , vsum );
+
+		if( ABS( pl[0] ) > ABS( pl[1] ) )
+		{
+			if( ABS( pl[0] ) > ABS( pl[2] ) )
+			{
+				if( pl[0] < 0.0 )
+					HREVERSE( pl, pl )
+			}
+			else
+			{
+				if( pl[2] < 0.0 )
+					HREVERSE( pl, pl )
+			}
+		}
+		else
+		{
+			if( ABS( pl[1] ) > ABS( pl[2] ) )
+			{
+				if( pl[1] < 0.0 )
+					HREVERSE( pl, pl )
+			}
+			else
+			{
+				if( pl[2] < 0.0 )
+					HREVERSE( pl, pl )
+			}
+		}
+	}
+	else
+	{
+		fastf_t x0,y0,z0;
+		int x_same=1;
+		int y_same=1;
+		int z_same=1;
+
+		/* singular matrix, may occur if all vertices have the same zero
+		 * component.
+		 */
+		x0 = x[0];
+		y0 = y[0];
+		z0 = z[0];
+		for( i=1 ; i<num_pts ; i++ )
+		{
+			if( x[i] != x0 )
+				x_same = 0;
+			if( y[i] != y0 )
+				y_same = 0;
+			if( z[i] != z0 )
+				z_same = 0;
+
+			if( !x_same && !y_same && !z_same )
+				break;
+		}
+
+		if( x_same )
+		{
+			VSET( pl , 1.0 , 0.0 , 0.0 );
+		}
+		else if( y_same )
+		{
+			VSET( pl , 0.0 , 1.0 , 0.0 );
+		}
+		else if( z_same )
+		{
+			VSET( pl , 0.0 , 0.0 , 1.0 );
+		}
+
+		if( x_same || y_same || z_same )
+		{
+			/* get average vertex coordinates */
+			VSCALE( vsum, vsum, one_over_vertex_count );
+
+			/* get distance from plane to orgin */
+			pl[H] = VDOT( pl , vsum );
+
+		}
+		else
+		{
+			rt_log( "Get_plane: Cannot calculate plane\n" );
+			failed = 1;
+		}
+	}
 }
 
 /*
@@ -1631,6 +1827,7 @@ int cnt;
 	int cpts;
 	char	shflg,mrflg,ctflg;
 	char	name[17],mirror_name[17];
+	plane_t pl;
 	struct rt_tol tol;
 
         /* XXX These need to be improved */
@@ -1742,6 +1939,8 @@ int cnt;
 				rt_log( "\t%g\n" , thicks[thick_no] );
 		}
 
+		Get_ave_plane( pl, l, x,y,z );
+
 		VSET( centroid , 0.0 , 0.0 , 0.0 );
 		for ( cpts=0, k=1; k<l; k++ ) {
 			point_t last, tmp;
@@ -1778,7 +1977,7 @@ int cnt;
 			else
 				mirror_name[0] = '\0';
 
-			if( !Build_solid( l, name, mirror_name, 1, centroid, thicks[thick_no], &tol ) )
+			if( !Build_solid( l, name, mirror_name, 1, centroid, thicks[thick_no], pl, &tol ) )
 			{
 				count++;
 				(void) mk_addmember(name,&head,WMOP_UNION);
