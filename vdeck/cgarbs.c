@@ -29,9 +29,9 @@ int svec[];	/* array of like points */
 			svec[si] = i;
 		for(j=i+1; j<8; j++) {
 			if(	compar(	&(rec->s.s_values[i*3]),
-					&(rec->s.s_values[j*3])
-				) == YES
-			) {
+			    &(rec->s.s_values[j*3])
+			    ) == YES
+			    ) {
 				if( done == NO ) svec[++si] = j;
 				unique = NO;
 			}
@@ -49,7 +49,7 @@ int svec[];	/* array of like points */
 			}
 		}
 	}
-	if( si > 2 && si < 6 ) 
+	if( si > 2 && si < 6 )
 		svec[0] = si - 1;
 	if( si > 6 )
 		svec[1] = si - 5;
@@ -81,16 +81,16 @@ int svec[];	/* array of like points */
 		break;
 	case 4:
 		if(svec[0] == 2)	rec->s.s_cgtype = -6;	/* ARB6 */
-		else			rec->s.s_cgtype = -5;	/* ARB5 */
+		else	rec->s.s_cgtype = -5;	/* ARB5 */
 		break;
 	case 2:
 		rec->s.s_cgtype = -4;	/* ARB4 */
 		break;
 	default:
 		(void) fprintf( stderr,
-				"solid: %s  bad number of unique vectors (%d)\n",
-				rec->s.s_name,numuvec
-				);
+		    "solid: %s  bad number of unique vectors (%d)\n",
+		    rec->s.s_name,numuvec
+		    );
 		return(0);
 	}
 	return( numuvec );
@@ -129,7 +129,7 @@ int uvec[], svec[], numvec;
 			move(rec,2,1,5,6,3,0,4,3);
 			break;
 		case 4:			/* 4 = 5 */
-					/* if 4 = 7  do nothing */
+			/* if 4 = 7  do nothing */
 			if(svec[3] == 5)	move(rec,1,2,3,0,5,6,7,5);
 			break;
 		case 5:			/* 5 = 6 */
@@ -142,7 +142,7 @@ int uvec[], svec[], numvec;
 			(void) fprintf( stderr, "%s: bad arb7\n", rec->s.s_name );
 			return( 0 );
 		}
-		break;  
+		break;
 		/* end of ARB7 case */
 	case ARB6:	/* arb6 vectors:  0 1 2 3 4 4 6 6 */
 		prod = 1;
@@ -150,34 +150,34 @@ int uvec[], svec[], numvec;
 			prod = prod * (uvec[i] + 1);
 		switch( prod ) {
 		case 24:	/* 0123 unique */
-				/* 4=7 and 5=6  OR  4=5 and 6=7 */
+			/* 4=7 and 5=6  OR  4=5 and 6=7 */
 			if(svec[3] == 7)	move(rec,3,0,1,2,4,4,5,5);
-			else			move(rec,0,1,2,3,4,4,6,6);
+			else	move(rec,0,1,2,3,4,4,6,6);
 			break;
 		case 1680:	/* 4567 unique */
-				/* 0=3 and 1=2  OR  0=1 and 2=3 */
+			/* 0=3 and 1=2  OR  0=1 and 2=3 */
 			if(svec[3] == 3)	move(rec,7,4,5,6,0,0,1,1);
-			else			move(rec,4,5,6,7,0,0,2,2);
+			else	move(rec,4,5,6,7,0,0,2,2);
 			break;
 		case 160:	/* 0473 unique */
-				/* 1=2 and 5=6  OR  1=5 and 2=6 */
+			/* 1=2 and 5=6  OR  1=5 and 2=6 */
 			if(svec[3] == 2)	move(rec,0,3,7,4,1,1,5,5);
-			else			move(rec,4,0,3,7,1,1,2,2);
+			else	move(rec,4,0,3,7,1,1,2,2);
 			break;
 		case 672:	/* 3267 unique */
-				/* 0=1 and 4=5  OR  0=4 and 1=5 */
+			/* 0=1 and 4=5  OR  0=4 and 1=5 */
 			if(svec[3] == 1)	move(rec,3,2,6,7,0,0,4,4);
-			else			move(rec,7,3,2,6,0,0,1,1);
+			else	move(rec,7,3,2,6,0,0,1,1);
 			break;
 		case 252:	/* 1256 unique */
-				/* 0=3 and 4=7  OR 0=4 and 3=7 */
+			/* 0=3 and 4=7  OR 0=4 and 3=7 */
 			if(svec[3] == 3)	move(rec,1,2,6,5,0,0,4,4);
-			else			move(rec,5,1,2,6,0,0,3,3);
+			else	move(rec,5,1,2,6,0,0,3,3);
 			break;
 		case 60:	/* 0154 unique */
-				/* 2=3 and 6=7  OR  2=6 and 3=7 */
+			/* 2=3 and 6=7  OR  2=6 and 3=7 */
 			if(svec[3] == 3)	move(rec,0,1,5,4,2,2,6,6);
-			else			move(rec,5,1,0,4,2,2,3,3);
+			else	move(rec,5,1,0,4,2,2,3,3);
 			break;
 		default:
 			(void) fprintf( stderr,"%s: bad arb6\n", rec->s.s_name);
@@ -194,7 +194,7 @@ int uvec[], svec[], numvec;
 			move(rec,4,5,6,7,0,0,0,0);
 			break;
 		case 1680:	/* 4=5=6=7 */
-				/* do nothing */
+			/* do nothing */
 			break;
 		case 160:	/* 0=3=4=7 */
 			move(rec,1,2,6,5,0,0,0,0);
@@ -221,9 +221,9 @@ int uvec[], svec[], numvec;
 		break;
 	default:
 		(void) fprintf( stderr,
-				"solid %s: unknown arb type (%d)\n",
-				rec->s.s_name,rec->s.s_cgtype
-				);
+		    "solid %s: unknown arb type (%d)\n",
+		    rec->s.s_name,rec->s.s_cgtype
+		    );
 		return( 0 );
 	}
 	return( 1 );
@@ -232,9 +232,10 @@ int uvec[], svec[], numvec;
 move( rec, p0, p1, p2, p3, p4, p5, p6, p7 )
 register Record	*rec;
 int		p0, p1, p2, p3, p4, p5, p6, p7;
-	{	register int	i, j;
-		int		pts[8];
-		float		copy[24];
+{	
+	register int	i, j;
+	int		pts[8];
+	float		copy[24];
 	pts[0] = p0 * 3;
 	pts[1] = p1 * 3;
 	pts[2] = p2 * 3;
@@ -246,24 +247,25 @@ int		p0, p1, p2, p3, p4, p5, p6, p7;
 
 	/* Copy of the record.						*/
 	for( i = 0; i <= 21; i += 3 )
-		{
+	{
 		VMOVE( &copy[i], &(rec->s.s_values[i]) );
-		}
+	}
 	for( i = 0; i < 8; i++ )
-		{
+	{
 		j = pts[i];
 		VMOVE( &(rec->s.s_values[i*3]), &copy[j] );
-		}
-	return;
 	}
+	return;
+}
 
 compar( x, y )
 register float *x, *y;
-	{	register int i;
+{	
+	register int i;
 	for( i = 0; i < 3; i++ )
-		{
+	{
 		if( fabs( *x++ - *y++ ) > CONV_EPSILON )
 			return	0;   /* Different */
-		}
-	return	1;  /* Same */
 	}
+	return	1;  /* Same */
+}
