@@ -134,7 +134,7 @@ char *file, *obj;
 /*
  *			V I E W _ 2 I N I T
  *
- *  View_2init is called by do_frame, which in turn is called by
+ *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.  It writes the view-specific COVART header.
  * 
  */
@@ -193,16 +193,23 @@ view_pixel()
 /*
  *			R A Y H I T
  *
- *  Rayhit() is called by rt_shootray() when a hit is detected.  It
- *  writes a hit to the ray file.
- *  This routine sets up the grid that will be used to fire rays at
- *  the model.  First, the grid origen is moved to the model's center
- *  to satisfy GIFT.  Likewise, the ray's starting position is adjusted
- *  to coincide with the cell-center, rather than its lower left corner.
- *  This too is a GIFT requirement.
- *  An optional rtg3.pl UnixPlot file is written, permitting the
- *  color graphic display of ray-model intersections.
- *  Finally, the individual ray headers are written.
+ *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
+ *  A per-shotline header record is written, followed by information about
+ *  each object hit.
+ *
+ *  Note that the GIFT-3 format uses a different convention for the "zero"
+ *  distance along the ray.  RT has zero at the ray origin (emanation plane),
+ *  while GIFT has zero at the screen plane translated so that it contains
+ *  the model origin.  This difference is compensated for by adding the
+ *  'dcorrection' distance correction factor.
+ *
+ *  Also note that the GIFT-3 format requires information about the start
+ *  point of the ray in two formats.  First, the h,v coordinates of the
+ *  grid cell CENTERS (in screen space coordinates) are needed.
+ *  Second, the ACTUAL h,v coordinates fired from are needed.
+ *
+ *  An optional rtg3.pl UnixPlot file is written, permitting a
+ *  color vector display of ray-model intersections.
  */
 int
 rayhit( ap, PartHeadp )
@@ -409,9 +416,10 @@ register struct partition *PartHeadp;
 
 		/* A color rtg3.pl UnixPlot file of output commands
 		 * is generated.  This is processed by plot(1)
-		 * plotting filters such as pl-fb or pl-xxx.
-		 * Inhits are assigned green; outhits are assigned
-		 * blue.
+		 * plotting filters such as pl-fb or pl-sgi.
+		 * Portions of a ray passing through air within the
+		 * model are represented in blue, while portions 
+		 * passing through a solid are assigned green.
 		 */
 
 		if(rdebug & RDEBUG_RAYPLOT) {
