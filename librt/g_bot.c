@@ -1137,6 +1137,9 @@ struct seg		*seghead;
 		toldist = 0.0;
 	}
 
+	if( debug_shoot ) {
+		bu_log( "In rt_bot_piece_shot(), looking at %d pieces\n", plp->npieces );
+	}
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
 		FAST fastf_t	dn;		/* Direction dot Normal */
@@ -1501,10 +1504,26 @@ const struct bn_tol	*tol;
 		VUNITIZE(norm);
 		RT_ADD_VLIST(vhead, norm, BN_VLIST_POLY_START);
 
-		RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_MOVE );
-		RT_ADD_VLIST( vhead, bb, BN_VLIST_POLY_DRAW );
-		RT_ADD_VLIST( vhead, cc, BN_VLIST_POLY_DRAW );
-		RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_END );
+		if( (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) &&
+		    (bot_ip->bot_flags & RT_BOT_USE_NORMALS) ) {
+			vect_t na, nb, nc;
+
+			VMOVE( na, &bot_ip->normals[bot_ip->face_normals[i*3+0]*3] );
+			VMOVE( nb, &bot_ip->normals[bot_ip->face_normals[i*3+1]*3] );
+			VMOVE( nc, &bot_ip->normals[bot_ip->face_normals[i*3+2]*3] );
+			RT_ADD_VLIST( vhead, na, BN_VLIST_POLY_VERTNORM );
+			RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_MOVE );
+			RT_ADD_VLIST( vhead, nb, BN_VLIST_POLY_VERTNORM );
+			RT_ADD_VLIST( vhead, bb, BN_VLIST_POLY_DRAW );
+			RT_ADD_VLIST( vhead, nc, BN_VLIST_POLY_VERTNORM );
+			RT_ADD_VLIST( vhead, cc, BN_VLIST_POLY_DRAW );
+			RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_END );
+		} else {
+			RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_MOVE );
+			RT_ADD_VLIST( vhead, bb, BN_VLIST_POLY_DRAW );
+			RT_ADD_VLIST( vhead, cc, BN_VLIST_POLY_DRAW );
+			RT_ADD_VLIST( vhead, aa, BN_VLIST_POLY_END );
+		}
 	}
 
 	return(0);
@@ -3793,10 +3812,10 @@ Add_unique_verts( int *piece_verts, int *v )
 int
 rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 {
-	int *new_faces;		/* the sorted list of faces to be attached to the BOT at teh end of this routine */
+	int *new_faces;		/* the sorted list of faces to be attached to the BOT at the end of this routine */
 	int new_face_count=0;	/* the current number of faces in the "new_faces" list */
 	int *old_faces;		/* a copy of the original face list from the BOT */
-	int *piece;		/* a smalled face list, for just the faces in the current piece */
+	int *piece;		/* a small face list, for just the faces in the current piece */
 	int *piece_verts;	/* a list of vertices in the current piece (each vertex appears only once) */
 	char *vert_count;	/* an array used to hold the number of piece vertices that appear in each BOT face */
 	int faces_left;		/* the number of faces in the "old_faces" array that have not yet been used */
@@ -4434,4 +4453,198 @@ rt_bot_decimate( struct rt_bot_internal *bot,	/* BOT to be decimated */
 	(void)rt_bot_condense( bot );
 
 	return edges_deleted;
+}
+
+static int
+smooth_bot_hit( struct application *ap, struct partition *PartHeadp, struct seg *seg )
+{
+	struct partition *pp;
+	struct soltab *stp;
+	vect_t inormal, onormal;
+	vect_t *normals=(vect_t *)ap->a_uptr;
+
+	for( pp=PartHeadp->pt_forw ; pp != PartHeadp; pp = pp->pt_forw )  {
+		stp = pp->pt_inseg->seg_stp;
+		RT_HIT_NORMAL( inormal, pp->pt_inhit, stp, &(ap->a_ray), pp->pt_inflip );
+
+		stp = pp->pt_outseg->seg_stp;
+		RT_HIT_NORMAL( onormal, pp->pt_outhit, stp, &(ap->a_ray), pp->pt_outflip );
+		if( pp->pt_inhit->hit_surfno == ap->a_user ) {
+			VMOVE( normals[pp->pt_inhit->hit_surfno], inormal );
+			break;
+		}
+		if( pp->pt_outhit->hit_surfno == ap->a_user ) {
+			VMOVE( normals[pp->pt_outhit->hit_surfno], onormal );
+			break;
+		}
+	}
+
+	return 1;
+}
+
+int
+rt_smooth_bot( struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle )
+{
+	int vert_no;
+	int i,j,k;
+	struct rt_i *rtip;
+	struct application ap;
+	fastf_t normal_dot_tol=0.0;
+	vect_t *normals;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	if( norm_tol_angle < 0.0 || norm_tol_angle > M_PI ) {
+		bu_log( "normal tolerance angle must be from 0 to Pi\n" );
+		return( -2 );
+	}
+
+	normal_dot_tol = cos( norm_tol_angle );
+
+
+	if( bot->normals ) {
+		bu_free( (char *)bot->normals, "bot->normals" );
+		bot->normals = NULL;
+	}
+
+	if( bot->face_normals ) {
+		bu_free( (char *)bot->face_normals, "bot->face_normals" );
+		bot->face_normals = NULL;
+	}
+
+	bot->bot_flags &= !(RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS);
+	bot->num_normals = 0;
+	bot->num_face_normals = 0;
+
+	/* build an array of surface normals */
+	normals = (vect_t *)bu_calloc( bot->num_faces , sizeof( vect_t ), "normals" );
+
+	if( bot->orientation == RT_BOT_UNORIENTED ) {
+		/* need to do raytracing, do prepping */
+		bzero( &ap, sizeof( struct application ) );
+		rtip = rt_new_rti( dbip );
+		ap.a_rt_i = rtip;
+		ap.a_hit = smooth_bot_hit;
+		ap.a_uptr = (genptr_t)normals;
+		if( rt_gettree( rtip, bot_name ) ) {
+			bu_log( "rt_gettree failed for %s\n", bot_name );
+			return( -1 );
+		}
+		rt_prep( rtip );
+
+		/* find the surface normal for each face */
+		for( i=0 ; i<bot->num_faces ; i++ ) {
+			vect_t a, b;
+			vect_t inv_dir;
+
+			VSUB2( a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3] );
+			VSUB2( b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3] );
+			VCROSS( ap.a_ray.r_dir, a, b );
+			VUNITIZE( ap.a_ray.r_dir );
+
+			/* calculate ray start point */
+			VADD3( ap.a_ray.r_pt, &bot->vertices[bot->faces[i*3]*3],
+			       &bot->vertices[bot->faces[i*3+1]*3],
+			       &bot->vertices[bot->faces[i*3+2]*3] );
+			VSCALE( ap.a_ray.r_pt, ap.a_ray.r_pt, 0.333333333333 );
+
+			/* back out to bounding box limits */
+
+			/* Compute the inverse of the direction cosines */
+			if( ap.a_ray.r_dir[X] < -SQRT_SMALL_FASTF )  {
+				inv_dir[X]=1.0/ap.a_ray.r_dir[X];
+			} else if( ap.a_ray.r_dir[X] > SQRT_SMALL_FASTF )  {
+				inv_dir[X]=1.0/ap.a_ray.r_dir[X];
+			} else {
+				ap.a_ray.r_dir[X] = 0.0;
+				inv_dir[X] = INFINITY;
+			}
+			if( ap.a_ray.r_dir[Y] < -SQRT_SMALL_FASTF )  {
+				inv_dir[Y]=1.0/ap.a_ray.r_dir[Y];
+			} else if( ap.a_ray.r_dir[Y] > SQRT_SMALL_FASTF )  {
+				inv_dir[Y]=1.0/ap.a_ray.r_dir[Y];
+			} else {
+				ap.a_ray.r_dir[Y] = 0.0;
+				inv_dir[Y] = INFINITY;
+			}
+			if( ap.a_ray.r_dir[Z] < -SQRT_SMALL_FASTF )  {
+				inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
+			} else if( ap.a_ray.r_dir[Z] > SQRT_SMALL_FASTF )  {
+				inv_dir[Z]=1.0/ap.a_ray.r_dir[Z];
+			} else {
+				ap.a_ray.r_dir[Z] = 0.0;
+				inv_dir[Z] = INFINITY;
+			}
+
+			if( !rt_in_rpp( &ap.a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max ) ) {
+				/* ray missed!!! */
+				bu_log( "ERROR: Ray missed target!!!!\n" );
+			}
+			VJOIN1( ap.a_ray.r_pt, ap.a_ray.r_pt, ap.a_ray.r_min, ap.a_ray.r_dir );
+			ap.a_user = i;
+			(void) rt_shootray( &ap );
+		}
+		rt_free_rti( rtip );
+	} else {
+		/* calculate normals */
+		for( i=0 ; i<bot->num_faces ; i++ ) {
+			vect_t a, b;
+
+			VSUB2( a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3] );
+			VSUB2( b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3] );
+			VCROSS( normals[i], a, b );
+			VUNITIZE( normals[i] );
+			if( bot->orientation == RT_BOT_CW ) {
+				VREVERSE( normals[i], normals[i] );
+			}
+		}
+	}
+
+	bot->num_normals = bot->num_faces * 3;
+	bot->num_face_normals = bot->num_normals;
+
+	bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "bot->normals" );
+	bot->face_normals = (int *)bu_calloc( bot->num_face_normals, sizeof( int ), "bot->face_normals" );
+
+	/* process each face */
+	for( i=0 ; i<bot->num_faces ; i++ ) {
+		vect_t def_norm; /* default normal for this face */
+
+		VMOVE( def_norm, normals[i] );
+
+		/* process each vertex in his face */
+		for( k=0 ; k<3 ; k++ ) {
+			vect_t ave_norm;
+
+			/* the actual vertex index */
+			vert_no = bot->faces[i*3+k];
+			VSETALL( ave_norm, 0.0 );
+
+			/* find all the faces that use this vertex */
+			   for( j=0 ; j<bot->num_faces*3 ; j++ ) {
+				   if( bot->faces[j] == vert_no ) {
+					   int the_face;
+
+					   the_face = j / 3;
+
+					   /* add all the normals that are within tolerance
+					    * this also gets def_norm
+					    */
+					   if( VDOT( normals[the_face], def_norm ) >= normal_dot_tol ) {
+						   VADD2( ave_norm, ave_norm, normals[the_face] );
+					   }
+				   }
+			   }
+			   VUNITIZE( ave_norm );
+			   VMOVE( &bot->normals[(i*3+k)*3], ave_norm );
+			   bot->face_normals[i*3+k] = i*3+k;
+		}
+	}
+
+	bu_free( (char *)normals, "normals" );
+
+	bot->bot_flags |= RT_BOT_HAS_SURFACE_NORMALS;
+	bot->bot_flags |= RT_BOT_USE_NORMALS;
+
+	return( 0 );
 }
