@@ -27,11 +27,10 @@ everything&::	PRODUCTS
 	FC FFLAGS -c ../SRCDIR/%.f
 
 
-/* lex always generates lex.yy.c */
+/* Non-ANSI compilers can't take tab-# */
 %.o:    ../SRCDIR/%.l			if exist ../SRCDIR/%.l
-	-rm -f ./%.c lex.yy.c
-        LEX LEX_OPTS ../SRCDIR/%.l
-	-mv -f lex.yy.c ./%.c
+	-rm -f ./%.c
+        LEX -t LEX_OPTS ../SRCDIR/%.l | sed -e 's/^[ 	]#/#/' > ./%.c
 	CC CFLAGS -I. -c ./%.c
 
 %.o:    ../SRCDIR/%.y			if exist ../SRCDIR/%.y
