@@ -199,9 +199,12 @@ register struct region *regp;
 		if( regp->reg_regionid <= mp->mt_high &&
 		    regp->reg_regionid >= mp->mt_low ) {
 		    	regp->reg_mater.ma_override = 1;
-		    	regp->reg_mater.ma_color[0] = (mp->mt_r+0.5)*rt_inv255;
-		    	regp->reg_mater.ma_color[1] = (mp->mt_g+0.5)*rt_inv255;
-		    	regp->reg_mater.ma_color[2] = (mp->mt_b+0.5)*rt_inv255;
+			regp->reg_mater.ma_color[0] =
+				(((double)mp->mt_r)+0.5)*rt_inv255;
+			regp->reg_mater.ma_color[1] =
+				(((double)mp->mt_g)+0.5)*rt_inv255;
+			regp->reg_mater.ma_color[2] =
+				(((double)mp->mt_b)+0.5)*rt_inv255;
 			return;
 		}
 	}
