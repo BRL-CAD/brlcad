@@ -283,11 +283,11 @@ int		width, height;
 	}
 
 	if( ifp->if_xyoff )  {
-		sprintf(message,"ab_open %x*%d offset=%d,%d\n",
+		sprintf(message,"ab_open %x*%d xoff=%d yoff=%d",
 			ifp->if_width, ifp->if_height,
 			ifp->if_xyoff>>16, ifp->if_xyoff&0xFFFF );
 	} else {
-		sprintf(message,"ab_open %d*%d\n",
+		sprintf(message,"ab_open %d*%d",
 			ifp->if_width, ifp->if_height);
 	}
 	ab_log(ifp, message);
