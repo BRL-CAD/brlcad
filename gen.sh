@@ -140,7 +140,7 @@ ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 # Every shell script to be distributed must be listed here.
 # Scripts to be installed in $BINDIR need to be listed in setup.sh $SCRIPTS also.
 TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
-		gen.sh setup.sh verify.sh newbindir.sh"
+		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
 ADIRS="h doc pix vfont whetstone awf brlman tclscripts"

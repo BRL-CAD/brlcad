@@ -193,11 +193,11 @@ fi
 #  This is mostly a double-check on people porting to new machines.
 #
 ############################################################################
-echo "Running verify.sh"
-if ./verify.sh
+echo "Running brlcad-check.sh"
+if sh/brlcad-check.sh
 then	;
 else
-	echo "verify.sh failed, aborting setup.sh"
+	echo "brlcad-check.sh failed, aborting setup.sh"
 	exit 1;
 fi
 
