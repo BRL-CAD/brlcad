@@ -25,7 +25,7 @@ if [ -d $TESTS_DIR ] ; then
 		log "Running [${TESTS_DIR}/$SCRIPT] test" 
 		log "RUNNING TEST:" >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
 		log ${TESTS_DIR}/$SCRIPT >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG
-		${TESTS_DIR}/$SCRIPT >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG 2>&1
+		${TESTS_DIR}/$SCRIPT $REGRESS_DIR >> $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG 2>&1
 	fi
     done
 else
