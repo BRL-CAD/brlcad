@@ -23,11 +23,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <fcntl.h>
+#include <signal.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "plot3.h"
+#include "rtstring.h"
 
 #define US_DELAY	10	/* Additional delay between frames */
 
@@ -37,7 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 void		(*nmg_plot_anim_upcall)();	/* For I/F with MGED */
 void		(*nmg_vlblock_anim_upcall)();	/* For I/F with MGED */
-
+double nmg_eue_dist = 0.05;
 /************************************************************************
  *									*
  *			Generic VLBLOCK routines			*
@@ -447,10 +450,86 @@ vect_t		face_normal;
 	VUNITIZE(final_vec);
 
 	/* XXX offset vector lengths should be scaled by 5% of face size */
-	
-	VJOIN2(base, cur_pt_p, 0.125,prev_vec, 0.05,face_normal);
-	VJOIN2(tip, next_pt_p, 0.125,final_vec, 0.05,face_normal);
+
+/*	dist1=MAGNITUDE(edge_vec); */
+	dist1=0.125;
+
+	VJOIN2(base, cur_pt_p, dist1,prev_vec, nmg_eue_dist,face_normal);
+	VJOIN2(tip, next_pt_p, dist1,final_vec, nmg_eue_dist,face_normal);
 }
+
+/*	N M G _ O F F S E T _ E U _ V E R T
+ *
+ *	Given an edgeuse, find an offset for its vertexuse which will place
+ *	it "above" and "inside" the area of the face.
+ */
+void
+nmg_offset_eu_vert(base, eu, face_normal)
+point_t		base;
+struct edgeuse	*eu;
+vect_t		face_normal;
+{
+	pointp_t	cur_pt_p;
+	pointp_t	next_pt_p;
+	pointp_t	prev_pt_p;
+	vect_t		eu_vec;	/* from cur_pt to next_pt */
+	struct edgeuse	*prev_eu;
+	struct edgeuse	*this_eu;
+	vect_t		prev_vec;	/* from cur_pt to prev_pt */
+	vect_t		prev_left;
+	vect_t		eu_left;
+	vect_t		delta_vec;
+
+
+
+	bzero(delta_vec, sizeof(vect_t)),
+	prev_eu = RT_LIST_PLAST_CIRC( edgeuse, eu ); 
+
+	for(this_eu = eu ; MAGSQ(delta_vec) <= VDIVIDE_TOL && prev_eu != eu ;
+	    prev_eu = RT_LIST_PLAST_CIRC( edgeuse, prev_eu ),
+	    this_eu = RT_LIST_PNEXT_CIRC( edgeuse, this_eu ) ) {
+
+		NMG_CK_EDGEUSE(this_eu);
+		NMG_CK_VERTEXUSE(this_eu->vu_p);
+		NMG_CK_VERTEX(this_eu->vu_p->v_p);
+		NMG_CK_VERTEX_G(this_eu->vu_p->v_p->vg_p);
+		NMG_CK_EDGEUSE(this_eu->eumate_p);
+		NMG_CK_VERTEXUSE(this_eu->eumate_p->vu_p);
+		NMG_CK_VERTEX(this_eu->eumate_p->vu_p->v_p);
+		NMG_CK_VERTEX_G(this_eu->eumate_p->vu_p->v_p->vg_p);
+		NMG_CK_EDGEUSE(prev_eu);
+		NMG_CK_VERTEXUSE(prev_eu->vu_p);
+		NMG_CK_VERTEX(prev_eu->vu_p->v_p);
+		NMG_CK_VERTEX_G(prev_eu->vu_p->v_p->vg_p);
+
+		if (prev_eu->e_p == this_eu->e_p)
+			continue;
+
+		/* get "left" vector for edgeuse */
+		cur_pt_p = this_eu->vu_p->v_p->vg_p->coord;
+		next_pt_p = this_eu->eumate_p->vu_p->v_p->vg_p->coord;
+		VSUB2(eu_vec, next_pt_p, cur_pt_p); 
+		VUNITIZE(eu_vec);
+		VCROSS(eu_left, face_normal, eu_vec);
+
+		/* get "left" vector for previous edgeuse */
+		prev_pt_p = prev_eu->vu_p->v_p->vg_p->coord;
+		VSUB2(prev_vec, cur_pt_p, prev_pt_p);
+		VUNITIZE(prev_vec);
+		VCROSS(prev_left, face_normal, prev_vec);
+
+		/* get "delta" vector to apply to vertex */
+		VADD2(delta_vec, prev_left, eu_left);
+	}
+
+	if (MAGSQ(delta_vec) > VDIVIDE_TOL) {
+		VUNITIZE(delta_vec);
+		VJOIN2(base, cur_pt_p, nmg_eue_dist,delta_vec, nmg_eue_dist,face_normal);
+	} else {
+		VJOIN2(base, cur_pt_p, nmg_eue_dist,eu_left, nmg_eue_dist,face_normal);
+	}
+}
+
 
 
 /*			N M G _ E U _ C O O R D S
@@ -488,8 +567,12 @@ point_t base, tip60;
 		} else {
 		    	VMOVE( face_normal, fu->f_p->fg_p->N );
 		}
-
+#if 0
 		nmg_offset_eu_coord(base, tip, eu, face_normal);
+#else
+	    	nmg_offset_eu_vert(base, eu, face_normal);
+	    	nmg_offset_eu_vert(tip, RT_LIST_PNEXT_CIRC( edgeuse, eu ), face_normal);
+#endif
 	} else
 		rt_bomb("nmg_eu_coords: bad edgeuse up. What's going on?\n");
 
@@ -907,7 +990,7 @@ int		fancy;
 	 * compute endpoints by forming a vector between verets, scale vector
 	 * and modify points
 	 */
-	VSUB2SCALE(v, p1, p0, 0.95);
+	VSUB2SCALE(v, p1, p0, 0.90);
 	VADD2(end0, p0, v);
 	VSUB2(end1, p1, v);
 
@@ -954,6 +1037,15 @@ int			fancy;
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
+
+	    	/* if "fancy" doesn't specify plotting edgeuses of this
+	    	 * particular face orientation, return
+	    	 */
+	    	if ( (eu->up.lu_p->up.fu_p->orientation == OT_SAME &&
+	    	     (fancy & 1) == 0) ||
+		     (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE &&
+		     (fancy & 2) == 0) )
+	    		return;
 
 	    	nmg_eu_coords(eu, base, tip);
 	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
@@ -1082,7 +1174,7 @@ int		fancy;
 			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, fancy );
 		} else {
 			/* non-fancy, wire edges in yellow */
-			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, 0 );
+			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, 0 ); 
 		}
 	}
 	if (s->vu_p) {
@@ -1277,11 +1369,12 @@ struct faceuse	*fu1;
 
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_fu(vbp, fu1, tab, 1);
+		nmg_vlblock_fu(vbp, fu1, tab, 3);
 
 		if( nmg_vlblock_anim_upcall )  {
 			(*nmg_vlblock_anim_upcall)( vbp,
-				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0 );
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+				0 );
 		} else {
 			rt_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
@@ -1340,20 +1433,393 @@ int		show_mates;
 
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_fu( vbp, fu1, tab, 1);
+		nmg_vlblock_fu( vbp, fu1, tab, 3);
 		if( show_mates )
-			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 1);
+			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 3);
 
-		nmg_vlblock_fu( vbp, fu2, tab, 1);
+		nmg_vlblock_fu( vbp, fu2, tab, 3);
 		if( show_mates )
-			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 1);
+			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 3);
 
 		/* Cause animation of boolean operation as it proceeds! */
 		if( nmg_vlblock_anim_upcall )  {
 			(*nmg_vlblock_anim_upcall)( vbp,
-				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0 );
+				(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+				0 );
 		}
 		rt_vlblock_free(vbp);
 	}
 	rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
+}
+
+
+int		nmg_class_nothing_broken=1;
+static long	**global_classlist;
+static struct rt_vlblock *vbp_old;
+long		*broken_tab;
+int 		broken_color;
+static unsigned char broken_colors[][3] = {
+	{ 100, 100, 255 },	/* NMG_CLASS_AinB */
+	{ 255,  50,  50 },	/* NMG_CLASS_AonBshared */
+	{ 255,  50, 255 }, 	/* NMG_CLASS_AonBanti */
+	{  50, 255,  50 },	/* NMG_CLASS_AoutB */
+	{ 255, 255, 255 },	/* UNKNOWN */
+	{ 255, 255, 125 }	/* no classification list */
+};
+#define PICK_BROKEN_COLOR(type, p) { \
+	if (global_classlist == (long **)NULL) { \
+		broken_color = 5; \
+	} else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AinB], ((struct type *)p)) ) \
+		broken_color = NMG_CLASS_AinB; \
+	else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBshared], ((struct type *)p)) ) \
+		broken_color = NMG_CLASS_AonBshared; \
+	else if( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AonBanti], ((struct type *)p)) ) \
+		broken_color = NMG_CLASS_AonBanti; \
+	else if ( NMG_INDEX_TEST(global_classlist[NMG_CLASS_AoutB], ((struct type *)p)) ) \
+		broken_color = NMG_CLASS_AoutB; \
+	else \
+		broken_color = 4;}
+
+
+static void
+show_broken_vu(vbp, vu, fancy)
+struct rt_vlblock *vbp;
+int fancy;
+struct vertexuse *vu;
+{
+
+	pointp_t p;
+	static char label[128];
+	struct rt_list	*vh;
+	struct vertex *v;
+	point_t pt;
+
+	NMG_CK_VERTEXUSE(vu);
+	v = vu->v_p;
+	NMG_CK_VERTEX(v);
+	NMG_CK_VERTEX_G(v->vg_p);
+
+	NMG_TAB_RETURN_IF_SET_ELSE_SET( broken_tab, v->index );
+
+	NMG_CK_VERTEX_G(v->vg_p);
+	p = v->vg_p->coord;
+
+	PICK_BROKEN_COLOR(vertex, vu->v_p);
+	if (broken_color == 4) {
+		fprintf(stderr, "vertex broken_color %d...", broken_color);
+		PICK_BROKEN_COLOR(vertexuse, vu);
+		fprintf(stderr, "vertexuse broken_color %d\n", broken_color);
+	}
+	vh = rt_vlblock_find( vbp, 
+		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
+
+	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_DRAW );
+
+
+	VMOVE(pt, p);
+	pt[0] += 0.05;
+	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_MOVE );
+	VMOVE(pt, p);
+	pt[0] -= 0.05;
+	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_DRAW );
+
+	VMOVE(pt, p);
+	pt[1] += 0.05;
+	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_MOVE );
+	VMOVE(pt, p);
+	pt[1] -= 0.05;
+	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_DRAW );
+
+	VMOVE(pt, p);
+	pt[2] += 0.05;
+	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_MOVE );
+	VMOVE(pt, p);
+	pt[2] -= 0.05;
+	RT_ADD_VLIST( vh, pt, RT_VLIST_LINE_DRAW );
+
+	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
+}
+
+static void
+show_broken_eu(vbp, eu, fancy)
+struct rt_vlblock *vbp;
+int fancy;
+struct edgeuse *eu;
+{
+	pointp_t p0, p1;
+	point_t end0, end1;
+	vect_t v;
+	struct rt_list	*vh;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGE(eu->e_p);
+	NMG_TAB_RETURN_IF_SET_ELSE_SET( broken_tab, eu->e_p->index );
+
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+	p0 = eu->vu_p->v_p->vg_p->coord;
+
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+	p1 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+
+	/* leave a little room between the edge endpoints and the vertex
+	 * compute endpoints by forming a vector between verets, scale vector
+	 * and modify points
+	 */
+	VSUB2SCALE(v, p1, p0, 0.90);
+	VADD2(end0, p0, v);
+	VSUB2(end1, p1, v);
+
+
+	PICK_BROKEN_COLOR(edge, eu->e_p);
+	if (broken_color == 4) {
+		fprintf(stderr, "edge broken_color %d... ", broken_color);
+		PICK_BROKEN_COLOR(edgeuse, eu);
+		fprintf(stderr, "edgeuse broken_color %d\n", broken_color);
+	}
+
+	vh = rt_vlblock_find( vbp, 
+		broken_colors[broken_color][0], broken_colors[broken_color][1], broken_colors[broken_color][2]);
+
+	RT_ADD_VLIST( vh, end0, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, end1, RT_VLIST_LINE_DRAW );
+
+	show_broken_vu(vbp, eu->vu_p, fancy);
+	show_broken_vu(vbp, eu->eumate_p->vu_p, fancy);
+
+
+	if (!fancy) return;
+
+	/* paint the edgeuse lines */
+	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
+	    	int red, green, blue;
+		point_t base, tip;
+		point_t	radial_tip;
+		point_t	next_base;
+		point_t	last_tip;
+
+	    	red = broken_colors[broken_color][0];
+	    	green = broken_colors[broken_color][1];
+	    	blue = broken_colors[broken_color][2];
+
+	    	nmg_eu_coords(eu, base, tip);
+	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
+	    		red += 50;
+		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
+			red -= 50;
+	    	else
+	    		red = green = blue = 255;
+
+		vh = rt_vlblock_find( vbp, red, green, blue );
+		RT_ADD_VLIST( vh, base, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_DRAW );
+
+	    	nmg_eu_radial( eu, radial_tip );
+		vh = rt_vlblock_find( vbp, red, green-20, blue );
+		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, radial_tip, RT_VLIST_LINE_DRAW );
+
+	    	nmg_eu_next_base( eu, next_base );
+		vh = rt_vlblock_find( vbp, 0, 100, 0 );
+		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, next_base, RT_VLIST_LINE_DRAW );
+	}
+
+}
+
+static void
+show_broken_lu(vbp, lu, fancy)
+struct rt_vlblock *vbp;
+int fancy;
+struct loopuse *lu;
+{
+	register struct edgeuse *eu;
+	NMG_CK_LOOPUSE(lu);
+
+	if( RT_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
+		register struct vertexuse *vu;
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		show_broken_vu(vbp, vu, fancy);
+		return;
+	}
+
+	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd))
+		show_broken_eu(vbp, eu, fancy);
+}
+
+
+
+static void
+show_broken_fu(vbp, fu, fancy)
+struct rt_vlblock *vbp;
+int fancy;
+struct faceuse *fu;
+{
+	register struct loopuse *lu;
+
+	NMG_CK_FACEUSE(fu);
+	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+		show_broken_lu(vbp, lu, fancy);
+	}
+}
+
+static void
+show_broken_s(vbp, s, fancy)
+struct rt_vlblock *vbp;
+struct shell *s;
+int fancy;
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct vertexuse *vu;
+
+	NMG_CK_SHELL(s);
+	for ( RT_LIST_FOR(fu, faceuse, &s->fu_hd ))
+		show_broken_fu(vbp, fu, fancy);
+	for ( RT_LIST_FOR(lu, loopuse, &s->lu_hd ))
+		show_broken_lu(vbp, lu, fancy);
+	for ( RT_LIST_FOR(eu, edgeuse, &s->eu_hd ))
+		show_broken_eu(vbp, eu, fancy);
+	if ( s->vu_p )
+		show_broken_vu(vbp, s->vu_p, fancy);
+}
+static void
+show_broken_r(vbp, r, fancy)
+struct rt_vlblock *vbp;
+struct nmgregion *r;
+int fancy;
+{
+	register struct shell *s;
+
+	NMG_CK_REGION(r);
+	for ( RT_LIST_FOR(s, shell, & r->s_hd))
+		show_broken_s(vbp, s, fancy);
+}
+
+static void
+show_broken_m(vbp, m, fancy)
+struct rt_vlblock *vbp;
+struct model *m;
+int fancy;
+{
+	register struct nmgregion *r;
+
+	NMG_CK_MODEL(m);
+	for (RT_LIST_FOR(r, nmgregion, &m->r_hd))
+		show_broken_r(vbp, r, fancy);
+}
+
+static struct rt_vlblock *vbp = (struct rt_vlblock *)NULL;
+static int stepalong = 0;
+
+void
+sigstepalong(i)
+int i;
+{
+	stepalong=1;
+}
+
+void
+show_broken_stuff(p, classlist, all_new, fancy)
+long	*classlist[4];
+long	*p;
+int	all_new;
+{
+	struct model *m;
+
+/*	printf("showing broken stuff\n"); */
+
+	global_classlist = classlist;
+
+	nmg_class_nothing_broken = 0;
+
+	if (!vbp)
+		vbp = rt_vlblock_init();
+	else if (all_new) {
+		rt_vlblock_free(vbp);
+		vbp = (struct rt_vlblock *)NULL;
+		vbp = rt_vlblock_init();
+	}
+
+	m = nmg_find_model(p);
+	/* get space for list of items processed */
+	if (!broken_tab) {
+		broken_tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+			"nmg_vlblock_s tab[]");
+	} else if (all_new) {
+		bzero(broken_tab,  (m->maxindex+1) * sizeof(long));
+	}
+
+
+	switch (*p) {
+	case NMG_MODEL_MAGIC:
+		show_broken_m( vbp, (struct model *)p, fancy);
+		break;
+	case NMG_REGION_MAGIC:
+		show_broken_r( vbp, (struct nmgregion *)p, fancy);
+		break;
+	case NMG_SHELL_MAGIC:
+		show_broken_s( vbp, (struct shell *)p, fancy);
+		break;
+	case NMG_FACE_MAGIC:
+		show_broken_fu( vbp, ((struct face *)p)->fu_p, fancy);
+		break;
+	case NMG_FACEUSE_MAGIC:
+		show_broken_fu( vbp, (struct faceuse *)p, fancy);
+#if 0
+		{
+			struct rt_vlblock *vbp2 = vbp;
+			register struct loopuse *lu;
+			struct faceuse *fu = (struct faceuse *)p;
+			int i;
+			void            (*cur_sigint)();
+
+			cur_sigint = signal(SIGINT, sigstepalong);
+			for (stepalong=0;!stepalong;) {
+				for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
+					show_broken_stuff(lu, classlist, 1, fancy);
+					for (i=0 ; ++i ; );
+				}
+			}
+			signal(SIGINT, cur_sigint);
+
+			show_broken_fu( vbp, (struct faceuse *)p, fancy);
+		}
+#endif
+		break;
+	case NMG_LOOPUSE_MAGIC:
+		show_broken_lu( vbp, (struct loopuse *)p, fancy);
+		break;
+	case NMG_EDGE_MAGIC:
+		 show_broken_eu( vbp, ((struct edge *)p)->eu_p, fancy);
+		 break;
+	case NMG_EDGEUSE_MAGIC:
+		show_broken_eu( vbp, (struct edgeuse *)p, fancy);
+		break;
+	case NMG_VERTEXUSE_MAGIC:
+		show_broken_vu( vbp, ((struct vertexuse *)p)->v_p, fancy);
+		break;
+	default: fprintf(stderr, "Unknown magic number %ld %0x %ld %0x\n", *p, *p, p, p);
+				break;
+	}
+
+	/* Cause animation of boolean operation as it proceeds! */
+	/* The "copy" flag on nmg_vlblock_anim_upcall() means that
+	 * the vlist will remain, undisturbed, for further use. */
+	if( nmg_vlblock_anim_upcall )  {
+		(*nmg_vlblock_anim_upcall)( vbp,
+			(rt_g.NMG_debug&DEBUG_PL_SLOW) ? US_DELAY : 0,
+			1 );
+	} else {
+		rt_vlblock_free(vbp);
+		vbp = (struct rt_vlblock *)NULL;
+		rt_free((char *)broken_tab, "broken_tab");
+		broken_tab = (long *)NULL;
+	}
 }
