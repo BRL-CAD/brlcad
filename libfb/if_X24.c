@@ -2556,16 +2556,12 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				unsigned char *line_irgb;
 				unsigned char *p;
 
-				unsigned char *red = xi->xi_redmap;
-				unsigned char *grn = xi->xi_grnmap;
-				unsigned char *blu = xi->xi_blumap;
-
 				line_irgb = irgb;
 				p = (unsigned char *)opix;
 
 				/* For each line, convert/copy pixels */
 
-				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
 					for (k = x2 - x1 + 1; k; k--) {
 						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 							if( xi->xi_visual->red_mask & 0xFF)  {
@@ -2598,7 +2594,11 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						}
 						line_irgb += sizeof (RGBpixel);
 					}
-				else
+				} else {
+					unsigned char *red = xi->xi_redmap;
+					unsigned char *grn = xi->xi_grnmap;
+					unsigned char *blu = xi->xi_blumap;
+
 					for (k = x2 - x1 + 1; k; k--) {
 						if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 							if( xi->xi_visual->red_mask & 0xFF)  {
@@ -2631,7 +2631,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						}
 						line_irgb += sizeof (RGBpixel);
 					}
-
+				}
 				irgb += xi->xi_iwidth * sizeof (RGBpixel);
 				opix -= xi->xi_xwidth;
 			}
@@ -2644,10 +2644,6 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				unsigned char *line_irgb;
 				unsigned int  *prev_line;
 				unsigned char *p;
-
-				unsigned char *red = xi->xi_redmap;
-				unsigned char *grn = xi->xi_grnmap;
-				unsigned char *blu = xi->xi_blumap;
 
 				/* Calculate # lines needed */
 
@@ -2667,7 +2663,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 				/* For the first line, convert/copy pixels */
 
-				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
+				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
 					for (x = x1; x <= x2; x++) {
 							int pxwd;
 
@@ -2715,7 +2711,11 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						}
 						line_irgb += sizeof (RGBpixel);
 					}
-				else
+				} else {
+					unsigned char *red = xi->xi_redmap;
+					unsigned char *grn = xi->xi_grnmap;
+					unsigned char *blu = xi->xi_blumap;
+
 					for (x = x1; x <= x2; x++) {
 						int pxwd;
 
@@ -2764,7 +2764,7 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 						}
 						line_irgb += sizeof (RGBpixel);
 					}
-
+				}
 				copied = p - (unsigned char *)opix;	/* bytes */
 
 				irgb += xi->xi_iwidth * sizeof (RGBpixel);
