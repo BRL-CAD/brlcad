@@ -125,6 +125,10 @@ RB_EXTERN(rb_tree *rb_create,	(char		*description,
 RB_EXTERN(rb_tree *rb_create1,	(char		*description,
 				 int		(*order_func)()
 				));
+RB_EXTERN(void *rb_curr,	(rb_tree	*tree,
+				 int		order
+				));
+#define		rb_curr1(t)	rb_curr((t), 0)
 RB_EXTERN(void rb_delete,	(rb_tree	*tree,
 				 int		order
 				));
