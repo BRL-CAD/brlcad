@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  19:17:49  mike
+ * Stardent ANSI lint
+ * 
  * Revision 2.2  91/08/30  18:11:09  mike
  * Made explicit that termcap.h to be used is the local version
  * 
@@ -51,6 +54,7 @@ WINDOW	*w;
 	} while (wp != fwind);
 	complain("WINDOW?");
 	/* NOTREACHED */
+	return 0;
 }
 
 initwinds(b)
@@ -79,7 +83,7 @@ lastwind()
 			return wp;
 		wp = wp->w_next;
 	} while (wp != fwind);
-    /* NOTREACHED */
+	return fwind;
 }
 
 WINDOW *
