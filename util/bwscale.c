@@ -29,11 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
-extern unsigned char *malloc();
+#include "machine.h"
+#include "externs.h"
 
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
 
@@ -191,7 +188,7 @@ int scanlen;
 	if( max > 512 ) max = 512;
 
 	buflines = max;
-	if ((buffer = malloc( buflines * scanlen )) == (char *)NULL) {
+	if ((buffer = malloc( buflines * scanlen )) == (unsigned char *)NULL) {
 		fprintf(stderr, "Cannot allocate buffer\n");
 		exit(-1);
 	} else {

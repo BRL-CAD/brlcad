@@ -34,7 +34,7 @@ static char	*usage[] = {
 };
 
 static FBIO	*fbp;
-static FILE	*fp = stdout;
+static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 1;
 static int	ncolors = 3;
@@ -63,6 +63,7 @@ char	*argv[];
 		prntUsage();
 		return	1;
 	}
+	fp = stdout;
 	setbuf( fp, malloc( BUFSIZ ) );
 
 	rle_wlen( xlen, ylen, 1 );
