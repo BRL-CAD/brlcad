@@ -109,5 +109,14 @@ cake \
  regionfix.o \
  tree.o &
 
+cake \
+ nurb_basis.o nurb_bound.o nurb_diff.o nurb_eval.o nurb_flat.o \
+ nurb_knot.o nurb_norm.o nurb_poly.o nurb_ray.o nurb_refine.o \
+ nurb_solve.o nurb_split.o nurb_util.o nurb_xsplit.o nurb_copy.o &
+
+cake \
+ nurb_c2.o oslo_calc.o oslo_map.o nurb_plot.o nurb_bezier.o nurb_trim.o \
+ nurb_interp.o nurb_reverse.o nurb_tess.o nurb_trim_util.o &
+
 wait
 cake
