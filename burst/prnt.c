@@ -87,9 +87,10 @@ struct application *ap;
 	Thickness returned in "a_rbeam".
  */
 STATIC int
-f_Normal( ap, pt_headp )
+f_Normal( ap, pt_headp, segp )
 struct application *ap;
 struct partition *pt_headp;
+struct seg *segp;
 	{	register struct partition *pp = pt_headp->pt_forw;
 		register struct partition *cp;
 		register struct hit *ohitp;
