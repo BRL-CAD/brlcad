@@ -69,8 +69,11 @@ com_table	ComTab[] =
 		    { 0 }
 		};
 
-struct rt_i	*rtip;
-struct rt_i	*rti_tab[2];	/* For use w/ and w/o air */
+/* Parallel structures needed for operation w/ and w/o air */
+struct rt_i		*rti_tab[2];
+struct rt_i		*rtip;
+struct resource		res_tab[2];
+
 struct application	ap;
 struct nirt_obj		object_list = {"", 0};
 
@@ -166,12 +169,16 @@ char **argv;
     while (++optind < argc)    /* prepare the objects that are to be included */
 	do_rt_gettree( rtip, argv[optind], 1 );
  
+    /* Initialize the table of resource structures */
+    res_tab[use_of_air].re_magic =
+	(res_tab[1 - use_of_air].re_magic = RESOURCE_MAGIC);
+
     /* initialization of the application structure */
     ap.a_hit = if_hit;        /* branch to if_hit routine            */
     ap.a_miss = if_miss;      /* branch to if_miss routine           */
     ap.a_overlap = if_overlap;/* branch to if_overlap routine        */
     ap.a_onehit = 0;          /* continue through shotline after hit */
-    ap.a_resource = 0;
+    ap.a_resource = &res_tab[use_of_air];
     ap.a_purpose = "NIRT ray";
     ap.a_rt_i = rtip;         /* rt_i pointer                        */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h      */
