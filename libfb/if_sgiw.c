@@ -39,7 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define WIN_B	MARGIN
 #define WIN_T	(ifp->if_height+MARGIN)
 
-#define MAP_RESERVED	32		/* # slots reserved by MEX */
+#define MAP_RESERVED	16		/* # slots reserved by MEX */
 #define MAP_SIZE	1024		/* # slots available, incl reserved */
 #define MAP_TOL		28		/* pixel delta across all channels */
 /* TOL of 28 gives good rendering of the dragon picture without running out */
@@ -89,7 +89,7 @@ _LOCAL_ int	sgw_dopen(),
 		sgw_viewport_set(),
 		sgw_window_set(),
 		sgw_zoom_set(),
-		sgw_cinit_bitmap(),
+		sgw_curs_set(),
 		sgw_cmemory_addr(),
 		sgw_cscreen_addr();
 
@@ -107,7 +107,7 @@ FBIO sgiw_interface =
 		sgw_viewport_set,
 		fb_null,
 		sgw_zoom_set,
-		sgw_cinit_bitmap,
+		sgw_curs_set,
 		sgw_cmemory_addr,
 		fb_null,
 		"Silicon Graphics IRIS, in 12-bit mode, for windows",
@@ -226,6 +226,7 @@ int	width, height;
 	
 	if( ismex() )
 		{
+#if 0
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		foreground();
 		if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
@@ -234,6 +235,7 @@ int	width, height;
 			return	-1;
 			}
 		wintitle( "frame buffer" );
+#endif
 		}
 	else
 		ginit();
@@ -252,8 +254,8 @@ int	width, height;
 	if( ifp->if_mode )
 		{
 		/* Mode 1 uses fixed color map */
-		for( i = MAP_RESERVED; i < MAP_SIZE; i++ )
-			mapcolor( 	i,
+		for( i = 0; i < MAP_SIZE-MAP_RESERVED; i++ )
+			mapcolor( 	i+MAP_RESERVED,
 					(short)((i % 10) + 1) * 25,
 					(short)(((i / 10) % 10) + 1) * 25,
 					(short)((i / 100) + 1) * 25
@@ -265,7 +267,9 @@ int	width, height;
 
 	/* Build a linear "colormap" in case he wants to read it */
 	sgw_cmwrite( ifp, COLORMAP_NULL );
-
+	/* Setup default cursor.					*/
+	defcursor( 1, cursor );
+	curorigin( 1, 0, 0 );
 	return	0;
 }
 
@@ -348,6 +352,7 @@ int	count;
 			{
 			if( ifp->if_mode )
 				{
+				colors[i] -= MAP_RESERVED;
 				(*pixelp)[RED] =   (colors[i] % 10 + 1) * 25;
 				colors[i] /= 10;
 				(*pixelp)[GRN] = (colors[i] % 10 + 1) * 25;
@@ -406,7 +411,8 @@ int	count;
 					{
 					if( ifp->if_mode )
 						{
-						colori =  ((*pixelp)[RED]/26);
+						colori =  MAP_RESERVED +
+							((*pixelp)[RED]/26);
 						colori += ((*pixelp)[GRN]/26) * 10;
 						colori += ((*pixelp)[BLU]/26) * 100;
 						}
@@ -421,11 +427,12 @@ int	count;
 			for( i = 0; i < scan_count; i++, pixelp++ )
 				{	register Colorindex	col;
 					register Coord	r = x + xzoom - 1,
-							t = ypos - yzoom + 1;
+							t = ypos + yzoom - 1;
 				CMOV2S( hole, x, ypos );
 				if( ifp->if_mode )
 					{
-					col =  ((*pixelp)[RED]/26);
+					col =  MAP_RESERVED +
+						((*pixelp)[RED]/26);
 					col += ((*pixelp)[GRN]/26) * 10;
 					col += ((*pixelp)[BLU]/26) * 100;
 					}
@@ -522,13 +529,33 @@ int	x, y;
 	}
 
 _LOCAL_ int
-sgw_cinit_bitmap( ifp, bitmap )
+sgw_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-long	bitmap[32];
-	{	register int	i;
-	for( i = 0; i < 16; i++ )
-		cursor[i] = bitmap[15-i] & 0xFFFF;
-	defcursor( 1, cursor );
+unsigned char	*bits;
+int		xbits, ybits;
+int		xorig, yorig;
+	{	register int	y;
+		register int	xbytes;
+		Cursor		newcursor;
+	/* Check size of cursor.					*/
+	if( xbits < 0 )
+		return	-1;
+	if( xbits > 16 )
+		xbits = 16;
+	if( ybits < 0 )
+		return	-1;
+	if( ybits > 16 )
+		ybits = 16;
+	if( (xbytes = xbits / 8) * 8 != xbits )
+		xbytes++;
+	for( y = 0; y < ybits; y++ )
+		{
+		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
+		if( xbytes == 2 )
+			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
+		}
+	defcursor( 1, newcursor );
+	curorigin( 1, (short) xorig, (short) yorig );
 	return	0;
 	}
 
@@ -537,9 +564,7 @@ sgw_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
-	{	register int		xpos, ypos;
-		register union gepipe *hole = GEPIPE;
-		static Colorindex	cursor_color = YELLOW;
+	{	static Colorindex	cursor_color = YELLOW;
 			/* Color and bitmask ignored under MEX.	*/
 	if( ! mode )
 		{
