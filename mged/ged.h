@@ -292,3 +292,14 @@ An error has occured while deleting '%s' from the database.\n", _name); \
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
+
+
+
+/* mged command variables for affecting the user environment */
+struct mged_variables {
+	int	autosize;
+	int	sgi_win_size;
+	int	sgi_win_origin[2];
+};
+
+extern struct mged_variables mged_variables;
