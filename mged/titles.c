@@ -46,6 +46,13 @@ char	*state_str[] = {
 	"UNKNOWN",
 };
 
+extern struct rt_db_internal	es_int;
+
+struct point_labels {
+	char	str[8];
+	point_t	pt;
+};
+
 /*
  *			D O T I T L E S
  *
@@ -122,8 +129,22 @@ dotitles()
 	}
 
 	/* Label the vertices of the edited solid */
-	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))
-		label_edited_solid();
+	if(es_edflag >= 0 || (state == ST_O_EDIT && illump->s_Eflag == 0))  {
+		mat_t			xform;
+		struct point_labels	pl[8+1];
+
+		mat_mul( xform, model2objview, es_mat );
+
+		label_edited_solid( pl, 8+1, xform, &es_int );
+
+		for( i=0; i<8+1; i++ )  {
+			if( pl[i].str[0] == '\0' )  break;
+			dmp->dmr_puts( pl[i].str,
+				((int)(pl[i].pt[X]*2048))+15,
+				((int)(pl[i].pt[Y]*2048))+15,
+				0, DM_WHITE );
+		}
+	}
 
 	/*
 	 * Set up for character output.  For the best generality, we
@@ -332,23 +353,30 @@ dotitles()
  *  Put labels on the vertices of the currently edited solid.
  *  XXX This really should use import/export interface!!!
  */
-label_edited_solid()
+label_edited_solid( pl, max_pl, xform, ip )
+struct point_labels	pl[];
+int			max_pl;
+CONST mat_t		xform;
+struct rt_db_internal	*ip;
 {
 	register int	i;
 	union record	temp_rec;	/* copy of es_rec record */
 	point_t		work;
-	point_t		temp;
 	point_t		pos_view;
-	mat_t		xform;		/* model2objview * es_mat */
-	char		kvt[4];		/* Used to change chars to strings */
+	int		npl = 0;
 
-	mat_mul( xform, model2objview, es_mat );
+	RT_CK_DB_INTERNAL( ip );
 
-	switch( es_gentype )  {
+	switch( ip->idb_type )  {
 
-	case GENARB8:
+#define	POINT_LABEL( _pt, _char )	{ \
+	VMOVE( pl[npl].pt, _pt ); \
+	pl[npl].str[0] = _char; \
+	pl[npl++].str[1] = '\0'; }
+
+	case ID_ARB8:
 		MAT4X3PNT( pos_view, xform, es_rec.s.s_values );
-		dmp->dmr_puts( "1", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, '1' );
 		temp_rec.s = es_rec.s;
 		if(es_type == ARB4) {
 			VMOVE(&temp_rec.s.s_values[9], &temp_rec.s.s_values[12]);
@@ -359,61 +387,69 @@ label_edited_solid()
 		for(i=1; i<es_type; i++) {
 			VADD2( work, es_rec.s.s_values, &temp_rec.s.s_values[i*3] );
 			MAT4X3PNT(pos_view, xform, work);
-			kvt[0] = i + '1';
-			kvt[1] = '\0';
-			dmp->dmr_puts( kvt, ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+			POINT_LABEL( pos_view, i + '1' );
 		}
 		break;
-	case GENTGC:
+	case ID_TGC:
+		MAT4X3PNT( pos_view, xform, &es_rec.s.s_tgc_V );
+		POINT_LABEL( pos_view, 'V' );
+
 		VADD2( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_A );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "A", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'A' );
 
 		VADD2( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_B );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "B", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'B' );
 
 		VADD3( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H, &es_rec.s.s_tgc_C );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "C", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'C' );
 
 		VADD3( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H, &es_rec.s.s_tgc_D );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "D", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'D' );
 		break;
 
-	case GENELL:
+	case ID_ELL:
+		MAT4X3PNT( pos_view, xform, &es_rec.s.s_ell_V );
+		POINT_LABEL( pos_view, 'V' );
+
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_A );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "A", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'A' );
 
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_B );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "B", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'B' );
 
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_C );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "C", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'C' );
 		break;
 
-	case TOR:
+	case ID_TOR:
+		MAT4X3PNT( pos_view, xform, &es_rec.s.s_tor_V );
+		POINT_LABEL( pos_view, 'V' );
+
 		VADD2( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_C );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "I", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'I' );
 
 		VADD2( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_E );
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "O", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'O' );
 
 		VADD3( work, &es_rec.s.s_tor_V, &es_rec.s.s_tor_A, &es_rec.s.s_tor_H);
 		MAT4X3PNT(pos_view, xform, work);
-		dmp->dmr_puts( "H", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'H' );
 		break;
 
-	case ARS:
-	case ARSCONT:
+	case ID_ARS:
 		MAT4X3PNT(pos_view, xform, es_rec.s.s_values);
-		dmp->dmr_puts( "V", ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
+		POINT_LABEL( pos_view, 'V' );
 		break;
 	}
+
+	pl[npl].str[0] = '\0';	/* Mark ending */
 }
