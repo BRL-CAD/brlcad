@@ -69,6 +69,7 @@ DISTCLEANFILES = \
 	config.log \
 	config.status \
 	configure \
+	install.$(host_triplet) \
 	libtool \
 	so_locations
 
@@ -82,6 +83,17 @@ MAINTAINERCLEANFILES = Makefile.in
 $(PACKAGE)-$(VERSION).tar.gz: dist
 
 $(PACKAGE_NAME)-$(VERSION).pkg:
+	@if ! test -f "install.$(host_triplet)" ; then \
+	  $(ECHO) ; \
+	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
+	  $(ECHO) "  WARNING: It seems as though you might not have" ; \
+	  $(ECHO) "           installed BRL-CAD yet?" ; \
+	  $(ECHO) ; \
+	  $(ECHO) "  You should run 'make install' before creating a" ; \
+	  $(ECHO) "  binary distribution package.  Trying regardless." ; \
+	  $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
+	  $(ECHO) ; \
+	fi
 	@$(ECHO) "Building an Installer package for Mac OS X"
 	@$(ECHO)
 	@$(ECHO) "Warning: this package target presently assumes that the install directory"
@@ -89,7 +101,7 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 	@$(ECHO)
 	@@SH@ sh/make_pkg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
 
-$(PACKAGE_NAME)-$(VERSION).dmg:
+$(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
 	@@SH@ sh/make_dmg.sh "$(PACKAGE_NAME)-$(VERSION)"
@@ -121,6 +133,17 @@ $(PACKAGE)-$(VERSION).deb:
 	@@SH@ sh/make_deb.sh "$(PACKAGE_NAME)-$(VERSION)"
 
 $(PACKAGE)-$(VERSION).bin.zip:
+	@if ! test -f "install.$(host_triplet)" ; then \
+	  $(ECHO) ; \
+	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
+	  $(ECHO) "  WARNING: It seems as though you might not have" ; \
+	  $(ECHO) "           installed BRL-CAD yet?" ; \
+	  $(ECHO) ; \
+	  $(ECHO) "  You should run 'make install' before creating a" ; \
+	  $(ECHO) "  binary distribution package.  Trying regardless." ; \
+	  $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
+	  $(ECHO) ; \
+	fi
 	@$(ECHO) "Building a zip-compressed file archive"
 	@$(ECHO)
 	@@SH@ sh/make_zip.sh "$(PACKAGE_NAME)-$(VERSION)"
@@ -142,6 +165,17 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.bz2 for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar:
+	@if ! test -f "install.$(host_triplet)" ; then \
+	  $(ECHO) ; \
+	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
+	  $(ECHO) "  WARNING: It seems as though you might not have" ; \
+	  $(ECHO) "           installed BRL-CAD yet?" ; \
+	  $(ECHO) ; \
+	  $(ECHO) "  You should run 'make install' before creating a" ; \
+	  $(ECHO) "  binary distribution package.  Trying regardless." ; \
+	  $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
+	  $(ECHO) ; \
+	fi
 	@$(ECHO) "Building an uncompressed tape archive"
 	@$(ECHO)
 	@@SH@ sh/make_tar.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
@@ -206,13 +240,21 @@ package:
 
 # make sure a dangerous umask will not prevent others from using an
 # installed version by checking to make sure the exec mode is set.
+# We minimally check only the binary and prefix directories.
 install-data-local:
 	@warn_umask=no ; \
-	case `ls -ld $(DESTDIR)$(bindir)` in \
+	case `ls -ld $(DESTDIR)$(prefix)` in \
 	  d????????-*) warn_umask=yes ;; \
 	  d?????-???*) warn_umask=yes ;; \
 	  d??-??????*) warn_umask=yes ;; \
 	esac ; \
+	if test "x$$warn_umask" = "xno" ; then \
+	  case `ls -ld $(DESTDIR)$(bindir)` in \
+	    d????????-*) warn_umask=yes ;; \
+	    d?????-???*) warn_umask=yes ;; \
+	    d??-??????*) warn_umask=yes ;; \
+	  esac ; \
+	fi ; \
 	if test "x$$warn_umask" = "xyes" ; then \
 	    $(ECHO) ; \
 	    $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
@@ -265,9 +307,12 @@ install-data-local:
 	      fi ; \
 	    fi ; \
 	    $(ECHO) ; \
+	    $(ECHO) "  Do not presume the find example is all that is" ; \
+	    $(ECHO) "  needed.  VERIFY THE PERMISSIONS." ; \
 	    $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
 	    $(ECHO) ; \
-	fi
+	fi ; \
+	touch install.$(host_triplet)
 
 
 # Print out an informative summary.  As just about everything seems to
