@@ -1,21 +1,24 @@
 /*
- *			T E R M C A P . H 
+ *			T E R M C A P . H
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:26  mike
+ * Release_4.4
+ *
  * Revision 10.1  91/10/12  06:54:07  mike
  * Release_4.0
- * 
+ *
  * Revision 2.1  88/03/10  05:24:49  phil
  * ignore ll if li != winsize
- * 
+ *
  * Revision 2.0  84/12/26  16:50:05  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:10:36  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 
 /* Termcap definitions */
@@ -63,4 +66,3 @@ extern int LowerLen;	/* Length of lower string */
 extern int BG;		/* Are we on a BITGRAPH */
 
 extern char *BC;	/* Back space */
-extern int ospeed;
