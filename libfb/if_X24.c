@@ -68,9 +68,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <unistd.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#else
+#define CAN_LINGER 1
+#endif
+
+#ifdef HAVE_SHM
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#define	CAN_LINGER 1
 #endif
 
 #include <X11/X.h>
@@ -196,7 +200,7 @@ struct	xinfo {
 	unsigned char	*xi_mem;	/* 24-bit backing store */
 	unsigned char	*xi_pix;	/* X Image buffer */
 
-#ifndef HAVE_MMAP
+#ifdef HAVE_SHM
 	int		xi_shmid;	/* Sys V shared mem id */
 #endif
 
@@ -2067,7 +2071,8 @@ using private memory instead, errno %d\n", errno);
 
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
-#else
+#endif
+#ifdef HAVE_SHM
 		if ((xi->xi_shmid = shmget(SHMEM_KEY, size, 0)) < 0) {
 			/* No existing one, create a new one */
 			xi->xi_shmid = shmget(SHMEM_KEY, size, IPC_CREAT|0666);
@@ -2088,6 +2093,11 @@ private memory instead, errno %d\n", errno);
 using private memory instead, errno %d\n", errno);
 		}
 
+		/* Change it to local */
+		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
+#endif
+
+#ifndef CAN_LINGER
 		/* Change it to local */
 		xi->xi_mode = (xi->xi_mode & ~MODE10_MASK) | MODE10_MALLOC;
 #endif
@@ -2130,7 +2140,8 @@ X24_zapmem()
 
 #ifdef HAVE_MMAP
 	unlink(BS_NAME);
-#else
+#endif
+#ifdef HAVE_SHM
 	if ((shmid = shmget(SHMEM_KEY, 0, 0)) < 0) {
 		fb_log("X24_zapmem shmget failed, errno=%d\n", errno);
 		return;
@@ -2142,7 +2153,9 @@ X24_zapmem()
 		return;
 	}
 #endif
+#ifdef CAN_LINGER
 	fb_log("if_X24: shared memory released\n");
+#endif
 	return;
 }
 
