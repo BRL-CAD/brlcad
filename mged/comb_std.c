@@ -36,7 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./ged.h"
@@ -135,7 +134,6 @@ char	**argv;
     int				ch;
     int				region_flag = -1;
     register struct directory	*dp;
-    union record		record;
 
     extern int			optind;
     extern char			*optarg;

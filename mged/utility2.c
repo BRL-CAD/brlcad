@@ -2,7 +2,6 @@
  *			U T I L I T Y 2 . C
  *
  *
- *	f_tabobj()	tabs objects as they are stored in data file
  *	f_pathsum()	gives various path summaries
  *	f_copyeval()	copy an evaluated solid
  *	trace()		traces hierarchy of objects
@@ -35,8 +34,6 @@
 #include "./ged.h"
 #include "./sedit.h"
 #include "../librt/debug.h"	/* XXX */
-
-static union record record;
 
 void		identitize();
 void		trace();
@@ -135,120 +132,6 @@ char **argv;
 
 	return TCL_OK;
 }
-
-/*  	F _ T A B O B J :   tabs objects as they appear in data file
- */
-int
-f_tabobj(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	register struct directory *dp;
-	int ngran, nmemb;
-	int i, j, k, kk;
-	struct bu_vls tmp_vls;
-
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
-
-	bu_vls_init(&tmp_vls);
-	start_catching_output(&tmp_vls);
-
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else{
-	  bu_vls_free(&tmp_vls);
-	  return TCL_OK;
-	}
-
-	for(i=1; i<argc; i++) {
-		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
-			continue;
-		if( db_get( dbip, dp, &record, 0, 1) < 0 ) {
-		  stop_catching_output(&tmp_vls);
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		  (void)signal( SIGINT, SIG_IGN );
-		  TCL_READ_ERR_return;
-		}
-		if(record.u_id == ID_ARS_A) {
-			bu_log("%c %d %s ",record.a.a_id,record.a.a_type,record.a.a_name);
-			bu_log("%d %d %d %d\n",record.a.a_m,record.a.a_n,
-				record.a.a_curlen,record.a.a_totlen);
-			/* the b-records */
-			ngran = record.a.a_totlen;
-			for(j=1; j<=ngran; j++) {
-				if( db_get( dbip, dp, &record, j, 1) < 0 ) {
-				  stop_catching_output(&tmp_vls);
-				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-				  bu_vls_free(&tmp_vls);
-				  (void)signal( SIGINT, SIG_IGN );
-				  TCL_READ_ERR_return;
-				}
-				bu_log("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
-				for(k=0; k<24; k+=6) {
-					for(kk=k; kk<k+6; kk++)
-						bu_log("%10.4f ",record.b.b_values[kk]*base2local);
-					bu_log("\n");
-				}
-			}
-		}
-
-		if(record.u_id == ID_SOLID) {
-			bu_log("%c %d %s %d\n", record.s.s_id,
-				record.s.s_type,record.s.s_name,
-				record.s.s_cgtype);
-			for(kk=0;kk<24;kk+=6){
-				for(j=kk;j<kk+6;j++)
-					bu_log("%10.4f ",record.s.s_values[j]*base2local);
-				bu_log("\n");
-			}
-		}
-		if(record.u_id == ID_COMB) {
-			bu_log("%c '%c' %s %d %d %d %d %d \n",
-			record.c.c_id,record.c.c_flags,
-			record.c.c_name,record.c.c_regionid,
-			record.c.c_aircode, dp->d_len-1,
-			record.c.c_material,record.c.c_los);
-			nmemb = dp->d_len-1;
-			for(j=1; j<=nmemb; j++) {
-				mat_t	xmat;
-
-				if( db_get( dbip, dp, &record, j, 1) < 0 ) {
-				  stop_catching_output(&tmp_vls);
-				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-				  bu_vls_free(&tmp_vls);
-				  (void)signal( SIGINT, SIG_IGN );
-				  TCL_READ_ERR_return;
-				}
-				bu_log("%c %c %s\n",
-					record.M.m_id,
-					record.M.m_relation,
-					record.M.m_instname);
-				rt_mat_dbmat( xmat, record.M.m_mat );
-				matrix_print( xmat );
-				bu_log("\n");
-			}
-		}
-		if(record.u_id == ID_P_HEAD) {
-			bu_log("POLYGON: not implemented yet\n");
-		}
-
-		if(record.u_id == ID_BSOLID) {
-			bu_log("SPLINE: not implemented yet\n");
-		}
-	}
-
-	stop_catching_output(&tmp_vls);
-	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	bu_vls_free(&tmp_vls);
-
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
-}
-
 
 #define MAX_LEVELS 12
 #define CPEVAL		0
@@ -1575,7 +1458,6 @@ char **argv;
 	char *parent;
 	char *child;
 	struct directory *dp;
-	union record *rp;
 	int max_count=1;
 	mat_t acc_matrix;
 	struct bu_vls tmp_vls;
@@ -1789,8 +1671,6 @@ char *argv[];
 
 	if( success )
 	{
-		int ngran;
-
 		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 		s = BU_LIST_FIRST( shell, &r->s_hd );
 
@@ -1808,31 +1688,17 @@ char *argv[];
 
 		rt_db_free_internal( &nmg_intern );
 
-		if( rt_functab[new_intern.idb_type].ft_export( &new_extern, &new_intern, 1.0 ) < 0 )
+		if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
 		{
-		  Tcl_AppendResult(interp, "f_nmg_simplify: export failure\n", (char *)NULL);
-		  rt_functab[new_intern.idb_type].ft_ifree( &new_intern );
-		  return TCL_ERROR;
+			Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
+			return TCL_ERROR;
 		}
 
-		/* only the polysolid mallocs anything */
-		if( new_intern.idb_type == ID_POLY )
-			rt_functab[new_intern.idb_type].ft_ifree( &new_intern );
-
-		ngran = (new_extern.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-		if( (dp = db_diradd( dbip, new_name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-		    db_alloc( dbip, dp, 1 ) < 0 )
-		    {
-		      db_free_external( &new_extern );
-		      TCL_ALLOC_ERR_return;
-		    }
-
-		if (db_put_external( &new_extern, dp, dbip ) < 0 )
+		if( rt_db_put_internal( dp, dbip, &new_intern ) < 0 )
 		{
-		  db_free_external( &new_extern );
-		  TCL_WRITE_ERR_return;
+			rt_db_free_internal( &new_intern );
+			TCL_WRITE_ERR_return;
 		}
-		db_free_external( &new_extern );
 		return TCL_OK;
 	}
 
@@ -1860,9 +1726,7 @@ char **argv;
 	struct directory	*dp;
 	struct rt_arb_internal	arb;
 	struct rt_db_internal	new_intern;
-	struct bu_external	new_extern;
 	struct region		*regp;
-	int			ngran;
 	char			*new_name;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -2025,34 +1889,18 @@ char **argv;
 	RT_INIT_DB_INTERNAL( &new_intern );
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_ptr = (genptr_t)(&arb);
-	BU_INIT_EXTERNAL( &new_extern );
 
-	/* export it */
-	if( rt_functab[new_intern.idb_type].ft_export( &new_extern, &new_intern, 1.0 ) < 0 )
+	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
-	  Tcl_AppendResult(interp, "f_make_bb: export failure\n", (char *)NULL);
-	  rt_functab[new_intern.idb_type].ft_ifree( &new_intern );
-	  return TCL_ERROR;
+		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
+		return TCL_ERROR;
 	}
 
-	/* Add this new solid to the directory */
-	ngran = (new_extern.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if( (dp = db_diradd( dbip, new_name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-		db_alloc( dbip, dp, 1 ) < 0 )
+	if( rt_db_put_internal( dp, dbip, &new_intern ) < 0 )
 	{
-	  db_free_external( &new_extern );
-	  TCL_ALLOC_ERR_return;
+		rt_db_free_internal( &new_intern );
+		TCL_WRITE_ERR_return;
 	}
-
-	/* and finally, write it to disk */
-	if (db_put_external( &new_extern, dp, dbip ) < 0 )
-	{
-	  db_free_external( &new_extern );
-	  TCL_WRITE_ERR_return;
-	}
-
-	/* clean up */
-	db_free_external( &new_extern );
 
 	rt_clean( rtip );
 	bu_free( (genptr_t)rtip, "f_make_bb: rtip" );
@@ -2079,7 +1927,6 @@ char **argv;
 	struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	union record rec;
 	char id[10];
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
