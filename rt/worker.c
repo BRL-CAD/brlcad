@@ -153,7 +153,6 @@ do_run( a, b )
 void
 worker()
 {
-	/* breaks when a is static (default for LOCAL) or global, okay if auto */
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
 	LOCAL vect_t colorsum;
