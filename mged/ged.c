@@ -83,33 +83,6 @@ extern Tk_Window tkwin;
 #include "./sedit.h"
 #include "./dm.h"
 
-#ifdef XMGED
-
-extern int      (*editline_hook)();
-extern int	(*fgetc_hook)();
-extern int	(*fputc_hook)();
-extern int	(*fputs_hook)();
-extern char	*(*fgets_hook)();
-extern char	*(*gets_hook)();
-extern void	(*fprintf_hook)();
-extern int	(*button_hook)();
-extern int	(*slider_hook)();
-extern int	(*openw_hook)();
-extern int	(*closew_hook)();
-extern int	(*adc_hook)();
-extern void	(*wait_hook)();
-extern void	(*dotitles_hook)();
-extern int     (*tran_hook)();
-extern int     (*rot_hook)(), (*set_tran_hook)();
-extern void set_tran();
-extern point_t orig_pos;
-extern int tran_set;
-extern double tran_x;
-extern double tran_y;
-extern double tran_z;
-extern int journal;
-#endif
-
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
@@ -132,16 +105,8 @@ int		dmaflag;		/* Set to 1 to force new screen DMA */
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
-int             (*knob_hook)() = NULL;
-int             (*cue_hook)() = NULL;
-int             (*zclip_hook)() = NULL;
-int             (*zbuffer_hook)() = NULL;
-int             (*light_hook)() = NULL;
-int             (*perspective_hook)() = NULL;
 int		(*cmdline_hook)() = NULL;
 void		(*viewpoint_hook)() = NULL;
-void            (*axis_color_hook)() = NULL;
-void            (*knob_offset_hook)() = NULL;
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -163,10 +128,6 @@ static void	log_event();
 extern char	version[];		/* from vers.c */
 
 struct rt_tol	mged_tol;		/* calculation tolerance */
-
-#ifdef XMGED
-extern int      already_scandb;
-#endif
 
 static char *units_str[] = {
 	"none",
@@ -197,26 +158,6 @@ int argc;
 char **argv;
 {
 	int	rateflag = 0;
-
-#ifdef XMGED
-	editline_hook = NULL;
-	fputc_hook = NULL;
-	fputs_hook = NULL;
-	fprintf_hook = NULL;
-	fgets_hook = NULL;
-	gets_hook = NULL;
-	fgetc_hook = NULL;
-	button_hook = NULL;
-	slider_hook = NULL;
-	openw_hook = NULL;
-	closew_hook = NULL;
-	adc_hook = NULL;
-	dotitles_hook = NULL;
-	wait_hook = NULL;
-	tran_hook = NULL;
-	rot_hook = NULL;
-	set_tran_hook = NULL;
-#endif
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
@@ -280,6 +221,8 @@ char **argv;
 	RT_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
 	curr_dm_list = &head_dm_list;
+	rt_vls_init(&pathName);
+	rt_vls_strcpy(&pathName, "nu");
 #endif
 
 	state = ST_VIEW;
@@ -420,16 +363,12 @@ char **argv;
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
 
-#ifdef XMGED
-		/* now being done in cmd.c/mged_cmd() */
-#else
 		/* apply solid editing changes if necessary */
 		if( sedraw > 0) {
 			sedit();
 			sedraw = 0;
 			dmaflag = 1;
 		}
-#endif
 
 		/*
 		 * Cause the control portion of the displaylist to be
@@ -486,7 +425,7 @@ int mask;
     static int escaped = 0;
     static int bracketed = 0;
     static int freshline = 1;
-#if TRY_PIPES
+#ifdef SEND_KEY_DOWN_PIPE
     int fd;
 
     fd = (int)clientData;
@@ -548,7 +487,7 @@ int mask;
 
     /* Grab single character from stdin */
 
-#if TRY_PIPES
+#ifdef SEND_KEY_DOWN_PIPE
     count = read(fd, (void *)&ch, 1);
 #else
     count = read(fileno(stdin), (void *)&ch, 1);
@@ -1164,45 +1103,8 @@ void
 setview( a1, a2, a3 )
 double a1, a2, a3;		/* DOUBLE angles, in degrees */
 {
-#ifdef XMGED
-  point_t old_pos;
-  point_t new_pos;
-  point_t new_pos2;
-  point_t diff;
-  vect_t view_pos;
-  
-  MAT_DELTAS_GET(old_pos, toViewcenter);
-
-  if(state == ST_S_EDIT || state == ST_O_EDIT){
-    VSET(view_pos, tran_x, tran_y, tran_z);
-    MAT4X3PNT( new_pos2, view2model, view_pos );
-  }
-#endif
-
 	buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
 	new_mats();
-
-#ifdef XMGED
-  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-
-  if(state == ST_S_EDIT || state == ST_O_EDIT){
-    MAT4X3PNT(view_pos, model2view, new_pos2);
-    tran_x = view_pos[X];
-    tran_y = view_pos[Y];
-    tran_z = view_pos[Z];
-  }else{
-    VSUB2(diff, new_pos, orig_pos);
-    VADD2(new_pos, old_pos, diff);
-    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
-    MAT4X3PNT( new_pos, model2view, view_pos);
-    tran_x = new_pos[X];
-    tran_y = new_pos[Y];
-    tran_z = new_pos[Z];
-  }
-
-  if(tran_hook)
-          (*tran_hook)();
-#endif
 }
 
 /*
@@ -1230,17 +1132,6 @@ vect_t view_pos;
 	MAT_DELTAS_VEC( delta, diff );
 	mat_mul2( delta, ModelDelta );
 	new_mats();
-
-#ifdef XMGED
-	if(!tran_set){
-	  tran_x -= view_pos[X];
-	  tran_y -= view_pos[Y];
-	  tran_z -= view_pos[Z];
-	}
-
-	if(tran_hook)
-	  (*tran_hook)();
-#endif
 }
 
 /*
@@ -1399,7 +1290,6 @@ do_rc()
 	if( !found )
 		return -1;
 
-#ifndef XMGED
 	bogus = 0;
 	while( !feof(fp) ) {
 	    char buf[80];
@@ -1422,10 +1312,7 @@ do_rc()
 	if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
 	    rt_log("Error reading %s: %s\n", RCFILE, interp->result);
 	}
-#else
-	mged_source_file( fp );
-	fclose( fp );
-#endif
+
 	return 0;
 
 }

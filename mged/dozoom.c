@@ -39,7 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define E_AXIS 2
 
 extern point_t e_axis_pos;
-extern void (*axis_color_hook)();
 static void draw_axis();
 
 #ifndef MULTI_ATTACH
@@ -309,11 +308,7 @@ int	which_eye;
 		VSET( l, -1, -1, -1 );
 		VSET( h, 1, 1, 200.0 );
 if(which_eye) {
-#ifdef XMGED
-rt_log("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
-#else
 printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
-#endif
 VPRINT("l", l);
 VPRINT("h", h);
 }
