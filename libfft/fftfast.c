@@ -21,7 +21,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -113,6 +113,7 @@ double	*costab;
  *   We chose the later. (but N.B. this doesn't allow sub
  *   _init_size requests to use existing numbers!)
  */
+int
 init_sintab( size )
 int size;
 {

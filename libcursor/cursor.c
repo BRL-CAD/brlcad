@@ -7,7 +7,7 @@
 			(301)278-6647 or AV-298-6647
 */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 /*
 	Originally extracted from SCCS archive:
@@ -109,6 +109,7 @@ int		ClrStandout(), ClrEOL(), ClrText(),
 	appropriate diagnostic.
 	Use 'fp' as output stream.
  */
+int
 InitTermCap( fp )
 FILE	*fp;
 	{	char	*term; /* Name of terminal from environment ($TERM).*/
@@ -364,6 +365,7 @@ SetStandout()
 	}
 
 /*	P u t C h r ( )							*/
+int
 PutChr( c )
 char	c;
 	{
