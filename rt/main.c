@@ -485,7 +485,7 @@ worker()
 		if( com > last_pixel )  return;
 		/* Note: ap.... not valid until first time here */
 		a.a_x = com%npts;
-		a.a_y = npts-1 - com/npts;
+		a.a_y = com/npts;
 		a.a_hit = ap.a_hit;
 		a.a_miss = ap.a_miss;
 		a.a_rt_i = ap.a_rt_i;
@@ -496,14 +496,13 @@ worker()
 			if( hypersample )  {
 				FAST fastf_t dx, dy;
 				dx = a.a_x + rand_half();
-				dy = (npts-a.a_y-1) + rand_half();
+				dy = a.a_y + rand_half();
 				VJOIN2( point, viewbase_model,
 					dx, dx_model, dy, dy_model );
 			}  else  {
-				register int yy = npts-a.a_y-1;
 				VJOIN2( point, viewbase_model,
 					a.a_x, dx_model,
-					yy, dy_model );
+					a.a_y, dy_model );
 			}
 			if( perspective )  {
 				VSUB2( a.a_ray.r_dir,
@@ -554,7 +553,7 @@ worker()
 			register char *pixelp;
 			register int r,g,b;
 			/* .pix files go bottom to top */
-			pixelp = scanbuf+(((npts-a.a_y-1)*npts)+a.a_x)*3;
+			pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
 			r = a.a_color[0]*255.;
 			g = a.a_color[1]*255.;
 			b = a.a_color[2]*255.;
@@ -588,4 +587,15 @@ LOCKOFF(p)
 {
 }
 #endif
+#endif
+
+#ifdef sgi
+/* Horrible bug in 3.3.1 and 3.4 -- hypot ruins stack! */
+double
+hypot(a,b)
+double a,b;
+{
+	extern double sqrt();
+	return(sqrt(a*a+b*b));
+}
 #endif
