@@ -1856,6 +1856,17 @@ mat_t		mat;
 			VSETALL( mpt, 0.0 );
 			*strp = "(origin)";
 
+#if 1
+			/* XXX Try to use the first point of the selected edge */
+			if (es_eu != (struct edgeuse *)NULL &&
+			    es_eu->vu_p != (struct vertexuse *)NULL &&
+			    es_eu->vu_p->v_p != (struct vertex *)NULL &&
+			    es_eu->vu_p->v_p->vg_p != (struct vertex_g *)NULL) {
+			  VMOVE(mpt, es_eu->vu_p->v_p->vg_p->coord);
+			  break;
+			}
+#endif
+
 			if( BU_LIST_IS_EMPTY( &m->r_hd ) )
 				break;
 
