@@ -554,156 +554,160 @@ put_tree_into_comb(comb, dp, old_name, new_name, str)
 }
 
 int
-cmd_get_comb(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+cmd_get_comb(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
 {
-  struct directory *dp;
-  struct rt_db_internal	intern;
-  struct rt_comb_internal *comb;
-  struct rt_tree_array	*rt_tree_array;
-  int i;
-  int node_count;
-  int actual_count;
-  struct bu_vls vls;
+	struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal *comb;
+	struct rt_tree_array	*rt_tree_array;
+	int i;
+	int node_count;
+	int actual_count;
+	struct bu_vls vls;
 
-  CHECK_DBI_NULL;
-  CHECK_READ_ONLY;
+	CHECK_DBI_NULL;
+	CHECK_READ_ONLY;
 
-  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-  if(argc != 2){
-    bu_vls_printf(&vls, "helpdevel get_comb");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc != 2) {
+		bu_vls_printf(&vls, "helpdevel get_comb");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
+	dp = db_lookup(dbip , argv[1] , LOOKUP_QUIET);
 
-  if(dp != DIR_NULL){
-    if( !(dp->d_flags & DIR_COMB) ){
-      Tcl_AppendResult(interp, argv[1],
-		       " is not a combination, so cannot be edited this way\n", (char *)NULL);
-      return TCL_ERROR;
-    }
+	if (dp != DIR_NULL) {
+		if (!(dp->d_flags & DIR_COMB)) {
+			Tcl_AppendResult(interp, argv[1],
+					 " is not a combination, so cannot be edited this way\n", (char *)NULL);
+			return TCL_ERROR;
+		}
 
-    if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-      TCL_READ_ERR_return;
+		if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
+			TCL_READ_ERR_return;
 
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-    if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 ){
-      db_non_union_push( comb->tree, &rt_uniresource );
-      if( db_ck_v4gift_tree( comb->tree ) < 0 ){
-	Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
-	return TCL_ERROR;
-      }
-    }
+		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+			db_non_union_push(comb->tree, &rt_uniresource);
+			if (db_ck_v4gift_tree(comb->tree) < 0) {
+				Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
+				return TCL_ERROR;
+			}
+		}
 
-    node_count = db_tree_nleaves( comb->tree );
-    if( node_count > 0 ){
-      rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count, sizeof( struct rt_tree_array ), "tree list" );
-      actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array,
-		comb->tree, OP_UNION, 1, &rt_uniresource ) - rt_tree_array;
-      BU_ASSERT_LONG( actual_count, ==, node_count );
-      comb->tree = TREE_NULL;
-    } else {
-      rt_tree_array = (struct rt_tree_array *)NULL;
-      actual_count = 0;
-    }
+		node_count = db_tree_nleaves(comb->tree);
+		if (node_count > 0) {
+			rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count,
+									  sizeof(struct rt_tree_array),
+									  "tree list");
+			actual_count = (struct rt_tree_array *)db_flatten_tree(rt_tree_array,
+									       comb->tree,
+									       OP_UNION,
+									       1,
+									       &rt_uniresource) - rt_tree_array;
+			BU_ASSERT_LONG(actual_count, ==, node_count);
+			comb->tree = TREE_NULL;
+		} else {
+			rt_tree_array = (struct rt_tree_array *)NULL;
+			actual_count = 0;
+		}
 
-    Tcl_AppendElement(interp, dp->d_namep);                 /* NAME=name */
-    if( comb->region_flag ){
-      Tcl_AppendElement(interp, "Yes");              /* REGION=Yes */
-      bu_vls_trunc(&vls, 0);
-      bu_vls_printf(&vls, "%d", comb->region_id );
-      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* REGION_ID=comb->region_id */
-      bu_vls_trunc(&vls, 0);
-      bu_vls_printf(&vls, "%d", comb->aircode);
-      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* AIRCODE=comb->aircode */
-      bu_vls_trunc(&vls, 0);
-      bu_vls_printf(&vls, "%d", comb->GIFTmater);
-      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* GIFT_MATERIAL=comb->GIFTmater */
-      bu_vls_trunc(&vls, 0);
-      bu_vls_printf(&vls, "%d", comb->los );
-      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* LOS=comb->los */
-    }else{
-      Tcl_AppendElement(interp, "No");   /* REGION=No */
-    }
+		Tcl_AppendElement(interp, dp->d_namep);                 /* NAME=name */
+		if (comb->region_flag) {
+			Tcl_AppendElement(interp, "Yes");              /* REGION=Yes */
+			bu_vls_trunc(&vls, 0);
+			bu_vls_printf(&vls, "%d", comb->region_id );
+			Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* REGION_ID=comb->region_id */
+			bu_vls_trunc(&vls, 0);
+			bu_vls_printf(&vls, "%d", comb->aircode);
+			Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* AIRCODE=comb->aircode */
+			bu_vls_trunc(&vls, 0);
+			bu_vls_printf(&vls, "%d", comb->GIFTmater);
+			Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* GIFT_MATERIAL=comb->GIFTmater */
+			bu_vls_trunc(&vls, 0);
+			bu_vls_printf(&vls, "%d", comb->los );
+			Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* LOS=comb->los */
+		} else {
+			Tcl_AppendElement(interp, "No");   /* REGION=No */
+		}
 
-    if(comb->rgb_valid){
-      bu_vls_trunc(&vls, 0);
-      bu_vls_printf(&vls, "%d %d %d", V3ARGS(comb->rgb));
-      Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* COLOR=comb->rgb */
-    }else
-      Tcl_AppendElement(interp, "");                 /* COLOR="" */
+		if (comb->rgb_valid) {
+			bu_vls_trunc(&vls, 0);
+			bu_vls_printf(&vls, "%d %d %d", V3ARGS(comb->rgb));
+			Tcl_AppendElement(interp, bu_vls_addr(&vls));  /* COLOR=comb->rgb */
+		} else
+			Tcl_AppendElement(interp, "");                 /* COLOR="" */
 
-    Tcl_AppendElement(interp, bu_vls_addr(&comb->shader)); /* SHADER=comb->shader */
+		Tcl_AppendElement(interp, bu_vls_addr(&comb->shader)); /* SHADER=comb->shader */
 
-    if( comb->inherit )
-      Tcl_AppendElement(interp, "Yes");  /* INHERIT=Yes */
-    else
-      Tcl_AppendElement(interp, "No");   /* INHERIT=No  */
+		if (comb->inherit)
+			Tcl_AppendElement(interp, "Yes");  /* INHERIT=Yes */
+		else
+			Tcl_AppendElement(interp, "No");   /* INHERIT=No  */
 
 
-    bu_vls_trunc(&vls, 0);
-    for( i=0 ; i<actual_count ; i++ ){
-      char op;
+		bu_vls_trunc(&vls, 0);
+		for (i = 0 ; i < actual_count ; i++) {
+			char op;
 
-      switch( rt_tree_array[i].tl_op ){
-      case OP_UNION:
-	op = 'u';
-	break;
-      case OP_INTERSECT:
-	op = '+';
-	break;
-      case OP_SUBTRACT:
-	op = '-';
-	break;
-      default:
-	Tcl_AppendResult(interp, "Illegal op code in tree\n",
-			 (char *)NULL );
-	bu_vls_free(&vls);
+			switch (rt_tree_array[i].tl_op) {
+			case OP_UNION:
+				op = 'u';
+				break;
+			case OP_INTERSECT:
+				op = '+';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			default:
+				Tcl_AppendResult(interp, "Illegal op code in tree\n",
+						 (char *)NULL);
+				bu_vls_free(&vls);
 
-	return TCL_ERROR;
-      }
+				return TCL_ERROR;
+			}
 
-      bu_vls_printf(&vls, " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name);
-      vls_print_matrix(&vls, rt_tree_array[i].tl_tree->tr_l.tl_mat);
-      bu_vls_printf(&vls, "\n");
-      db_free_tree( rt_tree_array[i].tl_tree, &rt_uniresource );
-    }
+			bu_vls_printf(&vls, " %c %s\t" , op , rt_tree_array[i].tl_tree->tr_l.tl_name);
+			vls_print_matrix(&vls, rt_tree_array[i].tl_tree->tr_l.tl_mat);
+			bu_vls_printf(&vls, "\n");
+			db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);
+		}
 
-    Tcl_AppendElement(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
+		Tcl_AppendElement(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
 
-    return TCL_OK;
-  }else {
-    Tcl_AppendElement(interp, argv[1]); /* NAME=argv[1] */
-    Tcl_AppendElement(interp, "Yes");    /* REGION=Yes */
-    bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "%d", item_default);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* REGION_ID=item_default */
-    bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "%d", air_default);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* AIRCODE=air_default */
-    bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "%d", mat_default);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* GIFT_MATERIAL=mat_default */
-    bu_vls_trunc(&vls, 0);
-    bu_vls_printf(&vls, "%d", los_default);
-    Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* LOS=los_default */
-    Tcl_AppendElement(interp, "");      /* COLOR=""         */
-    Tcl_AppendElement(interp, "");      /* SHADER=""        */
-    Tcl_AppendElement(interp, "No");    /* INHERIT=No       */
-    Tcl_AppendElement(interp, "");      /* COMBINATION:""   */
-    bu_vls_free(&vls);
+		return TCL_OK;
+	} else {
+		Tcl_AppendElement(interp, argv[1]); /* NAME=argv[1] */
+		Tcl_AppendElement(interp, "Yes");    /* REGION=Yes */
+		bu_vls_trunc(&vls, 0);
+		bu_vls_printf(&vls, "%d", item_default);
+		Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* REGION_ID=item_default */
+		bu_vls_trunc(&vls, 0);
+		bu_vls_printf(&vls, "%d", air_default);
+		Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* AIRCODE=air_default */
+		bu_vls_trunc(&vls, 0);
+		bu_vls_printf(&vls, "%d", mat_default);
+		Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* GIFT_MATERIAL=mat_default */
+		bu_vls_trunc(&vls, 0);
+		bu_vls_printf(&vls, "%d", los_default);
+		Tcl_AppendElement(interp, bu_vls_addr(&vls)); /* LOS=los_default */
+		Tcl_AppendElement(interp, "");      /* COLOR=""         */
+		Tcl_AppendElement(interp, "");      /* SHADER=""        */
+		Tcl_AppendElement(interp, "No");    /* INHERIT=No       */
+		Tcl_AppendElement(interp, "");      /* COMBINATION:""   */
+		bu_vls_free(&vls);
 
-    return TCL_RETURN;
-  }
+		return TCL_RETURN;
+	}
 }
 
 /*
