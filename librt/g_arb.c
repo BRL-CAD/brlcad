@@ -95,10 +95,11 @@ struct prep_arb {
  *  to make proper outward-pointing face normals.
  *  (Although the cross product wants counter-clockwise order)
  */
-static struct arb_info {
+struct arb_info {
 	char	*ai_title;
 	int	ai_sub[4];
-} rt_arb_info[6] = {
+};
+static CONST struct arb_info rt_arb_info[6] = {
 	{ "1234", 3, 2, 1, 0 },		/* "bottom" face */
 	{ "8765", 4, 5, 6, 7 },		/* "top" face */
 	{ "1485", 4, 7, 3, 0 },
@@ -124,7 +125,7 @@ RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 HIDDEN int
 rt_arb_add_pt( point, title, pap, ptno )
 register pointp_t point;
-char		*title;
+CONST char	*title;
 struct prep_arb	*pap;
 int		ptno;	/* current point # on face */
 {
