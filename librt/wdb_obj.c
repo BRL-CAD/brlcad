@@ -75,6 +75,8 @@ HIDDEN int wdb_list_tcl();
 HIDDEN int wdb_pathsum_tcl();
 HIDDEN int wdb_expand_tcl();
 HIDDEN int wdb_kill_tcl();
+HIDDEN int wdb_killtree_tcl();
+HIDDEN void wdb_killtree_callback();
 
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
@@ -120,6 +122,7 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"paths",	wdb_pathsum_tcl,
 	"expand",	wdb_expand_tcl,
 	"kill",		wdb_kill_tcl,
+	"killtree",	wdb_killtree_tcl,
 #if 0
 	"c",		wdb_comb_std_tcl,
 	"cat",		wdb_cat_tcl,
@@ -138,7 +141,6 @@ HIDDEN struct bu_cmdtab wdb_cmds[] = {
 	"inside",	wdb_inside_tcl,
 	"keep",		wdb_keep_tcl,
 	"killall",	wdb_killall_tcl,
-	"killtree",	wdb_killtree_tcl,
 	"mv",		wdb_move_tcl,
 	"mvall",	wdb_move_all_tcl,
 	"pathlist",	wdb_pathlist_tcl,
@@ -1525,7 +1527,7 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 				continue;
 
 			/* notify drawable geometry objects associated with this database object */
-			dgo_eraseobjall_callback(interp, wdbop, dp);
+			dgo_eraseobjall_callback(interp, wdbop->wdb_wp->dbip, dp);
 
 			if (db_delete(wdbop->wdb_wp->dbip, dp) < 0 ||
 			    db_dirdelete(wdbop->wdb_wp->dbip, dp) < 0) {
@@ -1539,6 +1541,74 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 	}
 
 	return TCL_OK;
+}
+
+/*
+ * Kill all paths belonging to an object.
+ *
+ * Usage:
+ *        procname killtree arg(s)
+ */
+HIDDEN int
+wdb_killtree_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	register struct directory *dp;
+	register int i;
+
+	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 3 || MAXARGS < argc) {
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "helplib wdb_killtree");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	curr_interp = interp;
+
+	/* skip past procname */
+	argc--;
+	argv++;
+
+	for (i=1; i<argc; i++) {
+		if ((dp = db_lookup(wdbop->wdb_wp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+			continue;
+		db_functree(wdbop->wdb_wp->dbip, dp, wdb_killtree_callback, wdb_killtree_callback);
+	}
+}
+
+/*
+ *			K I L L T R E E
+ */
+HIDDEN void
+wdb_killtree_callback(dbip, dp)
+struct db_i	*dbip;
+register struct directory *dp;
+{
+  if (dbip == DBI_NULL)
+    return;
+
+  Tcl_AppendResult(curr_interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+		   ":  ", dp->d_namep, "\n", (char *)NULL);
+
+  dgo_eraseobjall_callback(curr_interp, dbip, dp);
+
+  if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+    Tcl_AppendResult(curr_interp,
+		     "an error occurred while deleting ",
+		     dp->d_namep, "\n", (char *)NULL);
+  }
 }
 
 #if 0
