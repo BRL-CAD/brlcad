@@ -239,13 +239,19 @@ clobber&:	clean noprod
 clean&:
 	-rm -f core *~ *.o EXTRA_CLEAN SRCDIR.out SRCDIR.err SRCDIR.xref SRCDIR.flow SRCDIR.lint
 
+#if defined(LIBRARY_TITLE)
 /*
- * The asterisk is to glob all the variations of library names.
- * Hopefully we don't have any programs called short things like 'a'.
- * Something more general for dealing with libraries might be appropriate.
+ *  The asterisk is to glob all the variations of (shared) library names.
+ *  This depends on the fact that for libraries, PRODUCTS is a single name,
+ *  not a list of file names, and that there will be no source file called
+ *  PRODUCTS.c, e.g., no librt.c file for making librt.so.10.
  */
 noprod&:
 	-rm -f PRODUCTS*
+#else
+noprod&:
+	-rm -f PRODUCTS
+#endif
 
 #ifdef never
 /*
