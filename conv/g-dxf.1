@@ -2,7 +2,7 @@
 .SH NAME
 g-dxf \- AutoCad DXF Translator (BRL-CAD to DXF)
 .SH SYNOPSIS
-.B g-dxf [-v] [-i] [-xX lvl]
+.B g-dxf [-v] [-i] [-p] [-xX lvl]
 [-D calculation_tolerance ]
 [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o DXF_file] database.g object(s)
 .SH DESCRIPTION
@@ -42,7 +42,11 @@ The
 option requests verbose output.
 The
 .I -i
-option requests the output file units to be inches (the default is mm).
+option requests the output file units to be inches (the default is mm).\
+The
+.I -p
+option requests that the output consist entirely of POLYFACE MESH entities.
+(The default is all 3DFACE entities).
 The
 .I -o
 option specifies the name of the file to receive the output
