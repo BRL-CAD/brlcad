@@ -30,7 +30,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-unsigned char *malloc();
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern unsigned char *malloc();
 
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
 
@@ -42,43 +45,108 @@ int	buf_start = -1000;		/* First line in buffer */
 
 int	bufy;				/* y coordinate in buffer */
 FILE	*buffp;
-int	nflag = 0;
+static char	*file_name;
+
+int	rflag = 0;
+int	inx = 512;
+int	iny = 512;
+int	outx = 512;
+int	outy = 512;
 
 void	init_buffer(), fill_buffer(), binterp(), ninterp();
 
-static char usage[] = "\
-Usage: bwscale [-n] infile.bw inx iny outx outy >out.bw\n";
+static	char usage[] = "\
+Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'r':
+			/* pixel replication */
+			rflag = 1;
+			break;
+		case 'h':
+			/* high-res */
+			inx = iny = 1024;
+			break;
+		case 'S':
+			/* square size */
+			outx = outy = atoi(optarg);
+			break;
+		case 's':
+			/* square size */
+			inx = iny = atoi(optarg);
+			break;
+		case 'W':
+			outx = atoi(optarg);
+			break;
+		case 'w':
+			inx = atoi(optarg);
+			break;
+		case 'N':
+			outy = atoi(optarg);
+			break;
+		case 'n':
+			iny = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	/* XXX - backward compatability hack */
+	if( optind+5 == argc ) {
+		file_name = argv[optind++];
+		if( (buffp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"bwscale: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+		inx = atoi(argv[optind++]);
+		iny = atoi(argv[optind++]);
+		outx = atoi(argv[optind++]);
+		outy = atoi(argv[optind++]);
+		return(1);
+	}
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		buffp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (buffp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"bwscale: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "bwscale: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main( argc, argv )
 int argc; char **argv;
 {
-	int	inx, iny, outx, outy;
-
-	while( argc > 1 ) {
-		if( strcmp(argv[1],"-n") == 0 ) {
-			nflag++;
-		} else
-			break;
-		argc--;
-		argv++;
-	}
-
-	if( argc != 6 ) {
-		fprintf( stderr, usage );
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
-	inx = atoi( argv[2] );
-	iny = atoi( argv[3] );
-	outx = atoi( argv[4] );
-	outy = atoi( argv[5] );
+
 	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
 		fprintf( stderr, "bwscale: bad size\n" );
 		exit( 2 );
-	}
-
-	if( (buffp = fopen( argv[1], "r" )) == NULL ) {
-		fprintf( stderr, "bwscale: can't open \"%s\"\n", argv[1] );
-		exit( 3 );
 	}
 
 	/* See how many lines we can buffer */
@@ -127,7 +195,10 @@ int y;
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;
 
-	fseek( buffp, buf_start * scanlen, 0 );
+	if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+		fprintf( stderr, "bwscale: Can't seek to input pixel!\n" );
+		exit( 3 );
+	}
 	fread( buffer, scanlen, buflines, buffp );
 }
 
@@ -163,7 +234,7 @@ int	ix, iy, ox, oy;
 		return( -1 );
 	}
 	if( pxlen < 1.0 || pylen < 1.0 ) {
-		if( nflag ) {
+		if( rflag ) {
 			/* nearest neighbor interpolate */
 			ninterp( ofp, ix, iy, ox, oy );
 		} else {
