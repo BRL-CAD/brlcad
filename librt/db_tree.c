@@ -644,9 +644,11 @@ CONST char		*cp;
 	switch( side )  {
 	case 1:
 		db_tree_del_lhs( parent );
+		(void)db_tree_del_dbleaf( tp, cp );	/* recurse for extras */
 		return 0;
 	case 2:
 		db_tree_del_rhs( parent );
+		(void)db_tree_del_dbleaf( tp, cp );	/* recurse for extras */
 		return 0;
 	}
 	bu_log("db_tree_del_dbleaf() unknown side=%d?\n", side);
