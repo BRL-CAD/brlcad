@@ -36,8 +36,7 @@ extern char	*optarg;
 extern int	optind;
 extern int	getopt();
 
-typedef unsigned char u_char;
-static u_char	halftone[8][8] =	/* halftone pattern */
+static int	halftone[8][8] =	/* halftone pattern */
 {
 	6,   7,   8,   9,  10,  11,  12,  13,
 	40,  42,  44,  46,  49,  51,  54,  14,
@@ -49,7 +48,7 @@ static u_char	halftone[8][8] =	/* halftone pattern */
 	29,  27,  26,  25,  23,  22,  21,  20
 };
 
-static u_char	dither[8][8] =		/* dither pattern */
+static int	dither[8][8] =		/* dither pattern */
 {
 	6,  51,  14,  78,   8,  57,  16,  86,
 	118,  22, 178,  34, 130,  25, 197,  37,
@@ -61,7 +60,7 @@ static u_char	dither[8][8] =		/* dither pattern */
 	254,  49, 169,  32, 230,  44, 152,  29
 };
 
-static u_char	(*pattern)[8] = dither;	/* -> dither or halftone */
+static int	(*pattern)[8] = dither;	/* -> dither or halftone */
 
 static FILE	*infp;			/* input file handle */
 static char	*file_name = "-";	/* name of input file, for banner */
@@ -282,10 +281,10 @@ int y;
 
 	/* output the swath */
 	{
-		register int x, y;
-		for ( x = 0; x < im_wpatches; ++x )  {
-			for ( y = 0; y < 32; ++y )  {
-				register long	b = swath[y][x];
+		register int xx, yy;
+		for ( xx = 0; xx < im_wpatches; ++xx )  {
+			for ( yy = 0; yy < 32; ++yy )  {
+				register long	b = swath[yy][xx];
 				register c;
 
 				c = (int)(b >> 24) & 0xFF; (void)putchar( c );
