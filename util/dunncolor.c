@@ -10,26 +10,26 @@
  *	August 1985
  *
  */
-
-
 #include <sys/time.h>
 #include <sgtty.h>
 #include <sys/file.h>
+
 struct	sgttyb	tty;
 int fd;
 char cmd;
 unsigned char status[4], values[21];
 int readfds, xcptfd;
 
+int polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
+
 main(argc, argv)
 int argc;
 char **argv;
 {
-	struct timeval waittime, *timeout;
-	timeout = &waittime;
-	timeout->tv_sec = 20;
-	timeout->tv_usec = 0;
+	struct timeval waittime;
 
+	waittime.tv_sec = 20;
+	waittime.tv_usec = 0;
 
 	/* open the camera device */
 
@@ -50,35 +50,25 @@ char **argv;
 	}
 
 	/* check argument */
-
-	if ( argc != 5) {
-		printf("usage: dunncolor baseval redval greenval blueval\n"); 
+	if ( argc != 5 && argc != 6 ) {
+		printf("usage: dunncolor [-p] baseval redval greenval blueval\n"); 
 		exit(25);
 	}
-
+	if( strcmp( argv[1], "-p" ) == 0 )  {
+		/* Polaroid rather than external camera */
+		polaroid = 1;
+		argc--; argv++;
+	}
 
 	if (!ready(1)) {
 		printf("dunncolor: 30 camera not ready\n");
 		exit(30);
 	}
 		
-	cmd = '=';	/* request AUX exposure values command */
-	write(fd, &cmd, 1);
-	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, &xcptfd, timeout);
-	if( (readfds&(1<<fd)) != 0) {
-		mread(fd, values, 20);
-		values[20] = '\0';
-		printf("dunncolor: current values= %s\n",values);
-	}
-	else {
-		printf("dunncolor:\007request values cmd timed out\n");
-		exit(40);
-	}
-
+	getexposure("old");
 
 	if(!ready(20)) {
-		printf("dunncolor: 50 camera not ready\n");
+		printf("dunncolor:  camera not ready\n");
 		exit(50);
 	}
 
@@ -92,19 +82,7 @@ char **argv;
 		exit(60);
 	}
 
-	cmd = '=';	/* request AUX exposure values command */
-	write(fd, &cmd, 1);
-	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, &xcptfd, timeout);
-	if( (readfds&(1<<fd)) != 0) {
-		mread(fd, values, 20);
-		values[20] = '\0';
-		printf("dunncolor: new values= %s\n",values);
-	}
-	else {
-		printf("dunncolor:\007request values cmd timed out\n");
-		exit(70);
-	}
+	getexposure("new");
 }
 
 /*
@@ -127,7 +105,10 @@ int val;
 		exit(80);
 	}
 
-	cmd = 'L';	/* set AUX exposure values */
+	if( polaroid )
+		cmd = 'K';	/* set 8x10 exposure values */
+	else
+		cmd = 'L';	/* set AUX exposure values */
 	write(fd, &cmd, 1);
 	hangten();
 	write(fd, &color, 1);
@@ -175,6 +156,36 @@ unsigned	n;
 }
 
 /*
+ *			G E T E X P O S U R E
+ *
+ *  Get and print the current exposure
+ */
+getexposure(title)
+char *title;
+{
+	struct timeval waittime;
+
+	waittime.tv_sec = 20;
+	waittime.tv_usec = 0;
+
+	if(polaroid)
+		cmd = '<';	/* req 8x10 exposure values */
+	else
+		cmd = '=';	/* request AUX exposure values */
+	write(fd, &cmd, 1);
+	readfds = 1<<fd;
+	select(fd+1, &readfds, (int *)0, &xcptfd, &waittime);
+	if( (readfds&(1<<fd)) != 0) {
+		mread(fd, values, 20);
+		values[20] = '\0';
+		printf("dunncolor: %s = %s\n", title, values);
+	} else {
+		printf("dunncolor:\007 %s request exposure value cmd: timed out\n", title);
+		exit(40);
+	}
+}
+
+/*
  *			G O O D S T A T U S
  *
  *	Checks the status of the Dunn camera and returns 1 for good status
@@ -184,16 +195,15 @@ unsigned	n;
 
 goodstatus()
 {
-	struct timeval waittime, *timeout;
+	struct timeval waittime;
 	
-	timeout = &waittime;
-	timeout->tv_sec = 10;
-	timeout->tv_usec = 0;
+	waittime.tv_sec = 10;
+	waittime.tv_usec = 0;
 	
 	cmd = ';';	/* status request cmd */
 	write(fd, &cmd, 1);	
 	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, &xcptfd, timeout);
+	select(fd+1, &readfds, (int *)0, &xcptfd, &waittime);
 	if( (readfds & (1<<fd)) !=0) {
 		mread(fd, status, 4);
 		if ((status[0]&0xf) == 0 &&
@@ -234,15 +244,15 @@ hangten()
 ready(nsecs)
 int nsecs;
 {
-	struct timeval waittime, *timeout;
-	timeout = &waittime;
-	timeout->tv_sec = nsecs;
-	timeout->tv_usec = 0;
+	struct timeval waittime;
+
+	waittime.tv_sec = nsecs;
+	waittime.tv_usec = 0;
 	
 	cmd = ':';	/* ready test command */
 	write(fd, &cmd, 1);
 	readfds = 1<<fd;
-	select(fd+1, &readfds, (int *)0, &xcptfd, timeout);
+	select(fd+1, &readfds, (int *)0, &xcptfd, &waittime);
 	if ((readfds & (1<<fd)) != 0) {
 		mread(fd, status, 2);
 		if((status[0]&0x7f) == 'R')
