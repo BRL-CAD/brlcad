@@ -83,7 +83,7 @@ struct functab functab[] = {
 /*
  *  Hooks for unimplemented routines
  */
-#define DEF(func)	func() { rtlog("func unimplemented\n"); }
+#define DEF(func)	func() { rtlog("func unimplemented\n"); return(0); }
 
 DEF(nul_prep); struct seg * DEF(nul_shot); DEF(nul_print); DEF(nul_norm); DEF(nul_uv);
 
@@ -289,7 +289,12 @@ next_one: ;
 	return( stp );
 }
 
-#define	MAXLEVELS	8
+/*
+ * Note that while GED has a more limited MAXLEVELS, GED can
+ * work on sub-trees, while RT must be able to process the full tree.
+ * Thus the difference, and the large value here.
+ */
+#define	MAXLEVELS	64
 static struct directory	*path[MAXLEVELS];	/* Record of current path */
 
 struct tree_list {
@@ -379,8 +384,10 @@ matp_t old_xlate;
 	/* Handle combinations which are the top of a "region" */
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			rtlog("Warning:  region %s within region %s\n",
-				path_str(pathpos), argregion->reg_name );
+			if( debug & DEBUG_REGIONS )
+				rtlog("Warning:  region %s within region %s\n",
+					path_str(pathpos),
+					argregion->reg_name );
 /***			argregion = REGION_NULL;	/* override! */
 		} else {
 			register struct region *nrp;
@@ -614,7 +621,7 @@ HIDDEN char *
 path_str( pos )
 int pos;
 {
-	static char line[256];
+	static char line[MAXLEVELS*(16+2)];
 	register char *cp = &line[0];
 	register int i;
 
@@ -622,7 +629,7 @@ int pos;
 	line[0] = '/';
 	line[1] = '\0';
 	for( i=0; i<=pos; i++ )  {
-		(void)sprintf( cp, "/%s%c", path[i]->d_namep, '\0' );
+		(void)sprintf( cp, "/%s", path[i]->d_namep );
 		cp += strlen(cp);
 	}
 	return( &line[0] );
