@@ -116,7 +116,8 @@ dnl ============================================================
 
 
 AC_DEFINE(DM_X,1,[Display for X])
-AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)]))
+AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
+AC_DEFINE(DM_OGL,1,[yeah, GL])
 LEX_CFLAGS="-Dyylex=cmd_nop"
 X_CFLAGS="-I/usr/X11R6/include"
 
