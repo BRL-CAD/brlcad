@@ -17,6 +17,7 @@ initializeVariable REGRESS_DIR /tmp/`whoami`
 initializeVariable REFERENCE_LOGS
 
 # mail or display message by default
+# set to 1 and the default mail_to address will get included in all status reports
 initializeVariable MAIL_RESULTS 0
 
 # name of default user to mail to
@@ -77,7 +78,17 @@ for i in $* ; do
 	-w)
 	    NO_WARNINGS="1"; shift 1;;
 	-a)
-	    MAIL_TO="$2"; MAIL_RESULTS="1"; shift 2;;
+	    # this is a dumb hack to allow multiple outgoing e-mails
+	    # without having to include the default.  note the default
+	    # e-mail address will get included if the mail_results
+	    # default is set to 1
+	    if [ "x$MAIL_RESULTS" = "x1" ] ; then 
+		MAIL_TO="$MAIL_TO $2"
+	    else
+		MAIL_TO="$2"
+	    fi
+	    MAIL_RESULTS="1"; shift 2;;
+
 	-h | -H)
 	    log $USAGE; exit;;
 	# dash question should never be reached
@@ -101,14 +112,14 @@ initializeVariable REGRESS_LOG ""
 # sanity check -- make sure someone didn't request ""
 # not a good idea to use "." either, but we do not check
 if [ "x$REGRESS_DIR" = "x" ] ; then
-	bomb "Must specify regression directory [REGRESS_DIR=$REGRESS_DIR]"
+    bomb "Must specify regression directory [REGRESS_DIR=$REGRESS_DIR]"
 fi
 
 #
 #  Make sure the regression directory exists
 #
 if [ ! -d "$REGRESS_DIR" ] ; then
-    REGRESS_LOG="[$REGRESS_DIR] does not exist"
+    REGRESS_LOG="${REGRESS_LOG}[$REGRESS_DIR] does not exist\n"
 fi
 
 # make sure the master script ran and completed successfully
@@ -136,9 +147,8 @@ if [ $MASTER_LOG_COUNT -gt 0 ] ; then
     fi
     
 else
-    REGRESS_LOG="${REGRESS_LOG}master.sh script never ran\n\t(no log file available in [$REGRESS_DIR])\n"
+    REGRESS_LOG="${REGRESS_LOG}master.sh script never ran\n\t(no master log file available in [$REGRESS_DIR])\n"
 fi
-
 
 # make sure cvs completed successfully
 CVS_LOG_COUNT=`ls ${REGRESS_DIR}/.cvs-*.log | wc | awk '{print $1}'`
@@ -173,7 +183,6 @@ fi
 
 # get all of the .regress.(ARCH) builds
 ARCHES=`ls -1ad ${REGRESS_DIR}/.regress.* | awk -F. '{print $NF}'`
-
 
 if [ "x$ARCHES" = x ] ; then
     REGRESS_LOG="${REGRESS_LOG}No clients appear to have ran\n\t(there are no .regress.ARCH directories in ${REGRESS_DIR})\n"
@@ -212,14 +221,47 @@ fi
 
 log "$REGRESS_LOG"
 
+
 # if mail output is requested, mail the results
 if [ "x$MAIL_RESULTS" = "x1" ] ; then
     WC=`wc <<EOF
     $REGRESS_LOG
     EOF`
     if [ `echo $WC | awk '{print $2}'` -ne 0 ] ; then
-        REGRESS_LOG="\n${REGRESS_LOG}\nSee $REGRESS_DIR/.regress.[ARCH]/MAKE_LOG for details\n"
-	mail $MAIL_TO "Regression Errors" "$REGRESS_LOG"
+
+	ATTACHMENTS=""
+
+	# do not try to attach files that are missing
+	if [ ! "x$REGRESS_DIR" = "x" ] ; then
+
+
+	    # if there are architecture directories found, search for logs to attach
+	    if [ ! "x$ARCHES" = x ] ; then
+		# now iterate over the architectures that ran
+		for ARCH in $ARCHES ; do
+		    if [ -d "$REGRESS_DIR/.regress.$ARCH" ] && [ -r "$REGRESS_DIR/.regress.$ARCH" ] ; then
+
+			# is there no regress log (bad)
+			if [ -f "$REGRESS_DIR/.regress.$ARCH/DIFFS" ] ; then
+			    REGRESS_LOG="\n${REGRESS_LOG}\nSee ${REGRESS_DIR}/.regress.$ARCH/MAKE_LOG (or DIFFS) for details\n"
+			    ATTACHMENTS="$ATTACHMENTS '$REGRESS_DIR/.regress.$ARCH/DIFFS' 'diff log for $ARCH'"
+			elif [ -f "$REGRESS_DIR/.regress.$ARCH/MAKE_LOG" ] ; then
+			    REGRESS_LOG="\n${REGRESS_LOG}\nSee ${REGRESS_DIR}/.regress.$ARCH/MAKE_LOG for details\n"
+			    ATTACHMENTS="$ATTACHMENTS '$REGRESS_DIR/.regress.$ARCH/MAKE_LOG' 'build log (diff log missing) for $ARCH'"
+			fi
+		    fi
+		done
+	    fi
+
+	    # if there is a master file, attach it last for reference
+	    if [ ! "x$MASTER_FILE" = "x___NONE___" ] && [ ! "x$MASTER_FILE" = "x" ] ; then
+		MASTER_FILE_NAME=`basename "${MASTER_FILE}"`
+		ATTACHMENTS="${ATTACHMENTS} '${MASTER_FILE}' '${MASTER_FILE_NAME}'"
+	    fi
+	fi
+
+	mail "$MAIL_TO" "Regression Errors" "$REGRESS_LOG" "$ATTACHMENTS"
+    
     fi
     log "Results have been mailed to [$MAIL_TO]."
 fi
