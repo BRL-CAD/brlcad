@@ -22,6 +22,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
 
 unsigned char	ibuf[1024], obuf[3*1024];
 
