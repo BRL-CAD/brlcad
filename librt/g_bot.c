@@ -141,10 +141,14 @@ struct rt_i		*rtip;
 	 *  For now, each triangle is considered a separate piece.
 	 *  These array allocations can't be made until the number of
 	 *  triangles are known.
+	 *
+	 *  If the number of triangles is too small,
+	 *  don't bother making pieces, the overhead isn't worth it.
 	 */
+	if( ntri < 32 )  return 0;
+
 #if 1	/* Set this to '1' to enable BoT pieces */
 	stp->st_npieces = ntri;
-#endif
 
 	bot->bot_facearray = (struct tri_specific **)
 		bu_malloc( sizeof(struct tri_specific *) * ntri,
@@ -154,7 +158,59 @@ struct rt_i		*rtip;
 		bu_malloc( sizeof(struct bound_rpp) * ntri,
 			"st_piece_rpps" );
 
-	{
+	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )  {
+		struct bound_rpp	*minmax = stp->st_piece_rpps;
+		CONST struct tri_specific **fap =
+			(CONST struct tri_specific **)bot->bot_facearray;
+		register CONST struct tri_specific *trip = bot->bot_facelist;
+		int	surfno = 0;
+
+		for( ; trip; trip = trip->tri_forw, surfno++ )  {
+			point_t b,c;
+			point_t d,e,f;
+			vect_t offset;
+			fastf_t los;
+
+			*fap = trip;
+			fap++;
+
+			if( BU_BITTEST( bot->bot_facemode, surfno ) )  {
+				/* Append full thickness on both sides */
+				los = bot->bot_thickness[surfno];
+			} else {
+				/* Center thickness.  Append 1/2 thickness on both sides */
+				los = bot->bot_thickness[surfno] * 0.51;
+			}
+
+			minmax->min[X] = minmax->max[X] = trip->tri_A[X];
+			minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
+			minmax->min[Z] = minmax->max[Z] = trip->tri_A[Z];
+			VADD2( b, trip->tri_BA, trip->tri_A );
+			VADD2( c, trip->tri_CA, trip->tri_A );
+			VMINMAX( minmax->min, minmax->max, b );
+			VMINMAX( minmax->min, minmax->max, c );
+
+			/* Offset face in +los */
+			VSCALE( offset, trip->tri_N, los );
+			VADD2( d, trip->tri_A, offset );
+			VADD2( e, b, offset );
+			VADD2( f, c, offset );
+			VMINMAX( minmax->min, minmax->max, d );
+			VMINMAX( minmax->min, minmax->max, e );
+			VMINMAX( minmax->min, minmax->max, f );
+
+			/* Offset face in -los */
+			VSCALE( offset, trip->tri_N, -los );
+			VADD2( d, trip->tri_A, offset );
+			VADD2( e, b, offset );
+			VADD2( f, c, offset );
+			VMINMAX( minmax->min, minmax->max, d );
+			VMINMAX( minmax->min, minmax->max, e );
+			VMINMAX( minmax->min, minmax->max, f );
+
+			minmax++;
+		}
+	} else {
 		struct bound_rpp	*minmax = stp->st_piece_rpps;
 		CONST struct tri_specific **fap =
 			(CONST struct tri_specific **)bot->bot_facearray;
@@ -173,11 +229,10 @@ struct rt_i		*rtip;
 			VADD2( c, trip->tri_CA, trip->tri_A );
 			VMINMAX( minmax->min, minmax->max, c );
 			minmax++;
-
-			/* XXX Need to enlarge RPP for bot->bot_mode == RT_BOT_PLATE */
 		}
 
 	}
+#endif
 
 	return 0;
 }
