@@ -19,7 +19,7 @@ cake  \
 
 cake \
  g_arb.o \
- nmg_rt.o \
+ nmg_rt_isect.o \
  g_ars.o \
  db_alloc.o \
  db_anim.o \
@@ -27,6 +27,7 @@ cake \
  db_lookup.o &
 
 cake \
+ nmg_rt_segs.o \
  g_ebm.o \
  g_ell.o \
  db_open.o \
