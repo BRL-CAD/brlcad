@@ -70,48 +70,10 @@ f_name(
 	int	argc,
 	char	**argv)
 {
-	register struct directory *dp;
-	struct rt_db_internal	intern;
-
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help mv");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
-	  return TCL_ERROR;
-
-	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
-	  aexists( argv[2] );
-	  return TCL_ERROR;
-	}
-
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )  {
-		TCL_READ_ERR_return;
-	}
-
-	/*  Change object name in the in-memory directory. */
-	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
-		rt_db_free_internal( &intern, &rt_uniresource );
-	  Tcl_AppendResult(interp, "error in db_rename to ", argv[2],
-			   ", aborting\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return TCL_ERROR;
-	}
-
-	/* Re-write to the database.  New name is applied on the way out. */
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
-		TCL_WRITE_ERR_return;
-	}
-	return TCL_OK;
+	return wdb_move_cmd(wdbp, interp, argc, argv);
 }
 
 /* Copy an object */
@@ -246,105 +208,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#if 0
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	return invoke_db_wrapper(interp, argc, argv);
-#else
-	register struct directory *dp;
-	int i;
-	int ident, air;
-	char oper;
-	struct bu_list head;
-
-	CHECK_DBI_NULL;
-	CHECK_READ_ONLY;
-
-	BU_LIST_INIT(&head);
-
-	if(argc < 4){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help r");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
- 	ident = item_default;
- 	air = air_default;
- 
-	/* Check for even number of arguments */
-	if( argc & 01 )  {
-	  Tcl_AppendResult(interp, "error in number of args!\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-
-	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
-		/* will attempt to create the region */
-		if(item_default) {
-		  struct bu_vls tmp_vls;
-
-		  item_default++;
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "Defaulting item number to %d\n", item_default);
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		}
-	}
-
-	/* Get operation and solid name for each solid */
-	for( i = 2; i < argc; i += 2 )  {
-		if( argv[i][1] != '\0' )  {
-		  Tcl_AppendResult(interp, "bad operation: ", argv[i],
-				   " skip member: ", argv[i+1], "\n", (char *)NULL);
-		  continue;
-		}
-		oper = argv[i][0];
-		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
-		  Tcl_AppendResult(interp, "skipping ", argv[i+1], "\n", (char *)NULL);
-		  continue;
-		}
-
-		if(oper != WMOP_UNION && oper != WMOP_SUBTRACT &&	oper != WMOP_INTERSECT) {
-		  struct bu_vls tmp_vls;
-
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "bad operation: %c skip member: %s\n",
-				oper, dp->d_namep );
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		  continue;
-		}
-
-		/* Adding region to region */
-		if( dp->d_flags & DIR_REGION )  {
-		    Tcl_AppendResult(interp, "Note: ", dp->d_namep,
-				     " is a region\n", (char *)NULL);
-		}
-
-		mk_addmember( argv[i+1], &head, oper );
-	}
-
-	if( mk_comb( wdbp, argv[1], &head,
-	    1, NULL, NULL, NULL,
-	    ident, air, mat_default, los_default,
-	    0, 1, 1 ) < 0 )
-	{
-		/* failed to create region */
-		if(item_default > 1)
-			item_default--;
-
-		Tcl_AppendResult(interp,
-			"An error has occured while adding '",
-			argv[1], "' to the database.\n", (char *)NULL);
-		TCL_ERROR_RECOVERY_SUGGESTION;
-		return TCL_ERROR;
-	}
-	return TCL_OK;
-#endif
+	return wdb_region_cmd(wdbp, interp, argc, argv);
 }
 
 /*
@@ -559,7 +426,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	return invoke_db_wrapper(interp, argc, argv);
+	return wdb_remove_cmd(wdbp, interp, argc, argv);
 }
 
 /* Copy a cylinder and position at end of original cylinder

@@ -3708,7 +3708,7 @@ char	**argv;
 #if 0
 	CHECK_DBI_NULL;
 
-	return invoke_db_wrapper(interp, argc, argv);
+	return wdb_tol_cmd(wdbp, interp, argc, argv);
 #else
 	double	f;
 	int argind=1;

@@ -69,7 +69,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	return invoke_db_wrapper(interp, argc, argv);
+	return wdb_prcolor_cmd(wdbp, interp, argc, argv);
 }
 
 /*

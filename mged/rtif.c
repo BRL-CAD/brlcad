@@ -2189,7 +2189,7 @@ char 		**argv;
 #if 0
 	CHECK_DBI_NULL;
 
-	return invoke_db_wrapper(interp, argc, argv);
+	return dg_who_cmd(dgp, interp, argc, argv);
 #else
 	register struct solid *sp;
 	int skip_real, skip_phony;

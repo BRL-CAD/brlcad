@@ -348,7 +348,7 @@ char	**argv;
         else
 		return TCL_OK;
 
-	ret = invoke_db_wrapper(interp, argc, argv);
+	ret = wdb_tops_cmd(wdbp, interp, argc, argv);
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;
@@ -913,11 +913,10 @@ char	**argv;
  *	Print out a list of all members and submembers of an object.
  */
 int
-f_tree(clientData, interp, argc, argv)
-     ClientData	clientData;
-     Tcl_Interp	*interp;
-     int	argc;
-     char	**argv;
+f_tree(ClientData	clientData,
+       Tcl_Interp	*interp,
+       int		argc,
+       char		**argv)
 {
 	int		ret;
 
@@ -933,7 +932,7 @@ f_tree(clientData, interp, argc, argv)
 	 * routine with the name _mged_tree. So, we put back the original name.
 	 */ 
 	argv[0] = "tree";
-	ret = invoke_db_wrapper(interp, argc, argv);
+	ret = wdb_tree_cmd(wdbp, interp, argc, argv);
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;
@@ -968,127 +967,15 @@ genptr_t		old_ptr, new_ptr;
  *
  */
 int
-f_mvall(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+f_mvall(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
 {
-	register int	i;
-	register struct directory *dp;
-	struct rt_db_internal	intern;
-	struct rt_comb_internal *comb;
-	struct bu_ptbl		stack;
-
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help mvall");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( dbip->dbi_version < 5 && (int)strlen(argv[2]) > NAMESIZE ) {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters in v4 databases\n", NAMESIZE);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	  return TCL_ERROR;
-	}
-
-	/* rename the record itself */
-	if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
-	  return TCL_ERROR;
-	if( db_lookup( dbip, argv[2], LOOKUP_QUIET ) != DIR_NULL ) {
-	  aexists( argv[2]);
-	  return TCL_ERROR;
-	}
-	/*  Change object name in the directory. */
-	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
-	  Tcl_AppendResult(interp, "error in rename to ", argv[2],
-			   ", aborting\n", (char *)NULL);
-	  TCL_ERROR_RECOVERY_SUGGESTION;
-	  return TCL_ERROR;
-	}
-
-	/* Change name in the file */
-	if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-		TCL_READ_ERR_return;
-	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 ) {
-		TCL_WRITE_ERR_return;
-	}
-
-	bu_ptbl_init( &stack, 64, "combination stack for f_mvall" );
-
-	/* Examine all COMB nodes */
-	for( i = 0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			union tree	*comb_leaf;
-			int		done=0;
-			int		changed=0;
-
-			if( !(dp->d_flags & DIR_COMB) )
-				continue;
-
-			if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-				continue;
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-			bu_ptbl_reset( &stack );
-			/* visit each leaf in the combination */
-			comb_leaf = comb->tree;
-			if( comb_leaf )
-			{
-				while( !done )
-				{
-					while( comb_leaf->tr_op != OP_DB_LEAF )
-					{
-						bu_ptbl_ins( &stack, (long *)comb_leaf );
-						comb_leaf = comb_leaf->tr_b.tb_left;
-					}
-					if( !strcmp( comb_leaf->tr_l.tl_name, argv[1] ) )
-					{
-						bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
-						comb_leaf->tr_l.tl_name = bu_strdup( argv[2] );
-						changed = 1;
-					}
-
-					if( BU_PTBL_END( &stack ) < 1 )
-					{
-						done = 1;
-						break;
-					}
-					comb_leaf = (union tree *)BU_PTBL_GET( &stack, BU_PTBL_END( &stack )-1 );
-					if( comb_leaf->tr_op != OP_DB_LEAF )
-					{
-						bu_ptbl_rm( &stack, (long *)comb_leaf );
-						comb_leaf = comb_leaf->tr_b.tb_right;
-					}
-				}
-			}
-
-			if( changed )
-			{
-				if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) )
-				{
-					bu_ptbl_free( &stack );
-					rt_comb_ifree( &intern, &rt_uniresource );
-					TCL_WRITE_ERR_return;
-				}
-			}
-			else
-				rt_comb_ifree( &intern, &rt_uniresource );
-		}
-	}
-	bu_ptbl_free( &stack );
-	return TCL_OK;
+	return wdb_move_all_cmd(wdbp, interp, argc, argv);
 }
 
 /*	F _ K I L L A L L

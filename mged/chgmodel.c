@@ -1322,7 +1322,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 
 	sf = dbip->dbi_base2local;
-	ret = invoke_db_wrapper(interp, argc, argv);
+	ret = wdb_units_cmd(wdbp, interp, argc, argv);
 
 	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;
@@ -1347,7 +1347,7 @@ char	**argv;
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
-	ret = invoke_db_wrapper(interp, argc, argv);
+	ret = wdb_title_cmd(wdbp, interp, argc, argv);
 	view_state->vs_flag = 1;
 
 	return ret;

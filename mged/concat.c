@@ -46,8 +46,6 @@ char	new_name[NAMESIZE];
 char	prestr[NAMESIZE];
 int	ncharadd;
 
-int invoke_db_wrapper(Tcl_Interp *interp, int argc, char **argv);
-
 /*
  *
  *			F _ D U P ( )
@@ -66,37 +64,7 @@ f_dup(clientData, interp, argc, argv )
 {
 	CHECK_DBI_NULL;
 
-	return invoke_db_wrapper(interp, argc, argv);
-}
-
-/*
- *			I N V O K E _ D B _ W R A P P E R
- *
- *  This is generally useful for all MGED commands
- *  that have been subsumed by "db" object methods.
- */
-int
-invoke_db_wrapper(Tcl_Interp	*interp,
-		  int		argc,
-		  char		**argv)
-{
-	register int	i;
-	struct bu_vls	vls;
-	int		ret;
-
-	bu_vls_init(&vls);
-
-	bu_vls_strcpy(&vls, MGED_DB_NAME);
-	for (i = 0; i < argc; ++i)
-		bu_vls_printf(&vls, " %s", argv[i]);
-
-	if (bu_debug)
-		bu_log("%s\n", bu_vls_addr(&vls));
-
-	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-
-	return ret;
+	return wdb_dup_cmd(wdbp, interp, argc, argv);
 }
 
 /*
@@ -141,5 +109,5 @@ f_concat(clientData, interp, argc, argv)
 	/* replace dbconcat with concat */
 	argv[0] = "concat";
 
-	return invoke_db_wrapper(interp, argc, argv);
+	return wdb_concat_cmd(wdbp, interp, argc, argv);
 }
