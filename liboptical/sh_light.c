@@ -1001,6 +1001,7 @@ struct seg *finished_segs;
 	int	air_sols_seen = 0;
 	char	*reason = "???";
 
+	bzero(&sw, sizeof(sw));		/* make sure nothing nasty on the stack */
 	if (rdebug&RDEBUG_LIGHT)
 		bu_log("light_hit level %d %d\n", ap->a_level, __LINE__);
 
