@@ -219,7 +219,7 @@ static int wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, c
 static int wdb_kill_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_killall_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_killtree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
-static void wdb_killtree_callback(struct db_i *dbip, register struct directory *dp, genptr_t *ptr);
+static void wdb_killtree_callback(struct db_i *dbip, register struct directory *dp, genptr_t ptr);
 static int wdb_copy_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_move_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -2697,7 +2697,7 @@ wdb_killtree_tcl(ClientData	clientData,
 static void
 wdb_killtree_callback(struct db_i		*dbip,
 		      register struct directory *dp,
-		      genptr_t			*ptr) {
+		      genptr_t			ptr) {
 	struct wdb_killtree_data *ktdp = (struct wdb_killtree_data *)ptr;
 	Tcl_Interp *interp = ktdp->interp;
 
