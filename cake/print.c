@@ -111,31 +111,38 @@ reg	Test	*test;
 	switch (test->t_kind)
 	{
 
-when t_TRUE:	printf("true");
-when t_FALSE:	printf("false");
+case t_TRUE:	printf("true");
+		break;
+case t_FALSE:	printf("false");
+		break;
 
-when t_AND:	print_test(test->t_left);
+case t_AND:	print_test(test->t_left);
 		printf(" and ");
 		print_test(test->t_right);
+		break;
 
-when t_OR:	print_test(test->t_left);
+case t_OR:	print_test(test->t_left);
 		printf(" or ");
 		print_test(test->t_right);
+		break;
 
-when t_NOT:	printf("not ");
+case t_NOT:	printf("not ");
 		print_test(test->t_left);
+		break;
 
-when t_CMD:	printf("cmd `%s`", test->t_cmd);
+case t_CMD:	printf("cmd `%s`", test->t_cmd);
+		break;
 
-when t_MATCH:	printf("match ");
+case t_MATCH:	printf("match ");
 		print_pat(test->t_pat);
 		printf(" against");
 		printf(" (");
 		print_pat((Pat *) first(test->t_list));
 		printf(") ");
 		print_pat((Pat *) last(test->t_list));
+		break;
 
-when t_LIST:	printf("list ");
+case t_LIST:	printf("list ");
 		print_pat(test->t_pat);
 
 		printf(" in (");
@@ -149,17 +156,21 @@ when t_LIST:	printf("list ");
 		}
 
 		printf(")");
+		break;
 
-when t_EXIST:	printf("exist ");
+case t_EXIST:	printf("exist ");
 		print_pat(test->t_pat);
+		break;
 
-when t_CANDO:	printf("cando ");
+case t_CANDO:	printf("cando ");
 		print_pat(test->t_pat);
+		break;
 
-when t_OK:	printf("ok ");
+case t_OK:	printf("ok ");
 		print_pat(test->t_pat);
+		break;
 
-otherwise:	printf("Bad type kind %d in print_test\n", test->t_kind);
+default:	printf("Bad type kind %d in print_test\n", test->t_kind);
 
 	}
 }
@@ -221,9 +232,9 @@ reg	N_kind	nkind;
 {
 	switch (nkind)
 	{
-when n_OK:	return "ok";
-when n_NOWAY:	return "noway";
-when n_CANDO:	return "cando";
+case n_OK:	return "ok";
+case n_NOWAY:	return "noway";
+case n_CANDO:	return "cando";
 	}
 
 	return "bizarre";
