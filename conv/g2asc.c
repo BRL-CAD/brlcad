@@ -9,6 +9,7 @@
  *  Author -
  *  	Charles M Kennedy
  *  	Michael J Muuss
+ *	Susanne Muuss, J.D.
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -25,7 +26,35 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  
 #include <stdio.h>
 #include <ctype.h>
+#include "machine.h"
+#include "vmath.h"
 #include "db.h"
+#include "wdb.h"
+#include "raytrace.h"
+#include "rtlist.h"
+
+#define RT_PARTICLE_TYPE_SPHERE		1
+#define RT_PARTICLE_TYPE_CYLINDER	2
+#define RT_PARTICLE_TYPE_CONE		3
+
+struct	pipe_internal {
+	int			pipe_count;
+	struct wdb_pipeseg	pipe_segs;
+};
+
+struct	part_internal {
+	point_t		part_V;
+	vect_t		part_H;
+	fastf_t		part_vrad;
+	fastf_t		part_hrad;
+	int		part_type;
+};
+
+mat_t	id_mat = {
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0};	/* identity matrix for pipes */
 
 extern void	exit();
 
@@ -36,6 +65,7 @@ char *strchop();
 void	idendump(), polyhead(), polydata();
 void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
+void	pipe_dump(), particle_dump(), dump_pipe_segs();
 
 union record	record;		/* GED database record */
 
@@ -71,6 +101,12 @@ char **argv;
 	    		continue;
 	    	case ID_MATERIAL:
 			materdump();
+	    		continue;
+	    	case DBID_PIPE:
+	    		pipe_dump();
+	    		continue;
+	    	case DBID_PARTICLE:
+	    		particle_dump();
 	    		continue;
 	    	case ID_BSOLID:
 			bspldump();
@@ -148,6 +184,150 @@ soldump()	/* Print out Solid record information */
 	for( i = 0; i < 24; i++ )
 		(void)printf("%.12e ", record.s.s_values[i] ); /* parameters */
 	(void)printf("\n");			/* Terminate w/ a newline */
+}
+
+void
+pipe_dump()	/* Print out Pipe record information */
+{
+
+	int			ngranules;	/* number of granules, total */
+	int			count;
+	int			ret;
+	char			*name;
+	char			id;
+	union record		*rp;		/* pointer to an array of granules */
+	struct pipe_internal	pipe;		/* want a struct for the head, not a ptr. */
+	struct wdb_pipeseg	head;		/* actual head, not a ptr. */
+
+	ngranules = record.pw.pw_count;
+	name = record.pw.pw_name;
+	id = record.pw.pw_id;
+
+	/* malloc enough space for ngranules */
+	if( (rp = (union record *)malloc(ngranules * sizeof(union record)) ) == 0)  {
+		fprintf(stderr, "g2asc: malloc failure\n");
+		exit(-1);
+	}
+
+	/* copy the freebee record into the array */
+	bcopy( (char *)&record, (char *)rp, sizeof(union record) );
+
+	/* copy ngranules-1 more records into the array */
+
+	if( (count = fread( (char *)&rp[1], sizeof(union record), ngranules - 1, stdin) ) != ngranules - 1)  {
+		fprintf(stderr, "g2asc: pipe read failure\n");
+		exit(-1);
+	}
+
+	/* Send this off to rt_pipe_import() for conversion into machine
+	 * dependent format and making of a doubly linked list.  rt_pipe_internal()
+	 * fills in the "pipe_internal" structure.
+	 */
+
+	if( (ret = (rt_pipe_import(&pipe, rp, id_mat) ) !=0 ) )   {
+		fprintf(stderr, "g2asc: pipe_import failure\n" );
+		exit(-1);
+	}
+
+	/* send the doubly linked list off to dump_pipe_segs(), which
+	 * will print all the information.
+	 */
+
+	dump_pipe_segs(id, name, &pipe.pipe_segs);
+	mk_freemembers( &pipe.pipe_segs );		/* give back memory */
+	free( rp );
+}
+
+void
+dump_pipe_segs(id, name, headp)
+char			id;
+char			*name;
+struct wdb_pipeseg	*headp;
+{
+
+	struct wdb_pipeseg	*sp;
+
+	printf("%c %.16s\n", id, name);
+
+	/* print parameters for each segment: one segment per line */
+
+	for( RT_LIST( sp, wdb_pipeseg, &(headp->l) ) )  {
+		switch(sp->ps_type)  {
+		case WDB_PIPESEG_TYPE_END:
+			printf("end %e %e %e %e %e\n",
+				sp->ps_id, sp->ps_od,
+				sp->ps_start[X],
+				sp->ps_start[Y],
+				sp->ps_start[Z] );
+			break;
+		case WDB_PIPESEG_TYPE_LINEAR:
+			printf("linear %e %e %e %e %e\n",
+				sp->ps_id, sp->ps_od,
+				sp->ps_start[X],
+				sp->ps_start[Y],
+				sp->ps_start[Z] );
+			break;
+		case WDB_PIPESEG_TYPE_BEND:
+			printf("bend %e %e %e %e %e %e %e %e\n",
+				sp->ps_id, sp->ps_od,
+				sp->ps_start[X],
+				sp->ps_start[Y],
+				sp->ps_start[Z],
+				sp->ps_bendcenter[X],
+				sp->ps_bendcenter[Y],
+				sp->ps_bendcenter[Z]);
+			break;
+		default:
+			fprintf(stderr, "g2asc: unknown pipe type %d\n",
+				sp->ps_type);
+			break;
+		}
+	}
+}
+
+void
+particle_dump()	/* Print out Particle record information */
+{
+
+	/* Note that particles fit into one granule only. */
+
+	int			ret;
+	char			*type;
+	struct part_internal 	part;	/* head for the structure */
+	
+	if( (ret = (rt_part_import(&part, &record, id_mat)) ) != 0)  {
+		fprintf(stderr, "g2asc: particle import failure\n");
+		exit(-1);
+	}
+
+	/* Particle type is picked up on here merely to ensure receiving
+	 * valid data.  The type is not used any further.
+	 */
+
+	switch( part.part_type )  {
+	case RT_PARTICLE_TYPE_SPHERE:
+		type = "sphere";
+		break;
+	case RT_PARTICLE_TYPE_CYLINDER:
+		type = "cylinder";
+		break;
+	case RT_PARTICLE_TYPE_CONE:
+		type = "cone";
+		break;
+	default:
+		fprintf(stderr, "g2asc: no particle type %s\n", type);
+		exit(-1);
+	}
+
+	printf("%c %.16s %e %e %e %e %e %e %e %e\n",
+		record.part.p_id, record.part.p_name,
+		part.part_V[X],
+		part.part_V[Y],
+		part.part_V[Z],
+		part.part_H[X],
+		part.part_H[Y],
+		part.part_H[Z],
+		part.part_vrad, part.part_hrad);
 }
 
 void
@@ -458,4 +638,137 @@ char *str;
 		return("-=STRING=-");
 	}
 	return(buf);
+}
+
+/*** XXX temporary copy, until formal import library exists ***/
+/*
+ *			R T _ P I P E _ I M P O R T
+ */
+int
+rt_pipe_import( pipe, rp, mat )
+struct pipe_internal	*pipe;
+union record		*rp;
+register mat_t		mat;
+{
+	register struct exported_pipeseg *ep;
+	register struct wdb_pipeseg	*psp;
+	struct wdb_pipeseg		tmp;
+
+	/* Check record type */
+	if( rp->u_id != DBID_PIPE )  {
+		fprintf(stderr,"rt_pipe_import: defective record\n");
+		return(-1);
+	}
+
+	/* Count number of segments */
+	pipe->pipe_count = 0;
+	for( ep = &rp->pw.pw_data[0]; ; ep++ )  {
+		pipe->pipe_count++;
+		switch( (int)(ep->eps_type[0]) )  {
+		case WDB_PIPESEG_TYPE_END:
+			goto done;
+		case WDB_PIPESEG_TYPE_LINEAR:
+		case WDB_PIPESEG_TYPE_BEND:
+			break;
+		default:
+			return(-2);	/* unknown segment type */
+		}
+	}
+done:	;
+	if( pipe->pipe_count <= 1 )
+		return(-3);		/* Not enough for 1 pipe! */
+
+	/*
+	 *  Walk the array of segments in reverse order,
+	 *  allocating a linked list of segments in internal format,
+	 *  using exactly the same structures as libwdb.
+	 */
+	RT_LIST_INIT( &pipe->pipe_segs.l );
+	for( ep = &rp->pw.pw_data[pipe->pipe_count-1]; ep >= &rp->pw.pw_data[0]; ep-- )  {
+		tmp.ps_type = (int)ep->eps_type[0];
+		ntohd( tmp.ps_start, ep->eps_start, 3 );
+		ntohd( &tmp.ps_id, ep->eps_id, 1 );
+		ntohd( &tmp.ps_od, ep->eps_od, 1 );
+
+		/* Apply modeling transformations */
+		psp = (struct wdb_pipeseg *)calloc( 1, sizeof(struct wdb_pipeseg) );
+		psp->ps_type = tmp.ps_type;
+		MAT4X3PNT( psp->ps_start, mat, tmp.ps_start );
+		if( psp->ps_type == WDB_PIPESEG_TYPE_BEND )  {
+			ntohd( tmp.ps_bendcenter, ep->eps_bendcenter, 3 );
+			MAT4X3PNT( psp->ps_bendcenter, mat, tmp.ps_bendcenter );
+		} else {
+			VSETALL( psp->ps_bendcenter, 0 );
+		}
+		psp->ps_id = tmp.ps_id / mat[15];
+		psp->ps_od = tmp.ps_od / mat[15];
+		RT_LIST_APPEND( &pipe->pipe_segs.l, &psp->l );
+	}
+
+	return(0);			/* OK */
+}
+
+/*		R T _ P A R T_ I M P O R T
+ *
+ */
+int
+rt_part_import( part, rp, mat )
+struct part_internal	  *part;
+union record		  *rp;
+register mat_t		  mat;
+{
+	point_t		  v;
+	vect_t		  h;
+	double		  vrad;
+	double		  hrad;
+	fastf_t		  maxrad, minrad;
+
+	/* Check record type */
+	if( rp->u_id != DBID_PARTICLE )  {
+		rt_log("rt_part_import: defective record\n");
+		return(-1);
+	}
+
+	/* Convert from database to internal format */
+	ntohd( v, rp->part.p_v, 3 );
+	ntohd( h, rp->part.p_h, 3 );
+	ntohd( &vrad, rp->part.p_vrad, 1 );
+	ntohd( &hrad, rp->part.p_hrad, 1 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( part->part_V, mat, v );
+	MAT4X3PNT( part->part_H, mat, h );
+	if( (part->part_vrad = vrad / mat[15]) < 0 )
+		return(-2);
+	if( (part->part_hrad = hrad / mat[15]) < 0 )
+		return(-2);
+
+	if( part->part_vrad > part->part_hrad )  {
+		maxrad = part->part_vrad;
+		minrad = part->part_hrad;
+	} else {
+		maxrad = part->part_hrad;
+		minrad = part->part_vrad;
+	}
+	if( maxrad <= 0 )
+		return(-4);
+
+	if( MAGSQ( part->part_H ) * 1000000 < maxrad * maxrad)  {
+		/* Height vector is insignificant, particle is a sphere */
+		part->part_vrad = part->part_hrad = maxrad;
+		VSETALL( part->part_H, 0 );		 /* sanity */
+		part->part_type = RT_PARTICLE_TYPE_SPHERE;
+		return(0);		 /* OK */
+	}
+
+	if( (maxrad - minrad) / maxrad < 0.001 )  {
+		/* radii are nearly equal, particle is a cylinder (lozenge) */
+		part->part_vrad = part->part_hrad = maxrad;
+		part->part_type = RT_PARTICLE_TYPE_CYLINDER;
+		return(0);		 /* OK */
+	}
+
+	part->part_type = RT_PARTICLE_TYPE_CONE;
+	return(0);		 /* OK */
+
 }
