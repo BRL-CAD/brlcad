@@ -89,9 +89,7 @@ char	*dp;
 	register struct temp_specific *tp =
 		(struct temp_specific *)dp;
 	fastf_t xmin, xmax, ymin, ymax;
-	int line;
 	int dx, dy;
-	int x,y;
 	register fastf_t temp = 0;
 
 	if( rdebug & RDEBUG_SHADE )
@@ -161,7 +159,6 @@ char	*dp;
 		int start_line, stop_line, line;
 		int start_col, stop_col, col;
 		fastf_t xstart, xstop, ystart, ystop;
-		fastf_t u, v;
 
 		xstart = xmin * (tp->t_w-1);
 		xstop = xmax * (tp->t_w-1);
@@ -183,7 +180,6 @@ char	*dp;
 		for( line = start_line ; line <= stop_line ; line++ )
 		{
 			register unsigned char *cp;
-			register unsigned char *ep;
 			fastf_t line_factor;
 			fastf_t line_upper, line_lower;
 
