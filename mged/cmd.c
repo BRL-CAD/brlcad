@@ -1227,7 +1227,7 @@ char **argv;
 	if (Tcl_GetDouble(interp, argv[2], &beta) != TCL_OK)   goto error;
 	if (Tcl_GetDouble(interp, argv[3], &ggamma) != TCL_OK) goto error;
 
-	(*math_func)(o, alpha, beta, gamma);
+	(*math_func)(o, alpha, beta, ggamma);
 	encode_mat(&result, o);
     } else if (math_func == mat_eigen2x2) {
 	fastf_t val1, val2;
