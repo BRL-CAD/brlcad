@@ -111,7 +111,7 @@ struct functab {
 extern struct functab functab[];
 
 #define EPSILON		0.0001
-#define NEAR_ZERO(f)	( ((f) < 0) ? ((f) > -EPSILON) : ((f) < EPSILON) )
+#define NEAR_ZERO(f)	( ((f) > -EPSILON) && ((f) < EPSILON) )
 #define INFINITY	100000000.0
 
 
@@ -184,6 +184,8 @@ struct partition {
 	struct region	*pt_regionp;		/* ptr to containing region */
 	struct partition *pt_forw;		/* forwards link */
 	struct partition *pt_back;		/* backwards link */
+	char		pt_inflip;		/* flip inhit->hit_normal */
+	char		pt_outflip;		/* flip outhit->hit_normal */
 };
 #define pt_indist	pt_inhit->hit_dist
 #define pt_outdist	pt_outhit->hit_dist
