@@ -59,5 +59,8 @@ proc geometree { } {
 		return
 	}
 
-	GeometryBrowser $gt
+	# just to quell the tk name returned and report fatal errors
+	if [ catch { GeometryBrowser $gt } gbName ] {
+		puts $gbName
+	}
 }
