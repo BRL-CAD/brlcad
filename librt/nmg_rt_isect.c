@@ -1576,6 +1576,8 @@ struct edgeuse *eu_p;
 
 		break;
 	case 0 :  /* oh joy.  Lines are co-linear */
+		HIT_EDGE_VERTEX(rd, eu_p, eu_p->vu_p);
+		HIT_EDGE_VERTEX(rd, eu_p, eu_p->eumate_p->vu_p);
 		colinear_edge_ray(rd, eu_p);
 		break;
 	case 1 :
