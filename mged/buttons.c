@@ -64,7 +64,7 @@ float	acc_sc[3];	/* local object scale factors --- accumulations */
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
 static void bv_vrestore(), bv_vsave(), bv_adcursor(), bv_reset();
-static void bv_90_90(), bv_35_25();
+static void bv_45_45(), bv_35_25();
 static void be_o_illuminate(), be_s_illuminate();
 static void be_o_scale(), be_o_x(), be_o_y(), be_o_xy(), be_o_rotate();
 static void be_accept(), be_reject(), bv_slicemode();
@@ -86,7 +86,7 @@ struct buttons  {
 	BV_VSAVE,	"save",		bv_vsave,
 	BV_ADCURSOR,	"adc",		bv_adcursor,
 	BV_RESET,	"reset",	bv_reset,
-	BV_90_90,	"90,90",	bv_90_90,
+	BV_45_45,	"45,45",	bv_45_45,
 	BV_35_25,	"35,25",	bv_35_25,
 	BE_O_ILLUMINATE,"oill",		be_o_illuminate,
 	BE_S_ILLUMINATE,"sill",		be_s_illuminate,
@@ -127,7 +127,7 @@ static struct menu_item second_menu[] = {
 	{ "Top", btn_item_hit, BV_TOP },
 	{ "Right", btn_item_hit, BV_RIGHT },
 	{ "Front", btn_item_hit, BV_FRONT },
-	{ "90,90", btn_item_hit, BV_90_90 },
+	{ "45,45", btn_item_hit, BV_45_45 },
 	{ "Restore View", btn_item_hit, BV_VRESTORE },
 	{ "Save View", btn_item_hit, BV_VSAVE },
 	{ "Angle/Dist Cursor", btn_item_hit, BV_ADCURSOR },
@@ -303,14 +303,13 @@ static void bv_reset()  {
 	setview( 0, 0, 0 );
 }
 
-static void bv_90_90()  {
-	/* azm 90   elev 90 */
-	setview( 360, 0, 180 );
+static void bv_45_45()  {
+	setview( 270+45, 0, 270-45 );
 }
 
 static void bv_35_25()  {
-	/* Use Azmuth=35, Elevation=25 in Keith's backwards space */
-	setview( 295, 0, 235 );
+	/* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
+	setview( 270+25, 0, 270-35 );
 }
 
 /* returns 0 if error, !0 if success */
