@@ -120,15 +120,33 @@ extern char	*realloc();
  *	dot product is nearly zero, then they are perpendicular.
  *	For example:
  *		vect_t	a,b;
- *		if( VDOT(a,b) >= tol->para )	a & b are parallel
- *		if( VDOT(a,b) <= tol->perp )	a & b are perpendicular
+ *		if( fabs(VDOT(a,b)) >= tol->para )	a & b are parallel
+ *		if( fabs(VDOT(a,b)) <= tol->perp )	a & b are perpendicular
+ *
  */
 struct rt_tol {
+	long		magic;
 	double		dist;			/* >= 0 */
 	double		dist_sq;		/* dist * dist */
 	double		perp;			/* nearly 0 */
 	double		para;			/* nearly 1 */
 };
+#define RT_TOL_MAGIC	0x98c734bb
+
+#define	RT_VECT_ARE_PARALLEL(_dot,_tol)		\
+	(((_dot) < 0) ? ((-(_dot))>=(_tol)->para) : ((_dot) >= (_tol)->para))
+#define RT_VECT_ARE_PERP(_dot,_tol)		\
+	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
+
+/*
+ */
+struct rt_tess_tol  {
+	long		magic;
+	double		abs;			/* absolute dist tol */
+	double		rel;			/* rel dist tol */
+	double		norm;			/* normal tol */
+};
+#define RT_TESS_TOL_MAGIC	0xb9090dab
 
 /*
  *  Macros for providing function prototypes, regardless of whether
@@ -1221,11 +1239,13 @@ struct rt_functab {
 	int	ft_use_rpp;
 	int	(*ft_prep) RT_ARGS((struct soltab * /*stp*/,
 			struct rt_db_internal * /*ip*/,
-			struct rt_i * /*rtip*/));
+			struct rt_i * /*rtip*/,
+			CONST struct rt_tol * /*tol*/));
 	int 	(*ft_shot) RT_ARGS((struct soltab * /*stp*/,
 			struct xray * /*rp*/,
 			struct application * /*ap*/,
-			struct seg * /*seghead*/));
+			struct seg * /*seghead*/,
+			CONST struct rt_tol * /*tol*/));
 	void	(*ft_print) RT_ARGS((struct soltab * /*stp*/));
 	void	(*ft_norm) RT_ARGS((struct hit * /*hitp*/,
 			struct soltab * /*stp*/,
@@ -1242,23 +1262,27 @@ struct rt_functab {
 	int	(*ft_plot) RT_ARGS((
 			struct rt_list * /*vhead*/,
 			struct rt_db_internal * /*ip*/,
-			double /*abs*/, double /*rel*/, double /*norm*/));
+			CONST struct rt_tess_tol * /*ttol*/,
+			struct rt_tol * /*tol*/));
 	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
-			struct resource * /*resp*/));
+			struct resource * /*resp*/,
+			CONST struct rt_tol * /*tol*/));
 #if defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
 	int	(*ft_tessellate) RT_ARGS((
 			struct nmgregion ** /*r*/,
 			struct model * /*m*/,
 			struct rt_db_internal * /*ip*/,
-			double /*abs*/, double /*rel*/, double /*norm*/));
+			CONST struct rt_tess_tol * /*ttol*/,
+			struct rt_tol * /*tol*/));
 #else
 	int	(*ft_tessellate) RT_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
-			double /*abs*/, double /*rel*/, double /*norm*/));
+			CONST struct rt_tess_tol * /*ttol*/,
+			struct rt_tol * /*tol*/));
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
 			struct rt_external * /*ep*/,
@@ -1537,18 +1561,35 @@ RT_EXTERN(struct rt_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
 
 /* plane.c */
-RT_EXTERN(int rt_3pts_distinct, (point_t a, point_t b, point_t c, double dist_tol_sq) );
-RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, point_t a, point_t b, point_t c, double dist_tol_sq) );
-RT_EXTERN(int rt_mkpoint_3planes, (point_t pt, plane_t a, plane_t b, plane_t c) );
-RT_EXTERN(int rt_isect_ray_plane, (fastf_t *dist, point_t pt, vect_t dir, plane_t plane) );
-RT_EXTERN(int rt_isect_2planes, (point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min) );
-RT_EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, point_t p, vect_t d, point_t a, vect_t c) );
-RT_EXTERN(int rt_isect_line_lseg, (fastf_t *t, point_t p, vect_t d, point_t a, point_t b) );
-RT_EXTERN(double rt_dist_line_point, (point_t pt, vect_t dir, point_t a) );
-RT_EXTERN(double rt_dist_line_origin, (point_t pt, vect_t dir) );
-RT_EXTERN(double rt_area_of_triangle, (point_t a, point_t b, point_t c) );
-RT_EXTERN(int rt_isect_pt_lseg, (fastf_t *dist, point_t a, point_t b, point_t p, fastf_t tolsq) );
-RT_EXTERN(double rt_dist_pt_lseg, (point_t pca, point_t a, point_t b, point_t p) );
+RT_EXTERN(int rt_3pts_distinct, (CONST point_t a, CONST point_t b,
+	CONST point_t c, CONST struct rt_tol *tol) );
+RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, CONST point_t a,
+	CONST point_t b, CONST point_t c, CONST struct rt_tol *tol) );
+RT_EXTERN(int rt_mkpoint_3planes, (point_t pt, CONST plane_t a,
+	CONST plane_t b, CONST plane_t c) );
+RT_EXTERN(int rt_isect_ray_plane, (fastf_t *dist, CONST point_t pt,
+	CONST vect_t dir, CONST plane_t plane) );
+RT_EXTERN(int rt_isect_2planes, (point_t pt, vect_t dir, CONST plane_t a,
+	CONST plane_t b, CONST vect_t  rpp_min, CONST struct rt_tol *tol) );
+RT_EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, CONST point_t p,
+	CONST vect_t d, CONST point_t a, CONST vect_t c,
+	CONST struct rt_tol *tol) );
+RT_EXTERN(int rt_isect_line_lseg, (fastf_t *t, CONST point_t p,
+	CONST vect_t d, CONST point_t a, CONST point_t b,
+	CONST struct rt_tol *tol) );
+RT_EXTERN(double rt_dist_line_point, (CONST point_t pt, CONST vect_t dir,
+	CONST point_t a) );
+RT_EXTERN(double rt_dist_line_origin, (CONST point_t pt, CONST vect_t dir) );
+RT_EXTERN(double rt_area_of_triangle, (CONST point_t a, CONST point_t b,
+	CONST point_t c) );
+RT_EXTERN(int rt_isect_pt_lseg, (fastf_t *dist, CONST point_t a,
+	CONST point_t b, CONST point_t p, CONST struct rt_tol *tol) );
+RT_EXTERN(double rt_dist_pt_lseg, (point_t pca, CONST point_t a,
+	CONST point_t b, CONST point_t p, CONST struct rt_tol *tol) );
+RT_EXTERN(void rt_rotate_bbox, (point_t omin, point_t omax, CONST mat_t mat,
+	CONST point_t imin, CONST point_t imax));
+RT_EXTERN(void rt_rotate_plane, (plane_t oplane, CONST mat_t mat,
+	CONST plane_t iplane));
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
