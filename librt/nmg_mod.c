@@ -27,9 +27,113 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 
 /*
+ *			N M G _ F U _ P L A N E E Q N
+ *
+ *  Given a convex face that has been constructed with edges listed in
+ *  counter-clockwise (CCW) order, compute the surface normal and plane
+ *  equation for this face.
+ *
+ *
+ *			D                   C
+ *	                *-------------------*
+ *	                |                   |
+ *	                |   .<...........   |
+ *	   ^     N      |   .           ^   |     ^
+ *	   |      \     |   .  counter- .   |     |
+ *	   |       \    |   .   clock   .   |     |
+ *	   |C-B     \   |   .   wise    .   |     |C-B
+ *	   |         \  |   v           .   |     |
+ *	   |          \ |   ...........>.   |     |
+ *	               \|                   |
+ *	                *-------------------*
+ *	                A                   B
+ *			      <-----
+ *				A-B
+ *
+ *  If the vertices in the loop are given in the order A B C D
+ *  (e.g., counter-clockwise),
+ *  then the outward pointing surface normal can be computed as:
+ *
+ *		N = (C-B) x (A-B)
+ *
+ *  This is the "right hand rule".
+ *  For reference, note that a vector which points "into" the loop
+ *  can be subsequently found by taking the cross product of the
+ *  surface normal and any edge vector, e.g.:
+ *
+ *		Left = N x (B-A)
+ *	or	Left = N x (C-B)
+ *
+ *  This routine will skip on past edges that start and end on
+ *  the same vertex, in an attempt to avoid trouble.
+ *  However, the loop *must* be convex for this routine to work.
+ *  Otherwise, the surface normal may be inadvertently reversed.
+ *
+ *  Returns -
+ *	0	OK
+ *	-1	failure
+ */
+int
+nmg_fu_planeeqn( fu, tol_sq )
+struct faceuse	*fu;
+double		tol_sq;
+{
+	struct edgeuse		*eu, *eu_final, *eu_next;
+	struct loopuse		*lu;
+	plane_t			plane;
+	struct vertex		*a, *b, *c;
+
+	NMG_CK_FACEUSE(fu);
+	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
+	NMG_CK_LOOPUSE(lu);
+
+	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+		return -1;
+	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
+	NMG_CK_EDGEUSE(eu);
+	a = eu->vu_p->v_p;
+	NMG_CK_VERTEX(a);
+
+	eu_next = eu;
+	do {
+		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu_next);
+		NMG_CK_EDGEUSE(eu_next);
+		if( eu_next == eu )  return -1;
+		b = eu_next->vu_p->v_p;
+		NMG_CK_VERTEX(b);
+	} while( b == a );
+
+	eu_final = eu_next;
+	do {
+		eu_final = RT_LIST_PNEXT_CIRC(edgeuse, eu_final);
+		NMG_CK_EDGEUSE(eu_final);
+		if( eu_final == eu )  return -1;
+		c = eu_final->vu_p->v_p;
+		NMG_CK_VERTEX(c);
+	} while( c == b );
+
+	if (rt_mk_plane_3pts(plane,
+	    a->vg_p->coord, b->vg_p->coord, c->vg_p->coord, tol_sq) < 0 ) {
+		rt_log("nmg_fu_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
+			V3ARGS( a->vg_p->coord ),
+			V3ARGS( b->vg_p->coord ),
+			V3ARGS( c->vg_p->coord ) );
+	    	HPRINT("plane", plane);
+		return(-1);
+	}
+	if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+		rt_log("nmg_fu_planeeqn():  Bad plane equation from rt_mk_plane_3pts\n" );
+	    	HPRINT("plane", plane);
+		return(-1);
+	}
+	nmg_face_g( fu, plane);
+	return(0);
+}
+
+/*
  *			N M G _ C F A C E
  *
- *	Create a face from a list of vertices
+ *	Create a loop within a face, given a list of vertices.
  *
  *	"verts" is an array of "n" pointers to (struct vertex).  "s" is the
  *	parent shell for the new face.  The face will consist of a single loop
@@ -41,14 +145,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	list will cause a new vertex to be created for that point.  Such new
  *	vertices will be inserted into the list for return to the caller.
  *
- *	The vertices should be listed in "clockwise" order if this is
- *	an ordinary face, and in "counterclockwise" order if this is
- *	an interior ("hole" or "subtracted") face.
- *	See the comments in nmg_cmface() for more details.
+ *	The vertices should be listed in
+ *	"counter-clockwise" (CCW) order if this is an ordinary face (loop),
+ *	and in "clockwise" (CW) order if this is an interior
+ * 	("hole" or "subtracted") face (loop).
+ *	This routine makes only topology, without reference to any geometry.
  *
  *	Note that this routine inserts new vertices (by edge use splitting)
  *	at the head of the loop, which reverses the order.
- *	Therefore, the callers vertices are inserted in reverse order,
+ *	Therefore, the caller's vertices are traversed in reverse order
+ *	to counter this behavior, and
  *	to effect the proper vertex order in the final face loop.
  */
 struct faceuse *nmg_cface(s, verts, n)
@@ -100,7 +206,8 @@ int n;
 /*
  *			N M G _ C M F A C E
  *
- *	Create a face for a manifold shell from a list of vertices
+ *	Create a loop within a face for a 3-manifold shell,
+ *	given a list of pointers to vertices.
  *
  *	"verts" is an array of "n" pointers to pointers to (struct vertex).
  *	"s" is the parent shell for the new face.
@@ -110,7 +217,7 @@ int n;
  *	edge with a single use-pair (in this shell) between the two verticies.
  *	If such an edge can be found, the newly created edge will "use-share"
  *	the existing edge.  This greatly facilitates the construction of
- *	manifold shells from a series of points/faces.
+ *	shells from a series of points/faces.
  *
  *	If a pointer in verts is a pointer to a null vertex pointer, a new
  *	vertex is created.  In this way, new verticies can be created
@@ -131,38 +238,16 @@ int n;
  *	-------				---------
  *
  *
- *	The vertices should be listed in "clockwise" order if this is
- *	an ordinary face, and in "counterclockwise" order if this is
- *	an interior ("hole" or "subtracted") face.
- *	Note that while this routine makes only topology, without
- *	reference to geometry, by following the clockwise rule,
- *	finding the surface normal
- *	of ordinary faces can be done using the following procedure.
- *
- *
- *			C                   D
- *	                *-------------------*
- *	                |                   |
- *	                |   ^...........>   |
- *	   ^     N      |   .           .   |
- *	   |      \     |   .           .   |
- *	   |       \    |   . clockwise .   |
- *	   |C-B     \   |   .           .   |
- *	   |         \  |   .           v   |
- *	   |          \ |   <............   |
- *	               \|                   |
- *	                *-------------------*
- *	                B                   A
- *			       ----->
- *				A-B
- *
- *	If the points are given in the order A B C D (eg, clockwise),
- *	then the outward pointing surface normal N = (A-B) x (C-B).
- *	This is the "right hand rule".
+ *	The vertices should be listed in
+ *	"counter-clockwise" (CCW) order if this is an ordinary face (loop),
+ *	and in "clockwise" (CW) order if this is an interior
+ * 	("hole" or "subtracted") face (loop).
+ *	This routine makes only topology, without reference to any geometry.
  *
  *	Note that this routine inserts new vertices (by edge use splitting)
  *	at the head of the loop, which reverses the order.
- *	Therefore, the callers vertices are inserted in reverse order,
+ *	Therefore, the caller's vertices are traversed in reverse order
+ *	to counter this behavior, and
  *	to effect the proper vertex order in the final face loop.
  */
 struct faceuse *nmg_cmface(s, verts, n)
@@ -240,33 +325,31 @@ int		n;
 				nmg_moveeu(eur, eu);
 
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
-				rt_log("found another edgeuse (%8x) between %8x and %8x\n",
-					eur, *verts[i+1], *verts[i]);
-			}
-			else {
+					rt_log("found another edgeuse (%8x) between %8x and %8x\n",
+						eur, *verts[i+1], *verts[i]);
+			} else {
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
 				    rt_log("didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
 					i+1, *verts[i+1], i, *verts[i]);
 			}
 		} else {
-			if (rt_g.NMG_debug & DEBUG_CMFACE)
-				rt_log("*verts[%d] is null\t", i);
-
 			eu = nmg_eusplit(*verts[i], euold);
 			*verts[i] = eu->vu_p->v_p;
 
-			if (rt_g.NMG_debug & DEBUG_CMFACE)
-			rt_log("*verts[%d] is now %8x\n", i, *verts[i]);
+			if (rt_g.NMG_debug & DEBUG_CMFACE)  {
+				rt_log("*verts[%d] was null, is now %8x\n",
+					i, *verts[i]);
+			}
 		}
 	}
 
-	if (eur = nmg_findeu(*verts[n-1], *verts[0], s, euold))
+	if (eur = nmg_findeu(*verts[n-1], *verts[0], s, euold))  {
 		nmg_moveeu(eur, euold);
-	else 
+	} else  {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)
 		rt_log("didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
 			n-1, *verts[n-1], 0, *verts[0]);
-
+	}
 	return (fu);
 }
 

@@ -1142,9 +1142,9 @@ double			norm_tol;
 	for( w = 0; w < nw; w++ )  {
 		for( len = 0; len < nlen; len++ )  {
 			vertp[0] = &verts[ PT(w+0,len+0) ];
-			vertp[1] = &verts[ PT(w+1,len+0) ];
+			vertp[1] = &verts[ PT(w+0,len+1) ];
 			vertp[2] = &verts[ PT(w+1,len+1) ];
-			vertp[3] = &verts[ PT(w+0,len+1) ];
+			vertp[3] = &verts[ PT(w+1,len+0) ];
 			if( (faces[nfaces++] = nmg_cmface( s, vertp, 4 )) == (struct faceuse *)0 )  {
 				rt_log("rt_tor_tess() nmg_cmface failed, w=%d/%d, len=%d/%d\n",
 					w, nw, len, nlen );
@@ -1162,7 +1162,8 @@ double			norm_tol;
 
 	/* Associate face geometry */
 	for( i=0; i < nfaces; i++ )  {
-		rt_mk_nmg_planeeqn( faces[i] );
+		if( nmg_fu_planeeqn( faces[i] ) < 0 )
+			return -1;		/* FAIL */
 	}
 
 	/* Compute "geometry" for region and shell */

@@ -795,13 +795,6 @@ double		norm_tol;
 			RT_ADD_VLIST( vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
-	/*
-	 *  Free storage for faces
-	 */
-	for( i = 0; i < arip->ncurves; i++ )  {
-		rt_free( (char *)arip->curves[i], "ars curve" );
-	}
-	rt_free( (char *)arip->curves, "ars curves[]" );
 	return(0);
 }
 
@@ -876,10 +869,10 @@ double		norm_tol;
 				FIND_IJ(1, 1);
 				FIND_IJ(0, 1);
 
-				/* Construct first face topology, clockwise order */
+				/* Construct first face topology, CCW order */
 				corners[0] = &verts[IJ(0,0)];
-				corners[1] = &verts[IJ(1,1)];
-				corners[2] = &verts[IJ(0,1)];
+				corners[1] = &verts[IJ(0,1)];
+				corners[2] = &verts[IJ(1,1)];
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
 					rt_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
 						i,j);
@@ -887,10 +880,9 @@ double		norm_tol;
 
 				/* Associate vertex geometry, if new */
 				ASSOC_GEOM( 0, 0, 0 );
-				ASSOC_GEOM( 1, 1, 1 );
-				ASSOC_GEOM( 2, 0, 1 );
-
-				rt_mk_nmg_planeeqn( fu );
+				ASSOC_GEOM( 1, 0, 1 );
+				ASSOC_GEOM( 2, 1, 1 );
+				if( nmg_fu_planeeqn( fu ) < 0 )  return -1;
 			}
 
 			/*
@@ -904,10 +896,10 @@ double		norm_tol;
 				FIND_IJ(1, 1);
 				FIND_IJ(0, 0);
 
-				/* Construct second face topology, clockwise */
+				/* Construct second face topology, CCW */
 				corners[0] = &verts[IJ(1,0)];
-				corners[1] = &verts[IJ(1,1)];
-				corners[2] = &verts[IJ(0,0)];
+				corners[1] = &verts[IJ(0,0)];
+				corners[2] = &verts[IJ(1,1)];
 				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
 					rt_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
 						i,j);
@@ -915,10 +907,9 @@ double		norm_tol;
 
 				/* Associate vertex geometry, if new */
 				ASSOC_GEOM( 0, 1, 0 );
-				ASSOC_GEOM( 1, 1, 1 );
-				ASSOC_GEOM( 2, 0, 0 );
-
-				rt_mk_nmg_planeeqn( fu );
+				ASSOC_GEOM( 1, 0, 0 );
+				ASSOC_GEOM( 2, 1, 1 );
+				if( nmg_fu_planeeqn( fu ) < 0 )  return -1;
 			}
 		}
 	}
@@ -928,12 +919,5 @@ double		norm_tol;
 
 	rt_free( (char *)verts, "rt_ars_tess *verts[]" );
 
-	/*
-	 *  Free storage for imported curves
-	 */
-	for( i = 0; i < arip->ncurves; i++ )  {
-		rt_free( (char *)arip->curves[i], "ars curve" );
-	}
-	rt_free( (char *)arip->curves, "ars curves[]" );
 	return(0);
 }

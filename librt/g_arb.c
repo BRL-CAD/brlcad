@@ -81,7 +81,7 @@ struct prep_arb {
 	int		pa_faces;	/* Number of faces done so far */
 	int		pa_npts[6];	/* # of points on face's plane */
 	int		pa_pindex[4][6]; /* subscr in arbi_pt[] */
-	int		pa_reversed[6];	/* face normal was flipped */
+	int		pa_clockwise[6];	/* face normal was flipped */
 	struct aface	pa_face[6];	/* required face info work area */
 	struct oface	pa_opt[6];	/* optional face info work area */
 	/* These elements must be initialized before using */
@@ -198,14 +198,19 @@ int		ptno;	/* current point # on face */
 		/*
 		 *  If C-A is clockwise from B-A, then the normal
 		 *  points inwards, so we need to fix it here.
+		 *  Build a vector from the centroid to vertex A.
+		 *  If the surface normal points in the same direction,
+		 *  then the vertcies were given in CCW order;
+		 *  otherwise, vertices were given in CW order, and
+		 *  the normal needs to be flipped.
 		 */
 		VSUB2( work, afp->A, pap->pa_center );
 		f = VDOT( work, afp->peqn );
 		if( f < 0.0 )  {
 			VREVERSE(afp->peqn, afp->peqn);	/* "fix" normal */
-			pap->pa_reversed[pap->pa_faces] = 1;
+			pap->pa_clockwise[pap->pa_faces] = 1;
 		} else {
-			pap->pa_reversed[pap->pa_faces] = 0;
+			pap->pa_clockwise[pap->pa_faces] = 0;
 		}
 		afp->peqn[3] = VDOT( afp->peqn, afp->A );
 		return(0);				/* OK */
@@ -1077,8 +1082,8 @@ double		norm_tol;
 
 	/* Process each face */
 	for( i=0; i < pa.pa_faces; i++ )  {
-		if( pa.pa_reversed[i] == 0 )  {
-			/* Clockwise orientation (CW) */
+		if( pa.pa_clockwise[i] != 0 )  {
+			/* Counter-Clockwise orientation (CCW) */
 			vertp[0] = &verts[pa.pa_pindex[0][i]];
 			vertp[1] = &verts[pa.pa_pindex[1][i]];
 			vertp[2] = &verts[pa.pa_pindex[2][i]];
@@ -1087,7 +1092,7 @@ double		norm_tol;
 			}
 		} else {
 			register struct vertex	***vertpp = vertp;
-			/* Counter-Clockwise orientation (CCW) */
+			/* Clockwise orientation (CW) */
 			if( pa.pa_npts[i] > 3 ) {
 				*vertpp++ = &verts[pa.pa_pindex[3][i]];
 			}
@@ -1113,80 +1118,17 @@ double		norm_tol;
 
 	/* Associate face geometry */
 	for( i=0; i < pa.pa_faces; i++ )  {
-#if 1
+#if 0
 		/* We already know the plane equations, this is fast */
 		nmg_face_g( fu[i], pa.pa_face[i].peqn );
 #else
 		/* For the cautious, ensure topology and geometry match */
-		rt_mk_nmg_planeeqn( fu[i], pa.pa_tol_sq );
+		if( nmg_fu_planeeqn( fu[i], pa.pa_tol_sq ) < 0 )
+			return -1;		/* FAIL */
 #endif
 	}
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
-	return(0);
-}
-
-/*
- *			R T _ M K _ N M G _ P L A N E E Q N
- *
- *  This routine is just a hack, for getting started quickly.
- *
- *  If face was built in clockwise manner from points A, B, C, then
- *	A is at eu
- *	B is at eu->last, and
- *	C is at eu->next
- *  as a consequence of the way nmg_cmface() makes the face.
- *
- *  Returns -
- *	0	OK
- *	-1	failure
- */
-int
-rt_mk_nmg_planeeqn( fu, tol_sq )
-struct faceuse	*fu;
-double		tol_sq;
-{
-	struct edgeuse		*eu, *eu_last, *eu_next;
-	struct loopuse		*lu;
-	plane_t			plane;
-	struct vertex_g		*a, *b, *c;
-
-	if( fu == (struct faceuse *)0 )  {
-		rt_bomb("rt_mk_nmg_planeeqn(): null faceuse\n");
-	}
-
-	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
-	NMG_CK_LOOPUSE(lu);
-
-	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
-	NMG_CK_EDGEUSE(eu);
-
-	eu_last = RT_LIST_PLAST_CIRC(edgeuse, eu);
-	eu_next = RT_LIST_PNEXT_CIRC(edgeuse, eu);
-	NMG_CK_EDGEUSE(eu_last);
-	NMG_CK_EDGEUSE(eu_next);
-
-	a = eu->vu_p->v_p->vg_p;
-	b = eu_last->vu_p->v_p->vg_p;
-	c = eu_next->vu_p->v_p->vg_p;
-	NMG_CK_VERTEX_G(a);
-	NMG_CK_VERTEX_G(b);
-	NMG_CK_VERTEX_G(c);
-
-	if (rt_mk_plane_3pts(plane, a->coord, b->coord, c->coord, tol_sq) < 0 ) {
-		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
-			V3ARGS( a->coord ),
-			V3ARGS( b->coord ),
-			V3ARGS( c->coord ) );
-	    	HPRINT("plane", plane);
-		return(-1);
-	}
-	if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
-		rt_log("rt_mk_nmg_planeeqn():  Bad plane equation from rt_mk_plane_3pts\n" );
-	    	HPRINT("plane", plane);
-		return(-1);
-	}
-	nmg_face_g( fu, plane);
 	return(0);
 }

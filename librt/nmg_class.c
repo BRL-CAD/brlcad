@@ -218,9 +218,10 @@ long		*novote;
 				mag = MAGSQ(euvect);
 			}
 
-			/* get vector in the plane */
-			VCROSS(plvec, euvect, N);
-		
+		    	/* Get vector which lies on the plane, and points
+		    	 * left, towards the interior of the CCW loop.
+		    	 */
+		    	VCROSS( plvec, N, euvect );
 			VSUB2(ptvec, pt, pca);
 
 			mag = MAGSQ(ptvec);

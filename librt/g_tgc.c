@@ -1850,7 +1850,7 @@ double			norm_tol;
 	RT_TGC_CK_MAGIC(tip);
 
 	/* Create two 16 point ellipses
-	 *  Note that in both cases the points go counterclockwise.
+	 *  Note that in both cases the points go counterclockwise (CCW).
 	 */
 	rt_ell_16pts( bottom, tip->v, tip->a, tip->b );
 	VADD2( work, tip->v, tip->h );
@@ -1863,10 +1863,10 @@ double			norm_tol;
 		vtop[i] = vtemp[i] = (struct vertex *)0;
 	}
 
-	/* Top face topology.  Verts are considered to go clockwise */
+	/* Top face topology.  Verts are considered to go CCW */
 	outfaceuses[0] = nmg_cface(s, vtop, 16);
 
-	/* Bottom face topology.  Verts must go in opposite dir (ccw) */
+	/* Bottom face topology.  Verts must go in opposite dir (CW) */
 	outfaceuses[1] = nmg_cface(s, vtemp, 16);
 	for( i=0; i<16; i++ )  vbottom[i] = vtemp[16-1-i];
 
@@ -1876,7 +1876,7 @@ double			norm_tol;
 
 	/* Build topology for all the triangular side faces (2*16 of them)
 	 * hanging down from the top face to the bottom face.
-	 * increasing indices go towards clockwise.
+	 * increasing indices go towards counter-clockwise (CCW).
 	 */
 	for( i=0; i<16; i++ )  {
 		vertlist[0] = vtop[i];		/* from top, */
@@ -1895,17 +1895,18 @@ double			norm_tol;
 		NMG_CK_VERTEX(vbottom[i]);
 	}
 
-	/* Associate the vertex geometry */
+	/* Associate the vertex geometry, CCW */
 	for( i=0; i<16; i++ )  {
-		nmg_vertex_gv( vtop[i], &top[3*(16-1-i)] );
+		nmg_vertex_gv( vtop[i], &top[3*(i)] );
 	}
 	for( i=0; i<16; i++ )  {
-		nmg_vertex_gv( vbottom[i], &bottom[3*(16-1-i)] );
+		nmg_vertex_gv( vbottom[i], &bottom[3*(i)] );
 	}
 
 	/* Associate the face geometry */
 	for (i=0 ; i < 2*16+2 ; ++i) {
-		rt_mk_nmg_planeeqn( outfaceuses[i] );
+		if( nmg_fu_planeeqn( outfaceuses[i] ) < 0 )
+			return -1;		/* FAIL */
 	}
 
 	/* Glue the edges of different outward pointing face uses together */

@@ -655,7 +655,7 @@ double			norm_tol;
 				&pp->verts[3*i], tol_sq );
 		}
 
-		/* Construct the face */
+		/* Construct the face.  Verts should be in CCW order */
 		if( (fu = nmg_cmface( s, vertp, pp->npts )) == (struct faceuse *)0 )  {
 			rt_log("rt_pg_tess() nmg_cmface failed, skipping face %d\n",
 				p);
@@ -668,7 +668,7 @@ double			norm_tol;
 		}
 
 		/* Associate face geometry */
-		rt_mk_nmg_planeeqn( fu );
+		if( nmg_fu_planeeqn( fu ) < 0 )  return -1;	/* FAIL */
 	}
 
 	/* Compute "geometry" for region and shell */
