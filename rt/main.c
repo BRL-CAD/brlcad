@@ -80,8 +80,7 @@ extern char *sbrk();
 int npsw = 1;		/* number of worker PSWs to run */
 /***** end variables shared with worker() */
 
-extern int end;		/* Conventionally, end of initial memory */
-static char *endptr = (char *)&end;
+static char *beginptr;	/* sbrk() at start of program */
 
 /*
  *			M A I N
@@ -105,6 +104,7 @@ char **argv;
 	int desiredframe = 0;
 	static struct region *regp;
 
+	beginptr = sbrk(0);
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
@@ -267,7 +267,8 @@ char **argv;
 		rt_get_bitv();
 	}
 #ifdef HEP
-	/* This isn't useful with the Caltech malloc() in most systems */
+	/* This isn't useful with the Caltech malloc() in most systems,
+	 * but is very helpful with the ordinary malloc(). */
 	rt_free( rt_malloc( (20+npsw)*8192, "worker prefetch"), "worker");
 #endif
 
@@ -278,8 +279,8 @@ char **argv;
 		Dcreate( worker );
 	}
 #endif
-	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-endptr );
 #endif
+	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 
 do_more:
 	if( !matflag )  {
@@ -369,6 +370,7 @@ do_more:
 	/*
 	 *  All done.  Display run statistics.
 	 */
+	fprintf(stderr,"Dynamic memory use=%d.\n",sbrk(0)-beginptr );
 	fprintf(stderr, "SHOT: %s\n", outbuf );
 	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
 		rtip->nshots, rtip->nhits, rtip->nmiss );
@@ -391,6 +393,9 @@ do_more:
 	if( fbp )
 		fb_write( fbp, 0, 0, scanbuf, npts*npts*3 );
 	}
+#endif
+#ifdef alliant
+	alliant_pr();
 #endif
 
 	if( outfp != NULL )  {
@@ -434,12 +439,37 @@ double a,b;
 #endif
 
 #ifdef alliant
+int alliant_tab[8];
+char *all_title[8] = {
+	"partition",
+	"seg",
+	"malloc",
+	"printf",
+	"bitv",
+	"worker",
+	"stats",
+	"???"
+};
+alliant_pr()
+{
+	register int i;
+	for( i=0; i<8; i++ )  {
+		if(alliant_tab[i] == 0)  continue;
+		fprintf(stderr,"%10d %s\n", alliant_tab[i], all_title[i]);
+	}
+}
+
 RES_ACQUIRE(p)
 register int *p;
 {
 #ifdef PARALLEL
 	asm("loop:");
-	while( *p )  ;
+	while( *p )   {
+		/* Just wasting time anyways, so log it */
+		register int i;
+		i = p - (&rt_g.res_pt);
+		alliant_tab[i]++;	/* non-interlocked */
+	}
 	asm("	tas	a5@");
 	asm("	bne	loop");
 #endif
