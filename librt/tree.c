@@ -598,10 +598,10 @@ struct mater_info *materp;
 			nrp->reg_aircode = rp->c.c_aircode;
 			nrp->reg_gmater = rp->c.c_material;
 			nrp->reg_name = rt_strdup(rt_path_str(path,pathpos));
+			nrp->reg_instnum = dp->d_uses++; /* after rt_path_str() */
 			nrp->reg_mater = curmater;	/* struct copy */
 			/* Material property processing in rt_add_regtree() */
 			regionp = nrp;
-			dp->d_uses++;		/* after rt_path_str() */
 		}
 	}
 
@@ -873,10 +873,13 @@ int pos;
 	for( i=0; i<=pos; i++ )  {
 		(void)sprintf( cp, "/%s", (dp=whichpath[i])->d_namep );
 		cp += strlen(cp);
+#if 1
+		/* This should be superceeded by reg_instnum soon */
 		if( (dp->d_flags & DIR_REGION) || dp->d_uses > 0 )  {
 			(void)sprintf( cp, "{{%d}}", dp->d_uses );
 			cp += strlen(cp);
 		}
+#endif
 	}
 	return( &line[0] );
 }
@@ -945,7 +948,8 @@ rt_pr_region( rp )
 register struct region *rp;
 {
 	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
-	rt_log("id=%d, air=%d, gift_material=%d, los=%d\n",
+	rt_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
+		rp->reg_instnum,
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_gmater, rp->reg_los );
 	if( rp->reg_mater.ma_override == 1 )
@@ -1294,8 +1298,10 @@ register union tree *tp;
 	regp->reg_bit = rtip->nregions;	/* Add to bit vectors */
 	/* Will be added to rtip->Regions[] in final prep stage */
 	rtip->nregions++;
-	if( rt_g.debug & DEBUG_REGIONS )
-		rt_log("Add Region %s\n", regp->reg_name);
+	if( rt_g.debug & DEBUG_REGIONS )  {
+		rt_log("Add Region %s instnum %d\n",
+			regp->reg_name, regp->reg_instnum);
+	}
 }
 
 /*
@@ -1320,7 +1326,7 @@ register struct region *delregp;
 
 	regp = rtip->HeadRegion;
 	if( rt_g.debug & DEBUG_REGIONS )
-		rt_log("Del Region %s\n", regp->reg_name);
+		rt_log("Del Region %s\n", delregp->reg_name);
 
 	if( regp == delregp )  {
 		rtip->HeadRegion = regp->reg_forw;
