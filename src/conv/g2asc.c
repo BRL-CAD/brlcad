@@ -59,7 +59,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "tcl.h"
-#ifndef WIN32
+#ifdef WIN32
 #include <fcntl.h>
 #endif
 
