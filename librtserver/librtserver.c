@@ -52,7 +52,7 @@ static int comp_count=0;
 static int use_air=0;
 
 /* attribute name for MUVES components */
-static char *muves_comp="MUVES_Comp";
+/* static char *muves_comp="MUVES_Comp"; */
 
 /* array of MUVES component names */
 static char **names;
@@ -1553,7 +1553,7 @@ build_Java_RayResult( JNIEnv *env, struct rtserver_result *aresult, jobject jsta
  *	JNI_FALSE - all is well
  *	JNI_TRUE - something went wrong
  */
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jint JNICALL
 Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
 {
 	jsize len=(*env)->GetArrayLength(env, args);
@@ -1561,13 +1561,13 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 	char *file_name;
 	char **obj_list;
 	int num_objects=(len - 3);
-	jboolean ret=JNI_FALSE;
+	jint ret=0;
 	int i;
 
 	rts_init();
 
 	if( len < 4 ) {
-		return( JNI_TRUE );
+		return( (jint) 1 );
 	}
 
 	/* get the aruments from the JAVA args object array */
@@ -1583,7 +1583,7 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, 
 
 	/* load the geometry */
 	if( rts_load_geometry( file_name, 0, num_objects, obj_list ) < 0 ) {
-		ret = JNI_TRUE;
+		ret = 2;
 	} else {
 		/* get number of queues specified by command line */
 		jstring jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 0 );
