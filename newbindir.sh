@@ -4,7 +4,7 @@
 eval `grep "^BINDIR=" setup.sh`		# sets BINDIR
 LIBDIR=`echo $BINDIR | sed -e 's/bin$/lib/'`
 ETCDIR=`echo $BINDIR | sed -e 's/bin$/etc/'`
-INCLUDE_DIR=/usr/include/brlcad
+INCLUDE_DIR=/usr/brlcad/include
 
 echo "Current BINDIR is $BINDIR"
 echo
