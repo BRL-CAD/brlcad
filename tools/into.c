@@ -66,7 +66,7 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-    char *cp, *rindex();
+    char *cp;
     int c;
     FILE * outf;
 #ifdef FAST_STDIO
