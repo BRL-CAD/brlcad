@@ -63,9 +63,9 @@ union record  {
 		char	md_flags;
 		short	md_low;		/* lower end of this material ID */
 		short	md_hi;		/* upper end of this material ID */
-		char	md_r;		/* color of this material */
-		char	md_g;
-		char	md_b;
+		unsigned char md_r;
+		unsigned char md_g;	/* color of this material 0..255 */
+		unsigned char md_b;
 		char	md_material[100]; /* "handle" in material database */
 	} md;
 	struct b_spline_head {
