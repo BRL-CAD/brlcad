@@ -306,7 +306,7 @@ shoot_grids(struct application *ap,
 	double x, y, z;
 
 	if (rdebug & RDEBUG_LIGHT )
-		bu_log("shoot_grids Z\n");
+		bu_log("shoot_grids Z, step=(%g, %g, %g)\n", V3ARGS(step) );
 
 	/* shoot through the X,Y plane */
 
@@ -381,8 +381,10 @@ light_gen_sample_pts(struct rt_i            *rtip,
 	vect_t step, span;
 	double mul = 0.25;
 
+	RT_CK_LIGHT(lsp);
+
 	if (rdebug & RDEBUG_LIGHT )
-		bu_log("light_gen_sample_pts\n");
+		bu_log("light_gen_sample_pts(%s)\n", lsp->lt_name);
 
 
 	memset(&ap, 0, sizeof(ap));
@@ -403,13 +405,14 @@ light_gen_sample_pts(struct rt_i            *rtip,
 	/* get extent in X, Y, Z */
 	VSUB2(span, tree_max, tree_min);
 
-	/* if there is no space occupied by the light source, then
-	 * just give up
-	 */
-	if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) return;
-
 	while ( lsp->lt_pt_count < 5 ) {
 		VSCALE(step, span, mul);
+
+		/* if there is no space occupied by the light source, then
+		 * just give up.  Prevents infinite loops.
+		 */
+		if (step[X] <= 0.0 && step[Y] <= 0.0 && step[Z] <= 0.0) break;
+
 		shoot_grids(&ap, step, tree_min, tree_max);
 		mul *= 0.5;
 	}
