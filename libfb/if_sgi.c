@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <gl.h>
+#undef RED
 
 #include "fb.h"
 #include "./fblocal.h"
@@ -181,10 +182,10 @@ FBIO	*ifp;
 _LOCAL_ int
 sgi_dclear( ifp, pp )
 FBIO	*ifp;
-Pixel	*pp;
+RGBpixel	*pp;
 {
 	if ( pp != NULL)
-		RGBcolor((short) pp->red, (short)pp->green, (short)pp->blue);
+		RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
 	else
 		RGBcolor( (short) 0, (short) 0, (short) 0);
 	clear();
@@ -216,7 +217,7 @@ _LOCAL_ int
 sgi_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-register Pixel	*pixelp;
+register RGBpixel	*pixelp;
 int	count;
 {
 	short scan_count;
@@ -237,17 +238,17 @@ int	count;
 		}
 
 		cmov2s( xpos, ypos );		/* move to current position */
-		readRGB( scan_count, rr, gg, bb ); 
+		readRGB( scan_count, rr, gg, bb );
 
 		for( i = 0; i < scan_count; i++, pixelp++)  {
 			if ( _sgi_cmap_flag == FALSE )  {
-				pixelp->red = rr[i];
-				pixelp->green = gg[i];
-				pixelp->blue = bb[i];
+				(*pixelp)[RED] = rr[i];
+				(*pixelp)[GRN] = gg[i];
+				(*pixelp)[BLU] = bb[i];
 			} else {
-				pixelp->red = _sgi_cmap.cm_red[ rr[i] ];
-				pixelp->green = _sgi_cmap.cm_green[ gg[i] ];
-				pixelp->blue = _sgi_cmap.cm_blue[ bb[i] ];
+				(*pixelp)[RED] = _sgi_cmap.cm_red[ rr[i] ];
+				(*pixelp)[GRN] = _sgi_cmap.cm_green[ gg[i] ];
+				(*pixelp)[BLU] = _sgi_cmap.cm_blue[ bb[i] ];
 			}
 		}
 
@@ -262,7 +263,7 @@ _LOCAL_ int
 sgi_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 short	x, y;
-register Pixel	*pixelp;
+register RGBpixel	*pixelp;
 short	count;
 {
 	register union gepipe *hole = GEPIPE;
@@ -293,9 +294,9 @@ short	count;
 
 			if( ifp->if_pixsize > 1 )  {
 				Coord l, b;
-				RGBcolor( (short)pixelp->red,
-					(short)pixelp->green,
-					(short)pixelp->blue );
+				RGBcolor( (short)((*pixelp)[RED]),
+					(short)((*pixelp)[GRN]),
+					(short)((*pixelp)[BLU]) );
 				l = xpos * ifp->if_pixsize;
 				b = ypos * ifp->if_pixsize;
 				/* left bottom right top */
@@ -315,15 +316,15 @@ short	count;
 			i -= chunk;
 			if ( _sgi_cmap_flag == FALSE )  {
 				for( ; chunk>0; chunk--,pixelp++ )  {
-					hole->s = pixelp->red;
-					hole->s = pixelp->green;
-					hole->s = pixelp->blue;
+					hole->s = (*pixelp)[RED];
+					hole->s = (*pixelp)[GRN];
+					hole->s = (*pixelp)[BLU];
 				}
 			} else {
 				for( ; chunk>0; chunk--,pixelp++ )  {
-					hole->s = _sgi_cmap.cm_red[pixelp->red];
-					hole->s = _sgi_cmap.cm_green[pixelp->green];
-					hole->s = _sgi_cmap.cm_blue[pixelp->blue];
+					hole->s = _sgi_cmap.cm_red[(*pixelp)[RED]];
+					hole->s = _sgi_cmap.cm_green[(*pixelp)[GRN]];
+					hole->s = _sgi_cmap.cm_blue[(*pixelp)[BLU]];
 				}
 			}
 		}

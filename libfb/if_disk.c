@@ -27,7 +27,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
-			*sizeof(Pixel))
+			*sizeof(RGBpixel))
+
+#define	DISK_DMA_BYTES	(16*1024)
+#define	DISK_DMA_PIXELS	(DISK_DMA_BYTES/sizeof(RGBpixel))
 
 _LOCAL_ int	dsk_dopen(),
 		dsk_dclose(),
@@ -82,7 +85,7 @@ int	width, height;
 	  && (ifp->if_fd = open( file, O_RDONLY, 0 )) == -1 ) {
 		if( (ifp->if_fd = open( file, O_RDWR|O_CREAT, 0664 )) > 0 ) {
 			/* New file, write byte at end */
-			if( lseek( ifp->if_fd, height*width*sizeof(Pixel)-1, 0 ) == -1 )
+			if( lseek( ifp->if_fd, height*width*sizeof(RGBpixel)-1, 0 ) == -1 )
 				{
 				fb_log( "disk_device_open : can not seek to end of new file.\n" );
 				return	-1;
@@ -115,28 +118,28 @@ FBIO	*ifp;
 _LOCAL_ int
 dsk_dclear( ifp, bgpp )
 FBIO	*ifp;
-Pixel	*bgpp;
-	{
-	static Pixel	black = { 0, 0, 0, 0 };
+RGBpixel	*bgpp;
+{
+	static RGBpixel	black = { 0, 0, 0 };
 
-	if( bgpp == (Pixel *)NULL )
-		return fb_fast_dma_bg( ifp, &black );
+	if( bgpp == (RGBpixel *)NULL )
+		return disk_color_clear( ifp, black );
 
-	return	fb_fast_dma_bg( ifp, bgpp );
-	}
+	return	disk_color_clear( ifp, bgpp );
+}
 
 _LOCAL_ int
 dsk_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
-int		x,  y;
-Pixel		*pixelp;
-int		count;
-{	register long bytes = count * (long) sizeof(Pixel);
+int	x,  y;
+RGBpixel	*pixelp;
+int	count;
+{	register long bytes = count * (long) sizeof(RGBpixel);
 	register long todo;
 
 	if( lseek(	ifp->if_fd,
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(Pixel),
+			* (long) sizeof(RGBpixel),
 			0
 			)
 	    == -1L
@@ -144,17 +147,17 @@ int		count;
 		{
 		fb_log( "disk_buffer_read : seek to %ld failed.\n",
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(Pixel)
+			* (long) sizeof(RGBpixel)
 			);
 		return	-1;
 		}
 	while( bytes > 0 )
 		{
-		todo = (bytes > MAX_BYTES_DMA ? MAX_BYTES_DMA : bytes);
+		todo = (bytes > DISK_DMA_BYTES ? DISK_DMA_BYTES : bytes);
 		if( read( ifp->if_fd, (char *) pixelp, todo ) != todo )
 			return	-1;
 		bytes -= todo;
-		pixelp += todo / sizeof(Pixel);
+		pixelp += todo / sizeof(RGBpixel);
 		}
 	return	count;
 	}
@@ -163,13 +166,13 @@ _LOCAL_ int
 dsk_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 long	count;
-	{	register long	bytes = count * (long) sizeof(Pixel);
+	{	register long	bytes = count * (long) sizeof(RGBpixel);
 		register int	todo;
 	if( lseek(	ifp->if_fd,
 			((long) y * (long) ifp->if_width + (long) x)
-			* (long) sizeof(Pixel),
+			* (long) sizeof(RGBpixel),
 			0
 			)
 	    == -1L
@@ -177,17 +180,17 @@ long	count;
 		{
 		fb_log( "disk_buffer_write : seek to %ld failed.\n",
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(Pixel)
+			* (long) sizeof(RGBpixel)
 			);
 		return	-1;
 		}
 	while( bytes > 0 )
 		{
-		todo = (bytes > MAX_BYTES_DMA ? MAX_BYTES_DMA : bytes);
+		todo = (bytes > DISK_DMA_BYTES ? DISK_DMA_BYTES : bytes);
 		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )
 			return	-1;
 		bytes -= todo;
-		pixelp += todo / sizeof(Pixel);
+		pixelp += todo / sizeof(RGBpixel);
 		}
 	return	count;
 	}
@@ -240,3 +243,49 @@ ColorMap	*cmap;
 		}
 	return	0;
 	}
+
+/*
+ *		D I S K _ C O L O R _ C L E A R
+ *
+ *  Clear the disk file to the given color.
+ */
+_LOCAL_ int
+disk_color_clear( ifp, bpp )
+FBIO	*ifp;
+register RGBpixel	*bpp;
+{
+	static RGBpixel	*pix_buf = NULL;
+	register RGBpixel *pix_to;
+	register long	i;
+	int	fd, pixelstodo;
+
+	if( pix_buf == NULL )
+		if( (pix_buf = (RGBpixel *) malloc(DISK_DMA_BYTES)) == PIXEL_NULL ) {
+			Malloc_Bomb(DISK_DMA_BYTES);
+			return	-1;
+		}
+
+	/* Fill buffer with background color. */
+	for( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
+		COPYRGB( *pix_to, *bpp );
+		pix_to++;
+	}
+
+	/* Set start of framebuffer */
+	fd = ifp->if_fd;
+	if( lseek( fd, 0L, 0 ) == -1 ) {
+		fb_log( "disk_color_clear : seek failed.\n" );
+		return	-1;
+	}
+
+	/* Send until frame buffer is full. */
+	pixelstodo = ifp->if_height * ifp->if_width;
+	while( pixelstodo > 0 ) {
+		i = pixelstodo > DISK_DMA_PIXELS ? DISK_DMA_PIXELS : pixelstodo;
+		if( write( fd, pix_buf, i * sizeof(RGBpixel) ) == -1 )
+			return	-1;
+		pixelstodo -= i;
+	}
+
+	return	0;
+}

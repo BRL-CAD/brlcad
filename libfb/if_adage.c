@@ -140,6 +140,12 @@ static long cursor[32] =
 /* Global Flags */
 short	*_ikUBaddr;		/* Mapped-in Ikonas address */
 
+static char *_pixbuf;		/* RGBpixel -> Ikonas pixel buffer */
+typedef unsigned char IKONASpixel[4];
+
+#define	ADAGE_DMA_BYTES	(63*1024)
+#define	ADAGE_DMA_PIXELS (ADAGE_DMA_BYTES/sizeof(IKONASpixel))
+
 _LOCAL_ int
 adage_device_open( ifp, file, width, height )
 FBIO	*ifp;
@@ -255,6 +261,11 @@ int		width, height;
 		fb_log( "adage_device_open : lseek failed.\n" );
 		return	-1;
 		}
+	/* Create pixel buffer */
+	if( (_pixbuf = malloc( ADAGE_DMA_BYTES )) == NULL ) {
+		fb_log( "adage_device_open : pixbuf malloc failed.\n" );
+		return	-1;
+	}
 	x_zoom = 1;
 	y_zoom = 1;
 	x_origin = ifp->if_width / 2;
@@ -273,14 +284,14 @@ FBIO	*ifp;
 _LOCAL_ int
 adage_device_clear( ifp, bgpp )
 FBIO	*ifp;
-Pixel	*bgpp;
+RGBpixel	*bgpp;
 	{	int dev_mode = 1;
-	/* If adage_setbackground() was called with non-black color, must
+	/* If adage_device_clear() was called with non-black color, must
 		use DMAs to fill the frame buffer since there is no
 		hardware support for this.
 	 */
-	if( bgpp != NULL && (bgpp->red != 0 || bgpp->green != 0 || bgpp->blue != 0) )
-		return	fb_fast_dma_bg( ifp, bgpp );
+	if( bgpp != NULL && ((*bgpp)[RED] != 0 || (*bgpp)[GRN] != 0 || (*bgpp)[BLU] != 0) )
+		return	adage_color_clear( ifp, bgpp );
 
 	if( ifp->if_width == 1024 )
 		dev_mode = 2;
@@ -319,11 +330,14 @@ Pixel	*bgpp;
 _LOCAL_ int
 adage_buffer_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
-int		x,  y;
-Pixel		*pixelp;
-int		count;
-	{	register long bytes = count * (long) sizeof(Pixel);
-		register long todo;
+int	x,  y;
+RGBpixel	*pixelp;
+int	count;
+{
+	register char *out, *in;
+	register int i;
+	long bytes = count * (long) sizeof(IKONASpixel);
+	long todo;
 
 	if( count == 1 )
 		return adage_read_pio_pixel( ifp, x, y, pixelp );
@@ -331,37 +345,45 @@ int		count;
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(Pixel),
+			* (long) sizeof(IKONASpixel),
 			0
 			)
-	    == -1L
-		)
-		{
+	    == -1L ) {
 		fb_log( "adage_buffer_read : seek to %ld failed.\n",
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(Pixel)
-			);
+			* (long) sizeof(IKONASpixel) );
 		return	-1;
-		}
-	while( bytes > 0 )
-		{
-		todo = (bytes > MAX_BYTES_DMA ? MAX_BYTES_DMA : bytes);
-		if( read( ifp->if_fd, (char *) pixelp, todo ) != todo )
-			return	-1;
-		bytes -= todo;
-		pixelp += todo / sizeof(Pixel);
-		}
-	return	count;
 	}
+	while( bytes > 0 ) {
+		todo = (bytes > ADAGE_DMA_BYTES ? ADAGE_DMA_BYTES : bytes);
+		if( read( ifp->if_fd, _pixbuf, todo ) != todo )
+			return	-1;
+
+		in = _pixbuf;
+		out = (char *)pixelp;
+		for( i = todo/sizeof(IKONASpixel); i > 0; i-- ) {
+			*out++ = *in;
+			*out++ = in[1];
+			*out++ = in[2];
+			in += sizeof(IKONASpixel);
+		}
+		bytes -= todo;
+		pixelp += todo / sizeof(IKONASpixel);
+	}
+	return	count;
+}
 
 _LOCAL_ int
 adage_buffer_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 long	count;
-	{	register long	bytes = count * (long) sizeof(Pixel);
-		register int	todo;
+{
+	register char *out, *in;
+	register int i;
+	register long	bytes = count * (long) sizeof(IKONASpixel);
+	register int	todo;
 
 	if( count == 1 )
 		return adage_write_pio_pixel( ifp, x, y, pixelp );
@@ -369,37 +391,49 @@ long	count;
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			((long) y * (long) ifp->if_width + (long) x)
-			* (long) sizeof(Pixel),
+			* (long) sizeof(IKONASpixel),
 			0
 			)
-	    == -1L
-		)
-		{
+	    == -1L ) {
 		fb_log( "adage_buffer_write : seek to %ld failed.\n",
 			(((long) y * (long) ifp->if_width) + (long) x)
-			* (long) sizeof(Pixel)
-			);
+			* (long) sizeof(IKONASpixel) );
 		return	-1;
+	}
+	while( bytes > 0 ) {
+		todo = (bytes > ADAGE_DMA_BYTES ? ADAGE_DMA_BYTES : bytes);
+		in = (char *)pixelp;
+		out = _pixbuf;
+		for( i = todo/sizeof(IKONASpixel); i > 0; i-- ) {
+			/* VAX subscripting faster than ++ */
+			*out = *in++;
+			out[1] = *in++;
+			out[2] = *in++;
+			out += sizeof(IKONASpixel);
 		}
-	while( bytes > 0 )
-		{
-		todo = (bytes > MAX_BYTES_DMA ? MAX_BYTES_DMA : bytes);
-		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )
+		if( write( ifp->if_fd, _pixbuf, todo ) != todo )
 			return	-1;
 		bytes -= todo;
-		pixelp += todo / sizeof(Pixel);
-		}
-	return	count;
+		pixelp += todo / sizeof(IKONASpixel);
 	}
+	return	count;
+}
 
 /* Write 1 Ikonas pixel using PIO rather than DMA */
 _LOCAL_ int
-adage_write_pio_pixel( ifp, x, y, data )
+adage_write_pio_pixel( ifp, x, y, datap )
 FBIO	*ifp;
-int		x, y;
-long		*data;
-	{	register int i;
-		register struct ikdevice *ikp = (struct ikdevice *)_ikUBaddr;
+int	x, y;
+RGBpixel	*datap;
+	{
+	register int i;
+	register struct ikdevice *ikp = (struct ikdevice *)_ikUBaddr;
+	long data = 0;
+
+	((unsigned char *)&data)[RED] = (*datap)[RED];
+	((unsigned char *)&data)[GRN] = (*datap)[GRN];
+	((unsigned char *)&data)[BLU] = (*datap)[BLU];
+
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	i = 10000;
 	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
@@ -422,8 +456,8 @@ long		*data;
 		ikp->ikhiaddr = y<<1;
 		}
 	ikp->ubcomreg = 1;			/* GO */
-	ikp->datareg = (u_short)*data;
-	ikp->datareg = (u_short)(*data>>16);
+	ikp->datareg = (u_short)data;
+	ikp->datareg = (u_short)(data>>16);
 	if( ikp->ubcomreg & IKERROR )
 		{
 		fb_log( "IK ERROR bit on PIO.\n" );
@@ -436,11 +470,13 @@ long		*data;
 _LOCAL_ long
 adage_read_pio_pixel( ifp, x, y, datap )
 FBIO	*ifp;
-int		x, y;
-long		*datap;
-	{	register int i;
-		register struct ikdevice *ikp = (struct ikdevice *)_ikUBaddr;
-		register long data;
+int	x, y;
+RGBpixel	*datap;
+	{
+	register int i;
+	register struct ikdevice *ikp = (struct ikdevice *)_ikUBaddr;
+	long data;
+
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	i = 10000;
 	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
@@ -478,7 +514,9 @@ long		*datap;
 		fb_log( "IK ERROR bit on PIO.\n" );
 		return	-1;
 		}
-	*datap = data;
+	(*datap)[RED] = ((unsigned char *)&data)[RED];
+	(*datap)[GRN] = ((unsigned char *)&data)[GRN];
+	(*datap)[BLU] = ((unsigned char *)&data)[BLU];
 	return	1;
 	}
 
@@ -770,11 +808,11 @@ long		*bitmap;
 _LOCAL_ int
 adage_colormap_write_entry( ifp, cp, page, offset )
 FBIO	*ifp;
-register Pixel	*cp;
+register RGBpixel	*cp;
 long	page, offset;
 	{	long	lp;
 
-	lp = RGB10( cp->red>>6, cp->green>>6, cp->blue>>6 );
+	lp = RGB10( (*cp)[RED]>>6, (*cp)[GRN]>>6, (*cp)[BLU]>>6 );
 	lseek( ifp->if_fd, (LUVO + page*256 + offset)*4L, 0);
 	if( write( ifp->if_fd, (char *) &lp, 4 ) != 4 )
 		{
@@ -788,9 +826,11 @@ _LOCAL_ int
 adage_colormap_write( ifp, cp )
 FBIO		*ifp;
 register ColorMap	*cp;
-	{	long cmap[1024];
-		register long *lp = cmap;
-		register int i;
+{
+	long cmap[1024];
+	register long *lp = cmap;
+	register int i;
+
 	/* Note that RGB10(r,g,b) flips to cmap order (b,g,r).		*/
 	if( cp == (ColorMap *) NULL )
 		for( i=0; i < 256; i++ )
@@ -842,10 +882,12 @@ register ColorMap	*cp;
 
 _LOCAL_ int
 adage_colormap_read( ifp, cp )
-FBIO		*ifp;
+FBIO	*ifp;
 register ColorMap	*cp;
-	{	register int i;
-		long cmap[1024];
+{
+	register int i;
+	long cmap[1024];
+
 	if( lseek( ifp->if_fd, LUVO*4L, 0) == -1 )
 		{
 		fb_log( "adage_colormap_read : lseek failed.\n" );
@@ -877,4 +919,52 @@ register ColorMap	*cp;
 		}
 #endif
 	return	0;
+}
+
+/*
+ *		A D A G E _ C O L O R _ C L E A R
+ *
+ *  Clear the frame buffer to the given color.  There is no hardware
+ *  Support for this so we do it via large DMA's.
+ */
+_LOCAL_ int
+adage_color_clear( ifp, bpp )
+register FBIO	*ifp;
+register RGBpixel	*bpp;
+{
+	static RGBpixel	*pix_buf = NULL;
+	register IKONASpixel *pix_to;
+	register long	i;
+	long	pixelstodo;
+	int	fd;
+
+	if( pix_buf == NULL )
+		if( (pix_buf = (IKONASpixel *) malloc(ADAGE_DMA_BYTES)) == PIXEL_NULL ) {
+			Malloc_Bomb(ADAGE_DMA_BYTES);
+			return	-1;
+		}
+
+	/* Fill buffer with background color. */
+	for( i = ADAGE_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
+		COPYRGB( *pix_to, *bpp );
+		pix_to++;
 	}
+
+	/* Set start of framebuffer */
+	fd = ifp->if_fd;
+	if( lseek( fd, 0L, 0 ) == -1 ) {
+		fb_log( "adage_color_clear : seek failed.\n" );
+		return	-1;
+	}
+
+	/* Send until frame buffer is full. */
+	pixelstodo = ifp->if_height * ifp->if_width;
+	while( pixelstodo > 0 ) {
+		i = pixelstodo > ADAGE_DMA_PIXELS ? ADAGE_DMA_PIXELS : pixelstodo;
+		if( write( fd, pix_buf, i*sizeof(IKONASpixel) ) == -1 )
+			return	-1;
+		pixelstodo -= i;
+	}
+
+	return	0;
+}

@@ -1,6 +1,11 @@
 /*
  *	I F _ D E B U G
+ *
+ *  Reports all calls to fb_log().
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include "fb.h"
@@ -94,14 +99,14 @@ FBIO	*ifp;
 _LOCAL_ int
 deb_dclear( ifp, pp )
 FBIO	*ifp;
-Pixel	*pp;
+RGBpixel	*pp;
 {
 	if( pp == 0 )
 		fb_log( "fb_clear( fp, 0 )\n" );
 	else
-		fb_log( "fb_clear( fp, &[%d %d %d %d] )\n",
-			(int)pp->red, (int)pp->green,
-			(int)pp->blue, (int)pp->spare );
+		fb_log( "fb_clear( fp, &[%d %d %d] )\n",
+			(int)((*pp)[RED]), (int)((*pp)[GRN]),
+			(int)((*pp)[BLU]) );
 	return	1;
 }
 
@@ -109,7 +114,7 @@ _LOCAL_ int
 deb_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 int	count;
 {
 	fb_log( "fb_read( fp,%4d,%4d, 0x%x, %d )\n",
@@ -121,7 +126,7 @@ _LOCAL_ int
 deb_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 int	count;
 {
 	fb_log( "fb_write( fp,%4d,%4d, 0x%x, %d )\n",
