@@ -93,7 +93,7 @@ all-local:
 	@@ECHO@ "Done."
 	@@ECHO@
 	@@ECHO@ @ECHO_N@ "Elapsed compilation time: "
-	@sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/build_date.h | grep Compilation`
+	@sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation`
 	@@ECHO@ @ECHO_N@ "Elapsed time since configuration: "
 	@sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@
 	@@ECHO@ "---"
