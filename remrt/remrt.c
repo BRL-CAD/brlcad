@@ -1460,22 +1460,13 @@ register struct frame *fr;
 
 	/* Do any after-frame commands */
 	if( rt_vls_strlen( &fr->fr_after_cmd ) > 0 )  {
+		rt_log("running after_cmd='%s'\n",
+			RT_VLS_ADDR(&fr->fr_after_cmd) );
 		(void)rt_do_cmd( (struct rt_i *)0,
 			RT_VLS_ADDR(&fr->fr_after_cmd), cmd_tab );
 	}
 
-	if( fr->fr_tempfile )  {
-		/* Unlink temp file -- it is in framebuffer */
-		if( unlink( fr->fr_filename ) < 0 )
-			perror( fr->fr_filename );
-	} else {
-		/* Write-protect file, to prevent re-computation */
-		if( chmod( fr->fr_filename, 0444 ) < 0 )
-			perror( fr->fr_filename );
-	}
-
-
-	/* Run any end-of-frame script */
+	/* Run global end-of-frame script from 'EOFrame' in .remrtrc file */
 	if (frame_script) {
 		char *cmd;
 		cmd = malloc(strlen(frame_script) + strlen(fr->fr_filename) +
@@ -1486,6 +1477,19 @@ register struct frame *fr;
 		(void) system(cmd);
 		(void) free(cmd);
 	}
+
+	/* Final processing of output file */
+	if( fr->fr_tempfile )  {
+		/* Unlink temp file -- it is in framebuffer */
+		if( unlink( fr->fr_filename ) < 0 )
+			perror( fr->fr_filename );
+	} else {
+		/* Write-protect file, to prevent re-computation */
+		if( chmod( fr->fr_filename, 0444 ) < 0 )
+			perror( fr->fr_filename );
+	}
+
+	/* Forget all about this frame */
 	destroy_frame( fr );
 }
 
