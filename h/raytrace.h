@@ -739,7 +739,8 @@ extern char *rt_strdup(char *cp);
 					/* Look up name in toc */
 extern struct directory *rt_dir_lookup(struct rt_i *rtip, char *str, int noisy);
 					/* Add name to toc */
-extern struct directory *rt_dir_add(struct rt_i *rtip, char *name, long laddr);
+extern struct directory *rt_dir_add(struct rt_i *rtip, char *name,
+	long laddr, int len, int flags);
 					/* Weave segs into partitions */
 extern void rt_boolweave(struct seg *segp_in, struct partition *PartHeadp,
 	struct application *ap);
