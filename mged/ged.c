@@ -1154,7 +1154,7 @@ std_out_or_err(clientData, mask)
 ClientData clientData;
 int mask;
 {
-  int fd = (int)clientData;
+  int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
   int count;
   struct bu_vls vls;
   char line[MAXLINE];
