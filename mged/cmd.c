@@ -67,7 +67,7 @@ void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
 void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in();
-void	f_rmats();
+void	f_rmats(),f_prefix(), f_keep(), f_tree();
 
 static struct funtab {
 	char *ft_name;
@@ -202,6 +202,12 @@ static struct funtab {
 	f_edgedir, 3, 4,
 "in", "", "keyboard entry of solids",
 	f_in, 1, 27,
+"prefix", "new_prefix object(s)", "prefix each occurence of object name(s)",
+	f_prefix, 3, MAXARGS,
+"keep", "keep_file object(s)", "save named objects in specified file",
+	f_keep, 3, MAXARGS,
+"tree",	"object(s)", "print out a tree of all members of an object",
+	f_tree, 2, MAXARGS,
 "memprint", "", "print memory maps",
 	f_memprint, 1, 1
 };

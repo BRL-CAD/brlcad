@@ -25,10 +25,14 @@
  *	dir_summary	Summarize contents of directory by categories
  *	f_tops		Prints top level items in database
  *	cmd_glob	Does regular expression expansion on cmd_args[]
+ *	f_prefix	Prefix each occurence of a specified object name
+ *	f_keep		Save named objects in specified file
+ *	f_tree		Print out a tree of all members of an object
  *
  *  Authors -
  *	Michael John Muuss
  *	Keith A. Applin
+ *	Richard Romanelli
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -101,6 +105,9 @@ char	cur_title[128];			/* current target title */
 char	*filename;			/* Name of database file */
 int	read_only = 0;			/* non-zero when read-only */
 void	conversions();
+
+static void file_put();
+static void printnode();
 
 extern void color_addrec();
 extern int numargs, maxargs;		/* defined in cmd.c */
@@ -1092,4 +1099,271 @@ f_find()
 		}
 	}
 	(void)fclose(fp);
+}
+
+/*
+ *			F _ P R E F I X
+ *
+ *  Prefix each occurence of a specified object name, both
+ *  when defining the object, and when referencing it.
+ */
+void
+f_prefix()
+{
+	register struct directory *dp;
+	register FILE *fp;
+	long	seekptr = 0;
+	long	laddr;
+	char	tempstring[NAMESIZE+2];
+	int 	flags, len, i;
+
+	if( (fp = fopen(filename, "r+")) == NULL) {
+		(void) printf("f_prefix: fopen failed\n");
+		return;
+	}
+
+	for( i = 2; i < numargs; i++) {
+		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY )) == DIR_NULL) 
+			return;
+
+		if( strlen(cmd_args[1]) + strlen(cmd_args[i]) > NAMESIZE) {
+			printf("Prefix too long, names must be less than %d characters.\n",
+				NAMESIZE);
+			return;
+		}
+
+		(void) strcpy( tempstring, cmd_args[1]);
+		(void) strcat( tempstring, cmd_args[i]);
+
+		if( lookup( tempstring, LOOKUP_QUIET ) != DIR_NULL ) {
+			aexists( tempstring );
+			return;
+		}
+		/*  Change object name in the directory.
+		    Due to hashing, need to delete and add it back. */
+		laddr = dp->d_addr;
+		flags = dp->d_flags;
+		len = dp->d_len;
+
+		dir_delete( dp );
+		dp = dir_add( tempstring, laddr, flags, len );
+
+		/* Read whole database, looking at each object name. */
+		for( ; fread( (char*)&record, sizeof(record), 1, fp ) == 1 &&
+		     ! feof(fp);
+		    seekptr += sizeof(record) )  {
+
+			switch( record.u_id ) {
+			case ID_COMB:
+				if( strcmp(cmd_args[i],record.c.c_name) != 0 )
+					continue;
+				(void) strcpy(record.c.c_name,tempstring);
+				(void) fseek( fp, seekptr, 0);
+				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+	 			break;
+
+			case ID_B_SPL_HEAD:
+				if( strcmp(cmd_args[i],record.d.d_name) != 0 )
+					continue;
+				(void) strcpy(record.d.d_name,tempstring);
+				(void) fseek( fp, seekptr, 0);
+				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+		 		break;
+
+			case ID_ARS_A:
+				if( strcmp(cmd_args[i],record.a.a_name) != 0 )
+					continue;
+				(void) strcpy(record.a.a_name,tempstring);
+				(void) fseek( fp, seekptr, 0);
+				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+	 			break;
+
+			case ID_P_HEAD:
+				if( strcmp(cmd_args[i],record.p.p_name) != 0 )
+					continue;
+				(void) strcpy(record.p.p_name,tempstring);
+				(void) fseek( fp, seekptr, 0);
+				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+	 			break;
+
+			case ID_SOLID:
+				if( strcmp(cmd_args[i],record.s.s_name) != 0 )
+					continue;
+				(void) strcpy(record.s.s_name,tempstring);
+				(void) fseek( fp, seekptr, 0);
+				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+	 			break;
+
+			case ID_MEMB:
+				if( strcmp(cmd_args[i],record.M.m_instname) != 0 )
+					continue;
+				(void) strcpy(record.M.m_instname,tempstring);
+				(void) fseek( fp, seekptr, 0);
+				fwrite((char*)&record, sizeof(record), 1, fp);
+				(void) fseek( fp, seekptr+sizeof(record), 0);
+ 				break;
+
+			default:
+				;
+			}
+		}
+		seekptr = 0;
+		fseek(fp,0,0);  /* Rewind the file for next pass.*/
+	}  
+	(void) fclose(fp);
+}
+
+/*
+ *			F _ K E E P
+ *
+ *  	Saves named objects in specified file.
+ *	Good for pulling parts out of a description.
+ */
+
+#define MAX_KEEPCOUNT	  500
+static char	*keep_names[MAX_KEEPCOUNT];
+static int	keepfd;
+static int	keep_count;
+
+void
+f_keep() {
+	register struct directory *dp;
+	int i;
+
+	if( (keepfd = creat( cmd_args[1], 0644 )) < 0 )  {
+		perror( cmd_args[1] );
+		return;
+	}
+	
+	/* ident record */
+	(void)lseek(keepfd, 0L, 0);
+	record.i.i_id = ID_IDENT;
+	record.i.i_units = localunit;
+	strcpy(record.i.i_version, ID_VERSION);
+	sprintf(record.i.i_title, "Parts of: %s", cur_title);
+	(void)write(keepfd, (char *)&record, sizeof record);
+
+	keep_count = 0;
+	for(i = 2; i < numargs; i++) {
+		if( (dp = lookup(cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )
+			file_put(dp);
+	}
+	(void) close(keepfd);
+}
+
+/*
+ *  Saves all objects in hierarchy of an object.
+ */
+static void
+file_put( dp )
+register struct directory *dp;
+{
+	register struct member *mp;
+	struct directory *nextdp;
+	register int i;
+
+	/* If this object already sent to keep file, just return */
+	for( i=0; i<keep_count; i++) {
+		if(keep_names[i] == dp->d_namep)
+			return;
+	}
+
+	/* write this record to the keep file if new object */
+	keep_names[keep_count++] = dp->d_namep;
+
+	db_getrec (dp, (char *)&record, 0);
+	(void)write(keepfd, (char *)&record, sizeof record);
+
+	if(record.u_id == ID_COMB) {
+		/* write out all member records */
+		for( i=1; i<dp->d_len; i++ )  {
+			db_getrec( dp, &record, i );
+			(void)write(keepfd, (char *)&record, sizeof record);
+		}
+		/* recurse on all member records */
+		for( i=1; i<dp->d_len; i++ )  {
+			db_getrec( dp, &record, i );
+			nextdp = lookup(record.M.m_instname,LOOKUP_NOISY);
+			if( nextdp == DIR_NULL )
+				continue;
+			file_put( nextdp );
+		}
+		return;
+	}
+
+	/* Whatever it is, we must write all granules */
+	for( i=1; i<dp->d_len; i++ )  {
+		db_getrec( dp, &record, i );
+		(void)write(keepfd, (char *)&record, sizeof record);
+	}
+}
+
+/*
+ *			F _ T R E E
+ *
+ *	Print out a list of all members and submembers of an object.
+ */
+void
+f_tree() {
+	register struct directory *dp;
+	register int j;
+
+	(void) signal( SIGINT, sig2);  /* Allow interrupts */
+
+	for ( j = 1; j < numargs; j++) {
+		if( (dp = lookup( cmd_args[j], LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+		printnode(dp, 0, 0);
+		putchar( '\n' );
+	}
+}
+
+static void
+printnode( dp, pathpos, cont )
+register struct directory *dp;
+int pathpos;
+int cont;		/* non-zero when continuing partly printed line */
+{	
+	union record rec;
+	register int	i;
+
+	/*
+	 * Load the record into local record buffer
+	 */
+	db_getrec( dp, &rec, 0 );
+
+	if( !cont ) {
+		for( i=0; i<(pathpos*(NAMESIZE+2)); i++) 
+			putchar(' ');
+		cont = 1;
+	}
+	printf("| %s", dp->d_namep);
+
+	if( rec.u_id != ID_COMB )  {
+		putchar( '\n' );
+		return;
+	}
+	i = NAMESIZE - strlen(dp->d_namep);
+	while( i-- > 0 )
+		putchar('_');
+
+	/*
+	 *  This node is a combination (eg, a directory).
+	 *  Process all the arcs (eg, directory members).
+	 */
+	for( i=1; i < dp->d_len; i++ )  {
+		register struct directory *nextdp;	/* temporary */
+
+		db_getrec( dp, &rec, i );
+		if( (nextdp = lookup( rec.M.m_instname, LOOKUP_NOISY )) == DIR_NULL )
+			continue;
+
+		printnode ( nextdp, pathpos+1, cont );
+		cont = 0;
+	}
 }
