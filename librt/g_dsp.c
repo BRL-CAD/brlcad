@@ -199,7 +199,7 @@ CONST struct rt_dsp_internal *dsp_ip;
 
 	VSETALL(pt, 0.0);
 	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
-	bu_vls_printf( vls, "  V=(%g %g %g)mm\n", V3ARGS(pt));
+	bu_vls_printf( vls, "  V=(%g %g %g)mm\n", v);
 
 	bu_vls_printf( vls, "  stom=\n");
 	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
@@ -677,8 +677,6 @@ double dist2;		  /* distance to second cell hit */
 	char	buf[132];
 	point_t	A, B, C, D;
 	point_t tmp, pt, in_pt, out_pt;
-	vect_t	A_B;
-	vect_t	A_C;
 	unsigned short	min_val;
 	unsigned short	max_val;
 	int	outside;
@@ -704,8 +702,6 @@ double dist2;		  /* distance to second cell hit */
 
 
 
-	VSUB2(A_B, B, A);
-	VSUB2(A_C, C, A);
 
 	/* we don't plot the bounds of the box if it's a
 	 * zero thickness axis aligned plane
@@ -1430,6 +1426,8 @@ point_t pt;
 		V3ARGS(pt) );
 	bu_log("\tNot inside cell\n");
 	longjmp(isect->env, 1);
+	/* NOTREACHED */
+	return 0;
 }
 
 
@@ -1607,8 +1605,8 @@ struct cell_stuff *cs;
 	 * This is where we actually intersect the ray with the top of
 	 * the cell.
 	 */
-	isect_ray_triangles(isect, cs->grid_cell, cs->curr_pt, cs->next_pt,
-		isect->sp_is_valid);
+	isect_ray_triangles(isect, cs->grid_cell, cs->curr_pt, cs->next_pt);
+
 
 
 	if (isect->sp_is_valid) {
@@ -1632,14 +1630,10 @@ isect_ray_dsp(isect)
 struct isect_stuff *isect;
 {
 	point_t	bbin_pt;	/* DSP Bounding Box entry point */
-	int	bbin_surf;
 	double	bbin_dist;
 	point_t	bbout_pt;	/* DSP Bounding Box exit point */
 	int	bbout_cell[3];	/* grid cell of last point in bbox */
-	int	cells_bbox[4];	/* bbox (in x, y) of cells along ray */
-
 	point_t curr_pt;	/* entry pt into a cell */
-	int	curr_surf;	/* surface of cell bbox for curr_pt */
 	double	curr_dist;	/* dist along ray to curr_pt */
 	point_t	next_pt;	/* The out point of the current cell */
 
@@ -1654,7 +1648,6 @@ struct isect_stuff *isect;
 	double	tDY;		/* dist along ray to span 1 cell in Y dir */
 
 	double	out_dist;
-	double	span_dist;	
 
 	double	tX, tY;	/* dist along ray from hit pt. to next cell boundary */
 	struct cell_stuff cs;
@@ -1682,7 +1675,6 @@ struct isect_stuff *isect;
 	}
 
 
-	bbin_surf = isect->bbox.in_surf;
 
 	VMOVE(curr_cell, bbin_pt);	/* int/float conversion */
 	if (curr_cell[X] >= XSIZ(isect->dsp)) curr_cell[X]--;
@@ -1692,26 +1684,6 @@ struct isect_stuff *isect;
 	VMOVE(bbout_cell, bbout_pt);	/* int/float conversion */
 	if (bbout_cell[X] >= XSIZ(isect->dsp)) bbout_cell[X]--;
 	if (bbout_cell[Y] >= YSIZ(isect->dsp)) bbout_cell[Y]--;
-
-
-	/* compute min/max cell values in X and Y for extent of 
-	 * ray overlap with bounding box
-	 */
-	if (bbout_cell[X] < curr_cell[X]) {
-		cells_bbox[XMIN] = bbout_cell[X];
-		cells_bbox[XMAX] = curr_cell[X];
-	} else {
-		cells_bbox[XMIN] = curr_cell[X];
-		cells_bbox[XMAX] = bbout_cell[X];
-	}
-	if (bbout_cell[Y] < curr_cell[Y]) {
-		cells_bbox[YMIN] = bbout_cell[Y];
-		cells_bbox[YMAX] = curr_cell[Y];
-	} else {
-		cells_bbox[YMIN] = curr_cell[Y];
-		cells_bbox[YMAX] = bbout_cell[Y];
-	}
-
 
 	if (rt_g.debug & DEBUG_HF) {
 		vect_t t;
@@ -1806,7 +1778,6 @@ struct isect_stuff *isect;
 
 	VMOVE(curr_pt, bbin_pt);
 	curr_dist = bbin_dist;
-	curr_surf = BBSURF(bbin_surf);
 
 
 	/* precompute some addresses for parameters we're going to
@@ -1910,7 +1881,7 @@ struct seg		*seghead;
 	vect_t	dir;	/* temp storage */
 	vect_t	v;
 	struct isect_stuff isect;
-	static CONST point_t junk = { 0.0, 0.0, 0.0 };
+	static CONST int junk[2] = { 0, 0 };
 
 
 	if (setjmp(isect.env)) {
@@ -1980,9 +1951,10 @@ struct seg		*seghead;
 		 *		     / out point
 		 */
 
-		INHIT( (&isect), isect.minbox.in_dist,
-			BBSURF(isect.minbox.in_surf), junk, 
-			dsp_pl[isect.minbox.in_surf]);
+		inhit( &isect, isect.minbox.in_dist,
+			BBSURF(isect.minbox.in_surf),
+			junk, 
+			dsp_pl[isect.minbox.in_surf], __FILE__, __LINE__);
 
 		OUTHIT( (&isect), isect.minbox.out_dist,
 			BBSURF(isect.minbox.out_surf), junk,
@@ -2192,7 +2164,6 @@ register struct xray	*rp;
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
 #if 1
-	vect_t N;
  	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_norm(%g %g %g,   %g %g %g)",
 		V3ARGS(hitp->hit_point),
@@ -2500,9 +2471,8 @@ register struct uvcoord	*uvp;
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
 	point_t pt;
-	int x, y;
-	vect_t v_m, v_s, tmp;
-	double u, v, r;
+	vect_t tmp;
+	double r;
 	fastf_t min_r_U, min_r_V;
 	vect_t norm;
 	vect_t rev_dir;
