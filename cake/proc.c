@@ -111,7 +111,7 @@ reg	List	*args;
 		switch (type)
 		{
 
-	when Script:	if (shell_opt[1] != NULL)
+	case Script:	if (shell_opt[1] != NULL)
 				execl(shell_path[1], shell_cmd[1], shell_opt[1], script_filename, 0);
 			else
 				execl(shell_path[1], shell_cmd[1], script_filename, 0);
@@ -119,7 +119,7 @@ reg	List	*args;
 			perror("cake system error, shell script exec");
 			_exit(127);
 
-	when System:	if (shell_opt[0] != NULL)
+	case System:	if (shell_opt[0] != NULL)
 				execl(shell_path[0], shell_cmd[0], shell_opt[0], cmd, 0);
 			else
 				execl(shell_path[0], shell_cmd[0], cmd, 0);
@@ -127,12 +127,12 @@ reg	List	*args;
 			perror("cake system error, shell exec");
 			_exit(127);
 
-	when Exec:	execvp(argv[0], argv);
+	case Exec:	execvp(argv[0], argv);
 			sprintf(scratchbuf, "cake system error, %s exec", argv[0]);
 			perror(scratchbuf);
 			_exit(127);
 
-	otherwise:	fprintf(stderr, "cake internal error: type = %x in cake_proc\n", type);
+	default:	fprintf(stderr, "cake internal error: type = %x in cake_proc\n", type);
 			_exit(127);
 		}
 	}
