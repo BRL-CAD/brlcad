@@ -45,7 +45,7 @@ static char RCSid[] = "@(#)$Header$";
 
 extern struct db_i	*dbip;	/* database instance pointer */
 
-static joint_debug = 0;
+static int joint_debug = 0;
 #define DEBUG_J_MESH	0x00000001
 #define DEBUG_J_LOAD	0x00000002
 #define DEBUG_J_MOVE	0x00000004
@@ -58,6 +58,7 @@ static joint_debug = 0;
 "\020\10LEX\7PARSE\6SYSTEM\5EVAL\4SOLVE\3MOVE\2LOAD\1MESH"
 
 void joint_move();
+void joint_clear();
 
 static int f_jfhelp();
 int f_fhelp2();
@@ -832,7 +833,7 @@ struct rt_vls *str;
 	ap->arc_last = -1;
 	ap->type = ARC_PATH;
 	for (;;) {
-		if (get_token(&token, fip, str, 0, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 			parse_error(str,"parse_path: Unexpect EOF.");
 			free_arc(ap);
 			return 0;
@@ -848,7 +849,7 @@ struct rt_vls *str;
 			    sizeof(char *)*max, "arc table");
 		}
 		ap->arc[ap->arc_last] = token.t_id.value;
-		if (get_token(&token, fip, str, 0, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 			parse_error(str, "parse_path: Unexpect EOF while getting '/' or '-'");
 			free_arc(ap);
 			return 0;
@@ -872,7 +873,7 @@ struct rt_vls *str;
 	/*
 	 * Just got the '-' so this is the "destination" part.
 	 */
-	if (get_token(&token, fip, str, 0, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 		parse_error(str,"parse_path: Unexpected EOF while getting destination.");
 		free_arc(ap);
 		return 0;
@@ -911,7 +912,7 @@ struct rt_vls *str;
 	ap->arc_last = -1;
 	ap->type = ARC_LIST;
 	for (;;) {
-		if (get_token(&token, fip, str, 0, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 			parse_error(str,"parse_path: Unexpect EOF.");
 			free_arc(ap);
 			return 0;
@@ -927,7 +928,7 @@ struct rt_vls *str;
 			    sizeof(char *)*max, "arc table");
 		}
 		ap->arc[ap->arc_last] = token.t_id.value;
-		if (get_token(&token, fip, str, 0, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 			parse_error(str, "parse_path: Unexpect EOF while getting ',' or ';'");
 			free_arc(ap);
 			return 0;
@@ -972,7 +973,7 @@ struct rt_vls *str;
 	ap->arc_last = -1;
 
 	error = "parse_ARC: Unexpected EOF while getting arc.";
-	while (get_token(&token, fip, str, 0, syms) != EOF) {
+	while (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) != EOF) {
 		if (token.type != RT_LEX_IDENT) {
 			error = "parse_ARC: syntax error. Missing identifier.";
 			break;
@@ -983,7 +984,7 @@ struct rt_vls *str;
 			    sizeof(char *)*max, "arc table");
 		}
 		ap->arc[ap->arc_last] = token.t_id.value;
-		if (get_token(&token, fip, str, 0, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 			error = "parse_ARC: Unexpected EOF while getting '/' or ';'.";
 			break;
 		}
@@ -1439,7 +1440,7 @@ struct rt_vls *str;
 	jp->path.type = ARC_UNSET;
 	jp->name = NULL;
 
-	if (get_token(&token, fip, str, 0, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 		parse_error(str,"parse_joint: Unexpected EOF getting name.");
 		free_joint(jp);
 		return 0;
@@ -1811,14 +1812,14 @@ struct rt_vls *str;
 	hp->j_set.path.type = ARC_UNSET;
 	hp->j_set.exclude.type = ARC_UNSET;
 
-	if ( get_token(&token, fip, str, 0, syms) == EOF) {
+	if ( get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 		parse_error(str, "parse_hold: Unexpected EOF getting name.");
 		free_hold(hp);
 		return 0;
 	}
 	if (token.type == RT_LEX_IDENT) {
 		hp->name = token.t_id.value;
-		if ( get_token(&token, fip, str, 0, syms) == EOF) {
+		if ( get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
 			parse_error(str, "parse_hold: Unexpected EOF getting open group.");
 			free_hold(hp);
 			return 0;
@@ -1972,7 +1973,7 @@ char **argv;
 	}
 	argv += optind;
 	argc -= optind;
-	if (!no_unload) f_junload(0,0);
+	if (!no_unload) f_junload(0, (char **)0);
 
 	base2mm = dbip->dbi_base2local;
 	mm2base = dbip->dbi_local2base;
@@ -2384,6 +2385,7 @@ struct rt_list solve_head = {
 	&solve_head
 };
 
+void
 joint_clear()
 {
 	register struct stack_solve *ssp;
