@@ -370,10 +370,21 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_s
 		bu_vls_printf( &value, "%f", comb->temperature );
 		bu_avs_add_vls( avsp, "temp", &value );
 	}
+	/* GIFT compatability */
 	if( comb->region_id != 0 )  {
 		bu_vls_trunc( &value, 0 );
 		bu_vls_printf( &value, "%d", comb->region_id );
 		bu_avs_add_vls( avsp, "region_id", &value );
+	}
+	if( comb->aircode != 0 )  {
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%d", comb->aircode );
+		bu_avs_add_vls( avsp, "aircode", &value );
+	}
+	if( comb->GIFTmater != 0 )  {
+		bu_vls_trunc( &value, 0 );
+		bu_vls_printf( &value, "%d", comb->GIFTmater );
+		bu_avs_add_vls( avsp, "giftmater", &value );
 	}
 	if( comb->los != 0 )  {
 		bu_vls_trunc( &value, 0 );
@@ -381,10 +392,7 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_s
 		bu_avs_add_vls( avsp, "los", &value );
 	}
 
-	/* XXX THere are more still to be converted */
-	/* aircode, GIFTmater */
-
-bu_avs_print( avsp, "comb v5 attributes");
+if(getuid()==53)bu_avs_print( avsp, "comb v5 attributes");
 
 	bu_vls_free( &value );
 	return 0;	/* OK */
