@@ -267,7 +267,8 @@ register struct db_i	*dbip;
 		 *  the second choice is taken.
 		 */
 		bu_close_mapped_file( dbip->dbi_mf );
-		return;
+		bu_free_mapped_files( 0 );
+		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 	}
 
 #ifdef HAVE_UNIX_IO
