@@ -272,7 +272,7 @@ char	*argv[];
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
-	bn_vlist_cleanup();
+	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING

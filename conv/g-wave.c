@@ -261,7 +261,7 @@ char	*argv[];
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
-	bn_vlist_cleanup();
+	rt_vlist_cleanup();
 	db_close(dbip);
 
 #if MEMORY_LEAK_CHECKING
@@ -545,7 +545,6 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 genptr_t		client_data;
 {
-	extern FILE		*fp_fig;
 	union tree		*ret_tree;
 	struct bu_list		vhead;
 	struct nmgregion	*r;
