@@ -68,6 +68,9 @@ extern FBIO sgi_interface;
 #ifdef IF_RAT
 extern FBIO rat_interface;
 #endif
+#ifdef IF_UG
+extern FBIO ug_interface;
+#endif
 
 extern FBIO debug_interface, disk_interface;	/* Always included */
 
@@ -85,6 +88,9 @@ FBIO *_if_list[] = {
 #endif
 #ifdef IF_RAT
 	&rat_interface,
+#endif
+#ifdef IF_UG
+	&ug_interface,
 #endif
 	&debug_interface,
 	(FBIO *) 0
