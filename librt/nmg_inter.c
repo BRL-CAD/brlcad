@@ -1453,8 +1453,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
     		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
     	}
 
-	nmg_purge_unwanted_intersection_points(&vert_list1, fu);
-	nmg_purge_unwanted_intersection_points(&vert_list2, eu_fu);
+	nmg_purge_unwanted_intersection_points(&vert_list1, fu, &is->tol);
+	nmg_purge_unwanted_intersection_points(&vert_list2, eu_fu, &is->tol);
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_edge2p_face2p(eu=x%x, fu=x%x) vert_lists B:\n", eu, fu );
@@ -1595,8 +1595,8 @@ struct faceuse		*fu1, *fu2;
 	nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 #endif
 
-	nmg_purge_unwanted_intersection_points(&vert_list1, fu2);
-	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
+	nmg_purge_unwanted_intersection_points(&vert_list1, fu2, &is->tol);
+	nmg_purge_unwanted_intersection_points(&vert_list2, fu1, &is->tol);
 
     	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_two_generic_faces(fu1=x%x, fu2=x%x) vert_lists B:\n", fu1, fu2);
