@@ -306,7 +306,7 @@ int y;
 bool
 im_close()
 {
-/*	(void)putchar( 219 );		/* ENDPAGE */
+/*	(void)putchar( 219 );		ENDPAGE */
 
 	(void)fflush( stdout );
 	return true;
