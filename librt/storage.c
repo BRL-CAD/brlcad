@@ -262,7 +262,7 @@ char		*ptr;
 CONST char	*str;
 {
 	if(rt_g.debug&DEBUG_MEM) rt_log("%8x free %s\n", ptr, str);
-	if(ptr == (char *)0 || (int)ptr == -1)  {
+	if(ptr == (char *)0 || ptr == (char *)(-1L) )  {
 		rt_log("%8x free ERROR %s\n", ptr, str);
 		return;
 	}
@@ -524,13 +524,13 @@ int
 rt_byte_roundup(nbytes)
 register int nbytes;
 {
+#if !defined(HAVE_CALTECH_MALLOC)
+	return(nbytes);
+#else
 	static int pagesz;
 	register int n;
 	register int amt;
 
-#if !defined(HAVE_CALTECH_MALLOC)
-	return(nbytes);
-#else
 	if (pagesz == 0)
 		pagesz = getpagesize();
 
