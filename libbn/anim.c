@@ -43,6 +43,8 @@
  *	anim_quat2mat()
  *	anim_dir2mat()		create rotation matrix from direction
  *	anim_dirn2mat()		create rot matrix from dir and normal
+ *	
+ *	anim_steer_mat()	automatic steering
  *
  *	anim_add_trans()	add pre- and post- translation to matrix
  *	anim_rotatez()		rotate vector about z-axis
@@ -853,6 +855,74 @@ vect_t dx,dn;
         m[15]=1.0;
 
 }
+
+
+
+#define ASM_EMPTY 0
+#define ASM_FIRST 1
+#define ASM_FULL  2
+
+/*ANIM_STEER_MAT - given the next frame's position, remember the value of
+the previous frame's position and calculate a matrix which points the x-axis
+in the direction defined by those two positions. Return new matrix, and the
+remembered value of the current position, as arguments; return 1 as the 
+normal value, and 0 when there is not yet information to remember.
+*/
+int anim_steer_mat(mat,point,end)
+mat_t  mat;
+vect_t point;
+int end;
+{
+	void anim_dir2mat(), anim_add_trans(), anim_view_rev();
+	static vect_t p1, p2, p3;
+	vect_t dir, dir2;
+	static vect_t norm;
+	static int state = ASM_EMPTY;
+
+	VMOVE(p1,p2);
+	VMOVE(p2,p3);
+	VMOVE(p3,point);
+
+	switch(state) {
+	case ASM_EMPTY:
+		if (end) {
+			state = ASM_EMPTY;
+			return(0);
+		} else {
+			state = ASM_FIRST;
+			return(0); /* "don't print yet */
+		}
+		break;
+	case ASM_FIRST:
+		if (end) {
+			/* only one point specified, use default direction*/
+			VSET(dir,1.0,0.0,0.0);
+			VSET(norm,0.0,1.0,0.0);
+			state = ASM_EMPTY;
+		} else {
+			VSUBUNIT(dir,p3,p2);
+			VSET(norm, 0.0, 1.0, 0.0);
+			state = ASM_FULL;
+		}
+		break;
+	case ASM_FULL:
+		if (end) {
+			VSUBUNIT(dir,p2,p1);
+			state = ASM_EMPTY;
+		} else {
+			VSUBUNIT(dir,p3,p1);
+			state = ASM_FULL;
+		}
+	}
+
+	/* go for it */
+	anim_dirn2mat(mat,dir,norm); /* create basic rotation matrix */
+	VSET(norm, mat[1], mat[5], 0.0); /* save for next time */
+	VMOVE(point,p2); /* for main's purposes, the current point is p2 */
+	return(1); /* return signal go ahead and print */
+
+}
+
 
 /***************************************
  * Other animation routines
