@@ -57,6 +57,89 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 
+int	debug = 0;
+
+char	*cmd[] = {
+"",
+"C O M M A N D                  D E S C R I P T I O N",
+"",
+"deck [output file prefix]      Produce COM GEOM card deck.",
+"erase                          Erase current list of objects.",
+"insert [object[s]]             Add an object to current list.",
+"list [object[s]]               Display current list of selected objects.",
+"number [solid] [region]        Specify starting numbers for objects.",
+"quit                           Terminate run.",
+"remove [object[s]]             Remove an object from current list.",
+"sort                           Sort table of contents alphabetically.",
+"toc [object[s]]                Table of contents of solids database.",
+"! [shell command]              Execute a UNIX shell command.",
+"",
+"NOTE:",
+"First letter of command is sufficient, and all arguments are optional.",
+"Objects may be specified with string matching operators (*, [], -, ? or \\)",
+"as in the UNIX shell.",
+0 };
+
+char	*usage[] = {
+"",
+"v d e c k ($Revision$)",
+"Make COMGEOM decks of objects from a \"mged\" file suitable as",
+"input to the Cyber GIFT5 or gift(1V).",
+"",
+"Usage: vdeck {file}.vg",
+"",
+0 };
+
+/* Units conversion factor from milimeters to whatever is specified in
+	the ident record.  If nothing is specified, unity scaling is used.
+	See '3d.h' for defined units and ident record definition.  This
+	capability dates back to GED database version (v4).
+ */
+double	unit_conversion = 1.0;
+
+/* Sorted table of contents.						*/
+char	*toc_list[NDIR];
+
+/* List of regions and solids to be processed.				*/
+char	*curr_list[NDIR];
+int	curr_ct = 0;
+
+/* List of arguments from command line parser.				*/
+char	*arg_list[MAXARG];
+int	arg_ct = 0;
+
+/* Temporary list of names.						*/
+char	*tmp_list[NDIR];
+int	tmp_ct = 0;
+
+/* Structure used by setjmp() and longjmp() to save environment.	*/
+jmp_buf	env;
+
+/* File names and descriptors.						*/
+int	objfd;		char	*objfile;
+int	regfd;		char	reg_file[15];
+int	solfd;		char	st_file[73];
+int	ridfd;		char	id_file[73];
+int	rrfd, rd_rrfd;	char	rt_file[73];
+
+/* Counters.								*/
+int	nns;		/* Solids.					*/
+int	nnr;		/* Regions not members of other regions.	*/
+int	numrr;		/* Regions.					*/
+int	ndir;		/* Entries in directory.			*/
+
+/* Miscellaneous globals leftover from Keith's KARDS code.		*/
+int		regflag, orflag, delsol = 0, delreg = 0;
+int		isave;
+char		operate, buff[30], name[16];
+long		savsol;
+
+/* Structures.								*/
+mat_t		xform, notrans, identity;
+Record		record;
+struct findrr	findrr[MAXRR];
+char		dir_names[NDIR*10], *dir_last = dir_names;
+
 
 extern void		blank_fill(), menu();
 extern void		quit();
@@ -561,476 +644,6 @@ char	*str;
 		fprintf(stderr,"Unable to treewalk '%s'\n", str );
 	}
 }
-
-#if 0
-/*	c g o b j ( )
-	Build deck for object pointed to by 'dirp'.
- *	Called from deck(), with pathpos=0 and old_xlate=identity.
- */
-cgobj( dirp, pathpos, old_xlate )
-register struct directory	*dirp;
-int			pathpos;
-matp_t			old_xlate;
-	{
-	register struct member	*mp;
-	register char		*bp;
-	Record			rec;
-	struct directory	*nextdirp, *tdirp;
-	static struct directory	*path[MAXPATH];
-	mat_t			new_xlate;
-	long			savepos, RgOffset;
-	int			nparts;
-	int			i, j;
-	int			length;
-	int			dchar = 0;
-	int			nnt;
-	static char		buf[MAXPATH*NAMESIZE];
-	char			ars_name[NAMESIZE];
-
-	/* Limit tree hierarchy to MAXPATH levels.			*/
-	if( pathpos >= MAXPATH )
-		{
-		(void) fprintf( stderr, "Nesting exceeds %d levels\n", MAXPATH );
-		for( i = 0; i < MAXPATH; i++ )
-			(void) fprintf( stderr, "/%s", path[i]->d_namep );
-		(void) fprintf( stderr, "\n" );
-		return;
-		}
-	savepos = lseek( objfd, 0L, 1 );
-	(void) lseek( objfd, dirp->d_addr, 0 );
-	eread( objfd, (char *) &rec, sizeof rec );
-
-	if( rec.u_id == ID_COMB )
-		{ /* We have a group.					*/
-		if( regflag > 0 )
-			{
-			/* Record is part of a region.			*/
-			if( rec.c.c_flags != 'R' )
-				{
-				(void) fprintf( stderr,
-	"Illegal combination, group '%s' is a member of a region (%s)",
-						rec.c.c_name,
-						buff
-						);
-				return;
-				}
-			if( operate == UNION )
-				{
-				(void) fprintf( stderr,
-					"Region: %s is member of ",
-					rec.c.c_name );
-				(void) fprintf( stderr,
-					"region %s with OR operation.\n",
-					buff );
-				return;
-				}
-
-			/* Check for end of line in region table.	*/
-			if(	(isave % 9 ==  1 && isave >  1)
-			    ||	(isave % 9 == -1 && isave < -1)
-				)
-				{
-				endRegion( buff );
-				putSpaces( regBufPtr, 6 );
-				}
-			(void) sprintf( regBufPtr, "rg%c", operate );
-			regBufPtr += 3;
-			RgOffset = (long)(regBufPtr - regBuffer);
-
-			/* Check if this region is in desc yet		*/
-			(void) lseek( rd_rrfd, 0L, 0 );
-			for( j = 1; j <= nnr; j++ )
-				{
-				eread( rd_rrfd, name, (unsigned) NAMESIZE );
-				if( strcmp( name, rec.c.c_name ) == 0 )
-					{ /* Region is #j.		*/
-					(void) sprintf( regBufPtr, "%4d", j+delreg );
-					regBufPtr += 4;
-					break;
-					}
-				}
-			if( j > nnr )
-				{   /* region not in desc yet */
-				numrr++;
-				if( numrr > MAXRR )
-					{
-					(void) fprintf( stderr,
-						"More than %d regions.\n",
-						MAXRR
-						);
-					exit( 10 );
-					}
-
-				/* Add to list of regions to look up.	*/
-				findrr[numrr].rr_pos = lseek(	regfd,
-								0L,
-								1
-								) + RgOffset;
-				for( i = 0; i < NAMESIZE; i++ )
-					findrr[numrr].rr_name[i] =
-						   rec.c.c_name[i];
-				putSpaces( regBufPtr, 4 );
-				}
-			/* Check for end of this region.		*/
-			if( isave < 0 )
-				{	int	n;
-				isave = -isave;
-				regflag = 0;
-				n = 69 - (regBufPtr - regBuffer);
-				putSpaces( regBufPtr, n );
-				endRegion( buff );
-				}
-			(void) lseek( objfd, savepos, 0);
-			return;
-			}
-
-		regflag = 0;
-		nparts = rec.c.c_length;
-		if( rec.c.c_flags == 'R')
-			{ /* Record is region but not member of a region.	*/
-			regflag = 1;
-			nnr++;
-			/* Dummy region.				*/
-			if( nparts == 0 )
-				regflag = 0;
-			/* Save the region name.			*/
-			(void) strncpy( buff, rec.c.c_name, NAMESIZE );
-			/* Start new region.				*/
-			(void) sprintf( regBufPtr, "%5d ", nnr+delreg );
-			regBufPtr += 6;
-			/* Check for dummy region.			*/
-			if( nparts == 0 )
-				{	int	n;
-				n = 69 - (regBufPtr - regBuffer);
-				putSpaces( regBufPtr, n );
-				endRegion( "" );
-				regflag = 0;
-				}
-
-			/* Add region to list of regions in desc.	*/
-			(void) lseek( rrfd, 0L, 2 );
-			ewrite( rrfd, rec.c.c_name, NAMESIZE );
-			/* Check for any OR.				*/
-			orflag = 0;
-			if( nparts > 1 )
-				{ /* First OR doesn't count, throw away
-					first member.		 	*/
-				eread( objfd, (char *) &rec, sizeof rec );
-				for( i = 2; i <= nparts; i++ )
-					{
-					eread( objfd, (char *) &rec, sizeof rec );
-					if( rec.M.m_relation == UNION )
-						{
-						orflag = 1;
-						break;
-						}
-					}
-				(void) lseek( objfd, dirp->d_addr, 0 );
-				eread( objfd, (char *) &rec, sizeof rec );
-				}
-			/* Write region ident table.			*/
-			itoa( nnr+delreg, buf, 5 );
-			itoa( rec.c.c_regionid,	&buf[5], 5 );
-			itoa( rec.c.c_aircode, &buf[10], 5 );
-/* + */			itoa( rec.c.c_material, &buf[15], 5 );
-/* + */			itoa( rec.c.c_los, &buf[20], 5 );
-			ewrite( ridfd, buf, 25 );
-			blank_fill( ridfd, 5 );
-			bp = buf;
-			length = strlen( rec.c.c_name );
-			for( j = 0; j < pathpos; j++ )
-				{
-				(void) strncpy(	bp,
-						path[j]->d_namep,
-						strlen( path[j]->d_namep )
-						);
-				bp += strlen( path[j]->d_namep );
-				*bp++ = '/';
-				*bp = '\0';
-				}
-			length += bp - buf;
-			if( length > 50 )
-				{
-				bp = buf + (length - 50);
-				*bp = '*';
-				ewrite(	ridfd,
-					bp,
-					(unsigned)(50 - strlen( rec.c.c_name ))
-					);
-				}
-			else
-				ewrite( ridfd, buf, (unsigned)(bp - buf) );
-			ewrite(	ridfd,
-				rec.c.c_name,
-				(unsigned) strlen( rec.c.c_name )
-				);
-			ewrite( ridfd, LF, 1 );
-			(void) printf( "%4d:", nnr+delreg );
-			for( j = 0; j < pathpos; j++ )
-				(void) printf( "/%s", path[j]->d_namep );
-			(void) printf( "/%s\n", rec.c.c_name );
-			}
-		isave = 0;
-		for( i = 1; i <= nparts; i++ )
-			{
-			if( ++isave == nparts )
-				isave = -isave;
-			eread( objfd, (char *) &rec, sizeof rec );
-			mp = &rec.M;
- 
-			/* Save this operation.				*/
-			operate = mp->m_relation;
- 			path[pathpos] = dirp;
-			if(	(nextdirp =
-				db_lookup( mp->m_instname, NOISY )) == DIR_NULL
-				)
-				continue;
-			mat_mul( new_xlate, old_xlate, mp->m_mat );
-
-			/* Recursive call.				*/
-			cgobj( nextdirp, pathpos+1, new_xlate );
-			}
-		(void) lseek( objfd, savepos, 0 );
-		return;
-		}
-
-	/* N O T  a  C O M B I N A T I O N  record.			*/
-	if( rec.u_id != ID_SOLID && rec.u_id != ID_ARS_A )
-		{
-		(void) fprintf( stderr,
-				"Bad input: should have a 'S' or 'A' record, " );
-		(void) fprintf( stderr,
-				"but have '%c'.\n", rec.u_id );
-		exit( 10 );
-		}
-
-	/* Now have proceeded down branch to a solid
-
-		if regflag = 1  add this solid to present region
-		if regflag = 0  solid not defined as part of a region
-				make new region if scale != 0 
-	
-		if orflag = 1   this region has or's
-		if orflag = 0   no
-	*/
-	if( old_xlate[15] < EPSILON )
-		{ /* Do not add solid.		*/
-		(void) lseek( objfd, savepos, 0 );
-		return;
-		}
-
-	/* Fill ident struct.						*/
-	mat_copy( d_ident.i_mat, old_xlate );
-	(void) strncpy( d_ident.i_name, rec.s.s_name, NAMESIZE );
-	(void) strncpy( ars_name, rec.s.s_name, NAMESIZE );
-	
-	/* Calculate first look discriminator for this solid.		*/
-	dchar = 0;
-	for( i = 0; i < NAMESIZE; i++ )
-		{
-		if( rec.s.s_name[i] == 0 )
-			break;
-		dchar += (rec.s.s_name[i] << (i&7));
-		}
-
-	/* Quick check if solid already in solid table.			*/
-	nnt = 0;
-	for( i = 0; i < nns; i++ )
-		{
-		if( dchar == discr[i] )
-			{ /* Quick look match - check further.		*/
-			(void) lseek( rd_idfd, (long)(i * sizeof d_ident), 0 );
-			eread( rd_idfd, (char *) &idbuf, sizeof d_ident );
-			d_ident.i_index = i + 1;
-			if( check( (char *) &d_ident, (char *) &idbuf ) == 1 )
-				{
-				/* Really is an old solid.		*/
-				nnt = i + 1;
-				goto notnew;
-				}
-			/* False alarm - keep looking for quick look
-				matches.
-			 */
-			}
-		}
-
-	/* New solid.							*/
-	discr[nns] = dchar;
-	nns++;
-	d_ident.i_index = nns;
-
-	if( nns > MAXSOL )
-		{
-		(void) fprintf( stderr,
-				"\nNumber of solids (%d) greater than max (%d).\n",
-				nns, MAXSOL
-				);
-		exit( 10 );
-		}
-
-	/* Write ident struct at end of idfd file.			*/
-	(void) lseek( idfd, 0L, 2 );
-	ewrite( idfd, (char *) &d_ident, sizeof d_ident );
-	nnt = nns;
-
-	/* Process this solid.						*/
-	mat_copy( xform, old_xlate );
-	mat_copy( notrans, xform );
-
-	/* Notrans = homogeneous matrix with a zero translation vector.	*/
-	notrans[3] = notrans[7] = notrans[11] = 0.0;
-
-	/* Write solid #.						*/
-	itoa( nnt+delsol, buf, 5 );
-	ewrite( solfd, buf, 5 );
-
-	/* Process appropriate solid type.				*/
-	switch( rec.s.s_type )
-		{
-	case TOR :
-		addtor( &rec );
-		break;
-	case GENARB8 :
-		addarb( &rec );
-		break;
-	case GENELL :
-		addell( &rec );
-		break;
-	case GENTGC :
-		addtgc( &rec );
-		break;
-	case ARS :
-		addars( &rec );
-		break;
-	default:
-		(void) fprintf( stderr,
-				"Solid type (%d) unknown.\n", rec.s.s_type
-				);
-		exit( 10 );
-		}
-
-notnew:	/* Sent here if solid already in solid table.			*/
-	/* Finished with solid.						*/
-	/* Put solid in present region if regflag == 1.			*/
-	if( regflag == 1 )
-		{
-		/* isave = number of this solid in this region, if
-			negative then is the last solid in this region.
-		 */
-		if(	(isave % 9 ==  1 && isave >  1)
-		    ||	(isave % 9 == -1 && isave < -1)
-			)
-			{	int	n;
-			/* New line.					*/
-		    	n = 69 - (regBufPtr - regBuffer);
-		    	putSpaces( regBufPtr, n );
-		    	endRegion( buff );
-			putSpaces( regBufPtr, 6 );
-			}
-		nnt += delsol;
-		if( operate == '-' )	nnt = -nnt;
-		if( orflag == 1 )
-			{
-			if( operate == UNION || isave == 1 )
-				{
-				(void) sprintf( regBufPtr, "or" );
-				regBufPtr += 2;
-				}
-			else
-				putSpaces( regBufPtr, 2 );
-			}
-		else
-			putSpaces( regBufPtr, 2 );
-		(void) sprintf( regBufPtr, "%5d", nnt );
-		regBufPtr += 5;
-		if( nnt < 0 )	nnt = -nnt;
-		nnt -= delsol;
-		if( isave < 0 )
-			{	int	n; /* end this region */
-			isave = -isave;
-			regflag = 0;
-			n = 69 - (regBufPtr - regBuffer);
-			putSpaces( regBufPtr, n );
-			endRegion( buff );
-			}
-		}
-	else
-	if( old_xlate[15] > EPSILON )
-		{
-		/* Solid not part of a region, make solid into region
-			if scale > 0
-		 */
-		++nnr;
-		(void) sprintf( regBufPtr, "%5d%8d", nnr+delreg, nnt+delsol );
-		regBufPtr += 13;
-		putSpaces( regBufPtr, 56 );
-		(void) sprintf( regBufPtr, rec.s.s_name );
-		regBufPtr += strlen( rec.s.s_name );
-		itoa( nnr+delreg, buf, 5 );
-		ewrite( ridfd, buf, 5 );
-
-		/* Values for item, space, material and percentage are
-			meaningless at this point.
-		 */
-		ewrite( ridfd, "    0", 5 );
-		ewrite( ridfd, "    0", 5 );
-		ewrite( ridfd, "    0", 5 );
-		ewrite( ridfd, "    0", 5 );
-		blank_fill( ridfd, 5 );
-		(void) printf( "%4d:", nnr+delreg );
-		bp = buf;
-		length = strlen( rec.s.s_name );
-		for( i = 0; i < pathpos; i++ )
-			{
-			(void) strncpy(	bp,
-					path[i]->d_namep,
-					strlen( path[i]->d_namep )
-					);
-			bp += strlen( path[i]->d_namep );
-			*bp++ = '/';
-			}
-		length += bp - buf;
-		if( length > 50 )
-			{
-			bp = buf + (length - 50);
-			*bp = '*';
-			ewrite(	ridfd,
-				bp,
-				(unsigned) (50 - strlen( rec.s.s_name ))
-				);
-			}
-		else
-			ewrite( ridfd, buf, (unsigned)(bp - buf) );
-
-		if( rec.u_id == ID_ARS_B )
-			{ /* Ars extension record.	*/
-			(void) printf( "/%s\n", ars_name );
-			ewrite(	ridfd,
-				ars_name,
-				(unsigned) strlen( ars_name )
-				);
-			}
-		else
-			{
-			(void) printf( "/%s\n", rec.s.s_name );
-			ewrite(	ridfd,
-				rec.s.s_name,
-				(unsigned) strlen( rec.s.s_name )
-				);
-			}
-		ewrite( ridfd, LF, 1 );
-		{	int	n;
-		n = 69 - (regBufPtr - regBuffer);
-		putSpaces( regBufPtr, n );
-		endRegion( "" );
-		}
-		}
-	if( isave < 0 )
-		regflag = 0;
-	(void) lseek( objfd, savepos, 0 );
-	return;
-	}
-#endif
 
 
 void
