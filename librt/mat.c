@@ -1,4 +1,3 @@
-/*	SCCSID	%W%	%E%	*/
 /*
  *			M A T . C
  *
@@ -8,10 +7,11 @@
  *	mat_idn( &m )			Fill matrix m with identity matrix
  *	mat_copy( &o, &i )		Copy matrix i to matrix o
  *	mat_mul( &o, &i1, &i2 )		Multiply i1 by i2 and store in o
- *	matXvec( &ov, &m, &iv )		Multiply m by vector iv and store in ov
- *	mat_inv( &om, &im )		Invert matrix im and store result in om
+ *	matXvec( &ov, &m, &iv )		Multiply m by vector iv, store in ov
+ *	mat_inv( &om, &im )		Invert matrix im, store result in om
  *	mat_print( &title, &m )		Print matrix (with title) on stdout.
  *	mat_trn( &o, &i )		Transpose matrix i into matrix o
+ *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -24,6 +24,12 @@
  *
  *     preVector (vect_t)	 Matrix (mat_t)    postVector (vect_t)
  *
+ *  Authors -
+ *	Robert S. Miles
+ *	Michael John Muuss
+ *	U. S. Army Ballistic Research Laboratory
+ *
+ * $Revision$
  */
 
 #include	<math.h>
@@ -332,4 +338,51 @@ register matp_t im;
 	*om++ = im[7];
 	*om++ = im[11];
 	*om++ = im[15];
+}
+
+/*
+ *			M A T _ A E
+ *
+ *  Compute a 4x4 rotation matrix given Azimuth and Elevation.
+ *  
+ *  Azimuth is +X, Elevation is +Z, both in degrees.
+ *
+ *  Formula due to Doug Gwyn, BRL.
+ */
+void
+mat_ae( m, azimuth, elev )
+register matp_t m;
+float azimuth;
+float elev;
+{
+	static float sin_az, sin_el;
+	static float cos_az, cos_el;
+	extern double sin(), cos();
+	static double degtorad = 0.0174532925;
+
+	azimuth *= degtorad;
+	elev *= degtorad;
+
+	sin_az = sin(azimuth);
+	cos_az = cos(azimuth);
+	sin_el = sin(elev);
+	cos_el = cos(elev);
+
+	m[0] = cos_el * cos_az;
+	m[1] = -sin_az;
+	m[2] = -sin_el * cos_az;
+	m[3] = 0;
+
+	m[4] = cos_el * sin_az;
+	m[5] = cos_az;
+	m[6] = -sin_el * sin_az;
+	m[7] = 0;
+
+	m[8] = sin_el;
+	m[9] = 0;
+	m[10] = cos_el;
+	m[11] = 0;
+
+	m[12] = m[13] = m[14] = 0;
+	m[15] = 1.0;
 }
