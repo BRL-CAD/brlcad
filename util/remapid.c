@@ -1,10 +1,10 @@
 /*
  *			R E M A P I D . C
  *
- *	Perform batch modifications of region_id's for BRL-CAD geometry
+ *	Perform batch modifications of region IDs for BRL-CAD geometry
  *
  *	The program reads a .g file and a spec file indicating which
- *	region_id's to change to which new values.  It makes the
+ *	region IDs to change to which new values.  It makes the
  *	specified changes in the .g file.
  *
  *  Author -
@@ -41,18 +41,79 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 rb_tree		*assignment;	/* Relabeling assignment */
 struct db_i	*dbip;		/* Instance of BRL-CAD database */
 
-
 /************************************************************************
  *									*
- *			The data structures				*
+ *			The Algorithm					*
+ *									*
+ *									*
+ *  The remapping assignment is read from a specification file		*
+ *  containing commands, the grammar for which looks something like:	*
+ *									*
+ *	 command --> id_list ':' id					*
+ *	 id_list --> id_block | id_block ',' id_list			*
+ *	id_block --> id | id '-' id					*
+ *	   id    --> [0-9]+						*
+ *									*
+ *  The semantics of a command is:  For every region in the database	*
+ *  whose region ID appears in the id_list before the ':', change its	*
+ *  region ID to the value appearing after the ':'.			*
+ *									*
+ *  Consider all the (current) region IDs in the id_list of any		*
+ *  command.  For each one, the corresponding curr_id structure is	*
+ *  looked up in the red-black tree (and created, if necessary).	*
+ *  As they're found, the curr_id's are stored in a list, so that	*
+ *  when their new ID is found at the end of the command, it can be	*
+ *  recorded in each of them.  All this processing of the specification	*
+ *  file is performed by the function read_spec().			*
+ *									*
+ *  After the specification file has been processed, we read through	*
+ *  the entire database, find every region and its (current) region ID,	*
+ *  and add the region to the list of regions currently sharing that	*
+ *  ID.  This is done by the function db_init().			*
+ *									*
+ *  At that point, it's a simple matter for main() to perform an	*
+ *  inorder traversal of the red-black tree, writing to the database	*
+ *  all the new region IDs.						*
+ *									*
+ *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *   *  *
+ *									*
+ *			The Data Structures				*
+ *									*
+ *  assignment points to the red-black tree of curr_id structures,	*
+ *  each of which records a region ID and all the regions in the	*
+ *  database that currently sport that ID, in a remap_reg structure	*
+ *  per region).							*
+ *									*
+ *									*
+ *				        +-+				*
+ *	       rb_tree		        | |				*
+ *				        +-+				*
+ *				       /   \				*
+ *				   +-+/     \+-+			*
+ *				   | |       | |			*
+ *				   +-+       +-+			*
+ *				   / \       / \			*
+ *				 +-+ +-+   +-+ +-+			*
+ *	  curr_id structures	 | | | |   | | | |			*
+ *	  			 +-+ +-+   +-+ +-+			*
+ *				  |					*
+ *				  | ...					*
+ *				  |					*
+ *	 			+---+   +---+   +---+   +---+		*
+ *	 remap_reg structures	|   |-->|   |-->|   |-->|   |--+	*
+ *				+---+   +---+   +---+   +---+  |	*
+ *				  ^                            |	*
+ *				  |                            |	*
+ *				  +----------------------------+	*
  *									*
  ************************************************************************/
+
 struct curr_id
 {
-    struct bu_list	l;
-    int			ci_id;
-    struct bu_list	ci_regions;
-    int			ci_newid;
+    struct bu_list	l;		
+    int			ci_id;		/* The region ID */
+    struct bu_list	ci_regions;	/* Regions now holding this ID */
+    int			ci_newid;	/* Replacement ID for the regions */
 };
 #define	ci_magic	l.magic
 #define	CURR_ID_NULL	((struct curr_id *) 0)
@@ -165,71 +226,11 @@ struct curr_id	*cip;
 }
 
 /*
- *		M K _ R E M A P _ R E G ( )
- *
- */
-struct remap_reg *mk_remap_reg (region_name)
-
-char	*region_name;
-
-{
-    struct remap_reg	*rp;
-
-    rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
-
-    rp -> rr_magic = REMAP_REG_MAGIC;
-
-    rp -> rr_name = (char *) bu_malloc(strlen(region_name) + 1, "region name");
-    strcpy(rp -> rr_name, region_name);
-
-    rp -> rr_dp = DIR_NULL;
-    rp -> rr_ip = (struct rt_db_internal *) 0;
-
-    return (rp);
-}
-
-/*
- *		F R E E _ R E M A P _ R E G ( )
- *
- */
-void free_remap_reg (rp)
-
-struct remap_reg	*rp;
-
-{
-    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-    bu_free((genptr_t) rp -> rr_name, "region name");
-    bu_free((genptr_t) rp, "remap_reg");
-}
-
-/*
- *		C O M P A R E _ C U R R _ I D S ( )
- *
- *	    The comparison callback for libredblack(3)
- */
-int compare_curr_ids (v1, v2)
-
-void	*v1;
-void	*v2;
-
-{
-    struct curr_id	*id1 = (struct curr_id *) v1;
-    struct curr_id	*id2 = (struct curr_id *) v2;
-
-    BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
-    BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
-
-    return (id1 -> ci_id  -  id2 -> ci_id);
-}
-
-/************************************************************************
- *									*
- *	  	Routines for manipulating the assignment		*
- *									*
- ************************************************************************/
-
-/*
  *		L O O K U P _ C U R R _ I D ( )
+ *
+ *	Scrounge for a particular region in the red-black tree.
+ *	If it's not found there, add it to the tree.  In either
+ *	event, return a pointer to it.
  */
 struct curr_id *lookup_curr_id(region_id)
 
@@ -268,9 +269,71 @@ int	region_id;
     return (cip);
 }
 
+/*
+ *		M K _ R E M A P _ R E G ( )
+ *
+ */
+struct remap_reg *mk_remap_reg (region_name)
+
+char	*region_name;
+
+{
+    struct remap_reg	*rp;
+
+    rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
+
+    rp -> rr_magic = REMAP_REG_MAGIC;
+
+    rp -> rr_name = (char *) bu_malloc(strlen(region_name) + 1, "region name");
+    strcpy(rp -> rr_name, region_name);
+
+    rp -> rr_dp = DIR_NULL;
+    rp -> rr_ip = (struct rt_db_internal *) 0;
+
+    return (rp);
+}
+
+/*
+ *		F R E E _ R E M A P _ R E G ( )
+ *
+ */
+void free_remap_reg (rp)
+
+struct remap_reg	*rp;
+
+{
+    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
+    bu_free((genptr_t) rp -> rr_name, "region name");
+    bu_free((genptr_t) rp, "remap_reg");
+}
+
 /************************************************************************
  *									*
- *	  More or less vanilla-flavored stuff				*
+ *	  	The comparison callback for libredblack(3)		*
+ *									*
+ ************************************************************************/
+
+/*
+ *		C O M P A R E _ C U R R _ I D S ( )
+ */
+int compare_curr_ids (v1, v2)
+
+void	*v1;
+void	*v2;
+
+{
+    struct curr_id	*id1 = (struct curr_id *) v1;
+    struct curr_id	*id2 = (struct curr_id *) v2;
+
+    BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
+    BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
+
+    return (id1 -> ci_id  -  id2 -> ci_id);
+}
+
+/************************************************************************
+ *									*
+ *	  Routines for reading the specification file			*
  *									*
  ************************************************************************/
 
@@ -315,9 +378,9 @@ int	*n;		/* The result */
 }
 
 /*
- *			  R E A D _ R A N G E ( )
+ *			  R E A D _ B L O C K ( )
  */
-int read_range (sfp, ch, n1, n2)
+int read_block (sfp, ch, n1, n2)
 
 BU_FILE	*sfp;
 int	*ch;
@@ -343,7 +406,7 @@ int	*n1, *n2;
 	    else
 		return (2);
 	default:
-	    bu_file_err(sfp, "remapid:read_range()",
+	    bu_file_err(sfp, "remapid:read_block()",
 		"Syntax error",
 		(sfp -> file_bp) - bu_vls_addr(&(sfp -> file_buf)) - 1);
 	    return (-1);
@@ -386,7 +449,7 @@ char	*sf_name;
 		;
 	    if (ch == EOF)
 		return (1);
-	    switch (read_range(sfp, &ch, &num1, &num2))
+	    switch (read_block(sfp, &ch, &num1, &num2))
 	    {
 		case 1:
 		    cip = lookup_curr_id(num1);
@@ -443,6 +506,12 @@ char	*sf_name;
 	}
     }
 }
+
+/************************************************************************
+ *									*
+ *	  Routines for procesing the geometry database			*
+ *									*
+ ************************************************************************/
 
 void record_region (region_name, region_id, dp, ip)
 
@@ -539,6 +608,11 @@ int	depth;
     }
 }
 
+/************************************************************************
+ *									*
+ *	  	And finally... the main program				*
+ *									*
+ ************************************************************************/
 
 /*
  *			   P R I N T _ U S A G E ( )
@@ -612,14 +686,6 @@ char	*argv[];
      *	Read in the specification for the reassignment
      */
     read_spec (sfp, sf_name);
-
-#if 0
-    record_region("USA", 1776);
-    record_region("Will", 7);
-    record_region("Griff", 8);
-    record_region("Jake", 11);
-    record_region("Chad", 11);
-#endif
 
     db_init(db_name);
 
