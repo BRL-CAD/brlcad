@@ -2,9 +2,10 @@
  *			M E N U . C
  *
  * Functions -
- *	menu_init		Clear global menu data
- *	menu_display		Add a list of items to the display list
- *	menu_select		Called by usepen() for menu pointing
+ *	mmenu_init		Clear global menu data
+ *	mmenu_display		Add a list of items to the display list
+ *	mmenu_select		Called by usepen() for menu pointing
+ *	mmenu_pntr		Reset the pointer to a menu item
  *
  * Authors -
  *	Bob Suckling
@@ -40,12 +41,12 @@ void set_menucurrent();
 int set_arrowloc();
 
 /*
- *			M E N U _ I N I T
+ *			M M E N U _ I N I T
  *
  * Clear global data
  */
 void
-menu_init()
+mmenu_init()
 {
 	menuflag = 0;
 	menu_array[MENU_L1] = MENU_NULL;
@@ -54,14 +55,14 @@ menu_init()
 }
 
 /*
- *			M E N U _ D I S P L A Y
+ *			M M E N U _ D I S P L A Y
  *
  *  Draw one or more menus onto the display.
  *  If "menuflag" is non-zero, then the last selected
  *  menu item will be indicated with an arrow.
  */
 void
-menu_display( y_top )
+mmenu_display( y_top )
 int y_top;
 { 
 	static int menu, item;
@@ -92,7 +93,7 @@ int y_top;
 }
 
 /*
- *			M E N U _ S E L E C T
+ *			M M E N U _ S E L E C T
  *
  *  Called with Y coordinate of pen in menu area.
  *
@@ -101,7 +102,7 @@ int y_top;
  *		-1 if pen is ABOVE menu	(error)
  */
 int
-menu_select( pen_y )
+mmenu_select( pen_y )
 register int pen_y;
 { 
 	static int menu, item;
@@ -141,14 +142,14 @@ register int pen_y;
 }
 
 /*
- *			M E N U _ A R R O W
+ *			M M E N U _ P N T R
  *
  *  Routine to allow user to reset the arrow to any menu & item desired.
  *  Example:  menu_pntr( MENU_L1, 3 ).
  *  The arrow can always be eliminated by setting menuflag=0, dmaflag=1.
  */
 void
-menu_pntr( menu, item )
+mmenu_pntr( menu, item )
 {
 	cur_menu = menu;
 	cur_item = item;
