@@ -479,7 +479,8 @@ LZW()
 			}
 		else	{
 			if ( c > next_code )
-				Fatal( "LZW code impossibly large" );
+				Fatal("LZW code impossibly large  (%x > %x, diff: %d)",
+					c, next_code, c-next_code);
 
 			if ( c == next_code )
 				{	/* KwKwK special case */
