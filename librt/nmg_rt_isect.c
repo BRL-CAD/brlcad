@@ -264,6 +264,7 @@ struct hitmiss *newhit;
 	struct hitmiss *a_hit;
 
 	BU_LIST_MAGIC_SET(&newhit->l, NMG_RT_HIT_MAGIC);
+	newhit->hit.hit_magic = RT_HIT_MAGIC;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		bu_log("hit_ins()\n  inserting:");
