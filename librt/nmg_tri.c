@@ -994,7 +994,7 @@ gotit:
 	tp->bot = pt;
 	/* create new left and right trapezoids */
 
-	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 2, "New hole start trapezoids");
+	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
 	new_trap->top = pt;
 	new_trap->bot = (struct pt2d *)NULL;
 	new_trap->e_left = tp->e_left;
@@ -1002,7 +1002,7 @@ gotit:
 	BU_LIST_MAGIC_SET(&new_trap->l, NMG_TRAP_MAGIC);
 	BU_LIST_APPEND(&tp->l, &new_trap->l);
 
-	new_trap++;
+	new_trap = (struct trap *)rt_calloc(sizeof(struct trap), 1, "New hole start trapezoids");
 	new_trap->top = pt;
 	new_trap->bot = (struct pt2d *)NULL;
 	new_trap->e_left = pt->vu_p->up.eu_p;
