@@ -492,6 +492,9 @@ char	      **argv;
 	struct rt_wdb  *wdb = (struct rt_wdb *)clientData;
 	struct bu_vls	matches;
 
+	--argc;
+	++argv;
+
 	RT_CK_WDB_TCL(wdb);
 	
 	/* Verify that this wdb supports lookup operations
@@ -541,6 +544,9 @@ char	      **argv;
 	struct rt_wdb	       *wdb = (struct rt_wdb *)clientData;
 	Tcl_DString		ds;
 	struct bu_vls		str;
+
+	--argc;
+	++argv;
 
 	if( argc < 2 || argc > 3) {
 		Tcl_AppendResult( interp,
@@ -650,7 +656,9 @@ char	      **argv;
 	struct rt_wdb			  *wdb = (struct rt_wdb *)clientData;
 	char				        type[16];
 
-    
+	--argc;
+	++argv;
+
 	if( argc < 2 ) {
 		Tcl_AppendResult( interp,
  	               "wrong # args: should be db put objName objType attrs",
@@ -760,6 +768,9 @@ char	      **argv;
 	char				 objecttype;
 	struct rt_wdb		        *wdb = (struct rt_wdb *)clientData;
 
+	--argc;
+	++argv;
+
 	if( argc < 4 ) {
 		Tcl_AppendResult( interp,
 		"wrong # args: should be \"db adjust objName attr value ?attr? ?value?...\"",
@@ -837,6 +848,9 @@ char **argv;
 	struct bu_vls str;
 	register char *cp;
 
+	--argc;
+	++argv;
+
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "wrong # args: should be \"db form objType\"",
 				 (char *)NULL);
@@ -897,8 +911,8 @@ char **argv;
 	wdbp = NULL;
 
 	/* De-register Tcl command */
-bu_log("De-registering Tcl command '%s'\n", argv[-1] );
-	Tcl_DeleteCommand( interp, argv[-1] );
+bu_log("De-registering Tcl command '%s'\n", argv[0] );
+	Tcl_DeleteCommand( interp, argv[0] );
 	return TCL_OK;
 }
 
@@ -985,7 +999,7 @@ char **argv;
 			/* hack: dispose of error msg if OK */
 			Tcl_ResetResult( interp );
 			return (*dbcmd->cmdfunc)( clientData, interp,
-						  argc-1, argv+1 );
+						  argc, argv );
 		}
 		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
