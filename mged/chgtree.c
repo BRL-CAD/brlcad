@@ -688,7 +688,7 @@ char	**argv;
 		  TCL_ERROR_RECOVERY_SUGGESTION;
 		  goto fail;
 		}
-		bu_free( (char *)rec, "union record []");
+		bu_free( (genptr_t)rec, "union record []");
 		db_free_1anim( anp );
 		return TCL_OK;
 	}
@@ -698,7 +698,7 @@ char	**argv;
 			 anp->an_path.fp_names[0]->d_namep, "', error\n", (char *)NULL);
 		
 fail:
-	bu_free( (char *)rec, "union record []");
+	bu_free( (genptr_t)rec, "union record []");
 	db_free_1anim( anp );
 	return TCL_ERROR;
 }
@@ -721,7 +721,7 @@ int			id;
 
 	Tcl_AppendElement( interp, str );
 
-	bu_free( str, "path string" );
+	bu_free( (genptr_t)str, "path string" );
 	return TREE_NULL;
 }
 

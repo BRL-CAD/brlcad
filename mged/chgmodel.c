@@ -322,7 +322,7 @@ char    *argv[];
 
   if( f_wmater(clientData, interp, argc + 1, av) == TCL_ERROR ){
     (void)unlink(tmpfil);
-    bu_free((char *)av, "f_edmater: av");
+    bu_free((genptr_t)av, "f_edmater: av");
     return TCL_ERROR;
   }
 
@@ -334,7 +334,7 @@ char    *argv[];
     status = TCL_ERROR;
 
   (void)unlink(tmpfil);
-  bu_free((char *)av, "f_edmater: av");
+  bu_free((genptr_t)av, "f_edmater: av");
   return status;
 }
 
@@ -683,7 +683,7 @@ char	**argv;
 		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
 		  TCL_WRITE_ERR_return;
 		}
-		bu_free( (char *)rec, "record" );
+		bu_free((genptr_t)rec, "record");
 	} else if( rec[0].u_id == ID_COMB ) {
 		if( (dp = db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags ) ) == DIR_NULL ||
 		    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
@@ -706,7 +706,7 @@ char	**argv;
 		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 ) {
 		  TCL_WRITE_ERR_return;
 		}
-		bu_free( (char *)rec, "record" );
+		bu_free((genptr_t)rec, "record");
 	} else {
 	  Tcl_AppendResult(interp, argv[2], ": Cannot mirror\n", (char *)NULL);
 	  return TCL_ERROR;

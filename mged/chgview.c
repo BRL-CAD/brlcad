@@ -813,7 +813,7 @@ mged_freemem()
   while( BU_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
     vp = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
     BU_LIST_DEQUEUE( &(vp->l) );
-    bu_free( (char *)vp, "mged_freemem: struct rt_vlist" );
+    bu_free( (genptr_t)vp, "mged_freemem: struct rt_vlist" );
   }
 }
 
@@ -1205,8 +1205,8 @@ char	**argv;
 	if (path_piece)
 	{
 	    for (i = 0; path_piece[i] != 0; ++i)
-		bu_free(path_piece[i], "f_ill: char *");
-	    bu_free((char *) path_piece, "f_ill: char **");
+		bu_free((genptr_t)path_piece[i], "f_ill: char *");
+	    bu_free((genptr_t) path_piece, "f_ill: char **");
 	}
 	return TCL_OK;
 
@@ -1216,8 +1216,8 @@ bail_out:
     if (path_piece)
     {
 	for (i = 0; path_piece[i] != 0; ++i)
-	    bu_free(path_piece[i], "f_ill: char *");
-	bu_free((char *) path_piece, "f_ill: char **");
+	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
+	bu_free((genptr_t) path_piece, "f_ill: char **");
     }
     return TCL_ERROR;
 }
