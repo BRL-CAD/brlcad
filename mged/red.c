@@ -825,9 +825,9 @@ char **argv;
     NAMEMOVE(dp->d_namep, new_name);
 
   if(*argv[2] == 'y' || *argv[2] == 'Y')
-    comb->region_flag = 'Y';
+    comb->region_flag = 1;
   else
-    comb->region_flag = '\0';
+    comb->region_flag = 0;
 
   if(comb->region_flag){
     if(argc != 11){
@@ -1383,9 +1383,9 @@ char *old_name;
 		else if( (ptr=find_keyword( i, line, "REGION" ) ) )
 		{
 			if( *ptr == 'y' || *ptr == 'Y' )
-				comb->region_flag = 'Y';
+				comb->region_flag = 1;
 			else
-				comb->region_flag = '\0';
+				comb->region_flag = 0;
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "AIRCODE" ) ) )
