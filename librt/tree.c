@@ -153,6 +153,7 @@ union tree			*curtree;
 		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
 		rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
 	}
+
 	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
 	if( region_max[X] >= INFINITY )  {
 		/* skip infinite region */
@@ -381,7 +382,11 @@ int				id;
 	 *  Match on leaf name and matrix.
 	 */
 	stp = rt_find_identical_solid( mat, dp, rt_tree_rtip );
-	if( stp->st_id != 0 )  goto found_it;
+	if( stp->st_id != 0 )  {
+		if( stp->st_aradius <= 0 )
+			return( TREE_NULL );	/* BAD: instance of dead solid */
+		goto found_it;
+	}
 
 	stp->st_id = id;
 	if( mat )  {
@@ -397,7 +402,7 @@ int				id;
 	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
 		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		/* Too late to delete soltab entry; mark is as "dead" */
+		/* Too late to delete soltab entry; mark it as "dead" */
 		stp->st_aradius = -1;
 		return( TREE_NULL );		/* BAD */
 	}
@@ -416,7 +421,7 @@ int				id;
 		/* Error, solid no good */
 		rt_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[stp->st_id].ft_ifree( &intern );
-		/* Too late to delete soltab entry; mark is as "dead" */
+		/* Too late to delete soltab entry; mark it as "dead" */
 		stp->st_aradius = -1;
 		return( TREE_NULL );		/* BAD */
 	}
@@ -491,13 +496,16 @@ int		argc;
 CONST char	**argv;
 int		ncpus;
 {
+	register struct soltab	*stp;
 	int			prev_sol_count;
 	int			i;
 
 	RT_CHECK_RTI(rtip);
 
-	if(!rtip->needprep)
-		rt_bomb("rt_gettree called again after rt_prep!\n");
+	if(!rtip->needprep)  {
+		rt_log("ERROR: rt_gettree() called again after rt_prep!\n");
+		return(-1);		/* FAIL */
+	}
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
@@ -512,13 +520,24 @@ int		ncpus;
 
 	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
 
-	if(rt_g.debug&DEBUG_SOLIDS)  {
-		register CONST struct soltab	*stp;
-		RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
-			RT_CK_SOLTAB(stp);
+	/* Eliminate any "dead" solids that parallel code couldn't change */
+again:
+	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
+		RT_CK_SOLTAB(stp);
+		if( stp->st_aradius <= 0 )  {
+			RT_LIST_DEQUEUE( &(stp->l) );
+			if( stp->st_matp )  rt_free( (char *)stp->st_matp, "st_matp");
+			stp->st_matp = (matp_t)0;
+			stp->st_regions = (bitv_t *)0;
+			stp->st_dp = DIR_NULL;		/* was ptr to directory */
+			rt_free( (char *)stp, "dead struct soltab" );
+			rtip->nsolids--;
+			/* The macro makes it hard to regain place, punt */
+			goto again;
+		}
+		if(rt_g.debug&DEBUG_SOLIDS)
 			rt_pr_soltab( stp );
-		} RT_VISIT_ALL_SOLTABS_END
-	}
+	} RT_VISIT_ALL_SOLTABS_END
 
 	if( i < 0 )  return(-1);
 
@@ -596,12 +615,9 @@ vect_t				tree_max;
 			stp = tp->tr_a.tu_stp;
 			RT_CK_SOLTAB(stp);
 			if( stp->st_aradius <= 0 )  {
-				/* Problematic: need to skip this solid.
-				 * XXX Assume origin is within model RPP.
-				 */
-				VSETALL( tree_min, 0 );
-				VSETALL( tree_max, 0 );
-				return(0);
+				rt_log("rt_bound_tree: encountered dead solid '%s'\n",
+					stp->st_dp->d_namep);
+				return -1;	/* ERROR */
 			}
 
 			if( stp->st_aradius >= INFINITY )  {
