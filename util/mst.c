@@ -31,19 +31,21 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "conf.h"
 #include <stdio.h>
-#include <machine.h>
+#include "machine.h"
+#include "externs.h"			/* for getopt() */
 #include "bu.h"
 #include "redblack.h"
 
 /************************************************************************
  *									*
- *		The data structures					*
+ *			The data structures				*
  *									*
  ************************************************************************/
 struct vertex
 {
     long		v_magic;
     long		v_index;
+    char		*v_label;
     int			v_civilized;
     struct bu_list	v_neighbors;
     struct bridge	*v_bridge;
@@ -76,7 +78,7 @@ struct neighbor
 #define	NEIGHBOR_NULL	((struct neighbor *) 0)
 #define	NEIGHBOR_MAGIC	0x6d73746e
 
-static int		debug = 0;
+static int		debug = 1;
 
 /************************************************************************
  *									*
@@ -164,9 +166,10 @@ struct bridge	*bp;
  *			     M K _ V E R T E X ( )
  *
  */
-struct vertex *mk_vertex (index)
+struct vertex *mk_vertex (index, label)
 
 long	index;
+char	*label;
 
 {
     struct vertex	*vp;
@@ -175,6 +178,7 @@ long	index;
 
     vp -> v_magic = VERTEX_MAGIC;
     vp -> v_index = index;
+    vp -> v_label = label;
     vp -> v_civilized = 0;
     BU_LIST_INIT(&(vp -> v_neighbors));
     vp -> v_bridge = mk_init_bridge(vp);
@@ -197,16 +201,18 @@ int	depth;
 
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
 
-    bu_log(" vertex %d <x%x> %s...\n",
-	vp -> v_index, vp,
+    bu_log(" vertex <x%x> %d '%s' %s...\n",
+	vp, vp -> v_index, vp -> v_label,
 	vp -> v_civilized ? "civilized" : "uncivilized");
     for (BU_LIST_FOR(np, neighbor, &(vp -> v_neighbors)))
     {
 	BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
 	BU_CKMAG(np -> n_vertex, VERTEX_MAGIC, "vertex");
 
-	bu_log("  is a neighbor <x%x> of vertex <x%x> %d at cost %g\n",
-	    np, np -> n_vertex, np -> n_vertex -> v_index, np -> n_weight);
+	bu_log("  is a neighbor <x%x> of vertex <x%x> %d '%s' at cost %g\n",
+	    np, np -> n_vertex,
+	    np -> n_vertex -> v_index, np -> n_vertex -> v_label,
+	    np -> n_weight);
     }
 }
 
@@ -253,9 +259,9 @@ double		weight;
  ************************************************************************/
 
 /*
- *		      C O M P A R E _ V E R T I C E S ( )
+ *		C O M P A R E _ V E R T E X _ I N D I C E S ( )
  */
-int compare_vertices (v1, v2)
+int compare_vertex_indices (v1, v2)
 
 void	*v1;
 void	*v2;
@@ -268,6 +274,41 @@ void	*v2;
     BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
 
     return (vert1 -> v_index  -  vert2 -> v_index);
+}
+
+/*
+ *		 C O M P A R E _ V E R T E X _ L A B E L S ( )
+ */
+int compare_vertex_labels (v1, v2)
+
+void	*v1;
+void	*v2;
+
+{
+    struct vertex	*vert1 = (struct vertex *) v1;
+    struct vertex	*vert2 = (struct vertex *) v2;
+
+    BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
+    BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
+    if (vert1 -> v_label == '\0')
+    {
+	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
+	    vert1, vert1 -> v_index);
+	exit (1);
+    }
+    if (vert2 -> v_label == '\0')
+    {
+	bu_log("compare_vertex_labels: null label in vertex <x%x> %d\n",
+	    vert2, vert2 -> v_index);
+	exit (1);
+    }
+
+    if (*(vert1 -> v_label) < *(vert2 -> v_label))
+	return -1;
+    else if (*(vert1 -> v_label) > *(vert2 -> v_label))
+	return 1;
+    else
+	return (strcmp(vert1 -> v_label, vert2 -> v_label));
 }
 
 /*
@@ -333,22 +374,23 @@ void	*v2;
  *		       C O M P A R E _ W E I G H T S ( )
  */
 #define	compare_weights(w1, w2)					\
-{								\
-    double	delta;						\
-								\
-    if ((w1) <= 0.0)						\
-	if ((w2) <= 0.0)					\
-	    return 0;						\
-	else							\
-	    return 1;						\
-    else if ((w2) <= 0.0)					\
-	return -1;						\
-    								\
-    delta = (w1) - (w2);					\
-    return ((delta <  0.0) ? -1 :				\
-	    (delta == 0.0) ?  0 :				\
-			      1);				\
-}
+(								\
+    ((w1) <= 0.0) ?						\
+    (								\
+	((w2) <= 0.0) ?						\
+	    0 :							\
+	    1							\
+    ) :								\
+    (								\
+	((w2) <= 0.0) ?						\
+	    -1 :						\
+	    ((w1) < (w2)) ?					\
+		-1 :						\
+		((w1) == (w2)) ?				\
+		    0 :						\
+		    1						\
+    )								\
+)
 
 /************************************************************************
  *									*
@@ -359,10 +401,11 @@ void	*v2;
 /*
  *			 L O O K U P _ V E R T E X ( )
  */
-struct vertex *lookup_vertex(dict, index)
+struct vertex *lookup_vertex(dict, index, label)
 
 rb_tree	*dict;
 long	index;
+char	*label;
 
 {
     int			rc;	/* Return code from rb_insert() */
@@ -372,7 +415,7 @@ long	index;
     /*
      *	Prepare the dictionary query
      */
-    qvp = mk_vertex(index);
+    qvp = mk_vertex(index, label);
 
     /*
      *	Perform the query by attempting an insertion...
@@ -465,11 +508,13 @@ struct bridge *extract_min ()
 /*
  *			      G E T _ E D G E ( )
  */
-int get_edge (fp, index, w)
+int get_edge (fp, index, label, w, numeric)
 
 FILE	*fp;
 long	*index;		/* Indices of edge endpoints */
+char	**label;	/* Labels of edge endpoints */
 double	*w;		/* Weight */
+int	numeric;	/* Use indices instead of labels? */
 
 {
     char		*bp;
@@ -488,24 +533,89 @@ double	*w;		/* Weight */
 	    ++bp;
 	if (*bp == '#')
 	    continue;
-	if (sscanf(bp, "%ld%ld%lg", &index[0], &index[1], w) != 3)
+	if (numeric)
 	{
-	    bu_log("Illegal input on line %d: '%s'\n", line_nm, bp);
-	    return (-1);
+	    if (sscanf(bp, "%ld%ld%lg", &index[0], &index[1], w) != 3)
+	    {
+		bu_log("Illegal input on line %d: '%s'\n", line_nm, bp);
+		return (-1);
+	    }
+	    else
+	    {
+		label[0] = label[1] = NULL;
+		break;
+	    }
 	}
 	else
-	    break;
+	{
+	    char	*bep;
+
+	    for (bep = bp; (*++bep != ' ') && (*bep != '\t'); ++bep)
+		if (*bep == '\0')
+		{
+		    bu_log("Illegal input on line %d: '%s'\n",
+			line_nm, bu_vls_addr(&buf));
+		    return (-1);
+		}
+	    *bep = '\0';
+	    label[0] = bu_strdup(bp);
+
+	    for (bp = bep + 1; (*bp == ' ') || (*bp == '\t'); ++bp)
+		if (*bep == '\0')
+		{
+		    bu_log("Illegal input on line %d: '%s'\n",
+			line_nm, bu_vls_addr(&buf));
+		    return (-1);
+		}
+	    for (bep = bp; (*++bep != ' ') && (*bep != '\t'); ++bep)
+		if (*bep == '\0')
+		{
+		    bu_log("Illegal input on line %d: '%s'\n",
+			line_nm, bu_vls_addr(&buf));
+		    return (-1);
+		}
+	    *bep = '\0';
+	    label[1] = bu_strdup(bp);
+
+	    if (sscanf(bep + 1, "%lg", w) != 1)
+	    {
+		bu_log("Illegal input on line %d: '%s'\n",
+		    line_nm, bu_vls_addr(&buf));
+		return (-1);
+	    }
+	    else
+	    {
+		index[0] = index[1] = -1;
+		break;
+	    }
+	}
     }
     return (1);
 }
 
+/*
+ *			   P R I N T _ U S A G E ( )
+ */
+void print_usage (void)
+{
+#define OPT_STRING	"n?"
+
+    bu_log("Usage: 'mst [-n]'\n");
+}
+
+/*
+ *                                M A I N ( )
+ */
 main (argc, argv)
 
 int	argc;
 char	*argv[];
 
 {
+    char		*label[2];	/* Labels of edge endpoints */
+    int			ch;		/* Command-line character */
     int			i;
+    int			numeric = 0;	/* Use vertex indices (vs. labels)? */
     long		index[2];	/* Indices of edge endpoints */
     double		weight;		/* Edge weight */
     rb_tree		*dictionary;	/* Dictionary of vertices */
@@ -518,30 +628,49 @@ char	*argv[];
     struct neighbor	*np;		/* A neighbor of vup */
     int			(*po[2])();	/* Priority queue order functions */
 
+    while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
+	switch (ch)
+	{
+	    case 'n':
+		numeric = 1;
+		break;
+	    case '?':
+	    default:
+		print_usage();
+		exit (ch != '?');
+		return(0);
+	}
+
     /*
-     *	Initialize the dictionary and the priority queue
+     *	Initialize the dictionary
      */
-    dictionary = rb_create1("Dictionary of vertices", compare_vertices);
+    dictionary = rb_create1("Dictionary of vertices",
+		    numeric ? compare_vertex_indices
+			    : compare_vertex_labels);
     rb_uniq_on1(dictionary);
-    po[PRIOQ_INDEX] = compare_bridge_indices;
-    po[PRIOQ_WEIGHT] = compare_bridge_weights;
-    prioq = rb_create("Priority queue of bridges", 2, po);
-    rb_walk1(dictionary, add_to_prioq, INORDER);
 
     /*
      *	Read in the graph
      */
-    while (get_edge(stdin, index, &weight))
+    while (get_edge(stdin, index, label, &weight, numeric))
     {
 	for (i = 0; i < 2; ++i)		/* For each end of the edge... */
 	{
-	    vertex[i] = lookup_vertex(dictionary, index[i]);
+	    vertex[i] = lookup_vertex(dictionary, index[i], label[i]);
 	    neighbor[i] = mk_neighbor(VERTEX_NULL, weight);
 	    BU_LIST_INSERT(&(vertex[i] -> v_neighbors), &(neighbor[i] -> l));
 	}
 	neighbor[0] -> n_vertex = vertex[1];
 	neighbor[1] -> n_vertex = vertex[0];
     }
+
+    /*
+     *	Initialize the priority queue
+     */
+    po[PRIOQ_INDEX] = compare_bridge_indices;
+    po[PRIOQ_WEIGHT] = compare_bridge_weights;
+    prioq = rb_create("Priority queue of bridges", 2, po);
+    rb_walk1(dictionary, add_to_prioq, INORDER);
 
     if (debug)
     {
@@ -579,8 +708,12 @@ char	*argv[];
 	if (is_finite_bridge(bp))
 	{
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
-	    (void) printf("%d %d %g\n",
-		vcp -> v_index, vup -> v_index, bp -> b_weight);
+	    if (numeric)
+		(void) printf("%d %d %g\n",
+		    vcp -> v_index, vup -> v_index, bp -> b_weight);
+	    else
+		(void) printf("%s %s %g\n",
+		    vcp -> v_label, vup -> v_label, bp -> b_weight);
 	    weight += bp -> b_weight;
 	}
 	free_bridge(bp);
