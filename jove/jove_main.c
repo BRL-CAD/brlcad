@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/10/26  03:38:55  mike
+ * termios stuff
+ * 
  * Revision 10.2  93/04/01  04:25:24  mike
  * Arg to FIONREAD is an "int", not a "long" these days.
  * 
@@ -92,6 +95,9 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <signal.h>
 #if HAS_TERMIOS
+#  if !defined(_XOPEN_SOURCE)
+#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
+#  endif
 # include <termios.h>
 # include <fcntl.h>
 #else
@@ -110,6 +116,8 @@ extern char	*Joverc;
 extern int	errno;
 
 extern char	*sprint();
+
+void		DoKeys();
 
 #ifndef	BRLUNIX			/* this is not found on a BRL pdp-11.	*/
 /***** #include <sys/ioctl.h> *****/
@@ -284,7 +292,11 @@ charp()
 		 * characters here, to see if there are any.
 		 */
 		flags = fcntl( Input, F_GETFL, 0);
+#  if defined(HAS_TERMIOS)
+		(void)fcntl( Input, F_SETFL, flags|FNDELAY );
+#  else
 		(void)fcntl( Input, F_SETFL, flags|O_NDELAY );
+#  endif
 		c = &smbuf[NTOBUF] - bp - nchars;	/* space left */
 		if( c < 0 )  c = 0;
 		c = read(Input, bp+nchars, c );
@@ -393,7 +405,7 @@ int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 
 #ifndef	BRLUNIX
 # if defined(HAS_TERMIOS)
-struct termio	oldtty, newtty;
+struct termios	oldtty, newtty;
 # else
 #  if defined(SYS5)
 struct termio	oldtty, newtty;
@@ -407,11 +419,15 @@ struct sg_brl	oldtty, newtty;
 
 ttsetup() {
 #ifndef BRLUNIX
-#if defined(SYS5) || defined(HAS_TERMIOS)
+#  if defined(HAS_TERMIOS)
+	if (tcgetattr( 0, &oldtty ) < 0) {
+#  else
+#    if defined(SYS5)
 	if (ioctl (0, TCGETA, &oldtty) < 0) {
-#else
+#    else
 	if (ioctl(0, TIOCGETP, (char *) &oldtty) == -1) {
-#endif
+#    endif
+#  endif	/* HAS_TERMIOS */
 #else
 	if (gtty(0, &oldtty) < 0) {
 #endif
@@ -503,7 +519,9 @@ ttinit()
 	ignorf(signal(SIGHUP, finish));
 	ignorf(signal(SIGINT, SIG_IGN));
 	ignorf(signal(SIGQUIT, SIG_IGN));
+#if defined(SIGBUS)
 	ignorf(signal(SIGBUS, finish));
+#endif
 	ignorf(signal(SIGSEGV, finish));
 	ignorf(signal(SIGPIPE, finish));
 	ignorf(signal(SIGTERM, SIG_IGN));
@@ -514,7 +532,7 @@ ttinit()
 ttyset(n)
 {
 #if defined(HAS_TERMIOS)
-	struct termio	tty;
+	struct termios	tty;
 #else
 # if defined(SYS5)
 	struct termio	tty;
@@ -528,10 +546,14 @@ ttyset(n)
 	else
 		tty = oldtty;
 
-#if !defined(SYS5) && !defined(HAS_TERMIOS)
-	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
+#if defined(HAS_TERMIOS)
+	if (tcsetattr( 0, TCSANOW, &tty) == -1)
 #else
+#  if !defined(SYS5) && !defined(HAS_TERMIOS)
+	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
+#  else
 	if (ioctl (0, TCSETAW, (char *) &tty) == -1)
+#  endif
 #endif
 	{
 		putstr("ioctl error?");
@@ -581,6 +603,7 @@ emalloc(size)
 	return (char *)NULL;
 }
 
+void
 dispatch(c)
 register int	c;
 {
@@ -597,6 +620,7 @@ register int	c;
 	ExecFunc(fp, 0);
 }
 
+int
 getch()
 {
 	register int	c;
@@ -616,6 +640,7 @@ getch()
 	return c;
 }
 
+void
 parse(argc, argv)
 register char	*argv[];
 {
@@ -746,6 +771,7 @@ read_ch()
 	return getch();
 }
 
+void
 DoKeys(first)
 {
 	register int	c;
