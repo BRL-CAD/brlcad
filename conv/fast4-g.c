@@ -96,13 +96,12 @@ static int	int_list_count=0;	/* Number of ints in above array */
 static int	int_list_length=0;	/* Length of int_list array */
 #define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
 
-static char	*usage="Usage:\n\tfast4-g [-dnwp] [-c component_list] [-o plot_file] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
-	a - set minimum allowed angle (degrees) between adjacent faces in PLATE mode\n\
-		components with smaller angles will be converted using ARB6 solids\n\
+static char	*usage="Usage:\n\tfast4-g [-dw] [-c component_list] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n\
 	d - print debugging info\n\
 	w - print warnings about creating default names\n\
 	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
 	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
+	b - set LIBBU debug flag\n\
 	x - set RT debug flag\n";
 
 RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
