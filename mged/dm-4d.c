@@ -1,27 +1,4 @@
 /*
-   Just a note:
-
-   DM-4D.C currently uses the commands below. These particular commands
-   should not be used in mixed mode programming.
-
-   qdevice
-   blkqread
-   qtest
-   getbutton
-   getvaluator
-   setvaluator
-   unqdevice
-   mapcolor
-   gconfig
-   doublebuffer
-   RGBmode
-   winopen
-   foreground
-   noborder
-   keepaspect
-   prefposition
-*/
-/*
  *			D M - 4 D . C
  *
  *  This version for the SGI 4-D Iris, both regular and GT versions.
@@ -46,10 +23,6 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-/* Experimental */
-#define MIXED_MODE 1
-#define TRY_PIPES 1
-
 #include "conf.h"
 
 /* Forwards compat with IRIX 5.0.1 */
@@ -62,24 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <termio.h>
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
-
-#if MIXED_MODE
-#include <X11/X.h>
-#include <gl/glws.h>
-#include "tk.h"
-#include <X11/extensions/XI.h>
-#include <X11/extensions/XInput.h>
-#include <X11/Xutil.h>
-#include "tkGLX.h"
-extern Tcl_Interp *interp;
-extern Tk_Window tkwin;
-static Tk_Window xtkwin;
-static Display  *dpy;
-static Window   win;
-static int devmotionnotify = LASTEvent;
-static int devbuttonpress = LASTEvent;
-static int devbuttonrelease = LASTEvent;
-#endif
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -101,9 +56,6 @@ static int devbuttonrelease = LASTEvent;
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#if TRY_PIPES
-extern int ged_pipe[];
-#endif
 extern inventory_t	*getinvent();
 
 /* Display Manager package interface */
@@ -122,16 +74,7 @@ unsigned Ir_cvtvecs(), Ir_load();
 void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
 int	Ir_dm();
-#if MIXED_MODE
-int   Ir_loadGLX();
-#ifdef USE_PROTOTYPES
-Tk_GenericProc Ircheckevents;
-#else
-int Ircheckevents();
-#endif
-#else
 void    Ircheckevents();
-#endif
 
 /*
  * These variables are visible and modifiable via a "dm set" command.
@@ -143,11 +86,6 @@ static int	lighting_on = 0;	/* Lighting model on */
 static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	no_faceplate = 0;	/* Don't draw faceplate */
 static int	ir_linewidth = 1;	/* Line drawing width */
-#if 0
-static int      focus = 0;              /* send key events to the command window */
-#endif
-static int      dummy_perspective = 1;
-static int      perspective_mode = 0;	/* Perspective flag */
 /*
  * These are derived from the hardware inventory -- user can change them,
  * but the results may not be pleasing.  Mostly, this allows them to be seen.
@@ -160,18 +98,9 @@ static int	min_scr_z;		/* based on getgdesc(GD_ZMIN) */
 static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
 
-#if MIXED_MODE
-static int irsetup();
-GLXconfig glxConfig [] = {
-  { GLX_NORMAL, GLX_DOUBLE, TRUE },
-  { GLX_NORMAL, GLX_RGB, TRUE },
-  { GLX_NORMAL, GLX_ZSIZE, GLX_NOCONFIG },
-  { 0, 0, 0 }
-};
-#endif
-
 static int	ir_fd;			/* GL file descriptor to select() on */
 static CONST char ir_title[] = "BRL MGED";
+static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
@@ -264,8 +193,6 @@ struct dm dm_4d = {
 
 extern struct device_values dm_values;	/* values read from devices */
 
-static void     establish_perspective();
-static void     set_perspective();
 static void	establish_lighting();
 static void	establish_zbuffer();
 
@@ -280,8 +207,6 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "zclip",		(int)&zclipping_on,	refresh_hook },
 	{"%d",  1, "zbuffer",		(int)&zbuffer_on,	establish_zbuffer },
 	{"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting },
-	{"%d",  1, "perspective",       (int)&perspective_mode, establish_perspective },
-	{"%d",  1, "set_perspective",(int)&dummy_perspective,  set_perspective },
 	{"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook },
 	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
 	{"%d",  1, "has_rgb",		(int)&ir_has_rgb,	Ir_colorchange },
@@ -294,7 +219,6 @@ struct structparse Ir_vparse[] = {
 };
 
 
-static char ref[] = "mged";
 static int	ir_oldmonitor;		/* Old monitor type */
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -312,17 +236,11 @@ static int
 irisX2ged(x)
 register int x;
 {
-#if MIXED_MODE
-	x = (x/(double)winx_size - 0.5) * 4095;
-#else
 	if( x <= win_l )  return(-2048);
 	if( x >= win_r )  return(2047);
-
 	x -= win_l;
 	x = ( x / (double)winx_size)*4096.0;
 	x -= 2048;
-#endif
-
 	return(x);
 }
 
@@ -330,18 +248,12 @@ static int
 irisY2ged(y)
 register int y;
 {
-#if MIXED_MODE
-	y = (0.5 - y/(double)winy_size) * 4095;
-#else
 	if( y <= win_b )  return(-2048);
 	if( y >= win_t )  return(2047);
-
 	y -= win_b;
 	if( stereo_is_on )  y = (y%512)<<1;
 	y = ( y / (double)winy_size)*4096.0;
 	y -= 2048;
-#endif
-
 	return(y);
 }
 
@@ -356,25 +268,16 @@ static void
 Ir_configure_window_shape()
 {
 	int		npix;
-#if MIXED_MODE
-	XWindowAttributes xwa;
-#endif
 
 	xlim_view = 1.0;
 	ylim_view = 1.0;
 	mat_idn(aspect_corr);
 
-#if MIXED_MODE
-	XGetWindowAttributes( dpy, win, &xwa );
-	winx_size = xwa.width;
-	winy_size = xwa.height;
-#else
 	getsize( &winx_size, &winy_size);
 	getorigin( &win_l, & win_b );
-
 	win_r = win_l + winx_size;
 	win_t = win_b + winy_size;
-#endif
+
 	/* Write enable all the bloody bits after resize! */
 	viewport(0, winx_size, 0, winy_size);
 
@@ -391,8 +294,6 @@ Ir_configure_window_shape()
 	} else
 		ir_clear_to_black();
 
-#if MIXED_MODE
-#else
 	switch( getmonitor() )  {
 	default:
 		break;
@@ -449,7 +350,6 @@ Ir_configure_window_shape()
 		blanktime(0);	/* don't screensave while recording video! */
 		break;
 	}
-#endif
 
 	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 	/* The ortho() call really just makes this matrix: */
@@ -474,336 +374,6 @@ Ir_configure_window_shape()
  *  message. It doesn't hurt anything.  Silly MEX.
  */
 
-#if MIXED_MODE
-Ir_open()
-{
-        char	line[82];
-        char	hostname[80];
-	char	display[82];
-	char	*envp;
-
-	/* get or create the default display */
-	if( (envp = getenv("DISPLAY")) == NULL ) {
-		/* Env not set, use local host */
-		gethostname( hostname, 80 );
-		hostname[79] = '\0';
-		(void)sprintf( display, "%s:0", hostname );
-		envp = display;
-	}
-
-	rt_log("X Display [%s]? ", envp );
-	(void)fgets( line, sizeof(line), stdin );
-	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( feof(stdin) )  quit();
-	if( line[0] != '\0' ) {
-		if( irsetup(line) ) {
-			return(1);		/* BAD */
-		}
-	} else {
-		if( irsetup(envp) ) {
-			return(1);	/* BAD */
-		}
-	}
-
-	/* Ignore the old scrollbars and menus */
-	ignore_scroll_and_menu = 1;
-
-	return(0);			/* OK */
-}
-
-static int
-irsetup( name )
-char *name;
-{
-	register int	i;
-	Matrix		m;
-	inventory_t	*inv;
-	int		win_size=1000;
-	int		win_o_x=272;
-	int		win_o_y=12;
-	struct rt_vls str;
-	int j, k;
-	int ndevices;
-	int nclass = 0;
-	XDeviceInfoPtr olist, list;
-	XDevice *dev;
-	XEventClass e_class[15];
-	XInputClassInfo *cip;
-	XAnyClassPtr any;
-
-	rt_vls_init(&str);
-	rt_vls_printf(&str, "loadtk %s\n", name);
-	if(cmdline(&str, FALSE) == CMD_BAD){
-	  rt_vls_free(&str);
-	  return -1;
-	}
-	
-	(void)TkGLX_Init(interp, tkwin);
-
-	/* Invoke script to create button and key bindings */
-	if( Ir_loadGLX() )
-	  return -1;
-
-	dpy = Tk_Display(tkwin);
-	winx_size = DisplayWidth(dpy, Tk_ScreenNumber(tkwin)) - 20;
-	winy_size = DisplayHeight(dpy, Tk_ScreenNumber(tkwin)) - 20;
-	if(winx_size > winy_size)
-	  winx_size = winy_size;
-	else
-	  winy_size = winx_size;
-
-	rt_vls_strcpy(&str, "create_glx ");
-	rt_vls_printf(&str, ".%s %s %d %d true true\n", ref, ref,
-		      winx_size, winy_size);
-	rt_vls_printf(&str, "pack .%s -expand 1 -fill both\n", ref);
-	if(cmdline(&str, FALSE) == CMD_BAD){
-	  rt_vls_free(&str);
-	  return -1;
-	}
-
-	rt_vls_free(&str);
-
-	if(TkGLXwin_RefExists(ref)){
-	  xtkwin = TkGLXwin_RefGetTkwin(ref);
-	  if(xtkwin == NULL)
-	    return -1;
-	}else{
-	  rt_log("Ir_open: ref - %s doesn't exist!!!\n", ref);
-	  return -1;
-	}
-
-	/* Do this now to force a GLXlink */
-	Tk_MapWindow(xtkwin);
-
-	Tk_MakeWindowExist(xtkwin);
-	win = Tk_WindowId(xtkwin);
-
-	ir_is_gt = 1;
-
-	{
-	  GLXconfig *glx_config, *p;
-
-	  glx_config = TkGLXwin_RefGetConfig(ref);
-	
-	  for(p = glx_config; p->buffer; ++p){
-	    switch(p->buffer){
-	    case GLX_NORMAL:
-	      switch(p->mode){
-	      case GLX_ZSIZE:
-		if(p->arg)
-		  ir_has_zbuf = 1;
-		else
-		  ir_has_zbuf = 0;
-
-		break;
-	      case GLX_RGB:
-		if(p->arg)
-		  ir_has_rgb = 1;
-		else
-		  ir_has_rgb = 0;
-
-		break;
-	      case GLX_DOUBLE:
-		if(p->arg)
-		  ir_has_doublebuffer = 1;
-		else
-		  ir_has_doublebuffer = 0;
-
-		break;
-	      case GLX_STEREOBUF:
-		stereo_is_on = 1;
-
-		break;
-	      case GLX_BUFSIZE:
-	      case GLX_STENSIZE:
-	      case GLX_ACSIZE:
-	      case GLX_VISUAL:
-	      case GLX_COLORMAP:
-	      case GLX_WINDOW:
-	      case GLX_MSSAMPLE:
-	      case GLX_MSZSIZE:
-	      case GLX_MSSSIZE:
-	      case GLX_RGBSIZE:
-	      default:
-		break;
-	      }
-	    case GLX_OVERLAY:
-	    case GLX_POPUP:
-	    case GLX_UNDERLAY:
-	    default:
-	      break;
-	    }
-	  }
-
-	  free((void *)glx_config);
-	}
-
-#if 0
-	/* Start out with the usual window */
-/*XXX Not supposed to be using this guy in mixed mode. */
-	foreground();
-#endif
-	
-	if (mged_variables.sgi_win_size > 0)
-		win_size = mged_variables.sgi_win_size;
-
-	if (mged_variables.sgi_win_origin[0] != 0)
-		win_o_x = mged_variables.sgi_win_origin[0];
-
-	if (mged_variables.sgi_win_origin[1] != 0)
-		win_o_y = mged_variables.sgi_win_origin[1];
-#if 0
-	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
-#else
-#endif
-#if 0
-	keepaspect(1,1);	/* enforce 1:1 aspect ratio */
-#endif
-	winconstraints();	/* remove constraints on the window size */
-
-	/*
-	 * Establish GL library operating modes
-	 */
-	/* Don't draw polygon edges */
-	glcompat( GLC_OLDPOLYGON, 0 );
-
-	/* Z-range mapping */
-	/* Z range from getgdesc(GD_ZMIN)
-	 * to getgdesc(GD_ZMAX).
-	 * Hardware specific.
-	 */
-	glcompat( GLC_ZRANGEMAP, 0 );
-	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
-#if 1
-	min_scr_z = getgdesc(GD_ZMIN)+15;
-	max_scr_z = getgdesc(GD_ZMAX)-15;
-#else
-	min_scr_z = 0;
-	max_scr_z = 0;
-#endif
-
-	Ir_configure_window_shape();
-
-	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
-	deflinestyle( 1, 0xCF33 );
-	setlinestyle( 0 );
-
-/* Take a look at the available input devices */
-	olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
-
-	/* IRIX 4.0.5 bug workaround */
-	if( list == (XDeviceInfoPtr)NULL ||
-	   list == (XDeviceInfoPtr)1 )  goto Done;
-
-	for(j = 0; j < ndevices; ++j, list++){
-	  if(list->use == IsXExtensionDevice){
-	    if(!strcmp(list->name, "dial+buttons")){
-	      if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
-		rt_log("Ir_open: Couldn't open the dials+buttons\n");
-		goto Done;
-	      }
-
-	      for(cip = dev->classes, k = 0; k < dev->num_classes;
-		  ++k, ++cip){
-		switch(cip->input_class){
-		case ButtonClass:
-		  DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
-		  ++nclass;
-		  DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
-		  ++nclass;
-		  break;
-		case ValuatorClass:
-		  DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
-		  ++nclass;
-		  break;
-		default:
-		  break;
-		}
-	      }
-
-	      XSelectExtensionEvent(dpy, win, e_class, nclass);
-	      goto Done;
-	    }
-	  }
-	}
-Done:
-	XFreeDeviceList(olist);
-	Tk_CreateGenericHandler(Ircheckevents, (ClientData)NULL);
-	XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
-		     KeyPressMask|StructureNotifyMask);
-
-	return(0);
-}
-
-/*XXX Just experimenting */
-int
-Ir_loadGLX()
-{
-  FILE    *fp;
-  struct rt_vls str;
-  char *path;
-  int     found;
-  int bogus;
-
-#define DM_IR_ENVRC "MGED_DM_IR_RCFILE"
-#define DM_IR_RCFILE "glxinit2.tk"
-
-  found = 0;
-  rt_vls_init( &str );
-
-  if((path = getenv(DM_IR_ENVRC)) != (char *)NULL ){
-    if ((fp = fopen(path, "r")) != NULL ) {
-      rt_vls_strcpy( &str, path );
-      found = 1;
-    }
-  }
-
-  if(!found){
-    if( (path = getenv("HOME")) != (char *)NULL )  {
-      rt_vls_strcpy( &str, path );
-      rt_vls_strcat( &str, "/" );
-      rt_vls_strcat( &str, DM_IR_RCFILE );
-
-      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-	found = 1;
-    }
-  }
-
-  if( !found ) {
-    if( (fp = fopen( DM_IR_RCFILE, "r" )) != NULL )  {
-      rt_vls_strcpy( &str, DM_IR_RCFILE );
-      found = 1;
-    }
-  }
-
-/*XXX Temporary, so things will work without knowledge of the new environment
-      variables */
-  if( !found ) {
-    rt_vls_strcpy( &str, "/m/cad/mged/");
-    rt_vls_strcat( &str, DM_IR_RCFILE);
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-      found = 1;
-  }
-
-  if(!found){
-    rt_vls_free(&str);
-    return -1;
-  }
-
-  fclose( fp );
-
-  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
-    rt_log("Error reading %s: %s\n", DM_IR_RCFILE, interp->result);
-    rt_vls_free(&str);
-    return -1;
-  }
-
-  rt_vls_free(&str);
-  return 0;
-}
-
-#else
 int
 Ir_open()
 {
@@ -1104,7 +674,6 @@ Ir_open()
 	Tk_CreateFileHandler(ir_fd, 1, Ircheckevents, (void *)NULL);
 	return(0);
 }
-#endif
 
 /*
  *  			I R _ C L O S E
@@ -1131,17 +700,11 @@ Ir_close()
 	ir_clear_to_black();
 	frontbuffer(0);
 
-#if MIXED_MODE
-	Tk_DestroyWindow(xtkwin);
-#else
 	if( getmonitor() != ir_oldmonitor )
 		setmonitor(ir_oldmonitor);
 
 	winclose(gr_id);
-#endif
-
-	/* Stop ignoring the old scrollbars and menus */
-	ignore_scroll_and_menu = 0;
+	return;
 }
 
 /*
@@ -1613,9 +1176,6 @@ int		noblock;
 	fd_set		files;
 	int		width;
 
-#if MIXED_MODE
-/* Don't need to do this because Ir_input never gets called anyway */
-#else
 	if (ir_debug)
 		rt_log( "Ir_input()\n");
 	if( (width = sysconf(_SC_OPEN_MAX)) <= 0 )
@@ -1672,204 +1232,9 @@ input_waiting:
 
 	if( FD_ISSET( ir_fd, input ) )
 		Ircheckevents();
-#endif
+
 	return;
 }
-
-#if MIXED_MODE
-/*
-   This routine does not get key events. The key events are
-   being processed via the TCL/TK bind command. Eventually, I'd also
-   like to do the dials+buttons that way. That would leave this
-   routine to handle only events like Expose and ConfigureNotify.
-*/
-int
-Ircheckevents(clientData, eventPtr)
-ClientData clientData;
-XEvent *eventPtr;
-{
-  XEvent event;
-  static int button0  = 0;   /*  State of button 0 */
-  static int knobs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  static int knobs_offset[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-/*XXX still drawing too much!!!
-i.e. drawing 2 or more times when resizing the window to a larger size.
-once for the Configure and once for the expose. This is especially
-annoying when running remotely. */
-
-  if (eventPtr->xany.window != win)
-    return TCL_OK;
-
-#if 0
-if(eventPtr->type == Expose)
-  rt_log("Ircheckevents:%d\t%d\tevent type - %d\tcount - %d\n",
-	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
-else if( eventPtr->type == ConfigureNotify )
-  rt_log("Ircheckevents:%d\t%d\tevent type - %d\n",
-	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
-#endif
-
-#if TRY_PIPES
-  if(mged_variables.focus && eventPtr->type == KeyPress){
-    char buffer[1];
-
-    XLookupString(&(eventPtr->xkey), buffer, 1,
-		  (KeySym *)NULL, (XComposeStatus *)NULL);
-
-    write(ged_pipe[1], buffer, 1);
-    return TCL_RETURN;
-  }
-#endif
-
-
-  /* Now getting X events */
-  if(eventPtr->type == Expose && eventPtr->xexpose.count == 0){
-    /* Window may have moved */
-    Ir_configure_window_shape();
-
-    dmaflag = 1;
-    if( ir_has_doublebuffer) /* to fix back buffer */
-      refresh();
-    dmaflag = 1;
-  }else if( eventPtr->type == ConfigureNotify ){
-      /* Window may have moved */
-      Ir_configure_window_shape();
-
-      if (eventPtr->xany.window != win)
-	return TCL_OK;
-
-      dmaflag = 1;
-      if( ir_has_doublebuffer) /* to fix back buffer */
-	refresh();
-      dmaflag = 1;
-  }else if( eventPtr->type == MotionNotify ) {
-    int x, y;
-
-    x = (eventPtr->xmotion.x/(double)winx_size - 0.5) * 4095;
-    y = (0.5 - eventPtr->xmotion.y/(double)winy_size) * 4095;
-    /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
-  }else if( eventPtr->type == devmotionnotify ){
-    XDeviceMotionEvent *M;
-    int setting;
-
-    M = (XDeviceMotionEvent * ) eventPtr;
-
-    if(button0){
-      knobs_during_help[M->first_axis] = M->axis_data[0];
-      ir_dbtext(
-		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
-      return TCL_OK;
-    }else{
-      knobs[M->first_axis] = M->axis_data[0];
-      setting = irlimit(knobs[M->first_axis] - knobs_offset[M->first_axis]);
-    }
-
-    switch(DIAL0 + M->first_axis){
-    case DIAL0:
-      if(adcflag) {
-	rt_vls_printf( &dm_values.dv_string, "knob ang1 %d\n",
-		      setting );
-      }
-      break;
-    case DIAL1:
-      rt_vls_printf( &dm_values.dv_string , "knob S %f\n",
-		    setting / 2048.0 );
-      break;
-    case DIAL2:
-      if(adcflag)
-	rt_vls_printf( &dm_values.dv_string , "knob ang2 %d\n",
-		      setting );
-      else
-	rt_vls_printf( &dm_values.dv_string , "knob z %f\n",
-		      setting / 2048.0 );
-      break;
-    case DIAL3:
-      if(adcflag)
-	rt_vls_printf( &dm_values.dv_string , "knob distadc %d\n",
-		      setting );
-      else
-	rt_vls_printf( &dm_values.dv_string , "knob Z %f\n",
-		      setting / 2048.0 );
-      break;
-    case DIAL4:
-      if(adcflag)
-	rt_vls_printf( &dm_values.dv_string , "knob yadc %d\n",
-		      setting );
-      else
-	rt_vls_printf( &dm_values.dv_string , "knob y %f\n",
-		      setting / 2048.0 );
-      break;
-    case DIAL5:
-      rt_vls_printf( &dm_values.dv_string , "knob Y %f\n",
-		    setting / 2048.0 );
-      break;
-    case DIAL6:
-      if(adcflag)
-	rt_vls_printf( &dm_values.dv_string , "knob xadc %d\n",
-		      setting );
-      else
-	rt_vls_printf( &dm_values.dv_string , "knob x %f\n",
-		      setting / 2048.0 );
-      break;
-    case DIAL7:
-      rt_vls_printf( &dm_values.dv_string , "knob X %f\n",
-		    setting / 2048.0 );
-      break;
-    default:
-      break;
-    }
-
-  }else if( eventPtr->type == devbuttonpress ){
-    XDeviceButtonEvent *B;
-
-    B = (XDeviceButtonEvent * ) eventPtr;
-
-    if(B->button == 1){
-      button0 = 1;
-      return TCL_OK;
-    }
-
-    if(button0){
-      ir_dbtext(label_button(bmap[B->button - 1]));
-    }else if(B->button == 4){
-      int i;
-
-      rt_vls_strcat(&dm_values.dv_string, "knob zero\n");
-      for(i = 0; i < 8; ++i){
-#if 0 /* Not surprising that this really doesn't work. */
-	/* Not supposed to use this in mixed mode; trying it anyway:-). */
-	setvaluator(DIAL0+i, 0, -2048-NOISE, 2047+NOISE);
-
-	knobs[i] = 0;
-#else
-	knobs_offset[i] = knobs[i];
-#endif
-      }
-    }else
-      rt_vls_printf(&dm_values.dv_string, "press %s\n",
-		    label_button(bmap[B->button - 1]));
-  }else if( eventPtr->type == devbuttonrelease ){
-    XDeviceButtonEvent *B;
-
-    B = (XDeviceButtonEvent * ) eventPtr;
-
-    if(B->button == 1){
-      int i;
-
-      button0 = 0;
-
-      /* update the offset */
-      for(i = 0; i < 8; ++i)
-	knobs_offset[i] += knobs_during_help[i] - knobs[i];
-    }
-  }
-
-  return TCL_OK;
-}
-#else
 /*
  *  C H E C K E V E N T S
  *
@@ -2226,7 +1591,6 @@ continue;
 		}
 	}
 }
-#endif
 
 /* 
  *			I R _ L I G H T
@@ -2296,27 +1660,6 @@ Ir_statechange( a, b )
 	 *  including enabling continuous tablet tracking,
 	 *  object highlighting
 	 */
-#if MIXED_MODE
- 	switch( b )  {
-	case ST_VIEW:
-	  /* constant tracking OFF */
-	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
-		       KeyPressMask|StructureNotifyMask);
-	  break;
-	case ST_S_PICK:
-	case ST_O_PICK:
-	case ST_O_PATH:
-	  /* constant tracking ON */
-	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
-		       KeyPressMask|StructureNotifyMask|PointerMotionMask);
-	  break;
-	case ST_O_EDIT:
-	case ST_S_EDIT:
-	  /* constant tracking OFF */
-	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|
-		       KeyPressMask|StructureNotifyMask);
-	  break;
-#else
 	switch( b )  {
 	case ST_VIEW:
 		unqdevice( MOUSEY );	/* constant tracking OFF */
@@ -2334,12 +1677,10 @@ Ir_statechange( a, b )
 	case ST_S_VPICK:
 		unqdevice( MOUSEY );	/* constant tracking OFF */
 		break;
-#endif
 	default:
 		rt_log("Ir_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
-
 	Ir_viewchange( DM_CHGV_REDO, SOLID_NULL );
 }
 
@@ -2562,8 +1903,6 @@ int i;
 gen_color(c)
 int c;
 {
-#if MIXED_MODE
-#else
 	if(cueing_on) {
 
 		/*  Not much sense in making a ramp for DM_BLACK.  Besides
@@ -2594,7 +1933,6 @@ int c;
 		mapcolor(c+CMAP_BASE,
 		    ir_rgbtab[c].r, ir_rgbtab[c].g, ir_rgbtab[c].b);
 	}
-#endif
 }
 
 #ifdef never
@@ -2615,45 +1953,6 @@ kblights()
 	lampoff(lights^0xf);
 }
 #endif
-
-static void
-establish_perspective()
-{
-  rt_vls_printf( &dm_values.dv_string,
-		"set perspective %d\n",
-		perspective_mode ?
-		perspective_table[perspective_angle] :
-		-1 );
-  dmaflag = 1;
-}
-
-/*
-   This routine will toggle the perspective_angle if the
-   dummy_perspective value is 0 or less. Otherwise, the
-   perspective_angle is set to the value of (dummy_perspective - 1).
-*/
-static void
-set_perspective()
-{
-  /* set perspective matrix */
-  if(dummy_perspective > 0)
-    perspective_angle = dummy_perspective <= 4 ? dummy_perspective - 1: 3;
-  else if (--perspective_angle < 0) /* toggle perspective matrix */
-    perspective_angle = 3;
-
-  if(perspective_mode)
-    rt_vls_printf( &dm_values.dv_string,
-		  "set perspective %d\n",
-		  perspective_table[perspective_angle] );
-
-  /*
-     Just in case the "!" is used with the set command. This
-     allows us to toggle through more than two values.
-   */
-  dummy_perspective = 1;
-
-  dmaflag = 1;
-}
 
 static void
 establish_zbuffer()
@@ -3163,7 +2462,6 @@ char	**argv;
 {
 	struct rt_vls	vls;
 
-#if 0
 	if( argc < 1 )  return -1;
 
 	/* For now, only "set" command is implemented */
@@ -3188,47 +2486,6 @@ char	**argv;
 	}
 	rt_vls_free(&vls);
 	return CMD_OK;
-#else
-	if( !strcmp( argv[0], "set" )){
-	  rt_vls_init(&vls);
-	  if( argc < 2 )  {
-	    /* Bare set command, print out current settings */
-	    rt_structprint("dm_4d internal variables", Ir_vparse, (char *)0 );
-	    rt_log("%s", rt_vls_addr(&vls) );
-	  } else if( argc == 2 ) {
-	    rt_vls_name_print( &vls, Ir_vparse, argv[1], (char *)0 );
-	    rt_log( "%s\n", rt_vls_addr(&vls) );
-	  } else {
-	    rt_vls_printf( &vls, "%s=\"", argv[1] );
-	    rt_vls_from_argv( &vls, argc-2, argv+2 );
-	    rt_vls_putc( &vls, '\"' );
-	    rt_structparse( &vls, Ir_vparse, (char *)0 );
-	  }
-	  rt_vls_free(&vls);
-	  return CMD_OK;
-	}
-
-	if( !strcmp( argv[0], "mouse" )){
-	  int up;
-	  int xpos;
-	  int ypos;
-
-	  if( argc < 4){
-	    rt_log("dm: need more parameters\n");
-	    rt_log("mouse 1|0 xpos ypos\n");
-	    return CMD_BAD;
-	  }
-
-	  up = atoi(argv[1]);
-	  xpos = atoi(argv[2]);
-	  ypos = atoi(argv[3]);
-	  rt_vls_printf(&dm_values.dv_string, "M %d %d %d\n",
-			up, irisX2ged(xpos), irisY2ged(ypos));
-	  return CMD_OK;
-	}
-
-	rt_log("dm: bad command - %s\n", argv[0]);
-	return CMD_BAD;
-
-#endif
 }
+
+
