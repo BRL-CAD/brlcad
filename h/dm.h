@@ -92,7 +92,6 @@
 
 /* Interface to a specific Display Manager */
 struct dm {
-  int (*dm_init)();
   int (*dm_open)();
   int (*dm_close)();
   int (*dm_drawBegin)();	/* was dmr_prolog */
@@ -117,10 +116,12 @@ struct dm {
   struct mem_map *dm_map;	/* displaylist mem map */
   genptr_t dm_vars;		/* pointer to display manager dependant variables */
   struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
+  struct bu_vls dm_initWinProc; /* Tcl/Tk procedure for initializing the drawing window */
   char dm_dname[80];		/* Display name */
   fastf_t *dm_vp;		/* XXX--ogl still depends on this--XXX Viewscale pointer */
 };
 
+extern int dm_process_options();
 extern int dm_limit();
 extern int dm_unlimit();
 extern fastf_t dm_wrap();
