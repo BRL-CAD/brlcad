@@ -65,6 +65,13 @@ fastf_t * final_value;
 	c_ptr = diff_curve;
 
 	k_index = rt_nurb_knot_index( &srf->u_knots, u, srf->order[RT_NURB_SPLIT_ROW] );
+	if( k_index < 0 )
+	{
+		rt_log( "rt_nurb_s_eval: u value outside parameter range\n");
+		rt_log( "\tUV = (%g %g )\n", u,v );
+		rt_nurb_s_print( "", srf );
+		rt_bomb( "rt_nurb_s_eval: u value outside parameter range\n");
+	}
 
 	curves = (fastf_t * ) rt_malloc( col_size * sizeof(fastf_t) * coords,
 	    "rt_nurb_s_eval:crv_ptr");
@@ -90,6 +97,13 @@ fastf_t * final_value;
 	rt_free( (char *)curves, "rt_nurb_s_eval: curves" );
 
 	k_index = rt_nurb_knot_index( &srf->v_knots, v, srf->order[RT_NURB_SPLIT_COL] );
+	if( k_index < 0 )
+	{
+		rt_log( "rt_nurb_s_eval: v value outside parameter range\n");
+		rt_log( "\tUV = (%g %g )\n", u,v );
+		rt_nurb_s_print( "", srf );
+		rt_bomb( "rt_nurb_s_eval: v value outside parameter range\n");
+	}
 
 	ev_pt = (fastf_t * ) rt_nurb_eval_crv( diff_curve, srf->order[RT_NURB_SPLIT_COL], 
 		v, &srf->v_knots, k_index, coords);
