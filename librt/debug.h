@@ -46,7 +46,7 @@
 #define DEBUG_PARALLEL	0x00080000	/* 20 machine.c parallel support */
 
 /* These will cause binary debugging output */
-#define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes to stdout */
+#define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes and cuts */
 
 /* Format string for rt_printb() */
 #define DEBUG_FORMAT	\
