@@ -132,8 +132,12 @@ CONST struct rt_tol	*tol;
 	fu1 = nmg_find_fu_of_eu(eu1);
 	fu2 = nmg_find_fu_of_eu(eu2);
 	if( fu1 && fu2 )  {
-		if( fu1->orientation != fu2->orientation )
-			rt_bomb("nmg_radial_join_eu(): faceuse orientations don't match\n");
+		if( fu1->orientation != fu2->orientation ){
+			eu2 = eu2->eumate_p;
+			fu2 = nmg_find_fu_of_eu(eu2);
+			if( fu1->orientation != fu2->orientation )
+				rt_bomb( "nmg_radial_join_eu(): Cannot find matching orientations for faceuses\n" );
+		}
 	}
 
 	/*  Construct local coordinate system for this edge,
