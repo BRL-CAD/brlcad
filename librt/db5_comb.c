@@ -519,15 +519,19 @@ rt_comb_import5(
 
 				/* Unpack indicated matrix mi */
 				BU_ASSERT_LONG( mi, <, nmat );
-				tp->tr_l.tl_mat = (matp_t)bu_malloc(
-					sizeof(mat_t), "v5comb mat");
 				ntohd( (unsigned char *)diskmat,
 					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 					ELEMENTS_PER_MAT);
-				bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
-				if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
-					bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
-					tp->tr_l.tl_mat = (matp_t)NULL;
+				if( !mat || bn_mat_is_identity( mat ) ) {
+					tp->tr_l.tl_mat = bn_mat_dup( diskmat );
+				} else {
+					tp->tr_l.tl_mat = (matp_t)bu_malloc(
+						sizeof(mat_t), "v5comb mat");
+					bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
+					if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
+						bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
+						tp->tr_l.tl_mat = (matp_t)NULL;
+					}
 				}
 			}
 
@@ -586,15 +590,19 @@ rt_comb_import5(
 
 				/* Unpack indicated matrix mi */
 				BU_ASSERT_LONG( mi, <, nmat );
-				tp->tr_l.tl_mat = (matp_t)bu_malloc(
-					sizeof(mat_t), "v5comb mat");
 				ntohd( (unsigned char *)diskmat,
 					&matp[mi*ELEMENTS_PER_MAT*SIZEOF_NETWORK_DOUBLE],
 					ELEMENTS_PER_MAT);
-				bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
-				if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
-					bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
-					tp->tr_l.tl_mat = (matp_t)NULL;
+				if( !mat || bn_mat_is_identity( mat ) ) {
+					tp->tr_l.tl_mat = bn_mat_dup( diskmat );
+				} else {
+					tp->tr_l.tl_mat = (matp_t)bu_malloc(
+						sizeof(mat_t), "v5comb mat");
+					bn_mat_mul( tp->tr_l.tl_mat, mat, diskmat );
+					if( bn_mat_is_identity( tp->tr_l.tl_mat ) ) {
+						bu_free( (char *)tp->tr_l.tl_mat,"tl_mat");
+						tp->tr_l.tl_mat = (matp_t)NULL;
+					}
 				}
 			}
 			break;
