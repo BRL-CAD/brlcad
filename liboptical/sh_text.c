@@ -221,7 +221,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 
 			/* check size of object */
 			if (texture->tx_binunifp->count < size) {
-				bu_log("\ntxt_load_datasource() WARNING %S needs %d bytes, '%s' only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
+				bu_log("\nWARNING: %S needs %d bytes, '%s' only has %d\n", texture->tx_name, size, texture->tx_binunifp->count);
 			} else if (texture->tx_binunifp->count > size) {
 				bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 			}
@@ -239,8 +239,7 @@ HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInst
 			return -1;				/* FAIL */
 
 		if (texture->tx_mp->buflen < size) {
-			bu_log("\ntxt_load_datasource() ERROR %S needs %d bytes, file only has %d\n", texture->tx_name, size, texture->tx_mp->buflen);
-			return -1;
+			bu_log("\nWARNING: %S needs %d bytes, file only has %d\n", &texture->tx_name, size, texture->tx_mp->buflen);
 		} else if (texture->tx_mp->buflen > size) {
 			bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %d pixels\n\tSpecified Texture Size: %d pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 		}
