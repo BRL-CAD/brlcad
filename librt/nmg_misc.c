@@ -53,10 +53,14 @@ long *p;
 		b->buffer = (long **)rt_calloc(b->blen=64,
 						sizeof(p), "pointer table");
 		b->end = 0;
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl(%8x) TBL_INIT\n", b);
 		return(0);
 	} else if (func == TBL_RST) {
 		NMG_CK_PTBL(b);
 		b->end = 0;
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl(%8x) TBL_RST\n", b);
 		return(0);
 	} else if (func == TBL_INS) {
 		register int i;
@@ -68,7 +72,7 @@ long *p;
 		} pp;
 
 		if (rt_g.NMG_debug & DEBUG_INS)
-			rt_log("nmg_tbl Inserting %8x\n", p);
+			rt_log("nmg_tbl(%8x) TBL_INS %8x\n", b, p);
 
 		NMG_CK_PTBL(b);
 		pp.l = p;
@@ -114,7 +118,7 @@ long *p;
 		}
 
 		if (rt_g.NMG_debug & DEBUG_INS)
-			rt_log("nmg_tbl Inserting %8x\n", p);
+			rt_log("nmg_tbl(%8x) TBL_INS_UNIQUE %8x\n", b, p);
 
 		b->buffer[k=b->end++] = p;
 		return(-1);		/* To signal that it was added */
@@ -129,6 +133,8 @@ long *p;
 		register long **pp = b->buffer;
 
 		NMG_CK_PTBL(b);
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl(%8x) TBL_RM %8x\n", b, p);
 		for (l = b->end-1 ; l >= 0 ; --l)
 			if (pp[l] == p){
 				/* delete occurrence(s) of p */
@@ -152,6 +158,9 @@ long *p;
 
 		NMG_CK_PTBL(b);
 		d.l = p;
+		NMG_CK_PTBL(d.t);
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl(%8x) TBL_CAT %8x\n", b, p);
 
 		if ((b->blen - b->end) < d.t->end) {
 			
@@ -166,9 +175,12 @@ long *p;
 		bzero((char *)b->buffer, b->blen * sizeof(p));
 		rt_free((char *)b->buffer, "pointer table");
 		bzero(b, sizeof(struct nmg_ptbl));
+		if (rt_g.NMG_debug & DEBUG_INS)
+			rt_log("nmg_tbl(%8x) TBL_FREE\n", b);
 		return (0);
 	} else {
-		rt_log("Unknown table function %d\n", func);
+		NMG_CK_PTBL(b);
+		rt_log("nmg_tbl(%8x) Unknown table function %d\n", b, func);
 		rt_bomb("nmg_tbl");
 	}
 	return(-1);/* this is here to keep lint happy */
