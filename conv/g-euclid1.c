@@ -474,9 +474,11 @@ char	*argv[];
 			break;
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'r':		/* Relative tolerance. */
 			ttol.rel = atof(optarg);

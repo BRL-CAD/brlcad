@@ -619,10 +619,10 @@ struct db_full_path *pathp;
 
 		/* Now write the data out */
 		if( fp_id )	/* Use id count instead of actual id */
-			fprintf( fp_out , "%11d%7d%7d           " ,
+			fprintf( fp_out , "%d %d %d           " ,
 				NMG_TBL_END( &vertices ), id_counter , surr_code );
 		else
-			fprintf( fp_out , "%11d%7d%7d           " ,
+			fprintf( fp_out , "%d %d %d           " ,
 				NMG_TBL_END( &vertices ), tsp->ts_regionid , surr_code );
 		for( i=0 ; i<NMG_TBL_END( &vertices ) ; i++ )
 		{
@@ -630,9 +630,9 @@ struct db_full_path *pathp;
 
 			v = (struct vertex *)NMG_TBL_GET( &vertices , i );
 			if( (i-1)%4 == 0 )
-				fprintf( fp_out , "%5.0f.%5.0f.%5.0f.\n" , V3ARGS( v->vg_p->coord ) );
+				fprintf( fp_out , " %.3f %.3f %.3f\n" , V3ARGS( v->vg_p->coord ) );
 			else
-				fprintf( fp_out , "%5.0f.%5.0f.%5.0f." , V3ARGS( v->vg_p->coord ) );
+				fprintf( fp_out , " %.3f %.3f %.3f" , V3ARGS( v->vg_p->coord ) );
 		}
 		if( (NMG_TBL_END( &vertices )-2)%4 != 0 )
 			fprintf( fp_out, "\n" );
@@ -706,12 +706,14 @@ char	*argv[];
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'i':		/* Idents output file */
 			id_file = optarg;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */
 			out_file = optarg;

@@ -227,6 +227,7 @@ char	*argv[];
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'd':		/* calculational tolerance */
 			tol.dist = atof( optarg );
@@ -234,6 +235,7 @@ char	*argv[];
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */
 			out_file = optarg;
