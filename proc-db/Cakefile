@@ -1,0 +1,46 @@
+/*
+ *			proc-db/Cakefile
+ */
+
+#define SRCDIR	proc-db
+#define PRODUCTS	pyramid molecule clutter kurt room tube
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* These programs are not really for system-wide installation */
+#undef BINDIR
+#define BINDIR	/tmp
+#define AFTERINSTALL	rm
+
+#define MATHTAB	../rt.MTYPE/mathtab.o
+
+/* Explicit composition of each product */
+
+tube:	tube.o 
+	CC LDFLAGS  tube.o LIBWDB \
+		LIBRT RT_CONFIG LIBSYSV LIBES -o tube
+
+room:	room.o common.o
+	CC LDFLAGS  room.o common.o LIBWDB \
+		LIBRT RT_CONFIG LIBSYSV LIBES -o room
+
+clutter:	clutter.o common.o
+	CC LDFLAGS  clutter.o common.o LIBWDB \
+		LIBRT RT_CONFIG MATHTAB LIBSYSV LIBES -o clutter
+
+kurt:		kurt.o
+	CC LDFLAGS  kurt.o LIBWDB LIBRT RT_CONFIG \
+		LIBSYSV LIBES -o kurt
+
+pyramid:	pyramid.o
+	CC LDFLAGS  pyramid.o LIBWDB \
+		LIBRT RT_CONFIG LIBSYSV LIBES -o pyramid
+
+molecule:	molecule.o 
+	CC LDFLAGS  molecule.o LIBWDB \
+		LIBRT RT_CONFIG LIBSYSV LIBES -o molecule
+
+#include "../Cakefile.rules"
