@@ -35,25 +35,57 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *			M K _ I D
  */
-mk_id( title )
-char *title;
+mk_id( fp, title )
+FILE	*fp;
+char	*title;
 {
 	static union record rec;
 
+	bzero( (char *)&rec, sizeof(rec) );
 	rec.i.i_id = ID_IDENT;
 	rec.i.i_units = ID_MM_UNIT;
 	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
 	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
-	fwrite( (char *)&rec, sizeof(rec), 1, stdout );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 }
 
 /*
- *			M K _ A R B
+ *			M K _ A R B 4
  */
-mk_arb( name, pts, npts )
-char *name;
-point_t pts[];
-int npts;
+mk_arb4( fp, name, pts )
+FILE	*fp;
+char	*name;
+point_t	pts[];
+{
+	register int i;
+	point_t	pt8[8];
+
+	VMOVE( pt8[0], pts[0] );
+	VMOVE( pt8[1], pts[1] );
+	VMOVE( pt8[2], pts[2] );
+	VMOVE( pt8[3], pts[2] );	/* shared point for base */
+
+	VMOVE( pt8[4], pts[3] );	/* top point */
+	VMOVE( pt8[5], pts[3] );
+	VMOVE( pt8[6], pts[3] );
+	VMOVE( pt8[7], pts[3] );
+
+	mk_arb8( fp, name, pt8 );
+}
+
+/*
+ *			M K _ A R B 8
+ *
+ *  If there are degeneracies (ie, all 8 vertices are not distinct),
+ *  then certain requirements must be met.
+ *  If we think of the ARB8 as having a top and a bottom plate,
+ *  the first four points listed must lie on one plate, and
+ *  the second four points listed must lie on the other plate.
+ */
+mk_arb8( fp, name, pts )
+FILE	*fp;
+char	*name;
+point_t	pts[];
 {
 	register int i;
 	static union record rec;
@@ -63,13 +95,10 @@ int npts;
 	rec.s.s_type = GENARB8;
 	NAMEMOVE( name, rec.s.s_name );
 	VMOVE( &rec.s.s_values[3*0], pts[0] );
-	for( i=1; i<npts; i++ )  {
+	for( i=1; i<8; i++ )  {
 		VSUB2( &rec.s.s_values[3*i], pts[i], pts[0] );
 	}
-	for( ; i<8; i++ )  {
-		VSET( &rec.s.s_values[3*i], 0, 0, 0 );
-	}
-	fwrite( (char *)&rec, sizeof(rec), 1, stdout );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 }
 
 /*
@@ -78,17 +107,15 @@ int npts;
  * Make a sphere centered at sx, sy, sz with radius r.
  */
 
-mk_sph(name,  sx, sy, sz, r)
-char * name;
-fastf_t sx, sy, sz, r;
+mk_sph( fp, name, sx, sy, sz, r)
+FILE	*fp;
+char	*name;
+fastf_t	sx, sy, sz, r;
 {
 	register int i;
 	static union record rec;
 
-#ifdef BSD
 	bzero( (char *)&rec, sizeof(rec) );
-#endif
-
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENELL;
 	rec.s.s_cgtype = SPH;
@@ -99,7 +126,7 @@ fastf_t sx, sy, sz, r;
 	VSET( &rec.s.s_values[6], 0, r, 0 );
 	VSET( &rec.s.s_values[9], 0, 0, r );
 	
-	fwrite( (char *) &rec, sizeof(rec), 1, stdout);
+	fwrite( (char *) &rec, sizeof(rec), 1, fp);
 }
 
 
@@ -120,23 +147,18 @@ fastf_t sx, sy, sz, r;
  * mk_rcc( name, base, height, radius)
  * Make a Right Circular Cylinder into a generalized truncated cyinder
  */
-
-
-mk_rcc( name, base, height, radius )
-char * name;
-point_t base;
-vect_t height;
-fastf_t radius;
+mk_rcc( fp, name, base, height, radius )
+FILE	*fp;
+char	*name;
+point_t	base;
+vect_t	height;
+fastf_t	radius;
 {
 	static union record rec;
 	static float pi = 3.14159265358979323264;
 	fastf_t m1, m2;
 
-#ifdef BSD
 	bzero( (char *)&rec, sizeof(rec) );
-#endif
-
-
 	rec.s.s_id = ID_SOLID;
 	rec.s.s_type = GENTGC;
 	rec.s.s_cgtype = RCC;
@@ -172,7 +194,7 @@ fastf_t radius;
 	VMOVE( F5, F3);
 	VMOVE( F6, F4);
 
-	fwrite( (char *)&rec, sizeof( rec), 1, stdout);
+	fwrite( (char *)&rec, sizeof( rec), 1, fp);
 }
 
 /*
@@ -180,11 +202,12 @@ fastf_t radius;
  *
  *  Make a combination with material properties info
  */
-mk_mcomb( name, len, region, matname, matparm, override, rgb )
-char *name;
-char *matname;
-char *matparm;
-char *rgb;
+mk_mcomb( fp, name, len, region, matname, matparm, override, rgb )
+FILE	*fp;
+char	*name;
+char	*matname;
+char	*matparm;
+char	*rgb;
 {
 	static union record rec;
 
@@ -208,7 +231,7 @@ char *rgb;
 		rec.c.c_rgb[1] = rgb[1];
 		rec.c.c_rgb[2] = rgb[2];
 	}
-	fwrite( (char *)&rec, sizeof(rec), 1, stdout );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 }
 
 
@@ -218,8 +241,9 @@ char *rgb;
  *  Make a simple combination header.
  * Must be followed by 'len' mk_memb() calls before any other mk_* routines
  */
-mk_comb( name, len, region )
-char *name;
+mk_comb( fp, name, len, region )
+FILE	*fp;
+char	*name;
 {
 	static union record rec;
 
@@ -231,7 +255,7 @@ char *name;
 		rec.c.c_flags = ' ';
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_length = len;
-	fwrite( (char *)&rec, sizeof(rec), 1, stdout );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 }
 
 /*
@@ -239,18 +263,20 @@ char *name;
  *
  *  Must be part of combination/member clump of records.
  */
-mk_memb( op, name, mat )
-int op;
-char *name;
-mat_t mat;
+mk_memb( fp, op, name, mat )
+FILE	*fp;
+int	op;
+char	*name;
+mat_t	mat;
 {
 	static union record rec;
 	register int i;
 
+	bzero( (char *)&rec, sizeof(rec) );
 	rec.M.m_id = ID_MEMB;
 	rec.M.m_relation = op;
 	NAMEMOVE( name, rec.M.m_instname );
 	for( i=0; i<16; i++ )
 		rec.M.m_mat[i] = mat[i];
-	fwrite( (char *)&rec, sizeof(rec), 1, stdout );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 }

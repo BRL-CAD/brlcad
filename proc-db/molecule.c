@@ -17,11 +17,11 @@ static char rcs_ident[] = "$Header$";
 
 struct sphere  {
 	struct sphere * next;		/* Next Sphere */
-	int  s_id;			/* Sphere id */
-	char  s_name[15];			/* Sphere name */
-	point_t s_center;		/* Sphere Center */
-	fastf_t s_rad;			/* Sphere radius */
-	int s_atom_type;		/* Atom Type */
+	int	s_id;			/* Sphere id */
+	char	s_name[15];		/* Sphere name */
+	point_t	s_center;		/* Sphere Center */
+	fastf_t	s_rad;			/* Sphere radius */
+	int	s_atom_type;		/* Atom Type */
 };
 
 struct sphere *s_list = (struct sphere *) 0;
@@ -43,7 +43,7 @@ int argc;
 char ** argv;
 {
 
-	mk_id( argv[1], ID_MM_UNIT );
+	mk_id( stdout, argv[1], ID_MM_UNIT );
 	read_data();
 }
 
@@ -101,7 +101,7 @@ read_data( )
 		case (2):
 			scanf("%d", &b_1);
 			scanf("%d", &b_2);
-			mk_bond( b_1, b_2);
+			make_bond( b_1, b_2);
 			break;
 		case (4):
 			return;
@@ -129,9 +129,9 @@ int sph_type;
 
 	sprintf(nm, "SPH.%d", id );
 	sprintf(nm1, "sph.%d", id );
-	mk_sph( nm1, x, y, z, rad );
-	mk_mcomb( nm, 1, 1, matname, matparm, 1, rgb );
-	mk_memb( UNION, nm1, m);
+	mk_sph( stdout, nm1, x, y, z, rad );
+	mk_mcomb( stdout, nm, 1, 1, matname, matparm, 1, rgb );
+	mk_memb( stdout, UNION, nm1, m);
 
 	new->next = ( struct sphere *)0;
 	new->s_id = id;
@@ -152,7 +152,7 @@ int sph_type;
 	}
 }
 
-mk_bond( sp1, sp2 )
+make_bond( sp1, sp2 )
 int sp1, sp2;
 {
 	struct sphere * s1, *s2, *s_ptr;
@@ -188,12 +188,11 @@ int sp1, sp2;
 	rgb[1] = 142;
 	rgb[2] = 57;
 
-	mk_rcc( nm, base, height, 5.0 );
+	mk_rcc( stdout, nm, base, height, 5.0 );
 
-	mk_mcomb( nm1, 3, 1, matname, matparm, 1, rgb);
-	mk_memb(UNION, nm, m);
-	mk_memb(SUBTRACT, s1->s_name, m);
-	mk_memb(SUBTRACT, s2->s_name, m);
+	mk_mcomb( stdout, nm1, 3, 1, matname, matparm, 1, rgb);
+	mk_memb( stdout, UNION, nm, m);
+	mk_memb( stdout, SUBTRACT, s1->s_name, m);
+	mk_memb( stdout, SUBTRACT, s2->s_name, m);
 
 }
-

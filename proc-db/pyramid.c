@@ -28,32 +28,34 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 double sin60;
 
-main()
+main(argc, argv)
+char	**argv;
 {
-	sin60 = sin(3.14159265358979323846264/3.0);
+	int depth;
 
-	mk_id( "Triangles" );
+	if( argc != 2 )  {
+		fprintf(stderr, "Usage:  tri recursion\n");
+		exit(1);
+	}
+	depth = atoi( argv[1] );
+	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
+
+	mk_id( stdout, "Triangles" );
 
 	do_leaf();
-	do_tree("tree",4);
+	do_tree("tree", depth);
 }
 
 do_leaf()
 {
-	point_t pt[8];
+	point_t pt[4];
 
 	VSET( pt[0], 0, 0, 0);
 	VSET( pt[1], 1, 0, 0);
 	VSET( pt[2], 0.5, sin60, 0);
-	VMOVE( pt[3], pt[2] );
+	VSET( pt[3], 0.5, sin60/3, sin60 );
 
-	VSET( pt[4], 0.5, sin60/3, sin60 );
-
-	VMOVE( pt[5], pt[1] );
-	VMOVE( pt[6], pt[2] );
-	VMOVE( pt[7], pt[4] );
-
-	mk_arb( "leaf", pt, 8 );
+	mk_arb4( stdout, "leaf", pt );
 }
 
 do_tree(name, level)
@@ -76,23 +78,23 @@ int level;
 		scale *= 2;
 
 	/* len = 4, set region on lowest level */
-	mk_comb( name, 4, level<=1 );
+	mk_comb( stdout, name, 4, level<=1 );
 
 	mat_idn( m );
 	sprintf(nm, "%sL", name);
-	mk_memb( UNION, leafp, m );
+	mk_memb( stdout, UNION, leafp, m );
 
 	MAT_DELTAS( m, 1*scale, 0, 0 );
 	sprintf(nm, "%sR", name);
-	mk_memb( UNION, leafp, m );
+	mk_memb( stdout, UNION, leafp, m );
 
 	MAT_DELTAS( m, 0.5*scale, sin60*scale, 0 );
 	sprintf(nm, "%sB", name);
-	mk_memb( UNION, leafp, m );
+	mk_memb( stdout, UNION, leafp, m );
 
 	MAT_DELTAS( m, 0.5*scale, sin60/3*scale, sin60*scale );
 	sprintf(nm, "%sT", name);
-	mk_memb( UNION, leafp, m );
+	mk_memb( stdout, UNION, leafp, m );
 
 	/* Loop for children if level > 1 */
 	if( level <= 1 )
