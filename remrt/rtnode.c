@@ -104,9 +104,9 @@ static char *title_file, *title_obj;	/* name of file and first object */
 #define MAX_WIDTH	(16*1024)
 
 static int	nlines_line;		/* how many scanlines worth in red_line */
-static char	*red_line;
-static char	*grn_line;
-static char	*blu_line;
+static unsigned char	*red_line;
+static unsigned char	*grn_line;
+static unsigned char	*blu_line;
 extern int	curframe;		/* shared with do.c */
 
 static int	avail_cpus;		/* # of cpus avail on this system */
@@ -562,9 +562,15 @@ char *buf;
 	    rtip->rti_dbip->dbi_title, strlen(rtip->rti_dbip->dbi_title)+1, pcsrv ) < 0 )
 		fprintf(stderr,"RTSYNCMSG_DIRBUILD reply error\n");
 
-/* XXXX BUG:  On IRIX64, int=32, but these pointers are 64-bits wide! (long)  No TCL_LINK_LONG or TCL_LINK_PTR */
-	Tcl_LinkVar(interp, "dbip", (char *)&ap.a_rt_i->rti_dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
-	Tcl_LinkVar(interp, "rtip", (char *)&ap.a_rt_i, TCL_LINK_INT|TCL_LINK_READ_ONLY);
+
+	/* Can't use Tcl_LinkVar, it doesn't have a (void*) or (long) type */
+	{
+		char	str[64];
+		sprintf(str, "%ld", (long)ap.a_rt_i->rti_dbip );
+		Tcl_SetVar(interp, "dbip", str, TCL_GLOBAL_ONLY);
+		sprintf(str, "%ld", (long)ap.a_rt_i );
+		Tcl_SetVar(interp, "rtip", str, TCL_GLOBAL_ONLY);
+	}
 
 	{
 		struct bu_vls	cmd;
