@@ -2369,6 +2369,9 @@ int width, height;
   OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
   OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
 
+  ifp->if_zoomflag = 0;
+  ifp->if_xzoom = 1;
+  ifp->if_yzoom = 1;
   ifp->if_xcenter = width/2;
   ifp->if_ycenter = height/2;
 
@@ -2607,6 +2610,7 @@ FBIO *ifp;
 int x, y, w, h;
 {
   int mm;
+  struct ogl_clip *clp;
 
   if(w < 0){
     w = -w;
@@ -2629,7 +2633,15 @@ int x, y, w, h;
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
+
+#if 0
   glOrtho(0.0, OGL(ifp)->win_width, 0.0, OGL(ifp)->win_height, -1.0, 1.0);
+#else
+  ogl_clipper(ifp);
+  clp = &(OGL(ifp)->clip);
+  glOrtho( clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
+  glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
+#endif
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
