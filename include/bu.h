@@ -2139,7 +2139,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_vlscatzap,
 BU_EXPORT BU_EXTERN(void bu_vls_from_argv,
 		    (struct bu_vls *vp,
 		     int argc,
-		     char **argv));
+		     const char *argv[]));
 BU_EXPORT BU_EXTERN(int bu_argv_from_string,
 		    (char **argv,
 		     int lim,
