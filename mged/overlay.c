@@ -80,7 +80,7 @@ char	**argv;
 	cvt_vlblock_to_solids( vbp, name, 0 );
 
 	rt_vlblock_free(vbp);
-	view_state->vs_flag = 1;
+	update_views = 1;
 	return TCL_OK;
 }
 
@@ -134,6 +134,6 @@ char	**argv;
 	cvt_vlblock_to_solids( vbp, "_LABELVERT_", 0 );
 
 	rt_vlblock_free(vbp);
-	view_state->vs_flag = 1;
+	update_views = 1;
 	return TCL_OK;
 }
