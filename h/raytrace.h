@@ -1142,6 +1142,10 @@ struct application  {
 #define RT_AP_MAGIC	0x4170706c	/* "Appl" */
 #define RT_CK_AP(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
 #define RT_CK_APPLICATION(_p)	BU_CKMAG(_p,RT_AP_MAGIC,"struct application")
+#define RT_APPLICATION_INIT(_p)	{ \
+		bzero( (char *)(_p), sizeof(struct application) ); \
+		(_p)->a_magic = RT_AP_MAGIC; \
+	}
 
 #define RT_AP_CHECK(_ap)	\
 	{if((_ap)->a_zero1||(_ap)->a_zero2) \
@@ -1459,6 +1463,25 @@ struct rt_functab {
 	CONST struct bu_structparse *ft_parsetab;	/* rt_xxx_parse */
 	size_t	ft_internal_size;	/* sizeof(struct rt_xxx_internal) */
 	long	ft_internal_magic;	/* RT_XXX_INTERNAL_MAGIC */
+#if defined(TCL_OK)
+	int	(*ft_tclget) BU_ARGS((Tcl_Interp *,
+			CONST struct rt_db_internal *, CONST char *item));
+	int	(*ft_tcladjust) BU_ARGS((Tcl_Interp *,
+			struct rt_db_internal *,
+			int /*argc*/, char ** /*argv*/));
+	int	(*ft_tclform) BU_ARGS((CONST struct rt_functab *,
+			Tcl_Interp *));
+#else
+	int	(*ft_tclget) BU_ARGS((genptr_t /*interp*/,
+			CONST struct rt_db_internal *, CONST char *item));
+	int	(*ft_tcladjust) BU_ARGS((genptr_t /*interp*/,
+			struct rt_db_internal *,
+			int /*argc*/, char ** /*argv*/));
+	int	(*ft_tclform) BU_ARGS((CONST struct rt_functab *,
+			genptr_t /*interp*/));
+#endif
+	void	(*ft_make) BU_ARGS((CONST struct rt_functab *,
+			struct rt_db_internal *, double /*diameter*/));
 };
 extern CONST struct rt_functab rt_functab[];
 extern CONST int rt_nfunctab;
