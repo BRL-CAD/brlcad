@@ -32,6 +32,8 @@ static char RCSlight[] = "@(#)$Header$ (BRL)";
 
 struct matparse light_parse[] = {
 	"inten",	(mp_off_ty)&(LIGHT_NULL->lt_intensity),	"%f",
+	"angle",	(mp_off_ty)&(LIGHT_NULL->lt_angle),	"%f",
+	"shadows",	(mp_off_ty)&(LIGHT_NULL->lt_shadows),	"%d",
 	"fract",	(mp_off_ty)&(LIGHT_NULL->lt_fraction),	"%f",
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
@@ -65,8 +67,16 @@ char	*dp;
 {
 	register struct light_specific *lp =
 		(struct light_specific *)dp;
+	register fastf_t f, dot;
 
-	VSCALE( swp->sw_color, lp->lt_color, lp->lt_fraction );
+	if( (dot= -VDOT( ap->a_ray.r_dir, lp->lt_aim)) < lp->lt_cosangle )  {
+		/* dark, outside of light beam area */
+		f = lp->lt_fraction * 0.5;
+	} else {
+		/* within beam area */
+		f = lp->lt_fraction;
+	}
+	VSCALE( swp->sw_color, lp->lt_color, f );
 }
 
 /*
@@ -81,6 +91,8 @@ char	*matparm;
 char	**dpp;
 {
 	register struct light_specific *lp;
+	register struct soltab *stp;
+	vect_t	work;
 
 	GETSTRUCT( lp, light_specific );
 	*dpp = (char *)lp;
@@ -88,17 +100,22 @@ char	**dpp;
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
 	lp->lt_explicit = 1;		/* explicitly modeled */
+	lp->lt_shadows = 1;		/* by default, casts shadows */
+	lp->lt_angle = 90;		/* hemisphere emission by default */
 	mlib_parse( matparm, light_parse, (mp_off_ty)lp );
+
+	if( lp->lt_angle > 180 )  lp->lt_angle = 180;
+	lp->lt_cosangle = cos( (double) lp->lt_angle * 0.0174532925199433 );
 
 	/* Determine position and size */
 	if( rp->reg_treetop->tr_op == OP_SOLID )  {
-		register struct soltab *stp;
 
 		stp = rp->reg_treetop->tr_a.tu_stp;
 		VMOVE( lp->lt_pos, stp->st_center );
 		lp->lt_radius = stp->st_aradius;
 	} else {
 		vect_t	min_rpp, max_rpp, avg, rad;
+		register union tree *tp;
 
 		VSETALL( min_rpp,  INFINITY );
 		VSETALL( max_rpp, -INFINITY );
@@ -108,13 +125,29 @@ char	**dpp;
 		VMOVE( lp->lt_pos, avg );
 		VSUB2( rad, max_rpp, avg );
 		lp->lt_radius = MAGNITUDE( rad );
+
+		/* Find first leaf node on left of tree */
+		tp = rp->reg_treetop;
+		while( tp->tr_op != OP_SOLID )
+			tp = tp->tr_b.tb_left;
+		stp = tp->tr_a.tu_stp;
 	}
+
+	/* Light is aimed down -Z in it's local coordinate system */
+	VSET( work, 0, 0, -1 );
+	MAT4X3VEC( lp->lt_aim, stp->st_pathmat, work );
+	VUNITIZE( lp->lt_aim );
+
 	if( rp->reg_mater.ma_override )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
 	} else {
 		VSETALL( lp->lt_color, 1 );
 	}
-	VPRINT( "Light at", lp->lt_pos );
+	rt_log( "Light at (%g, %g, %g), aimed at (%g, %g, %g), angle=%g\n",
+		lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
+		lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z],
+		lp->lt_angle );
+
 	VMOVE( lp->lt_vec, lp->lt_pos );
 	VUNITIZE( lp->lt_vec );
 

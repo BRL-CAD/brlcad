@@ -466,8 +466,7 @@ struct partition *PartHeadp;
  *	0 on failure
  *	1 on success
  */
-static char *light_hack = "light visibility?";
-
+int
 viewshade( ap, pp, swp )
 struct application *ap;
 register struct partition *pp;
@@ -587,24 +586,38 @@ register struct shadework *swp;
 		 *  An explicit light source, and the shader desires
 		 *  light visibility information.
 		 *  Fire ray at light source to check for shadowing.
-		 *  This SHOULD actually return an energy value
+		 *  (This SHOULD actually return an energy value)
+		 *  Dither light pos for penumbra by +/- 0.5 light radius;
+		 *  this presently makes a cubical light source distribution.
 		 */
-		sub_ap = *ap;		/* struct copy */
-		sub_ap.a_hit = light_hit;
-		sub_ap.a_miss = light_miss;
-		sub_ap.a_level = 0;
-		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
-			
-		/* Dither light pos for penumbra by +/- 0.5 light radius */
-		/* This presently makes a cubical light source distribution */
+		sub_ap = *ap;			/* struct copy */
 		f = lp->lt_radius * 0.9;
 		sub_ap.a_ray.r_dir[X] =  lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
 		sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
 		sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
 		VUNITIZE( sub_ap.a_ray.r_dir );
+
+		/*
+		 * See if ray from hit point to light lies within light beam
+		 */
+		if( -VDOT(sub_ap.a_ray.r_dir, lp->lt_aim) < lp->lt_cosangle )  {
+			/* dark (outside of light beam) */
+			swp->sw_visible[i] = (char *)0;
+			continue;
+		}
+		if( !(lp->lt_shadows) )  {
+			/* "fill light" in beam, don't care about shadows */
+			swp->sw_visible[i] = (char *)lp;
+			VSETALL( intensity, 1 );
+			continue;
+		}
+		VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
+		sub_ap.a_hit = light_hit;
+		sub_ap.a_miss = light_miss;
+		sub_ap.a_level = 0;
+
 		VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
-/**		sub_ap.a_purpose = "light visibility?"; **/
-		sub_ap.a_purpose = light_hack;
+		sub_ap.a_purpose = "light visibility?";
 		if( rt_shootray( &sub_ap ) )  {
 			/* light visible */
 			swp->sw_visible[i] = (char *)lp;
