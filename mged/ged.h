@@ -313,7 +313,8 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 	DELETE_ERR(_name); \
 	return;  }
 
-/* A verbose message to attempt to soothe and advise the user */#define	ERROR_RECOVERY_SUGGESTION	\
+/* A verbose message to attempt to soothe and advise the user */
+#define	ERROR_RECOVERY_SUGGESTION	\
 	(void)printf("\
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
