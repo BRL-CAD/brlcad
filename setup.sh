@@ -3,6 +3,7 @@
 #
 # This shell script is to be run as the very first step in installing
 # the BRL CAD Package
+#
 # Secret option:  -f, (fast) to skip re-compiling Cake.
 #
 #  $Header$
@@ -132,14 +133,16 @@ cat << EOF > ${IN_FILE}
 #include "Cakefile.defs"
 
 #ifdef BSD
+#undef BSD	/* So that C_UNIXTYPE can have a value of BSD, not "43", etc. */
 ${OUT_FILE}:
 	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
-	echo C_UNIXTYPE=\"BSD\" ';' >> ${OUT_FILE}
+	echo C_UNIXTYPE=\'BSD\' ';' >> ${OUT_FILE}
 	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
 #else
+#undef SYSV
 ${OUT_FILE}:
 	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
-	echo C_UNIXTYPE=\"SYSV\" ';' >> ${OUT_FILE}
+	echo C_UNIXTYPE=\'SYSV\' ';' >> ${OUT_FILE}
 	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
 #endif
 EOF
