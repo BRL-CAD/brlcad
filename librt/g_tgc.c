@@ -1683,7 +1683,7 @@ const struct db_i		*dbip;
 	fastf_t			vec[3*6];
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_TGC )  return(-1);
+	if( ip->idb_type != ID_TGC && ip->idb_type != ID_REC )  return(-1);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
