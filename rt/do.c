@@ -571,7 +571,8 @@ int framenumber;
 		remark(message);	/* Send to log files */
 #else
 		/* Protect finished product */
-		chmod( framename, 0444 );
+		if( outputfile != (char *)0 )
+			chmod( framename, 0444 );
 #endif CRAY_COS
 	}
 
