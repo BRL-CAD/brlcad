@@ -3287,7 +3287,6 @@ copy_object(
 	Tcl_HashTable *used_names_tbl,
 	int unique_mode )
 {
-	int id;
 	struct rt_db_internal ip;
 	struct rt_extrude_internal *extr;
 	struct rt_dsp_internal *dsp;
@@ -3295,7 +3294,7 @@ copy_object(
 	struct directory *new_dp;
 	char *new_name;
 
-	if( (id = rt_db_get_internal( &ip, input_dp, input_dbip, NULL, &rt_uniresource)) < 0 ) {
+	if( rt_db_get_internal( &ip, input_dp, input_dbip, NULL, &rt_uniresource) < 0 ) {
 		Tcl_AppendResult(interp, "Failed to get internal form of object (", input_dp->d_namep,
 				 ") - aborting!!!\n", (char *)NULL );
 		return TCL_ERROR;
@@ -7918,7 +7917,6 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 {
 	int c;
 	struct bu_vls	vls;
-	unsigned int major_type=0;
 	unsigned int minor_type=0;
 	char *obj_name;
 	char *file_name;
@@ -7991,7 +7989,6 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 				return TCL_ERROR;
 			}
 
-			major_type=DB5_MAJORTYPE_BINARY_UNIF;
 			switch ((int)argv[1][0]) {
 			case 'f':
 				minor_type = DB5_MINORTYPE_BINU_FLOAT;
@@ -8074,7 +8071,6 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 
 	} else if( output_mode ) {
 		FILE *fd;
-		int id;
 
 		file_name = *argv;
 
@@ -8103,8 +8099,8 @@ wdb_binary_cmd(struct rt_wdb	*wdbp,
 			return TCL_ERROR;
 		}
 
-		if( (id=rt_db_get_internal( &intern, dp, wdbp->dbip, NULL,
-					 &rt_uniresource )) < 0 ) {
+		if( rt_db_get_internal( &intern, dp, wdbp->dbip, NULL,
+					 &rt_uniresource ) < 0 ) {
 			Tcl_AppendResult(interp, "Error reading ", dp->d_namep,
 					 " from database", (char *)NULL );
 			fclose( fd );
