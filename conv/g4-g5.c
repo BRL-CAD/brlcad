@@ -70,7 +70,7 @@ char	**argv;
 				continue;
 			}
 			if ( id == ID_HF ) {
-				if (hf_to_dsp( &intern )) {
+				if (rt_hf_to_dsp( &intern )) {
 					fprintf(stderr,
 						"%s: Conversion from HF to DSP failed for solid %s\n",
 						argv[0], dp->d_namep );
@@ -80,7 +80,7 @@ char	**argv;
 			}
 			if( id == ID_POLY)
 			{
-				if( pg_bot( &intern, &tol ) )
+				if( rt_pg_to_bot( &intern, &tol ) )
 				{
 					fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
 						argv[0], dp->d_namep );
