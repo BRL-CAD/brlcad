@@ -281,17 +281,8 @@ struct seg {
 #define RT_SEG_NULL	((struct seg *)0)
 #define RT_SEG_MAGIC	0x98bcdef1
 
-#define RT_CHECK_SEG(_p)	{ \
-	if( !(_p) )  {\
-		rt_log("RT_CHECK_SEG() NULL seg ptr, %s line %d\n", \
-			__FILE__, __LINE__ ); \
-		rt_bomb("NULL seg ptr\n"); \
-	} else if( (_p)->l.magic != RT_SEG_MAGIC )  { \
-		rt_log("RT_CHECK_SEG(x%x) magic was x%x, s/b x%x, %s line %d\n", \
-			(_p), (_p)->l.magic, RT_SEG_MAGIC, \
-			__FILE__, __LINE__ ); \
-		rt_bomb("bad seg ptr\n"); \
-	} }
+#define RT_CHECK_SEG(_p)	RT_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
+#define RT_CK_SEG(_p)		RT_CKMAG(_p, RT_SEG_MAGIC, "struct seg")
 
 #define RT_GET_SEG(p,res)    { \
 	while( !RT_LIST_WHILE((p),seg,&((res)->re_seg.l)) || !(p) ) \
@@ -343,13 +334,8 @@ struct soltab {
 #define	SOLTAB_NULL	RT_SOLTAB_NULL	/* backwards compat */
 #define RT_SOLTAB_MAGIC	0x92bfcde0
 
-#define RT_CHECK_SOLTAB(_p)	{ \
-	if( (_p)->l.magic != RT_SOLTAB_MAGIC )  { \
-		rt_log("RT_CHECK_SOLTAB(x%x) magic was x%x, s/b x%x, %s line %d\n", \
-			(_p), (_p)->l.magic, RT_SOLTAB_MAGIC, \
-			__FILE__, __LINE__ ); \
-		rt_bomb("bad soltab ptr\n"); \
-	} }
+#define RT_CHECK_SOLTAB(_p)	RT_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
+#define RT_CK_SOLTAB(_p)	RT_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
 
 /*
  *  Values for Solid ID.
@@ -433,6 +419,7 @@ struct mater_info {
  *  The region structure.
  */
 struct region  {
+	long		reg_magic;
 	char		*reg_name;	/* Identifying string */
 	union tree	*reg_treetop;	/* Pointer to boolean tree */
 	short		reg_bit;	/* constant index into Regions[] */
@@ -448,6 +435,8 @@ struct region  {
 	short		reg_instnum;	/* instance number, from d_uses */
 };
 #define REGION_NULL	((struct region *)0)
+#define RT_REGION_MAGIC	0xdffb8001
+#define RT_CK_REGION(_p)	RT_CKMAG(_p,RT_REGION_MAGIC,"struct region")
 
 /*
  *  			P A R T I T I O N
@@ -478,13 +467,13 @@ struct region  {
 
 struct partition {
 	long		pt_magic;		/* sanity check */
+	struct partition *pt_forw;		/* forwards link */
+	struct partition *pt_back;		/* backwards link */
 	struct seg	*pt_inseg;		/* IN seg ptr (gives stp) */
 	struct hit	*pt_inhit;		/* IN hit pointer */
 	struct seg	*pt_outseg;		/* OUT seg pointer */
 	struct hit	*pt_outhit;		/* OUT hit ptr */
 	struct region	*pt_regionp;		/* ptr to containing region */
-	struct partition *pt_forw;		/* forwards link */
-	struct partition *pt_back;		/* backwards link */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
 	int		pt_len;			/* rti_pt_bytes when created */
@@ -493,12 +482,8 @@ struct partition {
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
 
-#define RT_CHECK_PT(_p)	{ if( (_p)->pt_magic != PT_MAGIC )  { \
-				rt_log("RT_CHECK_PT(x%x) magic was x%x, s/b x%x, %s line %d\n", \
-					(_p), (_p)->pt_magic, PT_MAGIC, \
-					__FILE__, __LINE__ ); \
-				rt_bomb("bad partition ptr\n"); \
-			} }
+#define RT_CHECK_PT(_p)	RT_CKMAG(_p,PT_MAGIC, "struct partition")
+#define RT_CK_PT(_p)	RT_CKMAG(_p,PT_MAGIC, "struct partition")
 
 #define COPY_PT(ip,out,in)	{ \
 	bcopy((char *)in, (char *)out, ip->rti_pt_bytes); }
@@ -700,12 +685,8 @@ struct db_i  {
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
 
-#define RT_CHECK_DBI(_p) { if( (_p)->dbi_magic != DBI_MAGIC )  { \
-				rt_log("RT_CHECK_DBI(x%x) magic was x%x, s/b x%x, %s line %d\n", \
-					(_p), (_p)->dbi_magic, DBI_MAGIC, \
-					__FILE__, __LINE__ ); \
-				rt_bomb("bad db_i pointer\n"); \
-			} }
+#define RT_CHECK_DBI(_p)	RT_CKMAG(_p,DBI_MAGIC,"struct db_i")
+#define RT_CK_DBI(_p)		RT_CKMAG(_p,DBI_MAGIC,"struct db_i")
 
 /*
  *			D I R E C T O R Y
@@ -860,6 +841,7 @@ struct animate {
  *  be the responsibility of the application.
  */
 struct resource {
+	long		re_magic;	/* Magic number */
 	struct seg 	re_seg;		/* Head of segment freelist */
 	long		re_seglen;
 	long		re_segget;
@@ -876,16 +858,11 @@ struct resource {
 	long		re_boolslen;	/* # elements in re_boolstack[] */
 	int		re_cpu;		/* processor number, for ID */
 	float		*re_randptr;	/* ptr into random number table */
-	long		re_magic;	/* Magic number */
 };
 #define RESOURCE_NULL	((struct resource *)0)
 #define RESOURCE_MAGIC	0x83651835
-#define RT_RESOURCE_CHECK(_resp)	\
-	{if((_resp)->re_magic != RESOURCE_MAGIC) {\
-		rt_log("resp=x%x, magic s/b x%x was x%x, %s line %d\n", \
-			(_resp), RESOURCE_MAGIC, (_resp)->re_magic, \
-			__FILE__, __LINE__ ); \
-		rt_bomb("bad resource struct"); } }
+#define RT_RESOURCE_CHECK(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
+#define RT_CK_RESOURCE(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 
 /*
  *			S T R U C T P A R S E
@@ -1065,12 +1042,8 @@ struct rt_i {
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
 
-#define RT_CHECK_RTI(_p) { if( (_p)->rti_magic != RTI_MAGIC )  { \
-				rt_log("RT_CHECK_RTI(x%x) magic was x%x, s/b x%x, %s line %d\n", \
-					(_p), (_p)->rti_magic, RTI_MAGIC, \
-					__FILE__, __LINE__ ); \
-				rt_bomb("bad rt_i pointer\n"); \
-			} }
+#define RT_CHECK_RTI(_p)	RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
+#define RT_CK_RTI(_p)		RT_CKMAG(_p, RTI_MAGIC, "struct rt_i")
 
 /*
  *			V L I S T
@@ -1148,11 +1121,6 @@ struct rt_vlblock {
 	struct rt_list	*head;		/* head[max] */
 };
 #define RT_VLBLOCK_MAGIC	0x981bd112
-
-/* XXX temporary */
-#define GET_VL(p)	xxx
-#define FREE_VL(p)	yyy
-#define ADD_VL(hd,pnt,cmd)	zzz
 
 /*
  *  Replacements for definitions from ../h/vmath.h
