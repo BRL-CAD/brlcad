@@ -44,6 +44,7 @@ matp_t mat;
 	static fastf_t xmin, ymin, zmin;/* For finding the bounding spheres */
 	static fastf_t dx, dy, dz;	/* For finding the bounding spheres */
 	static vect_t	work;		/* Vector addition work area */
+	static vect_t	sum;		/* Sum of all endpoints */
 	static int	faces;		/* # of faces produced */
 	static fastf_t	scale;		/* width across widest axis */
 	static int	i;
@@ -65,30 +66,25 @@ matp_t mat;
 	htov_move( vec, work );				/* divide out W */
 
 	op = &vec[1*ELEMENTS_PER_VECT];
+	VMOVE( sum, vec );				/* sum=0th element */
 	for( i=1; i<8; i++ )  {
 		MAT3XVEC( work, mat, op );		/* 3x3: rot only */
 		VADD2( op, &vec[0], work );
+		VADD2( sum, sum, op );			/* build the sum */
 		op += ELEMENTS_PER_VECT;
 	}
 
 	/*
-	 * Compute bounding sphere.
-	 * Find min and max of the point co-ordinates
+	 *  Determine a point which is guaranteed to be within the solid.
+	 *  This is done by averaging all the vertices.  This center is
+	 *  needed only for add_pt, which demands a point inside the solid.
+	 *  The center of the enclosing RPP strategy used for the bounding
+	 *  sphere can be tricked by thin plates which are non-axis aligned,
+	 *  so this dual-strategy is required.  (What a bug hunt!).
+	 *  The actual work is done in the loop, above.
 	 */
-	op = &vec[0];
-	for( i=0; i< 8; i++ ) {
-		MINMAX( xmin, xmax, *op++ );
-		MINMAX( ymin, ymax, *op++ );
-		MINMAX( zmin, zmax, *op++ );
-		op++;		/* Depends on ELEMENTS_PER_VECT */
-	}
-	VSET( stp->st_center,
-		(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+	VSCALE( stp->st_center, sum, 0.125 );	/* sum/8 */
 
-	dx = (xmax - xmin)/2;
-	dy = (ymax - ymin)/2;
-	dz = (zmax - zmin)/2;
-	stp->st_radsq = dx*dx + dy*dy + dz*dz;
 	stp->st_specific = (int *) 0;
 
 #define P(x)	(&vec[(x)*ELEMENTS_PER_VECT])
@@ -107,12 +103,34 @@ matp_t mat;
 		faces++;					/* 4378 */
 #undef P
 
-	if( faces >= 4  && faces <= 6 )
-		return(0);		/* OK */
+	if( faces < 4  || faces > 6 )  {
+		printf("arb8(%s):  only %d faces present\n",
+			stp->st_name, faces);
+		/* Should free storage for good faces */
+		return(1);			/* Error */
+	}
 
-	printf("arb8(%s):  only %d faces present\n", stp->st_name, faces);
-	/* Should free storage for good faces */
-	return(1);			/* Error */
+	/*
+	 * Compute bounding sphere which contains the bounding RPP.
+	 * Find min and max of the point co-ordinates to find the
+	 * bounding RPP.  Note that this center is NOT guaranteed
+	 * to be contained within the solid!
+	 */
+	op = &vec[0];
+	for( i=0; i< 8; i++ ) {
+		MINMAX( xmin, xmax, *op++ );
+		MINMAX( ymin, ymax, *op++ );
+		MINMAX( zmin, zmax, *op++ );
+		op++;		/* Depends on ELEMENTS_PER_VECT */
+	}
+	VSET( stp->st_center,
+		(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+
+	dx = (xmax - xmin)/2;
+	dy = (ymax - ymin)/2;
+	dz = (zmax - zmin)/2;
+	stp->st_radsq = dx*dx + dy*dy + dz*dz;
+	return(0);		/* OK */
 }
 
 /*
@@ -241,19 +259,23 @@ int noise;			/* non-0: check 4,> pts for being planar */
 	default:
 		/* Merely validate 4th and subsequent points */
 		VSUB2( P_A, point, plp->pl_A );
+		/* Project into 2-d, even if non-planar */
+		plp->pl_2d_x[i] = VDOT( P_A, plp->pl_Xbasis );
+		plp->pl_2d_y[i] = VDOT( P_A, plp->pl_Ybasis );
 		f = VDOT( plp->pl_N, P_A );
-		if( NEAR_ZERO(f) )  {
-			plp->pl_2d_x[i] = VDOT( P_A, plp->pl_Xbasis );
-			plp->pl_2d_y[i] = VDOT( P_A, plp->pl_Ybasis );
-			return(1);			/* OK */
-		}
-		if( noise )  {
-			printf("ERROR: arb8(%s) face %s non-planar\n",
+		if( ! NEAR_ZERO(f) )  {
+			/* Non-planar face */
+			if( noise )  {
+				printf("ERROR: arb8(%s) face %s non-planar\n",
 				stp->st_name, plp->pl_code );
+			}
+#ifdef CONSERVATIVE
+			plp->pl_npts--;
+			plp->pl_code[i] = '\0';
+			return(0);				/* BAD */
+#endif
 		}
-		plp->pl_npts--;
-		plp->pl_code[i] = '\0';
-		return(0);				/* BAD */
+		return(1);			/* OK */
 	}
 }
 
@@ -407,6 +429,10 @@ register struct ray *rp;
 		flags |= SEG_OUT;
 	}
 
+	if( flags == SEG_OUT )  {
+		VSET( in.hit_point, 0, 0, 0 );
+		VSET( in.hit_normal, 0, 0, 0 );
+	}
 	/* SEG_OUT, or SEG_IN|SEG_OUT */
 	GET_SEG(segp);
 	segp->seg_stp = stp;
