@@ -450,10 +450,12 @@ proc do_Raytrace { id } {
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
 	if {$rt_control($id,lmodel) == 7} {
-		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmImportanceMapping),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmScaleIndirectEntry),$rt_control($id,pmCacheFileEntry) -A0"
+		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmImportanceMapping),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmScaleIndirectEntry),$rt_control($id,pmSphereInvalidationEntry),$rt_control($id,pmCacheFileEntry) -A0"
 	}
     }
-	#puts $rt_cmd
+#    puts "************************\n"
+#    puts $rt_cmd
+#    puts "************************\n"
 
     if {$rt_control($id,other) != ""} {
 	append rt_cmd " $rt_control($id,other)"
@@ -1312,6 +1314,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,pmVisualizeIrradiance) 0
 	set rt_control($id,pmScaleIndirectScale) 1.0
 	set rt_control($id,pmCacheFileEntry) ""
+	set rt_control($id,pmSphereInvalidationEntry) "0,0,0,0,4.0"
 
 
 	# set widget padding
@@ -1550,11 +1553,23 @@ proc PMMenu {id top enable} {
     hoc_register_data $top.gridF4.pmCacheFileEntry "Load/Save Photon Map Data" $hoc_data
 
 
+    ## Sphere Invalidation X,Y,Z,Rad
+    set hoc_data { { summary "Sphere invalidation region format: x,y,z,rad" } }
+
+    label $top.gridF4.pmSphereInvalidationLabel -text "Sphere Invalidation"
+    grid $top.gridF4.pmSphereInvalidationLabel -row 8 -column 0 -sticky e
+    hoc_register_data $top.gridF4.pmSphereInvalidationLabel "Sphere Invalidation (X,Y,Z,Rad)" $hoc_data
+
+    entry $top.gridF4.pmSphereInvalidationEntry -width 8 -textvar rt_control($id,pmSphereInvalidationEntry)
+    grid $top.gridF4.pmSphereInvalidationEntry -row 8 -column 1 -columnspan 2 -sticky news
+    hoc_register_data $top.gridF4.pmSphereInvalidationEntry "Sphere Invalidation (X,Y,Z,Rad)" $hoc_data
+
+
     ## Generate Importons
     set hoc_data { { summary "Use this setting to distribute the photons in a view dependent fashion.  This is useful when\nscenes are dominated by complex geometry in which only small portions are being viewed.\nImportance Mapping is view dependent and therefore should not be used in conjunction\nwith the file saving option unless the view remains static." } }
 
     checkbutton $top.gridF4.pmImportanceMapping -text "Use Importance Mapping" -variable rt_control($id,pmImportanceMapping)
-    grid $top.gridF4.pmImportanceMapping -row 8 -column 1 -columnspan 2 -sticky w
+    grid $top.gridF4.pmImportanceMapping -row 9 -column 1 -columnspan 2 -sticky w
     hoc_register_data $top.gridF4.pmImportanceMapping "Importance Mapping" $hoc_data
 #    $top.gridF4.pmImportanceMapping select
 
@@ -1562,7 +1577,7 @@ proc PMMenu {id top enable} {
     set hoc_data { { summary "With this option enabled only one irradiance and caustic lookup will be performed per pixel." } }
 
     checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
-    grid $top.gridF4.pmIrradianceHypersamplingCache -row 9 -column 1 -columnspan 2 -sticky w
+    grid $top.gridF4.pmIrradianceHypersamplingCache -row 10 -column 1 -columnspan 2 -sticky w
     hoc_register_data $top.gridF4.pmIrradianceHypersamplingCache "Irradiance Hypersampling Cache" $hoc_data
 #    $top.gridF4.pmIrradianceHypersamplingCache select
 
@@ -1570,7 +1585,7 @@ proc PMMenu {id top enable} {
     set hoc_data { { summary "With this option enabled only the indirect illumination and caustics will be rendered." } }
 
     checkbutton $top.gridF4.pmVisualizeIrradiance -text "Visualize Irradiance Cache" -variable rt_control($id,pmVisualizeIrradiance)
-    grid $top.gridF4.pmVisualizeIrradiance -row 10 -column 1 -columnspan 2 -sticky w
+    grid $top.gridF4.pmVisualizeIrradiance -row 11 -column 1 -columnspan 2 -sticky w
     hoc_register_data $top.gridF4.pmVisualizeIrradiance "Visualize Irradiance" $hoc_data
 #    $top.gridF4.pmVisualizeIrradiance select
 

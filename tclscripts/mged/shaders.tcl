@@ -1194,6 +1194,7 @@ proc do_phong { shade_var id } {
 		{range "non-negative"}
 	}
 
+
 #	set variables from current 'params' list
 
 	set_phong_values $shader_str $id
@@ -1214,7 +1215,6 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.ext_e -row 2 -column 3 -sticky w
 	grid $shader_params($id,window).fr.emiss -row 3 -column 2 -sticky e
 	grid $shader_params($id,window).fr.emiss_e -row 3 -column 3 -sticky w
-	
 	grid $shader_params($id,window).fr -sticky new -ipadx 3 -ipady 3
 	return $shader_params($id,window).fr
 }
@@ -1539,9 +1539,10 @@ set light_data {
 	e	fraction	f	1.0	"fraction of total light contributed"		"0..1" 		0 0 \
 	e	angle		a	180	"angle of light cone"				"0..180" 	1 0 \
 	e	target		d	{0 0 0}	"Point to which light is directed\n   (angle must be less than 180)"   "any X,Y,Z"	2 0 \
-	e	lumens		b	1.0	"Lumens for Photon mapping" 		        "And Real #"	3 0 \
+	e	lumens		b	1.0	"Energy of light source.  Energy needed depends on scene size"	"And Real #"	3 0 \
 	c	infinite 	i	0	"Boolean: light is infinite distance away"	"0,1" 		3 2 \
 	c	visible 	v	1	"Boolean: light souce object can be seen"	"0,1" 		3 3 \
+	c	attenuation	t	0	"Boolean: light power decreases over distance.  Initial power specified in lumens."	"0,1" 3 4
 	i	icon		icon	""	"Shows effect of values for:\n  Shadow Rays\n  infinite\n  visible" "" 0 4 \
     }
 
