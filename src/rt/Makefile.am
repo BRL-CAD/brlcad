@@ -72,7 +72,7 @@ rt_SOURCES = \
 	vers.c \
 	view.c
 
-rt_bot_faces_SOURCES = \
+BOTFACESSRC= \
 	do.c \
 	main.c \
 	opt.c \
@@ -80,60 +80,88 @@ rt_bot_faces_SOURCES = \
 	view_bot_faces.c \
 	worker.c
 
+rt_bot_faces_vers.c: $(BOTFACESRC)
+	sh $(top_srcdir)/sh/vers.sh version "RT BOT FACES" > $@
+rt_bot_faces_SOURCES = 	$(BOTFACESSRC) rt_bot_faces_vers.c
+
+rt_simple_vers.c: rt_simple.c
+	sh $(top_srcdir)/sh/vers.sh version "RT simple?" > $@
 rt_simple_SOURCES = \
 	rt_simple.c \
 	rt_simple_vers.c
 
+rtarea_vers.c: $(COMMON) viewarea.c
+	sh $(top_srcdir)/sh/vers.sh version "RT area?" > $@
 rtarea_SOURCES = \
 	$(COMMON) \
 	rtarea_vers.c \
 	viewarea.c
 
+rtcell_vers.c: $(COMMON) viewcell.c
+	sh $(top_srcdir)/sh/vers.sh version "RT cell?" > $@
 rtcell_SOURCES = \
 	$(COMMON) \
 	rtcell_vers.c \
 	viewcell.c
 
+rtcheck_vers.c: $(COMMON) viewcheck.c
+	sh $(top_srcdir)/sh/vers.sh version "RT Check" > $@
 rtcheck_SOURCES = \
 	$(COMMON) \
 	rtcheck_vers.c \
 	viewcheck.c
 
+rtedge_vers.c: $(COMMON) viewedge.c
+	sh $(top_srcdir)/sh/vers.sh version "RT LGT-Style Hidden-Line Renderer" > $@
 rtedge_SOURCES = \
 	$(COMMON) \
 	rtedge_vers.c \
 	viewedge.c
 
+rtfrac_vers.c: $(COMMON) viewfrac.c
+	sh $(top_srcdir)/sh/vers.sh version "RT frac?" > $@
 rtfrac_SOURCES = \
 	$(COMMON) \
 	rtfrac_vers.c \
 	viewfrac.c
 
+rtg3_vers.c: $(COMMON) viewg3.c
+	sh $(top_srcdir)/sh/vers.sh version "RTG3" > $@
 rtg3_SOURCES = \
 	$(COMMON) \
 	rtg3_vers.c \
 	viewg3.c 
 
+rthide_vers.c: $(COMMON) viewhide.c
+	sh $(top_srcdir)/sh/vers.sh version "RT Hidden-Line Plot" > $@
 rthide_SOURCES = \
 	$(COMMON) \
 	rthide_vers.c \
 	viewhide.c
 
+rtpp_vers.c: $(COMMON) viewpp.c
+	sh $(top_srcdir)/sh/vers.sh version "RT Pretty Picture" > $@
 rtpp_SOURCES = \
 	$(COMMON) \
 	rtpp_vers.c \
 	viewpp.c
 
+rtrad_vers.c: $(COMMON) viewrad.c
+	sh $(top_srcdir)/sh/vers.sh version "RT rad?" > $@
 rtrad_SOURCES = \
 	$(COMMON) \
 	rtrad_vers.c \
 	viewrad.c
 
+rtrange_vers.c: $(COMMON) viewrange.c
+	sh $(top_srcdir)/sh/vers.sh version "RT Range Plot" > $@
 rtrange_SOURCES = \
 	$(COMMON) \
 	rtrange_vers.c \
 	viewrange.c
 
+rtray_vers.c: $(COMMON) viewray.c
+	sh $(top_srcdir)/sh/vers.sh version "RT Ray" > $@
 rtray_SOURCES = \
 	$(COMMON) \
 	rtray_vers.c \
@@ -150,6 +178,8 @@ rtscale_SOURCES = \
 rtshot_SOURCES = \
 	rtshot.c
 
+rtsil_vers.c: $(COMMON) viewsil.c
+	sh $(top_srcdir)/sh/vers.sh version "RT sil?" > $@
 rtsil_SOURCES = \
 	$(COMMON) \
 	rtsil_vers.c \
@@ -158,11 +188,15 @@ rtsil_SOURCES = \
 rtwalk_SOURCES = \
 	rtwalk.c
 
+rtweight_vers.c: $(COMMON) viewweight.c
+	sh $(top_srcdir)/sh/vers.sh version "RT Weight" > $@
 rtweight_SOURCES = \
 	$(COMMON) \
 	rtweight_vers.c \
 	viewweight.c
 
+rtxray_vers.c: $(COMMON) viewxray.c
+	sh $(top_srcdir)/sh/vers.sh version "RT X-Ray" > $@
 rtxray_SOURCES = \
 	$(COMMON) \
 	rtxray_vers.c \
@@ -206,37 +240,7 @@ BUILT_SOURCES = \
 	vers.c
 
 
-rt_bot_faces_vers.c: $(rt_bot_faces_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT BOT FACES" > $@
-
-rtcheck_vers.c: $(rtcheck_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT Check" > $@
-
-rtedge_vers.c: $(rtedge_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT LGT-Style Hidden-Line Renderer" > $@
-
-rtg3_vers.c: $(rtg3_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RTG3" > $@
-
-rthide_vers.c: $(rthide_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT Hidden-Line Plot" > $@
-
-rtpp_vers.c: $(rtpp_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT Pretty Picture" > $@
-
-rtrange_vers.c: $(rtrange_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT Range Plot" > $@
-
-rtray_vers.c: $(rtray_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT Ray" > $@
-
-rtweight_vers.c: $(rtweight_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT Weight" > $@
-
-rtxray_vers.c: $(rtxray_SOURCES)
-	sh $(top_srcdir)/sh/vers.sh version "RT X-Ray" > $@
-
-vers.c: $(ALLSRCS)vers.c: $(ALLSRCS)
+vers.c: $(ALLSRCS)
 	sh $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
 
 
