@@ -20,7 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <string.h>
 #ifndef cray
-#if ! defined( BSD ) && ! defined( SYSV )
+#if defined( VLDSYSV )
 #include <sys/_ioctl.h>
 #else
 #include <sys/ioctl.h>
