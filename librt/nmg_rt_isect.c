@@ -1247,7 +1247,6 @@ struct hitmiss *myhit;
 	vect_t eu_vec;
 	vect_t norm;
 	int faces_found;
-	struct hitmiss *a_hit;
 
 #ifndef FAST_NMG
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
@@ -1465,7 +1464,6 @@ double dist_along_ray;
 point_t pt;
 {
 	struct hitmiss *myhit;
-	struct hitmiss *a_hit;
 	ray_miss_vertex(rd, eu_p->vu_p);
 	ray_miss_vertex(rd, eu_p->eumate_p->vu_p);
 #if DO_NITMISS_CHECKS
@@ -1664,9 +1662,7 @@ isect_ray_edgeuse(rd, eu_p)
 struct ray_data *rd;
 struct edgeuse *eu_p;
 {
-	int status;
 	struct hitmiss *myhit;
-	int vhit1, vhit2;
 
 	NMG_CK_EDGEUSE(eu_p);
 	NMG_CK_EDGEUSE(eu_p->eumate_p);
@@ -1800,7 +1796,6 @@ char *priv;
 {
 	struct edgeuse *eu_next;
 	struct ray_data *rd;
-	struct hitmiss *myhit;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGEUSE(eu->eumate_p);
@@ -2257,13 +2252,11 @@ struct faceuse *fu_p;
 struct face_g_plane *fg_p;
 {
 	plane_t			norm;
-	int			code;
 	fastf_t			dist;
 	struct hitmiss		*myhit;
 	point_t			plane_pt;
 	struct loopuse		*lu_p;
 	int			pt_class;
-	plane_t			tol_norm;
 
 	/* the geometric intersection of the ray with the plane 
 	 * of the face has already been done by isect_ray_faceuse().
@@ -2454,7 +2447,6 @@ struct faceuse *fu_p;
 		int code;
 		fastf_t dist;
 		point_t hit_pt;
-		point_t min,max;
 
 		fgp = fu_p->f_p->g.plane_p;
 		NMG_CK_FACE_G_PLANE(fgp);
@@ -2585,7 +2577,6 @@ struct ray_data *rd;
 {
 	struct nmgregion *r_p;
 	struct shell *s_p;
-	struct hitmiss *a_hit;
 
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -2909,9 +2900,6 @@ struct bn_tol *tol;
 	struct ray_data rd;
 	struct application ap;
 	struct hitmiss *a_hit;
-	int hit_count = 0;
-	struct hitmiss *minus_hit = (struct hitmiss *)NULL;
-	struct hitmiss *plus_hit = (struct hitmiss *)NULL;
 	int minus_class, plus_class;
 	int hari_kari_minus, hari_kari_plus;
 

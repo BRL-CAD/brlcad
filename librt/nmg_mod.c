@@ -395,7 +395,6 @@ CONST struct bn_tol *tol;
 			while( BU_LIST_NOT_HEAD( &lu1->l, &fu->lu_hd ) )
 			{
 				struct loopuse *next_lu1;
-				int found;
 
 				NMG_CK_LOOPUSE( lu1 );
 
@@ -2204,7 +2203,6 @@ struct vertexuse	*vu2;
 	struct edgeuse	*second_new_eu;
 	struct edgeuse	*final_eu2;
 	struct loopuse	*lu1, *lu2;
-	int		new_orient;
 
 	NMG_CK_VERTEXUSE(vu1);
 	NMG_CK_VERTEXUSE(vu2);
@@ -3245,7 +3243,7 @@ CONST struct bn_tol	*tol;
 	int			need_init=1;
 	int			*visit_count;
 	int			*jaunt_status;
-	int			i,j;
+	int			i;
 
 	NMG_CK_LOOPUSE(lu);
 	BN_CK_TOL(tol);
@@ -3943,7 +3941,6 @@ nmg_lu_reorient( lu )
 struct loopuse		*lu;
 {
 	struct faceuse	*fu;
-	int	ccw;
 	int	geom_orient;
 	plane_t	norm;
 	plane_t lu_pl;

@@ -637,9 +637,6 @@ CONST struct shell	*s;
 CONST int		in_or_out_only;
 CONST struct bn_tol	*tol;
 {
-	int		hitcount = 0;
-	int		stat;
-	point_t 	plane_pt;
 	CONST struct faceuse	*fu;
 	struct model	*m;
 	long		*faces_seen;
@@ -967,7 +964,6 @@ CONST struct bn_tol	*tol;
 	if (euv_cl == ON_SURF && matev_cl == ON_SURF) {
 		vect_t eu_dir;
 		int try;
-		int class_topo;
 
 		/* check for radial uses of this edge by the shell */
 		eup = eu->radial_p->eumate_p;
@@ -1695,8 +1691,6 @@ CONST struct bn_tol	*tol;
 	struct edgeuse *eu, *p;
 	struct loopuse *q_lu;
 	struct vertexuse *vu;
-	struct faceuse *fu_eu;
-	vect_t norm1, norm2;
 	long		magic1;
 	char		*reason = "Unknown";
 	int		seen_error = 0;
@@ -1949,8 +1943,6 @@ retry:
 #else
 	class = NMG_CLASS_Unknown;
 	eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
-	fu_eu = nmg_find_fu_of_eu( eu );
-	NMG_GET_FU_NORMAL( norm1, fu_eu );
 	for(
 	    eu = eu->radial_p->eumate_p;
 	    eu != BU_LIST_FIRST(edgeuse, &lu->down_hd) ;
@@ -2441,11 +2433,9 @@ CONST struct bn_tol *tol;
 {
 	struct faceuse *fu1,*fu2;
 	struct edgeuse *eu;
-	point_t pt;
 	int share_edges;
 	int lu1_eu_count=0;
 	int lu2_eu_count=0;
-	int ret;
 
 	NMG_CK_LOOPUSE( lu1 );
 	NMG_CK_LOOPUSE( lu2 );
