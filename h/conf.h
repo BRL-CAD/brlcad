@@ -252,12 +252,18 @@
 #	define HAVE_CALTECH_MALLOC 1   /* XXX Bleh. See librt/storage.c */
 #endif
 
-#if IRIX >= 5
+#if IRIX == 5
 #	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
 #	define _BSD_TYPES		1
 #	define _BSD_TIME		1	/* for good timeval */
 #	define HAVE_SBRK_DECL		1
 #	define HAVE_REGEX_DECL	1
+#endif
+
+#if IRIX == 6
+#	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
+#	define _BSD_TYPES		1
+#	define _BSD_TIME		1	/* for good timeval */
 #endif
 
 #ifdef SYSV
