@@ -128,10 +128,13 @@ register struct application *ap;
 		/*
 		 *  To prevent bad color aliasing, add some color dither.
 		 *  Be certain to NOT output the background color here.
+		 *  Random numbers in the range 0 to 1 are used, so
+		 *  that integer valued colors (eg, from texture maps)
+		 *  retain their original values.
 		 */
-		r = ap->a_color[0]*255.+rand_half();
-		g = ap->a_color[1]*255.+rand_half();
-		b = ap->a_color[2]*255.+rand_half();
+		r = ap->a_color[0]*255.+rand0to1();
+		g = ap->a_color[1]*255.+rand0to1();
+		b = ap->a_color[2]*255.+rand0to1();
 		if( r > 255 ) r = 255;
 		else if( r < 0 )  r = 0;
 		if( g > 255 ) g = 255;
