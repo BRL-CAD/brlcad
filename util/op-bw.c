@@ -44,7 +44,7 @@ extern char	*optarg;
 extern int	optind;
 
 static char usage[] = "\
-Usage: op-bw [-x xoffset] [-y yoffset] [-S step] [-v]\n\
+Usage: op-bw [-hv] [-S step] [-x xoffset] [-y yoffset]\n\
         [-s squaresize] [-w width] [-n nlines] > file.bw\n";
 
 /*
@@ -56,10 +56,13 @@ register char **argv;
 
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vx:y:o:r:S:w:n:s:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hvx:y:o:r:S:w:n:s:" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose++;
+			break;
+		case 'h':
+			nlines = width = 1024;
 			break;
 		case 'y':
 		case 'o':
