@@ -29,6 +29,7 @@ class Db {
     public method adjust {args}
     public method attr {args}
     public method attr_rm {args}
+    public method binary {args}
     public method c {args}
     public method cat {args}
     public method color {args}
@@ -351,6 +352,10 @@ body Db::attr_rm {args} {
 
 body Db::version {args} {
     eval $db version $args
+}
+
+body Db::binary {args} {
+    eval $db binary $args
 }
 
 body Db::help {args} {

@@ -36,6 +36,7 @@ class Mged {
     public method adjust {args}
     public method attr {args}
     public method attr_rm {args}
+    public method binary {args}
     public method blast {args}
     public method c {args}
     public method cat {args}
@@ -398,6 +399,10 @@ body Mged::xpush {args} {
 
 body Mged::zap {args} {
     $db zap $args
+}
+
+body Mged::binary {args} {
+    eval $db binary $args
 }
 
 body Mged::blast {args} {
