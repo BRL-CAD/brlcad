@@ -1753,7 +1753,8 @@ out:
 		rt_pr_partitions( ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:" );
 		bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
 	}
-
+#if 0
+	/* This is no longer a valid check!!! */
 	/* Sanity check */
 	if( rt_g.debug && ap->a_onehit == 0 &&
 	    InputHdp->pt_forw != InputHdp && enddist >= INFINITY )  {
@@ -1762,7 +1763,7 @@ out:
 		rt_pr_partitions( ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:" );
 		rt_bomb("rt_boolfinal() failed to process InputHdp list\n");
 	}
-
+#endif
 	return ret;
 }
 
