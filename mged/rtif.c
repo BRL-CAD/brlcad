@@ -72,9 +72,9 @@ struct nirt_fmt_data {
 };
 extern struct nirt_fmt_data def_nirt_fmt_data[];
 
-#define NIRT_TEXT 0
-#define NIRT_GRAPHICS 1
-#define NIRT_BOTH 2
+#define NIRT_TEXT 't'
+#define NIRT_GRAPHICS 'g'
+#define NIRT_BOTH 'b'
 #define DO_NIRT_TEXT (mged_variables->nirt_behavior == NIRT_TEXT ||\
 		      mged_variables->nirt_behavior == NIRT_BOTH)
 #define DO_NIRT_GRAPHICS (mged_variables->nirt_behavior == NIRT_GRAPHICS ||\
