@@ -175,12 +175,6 @@ char	*argv[];
 	exit (1);
     }
 
-    bu_log("OK, Reading from '%s', %d pix->'%s', %d d->'%s'\n",
-	inf_name, c_per_p, cf_name, d_per_p, df_name);
-    bu_log("We %s RGB, we %s d\n",
-	cf_name ? "want" : "don't want",
-	  df_name ? "want" : "don't want");
-
     cwidth = c_per_p * 1;
     dwidth = d_per_p * 8;
     pwidth = cwidth + dwidth;
@@ -188,8 +182,6 @@ char	*argv[];
     inb_size = p_per_b * pwidth;
     cb_size = p_per_b * cwidth;
     db_size = p_per_b * dwidth;
-    bu_log("Hmm, Buffers will contain %d pixels...\n", p_per_b);
-    bu_log("  that's %d --> %d %d\n", inb_size, cb_size, db_size);
 
     inbuf = (char *) bu_malloc(inb_size, "char buffer");
     cbuf = (char *) bu_malloc(cb_size, "char buffer");
