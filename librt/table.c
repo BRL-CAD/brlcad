@@ -588,7 +588,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_part_uv,	rt_part_curve,	rt_part_class,	rt_part_free,
 		rt_part_plot,	rt_part_vshot,	rt_part_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_part_import5, rt_part_export5,
 		rt_part_import,	rt_part_export,	rt_part_ifree,
 		rt_part_describe,rt_part_xform,	rt_part_parse,
 		sizeof(struct rt_part_internal), RT_PART_INTERNAL_MAGIC,
