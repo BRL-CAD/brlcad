@@ -5,7 +5,7 @@
  */
 
 #define SRCDIR	conv
-#define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
+#define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g botprint \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g g-nff \
 			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave g-stl \
@@ -20,6 +20,9 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+
+botprint : botprint.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP 
+	CC LDFLAGS g-stl.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o botprint
 
 g-stl: g-stl.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS g-stl.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-stl
