@@ -86,7 +86,7 @@ register struct rt_i *rtip;
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
-	rt_hist_init( &rtip->rti_hist_cellsize, 0, 100, 100 );
+	rt_hist_init( &rtip->rti_hist_cellsize, 0, 99, 100 );
 	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+1, 100 );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
@@ -96,11 +96,9 @@ register struct rt_i *rtip;
 		rtip->rti_cut_nbins,
 		rtip->rti_cut_maxlen,
 		((double)rtip->rti_cut_totobj)/rtip->rti_cut_nbins );
-		rt_hist_pr( &rtip->rti_hist_cellsize, "Cut tree leaf cell size");
-		rt_hist_pr( &rtip->rti_hist_cutdepth, "Cut tree depth (height)"); 
+		rt_hist_pr( &rtip->rti_hist_cellsize, "cut_tree: Number of solids per leaf cell");
+		rt_hist_pr( &rtip->rti_hist_cutdepth, "cut_tree: Depth (height)"); 
 	}
-
-	if(rt_g.debug&DEBUG_CUTDETAIL) rt_pr_cut( &rtip->rti_CutHead, 0 );
 
 	/* For plotting, build slightly enlarged model RPP, to
 	 * allow rays clipped to the model RPP to be depicted,
@@ -135,16 +133,21 @@ register struct rt_i *rtip;
 		rtip->rti_pconv = diff;
 	}
 
-	if( !(rt_g.debug&DEBUG_PLOTBOX) )  return;
-
-	/* Debugging code to plot cuts */
-	if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
-		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
-		/* First, all the cutting boxes */
-		rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
-		(void)fclose(plotfp);
+	if( rt_g.debug&DEBUG_PLOTBOX )  {
+		/* Debugging code to plot cuts */
+		if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
+			pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
+			/* Plot all the cutting boxes */
+			rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
+			(void)fclose(plotfp);
+		}
+	}
+	if(rt_g.debug&DEBUG_CUTDETAIL)  {
+		/* Produce a voluminous listing of the cut tree */
+		rt_pr_cut( &rtip->rti_CutHead, 0 );
 	}
 }
+
 
 /*
  *			R T _ C T _ A D D
@@ -225,33 +228,93 @@ struct soltab *stp;
 }
 
 /*
- *			R T _ C T _ B O X
- *  
- *  Cut a box node with a plane, generating a cut node and two box nodes.
- *  NOTE that this routine guarantees that each new box node will
- *  be able to hold at least one more item in it's list.
- *  Returns 1 if box cut and cutp has become a CUT_CUTNODE;
- *  returns 0 if this cut didn't help.
+ *			R T _ C T _ P L A N
+ *
+ *  Attempt to make an "optimal" cut of the given boxnode.
+ *  Consider cuts along all three axis planes, and choose
+ *  the one with the smallest "offcenter" metric.
+ *
+ *  Returns -
+ *	-1	No cut is possible
+ *	 0	Node has been cut
  */
 HIDDEN int
-rt_ct_box( cutp, axis )
+rt_ct_plan( cutp )
+union cutter	*cutp;
+{
+	int	axis;
+	int	status[3];
+	double	where[3];
+	double	offcenter[3];
+	int	best;
+	double	bestoff;
+
+	for( axis = X; axis <= Z; axis++ )  {
+		status[axis] = rt_ct_assess(
+			cutp, axis, &where[axis], &offcenter[axis] );
+	}
+
+	for(;;)  {
+		best = -1;
+		bestoff = INFINITY;
+		for( axis = X; axis <= Z; axis++ )  {
+			if( status[axis] <= 0 )  continue;
+			if( offcenter[axis] >= bestoff )  continue;
+			/* This one is better than previous ones */
+			best = axis;
+			bestoff = offcenter[axis];
+		}
+
+		if( best < 0 )  return(-1);	/* No cut is possible */
+
+		if( rt_ct_box( cutp, best, where[best] ) > 0 )
+			return(0);		/* OK */
+
+		/*
+		 *  This cut failed to reduce complexity on either side.
+		 *  Mark this status as bad, and try the next-best
+		 *  opportunity, if any.
+		 */
+		status[best] = 0;
+	}
+}
+
+/*
+ *			R T _ C T _ A S S E S S
+ *
+ *  Assess the possibility of making a cut along the indicated axis.
+ *  
+ *  Returns -
+ *	1 if box cut and cutp has become a CUT_CUTNODE;
+ *	0	if a cut along this axis is not possible
+ *	1	if a cut along this axis *is* possible, plus:
+ *		*where		is proposed cut point, and
+ *		*offcenter	is distance from "optimum" cut location.
+ */
+HIDDEN int
+rt_ct_assess( cutp, axis, where_p, offcenter_p )
 register union cutter *cutp;
-register int axis;
+register int	axis;
+double		*where_p;
+double		*offcenter_p;
 {
 	register struct boxnode *bp;
-	auto union cutter oldbox;
-	auto double d_close;		/* Closest distance from midpoint */
-	auto double pt_close;		/* Point closest to midpoint */
-	auto double middle;		/* midpoint */
-	auto double d;
-	register int i;
+	register int	i;
+	register double	dist;
+	register double	val;
+	register double	where;
+	register double	offcenter;	/* Closest distance from midpoint */
+	register double	middle;		/* midpoint */
+	register double	left, right;
 
-	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_box(x%x, %c)\n",cutp,"XYZ345"[axis]);
+	if( cutp->bn.bn_len <= 1 )  return(0);		/* Forget it */
 
-	/*  In absolute terms, each box must be at least 1mm wide after cut. */
-	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+	/*
+	 *  In absolute terms, each box must be at least 1mm wide after cut,
+	 *  so there is no need subdividing anything smaller than twice that.
+	 */
+	if( (right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) <= 2.0 )
 		return(0);
-	oldbox = *cutp;		/* struct copy */
 
 	/*
 	 *  Split distance between min and max in half.
@@ -259,78 +322,151 @@ register int axis;
 	 *  to the mid-point, and split there.
 	 *  This should ordinarily guarantee that at least one side of the
 	 *  cut has one less item in it.
+	 *
+	 * XXX This should be much more sophisticated.
+	 * XXX Consider making a list of candidate cut points
+	 * (max and min of each bn_list[] element) with
+	 * the subscript stored.
+	 * Eliminaate candidates outside the current range.
+	 * Sort the list.
+	 * Eliminate duplicate candidates.
+	 * The the element in the middle of the candidate list.
+	 * Compute offcenter from middle of range as now.
 	 */
-	pt_close = oldbox.bn.bn_min[axis];
-	middle = (pt_close + oldbox.bn.bn_max[axis]) * 0.5;
-	d_close = middle - pt_close;
-	for( i=0; i < oldbox.bn.bn_len; i++ )  {
-		d = oldbox.bn.bn_list[i]->st_min[axis] - middle;
-		if( d < 0 )  d = (-d);
-		if( d < d_close )  {
-			d_close = d;
-			pt_close = oldbox.bn.bn_list[i]->st_min[axis]-0.1;
+	middle = (left + right) * 0.5;
+	where = offcenter = INFINITY;
+	for( i=0; i < cutp->bn.bn_len; i++ )  {
+		/* left (min) edge */
+		val = cutp->bn.bn_list[i]->st_min[axis];
+		if( val > left && val < right )  {
+			register double	d;
+			if( (d = val - middle) < 0 )  d = (-d);
+			if( d < offcenter )  {
+				offcenter = d;
+				where = val;
+			}
 		}
-		d = oldbox.bn.bn_list[i]->st_max[axis] - middle;
-		if( d < 0 )  d = (-d);
-		if( d < d_close )  {
-			d_close = d;
-			pt_close = oldbox.bn.bn_list[i]->st_max[axis]+0.1;
+		/* right (max) edge */
+		val = cutp->bn.bn_list[i]->st_max[axis];
+		if( val > left && val < right )  {
+			register double	d;
+			if( (d = val - middle) < 0 )  d = (-d);
+			if( d < offcenter )  {
+				offcenter = d;
+				where = val;
+			}
 		}
 	}
-	if( pt_close <= oldbox.bn.bn_min[axis] ||
-	    pt_close >= oldbox.bn.bn_max[axis] )
+	if( offcenter >= INFINITY )
+		return(0);	/* no candidates? */
+	if( where <= left || where >= right )
 		return(0);	/* not reasonable */
 
-	if( pt_close - oldbox.bn.bn_min[axis] <= 1.0 ||
-	    oldbox.bn.bn_max[axis] - pt_close <= 1.0 )
+	if( where - left <= 1.0 || right - where <= 1.0 )
 		return(0);	/* cut will be too small */
 
-	/* We are going to cut -- convert caller's node type */
-	if(rt_g.debug&DEBUG_CUTDETAIL)rt_log("rt_ct_box(x%x) [%g,%g,%g]\n",
-		cutp,
-		oldbox.bn.bn_min[axis], pt_close, oldbox.bn.bn_max[axis]);
-	cutp->cut_type = CUT_CUTNODE;
-	cutp->cn.cn_axis = axis;
-	cutp->cn.cn_point = pt_close;
+	*where_p = where;
+	*offcenter_p = offcenter;
+	return(1);		/* OK */
+}
+
+/*
+ *			R T _ C T _ B O X
+ *
+ *  Cut the given box node with a plane along the given axis,
+ *  at the specified distance "where".
+ *  Convert the caller's box node into a cut node, allocating two
+ *  additional box nodes for the new leaves.
+ *
+ *  If, according to the classifier, both sides have the same number
+ *  of solids, then nothing is changed, and an error is returned.
+ *
+ *  XXX should really check & store all the overlaps, & calculate
+ *  minimum necessary sizes for each side.
+ *
+ *  Returns -
+ *	0	failure
+ *	1	success
+ */
+HIDDEN int
+rt_ct_box( cutp, axis, where )
+register union cutter	*cutp;
+register int		axis;
+double			where;
+{
+	register union cutter	*rhs, *lhs;
+	register int	i;
+
+	if(rt_g.debug&DEBUG_CUTDETAIL)  {
+		rt_log("rt_ct_box(x%x, %c) %g .. %g .. %g\n",
+			cutp, "XYZ345"[axis],
+			cutp->bn.bn_min[axis],
+			where,
+			cutp->bn.bn_max[axis]);
+	}
 
 	/* LEFT side */
-	cutp->cn.cn_l = rt_ct_get();
-	bp = &(cutp->cn.cn_l->bn);
-	bp->bn_type = CUT_BOXNODE;
-	VMOVE( bp->bn_min, oldbox.bn.bn_min );
-	VMOVE( bp->bn_max, oldbox.bn.bn_max );
-	bp->bn_max[axis] = cutp->cn.cn_point;
-	bp->bn_len = 0;
-	bp->bn_maxlen = oldbox.bn.bn_len + 1;
-	bp->bn_list = (struct soltab **) rt_malloc(
-		sizeof(struct soltab *) * bp->bn_maxlen,
+	lhs = rt_ct_get();
+	lhs->bn.bn_type = CUT_BOXNODE;
+	VMOVE( lhs->bn.bn_min, cutp->bn.bn_min );
+	VMOVE( lhs->bn.bn_max, cutp->bn.bn_max );
+	lhs->bn.bn_max[axis] = where;
+	lhs->bn.bn_len = 0;
+	lhs->bn.bn_maxlen = cutp->bn.bn_len;
+	lhs->bn.bn_list = (struct soltab **) rt_malloc(
+		sizeof(struct soltab *) * lhs->bn.bn_maxlen,
 		"rt_ct_box: left list" );
-	for( i=0; i < oldbox.bn.bn_len; i++ )  {
-		if( !rt_ck_overlap(bp->bn_min, bp->bn_max, oldbox.bn.bn_list[i]))
+	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
+		if( !rt_ck_overlap(lhs->bn.bn_min, lhs->bn.bn_max,
+		    cutp->bn.bn_list[i]))
 			continue;
-		bp->bn_list[bp->bn_len++] = oldbox.bn.bn_list[i];
+		lhs->bn.bn_list[lhs->bn.bn_len++] = cutp->bn.bn_list[i];
 	}
 
 	/* RIGHT side */
-	cutp->cn.cn_r = rt_ct_get();
-	bp = &(cutp->cn.cn_r->bn);
-	bp->bn_type = CUT_BOXNODE;
-	VMOVE( bp->bn_min, oldbox.bn.bn_min );
-	VMOVE( bp->bn_max, oldbox.bn.bn_max );
-	bp->bn_min[axis] = cutp->cn.cn_point;
-	bp->bn_len = 0;
-	bp->bn_maxlen = oldbox.bn.bn_len + 1;
-	bp->bn_list = (struct soltab **) rt_malloc(
-		sizeof(struct soltab *) * bp->bn_maxlen,
+	rhs = rt_ct_get();
+	rhs->bn.bn_type = CUT_BOXNODE;
+	VMOVE( rhs->bn.bn_min, cutp->bn.bn_min );
+	VMOVE( rhs->bn.bn_max, cutp->bn.bn_max );
+	rhs->bn.bn_min[axis] = where;
+	rhs->bn.bn_len = 0;
+	rhs->bn.bn_maxlen = cutp->bn.bn_len;
+	rhs->bn.bn_list = (struct soltab **) rt_malloc(
+		sizeof(struct soltab *) * rhs->bn.bn_maxlen,
 		"rt_ct_box: right list" );
-	for( i=0; i < oldbox.bn.bn_len; i++ )  {
-		if( !rt_ck_overlap(bp->bn_min, bp->bn_max, oldbox.bn.bn_list[i]))
+	for( i = cutp->bn.bn_len-1; i >= 0; i-- )  {
+		if( !rt_ck_overlap(rhs->bn.bn_min, rhs->bn.bn_max,
+		    cutp->bn.bn_list[i]))
 			continue;
-		bp->bn_list[bp->bn_len++] = oldbox.bn.bn_list[i];
+		rhs->bn.bn_list[rhs->bn.bn_len++] = cutp->bn.bn_list[i];
 	}
-	rt_free( (char *)oldbox.bn.bn_list, "rt_ct_box:  old list" );
-	oldbox.bn.bn_list = (struct soltab **)0;
-	return(1);
+
+	if( rhs->bn.bn_len == cutp->bn.bn_len && lhs->bn.bn_len == cutp->bn.bn_len )  {
+		/*
+		 *  This cut operation did no good, release storage,
+		 *  and let caller attempt something else.
+		 */
+		if(rt_g.debug&DEBUG_CUTDETAIL)  {
+			rt_log("rt_ct_box:  no luck, len=%d\n",
+				cutp->bn.bn_len );
+		}
+		rt_free( (char *)rhs->bn.bn_list, "rt_ct_box, rhs list");
+		rt_free( (char *)lhs->bn.bn_list, "rt_ct_box, lhs list");
+		rt_ct_free( rhs );
+		rt_ct_free( lhs );
+		return(0);		/* fail */
+	}
+
+	/* Success, convert callers box node into a cut node */
+	rt_free( (char *)cutp->bn.bn_list, "rt_ct_box:  old list" );
+	cutp->bn.bn_list = (struct soltab **)0;
+
+	cutp->cut_type = CUT_CUTNODE;
+	cutp->cn.cn_axis = axis;
+	cutp->cn.cn_point = where;
+	cutp->cn.cn_l = lhs;
+	cutp->cn.cn_r = rhs;
+	return(1);			/* success */
 }
 
 /*
@@ -379,10 +515,8 @@ fail:
 HIDDEN void
 rt_ct_optim( cutp, depth )
 register union cutter *cutp;
-int depth;
+int	depth;
 {
-	register int oldlen;
-	register int axis;
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		rt_ct_optim( cutp->cn.cn_l, depth+1 );
@@ -393,35 +527,28 @@ int depth;
 		rt_log("rt_ct_optim: bad node x%x\n", cutp->cut_type);
 		return;
 	}
+
 	/*
-	 * BOXNODE
+	 * BOXNODE (leaf)
 	 */
-	if( cutp->bn.bn_len <= 1 )  return;	/* optimal */
+	if( cutp->bn.bn_len <= 1 )  return;		/* optimal */
 	if( depth > rt_cutDepth )  return;		/* too deep */
+
 	/* Attempt to subdivide finer than rt_cutLen near treetop */
 	/**** XXX This test can be improved ****/
 	if( depth >= 6 && cutp->bn.bn_len <= rt_cutLen )
 		return;				/* Fine enough */
 	/*
-	 *  In general, keep subdividing until things don't get any better.
-	 *  Really we might want to proceed for 2-3 levels.
-	 *
-	 *  First, make certain this is a worthwhile cut.
-	 *  In absolute terms, each box must be at least 1mm wide after cut.
+	 *  Attempt to make an optimal cut
 	 */
-	axis = AXIS(depth);
-	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
+	if( rt_ct_plan( cutp ) < 0 )  {
+		/* Unable to further subdivide this box node */
 		return;
-	oldlen = cutp->bn.bn_len;	/* save before rt_ct_box() */
-	if( rt_ct_box( cutp, axis ) == 0 )  {
-		if( rt_ct_box( cutp, AXIS(depth+1) ) == 0 )
-			return;	/* hopeless */
 	}
-	if( cutp->cn.cn_l->bn.bn_len < oldlen ||
-	    cutp->cn.cn_r->bn.bn_len < oldlen )  {
-		rt_ct_optim( cutp->cn.cn_l, depth+1 );
-		rt_ct_optim( cutp->cn.cn_r, depth+1 );
-	}
+
+	/* Box node is now a cut node, recurse */
+	rt_ct_optim( cutp->cn.cn_l, depth+1 );
+	rt_ct_optim( cutp->cn.cn_r, depth+1 );
 }
 
 /*
