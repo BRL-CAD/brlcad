@@ -185,6 +185,7 @@ rt_rect_area()
 		dmp->dm_width, mged_variables->port,
 		xmin, ymin, xmax, ymax);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  (void)Tcl_ResetResult(interp);
   bu_vls_free(&vls);
 }
 
