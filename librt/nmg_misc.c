@@ -2038,9 +2038,9 @@ rt_log("nmg_unbreak_edge(eu=x%x) ret = %d\n", eu1_first, ret);
  */
 void
 nmg_unbreak_handler( ep , state , after )
-long *ep;
-genptr_t *state;
-int after;
+long	*ep;
+genptr_t state;
+int	after;
 {
 	struct edgeuse *eu1,*eu2;
 	struct edge *e;
