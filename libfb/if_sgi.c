@@ -957,7 +957,10 @@ int	count;
 		if( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
 			int todraw = (ifp->if_width-xscr)/SGI(ifp)->si_xzoom;
-			int tocopy = scan_count - todraw;
+			int tocopy;
+
+			if( todraw > scan_count )  todraw = scan_count;
+			tocopy = scan_count - todraw;
 
 			l = xscr;
 			b = yscr;
