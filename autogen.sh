@@ -18,8 +18,9 @@ AUTOCONF_MAJOR_VERSION=2
 AUTOCONF_MINOR_VERSION=50
 AUTOCONF_PATCH_VERSION=0
 
+# unused for now but informative
 AUTOMAKE_MAJOR_VERSION=1
-AUTOMAKE_MINOR_VERSION=5
+AUTOMAKE_MINOR_VERSION=4
 AUTOMAKE_PATCH_VERSION=0
 
 
@@ -39,17 +40,24 @@ case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
 esac
 
 
-#################
-# version check #
-#################
-autoconf -V > /dev/null 2>&1
-[ $? = 0 ] && _autofound=yes || _autofound=no
+##########################
+# autoconf version check #
+##########################
+_autofound=no
+for AUTOCONF in autoconf ; do
+  $AUTOCONF --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    _autofound=yes
+    break
+  fi
+done
+
 _report_error=no
 if [ ! "x$_autofound" = "xyes" ] ; then
   echo "ERROR:  Unable to locate GNU Autoconf."
   _report_error=yes
 else
-  _version_line="`autoconf -V | head -1`"
+  _version_line="`$AUTOCONF --version | head -1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
     _min_version="`echo $_version_line | sed 's/.*\.\([0-9][0-9]\).*/\1/'`"
@@ -81,19 +89,34 @@ fi
 ########################
 # check for autoreconf #
 ########################
-HAVE_AUTORECONF=yes
-autoreconf -V > /dev/null 2>&1
-if [ ! $? = 0 ] ; then
-  HAVE_AUTORECONF=no
-fi
+HAVE_AUTORECONF=no
+for AUTORECONF in autoreconf ; do
+  $AUTORECONF --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    HAVE_AUTORECONF=yes
+    break
+  fi
+done
+
+
+#####################
+# check for aclocal #
+#####################
+for ACLOCAL in aclocal ; do
+  $ACLOCAL --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    break
+  fi
+done
 
 
 ########################
 # check for libtoolize #
 ########################
 HAVE_LIBTOOLIZE=yes
-HAVE_GLIBTOOLIZE=no
-libtoolize --version > /dev/null 2>&1
+HAVE_ALTLIBTOOLIZE=no
+LIBTOOLIZE=libtoolize
+$LIBTOOLIZE --version > /dev/null 2>&1
 if [ ! $? = 0 ] ; then
   HAVE_LIBTOOLIZE=no
   if [ "x$HAVE_AUTORECONF" = "xno" ] ; then
@@ -103,28 +126,55 @@ if [ ! $? = 0 ] ; then
     echo "autoreconf cannot be used."
   fi
 
-  _glibtoolize="`glibtoolize --version 2>/dev/null`"
-  if [ $? = 0 ] ; then
-    HAVE_GLIBTOOLIZE=yes
-    echo 
-    echo "Fortunately, glibtoolize was found which means that your system may simply"
-    echo "have a non-standard or incomplete GNU Autotools install.  If you have"
-    echo "sufficient system access, it may be possible to quell this warning by"
-    echo "running:"
-    echo
-    sudo -V > /dev/null 2>&1
+  # look for some alternates
+  for tool in glibtoolize libtoolize15 libtoolize13 ; do
+    _glibtoolize="`$tool --version > /dev/null 2>&1`"
     if [ $? = 0 ] ; then
-      _glti="`which glibtoolize`"
-      _gltidir="`dirname $_glti`"
-      echo "   sudo ln -s $_glti $_gltidir/libtoolize"
-    else
-      echo "   ln -s $glti $_gltidir/libtoolize"
+      HAVE_ALTLIBTOOLIZE=yes
+      LIBTOOLIZE="$tool"
       echo 
-      echo "Run that as root or with proper permissions to the $_gltidir directory"
+      echo "Fortunately, $tool was found which means that your system may simply"
+      echo "have a non-standard or incomplete GNU Autotools install.  If you have"
+      echo "sufficient system access, it may be possible to quell this warning by"
+      echo "running:"
+      echo
+      sudo -V > /dev/null 2>&1
+      if [ $? = 0 ] ; then
+	_glti="`which $tool`"
+	_gltidir="`dirname $_glti`"
+	echo "   sudo ln -s $_glti $_gltidir/libtoolize"
+      else
+	echo "   ln -s $glti $_gltidir/libtoolize"
+	echo 
+	echo "Run that as root or with proper permissions to the $_gltidir directory"
+      fi
+      echo
+      break
     fi
-    echo
-  fi
+  done
 fi
+
+
+########################
+# check for autoheader #
+########################
+for AUTOHEADER in autoheader ; do
+  $AUTOHEADER --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    break
+  fi
+done
+
+
+######################
+# check for automake #
+######################
+for AUTOMAKE in automake ; do
+  $AUTOMAKE --version > /dev/null 2>&1
+  if [ $? = 0 ] ; then
+    break
+  fi
+done
 
 
 ##############
@@ -191,9 +241,9 @@ done
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   echo $ECHO_N "Automatically preparing build ... $ECHO_C"
-  autoreconf -i -f > /dev/null 2>&1
+  $AUTORECONF -i -f > /dev/null 2>&1
   if [ ! $? = 0 ] ; then
-    echo "Warning: autoreconf failed"
+    echo "Warning: $AUTORECONF failed"
     echo "Attempting to run the configuration steps individually"
     reconfigure_manually=yes
   fi
@@ -204,22 +254,23 @@ fi
 if [ "x$reconfigure_manually" = "xyes" ] ; then
   echo $ECHO_N "Preparing build ... $ECHO_C"
 
-  aclocal
-  [ ! $? = 0 ] && echo "ERROR: aclocal failed" && exit 2
-
+  $ACLOCAL
+  [ ! $? = 0 ] && echo "ERROR: $ACLOCAL failed" && exit 2
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
-    libtoolize --automake -c -f
-    [ ! $? = 0 ] && echo "ERROR: libtoolize failed" && exit 2
+    $LIBTOOLIZE --automake -c -f
+    [ ! $? = 0 ] && echo "ERROR: $LIBTOOLIZE failed" && exit 2
   else
-    [ "x$HAVE_GLIBTOOLIZE" = "xyes" ] && glibtoolize --automake --copy --force
-    [ ! $? = 0 ] && echo "ERROR: glibtoolize failed" && exit 2
+    if [ "x$HAVE_ALTLIBTOOLIZE" = "xyes" ] ; then
+      $LIBTOOLIZE --automake --copy --force
+      [ ! $? = 0 ] && echo "ERROR: $LIBTOOLIZE failed" && exit 2
+    fi
   fi
 
   # libtoolize might put ltmain.sh in the wrong place
   if test -f ltmain.sh ; then
     if test ! -f "${_aux_dir}/ltmain.sh" ; then
       echo
-      echo "Warning:  libtoolize is creating ltmain.sh in the wrong directory"
+      echo "Warning:  $LIBTOOLIZE is creating ltmain.sh in the wrong directory"
       echo
       echo "Fortunately, the problem can be worked around by simply copying the"
       echo "file to the appropriate location (${_aux_dir}/).  This has been done for you."
@@ -229,14 +280,14 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     fi
   fi
 
-  autoconf -f
-  [ ! $? = 0 ] && echo "ERROR: autoconf failed" && exit 2
+  $AUTOCONF -f
+  [ ! $? = 0 ] && echo "ERROR: $AUTOCONF failed" && exit 2
+  
+  $AUTOHEADER
+  [ ! $? = 0 ] && echo "ERROR: $AUTOHEADER failed" && exit 2
 
-  autoheader 
-  [ ! $? = 0 ] && echo "ERROR: autoheader failed" && exit 2
-
-  automake -a -c -f
-  [ ! $? = 0 ] && echo "ERROR: automake failed" && exit 2
+  $AUTOMAKE -a -c -f
+  [ ! $? = 0 ] && echo "ERROR: $AUTOMAKE failed" && exit 2
 fi
 
 
