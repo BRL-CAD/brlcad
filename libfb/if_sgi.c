@@ -223,7 +223,9 @@ int	count;
 	short xpos, ypos;
 	RGBvalue rr[1024], gg[1024], bb[1024];
 	register int i;
+	int ret;
 
+	ret = count;	/* save count */
 	xpos = x;
 	ypos = y;
 
@@ -253,7 +255,7 @@ int	count;
 		xpos = 0;
 		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
-	return(0);
+	return(ret);
 }
 
 _LOCAL_ int
@@ -267,7 +269,9 @@ short	count;
 	register short scan_count;
 	short xpos, ypos;
 	register short i;
+	int ret;
 
+	ret = count;	/* save count */
 	xpos = x;
 	ypos = y;
 	while( count > 0 )  {
@@ -329,7 +333,7 @@ short	count;
 		xpos = 0;
 		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
-	return(0);
+	return(ret);
 }
 
 _LOCAL_ int
