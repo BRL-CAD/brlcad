@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"
@@ -37,7 +38,6 @@ mat_t	model2view, view2model;
 mat_t	model2objview, objview2model;
 mat_t	incr_change;
 mat_t	modelchanges;
-fastf_t	maxview = 0.5;
 mat_t	identity;
 
 struct solid	*FreeSolid;	/* Head of freelist */
