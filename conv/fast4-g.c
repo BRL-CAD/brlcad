@@ -2644,20 +2644,23 @@ int type;
 		strncpy( field , &line[col] , 8 );
 		icmp = atoi( field );
 
-		if( list_ptr )
+		if( igrp > 0 && icmp > 0 )
 		{
-			list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-			list_ptr = list_ptr->next;
+			if( list_ptr )
+			{
+				list_ptr->next = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+				list_ptr = list_ptr->next;
+			}
+			else
+			{
+				list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
+				list_start = list_ptr;
+			}
+			
+			list_ptr->group = igrp;
+			list_ptr->component = icmp;
+			list_ptr->next = (struct hole_list *)NULL;
 		}
-		else
-		{
-			list_ptr = (struct hole_list *)bu_malloc( sizeof( struct hole_list ) , "do_hole_wall: list_ptr" );
-			list_start = list_ptr;
-		}
-
-		list_ptr->group = igrp;
-		list_ptr->component = icmp;
-		list_ptr->next = (struct hole_list *)NULL;
 
 		col += 8;
 	}
