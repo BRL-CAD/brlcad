@@ -421,11 +421,11 @@ yycurly()
 
 check_actlen()
 {
-#if 0
-	if (strlen(yytext) >= (unsigned)YYLMAX)
-#else
+	/* Sometimes yytext is a pointer, not a buffer */
+	if( sizeof(yytext) <= 8 )  return;
+
+	/* We know yytext is a char array, check against actual size */
 	if (strlen(yytext) >= (unsigned)sizeof(yytext)-4)
-#endif
 	{
 		printf("cake: action '%s' too long\n", yytext);
 		exit_cake(FALSE);
