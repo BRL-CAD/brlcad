@@ -53,7 +53,13 @@ int maxlines = 	 0;
 int domem = 	 0;
 int debug = 	 0;
 
-fastf_t gettime(fastf_t dist,fastf_t a,fastf_t b,fastf_t c,fastf_t init)
+fastf_t
+gettime(dist, a, b, c, init)
+fastf_t dist;
+fastf_t a;
+fastf_t b;
+fastf_t c;
+fastf_t init;
 {
 
 	fastf_t old,new,temp,inv;
