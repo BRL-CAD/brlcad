@@ -269,7 +269,9 @@ int			id;
 
 	return( curtree );
 }
-
+/* XXX Grotesque, shameless hack */
+static int mged_do_not_draw_nmg_solids_during_debugging = 0;
+static int mged_draw_edge_uses=0;
 
 /*
  *			M G E D _ N M G _ L E A F
@@ -467,6 +469,12 @@ union tree		*curtree;
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
 	r = mged_nmg_doit( curtree );
+
+	if( mged_do_not_draw_nmg_solids_during_debugging && r )  {
+		nmg_kr(r);
+		return curtree;
+	}
+
 	if( r != 0 )  {
 		int	style;
 		/* Convert NMG to vlist */
@@ -487,7 +495,8 @@ union tree		*curtree;
 		drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 
 		/* NMG region is no longer necessary, only vlist remains */
-		nmg_kr( r );
+		if( !mged_draw_edge_uses )
+			nmg_kr( r );
 	}
 
 	/* Return original tree -- it needs to be freed (by caller) */
@@ -528,11 +537,15 @@ int	kind;
 	ncpu = 1;
 	mged_draw_wireframes = 0;
 	mged_draw_normals = 0;
+	mged_draw_edge_uses = 0;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"wnP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"quwnP:")) != EOF )  {
 		switch(c)  {
+		case 'u':
+			mged_draw_edge_uses = 1;
+			break;
 		case 'w':
 			mged_draw_wireframes = 1;
 			break;
@@ -541,6 +554,9 @@ int	kind;
 			break;
 		case 'P':
 			ncpu = atoi(optarg);
+			break;
+		case 'q':
+			mged_do_not_draw_nmg_solids_during_debugging = 1;
 			break;
 		default:
 			printf("option '%c' unknown\n", c);
@@ -588,12 +604,24 @@ int	kind;
 Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n");
 	  	mged_nmg_model = nmg_mm();
+
+
 		i = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_nmg_region_end,
 			mged_nmg_leaf );
+
+	  	if (mged_draw_edge_uses) {
+	  		struct rt_vlblock *vbp;
+
+	  		fprintf(stderr, "Doing the edgeuse thang\n");
+	  		vbp = rt_vlblock_init();
+			nmg_vlblock_m(vbp, mged_nmg_model, 1);
+	  		cvt_vlblock_to_solids(vbp, "_EDGEUSES_", 0);
+	  		rt_vlblock_free(vbp);
+ 	  	}
 
 		/* Destroy NMG */
 		nmg_km( mged_nmg_model );
