@@ -510,7 +510,7 @@ build_cppargv()
 		goto out;
 	}
 	if( strcmp( buf, "sp3" ) == 0 )  {
-		cppargv[cppargc++] = new_name("/usr/local/bin/gcc");
+		cppargv[cppargc++] = new_name("gcc");
 		cppargv[cppargc++] = new_name("-E");
 		cppargv[cppargc++] = new_name("-traditional");
 		goto out;
