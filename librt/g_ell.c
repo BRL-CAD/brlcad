@@ -775,8 +775,6 @@ struct directory	*dp;
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
 
-	nmg_ck_closed_surf(s);		/* debug */
-
 	return(0);
 }
 

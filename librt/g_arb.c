@@ -940,7 +940,6 @@ struct directory	*dp;
 		}
 	}
 #endif
-	nmg_ck_closed_surf(s);		/* debug */
 
 	return(0);
 }
