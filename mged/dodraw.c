@@ -742,6 +742,32 @@ struct solid		*existing_sp;
 	}
 }
 
+HIDDEN void
+Do_getmat( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
+struct db_i             *dbip;
+struct rt_comb_internal *comb;
+union tree              *comb_leaf;
+genptr_t                user_ptr1, user_ptr2, user_ptr3;
+{
+	matp_t	xmat;
+	char	*kid_name;
+	int	*found;
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	kid_name = (char *)user_ptr2;
+
+	if( strncmp( comb_leaf->tr_l.tl_name, kid_name, NAMESIZE ) )
+		return;
+
+	xmat = (matp_t)user_ptr1;
+	found = (int *)user_ptr3;
+
+	(*found) = 1;
+	bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
+}
+
 /*
  *  			P A T H h M A T
  *  
@@ -760,6 +786,8 @@ matp_t matp;
 	register struct directory *parentp;
 	register struct directory *kidp;
 	register int		j;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 	auto mat_t		tmat;
 	register int		i;
 
@@ -772,26 +800,31 @@ matp_t matp;
 				   " is not a combination\n", (char *)NULL);
 		  return;		/* ERROR */
 		}
-		if( (rp = db_getmrec( dbip, parentp )) == (union record *)0 )
-			return;		/* ERROR */
-		for( j=1; j < parentp->d_len; j++ )  {
+
+		if( rt_db_get_internal( &intern, parentp, dbip, (mat_t *)NULL ) < 0 )
+			READ_ERR_return;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		if( comb->tree )
+		{
 			static mat_t xmat;	/* temporary fastf_t matrix */
+			int found=0;
 
-			/* Examine Member records */
-			if( strcmp( kidp->d_namep, rp[j].M.m_instname ) != 0 )
-				continue;
+			db_tree_funcleaf( dbip, comb, comb->tree, Do_getmat,
+				(genptr_t)xmat, (genptr_t)kidp->d_namep, (genptr_t)&found );
+			rt_comb_ifree( &intern );
 
-			/* convert matrix to fastf_t from disk format */
-			rt_mat_dbmat( xmat, rp[j].M.m_mat );
-			bn_mat_mul( tmat, matp, xmat );
-			bn_mat_copy( matp, tmat );
-			goto next_level;
+			if( found )
+			{
+				bn_mat_mul( tmat, matp, xmat );
+				bn_mat_copy( matp, tmat );
+			}
+			else
+			{
+				Tcl_AppendResult(interp, "pathHmat: unable to follow ", parentp->d_namep,
+						 "/", kidp->d_namep, "\n", (char *)NULL);
+				return;			/* ERROR */
+			}
 		}
-		Tcl_AppendResult(interp, "pathHmat: unable to follow ", parentp->d_namep,
-				 "/", kidp->d_namep, "\n", (char *)NULL);
-		return;			/* ERROR */
-next_level:
-		bu_free( (genptr_t)rp, "pathHmat recs");
 	}
 }
 
