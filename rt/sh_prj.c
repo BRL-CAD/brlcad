@@ -377,6 +377,8 @@ char			*dp;	/* ptr to the shader-specific struct */
 			continue;
 			break;
 		}
+#else
+		dist = 42;
 #endif
 		/* get point on image plane */
 		VJOIN1(pl_pt, pt, dist, dir);
