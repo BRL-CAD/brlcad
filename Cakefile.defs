@@ -550,8 +550,7 @@ set -S2 "/bin/sh"
 # endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
-#	define	LIBRT_LIBES	-lmpc
-#	define	LGT_CONFIG	GFLAG -lmpc
+#	define	LGT_CONFIG	GFLAG
 
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -DIF_X -I''XINCDIR
