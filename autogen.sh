@@ -2,7 +2,7 @@
 # script to prepare the sources
 ###
 
-libtoolize --force || glibtoolize --force
+libtoolize --automake --copy --force || glibtoolize --automake --copy --force
 [ ! $? = 0 ] && echo "libtoolize failed" && echo 1
 aclocal && [ ! $? = 0 ] && echo "aclocal failed" && exit 2
 autoheader && [ ! $? = 0 ] && echo "autoheader failed" && exit 3
