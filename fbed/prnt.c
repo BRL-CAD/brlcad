@@ -161,15 +161,6 @@ Va_Decl( fb_log )
 	Va_Start();
 	if( tty )
 		{
-		if( CS != NULL )
-			{
-			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			SCROLL_PR_MOVE();
-			ClrEOL();
-			Va_Print( stdout );
-			ResetScrlReg();
-			}
-		else
 		if( DL != NULL )
 			{
 			SCROLL_DL_MOVE();
@@ -177,6 +168,16 @@ Va_Decl( fb_log )
 			SCROLL_PR_MOVE();
 			ClrEOL();
 			Va_Print( stdout );
+			}
+		else
+		if( CS != NULL )
+			{ /* This scrolling region stuff doesn't work
+				correctly (XXX). */
+			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			SCROLL_PR_MOVE();
+			ClrEOL();
+			Va_Print( stdout );
+			ResetScrlReg();
 			}
 		else
 			Va_Print( stdout );
@@ -198,15 +199,6 @@ Va_Decl( prnt_Scroll )
 	Va_Start();
 	if( tty )
 		{
-		if( CS != NULL )
-			{
-			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
-			SCROLL_PR_MOVE();
-			ClrEOL();
-			Va_Print( stdout );
-			ResetScrlReg();
-			}
-		else
 		if( DL != NULL )
 			{
 			SCROLL_DL_MOVE();
@@ -214,6 +206,16 @@ Va_Decl( prnt_Scroll )
 			SCROLL_PR_MOVE();
 			ClrEOL();
 			Va_Print( stdout );
+			}
+		else
+		if( CS != NULL )
+			{ /* This scrolling region stuff doesn't work
+				correctly (XXX). */
+			SetScrlReg( TOP_SCROLL_WIN, PROMPT_LINE - 1 );
+			SCROLL_PR_MOVE();
+			ClrEOL();
+			Va_Print( stdout );
+			ResetScrlReg();
 			}
 		else
 			Va_Print( stdout );
