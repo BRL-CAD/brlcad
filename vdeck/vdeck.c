@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.13
-	Last edit: 	7/10/86 at 11:07:04
-	Retrieved: 	8/13/86 at 08:14:41
+	SCCS id:	@(#) vdeck.c	2.14
+	Last edit: 	7/10/86 at 14:54:11
+	Retrieved: 	8/13/86 at 08:15:21
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) vdeck.c	2.13	last edit 7/10/86 at 11:07:04";
+char	sccsTag[] = "@(#) vdeck.c	2.14	last edit 7/10/86 at 14:54:11";
 #endif
 
 /*
@@ -1002,9 +1002,6 @@ register Record *rec;
 			{
 			swap_vec( SV2, SV3, work );
 			swap_dbl( &ma, &mb );
-			}
-		if( mc < md )
-			{
 			swap_vec( SV4, SV5, work );
 			swap_dbl( &mc, &md );
 			}
