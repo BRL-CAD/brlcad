@@ -2836,11 +2836,15 @@ char	**argv;
 {
 	register struct servers *sp;
 	int	len;
+	char	rd_buffer[80];		/* Should be tied to argv[1] len XXX */
 
-	len = strlen(argv[1])+1;
+
+	strcpy(rd_buffer, "opt ");
+	strcat(rd_buffer, argv[1]);
+	len = strlen(rd_buffer)+1;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( pkg_send( MSG_OPTIONS, argv[1], len, sp->sr_pc) < 0 )
+		if( pkg_send( MSG_OPTIONS, rd_buffer, len, sp->sr_pc) < 0 )
 			drop_server(sp, "MSG_OPTIONS pkg_send error");
 	}
 }
