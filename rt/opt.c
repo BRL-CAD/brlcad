@@ -59,6 +59,8 @@ fastf_t		rt_perspective=0;	/* presp (degrees X) 0 => ortho */
 fastf_t		aspect = 1;		/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
+vect_t		dx_unit;		/* view delta-X as unit-len vect */
+vect_t		dy_unit;		/* view delta-Y as unit-len vect */
 fastf_t		cell_width;		/* model space grid cell width */
 fastf_t		cell_height;		/* model space grid cell height */
 int		cell_newsize=0;		/* new grid cell size */
