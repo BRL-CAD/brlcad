@@ -1720,9 +1720,9 @@ fi
 AC_SUBST(ECHO_N)
 
 
-dnl ***************************
-dnl *** Configure Makefiles ***
-dnl ***************************
+dnl **************************************
+dnl *** Configure Makefiles and output ***
+dnl **************************************
 
 AC_MSG_CHECKING([... o u t p u t ])
 AC_MSG_RESULT([])
@@ -1824,6 +1824,17 @@ WDB='${top_builddir}/src/libwdb/libwdb.la'
 AC_SUBST(WDB)
 
 dnl tcl
+
+# hack to work around the irix compiler crashing on the libtool btclsh
+# relink attempt when we get to tclscripts.
+BTCLSH_DEPENDENCY=""
+if test "x$build_vendor" = "xsgi" ; then
+    if test "x$compiler" = "xmipspro" ; then
+	BTCLSH_DEPENDENCY=".libs/lt-btclsh"
+    fi
+fi
+AC_SUBST(BTCLSH_DEPENDENCY)
+
 dnl Need to update version number(s) in src/other/libtcl/Makefile.am
 TCL_VERSION="8.4"
 AC_SUBST(TCL_VERSION)

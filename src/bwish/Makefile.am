@@ -41,4 +41,4 @@ btclsh_LDADD = \
 		$(CP) $(top_builddir)/src/bwish/.libs/btclsh $(top_builddir)/src/bwish/.libs/lt-btclsh ; \
 	fi
 
-all-am: .libs/lt-btclsh
+all-am: $(BTCLSH_DEPENDENCY)
