@@ -80,7 +80,11 @@ then
 
 	cd ../cakeaux
 	make clobber
-	make cakesub			# XXX
+	make cakesub			# XXX, should do "install"
+	if test -f ${BINDIR}/cakesub
+	then
+		mv -f ${BINDIR}/cakesub ${BINDIR}/cakesub.bak
+	fi
 	cp cakesub ${BINDIR}/.
 	make clobber
 	cd ..
