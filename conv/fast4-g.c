@@ -3939,7 +3939,6 @@ int final;
 			if( nmgs && make_nmg_objects() )
 			{
 				struct fast_fus *fus;
-				struct cline *cline_ptr;
 				struct shell_list *shell_ptr;
 				struct adjacent_faces *adj;
 
