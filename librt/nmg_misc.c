@@ -6810,11 +6810,16 @@ struct vertex *vpa,*vpb;
 struct nmg_ptbl *verts;
 CONST struct rt_tol *tol;
 {
+	int done=0;
+	int last_face=0;
 	int i;
 	int verts_in_face=0;
 	struct vertex *face_verts[20];
-	int max_verts=20;
+	struct vertex *v;
+	int max_vert_no=19;
 	int made_face;
+	fastf_t dist_to_a_sq,dist_to_b_sq;
+	vect_t to_vpa,to_vpb;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 	{
@@ -6835,124 +6840,138 @@ CONST struct rt_tol *tol;
 	NMG_CK_PTBL( verts );
 	RT_CK_TOL( tol );
 
-	face_verts[0] = (struct vertex *)NULL;
-	for( i=0 ; i<NMG_TBL_END( verts ) ; i++ )
+	if( NMG_TBL_END( verts ) < 1 )
 	{
-		struct vertex *v;
-		vect_t to_vpa,to_vpb;
-		fastf_t dist_to_a_sq,dist_to_b_sq;
-		fastf_t area;
+		rt_log( "nmg_make_connect_faces: no list of vertices from other shell\n" );
+		return;
+	}
+	if( NMG_TBL_END( verts ) == 1 )
+	{
+		face_verts[0] = vpb;
+		face_verts[1] = vpa;
+		face_verts[2] = (struct vertex *)NMG_TBL_GET( verts , 0 );
+		i = 0;
+	}
+	else
+	{
+		/* set up for first face */
+		face_verts[0] = vpa;
+		face_verts[1] = (struct vertex *)NMG_TBL_GET( verts , 0 );
+		face_verts[2] = (struct vertex *)NMG_TBL_GET( verts , 1 );
+		i = 1;
+	}
+	v = face_verts[2];
+	verts_in_face = 3;
+
+	VSUB2( to_vpa , vpa->vg_p->coord , v->vg_p->coord );
+	VSUB2( to_vpb , vpb->vg_p->coord , v->vg_p->coord );
+
+	dist_to_a_sq = MAGSQ( to_vpa );
+	dist_to_b_sq = MAGSQ( to_vpb );
+
+	while( 1 )
+	{
+		struct faceuse *new_fu;
+		struct loopuse *lu;
+		struct edgeuse *eu;
 		plane_t pl;
+		fastf_t area;
 
-		v = (struct vertex *)NMG_TBL_GET( verts , i );
-		NMG_CK_VERTEX( v );
+		made_face = 0;
 
-		VSUB2( to_vpa , vpa->vg_p->coord , v->vg_p->coord );
-		VSUB2( to_vpb , vpb->vg_p->coord , v->vg_p->coord );
-
-		dist_to_a_sq = MAGSQ( to_vpa );
-		dist_to_b_sq = MAGSQ( to_vpb );
-
-		if( face_verts[0] == (struct vertex *)NULL )
+		/* if the current points are all collinear, add another vertex */
+		while( rt_3pts_collinear( face_verts[0]->vg_p->coord,
+				face_verts[1]->vg_p->coord,
+				face_verts[verts_in_face - 1]->vg_p->coord, tol) )
 		{
-			if( dist_to_a_sq < dist_to_b_sq )
-				face_verts[0] = vpa;
-			else
-				face_verts[0] = vpb;
+			i++;
+			if( i >= NMG_TBL_END( verts ) )
+				break;
 
-			face_verts[1] = v;
-			verts_in_face = 2;
+			if( verts_in_face >= max_vert_no )
+				break;
+
+			face_verts[verts_in_face] = (struct vertex *)NMG_TBL_GET( verts , i );
+			verts_in_face++;
+		}
+			
+
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+		{
+			int debug_int;
+
+			rt_log( "make face:\n" );
+			for( debug_int=0 ; debug_int<verts_in_face ; debug_int++ )
+				rt_log( "\tx%x ( %f %f %f )\n" , face_verts[debug_int],
+					V3ARGS( face_verts[debug_int]->vg_p->coord ) );
+		}
+
+		/* make the new face */
+		new_fu = nmg_cface( dst , face_verts , verts_in_face );
+		lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+		area = nmg_loop_plane_area( lu , pl );
+
+		if( area <= 0.0 )
+		{
+			rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
+			nmg_kfu( new_fu );
 		}
 		else
 		{
-			face_verts[verts_in_face++] = v;
-				
-			if( !rt_3pts_collinear( face_verts[0]->vg_p->coord,
-				face_verts[1]->vg_p->coord,
-				face_verts[verts_in_face - 1]->vg_p->coord, tol) )
-			{
-				struct faceuse *new_fu;
-				struct loopuse *lu;
-				struct edgeuse *eu;
+			made_face = 1;
 
-				if( rt_g.NMG_debug & DEBUG_BASIC )
-				{
-					int debug_int;
+			nmg_face_g( new_fu , pl );
 
-					rt_log( "make face:\n" );
-					for( debug_int=0 ; debug_int<verts_in_face ; debug_int++ )
-						rt_log( "\tx%x ( %f %f %f )\n" , face_verts[debug_int],
-							V3ARGS( face_verts[debug_int]->vg_p->coord ) );
-				}
-
-				new_fu = nmg_cface( dst , face_verts , verts_in_face );
-				lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
-				area = nmg_loop_plane_area( lu , pl );
-				if( area <= 0.0 )
-				{
-					rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
-					nmg_kfu( new_fu );
-				}
-				else
-				{
-					made_face = 1;
-
-					nmg_face_g( new_fu , pl );
-
-					/* glue this face in */
-					nmg_glue_face_in_shell( new_fu , dst , tol );
-				}
-
-				if( dist_to_b_sq <= dist_to_a_sq && face_verts[0] == vpa )
-				{
-					/* make middle face */
-					face_verts[1] = v;
-					face_verts[2] = vpb;
-
-					if( rt_g.NMG_debug & DEBUG_BASIC )
-					{
-						int debug_int;
-
-						rt_log( "make middle face:\n" );
-						for( debug_int=0 ; debug_int<verts_in_face ; debug_int++ )
-							rt_log( "\tx%x ( %f %f %f )\n" , face_verts[debug_int],
-								V3ARGS( face_verts[debug_int]->vg_p->coord ) );
-					}
-
-					new_fu = nmg_cface( dst , face_verts , 3 );
-					lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
-					area = nmg_loop_plane_area( lu , pl );
-					if( area <= 0.0 )
-					{
-						rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn for middle face\n" );
-						nmg_kfu( new_fu );
-					}
-					else
-					{
-						made_face = 1;
-
-						nmg_face_g( new_fu , pl );
-
-						/* glue this face in */
-						nmg_glue_face_in_shell( new_fu , dst , tol );
-					}
-				}
-
-				/* get ready for next face, if necessary */
-				if( i < NMG_TBL_END( verts ) )
-				{
-					if( dist_to_a_sq < dist_to_b_sq )
-						face_verts[0] = vpa;
-					else
-						face_verts[0] = vpb;
-
-					face_verts[1] = v;
-					verts_in_face = 2;
-				}
-			}
-			else
-				made_face = 0;
+			/* glue this face in */
+			nmg_glue_face_in_shell( new_fu , dst , tol );
 		}
+
+		/* If we are half way to the other end of the edge,
+		 * switch from vpa to vpb for the basis of the faces.
+		 * Need to make the "middle" face.
+		 */
+		if( dist_to_b_sq <= dist_to_a_sq && face_verts[0] == vpa )
+		{
+			face_verts[0] = vpb;
+			face_verts[1] = vpa;
+			face_verts[2] = v;
+			verts_in_face = 3;
+		}
+		else
+		{
+			/* Get ready for next face and check if done */
+			i++;
+
+			if( i < NMG_TBL_END( verts ) )
+			{
+				v = (struct vertex *)NMG_TBL_GET( verts , i );
+				NMG_CK_VERTEX( v );
+
+				VSUB2( to_vpa , vpa->vg_p->coord , v->vg_p->coord );
+				VSUB2( to_vpb , vpb->vg_p->coord , v->vg_p->coord );
+
+				dist_to_a_sq = MAGSQ( to_vpa );
+				dist_to_b_sq = MAGSQ( to_vpb );
+				face_verts[1] = face_verts[verts_in_face-1];
+				face_verts[2] = v;
+				verts_in_face = 3;
+			}
+			else if( face_verts[0] == vpa )
+			{
+				if( done )
+					break;
+
+				/* make last face */
+				face_verts[0] = vpb;
+				face_verts[1] = vpa;
+				face_verts[2] = face_verts[verts_in_face-1];
+				verts_in_face = 3;
+				done = 1;
+			}
+			else	/* we are done */
+				break;
+		}
+
 	}
 
 	if( !made_face )
