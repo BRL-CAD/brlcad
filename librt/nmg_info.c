@@ -1384,7 +1384,6 @@ CONST struct edgeuse	*eu;
 		vect_t prev_left;
 		vect_t other_edge;
 		int other_edge_is_parallel=1;
-		fastf_t other_dot;
 
 		bu_log( "WARNING: eu x%x (%f %f %f) parallel to normal (%f %f %f)\n", eu, V3ARGS( edgevect ), V3ARGS( Norm ) );
 
@@ -1399,7 +1398,7 @@ CONST struct edgeuse	*eu;
 			VSUB2( other_edge, eu_next->eumate_p->vu_p->v_p->vg_p->coord,
 		                eu_next->vu_p->v_p->vg_p->coord );
 			VUNITIZE( other_edge );
-			other_dot = 1.0 - fabs( VDOT( other_edge, Norm ) );
+			dot = 1.0 - fabs( VDOT( other_edge, Norm ) );
 			if( dot < .5 )
 				other_edge_is_parallel = 0;
 		}
@@ -1425,7 +1424,7 @@ CONST struct edgeuse	*eu;
 			VSUB2( other_edge, eu_prev->eumate_p->vu_p->v_p->vg_p->coord,
 		                eu_prev->vu_p->v_p->vg_p->coord );
 			VUNITIZE( other_edge );
-			other_dot = 1.0 - fabs( VDOT( other_edge, Norm ) );
+			dot = 1.0 - fabs( VDOT( other_edge, Norm ) );
 			if( dot < .5 )
 				other_edge_is_parallel = 0;
 		}
@@ -1501,9 +1500,6 @@ CONST struct edgeuse	*eu;
 	CONST struct faceuse	*fu;
 	vect_t			Norm;
 	vect_t			edgevect;
-	fastf_t			dot;
-	fastf_t			edge_len_sq;
-	fastf_t			sin_sq;
 	pointp_t		p1,p2;
 
 	NMG_CK_EDGEUSE(eu);
