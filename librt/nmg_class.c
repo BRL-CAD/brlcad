@@ -803,17 +803,11 @@ retry:
 	
 	VMOVE(rp.r_pt, pt);
 	VMOVE(rp.r_dir, projection_dir);
-	hitcount = nmg_ray_vs_shell(&rp, s, tol);
 
 
-	/*  Using Jordan Curve Theorem, if hitcount is even, point is OUT.
-	 *  If hiscount is odd, point is IN.
-	 */
-	if (hitcount & 1) {
-		class = NMG_CLASS_AinB;
-	} else {
-		class = NMG_CLASS_AoutB;
-	}
+	/* get the ray-tracer to tell us if we're inside or outside */
+	class = nmg_ray_vs_shell(&rp, s, tol);
+
 out:
 	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
