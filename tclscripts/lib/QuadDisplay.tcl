@@ -19,17 +19,21 @@
 # Description -
 #	The QuadDisplay class is comprised of four Display objects. This class
 #       keeps track of the current Display object and provides the means to toggle
-#       between showing all four Display objects or just the current Display object.
+#       between showing all four Display objects or just the current one.
 #
 class QuadDisplay {
     inherit iwidgets::Panedwindow
 
-    constructor {{type X} args} {}
-    destructor {}
-
     itk_option define -pane pane Pane ur
     itk_option define -multi_pane multi_pane Multi_pane 1
     itk_option define -margin margin Margin 0
+
+    itk_option define -rscale rscale Rscale 0.4
+    itk_option define -sscale sscale Sscale 2.0
+    itk_option define -type type Type X
+
+    constructor {args} {}
+    destructor {}
 
     public method pane {args}
     public method multi_pane {args}
@@ -56,13 +60,19 @@ class QuadDisplay {
     public method contents {}
 
     public method listen {args}
+    public method linewidth {args}
+    public method linestyle {args}
+    public method zclip {args}
+    public method zbuffer {args}
+    public method light {args}
+    public method perspective {args}
+    public method bg {args}
     public method fb_active {args}
     public method fb_update {args}
     public method rt {args}
     public method rtcheck {args}
+    public method get_dm_name {}
 
-    public method dm_size {args}
-    public method dm_name {}
     public method margin {val}
     public method resetall {}
     public method default_views {}
@@ -76,7 +86,8 @@ class QuadDisplay {
     public method detach_drawableall {dg}
 
     private variable initializing 1
-    private variable priv_multi_pane 0
+    private variable priv_pane ur
+    private variable priv_multi_pane 1
     private variable upper ""
     private variable lower ""
     private variable ul ""
@@ -85,7 +96,7 @@ class QuadDisplay {
     private variable lr ""
 }
 
-body QuadDisplay::constructor {{type X} args} {
+body QuadDisplay::constructor {args} {
     Panedwindow::add upper
     Panedwindow::add lower
 
@@ -106,11 +117,18 @@ body QuadDisplay::constructor {{type X} args} {
     set ll [$lower childsite left].ll
     set lr [$lower childsite right].lr
 
+    eval itk_initialize $args
+    set initializing 0
+
     # create four instances of Display
-    Display $ul $type
-    Display $ur $type
-    Display $ll $type
-    Display $lr $type
+    Display $ul -type $itk_option(-type) \
+	    -rscale $itk_option(-rscale) -sscale $itk_option(-sscale)
+    Display $ur -type $itk_option(-type) \
+	    -rscale $itk_option(-rscale) -sscale $itk_option(-sscale)
+    Display $ll -type $itk_option(-type) \
+	    -rscale $itk_option(-rscale) -sscale $itk_option(-sscale)
+    Display $lr -type $itk_option(-type) \
+	    -rscale $itk_option(-rscale) -sscale $itk_option(-sscale)
 
     # initialize the views
     default_views
@@ -122,9 +140,6 @@ body QuadDisplay::constructor {{type X} args} {
 
     pack $upper -fill both -expand yes
     pack $lower -fill both -expand yes
-
-    set initializing 0
-    eval itk_initialize $args
 
     # set the margins
     paneconfigure 0 -margin $itk_option(-margin)
@@ -147,15 +162,35 @@ configbody QuadDisplay::pane {
 }
 
 configbody QuadDisplay::multi_pane {
-    if {$initializing} {
-	set priv_multi_pane $itk_option(-multi_pane)
-    } else {
-	multi_pane $itk_option(-multi_pane)
-    }
+    multi_pane $itk_option(-multi_pane)
 }
 
 configbody QuadDisplay::margin {
     margin $itk_option(-margin)
+}
+
+configbody QuadDisplay::rscale {
+    if {!$initializing} {
+	$ul configure -rscale $itk_option(-rscale)
+	$ur configure -rscale $itk_option(-rscale)
+	$ll configure -rscale $itk_option(-rscale)
+	$lr configure -rscale $itk_option(-rscale)
+    }
+}
+
+configbody QuadDisplay::sscale {
+    if {!$initializing} {
+	$ul configure -sscale $itk_option(-sscale)
+	$ur configure -sscale $itk_option(-sscale)
+	$ll configure -sscale $itk_option(-sscale)
+	$lr configure -sscale $itk_option(-sscale)
+    }
+}
+
+configbody QuadDisplay::type {
+    if {!$initializing} {
+	error "type is read-only"
+    }
 }
 
 body QuadDisplay::pane {args} {
@@ -163,8 +198,6 @@ body QuadDisplay::pane {args} {
     if {$args == ""} {
 	return $itk_option(-pane)
     }
-
-    set prev_pane $itk_option(-pane)
 
     # set the active pane
     switch $args {
@@ -179,13 +212,13 @@ body QuadDisplay::pane {args} {
 	}
     }
 
-    if {!$initializing && !$itk_option(-multi_pane)} {
+    if {!$itk_option(-multi_pane)} {
 	# nothing to do
-	if {$prev_pane == $itk_option(-pane)} {
+	if {$priv_pane == $itk_option(-pane)} {
 	    return
 	}
 
-	switch $prev_pane {
+	switch $priv_pane {
 	    ul {
 		switch $itk_option(-pane) {
 		    ur {
@@ -275,6 +308,8 @@ body QuadDisplay::pane {args} {
 		}
 	    }
 	}
+
+	set priv_pane $itk_option(-pane)
     }
 }
 
@@ -432,6 +467,44 @@ body QuadDisplay::listen {args} {
     eval [subst $[subst $itk_option(-pane)]] listen $args
 }
 
+body QuadDisplay::linewidth {args} {
+    set result [eval [subst $[subst $itk_option(-pane)]] linewidth $args]
+    if {$args != ""} {
+	refresh
+	return
+    }
+    return $result
+}
+
+body QuadDisplay::linestyle {args} {
+    eval [subst $[subst $itk_option(-pane)]] linestyle $args
+}
+
+body QuadDisplay::zclip {args} {
+    eval [subst $[subst $itk_option(-pane)]] zclip $args
+}
+
+body QuadDisplay::zbuffer {args} {
+    eval [subst $[subst $itk_option(-pane)]] zbuffer $args
+}
+
+body QuadDisplay::light {args} {
+    eval [subst $[subst $itk_option(-pane)]] light $args
+}
+
+body QuadDisplay::perspective {args} {
+    eval [subst $[subst $itk_option(-pane)]] perspective $args
+}
+
+body QuadDisplay::bg {args} {
+    set result [eval [subst $[subst $itk_option(-pane)]] bg $args]
+    if {$args != ""} {
+	refresh
+	return
+    }
+    return $result
+}
+
 body QuadDisplay::fb_active {args} {
     eval eval [subst $[subst $itk_option(-pane)]] fb_active $args
 }
@@ -448,11 +521,7 @@ body QuadDisplay::rtcheck {args} {
     eval [subst $[subst $itk_option(-pane)]] rtcheck $args
 }
 
-body QuadDisplay::dm_size {args} {
-    eval [subst $[subst $itk_option(-pane)]] Dm::size $args
-}
-
-body QuadDisplay::dm_name {} {
+body QuadDisplay::get_dm_name {} {
     eval [subst $[subst $itk_option(-pane)]] Dm::get_name
 }
 
