@@ -1,9 +1,10 @@
 /*
-	@(#) cgarbs.c			retrieved: 8/13/86 at 08:00:38,
-	@(#) version 2.4		last edit: 12/20/85 at 19:04:27., G S Moss.
+	@(#) cgarbs.c			retrieved: 8/13/86 at 08:00:50,
+	@(#) version 2.5		last edit: 7/10/86 at 11:07:42., G S Moss.
 
 	Written by Keith Applin.
  */
+#include <stdio.h>
 #include "./vextern.h"
 
 /* C G A R B S :   determines COMGEOM arb types from GED general arbs
@@ -86,8 +87,10 @@ int svec[];	/* array of like points */
 		rec->s.s_cgtype = -4;	/* ARB4 */
 		break;
 	default:
-		printf("solid: %s  bad number of unique vectors (%d)\n",
-			rec->s.s_name,numuvec);
+		(void) fprintf( stderr,
+				"solid: %s  bad number of unique vectors (%d)\n",
+				rec->s.s_name,numuvec
+				);
 		return(0);
 	}
 	return( numuvec );
@@ -136,7 +139,7 @@ int uvec[], svec[], numvec;
 			move(rec,3,0,1,2,7,4,5,7);
 			break;
 		default:
-			printf("%s: bad arb7\n", rec->s.s_name);
+			(void) fprintf( stderr, "%s: bad arb7\n", rec->s.s_name );
 			return( 0 );
 		}
 		break;  
@@ -177,7 +180,7 @@ int uvec[], svec[], numvec;
 			else			move(rec,5,1,0,4,2,2,3,3);
 			break;
 		default:
-			printf("%s: bad arb6\n", rec->s.s_name);
+			(void) fprintf( stderr,"%s: bad arb6\n", rec->s.s_name);
 			return( 0 );
 		}
 		break;
@@ -206,7 +209,7 @@ int uvec[], svec[], numvec;
 			move(rec,3,2,6,7,0,0,0,0);
 			break;
 		default:
-			printf("%s: bad arb5\n", rec->s.s_name);
+			(void) fprintf( stderr,"%s: bad arb5\n", rec->s.s_name);
 			return( 0 );
 		}
 		break;
@@ -217,23 +220,21 @@ int uvec[], svec[], numvec;
 		move(rec,uvec[0],uvec[1],svec[2],uvec[0],j,j,j,j);
 		break;
 	default:
-		printf("solid %s: unknown arb type (%d)\n",
-				rec->s.s_name,rec->s.s_cgtype);
+		(void) fprintf( stderr,
+				"solid %s: unknown arb type (%d)\n",
+				rec->s.s_name,rec->s.s_cgtype
+				);
 		return( 0 );
 	}
 	return( 1 );
 }
 
-move(	rec, p0, p1, p2, p3, p4, p5, p6, p7 )
-register
-Record *rec;
-int p0, p1, p2, p3, p4, p5, p6, p7;
-{
-
-	register int	i, j;
-	int		pts[8];
-	float		copy[24];
-
+move( rec, p0, p1, p2, p3, p4, p5, p6, p7 )
+register Record	*rec;
+int		p0, p1, p2, p3, p4, p5, p6, p7;
+	{	register int	i, j;
+		int		pts[8];
+		float		copy[24];
 	pts[0] = p0 * 3;
 	pts[1] = p1 * 3;
 	pts[2] = p2 * 3;
@@ -243,25 +244,26 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 	pts[6] = p6 * 3;
 	pts[7] = p7 * 3;
 
-	/* Copy of the record.				*/
-	for( i = 0; i <= 21; i += 3 ) {
+	/* Copy of the record.						*/
+	for( i = 0; i <= 21; i += 3 )
+		{
 		VMOVE( &copy[i], &(rec->s.s_values[i]) );
-	}
-	for( i = 0; i < 8; i++ ) {
+		}
+	for( i = 0; i < 8; i++ )
+		{
 		j = pts[i];
 		VMOVE( &(rec->s.s_values[i*3]), &copy[j] );
-	}
+		}
 	return;
-}
+	}
 
 compar( x, y )
-register
-float *x,*y;
-{
-	register int i;
-	for( i = 0; i < 3; i++ ) {
+register float *x, *y;
+	{	register int i;
+	for( i = 0; i < 3; i++ )
+		{
 		if( fabs( *x++ - *y++ ) > CONV_EPSILON )
-			return( 0 );   /* Different */
+			return	0;   /* Different */
+		}
+	return	1;  /* Same */
 	}
-	return( 1 );  /* Same */
-}
