@@ -712,6 +712,8 @@ static CONST char *nmg_wedge2_string[] = {
 	"WEDGE2_TOUCH_AT_DA",
 	"WEDGE2_???"
 };
+#define WEDGE2_TO_STRING(_class2)	(nmg_wedge2_string[(_class2)+2])
+
 #define WEDGE2_OVERLAP		-2
 #define WEDGE2_NO_OVERLAP	-1
 #define WEDGE2_AB_IN_CD		0
@@ -728,7 +730,9 @@ static CONST char *nmg_wedge2_string[] = {
  *	WEDGE2_NO_OVERLAP	AB does not overlap CD
  *	WEDGE2_AB_IN_CD		AB is inside CD
  *	WEDGE2_CD_IN_AB		CD is inside AB
- *	WEDGE2_IDENTICAL		AB == CD
+ *	WEDGE2_IDENTICAL	AB == CD
+ *	WEDGE2_TOUCH_AT_BC	AB touches CD at BC, but does not overlap
+ *	WEDGE2_TOUCH_AT_DA	CD touches AB at DA, but does not overlap
  */
 static int
 nmg_compare_2_wedges( a, b, c, d )
@@ -747,10 +751,11 @@ double	a,b,c,d;
 	int	c_eq_d = 0;
 	int	ret;
 
+#define WEDGE_ANG_TOL	0.001	/* XXX Angular tolerance, in degrees */
 #define	ANG_SMASH(_a)	{\
-	if( _a <= .01 )  _a = 0; \
-	else if( NEAR_ZERO( _a - 180, .01 ) )  _a = 180; \
-	else if( _a >= 360 - .01 )  _a = 360; }
+	if( _a <= WEDGE_ANG_TOL )  _a = 0; \
+	else if( NEAR_ZERO( _a - 180, WEDGE_ANG_TOL ) )  _a = 180; \
+	else if( _a >= 360 - WEDGE_ANG_TOL )  _a = 360; }
 
 	ANG_SMASH(a);
 	ANG_SMASH(b);
@@ -770,12 +775,12 @@ double	a,b,c,d;
 		d = t;
 	}
 
-	if( NEAR_ZERO( a-b, 0.01 ) )  a_eq_b = 1;
-	if( NEAR_ZERO( a-c, 0.01 ) )  a_eq_c = 1;
-	if( NEAR_ZERO( a-d, 0.01 ) )  a_eq_d = 1;
-	if( NEAR_ZERO( b-c, 0.01 ) )  b_eq_c = 1;
-	if( NEAR_ZERO( b-d, 0.01 ) )  b_eq_d = 1;
-	if( NEAR_ZERO( c-d, 0.01 ) )  c_eq_d = 1;
+	if( NEAR_ZERO( a-b, WEDGE_ANG_TOL ) )  a_eq_b = 1;
+	if( NEAR_ZERO( a-c, WEDGE_ANG_TOL ) )  a_eq_c = 1;
+	if( NEAR_ZERO( a-d, WEDGE_ANG_TOL ) )  a_eq_d = 1;
+	if( NEAR_ZERO( b-c, WEDGE_ANG_TOL ) )  b_eq_c = 1;
+	if( NEAR_ZERO( b-d, WEDGE_ANG_TOL ) )  b_eq_d = 1;
+	if( NEAR_ZERO( c-d, WEDGE_ANG_TOL ) )  c_eq_d = 1;
 
 	/*
 	 *  Test for TOUCHing wedges must come before INside test,
@@ -858,9 +863,9 @@ out:
 		rt_log(" a_in_cd=%d, b_in_cd=%d, c_in_ab=%d, d_in_ab=%d\n",
 			a_in_cd, b_in_cd, c_in_ab, d_in_ab );
 		rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) = %d %s\n",
-			a, b, c, d, ret, nmg_wedge2_string[ret+2] );
+			a, b, c, d, ret, WEDGE2_TO_STRING(ret) );
 	}
-	if(ret <= -2 )  {
+	if(ret <= WEDGE2_OVERLAP )  {
 		rt_log("nmg_compare_2_wedges(%g,%g, %g,%g) ERROR!\n", a, b, c, d);
 		rt_bomb("nmg_compare_2_wedges() ERROR\n");
 	}
@@ -1002,6 +1007,66 @@ out:
 }
 
 /*
+ *			N M G _ I S _ W E D G E _ B E F O R E _ C R O S S
+ *
+ *  Determine if the 'wedge' vu, which is either a LEFT or RIGHT wedge,
+ *  should be processed before or after the 'cross' vu, which is a
+ *  CROSS wedge.
+ *
+ *  Returns -
+ *	1	if wedge should be processed before cross
+ *	0	if cross should be processed before wedge
+ */
+static int
+nmg_is_wedge_before_cross( wedge, cross )
+CONST struct nmg_vu_stuff	*wedge;
+CONST struct nmg_vu_stuff	*cross;
+{
+	int	class2;
+	int	ret = -1;
+
+	if( cross->wedge_class != WEDGE_CROSS || wedge->wedge_class == WEDGE_CROSS )
+		rt_bomb("nmg_is_wedge_before_cross() bad input\n");
+
+	/* LEFT/RIGHT Wedge is (AB), CROSS wedge is (CD) */
+	class2 = nmg_compare_2_wedges( wedge->lo_ang, wedge->hi_ang,
+		cross->lo_ang, cross->hi_ang );
+
+	switch(class2)  {
+	default:
+		rt_log("nmg_is_wedge_before_cross() class2=%s\n",
+			WEDGE2_TO_STRING(class2) );
+		rt_bomb("nmg_is_wedge_before_cross(): bad wedge comparison\n");
+	case WEDGE2_NO_OVERLAP:
+		/* wedge is not inside cross, cross is not inside wedge. */
+		/* Do wedge first */
+		ret = 1;
+		break;
+	case WEDGE2_TOUCH_AT_BC:
+		/* Should only happen when wedge is WEDGE_RIGHT */
+		if( wedge->wedge_class != WEDGE_RIGHT )
+			rt_bomb("WEDGE not RIGHT with WEDGE2_TOUCH_AT_BC?\n");
+		ret = 1;
+		break;
+	case WEDGE2_TOUCH_AT_DA:
+		/* Should only happen when wedge is WEDGE_LEFT */
+		if( wedge->wedge_class != WEDGE_LEFT )
+			rt_bomb("WEDGE not LEFT with WEDGE2_TOUCH_AT_DA?\n");
+		ret = 1;
+		break;
+	case WEDGE2_AB_IN_CD:
+		/* 'wedge' is inside the 'cross' wedge, do it second. */
+		ret = 0;
+		break;
+	}
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		rt_log("nmg_is_wedge_before_cross() class2=%s, ret=%d\n",
+			WEDGE2_TO_STRING(class2), ret );
+	}
+	return ret;
+}
+
+/*
  *			N M G _ F A C E _ V U _ C O M P A R E
  *
  *  Support routine for nmg_face_coincident_vu_sort(), via qsort().
@@ -1016,9 +1081,9 @@ out:
  *	 0	when A == B
  *	+1	when A > B
  */
-#define	A_WINS		{ret = -1; goto out;}
+#define	A_LT_B		{ret = -1; goto out;}
 #define AB_EQUAL	{ret = 0; goto out;}
-#define B_WINS		{ret = 1; goto out;}
+#define A_GT_B		{ret = 1; goto out;}
 static int
 nmg_face_vu_compare( aa, bb )
 #if __STDC__
@@ -1036,29 +1101,29 @@ nmg_face_vu_compare( aa, bb )
 	int	hi_equal = 0;
 	register int	ret = 0;
 
-	lo_equal = NEAR_ZERO( a->lo_ang - b->lo_ang, 0.001 );
-	hi_equal = NEAR_ZERO( a->hi_ang - b->hi_ang, 0.001 );
+	lo_equal = NEAR_ZERO( a->lo_ang - b->lo_ang, WEDGE_ANG_TOL );
+	hi_equal = NEAR_ZERO( a->hi_ang - b->hi_ang, WEDGE_ANG_TOL );
 	/* If both have the same assessment & angles match, => tie */
 	if( a->wedge_class == b->wedge_class && lo_equal && hi_equal ) {
 		/* Break the tie */
 tie_break:
 		if( a->loop_index == b->loop_index )  {
 			/* Within a loop, sort by vu sequence number */
-			if( a->seq < b->seq )  A_WINS;
+			if( a->seq < b->seq )  A_LT_B;
 			if( a->seq == b->seq )  AB_EQUAL;
-			B_WINS;
+			A_GT_B;
 		}
 		/* Select smallest inbound angle */
 		diff = a->in_vu_angle - b->in_vu_angle;
-		if( NEAR_ZERO( diff, 0.001 ) )  {
+		if( NEAR_ZERO( diff, WEDGE_ANG_TOL ) )  {
 			/* Gak, this really means trouble! */
 			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same in_vu_angle%g?\n",
 				a->in_vu_angle);
 			rt_bomb("nmg_face_vu_compare():  can't decide\n");
 			AB_EQUAL;
 		}
-		if( diff < 0 )  A_WINS;
-		B_WINS;
+		if( diff < 0 )  A_LT_B;
+		A_GT_B;
 	}
 	switch( a->wedge_class )  {
 	case WEDGE_ON:
@@ -1074,46 +1139,39 @@ tie_break:
 		case WEDGE_LEFT:
 			if( lo_equal )  {
 				/* hi_equal case handled above */
-				if( a->hi_ang < b->hi_ang ) A_WINS;
-				B_WINS;
+				if( a->hi_ang < b->hi_ang ) A_LT_B;
+				A_GT_B;
 			}
-			if( a->lo_ang > b->lo_ang )  A_WINS;
-			B_WINS;
+			if( a->lo_ang > b->lo_ang )  A_LT_B;
+			A_GT_B;
 		case WEDGE_CROSS:
-			/* See if A is behind B */
-			if( a->lo_ang <= b->hi_ang ) B_WINS;
-			/* Choose smaller inbound angle */
-			diff = 360 - a->lo_ang;/* CW version of left angle */
-			if( b->lo_ang <= diff )  B_WINS;
-			A_WINS;
+			/* A is LEFT, B is CROSS */
+			if( nmg_is_wedge_before_cross( a, b ) )  A_LT_B;
+			A_GT_B;
 		case WEDGE_RIGHT:
 			diff = 360 - a->lo_ang;/* CW version of left angle */
-			if( b->lo_ang <= diff )  B_WINS;
-			A_WINS;
+			if( b->lo_ang <= diff )  A_GT_B;
+			A_LT_B;
 		case WEDGE_ON:
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 2?\n");
 		}
 	case WEDGE_CROSS:
 		switch( b->wedge_class )  {
 		case WEDGE_LEFT:
-			if( a->hi_ang >= b->lo_ang ) A_WINS;
-			/* Choose smaller inbound angle */
-			diff = 360 - b->lo_ang;/* CW version of left angle */
-			if( diff <= a->lo_ang )  B_WINS;
-			A_WINS;
+			/* A (AB) is CROSS, (CD) is LEFT */
+			if( nmg_is_wedge_before_cross( b, a ) )  A_GT_B;
+			A_LT_B;
 		case WEDGE_CROSS:
 			if( lo_equal )  {
-				if( a->hi_ang > b->hi_ang )  A_WINS;
-				B_WINS;
+				if( a->hi_ang > b->hi_ang )  A_LT_B;
+				A_GT_B;
 			}
-			if( a->lo_ang < b->lo_ang )  A_WINS;
-			B_WINS;
+			if( a->lo_ang < b->lo_ang )  A_LT_B;
+			A_GT_B;
 		case WEDGE_RIGHT:
-			if( a->lo_ang < b->hi_ang )  A_WINS;
-			/* Choose smaller inbound angle */
-			diff = 360 - a->hi_ang;/* CW version of left angle */
-			if( diff < b->lo_ang )  A_WINS;
-			B_WINS;
+			/* A is CROSS, B is RIGHT */
+			if( nmg_is_wedge_before_cross( b, a ) )  A_GT_B;
+			A_LT_B;
 		case WEDGE_ON:
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 3?\n");
 		}
@@ -1121,21 +1179,21 @@ tie_break:
 		switch( b->wedge_class )  {
 		case WEDGE_LEFT:
 			diff = 360 - b->lo_ang;/* CW version of left angle */
-			if( a->lo_ang <= diff )  A_WINS;
-			B_WINS;
+			if( a->lo_ang <= diff )  A_LT_B;
+			A_GT_B;
 		case WEDGE_CROSS:
-			if( b->lo_ang < a->hi_ang )  B_WINS;
+			if( b->lo_ang < a->hi_ang )  A_GT_B;
 			/* Choose smaller inbound angle */
 			diff = 360 - b->hi_ang;/* CW version of left angle */
-			if( diff < a->lo_ang )  B_WINS;
-			A_WINS;
+			if( diff < a->lo_ang )  A_GT_B;
+			A_LT_B;
 		case WEDGE_RIGHT:
 			if( lo_equal )  {
-				if( a->hi_ang < b->hi_ang )  B_WINS;
-				A_WINS;
+				if( a->hi_ang < b->hi_ang )  A_GT_B;
+				A_LT_B;
 			}
-			if( a->lo_ang < b->lo_ang )  A_WINS;
-			B_WINS;
+			if( a->lo_ang < b->lo_ang )  A_LT_B;
+			A_GT_B;
 		case WEDGE_ON:
 			rt_bomb("nmg_face_vu_compare() WEDGE_ON 4?\n");
 		}
