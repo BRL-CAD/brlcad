@@ -306,6 +306,8 @@ static struct funtab funtab[] = {
         f_load_dv, 1, 1, TRUE,
 "loadtk", "[DISPLAY]", "Initializes Tk window library",
         cmd_tk, 1, 2, TRUE,
+"lookat", "x y z", "Adjust view to look at given coordinates",
+	f_lookat, 4,4,TRUE,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS, TRUE,
 "M", "1|0 xpos ypos", "handle a middle mouse event",
