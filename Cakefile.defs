@@ -1025,10 +1025,11 @@ set -S2 "/bin/sh"
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR
+#		define	STANDARD_LIBES	-lpthread -lm -lc -Wl,-rpath -Wl,LIBDIR
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ar -s
+#		define	STANDARD_LIBES	-lpthread -lm -lc -Wl,-rpath -Wl,LIBDIR
 #	endif
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
