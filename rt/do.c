@@ -49,7 +49,6 @@ extern int	rdebug;			/* RT program debugging (not library) */
 
 /***** Variables shared with viewing model *** */
 extern FILE	*outfp;			/* optional pixel output file */
-extern int	hex_out;		/* Binary or Hex .pix output file */
 extern double	azimuth, elevation;
 extern mat_t	view2model;
 extern mat_t	model2view;
@@ -709,47 +708,32 @@ int framenumber;
 		 *  to a disk file to be resumed automaticly.
 		 *  This is worthwhile crash protection.
 		 *  This use of stat() and fseek() is UNIX-specific.
+		 *
+		 *  It is not appropriate for the RT "top part" to assume
+		 *  anything about the data that the view module will be
+		 *  storing.  Therefore, it is the responsibility of
+		 *  view_2init() to also detect that some existing data
+		 *  is in the file, and take appropriate measures
+		 *  (like reading it in).
+		 *  view_2init() can depend on the file being open for both
+		 *  reading and writing, but must do it's own positioning.
 		 */
 		{
 			struct stat sb;
 			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 				/* File exists, with partial results */
-				register int pixoff, des_pos, fd;
-				pixoff = sb.st_size / sizeof(RGBpixel);
-				des_pos = pixoff * sizeof(RGBpixel);
-				if( pix_start == 0 && pix_end > pixoff )  {
-					fprintf(stderr, "Continuing with pixel %d (%d, %d) [size %d, want %d]\n",
-						pixoff,
-						pixoff % width,
-						pixoff / width,
-						sb.st_size,
-						des_pos );
-					pix_start = pixoff;
-					/*
-					 *  Append to existing UNIX file.
-					 *  Ensure that positioning is precisely pixel aligned.
-					 *  The file size is almost certainly
-					 *  not an exact multiple of three bytes.
-					 *  Use UNIX sys-calls here because SYSV
-					 *  stdio & fseek() on append-mode files
-					 *  don't seem to work right, and this
-					 *  way is simpler anyway.
-					 */
-					if( (fd = open( framename, 2 )) < 0 ||
-					    (outfp = fdopen( fd, "r+" )) == NULL )  {
-						perror( framename );
-						if( matflag )  return(0);	/* OK */
-						return(-1);			/* Bad */
-					}
-					(void)fseek( outfp, (long)des_pos, 0);
-					/*
-					 *  view_2init() reads the file into
-					 *  scanbuf, when needed by buffering.
-					 */
+				register int	fd;
+				if( (fd = open( framename, 2 )) < 0 ||
+				    (outfp = fdopen( fd, "r+" )) == NULL )  {
+					perror( framename );
+					if( matflag )  return(0);	/* OK */
+					return(-1);			/* Bad */
 				}
 			}
 		}
 #endif
+
+		/* Ordinary case for creating output file */
 		if( outfp == NULL && (outfp = fopen( framename, "w" )) == NULL )  {
 			perror( framename );
 			if( matflag )  return(0);	/* OK */
@@ -759,8 +743,8 @@ int framenumber;
 		fprintf(stderr,"Output file is '%s'\n", framename);
 	}
 
-	/* initialize lighting */
-	view_2init( &ap );
+	/* initialize lighting, may update pix_start */
+	view_2init( &ap, framename );
 
 	if(rdebug&RDEBUG_RTMEM)
 		rt_g.debug |= DEBUG_MEM;	/* Just for the tracing */
@@ -855,17 +839,11 @@ int framenumber;
 		outfp = NULL;
 #ifdef CRAY_COS
 		status = 0;
-		if( hex_out )  {
-			(void)DISPOSE( &status, "DN      ", dn,
-				"TEXT    ", framename,
-				"NOWAIT  " );
-		} else {
-			/* Binary out */
-			(void)DISPOSE( &status, "DN      ", dn,
-				"TEXT    ", framename,
-				"NOWAIT  ",
-				"DF      ", "BB      " );
-		}
+		/* Binary out */
+		(void)DISPOSE( &status, "DN      ", dn,
+			"TEXT    ", framename,
+			"NOWAIT  ",
+			"DF      ", "BB      " );
 		sprintf(message,
 			"%s Dispose,dn='%s',text='%s'.  stat=0%o",
 			(status==0) ? "Good" : "---BAD---",
