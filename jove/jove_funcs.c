@@ -1,37 +1,40 @@
 /*
- *			J O V E _ F U N C S . C 
+ *			J O V E _ F U N C S . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:13  mike
+ * Release_4.4
+ *
  * Revision 10.4  94/09/17  04:57:35  butler
  * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
- * 
+ *
  * Revision 10.3  1993/12/10  04:25:54  mike
  * Added FindCursorTag(), bound to M-t.
  *
  * Revision 10.2  93/10/26  03:47:08  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:53:58  mike
  * Release_4.0
- * 
+ *
  * Revision 2.3  91/08/30  19:41:36  mike
  * Added ^Xe to run cake, like ^X^E runs make.
- * 
+ *
  * Revision 2.2  91/08/30  17:54:33  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.1  91/08/30  17:49:06  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.0  84/12/26  16:46:12  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:08:08  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -43,9 +46,11 @@ static char RCSid[] = "@(#)$Header$";
    jove_funcs.c
 
    This is like the second half of jove_extend.c.  It was divided
-   because the file was taking too long to compile ... 
+   because the file was taking too long to compile ...
  */
 #include "./jove.h"
+
+extern	int Dfltmode;
 
 static int	nfuncs = 0,
 		nmacros = 0,
@@ -458,7 +463,7 @@ InitBindings()
 	BindFunc(mainmap, CTL('R'), IncRSearch);
 	BindFunc(mainmap, CTL('S'), IncFSearch);
 	BindFunc(mainmap, CTL('\\'), IncFSearch);
-	BindFunc(mainmap, CTL('T'), TransChar);	
+	BindFunc(mainmap, CTL('T'), TransChar);
 	BindFunc(mainmap, CTL('U'), FourTime);
 	BindFunc(mainmap, CTL('V'), NextPage);
 	BindFunc(mainmap, CTL('W'), DelPWord);
@@ -612,8 +617,8 @@ struct function	*fp;
 /* Can only define the keyboard macro.  IT can be renamed to another
  * macro.  If the keyboard macro is renamed, we make a copy of it.
  * The keyboard macro is ALWAYS the keyboard macro.
- * 
- * We can't define or run the same macro recursively.  Each macro has 
+ *
+ * We can't define or run the same macro recursively.  Each macro has
  * a bit saying whether or not it is currently being executed/defined.
  */
 
@@ -742,11 +747,11 @@ NameMac()
 	name = copystr(name);
 	*m = KeyMacro;				/* Copy the keyboard macro */
 	m->Body = emalloc(m->MacBuflen);
-	memcpy(m->Body, KeyMacro.Body, m->MacLength);
+	bcopy(KeyMacro.Body, m->Body, m->MacLength);
 	m->Ntimes = m->Flags = m->Offset = 0;	/* At the beginning */
 	m->Name = name;
 	DefMac(name, m);
-}	
+}
 
 MacInit()
 {
@@ -770,7 +775,7 @@ char	*name;
 	m->MacBuflen = 16;
 	m->Body = emalloc(m->MacBuflen);
 	m->Ntimes = m->Flags = 0;
-}	
+}
 
 MacPutc(c)
 int	c;
@@ -819,7 +824,7 @@ WriteMacs()
 	char	*file;
 
 	file = ask((char *) 0, FuncName());
-	if ((macfd = creat(file, 0644)) == -1)
+	if ((macfd = creat(file, Dfltmode)) == -1)
 		complain(IOerr("create", file));
 	/* Don't write the keyboard macro which is always the first */
 	for (mp = &macros[1]; mp < &macros[NMACROS]; mp++) {
