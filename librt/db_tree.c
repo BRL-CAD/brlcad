@@ -2388,9 +2388,9 @@ point_t p_max;	/* shader/region max point */
 		my_rtip->useair = rtip->useair;
 		
 		/* XXX Should have our own semaphore here */
-		bu_semaphore_acquire( RT_SEM_STATS );
+		bu_semaphore_acquire( RT_SEM_MODEL );
 		if (rt_gettree(my_rtip, reg_name)) bu_bomb(rp->reg_name);
-		bu_semaphore_release( RT_SEM_STATS );
+		bu_semaphore_release( RT_SEM_MODEL );
 		rt_rpp_region(my_rtip, reg_name, p_min, p_max);
 		rt_clean(my_rtip);
 	}

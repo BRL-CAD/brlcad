@@ -667,9 +667,10 @@ CONST char	*node;
  *  because db_walk_tree() isn't multiply re-entrant.
  *
  *  Semaphores used for critical sections in parallel mode:
- *	RT_SEM_MODEL	protects rti_solidheads[] lists
- *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses, nregions
+ *	RT_SEM_TREE*	protects rti_solidheads[] lists, d_uses(solids)
+ *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses(reg), nregions
  *	RT_SEM_WORKER	(db_walk_dispatcher, from db_walk_tree)
+ *	RT_SEM_STATS	nsolids
  *  
  *  Returns -
  *  	0	Ordinarily
