@@ -3596,7 +3596,6 @@ BU_EXTERN(int			nmg_break_edges, (long *magic_p,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_lu_is_convex, (struct loopuse *lu,
 				CONST struct bn_tol *tol));
-
 #ifdef SEEN_RTGEOM_H
 BU_EXTERN(int			nmg_to_arb, (CONST struct model *m,
 				struct rt_arb_internal *arb_int));
@@ -3606,6 +3605,7 @@ BU_EXTERN(int			nmg_to_tgc, (CONST struct model *m,
 BU_EXTERN(int			nmg_to_poly, (CONST struct model *m,
 				struct rt_pg_internal *poly_int,
 				CONST struct bn_tol *tol));
+struct rt_bot_internal		*nmg_bot( struct shell *s, const struct bn_tol *tol );
 #endif
 
 BU_EXTERN(int			nmg_simplify_shell_edges, (struct shell *s,
@@ -3614,7 +3614,6 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 				CONST struct bn_tol *tol,
 				CONST fastf_t tol_coll,
 				CONST fastf_t min_angle));
-struct rt_bot_internal		*nmg_bot( struct shell *s, const struct bn_tol *tol );
 
 /* g_bot.c */
 int rt_bot_find_v_nearest_pt2();	/* needs rt_bot_internal for arg list */
