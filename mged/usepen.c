@@ -130,9 +130,6 @@ char	**argv;
 		}
 		if( i > 0 )  {
 			/* Menu claimed button press */
-			/* change solid edit menu if necessary */
-			if( es_edflag == CONTROL || es_edflag == CHGMENU || es_edflag == SETUP_ROTFACE ) 
-				sedraw = 1;
 			return;
 		}
 		/* Otherwise, fall through */
