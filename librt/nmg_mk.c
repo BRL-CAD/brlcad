@@ -1742,7 +1742,7 @@ long *p;
 		if (b->blen == 0) (void)nmg_tbl(b, TBL_INIT, p);
 		if (b->end >= b->blen)
 			b->buffer = (long **)rt_realloc( (char *)b->buffer,
-			    sizeof(p)*(b->blen += 64),
+			    sizeof(p)*(b->blen *= 4),
 			    "pointer table" );
 
 		b->buffer[i=b->end++] = p;
@@ -1752,13 +1752,32 @@ long *p;
 		 * this is the biggest argument I can make for changing to an
 		 * ordered list.  Someday....
 		 */
-		register int k= -1, end = b->end;
-		register long **pp = b->buffer;
+		register int	k;
+		register long	**pp = b->buffer;
 
-		while (++k < end)
+#		include "noalias.h"
+		for( k = b->end-1; k >= 0; k-- )
 			if (pp[k] == p) return(k);
 
 		return(-1);
+	} else if (func == TBL_INS_UNIQUE) {
+		/* we do this a great deal, so make it go as fast as possible.
+		 * this is the biggest argument I can make for changing to an
+		 * ordered list.  Someday....
+		 */
+		register int	k;
+		register long	**pp = b->buffer;
+
+#		include "noalias.h"
+		for( k = b->end-1; k >= 0; k-- )
+			if (pp[k] == p) return(k);
+
+		if (b->blen <= 0 || b->end >= b->blen)  {
+			/* Table needs to grow */
+			return( nmg_tbl( b, TBL_INS, p ) );
+		}
+		b->buffer[k=b->end++] = p;
+		return(-1);		/* To signal that it was added */
 	} else if (func == TBL_RM) {
 		/* we go backwards down the list looking for occurrences
 		 * of p to delete.  We do it backwards to reduce the amount
@@ -1777,6 +1796,7 @@ long *p;
 				while (pp[l-1] == p) --l;
 
 				end -= j - l;
+#				include "noalias.h"
 				for(k=l ; j < end ;)
 					b->buffer[k++] = b->buffer[j++];
 			}
