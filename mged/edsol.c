@@ -1713,46 +1713,46 @@ sedit_menu()  {
 
 	menuflag = 0;		/* No menu item selected yet */
 
-	menu_array[MENU_L1] = MENU_NULL;
+	menu_set( MENU_L1, MENU_NULL );
 	chg_l2menu(ST_S_EDIT);
                                                                       
 	switch( es_int.idb_type ) {
 
 	case ID_ARB8:
-		menu_array[MENU_L1] = cntrl_menu;
+		menu_set( MENU_L1, cntrl_menu );
 		break;
 	case ID_TGC:
-		menu_array[MENU_L1] = tgc_menu;
+		menu_set( MENU_L1, tgc_menu );
 		break;
 	case ID_TOR:
-		menu_array[MENU_L1] = tor_menu;
+		menu_set( MENU_L1, tor_menu );
 		break;
 	case ID_ELL:
-		menu_array[MENU_L1] = ell_menu;
+		menu_set( MENU_L1, ell_menu );
 		break;
 	case ID_ARS:
-		menu_array[MENU_L1] = ars_menu;
+		menu_set( MENU_L1, ars_menu );
 		break;
 	case ID_BSPLINE:
-		menu_array[MENU_L1] = spline_menu;
+		menu_set( MENU_L1, spline_menu );
 		break;
 	case ID_RPC:
-		menu_array[MENU_L1] = rpc_menu;
+		menu_set( MENU_L1, rpc_menu );
 		break;
 	case ID_RHC:
-		menu_array[MENU_L1] = rhc_menu;
+		menu_set( MENU_L1, rhc_menu );
 		break;
 	case ID_EPA:
-		menu_array[MENU_L1] = epa_menu;
+		menu_set( MENU_L1, epa_menu );
 		break;
 	case ID_EHY:
-		menu_array[MENU_L1] = ehy_menu;
+		menu_set( MENU_L1, ehy_menu );
 		break;
 	case ID_ETO:
-		menu_array[MENU_L1] = eto_menu;
+		menu_set( MENU_L1, eto_menu );
 		break;
 	case ID_NMG:
-		menu_array[MENU_L1] = nmg_menu;
+		menu_set( MENU_L1, nmg_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
