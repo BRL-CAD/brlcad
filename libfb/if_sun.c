@@ -60,8 +60,8 @@ FBIO            sun_interface = {
 				 1152,	/* max width */
 				 896,	/* max height */
 				 "/dev/sun",
-				 512,	/* current/default width  */
-				 512,	/* current/default height */
+				 1152,	/* current/default width  */
+				 896,	/* current/default height */
 				 -1,	/* file descriptor */
 				 PIXEL_NULL,	/* page_base */
 				 PIXEL_NULL,	/* page_curp */
@@ -73,15 +73,14 @@ FBIO            sun_interface = {
 				 0	/* debug */
 };
 
+#define	SUNPW(ptr)	((Pixwin *)((ptr)->u1.p))
+#define if_xzoom	u2.l
+#define if_yzoom	u3.l
+#define if_depth	u4.l	/* # bits/pixel */
+#define if_rheight	u5.l	/* height of master_rect.r_height */
 
-Pixwin		*sun_pw;
-int             sun_win_fd;
-int             sun_xzoom = 1;
-int             sun_yzoom = 1;
 int             sun_damaged;	/* window has incurred damage */
 int             dither_flg = 0;	/* dither output */
-Rect            master_rect;
-int		sun_depth;
 
 /* One scanline wide buffer */
 extern struct pixrectops mem_ops;
@@ -153,12 +152,13 @@ sun_sigwinch()
 	sun_damaged = 1;
 }
 
-sun_repair()
+sun_repair(ifp)
+register FBIO *ifp;
 {
 	if (sun_damaged) {
-		pw_damaged(sun_pw);
-		pw_repairretained(sun_pw);
-		pw_donedamaged(sun_pw);
+		pw_damaged(SUNPW(ifp));
+		pw_repairretained(SUNPW(ifp));
+		pw_donedamaged(SUNPW(ifp));
 		sun_damaged = 0;
 	}
 }
@@ -172,7 +172,9 @@ sun_dopen(ifp, file, width, height)
 	char           *file;
 	int             width, height;
 {
+	int             sun_win_fd;
 	char            gfxwinname[128];	/* Name of window to use */
+	Rect            master_rect;
 	int             i;
 	int             x;
 
@@ -185,37 +187,36 @@ sun_dopen(ifp, file, width, height)
 	if ( height > ifp->if_max_height) 
 		height = ifp->if_max_height;
 
-	if (sun_pw != (Pixwin *) 0) {
+	if (SUNPW(ifp) != (Pixwin *) 0) {
 		fb_log("sun_open, already open\n");
 		return(-1);	/* FAIL */
 	}
 
-	if( we_getgfxwindow(gfxwinname) == 0 )  {
-		int             gfxfd;
-
+        if( we_getgfxwindow(gfxwinname) == 0 )  {
+        	int	gfxfd;
+                        
 		/* Running under SunView, with windows */
 		if( (sun_win_fd = win_getnewwindow()) < 0 )  {
-			fb_log("sun_dopen:  win_getnewwindow returned %d\n", sun_win_fd);
-			return(-1);	/* FAIL */
+			fb_log("sun_dopen:  win_getnewwindow failed\n");
+			return(-1);     /* FAIL */
 		}
-		
+
 		/* The blanket window covers current GFX window */
-		gfxfd = open(gfxwinname, 2);
-		win_insertblanket(sun_win_fd, gfxfd);
-	} else {
+	       	gfxfd = open(gfxwinname, 2);
+        	win_insertblanket(sun_win_fd, gfxfd);
+        } else {
 		struct screen sun_screen;
-		Pixrect *screen_pr;
 
 		/* Create root window on raw screen */
 		bzero( (char *)&sun_screen, sizeof(sun_screen) );
 		strcpy( sun_screen.scr_kbdname, "NONE" );
 		strcpy( sun_screen.scr_msname, "NONE" );
 		if( (sun_win_fd = win_screennew( &sun_screen )) < 0 )  {
-			fb_log("sun_dopen: win_screennew returned %d\n", sun_win_fd);
-			return(-1);	/* FAIL */
+			fb_log("sun_open:  Unable to attach to SunView or raw screen\n");
+			return(-1);			/* FAIL */
 		}
 	}
-	sun_pw = pw_open(sun_win_fd);
+	ifp->u1.p = (char *)pw_open(sun_win_fd);	/* set SUNPW() */
 	win_getsize(sun_win_fd, &master_rect);
 
 	if( width > master_rect.r_width )
@@ -223,23 +224,23 @@ sun_dopen(ifp, file, width, height)
 	if( height > master_rect.r_height )
 		height = master_rect.r_height;
 
-	sun_depth = sun_pw->pw_pixrect->pr_depth;
-	sun_pw->pw_prretained = mem_create(width, height, sun_depth);
-	sun_mpr.pr_depth = sun_depth;
-	if( sun_depth < 8 )  {
-/**		pr_whiteonblack( sun_pw->pw_pixrect, 0, 1 );**/
+	ifp->if_rheight = master_rect.r_height;
+	ifp->if_depth = SUNPW(ifp)->pw_pixrect->pr_depth;
+	SUNPW(ifp)->pw_prretained = mem_create(width, height, ifp->if_depth);
+	sun_mpr.pr_depth = ifp->if_depth;
+	if( ifp->if_depth < 8 )  {
+		;
 	} else {
 		if (dither_flg) {
 #ifdef DIT
 			draw8Ainit();
 			dither8Ainit();
-			pw_set8Amap(sun_pw, &sun_cmap);
+			pw_set8Amap(SUNPW(ifp), &sun_cmap);
 #endif DIT
 		} else {
 			/* r | g | b, values = RR, GR, BR */
 			/* set a new cms name; initialize it */
-			x = pw_setcmsname(sun_pw, "libfb");
-			fb_log("setcmsname ret %d\n", x);
+			x = pw_setcmsname(SUNPW(ifp), "libfb");
 			for (x = 0; x < (RR * GR * BR); x++) {
 				int             new;
 				RGBpixel        q;
@@ -253,14 +254,17 @@ sun_dopen(ifp, file, width, height)
 				q[BLU] = blumap[x + 1];
 				new = COLOR_APPROX(qq);
 			}
-			x = pw_putcolormap(sun_pw, 0, 256, redmap, grnmap, blumap);
-			fb_log("colormap ret %d\n", x);
+			x = pw_putcolormap(SUNPW(ifp), 0, 256, redmap, grnmap, blumap);
 		}
 	}
+	ifp->if_width = width;
+	ifp->if_height = height;
+	ifp->if_xzoom = 1;
+	ifp->if_yzoom = 1;
 
 	/* Set entire area to background color */
 	/* SUN reserves [0] for white (background), [1] for black (fg) */
-	pw_rop(sun_pw, 0, 0, master_rect.r_width, master_rect.r_height,
+	pw_rop(SUNPW(ifp), 0, 0, master_rect.r_width, master_rect.r_height,
 	       PIX_SRC | PIX_COLOR(1), (Pixrect *) 0, 0, 0);
 
 	signal(SIGWINCH, sun_sigwinch);
@@ -278,9 +282,9 @@ sun_dclose(ifp)
 	Pixrect        *pr_out;
 	FILE           *ofp;
 
-	sun_repair();
-	pw_close(sun_pw);
-	sun_pw = (Pixwin *) 0;
+	sun_repair(ifp);
+	pw_close(SUNPW(ifp));
+	SUNPW(ifp) = (Pixwin *) 0;
 }
 
 /*
@@ -291,7 +295,7 @@ sun_dclear(ifp, pp)
 	FBIO           *ifp;
 	register RGBpixel *pp;
 {
-	sun_repair();
+	sun_repair(ifp);
 }
 
 /*
@@ -302,7 +306,7 @@ sun_window_set(ifp, x, y)
 	FBIO           *ifp;
 	int             x, y;
 {
-	sun_repair();
+	sun_repair(ifp);
 }
 
 /*
@@ -313,9 +317,9 @@ sun_zoom_set(ifp, xpts, ypts)
 	FBIO           *ifp;
 	int             xpts, ypts;
 {
-	sun_repair();
-	sun_xzoom = xpts;
-	sun_yzoom = ypts;
+	sun_repair(ifp);
+	ifp->if_xzoom = xpts;
+	ifp->if_yzoom = ypts;
 }
 
 /*
@@ -347,31 +351,40 @@ sun_bwrite(ifp, x, y, p, count)
 	register int    cnt;
 	int		needflush = 0;
 
-	sun_repair();
+	if (sun_damaged) {
+		pw_damaged(SUNPW(ifp));
+		pw_repairretained(SUNPW(ifp));
+		pw_donedamaged(SUNPW(ifp));
+		sun_damaged = 0;
+	}
 	cx = x;
-	cy = master_rect.r_height - 1 - y;
-	if (cy < 0 || cy >= master_rect.r_height)
-		return;
+	cy = ifp->if_rheight - 1 - y;
+	if (cx < 0 || cx >= ifp->if_width)
+		return(0);
+	if (cy < 0 || cy >= ifp->if_rheight)
+		return(0);
 
 	if( count == 1 )  {
-		if( sun_depth < 8 )  {
+		if( ifp->if_depth < 8 )  {
 			/* 0 gives white, 1 gives black */
 			value = ((*p)[RED] + (*p)[GRN] + (*p)[BLU]);
 			if( value < dither[(cx&07)][cy&07]*3 )
-				pw_put( sun_pw, cx, cy, 1 );
+				pw_put( SUNPW(ifp), cx, cy, 1 );
+			else
+				pw_put( SUNPW(ifp), cx, cy, 0 );
 		} else {
 			value = COLOR_APPROX(p);
-			pw_put( sun_pw, cx, cy, value );
+			pw_put( SUNPW(ifp), cx, cy, value );
 		}
 		return(1);
 	}
 	/* This code has problems if only part of a line is being written */
 
-	bzero( sun_mpr_buf, ifp->if_width * sun_depth / sizeof(char) );
-	pw_lock( sun_pw, sun_pw->pw_pixrect );
+	bzero( sun_mpr_buf, ifp->if_width * ifp->if_depth / sizeof(char) );
+	pw_lock( SUNPW(ifp), SUNPW(ifp)->pw_pixrect );
 	for (cnt = count; --cnt >= 0; p++) {
-		for( i=sun_xzoom; i-- > 0; cx++)  {
-			if( sun_depth < 8 )  {
+		for( i=ifp->if_xzoom; i-- > 0; cx++)  {
+			if( ifp->if_depth < 8 )  {
 				register short xxx;
 				/* 0 gives white, 1 gives black */
 				value = ((*p)[RED] + (*p)[GRN] + (*p)[BLU]);
@@ -384,28 +397,29 @@ sun_bwrite(ifp, x, y, p, count)
 		}
 		needflush = 1;
 		if (cx >= ifp->if_width) {
-			for( i=sun_yzoom; i-- > 0; cy-- )  {
-				pw_rop( sun_pw, x, cy,
+			for( i=ifp->if_yzoom; i-- > 0; cy-- )  {
+				pw_rop( SUNPW(ifp), x, cy,
 					cx-x, 1,
 					PIX_SRC, &sun_mpr, x, 0 );
 				x = cx = 0;
 			}
-			bzero( sun_mpr_buf, ifp->if_width * sun_depth / sizeof(char) );
+			bzero( sun_mpr_buf, ifp->if_width * ifp->if_depth / sizeof(char) );
 			needflush = 0;
 		}
 	}
 	if(needflush)  {
-		for( i=sun_yzoom; i-- > 0; cy-- )  {
-			pw_rop( sun_pw, x, cy,
+		for( i=ifp->if_yzoom; i-- > 0; cy-- )  {
+			pw_rop( SUNPW(ifp), x, cy,
 				cx-x, 1,
 				PIX_SRC, &sun_mpr, x, 0 );
 			x = cx = 0;
 		}
 	}
-	pw_unlock( sun_pw );
+	pw_unlock( SUNPW(ifp) );
 	return(count);
 }
 
+#ifdef never
 sun_put(pw, vx, vy, p)
 	Pixwin         *pw;
 	int             vx, vy;
@@ -416,12 +430,12 @@ sun_put(pw, vx, vy, p)
 	int             xcnt, ycnt;
 	int             value;
 
-	fx = vx * sun_xzoom;
-	fy = vy * sun_yzoom;
+	fx = vx * ifp->if_xzoom;
+	fy = vy * ifp->if_yzoom;
 	if (dither_flg) {
 #ifdef DIT
-		for (ycnt = sun_yzoom; --ycnt >= 0;) {
-			for (xcnt = sun_xzoom; --xcnt >= 0;) {
+		for (ycnt = ifp->if_yzoom; --ycnt >= 0;) {
+			for (xcnt = ifp->if_xzoom; --xcnt >= 0;) {
 				cx = fx + xcnt;
 				cy = fy + ycnt;
 				value = get_dither8Abit(cx, cy, (*p)[RED], (*p)[GRN], (*p)[BLU]);
@@ -434,10 +448,11 @@ sun_put(pw, vx, vy, p)
 			  (((*p)[GRN] * (GR)) >> 8)) * BR
 			 + (((*p)[BLU] * (BR)) >> 8));
 		/**	value = ((*p)[RED] + (*p)[GRN] + (*p)[BLU]) / 3; **/
-		pw_rop(pw, fx, fy, sun_xzoom, sun_yzoom,
+		pw_rop(pw, fx, fy, ifp->if_xzoom, ifp->if_yzoom,
 		       PIX_SRC | PIX_COLOR(value), (Pixrect *) 0, 0, 0);
 	}
 }
+#endif never
 
 /*
  * S U N _ V I E W P O R T _ S E T 
@@ -463,7 +478,7 @@ sun_cmwrite(ifp, cmp)
 	register FBIO  *ifp;
 	register ColorMap *cmp;
 {
-	sun_repair();
+	sun_repair(ifp);
 }
 
 /* --------------------------------------------------------------- */
