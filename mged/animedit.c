@@ -229,15 +229,15 @@ struct arc *ap;
 	register int i;
 	if (!ap || ap->type == ARC_UNSET) return;
 	for (i=0; i<=ap->arc_last; i++) {
-		bu_free(ap->arc[i], "arc entry");
+		bu_free((genptr_t)ap->arc[i], "arc entry");
 	}
-	bu_free((char *)ap->arc, "arc table");
+	bu_free((genptr_t)ap->arc, "arc table");
 	ap->arc = (char **)0;
 	if (ap->type & ARC_BOTH) {
 		for (i=0; i<=ap->arc_last; i++) {
-			bu_free(ap->original[i], "arc entry");
+			bu_free((genptr_t)ap->original[i], "arc entry");
 		}
-		bu_free((char *)ap->original, "arc table");
+		bu_free((genptr_t)ap->original, "arc table");
 	}
 	ap->type=ARC_UNSET;
 }
@@ -246,8 +246,8 @@ free_joint(jp)
 struct joint *jp;
 {
 	free_arc(&jp->path);
-	if (jp->name) bu_free(jp->name, "joint name");
-	bu_free((char *)jp, "joint structure");
+	if (jp->name) bu_free((genptr_t)jp->name, "joint name");
+	bu_free((genptr_t)jp, "joint structure");
 }
 
 static void
@@ -272,11 +272,11 @@ struct hold *hp;
 	while (BU_LIST_WHILE(jh, jointH, &hp->j_head)) {
 		jh->p->uses--;
 		BU_LIST_DEQUEUE(&jh->l);
-		bu_free((char *) jh, "joint handle");
+		bu_free((genptr_t) jh, "joint handle");
 	}
-	if (hp->joint) bu_free(hp->joint, "hold joint name");
-	if (hp->name) bu_free(hp->name, "hold name");
-	bu_free((char *)hp, "hold struct");
+	if (hp->joint) bu_free((genptr_t)hp->joint, "hold joint name");
+	if (hp->name) bu_free((genptr_t)hp->name, "hold name");
+	bu_free((genptr_t)hp, "hold struct");
 }
 static void
 hold_clear_flags(hp)
@@ -366,9 +366,9 @@ FILE *fip;
 		  Tcl_AppendResult(interp, "joint load constraint: arc '", text,
 				   "' for ", name, " is bad.\n", (char *)NULL);
 		  for (i=0; i<=arc_last; i++) {
-		    bu_free(arc[i], "arc entry");
+		    bu_free((genptr_t)arc[i], "arc entry");
 		  }
-		  bu_free((char *) arc, "arc table");
+		  bu_free((genptr_t) arc, "arc table");
 		  return 0;
 		}
 		pp->name = arc[arc_last];
@@ -377,9 +377,9 @@ FILE *fip;
 		 * a grip as we save it's name in pp->name.
 		 */
 		for (i=0; i< arc_last; i++) {
-			bu_free(arc[i], "arc entry");
+			bu_free((genptr_t)arc[i], "arc entry");
 		}
-		bu_free((char *) arc, "arc table");
+		bu_free((genptr_t) arc, "arc table");
 		return 1;
 	case HOLD_PT_JOINT:
 /*
@@ -424,9 +424,9 @@ FILE *fip;
 		  Tcl_AppendResult(interp, "joint load constraint: arc '", text,
 				   "' for ", name, " is bad.\n", (char *)NULL);
 			for (i=0; i<arc_last; i++) {
-				bu_free(arc[i], "arc entry");
+				bu_free((genptr_t)arc[i], "arc entry");
 			}
-			bu_free((char *) arc, "arc table");
+			bu_free((genptr_t) arc, "arc table");
 			return 0;
 		}
 		pp->name = arc[arc_last];
@@ -435,9 +435,9 @@ FILE *fip;
 		 * a joint as we save it's name in pp->name.
 		 */
 		for (i=0; i< arc_last; i++) {
-			bu_free(arc[i], "arc entry");
+			bu_free((genptr_t)arc[i], "arc entry");
 		}
-		bu_free((char *) arc, "arc table");
+		bu_free((genptr_t) arc, "arc table");
 		return 1;
 	default:
 	  {
@@ -2391,7 +2391,7 @@ joint_clear()
 	register struct stack_solve *ssp;
 	BU_LIST_POP(stack_solve, &solve_head, ssp);
 	while (ssp) {
-		bu_free((char *)ssp, "struct stack_solve");
+		bu_free((genptr_t)ssp, "struct stack_solve");
 		BU_LIST_POP(stack_solve, &solve_head, ssp);
 	}
 }
@@ -2739,7 +2739,7 @@ reject_move()
 		ssp->jp->dirs[ssp->freedom-3].current = ssp->old;
 	}
 	joint_move(ssp->jp);
-	bu_free((char *)ssp, "struct solve_stack");
+	bu_free((genptr_t)ssp, "struct solve_stack");
 }
 /*	Constraint system solver.
  *
@@ -3070,7 +3070,7 @@ char **argv;
 	for (count=0; count<myargc; count++) {
 		bu_free(myargv[count],"params");
 	}
-	bu_free((char *)myargv,"param pointers");
+	bu_free((genptr_t)myargv,"param pointers");
 
 	if (found >= 0) return CMD_BAD;
 
@@ -3247,12 +3247,18 @@ f_jlist(argc, argv)
 int argc;
 char **argv;
 {
-	register struct joint *jp;
-	for (BU_LIST_FOR(jp, joint, &joint_head)) {
-		col_item(jp->name);
-	}
-	col_eol();
-	return CMD_OK;
+  register struct joint *jp;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  for (BU_LIST_FOR(jp, joint, &joint_head)) {
+    vls_col_item(&vls, jp->name);
+  }
+  vls_col_eol(&vls);
+
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
+  return CMD_OK;
 }
 void
 joint_move(jp)
@@ -3285,7 +3291,7 @@ struct joint *jp;
 			if (!dp) {
 				anp->an_path.fp_len = i;
 				db_free_full_path(&anp->an_path);
-				bu_free((char *)anp, "struct animate");
+				bu_free((genptr_t)anp, "struct animate");
 				return;
 			}
 		}
@@ -3710,10 +3716,10 @@ char **argv;
 	while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
 		while (BU_LIST_WHILE(gp, artic_grips, &jp->head)) {
 			BU_LIST_DEQUEUE(&gp->l);
-			bu_free((char *)gp,"artic_grip");
+			bu_free((genptr_t)gp,"artic_grip");
 		}
 		BU_LIST_DEQUEUE(&jp->l);
-		bu_free((char *)jp, "Artic Joint");
+		bu_free((genptr_t)jp, "Artic Joint");
 	}
 	return CMD_OK;
 }
