@@ -1704,6 +1704,9 @@ union tree *	(*leaf_func)();
 	return(0);	/* OK */
 }
 
+/*
+ *			D B _ P A T H _ T O _ M A T
+ */
 int
 db_path_to_mat( dbip, pathp, mat, depth)
 struct db_i	*dbip;
@@ -1779,6 +1782,9 @@ int depth;			/* number of arcs */
 	return 1;
 }
 
+/*
+ *			D B _ A P P L Y _ A N I M S
+ */
 void
 db_apply_anims(pathp, dp, stack, arc, materp)
 struct db_full_path *pathp;
