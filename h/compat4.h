@@ -73,6 +73,7 @@ extern "C" {
 
 /* parse.c */
 #define rt_structparse		bu_structparse
+#define structparse		bu_structparse
 #define rt_vls_item_print	bu_vls_item_print
 #define rt_vls_item_print_nc	bu_vls_item_print_nc
 #define rt_vls_name_print	bu_vls_name_print
