@@ -166,9 +166,10 @@ struct rt_i		*rtip;
 	 * to unit length.  Used here in UV mapping.
 	 * See ell.c for details.
 	 */
-	VSCALE( &sph->sph_SoR[0], A, magsq_a );
-	VSCALE( &sph->sph_SoR[4], B, magsq_b );
-	VSCALE( &sph->sph_SoR[8], C, magsq_c );
+	mat_idn( sph->sph_SoR );
+	VSCALE( &sph->sph_SoR[0], A, 1.0/magsq_a );
+	VSCALE( &sph->sph_SoR[4], B, 1.0/magsq_b );
+	VSCALE( &sph->sph_SoR[8], C, 1.0/magsq_c );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, sph->sph_V );
