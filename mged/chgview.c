@@ -603,6 +603,7 @@ char	**argv;
 {
 	register struct solid *sp;
 	register struct solid *nsp;
+	struct directory	*dp;
 
 	no_memory = 0;
 
@@ -613,6 +614,13 @@ char	**argv;
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
 		memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+		dp = sp->s_path[0];
+		RT_CK_DIR(dp);
+		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
+			if( db_dirdelete( dbip, dp ) < 0 )  {
+				printf("f_zap: db_dirdelete failed\n");
+			}
+		}
 		sp->s_addr = sp->s_bytes = 0;
 		nsp = sp->s_forw;
 		DEQUEUE_SOLID( sp );
@@ -711,6 +719,7 @@ register struct directory *dp;
 	static struct solid *nsp;
 	register int i;
 
+	RT_CK_DIR(dp);
 	sp=HeadSolid.s_forw;
 	while( sp != &HeadSolid )  {
 		nsp = sp->s_forw;
@@ -727,6 +736,11 @@ register struct directory *dp;
 			break;
 		}
 		sp = nsp;
+	}
+	if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
+		if( db_dirdelete( dbip, dp ) < 0 )  {
+			printf("eraseobj: db_dirdelete failed\n");
+		}
 	}
 }
 
