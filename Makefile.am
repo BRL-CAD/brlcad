@@ -213,6 +213,7 @@ all-local:
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
+	  $(ECHO) "Run 'cd regress ; make regress' to run the BRL-CAD test Suite" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	  $(ECHO) ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
