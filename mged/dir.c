@@ -1383,19 +1383,21 @@ struct db_i	*dbip;
 struct directory *dp;
 genptr_t	ptr;
 {
-  Tcl_Interp	*interp = (Tcl_Interp *)ptr;
+	Tcl_Interp		*interp = (Tcl_Interp *)ptr;
+	struct directory	*dpp[2] = {DIR_NULL, DIR_NULL};
 
-  if(dbip == DBI_NULL)
-    return;
+	if (dbip == DBI_NULL)
+		return;
 
-  Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
-		   ":  ", dp->d_namep, "\n", (char *)NULL);
+	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+			 ":  ", dp->d_namep, "\n", (char *)NULL);
 
-  eraseobjall(&dp);
+	dpp[0] = dp;
+	eraseobjall(dpp);
 
-  if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
-    TCL_DELETE_ERR("");
-  }
+	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
+		TCL_DELETE_ERR("");
+	}
 }
 
 int
