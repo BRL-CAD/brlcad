@@ -463,7 +463,11 @@ cm_ae( argc, argv )
 int	argc;
 char	**argv;
 {
-	do_ae( atof(argv[1]), atof(argv[2]) );
+	azimuth = atof(argv[1]);	/* set elevation and azimuth */
+	elevation = atof(argv[2]);
+	Viewrotscale[15] = 0.0;		/* set scale to 0.0 so that cm_end */
+					/* will do the do_ae               */
+
 	return(0);
 }
 
