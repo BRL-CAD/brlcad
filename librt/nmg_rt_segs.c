@@ -113,6 +113,76 @@ char *s;
 	}
 }
 
+static void
+pl_ray(rd)
+struct ray_data	*rd;
+{
+	FILE *fd;
+	char name[80];
+	static int plot_file_number=0;
+	struct hitmiss *a_hit;
+	int old_state = NMG_RAY_STATE_OUTSIDE;
+	int in_state;
+	int out_state;
+	point_t old_point;
+	point_t end_point;
+	int old_cond = 0;
+
+	sprintf(name, "nmg_ray%02d.pl", plot_file_number++);
+	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+		perror(name);
+		abort();
+	} else
+		rt_log("overlay %s\n", name);
+
+	VMOVE(old_point, rd->rp->r_pt);
+
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+		NMG_CK_HITMISS(a_hit);
+
+		in_state = HMG_INBOUND_STATE(a_hit);
+		out_state = HMG_OUTBOUND_STATE(a_hit);
+
+		if (in_state == old_state) {
+			switch(in_state) {
+			case NMG_RAY_STATE_INSIDE:
+				pl_color(fd, 55, 255, 55);
+				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				break;
+			case NMG_RAY_STATE_ON:
+				pl_color(fd, 155, 155, 255);
+				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				break;
+			case NMG_RAY_STATE_OUTSIDE:
+				pl_color(fd, 255, 255, 255);
+				pdv_3line(fd, old_point, a_hit->hit.hit_point);
+				break;
+			}
+			old_cond = 0;
+		} else {
+			if (old_cond) {
+				pl_color(fd, 255, 155, 255);
+				old_cond = 0;
+			} else {
+				pl_color(fd, 255, 55, 255);
+				old_cond = 1;
+			}
+			pdv_3line(fd, old_point, a_hit->hit.hit_point);
+		}
+		VMOVE(old_point, a_hit->hit.hit_point);
+		old_state = out_state;
+	}
+
+	if (old_state == NMG_RAY_STATE_OUTSIDE)
+		pl_color(fd, 255, 255, 255);
+	else
+		pl_color(fd, 255, 55, 255);
+
+	VADD2(end_point, old_point, rd->rp->r_dir);
+	pdv_3line(fd, old_point, end_point);
+
+	fclose(fd);
+}
 
 /*
  *		N E X T _ S T A T E _ T A B L E
@@ -838,10 +908,10 @@ struct soltab		*stp;
 			}
 
 			/* Now bomb off */
-			rt_log("Solid: %s, pixel=%d,%d, lvl=%d %s\n",
-				stp->st_dp->d_namep,
-				ap->a_x, ap->a_y, ap->a_level,
-				ap->a_purpose );
+			rt_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
+				rd->stp->st_dp->d_namep,
+				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
+				rd->ap->a_purpose );
 		    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 			nmg_rt_segs_exit("Goodbye\n");
@@ -860,7 +930,7 @@ struct soltab		*stp;
 	    	rt_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	    		V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir) );
 		
-		rt_log("Solid: %s, pixel=%d,%d, lvl=%d %s\n",
+		rt_log("Solid: %s, pixel=%d %d, lvl=%d %s\n",
 			stp->st_dp->d_namep,
 			ap->a_x, ap->a_y, ap->a_level,
 			ap->a_purpose );
@@ -995,12 +1065,13 @@ struct nmg_ptbl *tbl;
 }
 
 static void
-unresolved(a_hit, next_hit, a_tbl, next_tbl, hd)
+unresolved(a_hit, next_hit, a_tbl, next_tbl, hd, rd)
 struct hitmiss *a_hit;
 struct hitmiss *next_hit;
 struct nmg_ptbl  *a_tbl;
 struct nmg_ptbl  *next_tbl;
 struct hitmiss *hd;
+struct ray_data *rd;
 {
 
 	struct hitmiss *hm;
@@ -1013,7 +1084,7 @@ struct hitmiss *hd;
 			rt_log("======= ======\n");
 			nmg_rt_print_hitmiss(hm);
 			rt_log("================\n");
-		} else 
+		} else
 			nmg_rt_print_hitmiss(hm);
 	}
 
@@ -1028,8 +1099,13 @@ struct hitmiss *hd;
 	l_p = &next_tbl->buffer[0];
 	for ( ; l_p < b ; l_p ++)
 		rt_log("\t0x%08x %s\n",**l_p, rt_identify_magic( **l_p));
-	
+
 	rt_log("<---Unable to fix state transition\n");
+	pl_ray(rd);
+	rt_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
+		rd->stp->st_dp->d_namep,
+		rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
+		rd->ap->a_purpose );
 }
 
 
@@ -1071,6 +1147,10 @@ struct ray_data	*rd;
 		/* this better be a 2-manifold face */
 		rt_log("%s[%d]: This better be a 2-manifold face\n",
 			__FILE__, __LINE__);
+		rt_log("Solid: %s, pixel=%d %d,  lvl=%d %s\n",
+				rd->stp->st_dp->d_namep,
+				rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
+				rd->ap->a_purpose );
 		a_hit = RT_LIST_PNEXT(hitmiss, a_hit);
 		if (a_hit != hd) {
 			NMG_CK_HITMISS(a_hit);
@@ -1128,7 +1208,7 @@ struct ray_data	*rd;
 
 			} else 
 				unresolved(a_hit, next_hit,
-						a_tbl, next_tbl, hd);
+						a_tbl, next_tbl, hd, rd);
 
 		}
 
@@ -1148,76 +1228,6 @@ struct ray_data	*rd;
 	return 0;
 }
 
-static void
-pl_ray(rd)
-struct ray_data	*rd;
-{
-	FILE *fd;
-	char name[80];
-	static int plot_file_number=0;
-	struct hitmiss *a_hit;
-	int old_state = NMG_RAY_STATE_OUTSIDE;
-	int in_state;
-	int out_state;
-	point_t old_point;
-	point_t end_point;
-	int old_cond = 0;
-
-	sprintf(name, "nmg_ray%02d.pl", plot_file_number++);
-	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
-		perror(name);
-		abort();
-	} else
-		rt_log("overlay %s\n", name);
-
-	VMOVE(old_point, rd->rp->r_pt);
-
-	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
-		NMG_CK_HITMISS(a_hit);
-
-		in_state = HMG_INBOUND_STATE(a_hit);
-		out_state = HMG_OUTBOUND_STATE(a_hit);
-
-		if (in_state == old_state) {
-			switch(in_state) {
-			case NMG_RAY_STATE_INSIDE:
-				pl_color(fd, 55, 255, 55);
-				pdv_3line(fd, old_point, a_hit->hit.hit_point);
-				break;
-			case NMG_RAY_STATE_ON:
-				pl_color(fd, 155, 155, 255);
-				pdv_3line(fd, old_point, a_hit->hit.hit_point);
-				break;
-			case NMG_RAY_STATE_OUTSIDE:
-				pl_color(fd, 255, 255, 255);
-				pdv_3line(fd, old_point, a_hit->hit.hit_point);
-				break;
-			}
-			old_cond = 0;
-		} else {
-			if (old_cond) {
-				pl_color(fd, 255, 155, 255);
-				old_cond = 0;
-			} else {
-				pl_color(fd, 255, 55, 255);
-				old_cond = 1;
-			}
-			pdv_3line(fd, old_point, a_hit->hit.hit_point);
-		}
-		VMOVE(old_point, a_hit->hit.hit_point);
-		old_state = out_state;
-	}
-
-	if (old_state == NMG_RAY_STATE_OUTSIDE)
-		pl_color(fd, 255, 255, 255);
-	else
-		pl_color(fd, 255, 55, 255);
-
-	VADD2(end_point, old_point, rd->rp->r_dir);
-	pdv_3line(fd, old_point, end_point);
-
-	fclose(fd);
-}
 /*	N M G _ R A Y _ S E G S
  *
  *	Obtain the list of ray segments which intersect with the nmg.
