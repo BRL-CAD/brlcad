@@ -55,7 +55,11 @@ fi
 
 SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
 
-cp ${SCRIPTS} ${BINDIR}/.
+for i in ${SCRIPTS}
+do
+	mv -f ${BINDIR}/${i} ${BINDIR}/${i}.bak
+	cp ${i} ${BINDIR}/.
+done
 
 # Make and install "cake" and "cakeaux"
 
