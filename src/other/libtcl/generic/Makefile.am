@@ -75,6 +75,7 @@ libtclgeneric_la_SOURCES = \
 noinst_HEADERS = \
 	regcustom.h \
 	regerrs.h \
+	regex.h \
 	regguts.h \
 	tclCompile.h \
 	tclIO.h \
