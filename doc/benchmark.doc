@@ -58,7 +58,7 @@ in an ASCII format in the "db" directory, and
 ascii-to-binary converters are provided in the "conv" directory.
 The setup command "\fBcake benchmark\fR"
 (see the document \fIInstalling the BRL-CAD Package\fR)
-will automaticly compile and run the converters.
+will automatically compile and run the converters.
 .PP
 If you are running this
 benchmark on a non-UNIX machine that has difficulty writing binary
@@ -70,15 +70,25 @@ The reference images are distributed in binary BRL-CAD
 .BR pix (5)
 format.
 Earlier releases distributed the reference images in the portable
-ASCII form, and the converted them to the binary form.
+ASCII form, and then converted them to the binary form.
 This consumed a significant amount of extra storage on UNIX machines,
 so this practice was discontinued.
 It is assumed that anyone attempting to benchmark a system that
 can not read pure binary files will at least have access to a
-UNIX system that can be used to convert the reference images to
+UNIX system.
+That UNIX system can be used to convert the reference images to
 the portable ASCII form with the
 .BR pix2asc (1)
-tool, and then send those images to the machine under test.
+tool, and then those images may be sent to the machine under test.
+.PP
+Information about modifying the benchmark to run on a particular system
+may be found in the document \fIInstalling the BRL-CAD Package\fR.
+For a detailed explanation of various hardware specific modifications
+necessary to take advantage of parallel processing, see the document
+\fIWorkstations, Networking, Distributed Graphics, and
+Parallel Processing\fR.
+Implementations for several different types of hardware in use at BRL
+are included.
 .PP
 If you encounter difficulty
 with running the benchmark,
@@ -179,7 +189,8 @@ ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
 bob.brl.mil	Cray-2, SN 2009, 4.3ns clock
 brl-patton	Cray X-MP/48, SN213, COS V115BF2, 8.5ns clock
 brl-spark	Gould PN 9050, no MACC, UTX 2.0, 2x4Mb mem boards
-brl-vector	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix 2.0
+brl-vector	Alliant FX/80 (8 ACEs, 6 IPs, 32 Mbytes), Concentrix
+brl-venom	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix
 brl-vgr	VAX 780, FPA, 4.3 BSD
 brl-virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
 brl-vista	SGI 3030, w/FP chip, UNIX release 3.5
@@ -218,11 +229,16 @@ rather than rays/total CPU seconds (which remains fairly constant on
 good parallel machines). Worthy finalists to date are listed below.
 Entries are omitted for tests in which correct results were not
 obtained.
-.LP
+.PP
 The statistics are recorded in
 an easily understood format, with all results for
 a particular configuration listed on a single line.
 The numbers reported are the rays/sec (RTFM) figure.
+Entries denoted with a dagger ("\(dg") produced incorrect results.
+Entries denoted with a dash ("-") were not available and should be
+considered differently than those entries with a dagger.
+Generally the results are not available because time constraints
+prevented running the complete set of databases.
 .fi
 .NH 1
 RELEASE 1.20 STATISTICS (12-Feb-1987)
@@ -278,8 +294,8 @@ _
 Rays	seer	460.7	263.2	246.8	241.0	?	UTX 2.0
 *vgr	seer	4.11	4.14	4.49	4.75	?
 _
-Rays	vector	492.9	228.0	180.0	157.1	?	Concentrix 2.0
-*vgr	vector	4.40	3.58	3.27	3.10	?
+Rays	venom	492.9	228.0	180.0	157.1	?	Concentrix 2.0
+*vgr	venom	4.40	3.58	3.27	3.10	?
 _
 Rays	elxgnu	520.6	315.4	264.4	242.0	?	BSD 4.2
 *vgr	elxgnu	4.64	4.96	4.81	4.77	?
@@ -299,17 +315,17 @@ _
 Rays	mflow	845.2	439.5	313.1	338.9	?	(preliminary)
 *vgr	mflow	7.54	6.91	5.69	6.68	?
 _
-Rays	vector	904.9	424.6	349.3	312.6	?	Concentrix 2.0,
-*vgr	vector	8.07	6.68	6.35	6.17	?	2 CEs, no vectors
+Rays	venom	904.9	424.6	349.3	312.6	?	Concentrix 2.0,
+*vgr	venom	8.07	6.68	6.35	6.17	?	2 CEs, no vectors
 _
-Rays	vector	1375.5	650.0	523.4	459.9	?	Concentrix 2.0,
-*vgr	vector	12.27	10.22	9.52	9.07	?	3 CEs, no vectors
+Rays	venom	1375.5	650.0	523.4	459.9	?	Concentrix 2.0,
+*vgr	venom	12.27	10.22	9.52	9.07	?	3 CEs, no vectors
 _
-Rays	vector	1813.5	845.5	686.0	600.7	?	Concentrix 2.0,
-*vgr	vector	16.17	13.29	12.47	11.85	?	4 CEs, no vectors
+Rays	venom	1813.5	845.5	686.0	600.7	?	Concentrix 2.0,
+*vgr	venom	16.17	13.29	12.47	11.85	?	4 CEs, no vectors
 _
-Rays	vector	2364.1	1104.4	870.2	775.9	?	Concentrix 2.0,
-*vgr	vector	21.08	17.36	15.82	15.3	?	5 CEs, no vectors
+Rays	venom	2364.1	1104.4	870.2	775.9	?	Concentrix 2.0,
+*vgr	venom	21.08	17.36	15.82	15.3	?	5 CEs, no vectors
 _
 Rays	snm2	2492.9	-	-	-	?	Unicos 2.0,
 *vgr	snm2	22.24	-	-	-	?	no vectors, no optim
@@ -317,17 +333,17 @@ _
 Rays	hep	2502.0	-	-	-	?	1 PEM, npsw=10
 *vgr	hep	22.32	-	-	-	?
 _
-Rays	vector	2811.4	1319.0	1051.6	918.0	?	Concentrix 2.0,
-*vgr	vector	25.08	20.74	19.12	18.1	?	6 CEs, no vectors
+Rays	venom	2811.4	1319.0	1051.6	918.0	?	Concentrix 2.0,
+*vgr	venom	25.08	20.74	19.12	18.1	?	6 CEs, no vectors
 _
-Rays	vector	3248.8	1533.0	1232.3	1065.9	?	Concentrix 2.0,
-*vgr	vector	28.98	24.10	22.41	21.02	?	7 CEs, no vectors
+Rays	venom	3248.8	1533.0	1232.3	1065.9	?	Concentrix 2.0,
+*vgr	venom	28.98	24.10	22.41	21.02	?	7 CEs, no vectors
 _
 Rays	patton	3453.3	1514.3	1271.2	1027.3	?	COS V115BF2
 *vgr	patton	30.81	23.81	23.11	20.26	?	1 CPU, no vectors
 _
-Rays	vector	3677.3	1724.2	1375.4	1208.4	?	Concentrix 2.0,
-*vgr	vector	32.80	27.11	25.01	23.83	?	8 CEs, no vectors
+Rays	venom	3677.3	1724.2	1375.4	1208.4	?	Concentrix 2.0,
+*vgr	venom	32.80	27.11	25.01	23.83	?	8 CEs, no vectors
 _
 Rays	alliant	3972.9	1840.0	1457.2	1266.4	?	Concentrix 3.0,
 *vgr	alliant	35.44	28.93	26.49	24.98	?	8 CEs, no vectors
@@ -359,27 +375,90 @@ _
 Rays	vmb	375.4	218.6	186.4	196.2	?	UTX 2.0
 *vgr	vmb	3.16	3.37	5.11	5.74	?
 _
+Rays	venom	468.2	221.7	166.1	144.9	?	Concentrix 3.0,
+*vgr	venom	3.94	3.42	4.55	4.24	?	1 CE, no vectors
+_
+Rays	vector	656.6	301.6	221.1	195.0	?	Concentrix 3.0,
+*vgr	vector	5.53	4.65	6.06	5.70	?	1 ACE, no vectors
+_
+Rays	venom	827.3	424.0	327.1	287.9	?	Concentrix 3.0,
+*vgr	venom	6.96	6.53	8.96	8.42	?	2 CEs, no vectors
+_
 Rays	vhs	958.3	545.6	447.0	414.1	?	-O2 optimization
 *vgr	vhs	8.07	9.41	12.25	12.11	?
 _
 Rays	mseries	988.3	603.5	515.6	491.6	?
 *vgr	mseries	8.32	9.29	14.13	14.37	?
 _
+Rays	vector	1280.9	596.8	436.7	389.2	?	Concentrix 3.0,
+*vgr	vector	10.78	9.19	11.96	11.38	?	2 ACEs, no vectors
+_
+Rays	venom	1288.7	630.6	486.4	428.0	?	Concentrix 3.0,
+*vgr	venom	10.85	9.72	13.33	12.51	?	3 CEs, no vectors
+_
+Rays	venom	1732.9	853.2	645.4	560.1	?	Concentrix 3.0,
+*vgr	venom	14.59	13.15	17.68	16.38	?	4 CEs, no vectors
+_
 Rays	bob	1856.7	801.9	574.1	500.3	?	1 CPU, UNICOS 3.0,
 *vgr	bob	15.63	12.36	15.73	15.62	?	CC -O
+_
+Rays	vector	1952.1	881.7	647.6	578.8	?	Concentrix 3.0,
+*vgr	vector	16.43	13.58	17.74	16.92	?	3 ACEs, no vectors
+_
+Rays	venom	2158.4	1031.3	797.3	703.1	?	Concentrix 3.0,
+*vgr	venom	18.17	15.89	21.84	20.56	?	5 CEs, no vectors
+_
+Rays	bob	2346.1	1127.4	751.0	677.2	?	1 CPU UNICOS 4.0
+*vgr	bob	19.75	17.37	20.57	19.80	?	CC -O
 _
 Rays	bob	2423.5	1045.7	719.3	609.4	?	1 CPU, UNICOS 3.0,
 *vgr	bob	20.40	16.11	19.71	17.82	?	VCC -O
 _
+Rays	vector	2546.2	1170.0	867.2	758.7	?	Concentrix 3.0,
+*vgr	vector	21.43	18.03	23.76	22.18	?	4 ACEs, no vectors
+_
+Rays	venom	2633.7	1232.7	943.4	839.5	?	Concentrix 3.0,
+*vgr	venom	22.17	18.99	25.85	24.55	?	6 CEs, no vectors
+_
+Rays	venom	2769.4	1393.3	1098.1	971.6	?	Concentrix 3.0,
+*vgr	venom	23.31	21.47	30.08	28.41	?	7 CEs, no vectors
+_
+Rays	vector	3131.2	1453.8	1065.8	945.4	?	Concentrix 3.0,
+*vgr	vector	26.36	22.40	29.20	27.64	?	5 ACEs, no vectors
+_
+Rays	venom	3368.7	1605.3	1231.3	1095.11	?	Concentrix 3.0,
+*vgr	venom	28.36	24.73	33.73	32.02	?	8 CEs, no vectors
+_
 Rays	patton	3456.5	1691.8	1169.0	1043.6	?	1 CPU, UNICOS 2.1
 *vgr	patton	29.10	26.07	32.03	30.51	?	no vectors
+_
+Rays	vector	3686.4	1688.6	1259.1	1129.0	?	Concentrix 3.0,
+*vgr	vector	31.03	26.02	34.49	33.01	?	6 ACEs, no vectors
+_
+Rays	vector	4140.3	1953.0	1463.3	1299.7	?	Concentrix 3.0,
+*vgr	vector	34.85	30.09	40.09	38.00	?	7 ACEs, no vectors
+_
+Rays	bob	4641.7	2243.4	1498.2	1358.1	?	2 CPUs, UNICOS 4.0
+*vgr	bob	39.07	34.57	41.05	39.71	?	CC -O
+_
+Rays	vector	4712.2	2226.3	1649.0	1469.7	?	Concentrix 3.0,
+*vgr	vector	39.66	34.30	45.18	42.97	?	8 ACEs, no vectors
+_
+Rays	bob	6884.9	3422.4	2267.7	2034.3	?	3 CPUs, UNICOS 4.0
+*vgr	bob	57.95	52.73	62.13	59.48	?	CC -O
+_
+Rays	bob	9477.1	4484.7	2947.0	2832.9	?	4 CPUs, UNICOS 4.0
+*vgr	bob	79.77	69.10	80.76	82.83	?	CC -O
 .TE
 .NH 1
 RELEASE 3.0 STATISTICS
 .PP
 Actual statistics for Release 3.0 were not available at the time
 of this printing, because the manuals are sent to the printers
-a month before the software is finalized.
+a month before the software is finalized.  Some preliminary results
+have been included as available.  The Release 3.0 software tape
+will have an updated version of this document with the results of
+several machines of interest.
 .LP
 .TS H
 expand box;
@@ -387,8 +466,14 @@ l l | n n n n | n | l.
 A/*	H/W	Moss	World	Star	Bldg	Mean	S/W Notes
 _
 .TH
-Abs	vgr	118.8	64.9	36.5	34.2	?	BSD 4.3 [PRELIM]
+Abs	vgr	?	?	?	?	?	BSD 4.3 [PRELIM]
 *vgr	vgr	1.0	1.0	1.0	1.0	1.0
+_
+Abs	vmb	409.5	201.9	181.0	179.0	?	UTX 2.0 [PRELIM]
+*vgr	vmb	?	?	?	?	?
+_
+Abs	vector	5289.9	2255.5	1696.1	1489.2	?	3.0 [PRELIM]
+*vgr	vector	?	?	?	?	?	8 ACEs, no vectors
 .TE
 .NH 1
 ADDITIONAL STATISTICS
