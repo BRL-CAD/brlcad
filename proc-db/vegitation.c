@@ -32,6 +32,7 @@
 
 #include "./vegitation.h"
 
+
 static void ageStructure(structure_t *structure) {
   int i;
   
