@@ -808,6 +808,10 @@ cmd_setup()
     (void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
 
+    /* A synonym, to allow cut-n-paste of rt animation scripts into mged */
+    (void)Tcl_CreateCommand(interp, "viewsize", f_view, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+
     Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode,
 		TCL_LINK_BOOLEAN);
     Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return,
