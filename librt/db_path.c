@@ -257,6 +257,7 @@ CONST char			*str;
 	char			*copy;
 	int			nslash = 0;
 	int			ret = 0;
+	int			len;
 
 	RT_CK_DBI(dbip);
 
@@ -269,6 +270,12 @@ CONST char			*str;
 	}
 
 	copy = bu_strdup( str );
+
+	/* eliminate a a trailing slash */
+	len = strlen( copy );
+	if( copy[len-1] == '/' )
+		copy[len-1] = '\0';
+
 	cp = copy;
 	while( *cp )  {
 		if( (slashp = strchr( cp, '/' )) == NULL )  break;
