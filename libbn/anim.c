@@ -889,12 +889,11 @@ int end;
 	case ASM_EMPTY:
 		if (end) {
 			state = ASM_EMPTY;
-			return(0);
 		} else {
 			state = ASM_FIRST;
-			return(0); /* "don't print yet */
+			/* "don't print yet */
 		}
-		break;
+		return 0;
 	case ASM_FIRST:
 		if (end) {
 			/* only one point specified, use default direction*/
