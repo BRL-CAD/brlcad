@@ -1500,6 +1500,7 @@ extern int rt_nfunctab;
  *****************************************************************/
 
 RT_EXTERN(void rt_bomb, (char *str) );	/* Fatal error */
+RT_EXTERN(void rt_putchar, (int c) );	/* Log a character, no flushing */
 #if __STDC__
 RT_EXTERN(void rt_log, (char *, ... ) ); /* Log message */
 #else
