@@ -24,6 +24,7 @@ struct light_specific {
 	int	lt_shadows;	/* !0 if this light casts shadows, # of rays*/
 	int	lt_infinite;	/* !0 if infinitely distant */
 	int	lt_visible;	/* 0 if implicitly modeled or invisible */
+	int	lt_invisible;	/* 0 if implicitly modeled or invisible */
 	int	lt_exaim;	/* !0 if explicit aim in lt_dir */
 	fastf_t lt_obscure;	/* percentage obscuration of light */
 	/* Internal fields */
