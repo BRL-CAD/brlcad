@@ -42,8 +42,12 @@ static char *units_str[] = {
  * This routine reads through the 3d object file and
  * builds a directory of the object names, to allow rapid
  * named access to objects.
+ *
+ * Returns -
+ *	0	Success
+ *	-1	Fatal Error
  */
-void
+int
 dir_build(filename)
 char *filename;
 {
@@ -52,7 +56,7 @@ char *filename;
 
 	if( (ged_fd = open(filename, 0)) < 0 )  {
 		perror(filename);
-		rtbomb("Unable to continue");
+		return(-1);
 	}
 
 	(void)lseek( ged_fd, 0L, 0 );
@@ -127,6 +131,7 @@ char *filename;
 			(long)record.c.c_length * (long)sizeof record,
 			1 );
 	}
+	return(0);	/* OK */
 }
 
 /*
