@@ -12,7 +12,7 @@ G2A=$(top_builddir)/src/conv/g2asc
 		echo $(A2G) $< $@ ; \
 		$(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; \
 	else \
-		echo "$(A2G) does not exist" ; touch $@ ; \
+		echo "$(A2G) does not exist" ; \
 	fi
 
 MODELS = \
@@ -45,7 +45,6 @@ MODELS = \
 	xmp.asc
 
 EXTRA_DIST = \
-	${MODELS:asc=g} \
 	${MODELS} \
 	db.php
 
