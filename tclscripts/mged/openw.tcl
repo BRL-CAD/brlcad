@@ -1388,7 +1388,7 @@ data." }
 	-label "Persistent sweep rectangle" -underline 0\
 	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
 hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber Band"\
-	{ { summary "Toggle drawing the rubber band while idle." }
+	{ { summary "Toggle drawing the rectangle while idle." }
           { see_also "rset" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
 	-label "Angle/Dist Cursor" -underline 0 \
@@ -1421,7 +1421,7 @@ Toggle display of edit information. If in
 solid edit state, the edit information is
 displayed in the internal solid editor. This
 editor, as its name implies, can be used to
-edit the solid as well as view its contents.
+edit the solid as well as to view its contents.
 If in object edit state, the object information
 is displayed in a dialog box." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,show_status)\
@@ -1445,6 +1445,11 @@ hoc_register_menu_data "Modes" "Graphics Window" "Graphics Window"\
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,collaborate)\
 	-label "Collaborate" -underline 0\
 	-command "collab_doit $id"
+hoc_register_menu_data "Modes" "Collaborate" "Collaborate"\
+	{ { summary "Toggle collaborate mode. When in collaborate
+mode, the upper right pane's view can be shared
+with other instances of MGED's new GUI that are
+also collaborating." } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rateknobs)\
 	-label "Rateknobs" -underline 0\
 	-command "mged_apply $id \"set rateknobs \$mged_gui($id,rateknobs)\""
