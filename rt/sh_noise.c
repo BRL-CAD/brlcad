@@ -78,6 +78,7 @@ struct gravel_specific {
 	mat_t	sh_to_m;	/* shader to model space matrix */
 	double max_delta;
 	double nsd;
+	double minval;		/* don't use noise value less than this */
 	int	shader_number;
 };
 
@@ -102,6 +103,7 @@ struct gravel_specific gravel_defaults = {
 		0.0, 0.0, 0.0, 0.0 },
 	0.0,
 	0.0,
+	0.0,
 	0
 	};
 
@@ -122,6 +124,7 @@ struct bu_structparse gravel_print_tab[] = {
 	{"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
 	{"%f",  1, "angle",		SHDR_O(max_angle),	gravel_deg_to_rad },
 	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  1, "min",		SHDR_O(minval),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
@@ -142,6 +145,7 @@ struct bu_structparse gravel_parse_tab[] = {
 	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
 	{"%f",  3, "vs",		SHDR_AO(vscale),	FUNC_NULL },
 	{"%f",  3, "v",			SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  1, "min",		SHDR_O(minval),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -417,6 +421,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	case 0:	/* gravel */
 		val = bn_noise_turb(pt, gravel_sp->h_val,
 			gravel_sp->lacunarity, gravel_sp->octaves);
+		if (val < gravel_sp->minval )  val = gravel_sp->minval;
 		VSCALE(swp->sw_color, swp->sw_color, val);
 
 		norm_noise(pt, val, gravel_sp, bn_noise_turb, swp, 0);
@@ -437,17 +442,20 @@ char			*dp;	/* ptr to the shader-specific struct */
 		val = bn_noise_fbm(pt, gravel_sp->h_val,
 			gravel_sp->lacunarity, gravel_sp->octaves);
 		RESCALE_NOISE(val);
+		if (val < gravel_sp->minval )  val = gravel_sp->minval;
 		VSCALE(swp->sw_color, swp->sw_color, val);
 		break;
 	case 4:	/* turcolor */
 		val = bn_noise_turb(pt, gravel_sp->h_val,
 			gravel_sp->lacunarity, gravel_sp->octaves);
+		if (val < gravel_sp->minval )  val = gravel_sp->minval;
 		VSCALE(swp->sw_color, swp->sw_color, val);
 		break;
 	case 5: /* grunge */
 		val = bn_noise_fbm(pt, gravel_sp->h_val,
 			gravel_sp->lacunarity, gravel_sp->octaves);
 		RESCALE_NOISE(val);
+		if (val < gravel_sp->minval )  val = gravel_sp->minval;
 		VSCALE(swp->sw_color, swp->sw_color, val);
 		norm_noise(pt, val, gravel_sp, bn_noise_fbm, swp, 1);
 		break;
