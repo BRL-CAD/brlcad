@@ -38,6 +38,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
  -U #		Set use_air flag\n\
+ -u #		Set libbu debug flag\n\
  -x #		Set librt debug flags\n\
  -X #		Set rt program debug flags\n\
  -N #		Set NMG debug flags\n\
@@ -79,6 +80,12 @@ char **argv;
 	while( argv[0][0] == '-' ) switch( argv[0][1] )  {
 	case 'U':
 		sscanf( argv[1], "%d", &use_air );
+		argc -= 2;
+		argv += 2;
+		break;
+	case 'u':
+		sscanf( argv[1], "%x", &bu_debug );
+		fprintf(stderr,"librt bu_debug=x%x\n", bu_debug);
 		argc -= 2;
 		argv += 2;
 		break;
