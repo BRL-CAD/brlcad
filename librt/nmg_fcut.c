@@ -1948,8 +1948,17 @@ rt_log("force next eu to ray\n");
 			}
 		}
 		/* Break edge, update vu table with new value */
-		rs->vu[pos] = nmg_ebreak( vu->v_p, eu )->vu_p;
-		/* Kill lone vertex loop */
+		if( vu->v_p == eu->vu_p->v_p )  {
+			/* Edge already starts at same vertex */
+			rs->vu[pos] = eu->vu_p;
+		} else if( vu->v_p == eu->eumate_p->vu_p->v_p )  {
+			/* Edge already ends at same vertex */
+			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
+		} else {
+			/* Break edge */
+			rs->vu[pos] = nmg_ebreak( vu->v_p, eu )->vu_p;
+		}
+		/* Kill lone vertex loop (and vertexuse) */
 		nmg_klu(lu);
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After LONE_V_ESPLIT, the final loop:\n");
