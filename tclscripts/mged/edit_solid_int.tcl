@@ -162,6 +162,7 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
     global local2base
     global solid_data
     global esolint_control
+    global build_form_debug
 
     set row -1
     set sform $w._F
@@ -186,10 +187,10 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 
 	switch $do_cmd {
 	    1 {
-		set esolint_control($id,cmd) [eval concat \[set esolint_control($id,cmd)\] $attr \\\"]
+		set esolint_control($id,cmd) "$esolint_control($id,cmd) $attr \""
 	    }
 	    2 {
-		set esolint_control($id,context_cmd) [eval concat \[set esolint_control($id,context_cmd)\] $attr \\\"]
+		set esolint_control($id,context_cmd) "$esolint_control($id,context_cmd) $attr \""
 	    }
 	}
 
@@ -205,66 +206,104 @@ proc esolint_build_form { id w name type vals state_val do_gui do_cmd do_entries
 	set field [lindex $form $i]
 	set fieldlen [llength $field]
 	for { set num 0 } { $num<$fieldlen } { incr num } {
-	    if { [string first "%f" $field]>-1 } {
-		if $do_gui {
-		    button $sform._$attr\decB$num -text \- -command \
-			    "esolint_dec $id $sform._$attr\E$num"
-		    button $sform._$attr\incB$num -text \+ -command \
-			    "esolint_inc $id $sform._$attr\E$num"
-		    entry $sform._$attr\E$num -width 6 -relief sunken
+	    set fe_type [lindex $field $num]
+	    set tnum [expr $num % 4]
 
-		    grid $sform._$attr\decB$num -row $row -column [expr $num * 3 + 1] -sticky nsew
-		    grid $sform._$attr\E$num -row $row -column [expr $num * 3 + 2] -sticky nsew
-		    grid $sform._$attr\incB$num -row $row -column [expr $num * 3 + 3] -sticky nsew
-		    grid columnconfigure $sform [expr $num * 3 + 1] -weight 0
-		    grid columnconfigure $sform [expr $num * 3 + 2] -weight 1
-		    grid columnconfigure $sform [expr $num * 3 + 3] -weight 0
-		}
-
-
-		if $do_entries {
-		    # Bummer, we have to enable the entry to set its value programmatically
-		    set save_state [$sform._$attr\E$num configure -state]
-		    $sform._$attr\E$num configure -state normal
-		    $sform._$attr\E$num delete 0 end
-		    $sform._$attr\E$num insert insert \
-			    [format $esolint_control($id,format_string) [expr [lindex \
-			    [lindex $vals $i] $num] * $base2local]]
-		    $sform._$attr\E$num configure -state [lindex $save_state 4]
-		}
-
-		if $do_state {
-		    $sform._$attr\decB$num configure -state $state_val
-		    $sform._$attr\incB$num configure -state $state_val
-		    $sform._$attr\E$num configure -state $state_val
-		}
-
-		switch $do_cmd {
-		    1 {
-			set esolint_control($id,cmd) [eval concat \[set esolint_control($id,cmd)\] \
-				\\\[expr \\\[$sform._$attr\E$num get\\\] * $local2base\\\]]
-		    }
-		    2 {
-			set esolint_control($id,context_cmd) [eval concat \[set esolint_control($id,context_cmd)\] \
-				\\\[expr \\\[$sform._$attr\E$num get\\\] * $local2base\\\]]
-		    }
-		}
-	    } else {
-		# XXXX Temporary debugging
-		puts "esolint_build_form: skipping field"
+	    # increment row if more than 4 field elements
+	    if {$num && $tnum == 0} {
+		incr row
 	    }
-	}
 
-	if $do_gui {
-	    grid rowconfigure $sform $row -weight 1
+	    if {$tnum == 0 && $do_gui} {
+		grid rowconfigure $sform $row -weight 1
+	    }
+
+	    switch -glob $fe_type {
+		%*s {
+		    if $do_gui {
+			entry $sform._$attr\E$num -relief sunken
+			grid $sform._$attr\E$num - - -row $row -column 1 -sticky nsew
+			grid columnconfigure $sform 1 -weight 1
+		    }
+
+		    if $do_entries {
+			# Bummer, we have to enable the entry to set its value programmatically
+			set save_state [$sform._$attr\E$num configure -state]
+			$sform._$attr\E$num configure -state normal
+			$sform._$attr\E$num delete 0 end
+			$sform._$attr\E$num insert insert \
+				[lindex [lindex $vals $i] $num]
+			$sform._$attr\E$num configure -state [lindex $save_state 4]
+		    }
+
+		    if $do_state {
+			$sform._$attr\E$num configure -state $state_val
+		    }
+
+		    switch $do_cmd {
+			1 {
+			    set esolint_control($id,cmd) "$esolint_control($id,cmd)\[$sform._$attr\E$num get\]"
+			}
+			2 {
+			    set esolint_control($id,context_cmd) "$esolint_control($id,context_cmd)\[$sform._$attr\E$num get\]"
+			}
+		    }
+		}
+		%*f -
+		%*d {
+		    if $do_gui {
+			button $sform._$attr\decB$num -text \- -command \
+				"esolint_dec $id $sform._$attr\E$num"
+			button $sform._$attr\incB$num -text \+ -command \
+				"esolint_inc $id $sform._$attr\E$num"
+			entry $sform._$attr\E$num -width 6 -relief sunken
+			
+			grid $sform._$attr\decB$num -row $row -column [expr $tnum * 3 + 1] -sticky nsew
+			grid $sform._$attr\E$num -row $row -column [expr $tnum * 3 + 2] -sticky nsew
+			grid $sform._$attr\incB$num -row $row -column [expr $tnum * 3 + 3] -sticky nsew
+			grid columnconfigure $sform [expr $tnum * 3 + 1] -weight 0
+			grid columnconfigure $sform [expr $tnum * 3 + 2] -weight 1
+			grid columnconfigure $sform [expr $tnum * 3 + 3] -weight 0
+		    }
+
+		    if $do_entries {
+			# Bummer, we have to enable the entry to set its value programmatically
+			set save_state [$sform._$attr\E$num configure -state]
+			$sform._$attr\E$num configure -state normal
+			$sform._$attr\E$num delete 0 end
+			$sform._$attr\E$num insert insert \
+				[format $esolint_control($id,format_string) [expr [lindex \
+				[lindex $vals $i] $num] * $base2local]]
+			$sform._$attr\E$num configure -state [lindex $save_state 4]
+		    }
+
+		    if $do_state {
+			$sform._$attr\decB$num configure -state $state_val
+			$sform._$attr\incB$num configure -state $state_val
+			$sform._$attr\E$num configure -state $state_val
+		    }
+
+		    switch $do_cmd {
+			1 {
+			    set esolint_control($id,cmd) "$esolint_control($id,cmd) \[expr \[$sform._$attr\E$num get\] * $local2base\]"
+			}
+			2 {
+			    set esolint_control($id,context_cmd) "$esolint_control($id,context_cmd) \[expr \[$sform._$attr\E$num get\] * $local2base\]"
+			}
+		    }
+		}
+		default {
+		    puts "esolint_build_form: skipping, attr - $attr, field - $fe_type"
+		}
+	    }
 	}
 
 	switch $do_cmd {
 	    1 {
-		set esolint_control($id,cmd) [eval concat \[set esolint_control($id,cmd)\] \\\"]
+		set esolint_control($id,cmd) "$esolint_control($id,cmd)\""
 	    }
 	    2 {
-		set esolint_control($id,context_cmd) [eval concat \[set esolint_control($id,context_cmd)\] \\\"]
+		set esolint_control($id,context_cmd) "$esolint_control($id,context_cmd)\""
 	    }
 	}
     }
