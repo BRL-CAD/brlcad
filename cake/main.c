@@ -61,7 +61,9 @@ char	**argv;
 	extern	Node	*chase();
 	extern	char	*getenv();
 	extern	char	*dir_setup();
+#if !defined(__convex__)
 	extern	Pwent	*getpwuid();
+#endif
 	extern	int	geteuid();
 	extern	FILE	*cake_popen();
 	extern	FILE	*yyin;
