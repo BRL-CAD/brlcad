@@ -1,7 +1,7 @@
 # $Id$#
 
 EXTRA_PROGRAMS = proe-brl
-EXTRA_LTLIBRARIES = libproe2brl.la
+# EXTRA_LTLIBRARIES = libproe2brl.la
 
 PRO_MACHINE_TYPE = sgi_mips4
 PROTOOL_SRC = /opt/ptc/proe2001/protoolkit
@@ -18,7 +18,8 @@ PTCLIBS_DLL = $(PTLIB_DLL) $(PDLIB_DLL)
 BRLLIBS     = $(BU) $(BN) $(TCL)
 SYSLIBS     = -lc -lm -lw
 
-#AM_LDFLAGS = $(BRLLIBS) $(SYSLIBS)
+AM_CFLAGS = -Wl,-rpath -Wl,$(libdir) -Wl,-multigot -Wl,-T10000000 -Wl,-B,symbolic
+AM_LDFLAGS = $(BRLLIBS) $(SYSLIBS)
 AM_CPPFLAGS = \
 	-DPRO_MACHINE=23 -DPRO_OS=3 \
 	-I$(PROTOOL_SRC)/protk_appls/includes \
@@ -28,17 +29,22 @@ AM_CPPFLAGS = \
 proe_brl_CFLAGS = $(AM_CFLAGS)
 proe_brl_LDADD = $(PTLIB) $(PDLIB) $(SYSLIBS)
 proe_brl_SOURCES = proe-brl.c
-bindir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+proebindir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
 
 #cc -n32 -mips4 -woff 1521 -multigot -Wl,-wall  -rpath /usr/brlcad/lib -Wl,-hiddens_file,/dev/null -shared -T10000000 -B symbolic -o proe-brl.dll proe-brl.o /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a -L/usr/brlcad/lib -lbu -lbn -ltcl -lc -lm -lw
 
 #gcc -shared  libproe2brl_la-proe-brl.o   -L/vld/morrison/brlcad/src/libbu/.libs -L/vld/morrison/brlcad/src/other/libtcl/.libs /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a ../../src/libbu/.libs/libbu.so ../../src/libbn/.libs/libbn.so ../../src/other/libtcl/.libs/libtcl8.4.so -lc -lm -lw -lmx -lmalloc    -lc  -Wl,-soname -Wl,libproe2brl.so.1 `test -n "sgi1.0" && echo -Wl,-set_version -Wl,sgi1.0` -Wl,-update_registry -Wl,.libs/so_locations -o .libs/libproe2brl.so.1.0
 
-libproe2brl_la_SOURCES = proe-brl.c
-libproe2brl_la_CFLAGS = $(AM_CFLAGS)
-libproe2brl_la_LDFLAGS = -multigot -rpath $(libdir) -T10000000 -B symbolic
-libproe2brl_la_LIBADD = $(PTLIB_DLL) $(PDLIB_DLL) $(BRLLIBS) $(SYSLIBS) 
-libdir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+#/usr/bin/ld -n32 -shared  libproe2brl_la-proe-brl.o   -L/vld/morrison/brlcad/src/libbu/.libs -L/vld/morrison/brlcad/src/other/libtcl/.libs /opt/ptc/proe2001/protoolkit/sgi_mips4/obj/protk_dll.a /opt/ptc/proe2001/prodevelop/sgi_mips4/obj/prodev_dll.a ../../src/libbu/.libs/libbu.so ../../src/libbn/.libs/libbn.so ../../src/other/libtcl/.libs/libtcl8.4.so -lc -lm -lw -lmx -lmalloc    -lc  -soname libproe2brl.so.1 `test -n "sgi1.0" && echo -set_version sgi1.0` -update_registry .libs/so_locations -o .libs/libproe2brl.so.1.0
+
+# libproe2brl_la_SOURCES = proe-brl.c
+# libproe2brl_la_CFLAGS = $(AM_CFLAGS)
+# libproe2brl_la_LDFLAGS = -multigot -rpath $(libdir) -T10000000 -B symbolic
+# libproe2brl_la_LIBADD = $(PTLIB_DLL) $(PDLIB_DLL) $(BRLLIBS) $(SYSLIBS)
+# libproe2brl_sodir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
+
+libproe2brl.so: mk
+	make -f mk lib
 
 all-am: Makefile
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
@@ -48,19 +54,25 @@ all-am: Makefile
 	fi
 
 install-data-local:
-	@if test -f proe-brl ; then \
-		$(INSTALL) .libs/proe-brl $(bindir)/proe-brl ; \
+	@if test -f .libs/proe-brl ; then \
+		@ECHO@ "Installing proe-brl" ; \
+		$(INSTALL) .libs/proe-brl $(proebindir)/proe-brl ; \
 	fi
-	@if test -f libproe2brl.la ; then \
-		$(INSTALL) .libs/libproe2brl.so $(libdir)/libproe2brl.so ; \
+	@if test -f libproe2brl.so ; then \
+		@ECHO@ "Installing libproe2brl.so" ; \
+		$(INSTALL) libproe2brl.so $(proelibdir)/libproe2brl.so ; \
 	fi
 
 unlock: proe-brl libproe2brl.la
-	@if test -f $(bindir)/proe-brl ; then \
-		/usr/proe/bin/protk_unlock $(bindir)/proe-brl ; \
+	@if test -f proe-brl ; then \
+		/usr/proe/bin/protk_unlock proe-brl ; \
+	else \
+		@ECHO@ "Run 'make install' before running 'make unlock'" ; \
 	fi
-	@if test -f $(libdir)/libproe2brl.so ; then \
-		/usr/proe/bin/protk_unlock $(libdir)/libproe2brl.so ; \
+	@if test -f libproe2brl.so ; then \
+		/usr/proe/bin/protk_unlock libproe2brl.so ; \
+	else \
+		@ECHO@ "Run 'make install' before running 'make unlock'" ; \
 	fi
 
 plugin: proe-brl libproe2brl.la
@@ -90,9 +102,12 @@ EXTRA_DIST = \
 	$(proe_DATA) \
 	$(rsrc_DATA) \
 	$(tmsg_DATA) \
+	mk.in \
 	protk.dat.in
 
-CLEANFILES = libproe2brl.la proe-brl
+CLEANFILES = libproe2brl.so proe-brl
+
+DISTCLEANFILES = mk protk.dat
 
 MAINTAINERCLEANFILES = Makefile.in
 
