@@ -275,6 +275,7 @@ char			**dpp;
 {
 	register struct txt_specific *tp;
 
+	RT_VLS_CHECK( matparm );
 	GETSTRUCT( tp, txt_specific );
 	*dpp = (char *)tp;
 
