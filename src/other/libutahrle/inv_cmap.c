@@ -27,12 +27,8 @@
  * $Id$
  */
 
-#include "common.h"
-
-
-
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 
 #ifndef NO_INV_CMAP_TRACKING
 
@@ -40,24 +36,31 @@
 static int cred, cgreen, cblue;
 static int red, green;
 static unsigned char *zrgbp;
-#endif /*DEBUG */
+#endif
 static int bcenter, gcenter, rcenter;
 static long gdist, rdist, cdist;
 static long cbinc, cginc, crinc;
 static unsigned long *gdp, *rdp, *cdp;
 static unsigned char *grgbp, *rrgbp, *crgbp;
-static int gstride, rstride;
+static gstride, rstride;
 static long x, xsqr, colormax;
 static int cindex;
 #ifdef INSTRUMENT_IT
 static long outercount = 0, innercount = 0;
 #endif
 
-void	maxfill(long unsigned int *buffer, long int side);
+#ifdef USE_PROTOTYPES
+static void maxfill( unsigned long *, long );
+static int redloop( void );
+static int greenloop( int );
+static int blueloop( int );
+#else
+static void maxfill();
+static int redloop();
+static int greenloop();
+static int blueloop();
+#endif
 
-int	redloop(void);
-int	greenloop(int restart);
-int	blueloop(int restart);
 
 /*****************************************************************
  * TAG( inv_cmap )
@@ -208,7 +211,10 @@ int	blueloop(int restart);
  */
 
 void
-inv_cmap(int colors, unsigned char **colormap, int bits, long unsigned int *dist_buf, unsigned char *rgbmap)
+inv_cmap( colors, colormap, bits, dist_buf, rgbmap )
+int colors, bits;
+unsigned char *colormap[3], *rgbmap;
+unsigned long *dist_buf;
 {
     int nbits = 8 - bits;
 
@@ -270,8 +276,8 @@ inv_cmap(int colors, unsigned char **colormap, int bits, long unsigned int *dist
 	cbinc = 2 * ((bcenter + 1) * xsqr - (colormap[2][cindex] * x));
 
 	/* Array starting points. */
-	cdp = dist_buf + ((rcenter * rstride) + (gcenter * gstride) + bcenter);
-	crgbp = rgbmap + ((rcenter * rstride) + (gcenter * gstride) + bcenter);
+	cdp = dist_buf + rcenter * rstride + gcenter * gstride + bcenter;
+	crgbp = rgbmap + rcenter * rstride + gcenter * gstride + bcenter;
 
 	(void)redloop();
     }
@@ -282,8 +288,8 @@ inv_cmap(int colors, unsigned char **colormap, int bits, long unsigned int *dist
 }
 
 /* redloop -- loop up and down from red center. */
-int
-redloop(void)
+static int
+redloop()
 {
     int detect;
     int r;
@@ -329,8 +335,9 @@ redloop(void)
 }
 
 /* greenloop -- loop up and down from green center. */
-int
-greenloop( int restart )
+static int
+greenloop( restart )
+int restart;
 {
     int detect;
     int g;
@@ -469,8 +476,9 @@ greenloop( int restart )
 }
 
 /* blueloop -- loop up and down from blue center. */
-int
-blueloop( int restart )
+static int
+blueloop( restart )
+int restart;
 {
     int detect;
     register unsigned long *dp;
@@ -756,10 +764,12 @@ blueloop( int restart )
     return detect;
 }
 
-void
-maxfill(long unsigned int *buffer, long int side)
+static void
+maxfill( buffer, side )
+unsigned long *buffer;
+long side;
 {
-    register unsigned long maxv = (unsigned long)~0L;
+    register unsigned long maxv = ~0L;
     register long i;
     register unsigned long *bp;
 

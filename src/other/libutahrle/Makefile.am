@@ -9,14 +9,17 @@ libutahrle_la_SOURCES = \
 	colorquant.c \
 	dither.c \
 	float_to_exp.c \
+	hilbert.c \
 	inv_cmap.c \
 	rle_addhist.c \
 	rle_cp.c \
+	rle_error.c \
 	rle_getcom.c \
 	rle_getraw.c \
 	rle_getrow.c \
 	rle_getskip.c \
 	rle_global.c \
+	rle_hdr.c \
 	rle_open_f.c \
 	rle_putcom.c \
 	rle_putraw.c \
@@ -39,10 +42,16 @@ man_MANS = \
 	dithergb.3 \
 	dithermap.3 \
 	float_to_exp.3 \
+	hilbert.3 \
+	hilbert_c2i.3 \
+	hilbert_i2c.3 \
 	inv_cmap.3 \
+	librle.3 \
+	librle.3 \
 	libutahrle.3 \
 	make_square.3 \
 	rgb_to_bw.3 \
+	rle.5 \
 	rle_addhist.3 \
 	rle_cp.3 \
 	rle_debug.3 \
@@ -74,8 +83,7 @@ man_MANS = \
 	rle_skiprow.3 \
 	scanargs.3
 
+
 EXTRA_DIST = \
 	$(man_MANS) \
-	bstring.c \
-	getopt.c \
-	sVsetlinebuf.c
+	getopt.c

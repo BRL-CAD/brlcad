@@ -30,6 +30,17 @@
 #ifndef RLE_H
 #define RLE_H
 
+#include "rle_config.h"		/* Configuration parameters. */
+
+#include <stdio.h>		/* Declare FILE. */
+
+#ifdef c_plusplus
+#define USE_PROTOTYPES
+#endif
+#ifndef CONST_DECL
+#define CONST_DECL
+#endif
+
 enum rle_dispatch {
     NO_DISPATCH = -1,
     RUN_DISPATCH = 0
@@ -63,15 +74,27 @@ typedef unsigned short rle_map;
 #define	RLE_EOF		-4
 
 /*
+ * "Magic" value for is_init field.  Pi * 2^29.
+ */
+#define RLE_INIT_MAGIC	0x6487ED51L
+
+/*****************************************************************
+ * TAG( RLE_CHECK_ALLOC )
+ *
+ * Test for allocation failure, scream and die if so.
+ */
+#define RLE_CHECK_ALLOC( pgm, ptr, name )				\
+    ( !(ptr) ?	rle_alloc_error( pgm, name ) : 0 )
+
+/*
  * TAG( rle_hdr )
  *
  * Definition of header structure used by RLE routines.
  */
 
 #ifndef c_plusplus
-typedef struct rle_hdr rle_hdr;
+typedef
 #endif
-
 struct rle_hdr {
     enum 	rle_dispatch dispatch;	/* Type of file to create. */
     int	    	ncolors,	/* Number of color channels. */
@@ -87,7 +110,7 @@ struct rle_hdr {
 				/* Map only saved if != 0. */
 	    	cmaplen;	/* Log2 of color map length. */
     rle_map    *cmap;		/* Pointer to color map array. */
-    const char **comments;	/* Pointer to array of pointers to comments. */
+    CONST_DECL char **comments;	/* Pointer to array of pointers to comments. */
     FILE       *rle_file;	/* Input or output file. */
     /* 
      * Bit map of channels to read/save.  Indexed by (channel mod 256).
@@ -103,6 +126,13 @@ struct rle_hdr {
 #define RLE_BIT(glob,bit) \
 	((glob).bits[((bit)&0xff)/8] & (1<<((bit)&0x7)))
     char    bits[256/8];
+    /* Set to magic pattern if following fields are initialized. */
+    /* This gives a 2^(-32) chance of missing. */
+    long int is_init;	
+    /* Save the command, file name and image number for error messages. */
+    CONST_DECL char *cmd;
+    CONST_DECL char *file_name;
+    int img_num;
     /* 
      * Local storage for rle_getrow & rle_putrow.
      * rle_getrow has
@@ -126,7 +156,11 @@ struct rle_hdr {
 	    long fileptr;
 	} put;
      } priv;
-};
+}
+#ifndef c_plusplus
+rle_hdr				/* End of typedef. */
+#endif
+;
 
 /* 
  * TAG( rle_dflt_hdr )
@@ -139,6 +173,25 @@ extern rle_hdr rle_dflt_hdr;
 /* Declare RLE library routines. */
 
 #ifdef USE_PROTOTYPES
+    /* From rle_error.c. */
+    /*****************************************************************
+     * TAG( rle_alloc_error )
+     * 
+     * Print memory allocation error message and exit.
+     */
+    extern int rle_alloc_error( CONST_DECL char *pgm,
+				  CONST_DECL char *name );
+
+    /*****************************************************************
+     * TAG( rle_get_error )
+     *
+     * Print an error message based on the error code returned by
+     * rle_get_setup.
+     */
+    extern int rle_get_error( int code,
+			      CONST_DECL char *pgmname,
+			      CONST_DECL char *fname );
+			  
     /* From rle_getrow.c */
 
     /*****************************************************************
@@ -148,16 +201,6 @@ extern rle_hdr rle_dflt_hdr;
      */
     extern void rle_debug( int on_off );
 
-    /*****************************************************************
-     * TAG( rle_get_error )
-     *
-     * Print an error message based on the error code returned by
-     * rle_get_setup.
-     */
-    extern int rle_get_error( int code,
-			      const char *pgmname,
-			      const char *fname );
-			  
     /*****************************************************************
      * TAG( rle_get_setup )
      */
@@ -171,8 +214,8 @@ extern rle_hdr rle_dflt_hdr;
      * code. 
      */
     extern void rle_get_setup_ok( rle_hdr *the_hdr,
-				  const char *prog_name,
-				  const char *file_name);
+				  CONST_DECL char *prog_name,
+				  CONST_DECL char *file_name);
 
     /*****************************************************************
      * TAG( rle_getrow )
@@ -189,6 +232,39 @@ extern rle_hdr rle_dflt_hdr;
      * Skip a scanline, return the number of the next one.
      */
     extern unsigned int rle_getskip( rle_hdr *the_hdr );
+
+    /* From rle_hdr.c. */
+
+    /*****************************************************************
+     * TAG( rle_names )
+     *
+     * Load the command and file names into the rle_hdr.
+     */
+    extern void rle_names( rle_hdr *the_hdr,
+			   CONST_DECL char *pgmname,
+			   CONST_DECL char *fname,
+			   int img_num );
+
+    /*****************************************************************
+     * TAG( rle_hdr_cp )
+     * 
+     * Make a "safe" copy of a rle_hdr structure.
+     */
+    extern rle_hdr * rle_hdr_cp( rle_hdr *from_hdr,
+				 rle_hdr *to_hdr );
+
+    /*****************************************************************
+     * TAG( rle_hdr_init )
+     * 
+     * Initialize a rle_hdr structure.
+     */
+    extern rle_hdr * rle_hdr_init( rle_hdr *the_hdr );
+
+    /*****************************************************************
+     * TAG( rle_hdr_clear )
+     * 
+     */
+    extern void rle_hdr_clear( rle_hdr *the_hdr );
 
     /* From rle_putrow.c. */
 
@@ -276,7 +352,7 @@ extern rle_hdr rle_dflt_hdr;
      *
      * Get a specific comment from the image comments.
      */
-    extern char * rle_getcom( const char * name, rle_hdr * the_hdr );
+    extern char * rle_getcom( CONST_DECL char * name, rle_hdr * the_hdr );
 
     /* From rle_putcom.c. */
     /*****************************************************************
@@ -284,23 +360,23 @@ extern rle_hdr rle_dflt_hdr;
      *
      * Delete a specific comment from the image comments.
      */
-    extern const char *
-    rle_delcom( const char * name, rle_hdr * the_hdr );
+    extern CONST_DECL char *
+    rle_delcom( CONST_DECL char * name, rle_hdr * the_hdr );
 
     /*****************************************************************
      * TAG( rle_putcom )
      * 
      * Put (or replace) a comment into the image comments.
      */
-    extern const char *
-    rle_putcom( const char * value, rle_hdr * the_hdr );
+    extern CONST_DECL char *
+    rle_putcom( CONST_DECL char * value, rle_hdr * the_hdr );
 
     /* From dither.c. */
     /*****************************************************************
      * TAG( bwdithermap )
      * Create a color map for ordered dithering in grays.
      */
-    extern void bwdithermap( int levels, double _gamma, int bwmap[],
+    extern void bwdithermap( int levels, double gamma, int bwmap[],
 			     int divN[256], int modN[256], int magic[16][16] );
     /*****************************************************************
      * TAG( ditherbw )
@@ -318,7 +394,7 @@ extern rle_hdr rle_dflt_hdr;
      * TAG( dithermap )
      * Create a color map for ordered dithering in color.
      */
-    extern void dithermap( int levels, double _gamma, int rgbmap[][3],
+    extern void dithermap( int levels, double gamma, int rgbmap[][3],
 			   int divN[256], int modN[256], int magic[16][16] );
     /*****************************************************************
      * TAG( make_square )
@@ -341,9 +417,9 @@ extern rle_hdr rle_dflt_hdr;
      * Open an input/output file with default.
      */
     extern FILE *
-    rle_open_f( const char *prog_name,
-		const char *f_name,
-		const char *mode );
+    rle_open_f( CONST_DECL char *prog_name,
+		CONST_DECL char *f_name,
+		CONST_DECL char *mode );
 
     /*****************************************************************
      * TAG( rle_open_f_noexit )
@@ -351,9 +427,18 @@ extern rle_hdr rle_dflt_hdr;
      * Open an input/output file with default.
      */
     extern FILE *
-    rle_open_f_noexit( const char *prog_name,
-		       const char *f_name,
-		       const char *mode );
+    rle_open_f_noexit( CONST_DECL char *prog_name,
+		       CONST_DECL char *f_name,
+		       CONST_DECL char *mode );
+
+    /*****************************************************************
+     * TAG( rle_close_f )
+     * 
+     * Close a file opened by rle_open_f.  If the file is stdin or stdout,
+     * it will not be closed.
+     */
+    extern void 
+    rle_close_f( FILE *fd );
 
     /* From colorquant.c. */
     /*****************************************************************
@@ -370,9 +455,9 @@ extern rle_hdr rle_dflt_hdr;
      * TAG( rle_addhist )
      * Append history information to the HISTORY comment.
      */
-extern void rle_addhist( char *argv[],
-			 rle_hdr *in_hdr,
-			 rle_hdr *out_hdr );
+    extern void rle_addhist( char *argv[],
+			     rle_hdr *in_hdr,
+			     rle_hdr *out_hdr );
 
     /* From cmd_name.c. */
     /*****************************************************************
@@ -388,30 +473,53 @@ extern void rle_addhist( char *argv[],
      */
     extern int scanargs( int argc,
 			 char **argv,
-			 const char *format,
+			 CONST_DECL char *format,
 			 ... );
 
-#ifdef NEED_BSTRING
-    /* From bstring.c. */
+    /* From hilbert.c */
     /*****************************************************************
-     * TAG( bstring bzero )
-     * 'Byte string' functions.
+     * TAG( hilbert_i2c )
+     * Convert an index into a Hilbert curve to a set of coordinates.
      */
-    extern void bzero( char *str, int count );
-    extern void bcopy( char *from, char *to, int count );
-#endif
+    extern void hilbert_c2i( int n, int m, int a[], long int *r );
+
+    /*****************************************************************
+     * TAG( hilbert_c2i )
+     * Convert coordinates of a point on a Hilbert curve to its index.
+     */
+    extern void hilbert_i2c( int n, int m, long int r, int a[] );
+
+    /* From inv_cmap.c */
+    /*****************************************************************
+     * TAG( inv_cmap )
+     * Compute an inverse colormap efficiently.
+     */
+    extern void inv_cmap( int colors,
+			  unsigned char *colormap[3],
+			  int bits,
+			  unsigned long *dist_buf,
+			  unsigned char *rgbmap );
+
 #else /* USE_PROTOTYPES */
     /* Return value decls for "K&R" C.  See above for full descriptions. */
+    /* From rle_error.c. */
+    extern int rle_alloc_error();
+    extern int rle_get_error();
 
     /* From rle_getrow.c. */
     extern void rle_debug();
-    extern int rle_get_error();
     extern int rle_get_setup();
     extern void rle_get_setup_ok();
     extern int rle_getrow();
 
     /* From rle_getskip.c */
     extern unsigned int rle_getskip();
+
+    /* From rle_hdr.c */
+    extern void rle_names();
+    extern rle_hdr *rle_hdr_cp();
+    extern rle_hdr *rle_hdr_init();
+    extern void rle_hdr_clear();
 
     /* From rle_putrow.c. */
     extern void rgb_to_bw();
@@ -452,6 +560,7 @@ extern void rle_addhist( char *argv[],
     /* From rle_open_f.c. */
     extern FILE *rle_open_f();
     extern FILE *rle_open_f_noexit();
+    extern void rle_close_f( );
 
     /* From colorquant.c. */
     extern int colorquant();
@@ -464,21 +573,14 @@ extern void rle_addhist( char *argv[],
 
     /* From scanargs.c. */
     extern int scanargs();
-#ifdef NEED_BSTRING
-    /* From bstring.c. */
-    extern void bzero();
-    extern void bcopy();
-#endif
+
+    /* From hilbert.c */
+    extern void hilbert_c2i();
+    extern void hilbert_i2c();
+
+    /* From inv_cmap.c */
+    extern void inv_cmap();
+
 #endif /* USE_PROTOTYPES */
 
 #endif /* RLE_H */
-
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

@@ -25,15 +25,6 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#include "common.h"
-
-
-
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "machine.h"
-
 #include "rle.h"
 #include "rle_code.h"
 
@@ -63,7 +54,8 @@
  * 	end of image.
  */
 unsigned int
-rle_getskip(rle_hdr *the_hdr)
+rle_getskip( the_hdr )
+rle_hdr *the_hdr;
 {
     unsigned char inst[2];
     register FILE *infile = the_hdr->rle_file;
@@ -82,8 +74,6 @@ rle_getskip(rle_hdr *the_hdr)
      */
     for (;;)
     {
-    	register int code;
-
         inst[0] = getc( infile );
 	inst[1] = getc( infile );
 	if ( feof(infile) )
@@ -92,8 +82,7 @@ rle_getskip(rle_hdr *the_hdr)
 	    break;		/* <--- one of the exits */
 	}
 
-    	code = OPCODE(inst);
-	switch( code )
+	switch( OPCODE(inst) )
 	{
 	case RSkipLinesOp:
 	    if ( LONGP(inst) )
@@ -150,7 +139,9 @@ rle_getskip(rle_hdr *the_hdr)
 	    break;
 
 	default:
-	    fprintf( stderr, "rle_getskip: Unrecognized opcode: %d\n", OPCODE(inst) );
+	    fprintf( stderr,
+		     "%s: rle_getskip: Unrecognized opcode: %d, reading %s\n",
+		     the_hdr->cmd, OPCODE(inst), the_hdr->file_name );
 	    exit(1);
 	}
 	if ( OPCODE(inst) == REOFOp )

@@ -25,12 +25,7 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include "common.h"
-
-#include <stdlib.h>
 #include <stdio.h>
-
-#include "machine.h"
 #include "rle.h"
 
 /*****************************************************************
@@ -52,17 +47,18 @@
  *	[None]
  */
 static char *
-match(const char *n, const char *v)
+match( n, v )
+register char *n;
+register char *v;
 {
     for ( ; *n != '\0' && *n != '=' && *n == *v; n++, v++ )
 	;
     if (*n == '\0' || *n == '=')
-    {
 	if ( *v == '\0' )
-	    return((char *) v);
+	    return v;
 	else if ( *v == '=' )
-	    return( (char *) ++v);
-    }
+	    return ++v;
+
     return NULL;
 }
 
@@ -81,16 +77,18 @@ match(const char *n, const char *v)
  * Algorithm:
  * 	Find match if any, else add at end (realloc to make bigger).
  */
-const char *
-rle_putcom(const char *value, rle_hdr *the_hdr)
+CONST_DECL char *
+rle_putcom( value, the_hdr )
+CONST_DECL char * value;
+rle_hdr * the_hdr;
 {
-    register const char ** cp, ** old_comments;
-    const char * v;
+    register CONST_DECL char ** cp, ** old_comments;
+    CONST_DECL char * v;
     int i;
 
     if ( the_hdr->comments == NULL )
     {
-	the_hdr->comments = (const char **)malloc( 2 * sizeof(char *) );
+	the_hdr->comments = (CONST_DECL char **)malloc( 2 * sizeof(char *) );
 	the_hdr->comments[0] = value;
 	the_hdr->comments[1] = NULL;
     }
@@ -112,7 +110,7 @@ rle_putcom(const char *value, rle_hdr *the_hdr)
 	 * could copy the pointers, too.
 	 */
 	old_comments = the_hdr->comments;
-	the_hdr->comments = (const char **)malloc(i * sizeof(char *) );
+	the_hdr->comments = (CONST_DECL char **)malloc(i * sizeof(char *) );
 	the_hdr->comments[--i] = NULL;
 	the_hdr->comments[--i] = value;
 	for ( i--; i >= 0; i-- )
@@ -137,11 +135,13 @@ rle_putcom(const char *value, rle_hdr *the_hdr)
  * Algorithm:
  *	[None]
  */
-const char *
-rle_delcom(const char *name, rle_hdr *the_hdr)
+CONST_DECL char *
+rle_delcom( name, the_hdr )
+CONST_DECL char * name;
+rle_hdr *the_hdr ;
 {
-    register const char ** cp;
-    const char * v = NULL;
+    register CONST_DECL char ** cp;
+    CONST_DECL char * v = NULL;
 
     if ( the_hdr->comments == NULL )
 	return NULL;

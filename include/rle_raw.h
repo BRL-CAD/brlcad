@@ -29,15 +29,22 @@
 #define RLE_RAW_H
 
 
+#ifdef __cplusplus        /* Cfront 2.0  or g++ */
+#ifndef c_plusplus
+#define c_plusplus        
+#endif
+extern "C" {
+#endif
+
+#include "rle_code.h"
+
 /*****************************************************************
  * TAG( rle_op )
  *
  * Struct representing one rle opcode.
  */
-#ifndef c_plusplus
-    typedef struct rle_op rle_op;
-#endif
 
+typedef
 struct rle_op {
     int opcode;			/* one of RByteDataOp or RRunDataOp */
     int xloc;			/* X location this op starts at */
@@ -46,7 +53,7 @@ struct rle_op {
 	rle_pixel * pixels;	/* for ByteData */
 	int run_val;		/* for RunData */
     } u;
-};
+} rle_op;
 
 #ifdef USE_PROTOTYPES
     /*****************************************************************
@@ -111,14 +118,8 @@ struct rle_op {
 
 #endif
 
-#endif /* RLE_RAW_H */
+#ifdef __cplusplus
+}
+#endif
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+#endif /* RLE_RAW_H */

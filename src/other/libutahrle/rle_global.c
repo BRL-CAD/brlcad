@@ -30,30 +30,21 @@
  * $Id$
  */
 
-#include "common.h"
-
-
-
-#if __sgi
-#     define  __EXTENSIONS__          1       /* To define "stdout" */
-#endif
 #include <stdio.h>
-
-#include "machine.h"
 #include "rle_put.h"
 #include "rle.h"
 
-extern int	RunSetup(register rle_hdr *the_hdr),
-		RunSkipBlankLines(int nblank, register rle_hdr *the_hdr),
-		RunSetColor(int c, register rle_hdr *the_hdr),
-		RunSkipPixels(int nskip, int last, int wasrun, register rle_hdr *the_hdr),
-		RunNewScanLine(int flag, register rle_hdr *the_hdr),
-		Runputdata(rle_pixel *buf, int n, register rle_hdr *the_hdr),
-		Runputrun(int color, int n, int last, register rle_hdr *the_hdr),
-		RunputEof(register rle_hdr *the_hdr);
+extern int	RunSetup( ARB_ARGS ),
+		RunSkipBlankLines( ARB_ARGS ),
+		RunSetColor( ARB_ARGS ),
+		RunSkipPixels( ARB_ARGS ),
+		RunNewScanLine( ARB_ARGS ),
+		Runputdata( ARB_ARGS ),
+		Runputrun( ARB_ARGS ),
+		RunputEof( ARB_ARGS );
 
-extern int	DefaultBlockHook(rle_hdr *the_hdr);
-extern void	NullputEof(rle_hdr *the_hdr);
+extern int	DefaultBlockHook( ARB_ARGS );
+extern void	NullputEof( ARB_ARGS );
 
 struct rle_dispatch_tab rle_DTable[] = {
     {
@@ -85,14 +76,19 @@ rle_hdr rle_dflt_hdr = {
     8,				/* cmaplen (log2 of length of color map) */
     NULL,			/* pointer to color map */
     NULL,			/* pointer to comment strings */
-    0,				/* output file */
-    { 7 }			/* RGB channels only */
+    stdout,			/* output file */
+    { 7 },			/* RGB channels only */
+    0L,				/* Can't free name and file fields. */
+    "Urt",			/* Default "program name". */
+    "no file",			/* No file name given. */
+    0				/* First image. */
     /* Can't initialize the union */
 };
 
 /* ARGSUSED */
 void
-NullputEof(rle_hdr *the_hdr)
+NullputEof(the_hdr)
+rle_hdr * the_hdr;
 {
 				/* do nothing */
 }

@@ -28,17 +28,11 @@
  * Copyright (c) 1986, University of Utah
  */
 #ifndef lint
-static const char rcs_ident[] = "$Id$";
+static char rcs_ident[] = "$Id$";
 #endif
 
-#include "common.h"
-
-#include <stdlib.h>
 #include <stdio.h>
-
-#include "machine.h"
 #include "rle.h"
-#include "rle_code.h"
 #include "rle_raw.h"
 
 /* Read a two-byte "short" that started in VAX (LITTLE_ENDIAN) order */
@@ -81,7 +75,10 @@ static const char rcs_ident[] = "$Id$";
  *	input files.
  */
 unsigned int
-rle_getraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
+rle_getraw( the_hdr, scanraw, nraw )
+rle_hdr *the_hdr;
+rle_op *scanraw[];
+int nraw[];
 {
     register int channel;
     register rle_op * rawp = NULL;
@@ -220,7 +217,9 @@ rle_getraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
 	    break;
 
 	default:
-	    fprintf( stderr, "rle_getraw: Unrecognized opcode: %d\n", OPCODE(inst) );
+	    fprintf( stderr,
+		     "%s: rle_getraw: Unrecognized opcode: %d, reading %s\n",
+		     the_hdr->cmd, OPCODE(inst), the_hdr->file_name );
 	    exit(1);
 	}
 	if ( OPCODE(inst) == REOFOp )
@@ -266,7 +265,10 @@ rle_getraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
  *	[None]
  */
 void
-rle_freeraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
+rle_freeraw( the_hdr, scanraw, nraw )
+rle_hdr * the_hdr;
+int nraw[];
+rle_op *scanraw[] ;
 {
     int c, i;
     register rle_op * raw_p;
@@ -275,5 +277,14 @@ rle_freeraw(rle_hdr *the_hdr, rle_op **scanraw, int *nraw)
 	if ( RLE_BIT( *the_hdr, c ) )
 	    for ( i = nraw[c], raw_p = scanraw[c]; i > 0; i--, raw_p++ )
 		if ( raw_p->opcode == RByteDataOp )
-		    free( raw_p->u.pixels );
+		{
+		    if ( raw_p->u.pixels )
+			free( raw_p->u.pixels );
+		    else
+			fprintf( stderr,
+	 "%s(%s): rle_freeraw given NULL pixel pointer, %d[%d].\n",
+				 the_hdr->cmd, the_hdr->file_name,
+				 c, nraw[c] - i );
+		    raw_p->u.pixels = NULL;
+		}
 }

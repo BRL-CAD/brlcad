@@ -27,8 +27,7 @@
  * $Header$
  */
 
-#ifndef RLE_CODE_H
-#define RLE_CODE_H
+#ifndef RLE_MAGIC
 
 /* 
  * Opcode definitions
@@ -65,19 +64,7 @@ struct XtndRsetup
 #define	    RMAGIC	('R' << 8)	/* top half of magic number */
 #define	    WMAGIC	('W' << 8)	/* black&white rle image */
 
-#ifndef RLE_MAGIC
 #define	    RLE_MAGIC	((short)0xcc52)	/* RLE file magic number */
-#endif
 
-#endif /* RLE_CODE_H */
+#endif /* RLE_MAGIC */
 
-
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

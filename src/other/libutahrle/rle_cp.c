@@ -25,12 +25,6 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#include "common.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "machine.h"
 #include "rle.h"
 #include "rle_code.h"
 #include "rle_put.h"
@@ -72,7 +66,9 @@
  * 	extent necessary to copy it and its data to the output.
  */
 void
-rle_cp(rle_hdr *in_hdr, rle_hdr *the_hdr)
+rle_cp( in_hdr, the_hdr )
+rle_hdr *in_hdr;
+rle_hdr *the_hdr;
 {
     register FILE *infile = in_hdr->rle_file;
     register FILE *outfile = the_hdr->rle_file;
@@ -190,8 +186,9 @@ rle_cp(rle_hdr *in_hdr, rle_hdr *the_hdr)
 	    break;
 
 	default:
-	    fprintf( stderr, "rle_cp: Unrecognized opcode: %d\n",
-		     OPCODE(inst) );
+	    fprintf( stderr,
+		     "%s: rle_cp: Unrecognized opcode: %d, reading %s\n",
+		     the_hdr->cmd, OPCODE(inst), the_hdr->file_name );
 	    fflush( the_hdr->rle_file );
 	    exit(1);
 	}

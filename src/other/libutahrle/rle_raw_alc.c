@@ -28,15 +28,8 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 
-#include "common.h"
-
-#include <stdlib.h>
 #include <stdio.h>
-
-#include "machine.h"
-
 #include "rle.h"
-#include "rle_code.h"
 #include "rle_raw.h"
 
 /*****************************************************************
@@ -64,7 +57,10 @@
  *	integers for the length buffer.
  */
 int
-rle_raw_alloc(rle_hdr *the_hdr, rle_op ***scanp, int **nrawp)
+rle_raw_alloc( the_hdr, scanp, nrawp )
+rle_hdr *the_hdr;
+rle_op ***scanp;
+int **nrawp;
 {
     rle_op ** scanbuf, * opbuf;
     int rowlen, nchan = 0, i, ncol;
@@ -87,7 +83,7 @@ rle_raw_alloc(rle_hdr *the_hdr, rle_op ***scanp, int **nrawp)
 	return -1;
     }
 
-    if ( (*nrawp = (int *)malloc( ncol * sizeof(int) )) == 0 )
+    if ( nrawp && (*nrawp = (int *)malloc( ncol * sizeof(int) )) == 0 )
     {
 	free( scanbuf );
 	free( opbuf );
@@ -97,7 +93,8 @@ rle_raw_alloc(rle_hdr *the_hdr, rle_op ***scanp, int **nrawp)
     if ( the_hdr->alpha )
     {
 	scanbuf++;
-	(*nrawp)++;
+	if ( nrawp )
+	    (*nrawp)++;
     }
 
     for ( i = -the_hdr->alpha; i < the_hdr->ncolors; i++ )
@@ -131,14 +128,18 @@ rle_raw_alloc(rle_hdr *the_hdr, rle_op ***scanp, int **nrawp)
  * 	free scanp[0], scanp, and nrawp.
  */
 void
-rle_raw_free(rle_hdr *the_hdr, rle_op **scanp, int *nrawp)
+rle_raw_free( the_hdr, scanp, nrawp )
+rle_hdr *the_hdr;
+rle_op **scanp;
+int *nrawp ;
 {
     int i;
 
     if ( the_hdr->alpha )
     {
 	scanp--;
-	nrawp--;
+	if ( nrawp )
+	    nrawp--;
     }
     for ( i = 0; i < the_hdr->ncolors + the_hdr->alpha; i++ )
 	if ( scanp[i] != 0 )
@@ -147,5 +148,6 @@ rle_raw_free(rle_hdr *the_hdr, rle_op **scanp, int *nrawp)
 	    break;
 	}
     free( (char *)scanp );
-    free( (char *)nrawp );
+    if ( nrawp )
+	free( (char *)nrawp );
 }

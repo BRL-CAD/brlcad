@@ -25,13 +25,7 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include "common.h"
-
-
-
 #include <stdio.h>
-
-#include "machine.h"
 #include "rle.h"
 
 /*****************************************************************
@@ -53,17 +47,17 @@
  *	[None]
  */
 static char *
-match(const char *n, const char *v)
+match( n, v )
+register char *n;
+register char *v;
 {
     for ( ; *n != '\0' && *n != '=' && *n == *v; n++, v++ )
 	;
     if (*n == '\0' || *n == '=')
-    {
 	if ( *v == '\0' )
-	    return( (char *) v);
+	    return v;
 	else if ( *v == '=' )
-	    return( (char *) ++v);
-    }
+	    return ++v;
 
     return NULL;
 }
@@ -83,9 +77,11 @@ match(const char *n, const char *v)
  *	[None]
  */
 char *
-rle_getcom(const char *name, rle_hdr *the_hdr)
+rle_getcom( name, the_hdr )
+CONST_DECL char *name;
+rle_hdr *the_hdr;
 {
-    const char ** cp;
+    CONST_DECL char ** cp;
     char * v;
 
     if ( the_hdr->comments == NULL )

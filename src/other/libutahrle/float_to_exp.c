@@ -28,15 +28,9 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include "common.h"
-
-
-
 #include <stdio.h>
-#include <math.h>
-
-#include "machine.h"
 #include "rle.h"
+#include <math.h>
 
 /*****************************************************************
  * TAG( float_to_exp )
@@ -45,7 +39,10 @@
  * of count+1 pixels out of it.
  */
 void
-float_to_exp(int count, float *floats, rle_pixel *pixels)
+float_to_exp( count, floats, pixels )
+int count;
+float * floats;
+rle_pixel * pixels;
 {
     register int i;
     int expon, max_exp = -2000;

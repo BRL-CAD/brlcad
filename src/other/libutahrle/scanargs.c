@@ -40,39 +40,25 @@
  *  to have all "void" functions so declared.
  */
 
-#include "common.h"
-
-#include <stdlib.h>
+#include "rle_config.h"
 #include <stdio.h>
 #include <ctype.h>
-#if defined(HAVE_STDARG_H)
-# include <stdarg.h>
+#ifndef USE_STDARG
+#include <varargs.h>
+#else
+#include <stdarg.h>
 #endif
-#if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
-# include <varargs.h>
-#endif
-#if !defined(HAVE_STDARG_H) && !defined(HAVE_VARARGS_H)
-# include "Need stdarg.h or varargs.h"
-#endif
-
-#include "machine.h"
 
 typedef char bool;
 /* 
  * An explicit assumption is made in this code that all pointers look
- * alike, except possibly char * pointers.
+ * alike, except possible char * pointers.
  */
 typedef int *ptr;
 
-#ifndef YES
 #define YES 1
-#endif
-#ifndef NO
 #define NO 0
-#endif
-#ifndef ERROR
 #define ERROR(msg)  {fprintf(stderr, "%s\n", msg); goto error; }
-#endif
 
 /* 
  * Storage allocation macros
@@ -80,43 +66,47 @@ typedef int *ptr;
 #define NEW( type, cnt )	(type *) malloc( (cnt) * sizeof( type ) )
 #define RENEW( type, ptr, cnt )	(type *) realloc( ptr, (cnt) * sizeof( type ) )
 
+#if defined(c_plusplus) && !defined(USE_PROTOTYPES)
+#define USE_PROTOTYPES
+#endif
+
 #ifndef USE_PROTOTYPES
 static char * prformat();
 static int isnum();
 static int	_do_scanargs();
 void		scan_usage();
 #else
-static const char * prformat( const char *, int );
-static int isnum( const char *, int, int );
-static int	_do_scanargs( int argc, char **argv, const char *format,
+static CONST_DECL char * prformat( CONST_DECL char *, int );
+static int isnum( CONST_DECL char *, int, int );
+static int	_do_scanargs( int argc, char **argv, CONST_DECL char *format,
 			      va_list argl );
-void		scan_usage( char **, const char * );
+void		scan_usage( char **, CONST_DECL char * );
 #endif
 
 /* 
  * Argument list is (argc, argv, format, ... )
  */
 int
-#ifdef HAVE_STDARG_H
-scanargs ( int argc, char **argv, const char *format, ... )
-#else
+#ifndef USE_STDARG
 scanargs ( va_alist )
 va_dcl
-#endif
+#else
+scanargs ( int argc, char **argv, CONST_DECL char *format, ... )
+#endif /* !USE_STDARG */
 {
     va_list argl;
     int retval;
-#ifdef HAVE_STDARG_H
-    va_start( argl, format );
-#else
+#ifndef USE_STDARG
     int argc;
     char ** argv;
-    const char *format;
+    CONST_DECL char *format;
 
     va_start( argl );
     argc = va_arg( argl, int );
     argv = va_arg( argl, char ** );
-    format = va_arg( argl, const char * );
+    format = va_arg( argl, CONST_DECL char * );
+#else
+    va_start( argl, format );
 #endif
     retval = _do_scanargs( argc, argv, format, argl );
     va_end( argl );
@@ -131,17 +121,17 @@ va_dcl
  */
 
 static int
-_do_scanargs(int argc, char **argv, const char *format, va_list argl)
-             			/* Actual arguments */
-             
-                     
-             
+_do_scanargs( argc, argv, format, argl )
+int     argc;			/* Actual arguments */
+char  **argv;
+CONST_DECL char   *format;
+va_list argl;
 {
 
-    register int    check;			/* check counter to be sure all argvs
+    register    check;			/* check counter to be sure all argvs
 					   are processed */
-    register const char  *cp;
-    register int    cnt;
+    register CONST_DECL char  *cp;
+    register    cnt;
     int	    optarg = 0;			/* where optional args start */
     int	    nopt = 0;
     char    tmpflg,			/* temp flag */
@@ -157,6 +147,8 @@ _do_scanargs(int argc, char **argv, const char *format, va_list argl)
 
     bool    list_of;			/* set if parsing off a list of args */
     bool    comma_list;			/* set if AT&T style multiple args */
+    bool    no_usage;			/* If set, don't print usage msg. */
+    bool    help = NO;			/* If set, always print usage. */
     int	  * cnt_arg = 0;		/* where to stuff list count */
     int	    list_cnt;			/* how many in list */
     /* These are used to build return lists */
@@ -167,10 +159,11 @@ _do_scanargs(int argc, char **argv, const char *format, va_list argl)
     double *dbllist = 0;
     char  * argp;			/* Pointer to argument. */
 
-    const char   *ncp;		/* remember cp during flag scanning */
+    CONST_DECL char   *ncp;		/* remember cp during flag scanning */
     static char   cntrl[7] = "%  %1s";	/* control string for scanf's */
     char    junk[2];			/* junk buffer for scanf's */
 
+    /* Set up for argument counting. */
     arg_used = NEW( bool, argc );
     if (arg_used == NULL)
     {
@@ -182,8 +175,26 @@ _do_scanargs(int argc, char **argv, const char *format, va_list argl)
 	for (cnt=0; cnt<argc; cnt++)
 	    arg_used[cnt] = NO;
     }
-
     check = 0;
+
+    /* Scan for -help in arg list. */
+    for ( cnt=1; cnt<argc; cnt++ )
+	if ( strcmp( argv[cnt], "-help" ) == 0 )
+	{
+	    check += cnt;
+	    arg_used[cnt] = YES;
+	    if ( argc == 2 )
+	    {
+		scan_usage( argv, format );
+		return 0;
+	    }
+	    else
+		help = YES;
+	}
+
+    /* If format string ends in @, don't print a usage message. */
+    no_usage = *(format + strlen( format ) - 1) == '&';
+
     cp = format;
     /* 
      * Skip program name
@@ -207,6 +218,18 @@ _do_scanargs(int argc, char **argv, const char *format, va_list argl)
 		optarg = 0;		/* end of optional arg string */
 		break;
 
+	    case '(':			/* Surrounds a comment. */
+	    {
+		int depth = 1;		/* Count parenthesis depth. */
+		while ( *cp && depth > 0 )
+		    switch ( *(cp++) )
+		    {
+		    case '(':	depth++;		break;
+		    case ')':	depth--;		break;
+		    }
+		break;
+	    }
+
 	    case '!': 			/* required argument */
 		required = YES;
 	    case '%': 			/* not required argument */
@@ -225,6 +248,35 @@ reswitch:				/* after finding '*' or ',' */
 			while ( argc > 1 && !arg_used[argc-1] )
 			    argc--;	/* find last used argument */
 			*va_arg( argl, int * ) = argc;
+			break;
+
+		    case '&':		/* Return unused args. */
+			/* Count how many.  Always include argv[0]. */
+			for ( nopt = cnt = 1; cnt < argc; cnt++ )
+			    if ( !arg_used[cnt] )
+				nopt++;
+			if ( nopt == 1 )
+			    nopt = 0;	/* Special case for no args. */
+			if ( nopt > 0 )
+			{
+			    strlist = NEW( char *, nopt + 1 );
+			    /* Copy program name, for sure. */
+			    strlist[0] = argv[0];
+			    for ( nopt = cnt = 1; cnt < argc; cnt++ )
+				if ( !arg_used[cnt] )
+				{
+				    strlist[nopt++] = argv[cnt];
+				    check += cnt;
+				    arg_used[cnt] = 1;
+				}
+			    strlist[nopt] = NULL;
+			}
+			else
+			    strlist = NULL;	/* No args, return empty. */
+
+			/* Return count and arg list. */
+			*va_arg( argl, int * ) = nopt;
+			*va_arg( argl, char *** ) = strlist;
 			break;
 
 		    case '-': 		/* argument is flag */
@@ -307,6 +359,10 @@ reswitch:				/* after finding '*' or ',' */
 		    case 'X': 		/* long hexadecimal # */
 		    case 'N':		/* long number in C syntax */
 		    case 'F': 		/* double precision floating # */
+#if defined(sgi) && !defined(mips)
+			/* Fix for broken SGI IRIS 2400/3000 floats */
+			if ( typchr == 'F' ) typchr = 'f';
+#endif /* sgi */
 			for (cnt = optarg+1; cnt < argc; cnt++)
 			{
 			    argp = argv[cnt];
@@ -316,24 +372,18 @@ reswitch:				/* after finding '*' or ',' */
 				;	/* it's ok, then */
 			    }
 			    else if ( *argp == '-' && argp[1] != '\0' )
-			    {
 				if ( optarg > 0 ) /* end optional args? */
 				{
 				    /* Eat the arg, too, if necessary */
 				    if ( list_cnt == 0 )
-				    {
 					if ( typchr == 's' )
 					    (void)va_arg( argl, char * );
 					else
 					    (void)va_arg( argl, ptr );
-				    }
 				    break;
 				}
 				else
-				{
 				    continue;
-				}
-			    }
 			    else if ( typchr != 's' )
 				continue;	/* not number, keep looking */
 			    
@@ -353,6 +403,13 @@ reswitch:				/* after finding '*' or ',' */
 			    {
 				register char * s;
 				int pass;
+
+				/*
+				 * Copy the string so we remain nondestructive
+				 */
+				s = NEW( char, strlen(argp)+1 );
+				strcpy( s, argp );
+				argp = s;
 
 				/* 
 				 * On pass 0, just count them.  On
@@ -511,7 +568,6 @@ reswitch:				/* after finding '*' or ',' */
 				     */
 				    tmpflg = typchr;
 				    if (typchr == 'n' || typchr == 'N' )
-				    {
 					if (*argp != '0')
 					    tmpflg = 'd';
 					else if (*(argp+1) == 'x' ||
@@ -522,7 +578,6 @@ reswitch:				/* after finding '*' or ',' */
 					}
 					else
 					    tmpflg = 'o';
-				    }
 				    if (typchr == 'N')
 					tmpflg = toupper( tmpflg );
 
@@ -617,7 +672,7 @@ reswitch:				/* after finding '*' or ',' */
 		    default: 		/* error */
 			fprintf (stderr,
 				 "scanargs: Corrupt or invalid format spec\n");
-			return (0);
+			return 0;
 		}
 	}
     }
@@ -632,19 +687,26 @@ reswitch:				/* after finding '*' or ',' */
     if (check != (((argc - 1) * argc) / 2))
 	ERROR ("extra arguments not processed");
 
+    /* If -help, always print usage. */
+    if ( help )
+	scan_usage( argv, format );
+
     free(arg_used);
-    return (1);
+    return 1;
 
 error: 
-    scan_usage( argv, format );
+    if ( !no_usage )
+	scan_usage( argv, format );
     free(arg_used);
     return 0;
 }
 
 void
-scan_usage(char **argv, const char *format)
+scan_usage( argv, format )
+char ** argv;
+CONST_DECL char * format;
 {
-    register const char * cp;
+    register CONST_DECL char * cp;
 
     fprintf (stderr, "usage : ");
     if (*(cp = format) != ' ')
@@ -674,12 +736,14 @@ scan_usage(char **argv, const char *format)
     (void)prformat (cp, NO);
 }
 
-static const char *
-prformat (const char *format, int recurse)
+static CONST_DECL char *
+prformat (format, recurse)
+CONST_DECL char   *format;
+int 	recurse;
 {
-    register const char  *cp;
+    register CONST_DECL char  *cp;
     bool    required, comma_list;
-    int    list_of;
+    int    list_of, depth;
 
     cp = format;
     if (recurse)
@@ -704,6 +768,27 @@ prformat (const char *format, int recurse)
 		putc(*cp, stderr);
 		format = ++cp;
 		break;
+
+	    case '(':
+		/* Parentheses surround an arbitrary (parenthesis
+		 * balanced) comment.
+		 */
+		for ( ; format < cp; format++ )
+		    putc( *format, stderr );
+		for ( cp++, depth = 1; *cp && depth > 0; )
+		{
+		    /* Don't print last close paren. */
+		    if ( *cp != ')' || depth > 1 )
+			putc( *cp, stderr );
+		    switch( *(cp++) )
+		    {
+		    case '(':	depth++;		break;
+		    case ')':	depth--;		break;
+		    }
+		}
+		format = cp;
+		break;
+
 	    case '!': 
 		required = YES;
 	    case '%': 
@@ -804,9 +889,12 @@ reswitch:
  * space and comma are also legal characters.
  */
 static int
-isnum(register const char *str, int typchr, int comma_list)
+isnum( str, typchr, comma_list )
+register CONST_DECL char * str;
+int typchr;
+int comma_list;
 {
-    register const char *allowed, *digits, *cp;
+    register CONST_DECL char *allowed, *digits, *cp;
     int hasdigit = NO;
 
     switch( typchr )

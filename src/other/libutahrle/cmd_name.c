@@ -25,14 +25,17 @@
  * Copyright (c) 1990, University of Michigan
  */
 
+static char no_name[] = "(no-name)";
+
 char *
-cmd_name(char **argv)
+cmd_name( argv )
+char **argv;
 {
-    register char *cp, *a = *argv;
+    register char *cp, *a;
 
     /* Be paranoid. */
-    if ( !a )
-	return "(no-name)";
+    if ( !argv || !(a = *argv) )
+	return no_name;
 
     /* Find end of file name. */
     for ( cp = a; *cp; cp++ )

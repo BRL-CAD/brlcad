@@ -23,24 +23,21 @@
  * getopt - get option letter from argv
  */
 
-#include <stdio.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#define index strchr
-#else
-#include <strings.h>
-#endif
 #include "rle_config.h"
+#include <stdio.h>
 
 char	*optarg;	/* Global argument pointer. */
 int	optind = 0;	/* Global argv index. */
 
 static char	*scan = NULL;	/* Private scan pointer. */
 
-extern char	*index(const char *, int);
+extern char	*index();
 
 int
-getopt(int argc, char **argv, char *optstring)
+getopt(argc, argv, optstring)
+int argc;
+char *argv[];
+char *optstring;
 {
     register char c;
     register char *place;

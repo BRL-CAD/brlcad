@@ -25,15 +25,9 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include "common.h"
-
-#include <stdlib.h>
 #include <stdio.h>
-#include <math.h>
-
-#include "machine.h"
 #include "rle.h"
-
+#include <math.h>
 
 /*****************************************************************
  * TAG( buildmap )
@@ -59,10 +53,14 @@
  *	be addressed by an rle_pixel).
  */
 rle_pixel **
-buildmap(rle_hdr *the_hdr, int minmap, double orig_gamma, double new_gamma)
+buildmap( the_hdr, minmap, orig_gamma, new_gamma )
+rle_hdr *the_hdr;
+int minmap;
+double orig_gamma;
+double new_gamma;
 {
     rle_pixel ** cmap, * gammap;
-    double gamma2;
+    double gamma;
     register int i, j;
     int maplen, cmaplen, nmap;
 
@@ -109,7 +107,7 @@ buildmap(rle_hdr *the_hdr, int minmap, double orig_gamma, double new_gamma)
 		else
 		    cmap[j][i] = i;
 	    for ( ; j < nmap; j++ )
-		cmap[j][i] = cmap[j-i][i];
+		cmap[j][i] = cmap[j-1][i];
 	}
     }
     
@@ -139,15 +137,15 @@ buildmap(rle_hdr *the_hdr, int minmap, double orig_gamma, double new_gamma)
 
     /* Now, compensate for the gamma of the new display, too. */
     if ( new_gamma != 0.0 )
-	gamma2 = orig_gamma / new_gamma;
+	gamma = orig_gamma / new_gamma;
     else
-	gamma2 = orig_gamma;
+	gamma = orig_gamma;
 
-    if ( gamma2 != 1.0 )
+    if ( gamma != 1.0 )
     {
 	gammap = (rle_pixel *)malloc( 256 * sizeof(rle_pixel) );
 	for ( i = 0; i < 256; i++ )
-	    gammap[i] = (int)(0.5 + 255.0 * pow( i / 255.0, gamma2 ));
+	    gammap[i] = (int)(0.5 + 255.0 * pow( i / 255.0, gamma ));
 	for ( i = 0; i < nmap; i++ )
 	    for ( j = 0; j < maplen; j++ )
 		cmap[i][j] = gammap[cmap[i][j]];

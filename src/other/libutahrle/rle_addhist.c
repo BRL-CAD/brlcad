@@ -25,25 +25,15 @@
  * Copyright (c) 1988, Curtin University of Technology
  */
 
-#include "common.h"
-
-#include <stdlib.h>
+#include "rle.h"
 #include <stdio.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
+
+#ifdef	USE_TIME_H
+#include <time.h>
 #else
-#include <strings.h>
-#endif
-
 #include <sys/types.h>
-
-#ifdef USE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#include <time.h>
-
-#include "machine.h"
-#include "rle.h"
 
 /*****************************************************************
  * TAG( rle_addhist )
@@ -61,13 +51,16 @@
  *	rle_putcom.
  */
 
-void rle_addhist(register char **argv, rle_hdr *in_hdr, rle_hdr *out_hdr)
+void rle_addhist(argv,in_hdr,out_hdr)
+register char	*argv[];
+rle_hdr *in_hdr,*out_hdr;
 {
 	register int	length,i;
 	time_t	temp;
-	static char	*histoire="HISTORY",					/* padding must give number of characters in histoire 	*/
-			*padding="\t";						/*     plus one for "="					*/
-	char	*getenv(const char *);
+	/* padding must give number of characters in histoire 	*/
+	/*     plus one for "="					*/
+	static CONST_DECL char	*histoire="HISTORY",
+				*padding="\t";
 	char	*timedate,*old= NULL;
 	static char	*newc;
 

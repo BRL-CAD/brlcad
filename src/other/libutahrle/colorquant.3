@@ -3,9 +3,11 @@
 .SH NAME
 colorquant \- variance-based color quantization
 .SH SYNOPSIS
+#include <colorquant.h>
+.PD 0
 .HP
 .B
-int colorquant(red, green, blue, npix, colormap, colors, bits, rgbmap, fast, accum_hist)
+int colorquant(red, green, blue, npix, colormap, colors, bits, rgbmap, flags, accum_hist)
 .LP
 .B
 unsigned char *red, *green, *blue;
@@ -23,10 +25,11 @@ int colors, bits;
 unsigned char *rgbmap;
 .br
 .B
-int fast;
+int flags;
 .br
 .B
 int accum_hist;
+.PD
 .SH DESCRIPTION
 .I Colorquant 
 performs variance-based color quantization on a given image.
@@ -62,7 +65,7 @@ at most this many colors.
 The number of significant bits in each entry of the \fIred\fR, \fIgreen\fR and
 \fIblue\fR arrays.  Normally, the red, green and blue arrays contain
 values that have been prequantized to fewer than eight
-significant bits.
+significant bits (see \fIflags\fP below).
 Five significant bits usually represents a good tradeoff between image quality
 and running time.  Anything above six significant bits will likely lead to
 excessive paging, as the size of \fIrgbmap\fR and the internal histogram are
@@ -80,10 +83,22 @@ colorindex = \fIrgbmap\fR[(((r << \fIbits\fR) | g) << \fIbits\fR) | b];
 where r, g, and b are the prequantized red, green and blue components of
 the pixel in question.
 .TP
-.I fast
-If non-zero, the construction of \fIrgbmap\fP will be relatively fast.  If
-zero, \fIrgbmap\fR will be built slowly but more accurately.  In most cases,
-the error introduced by the 'fast' approximation is barely noticeable.
+.I flags
+A collection of bit-flags that modify the operation of
+\fIcolorquant\fP.  Currently defined values are \fBCQ_FAST\fP,
+\fBCQ_QUANTIZE\fP, and \fBCQ_NO_RGBMAP\fP.  
+.br
+If \fBCQ_FAST\fP is set, the construction of \fIrgbmap\fP will be
+relatively fast.  If not, \fIrgbmap\fR will be built slowly but more
+accurately.  In most cases, the error introduced by the 'fast'
+approximation is barely noticeable.
+.br
+If \fBCQ_QUANTIZE\fP is set, the values in \fIred\fP, \fIgreen\fP, and
+\fIblue\fP are taken as 8-bit values and will be quantized to
+\fIbits\fP significant bits by \fIcolorquant\fP.  If not set, these
+values are assumed to be prequantized.  
+.br
+If \fBCQ_NO_RGBMAP\fP is set, \fIrgbmap\fP will not be built.
 .TP
 .I accum_hist
 This argument provides a facility to accumulate multiple images into a

@@ -30,20 +30,10 @@
  * $Id$
  */
 #ifndef lint
-static const char rcs_ident[] = "$Id$";
+static char rcs_ident[] = "$Id$";
 #endif
 
-#include "common.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
+#include "stdio.h"
 #include "rle.h"
 #include "rle_code.h"
 
@@ -58,8 +48,8 @@ static const char rcs_ident[] = "$Id$";
 #define DATUM(inst) (inst[1] & 0xff)	/* Make sure it's unsigned. */
 
 static int	   debug_f;		/* If non-zero, print debug info. */
-static void	bfill(register char *s, register int n, register int c);
-extern int vax_gshort(char *msgp);
+static void	bfill();
+extern int vax_gshort();
 
 /*****************************************************************
  * TAG( rle_get_setup )
@@ -81,7 +71,8 @@ extern int vax_gshort(char *msgp);
  * 	Read in the setup info and fill in the_hdr.
  */
 int
-rle_get_setup(rle_hdr *the_hdr)
+rle_get_setup( the_hdr )
+rle_hdr * the_hdr;
 {
     struct XtndRsetup setup;
     short magic;
@@ -89,6 +80,12 @@ rle_get_setup(rle_hdr *the_hdr)
     rle_pixel * bg_color;
     register int i;
     char * comment_buf;
+    
+    /* Clear old stuff out of the header. */
+    rle_hdr_clear( the_hdr );
+    if ( the_hdr->is_init != RLE_INIT_MAGIC )
+	rle_names( the_hdr, "Urt", "some file", 0 );
+    the_hdr->img_num++;		/* Count images. */
 
     VAXSHORT( magic, infile );
     if ( feof( infile ) )
@@ -104,12 +101,14 @@ rle_get_setup(rle_hdr *the_hdr)
     for ( i = 0; i < the_hdr->ncolors; i++ )
 	RLE_SET_BIT( *the_hdr, i );
 
-    if ( !(setup.h_flags & H_NO_BACKGROUND) )
+    if ( !(setup.h_flags & H_NO_BACKGROUND) && setup.h_ncolors > 0 )
     {
 	the_hdr->bg_color = (int *)malloc(
 	    (unsigned)(sizeof(int) * setup.h_ncolors) );
 	bg_color = (rle_pixel *)malloc(
 	    (unsigned)(1 + (setup.h_ncolors / 2) * 2) );
+	RLE_CHECK_ALLOC( the_hdr->cmd, the_hdr->bg_color && bg_color,
+			 "background color" );
 	fread( (char *)bg_color, 1, 1 + (setup.h_ncolors / 2) * 2, infile );
 	for ( i = 0; i < setup.h_ncolors; i++ )
 	    the_hdr->bg_color[i] = bg_color[i];
@@ -155,11 +154,13 @@ rle_get_setup(rle_hdr *the_hdr)
 	if ( the_hdr->cmap == NULL || maptemp == NULL )
 	{
 	    fprintf( stderr,
-		"Malloc failed for color map of size %d*%d in rle_get_setup\n",
-		the_hdr->ncmap, (1 << the_hdr->cmaplen) );
+"%s: Malloc failed for color map of size %d*%d in rle_get_setup, reading %s\n",
+		     the_hdr->cmd,
+		     the_hdr->ncmap, (1 << the_hdr->cmaplen),
+		     the_hdr->file_name );
 	    return RLE_NO_SPACE;
 	}
-	fread( maptemp, sizeof(short), maplen, infile );
+	fread( maptemp, 2, maplen, infile );
 	for ( i = 0; i < maplen; i++ )
 	    the_hdr->cmap[i] = vax_gshort( &maptemp[i * 2] );
 	free( maptemp );
@@ -180,8 +181,8 @@ rle_get_setup(rle_hdr *the_hdr)
 	    if ( comment_buf == NULL )
 	    {
 		fprintf( stderr,
-	 "Malloc failed for comment buffer of size %d in rle_get_setup\n",
-			 comlen );
+"%s: Malloc failed for comment buffer of size %d in rle_get_setup, reading %s\n",
+			 the_hdr->cmd, comlen, the_hdr->file_name );
 		return RLE_NO_SPACE;
 	    }
 	    fread( comment_buf, 1, evenlen, infile );
@@ -192,12 +193,12 @@ rle_get_setup(rle_hdr *the_hdr)
 	    i++;			/* extra for NULL pointer at end */
 	    /* Get space to put pointers to comments */
 	    the_hdr->comments =
-		(const char **)malloc( (unsigned)(i * sizeof(char *)) );
+		(CONST_DECL char **)malloc( (unsigned)(i * sizeof(char *)) );
 	    if ( the_hdr->comments == NULL )
 	    {
 		fprintf( stderr,
-		"Malloc failed for %d comment pointers in rle_get_setup\n",
-			 i );
+ "%s: Malloc failed for %d comment pointers in rle_get_setup, reading %s\n",
+			 the_hdr->cmd, i, the_hdr->file_name );
 		return RLE_NO_SPACE;
 	    }
 	    /* Get pointers to the comments */
@@ -233,61 +234,6 @@ rle_get_setup(rle_hdr *the_hdr)
 
 
 /*****************************************************************
- * TAG( rle_get_error )
- * 
- * Print an error message for the return code from rle_get_setup
- * Inputs:
- * 	code:		The return code from rle_get_setup.
- *	pgmname:	Name of this program (argv[0]).
- *	fname:		Name of the input file.
- * Outputs:
- * 	Prints an error message on standard output.
- *	Returns code.
- */
-int
-rle_get_error(int code, const char *pgmname, const char *fname)
-{
-    if (! fname)
-	fname = "Standard Input";
-    if ( strcmp( fname, "-" ) == 0 )
-	fname = "Standard Input";
-
-    switch( code )
-    {
-    case RLE_SUCCESS:		/* success */
-	break;
-
-    case RLE_NOT_RLE:		/* Not an RLE file */
-	fprintf( stderr, "%s: %s is not an RLE file\n",
-		 pgmname, fname );
-	break;
-
-    case RLE_NO_SPACE:			/* malloc failed */
-	fprintf( stderr,
-		 "%s: Malloc failed reading header of file %s\n",
-		 pgmname, fname );
-	break;
-
-    case RLE_EMPTY:
-	fprintf( stderr, "%s: %s is an empty file\n", pgmname, fname );
-	break;
-
-    case RLE_EOF:
-	fprintf( stderr,
-		 "%s: RLE header of %s is incomplete (premature EOF)\n",
-		 pgmname, fname );
-	break;
-
-    default:
-	fprintf( stderr, "%s: Error encountered reading header of %s\n",
-		 pgmname, fname );
-	break;
-    }
-    return code;
-}
-
-
-/*****************************************************************
  * TAG( rle_get_setup_ok )
  * 
  * Read the initialization information from an RLE file.
@@ -305,11 +251,26 @@ rle_get_error(int code, const char *pgmname, const char *fname)
  * 	rle_get_setup does all the work.
  */
 void
-rle_get_setup_ok(rle_hdr *the_hdr, const char *prog_name, const char *file_name)
+rle_get_setup_ok( the_hdr, prog_name, file_name )
+rle_hdr * the_hdr;
+CONST_DECL char *prog_name;
+CONST_DECL char *file_name;
 {
     int code;
 
-    code = rle_get_error( rle_get_setup( the_hdr ), prog_name, file_name );
+    /* Backwards compatibility: if is_init is not properly set, 
+     * initialize the header.
+     */
+    if ( the_hdr->is_init != RLE_INIT_MAGIC )
+    {
+	FILE *f = the_hdr->rle_file;
+	rle_hdr_init( the_hdr );
+	the_hdr->rle_file = f;
+	rle_names( the_hdr, prog_name, file_name, 0 );
+    }
+
+    code = rle_get_error( rle_get_setup( the_hdr ),
+			  the_hdr->cmd, the_hdr->file_name );
     if (code)
 	exit( code );
 }
@@ -329,16 +290,15 @@ rle_get_setup_ok(rle_hdr *the_hdr, const char *prog_name, const char *file_name)
  *	[None]
  */
 void
-rle_debug(int on_off)
+rle_debug( on_off )
+int on_off;
 {
-    static char std_err_buf[BUFSIZ];	/* BUFSIZ from stdio.h */
     debug_f = on_off;
 
     /* Set line buffering on stderr.  Character buffering is the default, and
      * it is SLOOWWW for large amounts of output.
      */
-
-    setbuf( stderr, std_err_buf );
+    setlinebuf( stderr );
 }
 
 
@@ -370,25 +330,36 @@ rle_debug(int on_off)
  *	discarding input until end of image.
  */
 int
-rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
+rle_getrow( the_hdr, scanline )
+rle_hdr * the_hdr;
+rle_pixel *scanline[];
 {
     register rle_pixel * scanc;
     register int nc;
     register FILE *infile = the_hdr->rle_file;
     int scan_x = the_hdr->xmin,	/* current X position */
+    	max_x = the_hdr->xmax,	/* End of the scanline */
 	   channel = 0;			/* current color channel */
+    int ns;			/* Number to skip */
     short word, long_data;
     char inst[2];
 
     /* Clear to background if specified */
-    if ( the_hdr->background == 2 )
+    if ( the_hdr->background != 1 )
     {
 	if ( the_hdr->alpha && RLE_BIT( *the_hdr, -1 ) )
-	    bfill( (char *)scanline[-1], the_hdr->xmax + 1, 0 );
+	    bzero( (char *)scanline[-1] + the_hdr->xmin,
+		   the_hdr->xmax - the_hdr->xmin + 1 );
 	for ( nc = 0; nc < the_hdr->ncolors; nc++ )
 	    if ( RLE_BIT( *the_hdr, nc ) )
-		bfill( (char *)scanline[nc], the_hdr->xmax+1,
-			the_hdr->bg_color[nc] );
+		/* Unless bg color given explicitly, use 0. */
+		if ( the_hdr->background != 2 || the_hdr->bg_color[nc] == 0 )
+		    bzero( (char *)scanline[nc] + the_hdr->xmin,
+			   the_hdr->xmax - the_hdr->xmin + 1 );
+		else
+		    bfill( (char *)scanline[nc] + the_hdr->xmin,
+			   the_hdr->xmax - the_hdr->xmin + 1,
+			   the_hdr->bg_color[nc] );
     }
 
     /* If skipping, then just return */
@@ -397,7 +368,6 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 	the_hdr->priv.get.vert_skip--;
 	the_hdr->priv.get.scan_y++;
 	if ( the_hdr->priv.get.vert_skip > 0 )
-    	{
 	    if ( the_hdr->priv.get.scan_y >= the_hdr->ymax )
 	    {
 		int y = the_hdr->priv.get.scan_y;
@@ -407,7 +377,6 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 	    }
 	    else
 		return the_hdr->priv.get.scan_y;
-    	}
     }
 
     /* If EOF has been encountered, return also */
@@ -469,7 +438,6 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 		if ( debug_f )
 		    fprintf( stderr, "Skip %d pixels (to %d)\n",
 			    long_data, scan_x );
-			 
 	    }
 	    else
 	    {
@@ -489,14 +457,28 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 	    else
 		nc = DATUM(inst);
 	    nc++;
+	    if ( debug_f )
+		if ( RLE_BIT( *the_hdr, channel ) )
+		    fprintf( stderr, "Pixel data %d (to %d):", nc, scan_x+nc );
+		else
+		    fprintf( stderr, "Pixel data %d (to %d)\n", nc, scan_x+nc);
 	    if ( RLE_BIT( *the_hdr, channel ) )
 	    {
+		/* Don't fill past end of scanline! */
+		if ( scan_x + nc > max_x )
+		{
+		    ns = scan_x + nc - max_x - 1;
+		    nc -= ns;
+		}
+		else
+		    ns = 0;
 		fread( (char *)scanc, 1, nc, infile );
+		while ( ns-- > 0 )
+		    (void)getc( infile );
 		if ( nc & 1 )
 		    (void)getc( infile );	/* throw away odd byte */
 	    }
 	    else
-	    {
 		if ( the_hdr->priv.get.is_seek )
 		    fseek( infile, ((nc + 1) / 2) * 2, 1 );
 		else
@@ -505,23 +487,16 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 		    for ( ii = ((nc + 1) / 2) * 2; ii > 0; ii-- )
 			(void) getc( infile );	/* discard it */
 		}
-	    }
 
 	    scanc += nc;
 	    scan_x += nc;
-	    if ( debug_f )
+	    if ( debug_f && RLE_BIT( *the_hdr, channel ) )
 	    {
-		if ( RLE_BIT( *the_hdr, channel ) )
-		{
-		    rle_pixel * cp = scanc - nc;
-		    fprintf( stderr, "Pixel data %d (to %d):", nc, scan_x );
-		    for ( ; nc > 0; nc-- )
-			fprintf( stderr, "%02x", *cp++ );
-		    putc( '\n', stderr );
-		}
+		rle_pixel * cp = scanc - nc;
+		for ( ; nc > 0; nc-- )
+		    fprintf( stderr, "%02x", *cp++ );
+		putc( '\n', stderr );
 	    }
-	    else
-		fprintf( stderr, "Pixel data %d (to %d)\n", nc, scan_x );
 	    break;
 
 	case RRunDataOp:
@@ -531,21 +506,29 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 	    }
 	    else
 		nc = DATUM(inst);
-	    scan_x += nc + 1;
+	    nc++;
+	    scan_x += nc;
 
 	    VAXSHORT( word, infile );
 	    if ( debug_f )
 		fprintf( stderr, "Run length %d (to %d), data %02x\n",
-			    nc + 1, scan_x, word );
+			    nc, scan_x, word );
 	    if ( RLE_BIT( *the_hdr, channel ) )
 	    {
+		if ( scan_x > max_x )
+		{
+		    ns = scan_x - max_x - 1;
+		    nc -= ns;
+		} 
+		else
+		    ns = 0;
 		if ( nc >= 10 )		/* break point for 785, anyway */
 		{
-		    bfill( (char *)scanc, nc + 1, word );
-		    scanc += nc + 1;
+		    bfill( (char *)scanc, nc, word );
+		    scanc += nc;
 		}
 		else
-		    for ( ; nc >= 0; nc--, scanc++ )
+		    for ( nc--; nc >= 0; nc--, scanc++ )
 			*scanc = word;
 	    }
 	    break;
@@ -558,7 +541,8 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 
 	default:
 	    fprintf( stderr,
-		     "rle_getrow: Unrecognized opcode: %d\n", inst[0] );
+		     "%s: rle_getrow: Unrecognized opcode: %d, reading %s\n",
+		     the_hdr->cmd, inst[0], the_hdr->file_name );
 	    exit(1);
 	}
 	if ( OPCODE(inst) == RSkipLinesOp || OPCODE(inst) == REOFOp )
@@ -580,7 +564,9 @@ rle_getrow(rle_hdr *the_hdr, rle_pixel **scanline)
 
 /* Fill buffer at s with n copies of character c.  N must be <= 65535*/
 /* ARGSUSED */
-static void bfill(register char *s, register int n, register int c)
+static void bfill( s, n, c )
+register char *s;
+register int n, c;
 {
 #ifdef vax
     asm("   movc5   $0,*4(ap),12(ap),8(ap),*4(ap)");

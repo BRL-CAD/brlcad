@@ -27,12 +27,19 @@
  * $Id$
  */
 
-#ifndef RLE_PUT_H
-#define RLE_PUT_H
+#include "rle.h"
 
 /* ****************************************************************
  * Dispatch table for different output types.
  */
+#ifdef __cplusplus        /* Cfront 2.0  or g++ */
+#ifndef c_plusplus
+#define c_plusplus        
+#endif
+extern "C" {
+#endif
+
+
 #ifdef c_plusplus
 #define ARB_ARGS ...
 #else
@@ -42,7 +49,7 @@
 typedef int rle_fn( ARB_ARGS );
 
 struct rle_dispatch_tab {
-    const char   *magic;	/* magic type flags */
+    CONST_DECL char   *magic;	/* magic type flags */
     rle_fn *setup,			/* startup function */
 	   *skipBlankLines,
 	   *setColor,
@@ -79,19 +86,15 @@ extern struct rle_dispatch_tab rle_DTable[];
  * States for run detection
  */
 #define	DATA	0
-#define	RUN2	1
-#define RUN3	2
-#define	RUN4	3
+#define	RUN1	1
+#define RUN2	2
+#define	RUN3	3
+#define RUN4	4
+#define RUN5	5
+#define RUN6	6
+#define RUN7	7
 #define	INRUN	-1
 
+#ifdef __cplusplus
+}
 #endif
-
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * c-basic-offset: 4
- * indent-tabs-mode: t
- * End:
- * ex: shiftwidth=4 tabstop=8
- */

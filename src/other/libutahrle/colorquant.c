@@ -27,58 +27,94 @@
  * Copyright (C) 1989 Craig E. Kolb
  * $Id$
  *
-
+ * $Log$
+ * Revision 3.0.1.4  1992/04/30  14:06:48  spencer
+ * patch3: lint fixes.
+ *
+ * Revision 3.0.1.3  1991/02/06  16:46:47  spencer
+ * patch3: Fix round-off error in variance calculation that sometimes
+ * patch3: caused multiple boxes with the same center to be cut.
+ * patch3: Change 'fast' argument to 'flags' argument.  Currently:
+ * patch3: 	CQ_FAST: same as old fast argument
+ * patch3: 	CQ_QUANTIZE: data is not prequantized to bits
+ * patch3: 	CQ_NO_RGBMAP: don't build rgbmap.
+ *
+ * Revision 3.0.1.2  90/11/29  15:18:04  spencer
+ * Remove a typo.
+ * 
+ * 
+ * Revision 3.0.1.1  90/11/19  16:59:48  spencer
+ * Use inv_cmap instead of find_colors.
+ * Changes to process multiple files into one colormap (accum_hist arg).
+ * Delete 'otherimages' argument -- unnecessary with faster inv_cmap code.
+ * 
+ * 
+ * Revision 3.0  90/08/03  15:20:11  spencer
+ * Establish version 3.0 base.
+ * 
+ * Revision 1.6  90/07/29  08:06:06  spencer
+ * If HUGE isn't defined, make it HUGE_VAL (for ansi).
+ * 
+ * Revision 1.5  90/07/26  17:25:48  rgb
+ * Added a parameter to colorquant for rgbmap construction.
+ * 
+ * Revision 1.4  90/07/13  14:53:31  spencer
+ * Get rid of ARB_ARG sh*t.
+ * Change a couple of vars to double so that HUGE won't cause problems.
+ * 
+ * Revision 1.3  90/06/28  21:42:56  spencer
+ * Declare internal functions properly.
+ * Delete unused global variable.
+ * 
+ * Revision 1.2  90/06/28  13:18:56  spencer
+ * Make internal functions static.
+ * Build entire RGB cube, not just those colors used by this image.  This
+ * is so dithering will work.
+ * 
+ * Revision 1.1  90/06/18  20:45:17  spencer
+ * Initial revision
+ * 
+ * Revision 1.3  89/12/03  18:27:16  craig
+ * Removed bogus integer casts in distance calculation in makenearest().
+ * 
+ * Revision 1.2  89/12/03  18:13:12  craig
+ * FindCutpoint now returns FALSE if the given box cannot be cut.  This
+ * to avoid overflow problems in CutBox.
+ * "whichbox" in GreatestVariance() is now initialized to 0.
+ * 
  */
-#include "common.h"
+static char rcsid[] = "$Header$";
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
-#include "machine.h"
-#include "rle.h"
+#include <stdio.h>
+#include "rle_config.h"
+#include "colorquant.h"
 
 /* Ansi uses HUGE_VAL. */
 #ifndef HUGE
+#ifdef HUGE_VAL
 #define HUGE HUGE_VAL
+#else
+#define HUGE MAXFLOAT
+#endif
 #endif
 
-/*
- * Maximum number of colormap entries.  To make larger than 2^8, the rgbmap
- * type will have to be changed from unsigned chars to something larger.
- */
-#define MAXCOLORS		256
-
-typedef struct {
-	float		weightedvar,		/* weighted variance */
-			mean[3];		/* centroid */
-	unsigned long 	weight,			/* # of pixels in box */
-			freq[3][MAXCOLORS];	/* Projected frequencies */
-	int 		low[3], high[3];	/* Box extent */
-} Box;
-
-static void QuantHistogram(register unsigned char *r, register unsigned char *g, register unsigned char *b, Box *box);
-static void BoxStats(register Box *box);
-static void UpdateFrequencies(register Box *box1, register Box *box2);
-static void ComputeRGBMap(Box *boxes, int colors, unsigned char *rgbmap, int bits, unsigned char **colormap, int fast);
-static void SetRGBmap(int boxnum, Box *box, unsigned char *rgbmap, int bits);
+static void QuantHistogram();
+static void BoxStats();
+static void UpdateFrequencies();
+static void ComputeRGBMap();
+static void SetRGBmap();
 #ifdef slow_color_map
 static void find_colors();
 static int  getneighbors();
 static int  makenearest();
 #else
-extern void inv_cmap(int colors, unsigned char **colormap, int bits, long unsigned int *dist_buf, unsigned char *rgbmap);
+extern void inv_cmap();
 #endif
-static int  CutBoxes(Box *boxes, int colors);
-static int  CutBox(Box *box, Box *newbox);
-static int  GreatestVariance(Box *boxes, int n);
-static int  FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2);
+static int  CutBoxes();
+static int  CutBox();
+static int  GreatestVariance();
+static int  FindCutpoint();
 
 
 
@@ -107,6 +143,11 @@ static int  FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2);
  */
 
 /*
+ * Maximum number of colormap entries.  To make larger than 2^8, the rgbmap
+ * type will have to be changed from unsigned chars to something larger.
+ */
+#define MAXCOLORS		256
+/*
  * Value corrersponding to full intensity in colormap.  The values placed
  * in the colormap are scaled to be between zero and this number.  Note
  * that anything larger than 255 is going to lead to problems, as the
@@ -123,6 +164,14 @@ static int  FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2);
 #define BLUEI		2	
 #define TRUE		1
 #define FALSE		0
+
+typedef struct {
+	double		weightedvar;		/* weighted variance */
+	float		mean[3];		/* centroid */
+	unsigned long 	weight,			/* # of pixels in box */
+			freq[3][MAXCOLORS];	/* Projected frequencies */
+	int 		low[3], high[3];	/* Box extent */
+} Box;
 
 static unsigned long	*Histogram,		/* image histogram */
 			NPixels,		/* # of pixels in an image*/
@@ -160,12 +209,20 @@ static Box		*Boxes;			/* Array of color boxes. */
  *				the index which should be used into the colormap
  *				to represent the pixel.  In short:
  *				index = rgbmap[(((r << bits) | g) << bits) | b];
- * 	fast			If non-zero, the rgbmap will be constructed
- *				quickly.  If zero, the rgbmap will be built
- *				much slower, but more accurately.  In most
- *				cases, fast should be non-zero, as the error
- *				introduced by the approximation is usually
- *				small.  'Fast' is stored as an integer.
+ * 	flags			A set of bit-flags:
+ * 		CQ_FAST		If set, the rgbmap will be constructed
+ *				quickly.  If not set, the rgbmap will
+ *				be built more slowly, but more
+ *				accurately.  In most cases, fast
+ *				should be set, as the error introduced
+ *				by the approximation is usually small.
+ * 		CQ_QUANTIZE:	If set, the data in red, green, and
+ * 				blue is not pre-quantized, and will be
+ * 				quantized "on the fly".  This slows
+ * 				the routine slightly.  If not set, the
+ * 				data has been prequantized to 'bits'
+ * 				significant bits.
+ * 		
  *	accum_hist		If non-zero the histogram will accumulate and 
  *				reflect pixels from multiple images.
  *				when 1, the histogram will be initialized and
@@ -182,7 +239,13 @@ static Box		*Boxes;			/* Array of color boxes. */
 #define USE_HIST 2
 #define PROCESS_HIST 3
 int
-colorquant(unsigned char *red, unsigned char *green, unsigned char *blue, long unsigned int pixels, unsigned char **colormap, int colors, int bits, unsigned char *rgbmap, int fast, int accum_hist)
+colorquant(red,green,blue,pixels,colormap,colors,bits,rgbmap,flags,accum_hist)
+unsigned char *red, *green, *blue;
+unsigned long pixels;
+unsigned char *colormap[3];
+int colors, bits;
+unsigned char *rgbmap;
+int flags, accum_hist;
 {
     int	i,			/* Counter */
     OutColors,			/* # of entries computed */
@@ -205,16 +268,16 @@ colorquant(unsigned char *red, unsigned char *green, unsigned char *blue, long u
 	/*
 	 * Zero-out the projected frequency arrays of the largest box.
 	 */
-	bzero((char *)Boxes->freq[0], ColormaxI * sizeof(unsigned long));
-	bzero((char *)Boxes->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero((char *)Boxes->freq[2], ColormaxI * sizeof(unsigned long));
+	bzero(Boxes->freq[0], ColormaxI * sizeof(unsigned long));
+	bzero(Boxes->freq[1], ColormaxI * sizeof(unsigned long));
+	bzero(Boxes->freq[2], ColormaxI * sizeof(unsigned long));
 	SumPixels = 0;
     }
 
     SumPixels += NPixels;
 
     if ( accum_hist != PROCESS_HIST ) 
-	QuantHistogram(red, green, blue, &Boxes[0]);
+	QuantHistogram(red, green, blue, &Boxes[0], flags&CQ_QUANTIZE);
 
     if ( !accum_hist || accum_hist == PROCESS_HIST) {
 	OutColors = CutBoxes(Boxes, colors);
@@ -233,7 +296,9 @@ colorquant(unsigned char *red, unsigned char *green, unsigned char *blue, long u
 		(unsigned char)(Boxes[i].mean[BLUEI] * Cfactor + 0.5);
 	}
 
-	ComputeRGBMap(Boxes, OutColors, rgbmap, bits, colormap, fast);
+	if ( !(flags & CQ_NO_RGBMAP) )
+	    ComputeRGBMap(Boxes, OutColors, rgbmap, bits, colormap,
+			  flags&CQ_FAST);
 
 	free((char *)Histogram);
 	free((char *)Boxes);
@@ -247,9 +312,13 @@ colorquant(unsigned char *red, unsigned char *green, unsigned char *blue, long u
  * arrays for the first world-encompassing box.
  */
 static void
-QuantHistogram(register unsigned char *r, register unsigned char *g, register unsigned char *b, Box *box)
+QuantHistogram(r, g, b, box, quantize)
+register unsigned char *r, *g, *b;
+Box *box;
+int quantize;
 {
-	unsigned long *rf, *gf, *bf, i;
+	register unsigned long *rf, *gf, *bf;
+	unsigned long i;
 
 	rf = box->freq[0];
 	gf = box->freq[1];
@@ -260,20 +329,37 @@ QuantHistogram(register unsigned char *r, register unsigned char *g, register un
 	 * the first box at the same time to save a pass through the
 	 * entire image. 
 	 */
-
-	for (i = 0; i < NPixels; i++) {
+	
+	if ( !quantize )
+	    for (i = 0; i < NPixels; i++) {
 		rf[*r]++;
 		gf[*g]++;
 		bf[*b]++;
 		Histogram[((((*r++)<<Bits)|(*g++))<<Bits)|(*b++)]++;
+	    }
+	else
+	{
+	    unsigned char rr, gg, bb;
+	    for (i = 0; i < NPixels; i++) {
+		rr = (*r++)>>(8-Bits);
+		gg = (*g++)>>(8-Bits);
+		bb = (*b++)>>(8-Bits);
+		rf[rr]++;
+		gf[gg]++;
+		bf[bb]++;
+		Histogram[(((rr<<Bits)|gg)<<Bits)|bb]++;
+	    }
 	}
+	    
 }
 
 /*
  * Interatively cut the boxes.
  */
 static int
-CutBoxes(Box *boxes, int colors)
+CutBoxes(boxes, colors) 
+Box	*boxes;
+int	colors;
 {
 	int curbox;
 
@@ -298,7 +384,9 @@ CutBoxes(Box *boxes, int colors)
  * Restrict the search to those boxes with indices between 0 and n-1.
  */
 static int
-GreatestVariance(Box *boxes, int n)
+GreatestVariance(boxes, n)
+Box *boxes;
+int n;
 {
 	register int i, whichbox = 0;
 	float max;
@@ -317,11 +405,12 @@ GreatestVariance(Box *boxes, int n)
  * Compute mean and weighted variance of the given box.
  */
 static void
-BoxStats(register Box *box)
+BoxStats(box)
+register Box *box;
 {
 	register int i, color;
 	unsigned long *freq;
-	float mean, var;
+	double mean, var;
 
 	if(box->weight == 0) {
 		box->weightedvar = 0;
@@ -337,9 +426,9 @@ BoxStats(register Box *box)
 			mean += i * *freq;
 			var += i*i* *freq;
 		}
-		box->mean[color] = mean / (float)box->weight;
+		box->mean[color] = mean / (double)box->weight;
 		box->weightedvar += var - box->mean[color]*box->mean[color]*
-					(float)box->weight;
+					(double)box->weight;
 	}
 	box->weightedvar /= SumPixels;
 }
@@ -348,7 +437,8 @@ BoxStats(register Box *box)
  * Cut the given box.  Returns TRUE if the box could be cut, FALSE otherwise.
  */
 static int
-CutBox(Box *box, Box *newbox)
+CutBox(box, newbox)
+Box *box, *newbox;
 {
 	int i;
 	double totalvar[3];
@@ -400,7 +490,9 @@ CutBox(Box *box, Box *newbox)
  * in newbox1 and newbox2.
  */
 static int
-FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
+FindCutpoint(box, color, newbox1, newbox2)
+Box *box, *newbox1, *newbox2;
+int color;
 {
 	float u, v, max;
 	int i, maxindex, minindex, cutpoint;
@@ -451,15 +543,16 @@ FindCutpoint(Box *box, int color, Box *newbox1, Box *newbox2)
  * a single box.
  */
 static void
-UpdateFrequencies(register Box *box1, register Box *box2)
+UpdateFrequencies(box1, box2)
+register Box *box1, *box2;
 {
 	register unsigned long myfreq, *h;
 	register int b, g, r;
 	int roff;
 
-	bzero((char *)box1->freq[0], ColormaxI * sizeof(unsigned long));
-	bzero((char *)box1->freq[1], ColormaxI * sizeof(unsigned long));
-	bzero((char *)box1->freq[2], ColormaxI * sizeof(unsigned long)); 
+	bzero(box1->freq[0], ColormaxI * sizeof(unsigned long));
+	bzero(box1->freq[1], ColormaxI * sizeof(unsigned long));
+	bzero(box1->freq[2], ColormaxI * sizeof(unsigned long)); 
 
 	for (r = box1->low[0]; r < box1->high[0]; r++) {
 		roff = r << Bits;
@@ -484,7 +577,11 @@ UpdateFrequencies(register Box *box1, register Box *box2)
  * Compute RGB to colormap index map.
  */
 static void
-ComputeRGBMap(Box *boxes, int colors, unsigned char *rgbmap, int bits, unsigned char **colormap, int fast)
+ComputeRGBMap(boxes, colors, rgbmap, bits, colormap, fast)
+Box *boxes;
+int colors;
+unsigned char *rgbmap, *colormap[3];
+int bits, fast;
 {
 	register int i;
 
@@ -501,7 +598,7 @@ ComputeRGBMap(Box *boxes, int colors, unsigned char *rgbmap, int bits, unsigned 
 		 * pixel.
 		 */
 #ifdef slow_color_map
-		find_colors(boxes, colors, rgbmap, bits, colormap, 0);
+		find_colors(boxes, colors, rgbmap, bits, colormap, 1);
 #else
 		inv_cmap(colors, colormap, bits, Histogram, rgbmap);
 #endif
@@ -512,7 +609,11 @@ ComputeRGBMap(Box *boxes, int colors, unsigned char *rgbmap, int bits, unsigned 
  * each color in the box.
  */
 static void
-SetRGBmap(int boxnum, Box *box, unsigned char *rgbmap, int bits)
+SetRGBmap(boxnum, box, rgbmap, bits)
+int boxnum;
+Box *box;
+unsigned char *rgbmap;
+int bits;
 {
 	register int r, g, b;
 	

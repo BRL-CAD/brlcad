@@ -8,24 +8,8 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#include "common.h"
-
-
-
-#include <stdio.h>
-
-#include "machine.h"
-
-#ifdef HAVE_STRING_H
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-
 #include "rle.h"
-#include "rle_code.h"
 #include "rle_raw.h"
-
 
 /*****************************************************************
  * TAG( rle_rawtorow )
@@ -44,7 +28,11 @@
  * 	color, if one is given.
  */
 void    
-rle_rawtorow(rle_hdr *the_hdr, rle_op **raw, int *nraw, rle_pixel **outrows)
+rle_rawtorow(the_hdr, raw, nraw, outrows)
+rle_hdr * the_hdr;
+rle_op ** raw;
+int * nraw;
+rle_pixel ** outrows;
 {
     register int i, j;
     register rle_pixel * outptr;
@@ -73,7 +61,7 @@ rle_rawtorow(rle_hdr *the_hdr, rle_op **raw, int *nraw, rle_pixel **outrows)
 		switch (raw[chan][i].opcode)
 		{
 		case RByteDataOp:
-		    bcopy( raw[chan][i].u.pixels, outptr,
+		    bcopy( (char *)raw[chan][i].u.pixels, (char *)outptr,
 			   raw[chan][i].length );
 		    break;
 

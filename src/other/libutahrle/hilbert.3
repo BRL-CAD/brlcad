@@ -1,0 +1,61 @@
+.\" Copyright 1991, The Regents of the University of Michigan
+.TH HILBERT 3 3/12/91 3
+.UC 4
+.SH NAME
+hilbert_i2c, hilbert_c2i \- Compute points on a Hilbert curve.
+.SH SYNOPSIS
+.B
+void hilbert_i2c( dim, bits, idx, coords )
+.br
+.B
+int dim, bits;
+.br
+.B
+long int idx;
+.br
+.B
+int coords[];
+.sp
+.B
+void hilbert_c2i( dim, bits, coords, idx )
+.br
+.B
+int dim, bits;
+.br
+.B
+int coords[];
+.br
+.B
+long int *idx;
+.SH DESCRIPTION
+These procedures map the real line onto a Hilbert curve and vice
+versa.  (A Hilbert curve is a space filling curve similar to the Peano
+curve, except it is not closed.)  The procedure \fIhilbert_i2c\fP
+returns the coordinates of a point on the Hilbert curve, given an
+index value representing its sequential position on the curve.  The
+procedure \fIhilbert_c2i\fP reverses the process.  The arguments are:
+.TP
+.I dim
+The dimensionality of the Hilbert curve.  For the usual planar curve
+case, this would be 2.
+.TP
+.I bits
+The resolution to which the Hilbert curve will be computed.  The space
+is quantized to 2^\fIbits\fP values on each axis, so there are
+2^(3*\fIbits\fP) points on the curve.  The product of
+\fIdim\fP*\fIbits\fP should be less than or equal to the number of
+bits in a long integer (typically 32), and \fIbits\fP should be less
+than or equal to the number of bits in an integer.
+.TP
+.I idx
+The sequential position of the point along the curve (starting from
+0).  This is a 3*\fIbits\fP bit integer.
+.TP
+.I coords
+The spatial coordinates of the point on the curve.  The array should
+hold \fIdim\fP values.  Each is a \fIbits\fP bit integer.
+.SH REFERENCE
+A. R. Butz, "Alternative algorithm for Hilbert's space-filling
+curve," \fIIEEE Trans. Comput.\fP, vol C-20, pp. 424-426, Apr. 1971.
+.SH AUTHOR
+Spencer W. Thomas

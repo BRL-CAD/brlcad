@@ -28,20 +28,12 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 #ifndef lint
-static const char rcs_ident[] = "$Id$";
+static char rcs_ident[] = "$Id$";
 #endif
 
-#include "common.h"
-
-
-
 #include <stdio.h>
-
-#include "machine.h"
-
 #include "rle_put.h"
 #include "rle.h"
-#include "rle_code.h"
 #include "rle_raw.h"
 
 /*****************************************************************
@@ -65,7 +57,10 @@ static const char rcs_ident[] = "$Id$";
  *	[None]
  */
 void
-rle_putraw(rle_op **scanraw, int *nraw, rle_hdr *the_hdr)
+rle_putraw( scanraw, nraw, the_hdr )
+rle_op **scanraw;
+int *nraw;
+rle_hdr *the_hdr;
 {
     register int channel;
     int scan_x,
