@@ -180,15 +180,8 @@ top:
 			printf("Garbage record in database\n");
 			exit(42);
 		case ID_MEMB:
-			/* Zap rotation part, flip scale */
+			/* flip translation to other side */
 #define m rec.M.m_mat
-/*mat_pr("before", m); */
-			m[0] = 1; m[1] = 0; m[2] = 0;
-			m[4] = 0; m[5] = 1; m[6] = 0;
-			m[8] = 0; m[9] = 0; m[10] = 1;
-
-			/* m[15] we leave alone */
-/*mat_pr("after", m); */
 			m[3] *= factor;
 			m[7] *= factor;
 			m[11] *= factor;
