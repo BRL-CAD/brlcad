@@ -84,16 +84,37 @@ struct hitmiss *hl;
 	if (!(rt_g.NMG_debug & DEBUG_RT_ISECT))
 		return;
 
-	rt_log("nmg/ray hit list\n");
+	rt_log("nmg/ray hit list\n\tRay_hit_dist	(hitpoint)	struct type	state\n");
 
 	for (RT_LIST_FOR(a_hit, hitmiss, &(hl->l))) {
 		NMG_CK_HITMISS(a_hit);
-		rt_log("\tray_hit_distance %g   pt(%g %g %g) struct %s\n",
+		rt_log("\t%12g  (%g %g %g) %s ",
 			a_hit->hit.hit_dist,
 			a_hit->hit.hit_point[0],
 			a_hit->hit.hit_point[1],
 			a_hit->hit.hit_point[2],
 			rt_identify_magic(*(int*)a_hit->hit.hit_private) );
+
+		switch(a_hit->in_out) {
+		case HMG_HIT_IN_IN:
+			rt_log("IN_IN\n"); break;
+		case HMG_HIT_IN_OUT:
+			rt_log("IN_OUT\n"); break;
+		case HMG_HIT_OUT_IN:
+			rt_log("OUT_IN\n"); break;
+		case HMG_HIT_OUT_OUT:
+			rt_log("OUT_OUT\n"); break;
+		case HMG_HIT_IN_ON:
+			rt_log("IN_ON\n"); break;
+		case HMG_HIT_ON_IN:
+			rt_log("ON_IN\n"); break;
+		case HMG_HIT_OUT_ON:
+			rt_log("OUT_ON\n"); break;
+		case HMG_HIT_ON_OUT:
+			rt_log("ON_OUT\n"); break;
+		default:
+			rt_log("?_?\n"); break;
+		}
 	}
 }
 
@@ -495,16 +516,144 @@ struct edgeuse *eu_p;
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
 	RT_LIST_INSERT(&rd->rd_miss, &myhit->l); }
 
+
+
+/*
+ *	Compute the "ray state" before and after the ray encounters a
+ *	hit-point on an edge.
+ */
+static int
+edge_hit_ray_state(rd, eu)
+struct ray_data *rd;
+struct edgeuse *eu;
+{
+	double cos_angle;
+	double min_cos_angle = 2.0;
+	double max_cos_angle = -1.0;
+	struct faceuse *fu;
+	struct faceuse *min_fu;
+	struct faceuse *max_fu;
+	int in_out = 0;
+	struct edgeuse *eu_p;
+	vect_t edge_left;
+	vect_t norm;
+
+eu_p = RT_LIST_PNEXT_CIRC(edgeuse, eu);
+rt_log("edge_hit_ray_state(%g %g %g -> %g %g %g _vs_ %g %g %g)\n",
+	eu->vu_p->v_p->vg_p->coord[0],
+	eu->vu_p->v_p->vg_p->coord[1],
+	eu->vu_p->v_p->vg_p->coord[2],
+	eu_p->vu_p->v_p->vg_p->coord[0],
+	eu_p->vu_p->v_p->vg_p->coord[1],
+	eu_p->vu_p->v_p->vg_p->coord[2],
+	rd->rp->r_dir[0],
+	rd->rp->r_dir[1],
+	rd->rp->r_dir[2]);
+
+	eu_p = eu->e_p->eu_p;
+	do {
+		if (fu=nmg_find_fu_of_eu(eu_p)) {
+			if (fu->orientation == OT_OPPOSITE &&
+			    fu->fumate_p->orientation == OT_SAME)
+				fu = fu->fumate_p;
+
+			if (fu->orientation != OT_SAME) {
+				rt_log("%s[%d]: I can't seem to find an OT_SAME faceuse\n", __FILE__, __LINE__);
+				rt_bomb("I give up\n");
+			}
+
+			if (nmg_find_eu_leftvec(edge_left, eu_p)) {
+				rt_log("edgeuse not part of faceuse");
+				goto next_edgeuse;
+			}
+			cos_angle = VDOT(edge_left, rd->rp->r_dir);
+
+			rt_log("left_vect:(%g %g %g)  cos_angle:%g\n",
+				edge_left[0], edge_left[1], edge_left[2], cos_angle);
+
+			if (cos_angle < min_cos_angle) {
+				min_cos_angle = cos_angle;
+				min_fu = fu;
+				rt_log("New min cos_angle %g\n", min_cos_angle);
+			}
+			if (cos_angle > max_cos_angle) {
+				max_cos_angle = cos_angle;
+				max_fu = fu;
+				rt_log("New max cos_angle %g\n", max_cos_angle);
+			}
+		}
+next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
+	} while (eu_p != eu->e_p->eu_p);
+
+	/* min_fu is closest to ray on outbound side
+	 * max_fu is closest to ray on inbound side
+	 */
+
+	/* Compute the ray state on the inbound side */
+	NMG_GET_FU_NORMAL(norm, min_fu);
+	cos_angle = VDOT(norm, rd->rp->r_dir);
+VPRINT("\nmin face normal", norm);
+rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+
+	if (RT_VECT_ARE_PERP(cos_angle, rd->tol))
+		in_out |= NMG_RAY_STATE_ON << 4;
+	else if (cos_angle < 0.0)
+		in_out |= NMG_RAY_STATE_OUTSIDE << 4;
+	else /* (cos_angle > 0.0) */
+		in_out |= NMG_RAY_STATE_INSIDE << 4;
+
+
+	/* Compute the ray state on the outbound side */
+	NMG_GET_FU_NORMAL(norm, max_fu);
+	cos_angle = VDOT(norm, rd->rp->r_dir);
+
+	VPRINT("\nmax face normal", norm);
+	rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+
+	if (RT_VECT_ARE_PERP(cos_angle, rd->tol))
+		in_out |= NMG_RAY_STATE_ON;
+	else if (cos_angle > 0.0)
+		in_out |= NMG_RAY_STATE_OUTSIDE;
+	else /* (cos_angle < 0.0) */
+		in_out |= NMG_RAY_STATE_INSIDE;
+
+
+rt_log("in_out: 0x%02x/", in_out);
+	switch(in_out) {
+	case HMG_HIT_IN_IN:
+		rt_log("IN_IN\n"); break;
+	case HMG_HIT_IN_OUT:
+		rt_log("IN_OUT\n"); break;
+	case HMG_HIT_OUT_IN:
+		rt_log("OUT_IN\n"); break;
+	case HMG_HIT_OUT_OUT:
+		rt_log("OUT_OUT\n"); break;
+	case HMG_HIT_IN_ON:
+		rt_log("IN_ON\n"); break;
+	case HMG_HIT_ON_IN:
+		rt_log("ON_IN\n"); break;
+	case HMG_HIT_OUT_ON:
+		rt_log("OUT_ON\n"); break;
+	case HMG_HIT_ON_OUT:
+		rt_log("ON_OUT\n"); break;
+	default:
+		rt_log("?_?\n"); break;
+	}
+
+	return in_out;
+}
+
 /*
  *
  * record a hit on an edge.
  *
  */
 static void
-ray_hit_edge(rd, eu_p, dist_along_ray)
+ray_hit_edge(rd, eu_p, dist_along_ray, pt)
 struct ray_data *rd;
 struct edgeuse *eu_p;
 double dist_along_ray;
+point_t pt;
 {
 	struct hitmiss *myhit;
 	ray_miss_vertex(rd, eu_p->vu_p);
@@ -516,16 +665,12 @@ double dist_along_ray;
 	GET_HITMISS(myhit);
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
-
-	/* XXX Need to compute IN/OUT status for the ray wrt the faces about
-	 * the edge and fill in the in_out element in the hitmiss structure.
-	 */
-
 	/* build the hit structure */
 	myhit->hit.hit_dist = dist_along_ray;
-	VJOIN1(myhit->hit.hit_point, 
-		rd->rp->r_pt, dist_along_ray, rd->rp->r_dir);
+	VMOVE(myhit->hit.hit_point, pt)
 	myhit->hit.hit_private = (genptr_t) eu_p->e_p;
+
+	myhit->in_out = edge_hit_ray_state(rd, eu_p);
 
 	hit_ins(rd, myhit);
 	NMG_CK_HITMISS(myhit);
@@ -669,8 +814,15 @@ struct edgeuse *eu_p;
 		HIT_EDGE_VERTEX(rd, eu_p, eu_p->eumate_p->vu_p);
 		break;
 	case 3 : /* a hit on an edge */
-		ray_hit_edge(rd, eu_p, dist_along_ray);
-		break;
+		{
+			point_t pt;
+
+			VJOIN1(pt, rd->rp->r_pt, dist_along_ray, rd->rp->r_dir);
+
+			ray_hit_edge(rd, eu_p, dist_along_ray, pt);
+
+			break;
+		}
 	}
 }
 
@@ -755,7 +907,6 @@ struct fu_pt_info *fpi;
 	rd = (struct ray_data *)fpi->priv;
 	rd->face_subhit = 1;
 
-	plfu(fpi->fu_p, rd->rp->r_pt, fpi->pt);
 
 	rt_log("\tLooking for previous hit on edge 0x%08x ...\n",
 		eu->e_p);
@@ -780,19 +931,10 @@ struct fu_pt_info *fpi;
 	}
 
 	rt_log("\t No previous hit\n");
-	GET_HITMISS(myhit);
-	NMG_INDEX_ASSIGN(rd->hitmiss, eu->e_p, myhit);
-	rt_log("\tAssigning hit to edge 0x%08x\n", eu->e_p);
 
-	/* dist along ray */
-	myhit->hit.hit_dist = rd->ray_dist_to_plane;
+	plfu(fpi->fu_p, rd->rp->r_pt, fpi->pt);
 
-	VMOVE(myhit->hit.hit_point, fpi->pt);
-
-	myhit->hit.hit_private = eu->e_p;
-
-	hit_ins(rd, myhit);
-	NMG_CK_HITMISS(myhit);
+	ray_hit_edge(rd, eu, rd->ray_dist_to_plane, fpi->pt);
 }
 
 
@@ -833,6 +975,7 @@ struct faceuse *fu_p;
 	int			code;
 	plane_t			norm;
 	struct fu_pt_info	*fpi;
+	double			cos_angle;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("isect_ray_faceuse(0x%08x, faceuse:0x%08x/face:0x%08x)\n",
@@ -973,8 +1116,6 @@ struct faceuse *fu_p;
 			/* also rd->ray_dist_to_plane */
 			myhit->hit.hit_dist = dist; 
 
-
-
 			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 			RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		} else {
@@ -991,6 +1132,37 @@ struct faceuse *fu_p;
 			myhit->hit.hit_dist = dist; 
 
 			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+
+
+			/* compute what the ray-state is before and after this
+			 * encountering this hit point.
+			 */
+
+			cos_angle = VDOT(norm, rd->rp->r_dir);
+
+			if (fu_p->orientation == OT_OPPOSITE) {
+				if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
+					/* perpendicular? */
+					rt_log("%s[%d]: Ray is in plane of face?\n",
+						__FILE__, __LINE__);
+					rt_bomb("I quit\n");
+				} else if (cos_angle > 0.0)
+					myhit->in_out = HMG_HIT_IN_OUT;
+				else /* (cos_angle < 0.0) */
+					myhit->in_out = HMG_HIT_OUT_IN;
+
+			} else if (fu_p->orientation == OT_SAME) {
+				if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
+					/* perpendicular? */
+					rt_log("%s[%d]: Ray is in plane of face?\n",
+						__FILE__, __LINE__);
+					rt_bomb("I quit\n");
+				} else if (cos_angle > 0.0)
+					myhit->in_out = HMG_HIT_OUT_IN;
+				else
+					myhit->in_out = HMG_HIT_IN_OUT;
+			}
+
 
 			hit_ins(rd, myhit);
 			NMG_CK_HITMISS(myhit);
