@@ -135,6 +135,9 @@ extern "C" {
  *  This constant places an upper bound on the size object which
  *  can be represented in the model.
  */
+#ifdef INFINITY
+#	undef INFINITY
+#endif
 #if defined(vax) || (defined(sgi) && !defined(mips))
 #	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
 #else
