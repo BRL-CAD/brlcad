@@ -99,14 +99,23 @@ char	**argv;
 	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
 	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
 	int status = TCL_OK;
+	struct bu_vls tmp_vls;
+	struct bu_vls	cmd;
+
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
+	bu_vls_init(&tmp_vls);
+	bu_vls_init( &cmd );
+
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
-	else
+	else{
+	  bu_vls_free( &cmd );
+	  bu_vls_free(&tmp_vls);
 	  return TCL_OK;
+	}
 
 	/* find out which ascii table is desired */
 	if( strcmp(argv[0], "solids") == 0 ) {
@@ -185,36 +194,22 @@ char	**argv;
 		(void)unlink( "/tmp/mged_discr\0" );
 		(void)fprintf(tabptr,"\n\nNumber Solids = %d  Number Regions = %d\n",
 				numsol,numreg);
-		{
-		  struct bu_vls tmp_vls;
 
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "Processed %d Solids and %d Regions\n",
-				numsol,numreg);
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		}
+		bu_vls_printf(&tmp_vls, "Processed %d Solids and %d Regions\n",
+			      numsol,numreg);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 
 		(void)fclose( tabptr );
 	}
 
 	else {
-		struct bu_vls	cmd;
-
 		(void)fprintf(tabptr,"* 9999999\n* 9999999\n* 9999999\n* 9999999\n* 9999999\n");
 		(void)fclose( tabptr );
 
-		{
-		  struct bu_vls tmp_vls;
-
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "Processed %d Regions\n",numreg);
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		}
+		bu_vls_printf(&tmp_vls, "Processed %d Regions\n",numreg);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 
 		/* make ordered idents */
-		bu_vls_init( &cmd );
 		bu_vls_strcpy( &cmd, sortcmd );
 		bu_vls_strcat( &cmd, argv[1] );
 		Tcl_AppendResult(interp, bu_vls_addr(&cmd), "\n", (char *)NULL);
@@ -225,12 +220,13 @@ char	**argv;
 		bu_vls_strcat( &cmd, argv[1] );
 		Tcl_AppendResult(interp, bu_vls_addr(&cmd), "\n", (char *)NULL);
 		(void)system( bu_vls_addr(&cmd) );
-		bu_vls_free( &cmd );
 
 		(void)unlink( "/tmp/ord_id\0" );
 	}
 
 end:
+	bu_vls_free( &cmd );
+	bu_vls_free(&tmp_vls);
 	(void)signal( SIGINT, SIG_IGN );
 	return status;
 }
