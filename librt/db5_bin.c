@@ -119,7 +119,8 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	 */
 
 	RT_CK_DB_INTERNAL( ip );
-	ip->idb_type = ID_BINUNIF;
+	ip->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
+	ip->idb_minor_type = minor_type;
 	ip->idb_meth = &rt_functab[ID_BINUNIF];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_binunif_internal),
 	    "rt_binunif_internal");
@@ -277,9 +278,9 @@ rt_binunif_export5( struct bu_external		*ep,
 	unsigned short			*ssrcp;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != minor_type ) {
-		bu_log("ip->idb_type(%d) != minor_type(%d)\n",
-		       ip->idb_type, minor_type );
+	if( ip->idb_minor_type != minor_type ) {
+		bu_log("ip->idb_minor_type(%d) != minor_type(%d)\n",
+		       ip->idb_minor_type, minor_type );
 		return -1;
 	}
 	bip = (struct rt_binunif_internal *)ip->idb_ptr;
@@ -363,13 +364,11 @@ rt_binunif_describe( struct bu_vls		*str,
 	char					buf[256];
 	unsigned short				wid;
 
-	bu_made_it();
 	bip = (struct rt_binunif_internal *) ip->idb_ptr;
 	RT_CK_BINUNIF(bip);
 	rt_binunif_dump(bip);
 	bu_vls_strcat( str, "uniform-array binary object (BINUNIF)\n");
 	wid = (bip->type & DB5_MINORTYPE_BINU_WID_MASK) >> 4;
-	bu_made_it();
 	bu_log("bip->count is %d\n", bip->count);
 	switch (wid) {
 	    case 0:
@@ -381,9 +380,7 @@ rt_binunif_describe( struct bu_vls		*str,
 	    case 3:
 		sprintf( buf, "%ld quadruples of ", bip->count / 4 ); break;
 	}
-	bu_made_it();
 	bu_vls_strcat( str, buf );
-	bu_made_it();
 	switch (bip->type & DB5_MINORTYPE_BINU_ATM_MASK) {
 	    case DB5_MINORTYPE_BINU_FLOAT:
 		bu_vls_strcat( str, "floats\n"); break;
@@ -409,7 +406,6 @@ rt_binunif_describe( struct bu_vls		*str,
 		bu_log("%s:%d: This shouldn't happen", __FILE__, __LINE__);
 		return(1);
 	}
-	bu_made_it();
 	bu_log("str contains: '%s'\n", bu_vls_addr(str));
 
 	return(0);
@@ -418,7 +414,7 @@ rt_binunif_describe( struct bu_vls		*str,
 /*
  *			R T _ B I N U N I F _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ *  Free the storage associated with the rt_db_internal version of this thing.
  */
 void
 rt_binunif_ifree( struct rt_db_internal	*ip )
