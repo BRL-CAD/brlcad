@@ -738,7 +738,10 @@ CONST struct rt_tol	*tol;
 	NMG_CK_LOOPUSE(lu);
 
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-		return -1;
+	{
+		rt_log( "nmg_fu_planeeqn(): First loopuse does not contain edges\n" );
+		return(-1);
+	}
 	eu = RT_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
