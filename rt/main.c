@@ -256,8 +256,12 @@ char **argv;
 			exit(12);
 		}
 
-		/* If the fb is lots bigger (>= 2X), zoom up & center */
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		/* If fb came out smaller than requested, do less work */
+		if( fb_getwidth(fbp) < xx )  width = fb_getwidth(fbp);
+		if( fb_getheight(fbp) < yy )  height = fb_getheight(fbp);
+
+		/* If the fb is lots bigger (>= 2X), zoom up & center */
 		if( width > 0 && height > 0 )  {
 			zoom = fb_getwidth(fbp)/width;
 			if( fb_getheight(fbp)/height < zoom )
