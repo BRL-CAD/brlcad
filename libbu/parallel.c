@@ -446,8 +446,9 @@ DONE_NCPU:  ; /* allows debug and final validity check */
 	}
 #endif /* HAS_POSIX_THREADS */
 
-	if (bu_debug && BU_DEBUG_PARALLEL) {
-	      bu_log ("bu_avail_cpus: counted %d cpus.\n", ncpu);
+	if (bu_debug & BU_DEBUG_PARALLEL) {
+		/* do not use bu_log() here, this can get called before semaphores are initialized */
+		fprintf( stderr, "bu_avail_cpus: counted %d cpus.\n", ncpu);
 	}
 
 	if (ncpu > 0) {
