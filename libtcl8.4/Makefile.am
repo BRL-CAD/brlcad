@@ -16,4 +16,4 @@ libtcl8_4_la_LIBADD = $(libtcl8_4_la_SOURCES)
 libtcl8_4_la_LDFLAGS = -version-info 1
 
 tclsh_SOURCES = unix/tclAppInit.c
-tclsh_LDADD = libtcl.la -lm @DL@
+tclsh_LDADD = libtcl8.4.la -lm @DL@
