@@ -41,6 +41,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
+BU_EXTERN(void db_ck_tree, (CONST union tree *tp));
+
 /*
  *			D B _ D U P _ D B _ T R E E _ S T A T E
  *
@@ -640,6 +642,8 @@ CONST char		*cp;
 		/* Perhaps the root of the tree is the named leaf? */
 		if( (*tp)->tr_op == OP_DB_LEAF &&
 		    strcmp( cp, (*tp)->tr_l.tl_name ) == 0 )  {
+bu_log("db_free_tree from db_tree_del_dbleaf\n");
+db_ck_tree( *tp );
 		    	db_free_tree( *tp );
 		    	*tp = TREE_NULL;
 		    	return 0;
@@ -987,6 +991,7 @@ genptr_t	client_data;
 			*tmp = *tp;	/* struct copy */
 			*tp = *subtree;	/* struct copy */
 			bu_free( (char *)subtree, "subtree" );
+db_ck_tree(tmp);
 			db_free_tree( tmp );
 			RT_CK_TREE(tp);
 		} else {
@@ -1338,9 +1343,16 @@ CONST union tree	*tp;
  */
 void
 db_free_tree( tp )
-union tree	*tp;
+register union tree	*tp;
 {
 	RT_CK_TREE(tp);
+
+	/*
+	 *  Before recursion, smash the magic number, so that if
+	 *  another thread tries to free this same tree, they will fail.
+	 */
+	tp->magic = -3;		/* special bad flag */
+
 	switch( tp->tr_op )  {
 	case OP_NOP:
 		break;
@@ -1412,13 +1424,20 @@ union tree	*tp;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-		/* This node is known to be a binary op */
-		if( tp->tr_b.tb_left->magic == RT_TREE_MAGIC )
-			db_free_tree( tp->tr_b.tb_left );
-		tp->tr_b.tb_left = TREE_NULL;
-		if( tp->tr_b.tb_right->magic == RT_TREE_MAGIC )
-			db_free_tree( tp->tr_b.tb_right );
-		tp->tr_b.tb_right = TREE_NULL;
+		{
+			register union tree *fp;
+
+			/* This node is known to be a binary op */
+			fp = tp->tr_b.tb_left;
+			tp->tr_b.tb_left = TREE_NULL;
+			RT_CK_TREE(fp);
+			db_free_tree( fp );
+
+			fp = tp->tr_b.tb_right;
+			tp->tr_b.tb_right = TREE_NULL;
+			RT_CK_TREE(fp);
+			db_free_tree( fp );
+		}
 		break;
 
 	default:
@@ -2143,8 +2162,9 @@ genptr_t	client_data;
 
 	/* Clean up any remaining sub-trees still in reg_trees[] */
 	for( i=0; i < new_reg_count; i++ )  {
-		if( reg_trees[i] != TREE_NULL )
+		if( reg_trees[i] != TREE_NULL )  {
 			db_free_tree( reg_trees[i] );
+		}
 	}
 	bu_free( (char *)reg_trees, "*reg_trees[]" );
 
