@@ -6,7 +6,7 @@ proc help_comm {data args} {
 		if [info exists [subst $data]($cmd)] {
 		    return "Usage: $cmd [lindex [subst $[subst $data]($cmd)] 0]\n\t([lindex [subst $[subst $data]($cmd)] 1])"
 		} else {
-			return "Command not found: $cmd"
+			return "No help found for $cmd"
 		}
 	} else {
 		foreach cmd [lsort [array names [subst $data]]] {
