@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 
 #include "./debug.h"
 
@@ -924,7 +925,8 @@ CONST union tree	*tp;
 		return(new);
 
 	default:
-		rt_bomb("db_dup_subtree: bad op\n");
+		rt_log("db_dup_subtree: bad op %d\n", tp->tr_op);
+		rt_bomb("db_dup_subtree\n");
 	}
 	return( TREE_NULL );
 }
@@ -964,6 +966,22 @@ union tree	*tp;
 		tp->tr_c.tc_ctsp = (struct combined_tree_state *)0;
 		break;
 
+	case OP_NMG_TESS:
+		{
+			struct nmgregion *r = tp->tr_d.td_r;
+			struct model	*m;
+			if( r->l.magic == (-1L) )  {
+				rt_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n");
+			} else {
+				NMG_CK_REGION(r);
+				m = r->m_p;
+				NMG_CK_MODEL(m);
+				nmg_km(m);
+			}
+			tp->tr_d.td_r = (struct nmgregion *)NULL;
+		}
+		break;
+
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
@@ -983,7 +1001,8 @@ union tree	*tp;
 		break;
 
 	default:
-		rt_bomb("db_free_tree: bad op\n");
+		rt_log("db_free_tree: bad op %d\n", tp->tr_op);
+		rt_bomb("db_free_tree\n");
 	}
 	tp->tr_op = 0;		/* sanity */
 	rt_free( (char *)tp, "union tree" );
@@ -1127,7 +1146,8 @@ register int			count;
 		return(count);
 
 	default:
-		rt_bomb("db_count_subtree_regions: bad op\n");
+		rt_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
+		rt_bomb("db_count_subtree_regions\n");
 	}
 	return( 0 );
 }
@@ -1163,7 +1183,8 @@ CONST union tree	*tp;
 		return(1);
 
 	default:
-		rt_bomb("db_count_subtree_regions: bad op\n");
+		rt_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
+		rt_bomb("db_count_subtree_regions\n");
 	}
 	return( 0 );
 }
@@ -1214,7 +1235,8 @@ int		lim;
 		return(cur);
 
 	default:
-		rt_bomb("db_tally_subtree_regions: bad op\n");
+		rt_log("db_tally_subtree_regions: bad op %d\n", tp->tr_op);
+		rt_bomb("db_tally_subtree_regions\n");
 	}
 	return( cur );
 }
@@ -1332,7 +1354,8 @@ union tree		 *(*leaf_func)();
 		return;
 
 	default:
-		rt_bomb("db_walk_subtree: bad op\n");
+		rt_log("db_walk_subtree: bad op\n", tp->tr_op);
+		rt_bomb("db_walk_subtree\n");
 	}
 }
 
