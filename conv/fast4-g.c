@@ -1726,19 +1726,30 @@ struct shell * new_s;
 
 	nmg_edgeuse_tabulate( &list , &new_s->l.magic );
 
+	/* get rid of all the old edge geometry */
 	for( i=0 ; i<NMG_TBL_END( &list ) ; i++ )
 	{
-		struct edgeuse		*eu;
-		struct edge_g_lseg	*eg;
+		struct edgeuse	*eu;
 
 		eu = (struct edgeuse *)NMG_TBL_GET( &list , i );
 		NMG_CK_EDGEUSE( eu );
 
-		eg = eu->g.lseg_p;
-		NMG_CK_EDGE_G_LSEG( eg );
+		if( eu->g.magic_p )
+			nmg_keg( eu );
+	}
 
-		if( NMG_INDEX_TEST_AND_SET( flags , eg ) )
+	for( i=0 ; i<NMG_TBL_END( &list ) ; i++ )
+	{
+		struct edgeuse		*eu;
+
+		eu = (struct edgeuse *)NMG_TBL_GET( &list , i );
+		NMG_CK_EDGEUSE( eu );
+
+		if( NMG_INDEX_TEST_AND_SET( flags , eu ) )
+		{
 			nmg_edge_g( eu );
+			NMG_INDEX_SET( flags , eu->eumate_p );
+		}
 	}
 
 	rt_free( (char *)flags , "Recalc_edge_g: flags" );
