@@ -99,6 +99,7 @@ extern struct floatpixel	*prev_float_frame;
 
 /***** Photon Mapping Variables *****/
 extern	double		pmargs[9];
+extern	char		pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/

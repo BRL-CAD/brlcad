@@ -1497,15 +1497,9 @@ bu_log("mallocing curr_float_frame\n");
 		break;
 	case 7:
 		{
-		point_t	m1,m2;
+		struct	application	bakapp;
 
-                m1[0]= ap -> a_ray.r_pt[0];
-                m1[1]= ap -> a_ray.r_pt[1];
-                m1[2]= ap -> a_ray.r_pt[2];
-
-                m2[0]= ap -> a_ray.r_dir[0];
-                m2[1]= ap -> a_ray.r_dir[1];
-                m2[2]= ap -> a_ray.r_dir[2];
+		memcpy(&bakapp,ap,sizeof(struct application));
 
 		/* If user did not specify any light sources then create one */
 		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || BU_LIST_UNINITIALIZED(&(LightHead.l))) {
@@ -1516,18 +1510,11 @@ bu_log("mallocing curr_float_frame\n");
 
                 /* Build Photon Map */
 		PM_Activated= 1;
-		BuildPhotonMap(ap,eye_model,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5],(int)pmargs[6],(int)pmargs[7],pmargs[8]);
+		BuildPhotonMap(ap,eye_model,npsw,width,height,hypersample,(int)pmargs[0],pmargs[1],(int)pmargs[2],pmargs[3],(int)pmargs[4],(int)pmargs[5],(int)pmargs[6],(int)pmargs[7],pmargs[8],pmfile);
 
-                ap -> a_ray.r_pt[0]= m1[0];
-                ap -> a_ray.r_pt[1]= m1[1];
-                ap -> a_ray.r_pt[2]= m1[2];
-
-                ap -> a_ray.r_dir[0]= m2[0];
-                ap -> a_ray.r_dir[1]= m2[1];
-                ap -> a_ray.r_dir[2]= m2[2];
-
+		memcpy(ap,&bakapp,sizeof(struct application));
 		/* Set callback for ray hit */
-		ap -> a_hit = colorview;
+		ap -> a_hit= colorview;
 
 		}
 		break;

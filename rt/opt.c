@@ -85,6 +85,7 @@ int		transpose_grid = 0;     /* reverse the order of grid traversal */
 
 /***** Photon Mapping Variables *****/
 double		pmargs[9];
+char		pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
@@ -346,25 +347,28 @@ int get_args( int argc, register char **argv )
 				item= strtok(bu_optarg,",");
 				lightmodel= atoi(item);
 
-				if (lightmodel == 7) {				/* Process the photon mapping arguments */
+				if (lightmodel == 7) {					/* Process the photon mapping arguments */
 					item= strtok(NULL,",");
- 					pmargs[0]= item ? atoi(item) : 16384;	/* Number of Global Photons */
+ 					pmargs[0]= item ? atoi(item) : 16384;		/* Number of Global Photons */
 					item= strtok(NULL,",");
-					pmargs[1]= item ? atof(item) : 50;	/* Percent of Global Photons that should be used for Caustic Photons */
+					pmargs[1]= item ? atof(item) : 50;		/* Percent of Global Photons that should be used for Caustic Photons */
 					item= strtok(NULL,",");
-					pmargs[2]= item ? atoi(item) : 10;	/* Number of Irradiance Sample Rays, Total Rays is this number squared */
+					pmargs[2]= item ? atoi(item) : 10;		/* Number of Irradiance Sample Rays, Total Rays is this number squared */
 					item= strtok(NULL,",");
-					pmargs[3]= item ? atof(item) : 60.0;	/* Angular Tolerance */
+					pmargs[3]= item ? atof(item) : 60.0;		/* Angular Tolerance */
 					item= strtok(NULL,",");
-					pmargs[4]= item ? atoi(item) : 0;	/* Random Seed */
+					pmargs[4]= item ? atoi(item) : 0;		/* Random Seed */
 					item= strtok(NULL,",");
-					pmargs[5]= item ? atoi(item) : 0;	/* Importance Mapping */
+					pmargs[5]= item ? atoi(item) : 0;		/* Importance Mapping */
 					item= strtok(NULL,",");
-					pmargs[6]= item ? atoi(item) : 0;	/* Irradiance Hypersampling */
+					pmargs[6]= item ? atoi(item) : 0;		/* Irradiance Hypersampling */
 					item= strtok(NULL,",");
-					pmargs[7]= item ? atoi(item) : 0;	/* Visualize Irradiance */
+					pmargs[7]= item ? atoi(item) : 0;		/* Visualize Irradiance */
 					item= strtok(NULL,",");
-					pmargs[8]= item ? atof(item) : 1.0;	/* Light Intensity */
+					pmargs[8]= item ? atof(item) : 1.0;		/* Scale Lumens */
+					item= strtok(NULL,",");
+					if (item) { strcpy(pmfile,item); } else { pmfile[0]= 0; }
+/*					item ? strcpy(pmfile,item) : pmfile[0]= 0;*/	/* Scale Lumens */
 				}
 			}
 			break;

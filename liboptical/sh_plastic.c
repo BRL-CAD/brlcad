@@ -480,16 +480,15 @@ if (!PM_Visualize) {
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
-PM_Intensity= 1.0;
 			/* Get Obj Hit Point For Attenuation */
                         if (pp && PM_Activated) {
 				VJOIN1(pt, ap -> a_ray.r_pt, pp -> pt_inhit -> hit_dist, ap -> a_ray.r_dir)
 				dist= sqrt((pt[0]-lp -> lt_pos[0])*(pt[0]-lp -> lt_pos[0]) + (pt[1]-lp -> lt_pos[1])*(pt[1]-lp -> lt_pos[1]) + (pt[2]-lp -> lt_pos[2])*(pt[2]-lp -> lt_pos[2]))/1000.0;
-				dist= PM_Intensity * (1.0/(0.1 + 0.5*dist + 3.0*dist*dist));
-				refl= dist * ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp -> lt_intensity;
+				dist= (1.0/(0.1 + 1.0*dist + 0.01*dist*dist));
+				refl= dist * ps -> wgt_diffuse * cosine * swp -> sw_lightfract[i] * lp -> lt_intensity;
 /*				bu_log("pt: [%.3f][%.3f,%.3f,%.3f]\n",dist,pt[0],pt[1],pt[2]);*/
                         } else {
-				refl= ps->wgt_diffuse * swp->sw_lightfract[i] * cosine * lp-> lt_fraction;
+				refl= ps -> wgt_diffuse * swp -> sw_lightfract[i] * cosine * lp -> lt_fraction;
 			}
 
 #if RT_MULTISPECTRAL
