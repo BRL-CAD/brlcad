@@ -1,0 +1,35 @@
+/*
+ *			db/Cakefile
+ *
+XXXXX -- wrong
+ *  This Cakefile is for the master source machine.
+ *  The function is take the existing .g files, and
+ *  create updated .asc files as required.
+XXXXX
+ *  This Cakefile is for a recipient machine.
+ *  The function is to take the distributed .asc files, and
+ *  create the local binary form in .g files
+ */
+
+#define SRCDIR	db
+#define PRODUCTS	bldg391.g crod.g demo.g \
+	ktank.g moss.g prim.g \
+	star.g truck.g world.g cube.g axis.g
+
+#define	SRCSUFF	.asc
+#define MANSECTION	9
+
+#include "../Cakefile.defs"
+
+/* Prevent actual installation */
+#undef BINDIR
+#define BINDIR	/tmp
+#define AFTERINSTALL	rm
+
+/* Default rule */
+everything&::	PRODUCTS
+
+%.g:	../SRCDIR/%.asc			if exist ../SRCDIR/%.asc
+	asc2g < ../SRCDIR/%.asc > %.g
+
+#include "../Cakefile.rules"

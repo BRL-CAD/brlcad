@@ -1,0 +1,241 @@
+/*
+ *			util/Cakefile
+ */
+
+#define SRCDIR	util
+#define PRODUCTS	fbanim loop pix-fb fb-pix \
+		pixbustup pixdiff pixinterp2x pixtile pixuntile \
+		pp-fb fbclear fbgrid \
+		rle-fb fb-rle rle-pix pix-rle \
+		fbcmap fb-cmap cmap-fb fbgamma \
+		fbscanplot fbzoom fbpoint fblabel fbline\
+		pl-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
+		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-impress \
+		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
+		gencolor pix-bw pix-bw3 pixfilter pixhist \
+		pixhist3d pixhist3d-pl \
+		pixrect pixrot pixscale pixstat fbcbars \
+		sun-pix mac-pix pixmerge op-bw \
+		pl-sgi pldebug plgetframe plrot \
+		dunncolor dunnsnap urt-fb
+
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+asc2g:	asc2g.o
+	CC CFLAGS asc2g.o -o asc2g
+
+
+dunncolor:	dunncolor.o dunncomm.o
+	CC LDFLAGS -o dunncolor dunncolor.o dunncomm.o LIBES
+
+dunnsnap:	dunnsnap.o dunncomm.o
+	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIBES
+
+fbanim:		fbanim.o LIBFB
+	CC LDFLAGS -o fbanim fbanim.o LIBFB LIBES
+
+pl-fb:		pl-fb.o LIBFB
+	CC LDFLAGS -o pl-fb pl-fb.o LIBFB LIBPLOT LIBES
+
+loop:		loop.o
+	CC LDFLAGS -o loop loop.o LIBES
+
+mac-pix:	mac-pix.o
+	CC LDFLAGS -o mac-pix mac-pix.o LIBES
+
+sun-pix:	sun-pix.o
+	CC LDFLAGS -o sun-pix sun-pix.o LIBES
+
+pixmerge:	pixmerge.o
+	CC LDFLAGS -o pixmerge pixmerge.o LIBES
+
+fbcbars:	fbcbars.o
+	CC LDFLAGS -o fbcbars fbcbars.o LIBFB LIBES
+
+pix-fb:		pix-fb.o LIBFB
+	CC LDFLAGS -o pix-fb pix-fb.o LIBFB LIBES
+
+fb-pix:		fb-pix.o LIBFB
+	CC LDFLAGS -o fb-pix fb-pix.o LIBFB LIBES
+
+pixbustup:	pixbustup.o
+	CC LDFLAGS -o pixbustup pixbustup.o LIBES
+
+pixdiff:	pixdiff.o
+	CC LDFLAGS -o pixdiff pixdiff.o LIBES
+
+pixinterp2x:	pixinterp2x.o
+	CC LDFLAGS -o pixinterp2x pixinterp2x.o LIBES
+
+pixtile:	pixtile.o
+	CC LDFLAGS -o pixtile pixtile.o LIBES
+
+pixuntile:	pixuntile.o
+	CC LDFLAGS -o pixuntile pixuntile.o LIBES
+
+pp-fb:		pp-fb.o LIBFB
+	CC LDFLAGS -o pp-fb pp-fb.o LIBFB LIBTERMIO LIBES
+
+fbclear:	fbclear.o LIBFB
+	CC LDFLAGS -o fbclear fbclear.o LIBFB LIBES
+
+fbgrid:		fbgrid.o LIBFB
+	CC LDFLAGS -o fbgrid fbgrid.o LIBFB LIBES
+
+rle-fb:		rle-fb.o LIBFB
+	CC LDFLAGS -o rle-fb rle-fb.o LIBFB LIBRLE LIBES
+
+fb-rle:		fb-rle.o LIBFB
+	CC LDFLAGS -o fb-rle fb-rle.o LIBFB LIBRLE LIBES
+
+rle-pix:	rle-pix.o
+	CC LDFLAGS -o rle-pix rle-pix.o LIBRLE LIBES
+
+pix-rle:	pix-rle.o
+	CC LDFLAGS -o pix-rle pix-rle.o LIBRLE LIBES
+
+fbcmap:		fbcmap.o LIBFB
+	CC LDFLAGS -o fbcmap fbcmap.o LIBFB LIBES
+
+fb-cmap:	fb-cmap.o LIBFB
+	CC LDFLAGS -o fb-cmap fb-cmap.o LIBFB LIBES
+
+cmap-fb:	cmap-fb.o LIBFB
+	CC LDFLAGS -o cmap-fb cmap-fb.o LIBFB LIBES
+
+fbgamma:	fbgamma.o LIBFB
+	CC LDFLAGS -o fbgamma fbgamma.o LIBFB LIBES
+
+fbscanplot:	fbscanplot.o LIBFB
+	CC LDFLAGS -o fbscanplot fbscanplot.o LIBFB LIBES
+
+fbzoom:		fbzoom.o LIBFB
+	CC LDFLAGS -o fbzoom fbzoom.o LIBFB LIBTERMIO LIBES 
+
+fbpoint:	fbpoint.o LIBFB
+	CC LDFLAGS -o fbpoint fbpoint.o LIBFB LIBTERMIO LIBES 
+
+fblabel:	fblabel.o LIBFB
+	CC LDFLAGS -o fblabel fblabel.o LIBFB LIBES 
+
+fbline:		fbline.o LIBFB
+	CC LDFLAGS -o fbline fbline.o LIBFB LIBES 
+
+fbcolor:	fbcolor.o LIBFB
+	CC LDFLAGS -o fbcolor fbcolor.o LIBFB LIBTERMIO LIBES 
+
+ap-pix:		ap-pix.o
+	CC LDFLAGS -o ap-pix ap-pix.o LIBES
+
+fbcmrot:	fbcmrot.o LIBFB
+	CC LDFLAGS -o fbcmrot fbcmrot.o LIBFB LIBES
+
+pixbackgnd:	pixbackgnd.o
+	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
+
+fbframe:	fbframe.o LIBFB
+	CC LDFLAGS -o fbframe fbframe.o LIBFB LIBES
+
+bw-fb:		bw-fb.o LIBFB
+	CC LDFLAGS -o bw-fb bw-fb.o LIBFB LIBES
+
+bw-impress:	bw-impress.o
+	CC LDFLAGS -o bw-impress bw-impress.o LIBES
+
+bw-pix:		bw-pix.o
+	CC LDFLAGS -o bw-pix bw-pix.o LIBES
+
+bw3-pix:	bw3-pix.o
+	CC LDFLAGS -o bw3-pix bw3-pix.o LIBES
+
+bwcrop:		bwcrop.o
+	CC LDFLAGS -o bwcrop bwcrop.o LIBES
+
+bwdiff:		bwdiff.o
+	CC LDFLAGS -o bwdiff bwdiff.o LIBES
+
+bwfilter:	bwfilter.o
+	CC LDFLAGS -o bwfilter bwfilter.o LIBES
+
+bwhist:		bwhist.o LIBFB
+	CC LDFLAGS -o bwhist bwhist.o LIBFB LIBES
+
+bwhisteq:	bwhisteq.o
+	CC LDFLAGS -o bwhisteq bwhisteq.o LIBES
+
+bwmod:		bwmod.o
+	CC LDFLAGS -o bwmod bwmod.o LIBES
+
+bwrect:		bwrect.o
+	CC LDFLAGS -o bwrect bwrect.o LIBES
+
+bwrot:		bwrot.o
+	CC LDFLAGS -o bwrot bwrot.o LIBES
+
+bwscale:	bwscale.o
+	CC LDFLAGS -o bwscale bwscale.o LIBES
+
+bwstat:		bwstat.o
+	CC LDFLAGS -o bwstat bwstat.o LIBES
+
+fb-bw:		fb-bw.o LIBFB
+	CC LDFLAGS -o fb-bw fb-bw.o LIBFB LIBES
+
+gencolor:	gencolor.o
+	CC LDFLAGS -o gencolor gencolor.o LIBES
+
+pix-bw:		pix-bw.o
+	CC LDFLAGS -o pix-bw pix-bw.o LIBES
+
+pix-bw3:	pix-bw3.o
+	CC LDFLAGS -o pix-bw3 pix-bw3.o LIBES
+
+pixfilter:	pixfilter.o
+	CC LDFLAGS -o pixfilter pixfilter.o LIBES
+
+pixhist:	pixhist.o LIBFB
+	CC LDFLAGS -o pixhist pixhist.o LIBFB LIBES
+
+pixhist3d:	pixhist3d.o LIBFB
+	CC LDFLAGS -o pixhist3d pixhist3d.o LIBFB LIBES
+
+pixrect:	pixrect.o
+	CC LDFLAGS -o pixrect pixrect.o LIBES
+
+pixrot:		pixrot.o
+	CC LDFLAGS -o pixrot pixrot.o LIBES
+
+pixscale:	pixscale.o
+	CC LDFLAGS -o pixscale pixscale.o LIBES
+
+pixstat:	pixstat.o
+	CC LDFLAGS -o pixstat pixstat.o LIBES
+
+pixhist3d-pl:	pixhist3d-pl.o
+	CC LDFLAGS -o pixhist3d-pl pixhist3d-pl.o LIBPLOT LIBES
+
+pl-sgi:		pl-sgi.o
+	CC LDFLAGS -o pl-sgi pl-sgi.o LIBPLOT LIBFB LIBES
+
+pldebug:	pldebug.o
+	CC LDFLAGS -o pldebug pldebug.o LIBPLOT LIBES
+
+plgetframe:	plgetframe.o
+	CC LDFLAGS -o plgetframe plgetframe.o LIBPLOT LIBES
+
+plrot:		plrot.o
+	CC LDFLAGS -o plrot plrot.o LIBPLOT LIBES
+
+op-bw:		op-bw.o
+	CC LDFLAGS -o op-bw op-bw.o LIBES
+
+urt-fb:		urt-fb.o LIBURT LIBFB
+	CC LDFLAGS -o urt-fb urt-fb.o LIBURT LIBFB LIBES
+
+#include "../Cakefile.rules"

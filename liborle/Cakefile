@@ -1,0 +1,14 @@
+/*
+ *			librle/Cakefile
+ */
+
+#define PRODUCTS	librle.ARCH_SUF
+#define SRCDIR	librle
+#define FILES	rle
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"

@@ -1,0 +1,20 @@
+/*
+ *			vdeck/Cakefile
+ */
+
+#define SRCDIR	vdeck
+#define PRODUCTS	vdeck
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	vdeck cgarbs match parsarg vproc vglobal vsort
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+vdeck:	OBJ
+	CC LDFLAGS -o vdeck OBJ LIBSYSV LIBES
+
+#include "../Cakefile.rules"

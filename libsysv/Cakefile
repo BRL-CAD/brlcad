@@ -1,0 +1,13 @@
+/*
+ *			libsysv/Cakefile
+ */
+#define PRODUCTS	libsysv.ARCH_SUF
+#define SRCDIR	libsysv
+#define FILES	getopt
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"

@@ -1,0 +1,50 @@
+/*
+ *			librt/Cakefile
+ */
+#define SRCDIR	librt
+#define PRODUCTS	librt.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+/* Separate into orderly groupings:
+ *	headers
+ *	Geometry routines
+ *	Database handling
+ *	Utility routines
+ *	Raytrace logic
+ */
+/* 	complex debug plane polyno */
+#define FILES	\
+	arb ars ell half rec sph spline tgc \
+	torus pg \
+	dir tree \
+	anim complex mat mater polylib roots \
+	machine LIBRT_TIMER error storage  \
+	cut bool shoot spm
+
+#define SPL_OBJ	\
+	bound_spl.o calc_oslo.o diff_spl.o knot.o map_oslo.o new_spl.o \
+	pr_spl.o refine_spl.o solve.o spl_eval.o spl_flat.o spl_poly.o \
+	split_spl.o
+
+#define PLOT_OBJ	plot3.o htond.o
+
+#ifdef FAST_SQRT
+#	define	EXTRA_OBJ	FAST_SQRT PLOT_OBJ SPL_OBJ
+#else
+#	define	EXTRA_OBJ	PLOT_OBJ SPL_OBJ
+#endif
+
+#include "../Cakefile.lib"
+
+/*
+ *  Special rules for additions from other directories
+ */
+%.o&:	libplot3,,%,o			if exist ../libplot3/%.c
+
+%.o:	../libspl/%.c			if exist ../libspl.MTYPE/%.o
+	cp ../libspl.MTYPE/%.o %.o
+
+#include "../Cakefile.rules"

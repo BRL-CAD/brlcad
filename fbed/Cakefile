@@ -1,0 +1,26 @@
+/*
+ *			fbed/Cakefile
+ */
+#define CONFIGDEFS	-D_LOCAL_=static
+
+#define SRCDIR	fbed
+#define PRODUCTS	fbed
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	fbed char sgi_dep \
+		empty execshell getfont \
+		getinput glob fill_buf \
+		pos_pad prnt \
+		squash try
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+fbed:	OBJ
+	CC LDFLAGS -o fbed OBJ LIBFB LIBTERMIO LIBCURSOR \
+		LIBTERMLIB LIBSYSV LIBES
+
+#include "../Cakefile.rules"

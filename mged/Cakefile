@@ -1,0 +1,50 @@
+/*
+ *			mged/Cakefile
+ */
+#define	CONFIGDEFS	MGED_CONFIG
+
+#define SRCDIR	mged
+#define PRODUCTS	mged
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define	SHFILES	newvers.sh newvers5.sh newversVLD.sh
+
+#define FILES	ged dodraw dozoom titles \
+			usepen dir columns path mover tedit \
+			cmd chgview chgmodel chgtree \
+			rtif anal typein \
+			buttons clip menu adc edsol edarb \
+			ars proc_reg memalloc \
+			spline mater plot overlay inside \
+			utility1 utility2 track arbs \
+			facedef arb ell half tgc torus \
+			attach dm-tek dm-plot \
+			dm-tek4109 MGED_OBJS
+
+#include "../Cakefile.defs"
+
+#ifndef MGED_OBJS
+#	define	MGED_OBJS	/**/
+#endif
+
+#ifndef MGED_CONFIG
+#	define	MGED_CONFIG	/**/
+#endif
+
+#ifndef MGED_LIBES
+#	define	MGED_LIBES	/**/
+#endif
+
+#ifndef RT_CONFIG
+#	define	RT_CONFIG	/**/
+#endif
+
+#include "../Cakefile.prog"
+
+mged:	OBJ
+	sh ../SRCDIR/MGED_VERS
+	CC -c vers.c
+	CC -o mged CFLAGS OBJ MGED_LIBES LIBRT RT_CONFIG LIBMALLOC LIBES vers.o
+
+#include "../Cakefile.rules"

@@ -1,0 +1,13 @@
+/*
+ *			libwdb/Cakefile
+ */
+#define PRODUCTS	libwdb.ARCH_SUF
+#define SRCDIR	libwdb
+#define FILES	wdb reg spl
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"

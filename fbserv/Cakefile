@@ -1,0 +1,23 @@
+/*
+ *			rfbd/Cakefile
+ */
+#ifdef RFBD_CONFIG
+#	define CONFIGDEFS	RFBD_CONFIG
+#endif
+
+#define SRCDIR	rfbd
+#define PRODUCTS	rfbd
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	rfbd
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+rfbd:	OBJ
+	CC LDFLAGS -o rfbd OBJ LIBFB LIBES
+
+#include "../Cakefile.rules"
