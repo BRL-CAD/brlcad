@@ -267,12 +267,14 @@ XEvent *eventPtr;
     case AMM_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct ogl_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
-		       dm_X2Normal(dmp, mx, 0) * 2047.0, dm_Y2Normal(dmp, my) * 2047.0 );
+		       (int)(dm_X2Normal(dmp, mx, 0) * 2047.0),
+		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
       else if(OgldoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	bu_vls_printf( &cmd, "M 0 %d %d\n",
-		       dm_X2Normal(dmp, mx, 1) * 2047.0, dm_Y2Normal(dmp, my) * 2047.0 );
+		       (int)(dm_X2Normal(dmp, mx, 1) * 2047.0),
+		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
       else /* not doing motion */
 	goto end;
 
