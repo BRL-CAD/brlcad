@@ -21,13 +21,15 @@
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
+	echo CAKEFLAGS
 	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE CAKEFLAGS
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
 	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER\"; \
+		\A\F\T\E\R\_\M\A\K\E=\"AFTER_MAKE\"; \
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
-		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
+		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \A\F\T\E\R\_\M\A\K\E; \
 		 ../SRCDIR/"unix"/configure TCL_OPTS; \
 		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
@@ -36,10 +38,10 @@ clean&:
 	make -f Makefile clean
 
 noprod&:
-	rm -rf *.so *.a
+	rm -rf libtcl.*
 
 clobber&: 
-	rm -f *.MTYPE *.o *.a config.log config.status tclConfig.sh tclsh Makefile
+	rm -f *.MTYPE *.o libtcl.* config.log config.status tclConfig.sh tclsh Makefile
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
