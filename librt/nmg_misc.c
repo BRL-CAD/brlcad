@@ -48,13 +48,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 RT_EXTERN( struct edgeuse *nmg_find_e, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edge *e ) );
 
 int
-nmg_loop_is_convex( lu, tol )
-struct loopuse *lu;
-struct rt_tol *tol;
-{
-}
-
-int
 nmg_snurb_calc_lu_uv_orient( lu )
 struct loopuse *lu;
 {
@@ -10666,7 +10659,7 @@ CONST struct rt_tol *tol;
 						rt_log( "write_shell_as_polysolid: triangulating fu x%x\n", fu );
 					nmg_triangulate_fu( fu, tol );
 				}
-				else if( !nmg_loop_is_convex( lu, tol ) )
+				else if( !nmg_lu_is_convex( lu, tol ) )
 				{
 					if( rt_g.NMG_debug & DEBUG_BASIC )
 						rt_log( "write_shell_as_polysolid: triangulating non-convex fu x%x\n", fu );
