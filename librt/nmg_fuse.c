@@ -1109,6 +1109,14 @@ struct nmg_radial	*rad;
 
 /*
  *			N M G _ R A D I A L _ B U I L D _ L I S T
+ *
+ *  The coordinate system is expected to have been chosen in such a
+ *  way that the radial list of faces around this edge are circularly
+ *  increasing (CCW) in their angle.  Put them in the list in exactly
+ *  the order they occur around the edge.  Then, at the end, move the
+ *  list head to lie between the maximum and minimum angles, so that the
+ *  list head is crossed as the angle goes around through zero.
+ *  Now the list is monotone increasing.
  */
 void
 nmg_radial_build_list( hd, shell_tbl, existing, eu, xvec, yvec, zvec, tol )
@@ -1124,11 +1132,18 @@ CONST struct rt_tol	*tol;		/* for printing */
 	fastf_t			angle;
 	struct edgeuse		*teu;
 	struct nmg_radial	*rad;
+	fastf_t			amin;
+	fastf_t			amax;
+	struct nmg_radial	*rmin = (struct nmg_radial *)NULL;
+	struct nmg_radial	*rmax = (struct nmg_radial *)NULL;
 
 	RT_CK_LIST_HEAD(hd);
 	NMG_CK_PTBL(shell_tbl);
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
+
+	amin = 64;
+	amax = -64;
 
 	teu = eu;
 	for(;;)  {
@@ -1142,14 +1157,58 @@ CONST struct rt_tol	*tol;		/* for printing */
 		rad->existing_flag = existing;
 		rad->needs_flip = 0;	/* not yet determined */
 		rad->is_crack = 0;	/* not yet determined */
-		nmg_radial_sorted_list_insert( hd, rad );
 
-		/* Build list of all shells involved at this edge */
+		if( rad->ang < amin )  {
+			amin = rad->ang;
+			rmin = rad;
+		}
+		if( rad->ang > amax )  {
+			amax = rad->ang;
+			rmax = rad;
+		}
+
+		/* Just append.  Should already be properly sorted. */
+		RT_LIST_INSERT( hd, &(rad->l) );
+
+		/* Add to list of all shells involved at this edge */
 		nmg_tbl( shell_tbl, TBL_INS_UNIQUE, &(rad->s->l.magic) );
 
 		/* Advance to next edgeuse pair */
 		teu = teu->radial_p->eumate_p;
 		if( teu == eu )  break;
+	}
+
+	/* Increasing, with min or max value repeated */
+#if 0
+rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x\n",
+rmin->ang * rt_radtodeg, rmin->eu,
+rmax->ang * rt_radtodeg, rmax->eu );
+#endif
+	while( RT_LIST_PNEXT_CIRC(nmg_radial, rmax)->ang >= amax )
+		rmax = RT_LIST_PNEXT_CIRC(nmg_radial, rmax);
+	while( RT_LIST_PPREV_CIRC(nmg_radial, rmin)->ang <= amin )
+		rmin = RT_LIST_PPREV_CIRC(nmg_radial, rmin);
+
+	/* Move list head so that it is inbetween min and max entries. */
+	if( RT_LIST_PNEXT_CIRC(nmg_radial, rmax) == rmin )  {
+		/* Maximum entry is followed by minimum.  Ascending --> CCW */
+		RT_LIST_DEQUEUE( hd );
+		/* Append head after maximum, before minimum */
+		RT_LIST_APPEND( &(rmax->l), hd );
+		/* Verify monotone increasing */
+		for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
+			if( rad->ang < amin )  {
+				nmg_pr_radial_list( hd, tol );
+				rt_bomb("nmg_radial_build_list() not monotone increasing\n");
+			}
+			amin = rad->ang;
+		}
+	} else {
+		rt_log("amin=%g min_eu=x%x, amax=%g max_eu=x%x B\n",
+			rmin->ang * rt_radtodeg, rmin->eu,
+			rmax->ang * rt_radtodeg, rmax->eu );
+		nmg_pr_radial_list( hd, tol );
+		rt_bomb("nmg_radial_build_list() min and max angle not adjacent in list\n");
 	}
 }
 
