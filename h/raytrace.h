@@ -158,7 +158,8 @@ struct rt_external  {
 	genptr_t ext_buf;
 };
 #define RT_EXTERNAL_MAGIC	0x768dbbd0
-#define RT_INIT_EXTERNAL(_p)	{(_p)->ext_magic = RT_EXTERNAL_MAGIC;}
+#define RT_INIT_EXTERNAL(_p)	{(_p)->ext_magic = RT_EXTERNAL_MAGIC; \
+	(_p)->ext_buf = GENPTR_NULL; (_p)->ext_nbytes = 0;}
 #define RT_CK_EXTERNAL(_p)	RT_CKMAG(_p, RT_EXTERNAL_MAGIC, "rt_external")
 
 /*
@@ -756,9 +757,21 @@ struct db_tree_state {
 	mat_t		ts_mat;		/* transform matrix */
 
 	int		ts_stop_at_regions;	/* else stop at solids */
-	int		(*ts_region_start_func)();
-	union tree *	(*ts_region_end_func)();
-	union tree *	(*ts_leaf_func)();
+	int		(*ts_region_start_func) RT_ARGS((
+				struct db_tree_state * /*tsp*/,
+				struct db_full_path * /*pathp*/
+			));
+	union tree *	(*ts_region_end_func) RT_ARGS((
+				struct db_tree_state * /*tsp*/,
+				struct db_full_path * /*pathp*/,
+				union tree * /*curtree*/
+			));
+	union tree *	(*ts_leaf_func) RT_ARGS((
+				struct db_tree_state * /*tsp*/,
+				struct db_full_path * /*pathp*/,
+				struct rt_external * /*ep*/,
+				int /*id*/
+			));
 };
 #define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
 #define TS_SOFAR_INTER	2		/* Intersection encountered above */
@@ -1498,6 +1511,9 @@ extern void rt_pr_roots();		/* print complex roots */
 RT_EXTERN(void rt_pr_fallback_angle, (struct rt_vls *str, char *prefix,
 	double angles[5]));
 RT_EXTERN(void rt_find_fallback_angle, (double angles[5], vect_t vec));
+
+/* table.c */
+RT_EXTERN(int rt_id_solid, (struct rt_external *ep));
 
 /*
  *  Constants provided and used by the RT library.
