@@ -2839,6 +2839,7 @@ proc set_mouse_behavior { id } {
 	    set mged_gui($id,fb_all) 1
 	    mged_apply $id "set fb_all 1"
 	}
+	"p" -
 	"r" {
 	    # use only the area of the framebuffer specified by the rectangle
 	    set mged_gui($id,fb_all) 0
