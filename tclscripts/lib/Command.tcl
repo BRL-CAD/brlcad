@@ -23,35 +23,19 @@
 class Command {
     inherit iwidgets::Scrolledtext
 
-    private variable hist ""
-    private variable scratchline ""
-    private variable moveView 0
-    private variable freshline 1
-
-    private variable overwrite_flag 0
-    private variable change_flag 0
-    private variable delete_flag 0
-    private variable search_flag 0
-    private variable search_char ""
-    private variable search_dir ""
-
-    public variable edit_style emacs
-    public variable prompt "> "
-    public variable cmd_prefix ""
-#    public variable selection_color #fefe8e
-#    public variable prompt_color red1
-#    public variable cmd_color black
-#    public variable oldcmd_color red3
-#    public variable result_color blue3
-
     constructor {args} {}
     destructor {}
 
+    itk_option define -edit_style edit_style Edit_style emacs
+    itk_option define -prompt prompt Prompt "> "
+    itk_option define -cmd_prefix cmd_prefix Cmd_prefix ""
     itk_option define -selection_color selection_color TextColor #fefe8e
     itk_option define -prompt_color prompt_color TextColor red1
     itk_option define -cmd_color cmd_color TextColor black
     itk_option define -oldcmd_color oldcmd_color TextColor red3
     itk_option define -result_color result_color TextColor blue3
+
+    public method history {args}
 
     private method invoke {}
     private method first_char_in_line {}
@@ -104,11 +88,21 @@ class Command {
     private method doLeft {}
     private method doRight {}
 
-    public method history {args}
+    private variable hist ""
+    private variable scratchline ""
+    private variable moveView 0
+    private variable freshline 1
+
+    private variable overwrite_flag 0
+    private variable change_flag 0
+    private variable delete_flag 0
+    private variable search_flag 0
+    private variable search_char ""
+    private variable search_dir ""
 }
 
 configbody Command::edit_style {
-    switch $edit_style {
+    switch $itk_option(-edit_style) {
 	emacs -
 	vi {
 	    doKeyBindings
@@ -141,6 +135,8 @@ configbody Command::result_color {
 }
 
 body Command::constructor {args} {
+	eval itk_initialize $args
+
 	doBindings
 
 	# create command history object
@@ -151,8 +147,6 @@ body Command::constructor {args} {
 	print_prompt
 	$itk_component(text) insert insert " "
 	beginning_of_line
-
-	eval itk_initialize $args
 
 	$itk_component(text) tag configure sel -background $itk_option(-selection_color)
 	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
@@ -169,7 +163,7 @@ body Command::destructor {} {
 body Command::invoke {} {
     set w $itk_component(text)
 
-    set cmd [concat $cmd_prefix [$w get promptEnd insert]]
+    set cmd [concat $itk_option(-cmd_prefix) [$w get promptEnd insert]]
 
     if [info complete $cmd] {
 	set result [catch {uplevel #0 $cmd} msg]
@@ -183,9 +177,6 @@ body Command::invoke {} {
 	    if {$msg != ""} {
 		print_tag $msg\n result
 	    }
-
-#	    distribute_text $w $cmd $msg
-#	    stuff_str "\nmged:$id> $cmd\n$msg"
 	}
 
 	$hist add $cmd
@@ -908,7 +899,7 @@ body Command::print {str} {
 
 body Command::print_prompt {} {
     set w $itk_component(text)
-    print_tag $prompt prompt
+    print_tag $itk_option(-prompt) prompt
     $w mark set promptEnd insert
     $w mark gravity promptEnd left
 }
@@ -938,7 +929,7 @@ body Command::doBindings {} {
 
 body Command::doKeyBindings {} {
     set w $itk_component(text)
-    switch $edit_style {
+    switch $itk_option(-edit_style) {
 	vi {
 	    vi_insert_mode
 
@@ -1026,7 +1017,7 @@ body Command::doButtonBindings {} {
 }
 
 body Command::doControl_a {} {
-    if {$edit_style == "vi"} {
+    if {$itk_option(-edit_style) == "vi"} {
 	first_char_in_line
     } else {
 	beginning_of_line
@@ -1035,7 +1026,7 @@ body Command::doControl_a {} {
 
 body Command::doControl_c {} {
     interrupt
-    if {$edit_style == "vi"} {
+    if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
     }
 }
@@ -1056,21 +1047,21 @@ body Command::doMeta_BackSpace {} {
 
 body Command::doReturn {} {
     execute
-    if {$edit_style == "vi"} {
+    if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
     }
 }
 
 body Command::doLeft {} {
     backward_char
-    if {$edit_style == "vi"} {
+    if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
     }
 }
 
 body Command::doRight {} {
     forward_char
-    if {$edit_style == "vi"} {
+    if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
     }
 }
