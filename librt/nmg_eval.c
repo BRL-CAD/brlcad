@@ -11,6 +11,35 @@
 #include "nmg.h"
 #include "raytrace.h"
 
+/*	T O S S _ L O O P
+ *
+ *	throw away all loops in the loopuse list "lu"
+ */
+static void toss_loops(lu, n)
+struct loopuse **lu;
+int n;
+{
+	int i;
+	struct faceuse *fu;	
+	struct shell *s;
+	struct nmgregion *r;
+
+
+	for (i=0 ; i < n ; ++i) {
+		fu = lu[i]->up.fu_p;
+		nmg_klu(lu[i]);
+		lu[i] = (struct loopuse *)NULL;
+		if (!fu->lu_p) {
+			s = fu->s_p;
+			nmg_kfu(fu);
+			if (!s->fu_p && !s->lu_p && !s->eu_p && !s->vu_p) {
+				r = s->r_p;
+				nmg_ks(s);
+				if (!r->s_p && r->next != r) nmg_kr(r);
+			}
+		}
+	}
+}
 
 /*	S U B T R A C T I O N
  *
@@ -55,7 +84,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
 			/* move faceuse to new shell */
 			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused\n");
+				rt_bomb("I'm NMG confused 1\n");
 			}
 
 			sB->fu_p = fu;
@@ -190,7 +219,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
 			/* move faceuse to new shell */
 			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused\n");
+				rt_bomb("I'm NMG confused 2\n");
 			}
 
 			sB->fu_p = fu;
@@ -205,7 +234,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 			fu = fu->fumate_p;
 			NMG_CK_FACEUSE(fu);
 			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused\n");
+				rt_bomb("I'm NMG confused 3\n");
 			}
 
 			sB->fu_p = fu;
@@ -269,7 +298,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 		if (nmg_tbl(&faces, TBL_LOC, &fu->magic) < 0) {
 			/* move faceuse to new shell */
 			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused\n");
+				rt_bomb("I'm NMG confused 4\n");
 			}
 
 			sB->fu_p = fu;
@@ -284,7 +313,7 @@ struct nmg_ptbl *AinB, *AonB, *AoutB, *BinA, *BonA, *BoutA;
 			fu = fu->fumate_p;
 			NMG_CK_FACEUSE(fu);
 			if (fu->s_p != sB) {
-				rt_bomb("I'm NMG confused\n");
+				rt_bomb("I'm NMG confused 5\n");
 			}
 
 			sB->fu_p = fu;
