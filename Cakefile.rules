@@ -89,9 +89,9 @@ uninstall-prod&:
 uninstall-man&:	do-uninstall-man	if MAN_EXISTS
 uninstall-man&:				if not MAN_EXISTS
 
-do-uninstall-man&:  [[SUB ../SRCDIR/X X.uninstall-man ../SRCDIR/''*.MANSECTION]]
+do-uninstall-man&:  [[SUB ../SRCDIR/X X.ui-man ../SRCDIR/''*.MANSECTION]]
 
-%.uninstall-man&:
+%.ui-man&:
 	rm -f MANDIR''MANSECTION/% MANDIR''MANSECTION/%.bak
 
 uninstall-stub&:  do-uninstall-stub	if STUB_EXISTS
@@ -150,9 +150,9 @@ install-prod-nobak&:
 install-man&:  do-install-man	if MAN_EXISTS
 install-man&:			if not MAN_EXISTS
 
-do-install-man&: [[SUB ../SRCDIR/X X.install-man ../SRCDIR/''*.MANSECTION ]]
+do-install-man&: [[SUB ../SRCDIR/X X.i-man ../SRCDIR/''*.MANSECTION ]]
 
-%.install-man&:	../SRCDIR/%
+%.i-man&:	../SRCDIR/%
 	@if cmp -s MANDIR''MANSECTION/% ../SRCDIR/%; \
 	then	exit 0; fi; \
 	mv -f MANDIR''MANSECTION/% MANDIR''MANSECTION/%.bak 2>/dev/null; \
