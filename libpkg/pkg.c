@@ -136,6 +136,13 @@ static void	pkg_checkin();
 
 #define	MAXQLEN	512	/* largest packet we will queue on stream */
 
+/* A macro for logging a string message when the debug file is open */
+#if 1
+#define DMSG(s) if(pkg_debug){pkg_timestamp();fprintf(pkg_debug,s);fflush(pkg_debug);}
+#else
+#define DMSG(s)	/**/
+#endif
+
 /*
  * Routines to insert/extract short/long's into char arrays,
  * independend of machine byte order and word-alignment.
@@ -751,6 +758,7 @@ register struct pkg_conn *pc;
 	}
 
 	/* Check for any pending input, no delay */
+	/* Input may be read, but not acted upon, to prevent deep recursion */
 	pkg_checkin( pc, 1 );
 
 	/* Flush any queued stream output first. */
@@ -855,6 +863,7 @@ register struct pkg_conn *pc;
 	}
 
 	/* Check for any pending input, no delay */
+	/* Input may be read, but not acted upon, to prevent deep recursion */
 	pkg_checkin( pc, 1 );
 
 	/* Flush any queued stream output first. */
@@ -1183,60 +1192,127 @@ pkg_get(pc)
 register struct pkg_conn *pc;
 {
 	register int	len;
-	int		ret;
+	register int	available;
+	register int	ret;
 
+top:
 	PKG_CK(pc);
 	if( pkg_debug )  {
+		if( pc->pkc_left < 0 )  {
+			sprintf(errbuf, "awaiting new header");
+		} else if( pc->pkc_left > 0 )  {
+			sprintf(errbuf, "more data to come");
+		} else {
+			sprintf(errbuf, "all here");
+		}
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_get(pc=x%x)\n",
-			pc );
+			"pkg_get(pc=x%x) pkc_left=%d %s\n",
+			pc, pc->pkc_left, errbuf );
 		fflush(pkg_debug);
 	}
-top:
 	if( pc->pkc_left < 0 )  {
-		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
-		/* Now pkc_left >= 0 */
+		if( pkg_gethdr( pc, (char *)0 ) < 0 )  {
+			DMSG("pkg_gethdr < 0\n");
+			ret = -1;
+			goto out;
+		}
 	}
+	if( pc->pkc_left < 0 )  {
+		/* pkg_gethdr() didn't get a header */
+		DMSG("pkc_left < 0 after pkg_gethdr\n");
+		ret = -3;
+		goto out;
+	}
+	/* Now pkc_left >= 0 */
+
 
 	/* copy what is here already, and dispatch when all here */
 	if( pc->pkc_left > 0 )  {
+		/* Sanity check -- user buffer should be allocated */
+		if( pc->pkc_curpos == 0 )  {
+			DMSG("curpos=0\n");
+			(pc->pkc_errlog)("pkg_get: curpos=0");
+			ret = -9;
+			goto out;
+		}
+
 		/*
 		 * Header has been seen, stop briefly to
 		 * see if any more of the message body has arrived yet
 		 */
 		pkg_checkin( pc, 0 );
 
-		len = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
-		if( len > pc->pkc_left )  {
+		available = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
+		if( available > pc->pkc_left )  {
 			/* There is more in input buf than just this pkg */
-			if( pkg_debug )  {
-				pkg_timestamp();
-				fprintf( pkg_debug,
-					"pkg_get(pc=x%x) taking %d, %d more in buffer\n",
-					pc, pc->pkc_left, len-pc->pkc_left );
-				fflush(pkg_debug);
-			}
 			len = pc->pkc_left; /* trim to amt needed */
+		} else {
+			/* Take all that there is */
+			len = available;
+		}
+		if( pkg_debug )  {
+			pkg_timestamp();
+			fprintf( pkg_debug,
+				"pkg_get() taking %d, %d more in inbuf\n",
+				len, available-len);
+fprintf(pkg_debug, "pkg_get() pkc_buf=x%x, pkc_curpos=x%x\n",
+pc->pkc_buf, pc->pkc_curpos);
+			fflush(pkg_debug);
 		}
 		if( len > 0 )  {
+			if( pc->pkc_curpos == 0 )  {
+				DMSG("len>0, curpos==0\n");
+				ret = -99;
+				goto out;
+			}
 			bcopy( &pc->pkc_inbuf[pc->pkc_incur],
 				pc->pkc_curpos, len );
 			pc->pkc_incur += len;
 			pc->pkc_curpos += len;
 			pc->pkc_left -= len;
+			DMSG("bcopy done\n");
 		}
-		if( pc->pkc_left > 0 )
-			return(0);		/* more is on the way */
+		if( pc->pkc_left > 0 )  {
+			/* more is on the way */
+			DMSG("more is on the way\n");
+			ret = 0;
+			goto out;
+		}
 	}
 
+	if( pc->pkc_left != 0 )  {
+		DMSG("pkc_left != 0\n");
+		ret = -5;
+		goto out;
+	}
 	/* Now, pkc_left == 0, dispatch the message */
-	ret = pkg_dispatch(pc);
-	if( ret <= 0 )  return(ret);		/* something bad happened */
+	len = pkg_dispatch(pc);
+	if( len <= 0 )  {
+		/* something bad happened */
+		DMSG("pkg_dispatch failed\n");
+		ret = -2;
+		goto out;
+	}
+	DMSG("pkg_dispatch worked\n");
 
+	/* If a full header of another pkg is here, process it too */
 	len = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
 	if( len >= sizeof(struct pkg_header) )  goto top;
-	return( 1 );				/* user handler called */
+
+	/* Indicate that user handler was called */
+	DMSG("indicating success\n");
+	ret = 1;
+	/* Fall through */
+out:
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_get() returns %d, pkc_left=%d\n",
+			ret, pc->pkc_left);
+		fflush(pkg_debug);
+	}
+	return( ret );
 }
 
 /*
@@ -1570,6 +1646,10 @@ pkg_ck_debug()
 	/* Named file must exist and be writeable */
 	if( access( place, 2 ) < 0 )  return;
 	if( (pkg_debug = fopen( place, "a" )) == NULL )  return;
+
+	/* Log version number of this code */
+	pkg_timestamp();
+	fprintf( pkg_debug, "pkg_ck_debug %s\n", RCSid );
 }
 
 /*
@@ -1650,6 +1730,13 @@ register struct pkg_conn	*pc;
 	avail = pc->pkc_inlen - pc->pkc_inend;
 	if( avail < 10 * sizeof(struct pkg_header) )  {
 		pc->pkc_inlen <<= 1;
+		if( pkg_debug)  {
+			pkg_timestamp();
+			fprintf(pkg_debug,
+				"pkg_suckin: realloc inbuf to %d\n",
+				pc->pkc_inlen );
+			fflush(pkg_debug);
+		}
 		if( (pc->pkc_inbuf = (char *)realloc(pc->pkc_inbuf, pc->pkc_inlen)) == (char *)0 )  {
 			pc->pkc_errlog("pkg_suckin realloc failure\n");
 			pc->pkc_inlen = 0;
@@ -1659,7 +1746,16 @@ register struct pkg_conn	*pc;
 
 	/* Take as much as the system will give us, up to buffer size */
 	if( (got = read( pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail )) <= 0 )  {
-		if( got == 0 )  return(0);	/* EOF */
+		if( got == 0 )  {
+			if( pkg_debug )  {
+				pkg_timestamp();
+				fprintf(pkg_debug,
+					"pkg_suckin: fd=%d, read for %d returned 0\n",
+					avail, pc->pkc_fd );
+				fflush(pkg_debug);
+			}
+			return(0);	/* EOF */
+		}
 		pkg_perror(pc->pkc_errlog, "pkg_suckin: read");
 		return(-1);
 	}
@@ -1694,9 +1790,13 @@ int		nodelay;
 	struct timeval	tv;
 	long		bits;
 	register int	i;
+	extern int	errno;
 
+#if 0
+	/* XXX Setting this flag will lead to handing applications! */
 	if( pkg_nochecking )
 		return;
+#endif
 
 	/* Check socket for unexpected input */
 	tv.tv_sec = 0;
@@ -1706,8 +1806,29 @@ int		nodelay;
 		tv.tv_usec = 20000;	/* 20 ms */
 	bits = 1 << pc->pkc_fd;
 	i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
-	if( i > 0 && bits )
-		(void)pkg_suckin(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf(pkg_debug,
+			"pkg_checkin: select on fd %d returned %d, bits=x%x\n",
+			pc->pkc_fd,
+			i, bits );
+		fflush(pkg_debug);
+	}
+	if( i > 0 )  {
+		if( bits != 0 )  {
+			(void)pkg_suckin(pc);
+		} else {
+			/* Odd condition */
+			sprintf(errbuf,
+				"pkg_checkin: select returned %d, bits=0\n",
+				i );
+			(pc->pkc_errlog)(errbuf);
+		}
+	} else if( i < 0 )  {
+		/* Error condition */
+		if( errno != EINTR )
+			pkg_perror(pc->pkc_errlog, "pkg_checkin: select");
+	}
 }
 
 /*
