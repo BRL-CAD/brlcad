@@ -61,7 +61,6 @@ int		width;			/* # of pixels in X */
 int		height;			/* # of lines in Y */
 mat_t		Viewrotscale;
 fastf_t		viewsize=0;
-char		*scanbuf;		/* For optional output buffering */
 int		incr_mode = 0;		/* !0 for incremental resolution */
 int		incr_level;		/* current incremental level */
 int		incr_nlevel;		/* number of levels */
