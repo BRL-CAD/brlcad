@@ -154,14 +154,6 @@ int need_close;
   }else if(dmp && !strcmp("nu", bu_vls_addr(&pathName)))
       return TCL_OK;  /* Ignore */
 
-  /*
-   *  This saves the state of the resoures to the "nu" display manager, which
-   *  is beneficial only if closing the last display manager. So when
-   *  another display manager is opened, it looks like the last one
-   *  the user had open. This depends on "nu" always being last in the list.
-   */
-  usurp_all_resources(BU_LIST_LAST(dm_list, &head_dm_list.l), curr_dm_list);
-
   if(fbp){
     if(mged_variables->mv_listen){
       /* drop all clients */
@@ -172,6 +164,14 @@ int need_close;
     /* release framebuffer resources */
     mged_fb_close();
   }
+
+  /*
+   *  This saves the state of the resoures to the "nu" display manager, which
+   *  is beneficial only if closing the last display manager. So when
+   *  another display manager is opened, it looks like the last one
+   *  the user had open. This depends on "nu" always being last in the list.
+   */
+  usurp_all_resources(BU_LIST_LAST(dm_list, &head_dm_list.l), curr_dm_list);
 
   /* If this display is being referenced by a command window,
      then remove the reference  */
