@@ -43,7 +43,7 @@ extern int	stereo;			/* stereo viewing */
 extern vect_t	left_eye_delta;
 extern int	hypersample;		/* number of extra rays to fire */
 extern int	rt_perspective;		/* perspective view -vs- parallel */
-extern fastf_t	aspect;			/* aspect ratio Y/X */
+extern fastf_t	aspect;			/* view aspect ratio X/Y */
 extern fastf_t	persp_angle;		/* perspective angle (degrees X) */
 extern vect_t	dx_model;		/* view delta-X as model-space vect */
 extern vect_t	dy_model;		/* view delta-Y as model-space vect */
@@ -87,7 +87,7 @@ grid_setup()
 	/* Chop -1.0..+1.0 range into parts */
 	VSET( temp, 2.0/width, 0, 0 );
 	MAT4X3VEC( dx_model, view2model, temp );
-	VSET( temp, 0, 2.0*aspect/height, 0 );
+	VSET( temp, 0, 2.0/(height*aspect), 0 );
 	MAT4X3VEC( dy_model, view2model, temp );
 	if( stereo )  {
 		/* Move left 2.5 inches (63.5mm) */
@@ -102,7 +102,7 @@ grid_setup()
 		fastf_t	zoomout;
 		extern double mat_degtorad;
 		zoomout = 1.0 / tan( mat_degtorad * persp_angle / 2.0 );
-		VSET( temp, -1, -aspect, -zoomout );	/* viewing plane */
+		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
 		/*
 		 * Divergance is (0.5 * viewsize / width) mm at
 		 * a ray distance of (viewsize * zoomout) mm.
@@ -115,7 +115,7 @@ grid_setup()
 		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
 		VUNITIZE( ap.a_ray.r_dir );
 
-		VSET( temp, -1, -aspect, 0 );	/* eye plane */
+		VSET( temp, -1, -1/aspect, 0 );	/* eye plane */
 		ap.a_rbeam = 0.5 * viewsize / width;
 		ap.a_diverge = 0;
 	}
