@@ -69,7 +69,8 @@ char	**dpp;
 {
 	int	i, j, k;
 	register struct marble_specific *mp;
-	register float	*randp;
+	extern struct resource		rt_uniresource;
+	register struct resource	*resp = &rt_uniresource;;
 
 	GETSTRUCT( mp, marble_specific );
 	*dpp = (char *)mp;
@@ -80,7 +81,7 @@ char	**dpp;
 	for( i = 0; i < IPOINTS+1; i++ )
 		for( j = 0; j < IPOINTS+1; j++ )
 			for( k = 0; k < IPOINTS+1; k++ )
-				n[i][j][k] = rand0to1(randp);
+				n[i][j][k] = rand0to1(resp->re_randptr);
 
 	/*
 	 * Duplicate the three initial faces
