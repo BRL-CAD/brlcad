@@ -47,6 +47,7 @@ struct cook_specific {
 	double	transmit;	/* Moss "transparency" */
 	double	reflect;	/* Moss "transmission" */
 	double	refrac_index;
+	double	extinction;
 	double	m2;		/* m^2 - plus check for near zero */
 	double	n[3];		/* "effective" RGB refract index */
 	double	rd[3];		/* Diffuse reflection coefficient */
@@ -64,6 +65,8 @@ struct matparse cook_parse[] = {
 	"reflect",	(mp_off_ty)&(CK_NULL->reflect),		"%f",
 	"re",		(mp_off_ty)&(CK_NULL->reflect),		"%f",
 	"ri",		(mp_off_ty)&(CK_NULL->refrac_index),	"%f",
+	"extinction",	(mp_off_ty)&(CK_NULL->extinction),	"%f",
+	"ex",		(mp_off_ty)&(CK_NULL->extinction),	"%f",
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
@@ -119,6 +122,7 @@ char	**dpp;
 	pp->transmit = 0.0;
 	pp->reflect = 0.0;
 	pp->refrac_index = RI_AIR;
+	pp->extinction = 0.0;
 
 	/* XXX - scale only if >= 1.0 !? */
 	pp->n[0] = (1.0 + sqrt(rp->reg_mater.ma_color[0]*.99))
@@ -160,6 +164,7 @@ char	**dpp;
 	pp->transmit = 0.0;
 	pp->reflect = 0.75;
 	pp->refrac_index = 1.65;
+	pp->extinction = 0.0;
 
 	pp->n[0] = (1.0 + sqrt(pp->reflect*.99))
 		   / (1.0 - sqrt(pp->reflect*.99));
@@ -198,6 +203,7 @@ char	**dpp;
 	pp->reflect = 0.1;
 	/* leaving 0.1 for diffuse/specular */
 	pp->refrac_index = 1.65;
+	pp->extinction = 0.0;
 
 	pp->n[0] = pp->refrac_index;
 	pp->n[1] = pp->n[2] = pp->n[0];
@@ -256,13 +262,12 @@ struct shadework	*swp;
 char	*dp;
 {
 	register struct light_specific *lp;
-	register fastf_t *intensity;
+	register fastf_t *intensity, *to_light;
 	register int	i;
 	register fastf_t cosine;
 	register fastf_t refl;
 	vect_t	work;
 	vect_t	reflected;
-	vect_t	to_light;
 	vect_t	cprod;			/* color product */
 	vect_t	h;
 	point_t	matcolor;		/* Material color */
@@ -284,6 +289,7 @@ vect_t	Fv;
 	swp->sw_transmit = f - swp->sw_reflect;
 
 	swp->sw_refrac_index = ps->refrac_index;
+	swp->sw_extinction = ps->extinction;
 	if( swp->sw_xmitonly )  return(1);	/* done */
 
 	VMOVE( matcolor, swp->sw_color );
@@ -305,10 +311,7 @@ vect_t	Fv;
 	
 		/* Light is not shadowed -- add this contribution */
 		intensity = swp->sw_intensity+3*i;
-
-		/* XXX - perhaps to_light vectors should be given? */
-		VSUB2( to_light, lp->lt_pos, swp->sw_hit.hit_point );
-		VUNITIZE( to_light );
+		to_light = swp->sw_tolight+3*i;
 
 		n_dot_l = VDOT( swp->sw_hit.hit_normal, to_light );
 		if( n_dot_l < 0 ) {

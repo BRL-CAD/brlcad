@@ -44,6 +44,7 @@ struct phong_specific {
 	double	transmit;	/* Moss "transparency" */
 	double	reflect;	/* Moss "transmission" */
 	double	refrac_index;
+	double	extinction;
 };
 #define PL_NULL	((struct phong_specific *)0)
 
@@ -59,6 +60,8 @@ struct matparse phong_parse[] = {
 	"reflect",	(mp_off_ty)&(PL_NULL->reflect),		"%f",
 	"re",		(mp_off_ty)&(PL_NULL->reflect),		"%f",
 	"ri",		(mp_off_ty)&(PL_NULL->refrac_index),	"%f",
+	"extinction",	(mp_off_ty)&(PL_NULL->extinction),	"%f",
+	"ex",		(mp_off_ty)&(PL_NULL->extinction),	"%f",
 	(char *)0,	(mp_off_ty)0,				(char *)0
 };
 
@@ -105,6 +108,7 @@ char	**dpp;
 	pp->transmit = 0.0;
 	pp->reflect = 0.0;
 	pp->refrac_index = RI_AIR;
+	pp->extinction = 0.0;
 
 	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
 
@@ -133,6 +137,7 @@ char	**dpp;
 	pp->transmit = 0.0;
 	pp->reflect = 0.75;
 	pp->refrac_index = 1.65;
+	pp->extinction = 0.0;
 
 	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
 
@@ -162,6 +167,7 @@ char	**dpp;
 	pp->reflect = 0.1;
 	/* leaving 0.1 for diffuse/specular */
 	pp->refrac_index = 1.65;
+	pp->extinction = 0.0;
 
 	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
 
@@ -266,13 +272,12 @@ struct shadework	*swp;
 char	*dp;
 {
 	register struct light_specific *lp;
-	register fastf_t *intensity;
+	register fastf_t *intensity, *to_light;
 	register int	i;
 	register fastf_t cosine;
 	register fastf_t refl;
 	vect_t	work;
 	vect_t	reflected;
-	vect_t	to_light;
 	vect_t	cprod;			/* color product */
 	point_t	matcolor;		/* Material color */
 	struct phong_specific *ps =
@@ -281,6 +286,7 @@ char	*dp;
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;
 	swp->sw_refrac_index = ps->refrac_index;
+	swp->sw_extinction = ps->extinction;
 	if( swp->sw_xmitonly )  return(1);	/* done */
 
 	VMOVE( matcolor, swp->sw_color );
@@ -306,10 +312,9 @@ char	*dp;
 	
 		/* Light is not shadowed -- add this contribution */
 		intensity = swp->sw_intensity+3*i;
+		to_light = swp->sw_tolight+3*i;
 
 		/* Diffuse reflectance from this light source. */
-		VSUB2( to_light, lp->lt_pos, swp->sw_hit.hit_point );
-		VUNITIZE( to_light );
 		if( (cosine = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
 			if( cosine > 1.00001 )  {
 				rt_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
