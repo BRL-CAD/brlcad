@@ -174,6 +174,7 @@ char	**argv;
 } def\n\
 \n\
 FntH  setfont\n\
+NV\n\
 NEWPG\n\
 ", stdout);
 
@@ -256,7 +257,7 @@ NEWPG\n\
 			break;
 		case 'e':
 			/* New page */
-			/* XXX */
+			printf("NEWPG\n");
 			break;
 		case 'f':
 			/* linmod */
