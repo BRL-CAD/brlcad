@@ -53,7 +53,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"
 #include "../rt/ext.h"
-#include "../rt/rdebug.h"
+#include "rtprivate.h"
 
 #include "./protocol.h"
 
