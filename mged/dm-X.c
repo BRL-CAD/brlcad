@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/multibuf.h>
-#include "./xinit.h"
 
 #include "machine.h"
 #include "externs.h"
@@ -47,6 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./dm.h"
 #include "./solid.h"
+#include "./sedit.h"
 
 extern int dm_pipe[];
 
@@ -75,7 +75,7 @@ void	X_statechange(), X_viewchange(), X_colorchange();
 void	X_window(), X_debug(), X_selectargs();
 int     X_dm();
 
-static int   X_load_startup();
+static void X_load_startup();
 static struct dm_list *get_dm_list();
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc X_doevent;
@@ -553,16 +553,24 @@ XEvent *eventPtr;
       {
 	fastf_t fx, fy;
 
-	fx = (mx/(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
-	fy = (0.5 - my/(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
-
-	rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
+	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	   (edobj || es_edflag > 0)){
+	  fx = (mx/(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
+	  fy = (0.5 - my/(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
+	  rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
+	}else{
+	  fx = (mx - ((struct x_vars *)dm_vars)->omx) /
+	    (fastf_t)((struct x_vars *)dm_vars)->width * 2.0;
+	  fy = (((struct x_vars *)dm_vars)->omy - my) /
+	    (fastf_t)((struct x_vars *)dm_vars)->height * 2.0;
+	  rt_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
+	}
       }
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
       rt_vls_printf( &cmd, "iknob aS %f\n",
-		     ((double)((struct x_vars *)dm_vars)->omy - my)/
-		     ((struct x_vars *)dm_vars)->height);
+		     (((struct x_vars *)dm_vars)->omy - my)/
+		     (fastf_t)((struct x_vars *)dm_vars)->height);
       break;
     }
 
@@ -792,27 +800,12 @@ char	*name;
   rt_vls_init(&str);
 
   /* Only need to do this once */
-  if(tkwin == NULL){
-#if 1
+  if(tkwin == NULL)
     gui_setup();
-#else
-    rt_vls_printf(&str, "loadtk %s\n", name);
-
-    if(cmdline(&str, FALSE) == CMD_BAD){
-      rt_vls_free(&str);
-      return -1;
-    }
-#endif
-  }
-
 
   /* Only need to do this once for this display manager */
-  if(!count){
-    if( X_load_startup() ){
-      rt_vls_free(&str);
-      return -1;
-    }
-  }
+  if(!count)
+    X_load_startup();
 
   if(RT_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_CreateGenericHandler(X_doevent, (ClientData)NULL);
@@ -1244,7 +1237,9 @@ char *argv[];
 	  break;
 	case 't':
 	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  {
+
+	  if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	                  (edobj || es_edflag > 0)){
 	    fastf_t fx, fy;
 
 	    rt_vls_init(&vls);
@@ -1256,6 +1251,7 @@ char *argv[];
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }
+
 	  break;
 	case 'z':
 	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
@@ -1292,60 +1288,16 @@ x_var_init()
   ((struct x_vars *)dm_vars)->mvars.virtual_trackball = 1;
 }
 
-static int
+static void
 X_load_startup()
 {
-  FILE    *fp;
-  struct rt_vls str;
-  char *path;
   char *filename;
-
-#define DM_X_RCFILE "xinit.tk"
 
   bzero((void *)&head_x_vars, sizeof(struct x_vars));
   RT_LIST_INIT( &head_x_vars.l );
 
-  /* Start with internal default */
-  Tcl_Eval( interp, x_init_str );
-
-  rt_vls_init( &str );
-
-  if((filename = getenv("DM_X_RCFILE")) == (char *)NULL )
-    /* Use default file name */
-    filename = DM_X_RCFILE;
-
-  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
-    /* Use MGED_LIBRARY path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-      fclose(fp);
-      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  if( (path = getenv("HOME")) != (char *)NULL )  {
-    /* Use HOME path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-	fclose(fp);
-	(void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  /* Check current directory */
-  if( (fp = fopen( filename, "r" )) != NULL )  {
-    fclose(fp);
-    (void)Tcl_EvalFile( interp, filename );
-  }
-
-  rt_vls_free(&str);
-  return 0;
+  if((filename = getenv("DM_X_RCFILE")) != (char *)NULL )
+    Tcl_EvalFile(interp, filename);
 }
 
 

@@ -41,7 +41,6 @@
 #include "tk.h"
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XInput.h>
-#include "./oglinit.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>
@@ -58,6 +57,7 @@
 #include "./ged.h"
 #include "./dm.h"
 #include "./solid.h"
+#include "./sedit.h"
 
 /* these are from /usr/include/gl.h could be device dependent */
 #define XMAXSCREEN	1279
@@ -79,7 +79,7 @@ static void	Ogl_configure_window_shape();
 static int	Ogl_doevent();
 static void	Ogl_gen_color();
 static void     Ogl_colorit();
-static int      Ogl_load_startup();
+static void     Ogl_load_startup();
 static void     ogl_var_init();
 static XVisualInfo *Ogl_set_visual();
 static void     print_cmap();
@@ -377,61 +377,16 @@ Ogl_open()
 }
 
 /*XXX Just experimenting */
-int
+static void
 Ogl_load_startup()
 {
-  FILE    *fp;
-  struct rt_vls str;
-  char *path;
   char *filename;
-
-/*XXX*/
-#define DM_OGL_RCFILE "oglinit.tk"
 
   bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
   RT_LIST_INIT( &head_ogl_vars.l );
 
-  /* Start with internal default */
-  Tcl_Eval( interp, ogl_init_str );
-
-  rt_vls_init( &str );
-
-  if((filename = getenv("DM_OGL_RCFILE")) == (char *)NULL )
-    /* Use default file name */
-    filename = DM_OGL_RCFILE;
-
-  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
-    /* Use MGED_LIBRARY path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ) {
-      fclose(fp);
-      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  if( (path = getenv("HOME")) != (char *)NULL )  {
-    /* Use HOME path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-    
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-      fclose(fp);
-      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  /* Check current directory */
-  if( (fp = fopen( filename, "r" )) != NULL )  {
-    fclose(fp);
-    (void)Tcl_EvalFile( interp, filename );
-  }
-
-  rt_vls_free(&str);
-  return 0;
+  if((filename = getenv("DM_OGL_RCFILE")) != (char *)NULL )
+    Tcl_EvalFile(interp, filename);
 }
 
 /*
@@ -1053,14 +1008,21 @@ XEvent *eventPtr;
       {
 	fastf_t fx, fy;
 
-	fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
-	fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
-	rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
+	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	   (edobj || es_edflag > 0)){
+	  fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
+	  fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
+	  rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
+	}else{
+	  fx = (mx - omx)/(fastf_t)((struct ogl_vars *)dm_vars)->width * 2.0;
+	  fy = (omy - my)/(fastf_t)((struct ogl_vars *)dm_vars)->height * 2.0;
+	  rt_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy);
+	}
       }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
       rt_vls_printf( &cmd, "iknob aS %f\n",
-		     (omy - my)/(double)((struct ogl_vars *)dm_vars)->height);
+		     (omy - my)/(fastf_t)((struct ogl_vars *)dm_vars)->height);
       break;
     }
 
@@ -1608,26 +1570,12 @@ char	*name;
   rt_vls_init(&str);
 
   /* Only need to do this once */
-  if(tkwin == NULL){
-#if 1
+  if(tkwin == NULL)
     gui_setup();
-#else
-    rt_vls_printf(&str, "loadtk %s\n", name);
-
-    if(cmdline(&str, FALSE) == CMD_BAD){
-      rt_vls_free(&str);
-      return -1;
-    }
-#endif
-  }
 
   /* Only need to do this once for this display manager */
-  if(!count){
-    if( Ogl_load_startup() ){
-      rt_vls_free(&str);
-      return -1;
-    }
-  }
+  if(!count)
+    Ogl_load_startup();
 
   if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
     Tk_CreateGenericHandler(Ogl_doevent, (ClientData)NULL);
@@ -2157,7 +2105,9 @@ char	**argv;
 	  break;
 	case 't':
 	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  {
+
+	  if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	     (edobj || es_edflag > 0)){
 	    fastf_t fx, fy;
 
 	    rt_vls_init(&vls);

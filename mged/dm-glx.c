@@ -61,7 +61,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/extensions/XInput.h>
 #include <X11/Xutil.h>
 #include "tkGLX.h"
-#include "./glxinit.h"
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -79,6 +78,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "externs.h"
 #include "./solid.h"
+#include "./sedit.h"
 
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
@@ -108,7 +108,7 @@ int	Glx_dm();
 
 static int Glx_setup();
 static void set_knob_offset();
-static int   Glx_load_startup();
+static void   Glx_load_startup();
 static struct dm_list *get_dm_list();
 #ifdef USE_PROTOTYPES
 static Tk_GenericProc Glx_doevent;
@@ -424,32 +424,13 @@ char *name;
   rt_vls_init(&str);
 
   /* Only need to do this once */
-  if(tkwin == NULL){
-#if 1
+  if(tkwin == NULL)
     gui_setup();
-#else
-#if 0    
-    rt_vls_printf(&str, "loadtk %s\n", name);
-#else
-    rt_vls_printf(&str, "loadtk\n");
-#endif
-
-    if(cmdline(&str, FALSE) == CMD_BAD){
-      rt_vls_free(&str);
-      return -1;
-    }
-#endif
-  }
 
   /* Only need to do this once for this display manager */
   if(!ref_count){
     (void)TkGLX_Init(interp, tkwin);
-
-    /* Invoke script to load commands */
-    if( Glx_load_startup() ){
-      rt_vls_free(&str);
-      return -1;
-    }
+    Glx_load_startup();
   }
 
   if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
@@ -658,61 +639,16 @@ Done:
 }
 
 /*XXX Just experimenting */
-int
+void
 Glx_load_startup()
 {
-  FILE    *fp;
-  struct rt_vls str;
-  char *path;
   char *filename;
-
-/*XXX*/
-#define DM_GLX_RCFILE "glxinit.tk"
 
   bzero((void *)&head_glx_vars, sizeof(struct glx_vars));
   RT_LIST_INIT( &head_glx_vars.l );
 
-  /* Start with internal default */
-  Tcl_Eval( interp, glx_init_str);
-
-  rt_vls_init( &str );
-
-  if((filename = getenv("DM_GLX_RCFILE")) == (char *)NULL )
-    /* Use default file name */
-    filename = DM_GLX_RCFILE;
-
-  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
-    /* Use MGED_LIBRARY path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-      fclose( fp );
-      Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  if( (path = getenv("HOME")) != (char *)NULL )  {
-    /* Use HOME path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-      fclose( fp );
-      Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  /* Check current directory */
-  if( (fp = fopen( filename, "r" )) != NULL )  {
-    fclose( fp );
-    Tcl_EvalFile( interp, filename );
-  }
-
-  rt_vls_free(&str);
-  return 0;
+  if((filename = getenv("DM_GLX_RCFILE")) != (char *)NULL )
+    Tcl_EvalFile(interp, filename);
 }
 
 /*
@@ -1307,14 +1243,20 @@ XEvent *eventPtr;
       {
 	fastf_t fx, fy;
 
-	fx = (mx/(fastf_t)winx_size - 0.5) * 2;
-	fy = (0.5 - my/(fastf_t)winy_size) * 2;
-
-	rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
+	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	  (edobj || es_edflag > 0)){
+	  fx = (mx/(fastf_t)winx_size - 0.5) * 2;
+	  fy = (0.5 - my/(fastf_t)winy_size) * 2;
+	  rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
+	}else{
+	  fx = (mx - omx)/(fastf_t)winx_size * 2.0;
+	  fy = (omy - my)/(fastf_t)winy_size * 2.0;
+	  rt_vls_printf( &cmd, "iknob aX %f aY %f\n", fx, fy );
+	}
       }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
-      rt_vls_printf( &cmd, "iknob aS %f\n", (omy - my)/(double)winy_size);
+      rt_vls_printf( &cmd, "iknob aS %f\n", (omy - my)/(fastf_t)winy_size);
       break;
     }
 
@@ -2740,7 +2682,8 @@ char	**argv;
 	  break;
 	case 't':
 	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-	  {
+	  if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
+	                (edobj || es_edflag > 0)){
 	    fastf_t fx, fy;
 
 	    rt_vls_init(&vls);
@@ -2750,6 +2693,7 @@ char	**argv;
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }
+
 	  break;
 	case 'z':
 	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
