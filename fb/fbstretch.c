@@ -80,18 +80,14 @@ static char	RCSid[] =		/* for "what" utility */
 #include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
-#ifdef BSD
-#include	<strings.h>
-#else
 #include	<string.h>
-#endif
 #if __STDC__
 #include	<stdarg.h>
 #include	<stdlib.h>
-#ifndef CRAY	/* CRAY defines getopt in stdlib.h! */
+#if __STDC__ == 1	/* workaround for Cray nonsense */
 extern int	getopt( int, char const * const *, char const * );
 #endif
-#else /* !__STDC__ */
+#else
 #ifdef NO_STRRCHR
 #define	strrchr( s, c )	rindex( s, c )
 #endif
@@ -100,7 +96,7 @@ extern void	exit();
 extern char	*calloc(), *getenv();
 extern int	atoi(), getopt();
 extern double	atof();
-#endif /* !__STDC__ */
+#endif
 #ifndef EXIT_SUCCESS
 #define	EXIT_SUCCESS	0
 #endif
