@@ -677,26 +677,29 @@ bn_cmd_noise_slice(ClientData clientData,
 #define NOISE_FBM 0
 #define NOISE_TURB 1
 
-	int noise_type;
+	int noise_type = NOISE_FBM;
 	double val;
 	point_t pt;
 	double *img;
 
 	if (argc != 7) {
 		Tcl_AppendResult(interp, "wrong # args: should be \"",
-				 argv[0], " X Y Z h_val lacunarity octaves\"",
+				 argv[0], " Xdim Ydim Zval h_val lacunarity octaves\"",
 				 NULL);
 		return TCL_ERROR;
 	}
 
 	xdim = atoi(argv[0]);
 	ydim = atoi(argv[1]);
-
+	VSETALL(delta, 0.0);
+	pt[Z] = delta[Z] = atof(argv[2]);
+	h_val = atof(argv[3]);
+	lacunarity = atof(argv[4]);
+	octaves = atof(argv[5]);
 
 
 	img = bu_malloc(xdim*ydim*sizeof(double), "noise array");
 
-	pt[Z] = delta[Z];
 	switch (noise_type) {
 	case NOISE_FBM: 
 		for (yval = 0 ; yval < ydim ; yval++) {
@@ -704,7 +707,7 @@ bn_cmd_noise_slice(ClientData clientData,
 		    pt[Y] = yval * scale[Y] + delta[Y];
 
 		    for (xval = 0 ; xval < xdim ; xval++) {
-			pt[X] = xval * scale[X]; + delta[X];
+			pt[X] = xval * scale[X] + delta[X];
 
 			val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
 
@@ -717,7 +720,7 @@ bn_cmd_noise_slice(ClientData clientData,
 		    pt[Y] = yval * scale[Y] + delta[Y];
 
 		    for (xval = 0 ; xval < xdim ; xval++) {
-			pt[X] = xval * scale[X]; + delta[X];
+			pt[X] = xval * scale[X] + delta[X];
 
 			val = bn_noise_turb(pt, h_val, lacunarity, octaves);
 
