@@ -56,9 +56,9 @@ char *argv[];
 		}
 	}
 	else {
+		lseek(ifd, 0L, 0);
 		/* have an old vged file to convert */
-		lseek (ifd, 0L, 0);
-		
+
 		/* units are inportant now because:
 		 *	The ged data records will be stored in a constant BASE unit
 		 *	of MiliMeters (MM).
