@@ -37,16 +37,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "./sedit.h"
 #include "raytrace.h"
-#include "./ged.h"
+#include "rtgeom.h"
 #include "externs.h"
+
+#include "./ged.h"
 #include "./solid.h"
+#include "./sedit.h"
 #include "./dm.h"
 #include "./menu.h"
 
 extern char    *cmd_args[];
 extern int 	numargs;
+
+static int	new_way = 0;	/* Set 1 for import/export handling */
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
@@ -670,6 +674,7 @@ init_sedit()
 	RT_CK_DB_INTERNAL( &es_int );
 
 	es_menu = 0;
+	new_way = 0;
 
 	bcopy( (char *)es_ext.ext_buf, (char *)&es_orig, sizeof(es_orig) );
 	if( es_orig.u_id == ID_SOLID )  {
@@ -712,6 +717,17 @@ init_sedit()
 			/* find the plane equations */
 			calc_planes( &es_rec.s, type );
 		}
+#if 0
+		/* XXX strictly experimental! */
+		if( es_rec.s.s_type == GENELL )  {
+			rt_log("Experimental:  new_way=1\n");
+			new_way = 1;
+			rt_log("es_int.idb_magic=x%x\n", es_int.idb_magic);
+			rt_log("es_int.idb_type=%d.\n", es_int.idb_type);
+			rt_log("es_int.idb_ptr=x%x\n", es_int.idb_ptr);
+		}
+#endif
+
 	}
 
 	/* Save aggregate path matrix */
@@ -747,33 +763,81 @@ replot_editing_solid()
 	int			id;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
+	struct rt_db_internal	*ip;
 	struct directory	*dp;
 
 	dp = illump->s_path[illump->s_last];
 
-	/* Fake up an external representation */
-	RT_INIT_EXTERNAL( &ext );
-	ext.ext_buf = (genptr_t)&es_rec;
-	ext.ext_nbytes = sizeof(union record);
+	if( new_way )  {
+		ip = &es_int;
+	} else {
+		/* Fake up an external representation */
+		RT_INIT_EXTERNAL( &ext );
+		ext.ext_buf = (genptr_t)&es_rec;
+		ext.ext_nbytes = sizeof(union record);
 
-	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-		(void)printf("replot_editing_solid() unable to identify type of solid %s\n",
-			dp->d_namep );
-		return;
+		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
+			(void)printf("replot_editing_solid() unable to identify type of solid %s\n",
+				dp->d_namep );
+			return;
+		}
+
+	    	RT_INIT_DB_INTERNAL(&intern);
+		if( rt_functab[id].ft_import( &intern, &ext, rt_identity ) < 0 )  {
+			rt_log("%s:  solid import failure\n",
+				dp->d_namep );
+		    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		    	return;			/* ERROR */
+		}
+		ip = &intern;
 	}
+	RT_CK_DB_INTERNAL( ip );
 
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, rt_identity ) < 0 )  {
-		rt_log("%s:  solid import failure\n",
-			dp->d_namep );
+/* XXX This routine isn't taking into account the tree path,
+ * XXX nor the provided es_mat argument!
+ * XXX It's in dodraw.c -- fix it!
+ */
+	(void)replot_modified_solid( illump, ip, es_mat );
+
+	if( !new_way )  {
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-	    	return;			/* ERROR */
 	}
-	RT_CK_DB_INTERNAL( &intern );
+}
 
-	(void)replot_modified_solid( illump, &intern, es_mat );
+/*
+ * Works the new_way only.
+ */
+void
+transform_editing_solid(os, mat, is)
+struct rt_db_internal	*os;
+mat_t			mat;
+struct rt_db_internal	*is;
+{
+	struct rt_external	ext;
+	struct directory	*dp;
+	int			id;
 
-    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	RT_CK_DB_INTERNAL( is );
+	dp = illump->s_path[illump->s_last];
+	id = is->idb_type;
+	RT_INIT_EXTERNAL(&ext);
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[id].ft_export( &ext, is, 1.0 ) < 0 )  {
+		rt_log("transform_editing_solid(%s):  solid export failure\n", dp->d_namep);
+		rt_bomb("transform_editing_solid");		/* FAIL */
+	}
+    	if( os == is && is->idb_ptr )  {
+		rt_functab[id].ft_ifree( is );
+    		is->idb_ptr = (genptr_t)0;
+    	}
+
+	if( rt_functab[id].ft_import( os, &ext, mat ) < 0 )  {
+		rt_log("transform_editing_solid(%s):  solid import failure\n",
+			illump->s_path[illump->s_last]->d_namep );
+		rt_bomb("transform_editing_solid");		/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( os );
+
 }
 
 /* put up menu header */
@@ -1031,9 +1095,16 @@ sedit()
 			acc_sc_sol = es_para[0];
 
 		}
-		for(i=3; i<=21; i+=3) { 
-			op = &es_rec.s.s_values[i];
-			VSCALE(op,op,es_scale);
+		if( new_way )  {
+			mat_t	scalemat;
+			mat_idn(scalemat);
+			scalemat[15] = 1/es_scale;
+			transform_editing_solid(&es_int, scalemat, &es_int);
+		} else {
+			for(i=3; i<=21; i+=3) { 
+				op = &es_rec.s.s_values[i];
+				VSCALE(op,op,es_scale);
+			}
 		}
 		/* reset solid scale factor */
 		es_scale = 1.0;
@@ -1044,10 +1115,20 @@ sedit()
 		if(inpara) {
 			/* Keyboard parameter.
 			 * Apply inverse of es_mat to these
-			 * model coordinates first.
+			 * model coordinates first, because sedit_mouse()
+			 * as already applied es_mat to them.
 			 */
-			MAT4X3PNT( work, es_invmat, es_para );
-			VMOVE(es_rec.s.s_values, work);
+			if( new_way )  {
+				mat_t	xlatemat;
+				/* Need vector from current vertex/keypoint
+				 * to new location.  Then apply matrix.
+				 */
+				rt_bomb("new_way");
+				transform_editing_solid(&es_int, xlatemat, &es_int);
+			} else {
+				MAT4X3PNT( work, es_invmat, es_para );
+				VMOVE(es_rec.s.s_values, work);
+			}
 		}
 		break;
 
@@ -1140,11 +1221,6 @@ sedit()
 			 * then perform new rotation
 			 */
 			mat_inv( invsolr, acc_rot_sol );
-			for(i=1; i<8; i++) {
-				op = &es_rec.s.s_values[i*3];
-				VMOVE( work, op );
-				MAT4X3VEC( op, invsolr, work );
-			}
 
 			/* Build completely new rotation change */
 			mat_idn( modelchanges );
@@ -1152,19 +1228,22 @@ sedit()
 				es_para[0] * degtorad,
 				es_para[1] * degtorad,
 				es_para[2] * degtorad );
+			/* Borrow incr_change matrix here */
+			mat_mul( incr_change, modelchanges, invsolr );
 			mat_copy(acc_rot_sol, modelchanges);
 
 			/* Apply new rotation to solid */
-			for(i=1; i<8; i++) {
-				op = &es_rec.s.s_values[i*3];
-				VMOVE( work, op );
-				MAT4X3VEC( op, modelchanges, work );
-			}
 			/*  Clear out solid rotation */
 			mat_idn( modelchanges );
-
 		}  else  {
-			/* Apply incremental changes */
+			/* Apply incremental changes already in incr_change */
+		}
+		/* Apply changes to solid */
+		if( new_way )  {
+			/* XXX Need to xlate keypoint to origin, then rotate, then put back. */
+			rt_bomb("new_way");
+			transform_editing_solid(&es_int, incr_change, &es_int);
+		} else {
 			for(i=1; i<8; i++) {
 				op = &es_rec.s.s_values[i*3];
 				VMOVE( work, op );
@@ -1243,6 +1322,7 @@ CONST vect_t	mousevec;
 		 * project result back to model space.
 		 */
 		/* XXX this makes bad assumptions about format of es_rec !! */
+		/* XXX new_way */
 		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 		MAT4X3PNT( pos_view, model2view, temp );
 		pos_view[X] = mousevec[X];
@@ -1445,6 +1525,9 @@ register vect_t		unitv;
 
 #define EPSILON 1.0e-7
 
+/*
+ *  The only "solidrec" argument ever used is &es_res.s
+ */
 void
 vls_solid( vp, sp, mat )
 register struct rt_vls	*vp;
@@ -1459,16 +1542,21 @@ CONST mat_t		mat;
 
 	RT_VLS_CHECK(vp);
 
-	/* Fake up an external record.  Does not need to be freed */
-	sol = *sp;		/* struct copy */
-	RT_INIT_EXTERNAL(&ext);
-	ext.ext_nbytes = sizeof(sol);
-	ext.ext_buf = (genptr_t)&sol;
+	if( new_way )  {
+		id = es_int.idb_type;
+		transform_editing_solid( &intern, mat, &es_int );
+	} else {
+		/* Fake up an external record.  Does not need to be freed */
+		sol = *sp;		/* struct copy */
+		RT_INIT_EXTERNAL(&ext);
+		ext.ext_nbytes = sizeof(sol);
+		ext.ext_buf = (genptr_t)&sol;
 
-	id = rt_id_solid( &ext );
-	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
-		printf("vls_solid: database import error\n");
-		return;
+		id = rt_id_solid( &ext );
+		if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
+			printf("vls_solid: database import error\n");
+			return;
+		}
 	}
 
 	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
@@ -1583,36 +1671,71 @@ torcom:
 
 	case MENU_ELL_SCALE_A:
 		/* scale vector A */
-		op = &es_rec.s.s_ell_A;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)es_int.idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(ell->a);
+			}
+			VSCALE( ell->a, ell->a, es_scale );
+		} else {
+			op = &es_rec.s.s_ell_A;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_ELL_SCALE_B:
 		/* scale vector B */
-		op = &es_rec.s.s_ell_B;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)es_int.idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(ell->b);
+			}
+			VSCALE( ell->b, ell->b, es_scale );
+		} else {
+			op = &es_rec.s.s_ell_B;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_ELL_SCALE_C:
 		/* scale vector C */
-		op = &es_rec.s.s_ell_C;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)es_int.idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(ell->c);
+			}
+			VSCALE( ell->c, ell->c, es_scale );
+		} else {
+			op = &es_rec.s.s_ell_C;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_TGC_SCALE_C:
@@ -1685,20 +1808,37 @@ torcom:
 		break;
 
 	case MENU_ELL_SCALE_ABC:	/* scale A,B, and C of ellg */
-		op = &es_rec.s.s_ell_A;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)es_int.idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_scale = es_para[0] * es_mat[15] /
+					MAGNITUDE(ell->a);
+			}
+			VSCALE( ell->a, ell->a, es_scale );
+			ma = MAGNITUDE( ell->a );
+			mb = MAGNITUDE( ell->b );
+			VSCALE(ell->b, ell->b, ma/mb);
+			mb = MAGNITUDE( ell->c );
+			VSCALE(ell->c, ell->c, ma/mb);
+		} else {
+			op = &es_rec.s.s_ell_A;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
+			ma = MAGNITUDE( op );
+			op = &es_rec.s.s_ell_B;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
+			op = &es_rec.s.s_ell_C;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
 		}
-		VSCALE(op, op, es_scale);
-		ma = MAGNITUDE( op );
-		op = &es_rec.s.s_ell_B;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
-		op = &es_rec.s.s_ell_C;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
 		break;
 
 	}
@@ -1922,31 +2062,33 @@ sedit_accept()
 
 	/* write editing changes out to disc */
 	dp = illump->s_path[illump->s_last];
-#if 1
-	db_put( dbip, dp, &es_rec, 0, 1 );
-#else
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0 ) < 0 )  {
-		rt_log("sedit_accept(%s):  solid export failure\n", dp->d_namep);
+	if( !new_way )  {
+		db_put( dbip, dp, &es_rec, 0, 1 );
+	} else {
+		/* Scale change on export is 1.0 -- no change */
+		if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0 ) < 0 )  {
+			rt_log("sedit_accept(%s):  solid export failure\n", dp->d_namep);
+		    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+			db_free_external( &es_ext );
+			return;				/* FAIL */
+		}
 	    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-		db_free_external( &es_ext );
-		return;				/* FAIL */
-	}
-    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 
-	/* Depends on solid names always being in the same place */
-	rec = (union record *)es_ext.ext_buf;
-	NAMEMOVE( dp->d_namep, rec->s.s_name );
+		/* Depends on solid names always being in the same place */
+		rec = (union record *)es_ext.ext_buf;
+		NAMEMOVE( dp->d_namep, rec->s.s_name );
 
-	if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
-		db_free_external( &es_ext );
-		ERROR_RECOVERY_SUGGESTION;
-		WRITE_ERR_return;
+		if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
+			db_free_external( &es_ext );
+			ERROR_RECOVERY_SUGGESTION;
+			WRITE_ERR_return;
+		}
 	}
-#endif
+
 	es_edflag = -1;
 	menuflag = 0;
 	movedir = 0;
+	new_way = 0;
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	db_free_external( &es_ext );
@@ -1963,6 +2105,7 @@ sedit_reject()
 	menuflag = 0;
 	movedir = 0;
 	es_edflag = -1;
+	new_way = 0;
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	db_free_external( &es_ext );
