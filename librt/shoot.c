@@ -44,6 +44,24 @@ struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
 
 HIDDEN int shoot_tree();
 
+void get_bitv();
+union bitv_elem {
+	union bitv_elem	*be_next;
+	bitv_t		be_v[2];
+};
+union bitv_elem *FreeBitv;		/* Head of freelist */
+#define BITV_NULL	((union bitv_elem *)0)
+
+#define GET_BITV(p)    {	RES_ACQUIRE(&res_bitv); \
+			while( ((p)=FreeBitv) == BITV_NULL ) \
+				get_bitv(); \
+			FreeBitv = (p)->be_next; \
+			p->be_next = BITV_NULL; \
+			RES_RELEASE(&res_bitv); }
+#define FREE_BITV(p)   {	RES_ACQUIRE(&res_bitv); \
+			(p)->be_next = FreeBitv; FreeBitv = (p); \
+			RES_RELEASE(&res_bitv); }
+
 /*
  *  			S H O O T R A Y
  *  
@@ -86,7 +104,7 @@ register struct application *ap;
 	auto vect_t point;
 	auto fastf_t	box_start, box_end, model_end;
 	auto fastf_t	last_bool_start;
-	auto bitv_t *solidbits;		/* bits for all solids shot so far */
+	auto union bitv_elem *solidbits;/* bits for all solids shot so far */
 	auto bitv_t *regionbits;	/* bits for all involved regions */
 	auto int trybool;
 	auto char *status;
@@ -99,7 +117,7 @@ register struct application *ap;
 	InitialPart.pt_forw = InitialPart.pt_back = &InitialPart;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 
-	solidbits = (bitv_t *)0;		/* not allocated yet */
+	solidbits = BITV_NULL;		/* not allocated yet */
 
 	if(debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		VPRINT("\nPnt", ap->a_ray.r_pt);
@@ -149,11 +167,9 @@ register struct application *ap;
 		box_start = 0.0;	/* don't look back */
 	last_bool_start = box_start;
 
-	solidbits = (bitv_t *)vmalloc(
-		BITS2BYTES(nsolids) + BITS2BYTES(nregions) + 4*sizeof(bitv_t),
-		"solidbits+regionbits");
-	regionbits = &solidbits[2+(BITS2BYTES(nsolids)/sizeof(bitv_t))];
-	BITZERO(solidbits,nsolids);
+	GET_BITV( solidbits );	/* see get_bitv() for details */
+	regionbits = &solidbits->be_v[2+(BITS2BYTES(nsolids)/sizeof(bitv_t))];
+	BITZERO(solidbits->be_v,nsolids);
 	BITZERO(regionbits,nregions);
 	HeadSeg = SEG_NULL;
 	lastcut = CUTTER_NULL;
@@ -217,7 +233,7 @@ register struct application *ap;
 			register struct seg *newseg;
 
 			stp = cutp->bn.bn_list[ret];
-			if( BITTEST( solidbits, stp->st_bit ) )  {
+			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
 				if(debug&DEBUG_SHOOT)rtlog("skipping %s\n", stp->st_name);
 				nmiss_tree++;
 				continue;	/* already shot */
@@ -225,7 +241,7 @@ register struct application *ap;
 
 			/* Shoot a ray */
 			if(debug&DEBUG_SHOOT)rtlog("shooting %s\n", stp->st_name);
-			BITSET( solidbits, stp->st_bit );
+			BITSET( solidbits->be_v, stp->st_bit );
 
 			/* If ray does not strike the bounding RPP, skip on */
 			if(
@@ -401,8 +417,9 @@ freeup:
 		}
 	}
 out:
-	if( solidbits != (bitv_t *)0)
-		vfree((char *)solidbits, "solidbits");
+	if( solidbits != BITV_NULL)  {
+		FREE_BITV( solidbits );
+	}
 	if(debug&(DEBUG_SHOOT|DEBUG_ALLRAYS))
 		rtlog( "%s, ret%d\n", status, ret);
 	if( debug )  fflush(stderr);
@@ -535,4 +552,36 @@ int nbits;
 	words = (nbits+BITV_MASK)>>BITV_SHIFT;/*BITS2BYTES()/sizeof(bitv_t)*/
 	while( words-- > 0 )
 		*out++ |= *in++;
+}
+
+/*
+ *  			G E T _ B I T V
+ *  
+ *  This routine is called by the GET_BITV macro when the freelist
+ *  is exhausted.  Rather than simply getting one additional structure,
+ *  we get a whole batch, saving overhead.  When this routine is called,
+ *  the bitv resource must already be locked.
+ *  malloc() locking is done in vmalloc.
+ *
+ *  Also note that there is a bit of trickery going on here:
+ *  the *real* size of be_v[] array is determined at runtime, here.
+ */
+void
+get_bitv()  {
+	register char *cp;
+	register int bytes;
+	register int size;		/* size of structure to really get */
+
+	size = BITS2BYTES(nsolids) + BITS2BYTES(nregions) + 4*sizeof(bitv_t);
+	bytes = byte_roundup(16*size);
+	if( (cp = vmalloc(bytes, "get_bitv")) == (char *)0 )  {
+		rtlog("get_bitv: malloc failure\n");
+		exit(17);
+	}
+	while( bytes >= size )  {
+		((union bitv_elem *)cp)->be_next = FreeBitv;
+		FreeBitv = (union bitv_elem *)cp;
+		cp += size;
+		bytes -= size;
+	}
 }

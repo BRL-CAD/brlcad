@@ -161,6 +161,7 @@ char **argv;
 	RES_RELEASE( &res_pt );
 	RES_RELEASE( &res_seg );
 	RES_RELEASE( &res_malloc );
+	RES_RELEASE( &res_bitv );
 #ifdef HEP
 	scanbuf = vmalloc( npts*npts*3 + sizeof(long), "scanbuf" );
 #endif
@@ -219,6 +220,7 @@ char **argv;
 	for( x=0; x<npsw; x++ )  {
 		get_pt();
 		get_seg();
+		get_bitv();
 	}
 	vfree( vmalloc( (20+npsw)*8192, "worker prefetch"), "worker");
 
