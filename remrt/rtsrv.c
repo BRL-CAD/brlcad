@@ -372,21 +372,21 @@ ph_start(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
 {
-#define MAXARGS 48
-	char	*cmd_args[MAXARGS+1];
-	int	numargs;
+#define MAXARGS 1024
+	char	*argv[MAXARGS+1];
+	int	argc;
 	struct rt_i *rtip;
 	register int i;
 
 	if( debug )  fprintf(stderr, "ph_start: %s\n", buf );
 
-	if( (numargs = rt_split_cmd( cmd_args, MAXARGS, buf )) <= 0 )  {
+	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
 		(void)free(buf);
 		return;
 	}
 
-	if( numargs < 2 )  {
+	if( argc < 2 )  {
 		rt_log("ph_start:  no objects? %s\n", buf);
 		(void)free(buf);
 		return;
@@ -397,8 +397,8 @@ char *buf;
 		return;
 	}
 
-	title_file = rt_strdup(cmd_args[0]);
-	title_obj = rt_strdup(cmd_args[1]);
+	title_file = rt_strdup(argv[0]);
+	title_obj = rt_strdup(argv[1]);
 
 	rt_prep_timer();		/* Start timing preparations */
 
@@ -411,9 +411,10 @@ char *buf;
 	rt_log( "db title:  %s\n", idbuf);
 
 	/* Load the desired portion of the model */
-	for( i=1; i<numargs; i++ )  {
-		(void)rt_gettree(rtip, cmd_args[i]);
-	}
+#define npsw 1		/* XXXXXXXXX Temp. disable parallel prep, it may be buggy XXXXX -M */
+	if( rt_gettrees(rtip, argc-1, argv+1, npsw) < 0 )
+		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[1]);
+#undef npsw
 
 	/* In case it changed from startup time */
 	if( npsw > 1 )  {
@@ -453,6 +454,7 @@ char	*buf;
 		while( *cp && *cp != ';' )  cp++;
 		*cp++ = '\0';
 		/* Process this command */
+		if( debug )  rt_log("process_cmd '%s'\n", sp);
 		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )  {
 			rt_log("process_cmd: error on '%s'\n", sp );
 			exit(1);
