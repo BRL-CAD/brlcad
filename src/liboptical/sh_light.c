@@ -730,7 +730,7 @@ light_setup(register struct region *rp,
 	BU_LIST_INSERT( &(LightHead.l), &(lsp->l) );
 
 	if (rdebug&RDEBUG_LIGHT)
-		light_print(rp, lsp);
+		light_print(rp, (char *)lsp);
 
 	if (lsp->lt_invisible )  {
 		return(2);	/* don't show light, destroy it later */

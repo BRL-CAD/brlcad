@@ -128,7 +128,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, struct
 	if (bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
-	if (rdebug&RDEBUG_SHADE) air_print(rp, air_sp);
+	if (rdebug&RDEBUG_SHADE) air_print(rp, (char *)air_sp);
 
 	return(1);
 }
