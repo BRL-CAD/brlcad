@@ -46,10 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-X.h"
-
-/*XXX This is just temporary!!! */
-#include "../mged/solid.h"
-#include "../mged/sedit.h"
+#include "solid.h"
 
 #define FONTBACK	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 #define FONT5	"5x7"
@@ -110,6 +107,9 @@ struct dm dm_X = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
   0
 };
 
@@ -120,9 +120,8 @@ struct x_vars head_x_vars;
 static int perspective_table[] = { 30, 45, 60, 90 };
 
 static int
-X_init(dmp, color_func, argc, argv)
+X_init(dmp, argc, argv)
 struct dm *dmp;
-void (*color_func)();
 int argc;
 char *argv[];
 {
@@ -134,10 +133,8 @@ char *argv[];
 
   bu_vls_printf(&dmp->dmr_pathName, ".dm_x%d", count++);
 
-  dmp->dmr_vars = bu_malloc(sizeof(struct x_vars), "X_init: x_vars");
-  bzero((void *)dmp->dmr_vars, sizeof(struct x_vars));
+  dmp->dmr_vars = bu_calloc(1, sizeof(struct x_vars), "X_init: x_vars");
   ((struct x_vars *)dmp->dmr_vars)->perspective_angle = 3;
-  ((struct x_vars *)dmp->dmr_vars)->color_func = color_func;
 
   /* initialize the modifiable variables */
   ((struct x_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
@@ -724,7 +721,8 @@ static void
 X_colorchange(dmp)
 struct dm *dmp;
 {
-  ((struct x_vars *)dmp->dmr_vars)->color_func();
+  /* apply colors to the solid table */
+  dmp->dmr_cfunc();
 }
 
 /* ARGSUSED */

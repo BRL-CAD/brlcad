@@ -54,13 +54,10 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-ogl.h"
+#include "solid.h"
 
-/*XXX This is just temporary!!! */
-#include "../mged/solid.h"
-#include "../mged/sedit.h"
-
-#define VIEWFACTOR      (1/(*((struct ogl_vars *)dmp->dmr_vars)->viewscale))
-#define VIEWSIZE        (2*(*((struct ogl_vars *)dmp->dmr_vars)->viewscale))
+#define VIEWFACTOR      (1/(*dmp->dmr_vp))
+#define VIEWSIZE        (2*(*dmp->dmr_vp))
 
 /* these are from /usr/include/gl.h could be device dependent */
 #define XMAXSCREEN	1279
@@ -134,6 +131,9 @@ struct dm dm_ogl = {
   0,				/* mem map */
   0,
   0,
+  0,
+  0,
+  0,
   0
 };
 
@@ -143,7 +143,7 @@ struct ogl_vars head_ogl_vars;
 int perspective_table[] = {
 	30, 45, 60, 90 };
 
-static fastf_t default_viewscale = 1.0;
+static fastf_t default_viewscale = 1000.0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
 static double	ylim_view = 1.0;
 
@@ -214,22 +214,18 @@ register int y;
 }
 
 static int
-Ogl_init(dmp, color_func)
+Ogl_init(dmp, argc, argv)
 struct dm *dmp;
-void (*color_func)();
+int argc;
+char *argv[];
 {
-  dmp->dmr_vars = bu_malloc(sizeof(struct ogl_vars),
-			    "Ogl_init: ogl_vars");
-  bzero((void *)dmp->dmr_vars, sizeof(struct ogl_vars));
-
+  dmp->dmr_vars = bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
   ((struct ogl_vars *)dmp->dmr_vars)->devmotionnotify = LASTEvent;
   ((struct ogl_vars *)dmp->dmr_vars)->devbuttonpress = LASTEvent;
   ((struct ogl_vars *)dmp->dmr_vars)->devbuttonrelease = LASTEvent;
   ((struct ogl_vars *)dmp->dmr_vars)->perspective_angle = 3;
   ((struct ogl_vars *)dmp->dmr_vars)->aspect = 1.0;
   ((struct ogl_vars *)dmp->dmr_vars)->ovec = -1;
-  ((struct ogl_vars *)dmp->dmr_vars)->viewscale = &default_viewscale;
-  ((struct ogl_vars *)dmp->dmr_vars)->color_func = color_func;
 
   /* initialize the modifiable variables */
   ((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on = 1; /* Depth cueing flag - for colormap work */
@@ -351,14 +347,15 @@ struct dm *dmp;
       glEnable(GL_FOG);
 #if 1
       /*XXX Need to do something with Viewscale */
-      fogdepth = 2.2 * (*((struct ogl_vars *)dmp->dmr_vars)->viewscale); /* 2.2 is heuristic */
+      fogdepth = 2.2 * (*dmp->dmr_vp); /* 2.2 is heuristic */
 #else
       fogdepth = 2.2; /* 2.2 is heuristic */
 #endif
       glFogf(GL_FOG_END, fogdepth);
 #if 1
 /*XXX Need to do something with Viewscale */
-      fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dmp->dmr_vars)->mvars.fogdensity/(*((struct ogl_vars *)dmp->dmr_vars)->viewscale));
+      fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dmp->dmr_vars)->mvars.fogdensity/
+			    (*dmp->dmr_vp));
 #else
       fogdepth = (GLfloat) 0.5*((struct ogl_vars *)dmp->dmr_vars)->mvars.fogdensity;
 #endif
@@ -943,7 +940,7 @@ struct dm *dmp;
 		glColor3ub( (short)255,  (short)255,  (short)255 );
 
 		/* apply region-id based colors to the solid table */
-		((struct ogl_vars *)dmp->dmr_vars)->color_func();
+		dmp->dmr_cfunc();
 
 		return;
 	}
@@ -970,7 +967,7 @@ struct dm *dmp;
 	((struct ogl_vars *)dmp->dmr_vars)->ovec = -1;	/* Invalidate the old colormap entry */
 
 	/* apply region-id based colors to the solid table */
-	((struct ogl_vars *)dmp->dmr_vars)->color_func();
+	dmp->dmr_cfunc();
 
 	/* best to do this before the colorit */
 	if (((struct ogl_vars *)dmp->dmr_vars)->mvars.cueing_on && ((struct ogl_vars *)dmp->dmr_vars)->mvars.lighting_on){
@@ -1672,7 +1669,7 @@ struct dm *dmp;
 
   if( ((struct ogl_vars *)dmp->dmr_vars)->mvars.rgb )  return;
 
-  FOR_ALL_SOLIDS( sp )  {
+  FOR_ALL_SOLIDS(sp, &dmp->dmr_hp->l)  {
     r = sp->s_color[0];
     g = sp->s_color[1];
     b = sp->s_color[2];

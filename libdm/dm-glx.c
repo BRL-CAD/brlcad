@@ -74,10 +74,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-glx.h"
-
-/*XXX This is just temporary!!! */
-#include "../mged/solid.h"
-#include "../mged/sedit.h"
+#include "solid.h"
 
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
@@ -180,6 +177,9 @@ struct dm dm_glx = {
   0,			/* mem map */
   0,
   0,
+  0,
+  0,
+  0,
   0
 };
 
@@ -212,17 +212,16 @@ register int y;
 
 
 static int
-Glx_init(dmp, color_func)
+Glx_init(dmp, argc, argv)
 struct dm *dmp;
-void (*color_func)();
+int argc;
+char *argv[];
 {
-  dmp->dmr_vars = bu_malloc(sizeof(struct glx_vars), "Glx_init: struct glx_vars");
-  bzero((void *)dmp->dmr_vars, sizeof(struct glx_vars));
+  dmp->dmr_vars = bu_calloc(1, sizeof(struct glx_vars), "Glx_init: struct glx_vars");
   ((struct glx_vars *)dmp->dmr_vars)->devmotionnotify = LASTEvent;
   ((struct glx_vars *)dmp->dmr_vars)->devbuttonpress = LASTEvent;
   ((struct glx_vars *)dmp->dmr_vars)->devbuttonrelease = LASTEvent;
   ((struct glx_vars *)dmp->dmr_vars)->perspective_angle = 3;
-  ((struct glx_vars *)dmp->dmr_vars)->color_func = color_func;
 
   /* initialize the modifiable variables */
   ((struct glx_vars *)dmp->dmr_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
@@ -1192,7 +1191,7 @@ struct dm *dmp;
 		RGBcolor( (short)255, (short)255, (short)255 );
 
 		/* apply region-id based colors to the solid table */
-		((struct glx_vars *)dmp->dmr_vars)->color_func();
+		dmp->dmr_cfunc();
 
 		return;
 	}
@@ -1216,7 +1215,7 @@ struct dm *dmp;
 	ovec = -1;	/* Invalidate the old colormap entry */
 
 	/* apply region-id based colors to the solid table */
-	((struct glx_vars *)dmp->dmr_vars)->color_func();
+	dmp->dmr_cfunc();
 
 	/* Map the colors in the solid table to colormap indices */
 	Glx_colorit(dmp);
@@ -1240,7 +1239,7 @@ struct dm *dmp;
 
 	if( ((struct glx_vars *)dmp->dmr_vars)->mvars.rgb )  return;
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &dmp->dmr_hp->l)  {
 		r = sp->s_color[0];
 		g = sp->s_color[1];
 		b = sp->s_color[2];

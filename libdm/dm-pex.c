@@ -55,10 +55,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-pex.h"
-
-/*XXXX Temporary */
-#include "../mged/solid.h"
-#include "../mged/sedit.h"
+#include "solid.h"
 
 #define FONTBACK        "-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 #define FONT5   "5x7"
@@ -125,6 +122,9 @@ struct dm dm_pex = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
   0
 };
 
@@ -139,14 +139,13 @@ static int cue_num = 1;
 static int perspective_table[] = { 30, 45, 60, 90 };
 
 static int
-Pex_init(dmp, color_func)
+Pex_init(dmp, argc, argv)
 struct dm *dmp;
-void (*color_func)();
+int argc;
+char *argv[];
 {
-  dmp->dmr_vars = bu_malloc(sizeof(struct pex_vars), "Pex_init: pex_vars");
-  bzero((void *)dmp->dmr_vars, sizeof(struct pex_vars));
+  dmp->dmr_vars = bu_calloc(1, sizeof(struct pex_vars), "Pex_init: pex_vars");
   ((struct pex_vars *)dmp->dmr_vars)->perspective_angle = 3;
-  ((struct pex_vars *)dmp->dmr_vars)->color_func = color_func;
 
   /* initialize the modifiable variables */
   ((struct pex_vars *)dmp->dmr_vars)->mvars.dummy_perspective = 1;
@@ -664,7 +663,7 @@ struct dm *dmp;
 		      ((struct pex_vars *)dmp->dmr_vars)->rattrs.depth_cue_table,
 		      cue_num, 1, PEXLUTDepthCue, &cue_entry );
 #endif
-  ((struct pex_vars *)dmp->dmr_vars)->color_func(); /* apply colors to the solid table */
+  dmp->dmr_cfunc(); /* apply colors to the solid table */
 }
 
 /* ARGSUSED */
