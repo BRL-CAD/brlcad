@@ -1,0 +1,55 @@
+.\" Copyright (c) 1988, Curtin University of Technology
+.TH RLE_ADDHIST 3 9/9/88 3
+.UC 4 
+
+.SH NAME
+rle_addhist \- add a history comment to an RLE file.
+
+.SH SYNOPSIS
+.B
+#include <rle.h>
+.sp
+.B
+void  rle_addhist( argv, in_hdr, out_hdr )
+.br
+.B
+char **argv;
+.br
+.B
+rle_hdr *in_hdr, *out_hdr;
+
+.SH DESCRIPTION
+
+.I rle_addhist
+is used to add history comments to the 
+.IR RLE (5)
+file in the form:
+.br
+	HISTORY=cmd arg1 arg2 on Tue Sep 13 01:06:49 WST 1988
+.br
+where cmd, arg1, etc. are the command line arguments which have been
+used to generate or filter this \fIRLE\fP file. The HISTORY comment is
+always appended to so that an accumulated history is kept along with a
+timestamp.  Programs which generate \fIRLE\fP files should call
+.I rle_addhist
+as follows:
+.br
+	rle_addhist(argv,(rle_hdr *)0,&out_hdr);
+.br
+Programs which filter \fIRLE\fP files should call 
+.I rle_addhist
+as:
+.br
+	rle_addhist(argv,&in_hdr,&out_hdr);
+.SH SEE ALSO
+.na
+.IR rle_hdr (3),
+.IR rle_putcom (3),
+.IR rle_getcom (3),
+.IR librle (3),
+.IR RLE (5).
+.ad b
+.SH AUTHOR
+Andrew Marriott,
+.br
+Curtin University of Technology (Australia)

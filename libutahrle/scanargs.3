@@ -1,0 +1,429 @@
+.TH SCANARGS 3 "7/23/90"
+.SH NAME
+scanargs, qscanargs - formatted conversion from command argument list
+.SH SYNOPSIS
+.B "#include <stdio.h>"
+.PP
+.B "scanargs(argc, argv, format" 
+[, pointer]...
+.B )
+.br
+.B "int argc;"
+.br
+.B "char *argv[];"
+.br
+.B "char *format;"
+.SH DESCRIPTION
+.I Scanargs
+reads
+.I argc
+arguments from an argument list pointed to by
+.I argv.
+It converts the argument list according to the format string,
+and stores the results of the conversions in its parameters.
+.PP
+Scanargs expects as its parameters an argument count
+.I argc,
+a pointer to an argument list 
+.I argv
+(see 
+.IR exec (2)),
+a control string
+.I format,
+described below, and a set of
+.I pointer
+arguments indicating where the converted output should be stored.
+.PP
+The control string contains specifications, which are used to direct
+interpretation of argument sequences.  It contains
+the necessary information to describe an acceptable 
+syntax for the argument list, and the expected meaning of each argument.
+.PP
+If the scanning fails it will print a cryptic 
+message telling why it failed, and generate a 
+.I usage
+message from the control string.
+.PP
+The control string is composed of two parts:
+.PP
+.B Name:\ \ 
+The first characters in the string are assumed to be the calling 
+name of the program being executed. This is used for generation of
+usage messages, but is otherwise ignored.
+If this field is a % sign, it is replaced with the contents of
+.IR argv [0]
+in the message.
+.PP
+.B Conversions:\ \ 
+Following the name, an optional list of conversion specifications is given,
+with separating spaces.  The structure of a conversion specification:
+.RS
+.PP
+.B "label_key_conversion"
+.RE
+.PP
+consists of a
+.I label
+which is a string of non-space characters describing the acceptable
+argument, a
+.I key
+which may be either of
+.TP 4
+.B %
+The argument is optional. Its absence is ignored.
+.TP 4 
+.B !
+A required argument. If absent, an error return ensues.
+.PP
+The
+.I conversion
+character indicates the interpretation of the argument; the corresponding
+pointer parameter must be of a restricted type.
+.PP
+The following conversion characters are supported:
+.TP 4
+.B d D
+a decimal integer is expected; the corresponding parameter should be an 
+.I int
+or a
+.I long
+(if
+.B D
+is specified) pointer.
+.TP 4
+.B o O
+an octal integer is expected; the corresponding parameter should be an 
+.I int
+or a
+.I long
+pointer.
+.TP 4
+.B x X
+a hexadecimal integer is expected; the corresponding parameter should be an 
+.I int
+or a
+.I long
+pointer.
+.TP 4
+.B n N
+an integer numeric conversion using 
+.I C
+language syntax.  Numbers beginning 
+.B 0x
+are hexadecimal, numbers beginning
+.B 0
+are octal, and other numbers are decimal.  Negative hex numbers must have
+the minus sign
+.I following
+the
+.BR 0x ,
+i.e. negative 0xa would be given as 0x\-a.  The corresponding pointer
+should point to an
+.I int
+or a
+.I long.
+.TP 4
+.B f F
+a floating point number is expected; the corresponding parameter should
+be a pointer to a
+.I float
+or a
+.I double.
+.TP 4
+.B s
+a character string is expected; the corresponding parameter should be the
+address of a pointer to
+.I char.
+.TP 4
+.B \-
+a single character flag is expected; the corresponding parameter should
+be an 
+.I int
+pointer.  The occurrence of a
+.B \-
+followed by the character specified in the label
+will cause the setting of the least significant bit of the integer pointed to 
+by the corresponding parameter.  The label may consist of up to sixteen
+(actually, up to the number of bits in an \fIint\fP) option
+characters, in which case one of the bits of the integer is independently
+set to reflect which one of the flags was present. (The right most character
+corresponds to the LSB of the integer)  Only one option may be chosen from
+each conversion specification.  The bits which are not set will remain in
+their previous state.  For example, a specification of 
+.B abc%\-
+would match one of
+.B \-a \-b
+or
+.B \-c
+in the argument list. 
+.B \-c
+would cause the corresponding variable to be set to 1, 
+.B \-b
+to 2, and
+.B \-a
+to 4.  (Actually, these bits would be ored in, but assuming an initial value
+of 0, this is true).
+.PP
+.RS 4
+The
+.B \-
+may be followed immediately by more label_key_conversion specifications.
+These should not be separated by blanks and should not contain any
+.B \-
+specifications.  They will be processed only if the flag argument is scanned.
+This allows optional specification of parameters corresponding to a flag
+(e.g.
+.I \-f file
+).  Corresponding arguments on the command line must appear between the flag
+which introduces them and the next flag in the command line.
+.RE
+.TP 4
+.B $
+This may appear only as the last specifier in the format string, and is used
+to "eat up" the rest of the command arguments.  The corresponding function
+argument is an
+.I int
+pointer.  An index into
+.I argv
+to the dividing point between the arguments which have been used, and those
+which have not is returned.  This index points to the first unused command
+argument.  If there is no such dividing point, an error
+will be generated (but \fB$\fP may match zero arguments, as long as
+the entire set of arguments has already been matched).
+.PP
+A string or numeric conversion character may be preceded by a
+`\fB*\fP' or a `\fB,\fP' to indicate that a list of such arguments is
+expected.  If `\fB,\fP' is used, then the AT&T proposed argument
+standard is followed, and a single string is expected, with the
+individual list elements separated by commas or spaces.  Two commas in
+a row will produce a null entry (0 if numeric, zero-length string if
+string conversion), but multiple spaces, and spaces following a comma,
+are taken as a single separator.  If
+`\fB*\fP'
+is specified, then multiple arguments are parsed to produce the list.  A
+format specifier with a
+`\fB*\fP'
+or a
+`\fB,\fP'
+takes two arguments.  The first is an
+.B int
+pointer, the number of items in the list is returned here.  The second is a
+pointer to pointer to the correct data type for the format specifier.  A
+pointer to the list of arguments is returned here.
+.PP
+The scanner will process the control string from left to right,
+and where there are multiple conversions of the same type, they will
+be assigned one to one with their order of occurrence in the argument list.
+Where the order of the arguments is not ambiguous in the control string,
+they may occur in any order in the argument list. (ie. A decimal number
+will not be confused with a flag, but may
+be confused with an octal number or another decimal number. So if an
+octal and a decimal number are to be arguments, their order will determine
+their conversion, while a decimal number and a flag as arguments may occur
+in any order and still be converted correctly.)
+.PP
+An argument list that does not match the requirements of the control
+string will cause the printing of a short message telling why, and
+a message telling what the correct usage is.
+This usage is gleaned from the control string, and the labels are used
+directly.  The labels should be both terse and descriptive!  Spaces, tabs,
+and newlines in the format string will be reproduced in the usage message,
+and can be used for effective prettyprinting.  A single tab (following a
+newline) will indent the line directly under the command name in the usage
+message.
+.PP
+The
+.I scanargs
+function returns 1 when the argument list matched the requirements
+of the control string, and returns 0 if there was a failure.
+Parameters for any conversions not matched are left untouched.
+.br
+For example, the call
+.RS
+.PP
+int i; double x; char *name;
+.br
+scanargs(argc, argv, "% decimal%d floating%F file%s",
+.in 15
+&i, &x, &name );
+.RE
+.PP
+in a C program executed by the shell command
+.RS
+.PP
+.I %
+program 10 3.5397 inputfile
+.RE
+.PP
+will assign to 
+.I i
+the value 10, 
+.I x
+the value 3.5397, and
+.I name
+will point to the string "inputfile".
+.PP
+If the program was executed by the shell command
+.RS
+.PP
+.I %
+program  3.4 .7 inputfile
+.RE
+.PP
+the following would be printed on the standard error:
+.RS
+.PP
+extra arguments not processed
+.br
+usage : program [decimal] [floating] [file]
+.RE
+.PP
+because 3.4 matches the type of 'floating' and .7 matches
+the type of 'file', leaving inputfile unmatched.
+.PP
+Finally, executing the command
+.RS
+.br
+.I %
+program 10
+.RE
+.br
+would assign 10 to 
+.IR i ,
+leaving
+.I x
+and
+.I name
+unaffected.
+.PP
+This call could be used for the 
+.IR diff (1)
+command
+.RS
+.PP
+int blanks; int flags; char *file1; char *file2;
+.br
+scanargs(argc, argv, "diff b%\- efh%\- file1!s file2!s",
+.in 15
+&blanks, &flags, &file1, &file2 );
+.RE
+.PP
+and would only allow one of either 
+.BR \-e ", " \-f ,
+or
+.B \-h
+to be chosen optionally, with 
+.B \-b 
+as an independent option.
+.B File1
+and
+.B file2
+are both required.
+The usage message for this version of
+.I diff
+would be
+.RS
+.PP
+usage : diff [\-b] \-{efh} file1 file2
+.RE
+
+This call could be used for a simplified version of the
+.IR sed (1)
+command
+.RS
+.PP
+int efile; int noprint; char *script; 
+.br
+char *file1; char *file2;
+.br
+scanargs(argc, argv, 
+.in 15
+"sed n%\- f%\-editfile!s script%s file%s",
+.in 15
+&noprint, &efile, &file1, &script, &file2 );
+.RE
+.PP
+If the
+.B \-f
+option is specified, then a file name must be given as the next string
+argument.
+The usage message for this version of
+.I sed
+would be
+.RS
+.PP
+usage : sed [\-n] [\-f editfile] [script] file
+.RE
+
+.PP
+Further notes on putting together a format string:
+.PP
+It is possible for conditional arguments to be confused with
+arguments which stand alone.  For this reason, it is recommended that
+all flags (and associated conditional arguments) be specified first in
+the scanargs format string.  This ordering is not necessary for the
+command line arguments, however.  The only case which could still cause
+confusion if these rules are followed is illustrated below:
+.br
+.RS
+format string:	"prog d%\-num%d othernum%d"
+.br
+command line:	prog \-d 9
+.RE
+.br
+It is unclear whether the number 9 should be associated with the 
+.I num
+parameter or the
+.I othernum
+parameter.  
+.I Scanargs 
+assigns it to the
+.I num
+parameter.  To force it to be associated with
+.I othernum
+the
+command could be invoked as either
+.br
+.RS
+		prog 9 \-d
+.br
+or		prog \-d \-\^\- 9
+.RE
+.br
+The 
+.B \-\^\-
+in the second example is interpreted as a flag, thereby
+terminating the scan for arguments introduced by the 
+.BR \-d .
+According to the proposed standard, an argument of
+.B \-\^\-
+is to be interpreted as terminating the optional arguments on a flag.
+.PP
+Note that if the format string in the above example were
+.br
+.RS
+		"prog othernum%d d%\-num%d"
+.RE
+.br
+it would be impossible to assign a value to 
+.I num
+without also
+assigning a value to 
+.I othernum.
+A command line of
+.RS
+	prog -d 9
+.RE
+would match \fIothernum\fP with 9, leaving nothing to match \fInum\fP.
+.SH SEE ALSO
+exec(2), scanf(3S)
+.SH DIAGNOSTICS
+Returns 0 on error, 1 on success.
+.SH AUTHOR
+Gary Newman \(em Ampex Corporation
+.br
+Spencer W. Thomas \(em University of Utah
+.SH BUGS
+By its nature a call to scanargs defines a syntax
+which may be ambiguous, and although the results may be surprising, 
+they are quite predictable.

@@ -1,0 +1,39 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLE_GETSKIP 3 2/2/87 3
+.SH NAME
+rle_getskip \- Skip the rest of an input image.
+.SH SYNOPSIS
+.B
+#include <rle.h>
+.sp
+.B
+unsigned int rle_getskip( in_hdr )
+.br
+.B
+rle_hdr *in_hdr;
+.SH DESCRIPTION
+This routine skips the unread part of an
+.IR RLE (5)
+image.  
+Each time
+.I rle_getskip
+is called, a scanline in the image described by 
+.I in_hdr
+will be skipped.  
+.I rle_getskip
+returns the scanline number of the next scanline that would be read by
+.IR rle_getrow (3)
+or
+.IR rle_getraw (3).
+When the end of the image is reached,
+.I rle_getskip
+returns 32768.
+.SH SEE ALSO
+.IR rle_hdr (3),
+.IR rle_getrow (3),
+.IR rle_getraw (3),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas
+.br
+University of Utah
