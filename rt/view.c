@@ -1037,6 +1037,7 @@ char *file, *obj;
 		extern struct mfuncs cook_mfuncs[];
 		extern struct mfuncs marble_mfuncs[];
 		extern struct mfuncs stxt_mfuncs[];
+		extern struct mfuncs points_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -1047,6 +1048,7 @@ char *file, *obj;
 		mlib_add( cook_mfuncs );
 		mlib_add( marble_mfuncs );
 		mlib_add( stxt_mfuncs );
+		mlib_add( points_mfuncs );
 	}
 
 	if( minus_o )  {
