@@ -312,14 +312,14 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG	-o32 -KPIC -G 0
+#	define	GFLAG	-n32 -KPIC -G 0
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib
 #	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	LDSHARED	ld -o32 -shared
+#		define	LDSHARED	ld -n32 -shared
 #		define	BUILD_LIBRARY	LDSHARED -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -rpath LIBDIR:/usr/lib  /* -lmalloc -lc */
@@ -330,7 +330,7 @@ set -S2 "/bin/sh"
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-o32 -lm -lmalloc /* -lc */
+#		define	STANDARD_LIBES	-n32 -lm -lmalloc /* -lc */
 #	endif
 #	define	LD_OPTS		GFLAG 
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
