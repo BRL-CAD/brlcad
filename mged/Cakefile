@@ -5,6 +5,7 @@
 
 #define SRCDIR	mged
 #define PRODUCTS	mged cad_boundp cad_parea
+#define STATIC_PRODUCTS mged.tcl
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -33,10 +34,10 @@
 #    define	TCP_FILES	/**/
 #endif
 
-mged:	OBJ LIBRT_DEP LIBWDB_DEP
+mged:	OBJ LIBRT_DEP LIBWDB_DEP LIBTCL_DEP LIBTK_DEP
 	sh ../newvers.sh version "Graphics Editor (MGED)"
 	CC CFLAGS -c vers.c
-	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
+	CC -o mged LDFLAGS OBJ LIBTCL LIBTK COMPLETE_LIBES vers.o
 
 cad_boundp: cad_boundp.o
 	CC -o cad_boundp LDFLAGS cad_boundp.o LIBES

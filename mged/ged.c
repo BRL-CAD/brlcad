@@ -79,7 +79,7 @@ in all countries except the USA.  All rights reserved.";
 #include "./sedit.h"
 #include "./dm.h"
 
-#ifdef MGED_TCL
+#ifndef XMGED
 #  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #  include "tcl.h"
 #  include "tk.h"
@@ -396,7 +396,7 @@ int	non_blocking;
 	if( extrapoll_fd )  FD_SET( extrapoll_fd, &input );
 	FD_SET( fileno(stdin), &input );
 
-#ifdef MGED_TCL
+#ifndef XMGED
 	if( mged_tk_dontwait() )  non_blocking = 1;
 #endif
 
@@ -406,7 +406,7 @@ int	non_blocking;
 	if(extrapoll_fd && FD_ISSET(extrapoll_fd,&input) && extrapoll_hook)  {
 		(*extrapoll_hook)();
 	}
-#ifdef MGED_TCL
+#ifndef XMGED
 	else {
 		mged_tk_idle(non_blocking);
 	}
@@ -879,13 +879,8 @@ do_rc()
 	found = 0;
 	rt_vls_init( &str );
 
-#ifdef MGED_TCL
-# define ENVRC	"TMGED_RCFILE"
-# define RCFILE	".tmgedrc"
-#else
-# define ENVRC	"MGED_RCFILE"
-# define RCFILE	".mgedrc"
-#endif
+#define ENVRC	"MGED_RCFILE"
+#define RCFILE	".mgedrc"
 
 	if( (path = getenv(ENVRC)) != (char *)NULL ) {
 		if ((fp = fopen(path, "r")) != NULL ) {
@@ -916,7 +911,7 @@ do_rc()
 	if( !found )
 		return -1;
 
-#ifdef MGED_TCL
+#ifndef XMGED
 	fclose( fp );
 	Tcl_EvalFile( interp, rt_vls_addr(&str) );
 #else
