@@ -8,30 +8,30 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-u_short
+unsigned short
 getshort(msgp)
 	char *msgp;
 {
-	register u_char *p = (u_char *) msgp;
+	register unsigned char *p = (unsigned char *) msgp;
 #ifdef vax
 	/*
 	 * vax compiler doesn't put shorts in registers
 	 */
-	register u_long u;
+	register unsigned long u;
 #else
-	register u_short u;
+	register unsigned short u;
 #endif
 
 	u = *p++ << 8;
-	return ((u_short)(u | *p));
+	return ((unsigned short)(u | *p));
 }
 
-u_long
+unsigned long
 getlong(msgp)
 	char *msgp;
 {
-	register u_char *p = (u_char *) msgp;
-	register u_long u;
+	register unsigned char *p = (unsigned char *) msgp;
+	register unsigned long u;
 
 	u = *p++; u <<= 8;
 	u |= *p++; u <<= 8;
@@ -41,7 +41,7 @@ getlong(msgp)
 
 char *
 putshort(s, msgp)
-	register u_short s;
+	register unsigned short s;
 	register char *msgp;
 {
 
@@ -52,7 +52,7 @@ putshort(s, msgp)
 
 char *
 putlong(l, msgp)
-	register u_long l;
+	register unsigned long l;
 	register char *msgp;
 {
 
