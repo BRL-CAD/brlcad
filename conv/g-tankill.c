@@ -43,8 +43,7 @@ static char RCSid[] = "$Header$";
 #include "raytrace.h"
 #include "../librt/debug.h"
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s, int *dir, long *flags ));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static char	usage[] = "Usage:\n\
 	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\

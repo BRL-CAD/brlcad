@@ -44,8 +44,6 @@
 #include "wdb.h"
 #include "../librt/debug.h"
 
-RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
-
 #define START_ARRAY_SIZE	64
 #define ARRAY_BLOCK_SIZE	64
 

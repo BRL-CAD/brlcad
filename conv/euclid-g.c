@@ -59,9 +59,6 @@ static char RCSid[] = "$Header$";
 #define	INNER_SHELL	0x00000002
 #define INVERT_SHELL	0x00000004
 
-
-RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
-RT_EXTERN( struct faceuse *nmg_add_loop_to_face , (struct shell *s, struct faceuse *fu, struct vertex *verts[], int n, int dir ) );
 void euclid_to_brlcad();
 
 extern int errno;

@@ -88,8 +88,7 @@ struct bu_structparse vrml_mat_parse[]={
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 

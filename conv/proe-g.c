@@ -49,11 +49,6 @@ static char RCSid[] = "$Header$";
 #include "../librt/debug.h"
 #include "regex.h"
 
-RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
-RT_EXTERN( fastf_t mat_determinant , ( mat_t m ) );
-RT_EXTERN( fastf_t mat_det3 , ( mat_t m ) );
-RT_EXTERN( struct edgeuse *nmg_next_radial_eu, ( struct edgeuse *eu, struct shell *s, int wires ) );
-
 extern char *optarg;
 extern int optind,opterr,optopt;
 extern int errno;
@@ -556,7 +551,7 @@ char line[MAX_LINE_LEN];
 
 			/* convert this matrix to seperate scale factor into element #15 */
 /*			scale = MAGNITUDE( &wmem->wm_mat[0] ); */
-			scale = pow( mat_det3( wmem->wm_mat ), 1.0/3.0 );
+			scale = pow( bn_mat_det3( wmem->wm_mat ), 1.0/3.0 );
 			if( debug )
 			{
 				bn_mat_print( brlcad_name, wmem->wm_mat );

@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 

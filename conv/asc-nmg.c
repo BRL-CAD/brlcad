@@ -29,9 +29,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "rtlist.h"
 
-RT_EXTERN( struct faceuse *nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir ) );
-RT_EXTERN( fastf_t nmg_loop_plane_area, (CONST struct loopuse *lu, plane_t pl ) );
-
 static int ascii_to_brlcad();
 static void descr_to_nmg();
 

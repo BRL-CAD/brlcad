@@ -24,8 +24,6 @@
 
 #define LINE_LEN 256
 
-RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
-
 static char *usage="Usage:\n\tcy-g input_laser_scan_file output_brlcad_file.g\n";
 
 main( argc, argv )

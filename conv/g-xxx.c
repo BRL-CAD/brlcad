@@ -43,8 +43,8 @@ static char RCSid[] = "$Header$";
 #include "wdb.h"
 #include "../librt/debug.h"
 
-RT_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp ) );
-RT_EXTERN( void solid_func , ( struct db_i *dbip , struct directory *dp ) );
+BU_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp ) );
+BU_EXTERN( void solid_func , ( struct db_i *dbip , struct directory *dp ) );
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */

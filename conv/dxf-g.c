@@ -17,9 +17,6 @@
 #include "wdb.h"
 #include "../librt/debug.h"
 
-RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
-
-
 #define	LINELEN	256 /* max input line length from elements file */
 
 static char *usage="dxf-g [-v] [-d] [-p] [-t tolerance] [-i input_file] [-o output_file_name]";

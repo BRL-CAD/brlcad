@@ -104,8 +104,6 @@ static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file]
 	b - set LIBBU debug flag\n\
 	x - set RT debug flag\n";
 
-RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
-
 #define		PLATE_MODE	1
 #define		VOLUME_MODE	2
 
