@@ -25,20 +25,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 _LOCAL_ int	stk_open(),
 		stk_close(),
-		stk_reset(),
 		stk_clear(),
 		stk_read(),
 		stk_write(),
 		stk_rmap(),
 		stk_wmap(),
-		stk_viewport(),
-		stk_window(),
-		stk_zoom(),
+		stk_view(),
+		stk_getview(),
 		stk_setcursor(),
 		stk_cursor(),
-		stk_scursor(),
+		stk_getcursor(),
 		stk_readrect(),
 		stk_writerect(),
+		stk_poll(),
 		stk_flush(),
 		stk_free(),
 		stk_help();
@@ -47,20 +46,19 @@ _LOCAL_ int	stk_open(),
 FBIO stk_interface =  {
 	stk_open,		/* device_open		*/
 	stk_close,		/* device_close		*/
-	stk_reset,		/* device_reset		*/
 	stk_clear,		/* device_clear		*/
 	stk_read,		/* buffer_read		*/
 	stk_write,		/* buffer_write		*/
 	stk_rmap,		/* colormap_read	*/
 	stk_wmap,		/* colormap_write	*/
-	stk_viewport,		/* viewport_set		*/
-	stk_window,		/* window_set		*/
-	stk_zoom,		/* zoom_set		*/
-	stk_setcursor,		/* curs_set		*/
-	stk_cursor,		/* cursor_move_memory_addr */
-	stk_scursor,		/* cursor_move_screen_addr */
-	stk_readrect,		/* readrect		*/
-	stk_writerect,		/* writerect		*/
+	stk_view,		/* set view		*/
+	stk_getview,		/* get view		*/
+	stk_setcursor,		/* define cursor	*/
+	stk_cursor,		/* set cursor		*/
+	stk_getcursor,		/* get cursor		*/
+	stk_readrect,		/* read rectangle	*/
+	stk_writerect,		/* write rectangle	*/
+	stk_poll,		/* handle events	*/
 	stk_flush,		/* flush output		*/
 	stk_free,		/* free resources	*/
 	stk_help,		/* help function	*/
@@ -70,7 +68,11 @@ FBIO stk_interface =  {
 	"/dev/stack",		/* short device name	*/
 	4,			/* default/current width  */
 	4,			/* default/current height */
+	-1,			/* select fd		*/
 	-1,			/* file descriptor	*/
+	1, 1,			/* zoom			*/
+	2, 2,			/* window center	*/
+	0, 0, 0,		/* cursor		*/
 	PIXEL_NULL,		/* page_base		*/
 	PIXEL_NULL,		/* page_curp		*/
 	PIXEL_NULL,		/* page_endp		*/
@@ -144,7 +146,7 @@ int	width, height;
 			if( ifp->if_height == 0 )
 				ifp->if_height = fbp->if_height;
 
-			/* Track the minimum of all the sizes availible */
+			/* Track the minimum of all the sizes available */
 			if( fbp->if_width < ifp->if_width )
 				ifp->if_width = fbp->if_width;
 			if( fbp->if_height < ifp->if_height )
@@ -170,20 +172,6 @@ FBIO	*ifp;
 
 	while( *ip != (FBIO *)NULL ) {
 		fb_close( (*ip) );
-		ip++;
-	}
-
-	return(0);
-}
-
-_LOCAL_ int
-stk_reset( ifp )
-FBIO	*ifp;
-{
-	register FBIO **ip = SI(ifp)->if_list;
-
-	while( *ip != (FBIO *)NULL ) {
-		fb_reset( (*ip) );
 		ip++;
 	}
 
@@ -304,14 +292,15 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-stk_viewport( ifp, left, top, right, bottom )
+stk_view( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	left, top, right, bottom;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
 	while( *ip != (FBIO *)NULL ) {
-		fb_viewport( (*ip), left, top, right, bottom );
+		fb_view( (*ip), xcenter, ycenter, xzoom, yzoom );
 		ip++;
 	}
 
@@ -319,30 +308,15 @@ int	left, top, right, bottom;
 }
 
 _LOCAL_ int
-stk_window( ifp, x, y )
+stk_getview( ifp, xcenter, ycenter, xzoom, yzoom )
 FBIO	*ifp;
-int	x, y;
+int	*xcenter, *ycenter;
+int	*xzoom, *yzoom;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
-	while( *ip != (FBIO *)NULL ) {
-		fb_window( (*ip), x, y );
-		ip++;
-	}
-
-	return(0);
-}
-
-_LOCAL_ int
-stk_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	register FBIO **ip = SI(ifp)->if_list;
-
-	while( *ip != (FBIO *)NULL ) {
-		fb_zoom( (*ip), x, y );
-		ip++;
+	if( *ip != (FBIO *)NULL ) {
+		fb_getview( (*ip), xcenter, ycenter, xzoom, yzoom );
 	}
 
 	return(0);
@@ -382,15 +356,28 @@ int	x, y;
 }
 
 _LOCAL_ int
-stk_scursor( ifp, mode, x, y )
+stk_getcursor( ifp, mode, x, y )
 FBIO	*ifp;
-int	mode;
-int	x, y;
+int	*mode;
+int	*x, *y;
+{
+	register FBIO **ip = SI(ifp)->if_list;
+
+	if( *ip != (FBIO *)NULL ) {
+		fb_getcursor( (*ip), mode, x, y );
+	}
+
+	return(0);
+}
+
+_LOCAL_ int
+stk_poll( ifp )
+FBIO	*ifp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
 	while( *ip != (FBIO *)NULL ) {
-		fb_scursor( (*ip), mode, x, y );
+		fb_poll( (*ip) );
 		ip++;
 	}
 
