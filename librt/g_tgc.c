@@ -359,16 +359,16 @@ register struct ray	*rp;
 
 	/* find rotated point and direction				*/
 	MAT3XVEC( dprime, tgc->tgc_ShoR, rp->r_dir );
+	VUNITIZE( dprime );
+
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
 	MAT3XVEC( pprime, tgc->tgc_ShoR, work );
 
 	npts = stdCone( pprime, dprime, tgc, k );
 
-	if ( npts <= 0)
-		return( SEG_NULL );			/* No hit	*/
-
-	if ( npts != 2 && npts != 4 ){
-		printf("tgc(%s):  %d intersects != {2,4}\n", stp->st_name, npts );
+	if ( npts != 0 && npts != 2 && npts != 4 ){
+		printf("tgc(%s):  %d intersects != {0,2,4}\n",
+			stp->st_name, npts );
 		return( SEG_NULL );			/* No hit	*/
 	}
 
@@ -435,7 +435,7 @@ register struct ray	*rp;
 		 *  plane (in the standard coordinate system), and test
 		 *  whether this lies within the governing ellipse.
 		 */
-		b = ( pprime[2] )/dprime[2];
+		b = ( -pprime[2] )/dprime[2];
 		t = ( tgc->tgc_sH - pprime[2] )/dprime[2];
 
 		VJOIN1( work, pprime, b, dprime );
@@ -444,7 +444,7 @@ register struct ray	*rp;
 		VJOIN1( work, pprime, t, dprime );
 		Alpha( alf2, work[0], work[1], tgc->tgc_C, tgc->tgc_D );
 
-		if ( alf1 <=  1.0 ){
+		if ( alf1 <= 1.0 ){
 			pt[IN] = b;
 			VREVERSE( norm, tgc->tgc_norm );
 		} else if ( alf2 <= 1.0 ){
@@ -452,6 +452,7 @@ register struct ray	*rp;
 			VMOVE( norm, tgc->tgc_norm );
 		} else {
 			/* intersection apparently invalid  */
+			printf("tgc(%s):  only 1 intersect\n", stp->st_name);
 			return( SEG_NULL );
 		}
 
@@ -491,7 +492,7 @@ register struct ray	*rp;
 		if ( NEAR_ZERO( dir ) )
 			return( SEG_NULL );
 
-		b = ( pprime[2] )/dprime[2];
+		b = ( -pprime[2] )/dprime[2];
 		t = ( tgc->tgc_sH - pprime[2] )/dprime[2];
 
 		VJOIN1( work, pprime, b, dprime );
