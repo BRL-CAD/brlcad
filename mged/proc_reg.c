@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct bn_tol		mged_tol;
 extern struct rt_tess_tol	mged_ttol;
 static struct application	ap;
-static time_t			stime, etime;
+static time_t			start_time, etime;
 static struct bu_ptbl		leaf_list;
 static long			nvectors;
 static struct rt_i		*rtip;
@@ -1150,7 +1150,7 @@ char	**argv;
 	rtip->rti_tol = mged_tol;	/* struct copy */
 
 	nvectors = 0;
-	(void)time( &stime );
+	(void)time( &start_time );
 
 	(void)db_walk_tree( dbip, argc-start_argc, (CONST char **)(argv+start_argc), 1, &E_initial_tree_state, 0,
 		E_region_end, E_solid_end );
@@ -1172,7 +1172,7 @@ char	**argv;
 
 	color_soltab();
 
-	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, etime - stime );
+	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, etime - start_time );
 	Tcl_AppendResult(interp, perf_message, (char *)NULL);
 
 	return TCL_OK;
