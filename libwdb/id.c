@@ -53,7 +53,10 @@ CONST char	*title;
  *
  *  Make a database header (ID) record, and note the
  *  user's preferred editing units.
- *  Alas, the current database format does not have many choices.
+ *
+ *  Returns -
+ *	<0	error
+ *	0	success
  */
 int
 mk_id_units( fp, title, units )
@@ -62,33 +65,14 @@ CONST char	*title;
 register CONST char	*units;
 {
 	union record rec;
+	int	code;
 
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.i.i_id = ID_IDENT;
 
-	if( strcmp( units, "none" ) == 0 )  {
-		rec.i.i_units = ID_NO_UNIT;
-	} else if( strcmp( units, "um" ) == 0 )  {
-		rec.i.i_units = ID_UM_UNIT;
-	} else if( strcmp( units, "mm" ) == 0 )  {
-		rec.i.i_units = ID_MM_UNIT;
-	} else if( strcmp( units, "cm" ) == 0 )  {
-		rec.i.i_units = ID_CM_UNIT;
-	} else if( strcmp( units, "m" ) == 0 )  {
-		rec.i.i_units = ID_M_UNIT;
-	} else if( strcmp( units, "km" ) == 0 )  {
-		rec.i.i_units = ID_KM_UNIT;
-	} else if( strcmp( units, "in" ) == 0 )  {
-		rec.i.i_units = ID_IN_UNIT;
-	} else if( strcmp( units, "ft" ) == 0 )  {
-		rec.i.i_units = ID_FT_UNIT;
-	} else if( strcmp( units, "yd" ) == 0 )  {
-		rec.i.i_units = ID_YD_UNIT;
-	} else if( strcmp( units, "mi" ) == 0 )  {
-		rec.i.i_units = ID_MI_UNIT;
-	} else {
-		return -2;
-	}
+	if( (code = db_v4_get_units_code(units)) < 0 )
+		return -2;		/* ERROR */
+	rec.i.i_units = code;
 
 	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
 	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
@@ -96,3 +80,5 @@ register CONST char	*units;
 		return(-1);
 	return(0);
 }
+
+/* Should there be a routine which takes a local2mm arg as well? */

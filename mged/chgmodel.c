@@ -1350,35 +1350,8 @@ char	**argv;
 	  return TCL_OK;
 	}
 
-	if( strcmp(argv[1], "mm") == 0 || strcmp(argv[1], "millimeters") == 0 ) 
-		new_unit = ID_MM_UNIT;
-	else
-	if( strcmp(argv[1], "um") == 0 || strcmp(argv[1], "micrometers") == 0) 
-		new_unit = ID_UM_UNIT;
-	else
-	if( strcmp(argv[1], "cm") == 0 || strcmp(argv[1], "centimeters") == 0) 
-		new_unit = ID_CM_UNIT;
-	else
-	if( strcmp(argv[1],"m")==0 || strcmp(argv[1],"meters")==0 ) 
-		new_unit = ID_M_UNIT;
-	else
-	if( strcmp(argv[1], "km") == 0 || strcmp(argv[1], "kilometers") == 0) 
-		new_unit = ID_KM_UNIT;
-	else
-	if( strcmp(argv[1],"in")==0 || strcmp(argv[1],"inches")==0 || strcmp(argv[1],"inch")==0 ) 
-		new_unit = ID_IN_UNIT;
-	else
-	if( strcmp(argv[1],"ft")==0 || strcmp(argv[1],"feet")==0 || strcmp(argv[1],"foot")==0 ) 
-		new_unit = ID_FT_UNIT;
-	else
-	if( strcmp(argv[1],"yd")==0 || strcmp(argv[1],"yards")==0 || strcmp(argv[1],"yard")==0 ) 
-		new_unit = ID_YD_UNIT;
-	else
-	if( strcmp(argv[1],"mi")==0 || strcmp(argv[1],"miles")==0 || strcmp(argv[1],"mile")==0 ) 
-		new_unit = ID_MI_UNIT;
-
 	sf = dbip->dbi_base2local;
-	if( new_unit ) {
+	if( (new_unit = db_v4_get_units_code(argv[1])) >= 0 ) {
 		/* One of the recognized db.h units */
 		/* change to the new local unit */
 		db_conversions( dbip, new_unit );
@@ -1389,21 +1362,24 @@ char	**argv;
 				   "Warning: unable to stash working units into database\n",
 				   (char *)NULL);
 
-	} else if( (loc2mm = bu_units_conversion(argv[1]) ) <= 0 )  {
-	  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
-			   "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
-	  return TCL_ERROR;
 	} else {
-		/*
-		 *  Can't stash requested units into the database for next session,
-		 *  but there is no problem with the user editing in these units.
-		 */
-		dbip->dbi_localunit = ID_MM_UNIT;
-		dbip->dbi_local2base = loc2mm;
-		dbip->dbi_base2local = 1.0 / loc2mm;
-		Tcl_AppendResult(interp, "\
+		/* Allows inputs of the form "25cm" */
+		if( (loc2mm = bu_mm_value(argv[1]) ) <= 0 )  {
+			  Tcl_AppendResult(interp, argv[1], ": unrecognized unit\n",
+				   "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
+			return TCL_ERROR;
+		} else {
+			/*
+			 *  Can't stash requested units into the database for next session,
+			 *  but there is no problem with the user editing in these units.
+			 */
+			dbip->dbi_localunit = ID_MM_UNIT;
+			dbip->dbi_local2base = loc2mm;
+			dbip->dbi_base2local = 1.0 / loc2mm;
+			Tcl_AppendResult(interp, "\
 Due to a database restriction in the current format of .g files,\n\
 this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
+		}
 	}
 
 	set_localunit_TclVar();
