@@ -42,8 +42,8 @@ Docolor()
 
 	for( i=0 ; i<totentities ; i++ )
 	{
-		/* only set colors for regions or groups */
-		if( dir[i]->type == 180 || dir[i]->type == 184 )
+		/* only set colors for regions, groups, or solid instances */
+		if( dir[i]->type == 180 || dir[i]->type == 184 || dir[i]->type == 430 )
 		{
 			if( dir[i]->colorp > 0 ) /* just use color table */
 			{
