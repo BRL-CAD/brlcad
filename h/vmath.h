@@ -53,7 +53,7 @@
  *  Include Sequencing -
  *	#include <stdio.h>
  *	#include <math.h>
- *	#include "machine.h"	/* For fastf_t definition on this machine *_/
+ *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
  *	#include "vmath.h"
  *
  *  Libraries Used -
