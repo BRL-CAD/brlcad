@@ -192,7 +192,7 @@ system declarations and preprocessor defines.
 FILESYSTEM ORGANIZATION
 -----------------------
 
-Here is an (not comprehensive) sample of how some of the sources are
+Here is a sample (not comprehensive) of how some of the sources are
 organized in the source distribution:
 
 bench/
@@ -399,11 +399,11 @@ int everything() { return 42; };
 TESTING
 -------
 
-The need for a more formal testing plan has become more of a
-pressing issue as the size of BRL-CAD continues to grow.  As such,
-more importance on various forms of testing is becoming necessary.
+The need for a more formal testing plan has become more of a pressing
+issue as the size of BRL-CAD continues to grow.  As such, more
+importance on various forms of testing is becoming necessary.
 
-While specific plans for unit and black box testing ar not yet
+While specific plans for unit and black box testing are not yet
 finalized, the Corredor Automation Test Suite will be used to assist
 in performing cross-platform build tests, regression tests, and
 various integration and operability tests.
