@@ -368,7 +368,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	dmp->dm_newrot( dmp, mat, which_eye );
 
-	dmp->dm_setLineAttr(dmp, 1, linestyle); /* linewidth - 1, not dashed */
+	dmp->dm_setLineAttr(dmp, 1, linestyle); /* linewidth - 0, not dashed */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  sp->s_flag = DOWN;		/* Not drawn yet */
 	  /* If part of object rotation, will be drawn below */
@@ -389,41 +389,30 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    dmp->dm_setLineAttr(dmp, 1, linestyle);
 	  }
 
-	  if(sp==illump){
-	    if(!DM_SAME_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B)){
-	      dmp->dm_setColor(dmp, DM_WHITE, 1);
-	      DM_COPY_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
-	    }
-	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
-	      sp->s_flag = UP;
-	      ndrawn++;
-	    }
-	  }else{
-	    if(!DM_SAME_COLOR(r,g,b,
-			      (short)sp->s_color[0],
-			      (short)sp->s_color[1],
-			      (short)sp->s_color[2])){
-	      dmp->dm_setColor(dmp,
-			       (short)sp->s_color[0],
-			       (short)sp->s_color[1],
-			       (short)sp->s_color[2], 0);
-	      DM_COPY_COLOR(r,g,b,
-			      (short)sp->s_color[0],
-			      (short)sp->s_color[1],
-			      (short)sp->s_color[2]);
-	    }
-	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK) {
-	      sp->s_flag = UP;
-	      ndrawn++;
-	    }
+	  if(!DM_SAME_COLOR(r,g,b,
+			    (short)sp->s_color[0],
+			    (short)sp->s_color[1],
+			    (short)sp->s_color[2])){
+	    dmp->dm_setColor(dmp,
+			     (short)sp->s_color[0],
+			     (short)sp->s_color[1],
+			     (short)sp->s_color[2], 0);
+	    DM_COPY_COLOR(r,g,b,
+			  (short)sp->s_color[0],
+			  (short)sp->s_color[1],
+			  (short)sp->s_color[2]);
+	  }
+	  if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK) {
+	    sp->s_flag = UP;
+	    ndrawn++;
 	  }
 	}
 
-  if(mged_variables.m_axes)
-    draw_axes(M_AXES);  /* draw world view axis */
+	if(mged_variables.m_axes)
+	  draw_axes(M_AXES);  /* draw world view axis */
 
-  if(mged_variables.v_axes)
-    draw_axes(V_AXES);  /* draw view axis */
+	if(mged_variables.v_axes)
+	  draw_axes(V_AXES);  /* draw view axis */
 
 	/*
 	 *  Draw all solids involved in editing.
@@ -488,7 +477,7 @@ int axes;
   point_t m1, m2;
   point_t m3, m4;
   point_t r_m3, r_m4;
-  point_t   v1, v2;
+  point_t v1, v2;
   mat_t mr_mat;   /* model rotations */
   static char *labels[] = {"X", "Y", "Z"};
 
@@ -599,9 +588,8 @@ int axes;
       MAT4X3PNT(m1, view2model, v1);
       MAT4X3PNT(m2, view2model, v2);
     }else{  /* create edit axes */
-      if(state == ST_S_EDIT || state == ST_O_EDIT){
-	/* build edit axes in model coordinates */
-
+      /* build edit axes in model coordinates */
+      if(state == ST_S_EDIT){
 	/* apply rotations */
 	MAT4X3PNT(m1, acc_rot_sol, a1);
 	MAT4X3PNT(m2, acc_rot_sol, a2);
@@ -619,14 +607,23 @@ int axes;
 	m4[X] = Viewscale*a2[X] + e_axes_pos[X];
 	m4[Y] = Viewscale*a2[Y] + e_axes_pos[Y];
 	m4[Z] = Viewscale*a2[Z] + e_axes_pos[Z];
+      }else if(state == ST_O_EDIT){
+	point_t delta1, delta2;
+	point_t point1, point2;
 
-	if(OEDIT_TRAN){
-	  vect_t delta;
+	VSCALE(a1, a1, Viewscale);
+	VSCALE(a2, a2, Viewscale);
 
-	  MAT_DELTAS_GET(delta, modelchanges);
-	  VADD2(m1, delta, m1);
-	  VADD2(m2, delta, m2);
-	}
+	MAT4X3PNT(delta1, es_mat, es_keypoint);
+	MAT4X3PNT(delta2, modelchanges, delta1);
+
+	VADD2(m3, delta1, a1);
+	VADD2(m4, delta1, a2);
+
+	MAT4X3PNT(point1, acc_rot_sol, a1);
+	MAT4X3PNT(point2, acc_rot_sol, a2);
+	VADD2(m1, delta2, point1);
+	VADD2(m2, delta2, point2);
       }else
 	return;
     }
