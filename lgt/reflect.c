@@ -69,8 +69,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	}
 
 #define TWO_PI		6.28318530717958647692528676655900576839433879875022
-#define RI_AIR		1.0    /* Refractive index of air.		*/
-
+#define RI_AIR		1.0	/* Refractive index of air.		*/
 static Mat_Db_Entry	mat_tmp_entry =
 				{
 				0,		/* Material id.		*/
@@ -117,6 +116,32 @@ static struct application ag;	/* Global application structure.	*/
 #define ZeroPixel(_p)		((_p)[RED]==0 && (_p)[GRN]==0 && (_p)[BLU]==0)
 static bitv_t	hl_bits[1024][1024/HL_BITVBITS];
 static short	*hl_regmap = NULL;
+
+#define BEHIND_ME_TOL	0.01	/* Is object behind me. */
+#define PT_EMPTY	0
+#define PT_OHIT		1
+#define PT_BEHIND	2
+
+#define Get_Partition( pp, pt_headp )\
+	{	int	failure;\
+	for(	pp = pt_headp->pt_forw;\
+		(failure=PT_EMPTY, pp != pt_headp)\
+	    &&	(failure=PT_OHIT, pp->pt_outhit != (struct hit *) NULL)\
+	    &&	(failure=PT_BEHIND, pp->pt_outhit->hit_dist < BEHIND_ME_TOL);\
+		pp = pp->pt_forw\
+		)\
+		;\
+	switch( failure )\
+		{\
+	case PT_EMPTY :\
+		return	ap->a_miss( ap );\
+	case PT_OHIT :\
+		rt_log( "BUG: f_Model: Bad partition returned by rt_shootray!\n" );\
+		return	ap->a_miss( ap );\
+	case PT_BEHIND :\
+		break;\
+		}\
+	}
 
 #ifdef cray
 int	render_Scan();
@@ -448,14 +473,7 @@ struct partition *pt_headp;
 		register struct region		*regp;
 		register struct xray		*rayp;
 		register struct hit		*ihitp;
-	for(	pp = pt_headp->pt_forw;
-		pp != pt_headp
-	    &&	pp->pt_outhit->hit_dist < 0.1;
-		pp = pp->pt_forw
-		) 
-		;
-	if( pp == pt_headp || pp->pt_outhit->hit_dist < 0.1 )
-		return	ap->a_miss( ap );
+	Get_Partition( pp, pt_headp );
 	regp = pp->pt_regionp;
 	rayp = &ap->a_ray;
 	ihitp = pp->pt_inhit;
@@ -507,16 +525,7 @@ struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register struct soltab		*stp;
 		register struct hit		*ihitp;
-
-	for(	pp = pt_headp->pt_forw;
-		pp != pt_headp
-	    &&	pp->pt_outhit->hit_dist < 0.1;
-		pp = pp->pt_forw
-		) 
-		;
-	if( pp == pt_headp || pp->pt_outhit->hit_dist < 0.1 )
-		return	ap->a_miss( ap );
-
+	Get_Partition( pp, pt_headp );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
 	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
@@ -548,16 +557,7 @@ struct partition *pt_headp;
 		register struct hit		*ihitp;
 		int				material_id;
 		fastf_t				rgb_coefs[3];
-
-	for(	pp = pt_headp->pt_forw;
-		pp != pt_headp
-	    &&	pp->pt_outhit->hit_dist < 0.1;
-		pp = pp->pt_forw
-		) 
-		;
-	if( pp == pt_headp || pp->pt_outhit->hit_dist < 0.1 )
-		return	ap->a_miss( ap );
-
+	Get_Partition( pp, pt_headp );
 	stp = pp->pt_inseg->seg_stp;
 	ihitp = pp->pt_inhit;
 	RT_HIT_NORM( ihitp, stp, &(ap->a_ray) );
@@ -1155,18 +1155,7 @@ struct partition *pt_headp;
 		register struct soltab		*stp;
 	if( rt_g.debug & DEBUG_RGB )
 		rt_log( "f_Probe()\n" );
-	for(	pp = pt_headp->pt_forw;
-		pp != pt_headp
-	    &&	pp->pt_outhit->hit_dist < 0.1;
-		pp = pp->pt_forw
-		) 
-		;
-	if( pp == pt_headp || pp->pt_outhit->hit_dist < 0.1 )
-		{
-		if( rt_g.debug & DEBUG_REFRACT )
-			rt_log( "partition behind ray origin, no exit\n" );
-		return	ap->a_miss( ap );
-		}
+	Get_Partition( pp, pt_headp );
 	stp = pp->pt_outseg->seg_stp;
 	hitp = pp->pt_outhit;
 	RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
@@ -1264,18 +1253,7 @@ register struct application *ap;
 struct partition *pt_headp;
 	{	register struct partition	*pp;
 		register Mat_Db_Entry		*entry;
-	for(	pp = pt_headp->pt_forw;
-		pp != pt_headp
-	    &&	pp->pt_outhit->hit_dist < 0.1;
-		pp = pp->pt_forw
-		) 
-		;
-	if( pp == pt_headp || pp->pt_outhit->hit_dist < 0.1 )
-		{
-		if( rt_g.debug & DEBUG_SHADOW )
-			rt_log( "partition behind ray origin, no shadow\n" );
-		return	ap->a_miss( ap );
-		}
+	Get_Partition( pp, pt_headp );
 	if( rt_g.debug & DEBUG_SHADOW )
 		{	register struct hit	*ihitp, *ohitp;
 			register struct soltab	*istp, *ostp;
