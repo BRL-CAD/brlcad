@@ -468,6 +468,12 @@ struct bu_list {
 	(((struct bu_list *)(p)) != (hp))
 #define BU_CK_LIST_HEAD( _p )	BU_CKMAG( (_p), BU_LIST_HEAD_MAGIC, "bu_list")
 
+/* Boolean test to see if previous list element is the head */
+#define BU_LIST_PREV_IS_HEAD(p,hp)\
+	(((struct bu_list *)(p))->back == (hp))
+#define BU_LIST_PREV_NOT_HEAD(p,hp)\
+	(((struct bu_list *)(p))->back != (hp))
+
 /* Boolean test to see if the next list element is the head */
 #define BU_LIST_NEXT_IS_HEAD(p,hp)	\
 	(((struct bu_list *)(p))->forw == (hp))
