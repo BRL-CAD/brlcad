@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.1
-	Last edit: 	3/21/85 at 14:00:59
-	Retrieved: 	8/13/86 at 03:10:28
+	SCCS id:	@(#) fb-rle.c	1.2
+	Last edit: 	3/21/85 at 16:21:49
+	Retrieved: 	8/13/86 at 03:10:33
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,19 +12,23 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.1	last edit 3/21/85 at 14:00:59";
+char	sccsTag[] = "@(#) fb-rle.c	1.2	last edit 3/21/85 at 16:21:49";
 #endif
 #include <stdio.h>
 #include <fb.h>
 
 static char	*usage[] = {
 "",
-"_fb-rle (1.1)",
+"fb-rle (1.2)",
 "",
-"Usage: _fb-rle [-BCdhvw]",
+"Usage: fb-rle [-BCdhvw] [file.rle]",
 "",
+"If no rle file is specifed, fb-rle will write to its standard output.",
+"If the environment variable FB_FILE is set, its value will be used",
+"	to specify the framebuffer file or device to read from.",
 0
 };
+static FILE	*fp = stdout;
 static Pixel	bgpixel = { 0, 0, 0, 0 };
 int		debug = 0;
 int		verbose = 0;
@@ -50,7 +54,7 @@ char	*argv[];
 		prntUsage();
 		return	1;
 		}
-	setbuf( stdout, malloc( BUFSIZ ) );
+	setbuf( fp, malloc( BUFSIZ ) );
 	fbsz = getfbsize();
 	if( verbose )
 		(void) fprintf( stderr,
@@ -62,7 +66,7 @@ char	*argv[];
 			0.55 * bgpixel.green +
 			0.10 * bgpixel.blue;
 
-	if(	rle_whdr( stdout, bwflag, bgflag, cmflag, bbw, &bgpixel )
+	if(	rle_whdr( fp, bwflag, bgflag, cmflag, bbw, &bgpixel )
 	    ==	-1
 		)
 		return	1;
@@ -73,16 +77,21 @@ char	*argv[];
 	if( cmflag )
 		{
 		if(	fb_rmap( &cmap ) == -1
-		     ||	rle_wmap( stdout, &cmap ) == -1
+		     ||	rle_wmap( fp, &cmap ) == -1
 			)
 			return	1;
+		else
+			if( debug )
+				(void) fprintf( stderr,
+					"Color map saved.\n"
+						);
 		}
 
 	for( scan_ln = fbsz-1; scan_ln >= 0; --scan_ln )
 		{
 		if( fbread( 0, scan_ln, scan_buf, fbsz ) == -1 )
 			return	1;
-		if( rle_encode_ln( stdout, scan_buf ) == -1 )
+		if( rle_encode_ln( fp, scan_buf ) == -1 )
 			return	1;
 		}
 	return	0;
@@ -126,7 +135,16 @@ register char	**argv;
 				return	0;
 			}
 		}
-	if( argc != optind )
+	if( argv[optind] != NULL )
+		if( (fp = fopen( argv[optind], "w" )) == NULL )
+			{
+			(void) fprintf( stderr,
+					"Can't open %s for writing!\n",
+					argv[optind]
+					);
+			return	0;
+			}
+	if( argc > ++optind )
 		{
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
