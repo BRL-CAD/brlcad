@@ -30,6 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef HEP
 # include <synch.h>
+# undef stderr
+# define stderr stdout
 #endif
 
 extern char usage[];
@@ -71,9 +73,11 @@ char **argv;
 	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
+	char *outputfile = (char *)0;	/* name of base of output file */
 	static float	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
-	static int outfd;		/* fd of optional pixel output file */
+	static int outfd = -1;		/* fd of optional pixel output file */
 	register int x,y;
+	char framename[128];		/* File name to hold current frame */
 	char outbuf[132];
 	mat_t Viewrotscale;
 	mat_t toEye;
@@ -129,10 +133,7 @@ char **argv;
 			break;
 		case 'o':
 			/* Output pixel file name */
-			if( (outfd = creat( argv[1], 0444 )) <= 0 )  {
-				perror( argv[1] );
-				exit(10);
-			}
+			outputfile = argv[1];
 			argc--; argv++;
 			break;
 		case 'p':
@@ -193,7 +194,7 @@ char **argv;
 	rt_prep();
 
 	/* initialize application */
-	view_init( &ap, title_file, title_obj, npts, outfd );
+	view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 );
 
 	(void)read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr, "PREP: %s\n", outbuf );
@@ -214,12 +215,18 @@ char **argv;
 	(void)Disete( &work_word );
 	if( npsw < 1 || npsw > 128 )
 		npsw = 4;
-	vfree( vmalloc( (20+npsw)*2048, "worker prefetch"), "worker");
+	/* Get enough dynamic memory to keep from making malloc sbrk() */
+	for( x=0; x<npsw; x++ )  {
+		get_pt();
+		get_seg();
+	}
+	vfree( vmalloc( (20+npsw)*8192, "worker prefetch"), "worker");
+
 	fprintf(stderr,"creating %d worker PSWs\n", npsw );
 	for( x=0; x<npsw; x++ )  {
 		Dcreate( worker, &ap );
 	}
-	fprintf(stderr,"creates done\n");
+	fprintf(stderr,"creates done, DMend=%d.\n",sbrk(0) );
 #endif
 
 do_more:
@@ -264,6 +271,18 @@ do_more:
 	}
 	if( framenumber++ < desiredframe )  goto do_more;
 
+	if( outputfile != (char *)0 )  {
+		if( framenumber-1 <= 0 )
+			sprintf( framename, outputfile );
+		else
+			sprintf( framename, "%s.%d", outputfile, framenumber-1 );
+		if( (outfd = creat( framename, 0444 )) <= 0 )  {
+			perror( framename );
+			goto do_more;
+		}
+		fprintf(stderr,"Output file is %s\n", framename);
+	}
+
 	/* model2view takes us to eye_model location & orientation */
 	mat_idn( toEye );
 	toEye[MDX] = -eye_model[X];
@@ -295,7 +314,7 @@ do_more:
 	MAT4X3PNT( viewbase_model, view2model, temp );
 
 	/* initialize lighting */
-	view_2init( &ap );
+	view_2init( &ap, outfd );
 
 	fflush(stdout);
 	fflush(stderr);
@@ -329,16 +348,18 @@ do_more:
 	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
 		nshots>0?((double)nhits*100.0)/nshots:100.0,
 		nmiss_model, nmiss_tree, nmiss_solid );
-	fprintf(stderr,"Frame %d:  %d output rays in %f sec = %f rays/sec\n",
+	fprintf(stderr,"Frame %d: %d output rays in %f sec = %f rays/sec\n",
 		framenumber-1,
 		npts*npts, utime, (double)(npts*npts/utime) );
 #ifdef HEP
 	if( write( outfd, scanbuf, npts*npts*3 ) != npts*npts*3 )  {
 		perror("pixel output write");
-		exit(1);
+		goto out;
 	}
 #endif
 
+	(void)close(outfd);
+	outfd = -1;
 	if( matflag )  goto do_more;
 out:
 #ifdef HEP

@@ -792,16 +792,15 @@ view_end() {}
 /*
  *  			V I E W _ I N I T
  */
-view_init( ap, file, obj, npts, outfd )
+view_init( ap, file, obj, npts, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
-	pixfd = outfd;
 	if( npts > MAX_LINE )  {
-		rtlog("view:  %d pixels/line is too many\n", npts);
+		rtlog("view:  %d pixels/line > %d\n", npts, MAX_LINE);
 		exit(12);
 	}
-	if( pixfd > 0 )  {
+	if( minus_o )  {
 		/* Output is destined for a pixel file */
 		pixelp = &scanline[0];
 		scanbytes = npts * 3;
@@ -843,11 +842,12 @@ char *file, *obj;
  *
  *  Called each time a new image is about to be done.
  */
-view_2init( ap )
+view_2init( ap, outfd )
 register struct application *ap;
 {
 	vect_t temp;
 
+	pixfd = outfd;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 

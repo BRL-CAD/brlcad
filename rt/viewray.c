@@ -63,7 +63,7 @@ register struct partition *PartHeadp;
 /*
  *  			V I E W _ I N I T
  */
-view_init( ap, file, obj, npts, outfd )
+view_init( ap, file, obj, npts, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
@@ -71,7 +71,7 @@ char *file, *obj;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
 
-	if( outfd > 0 )
+	if( minus_o )
 		fprintf(stderr,"Warning:  -o ignored, rays go to stdout\n");
 }
 
