@@ -48,7 +48,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define CHUNK		(32*1024)	/* # elements per I/O */
 
 static int		width = 3;
-static unsigned char	pconst[EL_WIDTH];	/* XXX */
 
 static char		*file_name[NFILES];
 static FILE		*fp[NFILES];	/* NULL => use f_const */
@@ -170,7 +169,7 @@ register char	**argv;
 			break;
 		case 'w':
 			c = atoi(optarg);
-			if( c >= 1 && c < sizeof(pconst) )
+			if( c >= 1 && c < EL_WIDTH )
 				width = c;
 			else
 				usage("Illegal width specified\n", 1);
