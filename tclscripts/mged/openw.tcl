@@ -96,15 +96,17 @@ if ![info exists player_screen(mged)] {
     set player_screen(mged) $mged_default_display
 }
 
+# specify whether or not to use menus that can be torn off
 set do_tearoffs 0
+
+if ![info exists tk_version] {
+    loadtk
+}
 
 # Set the class bindings for use with help. This requires the
 # widget to register its data using hoc_register_data. Also, for now,
 # the Menu class binding is being handled in tclscripts/menu_override.tcl.
 #
-if ![info exists tk_version] {
-    loadtk
-}
 bind Entry <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Label <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
 bind Text <ButtonPress-3><ButtonRelease-3> "hoc_callback %W %X %Y"
@@ -1075,7 +1077,7 @@ hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	{ { summary "Put the framebuffer in underlay mode. In this mode,
 the framebuffer data is placed in the pane before
 the geometry is drawn (i.e. the geometry is drawn on
-top of the framebuffer data." }
+top of the framebuffer data)." }
           { see_also "rset, vars" } }
 .$id.menubar.settings.fb add separator
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
@@ -1089,10 +1091,11 @@ hoc_register_menu_data "Framebuffer" "Framebuffer Active" "Framebuffer Active"\
 	-command "set_listen $id" -state disabled
 hoc_register_menu_data "Framebuffer" "Listen For Clients" "Listen For Clients"\
 	{ { summary "This activates/deactivates listening for clients.
-If the framebuffer is listening for clients, new data can
-be passed into the framebuffer. Otherwise, the framebuffer
-is write protected. Actually, it is also read protected with
-one exception. MGED can still read the framebuffer data." }
+If the framebuffer is listening for clients, new
+data can be passed into the framebuffer. Otherwise,
+the framebuffer is write protected. Actually, it is
+also read protected. The one exception is that MGED
+can still read the framebuffer data." }
           { see_also "rset, vars" } }
 
 menu .$id.menubar.settings.vap -title "View Axes Position" -tearoff $do_tearoffs
@@ -1807,6 +1810,9 @@ if {[info procs cad_MenuFirstEntry] == ""} {
 cmd_init $id
 setupmv $id
 tie $id $mged_active_dm($id)
+
+# Force display manager windows to update their respective color schemes
+mged_apply_local $id "rset cs mode 0"
 rset cs mode 1
 
 if { $join_c } {
@@ -1833,9 +1839,6 @@ bind $mged_top($id) <KeyPress> { break }
 
 set dbname [_mged_opendb]
 set_wm_title $id $dbname
-
-# Force display manager windows to update their respective color schemes
-mged_apply_local $id "rset cs mode \[rset cs mode\]"
 
 wm protocol $mged_top($id) WM_DELETE_WINDOW "gui_destroy_default $id"
 wm geometry $mged_top($id) -0+0
@@ -1932,6 +1935,8 @@ proc reconfig_gui_default { id } {
     .$id.status.aet configure -textvar mged_display($shared_id,aet)
     .$id.status.ang configure -textvar mged_display($shared_id,ang)
 
+    do_view_ring_entries $id s
+    do_view_ring_entries $id d
 #    reconfig_mmenu $id
 }
 
