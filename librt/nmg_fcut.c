@@ -201,6 +201,21 @@ fastf_t		dist_tol;
 	register int i, j;
 
 	vu = (struct vertexuse **)b->buffer;
+
+	if( rt_g.NMG_debug )  {
+		/* Ensure that distance from points to ray is reasonable */
+		for(i = 0 ; i < b->end ; ++i) {
+			fastf_t		dist;
+
+			NMG_CK_VERTEXUSE(vu[i]);
+			dist = rt_dist_line_point( pt, dir, vu[i]->v_p->vg_p->coord );
+			if( dist > 1 )  {
+				rt_log("ptbl_vsort() vu=x%x point off line by %g\n", dist);
+				rt_log("ptbl_vsort()\n");
+			}
+		}
+	}
+
 	/* check vertexuses and compute distance from start of line */
 	for(i = 0 ; i < b->end ; ++i) {
 		vect_t		vect;
@@ -1242,7 +1257,7 @@ int			end;		/* last index + 1 */
 	struct nmg_vu_stuff	*vs;
 	struct nmg_loop_stuff *ls;
 	int		nloop;
-	int		nvu;
+	unsigned	nvu;
 	int		i;
 	struct loopuse	*lu;
 	int		ass;
@@ -1998,6 +2013,8 @@ int			other_rs_state;
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
 		nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+nmg_fu_touchingloops(rs->fu1);
+nmg_fu_touchingloops(rs->fu2);
 	}
 
 	vu = rs->vu[pos];
@@ -2350,6 +2367,8 @@ rt_log("force next eu to ray\n");
 		/* Verify both faces are still OK */
 		nmg_vfu( &rs->fu1->s_p->fu_hd, rs->fu1->s_p );
 		nmg_vfu( &rs->fu2->s_p->fu_hd, rs->fu2->s_p );
+nmg_fu_touchingloops(rs->fu1);
+nmg_fu_touchingloops(rs->fu2);
 	}
 }
 
