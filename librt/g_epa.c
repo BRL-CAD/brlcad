@@ -1393,8 +1393,15 @@ register CONST mat_t		mat;
 	MAT4X3PNT( xip->epa_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->epa_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->epa_Au, mat, &rp->s.s_values[2*3] );
-	xip->epa_r1 = rp->s.s_values[3*3];
-	xip->epa_r2 = rp->s.s_values[3*3+1];
+	xip->epa_r1 = rp->s.s_values[3*3] / mat[15];
+	xip->epa_r2 = rp->s.s_values[3*3+1] / mat[15];
+
+	if( xip->epa_r1 < SMALL_FASTF || xip->epa_r2 < SMALL_FASTF )
+	{
+		rt_log( "rt_epa_import: r1 or r2 are zero\n" );
+		rt_free( (char *)ip->idb_ptr , "rt_epa_import: ip->idb_ptr" );
+		return( -1 );
+	}
 
 	return(0);			/* OK */
 }
@@ -1452,8 +1459,8 @@ double				local2mm;
 	VSCALE( &epa->s.s_values[0*3], xip->epa_V, local2mm );
 	VSCALE( &epa->s.s_values[1*3], xip->epa_H, local2mm );
 	VSCALE( &epa->s.s_values[2*3], xip->epa_Au, local2mm );
-	epa->s.s_values[3*3] = xip->epa_r1;
-	epa->s.s_values[3*3+1] = xip->epa_r2;
+	epa->s.s_values[3*3] = xip->epa_r1 * local2mm;
+	epa->s.s_values[3*3+1] = xip->epa_r2 * local2mm;
 
 	return(0);
 }

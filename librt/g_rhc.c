@@ -1135,8 +1135,15 @@ register CONST mat_t		mat;
 	MAT4X3PNT( xip->rhc_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->rhc_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->rhc_B, mat, &rp->s.s_values[2*3] );
-	xip->rhc_r = rp->s.s_values[3*3];
-	xip->rhc_c = rp->s.s_values[3*3+1];
+	xip->rhc_r = rp->s.s_values[3*3] / mat[15];
+	xip->rhc_c = rp->s.s_values[3*3+1] / mat[15];
+
+	if( xip->rhc_r < SMALL_FASTF || xip->rhc_c < SMALL_FASTF )
+	{
+		rt_log( "rt_rhc_import: r or c are zero\n" );
+		rt_free( (char *)ip->idb_ptr , "rt_rhc_import: ip->idb_ptr" );
+		return( -1 );
+	}
 
 	return(0);			/* OK */
 }
@@ -1185,8 +1192,8 @@ double				local2mm;
 	VSCALE( &rhc->s.s_values[0*3], xip->rhc_V, local2mm );
 	VSCALE( &rhc->s.s_values[1*3], xip->rhc_H, local2mm );
 	VSCALE( &rhc->s.s_values[2*3], xip->rhc_B, local2mm );
-	rhc->s.s_values[3*3] = xip->rhc_r;
-	rhc->s.s_values[3*3+1] = xip->rhc_c;
+	rhc->s.s_values[3*3] = xip->rhc_r * local2mm;
+	rhc->s.s_values[3*3+1] = xip->rhc_c * local2mm;
 
 	return(0);
 }

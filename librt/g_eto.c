@@ -1194,8 +1194,8 @@ register CONST mat_t		mat;
 	MAT4X3PNT( tip->eto_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( tip->eto_N, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( tip->eto_C, mat, &rp->s.s_values[2*3] );
-	tip->eto_r  = rp->s.s_values[3*3];
-	tip->eto_rd = rp->s.s_values[3*3+1];
+	tip->eto_r  = rp->s.s_values[3*3] / mat[15];
+	tip->eto_rd = rp->s.s_values[3*3+1] / mat[15];
 
 	if( tip->eto_r < SMALL || tip->eto_rd < SMALL )  {
 		rt_log("rt_eto_import:  zero length R or Rd vector\n");
@@ -1254,8 +1254,8 @@ double				local2mm;
 	VSCALE( &eto->s.s_values[0*3], tip->eto_V, local2mm );
 	VSCALE( &eto->s.s_values[1*3], tip->eto_N, local2mm );
 	VSCALE( &eto->s.s_values[2*3], tip->eto_C, local2mm );
-	eto->s.s_values[3*3] = tip->eto_r;
-	eto->s.s_values[3*3+1] = tip->eto_rd;
+	eto->s.s_values[3*3] = tip->eto_r * local2mm;
+	eto->s.s_values[3*3+1] = tip->eto_rd * local2mm;
 
 	return(0);
 }

@@ -1353,9 +1353,16 @@ register CONST mat_t		mat;
 	MAT4X3PNT( xip->ehy_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->ehy_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->ehy_Au, mat, &rp->s.s_values[2*3] );
-	xip->ehy_r1 = rp->s.s_values[3*3];
-	xip->ehy_r2 = rp->s.s_values[3*3+1];
-	xip->ehy_c  = rp->s.s_values[3*3+2];
+	xip->ehy_r1 = rp->s.s_values[3*3] / mat[15];
+	xip->ehy_r2 = rp->s.s_values[3*3+1] / mat[15];
+	xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
+
+	if( xip->ehy_r1 < SMALL_FASTF || xip->ehy_r2 < SMALL_FASTF || xip->ehy_c < SMALL_FASTF )
+	{
+		rt_log( "rt_ehy_import: r1, r2, or c are zero\n" );
+		rt_free( (char *)ip->idb_ptr , "rt_ehy_import: ip->idb_ptr" );
+		return( -1 );
+	}
 
 	return(0);			/* OK */
 }
@@ -1414,9 +1421,9 @@ double				local2mm;
 	VSCALE( &ehy->s.s_values[0*3], xip->ehy_V, local2mm );
 	VSCALE( &ehy->s.s_values[1*3], xip->ehy_H, local2mm );
 	VSCALE( &ehy->s.s_values[2*3], xip->ehy_Au, local2mm );
-	ehy->s.s_values[3*3] = xip->ehy_r1;
-	ehy->s.s_values[3*3+1] = xip->ehy_r2;
-	ehy->s.s_values[3*3+2] = xip->ehy_c;
+	ehy->s.s_values[3*3] = xip->ehy_r1 * local2mm;
+	ehy->s.s_values[3*3+1] = xip->ehy_r2 * local2mm;
+	ehy->s.s_values[3*3+2] = xip->ehy_c * local2mm;
 
 	return(0);
 }

@@ -1137,7 +1137,14 @@ register CONST mat_t		mat;
 	MAT4X3PNT( xip->rpc_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->rpc_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->rpc_B, mat, &rp->s.s_values[2*3] );
-	xip->rpc_r = rp->s.s_values[3*3];
+	xip->rpc_r = rp->s.s_values[3*3] / mat[15];
+
+	if( xip->rpc_r < SMALL_FASTF )
+	{
+		rt_log( "rt_rpc_import: r is zero\n" );
+		rt_free( (char *)ip->idb_ptr , "rt_rpc_import: ip->idp_ptr" );
+		return( -1 );
+	}
 
 	return(0);			/* OK */
 }
@@ -1177,7 +1184,8 @@ double				local2mm;
 	}
 	
 	if ( !NEAR_ZERO( VDOT(xip->rpc_B, xip->rpc_H), RT_DOT_TOL) ) {
-		rt_log("rt_rpc_export: B and H are not perpendicular!\n");
+		rt_log("rt_rpc_export: B and H are not perpendicular! (dot = %g)\n",
+				VDOT(xip->rpc_B, xip->rpc_H));
 		return(-1);
 	}
 

@@ -489,6 +489,11 @@ struct rt_tol		*tol;
 			return -1;			/* FAIL */
 	}
 
+	/* Polysolids are often built with incorrect face normals.
+	 * Don't depend on them here.
+	 */
+	nmg_fix_normals( s , tol );
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
