@@ -193,7 +193,7 @@ proc mouse_solid_edit_select { x y } {
     }
 }
 
-proc mouse_object_edit_select { x y } {
+proc mouse_matrix_edit_select { x y } {
     global mged_players
     global mged_mouse_behavior
 
@@ -226,7 +226,7 @@ proc mouse_comb_edit_select { x y } {
     set id [get_player_id_dm $win]
     init_comb $id
     set comb_name($id) $comb
-    comb_load_defaults $id
+    comb_reset $id
 
     mged_apply_all "set mouse_behavior d"
     foreach id $mged_players {
