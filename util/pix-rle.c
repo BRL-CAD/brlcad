@@ -46,7 +46,7 @@ static int	file_width = 512;
 static int	file_height = 512;
 
 static char	usage[] = "\
-Usage: pix-rle [-h -d] [-s squarefilesize]  [-C r/g/b]\n\
+Usage: pix-rle [-h] [-s squarefilesize]  [-C r/g/b]\n\
 	[-w file_width] [-n file_height] [file.pix] [file.rle]\n\
 \n\
 If omitted, the .pix file is taken from stdin\n\
