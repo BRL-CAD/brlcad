@@ -2398,7 +2398,7 @@ bu_log("total of disk NMG(v4)=%d\n", tot_size);
 		disk_arrays[i] = (genptr_t)cp;
 		cp += kind_counts[i] * rt_nmg_disk_sizes[i];
 bu_log("V4: kind=%d, count=%d, disk_size = %d, total_size=%d\n",
-    i, kind_counts[i], (genptr_t)cp-disk_arrays[i], (genptr_t)cp-disk_arrays[0]);
+    i, kind_counts[i], cp-(char *)disk_arrays[i], cp-(char *)disk_arrays[0]);
 	}
 	/* disk_arrays[NMG_KIND_DOUBLE_ARRAY] is set properly because it is last */
 	rt_nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
@@ -2732,18 +2732,18 @@ bu_log("total of disk NMG(v5)=%d\n", tot_size);
 	ep->ext_nbytes = tot_size;
 	ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
 	dp = ep->ext_buf;
-	(void)bu_plong((char *)dp, DISK_MODEL_VERSION);
+	(void)bu_plong((unsigned char *)dp, DISK_MODEL_VERSION);
 	dp+=SIZEOF_NETWORK_LONG;
 
 	for (kind=0; kind <NMG_N_KINDS; kind++) {
-		(void)bu_plong((char *) dp, kind_counts[kind]);
+		(void)bu_plong((unsigned char *) dp, kind_counts[kind]);
 		dp+=SIZEOF_NETWORK_LONG;
 	}
 	for (i=0; i< NMG_N_KINDS; i++) {
 		disk_arrays[i] = (genptr_t)dp;
 		dp += kind_counts[i] * rt_nmg_disk_sizes[i];
 bu_log("V5: kind=%d, count=%d, disk_size = %d, total_size=%d\n",
-    i, kind_counts[i], (genptr_t)dp-disk_arrays[i], (genptr_t)dp-disk_arrays[0]);
+    i, kind_counts[i], dp-(char *)disk_arrays[i], dp-(char *)disk_arrays[0]);
 	}
 	rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
