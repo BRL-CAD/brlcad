@@ -972,7 +972,7 @@ int	width, height;
 	XI(ifp)->screen = screen;
 	XI(ifp)->visual = visual;
 	XI(ifp)->depth = DisplayPlanes(dpy,screen);
-	if( DisplayCells(dpy,screen) != 256 )
+/* ctj	if( DisplayCells(dpy,screen) != 256 )
 		XI(ifp)->depth = 1;	/*XXX - until cmap fix */
 
 #if DEBUGX
@@ -1362,7 +1362,7 @@ FBIO *ifp;
 	int		tmp;
 	long		b, w;	/* server black and white pixels */
 
-	tot_levels = 256;
+	tot_levels = 254;	/* XXX ctj should be 256 */
 
 #if DEBUGX
 	printf("make_colormap\n");
