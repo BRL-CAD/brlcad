@@ -5110,14 +5110,13 @@ vect_t tvec;
   }
 
   sedit();
-#if 0
+
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
 #endif
 }
-
-#define MGED_SMALL_SCALE 1.0e-10
 
 void
 sedit_abs_scale()
@@ -5142,7 +5141,10 @@ sedit_abs_scale()
 
   es_scale = acc_sc_sol / old_acc_sc_sol;
   sedit();
+
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
+#endif
 }
 
 
@@ -5275,7 +5277,7 @@ point_t tvec;
 
   new_edit_mats();
 
-#if 0
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Z]));
@@ -5338,17 +5340,15 @@ oedit_abs_scale()
   /* Have scaling take place with respect to keypoint,
    * NOT the view center.
    */
-#if 0
-  MAT4X3PNT(pos_model, modelchanges, es_keypoint);
-#else
   MAT4X3PNT(temp, es_mat, es_keypoint);
   MAT4X3PNT(pos_model, modelchanges, temp);
-#endif
   wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
   new_edit_mats();
 
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
+#endif
 }
 
 
@@ -6195,9 +6195,16 @@ init_objedit()
 	VSETALL( edit_absolute_model_rotate, 0.0 );
 	VSETALL( edit_absolute_object_rotate, 0.0 );
 	VSETALL( edit_absolute_view_rotate, 0.0 );
+	VSETALL( last_edit_absolute_model_rotate, 0.0 );
+	VSETALL( last_edit_absolute_object_rotate, 0.0 );
+	VSETALL( last_edit_absolute_view_rotate, 0.0 );
 	VSETALL( edit_absolute_model_tran, 0.0 );
 	VSETALL( edit_absolute_view_tran, 0.0 );
+	VSETALL( last_edit_absolute_model_tran, 0.0 );
+	VSETALL( last_edit_absolute_view_tran, 0.0 );
 	edit_absolute_scale = 0;
+	acc_sc_sol = 1.0;
+	VSETALL( acc_sc, 1.0 );
 
 	VSETALL( edit_rate_model_rotate, 0 );
 	VSETALL( edit_rate_object_rotate, 0 );
