@@ -181,7 +181,11 @@ X_prolog()
 void
 X_epilog()
 {
+#if 0
 	XFlush( dpy );
+#else
+	XSync( dpy, 0 );	/* Prevent lag between events and updates */
+#endif
 	return;
 }
 
