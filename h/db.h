@@ -91,7 +91,7 @@ union record  {
 #define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
-#define ID_STRSOL	's'	/* String solid description */
+#define DBID_STRSOL	's'	/* String solid description */
 #define DBID_ARBN	'n'	/* Convex polyhedron with N faces */
 #define DBID_PIPE	'w'	/* pipe (wire) solid */
 #define DBID_PARTICLE	'p'	/* a particle (lozenge) */
