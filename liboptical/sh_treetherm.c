@@ -282,22 +282,41 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	file_size_long = sizeof(long) + *((long *)tt_data) * 
 		(sizeof(short) + sizeof(float) * 4 * NUM_NODES);
 
-	
-	if (tt_file->buflen == file_size_long) {
-		long_size = sizeof(long);
-		tthrm_sp->tt_max_seg = cyl_tot = *((long *)tt_data);
-	} else if (tt_file->buflen == file_size_int) {
-		long_size = sizeof(int);
-		tthrm_sp->tt_max_seg = cyl_tot = *((int *)tt_data);
-	} else {
-		bu_log("file size %d sb %ld or %ld\n",
-			tt_file->buflen, file_size_int, file_size_long);
+	switch (sizeof(long)) {
+	case 8:
+		if (tt_file->buflen == file_size_long) {
+			/* 64bit data on 64bit host */
+			long_size = sizeof(long);
+			tthrm_sp->tt_max_seg = cyl_tot = *((long *)tt_data);
+		} else if (tt_file->buflen == file_size_int) {
+			/* 32bit data on 32bit host */
+			long_size = sizeof(int);
+			tthrm_sp->tt_max_seg = cyl_tot = *((int *)tt_data);
+		}
+		break;
+	case 4:
+		if (tt_file->buflen == file_size_long) {
+			/* 32bit data on 32bit host */
+			long_size = sizeof(long);
+			tthrm_sp->tt_max_seg = cyl_tot = *((long *)tt_data);
+		} else if (tt_file->buflen == (file_size_long+4)) {
+			/* 64bit data on 32bit host */
 
-		bu_log("cyl_tot is either %ld or %ld\n",
-			*((int *)tt_data),
-			*((long *)tt_data));
+			cyl_tot = *((int *)tt_data);
+			if (cyl_tot != 0) {
+				bu_log("%s:%d thermal data written on 64bit machine with more that 2^32 segs\n", __FILE__, __LINE__);
+				bu_bomb("");
+			}
 
-		bu_bomb("");
+			long_size = sizeof(long) + 4;
+			tthrm_sp->tt_max_seg = cyl_tot = 
+				((int *)tt_data)[1];
+		}
+		break;
+	default:
+		bu_log("a long int is %d bytes on this machine\n", sizeof(long));
+		bu_bomb("I can only handle 4 or 8 byte longs\n");
+		break;
 	}
 
 	if (rdebug&RDEBUG_SHADE)
