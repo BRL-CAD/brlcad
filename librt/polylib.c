@@ -29,6 +29,8 @@
 static char RCSpolylib[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
@@ -298,9 +300,8 @@ int	sig;
 {
 	if( !expecting_fpe )
 		rt_bomb("unexpected SIGFPE! sig=%d\n", sig);
-#ifdef SYSV
-	(void)signal(SIGFPE, catch_FPE);	/* Renew handler */
-#endif				
+	if( !rt_g.parallel )
+		(void)signal(SIGFPE, catch_FPE);	/* Renew handler */
 	longjmp(abort_buf, 1);	/* return error code */
 }
 
@@ -313,19 +314,19 @@ register complex	root[];
 	register int	i;
 	static int	first_time = 1;
 	
-#if !defined(PARALLEL) && !defined(CRAY)
-	/* abort_buf is NOT parallel! */
-	if( first_time )  {
-		first_time = 0;
-		(void)signal(SIGFPE, catch_FPE);
+	if( !rt_g.parallel ) {
+		/* abort_buf is NOT parallel! */
+		if( first_time )  {
+			first_time = 0;
+			(void)signal(SIGFPE, catch_FPE);
+		}
+		expecting_fpe = 1;
+		if( setjmp( abort_buf ) )  {
+			(void)signal(SIGFPE, catch_FPE);
+			rt_log("rt: cubic() Floating Point Error\n");
+			return(0);	/* FAIL */
+		}
 	}
-	expecting_fpe = 1;
-	if( setjmp( abort_buf ) )  {
-		(void)signal(SIGFPE, catch_FPE);
-		rt_log("rt: cubic() Floating Point Error\n");
-		return(0);	/* FAIL */
-	}
-#endif
 
 	c1 = eqn->cf[1];
 	if( Abs(c1) > SQRT_MAX_FASTF )  return(0);	/* FAIL */
