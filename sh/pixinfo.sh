@@ -10,7 +10,9 @@
 #	stuff.rle
 #
 #  The output of this script is one line, suitable for use in a
-#  Bourne-shell accent-grave form.
+#  Bourne-shell accent-grave form, like this:
+#
+#	eval `pixinfo.sh $FILE`		# Sets BASE, SUFFIX, WIDTH, HEIGHT
 #
 #  -Mike Muuss, BRL, 11-Sept-92.
 #
