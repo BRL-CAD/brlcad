@@ -43,10 +43,11 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 /* This is the solid information specific to an nmg solid */
 struct nmg_specific {
-	int				nmg_smagic;	/* STRUCT START magic number */
-	struct model	*nmg_model;
+	int			nmg_smagic;	/* STRUCT START magic number */
+	struct model		*nmg_model;
+	char			*manifolds; /*  structure 1-3manifold table */
 	vect_t			nmg_invdir;
-	int				nmg_emagic;	/* STRUCT END magic number */
+	int			nmg_emagic;	/* STRUCT END magic number */
 };
 
 
@@ -109,7 +110,7 @@ struct rt_i		*rtip;
 	/* build table indicating the manifold level
 	 * of each sub-element of NMG solid
 	 */
-	nmg_manifolds(m);
+	nmg_s->manifolds = nmg_manifolds(m);
 
 	return(0);
 }
@@ -187,6 +188,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 
 	/* build the NMG per-ray data structure */
 	rd.rd_m = nmg->nmg_model;
+	rd.manifolds = nmg->manifolds;
 	VMOVE(rd.rd_invdir, nmg->nmg_invdir);
 	rd.rp = rp;
 	rd.tol = &ap->a_rt_i->rti_tol;

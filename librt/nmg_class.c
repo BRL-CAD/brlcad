@@ -778,8 +778,12 @@ retry:
 			/* Point is OUTside face, its undecided. */
 		}
 
+#if 0
+/* XXX Need to get manifolds table from caller! */
+/* For now, assume there aren't any.  Real ray-tracer knows how to do this better. */
 		/* Dangling faces don't participate in Jordan Curve calc */
-		if (nmg_dangling_face(fu))  continue;
+		if (nmg_dangling_face(fu,manifolds))  continue;
+#endif
 
 /* XXX Adding this code in breaks Test1.r! */
 #if 0

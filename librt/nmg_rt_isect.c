@@ -1196,7 +1196,7 @@ struct hitmiss *myhit;
 			}
 
 			if (! (NMG_3MANIFOLD & 
-			       NMG_MANIFOLDS(rd->rd_m->manifolds, fu->f_p)) ){
+			       NMG_MANIFOLDS(rd->manifolds, fu->f_p)) ){
 				rt_log("This is not a 3-Manifold face.  I'll skip it\n");
 				goto next_edgeuse;
 			}
@@ -1697,7 +1697,6 @@ struct faceuse *fu_p;
 plane_t norm;
 struct hitmiss		*a_hit;
 {
-	struct model *m;
 	double cos_angle;
 
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_MAGIC);
@@ -1715,8 +1714,6 @@ struct hitmiss		*a_hit;
 	/* compute what the ray-state is before and after this
 	 * encountering this hit point.
 	 */
-	m = nmg_find_model( (long *)fu_p );
-
 	cos_angle = VDOT(norm, rd->rp->r_dir);
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		VPRINT("face Normal", norm);
@@ -1724,7 +1721,7 @@ struct hitmiss		*a_hit;
 	}
 
 
-	if ( ! (NMG_MANIFOLDS(m->manifolds, fu_p) & NMG_3MANIFOLD) ) {
+	if ( ! (NMG_MANIFOLDS(rd->manifolds, fu_p) & NMG_3MANIFOLD) ) {
 		myhit->in_out = HMG_HIT_ANY_ANY;
 
 		if (cos_angle < rd->tol->perp) {

@@ -21,22 +21,18 @@
  *	Return
  *	1	face has dangling edge
  *	0	face does not have a dangling edge
- *
- *  Implicit Input -
- *	The "manifolds" array in the "model" structure.
  */
 int 
-nmg_dangling_face(fu)
+nmg_dangling_face(fu, manifolds)
 CONST struct faceuse	*fu;
+register CONST char	*manifolds;
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	CONST struct edgeuse *eur;
 	struct faceuse *newfu;
-	register char *tbl;
 
 	NMG_CK_FACEUSE(fu);
-	tbl = fu->s_p->r_p->m_p->manifolds;
 
 	for(RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    NMG_CK_LOOPUSE(lu);
@@ -54,12 +50,12 @@ CONST struct faceuse	*fu;
 		    eur = nmg_radial_face_edge_in_shell(eu);
 		    newfu = eur->up.lu_p->up.fu_p;
 
-	    	    if (tbl) {
+	    	    if (manifolds) {
 
 		    	    /* skip any known dangling-edge faces or 
 		    	     * faces known to be 2manifolds.
 			     */
-			    while (NMG_MANIFOLDS(tbl,newfu) & NMG_2MANIFOLD &&
+			    while (NMG_MANIFOLDS(manifolds,newfu) & NMG_2MANIFOLD &&
 				eur != eu->eumate_p) {
 					eur = nmg_radial_face_edge_in_shell(
 						eur->eumate_p);
@@ -250,7 +246,7 @@ char *tbl;
 		do {
 			found = 0;
 			for (RT_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
-				if (nmg_dangling_face(fu_p /**,tbl**/)) {
+				if (nmg_dangling_face(fu_p, tbl)) {
 					found = 1;
 
 					NMG_SET_MANIFOLD(tbl, fu_p, 
@@ -328,11 +324,7 @@ struct model *m;
 
 	NMG_CK_MODEL(m);
 
-	if (m->manifolds == (char *)NULL)
-		m->manifolds = 
-		tbl = rt_calloc(m->maxindex, 1, "manifold table");
-	else
-		tbl = m->manifolds;
+	tbl = rt_calloc(m->maxindex, 1, "manifold table");
 
 	for (RT_LIST_FOR(rp, nmgregion, &m->r_hd)) {
 		NMG_CK_REGION(rp);

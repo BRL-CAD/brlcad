@@ -1,3 +1,25 @@
+/*
+ *			N M G _ R T . H
+ *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
+ *
+ *  $Header$
+ */
+
 #define NMG_HIT_LIST	0
 #define NMG_MISS_LIST	1
 #define NMG_RT_HIT_MAGIC 0x48697400	/* "Hit" */
@@ -110,6 +132,7 @@ struct hitmiss {
 struct ray_data {
 	long magic;
 	struct model		*rd_m;
+	char			*manifolds; /*  structure 1-3manifold table */
 	vect_t			rd_invdir;
 	struct xray		*rp;
 	struct application	*ap;
