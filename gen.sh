@@ -30,7 +30,8 @@ NFS=1
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
 #RELEASE=4.8;	RCS_REVISION=11;	REL_DATE=Today
-RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=1-Dec-94	# Beta2
+RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=20-Dec-94	# Beta3
+#RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=1-Dec-94	# Beta2
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=19-Nov-94	# Beta1
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=4-Nov-94	# Alpha6
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=20-Oct-94	# Alpha5
@@ -204,7 +205,7 @@ then
 fi
 
 # If this is not an SGI 4D, eliminate SGI-specific directories
-if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d"
+if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d" -a "${MACHINE}" != "6d" -a "${MACHINE}" != "7d" -a "${MACHINE}" != "8d"
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/edpix//'`
 fi
@@ -399,7 +400,7 @@ checkin)
 #	"make arch"	to create TAR archive
 #
 dist)
-	if test `grep '#define[ 	]*NFS' Cakefile.defs|wc -l` -eq 0
+	if test `grep '^#define[ 	]*NFS' Cakefile.defs|wc -l` -eq 0
 	then 	echo "Shipping non-NFS version of Cakefile.defs (this is good)";
 	else
 		echo "ERROR: Update Cakefile.defs for non-NFS before proceeding!"
