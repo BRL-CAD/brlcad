@@ -622,12 +622,15 @@ char	*name;
 		return -1;
 	}
 
+#if 0
 	/* Load the font to use */
+	/* Answering this extra question all the time is irritating */
 	(void)printf("Font [6x10]? ");
 	(void)gets( line );		/* Null terminated */
 	if( line[0] != NULL )
 		cp = line;
 	else
+#endif
 		cp = FONT;
 #ifndef CRAY2
 /* The Cray2 never returns from this call.  sigh.
