@@ -102,8 +102,13 @@ prnt_HMitem(HMitem *itemp)
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
 	(void) fprintf( stderr, "next=0x%lx\n", (long unsigned int)itemp->next );
 #ifndef sgi
-	(void) fprintf( stderr, "dfn=0x%x\n", (unsigned int)itemp->dfn );
-	(void) fprintf( stderr, "bfn=0x%x\n", (unsigned int)itemp->bfn );
+	if (sizeof(itemp->dfn) > sizeof(unsigned int)) {
+		(void) fprintf( stderr, "dfn=0x%X\n", itemp->dfn );
+		(void) fprintf( stderr, "bfn=0x%X\n", itemp->bfn );
+	} else {
+		(void) fprintf( stderr, "dfn=0x%x\n", itemp->dfn );
+		(void) fprintf( stderr, "bfn=0x%x\n", itemp->bfn );
+	}
 #endif
 	(void) fprintf( stderr, "hfn=0x%lx\n", (long unsigned int)itemp->hfn );
 	(void) fprintf( stderr, "data=%ld\n--\n", itemp->data );
