@@ -35,6 +35,7 @@ static char			*who;
 extern char			*getenv();
 
 extern char	*malloc();
+extern char	*strdup();
 
 static FILE	*infp = stdin;
 static char	*infile;
@@ -45,37 +46,12 @@ static int	file_width = 512;
 static int	file_height = 512;
 
 static char	usage[] = "\
-Usage: pix-rle [-h -d -v] [-s squarefilesize]  [-C r/g/b]\n\
+Usage: pix-rle [-h -d] [-s squarefilesize]  [-C r/g/b]\n\
 	[-w file_width] [-n file_height] [file.pix] [file.rle]\n\
 \n\
 If omitted, the .pix file is taken from stdin\n\
 and the .rle file is written to stdout\n";
 
-
-/*
- *			S T R D U P
- *
- * Given a string, allocate enough memory to hold it using malloc(),
- * duplicate the strings, returns a pointer to the new string.
- */
-char *
-strdup( cp )
-register char *cp;
-{
-	register char	*base;
-	register int	len;
-
-	len = strlen( cp )+2;
-	if( (base = malloc( len )) == (char *)0 )
-		return( (char *)0 );
-
-#ifdef BSD
-	bcopy( cp, base, len );
-#else
-	memcpy( base, cp, len );
-#endif
-	return(base);
-}
 
 /*
  *			G E T _ A R G S
@@ -116,6 +92,7 @@ register char	**argv;
 				}
 			}
 			break;
+		default:
 		case '?':
 			return	0;
 		}
@@ -142,7 +119,7 @@ register char	**argv;
 		}
 	}
 	if( argc > ++optind )
-		(void) fprintf( stderr, "Excess arguments ignored\n" );
+		(void) fprintf( stderr, "pix-rle: Excess arguments ignored\n" );
 
 	if( isatty(fileno(infp)) || isatty(fileno(outfp)) )
 		return 0;
@@ -205,9 +182,9 @@ char	*argv[];
 	for( y = 0; y < file_height; y++ )  {
 		if( fread( (char *)scan_buf, sizeof(RGBpixel), file_width, infp ) != file_width)  {
 			(void) fprintf(	stderr,
-				"read of %d pixels on line %d failed!\n",
+				"pix-rle: read of %d pixels on line %d failed!\n",
 				file_width, y );
-				return	1;
+			exit(1);
 		}
 
 		/* Grumble, convert to Utah layout */
@@ -230,5 +207,5 @@ char	*argv[];
 
 	fclose( infp );
 	fclose( outfp );
-	return	0;
+	exit(0);
 }
