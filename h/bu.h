@@ -1982,6 +1982,53 @@ void bu_mro_set( struct bu_mro *mrop, const char *string );
 void bu_mro_init( struct bu_mro *mrop );
 void bu_mro_free( struct bu_mro *mrop );
 
+/* hash.c */
+struct bu_hash_entry {
+	long magic;
+	unsigned char *key;
+	unsigned char *value;
+	int key_len;
+	struct bu_hash_entry *next;
+};
+
+struct bu_hash_tbl {
+	long magic;
+	unsigned long mask;
+	unsigned long num_lists;
+	unsigned long num_entries;
+	struct bu_hash_entry **lists;
+};
+
+struct bu_hash_record {
+	long magic;
+	struct bu_hash_tbl *tbl;
+	unsigned long index;
+	struct bu_hash_entry *hsh_entry;
+};
+
+#define BU_HASH_TBL_MAGIC	0x48415348	/* "HASH" */
+#define BU_HASH_RECORD_MAGIC	0x68617368	/* "hash" */
+#define BU_HASH_ENTRY_MAGIC	0x48454E54	/* "HENT" */
+#define BU_CK_HASH_TBL(_hp)	BU_CKMAG( _hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl" )
+#define BU_CK_HASH_RECORD(_rp)	BU_CKMAG( _rp, BU_HASH_RECORD_MAGIC, "bu_hash_record" )
+#define BU_CK_HASH_ENTRY(_ep)	BU_CKMAG( _ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry" )
+
+unsigned long bu_hash(unsigned char *str, int len);
+struct bu_hash_tbl *bu_create_hash_tbl( unsigned long tbl_size );
+struct bu_hash_entry *bu_find_hash_entry( struct bu_hash_tbl *hsh_tbl,
+					  unsigned char *key,
+					  int key_len,
+					  struct bu_hash_entry **prev,
+					  unsigned long *index );
+void bu_set_hash_value( struct bu_hash_entry *hsh_entry, unsigned char *value );
+unsigned char *bu_get_hash_value( struct bu_hash_entry *hsh_entry );
+struct bu_hash_entry *bu_hash_add_entry( struct bu_hash_tbl *hsh_tbl, unsigned char *key, int key_len, int *new );
+void bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str );
+void bu_hash_tbl_free( struct bu_hash_tbl *hsh_tbl );
+struct bu_hash_entry *bu_hash_tbl_first( struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec );
+struct bu_hash_entry *bu_hash_tbl_next( struct bu_hash_record *rec );
+
+
 #ifdef __cplusplus
 }
 #endif
