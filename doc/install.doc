@@ -27,7 +27,7 @@ the distribution tape.
 GOING QUICKLY
 .PP
 This document exists to help you install the BRL-CAD Package. With
-approximately 435,000 lines of source code, and support for over a dozen
+approximately 700,000 lines of source code, and support for over a dozen
 hardware platforms, the configuration is important.
 It would be best if you read
 these directions first. However, it would be quite understandable if
@@ -63,16 +63,6 @@ If you need to install the software somewhere other than /usr/brlcad,
 	sh setup.sh
 	sh gen.sh all
 	sh gen.sh install
-.ft R
-.fi
-.PP
-If you are adventurous and which to try our experimental TCL version
-of MGED (tmged), run these two additional commands:
-.sp .5
-.nf
-.ft B
-	sh gen.sh tcl
-	sh gen.sh install-tcl
 .ft R
 .fi
 .NH 1
@@ -225,12 +215,11 @@ when specifically configured:
 .TS
 center box;
 l l.
-dm-ir	SGI 2400, 3030
 dm-4d	SGI 4-D
 dm-sun	SUN 3.2 Pixwin
-dm-rat	Raster Tech One/180,380
-dm-rat80	Raster Tech One/80
 dm-X	X Window System (X11R4, R5)
+dm-ogl	OpenGL
+dm-glx	OpenGL in the X window system
 dm-xgl	SUN XGL interface
 .TE
 .NH 1
@@ -240,8 +229,9 @@ The BRL-CAD Package is distributed in source code form only,
 so you will need enough space to simultaneously store
 the source material, documentation, binary files, and test images.
 .PP
-The TAR archive of the source materials requires about 48 MBytes.
-You will need about 350 MBytes of free space to compile in. On an SGI
+The TAR archive of the source materials requires about 75 MBytes.
+You will need about 400 MBytes of free space to compile in, if you use static libraries.
+On an SGI
 Irix 4.0.5 system, the installed /usr/brlcad tree requires 165 MBytes.
 On an SGI Irix 5.2 system, the installed /usr/brlcad tree requires only
 21 MBytes.  On a Sun-4 system, the installed /usr/brlcad tree requires
@@ -368,15 +358,18 @@ l l.
 LIBRARIES
 _
 librt	A solid-model ray-tracing library
-libspl	A B-spline library
+libbu	A library of widely used utilities
+libbn	A library of useful numerical routines
+libdm	A library of diplay manangers
+libtcl	The Tcl library
+libtk	The Tk library
+libfft	An FFT library
 libsysv	Some System-V compatibility routines
 libpkg	A "message-passing" interface to TCP network links
 libfb	A generic frame-buffer library
 libtermio	A library to handle terminal mode setting
 libplot3	A public-domain 2-D and 3-D UNIX-Plot library
-libtig	Some plotting routines built on libplot3
 librle	A Run-Length-Encoding library (originally from UofUtah)
-libmalloc	The Princeton malloc(3) -- a better malloc
 libwdb	A library for procedurally writing databases
 libredblack	A library implementing red-black trees
 .TE
@@ -395,24 +388,11 @@ dmdfb	libfb support for layers in Teletype 5620 DMD terminal
 whetstone	FORTRAN Whetstone benchmark
 dhrystone	"C" Dhyrstone benchmark
 .TE
-.TS
-center;
-l s
-l l.
-CONTRIBUTED SOFTWARE (contributed/)
-_
-cake	A Fifth Generation version of MAKE
-mgm	Mged On-Line Manual
-off-3d	"OFF - A 3D Object File Format" document
-pbm	Portable Bitmap Toolkit
-spd	"Standard" Procedural Databases
-toolkit-2.0	Utah Raster Toolkit, Release 2.0
-.TE
 .PP
 Please note that
 this distribution package does \fInot\fR include the various
 military-specific model
-analysis tools such as GIFT, SAR, SLAVE, VAST, etc., nor does it
+analysis tools such as MUVES, GIFT, SAR, SLAVE, VAST, etc., nor does it
 include any military databases.
 If you desire to have access to this material, please contact
 Keith Applin at (301)-278-6647.
@@ -595,8 +575,7 @@ first argument being the full path name of the new parent directory.
 INSTALLATION DIRECTORIES \(em PRODUCTION USE
 .PP
 For production use, the software comes configured to install
-everything in the directories "/usr/brlcad/bin", "/usr/brlcad/lib",
-and "/usr/brlcad/etc".
+everything in the directories under "/usr/brlcad/".
 If this choice is acceptable to you, then first you need
 to make these directories, or have a superuser make them for you:
 .ft B
@@ -604,7 +583,7 @@ to make these directories, or have a superuser make them for you:
 .sp .5
 	mkdir /usr/brlcad
 	cd /usr/brlcad
-	mkdir bin lib etc include man vfont
+	mkdir bin lib etc include man vfont tk tcl tclscripts
 	mkdir man/man1 man/man3 man/man5
 	chmod 775 * */*
 	chown YOURNAME * */*
@@ -1112,7 +1091,41 @@ this can be done with something like this:
 .sp .5
 For most systems, the default values should be fine.
 Changing the definition of CC can be useful when testing a new release
-of the C compiler.  The BRL-CAD Package is used by several hardware vendors
+of the C compiler.  Note that the value of "CC" must be changed manually
+in the "Makefile" in both the "cake" and "cakeaux" directories.
+\fBCake\fR uses your \fBC\fR language preprocessor for
+processing the cakefiles, so if you are changing compilers,
+you may also need to change the preprocessor.  For example,
+if you use the \fBGNU\fR C compiler, the entry in \fBcake/conf.h\fR
+for your machine type should look something like this:
+.nf
+.sp .5
+.ft B
+#if __MACHINETYPE__sun5
+#if    defined( __GNUC__ )
+        /* GNU compiler */
+#        define    CPP              "gcc"
+#        define    CPP_OPTIONS      "-E"
+#        define    CPP_OPTIONS2     "-traditional"
+#        define    CPP_OPTIONS3     "-D__CAKE__SunOS5"
+#    else
+        /* SunOS 5 with unbundled compilers */
+#        define    CPP              "cc"
+        /*
+         * WARNING:  Make sure /opt/SUNWspro/bin is ahead of /usr/ucb
+         * in your path.
+         * /opt/SUNWspro/bin/cc -E puts unwanted spaces around
+         * substitutions so fall back to old SunC mode
+         */
+#        define    CPP_OPTIONS      "-E"
+#        define    CPP_OPTIONS2     "-Xs"
+#        define    CPP_OPTIONS3     "-D__CAKE__SunOS5"
+#    endif
+#endif
+.ft R
+.sp .5
+.fi
+The BRL-CAD Package is used by several hardware vendors
 as part of their standard compiler regression test suite.
 .NH 3
 FORTRAN Compiler Configuration
@@ -1372,6 +1385,35 @@ supported:  displaylist and refresh.  You should examine display
 managers for devices similar to yours, and proceed from there.
 ARL would be most interested in obtaining any additional display modules
 that you might develop, should you wish to share them.
+.NH 2
+Tcl and Tk
+.PP
+Tcl and Tk are included as part of the \fBBRL-CAD\fR distribution.
+The macros \fBTCL_DEFS\fR, \fBTK_DEFS\fR, and \fBTCL_COMPAT_FILES\fR
+need to be defined for your machine/OS combination in \fBCakefile.defs\fR.
+To determine the correct settings for these macros, run the \fBconfigure\fR
+scripts in \fBlibtcl\fR and \fBlibtk\fR. These scripts will each create a
+\fBMakefile\fR containing an \fBAC_FLAGS\fR macro. The \fBTCL_DEFS\fR should
+be defined as:
+.nf
+.sp .5
+#define TCL_DEFS OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"'
+.sp .5
+.fi
+with the \fBAC_FLAGS\fR defines from the \fBMakfile\fR in \fBlibtcl\fR
+tagged on the end of the above definition. Similarly, \fBTK_DEFS\fR should be defined
+as:
+.nf
+.sp .5
+#define TK_DEFS OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"'
+.sp .5
+.fi
+with the \fBAC_FLAGS\fR defines from the Makfile in \fBlibtk\fR
+tagged on the end of the above definition.
+Check for a definition of \fBCOMPAT_OBJS\fR in the \fBlibtcl\fR Makefile. If
+\fBCOMPAT_OBJS\fR is defined, create a corresponding definition of
+\fBTCL_COMPAT_FILES\fR in \fBCakefile.defs\fR. Remember to remove the ".o"
+suffixes from the file names.
 .NH 2
 Potential Optimizations
 .PP
