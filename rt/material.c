@@ -162,3 +162,25 @@ void
 mlib_void()
 {
 }
+
+/*
+ *			P R _ S H A D E W O R K
+ *
+ *  Pretty print a shadework structure.
+ */
+void
+pr_shadework( str, swp )
+char *str;
+register struct shadework *swp;
+{
+	rt_log( "Shadework %s: 0x%x\n", str, swp );
+	rt_log( " sw_transmit %f\n", swp->sw_transmit );
+	rt_log( " sw_reflect %f\n", swp->sw_reflect );
+	rt_log( " sw_refract_index %f\n", swp->sw_refrac_index );
+	rt_log( " sw_extinction %f\n", swp->sw_extinction );
+	VPRINT( " sw_color", swp->sw_color );
+	VPRINT( " sw_basecolor", swp->sw_basecolor );
+	rt_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
+	rt_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
+	rt_log( " sw_inputs 0x%x\n", swp->sw_inputs );
+}
