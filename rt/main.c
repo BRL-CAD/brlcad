@@ -30,7 +30,7 @@ Usage:  rt [options] model.vg object [objects]\n\
 Options:  -f[#] -x# -aAz -eElev -A%Ambient -l# [-o model.pix]\n";
 
 /* Used for autosizing */
-static vect_t base;		/* view position of model_min */
+static vect_t base;		/* view position of mdl_min */
 static fastf_t deltas;		/* distance between rays */
 extern double atof();
 
@@ -159,9 +159,9 @@ char **argv;
 	dev_setup(npts);
 
 	fprintf(stderr,"model X(%f,%f), Y(%f,%f), Z(%f,%f)\n",
-		model_min[X], model_max[X],
-		model_min[Y], model_max[Y],
-		model_min[Z], model_max[Z] );
+		mdl_min[X], mdl_max[X],
+		mdl_min[Y], mdl_max[Y],
+		mdl_min[Z], mdl_max[Z] );
 
 	if( !matflag )  {
 		/*
@@ -267,8 +267,8 @@ int n;
 	vect_t top;
 	double f;
 
-	MAT4X3PNT( base, m2v, model_min );
-	MAT4X3PNT( top, m2v, model_max );
+	MAT4X3PNT( base, m2v, mdl_min );
+	MAT4X3PNT( top, m2v, mdl_max );
 
 	deltas = (top[X]-base[X])/n;
 	f = (top[Y]-base[Y])/n;

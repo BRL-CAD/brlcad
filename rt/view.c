@@ -68,10 +68,11 @@ extern FILE *outfp;		/* defined in rt.c */
 extern int lightmodel;		/* lighting model # to use */
 extern int one_hit_flag;
 
-#define MAX_LINE	1024	/* Max pixels/line */
-static long scanline[MAX_LINE];	/* 1 scanline pixel buffer */
-static long *pixelp;		/* pointer to first empty pixel */
-static int scanbytes;		/* # of bytes of scanline to be written */
+#define MAX_LINE	1024		/* Max pixels/line */
+/* Current arrangement is definitely non-parallel! */
+static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer, R,G,B */
+static char *pixelp;			/* pointer to first empty pixel */
+static int scanbytes;			/* # bytes in scanline to write */
 
 /* Stuff for pretty-picture output format */
 static struct soltab *last_solidp;	/* pointer to last solid hit */
@@ -151,7 +152,7 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
-	static double cosI0;
+	LOCAL double cosI0;
 	register int i,j;
 
 #define pchar(c) {putc(c,outfp);if(col++==74){putc('\n',outfp);col=0;}}
@@ -200,12 +201,12 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
-	static long inten;
-	static fastf_t diffuse2, cosI2;
-	static fastf_t diffuse1, cosI1;
-	static fastf_t diffuse0, cosI0;
-	static vect_t work0, work1;
-	static int r,g,b;
+	LOCAL long inten;
+	LOCAL fastf_t diffuse2, cosI2;
+	LOCAL fastf_t diffuse1, cosI1;
+	LOCAL fastf_t diffuse0, cosI0;
+	LOCAL vect_t work0, work1;
+	LOCAL int r,g,b;
 
 	/*
 	 * Diffuse reflectance from each light source
@@ -286,8 +287,11 @@ struct partition *PartHeadp;
 
 	if( ikfd > 0 )
 		ikwpixel( ap->a_x, ap->a_y, inten);
-	if( outfd > 0 )
-		*pixelp++ = inten;
+	if( outfd > 0 )  {
+		*pixelp++ = inten & 0xFF;	/* R */
+		*pixelp++ = (inten>>8) & 0xFF;	/* G */
+		*pixelp++ = (inten>>16) & 0xFF;	/* B */
+	}
 }
 
 
@@ -353,10 +357,10 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	register struct hit *hitp= pp->pt_inhit;
-	struct application shadow_ap;
-	static long inten;
-	static int r,g,b;
-	int light_visible;
+	LOCAL struct application shadow_ap;
+	LOCAL long inten;
+	LOCAL int r,g,b;
+	LOCAL int light_visible;
 
 	double	Rd1, Rd2;
 	double	cosI1, cosI2;
@@ -364,8 +368,8 @@ struct partition *PartHeadp;
 	vect_t	work;
 	double	dist_gradient = 1.0;
 	int	red, grn, blu;
-	static vect_t	reflected;
-	static vect_t	to_eye;
+	LOCAL vect_t	reflected;
+	LOCAL vect_t	to_eye;
 
 	/* Check to see if we hit the light source */
 	if( strncmp( pp->pt_inseg->seg_stp->st_name, "LIGHT", 5 )==0 )  {
@@ -374,7 +378,7 @@ struct partition *PartHeadp;
 	}
 	/* Check to see if eye is "inside" the solid */
 	if( hitp->hit_dist < 0.0 )  {
-		inten = 0L;		/* black */
+		inten = 0xffL;		/* red */
 		if(debug)fprintf(stderr,"colorview:  eye inside solid\n");
 		goto done;
 	}
@@ -474,8 +478,11 @@ struct partition *PartHeadp;
 done:
 	if( ikfd > 0 )
 		ikwpixel( ap->a_x, ap->a_y, inten);
-	if( outfd > 0 )
-		*pixelp++ = inten;
+	if( outfd > 0 )  {
+		*pixelp++ = inten & 0xFF;	/* R */
+		*pixelp++ = (inten>>8) & 0xFF;	/* G */
+		*pixelp++ = (inten>>16) & 0xFF;	/* B */
+	}
 }
 
 l3miss()  {
@@ -500,8 +507,11 @@ register struct application *ap;
 		
 	if( ikfd > 0 )
 		ikwpixel( ap->a_x, ap->a_y, bg );
-	if( outfd > 0 )
-		*pixelp++ = bg;
+	if( outfd > 0 )  {
+		*pixelp++ = bg & 0xFF;	/* R */
+		*pixelp++ = (bg>>8) & 0xFF;	/* G */
+		*pixelp++ = (bg>>16) & 0xFF;	/* B */
+	}
 }
 
 /*
@@ -533,9 +543,9 @@ int n;
 		/* Output is destined for a pixel file */
 		pixelp = &scanline[0];
 		if( n > 512 )
-			scanbytes = MAX_LINE * sizeof(long);
+			scanbytes = MAX_LINE * 3;
 		else
-			scanbytes = 512 * sizeof(long);
+			scanbytes = 512 * 3;
 	}  else  {
 		/* Output directly to Ikonas */
 		if( n > 512 )

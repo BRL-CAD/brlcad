@@ -15,9 +15,11 @@
 extern int ikfd;
 extern int ikhires;
 
-#define MAX_LINE	1024	/* Max pixels/line */
-static long scanline[MAX_LINE];	/* 1 scanline pixel buffer */
-static int scanbytes;		/* # of bytes of scanline to be written */
+#define MAX_LINE	1024		/* Max pixels/line */
+static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
+static int scanbytes;			/* # of bytes of scanline */
+
+static char outline[MAX_LINE*4];	/* Ikonas pixels */
 
 char usage[] = "Usage: pix-ik [-h] file.pix\n";
 
@@ -25,8 +27,8 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	register int y;
-	register int infd;
+	static int y;
+	static int infd;
 	static int nlines;
 
 	if( argc < 2 || argc > 3 )  {
@@ -53,11 +55,22 @@ char **argv;
 	load_map(1);		/* Standard map: linear */
 	ikclear();
 
-	scanbytes = nlines * sizeof(long);
+	scanbytes = nlines * 3;
 
 	y = nlines-1;
 	while( read( infd, (char *)scanline, scanbytes ) == scanbytes )  {
-		clustwrite( scanline, y, nlines );
+		register char *in, *out;
+		register int i;
+
+		in = scanline;
+		out = outline;
+		for( i=0; i<nlines; i++ )  {
+			*out++ = *in++;
+			*out++ = *in++;
+			*out++ = *in++;
+			*out++ = 0;
+		}
+		clustwrite( outline, y, nlines );
 		if( --y < 0 )
 			break;
 	}

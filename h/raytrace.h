@@ -22,6 +22,38 @@ extern char *malloc();
 extern void free();
 
 /*
+ *  Definitions necessary to operate in a parallel environment.
+ */
+extern int	res_pt;			/* lock on free partition structs */
+extern int	res_seg;		/* lock on free seg structs */
+extern int	res_malloc;		/* lock on memory allocation */
+extern int	res_printf;		/* lock on printing */
+#ifdef HEP
+/* full means resource free, empty means resource busy */
+#define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
+#define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
+#else
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#endif
+
+/*
+ * Handy memory allocator
+ */
+
+/* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
+#define GETSTRUCT(p,str) \
+	if( debug & DEBUG_MEM )  printf("getstruct( str ): %s\n", __FILE__); \
+	RES_ACQUIRE( &res_malloc ); \
+	p = (struct str *)malloc(sizeof(struct str)); \
+	RES_RELEASE( &res_malloc ); \
+	if( p == (struct str *)0 ) { \
+		fprintf(stderr,"rt/getstruct( p, str ): malloc failed\n");/* cpp magic */ \
+		exit(17); \
+	}  bzero( (char *)p, sizeof(struct str));
+
+
+/*
  *			X R A Y
  *
  * All necessary information about a ray.
@@ -75,13 +107,17 @@ struct seg {
 };
 #define SEG_NULL	((struct seg *)0)
 extern struct seg *FreeSeg;		/* Head of freelist */
-#define GET_SEG(p)    {	if( ((p)=FreeSeg) == SEG_NULL )  { \
+#define GET_SEG(p)    {	RES_ACQUIRE(&res_seg); \
+			if( ((p)=FreeSeg) == SEG_NULL )  { \
 				GETSTRUCT((p), seg); \
 			} else { \
 				FreeSeg = (p)->seg_next; \
 			} \
-			p->seg_next = SEG_NULL; }
-#define FREE_SEG(p) {(p)->seg_next = FreeSeg; FreeSeg = (p);}
+			p->seg_next = SEG_NULL; \
+			RES_RELEASE(&res_seg); }
+#define FREE_SEG(p)   {	RES_ACQUIRE(&res_seg); \
+			(p)->seg_next = FreeSeg; FreeSeg = (p); \
+			RES_RELEASE(&res_seg); }
 
 
 /*
@@ -229,12 +265,16 @@ extern struct partition *FreePart;		 /* Head of freelist */
 #define GET_PT_INIT(p)	\
 	{ GET_PT(p);bzero( ((char *) (p)), sizeof(struct partition) ); }
 
-#define GET_PT(p)   { if( ((p)=FreePart) == PT_NULL )  { \
+#define GET_PT(p)   { RES_ACQUIRE(&res_pt); \
+			if( ((p)=FreePart) == PT_NULL )  { \
 				GETSTRUCT((p), partition); \
 			} else { \
 				FreePart = (p)->pt_forw; \
-			}  }
-#define FREE_PT(p) {(p)->pt_forw = FreePart; FreePart = (p);}
+			} \
+			RES_RELEASE(&res_pt); }
+#define FREE_PT(p) { RES_ACQUIRE(&res_pt); \
+			(p)->pt_forw = FreePart; FreePart = (p); \
+			RES_RELEASE(&res_pt); }
 
 /* Insert "new" partition in front of "old" partition */
 #define INSERT_PT(new,old)	{ \
@@ -295,8 +335,8 @@ extern long nmiss_solid;	/* rays missed solid RPP */
 extern long nmiss;		/* solid ft_shot() returned a miss */
 extern long nhits;		/* solid ft_shot() returned a hit */
 extern struct soltab *HeadSolid;/* pointer to list of solids in model */
-extern vect_t model_min;	/* min corner of model bounding RPP */
-extern vect_t model_max;	/* max corner of model bounding RPP */
+extern vect_t mdl_min;		/* min corner of model bounding RPP */
+extern vect_t mdl_max;		/* max corner of model bounding RPP */
 
 /*
  *  Global routines to interface with the RT library.

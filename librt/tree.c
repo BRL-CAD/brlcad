@@ -29,8 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct region *HeadRegion;
 
 /* A bounding RPP around the whole model */
-vect_t model_min = {  INFINITY,  INFINITY,  INFINITY };
-vect_t model_max = { -INFINITY, -INFINITY, -INFINITY };
+vect_t mdl_min = {  INFINITY,  INFINITY,  INFINITY };
+vect_t mdl_max = { -INFINITY, -INFINITY, -INFINITY };
 #define MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
 			if( (c) > (b) )  b = (c); }
 
@@ -245,9 +245,9 @@ next_one: ;
 	stp->st_uses = 1;
 
 	/* Update the model maxima and minima */
-#define MMM(v)		MINMAX( model_min[X], model_max[X], v[X] ); \
-			MINMAX( model_min[Y], model_max[Y], v[Y] ); \
-			MINMAX( model_min[Z], model_max[Z], v[Z] )
+#define MMM(v)		MINMAX( mdl_min[X], mdl_max[X], v[X] ); \
+			MINMAX( mdl_min[Y], mdl_max[Y], v[Y] ); \
+			MINMAX( mdl_min[Z], mdl_max[Z], v[Z] )
 	MMM( stp->st_min );
 	MMM( stp->st_max );
 

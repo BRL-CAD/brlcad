@@ -87,7 +87,7 @@ register struct application *ap;
 	 *  and is well worth it.  When the model fills the view,
 	 *  then this is just wasted time;  perhaps a flag is needed?
 	 */
-	if( !in_rpp( &ap->a_ray, model_min, model_max )  ||
+	if( !in_rpp( &ap->a_ray, mdl_min, mdl_max )  ||
 	    ap->a_ray.r_max <= 0.0 )  {
 		nmiss_model++;
 		return( ap->a_miss( ap ) );
