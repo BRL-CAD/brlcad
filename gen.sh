@@ -224,7 +224,6 @@ BDIRS="bench \
 "			# This ends the list.
 
 TSDIRS=". mged nirt pl-dm lib util"
-TDIRS="libtk libtkGLX"
 HTML_DIRS="html/manuals html/manuals/shaders html/manuals/Anim_Tutorial html/manuals/libdm html/manuals/mged html/manuals/mged/animmate html/ReleaseNotes html/ReleaseNotes/Rel5.0 html/ReleaseNotes/Rel5.0/Summary"
 INSTALL_ONLY_DIRS="sample_applications $HTML_DIRS"
 PROE_DIRS=". sun4_solaris sgi_elf2 text text/fullhelp text/menus"
@@ -247,7 +246,11 @@ case "${MACHINE}" in
 		;;
 esac
 
-# If this system has good vendor-provided libtcl and libtk, use them.
+# If this system has good vendor-provided libraries, use them.
+# Remove them from the list of targets to be compiled.
+# Two common sets:
+#	libtcl, libtk
+#	libpng, libz
 # Needs to be coordinated with setting of LIBTCL_DIR LIBTK_DIR LIBZ_DIR
 # in architecture-specific entry in Cakefile.defs
 case "${MACHINE}" in
@@ -470,20 +473,6 @@ wc)
 	awk '{tot += $1;}; END{print "Total lines of source = ", tot;}' < /tmp/cad-lines
 	rm -f /tmp/cad-lines
 	;;
-
-tcl)
-	for dir in ${TDIRS}; do
-		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} )
-	done;;
-
-install-tcl)
-	cp -r libtcl/library/* /usr/brlcad/tcl
-	cp -r libtk/library/* /usr/brlcad/tk
-	for dir in ${TDIRS}; do
-		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
-		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${SILENT} install )
-	done;;
 
 tclIndex)
 	( cd tclscripts && cake -k ${SILENT} ${TARGET} )
