@@ -22,6 +22,9 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
+/* Used to ignore the old scrollbars and menus */
+extern int ignore_scroll_and_menu;
+
 /* Interface to a specific Display Manager */
 struct dm {
 	int	(*dmr_open)();
