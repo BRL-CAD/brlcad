@@ -3,7 +3,7 @@
 fblabel \- display a text string on a framebuffer
 .SH SYNOPSIS
 .B fblabel
-.RB [ \-hc ]
+.RB [ \-hca ]
 .RB [ \-F\  framebuffer]
 .RB [ \-f\  fontname]
 .RB [ \-C\  r/g/b]
@@ -40,6 +40,10 @@ The
 flag causes the screen to be cleared before the text string is displayed.
 The default behavior is to label the current image
 without clearing the screen.
+.PP
+The
+.B \-a
+The flag causes the text not to be filtered against the frame buffer image.
 .PP
 The
 .B \-C r/g/b
