@@ -13,6 +13,7 @@ struct bot_specific {
     unsigned char bot_mode;
     unsigned char bot_orientation;
     unsigned char bot_errmode;
+    int bot_ntri;
     fastf_t *bot_thickness;
     struct bu_bitv *bot_facemode;
     struct tri_specific *bot_facelist;	/* head of linked list */
