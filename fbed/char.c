@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) char.c	2.1
-	Modified: 	12/9/86 at 15:54:38
-	Retrieved: 	12/26/86 at 21:53:56
+	SCCS id:	@(#) char.c	2.3
+	Modified: 	12/31/86 at 16:09:47
+	Retrieved: 	12/31/86 at 16:09:54
 	SCCS archive:	/vld/moss/src/fbed/s.char.c
 
 	Authors:	Paul R. Stay
@@ -15,7 +15,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) char.c 2.1, modified 12/9/86 at 15:54:38, archive /vld/moss/src/fbed/s.char.c";
+char	sccsTag[] = "@(#) char.c 2.3, modified 12/31/86 at 16:09:47, archive /vld/moss/src/fbed/s.char.c";
 #endif
 
 #include <stdio.h>
@@ -122,19 +122,22 @@ int xpos, ypos, odd;
 			);
 		fb_read( fbp, xpos, ypos - down + i, fbline, totwid+3);
 		for (j = 0; j < (totwid + 3) - 1; j++)
-			{
+			{	register int	tmp;
+			/* EDITOR'S NOTE : do not rearrange this code,
+				the SUN compiler can't handle more
+				complex expressions.			*/
+			tmp = fbline[j][RED] & 0377;
 			fbline[j][RED] =
-				(int)(paint[RED]*resbuf[j]+(1-resbuf[j]) *
-		    		(fbline[j][RED] & 0377))
-			 	& 0377;
+				(int)(paint[RED]*resbuf[j]+(1-resbuf[j])*tmp);
+			fbline[j][RED] &= 0377;
+			tmp = fbline[j][GRN] & 0377;
 			fbline[j][GRN] =
-				(int)(paint[GRN]*resbuf[j]+(1-resbuf[j]) *
-				(fbline[j][GRN] & 0377))
-				& 0377;
+				(int)(paint[GRN]*resbuf[j]+(1-resbuf[j])*tmp);
+			fbline[j][GRN] &= 0377;
+			tmp = fbline[j][BLU] & 0377;
 			fbline[j][BLU] =
-				(int)(paint[BLU]*resbuf[j]+(1-resbuf[j]) *
-				(fbline[j][BLU] & 0377))
-				& 0377;
+				(int)(paint[BLU]*resbuf[j]+(1-resbuf[j])*tmp);
+			fbline[j][BLU] &= 0377;
 			}
 		fb_write( fbp, xpos, ypos - down + i, fbline,  totwid+3 );
 		}
