@@ -30,7 +30,7 @@ char **argv;
 
 
 	if (argc < 3) {
-		fprintf(sterr,"Usage: chan_add value num_columns colomn [column ...] < in.file > out.file\n");
+		fprintf(stderr,"Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
 		return;
 	}
 
