@@ -2670,6 +2670,11 @@ int *need_init;
  *	jaunt_no - which entry in the jaunt_tbl is being considered as a split location
  *	visit_count - array for counting the number of times a jaunt gets visited in the new loop
  *		This array just provides working space for the routine.
+ *	which_loop - Flag:
+ *		0 -> This is a proposed loop to be created  by nmg_split_lu_at_vu()
+ *		1 -> This is the loop that will be remaining after nmg_split_lu_at_vu().
+ *		when "which_loop" == 1, (*next_start_eu) must be set to the starting EU
+ *		of the first loop (Used to find end of remaining loop).
  *
  * output:
  *	jaunt_status - status of each touching jaunt that appears in the jaunt_tbl
@@ -2677,17 +2682,19 @@ int *need_init;
  */
 
 static void
-nmg_check_proposed_loop( start_eu, next_start_eu, visit_count, jaunt_status, jaunt_tbl, jaunt_no )
+nmg_check_proposed_loop( start_eu, next_start_eu, visit_count, jaunt_status, jaunt_tbl, jaunt_no, which_loop )
 struct edgeuse *start_eu;
 struct edgeuse **next_start_eu;
 int visit_count[];
 int jaunt_status[];
 CONST struct nmg_ptbl *jaunt_tbl;
 CONST int jaunt_no;
+CONST int which_loop;
 {
 	struct edgeuse *loop_eu;
 	struct edgeuse *last_eu;
 	int j;
+	int done=0;
 
 	NMG_CK_EDGEUSE( start_eu );
 	NMG_CK_PTBL( jaunt_tbl );
@@ -2699,7 +2706,7 @@ CONST int jaunt_no;
 	/* walk through the proposed new loop, updating the visit_count and the jaunt status */
 	last_eu = NULL;
 	loop_eu = start_eu;
-	do
+	while( !done )
 	{
 		for( j=0 ; j<NMG_TBL_END( jaunt_tbl ) ; j++ )
 		{
@@ -2713,7 +2720,7 @@ CONST int jaunt_no;
 			NMG_CK_EDGEUSE( jaunt_eu );
 
 			/* if jaunt number j is included in this loop, update its status */
-			if( last_eu && last_eu == jaunt_eu && jaunt_status[j] != JS_TOUCHING_JAUNT )
+			if( last_eu && last_eu == jaunt_eu )
 				jaunt_status[j] = JS_JAUNT;
 
 			/* if this loop_eu has its vertex at the apex of one of
@@ -2724,7 +2731,15 @@ CONST int jaunt_no;
 		}
 		last_eu = loop_eu;
 		loop_eu = RT_LIST_PNEXT_CIRC(edgeuse, &loop_eu->l);
-	} while( loop_eu->vu_p->v_p != start_eu->vu_p->v_p );
+
+		/* if "which_loop" is 0, use the nmg_split_lu_at_vu() terminate condition,
+		 * otherwise, continue until we find (*next_start_eu)
+		 */
+		if( !which_loop && loop_eu->vu_p->v_p == start_eu->vu_p->v_p )
+			done = 1;
+		else if( which_loop && loop_eu == (*next_start_eu) )
+			done = 1;
+	}
 	*next_start_eu = loop_eu;
 
 
@@ -2879,8 +2894,8 @@ top:
 	/* consider each jaunt as a possible location for splitting the loop */
 	for( jaunt_no=0 ; jaunt_no<NMG_TBL_END( &jaunt_tbl ) ; jaunt_no++ )
 	{
-		struct edgeuse *start_eu;	/* EU that will start a new loop upon split */
-		struct edgeuse *next_start_eu;	/* starting eu for the remaining loop */
+		struct edgeuse *start_eu1;	/* EU that will start a new loop upon split */
+		struct edgeuse *start_eu2;	/* EU that will start the remaining loop */
 		int do_split=1;			/* flag: 1 -> this jaunt is a good choice for making the split */
 
 		/* initialize the status of each jaunt to unknown */
@@ -2892,16 +2907,15 @@ top:
 		NMG_CK_EDGEUSE( eu );
 
 		/* get new loop starting edgeuse */
-		start_eu = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
+		start_eu1 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
 		/* determine status of jaunts in the proposed new loop */
-		nmg_check_proposed_loop( start_eu, &next_start_eu, visit_count,
-			jaunt_status, &jaunt_tbl, jaunt_no );
+		nmg_check_proposed_loop( start_eu1, &start_eu2, visit_count,
+			jaunt_status, &jaunt_tbl, jaunt_no, 0 );
 
 		/* Still need to check the loop that will be left if we do a split here */
-		start_eu = next_start_eu;
-		nmg_check_proposed_loop( start_eu, &next_start_eu, visit_count,
-			jaunt_status, &jaunt_tbl, jaunt_no );
+		nmg_check_proposed_loop( start_eu2, &start_eu1, visit_count,
+			jaunt_status, &jaunt_tbl, jaunt_no, 1 );
 
 		/* check predicted status of all the touching jaunts,
 		 * every one must be either split or still a touching jaunt.
