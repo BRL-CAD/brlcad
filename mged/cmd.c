@@ -371,6 +371,8 @@ static struct funtab funtab[] = {
 	f_push, 2, MAXARGS,TRUE,
 "putmat", "a/b {I | m0 m1 ... m16}", "replace matrix on combination's arc",
 	f_putmat, 3,MAXARGS,TRUE,
+"copymat", "a/b c/d", "copy matrix from one combination's arc to another's",
+	f_copymat, 3,3,TRUE,
 "q", "", "quit",
 	f_quit,1,1,TRUE,
 "quit", "", "quit",

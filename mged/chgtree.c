@@ -993,3 +993,54 @@ char	**argv;
     bu_vls_vlsfree(avp);
     return result;
 }
+
+/*
+ *			F _ C O P Y M A T
+ *
+ *	Copy the matrix on one arc in the database to another arc.
+ *
+ */
+int
+f_copymat(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    mat_t			matrix;
+
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
+    if (not_state( ST_VIEW, "Command-line matrix copy"))
+	return TCL_ERROR;
+
+    accumulate_mat(&matrix, argv[1]);
+    install_mat(matrix, argv[2]);
+
+    return TCL_OK;
+}
+
+HIDDEN int
+accumulate_mat (matrix, path)
+
+mat_t	matrix;
+char	*path;
+
+{
+    bu_log("Accumulating the matrices from '%s' into <%x>\n",
+	path, matrix);
+    return 1;
+}
+
+HIDDEN int
+install_mat (matrix, path)
+
+mat_t	matrix;
+char	*path;
+
+{
+    bu_log("Installing the matrix <%x> into '%s'\n",
+	matrix, path);
+    return 1;
+}
