@@ -234,7 +234,7 @@ char **argv;
 	for(;;)  {
 		ibits = 1 << pcsrv->pkc_fd;
 		n = select(32, (char *)&ibits, (char *)0, (char *)0,
-			WorkHead.li_forw != LIST_NULL ? 
+			WorkHead.li_forw != &WorkHead ? 
 				&nowait : (struct timeval *)0 );
 		if( n < 0 )  {
 			perror("select");
@@ -246,7 +246,7 @@ char **argv;
 				break;
 		}
 		/* More work may have just arrived, recheck queue */
-		if( WorkHead.li_forw != LIST_NULL )  {
+		if( WorkHead.li_forw != &WorkHead )  {
 			do_work();
 		}
 	}
