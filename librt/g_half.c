@@ -398,7 +398,7 @@ rt_hlf_class()
  */
 int
 rt_hlf_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -433,19 +433,19 @@ double		norm_tol;
 	VADD2( y1, cent, ybase );
 	VSUB2( y2, cent, ybase );
 
-	ADD_VL( vhead, x1, 0 );		/* the cross */
-	ADD_VL( vhead, x2, 1 );
-	ADD_VL( vhead, y1, 0 );
-	ADD_VL( vhead, y2, 1 );
-	ADD_VL( vhead, x2, 1 );		/* the box */
-	ADD_VL( vhead, y1, 1 );
-	ADD_VL( vhead, x1, 1 );
-	ADD_VL( vhead, y2, 1 );
+	RT_ADD_VLIST( vhead, x1, RT_VLIST_LINE_MOVE );	/* the cross */
+	RT_ADD_VLIST( vhead, x2, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, y1, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, y2, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x2, RT_VLIST_LINE_DRAW );	/* the box */
+	RT_ADD_VLIST( vhead, y1, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, x1, RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, y2, RT_VLIST_LINE_DRAW );
 
 	VSCALE( tip, hip->eqn, 500 );
 	VADD2( tip, cent, tip );
-	ADD_VL( vhead, cent, 0 );
-	ADD_VL( vhead, tip, 1 );
+	RT_ADD_VLIST( vhead, cent, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, tip, RT_VLIST_LINE_DRAW );
 	return(0);
 }
 

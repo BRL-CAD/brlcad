@@ -66,7 +66,7 @@ struct structparse rt_vol_parse[] = {
 };
 
 RT_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,
-	mat_t mat, struct vlhead *vhead, struct rt_vol_internal *vip));
+	mat_t mat, struct rt_list *vhead, struct rt_vol_internal *vip));
 
 /*
  *  Codes to represent surface normals.
@@ -759,7 +759,7 @@ rt_vol_class()
  */
 int
 rt_vol_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
@@ -866,7 +866,7 @@ void
 rt_vol_plate( a,b,c,d, mat, vhead, vip )
 point_t			a,b,c,d;
 register mat_t		mat;
-register struct vlhead	*vhead;
+register struct rt_list	*vhead;
 register struct rt_vol_internal	*vip;
 {
 	LOCAL point_t	s;		/* scaled original point */
@@ -874,21 +874,21 @@ register struct rt_vol_internal	*vip;
 
 	VELMUL( s, vip->cellsize, a );
 	MAT4X3PNT( arot, mat, s );
-	ADD_VL( vhead, arot, 0 );
+	RT_ADD_VLIST( vhead, arot, RT_VLIST_LINE_MOVE );
 
 	VELMUL( s, vip->cellsize, b );
 	MAT4X3PNT( prot, mat, s );
-	ADD_VL( vhead, prot, 1 );
+	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
 
 	VELMUL( s, vip->cellsize, c );
 	MAT4X3PNT( prot, mat, s );
-	ADD_VL( vhead, prot, 1 );
+	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
 
 	VELMUL( s, vip->cellsize, d );
 	MAT4X3PNT( prot, mat, s );
-	ADD_VL( vhead, prot, 1 );
+	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
 
-	ADD_VL( vhead, arot, 1 );
+	RT_ADD_VLIST( vhead, arot, RT_VLIST_LINE_DRAW );
 }
 
 /*

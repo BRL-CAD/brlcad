@@ -48,49 +48,52 @@ void		(*nmg_vlblock_anim_upcall)();	/* For I/F with MGED */
  *									*
  ************************************************************************/
 
-struct vlblock *
+struct rt_vlblock *
 rt_vlblock_init()
 {
-	struct vlblock *vbp;
+	struct rt_vlblock *vbp;
 	int	i;
 
-	GETSTRUCT( vbp, vlblock );
-	vbp->count = 32;
-	vbp->cvp = (struct color_vlhead *)rt_malloc(
-		vbp->count * sizeof(struct color_vlhead),
-		"color_vlhead[]");
+	GETSTRUCT( vbp, rt_vlblock );
+	vbp->magic = RT_VLBLOCK_MAGIC;
+	vbp->max = 32;
+	vbp->head = (struct rt_list *)rt_calloc( vbp->max,
+		sizeof(struct rt_list), "head[]" );
+	vbp->rgb = (long *)rt_calloc( vbp->max,
+		sizeof(long), "rgb[]" );
 
-	for( i=0; i < vbp->count; i++ )  {
-		vbp->cvp[i].rgb = 0;	/* black, unused */
-		vbp->cvp[i].head.vh_first = VL_NULL;
-		vbp->cvp[i].head.vh_last = VL_NULL;
+	for( i=0; i < vbp->max; i++ )  {
+		vbp->rgb[i] = 0;	/* black, unused */
+		RT_LIST_INIT( &(vbp->head[i]) );
 	}
-	vbp->cvp[0].rgb = 0xFFFF00L;	/* Yellow, default */
-	vbp->cvp[1].rgb = 0xFFFFFFL;	/* White */
+	vbp->rgb[0] = 0xFFFF00L;	/* Yellow, default */
+	vbp->rgb[1] = 0xFFFFFFL;	/* White */
+	vbp->nused = 2;
 
 	return(vbp);
 }
 
 void
 rt_vlblock_free(vbp)
-struct vlblock *vbp;
+struct rt_vlblock *vbp;
 {
 	int	i;
 
-	for( i=0; i < vbp->count; i++ )  {
+	for( i=0; i < vbp->nused; i++ )  {
 		/* Release any remaining vlist storage */
-		if( vbp->cvp[i].rgb == 0 )  continue;
-		if( vbp->cvp[i].head.vh_first == VL_NULL) continue;
-		FREE_VL( vbp->cvp[i].head.vh_first );
+		if( vbp->rgb[i] == 0 )  continue;
+		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		RT_FREE_VLIST( &(vbp->head[i]) );
 	}
 
-	rt_free( (char *)(vbp->cvp), "color_vlhead[]" );
-	rt_free( (char *)vbp, "vlblock" );
+	rt_free( (char *)(vbp->head), "head[]" );
+	rt_free( (char *)(vbp->rgb), "rgb[]" );
+	rt_free( (char *)vbp, "rt_vlblock" );
 }
 
-struct vlhead *
+struct rt_list *
 rt_vlblock_find( vbp, r, g, b )
-struct vlblock *vbp;
+struct rt_vlblock *vbp;
 int	r, g, b;
 {
 	long	new;
@@ -99,22 +102,23 @@ int	r, g, b;
 	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
 	/* Map black plots into default color (yellow) */
-	if( new == 0 ) return( &vbp->cvp[0].head );
+	if( new == 0 ) return( &(vbp->head[0]) );
 
-	for( n=0; n < vbp->count; n++ )  {
-		if( vbp->cvp[n].rgb == 0 )  {
-			/* Allocate empty slot */
-			vbp->cvp[n].rgb = new;
-			return( &vbp->cvp[n].head );
-		}
-		if( vbp->cvp[n].rgb == new )
-			return( &vbp->cvp[n].head );
+	for( n=0; n < vbp->nused; n++ )  {
+		if( vbp->rgb[n] == new )
+			return( &(vbp->head[n]) );
+	}
+	if( vbp->nused < vbp->max )  {
+		/* Allocate empty slot */
+		n = vbp->nused++;
+		vbp->rgb[n] = new;
+		return( &(vbp->head[n]) );
 	}
 	/*  RGB does not match any existing entry, and table is full.
 	 *  Eventually, enlarge table.
 	 *  For now, just default to yellow.
 	 */
-	return( &vbp->cvp[0].head );
+	return( &(vbp->head[0]) );
 }
 
 /************************************************************************
@@ -129,7 +133,7 @@ int	r, g, b;
  *  Plot a single vertexuse
  */
 nmg_vu_to_vlist( vhead, vu )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct vertexuse	*vu;
 {
 	struct vertex	*v;
@@ -142,8 +146,8 @@ struct vertexuse	*vu;
 	if( vg )  {
 		/* Only thing in this shell is a point */
 		NMG_CK_VERTEX_G(vg);
-		ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
-		ADD_VL( vhead, vg->coord, VL_CMD_LINE_DRAW );
+		RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
 	}
 }
 
@@ -153,7 +157,7 @@ struct vertexuse	*vu;
  *  Plot a list of edgeuses.  The last edge is joined back to the first.
  */
 nmg_eu_to_vlist( vhead, eu_hd )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct nmg_list	*eu_hd;
 {
 	struct edgeuse		*eu;
@@ -186,8 +190,8 @@ struct nmg_list	*eu_hd;
 		NMG_CK_VERTEX_G(vg);
 		NMG_CK_VERTEX_G(vgmate);
 
-		ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
-		ADD_VL( vhead, vgmate->coord, VL_CMD_LINE_DRAW );
+		RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vgmate->coord, RT_VLIST_LINE_DRAW );
 	}
 }
 
@@ -197,7 +201,7 @@ struct nmg_list	*eu_hd;
  *  Plot a list of loopuses.
  */
 nmg_lu_to_vlist( vhead, lu_hd, poly_markers, normal )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct nmg_list	*lu_hd;
 int		poly_markers;
 vectp_t		normal;
@@ -244,20 +248,20 @@ vectp_t		normal;
 			if (isfirst) {
 				if( poly_markers) {
 					/* Insert a "start polygon, normal" marker */
-					ADD_VL( vhead, normal, VL_CMD_POLY_START );
-					ADD_VL( vhead, vg->coord, VL_CMD_POLY_MOVE );
+					RT_ADD_VLIST( vhead, normal, RT_VLIST_POLY_START );
+					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_MOVE );
 				} else {
 					/* move */
-					ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
+					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_MOVE );
 				}
 				isfirst = 0;
 				first_vg = vg;
 			} else {
 				if( poly_markers) {
-					ADD_VL( vhead, vg->coord, VL_CMD_POLY_DRAW );
+					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_POLY_DRAW );
 				} else {
 					/* Draw */
-					ADD_VL( vhead, vg->coord, VL_CMD_LINE_DRAW );
+					RT_ADD_VLIST( vhead, vg->coord, RT_VLIST_LINE_DRAW );
 				}
 			}
 		}
@@ -266,10 +270,10 @@ vectp_t		normal;
 		if( !isfirst && first_vg )  {
 			if( poly_markers )  {
 				/* Draw, end polygon */
-				ADD_VL( vhead, first_vg->coord, VL_CMD_POLY_END );
+				RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_POLY_END );
 			} else {
 				/* Draw */
-				ADD_VL( vhead, first_vg->coord, VL_CMD_LINE_DRAW );
+				RT_ADD_VLIST( vhead, first_vg->coord, RT_VLIST_LINE_DRAW );
 			}
 		}
 		if( poly_markers > 1 && npoints > 2 )  {
@@ -278,12 +282,12 @@ vectp_t		normal;
 			vect_t	tocent;
 			f = 1.0 / npoints;
 			VSCALE( centroid, centroid, f );
-			ADD_VL( vhead, centroid, VL_CMD_LINE_MOVE );
+			RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_MOVE );
 			VSUB2( tocent, first_vg->coord, centroid );
 			f = MAGNITUDE( tocent ) * 0.5;
 			VSCALE( tocent, normal, f );
 			VADD2( centroid, centroid, tocent );
-			ADD_VL( vhead, centroid, VL_CMD_LINE_DRAW );
+			RT_ADD_VLIST( vhead, centroid, RT_VLIST_LINE_DRAW );
 		}
 	}
 }
@@ -300,7 +304,7 @@ vectp_t		normal;
  */
 void
 nmg_s_to_vlist( vhead, s, poly_markers )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct shell	*s;
 int		poly_markers;
 {
@@ -339,7 +343,7 @@ int		poly_markers;
  */
 void
 nmg_r_to_vlist( vhead, r, poly_markers )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct nmgregion	*r;
 int		poly_markers;
 {
@@ -830,13 +834,13 @@ struct model *m;
  *			N M G _ V L B L O C K _ V
  */
 static void nmg_vlblock_v(vbp, v, tab)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct vertex	*v;
 long		*tab;
 {
 	pointp_t p;
 	static char label[128];
-	struct vlhead	*vh;
+	struct rt_list	*vh;
 
 	NMG_CK_VERTEX(v);
 	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, v->index );
@@ -852,15 +856,15 @@ long		*tab;
 		pl_label(vbp, label);
 	}
 #endif
-	ADD_VL( vh, p, VL_CMD_LINE_MOVE );
-	ADD_VL( vh, p, VL_CMD_LINE_DRAW );
+	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, p, RT_VLIST_LINE_DRAW );
 }
 
 /*
  *			N M G _ V L B L O C K _ E
  */
 static void nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct edge	*e;
 long		*tab;
 int		red, green, blue;
@@ -869,7 +873,7 @@ int		fancy;
 	pointp_t p0, p1;
 	point_t end0, end1;
 	vect_t v;
-	struct vlhead	*vh;
+	struct rt_list	*vh;
 
 	NMG_CK_EDGE(e);
 	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, e->index );
@@ -894,8 +898,8 @@ int		fancy;
 	VSUB2(end1, p1, v);
 
 	vh = rt_vlblock_find( vbp, red, green, blue );
-	ADD_VL( vh, end0, VL_CMD_LINE_MOVE );
-	ADD_VL( vh, end1, VL_CMD_LINE_DRAW );
+	RT_ADD_VLIST( vh, end0, RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vh, end1, RT_VLIST_LINE_DRAW );
 
 	nmg_vlblock_v(vbp, e->eu_p->vu_p->v_p, tab);
 	nmg_vlblock_v(vbp, e->eu_p->eumate_p->vu_p->v_p, tab);
@@ -905,7 +909,7 @@ int		fancy;
  *			M N G _ V L B L O C K _ E U
  */
 void nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy)
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 struct edgeuse	*eu;
 long		*tab;
 int		red, green, blue;
@@ -915,7 +919,7 @@ int		fancy;
 	point_t	radial_tip;
 	point_t	next_base;
 	point_t	last_tip;
-	struct vlhead	*vh;
+	struct rt_list	*vh;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, eu->index );
@@ -945,18 +949,18 @@ int		fancy;
 	    		red = green = blue = 255;
 
 		vh = rt_vlblock_find( vbp, red, green, blue );
-		ADD_VL( vh, base, VL_CMD_LINE_MOVE );
-		ADD_VL( vh, tip, VL_CMD_LINE_DRAW );
+		RT_ADD_VLIST( vh, base, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_DRAW );
 
 	    	nmg_eu_radial( eu, radial_tip );
 		vh = rt_vlblock_find( vbp, red, green-20, blue );
-		ADD_VL( vh, tip, VL_CMD_LINE_MOVE );
-		ADD_VL( vh, radial_tip, VL_CMD_LINE_DRAW );
+		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, radial_tip, RT_VLIST_LINE_DRAW );
 
 	    	nmg_eu_next_base( eu, next_base );
 		vh = rt_vlblock_find( vbp, 0, 100, 0 );
-		ADD_VL( vh, tip, VL_CMD_LINE_MOVE );
-		ADD_VL( vh, next_base, VL_CMD_LINE_DRAW );
+		RT_ADD_VLIST( vh, tip, RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vh, next_base, RT_VLIST_LINE_DRAW );
 	}
 }
 
@@ -1239,9 +1243,9 @@ struct faceuse	*fu1;
 	}
 
 	if( do_anim )  {
-		struct vlblock	*vbp;
-		long		*tab;
-		struct model	*m;
+		struct rt_vlblock	*vbp;
+		long			*tab;
+		struct model		*m;
 
 		m = nmg_find_model( &fu1->l.magic );
 		NMG_CK_MODEL(m);
@@ -1305,9 +1309,9 @@ int		show_mates;
 	}
 
 	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  {
-		struct vlblock *vbp;
-		long		*tab;
-		struct model	*m;
+		struct rt_vlblock	*vbp;
+		long			*tab;
+		struct model		*m;
 
 		m = nmg_find_model( &fu1->l.magic );
 		NMG_CK_MODEL(m);

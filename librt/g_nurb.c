@@ -259,7 +259,7 @@ rt_nurb_class()
 int
 rt_nurb_plot( rp, vhead, dp, abs_tol, rel_tol, norm_tol )
 union record	*rp;
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct directory *dp;
 double		abs_tol;
 double		rel_tol;

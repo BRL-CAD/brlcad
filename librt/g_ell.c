@@ -608,7 +608,7 @@ fastf_t *A, *B;
  */
 int
 rt_ell_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -629,19 +629,19 @@ double		norm_tol;
 	rt_ell_16pts( bottom, eip->v, eip->b, eip->c );
 	rt_ell_16pts( middle, eip->v, eip->a, eip->c );
 
-	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
+	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 1 );
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
-	ADD_VL( vhead, &bottom[15*ELEMENTS_PER_VECT], 0 );
+	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
-	ADD_VL( vhead, &middle[15*ELEMENTS_PER_VECT], 0 );
+	RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &middle[i*ELEMENTS_PER_VECT], 1 );
+		RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 	return(0);
 }

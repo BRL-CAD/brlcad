@@ -213,7 +213,8 @@ register struct rt_i *rtip;
 			if( stp->st_aradius >= INFINITY )
 				continue;
 
-			(void)rt_plot_solid( plotfp, rtip, stp );
+			if( rt_plot_solid( plotfp, rtip, stp ) < 0 )
+				rt_log("unable to plot %s\n", stp->st_name);
 		}
 		(void)fclose(plotfp);
 	}
@@ -234,17 +235,17 @@ int
 rt_plot_solid( fp, rtip, stp )
 register FILE		*fp;
 struct rt_i		*rtip;
-register struct soltab	*stp;
+struct soltab		*stp;
 {
-	struct vlhead	vhead;
-	struct region	*regp;
-	register struct vlist	*vp;
-	int		rnum;
-	struct rt_external	ext;
-	struct rt_db_internal	intern;
-	int		id = stp->st_id;
+	register struct rt_vlist	*vp;
+	struct rt_list			vhead;
+	struct region			*regp;
+	struct rt_external		ext;
+	struct rt_db_internal		intern;
+	int				id = stp->st_id;
+	int				rnum;
 
-	vhead.vh_first = vhead.vh_last = VL_NULL;
+	RT_LIST_INIT( &vhead );
 
 	if( db_get_external( &ext, stp->st_dp, rtip->rti_dbip ) < 0 )  {
 		rt_log("rt_plot_solid(%s): db_get_external() failure\n",
@@ -287,18 +288,37 @@ register struct soltab	*stp;
 			(int)(255*regp->reg_mater.ma_color[2]) );
 	}
 
-	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
-		if( vp->vl_draw )
-			pdv_3cont( fp, vp->vl_pnt );
-		else
-			pdv_3move( fp, vp->vl_pnt );
+	for( RT_LIST_FOR( vp, rt_vlist, &vhead ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				break;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				pdv_3move( fp, *pt );
+				break;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				pdv_3cont( fp, *pt );
+				break;
+			default:
+				rt_log("rt_plot_solid(%s): unknown vlist cmd x%x\n",
+					stp->st_name, *cmd );
+			}
+		}
 	}
-	if( vhead.vh_first == VL_NULL )  {
-		rt_log("rt_plot_solid(%s): no vectors to plot?\n", stp->st_name);
+
+	if( RT_LIST_IS_EMPTY( &vhead ) )  {
+		rt_log("rt_plot_solid(%s): no vectors to plot?\n",
+			stp->st_name);
 		return(-3);		/* FAIL */
-	} else {
-		FREE_VL( vhead.vh_first );
 	}
+	RT_FREE_VLIST( &vhead );
 	return(0);			/* OK */
 }
 

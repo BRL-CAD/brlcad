@@ -916,7 +916,7 @@ rt_ebm_class()
  */
 int
 rt_ebm_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -982,28 +982,28 @@ int			x1, y1;
 int			x2, y2;
 double			t;
 register mat_t		mat;
-register struct vlhead	*vhead;
+register struct rt_list	*vhead;
 {
 	LOCAL point_t	s, p;
 	LOCAL point_t	srot, prot;
 
 	VSET( s, x1, y1, 0.0 );
 	MAT4X3PNT( srot, mat, s );
-	ADD_VL( vhead, srot, 0 );
+	RT_ADD_VLIST( vhead, srot, RT_VLIST_LINE_MOVE );
 
 	VSET( p, x1, y1, t );
 	MAT4X3PNT( prot, mat, p );
-	ADD_VL( vhead, prot, 1 );
+	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
 
 	VSET( p, x2, y2, t );
 	MAT4X3PNT( prot, mat, p );
-	ADD_VL( vhead, prot, 1 );
+	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
 
 	p[Z] = 0;
 	MAT4X3PNT( prot, mat, p );
-	ADD_VL( vhead, prot, 1 );
+	RT_ADD_VLIST( vhead, prot, RT_VLIST_LINE_DRAW );
 
-	ADD_VL( vhead, srot, 1 );
+	RT_ADD_VLIST( vhead, srot, RT_VLIST_LINE_DRAW );
 }
 
 /*

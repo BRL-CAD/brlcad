@@ -325,7 +325,7 @@ register struct soltab *stp;
  */
 int
 rt_arbn_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -368,12 +368,12 @@ double		norm_tol;
 				}
 
 				if( point_count <= 0 )  {
-					ADD_VL( vhead, pt, 0 );
+					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
 					VMOVE( a, pt );
 				} else if( point_count == 1 )  {
 					VSUB2( dist, pt, a );
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
-					ADD_VL( vhead, pt, 1 );
+					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 					VMOVE( b, pt );
 				} else {
 					VSUB2( dist, pt, a );
@@ -386,7 +386,7 @@ double		norm_tol;
 					VPRINT(" a", a);
 					VPRINT(" b", b);
 					VPRINT("pt", pt);
-					ADD_VL( vhead, pt, 1 );	/* draw it */
+					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );	/* draw it */
 				}
 				point_count++;
 next_k:				;

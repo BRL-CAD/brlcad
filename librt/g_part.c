@@ -799,7 +799,7 @@ vect_t		h;
  */
 int
 rt_part_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -826,21 +826,21 @@ double		norm_tol;
 		VSET( c, 0, 0, pip->part_vrad );
 
 		rt_ell_16pts( sphere_rim, pip->part_V, a, b );
-		ADD_VL( vhead, sphere_rim[15], 0 );
+		RT_ADD_VLIST( vhead, sphere_rim[15], RT_VLIST_LINE_MOVE );
 		for( i=0; i<16; i++ )  {
-			ADD_VL( vhead, sphere_rim[i], 1 );
+			RT_ADD_VLIST( vhead, sphere_rim[i], RT_VLIST_LINE_DRAW );
 		}
 
 		rt_ell_16pts( sphere_rim, pip->part_V, b, c );
-		ADD_VL( vhead, sphere_rim[15], 0 );
+		RT_ADD_VLIST( vhead, sphere_rim[15], RT_VLIST_LINE_MOVE );
 		for( i=0; i<16; i++ )  {
-			ADD_VL( vhead, sphere_rim[i], 1 );
+			RT_ADD_VLIST( vhead, sphere_rim[i], RT_VLIST_LINE_DRAW );
 		}
 
 		rt_ell_16pts( sphere_rim, pip->part_V, a, c );
-		ADD_VL( vhead, sphere_rim[15], 0 );
+		RT_ADD_VLIST( vhead, sphere_rim[15], RT_VLIST_LINE_MOVE );
 		for( i=0; i<16; i++ )  {
-			ADD_VL( vhead, sphere_rim[i], 1 );
+			RT_ADD_VLIST( vhead, sphere_rim[i], RT_VLIST_LINE_DRAW );
 		}
 		return(0);		/* OK */
 	}
@@ -864,44 +864,44 @@ double		norm_tol;
 	rt_part_hemisphere( hhemi, tail, as, bs, hs );
 
 	/* Draw V end hemisphere */
-	ADD_VL( vhead, vhemi[0], 0 );
+	RT_ADD_VLIST( vhead, vhemi[0], RT_VLIST_LINE_MOVE );
 	for( i=7; i >= 0; i-- )  {
-		ADD_VL( vhead, vhemi[i], 1 );
+		RT_ADD_VLIST( vhead, vhemi[i], RT_VLIST_LINE_DRAW );
 	}
-	ADD_VL( vhead, vhemi[8], 1 );
-	ADD_VL( vhead, vhemi[12], 1 );
-	ADD_VL( vhead, vhemi[10], 1 );
-	ADD_VL( vhead, vhemi[4], 1 );
-	ADD_VL( vhead, vhemi[2], 0 );
-	ADD_VL( vhead, vhemi[9], 1 );
-	ADD_VL( vhead, vhemi[12], 1 );
-	ADD_VL( vhead, vhemi[11], 1 );
-	ADD_VL( vhead, vhemi[6], 1 );
+	RT_ADD_VLIST( vhead, vhemi[8], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[12], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[10], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[4], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[2], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, vhemi[9], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[12], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[11], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[6], RT_VLIST_LINE_DRAW );
 
 	/* Draw H end hemisphere */
-	ADD_VL( vhead, hhemi[0], 0 );
+	RT_ADD_VLIST( vhead, hhemi[0], RT_VLIST_LINE_MOVE );
 	for( i=7; i >= 0; i-- )  {
-		ADD_VL( vhead, hhemi[i], 1 );
+		RT_ADD_VLIST( vhead, hhemi[i], RT_VLIST_LINE_DRAW );
 	}
-	ADD_VL( vhead, hhemi[8], 1 );
-	ADD_VL( vhead, hhemi[12], 1 );
-	ADD_VL( vhead, hhemi[10], 1 );
-	ADD_VL( vhead, hhemi[4], 1 );
-	ADD_VL( vhead, hhemi[2], 0 );
-	ADD_VL( vhead, hhemi[9], 1 );
-	ADD_VL( vhead, hhemi[12], 1 );
-	ADD_VL( vhead, hhemi[11], 1 );
-	ADD_VL( vhead, hhemi[6], 1 );
+	RT_ADD_VLIST( vhead, hhemi[8], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[12], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[10], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[4], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[2], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, hhemi[9], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[12], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[11], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, hhemi[6], RT_VLIST_LINE_DRAW );
 
 	/* Draw 4 connecting lines */
-	ADD_VL( vhead, vhemi[0], 0 );
-	ADD_VL( vhead, hhemi[0], 1 );
-	ADD_VL( vhead, vhemi[2], 0 );
-	ADD_VL( vhead, hhemi[2], 1 );
-	ADD_VL( vhead, vhemi[4], 0 );
-	ADD_VL( vhead, hhemi[4], 1 );
-	ADD_VL( vhead, vhemi[6], 0 );
-	ADD_VL( vhead, hhemi[6], 1 );
+	RT_ADD_VLIST( vhead, vhemi[0], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, hhemi[0], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[2], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, hhemi[2], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[4], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, hhemi[4], RT_VLIST_LINE_DRAW );
+	RT_ADD_VLIST( vhead, vhemi[6], RT_VLIST_LINE_MOVE );
+	RT_ADD_VLIST( vhead, hhemi[6], RT_VLIST_LINE_DRAW );
 
 	return(0);
 }

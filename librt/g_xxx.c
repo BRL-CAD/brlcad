@@ -204,7 +204,7 @@ rt_xxx_class()
  */
 int
 rt_xxx_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;

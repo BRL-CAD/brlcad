@@ -207,7 +207,7 @@ rt_pipe_class()
  */
 int
 rt_pipe_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
@@ -225,7 +225,7 @@ double			norm_tol;
 	RT_PIPE_CK_MAGIC(pip);
 
 	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs_head);
-	ADD_VL( vhead, np->ps_start, 0 );
+	RT_ADD_VLIST( vhead, np->ps_start, RT_VLIST_LINE_MOVE );
 	for( RT_LIST( psp, wdb_pipeseg, &pip->pipe_segs_head ) )  {
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
@@ -233,7 +233,7 @@ double			norm_tol;
 			break;
 		case WDB_PIPESEG_TYPE_LINEAR:
 			np = RT_LIST_PNEXT(wdb_pipeseg, &psp->l);
-			ADD_VL( vhead, np->ps_start, 1 );
+			RT_ADD_VLIST( vhead, np->ps_start, RT_VLIST_LINE_DRAW );
 			break;
 		case WDB_PIPESEG_TYPE_BEND:
 			VSUB2( head, psp->ps_start, psp->ps_bendcenter );
@@ -248,7 +248,7 @@ double			norm_tol;
 				VJOIN2( pt, psp->ps_bendcenter,
 					cos_ang, head,
 					sin_ang, tail );
-				ADD_VL( vhead, pt, 1 );
+				RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 			}
 			break;
 		default:

@@ -50,6 +50,10 @@ int	len;
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
 
+	if( RT_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
+		RT_LIST_INIT( &rt_g.rtg_vlfree );
+	}
+
 	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
 	    	return( RTI_NULL );		/* FAIL */
 

@@ -1118,7 +1118,7 @@ int		delay;
 		/* get space for list of items processed */
 		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
 
-		sprintf(fname, "/tmp/eval%d.pl", num);
+		sprintf(fname, "/tmp/nmg_eval%d.pl", num);
 		if( (fp = fopen(fname,"w")) == NULL )  {
 			perror(fname);
 			return;
@@ -1135,7 +1135,7 @@ int		delay;
 
 	if( do_anim )  {
 		extern void (*nmg_vlblock_anim_upcall)();
-		struct vlblock *vbp;
+		struct rt_vlblock	*vbp;
 
 		/* get space for list of items processed */
 		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	

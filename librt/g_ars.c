@@ -758,7 +758,7 @@ rt_ars_class()
  */
 int
 rt_ars_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;
@@ -780,19 +780,19 @@ double		norm_tol;
 		register fastf_t *v1;
 
 		v1 = arip->curves[i];
-		ADD_VL( vhead, v1, 0 );
+		RT_ADD_VLIST( vhead, v1, RT_VLIST_LINE_MOVE );
 		v1 += ELEMENTS_PER_VECT;
 		for( j = 1; j <= arip->pts_per_curve; j++, v1 += ELEMENTS_PER_VECT )
-			ADD_VL( vhead, v1, 1 );
+			RT_ADD_VLIST( vhead, v1, RT_VLIST_LINE_DRAW );
 	}
 
 	/*
 	 *  Connect the Ith points on each curve, to make a mesh.
 	 */
 	for( i = 0; i < arip->pts_per_curve; i++ )  {
-		ADD_VL( vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], 0 );
+		RT_ADD_VLIST( vhead, &arip->curves[0][i*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 		for( j = 1; j < arip->ncurves; j++ )
-			ADD_VL( vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], 1 );
+			RT_ADD_VLIST( vhead, &arip->curves[j][i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/*

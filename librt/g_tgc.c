@@ -1625,7 +1625,7 @@ struct rt_db_internal	*ip;
  */
 int
 rt_tgc_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
@@ -1647,21 +1647,21 @@ double			norm_tol;
 	rt_ell_16pts( top, work, tip->c, tip->d );
 
 	/* Draw the top */
-	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
+	RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 1 );
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw the bottom */
-	ADD_VL( vhead, &bottom[15*ELEMENTS_PER_VECT], 0 );
+	RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
 	for( i=0; i<16; i++ )  {
-		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 
 	/* Draw connections */
 	for( i=0; i<16; i += 4 )  {
-		ADD_VL( vhead, &top[i*ELEMENTS_PER_VECT], 0 );
-		ADD_VL( vhead, &bottom[i*ELEMENTS_PER_VECT], 1 );
+		RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], RT_VLIST_LINE_DRAW );
 	}
 	return(0);
 }

@@ -914,7 +914,7 @@ rt_tor_class()
  */
 int
 rt_tor_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
@@ -1009,17 +1009,17 @@ double			norm_tol;
 	/* Draw lengthwise (around outside rim) */
 	for( w = 0; w < nw; w++ )  {
 		len = nlen-1;
-		ADD_VL( vhead, PTA(w,len), 0 );
+		RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_MOVE );
 		for( len = 0; len < nlen; len++ )  {
-			ADD_VL( vhead, PTA(w,len), 1 );
+			RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_DRAW );
 		}
 	}
 	/* Draw around the "width" (1 cross section) */
 	for( len = 0; len < nlen; len++ )  {
 		w = nw-1;
-		ADD_VL( vhead, PTA(w,len), 0 );
+		RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_MOVE );
 		for( w = 0; w < nw; w++ )  {
-			ADD_VL( vhead, PTA(w,len), 1 );
+			RT_ADD_VLIST( vhead, PTA(w,len), RT_VLIST_LINE_DRAW );
 		}
 	}
 

@@ -398,7 +398,7 @@ rt_pg_class()
  */
 int
 rt_pg_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
@@ -416,10 +416,11 @@ double			norm_tol;
 		register struct rt_pg_face_internal	*pp;
 
 		pp = &pgp->poly[p];
-		ADD_VL( vhead, &pp->verts[3*(pp->npts-1)],
-			VL_CMD_LINE_MOVE );
+		RT_ADD_VLIST( vhead, &pp->verts[3*(pp->npts-1)],
+			RT_VLIST_LINE_MOVE );
 		for( i=0; i < pp->npts; i++ )  {
-			ADD_VL( vhead, &pp->verts[3*i], VL_CMD_LINE_DRAW );
+			RT_ADD_VLIST( vhead, &pp->verts[3*i],
+				RT_VLIST_LINE_DRAW );
 		}
 	}
 	return(0);		/* OK */

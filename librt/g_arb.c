@@ -841,10 +841,10 @@ register struct soltab *stp;
 }
 
 #define ARB_FACE( valp, a, b, c, d ) \
-	ADD_VL( vhead, valp[a], 0 ); \
-	ADD_VL( vhead, valp[b], 1 ); \
-	ADD_VL( vhead, valp[c], 1 ); \
-	ADD_VL( vhead, valp[d], 1 );
+	RT_ADD_VLIST( vhead, valp[a], RT_VLIST_LINE_MOVE ); \
+	RT_ADD_VLIST( vhead, valp[b], RT_VLIST_LINE_DRAW ); \
+	RT_ADD_VLIST( vhead, valp[c], RT_VLIST_LINE_DRAW ); \
+	RT_ADD_VLIST( vhead, valp[d], RT_VLIST_LINE_DRAW );
 
 /*
  *  			R T _ A R B _ P L O T
@@ -855,7 +855,7 @@ register struct soltab *stp;
  */
 int
 rt_arb_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead	*vhead;
+struct rt_list	*vhead;
 struct rt_db_internal *ip;
 double		abs_tol;
 double		rel_tol;

@@ -223,7 +223,7 @@ rt_spl_class()
  */
 int
 rt_spl_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct vlhead		*vhead;
+struct rt_list		*vhead;
 struct rt_db_internal	*ip;
 double			abs_tol;
 double			rel_tol;
@@ -262,11 +262,11 @@ double			norm_tol;
 		vp = new->ctl_mesh->mesh;
 
 		for( i = 0; i < new->ctl_mesh->mesh_size[0]; i++) {
-			ADD_VL( vhead, vp, 0 );
+			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
 			vp += new->ctl_mesh->pt_type;
 			for( j = 1; j < new->ctl_mesh->mesh_size[1]; j++ )  {
 				/** CTL_POS( i, j ); **/
-				ADD_VL( vhead, vp, 1 );
+				RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
 				vp += new->ctl_mesh->pt_type;
 			}
 		}
@@ -276,10 +276,10 @@ double			norm_tol;
 		 */
 		for( i = 0; i < new->ctl_mesh->mesh_size[1]; i++ )  {
 			vp = new->ctl_mesh->mesh+CTL_POS( 0, i );
-			ADD_VL( vhead, vp, 0 );
+			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
 			for( j = 1; j < new->ctl_mesh->mesh_size[0]; j++ )  {
 				vp = new->ctl_mesh->mesh+CTL_POS( j, i );
-				ADD_VL( vhead, vp, 1 );
+				RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
 			}
 		}
 	}
