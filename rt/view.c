@@ -68,6 +68,8 @@ extern FILE	*outfp;			/* optional output file */
 extern int	perspective;
 extern int	width;
 extern int	height;
+extern int	parallel;		/* Trying to use multi CPUs */
+
 extern int	lightmodel;		/* lighting model # to use */
 extern mat_t	view2model;
 extern mat_t	model2view;
@@ -84,158 +86,20 @@ int	ibackground[3];			/* integer 0..255 version */
 #define MAX_IREFLECT	9	/* Maximum internal reflection level */
 #define MAX_BOUNCE	4	/* Maximum recursion level */
 
-/*
- *			H I T _ N O T H I N G
- *
- *  a_miss() routine called when no part of the model is hit.
- *  Background texture mapping could be done here.
- *  For now, return a pleasant dark blue.
- */
-hit_nothing( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	if( rdebug&RDEBUG_RAYPLOT )  {
-		vect_t	out;
-
-		VJOIN1( out, ap->a_ray.r_pt,
-			10000, ap->a_ray.r_dir );	/* to imply direction */
-		pl_color( stdout, 190, 0, 0 );
-		rt_drawvec( stdout, ap->a_rt_i,
-			ap->a_ray.r_pt, out );
-	}
-	ap->a_user = 0;		/* Signal view_pixel:  MISS */
-	return(0);
-}
-
-/*
- *			V I E W I T
- *
- *  a_hit() routine for simple lighting model.
- */
-viewit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	register struct partition *pp;
-	register struct hit *hitp;
-	LOCAL fastf_t diffuse2, cosI2;
-	LOCAL fastf_t diffuse1, cosI1;
-	LOCAL fastf_t diffuse0, cosI0;
-	LOCAL vect_t work0, work1;
-
-	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
-	if( pp == PartHeadp )  {
-		rt_log("viewit:  no hit out front?\n");
-		return(0);
-	}
-	hitp = pp->pt_inhit;
-	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-
-	/*
-	 * Diffuse reflectance from each light source
-	 */
-	if( pp->pt_inflip )  {
-		VREVERSE( hitp->hit_normal, hitp->hit_normal );
-	}
-	switch( lightmodel )  {
-	case 1:
-		/* Light from the "eye" (ray source).  Note sign change */
-		diffuse0 = 0;
-		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
-			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
-		VSCALE( work0, LightHeadp->lt_color, diffuse0 );
-
-		/* Add in contribution from ambient light */
-		VSCALE( work1, ambient_color, AmbientIntensity );
-		VADD2( ap->a_color, work0, work1 );
-		break;
-	case 3:
-		/* Simple attempt at a 3-light model. */
-		{
-			struct light_specific *l0, *l1, *l2;
-			l0 = LightHeadp;
-			l1 = l0->lt_forw;
-			l2 = l1->lt_forw;
-
-			diffuse0 = 0;
-			if( (cosI0 = VDOT(hitp->hit_normal, l0->lt_vec)) >= 0.0 )
-				diffuse0 = cosI0 * l0->lt_fraction;
-			diffuse1 = 0;
-			if( (cosI1 = VDOT(hitp->hit_normal, l1->lt_vec)) >= 0.0 )
-				diffuse1 = cosI1 * l1->lt_fraction;
-			diffuse2 = 0;
-			if( (cosI2 = VDOT(hitp->hit_normal, l2->lt_vec)) >= 0.0 )
-				diffuse2 = cosI2 * l2->lt_fraction;
-
-			VSCALE( work0, l0->lt_color, diffuse0 );
-			VSCALE( work1, l1->lt_color, diffuse1 );
-			VADD2( work0, work0, work1 );
-			VSCALE( work1, l2->lt_color, diffuse2 );
-			VADD2( work0, work0, work1 );
-		}
-		/* Add in contribution from ambient light */
-		VSCALE( work1, ambient_color, AmbientIntensity );
-		VADD2( ap->a_color, work0, work1 );
-		break;
-	case 2:
-		/* Store surface normals pointing inwards */
-		/* (For Spencer's moving light program) */
-		ap->a_color[0] = (hitp->hit_normal[0] * (-.5)) + .5;
-		ap->a_color[1] = (hitp->hit_normal[1] * (-.5)) + .5;
-		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
-		break;
-	case 4:
-	 	{
-			LOCAL struct curvature cv;
-			FAST fastf_t f;
-			auto int ival;
-
-			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
-	
-			f = cv.crv_c1;
-			f *= 10;
-			if( f < -0.5 )  f = -0.5;
-			if( f > 0.5 )  f = 0.5;
-			ap->a_color[0] = 0.5 + f;
-			ap->a_color[1] = 0;
-
-			f = cv.crv_c2;
-			f *= 10;
-			if( f < -0.5 )  f = -0.5;
-			if( f > 0.5 )  f = 0.5;
-			ap->a_color[2] = 0.5 + f;
-		}
-		break;
-	case 5:
-	 	{
-			LOCAL struct curvature cv;
-			FAST fastf_t f;
-			auto int ival;
-
-			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
-
-			ap->a_color[0] = (cv.crv_pdir[0] * (-.5)) + .5;
-			ap->a_color[1] = (cv.crv_pdir[1] * (-.5)) + .5;
-			ap->a_color[2] = (cv.crv_pdir[2] * (-.5)) + .5;
-	 	}
-		break;
-	}
-
-	if(rdebug&RDEBUG_HITS)  {
-		rt_pr_hit( " In", hitp );
-		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
-		VPRINT("RGB", ap->a_color);
-	}
-	ap->a_user = 1;		/* Signal view_pixel:  HIT */
-	return(0);
-}
+static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
 
 /*
  *  			V I E W _ P I X E L
  *  
  *  Arrange to have the pixel output.
+ *
+ *  The buffering strategy for output files:
+ *	In serial mode, let stdio handle the buffering.
+ *	In parallel mode, save whole image until the end (view_end).
+ *  The buffering strategy for an "online" libfb framebuffer:
+ *	buf_mode = 0	single pixel I/O
+ *	buf_mode = 1	line buffering
+ *	buf_mode = 2	full frame buffering
  */
 view_pixel(ap)
 register struct application *ap;
@@ -287,15 +151,12 @@ register struct application *ap;
 		}
 	}
 
-#if !defined(PARALLEL) && !defined(RTSRV)
-	if( fbp != FBIO_NULL )  {
-		RGBpixel p;
-		p[RED] = r;
-		p[GRN] = g;
-		p[BLU] = b;
-		fb_write( fbp, ap->a_x, ap->a_y, p, 1 );
-	}
-	if( outfp != NULL )  {
+	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d xy=%3d,%3d\n", r,g,b, ap->a_x, ap->a_y);
+
+	/*
+	 *  Handle file output
+	 */
+	if( !parallel && outfp != NULL )  {
 		if( hex_out )  {
 			fprintf(outfp, "%2.2x%2.2x%2.2x\n", r, g, b);
 		} else {
@@ -307,17 +168,33 @@ register struct application *ap;
 				rt_bomb("pixel fwrite error");
 		}
 	}
-#else PARALLEL or RTSRV
-	{
+
+	/*
+	 *  Handle framebuffer output
+	 */
+	if( buf_mode == 0 )  {
+		/* Single Pixel I/O */
+
+		if( fbp != FBIO_NULL )  {
+			RGBpixel p;
+			p[RED] = r;
+			p[GRN] = g;
+			p[BLU] = b;
+			RES_ACQUIRE( &rt_g.res_syscall );
+			fb_write( fbp, ap->a_x, ap->a_y, p, 1 );
+			RES_RELEASE( &rt_g.res_syscall );
+		}
+	} else {
 		register char *pixelp;
 
-		/* .pix files go bottom to top */
-#ifdef RTSRV
-		/* Here, the buffer is only one line long */
-		pixelp = scanbuf+ap->a_x*3;
-#else RTSRV
-		pixelp = scanbuf+((ap->a_y*width)+ap->a_x)*3;
-#endif RTSRV
+		if( buf_mode == 1 )  {
+			/* Here, the buffer is only one line long */
+			pixelp = scanbuf+ap->a_x*3;
+		} else {
+			/* Buffering a full frame */
+			pixelp = scanbuf+((ap->a_y*width)+ap->a_x)*3;
+		}
+
 		/* Don't depend on interlocked hardware byte-splice */
 		RES_ACQUIRE( &rt_g.res_worker );	/* XXX need extra semaphore */
 		*pixelp++ = r ;
@@ -325,8 +202,81 @@ register struct application *ap;
 		*pixelp++ = b ;
 		RES_RELEASE( &rt_g.res_worker );
 	}
-#endif PARALLEL or RTSRV
-	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
+}
+
+/*
+ *  			V I E W _ E O L
+ *  
+ *  This routine is called by main when the last pixel of a scanline
+ *  has been finished.  When in parallel mode, there is no guarantee
+ *  that the last few pixels are done -- just send off the buffer.
+ */
+view_eol(ap)
+register struct application *ap;
+{
+	if( buf_mode <= 0 || fbp == FBIO_NULL )
+		return;
+
+	RES_ACQUIRE( &rt_g.res_syscall );
+	if( buf_mode == 2 )
+		fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
+	else
+		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+	RES_RELEASE( &rt_g.res_syscall );
+}
+
+/*
+ *			V I E W _ E N D
+ */
+view_end(ap)
+struct application *ap;
+{
+	register struct light_specific *lp, *nlp;
+
+	if( parallel )  {
+		if( (outfp != NULL) &&
+		    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
+			fprintf(stderr,"view_end:  fwrite failure\n");
+			return(-1);		/* BAD */
+		}
+	}
+
+	/* Eliminate implicit lights */
+	lp=LightHeadp;
+	while( lp != LIGHT_NULL )  {
+		if( lp->lt_explicit )  {
+			/* will be cleaned by mlib_free() */
+			lp = lp->lt_forw;
+			continue;
+		}
+		nlp = lp->lt_forw;
+		light_free( (char *)lp );
+		lp = nlp;
+	}
+}
+
+/*
+ *			H I T _ N O T H I N G
+ *
+ *  a_miss() routine called when no part of the model is hit.
+ *  Background texture mapping could be done here.
+ *  For now, return a pleasant dark blue.
+ */
+hit_nothing( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	if( rdebug&RDEBUG_RAYPLOT )  {
+		vect_t	out;
+
+		VJOIN1( out, ap->a_ray.r_pt,
+			10000, ap->a_ray.r_dir );	/* to imply direction */
+		pl_color( stdout, 190, 0, 0 );
+		rt_drawvec( stdout, ap->a_rt_i,
+			ap->a_ray.r_pt, out );
+	}
+	ap->a_user = 0;		/* Signal view_pixel:  MISS */
+	return(0);
 }
 
 static struct shadework shade_default = {
@@ -511,8 +461,8 @@ register struct shadework *swp;
 		} else {
 			FAST fastf_t f;
 			/* Get surface normal for hit point */
-			RT_HIT_NORM( &(swp->sw_hit), pp->pt_inseg->seg_stp,
-				&(ap->a_ray) );
+			/* Stupid SysV PCC needs this on one line */
+			RT_HIT_NORM( &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
 			/* Temporary check to make sure normals are OK */
 			if( swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
@@ -565,52 +515,127 @@ register struct shadework *swp;
 }
 
 /*
- *  			V I E W _ E O L
- *  
- *  This routine is called by main when the end of a scanline is
- *  reached.
+ *			V I E W I T
+ *
+ *  a_hit() routine for simple lighting model.
  */
-view_eol(ap)
+viewit( ap, PartHeadp )
 register struct application *ap;
+struct partition *PartHeadp;
 {
-#ifdef PARALLEL
-	if( fbp ==FBIO_NULL )
-		return;
-	/* We make no guarantee that the last few pixels are done */
-	RES_ACQUIRE( &rt_g.res_syscall );
-	fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
-	RES_RELEASE( &rt_g.res_syscall );
-#endif PARALLEL
-}
+	register struct partition *pp;
+	register struct hit *hitp;
+	LOCAL fastf_t diffuse2, cosI2;
+	LOCAL fastf_t diffuse1, cosI1;
+	LOCAL fastf_t diffuse0, cosI0;
+	LOCAL vect_t work0, work1;
 
-/*
- *			V I E W _ E N D
- */
-view_end(ap)
-struct application *ap;
-{
-	register struct light_specific *lp, *nlp;
-
-#ifdef PARALLEL
-	if( (outfp != NULL) &&
-	    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
-		fprintf(stderr,"view_end:  fwrite failure\n");
-		return(-1);		/* BAD */
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("viewit:  no hit out front?\n");
+		return(0);
 	}
-#endif PARALLEL
+	hitp = pp->pt_inhit;
+	RT_HIT_NORM( hitp, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 
-	/* Eliminate implicit lights */
-	lp=LightHeadp;
-	while( lp != LIGHT_NULL )  {
-		if( lp->lt_explicit )  {
-			/* will be cleaned by mlib_free() */
-			lp = lp->lt_forw;
-			continue;
+	/*
+	 * Diffuse reflectance from each light source
+	 */
+	if( pp->pt_inflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
+	switch( lightmodel )  {
+	case 1:
+		/* Light from the "eye" (ray source).  Note sign change */
+		diffuse0 = 0;
+		if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) >= 0.0 )
+			diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
+		VSCALE( work0, LightHeadp->lt_color, diffuse0 );
+
+		/* Add in contribution from ambient light */
+		VSCALE( work1, ambient_color, AmbientIntensity );
+		VADD2( ap->a_color, work0, work1 );
+		break;
+	case 3:
+		/* Simple attempt at a 3-light model. */
+		{
+			struct light_specific *l0, *l1, *l2;
+			l0 = LightHeadp;
+			l1 = l0->lt_forw;
+			l2 = l1->lt_forw;
+
+			diffuse0 = 0;
+			if( (cosI0 = VDOT(hitp->hit_normal, l0->lt_vec)) >= 0.0 )
+				diffuse0 = cosI0 * l0->lt_fraction;
+			diffuse1 = 0;
+			if( (cosI1 = VDOT(hitp->hit_normal, l1->lt_vec)) >= 0.0 )
+				diffuse1 = cosI1 * l1->lt_fraction;
+			diffuse2 = 0;
+			if( (cosI2 = VDOT(hitp->hit_normal, l2->lt_vec)) >= 0.0 )
+				diffuse2 = cosI2 * l2->lt_fraction;
+
+			VSCALE( work0, l0->lt_color, diffuse0 );
+			VSCALE( work1, l1->lt_color, diffuse1 );
+			VADD2( work0, work0, work1 );
+			VSCALE( work1, l2->lt_color, diffuse2 );
+			VADD2( work0, work0, work1 );
 		}
-		nlp = lp->lt_forw;
-		light_free( (char *)lp );
-		lp = nlp;
+		/* Add in contribution from ambient light */
+		VSCALE( work1, ambient_color, AmbientIntensity );
+		VADD2( ap->a_color, work0, work1 );
+		break;
+	case 2:
+		/* Store surface normals pointing inwards */
+		/* (For Spencer's moving light program) */
+		ap->a_color[0] = (hitp->hit_normal[0] * (-.5)) + .5;
+		ap->a_color[1] = (hitp->hit_normal[1] * (-.5)) + .5;
+		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
+		break;
+	case 4:
+	 	{
+			LOCAL struct curvature cv;
+			FAST fastf_t f;
+			auto int ival;
+
+			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
+	
+			f = cv.crv_c1;
+			f *= 10;
+			if( f < -0.5 )  f = -0.5;
+			if( f > 0.5 )  f = 0.5;
+			ap->a_color[0] = 0.5 + f;
+			ap->a_color[1] = 0;
+
+			f = cv.crv_c2;
+			f *= 10;
+			if( f < -0.5 )  f = -0.5;
+			if( f > 0.5 )  f = 0.5;
+			ap->a_color[2] = 0.5 + f;
+		}
+		break;
+	case 5:
+	 	{
+			LOCAL struct curvature cv;
+			FAST fastf_t f;
+			auto int ival;
+
+			RT_CURVE( &cv, hitp, pp->pt_inseg->seg_stp );
+
+			ap->a_color[0] = (cv.crv_pdir[0] * (-.5)) + .5;
+			ap->a_color[1] = (cv.crv_pdir[1] * (-.5)) + .5;
+			ap->a_color[2] = (cv.crv_pdir[2] * (-.5)) + .5;
+	 	}
+		break;
 	}
+
+	if(rdebug&RDEBUG_HITS)  {
+		rt_pr_hit( " In", hitp );
+		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
+		VPRINT("RGB", ap->a_color);
+	}
+	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+	return(0);
 }
 
 /*
@@ -623,9 +648,25 @@ register struct application *ap;
 char *file, *obj;
 {
 
-#ifdef PARALLEL
-	scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf" );
-#endif
+#ifndef RTSRV
+	if( parallel )  {
+		/* frame buffering */
+		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
+		buf_mode = 2;
+		rt_log("Buffering full frames\n");
+	} else if( width <= 96 )  {
+		/* single-pixel I/O */
+		scanbuf = (char *)0;
+		buf_mode = 0;
+		rt_log("Single pixel I/O, unbuffered\n");
+	}  else
+#endif not RTSRV
+	{
+		/* line buffering */
+		scanbuf = rt_malloc( width*3 + sizeof(long), "scanbuf [line]" );
+		buf_mode = 1;
+		rt_log("Buffering single scanlines\n");
+	}
 
 	mlib_init();			/* initialize material library */
 

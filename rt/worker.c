@@ -50,6 +50,7 @@ extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
 extern fastf_t	zoomout;
+extern int	parallel;		/* Trying to use multi CPUs */
 extern int	npsw;
 extern struct resource resource[];
 
@@ -140,7 +141,14 @@ do_run( a, b )
 	cur_pixel = a;
 	last_pixel = b;
 
-#ifdef PARALLEL
+	if( !parallel )  {
+		/*
+		 * SERIAL case -- one CPU does all the work.
+		 */
+		worker(0);
+		return;
+	}
+
 	/*
 	 *  Parallel case.  This is different for each system.
 	 *  The parallel workers are started and terminated here.
@@ -180,12 +188,6 @@ do_run( a, b )
 	x = 0;
 	while( nworkers > 0 )  x++;
 	if( x > 0 )  rt_log("do_run(%d,%d): termination took %d extra loops\n", a, b, x);
-#else
-	/*
-	 * SERIAL case -- one CPU does all the work.
-	 */
-	worker(0);
-#endif
 }
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])

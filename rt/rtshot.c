@@ -49,6 +49,7 @@ extern char	*sbrk();
 int		rdebug;			/* RT program debugging (not library) */
 
 int		npsw = 1;		/* Run serially */
+int		parallel = 0;
 
 struct resource		resource;
 struct application	ap;

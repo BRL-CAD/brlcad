@@ -56,12 +56,14 @@ extern void	worker();
 
 /***** variables shared with worker() ******/
 extern struct application ap;
+extern int	hypersample;		/* number of extra rays to fire */
 extern point_t	eye_model;		/* model-space location of eye */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
 extern char	*scanbuf;		/* For optional output buffering */
+extern int	parallel;		/* Trying to use multi CPUs */
 extern int	npsw;
 extern struct resource resource[];
 /***** end variables shared with worker() */
@@ -380,6 +382,7 @@ int framenumber;
 
 	fprintf(stderr, "\n...................Frame %5d...................\n",
 		framenumber);
+	set_priority( width*height*(hypersample+1) );
 	if( rtip->needprep )  {
 		/* Allow RT library to prepare itself */
 		rt_prep_timer();

@@ -70,6 +70,7 @@ mat_t		Viewrotscale;
 fastf_t		viewsize=0;
 fastf_t		zoomout=1;		/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;		/* For optional output buffering */
+int		parallel=0;		/* Trying to use multi CPUs */
 int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() *****/
@@ -231,6 +232,13 @@ char **argv;
 	char idbuf[132];		/* First ID record info */
 	char cbuf[512];			/* Input command buffer */
 
+#ifdef BSD
+	setlinebuf( stderr );
+#endif BSD
+#if defined( SYSV) && !defined( sgi )
+	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
+#endif SYSV
+
 	beginptr = sbrk(0);
 	width = height = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -245,7 +253,7 @@ char **argv;
 		exit(1);
 	}
 	if( optind >= argc )  {
-		fprintf(stderr,"rt: MGED database not specified\n");
+		fprintf(stderr,"rt:  MGED database not specified\n");
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
@@ -258,6 +266,11 @@ char **argv;
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
+
+	if( npsw > 1 )
+		parallel = 1;
+	if( parallel )
+		fprintf(stderr,"rt:  running with %d processors\n", npsw );
 
 	title_file = argv[optind];
 	title_obj = argv[optind+1];
@@ -292,17 +305,13 @@ char **argv;
 		fb_window( fbp, width/2, height/2 );
 	} else if( outputfile == (char *)0 )  {
 		if( isatty(fileno(stdout)) )  {
-			fprintf(stderr,"rt: binary output to terminal\n");
+			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
 			exit(14);
 		}
 		outfp = stdout;
 	}
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 	beginptr = sbrk(0);
-
-#ifdef PARALLEL
-	fprintf(stderr,"PARALLEL: npsw=%d\n", npsw );
-#endif PARALLEL
 
 	if( !matflag )  {
 		def_tree( rtip );		/* Load the default trees */
