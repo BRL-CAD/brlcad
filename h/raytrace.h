@@ -1093,16 +1093,11 @@ struct application  {
  *  regardless of how many different models are being worked on
  */
 struct rt_g {
-	int		debug;		/* non-zero for debug, see debug.h */
-	/*  Definitions necessary to interlock in a parallel environment */
+	int		debug;		/* !0 for debug, see librt/debug.h */
+	/* XXX rtg_parallel is not used by LIBRT any longer */
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
-	long		res_syscall;	/* lock on system calls */
-	long		res_worker;	/* lock on work to do */
-	long		res_stats;	/* lock on statistics */
-	long		res_results;	/* lock on result buffer */
-	long		res_model;	/* lock on model growth (splines) */
 	struct bu_list	rtg_vlfree;	/* head of rt_vlist freelist */
-	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
+	int		NMG_debug;	/* debug bits for NMG's see h/nmg.h */
 };
 extern struct rt_g rt_g;
 
