@@ -30,6 +30,13 @@
 #include "vmath.h"
 #include "anim.h"
 
+#ifndef M_PI
+#define M_PI	3.14159265358979323846
+#endif
+#ifndef RTOD
+#define RTOD	(180/M_PI)
+#endif
+
 extern int optind;
 extern char *optarg;
 
@@ -72,6 +79,9 @@ char **argv;
 		}
 		else {
 			anim_mat2ypr(angles,mat);
+			angles[0] *= RTOD;
+			angles[1] *= RTOD;
+			angles[2] *= RTOD;
 			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
 			printf("%g\t%g\t%g\n",angles[0],angles[1],angles[2]);
 		}
