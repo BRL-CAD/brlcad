@@ -181,12 +181,16 @@ CONST char	*str;
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	}
 
+#if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
+#endif
 	ptr = malloc(cnt);
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
 		fprintf(stderr, "%8lx malloc%7d %s\n", (long)ptr, cnt, str);
 	}
+#if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release( BU_SEM_SYSCALL );
+#endif
 
 	if( ptr==(char *)0 )  {
 		fprintf(stderr,"bu_malloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
@@ -231,10 +235,14 @@ CONST char	*str;
 		}
 	}
 
+#if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
+#endif
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
+#if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
 }
 
 /*
@@ -264,9 +272,13 @@ CONST char		*str;
 		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
 	}
 
+#if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
+#endif
 	ptr = realloc(ptr,cnt);
+#if defined(MALLOC_NOT_MP_SAFE)
 	bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
 
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
