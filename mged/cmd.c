@@ -75,6 +75,7 @@ void	f_make(), f_attach(), f_release();
 void	f_tedit(), f_memprint();
 void	f_mirface(), f_units(), f_title();
 void	f_permute();
+void	f_keypoint();
 void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
@@ -212,6 +213,8 @@ static struct funtab {
 	f_itemair,3,4,
 "keep", "keep_file object(s)", "save named objects in specified file",
 	f_keep, 3, MAXARGS,
+"keypoint", "[x y z | reset]", "set/see center of editing transformations",
+	f_keypoint,1,4,
 "kill", "<objects>", "delete objects from file",
 	f_kill,2,MAXARGS,
 "killall", "object[s]", "kill object[s] and all references",
