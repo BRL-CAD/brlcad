@@ -22,13 +22,10 @@
 class Database {
     inherit Db Drawable
 
-    constructor {file args} {
+    constructor {file} {
 	Db::constructor $file
 	Drawable::constructor [Db::get_name]
-    } {
-	# process options
-	eval configure $args
-    }
+    } {}
 
     destructor {
     }
