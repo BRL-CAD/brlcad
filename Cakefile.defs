@@ -81,6 +81,60 @@ set -S2 "/bin/sh"
 /* #undef NFS */
 #define NFS	1
 
+/****************************************************************
+ *								*
+ * If the PRODUCTION flag is not defined, then a debugable	*
+ * and static build is usually performed.			*
+ *								*
+ * Each platform should distiguish the appropriate build	*
+ * parameters for a production and non-production compile.	*
+ *								*
+ * Shared library builds (BUILD_SHARED) and optimized		*
+ * compilation (BUILD_OPTIMIZED) are turned off by default for	*
+ * a production compile.  Each individual platform may set or 	*
+ * override a default build option if there is some special 	*
+ * significance	(e.g. building staticly on m4i64).		*
+ *								*
+ * The BUILD_XWINDOWS flag will enable building of the X Window	*
+ * System (a portable, network-transparent window system).	*
+ * Disabling this option in the absence of an alternative GUI	*
+ * will build in text-only mode (terminal-mode mged).		*
+ *								*
+ * The BUILD_OPENGL flag will attempt to build OpenGL 		*
+ * framebuffer capability on platforms that support such a	*
+ * thing.  This option, although generally desired, is turned	*
+ * off by default since it couples a dependancy with the OpenGL	*
+ * libraries that may or may not be installed on the local	*
+ * system.							*
+ *								*
+ * The BUILD_PRODUCTION	flag (which is NOT enabled by default)	*
+ * turns off debug and error condition checking (among other	*
+ * options) throughout the package via a compile-time option 	*
+ * (-DPRODUCTION=1).  As such, this option should be enabled	*
+ * with care.  In the event of an undetected bug, there is the	*
+ * potential for database corruption..  Enabling the option,	*
+ * however, should improve raytrace performance noticeably.	*
+ *								*
+ ****************************************************************/
+
+/* 1==YES, 0==NO */
+
+#define PRODUCTION	1
+
+#if PRODUCTION
+#	define BUILD_OPTIMIZED	1
+#	define BUILD_SHARED	1
+#	define BUILD_XWINDOWS	1
+#	define BUILD_OPENGL	0
+/*# 	define BUILD_PRODUCTION	1*/
+#else
+#	define BUILD_OPTIMIZED	0
+#	define BUILD_SHARED	0
+#	define BUILD_XWINDOWS	1
+#	define BUILD_OPENGL	0
+#	define BUILD_PRODUCTION	0
+#endif
+
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
 #define	TCLTK_VERS	8.3
 
@@ -173,7 +227,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 5.0 */
 #	undef	sgi
 #	define	MTYPE	6d
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
 #		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
@@ -181,7 +235,7 @@ set -S2 "/bin/sh"
 /*		This version for debugging with DBX */
 #		define	OPTIMIZER	-g
 #	endif
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	GFLAG		-KPIC
 #		define	ARCH_SUF	so
@@ -239,7 +293,7 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX 6.0 (on a MIPS-3 32-bit machine) */
 #	undef	sgi
 #	define	MTYPE	7d
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -259,7 +313,7 @@ set -S2 "/bin/sh"
 #	define	GFLAG	-o32 -KPIC -G 0
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -307,12 +361,12 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS3 machine) */
 #	undef	sgi
 #	define	MTYPE	m3i62
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
-/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
@@ -327,7 +381,7 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 /*		32-bit version, compatible with HLA, etc. etc. */
 #		define	GFLAG		-n32 -mips3 -KPIC -G 7
 #		define	XLIBDIR /usr/lib32
@@ -337,7 +391,7 @@ set -S2 "/bin/sh"
 #		define	XLIBDIR /usr/lib64
 #endif
 #	define  XINCDIR /usr/include/X11
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -378,12 +432,12 @@ set -S2 "/bin/sh"
 /*	Silicon Graphics 4D, running IRIX64 6.2 (on a MIPS4 machine) */
 #	undef	sgi
 #	define	MTYPE	m4i62
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
-/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
@@ -405,7 +459,7 @@ set -S2 "/bin/sh"
 #endif
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -453,15 +507,12 @@ set -S2 "/bin/sh"
 #			define M4I64_USE_N32
 #		endif /* else use 32 (o32) */
 #	endif
-#	if 1 /*	PRODUCTION=1	*/
-#		define	M4I64_PRODUCTION
-#	endif
 #	define	MTYPE	m4i64
-#	ifdef M4I64_PRODUCTION
+#	if BUILD_OPTIMIZED /*	PRODUCTION=1	*/
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
-/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
 /*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
@@ -507,7 +558,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define  XINCDIR /usr/include/X11
 
-#	ifdef M4I64_PRODUCTION
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -570,21 +621,17 @@ set -S2 "/bin/sh"
 #			define M4I65_USE_N32
 #		endif /* else use 32 (o32) */
 #	endif
-#	if 1 /*	PRODUCTION	*/
-#		define	M4I65_PRODUCTION
-#		define	M4I65_SHARED_LIB
-#	else /* DEBUG		*/
-#		if 1
-#			define	M4I65_SHARED_LIB
-#		endif
+/*	Building staticly on this architecture creates *huge* executeables, thus we override by default*/
+#	if 1
+#		define	BUILD_SHARED	1
 #	endif
 #	define	MTYPE	m4i65
-#	ifdef M4I65_PRODUCTION
+#	if BUILD_OPTIMIZED
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
-/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
+/*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1412 is "destination type of cast is too small to hold all pointers: truncation possible" */
@@ -631,7 +678,7 @@ set -S2 "/bin/sh"
 #			define	XLIBDIR /usr/lib
 #		endif
 #	endif
-#	ifdef M4I65_SHARED_LIB
+#	if BUILD_SHARED
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -690,13 +737,13 @@ set -S2 "/bin/sh"
 #	define	MTYPE	sun4
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
 #	endif
 #	define	CC_DEFS	-PIC
-#	if 0
+#	if BUILD_SHARED
 /*		Shared library support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
@@ -711,8 +758,37 @@ set -S2 "/bin/sh"
 #		define	RANLIB	ranlib
 #	endif
 #	define	LIBRT_TIMER	timer42
-
-#	if 1	/* PRODUCTION=1 */
+/*	Try to use OpenWindows by default (most common) */
+#	define BUILD_XWINDOWS	0
+#	if BUILD_XWINDOWS	/* OpenWindows=>BUILD_XWINDOWS=0 */
+/*		Sun with site-provided MIT X11. */
+#		define	XINCDIR		/usr/X11/include
+#		define	XLIBDIR		/usr/X11/lib
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
+			-I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		if BUILD_OPENGL
+#			define	LIBDM_OBJS	color query dm-X dm-ogl
+#			define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#			define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#			define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
+#			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#			define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
+#			define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#			define	BWISH_CONFIG	-I''XINCDIR -DBWISH
+#			define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
+#		else
+#			define	LIBDM_OBJS	color query dm-X
+#			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#			define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#			define	MGED_OBJS	doevent update dm-X dm-generic
+#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
+#			define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
+#		endif
+#	else
 /*		Sun with X11 (aka "openwin") Default for SunOS 41.1 */
 #		define	XINCDIR		/usr/openwin/include
 #		define	XLIBDIR		/usr/openwin/lib
@@ -726,38 +802,8 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
-#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-#	else
-/*		Sun with site-provided MIT X11. */
-#		define	XINCDIR		/usr/X11/include
-#		define	XLIBDIR		/usr/X11/lib
-#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
-			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		if 0
-#			define	LIBDM_OBJS	color query dm-X dm-ogl
-#			define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#			define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#			define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
-#			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#			define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
-$#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
-#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
-#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
-#		else
-#			define	LIBDM_OBJS	color query dm-X
-#			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#			define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#			define	MGED_OBJS	doevent update dm-X dm-generic
-#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
-#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-#		endif
-
+#		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #	endif
-
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	if 0
@@ -783,7 +829,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #	if defined( __GNUC__ )
 #		define	CC		gcc
-#		if 1	/* PRODUCTION=1 */
+#		if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-O2 -fwritable-strings -Wall
 #		else
 #			define	OPTIMIZER	-g -fwritable-strings -Wall
@@ -793,7 +839,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
-#		if 1	/* PRODUCTION=1 */
+#		if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-dalign -xcg92 -xO4
 #		else
 #			define	OPTIMIZER	-g
@@ -804,7 +850,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 
 /*	Shared library support */
-#	if 1 /* PRODUCTION=1 */
+#	if BUILD_SHARED /* PRODUCTION=1 */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -o
@@ -827,31 +873,30 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
-#  if 1	/* PRODUCTION=1 */
-#	define	LIBMESA_CONFIG	-DFBIND=2
-#	define	LIBDM_OBJS	color query dm-X
-#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#	define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	doevent update dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	if BUILD_OPENGL	/* PRODUCTION=1 */
+#		define	LIBMESA_CONFIG	-DFBIND=2
+#		define	LIBDM_OBJS	color query dm-X
+#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #if 0
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 #else
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
 #endif
-#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
-#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-#  else
-/*	Compiling XGL requires SDK (Solaris Developer's Kit) */
-#	define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
-#	define	MGED_OBJS	doevent update dm-X dm-xgl dm-generic
-#	define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
-#	define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR \
-				-R''XGLHOME/lib \
-				-lX11 -lxgl -lnsl -lsocket -lXi
-#  endif
-
+#		define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#		define	BWISH_CONFIG	-I''XINCDIR -DBWISH
+#		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
+#	else
+/*		Compiling XGL requires SDK (Solaris Developer's Kit) */
+#		define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
+#		define	MGED_OBJS	doevent update dm-X dm-xgl dm-generic
+#		define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
+#		define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR \
+					-R''XGLHOME/lib \
+					-lX11 -lxgl -lnsl -lsocket -lXi
+#	endif
 #endif
 
 #if defined(CRAY1)
@@ -947,12 +992,13 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O3 -fno-strict-aliasing
 #	else
-#		define	OPTIMIZER	-g
+#		define	OPTIMIZER	-O -g
+#		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support.  Requires ELF for Linux. */
 #		define	CC	gcc
 #		define	CC_DEFS -pipe -fPIC -Wall
@@ -975,7 +1021,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES -ldl
-#	if 1	/* Use MESA  and GLX */
+#	if BUILD_OPENGL	/* Use MESA  and GLX */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
 #		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
@@ -986,7 +1032,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	else	/* just use X */
-#		if 1
+#		if BUILD_XWINDOWS
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
@@ -1043,12 +1089,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XLIBDIR	/usr/X11R6/lib
 #	define	CC	gcc
 #	define	LEX_OPTS	-l
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support.  */
 #		define	CC_DEFS -pipe -fPIC -Wall
 #		define	ARCH_SUF	so
@@ -1062,7 +1108,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #	define	LIBRT_TIMER	timer42
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
-#	if 0	/* Use MESA  and GLX */
+#	if BUILD_OPENGL	/* Use MESA  and GLX */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
 #		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
@@ -1073,7 +1119,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	else	/* just use X */
-#		if 1
+#		if BUILD_XWINDOWS
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
@@ -1150,26 +1196,35 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBTERMLIB	-lcurses
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-#	if	0
+#	if	BUILD_XWINDOWS
 /*      X and remote fb */
 #		define  LIBFB_OBJS      if_remote if_X if_X24
 #		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define  LIBDM_OBJS	color query dm-X
+#		define  LIBDM_CONFIG    -DDM_X
+#		define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
+#		define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#		define	BWISH_CONFIG	-I''XINCDIR -DBWISH
+#		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #	else
 /*      And the next two are for all the rest. */
 #		define  LIBFB_OBJS      if_remote
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
+#		define  LIBDM_OBJS	color query
+#      		define  LIBDM_CONFIG
+#		define  LIBDM_LIBES	LIBTCL LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-generic
+#		define	MGED_CONFIG
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES
+#		define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#		define	BWISH_CONFIG	-DBWISH
+#		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)"
 #	endif
-#       define  LIBDM_OBJS	color query dm-X
-#       define  LIBDM_CONFIG    -DDM_X
-#       define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	doevent update dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
-#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
-#	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
 /****************************************************************
@@ -1184,7 +1239,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 /*	Silicon Graphics 4D, running IRIX 4.0 "Cypress" and X-windows */
 #	undef	sgi
 #	define	MTYPE	5d
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 #		define	OPTIMIZER	-O2
 /*		Use shared libraries */
@@ -1212,7 +1267,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_OPENGL	/* PRODUCTION=1 */
 /*		X11 for MGED */
 #		define	MGED_OBJS	doevent update dm-4d dm-X dm-ogl dm-generic
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
@@ -1357,7 +1412,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	undef	alpha
 #	define	CC_OPTS	-std1 -readonly_strings
 #	define	OPTIMIZER	-O2 -Olimit 1400 -fp_reorder
-#	if 1	/* PRODUCTION=1 */
+#	if BUILD_SHARED	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -1423,7 +1478,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_TIMER	timerunix
 #	define	CC_OPTS	-Daux
 #	define	LIBPKG_CONFIG	-I/usr/include/netinet -DBSD=42
-#	if	0
+#	if	BUILD_XWINDOWS
 /*      These defines are for rfbd version of libfb. */
 #		define  LIBFB_OBJS      if_remote if_X
 #		define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
@@ -1610,7 +1665,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MTYPE	sel
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if 1
+#	if BUILD_OPTIMIZED
 /*		Normal configuration, with optimization */
 #		define	LD_OPTS	-m 8
 #	else
@@ -1620,11 +1675,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LD_OPTS	-m 8 -g
 #	endif
 #	if 1
-/*		Normal Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
-#		define	LIBFB_OBJS	if_remote if_ab
-#		define	LIBFB_LIBES	LIBPKG
-#	else
+/*		set the default build to be non-XWindows-based */
+#		define BUILD_XWINDOWS	0
+#	endif
+#	if BUILD_XWINDOWS
 /*		X-Windows Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/m/X11/core
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
@@ -1632,6 +1686,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I/m/X11/core
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
+#	else
+/*		Normal Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_LIBES	LIBPKG
 #	endif
 #	define	LIBRT_TIMER	timer42
 #endif
@@ -1643,7 +1702,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MTYPE	np1
 #	define	BSD	43
 #	define	HAS_TCP	1
-#	if 1
+#	if BUILD_OPTIMIZED
 /*		Normal configuration, with optimization */
 #	else
 /*		DBX configuration, -g, no optimization */
@@ -1652,11 +1711,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LD_OPTS	-g
 #	endif
 #	if 1
-/*		Normal Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
-#		define	LIBFB_OBJS	if_remote if_ab
-#		define	LIBFB_LIBES	LIBPKG
-#	else
+/*		set the default build to be non-XWindows-based */
+#		define BUILD_XWINDOWS	0
+#	endif
+#	if BUILD_XWINDOWS
 /*		X-Windows Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
@@ -1664,6 +1722,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
+#	else
+/*		Normal Configuration */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_LIBES	LIBPKG
 #	endif
 #	define	LIBRT_TIMER	timer42
 #endif
@@ -1749,7 +1812,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define  LIBPKG_CONFIG   -I/usr/include/netinet -DBSD=42 
 #	define	XINCDIR	/usr/include/X11R6
 #	define	XLIBDIR	/usr/lib/X11R6
-#	if 1
+#	if BUILD_XWINDOWS
 /*		X and remote fb */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -2343,12 +2406,24 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #endif
 
-/* C compiler flags */
-#ifdef BSD
-#	define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR -DBSD=BSD CC_DEFS CONFIGDEFS
+#if !defined(BUILD_PRODUCTION)
+#	define	OPTIMIZE_FLAGS	/**/
 #else
-#	define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR -DSYSV CC_DEFS CONFIGDEFS
+#	if BUILD_PRODUCTION
+#		define	OPTIMIZE_FLAGS -DPRODUCTION=1
+#	else
+#		define	OPTIMIZE_FLAGS	/**/
+#	endif
 #endif
+
+#if !defined(BSD)
+#	define TYPE_CFLAGS	-DSYSV
+#else
+#	define TYPE_CFLAGS	-DBSD=BSD
+#endif
+
+/* C compiler flags */
+#define CFLAGS	CC_OPTS OPTIMIZER PROFILER -I''INCDIR TYPE_CFLAGS OPTIMIZE_FLAGS CC_DEFS CONFIGDEFS
 
 /* Loader flags.  Note that CC is used to do the loading */
 #ifndef LDFLAGS
@@ -2360,11 +2435,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 /* Lint flags */
 #define	LINT	lint
-#ifdef BSD
-#	define	LFLAGS	-abchx -DBSD=BSD CC_DEFS CONFIGDEFS
+#if !defined(BSD)
+#	define TYPE_LFLAGS	-DSYSV
 #else
-#	define	LFLAGS	-DSYSV CC_DEFS CONFIGDEFS
+#	define TYPE_LFLAGS	-abchx -DBSD=BSD
 #endif
+#define	LFLAGS	TYPE_LFLAGS OPTIMIZE_FLAGS CC_DEFS CONFIGDEFS
 
 /* Archiver */
 #if !defined(AR)
