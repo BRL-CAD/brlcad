@@ -537,6 +537,12 @@ struct rt_db_internal	*ip;
 {
 	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
 	fastf_t ma, mb, mc;
+#ifdef major		/* Some systems have these defined as macros!!! */
+#undef major
+#endif
+#ifdef minor
+#undef minor
+#endif
 	fastf_t ecc, major, minor;
 	fastf_t vol, sur_area;
 	int	type;
