@@ -1,7 +1,7 @@
 /*
  *			P L A N E . C
  *
- *  Some useful routines for dealing with planes.
+ *  Some useful routines for dealing with planes and lines.
  *
  *  Author -
  *	Michael John Muuss
@@ -77,6 +77,19 @@ point_t	a, b, c;
  *  Given the description of three planes, compute the point of intersection,
  *  if any.
  *
+ *  Find the solution to a system of three equations in three unknowns:
+ *
+ *	Px * Ax + Py * Ay + Pz * Az = -A3;
+ *	Px * Bx + Py * By + Pz * Bz = -B3;
+ *	Px * Cx + Py * Cy + Pz * Cz = -C3;
+ *
+ *  or
+ *
+ *	[ Ax  Ay  Az ]   [ Px ]   [ -A3 ]
+ *	[ Bx  By  Bz ] * [ Py ] = [ -B3 ]
+ *	[ Cx  Cy  Cz ]   [ Pz ]   [ -C3 ]
+ *
+ *
  *  Explitic Return -
  *	 0	OK
  *	-1	Failure.  Intersection is a line or plane.
@@ -90,18 +103,26 @@ point_t	pt;
 plane_t	a, b, c;
 {
 	vect_t	v1, v2, v3;
-	register fastf_t d;
+	register fastf_t det;
 
+	/* Find a vector perpendicular to both planes B and C */
 	VCROSS( v1, b, c );
-	d = VDOT( a, v1 );
-	if( NEAR_ZERO( d, SQRT_SMALL_FASTF ) )  return(-1);
-	d = 1/d;
+
+	/*  If that vector is perpendicular to A,
+	 *  then A is parallel to either B or C, and no intersection exists.
+	 *  This dot&cross product is the determinant of the matrix M.
+	 *  (I suspect there is some deep significance to this!)
+	 */
+	det = VDOT( a, v1 );
+	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  return(-1);
+
 	VCROSS( v2, a, c );
 	VCROSS( v3, a, b );
 
-	pt[X] = d*(a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X]);
-	pt[Y] = d*(a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y]);
-	pt[Z] = d*(a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z]);
+	det = 1/det;
+	pt[X] = det*(a[3]*v1[X] - b[3]*v2[X] + c[3]*v3[X]);
+	pt[Y] = det*(a[3]*v1[Y] - b[3]*v2[Y] + c[3]*v3[Y]);
+	pt[Z] = det*(a[3]*v1[Z] - b[3]*v2[Z] + c[3]*v3[Z]);
 	return(0);
 }
 
@@ -112,8 +133,7 @@ plane_t	a, b, c;
  *  The ray direction vector need not have unit length.
  *
  *  Explicit Return -
- *	-3	missed (ray is outside halfspace)
- *	-2	"missed" (ray lies on plane)
+ *	-2	missed (ray is outside halfspace)
  *	-1	missed (ray is inside)
  *	 0	hit (ray is entering halfspace)
  *	 1	hit (ray is leaving)
@@ -146,16 +166,10 @@ plane_t	plane;
 	 *  Ray is parallel to plane when dir.N == 0.
 	 */
 	*dist = 0;		/* sanity */
-	if( norm_dist < SQRT_SMALL_FASTF )
-		return(-3);	/* missed, outside */
-	if( norm_dist > SQRT_SMALL_FASTF )
-		return(-1);	/* missed, inside */
-	return(-2);		/* "missed", ray lies on plane */
+	if( norm_dist < 0.0 )
+		return(-2);	/* missed, outside */
+	return(-1);		/* missed, inside */
 }
-
-static plane_t	xpl = { 1, 0, 0, 0 };
-static plane_t	ypl = { 0, 1, 0, 0 };
-static plane_t	zpl = { 0, 0, 1, 0 };
 
 /*
  *			R T _ I S E C T _ 2 P L A N E S
@@ -167,7 +181,7 @@ static plane_t	zpl = { 0, 0, 1, 0 };
  *
  *  In order that all the geometry under consideration be in "front"
  *  of the ray, it is necessary to pass the minimum point of the model
- *  RPP.  If this is unnecessary, just pass (0,0,0).
+ *  RPP.  If this convention is unnecessary, just pass (0,0,0) as rpp_min.
  *
  *  Explicit Return -
  *	 0	OK, line of intersection stored in `pt' and `dir'.
@@ -196,7 +210,7 @@ vect_t	rpp_min;
 
 	/* Direction vector for ray is perpendicular to both plane normals */
 	VCROSS( dir, a, b );
-	VUNITIZE( dir );		/* safety? */
+	VUNITIZE( dir );		/* safety */
 
 	/*
 	 *  Select an axis-aligned plane which has it's normal pointing
@@ -211,13 +225,13 @@ vect_t	rpp_min;
 
 	if( abs_dir[X] >= abs_dir[Y] )  {
 		if( abs_dir[X] >= abs_dir[Z] )  {
-			VMOVE( pl, xpl);
+			VSET( pl, 1, 0, 0 );
 			pl[3] = rpp_min[X];
 			if( dir[X] < 0 )  {
 				VREVERSE( dir, dir );
 			}
 		} else {
-			VMOVE( pl, zpl);
+			VSET( pl, 0, 0, 1 );
 			pl[3] = rpp_min[Z];
 			if( dir[Z] < 0 )  {
 				VREVERSE( dir, dir );
@@ -225,13 +239,13 @@ vect_t	rpp_min;
 		}
 	} else {
 		if( abs_dir[Y] >= abs_dir[Z] )  {
-			VMOVE( pl, ypl);
+			VSET( pl, 0, 1, 0 );
 			pl[3] = rpp_min[Y];
 			if( dir[Y] < 0 )  {
 				VREVERSE( dir, dir );
 			}
 		} else {
-			VMOVE( pl, zpl);
+			VSET( pl, 0, 0, 1 );
 			pl[3] = rpp_min[Y];
 			if( dir[Z] < 0 )  {
 				VREVERSE( dir, dir );
@@ -245,3 +259,296 @@ vect_t	rpp_min;
 
 	return(0);		/* OK */
 }
+
+/*
+ *			R T _ I S E C T _ 2 L I N E S
+ *
+ *  Intersect two lines, each in given in parametric form:
+ *
+ *	X = P + t * D
+ *  and
+ *	X = A + u * C
+ *
+ *  While the parametric form is usually used to denote a ray
+ *  (ie, positive values of the parameter only), in this case
+ *  the full line is considered.
+ *
+ *  The direction vectors C and D need not have unit length.
+ *
+ *  XXX Tolerancing around zero, as always, remains a problem.
+ *
+ *  Explicit Return -
+ *	-1	no intersection
+ *	 0	lines are co-linear (t returned for u=0 to give distance to A)
+ *	 1	intersection found (t and u returned)
+ *
+ *  Implicit Returns -
+ *
+ *	t,u	When explicit return >= 0, t and u are the
+ *		line parameters of the intersection point on the 2 rays.
+ *		The actual intersection coordinates can be found by
+ *		substituting either of these into the original ray equations.
+ */
+int
+rt_isect_2lines( t, u, p, d, a, c )
+fastf_t		*t, *u;
+point_t		p;
+vect_t		d;
+point_t		a;
+vect_t		c;
+{
+	LOCAL vect_t		n;
+	LOCAL vect_t		abs_n;
+	LOCAL vect_t		h;
+	register fastf_t	det;
+	register short int	q,r,s;
+
+	/*
+	 *  Any intersection will occur in the plane with surface
+	 *  normal D cross C, which may not have unit length.
+	 *  The plane containing the two lines will be a constant
+	 *  distance from a plane with the same normal that contains
+	 *  the origin.  Therfore, the projection of any point on the
+	 *  plane along N has the same length.
+	 *  Verify that this holds for P and A.
+	 *  If N dot P != N dot A, there is no intersection, because
+	 *  P and A must lie on parallel planes that are different
+	 *  distances from the origin.
+	 */
+#define DIFFERENCE_TOL	(1.0e-10)
+	VCROSS( n, d, c );
+	det = VDOT( n, p ) - VDOT( n, a );
+	if( !NEAR_ZERO( det, DIFFERENCE_TOL ) )  {
+		return(-1);		/* No intersection */
+	}
+
+	/*
+	 *  Solve for t and u in the system:
+	 *
+	 *	Px + t * Dx = Ax + u * Cx
+	 *	Py + t * Dy = Ay + u * Cy
+	 *	Pz + t * Dz = Az + u * Cz
+	 *
+	 *  This system is over-determined, having 3 equations in 2 unknowns.
+	 *  However, the intersection problem is really only a 2-dimensional
+	 *  problem, being located in the surface of a plane.
+	 *  Therefore, the "least important" of these equations can
+	 *  be initially ignored, leaving a system of 2 equations in
+	 *  2 unknowns.
+	 *
+	 *  Find the component of N with the largest magnitude.
+	 *  This component will have the least effect on the parameters
+	 *  in the system, being most nearly perpendicular to the plane.
+	 *  Denote the two remaining components by the
+	 *  subscripts q and r, rather than x,y,z.
+	 *  Subscript s is the smallest component, used for checking later.
+	 */
+	abs_n[X] = (n[X] >= 0) ? n[X] : (-n[X]);
+	abs_n[Y] = (n[Y] >= 0) ? n[Y] : (-n[Y]);
+	abs_n[Z] = (n[Z] >= 0) ? n[Z] : (-n[Z]);
+	if( abs_n[X] >= abs_n[Y] )  {
+		if( abs_n[X] >= abs_n[Z] )  {
+			/* X is largest in magnitude */
+			q = Y;
+			r = Z;
+			s = X;
+		} else {
+			/* Z is largest in magnitude */
+			q = X;
+			r = Y;
+			s = Z;
+		}
+	} else {
+		if( abs_n[Y] >= abs_n[Z] )  {
+			/* Y is largest in magnitude */
+			q = X;
+			r = Z;
+			s = Y;
+		} else {
+			/* Z is largest in magnitude */
+			q = X;
+			r = Y;
+			s = Z;
+		}
+	}
+
+	/*
+	 *  From the two components q and r, form a system
+	 *  of 2 equations in 2 unknowns:
+	 *
+	 *	Pq + t * Dq = Aq + u * Cq
+	 *	Pr + t * Dr = Ar + u * Cr
+	 *  or
+	 *	t * Dq - u * Cq = Aq - Pq
+	 *	t * Dr - u * Cr = Ar - Pr
+	 *
+	 *  Let H = A - P, resulting in:
+	 *
+	 *	t * Dq - u * Cq = Hq
+	 *	t * Dr - u * Cr = Hr
+	 *
+	 *  or
+	 *
+	 *	[ Dq  -Cq ]   [ t ]   [ Hq ]
+	 *	[         ] * [   ] = [    ]
+	 *	[ Dr  -Cr ]   [ u ]   [ Hr ]
+	 *
+	 *  This system can be solved by direct substitution, or by
+	 *  finding the determinants by Cramers rule:
+	 *
+	 *	             [ Dq  -Cq ]
+	 *	det(M) = det [         ] = -Dq * Cr + Cq * Dr
+	 *	             [ Dr  -Cr ]
+	 *
+	 *  If det(M) is zero, then there is no solution; otherwise,
+	 *  exactly one solution exists.
+	 */
+	VSUB2( h, a, p );
+	det = c[q] * d[r] - d[q] * c[r];
+	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
+		/* Lines are co-linear */
+		/* Compute t for u=0 as a convenience to caller */
+		*u = 0;
+		/* Use largest direction component */
+		if( d[q] >= d[r] )  {
+			*t = h[q]/d[q];
+		} else {
+			*t = h[r]/d[r];
+		}
+		return(0);	/* Lines co-linear */
+	}
+
+	/*
+	 *  det(M) is non-zero, so there is exactly one solution.
+	 *  Using Cramer's rule, det1(M) replaces the first column
+	 *  of M with the constant column vector, in this case H.
+	 *  Similarly, det2(M) replaces the second column.
+	 *  Computation of the determinant is done as before.
+	 *
+	 *  Now,
+	 *
+	 *	                  [ Hq  -Cq ]
+	 *	              det [         ]
+	 *	    det1(M)       [ Hr  -Cr ]   -Hq * Cr + Cq * Hr
+	 *	t = ------- = --------------- = ------------------
+	 *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
+	 *
+	 *  and
+	 *
+	 *	                  [ Dq   Hq ]
+	 *	              det [         ]
+	 *	    det2(M)       [ Dr   Hr ]    Dq * Hr - Hq * Dr
+	 *	u = ------- = --------------- = ------------------
+	 *	     det(M)       det(M)        -Dq * Cr + Cq * Dr
+	 */
+	det = 1/det;
+	*t = det * (c[q] * h[r] - h[q] * c[r]);
+	*u = det * (d[q] * h[r] - h[q] * d[r]);
+
+	/*
+	 *  Check that these values of t and u satisfy the 3rd equation
+	 *  as well!
+	 *  XXX It isn't clear what tolerance to use here.
+	 */
+	det = *t * d[s] - *u * c[s] - h[s];
+	if( !NEAR_ZERO( det, DIFFERENCE_TOL ) )  {
+		/* This tolerance needs to be much less loose than
+		 * SQRT_SMALL_FASTF.
+		 */
+		/* Inconsistent solution, lines miss each other */
+		return(-1);
+	}
+
+	return(1);		/* Intersection found */
+}
+
+/*
+ *			R T _ I S E C T _ L I N E _ L S E G
+ *
+ *  Intersect a line in parametric form:
+ *
+ *	X = P + t * D
+ *
+ *  with a line segment defined by two distinct points A and B.
+ *
+ *  Explicit Return -
+ *	-3	A and B are not distinct points
+ *	-2	Intersection exists, but is outside of A--B
+ *	-1	Lines do not intersect
+ *	 0	Lines are co-linear (t for A is returned)
+ *	 1	Intersection at vertex A
+ *	 2	Intersection at vertex B
+ *	 3	Intersection between A and B
+ *
+ *  Implicit Returns -
+ *	t	When explicit return >= 0, t is the parameter that describes
+ *		the intersection of the line and the line segment.
+ *		The actual intersection coordinates can be found by
+ *		solving P + t * D.  However, note that for return codes
+ *		1 and 2 (intersection exactly at a vertex), it is
+ *		strongly recommended that the original values passed in
+ *		A or B are used instead of solving P + t * D, to prevent
+ *		numeric error from creeping into the position of
+ *		the endpoints.
+ */
+int
+rt_isect_line_lseg( t, p, d, a, b )
+fastf_t		*t;
+point_t		p;
+vect_t		d;
+point_t		a;
+point_t		b;
+{
+	LOCAL vect_t	c;		/* Direction vector from A to B */
+	auto fastf_t	u;		/* As in, A + u * C = X */
+	register fastf_t f;
+	register int	ret;
+
+	VSUB2( c, b, a );
+	/*
+	 *  To keep the values of u between 0 and 1,
+	 *  C should NOT be scaled to have unit length.
+	 *  However, it is a good idea to make sure that
+	 *  C is a non-zero vector, (ie, that A and B are distinct).
+	 */
+#if 0
+	/* Perhaps something like this would be more efficient? */
+	if( VNEAR_ZERO( c, 0.005 ) )  return(-3);
+#endif
+	f = MAGNITUDE(c);		/* always positive */
+	if( f < SQRT_SMALL_FASTF )  {
+		return(-3);		/* A and B are not distinct */
+	}
+
+	if( (ret = rt_isect_2lines( t, &u, p, d, a, c )) < 0 )  {
+		/* No intersection found */
+		return( -1 );
+	}
+	if( ret == 0 )  {
+		/* co-linear (t was computed for point A, u=0) */
+		return( 0 );
+	}
+
+	/*
+	 *  The two lines intersect at a point.
+	 *  If the u parameter is outside the range (0..1),
+	 *  reject the intersection, because it falls outside
+	 *  the line segment A--B.
+	 */
+	if( u < -SQRT_SMALL_FASTF || (f=(u-1)) > SQRT_SMALL_FASTF )
+		return(-2);		/* Intersection outside of A--B */
+
+	/* Check for fuzzy intersection with one of the verticies */
+	if( u < SQRT_SMALL_FASTF )
+		return( 1 );		/* Intersection at A */
+	if( f >= -SQRT_SMALL_FASTF )
+		return( 2 );		/* Intersection at B */
+
+	return(3);			/* Intersection between A and B */
+}
+
+/*
+ * Still to come:
+ *	Closest Distance between a line and the origin,
+ *	Closest Distance between a line and a point.
+ */
