@@ -27,6 +27,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./material.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
@@ -58,21 +59,25 @@
 #endif
 
 
-/* XXX God this is a hack, we should have some way of asking this of the
- * solid rather than pirating it's private parts.  Talk about castrating
- * the packaging....
- */
-struct ell_specific {
-	vect_t	ell_V;		/* Vector to center of ellipsoid */
-	vect_t	ell_Au;		/* unit-length A vector */
-	vect_t	ell_Bu;
-	vect_t	ell_Cu;
-	vect_t	ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
-	mat_t	ell_SoR;	/* Scale(Rot(vect)) */
-	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
+#define DBINT_MAGIC 0xDECCA
+struct reg_db_internals {
+	struct rt_list	l;
+	struct rt_db_internal ip;	/* internal rep from rtgeom.h */
+	struct soltab	*st_p;
+	vect_t one_sigma;
+};
+#define DBINT_MAGIC 0xDECCA
+#define CK_DBINT(_p) RT_CKMAG( _p, DBINT_MAGIC, "struct reg_db_internals" )
+
+struct tree_bark {
+	struct db_i	*dbip;
+	struct rt_list	*l;
+	CONST char	*name;
+	struct gauss_specific *gs;
 };
 
-#define gauss_MAGIC 0x6ao5    /* make this a unique number for each shader */
+
+#define gauss_MAGIC 0x6a05    /* make this a unique number for each shader */
 #define CK_gauss_SP(_p) RT_CKMAG(_p, gauss_MAGIC, "gauss_specific")
 
 /*
@@ -81,18 +86,17 @@ struct ell_specific {
  */
 struct gauss_specific {
 	long	magic;	/* magic # for memory validity check, must come 1st */
-	double	gauss_val;	/* variables for shader ... */
-	vect_t	gauss_delta;
+	double	gauss_sigma;	/* # std dev represented by ell bounds */
 	mat_t	gauss_m_to_sh;	/* model to shader space matrix */
-	struct ell_specific ell_sp;
+	struct	rt_list	dbil;
 };
+
 
 /* The default values for the variables in the shader specific structure */
 CONST static
 struct gauss_specific gauss_defaults = {
 	gauss_MAGIC,
-	1.0,
-	{ 1.0, 1.0, 1.0 },
+	4.0,
 	{	0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
@@ -109,15 +113,13 @@ struct gauss_specific gauss_defaults = {
  * structure above
  */
 struct structparse gauss_print_tab[] = {
-	{"%f",  1, "val",		SHDR_O(gauss_val),	FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(gauss_delta),	FUNC_NULL },
+	{"%f",  1, "sigma",		SHDR_O(gauss_sigma),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 
 };
 struct structparse gauss_parse_tab[] = {
 	{"i",	byteoffset(gauss_print_tab[0]), "gauss_print_tab", 0, FUNC_NULL },
-	{"%f",  1, "v",			SHDR_O(gauss_val),	FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(gauss_delta),	FUNC_NULL },
+	{"%f",  1, "s",			SHDR_O(gauss_sigma),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -141,6 +143,100 @@ struct mfuncs gauss_mfuncs[] = {
 };
 
 
+static void
+tree_solids(tp, tb)
+union tree *tp;
+struct tree_bark *tb;
+{
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return;
+
+	case OP_SOLID: {
+		struct reg_db_internals *dbint;
+		matp_t mp;
+		long sol_id;
+		struct rt_ell_internal *ell_p;
+
+		GETSTRUCT( dbint, reg_db_internals );
+		RT_LIST_MAGIC_SET( &(dbint->l), DBINT_MAGIC);
+
+		if (tp->tr_a.tu_stp->st_matp)
+			mp = tp->tr_a.tu_stp->st_matp;
+		else
+			mp = rt_identity;
+
+		/* Get the internal form of this solid & add it to the list */
+		rt_db_get_internal(&dbint->ip, tp->tr_a.tu_stp->st_dp,
+			tb->dbip, mp);
+
+		RT_CK_DB_INTERNAL(&dbint->ip);
+		dbint->st_p = tp->tr_a.tu_stp;
+
+		sol_id = dbint->ip.idb_type;
+
+		if (sol_id < 0 || sol_id > rt_nfunctab ) {
+			rt_log("Solid ID %ld out of bounds\n", sol_id);
+			rt_bomb("");
+		}
+
+
+		if (sol_id != ID_ELL) {
+			rt_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
+				sol_id, rt_functab[sol_id].ft_name);
+		} else {
+			ell_p = dbint->ip.idb_ptr;
+
+			rt_log(" got a solid type %d \"%s\"\n", sol_id,
+				rt_functab[sol_id].ft_name);
+
+			RT_ELL_CK_MAGIC(ell_p);
+
+			VPRINT("point", ell_p->v); 
+			VPRINT("a", ell_p->a); 
+			VPRINT("b", ell_p->b); 
+			VPRINT("c", ell_p->c); 
+		}
+
+		/* XXX Only works for axis aligned solids */
+		VSET(dbint->one_sigma,
+			MAGNITUDE(ell_p->a) / tb->gs->gauss_sigma,
+			MAGNITUDE(ell_p->b) / tb->gs->gauss_sigma,
+			MAGNITUDE(ell_p->c) / tb->gs->gauss_sigma);
+
+
+		VPRINT("sigma", dbint->one_sigma);
+		RT_LIST_APPEND(tb->l, &(dbint->l) );
+
+		break;
+	}
+	case OP_UNION:
+		tree_solids(tp->tr_b.tb_left, tb);
+		tree_solids(tp->tr_b.tb_right, tb);
+		break;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		rt_log("Warning: Non-union region op in %s!\n", tb->name);
+		tree_solids(tp->tr_b.tb_left, tb);
+		break;
+
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		rt_log("Warning: Non-union region op in %s!\n", tb->name);
+		tree_solids(tp->tr_b.tb_left, tb);
+		tree_solids(tp->tr_b.tb_right, tb);
+		return;
+
+	default:
+		rt_bomb("rt_tree_region_assign: bad op\n");
+	}
+}
+
 /*	G A U S S _ S E T U P
  *
  *	This routine is called (at prep time)
@@ -156,12 +252,7 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct gauss_specific	*gauss_sp;
-	struct directory *dp;
-	struct rt_db_internal ip;
-	union tree *tree_p;
-	mat_t	reg_mat;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
+	struct tree_bark tb;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -171,6 +262,10 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("gauss_setup(%s)\n", rp->reg_name);
+
+	if (! rtip->useair)
+		rt_bomb("gauss shader used and useair not set\n");
+
 
 	/* Get memory for the shader parameters and shader-specific data */
 	GETSTRUCT( gauss_sp, gauss_specific );
@@ -190,31 +285,20 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * that definition/parameters.
 	 */
 
-	if (rp->reg_treetop->tr_op != OP_SOLID)
-		/* bitch and moan about non-solid and abort */
-		rt_log("%s: non-solid first region element op(%d) s/b (%d)",
-			rp->reg_name, rp->reg_treetop->tr_op, OP_SOLID);
-		rt_bomb("gauss-shaded region needs ellipsoid as first element").
-	}
+	RT_LIST_INIT( &gauss_sp->dbil );
+	tb.l = &gauss_sp->dbil;
 
-	if (rp->reg_treetop->tree_leaf.tu_stp->st_id != ID_ELL) {
-		/* bitch and moan, bitch and moan */
-		rt_log("%s: non-ellipsoid first solid in region id(%d) s/b (%d)",
-			rp->reg_name,
-			rp->reg_treetop->tree_leaf.tu_stp->st_id,
-			ID_ELL);
-		rt_bomb("gauss-shaded region needs ellipsoid as first element").
-	}
+	tb.dbip = rtip->rti_dbip;
+	tb.name = rp->reg_name;
+	tb.gs = gauss_sp;
 
-	memcpy(	gauss_sp->ell_sp,
-		rp->reg_treetop->tree_leaf.tu_stp->st_specific,
-		sizeof(struct ell_specific));
+	tree_solids ( rp->reg_treetop, &tb );
+
 
 	/* XXX If this puppy isn't axis-aligned, we should come up with a
 	 * matrix to rotate it into alignment.  We're going to have to do
 	 * computation in the space defined by this ellipsoid.
 	 */
-
 /*	db_shader_mat(gauss_sp->gauss_m_to_sh, rtip->rti_dbip, rp); */
 
 
@@ -244,10 +328,102 @@ HIDDEN void
 gauss_free( cp )
 char *cp;
 {
+	register struct gauss_specific *gauss_sp =
+		(struct gauss_specific *)cp;
+	struct reg_db_internals *p;
+
+	while (RT_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil) ) {
+		RT_LIST_DEQUEUE( &(p->l) );
+		rt_free( p->ip.idb_ptr, "internal ptr" );
+		rt_free( (char *)p, "gauss reg_db_internals" );
+	}
+
 	rt_free( cp, "gauss_specific" );
 }
 
-/*
+
+/*
+ *
+ * Evaluate the 3-D gaussian "puff" function:
+ *
+ * 1.0 / ( (2*PI)^(3/2) * sigmaX*sigmaY*sigmaZ )) * 
+ *      exp( -0.5 * ( (x-ux)^2/sigmaX + (y-uy)^2/sigmaY + (z-uz)^2/sigmaZ ) )
+ *
+ * for a given point "pt" where the center of the puff is at {ux,uy,uz} and
+ * the size of 1 standard deviation is {sigmaX,sigmaY,sigmaZ}
+ */
+static double
+gauss_eval(pt, ell_center, sigma)
+point_t pt;
+point_t ell_center;
+vect_t sigma;
+{
+	double term2;
+	point_t p;
+	double val;
+
+	VSUB2(p, pt, ell_center);
+	p[X] *= p[X];
+	p[Y] *= p[Y];
+	p[Z] *= p[Z];
+
+	term2 = (p[X]/sigma[X]) + (p[Y]/sigma[Y]) + (p[Z]/sigma[Z]);
+	term2 *= term2;
+
+	val = exp( -0.5 * term2 );
+
+	rt_log("pt(%g %g %g) term2:%g val:%g\n",
+		V3ARGS(pt), term2, val);
+
+	return val;
+}
+
+/*
+ * Given a seg which participates in the partition we are shading evaluate
+ * the transmission on the path
+ */
+static double
+eval_seg(ap, dbint, seg_p)
+struct application	*ap;
+struct reg_db_internals *dbint;
+struct seg *seg_p;
+{
+	double span;
+	point_t pt;
+	struct rt_ell_internal *ell_p = dbint->ip.idb_ptr;
+	double optical_density = 0.0;
+	double step_dist;
+	double dist;
+	int steps;
+
+	span = seg_p->seg_out.hit_dist - seg_p->seg_in.hit_dist;
+	steps = (int)(span / 100.0 + 0.5);
+	if ( steps < 2 ) steps = 2;
+
+	step_dist = span / (double)steps;
+
+	rt_log("r_pt(%g %g %g)  r_dir(%g %g %g)\n", V3ARGS(ap->a_ray.r_pt),
+		V3ARGS(ap->a_ray.r_dir) );
+
+	rt_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
+		seg_p->seg_in.hit_dist,
+		seg_p->seg_out.hit_dist,
+		span, step_dist, steps);
+
+#if 1
+	for (dist=seg_p->seg_in.hit_dist ; dist < seg_p->seg_out.hit_dist ; dist += step_dist ) {
+		VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir);
+		optical_density += gauss_eval(pt, ell_p->v, dbint->one_sigma);
+	}
+
+
+	return optical_density;
+#else
+	return gauss_eval(ell_p->v, ell_p->v, dbint->one_sigma);
+#endif
+}
+
+/*
  *	G A U S S _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point
@@ -264,6 +440,11 @@ char			*dp;	/* ptr to the shader-specific struct */
 	register struct gauss_specific *gauss_sp =
 		(struct gauss_specific *)dp;
 	point_t pt;
+	struct seg *seg_p;
+	struct reg_db_internals *dbint_p;
+	double optical_density = 0.0;
+	double partition_dist;
+	double tau;
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -287,25 +468,53 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	/* perform shading operations here */
 
-	/* First of all, we need to rotate the ray and ellipse into an
+	/* XXX First of all, we need to rotate the ray and ellipse into an
 	 * axis-aligned state
 	 */
 
-	/* Now we need to evaluate the following function at various points
-	 * along the solid/ray intersection partition:
-							      2		2	 2
-						      / (x-Ux)	  (y-Uy)   (z-Uz)  \
-		   1.0				  -.5|   ----   + ------ + ------   |
----------------------------------------------- * e    \ sigma_x   sigma_y  sigma_z /
-        (3/2)
-   (2*PI)       * sigma_x * sigma_y * sigma_z)
+
+	RT_CK_LIST_HEAD(&swp->sw_segs->l);
+	RT_CK_LIST_HEAD(&gauss_sp->dbil);
 
 
-	*/
+	/* look at each segment that participated in the ray */
+	for (RT_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
+
+		RT_CK_SEG(seg_p);
+		RT_CK_SOLTAB(seg_p->seg_stp);
+
+		/* check to see if the seg/solid is in this partition */
+		if (BITTEST(pp->pt_solhit, seg_p->seg_stp->st_bit) ) {
+
+			/* check to see if the solid is in the region */
+			for (RT_LIST_FOR(dbint_p, reg_db_internals, &gauss_sp->dbil)){
+
+				CK_DBINT(dbint_p);
+
+				if (dbint_p->st_p == seg_p->seg_stp) {
+					optical_density +=
+						eval_seg(ap, dbint_p, seg_p);
+					break;
+				}
+			}
+		}
+	}
 
 
+	rt_log("Optical Density %g\n", optical_density);
 
-	VMOVE(swp->sw_color, pt);
+	/* get the path length right */
+	if (pp->pt_inhit->hit_dist < 0.0)
+		partition_dist = pp->pt_outhit->hit_dist;
+	else
+		partition_dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
+
+	tau = optical_density * partition_dist;
+
+/* 	swp->sw_transmit = exp(-tau); */
+ 	swp->sw_transmit = 1.0 - optical_density;
+
+/*	VMOVE(swp->sw_color, pt);*/
 
 	/* shader must perform transmission/reflection calculations
 	 *
@@ -317,3 +526,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	return(1);
 }
+
+
+
