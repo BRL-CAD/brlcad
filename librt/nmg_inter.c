@@ -208,8 +208,10 @@ struct face		*f1;
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
 	is->face = f1;
-rt_log("nmg_isect2d_prep(f=x%x)\n", f1);
-PLPRINT("N", fg->N);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_isect2d_prep(f=x%x)\n", f1);
+		PLPRINT("N", fg->N);
+	}
 
 	m = nmg_find_model( &f1->magic );
 
@@ -505,48 +507,60 @@ struct faceuse *fu;
  *	stick a vertex at the point of intersection along the edge.
  */
 static void
-nmg_break_3edge_at_plane(hit_pt, fu, bs, eu, v1, v1mate)
-point_t	hit_pt;
-struct faceuse *fu;
-struct nmg_inter_struct *bs;
-struct edgeuse *eu;
-struct vertex	*v1;
-struct vertex	*v1mate;
+nmg_break_3edge_at_plane(hit_pt, fu, is, eu)
+CONST point_t		hit_pt;
+struct faceuse		*fu;		/* The face that eu intersects */
+struct nmg_inter_struct *is;
+struct edgeuse		*eu;		/* Edge to be broken */
 {
 	struct vertexuse *vu_other;
 	struct loopuse	*plu;
-	struct edgeuse *euforw;
+	struct edgeuse	*euforw;	/* New eu, after break, forw of eu */
+	struct vertex	*v1;
+	struct vertex	*v1mate;
 
-	NMG_CK_INTER_STRUCT(bs);
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_EDGEUSE(eu);
+
+	v1 = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v1);
+	v1mate = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(v1mate);
 
 	/* Intersection is between first and second vertex points.
 	 * Insert new vertex at intersection point.
 	 */
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("Splitting %g, %g, %g <-> %g, %g, %g\n",
-			V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
-		VPRINT("\tPoint of intersection", hit_pt);
+		rt_log("nmg_break_3edge_at_plane() Splitting %g, %g, %g <-> %g, %g, %g\n",
+			V3ARGS(v1->vg_p->coord),
+			V3ARGS(v1mate->vg_p->coord) );
+		VPRINT("\tAt point of intersection", hit_pt);
 	}
+
+	/* Double check for bad behavior */
+	if( rt_pt3_pt3_equal( hit_pt, v1->vg_p->coord, &is->tol ) )
+		rt_bomb("nmg_break_3edge_at_plane() hit_pt equal to v1\n");
+	if( rt_pt3_pt3_equal( hit_pt, v1mate->vg_p->coord, &is->tol ) )
+		rt_bomb("nmg_break_3edge_at_plane() hit_pt equal to v1mate\n");
 
 	/* if we can't find the appropriate vertex in the
 	 * other face, we'll build a new vertex.  Otherwise
 	 * we re-use an old one.
 	 */
-	vu_other = nmg_find_pt_in_face(hit_pt, fu, &(bs->tol));
+	vu_other = nmg_find_pt_in_face(hit_pt, fu, &(is->tol));
 	if (vu_other) {
 		/* the other face has a convenient vertex for us */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("re-using vertex v=x%x from other face\n", vu_other->v_p);
 
 		euforw = nmg_ebreak(vu_other->v_p, eu);
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 	} else {
 		/* The other face has no vertex in this vicinity */
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("Making new vertex\n");
-
 		euforw = nmg_ebreak((struct vertex *)NULL, eu);
 		nmg_vertex_gv(euforw->vu_p->v_p, hit_pt);
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("Made new vertex vu=x%x, v=x%x\n", euforw->vu_p, euforw->vu_p->v_p);
 
 		NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 		NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
@@ -557,11 +571,13 @@ struct vertex	*v1mate;
 			register pointp_t p1 = eu->vu_p->v_p->vg_p->coord;
 			register pointp_t p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
-			rt_log("Just split %g, %g, %g -> %g, %g, %g\n",
+			rt_log("After split eu x%x= %g, %g, %g -> %g, %g, %g\n",
+				eu,
 				V3ARGS(p1), V3ARGS(p2) );
 			p1 = euforw->vu_p->v_p->vg_p->coord;
 			p2 = euforw->eumate_p->vu_p->v_p->vg_p->coord;
-			rt_log("\t\t\t%g, %g, %g -> %g, %g, %g\n",
+			rt_log("\teuforw x%x = %g, %g, %g -> %g, %g, %g\n",
+				euforw,
 				V3ARGS(p1), V3ARGS(p2) );
 		}
 
@@ -575,10 +591,11 @@ struct vertex	*v1mate;
 		nmg_loop_g(plu->l_p);
 
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		    	VPRINT("Making vertexloop",
-				vu_other->v_p->vg_p->coord);
+			rt_log("Made vertexloop in other face. lu=x%x vu=x%x on v=x%x\n",
+				plu, 
+				vu_other, vu_other->v_p);
 		}
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -592,7 +609,7 @@ struct vertex	*v1mate;
 		rt_log("\tand %g, %g, %g <-> %g, %g, %g\n\n",
 			V3ARGS(p1), V3ARGS(p2) );
 	}
-	(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
+	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
 }
 
 /* XXX move to nmg_ck.c */
