@@ -253,12 +253,8 @@ EOF
 		if test $? -eq 0
 		then BDIRS=`echo ${BDIRS} | \
 		    sed -e  's/libtcl//' -e 's/libtk//' \
-			-e 's/libz//' -e 's/libpng//' `
+			-e 's/libz//' `
 		fi
-		;;
-	7d)
-		BDIRS=`echo ${BDIRS} | \
-		    sed -e 's/libz//' -e 's/libpng//' `
 		;;
 	m4i65)
 		# Be sure to look in /usr/lib64, not /usr/lib!

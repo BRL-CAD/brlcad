@@ -299,9 +299,6 @@ set -S2 "/bin/sh"
 #	define	LIBZ_DIR	_use_system_z_
 #	define	LIBZ		-lz
 #	define	LIBZ_DEP	/**/
-#	define	LIBPNG_DIR	_use_system_png_
-#	define	LIBPNG		-lpng
-#	define	LIBPNG_DEP	/**/
 #endif
 
 #if defined(__CAKE__m3i62)
