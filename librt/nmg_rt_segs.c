@@ -1,5 +1,5 @@
 /*
- *			N M G _ R T . C
+ *			N M G _ R T _ S E G S. C
  *
  *	Support routines for raytracing an NMG.
  *
@@ -1124,26 +1124,44 @@ struct nmg_specific	*nmg_spec;
 
 	struct hitmiss *hl, *a_hit;
 	struct seg *seg_p;
+	struct ray_data rd;
 	int seg_count=0;
 
 	rt_g.NMG_debug = rt_g.NMG_debug | DEBUG_NMGRT;
 	rt_log("============================ New Ray ===================================\n");
 	rt_log("Screen pos(%d %d)\n", ap->a_x, ap->a_y);
 
+	rd.rp = rp;
+	rd.tol = &ap->a_rt_i->rti_tol;
+	VMOVE(rd.invdir, nmg_spec->nmg_invdir);
+
+	/* create a table to keep track of which elements have been
+	 * processed before and which haven't.  Elements in this table
+	 * will either be:
+	 *		(NULL)		item not previously processed
+	 *		hitmiss ptr	item previously processed
+	 *
+	 */
+	rd.hitmiss = (struct hitmiss **)rt_calloc( m->maxindex, sizeof(struct hitmiss *),
+		"nmg geom hit list");
+
+	/* initialize the lists of things that have been hit/missed */
+	RT_LIST_INIT(&rd.nmg_hits);
+	RT_LIST_INIT(&rd.nmg_misses);
+
 	/* Shoot the ray */
-	hl = nmg_isect_ray_model(rp, nmg_spec->nmg_invdir,
-		nmg_spec->nmg_model, &ap->a_rt_i->rti_tol);
+	nmg_isect_ray_model(rd, nmg_spec->nmg_model);
 
 	rt_g.NMG_debug = rt_g.NMG_debug & ~DEBUG_NMGRT;
 
-	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
+	if (RT_LIST_IS_EMPTY(&rd.nmg_hits)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("ray missed NMG\n");
 		return(0);			/* MISS */
 	} else /* if (rt_g.NMG_debug & DEBUG_NMGRT) */{
 
 		rt_log("\nsorted nmg/ray hit list\n");
-		for (RT_LIST_FOR(a_hit, hitmiss, &hl->l)) {
+		for (RT_LIST_FOR(a_hit, hitmiss, &rd.nmg_hits) {
 			rt_log("ray_hit_distance %g (%g %g %g)",
 				a_hit->hit.hit_dist,
 				a_hit->hit.hit_point[0],
@@ -1160,7 +1178,8 @@ struct nmg_specific	*nmg_spec;
 		}
 	}
 
-	seg_count = build_segs(hl, ap, nmg_spec, seghead, rp, stp);
+#if 0
+	seg_count = build_segs(&, ap, nmg_spec, seghead, rp, stp);
 	
 	if (!(rt_g.NMG_debug & DEBUG_NMGRT))
 		return(seg_count);
@@ -1169,5 +1188,8 @@ struct nmg_specific	*nmg_spec;
 	print_seg_list(seghead);
 
 	return(seg_count);
+#else
+	return(0);
+#endif
 }
 

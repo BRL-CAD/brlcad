@@ -1,5 +1,5 @@
 /*
- *			N M G _ R T . C
+ *			N M G _ R T _ I S E C T . C
  *
  *	Support routines for raytracing an NMG.
  *
@@ -65,7 +65,7 @@ struct hitmiss *newhit;
 	if (rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("hit_ins()\n");
 
-	for (RT_LIST_FOR(a_hit, hitmiss, &rd->hitmiss[NMG_HIT_LIST]->l)) {
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit.l)) {
 		if (newhit->hit.hit_dist < a_hit->hit.hit_dist)
 			break;
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
@@ -81,7 +81,7 @@ struct hitmiss *newhit;
 	 * hit in the hit list.
 	 */
 	 
-	if (RT_LIST_NOT_HEAD(a_hit, &rd->hitmiss[NMG_HIT_LIST]->l)) {
+	if (RT_LIST_NOT_HEAD(a_hit, &rd->rd_hit.l)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 		    rt_log ("\tinserting newhit 0x%08x dist:%g pt:(%g %g %g)\n\tprior to 0x%08x dist:%g pt:(%g %g %g)\n",
 			newhit,
@@ -154,7 +154,7 @@ struct vertexuse *vu_p;
 
 	/* add myhit to the list of misses */
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-	RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 
 	return myhit;
 }
@@ -312,7 +312,7 @@ struct edgeuse *eu_p;
 	GET_HITMISS(myhit);
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
-	RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 	return;
 }
 
@@ -326,7 +326,7 @@ struct edgeuse *eu_p;
 	GET_HITMISS(myhit); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
-	RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l); }
+	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l); }
 
 
 /*	I S E C T _ R A Y _ E D G E U S E
@@ -396,13 +396,10 @@ struct edgeuse *eu_p;
 	switch (status) {
 	case -4 :
 		/* Zero length edge.  The routine rt_isect_line_lseg() can't
-		 * help us.  Intersect the ray with a vertex.  If it hits, 
-		 * then this edge is a "sub-hit".  If it misses then both 
-		 * the vertex and the edge are missed by the ray.
-		 *
-		 * Note.  There is no need to see if this edge (its verticies
-		 * really) was the closest item to the hit point in the face.
-		 * That will be handled by isect_ray_vertexuse() in this case.
+		 * help us.  Intersect the ray with each vertex.  If either
+		 * vertex is hit, then record that the edge has sub-elements
+		 * which where hit.  Otherwise, record the edge as being
+		 * missed.
 		 */
 
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
@@ -421,7 +418,7 @@ struct edgeuse *eu_p;
 			/* both vertecies were missed, so edge is missed */
 			RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		}
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 		break;
 	case -3 :	/* fallthrough */
 	case -2 :
@@ -441,7 +438,7 @@ struct edgeuse *eu_p;
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 
 		break;
 	case -1 : /* just plain missed the edge/line */
@@ -455,7 +452,7 @@ struct edgeuse *eu_p;
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 
 		break;
 	case 0 :  /* oh joy.  Lines are co-linear */
@@ -726,7 +723,7 @@ struct loopuse *lu_p;
 	GET_HITMISS(myhit); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, f_p, myhit); \
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
-	RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l); }
+	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l); }
 
 static void
 face_closest_is_eu(rd, fu_p, eu)
@@ -736,7 +733,7 @@ struct edgeuse *eu;
 {
 	struct edgeuse *eu_p;
 	struct faceuse *nmg_find_fu_of_eu();
-	struct hitmiss *hit;
+	struct hitmiss *myhit;
 	int mate_rad = 0;
 	vect_t eu_v, left, pt_v;
 
@@ -748,13 +745,13 @@ struct edgeuse *eu;
 	/* if there is a hit on the edge which is "closest" to the plane
 	 * intercept point, then we do not add a hit point for the face
 	 */
-	if (hit = NMG_INDEX_GET(rd->hitmiss, eu->e_p)) {
-		if (RT_LIST_MAGIC_OK((struct rt_list *)hit, NMG_RT_HIT_MAGIC)) {
+	if (myhit = NMG_INDEX_GET(rd->hitmiss, eu->e_p)) {
+		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_NMGRT)
 				rt_log("\tedge hit, no face hit here\n");
 			FACE_MISS(rd, fu_p->f_p);
 			return;
-		} else if (RT_LIST_MAGIC_OK((struct rt_list *)hit, NMG_RT_HIT_SUB_MAGIC)) {
+		} else if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_SUB_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_NMGRT)
 				rt_log("\tedge vertex hit, no face hit here\n");
 			FACE_MISS(rd, fu_p->f_p);
@@ -873,8 +870,8 @@ struct edgeuse *eu;
 
 	/* XXX */
 
-	GET_HITMISS(hit);
-	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, hit);
+	GET_HITMISS(myhit);
+	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 
 
 	VSUB2(eu_v,eu_p->eumate_p->vu_p->v_p->vg_p->coord,
@@ -898,24 +895,28 @@ struct edgeuse *eu;
 	if (VDOT(left, pt_v) < 0.0) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("face_closest_is_eu( plane hit outside face )\n");
-		RT_LIST_MAGIC_SET(&hit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &hit->l);
+		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 		return;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("face_closest_is_eu( New hit on face )\n");
 
-	hit->dist_in_plane = 0.0;
+	myhit->dist_in_plane = 0.0;
 
-	VMOVE(hit->hit.hit_point, rd->plane_pt);
-	hit->hit.hit_dist = rd->ray_dist_to_plane;
-	hit->hit.hit_private = (genptr_t) fu_p->f_p;
+	VMOVE(myhit->hit.hit_point, rd->plane_pt);
+	myhit->hit.hit_dist = rd->ray_dist_to_plane;
+	myhit->hit.hit_private = (genptr_t) fu_p->f_p;
 
 	/* add hit to list of hit points */
-	hit_ins(rd, hit);
+	hit_ins(rd, myhit);
 }
 
+/* 
+ * The element which was closest to the plane intercept was a vertex(use).
+ *
+ */
 static void
 face_closest_is_vu(rd, fu_p, vu)
 struct ray_data *rd;
@@ -953,11 +954,31 @@ struct vertexuse *vu;
 		vu = vu_p;
 	}
 
-	/* XXX */
+	GET_HITMISS(myhit);
+	NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 
-	/* if parent is OT_SAME loopuse, we've missed face */
-	/* if parent is OT_OPPOSITE loopuse, we've hit face */
-	/* if parent is edgeuse, do left/right computation */
+	/* XXX */
+	if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+		struct loopuse *lu = vu->up.lu_p;
+		if (lu->orientation == OT_OPPOSITE) {
+			/* if parent is OT_OPPOSITE loopuse, we've hit face */
+		} else if lu->orientation == OT_SAME) {
+			/* if parent is OT_SAME loopuse, we've missed face */
+			RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
+			RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		} else {
+			rt_log("non-oriented loopuse parent at: %s %d\n",
+				__FILE__, __LINE__);
+			rt_bomb("goodnight\n");
+		}
+	} else if *vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
+		/* if parent is edgeuse, do left/right computation */
+	} else {
+		rt_log("vertexuse has strange parent at: %s %d\n",
+			__FILE__, __LINE__);
+		rt_bomb("arrivaderchi\n");
+	}
+
 }
 
 /*	I S E C T _ R A Y _ F A C E U S E
@@ -1007,7 +1028,7 @@ struct faceuse *fu_p;
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("missed bounding box\n");
 		return;
@@ -1019,14 +1040,16 @@ struct faceuse *fu_p;
 			fu_p->f_p->fg_p->N, rd->tol);
 
 	if (code < 0) {
-		/* ray misses halfspace, but intersected bounding box. */
+		/* ray is parallel to halfspace and (-1)inside or (-2)outside
+		 * the halfspace.
+		 */
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("\tray misses halfspace of plane\n");
 
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 		return;
 	} else if (code == 0) {
 		/* XXX gack!  ray lies in plane.  
@@ -1034,11 +1057,11 @@ struct faceuse *fu_p;
 		 * as "missing" the face.  We rely on other faces to generate
 		 * hit points.
 		 */
-		rt_log("\tWarning:  Ignoring ray in plane of face\n");
+		rt_log("\tWarning:  Ignoring ray in plane of face (NOW A MISS) XXX\n");
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->hitmiss[NMG_MISS_LIST]->l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
 		return;
 	}
 
@@ -1064,12 +1087,14 @@ struct faceuse *fu_p;
 		rt_log("\tdistance along ray to intersection point %g\n",
 			dist);
 	}
-	
 
 
-	/* check each loopuse in the faceuse to determine hit/miss */
+	/* check each loopuse in the faceuse to determine hit/miss and
+	 * find the object which is "closest" to the ray/plane intercept.
+	 */
 	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
 		isect_ray_loopuse(rd, lu_p);
+
 
 	/* find the sub-element that was closest to the point of intersection.
 	 * If this element was hit, we don't need to generate a hit point on
@@ -1150,17 +1175,15 @@ struct shell *s_p;
 /*	N M G _ I S E C T _ R A Y
  *
  */
-struct ray_data *
-nmg_isect_ray_model(rp, invdir, m, tol)
-struct xray *rp;
-vect_t invdir;
+void
+nmg_isect_ray_model(rd, m)
+struct ray_data *rd;
 struct model *m;
-struct rt_tol	*tol;
 {
 	struct nmgregion *r_p;
 	struct shell *s_p;
 	struct hitmiss *hm;
-	struct ray_data rd;
+
 
 	if (rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("isect_ray_nmg: Pnt(%g %g %g) Dir(%g %g %g)\n", 
@@ -1173,28 +1196,6 @@ struct rt_tol	*tol;
 
 	NMG_CK_MODEL(m);
 
-	rd.rp = rp;
-	rd.tol = tol;
-	VMOVE(rd.invdir, invdir);
-
-	/* create a table to keep track of which elements have been
-	 * processed before and which haven't.  Elements in this table
-	 * will either be:
-	 *		(NULL)		item not previously processed
-	 *		hitmiss ptr	item previously processed
-	 *
-	 * the 0th item in the array is a pointer to the head of the "hit"
-	 * list.  The 1th item in the array is a pointer to the head of the
-	 * "miss" list.
-	 */
-	rd.hitmiss = (struct hitmiss **)rt_calloc( m->maxindex, sizeof(struct hitmiss *),
-		"nmg geom hit list");
-
-	/* initialize the lists of things that have been hit/missed */
-	RT_LIST_INIT(&rd.nmg_hits);
-	RT_LIST_INIT(&rd.nmg_misses);
-
-
 	/* Caller has assured us that the ray intersects the nmg model,
 	 * check ray for intersecion with rpp's of nmgregion's
 	 */
@@ -1203,36 +1204,15 @@ struct rt_tol	*tol;
 		NMG_CK_REGION_A(r_p->ra_p);
 
 		/* does ray intersect nmgregion rpp? */
-		if (! rt_in_rpp(rd.rp, rd.invdir,
-		    r_p->ra_p->min_pt, r_p->ra_p->max_pt) )
+		if (! rt_in_rpp(rd->rp, rd->invdir,
+		    rd->r_p->ra_p->min_pt, rd->r_p->ra_p->max_pt) )
 			continue;
 
 		/* ray intersects region, check shell intersection */
-		for (RT_LIST_FOR(s_p, shell, &r_p->s_hd)) {
+		for (RT_LIST_FOR(s_p, shell, &rd->r_p->s_hd)) {
 			nmg_isect_ray_shell(&rd, s_p);
 		}
 	}
-
-	/* free the list of missed elements */
-	while (RT_LIST_WHILE(hm, hitmiss, &rd.hitmiss[NMG_MISS_LIST]->l)) {
-		RT_LIST_DEQUEUE( &(hm->l) );
-		rt_free((char *)hm, "missed hitmiss structure");
-	}
-
-	/* if there weren't any hit points then 
-	 *   free the list head and return a NULL pointer
-	 */
-	hm = rd.hitmiss[NMG_HIT_LIST];
-	if (RT_LIST_IS_EMPTY(&hm->l)) {
-		if (rt_g.NMG_debug & DEBUG_NMGRT)
-			rt_log("isect_ray_nmg: No elements in hitlist\n");
-
-		rt_free((char *)rd.hitmiss[NMG_HIT_LIST],
-			"free empty hit list");
-		hm = (struct hitmiss *)NULL;
-	}
-
-	rt_free((char *)rd.hitmiss, "free nmg geom hit list");
 
 	return(hm);
 }

@@ -44,9 +44,9 @@ struct ray_data {
 	struct xray	*rp;
 	struct rt_tol	*tol;
 	vect_t		invdir;
-	struct hitmiss	**hitmiss;	/* 1 hitmiss struct ptr for each obj */
-	struct rt_list	nmg_hits;	/* objects which have been hit */
-	struct rt_list	nmg_misses;	/* objects which have been missed/sub-hit */
+	struct hitmiss	**hitmiss;	/* 1 struct hitmiss ptr per elem. */
+	struct rt_list	rd_hit;		/* list of hit elements */
+	struct rt_list	rd_miss;	/* list of missed/sub-hit elements */
 
 	pointp_t	plane_pt;	/* ray/plane(face) intercept point */
 	fastf_t		ray_dist_to_plane; /* parametric dist to plane */
