@@ -1,6 +1,8 @@
 #ifndef lint
 static char rcsid[] = "$Header$";
 #endif
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -54,6 +56,9 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 10.1  1991/10/12  06:53:18  mike
+ * Release_4.0
+ *
  * Revision 2.5  91/09/23  05:47:40  mike
  * Eliminated prototype warning on atof()
  * 
@@ -146,8 +151,6 @@ setup(argc,argv)
 int argc;
 char **argv;
 {
-	extern char	*optarg;
-	extern int	optind;
 	int c;
 	int i,j;
 	int *Xlist, *Ylist;
