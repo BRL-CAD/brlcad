@@ -302,9 +302,12 @@ CONST struct member	*mp;
 			str = db_path_to_string( &(anp->an_path) );
 			rt_log( "\t%s\t", str );
 			rt_free( str, "path string" );
+			rt_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
+				i, j);
+
 		}
 		for( ; i>=0 && j>=0; i--, j-- )  {
-			if( anp->an_path.fp_names[i] != pathp->fp_names[j] )  {
+			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
 				if (rt_g.debug & DEBUG_ANIM) {
 					rt_log("%s != %s\n",
 					     anp->an_path.fp_names[i]->d_namep,
@@ -515,7 +518,7 @@ is_leaf:
 
 out:
 	db_free_external( &ext );
-	rt_free( str, "dupped path" );
+	rt_free( str, "rt_strdup (dup'ed path)" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() returns pathp='%s'\n",
@@ -525,7 +528,7 @@ out:
 	return(0);		/* SUCCESS */
 fail:
 	db_free_external( &ext );
-	rt_free( str, "dupped path" );
+	rt_free( str, "rt_strdup (dup'ed path)" );
 	return(-1);		/* FAIL */
 }
 
