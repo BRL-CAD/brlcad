@@ -97,7 +97,7 @@ int	pat_len;
 
     for (ctp = ComTab; ctp -> com_name; ++ctp)
     {
-	len = max(pat_len, strlen(ctp -> com_name));
+	len = max(pat_len, (int)strlen(ctp -> com_name));
 	if ((strncmp (pattern, ctp -> com_name, len)) == 0)
 	    break;
     }
