@@ -17,7 +17,7 @@
  *
  */
 #ifndef lint
-static char RCSid[] = "$Header$:"
+static char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/
