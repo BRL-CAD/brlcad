@@ -112,15 +112,17 @@ struct seg {
 };
 #define SEG_NULL	((struct seg *)0)
 
-#define GET_SEG(p)    {	RES_ACQUIRE(&rt_g.res_seg); \
-			while( ((p)=rt_g.FreeSeg) == SEG_NULL ) \
-				rt_get_seg(); \
-			rt_g.FreeSeg = (p)->seg_next; \
+#define GET_SEG(p,res)    { \
+			while( ((p)=res->re_seg) == SEG_NULL ) \
+				rt_get_seg(res); \
+			res->re_seg = (p)->seg_next; \
 			p->seg_next = SEG_NULL; \
-			RES_RELEASE(&rt_g.res_seg); }
-#define FREE_SEG(p)   {	RES_ACQUIRE(&rt_g.res_seg); \
-			(p)->seg_next = rt_g.FreeSeg; rt_g.FreeSeg = (p); \
-			RES_RELEASE(&rt_g.res_seg); }
+			res->re_segget++; }
+
+#define FREE_SEG(p,res)  { \
+			(p)->seg_next = res->re_seg; \
+			res->re_seg = (p); \
+			res->re_segfree++; }
 
 
 /*
@@ -285,17 +287,19 @@ struct partition {
 #define COPY_PT(out,in)	bcopy((char *)in, (char *)out, PT_BYTES)
 
 /* Initialize all the bits to FALSE, clear out structure */
-#define GET_PT_INIT(p)	\
-	{ GET_PT(p); bzero( ((char *) (p)), PT_BYTES ); }
+#define GET_PT_INIT(p,res)	\
+	{ GET_PT(p,res); bzero( ((char *) (p)), PT_BYTES ); }
 
-#define GET_PT(p)   { RES_ACQUIRE(&rt_g.res_pt); \
-			while( ((p)=rt_g.FreePart) == PT_NULL ) \
-				rt_get_pt(); \
-			rt_g.FreePart = (p)->pt_forw; \
-			RES_RELEASE(&rt_g.res_pt); }
-#define FREE_PT(p) { RES_ACQUIRE(&rt_g.res_pt); \
-			(p)->pt_forw = rt_g.FreePart; rt_g.FreePart = (p); \
-			RES_RELEASE(&rt_g.res_pt); }
+#define GET_PT(p,res)   { \
+			while( ((p)=res->re_part) == PT_NULL ) \
+				rt_get_pt(res); \
+			res->re_part = (p)->pt_forw; \
+			res->re_partget++; }
+
+#define FREE_PT(p,res)  { \
+			(p)->pt_forw = res->re_part; \
+			res->re_part = (p); \
+			res->re_partfree++; }
 
 /* Insert "new" partition in front of "old" partition */
 #define INSERT_PT(new,old)	{ \
@@ -325,15 +329,17 @@ union bitv_elem {
 };
 #define BITV_NULL	((union bitv_elem *)0)
 
-#define GET_BITV(p)    {	RES_ACQUIRE(&rt_g.res_bitv); \
-			while( ((p)=rt_i.FreeBitv) == BITV_NULL ) \
-				rt_get_bitv(); \
-			rt_i.FreeBitv = (p)->be_next; \
+#define GET_BITV(p,res)  { \
+			while( ((p)=res->re_bitv) == BITV_NULL ) \
+				rt_get_bitv(res); \
+			res->re_bitv = (p)->be_next; \
 			p->be_next = BITV_NULL; \
-			RES_RELEASE(&rt_g.res_bitv); }
-#define FREE_BITV(p)   {	RES_ACQUIRE(&rt_g.res_bitv); \
-			(p)->be_next = rt_i.FreeBitv; rt_i.FreeBitv = (p); \
-			RES_RELEASE(&rt_g.res_bitv); }
+			res->re_bitvget++; }
+
+#define FREE_BITV(p,res)  { \
+			(p)->be_next = res->re_bitv; \
+			res->re_bitv = (p); \
+			res->re_bitvfree++; }
 
 /*
  *  Bit-string manipulators for arbitrarily long bit strings
@@ -388,6 +394,39 @@ struct directory  {
 #define LOOKUP_NOISY	1
 #define LOOKUP_QUIET	0
 
+/*
+ *			R E S O U R C E
+ *
+ *  One of these structures is allocated per processor.
+ *  To prevent excessive competition for free structures,
+ *  memory is now allocated on a per-processor basis.
+ *  The application structure a_resource element specifies
+ *  the resource structure to be used;  if uniprocessing,
+ *  a null a_resource pointer results in using the internal global
+ *  structure, making initial application development simpler.
+ *
+ *  Note that if multiple models are being used, the partition and bitv
+ *  structures (which are variable length) will require there to be
+ *  ncpus * nmodels resource structures, the selection of which will
+ *  be the responsibility of the application.
+ */
+struct resource {
+	struct seg 	*re_seg;	/* Head of segment freelist */
+	long		re_seglen;
+	long		re_segget;
+	long		re_segfree;
+	struct partition *re_part;	/* Head of freelist */
+	long		re_partlen;
+	long		re_partget;
+	long		re_partfree;
+	union bitv_elem *re_bitv;	/* head of freelist */
+	long		re_bitvlen;
+	long		re_bitvget;
+	long		re_bitvfree;
+	int		re_cpu;		/* processor number, for ID */
+};
+#define RESOURCE_NULL	((struct resource *)0)
+
 
 /*
  *			A P P L I C A T I O N
@@ -402,20 +441,21 @@ struct directory  {
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
-	struct xray a_ray;	/* Actual ray to be shot */
-	int	(*a_hit)();	/* routine to call when shot hits model */
-	int	(*a_miss)();	/* routine to call when shot misses */
-	int	a_level;	/* recursion level (for printing) */
-	int	a_onehit;	/* flag to stop on first hit */
-	struct rt_i *a_rt_i;	/* this librt instance */
+	struct xray	a_ray;		/* Actual ray to be shot */
+	int		(*a_hit)();	/* called when shot hits model */
+	int		(*a_miss)();	/* called when shot misses */
+	int		a_level;	/* recursion level (for printing) */
+	int		a_onehit;	/* flag to stop on first hit */
+	struct rt_i	*a_rt_i;	/* this librt instance */
+	struct resource	*a_resource;	/* dynamic memory resources */
 	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
-	int	a_x;		/* Screen X of ray, where applicable */
-	int	a_y;		/* Screen Y of ray, where applicable */
-	int	a_user;		/* application-specific value */
-	point_t	a_color;	/* application-specific color */
-	vect_t	a_uvec;		/* application-specific vector */
-	fastf_t	a_rbeam;	/* initial beam radius (mm) */
-	fastf_t	a_diverge;	/* slope of beam divergance/mm */
+	int		a_x;		/* Screen X of ray, if applicable */
+	int		a_y;		/* Screen Y of ray, if applicable */
+	int		a_user;		/* application-specific value */
+	point_t		a_color;	/* application-specific color */
+	vect_t		a_uvec;		/* application-specific vector */
+	fastf_t		a_rbeam;	/* initial beam radius (mm) */
+	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 };
 
 /*
@@ -426,15 +466,9 @@ struct application  {
  */
 struct rt_g {
 	int		debug;		/* non-zero for debug, see debug.h */
-	struct seg 	*FreeSeg;	/* Head of segment freelist */
-	struct partition *FreePart;	/* Head of freelist */
 	union cutter	*rtg_CutFree;	/* cut Freelist */
 	/*  Definitions necessary to interlock in a parallel environment */
-	int		res_pt;		/* lock on free partition structs */
-	int		res_seg;	/* lock on free seg structs */
 	int		res_malloc;	/* lock on memory allocation */
-	int		res_printf;	/* lock on printing */
-	int		res_bitv;	/* lock on bitvectors */
 	int		res_worker;	/* lock on work to do */
 	int		res_stats;	/* lock on statistics */
 };
@@ -456,7 +490,6 @@ struct rt_i {
 	FILE		*fp;		/* file handle of database */
 	vect_t		mdl_min;	/* min corner of model bounding RPP */
 	vect_t		mdl_max;	/* max corner of model bounding RPP */
-	union bitv_elem *FreeBitv;	/* head of freelist */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
 	long		nshots;		/* # of calls to ft_shot() */
