@@ -674,9 +674,13 @@ CONST struct bu_attribute_value_pair	*attr;
 		return -2;		/* FAIL */
 	}
 
-	/* What about combinations? */
-	major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
-	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+	if( ip->idb_type == ID_COMBINATION )  {
+		major = DB5HDR_MAJORTYPE_BRLCAD_NONGEOM;
+		minor = 1;
+	} else {
+		major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
+		minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+	}
 
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		dp->d_namep, attr, &body,
@@ -732,9 +736,13 @@ CONST struct bu_attribute_value_pair	*attr;
 	}
 	BU_CK_EXTERNAL( &body );
 
-	/* What about combinations? */
-	major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
-	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+	if( ip->idb_type == ID_COMBINATION )  {
+		major = DB5HDR_MAJORTYPE_BRLCAD_NONGEOM;
+		minor = 1;
+	} else {
+		major = DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY;
+		minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
+	}
 
 	BU_INIT_EXTERNAL( &ext );
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
