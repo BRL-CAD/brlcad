@@ -88,6 +88,10 @@ done
 #####################
 # environment check #
 #####################
+
+# force locale setting to C so things like date output as expected
+LC_ALL=C
+
 case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
   *c*,-n*) ECHO_N= ECHO_C='
 ' ECHO_T='	' ;;
