@@ -26,8 +26,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tcl.h"
 #include "tk.h"
 
-int	width = 64;
-int	height = 64;
+int	width = 64;				/* Linked with TCL */
+int	height = 64;				/* Linked with TCL */
 
 char	*basename = "mtherm";
 char	spectrum_name[100];
@@ -38,9 +38,13 @@ struct rt_spectrum	*spectrum;
 
 struct rt_spect_sample	*ss;
 
-char	*pixels;
+struct rt_spect_sample	*atmosphere_orig;
+struct rt_spect_sample	*atmosphere;
+int			use_atmosphere = 0;	/* Linked with TCL */
 
-fastf_t	maxval, minval;
+char	*pixels;		/* en-route to framebuffer */
+
+fastf_t	maxval, minval;				/* Linked with TCL */
 
 Tcl_Interp	*interp;
 Tk_Window	tkwin;
@@ -94,6 +98,7 @@ char		*argv[];
 	struct rt_spect_sample	*sp;
 	int	x, y, wl;
 	char	*cp;
+	fastf_t	val;
 
 	if( argc != 4 )  {
 		interp->result = "Usage: getspect x y wl";
@@ -117,7 +122,10 @@ char		*argv[];
 	cp = cp + (y * width + x) * RT_SIZEOF_SPECT_SAMPLE(spectrum);
 	sp = (struct rt_spect_sample *)cp;
 	RT_CK_SPECT_SAMPLE(sp);
-	sprintf( interp->result, "%g", sp->val[wl] );
+	val = sp->val[wl];
+	if( use_atmosphere )
+		val *= atmosphere->val[wl];
+	sprintf( interp->result, "%g", val );
 	return TCL_OK;
 }
 
@@ -213,6 +221,7 @@ Tcl_Interp	*inter;
 
 	Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
 
 	/* Source the TCL part of this lashup */
 	tcl_RcFileName = "./disp.tcl";
@@ -227,6 +236,8 @@ char	**argv;
 	int	fd;
 	int	i;
 
+	rt_g.debug = 1;
+
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
 		rt_bomb("Unable to open fb\n");
 	}
@@ -238,6 +249,11 @@ char	**argv;
 	if( spectrum == NULL )  {
 		rt_bomb("Unable to read spectrum\n");
 	}
+
+	/* Read atmosphere curve -- input is in microns, not nm */
+	atmosphere_orig = rt_read_spectrum_and_samples( "std_day_1km.dat" );
+	rt_spectrum_scale( atmosphere_orig->spectrum, 1000.0 );
+	atmosphere = rt_spect_resample( spectrum, atmosphere_orig );
 
 	len = width * height * RT_SIZEOF_SPECT_SAMPLE(spectrum);
 	ss = (struct rt_spect_sample *)rt_malloc( len, "rt_spect_sample" );
@@ -307,7 +323,8 @@ char		*argv[];
 	fb_writerect( fbp, 0, 0, width, height, pixels );
 	fb_poll(fbp);
 
-	/* set global variables */
+	/* export C variables to TCL, one-way */
+	/* These are being traced by Tk, this will cause update */
 	sprintf(buf, "%d", wl);
 	Tcl_SetVar(interp, "wavel", buf, TCL_GLOBAL_ONLY);
 	sprintf(buf, "%g", spectrum->wavel[wl] * 0.001);
@@ -348,6 +365,10 @@ find_minmax()
 }
 
 /*
+ *			R E S C A L E
+ *
+ *  Create monochrome image from the spectral data, at wavelength 'wav',
+ *  given current min & max values.
  */
 rescale(wav)
 int	wav;
@@ -357,6 +378,7 @@ int	wav;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
+	fastf_t		atmos_scale;
 
 	cp = (char *)ss;
 	nbytes = RT_SIZEOF_SPECT_SAMPLE(spectrum);
@@ -365,6 +387,11 @@ int	wav;
 
 	scale = 255 / (maxval - minval);
 
+	if( use_atmosphere )
+		atmos_scale = atmosphere->val[wav];
+	else
+		atmos_scale = 1;
+
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 		struct rt_spect_sample	*sp;
 		register int		val;
@@ -372,7 +399,7 @@ int	wav;
 		sp = (struct rt_spect_sample *)cp;
 		RT_CK_SPECT_SAMPLE(sp);
 
-		val = (sp->val[wav] - minval) * scale;
+		val = (sp->val[wav] * atmos_scale - minval) * scale;
 		if( val > 255 )  val = 255;
 		else if( val < 0 ) val = 0;
 		pp[0] = pp[1] = pp[2] = val;
