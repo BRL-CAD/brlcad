@@ -510,6 +510,8 @@ static struct funtab funtab[] = {
 	f_sc_obj,2,2,FALSE,
 "sed", "<path>", "solid-edit named solid",
 	f_sed,2,2,FALSE,
+"setview", "x y z", "set the view given angles x, y, and z in degrees",
+        f_setview,4,4,FALSE,
 "vars",	"[var=opt]", "assign/display mged variables",
 	f_set,1,2,FALSE,
 "shells", "nmg_model", "breaks model into seperate shells",
@@ -1989,22 +1991,57 @@ clean_up:
 #endif
 
 int
+f_setview(argc, argv)
+int     argc;
+char    *argv[];
+{
+  double x, y, z;
+
+  if(sscanf(argv[1], "%lf", &x) < 1){
+    rt_log("f_setview: bad x value - %s\n", argv[1]);
+    return CMD_BAD;
+  }
+
+  if(sscanf(argv[2], "%lf", &y) < 1){
+    rt_log("f_setview: bad y value - %s\n", argv[2]);
+    return CMD_BAD;
+  }
+
+  if(sscanf(argv[3], "%lf", &z) < 1){
+    rt_log("f_setview: bad z value - %s\n", argv[3]);
+    return CMD_BAD;
+  }
+
+  setview(x, y, z);
+
+  return CMD_OK;
+}
+
+int
 f_slewview(argc, argv)
 int	argc;
 char	*argv[];
 {
-	int x, y;
-	vect_t tabvec;
+  int x, y;
+  vect_t tabvec;
 
-	sscanf(argv[1], "%d", &x);
-	sscanf(argv[2], "%d", &y);
 
-	tabvec[X] =  x / 2047.0;
-	tabvec[Y] =  y / 2047.0;
-	tabvec[Z] = 0;
-	slewview( tabvec );
+  if(sscanf(argv[1], "%d", &x) < 1){
+    rt_log("f_slewview: bad x value - %s\n", argv[1]);
+    return CMD_BAD;
+  }
 
-	return CMD_OK;
+  if(sscanf(argv[2], "%d", &y) < 1){
+    rt_log("f_slewview: bad y value - %s\n", argv[2]);
+    return CMD_BAD;
+  }
+
+  tabvec[X] =  x / 2047.0;
+  tabvec[Y] =  y / 2047.0;
+  tabvec[Z] = 0;
+  slewview( tabvec );
+
+  return CMD_OK;
 }
 
 void
