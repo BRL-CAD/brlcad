@@ -883,8 +883,6 @@ replot_editing_solid()
 /*
  *			T R A N S F O R M _ E D I T I N G _ S O L I D
  *
- * XXX This should be part of the import/export interface.
- * XXX Each solid should know how to transform it's internal representation.
  */
 void
 transform_editing_solid(os, mat, is, free)
@@ -893,31 +891,10 @@ mat_t			mat;
 struct rt_db_internal	*is;
 int			free;
 {
-	struct rt_external	ext;
 	struct directory	*dp;
-	int			id;
-
-	RT_CK_DB_INTERNAL( is );
 	dp = illump->s_path[illump->s_last];
-	id = is->idb_type;
-	RT_INIT_EXTERNAL(&ext);
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, is, 1.0 ) < 0 )  {
-		rt_log("transform_editing_solid(%s):  solid export failure\n", dp->d_namep);
+	if( rt_db_xform_internal( os, mat, is, free, dp->d_namep ) < 0 )
 		rt_bomb("transform_editing_solid");		/* FAIL */
-	}
-	if( (free || os == is) && is->idb_ptr )  {
-		rt_functab[id].ft_ifree( is );
-    		is->idb_ptr = (genptr_t)0;
-    	}
-
-	if( rt_functab[id].ft_import( os, &ext, mat ) < 0 )  {
-		rt_log("transform_editing_solid(%s):  solid import failure\n",
-			illump->s_path[illump->s_last]->d_namep );
-		rt_bomb("transform_editing_solid");		/* FAIL */
-	}
-	RT_CK_DB_INTERNAL( os );
-
 }
 
 /* put up menu header */
@@ -2992,4 +2969,54 @@ struct rt_tol		*tol;
 		}
 	}
 	return 0;
+}
+
+/*
+ *			R T _ D B _ X F O R M _ I N T E R N A L
+ *
+ *  Apply a 4x4 transformation matrix to the internal form of a solid.
+ *
+ *  If "free" flag is non-zero, storage for the original solid is released.
+ *  If "os" is same as "is", storage for the original solid is
+ *  overwritten with the new, transformed solid.
+ *
+ * XXX This should be part of the import/export interface.
+ * XXX Each solid should know how to transform it's internal representation.
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	 0	OK
+ */
+int
+rt_db_xform_internal(os, mat, is, free, name)
+struct rt_db_internal	*os;
+mat_t			mat;
+struct rt_db_internal	*is;
+int			free;
+char			*name;
+{
+	struct rt_external	ext;
+	int			id;
+
+	RT_CK_DB_INTERNAL( is );
+	id = is->idb_type;
+	RT_INIT_EXTERNAL(&ext);
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[id].ft_export( &ext, is, 1.0 ) < 0 )  {
+		rt_log("rt_db_xform_internal(%s):  solid export failure\n",
+			name);
+		return -1;			/* FAIL */
+	}
+	if( (free || os == is) && is->idb_ptr )  {
+		rt_functab[id].ft_ifree( is );
+    		is->idb_ptr = (genptr_t)0;
+    	}
+
+	if( rt_functab[id].ft_import( os, &ext, mat ) < 0 )  {
+		rt_log("rt_db_xform_internal(%s):  solid import failure\n",
+			name);
+		return -1;			/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( os );
+	return 0;				/* OK */
 }
