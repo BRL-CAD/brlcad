@@ -439,6 +439,23 @@ Ir_open()
 	ir_var_init();
 	rt_vls_printf(&pathName, ".dm_4d");
 
+#if 1
+	{
+	  static char dm_4d_dstr[80];
+
+	  sprintf(dm_4d_dstr, "DISPLAY=%s", dname);
+	  putenv(dm_4d_dstr);
+	}
+
+	if(getgdesc(GD_BITS_NORM_DBL_RED) > 0){
+	  mvars.rgb = 1;
+	  mvars.doublebuffer = 1;
+	  ir_is_gt = 1;
+	}
+
+	if(getgdesc(GD_BITS_NORM_ZBUFFER) > 0)
+	  mvars.zbuf = 1;
+#else
 	/*
 	 *  Take inventory of the hardware.
 	 *  See "types for class graphics" in /usr/include/sys/invent.h
@@ -526,6 +543,8 @@ Ir_open()
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
+#endif
+
 #if 0
 	rt_log("4D: gt=%d, zbuf=%d, rgb=%d\n", ir_is_gt, mvars.zbuf, mvars.rgb);
 #endif
@@ -1770,41 +1789,69 @@ continue;
 				if(adcflag)
 					rt_vls_printf( &cmd , "knob ang2 %d\n",
 							setting );
-				else
-					rt_vls_printf( &cmd , "knob z %f\n",
-							setting/2048.0 );
+				else {
+				  if(mged_variables.rateknobs)
+				    rt_vls_printf( &cmd , "knob z %f\n",
+						   setting/2048.0 );
+				  else
+				    rt_vls_printf( &cmd , "knob az %f\n",
+						   setting/512.0 );
+				}
 				break;
 			case DIAL3:
 				if(adcflag)
 					rt_vls_printf( &cmd , "knob distadc %d\n",
 							setting );
-				else
-					rt_vls_printf( &cmd , "knob Z %f\n",
-							setting/2048.0 );
+				else {
+				  if(mged_variables.rateknobs)
+				    rt_vls_printf( &cmd , "knob Z %f\n",
+						   setting/2048.0 );
+				  else
+				    rt_vls_printf( &cmd , "knob aZ %f\n",
+						   setting/512.0 );
+				}
 				break;
 			case DIAL4:
 				if(adcflag)
 					rt_vls_printf( &cmd , "knob yadc %d\n",
 							setting );
-				else
-					rt_vls_printf( &cmd , "knob y %f\n",
-							setting/2048.0 );
+				else {
+				  if(mged_variables.rateknobs)
+				    rt_vls_printf( &cmd , "knob y %f\n",
+						   setting/2048.0 );
+				  else
+				    rt_vls_printf( &cmd , "knob ay %f\n",
+						   setting/512.0 );
+				}
 				break;
 			case DIAL5:
-				rt_vls_printf( &cmd , "knob Y %f\n",
-							setting/2048.0 );
+			        if(mged_variables.rateknobs)
+				  rt_vls_printf( &cmd , "knob Y %f\n",
+						 setting/2048.0 );
+				else
+				  rt_vls_printf( &cmd , "knob aY %f\n",
+						 setting/512.0 );
 				break;
 			case DIAL6:
 				if(adcflag)
 					rt_vls_printf( &cmd , "knob xadc %d\n",
 							setting );
-				else
-					rt_vls_printf( &cmd , "knob x %f\n",
-							setting/2048.0 );
+				else {
+				  if(mged_variables.rateknobs)
+				    rt_vls_printf( &cmd , "knob x %f\n",
+						   setting/2048.0 );
+				  else
+				    rt_vls_printf( &cmd , "knob ax %f\n",
+						   setting/512.0 );
+				}
 				break;
 			case DIAL7:
-				rt_vls_printf( &cmd , "knob X %f\n",
-							setting/2048.0 );
+			        if(mged_variables.rateknobs)
+				  rt_vls_printf( &cmd , "knob X %f\n",
+						 setting/2048.0 );
+				else
+				  rt_vls_printf( &cmd , "knob aX %f\n",
+						 setting/512.0 );
 				break;
 			}
 			continue;
@@ -1886,6 +1933,7 @@ continue;
 		}
   }
 
+  scroll_active = 0;
   (void)cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
   curr_dm_list = save_dm_list;
