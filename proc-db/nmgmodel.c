@@ -28,13 +28,16 @@ static struct vertex **f_vertl[256];
 
 
 /* declarations to support use of getopt() system call */
-char *options = "h";
+char *options = "h3210";
 extern char *optarg;
 extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 char plotfilename[1024];
 char mfilename[1024];
+
+int manifold[4] = { 1, 1, 1, 1 };
+
 /*
  *	U S A G E --- tell user how to invoke this program, then exit
  */
@@ -43,9 +46,11 @@ char *s;
 {
 	if (s) (void)fputs(s, stderr);
 
-	(void) fprintf(stderr, "Usage: %s\n%s%s\n",
+	(void) fprintf(stderr, "Usage: %s [ -0123 ] \n%s\"%s\"\n%s\"%s\"\n",
 		progname,
-		"\tCreates model on stdout, plot file in ",
+		"\tCreate NMG to mged database ",
+		mfilename,
+		"\tand plot file ",
 		plotfilename);
 	exit(1);
 }
@@ -77,6 +82,10 @@ char *av[];
 	/* get all the option flags from the command line */
 	while ((c=getopt(ac,av,options)) != EOF)
 		switch (c) {
+		case '3'	: manifold[3] = 0; break;
+		case '2'	: manifold[2] = 0; break;
+		case '1'	: manifold[1] = 0; break;
+		case '0'	: manifold[0] = 0; break;
 		case '?'	:
 		case 'h'	:
 		default		: usage((char *)NULL); break;
@@ -287,15 +296,15 @@ struct rt_tol *tol;
 	f_vertl[2] = &vertl[24];
 	f_vertl[3] = &vertl[25];
 	fu = nmg_cmface(s, f_vertl, 4);
-	nmg_vertex_g(vertl[22],  10.0,  60.0,  0.0);
+	nmg_vertex_g(vertl[22],  10.0, 60.0,  0.0);
 	nmg_vertex_g(vertl[23],  25.0,  60.0,  0.0);
 	nmg_vertex_g(vertl[24],  25.0,  40.0,  0.0);
-	nmg_vertex_g(vertl[25],  10.0,  40.0,  0.0);
+	nmg_vertex_g(vertl[25],  10.0, 40.0,  0.0);
 
 	/* GROSS HACK XXX
 	 * we reverse the orientation of the faceuses and loopuses
 	 * so that we can make the hole as a face, and transfer the hole
-	 * to an existing face
+	 * to an existing face.
 	 */
 
 	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
@@ -517,6 +526,9 @@ char *av[];
 	FILE *fdplot, *fdmodel;
 
 	if (parse_args(ac, av) < ac) usage((char *)NULL);
+	if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])
+		usage("No manifolds selected\n");
+
 	
 	m = nmg_mm();
 	r = nmg_mrsv(m);
@@ -528,25 +540,28 @@ char *av[];
 	tol.perp = 0.001;
 	tol.para = 0.999;
 
-	make_3manifold_bits(&tol);
-	make_2manifold_bits(&tol);
-	make_1manifold_bits(tol);
-	make_0manifold_bits(tol);
+	if (manifold[3]) make_3manifold_bits(&tol);
+	if (manifold[2]) make_2manifold_bits(&tol);
+	if (manifold[1]) make_1manifold_bits(tol);
+	if (manifold[0]) make_0manifold_bits(tol);
 
 	NMG_CK_MODEL(m);
 
 	
 	/* write the database */
+	unlink(mfilename);
 	if ((fdmodel = fopen(mfilename, "w")) == (FILE *)NULL)
 		perror(mfilename);
 	else {
 		mk_id(fdmodel, "hairy NMG");
 		mk_nmg(fdmodel, "s.NMG",  m);
 
+
 		/* build a database region of the solid */
 		mk_comb(fdmodel, "r.NMG", 1, 1, (char *)NULL /*matname*/,
 			(char *)NULL /* matparm */, (char *)NULL /*rgb */, 1);
 		mk_memb(fdmodel, "s.NMG", rt_identity, WMOP_UNION);
+
 		fclose(fdmodel);
 	}
 
