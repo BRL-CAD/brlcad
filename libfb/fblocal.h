@@ -19,6 +19,7 @@
 #ifndef INCL_FBLOCAL
 #define INCL_FBLOCAL
 
+#include "machine.h"
 #include "externs.h"
 
 #define Malloc_Bomb( _bytes_ ) \
