@@ -30,14 +30,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	In the process, the name was changed to fbzoom from ikzoom.
 	Gary S. Moss, BRL. 03/13/85.
 
-	SCCS id:	@(#) fbzoom.c	1.6
-	Last edit: 	5/29/85 at 16:32:49
-	Retrieved: 	8/13/86 at 03:15:08
+	SCCS id:	@(#) fbzoom.c	1.7
+	Last edit: 	6/6/85 at 16:51:04
+	Retrieved: 	8/13/86 at 03:15:14
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fbzoom.c
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbzoom.c	1.6	last edit 5/29/85 at 16:32:49";
+char	sccsTag[] = "@(#) fbzoom.c	1.7	last edit 6/6/85 at 16:51:04";
 #endif
 #include <stdio.h>	
 #include <fb.h>
@@ -90,6 +90,7 @@ char **argv;
 	(void) fprintf( stdout,  "\n");	/* Move off of the output line.	*/
 	(void) fbzoom( zoom, zoom );
 	(void) fbwindow( xPan, yPan );
+	return	0;
 	}
 
 char help[] = "\r\n\
