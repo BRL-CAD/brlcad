@@ -7,7 +7,9 @@
 set mged_help_data(?)		{{}	{summary of available mged commands}}
 set mged_help_data(?lib)	{{}	{summary of available library commands}}
 set mged_help_data(?devel)	{{}	{summary of available mged developer commands}}
-set mged_help_data(%)		{{}	{escape to interactive shell}}
+set mged_help_data(%)		{{}	{Escape to an interactive shell. Note - This only works in a
+        command window associated with a tty (i.e. the window used
+        to start MGED in classic mode). }}
 set mged_help_data(3ptarb)	{{}	{makes arb given 3 pts, 2 coord of 4th pt, and thickness}}
 set mged_help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> [value(s)]]}	{control the angle/distance cursor}}
 set mged_help_data(ae)		{{[-i] azim elev [twist]}	{set view using azim, elev and twist angles}}
