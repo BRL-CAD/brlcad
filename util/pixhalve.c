@@ -40,8 +40,6 @@ static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
-#include "./asize.c"
-
 get_args( argc, argv )
 register char **argv;
 {
@@ -103,6 +101,9 @@ int	*rlines[5];
 int	*glines[5];
 int	*blines[5];
 
+/*
+ *			M A I N
+ */
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -121,9 +122,11 @@ char	**argv;
 	/* autosize input? */
 	if( fileinput && autosize ) {
 		int	w, h;
-		if( image_size(file_name, 3, &w, &h) ) {
+		if( fb_common_file_size(&w, &h, file_name, 3) ) {
 			file_width = w;
 			file_height = h;
+		} else {
+			fprintf(stderr, "pixhalve: unable to autosize\n");
 		}
 	}
 	out_width = file_width/2;
@@ -189,6 +192,11 @@ char	**argv;
 	exit(0);
 }
 
+/*
+ *			S E P A R A T E
+ *
+ *  Unpack RGB byte tripples into three separate arrays of integers
+ */
 separate( rop, gop, bop, cp, num )
 register int	*rop;
 register int	*gop;
@@ -205,6 +213,12 @@ int		num;
 	}
 }
 
+/*
+ *			C O M B I N E
+ *
+ *  Combine three separate arrays of integers into a buffer of
+ *  RGB byte tripples
+ */
 combine( cp, rip, gip, bip, num )
 register unsigned char	*cp;
 register int		*rip;
@@ -222,6 +236,10 @@ int			num;
 }
 
 /*
+ *			R I P P L E
+ *
+ *  Ripple all the scanlines down by one.
+ *
  *  Barrel shift all the pointers down, with [0] going back to the top.
  */
 ripple( array, num )
@@ -237,6 +255,14 @@ int	num;
 	array[num-1] = temp;
 }
 
+/*
+ *			F I L T E R
+ *
+ *  Apply a 5x5 image pyramid to the input scanline, taking every other
+ *  input position to make an output.
+ *
+ *  Code is arranged so as to vectorize, on machines that can.
+ */
 filter( op, lines, num )
 int	*op;
 int	*lines[];
@@ -268,7 +294,6 @@ int	num;
 #else
 	/* This version is better for non-vectorizing machines */
 	for( i=0; i < num; i++ )  {
-		j = i*2;
 		op[i] = (
 			  a[0] + 2*a[1] + 4*a[2] + 2*a[3] +   a[4] +
 			2*b[0] + 4*b[1] + 8*b[2] + 4*b[3] + 2*b[4] +

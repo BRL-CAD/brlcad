@@ -37,6 +37,7 @@ static char	*file_name;
 static int	infd;
 
 static int	fileinput = 0;		/* file of pipe on input? */
+static int	autosize = 0;		/* !0 to autosize input */
 
 static int	file_width = 512;	/* default input width */
 static int	file_height = 512;	/* default input height */
@@ -49,7 +50,7 @@ static int	zoom = 0;
 static int	inverse = 0;		/* Draw upside-down */
 
 static char usage[] = "\
-Usage: pix-fb [-h -i -c -z] [-F framebuffer]\n\
+Usage: pix-fb [-a -h -i -c -z] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.pix]\n";
@@ -59,12 +60,16 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ahiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 'a':
+			autosize = 1;
+			break;
 		case 'h':
 			/* high-res */
 			file_height = file_width = 1024;
 			scr_height = scr_width = 1024;
+			autosize = 0;
 			break;
 		case 'i':
 			inverse = 1;
@@ -81,12 +86,15 @@ register char **argv;
 		case 's':
 			/* square file size */
 			file_height = file_width = atoi(optarg);
+			autosize = 0;
 			break;
 		case 'w':
 			file_width = atoi(optarg);
+			autosize = 0;
 			break;
 		case 'n':
 			file_height = atoi(optarg);
+			autosize = 0;
 			break;
 		case 'x':
 			file_xoff = atoi(optarg);
@@ -148,6 +156,17 @@ char **argv;
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
+	}
+
+	/* autosize input? */
+	if( fileinput && autosize ) {
+		int	w, h;
+		if( fb_common_file_size(&w, &h, file_name, 3) ) {
+			file_width = w;
+			file_height = h;
+		} else {
+			fprintf(stderr,"pix-fb: unable to autosize\n");
+		}
 	}
 
 	/* If screen size was not set, track the file size */

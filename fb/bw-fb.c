@@ -37,6 +37,7 @@ static char	ibuf[MAX_LINE];
 static RGBpixel obuf[MAX_LINE];
 
 static int	fileinput = 0;		/* file of pipe on input? */
+static int	autosize = 0;		/* !0 to autosize input */
 
 static int	file_width = 512;	/* default input width */
 static int	file_height = 512;	/* default input height */
@@ -57,7 +58,7 @@ static int	infd;
 static FBIO	*fbp;
 
 static char	usage[] = "\
-Usage: bw-fb [-h -i -c -z -R -G -B] [-F framebuffer]\n\
+Usage: bw-fb [-a -h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
@@ -67,12 +68,16 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiczRGBF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "ahiczRGBF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 'a':
+			autosize = 1;
+			break;
 		case 'h':
 			/* high-res */
 			file_height = file_width = 1024;
 			scr_height = scr_width = 1024;
+			autosize = 0;
 			break;
 		case 'i':
 			inverse = 1;
@@ -98,12 +103,15 @@ register char **argv;
 		case 's':
 			/* square file size */
 			file_height = file_width = atoi(optarg);
+			autosize = 0;
 			break;
 		case 'w':
 			file_width = atoi(optarg);
+			autosize = 0;
 			break;
 		case 'n':
 			file_height = atoi(optarg);
+			autosize = 0;
 			break;
 		case 'x':
 			file_xoff = atoi(optarg);
@@ -163,6 +171,17 @@ int argc; char **argv;
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1 );
+	}
+
+	/* autosize input? */
+	if( fileinput && autosize ) {
+		int	w, h;
+		if( fb_common_file_size(&w, &h, file_name, 1) ) {
+			file_width = w;
+			file_height = h;
+		} else {
+			fprintf(stderr, "bw-fb: unable to autosize\n");
+		}
 	}
 
 	/* If no color planes were selected, load them all */
