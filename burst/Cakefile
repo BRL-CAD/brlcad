@@ -32,21 +32,21 @@ all&: PRODUCTS
 
 test&:	../.burst.MTYPE/burst tfiles/ktank.g
 	../.burst.MTYPE/burst -b < tfiles/ktank.in
-	@if test $? -ne 0 \
-	then	echo "Test failed."; exit 1 \
+	@if test $? -ne 0 \\
+	then	echo "Test failed."; exit 1 \\
 	fi
 	diff tfiles/ktank.burst tfiles/ktank.burst.bak4.0
-	@if test $? -ne 0 \
-	then	echo "Test failed."; exit 1 \
+	@if test $? -ne 0 \\
+	then	echo "Test failed."; exit 1 \\
 	fi
 	diff tfiles/ktank.shotlines tfiles/ktank.shotlines.bak4.0
-	@if test $? -ne 0 \
-	then	echo "Test failed."; exit 1 \
+	@if test $? -ne 0 \\
+	then	echo "Test failed."; exit 1 \\
 	fi
 	@echo "Tested OK."
 
 untest&:
-	rm -f tfiles/ktank.burst tfiles/ktank.shotlines tfiles/ktank.plot \
+	rm -f tfiles/ktank.burst tfiles/ktank.shotlines tfiles/ktank.plot \\
 		tfiles/ktank.pix tfiles/ktank.g tfiles/ktank.log
 
 tfiles/ktank.g:
