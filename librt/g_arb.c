@@ -867,6 +867,7 @@ struct directory	*dp;
 	struct vertex		**vertp[4];
 	int			face;
 	plane_t			plane;
+	int			j;
 
 	if( arb_import( &ai, rp, mat ) < 0 )  {
 		rt_log("arb_tess(%s): import failure\n", dp->d_namep);
@@ -888,6 +889,13 @@ struct directory	*dp;
 		vertp[2] = &verts[aip->ai_sub[2]];
 		vertp[3] = &verts[aip->ai_sub[3]];
 
+#if 0
+		rt_log("\ni:%d\n", i);
+		for (j=0 ; j < 8 ; ++j)
+			rt_log("verts[%d]: %8x\n", j, verts[j]);
+		for (j=0 ; j < 4 ; ++j)
+			rt_log("vertp[%d]:(%8x)->%8x\n", j, vertp[j], *vertp[j]);
+#endif
 		outfaceuses[i] = nmg_cmface(s, vertp, 4);
 #else
 		struct vertex	*vertlist[4];
@@ -920,6 +928,7 @@ struct directory	*dp;
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
 
+#if 0
 	{
 		FILE *file;
 		if( (file = fopen("mged.pl", "w")) == NULL )  {
@@ -930,6 +939,7 @@ struct directory	*dp;
 			printf("wrote mged.pl\n");
 		}
 	}
+#endif
 	nmg_ck_closed_surf(s);		/* debug */
 
 	return(0);
