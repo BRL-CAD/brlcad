@@ -169,6 +169,9 @@ char **argv;
 		} else if( strcmp( argv[1], "-X" ) == 0 )  {
 			sscanf( argv[2], "%x", &rdebug );
 			argc--; argv++;
+		} else if( strcmp( argv[1], "-U" ) == 0 )  {
+			sscanf( argv[2], "%d", &use_air );
+			argc--; argv++;
 		} else {
 			fprintf(stderr, srv_usage);
 			exit(3);
@@ -584,7 +587,8 @@ register struct pkg_conn *pc;
 char			*buf;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
-	char	*argv[MAXARGS+1];
+	char	*argv_buf[MAXARGS+1];
+	char	**argv = argv_buf;
 	int	argc;
 	int	min_res;
 	int	start_line;
@@ -600,7 +604,7 @@ char			*buf;
 
 	if( debug )  fprintf(stderr, "rtsync_ph_pov: %s\n", buf );
 
-	if( (argc = rt_split_cmd( argv, MAXARGS, buf )) <= 0 )  {
+	if( (argc = rt_split_cmd( argv_buf, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
 		rt_log("Null POV command\n");
 		(void)free(buf);
@@ -611,11 +615,9 @@ char			*buf;
 	AmbientIntensity = 0.4;
 	hypersample = 0;
 	jitter = 0;
-	rt_perspective = 0;
 	eye_backoff = 1.414;
 	aspect = 1;
 	stereo = 0;
-	use_air = 0;
 #if 0
 	width = height = 0;
 	cell_width = cell_height = 0;
@@ -634,10 +636,16 @@ char			*buf;
 	width = fb_getwidth(fbp);
 	height = fb_getheight(fbp);
 
-	VSET( viewcenter_model, atof(argv[3]), atof(argv[4]), atof(argv[5]) );
-	VSET( orient, atof(argv[6]), atof(argv[7]), atof(argv[8]) );
-	orient[3] = atof(argv[9]);
-	viewscale = atof(argv[10]);
+	argc -= 2;
+	argv += 2;
+
+	VSET( viewcenter_model, atof(argv[1]), atof(argv[2]), atof(argv[3]) );
+	VSET( orient, atof(argv[4]), atof(argv[5]), atof(argv[6]) );
+	orient[3] = atof(argv[7]);
+	viewscale = atof(argv[8]);
+	/* 9...11 for eye_pos_screen[] */
+	rt_perspective = atof(argv[12]);
+	if( rt_perspective < 0 || rt_perspective > 179 )  rt_perspective = 0;
 
 	viewsize = 2 * viewscale;
 	mat_idn( Viewrotscale );
