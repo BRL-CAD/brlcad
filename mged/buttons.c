@@ -674,7 +674,6 @@ static void
 be_accept()  {
 	register struct solid *sp;
 
-	mmenu_set( MENU_L2, MENU_NULL );
 	if( state == ST_S_EDIT )  {
 		/* Accept a solid edit */
 #if 0
@@ -686,8 +685,8 @@ be_accept()  {
 
 		sedit_accept();		/* zeros "edsol" var */
 
-		mmenu_set( MENU_L1, MENU_NULL );
-		mmenu_set( MENU_L2, MENU_NULL );
+		mmenu_set_all( MENU_L1, MENU_NULL );
+		mmenu_set_all( MENU_L2, MENU_NULL );
 #if 0
 		dmp->dm_light( dmp, LIGHT_OFF, BE_S_EDIT );
 #endif
@@ -712,6 +711,8 @@ be_accept()  {
 		movedir = 0;	/* No edit modes set */
 
 		oedit_accept();
+
+		mmenu_set_all( MENU_L2, MENU_NULL );
 
 		illump = SOLID_NULL;
 		color_soltab();
@@ -749,8 +750,8 @@ be_reject()  {
 			dmp->dm_light( dmp, LIGHT_OFF, edsol );
 #endif
 
-		mmenu_set( MENU_L1, MENU_NULL );
-		mmenu_set( MENU_L2, MENU_NULL );
+		mmenu_set_all( MENU_L1, MENU_NULL );
+		mmenu_set_all( MENU_L2, MENU_NULL );
 
 		sedit_reject();
 		break;
@@ -760,9 +761,10 @@ be_reject()  {
 		if( edobj )
 			dmp->dm_light( dmp, LIGHT_OFF, edobj );
 #endif
-
+#if 0
 		mmenu_set( MENU_L1, MENU_NULL );
-		mmenu_set( MENU_L2, MENU_NULL );
+#endif
+		mmenu_set_all( MENU_L2, MENU_NULL );
 
 		oedit_reject();
 		break;
@@ -1022,10 +1024,10 @@ void
 chg_l2menu(i)  {
 	switch( i )  {
 	case ST_S_EDIT:
-		mmenu_set( MENU_L2, sed_menu );
+		mmenu_set_all( MENU_L2, sed_menu );
 		break;
 	case ST_O_EDIT:
-		mmenu_set( MENU_L2, oed_menu );
+		mmenu_set_all( MENU_L2, oed_menu );
 		break;
 	default:
 	  {
