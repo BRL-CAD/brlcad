@@ -173,7 +173,7 @@ genptr_t	*dpp;
 	{
 		register matp_t	matp;
 		if( (matp = stp->st_matp) == (matp_t)0 )
-			matp = rt_identity;
+			matp = (matp_t)rt_identity;
 		VSET( work, 0, 0, -1 );
 		MAT4X3VEC( lp->lt_aim, matp, work );
 		VUNITIZE( lp->lt_aim );
