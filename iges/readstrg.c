@@ -52,7 +52,7 @@ char *id;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		printf( "%s" , id );
+		rt_log( "%s" , id );
 
 	while( !done )
 	{
@@ -70,11 +70,11 @@ char *id;
 		if( counter > lencard )
 			Readrec( ++currec );
 		if( *id != '\0' )
-			putchar( card[counter] );
+			rt_log( "%c", card[counter] );
 		counter++;
 	}
 	if( *id != '\0' )
-		putchar( '\n' );
+		rt_log( "%c", '\n' );
 
 	while( card[counter] != eof && card[counter] != eor )
 	{

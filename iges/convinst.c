@@ -41,7 +41,7 @@ Convinst()
 		/* read parameters */
 		if( dir[i]->param <= pstart )
 		{
-			printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+			rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -53,7 +53,7 @@ Convinst()
 		pointer = (pointer - 1)/2;
 		if( pointer < 0 || pointer >= totentities )
 		{
-			printf( "Solid instance D%07d (%s) does not point to a legal solid\n",
+			rt_log( "Solid instance D%07d (%s) does not point to a legal solid\n",
 				dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -144,5 +144,5 @@ Convinst()
 		conv++;
 	}
 
-	printf( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
+	rt_log( "\nConverted %d solid instances out of %d total instances\n" , conv , totinst );
 }

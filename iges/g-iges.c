@@ -162,8 +162,8 @@ char	*argv[];
 
 	port_setlinebuf( stderr );
 
-	printf( "%s", version+5);
-	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );
+	rt_log( "%s", version+5);
+	rt_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
 
 	mat_idn( identity_mat );
 
@@ -229,14 +229,14 @@ char	*argv[];
 			NMG_debug = rt_g.NMG_debug;
 			break;
 		default:
-			fprintf(stderr, usage, argv[0]);
+			rt_log( usage, argv[0]);
 			exit(1);
 			break;
 		}
 	}
 
 	if (optind+1 >= argc) {
-		fprintf(stderr, usage, argv[0]);
+		rt_log( usage, argv[0]);
 		exit(1);
 	}
 
@@ -253,7 +253,7 @@ char	*argv[];
 		fp_dir = stdout;
 	else {
 		if( (fp_dir=fopen( output_file , "w" )) == NULL ) {
-			fprintf( stderr , "Cannot open output file: %s\n" , output_file );
+			rt_log( "Cannot open output file: %s\n" , output_file );
 			perror( "g-iges" );
 			exit( 1 );
 		}
@@ -261,7 +261,7 @@ char	*argv[];
 
 	/* Open the temporary file for the parameter section */
 	if( (fp_param=tmpfile()) == NULL ) {
-		fprintf( stderr , "Cannot open temporary file\n" );
+		rt_log( "Cannot open temporary file\n" );
 		perror( "g-iges" );
 		exit( 1 );
 	}
@@ -339,14 +339,14 @@ char	*argv[];
 
 	/* Copy the parameter section from the temporary file to the output file */
 	if( (fseek( fp_param , (long) 0 , 0 )) ) {
-		fprintf( stderr , "Cannot seek to start of temporary file\n" );
+		rt_log( "Cannot seek to start of temporary file\n" );
 		perror( "g-iges" );
 		exit( 1 );
 	}
 
 	while( (i=fread( copy_buffer , 1 , CP_BUF_SIZE , fp_param )) )
 		if( fwrite( copy_buffer , 1 , i , fp_dir ) != i ) {
-			fprintf( stderr , "Error in copying parameter data to %s\n" , output_file );
+			rt_log( "Error in copying parameter data to %s\n" , output_file );
 			perror( "g-iges" );
 			exit( 1 );
 		}
@@ -362,19 +362,19 @@ char	*argv[];
 	{
 		percent = 0;
 		if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
-		printf("Tried %d regions, %d converted to nmg's successfully.  %g%%\n",
+		rt_log("Tried %d regions, %d converted to nmg's successfully.  %g%%\n",
 			regions_tried, regions_done, percent);
 	}
 
 	/* re-iterate warnings */
 	if( scale_error || solid_error || comb_error )
-		fprintf( stderr , "WARNING: the IGES file produced has errors:\n" );
+		rt_log( "WARNING: the IGES file produced has errors:\n" );
 	if( scale_error )
-		fprintf( stderr , "\t%d scaled objects found, written to IGES file without being scaled\n" , scale_error );
+		rt_log( "\t%d scaled objects found, written to IGES file without being scaled\n" , scale_error );
 	if( solid_error )
-		fprintf( stderr , "\t%d solids were not converted to IGES format\n" , solid_error );
+		rt_log( "\t%d solids were not converted to IGES format\n" , solid_error );
 	if( comb_error )
-		fprintf( stderr , "\t%d combinations were not converted to IGES format\n" , comb_error );
+		rt_log( "\t%d combinations were not converted to IGES format\n" , comb_error );
 }
 
 /*
@@ -579,7 +579,7 @@ struct directory *dp;
 	if( !dp->d_uses )
 	{
 		comb_error++;
-		fprintf( stderr , "g-iges: combination (%s) not written to iges file\n" , dp->d_namep );
+		rt_log( "g-iges: combination (%s) not written to iges file\n" , dp->d_namep );
 	}
 
         rt_free( (char *)rp , "csg_comb_func record[]" );

@@ -41,16 +41,16 @@ vect_t evect;	/* extrusion vector */
 
 	if( dir[curve]->form > 1 )
 	{
-		printf( "Conic arc for extrusion is not closed:\n" );
-		printf( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		rt_log( "Conic arc for extrusion is not closed:\n" );
+		rt_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
 			dir[entityno]->name );
-		printf( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		rt_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
 		return( 0 );
 	}
 
 	if( dir[curve]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[curve]->direct , dir[curve]->name );
 		return(0);
 	}
@@ -96,10 +96,10 @@ vect_t evect;	/* extrusion vector */
 
 	if( start[X] != stop[X] || start[Y] != stop[Y] )
 	{
-		printf( "Conic arc for extrusion is not closed:\n" );
-		printf( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		rt_log( "Conic arc for extrusion is not closed:\n" );
+		rt_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
 			dir[entityno]->name );
-		printf( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		rt_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
 		return( 0 );
 	}
 
@@ -119,10 +119,10 @@ vect_t evect;	/* extrusion vector */
 
 	if( !ellipse )
 	{
-		printf( "Conic arc for extrusion is not an elipse:\n" );
-		printf( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		rt_log( "Conic arc for extrusion is not an elipse:\n" );
+		rt_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
 			dir[entityno]->name );
-		printf( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		rt_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
 		return( 0 );
 	}
 

@@ -56,7 +56,7 @@ char *id,**ptr;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		printf( "%s" , id );
+		rt_log( "%s" , id );
 
 	while( !done )
 	{
@@ -77,11 +77,11 @@ char *id,**ptr;
 			Readrec( ++currec );
 		ch[i] = card[counter++];
 		if( *id != '\0' )
-			putchar( ch[i] );
+			rt_log( "%c", ch[i] );
 	}
 	ch[length] = '\0';
 	if( *id != '\0' )
-		putchar( '\n' );
+		rt_log( "%c", '\n' );
 
 	done = 0;
 	while( !done )

@@ -35,6 +35,6 @@ options, it is ignored for all other options\n";
 
 usage()
 {
-	fprintf( stderr , message );
+	rt_log( message );
 	exit( 1 );
 }

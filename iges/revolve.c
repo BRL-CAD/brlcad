@@ -78,7 +78,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -106,7 +106,7 @@ int entityno;
 
 	if( fract <= 0.0 || fract > 1.0 )
 	{
-		printf( "Illegal parameters for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}
@@ -118,8 +118,8 @@ int entityno;
 	npts = Getcurve( curve , &curv_pts );
 	if( npts == 0 )
 	{
-		printf( "Could not get points along curve for revovling\n" );
-		printf( "Illegal parameters for entity D%07d (%s)\n" ,
+		rt_log( "Could not get points along curve for revovling\n" );
+		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}
@@ -207,7 +207,7 @@ int entityno;
 		/* Make the TRC */
 		if( mk_trc_top( fdout, trcptr->name, trcptr->base,
 		    trcptr->top, trcptr->r1, trcptr->r2 ) < 0 )  {
-			printf( "Unable to write TRC for entity D%07d (%s)\n" ,
+			rt_log( "Unable to write TRC for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );
 		}
@@ -389,7 +389,7 @@ int entityno;
 
 		/* Make the BRLCAD solid */
 		if( mk_arb8( fdout , cutname , &pts[0][X] ) < 0 )  {
-			printf( "Unable to write ARB8 for entity D%07d (%s)\n" ,
+			rt_log( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );
 		}
@@ -424,7 +424,7 @@ int entityno;
 	/* Make the object */
 	if( mk_lcomb( fdout , dir[entityno]->name , &head , 0 ,
 	    (char *)0 , (char *)0 , (unsigned char *)0 , 0 ) < 0 )  {
-		printf( "Unable to make combination for entity D%07d (%s)\n" ,
+		rt_log( "Unable to make combination for entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}

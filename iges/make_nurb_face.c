@@ -47,7 +47,7 @@ int face_orient;
 
 	if( dir[loop_entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s), loop ignored\n" ,
 				dir[loop_entityno]->direct , dir[loop_entityno]->name );
 		return( 0 );
 	}

@@ -73,8 +73,8 @@ int k;		/* degree of basis function */
 
 	if( (i+1) > (numknots-1) )
 	{
-		fprintf( stderr , "Error in evaluation of a B-spline Curve\n" );
-		fprintf( stderr, "attempt to access knots out of range: numknots=%d i=%d, k=%d\n" , numknots , i , k );
+		rt_log( "Error in evaluation of a B-spline Curve\n" );
+		rt_log( "attempt to access knots out of range: numknots=%d i=%d, k=%d\n" , numknots , i , k );
 		return( 0.0 );
 	}
 

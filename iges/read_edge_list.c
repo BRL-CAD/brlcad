@@ -30,7 +30,7 @@ struct iges_edge_use *edge;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return( (struct iges_edge_list *)NULL );
 	}

@@ -55,7 +55,7 @@ char *id;
 		Readrec( ++currec );
 
 	if( *id != '\0' )
-		printf( "%s" , id );
+		rt_log( "%s" , id );
 
 	while( !done )
 	{
@@ -79,12 +79,12 @@ char *id;
 			Readrec( ++currec );
 		(*str)[i] = card[counter];
 		if( *id != '\0' )
-			putchar( card[counter] );
+			rt_log( "%c", card[counter] );
 		counter++;
 	}
 	(*str)[length] = '\0';
 	if( *id != '\0' )
-		putchar( '\n' );
+		rt_log( "%c", '\n' );
 
 	while( card[counter] != eof && card[counter] != eor )
 	{
@@ -773,7 +773,7 @@ Conv_drawings()
 	struct shell *s;
 	struct nmg_ptbl view_vis_list;
 
-	printf( "\n\nConverting drawing entities:\n" );
+	rt_log( "\n\nConverting drawing entities:\n" );
 
 	nmg_tbl( &view_vis_list , TBL_INIT , NULL );
 
@@ -816,7 +816,7 @@ Conv_drawings()
 		nmg_tbl( &view_vis_list , TBL_FREE , NULL );
 		return;
 	}
-	printf( "\nNo drawings entities\n" );
+	rt_log( "\nNo drawings entities\n" );
 
 	/* no drawing entities, so look for view entities */
 	for( i=0 ; i<totentities ; i++ )
@@ -873,7 +873,7 @@ Conv_drawings()
 
 		return;
 	}
-	printf( "No view entities\n" );
+	rt_log( "No view entities\n" );
 
 	/* no drawings or views, just convert all independent lines, arcs, etc */
 	m = nmg_mm();

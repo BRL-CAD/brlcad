@@ -49,7 +49,7 @@ char *id;
 		return;
 
 	if( *id != '\0' )
-		printf( "%s" , id );
+		rt_log( "%s" , id );
 
 	if( card[72] == 'P' )
 		lencard = PARAMLEN;
@@ -73,8 +73,8 @@ char *id;
 	length = atoi( num );
 	if( length != 13 )
 	{
-		fprintf( stderr , "\tError in time stamp\n" );
-		fprintf( stderr , "\tlength of string=%s (should be 13)\n" , num );
+		rt_log( "\tError in time stamp\n" );
+		rt_log( "\tlength of string=%s (should be 13)\n" , num );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -85,15 +85,15 @@ char *id;
 	}
 
 	if( length > 5 && length < 16 )
-		printf( "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
+		rt_log( "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
 			num[0],num[1] );
 
 	if( length > 12 && length < 16 )
-		printf( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
+		rt_log( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
 			num[10],num[11],num[12] );
 
 	if( length > 15 )
-		printf( "%s\n" , num );
+		rt_log( "%s\n" , num );
 
 	while( card[counter] != eof && card[counter] != eor )
 	{

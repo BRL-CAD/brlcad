@@ -37,7 +37,7 @@ Findp()
 
 	if( fseek( fd , 0L , 2 ) )	/* go to end of file */
 	{
-		fprintf( stderr , "Cannot seek to end of file\n" );
+		rt_log( "Cannot seek to end of file\n" );
 		perror( "Findp" );
 		exit( 1 );
 	}

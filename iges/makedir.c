@@ -32,8 +32,8 @@ Makedir()
 	char str[9];
 	
 	str[8] = '\0';
-	printf( "Reading Directory Section...\n" );
-	printf( "Number of entities checked:\n" );
+	rt_log( "Reading Directory Section...\n" );
+	rt_log( "Number of entities checked:\n" );
 	Readrec( dstart+1 );	/* read first record in directory section */
 	
 	while( 1 )
@@ -73,7 +73,7 @@ Makedir()
 		else if( paramptr > 0 )
 			dir[entcount]->param = paramptr + pstart;
 		else
-			fprintf( stderr , "Entity number %d does not have a correct parameter pointer\n",
+			rt_log( "Entity number %d does not have a correct parameter pointer\n",
 				entcount );
 
 		if( dir[entcount]->type == 422 )
@@ -138,7 +138,7 @@ Makedir()
 			/* Read and store the matrix */
 			if( dir[entcount]->param <= pstart )
 			{
-				printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 						dir[entcount]->direct , dir[entcount]->name );
 				dir[entcount]->rot = NULL;
 			}
@@ -154,8 +154,8 @@ Makedir()
 	Readrec( saverec ); /* restore previous record */
 	}
 
-	printf( "\t%d\n\n" ,entcount+1 );
+	rt_log( "\t%d\n\n" ,entcount+1 );
 	if( paramguess )
-		printf( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
+		rt_log( "Some entities did not have proper parameter pointers, so a resonable guess was made\n" );
 }
 

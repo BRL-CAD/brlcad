@@ -31,7 +31,7 @@ vect_t evect;	/* extrusion vector */
 
 	if( dir[curve]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[curve]->direct , dir[curve]->name );
 		return(0);
 	}
@@ -49,10 +49,10 @@ vect_t evect;	/* extrusion vector */
 
 	if( x1 != x2 || y1 != y2 )
 	{
-		printf( "Circular arc for extrusion is not closed:\n" );
-		printf( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
+		rt_log( "Circular arc for extrusion is not closed:\n" );
+		rt_log( "\textrusion entity D%07d (%s)\n" , dir[entityno]->direct ,
 			dir[entityno]->name );
-		printf( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
+		rt_log( "\tarc entity D%07d (%s)\n" , dir[curve]->direct , dir[curve]->name );
 		return( 0 );
 	}
 

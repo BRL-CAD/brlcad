@@ -60,7 +60,7 @@ struct node *root;
 
 		if( ptr == NULL )
 		{
-			printf( "Error in Showtree: Popped a null pointer\n" );
+			rt_log( "Error in Showtree: Popped a null pointer\n" );
 			Afreestack();
 			Sfreestack();
 			return;
@@ -93,7 +93,7 @@ struct node *root;
 
 		if( ptr == root )	/* done! */
 		{
-			printf( "%s\n" , Apop() ); /* print the result */
+			rt_log( "%s\n" , Apop() ); /* print the result */
 
 			/* free some memory */
 			Afreestack();
@@ -120,7 +120,7 @@ Initastack()
 	stk = (char **)rt_malloc( stklen*sizeof( char * ), "Initastack: stk" );
 	if( stk == NULL )
 	{
-		fprintf( stderr , "Cannot allocate stack space\n" );
+		rt_log( "Cannot allocate stack space\n" );
 		perror( "Initastack" );
 		exit( 1 );
 	}
@@ -143,7 +143,7 @@ char *ptr;
 		stk = (char **)rt_realloc( (char *)stk , stklen*sizeof( char *), "Apush: stk" );
 		if( stk == NULL )
 		{
-			fprintf( stderr , "Cannot reallocate stack space\n" );
+			rt_log( "Cannot reallocate stack space\n" );
 			perror( "Apush" );
 			exit( 1 );
 		}
@@ -195,7 +195,7 @@ Initsstack() /* initialize the stack */
 	sstk = (struct node **)rt_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk" );
 	if( sstk == NULL )
 	{
-		fprintf( stderr , "Cannot allocate stack space\n" );
+		rt_log( "Cannot allocate stack space\n" );
 		perror( "Initsstack" );
 		exit( 1 );
 	}
@@ -215,7 +215,7 @@ struct node *ptr;
 		sstk = (struct node **)rt_realloc( (char *)sstk , sstklen*sizeof( struct node *), "Spush: sstk" );
 		if( sstk == NULL )
 		{
-			fprintf( stderr , "Cannot reallocate stack space\n" );
+			rt_log( "Cannot reallocate stack space\n" );
 			perror( "Spush" );
 			exit( 1 );
 		}

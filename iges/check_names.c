@@ -194,7 +194,7 @@ int skip;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -264,7 +264,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -346,7 +346,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -427,7 +427,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return;
 	}
@@ -497,7 +497,7 @@ Check_names()
 
 	int i;
 
-	printf( "Looking for Name Entities...\n" );
+	rt_log( "Looking for Name Entities...\n" );
 	for( i=0 ; i < totentities ; i++ )
 	{
 		switch( dir[i]->type )
@@ -547,7 +547,7 @@ Check_names()
 		}
 	}
 
-	printf( "Assigning names to entities without names...\n" );
+	rt_log( "Assigning names to entities without names...\n" );
 	for( i=0 ; i < totentities ; i++ )
 	{
 		char tmp_name[NAMESIZE + 1];

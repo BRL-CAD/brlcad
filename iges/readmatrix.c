@@ -36,7 +36,7 @@ mat_t rot;
 	Readint( &i , "" );
 	if( i != 124 && i != 700  )
 	{
-		printf( "Error in transformation parameter data at P%d\n" , xform );
+		rt_log( "Error in transformation parameter data at P%d\n" , xform );
 		for( j=0 ; j<16 ; j++ )
 			rot[j] = (*identity)[j];
 		return;

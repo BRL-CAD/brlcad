@@ -57,7 +57,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;
@@ -99,7 +99,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;
@@ -183,7 +183,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;
@@ -201,7 +201,7 @@ struct ptlist **curv_pts;
 				{
 					if( interpflag != 1 )
 					{
-						printf( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
+						rt_log( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
 							dir[curve]->direct , interpflag );
 						npts = 0;
 						break;
@@ -235,7 +235,7 @@ struct ptlist **curv_pts;
 				{
 					if( interpflag != 2 )
 					{
-						printf( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 2\n",
+						rt_log( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 2\n",
 							dir[curve]->direct , interpflag );
 						npts = 0;
 						break;
@@ -268,7 +268,7 @@ struct ptlist **curv_pts;
 				{
 					if( interpflag != 1 )
 					{
-						printf( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
+						rt_log( "Error in Getcurve for copius data entity D%07d, IP=%d, should be 1\n",
 							dir[curve]->direct , interpflag );
 						npts = 0;
 						break;
@@ -300,7 +300,7 @@ struct ptlist **curv_pts;
 #endif
 				default:
 				{
-					printf( "Error in Getcurve for copius data entity D%07d, form %d is not a legal choice\n",
+					rt_log( "Error in Getcurve for copius data entity D%07d, form %d is not a legal choice\n",
 						dir[curve]->direct , dir[curve]->form );
 					npts = 0;
 					break;
@@ -319,7 +319,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;
@@ -434,7 +434,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;
@@ -473,7 +473,7 @@ struct ptlist **curv_pts;
 	   			if( B == 0.0 && D == 0.0 && E == 0.0 )
 	   				type = 1;
 	   			else
-	   				printf( "Entity #%d is an incorrectly formatted ellipse\n" , curve );
+	   				rt_log( "Entity #%d is an incorrectly formatted ellipse\n" , curve );
 	   		}
 
 	   		/* make coeff of X**2 equal to 1.0 */
@@ -501,7 +501,7 @@ struct ptlist **curv_pts;
 		   		I = A+C;
 		   		if( del == 0.0 ) /* not a conic */
 		   		{
-		   			printf( "Entity #%d, claims to be conic arc, but isn't\n" , curve );
+		   			rt_log( "Entity #%d, claims to be conic arc, but isn't\n" , curve );
 		   			break;
 		   		}
 		   		else if( a > 0.0 && del*I < 0.0)
@@ -512,7 +512,7 @@ struct ptlist **curv_pts;
 		   			type = 3; /* parabola */
 		   		else	/* imaginary ellipse */
 		   		{
-		   			printf( "Entity #%d is an imaginary ellipse!!\n", curve );
+		   			rt_log( "Entity #%d is an imaginary ellipse!!\n", curve );
 		   			break;
 		   		}
 	   		}
@@ -544,7 +544,7 @@ struct ptlist **curv_pts;
 	   			p = (-E*sin(theta) - D*cos(theta))/4.0;
 	   			if( fabs( p ) < TOL )
 	   			{
-	   				printf( "Cannot plot entity %d, p=%g\n" , curve , p );
+	   				rt_log( "Cannot plot entity %d, p=%g\n" , curve , p );
 	   				break;
 	   			}
 
@@ -559,7 +559,7 @@ struct ptlist **curv_pts;
 				c = ((v1[1]-v2[1])*cos(theta) - (v1[0]-v2[0])*sin(theta));
 	   			if( fabs( c ) < TOL*TOL )
 	   			{
-	   				printf( "Cannot plot entity %d\n" , curve );
+	   				rt_log( "Cannot plot entity %d\n" , curve );
 	   				break;
 	   			}
 	   			b = b/c;
@@ -771,7 +771,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;
@@ -827,7 +827,7 @@ struct ptlist **curv_pts;
 			Readint( &type , "" );
 			if( type != dir[curve]->type )
 			{
-				printf( "Error in Getcurve, looking for curve type %d, found %d\n" ,
+				rt_log( "Error in Getcurve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
 				npts = 0;
 				break;

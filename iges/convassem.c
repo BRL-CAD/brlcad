@@ -44,7 +44,7 @@ Convassem()
 	struct brlcad_att	brl_att;
 	fastf_t			*flt;
 
-	printf( "\nConverting solid assembly entities:\n" );
+	rt_log( "\nConverting solid assembly entities:\n" );
 
 	ptr = NULL;
 	root = NULL;
@@ -60,7 +60,7 @@ Convassem()
 
 		if( dir[i]->param <= pstart )
 		{
-			printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+			rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 					dir[i]->direct , dir[i]->name );
 			continue;
 		}
@@ -69,7 +69,7 @@ Convassem()
 		Readint( &j , "" );	/* read entity type */
 		if( j != 184 )
 		{
-			fprintf( stderr , "Incorrect entity type in Parameter section for entity %d\n" , i );
+			rt_log( "Incorrect entity type in Parameter section for entity %d\n" , i );
 			return;
 		}
 
@@ -201,5 +201,5 @@ Convassem()
 			ptr = ptr->next;
 		}
 	}
-	printf( "Converted %d solid assemblies successfully out of %d total assemblies\n" , conv , totass );
+	rt_log( "Converted %d solid assemblies successfully out of %d total assemblies\n" , conv , totass );
 }

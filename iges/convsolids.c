@@ -26,7 +26,7 @@ Convsolids()
 
 	int i,totsolids=0,conv=0;
 
-	printf( "\n\nConverting solid entities:\n" );
+	rt_log( "\n\nConverting solid entities:\n" );
 
 	for( i=0 ; i<totentities ; i++ )
 	{
@@ -74,5 +74,5 @@ Convsolids()
 				break;
 		}
 	}
-	printf( "Converted %d solids successfully out of %d total solids\n" , conv , totsolids );
+	rt_log( "Converted %d solids successfully out of %d total solids\n" , conv , totsolids );
 }

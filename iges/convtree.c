@@ -35,7 +35,7 @@ Convtree()
 	struct brlcad_att	brl_att;
 	int			i,j,k;
 
-	printf( "\nConverting boolean tree entities:\n" );
+	rt_log( "\nConverting boolean tree entities:\n" );
 
 	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
 	{
@@ -48,7 +48,7 @@ Convtree()
 
 		if( dir[i]->param <= pstart )	/* Illegal parameter address */
 		{
-			printf( "Entity number %d (Boolean Tree) does not have a legal parameter pointer\n" , i );
+			rt_log( "Entity number %d (Boolean Tree) does not have a legal parameter pointer\n" , i );
 			continue;
 		}
 
@@ -123,15 +123,15 @@ Convtree()
 		}
 		else
 		{
-			printf( "'%s'Tree cannot be converted to BRLCAD format\n",dir[i]->name );
-			printf( "\tOriginal tree from IGES file:\n\t" );
+			rt_log( "'%s'Tree cannot be converted to BRLCAD format\n",dir[i]->name );
+			rt_log( "\tOriginal tree from IGES file:\n\t" );
 			Showtree( oldptr );
-			printf( "\tAfter attempted conversion to BRLCAD format:\n\t" );
+			rt_log( "\tAfter attempted conversion to BRLCAD format:\n\t" );
 			Showtree( ptr );
 		}
 
 		Freetree( ptr );
 		Freetree( oldptr );
 	}
-	printf( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
+	rt_log( "Converted %d trees successfully out of %d total trees\n", conv , tottrees );
 }

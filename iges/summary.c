@@ -22,11 +22,11 @@ Summary()
 	int i;
 	int indep_entities=0;
 
-	printf( "Summary of entity types found:\n" );
+	rt_log( "Summary of entity types found:\n" );
 	for( i=0 ; i<=ntypes ; i++ )
 	{
 		if( typecount[i].count != 0 )
-			printf( "%10d %s (type %d)\n",typecount[i].count , typecount[i].name , typecount[i].type );
+			rt_log( "%10d %s (type %d)\n",typecount[i].count , typecount[i].name , typecount[i].type );
 	}
 
 	for( i=0 ; i<totentities ; i++ )
@@ -37,5 +37,5 @@ Summary()
 		if( !subord )
 			indep_entities++;
 	}
-	printf( "%d Independent entities\n" , indep_entities );
+	rt_log( "%d Independent entities\n" , indep_entities );
 }

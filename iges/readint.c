@@ -67,6 +67,6 @@ int *inum;
 	num[++i] = '\0';
 	*inum = atoi( num );
 	if( *id != '\0' )
-		printf( "%s%d\n" , id , *inum );
+		rt_log( "%s%d\n" , id , *inum );
 }
 

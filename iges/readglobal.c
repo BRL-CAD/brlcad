@@ -56,12 +56,11 @@ int file_count;
 		while( card[++counter] == ' ' );
 		if( card[counter] != '1' || card[counter+1] != 'H' )
 		{
-			fprintf( stderr , "Error in new delimiter\n" );
-			fprintf( stderr , "%s\n" , card );
+			rt_log( "Error in new delimiter\n" );
+			rt_log( "%s\n" , card );
 			for( i=0 ; i<counter-1 ; i++ )
-				putc( ' ' , stderr );
-			putc( '^' , stderr );
-			fprintf( stderr , "\n" );
+				rt_log( "%c", ' ' );
+			rt_log( "^\n" );
 			exit( 1 );
 		}
 		counter++;
@@ -79,7 +78,7 @@ int file_count;
 		while( card[++counter] == ' ' );
 		if( card[counter] != '1' || card[counter+1] != 'H' )
 		{
-			fprintf( stderr , "Error in new record delimiter\n" );
+			rt_log( "Error in new record delimiter\n" );
 			exit( 1 );
 		}
 		counter++;
@@ -140,7 +139,7 @@ int file_count;
 		case 14:	Readint( &units , "Units: " );
 				if( units == 0 || units == 3 || units > 11 )
 				{
-					printf( "Unrecognized units, assuming 'mm'\n" );
+					rt_log( "Unrecognized units, assuming 'mm'\n" );
 					conv_factor = 1.0;
 				}
 				else
@@ -167,9 +166,9 @@ int file_count;
 				break;
 		case 23:	Readint( &i , "" );
 				if( i<1 || i>=NO_OF_VERSIONS )
-					printf( "Unrecognized IGES version\n" );
+					rt_log( "Unrecognized IGES version\n" );
 				else
-					printf( "IGES version: %s\n" , iges_version[i] );
+					rt_log( "IGES version: %s\n" , iges_version[i] );
 				break;
 		case 24:	Readint( &i , "" );
 				break;

@@ -26,7 +26,7 @@ Convsurfs()
 
 	int i,totsurfs=0,convsurf=0;
 
-	printf( "\n\nConverting NURB entities:\n" );
+	rt_log( "\n\nConverting NURB entities:\n" );
 
 	/* First count the number of surfaces */
 	for( i=0 ; i<totentities ; i++ )
@@ -49,7 +49,7 @@ Convsurfs()
 		if( dir[i]->type == 128 )
 			convsurf += spline( i );
 	}
-	printf( "Converted %d NURBS successfully out of %d total NURBS\n" , convsurf , totsurfs );
+	rt_log( "Converted %d NURBS successfully out of %d total NURBS\n" , convsurf , totsurfs );
 	if( convsurf )
-		printf( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
+		rt_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );
 }

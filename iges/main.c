@@ -113,16 +113,16 @@ Suggestions()
 	}
 
 	if( (csg || brep) && (do_splines || do_drawings || trimmed_surf ) )
-		printf( msg1 , iges_file );
+		rt_log( msg1 , iges_file );
 
 	if( drawing && csg == 0 && brep == 0 && !do_drawings )
-		printf( msg2 , iges_file );
+		rt_log( msg2 , iges_file );
 
 	if( splines && csg == 0 && brep == 0 && !do_splines )
-		printf( msg3 , iges_file );
+		rt_log( msg3 , iges_file );
 
 	if( tsurfs && csg == 0 && brep == 0 && !trimmed_surf )
-		printf( msg4 , iges_file );
+		rt_log( msg4 , iges_file );
 }
 
 main( argc , argv )
@@ -174,8 +174,8 @@ char *argv[];
 		exit(1);
 	}
 
-	printf( "%s", version+5);
-	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );
+	rt_log( "%s", version+5);
+	rt_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
 
 	/* Initialize some variables */
 	ntypes = NTYPES;
@@ -202,7 +202,7 @@ char *argv[];
 
 	if( (fdout = fopen( output_file , "w" )) == NULL )
 	{
-		fprintf( stderr , "Cannot open %s\n" , output_file );
+		rt_log( "Cannot open %s\n" , output_file );
 		perror( "iges-g" );
 		usage();
 		exit( 1 );
@@ -231,7 +231,7 @@ char *argv[];
 		fd = fopen( iges_file , "r" );	/* open IGES file */
 		if( fd == NULL )
 		{
-			fprintf( stderr , "Cannot open %s\n" , iges_file );
+			rt_log( "Cannot open %s\n" , iges_file );
 			perror( "iges-g" );
 			usage();
 			exit( 1 );
@@ -240,7 +240,7 @@ char *argv[];
 		reclen = Recsize() * sizeof( char ); /* Check length of records */
 		if( reclen == 0 )
 		{
-			fprintf( stderr , "File (%s) not in IGES ASCII format\n", iges_file );
+			rt_log( "File (%s) not in IGES ASCII format\n", iges_file );
 			exit(1);
 		}
 

@@ -44,7 +44,7 @@ int entityno;
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -61,7 +61,7 @@ int entityno;
 
 	if( rad <= 0.0 || rad2 <= 0.0 )
 	{
-		printf( "Illegal parameters for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}

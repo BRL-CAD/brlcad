@@ -26,7 +26,7 @@ struct node *Readtree()
 	Readint( &i , "" );
 	if( i != 180 )
 	{
-		fprintf( stderr , "Expecting a Boolean Tree, found type %d\n" , i );
+		rt_log( "Expecting a Boolean Tree, found type %d\n" , i );
 		return( (struct node *)NULL );
 	}
 

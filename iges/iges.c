@@ -497,7 +497,7 @@ int entry[];
 			break;
 	if( type_index == NO_OF_TYPES )
 	{
-		fprintf( stderr , "Writing directory entry for an unknown entity type (%d)\n" , entry[1] );
+		rt_log( "Writing directory entry for an unknown entity type (%d)\n" , entry[1] );
 		label = unknown;
 		unknown_count++;
 		entry[19] = unknown_count;
@@ -568,7 +568,7 @@ char c;		/* 'G' for global section
 	}
 	else
 	{
-		fprintf( stderr , "Bad section character passed to 'write_freeform' (%c)\n" , c );
+		rt_log( "Bad section character passed to 'write_freeform' (%c)\n" , c );
 		exit( 1 );
 	}
 
@@ -776,7 +776,7 @@ char *version;
 
 	if( stat( db_name , &db_stat ) )
 	{
-		fprintf( stderr , "Cannot stat %s\n" , db_name );
+		rt_log( "Cannot stat %s\n" , db_name );
 		perror( prog_name );
 		rt_vls_strcat( &str , ",13H000101.000000;" );
 	}
@@ -1816,7 +1816,7 @@ FILE *fp_dir,*fp_param;
 
 			if( exterior_loop < 0 )
 			{
-				fprintf( stderr , "No outside loop found for face\n" );
+				rt_log( "No outside loop found for face\n" );
 				outer_loop_flag = 0;
 			}
 			else if( exterior_loop != 0 ) /* move outside loop to start of list */

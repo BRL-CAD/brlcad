@@ -73,6 +73,6 @@ fastf_t *inum;
 	num[++i] = '\0';
 	*inum = atof( num ) * conv_factor;
 	if( *id != '\0' )
-		printf( "%s%g\n" , id , *inum );
+		rt_log( "%s%g\n" , id , *inum );
 }
 

@@ -28,7 +28,7 @@ Readstart()
 	{
 		if( Readrec( ++i ) )
 		{
-			fprintf( stderr , "End of file encountered\n" );
+			rt_log( "End of file encountered\n" );
 			exit( 1 );
 		}
 
@@ -38,8 +38,8 @@ Readstart()
 			break;
 		}
 		card[72] = '\0';
-		printf( "%s\n" , card );
+		rt_log( "%s\n" , card );
 	}
-	putchar( '\n' );
+	rt_log( "%c", '\n' );
 }
 

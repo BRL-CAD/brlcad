@@ -30,7 +30,7 @@ Initstack()
 	stk = (struct node **)rt_malloc( stklen*sizeof( struct node * ), "Initstack: stk" );
 	if( stk == NULL )
 	{
-		fprintf( stderr , "Cannot allocate stack space\n" );
+		rt_log( "Cannot allocate stack space\n" );
 		perror( "Initstack" );
 		exit( 1 );
 	}
@@ -51,7 +51,7 @@ struct node *ptr;
 			"Push: stk" );
 		if( stk == NULL )
 		{
-			fprintf( stderr , "Cannot reallocate stack space\n" );
+			rt_log( "Cannot reallocate stack space\n" );
 			perror( "Push" );
 			exit( 1 );
 		}

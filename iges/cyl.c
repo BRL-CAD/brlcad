@@ -44,7 +44,7 @@ int entityno;
 	/* Acquiring Data */
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
@@ -61,28 +61,28 @@ int entityno;
 
 	if( radius <= 0.0 || scale_height <= 0.0 )
 	{
-		printf( "Illegal parameters for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameters for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		if( radius == 0.0 )
 		{
-			printf( "\tradius of cylinder is zero!!!\n" );
+			rt_log( "\tradius of cylinder is zero!!!\n" );
 			return( 0 );
 		}
 		if( scale_height == 0.0 )
 		{
-			printf( "\theight of cylinder is zero!!!\n" );
+			rt_log( "\theight of cylinder is zero!!!\n" );
 			return( 0 );
 		}
 
 		if( radius < 0.0 )
 		{
-			printf( "\tUsing the absolute value of a negative radius\n" );
+			rt_log( "\tUsing the absolute value of a negative radius\n" );
 			radius = (-radius);
 		}
 
 		if( scale_height < 0.0 )
 		{
-			printf( "\tUsing absolute value of a negative height and reversing axis direction\n" );
+			rt_log( "\tUsing absolute value of a negative height and reversing axis direction\n" );
 			scale_height = (-scale_height);
 			x2 = (-x2);
 			y2 = (-y2);
@@ -108,7 +108,7 @@ int entityno;
 	VSCALE(height, hdir, scale_height);
 
 	if( mk_rcc(fdout, dir[entityno]->name, base, height, radius) < 0 )  {
-		printf("Unable to write entity D%07d (%s)\n" ,
+		rt_log("Unable to write entity D%07d (%s)\n" ,
 			dir[entityno]->direct , dir[entityno]->name );
 		return( 0 );
 	}
