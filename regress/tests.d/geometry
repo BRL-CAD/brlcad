@@ -14,10 +14,23 @@ for PRIM in $PRIMITIVES ; do
         warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
     else
 
-    mged -c <<EOF
+        unset IN_ARGS
+        unset DB_ARGS
+        initializeVariable IN_ARGS "${PRIM}_IN_ARGS"
+        initializeVariable DB_ARGS "${PRIM}_DB_ARGS"
 
-    set glob_compat_mode 0
-     
+        mged -c <<EOF
+
+set glob_compat_mode 0
+
+
+    #
+    # Start of Primitive Arguments
+    #
+    # Add 1) the full name of the primitive, 2) the 'in' command arg description,
+    #     3) 'in' command arguments, & 4) 'db put' command arguments.
+    ###
+
     #
     # (arb) Arguments
     # 
@@ -290,7 +303,7 @@ for PRIM in $PRIMITIVES ; do
             #
             # Edit 'in' args 
             #
-            set inval "in ${PRIM}.in.s $PRIM \$${PRIM}_IN_ARGS"
+            set inval "in ${PRIM}.in.s $PRIM $IN_ARGS"
             eval \$inval
             saveview ${PRIM}.\$version.in.rt
 
@@ -307,7 +320,7 @@ for PRIM in $PRIMITIVES ; do
             #
             # Edit 'db put' args 
             #
-            set dbput "db put ${PRIM}.dbput.s $PRIM \$${PRIM}_DB_ARGS"
+            set dbput "db put ${PRIM}.dbput.s $PRIM $DB_ARGS"
             eval \$dbput
             saveview ${PRIM}.\$version.dbput.rt
 
