@@ -54,7 +54,8 @@ struct shadework {
 	fastf_t		sw_transmit;	/* Moss "transparency" */
 	fastf_t		sw_reflect;	/* Moss "transmission" */
 	fastf_t		sw_refrac_index;
-	fastf_t		sw_color[9];	/* color */
+	fastf_t		sw_color[3];	/* shaded color */
+	fastf_t		sw_basecolor[3]; /* base color */
 	struct hit	sw_hit;		/* ray hit (dist,point,normal) */
 	struct uvcoord	sw_uv;
 };
