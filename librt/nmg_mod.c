@@ -27,6 +27,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(struct edgeuse	*nmg_find_e, (CONST struct vertex *v1,
+				CONST struct vertex *v2,
+				CONST struct shell *s,
+				CONST struct edge *ep));
+
+
 /************************************************************************
  *									*
  *				SHELL Routines				*
@@ -4033,11 +4040,16 @@ CONST struct rt_tol	*tol;
 
 	new_eu = nmg_ebreak(v, eu);
 	if( v )  {
-
-		/* This edge was broken on an existing vertex.  Search */
-		oeu = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p,
-			(struct shell *)NULL, eu, 0 );
-		if( oeu )  {
+		/*
+		 *  This edge was broken on an existing vertex.
+		 *  Search the whole model for other existing edges
+		 *  that match the newly created edge fragments.
+		 */
+		for(;;)  {
+			oeu = nmg_find_e( eu->vu_p->v_p,
+				eu->eumate_p->vu_p->v_p,
+				(struct shell *)NULL, eu->e_p );
+			if( !oeu ) break;
 			if (rt_g.NMG_debug & DEBUG_BASIC)  {
 				rt_log("nmg_ebreaker() joining eu=x%x to oeu=x%x\n",
 					eu, oeu );
@@ -4045,9 +4057,11 @@ CONST struct rt_tol	*tol;
 			nmg_radial_join_eu( eu, oeu, tol );
 		}
 
-		oeu = nmg_findeu( new_eu->vu_p->v_p, new_eu->eumate_p->vu_p->v_p,
-			(struct shell *)NULL, new_eu, 0 );
-		if( oeu )  {
+		for(;;)  {
+			oeu = nmg_find_e( new_eu->vu_p->v_p,
+				new_eu->eumate_p->vu_p->v_p,
+				(struct shell *)NULL, new_eu->e_p );
+			if( !oeu )  break;
 			if (rt_g.NMG_debug & DEBUG_BASIC)  {
 				rt_log("nmg_ebreaker() joining new_eu=x%x to oeu=x%x\n",
 					new_eu, oeu );
