@@ -222,7 +222,8 @@ struct faceuse *fu;
 	 */
 	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
 	edge_len = MAGNITUDE(edge_vect);
-#if 0
+#define USE_EDGE_GEOMETRY	0
+#if USE_EDGE_GEOMETRY
 	if( eu->e_p->eg_p )
 #else
 	if(0)
@@ -263,7 +264,9 @@ calc:
 		VMOVE( start_pt, v1->vg_p->coord );
 		dist1 = 0;
 		dist2 = edge_len;
+#if USE_EDGE_GEOMETRY
 rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
+#endif
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
