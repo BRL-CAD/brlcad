@@ -275,7 +275,6 @@ set -S2 "/bin/sh"
 
 #if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
 /*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
-/*	The network code is not tested yet */
 #	undef	stad
 #	define	MTYPE	stad
 #	define	LIBRT_TIMER	timerunix
@@ -284,9 +283,9 @@ set -S2 "/bin/sh"
 /*	-Xc for ANSI, otherwise non-ANSI */
 #	define	CC_OPTS	-D__stardent=1 -Xc
 #	define	LIBPKG_CONFIG	-DBSD=43
-#	define  LIBFB_OBJS      if_remote
-#	define  LIBFB_CONFIG    -DIF_REMOTE
-#	define	LIBFB_LIBES	LIBPKG -lresolv -lsocket -lnsl
+#	define  LIBFB_OBJS      if_remote if_X
+#	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #endif
 
 #ifdef gould
