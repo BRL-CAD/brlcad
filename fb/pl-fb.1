@@ -4,6 +4,7 @@ pl-fb \- display 3-D UNIX plot on a framebuffer
 .SH SYNOPSIS
 .B pl-fb
 .RB [ \-hoid ]
+.RB [ \-t\  line_thickness]
 [filename]
 .SH DESCRIPTION
 .I Pl-fb
@@ -36,6 +37,15 @@ The
 flag outputs a very verbose debugging stream to standard error
 listing every UNIX plot command
 and the corresponding framebuffer coordinates.
+The
+.B \-t
+flag causes all lines to be thickened perpendicular to their length,
+by the given number of pixels.
+This is especially useful when making images for recording on videotape,
+as single pixel lines are difficult to resolve.
+The thickening will be reduced so that a
+line will never be wider than it is long.
+.PP
 If
 .I filename
 is not specified,
