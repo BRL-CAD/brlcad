@@ -1058,3 +1058,163 @@ char *s;
 		}
 	}
 }
+
+/*
+ *			N M G _ C H E C K _ R A D I A L
+ *
+ *	check to see if all radial uses of an edge (within a shell) are
+ *	properly oriented with respect to each other.
+ *
+ *	Return
+ *	0	OK
+ *	1	bad edgeuse mate
+ *	2	unclosed space
+ */
+int
+nmg_check_radial(eu)
+struct edgeuse *eu;
+{
+	char curr_orient;
+	struct edgeuse *eur, *eu1, *eurstart;
+	struct shell *s;
+	pointp_t p, q;
+
+	NMG_CK_EDGEUSE(eu);
+	
+	s = eu->up.lu_p->up.fu_p->s_p;
+	NMG_CK_SHELL(s);
+
+	curr_orient = eu->up.lu_p->up.fu_p->orientation;
+	eur = eu->radial_p;
+
+	/* skip the wire edges */
+	while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
+		eur = eur->eumate_p->radial_p;
+	}
+
+	eurstart = eur;
+
+	eu1 = eu;
+	NMG_CK_EDGEUSE(eur);
+	do {
+
+		NMG_CK_LOOPUSE(eu1->up.lu_p);
+		NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
+
+		NMG_CK_LOOPUSE(eur->up.lu_p);
+		NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
+		/* go find a radial edgeuse of the same shell
+		 */
+		while (eur->up.lu_p->up.fu_p->s_p != s) {
+			NMG_CK_EDGEUSE(eur->eumate_p);
+			if (eur->eumate_p->eumate_p != eur) {
+				p = eur->vu_p->v_p->vg_p->coord;
+				q = eur->eumate_p->vu_p->v_p->vg_p->coord;
+				rt_log("edgeuse mate has different mate %g %g %g -> %g %g %g\n",
+					p[0], p[1], p[2], q[0], q[1], q[2]);
+				nmg_pr_lu(eu->up.lu_p, (char *)NULL);
+				nmg_pr_lu(eu->eumate_p->up.lu_p, (char *)NULL);
+				rt_log("nmg_check_radial: bad edgeuse mate\n");
+				return(1);
+			}
+			eur = eur->eumate_p->radial_p;
+			NMG_CK_EDGEUSE(eur);
+			NMG_CK_LOOPUSE(eur->up.lu_p);
+			NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
+		}
+
+		/* if that radial edgeuse doesn't have the
+		 * correct orientation, print & bomb
+		 */
+		if (eur->up.lu_p->up.fu_p->orientation != curr_orient) {
+			p = eu1->vu_p->v_p->vg_p->coord;
+			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
+			rt_log("Radial orientation problem at edge %g %g %g -> %g %g %g\n",
+				p[0], p[1], p[2], q[0], q[1], q[2]);
+			rt_log("Problem Edgeuses: %8x, %8x\n", eu1, eur);
+			if (rt_g.NMG_debug) {
+				nmg_pr_fu(eu1->up.lu_p->up.fu_p, 0);
+				rt_log("Radial loop:\n");
+				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
+			}
+			rt_log("nmg_check_radial: unclosed space\n");
+			return(2);
+		}
+
+		eu1 = eur->eumate_p;
+		curr_orient = eu1->up.lu_p->up.fu_p->orientation;
+		eur = eu1->radial_p;
+		while (*eur->up.magic_p == NMG_SHELL_MAGIC) {
+			eur = eur->eumate_p->radial_p;
+		}
+
+	} while (eur != eurstart);
+	return(0);
+}
+
+/*
+ *		 	N M G _ C K _ C L O S E D _ S U R F
+ *
+ *  Verify that shell is closed.
+ *  Do this by verifying that it is not possible to get from outside
+ *  to inside the solid by crossing any face edge.
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	status code from nmg_check_radial()
+ */
+int
+nmg_ck_closed_surf(s)
+struct shell *s;
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	int		status;
+	long		magic1;
+
+	NMG_CK_SHELL(s);
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			NMG_CK_LOOPUSE(lu);
+			magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
+			if (magic1 == NMG_EDGEUSE_MAGIC) {
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+					if (status=nmg_check_radial(eu))
+						return(status);
+				}
+			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
+				register struct vertexuse	*vu;
+				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
+				NMG_CK_VERTEXUSE(vu);
+				NMG_CK_VERTEX(vu->v_p);
+			}
+		}
+	}
+	return(0);
+}
+
+/*
+ *			N M G _ C K _ C L O S E D _ R E G I O N
+ *
+ *  Check all the shells in a region for being closed.
+ *
+ *  Returns -
+ *	 0	OK
+ *	!0	status code from nmg_check_radial()
+ */
+int
+nmg_ck_closed_region(r)
+struct nmgregion	*r;
+{
+	struct shell	*s;
+	int		ret;
+
+	NMG_CK_REGION(r);
+	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
+		ret = nmg_ck_closed_surf( s );
+		if( ret != 0 )  return(ret);
+	}
+	return(0);
+}
