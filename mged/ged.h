@@ -327,11 +327,12 @@ struct mged_hist {
   int status;
 };
 
-/* variables related to the command window(s) */
+/* internal variables related to the command window(s) */
 struct cmd_list {
   struct rt_list l;
   struct dm_list *aim;        /* the drawing window being aimed at */
   struct mged_hist *cur_hist;
+  struct rt_vls more_default;
   char name[32];
 };
 
