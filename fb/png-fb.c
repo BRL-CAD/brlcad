@@ -16,7 +16,7 @@
  *      The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1998 by the United States Army
+ *      This software is Copyright (C) 1998-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 
@@ -208,6 +208,10 @@ char **argv;
 	bit_depth = png_get_bit_depth( png_p, info_p );
 	if( bit_depth == 16 )
 		png_set_strip_16( png_p );
+
+	if (color_type == PNG_COLOR_TYPE_GRAY ||
+	    color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb(png_p);
 
 	file_width = png_get_image_width( png_p, info_p );
 	file_height = png_get_image_height( png_p, info_p );

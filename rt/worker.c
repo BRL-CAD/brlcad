@@ -13,7 +13,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -234,13 +234,15 @@ void do_run( int a, int b )
 	void *buffer;
 	struct resource *tmp_res;
 
-	buffer = calloc(npsw, sizeof(resource[0]));
-	if (buffer == NULL) {
-		perror("calloc failed");
-		bu_bomb("Unable to allocate memory");
-	}
-	if (pipe(p) == -1) {
-		perror("pipe failed");
+	if( rt_g.rtg_parallel ) {
+		buffer = calloc(npsw, sizeof(resource[0]));
+		if (buffer == NULL) {
+			perror("calloc failed");
+			bu_bomb("Unable to allocate memory");
+		}
+		if (pipe(p) == -1) {
+			perror("pipe failed");
+		}
 	}
 #  endif
 
@@ -308,7 +310,11 @@ void do_run( int a, int b )
 	} /* end parallel case */
 
 #  if defined(linux )
-	tmp_res = (struct resource *)buffer;
+	if( rt_g.rtg_parallel ) {
+		tmp_res = (struct resource *)buffer;
+	} else {
+		tmp_res = resource;
+	}
 	for( cpu=0; cpu < npsw; cpu++ ) {
 		if ( tmp_res[cpu].re_magic != RESOURCE_MAGIC )  {
 			bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
