@@ -13,6 +13,7 @@ static char RCSid[] = "@(#) $Header$";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
@@ -84,6 +85,7 @@ int	trav_type;
     rt_log("-------- Red-black tree <%x> contents --------\n", tree);
     rt_log("Description: '%s'\n", tree -> rbt_description);
     rt_log("Order:       %d of %d\n", order, tree -> rbt_nm_orders);
+    rt_log("Uniqueness:  %d\n", rb_get_uniqueness(tree, order));
     rt_log("Current:     <%x>\n", tree -> rbt_current);
     rt_log("Empty node:  <%x>\n", tree -> rbt_empty_node);
     d_order = order;
@@ -114,15 +116,16 @@ rb_tree	*tree;
     rt_log("Empty node:       <%x>\n", tree -> rbt_empty_node);
     rt_log("Size (in nodes):  <%x>\n", tree -> rbt_nm_nodes);
     if (tree -> rbt_nm_orders <= 0)
-	fputs("No orders\n", stderr);
+	rt_log("No orders\n");
     else
     {
-	rt_log("i    Order[i]     Root[i]       Package[i]    Data[i]\n");
+	rt_log("i    Order[i]   Uniq[i]  Root[i]       Package[i]    Data[i]\n");
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
 	{
-	    rt_log("%-3d  <%x>    <%x>    <%x>    <%x>\n",
+	    rt_log("%-3d  <%x>    %c    <%x>    <%x>    <%x>\n",
 		    i,
 		    rb_order_func(tree, i),
+		    rb_get_uniqueness(tree, i) ? 'Y' : 'N',
 		    rb_root(tree, i),
 		    (rb_root(tree, i) == RB_NODE_NULL) ? 0 :
 			(rb_root(tree, i) -> rbn_package)[i],
