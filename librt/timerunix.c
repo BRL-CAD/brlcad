@@ -70,7 +70,8 @@ char *str;
 	(void)time(&now);
 	realt = now-time0;
 	(void)times(&tmsnow);
-	usert = tmsnow.tms_utime - tms0.tms_utime;
+	usert = (tmsnow.tms_utime + tmsnow.tms_cutime) - 
+		(tms0.tms_utime + tms0.tms_cutime );
 	usert /= HZ;
 	if( usert < 0.00001 )  usert = 0.01;
 	if( realt < 0.00001 )  realt = usert;
