@@ -245,7 +245,7 @@ struct partition {
 extern struct partition *FreePart;		 /* Head of freelist */
 
 #define PT_BYTES	(sizeof(struct partition) + \
-			 ((nsolids)+BITV_MASK)/8 + sizeof(bitv_t))
+			 BITS2BYTES(nsolids) + sizeof(bitv_t))
 
 #define COPY_PT(out,in)	bcopy((char *)in, (char *)out, PT_BYTES)
 
@@ -286,10 +286,11 @@ extern struct partition *FreePart;		 /* Head of freelist */
  *  stored as an array of bitv_t's.
  *  BITV_SHIFT and BITV_MASK are defined in machine.h
  */
+#define BITS2BYTES(nbits) (((nbits)+BITV_MASK)/8)	/* conservative */
 #define BITTEST(lp,bit)	(lp[bit>>BITV_SHIFT] & (1<<(bit&BITV_MASK)))
 #define BITSET(lp,bit)	(lp[bit>>BITV_SHIFT] |= (1<<(bit&BITV_MASK)))
 #define BITCLR(lp,bit)	(lp[bit>>BITV_SHIFT] &= ~(1<<(bit&BITV_MASK)))
-#define BITZERO(lp,bits) bzero((char *)lp, ((bits)+BITV_MASK)/8 )
+#define BITZERO(lp,nbits) bzero((char *)lp, BITS2BYTES(nbits))
 
 /*
  *		A P P L I C A T I O N
