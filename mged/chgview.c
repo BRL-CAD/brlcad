@@ -506,16 +506,16 @@ mat_t	mat;
 	register int i;
 	double d;
 
-	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
 	*scale = d*0.5;
-	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
 	eye[X] = d;
-	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
 	eye[Y] = d;
-	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
+	if( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
 	eye[Z] = d;
 	for( i=0; i < 16; i++ )  {
-		if( fscanf( fp, "%f", &d ) != 1 )
+		if( fscanf( fp, "%lf", &d ) != 1 )
 			return(-1);
 		mat[i] = d;
 	}
