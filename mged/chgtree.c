@@ -537,6 +537,7 @@ char	**argv;
 		rt_log("arced: unable to parse command\n");
 		return CMD_BAD;
 	}
+#if 0
 	if( anp->an_path.fp_len != 2 )  {
 		char	*thepath = db_path_to_string( &(anp->an_path) );
 		rt_log("arced: '%s' is not a 2-element path spec\n");
@@ -544,6 +545,7 @@ char	**argv;
 		db_free_1anim( anp );
 		return CMD_BAD;
 	}
+#endif
 
 #if 0
 	db_write_anim(stdout, anp);	/* XXX temp */
