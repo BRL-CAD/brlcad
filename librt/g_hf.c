@@ -1905,7 +1905,7 @@ double				local2mm;
 	rec = (union record *)ep->ext_buf;
 
 	bu_vls_init( &str );
-	bu_vls_struct_print( &str, rt_hf_parse, (char *)&xip );
+	bu_vls_struct_print( &str, rt_hf_parse, (char *)xip );
 
 	/* Any changes made by solid editing affect .g file only,
 	 * and not the cfile, if specified.
