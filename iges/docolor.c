@@ -31,6 +31,7 @@ unsigned char colortab[9][4]={
 	{ 7 ,   0 , 255 , 255 },
 	{ 8 , 255 , 255 , 255 }};
 
+void
 Docolor()
 {
 

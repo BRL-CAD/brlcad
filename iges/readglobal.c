@@ -40,6 +40,7 @@ char *iges_version[NO_OF_VERSIONS]={
 	"5.0",
 	"5.1" };
 
+void
 Readglobal( file_count )
 int file_count;
 {

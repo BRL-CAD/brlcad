@@ -17,6 +17,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Summary()
 {
 	int i;
@@ -40,6 +41,7 @@ Summary()
 	rt_log( "%d Independent entities\n" , indep_entities );
 }
 
+void
 Zero_counts()
 {
 	int i;

@@ -19,6 +19,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readstart()
 {
 

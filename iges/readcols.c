@@ -21,6 +21,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Readcols( id , cols )
 char *id;
 int cols;

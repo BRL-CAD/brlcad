@@ -18,6 +18,8 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void Addsub();
+
 #ifdef M_PI
 #define PI M_PI
 #else
@@ -441,6 +443,7 @@ int entityno;
 }
 
 /* Routine to add a name to the list of subtractions */
+void
 Addsub( trc , ptr )
 struct trclist *trc,*ptr;
 {

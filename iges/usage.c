@@ -32,7 +32,7 @@ The N option provides a name for the single solid created with the n or t\n\
 options, it is ignored for all other options\n";
 
 	
-
+void
 usage()
 {
 	rt_log( message );

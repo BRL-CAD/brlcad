@@ -27,6 +27,7 @@ struct list /* simple linked list for remembering a matrix sequence */
 	struct list *prev; /* link to previous xform matrix */
 };
 
+void
 Evalxform()
 {
 
@@ -34,9 +35,6 @@ Evalxform()
 	struct list *ptr,*ptr1,*ptr_root;
 	mat_t rot;
 
-	ptr = NULL;
-	ptr1 = NULL;
-	ptr_root = NULL;
 
 	for( i=0 ; i<totentities ; i++ ) /* loop through all entities */
 	{
@@ -48,6 +46,9 @@ Evalxform()
 		{
 			/* Make a linked list of the xform matrices
 				in reverse order */
+			ptr = NULL;
+			ptr1 = NULL;
+			ptr_root = NULL;
 			xform = i;
 			while( xform >= 0 )
 			{

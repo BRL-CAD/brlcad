@@ -25,6 +25,7 @@
 
 #define	CR	'\015'
 
+void
 Makedir()
 {
 	

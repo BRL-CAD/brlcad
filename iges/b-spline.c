@@ -55,6 +55,7 @@ fastf_t values[];	/* knot values */
 
 }
 
+void
 Freeknots()
 {
 	rt_free( (char *)knots , "Freeknots: knots" );

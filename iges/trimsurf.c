@@ -357,6 +357,7 @@ struct face_g_snurb *srf;
 	}
 
 	nmg_vertex_gv( vu->v_p, pt_on_srf );
+	/* XXXXX Need w coord!!!!! */
 	VSET( uvw, u, v, 1.0 );
 
 	for( RT_LIST_FOR( vu1, vertexuse, &vu->v_p->vu_hd ) )
@@ -690,6 +691,7 @@ rt_log( "CLosed loop spline curve\n" );
 				/* if old edge doesn't have vertex geometry, assign some */
 				if( !vp->vg_p )
 				{
+					/* XXX Don't divied out rational coord */
 					if( RT_NURB_IS_PT_RATIONAL( crv1->pt_type ) )
 					{
 						u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];
@@ -804,7 +806,7 @@ struct faceuse *fu;
 	pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
 	ncoords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
 
-	if( srf->order[0] < 3 && srf->order[2] < 3 )
+	if( srf->order[0] < 3 && srf->order[1] < 3 )
 		planar = 1;
 
 	lu = nmg_mlv( &fu->l.magic, (struct vertex *)NULL, OT_SAME );

@@ -43,7 +43,6 @@ char *name;
 		if( !strncmp( ptr->name, name, NAMESIZE ) )
 		{
 			found = 1;
-rt_log( "Add_brl_name: %s already in list\n" , name );
 			return( ptr->name );
 		}
 		ptr = ptr->next;
@@ -54,7 +53,7 @@ rt_log( "Add_brl_name: %s already in list\n" , name );
 	strcpy( ptr->name, name );
 	ptr->next = name_root;
 	name_root = ptr;
-rt_log( "Add_brl_name: new name is %s\n", ptr->name );
+
 	return( ptr->name );
 }
 
@@ -91,8 +90,6 @@ char *name;
 
 	if( !found )
 		return( Add_brl_name( name ) );
-
-rt_log( "Make_unique_brl_name: name is already in list: %s\n", name );
 
 	/* name is not unique, make it unique with a single character suffix */
 	if( namelen < NAMESIZE )
@@ -164,6 +161,7 @@ rt_log( "Make_unique_brl_name: name is already in list: %s\n", name );
 		/* not likely */
 		rt_log( "Could not make name unique: (%s)\n", name );
 		rt_bomb( "Make_unique_brl_name: failed\n" );
+		return( (char *)NULL );		/* make the compilers happy */
 	}
 	else
 		return( Add_brl_name( name ) );

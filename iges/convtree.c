@@ -20,6 +20,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+void
 Convtree()
 {
 
