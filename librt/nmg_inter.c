@@ -2544,7 +2544,7 @@ struct faceuse		*fu1;
 
 /*
  *
- *  Given two pointer tables filled with edgeuses representing two different
+ *  Given two pointer tables filled with edgeuses representing two differentt
  *  edge geometry lines, see if there is a common vertex of intersection.
  *  If so, enlist the intersection.
  *
@@ -3201,46 +3201,71 @@ CONST struct rt_tol	*tol;
 
 /*
  *  Search all edgeuses referring to this vu's vertex.
- *  Report if any edgeuse referrs to edge_g "eg".
- *  If found, and hit_vu non-NULL, bomb.
+ *  If the vertex is used by edges on both eg1 and eg2, then it's a "hit"
+ *  between the two edge geometries.
+ *  If a new hit happens at a different vertex from a previous hit,
+ *  that is a fatal error.
+ *  
  * XXX This is a lame name.
  */
 struct vertexuse *
-nmg_search_v_eg( vu, eg, hit_vu )
-struct vertexuse		*vu;
-CONST struct edge_g		*eg;
+nmg_search_v_eg( eu, second, eg1, eg2, hit_vu )
+CONST struct edgeuse		*eu;
+int				second;		/* 2nd vu on eu, not 1st */
+CONST struct edge_g		*eg1;
+CONST struct edge_g		*eg2;
 struct vertexuse		*hit_vu;	/* often will be NULL */
 {
 	CONST struct vertex	*v;
-	CONST struct vertexuse	*vu1;
+	CONST struct vertexuse	*vu;
+	struct vertexuse	*vu1;
+	int			seen1 = 0;
+	int			seen2 = 0;
+
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_EDGE_G(eg1);
+	NMG_CK_EDGE_G(eg2);
+
+	if( second )  {
+		vu = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
+	} else {
+		vu = eu->vu_p;
+	}
 
 	NMG_CK_VERTEXUSE(vu);
-	NMG_CK_EDGE_G(eg);
-
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
 
 	for( RT_LIST_FOR( vu1, vertexuse, &v->vu_hd ) )  {
-		CONST struct edgeuse	*eu;
+		struct edgeuse	*eu1;
+
 		NMG_CK_VERTEXUSE(vu1);
-		if( vu1 == vu )  continue;
 		if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
-		eu = vu1->up.eu_p;
-		if( eu->e_p->eg_p != eg )  continue;
+		eu1 = vu1->up.eu_p;
+		if( eu1->e_p->eg_p == eg1 )  seen1 = 1;
+		if( eu1->e_p->eg_p == eg2 )  seen2 = 1;
+		if( !seen1 || !seen2 )  continue;
 
-		/* 'vu' is shared by an edge along 'eg' */
-		if( hit_vu )  {
-			/* Is it a different vertex than hit_vu? */
-			if( hit_vu->v_p == v )  continue;
+		/* Both edge_g's have been seen at 'vu', this is a hit. */
+		if( !hit_vu )  return vu;
 
-			/* Yes, this "can't happen" */
-			rt_log("vu=x%x, v=x%x; hit_vu=x%x, v=x%x\n",
-				vu, v, hit_vu, hit_vu->v_p );
-			VPRINT("vu ", vu->v_p->vg_p->coord);
-			VPRINT("hit", hit_vu->v_p->vg_p->coord);
-			rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
-		}
-		hit_vu = vu;
+		/* Is it a different vertex than hit_vu? */
+		if( hit_vu->v_p == v )  return hit_vu;
+
+		/* Different vertices, this "can't happen" */
+		rt_log("vu=x%x, v=x%x; hit_vu=x%x, v=x%x\n",
+			vu, v, hit_vu, hit_vu->v_p );
+		VPRINT("vu ", vu->v_p->vg_p->coord);
+		VPRINT("hit", hit_vu->v_p->vg_p->coord);
+		rt_log("eg1: vu dist=%g, hit dist=%g\n",
+			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, vu->v_p->vg_p->coord ),
+			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_vu->v_p->vg_p->coord ) );
+		rt_log("eg2: vu dist=%g, hit dist=%g\n",
+			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, vu->v_p->vg_p->coord ),
+			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_vu->v_p->vg_p->coord ) );
+		nmg_pr_eg(eg1, 0);
+		nmg_pr_eg(eg2, 0);
+		rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
 	}
 	return hit_vu;
 }
@@ -3375,8 +3400,8 @@ colinear:
 				NMG_CK_EDGEUSE(*eu1);
 				if( (*eu1)->e_p->eg_p != *eg1 )  continue;
 				/* Both verts of *eu1 lie on line *eg1 */
-				hit_vu = nmg_search_v_eg( (*eu1)->vu_p, is->on_eg, hit_vu );
-				hit_vu = nmg_search_v_eg( RT_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p, is->on_eg, hit_vu );
+				hit_vu = nmg_search_v_eg( *eu1, 0, *eg1, is->on_eg, hit_vu );
+				hit_vu = nmg_search_v_eg( *eu1, 1, *eg1, is->on_eg, hit_vu );
 			}
 			/* hit_vu will be non-NULL if there is 1 topological intersection */
 		}
