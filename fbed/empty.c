@@ -14,12 +14,17 @@
 static
 char	sccsTag[] = "@(#) empty.c 2.3, modified 1/5/87 at 16:52:54, archive /vld/moss/src/fbed/s.empty.c";
 #endif
-#ifdef BSD
+#if defined( BSD ) || defined( cray )
 #include <sys/types.h>
 #include <sys/time.h>
 #endif
 
-#ifdef SYSV
+#if defined( sgi )
+#include <bsd/sys/types.h>
+#include <bsd/sys/time.h>
+#include "fb.h"
+#endif
+
 #ifdef VLDSYSV
 /* BRL SysV under 4.2 */
 #define select	_select
@@ -29,20 +34,19 @@ struct timeval
 	long	tv_usec;	/* and microseconds */
 	};
 #else
-/* Regular SysV */
-#ifdef sgi
-#include <bsd/sys/types.h>
-#include <bsd/sys/time.h>
-#include "fb.h"
-#endif sgi
-#endif VLDSYSV
-#endif SYSV
+#endif
 
 #ifndef FD_ZERO
 /* 4.2 does not define these */
+#ifdef cray
+#define	FD_SET(n, p)	(*p |= (n) == 0 ? 1 : (1 << (n)))
+#define FD_ZERO(p)	*p = 0
+typedef	long	fd_set;
+#else
 #define	FD_SET(n, p)	((p)->fds_bits[0] |= (n) == 0 ? 1 : (1 << (n)))
 #define FD_ZERO(p)	(p)->fds_bits[0] = 0
 /** typedef	struct fd_set { fd_mask	fds_bits[1]; } fd_set; **/
+#endif
 #endif FD_ZERO
 
 /*	e m p t y ( )

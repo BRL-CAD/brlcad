@@ -61,7 +61,7 @@ char	*args[];
 		default :
 			{	register int	pid;
 				int		stat_loc;
-#if defined( BSD ) || defined( sgi )
+#if defined( BSD ) || defined( sgi ) || defined( cray )
 #ifndef SIGCLD
 #define SIGCLD	SIGCHLD
 #endif
