@@ -247,9 +247,10 @@ char	*dp;
 }
 
 int
-tmist_hit(ap, PartHeadp)
+tmist_hit(ap, PartHeadp, segHeadp)
 register struct application *ap;
 struct partition *PartHeadp;
+struct seg *segHeadp;
 {
 	/* go looking for the object named in
 	 * ((struct air_specific *)ap->a_uptr)->name
