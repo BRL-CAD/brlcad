@@ -138,7 +138,7 @@ matp_t xlate;
  *
  * Add an instance of object 'dp' to combination 'name'.
  * If the combination does not exist, it is created.
- * Flag is 'r' (region), or 'g' (group).
+ * region_flag is 1 (region), or 0 (group).
  */
 struct directory *
 combadd( objp, combname, region_flag, relation, ident, air )
@@ -161,9 +161,15 @@ int air;				/* Air code */
 	 * Check to see if we have to create a new combination
 	 */
 	if( (dp = db_lookup( dbip,  combname, LOOKUP_QUIET )) == DIR_NULL )  {
+		int flags;
+
+		if( region_flag )
+			flags = DIR_REGION | DIR_COMB;
+		else
+			flags = DIR_COMB;
 
 		/* Update the in-core directory */
-		if( (dp = db_diradd( dbip, combname, -1, 2, DIR_COMB )) == DIR_NULL ||
+		if( (dp = db_diradd( dbip, combname, -1, 2, flags )) == DIR_NULL ||
 		    db_alloc( dbip, dp, 2 ) < 0 )  {
 		  Tcl_AppendResult(interp, "An error has occured while adding '",
 				   combname, "' to the database.\n", (char *)NULL);
