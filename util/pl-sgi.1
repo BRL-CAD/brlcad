@@ -4,6 +4,8 @@ pl\(hysgi \- display UnixPlot on a Silicon Graphics workstation
 .SH SYNOPSIS
 .B pl-sgi
 .RB [ \-f ]
+.RB [ \-n ]
+.RB [ \-t\  thickness]
 [unix_plot]
 .SH DESCRIPTION
 .I Pl-sgi
@@ -19,6 +21,18 @@ view, and the lower two rows of buttons are the same predefined
 orientations that the
 .IR mged (1)
 editor uses.
+.PP
+The
+.B \-n
+flag indicates that the plot is intended for display at NTSC
+resolution.  The display hardware is set for NTSC video output.
+The
+.B \-t
+flag specifies the thickening (pixel width) of each line.
+By default, lines are only a single pixel wide.
+A thickness value of one or two is usually good when making 35mm
+slides, while a thickness value of three or four is usually best
+when making NTSC videotape recordings.
 .PP
 The three mouse button are: left - zoom out (.5x smaller), middle
 - zoom in (2x larger), right - gives you a small menu of options.
