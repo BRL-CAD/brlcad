@@ -6,6 +6,7 @@ fbpoint \- point at and identify screen coordinates
 .RB [ \-h ]
 .RB [ \-x [prefix]]
 .RB [ \-y [prefix]]
+[initx inity]
 .SH DESCRIPTION
 .I Fbpoint
 allows you to move a non-destructive cursor around on the display.
@@ -13,9 +14,12 @@ As the cursor is moved around,
 .I fbpoint
 writes the coordinates of the pixel pointed
 at by the cursor, and the red, green, and blue values of that
-pixel, on stderr.
+pixel, on standard error
 .I fbpoint
-also writes the last set of coordinates out on stdout when you exit.
+also writes the last set of coordinates pointed to on standard out on exit.
+The starting position is center-screen unless an optional
+.I initx inity
+is given.
 .PP
 The 
 .RB `` h '',
@@ -66,8 +70,8 @@ the entire screen).
 .PP
 Using this program with grave accents in a shell script in order to
 interactively grab a pair of coordinates is one of it's main
-intentions.  This is the reason for the feedback on stderr and the
-final coordinate pair on stdout.
+intentions.  This is the reason for the feedback on standard error and the
+final coordinate pair on standard out.
 By default, both the x and y coordinates are written.  If the
 .B \-x
 or
