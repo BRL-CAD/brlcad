@@ -52,6 +52,9 @@
 #include <signal.h>
 #include "common.h"
 
+#ifdef WIN32
+#include <io.h>
+#endif
 
 
 #include "tcl.h"
@@ -137,7 +140,7 @@ static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cha
 #if 0
 static int dgo_close_tcl();
 #endif
-static int dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+int dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_headSolid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_illum_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_label_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -170,7 +173,7 @@ static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static union tree *dgo_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 static int dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int kind, struct dg_client_data *_dgcdp);
-int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy);
+int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 static void dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp);
 void dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
 void dgo_eraseobjpath(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int noisy, int all);
@@ -189,8 +192,8 @@ void dgo_notify(struct dg_obj *dgop, Tcl_Interp *interp);
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
 static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
 
-struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
-static struct solid FreeSolid;		/* head of free solid list */
+struct dg_obj HeadDGObj;	/* head of drawable geometry object list */
+struct solid FreeSolid;		/* head of free solid list */
 
 
 static struct bu_cmdtab dgo_cmds[] = {
@@ -247,7 +250,7 @@ Tcl_Channel chan1;
  *
  * Returns: result of dbo command.
  */
-static int
+int
 dgo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
 	return bu_cmd(clientData, interp, argc, argv, dgo_cmds, 1);
@@ -267,7 +270,7 @@ Dgo_Init(Tcl_Interp *interp)
 /*
  * Called by Tcl when the object is destroyed.
  */
-static void
+void
 dgo_deleteProc(ClientData clientData)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
@@ -813,7 +816,7 @@ dgo_build_dpp(struct dg_obj	*dgop,
 	    /* object is not currently being displayed */
 	    Tcl_AppendResult(interp, "-1", (char *)NULL);
 
-	    bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+	    bu_free((genptr_t)dpp, "dgo_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;
@@ -1048,7 +1051,11 @@ dgo_overlay_cmd(struct dg_obj	*dgop,
 	else
 		name = argv[3];
 
+#if defined(WIN32) && !defined(__CYGWIN__)
+	if ((fp = fopen(argv[1], "rb")) == NULL) {
+#else
 	if ((fp = fopen(argv[1], "r")) == NULL) {
+#endif
 		Tcl_AppendResult(interp, "dgo_overlay: failed to open file - ",
 				 argv[1], "\n", (char *)NULL);
 
@@ -1202,8 +1209,10 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 	vect_t		minus, plus;
 	vect_t		center;
 	vect_t		radial;
+	int pflag = 0;
+	register int	c;
 
-	if (argc != 1) {
+	if (argc < 1 || 2 < argc) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -1213,20 +1222,48 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 		return TCL_ERROR;
 	}
 
+	/* Parse options. */
+	bu_optind = 1;
+	while ((c = bu_getopt(argc, argv, "p")) != EOF) {
+	    switch (c) {
+	    case 'p':
+		pflag = 1;
+		break;
+	    default: {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias dgo_get_autoview %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	    }
+	    }
+	}
+	argc -= bu_optind;
+	argv += bu_optind;
+
 	DGO_CHECK_WDBP_NULL(dgop,interp);
 
 	VSETALL(min,  INFINITY);
 	VSETALL(max, -INFINITY);
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-		minus[X] = sp->s_center[X] - sp->s_size;
-		minus[Y] = sp->s_center[Y] - sp->s_size;
-		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN(min, minus);
-		plus[X] = sp->s_center[X] + sp->s_size;
-		plus[Y] = sp->s_center[Y] + sp->s_size;
-		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX(max, plus);
+	    /* Skip psuedo-solids unless pflag is set */
+	    if (!pflag &&
+		sp->s_fullpath.fp_names != (struct directory **)0 &&
+		sp->s_fullpath.fp_names[0] != (struct directory *)0 &&
+		sp->s_fullpath.fp_names[0]->d_addr == RT_DIR_PHONY_ADDR)
+		continue;
+
+	    minus[X] = sp->s_center[X] - sp->s_size;
+	    minus[Y] = sp->s_center[Y] - sp->s_size;
+	    minus[Z] = sp->s_center[Z] - sp->s_size;
+	    VMIN(min, minus);
+	    plus[X] = sp->s_center[X] + sp->s_size;
+	    plus[Y] = sp->s_center[Y] + sp->s_size;
+	    plus[Z] = sp->s_center[Z] + sp->s_size;
+	    VMAX(max, plus);
 	}
 
 	if (BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
@@ -1262,9 +1299,9 @@ dgo_get_autoview_tcl(ClientData	clientData,
 		     int	argc,
 		     char	**argv)
 {
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
+    struct dg_obj *dgop = (struct dg_obj *)clientData;
 
-	return dgo_get_autoview_cmd(dgop, interp, argc-1, argv+1);
+    return dgo_get_autoview_cmd(dgop, interp, argc-1, argv+1);
 }
 
 /*
@@ -1364,6 +1401,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 #else
 	*vp++ = "rt";
 #endif
+	*vp++ = "-s512";
 	*vp++ = "-M";
 
 	if (vop->vo_perspective > 0) {
@@ -1379,7 +1417,16 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 		}
 		*vp++ = argv[i];
 	}
+#ifdef WIN32
+	{
+	    char buf[512];
+
+	    sprintf(buf, "\"%s\"", dgop->dgo_wdbp->dbip->dbi_filename);
+	    *vp++ = buf;
+	}
+#else
 	*vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
+#endif
 
 	/*
 	 * Now that we've grabbed all the options, if no args remain,
@@ -1994,6 +2041,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 # else
 	*vp++ = "rtcheck";
 # endif
+	*vp++ = "-s50";
 	*vp++ = "-M";
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
@@ -2090,10 +2138,17 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	/* WIN32 */
 	vp = &dgop->dgo_rt_cmd[0];
 	*vp++ = "rtcheck";
+	*vp++ = "-s50";
 	*vp++ = "-M";
 	for (i=1; i < argc; i++)
 		*vp++ = argv[i];
-	*vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
+
+	{
+	    char buf[512];
+
+	    sprintf(buf, "\"%s\"", dgop->dgo_wdbp->dbip->dbi_filename);
+	    *vp++ = buf;
+	}
 
 	/*
 	 * Now that we've grabbed all the options, if no args remain,
@@ -2131,10 +2186,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	SetStdHandle(STD_ERROR_HANDLE, e_pipe[1]);  
 
 	// Create noninheritable read handle and close the inheritable read handle. 
-    DuplicateHandle( GetCurrentProcess(), e_pipe[0],
-        GetCurrentProcess(),  &pipe_eDup , 
-		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
+	DuplicateHandle( GetCurrentProcess(), e_pipe[0],
+			 GetCurrentProcess(),  &pipe_eDup , 
+			 0,  FALSE,
+			 DUPLICATE_SAME_ACCESS );
 	CloseHandle( e_pipe[0]);
 
 
@@ -2149,10 +2204,10 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	SetStdHandle(STD_OUTPUT_HANDLE, o_pipe[0]);  
 
 	// Create noninheritable read handle and close the inheritable read handle. 
-    DuplicateHandle( GetCurrentProcess(), o_pipe[1],
-        GetCurrentProcess(),  &pipe_oDup , 
-		0,  FALSE,
-        DUPLICATE_SAME_ACCESS );
+	DuplicateHandle( GetCurrentProcess(), o_pipe[1],
+			 GetCurrentProcess(),  &pipe_oDup , 
+			 0,  FALSE,
+			 DUPLICATE_SAME_ACCESS );
 	CloseHandle( o_pipe[1]);
 	
 	// The steps for redirecting child process's STDIN: 
@@ -2172,9 +2227,9 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	SetStdHandle(STD_INPUT_HANDLE, i_pipe[1]);
 	// Duplicate the write handle to the pipe so it is not inherited.  
 	DuplicateHandle(GetCurrentProcess(), i_pipe[0], 
-		GetCurrentProcess(), &pipe_iDup, 
-		0, FALSE,                  // not inherited       
-		DUPLICATE_SAME_ACCESS ); 
+			GetCurrentProcess(), &pipe_iDup, 
+			0, FALSE,                  // not inherited       
+			DUPLICATE_SAME_ACCESS ); 
 	CloseHandle(i_pipe[0]);
 
    si.cb = sizeof(STARTUPINFO);
@@ -2184,19 +2239,20 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
    si.lpDesktop = NULL;
    si.dwFlags = 0;
    si.dwFlags = STARTF_USESTDHANDLES;
- /*  si.hStdInput   = i_pipe[0];
-   si.hStdOutput  = o_pipe[1];
-   si.hStdError   = e_pipe[1];*/
-
-   
+#if 1
+   si.hStdInput   = o_pipe[0];
+   si.hStdOutput  = i_pipe[1];
+#else
    si.hStdInput   = i_pipe[1];
    si.hStdOutput  = o_pipe[0];
+#endif
    si.hStdError   = e_pipe[1];
 
-     sprintf(line,"%s ",dgop->dgo_rt_cmd[0]);
-   for(i=1;i<dgop->dgo_rt_cmd_len;i++) {
-	   sprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
-	   strcat(line,name); }
+   sprintf(line,"%s ",dgop->dgo_rt_cmd[0]);
+   for (i=1; i < dgop->dgo_rt_cmd_len; i++) {
+       sprintf(name,"%s ",dgop->dgo_rt_cmd[i]);
+       strcat(line,name);
+   }
 
     if(CreateProcess(NULL,
                      line,
@@ -2215,9 +2271,16 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 }
 
 
-	/* As parent, send view information down pipe */
+	/* close read end of pipe */
 	CloseHandle(o_pipe[0]);
-	fp = _fdopen( _open_osfhandle((HFILE)pipe_oDup,_O_TEXT), "w" );
+
+	/* close write end of pipes */
+	(void)CloseHandle(i_pipe[1]);
+	(void)CloseHandle(e_pipe[1]);
+
+	/* As parent, send view information down pipe */
+	fp = _fdopen( _open_osfhandle((HFILE)pipe_oDup,_O_TEXT), "wb" );
+
 #if 1
 	VSET(temp, 0.0, 0.0, 1.0);
 	MAT4X3PNT(eye_model, vop->vo_view2model, temp);
@@ -2225,18 +2288,13 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	dgo_rt_set_eye_model(dgop, vop, eye_model);
 #endif
 	dgo_rt_write(dgop, vop, fp, eye_model);
-
 	(void)fclose(fp);
-
-	/* close write end of pipes */
-	(void)CloseHandle(i_pipe[1]);
-	(void)CloseHandle(e_pipe[1]);
 
 	BU_GETSTRUCT(rtcp, rtcheck);
 
 	/* initialize the rtcheck struct */
 	rtcp->fd = pipe_iDup;
-	rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup,_O_TEXT), "r" );
+	rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup,_O_TEXT), "rb" );
 	rtcp->hProcess = pi.hProcess;
 	rtcp->pid = pi.dwProcessId;
 	rtcp->vbp = rt_vlblock_init();
@@ -2245,13 +2303,18 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	rtcp->dgop = dgop;
 	rtcp->interp = interp;
 
+	_setmode(pipe_iDup, _O_BINARY);
+	_setmode(pipe_eDup, _O_BINARY);
+
 	rtcp->chan = Tcl_MakeFileChannel(rtcp->fd,TCL_READABLE);
 	Tcl_CreateChannelHandler(rtcp->chan,TCL_READABLE,
-			      dgo_rtcheck_vector_handler, (ClientData)rtcp);
+				 dgo_rtcheck_vector_handler,
+				 (ClientData)rtcp);
 
 	chan1 = Tcl_MakeFileChannel(pipe_eDup,TCL_READABLE);
 	Tcl_CreateChannelHandler(chan1,TCL_READABLE,
-			      dgo_rtcheck_output_handler,pipe_eDup);
+				 dgo_rtcheck_output_handler,
+				 pipe_eDup);
 
 	return TCL_OK;
 
@@ -2348,6 +2411,26 @@ dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
 }
 
+int
+dgo_observer_cmd(struct dg_obj	*dgop,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv) {
+    if (argc < 2) {
+	struct bu_vls vls;
+
+	/* return help message */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib_alias dgo_observer %s", argv[0]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    return bu_cmd((ClientData)&dgop->dgo_observers,
+		  interp, argc-1, argv+1, bu_observer_cmds, 0);
+}
+
 /*
  * Attach/detach observers to/from list.
  *
@@ -2356,23 +2439,13 @@ dgo_assoc_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *
  */
 static int
-dgo_observer_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-	struct dg_obj *dgop = (struct dg_obj *)clientData;
+dgo_observer_tcl(ClientData	clientData,
+		 Tcl_Interp	*interp,
+		 int		argc,
+		 char		**argv) {
+    struct dg_obj *dgop = (struct dg_obj *)clientData;
 
-	if (argc < 3) {
-		struct bu_vls vls;
-
-		/* return help message */
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias dgo_observer %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	return bu_cmd((ClientData)&dgop->dgo_observers,
-		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
+    return dgo_observer_cmd(dgop, interp, argc-1, argv+1);
 }
 
 int
@@ -2600,7 +2673,7 @@ dgo_set_transparency_cmd(struct dg_obj	*dgop,
 	}
 
 	if (dpp != (struct directory **)NULL)
-	  bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+	    bu_free((genptr_t)dpp, "dgo_set_transparency_cmd: directory pointers");
 
 	return TCL_OK;
 }
@@ -3325,7 +3398,7 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlb
 
 		sprintf(namebuf, "%s%lx",
 			shortname, vbp->rgb[i]);
-		dgo_invent_solid(dgop, interp, namebuf, &vbp->head[i], vbp->rgb[i], copy);
+		dgo_invent_solid(dgop, interp, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0);
 	}
 }
 
@@ -3339,7 +3412,14 @@ dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlb
  *  This parallels much of the code in dodraw.c
  */
 int
-dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy)
+dgo_invent_solid(struct dg_obj	*dgop,
+		 Tcl_Interp	*interp,
+		 char		*name,
+		 struct bu_list	*vhead,
+		 long int	rgb,
+		 int		copy,
+		 fastf_t	transparency,
+		 int		dmode)
 {
 	register struct directory	*dp;
 	struct directory		*dpp[2] = {DIR_NULL, DIR_NULL};
@@ -3395,6 +3475,9 @@ dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_
 	sp->s_dflag = 0;
 	sp->s_cflag = 0;
 	sp->s_wflag = 0;
+
+	sp->s_transparency = transparency;
+	sp->s_dmode = dmode;
 
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(dgop->dgo_headSolid.back, &sp->l);
@@ -4267,10 +4350,11 @@ dgo_run_rt(struct dg_obj *dgop,
 }
 
 
-   	/* As parent, send view information down pipe */
 	CloseHandle(pipe_in[0]);
-	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "w" );
 	CloseHandle(pipe_err[1]);
+
+   	/* As parent, send view information down pipe */
+	fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup,_O_TEXT), "wb" );
 
 	dgo_rt_set_eye_model(dgop, vop, eye_model);
 	dgo_rt_write(dgop, vop, fp_in, eye_model);
