@@ -2339,23 +2339,29 @@ char	**argv;
 
   view_state->vs_flag = 1;
   item_default = atoi(argv[1]);
+  wdbp->wdb_item_default = item_default;
 
   if(argc == 2)
     return TCL_OK;
 
   air_default = atoi(argv[2]);
-  if(air_default) 
+  wdbp->wdb_air_default = air_default;
+  if(air_default) {
     item_default = 0;
+    wdbp->wdb_item_default = 0;
+  }
 
   if(argc == 3)
     return TCL_OK;
 
   los_default = atoi(argv[3]);
+  wdbp->wdb_los_default = los_default;
 
   if(argc == 4)
     return TCL_OK;
 
   mat_default = atoi(argv[4]);
+  wdbp->wdb_mat_default = mat_default;
 
   return TCL_OK;
 }
