@@ -20,6 +20,8 @@
 static char RCSnurb[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
