@@ -52,6 +52,7 @@ pixcut: Usage:	[-v] [-h] [-H] [-a] [-C red/green/blue]\n\
 		[-S out_square_size] [-W out_width] [-N out_height]\n\
 		[-x horizontal] [-y vertical] [file_in]\n";
 
+void
 parse_color(bak, s)
 unsigned char *bak;
 char * s;
