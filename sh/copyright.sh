@@ -16,7 +16,7 @@
 #   BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#   This software is Copyright (c) 2004 by the United States Army
+#   This software is Copyright (C) 2004-2004 by the United States Army
 #   in all countries except the USA.  All rights reserved.
 #
 ###
@@ -55,6 +55,7 @@ files="`find $findgen -type f | \
         grep -v \"$findgen/\.\" | \
         grep -v '\.g$' | \
         grep -v '\.pix$' |\
+        grep -v '\.jpg$' |\
         grep -v '\.pdf$' |\
         grep -v '\.dll$' |\
         grep -v '\.gif$' |\
@@ -66,20 +67,25 @@ for file in $files ; do
   
   # sanity checks
   if [ ! -f "$file" ] ; then
+    echo "."
     echo "WARNING: $file was lost, skipping"
     continue
   elif [ ! -r "$file" ] ; then
+    echo "."
     echo "WARNING: $file is not readable"
     continue
   elif [ ! -w "$file" ] ; then
+    echo "."
     echo "WARNING: $file is not writeable"
     continue
   fi
   echo -n "."
   if [ -f "$file.copyright.new" ] ; then
+    echo "."
     echo "WARNING: $file.copyright.new is in the way (moving it to .bak)"
     mv $file.copyright.new $file.copyright.new.bak
   elif [ -f "$file.copyright.old" ] ; then
+    echo "."
     echo "WARNING: $file.copyright.old is in the way (moving it to .bak)"
     mv $file.copyright.old $file.copyright.old.bak
   fi
@@ -88,11 +94,18 @@ for file in $files ; do
   year=`date +%Y`
   sed -E "s/Copyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;]+)(by +the +United +States +Army)/Copyright (C) \1-$year\2\3/" < $file > $file.copyright.new
 
-  if [ "x`diff $file $file.copyright.new`" = "x" ] ; then
+  filediff="`diff $file $file.copyright.new`"
+  if [ "x$filediff" = "x" ] ; then
     echo "."
     rm $file.copyright.new
+  elif [ ! "x`echo $filediff | grep \"No newline at end of file\"`" = "x" ] ; then
+    echo ". `basename $file` has no newline -- SKIPPING"
+    rm $file.copyright.new
+  elif [ ! "x`echo $filediff | grep \"Binary files\"`" = "x" ] ; then
+    echo ". `basename $file` is binary -- SKIPPING"
+    rm $file.copyright.new
   else
-    echo ". $file modified"
+    echo ". `basename $file` modified"
     mv $file $file.copyright.old
     mv $file.copyright.new $file
   fi
