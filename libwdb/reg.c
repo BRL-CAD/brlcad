@@ -30,6 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 #ifdef SYSV
@@ -232,15 +233,12 @@ register struct wmember *headp;
 		fprintf(stderr,"mk_wmember:  malloc failure\n");
 		return(WMEMBER_NULL);
 	}
-	wp->wm_magic = WMEMBER_MAGIC;
+	wp->l.magic = WMEMBER_MAGIC;
 	strncpy( wp->wm_name, name, sizeof(wp->wm_name) );
 	wp->wm_op = UNION;
 	bcopy( ident_mat, wp->wm_mat, sizeof(mat_t) );
 	/* Append to end of doubly linked list */
-	wp->wm_forw = headp;
-	wp->wm_back = headp->wm_back;
-	headp->wm_back->wm_forw = wp;
-	headp->wm_back = wp;
+	RT_LIST_INSERT( &headp->l, &wp->l );
 	return(wp);
 }
 
@@ -271,8 +269,8 @@ int	inherit;
 	register int len = 0;
 
 	/* Measure length of list */
-	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
-		if( wp->wm_magic != WMEMBER_MAGIC )  {
+	for( RT_LIST( wp, wmember, &headp->l ) )  {
+		if( wp->l.magic != WMEMBER_MAGIC )  {
 			fprintf(stderr, "mk_wmcomb:  corrupted linked list\n");
 			abort();
 		}
@@ -284,7 +282,7 @@ int	inherit;
 		(void)mk_freemembers( headp );
 		return(-1);
 	}
-	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
+	for( RT_LIST( wp, wmember, &headp->l ) )  {
 		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
 			(void)mk_freemembers( headp );
 			return(-1);
@@ -309,17 +307,13 @@ register struct wmember *headp;
 	register struct wmember *wp;
 	register int	ret = 0;
 
-	for( wp = headp->wm_forw; wp != headp; )  {
-		register struct wmember *next;
-
-		if( wp->wm_magic != WMEMBER_MAGIC )
+	while( RT_LIST_LOOP( wp, wmember, &headp->l ) )  {
+		if( wp->l.magic != WMEMBER_MAGIC )
 			ret--;
-		wp->wm_magic = -1;	/* Sanity */
-		next = wp->wm_forw;
+		RT_LIST_DEQUEUE( &wp->l );
+		wp->l.magic = -1;	/* Sanity */
 		free( (char *)wp );
-		wp = next;
 	}
-	headp->wm_forw = headp->wm_back = headp;
 	return(ret);
 }
 
@@ -354,8 +348,8 @@ int	inherit;
 	register int len = 0;
 
 	/* Measure length of list */
-	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
-		if( wp->wm_magic != WMEMBER_MAGIC )  {
+	while( RT_LIST_LOOP( wp, wmember, &headp->l ) )  {
+		if( wp->l.magic != WMEMBER_MAGIC )  {
 			fprintf(stderr, "mk_wmcomb:  corrupted linked list\n");
 			abort();
 		}
@@ -368,7 +362,7 @@ int	inherit;
 		(void)mk_freemembers( headp );
 		return(-1);
 	}
-	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
+	while( RT_LIST_LOOP( wp, wmember, &headp->l ) )  {
 		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
 			(void)mk_freemembers( headp );
 			return(-1);

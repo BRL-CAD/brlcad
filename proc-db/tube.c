@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 #include "../libspl/b_spline.h"
@@ -114,8 +115,8 @@ char	**argv;
 	vect_t	from, to;
 	vect_t	offset;
 
-	head.wm_forw = head.wm_back = &head;
-	ghead.wm_forw = ghead.wm_back = &ghead;
+	RT_LIST_INIT( &head.l );
+	RT_LIST_INIT( &ghead.l );
 
 	if( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
 		perror( "pos.dat" );	/* Just warn */
@@ -453,7 +454,7 @@ double	radius;
 	char	name[32];
 	struct wmember head;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	for( i=0; i<npts-1; i++ )  {
 		VMOVE( v, sample[i] );

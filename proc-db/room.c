@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 #include "../rt/mathtab.h"
@@ -79,7 +80,7 @@ char	**argv;
 	vect_t	pbase;
 	float	*randp;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	mat_idn( identity );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
@@ -154,7 +155,7 @@ struct wmember *headp;
 	vect_t	omin;
 	vect_t	omax;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	VSUB2( omin, imin, thickness );
 	VADD2( omax, imax, thickness );
@@ -186,7 +187,7 @@ struct wmember *headp;
 	vect_t	wmin, wmax;
 	int	mask;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	/* thickness[Z] = 0; */
 
@@ -259,7 +260,7 @@ struct wmember *headp;
 	struct wmember head;
 	struct wmember *wp;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	sprintf( pilname, "%s%d,%d", prefix, ix, iy );
 	sprintf( rname, "%s.r", pilname );

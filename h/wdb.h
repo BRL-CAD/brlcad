@@ -3,9 +3,9 @@
  *
  *  Interface structures and routines for libwdb
  *
- *  Note -
+ *  Notes -
  *	Any source file that includes this header file must also include
- *	<stdio.h> to obtain the typedef for FILE.
+ *	<stdio.h> to obtain the typedef for FILE
  *
  *  Author -
  *	Michael John Muuss
@@ -21,6 +21,10 @@
  *
  *  $Header$
  */
+
+#ifndef SEEN_RTLIST_H
+# include "rtlist.h"
+#endif
 
 #ifndef WDB_H
 #define WDB_H seen
@@ -42,31 +46,27 @@
  *  In-memory form of database combinations
  */
 struct wmember  {
-	long	wm_magic;
-	char	wm_name[16+3];	/* NAMESIZE */
-	char	wm_op;		/* Boolean operation */
-	mat_t	wm_mat;
-	struct wmember *wm_forw;
-	struct wmember *wm_back;
+	struct rt_list	l;
+	int		wm_op;		/* Boolean operation */
+	mat_t		wm_mat;
+	char		wm_name[16+3];	/* NAMESIZE */
 };
 #define WMEMBER_NULL	((struct wmember *)0)
-
 #define WMEMBER_MAGIC	0x43128912
-
-#define WMEMBER_HEAD_INIT(hp)	{ (hp)->wm_forw = (hp)->wm_back = (hp); }
 
 /*
  *  Definitions for pipe (wire) segments
  */
 struct wdb_pipeseg  {
+	struct rt_list	l;		/* doubly linked list support */
 	point_t		ps_start;	/* start point of centerline */
 	point_t		ps_bendcenter;	/* BEND only: center of bend circle */
 	fastf_t		ps_id;		/* inner diam, <=0 if solid (wire) */
 	fastf_t		ps_od;		/* pipe outer diam */
 	int		ps_type;	/* WDB_PIPESEG_TYPE_{END, LINEAR, BEND} */
-	struct wdb_pipeseg *ps_next;
 };
-#define WDB_PIPESEG_NULL		((struct wdb_pipeseg *)0)
+#define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
+#define WDB_PIPESEG_MAGIC	0x9723ffef
 #define WDB_PIPESEG_TYPE_END	1	/* End of pipe.  Required, last */
 #define WDB_PIPESEG_TYPE_LINEAR	2	/* Linear pipe segment */
 #define WDB_PIPESEG_TYPE_BEND	3	/* Bending pipe segment */
@@ -102,6 +102,10 @@ WDB_EXTERN(int mk_ars, (FILE *fp, char *name, int ncurves, int pts_per_curve,
 			fastf_t	*curves[]) );
 WDB_EXTERN(int mk_bsolid, (FILE *fp, char *name, int nsurf, double res) );
 WDB_EXTERN(int mk_bsurf, (FILE *fp, struct b_spline *bp) );
+WDB_EXTERN(int mk_particle, (FILE *fp, char *name, point_t vertex,
+			vect_t height, double vradius, double hradius) );
+WDB_EXTERN(int mk_pipe, (FILE *fp, char *name, struct wdb_pipeseg *headp) );
+WDB_EXTERN(void mk_free, (struct wdb_pipeseg *headp ) );
 
 /*
  *  Combination conversion routines

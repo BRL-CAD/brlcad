@@ -34,6 +34,7 @@ static char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 /*
@@ -83,21 +84,21 @@ double	hradius;
 /*
  *			M K _ P I P E
  *
- *  Note that it is the caller's responsibility to free up the linked
- *  list of pipe segments pointed to by psptr.
+ *  Note that the linked list of pipe segments headed by 'headp'
+ *  must be freed by the caller.  mk_pipe_free() can be used.
  *
  *  Returns -
  *	0	OK
  *	<0	failure
  */
 int
-mk_pipe( fp, name, psptr )
+mk_pipe( fp, name, headp )
 FILE			*fp;
 char			*name;
-struct wdb_pipeseg	*psptr;
+struct wdb_pipeseg	*headp;
 {
 	register struct exported_pipeseg *ep;
-	register struct wdb_pipeseg	*psp = psptr;
+	register struct wdb_pipeseg	*psp;
 	struct wdb_pipeseg		tmp;
 	int		count;
 	int		ngran;
@@ -106,22 +107,21 @@ struct wdb_pipeseg	*psptr;
 
 	/* Count number of segments, verify that last seg is an END seg */
 	count = 0;
-	while( psp != WDB_PIPESEG_NULL )  {
+	for( RT_LIST( psp, wdb_pipeseg, &headp->l ) )  {
 		count++;
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
-			if( psp->ps_next != WDB_PIPESEG_NULL )
+			if( RT_LIST_MORE( psp, wdb_pipeseg, &headp->l ) )
 				return(-1);	/* Inconsistency in list */
 			break;
 		case WDB_PIPESEG_TYPE_LINEAR:
 		case WDB_PIPESEG_TYPE_BEND:
-			if( psp->ps_next == WDB_PIPESEG_NULL )
+			if( !RT_LIST_MORE( psp, wdb_pipeseg, &headp->l ) )
 				return(-2);	/* List ends w/o TYPE_END */
 			break;
 		default:
 			return(-3);		/* unknown segment type */
 		}
-		psp = psp->ps_next;
 	}
 	if( count <= 1 )
 		return(-4);			/* Not enough for 1 pipe! */
@@ -142,7 +142,7 @@ struct wdb_pipeseg	*psptr;
 
 	/* Convert the pipe segments to external form */
 	ep = &rec->pw.pw_data[0];
-	for( psp = psptr; psp != WDB_PIPESEG_NULL; psp = psp->ps_next, ep++ )  {
+	for( RT_LIST( psp, wdb_pipeseg, &headp->l ), ep++ )  {
 		/* Avoid need for htonl() here */
 		ep->eps_type[0] = (char)psp->ps_type;
 		/* Convert from user units to mm */
@@ -162,4 +162,22 @@ struct wdb_pipeseg	*psptr;
 	}
 	free( (char *)rec );
 	return(0);
+}
+
+/*
+ *			M K _ P I P E _ F R E E
+ *
+ *  Release the storage from a list of pipe segments.
+ *  The head is left in initialized state (ie, forward & back point to head).
+ */
+void
+mk_pipe_free( headp )
+register struct wdb_pipeseg	*headp;
+{
+	register struct wdb_pipeseg	*wp;
+
+	while( RT_LIST_LOOP( wp, wdb_pipeseg, &headp->l ) )  {
+		RT_LIST_DEQUEUE( &wp->l );
+		free( (char *)wp );
+	}
 }

@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "rtlist.h"
 #include "wdb.h"
 
 #include "../rt/mathtab.h"
@@ -70,7 +71,7 @@ char	**argv;
 	struct wmember head;
 	float	*randp;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
@@ -164,7 +165,7 @@ double	size;
 	struct wmember head;
 	float	*randp;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	/* These should change somewhat for each layer, and be done by rots */
 	VSET( maj, 1, 0, .2 );
@@ -234,7 +235,7 @@ int	nsolids;	/* number of solids for this layer */
 	struct wmember head;
 	float	*randp;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	for( todo = nsolids-1; todo >= 0; todo-- )  {
 		cos_var = cos( var*rand0to1(randp) );
@@ -334,7 +335,7 @@ double	size;
 	char	name[32];
 	struct wmember head;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	/* Make some objects */
 	esz = size*0.5*0.9;	/* dist from ctr to edge of base */
@@ -373,7 +374,7 @@ double	size;
 	char	name[32];
 	struct wmember head;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	size *= 0.3;		/* Don't occupy full cell */
 	xbase = xc - size/2;
@@ -448,7 +449,7 @@ int	n;
 	char	sname[32];
 	struct wmember head;
 
-	head.wm_forw = head.wm_back = &head;
+	RT_LIST_INIT( &head.l );
 
 	VSET( normal, 0, 0, 1 );
 	for( i=0; i<n; i++ )  {
