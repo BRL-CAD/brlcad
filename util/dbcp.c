@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include	<stdio.h>
+#include	<signal.h>
 
 extern int	getopt();
 extern char	*optarg;
@@ -34,12 +35,12 @@ struct pipefds {
 	int	p_wr;
 };
 
-int	pid;
-long	count;
+static int	pid;
+static long	count;
 
-int	verbose;
+static int	verbose;
 
-char	errbuf[BUFSIZ];
+static char	errbuf[BUFSIZ];
 
 extern char *malloc();
 extern int errno;
@@ -70,7 +71,7 @@ char	**argv;
 	while ( (c = getopt( argc, argv, "v" )) != EOF )  {
 		switch( c )  {
 		case 'v':
-			verbose = 1;
+			verbose++;
 			break;
 		default:
 			(void)fputs(usage, stderr);
@@ -93,6 +94,12 @@ char	**argv;
 		perror ("dbcp: Can't pipe");
 		exit (89);
 	}
+
+	/*
+	 * Ignore SIGPIPE, which may occur sometimes when the parent
+	 * goes to send a token to an already dead child on last buffer.
+	 */
+	(void)signal(SIGPIPE, SIG_IGN);
 
 	switch (pid = fork()) {
 	case -1:
@@ -161,6 +168,7 @@ char	**argv;
 			count++;
 			msgchar = GO;
 		}
+		if(verbose>1) prs("wrote %d\n", nread);
 		if (nread != size)
 			break;
 childstart:
