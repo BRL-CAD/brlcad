@@ -45,6 +45,7 @@ char *Usage = "This program ordinarily generates a database on stdout.\n\
 
 static struct shell *s;
 static struct model *m;
+static struct rt_tol tol;
 
 main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
@@ -54,7 +55,6 @@ int argc; char *argv[];
 	char * tea_name = "UtahTeapot";
 	char * uplot_name = "teapot.pl";
 	struct rt_list vhead;
-	struct rt_tol tol;
 	FILE *fp;
 	int i;
 
@@ -105,6 +105,10 @@ int argc; char *argv[];
 	/* Connect up the coincident vertexuses and edges */
 	(void)nmg_model_fuse( m , &tol );
 
+	/* write NMG to output file */
+	(void)mk_nmg( stdout , tea_name , m );
+	fflush( stdout );
+
 	/* Make a vlist drawing of the model */
 	RT_LIST_INIT( &vhead );
 	nmg_m_to_vlist( &vhead , m , 0 );
@@ -117,9 +121,6 @@ int argc; char *argv[];
 	}
 	else
 		rt_vlist_to_uplot( fp , &vhead );
-
-	/* write NMG to output file */
-	(void)mk_nmg( stdout , tea_name , m );
 
 	return(0);
 }
@@ -240,4 +241,5 @@ pt patch;
 		nmg_edge_g_cnurb_plinear( eu );
 #endif
 	}
+	nmg_face_bb( fu->f_p , &tol );
 }
