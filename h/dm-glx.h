@@ -6,6 +6,7 @@
 
 #define NSLOTS		4080	/* The mostest possible - may be fewer */
 #define NOISE 32		/* Size of dead spot on knob */
+#define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
 #define Glx_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
 
 struct modifiable_glx_vars {
@@ -15,27 +16,27 @@ struct modifiable_glx_vars {
   int lighting_on;
   int perspective_mode;
   int dummy_perspective;
+  int debug;
+  int linewidth;
   int zbuf;
   int rgb;
   int doublebuffer;
   int min_scr_z;       /* based on getgdesc(GD_ZMIN) */
   int max_scr_z;       /* based on getgdesc(GD_ZMAX) */
-  int debug;
-  int linewidth;
 };
 
 struct glx_vars {
   struct bu_list l;
-  struct dm_list *dm_list;
   Display *dpy;
   Window win;
   Tk_Window xtkwin;
-  Visual *vis;
-  Colormap cmap;
-  int depth;
-  unsigned int mb_mask;
-  long width, height;
+  int width;
+  int height;
   int omx, omy;
+  unsigned int mb_mask;
+  Colormap cmap;
+  Visual *vis;
+  int depth;
   int perspective_angle;
   int devmotionnotify;
   int devbuttonpress;

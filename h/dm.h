@@ -1,6 +1,36 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
+/* the font used depends on the size of the window opened */
+#define FONTBACK	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
+#define FONT5	"5x7"
+#define FONT6	"6x10"
+#define FONT7	"7x13"
+#define FONT8	"8x13"
+#define FONT9	"9x15"
+
+/* Display Manager Types */
+#define DM_TYPE_NULL	0
+#define DM_TYPE_PLOT	1
+#define DM_TYPE_PS	2
+#define DM_TYPE_X	3
+#define DM_TYPE_PEX	4
+#define DM_TYPE_OGL	5
+#define DM_TYPE_GLX	6
+
+#define GET_DM(p,structure,w,hp) { \
+	register struct structure *tp; \
+	for(BU_LIST_FOR(tp, structure, hp)) { \
+		if(w == tp->win) { \
+			(p) = tp; \
+			break; \
+		} \
+	} \
+\
+	if(BU_LIST_IS_HEAD(tp, hp)) \
+		p = (struct structure *)NULL; \
+}
+
 /*  Colors */
 #define DM_BLACK	0
 #define DM_RED		1
@@ -48,7 +78,6 @@ struct dm {
   int	(*dmr_cmd)();		/* application provided dm-specific command handler */
   int	(*dmr_eventhandler)();	/* application provided dm-specific event handler */
   int	dmr_displaylist;	/* !0 means device has displaylist */
-  int	dmr_releasedisplay;	/* !0 release for other programs */
   double	dmr_bound;		/* zoom-in limit */
   char	*dmr_name;		/* short name of device */
   char	*dmr_lname;		/* long name of device */
@@ -56,9 +85,7 @@ struct dm {
   genptr_t dmr_vars;		/* pointer to display manager dependant variables */
   struct bu_vls dmr_pathName;	/* full Tcl/Tk name of drawing window */
   char	dmr_dname[80];		/* Display name */
-  fastf_t *dmr_vp;              /* Viewscale pointer */
-  void (*dmr_cfunc)();          /* XXX application provided color function */
-  struct solid *dmr_hp;         /* XXX - Temporary */
+  fastf_t *dmr_vp;              /* XXX--ogl still depends on this--XXX Viewscale pointer */
 };
 
 extern void Nu_void();

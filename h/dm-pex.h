@@ -11,8 +11,9 @@
 #define Xx_TO_GED(x)    ((int)(((x)/(double)((struct pex_vars *)dmp->dmr_vars)->width - 0.5) * 4095))
 #define Xy_TO_GED(x)    ((int)((0.5 - (x)/(double)((struct pex_vars *)dmp->dmr_vars)->height) * 4095))
 
-#define Pex_MV_O(_m) offsetof(struct modifiable_pex_vars, _m)
 #define TRY_DEPTHCUE 0
+#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
+#define Pex_MV_O(_m) offsetof(struct modifiable_pex_vars, _m)
 
 struct modifiable_pex_vars {
 #if TRY_DEPTHCUE
@@ -25,21 +26,21 @@ struct modifiable_pex_vars {
 struct pex_vars {
   struct bu_list l;
   Display *dpy;
-  Tk_Window xtkwin;
   Window win;
+  Tk_Window xtkwin;
+  int width;
+  int height;
+  int omx, omy;
+  unsigned int mb_mask;
+  int perspective_angle;
+  XFontStruct *fontstruct;
+  GC gc;
 #ifdef DOUBLE_BUFFERING_WITH_PIXMAPS
   Pixmap pix;
   int pix_width, pix_height;
 #endif
   PEXRenderer renderer;
   PEXRendererAttributes rattrs;
-  unsigned int mb_mask;
-  int width;
-  int height;
-  int omx, omy;
-  int perspective_angle;
-  GC gc;
-  XFontStruct *fontstruct;
   int is_monochrome;
   unsigned long black,gray,white,yellow,red,blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */

@@ -14,6 +14,7 @@
 
 #define NOISE 32		/* Size of dead spot on knob */
 #define NSLOTS		4080	/* The mostest possible - may be fewer */
+#define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {
@@ -23,14 +24,14 @@ struct modifiable_ogl_vars {
   int lighting_on;
   int perspective_mode;
   int dummy_perspective;
+  int linewidth;
+  int fastfog;
+  double fogdensity;
   int zbuf;
   int rgb;
   int doublebuffer;
   int depth;
   int debug;
-  int linewidth;
-  int fastfog;
-  double fogdensity;
 };
 
 struct ogl_vars {
@@ -38,14 +39,15 @@ struct ogl_vars {
   Display *dpy;
   Window win;
   Tk_Window xtkwin;
-  Colormap cmap;
-  GLdouble faceplate_mat[16];
-  unsigned int mb_mask;
-  int face_flag;
   int width;
   int height;
   int omx, omy;
+  unsigned int mb_mask;
   int perspective_angle;
+  XFontStruct *fontstruct;
+  Colormap cmap;
+  GLdouble faceplate_mat[16];
+  int face_flag;
   int devmotionnotify;
   int devbuttonpress;
   int devbuttonrelease;
@@ -53,7 +55,6 @@ struct ogl_vars {
   int stereo_is_on;
   fastf_t aspect;
   GLXContext glxc;
-  XFontStruct *fontstruct;
   int fontOffset;
   int ovec;		/* Old color map entry number */
   char is_direct;

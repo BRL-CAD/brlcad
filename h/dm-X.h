@@ -13,6 +13,7 @@
 
 #define TRY_COLOR_CUBE 1
 #define NUM_PIXELS  216
+#define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
 
 struct modifiable_x_vars {
@@ -24,16 +25,16 @@ struct modifiable_x_vars {
 struct x_vars {
   struct bu_list l;
   Display *dpy;
-  Tk_Window xtkwin;
   Window win;
-  Pixmap pix;
-  unsigned int mb_mask;
+  Tk_Window xtkwin;
   int width;
   int height;
   int omx, omy;
+  unsigned int mb_mask;
   int perspective_angle;
-  GC gc;
   XFontStruct *fontstruct;
+  GC gc;
+  Pixmap pix;
   int is_monochrome;
   unsigned long black,gray,white,yellow,red,blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
