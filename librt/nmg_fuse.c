@@ -288,6 +288,135 @@ if(total>0)rt_log("nmg_model_edge_fuse(): %d edges fused\n", total);
 	return total;
 }
 
+/* XXX move to nmg_info.c */
+/*
+ *			N M G _ 2 E D G E _ G _ C O I N C I D E N T
+ *
+ *  Given two edges, determine if they share the same edge geometry,
+ *  either topologically, or within tolerance.
+ *
+ *  Returns -
+ *	0	two edge geometries are not coincident
+ *	1	edges geometries are everywhere coincident.
+ *		(For linear edge_g, the 2 are the same line, within tol.)
+ */
+int
+nmg_2edge_g_coincident( e1, e2, tol )
+CONST struct edge	*e1;
+CONST struct edge	*e2;
+CONST struct rt_tol	*tol;
+{
+	struct edge_g	*eg1;
+	struct edge_g	*eg2;
+	fastf_t		t, u;
+
+	NMG_CK_EDGE(e1);
+	NMG_CK_EDGE(e2);
+	RT_CK_TOL(tol);
+	eg1 = e1->eg_p;
+	eg2 = e2->eg_p;
+	NMG_CK_EDGE_G(eg1);
+	NMG_CK_EDGE_G(eg2);
+
+	if( eg1 == eg2 )  return 1;
+
+#if 0
+	/* Ensure direction vectors are generally parallel */
+	/* These are not unit vectors */
+	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
+	if( fabs(VDOT(eg1->e_dir, eg2->e_dir)) <
+	    0.9 * MAGNITUDE(eg1->e_dir) * MAGNITUDE(eg2->e_dir)  )  return 0;
+#endif
+
+	/* Ensure that vertices of both edges are within tol of other eg */
+	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
+	    e2->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
+	    e2->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+
+	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
+	    e1->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
+	    e1->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+
+	/* Ensure that lines are colinear */
+	if( rt_isect_line3_line3( &t, &u, eg1->e_pt, eg1->e_dir,
+	    eg2->e_pt, eg2->e_dir, tol) != 0 )  {
+#if 0
+	    	VPRINT("eg1->e_pt ", eg1->e_pt);
+	    	VPRINT("eg1->e_dir", eg1->e_dir);
+	    	VPRINT("eg2->e_pt ", eg2->e_pt);
+	    	VPRINT("eg2->e_dir", eg2->e_dir);
+rt_log("nmg_2edge_g_coincident() rejecting on rt_isect_line3_line3()\n");
+#endif
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
+ *			N M G _ M O D E L _ E D G E _ G _ F U S E
+ */
+int
+nmg_model_edge_g_fuse( m, tol )
+struct model		*m;
+CONST struct rt_tol	*tol;
+{
+	struct nmg_ptbl	etab;
+	int		total = 0;
+	register int	i,j;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	/* Make a list of all the edgeuse structs in the model */
+	nmg_edge_tabulate( &etab, &m->magic );
+
+	for( i = NMG_TBL_END(&etab)-1; i >= 0; i-- )  {
+		register struct edge	*e1;
+		struct edge_g		*eg1;
+
+		e1 = (struct edge *)NMG_TBL_GET(&etab, i);
+		NMG_CK_EDGE(e1);
+		eg1 = e1->eg_p;
+		NMG_CK_EDGE_G(eg1);
+
+		for( j = i-1; j >= 0; j-- )  {
+			register struct edge	*e2;
+			struct edge_g		*eg2;
+			register struct edge	**ep;
+
+			e2 = (struct edge *)NMG_TBL_GET(&etab,j);
+			NMG_CK_EDGE(e2);
+			eg2 = e2->eg_p;
+			NMG_CK_EDGE_G(eg2);
+
+			if( e1 == e2 )  rt_bomb("nmg_model_edge_g_fuse() two incidences of edge?\n");
+			if( eg1 == eg2 )  continue;
+
+			if( !nmg_2edge_g_coincident( e1, e2, tol ) )  continue;
+
+			/* Comitted to fusing two edge_g's.
+			 * Make all instances of eg2 become eg1.
+			 * XXX really should check ALL edges using eg1
+			 * XXX against ALL edges using eg2 for coincidence.
+			 */
+		     	total++;
+			for( ep = (struct edge **)NMG_TBL_LASTADDR(&etab);
+			     ep >= (struct edge **)NMG_TBL_BASEADDR(&etab);
+			     ep--
+			)  {
+				if( (*ep)->eg_p != eg2 )  continue;
+				/* Change every edge using eg2 to use eg1 */
+				nmg_use_edge_g( *ep, eg1 );
+			}
+		}
+	}
+if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g's fused\n", total);
+	return total;
+}
+
 /*
  *			N M G _ C K _ F U _ V E R T S
  *
@@ -614,6 +743,9 @@ CONST struct rt_tol	*tol;
 
 	/* Step 3 -- edges */
 	total += nmg_model_edge_fuse( m, tol );
+
+	/* Step 4 -- edge geometry */
+	total += nmg_model_edge_g_fuse( m, tol );
 
 if(total>0)rt_log("nmg_model_fuse(): %d entities fused\n", total);
 	return total;
