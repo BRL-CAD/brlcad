@@ -153,13 +153,14 @@ point_t	pts[];
 /*
  *			M K _ S P H
  *
- * Make a sphere centered at sx, sy, sz with radius r.
+ * Make a sphere centered at point with radius r.
  */
 
-mk_sph( fp, name, sx, sy, sz, r)
+mk_sph( fp, name, point, r)
 FILE	*fp;
 char	*name;
-fastf_t	sx, sy, sz, r;
+point_t	point;
+fastf_t	r;
 {
 	register int i;
 	static union record rec;
@@ -170,7 +171,7 @@ fastf_t	sx, sy, sz, r;
 	rec.s.s_cgtype = SPH;
 	NAMEMOVE(name,rec.s.s_name);
 
-	VSET( &rec.s.s_values[0], sx, sy, sz);
+	VMOVE( &rec.s.s_values[0], point );
 	VSET( &rec.s.s_values[3], r, 0, 0 );
 	VSET( &rec.s.s_values[6], 0, r, 0 );
 	VSET( &rec.s.s_values[9], 0, 0, r );
@@ -312,11 +313,11 @@ char	*name;
  *
  *  Must be part of combination/member clump of records.
  */
-mk_memb( fp, op, name, mat )
+mk_memb( fp, name, mat, op )
 FILE	*fp;
-int	op;
 char	*name;
 mat_t	mat;
+int	op;
 {
 	static union record rec;
 	register int i;
