@@ -258,7 +258,7 @@ reg	bool	force_exec;
 				if (code.w_termsig == 0)
 					printf("*** Error code %d\n", code.w_retcode);
 				else
-					printf("*** Termination code %d\n", code.w_termsig);
+					printf("*** Termination code signal %d\n", code.w_termsig);
 			}
 			
 			cake_error(node);
