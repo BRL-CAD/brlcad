@@ -85,7 +85,7 @@ char *str;
 		"%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
 		usert, syst, realt, percent );
 #else
-	sprintf(line,"%g user + %s sys in %g elapsed secs (%g%%)",
+	sprintf(line,"%g user + %g sys in %g elapsed secs (%g%%)",
 		usert, syst, realt, percent );
 #endif
 	(void)strncpy( str, line, len );
