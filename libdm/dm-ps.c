@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "_dm.h"
+#include "dm.h"
 #include "dm-ps.h"
 
 #define EPSILON          0.0001
@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*XXX This is just temporary!!! */
 #include "../mged/solid.h"
 
-static int vclip();
+static void PS_load_startup();
 
 /* Display Manager package interface */
 
@@ -85,24 +85,123 @@ struct dm dm_PS = {
   0
 };
 
-static vect_t	clipmin, clipmax;	/* for vector clipping */
-FILE	*ps_fp;			/* PostScript file pointer */
-static char	ttybuf[BUFSIZ];
+char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inches]\
+ [-l linewidth] file";
 
-/*
- * Display coordinate conversion:
- *  GED is using -2048..+2047,
- *  and we define the PLOT file to use 0..4095
- */
+struct ps_vars head_ps_vars;
+
 static int
-PS_init(dmp, color_func)
+PS_init(dmp, color_func, argc, argv)
 struct dm *dmp;
 void (*color_func)();
+int argc;
+char *argv[];
 {
+  static int count = 0;
+
+  /* Only need to do this once for this display manager */
+  if(!count)
+    PS_load_startup(dmp);
+
+  bu_vls_printf(&dmp->dmr_pathName, ".dm_ps%d", count++);
 
   dmp->dmr_vars = bu_malloc(sizeof(struct ps_vars), "PS_init: ps_vars");
   bzero((void *)dmp->dmr_vars, sizeof(struct ps_vars));
   ((struct ps_vars *)dmp->dmr_vars)->color_func = color_func;
+  bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->fname);
+  bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->font);
+  bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->title);
+  bu_vls_init(&((struct ps_vars *)dmp->dmr_vars)->creator);
+
+  /* set defaults */
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->font, "Courier");
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->title, "No Title");
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->creator, "LIBDM dm-ps");
+  ((struct ps_vars *)dmp->dmr_vars)->scale = 0.0791;
+  ((struct ps_vars *)dmp->dmr_vars)->linewidth = 4;
+  
+  /* Process any options */
+  while(argv[1] != (char *)0 && argv[1][0] == '-'){
+    switch(argv[1][1]){
+    case 'f':               /* font */
+      if(argv[1][2] != '\0')
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->font, &argv[1][2]);
+      else{
+	argv++;
+	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	  Tcl_AppendResult(interp, ps_usage, (char *)0);
+	  return TCL_ERROR;
+	}else
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->font, &argv[1][0]);
+      }
+      break;
+    case 't':               /* title */
+      if(argv[1][2] != '\0')
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->title, &argv[1][2]);
+      else{
+	argv++;
+	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	  Tcl_AppendResult(interp, ps_usage, (char *)0);
+	  return TCL_ERROR;
+	}else
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->title, &argv[1][0]);
+      }
+      break;
+    case 'c':               /* creator */
+      if(argv[1][2] != '\0')
+	bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->creator, &argv[1][2]);
+      else{
+	argv++;
+	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	  Tcl_AppendResult(interp, ps_usage, (char *)0);
+	  return TCL_ERROR;
+	}else
+	  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->creator, &argv[1][0]);
+      }
+      break;
+    case 's':               /* size in inches */
+      {
+	fastf_t size;
+
+	if(argv[1][2] != '\0')
+	  sscanf(&argv[1][2], "%lf", &size);
+	else{
+	  argv++;
+	  if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	    Tcl_AppendResult(interp, ps_usage, (char *)0);
+	    return TCL_ERROR;
+	  }else
+	    sscanf(&argv[1][0], "%lf", &size);
+	}
+
+	((struct ps_vars *)dmp->dmr_vars)->scale = size * 0.017578125;
+      }
+      break;
+    case 'l':               /* line width */
+      if(argv[1][2] != '\0')
+	sscanf(&argv[1][2], "%d", &((struct ps_vars *)dmp->dmr_vars)->linewidth);
+      else{
+	argv++;
+	if(argv[1] == (char *)0 || argv[1][0] == '-'){
+	  Tcl_AppendResult(interp, ps_usage, (char *)0);
+	  return TCL_ERROR;
+	}else
+	  sscanf(&argv[1][0], "%d", &((struct ps_vars *)dmp->dmr_vars)->linewidth);
+      }
+      break;
+    default:
+      Tcl_AppendResult(interp, ps_usage, (char *)0);
+      return TCL_ERROR;
+    }
+    argv++;
+  }
+
+  if(argv[1] == (char *)0){
+    Tcl_AppendResult(interp, "no filename specified\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  bu_vls_strcpy(&((struct ps_vars *)dmp->dmr_vars)->fname, argv[1]);
 
   if(dmp->dmr_vars)
     return TCL_OK;
@@ -120,50 +219,61 @@ static int
 PS_open(dmp)
 struct dm *dmp;
 {
-	char line[64];
+  if( (((struct ps_vars *)dmp->dmr_vars)->ps_fp =
+       fopen(bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->fname), "w")) == NULL){
+    Tcl_AppendResult(interp, "f_ps: Error opening file - ",
+		     ((struct ps_vars *)dmp->dmr_vars)->fname,
+		     "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  
+  setbuf( ((struct ps_vars *)dmp->dmr_vars)->ps_fp,
+	  ((struct ps_vars *)dmp->dmr_vars)->ttybuf );
+  fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"%%!PS-Adobe-1.0\n\
+%%begin(plot)\n\
+%%%%DocumentFonts:  %s\n",
+	  bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->font));
 
-	if( (ps_fp = fopen( dmp->dmr_dname, "w" )) == NULL ){
-	  Tcl_AppendResult(interp, "f_ps: Error opening file - ", dmp->dmr_dname,
-			   "\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+  fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "%%%%Title: %s\n",
+	  bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->title));
 
-	setbuf( ps_fp, ttybuf );
-	fputs( "%!PS-Adobe-1.0\n\
-%begin(plot)\n\
-%%DocumentFonts:  Courier\n", ps_fp );
-	fprintf(ps_fp, "%%%%Title: %s\n", line );
-	fputs( "\
-%%Creator: MGED dm-ps.c\n\
-%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX\n\
-%%EndComments\n\
-\n", ps_fp );
+  fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "\
+%%%%Creator: %s\n\
+%%%%BoundingBox: 0 0 324 324	%% 4.5in square, for TeX\n\
+%%%%EndComments\n\
+\n", bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->creator));
 
-	fputs( "\
-4 setlinewidth\n\
+  fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "\
+%d setlinewidth\n\
 \n\
-% Sizes, made functions to avoid scaling if not needed\n\
-/FntH /Courier findfont 80 scalefont def\n\
-/DFntL { /FntL /Courier findfont 73.4 scalefont def } def\n\
-/DFntM { /FntM /Courier findfont 50.2 scalefont def } def\n\
-/DFntS { /FntS /Courier findfont 44 scalefont def } def\n\
+%% Sizes, made functions to avoid scaling if not needed\n\
+/FntH /%s findfont 80 scalefont def\n\
+/DFntL { /FntL /%s findfont 73.4 scalefont def } def\n\
+/DFntM { /FntM /%s findfont 50.2 scalefont def } def\n\
+/DFntS { /FntS /%s findfont 44 scalefont def } def\n\
 \n\
-% line styles\n\
-/NV { [] 0 setdash } def	% normal vectors\n\
-/DV { [8] 0 setdash } def	% dotted vectors\n\
-/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors\n\
-/SDV { [32 8] 0 setdash } def	% short-dash vectors\n\
-/LDV { [64 8] 0 setdash } def	% long-dash vectors\n\
+%% line styles\n\
+/NV { [] 0 setdash } def	%% normal vectors\n\
+/DV { [8] 0 setdash } def	%% dotted vectors\n\
+/DDV { [8 8 32 8] 0 setdash } def	%% dot-dash vectors\n\
+/SDV { [32 8] 0 setdash } def	%% short-dash vectors\n\
+/LDV { [64 8] 0 setdash } def	%% long-dash vectors\n\
 \n\
 /NEWPG {\n\
-	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)\n\
+	%f %f scale	%% 0-4096 to 324 units (4.5 inches)\n\
 } def\n\
 \n\
 FntH  setfont\n\
 NEWPG\n\
-", ps_fp);
+", ((struct ps_vars *)dmp->dmr_vars)->linewidth,
+	  bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->font),
+	  bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->font),
+	  bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->font),
+	  bu_vls_addr(&((struct ps_vars *)dmp->dmr_vars)->font),
+	  ((struct ps_vars *)dmp->dmr_vars)->scale,
+	  ((struct ps_vars *)dmp->dmr_vars)->scale);
 
-	return(0);			/* OK */
+  return TCL_OK;
 }
 
 /*
@@ -175,11 +285,26 @@ static void
 PS_close(dmp)
 struct dm *dmp;
 {
-  if( !ps_fp )  return;
+  if(!((struct ps_vars *)dmp->dmr_vars)->ps_fp)
+    return;
 
-  fputs("%end(plot)\n", ps_fp);
-  (void)fclose(ps_fp);
-  ps_fp = (FILE *)NULL;
+  fputs("%end(plot)\n", ((struct ps_vars *)dmp->dmr_vars)->ps_fp);
+  (void)fclose(((struct ps_vars *)dmp->dmr_vars)->ps_fp);
+
+#if 0
+  /* Give the application a chance to clean up */
+  if(dmp->dmr_app_close)
+    dmp->dmr_app_close(((struct ps_vars *)dmp->dmr_vars)->app_vars);
+#endif
+
+  if(((struct ps_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
+    BU_LIST_DEQUEUE(&((struct ps_vars *)dmp->dmr_vars)->l);
+
+  bu_vls_free(&((struct ps_vars *)dmp->dmr_vars)->fname);
+  bu_vls_free(&((struct ps_vars *)dmp->dmr_vars)->font);
+  bu_vls_free(&((struct ps_vars *)dmp->dmr_vars)->title);
+  bu_vls_free(&((struct ps_vars *)dmp->dmr_vars)->creator);
+  bu_free(dmp->dmr_vars, "PS_close: ps_vars");
 }
 
 /*
@@ -202,10 +327,10 @@ static void
 PS_epilog(dmp)
 struct dm *dmp;
 {
-  if( !ps_fp )  return;
+  if( !((struct ps_vars *)dmp->dmr_vars)->ps_fp )  return;
 
-  fputs("% showpage	% uncomment to use raw file\n", ps_fp);
-  (void)fflush( ps_fp );
+  fputs("% showpage	% uncomment to use raw file\n", ((struct ps_vars *)dmp->dmr_vars)->ps_fp);
+  (void)fflush( ((struct ps_vars *)dmp->dmr_vars)->ps_fp );
   return;
 }
 
@@ -244,12 +369,12 @@ int white;
 	register struct rt_vlist	*vp;
 	int useful = 0;
 
-	if( !ps_fp )  return(0);
+	if( !((struct ps_vars *)dmp->dmr_vars)->ps_fp )  return(0);
 
 	if( sp->s_soldash )
-		fprintf(ps_fp, "DDV ");		/* Dot-dashed vectors */
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "DDV ");		/* Dot-dashed vectors */
 	else
-		fprintf(ps_fp, "NV ");		/* Normal vectors */
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "NV ");		/* Normal vectors */
 
 	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
@@ -278,10 +403,10 @@ int white;
 			}
 
 			if(
-				vclip( start, fin, clipmin, clipmax ) == 0
+				vclip( start, fin, ((struct ps_vars *)dmp->dmr_vars)->clipmin, ((struct ps_vars *)dmp->dmr_vars)->clipmax ) == 0
 			)  continue;
 
-			fprintf(ps_fp,"newpath %d %d moveto %d %d lineto stroke\n",
+			fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"newpath %d %d moveto %d %d lineto stroke\n",
 				GED_TO_PS( start[0] * 2047 ),
 				GED_TO_PS( start[1] * 2047 ),
 				GED_TO_PS( fin[0] * 2047 ),
@@ -315,9 +440,9 @@ static void
 PS_update(dmp)
 struct dm *dmp;
 {
-	if( !ps_fp )  return;
+	if( !((struct ps_vars *)dmp->dmr_vars)->ps_fp )  return;
 
-	(void)fflush(ps_fp);
+	(void)fflush(((struct ps_vars *)dmp->dmr_vars)->ps_fp);
 }
 
 /*
@@ -332,26 +457,26 @@ PS_puts( dmp, str, x, y, size, color )
 struct dm *dmp;
 register char *str;
 {
-	if( !ps_fp )  return;
+	if( !((struct ps_vars *)dmp->dmr_vars)->ps_fp )  return;
 
 	switch( size )  {
 	default:
 		/* Smallest */
-		fprintf(ps_fp,"DFntS ");
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"DFntS ");
 		break;
 	case 1:
-		fprintf(ps_fp,"DFntM ");
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"DFntM ");
 		break;
 	case 2:
-		fprintf(ps_fp,"DFntL ");
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"DFntL ");
 		break;
 	case 3:
 		/* Largest */
-		fprintf(ps_fp,"FntH ");
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"FntH ");
 		break;
 	}
 
-	fprintf(ps_fp, "(%s) %d %d moveto show\n",
+	fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "(%s) %d %d moveto show\n",
 		str, GED_TO_PS(x), GED_TO_PS(y) );
 }
 
@@ -367,13 +492,13 @@ int x2, y2;
 int dashed;
 {
 
-	if( !ps_fp )  return;
+	if( !((struct ps_vars *)dmp->dmr_vars)->ps_fp )  return;
 
 	if( dashed )
-		fprintf(ps_fp, "DDV ");	/* Dot-dashed vectors */
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "DDV ");	/* Dot-dashed vectors */
 	else
-		fprintf(ps_fp, "NV ");		/* Normal vectors */
-	fprintf(ps_fp,"newpath %d %d moveto %d %d lineto stroke\n",
+		fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp, "NV ");		/* Normal vectors */
+	fprintf(((struct ps_vars *)dmp->dmr_vars)->ps_fp,"newpath %d %d moveto %d %d lineto stroke\n",
 		GED_TO_PS(x1), GED_TO_PS(y1),
 		GED_TO_PS(x2), GED_TO_PS(y2) );
 }
@@ -490,86 +615,23 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  clipmin[0] = w[1] / 2048.;
-  clipmin[1] = w[3] / 2048.;
-  clipmin[2] = w[5] / 2048.;
-  clipmax[0] = w[0] / 2047.;
-  clipmax[1] = w[2] / 2047.;
-  clipmax[2] = w[4] / 2047.;
+  ((struct ps_vars *)dmp->dmr_vars)->clipmin[0] = w[1] / 2048.;
+  ((struct ps_vars *)dmp->dmr_vars)->clipmin[1] = w[3] / 2048.;
+  ((struct ps_vars *)dmp->dmr_vars)->clipmin[2] = w[5] / 2048.;
+  ((struct ps_vars *)dmp->dmr_vars)->clipmax[0] = w[0] / 2047.;
+  ((struct ps_vars *)dmp->dmr_vars)->clipmax[1] = w[2] / 2047.;
+  ((struct ps_vars *)dmp->dmr_vars)->clipmax[2] = w[4] / 2047.;
 }
 
-/*                      V C L I P
- *
- *  Clip a ray against a rectangular parallelpiped (RPP)
- *  that has faces parallel to the coordinate planes (a clipping RPP).
- *  The RPP is defined by a minimum point and a maximum point.
- *
- *  Returns -
- *	 0  if ray does not hit RPP,
- *	!0  if ray hits RPP.
- *
- *  Implicit Return -
- *	if !0 was returned, "a" and "b" have been clipped to the RPP.
- */
-static int
-vclip( a, b, min, max )
-vect_t a, b;
-register fastf_t *min, *max;
+static void
+PS_load_startup(dmp)
+struct dm *dmp;
 {
-	static vect_t diff;
-	static double sv;
-	static double st;
-	static double mindist, maxdist;
-	register fastf_t *pt = &a[0];
-	register fastf_t *dir = &diff[0];
-	register int i;
+  char *filename;
 
-	mindist = -INFINITY;
-	maxdist = INFINITY;
-	VSUB2( diff, b, a );
+  bzero((void *)&head_ps_vars, sizeof(struct ps_vars));
+  BU_LIST_INIT( &head_ps_vars.l );
 
-	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
-		if( *dir < -EPSILON )  {
-			if( (sv = (*min - *pt) / *dir) < 0.0 )
-				return(0);	/* MISS */
-			if(maxdist > sv)
-				maxdist = sv;
-			if( mindist < (st = (*max - *pt) / *dir) )
-				mindist = st;
-		}  else if( *dir > EPSILON )  {
-			if( (st = (*max - *pt) / *dir) < 0.0 )
-				return(0);	/* MISS */
-			if(maxdist > st)
-				maxdist = st;
-			if( mindist < ((sv = (*min - *pt) / *dir)) )
-				mindist = sv;
-		}  else  {
-			/*
-			 *  If direction component along this axis is NEAR 0,
-			 *  (ie, this ray is aligned with this axis),
-			 *  merely check against the boundaries.
-			 */
-			if( (*min > *pt) || (*max < *pt) )
-				return(0);	/* MISS */;
-		}
-	}
-	if( mindist >= maxdist )
-		return(0);	/* MISS */
-
-	if( mindist > 1 || maxdist < 0 )
-		return(0);	/* MISS */
-
-	if( mindist <= 0 && maxdist >= 1 )
-		return(1);	/* HIT, no clipping needed */
-
-	/* Don't grow one end of a contained segment */
-	if( mindist < 0 )
-		mindist = 0;
-	if( maxdist > 1 )
-		maxdist = 1;
-
-	/* Compute actual intercept points */
-	VJOIN1( b, a, maxdist, diff );		/* b must go first */
-	VJOIN1( a, a, mindist, diff );
-	return(1);		/* HIT */
+  if((filename = getenv("DM_PS_RCFILE")) != (char *)NULL )
+    Tcl_EvalFile(interp, filename);
 }
