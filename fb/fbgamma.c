@@ -36,7 +36,7 @@ int argc; char **argv;
 	int	onegamma = 0;
 	int	fbsize = 512;
 	int	overlay = 0;
-	double	gamr, gamg, gamb;	/* gamma's */
+	double	gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
 	double	f;
 	ColorMap cm;
 	FBIO	*fbp;

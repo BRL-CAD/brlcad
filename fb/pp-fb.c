@@ -413,7 +413,8 @@ paint()
 {
 	char c;
 	int i,j,iw,ih,iwih,trnf,flop;
-	int inten,inten_high;
+	int	inten = 0;
+	int	inten_high;
 	long li,lj,numb();
 	RGBpixel ocl,tcl,pmix,tp,bp;
 	register RGBpixel *fb_p;	/* Current position in buffer.	*/
