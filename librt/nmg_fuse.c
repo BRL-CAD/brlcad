@@ -1380,7 +1380,7 @@ struct bn_tol *tol;
 		struct edgeuse *eu1;
 
 		e1 = (struct edge *)BU_PTBL_GET( &edges, i );
-		if( !e1->index )
+		if(!e1 || !e1->index || e1->magic != NMG_EDGE_MAGIC )
 			continue;
 		eu1 = e1->eu_p;
 		if( !eu1 )
@@ -1394,7 +1394,7 @@ struct bn_tol *tol;
 			struct edgeuse *eu2;
 
 			e2 = (struct edge *)BU_PTBL_GET( &edges, j );
-			if( !e2->index )
+			if( !e2 || !e2->index || e2->magic != NMG_EDGE_MAGIC )
 				continue;
 			eu2 = e2->eu_p;
 			if( !eu2 )
