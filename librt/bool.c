@@ -34,6 +34,98 @@ static char RCSbool[] = "@(#)$Header$ (BRL)";
 RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
 
 /*
+ *			R T _ W E A V E 0 S E G
+ *
+ *  If a zero thickness segment abutts another partition,
+ *  it will be fused in, later.
+ *
+ *  If it is free standing, then it will remain as a
+ *  zero thickness partition, which probably signals
+ *  going through some solid an odd number of times,
+ *  or hitting an NMG wire edge or NMG lone vertex.
+ */
+rt_weave0seg( segp, PartHdp, ap )
+struct seg		*segp;
+struct partition	*PartHdp;
+struct application	*ap;
+{
+	register struct partition *pp;
+	struct resource		*res = ap->a_resource;
+	struct rt_i		*rtip = ap->a_rt_i;
+	FAST fastf_t		diff;
+	FAST CONST fastf_t	tol_dist = rtip->rti_tol.dist;
+
+	RT_CHECK_RTI(ap->a_rt_i);
+	RT_CK_RESOURCE(res);
+	RT_CK_RTI(rtip);
+
+	if(rt_g.debug&DEBUG_PARTITION)  {
+		rt_log(
+		"rt_boolweave:  Zero thickness seg: %s (%.18e,%.18e) %d,%d\n",
+		segp->seg_stp->st_name,
+		segp->seg_in.hit_dist,
+		segp->seg_out.hit_dist,
+		segp->seg_in.hit_surfno,
+		segp->seg_out.hit_surfno );
+	}
+
+	if( PartHdp->pt_forw == PartHdp )  rt_bomb("rt_weave0seg() with empty partition list\n");
+
+	/* See if this segment ends before start of first partition */
+	if( segp->seg_out.hit_dist < PartHdp->pt_forw->pt_inhit->hit_dist )  {
+		GET_PT_INIT( rtip, pp, res );
+		BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+		pp->pt_inseg = segp;
+		pp->pt_inhit = &segp->seg_in;
+		pp->pt_outseg = segp;
+		pp->pt_outhit = &segp->seg_out;
+		APPEND_PT( pp, PartHdp );
+		if(rt_g.debug&DEBUG_PARTITION) rt_log("0-len segment ends before start of first partition.\n");
+		return;
+	}
+
+	/*
+	 *  Cases:  seg at start of pt, in middle of pt, at end of pt,
+	 *  or past end of pt but before start of next pt.
+	 *  XXX For the first 3 cases, we might want to make a new 0-len pt,
+	 *  XXX especially as the NMG ray-tracer starts reporting wire hits.
+	 */
+	for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
+		if( NEAR_ZERO( segp->seg_in.hit_dist  - pp->pt_inhit->hit_dist, tol_dist ) ||
+		    NEAR_ZERO( segp->seg_out.hit_dist - pp->pt_inhit->hit_dist, tol_dist )
+		)  {
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("0-len segment ends right at start of existing partition.\n");
+			return;
+		}
+		if( NEAR_ZERO( segp->seg_in.hit_dist  - pp->pt_outhit->hit_dist, tol_dist ) ||
+		    NEAR_ZERO( segp->seg_out.hit_dist - pp->pt_outhit->hit_dist, tol_dist )
+		)  {
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("0-len segment ends right at end of existing partition.\n");
+			return;
+		}
+		if( segp->seg_out.hit_dist <= pp->pt_outhit->hit_dist &&
+		    segp->seg_in.hit_dist >= pp->pt_inhit->hit_dist )  {
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("0-len segment in the middle of existing partition.\n");
+			return;
+		}
+		if( pp->pt_forw == PartHdp ||
+		    segp->seg_out.hit_dist < pp->pt_forw->pt_inhit->hit_dist )  {
+		    	struct partition	*npp;
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("0-len segment after existing partition, but before next partition.\n");
+			GET_PT_INIT( rtip, npp, res );
+			BITSET(npp->pt_solhit, segp->seg_stp->st_bit);
+			npp->pt_inseg = segp;
+			npp->pt_inhit = &segp->seg_in;
+			npp->pt_outseg = segp;
+			npp->pt_outhit = &segp->seg_out;
+			APPEND_PT( npp, pp );
+			return;
+		}
+	}
+	rt_bomb("rt_weave0seg() fell out of partition loop?\n");
+}
+
+/*
  *			R T _ B O O L W E A V E
  *
  *  Weave a chain of segments into an existing set of partitions.
@@ -69,7 +161,8 @@ struct application	*ap;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
-	fastf_t			diff;
+	FAST fastf_t		diff;
+	FAST CONST fastf_t	tol_dist = rtip->rti_tol.dist;
 
 	RT_CHECK_RTI(ap->a_rt_i);
 	RT_CK_RESOURCE(res);
@@ -99,25 +192,6 @@ struct application	*ap;
 		if( segp->seg_out.hit_dist < -10.0 )
 			continue;
 
-		/*
-		 *  Force "very thin" segments to have exactly zero thickness.
-		 *  If a zero thickness segment abutts another partition,
-		 *  it will be fused in, later.
-		 *  If it is free standing, then it will remain as a
-		 *  zero thickness partition, which probably signals
-		 *  going through some solid an odd number of times.
-		 */
-		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
-		if( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
-			if(rt_g.debug&DEBUG_PARTITION)  rt_log(
-				"rt_boolweave:  Zero thickness seg: %s (%.18e,%.18e) %d,%d\n",
-				segp->seg_stp->st_name,
-				segp->seg_in.hit_dist,
-				segp->seg_out.hit_dist,
-				segp->seg_in.hit_surfno,
-				segp->seg_out.hit_surfno );
-			segp->seg_out.hit_dist = segp->seg_in.hit_dist;
-		}
 		if( !(segp->seg_in.hit_dist >= -INFINITY &&
 		    segp->seg_out.hit_dist <= INFINITY) )  {
 		    	rt_log("rt_boolweave:  Defective %s segment %s (%.18e,%.18e) %d,%d\n",
@@ -156,6 +230,14 @@ struct application	*ap;
 			if(rt_g.debug&DEBUG_PARTITION) rt_log("First partition\n");
 			goto done_weave;
 		}
+
+		/* Check for zero-thickness segment, within tol */
+		diff = segp->seg_in.hit_dist - segp->seg_out.hit_dist;
+		if( NEAR_ZERO( diff, tol_dist ) )  {
+			rt_weave0seg( segp, PartHdp, ap );
+			goto done_weave;
+		}
+
 		if( segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist )  {
 			/*
 			 * Segment starts exactly at last partition's end,
@@ -182,7 +264,7 @@ struct application	*ap;
 		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
 
 			diff = lasthit->hit_dist - pp->pt_outhit->hit_dist;
-			if( diff > ap->a_rt_i->rti_tol.dist )  {
+			if( diff > tol_dist )  {
 				/* Seg starts beyond the END of the
 				 * current partition.
 				 *	PPPP
@@ -196,7 +278,7 @@ struct application	*ap;
 				}
 				continue;
 			}
-			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
+			if( diff > -(tol_dist) )  {
 				/*
 				 * Seg starts almost "precisely" at the
 				 * end of the current partition.
@@ -219,7 +301,7 @@ struct application	*ap;
 			 *	  SSSS...
 			 */
 			diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
-			if( diff > ap->a_rt_i->rti_tol.dist )  {
+			if( diff > tol_dist )  {
 				/*
 				 * lasthit->hit_dist > pp->pt_inhit->hit_dist
 				 * pp->pt_inhit->hit_dist < lasthit->hit_dist
@@ -244,7 +326,7 @@ struct application	*ap;
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts within p. Split p at seg start, advance.\n");
 				goto equal_start;
 			}
-			if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
+			if( diff > -(tol_dist) )  {
 				/*
 				 * Make a subtle but important distinction here.
 				 * Even though the two distances are "equal"
@@ -260,7 +342,7 @@ struct application	*ap;
 				 * than the top face of the ARB8.
 				 */
 				diff = segp->seg_in.hit_dist - pp->pt_inhit->hit_dist;
-				if( NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist) &&
+				if( NEAR_ZERO(diff, tol_dist) &&
 				    diff < 0 )  {
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("changing partition start point to segment start point\n");
 					pp->pt_inseg = segp;
@@ -278,7 +360,7 @@ equal_start:
 				 * exactly equal!
 				 */
 				diff = segp->seg_out.hit_dist - pp->pt_outhit->hit_dist;
-				if( diff > ap->a_rt_i->rti_tol.dist )  {
+				if( diff > tol_dist )  {
 					/*
 					 * Seg & partition start at roughly
 					 * the same spot,
@@ -294,7 +376,7 @@ equal_start:
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg spans p and beyond\n");
 					continue;
 				}
-				if( diff > -(ap->a_rt_i->rti_tol.dist) )  {
+				if( diff > -(tol_dist) )  {
 					/*
 					 *  diff ~= 0
 					 * Segment and partition start & end
@@ -346,7 +428,7 @@ equal_start:
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
 				diff = segp->seg_out.hit_dist - pp->pt_inhit->hit_dist;
-				if( diff < -(ap->a_rt_i->rti_tol.dist) )  {
+				if( diff < -(tol_dist) )  {
 					/*
 					 *  diff < ~0
 					 * Seg starts and ends before current
@@ -363,7 +445,7 @@ equal_start:
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("seg between 2 partitions\n");
 					goto done_weave;
 				}
-				if( diff < ap->a_rt_i->rti_tol.dist )  {
+				if( diff < tol_dist )  {
 					/*
 					 *  diff ~= 0
 					 *
