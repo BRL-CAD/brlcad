@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
 
-#include "../h/machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -39,6 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
+#include <gl/get.h>		/* SGI IRIS library */
 #include <sys/types.h>
 #include <sys/invent.h>
 
@@ -209,9 +210,10 @@ register int y;
 int
 Ir_open()
 {
-	register int i;
-	Matrix	m;
+	register int	i;
+	Matrix		m;
 	inventory_t	*inv;
+	int		npix;
 
 	/*
 	 *  Take inventory of the hardware
@@ -236,17 +238,67 @@ Ir_open()
 	}
 	endinvent();		/* frees internal inventory memory */
 
+	/* Start out with the usual window */
 	foreground();
-	prefposition( 276, 1276, 12, 1012 );
+	prefposition( 376, 1276, 12, 912 );
 	if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
 		printf( "No more graphics ports available.\n" );
 		return	-1;
 	}
 
-	/* setupt the global variables for the window. */
+	/*
+	 *  If monitor is in special mode, close window and re-open.
+	 *  winconstraints() does not work, and getmonitor() can't
+	 *  be called before a window is open.
+	 */
+	switch( getmonitor() )  {
+	case HZ30:
+	case HZ30_SG:
+		/* Dunn camera, etc. */
+		/* Use already established prefposition */
+		break;
+	default:
+	case HZ60:
+		/* Regular hi-res monitor */
+		/* Use already established prefposition */
+		break;
+	case NTSC:
+		/* Television */
+		winclose(gr_id);
+		prefposition( 0, XMAX170, 0, YMAX170 );
+		foreground();
+		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+			printf( "No more graphics ports available.\n" );
+			return	-1;
+		}
+		ir_clear_to_black();
+		/* Only use the central square part */
+		npix = YMAX170-30;
+		viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
+			(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
+		linewidth(3);
+		break;
+	case PAL:
+		/* Television */
+		winclose(gr_id);
+		prefposition( 0, XMAXPAL, 0, YMAXPAL );
+		foreground();
+		if( (gr_id = winopen( "BRL MGED" )) == -1 )  {
+			printf( "No more graphics ports available.\n" );
+			return	-1;
+		}
+		ir_clear_to_black();
+		/* Only use the central square part */
+		npix = YMAXPAL-30;
+		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
+			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
+		linewidth(2);
+		break;
+	}
+
+	/* Sense the actual size of the window */
 	getsize( &winx_size, &winy_size);
 	getorigin( &win_l, & win_b );
-
 	win_r = win_l + winx_size;
 	win_t = win_b + winy_size;
 
@@ -258,8 +310,6 @@ Ir_open()
 	}
 	doublebuffer();			/* half of whatever we have */
 	gconfig();
-
-	winattach( );
 
 	/*
 	 * Establish GL library operating modes
@@ -1123,6 +1173,7 @@ checkevents()  {
 			}
 			break;
 		case REDRAW:
+			/* Window may have moved? */
 			dmaflag = 1;
 			refresh();		/* to fix back buffer */
 			dmaflag = 1;
