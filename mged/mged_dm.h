@@ -35,6 +35,7 @@ extern FILE *ps_fp;
 #define VIRTUAL_TRACKBALL_ROTATE 2 
 #define VIRTUAL_TRACKBALL_TRANSLATE 3
 #define VIRTUAL_TRACKBALL_ZOOM 4
+#define VIEW_TABLE_SIZE 4
 
 /* Interface to a specific Display Manager */
 struct dm {
@@ -75,14 +76,18 @@ struct shared_info {
   mat_t   _view2model;
   mat_t   _model2objview;
   mat_t   _objview2model;
-  struct _mged_variables _mged_variables;
+
+  mat_t	  _viewrot_table[VIEW_TABLE_SIZE];
+  fastf_t _viewscale_table[VIEW_TABLE_SIZE];
+  int	  _current_view;
+  struct  _mged_variables _mged_variables;
 
 /* Angle/distance cursor stuff */
-  int     _dv_xadc;
-  int     _dv_yadc;
-  int     _dv_1adc;
-  int     _dv_2adc;
-  int     _dv_distadc;
+  int	  _dv_xadc;
+  int	  _dv_yadc;
+  int	  _dv_1adc;
+  int	  _dv_2adc;
+  int	  _dv_distadc;
   fastf_t _curs_x;
   fastf_t _curs_y;
   fastf_t _c_tdist;
@@ -90,19 +95,19 @@ struct shared_info {
   fastf_t _angle2;
 
 /* Rate stuff */
-  int     _rateflag_slew;
+  int	  _rateflag_slew;
   vect_t  _rate_slew;
 
-  int     _rateflag_rotate;
+  int	  _rateflag_rotate;
   vect_t  _rate_rotate;
 	
-  int     _rateflag_zoom;
-  fastf_t  _rate_zoom;
+  int	  _rateflag_zoom;
+  fastf_t _rate_zoom;
 
 /* Absolute stuff */
   vect_t  _absolute_slew;
   vect_t  _absolute_rotate;
-  fastf_t  _absolute_zoom;
+  fastf_t _absolute_zoom;
 
 /* Virtual trackball stuff */
   point_t _orig_pos;
@@ -181,6 +186,9 @@ extern struct dm_list *curr_dm_list;
 #define view2model curr_dm_list->s_info->_view2model
 #define model2objview curr_dm_list->s_info->_model2objview
 #define objview2model curr_dm_list->s_info->_objview2model
+#define viewrot_table curr_dm_list->s_info->_viewrot_table
+#define viewscale_table curr_dm_list->s_info->_viewscale_table
+#define current_view curr_dm_list->s_info->_current_view
 
 #define rot_x curr_dm_list->s_info->_rot_x
 #define rot_y curr_dm_list->s_info->_rot_y
