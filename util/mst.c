@@ -64,7 +64,7 @@ struct bridge
 #define	BRIDGE_NULL	((struct bridge *) 0)
 #define	BRIDGE_MAGIC	0x6d737462
 
-static rb_tree		*prioq;		/* Priority queue of bridges */
+static bu_rb_tree		*prioq;		/* Priority queue of bridges */
 #define	PRIOQ_INDEX	0
 #define	PRIOQ_WEIGHT	1
 
@@ -158,7 +158,7 @@ struct bridge	*bp;
 #define	print_prioq()						\
 {								\
     bu_log("----- The priority queue -----\n");			\
-    rb_walk(prioq, PRIOQ_WEIGHT, print_bridge, INORDER);	\
+    bu_rb_walk(prioq, PRIOQ_WEIGHT, print_bridge, INORDER);	\
     bu_log("------------------------------\n\n");		\
 }
 
@@ -403,12 +403,12 @@ void	*v2;
  */
 struct vertex *lookup_vertex(dict, index, label)
 
-rb_tree	*dict;
+bu_rb_tree	*dict;
 long	index;
 char	*label;
 
 {
-    int			rc;	/* Return code from rb_insert() */
+    int			rc;	/* Return code from bu_rb_insert() */
     struct vertex	*qvp;	/* The query */
     struct vertex	*vp;	/* Value to return */
 
@@ -423,17 +423,17 @@ char	*label;
      *	then we have our vertex.
      *	Otherwise, we must create a new vertex.
      */
-    switch (rc = rb_insert(dict, (void *) qvp))
+    switch (rc = bu_rb_insert(dict, (void *) qvp))
     {
 	case -1:
-	    vp = (struct vertex *) rb_curr1(dict);
+	    vp = (struct vertex *) bu_rb_curr1(dict);
 	    free_vertex(qvp);
 	    break;
 	case 0:
 	    vp = qvp;
 	    break;
 	default:
-	    bu_log("rb_insert() returns %d:  This should not happen\n", rc);
+	    bu_log("bu_rb_insert() returns %d:  This should not happen\n", rc);
 	    exit (1);
     }
 
@@ -455,7 +455,7 @@ int	depth;
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
 
-    rb_insert(prioq, (void *) (vp -> v_bridge));
+    bu_rb_insert(prioq, (void *) (vp -> v_bridge));
 }
 
 /*
@@ -473,13 +473,13 @@ struct vertex	*vp;
     if (debug)
 	bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
 	    vp, vp -> v_bridge, vp -> v_bridge -> b_index);
-    if (rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
+    if (bu_rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
     {
 	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
 	bu_log("  This should not happen\n");
 	exit (1);
     }
-    rb_delete(prioq, PRIOQ_INDEX);
+    bu_rb_delete(prioq, PRIOQ_INDEX);
 }
 
 /*
@@ -490,11 +490,11 @@ struct bridge *extract_min ()
 {
     struct bridge	*bp;
 
-    bp = (struct bridge *) rb_min(prioq, PRIOQ_WEIGHT);
+    bp = (struct bridge *) bu_rb_min(prioq, PRIOQ_WEIGHT);
     if (bp != BRIDGE_NULL)
     {
 	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
-	rb_delete(prioq, PRIOQ_WEIGHT);
+	bu_rb_delete(prioq, PRIOQ_WEIGHT);
     }
     return (bp);
 }
@@ -618,7 +618,7 @@ char	*argv[];
     int			numeric = 0;	/* Use vertex indices (vs. labels)? */
     long		index[2];	/* Indices of edge endpoints */
     double		weight;		/* Edge weight */
-    rb_tree		*dictionary;	/* Dictionary of vertices */
+    bu_rb_tree		*dictionary;	/* Dictionary of vertices */
     struct bridge	*bp;		/* The current bridge */
     struct vertex	*up;		/* An uncivilized neighbor of vup */
     struct vertex	*vcp;		/* The civilized vertex of bp */
@@ -644,10 +644,10 @@ char	*argv[];
     /*
      *	Initialize the dictionary
      */
-    dictionary = rb_create1("Dictionary of vertices",
+    dictionary = bu_rb_create1("Dictionary of vertices",
 		    numeric ? compare_vertex_indices
 			    : compare_vertex_labels);
-    rb_uniq_on1(dictionary);
+    bu_rb_uniq_on1(dictionary);
 
     /*
      *	Read in the graph
@@ -669,13 +669,13 @@ char	*argv[];
      */
     po[PRIOQ_INDEX] = compare_bridge_indices;
     po[PRIOQ_WEIGHT] = compare_bridge_weights;
-    prioq = rb_create("Priority queue of bridges", 2, po);
-    rb_walk1(dictionary, add_to_prioq, INORDER);
+    prioq = bu_rb_create("Priority queue of bridges", 2, po);
+    bu_rb_walk1(dictionary, add_to_prioq, INORDER);
 
     if (debug)
     {
 	print_prioq();
-	rb_walk1(dictionary, print_vertex, INORDER);
+	bu_rb_walk1(dictionary, print_vertex, INORDER);
     }
     
     /*
