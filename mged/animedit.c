@@ -3018,7 +3018,7 @@ hold_point_to_string(hp)
 struct hold_point *hp;
 {
 #define HOLD_POINT_TO_STRING_LEN	1024
-	char text = rt_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
+	char *text = rt_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
 	char *path;
 	vect_t loc;
 
