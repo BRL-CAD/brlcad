@@ -46,11 +46,11 @@ static int	screen_width = 0;
 static int	screen_height = 0;
 
 static int	crunch;
-
+static int	overlay;
 static int	r_debug;
 
 static char	usage[] = "\
-Usage: rle-fb [-h -d -v -c] [-F framebuffer]  [-C r/g/b]\n\
+Usage: rle-fb [-h -d -v -c -O] [-F framebuffer]  [-C r/g/b]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height] [file.rle]\n\
 ";
 
@@ -63,8 +63,11 @@ register char	**argv;
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "cdhs:w:n:C:F:" )) != EOF )  {
+	while( (c = getopt( argc, argv, "cOdhs:w:n:C:F:" )) != EOF )  {
 		switch( c )  {
+		case 'O':
+			overlay = 1;
+			break;
 		case 'd':
 			r_debug = 1;
 			break;
@@ -169,6 +172,12 @@ char ** argv;
 		SV_CLR_BIT(sv_globals, i);
 	ncolors = sv_globals.sv_ncolors > 3 ? 3 : sv_globals.sv_ncolors;
 
+	/* Optional switch of library to overlay mode */
+	if( overlay )  {
+		sv_globals.sv_background = 1;		/* overlay */
+		override_background = 0;
+	}
+
 	/* Optional background color override */
 	if( override_background )  {
 		for( i=0; i<ncolors; i++ )
@@ -205,6 +214,7 @@ char ** argv;
 	 *  Import Utah color map, converting to libfb format.
 	 *  Check for old format color maps, where high 8 bits
 	 *  were zero, and correct them.
+	 *  XXX need to handle < 3 channels of color map, by replication.
 	 */
 	if( sv_globals.sv_ncmap > 0 )  {
 		register int maplen = (1 << sv_globals.sv_cmaplen);
@@ -239,6 +249,19 @@ char ** argv;
 		register rle_pixel	*gp = rows[1];
 		register rle_pixel	*bp = rows[2];
 		register int		j;
+
+		if( overlay )  {
+			fb_read( fbp, xbase, i, scan_buf, x_len );
+			for( j = 0; j < x_len; j++ )  {
+				*rp++ = *pp++;
+				*gp++ = *pp++;
+				*bp++ = *pp++;
+			}
+			pp = (unsigned char *)scan_buf;
+			rp = rows[0];
+			gp = rows[1];
+			bp = rows[2];
+		}
 
 		rle_getrow(&sv_globals, rows );
 
