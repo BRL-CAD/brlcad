@@ -3,14 +3,14 @@
  */
 
 #define SRCDIR	anim
-#define PRODUCTS	qinterp keyread convert
+#define PRODUCTS	ascript channel convert fly lookat keyread offset qinterp scriptsort track turn
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define FILES	qinterp anim
+#define FILES	anim ascript channel convert fly lookat keyread offset qinterp scriptsort track turn
 
 /* Explicit composition of each product */
 
