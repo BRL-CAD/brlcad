@@ -20,7 +20,6 @@
 	rtshot \
 	main opt do worker \
 	view viewpp viewray viewrad viewcheck viewg3 \
-	regionfix \
 	shade sh_text sh_cloud mathtab \
 	material refract sh_stack \
 	sh_plastic sh_cook wray sh_spm sh_light \
@@ -42,7 +41,7 @@ rt:	RT_OBJ LIBRT
 	CC LDFLAGS RT_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rt
 
 
-#define RTRAY_OBJ	RTUIF viewray.o regionfix.o wray.o
+#define RTRAY_OBJ	RTUIF viewray.o wray.o
 
 rtray:	RTRAY_OBJ LIBRT
 	sh ../newvers.sh version "RT Ray"
@@ -90,7 +89,7 @@ rtshot:	rtshot.o LIBRT
 rtwalk:	rtwalk.o LIBRT
 	CC LDFLAGS rtwalk.o LIB_PRE''LIBRT LIBRT_LIBES LIBMALLOC LIBES -o rtwalk
 
-#define RTG3_OBJ	RTUIF viewg3.o regionfix.o
+#define RTG3_OBJ	RTUIF viewg3.o
 
 rtg3:	RTG3_OBJ LIBRT
 	sh ../newvers.sh version "RTG3"
@@ -104,28 +103,28 @@ rtcell:	RTCELL_OBJ LIBRT
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTCELL_OBJ vers.o LIB_PRE''LIBRT LIBRT_LIBES LIB_PRE''LIBFB LIBFB_LIBES LIBMALLOC LIBES -o rtcell
 
-#define RTHIDE_OBJ	RTUIF viewhide.o regionfix.o
+#define RTHIDE_OBJ	RTUIF viewhide.o
 
 rthide:	RTHIDE_OBJ LIBRT
 	sh ../newvers.sh version "RT Hidden-Line Plot"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTHIDE_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rthide
 
-#define RTFRAC_OBJ	RTUIF viewfrac.o regionfix.o 
+#define RTFRAC_OBJ	RTUIF viewfrac.o
 
 rtfrac:	RTFRAC_OBJ LIBRT
 	sh ../newvers.sh version "RT Volume Fractions"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTFRAC_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtfrac
 
-#define RTRANGE_OBJ	RTUIF viewrange.o regionfix.o 
+#define RTRANGE_OBJ	RTUIF viewrange.o
 
 rtrange:	RTRANGE_OBJ LIBRT
 	sh ../newvers.sh version "RT Range Plot"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRANGE_OBJ vers.o LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtrange
 
-#define RTDUMMY_OBJ	RTUIF viewdummy.o regionfix.o 
+#define RTDUMMY_OBJ	RTUIF viewdummy.o
 
 rtdummy:	RTDUMMY_OBJ LIBRT
 	sh ../newvers.sh version "RT Dummy"
