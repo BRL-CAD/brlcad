@@ -60,6 +60,14 @@ static	int use_part_name_hash=0;
 static	int max_name_len=0;
 static	Tcl_HashTable htbl;
 static	int name_not_converted=0;
+static	int indent_level=0;
+static	int indent_delta=4;
+
+#define DO_INDENT	{ int _i; \
+				for( _i=0 ; _i<indent_level ; _i++ ) {\
+					bu_log( " " ); \
+				} \
+			} 
 
 static int verbose=0;
 
@@ -120,43 +128,6 @@ union vert_tree {
 
 
 void
-create_name_hash( FILE *fd )
-{
-	char line[MAX_LINE_LEN];
-	Tcl_HashEntry *hash_entry=NULL;
-	int new_entry=0;
-
-	Tcl_InitHashTable( &htbl, TCL_STRING_KEYS );
-
-	while( fgets( line, MAX_LINE_LEN, fd ) ) {
-		char *part_no, *desc, *ptr;
-
-		ptr = strtok( line, "\t\n" );
-		if( !ptr ) {
-			bu_log( "Error processing part name file at line:\n" );
-			bu_log( "\t%s\n", line );
-			exit( 1 );
-		}
-		part_no = bu_strdup( ptr );
-		ptr = strtok( (char *)NULL, "\t\n" );
-		if( !ptr ) {
-			bu_log( "Error processing part name file at line:\n" );
-			bu_log( "\t%s\n", line );
-			exit( 1 );
-		}
-		desc = bu_strdup( ptr );
-
-		hash_entry = Tcl_CreateHashEntry( &htbl, part_no, &new_entry );
-		if( new_entry ) {
-			Tcl_SetHashValue( hash_entry, desc );
-		} else {
-			bu_free( (char *)part_no, "part_no" );
-			bu_free( (char *)desc, "desc" );
-		}
-	}
-}
-
-void
 lower_case( char *name )
 {
 	unsigned char *c;
@@ -168,6 +139,44 @@ lower_case( char *name )
 	}
 }
 
+void
+create_name_hash( FILE *fd )
+{
+	char line[MAX_LINE_LEN];
+	Tcl_HashEntry *hash_entry=NULL;
+	int new_entry=0;
+
+	Tcl_InitHashTable( &htbl, TCL_STRING_KEYS );
+
+	while( fgets( line, MAX_LINE_LEN, fd ) ) {
+		char *part_no, *desc, *ptr;
+
+		ptr = strtok( line, " \t\n" );
+		if( !ptr ) {
+			bu_log( "*****Error processing part name file at line:\n" );
+			bu_log( "\t%s\n", line );
+			exit( 1 );
+		}
+		part_no = bu_strdup( ptr );
+		lower_case( part_no );
+		ptr = strtok( (char *)NULL, " \t\n" );
+		if( !ptr ) {
+			bu_log( "*****Error processing part name file at line:\n" );
+			bu_log( "\t%s\n", line );
+			exit( 1 );
+		}
+		desc = bu_strdup( ptr );
+		lower_case( desc );
+
+		hash_entry = Tcl_CreateHashEntry( &htbl, part_no, &new_entry );
+		if( new_entry ) {
+			Tcl_SetHashValue( hash_entry, desc );
+		} else {
+			bu_free( (char *)part_no, "part_no" );
+			bu_free( (char *)desc, "desc" );
+		}
+	}
+}
 
 /* routine to check for bad triangles
  * only checks for triangles with duplicate vertices
@@ -405,6 +414,23 @@ Make_brlcad_names( struct obj_info *part )
 		}
 
 		if( !hash_entry ) {
+			/* try without any name extension */
+			if( (ptr=strchr( part->obj_name, '_' )) != NULL ) {
+				bu_vls_strncpy( &vls, part->obj_name, (ptr - part->obj_name) );
+				hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+			}
+		}
+
+		if( !hash_entry ) {
+			/* try adding "-011" */
+			if( (ptr=strchr( part->obj_name, '-' ))  != NULL ) {
+				bu_vls_strncpy( &vls, part->obj_name, (ptr - part->obj_name) );
+				bu_vls_strcat( &vls, "-011" );
+				hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
+			}
+		}
+
+		if( !hash_entry ) {
 			name_not_converted++;
 		}
 	}
@@ -493,20 +519,24 @@ Make_brlcad_names( struct obj_info *part )
 			break;
 		case PART_TYPE:
 			if( use_part_name_hash ) {
-				bu_log( "Found part %s changed name to (%s)\n",
+				DO_INDENT
+				bu_log( "part %s changed name to (%s)\n",
 					part->obj_name,
 					part->brlcad_comb );
 			} else {
-				bu_log( "Found part %s\n", part->brlcad_comb );
+				DO_INDENT
+				bu_log( "part %s\n", part->brlcad_comb );
 			}
 			break;
 		case ASSEMBLY_TYPE:
 			if( use_part_name_hash ) {
-				bu_log( "Found assembly %s changed name to (%s)\n",
+				DO_INDENT
+				bu_log( "assembly %s changed name to (%s)\n",
 					part->obj_name,
 					part->brlcad_comb );
 			} else {
-				bu_log( "Found assembly %s\n", part->brlcad_comb );
+				DO_INDENT
+				bu_log( "assembly %s\n", part->brlcad_comb );
 			}
 			break;
 	}
@@ -625,6 +655,10 @@ Part_import( int id_start )
 				part->brlcad_solid, part->obj_name );
 			exit( 1 );
 		}
+		if( verbose ) {
+			DO_INDENT;
+			bu_log( "Wrote BOT %s\n", part->brlcad_solid );
+		}
 
 		/* then a region */
 		BU_LIST_INIT( &reg_head.l );
@@ -639,6 +673,11 @@ Part_import( int id_start )
 				part->brlcad_comb, part->obj_name );
 			exit( 1 );
 		}
+		if( verbose ) {
+			DO_INDENT;
+			bu_log( "Wrote region %s\n", part->brlcad_comb );
+		}
+
 		if( use_part_name_hash ) {
 			if( db5_update_attribute( part->brlcad_comb, "Part_No",
 						  part->obj_name, fd_out->dbip ) ) {
@@ -686,6 +725,9 @@ Assembly_import( int id_start )
 			line[strlen( line ) - 1] = '\0';
 			this_assem->obj_name = bu_strdup( &line[13] );
 			lower_case( this_assem->obj_name );
+			DO_INDENT;
+			bu_log( "Start of assembly %s (id = %d)\n", this_assem->obj_name, id_start );
+			indent_level += indent_delta;
 		} else if( !strncmp( line, "PartId", 6 ) ) {
 			/* found a member part */
 			member_id = atoi( &line[7] );
@@ -716,6 +758,9 @@ Assembly_import( int id_start )
 					id_end, id_start );
 				exit( 1 );
 			}
+			indent_level -= indent_delta;
+			DO_INDENT;
+			bu_log( "Found end of assembly %s (id = %d)\n",  this_assem->obj_name, id_start );
 			break;
 		} else {
 			bu_log( "Unrecognized line encountered while processing assembly id %d:\n",
