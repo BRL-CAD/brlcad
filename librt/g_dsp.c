@@ -346,7 +346,7 @@ struct rt_i		*rtip;
 	}
 
 	if (rt_g.debug & DEBUG_HF)
-		bu_log("x:%d y:%d min %d max %d\n", XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
+		bu_log("  x:%d y:%d min %d max %d\n", XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
 
 	/* record the distance to each of the bounding planes */
 	dsp->dsp_pl_dist[XMIN] = 0.0;
@@ -370,8 +370,8 @@ struct rt_i		*rtip;
 	BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, -1);
 	BBOX_PT(-.1,		    -.1,		        dsp_max+.1);
 	BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		        dsp_max+.1);
-	BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+1, dsp_max+.1);
-	BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+1, dsp_max+.1);
+	BBOX_PT(dsp_ip->dsp_xcnt+.1, dsp_ip->dsp_ycnt+.1, dsp_max+.1);
+	BBOX_PT(-.1,		    dsp_ip->dsp_ycnt+.1, dsp_max+.1);
 
 #undef BBOX_PT
 
@@ -385,7 +385,7 @@ struct rt_i		*rtip;
 	stp->st_bradius = MAGNITUDE(work);
 
 	if (rt_g.debug & DEBUG_HF) {
-		bu_log("model space bbox (%g %g %g) (%g %g %g)\n",
+		bu_log("  model space bbox (%g %g %g) (%g %g %g)\n",
 			V3ARGS(stp->st_min),
 			V3ARGS(stp->st_max));
 	}
@@ -406,7 +406,7 @@ register struct isect_stuff *isect;
 	register double NdotD;
 	register double NdotPt;
 	double dist;
-	register int i;
+	register int plane;
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("isect_ray_bbox()\n");
@@ -415,43 +415,43 @@ register struct isect_stuff *isect;
 	isect->bbox.in_surf = isect->bbox.out_surf = -1;
 
 	/* intersect the ray with the bounding box */
-	for (i=0 ; i < BBOX_PLANES ; i++) {
-		NdotD = VDOT(dsp_pl[i], isect->r.r_dir);
-		NdotPt = VDOT(dsp_pl[i], isect->r.r_pt);
+	for (plane=0 ; plane < BBOX_PLANES ; plane++) {
+		NdotD = VDOT(dsp_pl[plane], isect->r.r_dir);
+		NdotPt = VDOT(dsp_pl[plane], isect->r.r_pt);
 
 		/* if N/ray vectors are perp, ray misses plane */
 		if (BN_VECT_ARE_PERP(NdotD, isect->tol)) {
-			if ( (NdotPt - isect->dsp->dsp_pl_dist[i]) >
+			if ( (NdotPt - isect->dsp->dsp_pl_dist[plane]) >
 			    SQRT_SMALL_FASTF ) {
 				if (rt_g.debug & DEBUG_HF)
-					bu_log("ray parallel and above bbox surf %d\n", i);
+					bu_log("ray parallel and above bbox plane %d\n", plane);
 
 				return 0; /* MISS */
 			    }
 		}
 
-		dist = - ( NdotPt - isect->dsp->dsp_pl_dist[i] ) / NdotD;
+		dist = - ( NdotPt - isect->dsp->dsp_pl_dist[plane] ) / NdotD;
 
 		if (rt_g.debug & DEBUG_HF)
-			bu_log("surf[%d](%g %g %g %g) dot:%g ss_dist:%g\n",
-				i, V3ARGS(dsp_pl[i]),
-				isect->dsp->dsp_pl_dist[i],
+			bu_log("plane[%d](%g %g %g %g) dot:%g ss_dist:%g\n",
+				plane, V3ARGS(dsp_pl[plane]),
+				isect->dsp->dsp_pl_dist[plane],
 				NdotD, dist);
 
-		if ( i > 5) /* dsp_min elevation not valid bbox limit */
+		if ( plane > 5) /* dsp_min elevation not valid bbox limit */
 			continue;
 
 		if (NdotD < 0.0) {
 			/* entering */
 			if (dist > isect->bbox.in_dist) {
 				isect->bbox.in_dist = dist;
-				isect->bbox.in_surf = i;
+				isect->bbox.in_surf = plane;
 			}
 		} else { /*  (NdotD > 0.0) */
 			/* leaving */
 			if (dist < isect->bbox.out_dist) {
 				isect->bbox.out_dist = dist;
-				isect->bbox.out_surf = i;
+				isect->bbox.out_surf = plane;
 			}
 		}
 	}
@@ -1308,8 +1308,8 @@ int (*isect_wall)();
 	if (rt_g.debug & DEBUG_HF) {
 		vect_t t;
 		MAT4X3PNT(t, isect->dsp->dsp_i.dsp_stom, next_pt);
-		bu_log("next_pt(%g %g %g) surf:%d  ss_dist:%g\n",
-			V3ARGS(t), next_surf, dt);
+		bu_log("\tnext_pt (%g %g %g) ss_dist:%g\n",
+			V3ARGS(t), dt);
 	}
 	cell_minmax(isect->dsp, cs->grid_cell[X], cs->grid_cell[Y],
 		&cell_min, &cell_max);
@@ -1317,7 +1317,7 @@ int (*isect_wall)();
 	if (( rising && next_pt[Z] < cell_min) ||
 	    (!rising && cs->curr_pt[Z] < cell_min) ) {
 		/* in base */
-		if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
+		if (rt_g.debug & DEBUG_HF) bu_log("\tin base\n");
 	    	if (!*inside) {
 	    		INHIT(isect, *cs->curr_dist, *cs->curr_surf, cs->grid_cell);
 	    		*inside = 1;
@@ -1333,7 +1333,7 @@ int (*isect_wall)();
 	    ( rising && cs->curr_pt[Z] > cell_max) ||
 	    (!rising && next_pt[Z] > cell_max) ) {
 		/* miss above */
-		if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
+		if (rt_g.debug & DEBUG_HF) bu_log("\tmiss above\n");
 	    	if (*inside) {
 	    		HIT_COMMIT(isect);
 	    		*inside = 0;
@@ -1346,7 +1346,7 @@ int (*isect_wall)();
 	} else {
 		/* intersect */
 		if (rt_g.debug & DEBUG_HF)
-			bu_log("intersect %d %d X %s\n",
+			bu_log("\tintersect %d %d X %s\n",
 				cell_min, cell_max, 
 				(rising?"rising":"falling") );
 
@@ -1358,9 +1358,9 @@ int (*isect_wall)();
 				*cs->curr_dist, cs->curr_pt);
 			if (rt_g.debug & DEBUG_HF) {
 				if (hit)
-					bu_log("hit X in-wall\n");
+					bu_log("\thit X in-wall\n");
 				else
-					bu_log("miss X in-wall\n");
+					bu_log("\tmiss X in-wall\n");
 			}
 			break;
 		case BBSURF(YMIN) :
@@ -1370,14 +1370,14 @@ int (*isect_wall)();
 				*cs->curr_dist, cs->curr_pt);
 			if (rt_g.debug & DEBUG_HF) {
 				if (hit)
-					bu_log("hit Y in-wall\n");
+					bu_log("\thit Y in-wall\n");
 				else
-					bu_log("miss Y in-wall\n");
+					bu_log("\tmiss Y in-wall\n");
 			}
 			break;
 		case BBSURF(ZMIN) :
 			if (*cs->curr_dist != cs->bbin_dist){
-				bu_log("%s:%d hitting bottom of dsp for entry while past bottom?  pixel(%d,%d)\n",
+				bu_log("\t%s:%d hitting bottom of dsp for entry while past bottom?  pixel(%d,%d)\n",
 					__FILE__, __LINE__,
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
@@ -1388,8 +1388,8 @@ int (*isect_wall)();
 			hit = 0;
 			break;
 		default:
-			bu_log("%s:%d pixel(%d,%d) surface %d ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y, *cs->curr_surf);
-			bu_bomb("bad surface to intersect\n");
+			bu_log("\t%s:%d pixel(%d,%d) surface %d ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y, *cs->curr_surf);
+			bu_bomb("\tbad surface to intersect\n");
 		}
 
 		if (hit && !*inside) {
@@ -1407,17 +1407,17 @@ int (*isect_wall)();
 
 		if (hit) {
 			if (!*inside) {
-				bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y);
-				bu_log("hit dsp and not inside g_dsp.c line:%d", __LINE__);
+				bu_log("\t%s:%d pixel(%d,%d) ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y);
+				bu_log("\thit dsp and not inside g_dsp.c line:%d", __LINE__);
 				bu_bomb("");
 			}
 			if (rt_g.debug & DEBUG_HF)
-				bu_log("hit X out-wall\n");
+				bu_log("\thit X out-wall\n");
 			OUTHIT(isect, (cs->bbin_dist+dt), next_surf, cs->grid_cell);
 			*inside = 1;
 		} else {
 			if (rt_g.debug & DEBUG_HF)
-				bu_log("miss X out-wall\n");
+				bu_log("\tmiss X out-wall\n");
 		}
 	} 
 
@@ -1457,6 +1457,7 @@ struct isect_stuff *isect;
 	double	tDY;		/* dist along ray to span 1 cell in Y dir */
 
 	double	out_dist;
+	double	span_dist;
 
 	double	tX, tY;	/* dist along ray from hit pt. to next cell boundary */
 	struct cell_stuff cs;
@@ -1465,17 +1466,27 @@ struct isect_stuff *isect;
 		bu_log("isect_ray_dsp()\n");
 	}
 
+
 	/* compute BBox entry point and starting grid cell */
 	bbin_dist = isect->bbox.in_dist;
 	VJOIN1(bbin_pt, isect->r.r_pt, bbin_dist, isect->r.r_dir);
+
+	out_dist = isect->bbox.out_dist;
+	VJOIN1(bbout_pt, isect->r.r_pt, out_dist, isect->r.r_dir);
+
+	if (rt_g.debug & DEBUG_HF) {
+		bu_log("  r_pt: %g %g %g  dir: %g %g %g\n", V3ARGS(isect->r.r_pt),  V3ARGS(isect->r.r_dir));
+		bu_log(" in_pt: %g %g %g  dist: %g\n", V3ARGS(bbin_pt), bbin_dist);
+		bu_log("out_pt: %g %g %g  dist: %g\n", V3ARGS(bbout_pt), out_dist);
+	}
+
+
 	bbin_surf = isect->bbox.in_surf;
 
 	VMOVE(grid_cell, bbin_pt);	/* int/float conversion */
 	if (grid_cell[X] >= XSIZ(isect->dsp)) grid_cell[X]--;
 	if (grid_cell[Y] >= YSIZ(isect->dsp)) grid_cell[Y]--;
 	
-	out_dist = isect->bbox.out_dist;
-	VJOIN1(bbout_pt, isect->r.r_pt, out_dist, isect->r.r_dir);
 
 	VMOVE(bbout_cell, bbout_pt);	/* int/float conversion */
 	if (bbout_cell[X] >= XSIZ(isect->dsp)) bbout_cell[X]--;
@@ -1501,22 +1512,16 @@ struct isect_stuff *isect;
 	}
 
 
-	VMOVE(curr_pt, bbin_pt);
-	curr_dist = bbin_dist;
-	curr_surf = BBSURF(bbin_surf);
-
 	if (rt_g.debug & DEBUG_HF) {
 		vect_t t;
 
-		MAT4X3PNT(t, isect->dsp->dsp_i.dsp_stom, curr_pt);
-		bu_log(" in cell(%d,%d)  pt(%g %g %g) ss_dist:%g\n",
-			grid_cell[X], grid_cell[Y], V3ARGS(t),
-			bbin_dist);
+		MAT4X3PNT(t, isect->dsp->dsp_i.dsp_stom, bbin_pt);
+		bu_log(" in cell(%4d,%4d)  pt(%g %g %g) ss_dist:%g\n",
+			V2ARGS(grid_cell), V3ARGS(t), bbin_dist);
 
 		MAT4X3PNT(t, isect->dsp->dsp_i.dsp_stom, bbout_pt);
-		bu_log("out cell(%d,%d)  pt(%g %g %g) ss_dist:%g\n",
-			bbout_cell[X], bbout_cell[Y], V3ARGS(t),
-			out_dist);
+		bu_log("out cell(%4d,%4d)  pt(%g %g %g) ss_dist:%g\n",
+			V2ARGS(	bbout_cell), V3ARGS(t), out_dist);
 	}
 
 	rising = (isect->r.r_dir[Z] > 0.); /* compute Z direction */
@@ -1529,18 +1534,18 @@ struct isect_stuff *isect;
 		insurfX = BBSURF(XMAX);
 		outsurfX = BBSURF(XMIN);
 
-
 		/* tDX is the distance along the ray we have to travel
 		 * to traverse a cell (travel a unit distance) along the
 		 * X axis of the grid
 		 */
 		tDX = -1.0 / isect->r.r_dir[X];
 
-		/* tX is the distance along the ray from the initial hit point
+		/* tX is the distance along the ray from the bbox in point
 		 * to the first cell boundary in the X direction
 		 */
-		tX = (grid_cell[X] - curr_pt[X]) / isect->r.r_dir[X];
+		tX = (grid_cell[X] - bbin_pt[X]) / isect->r.r_dir[X];
 
+		
 	} else {
 		stepX = 1;
 		insurfX = BBSURF(XMIN);
@@ -1549,7 +1554,8 @@ struct isect_stuff *isect;
 		tDX = 1.0 / isect->r.r_dir[X];
 
 		if (isect->r.r_dir[X] > 0.0) {
-			tX = ((grid_cell[X]+1) - curr_pt[X]) / isect->r.r_dir[X];
+			tX = ((grid_cell[X]+1) - bbin_pt[X]) / isect->r.r_dir[X];
+			if (tX < tDX) tX += bbin_dist;
 		} else
 			tX = MAX_FASTF;
 	}
@@ -1560,7 +1566,8 @@ struct isect_stuff *isect;
 
 		tDY = -1.0 / isect->r.r_dir[Y];
 
-		tY = (grid_cell[Y] - curr_pt[Y]) / isect->r.r_dir[Y];
+		tY = (grid_cell[Y] - bbin_pt[Y]) / isect->r.r_dir[Y];
+
 	} else {
 		stepY = 1;
 		insurfY = BBSURF(YMIN);
@@ -1569,10 +1576,30 @@ struct isect_stuff *isect;
 		tDY = 1.0 / isect->r.r_dir[Y];
 
 		if (isect->r.r_dir[Y] > 0.0) {
-			tY = ((grid_cell[Y]+1) - curr_pt[Y]) / isect->r.r_dir[Y];
+			tY = ((grid_cell[Y]+1) - bbin_pt[Y]) / isect->r.r_dir[Y];
+			tY += bbin_dist;
 		} else
 			tY = MAX_FASTF;
 	}
+
+
+	if (rt_g.debug & DEBUG_HF) {
+		point_t t;
+
+		VJOIN1(t, bbin_pt, tX, isect->r.r_dir);
+		bu_log("stepX:%d tDX:%g tX:%g next: %g %g %g\n", 
+			stepX, tDX, tX, V3ARGS(t));
+
+		VJOIN1(t, bbin_pt, tY, isect->r.r_dir);
+		bu_log("stepY:%d tDY:%g tY:%g next: %g %g %g\n",
+			stepY,  tDY, tY, V3ARGS(t));
+	}
+
+
+	VMOVE(curr_pt, bbin_pt);
+	curr_dist = bbin_dist;
+	curr_surf = BBSURF(bbin_surf);
+	span_dist = out_dist - bbin_dist;
 
 
 	/* precompute some addresses for parameters we're going to
@@ -1586,27 +1613,36 @@ struct isect_stuff *isect;
 	cs.curr_pt = curr_pt;
 
 
-	if (rt_g.debug & DEBUG_HF) {
-		bu_log("stepX:%d tDX:%g tX:%g\n",
-			stepX, tDX, tX);
-		bu_log("stepY:%d tDY:%g tY:%g\n",
-			stepY,  tDY, tY);
-	}
-
-
 	do {
 		if (rt_g.debug & DEBUG_HF) {
 			vect_t t;
 			MAT4X3PNT(t, isect->dsp->dsp_i.dsp_stom, curr_pt);
-bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g) surf:%d  ss_dist:%g\n\t",
-grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
+bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\tcurr_pt (%g %g %g) ss_dist:%g surf:%d\n\t",
+grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_dist, curr_surf);
 		}
 
-		if (tX > out_dist) tX = out_dist;
-		if (tY > out_dist) tY = out_dist;
+/* XXX This was bogus when out_dist is measured from ray start point
+ * It must be measured from bbox in point
+ */
 
+
+		if (tX > span_dist) {
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("tX:%g beyond span_dist%g\n", tX, out_dist);
+			}
+			tX = span_dist;
+		}
+		if (tY > span_dist) {
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("tY:%g beyond span_dist%g\n", tY, out_dist);
+			}
+			tY = span_dist;
+		}
 		if (tX < tY) {
 
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("tX:%g < tY:%g\n", tX, tY);
+			}
 			cell_isect(isect, tX, outsurfX, &cs, &inside, rising,
 				isect_cell_x_wall);
 
@@ -1617,6 +1653,9 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 			tX += tDX;
 		} else {
 
+			if (rt_g.debug & DEBUG_HF) {
+				bu_log("tX:%g > tY:%g\n", tX, tY);
+			}
 			cell_isect(isect, tY, outsurfY, &cs, &inside, rising,
 				isect_cell_y_wall);
 
@@ -1631,6 +1670,11 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 		grid_cell[X] <= cell_bbox[XMAX] &&
 		grid_cell[Y] >= cell_bbox[YMIN] &&
 		grid_cell[Y] <= cell_bbox[YMAX] );
+
+	/* What we've got is hits in the 0 .. span_dist range.
+	 * We need them in the in_dist .. out_dist range.
+	 
+	 */
 
 
 	if (inside) {
@@ -1758,10 +1802,19 @@ struct seg		*seghead;
 		VSCALE(dir, isect.r.r_dir, segp->seg_in.hit_dist);
 		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
 		segp->seg_in.hit_dist = MAGNITUDE(v);
+		if (VDOT(v, rp->r_dir) < 0.0) segp->seg_in.hit_dist *= -1.0;
 
 		VSCALE(dir, isect.r.r_dir, segp->seg_out.hit_dist);
 		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
 		segp->seg_out.hit_dist = MAGNITUDE(v);
+		if (VDOT(v, rp->r_dir) < 0.0) segp->seg_out.hit_dist *= -1.0;
+
+		if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
+			bu_log("Pixel %d %d seg inside out %g %g\n",
+				ap->a_x, ap->a_y,
+				segp->seg_in.hit_dist,
+				segp->seg_out.hit_dist);
+		}
 
 		if (rt_g.debug & DEBUG_HF) {
 			bu_log("model in:%6g out:%6g\n",
