@@ -330,6 +330,7 @@ int		units;
 	dir.d_namep = "/IDENT/";
 	dir.d_addr = 0L;
 	dir.d_len = 1;
+	dir.d_magic = RT_DIR_MAGIC;
 	if( db_get( dbip, &dir, &rec, 0, 1 ) < 0 ||
 	    rec.u_id != ID_IDENT )
 		return(-1);
