@@ -49,6 +49,8 @@ Convtree()
 		if( dir[i]->type != 180 )	/* This is not a tree */
 			continue;
 
+		att_de = 0;			/* For default if there is no attribute entity */
+
 		tottrees++;
 
 		if( dir[i]->param <= pstart )	/* Illegal parameter address */
