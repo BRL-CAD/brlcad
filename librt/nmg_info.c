@@ -33,6 +33,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX Move to raytrace.h */
+RT_EXTERN( struct edge *nmg_find_e_nearest_pt2, (long *magic_p,
+			CONST point_t pt2, CONST mat_t mat,
+			CONST struct rt_tol *tol) );
+
+
 CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 
 /************************************************************************
@@ -863,6 +869,100 @@ struct edgeuse *eu;
 		}
 	}
 	return(eur);
+}
+
+/*
+ *  Support for nmg_find_e_nearest_pt2().
+ */
+struct fen2d_state {
+	char		*visited;	/* array of edges already visited */
+	fastf_t		mindist;	/* current min dist */
+	struct edge	*ep;		/* closest edge */
+	mat_t		mat;
+	point_t		pt2;
+	CONST struct rt_tol	*tol;
+};
+
+static void
+nmg_find_e_pt2_handler( lp, state, first )
+long		*lp;
+genptr_t	state;
+int		first;
+{
+	register struct fen2d_state	*sp = (struct fen2d_state *)state;
+	register struct edge		*e = (struct edge *)lp;
+	fastf_t				dist_sq;
+	point_t				a2, b2;
+	struct vertex			*va, *vb;
+	point_t				pca;
+	int				code;
+
+	RT_CK_TOL(sp->tol);
+	NMG_CK_EDGE(e);
+
+	/* If this edge has been processed before, do nothing more */
+	if( !NMG_INDEX_FIRST_TIME(sp->visited, e) )  return;
+
+	va = e->eu_p->vu_p->v_p;
+	vb = e->eu_p->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(va);
+	NMG_CK_VERTEX(vb);
+
+	MAT4X3VEC( a2, sp->mat, va->vg_p->coord );
+	MAT4X3VEC( b2, sp->mat, vb->vg_p->coord );
+
+	code = rt_dist_pt2_lseg2( &dist_sq, pca, a2, b2, sp->pt2, sp->tol );
+
+	if( code == 0 )  dist_sq = 0;
+
+	if( dist_sq < sp->mindist )  {
+		sp->mindist = dist_sq;
+		sp->ep = e;
+	}
+}
+
+/*
+ *			N M G _ F I N D _ E _ N E A R E S T _ P T 2
+ *
+ *  A geometric search routine to find the edge that is neaest to
+ *  the given point, when all edges are projected into 2D using
+ *  the matrix 'mat'.
+ *  Useful for finding the edge nearest a mouse click, for example.
+ */
+struct edge *
+nmg_find_e_nearest_pt2( magic_p, pt2, mat, tol )
+long		*magic_p;
+CONST point_t	pt2;		/* 2d point */
+CONST mat_t	mat;		/* 3d to 3d xform */
+CONST struct rt_tol	*tol;
+{
+	struct model			*m;
+	struct nmg_visit_handlers	htab;
+	struct fen2d_state		st;
+
+	RT_CK_TOL(tol);
+	m = nmg_find_model( magic_p );
+	NMG_CK_MODEL(m);
+
+	st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
+	st.mindist = INFINITY;
+	VMOVE( st.pt2, pt2 );
+	mat_copy( st.mat, mat );
+	st.ep = (struct edge *)NULL;
+	st.tol = tol;
+
+	htab = nmg_visit_handlers_null;		/* struct copy */
+	htab.vis_edge = nmg_find_e_pt2_handler;
+
+	nmg_visit( magic_p, &htab, &st );
+
+	rt_free( (char *)st.visited, "visited[]" );
+
+	if( st.ep )  {
+		NMG_CK_EDGE(st.ep);
+		return st.ep;
+	}
+	return (struct edge *)NULL;
 }
 
 /************************************************************************
