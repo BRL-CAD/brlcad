@@ -427,9 +427,8 @@ const struct db_i	*dbip;
 	const char	*ap;
 	int		i;
 
+	RT_CK_DB_INTERNAL( ip );
 	BU_CK_EXTERNAL(ep);
-
-	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_COMBINATION;
 	ip->idb_meth = &rt_functab[ID_COMBINATION];
 	BU_GETSTRUCT( comb, rt_comb_internal );
@@ -590,16 +589,17 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 
 finish:
 	if( ip->idb_avs.magic != BU_AVS_MAGIC )  return 0;	/* OK */
-bu_avs_print( &ip->idb_avs, "comb5" );
+if(getuid()==53) bu_avs_print( &ip->idb_avs, "comb5" );
 
 	/* Unpack the attributes */
-	if( (ap == bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
+	if( (ap = bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
 		int	ibuf[3];
-		if( sscanf( ap, "%d/%d/%d", V3ARGS(ibuf) ) == 3 )  {
+		if( sscanf( ap, "%d/%d/%d", ibuf, ibuf+1, ibuf+2 ) == 3 )  {
 			VMOVE( comb->rgb, ibuf );
 			comb->rgb_valid = 1;
+		} else {
+			bu_log("unable to parse rgb attribute '%s'\n", ap);
 		}
-		bu_log("unable to parse rgb attribute\n");
 	}
 
 	return 0;			/* OK */
