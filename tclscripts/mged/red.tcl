@@ -302,10 +302,18 @@ proc red_load_defaults { id } {
     }
 
     set save_isRegion $red_isRegion($id)
-    set comb_defs [get_comb $red_name($id)]
+    set result [catch {get_comb $red_name($id)} comb_defs]
+    if {$result == 1} {
+	mged_dialog .$id.redDialog $player_screen($id)\
+		"red_load_defaults: Error"\
+		$comb_defs\
+		"" 0 OK
+	return
+    }
+
     set red_isRegion($id) [lindex $comb_defs 1]
 
-    if {$red_isRegion($id)} {
+    if {$red_isRegion($id) == "Yes"} {
 	set red_id($id) [lindex $comb_defs 2]
 	set red_air($id) [lindex $comb_defs 3]
 	set red_gift($id) [lindex $comb_defs 4]
