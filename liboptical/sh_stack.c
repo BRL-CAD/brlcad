@@ -145,10 +145,13 @@ char	*dp;
 		(struct stk_specific *)dp;
 	int	i;
 	int	ret_status;
+	char	tmp[128];
 
 	for( i = 0; i < 16 && sp->mfuncs[i] != NULL; i++ ) {
-		if( rdebug&RDEBUG_SHADE && i > 0 )  {
-			pr_shadework( "before next stacked mf_render", swp );
+		if( rdebug&RDEBUG_SHADE)  {
+			sprintf(tmp, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
+
+			pr_shadework( tmp, swp );
 		}
 
 		ret_status = sp->mfuncs[i]->mf_render( ap, pp, swp,
