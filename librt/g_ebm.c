@@ -91,8 +91,9 @@ RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
 #define	BIT_XWIDEN	2
 #define	BIT_YWIDEN	2
 #define BIT(_eip,_xx,_yy)	\
-	(_eip)->map[((_yy)+BIT_YWIDEN)*((_eip)->xdim + \
-	BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN]
+	((unsigned char *)((_eip)->mp->apbuf))[ \
+		((_yy)+BIT_YWIDEN)*((_eip)->xdim + \
+		BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
 
 /*
  *			R T _ S E G _ P L A N E C L I P
@@ -491,6 +492,8 @@ CONST mat_t			mat;
 	register int	y;
 	mat_t		tmat;
 	int		ret;
+	struct rt_mapped_file	*mp;
+	unsigned char	*cp;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -536,35 +539,33 @@ CONST mat_t			mat;
 	mat_copy( eip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
-	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-	eip->map = (unsigned char *)rt_calloc(
-		1, nbytes, "rt_ebm_import bitmap" );
-
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	if( (fp = fopen(eip->file, "r")) == NULL )  {
-		perror(eip->file);
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
-		rt_free( (char *)eip->map , "rt_ebm_import: eip->map" );
+	if( !(mp = rt_open_mapped_file( eip->file, "ebm" )) )  {
+		rt_log("rt_ebm_import() unable to open '%s'\n", eip->file);
 		rt_free( (char *)eip , "rt_ebm_import: eip" );
+fail:
 		ip->idb_type = ID_NULL;
 		ip->idb_ptr = (genptr_t)NULL;
-		return(-1);
+		return -1;
 	}
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	eip->mp = mp;
+	if( mp->buflen < eip->xdim*eip->ydim )  {
+		rt_log("rt_ebm_import() file '%s' is too short %d < %d\n",
+			eip->file, mp->buflen, eip->xdim*eip->ydim );
+		goto fail;
+	}
+
+	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+	mp->apbuf = (genptr_t)rt_calloc(
+		1, nbytes, "rt_ebm_import bitmap" );
+	mp->apbuflen = nbytes;
 
 	/* Because of in-memory padding, read each scanline separately */
+	cp = mp->buf;
 	for( y=0; y < eip->ydim; y++ )  {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-		ret = fread( &BIT( eip, 0, y), eip->xdim, 1, fp ); /* res_syscall */
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
-		if( ret != 1 )  {
-			rt_log("rt_ebm_import(%s): fread error, y=%d\n",
-				eip->file, y );
-		}
+		/* BIT() addresses into mp->apbuf */
+		bcopy( cp, &BIT( eip, 0, y), eip->xdim );
+		cp += eip->xdim;
 	}
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return( 0 );
 }
 
@@ -650,10 +651,13 @@ struct rt_db_internal	*ip;
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
 	RT_EBM_CK_MAGIC(eip);
 
-	if( eip->map) rt_free( (char *)eip->map, "ebm bitmap" );
+	if(eip->mp)  {
+		RT_CK_MAPPED_FILE(eip->mp);
+		rt_close_mapped_file(eip->mp);
+	}
 
 	eip->magic = 0;			/* sanity */
-	eip->map = (unsigned char *)0;
+	eip->mp = (struct rt_mapped_file *)0;
 	rt_free( (char *)eip, "ebm ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
@@ -687,7 +691,9 @@ struct rt_i		*rtip;
 
 	GETSTRUCT( ebmp, rt_ebm_specific );
 	ebmp->ebm_i = *eip;		/* struct copy */
-	eip->map = (unsigned char *)0;	/* "steal" the bitmap storage */
+
+	/* "steal" the bitmap storage */
+	eip->mp = (struct rt_mapped_file *)0;	/* "steal" the mapped file */
 
 	/* build Xform matrix from model(world) to ideal(local) space */
 	mat_inv( ebmp->ebm_mat, eip->mat );
@@ -892,7 +898,9 @@ struct soltab	*stp;
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
 
-	rt_free( (char *)ebmp->ebm_i.map, "ebm_map" );
+	RT_CK_MAPPED_FILE(ebmp->ebm_i.mp);
+	rt_close_mapped_file(ebmp->ebm_i.mp);
+
 	rt_free( (char *)ebmp, "rt_ebm_specific" );
 }
 
