@@ -157,7 +157,25 @@ char	**argv;
 		PNG_COLOR_TYPE_RGB, PNG_INTERLACE_NONE,
 		PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT );
 
-	png_set_gAMA( png_p, info_p, 1.0 );
+	/*
+	 *  From the PNG 1.0 Specification:
+	 *	the gAMA chunk specifies the gamma characteristic
+	 *	of the source device.
+	 *
+	 *  In this interpretation, we set the value to 1.0;
+	 *  indicating we hadn't done any gamma correction.
+	 *
+	 *  From the PNG 1.1 Specification:
+	 *
+	 *	PNG images can specify, via the gAMA chunk, the
+	 *	power function relating the desired display output
+	 *	with the image samples.
+	 *
+	 *  In this interpretation, we set the value to 0.6,
+	 *  representing the value needed to un-do the 2.2 correction
+	 *  auto-applied by PowerPoint for PC monitors.
+	 */
+	png_set_gAMA( png_p, info_p, 0.6 );
 
 	png_write_info( png_p, info_p );
 	png_write_image( png_p, rows );
