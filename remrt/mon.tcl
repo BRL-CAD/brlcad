@@ -35,11 +35,19 @@ proc server_sense {} {
 		if { [ catch {
 			puts $fds($host) "status"
 			flush $fds($host)
-			gets $fds($host) status($host)
+			if { [gets $fds($host) status($host)] <= 0 } {
+				puts "EOF from $host"
+				unset nodes($host)
+				set status($host) "$host -dead-"
+				destroy .button_$nodes($host)
+				continue
+			}
 		} code ] } {
 			# error condition
 			puts "$host error $code"
 			unset nodes($host)
+			set status($host) "$host -error-"
+			destroy .button_$nodes($host)
 			continue
 		}
 		##puts "status=$status($host)"
