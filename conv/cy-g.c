@@ -47,7 +47,6 @@ char *argv[];
 	fastf_t *ptr;
 	int first_non_zero=30000;
 	int last_non_zero=(-1);
-	int new_first=(-1);
 	int new_last=0;
 
 	if( argc != 3 )
@@ -168,7 +167,6 @@ char *argv[];
 
 		for( y=0 ; y<nlt ; y++ )
 		{
-			point_t pt;
 			short r;
 			long radius;
 			fastf_t rad;

@@ -69,7 +69,6 @@ static char	*error_file = NULL;	/* error filename */
 static FILE	*fp;		/* Output file pointer */
 static FILE	*fpe;		/* Error file pointer */
 static struct db_i		*dbip;
-static struct bu_vls		base_seg;
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
@@ -91,7 +90,6 @@ char	*argv[];
 {
 	register int	c;
 	double		percent;
-	char 		buf[80];
 #ifdef BSD
 	setlinebuf( stderr );
 #else
@@ -290,7 +288,6 @@ int material_id;
 	char *region_name;
 	int numverts = 0;		/* Number of vertices to output */
 	int numtri   = 0;		/* Number of triangles to output */
-	int tricount = 0;		/* Triangle number */
 	int i;
 
 	NMG_CK_REGION( r );
@@ -551,7 +548,6 @@ union tree		*curtree;
 	union tree		*ret_tree;
 	struct bu_list		vhead;
 	struct nmgregion	*r;
-	int			failed;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(curtree);

@@ -121,14 +121,12 @@ static char			*line;		/* current input line */
 static char			*next_line;	/* next input line */
 static char			*prev_line;	/* previous input line */
 static int			input_status;		/* status of input FILE */
-static char			*free_field_seps=", \t";
 static long			line_count;	/* count of input lines */
 static long			bulk_data_start_line;	/* line number where BULK DATA begins */
 static struct model		*nmg_model;	/* NMG solid for surfaces */
 static struct shell		*nmg_shell;	/* NMG shell */
 static struct bn_tol		tol;		/* tolerance for NMG's */
 static int			polysolids=0;	/* flag fro outputting polysolids rather than NMG's */
-static int			NMG_debug=0;	/* NMG debug flag */
 
 #define		INPUT_OK	0
 #define		INPUT_NULL	1
@@ -662,7 +660,6 @@ int index;
 {
 	struct coord_sys *cs;
 	point_t tmp_pt;
-	fastf_t c1, c2, c3, c4;
 
 	if( !g_pts[index].cid )
 		return( 0 );
@@ -923,7 +920,7 @@ int pid;
 HIDDEN void
 get_cquad4()
 {
-	int eid, pid;
+	int pid;
 	int g1, g2, g3, g4;
 	int gin1, gin2, gin3, gin4;
 	point_t pt1, pt2, pt3, pt4;
@@ -932,7 +929,6 @@ get_cquad4()
 	struct shell *s;
 	int pid_index=0;
 
-	eid = atoi( curr_rec[1] );
 	pid = atoi( curr_rec[2] );
 
 	pid_index = get_pid_index( pid );
@@ -1030,7 +1026,7 @@ get_cquad4()
 HIDDEN void
 get_ctria3()
 {
-	int eid, pid;
+	int pid;
 	int g1, g2, g3;
 	int gin1, gin2, gin3;
 	point_t pt1, pt2, pt3;
@@ -1040,7 +1036,6 @@ get_ctria3()
 	struct pshell *psh;
 	int pid_index=0;
 
-	eid = atoi( curr_rec[1] );
 	pid = atoi( curr_rec[2] );
 
 	pid_index = get_pid_index( pid );
@@ -1181,9 +1176,7 @@ int argc;
 char *argv[];
 {
 	int c;
-	char *ptr;
 	int i;
-	struct coord_sys *cs;
 	struct pshell *psh;
 	struct pbar *pb;
 	struct wmember head;
@@ -1213,7 +1206,6 @@ char *argv[];
 				break;
 			case 'X':
 				sscanf( optarg, "%x", &rt_g.NMG_debug );
-				NMG_debug = rt_g.NMG_debug;
 				bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 				bu_log("\n");
 				break;
