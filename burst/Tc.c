@@ -32,6 +32,9 @@ static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
 
 #ifdef BSD
 #include <sys/ioctl.h>
+#ifdef HAVE_IOCTL_COMPAT_H
+#include <sys/ioctl_compat.h>
+#endif
 #ifndef _NFILE
 #define _NFILE	32
 #endif /* _NFILE */
