@@ -235,7 +235,7 @@ adcursor()
   calc_adc_a2();
   calc_adc_dst();
 
-  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
   DM_DRAW_LINE_2D(dmp,
 		  GED2PM1(GED_MIN), GED2PM1(dv_yadc),

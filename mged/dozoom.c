@@ -380,7 +380,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 			    (short)sp->s_color[0],
 			    (short)sp->s_color[1],
 			    (short)sp->s_color[2])){
-	    DM_SET_COLOR(dmp,
+	    DM_SET_FGCOLOR(dmp,
 			     (short)sp->s_color[0],
 			     (short)sp->s_color[1],
 			     (short)sp->s_color[2], 0);
@@ -421,7 +421,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	/* draw predictor vlist */
 	if(mged_variables->predictor){
-	  DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	  DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist, mged_variables->perspective);
 	}
 
@@ -440,7 +440,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	}
 	DM_LOADMATRIX( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
-	DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  /* Ignore all objects not being rotated */
@@ -517,7 +517,7 @@ struct solid *hsp;
 		      (short)sp->s_color[0],
 		      (short)sp->s_color[1],
 		      (short)sp->s_color[2])){
-      DM_SET_COLOR(dmp,
+      DM_SET_FGCOLOR(dmp,
 		       (short)sp->s_color[0],
 		       (short)sp->s_color[1],
 		       (short)sp->s_color[2], 0);

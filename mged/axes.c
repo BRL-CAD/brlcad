@@ -60,7 +60,7 @@ int linewidth;
   half_size = size * 0.5;
 
   /* set axes color */
-  DM_SET_COLOR(dmp, axes_color[0], axes_color[1], axes_color[2], 1);
+  DM_SET_FGCOLOR(dmp, axes_color[0], axes_color[1], axes_color[2], 1);
 
   /* set axes line width */
   DM_SET_LINE_ATTR(dmp, linewidth, 0);  /* solid lines */
@@ -120,7 +120,7 @@ int linewidth;
 		  rv2[X] + vpos[X], (rv2[Y] + vpos[Y]) * dmp->dm_aspect);
 
   /* set axes string color */
-  DM_SET_COLOR(dmp, label_color[0], label_color[1], label_color[2], 1);
+  DM_SET_FGCOLOR(dmp, label_color[0], label_color[1], label_color[2], 1);
 
   /* draw axes strings/labels with x/y offsets */
   DM_DRAW_STRING_2D(dmp, "X", xlx + vpos[X], xly + vpos[Y], 1, 1);

@@ -106,7 +106,7 @@ draw_grid()
   nh_lines = 2.0 * sf * inv_grid_res_v + (2 * mged_variables->grid_res_major_v);
   nv_lines = 2.0 * sf * inv_grid_res_h + (2 * mged_variables->grid_res_major_h);
 
-  DM_SET_COLOR(dmp,
+  DM_SET_FGCOLOR(dmp,
 	       mged_variables->grid_color[0], 
 	       mged_variables->grid_color[1],
 	       mged_variables->grid_color[2], 1);

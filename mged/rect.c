@@ -84,7 +84,7 @@ draw_rect()
   }
 
   /* draw rectangle */
-  DM_SET_COLOR(dmp,
+  DM_SET_FGCOLOR(dmp,
 	       mged_variables->rubber_band_color[0],
 	       mged_variables->rubber_band_color[1],
 	       mged_variables->rubber_band_color[2], 1);

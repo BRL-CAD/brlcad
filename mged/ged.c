@@ -1563,7 +1563,7 @@ refresh()
 	draw_e_axes();
 
       /* Draw center dot */
-      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
       DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
 
       DM_DRAW_END(dmp);

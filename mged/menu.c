@@ -203,17 +203,17 @@ int y;
   switch(mptr->menu_arg){
   case BV_RATE_TOGGLE:
     if(mged_variables->rateknobs){
-      DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
       DM_DRAW_STRING_2D(dmp, "Rate",
 			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
       DM_DRAW_STRING_2D(dmp, "/Abs",
 			GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
     }else{
-      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
       DM_DRAW_STRING_2D(dmp, "Rate/",
 			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-      DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
       DM_DRAW_STRING_2D(dmp, "Abs",
 			GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
     }
@@ -240,7 +240,7 @@ int y_top;
   register int y = y_top;
 
   menu_top = y - MENU_DY / 2;
-  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 #if 1
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 #else
@@ -268,19 +268,19 @@ int y_top;
 	mged_highlight_menu_item(mptr, y);
       else{
 	if(mptr == *m)
-	  DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	  DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	else
-	  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+	  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 	DM_DRAW_STRING_2D(dmp, mptr->menu_string,
 			  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       }
-      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 		      GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
       if( cur_item == item && cur_menu == menu && menuflag )  {
 	/* prefix item selected with "==>" */
-	DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	DM_DRAW_STRING_2D(dmp, "==>",
 			  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
       }
@@ -290,7 +290,7 @@ int y_top;
   if( y == y_top )
     return;	/* no active menus */
 
-  DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
 #if 1
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 #else

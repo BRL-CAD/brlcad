@@ -400,7 +400,7 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -414,7 +414,7 @@ int y_top;
 		f = absolute_tran[X];
 	    }
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -439,7 +439,7 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -453,7 +453,7 @@ int y_top;
 		f = absolute_tran[Y];
 	    }
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -478,7 +478,7 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -492,7 +492,7 @@ int y_top;
 		f = absolute_tran[Z];
 	    }
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -506,14 +506,14 @@ int y_top;
 	    else
 	      f = edit_absolute_scale;
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs)
 	      f = rate_scale;
 	    else
 	      f = absolute_scale;
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -542,7 +542,7 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -556,7 +556,7 @@ int y_top;
 		f = absolute_rotate[X] / ABS_ROT_FACTOR;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -588,7 +588,7 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -602,7 +602,7 @@ int y_top;
 		f = absolute_rotate[Y] / ABS_ROT_FACTOR;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -634,7 +634,7 @@ int y_top;
 	      break;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_WHITE_R, DM_WHITE_G, DM_WHITE_B, 1);
 	  }else{
 	    if(mged_variables->rateknobs){
 	      if(mged_variables->coords == 'm')
@@ -648,7 +648,7 @@ int y_top;
 		f = absolute_rotate[Z] / ABS_ROT_FACTOR;
 	    }
 
-	    DM_SET_COLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
+	    DM_SET_FGCOLOR(dmp, DM_RED_R, DM_RED_G, DM_RED_B, 1);
 	  }
 	}
 	break;
@@ -670,7 +670,7 @@ int y_top;
 
       DM_DRAW_STRING_2D( dmp, mptr->scroll_string,
 			 GED2PM1(xpos), GED2PM1(y-SCROLL_DY/2), 0, 0 );
-      DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+      DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(XMAX), GED2PM1(y),
 		      GED2PM1(MENUXLIM), GED2PM1(y));
@@ -679,7 +679,7 @@ int y_top;
 
   if( y != y_top )  {
     /* Sliders were drawn, so make left vert edge */
-    DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+    DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 		    GED2PM1(MENUXLIM), GED2PM1(y));
