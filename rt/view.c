@@ -41,7 +41,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "../librt/debug.h"
+#include "./rdebug.h"
 #include "./mathtab.h"
 
 char usage[] = "\
@@ -52,22 +52,19 @@ Options:\n\
  -e Elev	Elevation in degrees\n\
  -M		Read model2view matrix on stdin\n\
  -o model.pix	Specify output file, .pix format (default=fb)\n\
- -x #		Set debug flags\n\
+ -x #		Set librt debug flags\n\
+ -X #		Set rt debug flags\n\
  -p #		Perspective viewing, focal length scaling\n\
 ";
 
 extern FBIO	*fbp;		/* Framebuffer handle */
+extern FILE	*outfp;		/* optional output file */
 
 extern int lightmodel;		/* lighting model # to use */
 extern mat_t view2model;
 extern mat_t model2view;
-extern int hex_out;		/* Output format, 0=binary, !0=hex */
 
-#define MAX_LINE	(1024*8)	/* Max pixels/line */
-/* Current arrangement is definitely non-parallel! */
-static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer, R,G,B */
-static char *pixelp;			/* pointer to first empty pixel */
-static FILE *pixfp = NULL;		/* fd of .pix file */
+extern int hex_out;		/* Output format, 0=binary, !0=hex */
 
 struct soltab *l0stp = SOLTAB_NULL;	/* ptr to light solid tab entry */
 vect_t l0color = {  1,  1,  1 };		/* White */
@@ -165,7 +162,7 @@ struct partition *PartHeadp;
 		ap->a_color[2] = (hitp->hit_normal[2] * (-.5)) + .5;
 	}
 
-	if(rt_g.debug&DEBUG_HITS)  {
+	if(rdebug&RDEBUG_HITS)  {
 		rt_pr_hit( " In", hitp );
 		rt_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
 		VPRINT("RGB", ap->a_color);
@@ -204,16 +201,22 @@ register struct application *ap;
 		p[BLU] = b;
 		fb_write( fbp, ap->a_x, ap->a_y, p, 1 );
 	}
-	if( pixfp != NULL )  {
+	if( outfp != NULL )  {
 		if( hex_out )  {
-			fprintf(pixfp, "%2.2x%2.2x%2.2x\n", r, g, b);
+			fprintf(outfp, "%2.2x%2.2x%2.2x\n", r, g, b);
 		} else {
-			*pixelp++ = r;
-			*pixelp++ = g;
-			*pixelp++ = b;
+			unsigned char p[4];
+			p[0] = r;
+			p[1] = g;
+			p[2] = b;
+#ifdef cray
+rt_log("fwrite( 0%o, 3, 1, 0%o )\n", p, outfp);
+#endif
+			if( fwrite( (char *)p, 3, 1, outfp ) != 1 )
+				rt_bomb("pixel fwrite error");
 		}
 	}
-	if(rt_g.debug&DEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
+	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
 }
 
 
@@ -238,7 +241,7 @@ struct partition *PartHeadp;
 	}
 	hitp = pp->pt_inhit;
 
-	if(rt_g.debug&DEBUG_HITS)  {
+	if(rdebug&RDEBUG_HITS)  {
 		rt_pr_pt(pp);
 	}
 	if( hitp->hit_dist >= INFINITY )  {
@@ -254,7 +257,7 @@ struct partition *PartHeadp;
 
 		if( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > MAX_BOUNCE )  {
-		    	if( rt_g.debug )  {
+		    	if( rdebug&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
 		    	} else {
 		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
@@ -274,7 +277,7 @@ struct partition *PartHeadp;
 		return(1);
 	}
 
-	if( rt_g.debug&DEBUG_RAYWRITE )  {
+	if( rdebug&RDEBUG_RAYWRITE )  {
 		/* Record the approach path */
 		if( hitp->hit_dist > 0.0001 )  {
 			wraypts( ap->a_ray.r_pt,
@@ -319,24 +322,6 @@ struct partition *PartHeadp;
  */
 view_eol()
 {
-	register int cnt;
-	register int i;
-	if( pixfp != NULL )  {
-		if( hex_out )  return;
-		cnt = pixelp - scanline;
-		if( cnt <= 0 || cnt > sizeof(scanline) )  {
-			rt_log("corrupt pixelp=x%x, scanline=x%x, cnt=%d\n",
-				pixelp, scanline, cnt );
-			pixelp = scanline;
-			return;
-		}
-		i = fwrite( (char *)scanline, cnt, 1, pixfp );
-		if( i != 1 )  {
-			rt_log("view_eol: fwrite returned %d\n", i);
-			rt_bomb("write error");
-		}			
-		pixelp = &scanline[0];
-	}
 }
 
 /*
@@ -355,13 +340,8 @@ view_init( ap, file, obj, npts, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
-	if( npts > MAX_LINE )  {
-		rt_log("view:  %d pixels/line > %d\n", npts, MAX_LINE);
-		exit(12);
-	}
 	if( minus_o )  {
 		/* Output is destined for a pixel file */
-		pixelp = &scanline[0];
 		return(0);		/* don't open framebuffer */
 	}  else  {
 		return(1);		/* open a framebuffer */
@@ -373,14 +353,12 @@ char *file, *obj;
  *
  *  Called each time a new image is about to be done.
  */
-view_2init( ap, outfp )
+view_2init( ap )
 register struct application *ap;
-FILE *outfp;
 {
 	extern int hit_nothing();
 	vect_t temp;
 
-	pixfp = outfp;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 
@@ -393,7 +371,7 @@ FILE *outfp;
 			VPRINT("LIGHT0 at", l0pos);
 			break;
 		}
-		if(rt_g.debug)rt_log("No explicit light\n");
+		if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
 		goto debug_lighting;
 	case 1:
 	case 2:

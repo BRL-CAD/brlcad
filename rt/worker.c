@@ -25,6 +25,7 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "../rt/mathtab.h"
+#include "./rdebug.h"
 
 /***** view.c variables imported from rt.c *****/
 extern mat_t view2model;
@@ -148,14 +149,17 @@ do_run( a, b )
 	nworkers = 0;
 #ifdef cray
 	/* Create any extra worker tasks */
-
-	for( x=0; x<npsw; x++ ) {
+RES_ACQUIRE( &rt_g.res_worker );
+	for( x=1; x<npsw; x++ ) {
 		taskcontrol[x].tsk_len = 3;
 		taskcontrol[x].tsk_value = x;
-		TSKSTART( &taskcontrol[x], worker );
+		TSKSTART( &taskcontrol[x], worker, x );
 	}
+for( x=0; x<1000000; x++ ) a=x+1;	/* take time to get started */
+RES_RELEASE( &rt_g.res_worker );
+	worker(0);	/* avoid wasting this task */
 	/* Wait for them to finish */
-	for( x=0; x<npsw; x++ )  {
+	for( x=1; x<npsw; x++ )  {
 		TSKWAIT( &taskcontrol[x] );
 	}
 #endif
@@ -165,6 +169,7 @@ do_run( a, b )
 		asm("	subql		#1,d0");
 		asm("	cstart		d0");
 		asm("super_loop:");
+		/******** need to push index here as arg ******/
 		worker();
 		asm("	crepeat		super_loop");
 	}
@@ -177,7 +182,7 @@ do_run( a, b )
 	/*
 	 * SERIAL case -- one CPU does all the work.
 	 */
-	worker();
+	worker(0);
 #endif
 }
 
@@ -190,7 +195,8 @@ do_run( a, b )
  *  Compute one pixel, and store it.
  */
 void
-worker()
+worker(cpu)
+int cpu;
 {
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
@@ -198,8 +204,11 @@ worker()
 	register int com;
 
 	RES_ACQUIRE( &rt_g.res_worker );
-	nworkers++;
+	com = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
+#ifdef PARALLEL
+rt_log("Worker %d running on cpu %d, rt_g=0%o, ap=0%o\n", com, cpu, &rt_g, &ap);
+#endif
 
 	a.a_onehit = 1;
 	while(1)  {

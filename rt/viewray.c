@@ -40,7 +40,7 @@ Options:\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -x #		Set debug flags\n\
+ -x #		Set librt debug flags\n\
 ";
 
 /* Null function -- handle a miss */

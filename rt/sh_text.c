@@ -25,9 +25,10 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./material.h"
 #include "./mathtab.h"
+#include "./rdebug.h"
 
 struct txt_specific {
-	char	tx_transp[4];	/* RGB for transparency */
+	unsigned char tx_transp[8];	/* RGB for transparency */
 	char	tx_file[128];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
@@ -38,13 +39,16 @@ struct txt_specific {
 
 struct matparse txt_parse[] = {
 #ifndef cray
-	"transp",	(int)(TX_NULL->tx_transp),	"%C",
-	"file",		(int)(TX_NULL->tx_file),	"%s",
+	"transp",	(mp_off_ty)(TX_NULL->tx_transp),"%C",
+	"file",		(mp_off_ty)(TX_NULL->tx_file),	"%s",
+#else
+	"transp",	(mp_off_ty)0,			"%C",
+	"file",		(mp_off_ty)1,			"%s",
 #endif
-	"w",		(int)&(TX_NULL->tx_w),		"%d",
-	"l",		(int)&(TX_NULL->tx_l),		"%d",
-	"fw",		(int)&(TX_NULL->tx_fw),		"%d",
-	(char *)0,	0,				(char *)0
+	"w",		(mp_off_ty)&(TX_NULL->tx_w),	"%d",
+	"l",		(mp_off_ty)&(TX_NULL->tx_l),	"%d",
+	"fw",		(mp_off_ty)&(TX_NULL->tx_fw),	"%d",
+	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
 /*
@@ -177,12 +181,12 @@ struct partition *pp;
 	 * Transparency mapping is enabled, and we hit a transparent spot.
 	 * Fire another ray to determine the actual color
 	 */
-#ifndef cray
+#ifndef crayXX
 /* UNICOS 2.0 BUG */
 	if( tp->tx_transp[3] == 0 ||
-	    r != (tp->tx_transp[0]&0xFF) ||
-	    g != (tp->tx_transp[1]&0xFF) ||
-	    b != (tp->tx_transp[2]&0xFF) )  {
+	    r != (tp->tx_transp[0]) ||
+	    g != (tp->tx_transp[1]) ||
+	    b != (tp->tx_transp[2]) )  {
 		f = 1.0 / 255.0;
 		VSET( ap->a_color, r * f, g * f, b * f );
 		return(1);
@@ -224,29 +228,31 @@ register struct region *rp;
 
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_fw = tp->tx_l = -1;
-	mlib_parse( rp->reg_mater.ma_matparm, txt_parse, (char *)tp );
+	mlib_parse( rp->reg_mater.ma_matparm, txt_parse, (mp_off_ty)tp );
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
 	tp->tx_pixels = (char *)0;
-mlib_print("txt_setup", txt_parse, (char *)tp);
+	if(rdebug&RDEBUG_MATERIAL)
+		mlib_print(rp->reg_name, txt_parse, (mp_off_ty)tp);
 	return( txt_read(tp) );
 }
 
 struct ckr_specific  {
-	int	ckr_r[2];
-	int	ckr_g[2];
-	int	ckr_b[2];
+	char	ckr_a[8];	/* first RGB */
+	char	ckr_b[8];	/* second RGB */
 };
 #define CKR_NULL ((struct ckr_specific *)0)
 
 struct matparse ckr_parse[] = {
-	"r",		(int)&(CKR_NULL->ckr_r[0]),	"%d",
-	"g",		(int)&(CKR_NULL->ckr_g[0]),	"%d",
-	"b",		(int)&(CKR_NULL->ckr_b[0]),	"%d",
-	"R",		(int)&(CKR_NULL->ckr_r[1]),	"%d",
-	"G",		(int)&(CKR_NULL->ckr_g[1]),	"%d",
-	"B",		(int)&(CKR_NULL->ckr_b[1]),	"%d"
+#ifndef cray
+	"a",		(mp_off_ty)(CKR_NULL->ckr_a),	"%C",
+	"b",		(mp_off_ty)(CKR_NULL->ckr_b),	"%C",
+#else
+	"a",		(mp_off_ty)0,			"%C",
+	"b",		(mp_off_ty)1,			"%C",
+#endif
+	(char *)0,	(mp_off_ty)0,			(char *)0
 };
 
 /*
@@ -260,6 +266,7 @@ register struct partition *pp;
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)pp->pt_regionp->reg_udata;
 	auto struct uvcoord uv;
+	register char *cp;
 
 	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
 		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
@@ -268,10 +275,11 @@ register struct partition *pp;
 
 	if( (uv.uv_u < 0.5 && uv.uv_v < 0.5) ||
 	    (uv.uv_u >=0.5 && uv.uv_v >=0.5) )  {
-		VSET( ap->a_color, ckp->ckr_r[0], ckp->ckr_g[0], ckp->ckr_b[0] );
+		cp = ckp->ckr_a;
 	} else {
-		VSET( ap->a_color, ckp->ckr_r[1], ckp->ckr_g[1], ckp->ckr_b[1] );
+		cp = ckp->ckr_b;
 	}
+	VSET( ap->a_color, cp[0]*255, cp[1]*255, cp[2]*255 );
 }
 
 /*
@@ -287,7 +295,9 @@ register struct region *rp;
 	bzero( (char *)ckp, sizeof(struct ckr_specific) );
 	rp->reg_ufunc = ckr_render;
 	rp->reg_udata = (char *)ckp;
-	mlib_parse( rp->reg_mater.ma_matparm, ckr_parse, (char *)ckp );
+	mlib_parse( rp->reg_mater.ma_matparm, ckr_parse, (mp_off_ty)ckp );
+	if(rdebug&RDEBUG_MATERIAL)
+		mlib_print(rp->reg_name, ckr_parse, (mp_off_ty)ckp);
 	return(1);
 }
 
@@ -370,5 +380,6 @@ star_setup( rp )
 register struct region *rp;
 {
 	rp->reg_ufunc = star_render;
+	rp->reg_udata = (char *)0;
 	return(1);
 }
