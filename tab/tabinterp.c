@@ -1083,35 +1083,57 @@ register fastf_t	*times;
 			continue;
 		}
 
-		/* Check for being in first or last two time spans */
-#if 0
-		if( i == 0 || i >= x->c_ilen-3 )
-#endif
+		/* Check for being in first or last time span */
+		if( i == 0 || i >= x->c_ilen-2 )
 		{
 			fastf_t	f;
-			quat_t	qout, q1, q2;
+			quat_t	qout, q1, q2, q3, qtemp1, qtemp2, qtemp3;
 
 			f = (now - x->c_itime[i]) /
 			    (x->c_itime[i+1] - x->c_itime[i]);
 
-			QIGET( q1, i );
-			QIGET( q2, i+1 );
-			QUNITIZE( q1 );
-			QUNITIZE( q2 );
-			quat_slerp( qout, q1, q2, f );
+			if (i==0)
+			{
+				QIGET( q1, i );
+				QIGET( q2, i+1 );
+				QIGET( q3, i+2);
+				QUNITIZE( q1 );
+				QUNITIZE( q2 );
+				QUNITIZE( q3 );
+				quat_make_nearest( q2, q1 );
+				quat_make_nearest( q3, q2 );
+			}
+			else
+			{
+				QIGET( q1, i+1 );
+				QIGET( q2, i );
+				QIGET( q3, i-1 );
+				f = 1.0 - f;
+				QUNITIZE( q1 );
+				QUNITIZE( q2 );
+				QUNITIZE( q3 );
+				quat_make_nearest( q2, q3 );
+				quat_make_nearest( q1, q2 );
+			}
+
+			/* find middle control point */
+			quat_slerp( qtemp1, q3, q2, 2.0 );
+			quat_slerp( qtemp2, qtemp1, q1, 0.5 );
+			quat_slerp( qtemp3, q2, qtemp2, 0.33333 );
+
+			/* do 3-point bezier interpolation */
+			quat_slerp( qtemp1, q1, qtemp3, f );
+			quat_slerp( qtemp2, qtemp3, q2, f );
+			quat_slerp( qout, qtemp1, qtemp2, f );
+
 			QPUT( qout );
 			continue;
 		}
-#if 0
-		/* XXX This does not work.  q1 needs to be start of THIS span,
-		 * XXX (e.g. [i], not [i-1]),
-		 * XXX and q4 the end of this span, with the two in the
-		 * XXX middle somehow specially chosen.
-		 */
+
 		/* In an intermediate time span */
 		{
 			fastf_t	f;
-			quat_t	qout, q1, q2, q3, q4;
+			quat_t	qout, q1, q2, q3, q4, qa, qb, qtemp1, qtemp2;
 
 			f = (now - x->c_itime[i]) /
 			    (x->c_itime[i+1] - x->c_itime[i]);
@@ -1120,10 +1142,28 @@ register fastf_t	*times;
 			QIGET( q2, i );
 			QIGET( q3, i+1 );
 			QIGET( q4, i+2 );
-			quat_sberp( qout, q1, q2, q3, q4, f );
+
+			QUNITIZE( q1 );
+			QUNITIZE( q2 );
+			QUNITIZE( q3 );
+			QUNITIZE( q4 );
+			quat_make_nearest( q2, q1 );
+			quat_make_nearest( q3, q2 );
+			quat_make_nearest( q4, q3 );
+
+			/* find two middle control points */
+			quat_slerp( qtemp1, q1, q2, 2.0 );
+			quat_slerp( qtemp2, qtemp1, q3, 0.5 );
+			quat_slerp( qa, q2, qtemp2, 0.333333 );
+
+			quat_slerp( qtemp1, q4, q3, 2.0 );
+			quat_slerp( qtemp2, qtemp1, q2, 0.5 );
+			quat_slerp( qb, q3, qtemp2, 0.333333 );
+			
+			quat_sberp( qout, q2, qa, qb, q3, f );
 			QPUT( qout );
 		}
-#endif
+
 	}
 }
 
