@@ -1,7 +1,10 @@
 #!/bin/sh
 # @(#)$Header$ (BRL)
 
-touch version.number
+if test ! -f version.number
+then
+	echo 0 > version.number
+fi
 p=`cat version.number`
 c=`echo 0 1 $p +p | dc`
 
