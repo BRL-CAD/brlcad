@@ -148,6 +148,16 @@ int			nrays;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
+	if( ap->a_magic )  {
+		RT_CK_AP(ap);
+	} else {
+		ap->a_magic = RT_AP_MAGIC;
+	}
+	if( ap->a_ray.magic )  {
+		RT_CK_RAY(&(ap->a_ray));
+	} else {
+		ap->a_ray.magic = RT_RAY_MAGIC;
+	}
 	if( ap->a_resource == RESOURCE_NULL )  {
 		ap->a_resource = &rt_uniresource;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
@@ -306,6 +316,11 @@ int			nrays;
 				continue;	/* MISS */
 			}
 			resp->re_shot_hit++;
+			{
+				register struct seg *segp =
+					BU_LIST_FIRST(seg, &waiting_segs.l);
+				segp->seg_in.hit_rayp = segp->seg_out.hit_rayp = &ap->a_ray;
+			}
 		}
 	}
 
@@ -454,8 +469,7 @@ int			nrays;
 						/* Restore to original distance */
 						s2->seg_in.hit_dist += ss.dist_corr;
 						s2->seg_out.hit_dist += ss.dist_corr;
-						/* TODO:  based upon flags, evaluate hit_normal now */
-						/* XXX add pointer to xray from struct hit for lazy evaluators? */
+						s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &rays[ray];
 						BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 					}
 				}
