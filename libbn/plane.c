@@ -31,6 +31,9 @@ RT_EXTERN(double	rt_dist_pt3_along_line3, (CONST point_t	p,
 			CONST vect_t d, CONST point_t x));
 RT_EXTERN(double	rt_dist_pt2_along_line2, (CONST point_t p,
 			CONST vect_t d, CONST point_t x));
+/* XXX move to vmath.h */
+#define V2PRINT(a,b)	\
+	rt_log("%s (%g, %g)\n", a, V2ARGS(b) );
 
 
 /*
@@ -653,6 +656,8 @@ rt_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
  *
  *  with a line segment defined by two distinct points A and B=(A+C).
  *
+ *  XXX probably should take point B, not vector C.  Sigh.
+ *
  *  Explicit Return -
  *	-4	A and B are not distinct points
  *	-3	Lines do not intersect
@@ -763,9 +768,24 @@ rt_log("b=(%g, %g), b_dist_sq=%g\n", V2ARGS(b), ctol);
 
 		VJOIN1_2D( hit_pt, p, dist[0], d );
 		VJOIN1_2D( hit2, a, dist[1], c );
+		/* Check both hit point value calculations */
+		if( rt_pt2_pt2_equal( a, hit_pt, tol ) ||
+		    rt_pt2_pt2_equal( a, hit2, tol ) )  {
+			dist[1] = 0;
+			ret = 1;	/* Intersect is at A */
+		}
+		if( rt_pt2_pt2_equal( b, hit_pt, tol ) ||
+		    rt_pt2_pt2_equal( b, hit_pt, tol ) )  {
+			dist[1] = 1;
+			ret = 2;	/* Intersect is at B */
+		}
+
 		ret = rt_isect_pt2_lseg2( &ab_dist, a, b, hit_pt, tol );
 		if( rt_g.debug & DEBUG_MATH )  {
 			/* XXX This is temporary */
+			V2PRINT("a", a);
+			V2PRINT("hit", hit_pt);
+			V2PRINT("b", b);
 rt_log("rt_isect_pt2_lseg2() hit2d=(%g,%g) ab_dist=%g, ret=%d\n", hit_pt[X], hit_pt[Y], ab_dist, ret);
 rt_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
 		}
@@ -788,6 +808,11 @@ rt_log("\tother hit2d=(%g,%g)\n", hit2[X], hit2[Y] );
 			goto out;
 		}
 		/* ret == 3, hit_pt is between A and B */
+
+		if( !rt_between( a[X], hit_pt[X], b[X], tol ) ||
+		    !rt_between( a[Y], hit_pt[Y], b[Y], tol ) ) {
+		    	rt_bomb("rt_isect_line2_lseg2() hit_pt not between A and B!\n");
+		}
 	}
 
 	/*
@@ -2175,4 +2200,41 @@ CONST point_t	x;
 			ret );
 	}
 	return ret;
+}
+
+/*
+ *  Returns -
+ *	1	if left <= mid <= right
+ *	0	if mid is not in the range.
+ */
+int
+rt_between( left, mid, right, tol )
+double	left;
+double	mid;
+double	right;
+CONST struct rt_tol	*tol;
+{
+	RT_CK_TOL(tol);
+
+	if( left < right )  {
+		if( NEAR_ZERO(left-right, tol->dist*0.1) )  {
+			left -= tol->dist*0.1;
+			right += tol->dist*0.1;
+		}
+		if( mid < left || mid > right )  goto fail;
+		return 1;
+	}
+	/* The 'right' value is lowest */
+	if( NEAR_ZERO(left-right, tol->dist*0.1) )  {
+		right -= tol->dist*0.1;
+		left += tol->dist*0.1;
+	}
+	if( mid < right || mid > left )  goto fail;
+	return 1;
+fail:
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_between( %.17e, %.17e, %.17e ) ret=0 FAIL\n",
+			left, mid, right);
+	}
+	return 0;
 }

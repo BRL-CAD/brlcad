@@ -2631,13 +2631,27 @@ struct faceuse		*fu2;
 				eu1_dir[X], eu1_dir[Y] );
 			VPRINT("\t3D: is->pt ", is->pt);
 			VPRINT("\t3D: is->dir", is->dir);
-		    	VPRINT("\t\t2d: Breaking eu1 at isect. 3D pt=", hit_pt);
+			rt_log("\t2d: Breaking eu1 at isect.\n");
+			VPRINT("  vu1a", vu1a->v_p->vg_p->coord);
+			VPRINT("hit_pt", hit_pt);
+			VPRINT("  vu1b", vu1b->v_p->vg_p->coord);
 			/* XXX Perform a (not-so) quick check */
 			code = rt_isect_pt_lseg( &dist, vu1a->v_p->vg_p->coord,
 				vu1b->v_p->vg_p->coord,
 				hit_pt, &(is->tol) );
-			rt_log("rt_isect_pt_lseg() dist=%g, ret=%d\n", dist, code);
+			rt_log("\trt_isect_pt_lseg() dist=%g, ret=%d\n", dist, code);
 			if( code < 0 )  rt_bomb("3D point not on 3D lseg\n");
+
+			/* Ensure that the 3D hit_pt is between the end pts */
+if( !rt_between(vu1a->v_p->vg_p->coord[X], hit_pt[X], vu1b->v_p->vg_p->coord[X], &(is->tol)) ||
+    !rt_between(vu1a->v_p->vg_p->coord[Y], hit_pt[Y], vu1b->v_p->vg_p->coord[Y], &(is->tol)) ||
+    !rt_between(vu1a->v_p->vg_p->coord[Z], hit_pt[Z], vu1b->v_p->vg_p->coord[Z], &(is->tol)) )  {
+    	VPRINT("vu1a", vu1a->v_p->vg_p->coord);
+    	VPRINT("hitp", hit_pt);
+    	VPRINT("vu1b", vu1b->v_p->vg_p->coord);
+    	rt_bomb("nmg_isect_line2_edge2p() hit point not between edge verts!\n");
+}
+
 		}
 
 		/* if we can't find the appropriate vertex in the other
