@@ -94,6 +94,7 @@ static int wdb_comb_tcl();
 static int wdb_find_tcl();
 static int wdb_which_tcl();
 static int wdb_title_tcl();
+static int wdb_tree_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -139,6 +140,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"whichair",	wdb_which_tcl,
 	"whichid",	wdb_which_tcl,
 	"title",	wdb_title_tcl,
+	"tree",		wdb_tree_tcl,
 #if 0
 	"cat",		wdb_cat_tcl,
 	"color",	wdb_color_tcl,
@@ -153,7 +155,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"getmat",	wdb_getmat_tcl,
 	"putmat",	wdb_putmat_tcl,
 	"summary",	wdb_summary_tcl,
-	"tree",		wdb_tree_tcl,
 	"units",	wdb_units_tcl,
 	"whatid",	wdb_whatid_tcl,
 	"which_shader",	wdb_which_shader_tcl,
@@ -2855,6 +2856,155 @@ wdb_title_tcl(clientData, interp, argc, argv)
 
 	bu_vls_free(&title);
 	return bad ? TCL_ERROR : TCL_OK;
+}
+
+/*
+ *			W D B _ P R I N T _ N O D E
+ */
+static void
+wdb_print_node(wdbp, interp, dp, pathpos, prefix)
+     struct rt_wdb *wdbp;
+     Tcl_Interp *interp;
+     register struct directory *dp;
+     int pathpos;
+     char prefix;
+{	
+	register int	i;
+	register struct directory *nextdp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+
+	for( i=0; i<pathpos; i++) 
+		Tcl_AppendResult(interp, "\t", (char *)NULL);
+
+	if (prefix) {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "%c ", prefix);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	}
+
+	Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
+	/* Output Comb and Region flags (-F?) */
+	if(dp->d_flags & DIR_COMB)
+		Tcl_AppendResult(interp, "/", (char *)NULL);
+	if(dp->d_flags & DIR_REGION)
+		Tcl_AppendResult(interp, "R", (char *)NULL);
+
+	Tcl_AppendResult(interp, "\n", (char *)NULL);
+
+	if(!(dp->d_flags & DIR_COMB))
+		return;
+
+	/*
+	 *  This node is a combination (eg, a directory).
+	 *  Process all the arcs (eg, directory members).
+	 */
+
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		return;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	if (comb->tree){
+		int node_count;
+		int actual_count;
+		struct rt_tree_array *rt_tree_array;
+
+		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+			db_non_union_push(comb->tree);
+			if (db_ck_v4gift_tree(comb->tree) < 0) {
+				Tcl_AppendResult(interp, "Cannot flatten tree for listing\n", (char *)NULL);
+				return;
+			}
+		}
+		node_count = db_tree_nleaves(comb->tree);
+		if (node_count > 0) {
+			rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
+									   sizeof( struct rt_tree_array ), "tree list" );
+			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
+			if (actual_count > node_count)
+				bu_bomb("rt_comb_v4_export() array overflow!");
+			if (actual_count < node_count)
+				bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+		}
+
+		for (i=0 ; i<actual_count ; i++) {
+			char op;
+
+			switch (rt_tree_array[i].tl_op) {
+			case OP_UNION:
+				op = 'u';
+				break;
+			case OP_INTERSECT:
+				op = '+';
+				break;
+			case OP_SUBTRACT:
+				op = '-';
+				break;
+			default:
+				op = '?';
+				break;
+			}
+
+			if ((nextdp = db_lookup(wdbp->dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+				int j;
+				struct bu_vls tmp_vls;
+  			
+				for (j=0; j<pathpos+1; j++) 
+					Tcl_AppendResult(interp, "\t", (char *)NULL);
+
+				bu_vls_init(&tmp_vls);
+				bu_vls_printf(&tmp_vls, "%c ", op);
+				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+				bu_vls_free(&tmp_vls);
+
+				Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
+			} else
+				wdb_print_node(wdbp, interp, nextdp, pathpos+1, op);
+		}
+		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+	}
+	rt_comb_ifree(&intern);
+}
+
+/*
+ * Usage:
+ *        procname tree object(s)
+ */
+static int
+wdb_tree_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	register struct directory *dp;
+	register int j;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_tree");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	for (j = 2; j < argc; j++) {
+		if (j > 2)
+			Tcl_AppendResult(interp, "\n", (char *)NULL);
+		if ((dp = db_lookup(wdbp->dbip, argv[j], LOOKUP_NOISY)) == DIR_NULL)
+			continue;
+		wdb_print_node(wdbp, interp, dp, 0, 0);
+	}
+
+	return TCL_OK;
 }
 
 #if 0
