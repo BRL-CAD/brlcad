@@ -120,22 +120,11 @@ register struct rt_i *rtip;
 
 	if( !(rt_g.debug&DEBUG_PLOTBOX) )  return;
 
-	/* Debugging code to plot cuts, solid RRPs */
+	/* Debugging code to plot cuts */
 	if( (plotfp=fopen("rtcut.plot", "w"))!=NULL) {
 		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 		/* First, all the cutting boxes */
 		rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );
-		(void)fclose(plotfp);
-	}
-	if( (plotfp=fopen("rtrpp.plot", "w"))!=NULL) {
-		/* Then, all the solid bounding boxes, in white */
-		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
-		pl_color( plotfp, 255, 255, 255 );
-		for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-			if( stp->st_aradius >= INFINITY )
-				continue;
-			pdv_3box( plotfp, stp->st_min, stp->st_max );
-		}
 		(void)fclose(plotfp);
 	}
 }
