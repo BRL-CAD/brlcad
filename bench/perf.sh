@@ -13,10 +13,11 @@ then
 	exit 1
 fi
 
-# Save three args, because arg list will be reused below.
-HOST=$1
-NOTE1=$2
-NOTE2=$3
+#  Save three args, because arg list will be reused below.
+#  They may have embedded spaces in them.
+HOST="$1"
+NOTE1="$2"
+NOTE2="$3"
 
 INFILES="moss.log world.log star.log bldg391.log"
 VAXREF="122.64 59.33 46.28 45.95"
