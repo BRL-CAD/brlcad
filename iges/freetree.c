@@ -19,7 +19,7 @@
 #include "vmath.h"
 #include "./iges_struct.h"
 
-
+void
 Freetree( root )
 struct node *root;
 {
