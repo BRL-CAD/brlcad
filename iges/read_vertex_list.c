@@ -49,7 +49,7 @@ int vert_de;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "Vertex list: " );
+	Readint( &sol_num , "" );
 	if( sol_num != 502 )
 	{
 		/* this is not an vertex list entity */
@@ -62,7 +62,7 @@ int vert_de;
 
 	vertex_list->vert_de = vert_de;
 	vertex_list->next = NULL;
-	Readint( &vertex_list->no_of_verts , "\tNo of vertices: " );
+	Readint( &vertex_list->no_of_verts , "" );
 	vertex_list->i_verts = (struct iges_vertex *)rt_calloc( vertex_list->no_of_verts , sizeof( struct iges_vertex ) ,
 			"Read_vertex_list: iges_vertex" );
 
@@ -71,10 +71,6 @@ int vert_de;
 		Readcnv( &vertex_list->i_verts[i].pt[X] , "" );
 		Readcnv( &vertex_list->i_verts[i].pt[Y] , "" );
 		Readcnv( &vertex_list->i_verts[i].pt[Z] , "" );
-		printf( "\t\t%d - ( %g , %g , %g )\n" , i+1 ,
-			vertex_list->i_verts[i].pt[X] ,
-			vertex_list->i_verts[i].pt[Y] ,
-			vertex_list->i_verts[i].pt[Z] );
 		vertex_list->i_verts[i].v = (struct vertex *)NULL;
 	}
 
