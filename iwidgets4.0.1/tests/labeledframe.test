@@ -1,0 +1,194 @@
+# This file is a Tcl script to test out [incr Widgets] Labeledframe class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Labeledframe-1.$c {Labeledframe construction} {
+    iwidgets::Labeledframe .lf
+    set cs [.lf childsite]
+    .lf configure -background yellow
+    pack [radiobutton $cs.w1 -anchor w -text "Button1"] -anchor w -fill x
+    pack [radiobutton $cs.w2 -anchor w -text "Button2"] -anchor w -fill x
+    pack [radiobutton $cs.w3 -anchor w -text "Button3"] -anchor w -fill x
+    pack [radiobutton $cs.w4 -anchor w -text "Button4"] -anchor w -fill x
+    pack [radiobutton $cs.w5 -anchor w -text "Button5"] -anchor w -fill x
+    pack [radiobutton $cs.w6 -anchor w -text "Button6"] -anchor w -fill x
+    pack [radiobutton $cs.w7 -anchor w -text "Button7"] -anchor w -fill x
+    pack [radiobutton $cs.w8 -anchor w -text "Button8"] -anchor w -fill x
+
+    pack .lf -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Labeledframe-2.$o {configuration option} {
+    llength [.lf configure]
+} {15}
+
+incr o
+
+foreach test {
+    {-labeltext "Label" "Label"}
+    {-labelpos nw nw}
+    {-labelpos n n}
+    {-labelpos ne ne}
+    {-labelpos en en}
+    {-labelpos e e}
+    {-labelpos es es}
+    {-labelpos sw sw}
+    {-labelpos s s}
+    {-labelpos se se}
+    {-labelpos wn wn}
+    {-labelpos w w}
+    {-labelpos ws ws}
+    {-labelfont 6x13 6x13}
+    {-labelpos nw nw}
+    {-labelpos n n}
+    {-labelpos ne ne}
+    {-labelpos en en}
+    {-labelpos e e}
+    {-labelpos es es}
+    {-labelpos sw sw}
+    {-labelpos s s}
+    {-labelpos se se}
+    {-labelpos wn wn}
+    {-labelpos w w}
+    {-labelpos ws ws}
+    {-relief groove groove}
+    {-relief sunken sunken}
+    {-relief raised raised}
+    {-relief ridge  ridge}
+    {-relief flat   flat}
+    {-borderwidth 2 2}
+    {-borderwidth 4 4}
+    {-borderwidth 6 6}
+    {-borderwidth 8 8}
+    {-borderwidth 10 10}
+    {-ipadx 20 20}
+    {-ipady 20 20}
+    {-ipadx 10 10}
+    {-ipady 10 10}
+    {-ipadx 0 0}
+    {-ipady 0 0}
+    } {
+	set option [lindex $test 0]
+	test Labeledframe-1.$o "configuration options, $option" {
+	    .lf configure $option [lindex $test 1]
+	    lindex [.lf configure $option] 4
+	} [lindex $test 2]
+        update 
+	incr o
+    }
+
+#
+# Method tests which are successful.
+#
+test Labeledframe-3.$m {object method, childsite} {
+    list [catch {.lf childsite} msg] $msg
+} [list 0 .lf.childsite]
+
+incr m
+
+test Labeledframe-3.$m {object static method, initTable} {
+
+} {}
+
+incr m
+
+#
+# Method tests which fail and produce errors
+#
+test Labeledframe-3.$m {initTable static method} {
+    button .b
+
+} {.b}
+
+incr m
+
+test Labeledframe-1.$c {Labeledframe destruction} {
+    destroy .b
+    destroy .lf
+    update 
+} {}
+
+incr c
+
+test Labeledframe-1.$c {Labeledframe construction} {
+    iwidgets::labeledframe .lf -labeltext "ListBox" -labelpos s
+    set cs [.lf childsite]
+    .lf configure -background yellow
+    pack [radiobutton $cs.w1 -anchor w -text "Button1"] -anchor w -fill x
+    pack [radiobutton $cs.w2 -anchor w -text "Button2"] -anchor w -fill x
+    pack [radiobutton $cs.w3 -anchor w -text "Button3"] -anchor w -fill x
+    pack [radiobutton $cs.w4 -anchor w -text "Button4"] -anchor w -fill x
+    pack [radiobutton $cs.w5 -anchor w -text "Button5"] -anchor w -fill x
+    pack [radiobutton $cs.w6 -anchor w -text "Button6"] -anchor w -fill x
+    pack [radiobutton $cs.w7 -anchor w -text "Button7"] -anchor w -fill x
+    pack [radiobutton $cs.w8 -anchor w -text "Button8"] -anchor w -fill x
+    pack .lf -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+test Labeledframe-1.$c {Labeledframe destruction} {
+    destroy .lf
+    update 
+} {}
+
+incr c
+
+test Labeledframe-1.$c {Labeledframe construction} {
+    iwidgets::labeledframe .lf 
+    pack .lf 
+    destroy .lf
+    update 
+} {}
+
+
+
+::tcltest::cleanupTests
+exit
