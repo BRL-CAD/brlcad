@@ -374,10 +374,12 @@ char **argv;
 	/* Initialize the Tcl interpreter */
 	interp = Tcl_CreateInterp();
 	/* This runs the init.tcl script */
+bu_log("before Tcl_Init\n");
 	if( Tcl_Init(interp) == TCL_ERROR )  {
 		bu_log("Tcl_Init error %s\n", interp->result);
 		bu_bomb("rtnode: Unable to initialize TCL.  Run 'new_tk'?\n");
 	}
+bu_log("after Tcl_Init\n");
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
 	sh_tcl_setup(interp);
