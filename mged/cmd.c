@@ -646,6 +646,10 @@ f_help( argc, argv )
 int	argc;
 char	**argv;
 {
+	if( argc <= 1 )  {
+		/* User typed just "help" */
+		system("Mosaic http://ftp.arl.mil/ftp/brl-cad/html/mged &");
+	}
 	return f_help2(argc, argv, &funtab[0]);
 }
 
