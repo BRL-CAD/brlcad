@@ -1531,8 +1531,10 @@ char	**argv;
 
 	if(first){
 	  first = 0;
+#if 0
 	  Tcl_AppendResult(interp, "Note: the attach command can be used\n",
 			   "      to open a display window.\n\n", (char *)NULL);
+#endif
 	}
 
 	/* --- Scan geometry database and build in-memory directory --- */
