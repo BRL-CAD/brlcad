@@ -177,12 +177,6 @@ found_interface:
 	}
 	(void) strcpy( ifp->if_name, file );
 
-	/* set default width/height */
-	if( width == 0 )
-		width = ifp->if_width;
-	if( height == 0 )
-		height = ifp->if_height;
-
 	if( (*ifp->if_dopen)( ifp, file, width, height ) == -1 )  {
 		fb_log(	"fb_open : can not open device \"%s\".\n", file );
 		free( (void *) ifp->if_name );
