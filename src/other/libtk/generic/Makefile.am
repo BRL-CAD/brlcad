@@ -114,7 +114,7 @@ brlcadinclude_HEADERS = $(include_HEADERS)
 EXTRA_DIST = \
 	README \
 	prolog.ps \
-	tk.decls. \
+	tk.decls \
 	tkInt.decls
 
 MAINTAINERCLEANFILES = \
