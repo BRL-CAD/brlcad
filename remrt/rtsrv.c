@@ -813,6 +813,7 @@ va_dcl
 	char		*fmt;
 	char		buf[512];
 	FILE		strbuf;
+	static char	*cp;			/* NON-PARALLEL */
 
 	if( print_on == 0 )  return;
 	if( cp == (char *)0 )  cp = buf;
