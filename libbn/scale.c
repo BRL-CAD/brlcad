@@ -54,6 +54,8 @@
  * be declared of type DOUBLE PRECISION to reserve enough space.
  *
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

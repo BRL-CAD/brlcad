@@ -36,6 +36,8 @@
  *				fact that fortran arrays start at one
  *				and not zero as with c.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
