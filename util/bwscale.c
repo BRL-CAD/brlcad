@@ -47,9 +47,7 @@ char	*Usage = "usage: bwscale infile.bw inx iny outx outy >out.bw\n";
 main( argc, argv )
 int argc; char **argv;
 {
-	int	i, j;
 	int	inx, iny, outx, outy;
-	unsigned char linebuf[512];
 
 	if( argc != 6 ) {
 		fprintf( stderr, Usage );
@@ -59,10 +57,14 @@ int argc; char **argv;
 	iny = atoi( argv[3] );
 	outx = atoi( argv[4] );
 	outy = atoi( argv[5] );
+	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
+		fprintf( stderr, "bwscale: bad size\n" );
+		exit( 2 );
+	}
 
 	if( (buffp = fopen( argv[1], "r" )) == NULL ) {
 		fprintf( stderr, "bwscale: can't open \"%s\"\n", argv[1] );
-		exit( 2 );
+		exit( 3 );
 	}
 
 	/* See how many lines we can buffer */
@@ -70,7 +72,7 @@ int argc; char **argv;
 	init_buffer( scanlen );
 
 	/* Here we go */
-	scale( stdin, inx, iny, stdout, outx, outy );
+	scale( stdout, inx, iny, outx, outy );
 }
 
 /*
@@ -104,8 +106,6 @@ int scanlen;
 fill_buffer( y )
 int y;
 {
-	int	i;
-
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;
 
@@ -127,8 +127,8 @@ int y;
  * We will preserve the amount of light energy per unit area.
  * To scale up we use bilinear interpolation.
  */
-scale( ifp, ix, iy, ofp, ox, oy )
-FILE *ifp, *ofp;
+scale( ofp, ix, iy, ox, oy )
+FILE	*ofp;
 int	ix, iy, ox, oy;
 {
 	int	i, j, k, l;
@@ -146,7 +146,7 @@ int	ix, iy, ox, oy;
 	}
 	if( pxlen < 1.0 || pylen < 1.0 ) {
 		/* bilinear interpolate */
-		binterp( ifp, ix, iy, ofp, ox, oy );
+		binterp( ofp, ix, iy, ox, oy );
 		return( 0 );
 	}
 
@@ -201,8 +201,8 @@ int	ix, iy, ox, oy;
  *
  * This version preserves the outside pixels and interps inside only.
  */
-binterp( ifp, ix, iy, ofp, ox, oy )
-FILE *ifp, *ofp;
+binterp( ofp, ix, iy, ox, oy )
+FILE	*ofp;
 int	ix, iy, ox, oy;
 {
 	int	i, j;
