@@ -192,7 +192,7 @@ void mk_char_trans_tbl()
 			switch (op[i]) {
 			case ADD : d += val[i]; break;
 			case MULT: d *= val[i]; break;
-			case POW : d = pow( d, val[i]); break;
+			case POW : d = pow( (double)d, val[i]); break;
 			case ABS : if (d < 0.0) d = - d; break;
 			case SHIFT: d=d<<(int)val[i]; break;
 			case AND : d &= (int)val[i]; break;
