@@ -1381,7 +1381,7 @@ int arg;
 				return;
 			}
 
-			if( !lu | *lu->up.magic_p != NMG_SHELL_MAGIC )
+			if( !lu || *lu->up.magic_p != NMG_SHELL_MAGIC )
 			{
 				/* This should never happen */
 				bu_bomb( "Cannot find wire loop!!\n" );
@@ -2320,8 +2320,8 @@ init_sedit()
 	}
 
 	/* Read solid description into es_int */
-	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL, &rt_uniresource ) < 0 )  {
-	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
+	if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL, &rt_uniresource ) < 0 )  {
+	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[(int)(illump->s_last)]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  rt_db_free_internal( &es_int, &rt_uniresource );
 	  return;				/* FAIL */
@@ -2440,7 +2440,7 @@ replot_editing_solid()
   register struct solid *sp;
 
   FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-    if(sp->s_path[sp->s_last]->d_addr == illump->s_path[illump->s_last]->d_addr){
+    if(sp->s_path[(int)(sp->s_last)]->d_addr == illump->s_path[(int)(illump->s_last)]->d_addr){
       pathHmat( sp, mat, sp->s_last-1 );
       (void)replot_modified_solid( sp, &es_int, mat );
     }
@@ -3315,7 +3315,7 @@ sedit()
 		{
 			struct rt_extrude_internal *extr =
 				(struct rt_extrude_internal *)es_int.idb_ptr;
-			char *sketch_name, *curve_name;
+			char *sketch_name;
 			int ret_tcl;
 			struct directory *dp;
 			struct rt_db_internal tmp_ip;
@@ -7319,8 +7319,8 @@ init_oedit_guts()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL, &rt_uniresource ) < 0 )  {
-		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
+	if( rt_db_get_internal( &es_int, illump->s_path[(int)(illump->s_last)], dbip, NULL, &rt_uniresource ) < 0 )  {
+		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[(int)(illump->s_last)]->d_namep,
 				 "):  solid import failure\n", (char *)NULL);
 		rt_db_free_internal( &es_int, &rt_uniresource );
 		button(BE_REJECT);
@@ -7586,7 +7586,7 @@ sedit_apply(accept_flag)
 	}
 
 	/* write editing changes out to disc */
-	dp = illump->s_path[illump->s_last];
+	dp = illump->s_path[(int)(illump->s_last)];
 
 	/* make sure that any BOT solid is minimally legal */
 	if (es_int.idb_type == ID_BOT) {
@@ -7639,8 +7639,6 @@ sedit_apply(accept_flag)
 void
 sedit_accept()
 {
-	struct directory	*dp;
-
 	if (dbip == DBI_NULL)
 		return;
 
@@ -7690,7 +7688,7 @@ sedit_reject()
 	  register struct solid *sp;
 
 	  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
-	    if(sp->s_path[sp->s_last]->d_addr == illump->s_path[illump->s_last]->d_addr)
+	    if(sp->s_path[(int)(sp->s_last)]->d_addr == illump->s_path[(int)(illump->s_last)]->d_addr)
 	      (void)replot_original_solid( sp );
 	  }
 	}
