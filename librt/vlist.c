@@ -27,9 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "externs.h"
 
-/* Should move to raytrace.h */
-RT_EXTERN( unsigned char *rt_plong, (unsigned char *msgp, unsigned long l) );
-
 /*
  *			R T _ V L I S T _ E X P O R T
  *
@@ -42,7 +39,7 @@ void
 rt_vlist_export( vls, hp, name )
 struct rt_vls	*vls;
 struct rt_list	*hp;
-char		*name;
+CONST char	*name;
 {
 	register struct rt_vlist	*vp;
 	int		nelem;
@@ -103,11 +100,11 @@ void
 rt_vlist_import( hp, namevls, buf )
 struct rt_list	*hp;
 struct rt_vls	*namevls;
-unsigned char	*buf;
+CONST unsigned char	*buf;
 {
 	register struct rt_vlist	*vp;
-	unsigned char	*bp;
-	unsigned char	*pp;		/* point pointer */
+	CONST register unsigned char	*bp;
+	CONST unsigned char		*pp;		/* point pointer */
 	int		nelem;
 	int		namelen;
 	int		i;
