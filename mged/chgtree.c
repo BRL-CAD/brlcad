@@ -28,7 +28,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -162,8 +162,7 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ||
-	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
+	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL )  {
 	  TCL_ALLOC_ERR_return;
 	}
 
