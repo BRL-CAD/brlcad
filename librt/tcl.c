@@ -1352,6 +1352,7 @@ char		**argv;
 		Tcl_AppendResult(interp, "\
 Usage: wdb_open widget_command file filename\n\
        wdb_open widget_command disk $dbip\n\
+       wdb_open widget_command disk_append $dbip\n\
        wdb_open widget_command inmem $dbip\n\
        wdb_open widget_command inmem_append $dbip\n",
 		NULL);
@@ -1369,6 +1370,8 @@ Usage: wdb_open widget_command file filename\n\
 
 		if( strcmp( argv[2], "disk" ) == 0 )  {
 			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
+		} else if( strcmp( argv[2], "disk_append" ) == 0 )  {
+			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK_APPEND_ONLY );
 		} else if( strcmp( argv[2], "inmem" ) == 0 )  {
 			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_INMEM );
 		} else if( strcmp( argv[2], "inmem_append" ) == 0 )  {
