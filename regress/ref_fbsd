@@ -1036,7 +1036,7 @@ burst.o(.text+0x1ef): warning: tmpnam() possibly used unsafely; consider using m
 ../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
 -------------------------------- .btclsh.fbsd
 ../.libtcl8.3.fbsd/libtcl8.3.so: warning: tmpnam() possibly used unsafely; consider using mkstemp()
-Compilation complete
+Compilation Complete
 ./gen.sh -s install
 -------------------------------- h
 ......checking XtndRunsv.h
