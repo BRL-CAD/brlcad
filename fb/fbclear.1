@@ -3,14 +3,36 @@
 fbclear \- clear a frame buffer image
 .SH SYNOPSIS
 .B fbclear
-.RB [ \-h ]
+.RB [ \-h\ \-c ]
+.RB [ \-F\  framebuffer]
 [red green blue]
+.PP
+.B fbclear
+.RB [ \-h\ \-c ]
+.RB [ \-F\  framebuffer]
+[gray_value]
+.RB
 .SH DESCRIPTION
 .I Fbclear
 is used to erase a frame buffer using whatever method is efficient for the
 device being accessed.
-The environment
-variable
+A standard linear colormap will be loaded and the pan and zoom values
+will be reset, unless the
+.B \-c
+option is used, in which case only the color planes are cleared.
+.PP
+If the optional color values are given,
+.I fbclear
+writes the specified color over the entire
+image.
+The color values must be in the range 0 to 255.
+In the second form shown above, the single gray_value is written into
+all three color channels.
+.PP
+The frame buffer to be cleared is determined from the
+.B \-F
+option if given.
+Otherwise the environment variable
 .B
 .SM FB_FILE
 is used to select the display device (see
@@ -27,13 +49,15 @@ the
 .SM
 .B LORES
 (512x512x24) device is assumed.
-If the optional color values are given,
-.I fbclear
-writes the specified color over the entire
-image.
-The color values must be in the range 0 to 255.
+.PP
+In addition to those flags shown above, the
+.BI \-W\  width
+.BI \-N\  height
+and
+.BI \-S\  square_size
+flags can be used to set the size of the output frame buffer.
 .SH "SEE ALSO"
-brlcad(1), fbcmap(1)
+brlcad(1), fbcmap(1), fbhelp(1)
 .SH AUTHORS
 Gary S. Moss
 .br
