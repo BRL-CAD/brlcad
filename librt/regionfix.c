@@ -33,24 +33,25 @@ static char RCSregionfix[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "rtstring.h"
 #include "raytrace.h"
-#include "./material.h"
 
-#include "rdebug.h"
+#include "./debug.h"
 
 /*
- *			R E G I O N F I X
+ *			R T_ R E G I O N F I X
  *
  *  Apply any deltas to reg_regionid values
  *  to allow old applications that use the reg_regionid number
  *  to distinguish between different instances of the same
  *  prototype region.
+ *
+ *  Called once, from rt_prep(), before raytracing begins.
  */
 void
-regionfix( ap, file )
-struct application	*ap;
-char			*file;
+rt_regionfix( rtip )
+struct rt_i	*rtip;
 {
 	FILE	*fp;
+	char	*file;
 	char	*line;
 	char	*tabp;
 	int	linenum = 0;
@@ -59,16 +60,37 @@ char			*file;
 	int	ret;
 	int	oldid;
 	int	newid;
+	struct rt_vls	name;
+
+	RT_CK_RTI(rtip);
+
+	/*  If application has provided an alternative file name
+	 *  before rt_prep() was called, then use that.
+	 *  Otherwise, replace ".g" suffix on database name
+	 *  with ".regexp".
+	 */
+	rt_vls_init(&name);
+	file = rtip->rti_region_fix_file;
+	if( file == (char *)NULL )  {
+		rt_vls_strcpy( &name, rtip->rti_dbip->dbi_filename );
+		if( (tabp = strrchr( rt_vls_addr(&name), '.' )) != NULL )  {
+			/* Chop off "." and suffix */
+			rt_vls_trunc( &name, tabp-rt_vls_addr(&name) );
+		}
+		rt_vls_strcat( &name, ".regexp" );
+		file = rt_vls_addr(&name);
+	}
 
 	if( (fp = fopen( file, "r" )) == NULL )	 {
-		perror(file);
+		if( rtip->rti_region_fix_file ) perror(file);
 		return;
 	}
+	rt_log("librt/rt_regionfix(%s):  Modifying instanced region-ids.\n", file);
 
 	while( (line = rt_read_cmd( fp )) != (char *) 0 )  {
 		linenum++;
 		/*  For now, establish a simple format:
-		 *  regexp TAB formula SEMICOLON
+		 *  regexp TAB [more_white_space] formula SEMICOLON
 		 */
 		if( (tabp = strchr( line, '\t' )) == (char *)0 )  {
 			rt_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line );
@@ -81,10 +103,10 @@ char			*file;
 			continue;		/* just ignore it */
 		}
 		
-		rp = ap->a_rt_i->HeadRegion;
+		rp = rtip->HeadRegion;
 		for( ; rp != REGION_NULL; rp = rp->reg_forw )  {
 			ret = re_exec((char *)rp->reg_name);
-			if(rdebug&RDEBUG_INSTANCE)  {
+			if(rt_g.debug&DEBUG_INSTANCE)  {
 				rt_log("'%s' %s '%s'\n", line,
 					ret==1 ? "==" : "!=",
 					rp->reg_name);
@@ -114,7 +136,7 @@ char			*file;
 				newid = atoi( tabp );
 				if( newid == 0 )  rt_log("%s, line %d Warning:  new id = 0\n", file, linenum );
 			}
-			if(rdebug&RDEBUG_INSTANCE)  {
+			if(rt_g.debug&DEBUG_INSTANCE)  {
 				rt_log("%s instance %d:  region id changed from %d to %d\n",
 					rp->reg_name, rp->reg_instnum,
 					oldid, newid );
@@ -124,4 +146,5 @@ char			*file;
 		rt_free( line, "reg_expr line");
 	}
 	fclose( fp );
+	rt_vls_free(&name);
 }
