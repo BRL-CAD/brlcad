@@ -1,4 +1,4 @@
- /*
+/*
  *			D M - O G L . C
  *
  *  
@@ -11,8 +11,6 @@
  *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
  */
-
-#define CJDEBUG 0
 
 #include "conf.h"
 
@@ -41,10 +39,16 @@
 
 #include "tcl.h"
 #include "tk.h"
+#include <X11/extensions/XI.h>
+#include <X11/extensions/XInput.h>
+#include "./oglinit.h"
 
 #include <GL/glx.h>
 #include <GL/gl.h>
-
+/*XXXX*/
+#if 1
+#include <gl/device.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -61,22 +65,41 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-static int	Ogl_xsetup();
-static void	Ogl_configure_window_shape();
-static int	Ogldoevent();
-static void	Ogl_gen_color();
+extern int dm_pipe[];
 
-/* Flags indicating whether the gl and sgi display managers have been
- * attached. 
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
+
+extern void sl_toggle_scroll();		/* from scroll.c */
+
+static void     establish_perspective();
+static void     set_perspective();
+static void	establish_lighting();
+static void	establish_zbuffer();
+static int	Ogl_setup();
+static void     set_knob_offset();
+static void	Ogl_configure_window_shape();
+static int	Ogl_doevent();
+static void	Ogl_gen_color();
+static void     Ogl_colorit();
+static int      Ogl_load_startup();
+static void     ogl_var_init();
+static XVisualInfo *Ogl_set_visual();
+static void     print_cmap();
+static struct dm_list *get_dm_list();
+static int irisX2ged();
+static int irisY2ged();
+
+/* Flags indicating whether the ogl and sgi display managers have been
+ * attached.
  * These are necessary to decide whether or not to use direct rendering
  * with gl.
  */
-char	ogl_ogl_used = 0;
-char	ogl_sgi_used = 0;
-char	ogl_is_direct = 0;
+char  ogl_ogl_used = 0;
+char  ogl_sgi_used = 0;
+char  ogl_is_direct = 0;
 
 /* Display Manager package interface */
-
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
@@ -109,85 +132,138 @@ struct dm dm_ogl = {
 	0,				/* no displaylist */
 	0,				/* multi-window */
 	IRBOUND,
-	"gl", "X Windows with OpenGL graphics",
+	"ogl", "X Windows with OpenGL graphics",
 	0,				/* mem map */
 	Ogl_dm
 };
 
 
 /* ogl stuff */
-static GLXContext glxc;
-/*static Window wind;*/
-static int ogl_has_dbfr;
-static int ogl_depth_size;
-static int ogl_has_rgb;
-static int ogl_has_stereo;
-static int ogl_index_size;
-static Colormap cmap;
+#define NSLOTS		4080	/* The mostest possible - may be fewer */
+#define dpy (((struct ogl_vars *)dm_vars)->_dpy)
+#define win (((struct ogl_vars *)dm_vars)->_win)
+#define xtkwin (((struct ogl_vars *)dm_vars)->_xtkwin)
+#define omx (((struct ogl_vars *)dm_vars)->_omx)
+#define omy (((struct ogl_vars *)dm_vars)->_omy)
+#define perspective_angle (((struct ogl_vars *)dm_vars)->_perspective_angle)
+#define devmotionnotify (((struct ogl_vars *)dm_vars)->_devmotionnotify)
+#define devbuttonpress (((struct ogl_vars *)dm_vars)->_devbuttonpress)
+#define devbuttonrelease (((struct ogl_vars *)dm_vars)->_devbuttonrelease)
+#define knobs (((struct ogl_vars *)dm_vars)->_knobs)
+#define stereo_is_on (((struct ogl_vars *)dm_vars)->_stereo_is_on)
+#define aspect (((struct ogl_vars *)dm_vars)->_aspect)
+#define glxc (((struct ogl_vars *)dm_vars)->_glxc)
+#define fontstruct (((struct ogl_vars *)dm_vars)->_fontstruct)
+#define fontOffset (((struct ogl_vars *)dm_vars)->_fontOffset)
+#define ovec (((struct ogl_vars *)dm_vars)->_ovec)
+#define ogl_is_direct (((struct ogl_vars *)dm_vars)->_ogl_is_direct)
+#define ogl_index_size (((struct ogl_vars *)dm_vars)->_ogl_index_size)
+#define ogl_nslots (((struct ogl_vars *)dm_vars)->_ogl_nslots)
+#define slotsused (((struct ogl_vars *)dm_vars)->_slotsused)
+#define ogl_rgbtab (((struct ogl_vars *)dm_vars)->_ogl_rgbtab)
 
-static int fontOffset;
-static XVisualInfo *ogl_set_visual();
+struct modifiable_ogl_vars {
+  int cueing_on;
+  int zclipping_on;
+  int zbuffer_on;
+  int lighting_on;
+  int perspective_mode;
+  int dummy_perspective;
+  int zbuf;
+  int rgb;
+  int doublebuffer;
+  int depth;
+  int debug;
+  int linewidth;
+  int fastfog;
+  double fogdensity;
+  int virtual_trackball;
+};
 
-static GLdouble faceplate_mat[16];
-static int ogl_face_flag;		/* 1: faceplate matrix on stack */
-
-/*
- * These variables are visible and modifiable via a "dm set" command.
- */
-static int	cueing_on = 1;		/* Depth cueing flag - for colormap work */
-static int	zclipping_on = 1;	/* Z Clipping flag */
-static int	zbuffer_on = 1;		/* Hardware Z buffer is on */
-static int	lighting_on = 0;	/* Lighting model on */
-static int	ogl_debug;		/* 2 for basic, 3 for full */
-static int	no_faceplate = 0;	/* Don't draw faceplate */
-static int	ogl_linewidth = 1;	/* Line drawing width */
-static int	ogl_fastfog = 1;	/* 1 -> fast, 0 -> quality */
-static double	ogl_fogdensity = 1.0;	/* Fog density parameter */
-/*
- * These are derived from the hardware inventory -- user can change them,
- * but the results may not be pleasing.  Mostly, this allows them to be seen.
- */
-static int	ogl_is_gt;		/* 0 for non-GT machines */
-static int	ogl_has_zbuf;		/* 0 if no Z buffer */
-static int	ogl_has_rgb;		/* 0 if mapped mode must be used */
-static int	ogl_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
-
-
-/* End modifiable variables */
-
-static int	ogl_fd;			/* GL file descriptor to select() on */
-static CONST char ogl_title[] = "BRL MGED";
-static int perspective_mode = 0;	/* Perspective flag */
-static int perspective_angle =3;	/* GLfloat of perspective */
-static int perspective_table[] = {
-	30, 45, 60, 90 };
-static int ovec = -1;		/* Old color map entry number */
-static int kblights();
-static double	xlim_view = 1.0;	/* args for glOrtho*/
-static double	ylim_view = 1.0;
-static mat_t	aspect_corr;
-static int	stereo_is_on = 0;
-
-void		ogl_colorit();
-
+struct ogl_vars {
+  struct rt_list l;
+  struct dm_list *dm_list;
+  Display *_dpy;
+  Window _win;
+  Tk_Window _xtkwin;
+  Colormap cmap;
+  GLdouble faceplate_mat[16];
+  int face_flag;
+  int width;
+  int height;
+  int _omx, _omy;
+  int _perspective_angle;
+  int _devmotionnotify;
+  int _devbuttonpress;
+  int _devbuttonrelease;
+  int _knobs[8];
+  int _stereo_is_on;
+  fastf_t _aspect;
+  GLXContext _glxc;
+  XFontStruct *_fontstruct;
+  int _fontOffset;
+  int _ovec;		/* Old color map entry number */
+  char    _ogl_is_direct;
+  int _ogl_index_size;
 /*
  * SGI Color Map table
  */
-#define NSLOTS		4080	/* The mostest possible - may be fewer */
-static int ogl_nslots=0;		/* how many we have, <= NSLOTS */
-static int slotsused;		/* how many actually used */
-static struct rgbtab {
+  int _ogl_nslots;		/* how many we have, <= NSLOTS */
+  int _slotsused;		/* how many actually used */
+  struct rgbtab {
 	unsigned char	r;
 	unsigned char	g;
 	unsigned char	b;
-} ogl_rgbtab[NSLOTS];
+  }_ogl_rgbtab[NSLOTS];
+  struct modifiable_ogl_vars mvars;
+};
+
+#ifdef IR_BUTTONS
+/*
+ * Map SGI Button numbers to MGED button functions.
+ * The layout of this table is suggestive of the actual button box layout.
+ */
+#define SW_HELP_KEY	SW0
+#define SW_ZERO_KEY	SW3
+#define HELP_KEY	0
+#define ZERO_KNOBS	0
+static unsigned char bmap[IR_BUTTONS] = {
+	HELP_KEY,    BV_ADCURSOR, BV_RESET,    ZERO_KNOBS,
+	BE_O_SCALE,  BE_O_XSCALE, BE_O_YSCALE, BE_O_ZSCALE, 0,           BV_VSAVE,
+	BE_O_X,      BE_O_Y,      BE_O_XY,     BE_O_ROTATE, 0,           BV_VRESTORE,
+	BE_S_TRANS,  BE_S_ROTATE, BE_S_SCALE,  BE_MENU,     BE_O_ILLUMINATE, BE_S_ILLUMINATE,
+	BE_REJECT,   BV_BOTTOM,   BV_TOP,      BV_REAR,     BV_45_45,    BE_ACCEPT,
+	BV_RIGHT,    BV_FRONT,    BV_LEFT,     BV_35_25
+};
+#endif
+
+#ifdef IR_KNOBS
+static int irlimit();			/* provides knob dead spot */
+#define NOISE 32		/* Size of dead spot on knob */
+/*
+ *  Labels for knobs in help mode.
+ */
+static char	*kn1_knobs[] = {
+	/* 0 */ "adc <1",	/* 1 */ "zoom", 
+	/* 2 */ "adc <2",	/* 3 */ "adc dist",
+	/* 4 */ "adc y",	/* 5 */ "y slew",
+	/* 6 */ "adc x",	/* 7 */	"x slew"
+};
+static char	*kn2_knobs[] = {
+	/* 0 */ "unused",	/* 1 */	"zoom",
+	/* 2 */ "z rot",	/* 3 */ "z slew",
+	/* 4 */ "y rot",	/* 5 */ "y slew",
+	/* 6 */ "x rot",	/* 7 */	"x slew"
+};
+#endif
+
+static struct ogl_vars head_ogl_vars;
+static int perspective_table[] = {
+	30, 45, 60, 90 };
+static double	xlim_view = 1.0;	/* args for glOrtho*/
+static double	ylim_view = 1.0;
 
 extern struct device_values dm_values;	/* values read from devices */
-
-extern void sl_toggle_scroll();		/* from scroll.c */
-
-static void	establish_lighting();
-static void	establish_zbuffer();
 
 /* lighting parameters */
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
@@ -203,9 +279,6 @@ static float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 static float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
 
 /* functions */
-void print_cmap();
-
-
 static void
 refresh_hook()
 {
@@ -215,7 +288,7 @@ refresh_hook()
 static void
 do_linewidth()
 {
-	glLineWidth((GLfloat) ogl_linewidth);
+	glLineWidth((GLfloat) ((struct ogl_vars *)dm_vars)->mvars.linewidth);
 	dmaflag = 1;
 }
 
@@ -223,68 +296,45 @@ do_linewidth()
 static void
 do_fog()
 {
-	glHint(GL_FOG_HINT, ogl_fastfog ? GL_FASTEST : GL_NICEST);
+	glHint(GL_FOG_HINT, ((struct ogl_vars *)dm_vars)->mvars.fastfog ? GL_FASTEST : GL_NICEST);
 	dmaflag = 1;
 }
 
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 struct structparse Ogl_vparse[] = {
-	{
-		"%d",  1, "depthcue",		(int)&cueing_on,	Ogl_colorchange 	},
-	{
-		"%d",  1, "zclip",		(int)&zclipping_on,	refresh_hook 	}, /* doesn't seem to have any use*/
-	{
-		"%d",  1, "zbuffer",		(int)&zbuffer_on,	establish_zbuffer 	},
-	{
-		"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting 	},
-	{
-		"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook 	},
-	{
-		"%d",  1, "has_zbuf",		(int)&ogl_has_zbuf,	refresh_hook 	},
-	{
-		"%d",  1, "has_rgb",		(int)&ogl_has_rgb,	Ogl_colorchange 	},
-	{
-		"%d",  1, "has_doublebuffer",	(int)&ogl_has_doublebuffer, refresh_hook 	},
-	{
-		"%d",  1, "debug",		(int)&ogl_debug,		FUNC_NULL 	},
-	{
-		"%d",  1, "linewidth",		(int)&ogl_linewidth,	do_linewidth 	},
-	{
-		"%f",   1, "density",		(int)&ogl_fogdensity,  refresh	},
-	{
-		"%d",   1, "fastfog",		(int)&ogl_fastfog,  do_fog	},
-	{
-		"",	0,  (char *)0,		0,			FUNC_NULL 	}
+	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
+	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh_hook },
+	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
+	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
+	{"%d",  1, "perspective",       Ogl_MV_O(perspective_mode), establish_perspective },
+	{"%d",  1, "set_perspective",   Ogl_MV_O(dummy_perspective),  set_perspective },
+	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),	refresh_hook },
+	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),	Ogl_colorchange },
+	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), refresh_hook },
+	{"%d",  1, "depth",		Ogl_MV_O(depth),	FUNC_NULL },
+	{"%d",  1, "debug",		Ogl_MV_O(debug),	FUNC_NULL },
+	{"%d",  1, "linewidth",		Ogl_MV_O(linewidth),	do_linewidth },
+	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fog },
+	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
+	{"%d",  1, "virtual_trackball",	Ogl_MV_O(virtual_trackball),FUNC_NULL },
+	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
-
-/*int ogl_winx_size, ogl_winy_size;*/
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
-static int height, width;
-static Tcl_Interp *xinterp;
-static Tk_Window xtkwin;
 static int OgldoMotion = 0;
-
-static Display	*dpy;			/* X display pointer */
-static Window	win;			/* X window */
-static unsigned long black,gray,white,yellow,red,blue;
-static unsigned long bd, bg, fg;   /*color of border, background, foreground */
-
-static GC	gc;			/* X Graphics Context */
-static int	is_monochrome = 0;
-static XFontStruct *fontstruct;		/* X Font */
 
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
  *  X is 0..width,0..height
  */
-#define	GED_TO_Xx(x)	(((x)/4096.0+0.5)*width)
-#define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*height)
+#define	GED_TO_Xx(x)	(((x)/4096.0+0.5)*((struct ogl_vars *)dm_vars)->width)
+#define	GED_TO_Xy(x)	((0.5-(x)/4096.0)*((struct ogl_vars *)dm_vars)->height)
 
 /* get rid of when no longer needed */
-#define USE_RAMP	(cueing_on || lighting_on)
+#define USE_RAMP	(((struct ogl_vars *)dm_vars)->mvars.cueing_on || ((struct ogl_vars *)dm_vars)->mvars.lighting_on)
 #define CMAP_BASE	32
 #define CMAP_RAMP_WIDTH	16
 #define MAP_ENTRY(x)	( USE_RAMP ? \
@@ -293,6 +343,24 @@ static XFontStruct *fontstruct;		/* X Font */
 
 /********************************************************************/
 
+/*
+ *  Mouse coordinates are in absolute screen space, not relative to
+ *  the window they came from.  Convert to window-relative,
+ *  then to MGED-style +/-2048 range.
+ */
+static int
+irisX2ged(x)
+register int x;
+{
+  return ((x/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095);
+}
+
+static int
+irisY2ged(y)
+register int y;
+{
+  return ((0.5 - y/(double)((struct ogl_vars *)dm_vars)->height) * 4095);
+}
 
 
 /*
@@ -303,37 +371,85 @@ static XFontStruct *fontstruct;		/* X Font */
  */
 Ogl_open()
 {
-        char	line[82];
-        char	hostname[80];
-	char	display[82];
-	char	*envp;
+  ogl_var_init();
 
-	ogl_debug = CJDEBUG;
+  return Ogl_setup(dname);
+}
 
-	/* get or create the default display */
-	if( (envp = getenv("DISPLAY")) == NULL ) {
-		/* Env not set, use local host */
-		gethostname( hostname, 80 );
-		hostname[79] = '\0';
-		(void)sprintf( display, "%s:0", hostname );
-		envp = display;
-	}
+/*XXX Just experimenting */
+int
+Ogl_load_startup()
+{
+  FILE    *fp;
+  struct rt_vls str;
+  char *path;
+  char *filename;
+  int     found;
 
-	rt_log("X Display [%s]? ", envp );
-	(void)fgets( line, sizeof(line), stdin );
-	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( feof(stdin) )  quit();
-	if( line[0] != '\0' ) {
-		if( Ogl_xsetup(line) ) {
-			return(1);		/* BAD */
-		}
-	} else {
-		if( Ogl_xsetup(envp) ) {
-			return(1);	/* BAD */
-		}
-	}
+/*XXX*/
+#define DM_OGL_RCFILE "oglinit.tk"
 
-	return(0);			/* OK */
+#if 1
+  bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
+  RT_LIST_INIT( &head_ogl_vars.l );
+#endif
+
+  found = 0;
+  rt_vls_init( &str );
+
+  if((filename = getenv("DM_OGL_RCFILE")) == (char *)NULL )
+    /* Use default file name */
+    filename = DM_OGL_RCFILE;
+
+  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
+    /* Use MGED_LIBRARY path */
+    rt_vls_strcpy( &str, path );
+    rt_vls_strcat( &str, "/" );
+    rt_vls_strcat( &str, filename );
+
+    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+      found = 1;
+  }
+
+  if(!found){
+    if( (path = getenv("HOME")) != (char *)NULL )  {
+      /* Use HOME path */
+      rt_vls_strcpy( &str, path );
+      rt_vls_strcat( &str, "/" );
+      rt_vls_strcat( &str, filename );
+
+      if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+	found = 1;
+    }
+  }
+
+  if( !found ) {
+    /* Check current directory */
+    if( (fp = fopen( filename, "r" )) != NULL )  {
+      rt_vls_strcpy( &str, filename );
+      found = 1;
+    }
+  }
+
+  if(!found){
+    rt_vls_free(&str);
+
+    /* Using default */
+    if(Tcl_Eval( interp, ogl_init_str ) == TCL_ERROR)
+      return -1;
+
+    return 0;
+  }
+
+  fclose( fp );
+
+  if (Tcl_EvalFile( interp, rt_vls_addr(&str) ) == TCL_ERROR) {
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  rt_vls_free(&str);
+  return 0;
 }
 
 /*
@@ -344,18 +460,31 @@ Ogl_open()
 void
 Ogl_close()
 {
-	glDrawBuffer(GL_FRONT);
-	glClearColor(0.0, 0.0, 0.0, 0.0);
-/*	glClearDepth(0.0);*/
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  if(glxc != NULL){
+#if 0
+    glDrawBuffer(GL_FRONT);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    /*	glClearDepth(0.0);*/
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glDrawBuffer(GL_BACK);
+#endif
+    glXDestroyContext(dpy, glxc);
+  }
 
-	glXMakeCurrent(dpy, None, NULL);
+  if(xtkwin != NULL)
+    Tk_DestroyWindow(xtkwin);
 
-	glXDestroyContext(dpy, glxc);
+  if(((struct ogl_vars *)dm_vars)->l.forw != RT_LIST_NULL)
+    RT_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
 
-	Tk_DeleteGenericHandler(Ogldoevent, (ClientData)NULL);
-	Tk_DestroyWindow(xtkwin);
-	Tcl_DeleteInterp(xinterp);
+  rt_free(dm_vars, "Ogl_close: dm_vars");
+
+#if 0
+	Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)curr_dm_list);
+#else
+	if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+	  Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)NULL);
+#endif
 }
 
 /*
@@ -366,45 +495,49 @@ Ogl_close()
 void
 Ogl_prolog()
 {
-	GLint mm; 
-	char i;
-	char *str = "a";
-	GLfloat fogdepth;
+  GLint mm; 
+  char i;
+  char *str = "a";
+  GLfloat fogdepth;
 
-	if (ogl_debug)
-		rt_log( "Ogl_prolog\n");
+  if (((struct ogl_vars *)dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "Ogl_prolog\n", (char *)NULL);
 
-	if (dmaflag) {
-		if (!ogl_has_doublebuffer){
-			glClearColor(0.0, 0.0, 0.0, 0.0);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-/*			return;*/
-		}
+  if (!glXMakeCurrent(dpy, win, glxc)){
+    Tcl_AppendResult(interp, "Ogl_prolog: Couldn't make context current\n", (char *)NULL);
+    return;
+  }
 
-		if (ogl_face_flag){
-			glMatrixMode(GL_PROJECTION);
-			glPopMatrix();
-			glMatrixMode(GL_MODELVIEW);
-			glPopMatrix();
-			ogl_face_flag = 0;
-			if (cueing_on){
-				glEnable(GL_FOG);
-				fogdepth = 2.2 * Viewscale; /* 2.2 is heuristic */
-				glFogf(GL_FOG_END, fogdepth);
-				fogdepth = (GLfloat) (0.5*ogl_fogdensity/Viewscale);
-				glFogf(GL_FOG_DENSITY, fogdepth);
-				glFogi(GL_FOG_MODE, perspective_mode ? GL_EXP : GL_LINEAR);
-			}
-			if (lighting_on){
-				glEnable(GL_LIGHTING);
-			}
-		}
+#if 0
+  Ogl_configure_window_shape();
+#endif
+
+  if (!((struct ogl_vars *)dm_vars)->mvars.doublebuffer){
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    /*			return;*/
+  }
+
+  if (((struct ogl_vars *)dm_vars)->face_flag){
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    ((struct ogl_vars *)dm_vars)->face_flag = 0;
+    if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
+      glEnable(GL_FOG);
+      fogdepth = 2.2 * Viewscale; /* 2.2 is heuristic */
+      glFogf(GL_FOG_END, fogdepth);
+      fogdepth = (GLfloat) (0.5*((struct ogl_vars *)dm_vars)->mvars.fogdensity/Viewscale);
+      glFogf(GL_FOG_DENSITY, fogdepth);
+      glFogi(GL_FOG_MODE, ((struct ogl_vars *)dm_vars)->mvars.perspective_mode ? GL_EXP : GL_LINEAR);
+    }
+    if (((struct ogl_vars *)dm_vars)->mvars.lighting_on){
+      glEnable(GL_LIGHTING);
+    }
+  }
 	
-		glLineWidth((GLfloat) ogl_linewidth);
-
-	}
-
-
+  glLineWidth((GLfloat) ((struct ogl_vars *)dm_vars)->mvars.linewidth);
 }
 
 /*
@@ -413,43 +546,46 @@ Ogl_prolog()
 void
 Ogl_epilog()
 {
-	if (ogl_debug)
-		rt_log( "ogl_epilog\n");
-	/*
-	 * A Point, in the Center of the Screen.
-	 * This is drawn last, to always come out on top.
-	 */
+  if (((struct ogl_vars *)dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "Ogl_epilog\n", (char *)NULL);
 
-	glColor3ub( (short)ogl_rgbtab[4].r, (short)ogl_rgbtab[4].g, (short)ogl_rgbtab[4].b );
-	glBegin(GL_POINTS);
-	 glVertex2i(0,0);
-	glEnd();
-	/* end of faceplate */
+  /*
+   * A Point, in the Center of the Screen.
+   * This is drawn last, to always come out on top.
+   */
 
-	if(ogl_has_doublebuffer )
-	{
-		glXSwapBuffers(dpy, win);
-		/* give Graphics pipe time to work */
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glColor3ub( (short)ogl_rgbtab[4].r, (short)ogl_rgbtab[4].g, (short)ogl_rgbtab[4].b );
+  glBegin(GL_POINTS);
+  glVertex2i(0,0);
+  glEnd();
+  /* end of faceplate */
 
-	}
+  if(((struct ogl_vars *)dm_vars)->mvars.doublebuffer ){
+    glXSwapBuffers(dpy, win);
+    /* give Graphics pipe time to work */
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
 
+  /* Prevent lag between events and updates */
+  XSync(dpy, 0);
 
-	/* Prevent lag between events and updates */
-	XSync(dpy, 0);
+  if(((struct ogl_vars *)dm_vars)->mvars.debug){
+    int error;
+    struct rt_vls tmp_vls;
 
-	if(CJDEBUG){
-		int error;
+    rt_vls_init(&tmp_vls);
+    rt_vls_printf(&tmp_vls, "ANY ERRORS?\n");
 
-		rt_log("ANY ERRORS?\n");
-		while(	(error = glGetError())!=0){
-			rt_log("Error: %x\n", error);
-		}
-	}
+    while((error = glGetError())!=0){
+      rt_vls_printf(&tmp_vls, "Error: %x\n", error);
+    }
 
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+  }
 
-	return;
+  return;
 }
 
 /*
@@ -467,19 +603,25 @@ int which_eye;
 	mat_t	newm;
 	int	i;
 
+	
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
+	  Tcl_AppendResult(interp, "Ogl_newrot()\n", (char *)NULL);
 
-	if(CJDEBUG){
-		printf("which eye = %d\t", which_eye);
-		printf("newrot matrix = \n");
-		printf("%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-		printf("%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-		printf("%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-		printf("%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+	if(((struct ogl_vars *)dm_vars)->mvars.debug){
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+	  rt_vls_printf(&tmp_vls, "newrot matrix = \n");
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
 
-
-	if (ogl_debug)
-		rt_log( "Ogl_newrot()\n");
 	switch(which_eye)  {
 	case 0:
 		/* Non-stereo */
@@ -499,15 +641,15 @@ int which_eye;
 
 	mptr = mat;
 
-	gtmat[0] = *(mptr++) * aspect_corr[0];
-	gtmat[4] = *(mptr++) * aspect_corr[0];
-	gtmat[8] = *(mptr++) * aspect_corr[0];
-	gtmat[12] = *(mptr++) * aspect_corr[0];
+	gtmat[0] = *(mptr++) * aspect;
+	gtmat[4] = *(mptr++) * aspect;
+	gtmat[8] = *(mptr++) * aspect;
+	gtmat[12] = *(mptr++) * aspect;
 
-	gtmat[1] = *(mptr++) * aspect_corr[5];
-	gtmat[5] = *(mptr++) * aspect_corr[5];
-	gtmat[9] = *(mptr++) * aspect_corr[5];
-	gtmat[13] = *(mptr++) * aspect_corr[5];
+	gtmat[1] = *(mptr++) * aspect;
+	gtmat[5] = *(mptr++) * aspect;
+	gtmat[9] = *(mptr++) * aspect;
+	gtmat[13] = *(mptr++) * aspect;
 
 	gtmat[2] = *(mptr++);
 	gtmat[6] = *(mptr++);
@@ -519,115 +661,19 @@ int which_eye;
 	gtmat[11] = *(mptr++);
 	gtmat[15] = *(mptr++);
 
-
-	/* If all the display managers end up doing this maybe it's 
-	 * dozoom that has a bug */
-	gtmat[2]  = -gtmat[2];
-	gtmat[6]  = -gtmat[6];
-	gtmat[10]  = -gtmat[10];
-	gtmat[14]  = -gtmat[14];
-
-	/* we know that mat = P*T*M
-	 *	where 	P = the perspective matrix based on the
-	 *			eye at the origin
-	 *		T = a translation of one in the -Z direction
-	 *		M = model2view matrix
-	 *
-	 * Therefore P = mat*M'*T'
-	 * 
-	 * In order for depthcueing and lighting to work correctly, 
-	 * P must be stored in the GL_PROJECTION matrix and T*M must
-	 * be stored the the GL_MODELVIEW matrix.
-	 */
-	if ( perspective_mode){
-		float inv_view[16];
-
-		/* disassemble supplied matrix */
-
-		/* convert from row-major to column-major and from double
-		 * to float
-		 */
-		inv_view[0] = view2model[0];
-		inv_view[1] = view2model[4];
-		inv_view[2] = view2model[8];
-		inv_view[3] = view2model[12];
-		inv_view[4] = view2model[1];
-		inv_view[5] = view2model[5];
-		inv_view[6] = view2model[9];
-		inv_view[7] = view2model[13];
-		inv_view[8] = view2model[2];
-		inv_view[9] = view2model[6];
-		inv_view[10] = view2model[10];
-		inv_view[11] = view2model[14];
-		inv_view[12] = view2model[3];
-		inv_view[13] = view2model[7];
-		inv_view[14] = view2model[11];
-		inv_view[15] = view2model[15];
-
-		/* do P = P*T*M*M'*T' = mat*M'*T' (see explanation above) */
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf( gtmat );
-		glMultMatrixf( inv_view );
-		glTranslatef( 0.0, 0.0, 1.0);
-
-	} else {
-		/* Orthographic projection */
-		glMatrixMode(	GL_PROJECTION);
-		glLoadMatrixd( faceplate_mat);
-
-	}
-
-
-	/* convert from row-major to column-major and from double
-	 * to float
-	 */
-	view[0] = model2view[0];
-	view[1] = model2view[4];
-	view[2] = model2view[8];
-	view[3] = model2view[12];
-	view[4] = model2view[1];
-	view[5] = model2view[5];
-	view[6] = model2view[9];
-	view[7] = model2view[13];
-	view[8] = model2view[2];
-	view[9] = model2view[6];
-	view[10] = model2view[10];
-	view[11] = model2view[14];
-	view[12] = model2view[3];
-	view[13] = model2view[7];
-	view[14] = model2view[11];
-	view[15] = model2view[15];
-
-	/* do T*M (see above explanation) */
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glTranslatef( 0.0, 0.0, -1.0 );
-	glMultMatrixf( view );
-
+	glMultMatrixf( gtmat );
 
 	/* Make sure that new matrix is applied to the lights */
-	if (lighting_on ){
+	if (((struct ogl_vars *)dm_vars)->mvars.lighting_on ){
 		glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 		glLightfv(GL_LIGHT1, GL_POSITION, light1_position);
 		glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
 		glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
 
 	}
-
-
-	if(CJDEBUG){
-		GLfloat pmat[16];
-		int mode;
-
-		glGetIntegerv(GL_MATRIX_MODE, &mode);
-		printf("matrix mode %s\n", (mode==GL_MODELVIEW) ? "modelview" : "projection");
-		glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
-	}
-
 }
 
 
@@ -658,9 +704,8 @@ int white_flag;
 	int first;
 	int i,j;
 
-	if (ogl_debug)
-		rt_log( "Ogl_Object()\n");
-
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
+	  Tcl_AppendResult(interp, "Ogl_Object()\n", (char *)NULL);
 
 	/*
 	 *  It is claimed that the "dancing vector disease" of the
@@ -674,10 +719,10 @@ int white_flag;
 	if (sp->s_soldash)
 		glEnable(GL_LINE_STIPPLE);		/* set dot-dash */
 
-	if (white_flag && cueing_on)
+	if (white_flag && ((struct ogl_vars *)dm_vars)->mvars.cueing_on)
 		glDisable(GL_FOG);	
 
-	if( ogl_has_rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		register short	r, g, b;
 		if( white_flag )  {
 			r = g = b = 230;
@@ -687,7 +732,7 @@ int white_flag;
 			b = (short)sp->s_color[2];
 		}
 
-		if(lighting_on)
+		if(((struct ogl_vars *)dm_vars)->mvars.lighting_on)
 		{
 
 			/* Ambient = .2, Diffuse = .6, Specular = .2 */
@@ -716,7 +761,7 @@ int white_flag;
 			ovec = nvec;
 		}
 
-		if (lighting_on){
+		if (((struct ogl_vars *)dm_vars)->mvars.lighting_on){
 			material[0] = ovec - CMAP_RAMP_WIDTH + 2;
 			material[1] = ovec - CMAP_RAMP_WIDTH/2;
 			material[2] = ovec - 1;
@@ -782,7 +827,7 @@ int white_flag;
 	if (sp->s_soldash)
 		glDisable(GL_LINE_STIPPLE);	/* restore solid lines */
 
-	if (white_flag && cueing_on){
+	if (white_flag && ((struct ogl_vars *)dm_vars)->mvars.cueing_on){
 		glEnable(GL_FOG);
 	}
 
@@ -802,27 +847,27 @@ Ogl_normal()
 {
 	GLint mm; 
 
-	if (ogl_debug)
-		rt_log( "Ogl_normal\n");
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
+	  Tcl_AppendResult(interp, "Ogl_normal\n", (char *)NULL);
 
-	if( ogl_has_rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		glColor3ub( 0,  0,  0 );
 	} else {
 		ovec = MAP_ENTRY(DM_BLACK);
 		glIndexi( ovec );
 	}
 
-	if (!ogl_face_flag){
+	if (!((struct ogl_vars *)dm_vars)->face_flag){
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glLoadMatrixd( faceplate_mat );
+		glLoadMatrixd( ((struct ogl_vars *)dm_vars)->faceplate_mat );
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
-		ogl_face_flag = 1;
-		if(cueing_on)
+		((struct ogl_vars *)dm_vars)->face_flag = 1;
+		if(((struct ogl_vars *)dm_vars)->mvars.cueing_on)
 			glDisable(GL_FOG);
-		if (lighting_on)
+		if (((struct ogl_vars *)dm_vars)->mvars.lighting_on)
 			glDisable(GL_LIGHTING);
 
 	}
@@ -838,8 +883,8 @@ Ogl_normal()
 void
 Ogl_update()
 {
-	if (ogl_debug)
-		rt_log( "Ogl_update()\n");
+  if (((struct ogl_vars *)dm_vars)->mvars.debug)
+    Tcl_AppendResult(interp, "Ogl_update()\n", (char *)NULL);
 
     XFlush(dpy);
 }
@@ -856,17 +901,18 @@ Ogl_puts( str, x, y, size, colour )
 register char *str;
 int x,y,size, colour;
 {
-	if (ogl_debug)
-		rt_log( "Ogl_puts()\n");
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
+	  Tcl_AppendResult(interp, "Ogl_puts()\n", (char *)NULL);
 
 	
 /*	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));*/
-	if( ogl_has_rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		glColor3ub( (short)ogl_rgbtab[colour].r,  (short)ogl_rgbtab[colour].g,  (short)ogl_rgbtab[colour].b );
 	} else {
 		ovec = MAP_ENTRY(colour);
 		glIndexi( ovec );
 	}
+
 
 /*	glRasterPos2i( x,  y);*/
 	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));
@@ -887,10 +933,10 @@ int dashed;
 {
 	register int nvec;
 
-	if (ogl_debug)
-		rt_log( "Ogl_2d_line()\n");
+	if (((struct ogl_vars *)dm_vars)->mvars.debug)
+	  Tcl_AppendResult(interp, "Ogl_2d_line()\n", (char *)NULL);
 
-	if( ogl_has_rgb )  {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
 		/* Yellow */
 
 		glColor3ub( (short)255,  (short)255,  (short) 0 );
@@ -903,22 +949,28 @@ int dashed;
 	
 /*	glColor3ub( (short)255,  (short)255,  (short) 0 );*/
 
-	if(CJDEBUG){
-		GLfloat pmat[16];
-		glGetFloatv(GL_PROJECTION_MATRIX, pmat);
-		printf("projection matrix:");
-		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
-		glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
-		printf("modelview matrix:");
-		printf("%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
-		printf("%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
-		printf("%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
-		printf("%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+	if(((struct ogl_vars *)dm_vars)->mvars.debug){
+	  GLfloat pmat[16];
+	  struct rt_vls tmp_vls;
 
+	  rt_vls_init(&tmp_vls);
+	  glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	  rt_vls_printf(&tmp_vls, "projection matrix:\n");
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+	  glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
+	  rt_vls_printf(&tmp_vls, "modelview matrix:\n");
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[0], pmat[4], pmat[8],pmat[12]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[1], pmat[5], pmat[9],pmat[13]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[2], pmat[6], pmat[10],pmat[14]);
+	  rt_vls_printf(&tmp_vls, "%g %g %g %g\n", pmat[3], pmat[7], pmat[11],pmat[15]);
+
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
 	}
+
 	if( dashed )
 		glEnable(GL_LINE_STIPPLE);
 		
@@ -933,302 +985,220 @@ int dashed;
 
 }
 
-#define OGL_NUM_SLID	7
-#define OGL_XSLEW	0
-#define OGL_YSLEW	1
-#define OGL_ZSLEW	2
-#define OGL_ZOOM	3
-#define OGL_XROT	4
-#define OGL_YROT	5
-#define OGL_ZROT	6
+#define Ogl_NUM_SLID	7
+#define Ogl_XSLEW	0
+#define Ogl_YSLEW	1
+#define Ogl_ZSLEW	2
+#define Ogl_ZOOM	3
+#define Ogl_XROT	4
+#define Ogl_YROT	5
+#define Ogl_ZROT	6
 
-int
-Ogldoevent(clientData, eventPtr)
+static int
+Ogl_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
-    KeySym key;
-    char keybuf[4];
-    int cnt;
-	float inc;
-    XComposeStatus compose_stat;
-	static int ogl_which_slid = OGL_XSLEW;
+  static int button0  = 0;   /*  State of button 0 */
+  static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  static int knob_values[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  register struct dm_list *save_dm_list;
+  register struct dm_list *p;
+  struct rt_vls cmd;
+  int status = CMD_OK;
 
-    if (eventPtr->xany.window != win)
-	return 0;
+  rt_vls_init(&cmd);
+  save_dm_list = curr_dm_list;
 
-    if (eventPtr->type == Expose ) {
-	if (eventPtr->xexpose.count == 0) {
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		if (ogl_has_zbuf)
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		else
-			glClear(GL_COLOR_BUFFER_BIT);
-	    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
-		dmaflag = 1;
-	}
-    } else if( eventPtr->type == ConfigureNotify) {
-    	Ogl_configure_window_shape();
-    } else if( eventPtr->type == MotionNotify ) {
-	int	x, y;
-	if ( !OgldoMotion )
-	    return 1;
-	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
-	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
-    } else if( eventPtr->type == ButtonPress ) {
-	/* There may also be ButtonRelease events */
-	int	x, y;
-	/* In MGED this is a "penpress" */
-	x = (eventPtr->xbutton.x/(double)width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
-	switch( eventPtr->xbutton.button ) {
-	case Button1:
-	    /* Left mouse: Zoom out */
-	    rt_vls_printf( &dm_values.dv_string, "L 1 %d %d\n", x, y);
-	    break;
-	case Button2:
-	    /* Middle mouse, up to down transition */
-	    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", x, y);
-	    break;
-	case Button3:
-	    /* Right mouse: Zoom in */
-	    rt_vls_printf( &dm_values.dv_string, "R 1 %d %d\n", x, y);
-	    break;
-	}
-    } else if( eventPtr->type == ButtonRelease ) {
-	int	x, y;
-	x = (eventPtr->xbutton.x/(double)width - 0.5) * 4095;
-	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
-	switch( eventPtr->xbutton.button ) {
-	case Button1:
-	    rt_vls_printf( &dm_values.dv_string, "L 0 %d %d\n", x, y);
-	    break;
-	case Button2:
-	    /* Middle mouse, down to up transition */
-	    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y);
-	    break;
-	case Button3:
-	    rt_vls_printf( &dm_values.dv_string, "R 0 %d %d\n", x, y);
-	    break;
-	}
-    } else if( eventPtr->type == KeyPress ) {
-	register int i;
-	/* Turn these into MGED "buttonpress" or knob functions */
-	
-	cnt = XLookupString(&eventPtr->xkey, keybuf, sizeof(keybuf),
-			    &key, &compose_stat);
+  curr_dm_list = get_dm_list(eventPtr->xany.window);
 
-    	/* CJXX I think the following line is bad in X.c*/
-/*	for(i=0 ; i < cnt ; i++){*/
+  if(curr_dm_list == DM_LIST_NULL)
+    goto end;
 
-	inc = 0.1;		
-	switch( key ) {
-	case '?':
-		rt_log( "\n\t\tKey Help Menu:\n\
-\n\tView Control Functions\n\
-0, <F12>	Zero sliders (knobs)\n\
-s		Toggle sliders\n\
-x		Enable xrot slider\n\
-y		Enable yrot slider\n\
-z		Enable zrot slider\n\
-X		Enable Xslew slider\n\
-Y		Enable Yslew slider\n\
-Z		Enable Zslew slider\n\
-S		Enable Zoom (Scale) slider\n\
-<Up Arrow>	Enable slider above the current slider\n\
-<Down Arrow>	Enable slider below the current slider\n\
-<Left Arrow>	Move enabled slider to the left (decrement)\n\
-<Right Arrow>	Move enabled slider to the right (increment)\n\
-f		Front view\n\
-t		Top view\n\
-b		Bottom view\n\
-l		Left view\n\
-r		Right view\n\
-R		Rear view\n\
-3		35,25 view\n\
-4		45,45 view\n\
-\n\tToggle Functions\n\
-<F1>		Toggle depthcueing\n\
-<F2>		Toggle zclipping\n\
-<F3>		Toggle perspective\n\
-<F4>		Toggle zbuffer status\n\
-<F5>		Toggle smooth-shading\n\
-<F6>		Change perspective angle\n\
-<F7>,F		Toggle faceplate\n\
-" );
-		break;
-	case 'w':
-		print_cmap();
-		break;
-	case '0':
-		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
-		break;
-	case 's':
-		sl_toggle_scroll(); /* calls rt_vls_printf() */
-		break;
-	case 'S':
-		ogl_which_slid = OGL_ZOOM;
-		break;
-	case 'x':
-		/* 6 degrees per unit */
-		ogl_which_slid = OGL_XROT;
-		break;
-	case 'y':
-		ogl_which_slid = OGL_YROT;
-		break;
-	case 'z':
-		ogl_which_slid = OGL_ZROT;
-		break;
-	case 'X':
-		ogl_which_slid = OGL_XSLEW;
-		break;
-	case 'Y':
-		ogl_which_slid = OGL_YSLEW;
-		break;
-	case 'Z':
-		ogl_which_slid = OGL_ZSLEW;
-		break;
-	case 'f':
-		rt_vls_strcat( &dm_values.dv_string, "press front\n");
-		break;
-	case 't':
-		rt_vls_strcat( &dm_values.dv_string, "press top\n");
-		break;
-	case 'b':
-		rt_vls_strcat( &dm_values.dv_string, "press bottom\n");
-		break;
-	case 'l':
-		rt_vls_strcat( &dm_values.dv_string, "press left\n");
-		break;
-	case 'r':
-		rt_vls_strcat( &dm_values.dv_string, "press right\n");
-		break;
-	case 'R':
-		rt_vls_strcat( &dm_values.dv_string, "press rear\n");
-		break;
-	case '3':
-		rt_vls_strcat( &dm_values.dv_string, "press 35,25\n");
-		break;
-	case '4':
-		rt_vls_strcat( &dm_values.dv_string, "press 45,45\n");
-		break;
-	case 'F':
-		no_faceplate = !no_faceplate;
-		rt_vls_strcat( &dm_values.dv_string,
-			      no_faceplate ?
-			      "set faceplate 0\n" :
-			      "set faceplate 1\n" );
-		break;
-	case XK_F1:			/* F1 key */
-	    	rt_log("F1 botton!\n");
-		rt_vls_printf( &dm_values.dv_string,
-				"dm set depthcue !\n");
-		break;
-	case XK_F2:			/* F2 key */
-		rt_vls_printf(&dm_values.dv_string,
-				"dm set zclip !\n");
-		break;
-	case XK_F3:			/* F3 key */
-		perspective_mode = 1-perspective_mode;
-		rt_vls_printf( &dm_values.dv_string,
-			    "set perspective %d\n",
-			    perspective_mode ?
-			    perspective_table[perspective_angle] :
-			    -1 );
-		dmaflag = 1;
-		break;
-	case XK_F4:			/* F4 key */
-		/* toggle zbuffer status */
-		rt_vls_printf(&dm_values.dv_string,
-				"dm set zbuffer !\n");
-		break;
-	case XK_F5:			/* F5 key */
-		/* toggle status */
-		rt_vls_printf(&dm_values.dv_string,
-		    "dm set lighting !\n");
-	    	break;
-	case XK_F6:			/* F6 key */
-		/* toggle perspective matrix */
-		if (--perspective_angle < 0) perspective_angle = 3;
-		if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
-			    "set perspective %d\n",
-			    perspective_table[perspective_angle] );
-		dmaflag = 1;
-		break;
-	case XK_F7:			/* F7 key */
-		/* Toggle faceplate on/off */
-		no_faceplate = !no_faceplate;
-		rt_vls_strcat( &dm_values.dv_string,
-				    no_faceplate ?
-				    "set faceplate 0\n" :
-				    "set faceplate 1\n" );
-		Ogl_configure_window_shape();
-		dmaflag = 1;
-		break;
-	case XK_F12:			/* F12 key */
-		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
-		break;
-	case XK_Up:
-	    	if (ogl_which_slid-- == 0)
-	    		ogl_which_slid = OGL_NUM_SLID - 1;
-		break;
-	case XK_Down:
-	    	if (ogl_which_slid++ == OGL_NUM_SLID - 1)
-	    		ogl_which_slid = 0;
-		break;
-	case XK_Left:
-	    	/* set inc and fall through */
-	    	inc = -0.1;
-	case XK_Right:
-	    	/* keep value of inc set at top of switch */
-	    	switch(ogl_which_slid){
-	    	case OGL_XSLEW:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob X %f\n", rate_slew[X] + inc);
-	    		break;
-	    	case OGL_YSLEW:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob Y %f\n", rate_slew[Y] + inc);
-	    		break;
-	    	case OGL_ZSLEW:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob Z %f\n", rate_slew[Z] + inc);
-	    		break;
-	    	case OGL_ZOOM:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob S %f\n", rate_zoom + inc);
-	    		break;
-	    	case OGL_XROT:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob x %f\n", rate_rotate[X] + inc);
-	    		break;
-	    	case OGL_YROT:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob y %f\n", rate_rotate[Y] + inc);
-	    		break;
-	    	case OGL_ZROT:
-	    		rt_vls_printf( &dm_values.dv_string, 
-				"knob z %f\n", rate_rotate[Z] + inc);
-	    		break;
-	    	default:
-	    		break;
-	    	}
-		break;
-	case XK_Shift_L:
-	case XK_Shift_R:
-		break;
-	default:
-		rt_log("dm-ogl: The key '%c' is not defined. Press '?' for help.\n", key);
-		break;
-	    }
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
+    char buffer[1];
+    KeySym keysym;
 
-/*	}  for loop */
-    } else {
-	return 1;
+    XLookupString(&(eventPtr->xkey), buffer, 1,
+		  &keysym, (XComposeStatus *)NULL);
+
+    if(keysym == mged_variables.hot_key)
+      goto end;
+
+    write(dm_pipe[1], buffer, 1);
+    rt_vls_free(&cmd);
+    curr_dm_list = save_dm_list;
+
+    /* Use this so that these events won't propagate */
+    return TCL_RETURN;
+  }
+
+  if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
+#if 0
+    Ogl_configure_window_shape();
+#else
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    if (((struct ogl_vars *)dm_vars)->mvars.zbuf)
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    else
+       glClear(GL_COLOR_BUFFER_BIT);
+#endif
+
+    dirty = 1;
+    refresh();
+    goto end;
+  } else if( eventPtr->type == ConfigureNotify ) {
+    Ogl_configure_window_shape();
+
+    dirty = 1;
+    refresh();
+    goto end;
+  } else if( eventPtr->type == MotionNotify ) {
+    int mx, my;
+
+    if( !OgldoMotion &&
+	(VIRTUAL_TRACKBALL_NOT_ACTIVE(struct ogl_vars *, mvars.virtual_trackball)) )
+      goto end;
+
+    mx = eventPtr->xmotion.x;
+    my = eventPtr->xmotion.y;
+
+    switch(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
+    case VIRTUAL_TRACKBALL_OFF:
+    case VIRTUAL_TRACKBALL_ON:
+      /* do the regular thing */
+      /* Constant tracking (e.g. illuminate mode) bound to M mouse */
+      rt_vls_printf( &cmd, "M 0 %d %d\n",
+		     (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 4095,
+		     (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 4095);
+      break;
+    case VIRTUAL_TRACKBALL_ROTATE:
+      rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
+		     (mx - omx)/2.0);
+      break;
+    case VIRTUAL_TRACKBALL_TRANSLATE:
+      rt_vls_printf( &cmd, "tran %f %f %f\n",
+		     (mx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2,
+		     (0.5 - my/(double)((struct ogl_vars *)dm_vars)->height) * 2, tran_z);
+      break;
+    case VIRTUAL_TRACKBALL_ZOOM:
+      rt_vls_printf( &cmd, "zoom %lf\n",
+		     (omy - my)/(double)((struct ogl_vars *)dm_vars)->height + 1.0);
+      break;
     }
 
-    return 1;
+    omx = mx;
+    omy = my;
+  }else if( eventPtr->type == devmotionnotify ){
+    XDeviceMotionEvent *M;
+    int setting;
+
+    M = (XDeviceMotionEvent * ) eventPtr;
+
+    if(button0){
+      ogl_dbtext(
+		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+      goto end;
+    }
+
+    knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
+    setting = irlimit(knobs[M->first_axis]);
+    knob_values[M->first_axis] = M->axis_data[0];
+
+    switch(DIAL0 + M->first_axis){
+    case DIAL0:
+      if(adcflag) {
+	rt_vls_printf( &cmd, "knob ang1 %d\n",
+		      setting );
+      }
+      break;
+    case DIAL1:
+      rt_vls_printf( &cmd , "knob S %f\n",
+		    setting / 2048.0 );
+      break;
+    case DIAL2:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob ang2 %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob z %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL3:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob distadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob Z %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL4:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob yadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob y %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL5:
+      rt_vls_printf( &cmd , "knob Y %f\n",
+		    setting / 2048.0 );
+      break;
+    case DIAL6:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob xadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob x %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL7:
+      rt_vls_printf( &cmd , "knob X %f\n",
+		    setting / 2048.0 );
+      break;
+    default:
+      break;
+    }
+
+  }else if( eventPtr->type == devbuttonpress ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1){
+      button0 = 1;
+      goto end;
+    }
+
+    if(button0){
+      ogl_dbtext(label_button(bmap[B->button - 1]));
+    }else if(B->button == 4){
+      rt_vls_strcat(&cmd, "knob zero\n");
+      set_knob_offset();
+    }else
+      rt_vls_printf(&cmd, "press %s\n",
+		    label_button(bmap[B->button - 1]));
+  }else if( eventPtr->type == devbuttonrelease ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1)
+      button0 = 0;
+
+    goto end;
+  }else
+    goto end;
+
+  status = cmdline(&cmd, FALSE);
+end:
+  rt_vls_free(&cmd);
+  curr_dm_list = save_dm_list;
+
+  if(status == CMD_OK)
+    return TCL_OK;
+
+  return TCL_ERROR;
 }
 	    
 /*
@@ -1282,8 +1252,13 @@ unsigned
 Ogl_load( addr, count )
 unsigned addr, count;
 {
-	rt_log("Ogl_load(x%x, %d.)\n", addr, count );
-	return( 0 );
+  struct rt_vls tmp_vls;
+
+  rt_vls_init(&tmp_vls);
+  rt_vls_printf(&tmp_vls, "Ogl_load(x%x, %d.)\n", addr, count );
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+  return( 0 );
 }
 
 void
@@ -1303,6 +1278,7 @@ int	a, b;
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
+	case ST_S_VPICK:
 	    /* constant tracking ON */
 	    OgldoMotion = 1;
 	    break;
@@ -1312,8 +1288,9 @@ int	a, b;
 	    OgldoMotion = 0;
 	    break;
 	default:
-	    rt_log("Ogl_statechange: unknown state %s\n", state_str[b]);
-	    break;
+	  Tcl_AppendResult(interp, "Ogl_statechange: unknown state ",
+			   state_str[b], "\n", (char *)NULL);
+	  break;
 	}
 
 	/*Ogl_viewchange( DM_CHGV_REDO, SOLID_NULL );*/
@@ -1333,7 +1310,8 @@ Ogl_colorchange()
 	int count = 0;
 	Colormap a_cmap;
 
-	if( ogl_debug )  rt_log("colorchange\n");
+	if( ((struct ogl_vars *)dm_vars)->mvars.debug )
+	  Tcl_AppendResult(interp, "colorchange\n", (char *)NULL);
 
 	/* Program the builtin colors */
 	ogl_rgbtab[0].r=0; 
@@ -1351,8 +1329,8 @@ Ogl_colorchange()
 	ogl_rgbtab[4].r = ogl_rgbtab[4].g = ogl_rgbtab[4].b = 255; /* White */
 	slotsused = 5;
 
-	if( ogl_has_rgb )  {
-		if(cueing_on) {
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  {
+		if(((struct ogl_vars *)dm_vars)->mvars.cueing_on) {
 			glEnable(GL_FOG);
 		} else {
 			glDisable(GL_FOG);
@@ -1367,9 +1345,10 @@ Ogl_colorchange()
 	}
 
 	if(USE_RAMP && (ogl_index_size < 7)) {
-		rt_log("Too few bitplanes: depthcueing and lighting disabled\n");
-		cueing_on = 0;
-		lighting_on = 0;
+	  Tcl_AppendResult(interp, "Too few bitplanes: depthcueing and lighting disabled\n",
+			   (char *)NULL);
+	  ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
+	  ((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
 	}
 	/* number of slots is 2^indexsize */
 	ogl_nslots = 1<<ogl_index_size;
@@ -1387,20 +1366,20 @@ Ogl_colorchange()
 	color_soltab();
 
 	/* best to do this before the colorit */
-	if (cueing_on && lighting_on){
-		lighting_on = 0;
+	if (((struct ogl_vars *)dm_vars)->mvars.cueing_on && ((struct ogl_vars *)dm_vars)->mvars.lighting_on){
+		((struct ogl_vars *)dm_vars)->mvars.lighting_on = 0;
 		glDisable(GL_LIGHTING);
 	}
 
 	/* Map the colors in the solid table to colormap indices */
-	ogl_colorit();
+	Ogl_colorit();
 
 	for( i=0; i < slotsused; i++ )  {
 		Ogl_gen_color( i, ogl_rgbtab[i].r, ogl_rgbtab[i].g, ogl_rgbtab[i].b);
 	}
 
 	/* best to do this after the colorit */
-	if (cueing_on){
+	if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
 		glEnable(GL_FOG);
 	} else {
 		glDisable(GL_FOG);
@@ -1415,9 +1394,9 @@ Ogl_colorchange()
 void
 Ogl_debug(lvl)
 {
-	ogl_debug = lvl;
-	XFlush(dpy);
-	rt_log("flushed\n");
+  ((struct ogl_vars *)dm_vars)->mvars.debug = lvl;
+  XFlush(dpy);
+  Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 }
 
 void
@@ -1435,147 +1414,236 @@ register int w[];
 #define FONT9	"9x15"
 
 static int
-Ogl_xsetup( name )
+Ogl_setup( name )
 char	*name;
 {
-	char *cp, symbol;
-	XGCValues gcv;
-	XColor a_color;
-	Visual *a_visual;
-	int a_screen, num, i, success;
-	int major, minor;
-	Colormap  a_cmap;
-	XVisualInfo *vip;
-	int dsize, use, dbfr, rgba, red, blue, green, alpha, index;
-	GLfloat backgnd[4];
-	XSizeHints *hints, gethints;
-	long supplied;
+  static count = 0;
+  char *cp, symbol;
+  XGCValues gcv;
+  XColor a_color;
+  Visual *a_visual;
+  int a_screen, num, i, success;
+  int major, minor;
+  Colormap  a_cmap;
+  XVisualInfo *vip;
+  int dsize, use, dbfr, rgba, red, blue, green, alpha, index;
+  GLfloat backgnd[4];
+  long supplied;
+  int j, k;
+  int ndevices;
+  int nclass = 0;
+  XDeviceInfoPtr olist, list;
+  XDevice *dev;
+  XEventClass e_class[15];
+  XInputClassInfo *cip;
+  struct rt_vls str;
+  Display *tmp_dpy;
 
-	hints = XAllocSizeHints();
+  rt_vls_init(&str);
 
-	/* this is important so that Ogl_configure_notify knows to set
-	 * the font */
-	fontstruct = NULL;
+  /* Only need to do this once */
+  if(tkwin == NULL){
+    rt_vls_printf(&str, "loadtk %s\n", name);
 
-	width = height = 976;
+    if(cmdline(&str, FALSE) == CMD_BAD){
+      rt_vls_free(&str);
+      return -1;
+    }
+  }
 
-	xinterp = Tcl_CreateInterp(); /* Dummy interpreter */
-	xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
+  /* Only need to do this once for this display manager */
+  if(!count){
+    if( Ogl_load_startup() ){
+      rt_vls_free(&str);
+      return -1;
+    }
+  }
 
-	/* Open the display - XXX see what NULL does now */
-	if( xtkwin == NULL ) {
-		rt_log( "dm-X: Can't open X display\n" );
-		return -1;
+  if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+    Tk_CreateGenericHandler(Ogl_doevent, (ClientData)NULL);
+
+  RT_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)curr_dm_list->_dm_vars)->l);
+
+  rt_vls_printf(&pathName, ".dm_ogl%d", count++);
+
+  /* this is important so that Ogl_configure_notify knows to set
+   * the font */
+  fontstruct = NULL;
+
+  if((tmp_dpy = XOpenDisplay(name)) == NULL){
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  ((struct ogl_vars *)dm_vars)->width = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  ((struct ogl_vars *)dm_vars)->height = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+
+  /* Make window square */
+  if(((struct ogl_vars *)dm_vars)->height < ((struct ogl_vars *)dm_vars)->width)
+    ((struct ogl_vars *)dm_vars)->width = ((struct ogl_vars *)dm_vars)->height;
+  else
+    ((struct ogl_vars *)dm_vars)->height = ((struct ogl_vars *)dm_vars)->width;
+
+  XCloseDisplay(tmp_dpy);
+
+  /* Make xtkwin a toplevel window */
+  xtkwin = Tk_CreateWindowFromPath(interp, tkwin, rt_vls_addr(&pathName), name);
+
+  /* Open the display - XXX see what NULL does now */
+  if( xtkwin == NULL ) {
+    Tcl_AppendResult(interp, "dm-Ogl: Failed to open ", rt_vls_addr(&pathName),
+		     "\n", (char *)NULL);
+    return -1;
+  }
+
+  rt_vls_strcpy(&str, "init_ogl ");
+  rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
+
+  if(cmdline(&str, FALSE) == CMD_BAD){
+    rt_vls_free(&str);
+    return -1;
+  }
+
+  dpy = Tk_Display(xtkwin);
+
+  /* must do this before MakeExist */
+  if ((vip=Ogl_set_visual(xtkwin))==NULL){
+    Tcl_AppendResult(interp, "Ogl_open: Can't get an appropriate visual.\n", (char *)NULL);
+    return -1;
+  }
+
+  Tk_GeometryRequest(xtkwin, ((struct ogl_vars *)dm_vars)->width, ((struct ogl_vars *)dm_vars)->height);
+  Tk_MoveToplevelWindow(xtkwin, 1276 - 976, 0);
+  Tk_MakeWindowExist(xtkwin);
+
+  win = Tk_WindowId(xtkwin);
+
+  a_screen = Tk_ScreenNumber(xtkwin);
+
+  /* open GLX context */
+  /* If the sgi display manager has been used, then we must use
+   * an indirect context. Otherwise use direct, since it is usually
+   * faster.
+   */
+  if ((glxc = glXCreateContext(dpy, vip, 0, ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
+    Tcl_AppendResult(interp, "Ogl_open: couldn't create glXContext.\n", (char *)NULL);
+    return -1;
+  }
+  /* If we used an indirect context, then as far as sgi is concerned,
+   * gl hasn't been used.
+   */
+  ogl_is_direct = (char) glXIsDirect(dpy, glxc);
+  Tcl_AppendResult(interp, "Using ", ogl_is_direct ? "a direct" : "an indirect",
+		   " OpenGL rendering context.\n", (char *)NULL);
+  /* set ogl_ogl_used if the context was ever direct */
+  ogl_ogl_used = (ogl_is_direct || ogl_ogl_used);
+
+  /*
+   * Take a look at the available input devices. We're looking
+   * for "dial+buttons".
+   */
+  olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
+
+  /* IRIX 4.0.5 bug workaround */
+  if( list == (XDeviceInfoPtr)NULL ||
+      list == (XDeviceInfoPtr)1 )  goto Done;
+
+  for(j = 0; j < ndevices; ++j, list++){
+    if(list->use == IsXExtensionDevice){
+      if(!strcmp(list->name, "dial+buttons")){
+	if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
+	  Tcl_AppendResult(interp, "Glx_open: Couldn't open the dials+buttons\n", (char *)NULL);
+	  goto Done;
 	}
-	dpy = Tk_Display(xtkwin);
 
-	/* must do this before MakeExist */
-	if ((vip=ogl_set_visual(xtkwin))==NULL){
-		rt_log("Ogl_open: Can't get an appropriate visual.\n");
-		return -1;
+	for(cip = dev->classes, k = 0; k < dev->num_classes;
+	    ++k, ++cip){
+	  switch(cip->input_class){
+	  case ButtonClass:
+	    DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
+	    ++nclass;
+	    DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
+	    ++nclass;
+	    break;
+	  case ValuatorClass:
+	    DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
+	    ++nclass;
+	    break;
+	  default:
+	    break;
+	  }
 	}
 
-	Tk_GeometryRequest(xtkwin, width+10, height+10);
-	Tk_MoveToplevelWindow(xtkwin, 1276 - 976, 0);
-	Tk_MakeWindowExist(xtkwin);
+	XSelectExtensionEvent(dpy, win, e_class, nclass);
+	goto Done;
+      }
+    }
+  }
+Done:
+  XFreeDeviceList(olist);
 
-	win = Tk_WindowId(xtkwin);
-
-	a_screen = Tk_ScreenNumber(xtkwin);
-
-	/* open GLX context */
-	/* If the sgi display manager has been used, then we must use
-	 * an indirect context. Otherwise use direct, since it is usually
-	 * faster.
-	 */
-	if ((glxc = glXCreateContext(dpy, vip, 0, ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
-		rt_log("Ogl_open: couldn't create glXContext.\n");
-		return -1;
-	}
-	/* If we used an indirect context, then as far as sgi is concerned,
-	 * gl hasn't been used.
-	 */
-	ogl_is_direct = (char) glXIsDirect(dpy, glxc);
-	rt_log("Using %s OpenGL rendering context.\n", ogl_is_direct ? "a direct" : "an indirect");
-	/* set ogl_ogl_used if the context was ever direct */
-	ogl_ogl_used = (ogl_is_direct || ogl_ogl_used);
-
-	/* Register the file descriptor with the Tk event handler */
 #if 0
-	Tk_CreateEventHandler(xtkwin, ExposureMask|ButtonPressMask|KeyPressMask|
-			  PointerMotionMask
-			  |StructureNotifyMask|FocusChangeMask,
-			  (void (*)())Ogldoevent, (ClientData)NULL);
-
-#else
-	Tk_CreateGenericHandler(Ogldoevent, (ClientData)NULL);
+  /* Register the file descriptor with the Tk event handler */
+  Tk_CreateGenericHandler(Ogl_doevent, (ClientData)curr_dm_list);
 #endif
 
-	Tk_SetWindowBackground(xtkwin, bg);
+#if 0
+  Tk_SetWindowBackground(xtkwin, bg);
+#endif
 
-	if (!glXMakeCurrent(dpy, win, glxc)){
-		rt_log("Ogl_open: Couldn't make context current\n");
-		return -1;
-	}
+  if (!glXMakeCurrent(dpy, win, glxc)){
+    Tcl_AppendResult(interp, "Ogl_open: Couldn't make context current\n", (char *)NULL);
+    return -1;
+  }
 
-	/* display list (fontOffset + char) will displays a given ASCII char */
-	if ((fontOffset = glGenLists(128))==0){
-		rt_log("dm-ogl: Can't make display lists for font.\n");
-		return -1;
-	}
+  /* display list (fontOffset + char) will displays a given ASCII char */
+  if ((fontOffset = glGenLists(128))==0){
+    Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
+    return -1;
+  }
 
-	Tk_MapWindow(xtkwin);
+  Tk_MapWindow(xtkwin);
 
-	/* Keep the window square */
-	hints->min_aspect.x = 1;
-	hints->min_aspect.y = 1;
-	hints->max_aspect.x = 1;
-	hints->max_aspect.y = 1;
-	hints->flags = PAspect;
-	XSetWMNormalHints(dpy, win, hints);
-	XFree(hints);
+  /* do viewport, ortho commands and initialize font*/
+  Ogl_configure_window_shape();
 
+  /* Lines will be solid when stippling disabled, dashed when enabled*/
+  glLineStipple( 1, 0xCF33);
+  glDisable(GL_LINE_STIPPLE);
 
-	/* do viewport, ortho commands and initialize font*/
-	Ogl_configure_window_shape();
-
-	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
-	glDisable(GL_LINE_STIPPLE);
-
-	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
-	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glFogf(GL_FOG_START, 0.0);
-	glFogf(GL_FOG_END, 2.0);
-	if (ogl_has_rgb)
-		glFogfv(GL_FOG_COLOR, backgnd);
-	else
-		glFogi(GL_FOG_INDEX, CMAP_RAMP_WIDTH - 1);
-	glFogf(GL_FOG_DENSITY, VIEWFACTOR);
+  backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
+  glFogi(GL_FOG_MODE, GL_LINEAR);
+  glFogf(GL_FOG_START, 0.0);
+  glFogf(GL_FOG_END, 2.0);
+  if (((struct ogl_vars *)dm_vars)->mvars.rgb)
+    glFogfv(GL_FOG_COLOR, backgnd);
+  else
+    glFogi(GL_FOG_INDEX, CMAP_RAMP_WIDTH - 1);
+  glFogf(GL_FOG_DENSITY, VIEWFACTOR);
 	
 
-	/* Initialize matrices */
-	/* Leave it in model_view mode normally */
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, faceplate_mat);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity(); 
-	glTranslatef( 0.0, 0.0, -1.0); 
-	glPushMatrix();
-	glLoadIdentity();
-	ogl_face_flag = 1;	/* faceplate matrix is on top of stack */
+  /* Initialize matrices */
+  /* Leave it in model_view mode normally */
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
+  glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dm_vars)->faceplate_mat);
+  glPushMatrix();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity(); 
+  glTranslatef( 0.0, 0.0, -1.0); 
+  glPushMatrix();
+  glLoadIdentity();
+  ((struct ogl_vars *)dm_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 		
-	return 0;
+  return 0;
 }
 
 /* currently, get a double buffered rgba visual that works with Tk and
  * OpenGL
  */
 XVisualInfo *
-ogl_set_visual(tkwin)
+Ogl_set_visual(tkwin)
 Tk_Window tkwin;
 {
 	XVisualInfo *vip, vitemp, *vibase, *maxvip;
@@ -1649,31 +1717,30 @@ Tk_Window tkwin;
 
 				/* make sure Tk handles it */
 				if (maxvip->class == PseudoColor)
-					cmap = XCreateColormap(dpy,
+					((struct ogl_vars *)dm_vars)->cmap = XCreateColormap(dpy,
 						RootWindow(dpy, maxvip->screen),
 						maxvip->visual, AllocAll);
 				else
-					cmap = XCreateColormap(dpy,
+					((struct ogl_vars *)dm_vars)->cmap = XCreateColormap(dpy,
 						RootWindow(dpy, maxvip->screen),
 						maxvip->visual, AllocNone);
 
-				if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, cmap)){
-					ogl_has_dbfr = m_double;
-					ogl_has_doublebuffer = m_double;
-					glXGetConfig(dpy, maxvip, GLX_DEPTH_SIZE, &ogl_depth_size);
-					if (ogl_depth_size > 0)
-						ogl_has_zbuf = 1;
-					ogl_has_rgb = m_rgba;
+				if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, ((struct ogl_vars *)dm_vars)->cmap)){
+					((struct ogl_vars *)dm_vars)->mvars.doublebuffer = m_double;
+					glXGetConfig(dpy, maxvip, GLX_DEPTH_SIZE, &((struct ogl_vars *)dm_vars)->mvars.depth);
+					if (((struct ogl_vars *)dm_vars)->mvars.depth > 0)
+						((struct ogl_vars *)dm_vars)->mvars.zbuf = 1;
+					((struct ogl_vars *)dm_vars)->mvars.rgb = m_rgba;
 					if (!m_rgba){
 						glXGetConfig(dpy, maxvip, GLX_BUFFER_SIZE, &ogl_index_size);
 					}
-					ogl_has_stereo = m_stereo;
+					stereo_is_on = m_stereo;
 					return (maxvip); /* sucess */
 				} else { 
 					/* retry with lesser depth */
 					baddepth = maxvip->depth;
 					tries ++;
-					XFreeColormap(dpy,cmap);
+					XFreeColormap(dpy,((struct ogl_vars *)dm_vars)->cmap);
 				}
 			}
 					
@@ -1682,14 +1749,14 @@ Tk_Window tkwin;
 
 		/* if no success at this point, relax a desire and try again */
 		if ( m_stereo ){
-			m_stereo = 0;
-			rt_log("Stereo not available.\n");
+		  m_stereo = 0;
+		  Tcl_AppendResult(interp, "Stereo not available.\n", (char *)NULL);
 		} else if (m_rgba) {
-			m_rgba = 0;
-			rt_log("RGBA not available.\n");
+		  m_rgba = 0;
+		  Tcl_AppendResult(interp, "RGBA not available.\n", (char *)NULL);
 		} else if (m_double) {
-			m_double = 0;
-			rt_log("Doublebuffering not available. \n");
+		  m_double = 0;
+		  Tcl_AppendResult(interp, "Doublebuffering not available. \n", (char *)NULL);
 		} else {
 			return(NULL); /* failure */
 		}
@@ -1713,35 +1780,28 @@ Ogl_configure_window_shape()
 	XWindowAttributes xwa;
 	XFontStruct	*newfontstruct;
 
-	xlim_view = 1.0;
-	ylim_view = 1.0;
-	mat_idn(aspect_corr);
-
-#if 1
 	XGetWindowAttributes( dpy, win, &xwa );
-	height = xwa.height;
-	width = xwa.width;
-#else
-	width = Tk_Width(xtkwin);
-	height = Tk_Height(xtkwin);
-#endif
+	((struct ogl_vars *)dm_vars)->height = xwa.height;
+	((struct ogl_vars *)dm_vars)->width = xwa.width;
 	
-	glViewport(0,  0, (width), (height));
-	glScissor(0,  0, ( width)+1, ( height)+1);
+	glViewport(0,  0, (((struct ogl_vars *)dm_vars)->width), (((struct ogl_vars *)dm_vars)->height));
+	glScissor(0,  0, (((struct ogl_vars *)dm_vars)->width)+1, (((struct ogl_vars *)dm_vars)->height)+1);
 
-	if( ogl_has_zbuf ) establish_zbuffer();
+	if( ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on )
+	  establish_zbuffer();
+
 	establish_lighting();
 
 #if 0
 	glDrawBuffer(GL_FRONT_AND_BACK);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
-	if (ogl_has_zbuf)
+	if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	else
 		glClear( GL_COLOR_BUFFER_BIT);
 
-	if (ogl_has_doublebuffer)
+	if (((struct ogl_vars *)dm_vars)->mvars.doublebuffer)
 		glDrawBuffer(GL_BACK);
 	else
 		glDrawBuffer(GL_FRONT);
@@ -1755,25 +1815,28 @@ Ogl_configure_window_shape()
 	glLoadIdentity();
 	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
 	glMatrixMode(mm);
+	aspect = (fastf_t)((struct ogl_vars *)dm_vars)->height/
+	  (fastf_t)((struct ogl_vars *)dm_vars)->width;
 
 
 	/* First time through, load a font or quit */
 	if (fontstruct == NULL) {
-		if ((fontstruct = XLoadQueryFont(dpy, FONT9)) == NULL ) {
-			/* Try hardcoded backup font */
-			if ((fontstruct = XLoadQueryFont(dpy, FONTBACK)) == NULL) {
-				rt_log( "dm-ogl: Can't open font '%s' or '%s'\n", FONT9, FONTBACK );
-				return;
-			}
-		}
-		glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
+	  if ((fontstruct = XLoadQueryFont(dpy, FONT9)) == NULL ) {
+	    /* Try hardcoded backup font */
+	    if ((fontstruct = XLoadQueryFont(dpy, FONTBACK)) == NULL) {
+	      Tcl_AppendResult(interp, "dm-Ogl: Can't open font '", FONT9,
+			       "' or '", FONTBACK, "'\n", (char *)NULL);
+	      return;
+	    }
+	  }
+	  glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 	}
 		
 
 	/* Always try to choose a the font that best fits the window size.
 	 */
 
-	if (width < 582) {
+	if (((struct ogl_vars *)dm_vars)->width < 582) {
 		if (fontstruct->per_char->width != 5) {
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT5)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1781,7 +1844,7 @@ Ogl_configure_window_shape()
 				glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 			}
 		}
-	} else if (width < 679) {
+	} else if (((struct ogl_vars *)dm_vars)->width < 679) {
 		if (fontstruct->per_char->width != 6){
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT6)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1789,7 +1852,7 @@ Ogl_configure_window_shape()
 				glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 			}
 		}
-	} else if (width < 776) {
+	} else if (((struct ogl_vars *)dm_vars)->width < 776) {
 		if (fontstruct->per_char->width != 7){
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT7)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1797,7 +1860,7 @@ Ogl_configure_window_shape()
 				glXUseXFont( fontstruct->fid, 0, 127, fontOffset);
 			}
 		}
-	} else if (width < 873) {
+	} else if (((struct ogl_vars *)dm_vars)->width < 873) {
 		if (fontstruct->per_char->width != 8){
 			if ((newfontstruct = XLoadQueryFont(dpy, FONT8)) != NULL ) {
 				XFreeFont(dpy,fontstruct);
@@ -1828,32 +1891,125 @@ Ogl_dm(argc, argv)
 int	argc;
 char	**argv;
 {
-	struct rt_vls	vls;
+  struct rt_vls	vls;
+  int status;
+  char *av[4];
+  char xstr[32];
+  char ystr[32];
+  char zstr[32];
 
-	if( argc < 1 )  return -1;
+  if( !strcmp( argv[0], "set" ) )  {
+    struct rt_vls tmp_vls;
 
-	/* For now, only "set" command is implemented */
-	if( strcmp( argv[0], "set" ) != 0 )  {
-		rt_log("dm: command is not 'set'\n");
-		return CMD_BAD;
+    rt_vls_init(&vls);
+    rt_vls_init(&tmp_vls);
+    start_catching_output(&tmp_vls);
+
+    if( argc < 2 )  {
+      /* Bare set command, print out current settings */
+      rt_structprint("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      rt_log("%s", rt_vls_addr(&vls) );
+    } else if( argc == 2 ) {
+      rt_vls_name_print( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      rt_log( "%s\n", rt_vls_addr(&vls) );
+    } else {
+      rt_vls_printf( &vls, "%s=\"", argv[1] );
+      rt_vls_from_argv( &vls, argc-2, argv+2 );
+      rt_vls_putc( &vls, '\"' );
+      rt_structparse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
+    }
+
+    rt_vls_free(&vls);
+
+    stop_catching_output(&tmp_vls);
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+    return TCL_OK;
+  }
+
+  if( !strcmp( argv[0], "mouse" )){
+    if( argc < 4){
+      Tcl_AppendResult(interp, "dm: need more parameters\n",
+		       "mouse 1|0 xpos ypos\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+#if 0
+    sprintf(xstr, "%d", irisX2ged(atoi(argv[2])));
+    sprintf(ystr, "%d", irisY2ged(atoi(argv[3])));
+
+    av[0] = "M";
+    av[1] = argv[1];
+    av[2] = xstr;
+    av[3] = ystr;
+    return f_mouse((ClientData)NULL, interp, 4, av);
+#else
+    rt_vls_init(&vls);
+    rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
+		  irisX2ged(atoi(argv[2])), irisY2ged(atoi(argv[3])));
+    status = cmdline(&vls, FALSE);
+    rt_vls_free(&vls);
+
+    if(status == CMD_OK)
+      return TCL_OK;
+
+    return TCL_ERROR;
+#endif
+  }
+
+  status = TCL_OK;
+  if(((struct ogl_vars *)dm_vars)->mvars.virtual_trackball){
+    if( !strcmp( argv[0], "vtb" )){
+      int buttonpress;
+
+      if( argc < 5){
+	Tcl_AppendResult(interp, "dm: need more parameters\n",
+			 "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	return TCL_ERROR;
+      }
+
+      buttonpress = atoi(argv[2]);
+      omx = atoi(argv[3]);
+      omy = atoi(argv[4]);
+
+      if(buttonpress){
+	switch(*argv[1]){
+	case 'r':
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ROTATE;
+	  break;
+	case 't':
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
+
+	  sprintf(xstr, "%f", (omx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - omy/(double)((struct ogl_vars *)dm_vars)->height) * 2);
+	  sprintf(zstr, "%f", tran_z);
+	  av[0] = "tran";
+	  av[1] = xstr;
+	  av[2] = ystr;
+	  av[3] = zstr;
+	  status = f_tran((ClientData)NULL, interp, 4, av);
+	  
+	  break;
+	case 'z':
+	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
+	  break;
+	default:
+	  Tcl_AppendResult(interp, "dm: need more parameters\n",
+			   "vtb <r|t|z> 1|0 xpos ypos\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
+      }else{
+	((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ON;
+    }
 
-	rt_vls_init(&vls);
-	if( argc < 2 )  {
-		/* Bare set command, print out current settings */
-		rt_structprint("dm_ogl internal variables", Ogl_vparse, (char *)0 );
-		rt_log("%s", rt_vls_addr(&vls) );
-	} else if( argc == 2 ) {
-	        rt_vls_name_print( &vls, Ogl_vparse, argv[1], (char *)0 );
-		rt_log( "%s\n", rt_vls_addr(&vls) );
-  	} else {
-	        rt_vls_printf( &vls, "%s=\"", argv[1] );
-	        rt_vls_from_argv( &vls, argc-2, argv+2 );
-		rt_vls_putc( &vls, '\"' );
-		rt_structparse( &vls, Ogl_vparse, (char *)0 );
-	}
-	rt_vls_free(&vls);
-	return CMD_OK;
+    return status;
+    }
+  }else{
+    return status;
+  }
+
+  Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
+  return TCL_ERROR;
 }
 
 void	
@@ -1861,17 +2017,17 @@ establish_lighting()
 {
 
 
-	if (!lighting_on) {
+	if (!((struct ogl_vars *)dm_vars)->mvars.lighting_on) {
 		/* Turn it off */
 		glDisable(GL_LIGHTING);
-		if (!ogl_has_rgb)
+		if (!((struct ogl_vars *)dm_vars)->mvars.rgb)
 			Ogl_colorchange();
 	} else {
 		/* Turn it on */
 
-		if (!ogl_has_rgb){
-			if (cueing_on){
-				cueing_on = 0;
+		if (!((struct ogl_vars *)dm_vars)->mvars.rgb){
+			if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
+				((struct ogl_vars *)dm_vars)->mvars.cueing_on = 0;
 				glDisable(GL_FOG);
 			} 
 			Ogl_colorchange();
@@ -1901,15 +2057,16 @@ establish_lighting()
 }	
 
 
-void	
+static void	
 establish_zbuffer()
 {
-	if( ogl_has_zbuf == 0 ) {
-		rt_log("dm-ogl: This machine has no Zbuffer to enable\n");
-		zbuffer_on = 0;
+	if( ((struct ogl_vars *)dm_vars)->mvars.zbuf == 0 ) {
+	  Tcl_AppendResult(interp, "dm-Ogl: This machine has no Zbuffer to enable\n",
+			   (char *)NULL);
+	  ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 0;
 	}
 
-	if (zbuffer_on)  {
+	if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)  {
 		glEnable(GL_DEPTH_TEST);
 	} else {
 		glDisable(GL_DEPTH_TEST);
@@ -1919,16 +2076,61 @@ establish_zbuffer()
 	return;
 }
 
+static void
+establish_perspective()
+{
+  rt_vls_printf( &dm_values.dv_string,
+		 "set perspective %d\n",
+		 ((struct ogl_vars *)dm_vars)->mvars.perspective_mode ?
+		 perspective_table[perspective_angle] :
+		 -1 );
+  dmaflag = 1;
+}
 
-void
-ogl_colorit()
+/*
+  This routine will toggle the perspective_angle if the
+  dummy_perspective value is 0 or less. Otherwise, the
+  perspective_angle is set to the value of (dummy_perspective - 1).
+*/
+static void
+set_perspective()
+{
+  /* set perspective matrix */
+  if(((struct ogl_vars *)dm_vars)->mvars.dummy_perspective > 0)
+    perspective_angle = ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective <= 4 ? ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective - 1: 3;
+  else if (--perspective_angle < 0) /* toggle perspective matrix */
+    perspective_angle = 3;
+
+  if(((struct ogl_vars *)dm_vars)->mvars.perspective_mode)
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective %d\n",
+		  perspective_table[perspective_angle] );
+
+  /*
+     Just in case the "!" is used with the set command. This
+     allows us to toggle through more than two values.
+   */
+  ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
+
+  dmaflag = 1;
+}
+
+
+static void
+establish_vtb()
+{
+  return;
+}
+
+static void
+Ogl_colorit()
 {
 	register struct solid	*sp;
 	register struct rgbtab *rgb;
 	register int i;
 	register int r,g,b;
 
-	if( ogl_has_rgb )  return;
+	if( ((struct ogl_vars *)dm_vars)->mvars.rgb )  return;
 
 	FOR_ALL_SOLIDS( sp )  {
 		r = sp->s_color[0];
@@ -1965,6 +2167,31 @@ next:
 }
 
 
+#if IR_KNOBS
+ogl_dbtext(str)
+{
+  Tcl_AppendResult(interp, "dm-ogl: You pressed Help key and '",
+		   str, "'\n", (char *)NULL);
+}
+/*
+ *			I R L I M I T
+ *
+ * Because the dials are so sensitive, setting them exactly to
+ * zero is very difficult.  This function can be used to extend the
+ * location of "zero" into "the dead zone".
+ */
+static 
+int irlimit(i)
+int i;
+{
+	if( i > NOISE )
+		return( i-NOISE );
+	if( i < -NOISE )
+		return( i+NOISE );
+	return(0);
+}
+#endif
+
 /*			G E N _ C O L O R
  *
  *	maps a given color into the appropriate colormap entry
@@ -1973,7 +2200,7 @@ next:
  *	mode, DM_BLACK uses map entry 0, and does not generate a ramp for it.
  *	Non depthcued mode skips the first CMAP_BASE colormap entries.
  *
- *	This routine is not called at all if ogl_has_rgb is set.
+ *	This routine is not called at all if ((struct ogl_vars *)dm_vars)->mvars.rgb is set.
  */
 void
 Ogl_gen_color(c)
@@ -2002,7 +2229,7 @@ int c;
 #endif
 			
 
-			if (cueing_on){
+			if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
 				for(i = 0, j = MAP_ENTRY(c) + CMAP_RAMP_WIDTH - 1; 
 					i < CMAP_RAMP_WIDTH;
 				    i++, j--, red += r_inc, green += g_inc, blue += b_inc){
@@ -2012,7 +2239,7 @@ int c;
 				    	cells[i].blue = (short)blue;
 				    	cells[i].flags = DoRed|DoGreen|DoBlue;
 				}
-			} else { /* lighting_on */ 
+			} else { /* ((struct ogl_vars *)dm_vars)->mvars.lighting_on */ 
 				for(i = 0, j = MAP_ENTRY(c) - CMAP_RAMP_WIDTH + 1; 
 					i < CMAP_RAMP_WIDTH;
 				    i++, j++, red += r_inc, green += g_inc, blue += b_inc){
@@ -2023,7 +2250,7 @@ int c;
 				    	cells[i].flags = DoRed|DoGreen|DoBlue;
 				    }
 			}
-			XStoreColors(dpy, cmap, cells, CMAP_RAMP_WIDTH);
+			XStoreColors(dpy, ((struct ogl_vars *)dm_vars)->cmap, cells, CMAP_RAMP_WIDTH);
 		}
 	} else {
 		XColor cell, celltest;
@@ -2033,12 +2260,12 @@ int c;
 		cell.green = ogl_rgbtab[c].g * 256;
 		cell.blue = ogl_rgbtab[c].b * 256;
 		cell.flags = DoRed|DoGreen|DoBlue;
-		XStoreColor(dpy, cmap, &cell);
+		XStoreColor(dpy, ((struct ogl_vars *)dm_vars)->cmap, &cell);
 
 	}
 }
 
-void
+static void
 print_cmap()
 {
 	int i;
@@ -2046,7 +2273,65 @@ print_cmap()
 
 	for (i=0; i<112; i++){
 		cell.pixel = i;
-		XQueryColor(dpy, cmap, &cell);
+		XQueryColor(dpy, ((struct ogl_vars *)dm_vars)->cmap, &cell);
 		printf("%d  = %d %d %d\n",i,cell.red,cell.green,cell.blue);
 	}
+}
+
+static void
+set_knob_offset()
+{
+  int i;
+
+  for(i = 0; i < 8; ++i){
+#if 0
+    knobs_offset[i] = knobs[i];
+#else
+    knobs[i] = 0;
+#endif
+  }
+}
+
+static void
+ogl_var_init()
+{
+  dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars),
+					    "ogl_var_init: glx_vars");
+  bzero((void *)dm_vars, sizeof(struct ogl_vars));
+  devmotionnotify = LASTEvent;
+  devbuttonpress = LASTEvent;
+  devbuttonrelease = LASTEvent;
+  ((struct ogl_vars *)dm_vars)->dm_list = curr_dm_list;
+  perspective_angle = 3;
+  aspect = 1.0;
+  ovec = -1;
+
+  /* initialize the modifiable variables */
+  ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
+  ((struct ogl_vars *)dm_vars)->mvars.zclipping_on = 1;       /* Z Clipping flag */
+  ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
+  ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
+  ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.fastfog = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.fogdensity = 1.0;
+}
+
+static struct dm_list *
+get_dm_list(window)
+Window window;
+{
+  register struct ogl_vars *p;
+
+  for( RT_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
+    if(window == p->_win){
+      if (!glXMakeCurrent(p->_dpy, p->_win, p->_glxc)){
+	return DM_LIST_NULL;
+      }
+
+      return p->dm_list;
+    }
+  }
+
+  return DM_LIST_NULL;
 }
