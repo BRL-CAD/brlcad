@@ -34,6 +34,32 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
  *  This follows the BRL-CAD outward-pointing normal convention, and the
  *  right-hand rule for cross products.
  *
+ *
+ *			C
+ *	                *
+ *	                |\
+ *	                | \
+ *	   ^     N      |  \
+ *	   |      \     |   \
+ *	   |       \    |    \
+ *	   |C-A     \   |     \
+ *	   |         \  |      \
+ *	   |          \ |       \
+ *	               \|        \
+ *	                *---------*
+ *	                A         B
+ *			   ----->
+ *		            B-A
+ *
+ *  If the points are given in the order A B C (eg, *counter*-clockwise),
+ *  then the outward pointing surface normal N = (B-A) x (C-A).
+ *  This is the "right hand rule".
+ *
+ *  While listing the points in counterclockwise order is "closer"
+ *  to the orientation expected for the cross product,
+ *  it might have been nice to have listed the points in clockwise
+ *  order to match the convention of the NMG face creation routines.
+ *
  *  XXX The tolerance here should be relative to the model diameter, not abs.
  *
  *  Explicit Return -
