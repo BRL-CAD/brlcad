@@ -1420,6 +1420,7 @@ int			depth;
 void
 rt_cut_clean()
 {
-	nmg_tbl( &rt_waiting_nodes, TBL_FREE, 0 );
+	if( rt_waiting_nodes.magic )
+		nmg_tbl( &rt_waiting_nodes, TBL_FREE, 0 );
 }
 
