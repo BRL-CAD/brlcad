@@ -69,7 +69,6 @@ class Dm {
     public method get_aspect {}
 
     # new methods
-    public method get_name {}
     public method fb_active {args}
     public method fb_update {args}
 
@@ -291,6 +290,7 @@ body Dm::linestyle {args} {
 
 body Dm::handle_configure {} {
     $itk_component(dm) configure
+
     set itk_option(-dmsize) [$itk_component(dm) size]
     set width [lindex $itk_option(-dmsize) 0]
     set height [lindex $itk_option(-dmsize) 1]
@@ -385,19 +385,14 @@ body Dm::dmsize {args} {
 	set w [lindex $args 0]
 	set h [lindex $args 1]
     } else {
-	return -code error "size: bad size - $args"
+	error "size: bad size - $args"
     }
 
     $itk_component(dm) size $w $h
-    set itk_option(-dmsize) "$w $h"
 }
 
 body Dm::get_aspect {} {
     $itk_component(dm) get_aspect
-}
-
-body Dm::get_name {} {
-    return $itk_component(dm)
 }
 
 body Dm::fb_active {args} {
@@ -406,7 +401,7 @@ body Dm::fb_active {args} {
     }
 
     if {$args < 0 || 2 < $args} {
-	return -code error "Usage: fb_active \[0|1|2\]"
+	error "Usage: fb_active \[0|1|2\]"
     }
 
     # update saved value
@@ -419,7 +414,7 @@ body Dm::fb_update {args} {
     }
 
     if {$args < 0 || 1 < $args} {
-	return -code error "Usage: fb_update \[0|1\]"
+	error "Usage: fb_update \[0|1\]"
     }
 
     # update saved value
