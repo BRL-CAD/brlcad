@@ -214,6 +214,7 @@ Ir_open()
 	Matrix		m;
 	inventory_t	*inv;
 	int		npix;
+	int		monitor;
 
 	/*
 	 *  Take inventory of the hardware
@@ -251,7 +252,8 @@ Ir_open()
 	 *  winconstraints() does not work, and getmonitor() can't
 	 *  be called before a window is open.
 	 */
-	switch( getmonitor() )  {
+	monitor = getmonitor();
+	switch( monitor )  {
 	case HZ30:
 	case HZ30_SG:
 		/* Dunn camera, etc. */
@@ -271,12 +273,6 @@ Ir_open()
 			printf( "No more graphics ports available.\n" );
 			return	-1;
 		}
-		ir_clear_to_black();
-		/* Only use the central square part */
-		npix = YMAX170-30;
-		viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
-			(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
-		linewidth(3);
 		break;
 	case PAL:
 		/* Television */
@@ -287,12 +283,6 @@ Ir_open()
 			printf( "No more graphics ports available.\n" );
 			return	-1;
 		}
-		ir_clear_to_black();
-		/* Only use the central square part */
-		npix = YMAXPAL-30;
-		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
-			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
-		linewidth(2);
 		break;
 	}
 
@@ -302,13 +292,18 @@ Ir_open()
 	win_r = win_l + winx_size;
 	win_t = win_b + winy_size;
 
+	/*
+	 *  Configure the operating mode of the pixels in this window.
+	 *  Do not output graphics, clear screen, etc, until *after*
+	 *  the call to gconfig().
+	 */
 	if( ir_has_rgb )  {
 		RGBmode();
 	} else {
 		/* one indexed color map of 4096 entries */
 		onemap();
 	}
-	doublebuffer();			/* half of whatever we have */
+	doublebuffer();
 	gconfig();
 
 	/*
@@ -341,6 +336,47 @@ Ir_open()
 	
 	ir_buffer = 0;
 
+	/* Set special television-specific behaviors */
+	switch( monitor )  {
+	default:
+		/*
+		 *  Set an 8 minute screensaver blanking, which will light up
+		 *  the screen again if it was dark, and will protect it otherwise.
+		 *  4D/60 has a hardware botch limiting the time to 2**15 frames.
+		 */
+		blanktime( (long) 32767L );
+		break;
+	case NTSC:
+		/* Only use the central square part */
+		npix = YMAX170-30;
+		winx_size = npix;
+		winy_size = npix;
+		win_l = (XMAX170 - winx_size)/2;
+		win_r = win_l + winx_size;
+		win_b = (YMAX170-winy_size)/2;
+		win_t = win_b + winy_size;
+		viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
+			(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
+		linewidth(3);
+		blanktime(0);	/* don't screensave while recording video! */
+		break;
+	case PAL:
+		/* Only use the central square part */
+		npix = YMAXPAL-30;
+		winx_size = npix;
+		winy_size = npix;
+		win_l = (XMAXPAL - winx_size)/2;
+		win_r = win_l + winx_size;;
+		win_b = (YMAXPAL-winy_size)/2;
+		win_t = win_b + winy_size;
+		viewport( (XMAXPAL - npix)/2, npix + (XMAXPAL - npix)/2,
+			(YMAXPAL-npix)/2, npix + (YMAXPAL-npix)/2 );
+		linewidth(3);
+		blanktime(0);	/* don't screensave while recording video! */
+		break;
+	}
+
+	/* Enable qdev() input from various devices */
 	qdevice(LEFTMOUSE);
 	qdevice(MIDDLEMOUSE);
 	qdevice(RIGHTMOUSE);
@@ -397,12 +433,6 @@ Ir_open()
 	mat_idn( nozclip_mat );
 	nozclip_mat[10] = 1.0e-20;
 	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 );
-	/*
-	 *  Set an 8 minute screensaver blanking, which will light up
-	 *  the screen again if it was dark, and will protect it otherwise.
-	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
-	 */
-	blanktime( (long) 32767L );
 
 	return(0);
 }
