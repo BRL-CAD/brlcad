@@ -228,6 +228,9 @@ char **argv;
 
 	dmaflag = 1;
 
+	/* Perform any necessary initializations for the command parser */
+	cmd_setup();
+
 	/* --- Now safe to process commands.  BUT, no geometry yet. --- */
 	if( interactive )  {
 		/* This is an interactive mged, process .mgedrc */
@@ -269,9 +272,6 @@ char **argv;
 		RES_RELEASE( &rt_g.res_results );
 	}
 	pr_prompt();
-
-	/* Perform any necessary initializations for the command parser */
-	cmd_setup();
 
 	/****************  M A I N   L O O P   *********************/
 	while(1) {
