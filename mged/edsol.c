@@ -1639,7 +1639,10 @@ mat_t		mat;
 			struct rt_bot_internal *bot =
 				(struct rt_bot_internal *)ip->idb_ptr;
 
-			VMOVE( mpt, bot->vertices );
+			if( bot_verts[0] > -1 )
+				VMOVE( mpt, &bot->vertices[bot_verts[0]*3] )
+			else
+				VMOVE( mpt, bot->vertices )
 			break;
 		}
 	case ID_DSP:
