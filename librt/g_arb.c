@@ -690,6 +690,10 @@ register struct uvcoord *uvp;
 	LOCAL fastf_t r;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
+		/*
+		 * PARALLEL: This might want to be interlocked on res_model.
+		 * The only harm now is wasting some memory, though. XXX
+		 */
 		if( arb_setup( stp, (union record *)0, ap->a_rt_i, 1 ) != 0 ||
 		    arbp->arb_opt == (struct oface *)0 )  {
 			rt_log("arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
@@ -697,6 +701,7 @@ register struct uvcoord *uvp;
 		    		stp->st_specific, arbp->arb_opt );
 			return;
 		}
+		if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
 	}
 
 	h = (int)hitp->hit_private;
