@@ -57,9 +57,6 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #ifdef HAVE_SYS_SELECT_H
-#  ifdef panic
-#    undef panic
-#  endif
 #  include <sys/select.h>
 #endif
 #include <sys/stat.h>

@@ -945,6 +945,7 @@ AC_CHECK_FUNCS(\
 	modf \
 	munmap \
 	nl_langinfo \
+	panic \
 	pow \
 	putenv \
 	re_comp \

@@ -16,9 +16,7 @@
  * RCS: @(#) $Id$
  */
 
-#ifdef HAVE_CONFIG_H
-#  include "config.h"
-#endif
+#include "common.h"
 
 #ifndef _TCL
 #define _TCL
@@ -2223,7 +2221,9 @@ typedef unsigned short Tcl_UniChar;
 #define Tcl_Ckrealloc Tcl_Realloc
 #define Tcl_Return Tcl_SetResult
 #define Tcl_TildeSubst Tcl_TranslateFileName
-#define panic Tcl_Panic
+#ifndef HAVE_PANIC
+#  define panic Tcl_Panic
+#endif
 #define panicVA Tcl_PanicVA
 
 
