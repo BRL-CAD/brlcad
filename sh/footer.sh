@@ -91,7 +91,12 @@ fi
 # mode_vars are the indentation variables that need to be set
 # wrap is whether or not in needs to be incased in /* */
 # commentchar is the comment character to prefex each line
-###
+##
+mode=""
+mode_vars=""
+wrap=0
+commentchar=""
+
 case $FILE in 
     *.sh)
 	echo "$FILE is a shell script"
@@ -215,8 +220,10 @@ fi
 matching_found=0
 index=0
 for var in ${variables[@]} ; do
-    existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
-    existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
+    if [ ! "x$commentchar" = "x" ] ; then
+	existing_var=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $3}'`
+	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${var}:" | sed 's/:/ /g' | awk '{print $4}'`
+    fi
     
     if [ "x$existing_var" = "x" ] ; then
 	echo "$var not found"
@@ -271,12 +278,17 @@ else
     # make sure open and closing do not have trailing comment chars too
     do_not="Local"
     match="Variables"
-    existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${do_not} ${match}:" | sed 's/:/ /g' | awk '{print $4}'`
+
+    if [ ! "x$commentchar" = "x" ] ; then
+	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] ${do_not} ${match}:" | sed 's/:/ /g' | awk '{print $4}'`
+    fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "loc. var has trailing goo ... fixing"
 	perl -pi -e "s/(${prefixspace}[${commentchar}] ${do_not} ${match}:.*)/${prefixspace}${commentchar} ${do_not} ${match}:/i" $FILE
     fi
-    existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] End:" | sed 's/:/ /g' | awk '{print $3}'`
+    if [ ! "x$commentchar" = "x" ] ; then
+	existing_suffix=`cat $FILE | grep -i "${prefixspace}[${commentchar}] End:" | sed 's/:/ /g' | awk '{print $3}'`
+    fi
     if [ "x$existing_suffix" != "x" ] ; then
 	echo "end has trailing goo ... fixing"
 	perl -pi -e "s/(${prefixspace}[${commentchar}] End:.*)/${prefixspace}${commentchar} End:/i" $FILE
