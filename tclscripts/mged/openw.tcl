@@ -1387,7 +1387,7 @@ data." }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,rubber_band)\
 	-label "Persistent sweep rectangle" -underline 0\
 	-command "mged_apply $id \"rset rb draw \$mged_gui($id,rubber_band)\""
-hoc_register_menu_data "Modes" "Persistent Rubber Band" "Persistent Rubber Band"\
+hoc_register_menu_data "Modes" "Persistent sweep rectangle" "Persistent Rubber Band"\
 	{ { summary "Toggle drawing the rubber band while idle." }
           { see_also "rset" } }
 .$id.menubar.modes add checkbutton -offvalue 0 -onvalue 1 -variable mged_gui($id,adc_draw)\
@@ -2660,6 +2660,25 @@ proc set_mouse_behavior { id } {
     global mged_gui
 
     mged_apply $id "set mouse_behavior $mged_gui($id,mouse_behavior); refresh"
+
+    switch $mged_gui($id,mouse_behavior) {
+	"o" {
+	    # use the entire framebuffer
+	    set mged_gui($id,fb_all) 1
+	    mged_apply $id "set fb_all 1"
+	}
+	"r" {
+	    # use only the area of the framebuffer specified by the rectangle
+	    set mged_gui($id,fb_all) 0
+	    mged_apply $id "set fb_all 0"
+
+	    # activate the framebuffer
+	    set mged_gui($id,fb) 1
+	    set_fb $id
+	}
+    }
+
+    # update raytrace control panel
     rt_update_src $id
 }
 
