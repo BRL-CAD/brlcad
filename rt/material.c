@@ -104,14 +104,14 @@ try_load(const char *path, const char *material)
 	shader_mfuncs = dlsym(handle, "shader_mfuncs");
 	if ( (dl_error_str=dlerror()) != (char *)NULL) {
 		/* didn't find anything appropriate, give up */
-		if (rdebug&RDEBUG_MATERIAL) bu_log("no mfuncs table\n");
+		if (rdebug&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
 		dlclose(handle);
 		return (struct mfuncs *)NULL;
 	}
 
 found:
 	if (rdebug&RDEBUG_MATERIAL)
-		bu_log("mfuncs table found\n");
+		bu_log("%s mfuncs table found\n", material);
 
 	/* make sure the shader we were looking for is in the mfuncs table */
 	for (mfp = shader_mfuncs ; mfp->mf_name != (char *)NULL; mfp++) {
@@ -121,7 +121,7 @@ found:
 			return shader_mfuncs; /* found ! */
 	}
 
-	if (rdebug&RDEBUG_MATERIAL) bu_log("shader not found in library\n");
+	if (rdebug&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", material);
 
 	/* found the library, but not the shader */
 	dlclose(handle);
