@@ -90,14 +90,17 @@ extern int	mode;
 
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ) );
 
-#define		NO_OF_TYPES	28
+#define		NO_OF_TYPES	31
 static int	type_count[NO_OF_TYPES][2]={
+			{ 106 , 0 },	/* Copious Data */
 			{ 110 , 0 },	/* Line */
 			{ 116 , 0 },	/* Point */
 			{ 123 , 0 },	/* Direction */
 			{ 124 , 0 },	/* Transformation Matrix */
 			{ 126 , 0 },	/* Rational B-spline Curve */
 			{ 128 , 0 },	/* Rational B-spline Surface */
+			{ 142 , 0 },	/* Curve on a Parametric Surface */
+			{ 144 , 0 },	/* Trimmed Surface */
 			{ 150 , 0 },	/* Block */
 			{ 152 , 0 },	/* Right Angle Wedge */
 			{ 154 , 0 },	/* Right Circular Cylinder */
@@ -123,12 +126,15 @@ static int	type_count[NO_OF_TYPES][2]={
 		};
 
 static char	*type_label[NO_OF_TYPES]={
+			"CopiusDa",
 			"Line",
 			"Point",
 			"Directin",
 			"Matrix",
 			"B-spline",
 			"NURB",
+			"TrimCurv",
+			"TrimSurf",
 			"Block",
 			"RA Wedge",
 			"RC Cylin",
@@ -154,12 +160,15 @@ static char	*type_label[NO_OF_TYPES]={
 		};
 
 static char	*type_name[NO_OF_TYPES]={
+			"Copious Data",
 			"Line",
 			"Point",
 			"Direction",
 			"Transformation Matrix",
 			"Rational B_spline Curve",
 			"NURB Surface",
+			"Curve on a Parametric Surface",
+			"Trimmed Surface",
 			"Block",
 			"Right Angle Wedge",
 			"Right Circular Cylinder",
@@ -994,7 +1003,7 @@ char c;		/* 'G' for global section
 }
 
 void
-w_start_global(fp_dir ,  fp_param , db_name , prog_name , output_file , id , version )
+w_start_global(fp_dir , fp_param , db_name , prog_name , output_file , id , version )
 FILE *fp_dir,*fp_param;
 char *db_name;
 char *prog_name;
@@ -1060,9 +1069,10 @@ char *version;
 
 	(void)write_freeform( fp_dir , rt_vls_addr( &str ) , 0 , 'G' );
 
-	/* write attribute definition  entity */
+	/* write attribute definition entity */
 
-	attribute_de = write_attribute_definition( fp_dir ,  fp_param );
+	if( mode != TRIMMED_SURF_MODE )
+		attribute_de = write_attribute_definition( fp_dir ,  fp_param );
 
 	rt_vls_free( &str );
 }
@@ -1182,6 +1192,274 @@ FILE *fp_dir,*fp_param;
 		return( write_solid_assembly( name, brep_de , outer_shell_count , dependent , fp_dir , fp_param ) );
 	else
 		return( brep_de[0] );
+}
+
+int
+verts_to_copious_data( pts , vert_count , pt_size , fp_dir , fp_param )
+point_t *pts;
+int vert_count;
+int pt_size;
+FILE *fp_dir,*fp_param;
+{
+	struct rt_vls		str;
+	int			dir_entry[21];
+	int			i;
+
+	if( vert_count < 2 )
+		return( 0 );
+
+	rt_vls_init( &str );
+
+	/* initialize directory entry */
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
+
+	rt_vls_printf( &str , "106,%d,%d" , pt_size-1 , vert_count+1 );
+	if( pt_size == 2 )
+	{
+		rt_vls_printf( &str , ",0.0" );
+		for( i=0 ; i<vert_count ; i++ )
+			rt_vls_printf( &str , ",%f,%f" , pts[i][0] , pts[i][1] );
+		rt_vls_printf( &str , ",%f,%f" , pts[0][0] , pts[0][1] );
+	}
+	else if( pt_size == 3 )
+	{
+		for( i=0 ; i<vert_count ; i++ )
+			rt_vls_printf( &str , ",%f,%f,%f" , V3ARGS( pts[i] ) );
+		rt_vls_printf( &str , ",%f,%f,%f" , V3ARGS( pts[0] ) );
+	}
+
+	rt_vls_strcat( &str , ";" );
+
+	/* remember where parameter data is going */
+	dir_entry[2] = param_seq + 1;
+
+	/* get parameter line count */
+	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
+
+	/* write directory entry for vertex list entity */
+	dir_entry[1] = 106;
+	dir_entry[8] = 0;
+	if( pt_size == 2 )
+	{
+		dir_entry[9] = 10500;
+		dir_entry[15] = 63;
+	}
+	else
+	{
+		dir_entry[9] = 10000;
+		dir_entry[15] = 12;
+	}
+	dir_entry[11] = 106;
+
+
+	rt_vls_free( &str );
+
+	return( write_dir_entry( fp_dir , dir_entry ));
+}
+
+int
+nmg_loop_to_tcurve( lu , surf_de , u_dir , v_dir , u_max , v_max , base_pt , fp_dir , fp_param )
+struct loopuse *lu;
+int surf_de;
+vect_t u_dir,v_dir;
+fastf_t u_max,v_max;
+point_t base_pt;
+FILE *fp_dir,*fp_param;
+{
+	struct rt_vls		str;
+	int			dir_entry[21];
+	struct edgeuse		*eu;
+	int			vert_count=0;
+	point_t			*model_pts;
+	point_t			*param_pts;
+	int			i;
+
+	NMG_CK_LOOPUSE( lu );
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( 0 );
+
+	/* count vertices */
+	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		vert_count++;
+
+	if( vert_count < 3 )
+		return( 0 );
+
+	/* Allocate memory for points */
+	model_pts = (point_t *)rt_calloc( vert_count , sizeof( point_t ) , "nmg_loop_to_tcurve: model_pts" );
+	param_pts = (point_t *)rt_calloc( vert_count , sizeof( point_t ) , "nmg_loop_to_tcurve: param_pts" );
+
+	rt_vls_init( &str );
+
+	/* initialize directory entry */
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
+
+	rt_vls_printf( &str , "142,0,%d" , surf_de );
+
+	i = 0;
+	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+	{
+		struct vertex_g *vg;
+		vect_t from_base;
+		fastf_t u,v;
+
+		NMG_CK_EDGEUSE( eu );
+		NMG_CK_VERTEXUSE( eu->vu_p );
+		NMG_CK_VERTEX( eu->vu_p->v_p );
+		NMG_CK_VERTEX_G( eu->vu_p->v_p->vg_p );
+		vg = eu->vu_p->v_p->vg_p;
+
+		if( i >= vert_count )
+			rt_bomb( "nmg_loop_to_tcurve: too many vertices in loop!!!!\n" );
+
+		VMOVE( model_pts[i] , vg->coord );
+
+		VSUB2( from_base , vg->coord , base_pt );
+		u = VDOT( u_dir , from_base )/u_max;
+		v = VDOT( v_dir , from_base )/v_max;
+		if( u < 0.0 )
+			u = 0.0;
+		if( u > 1.0 )
+			u = 1.0;
+		if( v < 0.0 )
+			v = 0.0;
+		if( v > 1.0 )
+			v = 1.0;
+		VSET( param_pts[i] , u , v , 0.0 );
+
+		i++;
+	}
+
+	rt_vls_printf( &str , ",%d" , verts_to_copious_data( param_pts , vert_count , 2 , fp_dir , fp_param ) );
+	rt_vls_printf( &str , ",%d,0;" , verts_to_copious_data( model_pts , vert_count , 3 , fp_dir , fp_param ));
+
+	/* remember where parameter data is going */
+	dir_entry[2] = param_seq + 1;
+
+	/* get parameter line count */
+	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
+
+	/* write directory entry for vertex list entity */
+	dir_entry[1] = 142;
+	dir_entry[8] = 0;
+	dir_entry[9] = 10500;
+	dir_entry[11] = 142;
+	dir_entry[15] = 0;
+
+
+	rt_vls_free( &str );
+
+	return( write_dir_entry( fp_dir , dir_entry ));
+}
+
+void
+nmg_fu_to_tsurf( fu , fp_dir , fp_param )
+struct faceuse *fu;
+FILE *fp_dir,*fp_param;
+{
+	struct rt_vls		str;
+	int			dir_entry[21];
+	struct loopuse		*lu;
+	int			surf_de;
+	vect_t			u_dir,v_dir;
+	fastf_t			u_max,v_max;
+	point_t			base_pt;
+	int			loop_count=0;
+	int			*curve_de;
+	int			i;
+
+	NMG_CK_FACEUSE( fu );
+
+	rt_vls_init( &str );
+
+	/* initialize directory entry */
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
+
+	/* count loops */
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		loop_count++;
+	}
+
+	if( loop_count < 1 )	/* nothing to output */
+		return;
+
+	/* write underlying surface */
+	surf_de = write_planar_nurb( fu , u_dir , v_dir , &u_max , &v_max , base_pt , fp_dir , fp_param );
+
+	/* allocate space to hold DE for each trimming curve */
+	curve_de = (int *)rt_calloc( loop_count , sizeof( int ) , "nmg_fu_to_tsurf: curve_de" );
+
+	i = (-1);
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		curve_de[++i] = nmg_loop_to_tcurve( lu , surf_de , u_dir , v_dir , u_max , v_max , base_pt , fp_dir , fp_param );
+	}
+
+	rt_vls_printf( &str , "144,%d,0,%d" , surf_de , loop_count-1 );
+	for( i=0 ; i<loop_count ; i++ )
+		rt_vls_printf( &str , ",%d" , curve_de[i] );
+	rt_vls_strcat( &str , ";" );
+
+	rt_free( (char *)curve_de , "nmg_fu_to_tsurf: curve_de" );
+
+	/* remember where parameter data is going */
+	dir_entry[2] = param_seq + 1;
+
+	/* get parameter line count */
+	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ), dir_seq+1 , 'P' );
+
+	/* write directory entry for vertex list entity */
+	dir_entry[1] = 144;
+	dir_entry[8] = 0;
+	dir_entry[9] = 0;
+	dir_entry[11] = 144;
+	dir_entry[15] = 0;
+
+	rt_vls_free( &str );
+
+	(void)write_dir_entry( fp_dir , dir_entry );
+
+}
+
+int nmgregion_to_tsurf( name , r , fp_dir , fp_param )
+char *name;
+struct nmgregion *r;
+FILE *fp_dir,*fp_param;
+{
+	struct shell *s;
+
+	NMG_CK_REGION( r );
+
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		struct faceuse *fu;
+
+		NMG_CK_SHELL( s );
+		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		{
+			NMG_CK_FACEUSE( fu );
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			nmg_fu_to_tsurf( fu , fp_dir , fp_param );
+		}
+	}
+
+	return( -1 );
 }
 
 int
@@ -1520,8 +1798,11 @@ FILE *fp_dir,*fp_param;
 }
 
 int
-write_planar_nurb( fu , fp_dir , fp_param )
+write_planar_nurb( fu , u_dir , v_dir , u_max , v_max , base_pt , fp_dir , fp_param )
 struct faceuse *fu;
+vect_t u_dir,v_dir;	/* output */
+fastf_t *u_max,*v_max;	/* output */
+point_t base_pt;	/* output ( point at u,v==0 ) */
 FILE *fp_dir;
 FILE *fp_param;
 {
@@ -1531,8 +1812,6 @@ FILE *fp_param;
 	point_t			ctl_pt;
 	fastf_t			umin,umax,vmin,vmax;
 	struct rt_vls   	str;
-	vect_t			u_dir;
-	vect_t			v_dir;
 	int           	 	dir_entry[21];
 	int             	i;
 
@@ -1560,7 +1839,7 @@ FILE *fp_param;
 
 	eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
 	NMG_CK_EDGEUSE( eu );
-	vg = eu->vu_p->v_p->vg_p;
+		vg = eu->vu_p->v_p->vg_p;
 	NMG_CK_VERTEX_G( vg );
 	eu_next = RT_LIST_PNEXT( edgeuse , eu );
 	NMG_CK_EDGEUSE( eu_next );
@@ -1601,11 +1880,15 @@ FILE *fp_param;
 		}
 	}
 
+	*u_max = umax - umin;
+	*v_max = vmax - vmin;
+
 	/* Put preliminary stuff for planar nurb in string */
 	rt_vls_printf( &str , "128,1,1,1,1,0,0,1,0,0,0.,0.,1.,1.,0.,0.,1.,1.,1.,1.,1.,1." );
 
 	/* Now put control points in string */
 	VJOIN2( ctl_pt , vg->coord , umin , u_dir , vmin , v_dir );
+	VMOVE( base_pt , ctl_pt );
 	rt_vls_printf( &str , ",%g,%g,%g" , V3ARGS( ctl_pt ) );
 	VJOIN1( ctl_pt , ctl_pt , umax-umin , u_dir );
 	rt_vls_printf( &str , ",%g,%g,%g" , V3ARGS( ctl_pt ) );
@@ -1814,10 +2097,16 @@ FILE *fp_dir,*fp_param;
 			}
 
 			if( do_nurbs )
+			{
+				vect_t u_dir,v_dir;
+				point_t base_pt;
+				fastf_t u_max,v_max;
+
 				rt_vls_printf( &str , "510,%d,%d,%d" ,
-					write_planar_nurb( fu , fp_dir , fp_param ),
+					write_planar_nurb( fu , u_dir , v_dir , &u_max , &v_max , base_pt , fp_dir , fp_param ),
 					loop_count,
 					outer_loop_flag );
+			}
 			else
 				rt_vls_printf( &str , "510,%d,%d,%d" ,
 					write_plane_entity( fu->f_p->g.plane_p->N , fp_dir , fp_param ),

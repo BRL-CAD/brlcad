@@ -66,10 +66,11 @@ RT_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp ) );
 RT_EXTERN( void set_iges_tolerances , ( struct rt_tol *set_tol , struct rt_tess_tol *set_ttol ) );
 RT_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp ) );
 
-static char usage[] = "Usage: %s [-f|c] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file] brlcad_db.g object(s)\n\
+static char usage[] = "Usage: %s [-f|c|t] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file] brlcad_db.g object(s)\n\
 	options:\n\
 		f - convert each region to facetted BREP before output\n\
 		c - produce a CSG file to the maximum extent possible\n\
+		t - produce a file of trimmed surfaces\n\
 		s - produce NURBS for faces of any BREP objects\n\
 		v - verbose\n\
 		a - absolute tolerance for tessellation\n\
@@ -193,13 +194,16 @@ char	*argv[];
 	prog_name = argv[0];
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "fcsa:n:o:p:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "fctsa:n:o:p:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'f':		/* Select facetized output */
 			mode = FACET_MODE;
 			break;
 		case 'c':		/* Select CSG output */
 			mode = CSG_MODE;
+			break;
+		case 't':
+			mode = TRIMMED_SURF_MODE;
 			break;
 		case 's':		/* Select NURB output */
 			do_nurbs = 1;
@@ -322,6 +326,22 @@ char	*argv[];
 			db_functree( dbip , dp , csg_comb_func , csg_leaf_func );
 		}
 	}
+	else if( mode == TRIMMED_SURF_MODE )
+	{
+		/* Walk the indicated tree(s). Each region is output as a collection
+		 * of trimmed NURBS */
+
+		ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+			1,			/* ncpu */
+			&tree_state,
+			0,			/* take all regions */
+			do_nmg_region_end,
+			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+
+		if( ret )
+			rt_bomb( "g-iges: Could not facetize anything!!!" );
+
+	}
 
 	/* Copy the parameter section from the temporary file to the output file */
 	if( (fseek( fp_param , (long) 0 , 0 )) ) {
@@ -344,7 +364,7 @@ char	*argv[];
 	Print_stats( stdout );
 
 	/* report on the success rate for facetizing regions */
-	if( mode == FACET_MODE )
+	if( mode == FACET_MODE || mode == TRIMMED_SURF_MODE )
 	{
 		percent = 0;
 		if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
@@ -433,17 +453,22 @@ union tree		*curtree;
 
 		dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-		dependent = 1;
-		for( i=0 ; i<no_of_indeps ; i++ )
+		if( mode == FACET_MODE )
 		{
-			if( !strncmp( dp->d_namep , independent[i] , NAMESIZE ) )
+			dependent = 1;
+			for( i=0 ; i<no_of_indeps ; i++ )
 			{
-				dependent = 0;
-				break;
+				if( !strncmp( dp->d_namep , independent[i] , NAMESIZE ) )
+				{
+					dependent = 0;
+					break;
+				}
 			}
-		}
 
-		dp->d_uses = (-nmgregion_to_iges( dp->d_namep , r , dependent , fp_dir , fp_param ));
+			dp->d_uses = (-nmgregion_to_iges( dp->d_namep , r , dependent , fp_dir , fp_param ));
+		}
+		else if( mode == TRIMMED_SURF_MODE )
+			dp->d_uses = (-nmgregion_to_tsurf( dp->d_namep , r , fp_dir , fp_param ));
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);

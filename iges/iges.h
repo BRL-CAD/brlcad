@@ -1,5 +1,6 @@
-#define CSG_MODE	1
-#define FACET_MODE	2
+#define CSG_MODE		1
+#define FACET_MODE		2
+#define	TRIMMED_SURF_MODE	3
 
 struct iges_properties
 {

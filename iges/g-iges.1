@@ -3,7 +3,7 @@
 g-iges \- IGES Translator (BRL-CAD to IGES)
 .SH SYNOPSIS
 .B iges-g
-[-f|c] [-v] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o file.iges] database.g object(s)
+[-f|c|t] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o file.iges] database.g object(s)
 .SH DESCRIPTION
 .I g-iges\^
 converts the specified objects of the BRLCAD database,
@@ -13,13 +13,13 @@ converts the specified objects of the BRLCAD database,
 The
 .B \-f
 option selects a BREP IGES file consisting of only Manifold Solid BREP
-Objects.  All CSG solids in the specified objects are tesellated to
+Objects.  All CSG solids in the specified objects are tessellated to
 produce facetted BREP objects, then the indicated Boolean operations
 are performed for each region. Individual regions are written to the
 IGES file as individual BREP objects.  This procedure results in
 some approximations since curved surface solids, such as TGC's or
 ellipsoids, are approximated by flat facets. The accuracy of the
-tesellation may be controlled through the use of the
+tessellation may be controlled through the use of the
 .B \-a, -r, and -n
 options to specify tolerances.
 The
@@ -30,6 +30,29 @@ all possible solids represented by their IGES CSG equivalent. In cases
 where there is no IGES CSG equivalent, the BRLCAD solid is tesellated
 (using the provided tolerances), and a BREP object is written for that
 solid.
+The
+.B \-t
+option indicates that an IGES file consisting of only trimmed NURBS
+should be created. The trimmed NURBS will all be planar NURBS, and they
+are the facets derived from the tessellation and Boolean evaluation as in
+the
+.B \-f
+option. The file produced in this way is acceptable to the Pro/Engineer IGES
+import routine.
+The
+.B \-s
+option may be used in conjunction with the
+.B \-f
+or
+.B \-c
+options to indicate that all facets in BREP objects should be output
+in the form of planar NURBS (Intergraph likes their IGES files this way).
+The
+.B \-x
+option allows the user to set a hex librt debug flag (see librt/debug.h for values).
+The
+.B \-X
+option allows the user to set a hex NMG debug flag (see h/nmg.h for values).
 .SH EXAMPLE
 .nf
 .ce
