@@ -74,7 +74,7 @@ else
 	     LDSHARED=${LDSHARED-"cc -64 -shared"};;
   IRIX*)     SFLAGS=${CFLAGS-"-ansi -O2 -rpath ."}
 	     CFLAGS=${CFLAGS-"-ansi -O2"}
-	     LDSHARED=${LDSHARED-"cc -shared"};;
+	     LDSHARED=${LDSHARED-"cc -n32 -shared"};;
   OSF1)      SFLAGS=${CFLAGS-"-O -std1"}
 	     CFLAGS=${CFLAGS-"-O -std1"}
 	     LDSHARED=${LDSHARED-"cc -shared"};;
