@@ -19,10 +19,10 @@
 #include "nurb.h"	
 
 /* These Procedures take a set of matrices of the form Ax = b and
- * alows one to rt_nurb_solve the system by various means. The rt_nurb_doolittle
- * routine take the system and creates a lu decomposition using
+ * alows one to solve the system by various means. The rt_nurb_doolittle
+ * routine takes the system and creates a lu decomposition using
  * pivoting  to get the system in a desired form. Forward and backward
- * substitution are then used to spl_solve the system.  All work is done
+ * substitution are then used to solve the system.  All work is done
  * in place.
  */
 
@@ -32,12 +32,17 @@
  * the equation.  The variable solution which is double is also to be
  * created by the user and consisting of n elements of which the
  * solution set is passed back.
+ *
+ *  Arguments mat_1 and mat_2 are modified by this call.
+ *  The solution is written into the solution[] array.
  */
 void
 rt_nurb_solve(mat_1, mat_2, solution, dim, coords)
-fastf_t *mat_1, *mat_2, *solution;	/* A and b array of the system Ax= b*/
-int dim;				/* dimension of the matrix */
-int coords;		/* Number of coordsinates for mat_2 and solution */
+fastf_t	*mat_1;		/* A and b array of the system Ax= b*/
+fastf_t	*mat_2;
+fastf_t	*solution;
+int	dim;		/* dimension of the matrix */
+int	coords;		/* Number of coordsinates for mat_2 and solution */
 {
 	register int i, k;
 	fastf_t *y;
@@ -87,6 +92,10 @@ int coords;		/* Number of coordsinates for mat_2 and solution */
 	rt_free ((char *)s,"rt_nurb_solve: s");			/* Free up storage */
 }
 
+/*
+ *  Create LU decomosition.
+ *  Modifies both mat_1 and mat_2 values.
+ */
 void
 rt_nurb_doolittle(mat_1, mat_2,row, coords )
 fastf_t *mat_1, *mat_2;
@@ -185,7 +194,9 @@ int coords;
 
 void
 rt_nurb_forw_solve(lu, b, y, n)		/* spl_solve lower trianglular matrix */
-fastf_t *lu, *b, *y;
+CONST fastf_t *lu;
+CONST fastf_t *b;
+fastf_t *y;
 int n;
 {
 	register int i,j;
@@ -202,7 +213,9 @@ int n;
 
 void
 rt_nurb_back_solve( lu, y, x, n)		/* spl_solve upper triangular matrix */
-fastf_t *lu, *y, *x;
+CONST fastf_t *lu;
+CONST fastf_t *y;
+fastf_t *x;
 int n;
 {
 	register int i,j;
@@ -219,7 +232,7 @@ int n;
 }
 
 rt_nurb_p_mat(mat, dim)
-fastf_t * mat;
+CONST fastf_t * mat;
 int dim;
 {
 	int i;
