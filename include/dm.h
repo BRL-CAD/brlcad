@@ -24,7 +24,8 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+#ifndef DM_EXPORT
+#if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #  ifdef DM_EXPORT_DLL
 #    define DM_EXPORT __declspec(dllexport)
 #  else
@@ -32,6 +33,7 @@
 #  endif
 #else
 #  define DM_EXPORT
+#endif
 #endif
 
 #ifndef SEEN_BU_H
@@ -237,6 +239,9 @@ struct dm_obj {
   struct fbserv_obj	dmo_fbs;		/* fbserv object */
 #endif
   struct bu_observer	dmo_observers;		/* fbserv observers */
+  mat_t			viewMat;
+  int			(*dmo_drawLabelsHook)();
+  void			*dmo_drawLabelsHookClientData;
 };
 
 #define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
@@ -265,8 +270,13 @@ struct dm_obj {
 #define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
 #define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
 
+#ifdef BRLCAD_DEBUG
+DM_EXPORT BU_EXTERN(int Dm_d_Init,
+		    ());
+#else
 DM_EXPORT BU_EXTERN(int Dm_Init,
 		    ());
+#endif
 DM_EXPORT BU_EXTERN(struct dm *dm_open,
 		    (Tcl_Interp *interp,
 		     int type,
