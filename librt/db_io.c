@@ -207,7 +207,7 @@ long		offset;		/* byte offset from start of file */
 
 	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB)  {
-		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
+		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=x%x)\n",
 			dbip, addr, count, offset );
 	}
 	if( count <= 0 || offset < 0 )  {
