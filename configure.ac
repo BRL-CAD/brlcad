@@ -162,15 +162,12 @@ dnl search several additional locations if configure happens to fail
 dnl to find a required component
 BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
 BC_RETRY_DIRECTORY([/usr/local])
+BC_RETRY_DIRECTORY([/opt/X11R6], [X11])
 BC_RETRY_DIRECTORY([/opt])
 BC_RETRY_DIRECTORY([/sw], [fink])
 
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
-GL_CFLAGS="-I/usr/X11R6/include"
-AC_SUBST(GL_CFLAGS)
-GL_LIBS="-L/usr/X11R6/lib -lGL"
-AC_SUBST(GL_LIBS)
 
 
 dnl ***********************
@@ -690,41 +687,54 @@ AC_MSG_CHECKING([... l i b r a r i e s ])
 AC_MSG_RESULT([])
 
 dnl check if pthread library link works
-pthread_link_works=no
-AC_CHECK_LIB(pthread, pthread_create, pthread_link_works=yes)
+thread_link_works=no
+LIBTHREAD=""
+AC_CHECK_LIB(pthread, pthread_create, thread_link_works=yes ; LIBTHREAD="-lpthread",
+    dnl check if the BSD c_r threading library link works
+    [AC_CHECK_LIB(c_r, pthread_create, thread_link_works=yes ; LIBTHREAD="-pthread")]
+)
 
-dnl check if the BSD c_r threading library link works
-c_r_link_works=no
-AC_CHECK_LIB(c_r, pthread_create, c_r_link_works=yes)
-
-dnl need curses, would prefer ncurses  (XXX should look for tputs)
-#LIBS=
-AC_CHECK_LIB(ncurses, tputs, CURSES="-lncurses",
-    [AC_CHECK_LIB(curses, tputs, CURSES="-lcurses",
-	[AC_CHECK_LIB(termlib, tputs, CURSES="-ltermlib",
-	    [AC_CHECK_LIB(termcap, tputs, CURSES="-ltermcap")]
+dnl need curses, would prefer ncurses
+curses_lib_works=no
+CURSES=""
+AC_CHECK_LIB(ncurses, tputs, curses_lib_works=yes ; CURSES="-lncurses",
+    [AC_CHECK_LIB(curses, tputs, curses_lib_works=yes ; CURSES="-lcurses",
+	[AC_CHECK_LIB(termlib, tputs, curses_lib_works=yes ; CURSES="-ltermlib",
+	    [AC_CHECK_LIB(termcap, tputs, curses_lib_works=yes ; CURSES="-ltermcap")]
 	)]
     )]
 )
-AC_SUBST(CURSES)
 
-dnl X
-X_PREFIX=/usr/X11R6
-AC_SUBST(X_CFLAGS)
-X_CFLAGS="-I${X_PREFIX}/include"
-AC_SUBST(X_LIBS)
-X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
-AC_SUBST(X_PREFIX)
+dnl check if X11 library link works
+x11_link_works=no
+AC_CHECK_LIB(X11, XCreateWindow, x11_link_works=yes)
+
+xext_link_works=no
+AC_CHECK_LIB(Xext, XShapeCombineMask, xext_link_works=yes)
+
+xi_link_works=no
+AC_CHECK_LIB(Xi, XGetExtensionVersion, xi_link_works=yes)
+
+ice_link_works=no
+AC_CHECK_LIB(ICE, IceOpenConnection, ice_link_works=yes)
+
+sm_link_works=no
+AC_CHECK_LIB(SM, SmcOpenConnection, sm_link_works=yes)
+
+xt_link_works=no
+AC_CHECK_LIB(Xt, XtMalloc, xt_link_works=yes)
+
+xmu_link_works=no
+AC_CHECK_LIB(Xmu, XmuLookupStandardColormap, xmu_link_works=yes)
 
 dnl detect a useable system regular expression library
 regex_link_works=no
-AC_CHECK_LIB(c, regcomp, regex_link_works=yes)
-if test "x$regex_link_works" = "xno" ; then
-	AC_CHECK_LIB(regex, regcomp, regex_link_works=yes)
-fi
-if test "x$regex_link_works" = "xno" ; then
-	AC_CHECK_LIB(compat, regcomp, regex_link_works=yes)
-fi
+REGEX=""
+AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; REGEX="-lc",
+    [AC_CHECK_LIB(regex, regcomp, regex_link_works=yes ; REGEX="-lregex",
+	[AC_CHECK_LIB(compat, regcomp, regex_link_works=yes ; REGEX="-lcompat")]
+    )]
+)
 
 dnl check if zlib library links
 z_link_works=no
@@ -736,31 +746,47 @@ AC_CHECK_LIB(png, png_access_version_number, png_link_works=yes)
 
 dnl check if a math library links
 m_link_works=no
-AC_CHECK_LIB(m, cos, m_link_works=yes)
+LIBM=""
+AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
 
 dnl check if a socket library links
 socket_link_works=no
-AC_CHECK_LIB(socket, socket, socket_link_works=yes)
+LIBSOCKET=""
+AC_CHECK_LIB(socket, socket, socket_link_works=yes ; LIBSOCKET="-lsocket")
 
 dnl check if a network socket library links
 nsl_link_works=no
+LIBNSL=""
 AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes)
 
 dnl check if a malloc library links
 malloc_link_works=no
-AC_CHECK_LIB(malloc, mallopt, malloc_link_works=yes)
+LIBMALLOC=""
+AC_CHECK_LIB(c, mallopt, malloc_link_works=yes ; LIBMALLOC="-lc",
+    [AC_CHECK_LIB(malloc, mallopt, malloc_link_works=yes ; LIBMALLOC="-lmalloc")]
+)
 
 dnl check if a mx library links
 mx_link_works=no
-AC_CHECK_LIB(mx, matherr, mx_link_works=yes)
+LIBMX=""
+AC_CHECK_LIB(mx, matherr, mx_link_works=yes ; LIBMX="-lmx")
 
 dnl check if a dynamic link library links
 dl_link_works=no
-AC_CHECK_LIB(dl, dlopen, dl_link_works=yes)
+LIBDL=""
+AC_CHECK_LIB(dl, dlopen, dl_link_works=yes ; LIBDL="-ldl")
 
 dnl check if a graphics library links
 gl_link_works=no
-AC_CHECK_LIB(gl, getvideo, gl_link_works=yes)
+LIBGL=""
+AC_CHECK_LIB(GL, glEnable, gl_link_works=yes ; LIBGL="-lGL",
+    [AC_CHECK_LIB(GL2, glEnable, gl_link_works=yes ; LIBGL="-lGL2")]
+)
+
+dnl check if the sgigl library links
+sgigl_link_works=no
+LIBSGIGL=""
+AC_CHECK_LIB(gl, getvideo, sgigl_link_works=yes ; LIBSGIGL="-lgl")
 
 
 dnl *************************
@@ -1372,13 +1398,7 @@ dnl *********************************
 AC_MSG_CHECKING([... s e r v i c e s ])
 AC_MSG_RESULT([])
 
-dnl *** X11 ***
-
-AC_PATH_X
-AC_PATH_XTRA
-
 dnl *** java ***
-
 if test "x$only_rts" != "xno" ; then
 	AC_MSG_CHECKING(if java seems to be available)
 	if test "x$with_java" = "xno" ; then
@@ -1393,22 +1413,7 @@ if test "x$only_rts" != "xno" ; then
 	AC_MSG_RESULT(yes)
 fi
 
-dnl *** libm ***
-
-AC_MSG_CHECKING(whether to link with the math library)
-dnl See if libm library support works
-LIBM=""
-if test "x$m_link_works" = "xyes" ; then
-   	LIBM="-lm"
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
-AC_SUBST(LIBM)
-
 dnl *** libpng ***
-
-dnl See if png library support works
 png_works=no
 AC_MSG_CHECKING(for portable network graphics functionality)
 if test "x$png_link_works" = "xyes" ; then
@@ -1461,7 +1466,6 @@ fi
 AC_SUBST(LIBPNG)
 
 dnl *** libregex ***
-
 dnl See if regular expression support works
 regex_works=no
 AC_MSG_CHECKING(for regular expression functionality)
@@ -1508,7 +1512,6 @@ fi
 AC_SUBST(REGEX_LIBS)
 
 dnl *** libz ***
-
 dnl See if zlib library support works
 zlib_works=no
 AC_MSG_CHECKING(for zlib compression functionality)
@@ -1555,20 +1558,12 @@ else
 fi
 AC_SUBST(LIBZ)
 
-
 dnl *** libthread ***
-
-LIBTHREAD=""
 AC_MSG_CHECKING(for threading library availability)
-if test "xpthread_link_works" = "xyes" ; then
-	LIBTHREAD="-lpthread"
-else
-	if test "xc_r_link_works" = "xyes" ; then
-		LIBTHREAD="-pthread"
-	fi
-fi
+AC_MSG_RESULT($thread_link_works)
 AC_SUBST(LIBTHREAD)
 
+AC_MSG_CHECKING(if pthreading works)
 thread_works=no
 AC_TRY_RUN([
 #ifdef HAVE_PTHREAD_H
@@ -1588,88 +1583,66 @@ main () {
 )
 AC_MSG_RESULT($thread_works)
 
+dnl *** X11 ***
+AC_PATH_X
+AC_PATH_XTRA
+
+# XXX ugly hack that needs to die
+X_PREFIX=/usr/X11R6
+AC_SUBST(X_CFLAGS)
+X_CFLAGS="-I${X_PREFIX}/include"
+AC_SUBST(X_LIBS)
+X_LIBS="-L${X_PREFIX}/lib -lX11 -lXi"
+AC_SUBST(X_PREFIX)
+
+dnl *** libgl ***
+AC_MSG_CHECKING(whether to link with the OpenGL library)
+AC_MSG_RESULT($gl_link_works)
+AC_SUBST(LIBGL)
+
+dnl *** sgigl ***
+AC_MSG_CHECKING(whether to link with the SGI graphics library)
+AC_MSG_RESULT($sgigl_link_works)
+AC_SUBST(LIBSGIGL)
+dnl AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
+
+dnl *** curses ***
+AC_MSG_CHECKING(whether to link with the curses library)
+AC_MSG_RESULT($curses_lib_works)
+AC_SUBST(CURSES)
+
+dnl *** libm ***
+AC_MSG_CHECKING(whether to link with the math library)
+AC_MSG_RESULT($m_link_works)
+AC_SUBST(LIBM)
 
 dnl *** libsocket ***
-
-LIBSOCKET=""
 AC_MSG_CHECKING(for socket library availability)
-if test "x$socket_link_works" = "xyes" ; then
-	LIBSOCKET="-lsocket"
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
+AC_MSG_RESULT([$socket_link_works])
 AC_SUBST(LIBSOCKET)
 
-
 dnl *** libnsl ***
-
-LIBNSL=""
 AC_MSG_CHECKING(for network socket library availablity)
-if test "x$nsl_link_works" = "xyes" ; then
-	LIBNSL="-lnsl"
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
+AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
-
 dnl *** libmalloc ***
-
-LIBMALLOC=""
 AC_MSG_CHECKING(for malloc library availability)
-if test "x$malloc_link_works" = "xyes" ; then
-	LIBMALLOC="-lmalloc"
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
+AC_MSG_RESULT([$malloc_link_works])
 AC_SUBST(LIBMALLOC)
 
-
 dnl *** libmx ***
-
-LIBMX=""
 AC_MSG_CHECKING(for mx library availability)
-if test "x$mx_link_works" = "xyes" ; then
-	LIBMX="-lmx"
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
+AC_MSG_RESULT([$mx_link_works])
 AC_SUBST(LIBMX)
 
-
 dnl *** libdl ***
-
-LIBDL=""
 AC_MSG_CHECKING(for dynamic linker library availability)
-if test "x$dl_link_works" = "xyes" ; then
-	LIBDL="-ldl"
-	AC_MSG_RESULT(yes)
-else
-	AC_MSG_RESULT(no)
-fi
+AC_MSG_RESULT([$dl_link_works])
 AC_SUBST(LIBDL)
 
 
-dnl *** libgl ***
-
-LIBGL=""
-AC_MSG_CHECKING(for graphics library availability)
-if test "x$gl_link_works" = "xyes" ; then
-	LIBGL="-lgl"
-	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAS_SGIGL, 1, Irix GL is present.)
-else
-	AC_MSG_RESULT(no)
-fi
-AC_SUBST(LIBGL)
-
-
 dnl *** 64-bit compilation ***
-
 dnl figure out whether we are building 64-bit
 build_brlcad_64bit="no"
 if test "x$build_64bit" = "xyes" ; then
