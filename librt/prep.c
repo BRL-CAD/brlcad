@@ -190,6 +190,8 @@ register struct rt_i *rtip;
 			pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 			pl_color( plotfp, 255, 255, 255 );
 			for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+				/* Ignore "dead" solids in the list.  (They failed prep) */
+				if( stp->st_aradius <= 0 )  continue;
 				/* Don't draw infinite solids */
 				if( stp->st_aradius >= INFINITY )
 					continue;
@@ -209,6 +211,9 @@ register struct rt_i *rtip;
 		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 
 		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+			/* Ignore "dead" solids in the list.  (They failed prep) */
+			if( stp->st_aradius <= 0 )  continue;
+
 			/* Don't draw infinite solids */
 			if( stp->st_aradius >= INFINITY )
 				continue;

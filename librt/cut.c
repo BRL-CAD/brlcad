@@ -97,6 +97,8 @@ register struct rt_i *rtip;
 		rtip->rti_CutHead.bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: root list" );
 	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		/* Ignore "dead" solids in the list.  (They failed prep) */
+		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  {
 			/* Add to infinite solids list for special handling */
 			rt_cut_extend( &rtip->rti_inf_box, stp );
@@ -162,6 +164,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	rt_hist_init( &yhist, (int)rtip->rti_pmin[Y], (int)rtip->rti_pmax[Y], RT_NUGRID_NBINS );
 	rt_hist_init( &zhist, (int)rtip->rti_pmin[Z], (int)rtip->rti_pmax[Z], RT_NUGRID_NBINS );
 	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		/* Ignore "dead" solids in the list.  (They failed prep) */
+		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  continue;
 		rt_hist_range( &xhist,
 			(int)stp->st_min[X], (int)stp->st_max[X] );
@@ -775,6 +779,8 @@ register struct soltab *stp;
 		VPRINT("box max", max);
 		VPRINT("sol max", stp->st_max);
 	}
+	/* Ignore "dead" solids in the list.  (They failed prep) */
+	if( stp->st_aradius <= 0 )  return(0);
 	if( stp->st_aradius >= INFINITY )  {
 		/* Need object classification test here */
 		if( rt_g.debug&DEBUG_BOXING )  rt_log("rt_ck_overlap:  TRUE (inf)\n");
