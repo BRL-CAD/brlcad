@@ -990,7 +990,11 @@ int main (int argc, char *argv[]) {
 
   /* save the seed just in case we want to know it */
   seed=time(0);
+#ifndef HAVE_SRAND48
+  srand(seed);
+#else
   srand48(seed);
+#endif
   printf("Vegitation seed is %ld\n", seed);
 
   fp=wdb_fopen("vegitation.g");

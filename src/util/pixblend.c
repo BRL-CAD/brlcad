@@ -193,7 +193,7 @@ main(int argc, char **argv)
 	}
 
 	if (rflg) {
-#ifdef HAVE_DRAND48
+#ifdef HAVE_SRAND48
 	    srand48((long)seed);
 #else
 	    threshold = (int) (value * 65536.0);

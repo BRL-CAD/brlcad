@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 #ifdef MSRMAXTBL
       msr = msr_unif_init(seed, 0);
 #else
-#  ifndef HAVE_DRAND48
+#  ifndef HAVE_SRAND48
       (void) srandom(seed);
 #  else
       (void) srand48(seed);
