@@ -64,7 +64,7 @@ long *flags;
 	struct vertex *vp_top=(struct vertex *)NULL;
 	struct loopuse *lu;
 	struct faceuse *fu;
-	struct edgeuse *eu,*eu1,*eu2;
+	struct edgeuse *eu,*eu1;
 	struct vertexuse *vu;
 	int done;
 
@@ -674,10 +674,9 @@ CONST int pl_count;
 {
 	mat_t matrix;
 	mat_t inverse;
-	mat_t test;
 	vect_t hpq;
 	fastf_t det;
-	int i,j;
+	int i;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 	{
@@ -769,7 +768,6 @@ CONST struct rt_tol *tol;
 	for( fu_no=0 ; fu_no < NMG_TBL_END( &fus ) ; fu_no ++ )
 	{
 		struct faceuse *fu2;
-		struct faceuse *next_fu;
 
 		fu = (struct faceuse *)NMG_TBL_GET( &fus , fu_no );
 
@@ -1602,18 +1600,11 @@ long *p;
 		return(0);
 	} else if (func == TBL_INS) {
 		register int i;
-		union {
-			struct loopuse *lu;
-			struct edgeuse *eu;
-			struct vertexuse *vu;
-			long *l;
-		} pp;
 
 		if (rt_g.NMG_debug & DEBUG_INS)
 			rt_log("nmg_tbl(%8x) TBL_INS %8x\n", b, p);
 
 		NMG_CK_PTBL(b);
-		pp.l = p;
 
 		if (b->blen == 0) (void)nmg_tbl(b, TBL_INIT, p);
 		if (b->end >= b->blen)
@@ -2092,7 +2083,7 @@ struct rt_tol *tol;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu,*eu1,*eu2,*eu3,*eu_new;
-	int i,j;
+	int i;
 	int found;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -2158,7 +2149,7 @@ struct rt_tol *tol;
 
 	while( NMG_TBL_END( &eu_tbl ) )
 	{
-		vect_t normal,v1,v2,tmp_norm;
+		vect_t	normal;
 		int give_up_on_face=0;
 
 		/* Create an index into the table that orders the edgeuses into a loop */
@@ -2673,10 +2664,6 @@ nmg_reverse_face_and_radials( fu , tol )
 struct faceuse *fu;
 CONST struct rt_tol *tol;
 {
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	struct faceuse *fu2;
-
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_reverse_face_and_radials( fu = x%x )\n" , fu );
 
@@ -2737,7 +2724,7 @@ CONST struct shell *s;
 
 	if( normal[Z] == 0.0 )
 		rt_bomb( "nmg_shell_is_void: Cannot determine if shell is void\n" );
-	else if( normal[Z] < 0.0 )
+	if( normal[Z] < 0.0 )
 		return( 1 );
 	else
 		return( 0 );
@@ -2909,9 +2896,6 @@ CONST struct rt_tol *tol;
 	struct model *m;
 	struct face *f_top;
 	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu,*eu1,*eu2;
-	struct vertexuse *vu;
 	long *flags;
 	int missed_faces=1;
 
@@ -3054,7 +3038,6 @@ struct rt_tol *tol;
 						/* make sure we break the longer edge
 						 * and that the edges are in opposite directions */
 						vect_t v0,v1;
-						struct edgeuse *tmp_eu;
 
 						VSUB2( v0 , eu->eumate_p->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
 						VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
@@ -3068,7 +3051,7 @@ struct rt_tol *tol;
 									V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ),
 									V3ARGS( eu1->vu_p->v_p->vg_p->coord ) );
 							}
-							tmp_eu = nmg_ebreak(eu1->vu_p->v_p, eu);
+							(void) nmg_ebreak(eu1->vu_p->v_p, eu);
 							split_count++;
 						}
 						else if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -3360,7 +3343,6 @@ struct rt_tol	*tol;
 	struct model *m;
 	struct nmg_visit_handlers htab;
 	struct nmg_split_loops_state sl_state;
-	long *flags;
 	int count;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -3925,7 +3907,6 @@ int	after;
 	struct edge_g_lseg *eg;
 	struct nmg_unbreak_state *ub_state;
 	struct vertex	*vb;
-	struct vertexuse *vu;
 
 	eu1 = (struct edgeuse *)eup;
 	NMG_CK_EDGEUSE( eu1 );
@@ -4000,7 +3981,6 @@ long		*magic_p;
 	struct model *m;
 	struct nmg_visit_handlers htab;
 	struct nmg_unbreak_state ub_state;
-	long *flags;
 	int count;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -4168,7 +4148,6 @@ CONST struct rt_tol *tol;
 {
 	struct faceuse *fu;
 	struct face_g_plane *fg;
-	struct edgeuse *eu;
 	struct vertexuse *vu;
 	int i;
 	int unique;
@@ -4450,7 +4429,6 @@ CONST struct nmg_ptbl *int_faces;
 		else
 		{
 			struct faceuse *fu;
-			struct loopuse *lu;
 
 			rt_log( "\teu = x%x, from x%x ( %f %f %f ) to x%x ( %f %f %f )\n" , i_fus->eu,
 				i_fus->eu->vu_p->v_p , V3ARGS( i_fus->eu->vu_p->v_p->vg_p->coord ),
@@ -4559,7 +4537,6 @@ CONST struct rt_tol *tol;
 		if( eu->eumate_p == eu->radial_p )
 		{
 			/* found a dangling edge, start processing here */
-			vect_t tmp_vec,eu_dir;
 			plane_t pl;
 			struct intersect_fus *i_fus;
 
@@ -4622,7 +4599,6 @@ CONST struct rt_tol *tol;
 	while( !done )
 	{
 		fastf_t dist;
-		vect_t normal1;
 		point_t start;
 		vect_t dir;
 		vect_t eu_dir;
@@ -4684,7 +4660,6 @@ CONST struct rt_tol *tol;
 			/* find the new edge line at the intersection of these two faces
 			 * the line is defined by start and dir */
 
-			NMG_GET_FU_NORMAL( normal1 , fu1 );
 			if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->g.plane_p->N , fu2->f_p->g.plane_p->N , new_v->vg_p->coord , &tol_tmp ) )
 			{
 				/* Cannot find line for this edge */
@@ -4710,7 +4685,6 @@ CONST struct rt_tol *tol;
 		}
 		else if( i_fus->free_edge )
 		{
-			vect_t tmp_vec;
 			plane_t pl;
 
 			/* for a dangling edge, use the same direction as the original edge
@@ -4762,7 +4736,6 @@ CONST struct rt_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *r;
-	vect_t diag;
 	int edge_no;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC ) 
@@ -4785,7 +4758,6 @@ CONST struct rt_tol *tol;
 		fastf_t max_dist,dist[2];
 		int next_edge_no,prev_edge_no;
 		int other_index;
-		int found1,found2;
 
 		edge_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
 
@@ -5037,8 +5009,6 @@ CONST struct rt_tol *tol;
 
 		if( rt_pt3_pt3_equal( new_v->vg_p->coord , i_fus->pt , tol ) )
 		{
-			vect_t eu_dir;
-
 			/* if pt is within tolerance of new_v, don't split the edge */
 			i_fus->vp = (struct vertex *)NULL;
 			VMOVE( i_fus->pt , new_v->vg_p->coord );
@@ -5083,10 +5053,6 @@ CONST struct rt_tol *tol;
 		       j_fus->fu[0]->f_p == j_fus->fu[1]->f_p &&
 		       j_fus != i_fus )
 		{
-			struct edgeuse *new_eu;
-			struct edgeuse *prev_eu;
-			struct edgeuse *radial_eu;
-
 			/* if both edges are dangling, there is nothing to do */
 			if( i_fus->free_edge && j_fus->free_edge )
 				break;
@@ -5099,7 +5065,7 @@ CONST struct rt_tol *tol;
 			 * this moves the neighboring edge's endpoint to
 			 * fall on the first edge.
 			 */
-			new_eu = nmg_esplit( i_fus->vp , j_fus->eu, 0 );
+			(void) nmg_esplit( i_fus->vp , j_fus->eu, 0 );
 
 			/* now we can ignore this edge */
 			nmg_fuse_inters( i_fus , j_fus , int_faces , tol );
@@ -5301,14 +5267,6 @@ CONST struct rt_tol *tol;
 	{
 		struct intersect_fus *i_fus;
 		struct intersect_fus *j_fus;
-		struct vertexuse *vu1,*vu2;
-		struct edgeuse *eu;
-		struct loopuse *lu;
-		struct loopuse *new_lu;
-		struct loopuse *dup_lu;
-		struct faceuse *new_fu;
-		struct faceuse *fu;
-		long **trans_tbl;
 
 		/* get two consectutive structures */
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
@@ -5447,9 +5405,8 @@ struct vertex *new_v;
 struct nmg_ptbl *int_faces;
 CONST struct rt_tol *tol;
 {
-	struct model *m;
 	struct loopuse *old_lu;
-	int edge_no=0,next_edge_no,j;
+	int edge_no=0,next_edge_no;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_make_faces_at_vert( x%x , %d intersect_fus structs)\n" , new_v , NMG_TBL_END( int_faces ) );
@@ -5457,8 +5414,6 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX( new_v );
 	NMG_CK_PTBL( int_faces );
 	RT_CK_TOL( tol );
-
-	m = nmg_find_model( &new_v->magic );
 
 	if( NMG_TBL_END( int_faces ) == 1 )
 	{
@@ -5511,10 +5466,8 @@ CONST struct rt_tol *tol;
 		struct edgeuse *eu;
 		struct loopuse *lu;
 		struct loopuse *new_lu;
-		struct loopuse *dup_lu;
 		struct faceuse *new_fu;
 		struct faceuse *fu;
-		long **trans_tbl;
 
 		/* get two consectutive structures */
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
@@ -6311,21 +6264,10 @@ CONST struct nmg_ptbl *faces;
 CONST int approximate;
 CONST struct rt_tol *tol;
 {
-	struct model *m;
-	struct faceuse *fu1,*fu2,*fu;
+	struct faceuse *fu;
 	struct face *fp1;
-	struct vertexuse *vu;
-	struct edgeuse *eu1,*eu;
 	struct nmg_ptbl int_faces;
-	struct intersect_fus *k_fus;
-	point_t ave_pt;
-	vect_t ave_norm,x_vec,y_vec;
-	point_t rpp_min;
-	int i,j,done;
-	int unique_verts;
-	int added_faces;
-	int edge_no;
-	static int pl_count=0;
+	int i;
 
 	/* More than 3 faces intersect at vertex (new_v)
 	 * Calculate intersection point along each edge
@@ -6364,10 +6306,6 @@ CONST struct rt_tol *tol;
 				V3ARGS( new_v->vg_p->coord ) );
 		return( 0 );
 	}
-
-	m = nmg_find_model( &new_v->magic );
-
-	VSET( rpp_min , 0.0 , 0.0 , 0.0 );
 
 	nmg_tbl( &int_faces , TBL_INIT , (long *)NULL );
 
@@ -6447,18 +6385,14 @@ CONST struct rt_tol *tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
-	struct edgeuse *eu,*eu1,*eu2;
 	vect_t old_normal;
 	plane_t new_plane;
-	vect_t a,b;
-	point_t pa,pb,pc;
 
 	NMG_CK_SHELL( s );
 	RT_CK_TOL( tol );
 
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
-		int done=0;
 		fastf_t area;
 
 		NMG_CK_FACEUSE( fu );
@@ -6566,7 +6500,6 @@ struct edgeuse *mv_eu;
 CONST point_t pt;
 CONST struct rt_tol *tol;
 {
-	struct nmgregion *r;
 	struct faceuse *fu,*fu1;
 	struct edgeuse *eu,*eu1;
 	struct edge_g_lseg *eg;
@@ -6762,7 +6695,6 @@ CONST struct rt_tol *tol;
 	do
 	{
 		struct loopuse *lu;
-		struct vertex *v;
 
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
@@ -6871,10 +6803,9 @@ struct rt_list *vhead;
 	{
 		register int i;
 		register int nused = vp->nused;
-		fastf_t edge_len_sq;
 		vect_t edge_vec;
 
-		for( i=0 ; i<vp->nused ; i++ )
+		for( i=0 ; i<nused ; i++ )
 		{
 			switch( vp->cmd[i] )
 			{
@@ -7167,7 +7098,6 @@ struct nmg_ptbl *verts;
 CONST struct rt_tol *tol;
 {
 	int done=0;
-	int last_face=0;
 	int i;
 	int verts_in_face=0;
 	struct vertex *face_verts[20];
@@ -7229,7 +7159,6 @@ CONST struct rt_tol *tol;
 	{
 		struct faceuse *new_fu;
 		struct loopuse *lu;
-		struct edgeuse *eu;
 		plane_t pl;
 		fastf_t area;
 
@@ -7334,7 +7263,6 @@ CONST struct rt_tol *tol;
 	{
 		struct vertex *v1,*v2;
 		struct edgeuse *eu;
-		struct edgeuse *new_eu;
 
 		/* didn't make last face, must be collinear points
 		 * so split an edge to get the last vertex in
@@ -7353,7 +7281,7 @@ CONST struct rt_tol *tol;
 			rt_bomb( "\n" );
 		}
 
-		new_eu = nmg_esplit( v2 , eu, 0 );
+		(void) nmg_esplit( v2 , eu, 0 );
 
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 			rt_log( "Split eu x%x (x%x -> x%x) at vertex x%x\n" , eu , eu->vu_p->v_p , eu->eumate_p->vu_p->v_p, v2 );
@@ -7395,7 +7323,6 @@ CONST struct rt_tol *tol;
 	struct edgeuse *eu;
 	struct nmg_ptbl faces;
 	struct nmg_ptbl dangles;
-	int edge_no;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_open_shells_connect( dst=x%x , src=x%x , copy_tbl=x%x)\n" , dst , src , copy_tbl );
@@ -7437,9 +7364,7 @@ CONST struct rt_tol *tol;
 				{
 					struct dangle *dang;
 					struct vertexuse *test_vu;
-					struct edgeuse *check_eu;
 					struct vertex *vpbad1,*vpbada;
-					int i;
 
 					/* found a dangling edge, put it in the list */
 					dang = (struct dangle *)rt_malloc( sizeof( struct dangle ) ,
@@ -7585,20 +7510,16 @@ struct vertex *new_v;
 CONST int approximate;
 CONST struct rt_tol *tol;
 {
-	struct model *m;
 	struct nmg_ptbl faces;
 	int failed=0;
 	int free_edges=0;
 	int face_count;
-	int i;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_in_vert( new_v=x%x at ( %f %f %f) )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
-
-	m = nmg_find_model( &new_v->magic );
 
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
 
