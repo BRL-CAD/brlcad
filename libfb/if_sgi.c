@@ -72,9 +72,9 @@ FBIO sgi_interface =
 		};
 
 
-int _sgi_cmap_flag;
+_LOCAL_ int _sgi_cmap_flag;
 
-ColorMap _sgi_cmap;
+_LOCAL_ ColorMap _sgi_cmap;
 
 _LOCAL_ int
 sgi_dopen( ifp, file, width, height )
@@ -83,14 +83,15 @@ char	*file;
 int	width, height;
 {
 	short x_pos, y_pos;	/* Lower corner of viewport */
-
+	register int i;
 	
-	ginit();
+	gbegin();		/* not ginit() */
 	RGBmode();
 	gconfig();		/* Must be called after RGBmode() */
 
 
-	_sgi_cmap_flag = FALSE;
+	/* Build a linear "colormap" in case he wants to read it */
+	sgi_cmwrite( ifp, COLORMAP_NULL );
 
 	if ( width > ifp->if_max_width) 
 		width = ifp->if_max_width;
@@ -141,59 +142,41 @@ _LOCAL_ int
 sgi_bread( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+register Pixel	*pixelp;
 int	count;
 {
 	short scan_count;
 	short xpos, ypos;
 	RGBvalue rr[1024], gg[1024], bb[1024];
-	Pixel * pixptr;
-	int first_time;
 	register int i;
-	int x_pos, y_pos;
 
-	first_time = 1;
+	xpos = x;
+	ypos = y;
 
-	pixptr = pixelp;
-
-	while( count > 0 )
-	{
-		if (first_time)
-		{
-			first_time = 0;
-			scan_count = ifp->if_width - x;
-			xpos = x;
-			ypos = y;
+	while( count > 0 )  {
+		if ( count >= ifp->if_width )  {
+			scan_count = ifp->if_width;
+		} else	{
+			scan_count = count;
 		}
 
 		cmov2s( xpos, ypos );		/* move to current position */
-
 		readRGB( scan_count, rr, gg, bb ); 
 
-		for( i = 0; i < scan_count; i++, pixptr++)
-		{
-			if ( _sgi_cmap_flag == FALSE )
-			{
-				pixptr->red = rr[i];
-				pixptr->green = gg[i];
-				pixptr->blue = bb[i];
-			}
-			else
-			{
-				pixptr->red = _sgi_cmap.cm_red[ rr[i] ];
-				pixptr->green = _sgi_cmap.cm_green[ gg[i] ];
-				pixptr->blue = _sgi_cmap.cm_blue[ bb[i] ];
+		for( i = 0; i < scan_count; i++, pixelp++)  {
+			if ( _sgi_cmap_flag == FALSE )  {
+				pixelp->red = rr[i];
+				pixelp->green = gg[i];
+				pixelp->blue = bb[i];
+			} else {
+				pixelp->red = _sgi_cmap.cm_red[ rr[i] ];
+				pixelp->green = _sgi_cmap.cm_green[ gg[i] ];
+				pixelp->blue = _sgi_cmap.cm_blue[ bb[i] ];
 			}
 		}
 
-		if ( count >= ifp->if_width )  {
-			scan_count = ifp->if_width;
-			count -= scan_count;
-		} else	{
-			scan_count = 0;
-			count = 0;
-		}
-		x_pos = 0;
+		count -= scan_count;
+		xpos = 0;
 		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
 }
@@ -202,61 +185,42 @@ _LOCAL_ int
 sgi_bwrite( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 short	x, y;
-Pixel	*pixelp;
+register Pixel	*pixelp;
 short	count;
 {
 	short scan_count;
 	short xpos, ypos;
 	RGBvalue rr[1024], gg[1024], bb[1024];
-	Pixel * pixptr;
-	int first_time;
 	register int i;
-	int x_pos, y_pos;
 
-	first_time = 1;
-	
-	pixptr = pixelp;
-
-	while( count > 0 )
-	{
-		if (first_time)
-		{
-			first_time = 0;
-			scan_count = ifp->if_width - x;
-			xpos = x;
-			ypos = y;
+	xpos = x;
+	ypos = y;
+	while( count > 0 )  {
+		if ( count >= ifp->if_width )  {
+			scan_count = ifp->if_width;
+		} else	{
+			scan_count = count;
 		}
 
 		cmov2s( xpos, ypos );		/* move to current position */
 
-		for( i = 0; i < scan_count; i++, pixptr++)
-		{
-			if ( _sgi_cmap_flag == FALSE )
-			{
-				rr[i] = (RGBvalue) pixptr->red;
-				gg[i] = (RGBvalue) pixptr->green;
-				bb[i] = (RGBvalue) pixptr->blue;
-			}
-			else
-			{
+		for( i = 0; i < scan_count; i++, pixelp++)  {
+			if ( _sgi_cmap_flag == FALSE )  {
+				rr[i] = (RGBvalue) pixelp->red;
+				gg[i] = (RGBvalue) pixelp->green;
+				bb[i] = (RGBvalue) pixelp->blue;
+			}  else  {
 				rr[i] = (RGBvalue) 
-				    _sgi_cmap.cm_red[ (int) pixptr->red ];
+				    _sgi_cmap.cm_red[ (int) pixelp->red ];
 				gg[i] = (RGBvalue) 
-				    _sgi_cmap.cm_green[ (int) pixptr->green ];
+				    _sgi_cmap.cm_green[ (int) pixelp->green ];
 				bb[i] = (RGBvalue) 
-				    _sgi_cmap.cm_blue[ (int) pixptr->blue ];
+				    _sgi_cmap.cm_blue[ (int) pixelp->blue ];
 			}
 		}
-
 		writeRGB( scan_count, rr, gg, bb ); 
 
-		if ( count >= ifp->if_width )  {
-			scan_count = ifp->if_width;
-			count -= scan_count;
-		} else	{
-			scan_count = 0;
-			count = 0;
-		}
+		count -= scan_count;
 		xpos = 0;
 		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
@@ -271,39 +235,45 @@ int	left, top, right, bottom;
 }
 
 _LOCAL_ int
-DEVNAME_cmread( ifp, cmp )
+sgi_cmread( ifp, cmp )
 FBIO	*ifp;
-ColorMap	*cmp;
+register ColorMap	*cmp;
 {
 	register int i;
 
+	/* Just parrot back the stored colormap */
 	for( i = 0; i < 255; i++)
 	{
-		cmp->cm_red[i] = _sgi_cmap.cm_red[i];
-		cmp->cm_green[i] = _sgi_cmap.cm_green[i];
-		cmp->cm_blue[i] = _sgi_cmap.cm_blue[i];
+		cmp->cm_red[i] = _sgi_cmap.cm_red[i]<<8;
+		cmp->cm_green[i] = _sgi_cmap.cm_green[i]<<8;
+		cmp->cm_blue[i] = _sgi_cmap.cm_blue[i]<<8;
 	}
+	return(0);
 }
 
 _LOCAL_ int
-DEVNAME_cmwrite( ifp, cmp )
+sgi_cmwrite( ifp, cmp )
 FBIO	*ifp;
-ColorMap	*cmp;
+register ColorMap	*cmp;
 {
 	register int i;
 
-	if ( cmp == ( ColorMap *) 0)
-	{
-		return -1;
+	if ( cmp == COLORMAP_NULL)  {
+		for( i = 0; i < 255; i++)  {
+			_sgi_cmap.cm_red[i] = i;
+			_sgi_cmap.cm_green[i] = i;
+			_sgi_cmap.cm_blue[i] = i;
+		}
+		_sgi_cmap_flag = FALSE;
+		return(0);
 	}
 	
-	_sgi_cmap_flag = TRUE;
-
-	for(i = 0; i < 255; i++)
-	{
-		_sgi_cmap.cm_red[i] = cmp -> cm_red[i];
-		_sgi_cmap.cm_green[i] = cmp-> cm_green[i]; 
-		_sgi_cmap.cm_blue[i] = cmp-> cm_blue[i];
+	for(i = 0; i < 255; i++)  {
+		_sgi_cmap.cm_red[i] = cmp -> cm_red[i]>>8;
+		_sgi_cmap.cm_green[i] = cmp-> cm_green[i]>>8; 
+		_sgi_cmap.cm_blue[i] = cmp-> cm_blue[i]>>8;
 
 	}
+	_sgi_cmap_flag = TRUE;
+	return(0);
 }
