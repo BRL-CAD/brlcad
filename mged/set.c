@@ -125,7 +125,7 @@ struct bu_structparse mged_vparse[] = {
 
 char *
 read_var(clientData, interp, name1, name2, flags)
-ClientData clientData;       /* Contains pointer to structparse entry */
+ClientData clientData;       /* Contains pointer to bu_structparse entry */
 Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
@@ -159,7 +159,7 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
-    struct bu_structparse *sp = (struct structparse *)clientData;
+    struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
     char *newvalue;
 
