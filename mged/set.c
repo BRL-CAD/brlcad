@@ -62,13 +62,11 @@ struct _mged_variables default_mged_variables = {
 /* mv_rc */			1,
 /* mv_autosize */		1,
 /* mv_rateknobs */		0,
-/* mv_slidersflag */		0,
+/* mv_sliders */		0,
 /* mv_faceplate */		1,
 /* mv_orig_gui */		1,
-/* mv_rt_output */		1,
 /* mv_linewidth */		1,
 /* mv_linestyle */		's',
-/* mv_send_key */		0,
 /* mv_hot_key */		0,
 /* mv_context */		1,
 /* mv_dlist */			0,
@@ -100,13 +98,11 @@ struct _mged_variables default_mged_variables = {
 struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(mv_rateknobs),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "slidersflag",	MV_O(mv_slidersflag),      set_scroll_private },
+	{"%d",	1, "sliders",		MV_O(mv_sliders),	set_scroll_private },
 	{"%d",	1, "faceplate",		MV_O(mv_faceplate),	set_dirty_flag },
 	{"%d",	1, "orig_gui",		MV_O(mv_orig_gui),	        set_dirty_flag },
-	{"%d",	1, "rt_output",		MV_O(mv_rt_output),        BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "linewidth",		MV_O(mv_linewidth),	set_dirty_flag },
 	{"%c",	1, "linestyle",		MV_O(mv_linestyle),	set_dirty_flag },
-	{"%d",  1, "send_key",		MV_O(mv_send_key),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "hot_key",		MV_O(mv_hot_key),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "context",		MV_O(mv_context),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",		MV_O(mv_dlist),		set_dlist },
@@ -320,7 +316,7 @@ set_scroll_private()
       curr_dm_list = dmlp;
 
       if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
-	if (mged_variables->mv_slidersflag)	/* zero slider variables */
+	if (mged_variables->mv_sliders)	/* zero slider variables */
 	  mged_svbase();
 
 	set_scroll();		/* set scroll_array for drawing the scroll bars */

@@ -110,13 +110,11 @@ struct _mged_variables {
   int		mv_rc;
   int		mv_autosize;
   int		mv_rateknobs;
-  int		mv_slidersflag;
+  int		mv_sliders;
   int		mv_faceplate;
   int		mv_orig_gui;
-  int		mv_rt_output;
   int		mv_linewidth;
   char		mv_linestyle;
-  int		mv_send_key;
   int		mv_hot_key;
   int		mv_context;
   int		mv_dlist;
