@@ -1130,7 +1130,7 @@ CONST struct rt_tol	*tol;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
-	rt_log("nmg_pr_fu_around_eu_vecs(x%x)\n", eu);
+	rt_log("nmg_pr_fu_around_eu_vecs(eu=x%x) e=x%x\n", eu, eu->e_p);
 
 	/* To go correct way around, start with arg's mate,
 	 * so that arg, then radial, will follow.
@@ -1145,11 +1145,11 @@ CONST struct rt_tol	*tol;
 		NMG_CK_LOOPUSE(lu);
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log(" %8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
-			eu1, eu1->e_p,
-			lu->orientation == OT_SAME ? "S" : "O",
-			fu, fu->f_p,
-			fu->orientation == OT_SAME ? "SAME" : "OPP.",
+		rt_log(" %8.8x, lu=%8.8x=%s, f=%8.8x, fu=%8.8x=%s, s=%8.8x %g deg\n",
+			eu1,
+			lu, lu->orientation == OT_SAME ? "S" : "O",
+			fu->f_p,
+			fu, fu->orientation == OT_SAME ? "SAME" : "OPP.",
 			fu->s_p,
 			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
 
@@ -1160,11 +1160,11 @@ CONST struct rt_tol	*tol;
 		NMG_CK_LOOPUSE(lu);
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
-		rt_log(" %8.8x, e=%8.8x, %s fu=%8.8x, f=%8.8x %s, s=%8.8x %g deg\n",
-			eu1, eu1->e_p,
-			lu->orientation == OT_SAME ? "S" : "O",
-			fu, fu->f_p,
-			fu->orientation == OT_SAME ? "SAME" : "OPP.",
+		rt_log(" %8.8x, lu=%8.8x=%s, f=%8.8x, fu=%8.8x=%s, s=%8.8x %g deg\n",
+			eu1,
+			lu, lu->orientation == OT_SAME ? "S" : "O",
+			fu->f_p,
+			fu, fu->orientation == OT_SAME ? "SAME" : "OPP.",
 			fu->s_p,
 			nmg_measure_fu_angle(eu1, xvec, yvec, zvec) * rt_radtodeg );
 
