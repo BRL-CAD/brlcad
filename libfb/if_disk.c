@@ -162,11 +162,7 @@ int	count;
 		}
 	while( bytes > 0 )
 		{
-#ifdef never
-		todo = (bytes > DISK_DMA_BYTES ? DISK_DMA_BYTES : bytes);
-#else
 		todo = bytes;
-#endif
 		if( read( ifp->if_fd, (char *) pixelp, todo ) != todo )
 			return	-1;
 		bytes -= todo;
@@ -199,13 +195,11 @@ long	count;
 		}
 	while( bytes > 0 )
 		{
-#ifdef never
-		todo = (bytes > DISK_DMA_BYTES ? DISK_DMA_BYTES : bytes);
-#else
 		todo = bytes;
-#endif
-		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )
+		if( write( ifp->if_fd, (char *) pixelp, todo ) != todo )  {
+			fb_log( "disk_buffer_write: write failed\n" );
 			return	-1;
+		}
 		bytes -= todo;
 		pixelp += todo / sizeof(RGBpixel);
 		}
