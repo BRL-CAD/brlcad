@@ -283,10 +283,11 @@ struct rt_tol		*tol;
  *  Apply modeling transformations as well.
  */
 int
-rt_xxx_import( ip, ep, mat )
+rt_xxx_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
 CONST struct rt_external	*ep;
 register CONST mat_t		mat;
+CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 	union record			*rp;
@@ -316,10 +317,11 @@ register CONST mat_t		mat;
  *  The name is added by the caller, in the usual place.
  */
 int
-rt_xxx_export( ep, ip, local2mm )
+rt_xxx_export( ep, ip, local2mm, dbip )
 struct rt_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_xxx_internal	*xxx_ip;
 	union record		*rec;
