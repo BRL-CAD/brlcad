@@ -1015,11 +1015,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if !defined(MANDIR)
-#	ifdef BSD
-#		define	MANDIR	/usr/man/man
-#	else
-#		define	MANDIR	/usr/brlcad/man/man
-#	endif
+#	define	MANDIR	/usr/brlcad/man/man
 #endif
 
 /* Permissions for "installed" files of various types */
