@@ -262,7 +262,7 @@ struct wdb_pipeseg	*headp;
 
 	/* print parameters for each segment: one segment per line */
 
-	for( RT_LIST( sp, wdb_pipeseg, &(headp->l) ) )  {
+	for( RT_LIST_FOR( sp, wdb_pipeseg, &(headp->l) ) )  {
 		switch(sp->ps_type)  {
 		case WDB_PIPESEG_TYPE_END:
 			printf("end %26.20e %26.20e %26.20e %26.20e %26.20e\n",
