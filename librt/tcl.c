@@ -748,6 +748,7 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 
+#if 0
 	dp = db_lookup( wdb->dbip, argv[1], LOOKUP_QUIET );
 	if( dp == NULL ) {
 		Tcl_AppendResult( interp, argv[1], ": not found\n",
@@ -761,6 +762,19 @@ char	      **argv;
 				  argv[1], (char *)NULL );
 		return TCL_ERROR;
 	}
+#else
+	status = wdb_import( wdb, &intern, argv[1], (matp_t)NULL );
+	if( status == -4 )  {
+		Tcl_AppendResult( interp, argv[1], ": not found\n",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
+	if( status < 0 ) {
+		Tcl_AppendResult( interp, "wdb_import failure: ",
+				  argv[1], (char *)NULL );
+		return TCL_ERROR;
+	}
+#endif
 	RT_CK_DB_INTERNAL( &intern );
 
        /* Find out what type of object we are dealing with and report on it. */
