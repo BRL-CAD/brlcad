@@ -34,6 +34,7 @@ struct light_specific {
 	int	lt_invisible;	/* 0 if implicitly modeled or invisible */
 	int	lt_exaim;	/* !0 if explicit aim in lt_target */
 	fastf_t lt_obscure;	/* percentage obscuration of light */
+    int lt_attenuation;
 	/* Internal fields */
 #if RT_MULTISPECTRAL
 	struct bn_tabdata *lt_spectrum;	/* Units?  mw*sr ? */

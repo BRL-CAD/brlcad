@@ -607,9 +607,9 @@ phong_render(register struct application *ap,
 
     for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
 
-	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL )
+	if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL){
 	    continue;
-
+	}
 	to_light = swp->sw_tolight+3*i;
 	intensity = swp->sw_intensity+3*i;
 
@@ -624,17 +624,15 @@ phong_render(register struct application *ap,
 	    if (lp->lt_attenuation) {
 		/* take into account the light distance and intensity */
 		VSUB2(work, swp->sw_hit.hit_point, lp->lt_pos);
-#define light_dist cosine /* re-use variable storage */
-		light_dist = MAGNITUDE(work) / 1000.0;
-		light_dist = lp->lt_intensity / 
-		    (0.0001 + light_dist*light_dist);
 
-		VJOIN1(diffuse, diffuse, light_dist, diff);
-#undef light_dist
-	    } else {
-		VADD2(diffuse, diffuse, diff);
+		value = MAGNITUDE(work) / 1000.0; /* distance to light in m */
+		value = lp->lt_intensity / (0.0001 + value*value);
+
+		VSCALE(diff, diff, value);
 	    }
+	    VADD2(diffuse, diffuse, diff);
 	}
+
 	/* specular term */
 	VADD2(Hvec, to_eye, to_light);
 	VSCALE(Hvec, Hvec, 0.5);
@@ -672,7 +670,6 @@ phong_render(register struct application *ap,
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 	(void)rr_render( ap, pp, swp );
-
 
     return 1;
 }

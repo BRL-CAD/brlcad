@@ -156,7 +156,7 @@ struct bu_structparse light_parse[] = {
 {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 
-{"%d",	1, "t",		LIGHT_O(lt_attenuation),BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "atten",	LIGHT_O(lt_attenuation),BU_STRUCTPARSE_FUNC_NULL },
 
 {"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
 {"%d",  1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
@@ -634,6 +634,10 @@ light_setup(register struct region *rp,
 	lsp->lt_pt_count = 0;
 	memset(lsp->lt_sample_pts, 0, sizeof(lsp->lt_sample_pts));
 	lsp->lt_name = bu_strdup( rp->reg_name );
+
+	if (rdebug & RDEBUG_LIGHT ) {
+	    bu_log("light parameters: \"%S\"\n", matparm);
+	}
 	if (bu_struct_parse( matparm, light_parse, (char *)lsp ) < 0 )  {
 		bu_free( (char *)lsp, "light_specific" );
 		return(-1);

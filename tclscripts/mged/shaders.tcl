@@ -1542,7 +1542,7 @@ set light_data {
 	e	lumens		b	1.0	"Energy of light source.  Energy needed depends on scene size"	"And Real #"	3 0 \
 	c	infinite 	i	0	"Boolean: light is infinite distance away"	"0,1" 		3 2 \
 	c	visible 	v	1	"Boolean: light souce object can be seen"	"0,1" 		3 3 \
-	c	attenuation	t	0	"Boolean: light power decreases over distance.  Initial power specified in lumens."	"0,1" 3 4
+	c	attenuation	atten	0	"Boolean: light power decreases over distance.  Initial power specified in lumens."	"0,1" 3 4
 	i	icon		icon	""	"Shows effect of values for:\n  Shadow Rays\n  infinite\n  visible" "" 0 4 \
     }
 
