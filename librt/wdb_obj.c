@@ -6074,7 +6074,9 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 	
 	/* ident record */
 	bu_vls_init(&title);
-	bu_vls_strcat(&title, "Parts of: ");
+	if (strncmp(wdbp->dbip->dbi_title, "Parts of: ", 10) != 0) {
+	  bu_vls_strcat(&title, "Parts of: ");
+	}
 	bu_vls_strcat(&title, wdbp->dbip->dbi_title);
 
 	if (db_update_ident(keepfp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_local2base) < 0) {
