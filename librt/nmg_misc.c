@@ -345,6 +345,12 @@ long *flags;
 
 	NMG_CK_SHELL( s );
 
+	if( dir < X || dir > Z )
+	{
+		bu_log( "nmg_find_top_face_in_dir: illegal direction: %d\n", dir );
+		return( (struct face *)NULL );
+	}
+
 #if 0
 	if( dir < 0 )
 	{
@@ -1510,12 +1516,15 @@ CONST struct loopuse *lu;
 plane_t pl;
 {
 	struct edgeuse *eu;
-	fastf_t hmin,hmax;
+	double hmin,hmax;
+	double pl_tmp[3];
 
 	NMG_CK_LOOPUSE( lu );
 
 	VSETALL( pl, 0.0 );
 	pl[H] = 0.0;
+
+	VSETALL( pl_tmp, 0.0 );
 
 	/* make sure we have a loop of edges */
 	if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
@@ -1538,12 +1547,13 @@ plane_t pl;
 		eu_next = BU_LIST_PNEXT_CIRC( edgeuse, &eu->l );
 		vg_next = eu_next->vu_p->v_p->vg_p;
 
-		pl[X] += ( vg->coord[Y] - vg_next->coord[Y]) * ( vg->coord[Z] + vg_next->coord[Z] );
-		pl[Y] += ( vg->coord[Z] - vg_next->coord[Z]) * ( vg->coord[X] + vg_next->coord[X] );
-		pl[Z] += ( vg->coord[X] - vg_next->coord[X]) * ( vg->coord[Y] + vg_next->coord[Y] );
+		pl_tmp[X] += ( vg->coord[Y] - vg_next->coord[Y]) * ( vg->coord[Z] + vg_next->coord[Z] );
+		pl_tmp[Y] += ( vg->coord[Z] - vg_next->coord[Z]) * ( vg->coord[X] + vg_next->coord[X] );
+		pl_tmp[Z] += ( vg->coord[X] - vg_next->coord[X]) * ( vg->coord[Y] + vg_next->coord[Y] );
 	}
 
-	VUNITIZE( pl );
+	VUNITIZE( pl_tmp );
+	VMOVE( pl, pl_tmp );
 
 	hmin = MAX_FASTF;
 	hmax = (-hmin);
@@ -2965,7 +2975,7 @@ struct bn_tol *tol;
 	}
 
 	/* finally, glue it all together */
-	nmg_gluefaces( fu_list , fu_counter );
+	nmg_gluefaces( fu_list , fu_counter, tol );
 
 	/* Free up all the memory */
 	rt_free( (char *)index , "index" );
@@ -2999,10 +3009,12 @@ struct bn_tol *tol;
  *  correspondence.
  */
 struct shell *
-nmg_dup_shell( s , trans_tbl )
+nmg_dup_shell( s , trans_tbl, tol )
 struct shell *s;
 long ***trans_tbl;
+struct bn_tol *tol;
 {
+
 	struct model *m;
 	struct shell *new_s;
 	struct faceuse *fu;
@@ -3016,6 +3028,7 @@ long ***trans_tbl;
 		bu_log( "nmg_dup_shell( s = x%x , trans_tbl = x%x )\n" , s , trans_tbl );
 
 	NMG_CK_SHELL( s );
+	BN_CK_TOL( tol );
 
 	m = nmg_find_model( (long *)s );
 
@@ -3097,7 +3110,7 @@ long ***trans_tbl;
 	}
 
 	/* glue new faces */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
 	bu_ptbl_free( &faces );
 
 	/* copy wire loops */
@@ -3206,7 +3219,7 @@ long ***trans_tbl;
 		}
 	}
 #endif
-	
+
 	return( new_s );
 }
 
@@ -3233,33 +3246,19 @@ struct bu_ptbl *stack;
 	return( eu );
 }
 
-#if 1
-/* XXX Don't use this, use nmg_s_radial_harmonize() at the right time. */
-/*	N M G _ R E V E R S E _ F A C E _ A N D _ R A D I A L S
- *
- *	This routine calls "nmg_reverse_face" and also makes the radial
- *	pointers connect faces of like orientation (i.e., OT_SAME to OT_SAME and
- *	OT_OPPOSITE to OT_OPPOSITE).
- */
-
 void
-nmg_reverse_face_and_radials( fu , tol )
+nmg_reverse_radials( fu, tol )
 struct faceuse *fu;
 CONST struct bn_tol *tol;
 {
 	struct loopuse *lu;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		bu_log( "nmg_reverse_face_and_radials( fu = x%x )\n" , fu );
+		bu_log( "nmg_reverse_radials( fu = x%x )\n" , fu );
 
 	NMG_CK_FACEUSE( fu );
 	BN_CK_TOL( tol );
 
-	/* reverse face */
-	nmg_reverse_face( fu );
-#if 0
-	(void)nmg_face_fix_radial_parity( fu , tol );
-#else
 	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 	{
 		struct edgeuse *eu;
@@ -3293,9 +3292,66 @@ CONST struct bn_tol *tol;
 			eumate->radial_p = eu_radial;
 		}
 	}
-#endif
 }
-#endif
+
+/* XXX Don't use this, use nmg_s_radial_harmonize() at the right time. */
+/*	N M G _ R E V E R S E _ F A C E _ A N D _ R A D I A L S
+ *
+ *	This routine calls "nmg_reverse_face" and also makes the radial
+ *	pointers connect faces of like orientation (i.e., OT_SAME to OT_SAME and
+ *	OT_OPPOSITE to OT_OPPOSITE).
+ */
+
+void
+nmg_reverse_face_and_radials( fu , tol )
+struct faceuse *fu;
+CONST struct bn_tol *tol;
+{
+	struct loopuse *lu;
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		bu_log( "nmg_reverse_face_and_radials( fu = x%x )\n" , fu );
+
+	NMG_CK_FACEUSE( fu );
+	BN_CK_TOL( tol );
+
+	/* reverse face */
+	nmg_reverse_face( fu );
+
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		struct edgeuse *eu;
+		struct edgeuse *eu_radial;
+		struct edgeuse *eumate;
+		struct edgeuse *eumate_radial;
+
+		NMG_CK_LOOPUSE( lu );
+
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			eu_radial = eu->radial_p;
+			eumate = eu->eumate_p;
+			eumate_radial = eumate->radial_p;
+
+			/* if no radials continue to next edgeuse in loop */
+			if( eu_radial == eumate )
+				continue;
+
+			/* Note: there is no problem if this loop is radial to another
+			 * loop in the same face, the radials will get switched as we process
+			 * the first loop, then switched back as we process the second
+			 */
+
+			eu_radial->radial_p = eumate;
+			eu->radial_p = eumate_radial;
+			eumate_radial->radial_p = eu;
+			eumate->radial_p = eu_radial;
+		}
+	}
+}
 
 /*	N M G _ S H E L L _ I S _ V O I D
  *
@@ -3423,66 +3479,54 @@ CONST struct bn_tol *tol;
 
 		NMG_CK_EDGEUSE( eu1 );
 
-		/* if there is more than one other radial for this edge
-		 * in this shell, then can't know which to propogate to
-		 */
-
-		eu2 = eu1->radial_p->eumate_p;
-		while( eu2 != eu1 )
-		{
-			if( nmg_find_s_of_eu( eu2 ) == fu_in->s_p )
-				radial_count++;
-
-			eu2 = eu2->radial_p->eumate_p;
-		}
-
-		if( radial_count > 1 )
-			continue;
-
-		/* go to the radial */
 		eu = eu1->radial_p;
 		NMG_CK_EDGEUSE( eu );
 
-		/* make sure we are still on the same shell */
-		while( nmg_find_s_of_eu( eu ) != fu_in->s_p && eu != eu1 && eu != eu1->eumate_p )
-			eu = eu->eumate_p->radial_p;
-
-		if( eu == eu1 || eu == eu1->eumate_p )
-			continue;
-
 		/* find the face that contains this edgeuse */
-		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+		fu = nmg_find_fu_of_eu( eu );
+		if( !fu )
 			continue;
 
-		lu = eu->up.lu_p;
-		NMG_CK_LOOPUSE( lu );
-
-		if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
-			continue;
-
-		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE( fu );
 
 		/* if this face has already been processed, skip it */
 		if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p ) )
 		{
 			if( rt_g.NMG_debug & DEBUG_BASIC )
-				bu_log( "nmg_propagate_normals: reversing fu x%x\n" , fu );
-#if 1
-			/* if orientation is wrong, or if the radial edges are in the same direction
-			 * then reverse the face and fix the radials */
-			if( fu->orientation != OT_SAME ||
-				( eu1->vu_p->v_p == eu->vu_p->v_p &&
-				 eu1->eumate_p->vu_p->v_p == eu->eumate_p->vu_p->v_p ))
+				bu_log( "nmg_propagate_normals: checking fu x%x, eu = x%x, eu1 = x%x\n" , fu, eu, eu1 );
+
+			if( fu->orientation == OT_SAME )
 			{
-				nmg_reverse_face_and_radials( fu , tol );
+				if( eu1->vu_p->v_p == eu->vu_p->v_p &&
+					eu1->eumate_p->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+				{
+					/* edge direction is wrong, need to reverse
+					 * both the face and the radials
+					 */
+					nmg_reverse_face_and_radials( fu , tol );
+				}
+				/* else - this is the way it should be */
 			}
-#else
-			/* Reverse face now, caller will fix radials */
-			if( fu->orientation != OT_SAME )  {
-				nmg_reverse_face( fu );
+			else if( fu->orientation == OT_OPPOSITE )
+			{
+				if( eu1->vu_p->v_p == eu->vu_p->v_p &&
+					eu1->eumate_p->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+				{
+					/* just swap radial pointer around */
+					nmg_reverse_radials( fu , tol );
+				}
+				else
+				{
+					/* just reverse the face */
+					nmg_reverse_face( fu );
+				}
 			}
-#endif
+			else
+			{
+				rt_log( "nmg_propagate_normals: found an unoriented face!!!!\n" );
+				nmg_pr_fu_briefly( fu, "" );
+				rt_bomb( "nmg_propagate_normals: found an unoriented face!!!!\n" );
+			}
 
 			/* make sure we are dealing with an OT_SAME faceuse */
 			if( fu->orientation != OT_SAME )
@@ -3508,219 +3552,545 @@ CONST struct bn_tol *tol;
 	bu_ptbl_free( &stack );
 }
 
-/*	N M G _ F I X _ N O R M A L S
+
+/*		N M G _ D I S C O N N E C T _ S H E L L S
  *
- *	Finds the topmost face in the shell, assumes its normal must have
- *	a positive z-component, and makes it so if not.  Then propagates this
- *	orientation though the radial structures.  Disjoint shells are handled
- *	by flagging checked faces, and calling "nmg_find_top_face" again.
+ *	looks for edges that have uses in more than one shell in region.
+ *	creates new edges so that there is no sharing of edges among shells
+ */
+static void
+nmg_disconnect_shells( r )
+struct nmgregion *r;
+{
+	struct shell *s1;
+	struct bu_ptbl edges;
+	int count=0;
+	int i;
+
+	NMG_CK_REGION( r );
+
+	/* count number of shells in this region */
+	for( BU_LIST_FOR( s1, shell, &r->s_hd ) )
+		count++;
+
+	/* if there is less than two shells, nothing to do */
+	if( count < 2 )
+		return;
+
+	/* get a list of all edges in this region */
+	nmg_edge_tabulate( &edges, &r->l.magic );
+
+	/* look at every edge in region */
+	for( i=0 ; i<BU_PTBL_END( &edges ) ; i++ )
+	{
+		struct edge *e;
+		struct edgeuse *eu;
+		struct edgeuse *eu1;
+		struct shell *needs_disconnect=(struct shell *)NULL;
+
+		e = (struct edge *)BU_PTBL_GET( &edges, i );
+		NMG_CK_EDGE( e );
+
+		/* find shell of a use of this edge */
+		eu = e->eu_p;
+		s1 = nmg_find_s_of_eu( eu );
+
+		/* check if any other use of this edge is from a different shell */
+		eu1 = eu->eumate_p->radial_p;
+		while( eu1 != eu &&  eu1 != eu->eumate_p )
+		{
+			struct shell *s2;
+
+			if( (s2 = nmg_find_s_of_eu( eu1 )) != s1 )
+			{
+				needs_disconnect = s2;
+				break;
+			}
+			eu1 = eu1->eumate_p->radial_p;
+		}
+
+		while( needs_disconnect )
+		{
+			struct edgeuse *eu2;
+			struct edgeuse *start_eu;
+			struct edgeuse *last;
+			int last_orientation;
+
+			/* disconnect first use of this edge in shell 'needs_disconnect' */
+			start_eu = eu1->radial_p;
+			nmg_unglueedge( eu1 );
+			last = eu1;
+			last_orientation = (nmg_find_fu_of_eu( eu1 ))->orientation;
+
+			/* now disconnect all other uses, reconnecting them to eu1 as we go  */
+			while( nmg_find_s_of_eu( start_eu ) == needs_disconnect )
+				start_eu = start_eu->eumate_p->radial_p;
+			eu2 = start_eu;
+			do
+			{
+				struct edgeuse *next_eu;
+				struct faceuse *fu2;
+
+				/* find uses in 'needs_disconnect' shell */
+				next_eu = eu2->eumate_p->radial_p;
+				if( nmg_find_s_of_eu( eu2 ) == needs_disconnect )
+				{
+
+					/* disconnect this use */
+					nmg_unglueedge( eu2 );
+					fu2 = nmg_find_fu_of_eu( eu2 );
+
+					/* reconnect it to 'needs_disconnect' shell */
+					if( fu2->orientation == last_orientation)
+					{
+						nmg_je( last, eu2 );
+						last = eu2->eumate_p;
+						last_orientation = fu2->fumate_p->orientation;
+					}
+					else
+					{
+						nmg_je( last, eu2->eumate_p );
+						last_orientation = fu2->orientation;
+						last = eu2;
+					}
+				}
+				eu2 = next_eu;
+			} while( eu2 != start_eu && eu2->eumate_p != start_eu );
+
+			/* now check remaining uses */
+			eu1 = eu->eumate_p->radial_p;
+			needs_disconnect = (struct shell *)NULL;
+			while( eu1 != eu &&  eu1 != eu->eumate_p )
+			{
+				struct shell *s2;
+
+				if( (s2 = nmg_find_s_of_eu( eu1 )) != s1 )
+				{
+					needs_disconnect = s2;
+					break;
+				}
+				eu1 = eu1->eumate_p->radial_p;
+			}
+		}
+
+	}
+}
+
+/*		N M G _ C O N N E C T _ S A M E _ F U _ O R I E N T S
  *
- *	XXX - known bug: shells that are intended to describe void spaces (i.e., should
- *			 have inward pointing normals), will end up with outward pointing
- *			 normals.
+ *	looks for radially connected faceuses that have disagreeing orientations.
+ *	if such a condiftion is found, the radial pointers are rearranged to make
+ *	the radial faces agree in orientation.
+ */
+void
+nmg_connect_same_fu_orients( s )
+struct shell *s;
+{
+	struct faceuse *fu;
+
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+			{
+				struct faceuse *fu2;
+				struct faceuse *fu3;
+				struct edgeuse *eu2;
+
+				eu2 = eu->radial_p;
+
+				if( eu2 == eu->eumate_p )
+					continue;
+
+				fu2 = nmg_find_fu_of_eu( eu2 );
+				if( fu2->orientation == OT_SAME )
+					continue;
+
+				fu3 = nmg_find_fu_of_eu( eu->eumate_p->radial_p );
+				if( fu3->orientation == OT_OPPOSITE )
+					continue;
+			}
+		}
+	}
+}
+
+/*		N M G _ F I X _ D E C O M P O S E D_ S H E L L _ N O R M A L S
  *
+ *	Routine to set all OT_SAME faceuse normals to outward direction.
+ *	Assumes that there are no other shells sharing edges with this one.
  */
 
 void
-nmg_fix_normals( s , tol )
+nmg_fix_decomposed_shell_normals( s, tol )
 struct shell *s;
 CONST struct bn_tol *tol;
 {
 	struct model *m;
-	struct nmgregion *tmp_r;
-	struct shell *dup_s;
-	struct shell *s1;
-	struct shell *kill_s;
 	struct face *f_top;
 	struct faceuse *fu;
+	vect_t normal;
+	int dir;
+	int missed_faces;
 	long *flags;
-	long **trans_tbl;
-	int missed_faces=1;
-	int shell_count=0;
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-		bu_log( "nmg_fix_normals( s = x%x )\n" , s );
 
 	NMG_CK_SHELL( s );
 	BN_CK_TOL( tol );
 
-
-	/* Make an index table to insure we visit each face once and only once */
 	m = s->r_p->m_p;
 	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_fix_normals: flags" );
 
-	/* loop to catch disjoint shells */
-	while( missed_faces )
-	{
-		vect_t normal;
-		int dir;
-
-		/* find the top face */
-		f_top = nmg_find_top_face( s, &dir , flags );
-		if( f_top == (struct face *)NULL )
-		{
-			bu_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
-			bu_log( "\tWARNING: continuing without fixing normals!!!!\n" );
-			rt_free( (char *)flags, "nmg_fix_normals: flags" );
-			return;
-		}
-		if( *f_top->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
-		{
-			NMG_INDEX_SET( flags, f_top );
-			goto missed;
-		}
-
-		if( NMG_INDEX_TEST( flags, f_top ) )
-			bu_log(" nmg_find_top_face returned a flagged face %x\n" , f_top );
-
-		NMG_CK_FACE( f_top );
-		fu = f_top->fu_p;
-		NMG_CK_FACEUSE( fu );
-		if( fu->orientation != OT_SAME )
-			fu = fu->fumate_p;
-		if( fu->orientation != OT_SAME )
-		{
-			bu_log( "nmg_fix_normals: no OT_SAME use of top face\n" );
-			rt_free( (char *)flags , "nmg_fix_normals: flags" );
-			return;
-		}
-		NMG_GET_FU_NORMAL( normal , fu );
-
-		if( rt_g.NMG_debug & DEBUG_BASIC )
-		{
-			bu_log( "\tnmg_fix_normals: top face is x%x in %d direction, OT_SAME use is x%x\n", f_top, dir, fu );
-			bu_log( "\toutward normal = ( %g %g %g )\n" , V3ARGS( normal ) );
-		}
-
-		/* f_top is the topmost face (in the "dir" direction), so its OT_SAME use should have a
-		 * normal with component in the "dir" direction */
-		if( normal[dir] < 0.0 )
-		{
-			if( rt_g.NMG_debug & DEBUG_BASIC )
-				bu_log( "nmg_fix_normals: reversing fu x%x\n" , fu );
-
-			nmg_reverse_face_and_radials( fu, tol );
-		}
-
-		/* get OT_SAME use of top face */
-		fu = f_top->fu_p;
-		if( fu->orientation != OT_SAME )
-			fu = fu->fumate_p;
-
-		NMG_CK_FACEUSE( fu );
-
-		/* fu is now known to be a correctly oriented faceuse,
-		 * propagate this throughout the shell, face by face, by
-		 * traversing the shell using the radial edge structure */
-
-		nmg_propagate_normals( fu , flags , tol );
-
-		if( rt_g.NMG_debug & DEBUG_BASIC )
-		{
-			vect_t new_norm;
-
-			NMG_GET_FU_NORMAL( new_norm , fu );
-			bu_log( "nmg_fix_normals: After propagation top faceuse normal is ( %g %g %g )\n",
-				V3ARGS( new_norm ) );
-		}
-
 missed:
-
-		/* check if all the faces have been processed */
-		missed_faces = 0;
-		for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-		{
-			NMG_CK_FACEUSE( fu );
-			if( fu->orientation == OT_SAME )
-			{
-				if( !NMG_INDEX_TEST( flags , fu->f_p ) )
-					missed_faces++;
-			}
-		}
-
-		shell_count++;
+	/* find the top face */
+	f_top = nmg_find_top_face( s, &dir , flags );
+	if( f_top == (struct face *)NULL )
+	{
+		bu_log( "nmg_fix_normals: Could not get a top face from nmg_find_top_face()\n" );
+		bu_log( "\tWARNING: continuing without fixing normals!!!!\n" );
+		rt_free( (char *)flags, "nmg_fix_normals: flags" );
+		return;
+	}
+	if( *f_top->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+	{
+		NMG_INDEX_SET( flags, f_top );
+		goto missed;
 	}
 
-	/* free some memory */
-	rt_free( (char *)flags , "nmg_fix_normals: flags" );
+	if( NMG_INDEX_TEST( flags, f_top ) )
+		bu_log(" nmg_find_top_face returned a flagged face %x\n" , f_top );
+
+	NMG_CK_FACE( f_top );
+	fu = f_top->fu_p;
+	NMG_CK_FACEUSE( fu );
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
+	if( fu->orientation != OT_SAME )
+	{
+		bu_log( "nmg_fix_normals: no OT_SAME use of top face\n" );
+		rt_free( (char *)flags , "nmg_fix_normals: flags" );
+		return;
+	}
+	NMG_GET_FU_NORMAL( normal , fu );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+	{
+		bu_log( "\tnmg_fix_normals: top face is x%x in %d direction, OT_SAME use is x%x\n", f_top, dir, fu );
+		bu_log( "\toutward normal = ( %g %g %g )\n" , V3ARGS( normal ) );
+	}
+
+	/* f_top is the topmost face (in the "dir" direction), so its OT_SAME use should have a
+	 * normal with component in the "dir" direction */
+	if( normal[dir] < 0.0 )
+	{
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			bu_log( "nmg_fix_normals: reversing fu x%x\n" , fu );
+
+		nmg_reverse_face_and_radials( fu, tol );
+	}
+
+	/* get OT_SAME use of top face */
+	fu = f_top->fu_p;
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
+
+	NMG_CK_FACEUSE( fu );
+
+	/* fu is now known to be a correctly oriented faceuse,
+	 * propagate this throughout the shell, face by face, by
+	 * traversing the shell using the radial edge structure */
+
+	nmg_propagate_normals( fu , flags , tol );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+	{
+		vect_t new_norm;
+
+		NMG_GET_FU_NORMAL( new_norm , fu );
+		bu_log( "nmg_fix_normals: After propagation top faceuse normal is ( %g %g %g )\n",
+			V3ARGS( new_norm ) );
+	}
+
+	/* check if all the faces have been processed */
+	missed_faces = 0;
+	for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+		{
+			if( !NMG_INDEX_TEST( flags , fu->f_p ) )
+				missed_faces++;
+		}
+	}
+
+	if( missed_faces )
+	{
+		rt_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed????)\n", 
+			missed_faces, s );
+		rt_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed????)\n" );
+	}
+
+	bu_free( (char *)flags, "flags" );
+}
+
+/*		N M G _ M K _ M O D E L _ F R O M _ R E G I O N
+ *
+ *	Creates a new model from an existing nmgregion.
+ *	Will refuse to create new model if the passed nmgregion has
+ *	children with uses in another nmgregion.
+ *
+ *	The reindex flag indicates if the new model should be reindexed.
+ *		If non-zero, nmg_m_reindex() is called.
+ *		If zero, the maxindex field of the new model is filled by finding
+ *			the largest index value in the new model and adding one.
+ *		This is useful if the indices in the region are being used for table look-up.
+ */
+struct model *
+nmg_mk_model_from_region( r, reindex )
+struct nmgregion *r;
+int reindex;
+{
+	struct model *m;
+	struct model *old_m;
+	struct bu_ptbl tbl;
+	int i;
+	int other_uses=0;
+
+	NMG_CK_REGION( r );
+
+
+	/* check if anything in this region has uses in another region */
+	nmg_vertex_tabulate( &tbl, &r->l.magic );
+
+	for( i=0 ; i<BU_PTBL_END( &tbl ) ; i++ )
+	{
+		struct vertex *v;
+		struct vertexuse *vu;
+
+		v = (struct vertex *)BU_PTBL_GET( &tbl, i );
+		NMG_CK_VERTEX( v );
+
+		for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+		{
+			if( (nmg_find_s_of_vu( vu ))->r_p != r )
+			{
+				rt_log( "vertexuse x%x (v=x%x) at (%g %g %g) has use in another region\n",
+					vu, v, V3ARGS( v->vg_p->coord ) );
+				other_uses++;
+			}
+		}
+	}
+	bu_ptbl_free( &tbl );
+
+	nmg_edge_tabulate( &tbl, &r->l.magic );
+	for( i=0 ; i<BU_PTBL_END( &tbl ) ; i++ )
+	{
+		struct edge *e;
+		struct edgeuse *eu;
+		struct edgeuse *eu1;
+
+		e = (struct edge *)BU_PTBL_GET( &tbl, i );
+		NMG_CK_EDGE( e );
+
+		eu = e->eu_p;
+		NMG_CK_EDGEUSE( eu );
+
+		eu1 = eu->radial_p->eumate_p;
+		while( eu1 != eu )
+		{
+			if( (nmg_find_s_of_eu( eu1 ))->r_p != r )
+			{
+				rt_log( "edgeuse x%x (e=x%x) at (%g %g %g)<->(%g %g %g0 has use in another region\n",
+					eu, e, V3ARGS( eu->vu_p->v_p->vg_p->coord ), V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+				other_uses++;
+			}
+			eu1 = eu1->radial_p->eumate_p;
+		}
+	}
+	bu_ptbl_free( &tbl );
+
+	if( other_uses )
+	{
+		return( (struct model *)NULL );
+	}
+
+	m = nmg_mm();
+
+	RT_LIST_DEQUEUE( &r->l );
+
+	RT_LIST_INSERT( &m->r_hd, &r->l );
+
+	r->m_p = m;
+
+	if( reindex )
+		nmg_m_reindex( m , 0 );
+	else
+		m->maxindex = nmg_find_max_index( m ) + 1;
+
+	return( m );
+}
+
+/*		N M G _ F I X _ N O R M A L S
+ *
+ *	Routine to set faceuse normlas to correct direction.
+ *
+ *	Method:
+ *		1. Make a  copy of the shell in another model.
+ *		2. Decompose the copy into constituent shells.
+ *		3. Set all normals of constituent shells outward (no void shells)
+ *		4. Use nmg_classify_s_vs_s() for every pair of shells.
+ *		5. Mark any shell that is inside an odd number of other shells as a void shell.
+ *		6. Compare original faceuses with the results in the copy and adjust normals as needed.
+ *		7. Destroy the copy model.
+ */
+void
+nmg_fix_normals(s_orig, tol)
+struct shell *s_orig;
+CONST struct bn_tol *tol;
+{
+	struct model *tmp_m;
+	struct model *m;
+	struct shell *dup_s;
+	struct shell *s1;
+	struct nmgregion *tmp_r, *tmp_r2;
+	struct bu_ptbl reverse;
+	int shell_count;
+	long **trans_tbl;
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		bu_log( "nmg_fix_normals( s = x%x )\n" , s_orig );
+
+	NMG_CK_SHELL( s_orig );
+	BN_CK_TOL( tol );
+
+	m = s_orig->r_p->m_p;
+
+	/* make a temporary nmgregion for us to work in */
+	tmp_r = nmg_mrsv( m );
+
+	/* get rid of the automatically created shell */
+	(void)nmg_ks( BU_LIST_FIRST( shell, &tmp_r->s_hd ) );
+
+	/* make a copy of the shell of interest */
+	dup_s = nmg_dup_shell( s_orig, &trans_tbl, tol );
+
+	/* move the copy to our work area */
+	nmg_mv_shell_to_region( dup_s, tmp_r );
+
+	/* move duplicate shell to another model */
+	tmp_m = nmg_mk_model_from_region( tmp_r, 0 ); /* don't reindex, We need the old indices */
+	nmg_rebound( tmp_m, tol );
+
+	/* decompose the shell */
+	shell_count = nmg_decompose_shell( dup_s, tol );
 
 	if( shell_count == 1 )
-		return;
-
-	/* this shell is actually more than one piece
-	 * it may be than some pieces are inner voids and should have
-	 * their normals reversed.
-	 */
-
-	/* make a temporary nmgregion to work in */
-	tmp_r = nmg_mrsv( m );
-	kill_s = RT_LIST_FIRST( shell, &tmp_r->s_hd );
-	(void)nmg_ks( kill_s );
-
-	/* duplicate the shell in question */
-	dup_s = nmg_dup_shell( s, &trans_tbl );
-
-	/* move the duplicate shell to the temporary nmgregion */
-	(void)nmg_mv_shell_to_region( dup_s, tmp_r );
-	nmg_region_a( tmp_r, tol );
-
-	if( (shell_count=nmg_decompose_shell( dup_s , tol )) > 1 )
 	{
-		/* This shell has more than one part */
-		int inner_count; /* count of how many shells contain this shell */
-		struct bu_ptbl reverse_list;
-		int i;
+		/* just one shell, so fix it and return */
+		(void)nmg_km( tmp_m );
+		bu_free( (char *)trans_tbl, "translate table" );
+		nmg_connect_same_fu_orients( s_orig );
+		nmg_fix_decomposed_shell_normals( s_orig, tol );
+		return;
+	}
 
-		bu_ptbl_init( &reverse_list, shell_count, "list of shells to be reversed" );
+	/* make sure the shells don't share any edges */
+	nmg_disconnect_shells( tmp_r );
 
-		for( RT_LIST_FOR( s1 , shell , &tmp_r->s_hd ) )
-			nmg_shell_a( s1 , tol );
+	/* Make sure all OT_SAME faceuses are radial to OT_SAME faceuses */
+	for( BU_LIST_FOR( s1, shell, &tmp_r->s_hd ) )
+		nmg_connect_same_fu_orients( s1 );
 
-		for( RT_LIST_FOR( s1 , shell , &tmp_r->s_hd ) )
+	/* Decomposed into more than one shell.
+	 * Need to check for inner void shells.
+	 * Start by making all the shells look like solids (no voids).
+	 */
+	for( BU_LIST_FOR( s1, shell, &tmp_r->s_hd ) )
+		nmg_fix_decomposed_shell_normals( s1, tol );
+
+	/* initialize a list of shells to be reversed */
+	bu_ptbl_init( &reverse, 8, "Ptbl for nmg_fix_normals" );
+
+	/* now check which shells are inside others */
+	for( BU_LIST_FOR( s1, shell, &tmp_r->s_hd ) )
+	{
+		struct shell *s2;
+		int inner_count=0;
+
+		for( BU_LIST_FOR( s2, shell, &tmp_r->s_hd ) )
 		{
-			struct shell *s2;
+			int class;
 
-			inner_count = 0;
-			for( RT_LIST_FOR( s2 , shell , &tmp_r->s_hd ) )
+			if( s1 == s2 )
+				continue;
+
+			class = nmg_classify_s_vs_s( s1, s2, tol );
+			if( class == NMG_CLASS_AinB )
+				inner_count++;
+			else if( class == NMG_CLASS_Unknown )
 			{
-				if( s1 == s2 )
-					continue;
-
-				if( nmg_classify_s_vs_s( s1, s2, tol ) == NMG_CLASS_AinB )
-					inner_count++;
-			}
-
-			if( inner_count % 2 )
-			{
-
-				/* this shell is contained by an odd number of shells
-				 * it must be a void region, so reverse the surface normals
-				 */
-				bu_ptbl_ins( &reverse_list, (long *)s1 );
-
+				rt_log( "nmg_fix_normals: nmg_classify_s_vs_s() failed for shells x%x and x%x\n", s1, s2 );
+				rt_log( "   Continueing anyway (shell is likely to have incorrectly oriented normals)\n" );
 			}
 		}
 
-
-		/* reverse shells on list */
-		for( i=0 ; i<BU_PTBL_END( &reverse_list ); i++ )
+		if( inner_count % 2 )
 		{
-			s1 = (struct shell *)BU_PTBL_GET( &reverse_list, i );
-			for( BU_LIST_FOR( fu, faceuse, &s1->fu_hd ) )
+			/* shell s1 is inside an odd number of shells, so it must be a void */
+			bu_ptbl_ins( &reverse, (long *)s1 );
+		}
+	}
+
+	/* now set faces in orignal shell to match our calculations */
+	nmg_connect_same_fu_orients( s_orig );
+	for( BU_LIST_FOR( s1, shell, &tmp_r->s_hd ) )
+	{
+		struct faceuse *fu;
+		int reversed;
+
+		if( bu_ptbl_locate( &reverse, (long *)s1 ) == (-1 ))
+			reversed = 0;
+		else
+			reversed = 1;
+
+		for( BU_LIST_FOR( fu, faceuse, &s1->fu_hd ) )
+		{
+			struct faceuse *fu_in_s;
+			vect_t normal;
+			vect_t normal_in_s;
+
+			if( fu->orientation != OT_SAME )
+				continue;
+
+			fu_in_s = NMG_INDEX_GETP( faceuse, trans_tbl, fu );
+			if( fu_in_s->orientation != OT_SAME  )
+				fu_in_s = fu_in_s->fumate_p;
+
+			NMG_GET_FU_NORMAL( normal, fu );
+			if( reversed )
+				VREVERSE( normal, normal )
+
+			NMG_GET_FU_NORMAL( normal_in_s, fu_in_s );
+
+			if( VDOT( normal, normal_in_s ) < 0.0 )
 			{
-				struct faceuse *fu_in_s;
-
-				if( fu->orientation != OT_SAME )
-					continue;
-
-				fu_in_s = NMG_INDEX_GETP( faceuse, trans_tbl, fu );
-				NMG_CK_FACEUSE( fu_in_s );
-				nmg_reverse_face_and_radials( fu_in_s , tol );
+				nmg_reverse_face_and_radials( fu_in_s, tol );
 			}
 		}
 	}
-	rt_free( (char *)trans_tbl, "trans_tbl" );
-	(void)nmg_kr( tmp_r );
+
+	bu_ptbl_free( &reverse );
+	bu_free( (char *)trans_tbl, "translation table" );
+	nmg_km( tmp_m );
 }
 
 /*	N M G _ B R E A K _ L O N G _ E D G E S
@@ -4189,8 +4559,6 @@ struct bn_tol *tol;
 
 	BN_CK_TOL( tol );
 
-	(void)nmg_split_loops_into_faces( &s->l.magic , tol );
-
 	/* Make an index table to insure we visit each face once and only once */
 	r = s->r_p;
 	NMG_CK_REGION( r );
@@ -4200,6 +4568,9 @@ struct bn_tol *tol;
 
 	bu_ptbl_init( &stack , 64, " &stack ");
 	bu_ptbl_init( &shared_edges , 64, " &shared_edges ");
+
+	/* Need to be sure that every face has just one OT_SAME loop */
+	(void)nmg_split_loops_into_faces( &s->l.magic , tol );
 
 	/* get first faceuse from shell */
 	fu = BU_LIST_FIRST( faceuse , &s->fu_hd );
@@ -4255,7 +4626,7 @@ struct bn_tol *tol;
 		/* if this faceuse has already been visited, skip it */
 		if( !NMG_INDEX_TEST( flags , fu ) )
 		{
-                        /* push all "winged" edgeuses of "fu" onto the stack */
+                        /* push all edgeuses of "fu" onto the stacks */
                         for( BU_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
                         {
                                 NMG_CK_LOOPUSE( lu );
@@ -4320,7 +4691,7 @@ struct bn_tol *tol;
 			/* Construct a list of shells for this edge.
 			 * shells_at_edge[i] is the number of edgeuses of this
 			 * edge that have been assigned to shell number i.
-			 * shells_at_edge[0] si the number of uses of this edge
+			 * shells_at_edge[0] is the number of uses of this edge
 			 * that have not been asigned to any shell yet
 			 */
 			for( k=0 ; k<=no_of_shells ; k++ )
@@ -4567,9 +4938,13 @@ struct bn_tol *tol;
 	/* Now build the new shells */
 	for( shell_no=2 ; shell_no<=no_of_shells ; shell_no++ )
 	{
+		struct bu_ptbl faces;
+
+		bu_ptbl_init( &faces, 64, "Faces ptbl for nmg_decompose_shell" );
 
 		/* Make a shell */
 		new_s = nmg_msv( r );
+		(void)nmg_kvu( new_s->vu_p );
 
 		/* Move faces marked with this shell_no to this shell */
 		fu = BU_LIST_FIRST( faceuse , &s->fu_hd );
@@ -4588,16 +4963,23 @@ struct bn_tol *tol;
 			}
 
 			if( NMG_INDEX_GET( flags , fu ) == shell_no )
+			{
 				nmg_mv_fu_between_shells( new_s , s , fu );
+				bu_ptbl_ins( &faces, (long *)fu );
+			}
 
 			fu = next_fu;
 		}
-		if( nmg_kvu( new_s->vu_p ) )
-			rt_bomb( "nmg_decompose_shell: killed shell vertex, emptied shell!!\n" );
+
+		nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces ), BU_PTBL_END( &faces ), tol );
+		bu_ptbl_free( &faces );
+		nmg_shell_a( new_s, tol );
 	}
 	rt_free( (char *)flags , "nmg_decompose_shell: flags " );
 	bu_ptbl_free( &stack );
 	bu_ptbl_free( &shared_edges );
+
+	nmg_rebound( m ,tol );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_decompose_shell END (%d shells)\n" , no_of_shells );
@@ -8776,7 +9158,7 @@ CONST struct bn_tol *tol;
 		if( fu->orientation == OT_SAME )
 			bu_ptbl_ins( &faces , (long *)fu );
 	}
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces) , BU_PTBL_END( &faces ), tol );
 	bu_ptbl_free( &faces );
 
 	return( 0 );
@@ -11007,36 +11389,4 @@ struct bn_tol *tol;
 		fu = fu_next;
 	}
 	return( count );
-}
-
-int
-nmg_mv_region_to_model( r, m )
-struct nmgregion *r;
-struct model *m;
-{
-	struct model *m_old;
-	int ret_val;
-
-	NMG_CK_REGION( r );
-	NMG_CK_MODEL( m );
-
-	if( r->m_p == m )
-		return( 0 );
-
-	m_old = r->m_p;
-
-	BU_LIST_DEQUEUE( &r->l );
-
-	if( BU_LIST_IS_EMPTY( &m_old->r_hd ) )
-		ret_val = 1;
-	else
-		ret_val = 0;
-
-	BU_LIST_APPEND( &m->r_hd, &r->l );
-
-	r->m_p = m;
-
-	nmg_m_reindex( m, 0 );
-
-	return( ret_val );
 }
