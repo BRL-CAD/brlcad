@@ -57,7 +57,7 @@ void     X_configureWindowShape();
 static void	label();
 static void	draw();
 static void     x_var_init();
-static int X_set_visual();
+static XVisualInfo *X_set_visual();
 
 /* Display Manager package interface */
 
@@ -299,11 +299,13 @@ char *argv[];
   a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dm_vars)->top);
 
   /* must do this before MakeExist */
-  if(X_set_visual(dmp) == 0){
+  if((((struct x_vars *)dmp->dm_vars)->vip = X_set_visual(dmp)) == NULL){
     Tcl_AppendResult(interp, "X_open: Can't get an appropriate visual.\n", (char *)NULL);
     (void)X_close(dmp);
     return DM_NULL;
   }
+
+  ((struct x_vars *)dmp->dm_vars)->depth = ((struct x_vars *)dmp->dm_vars)->vip->depth;
 
   Tk_MakeWindowExist(((struct x_vars *)dmp->dm_vars)->xtkwin);
   ((struct x_vars *)dmp->dm_vars)->win =
@@ -978,7 +980,7 @@ struct dm *dmp;
   }
 }
 
-static int
+XVisualInfo *
 X_set_visual(dmp)
 struct dm *dmp;
 {
@@ -1027,7 +1029,7 @@ struct dm *dmp;
       if (Tk_SetWindowVisual(((struct x_vars *)dmp->dm_vars)->xtkwin, maxvip->visual,
 			     maxvip->depth, ((struct x_vars *)dmp->dm_vars)->cmap)){
 	((struct x_vars *)dmp->dm_vars)->depth = maxvip->depth;
-	return 1; /* success */
+	return maxvip; /* success */
       } else { 
 	/* retry with lesser depth */
 	baddepth = maxvip->depth;
@@ -1038,7 +1040,7 @@ struct dm *dmp;
     if(desire_trueColor)
       desire_trueColor = 0;
     else
-      return(0); /* failure */
+      return NULL; /* failure */
   }
 }
 

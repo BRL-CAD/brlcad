@@ -178,7 +178,6 @@ char *argv[];
 {
   static int count = 0;
   int a_screen;
-  XVisualInfo *vip;
   GLfloat backgnd[4];
   int i, j, k;
   int make_square = -1;
@@ -361,13 +360,15 @@ char *argv[];
 		     dmp->dm_height);
 
   /* must do this before MakeExist */
-  if((vip=ogl_set_visual(dmp,
-			 ((struct ogl_vars *)dmp->dm_vars)->xtkwin))==NULL){
+  if((((struct ogl_vars *)dmp->dm_vars)->vip=ogl_set_visual(dmp,
+				    ((struct ogl_vars *)dmp->dm_vars)->xtkwin)) == NULL){
     Tcl_AppendResult(interp, "ogl_open: Can't get an appropriate visual.\n",
 		     (char *)NULL);
     (void)ogl_close(dmp);
     return DM_NULL;
   }
+
+  ((struct ogl_vars *)dmp->dm_vars)->depth = ((struct ogl_vars *)dmp->dm_vars)->vip->depth;
 
   Tk_MakeWindowExist(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
 
@@ -381,7 +382,8 @@ char *argv[];
    * faster.
    */
   if ((((struct ogl_vars *)dmp->dm_vars)->glxc =
-       glXCreateContext(((struct ogl_vars *)dmp->dm_vars)->dpy, vip, 0,
+       glXCreateContext(((struct ogl_vars *)dmp->dm_vars)->dpy,
+			((struct ogl_vars *)dmp->dm_vars)->vip, 0,
 			ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
     Tcl_AppendResult(interp, "ogl_open: couldn't create glXContext.\n",
 		     (char *)NULL);

@@ -363,13 +363,12 @@ char *argv[];
   glx_config = GLXgetconfig(((struct glx_vars *)dmp->dm_vars)->dpy,
 			    Tk_ScreenNumber(((struct glx_vars *)dmp->dm_vars)->xtkwin),
 			    glx_config_wish_list);
-  visual_info = extract_visual(dmp, GLX_NORMAL, glx_config);
-  ((struct glx_vars *)dmp->dm_vars)->vis = visual_info->visual;
-  ((struct glx_vars *)dmp->dm_vars)->depth = visual_info->depth;
+  ((struct glx_vars *)dmp->dm_vars)->vip = extract_visual(dmp, GLX_NORMAL, glx_config);
+  ((struct glx_vars *)dmp->dm_vars)->depth = ((struct glx_vars *)dmp->dm_vars)->vip->depth;
   ((struct glx_vars *)dmp->dm_vars)->cmap = extract_value(GLX_NORMAL, GLX_COLORMAP,
 							   glx_config);
   if(Tk_SetWindowVisual(((struct glx_vars *)dmp->dm_vars)->xtkwin,
-			((struct glx_vars *)dmp->dm_vars)->vis,
+			((struct glx_vars *)dmp->dm_vars)->vip->visual,
 			((struct glx_vars *)dmp->dm_vars)->depth,
 			((struct glx_vars *)dmp->dm_vars)->cmap) == 0){
     (void)glx_close(dmp);
