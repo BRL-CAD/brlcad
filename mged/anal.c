@@ -68,6 +68,10 @@ char	*argv[];
 
 	if( argc == 1 ) {
 		/* use the solid being edited */
+		if (illump == SOLID_NULL) {
+			state_err( "Default SOLID Analyze" );
+			return;
+		}
 		ndp = illump->s_path[illump->s_last];
 		if(illump->s_Eflag) {
 			(void)printf("analyze: cannot analyze evaluated region containing %s\n",
