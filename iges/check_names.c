@@ -466,6 +466,12 @@ Check_names()
 			case 404:
 				Get_drawing_name( i );
 				break;
+			case 410:
+				if( dir[i]->form == 0 )
+					Get_name( i , 8 );
+				else if( dir[i]->form == 1 )
+					Get_name( i , 22 );
+				break;
 			case 430:
 				Get_name( i , 1 );
 				break;
@@ -536,6 +542,10 @@ Check_names()
 				case 404:
 					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
 					sprintf( dir[i]->name , "drawing.%d" , i );
+					break;
+				case 410:
+					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );
+					sprintf( dir[i]->name , "view.%d" , i );
 					break;
 				case 430:
 					dir[i]->name = (char *)rt_malloc( NAMELEN+1 , "Check_names: dir->name" );

@@ -22,19 +22,27 @@
 
 #undef W		/* from vmath.h */
 
-static float maxknot,*knots=NULL;
+static fastf_t maxknot,*knots=NULL;
 static int numknots=0;
 
 /* Set the knot values */
+void
 Knot( n , values )
 int n;		/* number of values in knot sequence */
-float values[];	/* knot values */
+fastf_t values[];	/* knot values */
 {
 	int i;
 
-	if( knots != NULL )
-		free( knots );
-	knots = (float *)calloc( n , sizeof( float ) );
+	if( n < 2 )
+	{
+		rt_log( "Knot: ERROR %d knot values\n" , n );
+		rt_bomb( "Knot: cannot have less than 2 knot values\n" );
+	}
+
+	if( numknots )
+		rt_free( (char *)knots , "Knot: knots" );
+
+	knots = (fastf_t *)rt_calloc( n , sizeof( fastf_t ) , "Knot: knots" );
 
 	numknots = n;
 
@@ -46,17 +54,19 @@ float values[];	/* knot values */
 
 Freeknots()
 {
-	free( knots );
+	rt_free( (char *)knots , "Freeknots: knots" );
+	numknots = 0;
 }
 
 
 /* Evaluate the Basis functions */
-float Basis( i , k , t )
-float t;	/* parameter value */
+fastf_t
+Basis( i , k , t )
+fastf_t t;	/* parameter value */
 int i;		/* interval number ( 0 through k )
 int k;		/* degree of basis function */
 {
-	float denom1,denom2,retval=0.0;
+	fastf_t denom1,denom2,retval=0.0;
 
 	if( (i+1) > (numknots-1) )
 	{
@@ -88,22 +98,23 @@ int k;		/* degree of basis function */
 }
 
 /* Evaluate a B-Spline curve */
+void
 B_spline( t , m , k , P , W , pt )
-float t;	/* parameter value */
+fastf_t t;	/* parameter value */
 int k;		/* order */
 int m;		/* upper limit of sum (number of control points - 1) */
-float P[][3];	/* Control Points (x,y,z) */
-float W[];	/* Weights for Control Points */
+point_t P[];	/* Control Points (x,y,z) */
+fastf_t W[];	/* Weights for Control Points */
 point_t pt;	/* Evaluated point on spline */
 {
 
-	double tmp,numer[3],denom=0.0;
+	fastf_t tmp,numer[3],denom=0.0;
 	int i,j;
 
 	for( j=0 ; j<3 ; j++ )
 		numer[j] = 0.0;
 
-	for( i=0 ; i<m ; i++ )
+	for( i=0 ; i<=m ; i++ )
 	{
 		tmp = W[i]*Basis( i , k , t );
 		denom += tmp;

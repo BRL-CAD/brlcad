@@ -138,6 +138,7 @@ struct rt_list *vhead;
 		fastf_t x=0.0,y=0.0,z=0.0;
 		double scale;
 		char one_char[2];
+		point_t loc,tmp;
 		char *str;
 
 		Readint( &str_len , "" );
@@ -149,20 +150,24 @@ struct rt_list *vhead;
 		Readflt( &rot_ang , "" );
 		Readint( &mirror , "" );	/* not currently used */
 		Readint( &internal_rot , "" );
-		Readcnv( &x , "" );
-		Readcnv( &y , "" );
-		Readcnv( &z , "" );		/* not currently used */
+		Readcnv( &tmp[X] , "" );
+		Readcnv( &tmp[Y] , "" );
+		Readcnv( &tmp[Z] , "" );
 		Getstrg( &str , "" );
+
+		/* apply any tranform */
+		MAT4X3PNT( loc , *dir[entno]->rot , tmp );
+
 
 		scale = width/str_len;
 		if( height < scale )
 			scale = height;
 
 		if( scale < height )
-			y += (height - scale)/2.0;
+			loc[Y] += (height - scale)/2.0;
 
 		if( scale*str_len < width )
-			x += (width - (scale*str_len))/2.0;
+			loc[X] += (width - (scale*str_len))/2.0;
 
 		if( internal_rot )	/* vertical text */
 		{
@@ -174,8 +179,8 @@ struct rt_list *vhead;
 			xdel = scale * sin( rot_ang );
 			ydel = scale * cos( rot_ang );
 
-			tmp_y = y;
-			tmp_x = x;
+			tmp_y = loc[Y];
+			tmp_x = loc[X];
 			one_char[1] = '\0';
 
 			for( j=0 ; j<str_len ; j++ )
@@ -189,7 +194,7 @@ struct rt_list *vhead;
 			}
 		}
 		else
-			rt_vlist_2string( vhead , str , (double)x , (double)y , scale,
+			rt_vlist_2string( vhead , str , (double)loc[X] , (double)loc[Y] , scale,
 				(double)(rot_ang*180.0*rt_invpi) );
 
 		free( str );
@@ -242,6 +247,163 @@ struct ptlist *ptlist;
 	{
 		RT_ADD_VLIST( vhead , ptr->pt , RT_VLIST_LINE_DRAW );
 		ptr = ptr->next;
+	}
+}
+
+void
+Leader_to_vlist( entno , vhead )
+int entno;
+struct rt_list *vhead;
+{
+	int entity_type;
+	int npts,i;
+	int nsegs;
+	point_t tmp,tmp2,tmp3,center;
+	vect_t v1,v2,v3;
+	fastf_t a,b,c;
+
+	Readrec( dir[entno]->param );
+	Readint( &entity_type , "" );
+	if( entity_type != 214 )
+	{
+		rt_log( "Expected Leader (Arrow) entity data at P%07d, got type %d\n" , dir[entno]->param , entity_type );
+		return;
+	}
+
+	Readint( &npts , "" );
+	Readcnv( &a , "" );
+	Readcnv( &b , "" );
+	Readcnv( &v1[2] , "" );
+	Readcnv( &v1[0] , "" );
+	Readcnv( &v1[1] , "" );
+	v2[2] = v1[2];
+	Readcnv( &v2[0] , "" );
+	Readcnv( &v2[1] , "" );
+	VMOVE( center , v1 );
+	if( dir[entno]->form == 5 || dir[entno]->form == 6 )
+	{
+		/* need to move v1 towards v2 by distance "a" */
+		VSUB2( v3 , v2 , v1 );
+		VUNITIZE( v3 );
+		VJOIN1( v1 , v1 , a , v3 );
+	}
+	MAT4X3PNT( tmp2 , *dir[entno]->rot , v1 );
+	RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_MOVE );
+	MAT4X3PNT( tmp , *dir[entno]->rot , v2 );
+	RT_ADD_VLIST( vhead , tmp , RT_VLIST_LINE_DRAW );
+
+	for( i=1 ; i<npts ; i++ )
+	{
+		Readcnv( &v3[0] , "" );
+		Readcnv( &v3[1] , "" );
+		MAT4X3PNT( tmp , *dir[entno]->rot , v3 );
+		RT_ADD_VLIST( vhead , tmp , RT_VLIST_LINE_DRAW );
+	}
+	switch( dir[entno]->form )
+	{
+	  default:
+	  case 1:	
+	  case 2:
+	  case 3:
+	  case 11:
+		/* Create unit vector parallel to leader */
+		v3[0] = v2[0] - v1[0];
+		v3[1] = v2[1] - v1[1];
+		v3[2] = 0.0;
+		VUNITIZE( v3 );
+
+		/* Draw one side of arrow head */
+		RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_MOVE );
+		v2[0] = v1[0] + a*v3[0] - b*v3[1];
+		v2[1] = v1[1] + a*v3[1] + b*v3[0];
+		v2[2] = v1[2];
+		MAT4X3PNT( tmp , *dir[entno]->rot , v2 );
+		RT_ADD_VLIST( vhead , tmp , RT_VLIST_LINE_DRAW );
+
+		/* Now draw other side of arrow head */
+		RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_MOVE );
+		v2[0] = v1[0] + a*v3[0] + b*v3[1];
+		v2[1] = v1[1] + a*v3[1] - b*v3[0];
+		MAT4X3PNT( tmp , *dir[entno]->rot , v2 );
+		RT_ADD_VLIST( vhead , tmp , RT_VLIST_LINE_DRAW );
+		break;
+	  case 4:
+		break;
+	  case 5:
+	  case 6:
+		{
+			fastf_t delta,cosdel,sindel,rx,ry;
+
+			delta = rt_pi/10.0;
+			cosdel = cos( delta );
+			sindel = sin( delta );
+			RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_MOVE );
+			VMOVE( tmp , v1 );
+			for( i=0 ; i<20 ; i++ )
+			{
+				rx = tmp[X] - center[X];
+				ry = tmp[Y] - center[Y];
+				tmp[X] = center[X] + rx*cosdel - ry*sindel;
+				tmp[Y] = center[Y] + rx*sindel + ry*cosdel;
+				MAT4X3PNT( tmp2 , *dir[entno]->rot , tmp );
+				RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_DRAW );
+			}
+		}
+		break;
+	  case 7:
+	  case 8:
+		/* Create unit vector parallel to leader */
+		v3[0] = v2[0] - v1[0];
+		v3[1] = v2[1] - v1[1];
+		v3[2] = 0.0;
+		c = sqrt( v3[0]*v3[0] + v3[1]*v3[1] );
+		v3[0] = v3[0]/c;
+		v3[1] = v3[1]/c;
+		/* Create unit vector perp. to leader */
+		v2[0] = v3[1];
+		v2[1] = (-v3[0]);
+		RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_MOVE );
+		tmp[0] = v1[0] + v2[0]*b/2.0;
+		tmp[1] = v1[1] + v2[1]*b/2.0;
+		tmp[2] = v1[2];
+		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
+		RT_ADD_VLIST( vhead , tmp3 , RT_VLIST_LINE_DRAW );
+		tmp[0] += v3[0]*a;
+		tmp[1] += v3[1]*a;
+		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
+		RT_ADD_VLIST( vhead , tmp3 , RT_VLIST_LINE_DRAW );
+		tmp[0] -= v2[0]*b;
+		tmp[1] -= v2[1]*b;
+		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
+		RT_ADD_VLIST( vhead , tmp3 , RT_VLIST_LINE_DRAW );
+		tmp[0] -= v3[0]*a;
+		tmp[1] -= v3[1]*a;
+		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
+		RT_ADD_VLIST( vhead , tmp3 , RT_VLIST_LINE_DRAW );
+		RT_ADD_VLIST( vhead , tmp2 , RT_VLIST_LINE_DRAW );
+		break;
+	  case 9:
+	  case 10:
+		/* Create unit vector parallel to leader */
+		v3[0] = v2[0] - v1[0];
+		v3[1] = v2[1] - v1[1];
+		v3[2] = 0.0;
+		VUNITIZE( v3 );
+
+		/* Create unit vector perp. to leader */
+		v2[0] = v3[1];
+		v2[1] = (-v3[0]);
+
+		tmp[0] = v1[0] + v2[0]*b/2.0 + v3[0]*a/2.0;
+		tmp[1] = v1[1] + v2[1]*b/2.0 + v3[1]*a/2.0;
+		tmp[2] = v1[2];
+		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
+		RT_ADD_VLIST( vhead , tmp3 , RT_VLIST_LINE_MOVE );
+		tmp[0] -= v3[0]*a + v2[0]*b;
+		tmp[1] -= v3[1]*a + v2[1]*b;
+		MAT4X3PNT( tmp3 , *dir[entno]->rot , tmp );
+		RT_ADD_VLIST( vhead , tmp3 , RT_VLIST_LINE_DRAW );
+		break;
 	}
 }
 
@@ -303,33 +465,38 @@ mat_t *xform;
 				continue;
 		}
 
-		if( dir[entno]->type == 212 )   /* this is a "general note" entity (text) */
-			Note_to_vlist( entno , &vhead );
-		else
+		switch( dir[entno]->type )
 		{
-			npts = Getcurve( entno , &pts );
-			if( npts > 1 )
-				Curve_to_vlist( &vhead , pts );
+			case 212:   /* "general note" entity (text) */
+				Note_to_vlist( entno , &vhead );
+				break;
+			case 214:	/* leader (arrow) */
+				Leader_to_vlist( entno , &vhead );
+				break;
+			default:
+				npts = Getcurve( entno , &pts );
+				if( npts > 1 )
+					Curve_to_vlist( &vhead , pts );
 
-			/* free list of points */
-			ptr = pts;
-			while( ptr != NULL )
-			{
-				struct ptlist *tmp_ptr;
+				/* free list of points */
+				ptr = pts;
+				while( ptr != NULL )
+				{
+					struct ptlist *tmp_ptr;
 
-				tmp_ptr = ptr->next;
-				free( ptr );
-				ptr = tmp_ptr;;
-			}
+					tmp_ptr = ptr->next;
+					free( ptr );
+					ptr = tmp_ptr;;
+				}
+				break;
 		}
 
 		/* rotate, scale, clip, etc, ect, etc... */
 		for( RT_LIST_FOR( vp , rt_vlist , &vhead ) )
 		{
-			register int i;
 			register int nused = vp->nused;
 
-			for( i=0 ; i>nused ; i++ )
+			for( i=0 ; i<nused ; i++ )
 			{
 				point_t tmp_pt;
 
@@ -582,8 +749,8 @@ struct nmg_ptbl *view_vis_list;
 			{
 				struct wmember *wm;
 
-				mk_nmg( fdout , dir[i]->name , m );
-				wm = mk_addmember( dir[i]->name , &headp , WMOP_UNION );
+				mk_nmg( fdout , dir[view_entno[i]]->name , m );
+				wm = mk_addmember( dir[view_entno[i]]->name , &headp , WMOP_UNION );
 			}
 		}
 
@@ -593,10 +760,14 @@ struct nmg_ptbl *view_vis_list;
 
 	(void)mk_lfcomb( fdout , dir[entno]->name , &headp , 0 )
 
-	rt_free( (char *)view_entno , "Get_drawing: view_entno" );
-	rt_free( (char *)x , "Get_drawing: x" );
-	rt_free( (char *)y , "Get_drawing: y" );
-	rt_free( (char *)ang , "Get_drawing: ang" );
+/*	if( no_of_views )
+	{
+		rt_free( (char *)view_entno , "Get_drawing: view_entno" );
+		rt_free( (char *)x , "Get_drawing: x" );
+		rt_free( (char *)y , "Get_drawing: y" );
+		rt_free( (char *)ang , "Get_drawing: ang" );
+	}
+*/
 }
 
 void
