@@ -36,7 +36,7 @@
  *  @(#)$Header$ (BRL)
  */
 #if __STDC__
-#	include "shortvect-prag.h"
+#	include "shortvect-pr.h"		/* limit 14 chars */
 #else
 	/* convex? */
 #endif
