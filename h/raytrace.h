@@ -519,6 +519,7 @@ struct soltab {
 
 #define ID_MAXIMUM	24	/* Maximum defined ID_xxx value */
 
+#define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
 
 /*
  *			M A T E R _ I N F O
@@ -895,6 +896,8 @@ struct combined_tree_state {
 #define OP_GUARD	MKOP(9)		/* Unary:  not L, or else! */
 #define OP_XNOP		MKOP(10)	/* Unary:  L, mark region */
 #define OP_NMG_TESS	MKOP(11)	/* Leaf: tr_stp -> nmgregion */
+/* LIBWDB import/export interface to combinations */
+#define OP_DB_LEAF	MKOP(12)	/* Leaf of combination, db fmt */
 
 union tree {
 	long	magic;				/* First word: magic number */
@@ -928,8 +931,14 @@ union tree {
 		genptr_t	td_r;
 #endif
 	} tr_d;
+	struct tree_db_leaf  {
+		long		magic;
+		int		tl_op;		/* leaf, OP_DB_LEAF */
+		matp_t		tl_mat;		/* xform matp, NULL ==> identity */
+		char		*tl_name;	/* Name of this leaf (rt_strdup'ed) */
+	} tr_l;
 };
-/* Things which are in the same place in both structures */
+/* Things which are in the same place in both A & B structures */
 #define tr_op		tr_a.tu_op
 #define tr_regionp	tr_a.tu_regionp
 
@@ -1652,7 +1661,7 @@ RT_EXTERN(void mat_arb_rot, (mat_t mat, CONST point_t pt, CONST vect_t dir, CONS
 RT_EXTERN(int rt_mat_is_equal, (CONST mat_t a, CONST mat_t b, CONST struct rt_tol *tol));
 #define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
 #define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
-
+RT_EXTERN(matp_t mat_dup,	(CONST mat_t in) );
 
 
 /* Routines from qmath.h */
