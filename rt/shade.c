@@ -31,7 +31,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"

@@ -49,7 +49,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "mater.h"
-#include "rtlist.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "shadefuncs.h"

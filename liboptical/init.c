@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"

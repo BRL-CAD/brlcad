@@ -29,7 +29,7 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtlist.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
