@@ -2311,8 +2311,8 @@ struct vertexuse	*vu;
 	if( vg )  {
 		/* Only thing in this shell is a point */
 		NMG_CK_VERTEX_G(vg);
-		ADD_VL( vhead, vg->coord, 0 );
-		ADD_VL( vhead, vg->coord, 1 );
+		ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
+		ADD_VL( vhead, vg->coord, VL_CMD_LINE_DRAW );
 	}
 }
 
@@ -2355,8 +2355,8 @@ struct nmg_list	*eu_hd;
 		NMG_CK_VERTEX_G(vg);
 		NMG_CK_VERTEX_G(vgmate);
 
-		ADD_VL( vhead, vg->coord, 0 );		/* move */
-		ADD_VL( vhead, vgmate->coord, 1 );	/* draw */
+		ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
+		ADD_VL( vhead, vgmate->coord, VL_CMD_LINE_DRAW );
 	}
 }
 
@@ -2413,20 +2413,20 @@ vectp_t		normal;
 			if (isfirst) {
 				if( poly_markers) {
 					/* Insert a "start polygon, normal" marker */
-					ADD_VL( vhead, normal, 2 );
-					ADD_VL( vhead, vg->coord, 3 );	/* move */
+					ADD_VL( vhead, normal, VL_CMD_POLY_START );
+					ADD_VL( vhead, vg->coord, VL_CMD_POLY_MOVE );
 				} else {
 					/* move */
-					ADD_VL( vhead, vg->coord, 0 );
+					ADD_VL( vhead, vg->coord, VL_CMD_LINE_MOVE );
 				}
 				isfirst = 0;
 				first_vg = vg;
 			} else {
 				if( poly_markers) {
-					ADD_VL( vhead, vg->coord, 4 );
+					ADD_VL( vhead, vg->coord, VL_CMD_POLY_DRAW );
 				} else {
 					/* Draw */
-					ADD_VL( vhead, vg->coord, 1 );
+					ADD_VL( vhead, vg->coord, VL_CMD_LINE_DRAW );
 				}
 			}
 		}
@@ -2435,10 +2435,10 @@ vectp_t		normal;
 		if( !isfirst && first_vg )  {
 			if( poly_markers )  {
 				/* Draw, end polygon */
-				ADD_VL( vhead, first_vg->coord, 5 );
+				ADD_VL( vhead, first_vg->coord, VL_CMD_POLY_END );
 			} else {
 				/* Draw */
-				ADD_VL( vhead, first_vg->coord, 1 );
+				ADD_VL( vhead, first_vg->coord, VL_CMD_LINE_DRAW );
 			}
 		}
 		if( poly_markers > 1 && npoints > 2 )  {
@@ -2447,12 +2447,12 @@ vectp_t		normal;
 			vect_t	tocent;
 			f = 1.0 / npoints;
 			VSCALE( centroid, centroid, f );
-			ADD_VL( vhead, centroid, 0 );	/* move */
+			ADD_VL( vhead, centroid, VL_CMD_LINE_MOVE );
 			VSUB2( tocent, first_vg->coord, centroid );
 			f = MAGNITUDE( tocent ) * 0.5;
 			VSCALE( tocent, normal, f );
 			VADD2( centroid, centroid, tocent );
-			ADD_VL( vhead, centroid, 1 );	/* draw */
+			ADD_VL( vhead, centroid, VL_CMD_LINE_DRAW );
 		}
 	}
 }
