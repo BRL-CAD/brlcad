@@ -88,7 +88,6 @@ struct rt_i		*rtip;
 struct resource		res_tab[2];
 
 struct application	ap;
-struct nirt_obj		object_list = {"", 0};
 
 struct script_rec
 {
@@ -230,7 +229,7 @@ char **argv;
     int                    if_overlap();    /* routine if you overlap         */
     int             	   if_hit();        /* routine if you hit target      */
     int             	   if_miss();       /* routine if you miss target     */
-    void                   do_rt_gettree();
+    void                   do_rt_gettrees();
     void                   printusage();
     void		   grid2targ();
     void		   targ2grid();
@@ -351,8 +350,8 @@ char **argv;
 
     if (silent_flag != SILENT_YES)
 	printf("\nPrepping the geometry...");
-    while (++optind < argc)    /* prepare the objects that are to be included */
-	do_rt_gettree( rtip, argv[optind], 1 );
+    ++optind;
+    do_rt_gettrees (rtip, argv + optind, argc - optind);
  
     /* Initialize the table of resource structures */
     res_tab[use_of_air].re_magic =
@@ -443,34 +442,43 @@ void printusage()
     (void) fputs(usage, stderr);
 }
 
-void do_rt_gettree(rip, object_name, save)
-struct rt_i	*rip;
-char 		*object_name;
-int		save;		/* Add object_name to object_list? */
-{
-    static struct nirt_obj	*op = &object_list;
+void do_rt_gettrees (rtip, object_name, nm_objects)
 
-    if (rt_gettree( rip, object_name ) == -1)
+struct rt_i	*rtip;
+char		*object_name[];
+int		nm_objects;
+
+{
+    static char	**prev_names = 0;
+    static int	prev_nm = 0;
+
+    if (object_name == NULL)
     {
-	fflush(stdout);
-	fprintf (stderr, "rt_gettree() could not preprocess object '%s'\n", 
-	    object_name);
-	exit(1);
-    }
-    if (save)
-    {
-	if (op == NULL)
+	if ((object_name = prev_names) == 0)
 	{
-	    fputs("Ran out of memory\n", stderr);
+	    bu_log("%s:%d: This shouldn't happen\n", __FILE__, __LINE__);
 	    exit (1);
 	}
-	op -> obj_name = object_name;
-	op -> obj_next = (struct nirt_obj *)
-				rt_malloc(sizeof(struct nirt_obj), "obj_next");
-	op = op -> obj_next;
-	if (op != NULL)
-	    op -> obj_next = NULL;
+	nm_objects = prev_nm;
+    }
+    if (prev_names == 0)
+    {
+	prev_names = object_name;
+	prev_nm = nm_objects;
+    }
+    if (rt_gettrees (rtip, nm_objects, (const char **) object_name, 1))
+    {
+	fflush(stdout);
+	fprintf(stderr, "rt_gettrees() failed\n");
+	exit (1);
     }
     if (silent_flag != SILENT_YES)
-	printf("\nObject '%s' processed\n", object_name);
+    {
+	int	i;
+
+	printf("\n%s", (nm_objects == 1) ? "Object" : "Objects");
+	for (i = 0; i < nm_objects; ++i)
+	    printf(" '%s'", object_name[i]);
+	printf(" processed\n");
+    }
 }

@@ -36,7 +36,6 @@ extern int			silent_flag;
 extern struct application	ap;
 extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
 extern struct resource		res_tab[];	/* For use w/ and w/o air */
-extern struct nirt_obj		object_list;
 extern com_table		ComTab[];
 extern outval			ValTab[];
 extern int			nirt_debug;
@@ -330,7 +329,6 @@ com_table		*ctp;
     char		*rp = response;
     char		db_title[TITLE_LEN+1];	/* title from MGED database */
     struct rt_i		*rtip;
-    struct nirt_obj	*op;
 
     extern char	*db_name;		/* Name of MGED database file */
 
@@ -373,7 +371,7 @@ com_table		*ctp;
 	    bu_log("useair remains %d\n", ap.a_rt_i -> useair);
 	    return;
 	}
-	bu_log("Building the directory...");fflush(stderr);
+	bu_log("Building the directory...");
 	if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL)
 	{
 	    bu_log("Could not load file %s\n", db_name);
@@ -383,9 +381,8 @@ com_table		*ctp;
 	rti_tab[new_use] = rtip;
 	rtip -> useair = new_use;
 
-	bu_log("Prepping the geometry...");fflush(stderr);
-	for (op = &object_list; op -> obj_next != NULL; op = op -> obj_next)
-	    do_rt_gettree( rtip, op -> obj_name, 0);
+	bu_log("Prepping the geometry...");
+	do_rt_gettrees(rtip, NULL, 0);
     }
     ap.a_rt_i = rti_tab[new_use];
     ap.a_resource = &res_tab[new_use];

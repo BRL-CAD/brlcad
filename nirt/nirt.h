@@ -67,12 +67,6 @@ struct VarTable
 	vect_t  grid;
 };
 
-struct nirt_obj
-{
-    char		*obj_name;
-    struct nirt_obj	*obj_next;
-};
-
 extern void		az_el();
 extern void		dir_vect();
 extern void	        grid_coor();
