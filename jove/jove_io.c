@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ *
+ * Revision 1.3  84/03/20  22:29:18  dpk
+ * Improved file handling, fixed "Free line in list" loop
+ * 
  * Revision 1.2  83/12/16  00:08:33  dpk
  * Added distinctive RCS header
  * 
@@ -20,8 +24,13 @@ static char RCSid[] = "@(#)$Header$";
 #include "jove.h"
 #include "termcap.h"
 
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+extern	int errno;
+extern	int Dfltmode;
+extern	char *TempFile;
 
 int	BackupFiles = SAVE_NO;
 
@@ -95,7 +104,7 @@ LINE	*line1,
 	register int	nib;
 
 	count = nlines = 0;
-	nib = 512;
+	nib = LBSIZE;
 	fp = iobuff;
 	lsave();	/* Need this! */
 
@@ -108,7 +117,7 @@ LINE	*line1,
 				n = fp - iobuff;
 				if (write(io, iobuff, n) != n)
 					goto werror;
-				nib = 511;
+				nib = LBSIZE-1;
 				count += n;
 				fp = iobuff;
 			}
@@ -171,7 +180,7 @@ FileMess(file, lines, chars)
 char	*file;
 long	chars;
 {
-	s_mess("\"%s\" %d lines %D characters", file, lines, chars);
+	s_mess("\"%s\" %d lines %ld characters", file, lines, chars);
 }
 
 dofread(file)
@@ -275,11 +284,11 @@ DoWriteReg(app)
 	if (app) {
 		io = open(fname, 1);	/* Writing */
 		if (io == -1)
-			io = creat(fname, 0644);
+			io = creat(fname, Dfltmode);
 		else
 			dolseek(io, 0L, 2);
 	} else 
-		io = creat(fname, 0644);
+		io = creat(fname, Dfltmode);
 	if (io == -1)
 		complain(IOerr("create", fname));
 
@@ -308,6 +317,8 @@ WriteFile()
 	SetUnmodified(curbuf);
 }
 
+char	*SaveName();
+
 file_write(fname, app)
 char	*fname;
 {
@@ -321,24 +332,28 @@ char	*fname;
 		complain("I need a file name");
 
 	io = -1;
-	inode.st_mode = DFLTMODE;
+	inode.st_mode = Dfltmode;
 	inode.st_nlink = 1;
+	inode.st_uid = getuid();
+	inode.st_gid = getgid();
 	exists = !stat(fname, &inode);
 	linked = (inode.st_nlink > 1);
 
-	if (access (fname, 02) != 0) {
+	if (IsReadOnly(curbuf) && exists) {
 		register char *yorn;
 
 		yorn = ask ("Y", "%s is read-only, recreate? (yes) ", fname);
 		if (*yorn == 'N' || *yorn == 'n')
 			complain ("File save aborted.");
+		if (unlink(fname) != 0)
+			complain ("Cannot unlink %s", fname);
 	}
 
 	if (app) {
 		/*  Appending to a file  */
 		io = open(fname, 1);	/* Writing */
 		if (io == -1)
-			io = creat(fname, DFLTMODE);
+			io = creat(fname, Dfltmode);
 		else
 			dolseek(io, 0L, 2);
 	} else {
@@ -348,7 +363,7 @@ char	*fname;
 			yorn = ask("Y", "%s has links, overwrite? (yes) ", fname);
 			overwrite = (*yorn == 'Y' || *yorn == 'y');
 		}
-		if (BackupFiles == SAVE_ASK) {
+		if (exists && BackupFiles == SAVE_ASK) {
 			yorn = ask("N", "Create backup file %s~ (no) ", fname);
 			saveit = (*yorn == 'Y' || *yorn == 'y');
 		}
@@ -358,26 +373,30 @@ char	*fname;
 		if (exists && (saveit || BackupFiles == SAVE_ALWAYS)) {
 			register char *savefile;
 
-			savefile = malloc(strlen(fname) + 2);
-		 	sprintf (savefile, "%s~", fname);
+			savefile = SaveName(fname);
 		 	unlink (savefile);
 		   	if (linked && overwrite) {
 		   		/*  We need to "cp" the file  */
 		   		s_mess("\"%s\" [No backup with overwrite]", fname);
 		   	} else {
 			 	if (link (fname, savefile))
-			   		s_mess("\"%s\" [No backup made]", fname);
+			   		s_mess("\"%s\" [No backup possible]", fname);
 			 	else
 		 			unlink (fname);
 		 	}
 			free (savefile);
 		}
-		if (!overwrite)
-			unlink(fname);
 		io = creat(fname, inode.st_mode&07777);
+
+		/*  This will fail on all but USG systems, ignore it  */
+		chown (fname, inode.st_uid, inode.st_gid);
 	}
 	if (io == -1)
 		complain(IOerr("create", fname));
+
+	ClrReadOnly(curbuf);
+	if (access(fname, 02))
+		SetReadOnly(curbuf);
 
 	UpdateMesg();		/* Update mesg line */
 	if (EndWNewline) {	/* Make sure file ends with a newline */
@@ -392,6 +411,29 @@ char	*fname;
 	putreg(curbuf->b_zero, 0, curbuf->b_dol, length(curbuf->b_dol));
 	FileMess(fname, nlines, count);
 	IOclose();
+}
+
+char *
+SaveName (fname)
+char *fname;
+{
+	register int	len = strlen(fname);
+	register char *cp;
+
+#ifndef V4_2BSD
+	if (cp = rindex(fname, '/'))
+		cp++;
+	else
+		cp = fname;
+
+	if (strlen(cp) > 13)
+		complain("Cannot make backup name; \"%s\" too long", cp);
+#endif V4_2BSD
+	cp = emalloc (len+2);
+	strncpy (cp, fname, len);
+	cp[len] = '~';
+	cp[len+1] = 0;
+	return (cp);
 }
 
 initlist(bp)
@@ -465,12 +507,13 @@ int	DOLsave = 0;	/* Do Lsave flag.  If lines aren't being save
 
 tmpinit()
 {
-	tfname = mktemp(TMPFILE);
+	tfname = mktemp(TempFile);
 	tline = 2;
 	iblock1 = oblock = iblock2 = -1;
 	hitin2 = ichng1 = ichng2 = 0;
 	ignore(close(creat(tfname, 0600)));
 	tmpfd = open(tfname, 2);
+	ignore(unlink(tfname));
 	if (tmpfd == -1) {
 		putstr(sprint("%s?\n", tfname));
 		finish(0);
@@ -556,7 +599,7 @@ disk_line	atl;
 	off = (atl << SHFT) & LBTMSK;
 	if (bno >= NMBLKS)
 		error("Tmp file too large.  Get help");
-	nleft = BUFSIZ - off;
+	nleft = BSIZ - off;
 	if (bno == iblock1) {
 		ichng1 |= iof;
 		return ibuff1 + off;
@@ -593,8 +636,8 @@ disk_line	atl;
 
 #ifdef	VMUNIX
 #define	INCORB	64
-char	incorb[INCORB+1][BUFSIZ];
-#define	pagrnd(a)	((char *)(((int)a)&~(BUFSIZ-1)))
+char	incorb[INCORB+1][BSIZ];
+#define	pagrnd(a)	((char *)(((int)a)&~(BSIZ-1)))
 #endif
 
 blkio(b, buf, iofcn)
@@ -606,38 +649,27 @@ int	(*iofcn)();
 #ifdef VMUNIX
 	if (b < INCORB) {
 		if (iofcn == read) {
-			bcopy(pagrnd(incorb[b+1]), buf, BUFSIZ);
+			bcopy(pagrnd(incorb[b+1]), buf, BSIZ);
 			return;
 		}
-		bcopy(buf, pagrnd(incorb[b+1]), BUFSIZ);
+		bcopy(buf, pagrnd(incorb[b+1]), BSIZ);
 		return;
 	}
 #endif
-	ignore(lseek(tmpfd, (long) (unsigned) b * BUFSIZ, 0));
-	if ((*iofcn)(tmpfd, buf, BUFSIZ) != BUFSIZ)
+	ignore(lseek(tmpfd, (long) (unsigned) b * (long)BSIZ, 0));
+	if ((*iofcn)(tmpfd, buf, BSIZ) != BSIZ)
 		error("IO error");
 }
 
-#ifdef VMUNIX
-
+#ifndef VMUNIX
 /* block copy from from to to, count bytes */
-
 bcopy(from, to, count)
-#ifdef vax
-	char *from, *to;
-	int count;
-{
-
-	asm("	movc3	12(ap),*4(ap),*8(ap)");
-}
-#else
 	register char *from, *to;
 	register int count;
 {
 	while ((--count) >= 0)
 		*to++ = *from++;
 }
-#endif
 #endif VMUNIX
 
 /*

@@ -25,15 +25,8 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <signal.h>
 
-char	*cerrfmt = "\\([^:]*\\):\\([0-9][0-9]*\\):";
-	/* C error scanf format string for errors of the form
-	 * filename:linenum: error message
-	 */
-
-char	*lerrfmt = "\"\\([^:]*\\)\", line \\([0-9][0-9]*\\):";
-	/* Lint error for errors of the form
-	 * "filename", line linenum: error message.
-	 */
+extern	char *cerrfmt;
+extern	char *lerrfmt;
 
 struct error {
 	BUFFER		*er_buf;	/* Buffer error is in */
@@ -51,6 +44,7 @@ int	MakeAll = 0,		/* Not make -k */
 	WtOnMk = 1;		/* Write the modified files when we make */
 
 extern char	*StdShell;
+extern char	*ProcTmp;
 
 /* Add an error to the end of the list of errors.  This is used for
  * parse-C/LINT-errors and for the spell-buffer command
@@ -169,25 +163,36 @@ WINDOW	*err,
 	*buf;
 {
 	BUFLOC	*bp;
-	char	string[100],
-		ans;
+	char	string[100], ans;
 	struct error	*newerr = 0;
 
 	if (errorlist)
 		ErrFree();
 	thisbuf = err->w_bufp;
-	SetWind(err);
 	for (;;) {
+		SetWind(err);
 		if (linebuf[0] == 0)
 			goto nextword;
 		s_mess("Is \"%s\" misspelled (Y or N)? ", linebuf);
 		ignore(sprintf(string, "\\b%s\\b", linebuf));
 		SetWind(buf);		/* Paper buffer */
 		Bof();
-		do
-			ans = getch();
-		while ((ans = Upper(ans)) != 'Y' && ans != 'N');
-
+		switch (ans = Upper(getch())) {
+		case ' ':
+		case '\n':
+		case '\r':
+			ans = 'N';
+		case 'Y':
+		case 'y':
+		case 'N':
+		case 'n':
+			break;
+		case '\07':
+			return;
+		default:
+			rbell();
+			continue;
+		}
 		if (ans == 'Y') {	/* Not correct */
 			while (bp = dosearch(string, 1, 1)) {
 				SetDot(bp);
@@ -408,10 +413,6 @@ char	*bufname,
 #else
 		ignorf(signal(SIGINT, SIG_DFL));
 #endif
-/*********
-**		ignore(close(0));
-**		ignore(open("/dev/null", 0));
-**********/
 		ignore(close(1));
 		ignore(close(2));
 		ignore(dup(p[1]));
@@ -419,15 +420,8 @@ char	*bufname,
 		PipeClose(p);
 		execvp(func, (char **) &args);
 		ignore(write(1, "Execl failed", 12));
-		_exit(1);
+		exit(1);
 	} else {
-#ifndef NOINTR
-#ifdef SIGTSTP
-		int	(*oldquit)() = signal(SIGINT, SIG_IGN);
-#else
-		int	(*oldquit)() = signal(SIGINT, SIG_IGN);
-#endif
-#endif NOINTR
 		int	status;
 		char	*mess;
 
@@ -440,7 +434,7 @@ char	*bufname,
 #ifdef VMUNIX			/* No easy way to find out */
 				mess = "Chugging along...";
 #else
-#ifdef MENLO_JCL
+#ifdef JOBCONTROL
 				{
 					short	avg[3];
 					double	theavg;
@@ -456,7 +450,7 @@ char	*bufname,
 				}
 #else
 				mess = "Chugging along...";
-#endif MENLO_JCL
+#endif JOBCONTROL
 #endif VMUNIX
 				message(mess);
 				redisplay();
@@ -464,13 +458,6 @@ char	*bufname,
 		}
 		UpdateMesg();
 		IOclose();
-#ifndef NOINTR
-#ifdef SIGTSTP
-		ignorf(signal(SIGINT, oldquit));
-#else
-		ignorf(signal(SIGINT, oldquit));
-#endif
-#endif NOINTR
 		while (wait(&status) != pid)
 			;
 		ttyset(1);
@@ -509,7 +496,7 @@ LINE	*line1,
 	*line2;
 char	*func;
 {
-	char	*fname = mktemp(TMPFILE);
+	char	*fname = mktemp(ProcTmp);
 	char	com[100];
 
 	if ((io = creat(fname, 0644)) == -1)

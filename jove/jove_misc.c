@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:09:03  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -68,11 +71,7 @@ char	*str;
 
 	siged = 0;
 	StrToShow = str;
-#ifdef MENLO_JCL
 	signal(SIGALRM, slowpoke);
-#else
-	signal(SIGALRM, slowpoke);
-#endif
 	ignore(alarm((unsigned) sec));
 	c = (*Getchar)();	/* The read will be restarted
 				   with the new signal mechanism */
@@ -102,6 +101,7 @@ EscPrefix()
 	}
 
 	if (c == '-' || (c >= '0' && c <= '9')) {
+		s_mess("M-%c", c);
 		sign = c == '-' ? -1 : 1;
 		if (sign == 1)
 			i = c - '0';
@@ -118,6 +118,7 @@ EscPrefix()
 				this_cmd = ARG_CMD;
 				return;
 			}
+			s_mess("M-%d", i);
 		}
 	}
 
@@ -137,7 +138,7 @@ CopyRegion()
 	LINE	*nl;
 	MARK	*mp;
 	int	status,
-		mod = curbuf->b_modified;
+		mod = IsModified(curbuf);
 
 	mp = CurMark();
 
@@ -161,7 +162,10 @@ CopyRegion()
 	else
 		ignore(DoYank(curline, curchar, mp->m_line, mp->m_char,
 				nl, 0, (BUFFER *) 0));
-	curbuf->b_modified = mod;
+	if (mod)		
+		curbuf->b_status |= B_MODIFIED;
+	else
+		curbuf->b_status &= ~B_MODIFIED;
 }
 
 DelNWord()
@@ -210,6 +214,8 @@ GoLine()
 	SetLine(next_line(curbuf->b_zero, exp - 1));
 }
 
+int	RMargin = RMARGIN;
+
 VtKeys()
 {
 	int	c = getch();
@@ -235,8 +241,6 @@ VtKeys()
 		complain("Unknown command ESC-[-%c", c);
 	}
 }
-
-int	RMargin = RMARGIN;
 
 Justify()
 {
@@ -446,8 +450,7 @@ Leave()
 
 	if (RecDepth == 0)
 		for (bp = world; bp; bp = bp->b_next)
-			if ((bp->b_zero) && IsModified(bp) &&
-					(bp->b_type != SCRATCHBUF)) {
+			if (bp->b_zero && IsModified(bp) && !IsScratch(bp)) {
 				confirm("Modified buffers exist.  Leave anyway? ");
 				break;
 			}
@@ -522,24 +525,24 @@ Yank()
 
 static	NumArg = 1;
 
-GetFour(Input)
-int	(*Input)();
+GetFour(InputFunc)
+int	(*InputFunc)();
 {
 	register int	c;
 
 	do {
 		NumArg *= 4;
-	} while ((c = (*Input)()) == CTL(U));
+	} while ((c = (*InputFunc)()) == CTL(U));
 	return c;
 }
 
-GetArg(Input)
-int	(*Input)();
+GetArg(InputFunc)
+int	(*InputFunc)();
 {
 	register int	c,
 			i = 0;
 
-	if (!isdigit(c = (*Input)()))
+	if (!isdigit(c = (*InputFunc)()))
 		return (c | 0200);
 
 	do
@@ -576,8 +579,8 @@ char	*string, *cp;
 char *
 RunEdit(c, begin, cp, def, HowToRead)
 register int	c;
-register char	*begin,
-		*cp;
+register char	*begin;
+register char	*cp;
 char	*def;
 int	(*HowToRead)();
 {
@@ -637,10 +640,10 @@ delchar:
 	case META(\177):	/* Delete previous word */
 	case CTL(W):
 	    {
-		char	*tcp = backup(begin, cp);
+		char	*bp = backup(begin, cp);
 
-		strcpy(tcp, cp);
-		cp = tcp;
+		strcpy(bp, cp);
+		cp = bp;
 	    }
 		break;
 
@@ -702,9 +705,9 @@ extern int	Interactive;
 /* VARARGS2 */
 
 char *
-ask(def, fmt, args)
-char	*def,
-	*fmt;
+ask(def, fmt, aa, bb, cc)
+char	*def, *fmt;
+char	*aa, *bb, *cc;
 {
 	static char	string[ASKSIZE];
 	char	*cp,
@@ -713,7 +716,7 @@ char	*def,
 	extern int	(*Getchar)();
 	int	(*HowToRead)() = Interactive ? NoMacGetc : Getchar;
 
-	format(string, fmt, &args);
+	sprintf(string, fmt, aa, bb, cc);
 	message(string);
 	Asking = strlen(string);	/* Entirely for redisplay */
 	begin = string + Asking;
@@ -786,8 +789,7 @@ WtModBuf()
 		name[100];
 
 	for (bp = world; bp; bp = bp->b_next) {
-		if (bp->b_zero == 0 || !IsModified(bp) ||
-					bp->b_type == SCRATCHBUF)
+		if (bp->b_zero == 0 || !IsModified(bp) || IsScratch(bp))
 			continue;
 		SetBuf(bp);	/* Make this current buffer */
 		if (Crashing) {
@@ -1179,6 +1181,24 @@ BUFLOC *buf;
 {
 	buf->p_line = curline;
 	buf->p_char = curchar;
+}
+
+CapChar()
+{
+	register int	num = exp;
+
+	exp = 1;
+	while (num--) {
+		upper(&linebuf[curchar]);	/* Cap this word. */
+		SetModified(curbuf);	/* Or else lsave won't do anything */
+		makedirty(curline);
+		if (eolp()) {			/* Go to the next line */
+			if (curline->l_next == 0)
+				break;
+			SetLine(curline->l_next);
+		} else
+			curchar++;
+	}
 }
 
 CapWord()

@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.4  84/02/06  20:43:17  dpk
+ * Fixed handling of clear to end of line (ADM3A bug).  Thanks
+ * go to Terry Slatterly for finding this bug and providing the fix.
+ * 
  * Revision 1.3  84/02/06  20:41:23  dpk
  * Made screen handling more conservative (i.e. fixed)
  * 
@@ -38,6 +42,7 @@ struct scrimage
 	*oimage;	/* What line are after redisplay */
 
 struct screenline	*Screen,	/* The screen, a bunch of screenline */
+			*Savelines,	/* Another bunch (LI of them) */
 			*Curline;	/* Current line */
 char	*cursor,			/* Offset into current line */
 	*cursend;			/* Pointer to last char in line */
@@ -167,7 +172,7 @@ register char	*line;
 				soutputc(' ')
 		} else if (c < 040 || c == '\177') {
 			soutputc('^')
-			soutputc(c == '\177' ? '?' : c + '@')
+			soutputc(c == '\177' ? '?' : (c + '@'))
 			col += 2;
 		} else {
 			soutputc(c)
@@ -201,7 +206,7 @@ BufSwrite(linenum)
 
 	if (lp == curline) {
 		bp = linebuf;
-		nl = BUFSIZ;
+		nl = BSIZ;
 	} else {
 		bp = getblock(tl, READ);
 		nl = nleft;
@@ -227,7 +232,7 @@ BufSwrite(linenum)
 
 		} else if (c < 040 || c == '\177') {
 			OkayOut('^');
-			OkayOut(c == '\177' ? '?' : c + '@');
+			OkayOut(c == '\177' ? '?' : (c + '@'));
 		} else
 			OkayOut(c);
 
@@ -265,7 +270,7 @@ register int	nline,
 extern int	diffnum;
 #define PrintHo()	putpad(HO, 1), CapLine = CapCol = 0
 
-/* Insert `num' lines a top, but leave all the lines BELOW `bottom'
+/* Insert `num' lines at `top', but leave all the lines BELOW `bottom'
  * alone (at least they won't look any different when we are done).
  * This changes the screen array AND does the physical changes.
  */
@@ -273,26 +278,23 @@ extern int	diffnum;
 v_ins_line(num, top, bottom)
 {
 	register int	i;
-	struct screenline	savelines[MAXNLINES];
 
 	/* Save the screen pointers. */
 
 	for(i = 0; i < num && top + i <= bottom; i++)
-		savelines[i] = Screen[bottom - i];
+		Savelines[i] = Screen[bottom - i];
 
 	/* Num number of bottom lines will be lost.
 	 * Copy everything down num number of times.
 	 */
 
-	for (i = bottom; i > top && i-num >= 0; i--) {
+	for (i = bottom; i > top && i-num >= 0; i--)
 		Screen[i] = Screen[i - num];
-		Screen[i] = Screen[i - num];
-	}
 
 	/* Restore the saved ones, making them blank. */
 
 	for (i = 0; i < num; i++) {
-		Screen[top + i] = savelines[i];
+		Screen[top + i] = Savelines[i];
 		clrline(Screen[top + i].s_line, Screen[top + i].s_length);
 	}
 
@@ -300,21 +302,34 @@ v_ins_line(num, top, bottom)
 		printf("\033[%d;%dr\033[%dL\033[r", top + 1, bottom + 1, num);
 		CapCol = CapLine = 0;
 	} else if (CS) {
-		Placur(0, 0);
-		printf(tgoto(CS, bottom, top));
-		PrintHo();
-		Placur(top, 0);		/* Conservative */
+		putpad(tgoto(CS, bottom, top), 0);
+		PrintHo();			/* Conservative */
+		DoPlacur(top, 0);		/* Conservative */
 		for (i = 0; i < num; i++)
 			putpad(SR, 0);
-		printf(tgoto(CS, LI - 1, 0));
+		putpad(tgoto(CS, LI - 1, 0), 0);
 		PrintHo();			/* Conservative */
 	} else {
 		Placur(bottom - num + 1, 0);
-		for (i = 0; i < num; i++)
-			putpad(DL, LI - CapLine);
+		if (M_DL && (num > 1)) {
+			char	minibuf[16];
+
+			sprintf (minibuf, M_DL, num);
+			putpad (minibuf, num);
+		} else {
+			for (i = 0; i < num; i++)
+				putpad(DL, LI - CapLine);
+		}
 		Placur(top, 0);
-		for (i = 0; i < num; i++)
-			putpad(AL, LI - CapLine);
+		if (M_AL && (num > 1)) {
+			char	minibuf[16];
+
+			sprintf (minibuf, M_AL, num);
+			putpad (minibuf, num);
+		} else {
+			for (i = 0; i < num; i++)
+				putpad(AL, LI - CapLine);
+		}
 	}
 }
 
@@ -325,26 +340,23 @@ v_del_line(num, top, bottom)
 {
 	register int	i,
 			bot;
-	struct screenline	savelines[MAXNLINES];
 
 	bot = bottom;
 
 	/* Save the lost lines. */
 
 	for (i = 0; i < num && top + i <= bottom; i++)
-		savelines[i] = Screen[top + i];
+		Savelines[i] = Screen[top + i];
 
 	/* Copy everything up num number of lines. */
 
-	for (i = top; num + i <= bottom; i++) {
+	for (i = top; num + i <= bottom; i++)
 		Screen[i] = Screen[i + num];
-		Screen[i] = Screen[i + num];
-	}
 
 	/* Restore the lost ones, clearing them. */
 
 	for (i = 0; i < num; i++) {
-		Screen[bottom - i] = savelines[i];
+		Screen[bottom - i] = Savelines[i];
 		clrline(Screen[bot].s_line, Screen[bot].s_length);
 		bot--;
 	}
@@ -354,21 +366,34 @@ v_del_line(num, top, bottom)
 				top + 1, bottom + 1, num));
 		CapCol = CapLine = 0;
 	} else if (CS) {
-		Placur(0, 0);
-		printf(tgoto(CS, bottom, top));
-		PrintHo();
-		Placur(bottom, 0);		/* Conservative */
+		putpad(tgoto(CS, bottom, top), 0);
+		PrintHo();			/* Conservative */
+		DoPlacur(bottom, 0);		/* Conservative */
 		for (i = 0; i < num; i++)
-			outchar('\n');
-		printf(tgoto(CS, LI - 1, 0));
+			putpad (SF, 0);
+		putpad(tgoto(CS, LI - 1, 0), 0);
 		PrintHo();			/* Conservative */
 	} else {
 		Placur(top, 0);
-		for (i = 0; i < num; i++)
-			putpad(DL, LI - CapLine);
+		if (M_DL && (num > 1)) {
+			char	minibuf[16];
+
+			sprintf (minibuf, M_DL, num);
+			putpad (minibuf, LI - CapLine);
+		} else {
+			for (i = 0; i < num; i++)
+				putpad(DL, LI - CapLine);
+		}
 		Placur(bottom + 1 - num, 0);
-		for (i = 0; i < num; i++)
-			putpad(AL, LI - CapLine);
+		if (M_AL && (num > 1)) {
+			char	minibuf[16];
+
+			sprintf (minibuf, M_AL, num);
+			putpad (minibuf, LI - CapLine);
+		} else {
+			for (i = 0; i < num; i++)
+				putpad(AL, LI - CapLine);
+		}
 	}
 }
 

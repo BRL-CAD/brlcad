@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:08:22  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -214,6 +217,9 @@ DoParen()
 			c_indent();	/* insert the white space */
 		}
 	
+	if(IsFlagSet(globflags, OVERWRITE))
+		if (!eolp())
+			DelNChar();
 	Insert(c);
 	if (IsFlagSet(globflags, MATCHING)) {
 		redisplay();

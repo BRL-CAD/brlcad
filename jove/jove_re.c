@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:09:27  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -241,9 +244,9 @@ reswitch:
 				    	m = MakeMark(curline, fromchar);
 				    	curchar = loc2 - genbuf;
 					message("Recursive edit ...");
-				    	copynchar(pushexp, expbuf, ESIZE + 4);
+				    	bcopy(expbuf, pushexp, ESIZE + 4);
 					Recurse();
-				    	copynchar(expbuf, pushexp, ESIZE + 4);
+					bcopy(pushexp, expbuf, ESIZE + 4);
 					SetBuf(oldbuf);
 				    	ToMark(m);
 				    	DelMark(m);
@@ -252,8 +255,8 @@ reswitch:
 					continue;
 				    }
 
-				case 'P':	/* Replace all */
-					query = 0;	/* Replace all */
+				case 'P':		/* Replace all */
+					query = 0;
 					break;
 
 				case '\n':	/* Stop this replace search */
@@ -860,6 +863,11 @@ isearch(direction, failing, ctls)
 		case CTL(G):
 			longjmp(incjmp, GOBACK);
 			/* Easy way out! */
+
+		case CTL(J):
+		case CTL(M):
+			longjmp(incjmp, FOUND);
+			/* End gracefully on carriage return or linefeed */
 
 		case CTL(Q):
 		case CTL(^):

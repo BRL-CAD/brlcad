@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:10:22  dpk
+ * Added distinctive RCS header
+ * 
  */
 
 /*
@@ -18,18 +21,6 @@
  */
 
 #ifndef VMUNIX
-#ifndef BIGTMP		/* 256k in tmp file */
-
-#define	BLKMSK	0777
-#define	BNDRY	8
-#define	INCRMT	0200
-#define	LBTMSK	0770
-#define	NMBLKS	506
-#define	OFFBTS	7
-#define	OFFMSK	0177
-#define	SHFT	2
-
-#else		/* 512 K in temp file with more slop, but it's worth it */
 
 #define	BLKMSK	01777
 #define	BNDRY	16
@@ -40,9 +31,8 @@
 #define	OFFMSK	077
 #define	SHFT	3
 
-#endif BIGTMP
-
 #else VMUNIX
+
 #define	BLKMSK	077777
 #define	BNDRY	2
 #define	INCRMT	02000
@@ -51,12 +41,13 @@
 #define	OFFBTS	10
 #define	OFFMSK	01777
 #define	SHFT	0
+
 #endif VMUNIX
 
 
-char	ibuff1[BUFSIZ],	/* Holds block `iblock1' of the tmp file */
-	ibuff2[BUFSIZ],	/*   "     "   `iblock2' of the tmp file */
-	obuff[BUFSIZ];	/* Holds the last block of the tmp file */
+char	ibuff1[BSIZ],	/* Holds block `iblock1' of the tmp file */
+	ibuff2[BSIZ],	/*   "     "   `iblock2' of the tmp file */
+	obuff[BSIZ];	/* Holds the last block of the tmp file */
 int	ichng1,		/* ibuff1 should be written to its
 			 * blocks when it is used to read
 			 * another block.

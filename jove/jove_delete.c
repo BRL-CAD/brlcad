@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:07:27  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";

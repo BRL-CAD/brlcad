@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:07:36  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -68,8 +71,9 @@ int	UpdWCalls,	/* Number of times we called UpdateWindow for this window */
 	IDstart,	/* First different line */
 	NumDirty;	/* Number of dirty lines in this screen update */
 
-extern int	RingBell;
-
+int	VisBell = 0;	/* If set, use visible bell if available */
+int	RingBell = 0;	/* So if we have a lot of errors ...
+			   ring the bell only ONCE */
 
 /* The redisplay algorithm:
 
@@ -322,18 +326,18 @@ BUFFER	*buf;
 {
 	extern int	DOLsave;
 
-	if (!buf->b_modified)
+	if (! IsModified(buf))
 		UpdModLine++;
-	buf->b_modified = 1;
+	buf->b_status |= B_MODIFIED;
 	DOLsave++;
 }
 
 SetUnmodified(buf)
 BUFFER	*buf;
 {
-	if (buf->b_modified)
+	if (IsModified(buf))
 		UpdModLine++;
-	buf->b_modified = 0;
+	buf->b_status &= ~B_MODIFIED;
 }
 
 /* Write whatever is in mesgbuf (maybe we are Asking,  or just printed
@@ -492,7 +496,7 @@ UpdateLine(w, linenum)
 register WINDOW	*w;
 register int	linenum;
 {
-	int	hasIC = ((IC || IM) && DC);
+	int	hasIC = (IC || IM || M_IC);
 	register struct scrimage	*np = &nimage[linenum];
 
 	if (np->Sflags == MODELINE)
@@ -513,13 +517,13 @@ register int	linenum;
 			if (w->w_numlines) {
 				ignore(sprintf(buff, "%6d  ", (linenum - FLine(w) +
 						w->w_topnum)));
-				ignore(getcptr(np->Line, buff + fromcol));
+				ignore(getright(np->Line, buff + fromcol));
 				bptr = buff;
 			} else
 				bptr = getcptr(np->Line, buff);
 			DeTab(np->StartCol, bptr,
 				outbuf, (sizeof outbuf) - 1);
-			if (!IDchar(outbuf, linenum, 0))
+			if (IDchar(outbuf, linenum, 0))
 				oimage[linenum] = *np;
 			else if (i_set(linenum, 0), swrite(outbuf))
 				do_cl_eol(linenum);
@@ -542,20 +546,33 @@ register int	linenum;
 	oimage[linenum] = nimage[linenum];
 }
 
-extern struct screenline	*Screen;
-int	InMode = 0;
-
-CopyTo(to, from, limit)
-register char	*to,
-		*from,
-		*limit;
-{
-	while (from <= limit)
-		*to++ = *from++;
-}
 
 /* ID character routines full of special cases and other fun stuff like that.
    It actually works thougth ... */
+
+extern struct screenline	*Screen;
+extern struct screenline	*Savelines;
+int	InMode = 0;
+int	DClen = 0;
+int	MDClen = 0;
+int	IClen = 0;
+int	MIClen = 0;
+int	IMlen = 0;
+int	CElen = 0;
+
+/*
+ *  Initialization routine.  Called from jove_term.c.
+ */
+disp_opt_init()
+{
+	if (DC) DClen = strlen(DC);
+	MDClen = (M_DC ? strlen(M_DC) : 9999);
+	if (IC) IClen = strlen(IC);
+	MIClen = (M_IC ? strlen(M_IC) : 9999);
+	if (IM) IMlen = strlen(IM);
+	if (CE) CElen = strlen(CE);
+	Savelines = (struct screenline *)emalloc(LI*sizeof (struct screenline));
+}
 
 IDchar(new, lineno, col)
 register char	*new;
@@ -572,7 +589,7 @@ register char	*new;
 		if (sline->s_line[i] != new[i])
 			break;
 	if (new[i] == 0 || i == oldlen)
-		return !(new[i] == 0 && i == oldlen);
+		return (new[i] == 0 && i == oldlen);
 
 	for (j = i + 1; j < oldlen && new[j]; j++) {
 		if (new[j] == sline->s_line[i]) {
@@ -581,8 +598,7 @@ register char	*new;
 						sline->s_line + i, j - i);
 			if (OkayInsert(NumSaved, j - i)) {
 				InsChar(lineno, i, j - i, new);
-				ignore(IDchar(new, lineno, j));
-				return 1;	/* Difference */
+				return(IDchar(new, lineno, j));
 			}
 		}
 	}
@@ -593,12 +609,11 @@ register char	*new;
 					oldlen - j);
 			if (OkayDelete(NumSaved, j - i, new[oldlen] == 0)) {
 				DelChar(lineno, i, j - i);
-				ignore(IDchar(new, lineno, j));
-				return 1;
+				return(IDchar(new, lineno, j));
 			}
 		}
 	}
-	return 1;
+	return 0;
 }
 
 NumSimilar(s, t, n)
@@ -636,23 +651,16 @@ register char	*s,
 
 OkayDelete(Saved, num, samelength)
 {
-	static int	DelIn = 0,
-			CElen = 0;
-
-	if (DelIn == 0) {
-		DelIn = strlen(DC);
-		CElen = strlen(CE);
-	}
-
 	/* If the old and the new are the same length, then we don't
 	 * have to clear to end of line.  We take that into consideration.
 	 */
-	return ((Saved + (!samelength ? CElen : 0)) > (DelIn * num));
+	return ((Saved + (!samelength ? CElen : 0))
+		> min(MDClen, DClen * num));
 }
 
 OkayInsert(Saved, num)
 {
-	int	n;
+	register int	n = 0;
 
 	/*
 	 *  Total cost of inserting characters is the cost of
@@ -660,27 +668,15 @@ OkayInsert(Saved, num)
 	 *  enter insert mode if necessary.  We ignore the cost
 	 *  cost of exiting insert mode.    (DPK@BRL)
 	 */
-	if (IC) {		/* Per character prefixes */
-		static int	IClen = 0;
+	if (IC)		/* Per character prefixes */
+		n = min (num * IClen, MIClen);
 
-		if (IClen == 0)
-			IClen = strlen(IC);
-
-		n = num * IClen;
-	}
+	if (IM && !InMode)
+		n += IMlen;	/* Must go into insert mode */
 
 	n += num;		/* Account for the chars themselves */
 
-	if (IM) {
-		static int	InsIn = 0;
-
-		if (InsIn == 0)
-			InsIn = strlen(IM);
-
-		if (!InMode)	/* We are NOT already in insert mode */
-			n += InsIn;
-	}
-	return Saved > n;
+	return (Saved > n);
 }
 
 extern int	CapCol;
@@ -690,14 +686,28 @@ extern struct screenline	*Curline;
 DelChar(lineno, col, num)
 {
 	register int	i;
+	register char	*from, *to;
+	struct screenline *sp = (&Screen[lineno]);
 
 	Placur(lineno, col);
-	for (i = 0; i < num; i++)
-		putpad(DC, 1);
-	CopyTo(Screen[lineno].s_line + col, Screen[lineno].s_line + col + num,
-			Screen[lineno].s_length);
-	clrline(Screen[lineno].s_length - num, Screen[lineno].s_length);
-	Screen[lineno].s_length -= num;
+	if (M_DC && num > 1) {
+		char	minibuf[16];
+
+		sprintf (minibuf, M_DC, num);
+		putpad (minibuf, num);
+	} else {
+		for (i = 0; i < num; i++)
+			putpad(DC, 1);
+	}
+
+	to = sp->s_line + col;
+	from = to + num;
+
+	i = sp->s_length - from + 1;
+	while (i--)
+		*to++ = *from++;
+	clrline(sp->s_length - num, sp->s_length);
+	sp->s_length -= num;
 }
 
 InsChar(lineno, col, num, new)
@@ -707,13 +717,12 @@ char	*new;
 			*sp2,	/* To push over the array */
 			*sp3;	/* Last character to push over */
 
-	int	WithSpaces = (int)IC;
-		/*
-		 *  If there is an insert character string, then
-		 *  it is expected to insert spaces which we then
-		 *  write the chars into.  The screen must be
-		 *  updated appropriately.
-		 */
+	/*
+	 *  If there is an insert character string, then
+	 *  it is expected to insert spaces which we then
+	 *  write the chars into.  The screen must be
+	 *  updated appropriately.
+	 */
 	int	i;
 
 	i_set(lineno, 0);
@@ -732,18 +741,23 @@ char	*new;
 	sp1 = Curline->s_line + col;
 	new += col;
 	for (i = 0; i < num; i++)
-		*sp1++ = (WithSpaces) ? ' ' : new[i];
+		*sp1++ = new[i];
 	/* The internal screen is correct, and now we have to do
 	 * the physical stuff
 	 */
 
 	Placur(lineno, col);
-	if (!WithSpaces) {
-		if (!InMode) {
-			putpad(IM, 1);
-			InMode++;
-		}
-	} else {
+	if (!InMode && IM) {
+		putpad(IM, 1);
+		InMode++;
+	}
+	if (M_IC && num > 1) {
+		char	minibuf[16];
+
+		sprintf (minibuf, M_IC, num);
+		putpad (minibuf, num);
+	}
+	else if (IC) {
 		for (i = 0; i < num; i++)
 			putpad(IC, 1);
 	}

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:08:08  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -15,6 +18,9 @@ static char RCSid[] = "@(#)$Header$";
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:08:08  dpk
+ * Added distinctive RCS header
+ * 
  * Revision 1.1  83/12/16  00:08:01  dpk
  * Original 4.2 Distribution Source
  * 
@@ -109,6 +115,7 @@ extern int
 	UnBound(),
 	CasRegLower(),
 	CasRegUpper(),
+	CapChar(),
 	CapWord(),
 	LowWord(),
 	UppWord(),
@@ -233,6 +240,7 @@ InitFuncs()
 	DefFunc("bind-to-key", BindAKey);
 	DefFunc("bind-macro-to-key", BindMac);
 	DefFunc("buffer-position", BufPos);
+	DefFunc("case-char-upper", CapChar);
 	DefFunc("case-region-lower", CasRegLower);
 	DefFunc("case-region-upper", CasRegUpper);
 	DefFunc("case-word-capitalize", CapWord);
@@ -417,7 +425,7 @@ InitBindings()
 	BindFunc(mainmap, CTL(@), SetMark);
 	BindFunc(mainmap, CTL(A), Bol);
 	BindFunc(mainmap, CTL(B), BackChar);
-	BindFunc(mainmap, CTL(C), UnBound);
+	BindFunc(mainmap, CTL(C), CapChar);
 	BindFunc(mainmap, CTL(D), DelNChar);
 	BindFunc(mainmap, CTL(E), Eol);
 	BindFunc(mainmap, CTL(F), ForChar);
@@ -426,33 +434,20 @@ InitBindings()
 	BindFunc(mainmap, CTL(I), CTab);
 	BindFunc(mainmap, CTL(J), LineAI);
 	BindFunc(mainmap, CTL(K), KillEOL);
-#ifndef BRL
-	BindFunc(mainmap, CTL(L), RedrawDisplay);
-#else
 	BindFunc(mainmap, CTL(L), ClAndRedraw);
-#endif
 	BindFunc(mainmap, CTL(M), Newline);
 	BindFunc(mainmap, CTL(N), NextLine);
 	BindFunc(mainmap, CTL(O), OpenLine);
 	BindFunc(mainmap, CTL(P), PrevLine);
 	BindFunc(mainmap, CTL(Q), QuotChar);
 	BindFunc(mainmap, CTL(^), QuotChar);
-#ifndef BRL
-	BindFunc(mainmap, CTL(R), RevSearch);
-	BindFunc(mainmap, CTL(S), ForSearch);
-#else
 	BindFunc(mainmap, CTL(R), IncRSearch);
 	BindFunc(mainmap, CTL(S), IncFSearch);
-#endif
-	BindFunc(mainmap, CTL(\\), ForSearch);
+	BindFunc(mainmap, CTL(\\), IncFSearch);
 	BindFunc(mainmap, CTL(T), TransChar);	
 	BindFunc(mainmap, CTL(U), FourTime);
 	BindFunc(mainmap, CTL(V), NextPage);
-#ifndef BRL
-	BindFunc(mainmap, CTL(W), DelReg);
-#else
 	BindFunc(mainmap, CTL(W), DelPWord);
-#endif BRL
 	BindFunc(mainmap, CTL(X), CtlxPrefix);
 	BindFunc(mainmap, CTL(Y), Yank);
 	BindFunc(mainmap, CTL(Z), UpScroll);
@@ -464,18 +459,10 @@ InitBindings()
 	/* Escape Prefix */
 
 	BindFunc(pref1map, CTL(B), Bparen);
-#ifdef BRL
 	BindFunc(pref1map, CTL(E), RepSearch);
-#endif BRL
 	BindFunc(pref1map, CTL(F), Fparen);
-#ifdef BRL
 	BindFunc(pref1map, CTL(H), DelPWord);
-#endif BRL
-#ifndef BRL
-	BindFunc(pref1map, CTL(L), ClAndRedraw);
-#else
 	BindFunc(pref1map, CTL(L), RedrawDisplay);
-#endif BRL
 	BindFunc(pref1map, CTL(V), PageNWind);
 	BindFunc(pref1map, '<', Bof);
 	BindFunc(pref1map, '>', Eof);
@@ -494,31 +481,22 @@ InitBindings()
 	BindFunc(pref1map, 'f', ForWord);
 	BindFunc(pref1map, 'G', GoLine);
 	BindFunc(pref1map, 'g', GoLine);
-#ifdef BRL
 	BindFunc(pref1map, 'H', Apropos);
 	BindFunc(pref1map, 'h', Apropos);
-#endif BRL
 	BindFunc(pref1map, 'J', Justify);
 	BindFunc(pref1map, 'j', Justify);
 	BindFunc(pref1map, 'L', LowWord);
 	BindFunc(pref1map, 'l', LowWord);
 	BindFunc(pref1map, 'M', ToIndent);
 	BindFunc(pref1map, 'm', ToIndent);
-#ifdef BRL
 	BindFunc(pref1map, 'P', PauseJove);
 	BindFunc(pref1map, 'p', PauseJove);
-#endif BRL
 	BindFunc(pref1map, 'Q', QRepSearch);
 	BindFunc(pref1map, 'q', QRepSearch);
-#ifndef BRL
-	BindFunc(pref1map, 'R', RepSearch);
-	BindFunc(pref1map, 'r', RepSearch);
-#else
 	BindFunc(pref1map, 'R', RevSearch);
 	BindFunc(pref1map, 'r', RevSearch);
 	BindFunc(pref1map, 'S', ForSearch);
 	BindFunc(pref1map, 's', ForSearch);
-#endif BRL
 	BindFunc(pref1map, 'U', UppWord);
 	BindFunc(pref1map, 'u', UppWord);
 	BindFunc(pref1map, 'V', PrevPage);
@@ -547,22 +525,16 @@ InitBindings()
 	BindFunc(pref2map, CTL(E), MakeErrors);
 	BindFunc(pref2map, CTL(F), FindFile);
 	BindFunc(pref2map, CTL(I), InsFile);
-#ifdef BRL
 	BindFunc(pref2map, CTL(K), DelReg);
-#endif BRL
 	BindFunc(pref2map, CTL(L), CasRegLower);
 	BindFunc(pref2map, CTL(M), WtModBuf);
 	BindFunc(pref2map, CTL(N), NextError);
 	BindFunc(pref2map, CTL(O), DelBlnkLines);
 	BindFunc(pref2map, CTL(R), ReadFile);
 	BindFunc(pref2map, CTL(S), SaveFile);
-#ifdef BRL
 	BindFunc(pref2map, CTL(T), FindTag);
-#endif BRL
 	BindFunc(pref2map, CTL(U), CasRegUpper);
-#ifdef BRL
 	BindFunc(pref2map, CTL(V), FindFile);
-#endif
 	BindFunc(pref2map, CTL(W), WriteFile);
 	BindFunc(pref2map, CTL(X), PtToMark);
 	BindFunc(pref2map, CTL(\\), SaveFile);
@@ -584,10 +556,8 @@ InitBindings()
 	BindFunc(pref2map, 'o', PrevWindow);
 	BindFunc(pref2map, 'P', PrevWindow);
 	BindFunc(pref2map, 'p', PrevWindow);
-#ifndef BRL
 	BindFunc(pref2map, 'T', FindTag);
 	BindFunc(pref2map, 't', FindTag);
-#endif
 	BindFunc(pref2map, '!', ShellCom);
 	BindFunc(pref2map, '^', GrowWindow);
 }
@@ -597,7 +567,8 @@ FuncName()
 {
 	static char	func[60];
 
-	return sprintf(func, ": %s ", LastFunc->f_name);
+	sprintf(func, ": %s ", LastFunc->f_name);
+	return func;
 }
 
 int	Interactive;	/* True when we invoke with the command handler? */
@@ -754,20 +725,11 @@ NameMac()
 	name = copystr(name);
 	*m = KeyMacro;				/* Copy the keyboard macro */
 	m->Body = emalloc(m->MacBuflen);
-	copynchar(m->Body, KeyMacro.Body, m->MacLength);
+	bcopy(KeyMacro.Body, m->Body, m->MacLength);
 	m->Ntimes = m->Flags = m->Offset = 0;	/* At the beginning */
 	m->Name = name;
 	DefMac(name, m);
 }	
-
-copynchar(t, f, len)
-register char	*t,
-		*f;
-register int	len;
-{
-	while (len--)
-		*t++ = *f++;
-}
 
 MacInit()
 {

@@ -4,13 +4,27 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:10:14  dpk
+ * Added distinctive RCS header
+ * 
  */
 
 /* jove.h header file to be included by EVERYONE */
 
 #include <setjmp.h>
 
-#include "jove_tune.h"
+/* The following is tailorable */
+#ifdef VMUNIX
+
+typedef	long	disk_line;
+#define BSIZ	4096
+
+#else VMUNIX
+
+typedef	short	disk_line;
+#define BSIZ	512
+
+#endif VMUNIX
 
 #define EOF	-1
 #define NULL	0
@@ -36,7 +50,7 @@
 #define DEFINE		1
 #define EXECUTE		2
 
-#define	LBSIZE		BUFSIZ	/* Same as a logical disk block */
+#define	LBSIZE		BSIZ	/* Same as a logical disk block */
 #define	ESIZE		128
 #define	GBSIZE		256
 
@@ -48,6 +62,7 @@
 #define CTL(c)		('c' & 037)
 #define META(c)		('c' | 0200)
 
+#define	rbell()		(RingBell++)
 #define	eolp()		(linebuf[curchar] == '\0')
 #define bolp()		(curchar == 0)
 #define	lastp(line)	(line == curbuf->b_dol)
@@ -57,7 +72,13 @@
 #define HALF(wp)	((wp->w_height - 1) / 2)
 #define SIZE(wp)	(wp->w_height - 1)
 #define makedirty(line)	line->l_dline |= DIRTY
-#define IsModified(b)	(b->b_modified)
+#define IsModified(b)	(b->b_status & B_MODIFIED)
+#define	IsScratch(b)	(b->b_status & B_SCRATCH)
+#define	SetScratch(b)	(b->b_status |= B_SCRATCH)
+#define	ClrScratch(b)	(b->b_status &= ~B_SCRATCH)
+#define	IsReadOnly(b)	(b->b_status & B_READONLY)
+#define	SetReadOnly(b)	(b->b_status |= B_READONLY);
+#define	ClrReadOnly(b)	(b->b_status &= ~B_READONLY);
 
 #define DoTimes(f, n)	exp_p = 1, exp = n, f()
 
@@ -117,7 +138,8 @@ int	origflags[NFLAGS],
 #define COMPLAIN	2	/* Do the error without a getDOT */
 #define QUIT		3	/* Leave this level of recusion */
 
-extern char	*Mainbuf;
+extern	char	*Mainbuf;
+extern	int	RingBell;
 
 char	genbuf[LBSIZE];		/* Scatch pad */
 int	peekc,
@@ -142,26 +164,13 @@ typedef struct iobuf	IOBUF;
 
 typedef int	(*FUNC)();
 
-/* Standary library struct _iobuf */
-
-/* This should look exactly like struct _iobuf (FILE) in stdio because
-   _doprnt knows about FILE.  Ideally _doprnt should be written in C
-   so as to make it portable ... */
-
+/* Pseudo-Standary library struct _iobuf */
 struct iobuf {
-#ifndef VMUNIX
 	char	*io_ptr;
 	int	io_cnt;
 	char	*io_base;
 	short	io_flag;
 	char	io_file;
-#else
-	int	io_cnt;
-	char	*io_ptr;
-	char	*io_base;
-	short	io_flag;
-	char	io_file;
-#endif
 };
 
 struct line {
@@ -204,6 +213,7 @@ struct buffer {
 	char	*b_name,		/* Buffer name */
 		*b_fname;		/* File name associated with buffer */
 	int	b_ino;			/* Inode of file name */
+	int	b_dev;			/* Device on which inode lives */
 	LINE	*b_zero,		/* Pointer to first line in list */
 		*b_dot,			/* Current line */
 		*b_dol;			/* Last line in list */
@@ -214,17 +224,17 @@ struct buffer {
 	MARK	*b_markring[NMARKS],	/* New marks are pushed saved here */
 		*b_marks;		/* All the marks for this buffer */
 	int	b_themark;		/* Current mark */
-	char	b_type,			/* Scratch? */
-		b_modified;
+	char	b_status;		/* Status flags (B_MODIFIED, etc.) */
+#define	B_MODIFIED	01		/* Buffer has been modified */
+#define	B_READONLY	02		/* File is readonly */
+#define	B_SCRATCH	04		/* Buffer is a scratch buffer */
+
 	int	b_flags[NFLAGS];
 	BUFFER	*b_next;		/* Next buffer in chain */
 };
 
 BUFFER	*world,			/* First buffer */
 	*curbuf;		/* Pointer into world for current buffer */
-
-/* Max terminal lines */
-#define MAXNLINES	66	/* Change it if you want to! */
 
 #define NUMKILLS	10	/* Number of kills saved in the kill ring */
 
@@ -381,8 +391,6 @@ extern BUFFER
 	*mak_buf(),
 	*buf_exists(),
 	*file_exists();
-
-int	(*sigset())();		/* Sigset returns a pointer to a procedure */
 
 #define	SAVE_NO		0
 #define	SAVE_ASK	1

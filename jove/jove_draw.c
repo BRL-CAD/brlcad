@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:07:48  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -68,11 +71,38 @@ register int	c_char;
 	return pos;
 }
 
+char *
+sprint(fmt, a, b, c, d, e)
+char	*fmt;
+char	*a, *b, *c, *d, *e;
+{
+	static char line[160];
+
+	sprintf(line, fmt, a, b, c, d, e);
+	return line;
+}
+
+s_mess(fmt, a, b, c, d)
+char	*fmt;
+char	*a, *b, *c, *d;
+{
+	if (Input)
+		return;
+	sprintf(mesgbuf, fmt, a, b, c, d);
+	message(mesgbuf);
+}
+
+printf(fmt, a, b, c, d)
+char	*fmt;
+char	*a, *b, *c, *d;
+{
+	putstr (sprint(fmt, a, b, c, d));
+}
+
 /*
  * message prints the null terminated string onto the bottom line of the
  * terminal.
  */
-
 message(str)
 char	*str;
 {
@@ -100,7 +130,6 @@ WINDOW	*w;
 
 	int	*flags = w->w_bufp->b_flags;
 
-	char	*printf();			/* Forward reference */
 	register char	*lp = line + 1,		/* Pay attention to this! */
 			*pp;
 	static char	*modenames[] = {
@@ -113,17 +142,7 @@ WINDOW	*w;
 		"AI-"
 	};
 
-	i_set(lineno, 0);
-
-#ifdef INCONSISTENT
-	if (w->w_next != fwind)
-		strcop(lp, "--- ");
-	else
-		strcop(lp, "    ");
-#endif
-	strcop(lp, "--- ");
-
-	strcop(lp, "JOVE (");
+	strcop(lp, "--- JOVE (");
 
 	for (i = 0; i < NFLAGS; i++)
 		if (IsFlagSet(flags, i))
@@ -140,17 +159,21 @@ WINDOW	*w;
 	strcop(lp, pp);
 	if (IsModified(w->w_bufp))
 		strcop(lp, "* ");
-	--lp;	/* strcop leaves lp after the null */
-#ifdef INCONSISTENT
-	if (w->w_next != fwind)
-#endif
-		while (lp < &line[CO - 2])
-			*lp++ = '-';
+	if (IsReadOnly(w->w_bufp))
+		strcop(lp, "[readonly] ");
+	--lp;			/* strcop leaves lp after the null */
+	i = CO - 2 - (2 * SG);	/* 2 space pad plus padding for magic cookies */
+	while (lp < &line[i])
+		*lp++ = '-';
 	*lp = 0;
+
+	i_set(lineno, 0);
+	Placur(lineno, 0);
 	if( SO ) putpad( SO, 1 );	/* Put mode line in standout */
 	if (swrite(line))
 		do_cl_eol(lineno);
-	if( SO ) putpad( SE, 1 );
+	if( SO )
+		putpad( SE, 1 );
 }
 
 bufnumber( cb )
@@ -160,10 +183,11 @@ BUFFER	*cb;		/* Current Buffer.	*/
     BUFFER	*bp;	/* Pointer into buffer list..	*/
 
     for (i=1, bp=world;	bp; bp=bp->b_next) {
+    	if (bp->b_zero == 0)
+    	    continue;
 	if (bp == cb)
 	    return i;
-	if (bp->b_zero != 0)
-	    ++i;
+	++i;
     }
     return -1;
 }
@@ -225,102 +249,6 @@ PrevPage()
 	}
 }
 
-int	VisBell = 0;	/* If set, use visible bell if available */
-int	RingBell = 0;	/* So if we have a lot of errors ...
-			   ring the bell only ONCE */
-
-rbell()
-{
-	RingBell++;
-}
-
-/* Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
-
-   format.c
-
-   contains procedures that call _doprnt */
-
-/* VARARGS2 */
-
-format(buf, fmt, args)
-char	*buf,
-	*fmt;
-int	*args;
-{
-	IOBUF	strbuf;
-
-	strbuf.io_flag = 0;
-	strbuf.io_base = strbuf.io_ptr = buf;
-	strbuf.io_cnt = 32767;
-	_doprnt(fmt, args, &strbuf);
-	Putc('\0', &strbuf);
-}
-
-/* VARARGS1 */
-
-char *
-sprint(fmt, args)
-char	*fmt;
-{
-	static char line[100];
-
-	format(line, fmt, &args);
-	return line;
-}
-
-/* VARARGS1 */
-
-char *
-printf(fmt, args)
-char	*fmt;
-{
-	_doprnt(fmt, &args, &termout);
-}
-
-/* VARARGS2 */
-
-char *
-sprintf(str, fmt, args)
-char	*str,
-	*fmt;
-{
-	format(str, fmt, &args);
-	return str;
-}
-
-/* VARARGS1 */
-
-s_mess(fmt, args)
-char	*fmt;
-{
-	if (Input)
-		return;
-	format(mesgbuf, fmt, &args);
-	message(mesgbuf);
-}
-
-_strout(string, count, adjust, file, fillch)
-register char *string;
-register int count;
-int adjust;
-register IOBUF	*file;
-{
-
-	while (adjust < 0) {
-		if (*string=='-' && fillch=='0') {
-			Putc(*string++, file);
-			count--;
-		}
-		Putc(fillch, file);
-		adjust++;
-	}
-	while (--count >= 0)
-		Putc(*string++, file);
-	while (adjust) {
-		Putc(fillch, file);
-		adjust--;
-	}
-}
 
 /* Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:07:57  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -22,6 +25,7 @@ static char RCSid[] = "@(#)$Header$";
 
 int	InJoverc = 0;
 
+extern char	*Findcom;
 extern int	getch(),
 		getchar();
 
@@ -126,7 +130,7 @@ DescCom()
 		complain("No such command");
 	fp = &functions[com];
 	ignore(UnixToBuf("Command Description", 0, exp_p == 0,
-					FINDCOM,
+					Findcom,
 					"describe",
 					fp->f_name, 0));
 	message("Done");
@@ -150,7 +154,7 @@ Apropos()
 	ans = ask((char *) 0, "Apropos (keyword) ");
 	if (UseBuffers) {
 		TellWBuffers("Apropos", 0);
-		curwind->w_bufp->b_type = SCRATCHBUF;
+		SetScratch(curwind->w_bufp);
 	} else
 		TellWScreen(0);
 	for (fp = functions; fp->f_name; fp++)
@@ -330,7 +334,7 @@ char	*prompt;
 				return EOF;
 			if (UseBuffers) {
 				TellWBuffers("Help", 1);
-				curwind->w_bufp->b_type = SCRATCHBUF;
+				SetScratch(curwind->w_bufp);
 			} else
 				TellWScreen(0);
 			length = strlen(begin);
@@ -413,10 +417,10 @@ Source()
 		complain(IOerr("read", com));
 }
 
-joverc(filename)
-char	*filename;
+joverc(file)
+char	*file;
 {
-	if ((Input = open(filename, 0)) == -1) {
+	if ((Input = open(file, 0)) == -1) {
 		Input = 0;
 		return -1;
 	}
@@ -438,10 +442,14 @@ BufPos()
 {
 	register LINE	*lp = curbuf->b_zero;
 	register int	i = 1;
+	int	dotline;
 
-	for (i = 1; lp != 0 && lp != curline; i++, lp = lp->l_next)
-		;
-	s_mess("line %d, column %d", i, curchar);
+	for (i = 1; lp != 0; i++, lp = lp->l_next)
+		if (lp == curline)
+			dotline = i;
+
+	s_mess("\"%s\" line %d of %d, column %d",
+		filename(curbuf), dotline, i, curchar);
 }
 
 extern char	quots[];

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.3  84/03/20  22:27:17  dpk
+ * Added better termcap handling
+ * 
  * Revision 1.2  83/12/16  00:08:44  dpk
  * Added distinctive RCS header
  * 
@@ -20,24 +23,28 @@ static char RCSid[] = "@(#)$Header$";
    Contains the main loop, initializations, getch routine... */
 
 #include "jove.h"
-
 #include "termcap.h"
-
-#ifndef	BRLUNIX			/* this is not found on a BRL pdp-11.	*/
-#include <sys/ioctl.h>
-#endif
 
 #include <signal.h>
 #include <sgtty.h>
 #include <errno.h>
 
-#ifdef TIOCSLTC
-struct ltchars	ls1,
-		ls2;
-#endif
+extern char	*version;
+extern char	*BinShell;
+extern char	*Joverc;
+extern int	errno;
 
-struct tchars	tc1,
-		tc2;
+extern char	*sprint();
+
+#ifndef	BRLUNIX			/* this is not found on a BRL pdp-11.	*/
+#include <sys/ioctl.h>
+#endif BRLUNIX
+
+#ifdef TIOCSLTC
+struct ltchars	ls1, ls2;
+#endif TIOCSLTC
+
+struct tchars	tc1, tc2;
 
 int	errormsg;
 
@@ -45,17 +52,8 @@ int	iniargc;
 char	**iniargv;
 char	*StdShell;
 
-extern char	*tfname;
-extern int	errno;
-
 finish(code)
 {
-	int	Crashit = code && (code != LOGOEXIT);
-
-#ifdef LSRHS_KLUDGERY
-	if (Crashit)
-		setdump(1);
-#endif
 	if (code == SIGINT) {
 		char	c;
 
@@ -71,7 +69,7 @@ finish(code)
 			return;
 		}
 	}
-	if (Crashit) {
+	if (code) {
 		if (!Crashing) {
 			putstr("Writing modified JOVE buffers...");
 			Crashing++;
@@ -81,23 +79,17 @@ finish(code)
 			putstr("Complete lossage!");
 	}
 	ttyset(0);
+	Placur(LI - 1, 0);
+	putpad(CE, 1);
 	if (KE)
 		putpad(KE, 1);
 	if (VE)
 		putpad(VE, 1);
 	if (TE)
 		putpad(TE, 1);
-	Placur(LI - 1, 0);
-	putpad(CE, 1);
 	flusho();
-#ifdef LSRHS_KLUDGERY
-	if (CS)
-		deal_with_scroll();
-#endif
-	ignore(unlink(tfname));
-	if (Crashit)
-		abort();
-	exit(code);
+
+	byebye(code);
 }
 
 #define NTOBUF	20		/* Should never get that far ahead */
@@ -118,7 +110,7 @@ register int	c;
 getchar()
 {
 	if (nchars <= 0) {
-#ifdef MENLO_JCL
+#ifdef JOBCONTROL
 		nchars = read(Input, smbuf, sizeof smbuf);
 #else
 		/*
@@ -128,7 +120,7 @@ getchar()
 		do {
 			nchars = read(Input, smbuf, sizeof smbuf);
 		} while (nchars < 0 && errno == EINTR);
-#endif MENLO_JCL
+#endif JOBCONTROL
 
 		if(nchars <= 0) {
 			if (Input)
@@ -176,10 +168,6 @@ charp()
 
 ResetTerm()
 {
-	if (IF)
-		dumpIF(IF);
-	if (IS)
-		putpad(IS, 1);
 	if (TI)
 		putpad(TI, 1);
 	if (VS)
@@ -192,13 +180,13 @@ ResetTerm()
 UnsetTerm()
 {
 	ttyset(0);
+	Placur(LI - 1, 0);
 	if (KE)
 		putpad(KE, 1);
 	if (VE)
 		putpad(VE, 1);
 	if (TE)
 		putpad(TE, 1);
-	Placur(LI - 1, 0);
 	flusho();
 }
 
@@ -253,17 +241,11 @@ register int	prompt;
 		else
 			execl(StdShell, "shell", 0);
 		message("Execl failed");
-		_exit(1);
+		byebye(1);
 
 	default:
-#ifndef NOINTR
-		signal(SIGINT, SIG_IGN);
-#endif
 		while (wait(0) != pid)
 			;
-#ifndef NOINTR
-		signal(SIGINT, finish);
-#endif
 	}
 
 	ResetTerm();
@@ -284,7 +266,7 @@ ttsetup() {
 	if (gtty(0, &oldtty) < 0) {
 #endif BRLUNIX
 		putstr("Input not a terminal");
-		exit(1);
+		byebye(1);
 	}
 
 	/* One time setup of "raw mode" stty struct */
@@ -321,11 +303,7 @@ ttinit()
 	/* Change interupt and quit. */
 	ioctl(0, TIOCGETC, (char *) &tc1);
 	tc2 = tc1;
-#ifndef NOINTR
-	tc2.t_intrc = '\035';
-#else
 	tc2.t_intrc = (char) -1;
-#endif
 	tc2.t_quitc = (char) -1;
 	if (OKXonXoff) {
 		tc2.t_stopc = (char) -1;
@@ -335,31 +313,13 @@ ttinit()
 
 	/* Go into cbreak, and -echo and -CRMOD */
 
-#ifdef SIGTSTP			/* New signal mechanism */
 	ignorf(signal(SIGHUP, finish));
-#ifndef NOINTR
-	ignorf(signal(SIGINT, finish));
-#else
 	ignorf(signal(SIGINT, SIG_IGN));
-#endif NOINTR
 	ignorf(signal(SIGQUIT, SIG_IGN));
 	ignorf(signal(SIGBUS, finish));
 	ignorf(signal(SIGSEGV, finish));
 	ignorf(signal(SIGPIPE, finish));
 	ignorf(signal(SIGTERM, SIG_IGN));
-#else
-	ignorf(signal(SIGHUP, finish));
-#ifndef NOINTR
-	ignorf(signal(SIGINT, finish));
-#else
-	ignorf(signal(SIGINT, SIG_IGN));
-#endif NOINTR
-	ignorf(signal(SIGQUIT, SIG_IGN));
-	ignorf(signal(SIGBUS, finish));
-	ignorf(signal(SIGSEGV, finish));
-	ignorf(signal(SIGPIPE, finish));
-	ignorf(signal(SIGTERM, SIG_IGN));
-#endif
 }
 
 /* If "n" is zero, reset to orignal modes */
@@ -376,7 +336,7 @@ ttyset(n)
 	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
 	{
 		putstr("ioctl error?");
-		exit(1);
+		byebye(1);
 	}
 	ioctl(0, TIOCSETC, n == 0 ? (char *) &tc1 : (char *) &tc2);
 #ifdef TIOCSLTC
@@ -396,19 +356,8 @@ ttyset(n)
 	if (stty(0, (char *) &tty) < 0)
 	{
 		putstr("stty error?");
-		exit(1);
+		byebye(1);
 	}
-}
-#endif
-
-#ifdef LSRHS_KLUDGERY
-deal_with_scroll()
-{
-	char	*pp;
-
-	pp = getenv("SCROLL");
-	if (!pp || !strcmp(pp, "smooth"))
-		putstr("\033[?4h");	/* Put in smooth scroll. */
 }
 #endif
 
@@ -471,7 +420,7 @@ register char	*argv[];
 	BUFFER	*secondbuf = 0;
 	register char	c;
 
-	message("Jonathan's Own Version of Emacs");
+	s_mess("Jonathan's Own Version of Emacs  (%s)", version);
 
 	*argv = (char *) 0;
 	argvp = argv + 1;
@@ -512,15 +461,6 @@ register char	*argv[];
 		SetBuf(firstbuf);
 }
 
-copy_n(f, t, n)
-register int	*f,
-		*t,
-		n;
-{
-	while (n--)
-		*f++ = *t++;
-}
-
 #ifdef lint
 Ignore(a)
 	char *a;
@@ -539,11 +479,12 @@ Ignorf(a)
 
 /* VARARGS1 */
 
-error(fmt, args)
+error(fmt, a, b, c, d)
 char	*fmt;
+char	*a, *b, *c, *d;
 {
 	if (fmt) {
-		format(mesgbuf, fmt, &args);
+		sprintf(mesgbuf, fmt, a, b, c, d);
 		UpdMesg++;
 	}
 	rbell();
@@ -552,11 +493,12 @@ char	*fmt;
 
 /* VARARGS1 */
 
-complain(fmt, args)
+complain(fmt, a, b, c, d)
 char	*fmt;
+char	*a, *b, *c, *d;
 {
 	if (fmt) {
-		format(mesgbuf, fmt, &args);
+		sprintf(mesgbuf, fmt, a, b, c, d);
 		UpdMesg++;
 	}
 	rbell();	/* Always ring the bell now */
@@ -565,24 +507,23 @@ char	*fmt;
 
 /* VARARGS1 */
 
-confirm(fmt, args)
+confirm(fmt, a, b, c, d)
 char	*fmt;
+char	*a, *b, *c, *d;
 {
 	char *yorn;
 
-	format(mesgbuf, fmt, &args);
+	sprintf(mesgbuf, fmt, a, b, c, d);
 	yorn = ask((char *)0, mesgbuf);
 	if (*yorn != 'Y' && *yorn != 'y')
 		longjmp(mainjmp, COMPLAIN);
 }
 
-#ifndef PROFILE
-exit(status)
+byebye(status)
 {
 	flusho();
-	_exit(status);
+	exit(status);
 }
-#endif
 
 Recurse()
 {
@@ -607,7 +548,7 @@ DoKeys(first)
 	register int	c;
 	jmp_buf	savejmp;
 
-	copynchar((char *) savejmp, (char *) mainjmp, sizeof savejmp);
+	bcopy((char *) mainjmp, (char *) savejmp, sizeof savejmp);
 
 	switch (setjmp(mainjmp)) {
 	case 0:
@@ -616,7 +557,7 @@ DoKeys(first)
 		break;
 
 	case QUIT:
-		copynchar((char *) mainjmp, (char *) savejmp, sizeof mainjmp);
+		bcopy((char *) savejmp, (char *) mainjmp, sizeof mainjmp);
 		return;
 
 	case ERROR:
@@ -697,17 +638,13 @@ char	*argv[];
 	curbuf = do_select(curwind, Mainbuf);
 
 	if ((StdShell = getenv("SHELL")) == 0)
-		StdShell = STDSHELL;
-	ignore(joverc(JOVERC));
+		StdShell = BinShell;
+	ignore(joverc(Joverc));
 	if (home = getenv("HOME"))
 		ignore(joverc(sprint("%s/.joverc", home)));
 
 	ttinit();	/* Initialize terminal (after ~/.joverc) */
 
-	if (IF)
-		dumpIF(IF);
-	if (IS)
-		putpad(IS, 1);
 	if (TI)
 		putpad(TI, 1);
 	if (VS)
@@ -716,23 +653,9 @@ char	*argv[];
 		putpad(KS, 1);
 	putpad(CL, 1);
 
-	copy_n(origflags, curbuf->b_flags, NFLAGS);
+	bcopy(curbuf->b_flags, origflags, NFLAGS*sizeof(int));
 	/* All new buffers will have these flags when created. */
 	RedrawDisplay();	/* Start the redisplay process */
 	DoKeys(1);
 	finish(0);
-}
-
-dumpIF(file)
-register char	*file;
-{
-	char	buf[100];
-	register int	fd;
-	register int	count;
-
-	if ((fd = open(file)) < 0)
-		return;
-	while ((count = read(fd, buf, 100)) > 0)
-		write (1, buf, count);
-	return;
 }
