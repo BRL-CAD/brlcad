@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./ged.h"
+
 int
 f_joint( argc, argv )
 int argc;
