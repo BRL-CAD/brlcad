@@ -590,12 +590,7 @@ struct mater_info *materp;
 		newmater = curmater;	/* struct copy -- modified below */
 
 		/* convert matrix to fastf_t from disk format */
-		{
-			register int k;
-
-			for( k=0; k<4*4; k++ )
-				xmat[k] = mp->m_mat[k];
-		}
+		rt_mat_dbmat( xmat, mp->m_mat );
 
 		/* Check here for animation to apply */
 		{
@@ -1100,6 +1095,70 @@ register int n;
 		*ff++ = *fp++;
 		ff += ELEMENTS_PER_VECT-3;
 	}
+}
+
+/*
+ *			R T _ M A T _ D B M A T
+ *
+ *  Convert TO fastf_t matrix FROM dbfloats (for database) 
+ */
+void
+rt_mat_dbmat( ff, dbp )
+register fastf_t *ff;
+register dbfloat_t *dbp;
+{
+
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+	*ff++ = *dbp++;
+}
+
+/*
+ *			R T _ D B M A T _ M A T
+ *
+ *  Convert FROM fastf_t matrix TO dbfloats (for updating database) 
+ */
+void
+rt_dbmat_mat( dbp, ff )
+register dbfloat_t *dbp;
+register fastf_t *ff;
+{
+
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
+	*dbp++ = *ff++;
 }
 
 /*
