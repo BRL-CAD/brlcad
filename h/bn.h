@@ -843,6 +843,21 @@ BU_EXTERN( void			bn_tabdata_add, (struct bn_tabdata *out,
 BU_EXTERN( void			bn_tabdata_mul, (struct bn_tabdata *out,
 					CONST struct bn_tabdata *in1,
 					CONST struct bn_tabdata *in2));
+BU_EXTERN( void			bn_tabdata_mul3, (struct bn_tabdata *out,
+					CONST struct bn_tabdata	*in1,
+					CONST struct bn_tabdata	*in2,
+					CONST struct bn_tabdata	*in3));
+BU_EXTERN( void			bn_tabdata_incr_mul3_scale,
+					(struct bn_tabdata *out,
+					CONST struct bn_tabdata	*in1,
+					CONST struct bn_tabdata	*in2,
+					CONST struct bn_tabdata	*in3,
+					double scale));
+BU_EXTERN( void			bn_tabdata_incr_mul2_scale,
+					(struct bn_tabdata *out,
+					CONST struct bn_tabdata	*in1,
+					CONST struct bn_tabdata	*in2,
+					double scale));
 BU_EXTERN( void			bn_tabdata_scale, (struct bn_tabdata *out,
 					CONST struct bn_tabdata *in1,
 					double scale));
@@ -851,6 +866,17 @@ BU_EXTERN( void			bn_table_scale, (struct bn_table *tabp,
 BU_EXTERN( void			bn_tabdata_join1, (struct bn_tabdata *out,
 					CONST struct bn_tabdata *in1,
 					double scale,
+					CONST struct bn_tabdata *in2));
+BU_EXTERN( void			bn_tabdata_join2, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in1,
+					double scale2,
+					CONST struct bn_tabdata *in2,
+					double scale3,
+					CONST struct bn_tabdata *in3));
+BU_EXTERN( void			bn_tabdata_blend2, (struct bn_tabdata *out,
+					double scale1,
+					CONST struct bn_tabdata *in1,
+					double scale2,
 					CONST struct bn_tabdata *in2));
 BU_EXTERN( void			bn_tabdata_blend3, (struct bn_tabdata *out,
 					double scale1,
@@ -876,6 +902,10 @@ BU_EXTERN( struct bn_tabdata	*bn_tabdata_resample_avg, (
 BU_EXTERN( int			bn_table_write, (CONST char *filename,
 					CONST struct bn_table *tabp));
 BU_EXTERN( struct bn_table	*bn_table_read, (CONST char *filename));
+BU_EXTERN( void			bn_pr_table, (CONST char *title,
+					CONST struct bn_table *tabp));
+BU_EXTERN( void			bn_pr_tabdata, (CONST char *title,
+					CONST struct bn_tabdata	*data));
 BU_EXTERN( int			bn_print_table_and_tabdata, (CONST char *filename,
 					CONST struct bn_tabdata *data));
 BU_EXTERN( struct bn_tabdata	*bn_read_table_and_tabdata, (
@@ -892,7 +922,18 @@ BU_EXTERN(struct bn_tabdata	*bn_tabdata_dup, (CONST struct bn_tabdata *in));
 BU_EXTERN(struct bn_tabdata	*bn_tabdata_get_constval, (double val,
 					CONST struct bn_table	*tabp));
 BU_EXTERN(void			bn_tabdata_constval, (struct bn_tabdata	*data, double val));
+BU_EXTERN( void			bn_tabdata_to_tcl, (struct bu_vls *vp,
+					CONST struct bn_tabdata	*data));
 BU_EXTERN(struct bn_tabdata	*bn_tabdata_from_array, (CONST double *array));
+BU_EXTERN( void			bn_tabdata_freq_shift, (struct bn_tabdata *out,
+					CONST struct bn_tabdata *in,
+					double offset));
+BU_EXTERN( int			bn_table_interval_num_samples,
+					(CONST struct bn_table *tabp,
+					double	low, double	hi));
+BU_EXTERN( int			bn_table_delete_sample_pts,
+					(struct bn_table *tabp,
+					int	i, int	j));
 BU_EXTERN(struct bn_table	*bn_table_merge2, (CONST struct bn_table *a,
 				CONST struct bn_table *b));
 BU_EXTERN(struct bn_tabdata	*bn_tabdata_mk_linear_filter,
