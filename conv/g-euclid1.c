@@ -576,6 +576,7 @@ union tree		*curtree;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
 	struct directory	*dir;
+	union tree		*ret_tree;
 
 	if( verbose )
 		rt_log( "do_region_end: regionid = %d\n" , tsp->ts_regionid );
@@ -655,7 +656,12 @@ union tree		*curtree;
 
 	(void)alarm( alarm_secs );
 
-	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	if( ret_tree )
+		r = ret_tree->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
 
 	(void)alarm( 0 );
 
