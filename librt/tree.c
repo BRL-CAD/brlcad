@@ -211,6 +211,9 @@ char *node;
 
 	root_mater = rt_no_mater;	/* struct copy */
 
+	if( (dp = rt_dir_lookup( rtip, node, LOOKUP_NOISY )) == DIR_NULL )
+		return(-1);		/* ERROR */
+
 	/* Process animations located at the root */
 	mat_idn( root );
 	if( rtip->rti_anroot )  {
@@ -218,16 +221,14 @@ char *node;
 		mat_t	temp_root, arc;
 
 		for( anp=rtip->rti_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
+			if( dp != anp->an_path[0] )
+				continue;
 			mat_copy( temp_root, root );
 			mat_idn( arc );
 			rt_do_anim( anp, temp_root, arc, &root_mater );
 			mat_mul( root, temp_root, arc );
 		}
 	}
-
-	dp = rt_dir_lookup( rtip, node, LOOKUP_NOISY );
-	if( dp == DIR_NULL )
-		return(-1);		/* ERROR */
 
 	curtree = rt_drawobj( rtip, dp, REGION_NULL, 0, root, &root_mater );
 	if( curtree != TREE_NULL )  {
