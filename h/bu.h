@@ -1059,6 +1059,12 @@ BU_EXTERN(void			bu_hist_range, (struct bu_hist *hp,
 BU_EXTERN(void			bu_hist_pr, (struct bu_hist *histp,
 				CONST char *title));
 
+/* htond.c */
+BU_EXTERN(void			htond, (unsigned char *out,
+				CONST unsigned char *in, int count));
+BU_EXTERN(void			ntohd, (unsigned char *out,
+				CONST unsigned char *in, int count));
+
 /* ispar.c */
 BU_EXTERN(int			bu_is_parallel, () );
 BU_EXTERN(void			bu_kill_parallel, () );
