@@ -4,6 +4,5 @@ proc _init_dm { func win } {
 }
 
 proc bind_dm { name } {
-puts "bind_dm: no default bindings"
 }
 
