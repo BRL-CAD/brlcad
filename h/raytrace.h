@@ -1335,6 +1335,8 @@ extern CONST double rt_halfpi;
 extern CONST double rt_invpi;
 extern CONST double rt_inv2pi;
 extern CONST double rt_inv255;
+extern CONST double rt_degtorad;
+extern CONST double rt_radtodeg;
 
 /*
  *  System library routines used by the RT library.
