@@ -128,7 +128,7 @@ set -S2 "/bin/sh"
 
 #ifdef vax
 /*	DEC VAX-11 systems */
-/*	4.3 BSD "Tahoe" */
+/*	4.3 BSD "Tahoe", or ULTRIX */
 #	undef	vax
 #	define	MTYPE	vax
 #	define	BSD	43
@@ -177,6 +177,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifdef i386
+/*	IBM PC or clone, probably running Xenix */
 #	define	MTYPE   at
 #	define	HAS_TCP 1
 #	define	LIBRT_TIMER	timerunix
@@ -283,7 +284,8 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(sgi) && !defined(mips)
-/*	Silicon Graphics 3D */
+/*	Silicon Graphics 3D product (e.g., 3030) */
+/*	OS Versions 3.5 and 3.6 only */
 #	undef	sgi
 #	define	MTYPE	3d
 #	define	HAS_TCP	1
@@ -297,38 +299,26 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	-DDM_IR
 /*		mged_config:  append -DMC68010 for non-turbo 2400 */
 /*		mged_config:  append -DNOBLOCK for XNS kernels */
-#	ifdef	Version3_4
-/*		This has not been tested */
-#		define	LIBPKG_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
-#		define	LIBPKG_SETUP	cp /usr/lib/libsocket.a PRODUCTS
-#		define	LIBFB_OBJS	if_remote sgiselect.o if_sgi
-#		define	LIBFB_LIBES	LIBPKG -lsocket -lgl2
-#		define	RFBD_CONFIG	-I/usr/include/EXOS -DSGI_EXCELAN
-#		define	MGED_LIBES	../libfb/sgiselect.o -lgl2
-#	else
-/*		Versions 3.5 and 3.6 */
-#		define	LIBSYSV_SETUP	( \
-			AR x /usr/lib/libbsd.a select.o getdtab.o; \
-			AR u libsysv.a select.o getdtab.o)
-#		define	LIBSYSV_OBJ	select.o
-#		define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
-#		define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
-#		define	LIBFB_OBJS	if_remote if_sgi
-#		define	LIBFB_LIBES	LIBPKG -lbsd -ldbm -lgl2
-#		define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
-#		define	MGED_LIBES	-lbsd -lgl2
-#	endif
+#	define	LIBSYSV_SETUP	( \
+		AR x /usr/lib/libbsd.a select.o getdtab.o; \
+		AR u libsysv.a select.o getdtab.o)
+#	define	LIBSYSV_OBJ	select.o
+#	define	LIBPKG_CONFIG	-I/usr/include/bsd -DBSD=42
+#	define	LIBPKG_SETUP	cp /usr/lib/libbsd.a PRODUCTS
+#	define	LIBFB_OBJS	if_remote if_sgi
+#	define	LIBFB_LIBES	LIBPKG -lbsd -ldbm -lgl2
+#	define	RFBD_CONFIG	-I/usr/include/bsd -DBSD=42
+#	define	MGED_LIBES	-lbsd -lgl2
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SGI
 #	define	LIBRT_TIMER	timerunix
 #endif
 
 #if defined(sgi) && defined(mips)
 /*	Silicon Graphics 4D, which uses the MIPS chip */
-/*
  *	NOTE:  "IRIX 3.3 and 3.3.1" are the ONLY software releases supported.
  *	NOTE:  If the shared library is used, then all machine types can
  *	use the same binary programs, and no type discrimination is
- *	necessary.  However, this prevents PIXIE from working...
+ *	necessary.  However, this prevents PIXIE from being used...
  */
 #	undef	sgi
 #	define	MTYPE	4d
@@ -394,7 +384,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(sun) && !defined(sparc)
-/*	SunOS 3.4, SunOS 4.0 */
+/*	Sun-3 hardware, SunOS 3.4, SunOS 4.0 */
 #	undef	sun
 #	undef	sun3
 #	define	MTYPE	sun3
@@ -457,6 +447,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(sparc)
+/*	Sun-4 "SparcStation" hardware */
 #	undef	sun
 #	undef	sun4
 #	define	MTYPE	sun4
@@ -499,7 +490,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(CRAY1)
-/*	Cray X-M/P running UNICOS 5.0 only */
+/*	Cray 1, X-M/P or Y-M/P running UNICOS 5 only */
 #	undef	xmp
 #	undef	cray
 #	define	MTYPE	xmp
@@ -510,7 +501,7 @@ set -S2 "/bin/sh"
 /*		 -hreport=v gives vectorization report */
 /*		 -hmsglevel_0 gives full warnings, as well as errors */
 #		define	CC	/bin/scc
-#		define CC_DEFS	-hmsglevel_0
+#		define	CC_DEFS	-hmsglevel_0
 #	else
 #		if 1
 /*			Plain old /bin/cc */
