@@ -1772,6 +1772,6 @@ int ymin, ymax;
 			scanbuf[x][BLU] = (*pp)[BLU];
 		}
 		/*printf("Write Scan %d pixels @ S(%d,%d)\n", sxlen, sxmin, sy);*/
-		X_scanwrite( ifp, sxmin, sy, scanbuf, sxlen, 0 );
+		X_scanwrite( ifp, sxmin, sy, &scanbuf[0][0], sxlen, 0 );
 	}
 }
