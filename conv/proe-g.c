@@ -282,7 +282,7 @@ char line[MAX_LINE_LEN];
 	struct vertex   **vts[3];
 	struct nmg_ptbl faces;
 	float colr[3];
-	char color[3];
+	unsigned char color[3];
 	char *brlcad_name;
 	struct wmember head;
 	struct wmember *wmem;
@@ -450,7 +450,8 @@ char line[MAX_LINE_LEN];
 	if( debug )
 		rt_log( "\tMake region (%s)\n" , brlcad_name );
 
-	mk_lrcomb( stdout , brlcad_name , &head , 1 , (char *)NULL , (char *)NULL , color , id_no , 0 , 1 , 100 , 0 );
+	mk_lrcomb( stdout, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
+	color, id_no, 0, 1, 100, 0 );
 	id_no++;
 }
 
