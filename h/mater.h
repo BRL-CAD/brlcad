@@ -22,7 +22,6 @@
 struct mater {
 	short		mt_low;		/* bounds of region IDs, inclusive */
 	short		mt_high;
-	short		mt_dm_int;	/* internal to Display Manager */
 	unsigned char	mt_r;		/* color */
 	unsigned char	mt_g;
 	unsigned char	mt_b;
