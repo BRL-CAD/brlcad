@@ -27,6 +27,7 @@ HIDDEN union cutter *cut_get();
 
 #define AXIS(depth)	((depth>>1)%3)	/* cuts: X, X, Y, Y, Z, Z, repeat */
 
+static void space3(), plot_color(), move3(), cont3();
 static FILE *plotfp;
 
 /*
@@ -504,6 +505,7 @@ register vect_t a, b;
  *  so we have to include the necessary sources here.
  */
 #define putsi(a)	putc(a&0377,plotfp); putc((a>>8)&0377,plotfp)
+static void
 space3(x0,y0,z0,x1,y1,z1){
 	putc('S',plotfp);
 	putsi(x0);
@@ -517,6 +519,7 @@ space3(x0,y0,z0,x1,y1,z1){
  *	plot_color -- deposit color selection in UNIX plot output file
  *	04-Jan-1984	D A Gwyn
  */
+static void
 plot_color( r, g, b )
 int	r, g, b;		/* color components, 0..255 */
 {
@@ -525,12 +528,14 @@ int	r, g, b;		/* color components, 0..255 */
 	putc( g, plotfp );
 	putc( b, plotfp );
 }
+static void
 move3(xi,yi,zi){
 	putc('M',plotfp);
 	putsi(xi);
 	putsi(yi);
 	putsi(zi);
 }
+static void
 cont3(xi,yi,zi){
 	putc('N',plotfp);
 	putsi(xi);
