@@ -64,6 +64,7 @@ ssampview_SOURCES = \
 	spectrum.c \
 	ssampview.c
 
+ssampview_CFLAGS = @X_CFLAGS@
 ssampview_LDADD = \
 	$(TK) \
 	$(LDADD)
