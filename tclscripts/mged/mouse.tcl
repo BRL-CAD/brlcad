@@ -44,7 +44,7 @@ proc mouse_get_spath { x y } {
 	set screen [winfo screen $win]
     }
 
-    create_listbox $top $screen Solid $paths "destroy $top"
+    create_listbox $top $screen Solid $paths "mouse_spath_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
@@ -56,11 +56,20 @@ proc mouse_get_spath { x y } {
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end; _mged_press reject; break"
 
+    wm protocol $top WM_DELETE_WINDOW "mouse_spath_destroy $id $top"
+
     while {$mged_gui($id,mgs_path) == ""} {
 	mged_update 0
     }
 
     return $mged_gui($id,mgs_path)
+}
+
+proc mouse_spath_destroy { id top } {
+    global mged_gui
+
+    set mged_gui($id,mgs_path) " "
+    destroy $top
 }
 
 proc mouse_get_spath_and_pos { x y } {
@@ -71,7 +80,7 @@ proc mouse_get_spath_and_pos { x y } {
 
     set mged_gui($id,mgs_path) [mouse_get_spath $x $y]
 
-    if {$mged_gui($id,mgs_path) == ""} {
+    if {$mged_gui($id,mgs_path) == "" || $mged_gui($id,mgs_path) == " "} {
 	return ""
     }
 
@@ -85,7 +94,7 @@ proc mouse_get_spath_and_pos { x y } {
     }
     regexp "\[^/\].*" $mged_gui($id,mgs_path) match
     set path_components [split $match /]
-    create_listbox $top $screen Matrix $path_components "destroy $top"
+    create_listbox $top $screen Matrix $path_components "mouse_spath_and_pos_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
@@ -99,11 +108,21 @@ proc mouse_get_spath_and_pos { x y } {
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end; _mged_press reject; break"
 
+    wm protocol $top WM_DELETE_WINDOW "mouse_spath_and_pos_destroy $id $top"
+
     while {$mged_gui($id,mgs_pos) == -1} {
 	mged_update 0
     }
 
     return "$mged_gui($id,mgs_path) $mged_gui($id,mgs_pos)"
+}
+
+proc mouse_spath_and_pos_destroy { id top } {
+    global mged_gui
+
+    set mged_gui($id,mgs_pos) -2
+    set mged_gui($id,mgs_path) ""
+    destroy $top
 }
 
 proc mouse_get_comb { x y } {
@@ -146,7 +165,7 @@ proc mouse_get_comb { x y } {
 	set screen [winfo screen $win]
     }
 
-    create_listbox $top $screen Combination $combs "destroy $top"
+    create_listbox $top $screen Combination $combs "mouse_comb_destroy $id $top"
     set mged_gui($id,edit_menu) $top
 
     bind_listbox $top "<ButtonPress-1>"\
@@ -161,6 +180,8 @@ proc mouse_get_comb { x y } {
 	    "%W selection clear 0 end;\
 	    _mged_press reject; break"
 
+    wm protocol $top WM_DELETE_WINDOW "mouse_comb_destroy $id $top"
+
     while {$mged_gui($id,mgc_comb) == ""} {
 	mged_update 0
     }
@@ -168,12 +189,19 @@ proc mouse_get_comb { x y } {
     return $mged_gui($id,mgc_comb)
 }
 
+proc mouse_comb_destroy { id top } {
+    global mged_gui
+
+    set mged_gui($id,mgc_comb) " "
+    destroy $top
+}
+
 proc mouse_solid_edit_select { x y } {
     global mged_players
     global mged_gui
 
     set spath [mouse_get_spath $x $y]
-    if {$spath == ""} {
+    if {$spath == "" || $spath == " "} {
 	return
     }
 
@@ -211,7 +239,7 @@ proc mouse_comb_edit_select { x y } {
     global comb_control
 
     set comb [mouse_get_comb $x $y]
-    if {$comb == ""} {
+    if {$comb == "" || $comb == " "} {
 	return
     }
 
