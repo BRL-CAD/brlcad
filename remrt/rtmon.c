@@ -148,7 +148,10 @@ int	fd;
 	bu_vls_printf( &str, " pub_cpu %d", bu_get_public_cpus() );
 	bu_vls_printf( &str, " load %g", bu_get_load_average() );
 	bu_vls_printf( &str, " realt %d", bu_set_realtime() );
+#if 0
+	/* Don't really need this, just a curiosity number */
 	bu_vls_printf( &str, " 1cpu_speed %g", bu_get_1cpu_speed() );
+#endif
 
 	bu_vls_putc( &str, '\n' );
 
