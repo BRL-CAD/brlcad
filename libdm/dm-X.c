@@ -1163,7 +1163,7 @@ X_configureWin(dmp)
 struct dm *dmp;
 {
   /* don't force */
-  _X_configureWin(dmp, 0);
+  return _X_configureWin(dmp, 0);
 }
 
 HIDDEN int

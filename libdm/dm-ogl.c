@@ -1508,7 +1508,7 @@ HIDDEN int
 ogl_configureWin(dmp)
 struct dm *dmp;
 {
-  _ogl_configureWin(dmp, 0);
+  return _ogl_configureWin(dmp, 0);
 }
 
 HIDDEN int
