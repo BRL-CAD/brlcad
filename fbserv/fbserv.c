@@ -300,6 +300,82 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+/*
+ *			R F B R E A D R E C T
+ */
+void
+rfbreadrect(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	xmin, ymin;
+	int	width, height;
+	int	num;
+	int	ret;
+	static char	*scanbuf = NULL;
+	static int	buflen = 0;
+
+	xmin = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ymin = pkg_glong( &buf[1*NET_LONG_LEN] );
+	width = pkg_glong( &buf[2*NET_LONG_LEN] );
+	height = pkg_glong( &buf[3*NET_LONG_LEN] );
+	num = width * height;
+
+	if( num*sizeof(RGBpixel) > buflen ) {
+		if( scanbuf != NULL )
+			free( scanbuf );
+		buflen = num*sizeof(RGBpixel);
+		if( buflen < 1024*sizeof(RGBpixel) )
+			buflen = 1024*sizeof(RGBpixel);
+		if( (scanbuf = malloc( buflen )) == NULL ) {
+#ifdef CRAY
+			rfbd_log("fb_read: malloc failed!");
+#else
+			fb_log("fb_read: malloc failed!");
+#endif
+			if( buf ) (void)free(buf);
+			buflen = 0;
+			return;
+		}
+	}
+
+	ret = fb_readrect( fbp, xmin, ymin, width, height, scanbuf );
+	if( ret < 0 )  ret = 0;		/* map error indications */
+	/* sending a 0-length package indicates error */
+	pkg_send( MSG_RETURN, scanbuf, ret*sizeof(RGBpixel), pcp );
+	if( buf ) (void)free(buf);
+}
+
+/*
+ *			R F B W R I T E R E C T
+ */
+void
+rfbwriterect(pcp, buf)
+struct pkg_conn *pcp;
+char *buf;
+{
+	int	x, y;
+	int	width, height;
+	char	rbuf[NET_LONG_LEN+1];
+	int	ret;
+	int	type;
+
+	x = pkg_glong( &buf[0*NET_LONG_LEN] );
+	y = pkg_glong( &buf[1*NET_LONG_LEN] );
+	width = pkg_glong( &buf[2*NET_LONG_LEN] );
+	height = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	type = pcp->pkc_type;
+	ret = fb_writerect( fbp, x, y, width, height,
+		(RGBpixel *)&buf[4*NET_LONG_LEN] );
+
+	if( type < MSG_NORETURN ) {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
 void
 rfbcursor(pcp, buf)
 struct pkg_conn *pcp;
