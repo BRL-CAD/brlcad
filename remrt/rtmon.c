@@ -306,6 +306,7 @@ char *find_paths[] = {
 	"/vld/mike",
 	"/vld/butler",
 	"/r/mike",
+	"/home/army/mike/SGI/cad",
 	NULL
 };
 
@@ -337,7 +338,7 @@ char	**argv;
 
 	for( pp = find_paths; *pp != NULL; pp++ )  {
 		if( chdir(*pp) < 0 )  {
-			perror(*pp);
+			if(debug)  perror(*pp);
 			continue;
 		}
 		if( access( argv[1], R_OK ) )  continue;
