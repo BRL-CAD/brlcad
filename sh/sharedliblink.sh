@@ -31,6 +31,6 @@ TWONUM=$BASE.1			# Minor version 1
 if test "$BASE" != "$NONUM"
 then
 	rm -f $NONUM $TWONUM
-	ln -s $ONENUM $NONUM
-	ln -s $ONENUM $TWONUM
+	ln -s $BASE $NONUM
+	ln -s $BASE $TWONUM
 fi
