@@ -1256,3 +1256,14 @@ struct application	*ap; /* pointer to an application */
 		}
 	}
 }
+
+/*
+ *			R T _ P R _ L I B R A R Y _ V E R S I O N
+ *
+ *  In case anyone actually cares, print out library's compilation version.
+ */
+void
+rt_pr_library_version()
+{
+	rt_log("%s", rt_version);
+}
