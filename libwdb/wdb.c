@@ -50,6 +50,29 @@ char	*title;
 }
 
 /*
+ *			M K _ H A L F
+ *
+ *  Make a halfspace.  Specified by distance from origin, and
+ *  outward pointing normal vector.
+ */
+mk_half( fp, name, d, norm )
+FILE	*fp;
+char	*name;
+double	d;
+point_t	norm;
+{
+	static union record rec;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.s.s_id = ID_SOLID;
+	rec.s.s_type = HALFSPACE;
+	NAMEMOVE( name, rec.s.s_name );
+	VMOVE( rec.s.s_values, norm );
+	rec.s.s_values[3] = d;
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+}
+
+/*
  *			M K _ R P P
  *
  *  Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
