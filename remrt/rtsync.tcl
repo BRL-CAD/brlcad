@@ -21,8 +21,8 @@ set suny 0
 set sunz 0
 
 puts "running rtsync.tcl"
-option add *background #ffffff
-. configure -background #ffffff
+##option add *background #ffffff
+##. configure -background #ffffff
 
 # Create main interaction widget
 frame .mbar -relief raised -bd 2 ; pack .mbar -side top
@@ -34,13 +34,17 @@ frame .button_fr ; pack .button_fr -side top
 
 # Menu bar, acros very top
 menubutton .mbar.file -text "File" -menu .mbar.file.menu
+menubutton .mbar.debug -text "Debug" -menu .mbar.debug.menu
 menubutton .mbar.help -text "Help" -menu .mbar.help.menu
 pack .mbar.file -side left -in .mbar -expand 1 -fill x
+pack .mbar.debug -side left -in .mbar -expand 1 -fill x
 pack .mbar.help -side right -in .mbar -expand 1 -fill x
 menu .mbar.file.menu
 .mbar.file.menu add command -label "Exit" -command "exit"
 menu .mbar.help.menu
 .mbar.help.menu add command -label "Exit" -command "exit"
+menu .mbar.debug.menu
+.mbar.debug.menu add command -label "Net Speed Test" -command "net_speed_test"
 
 # Title, across the top
 frame .words_fr
@@ -125,6 +129,11 @@ proc apply_color {} {
 
 	# Send 'refresh' command to MGED to get pov message sent back to us.
 	vrmgr_send refresh
+}
+
+proc net_speed_test {} {
+	node_send \
+		set test_fb_speed 1
 }
 
 puts "done rtsync.tcl"
