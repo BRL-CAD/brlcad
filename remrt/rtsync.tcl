@@ -67,7 +67,7 @@ frame .status.incr_fr
 frame .status.update_fr
 button .status.button -text "Update CPU Status" -command update_cpu_status
 checkbutton .status.checkbutton -variable update_status_every_frame
-label .status.checklabel -text "Continuously"
+label .status.checklabel -text "Continuous"
 button .status.incr -text "NCPU++" -command \
 	{cur_node_send {global npsw; incr npsw 1; set npsw}}
 button .status.decr -text "NCPU--" -command \
@@ -80,11 +80,13 @@ label .status.global1 -textvariable cur_global1_status
 label .status.global2 -textvariable cur_global2_status
 label .status.global3 -textvariable cur_global3_status
 label .status.global4 -textvariable cur_global4_status
+label .status.global5 -textvariable cur_global5_status
 pack .status.button .status.checkbutton .status.checklabel \
 	-side left -in .status.update_fr
 pack .status.incr .status.decr .status.drop -side left -in .status.incr_fr
 pack .status.update_fr .status.incr_fr .status.list \
-	.status.global1 .status.global2 .status.global3 .status.global4 \
+	.status.global1 .status.global2 .status.global3 \
+	.status.global4 .status.global5 \
 	-side top -in .status
 	
 
@@ -95,11 +97,13 @@ proc update_cpu_status {} {
 	global	cur_global2_status
 	global	cur_global3_status
 	global	cur_global4_status
+	global	cur_global5_status
 
 	set cur_global1_status [get_stats -1]
 	set cur_global2_status [get_stats -2]
 	set cur_global3_status [get_stats -3]
 	set cur_global4_status [get_stats -4]
+	set cur_global5_status [get_stats -5]
 
 	set nodes [list_rtnodes]
 

@@ -212,6 +212,7 @@ fastf_t		average_mbps = 0;	/* mbps */
 fastf_t		burst_mbps = 0;		/* mbps -- a lower bound */
 int		network_overhead = 0;	/* integer percentage */
 char		last_host_done[32];	/* short ident of last host done */
+double		variation;		/* slowest -vs- fastest */
 
 static fd_set	select_list;			/* master copy */
 static int	max_fd;
@@ -654,7 +655,6 @@ char **argv;
  *	-2	Get summary line rtsync stats, like what's printed per frame.
  *	-1	Get overall rtsync time-breakdown stats, in ms.
  *	0..n	Get rtnode-specific stats for indicated node.
- * XXX -3:  rtsync HOST fb $FB_FILE vrmgr $HOST db DATABASE
  */
 int
 get_stats( clientData, interp, argc, argv )
@@ -696,17 +696,29 @@ char **argv;
 		bu_vls_init(&str);
 		/* All values reported in ms */
 		bu_vls_printf(&str,
-			"mbps %.1f net%% %d rt_min %.1f rt_max %.1f last %s",
-			burst_mbps,
-			network_overhead,
+			"rt_min %.1f rt_max %.1f tot_min %.1f tot_max %.1f",
+			ms_total_min,
+			ms_total_max,
 			ms_rt_min,
-			ms_rt_max,
-			last_host_done
+			ms_rt_max
 		    );
 		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 		bu_vls_free(&str);
 		return TCL_OK;
 	case -3:
+		bu_vls_init(&str);
+		/* All values reported in ms */
+		bu_vls_printf(&str,
+			"mbps %.1f net%% %d var %.1f last %s",
+			burst_mbps,
+			network_overhead,
+			variation,
+			last_host_done
+		    );
+		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+		bu_vls_free(&str);
+		return TCL_OK;
+	case -4:
 		bu_vls_init(&str);
 		bu_vls_printf(&str,
 			"rtsync %s vrmgr %s fb %s",
@@ -716,7 +728,7 @@ char **argv;
 		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
 		bu_vls_free(&str);
 		return TCL_OK;
-	case -4:
+	case -5:
 		bu_vls_init(&str);
 		bu_vls_strcat(&str, database);
 		bu_vls_putc(&str, ' ');
@@ -1717,7 +1729,6 @@ char			*buf;
 	int		sched_update = 0;
 	int		last_i;
 	long		total_bits;
-	double		variation;
 
 	blend2 = 1 - blend1;	/* blend1 may change via Tcl interface */
 
