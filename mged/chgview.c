@@ -603,7 +603,7 @@ f_aeview(argc, argv)
 int	argc;
 char	**argv;
 {
-	setview( 270 + atoi(argv[2]), 0, 270 - atoi(argv[1]) );
+	setview( 270.0 + atof(argv[2]), 0.0, 270.0 - atof(argv[1]) );
 }
 
 void
