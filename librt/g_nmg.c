@@ -215,6 +215,9 @@ struct seg		*seghead;	/* intersection w/ ray */
 	/* build the segment lists */
 	status = nmg_ray_segs(&rd);
 
+	/* free the hitmiss table */
+	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
+
 	return(status);
 }
 
