@@ -187,7 +187,7 @@ must not exist by this name."}}\
 		cad_dialog .$id.uncool $mged_gui($id,screen) "Error" \
 			$msg info 0 OK
 	    } else {
-		cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
+		cad_dialog .$id.cool $mged_gui($id,screen) "File created" \
 			$msg info 0 OK
 	    }
 	}
