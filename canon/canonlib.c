@@ -317,7 +317,8 @@ ipu_delete_file(struct dsreq *dsp,
 
 /*	I P U _ G E T _ I M A G E
  *
- *	copy image from IPU to host computer
+ *	Copy image fragment from IPU buffer to host computer.
+ *	No format conversion is performed
  */
 u_char *
 ipu_get_image(struct dsreq *dsp, 
@@ -326,6 +327,7 @@ ipu_get_image(struct dsreq *dsp,
 	      int w, int h)	/* width/height of image portion to retrieve */
 {
 	register u_char *p;
+	u_char		*img;
 	int size;
 	int i;
 
@@ -343,12 +345,12 @@ ipu_get_image(struct dsreq *dsp,
 
 	size = w * h * 3;
 
-	if ((p = malloc( size )) == NULL) {
+	if ((img = malloc( size )) == NULL) {
 		fprintf(stderr, "malloc error\n");
 		exit(-1);
 	}
 
-	filldsreq(dsp, p, size, DSRQ_READ|DSRQ_SENSE);
+	filldsreq(dsp, img, size, DSRQ_READ|DSRQ_SENSE);
 	if ( i=doscsireq(getfd(dsp), dsp) )  {
 		fprintf(stderr, "get_image(%d, %d,%d, %d,%d) failed\n",
 			(int)id, sx, sy, w, h);
@@ -356,14 +358,63 @@ ipu_get_image(struct dsreq *dsp,
 		exit(-1);
 	}
 
-	return(p);
+	return img;
 }
 
+
+/*
+ *			I P U _  P U T _ I M A G E _ F R A G
+ *
+ *  Write image fragment from host to IPU buffer, in IPU format.
+ *  The amount to be sent must be small enough to fit in a single
+ *  SCSI transfer of 256k bytes.
+ *  No format conversion is performed.
+ */
+void
+ipu_put_image_frag(struct dsreq *dsp, 
+	      char id, 		/* file  id */
+	      int sx, int sy, 	/* upper left corner of image */
+	      int w, int h,	/* width/height of image portion to retrieve */
+	      u_char *img)
+{
+	u_char	*p;
+	int	i;
+	int	nbytes;
+
+	bzero(p=(u_char *)CMDBUF(dsp), 16);
+	p[0] = 0xc2;			/* put image */
+	p[2] = id;			/* file id */
+	toshort(&p[3], sx);
+	toshort(&p[5], sy);
+	toshort(&p[7], w);		/* ipu img width */
+	toshort(&p[9], h);		/* ipu img height */
+	CMDLEN(dsp) = 12;
+
+	nbytes = w * ipu_bytes_per_pixel * h;
+	if( nbytes > (256 * 1024 - 2) )  {
+		fprintf(stderr, "ipu_put_image_frag() nbytes=%d exceeds SCSI maximum transfer\n");
+		return;
+	}
+
+	filldsreq(dsp, img, nbytes, DSRQ_WRITE|DSRQ_SENSE);
+
+	if ( i=doscsireq(getfd(dsp), dsp) )  {
+		fprintf(stderr,
+		    "\nipu_put_image_frag(%d, %d,%d, %d,%d) failed\n",
+		    (int)id, sx, sy, w, h);
+		scsi_perror(i, dsp);
+		exit(-1);
+	} else if ( ipu_debug )  {
+		fprintf(stderr, "buffer y=%d  \r", sy);
+	}
+}
 
 
 /*	I P U _ P U T _ I M A G E
  *
- *	load a BRLCAD PIX(5) image into an IPU file
+ *	load a BRLCAD PIX(5) image into an IPU file.
+ *	The entire image must be memory resident.
+ *	Format conversion is performed.
  *
  *	Parameters
  *
@@ -378,7 +429,7 @@ ipu_put_image(struct dsreq *dsp,
 	      int w, int h, 
 	      u_char *img)
 {
-	u_char *ipubuf, *p;
+	u_char *ipubuf;
 	int saved_debug;
 	int i;
 
@@ -423,13 +474,6 @@ ipu_put_image(struct dsreq *dsp,
 			perror("gettimeofday()");
 	}
 
-	bzero(p=(u_char *)CMDBUF(dsp), 16);
-	p[0] = 0xc2;			/* put image */
-	p[2] = id;			/* file id */
-	toshort(&p[7], w);		/* ipu img width */
-	toshort(&p[9], lines_per_buf);	/* ipu img height */
-	CMDLEN(dsp) = 12;
-
 	img_line = 0;
 	for (buf_no=0 ; buf_no < fullbuffers ; buf_no++) {
 		/* fill a full buffer */
@@ -459,21 +503,11 @@ ipu_put_image(struct dsreq *dsp,
 			}
 		}
 
-		/* send buffer to IPU */
-		toshort(&p[5], h-img_line);	/* sy */
-		filldsreq(dsp, ipubuf, bytes_per_buf, DSRQ_WRITE|DSRQ_SENSE);
-
 		if (dsdebug)
 			fwrite(ipubuf, bytes_per_buf, 1, fd);
 
-		if ( i=doscsireq(getfd(dsp), dsp) )  {
-			fprintf(stderr,
-			    "\nput_image(%d, %d,%d) buffer %d failed\n",
-			    (int)id, w, h, buf_no);
-			scsi_perror(i, dsp);
-			exit(-1);
-		} else if ( ipu_debug )
-			fprintf(stderr, "buffer %d of %d\r", buf_no, fullbuffers);
+		/* send buffer to IPU */
+		ipu_put_image_frag(dsp, id, 0, h-img_line, w, lines_per_buf, ipubuf);
 	}
 
 
@@ -508,31 +542,15 @@ ipu_put_image(struct dsreq *dsp,
 			}
 		}
 
-		/* send buffer to IPU
-		 * y offset is implicitly 0
-		 */
-		bzero(p=(u_char *)CMDBUF(dsp), 16);
-		p[0] = 0xc2;			/* put image */
-		p[2] = id;			/* file id */
-		toshort(&p[7], w);		/* ipu img width */
-		p[10] = orphan_lines;		/* ipu img height */
-		CMDLEN(dsp) = 12;
-
-
-		filldsreq(dsp, ipubuf, orphan_lines*bytes_per_line,
-			DSRQ_WRITE|DSRQ_SENSE);
-
 		if (dsdebug)
 			fwrite(ipubuf, orphan_lines*bytes_per_line, 1, fd);
 
-		if ( i=doscsireq(getfd(dsp), dsp) )  {
-			fprintf(stderr,
-			    "\nipu_put_image(%d, %d,%d) orphan_lines failed\n",
-			    (int)id, w, h);
-			scsi_perror(i, dsp);
-			exit(-1);
-		} else if ( ipu_debug )
-			fprintf(stderr, "orphan_lines written\n");
+		/* send buffer to IPU
+		 * y offset is implicitly 0
+		 */
+		ipu_put_image_frag(dsp, id, 0, 0, w, orphan_lines, ipubuf);
+		if (ipu_debug)
+			fprintf(stderr, "\n");
 	}
 
 	if (tp1.tv_sec && ipu_debug) {
