@@ -46,6 +46,19 @@ struct tree_list {
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
 /*
+ *			D B _ F U L L _ P A T H _ I N I T
+ */
+void
+db_full_path_init( pathp )
+struct db_full_path	*pathp;
+{
+	pathp->fp_len = 0;
+	pathp->fp_maxlen = 0;
+	pathp->fp_names = (struct directory **)NULL;
+	pathp->magic = DB_FULL_PATH_MAGIC;
+}
+
+/*
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -55,9 +68,13 @@ register CONST struct db_full_path	*pathp;
 {
 	struct combined_tree_state	*new;
 
+	RT_CK_FULL_PATH(pathp);
+	RT_CK_DBI(tsp->ts_dbip);
+
 	GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = *tsp;		/* struct copy */
+	db_full_path_init( &(new->cts_p) );
 	db_dup_full_path( &(new->cts_p), pathp );
 	return new;
 }
@@ -75,6 +92,7 @@ CONST struct combined_tree_state	*old;
 	GETSTRUCT( new, combined_tree_state );
 	new->magic = RT_CTS_MAGIC;
 	new->cts_s = old->cts_s;	/* struct copy */
+	db_full_path_init( &(new->cts_p) );
 	db_dup_full_path( &(new->cts_p), &(old->cts_p) );
 	return new;
 }
@@ -345,6 +363,7 @@ int			noisy;
 	struct directory	*dp;		/* element's dp */
 
 	RT_CHECK_DBI( tsp->ts_dbip );
+
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
@@ -674,6 +693,8 @@ struct combined_tree_state	**region_start_statepp;
 	union tree		*curtree = TREE_NULL;
 
 	RT_CHECK_DBI( tsp->ts_dbip );
+	RT_CK_FULL_PATH(pathp);
+
 	if( pathp->fp_len <= 0 )  {
 		rt_log("db_recurse() null path?\n");
 		return(TREE_NULL);
@@ -1261,6 +1282,9 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 {
 
+	RT_CK_DBI(tsp->ts_dbip);
+	RT_CK_FULL_PATH(pathp);
+
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;
 	curtree->tr_c.tc_ctsp = db_new_combined_tree_state( tsp, pathp );
@@ -1275,6 +1299,9 @@ struct rt_external	*ext;
 int			id;
 {
 	register union tree	*curtree;
+
+	RT_CK_DBI(tsp->ts_dbip);
+	RT_CK_FULL_PATH(pathp);
 
 	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;
@@ -1477,7 +1504,7 @@ union tree *	(*leaf_func)();
 
 		ts = *init_state;	/* struct copy */
 		ts.ts_dbip = dbip;
-		path.fp_len = path.fp_maxlen = 0;
+		db_full_path_init( &path );
 
 		/* First, establish context from given path */
 		if( db_follow_path_for_state( &ts, &path, argv[i], LOOKUP_NOISY ) < 0 )
