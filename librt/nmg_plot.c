@@ -1354,7 +1354,7 @@ struct faceuse	*fu1;
 	long	*tab;
 
 	if(rt_g.NMG_debug & DEBUG_PLOTEM &&
-	   rt_g.NMG_debug & DEBUG_COMBINE ) do_plot = 1;
+	   rt_g.NMG_debug & DEBUG_FCUT ) do_plot = 1;
 	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
 
 	if( !do_plot && !do_anim )  return;
