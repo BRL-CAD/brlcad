@@ -57,7 +57,7 @@ cd brlcad/regress
 cp nightly.sh ../..
 
 if [ "x$TASK" = "xmaster" ] ; then
-    ./master.sh -C -d /c/regress -r /c/CVS
+    ./master.sh -C -d /c/regress -c /usr/gnu/bin/cvs -r /c/CVS
     echo "DONE RUNNING MASTER"
 elif [ "x$TASK" = "xstatus" ] ; then
     ./status.sh -d /c/regress -a morrison@arl.army.mil
