@@ -1,0 +1,36 @@
+/*
+ *			burst/Cakefile
+ *
+ *	Author:		Gary S. Moss
+ *			U. S. Army Ballistic Research Laboratory
+ *			Aberdeen Proving Ground
+ *			Maryland 21005-5066
+ *			(301)278-6651 or AV-298-6651
+ *
+ *	$Header$ (BRL)
+ *
+ * FONTDIR is pathname to font file (times.r.6) which is included with sources
+ * but on real BSD systems is found in /usr/lib/vfont.
+ */
+#define CONFIGDEFS	LGT_CONFIG -D_LOCAL_= -I.
+
+#define SRCDIR	burst
+#define PRODUCTS	burst
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	burst error fb glob grid gridrotate idents\
+		paint plot prnt trie ui
+#define MYLIBES	Hm/libHm.a Sc/libSc.a Tc/libTc.a
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+burst:	OBJ
+	CC LDFLAGS -o burst OBJ LIBRT RT_LIBES LIBFB LIBTERMLIB LIBES MYLIBES	-ltermlib -lm
+
+test:	burst
+	./burst -b < tfiles/ktank.in
+
+#include "../Cakefile.rules"
