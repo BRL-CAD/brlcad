@@ -14,6 +14,9 @@ mac-pix \- convert Apple MacPaint bitmap into pix(5) or bw(5) raster image
 .RB [ \-S\  squareOutputSize]
 .RB [ \-W\  output_width]
 .RB [ \-N\  output_height]
+.RB [ \-R\  intensity]
+.RB [ \-G\  intensity]
+.RB [ \-B\  intensity]
 [file.mac]
 .SH DESCRIPTION
 .I Mac-pix
@@ -32,7 +35,15 @@ flags;  the usefulness of this is unknown.
 By default, the output
 .IR pix (5)
 file is 1024x1024 pixels, with the input image located in the lower
-left corner of the output (nearest the origin).
+left corner of the output (nearest the origin).  The default color for
+an "on" pixel is white (R=G=B=256); alternatively, the 
+.B \-R
+,
+.B \-G
+, and 
+.B \-B
+flags can be used to specify intensities for each of the colors, in 
+the range of [0..256].
 The
 .B \-b
 flag will output a
