@@ -886,12 +886,13 @@ int	n;
  *      Cb Y Cr Y Cb Y Cr Y ...
  *  If we are at an even pixel, we use the Cr value following it.  If
  *  we are at an odd pixel, we use the Cb value following it.
+ *
+ *  Y:      16 .. 235 range, offset by 16
+ *  U, V: -112 .. +112 range, centered on 128
  */
 
-#define	VSET(v,a,b,c)	{v[0] = a; v[1] = b; v[2] = c;}
 #define	VDOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 #define	V5DOT(a,b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
-#define	SHIFTUP(v,n)	{v[4]=v[3]; v[3]=v[2]; v[2]=v[1]; v[1]=v[0]; v[0]=n;}
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
 #define	CLIP(v)		(v<0?0:v>255?255:v)
 
@@ -906,22 +907,18 @@ static double	y_filter[] = { -0.05674, 0.01883, 1.07582, 0.01883, -0.05674 };
 static double	u_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
 static double	v_filter[] = {  0.14963, 0.22010, 0.26054, 0.22010,  0.14963 };
 
-static double	y_buf[5], u_buf[5], v_buf[5];
+static double	ybuf[724];
+static double	ubuf[724];
+static double	vbuf[724];
 
-
-/*
- */
+/* RGB to YUV */
 ab_rgb_to_yuv( yuv_buf, rgb_buf, len )
 unsigned char *yuv_buf;
 unsigned char *rgb_buf;
 int	len;
 {
-	int	pixel;
-	double	rgb[3];
-	double	y, u, v;
-	unsigned char tmp;
-	register unsigned char *rgbp;
-	register unsigned char *yuvp;
+	register unsigned char *cp;
+	register double	*yp, *up, *vp;
 	register int	i;
 	static int	first=1;
 
@@ -935,60 +932,36 @@ int	len;
 		first = 0;
 	}
 
-	for( i=0; i<5; i++ )
-		y_buf[i] = u_buf[i] = v_buf[i] = 0;
+	/* Matrix RGB's into separate Y, U, and V arrays */
+	yp = &ybuf[2];
+	up = &ubuf[2];
+	vp = &vbuf[2];
+	cp = rgb_buf;
+	for( i = len; i; i-- ) {
+		*yp++ = VDOT( y_weights, cp );
+		*up++ = VDOT( u_weights, cp );
+		*vp++ = VDOT( v_weights, cp );
+		cp += 3;
+	}
 
-	rgbp = rgb_buf;
-	yuvp = yuv_buf;
-	for( pixel = len/2; pixel; pixel-- ) {
-		/*
-		 * first pixel gives Y and both chroma
-		 */
-		VSET( rgb, *rgbp++, *rgbp++, *rgbp++ );
-
-		y = VDOT( y_weights, rgb );
-		SHIFTUP( y_buf, y );
-		u = VDOT( u_weights, rgb );
-		SHIFTUP( u_buf, u );
-		v = VDOT( v_weights, rgb );
-		SHIFTUP( v_buf, v );
-
-		*yuvp++ = V5DOT(u_filter,u_buf) + 128.0;
-		*yuvp++ = V5DOT(y_filter,y_buf) + 16.0;
-		*yuvp++ = V5DOT(v_filter,v_buf) + 128.0;
-
-		/*
-		 * second pixel just yields a Y
-		 */
-		VSET( rgb, *rgbp++, *rgbp++, *rgbp++ );
-
-		y = VDOT( y_weights, rgb );
-		SHIFTUP( y_buf, y );
-		u = VDOT( u_weights, rgb );
-		SHIFTUP( u_buf, u );
-		v = VDOT( v_weights, rgb );
-		SHIFTUP( v_buf, v );
-
-		*yuvp++ = V5DOT(y_filter,y_buf) + 16.0;
+	/* filter, scale, and sample YUV arrays */
+	yp = ybuf;
+	up = ubuf;
+	vp = vbuf;
+	cp = yuv_buf;
+	for( i = len/2; i; i-- ) {
+		*cp++ = V5DOT(u_filter,up) + 128.0;	/* u */
+		*cp++ = V5DOT(y_filter,yp) + 16.0;	/* y */
+		*cp++ = V5DOT(v_filter,vp) + 128.0;	/* v */
+		yp++;
+		*cp++ = V5DOT(y_filter,yp) + 16.0;	/* y */
+		yp++;
+		up += 2;
+		vp += 2;
 	}
 }
 
-
 /* YUV to RGB */
-/*  A 4:2:2 framestore uses 2 bytes per pixel.  The even bytes (from 0)
- *  hold Cb and Y, the odd bytes Cr and Y.  Thus a scan line has:
- *      Cb Y Cr Y Cb Y Cr Y ...
- *  If we are at an even pixel, we use the Cr value following it.  If
- *  we are at an odd pixel, we use the Cb value following it.
- *
- *  Y:      16 .. 235 range, offset by 16
- *  U, V: -112 .. +112 range, centered on 128
- *
- *  Ideas:
- *    Premultiply filter by final multiplier
- *    Add final range shift before floor.  Then it's all >0 so floor = (int)
- *    Don't bother normallizing before filtering.
- */
 ab_yuv_to_rgb( rgb_buf, yuv_buf, len )
 unsigned char *rgb_buf;
 unsigned char *yuv_buf;
