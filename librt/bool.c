@@ -676,6 +676,190 @@ register int			verbose;
 }
 
 /*
+ *	R T _ G E T _ R E G I O N _ S E G L I S T _ F O R _ P A R T I T I O N
+ *
+ *  Given one of the regions that is involved in a given partition
+ *  (whether the boolean formula for this region is TRUE in this part or not),
+ *  return a bu_ptbl list containing all the segments in this partition
+ *  which came from solids that appear as terms in the boolean formula
+ *  for the given region.
+ *
+ *  The bu_ptbl is initialized here, and must be freed by the caller.
+ *  It will contain a pointer to at least one segment.
+ */
+void
+rt_get_region_seglist_for_partition( sl, pp, regp )
+struct bu_ptbl	*sl;
+CONST struct partition *pp;
+CONST struct region *regp;
+{
+	CONST struct seg *segp;
+
+	bu_ptbl_init( sl, 8, "region seglist for partition" );
+
+	/* Walk the partitions segment list */
+	for( BU_PTBL_FOR( segp, (CONST struct seg *), &pp->pt_seglist ) )  {
+		CONST struct region *srp;
+
+		RT_CK_SEG(segp);
+		/* For every segment in part, walk the solid's region list */
+		for( BU_PTBL_FOR( srp, (CONST struct region *), &segp->seg_stp->st_regions ) )  {
+			RT_CK_REGION(srp);
+
+			if( srp != regp )  continue;
+			/* This segment is part of a solid in this region */
+			bu_ptbl_ins_unique( sl, (long *)segp );
+		}
+	}
+
+	if( BU_PTBL_LEN(sl) <= 0 )  bu_bomb("rt_get_region_seglist_for_partition() didn't find any segments\n");
+}
+
+/*
+ *			R T _ F A S T G E N _ V O L _ V O L _ O V E R L A P
+ *
+ *  Handle FASTGEN volume/volume overlap.
+ *  Look at underlying segs.
+ *  If one is less than 1/4", take the longer.
+ *  Otherwise take the shorter.
+ *
+ *  Required to null out one of the two regions.
+ */
+void
+rt_fastgen_vol_vol_overlap( fr1, fr2, pp )
+struct region **fr1;
+struct region **fr2;
+CONST struct partition *pp;
+{
+	fastf_t d1, d2;
+	struct bu_ptbl	sl1, sl2;
+	CONST struct seg *s1, *s2;
+	fastf_t depth;
+
+	RT_CK_REGION(*fr1);
+	RT_CK_REGION(*fr2);
+
+	bu_log("Resolving FASTGEN volume/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
+
+	rt_get_region_seglist_for_partition( &sl1, pp, *fr1 );
+	rt_get_region_seglist_for_partition( &sl2, pp, *fr2 );
+
+	if( BU_PTBL_LEN(&sl1) > 1 )  bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr1)->reg_name );
+	if( BU_PTBL_LEN(&sl2) > 1 )  bu_log("rt_fastgen_vol_vol_overlap(), tricked by %s having more than one segment\n", (*fr2)->reg_name );
+
+	s1 = (CONST struct seg *)BU_PTBL_GET(&sl1, 0);
+	s2 = (CONST struct seg *)BU_PTBL_GET(&sl2, 0);
+	RT_CK_SEG(s1);
+	RT_CK_SEG(s2);
+
+	d1 = s1->seg_out.hit_dist - s1->seg_in.hit_dist;
+	d2 = s2->seg_out.hit_dist - s2->seg_in.hit_dist;
+
+	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+
+	/* 6.35mm = 1/4 inch */
+	if( depth < 6.35 )  {
+		/* Resolve overlap in favor of region with longest seg */
+		/* XXX or is rule "take region with lowest inhit? */
+		if( d1 > d2 )  {
+			/* keep fr1, delete fr2 */
+			*fr2 = REGION_NULL;
+		} else {
+			/* keep fr2, depete fr1 */
+			*fr1 = REGION_NULL;
+		}
+	} else {
+		/*
+		 * This partition is wide enough, resolve in favor of
+		 * the shorter segment.
+		 * XXX or is it: the region who's seg started at start of partition?
+		 */
+		if( d1 < d2 )  {
+			/* keep fr1, delete fr2 */
+			*fr2 = REGION_NULL;
+		} else {
+			*fr1 = REGION_NULL;
+		}
+	}
+
+	bu_ptbl_free( &sl1 );
+	bu_ptbl_free( &sl2 );
+}
+
+/*
+ *			R T _ F A S T G E N _ P L A T E _ V O L _ O V E R L A P
+ *
+ *  Handle FASTGEN plate/volume overlap.
+ *
+ *  Measure width of _preceeding_ partition,
+ *  which must have been claimed by the volume mode region fr2.
+ *  If less than 1/4", delete preceeding partition, and plate wins this part.
+ *  If less than 1/4", plate wins this part, previous partition untouched.
+ *  If previous partition is claimed by plate mode region fr1,
+ *  then overlap is left in output???
+ *
+ *  Required to null out one of the two regions.
+ */
+void
+rt_fastgen_plate_vol_overlap( fr1, fr2, pp, ap )
+struct region **fr1;
+struct region **fr2;
+CONST struct partition *pp;
+struct application *ap;
+{
+	CONST struct partition *prev;
+	fastf_t depth;
+
+	RT_CK_REGION(*fr1);
+	RT_CK_REGION(*fr2);
+	RT_CK_PT(pp);
+	RT_CK_AP(ap);
+
+	bu_log("Resolving FASTGEN plate/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
+
+	prev = pp->pt_back;
+	if( pp->pt_magic == PT_HD_MAGIC )  {
+		/* No prev partition, this is the first.  d=0, plate wins */
+		*fr2 = REGION_NULL;
+		return;
+	}
+
+	if( rt_fdiff(prev->pt_outhit->hit_dist, pp->pt_inhit->hit_dist) != 0 )  {
+		/* There is a gap between previous partition and this one */
+		/* So both plate and vol start at same place, d=0, plate wins */
+		*fr2 = REGION_NULL;
+		return;
+	}
+
+	if( prev->pt_regionp == *fr2 )  {
+		/* previous part is volume mode, ends at start of pp */
+		depth = prev->pt_outhit->hit_dist - prev->pt_inhit->hit_dist;
+		/* 6.35mm = 1/4 inch */
+		if( depth < 6.35 )  {
+			/* Delete previous partition from list */
+			DEQUEUE_PT(prev);
+			FREE_PT(prev, ap->a_resource);
+
+			/* plate mode fr1 wins this partition */
+			*fr2 = REGION_NULL;
+		} else {
+			/* Leave previous partition alone */
+			/* plate mode fr1 wins this partition */
+			*fr2 = REGION_NULL;
+		}
+	} else if( prev->pt_regionp == *fr1 )  {
+		/* previous part is plate mode, ends at start of pp */
+		/* d < 0, leave overlap in output??? */
+		/* For now, volume mode region just loses. */
+		*fr2 = REGION_NULL;
+	} else {
+		/* Some other region preceeds this partition */
+		/* So both plate and vol start at same place, d=0, plate wins */
+		*fr2 = REGION_NULL;
+	}
+}
+
+/*
  *			R T _ D E F A U L T _ M U L T I O V E R L A P
  *
  *  Default version of a_multioverlap().
@@ -722,12 +906,64 @@ struct partition	*InputHdp;
 	for( i = n_regions-1; i >= 0; i-- )  {
 		struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
 		RT_CK_REGION(regp);
-		if( regp->reg_is_fastgen )  n_fastgen++;
+		if( regp->reg_is_fastgen != REGION_NON_FASTGEN )  n_fastgen++;
 	}
 
+	/*
+	 *  Resolve all FASTGEN overlaps before considering BRL-CAD
+	 *  overlaps, because FASTGEN overlaps have strict rules.
+	 */
 	if( n_fastgen >= 2 )  {
-		/* Resolve all FASTGEN overlaps first. */
+		struct region **fr1;
+		struct region **fr2;
+
 		bu_log("I see %d FASTGEN overlaps in this partition\n", n_fastgen);
+
+		/*
+		 *  First, resolve volume_mode/volume_mode overlaps
+		 *  because they are a simple choice.
+		 *  N.B. The searches run from high to low in the ptbl array.
+		 */
+		for( BU_PTBL_FOR( fr1, (struct region **), regiontable ) )  {
+			if( *fr1 == REGION_NULL )  continue;
+			RT_CK_REGION(*fr1);
+			if( (*fr1)->reg_is_fastgen != REGION_FASTGEN_VOLUME )
+				continue;
+			for( fr2 = fr1-1; fr2 >= (struct region **)BU_PTBL_BASEADDR(regiontable); fr2-- )  {
+				if( *fr2 == REGION_NULL )  continue;
+				RT_CK_REGION(*fr2);
+				if( (*fr2)->reg_is_fastgen != REGION_FASTGEN_VOLUME )
+					continue;
+				rt_fastgen_vol_vol_overlap( fr1, fr2, pp );
+				if( *fr1 == REGION_NULL )  break;
+			}
+		}
+
+		/* Second, resolve plate_mode/volume_mode overlaps */
+		for( BU_PTBL_FOR( fr1, (struct region **), regiontable ) )  {
+			if( *fr1 == REGION_NULL )  continue;
+			RT_CK_REGION(*fr1);
+			if( (*fr1)->reg_is_fastgen != REGION_FASTGEN_PLATE )
+				continue;
+			for( fr2 = fr1-1; fr2 >= (struct region **)BU_PTBL_BASEADDR(regiontable); fr2-- )  {
+				if( *fr2 == REGION_NULL )  continue;
+				RT_CK_REGION(*fr2);
+				if( (*fr2)->reg_is_fastgen != REGION_FASTGEN_VOLUME )
+					continue;
+				rt_fastgen_plate_vol_overlap( fr1, fr2, pp, ap );
+				if( *fr1 == REGION_NULL )  break;
+			}
+		}
+
+
+		/* Finally, think up some way to pass plate/plate overlaps on */
+		n_fastgen = 0;
+		for( i = n_regions-1; i >= 0; i-- )  {
+			struct region *regp = (struct region *)BU_PTBL_GET(regiontable, i);
+			RT_CK_REGION(regp);
+			if( regp->reg_is_fastgen != REGION_NON_FASTGEN )  n_fastgen++;
+		}
+		if( n_fastgen > 1 )  bu_log("WARNING: no code to resolve FASTGEN plate/plate overlaps (Yet)\n");
 	}
 
 	lastregion = (struct region *)BU_PTBL_GET(regiontable, 0);
