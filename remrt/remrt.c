@@ -41,10 +41,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/socket.h>
 #include <netinet/in.h>
 #if !defined(CRAY1)
-#include <sys/time.h>		/* for struct timeval */
+# include <sys/time.h>		/* for struct timeval */
 #endif
 #if !defined(sun)
-#include <time.h>
+# include <time.h>
 #endif
 
 #include "machine.h"
@@ -282,6 +282,8 @@ extern char *malloc();
 
 int	tcp_listen_fd;
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
+
+int		debug;		/* dispatcher debugging flag */
 
 /*
  *			T V S U B
@@ -1561,12 +1563,12 @@ char *buf;
 		rt_log("struct_import error, %d, %d\n", i, info.li_len);
 		goto out;
 	}
-#if 0
-	rt_log("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
-		sp->sr_host->ht_name,
-		info.li_frame, info.li_startpix, info.li_endpix,
-	info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
-#endif
+	if( debug )  {
+		rt_log("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+			sp->sr_host->ht_name,
+			info.li_frame, info.li_startpix, info.li_endpix,
+			info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
+	}
 
 	/* XXX this is bogus -- assignments may have moved on to subsequent
 	 * frames.  Need to search frame list */
@@ -2321,7 +2323,30 @@ char	**argv;
 	build_start_cmd( argc, argv, 1 );
 }
 
+/*
+ *			C D _ D E B U G
+ *
+ *  Set/toggle the local (dispatcher) debugging flag
+ */
 cd_debug( argc, argv )
+int	argc;
+char	**argv;
+{
+	if( argc <= 1 )  {
+		debug = !debug;
+	} else {
+		sscanf( argv[1], "%x", &debug );
+	}
+	rt_log("dispatcher debug=x%x\n", debug );
+}
+
+/*
+ *			C D _ R D E B U G
+ *
+ *  Send a string to the command processor on all the remote workers.
+ *  Typically this would be of the form "opt -x42;"
+ */
+cd_rdebug( argc, argv )
 int	argc;
 char	**argv;
 {
@@ -2609,15 +2634,15 @@ char	**argv;
 		rt_log("%5d\t", fr->fr_number);
 		rt_log("width=%d, height=%d\n",
 			fr->fr_width, fr->fr_height );
-		if( fr->fr_filename )  rt_log(" %s\n", fr->fr_filename );
+		if( fr->fr_filename )  rt_log("\tfile=%s\n", fr->fr_filename );
 
 		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
-		rt_log("       servinit: ");
+		rt_log("\tservinit: ");
 		for( i=0; i<MAXSERVERS; i++ )
-			rt_log("%d ", fr->fr_servinit[i]);
+			rt_log("%d", fr->fr_servinit[i]);
 		rt_log("\n");
 		pr_list( &(fr->fr_todo) );
-		rt_log("cmd=%s\n", fr->fr_cmd.vls_str );
+		rt_log("\tcmd=%s\n", fr->fr_cmd.vls_str );
 	}
 }
 
@@ -2681,10 +2706,8 @@ char	**argv;
 			sp->sr_s_cpu/num,
 			sp->sr_w_elapsed );
 
-		/* May want to print this only on debugging flag */
-#if 0
-		pr_list( &(sp->sr_work) );
-#endif
+		if( debug )
+			pr_list( &(sp->sr_work) );
 	}
 }
 
@@ -2860,8 +2883,10 @@ struct command_tab cmd_tab[] = {
 	"clear", "",		"clear framebuffer",
 		cd_clear,	1, 1,
 	/* FLAGS */
-	"debug", "options",	"set remote debugging flags",
-		cd_debug,	2, 2,
+	"debug", "[hex_flags]",	"set local debugging flag bits",
+		cd_debug,	1, 2,
+	"rdebug", "options",	"set remote debugging via 'opt' command",
+		cd_rdebug,	2, 2,
 	"f", "square_size",	"set square frame size",
 		cd_f,		2, 2,
 	"-H", "hypersample",	"set number of hypersamples/pixel",
