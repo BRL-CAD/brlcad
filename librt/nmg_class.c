@@ -860,6 +860,14 @@ CONST struct rt_tol	*tol;
 			NMG_INDEX_SET(classlist[NMG_CLASS_AinB], eu->e_p);
 			status = INSIDE;
 		} else if( class == NMG_CLASS_AonBshared )  {
+#if 0
+			/* XXX bug hunt helper */
+			rt_g.NMG_debug |= DEBUG_FINDEU;
+			rt_g.NMG_debug |= DEBUG_MESH;
+			eup = nmg_findeu( eu->vu_p->v_p, eu->eumate_p->vu_p->v_p, s, eu );
+			if(!eup) rt_log("Unable to find it\n");
+			nmg_mesh_face_shell( eu->up.lu_p->up.fu_p, s );
+#endif
 			rt_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
 		}  else  {
 			rt_log("class=%s\n", nmg_class_name(class) );
