@@ -2242,7 +2242,7 @@ struct nmg_ray_state *rs;
 	struct loopuse *match_lu=(struct loopuse *)NULL;
 	struct loopuse *prior_lu,*next_lu;
 	struct vertexuse *prior_vu, *next_vu;
-	int count;
+	int count=0;
 	int i,j;
 	int done=0;
 
@@ -2255,6 +2255,12 @@ struct nmg_ray_state *rs;
 	while( !done )
 	{
 		done = 1;
+		count++;
+		if( count > 100 )
+		{
+			rt_log( "find_loop_to_cut: infinite loop\n" );
+			rt_bomb( "find_loop_to_cut: infinite loop" );
+		}
 		for( i=prior_start ; i < prior_end ; i++ )
 		{
 			int class_pt;
@@ -2273,11 +2279,24 @@ struct nmg_ray_state *rs;
 						match_lu = next_lu;
 						continue;
 					}
+
+					if( match_lu == next_lu )
+						continue;
+
 					if( class_pt == NMG_CLASS_Unknown )
+					{
 						class_pt = nmg_class_pt_lu_except( mid_pt,
 							match_lu, (struct edge *)NULL, rs->tol );
-
+						if( match_lu->orientation == OT_OPPOSITE )
+						{
+							if( class_pt == NMG_CLASS_AinB )
+								class_pt = NMG_CLASS_AoutB;
+							else if( class_pt == NMG_CLASS_AoutB )
+								class_pt = NMG_CLASS_AinB;
+						}
+					}
 					class_lu = nmg_classify_lu_lu( next_lu, match_lu, rs->tol );
+
 					if( class_lu == class_pt )
 					{
 						match_lu = next_lu;
@@ -4273,4 +4292,3 @@ nmg_fu_touchingloops(rs->fu2);
 	if(rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 	return 0;
 }
-                                                                                                                                      
