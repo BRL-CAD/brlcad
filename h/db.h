@@ -99,6 +99,7 @@ union record  {
 #define	DBID_SKETCH	'd'	/* 2D sketch */
 #define	DBID_EXTR	'e'	/* solid of extrusion */
 #define DBID_FGP	'f'	/* FASTGEN4 plate mode solid */
+#define	DBID_BOT	't'	/* Bag o' triangles */
 
 	char	u_size[DB_MINREC];	/* Minimum record size */
 
@@ -392,6 +393,25 @@ union record  {
 							 *       2 -> thickness extends in ray direction from hit point
 							 */
 	} fgp;
+
+	/* Bag o' triangles
+	 *  The vertices are stored in an array
+	 *  The faces are arrays of three ints each indexing into the array of vertices
+	 */
+	struct bot_rec {
+		char		bot_id;
+		char		bot_pad;
+		char		bot_name[NAMESIZE];
+		unsigned char	bot_orientation;	/* unoriented, ccw, or cw */
+		unsigned char	bot_mode;		/* surface or volume */
+		unsigned char	bot_err_mode;
+		unsigned char	bot_num_verts[4];	/* number of vertices */
+		unsigned char	bot_num_triangles[4];	/* number of triangles */
+		unsigned char	bot_data[1];		/* the start of the data:
+							 * num_verts*3*8 for the vertex floats
+							 * num_triangles*3*4 for the triangle ints */
+	} bot;
+
 };
 #endif /* !RECORD_DEFINED || !__STDC__ */
 #define DB_RECORD_NULL	((union record *)0)

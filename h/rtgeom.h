@@ -442,4 +442,32 @@ struct rt_fgp_internal
 #define	RT_FGP_INTERNAL_MAGIC		0x706c6174	/* plat */
 #define RT_FGP_CK_MAGIC(_p)	BU_CKMAG(_p,RT_FGP_INTERNAL_MAGIC,"rt_fgp_internal")
 
+/*
+ *	ID_BOT
+ */
+
+struct rt_bot_internal
+{
+	long		magic;
+	unsigned char	mode;
+	unsigned char	orientation;
+	unsigned char	error_mode;		/* may be used to indicate error handling */
+	int		num_vertices;
+	int		num_faces;
+	int		*faces;			/* array of ints for faces [num_faces*3] */
+	fastf_t		*vertices;		/* array of floats for vertices [num_vertices*3] */
+};
+
+/* orientationss for BOT */
+#define	RT_BOT_UNORIENTED		1	/* unoriented triangles */
+#define RT_BOT_CCW			2	/* oriented counter-clockwise */
+#define RT_BOT_CW			3	/* oriented clockwise */
+
+/* modes for BOT */
+#define RT_BOT_SURFACE			1	/* triangles represent a surface (no volume) */
+#define RT_BOT_SOLID			2	/* triangles respresent the boundary of a solid object */
+
+#define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
+#define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")
+
 #endif /* SEEN_RTGEOM_H */
