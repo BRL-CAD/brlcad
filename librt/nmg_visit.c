@@ -300,7 +300,7 @@ genptr_t			*state;		/* Handler's private state */
 		nmg_visit_model( (struct model *)magicp, htab, state );
 		break;
 	case NMG_REGION_MAGIC:
-		nmg_visit_region( (struct region *)magicp, htab, state );
+		nmg_visit_region( (struct nmgregion *)magicp, htab, state );
 		break;
 	case NMG_SHELL_MAGIC:
 		nmg_visit_shell( (struct shell *)magicp, htab, state );
