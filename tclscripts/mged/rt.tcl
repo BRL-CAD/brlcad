@@ -454,7 +454,7 @@ proc do_Raytrace { id } {
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
 	if {$rt_control($id,lmodel) == 7} {
-		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache) -A0"
+		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache),,$rt_control($id,pmLightIntensityEntry) -A0"
 	}
     }
 	puts "-b-";
@@ -1313,6 +1313,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,pmIrradianceRaysScale) 10
 	set rt_control($id,pmAngularTolerance) 60.0
 	set rt_control($id,pmRandomSeedEntry) 0
+	set rt_control($id,pmLightIntensityScale) 1.0
 	set rt_control($id,pmIrradianceHypersamplingCache) 1
 
 
@@ -1496,9 +1497,20 @@ proc PMMenu {id top enable} {
     grid $top.gridF4.pmRandomSeedScale -row 5 -column 2 -sticky news
 
 
+    ## Light Intensity
+    label $top.gridF4.pmLightIntensityLabel -text "Light Intensity"
+    grid $top.gridF4.pmLightIntensityLabel -row 6 -column 0 -sticky e
+
+    entry $top.gridF4.pmLightIntensityEntry -width 8 -textvar rt_control($id,pmLightIntensityEntry)
+    grid $top.gridF4.pmLightIntensityEntry -row 6 -column 1 -sticky news
+
+    scale $top.gridF4.pmLightIntensityScale -orient horizontal -showvalue 0 -from 0.01 -to 100.0 -resolution 0.01 -command "PMLinearEvent $top.gridF4.pmLightIntensityEntry" -variable rt_control($id,pmLightIntensityScale)
+    grid $top.gridF4.pmLightIntensityScale -row 6 -column 2 -sticky news
+
+
     ## Irradiance Hypersampling
     checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
-    grid $top.gridF4.pmIrradianceHypersamplingCache -row 6 -column 1 -columnspan 2 -sticky w
+    grid $top.gridF4.pmIrradianceHypersamplingCache -row 7 -column 1 -columnspan 2 -sticky w
     $top.gridF4.pmIrradianceHypersamplingCache select
 
     ## Edge Compensator
