@@ -22,30 +22,6 @@
  */
 
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
-#ifdef XMGED
-#define IDLE		0	/* edarb.c */
-#define ECMD_ARB_MAIN_MENU	1
-#define ECMD_ARB_SPECIFIC_MENU	2
-
-#define SSCALE		3	/* buttons.c */	/* Scale whole solid by scalor */
-#define PSCALE		4	/* Scale one solid parameter by scalor */
-
-#define SROT		5	/* buttons.c */
-#define ECMD_TGC_ROT_H	6
-#define ECMD_TGC_ROT_AB	7
-#define ECMD_ARB_SETUP_ROTFACE	8
-#define ECMD_ARB_ROTATE_FACE	9
-#define ECMD_ETO_ROT_C		10
-
-#define STRANS		11	/* buttons.c */
-#define	ECMD_TGC_MV_H	12
-#define ECMD_TGC_MV_HH	13
-#define EARB		14	/* chgmodel.c, edarb.c */
-#define PTARB		15	/* edarb.c */
-#define ECMD_ARB_MOVE_FACE	16
-
-#else /* not XMGED */
-
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
 #define SSCALE		2	/* buttons.c */	/* Scale whole solid by scalor */
@@ -66,7 +42,6 @@
 #define ECMD_ARB_ROTATE_FACE	15
 
 #define ECMD_ETO_ROT_C		16
-#endif
 
 #define ECMD_VTRANS		17	/* vertex translate */
 #define ECMD_NMG_EPICK		19	/* edge pick */

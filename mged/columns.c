@@ -94,32 +94,6 @@ void
 col_item(cp)
 register char *cp;
 {
-#ifdef XMGED
-	char 	line[133], *lineptr;
-
-	lineptr = line;
-
-	/* Output newline if last column printed. */
-	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
-		/* line now full */
-		sprintf(lineptr, "\n");
-		++lineptr;
-		col_count = 0;
-	} else if ( col_count != 0 ) {
-		/* Space over before starting new column */
-		do {
-			sprintf(lineptr, " ");
-			lineptr++;
-			col_len++;
-		}  while ( (col_len % NAMESIZE) != 0 );
-	}
-	/* Output string and save length for next tab. */
-	sprintf(lineptr, "%s", cp);
-	rt_log( "%s", line);
-	col_len = strlen(cp);
-	
-	col_count++;
-#else
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
@@ -140,7 +114,6 @@ register char *cp;
 		++col_len;
 	}
 	col_count++;
-#endif
 #undef	COLUMNS
 }
 
@@ -179,81 +152,6 @@ CONST genptr_t b;
 	return( strcmp( (*dp1)->d_namep, (*dp2)->d_namep));
 }
 
-#ifdef XMGED
-/*
- *				C O L _ P R 4 V
- *
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list in column order over four columns.
- */
-void
-col_pr4v( list_of_names, num_in_list)
-struct directory **list_of_names;
-int num_in_list;
-{
-	int lines, i, j, namelen, this_one;
-	char line[133], *lineptr;
-
-	lineptr = line;
-
-	qsort( (genptr_t)list_of_names,
-		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-		(int (*)())cmpdirname);
-	/*
-	 * For the number of (full and partial) lines that will be needed,
-	 * print in vertical format.
-	 */
-	lines = (num_in_list + 3) / 4;
-	for( i=0; i < lines; i++) {
-		for( j=0; j < 4; j++) {
-			this_one = j * lines + i;
-			/* Restrict the print to 16 chars per spec. */
-			sprintf(lineptr,  "%.16s", list_of_names[this_one]->d_namep);
-			namelen = strlen( list_of_names[this_one]->d_namep);
-			if( namelen > 16)
-				namelen = 16;
-			lineptr += namelen;
-			/*
-			 * Region and ident checks here....  Since the code
-			 * has been modified to push and sort on pointers,
-			 * the printing of the region and ident flags must
-			 * be delayed until now.  There is no way to make the
-			 * decision on where to place them before now.
-			 */
-			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				sprintf(lineptr,  "/");
-				namelen++;
-				++lineptr;
-			}
-			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				sprintf(lineptr,  "R");
-				namelen++;
-				++lineptr;
-			}
-			/*
-			 * Size check (partial lines), and line termination.
-			 * Note that this will catch the end of the lines
-			 * that are full too.
-			 */
-			if( this_one + lines >= num_in_list) {
-				sprintf(lineptr,  "\n");
-				rt_log("%s", line);
-				lineptr = line;
-				break;
-			} else {
-				/*
-				 * Pad to next boundary as there will be
-				 * another entry to the right of this one. 
-				 */
-				while( namelen++ < 20){
-					sprintf(lineptr,  " ");
-					++lineptr;
-				}
-			}
-		}
-	}
-}
-#else
 /*
  *				C O L _ P R 4 V
  *
@@ -318,10 +216,9 @@ int num_in_list;
 		}
 	}
 }
-#endif
 
 /*
- *				C O L _ P R 4 V
+ *				V L S _ C O L _ P R 4 V
  *
  *  Given a pointer to a list of pointers to names and the number of names
  *  in that list, sort and print that list in column order over four columns.

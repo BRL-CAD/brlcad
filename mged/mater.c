@@ -174,11 +174,8 @@ char	**argv;
 		perror( tempfile );
 		return CMD_BAD;
 	}
-#ifdef XMGED
-	if( mged_fgets(line, sizeof (line), fp) == NULL  ||
-#else
+
 	if( fgets(line, sizeof (line), fp) == NULL  ||
-#endif
 	    line[0] != hdr[0] )  {
 		rt_log("Header line damaged, aborting\n");
 		return CMD_BAD;
@@ -192,11 +189,7 @@ char	**argv;
 		rt_free( (char *)zot, "mater rec" );
 	}
 
-#ifdef XMGED
-	while( mged_fgets(line, sizeof (line), fp) != NULL )  {
-#else
 	while( fgets(line, sizeof (line), fp) != NULL )  {
-#endif
 		int cnt;
 		int low, hi, r, g, b;
 

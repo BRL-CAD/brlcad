@@ -224,10 +224,7 @@ char	**argv;
 			dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
 			adcflag = 1;
 		}
-#ifdef XMGED
-		 if(adc_hook)
-                        (*adc_hook)(0);
-#endif
+
 		dmaflag = 1;
 		return CMD_OK;
 	}
@@ -371,10 +368,7 @@ char	**argv;
 			dv_1adc = dv_2adc = 0;
 			dv_distadc = 0;
 			dmaflag = 1;
-#ifdef XMGED
-			if(adc_hook)
-			  (*adc_hook)(1);
-#endif
+
 			return CMD_OK;
 		}
 

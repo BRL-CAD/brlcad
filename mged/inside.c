@@ -159,11 +159,7 @@ char **argv;
 
 	int arg = 1;
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint);	/* allow interrupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	/* SCHEME:
 	 *	if in solid edit, use "edited" solid

@@ -74,7 +74,7 @@ struct dm dm_PS = {
 extern struct device_values dm_values;	/* values read from devices */
 
 static vect_t	clipmin, clipmax;	/* for vector clipping */
-#ifdef XMGED
+#if 0
 FILE	*ps_fp;			/* PostScript file pointer */
 char	ps_ttybuf[BUFSIZ];
 int	in_middle;		/* !0 when in middle of image */
@@ -114,7 +114,7 @@ PS_open()
 		return(1);		/* BAD */
 	}
 
-#ifdef XMGED
+#if 0
 	setbuf( ps_fp, ps_ttybuf );
 #else
 	setbuf( ps_fp, ttybuf );

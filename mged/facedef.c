@@ -84,11 +84,7 @@ char **argv;
 	struct rt_arb_internal	*arbo;
 	plane_t		planes[6];
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );		/* allow interrupts */
-#else
 	(void)signal( SIGINT, sig2);    /* allow interupts */
-#endif
 
 	if( state != ST_S_EDIT ){
 		rt_log("Facedef: must be in solid edit mode\n");
