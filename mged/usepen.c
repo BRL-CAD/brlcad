@@ -193,6 +193,7 @@ usepen()
 			sedraw = 1;
 			return;
 		case MOVEH:
+		case MOVEHH:
 			/* Use pen to change location of point V+H */
 			VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
 			MAT4X3PNT(pos_model, es_mat, temp);

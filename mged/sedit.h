@@ -37,6 +37,7 @@ int     es_edflag;		/* type of editing for this solid */
 #define PROT	6
 #define EARB	7
 #define	MOVEH	8
+#define MOVEHH	9
 float	es_scale;		/* scale factor */
 float 	es_para[3];		/* keyboard input parameter changes */
 float	es_plano[4];		/* coefficients of bounding plane 1 */
@@ -55,6 +56,7 @@ int	es_menu;		/* item selected from menu */
 #define MENURH	9
 #define MENURAB 10
 #define	MENUMH	11
+#define MENUMHH	12
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 int	es_nlines;		/* # lines in printed display */

@@ -1068,3 +1068,68 @@ f_regdef()
 
 	los_default = atoi(cmd_args[4]);
 }
+
+
+/* Edgedir command:  define the direction of an arb edge being moved
+ *	Format:  edgedir deltax deltay deltaz
+	     OR  edgedir rot fb
+ */
+
+void
+f_edgedir()
+{
+	int i, point;
+	vect_t work;
+	float rot, fb;
+
+	if( not_state( ST_S_EDIT, "Edgedir" ) )
+		return;
+
+	if( es_edflag != EARB ) {
+		(void)printf("Not moving an ARB edge\n");
+		return;
+	}
+
+	if( es_gentype != GENARB8 ) {
+		(void)printf("Edgeslope: solid type must be an ARB\n");
+		return;
+	}
+
+	VMOVE(work, &es_rec.s.s_values[0]);
+	if( (point = es_menu / 10 - 1) ) {
+		VADD2(work, &es_rec.s.s_values[0], &es_rec.s.s_values[point*3]);
+	}
+
+	newedge = 1;
+	editarb( work );
+
+	/* set up slope -
+	 *	if 2 values input assume rot, fb used
+	 *	else assume delta_x, delta_y, delta_z
+	 */
+	if( numargs == 3 ) {
+		rot = atof( cmd_args[1] ) * degtorad;
+		fb = atof( cmd_args[2] ) * degtorad;
+		es_m[0] = cos(fb) * cos(rot);
+		es_m[1] = cos(fb) * sin(rot);
+		es_m[2] = sin(fb);
+	}
+	else {
+		for(i=0; i<3; i++) {
+			/* put edge slope in es_m array */
+			es_m[i] = atof( cmd_args[i+1] );
+		}
+	}
+
+	if(MAGNITUDE(es_m) == 0) {
+		(void)printf("BAD slope\n");
+		return;
+	}
+
+	/* get it done */
+	editarb( work );
+	sedraw++;
+
+}
+
+

@@ -71,7 +71,8 @@ struct menu_item  tgc_menu[] = {
 	{ "scale d",	tgc_ed, MENUP2 },
 	{ "rotate H",	tgc_ed, MENURH },
 	{ "rotate AxB",	tgc_ed, MENURAB },
-	{ "move end of H", tgc_ed, MENUMH },
+	{ "move end H (rt)", tgc_ed, MENUMH },
+	{ "move end H", tgc_ed, MENUMHH },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -123,6 +124,8 @@ int arg;
 		es_edflag = PROT;
 	if(arg == MENUMH)
 		es_edflag = MOVEH;
+	if(arg == MENUMHH)
+		es_edflag = MOVEHH;
 }
 
 
@@ -382,6 +385,24 @@ sedit()
 		/* Restore original vector lengths to A,B */
 		VSCALE(&es_rec.s.s_tgc_A, &es_rec.s.s_tgc_A, la);
 		VSCALE(&es_rec.s.s_tgc_B, &es_rec.s.s_tgc_B, lb);
+		break;
+
+	case MOVEHH:
+		/* Move end of H of tgc - leave ends alone */
+		if( inpara ) {
+			/* apply es_invmat to convert to real model coordinates */
+			MAT4X3PNT( work, es_invmat, es_para );
+			VSUB2(&es_rec.s.s_tgc_H, work, &es_rec.s.s_tgc_V);
+		}
+
+		/* check for zero H vector */
+		if( MAGNITUDE( &es_rec.s.s_tgc_H ) == 0.0 ) {
+			(void)printf("Zero H vector not allowed\n");
+			/* Replace with original H */
+			VMOVE(&es_rec.s.s_tgc_H, &es_orig.s.s_tgc_H);
+			break;
+		}
+
 		break;
 
 	case PSCALE:

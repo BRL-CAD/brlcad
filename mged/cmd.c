@@ -65,7 +65,7 @@ void	f_rot_obj(), f_tr_obj(), f_sc_obj();
 void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
-void	f_plot(), f_area(), f_find();
+void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview();
 
 static struct funtab {
@@ -195,6 +195,8 @@ static struct funtab {
 	f_aeview, 3, 3,
 "regdef", "item [air] [material] [los]", "change next region default codes",
 	f_regdef, 2, 5,
+"edgedir", "edgedir delta_x delta_y delta_z", "define direction of ARB edge being moved",
+	f_edgedir, 3, 4,
 "memprint", "", "print memory maps",
 	f_memprint,1,1
 };
@@ -333,6 +335,11 @@ f_param()
 		(void)printf("A solid editor option not selected\n");
 		return;
 	}
+	if( es_edflag == PROT ) {
+		(void)printf("\"p\" command not defined for this option\n");
+		return;
+	}
+
 	inpara = 1;
 	sedraw++;
 	for( i = 1; i < numargs; i++ )  {
@@ -353,6 +360,7 @@ f_param()
 		case PSCALE:
 		case EARB:
 		case MOVEH:
+		case MOVEHH:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;

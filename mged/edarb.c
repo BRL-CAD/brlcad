@@ -81,6 +81,12 @@ vect_t pos_model;
 	 * Line containing edge must now go throug
 	 * point contained in pos_model[] array
 	 */
+
+	if( VDOT(es_plano, es_m) == 0 ||
+	    VDOT(es_plant, es_m) == 0 ) {
+		(void)printf("edge (slope) parallel to face\n");
+		goto err;
+	}
 	t = (es_plano[3] - VDOT(es_plano, pos_model)) / VDOT(es_plano, es_m);
 	op = &es_rec.s.s_values[pt1*3];
 	VCOMP1( op, pos_model, t, es_m );
