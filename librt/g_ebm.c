@@ -1,4 +1,3 @@
-
 /*
  *			E B M . C
  *
@@ -23,6 +22,7 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <ctype.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -32,19 +32,36 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 #include "./fixpt.h"
 
 struct ebm_specific {
-	char		*ebm_file;
+	char		ebm_file[128];
 	unsigned char	*ebm_map;
 	int		ebm_dim[2];
 	double		ebm_tallness;
-	vect_t		ebm_xnorm;	/* ideal +X normal in final orientation */
+	vect_t		ebm_xnorm;	/* local +X norm in model coords */
 	vect_t		ebm_ynorm;
 	vect_t		ebm_znorm;
+	vect_t		ebm_cellsize;	/* ideal coords: size of each cell */
+	mat_t		ebm_mat;	/* model to ideal space */
+	vect_t		ebm_origin;	/* local coords of grid origin (0,0,0) for now */
+	vect_t		ebm_large;	/* local coords of XYZ max */
 };
-#define BM_NULL		((struct ebm_specific *)0)
+#define EBM_NULL	((struct ebm_specific *)0)
+#define EBM_O(m)	offsetof(struct ebm_specific, m)
 
+struct structparse ebm_parse[] = {
+#if CRAY && !__STDC__
+	"%s",	"file",		0,			FUNC_NULL,
+#else
+	"%s",	"file",	offsetofarray(struct ebm_specific, ebm_file),	FUNC_NULL,
+#endif
+	"%d",	"w",		EBM_O(ebm_dim[0]),	FUNC_NULL,
+	"%d",	"n",		EBM_O(ebm_dim[1]),	FUNC_NULL,
+	"%f",	"d",		EBM_O(ebm_tallness),	FUNC_NULL,
+	/* XXX might have option for ebm_origin */
+	(char *)0,(char *)0,	0,			FUNC_NULL
+};
 
 struct seg		*ebm_shot();
-struct ebm_specific	*ebm_readin();
+struct ebm_specific	*ebm_import();
 struct seg		*ebm_dda();
 struct seg		*rt_seg_planeclip();
 
@@ -62,8 +79,8 @@ struct seg		*rt_seg_planeclip();
 #define NORM_ZNEG	(-3)
 
 /*
- *  Normal addressing is used:  (0..W-1, 0..N-1),
- *  but the bitmap is stored with two cell of zeros all around,
+ *  Regular bit addressing is used:  (0..W-1, 0..N-1),
+ *  but the bitmap is stored with two cells of zeros all around,
  *  so permissible subscripts run (-2..W+1, -2..N+1).
  *  This eliminates special-case code for the boundary conditions.
  */
@@ -126,7 +143,7 @@ struct application *ap;
 		kmax =  norm_dist_max / slant_factor;
 
 	if( kmin > kmax )  {
-		/* Not sure why this happens;  for now, just exchange them */
+		/* If r_dir[Z] < 0, will need to swap min & max */
 		slant_factor = kmax;
 		kmax = kmin;
 		kmin = slant_factor;
@@ -173,424 +190,331 @@ struct application *ap;
 	return( outseg );
 }
 
+static int ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
+
 
 /*
  *			E B M _ D D A
  *
- *  Solve the 2-D intersection by stepping through the bit array.
- *
- *  To solve an intercept, where point[axis] == 0:
- *  Using P + k * D formulation of line, solve
- *  P[axis] + k * D[axis] = 0;
- *  k = -P[axis]/D[axis].
+ *  Step through the 2-D array, in local coordinates ("ideal space").
  *
  *
  */
-struct seg_head {
-	struct seg	*sh_head;
-	struct seg	*sh_tail;
-	struct soltab	*sh_stp;
-	struct application *sh_ap;
-};
-
 struct seg *
-ebm_dda( rp, ebmp, stp, ap )
+ebm_dda( rp, stp, ap )
 register struct xray	*rp;
-register struct ebm_specific *ebmp;
 struct soltab		*stp;
 struct application	*ap;
 {
-	fastf_t		maj_entry_k, min_entry_k;
-	fastf_t		maj_exit_k, min_exit_k;
-	struct fixpt	maj_pos_deltas[2], min_pos_deltas[2];
-	struct fixpt	maj_exit_pos[2], min_exit_pos[2];
-	struct fixpt	maj_entry_pos[2], min_entry_pos[2];
-	fastf_t		maj_k_delta, min_k_delta;
-	int		maj_entry_norm, min_entry_norm;
-	int		majdir, mindir;
-	int		minor_has_deltas;
-	int		inside = 0;
-	int		do_minor_backup;
-	struct seg_head	head;
+	register struct ebm_specific *ebmp =
+		(struct ebm_specific *)stp->st_specific;
+	vect_t	invdir;
+	double	t0;	/* in point of cell */
+	double	t1;	/* out point of cell */
+	double	tmax;	/* out point of entire grid */
+	vect_t	t;	/* next t value for XYZ cell plane intersect */
+	vect_t	delta;	/* spacing of XYZ cell planes along ray */
+	int	igrid[3];/* Grid cell coordinates of cell (integerized) */
+	vect_t	P;	/* hit point */
+	int	inside;	/* inside/outside a solid flag */
+	struct seg	*head;
+	struct seg	*tail;
+	int	in_index;
+	int	out_index;
+	int	j;
 
-	head.sh_head = head.sh_tail = SEG_NULL;
-	head.sh_stp = stp;
-	head.sh_ap = ap;
+	head = tail = SEG_NULL;
 
-	/* Determine major and minor axes */
-	if( fabs(rp->r_dir[X]) > fabs(rp->r_dir[Y]) )  {
-		majdir = X;
-		mindir = Y;
-		if( rp->r_dir[X] > 0 )
-			maj_entry_norm = NORM_XNEG;	/* points outwards */
-		else	maj_entry_norm = NORM_XPOS;
-		if( rp->r_dir[Y] > 0 )
-			min_entry_norm = NORM_YNEG;
-		else	min_entry_norm = NORM_YPOS;
+	/* Compute the inverse of the direction cosines */
+	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
+		invdir[X]=1.0/rp->r_dir[X];
 	} else {
-		majdir = Y;
-		mindir = X;
-		if( rp->r_dir[Y] > 0 )
-			maj_entry_norm = NORM_YNEG;
-		else	maj_entry_norm = NORM_YPOS;
-		if( rp->r_dir[X] > 0 )
-			min_entry_norm = NORM_XNEG;
-		else	min_entry_norm = NORM_XPOS;
+		invdir[X] = INFINITY;
+		rp->r_dir[X] = 0.0;
 	}
-
-	/*  First, find the natural starting point on the trimmed ray.
-	 *  Use it as the start point for both major and minor entry_pos
-	 */
-	maj_entry_k = rp->r_min;
-	maj_k_delta = fabs(1.0/rp->r_dir[majdir]);
-	FIXPT_FLOAT( maj_entry_pos[X], rp->r_pt[X] + maj_entry_k * rp->r_dir[X] );
-	FIXPT_FLOAT( maj_entry_pos[Y], rp->r_pt[Y] + maj_entry_k * rp->r_dir[Y] );
-	min_entry_pos[X] = maj_entry_pos[X];	/* struct copy */
-	min_entry_pos[Y] = maj_entry_pos[Y];	/* struct copy */
-	if(rt_g.debug&DEBUG_EBM) PR_FIX2("original maj_entry_pos", maj_entry_pos);
-
-	/*
-	 * The major entry point MUST be a major axis intercept,
-	 * force maj_entry_pos[majdir] == integer.
-	 */
-	if( maj_entry_pos[majdir].f != 0 )  {
-		do_minor_backup = 1;
-		if( rp->r_dir[majdir] < 0 )  {
-			maj_entry_pos[majdir].i++;		/* back up */
-		} else {
-			if( maj_entry_pos[majdir].i <= 0 )
-				maj_entry_pos[majdir].i--;	/* back up */
-			/* else, just truncation to int will do the trick */
-		}
-		maj_entry_pos[majdir].f = 0;			/* truncate to int */
-
-		maj_entry_k = (maj_entry_pos[majdir].i - rp->r_pt[majdir]) / rp->r_dir[majdir];
-		FIXPT_FLOAT( maj_entry_pos[mindir],
-			rp->r_pt[mindir] + maj_entry_k * rp->r_dir[mindir] );
-		if(rt_g.debug&DEBUG_EBM) PR_FIX2("actual maj_entry_pos", maj_entry_pos);
+	if( !NEAR_ZERO( rp->r_dir[Y], SQRT_SMALL_FASTF ) )  {
+		invdir[Y]=1.0/rp->r_dir[Y];
 	} else {
-		do_minor_backup = 0;
+		invdir[Y] = INFINITY;
+		rp->r_dir[Y] = 0.0;
 	}
-
-	maj_pos_deltas[majdir].i = rp->r_dir[majdir] < 0.0 ? -1 : 1;
-	maj_pos_deltas[majdir].f = 0;
-	FIXPT_FLOAT( maj_pos_deltas[mindir],
-		rp->r_dir[mindir]/fabs(rp->r_dir[majdir]) );	/* should be <= 1 */
-	if(rt_g.debug&DEBUG_EBM) PR_FIX2( "maj_pos_deltas", maj_pos_deltas );
-
-	/*
-	 *  Find the first minor axis intercept before the start position,
-	 *  to "prime the pumps" in the minor direction.
-	 */
-	min_entry_k = rp->r_min;
-	if( maj_pos_deltas[mindir].i != 0 ||
-	    maj_pos_deltas[mindir].f != 0 )  {
-	    	minor_has_deltas = 1;
-		min_k_delta = fabs(1.0/rp->r_dir[mindir]);
-		/*
-		 *  The minor entry point MUST be on a minor axis intercept,
-	    	 *  force min_entry_pos[mindir] == integer
-	    	 */
-	    	if( min_entry_pos[mindir].f != 0 || do_minor_backup)  {
-			if( rp->r_dir[mindir] < 0 )  {
-				min_entry_pos[mindir].i++;	/* back up */
-			} else {
-				if( min_entry_pos[mindir].i <= 0 )
-					min_entry_pos[mindir].i--;	/* back up */
-				/* else, just truncation to int will do the trick */
-			}
-			min_entry_pos[mindir].f = 0;		/* truncate to int */
-
-			min_entry_k = (min_entry_pos[mindir].i - rp->r_pt[mindir]) / rp->r_dir[mindir];
-			FIXPT_FLOAT( min_entry_pos[majdir],
-				rp->r_pt[majdir] + min_entry_k * rp->r_dir[majdir] );
-	    	}
-		if(rt_g.debug&DEBUG_EBM) PR_FIX2( "min_entry_pos", min_entry_pos );
-
-		min_pos_deltas[mindir].i = rp->r_dir[mindir] < 0.0 ? -1 : 1;
-		min_pos_deltas[mindir].f = 0;
-		FIXPT_FLOAT( min_pos_deltas[majdir],
-			rp->r_dir[majdir]/fabs(rp->r_dir[mindir]) );	/* may be > 1 */
-		if(rt_g.debug&DEBUG_EBM) PR_FIX2( "min_pos_deltas", min_pos_deltas );
-
-		/* Take first minor step already, to have exit dist to check, below */
-		FIXPT_ADD2( min_exit_pos[X], min_entry_pos[X], min_pos_deltas[X] );
-		FIXPT_ADD2( min_exit_pos[Y], min_entry_pos[Y], min_pos_deltas[Y] );
+	if( !NEAR_ZERO( rp->r_dir[Z], SQRT_SMALL_FASTF ) )  {
+		invdir[Z]=1.0/rp->r_dir[Z];
 	} else {
-	    	minor_has_deltas = 0;
-		min_k_delta = 0;
-	}
-	min_exit_k = min_entry_k + min_k_delta;
-	if(rt_g.debug&DEBUG_EBM)  {
-		rt_log("maj_k_delta=%g, min_k_delta=%g, major_axis=%s\n", maj_k_delta, min_k_delta, majdir==X ? "X" : "Y");
-		rt_log("maj_entry_k = %g, min_entry_k = %g\n", maj_entry_k, min_entry_k );
+		invdir[Z] = INFINITY;
+		rp->r_dir[Z] = 0.0;
 	}
 
-	/* Take first major step */
-	FIXPT_ADD2( maj_exit_pos[X], maj_entry_pos[X], maj_pos_deltas[X] );
-	FIXPT_ADD2( maj_exit_pos[Y], maj_entry_pos[Y], maj_pos_deltas[Y] );
-	maj_exit_k = maj_entry_k + maj_k_delta;
+	/* intersect ray with ideal grid rpp */
+	VSETALL( P, 0 );
+	if( ! rt_in_rpp(rp, invdir, P, ebmp->ebm_large ) )
+		return	0;	/* MISS */
+	VJOIN1( P, rp->r_pt, rp->r_min, rp->r_dir );	/* P is hit point */
+if(rt_g.debug&DEBUG_EBM)VPRINT("ebm_origin", ebmp->ebm_origin);
+if(rt_g.debug&DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
+if(rt_g.debug&DEBUG_EBM)VPRINT("P", P);
+if(rt_g.debug&DEBUG_EBM)VPRINT("cellsize", ebmp->ebm_cellsize);
+	t0 = rp->r_min;
+	tmax = rp->r_max;
+if(rt_g.debug&DEBUG_EBM)rt_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
 
-	/*  See if a silent minor step is needed to get past
-	 *  the starting K for the major axis.
-	 */
-	if( minor_has_deltas )  {
-		while( min_exit_k < maj_entry_k )  {
-			if(rt_g.debug&DEBUG_EBM) rt_log("catch-up minor step\n");
-			/* Advance minor exit to some future cell */
-			min_entry_pos[X] = min_exit_pos[X];		/* struct copy */
-			min_entry_pos[Y] = min_exit_pos[Y];		/* struct copy */
-			FIXPT_ADD2( min_exit_pos[X], min_entry_pos[X], min_pos_deltas[X] );
-			FIXPT_ADD2( min_exit_pos[Y], min_entry_pos[Y], min_pos_deltas[Y] );
-			min_entry_k += min_k_delta;
-			min_exit_k += min_k_delta;
-		}
+	/* find grid cell where ray first hits ideal space bounding RPP */
+	igrid[X] = (P[X] - ebmp->ebm_origin[X]) / ebmp->ebm_cellsize[X];
+	igrid[Y] = (P[Y] - ebmp->ebm_origin[Y]) / ebmp->ebm_cellsize[Y];
+	if( igrid[X] < 0 )  {
+		igrid[X] = 0;
+	} else if( igrid[X] >= ebmp->ebm_dim[X] ) {
+		igrid[X] = ebmp->ebm_dim[X]-1;
 	}
+	if( igrid[Y] < 0 )  {
+		igrid[Y] = 0;
+	} else if( igrid[Y] >= ebmp->ebm_dim[Y] ) {
+		igrid[Y] = ebmp->ebm_dim[Y]-1;
+	}
+if(rt_g.debug&DEBUG_EBM)rt_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
-	while( inside >= 0 )  {
-		if(rt_g.debug&DEBUG_EBM) rt_log("maj_exit_k = %g, min_exit_k = %g\n", maj_exit_k, min_exit_k );
+	if( rp->r_dir[X] == 0.0 && rp->r_dir[Y] == 0.0 )  {
+		register struct seg	*segp;
 
-		/*
-		 *  First, do any minor direction exit step
-		 *  which has become "due".
-		 *  Minor direction steps usually happen once for
-		 *  every several major direction steps (depending on slope).
+		/*  Ray is traveling exactly along Z axis.
+		 *  Just check the one cell hit.
+		 *  Depend on higher level to clip ray to Z extent.
 		 */
-		if( minor_has_deltas && min_exit_k < maj_exit_k )  {
-		    	fastf_t	exit_k_diff;
-			fastf_t	maj_dist;
-
-			/*
-			 * If either the entry or exit points (K values)
-			 * are nearly equal, this is a shared
-			 * major/minor vertex, don't bother doing
-			 * a minor step partitioning in this cell,
-			 * but DO push min_exit_pos along.
-			 * All shared major+minor vertices should occur
-			 * exactly on integer-valued grid coordinates;
-			 * this is enforced.
-			 */
-#define VERT_TOL	(1.0e-10)
-			exit_k_diff = maj_exit_k - min_exit_k;
-			if(rt_g.debug&DEBUG_EBM)  {
-				PR_FIX2("maj_entry_pos", maj_entry_pos);
-				PR_FIX2("min_entry_pos", min_entry_pos);
-				PR_FIX2("maj_exit_pos ", maj_exit_pos);
-				PR_FIX2("min_exit_pos ", min_exit_pos);
-				rt_log("exit_k_diff = %e\n", exit_k_diff);
-			}
-			if( exit_k_diff > -VERT_TOL &&
-				   exit_k_diff <  VERT_TOL )  {
-				/*  Exit Vertex overlap -
-				 *  Do it as a regular major exit.
-				 *  Force positions to exactly integer
-				 *  values -- this is mandatory for
-				 *  correct results.
-				 */
-if(rt_g.debug&DEBUG_EBM) rt_log("MINOR STEP SKIPPED -- exit vertex overlap\n");
-				  
-				FIXPT_ROUND( maj_exit_pos[X] );
-				FIXPT_ROUND( maj_exit_pos[Y] );
-				FIXPT_ROUND( min_exit_pos[X] );
-				FIXPT_ROUND( min_exit_pos[Y] );
-				inside = ebm_do_exit( maj_entry_k, maj_exit_k,
-					maj_entry_pos, maj_exit_pos,
-					rp, inside, ebmp,
-					maj_entry_norm, &head );
-			} else {
-				if(rt_g.debug&DEBUG_EBM) rt_log("MINOR STEP\n");
-				/*
-			    	 *  Take a step in the minor direction.
-				 *  Ensure that this step is not going
-				 *  backwards along the major axis,
-			    	 *  due to slight differences in the slopes
-			    	 */
-			    	maj_dist =
-				    (FLOAT_FIXPT(min_exit_pos[majdir]) -
-			    	    FLOAT_FIXPT(maj_entry_pos[majdir]) ) *
-				    ( rp->r_dir[majdir] < 0.0 ? -1 : 1 );
-				if(rt_g.debug&DEBUG_EBM) rt_log("maj_dist = %g\n", maj_dist);
-#define DIFF_TOL	7.0/FIXPT_SCALE
-			    	if( maj_dist < 0 )  {
-			    		if( maj_dist < -DIFF_TOL )  {
-rt_log("??? major element heading wrong way, maj_dist=%g (%d) ???\n", maj_dist, ((int)(maj_dist*FIXPT_SCALE)) );
-			    		}
-			    		/* Fix it up */
-			    	    	min_exit_pos[majdir] = maj_entry_pos[majdir];	/* struct copy */
-			    	}
-				inside = ebm_do_exit( maj_entry_k, min_exit_k,
-					maj_entry_pos, min_exit_pos,
-					rp, inside, ebmp,
-					maj_entry_norm, &head );
-			    	if( inside < 0 )  break;
-				inside = ebm_do_exit( min_exit_k, maj_exit_k,
-					min_exit_pos, maj_exit_pos,
-					rp, inside, ebmp,
-					min_entry_norm, &head );
-			}
-
-			/* Advance minor exit to some future cell */
-			min_entry_pos[X] = min_exit_pos[X];		/* struct copy */
-			min_entry_pos[Y] = min_exit_pos[Y];		/* struct copy */
-			FIXPT_ADD2( min_exit_pos[X], min_entry_pos[X], min_pos_deltas[X] );
-			FIXPT_ADD2( min_exit_pos[Y], min_entry_pos[Y], min_pos_deltas[Y] );
-			min_entry_k += min_k_delta;
-			min_exit_k += min_k_delta;
+if(rt_g.debug&DEBUG_EBM)rt_log("ray on local Z axis\n");
+		if( BIT( igrid[X], igrid[Y] ) == 0 )
+			return(SEG_NULL);	/* MISS */
+		GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in.hit_dist = 0;
+		segp->seg_out.hit_dist = INFINITY;
+		if( rp->r_dir[Z] < 0 )  {
+			segp->seg_in.hit_private = (char *)NORM_ZPOS;
+			segp->seg_out.hit_private = (char *)NORM_ZNEG;
 		} else {
-			/* Take regular major direction step */
-			inside = ebm_do_exit( maj_entry_k, maj_exit_k,
-				maj_entry_pos, maj_exit_pos,
-				rp, inside, ebmp,
-				maj_entry_norm, &head );
+			segp->seg_in.hit_private = (char *)NORM_ZNEG;
+			segp->seg_out.hit_private = (char *)NORM_ZPOS;
 		}
-
-		/* Loop bottom -- press on to next major direction cell */
-		maj_entry_pos[X] = maj_exit_pos[X];		/* struct copy */
-		maj_entry_pos[Y] = maj_exit_pos[Y];		/* struct copy */
-		FIXPT_ADD2( maj_exit_pos[X], maj_entry_pos[X], maj_pos_deltas[X] );
-		FIXPT_ADD2( maj_exit_pos[Y], maj_entry_pos[Y], maj_pos_deltas[Y] );
-		maj_entry_k += maj_k_delta;
-		maj_exit_k += maj_k_delta;
-	}
-	return(head.sh_head);
-}
-
-/*
- *			E B M _ D O _ E X I T
- */
-int
-ebm_do_exit( entry_k, exit_k, entry_pos, exit_pos, rp, inside, ebmp, entry_norm, headp )
-double		entry_k, exit_k;
-struct fixpt	*entry_pos, *exit_pos;
-struct xray	*rp;
-int		inside;
-register struct ebm_specific *ebmp;
-int		entry_norm;
-struct seg_head	*headp;
-{
-	int	test[2];
-	int	val;
-	struct seg *segp = SEG_NULL;
-
-	if(rt_g.debug&DEBUG_EBM)  {
-		rt_log("ebm_do_exit(%g,%g) inside=%d\n", entry_k, exit_k, inside );
-		PR_FIX2( " entry", entry_pos );
-		PR_FIX2( "  exit", exit_pos );
+		return(segp);			/* HIT */
 	}
 
-	/*  Determine proper cell index.
-	 *  If the position is exactly a positive integer (no fractional part)
-	 *  then apply the subscript correction.
-	 *  If direction is negative, bitmap index needs correction,
-	 *  because intercept point will be on top or right edge of cell,
-	 *  resulting in round-up to next largest integer.
-	 */
-	if( entry_pos[X].f != 0 || entry_pos[X].i < 0 || rp->r_dir[X] >= 0 )
-		test[X] = entry_pos[X].i;
-	else	test[X] = entry_pos[X].i - 1;
-	if( entry_pos[Y].f != 0 || entry_pos[Y].i < 0 || rp->r_dir[Y] >= 0 )
-		test[Y] = entry_pos[Y].i;
-	else	test[Y] = entry_pos[Y].i - 1;
-
-	/*
-	 *  Sitting on first ring of zero cells is OK,
-	 *  but the outer ring of zeros is time to quit.
-	 *  The inner ring should prevent it from ever happening.
-	 */
-	if( test[X] < 0 ||
-	    test[X] >= ebmp->ebm_dim[X] ||
-	    test[Y] < 0 ||
-	    test[Y] >= ebmp->ebm_dim[Y] )  {
-
-		if( test[X] < -2 ||
-		    test[X] > ebmp->ebm_dim[X]+1 ||
-		    test[Y] < -2 ||
-		    test[Y] > ebmp->ebm_dim[Y]+1 )  {
-		    	if( !inside )
-		    		return( -1 );		/* OK, but time to stop */
-		}
-
-		/*
-		 *  DDA ran off the edge of the bitmap,
-		 *  perhaps while still "inside" a solid.
-		 *  Just print up an empty (zerp valued) cell,
-		 *  and return the -1 next time through.
-		 *  This accomodates the initial intercepts shifting
-		 *  the ray start positions outside the normal bounds.
-		 */
-		val = 0;
+	/* X setup */
+	if( rp->r_dir[X] == 0.0 )  {
+		t[X] = INFINITY;
+		delta[X] = 0;
 	} else {
-		val = BIT( test[X], test[Y] );
+		j = igrid[X];
+		if( rp->r_dir[X] < 0 ) j++;
+		t[X] = (ebmp->ebm_origin[X] + j*ebmp->ebm_cellsize[X] -
+			rp->r_pt[X]) * invdir[X];
+		delta[X] = ebmp->ebm_cellsize[X] * fabs(invdir[X]);
 	}
+	/* Y setup */
+	if( rp->r_dir[Y] == 0.0 )  {
+		t[Y] = INFINITY;
+		delta[Y] = 0;
+	} else {
+		j = igrid[Y];
+		if( rp->r_dir[Y] < 0 ) j++;
+		t[Y] = (ebmp->ebm_origin[Y] + j*ebmp->ebm_cellsize[Y] -
+			rp->r_pt[Y]) * invdir[Y];
+		delta[Y] = ebmp->ebm_cellsize[Y] * fabs(invdir[Y]);
+	}
+#if 0
+	/* Z setup */
+	if( rp->r_dir[Z] == 0.0 )  {
+		t[Z] = INFINITY;
+	} else {
+		/* Consider igrid[Z] to be either 0 or 1 */
+		if( rp->r_dir[Z] < 0 )  {
+			t[Z] = (ebmp->ebm_origin[Z] + ebmp->ebm_cellsize[Z] -
+				rp->r_pt[Z]) * invdir[Z];
+		} else {
+			t[Z] = (ebmp->ebm_origin[Z] - rp->r_pt[Z]) * invdir[Z];
+		}
+	}
+#endif
 
-	/* Check cell value */
-	if(rt_g.debug&DEBUG_EBM) rt_log(" .....TEST bit (%d, %d) val=%d\n",
-		test[X], test[Y], val );
+	/* The delta[] elements *must* be positive, as t must increase */
+if(rt_g.debug&DEBUG_EBM)rt_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X] );
+if(rt_g.debug&DEBUG_EBM)rt_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y] );
 
-	if( val )  {
-		/* New cell is solid */
+	/* Find face of entry into first cell -- max initial t value */
+	if( t[X] >= t[Y] )  {
+		in_index = X;
+		t0 = t[X];
+	} else {
+		in_index = Y;
+		t0 = t[Y];
+	}
+if(rt_g.debug&DEBUG_EBM)rt_log("Entry index is %s, t0=%g\n", in_index==X ? "X" : "Y", t0);
+
+	/* Advance to next exits */
+	t[X] += delta[X];
+	t[Y] += delta[Y];
+
+	/* Ensure that next exit is after first entrance */
+	if( t[X] < t0 )  {
+		rt_log("*** advancing t[X]\n");
+		t[X] += delta[X];
+	}
+	if( t[Y] < t0 )  {
+		rt_log("*** advancing t[Y]\n");
+		t[Y] += delta[Y];
+	}
+if(rt_g.debug&DEBUG_EBM)rt_log("Exit t[X]=%g, t[Y]=%g\n", t[X], t[Y] );
+
+	inside = 0;
+
+	while( t0 < tmax ) {
+		int	val;
+		struct seg	*segp;
+
+		/* find minimum exit t value */
+		out_index = t[X] < t[Y] ? X : Y;
+
+		t1 = t[out_index];
+
+		/* Ray passes through cell igrid[XY] from t0 to t1 */
+		val = BIT( igrid[X], igrid[Y] );
+if(rt_g.debug&DEBUG_EBM)rt_log("igrid [%d %d] from %g to %g, val=%d\n",
+			igrid[X], igrid[Y],
+			t0, t1, val );
+if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
+			out_index==X ? "X" : "Y", t[X], t[Y] );
+
+		if( t1 <= t0 )  rt_log("ERROR ebm t1=%g < t0=%g\n", t1, t0 );
 		if( !inside )  {
-			/* Handle the transition from vacuum to solid */
-			inside = 1;
+			if( val > 0 )  {
+				/* Handle the transition from vacuum to solid */
+				/* Start of segment (entering a full voxel) */
+				inside = 1;
 
-			GET_SEG(segp, headp->sh_ap->a_resource);
-			segp->seg_stp = headp->sh_stp;
-			segp->seg_in.hit_dist = entry_k;
-			segp->seg_in.hit_private = (char *)entry_norm;
+				GET_SEG(segp, ap->a_resource);
+				segp->seg_stp = stp;
+				segp->seg_in.hit_dist = t0;
 
-			if( headp->sh_head == SEG_NULL ||
-			    headp->sh_tail == SEG_NULL )  {
-				/* Install as beginning of list */
-				headp->sh_tail = segp;
-				segp->seg_next = headp->sh_head;
-				headp->sh_head = segp;
+				/* Compute entry normal */
+				if( rp->r_dir[in_index] < 0 )  {
+					/* Go left, entry norm goes right */
+					segp->seg_in.hit_private = (char *)
+						ebm_normtab[in_index];
+				}  else  {
+					/* go right, entry norm goes left */
+					segp->seg_in.hit_private = (char *)
+						(-ebm_normtab[in_index]);
+				}
+				segp->seg_next = SEG_NULL;
+				if( head == SEG_NULL ||
+				    tail == SEG_NULL )  {
+					/* Install as beginning of list */
+					tail = segp;
+					head = segp;
+				} else {
+					/* Append to list */
+					tail->seg_next = segp;
+					tail = segp;
+				}
+
+				if(rt_g.debug&DEBUG_EBM) rt_log("START t=%g, n=%d\n",
+					t0, segp->seg_in.hit_private);
 			} else {
-				/* Append to list */
-				headp->sh_tail->seg_next = segp;
-				headp->sh_tail = segp;
+				/* Do nothing, marching through void */
 			}
+		} else {
+			if( val > 0 )  {
+				/* Do nothing, marching through solid */
+			} else {
+				/* End of segment (now in an empty voxel) */
+				/* Handle transition from solid to vacuum */
+				inside = 0;
 
-			if(rt_g.debug&DEBUG_EBM) rt_log("START k=%g, n=%d\n", entry_k, entry_norm);
+				tail->seg_out.hit_dist = t0;
+
+				/* Compute exit normal */
+				if( rp->r_dir[in_index] < 0 )  {
+					/* Go left, exit normal goes left */
+					tail->seg_out.hit_private = (char *)
+						(-ebm_normtab[in_index]);
+				}  else  {
+					/* go right, exit norm goes right */
+					tail->seg_out.hit_private = (char *)
+						ebm_normtab[in_index];
+				}
+				if(rt_g.debug&DEBUG_EBM) rt_log("END t=%g, n=%d\n",
+					t0, tail->seg_out.hit_private );
+			}
 		}
-	} else {
-		/* New cell is empty */
-		if( inside )  {
-			/* Handle transition from solid to vacuum */
-			inside = 0;
 
-			headp->sh_tail->seg_out.hit_dist = entry_k;
-			headp->sh_tail->seg_out.hit_private = (char *)(-entry_norm);
-			if(rt_g.debug&DEBUG_EBM) rt_log("END k=%g, n=%d\n", entry_k, -entry_norm);
+		/* Take next step */
+		t0 = t1;
+		in_index = out_index;
+		t[out_index] += delta[out_index];
+		if( rp->r_dir[out_index] > 0 ) {
+			igrid[out_index]++;
+		} else {
+			igrid[out_index]--;
 		}
 	}
-	return(inside);
+
+	if( inside )  {
+		/* Close off the final segment */
+		tail->seg_out.hit_dist = tmax;
+
+		/* Compute exit normal.  Previous out_index is now in_index */
+		if( rp->r_dir[in_index] < 0 )  {
+			/* Go left, exit normal goes left */
+			tail->seg_out.hit_private = (char *)
+				(-ebm_normtab[in_index]);
+		}  else  {
+			/* go right, exit norm goes right */
+			tail->seg_out.hit_private = (char *)
+				ebm_normtab[in_index];
+		}
+		if(rt_g.debug&DEBUG_EBM) rt_log("closed END t=%g, n=%d\n",
+			tmax, tail->seg_out.hit_private );
+	}
+
+	return(head);
 }
 
 /*
- *			E B M _ R E A D I N
+ *			E B M _ I M P O R T
  */
 HIDDEN struct ebm_specific *
-ebm_readin( rp )
+ebm_import( rp )
 union record	*rp;
 {
 	register struct ebm_specific *ebmp;
 	FILE	*fp;
 	int	nbytes;
 	register int	y;
-
-	/* tokenize the string in the solid record ?? */
-	/* Perhaps just find the first WSp char */
-	/* parse each assignment w/library routine */
+	char	*str;
+	char	*cp;
 
 	GETSTRUCT( ebmp, ebm_specific );
-	ebmp->ebm_file = "bm.bw";
-	ebmp->ebm_dim[X] = 6;
-	ebmp->ebm_dim[Y] = 6;
-	ebmp->ebm_tallness = 6.0;
+
+	str = rt_strdup( rp->ss.ss_str );
+	/* First word is name of solid type (eg, "ebm") -- skip over it */
+	cp = str;
+	while( *cp && !isspace(*cp) )  cp++;
+	/* Skip all white space */
+	while( *cp && isspace(*cp) )  cp++;
+
+	rt_structparse( cp, ebm_parse, (char *)ebmp );
+	rt_free( str, "ss_str" );
+
+	/* Check for reasonable values */
+	if( ebmp->ebm_file[0] == '\0' || ebmp->ebm_dim[0] < 1 ||
+	    ebmp->ebm_dim[1] < 1 ||
+	    ebmp->ebm_tallness <= 0.0 )  {
+	    	rt_log("Unreasonable EBM parameters\n");
+		rt_free( (char *)ebmp, "ebm_specific" );
+		return( EBM_NULL );
+	}
 
 	/* Get bit map from .bw(5) file */
 	nbytes = (ebmp->ebm_dim[X]+BIT_XWIDEN*2)*(ebmp->ebm_dim[Y]+BIT_YWIDEN*2);
-	ebmp->ebm_map = (unsigned char *)rt_malloc( nbytes, "ebm_readin bitmap" );
+	ebmp->ebm_map = (unsigned char *)rt_malloc( nbytes, "ebm_import bitmap" );
 #ifdef SYSV
 	memset( ebmp->ebm_map, 0, nbytes );
 #else
@@ -598,12 +522,47 @@ union record	*rp;
 #endif
 	if( (fp = fopen(ebmp->ebm_file, "r")) == NULL )  {
 		perror(ebmp->ebm_file);
-		return( BM_NULL );
+		rt_free( (char *)ebmp, "ebm_specific" );
+		return( EBM_NULL );
 	}
+
+	/* Because of in-memory padding, read each scanline separately */
 	for( y=0; y < ebmp->ebm_dim[Y]; y++ )
 		(void)fread( &BIT(0, y), ebmp->ebm_dim[X], 1, fp );
 	fclose(fp);
 	return( ebmp );
+}
+
+/*
+ *			R T _ R O T _ B O U N D _ R P P
+ *
+ *  Given an RPP that defines a bounding cube in a local coordinate
+ *  system, transform that cube into another coordinate system,
+ *  and then find the new (usually somewhat larger) bounding RPP.
+ */
+void
+rt_rot_bound_rpp( omin, omax, mat, imin, imax )
+vect_t	omin, omax;
+mat_t	mat;
+vect_t	imin, imax;
+{
+	point_t	local;		/* vertex point in local coordinates */
+	point_t	model;		/* vertex point in model coordinates */
+
+#define ROT_VERT( a, b, c )  \
+	VSET( local, a[X], b[Y], c[Z] ); \
+	MAT4X3PNT( model, mat, local ); \
+	VMINMAX( omin, omax, model ) \
+
+	ROT_VERT( imin, imin, imin );
+	ROT_VERT( imin, imin, imax );
+	ROT_VERT( imin, imax, imin );
+	ROT_VERT( imin, imax, imax );
+	ROT_VERT( imax, imin, imin );
+	ROT_VERT( imax, imin, imax );
+	ROT_VERT( imax, imax, imin );
+	ROT_VERT( imax, imax, imax );
+#undef ROT_VERT
 }
 
 /*
@@ -626,11 +585,14 @@ struct rt_i	*rtip;
 	register struct ebm_specific *ebmp;
 	vect_t	norm;
 	vect_t	radvec;
+	vect_t	diam;
+	vect_t	small;
 
-	if( (ebmp = ebm_readin( rp )) == BM_NULL )
+	if( (ebmp = ebm_import( rp )) == EBM_NULL )
 		return(-1);	/* ERROR */
 
-	/* build Xform matrix to ideal space */
+	/* build Xform matrix from model(world) to ideal(local) space */
+	mat_inv( ebmp->ebm_mat, stp->st_pathmat );
 
 	/* Pre-compute the necessary normals */
 	VSET( norm, 1, 0 , 0 );
@@ -642,12 +604,22 @@ struct rt_i	*rtip;
 
 	stp->st_specific = (int *)ebmp;
 
-	/* This needs to account for the rotations */
-	VSETALL( stp->st_min, 0 );
-	VSET( stp->st_max, ebmp->ebm_dim[X], ebmp->ebm_dim[Y], ebmp->ebm_tallness );
+	/* Find bounding RPP of rotated local RPP */
+	VSETALL( small, 0 );
+	VSET( ebmp->ebm_large, ebmp->ebm_dim[X], ebmp->ebm_dim[Y], ebmp->ebm_tallness );
+	rt_rot_bound_rpp( stp->st_min, stp->st_max, stp->st_pathmat,
+		small, ebmp->ebm_large );
 
+	/* for now, EBM origin in ideal coordinates is at origin */
+	VSETALL( ebmp->ebm_origin, 0 );
+	VADD2( ebmp->ebm_large, ebmp->ebm_large, ebmp->ebm_origin );
+
+	/* for now, EBM cell size in ideal coordinates is one unit/cell */
+	VSETALL( ebmp->ebm_cellsize, 1 );
+
+	VSUB2( diam, stp->st_max, stp->st_min );
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
-	VSUB2SCALE( radvec, stp->st_min, stp->st_max, 0.5 );
+	VSCALE( radvec, diam, 0.5 );
 	stp->st_aradius = stp->st_bradius = MAGNITUDE( radvec );
 
 	return(0);		/* OK */
@@ -663,6 +635,12 @@ register struct soltab	*stp;
 	register struct ebm_specific *ebmp =
 		(struct ebm_specific *)stp->st_specific;
 
+	rt_log("ebm file = %s\n", ebmp->ebm_file );
+	rt_log("dimensions = (%d, %d, %g)\n",
+		ebmp->ebm_dim[X], ebmp->ebm_dim[Y],
+		ebmp->ebm_tallness );
+	VPRINT("model cellsize", ebmp->ebm_cellsize);
+	VPRINT("model grid origin", ebmp->ebm_origin);
 }
 
 /*
@@ -686,11 +664,32 @@ struct application	*ap;
 		(struct ebm_specific *)stp->st_specific;
 	struct seg	*segp;
 	vect_t		norm;
+	struct xray	ideal_ray;
 
-	segp = ebm_dda( rp, ebmp, stp, ap );
+	/* Transform actual ray into ideal space at origin in X-Y plane */
+	MAT4X3PNT( ideal_ray.r_pt, ebmp->ebm_mat, rp->r_pt );
+	MAT4X3VEC( ideal_ray.r_dir, ebmp->ebm_mat, rp->r_dir );
+
+#if 0
+rt_log("%g %g %g %g %g %g\n",
+ideal_ray.r_pt[X], ideal_ray.r_pt[Y], ideal_ray.r_pt[Z],
+ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
+#endif
+	segp = ebm_dda( &ideal_ray, stp, ap );
 
 	VSET( norm, 0, 0, -1 );		/* letters grow in +z, which is "inside" the halfspace */
-	segp = rt_seg_planeclip( segp, norm, 0.0, ebmp->ebm_tallness, rp, ap );
+	segp = rt_seg_planeclip( segp, norm, 0.0, ebmp->ebm_tallness,
+		&ideal_ray, ap );
+#if 0
+	if( segp )  {
+		vect_t	a, b;
+		/* Plot where WE think the ray goes */
+		VJOIN1( a, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir );
+		VJOIN1( b, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir );
+		pl_color( stdout, 0, 0, 255 );	/* B */
+		pdv_3line( stdout, a, b );
+	}
+#endif
 	return(segp);
 }
 
@@ -756,6 +755,9 @@ struct soltab			*stp;
 {
 	register struct ebm_specific *ebmp =
 		(struct ebm_specific *)stp->st_specific;
+
+	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
 /*
@@ -773,6 +775,8 @@ register struct uvcoord	*uvp;
 {
 	register struct ebm_specific *ebmp =
 		(struct ebm_specific *)stp->st_specific;
+
+	/* XXX uv should be xy in ideal space */
 }
 
 /*
@@ -801,7 +805,7 @@ ebm_class()
 void
 ebm_plot( rp, matp, vhead, dp )
 union record	*rp;
-register matp_t	matp;
+matp_t		matp;
 struct vlhead	*vhead;
 struct directory *dp;
 {
@@ -810,7 +814,7 @@ struct directory *dp;
 	register int	following;
 	register int	base;
 
-	if( (ebmp = ebm_readin( rp )) == BM_NULL )
+	if( (ebmp = ebm_import( rp )) == EBM_NULL )
 		return;
 
 	/* Find vertical lines */
@@ -819,12 +823,13 @@ struct directory *dp;
 		following = 0;
 		for( y=0; y <= ebmp->ebm_dim[Y]; y++ )  {
 			if( following )  {
-				if( BIT( x-1, y ) != BIT( x, y ) )
+				if( (BIT( x-1, y )==0) != (BIT( x, y )==0) )
 					continue;
-				ebm_plate( x, base, x, y, ebmp->ebm_tallness, vhead );
+				ebm_plate( x, base, x, y, ebmp->ebm_tallness,
+					matp, vhead );
 				following = 0;
 			} else {
-				if( BIT( x-1, y ) == BIT( x, y ) )
+				if( (BIT( x-1, y )==0) == (BIT( x, y )==0) )
 					continue;
 				following = 1;
 				base = y;
@@ -837,12 +842,13 @@ struct directory *dp;
 		following = 0;
 		for( x=0; x <= ebmp->ebm_dim[X]; x++ )  {
 			if( following )  {
-				if( BIT( x, y-1 ) != BIT( x, y ) )
+				if( (BIT( x, y-1 )==0) != (BIT( x, y )==0) )
 					continue;
-				ebm_plate( base, y, x, y, ebmp->ebm_tallness, vhead );
+				ebm_plate( base, y, x, y, ebmp->ebm_tallness,
+					matp, vhead );
 				following = 0;
 			} else {
-				if( BIT( x, y-1 ) == BIT( x, y ) )
+				if( (BIT( x, y-1 )==0) == (BIT( x, y )==0) )
 					continue;
 				following = 1;
 				base = x;
@@ -854,25 +860,33 @@ struct directory *dp;
 }
 
 /* either x1==x2, or y1==y2 */
-ebm_plate( x1, y1, x2, y2, t, vhead )
-double	t;
-struct vlhead	*vhead;
+ebm_plate( x1, y1, x2, y2, t, mat, vhead )
+int			x1, y1;
+int			x2, y2;
+double			t;
+register matp_t		mat;
+register struct vlhead	*vhead;
 {
-	point_t	s, p;
+	LOCAL point_t	s, p;
+	LOCAL point_t	srot, prot;
 
 	VSET( s, x1, y1, 0.0 );
-	ADD_VL( vhead, s, 0 );
+	MAT4X3PNT( srot, mat, s );
+	ADD_VL( vhead, srot, 0 );
 
 	VSET( p, x1, y1, t );
-	ADD_VL( vhead, p, 1 );
+	MAT4X3PNT( prot, mat, p );
+	ADD_VL( vhead, prot, 1 );
 
 	VSET( p, x2, y2, t );
-	ADD_VL( vhead, p, 1 );
+	MAT4X3PNT( prot, mat, p );
+	ADD_VL( vhead, prot, 1 );
 
 	p[Z] = 0;
-	ADD_VL( vhead, p, 1 );
+	MAT4X3PNT( prot, mat, p );
+	ADD_VL( vhead, prot, 1 );
 
-	ADD_VL( vhead, s, 1 );
+	ADD_VL( vhead, srot, 1 );
 }
 
 /******** Test Driver *********/
@@ -895,9 +909,14 @@ char	**argv;
 	fastf_t		xx, yy;
 	mat_t		mat;
 	register struct ebm_specific	*ebmp;
+	int		arg;
+	FILE		*fp;
+	union record	rec;
 
-	if( argc > 1 )
+	if( argc > 1 )  {
 		rt_g.debug |= DEBUG_EBM;
+		arg = atoi(argv[1]);
+	}
 
 	plotfp = fopen( "ebm.pl", "w" );
 
@@ -906,19 +925,61 @@ char	**argv;
 	Tappl.a_resource = &resource;
 	mat_idn( Tsolid.st_pathmat );
 
-	if( ebm_prep( &Tsolid, 0, 0 ) != 0 )  {
+	strcpy( rec.ss.ss_str, "ebm file=bm.bw w=6 n=6 d=6.0" );
+
+	if( ebm_prep( &Tsolid, &rec, 0 ) != 0 )  {
 		printf("prep failed\n");
 		exit(1);
 	}
+	ebm_print( &Tsolid );
 	ebmp = bmsp = (struct ebm_specific *)Tsolid.st_specific;
 
-	outline();
+	outline( Tsolid.st_pathmat, &rec );
 
+#if 1
+	if( (fp = fopen("ebm.rays", "r")) == NULL )  {
+		perror("ebm.rays");
+		exit(1);
+	}
+	for(;;)  {
+		x = fscanf( fp, "%lf %lf %lf %lf %lf %lf\n",
+			&pt1[X], &pt1[Y], &pt1[Z],
+			&pt2[X], &pt2[Y], &pt2[Z] );
+		if( x < 6 )  break;
+		VADD2( pt2, pt2, pt1 );
+		trial( pt1, pt2 );
+	}
+#endif
+#if 0
+	y = arg;
+	for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
+		VSET( pt1, 0, y, 1 );
+		VSET( pt2, x, 0, 1 );
+		trial( pt1, pt2 );
+	}
+#endif
+#if 0
+	y = arg;
+	for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
+		VSET( pt1, 0, y, 2 );
+		VSET( pt2, x, 0, 4 );
+		trial( pt1, pt2 );
+	}
+#endif
 #if 0
 	for( y=0; y<=ebmp->ebm_dim[Y]; y++ )  {
 		for( x=0; x<=ebmp->ebm_dim[X]; x++ )  {
 			VSET( pt1, 0, y, 2 );
 			VSET( pt2, x, 0, 4 );
+			trial( pt1, pt2 );
+		}
+	}
+#endif
+#if 0
+	for( y= -1; y<=ebmp->ebm_dim[Y]; y++ )  {
+		for( x= -1; x<=ebmp->ebm_dim[X]; x++ )  {
+			VSET( pt1, x, y, 10 );
+			VSET( pt2, x+2, y+3, -4 );
 			trial( pt1, pt2 );
 		}
 	}
@@ -933,6 +994,13 @@ char	**argv;
 	}
 #endif
 
+#if 0
+	for( yy = 2.0; yy < 6.0; yy += 0.3 )  {
+		VSET( pt1, 0, yy, 2 );
+		VSET( pt2, 6, 0, 4 );
+		trial( pt1, pt2 );
+	}
+#endif
 #if 0
 	for( yy=0; yy<=ebmp->ebm_dim[Y]; yy += 0.3 )  {
 		for( xx=0; xx<=ebmp->ebm_dim[X]; xx += 0.3 )  {
@@ -984,8 +1052,11 @@ char	**argv;
 
 
 #if 0
-/**	for( x=0; x<ebmp->ebm_dim[X]; x++ )  { **/
-	VSET( pt1, 0.75, 1.1, -10 );
+	/* With Z=-10, it works, but looks like trouble, due to
+	 * the Z-clipping causing lots of green vectors on the 2d proj.
+	 * VSET( pt1, 0.75, 1.1, -10 );
+	 */
+	VSET( pt1, 0.75, 1.1, 0 );
 	{
 		for( yy=0; yy<=ebmp->ebm_dim[Y]; yy += 0.3 )  {
 			for( xx=0; xx<=ebmp->ebm_dim[X]; xx += 0.3 )  {
@@ -995,7 +1066,7 @@ char	**argv;
 		}
 	}
 #endif
-#if 1
+#if 0
 	for( x=0; x<ebmp->ebm_dim[X]; x++ )  {
 		VSET( pt1, x+0.75, 1.1, -10 );
 		VSET( pt2, x+0.75, 1.1, 4 );
@@ -1011,8 +1082,6 @@ vect_t	p1, p2;
 {
 	struct seg	*segp, *next;
 	fastf_t		lastk;
-	vect_t		minpt, maxpt;
-	vect_t		inv_dir;
 	struct xray	ray;
 	register struct ebm_specific *ebmp = bmsp;
 
@@ -1027,34 +1096,6 @@ vect_t	p1, p2;
 		p2[X], p2[Y], p2[Z],
 		ray.r_dir[X], ray.r_dir[Y], ray.r_dir[Z] );
 
-
-	/*
-	 *  Clip ray to bounding RPP of bitmap volume.
-	 *  In real version, this would be done by rt_shootray().
-	 */
-	VSET( minpt, 0, 0, -INFINITY );
-	VSET( maxpt, ebmp->ebm_dim[X], ebmp->ebm_dim[Y], INFINITY );
-	/* Compute the inverse of the direction cosines */
-	if( !NEAR_ZERO( ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
-		inv_dir[X]=1.0/ray.r_dir[X];
-	} else {
-		inv_dir[X] = INFINITY;
-		ray.r_dir[X] = 0.0;
-	}
-	if( !NEAR_ZERO( ray.r_dir[Y], SQRT_SMALL_FASTF ) )  {
-		inv_dir[Y]=1.0/ray.r_dir[Y];
-	} else {
-		inv_dir[Y] = INFINITY;
-		ray.r_dir[Y] = 0.0;
-	}
-	if( !NEAR_ZERO( ray.r_dir[Z], SQRT_SMALL_FASTF ) )  {
-		inv_dir[Z]=1.0/ray.r_dir[Z];
-	} else {
-		inv_dir[Z] = INFINITY;
-		ray.r_dir[Z] = 0.0;
-	}
-	if( rt_in_rpp( &ray, inv_dir, minpt, maxpt ) == 0 )
-		return;
 
 	segp = ebm_shot( &Tsolid, &ray, &Tappl );
 
@@ -1073,7 +1114,9 @@ vect_t	p1, p2;
 	}
 }
 
-outline()
+outline(mat, rp)
+mat_t	mat;
+union record	*rp;
 {
 	register struct ebm_specific *ebmp = bmsp;
 	register struct vlist	*vp;
@@ -1086,8 +1129,8 @@ outline()
 	pl_3box( plotfp, -BIT_XWIDEN,-BIT_YWIDEN,-BIT_XWIDEN,
 		 ebmp->ebm_dim[X]+BIT_XWIDEN, ebmp->ebm_dim[Y]+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
 
-	/* call bit_plot(), then just draw the vlist */
-	ebm_plot( 0, 0, &vhead, 0 );
+	/* Get vlist, then just draw the vlist */
+	ebm_plot( rp, mat, &vhead, 0 );
 
 	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
 		if( vp->vl_draw == 0 )
@@ -1106,9 +1149,6 @@ int	inside;
 {
 	vect_t	a, b;
 
-#if 0
-printf("draw2seg (%g %g) in=%d\n", k1, k2, inside);
-#endif
 	a[0] = pt[0] + k1 * dir[0];
 	a[1] = pt[1] + k1 * dir[1];
 	a[2] = 0;
