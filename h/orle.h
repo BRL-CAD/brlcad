@@ -9,7 +9,9 @@
 				Aberdeen Proving Ground
 				Maryland 21005-5066
 				(301)278-6647 or AV-283-6647
-*/
+ *
+ *  Note:  Most users of this file will need to include "fb.h" as well.
+ */
 /* 
  * Runsv.h - Definitions for Run Length Encoding.
  * 
@@ -92,13 +94,13 @@ typedef struct /* Old RLE format instruction.				*/
 
 #define	    XtndRMAGIC	((short)0xcc52) /* Extended RLE magic number.	*/
 
-#define STRIDE (sizeof(Pixel))	/* Distance (bytes) to next pixel.	*/
+#define STRIDE (sizeof(struct pixel))	/* Distance (bytes) to next pixel.	*/
 
 /* Global data intended mainly for internal (library) use.		*/
 extern int	_bg_flag;
 extern int	_bw_flag;
 extern int	_cm_flag;
-extern Pixel	_bg_pixel;
+extern struct pixel	_bg_pixel;
 
 /* Global flags for general use.					*/
 extern int	rle_debug;
