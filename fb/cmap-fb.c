@@ -99,7 +99,9 @@ int argc; char **argv;
 	fb_close( fbp );
 	if( ret < 0 ) {
 		fprintf( stderr, "cmap-fb: couldn't write colormap\n" );
+		exit(1);
 	}
+	exit(0);
 }
 
 /*
