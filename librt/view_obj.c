@@ -115,8 +115,8 @@ static struct bu_cmdtab vo_cmds[] =
 	{"slew",		vo_slew_tcl},
 	{"tra",			vo_tra_tcl},
 	{"units",		vo_units_tcl},
-	{"vrot",		vo_vrot_tcl},
 	{"view2model",		vo_view2model_tcl},
+	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
 #if 0
 	{"knob",		vo_knob_tcl},
