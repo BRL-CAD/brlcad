@@ -20,6 +20,27 @@
 #define	FIX_FILE	sfile
 #endif
 
+#if !defined(LDSHARED)
+#	define	MAKETHIS ( \C\C=\"CC\"; \
+		\C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -I../SRCDIR\"; \
+		\R\A\N\L\I\B=\"RANLIB\"; \
+		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
+		SHAREDVER=[[LIBVERS]]; \
+		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \S\H\A\R\E\D\V\E\R; \
+		../SRCDIR/configure CONFIG_OPTS; \
+		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
+#else
+#	define MAKETHIS	( \C\C=\"CC\"; \
+		\C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -I../SRCDIR\"; \
+		\R\A\N\L\I\B=\"RANLIB\"; \
+		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
+		\L\D\S\H\A\R\E\D=\"LDSHARED\"; \
+		SHAREDVER=[[LIBVERS]]; \
+		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \L\D\S\H\A\R\E\D \S\H\A\R\E\D\V\E\R; \
+		../SRCDIR/configure CONFIG_OPTS; \
+		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
+#endif
+
 PRODUCTS: Makefile.MTYPE
 	make -f Makefile.MTYPE PRODUCTS
 	AFTER_MAKE
@@ -28,15 +49,7 @@ Makefile.in:	if not exist Makefile.in
 	cp ../SRCDIR/Makefile.in .
 
 Makefile.MTYPE:	Makefile.in	if not exist Makefile.MTYPE
-	( \C\C=\"CC\"; \
-		\C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -I../SRCDIR\"; \
-		\R\A\N\L\I\B=\"RANLIB\"; \
-		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
-		SHAREDVER=[[LIBVERS]]; \
-		export \C\C \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \S\H\A\R\E\D\V\E\R; \
-		../SRCDIR/configure CONFIG_OPTS; \
-		../SRCDIR/fix_makefile.sh FIX_FILE  >  Makefile.MTYPE)
-
+	MAKETHIS
 
 clean&:
 	make -f Makefile.MTYPE clean
