@@ -71,12 +71,14 @@ extern struct partition *bool_regions();
 
 int debug = DEBUG_OFF;
 int view_only;		/* non-zero if computation is for viewing only */
+int lightmodel;		/* Select lighting model */
 
 long nsolids;		/* total # of solids participating */
 long nregions;		/* total # of regions participating */
 long nshots;		/* # of ray-meets-solid "shots" */
 long nmiss;		/* # of ray-misses-solid's-sphere "shots" */
 int outfd;		/* fd of optional pixel output file */
+FILE *outfp;		/* used to write .PP files */
 
 struct soltab *HeadSolid = SOLTAB_NULL;
 
@@ -86,7 +88,7 @@ struct seg *HeadSeg = SEG_NULL;
 
 char usage[] = "\
 Usage:  rt [options] model.vg object [objects]\n\
-Options:  -f[#] -x# -aAz -eElev -A%Ambient [-o model.pix]\n";
+Options:  -f[#] -x# -aAz -eElev -A%Ambient -l# [-o model.pix]\n";
 
 /* Used for autosizing */
 static fastf_t xbase, ybase, zbase;
@@ -150,6 +152,10 @@ char **argv;
 			/* Set elevation */
 			elevation = atof( &argv[0][2] );
 			break;
+		case 'l':
+			/* Select lighting model # */
+			lightmodel = atoi( &argv[0][2] );
+			break;
 		case 'o':
 			/* Output pixel file name */
 			if( (outfd = creat( argv[1], 0444 )) <= 0 )  {
@@ -169,6 +175,13 @@ char **argv;
 	if( argc < 2 )  {
 		printf(usage);
 		exit(2);
+	}
+
+	if( lightmodel == 3  &&  outfd > 0 )  {
+		outfp = fdopen( outfd, "w" );
+		fprintf(outfp, "%s: %s - rt\n", argv[0], argv[1] );
+		fprintf(outfp, "%10d%10d", (int)azimuth, (int)elevation );
+		fprintf(outfp, "%10d%10d\n", npts, npts );
 	}
 
 	/* 4.2 BSD stdio debugging assist */
@@ -313,6 +326,8 @@ char **argv;
 		/* End of scan line */
 		dev_eol( yscreen );
 	}
+
+	dev_end();
 
 	/*
 	 *  All done.  Display run statistics.
