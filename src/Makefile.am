@@ -2,8 +2,8 @@
 
 required_dirs = \
 	other \
-	libbn \
 	libbu \
+	libbn \
 	librt
 
 rts_dirs = librtserver
