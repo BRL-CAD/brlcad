@@ -50,7 +50,8 @@ UCHAR *buffer;
 	int total_bytes, in_bytes;
 	int	count = 0;
 
-	if (!buffer && (buffer=malloc(scanlen * Height)) == (UCHAR *)NULL) {
+	if (!buffer &&
+	    (buffer=(UCHAR *)malloc(scanlen * Height)) == (UCHAR *)NULL) {
 		(void)fprintf(stderr, "%s: cannot allocate input buffer\n", 
 			progname);
 		exit(-1);
