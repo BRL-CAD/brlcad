@@ -454,35 +454,41 @@ mat_t mat;
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  *
- *  We use three Xgl_pt_list structures, one for solid polylines, one
- *  for dashed polylines, and one for polygons. The reason for much of this
+ *  We use four Xgl_pt_list structures, one for solid polylines, one
+ *  for dashed polylines, one for polygons without vertex normals, and one
+ *  for polygons with vertex normals. The reason for much of this
  *  complexity is we buffer up polylines to enhance performance. We could have
- *  just drawn i polyline/solid, but one some Sun frame buffers, that's much
+ *  just drawn i polyline/solid, but with some Sun frame buffers, that's much
  *  slower than buffering up many.
  */
 /*  First, define the array of point structures for regular lines, dashed lines,
  *  and polygons. Note that we use the 'flag' point type for polylines, since
- *  we need that to indicate wheter or not to draw the line. The flag is only
+ *  we need that to indicate whether or not to draw the line. The flag is only
  *  set for LINE_EDGE commands.
  */
 #define MAX_PL_PTS	100000
-static Xgl_pt_flag_f3d 	pl_norm_pts[MAX_PL_PTS];
+static Xgl_pt_flag_f3d 	pl_solid_pts[MAX_PL_PTS];
 static Xgl_pt_flag_f3d 	pl_dash_pts[MAX_PL_PTS];
 
 #define MAX_PG_PTS	12
-static Xgl_pt_f3d      	pg_pts[MAX_PG_PTS];
+static Xgl_pt_f3d      	pg_pts[MAX_PG_PTS];		/* no vertext normals */
+static Xgl_pt_normal_f3d pg_vnorm_pts[MAX_PG_PTS];	/* w/ vertext normals */
 
 /* Next define the point list structures, one for each type. */
-static Xgl_pt_list pl_norm_list = {XGL_PT_FLAG_F3D, 0, 0, 0, 0};
-static Xgl_pt_list pl_dash_list = {XGL_PT_FLAG_F3D, 0, 0, 0, 0};
-static Xgl_pt_list pg_list = 	  {XGL_PT_F3D, 0, 0, 0, 0};
+static Xgl_pt_list pl_solid_list = 	{XGL_PT_FLAG_F3D, 0, 0, 0, 0};
+static Xgl_pt_list pl_dash_list = 	{XGL_PT_FLAG_F3D, 0, 0, 0, 0};
+static Xgl_pt_list pg_list = 	  	{XGL_PT_F3D, 0, 0, 0, 0};
+static Xgl_pt_list pg_vnorm_list = 	{XGL_PT_NORMAL_F3D, 0, 0, 0, 0};
 
 /* Polygon data */
 
 
-static Xgl_pt_f3d      	*pg_ptr = pg_pts;	/* ptr into polygon point arr*/
+static Xgl_pt_f3d      	 *pg_ptr = pg_pts;	/* ptr into polygon point arr*/
+static Xgl_pt_normal_f3d *pg_vnorm_ptr = pg_vnorm_pts;	/* ptr into polygon 
+						           point arr w/ vertex
+							   normals */
 Xgl_facet_list		facet_list;		/* facet (contains color and
-						   normal */
+						   normal) */
 Xgl_color_normal_facet	cn_facet;
 
 
@@ -491,10 +497,10 @@ Xgl_color_normal_facet	cn_facet;
  */
  
 #define FlushPlList() \
-	if (pl_norm_list.num_pts) {\
+	if (pl_solid_list.num_pts) {\
 		xgl_object_set(ctx_3d,XGL_CTX_LINE_STYLE,XGL_LINE_SOLID,0);\
-		xgl_multipolyline(ctx_3d, NULL, 1, &pl_norm_list);\
-		pl_norm_list.num_pts = 0;\
+		xgl_multipolyline(ctx_3d, NULL, 1, &pl_solid_list);\
+		pl_solid_list.num_pts = 0;\
 	}\
 	if (pl_dash_list.num_pts) {\
 		xgl_object_set(ctx_3d,XGL_CTX_LINE_STYLE,XGL_LINE_PATTERNED,0);\
@@ -506,9 +512,18 @@ Xgl_color_normal_facet	cn_facet;
 	if (pg_list.num_pts) {\
 		xgl_multi_simple_polygon(ctx_3d,\
                         XGL_FACET_FLAG_SIDES_UNSPECIFIED |\
-                        XGL_FACET_FLAG_SHAPE_UNKNOWN, &facet_list,\
+                        XGL_FACET_FLAG_SHAPE_NONCONVEX | \
+			XGL_FACET_FLAG_FN_CONSISTENT, &facet_list,\
                         NULL, 1, &pg_list);\
 		pg_list.num_pts = 0; pg_ptr = pg_pts;\
+	}\
+	if (pg_vnorm_list.num_pts) {\
+		xgl_multi_simple_polygon(ctx_3d,\
+                        XGL_FACET_FLAG_SIDES_UNSPECIFIED |\
+                        XGL_FACET_FLAG_SHAPE_NONCONVEX | \
+			XGL_FACET_FLAG_FN_CONSISTENT, &facet_list,\
+                        NULL, 1, &pg_vnorm_list);\
+		pg_vnorm_list.num_pts = 0; pg_vnorm_ptr = pg_vnorm_pts;\
 	}
 
 /* Macro for pulling out double points and shoving into local array for XGL */
@@ -522,7 +537,7 @@ Xgl_color_normal_facet	cn_facet;
 		if (sp->s_soldash)\
 			pl_dash_list.num_pts++;\
 		else\
-			pl_norm_list.num_pts++;
+			pl_solid_list.num_pts++;
 
 int
 XGL_object(sp, mat, ratio, white)
@@ -536,6 +551,7 @@ double ratio;
 	struct rt_vlist         	*vp;
 	Xgl_pt_flag_f3d			*flag_f3d_ptr;
 	int				num_pts;
+	int				vnorm_flag;
 
 /*	DPRINTF("XGL_object\n");*/
 
@@ -568,11 +584,11 @@ double ratio;
 		}
 		flag_f3d_ptr = &(pl_dash_list.pts.flag_f3d[num_pts]);
 	} else {
-		num_pts = pl_norm_list.num_pts;
+		num_pts = pl_solid_list.num_pts;
 		if (num_pts + sp->s_vlen > MAX_PL_PTS)  {
 			FlushPlList();
 		}
-		flag_f3d_ptr = &(pl_norm_list.pts.flag_f3d[num_pts]);
+		flag_f3d_ptr = &(pl_solid_list.pts.flag_f3d[num_pts]);
 	}
 		
 	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
@@ -590,16 +606,29 @@ double ratio;
 				cn_facet.normal.y = pt[0][1];
 				cn_facet.normal.z = pt[0][2];
 				cn_facet.color = solid_color;
+				/* Assume no vertex normals coming */
+				vnorm_flag = 0;
                                 continue;
                         case RT_VLIST_POLY_MOVE:
                         case RT_VLIST_POLY_DRAW:
-				GrabPts(pg_ptr, pt);
-				pg_list.num_pts++;
+				if (vnorm_flag) {
+					GrabPts(pg_vnorm_ptr, pt);
+					pg_vnorm_list.num_pts++;
+				} else {
+					GrabPts(pg_ptr, pt);
+					pg_list.num_pts++;
+				}
 				continue;
                         case RT_VLIST_POLY_END:
 				FlushPgList();
 				continue;
 			case RT_VLIST_POLY_VERTNORM:
+				/* Set flag indicating we have vert. normals */
+				vnorm_flag = 1;
+				pg_vnorm_ptr->normal.x = pt[0][0];
+				pg_vnorm_ptr->normal.y = pt[0][1];
+				pg_vnorm_ptr->normal.z = pt[0][2];
+				/* The vertex comes next (POLY_MOVE/DRAW) */
 				continue;
                         case RT_VLIST_LINE_MOVE:
 					/* Don't draw edge */
@@ -633,9 +662,10 @@ XGL_object_flush()
  */
 static void 
 XGL_object_init() {
-	pl_norm_list.pts.flag_f3d = pl_norm_pts;
+	pl_solid_list.pts.flag_f3d = pl_solid_pts;
 	pl_dash_list.pts.flag_f3d = pl_dash_pts;
 	pg_list.pts.f3d = pg_pts;
+	pg_vnorm_list.pts.normal_f3d = pg_vnorm_pts;
 
 	facet_list.facet_type = XGL_FACET_COLOR_NORMAL;
 	facet_list.num_facets = 1;
@@ -2054,20 +2084,19 @@ fk_lighting()
 		 */
 		w = xgl_mat[3][3];
 		pos.x = pos.y = -w;
-		pos.z = -w;
+		pos.z = w;
 		xgl_object_set (lights[1],
 			XGL_LIGHT_POSITION, &pos,
 			NULL);
 		/*
-		 * We specify illumination of per-facet (flat shading) since
-		 * we don't have per-vertex normals we would need to do
-		 * color (gouraud) shading
+		 * We specify illumination of per-vertex (gouraud shading) 
+		 * since we now receive vertex normals.
 		 */
 		light_switches[0] = light_switches[1] = TRUE;
 		xgl_object_set(ctx_3d,
 			XGL_3D_CTX_LIGHT_SWITCHES, light_switches,
 			XGL_3D_CTX_SURF_FRONT_ILLUMINATION, 
-				XGL_ILLUM_PER_FACET,	/* flat shading */
+				XGL_ILLUM_PER_VERTEX,	/* gouraud shading */
 			NULL);
 	} else {
 		light_switches[0] = light_switches[1] = FALSE;
