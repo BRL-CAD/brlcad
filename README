@@ -302,8 +302,7 @@ brl-vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
 amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
 c1east	Convex C1 XP (2 IOPs, 4 Multibus, 4-way disk striping, 64 Mbytes), Convex Unix 6.0.1.12
 utah-ug	VAX 8600, FPA, 4.3 BSD
-brl-vector	Alliant FX/8 (4 CEs, 6 IPs, 16 Mbytes), Concentrix 2.0
-brl-viper	Alliant FX/8 (8 CEs, 6 IPs, 16 Mbytes), Concentrix 2.0
+brl-vector	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix 2.0
 hep		Denelcor HEP, 4 PEMs
 nrl-xmp	Cray X-MP/12, COS V115, 9.5ns clock
 snm2	Cray 1-M, SN2, UNICOS 2.0
@@ -342,10 +341,13 @@ _
 1018.2	 1375.5	 12.27	brl-vector, 3 CEs, no vectors (2.79X)
 1309.5	 1813.5	 16.17	brl-vector, 4 CEs, no vectors (3.68X)
 1396.6			nrl-xmp, no vectors, no optim
+1722.48	2364.06	21.08	brl-vector, 5 CEs, no vectors (4.80X)
 1745.0	 2492.9	 22.24	snm2, no vectors, no optim
 1752.1	  	 22.32	hep, 1 PEM, npsw=10
-2366.8	 3354.4	 29.92	brl-viper, 8 CEs, no vectors (6.8X)
+2040.8	2811.4	25.08	brl-vector, 6 CEs, no vectors (5.7X)
+2330.7	3248.8	28.98	brl-vector, 7 CEs, no vectors (6.5X)
 2418.3	 3453.3	 30.81	brl-patton, 1 CPU, no vectors, no optim (1.00X)
+2632.2	3677.3	32.8	brl-vector, 8 CEs, no vecotrs (7.46X)
 2840.3	  	 36.18	hep, 1 PEM, npsw=40
 4802.1	 6856.5	 61.16	brl-patton, 2 CPUs, no vectors, no optim (1.99X)
 7148.1	10205.1	 91.04	brl-patton, 3 CPUs, no vectors, no optim (2.96X)
@@ -378,8 +380,11 @@ _
  257.3	  424.6		brl-vector, 2 CEs, no vectors
  379.1	  650.0		brl-vector, 3 CEs, no vectors
  491.3	  845.5		brl-vector, 4 CEs, no vectors
+ 642.16	 1104.4	17.4	brl-vector, 5 CEs, no vectors
+ 762.38	 1319.0	20.7	brl-vector, 6 CEs, no vectors
  853.3	 1514.3		brl-patton, 1 CPU, no vectors
- 894.1	 1576.2	24.78	brl-viper, 8 CEs, no vectors
+ 880.42	 1533.0	24.1	brl-vector, 7 CEs, no vectors
+ 987.62	 1724.2	27.1	brl-vector, 8 CEs, no vectors
 .TE
 .fi
 .sp
@@ -408,8 +413,11 @@ _
  294.1	  349.3		brl-vector, 2 CE, no vectors (1.94X)
  443.4	  523.4		brl-vector, 3 CE, no vectors (2.91X)
  577.9	  686.0		brl-vector, 4 CEs, no vectors (3.81X)
-1040.2	 1241.7	22.58	brl-viper, 8 CEs, no vectors (6.90X)
+ 733.3	  870.2	15.8	brl-vector, 5 CEs, no vectors (4.83X)
+ 883.1	 1051.6	19.1	brl-vector, 6 CEs, no vectors (5.84X)
+1035.2	 1232.3	22.4	brl-vector, 7 CEs, no vectors (6.85X)
 1063.7	 1271.2		brl-patton, 1 CPU, no vectors (1.00X)
+1153.8	 1375.4	25	brl-vector, 8 CEs, no vectors (7.64X)
 2110.6	 2522.2		brl-patton, 2 CPUs, no vectors (1.98X)
 3138.2	 3749.9		brl-patton, 3 CPUs, no vectors (2.95X)
 4147.1	 4955.6		brl-patton, 4 CPUs, no vectors (3.90X)
@@ -440,8 +448,12 @@ _
  210.6	  312.6	 6.17	brl-vector, 2 CEs, no vectors (1.98X)
  310.9	  459.9	 9.07	brl-vector, 3 CEs, no vectors (2.93X)
  405.2	  600.7	11.85	brl-vector, 4 CEs, no vectors (3.82X)
+ 523.5	  775.9	15.3	brl-vector, 5 CEs, no vectors (4.93X)
+ 620.0	  918.0	18.1	brl-vector, 6 CEs, no vectors (5.84X)
  691.2	 1027.3	20.26	brl-patton, 1 CPU, no vectors
- 728.3	 1079.2	21.29	brl-vector, 8 CEs, no vectors (6.89X)
+ 719.0	 1065.9	21	brl-vector, 7 CEs, no vectors (6.78X)
+ 814.6	 1208.4	23.83	brl-vector, 8 CEs, no vectors (7.69X)
+
 .TE
 .fi
 .sp 2
