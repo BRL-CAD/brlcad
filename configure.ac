@@ -55,7 +55,7 @@ dnl
 
 AC_PREREQ(2.52)
 
-AC_INIT(BRL-CAD, 7.0.4, [http://brlcad.org], brlcad)
+AC_INIT(BRL-CAD, 7.0.5, [http://brlcad.org], brlcad)
 AC_REVISION($Revision$)
 AC_CONFIG_AUX_DIR(misc)
 
@@ -65,7 +65,7 @@ dnl
 dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
 MINOR_VERSION=0
-PATCH_VERSION=4
+PATCH_VERSION=5
 AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
 AC_SUBST(PATCH_VERSION)
