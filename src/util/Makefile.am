@@ -547,11 +547,13 @@ man_MANS = \
 	terrain.1 \
 	wavelet.1
 
-EXTRA_DIST = $(man_MANS)
-
 pl-X10.1: $(srcdir)/pl-X.1
 	cp $? $(srcdir)/$@
 
 sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = pl-dm.c
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	$(sample_applications_DATA)
