@@ -4,7 +4,7 @@
 
 #define SRCDIR	fb
 #define PRODUCTS	\
-	bw-fb cat-fb cell-fb cmap-fb \
+	bw-fb cat-fb cell-fb cmap-fb fbgammamod \
 	fb-bw fb-cmap fb-fb fb-orle fb-pix fb-rle \
 	fbanim fbcbars fbclear fbcmap fbcmrot fbcolor \
 	fbfade fbframe fbfree fbgamma fbgrid fbhelp \
@@ -88,6 +88,9 @@ cmap-fb:	cmap-fb.o LIBFB_DEP
 
 fbgamma:	fbgamma.o LIBFB_DEP
 	CC LDFLAGS -o fbgamma fbgamma.o LIBFB LIBFB_LIBES LIBES
+
+fbgammamod:	fbgammamod.o LIBFB_DEP
+	CC LDFLAGS -o fbgammamod fbgammamod.o LIBFB LIBFB_LIBES LIBES
 
 fbscanplot:	fbscanplot.o LIBFB_DEP
 	CC LDFLAGS -o fbscanplot fbscanplot.o LIBFB LIBFB_LIBES LIBES
