@@ -399,6 +399,7 @@ struct rt_wdb *wdb1, *wdb2;
 
 			/* try to get the TCL version of this object */
 			argv[2] = dp1->d_namep;
+/* XXX Dangerous downcall.  Should invoke Tcl_Eval("db1 get name") */
 			if( wdb_get_tcl( (ClientData)(&wdbobj1), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
 				/* cannot get TCL version, use bu_external */
@@ -418,6 +419,7 @@ struct rt_wdb *wdb1, *wdb2;
 			Tcl_ResetResult( interp );
 
 			/* try to get TCL version of object from the other database */				
+/* XXX Dangerous downcall.  Should invoke Tcl_Eval("db1 get name") */
 			if( wdb_get_tcl( (ClientData)(&wdbobj2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
 				Tcl_ResetResult( interp );
@@ -562,7 +564,7 @@ char *argv[];
 		exit( 1 );
 	}
 
-	if( db_scan( dbip1, (int (*)())db_diradd, 1 ) < 0 )
+	if( db_scan( dbip1, (int (*)())db_diradd, 1, NULL ) < 0 )
 	{
 		db_close( dbip1 );
 		bu_log( "db_scan failed on %s\n", file1 );
@@ -578,7 +580,7 @@ char *argv[];
 
 	RT_CK_DBI(dbip2);
 
-	if( db_scan( dbip2, (int (*)())db_diradd, 1 ) < 0 )
+	if( db_scan( dbip2, (int (*)())db_diradd, 1, NULL ) < 0 )
 	{
 		db_close( dbip1 );
 		db_close( dbip2 );

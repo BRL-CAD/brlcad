@@ -593,7 +593,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	if( out_file == NULL )
 		fp_out = stdout;

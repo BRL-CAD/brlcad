@@ -232,7 +232,7 @@ char	*argv[];
 	}
 
 	/* Build directory from object file.	 	*/
-	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+	if( db_scan( dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 		fprintf(stderr,"db_scan failure\n");
 		exit(1);
 	}

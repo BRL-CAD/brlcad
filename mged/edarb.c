@@ -745,7 +745,7 @@ char	**argv;
 	/* no interrupts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;

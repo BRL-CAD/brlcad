@@ -1408,7 +1408,7 @@ dgo_invent_solid(name, vhead, rgb, copy)
 		dgo_eraseobjall(curr_interp, curr_dgop, dp);
 	}
 	/* Need to enter phony name in directory structure */
-	dp = db_diradd(curr_dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID);
+	dp = db_diradd(curr_dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp,&FreeSolid.l);

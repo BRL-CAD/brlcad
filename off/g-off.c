@@ -65,7 +65,7 @@ int	argc;
 char	*argv[];
 {
 	char		*dot, *fig_file;
-	int		i, ret;
+	int		i;
 	register int	c;
 	double		percent;
 
@@ -154,7 +154,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	/* Create .fig file name and open it. */
 	fig_file = rt_malloc(sizeof(prefix) + sizeof(argv[0] + 4), "st");
@@ -182,7 +182,7 @@ char	*argv[];
 	rt_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
 	/* Walk indicated tree(s).  Each region will be output separately */
-	ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+	(void)db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
 		1,			/* ncpu */
 		&jack_tree_state,
 		0,			/* take all regions */

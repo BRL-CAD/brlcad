@@ -1457,7 +1457,7 @@ Rm_nulls()
 		}
 	}
 
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 	for( i=0 ; i<RT_DBNHASH ; i++ )
 	{
 		struct directory *dp;
@@ -1562,7 +1562,7 @@ top:
 					rt_comb_ifree( &intern );
 					continue;
 				}
-				if( (dp=db_diradd( dbip, name, -1, 0, flags)) == DIR_NULL )
+				if( (dp=db_diradd( dbip, name, -1, 0, flags, NULL)) == DIR_NULL )
 				{
 					bu_log( "Could not add modified '%s' to directory\n", dp->d_namep );
 					rt_comb_ifree( &intern );

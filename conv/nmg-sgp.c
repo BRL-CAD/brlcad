@@ -193,7 +193,7 @@ char	*argv[];
 		edge_len_limits = 
 	}
 #endif
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	if( out_file == NULL )
 		fp_out = stdout;

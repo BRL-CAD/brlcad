@@ -3005,7 +3005,7 @@ char *output_file;
 		return;
 	}
 
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	if( (dp=db_lookup( dbip, "all", 0 )) == DIR_NULL )
 	{

@@ -66,7 +66,7 @@ static struct db_i *wdb_prep_dbip();
 
 static int wdb_cmd();
 static int wdb_match_tcl();
-static int wdb_get_tcl();
+int wdb_get_tcl();
 static int wdb_put_tcl();
 static int wdb_adjust_tcl();
 static int wdb_form_tcl();
@@ -113,8 +113,6 @@ struct directory *wdb_combadd();
 
 struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 
-static Tcl_Interp *curr_interp;		/* current Tcl interpreter */
-static struct db_i *curr_dbip;		/* current dbip */
 static char wdb_prestr[RT_NAMESIZE];
 static int wdb_ncharadd;
 static int wdb_num_dups;
@@ -132,9 +130,6 @@ static int wdb_objpos;
 
 /* print flag */
 static int wdb_prflag;
-
-/* path transformation matrix ... calculated in trace() */
-static mat_t wdb_xform;
 
 static struct directory *wdb_path[WDB_MAX_LEVELS];
 
@@ -444,7 +439,7 @@ wdb_prep_dbip(interp, filename)
 	}
 
 	/* --- Scan geometry database and build in-memory directory --- */
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	return dbip;
 }
@@ -504,8 +499,9 @@ wdb_match_tcl( clientData, interp, argc, argv )
  ** property with that name of the item given, and returns it as the result
  ** string.
  **/
+/* NOTE: This is called directly by gdiff/g_diff.c */
 
-static int
+int
 wdb_get_tcl(clientData, interp, argc, argv)
      ClientData	clientData;
      Tcl_Interp     *interp;
@@ -1206,13 +1202,14 @@ wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 /*
  */
 static void
-wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag)
+wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
      Tcl_Interp			*interp;
      struct db_i		*dbip;
      register struct directory *dp;
      int pathpos;
      mat_t old_xlate;
      int flag;
+     mat_t wdb_xform;
 {
 	struct directory *nextdp;
 	struct rt_db_internal intern;
@@ -1325,6 +1322,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 {
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	int i, flag, pos_in;
+	mat_t	wdb_xform;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -1338,7 +1336,6 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 
 	--argc;
 	++argv;
-	curr_interp = interp;
 
 	/* pos_in = first member of path entered
 	 *
@@ -1381,7 +1378,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 
 	bn_mat_idn( wdb_xform );
 
-	wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_objects[0], 0, bn_mat_identity, flag);
+	wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_objects[0], 0, bn_mat_identity, flag, wdb_xform);
 
 	if (wdb_prflag == 0) {
 		/* path not found */
@@ -1704,8 +1701,6 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	curr_interp = interp;
-
 	/* skip past procname */
 	argc--;
 	argv++;
@@ -1792,7 +1787,7 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if ((dp=db_diradd(wdbop->wdb_wp->dbip, argv[3], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
+	if ((dp=db_diradd(wdbop->wdb_wp->dbip, argv[3], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ||
 	    db_alloc(wdbop->wdb_wp->dbip, dp, proto->d_len) < 0) {
 		Tcl_AppendResult(interp,
 				 "An error has occured while adding a new object to the database.\n",
@@ -2035,6 +2030,14 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	comb_leaf->tr_l.tl_name = bu_strdup(mref);
 }
 
+BU_EXTERN(HIDDEN int wdb_dir_add, ( struct db_i *input_dbip, CONST char
+	*name, long laddr, int len, int flags, genptr_t ptr));
+
+struct dir_add_stuff {
+	Tcl_Interp	*interp;
+	struct db_i	*main_dbip;		/* the main database */
+};
+
 /*
  *			W D B _ D I R _ A D D
  *
@@ -2042,18 +2045,20 @@ wdb_do_update(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
  *  into the primary database.
  */
 static int
-wdb_dir_add(input_dbip, name, laddr, len, flags)
+wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
      register struct db_i	*input_dbip;
-     register char		*name;
+     register CONST char	*name;
      long			laddr;
      int			len;
      int			flags;
+     genptr_t			ptr;
 {
 	register struct directory *input_dp;
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	char			local[RT_NAMESIZE+2+2];
+	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)ptr;
 
 	if (input_dbip->dbi_magic != DBI_MAGIC)
 		bu_bomb("wdb_dir_add:  bad dbip\n");
@@ -2068,7 +2073,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags)
 	local[RT_NAMESIZE] = '\0';
 		
 	/* Look up this new name in the existing (main) database */
-	if ((dp = db_lookup(curr_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
 		register int	c;
 		char		loc2[RT_NAMESIZE+2+2];
 
@@ -2083,36 +2088,36 @@ wdb_dir_add(input_dbip, name, laddr, len, flags)
 
 		for (c = 'A'; c <= 'Z'; c++) {
 			local[0] = c;
-			if ((dp = db_lookup(curr_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
+			if ((dp = db_lookup(dasp->main_dbip, local, LOOKUP_QUIET)) == DIR_NULL)
 				break;
 		}
 		if (c > 'Z') {
-			Tcl_AppendResult(curr_interp,
+			Tcl_AppendResult(dasp->interp,
 					 "wdb_dir_add: Duplicate of name '",
 					 local, "', ignored\n", (char *)NULL);
 			return 0;
 		}
-		Tcl_AppendResult(curr_interp,
+		Tcl_AppendResult(dasp->interp,
 				 "mged_dir_add: Duplicate of '",
 				 loc2, "' given new name '",
 				 local, "'\nYou should have used the 'dup' command to detect this,\nand then specified a prefix for the 'concat' command.\n");
 	}
 
 	/* First, register this object in input database */
-	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags)) == DIR_NULL)
+	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags, NULL)) == DIR_NULL)
 		return(-1);
 
 	/* Then, register a new object in the main database */
-	if ((dp = db_diradd(curr_dbip, local, -1L, len, flags)) == DIR_NULL)
+	if ((dp = db_diradd(dasp->main_dbip, local, -1L, len, flags, NULL)) == DIR_NULL)
 		return(-1);
-	if(db_alloc(curr_dbip, dp, len) < 0)
+	if(db_alloc(dasp->main_dbip, dp, len) < 0)
 		return(-1);
 
 	if (rt_db_get_internal(&intern, input_dp, input_dbip, (fastf_t *)NULL) < 0) {
-		Tcl_AppendResult(curr_interp, "Database read error, aborting\n", (char *)NULL);
-		if (db_delete(curr_dbip, dp) < 0 ||
-		    db_dirdelete(curr_dbip, dp) < 0) {
-			Tcl_AppendResult(curr_interp, "Database write error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(dasp->interp, "Database read error, aborting\n", (char *)NULL);
+		if (db_delete(dasp->main_dbip, dp) < 0 ||
+		    db_dirdelete(dasp->main_dbip, dp) < 0) {
+			Tcl_AppendResult(dasp->interp, "Database write error, aborting\n", (char *)NULL);
 		}
 	    	/* Abort processing on first error */
 		return -1;
@@ -2120,11 +2125,11 @@ wdb_dir_add(input_dbip, name, laddr, len, flags)
 
 	/* Update the name, and any references */
 	if (flags & DIR_SOLID) {
-		Tcl_AppendResult(curr_interp,
+		Tcl_AppendResult(dasp->interp,
 				 "adding solid '",
 				 local, "'\n", (char *)NULL);
 		if ((wdb_ncharadd + strlen(name)) > (unsigned)RT_NAMESIZE)
-			Tcl_AppendResult(curr_interp,
+			Tcl_AppendResult(dasp->interp,
 					 "WARNING: solid name \"",
 					 wdb_prestr, name, "\" truncated to \"",
 					 local, "\"\n", (char *)NULL);
@@ -2135,7 +2140,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags)
 		register int i;
 		char	mref[RT_NAMESIZE+2];
 
-		Tcl_AppendResult(curr_interp,
+		Tcl_AppendResult(dasp->interp,
 				 "adding  comb '",
 				 local, "'\n", (char *)NULL);
 		bu_free((genptr_t)dp->d_namep, "mged_dir_add: dp->d_namep");
@@ -2144,13 +2149,13 @@ wdb_dir_add(input_dbip, name, laddr, len, flags)
 		/* Update all the member records */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		if (wdb_ncharadd && comb->tree) {
-			db_tree_funcleaf(curr_dbip, comb, comb->tree, wdb_do_update,
+			db_tree_funcleaf(dasp->main_dbip, comb, comb->tree, wdb_do_update,
 					 (genptr_t)&wdb_ncharadd, (genptr_t)wdb_prestr, (genptr_t)NULL);
 		}
 	}
 
-	if (rt_db_put_internal(dp, curr_dbip, &intern) < 0) {
-		Tcl_AppendResult(curr_interp,
+	if (rt_db_put_internal(dp, dasp->main_dbip, &intern) < 0) {
+		Tcl_AppendResult(dasp->interp,
 				 "Failed writing ",
 				 dp->d_namep, " to database\n", (char *)NULL);
 		return( -1 );
@@ -2175,6 +2180,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	struct db_i		*newdbp;
 	int bad = 0;
+	struct dir_add_stuff	das;
 
 	if (wdbop->wdb_wp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
@@ -2211,11 +2217,10 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	curr_interp = interp;
-	curr_dbip = wdbop->wdb_wp->dbip;
-
 	/* Scan new database, adding everything encountered. */
-	if (db_scan(newdbp, wdb_dir_add, 1) < 0) {
+	das.interp = interp;
+	das.main_dbip = wdbop->wdb_wp->dbip;
+	if (db_scan(newdbp, wdb_dir_add, 1, (genptr_t)&das) < 0) {
 		Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
 		bad = 1;	
 		/* Fall through, to close off database */
@@ -2229,27 +2234,36 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	return bad ? TCL_ERROR : TCL_OK;
 }
 
+BU_EXTERN(int wdb_dir_check, ( struct
+db_i *input_dbip, CONST char *name, long laddr, int len, int flags,
+genptr_t ptr));
+
+struct dir_check_stuff {
+ 	struct db_i	*main_dbip;
+};
+
 /*
  *			W D B _ D I R _ C H E C K
  *
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(input_dbip, name, laddr, len, flags)
+wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
      register struct db_i	*input_dbip;
-     register char		*name;
+     register CONST char	*name;
      long			laddr;
      int			len;
      int			flags;
+     genptr_t			ptr;
 {
 	struct directory	*dupdp;
 	char			local[RT_NAMESIZE+2];
+	struct dir_check_stuff	*dcsp = (struct dir_check_stuff *)ptr;
 
-	if (curr_dbip == DBI_NULL)
+	if (dcsp->main_dbip == DBI_NULL)
 		return 0;
 
-	if (input_dbip->dbi_magic != DBI_MAGIC)
-		bu_bomb("mged_dir_check:  bad dbip\n");
+	RT_CK_DBI(input_dbip);
 
 	/* Add the prefix, if any */
 	if (wdb_ncharadd > 0) {
@@ -2261,7 +2275,7 @@ wdb_dir_check(input_dbip, name, laddr, len, flags)
 	local[RT_NAMESIZE] = '\0';
 		
 	/* Look up this new name in the existing (main) database */
-	if ((dupdp = db_lookup(curr_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dupdp = db_lookup(dcsp->main_dbip, local, LOOKUP_QUIET)) != DIR_NULL) {
 		/* Duplicate found, add it to the list */
 		wdb_num_dups++;
 		*wdb_dup_dirp++ = dupdp;
@@ -2285,6 +2299,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	struct db_i		*newdbp = DBI_NULL;
 	struct directory	**dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
+	struct dir_check_stuff	dcs;
 
 	if (argc != 4) {
 		struct bu_vls vls;
@@ -2325,11 +2340,9 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	}
 	dirp0 = wdb_dup_dirp;
 
-	curr_interp = interp;
-	curr_dbip = wdbop->wdb_wp->dbip;
-
 	/* Scan new database for overlaps */
-	if (db_scan(newdbp, wdb_dir_check, 0) < 0) {
+	dcs.main_dbip = wdbop->wdb_wp->dbip;
+	if (db_scan(newdbp, wdb_dir_check, 0, (genptr_t)&dcs) < 0) {
 		Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
 		bu_free((genptr_t)dirp0, "wdb_getspace array");
 		db_close(newdbp);
@@ -2461,7 +2474,7 @@ wdb_remove_tcl(clientData, interp, argc, argv)
 	}
 
 	if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
-		Tcl_AppendResult(curr_interp, "Database write error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2932,7 +2945,7 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air)
 			flags = DIR_COMB;
 
 		/* Update the in-core directory */
-		if ((dp = db_diradd(dbip, combname, -1, 2, flags)) == DIR_NULL ||
+		if ((dp = db_diradd(dbip, combname, -1, 2, flags, NULL)) == DIR_NULL ||
 		    db_alloc(dbip, dp, 2) < 0)  {
 			Tcl_AppendResult(interp, "An error has occured while adding '",
 					 combname, "' to the database.\n", (char *)NULL);

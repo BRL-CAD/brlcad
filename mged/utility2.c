@@ -114,7 +114,7 @@ char **argv;
 				sprintf( shell_name, "shell.%d", shell_count );
 			}
 
-			if( (new_dp=db_diradd( dbip, shell_name, -1, 0, DIR_SOLID)) == DIR_NULL )  {
+			if( (new_dp=db_diradd( dbip, shell_name, -1, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
 			  TCL_ALLOC_ERR_return;
 			}
 
@@ -419,7 +419,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp=db_diradd( dbip, argv[1], -1, obj[endpos-1]->d_len, obj[endpos-1]->d_flags)) == DIR_NULL ||
+	if( (dp=db_diradd( dbip, argv[1], -1, obj[endpos-1]->d_len, obj[endpos-1]->d_flags, NULL)) == DIR_NULL ||
 	    db_alloc( dbip, dp, obj[endpos-1]->d_len ) < 0 )
 	{
 	  db_free_external( &new_ext );
@@ -1138,7 +1138,7 @@ genptr_t	ptr;
 			}
 
 			/* Add new name to directory */
-			if( (use->dp = db_diradd( dbip, name, -1, 0, dp->d_flags )) == DIR_NULL )
+			if( (use->dp = db_diradd( dbip, name, -1, 0, dp->d_flags, NULL )) == DIR_NULL )
 			{
 				ALLOC_ERR;
 				return;
@@ -1862,7 +1862,7 @@ char *argv[];
 
 		rt_db_free_internal( &nmg_intern );
 
-		if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+		if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 		{
 			Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
 			return TCL_ERROR;
@@ -2075,7 +2075,7 @@ not_found:
 	new_intern.idb_meth = &rt_functab[ID_ARB8];
 	new_intern.idb_ptr = (genptr_t)(&arb);
 
-	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
 		return TCL_ERROR;
@@ -2331,7 +2331,7 @@ char **argv;
 
 	count = nmg_edge_collapse( m, &mged_tol, tol_coll, min_angle );
 
-	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
 		rt_db_free_internal( &intern );

@@ -564,7 +564,7 @@ char *str;
       }
     }
 
-    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL ){
+    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL ){
       bu_log("Cannot add %s to directory, no changes made\n", new_name);
       rt_comb_ifree( &intern );
       return( 1 );
@@ -583,7 +583,7 @@ char *str;
     else
       flags = DIR_COMB;
 
-    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL ){
+    if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL ){
       bu_log("Cannot add %s to directory, no changes made\n", new_name);
       rt_comb_ifree( &intern );
       return TCL_ERROR;
@@ -1627,7 +1627,7 @@ char *old_name;
 			}
 		}
 
-		if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL )
+		if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL )
 		{
 		  Tcl_AppendResult(interp, "Cannot add ", new_name,
 				   " to directory, no changes made\n", (char *)NULL);
@@ -1652,7 +1652,7 @@ char *old_name;
 		else
 			flags = DIR_COMB;
 
-		if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL )
+		if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags, NULL)) == DIR_NULL )
 		{
 		  Tcl_AppendResult(interp, "Cannot add ", new_name,
 				   " to directory, no changes made\n", (char *)NULL);
@@ -1730,7 +1730,7 @@ struct directory *dpold;
 	if( rt_db_get_internal( &intern, dpold, dbip, (fastf_t *)NULL ) < 0 )
 		TCL_READ_ERR_return;
 
-	if( (dp=db_diradd( dbip, red_tmpcomb, -1, dpold->d_len, dpold->d_flags)) == DIR_NULL ||
+	if( (dp=db_diradd( dbip, red_tmpcomb, -1, dpold->d_len, dpold->d_flags, NULL)) == DIR_NULL ||
 	    db_alloc( dbip, dp, dpold->d_len ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,

@@ -2067,7 +2067,10 @@ BU_EXTERN(void db_free_external, ( struct bu_external *ep ) );
 
 /* db_scan.c */
 					/* read db (to build directory) */
-BU_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
+BU_EXTERN(int db_scan, ( struct db_i *,
+	int (*handler)BU_ARGS((struct db_i *, CONST char *name, long addr,
+	int nrec, int flags, genptr_t client_data)),
+	int do_old_matter, genptr_t client_data ) );
 					/* update db unit conversions */
 BU_EXTERN(void db_conversions, ( struct db_i *, int units ) );
 
@@ -2077,7 +2080,7 @@ BU_EXTERN(int db_dirhash, (CONST char *str) );
 BU_EXTERN(struct directory *db_lookup,( CONST struct db_i *, CONST char *name, int noisy ) );
 					/* add entry to directory */
 BU_EXTERN(struct directory *db_diradd, ( struct db_i *, CONST char *name, long laddr,
-	int len, int flags ) );
+	int len, int flags, genptr_t ptr ) );
 					/* delete entry from directory */
 BU_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
 BU_EXTERN(int db_rename, ( struct db_i *, struct directory *, CONST char *newname) );

@@ -207,7 +207,7 @@ int			flags;
 		}
 		/* If name already exists, that object will be updated. */
 		if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL &&
-		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
+		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -225,7 +225,7 @@ int			flags;
 			return -5;
 		}
 		/* If name already exists, new non-conflicting name will be generated */
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -243,7 +243,7 @@ int			flags;
 				name );
 			return -3;
 		}
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0, NULL )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -262,7 +262,7 @@ int			flags;
 
 	case RT_WDB_TYPE_DB_INMEM:
 		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0 )) == DIR_NULL )  {
+			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, 0, NULL )) == DIR_NULL )  {
 				bu_log("wdb_export_external(%s): db_diradd error\n",
 					name );
 				db_free_external( ep );

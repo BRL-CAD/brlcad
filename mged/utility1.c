@@ -837,7 +837,7 @@ char	**argv;
 				}
 
 				/* write this model as a seperate nmg solid */
-				if( (new_dp=db_diradd( dbip, solid_name, -1, 0, DIR_SOLID)) == DIR_NULL )
+				if( (new_dp=db_diradd( dbip, solid_name, -1, 0, DIR_SOLID, NULL)) == DIR_NULL )
 				{
 					TCL_ALLOC_ERR;
 					return TCL_ERROR;;

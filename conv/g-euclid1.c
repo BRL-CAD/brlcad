@@ -516,7 +516,7 @@ char	*argv[];
 		perror(argv[0]);
 		exit(1);
 	}
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 	optind++;
 
 	/* Walk indicated tree(s).  Each region will be output separately */

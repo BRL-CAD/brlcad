@@ -294,7 +294,7 @@ char	**argv;
 		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", name, " to the directory\n", (char *)NULL );
 		return TCL_ERROR;
@@ -562,7 +562,7 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", name, " to the directory\n", (char *)NULL );
 		return TCL_ERROR;

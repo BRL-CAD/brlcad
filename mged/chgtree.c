@@ -162,7 +162,7 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL ||
+	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ||
 	    db_alloc( dbip, dp, proto->d_len ) < 0 )  {
 	  TCL_ALLOC_ERR_return;
 	}
@@ -634,7 +634,7 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags)) == DIR_NULL )  {
+	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, NULL)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {

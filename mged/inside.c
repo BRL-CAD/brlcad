@@ -523,7 +523,7 @@ char **argv;
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID )) == DIR_NULL )  {
+	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID, NULL )) == DIR_NULL )  {
 	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_ALLOC_ERR_return;
 	}

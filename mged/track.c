@@ -624,7 +624,7 @@ int flags;
 			return( -1 );
 	}
 
-	if( (tdp = db_diradd( dbip, name, -1L, 0, flags)) == DIR_NULL )
+	if( (tdp = db_diradd( dbip, name, -1L, 0, flags, NULL)) == DIR_NULL )
 	{
 		rt_db_free_internal( &intern );
 		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );

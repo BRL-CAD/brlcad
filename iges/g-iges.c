@@ -267,7 +267,7 @@ char	*argv[];
 	}
 
 	/* Scan the database */
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	if( !multi_file )
 	{

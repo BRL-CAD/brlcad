@@ -695,7 +695,7 @@ char **argv;
 	}
 
 do_new_update:
-	if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		rt_db_free_internal( &internal );
 		Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );

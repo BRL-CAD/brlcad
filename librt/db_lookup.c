@@ -121,12 +121,13 @@ int			noisy;
  * Add an entry to the directory
  */
 struct directory *
-db_diradd( dbip, name, laddr, len, flags )
+db_diradd( dbip, name, laddr, len, flags, ptr )
 register struct db_i	*dbip;
 register CONST char	*name;
 long			laddr;
 int			len;
 int			flags;
+genptr_t		ptr;		/* unused client_data from db_scan() */
 {
 	register struct directory **headp;
 	register struct directory *dp;

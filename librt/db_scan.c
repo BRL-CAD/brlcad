@@ -75,10 +75,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *	-1	Fatal Error
  */
 int
-db_scan( dbip, handler, do_old_matter )
+db_scan( dbip, handler, do_old_matter, client_data )
 register struct db_i	*dbip;
-int			(*handler)();
+int			(*handler)BU_ARGS((struct db_i *, CONST char *name, long addr, int nrec, int flags, genptr_t client_data));
 int			do_old_matter;
+genptr_t		client_data;	/* argument for handler */
 {
 	union record	record;		/* Initial record, holds name */
 	union record	rec2;		/* additional record(s) */
@@ -153,14 +154,14 @@ int			do_old_matter;
 			}
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.a.a_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case ID_ARS_B:
 			bu_log("db_scan ERROR: Unattached ARS 'B' record\n");
 			break;
 		case ID_SOLID:
 			handler( dbip, record.s.s_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_STRSOL:
 			for( ; nrec < DB_SS_NGRAN; nrec++ )  {
@@ -170,7 +171,7 @@ int			do_old_matter;
 			}
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.ss.ss_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case ID_MATERIAL:
 			if( do_old_matter ) {
@@ -193,7 +194,7 @@ int			do_old_matter;
 			}
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.p.p_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case ID_P_DATA:
 			bu_log("db_scan ERROR: Unattached P_DATA record\n");
@@ -219,7 +220,7 @@ int			do_old_matter;
 				next = ftell(dbip->dbi_fp);
 			}
 			handler( dbip, record.B.B_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case ID_BSURF:
 			bu_log("db_scan ERROR: Unattached B-spline surface record\n");
@@ -237,11 +238,11 @@ int			do_old_matter;
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.n.n_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_PARTICLE:
 			handler( dbip, record.part.p_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_PIPE:
 			j = bu_glong(record.pwr.pwr_count);
@@ -250,7 +251,7 @@ int			do_old_matter;
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.pwr.pwr_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_NMG:
 			j = bu_glong(record.nmg.N_count);
@@ -259,7 +260,7 @@ int			do_old_matter;
 				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.nmg.N_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_SKETCH:
 			j = bu_glong(record.skt.skt_count);
@@ -268,7 +269,7 @@ int			do_old_matter;
 				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.skt.skt_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_EXTR:
 			j = bu_glong(record.extr.ex_count);
@@ -277,11 +278,11 @@ int			do_old_matter;
 				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.extr.ex_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_FGP:
 			handler( dbip, record.s.s_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case DBID_BOT:
 			j = bu_glong( record.bot.bot_nrec );
@@ -290,7 +291,7 @@ int			do_old_matter;
 				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.s.s_name, addr, nrec,
-				DIR_SOLID );
+				DIR_SOLID, client_data );
 			break;
 		case ID_MEMB:
 			bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
@@ -311,7 +312,8 @@ int			do_old_matter;
 			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.c.c_name, addr, nrec,
 				record.c.c_flags == 'R' ?
-					DIR_COMB|DIR_REGION : DIR_COMB );
+					DIR_COMB|DIR_REGION : DIR_COMB,
+				client_data );
 			break;
 		default:
 			bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%x\n",

@@ -746,7 +746,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 		intern.idb_ptr = (genptr_t)comb;
 
-		if ((dp=db_diradd(wdbop->wdb_wp->dbip, comb_name, -1L, 0, DIR_COMB)) == DIR_NULL) {
+		if ((dp=db_diradd(wdbop->wdb_wp->dbip, comb_name, -1L, 0, DIR_COMB, NULL)) == DIR_NULL) {
 			Tcl_AppendResult(interp, "Failed to add ", comb_name,
 					 " to directory, aborting\n" , (char *)NULL);
 			return TCL_ERROR;

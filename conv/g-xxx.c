@@ -150,7 +150,7 @@ char	*argv[];
 	}
 
 	/* scan all the records in the database and build a directory */
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	/* open output file */
 	if( out_file == NULL )

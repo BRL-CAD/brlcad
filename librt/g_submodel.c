@@ -125,7 +125,7 @@ struct rt_i		*rtip;
 		    	return -1;
 		if( sub_dbip->dbi_uses <= 1 )  {
 			/* This is first open of db, build directory */
-			if( db_scan( sub_dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				db_close( sub_dbip );
 				return -1;
 			}
@@ -620,7 +620,7 @@ CONST struct bn_tol	*tol;
 		}
 		if( good.dbip->dbi_uses <= 1 )  {
 			/* This is first open of this database, build directory */
-			if( db_scan( good.dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+			if( db_scan( good.dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				bu_log("rt_submodel_plot() db_scan() failure\n");
 				db_close(good.dbip);
 				return -1;

@@ -184,7 +184,7 @@ int air;				/* Air code */
 			flags = DIR_COMB;
 
 		/* Update the in-core directory */
-		if( (dp = db_diradd( dbip, combname, -1, 2, flags )) == DIR_NULL ||
+		if( (dp = db_diradd( dbip, combname, -1, 2, flags, NULL )) == DIR_NULL ||
 		    db_alloc( dbip, dp, 2 ) < 0 )  {
 		  Tcl_AppendResult(interp, "An error has occured while adding '",
 				   combname, "' to the database.\n", (char *)NULL);

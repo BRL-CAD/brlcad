@@ -55,12 +55,13 @@ int	ncharadd;
  * Check a name against the global directory.
  */
 int
-mged_dir_check( input_dbip, name, laddr, len, flags )
+mged_dir_check( input_dbip, name, laddr, len, flags, ptr )
 register struct db_i	*input_dbip;
-register char		*name;
+register CONST char	*name;
 long			laddr;
 int			len;
 int			flags;
+genptr_t		ptr;
 {
 	struct directory	*dupdp;
 	char			local[NAMESIZE+2];
@@ -172,7 +173,7 @@ char	**argv;
   dirp0 = dup_dirp;
 
   /* Scan new database for overlaps */
-  if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
+  if( db_scan( newdbp, mged_dir_check, 0, NULL ) < 0 )  {
     Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
     status = TCL_ERROR;
     bu_free( (genptr_t)dirp0, "dir_getspace array" );
@@ -227,12 +228,13 @@ genptr_t		user_ptr1, user_ptr2, user_ptr3;
  *  into the primary database.
  */
 int
-mged_dir_add( input_dbip, name, laddr, len, flags )
+mged_dir_add( input_dbip, name, laddr, len, flags, ptr )
 register struct db_i	*input_dbip;
-register char		*name;
+register CONST char	*name;
 long			laddr;
 int			len;
 int			flags;
+genptr_t		ptr;
 {
 	register struct directory *input_dp;
 	register struct directory *dp;
@@ -282,11 +284,11 @@ int			flags;
 	}
 
 	/* First, register this object in input database */
-	if( (input_dp = db_diradd( input_dbip, name, laddr, len, flags)) == DIR_NULL )
+	if( (input_dp = db_diradd( input_dbip, name, laddr, len, flags, ptr)) == DIR_NULL )
 		return(-1);
 
 	/* Then, register a new object in the main database */
-	if( (dp = db_diradd( dbip, local, -1L, len, flags)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, local, -1L, len, flags, ptr)) == DIR_NULL )
 		return(-1);
 	if( db_alloc( dbip, dp, len ) < 0 )
 		return(-1);
@@ -405,7 +407,7 @@ char	**argv;
 	}
 
 	/* Scan new database, adding everything encountered. */
-	if( db_scan( newdbp, mged_dir_add, 1 ) < 0 )  {
+	if( db_scan( newdbp, mged_dir_add, 1, NULL ) < 0 )  {
 	  Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
 	  bad = 1;	
 	  /* Fall through, to close off database */

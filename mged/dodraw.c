@@ -1319,7 +1319,7 @@ int		copy;
 	  eraseobjall(dp);
 	}
 	/* Need to enter phony name in directory structure */
-	dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID );
+	dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL );
 
 #if 0
 	/* XXX need to get this going. */
@@ -1603,7 +1603,7 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
 		return TCL_ERROR;
@@ -1880,7 +1880,7 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
 		return TCL_ERROR;

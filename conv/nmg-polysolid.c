@@ -132,7 +132,7 @@ char *argv[];
 		bu_bomb( "Cannot open output file\n" );
 	}
 
-	db_scan(dbip, (int (*)())db_diradd, 1);
+	db_scan(dbip, (int (*)())db_diradd, 1, NULL);
 
 	fseek( dbip->dbi_fp, 0, SEEK_SET );
 	while( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) == 1  &&
