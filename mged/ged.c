@@ -914,6 +914,20 @@ again:
 	slewview( knobvec );
       }
       if( rateflag_zoom )  {
+#if 1
+	int status;
+	char *av[] = {"zoom", NULL, NULL};
+	struct rt_vls vls;
+
+	rt_vls_init(&vls);
+	rt_vls_printf(&vls, "%f", 1.0 / (1.0 - (rate_zoom / 10.0)));
+	av[1] = rt_vls_addr(&vls);
+	status = f_zoom((ClientData)NULL, interp, 2, av);
+	rt_vls_free(&vls);
+
+	if( status == TCL_OK )
+	  non_blocking++;
+#else
 	fastf_t	factor;
 	mat_t scale_mat;
 
@@ -933,6 +947,7 @@ again:
 
 	wrt_view( ModelDelta, scale_mat, ModelDelta );
 	new_mats();
+#endif
       }
       
       curr_dm_list = save_dm_list;
