@@ -275,7 +275,7 @@ const char		*str;
 	char	*original_ptr = ptr;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
-		if( (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
+		if( ptr && (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
 			fprintf(stderr,"%8lx realloc%6d %s ** barrier check failure\n",
 				(long)ptr, cnt, str );
 		}
