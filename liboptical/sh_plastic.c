@@ -572,7 +572,7 @@ phong_render(register struct application *ap,
     vect_t Hvec;
 
     if (rdebug&RDEBUG_SHADE)
-	bu_log("phong %s/%s\n",
+	bu_log("phong_render (new) %s/%s\n",
 	       pp->pt_regionp->reg_name, 
 	       pp->pt_inseg->seg_stp->st_dp->d_namep);
 
@@ -583,6 +583,20 @@ phong_render(register struct application *ap,
 	return 1;
     }
 
+    swp->sw_transmit = ps->transmit;
+    swp->sw_reflect = ps->reflect;
+    swp->sw_refrac_index = ps->refrac_index;
+    swp->sw_extinction = ps->extinction;
+    if (swp->sw_xmitonly ) {
+	if (swp->sw_xmitonly > 1 )
+	    return(1);	/* done -- wanted parameters only */
+	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
+	    if (rdebug&RDEBUG_SHADE)
+		bu_log("calling rr_render from phong, sw_xmitonly\n");
+	    (void)rr_render( ap, pp, swp );
+	}
+	return(1);	/* done */
+    }
 
     VSETALL(specular, 0.0);
     VSETALL(diffuse, 0.0);
@@ -655,6 +669,10 @@ phong_render(register struct application *ap,
     } else {
 	VADD3(swp->sw_color, ambient, diffuse, specular);
     }
+
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+	(void)rr_render( ap, pp, swp );
+
 
     return 1;
 }
