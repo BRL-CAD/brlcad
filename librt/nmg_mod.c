@@ -1928,6 +1928,12 @@ register struct faceuse	*src_fu;
 	}
 }
 
+/*
+ *			N M G _ M E R G E _ 2 F A C E S
+ *
+ *  Move everything from the source face and mate into the
+ *  destination face and mate, taking into account face orientations.
+ */
 void
 nmg_merge_2faces(dest_fu, src_fu)
 register struct faceuse	*dest_fu;
@@ -1936,8 +1942,13 @@ register struct faceuse	*src_fu;
 	NMG_CK_FACEUSE(dest_fu);
 	NMG_CK_FACEUSE(src_fu);
 
-	nmg_move_fu_fu(dest_fu, src_fu);
-	nmg_move_fu_fu(dest_fu->fumate_p, src_fu->fumate_p);
+	if( dest_fu->orientation == src_fu->orientation )  {
+		nmg_move_fu_fu(dest_fu, src_fu);
+		nmg_move_fu_fu(dest_fu->fumate_p, src_fu->fumate_p);
+	} else {
+		nmg_move_fu_fu(dest_fu, src_fu->fumate_p);
+		nmg_move_fu_fu(dest_fu->fumate_p, src_fu);
+	}
 
 	nmg_kfu(src_fu);
 }
