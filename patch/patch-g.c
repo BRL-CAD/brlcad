@@ -2205,8 +2205,8 @@ int cnt;
 
 	for(k=0 ; k <= (cnt-1) ; k+=4){
 		VSET( pt8[0], in[k].x,in[k].y,in[k].z );
-		VSET( pt8[1], in[k+1].x,in[k+1].y,in[k+1].z );
-		VSET( pt8[3], in[k+2].x,in[k+2].y,in[k+2].z );
+		VSET( pt8[3], in[k+1].x,in[k+1].y,in[k+1].z );
+		VSET( pt8[1], in[k+2].x,in[k+2].y,in[k+2].z );
 		VSET( pt8[4], in[k+3].x,in[k+3].y,in[k+3].z );
 
 		VSUB2(ab,pt8[4],pt8[0]);
@@ -2235,6 +2235,10 @@ int cnt;
 		(void) mk_addmember(name,&head,WMOP_UNION);
 
 		if( in[k].surf_mode == '-' ){
+			point_t interior;
+			vect_t diff;
+
+			fastf_t join_scale = 1.0/8.0;
 
 			ctflg = 'y';
 			strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
@@ -2242,18 +2246,40 @@ int cnt;
 		/* Create planes for arb6. Planes will be formed with
 		   normal pointing inward for creation of inner arb6 */
 
+			VSETALL( interior, 0.0 )
+			for( i=0 ; i<8 ; i++ )
+				VJOIN1( interior, interior, join_scale,  pt8[i] )
 			ret = rt_mk_plane_3pts(planes[0],pt8[0],pt8[3],pt8[2],tols);
+			VSUB2( diff, interior, pt8[0] )
+			if( VDOT( diff, planes[0] ) < 0.0 )
+				HREVERSE( planes[0], planes[0] )
 			ret = ret | rt_mk_plane_3pts(planes[1],pt8[2],pt8[3],pt8[6],tols);
+			VSUB2( diff, interior, pt8[2] )
+			if( VDOT( diff, planes[1] ) < 0.0 )
+				HREVERSE( planes[1], planes[1] )
 			ret = ret | rt_mk_plane_3pts(planes[2],pt8[6],pt8[3],pt8[0],tols);
+			VSUB2( diff, interior, pt8[6] )
+			if( VDOT( diff, planes[2] ) < 0.0 )
+				HREVERSE( planes[2], planes[2] )
 			ret = ret | rt_mk_plane_3pts(planes[3],pt8[4],pt8[0],pt8[1],tols);
+			VSUB2( diff, interior, pt8[4] )
+			if( VDOT( diff, planes[3] ) < 0.0 )
+				HREVERSE( planes[3], planes[3] )
 			ret = ret | rt_mk_plane_3pts(planes[4],pt8[1],pt8[2],pt8[6],tols);
+			VSUB2( diff, interior, pt8[1] )
+			if( VDOT( diff, planes[4] ) < 0.0 )
+				HREVERSE( planes[4], planes[4] )
 
 
 		/* Moves planes inward by normal thickness */
 
 			for (i=0; i < 5; i++) {
+				point_t tmp_pt, new_pt;
+
+				VSCALE( tmp_pt, planes[i], planes[i][3] )
+				VJOIN1( new_pt, tmp_pt, in[k].rsurf_thick, planes[i] )
 				
-				planes[i][3] += in[k].rsurf_thick;
+				planes[i][3] = VDOT( planes[i], new_pt );
 			}
 
 		/* Find new vertices of interior arb6 using
