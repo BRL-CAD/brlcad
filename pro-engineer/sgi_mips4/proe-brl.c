@@ -209,7 +209,7 @@ kill_empty_parts()
 
 	ptr = empty_parts_root;
 	while( ptr ) {
-		fprintf( outfp, "set combs [find %s]\n", ptr->name );
+		fprintf( outfp, "set combs [dbfind %s]\n", ptr->name );
 		fprintf( outfp, "foreach comb $combs {\n\trm $comb %s\n}\n", ptr->name );
 		ptr = ptr->next;
 	}
