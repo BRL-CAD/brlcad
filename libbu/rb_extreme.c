@@ -1,4 +1,4 @@
-/*			R B _ M I N . C
+/*			R B _ E X T R E M E . C
  *
  *	Written by:	Paul Tanenbaum
  *
@@ -10,36 +10,47 @@
 #include "redblack.h"
 #include "rb_internals.h"
 
-/*		        R B _ M I N ( )
+/*		        _ R B _ E X T R E M E ( )
  *
- *		Return the minimum node in a red-black tree
+ *	    Return the minimum or maximum node in a red-black tree
  *
- *	This function has two parameters: the tree in which to find the
- *	the minimum node and the order on which to do the search.
- *	is from T. H. Cormen, C. E. Leiserson, and R. L. Rivest.  _Intro-
- *	duction to Algorithms_.  Cambridge, MA: MIT Press, 1990. p. 268.
- *	On success, rb_min() returns a pointer to the minimum node.
- *	Otherwise, it returns RB_NODE_NULL.
+ *	This function has three parameters: the tree in which to find an
+ *	extreme node, the order on which to do the search, and the sense
+ *	(min or max).  On success, _rb_extreme() returns a pointer to
+ *	the extreme node.  Otherwise, it returns RB_NODE_NULL.
  */
-void *rb_min (rb_tree *tree, int order_nm)
+void *_rb_extreme (rb_tree *tree, int order_nm, int sense)
 {
     int			(*order)();  /* Comparison functions */
+    struct rb_node	*child;
     struct rb_node	*node;
 
     /* Check data type of the parameter "tree" */
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
-    order = (tree -> rbt_order)[order_nm];
+
+    /* Ensure other two parameters are within range */
+    RB_CKORDER(tree, order_nm);
+    if ((sense != SENSE_MIN) && (sense != SENSE_MAX))
+    {
+	fprintf(stderr,
+	    "Error: _rb_extreme(): invalid sense %d, file %s, line %s\n",
+	    sense, __FILE__, __LINE__);
+	exit (0);
+    }
 
     node = tree -> rbt_root;
     while (1)
     {
 	RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
-	if (rb_left_child(node, order_nm) == RB_NODE_NULL)
+	child = (sense == SENSE_MIN) ? rb_left_child(node, order_nm) :
+				       rb_right_child(node, order_nm);
+	if (child == RB_NODE_NULL)
 	    break;
-	node = rb_left_child(node, order_nm);
+	node = child;
     }
 
     /* Record the node with which we've been working */
-    current_node = node;
+    if (node != RB_NODE_NULL)
+	current_node = node;
     return (node -> rbn_data);
 }
