@@ -92,7 +92,7 @@ available commands.
 </DD>
 <HR>
 
-<DT><a NAME="B"><B>B</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="B"><B>B</B> &l;<I>objects</I>&gt</DT>
 
 <DD> Clear the <I>mged</I> display of any currently
 displayed objects, then display the list of objects provided in the
@@ -100,7 +100,7 @@ parameter list.
 Equivalent to
 the <a href="#Z">Z</a> command
 followed by the command
-<a href="#draw">draw</a> &lt<I>objects</I>&gt.
+<a href="#draw">draw</a> &lt;<I>objects</I>&gt.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -110,7 +110,7 @@ followed by the command
 </DD>
 <HR>
 
-<DT><a NAME="E"><B>E</B> [-s] &lt<I>objects</I>&gt</DT>
+<DT><a NAME="E"><B>E</B> [-s] &lt;<I>objects</I>&gt</DT>
 
 <DD> Display <I>objects</I> in an evaluated form.
 All the Boolean operations indicated in each
@@ -124,27 +124,6 @@ slower than using the usual <a href="#draw"><I>draw</I></a> command. The
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD><kbd>mged</kbd>> <b>E some_object</b><br> -- display a facetted approximation of <I>some_object</I>.
-	</DD>
-	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="L"><B>L</B> <I>1|0 xpos ypos</I></DT>
-
-<DD> Send a left mouse-button event.
-The first argument indicates whether the
-event should be a button press (<I>1</I>)
-or release (<I>0</I>).
-The <I>xpos</I> and <I>ypos</I> arguments specify
-the mouse position in <I>mged</I> screen coordinates
-between -2047 and +2047.
-With the default bindings,
-a left-button-press event at any mouse position
-is equivalent to the command <a href="#zoom">zoom 0.5</a>.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>L 1 0 0</b><br> -- Zoom out.
 	</DD>
 	</DL>
 </DD>
@@ -173,28 +152,6 @@ a middle mouse button event.
 	<DT><big>Examples:</big></DT>
 	<DD><kbd>mged></kbd> <b>M 1 100 100</b><br> -- translate the point a screen coordinates
 			(100, 100) to the center of the <I>mged </I> display.
-	</DD>
-	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="R"><B>R</B> <I>1|0 xpos ypos</I></DT>
-
-<DD> Send a right mouse-button event.
-The first argument indicates whether the
-event should be a button press (<I>1</I>)
-or release (<I>0</I>).
-The <I>xpos</I> and <I>ypos</I> arguments specify
-the mouse position in <I>mged</I> screen coordinates
-between -2047 and +2047.
-With the default bindings,
-a right-button-press event at any mouse position
-is equivalent to the command <a href="#zoom">zoom 2.0</a>.
-
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD><kbd>mged></kbd> <b>R 1 0 0</b><br> -- Zoom in.
 	</DD>
 	</DL>
 </DD>
@@ -261,15 +218,6 @@ or the <a href="#knob">knob</a> command.
 </DD>
 <HR>
 
-<DT><a NAME="add_view"><B>add_view</B></DT>
-
-<DD> The ``add_view'' command adds a new view to the view ring. The new view
-     becomes the current view and is initialized with values taken from the
-     previous view. This command was designed to be used within a Tcl/Tk
-     interface script.
-</DD>
-<HR>
-
 <DT><a NAME="ae"><B>ae</B> [<I>-i</I>] <I>azimuth elevation</I> [<I>twist</I>]</DT>
 
 <DD> Set the view orientation for the <I>mged</I>
@@ -297,40 +245,6 @@ as increments.
 </DD>
 <HR>
 
-<DT><a name="aim"><B>aim</B> <I>[command_window [display_window]]</I></DT>
-
-<DD> The ``aim'' command is used to create an association between
-     a command window and a display window. When there exists such an
-     association, all commands entered
-     from the command window will be directed at the
-     display window. The <I>command_window</I> can be specified with <I>mged</I>
-     to refer to the tty MGED was started from, or an id associated with
-     a Tcl/Tk interface window <a href="#openw"> created with <I>openw</I> </a>.
-     The <I>display_window</I> is specified with its Tcl/Tk pathname.
-     If no parameters are given, a listing of the current
-     <I>command_window</I>/<I>display_window</I> associations is returned.
-     If only the <I>command_window</I> is given, the <I>command_window</I>/<I>display_window</I>
-     association is returned. If both parameters are given, the
-     <I>command_window</I>/<I>display_window</I> association is created. This
-     command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>aim my_id .my_window</b>
-	    <br> -- Create the association between my_id and .my_window
-	    <br>mged> <b>aim my_id
-	    <br>my_id ---> .my_window</b>
-	    <br> -- list the command_window/display_window association for my_id
-	    <br>mged> <b>aim
-	    <br>my_id ---> .my_window
-	    <br>mged ---></b>
-	    <br> -- list all of the command_window/display_window associations
-	    <br>
-       </DD>
-     </DL>
-</DD>
-<HR>
-	
 <DT><a NAME="aip"><B>aip</B> [<I>f|b</I>]</DT>
 
 <DD> The ``aip'' command advances the <a href="#ill">illumination</a> pointer when
@@ -423,9 +337,9 @@ edited. The remainder of the ``arced'' command line consists of an <I>animation<
 command to be applied to that matrix. The available animation commands are:
 
 	<ul>
-	<li><I>matrix rarc &ltxlate|rot&gt matrix elements</I><br> -- replace the members matrix with the given matrix</li>
-	<li><I>matrix lmul &ltxlate|rot&gt matrix elements</I><br> -- left multiply the members matrix with the given matrix</li>
-	<li><I>matrix rmul &ltxlate|rot&gt matrix elements</I><br> -- right multiply the members matrix with the given matrix</li>
+	<li><I>matrix rarc &lt;xlate|rot&gt matrix elements</I><br> -- replace the members matrix with the given matrix</li>
+	<li><I>matrix lmul &lt;xlate|rot&gt matrix elements</I><br> -- left multiply the members matrix with the given matrix</li>
+	<li><I>matrix rmul &lt;xlate|rot&gt matrix elements</I><br> -- right multiply the members matrix with the given matrix</li>
 	</ul>
 
 	<DL>
@@ -468,9 +382,11 @@ minimum bounding polygon of the region and ignores holes.
 <DT><a NAME="arot"><B>arot</B> <I>x y z angle</I></DT>
 
 <DD>The ``arot'' command performs a rotation about the specified axis
-     (<I>x y z</I>). The amount of rotation is determined by <I>angle</I> which
+     (<I>x y z</I>) in screen coordinates (-2048 to +2048). The amount of rotation is determined by <I>angle</I> which
      is in degrees. Exactly what is rotated and how is dependant on MGED's
-     state as well as the state of the display manager.
+     state as well as the state of the display manager. For example, in normal viewing mode this
+     command simply rotates the view. But in solid edit mode, it rotates the solid being edited.
+	
 
      <DL>
        <DT><big>Examples:</big>
@@ -486,8 +402,8 @@ minimum bounding polygon of the region and ignores holes.
 </DT>
 
 <DD>The ``attach'' command is used to open a display window. The set of
-     supported window types includes X, ogl, and glx. The glx window type is
-     supported only on SGI's. It should be noted that <I>attach</I> no longer
+     supported window types includes X and ogl.
+     It should be noted that <I>attach</I> no longer
      releases previously attached
      display windows (.i.e multiple attaches are supported).
      To destroy a display window use the
@@ -495,10 +411,10 @@ minimum bounding polygon of the region and ignores holes.
 
      <DL>
        <DT><big>Examples:</big></DT>
-       <DD>mged> <b>attach glx</b>
-	    <br> -- Open a glx display window named .dm_glx0 (assuming this is the first glx display window opened using the default naming scheme)
-	    <br>mged> <b>attach glx</b>
-	    <br> -- Open a glx display window named .dm_glx1
+       <DD>mged> <b>attach ogl</b>
+	    <br> -- Open a ogl display window named .dm_ogl0 (assuming this is the first ogl display window opened using the default naming scheme)
+	    <br>mged> <b>attach ogl</b>
+	    <br> -- Open a ogl display window named .dm_ogl1
 	    <br>mged> <b>attach -n myOgl -W 720 -N 486 ogl</b>
 	    <br> -- Open a 720x486 OpenGL display window named myOgl
 	    <br>mged> <b>attach -n myX -d remote_host:0 -i myInit X</b>
@@ -574,7 +490,7 @@ The <a href="#comb">comb</a> and <a href="#r">r</a> commands may also be used to
 </DD>
 <HR>
 
-<DT><a NAME="cat"><B>cat</B> <I>&ltobjects&gt</I></DT>
+<DT><a NAME="cat"><B>cat</B> <I>&lt;objects&gt</I></DT>
 
 <DD> The ``cat'' command displays a brief description of each item in the list of <I>objects</I>.
 If the item is a primitive solid, the type of solid and its vertex are displayed.
@@ -607,21 +523,6 @@ a similar function by changing the viewing direction, but not moving the eye loc
 </DD>
 <HR>
 
-<DT><a NAME="closew"><B>closew</B> <I>id</I></DT>
-
-<DD> The ``closew'' command closes the Tcl/Tk interface windows
-     (opened previously with <a href="#openw">openw</a>) associated
-     with <I>id</I>.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>closew myOgl</b>
-	    <br> -- close the Tcl/Tk interface windows associated with myOgl
-       </DD>
-     </DL>
-</DD>
-<HR>
-
 <DT><a NAME="cmd_close"><B>cmd_close</B> <I>id</I></DT>
 <DD>This command releases <I>id</I>'s internal data structures.
      The parameter, <I>id</I>, refers to a command window.
@@ -644,7 +545,7 @@ a similar function by changing the viewing direction, but not moving the eye loc
        <LI>the id of the command window
        <LI>a list of command window ids associated with the current command window
 	    (Note: a command window is considered to be associated with another
-	    command window if each is being aimed at some
+	    command window if each is being tied to some
 	    display manager and these display managers are sharing their
 	    view state.)
      </UL>
@@ -654,11 +555,11 @@ a similar function by changing the viewing direction, but not moving the eye loc
        <DD>mged> <b>cmd_get</b>
 	    <br><b>.my_window .their_window me {{them} {me} }</b>
 	    <br> -- the current command window is <I>me</I> and is
-	    <a href="#aim">aim</a>ing at <I>.my_window</I>.
+	    <a href="#tie">tied</a> to <I>.my_window</I>.
 	    The display window <I>.their_window</I> is sharing its
 	    view state with <I>.my_window</I>.
 	    Also, <I>.their_window</I> is sharing its view state with the
-	    display manager window that is being aimed at by <I>them</I>.
+	    display manager window that is tied to <I>them</I>.
        </DD>
      </DL>
 </DD>
@@ -714,13 +615,13 @@ its entries will override any color assigned using the <a href="#mater">mater</a
 </DD>
 <HR>
 
-<DT><a NAME="comb"><B>comb</B> <I>combination_name &ltoperation object&gt</I></DT>
+<DT><a NAME="comb"><B>comb</B> <I>combination_name &lt;operation object&gt</I></DT>
 
 <DD> The ``comb'' command creates a new <a href="brlcad_glossary.html#COMBINATION">combination</a> or extends an existing one.
 If <I>combination_name</I> does not already exist, then it will be created
 using the indicated list of <I>operations</I> and <I> objects</I>.. If
 it does exist, the list of <I>operations</I> and <I> objects</I> will
-be appended to the end of the existing combination. The <I>&ltoperation object&gt</I>
+be appended to the end of the existing combination. The <I>&lt;operation object&gt</I>
 list is expected to be in the same form as used in the <a href="#r">r</a> command.
 The <a href="#c">c</a> command may also be used to create a <I>combination</I>.
 
@@ -760,7 +661,7 @@ The accumulated transformation matrix is then applied to the solid before it
 is drawn on the screen. The ``copyeval'' command creates a <I>new_solid</I> by applying
 the transformation matrices accumulated along the <I>path_to_old_solid</I> to
 the leaf solid at the end of the path and saving the result under the name <I>new_solid</I>.
-The <I>path_to_old_solid</I> must be a legitimate pathc ending with a primitive solid.
+The <I>path_to_old_solid</I> must be a legitimate path ending with a primitive solid.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -823,7 +724,7 @@ solid has since been added to <I>BRL&#173CAD</I> to handle such requirements.
 </DD>
 <HR>
 
-<DT><a NAME="d"><B>d</B> <I>&ltobjects&gt</I></DT>
+<DT><a NAME="d"><B>d</B> <I>&lt;objects&gt</I></DT>
 
 <DD> The ``d'' command deletes the specified list of objects from the
 <I>mged</I> display.
@@ -847,7 +748,7 @@ database, use the <a href="#kill">kill</a> command.
 </DD>
 <HR>
 
-<DT><a NAME="dall"><B>dall</B> <I>&ltobjects&gt</I></DT>
+<DT><a NAME="dall"><B>dall</B> <I>&lt;objects&gt</I></DT>
 
 <DD> The ``dall'' command deletes the specified list of objects from the
 <I>mged</I> display.
@@ -870,14 +771,17 @@ database, use the <a href="#kill">kill</a> command.
 <DT><a NAME="db"><B>db</B> <I>command</I> [<I>args...</I>]</DT>
 
 <DD> The ``db'' command provides an interface to a number of database manipulation routines.
+Note that this command always operates in units of millimeters.
 The <I>command</I> must be one of the following with appropriate arguments:
 
 	<ul>
-	<li><I>match &ltregular_exp&gt</I><br>
+	<li><I>match &lt;regular_exp&gt</I><br>
 		-- return a list of all objects in that database that match the
 		list of regular expressions.</li>
-	<li><I>get solid_name [attribute]</I><br>
-		-- return information about primtive solid <I>solid_name</I>.
+	<li><I>get solid_or_path [attribute]</I><br>
+		-- return information about the primitive solid at the end of the <I>solid_or_path</I>.
+		If a path is specified, the transformation matrices encountered along that path will
+		be accumulated and applied to the leaf solid before displaying the information.
 		If no <I>attribute</I> is specified, all the details about the solid are returned.
 		If a specific <I>attribute</I> is listed, then only that information is returned.</li>
 	<li><I>put solid_name solid_type attributes</I><br>
@@ -955,7 +859,7 @@ debugging commands include <a href="#debugmem">debugmem</a> and <a href="#debugd
 	<DD>mged> <b>debugbu</b><br>
 		-- get a list of available <I>bu_debug</I> values and the current value.
 	<br>mged> <b>debugbu 2</b><br>
-		-- set <I>bu_debug</I> to &ltMEM_CHECK&gt.
+		-- set <I>bu_debug</I> to &lt;MEM_CHECK&gt.
 	</DD>
 	</DL>
 </DD>
@@ -999,7 +903,7 @@ debugging commands include <a href="#debugmem">debugmem</a> and <a href="#debugd
 	<DD>mged> <b>debuglib</b><br>
 		-- get a list of available debug values for <I>librt</I> and the current value.
 	<br>mged> <b>debuglib 1</b><br>
-		-- set the <I>librt</I> debug flag to &ltDEBUG_ALLRAYS&gt (print info about rays).
+		-- set the <I>librt</I> debug flag to &lt;DEBUG_ALLRAYS&gt (print info about rays).
 	</DD>
 	</DL>
 </DD>
@@ -1010,7 +914,7 @@ debugging commands include <a href="#debugmem">debugmem</a> and <a href="#debugd
 <DD> The ``debugmem'' command prints a list of all the memory blocks that have been
 allocated and recorded in the <I>memdebug</I> table. Memory alocation is not normally
 recorded in the <I>memdebug</I> table, but executing the <I><a href="#debugbu">debugbu</a> 2</I> command
-will turn on the &ltMEM_CHECK&gt flag and as long as that flag is set, all memory
+will turn on the &lt;MEM_CHECK&gt flag and as long as that flag is set, all memory
 allocation will be recorded.
 
 	<DL>
@@ -1077,20 +981,6 @@ in <I>MGED</I> command scripts.
 </DD>
 <HR>
 
-<DT><a NAME="delete_view"><B>delete_view</B> <I>vid</I></DT>
-
-<DD> The ``delete_view'' command deletes view <I>vid</I> from the view ring.
-     This command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Example: </big></DT>
-       <DD>mged> <b>delete_view 3</b>
-	    <br> -- delete view 3 from the view_ring
-       </DD>
-     </DL>
-</DD>
-<HR>
-
 <DT><a NAME="dm"><B>dm</B> <I>command</I> [<I>args</I>]</DT>
 <DD>The ``dm'' command provides a means to interact with the display manager at a
      lower level. This command was designed to be used within a Tcl script. 
@@ -1124,7 +1014,7 @@ in <I>MGED</I> command scripts.
 	    to mged screen coordinates before being passed to the <a href="#M">M</a> command.
        </DD>
 
-       <DT><B>am</B> &lt<I>r</I> | <I>t</I> | <I>s</I>&gt <I>x y</I></DT>
+       <DT><B>am</B> &lt;<I>r</I> | <I>t</I> | <I>s</I>&gt <I>x y</I></DT>
        <DD>The ``am'' command effects <I>mged</I>'s alternate mouse mode. The alternate mouse
 	    mode gives the user a different way of manipulating the view or an object. For
 	    example, the user can drag an object or rotate the view while using the mouse.
@@ -1134,7 +1024,7 @@ in <I>MGED</I> command scripts.
 	    appropriately before being passed to the <a href="#knob">knob</a> command.
        </DD>
 
-       <DT><B>adc</B> &lt<I>1</I> | <I>2</I> | <I>t</I> | <I>d</I>&gt <I>x y</I></DT>
+       <DT><B>adc</B> &lt;<I>1</I> | <I>2</I> | <I>t</I> | <I>d</I>&gt <I>x y</I></DT>
        <DD>The ``adc'' command provides a way of manipulating the angle distance cursor while using
 	    the mouse. The first argument indicates the type of operation to perform (i.e.
 	    <I>1</I> for angle 1, <I>2</I> for angle 2, <I>t</I> for translate,
@@ -1144,18 +1034,18 @@ in <I>MGED</I> command scripts.
 	    (i.e. not ``dm adc'').
        </DD>
 
-       <DT><B>con</B> &lt<I>r</I> | <I>t</I> | <I>s</I>&gt &lt<I>x</I> | <I>y</I> | <I>z</I>&gt <I>xpos ypos</I></DT>
+       <DT><B>con</B> &lt;<I>r</I> | <I>t</I> | <I>s</I>&gt &lt;<I>x</I> | <I>y</I> | <I>z</I>&gt <I>xpos ypos</I></DT>
        <DD>This form of the ``con'' command provides a way to effect constrained manipulation of the
 	    view or an object while using the mouse. This simulates the behavior of
 	    sliders without taking up screen real estate. The first argument indicates the type of
 	    operation to perform (i.e. <I>r</I> for rotation, <I>t</I> for translation, and
-	    <I>s</I> for scale). The &lt<I>x</I> | <I>y</I> | <I>z</I>&gt argument is the axis
+	    <I>s</I> for scale). The &lt;<I>x</I> | <I>y</I> | <I>z</I>&gt argument is the axis
 	    of rotation, translation, or scale. The <I>xpos</I> and <I>ypos</I> arguments are in X
 	    screen coordinates and are transformed appropriately before being passed to the
 	    <a href="#knob">knob</a> command.
        </DD>
 
-       <DT><B>con</B> <I>a</I> &lt<I>x</I> | <I>y</I> | <I>1</I> | <I>2</I> | <I>d</I>&gt <I>xpos ypos </I></DT>
+       <DT><B>con</B> <I>a</I> &lt;<I>x</I> | <I>y</I> | <I>1</I> | <I>2</I> | <I>d</I>&gt <I>xpos ypos </I></DT>
        <DD>This form of the ``con'' command provides a way to effect constrained manipulation of the
 	    angle distance cursor while using the mouse. This simulates the behavior of sliders
 	    without taking up screen real estate. The first argument indicates that this is to be applied
@@ -1195,9 +1085,9 @@ in <I>MGED</I> command scripts.
      </DL>
 <HR>
 
-<DT><a NAME="draw"><B>draw</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="draw"><B>draw</B> &lt;<I>objects</I>&gt</DT>
 
-<DD> Add &lt<I>objects</I>&gt to the
+<DD> Add &lt;<I>objects</I>&gt to the
 display list so that they will appear on the <I>MGED</I> display.
 The <a href="#e">e</a> command
 is a synonym for <I>draw</I>.
@@ -1233,7 +1123,7 @@ to insure that there are no name clashes.
 </DD>
 <HR>
 
-<DT><a NAME="e"><B>e</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="e"><B>e</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``e'' command adds the objects in the argument list to the
 display list so that they will appear on the <I>MGED</I> display. This
@@ -1248,7 +1138,7 @@ is a synonym for the <a href="#draw">draw</a> command.
 </DD>
 <HR>
 
-<DT><a NAME="eac"><B>eac</B> &lt<I>aircodes</I>&gt</DT>
+<DT><a NAME="eac"><B>eac</B> &lt;<I>aircodes</I>&gt</DT>
 
 <DD> The ``eac'' command adds all the regions in the current model that have one of the
 <a href="brlcad_glossary.html#SPACE">aircodes</a> in the argument list to the
@@ -1281,7 +1171,7 @@ on the command line. This is intended for use in <I>MGED</I> scripts.
 </DD>
 <HR>
 
-<DT><a NAME="edcodes"><B>edcodes</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="edcodes"><B>edcodes</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``edcodes'' command puts the user into an editor to edit
 a file that has been filled with the <a href="brlcad_glossary.html#IDENT">ident</a>,
@@ -1362,7 +1252,7 @@ This can only be done while moving an edge of an <a href="brlcad_solids.html#ARB
 </DD>
 <HR>
 
-<DT><a NAME="edmater"><B>edmater</B> &lt<I>combinations</I>&gt</DT>
+<DT><a NAME="edmater"><B>edmater</B> &lt;<I>combinations</I>&gt</DT>
 
 <DD> The ``edmater'' command places the user in an editor ready to edit
 a file filled with with <a href="brlcad_glossary.html#SHADER">shader</a> parameters
@@ -1406,7 +1296,7 @@ coefficient of the equation is determined.
 </DD>
 <HR>
 
-<DT><a NAME="erase"><B>erase</B> <I>&ltobjects&gt</I></DT>
+<DT><a NAME="erase"><B>erase</B> <I>&lt;objects&gt</I></DT>
 
 <DD> The ``erase'' command deletes the specified list of objects from the
 <I>mged</I> display.
@@ -1430,7 +1320,7 @@ database, use the <a href="#kill">kill</a> command.
 </DD>
 <HR>
 
-<DT><a NAME="erase_all"><B>erase_all</B> <I>&ltobjects&gt</I></DT>
+<DT><a NAME="erase_all"><B>erase_all</B> <I>&lt;objects&gt</I></DT>
 
 <DD> The ``erase_all'' command deletes the specified list of objects from the
 <I>mged</I> display.
@@ -1451,7 +1341,7 @@ database, use the <a href="#kill">kill</a> command.
 </DD>
 <HR>
 
-<DT><a NAME="ev"><B>ev</B> [<I>-dnqstuvwT</I>] [<I>-P #</I>] &lt<I>objects</I>&gt</DT>
+<DT><a NAME="ev"><B>ev</B> [<I>-dnqstuvwT</I>] [<I>-P #</I>] &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``ev'' command evaluates the <I>objects</I> specified by tesselating
 all <a href="brlcad_glossary.html#SOLID">primitive solids</a> in the objects
@@ -1615,7 +1505,7 @@ to specifiy the number of CPU's to use for this command, but it is currently ign
 </DD>
 <HR>
 
-<DT><a NAME="find"><B>find</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="find"><B>find</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``find'' command displays all <a href="brlcad_glossary.html#COMBINATION">combinations</a>
 that have any of the <I>objects</I> specified as a <a href="brlcad_glossary.html#MEMBER">member</a>.
@@ -1646,7 +1536,7 @@ is specified, then the <I>NMG_solid</I> name provided is used in place of the <I
 </DD>
 <HR>
 
-<DT><a NAME="g"><B>g</B> <I>groupname</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="g"><B>g</B> <I>groupname</I> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``g'' command creates a special type of <a href="brlcad_glossary.html#COMBINATION">combination</a>
 often referred to as a <a href="brlcad_glossary.html#GROUP">group</a>. This builds a <I>combination</I>
@@ -1661,6 +1551,19 @@ Other commands to build
 	<DD>mged> <b>g solid1.nmg f</b><br>
 		-- create a series of <I>NMG</I> solids named "f_#", one for each
 		face in <I>solid1.nmg</I>
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="garbage_collect"><B>garbage_collect</B></DT>
+
+<DD> The ``garbage_collect'' command eliminates unused space in a BRL-CAD database file.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>garbage_collect</b><br>
+		-- clean out unsued space in the database
 	</DD>
 	</DL>
 </DD>
@@ -1693,37 +1596,6 @@ Other commands to build
 	    <br>some_non_region No {0 220 220} plastic No { u box2
 	    <br> - ball2
 	    <br> }
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="get_view"><B>get_view</B> [<I>-a</I>]</DT>
-
-<DD> Get the current view id. If the <I>-a</I> option is specified,
-     a list of all view ids on the view ring is returned. This command
-     was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>get_view</b>
-	    <br> -- return the view id of the current view
-	    <br>mged> <b>get_view -a</b>
-	    <br> -- return all view ids on the view ring
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="goto_view"><B>goto_view</B> <I>vid</I></DT>
-
-<DD> Go to view <I>vid</I> on the view ring. This command was designed
-     to be used within a Tcl script.
-     
-     <DL>
-       <DT><big>Example:</big></DT>
-       <DD>mged> <b>goto_view 2</b>
-	    <br> -- go to view 2 on the view ring
        </DD>
      </DL>
 </DD>
@@ -1837,7 +1709,7 @@ The <I>operation</I> may be ``+'', ``-'', or ``u''. If no <I>operation</I> is sp
 </DD>
 <HR>
 
-<DT><a NAME="idents"><B>idents</B> <I>file_name</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="idents"><B>idents</B> <I>file_name</I> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``idents'' command places a summary of the <a href="brlcad_glossary.html#REGION">regions</a>
 in the list of <I>objects</I> specified in the file specified. If any regions include other regions,
@@ -1882,7 +1754,7 @@ either using the mouse to make the selection, or using <a href="#aip">aip</a> an
 </DD>
 <HR>
 
-<DT><a NAME="in"><B>in</B> [<I>-f</I>] [<I>-s</I>] <I>new_solid_name solid_type</I> &lt<I>parameters</I>&gt</DT>
+<DT><a NAME="in"><B>in</B> [<I>-f</I>] [<I>-s</I>] <I>new_solid_name solid_type</I> &lt;<I>parameters</I>&gt</DT>
 
 <DD> The ``in'' command allows the user to type in the parameters needed to create a solid
 with the name <I>new_solid_name</I> of the type <I>solid_type</I>. The command may be invoked
@@ -1926,7 +1798,7 @@ values for <I>solid_type</I> are:
 </DD>
 <HR>
 
-<DT><a NAME="inside"><B>inside</B> [<I>outside_solid_name new_inside_solid_name</I> &lt<I>parameters</I>&gt]</DT>
+<DT><a NAME="inside"><B>inside</B> [<I>outside_solid_name new_inside_solid_name</I> &lt;<I>parameters</I>&gt]</DT>
 
 <DD> The ``inside'' command creates a new solid that is <I>inside</I> an existing solid.
 This command is typically used to create an <I>inside</I> solid that can be subtracted
@@ -2055,7 +1927,7 @@ is off by default.
 </DD>
 <HR>
 
-<DT><a NAME="keep"><B>keep</B> <I>keep_file</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="keep"><B>keep</B> <I>keep_file</I> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``keep'' command copies the <I>objects</I> specified to the <I>keep_file</I>.
 If <I>keep_file</I> does not exist, it is created. If <I>keep_file</I> does exist,
@@ -2088,7 +1960,7 @@ no effect when used in non-editing modes.
 </DD>
 <HR>
 
-<DT><a NAME="kill"><B>kill</B> [<I>-f</I>] &lt<I>objects</I>&gt</DT>
+<DT><a NAME="kill"><B>kill</B> [<I>-f</I>] &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``kill'' command deletes the specified <I>objects</I> from the current database.
 This command affects only the <I>objects</I> actually listed on the command line. If a
@@ -2108,7 +1980,7 @@ objecvts from the database are <a href="#killall">killall</a> and <a href="#kill
 </DD>
 <HR>
 
-<DT><a NAME="killall"><B>killall</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="killall"><B>killall</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``killall'' command deletes the specified <I>objects</I> from the current database
 and removes all references to them from all <a href="brlcad_glossary.html#COMBINATION">combinations</a> in the database.
@@ -2127,7 +1999,7 @@ objects from the database are <a href="#kill">kill</a> and <a href="#killtree">k
 </DD>
 <HR>
 
-<DT><a NAME="killtree"><B>killtree</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="killtree"><B>killtree</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``killtree'' command deletes the specified <I>objects</I> from the current database
 and recursively deletes all objects referenced by any of those objects.
@@ -2206,7 +2078,7 @@ The available <I>knob ids</I> are:
 </DD>
 <HR>
 
-<DT><a NAME="l"><B>l</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="l"><B>l</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``l'' command displays a verbose description about the specified <I>objects</I>.
 For a <a href="brlcad_glossary.html#COMBINATION">combination</a>, the <I>l</I> command
@@ -2229,7 +2101,7 @@ parameters will be displayed.
 </DD>
 <HR>
 
-<DT><a NAME="labelvert"><B>labelvert</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="labelvert"><B>labelvert</B> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``labelvert'' command labels the vertices of the indicated <I>objects</I>
 with their coordinate values in the <I>mged</I> display window. The <I>objects</I>
@@ -2377,7 +2249,7 @@ The possible values for <I>type</I> are:
 </DD>
 <HR>
 
-<DT><a NAME="make_bb"><B>make_bb</B> <I>new_solid_name</I> &lt<I>objects|paths</I>&gt</DT>
+<DT><a NAME="make_bb"><B>make_bb</B> <I>new_solid_name</I> &lt;<I>objects|paths</I>&gt</DT>
 
 <DD>The ``make_bb'' (make bounding box) command builds a single axis-aligned rectangular parallelepiped (RPP) that will
 contain the <I>objects</I> and <I>paths</I> specified. The <I>paths</I> will include any
@@ -2437,7 +2309,7 @@ Some available shaders are:
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>mater region1 "plastic tr=0.5 re=0.2" 210 100 100 0</b><br>
+	<DD>mged> <b>mater region1 "plastic {tr 0.5 re 0.2}" 210 100 100 0</b><br>
 		-- set <I>region1</I> to use the plastic shader with 50% transparency,
 		20% reflectivity, a base color of (210 100 100), and inheritance set to 0
 	</DD>
@@ -2583,14 +2455,6 @@ change the names and references of objects.
 </DD>
 <HR>
 
-<DT><a NAME="next_view"><B>next_view</B></DT>
-
-<DD> The ``next_view'' command sets the current view to the next view on
-     the view ring. This command was designed to be used within a user
-     interface.
-</DD>
-<HR>     
-
 <DT><a NAME="nirt"><B>nirt</B> [<I>nirt_args</I>]</DT>
 
 <DD>The ``nirt'' command runs the <I>nirt</I> program that is distributed with <I>BRL&#173CAD</I>
@@ -2700,103 +2564,6 @@ in <I>path_rhs</I> is used as the reference solid during the object editing.
 </DD>
 <HR>
 
-<DT><a name="openw"><B>openw</B> [<I>-config val</I>] [<I>-d display_string</I>] [<I>-gd graphics_display_string</I>] [<I>-gt graphics_type</I>] [<I>-id name</I>] [<I> -c -h -j -s</I>]</DT>
-
-<DD>The ``openw'' command opens a Tcl/Tk interface window and a display window.
-     If no options are given, separate interface and display windows are
-     opened on the screen specified by
-     the DISPLAY environment variable.
-     If the DISPLAY environment variable is not set
-     the windows are opened on the local screen.
-     The type of display window opened is that returned by
-     <a href="#dm_best_name">dm_best_name</a>.
-     <br><br>
-     <center>
-     <table COLS=2 RULES=all BORDER=1 CELLPADDING=3>
-     <tbody>
-     <tr>
-     <th ALIGN=center>Options</th>
-     <th ALIGN=center>Description</th>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-config val</I></td>
-     <td ALIGN=left>If <I>val</I> is <I>c</I> the Tcl/Tk interface window is
-     initially configured showing the command window. If <I>val</I> is <I>g</I>
-     the graphics window (display window) is configured in. If <I>val</I> is
-     <I>b</I> both the command window and graphics window are configured in.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-d display_string</I></td>
-     <td ALIGN=left>This option determines where the Tcl/Tk interface
-     window will be drawn. The <I>display_string</I> is in the same format
-     as the DISPLAY environment variable.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-gd graphics_display_string</I></td>
-     <td ALIGN=left>This option determines where the graphics display window
-     will be drawn. The <I>graphics_display_string</I> is in the same format
-     as the DISPLAY environment variable.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-gt graphics_type</I></td>
-     <td ALIGN=left>This option specifies what graphics type to make
-     the display window. The available types are ogl, glx, and X.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-id name</I></td>
-     <td ALIGN=left>This option specifies the name that will be used to refer
-     to this instance of the Tcl/Tk interface window.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-c</I></td>
-     <td ALIGN=left>This option indicates that the Tcl/Tk interface window
-     and the display window will be combined (i.e. the display window will become
-     part of the Tcl/Tk interface window).</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-h</I></td>
-     <td ALIGN=left>This option prints a usage message.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-j</I></td>
-     <td ALIGN=left>This option indicates that this instance of the Tcl/Tk
-     interface window will join the collaborative session.</td>
-     </tr>
-
-     <tr>
-     <td ALIGN=center><I>-s</I></td>
-     <td ALIGN=left>This option, which is the default behavior, indicates
-     that this Tcl/Tk interface window will not be combined with the
-     display window.</td>
-     </tr>
-     </tbody>
-     </table>
-     </center>
-<br>
-
-<DL>
-  <DT><big>Examples:</big></DT>
-  <DD>mged> <b>openw -gt ogl -gd graphics_host:0 -d host:0 </b>
-       <br> -- open a Tcl/Tk interace window on host and an OpenGl
-       display window on graphics_host. The id of this Tcl/Tk
-       interace window will be id_0. Issuing the same command again will
-       open a Tcl/Tk interace window with an id of id_1.
-       <br>mged> <b>openw -c -gt X -id only_me</b>
-       <br> -- This command will open a combined Tcl/Tk interface
-       window, with an id of <I>only_me</I>, and X display window.
-       </DD>
-</DL>
-</DD>
-<HR>
-     
 <DT><a NAME="orientation"><B>orientation</B> <I>x y z w</I></DT>
 
 <DD>The ``orientation'' command sets the view direction for <I>mged</I>
@@ -2892,7 +2659,7 @@ for solid parameters. The <a href="#translate">translate</a> and
 </DD>
 <HR>
 
-<DT><a NAME="pathlist"><B>pathlist</B> &lt<I>combinations</I>&gt</DT>
+<DT><a NAME="pathlist"><B>pathlist</B> &lt;<I>combinations</I>&gt</DT>
 
 <DD>The ``pathlist'' command lists all existing paths that start from the specified
 <a href="brlcad_glossary.html#COMBINATION">combinations</a> and end at
@@ -3050,7 +2817,7 @@ its entries will override any color assigned using the <a href="#mater">mater</a
 </DD>
 <HR>
 
-<DT><a NAME="prefix"><B>prefix</B> <I>new_prefix</I> &lt<I>objects</I>&gt </DT>
+<DT><a NAME="prefix"><B>prefix</B> <I>new_prefix</I> &lt;<I>objects</I>&gt </DT>
 
 <DD>The ``prefix'' command changes the name of all the <I>objects</I> listed
 by adding the specified <I>new_	prefix</I>. All references to the <I>objects</I>
@@ -3149,14 +2916,6 @@ Note that this may significantly slow the <I>preview</I>.
 </DD>
 <HR>
 
-<DT><a NAME="prev_view"><B>prev_view</B></DT>
-
-<DD> The ``prev_view'' command sets the current view to the previous view on
-     the view ring. This command was designed to be used within a user
-     interface.
-</DD>
-<HR>     
-
 <DT><a NAME="ps"><B>ps</B> [<I>-f font</I>] [<I>-t title</I>] [<I>-c creator</I>] [<I>-s size_in_inches</I>] [<I>-l line_width</I>] <I>output_file</I></DT>
 
 <DD>The ``ps'' command temporarily attaches the <I>Postscript</I> display manager and outputs
@@ -3177,7 +2936,7 @@ option allows the user to specify the creator of the file (the default is ``LIBD
 </DD>
 <HR>
 
-<DT><a NAME="push"><B>push</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="push"><B>push</B> &lt;<I>objects</I>&gt</DT>
 
 <DD>The ``push'' command forces the effects of all transformation
 matrices that appear in any
@@ -3322,7 +3081,7 @@ ae</a> command provides a similar capability.
 </DD>
 <HR>
 
-<DT><a NAME="r"><B>r</B> <I>region_name</I> &lt<I>operation object</I>&gt</DT>
+<DT><a NAME="r"><B>r</B> <I>region_name</I> &lt;<I>operation object</I>&gt</DT>
 
 <DD>The ``r'' command creates a <a href="brlcad_glossary.html#REGION">region</a> with
 the specified <I>region_name</I>. The <I>region</I> is constructed using the
@@ -3461,7 +3220,7 @@ commands.
 </DD>
 <HR>
 
-<DT><a NAME="regions"><B>regions</B> <I>output_file</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="regions"><B>regions</B> <I>output_file</I> &lt;<I>objects</I>&gt</DT>
 
 <DD>The ``regions'' command creates a summary of all the
 <a href="brlcad_glossary.html#REGION">regions</a> in the specified list
@@ -3521,7 +3280,7 @@ first face is extruded normally by the specified thickness to complete the <I>AR
 </DD>
 <HR>
 
-<DT><a NAME="rm"><B>rm</B> <I>combination</I> &lt<I>members</I>&gt</DT>
+<DT><a NAME="rm"><B>rm</B> <I>combination</I> &lt;<I>members</I>&gt</DT>
 
 <DD>The ``rm'' command deletes all occurences of the listed <a href="brlcad_glossary.html#MEMBER">members</a> from
 the specified <a href="brlcad_glossary.html#COMBINATION">combination</a>. The <a href="#red">red</a>, <a href="#r">r</a>,
@@ -3575,7 +3334,7 @@ to be as produced by the <a href="#savekey">savekey</a> command.
 <DT><a NAME="rot"><B>rot</B> <I>x y z</I></DT>
 <DD>The ``rot'' command rotates the view or an object by <I>x, y, z</I>
      degrees. Exactly what is rotated and how is dependant on MGED's state
-     as well as the state of the display manager.
+     as well as the state of the display manager. See <a href="#arot">arot</a> for a similar capability.
 
      <DL>
        <DT><big>Examples:</big></DT>
@@ -3733,7 +3492,7 @@ rt -M \
  model.g\
  'object1' 'object2' \
  2&gt&gt test.rt.log\
- &lt&ltEOF
+ &lt;&lt;EOF
 viewsize 2.780320739746094e+02;
 orientation 2.480973490458727e-01 4.765905732660483e-01 7.480973490458729e-01 3.894348305183902e-01;
 eye_pt 1.234152656421214e+02 7.220202900588745e+01 3.845765464924686e+01;
@@ -3814,7 +3573,7 @@ command is a synonym for <a href="#press">press top</a>.
 </DD>
 <HR>
 
-<DT><a NAME="shader"><B>shader</B> <I>combination shader_name</I> [<I>shader_args</I>]</DT>
+<DT><a NAME="shader"><B>shader</B> <I>combination shader_name</I> [<I>"{shader_args}"</I>]</DT>
 
 <DD>The ``shader'' command assigns <a href="brlcad_glossary.html#SHADER">shader</a> parameters
 to the specified <a href="brlcad_glossary.html#COMBINATION">combination</a>.
@@ -3825,59 +3584,11 @@ command.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>shader group1 checker a=0,255,0 b=0,0,255</b><br>
+	<DD>mged> <b>shader group1 checker "{a 0,255,0 b 0,0,255}"</b><br>
 		-- assign the checkerboard shader to <I>group1</I>
 		using green and blue colors for the squares
 	</DD>
 	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="share_menu"><B>share_menu</B> <I>pathName1 pathName2</I></DT>
-<DD>The ``share_menu'' command allows the menu state to be shared between display
-     manager windows <I>pathName1</I> and <I>pathName2</I>. More specifically,
-     <I>pathName1</I> shares its menu with <I>pathName2</I>. This command was
-     designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>share_menu .windowA .windowB</b>
-	    <br> -- <I>.windowA</I> shares its menu state with <I>.windowB</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="share_vars"><B>share_vars</B> <I>pathName1 pathName2</I></DT>
-<DD>The ``share_vars'' command allows variables to be shared
-     between display manager windows <I>pathName1</I> and <I>pathName2</I>.
-     More specifically, <I>pathName1</I> shares its variables with
-     <I>pathName2</I>. This command was designed to be used within a user
-     interface. See the <a href="#vars">vars</a> command for the list of
-     variables.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>share_vars .windowA .windowB</b>
-	    <br> -- <I>.windowA</I> shares its variables with <I>.windowB</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="share_view"><B>share_view</B> <I>pathName1 pathName2</I></DT>
-<DD>The ``share_view'' command allows the view state to be shared between
-     display manager windows <I>pathName1</I> and <I>pathName2</I>.
-     More specifically, <I>pathName1</I> shares its view state with
-     <I>pathName2</I>. This command was designed to be used within a
-     user interface.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>share_view .windowA .windowB</b>
-	    <br> -- <I>.windowA</I> shares its view state with <I>.windowB</I>
-       </DD>
-     </DL>
 </DD>
 <HR>
 
@@ -3963,7 +3674,7 @@ the actual value of that parameter.
 </DD>
 <HR>
 
-<DT><a NAME="solids"><B>solids</B> <I>file</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="solids"><B>solids</B> <I>file</I> &lt;<I>objects</I>&gt</DT>
 
 <DD>The ``solids'' command lists a summary of all the
 <a href="brlcad_glossary.html#SOLID">primitive solids</a> used in regions
@@ -4075,7 +3786,7 @@ written out.
 </DD>
 <HR>
 
-<DT><a NAME="t"><B>t</B> [&lt<I>object_names</I>&gt]</DT>
+<DT><a NAME="t"><B>t</B> [&lt;<I>object_names</I>&gt]</DT>
 
 <DD>The ``t'' command with no options displays a table of contents for the current database. This will
 list the name of every object in the database (in alphabetical order). A list of <I>object_names</I> may be supplied,
@@ -4113,6 +3824,40 @@ command performs a similar function for <a href="brlcad_glossary.html#COMBINATIO
 </DD>
 <HR>
 
+<DT><a name="tie"><B>tie</B> <I>[[-u] command_window [display_window]]</I></DT>
+
+<DD> The ``tie'' command is used to create (or destroy with the <b>-u</b> option) an association between
+     a command window and a display window. When there exists such an
+     association, all commands entered
+     from the command window will be directed at the
+     display window. The <I>command_window</I> can be specified with <I>mged</I>
+     to refer to the tty MGED was started from, or an id associated with
+     a Tcl/Tk interface window <a href="#openw"> created with <I>openw</I> </a>.
+     The <I>display_window</I> is specified with its Tcl/Tk pathname.
+     If no parameters are given, a listing of the current
+     <I>command_window</I>/<I>display_window</I> associations is returned.
+     If only the <I>command_window</I> is given, the <I>command_window</I>/<I>display_window</I>
+     association is returned. If both parameters are given, the
+     <I>command_window</I>/<I>display_window</I> association is created. This
+     command was designed to be used within a Tcl script.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>tie my_id .my_window</b>
+	    <br> -- Create the association between my_id and .my_window
+	    <br>mged> <b>tie my_id
+	    <br>my_id ---> .my_window</b>
+	    <br> -- list the command_window/display_window association for my_id
+	    <br>mged> <b>tie
+	    <br>my_id ---> .my_window
+	    <br>mged ---></b>
+	    <br> -- list all of the command_window/display_window associations
+	    <br>
+       </DD>
+     </DL>
+</DD>
+<HR>
+	
 <DT><a NAME="title"><B>title</B> [<I>string</I>]</DT>
 
 <DD>The ``title'' command, with no arguments, returns the title string for
@@ -4126,24 +3871,6 @@ the new title string for the current database. Quote marks must be doubly escape
 		-- set the title of the current database to <I>This is my "database"</I>
 	</DD>
 	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="toggle_view"><B>toggle_view</B>
-
-<DD> The ``toggle_view'' command sets the current view to the last view.
-     This command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b><a href="#goto_view">goto_view</a> 2</b>
-	    <br> -- go to view 2 (i.e. current view is now 2)
-	    <br>mged> <b><a href="#goto_view">goto_view</a> 4</b>
-	    <br> -- current view is 4; last view is 2
-	    <br>mged> <b>toggle_view</b>
-	    <br> -- current view is now 2; last view is now 4
-       </DD>
-     </DL>
 </DD>
 <HR>
 
@@ -4286,7 +4013,7 @@ solid editing.
 </DD>
 <HR>
 
-<DT><a NAME="tree"><B>tree</B> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="tree"><B>tree</B> &lt;<I>objects</I>&gt</DT>
 
 <DD>The ``tree'' command will list the contents of the specified <I>objects</I>
 in a tree-like format that displays the hierarchical structure of the <I>objects</I>,
@@ -4315,56 +4042,6 @@ as a result of a prior <a href="#read_muves">read_muves</a> command.
 		-- List all the known MUVES components.
 	</DD>
 	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="unaim"><B>unaim</B> <I>id</I></DT>
-<DD>The ``unaim'' command breaks the association between <I>id</I> and
-     its associated display manager window as created by the
-     <a href="#aim">aim</a> command.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>aim my_id .my_window</b>
-	    <br> -- Create an association between <I>my_id</I> and <I>.my_window</I>
-	    <br>mged> <b>unaim my_id</b>
-	    <br> -- break the association between <I>my_id</I> and <I>.my_window</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="unshare_menu"><B>unshare_menu</B> <I>pathName</I></DT>
-<DD>The ``unshare_menu'' command gives <I>pathName</I> a private menu.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>unshare_menu .my_window</b>
-	    <br> -- .my_window no longer shares its menu
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="unshare_vars"><B>unshare_vars</B> <I>pathName</I></DT>
-<DD>The ``unshare_vars'' command gives <I>pathName</I> a set of private
-     variables.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>unshare_vars .my_window</b>
-	    <br> -- .my_window no longer shares its variables
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="unshare_view"><B>unshare_view</B> <I>pathName</I></DT>
-<DD>The ``unshare_view'' command gives <I>pathName</I> a private view state.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>unshare_view .my_window</b>
-	    <br> -- .my_window no longer shares its view state
-       </DD>
-     </DL>
 </DD>
 <HR>
 
@@ -4670,7 +4347,7 @@ possible parameters are:
 </DD>
 <HR>
 
-<DT><a NAME="viewset"><B>viewset</B> &lt<I>parameter value</I>&gt</DT>
+<DT><a NAME="viewset"><B>viewset</B> &lt;<I>parameter value</I>&gt</DT>
 
 <DD>The ``viewset'' command sets various <I>mged</I> view parameters.
 More than one parameter may be set with one command.
@@ -4743,7 +4420,7 @@ command (or a menu button) allows the user to toggle between the two modes.
 </DD>
 <HR>
 
-<DT><a NAME="wcodes"><B>wcodes</B> <I>file</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="wcodes"><B>wcodes</B> <I>file</I> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``wcodes'' command writes  <a href="brlcad_glossary.html#IDENT">ident</a>,
 <a href="brlcad_glossary.html#SPACE">air code</a>,
@@ -4773,7 +4450,7 @@ number of the specified <I>region</I>.
 </DD>
 <HR>
 
-<DT><a NAME="which_shader"><B>which_shader</B> &lt<I>shaders</I>&gt</DT>
+<DT><a NAME="which_shader"><B>which_shader</B> &lt;<I>shaders</I>&gt</DT>
 
 <DD> The ``which_shader'' command lists all the <a href="brlcad_glossary.html#REGION">regions</a>
 that use one of the <I>shaders</I> specified.
@@ -4787,7 +4464,7 @@ that use one of the <I>shaders</I> specified.
 </DD>
 <HR>
 
-<DT><a NAME="whichair"><B>whichair</B> &lt<I>air_codes</I>&gt</DT>
+<DT><a NAME="whichair"><B>whichair</B> &lt;<I>air_codes</I>&gt</DT>
 
 <DD> The ``whichair'' command lists all the <a href="brlcad_glossary.html#REGION">regions</a>
 that use one of the <a href="brlcad_glossary.html#SPACE">air_codes</a> specified.
@@ -4805,7 +4482,7 @@ will not be listed by this command.
 </DD>
 <HR>
 
-<DT><a NAME="whichid"><B>whichid</B> &lt<I>idents</I>&gt</DT>
+<DT><a NAME="whichid"><B>whichid</B> &lt;<I>idents</I>&gt</DT>
 
 <DD> The ``whichid'' command lists all the <a href="brlcad_glossary.html#REGION">regions</a>
 that use one of the <a href="brlcad_glossary.html#IDENT">idents</a> specified.
@@ -4854,7 +4531,7 @@ The <a href="#x">x</a> command also lists displayed solids, but in more detail.
 </DD>
 <HR>
 
-<DT><a NAME="wmater"><B>wmater</B> <I>file</I> &lt<I>objects</I>&gt</DT>
+<DT><a NAME="wmater"><B>wmater</B> <I>file</I> &lt;<I>objects</I>&gt</DT>
 
 <DD> The ``wmater'' command lists the <a href="brlcad_glossary.html#SHADER">shader</a>
 name and parameters, <a href="brlcad_glossary.html#RGB">RGB</a> color,
