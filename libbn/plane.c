@@ -26,19 +26,6 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(double	rt_dist_pt3_along_line3, (CONST point_t	p,
-			CONST vect_t d, CONST point_t x));
-RT_EXTERN(double	rt_dist_pt2_along_line2, (CONST point_t p,
-			CONST vect_t d, CONST point_t x));
-RT_EXTERN(double	rt_distsq_line3_pt3, (CONST point_t pt,
-			CONST vect_t dir, CONST point_t a));
-
-/* XXX move to vmath.h */
-#define V2PRINT(a,b)	\
-	rt_log("%s (%g, %g)\n", a, V2ARGS(b) );
-
-
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -1423,7 +1410,7 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			R T _ D I S T _ L I N E _ P O I N T
+ *			R T _ D I S T _ L I N E 3_ P T 3
  *
  *  Given a parametric line defined by PT + t * DIR and a point A,
  *  return the closest distance between the line and the point.
@@ -1432,11 +1419,9 @@ CONST struct rt_tol	*tol;
  *
  *  Return -
  *	Distance
- *
- *  XXX Another name for this might be rt_dist_line3_pt3()
  */
 double
-rt_dist_line_point( pt, dir, a )
+rt_dist_line3_pt3( pt, dir, a )
 CONST point_t	pt;
 CONST vect_t	dir;
 CONST point_t	a;
