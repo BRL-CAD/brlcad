@@ -100,8 +100,8 @@ static struct fbcmd{
   (char *)0, (int (*)())0
 };
 
-void
-fb_tclInit(interp)
+int
+Fb_Init(interp)
 Tcl_Interp *interp;
 {
   struct fbcmd *fbp;
@@ -110,6 +110,8 @@ Tcl_Interp *interp;
     (void)Tcl_CreateCommand(interp, fbp->cmdName, fbp->cmdFunc,
 			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
   }
+
+  return TCL_OK;
 }
 
 int
