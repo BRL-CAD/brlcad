@@ -146,17 +146,17 @@ XEvent *eventPtr;
 
     /* no further processing of this event */
     status = TCL_RETURN;
-  }else
+  }
 #if IR_KNOBS
-  if(eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify){
+  else if(eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify){
     dials_event_handler((XDeviceMotionEvent *)eventPtr);
 
     /* no further processing of this event */
     status = TCL_RETURN;
-  }else
+  }
 #endif
 #if IR_BUTTONS
-  if(eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress){
+  else if(eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress){
     buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
 
     /* no further processing of this event */
@@ -166,26 +166,8 @@ XEvent *eventPtr;
 
     /* no further processing of this event */
     status = TCL_RETURN;
-  }else
-#endif
-  if(eventPtr->type == KeyPress){
-    /*XXX Hack to prevent Tk from choking on certain control sequences */
-    if(eventPtr->xkey.state & ControlMask){
-      char buffer[1];
-      KeySym keysym;
-
-      XLookupString(&(eventPtr->xkey), buffer, 1,
-		    &keysym, (XComposeStatus *)NULL);
-
-      if(keysym == XK_c || keysym == XK_t || keysym == XK_v ||
-	 keysym == XK_w || keysym == XK_x || keysym == XK_y)
-	/* no further processing of this event */
-	status = TCL_RETURN;
-    }
-
-    /* allow further processing of this event */
-    status = TCL_OK;
   }
+#endif
 
   curr_dm_list = save_dm_list;
   return status;
