@@ -101,12 +101,11 @@ body Dm::constructor {_type args} {
 
     itk_component add dm {
 	dm_open $itk_interior.dm $type -t 0 -W $width -N $height
-    } {
-    }
+    } {}
 
     pack $itk_component(dm) -fill both -expand yes
 
-    # prcess options
+    # process options
     eval itk_initialize $args
 
     # initialize display manager object
