@@ -491,12 +491,8 @@ int	count;
 
 	if (work_count > count) work_count = count;
 
-cv_pr_cookie( "incookie", incookie );
-cv_pr_cookie( "outcookie", outcookie );
 	incookie = cv_optimize( incookie );
 	outcookie = cv_optimize( outcookie );
-cv_pr_cookie( "optim incookie", incookie );
-cv_pr_cookie( "optim outcookie", outcookie );
 
 /*
  * break out the conversion code and the format code.
@@ -512,7 +508,6 @@ cv_pr_cookie( "optim outcookie", outcookie );
  */
 	outsize = cv_itemlen( outcookie );
 	insize = cv_itemlen( incookie );
-fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 
 /*
  * If the input format is the same as the output format then the
