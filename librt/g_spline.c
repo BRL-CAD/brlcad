@@ -664,7 +664,7 @@ struct seg		*seghead;
 	if(!NEAR_ZERO(rp->r_dir[2], SQRT_SMALL_FASTF)) 
 		invdir[2] = 1.0 / rp->r_dir[2];
 
-	RES_ACQUIRE( &rt_g.res_model );	
+	bu_semaphore_acquire( RT_SEM_MODEL );	
 
 	for(; nlist != (struct b_head *) 0; nlist = nlist->next )
 	{
@@ -679,7 +679,7 @@ struct seg		*seghead;
 
 	if (rt_spl_hit_head == NULLHIT )
 	{
-		RES_RELEASE( &rt_g.res_model );	
+		bu_semaphore_release( RT_SEM_MODEL );	
 		return (0);
 	}
 
@@ -721,7 +721,7 @@ struct seg		*seghead;
 
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
-	RES_RELEASE( &rt_g.res_model );	
+	bu_semaphore_release( RT_SEM_MODEL );	
 	return(2);
 }
 

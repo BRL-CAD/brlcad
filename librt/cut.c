@@ -148,9 +148,9 @@ rt_cut_optimize_parallel()
 	RT_CK_RTI(rtip);
 	for(;;)  {
 
-		RES_ACQUIRE( &rt_g.res_worker );
+		bu_semaphore_acquire( RT_SEM_WORKER );
 		i = rtip->rti_cuts_waiting.end--;	/* get first free index */
-		RES_RELEASE( &rt_g.res_worker );
+		bu_semaphore_release( RT_SEM_WORKER );
 		i -= 1;				/* change to last used index */
 
 		if( i < 0 )  break;
@@ -1401,7 +1401,7 @@ struct rt_i	*rtip;
 	register union cutter *cutp;
 
 	RT_CK_RTI(rtip);
-	RES_ACQUIRE(&rt_g.res_model);
+	bu_semaphore_acquire(RT_SEM_MODEL);
 	if( !rtip->rti_busy_cutter_nodes.l.magic )
 		bu_ptbl_init( &rtip->rti_busy_cutter_nodes, 128, "rti_busy_cutter_nodes" );
 
@@ -1421,7 +1421,7 @@ struct rt_i	*rtip;
 	}
 	cutp = rtip->rti_CutFree;
 	rtip->rti_CutFree = cutp->cut_forw;
-	RES_RELEASE(&rt_g.res_model);
+	bu_semaphore_release(RT_SEM_MODEL);
 
 	cutp->cut_forw = CUTTER_NULL;
 	return(cutp);
@@ -1438,10 +1438,10 @@ struct rt_i		*rtip;
 register union cutter	*cutp;
 {
 	RT_CK_RTI(rtip);
-	RES_ACQUIRE(&rt_g.res_model);
+	bu_semaphore_acquire(RT_SEM_MODEL);
 	cutp->cut_forw = rtip->rti_CutFree;
 	rtip->rti_CutFree = cutp;
-	RES_RELEASE(&rt_g.res_model);
+	bu_semaphore_release(RT_SEM_MODEL);
 }
 
 /*

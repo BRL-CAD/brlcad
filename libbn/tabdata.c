@@ -493,9 +493,9 @@ CONST struct rt_table	*tabp;
 
 	RT_CK_TABLE(tabp);
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "w" );
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -503,13 +503,13 @@ CONST struct rt_table	*tabp;
 		return -1;
 	}
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fprintf(fp, "  %d sample starts, and one end.\n", tabp->nx );
 	for( j=0; j <= tabp->nx; j++ )  {
 		fprintf( fp, "%g\n", tabp->x[j] );
 	}
 	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	return 0;
 }
 
@@ -530,9 +530,9 @@ CONST char	*filename;
 	int	nw;
 	int	j;
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -550,13 +550,13 @@ CONST char	*filename;
 
 	RT_GET_TABLE( tabp, nw );
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	for( j=0; j <= tabp->nx; j++ )  {
 		/* XXX assumes fastf_t == double */
 		fscanf( fp, "%lf", &tabp->x[j] );
 	}
 	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	rt_ck_table( tabp );
 
@@ -585,9 +585,9 @@ CONST struct rt_tabdata	*data;
 	tabp = data->table;
 	RT_CK_TABLE(tabp);
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "w" );
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -595,12 +595,12 @@ CONST struct rt_tabdata	*data;
 		return -1;
 	}
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	for( j=0; j < tabp->nx; j++ )  {
 		fprintf( fp, "%g %g\n", tabp->x[j], data->y[j] );
 	}
 	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	return 0;
 }
 
@@ -626,9 +626,9 @@ CONST char	*filename;
 	int	count = 0;
 	int	i;
 
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -637,20 +637,20 @@ CONST char	*filename;
 	}
 
 	/* First pass:  Count number of lines */
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	for(;;)  {
 		if( fgets( buf, sizeof(buf), fp ) == NULL )  break;
 		count++;
 	}
 	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	/* Allocate storage */
 	RT_GET_TABLE( tabp, count );
 	RT_GET_TABDATA( data, tabp );
 
 	/* Second pass:  Read only as much data as storage was allocated for */
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
 	for( i=0; i < count; i++ )  {
 		buf[0] = '\0';
@@ -661,7 +661,7 @@ CONST char	*filename;
 		sscanf( buf, "%lf %lf", &tabp->x[i], &data->y[i] );
 	}
 	fclose(fp);
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	/* Complete final interval */
 	tabp->x[count] = 2 * tabp->x[count-1] - tabp->x[count-2];

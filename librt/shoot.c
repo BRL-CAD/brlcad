@@ -723,9 +723,9 @@ register struct application *ap;
 		 *  Add this resource structure to the table.
 		 *  This is how per-cpu resource structures are discovered.
 		 */
-		RES_ACQUIRE(&rt_g.res_model);
+		bu_semaphore_acquire(RT_SEM_MODEL);
 		bu_ptbl_ins_unique( &rtip->rti_resources, (long *)resp );
-		RES_RELEASE(&rt_g.res_model);
+		bu_semaphore_release(RT_SEM_MODEL);
 	}
 	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );

@@ -1041,13 +1041,13 @@ register struct uvcoord *uvp;
 		/*
 		 *  The double check of arb_opt is to avoid the case
 		 *  where another processor did the UV setup while
-		 *  this processor was waiting in RES_ACQUIRE().
+		 *  this processor was waiting in bu_semaphore_acquire().
 		 */
-		RES_ACQUIRE( &rt_g.res_model );
+		bu_semaphore_acquire( RT_SEM_MODEL );
 		if( arbp->arb_opt == (struct oface *)0 )  {
 			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1 );
 		}
-		RES_RELEASE( &rt_g.res_model );
+		bu_semaphore_release( RT_SEM_MODEL );
 
 		rt_arb_ifree( &intern );
 

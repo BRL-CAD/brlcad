@@ -64,10 +64,10 @@ int			ncpu;
 
 	RT_CK_RTI(rtip);
 
-	RES_ACQUIRE(&rt_g.res_results);	/* start critical section */
+	bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
 	if(!rtip->needprep)  {
 		bu_log("WARNING: rt_prep() invoked a second time, ignored");
-		RES_RELEASE(&rt_g.res_results);
+		bu_semaphore_release(RT_SEM_RESULTS);
 		return;
 	}
 
@@ -208,7 +208,7 @@ int			ncpu;
 		}
 	}
 	rtip->needprep = 0;		/* prep is done */
-	RES_RELEASE(&rt_g.res_results);	/* end critical section */
+	bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 }
 
 /*

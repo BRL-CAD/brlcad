@@ -224,7 +224,7 @@ long		offset;		/* byte offset from start of file */
 		memcpy( addr, dbip->dbi_inmem + offset, count );
 		return(0);
 	}
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 #ifdef HAVE_UNIX_IO
 	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
 		bu_log("db_read: lseek returns %d not %d\n", s, offset);
@@ -236,7 +236,7 @@ long		offset;		/* byte offset from start of file */
 		bu_bomb("db_read: fseek error\n");
 	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	if( got != count )  {
 		perror("db_read");
@@ -285,7 +285,7 @@ long		offset;
 		bu_log("db_write() in memory?\n");
 		return(-1);
 	}
-	RES_ACQUIRE( &rt_g.res_syscall );
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 #ifdef HAVE_UNIX_IO
 	(void)lseek( dbip->dbi_fd, offset, 0 );
 	got = write( dbip->dbi_fd, addr, count );
@@ -293,7 +293,7 @@ long		offset;
 	(void)fseek( dbip->dbi_fp, offset, 0 );
 	got = fwrite( addr, 1, count, dbip->dbi_fp );
 #endif
-	RES_RELEASE( &rt_g.res_syscall );
+	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != count )  {
 		perror("db_write");
 		bu_log("db_write(%s):  write error.  Wanted %d, got %d bytes\n",

@@ -230,9 +230,9 @@ char	*filename;
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdin;
 	else  {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		fp = fopen( filename, "r" );
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if( fp == NULL )
 			return( -1 );
 	}
@@ -241,10 +241,10 @@ char	*filename;
 	for( y = 0; y < mapp->ny; y++ )
 		total += mapp->nx[y];
 
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	y = fread( (char *)mapp->_data, mapp->elsize, total, fp );	/* res_syscall */
 	(void) fclose( fp );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 
 	if( y != total )
 		return( -1 );
@@ -272,30 +272,30 @@ char	*filename;
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdout;
 	else  {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		fp = fopen( filename, "w" );			/* res_syscall */
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if( fp == NULL )
 			return( -1 );
 	}
 
 	for( i = 0; i < mapp->ny; i++ ) {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		got = fwrite( (char *)mapp->xbin[i], mapp->elsize,	/* res_syscall */
 		    mapp->nx[i], fp );
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if( got != mapp->nx[i] ) {
 			rt_log("spm_save(%s): write error\n", filename);
-			RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+			bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		    	(void) fclose( fp );
-			RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		    	return( -1 );
 		}
 	}
 
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	(void) fclose( fp );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 
 	return( 0 );
 }
@@ -328,19 +328,19 @@ int	nx, ny;
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdin;
 	else  {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		fp = fopen( filename, "r" );
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if( fp == NULL )
 			return( -1 );
 	}
 
 	/* Shamelessly suck it all in */
 	buffer = (unsigned char *)rt_malloc( (unsigned)(nx*nx*3), "spm_px_load buffer" );
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	i = fread( (char *)buffer, 3, nx*ny, fp );	/* res_syscall */
 	(void) fclose( fp );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	if( i != nx*ny )  {
 		rt_log("spm_px_load(%s) read error\n", filename);
 		return( -1 );
@@ -399,9 +399,9 @@ int	nx, ny;
 	if( strcmp( filename, "-" ) == 0 )
 		fp = stdout;
 	else  {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+		bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 		fp = fopen( filename, "w" );
-		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 		if( fp == NULL )
 			return( -1 );
 	}
@@ -409,22 +409,22 @@ int	nx, ny;
 	for( y = 0; y < ny; y++ ) {
 		for( x = 0; x < nx; x++ ) {
 			spm_read( mapp, pixel, (double)x/(double)nx, (double)y/(double)ny );
-			RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+			bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 			got = fwrite( (char *)pixel, sizeof(pixel), 1, fp );	/* res_syscall */
-			RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 			if( got != 1 )  {
 				rt_log("spm_px_save(%s): write error\n", filename);
-				RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+				bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 				(void) fclose( fp );
-				RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+				bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 				return( -1 );
 			}
 		}
 	}
 
-	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
 	(void) fclose( fp );
-	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 
 	return( 0 );
 }

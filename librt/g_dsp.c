@@ -323,9 +323,9 @@ struct rt_i		*rtip;
 	stp->st_specific = (genptr_t) dsp;
 	dsp->dsp_i = *dsp_ip;		/* struct copy */
 
-	RES_ACQUIRE( &rt_g.res_model);
+	bu_semaphore_acquire( RT_SEM_MODEL);
 	++dsp_ip->dsp_mp->uses;
-	RES_RELEASE( &rt_g.res_model);
+	bu_semaphore_release( RT_SEM_MODEL);
 
 	dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
 	dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
@@ -581,12 +581,12 @@ int inside;
 	VSET(C, cell[X],   cell[Y]+1, DSP(isect->dsp, cell[X],   cell[Y]+1));
 	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
-	RES_ACQUIRE( &rt_g.res_model);
+	bu_semaphore_acquire( RT_SEM_MODEL);
 	sprintf(buf, "dsp%02d.pl", plot_file_num++);
-	RES_RELEASE( &rt_g.res_model);
+	bu_semaphore_release( RT_SEM_MODEL);
 	bu_log("%s\n", buf);
 
-	RES_ACQUIRE( &rt_g.res_syscall);
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
 
 		VSUB2(A_B, B, A);
@@ -761,7 +761,7 @@ int inside;
 
 
 		fclose(fd);
-		RES_RELEASE( &rt_g.res_syscall);
+		bu_semaphore_release( BU_SEM_SYSCALL);
 	}
 }
 
@@ -1874,12 +1874,12 @@ int x, y;
 		VSET(tmp, x, y, DSP(dsp, x, y));
 		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
 
-		RES_ACQUIRE( &rt_g.res_model);
+		bu_semaphore_acquire( RT_SEM_MODEL);
 		sprintf(buf, "dsp%02d.pl", plot_file_num++);
-		RES_RELEASE( &rt_g.res_model);
+		bu_semaphore_release( RT_SEM_MODEL);
 		bu_log("%s\n", buf);
 
-		RES_ACQUIRE( &rt_g.res_syscall);
+		bu_semaphore_acquire( BU_SEM_SYSCALL);
 		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
 			pl_color(fd, 255, 255, 0);
 			VJOIN1(tmp, B, 1.0, N);
@@ -1897,7 +1897,7 @@ int x, y;
 
 			fclose(fd);
 		}
-		RES_RELEASE( &rt_g.res_syscall);
+		bu_semaphore_release( BU_SEM_SYSCALL);
 	}
 
 
@@ -1992,12 +1992,12 @@ register struct xray	*rp;
 				VPRINT("pt", pt);
 				bu_log("Xfrac:%g Yfrac:%g\n", Xfrac, Yfrac);
 
-				RES_ACQUIRE( &rt_g.res_model);
+				bu_semaphore_acquire( RT_SEM_MODEL);
 				sprintf(buf, "dsp%02d.pl", plot_file_num++);
-				RES_RELEASE( &rt_g.res_model);
+				bu_semaphore_release( RT_SEM_MODEL);
 				bu_log("plotting normal in %s\n", buf);
 
-				RES_ACQUIRE( &rt_g.res_syscall);
+				bu_semaphore_acquire( BU_SEM_SYSCALL);
 				if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
 					pl_color(fd, 220, 220, 90);
 
@@ -2015,7 +2015,7 @@ register struct xray	*rp;
 
 					fclose(fd);
 				}
-				RES_RELEASE( &rt_g.res_syscall);
+				bu_semaphore_release( BU_SEM_SYSCALL);
 			}
 		} else {
 			bu_log("%s:%d ", __FILE__, __LINE__);
@@ -2132,12 +2132,12 @@ register struct xray	*rp;
 				V3ARGS(dsp_pl[ hitp->hit_surfno ]),
 				V3ARGS(N));
 		}
-		RES_ACQUIRE( &rt_g.res_model);
+		bu_semaphore_acquire( RT_SEM_MODEL);
 		sprintf(buf, "dsp%02d.pl", plot_file_num++);
-		RES_RELEASE( &rt_g.res_model);
+		bu_semaphore_release( RT_SEM_MODEL);
 		bu_log("plotting normal in %s\n", buf);
 
-		RES_ACQUIRE( &rt_g.res_syscall);
+		bu_semaphore_acquire( BU_SEM_SYSCALL);
 		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
 			pl_color(fd, 90, 220, 90);
 
@@ -2146,7 +2146,7 @@ register struct xray	*rp;
 			pdv_3cont(fd, tmp);
 			fclose(fd);
 		}
-		RES_RELEASE( &rt_g.res_syscall);
+		bu_semaphore_release( BU_SEM_SYSCALL);
 	}
 }
 

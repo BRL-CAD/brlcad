@@ -1895,9 +1895,9 @@ db_walk_dispatcher()
 	union tree	*curtree;
 
 	while(1)  {
-		RES_ACQUIRE( &rt_g.res_worker );
+		bu_semaphore_acquire( RT_SEM_WORKER );
 		mine = db_reg_current++;
-		RES_RELEASE( &rt_g.res_worker );
+		bu_semaphore_release( RT_SEM_WORKER );
 
 		if( mine >= db_reg_count )
 			break;
