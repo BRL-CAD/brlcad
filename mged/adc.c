@@ -265,8 +265,9 @@ char	**argv;
 
 	    dmaflag = 1;
 	    adc_a1_deg = pt[0];
+#ifdef UPDATE_TCL_SLIDERS
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang1_vls));
-
+#endif
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc a1' command accepts only 1 argument\n", (char *)NULL);
@@ -281,7 +282,9 @@ char	**argv;
 
 	    dmaflag = 1;
 	    adc_a2_deg = pt[0];
+#ifdef UPDATE_TCL_SLIDERS
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang2_vls));
+#endif
 
 	    return TCL_OK;
 	  }
@@ -298,7 +301,9 @@ char	**argv;
 			    (Viewscale * base2local * M_SQRT2_DIV2) - 1.0) * 2047.0;
 
 	    dmaflag = 1;
+#ifdef UPDATE_TCL_SLIDERS
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&distadc_vls));
+#endif
 
 	    return TCL_OK;
 	  }
@@ -391,7 +396,9 @@ char	**argv;
 	      dv_xadc = pt[0];
 
 	    dmaflag = 1;
+#ifdef UPDATE_TCL_SLIDERS
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&xadc_vls));
+#endif
 
 	    return TCL_OK;
 	  }
@@ -406,7 +413,9 @@ char	**argv;
 	      dv_yadc = pt[0];
 
 	    dmaflag = 1;
+#ifdef UPDATE_TCL_SLIDERS
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&yadc_vls));
+#endif
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc y' command requires one argument\n", (char *)NULL);
@@ -419,11 +428,13 @@ char	**argv;
 	    dv_distadc = 0;
 	    adc_a1_deg = adc_a2_deg = 45.0;
 	    dmaflag = 1;
+#ifdef UPDATE_TCL_SLIDERS
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&xadc_vls));
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&yadc_vls));
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang1_vls));
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&ang2_vls));
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&distadc_vls));
+#endif
 	    return TCL_OK;
 	  }
 	  Tcl_AppendResult(interp, "The 'adc reset' command accepts no arguments\n", (char *)NULL);

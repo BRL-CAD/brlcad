@@ -5175,7 +5175,9 @@ CONST vect_t	mousevec;
 
     bn_mat_idn( incr_change );
     new_edit_mats();
+#ifdef UPDATE_TCL_SLIDERS
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
+#endif
   }  else if( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
 
