@@ -159,6 +159,7 @@ char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
 /*
  *			M A I N
  */
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -261,7 +262,7 @@ char **argv;
 			(void)ioctl(n, TIOCNOTTY, 0);
 			(void)close(n);
 		}
-#endif SYSV
+#endif
 	}
 
 	/* Send our version string */
@@ -305,7 +306,7 @@ char **argv;
 		}
 	}
 
-	exit(0);
+	return(0);		/* exit(0) */
 }
 
 /*
@@ -349,7 +350,6 @@ ph_restart(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
 {
-	register int i;
 
 	if(debug)fprintf(stderr,"ph_restart %s\n", buf);
 	rt_log("Restarting\n");
@@ -461,7 +461,6 @@ ph_matrix(pc, buf)
 register struct pkg_comm *pc;
 char *buf;
 {
-	register int i;
 	register struct rt_i *rtip = ap.a_rt_i;
 
 	if( debug )  fprintf(stderr, "ph_matrix: %s\n", buf );
@@ -523,13 +522,11 @@ ph_lines(pc, buf)
 struct pkg_comm *pc;
 char *buf;
 {
-	register struct list	*lp;
-	auto int	a,b, fr;
+	auto int		a,b, fr;
 	struct line_info	info;
 	register struct rt_i	*rtip = ap.a_rt_i;
 	int	len;
 	char	*cp;
-	int	pix_offset;
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_start )  {
@@ -607,7 +604,8 @@ char *buf;
 /* VARARGS */
 void
 rt_log( str, a, b, c, d, e, f, g, h )
-char *str;
+char	*str;
+int	a, b, c, d, e, f, g, h;
 {
 	static char buf[512];		/* a generous output line */
 	static char *cp = buf+1;
@@ -655,6 +653,9 @@ char *buf;
 	(void)free(buf);
 }
 
+/*
+ *			P H _ E N D
+ */
 void
 ph_end(pc, buf)
 register struct pkg_conn *pc;
@@ -665,6 +666,9 @@ char *buf;
 	exit(0);
 }
 
+/*
+ *			P H _ P R I N T
+ */
 void
 ph_print(pc, buf)
 register struct pkg_conn *pc;
@@ -674,6 +678,10 @@ char *buf;
 	(void)free(buf);
 }
 
+/*
+ *			P A R S E _ C M D
+ */
+int
 parse_cmd( line )
 char *line;
 {
