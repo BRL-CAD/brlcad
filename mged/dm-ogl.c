@@ -265,6 +265,7 @@ XEvent *eventPtr;
   else if( eventPtr->type == ((struct ogl_vars *)dm_vars)->devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
+    fastf_t f;
 
     M = (XDeviceMotionEvent * ) eventPtr;
 
@@ -284,9 +285,9 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	    Ogl_add_tol(dv_1adc) + M->axis_data[0] - knob_values[M->first_axis];
+	    dm_unlimit(dv_1adc) + M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd, "knob ang1 %d\n",
 		      setting );
       }
@@ -300,10 +301,10 @@ XEvent *eventPtr;
 	    M->axis_data[0] - knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	    Ogl_add_tol((int)(512.5 * rate_zoom)) + M->axis_data[0] -
+	    dm_unlimit((int)(512.5 * rate_zoom)) + M->axis_data[0] -
 	    knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob S %f\n",
 		       setting / 512.0 );
       }else{
@@ -314,10 +315,10 @@ XEvent *eventPtr;
 	    knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	    Ogl_add_tol((int)(512.5 * absolute_zoom)) + M->axis_data[0] -
+	    dm_unlimit((int)(512.5 * absolute_zoom)) + M->axis_data[0] -
 	    knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aS %f\n",
 		       setting / 512.0 );
       }
@@ -330,10 +331,10 @@ XEvent *eventPtr;
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = Ogl_add_tol(dv_2adc) +
+	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_2adc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob ang2 %d\n",
 		      setting );
       }else {
@@ -345,10 +346,10 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * rate_rotate[Z])) +
+	      dm_unlimit((int)(512.5 * rate_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob z %f\n",
 			 setting / 512.0 );
 	}else{
@@ -359,12 +360,11 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * absolute_rotate[Z])) +
+	      dm_unlimit((int)(512.5 * absolute_rotate[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob az %f\n",
-			 setting / 512.0 );
+	  f = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd , "knob az %f\n", dm_wrap(f));
 	}
       }
       break;
@@ -376,10 +376,10 @@ XEvent *eventPtr;
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = Ogl_add_tol(dv_distadc) +
+	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_distadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob distadc %d\n",
 		       setting );
       }else {
@@ -391,10 +391,10 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * rate_slew[Z])) +
+	      dm_unlimit((int)(512.5 * rate_slew[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob Z %f\n",
 			 setting / 512.0 );
 	}else{
@@ -404,10 +404,10 @@ XEvent *eventPtr;
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * absolute_slew[Z])) +
+	      dm_unlimit((int)(512.5 * absolute_slew[Z])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob aZ %f\n",
 			 setting / 512.0 );
 	}
@@ -421,10 +421,10 @@ XEvent *eventPtr;
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = Ogl_add_tol(dv_yadc) +
+	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_yadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob yadc %d\n",
 		      setting );
       }else{
@@ -436,10 +436,10 @@ XEvent *eventPtr;
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * rate_rotate[Y])) +
+	      dm_unlimit((int)(512.5 * rate_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob y %f\n",
 			 setting / 512.0 );
 	}else{
@@ -450,12 +450,11 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * absolute_rotate[Y])) +
+	      dm_unlimit((int)(512.5 * absolute_rotate[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob ay %f\n",
-			 setting / 512.0 );
+	  f = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd , "knob ay %f\n", dm_wrap(f));
 	}
       }
       break;
@@ -468,10 +467,10 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * rate_slew[Y])) +
+	      dm_unlimit((int)(512.5 * rate_slew[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 	  
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob Y %f\n",
 			 setting / 512.0 );
       }else{
@@ -482,10 +481,10 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * absolute_slew[Y])) +
+	      dm_unlimit((int)(512.5 * absolute_slew[Y])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob aY %f\n",
 			 setting / 512.0 );
       }
@@ -498,10 +497,10 @@ XEvent *eventPtr;
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] += M->axis_data[0] -
 	    knob_values[M->first_axis];
 	else
-	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = Ogl_add_tol(dv_xadc) +
+	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] = dm_unlimit(dv_xadc) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob xadc %d\n",
 		       setting );
       }else{
@@ -513,10 +512,10 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * rate_rotate[X])) +
+	      dm_unlimit((int)(512.5 * rate_rotate[X])) +
 	      M->axis_data[0] - knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	  setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	  bu_vls_printf( &cmd , "knob x %f\n",
 			 setting / 512.0 );
 	}else{
@@ -527,12 +526,11 @@ XEvent *eventPtr;
 	      knob_values[M->first_axis];
 	  else
 	    ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	      Ogl_add_tol((int)(512.5 * absolute_rotate[X])) + M->axis_data[0] -
+	      dm_unlimit((int)(512.5 * absolute_rotate[X])) + M->axis_data[0] -
 	      knob_values[M->first_axis];
 
-	  setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
-	  bu_vls_printf( &cmd , "knob ax %f\n",
-			 setting / 512.0 );
+	  f = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]) / 512.0;
+	  bu_vls_printf( &cmd , "knob ax %f\n", dm_wrap(f));
 	}
       }
       break;
@@ -545,10 +543,10 @@ XEvent *eventPtr;
 	    knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	    Ogl_add_tol((int)(512.5 * rate_slew[X])) +
+	    dm_unlimit((int)(512.5 * rate_slew[X])) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob X %f\n",
 		       setting / 512.0 );
       }else{
@@ -559,10 +557,10 @@ XEvent *eventPtr;
 	    knob_values[M->first_axis];
 	else
 	  ((struct ogl_vars *)dm_vars)->knobs[M->first_axis] =
-	    Ogl_add_tol((int)(512.5 * absolute_slew[X])) +
+	    dm_unlimit((int)(512.5 * absolute_slew[X])) +
 	    M->axis_data[0] - knob_values[M->first_axis];
 
-	setting = Ogl_irlimit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
+	setting = dm_limit(((struct ogl_vars *)dm_vars)->knobs[M->first_axis]);
 	bu_vls_printf( &cmd , "knob aX %f\n",
 		       setting / 512.0 );
       }
