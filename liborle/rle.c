@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.10
-	Last edit: 	10/15/85 at 15:27:36	G S M
-	Retrieved: 	8/13/86 at 10:28:57
+	SCCS id:	@(#) librle.c	1.11
+	Last edit: 	2/4/86 at 16:54:39	G S M
+	Retrieved: 	8/13/86 at 10:29:11
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.10	last edit 10/15/85 at 15:27:36";
+char	sccsTag[] = "@(#) librle.c	1.11	last edit 2/4/86 at 16:54:39";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -439,14 +439,13 @@ ColorMap	*cmap;
 rle_decode_ln( fp, scan_buf )
 register FILE	*fp;
 Pixel	*scan_buf;
-	{
-	static int	lines_to_skip = 0;
-	static int	opcode, datum;
-	static short	word;
+	{	static int	lines_to_skip = 0;
+		static int	opcode, datum;
+		static short	word;
 
-	register int	n;
-	register u_char	*pp;
-	register int	dirty_flag = 0;
+		register int	n;
+		register u_char	*pp;
+		register int	dirty_flag = 0;
 
 	if( lines_to_skip > 0 )
 		{
@@ -631,17 +630,19 @@ Pixel		*scan_buf;
 
 		SetColor( color );
 		if( runs[0].first != scan_p )
-			{
-			SkipPixels( runs[0].first - scan_p );
+			{	register int	runlen = (runs[0].first-1) -
+							 scan_p;
+			SkipPixels( runlen );
 			}
 		for( i = 0; i < nseg; i++ )
-			{
+			{	register int	runlen = (runs[i+1].first-1) -
+							 runs[i].last;
 			_encode_Seg_Color( fp, i, color );
 			/* Move along to next segment for encoding,
 				if this was not the last segment.
 			 */
 			if( i < nseg-1 )
-				SkipPixels( runs[i+1].first-runs[i].last-1 );
+				SkipPixels( runlen );
 			}
 		}
 	RSkipLines(1);
