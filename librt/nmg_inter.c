@@ -214,6 +214,24 @@ struct faceuse *fu;
 	NMG_CK_VERTEX(eu->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 
+	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
+		/* some edge sanity checking */
+		if (eu->vu_p->v_p != eu->last->eumate_p->vu_p->v_p) {
+			VPRINT("unshared vertex (mine): ", eu->vu_p->v_p->vg_p->coord);
+			VPRINT("\t\t (last->eumate_p): ", eu->last->eumate_p->vu_p->v_p->vg_p->coord);
+			rt_bomb("discontiuous edgeloop\n");
+		}
+		if (eu->next->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
+VPRINT("unshared vertex (my mate): ", eu->eumate_p->vu_p->v_p->vg_p->coord);
+VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
+			rt_bomb("discontiuous edgeloop\n");
+		}
+
+
+	}
+
+
+
 	/* We check to see if the edge crosses the plane of face fu.
 	 * First we check the topology.  If the topology says that the start
 	 * vertex of this edgeuse is on the other face, we enter the
@@ -340,7 +358,7 @@ struct faceuse *fu;
 			 * the two existing coordinates
 			 */
 			p3 = vu->v_p->vg_p->coord;
-			VSUB2SCALE(p1, p1, p3, 0.5);
+			VADD2SCALE(p1, p1, p3, 0.5);
 			nmg_jv(eu->vu_p->v_p, vu->v_p);
 		} else {
 			/* Since the other face doesn't have a vertex quite
@@ -436,7 +454,7 @@ struct faceuse *fu;
 				rt_bomb("I was supposed to share verticies!\n");
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-				rt_log("Just split %g, %g, %g -> %g, %g, %g   %g, %g, %g -> %g, %g, %g\n",
+				rt_log("Just split %g, %g, %g -> %g, %g, %g\n\t\t\t%g, %g, %g -> %g, %g, %g\n",
 					eu->vu_p->v_p->vg_p->coord[0],
 					eu->vu_p->v_p->vg_p->coord[1],
 					eu->vu_p->v_p->vg_p->coord[2],
