@@ -1747,15 +1747,25 @@ output_part( ProMdl model )
 				}
 			}
 
-			if( !got_density ) {
-				/* check if material has a density assigned */
-				status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
-				if( status == PRO_TK_NO_ERROR ) {
+			/* calculate mass properties */
+			status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
+			if( status == PRO_TK_NO_ERROR ) {
+				if( !got_density ) {
 					if( mass_prop.density > 0.0 ) {
 						fprintf( outfp, "attr set %s density %g\n",
 							 curr_part_name,
 							 mass_prop.density );
 					}
+				}
+				if( mass_prop.mass > 0.0 ) {
+					fprintf( outfp, "attr set %s mass %g\n",
+						 curr_part_name,
+						 mass_prop.mass );
+				}
+				if( mass_prop.volume > 0.0 ) {
+					fprintf( outfp, "attr set %s volume %g\n",
+						 curr_part_name,
+						 mass_prop.volume );
 				}
 			}
 
@@ -1855,6 +1865,7 @@ void
 output_assembly( ProMdl model )
 {
 	ProName asm_name;
+	ProMassProperty mass_prop;
 	ProError status;
 	struct asm_head curr_assem;
 	struct asm_member *member;
@@ -1958,6 +1969,25 @@ output_assembly( ProMdl model )
 	}
 	fprintf( outfp, "\n" );
 
+	/* calculate mass properties */
+	status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
+	if( status == PRO_TK_NO_ERROR ) {
+		if( mass_prop.density > 0.0 ) {
+			fprintf( outfp, "attr set %s.c density %g\n",
+				 curr_asm_name,
+				 mass_prop.density );
+		}
+		if( mass_prop.mass > 0.0 ) {
+			fprintf( outfp, "attr set %s.c mass %g\n",
+				 curr_asm_name,
+				 mass_prop.mass );
+		}
+		if( mass_prop.volume > 0.0 ) {
+			fprintf( outfp, "attr set %s.c volume %g\n",
+				 curr_asm_name,
+				 mass_prop.volume );
+		}
+	}
 	/* add this assembly to th elist of already output objects */
 	add_to_done_asm( asm_name );
 
