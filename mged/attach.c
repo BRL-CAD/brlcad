@@ -58,16 +58,23 @@ extern struct dm dm_Tek;
 extern struct dm dm_Tek4109;
 extern struct dm dm_Plot;
 
-/* Only some systems can do these */
-#ifdef BSD42
-extern struct dm dm_Mg, dm_Vg, dm_Rat;
+#ifdef BSD
+/* Only Berkeley systems have kernel drivers for these */
+extern struct dm dm_Mg, dm_Vg;
 #endif
+
+#ifdef DM_RAT
+extern struct dm dm_Rat;
+#endif
+
 #ifdef DM_MER
 extern struct dm dm_Mer;
 #endif
+
 #ifdef DM_PS
 extern struct dm dm_Ps;
 #endif
+
 #ifdef DM_IR
 extern struct dm dm_Ir;
 #endif
@@ -83,9 +90,11 @@ static struct dm *which_dm[] = {
 #ifdef DM_IR
 	&dm_Ir,
 #endif
-#ifdef BSD42
+#ifdef BSD
 	&dm_Mg,
 	&dm_Vg,
+#endif
+#ifdef DM_RAT
 	&dm_Rat,
 #endif
 #ifdef DM_MER

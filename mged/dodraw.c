@@ -28,13 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./objdir.h"
 #include "./dm.h"
 
-#ifdef BSD42
-extern void bcopy();
-#define	memcpy(to,from,cnt)	bcopy(from,to,cnt)
-#else
-extern char *memcpy();
-#endif
-
+extern char	*memcpy();
 extern void	perror();
 extern char	*malloc();
 extern int	printf(), write();

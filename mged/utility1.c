@@ -12,7 +12,7 @@
  *
  */
 
-#ifdef BSD42
+#ifdef BSD
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif

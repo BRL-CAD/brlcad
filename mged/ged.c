@@ -551,10 +551,18 @@ new_mats()
 	dmaflag = 1;
 }
 
-#ifndef BSD42
-/* Scum-bag System V */
+#ifdef SYSV
+/* System V lacks this */
 select( n, iv, ov, ev, timeout )
 {
 	return(n);
+}
+#endif
+
+#ifdef BSD
+extern void bcopy();
+void memcpy(to,from,cnt)
+{
+	bcopy(from,to,cnt);
 }
 #endif

@@ -157,7 +157,7 @@ register struct solidrec *sp;
 editit( file )
 char *file;
 {
-#ifdef BSD42
+#ifdef BSD
 	register pid, xpid;
 	int stat, omask;
 
@@ -184,7 +184,8 @@ char *file;
 			break;
 	sigsetmask(omask);
 	return (!stat);
-#else
+#endif
+#ifdef SYSV
 	/* System V */
 	register pid, xpid;
 	int stat;
