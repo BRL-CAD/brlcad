@@ -1119,16 +1119,18 @@ struct faceuse *fu;
 			V3ARGS(edge_vect) );
 	}
 
-	status = rt_isect_ray_plane(&dist, start_pt, edge_vect, fu->f_p->fg_p->N);
+	status = rt_isect_line3_plane(&dist, start_pt, edge_vect,
+		fu->f_p->fg_p->N, &bs->tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 	    if (status >= 0)
-		rt_log("\tHit. Status of rt_isect_ray_plane: %d dist: %g\n",
+		rt_log("\tHit. Status of rt_isect_line3_plane: %d dist: %g\n",
 				status, dist);
 	    else
-		rt_log("\tMiss. Boring status of rt_isect_ray_plane: %d\n",
+		rt_log("\tMiss. Boring status of rt_isect_line3_plane: %d\n",
 				status);
 	}
+	if( status == 0 )  rt_bomb("nmg_isect_3edge_3face: edge lies on face, 'shouldn't happen'\n");
 	if (status < 0)  {
 		/*  Ray does not strike plane.
 		 *  See if start point lies on plane.

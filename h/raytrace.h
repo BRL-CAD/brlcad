@@ -1740,8 +1740,8 @@ RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, CONST point_t a,
 	CONST point_t b, CONST point_t c, CONST struct rt_tol *tol) );
 RT_EXTERN(int rt_mkpoint_3planes, (point_t pt, CONST plane_t a,
 	CONST plane_t b, CONST plane_t c) );
-RT_EXTERN(int rt_isect_ray_plane, (fastf_t *dist, CONST point_t pt,
-	CONST vect_t dir, CONST plane_t plane) );
+RT_EXTERN(int rt_isect_line3_plane, (fastf_t *dist, CONST point_t pt,
+	CONST vect_t dir, CONST plane_t plane, CONST struct rt_tol *tol) );
 RT_EXTERN(int rt_isect_2planes, (point_t pt, vect_t dir, CONST plane_t a,
 	CONST plane_t b, CONST vect_t rpp_min, CONST struct rt_tol *tol) );
 RT_EXTERN(int rt_isect_2lines, (fastf_t *t, fastf_t *u, CONST point_t p,

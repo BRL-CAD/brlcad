@@ -626,8 +626,8 @@ CONST struct rt_tol	*tol;
 		if( fu->orientation != OT_SAME )  continue;
 
 		/* Find point where ray hits the plane. */
-		stat = rt_isect_ray_plane(&dist, pt, projection_dir,
-			fu->f_p->fg_p->N);
+		stat = rt_isect_line3_plane(&dist, pt, projection_dir,
+			fu->f_p->fg_p->N, tol);
 
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			rt_log("\tray/plane: stat:%d dist:%g\n", stat, dist);
@@ -636,6 +636,9 @@ CONST struct rt_tol	*tol;
 
 		if( stat < 0 )  continue;	/* Ray missed */
 		if( dist < 0 )  continue;	/* Hit was behind start pt. */
+
+		/* XXX This case needs special handling */
+		if( stat == 0 )  rt_bomb("nmg_class_pt_s: ray is ON face!\n");
 
 		/*
 		 *  The ray hit the face.  Determine if this is a reasonable
