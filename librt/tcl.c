@@ -1969,7 +1969,7 @@ char		**argv;
 		struct bu_vls	str;
 		Tcl_DStringAppendElement( &ds, "mat" );
 		bu_vls_init(&str);
-		bn_encode_mat( &str, &ts.ts_mat );
+		bn_encode_mat( &str, ts.ts_mat );
 		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
 		bu_vls_free(&str);
 	}

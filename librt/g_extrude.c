@@ -596,7 +596,7 @@ CONST struct db_i		*dbip;
 	bu_plong( rec->extr.ex_key, extrude_ip->keypoint );
 	bu_plong( rec->extr.ex_count, 1 );
 
-	ptr = (char *)rec;
+	ptr = (unsigned char *)rec;
 	ptr += sizeof( struct extr_rec );
 
 	strncpy( ptr, extrude_ip->sketch_name, 16 );

@@ -195,7 +195,7 @@ int		xmax;		/* ncol = max X */
 	cpt = &srf->ctl_points[0];
 
 /* _col is X, _row is Y */
-#define VAL(_col,_row)	data[((_row)*xmax+(_col))*3]
+#define NVAL(_col,_row)	data[((_row)*xmax+(_col))*3]
 
 	crv = (struct edge_g_cnurb *)rt_calloc( sizeof(struct edge_g_cnurb), ymax,
 		"rt_nurb_sinterp() crv[]");
@@ -204,8 +204,9 @@ int		xmax;		/* ncol = max X */
 	for( y = 0; y < ymax; y++)  {
 		crv[y].l.magic = RT_CNURB_MAGIC;
 		/* Build curve from from (0,y) to (xmax-1, y) */
-		rt_nurb_cinterp( &crv[y], order, &VAL(0,y), xmax );
+		rt_nurb_cinterp( &crv[y], order, &NVAL(0,y), xmax );
 	}
+#undef NVAL
 
 	tmp = (fastf_t *)rt_malloc( sizeof(fastf_t)*3 * ymax,
 		"rt_nurb_sinterp() tmp[]");
