@@ -665,6 +665,33 @@ struct directory  {
 #define LOOKUP_QUIET	0
 
 /*
+ *			R T _ C O M B _ I N T E R N A L
+ *
+ *  In-memory format for database "combination" record (non-leaf node).
+ *  (Regions and Groups are both a kind of Combination).
+ *  Perhaps move to h/wdb.h or h/rtgeom.h?
+ */
+struct rt_comb_internal  {
+	long		magic;
+	union tree	*tree;		/* Leading to tree_db_leaf leaves */
+	char		region_flag;	/* !0 ==> this COMB is a REGION */
+	/* Begin GIFT compatability */
+	short		region_id;
+	short		aircode;
+	short		GIFTmater;
+	short		los;
+	/* End GIFT compatability */
+	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
+	unsigned char	rgb[3];
+	struct rt_vls	shader_name;
+	struct rt_vls	shader_param;
+	struct rt_vls	material;
+	char		inherit;
+};
+#define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
+#define RT_CK_COMB(_p)		NMG_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
+
+/*
  *			D B _ T R E E _ S T A T E
  *
  *  State for database tree walker db_walk_tree()
