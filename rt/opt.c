@@ -84,7 +84,7 @@ int		transpose_grid = 0;     /* reverse the order of grid traversal */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
-double		pmargs[8];
+double		pmargs[9];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
@@ -358,11 +358,13 @@ int get_args( int argc, register char **argv )
 					item= strtok(NULL,",");
 					pmargs[4]= item ? atoi(item) : 0;	/* Random Seed */
 					item= strtok(NULL,",");
-					pmargs[5]= item ? atoi(item) : 0;	/* Irradiance Hypersampling */
+					pmargs[5]= item ? atoi(item) : 0;	/* Importance Mapping */
 					item= strtok(NULL,",");
-					pmargs[6]= item ? atoi(item) : 0;	/* Visualize Irradiance */
+					pmargs[6]= item ? atoi(item) : 0;	/* Irradiance Hypersampling */
 					item= strtok(NULL,",");
-					pmargs[7]= item ? atof(item) : 1.0;	/* Light Intensity */
+					pmargs[7]= item ? atoi(item) : 0;	/* Visualize Irradiance */
+					item= strtok(NULL,",");
+					pmargs[8]= item ? atof(item) : 1.0;	/* Light Intensity */
 				}
 			}
 			break;

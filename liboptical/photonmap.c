@@ -39,8 +39,8 @@ int			PM_Activated;
 double			PM_Intensity;
 int			PM_Visualize;
 
-struct	PhotonMap	*PMap[3];		/* Photon Map (KD-TREE) */
-struct	Photon		*Emit[3];		/* Emitted Photons */
+struct	PhotonMap	*PMap[PM_MAPS];		/* Photon Map (KD-TREE) */
+struct	Photon		*Emit[PM_MAPS];		/* Emitted Photons */
 struct	Photon		CurPh;
 vect_t			BBMin;			/* Min Bounding Box */
 vect_t			BBMax;			/* Max Bounding Box */
@@ -48,7 +48,7 @@ int			Depth;			/* Used to determine how many times the photon has propogated */
 int			PType;			/* Used to determine the type of Photon: Direct,Indirect,Specular,Caustic */
 int			PInit;
 int			EPL;			/* Emitted Photons For the Light */
-int			EPS[3];			/* Emitted Photons For the Light */
+int			EPS[PM_MAPS];		/* Emitted Photons For the Light */
 int			ICSize;
 double			ScaleFactor;
 struct	IrradCache	*IC;			/* Irradiance Cache for Hypersampling */
@@ -499,10 +499,10 @@ int Hit(struct application *ap, struct partition *PartHeadp, struct seg *finishe
       ap -> a_ray.r_pt[2]= pt[2];
 
       if (PType != PM_CAUSTIC)
-      if (PMap[PM_GLOBAL] -> StoredPhotons < PMap[PM_GLOBAL] -> MaxPhotons) {
-        Depth++;
-        rt_shootray(ap);
-      }
+        if (PMap[PM_GLOBAL] -> StoredPhotons < PMap[PM_GLOBAL] -> MaxPhotons) {
+          Depth++;
+          rt_shootray(ap);
+        }
     } else if (prob >= prob_diff && prob < prob_diff + prob_spec) {
       /* Store power of incident Photon */
       power[0]= CurPh.Power[0];
@@ -604,9 +604,40 @@ void ScalePhotonPower(fastf_t Scale, int Map) {
 
 
 
+/* Generate Importons and emit them into the scene from the eye position */
+void EmitImportonsRandom(struct application *ap, point_t eye_pos) {
+  while (PMap[PM_IMPORTANCE] -> StoredPhotons < PMap[PM_IMPORTANCE] -> MaxPhotons) {
+    do {
+      /* Set Ray Direction to application ptr */
+      ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
+      ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
+      ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
+    } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
+
+    /* Normalize Ray Direction */
+    VUNITIZE(ap -> a_ray.r_dir);
+
+    /* Set Ray Position to application ptr */
+    ap -> a_ray.r_pt[0]= eye_pos[0];
+    ap -> a_ray.r_pt[1]= eye_pos[1];
+    ap -> a_ray.r_pt[2]= eye_pos[2];
+
+
+    /* Shoot Importon into Scene */
+    CurPh.Power[0]= CurPh.Power[1]= CurPh.Power[2]= 0;
+
+    Depth= 0;
+    PType= PM_IMPORTANCE;
+    rt_shootray(ap);
+  }
+}
+
+
 /* Emit a photons in a random direction based on a point light */
-void EmitPhotonsRandom(struct application *ap, struct light_specific *lp, double LightIntensity) {
-  vect_t	ldir;
+void EmitPhotonsRandom(struct application *ap, double LightIntensity) {
+  struct	light_specific	*lp;
+  vect_t			ldir;
+  int				i;
 
   ldir[0]= 0;
   ldir[1]= 0;
@@ -617,45 +648,50 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp, double
     bu_log("sample points: [%.3f,%.3f,%.3f]\n",lp -> lt_sample_pts[i].lp_pt[0], lp -> lt_sample_pts[i].lp_pt[1], lp -> lt_sample_pts[i].lp_pt[2]);
 */
   while (1) {
-    /* If the Global Photon Map Completes before the Caustics Map, then it probably means there are no caustic objects in the Scene */
-    if (PMap[PM_GLOBAL] -> StoredPhotons == PMap[PM_GLOBAL] -> MaxPhotons && (!PMap[PM_CAUSTIC] -> StoredPhotons || PMap[PM_CAUSTIC] -> StoredPhotons == PMap[PM_CAUSTIC] -> MaxPhotons))
-      return;
+    for (BU_LIST_FOR(lp, light_specific, &(LightHead.l))) {
+      /* If the Global Photon Map Completes before the Caustics Map, then it probably means there are no caustic objects in the Scene */
+      if (PMap[PM_GLOBAL] -> StoredPhotons == PMap[PM_GLOBAL] -> MaxPhotons && (!PMap[PM_CAUSTIC] -> StoredPhotons || PMap[PM_CAUSTIC] -> StoredPhotons == PMap[PM_CAUSTIC] -> MaxPhotons))
+        return;
 
-    do {
-/*    do {*/
-      /* Set Ray Direction to application ptr */
+      do {
+/*      do {*/
+        /* Set Ray Direction to application ptr */
 /*
-      ap -> a_ray.r_dir[0]= 2.0*rand()/RAND_MAX-1.0;
-      ap -> a_ray.r_dir[1]= 2.0*rand()/RAND_MAX-1.0;
-      ap -> a_ray.r_dir[2]= 2.0*rand()/RAND_MAX-1.0;
+        ap -> a_ray.r_dir[0]= 2.0*rand()/RAND_MAX-1.0;
+        ap -> a_ray.r_dir[1]= 2.0*rand()/RAND_MAX-1.0;
+        ap -> a_ray.r_dir[2]= 2.0*rand()/RAND_MAX-1.0;
 */
-      ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
-      ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
-      ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
-
-    } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
+        ap -> a_ray.r_dir[0]= 2.0*drand48()-1.0;
+        ap -> a_ray.r_dir[1]= 2.0*drand48()-1.0;
+        ap -> a_ray.r_dir[2]= 2.0*drand48()-1.0;
+      } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
       /* Normalize Ray Direction */
       VUNITIZE(ap -> a_ray.r_dir);
 /*    } while (drand48() > VDOT(ap -> a_ray.r_dir,ldir));*/ /* we want this to terminate when a rnd# is less than the angle */
 
-    /* Set Ray Position to application ptr */
-    ap -> a_ray.r_pt[0]= lp -> lt_pos[0];
-    ap -> a_ray.r_pt[1]= lp -> lt_pos[1];
-    ap -> a_ray.r_pt[2]= lp -> lt_pos[2];
+      /* Set Ray Position to application ptr */
+      ap -> a_ray.r_pt[0]= lp -> lt_pos[0];
+      ap -> a_ray.r_pt[1]= lp -> lt_pos[1];
+      ap -> a_ray.r_pt[2]= lp -> lt_pos[2];
 
 
-    /* Shoot Photon into Scene */
+      /* Shoot Photon into Scene */
 /*bu_log("Shooting Ray: [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",lp -> lt_pos[0], lp -> lt_pos[1], lp -> lt_pos[2], x,y,z);*/
-    CurPh.Power[0]=
-    CurPh.Power[1]=
-    CurPh.Power[2]= 1000.0 * LightIntensity * lp -> lt_intensity;
-/*    CurPh.Power[2]= 1000.0 * 100.0 * 4.0 * LightIntensity * lp -> lt_intensity;*/
+      CurPh.Power[0]= 1000.0 * LightIntensity * lp -> lt_intensity * lp -> lt_color[0];
+      CurPh.Power[1]= 1000.0 * LightIntensity * lp -> lt_intensity * lp -> lt_color[1];
+      CurPh.Power[2]= 1000.0 * LightIntensity * lp -> lt_intensity * lp -> lt_color[2];
 
-    Depth= 0;
-    PType= PM_GLOBAL;
-    EPL++;
-    rt_shootray(ap);
+      Depth= 0;
+      PType= PM_GLOBAL;
+
+      EPL++;
+      for (i= 0; i < PM_MAPS; i++)
+        if (PMap[i] -> StoredPhotons < PMap[i] -> MaxPhotons)
+          EPS[i]++;
+
+      rt_shootray(ap);
 /*    bu_log("1: %d, 2: %d\n",PMap[PM_GLOBAL] -> StoredPhotons, PMap[PM_CAUSTIC] -> StoredPhotons);*/
+    }
   }
 }
 
@@ -682,8 +718,9 @@ int ICHit(struct application *ap, struct partition *PartHeadp, struct seg *finis
   RT_HIT_NORMAL(normal, part -> pt_inhit, part -> pt_inseg -> seg_stp, &(ap->a_ray), part -> pt_inflip);
 /*  GetEstimate(C1, pt, normal, ScaleFactor/10.0, PMap[PM_GLOBAL] -> StoredPhotons / 100, PM_GLOBAL, 5, 1);*/
 /*  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 10.0*log(PMap[PM_GLOBAL] -> StoredPhotons), PM_GLOBAL, ScaleFactor/5.0, 1);*/
-  GetEstimate(C1, pt, normal, ScaleFactor/1000.0, 128, PM_GLOBAL, ScaleFactor/8.0, 1);
-  GetEstimate(C2 ,pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC] -> MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC] -> MaxPhotons / 50,PM_CAUSTIC, 0, 0);
+  GetEstimate(C1, pt, normal, ScaleFactor/1024.0, 128, PM_GLOBAL, ScaleFactor/8.0, 1);
+/*  GetEstimate(C2 ,pt, normal, (int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC] -> MaxPhotons/2)/log(4)))), PMap[PM_CAUSTIC] -> MaxPhotons / 50,PM_CAUSTIC, 0, 0);*/
+  GetEstimate(C2 ,pt, normal, ScaleFactor/1024.0, PMap[PM_CAUSTIC] -> MaxPhotons / 100,PM_CAUSTIC, ScaleFactor/256.0, 1);
 /*    GetEstimate(IMColor2, pt, normal, (int)(ScaleFactor/100.0),PMap[PM_CAUSTIC] -> MaxPhotons/50,PM_CAUSTIC,1, 0);*/
 
   (*(vect_t*)ap -> a_purpose)[0]+= C1[0] + C2[0];
@@ -809,15 +846,16 @@ void IrradianceThread(int pid, genptr_t arg) {
 /*
  *  Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity) {
-  struct	light_specific	*lp;
-  int				i,MapSize[3];
+void BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity) {
+  int				i,MapSize[PM_MAPS];
 
 
   PM_Intensity= LightIntensity;
   PM_Visualize= VisualizeIrradiance;
-
-/*  bu_log("I,V,H: %.3f,%d,%d\n",LightIntensity,VisualizeIrradiance,IrradianceHypersampling);*/
+/*
+  bu_log("pos: [%.3f,%.3f,%.3f]\n",eye_pos[0],eye_pos[1],eye_pos[2]);
+  bu_log("I,V,Imp,H: %.3f,%d,%d,%d\n",LightIntensity,VisualizeIrradiance,ImportanceMapping,IrradianceHypersampling);
+*/
   temp1= temp2= temp3= 0;
   bu_log("Building Photon Map:\n");
 
@@ -840,17 +878,18 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
 
   /* Initialize Emitted Photons for each map to 0 */
   EPL= 0;
-  for (i= 0; i < 3; i++)
+  for (i= 0; i < PM_MAPS; i++)
     EPS[i]= 0;
 
   CausticsPercent/= 100.0;
+  MapSize[PM_IMPORTANCE]= 1024;
   MapSize[PM_GLOBAL]= (int)((1.0-CausticsPercent)*GlobalPhotons);
   MapSize[PM_CAUSTIC]= (int)(CausticsPercent*GlobalPhotons);
-  MapSize[2]= 0;
+  MapSize[PM_SHADOW]= 0;
 
 /*  bu_log("Caustic Photons: %d\n",MapSize[PM_CAUSTIC]);*/
   /* Allocate Memory for Photon Maps */
-  for (i= 0; i < 3; i++) {
+  for (i= 0; i < PM_MAPS; i++) {
     PMap[i]= (struct PhotonMap*)malloc(sizeof(struct PhotonMap));
     PMap[i] -> MaxPhotons= MapSize[i];
     PMap[i] -> Root= (struct PNode*)malloc(sizeof(struct PNode));
@@ -869,22 +908,25 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
   ap -> a_purpose= "Photon Mapping";
 
 
-  /* Photons must be shot from all light sources, So just divide
-   * the number of photons among all present light sources for now... */
-  bu_log("  Emitting Photons...\n");
-
-  for (BU_LIST_FOR(lp, light_specific, &(LightHead.l))) {
-    EmitPhotonsRandom(ap, lp, LightIntensity);
+  if (ImportanceMapping) {
+    bu_log("  Emitting Importons...\n");
+    EmitImportonsRandom(ap,eye_pos);
+    BuildTree(Emit[PM_IMPORTANCE],PMap[PM_IMPORTANCE] -> StoredPhotons,PMap[PM_IMPORTANCE] -> Root);
   }
+
+  bu_log("  Emitting Photons...\n");
+    EmitPhotonsRandom(ap, LightIntensity);
+/*    EmitPhotonsRandom(ap, &(LightHead.l), LightIntensity);*/
 
   /* Generate Scale Factor */
   ScaleFactor= max(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);
   bu_log("Scale Factor: %.3f\n",ScaleFactor);
 
   /* Scale Photon Power */
-  for (i= 0; i < 3; i++)
+  for (i= 0; i < PM_MAPS; i++)
     if (PMap[i] -> StoredPhotons)
-      ScalePhotonPower(ScaleFactor/(double)EPL,i);
+      ScalePhotonPower(ScaleFactor/(double)EPS[i],i);
+/*      ScalePhotonPower(ScaleFactor/(double)EPL,i);*/
 bu_log("EPL: %d\n",EPL);
 
 /*
@@ -1169,7 +1211,7 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
   Search.Max= pow(PMap[PM_GLOBAL] -> StoredPhotons, 0.5);
 */
 
-  Search.RadSq= (ScaleFactor/2000.0);
+  Search.RadSq= (ScaleFactor/2048.0);
   Search.RadSq*= Search.RadSq;
 /*  NP.RadSq= (4.0*ScaleFactor/PMap[PM_GLOBAL] -> MaxPhotons) * (4.0*ScaleFactor/PMap[PM_GLOBAL] -> MaxPhotons);*/
 /*  NP.Max= 2.0*pow(PMap[PM_GLOBAL] -> StoredPhotons, 0.5);*/
@@ -1221,7 +1263,8 @@ void IrradianceEstimate(struct application *ap, vect_t irrad, point_t pos, vect_
   free(Search.List);
 
 /*  GetEstimate(cirrad, pos, normal, (int)(ScaleFactor/100.0),PMap[PM_CAUSTIC] -> MaxPhotons/50,PM_CAUSTIC,1, 0);*/
-  GetEstimate(cirrad,pos,normal,(int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC] -> MaxPhotons/2)/log(4)))),PMap[PM_CAUSTIC] -> MaxPhotons / 50,PM_CAUSTIC,0,0);
+/*  GetEstimate(cirrad,pos,normal,(int)(ScaleFactor/pow(2,(log(PMap[PM_CAUSTIC] -> MaxPhotons/2)/log(4)))),PMap[PM_CAUSTIC] -> MaxPhotons / 50,PM_CAUSTIC,0,0);*/
+  GetEstimate(cirrad,pos,normal,ScaleFactor/1024.0,PMap[PM_CAUSTIC] -> MaxPhotons / 100,PM_CAUSTIC,ScaleFactor/128.0,1);
 
   irrad[0]+= cirrad[0];
   irrad[1]+= cirrad[1];

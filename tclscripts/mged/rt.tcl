@@ -454,7 +454,7 @@ proc do_Raytrace { id } {
     if {$rt_control($id,lmodel) != ""} {
 	append rt_cmd " -l$rt_control($id,lmodel)"
 	if {$rt_control($id,lmodel) == 7} {
-		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmLightIntensityEntry) -A0"
+		append rt_cmd ",$rt_control($id,pmGlobalPhotonsEntry),$rt_control($id,pmCausticsPercentScale),$rt_control($id,pmIrradianceRaysScale),$rt_control($id,pmAngularTolerance),$rt_control($id,pmRandomSeedEntry),$rt_control($id,pmImportanceMapping),$rt_control($id,pmIrradianceHypersamplingCache),$rt_control($id,pmVisualizeIrradiance),$rt_control($id,pmLightIntensityEntry) -A0"
 	}
     }
 	puts "-b-";
@@ -1313,6 +1313,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,pmIrradianceRaysScale) 10
 	set rt_control($id,pmAngularTolerance) 60.0
 	set rt_control($id,pmRandomSeedEntry) 0
+	set rt_control($id,pmImportanceMapping) 0
 	set rt_control($id,pmIrradianceHypersamplingCache) 0
 	set rt_control($id,pmVisualizeIrradiance) 0
 	set rt_control($id,pmLightIntensityScale) 1.0
@@ -1509,14 +1510,19 @@ proc PMMenu {id top enable} {
     grid $top.gridF4.pmLightIntensityScale -row 6 -column 2 -sticky news
 
 
-    ## Irradiance Hypersampling
-    checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
-    grid $top.gridF4.pmIrradianceHypersamplingCache -row 7 -column 1 -columnspan 2 -sticky w
-#    $top.gridF4.pmIrradianceHypersamplingCache select
+    ## Generate Importons
+    checkbutton $top.gridF4.pmImportanceMapping -text "Use Importance Mapping" -variable rt_control($id,pmImportanceMapping)
+    grid $top.gridF4.pmImportanceMapping -row 7 -column 1 -columnspan 2 -sticky w
+#    $top.gridF4.pmImportanceMapping select
 
     ## Irradiance Hypersampling
+    checkbutton $top.gridF4.pmIrradianceHypersamplingCache -text "Use Irradiance Hypersampling Cache" -variable rt_control($id,pmIrradianceHypersamplingCache)
+    grid $top.gridF4.pmIrradianceHypersamplingCache -row 8 -column 1 -columnspan 2 -sticky w
+#    $top.gridF4.pmIrradianceHypersamplingCache select
+
+    ## Irradiance Visualization
     checkbutton $top.gridF4.pmVisualizeIrradiance -text "Visualize Irradiance Cache" -variable rt_control($id,pmVisualizeIrradiance)
-    grid $top.gridF4.pmVisualizeIrradiance -row 8 -column 1 -columnspan 2 -sticky w
+    grid $top.gridF4.pmVisualizeIrradiance -row 9 -column 1 -columnspan 2 -sticky w
 #    $top.gridF4.pmVisualizeIrradiance select
 
     ## Edge Compensator

@@ -35,9 +35,12 @@
 #include "shadework.h"
 
 
+#define	PM_MAPS		3
+
 #define	PM_GLOBAL	0
 #define	PM_CAUSTIC	1
-#define	PM_SHADOW	2
+#define	PM_SHADOW	2	/* Current not used */
+#define	PM_IMPORTANCE	3
 
 #define	PM_SEM		RT_SEM_LAST-1
 #define	PM_SEM_INIT	RT_SEM_LAST
@@ -115,5 +118,5 @@ extern	int	PM_Activated;	/* Photon Mapping Activated, 0=off, 1=on */
 extern	double	PM_Intensity;	/* Photon Mapping Intensity applied to all Light Sources, a coefficient to lt_fraction */
 extern	int	PM_Visualize;	/* Photon Mapping Visualization of Irradiance Cache */
 
-BU_EXTERN(void BuildPhotonMap, (struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity));
+BU_EXTERN(void BuildPhotonMap, (struct application *ap, point_t eye_pos, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int ImportanceMapping, int IrradianceHypersampling, int VisualizeIrradiance, double LightIntensity));
 BU_EXTERN(void IrradianceEstimate, (struct application *ap, vect_t irrad, point_t pos, vect_t normal, fastf_t rad, int np));
