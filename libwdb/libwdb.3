@@ -9,7 +9,7 @@ mk_id( fp, title )
 FILE	*fp;
 char	*title;
 .sp
-mk_half( fp, name, d, norm )
+mk_half( fp, name, norm, d)
 FILE	*fp;
 char	*name;
 double	d;
@@ -30,16 +30,16 @@ FILE	*fp;
 char	*name;
 point_t	pts[];
 .sp
-mk_sph( fp, name, point, r)
+mk_sph( fp, name, center, radius)
 FILE	*fp;
 char	*name;
-point_t	point;
-fastf_t	r;
+point_t	center;
+fastf_t	radius;
 .sp
-mk_ell( fp, name, point, a, b, c)
+mk_ell( fp, name, center, a, b, c)
 FILE	*fp;
 char	*name;
-point_t	point;
+point_t	center;
 vect_t	a, b, c;
 .sp
 mk_tor( fp, name, center, n, r1, r2 )
@@ -56,14 +56,14 @@ point_t	base;
 vect_t	height;
 fastf_t	radius;
 .sp
-mk_mcomb( fp, name, len, region, matname, matparm, override, rgb )
+mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
 FILE	*fp;
 char	*name;
 char	*matname;
 char	*matparm;
 char	*rgb;
 .sp
-mk_comb( fp, name, len, region )
+mk_fcomb( fp, name, len, region )
 FILE	*fp;
 char	*name;
 .sp
@@ -72,6 +72,17 @@ FILE	*fp;
 char	*name;
 mat_t	mat;
 int	op;
+.sp
+mk_addmember( name, headp )
+char	*name;
+register struct wmember *headp;
+.sp
+mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
+FILE	*fp;
+char	*name;
+char	*matname;
+char	*matparm;
+char	*rgb;
 .sp
 mk_polysolid( fp, name )
 FILE	*fp;
@@ -82,6 +93,16 @@ FILE	*fp;
 int	npts;
 fastf_t	vert[][3];
 fastf_t	norm[][3];
+.sp
+mk_bsolid( fp, name, nsurf, res )
+FILE    *fp;
+char    *name;
+int     nsurf;
+double  res;
+.sp
+mk_bsurf( filep, bp )
+FILE    *filep;
+struct b_spline *bp;
 .sp
 .SH DESCRIPTION
 This library exists to permit writing MGED databases from
@@ -99,19 +120,19 @@ routines in future releases.
 All routines take as their first argument the stdio FILE pointer
 (eg, stdout) on which the generated MGED database record(s) will
 be written with fwrite().
-.P
+.PP
 .I mk_id\^
 fwrites an IDENT record on the indicated stdio file, with the string
 .I title\^
 associated.  Note that to have a valid database, the
 the first record written must have been an IDENT record such as
 written by this routine.
-.P
+.PP
 .I mk_half\^
 makes a halfspace with name ``name''.  It is specified by
 the distance ``d'' from the origin, and the outward pointing
 normal vector ``norm''.
-.P
+.PP
 .I mk_rpp\^
 makes an ARB8 called ``name''
 specified as a right rectangular parallelpiped in
@@ -129,23 +150,23 @@ then certain requirements must be met.
 If we think of the ARB8 as having a top and a bottom plate,
 the first four points listed must lie on one plate, and
 the second four points listed must lie on the other plate.
-.P
+.PP
 .I mk_sph\^
 makes a spherical ellipsoid called ``name''
-centered at point ``point'' with radius ``r''.
+centered at point ``center'' with radius ``radius''.
 .I mk_ell\^
-makes an ellipsoid called ``name'' centered at point ``point''
+makes an ellipsoid called ``name'' centered at point ``center''
 with three perpendicular radius vectors.
 The eccentricity of the ellipsoid is controlled by the relative
 lengths of the three radius vectors.
-.P
+.PP
 .I mk_tor\^
 makes a torus called ``name'' centered at point ``center'',
 with the torus lying in a plane with normal ``n''.
 Radius ``r1'' is the distance from the center point of the torus
 to the center of the solid part, and radius ``f2'' is
 the radius of the solid part.
-.P
+.PP
 .I mk_rcc\^
 makes a truncated general cone (TGC) with name ``name''
 specified as a right circular cylinder.
@@ -154,8 +175,8 @@ with height vector ``height'' which is perpendicular to
 the two end plates, the length of which defines the location of
 the top plate.
 The radius given as ``radius'' defines the size of the end plates.
-.P
-.I mk_mcomb\^
+.PP
+.I mk_comb\^
 defines a conbination of name ``name'', with material properties
 information included.
 ``len'' indicated the number of
@@ -168,24 +189,43 @@ containing the material property name.
 ``matparm'' is either a NULL pointer, or a pointer to a string
 containing the material property parameter information,
 which is material-specific (and still experimental).
-Color ``override'' is a boolean, and if true, the desired color
-is passed as an array of three unsigned chars in ``rgb''.
-.I mk_comb\^
+Color is passed as an array of three unsigned chars in ``rgb''.
+Color ``inherit'' is a boolean, and if true, the color and material
+properties will be passed from upper-level objects to lower-level
+objects.
+.I mk_fcomb\^
 makes a simple combination header, with name ``name'', length ``len'',
 and the boolean ``region''.  It functions just like
-.IR mk_mcomb\^ .
+.IR mk_comb\^ .
+``len''
 .I mk_memb\^
 calls must immediately follow the call to
-.I mk_mcomb\^
+.I mk_comb\^
 or
-.IR mk_comb\^ .
+.IR mk_fcomb\^ .
 Each call to
 .I mk_memb\^
 adds a reference to object ``name'' to the combination.
 It is transformed by the 4x4 matrix ``mat'', and is combined
 by boolean operation ``op'', chosen from
 the list of:  UNION, INTERSECT, SUBTRACT, from <brlcad/db.h>.
-.P
+.PP
+.I mk_addmember\^
+is used to obtain dynamic storage for a new wmember structure 
+(see
+.IR wdb.h\^
+).  Then 
+.I mk_lcomb\^
+can be used in the same way as 
+.I mk_comb\^
+to make a combination of a linked list of wmember structures.
+This is easier and less risky to use, because it produces the 
+combination and member records all at once, rather than in two
+calls, as in 
+.I mk_comb\^
+and
+.I mk_memb\^
+.PP
 .I mk_polysolid\^
 writes the header record for a polygon solid called ``name'',
 which must be immediately
@@ -202,6 +242,19 @@ For the present, note that librt/pg.c only uses the first normal
 in the ``norm'' array, although the intention is to do optional
 normal interpolation for those occasions where it may be desirable
 to have curved-looking polygons.
+.PP
+The routine
+.I mk_bsolid\^
+writes the header for a b-spline solid ``name'', with ``nsurf'' surfaces,
+at ``res'' resolution.  This call must be followed by ``nsurf''
+calls to 
+.I mk_bsurf\^
+which enters the respective surfaces into the combination.  This pair 
+work much like the 
+.I mk_comb\^
+and 
+.I mk_memb\^ 
+pair.
 .SH EXAMPLE(S)
 .sp
 Several examples of how to use this library can be found
