@@ -252,6 +252,7 @@ int air;				/* Air code */
 		db_putrec( dp, &record, 0 );
 
 		/* create first member record */
+		db_getrec( dp, &record, 1);
 		(void)strcpy( record.M.m_instname, objp->d_namep );
 
 		record.M.m_id = ID_MEMB;
@@ -283,6 +284,7 @@ int air;				/* Air code */
 	db_grow( dp, 1 );
 
 	/* Fill in new Member record */
+	db_getrec( dp, &record, dp->d_len-1);
 	record.M.m_id = ID_MEMB;
 	record.M.m_relation = relation;
 	mat_idn( record.M.m_mat );
