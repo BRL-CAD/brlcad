@@ -302,7 +302,7 @@ reattach()
 
   rt_vls_init(&cmd);
   rt_vls_printf(&cmd, "attach %s %s\n", dmp->dmr_name, dname);
-  release(NULL);
+  release((char *)NULL);
   status = cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
   return status;
@@ -448,7 +448,7 @@ Bad:
   Tcl_AppendResult(interp, "attach(", argv[1], "): BAD\n", (char *)NULL);
 
   if(*dp != (struct dm *)0)
-    release(NULL);
+    release((char *)NULL);
 
   return TCL_ERROR;
 }
