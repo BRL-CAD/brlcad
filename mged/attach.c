@@ -341,12 +341,41 @@ char *argv[];
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
   /* Only need to do this once */
   if(tkwin == NULL && NEED_GUI(wp->type)){
-    if(gui_setup() == TCL_ERROR){
+    struct dm *tmp_dmp;
+    struct bu_vls tmp_vls;
+
+    /* look for "-d display_string" and use it if provided */
+    BU_GETSTRUCT(tmp_dmp, dm);
+    bu_vls_init(&tmp_dmp->dm_pathName);
+    bu_vls_init(&tmp_dmp->dm_dName);
+    bu_vls_init(&tmp_vls);
+    dm_process_options(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
+    if(strlen(bu_vls_addr(&tmp_dmp->dm_dName))){
+      if(gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR){
+	BU_LIST_DEQUEUE( &curr_dm_list->l );
+	bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
+	curr_dm_list = o_dm_list;
+	bu_vls_free(&tmp_dmp->dm_pathName);
+	bu_vls_free(&tmp_dmp->dm_dName);
+	bu_vls_free(&tmp_vls);
+	bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
+	return TCL_ERROR;
+      }
+    } else if(gui_setup((char *)NULL) == TCL_ERROR){
       BU_LIST_DEQUEUE( &curr_dm_list->l );
       bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
       curr_dm_list = o_dm_list;
+      bu_vls_free(&tmp_dmp->dm_pathName);
+      bu_vls_free(&tmp_dmp->dm_dName);
+      bu_vls_free(&tmp_vls);
+      bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
       return TCL_ERROR;
     }
+
+    bu_vls_free(&tmp_dmp->dm_pathName);
+    bu_vls_free(&tmp_dmp->dm_dName);
+    bu_vls_free(&tmp_vls);
+    bu_free((genptr_t)tmp_dmp, "mged_attach: tmp_dmp");
   }
 
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
@@ -359,10 +388,10 @@ char *argv[];
 
   bu_vls_init(&fps_name);
   bu_vls_printf(&fps_name, "mged_display(%S,fps)",
-		&curr_dm_list->_dmp->dm_tkName);
+		&curr_dm_list->_dmp->dm_pathName);
   bu_vls_init(&curr_dm_list->_scroll_edit_vls);
   bu_vls_printf(&curr_dm_list->_scroll_edit_vls, "scroll_edit(%S)",
-		&curr_dm_list->_dmp->dm_tkName);
+		&curr_dm_list->_dmp->dm_pathName);
   Tcl_LinkVar(interp, bu_vls_addr(&curr_dm_list->_scroll_edit_vls),
 	      (char *)&curr_dm_list->_scroll_edit, TCL_LINK_INT);
   mged_slider_link_vars(curr_dm_list);
@@ -447,7 +476,8 @@ get_attached()
 
 
 int
-gui_setup()
+gui_setup(dstr)
+char *dstr;
 {
   char *filename;
   int status;
@@ -457,10 +487,12 @@ gui_setup()
   if(tkwin != NULL)
     return TCL_OK;
 
+  if(dstr != (char *)NULL)
+    Tcl_SetVar2(interp, "env", "DISPLAY", dstr, TCL_GLOBAL_ONLY);
+
   /* This runs the tk.tcl script */
   if(Tk_Init(interp) == TCL_ERROR){
-    Tcl_AppendResult(interp, "\ngui_setup: Try setting the TK_LIBRARY environment variable\n",
-		               "           to the path where tk.tcl lives.\n\n", (char *)NULL);
+    Tcl_AppendResult(interp, "\ngui_setup: Couldn't initialize Tk\n", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -597,7 +629,7 @@ char    **argv;
   p->s_info->_rc = 1;
   p->_owner = 1;
   p->_dmp->dm_vp = &p->s_info->_Viewscale;
-  p->s_info->opp = &p->_dmp->dm_tkName;
+  p->s_info->opp = &p->_dmp->dm_pathName;
 #if TRY_NEW_MGED_VARS
   mged_variable_setup(p);
 #endif
@@ -726,7 +758,7 @@ struct dm_list *op;
     /* first one found is the new owner */
     if(op != p && p->s_info == op->s_info){
       p->_owner = 1;
-      p->s_info->opp = &p->_dmp->dm_tkName;
+      p->s_info->opp = &p->_dmp->dm_pathName;
 #if TRY_NEW_MGED_VARS
       mged_variable_free_vls(p);
       mged_variable_setup(p);
@@ -844,53 +876,53 @@ struct dm_list *p;
   mged_slider_init_vls(p);
 
   bu_vls_printf(&p->s_info->_aet_name, "mged_display(%S,aet)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_ang_name, "mged_display(%S,ang)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_center_name, "mged_display(%S,center)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_size_name, "mged_display(%S,size)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_adc_name, "mged_display(%S,adc)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[X], "rate_tran(%S,X)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[Y], "rate_tran(%S,Y)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_tran_vls[Z], "rate_tran(%S,Z)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[X], "rate_rotate(%S,X)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[Y], "rate_rotate(%S,Y)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_rotate_vls[Z], "rate_rotate(%S,Z)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_scale_vls, "rate_scale(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[X], "abs_tran(%S,X)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[Y], "abs_tran(%S,Y)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[Z], "abs_tran(%S,Z)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[X], "abs_rotate(%S,X)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Y], "abs_rotate(%S,Y)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Z], "abs_rotate(%S,Z)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_scale_vls, "abs_scale(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_xadc_vls, "xadc(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_yadc_vls, "yadc(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_ang1_vls, "ang1(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_ang2_vls, "ang2(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_distadc_vls, "distadc(%S)",
-		&p->_dmp->dm_tkName);
+		&p->_dmp->dm_pathName);
 
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_tran_vls[X]),
 	      (char *)&p->s_info->_rate_tran[X], TCL_LINK_DOUBLE);
