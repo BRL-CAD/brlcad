@@ -30,8 +30,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 
-double	atof();
-
 extern int	getopt();
 extern char	*optarg;
 extern int	optind;
