@@ -117,7 +117,7 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:ST:U:V:X:"
+	"a:b:c:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -342,6 +342,10 @@ register char **argv;
 		case 'r':
 			/* report overlapping region names */
 			rpt_overlap = 1;
+			break;
+		case 'R':
+			/* DON'T report overlapping region names */
+			rpt_overlap = 0;
 			break;
 		default:		/* '?' */
 			fprintf(stderr,"unknown option %c\n", c);
