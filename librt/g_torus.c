@@ -236,10 +236,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute SoR.  Here, S = I / r1 */
 	mat_copy( tor->tor_SoR, R );
-	f = 1.0 / r1;
-	tor->tor_SoR[0] *= f;
-	tor->tor_SoR[5] *= f;
-	tor->tor_SoR[10] *= f;
+	tor->tor_SoR[15] *= r1;
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, tor->tor_V );
@@ -336,9 +333,9 @@ register struct xray *rp;
 	LOCAL int	npts;		/* # intersection points */
 
 	/* out, Mat, vect */
-	MAT3XVEC( dprime, tor->tor_SoR, rp->r_dir );
+	MAT4X3VEC( dprime, tor->tor_SoR, rp->r_dir );
 	VSUB2( work, rp->r_pt, tor->tor_V );
-	MAT3XVEC( pprime, tor->tor_SoR, work );
+	MAT4X3VEC( pprime, tor->tor_SoR, work );
 
 	npts = stdTorus( pprime, dprime, tor->tor_alpha, k);
 	if( npts <= 0 )
