@@ -19,7 +19,7 @@
 		pixrect pixrot pixscale pixstat fbcbars \
 		sun-pix mac-pix pixmerge pixmatte op-bw \
 		pl-sgi pldebug plgetframe plrot \
-		dunncolor dunnsnap cat-fb \
+		dunncolor dunnsnap cat-fb polar-fb \
 		buffer files-tape \
 		plcolor plline2 pl-pl pl-ps \
 		spm-fb pix-spm \
@@ -70,8 +70,8 @@ fbcbars:	fbcbars.o LIBFB
 pix-fb:		pix-fb.o LIBFB
 	CC LDFLAGS -o pix-fb pix-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
-fb-pix:		fb-pix.o linear-cmap.o cmap-crunch.o LIBFB
-	CC LDFLAGS -o fb-pix fb-pix.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+fb-pix:		fb-pix.o cmap-crunch.o LIBFB
+	CC LDFLAGS -o fb-pix fb-pix.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 fb-fb:		fb-fb.o LIBFB
 	CC LDFLAGS -o fb-fb fb-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
@@ -121,11 +121,11 @@ fbgrid:		fbgrid.o LIBFB
 orle-fb:	orle-fb.o LIBFB LIBORLE
 	CC LDFLAGS -o orle-fb orle-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBORLE LIBES
 
-fb-orle:	fb-orle.o linear-cmap.o cmap-crunch.o LIBFB LIBORLE
-	CC LDFLAGS -o fb-orle fb-orle.o linear-cmap.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBORLE LIBES
+fb-orle:	fb-orle.o cmap-crunch.o LIBFB LIBORLE
+	CC LDFLAGS -o fb-orle fb-orle.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBORLE LIBES
 
-orle-pix:	orle-pix.o linear-cmap.o LIBORLE
-	CC LDFLAGS -o orle-pix orle-pix.o linear-cmap.o LIB_PRE''LIBORLE LIBES
+orle-pix:	orle-pix.o LIBORLE LIBFB
+	CC LDFLAGS -o orle-pix orle-pix.o LIB_PRE''LIBORLE LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 pix-orle:	pix-orle.o LIBORLE
 	CC LDFLAGS -o pix-orle pix-orle.o LIB_PRE''LIBORLE LIBES
@@ -137,8 +137,8 @@ pix-orle:	pix-orle.o LIBORLE
 rle-fb:		rle-fb.o LIBFB LIBRLE
 	CC LDFLAGS -o rle-fb rle-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
 
-fb-rle:		fb-rle.o strdup.o cmap-crunch.o linear-cmap.o LIBFB LIBRLE
-	CC LDFLAGS -o fb-rle fb-rle.o strdup.o cmap-crunch.o linear-cmap.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
+fb-rle:		fb-rle.o strdup.o cmap-crunch.o LIBFB LIBRLE
+	CC LDFLAGS -o fb-rle fb-rle.o strdup.o cmap-crunch.o LIB_PRE''LIBFB LIBFB_LIBES LIB_PRE''LIBRLE LIBES
 
 rle-pix:	rle-pix.o strdup.o LIBRLE
 	CC LDFLAGS -o rle-pix rle-pix.o strdup.o LIB_PRE''LIBRLE LIBES
@@ -372,5 +372,8 @@ pl-asc: pl-asc.o
 
 xyz-pl: xyz-pl.o
 	CC LDFLAGS -o xyz-pl xyz-pl.o LIB_PRE''LIBPLOT LIBES
+
+polar-fb:		polar-fb.o LIBFB
+	CC LDFLAGS -o polar-fb polar-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 #include "../Cakefile.rules"
