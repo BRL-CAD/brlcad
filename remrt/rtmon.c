@@ -186,6 +186,8 @@ int	fd;
 	bu_vls_free( &str );
 }
 
+char bbin[128] = "/";		/* will be ~user/bbin/bin */
+
 char *prog_paths[] = {
 	".",
 	"/m/cad/.remrt.%s",
@@ -193,6 +195,7 @@ char *prog_paths[] = {
 	"/m/cad/.remrt.6d",
 	"/n/vapor/m/cad/.remrt.6d",
 	"/usr/brlcad/bin",
+	bbin,
 	NULL
 };
 
@@ -214,16 +217,19 @@ char	*program;	/* name of program to run */
 	argv[0] = program;
 
 	/* Set up environment variables appropriately */
-	if( access( "/m/cad/libtcl/library/.", X_OK ) == 0 )  {
+	if( access( "/m/cad/libtcl/library/init.tcl", R_OK ) == 0 )  {
 		putenv( "TCL_LIBRARY=/m/cad/libtcl/library" );
 		putenv( "TK_LIBRARY=/m/cad/libtk/library" );
-	} else if( access( "/n/vapor/m/cad/libtcl/library/.", X_OK ) == 0 )  {
+/* fprintf(stderr, "/m/cad/libtcl/library/init.tcl\n" ); */
+	} else if( access( "/n/vapor/m/cad/libtcl/library/init.tcl", R_OK ) == 0 )  {
 		putenv( "TCL_LIBRARY=/n/vapor/m/cad/libtcl/library" );
 		putenv( "TK_LIBRARY=/n/vapor/m/cad/libtk/library" );
+/* fprintf(stderr, "/n/vapor/m/cad/libtcl/library/init.tcl\n" ); */
 	} else {
 		putenv( "TCL_LIBRARY=/usr/brlcad/libtcl/library" );
 		putenv( "TK_LIBRARY=/usr/brlcad/libtk/library" );
 	}
+	/* XXX else /usr/brlcad/tcl/init.tcl? */
 
 	for( pp = prog_paths; *pp != NULL; pp++ )  {
 		int	stat;
@@ -483,6 +489,7 @@ CONST char	*name;
 		if( getuid() == 0 )  return -1;
 		return 1;
 	}
+	sprintf(bbin, "%s/bbin/bin", pw->pw_dir );
 	return 0;
 }
 
