@@ -362,7 +362,7 @@ set -S2 "/bin/sh"
 /*#			define	CC_OPTS	-PIC -f68881 -g*/
 /*#			define	CC_OPTS	-PIC -f68881 /usr/lib/f68881.il*/
 /*#			define	LD_OPTS	-PIC -f68881*/
-#			define	CC_OPTS	-PIC -f68881 -DHAVE_UNISTD_H=1 -DHAVE_STDLIB_H=1
+#			define	CC_OPTS	-PIC -f68881
 #		endif
 /*		Shared library support on Sun compiler */
 #		define	ARCH_SUF	so
@@ -372,15 +372,8 @@ set -S2 "/bin/sh"
 #	else
 /*		Using the Gnu C Compiler */
 #		define	CC	gcc
-#		if 1
-/*			Use this one to generate code */
-/*#			define	CC_OPTS	-traditional*/
-#			define	CC_OPTS	-traditional -fstrength-reduce -fomit-frame-pointer -finline-functions
-/*#			define	CC_OPTS	-fstrength-reduce -fomit-frame-pointer -finline-functions*/
-#		else
-/*			Use this one as an "ansi lint" -- don't use the code! */
-#			define	CC_OPTS	-ansi -g -pedantic -Wall
-#		endif
+#		define	CC_OPTS	-traditional -fstrength-reduce \
+				-fomit-frame-pointer -finline-functions
 #	endif
 #	define	FC_OPTS	CC_OPTS
 #	ifndef	LD_OPTS
@@ -468,7 +461,7 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	define	CC_DEFS	-PIC -DHAVE_UNISTD_H -DHAVE_STDLIB_H	/* Position independent code, for shared libraries, and unistd.h*/
+#	define	CC_DEFS	-PIC
 /*	Shared library support */
 #	define	ARCH_SUF	so
 #	define	LIBVERS		../sharedlibvers.sh
