@@ -81,7 +81,6 @@ proc print_return_val str {
 
 
 proc do_mouse_bindings { w } {
-    global adcflag
     global transform
 
 # default button bindings
@@ -96,6 +95,8 @@ proc do_mouse_bindings { w } {
     bind $w <KeyRelease-Shift_R> "winset $w; dm idle"
     bind $w <KeyRelease-Alt_L> "winset $w; dm idle"
     bind $w <KeyRelease-Alt_R> "winset $w; dm idle"
+
+    set adcflag [adc draw]
 
     if {$adcflag && $transform == "a"} {
 	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t %x %y"
