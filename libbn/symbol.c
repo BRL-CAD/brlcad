@@ -15,7 +15,14 @@
  *  factors less than 10.0 are unlikely to be legible.
  *
  */
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 
 #include "machine.h"
