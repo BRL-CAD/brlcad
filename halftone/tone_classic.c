@@ -2,7 +2,7 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
-#include "rndnum.h"
+#include "./rndnum.h"
 extern int Debug;
 extern int Levels;
 extern int RandomFlag;
@@ -48,6 +48,9 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.1  90/04/13  01:23:15  cjohnson
+ * First Relese.
+ * 
  * Revision 1.6  90/04/13  00:51:47  cjohnson
  * Comment clean up.
  * 

@@ -2,7 +2,7 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
-#include "rndnum.h"
+#include "./rndnum.h"
 extern int Debug;
 extern int Levels;
 extern int width;
@@ -37,6 +37,9 @@ extern int RandomFlag;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.1  90/04/13  01:23:18  cjohnson
+ * First Relese.
+ * 
  * Revision 1.4  90/04/13  00:56:25  cjohnson
  * Comment clean up.
  * Change some variables to registers.
