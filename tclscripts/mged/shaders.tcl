@@ -578,11 +578,27 @@ proc set_glass_defaults { id } {
 
 # TEXTURE MAP routines
 
+proc set_bump_defaults { id } {
+	set_texture_defaults $id
+}
+
+proc set_bwtexture_defaults { id } {
+	set_texture_defaults $id
+}
+
 proc set_texture_defaults { id } {
 	global shader_params
 
 	set shader_params($id,def_width) 512
 	set shader_params($id,def_height) 512
+}
+
+proc set_bump_values { shader_str id } {
+	set_texture_values $shader_str $id
+}
+
+proc set_bwtexture_values { shader_str id } {
+	set_texture_values $shader_str $id
 }
 
 proc set_texture_values { shader_str id } {
@@ -638,6 +654,14 @@ proc set_texture_values { shader_str id } {
 			}
 		}
 	}
+}
+
+proc do_bump_apply { shade_var id } {
+	do_texture_apply $shade_var $id
+}
+
+proc do_bwtexture_apply { shade_var id } {
+	do_texture_apply $shade_var $id
 }
 
 proc do_texture_apply { shade_var id } {
@@ -745,13 +769,24 @@ proc do_stack_apply { shade_var id } {
 	global shader_params
 	upvar #0 $shade_var shade_str
 
+# this may be called via a binding in some other shader and so might get the 'id' from
+# that shader. So it may be of the form 'id_#,stk_#' (where # is some number)
+
+	set index [string first ",stk" $id]
+	if { $index == -1 } then {
+		set use_id $id
+	} else {
+		set index2 [expr $index - 1]
+		set use_id [string range $id 0 $index2]
+	}
+
 	set params ""
 
 	set index 0
-	for {set index 0} {$index < $shader_params($id,stack_len)} {incr index} {
-		if {$shader_params($id,stk_$index,shader_name) == "" } {continue}
-		set shade_str $shader_params($id,stk_$index,shader_name)
-		do_shader_apply $shade_var $id,stk_$index
+	for {set index 0} {$index < $shader_params($use_id,stack_len)} {incr index} {
+		if {$shader_params($use_id,stk_$index,shader_name) == "" } {continue}
+		set shade_str $shader_params($use_id,stk_$index,shader_name)
+		do_shader_apply $shade_var $use_id,stk_$index
 		lappend params $shade_str
 	}
 
