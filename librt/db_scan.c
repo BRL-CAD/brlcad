@@ -279,7 +279,7 @@ genptr_t		client_data;	/* argument for handler */
 			handler( dbip, record.extr.ex_name, addr, nrec,
 				DIR_SOLID, client_data );
 			break;
-		case DBID_FGP:
+		case DBID_CLINE:
 			handler( dbip, record.s.s_name, addr, nrec,
 				DIR_SOLID, client_data );
 			break;

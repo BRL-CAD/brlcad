@@ -1053,14 +1053,20 @@ double			mm2local;
 	int i, curve_no;
 	int seg_no;
 	char	buf[256];
+	point_t V;
+	vect_t u, v;
 
 	RT_SKETCH_CK_MAGIC(sketch_ip);
 	bu_vls_strcat( str, "2D sketch (SKETCH)\n");
 
+	VSCALE( V, sketch_ip->V, mm2local );
+	VSCALE( u, sketch_ip->u_vec, mm2local );
+	VSCALE( v, sketch_ip->v_vec, mm2local );
+
 	sprintf(buf, "\tV = (%g %g %g),  A = (%g %g %g), B = (%g %g %g)\n\t%d vertices, %d curves\n",
-		V3ARGS( sketch_ip->V ),
-		V3ARGS( sketch_ip->u_vec ),
-		V3ARGS( sketch_ip->v_vec ),
+		V3ARGS( V ),
+		V3ARGS( u ),
+		V3ARGS( v ),
 		sketch_ip->vert_count,
 		sketch_ip->curve_count );
 	bu_vls_strcat( str, buf );
@@ -1167,7 +1173,7 @@ double			mm2local;
 								V2ARGS( sketch_ip->verts[csg->end] ) );
 							bu_vls_strcat( str, buf );
 						}
-						sprintf( buf, "\t\t\tradius: %g\n", csg->radius );
+						sprintf( buf, "\t\t\tradius: %g\n", csg->radius*mm2local );
 						bu_vls_strcat( str, buf );
 						if( csg->orientation )
 							bu_vls_strcat( str, "\t\t\tcurve is clock-wise\n" );

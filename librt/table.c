@@ -210,7 +210,8 @@ RT_DECLARE_INTERFACE(extrude)
 #define rt_submodel_xform rt_generic_xform
 RT_DECLARE_INTERFACE(submodel)
 
-RT_DECLARE_INTERFACE(fgp)
+#define rt_cline_xform rt_generic_xform
+RT_DECLARE_INTERFACE(cline)
 
 RT_DECLARE_INTERFACE(bot)
 
@@ -671,14 +672,14 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		NULL,
 	},
 
-	{RT_FUNCTAB_MAGIC, "ID_FGP", "fgp",
-		0,		/* 29 Fastgen plate mode solid */
-		rt_fgp_prep,	rt_fgp_shot,	rt_fgp_print,	rt_fgp_norm,
-		rt_fgp_uv,	rt_fgp_curve,	rt_fgp_class,	rt_fgp_free,
-		rt_fgp_plot,	rt_fgp_vshot,	rt_fgp_tess,	rt_fgp_tnurb,
-		rt_fgp_import,	rt_fgp_export,	rt_fgp_ifree,
-		rt_fgp_describe,rt_fgp_xform,	rt_fgp_parse,
-		sizeof(struct rt_fgp_internal), RT_FGP_INTERNAL_MAGIC,
+	{RT_FUNCTAB_MAGIC, "ID_CLINE", "cline",
+		0,		/* 29 Fastgen cline solid */
+		rt_cline_prep,	rt_cline_shot,	rt_cline_print,	rt_cline_norm,
+		rt_cline_uv,	rt_cline_curve,	rt_cline_class,	rt_cline_free,
+		rt_cline_plot,	rt_cline_vshot,	rt_cline_tess,	rt_cline_tnurb,
+		rt_cline_import,	rt_cline_export,	rt_cline_ifree,
+		rt_cline_describe,rt_cline_xform,	rt_cline_parse,
+		sizeof(struct rt_cline_internal), RT_CLINE_INTERNAL_MAGIC,
 		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
@@ -902,8 +903,8 @@ struct bu_external	*ep;
 	case DBID_EXTR:
 		id = ID_EXTRUDE;
 		break;
-	case DBID_FGP:
-		id = ID_FGP;
+	case DBID_CLINE:
+		id = ID_CLINE;
 		break;
 	case DBID_BOT:
 		id = ID_BOT;

@@ -86,8 +86,6 @@ static struct bn_tol extr_tol={			/* a fake tolerance structure for the intersec
 #define CARC_SEG	4
 #define NURB_SEG	5
 
-#define DEBUG	0
-
 /*
  *  			R T _ E X T R U D E _ P R E P
  *  
@@ -314,21 +312,6 @@ struct rt_i		*rtip;
 	VSUB2( tmp, stp->st_max, stp->st_min );
 	stp->st_aradius = 0.5 * MAGNITUDE( tmp );
 	stp->st_bradius = stp->st_aradius;
-
-#if DEBUG
-	bn_mat_print( "Rotation matrix", extr->rot );
-	VPRINT( "extrusion vector", eip->h );
-	MAT4X3VEC( tmp, extr->rot, eip->h )
-	VPRINT( "         rotated", tmp );
-	VPRINT( "solid vertex", eip->V );
-	MAT4X3PNT( tmp, extr->rot, eip->V );
-	VPRINT( "     rotated", tmp );
-	VPRINT( "bounding box min", stp->st_min );
-	VPRINT( "bounding box max", stp->st_max );
-	VPRINT( "bounding sphere center", stp->st_center );
-	bu_log( "approximating sphere radius = %g\n", stp->st_aradius );
-	bu_log( "bounding sphere radius = %g\n", stp->st_bradius );
-#endif
 
 	return(0);              /* OK */
 }
@@ -613,9 +596,6 @@ struct seg		*seghead;
 
 	crv = &extr->crv;
 
-#if DEBUG
-bu_log( "in rt_extrude_shot: ray start = (%g %g %g), dir=(%g %g %g)\n", V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
-#endif
 	/* intersect with top and bottom planes */
 	dot_pl1 = VDOT( rp->r_dir, extr->pl1 );
 	if( NEAR_ZERO( dot_pl1, SMALL_FASTF ) )
@@ -623,10 +603,6 @@ bu_log( "in rt_extrude_shot: ray start = (%g %g %g), dir=(%g %g %g)\n", V3ARGS( 
 		/* ray is parallel to top and bottom faces */
 		dist_bottom = DIST_PT_PLANE( rp->r_pt, extr->pl1 );
 		dist_top = DIST_PT_PLANE( rp->r_pt, extr->pl2 );
-#if DEBUG
-bu_log( "Ray is parallel to top and bottom faces\n" );
-bu_log( "\tdist_bottom=%g, dist_top = %g\n", dist_bottom, dist_top );
-#endif
 		if( dist_bottom < 0.0 && dist_top < 0.0 )
 			return( 0 );
 		if( dist_bottom > 0.0 && dist_top > 0.0 )
@@ -649,17 +625,11 @@ bu_log( "\tdist_bottom=%g, dist_top = %g\n", dist_bottom, dist_top );
 			top_face = BOTTOM_FACE;
 			bot_face = TOP_FACE;
 		}
-#if DEBUG
-bu_log( "\tdist_bottom=%g, dist_top = %g\n", dist_bottom, dist_top );
-#endif
 	}
 
 	/* rotate ray */
 	MAT4X3PNT( ray_start, extr->rot, rp->r_pt );
 	MAT4X3VEC( ray_dir, extr->rot, rp->r_dir );
-#if DEBUG
-bu_log( "transformed ray: (%g %g %g), in dir (%g %g %g)\n", V3ARGS( ray_start ), V3ARGS( ray_dir ) );
-#endif
 
 	dir_dot_z = ray_dir[Z];
 	if( dir_dot_z < 0.0 )
@@ -678,10 +648,6 @@ bu_log( "transformed ray: (%g %g %g), in dir (%g %g %g)\n", V3ARGS( ray_start ),
 
 		/* use the u vector as the ray direction */
 		VMOVE( ray_dir, extr->u_vec );
-#if DEBUG
-bu_log( "ray is parallel to extrusion vector, using pt=(%g %g %g), dir=(%g %g %g) to check in/out\n",
-V3ARGS( ray_start ), V3ARGS( ray_dir ) );
-#endif
 	}
 
 	/* intersect with projected curve */
@@ -702,10 +668,6 @@ V3ARGS( ray_start ), V3ARGS( ray_dir ) );
 				VSUB2( tmp, extr->verts[lsg->end], extr->verts[lsg->start] );
 				VMOVE( tmp2, extr->verts[lsg->start] );
 				code = bn_isect_line2_line2( dist, ray_start, ray_dir, tmp2, tmp, &extr_tol );
-#if DEBUG
-bu_log( "Intersection line segment (%g %g %g)<->(%g %g %g)\n", V3ARGS( extr->verts[lsg->start] ), V3ARGS( extr->verts[lsg->end] ) );
-bu_log( "\tintersection code is %d, dist[0]=%g, dist[1]=%g\n", code, dist[0], dist[1] );
-#endif
 				if( code < 1 )
 					continue;
 
@@ -768,9 +730,7 @@ bu_log( "\tintersection code is %d, dist[0]=%g, dist[1]=%g\n", code, dist[0], di
 				if( NEAR_ZERO( diff, extr_tol.dist ) )
 				{
 					int n;
-#if DEBUG
-bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
-#endif
+
 					for( n=k ; n<dist_count-1 ; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;
@@ -788,9 +748,7 @@ bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
 				if( NEAR_ZERO( diff, extr_tol.dist ) )
 				{
 					int n;
-#if DEBUG
-bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
-#endif
+
 					for( n=k ; n<dist_count-1 ; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;
@@ -808,9 +766,7 @@ bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
 				if( NEAR_ZERO( diff, extr_tol.dist ) )
 				{
 					int n;
-#if DEBUG
-bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
-#endif
+
 					for( n=k ; n<dist_count-1 ; n++ )
 						dists[n] = dists[n+1];
 					dist_count--;
@@ -843,9 +799,6 @@ bu_log( "\tskipping this intersection (same dist as a previous one)\n" );
 				}
 				dists_before[hits_before_bottom] = dists[j];
 				hits_before_bottom++;
-#if DEBUG
-bu_log( "hit before bottom is now %d\n", hits_before_bottom );
-#endif
 				continue;
 			}
 			if( dists[j] > dist_top )
@@ -858,16 +811,11 @@ bu_log( "hit before bottom is now %d\n", hits_before_bottom );
 				}
 				dists_after[hits_after_top] = dists[j];
 				hits_after_top++;
-#if DEBUG
-bu_log( "hit after top is now %d\n", hits_after_top );
-#endif
+
 				continue;
 			}
 
 			/* got a hit at distance dists[j] */
-#if DEBUG
-bu_log( "got a hit at dist=%g\n", dist[0] );
-#endif
 			if( hit_count >= MAX_HITS )
 			{
 				bu_log( "Too many hits on extrusion (%s), limit is %d\n",
@@ -921,23 +869,14 @@ bu_log( "got a hit at dist=%g\n", dist[0] );
 			segp->seg_in = hits[0];		/* struct copy */
 			segp->seg_out = hits[1];	/* struct copy */
 			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
-#if DEBUG
-bu_log( "hit top and bottom faces\n" );
-#endif
 			return( 2 );
 		}
 		else
 		{
-#if DEBUG
-bu_log( "returning 0\n" );
-#endif
 			return( 0 );
 		}
 	}
 
-#if DEBUG
-bu_log( "hit_count = %d\n", hit_count );
-#endif
 	if( hit_count )
 	{
 		/* Sort hits, Near to Far */
@@ -959,9 +898,6 @@ bu_log( "hit_count = %d\n", hit_count );
 
 	if( hits_before_bottom & 1 )
 	{
-#if DEBUG
-bu_log( "Adding bottom face hit at dist=%g\n", dist_bottom );
-#endif
 		if( hit_count >= MAX_HITS )
 		{
 			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
@@ -979,9 +915,6 @@ bu_log( "Adding bottom face hit at dist=%g\n", dist_bottom );
 
 	if( hits_after_top & 1 )
 	{
-#if DEBUG
-bu_log( "Adding top face hit at dist=%g\n", dist_top );
-#endif
 		if( hit_count >= MAX_HITS )
 		{
 			bu_log( "Too many hits on extrusion (%s), limit is %d\n",
@@ -1000,7 +933,6 @@ bu_log( "Adding top face hit at dist=%g\n", dist_top );
 		bu_log( "ERROR: rt_extrude_shot(): odd number of hits (%d) (ignoring last hit)\n", hit_count );
 		bu_log( "ray start = (%20.10f %20.10f %20.10f)\n", V3ARGS( rp->r_pt ) );
 		bu_log( "ray dir = (%20.10f %20.10f %20.10f)", V3ARGS( rp->r_dir ) );
-bu_bomb( "ERROR\n" );
 		hit_count--;
 	}
 
@@ -1017,9 +949,7 @@ bu_bomb( "ERROR\n" );
 			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
 	}
-#if DEBUG
-bu_log( "returning %d hits\n", hit_count );
-#endif
+
 	return( hit_count );
 }
 
@@ -1469,14 +1399,20 @@ double			mm2local;
 	register struct rt_extrude_internal	*extrude_ip =
 		(struct rt_extrude_internal *)ip->idb_ptr;
 	char	buf[256];
+	point_t V;
+	vect_t h, u, v;
 
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 	bu_vls_strcat( str, "2D extrude (EXTRUDE)\n");
+	VSCALE( V, extrude_ip->V, mm2local );
+	VSCALE( h, extrude_ip->h, mm2local );
+	VSCALE( u, extrude_ip->u_vec, mm2local );
+	VSCALE( v, extrude_ip->v_vec, mm2local );
 	sprintf( buf, "\tV = (%g %g %g)\n\tH = (%g %g %g)\n\tu_dir = (%g %g %g)\n\tv_dir = (%g %g %g)\n",
-		V3ARGS( extrude_ip->V ),
-		V3ARGS( extrude_ip->h ),
-		V3ARGS( extrude_ip->u_vec ),
-		V3ARGS( extrude_ip->v_vec ) );
+		V3ARGS( V ),
+		V3ARGS( h ),
+		V3ARGS( u ),
+		V3ARGS( v ) );
 	bu_vls_strcat( str, buf );
 	sprintf( buf, "\tsketch name: %.16s\n\tcurve name: %.16s\n",
 		extrude_ip->sketch_name,
