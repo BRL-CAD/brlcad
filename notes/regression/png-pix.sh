@@ -13,3 +13,4 @@ else
   rm png-pix.pix
 fi
 
+echo "done checking png-pix"

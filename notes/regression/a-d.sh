@@ -31,3 +31,5 @@ a-d <testasciidouble.txt >a-d.log
 if [ ! -f a-d.log ] ; then
   echo "ERROR: a-d output not found"
 fi
+
+echo "done checking a-d"

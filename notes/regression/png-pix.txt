@@ -1,2 +1,3 @@
 gives questioning error message twice when running.  should give same type of results as pix-png (no questioning message).
 
+gives incorrect pix output
