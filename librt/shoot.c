@@ -652,7 +652,7 @@ register struct application *ap;
 	bu_bitv_clear(solidbits);
 
 	if( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
-		BU_BU_GETSTRUCT( regionbits, bu_ptbl );
+		BU_GETSTRUCT( regionbits, bu_ptbl );
 		bu_ptbl_init( regionbits, 7, "rt_shootray() regionbits ptbl" );
 	} else {
 		regionbits = BU_LIST_FIRST( bu_ptbl, &resp->re_region_ptbl );
