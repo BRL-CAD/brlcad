@@ -27,8 +27,13 @@
 
 #include <stdio.h>
 #include <math.h>
+#ifdef BSD
+#include <strings.h>
+#else
 #include <string.h>
+#endif
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
@@ -209,14 +214,15 @@ char	**dtp;
 	}
 	fclose(fp);
 
-	if (!strncmp("glass", tp->material, 5)
-		|| (tp->material[0] == '/'
-		    && !strncmp("glass",
-				(char *)1+rindex(tp->material, '/'),
-				5)))
+	if (strncmp("glass", tp->material, 5) == 0)  {
 		tp->glass = 1;
-	else
+	} else if (tp->material[0] == '/' )  {
+		char *cp = strrchr(tp->material, '/')+1;
+		if (strncmp("glass", cp, 5) == 0)
+			tp->glass = 1;
+	} else {
 		tp->glass = 0;
+	}
 	return(1);
 }
 
@@ -1993,7 +1999,7 @@ fastf_t	*rgb;	/* Output, RGB approximation of input. */
 
 	fastf_t	krx, kry, krz, kgx, kgy, kgz, kbz;
 	fastf_t	ratio, r, g, b, x, y, z;
-	fastf_t	table[NCOLOR][4] = {
+	static CONST fastf_t	table[NCOLOR][4] = {
 		{380,	0.26899e-2,	0.20000e-3,	0.12260e-1},
 		{385,	0.53105e-2,	0.39556e-3,	0.24222e-1},
 		{390,	0.10781e-1,	0.80000e-3,	0.49250e-1},
