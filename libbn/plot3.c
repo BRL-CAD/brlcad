@@ -34,6 +34,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+#include "machine.h"
+#include "vmath.h"
+
 /* For the sake of efficiency, we trust putc() to write only one byte */
 /*#define putsi(a)	putc(a&0377,plotfp); putc((a>>8)&0377,plotfp)*/
 #define putsi(a)	putc(a,plotfp); putc((a>>8),plotfp)
@@ -379,7 +382,20 @@ double x1, y1, x2, y2;
 	pd_move( plotfp, x2, y2 );
 }
 
-/* Double 3-D */
+/* Double 3-D, both in vector and enumerated versions */
+pdv_3space( plotfp, min, max )
+register FILE *plotfp;
+vect_t	min;
+vect_t	max;
+{
+	char	out[6*8+1];
+
+	htond( &out[1], min, 3 );
+	htond( &out[3*8+1], max, 3 );
+
+	out[0] = 'W';
+	fwrite( out, 1, 6*8+1, plotfp );
+}
 
 pd_3space( plotfp, x1, y1, z1, x2, y2, z2 )
 register FILE *plotfp;
@@ -400,6 +416,18 @@ double x1, y1, z1, x2, y2, z2;
 	fwrite( out, 1, 6*8+1, plotfp );
 }
 
+pdv_3point( plotfp, pt )
+register FILE *plotfp;
+vect_t	pt;
+{
+	char	out[3*8+1];
+
+	htond( &out[1], pt, 3 );
+
+	out[0] = 'X';
+	fwrite( out, 1, 3*8+1, plotfp );
+}
+
 pd_3point( plotfp, x, y, z )
 register FILE *plotfp;
 double x, y, z;
@@ -413,6 +441,18 @@ double x, y, z;
 	htond( &out[1], in, 3 );
 
 	out[0] = 'X';
+	fwrite( out, 1, 3*8+1, plotfp );
+}
+
+pdv_3move( plotfp, pt )
+register FILE *plotfp;
+vect_t	pt;
+{
+	char	out[3*8+1];
+
+	htond( &out[1], pt, 3 );
+
+	out[0] = 'O';
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
@@ -432,6 +472,18 @@ double x, y, z;
 	fwrite( out, 1, 3*8+1, plotfp );
 }
 
+pdv_3cont( plotfp, pt )
+register FILE *plotfp;
+vect_t	pt;
+{
+	char	out[3*8+1];
+
+	htond( &out[1], pt, 3 );
+
+	out[0] = 'Q';
+	fwrite( out, 1, 3*8+1, plotfp );
+}
+
 pd_3cont( plotfp, x, y, z )
 register FILE *plotfp;
 double x, y, z;
@@ -446,6 +498,19 @@ double x, y, z;
 
 	out[0] = 'Q';
 	fwrite( out, 1, 3*8+1, plotfp );
+}
+
+pdv_3line( plotfp, a, b )
+register FILE *plotfp;
+vect_t	a, b;
+{
+	char	out[6*8+1];
+
+	htond( &out[1], a, 3 );
+	htond( &out[3*8+1], b, 3 );
+
+	out[0] = 'V';
+	fwrite( out, 1, 6*8+1, plotfp );
 }
 
 pd_3line( plotfp, x1, y1, z1, x2, y2, z2 )
@@ -465,6 +530,34 @@ double x1, y1, z1, x2, y2, z2;
 
 	out[0] = 'V';
 	fwrite( out, 1, 6*8+1, plotfp );
+}
+
+pdv_3box( plotfp, a, b )
+register FILE *plotfp;
+vect_t	a, b;
+{
+	pd_3move( plotfp, a[X], a[Y], a[Z] );
+	/* first side */
+	pd_3cont( plotfp, a[X], b[Y], a[Z] );
+	pd_3cont( plotfp, a[X], b[Y], b[Z] );
+	pd_3cont( plotfp, a[X], a[Y], b[Z] );
+	pd_3cont( plotfp, a[X], a[Y], a[Z] );
+	/* across */
+	pd_3cont( plotfp, b[X], a[Y], a[Z] );
+	/* second side */
+	pd_3cont( plotfp, b[X], b[Y], a[Z] );
+	pd_3cont( plotfp, b[X], b[Y], b[Z] );
+	pd_3cont( plotfp, b[X], a[Y], b[Z] );
+	pd_3cont( plotfp, b[X], a[Y], a[Z] );
+	/* front edge */
+	pd_3move( plotfp, a[X], b[Y], a[Z] );
+	pd_3cont( plotfp, b[X], b[Y], a[Z] );
+	/* bottom back */
+	pd_3move( plotfp, a[X], a[Y], b[Z] );
+	pd_3cont( plotfp, b[X], a[Y], b[Z] );
+	/* top back */
+	pd_3move( plotfp, a[X], b[Y], b[Z] );
+	pd_3cont( plotfp, b[X], b[Y], b[Z] );
 }
 
 pd_3box( plotfp, x1, y1, z1, x2, y2, z2 )
