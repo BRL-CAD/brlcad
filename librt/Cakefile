@@ -32,7 +32,7 @@
 	nmg_mesh nmg_fcut nmg_class nmg_mod nmg_index \
 	nmg_rt_isect nmg_rt_segs nmg_manif \
 	nmg_visit nmg_info nmg_pr \
-	units magic msr vert nmg_extrude nmg_tri
+	units magic msr vert nmg_extrude nmg_tri nmg_fuse
 
 #define NURB_OBJ	\
 	nurb_basis.o nurb_bound.o nurb_diff.o nurb_knot.o \

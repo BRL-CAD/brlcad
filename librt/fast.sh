@@ -40,7 +40,8 @@ cake \
  g_half.o \
  nmg_index.o \
  nmg_inter.o \
- g_sph.o &
+ g_sph.o \
+ &
 
 cake \
  g_tgc.o \
@@ -87,6 +88,7 @@ cake \
  plot3.o \
  polylib.o \
  nmg_bool.o \
+ nmg_fuse.o \
  prep.o \
  qmath.o \
  roots.o \
