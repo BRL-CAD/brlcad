@@ -19,6 +19,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* need non-generic installation instructions
+
 * consider providing installation and post configuration support
   scripts
 
