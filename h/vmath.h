@@ -93,6 +93,11 @@ typedef fastf_t hpoint_t[HPT_LEN];
 			(a)[1] = (b)[1];\
 			(a)[2] = (b)[2]
 
+/* Reverse the direction of b and store it in a */
+#define VREVERSE(a,b)	(a)[0] = -(b)[0]; \
+			(a)[1] = -(b)[1]; \
+			(a)[2] = -(b)[2];
+
 /* Add vectors at `b' and `c', store result at `a' */
 #define VADD2(a,b,c)	(a)[0] = (b)[0] + (c)[0];\
 			(a)[1] = (b)[1] + (c)[1];\
@@ -179,26 +184,26 @@ extern double sqrt();
 	(a)[1] = (b)[1] * (c)[1];\
 	(a)[2] = (b)[2] * (c)[2];
 
-/* Apply the 3x3 part of a mat_t to a 3-tuple.  Post-multiply. */
-#define MAT3XVEC(o,mat,vec) \
+/* Apply the 3x3 part of a mat_t to a 3-tuple. */
+#define MAT3X3VEC(o,mat,vec) \
 	(o)[0] = (mat)[0]*(vec)[0]+(mat)[1]*(vec)[1] + (mat)[ 2]*(vec)[2]; \
 	(o)[1] = (mat)[4]*(vec)[0]+(mat)[5]*(vec)[1] + (mat)[ 6]*(vec)[2]; \
 	(o)[2] = (mat)[8]*(vec)[0]+(mat)[9]*(vec)[1] + (mat)[10]*(vec)[2];
 
-/* Multiply a 3-tuple by the 3x3 part of a mat_t.  Pre-multiply. */
-#define VEC3x3MAT(o,i,m) \
+/* Multiply a 3-tuple by the 3x3 part of a mat_t. */
+#define VEC3X3MAT(o,i,m) \
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10];
 
-/* Apply the 3x3 part of a mat_t to a 2-tuple (Z part=0).  Post-multiply */
+/* Apply the 3x3 part of a mat_t to a 2-tuple (Z part=0). */
 #define MAT3X2VEC(o,mat,vec) \
 	(o)[0] = (mat)[0]*(vec)[0] + (mat)[1]*(vec)[1]; \
 	(o)[1] = (mat)[4]*(vec)[0] + (mat)[5]*(vec)[1]; \
 	(o)[2] = (mat)[8]*(vec)[0] + (mat)[9]*(vec)[1];
 
-/* Multiply a 2-tuple (Z=0) by the 3x3 part of a mat_t.  Pre-multiply */
-#define VEC2x3MAT(o,i,m) \
+/* Multiply a 2-tuple (Z=0) by the 3x3 part of a mat_t. */
+#define VEC2X3MAT(o,i,m) \
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5]; \
 	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6];
@@ -212,7 +217,7 @@ extern double sqrt();
 	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* f;}
 
 /* Multiply an Absolute 3-Point by a full 4x4 matrix. */
-#define PNT3x4MAT(o,i,m) \
+#define PNT3X4MAT(o,i,m) \
 	{ FAST fastf_t f; \
 	f = 1.0/((i)[X]*(m)[3] + (i)[Y]*(m)[7] + (i)[Z]*(m)[11] + (m)[15]);\
 	(o)[X]=((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8] + (m)[12]) * f;\
@@ -233,25 +238,19 @@ extern double sqrt();
 	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f; \
 	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f; }
 
-/* Multiply a Relative 3-Vector by most of a 4x4 matrix.  Pre-multiply */
-#define VEC3x4MAT(o,i,m) \
+/* Multiply a Relative 3-Vector by most of a 4x4 matrix */
+#define VEC3X4MAT(o,i,m) \
 	{ FAST fastf_t f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]) * f; }
 
-/* Multiply a Relative 2-Vector by most of a 4x4 matrix.  Pre-multiply */
-#define VEC2x4MAT(o,i,m) \
+/* Multiply a Relative 2-Vector by most of a 4x4 matrix */
+#define VEC2X4MAT(o,i,m) \
 	{ FAST fastf_t f; 	f = 1.0/((m)[15]); \
 	(o)[X] = ((i)[X]*(m)[0] + (i)[Y]*(m)[4]) * f; \
 	(o)[Y] = ((i)[X]*(m)[1] + (i)[Y]*(m)[5]) * f; \
 	(o)[Z] = ((i)[X]*(m)[2] + (i)[Y]*(m)[6]) * f; }
-
-/* Reverse the direction of b and store it in a */
-#define VREVERSE(a,b) \
-	(a)[0] = -(b)[0]; \
-	(a)[1] = -(b)[1]; \
-	(a)[2] = -(b)[2];
 
 /* Compare two vectors for EXACT equality.  Use carefully. */
 #define VEQUAL(a,b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
