@@ -2282,7 +2282,7 @@ int				compact;
 				ndouble =  fg->u.k_size +
 					   fg->v.k_size +
 					   fg->s_size[0] * fg->s_size[1] *
-					   RT_NURB_EXTRACT_COORDS(fg->pt_type);
+				   RT_NURB_EXTRACT_COORDS(fg->pt_type);
 				double_count += ndouble;
 				ecnt[i].byte_offset = fastf_byte_count;
 				fastf_byte_count += 3*(4+4) + 8*ndouble;
@@ -2580,6 +2580,177 @@ CONST struct db_i		*dbip;
 
 	/* The "compact" flag is used to save space in the database */
 	return  rt_nmg_export_internal( ep, ip, local2mm, 1 );
+}
+
+/*
+ *			R T _ N M G _ E X P O R T 5
+ */
+int
+rt_nmg_export5(
+	       struct bu_external		*ep,
+	       const struct rt_db_internal	*ip,
+	       double				local2mm,
+	       const struct db_i		*dbip)
+{
+	struct model			*m;
+	genptr_t			*dp, *startdata;
+	long				**ptrs;
+	struct nmg_struct_counts	cntbuf;
+	struct nmg_exp_counts		*ecnt;
+	int				kind_counts[NMG_N_KINDS];
+	genptr_t			disk_arrays[NMG_N_KINDS];
+	int				tot_size;
+	int				kind;
+	int				double_count;
+	register int			i;
+	int				subscript, fastf_byte_count;
+
+	RT_CK_DB_INTERNAL(ip);
+	if (ip->idb_type != ID_NMG) return -1;
+	m = (struct model *)ip->idb_ptr;
+	NMG_CK_MODEL(m);
+
+	bzero((char *)&cntbuf, sizeof(cntbuf));
+	ptrs = nmg_m_struct_count( &cntbuf, m);
+
+	ecnt = (struct nmg_exp_counts *)bu_calloc( m->maxindex+1,
+		sizeof(struct nmg_exp_counts), "ecnt[]");
+	for (i=0; i<NMG_N_KINDS; i++) {
+		kind_counts[i] = 0;
+	}
+	subscript = 1; 
+	double_count = 0;
+	fastf_byte_count = 0;
+	for (i=0; i< m->maxindex; i++) {
+		if (ptrs[i] == (long *)0 ) {
+			ecnt[i].kind = -1;
+			continue;
+		}
+
+		kind = rt_nmg_magic_to_kind( *(ptrs[i]) );
+		ecnt[i].per_struct_index = kind_counts[kind]++;
+		ecnt[i].kind = kind;
+
+		/* 
+		 * SNURB and CNURBS are variable sized and as such need
+		 * special handling
+		 */
+		if (kind == NMG_KIND_FACE_G_SNURB) {
+			struct face_g_snurb *fg;
+			int ndouble;
+			fg = (struct face_g_snurb *)ptrs[i];
+			ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+			kind_counts[NMG_KIND_DOUBLE_ARRAY] += 3;
+			ndouble = fg->u.k_size +
+				  fg->v.k_size +
+				  fg->s_size[0] * fg->s_size[1] *
+				  RT_NURB_EXTRACT_COORDS(fg->pt_type);
+			double_count += ndouble;
+			ecnt[i].byte_offset = fastf_byte_count;
+			fastf_byte_count += 3*(4*4) + 89*ndouble;
+		} else if (kind == NMG_KIND_EDGE_G_CNURB) {
+			struct edge_g_cnurb	*eg;
+			int			ndouble;
+			eg = (struct edge_g_cnurb *)ptrs[i];
+			ecnt[i].first_fastf_relpos =
+			    kind_counts[NMG_KIND_DOUBLE_ARRAY];
+			if (eg->order == 0) break;
+			kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
+			ndouble = eg->k.k_size +eg->c_size *
+			    RT_NURB_EXTRACT_COORDS(eg->pt_type);
+			double_count += ndouble;
+			ecnt[i].byte_offset = fastf_byte_count;
+			fastf_byte_count += 2*(4+4) +  8*ndouble;
+		}
+	}
+#if 0	/* Compacting wanted */
+	kind_counts[NMG_KIND_NMGREGION_A] = 0;
+	kind_counts[NMG_KIND_SHELL_A] = 0;
+	kind_counts[NMG_KIND_LOOP_G] = 0;
+#endif
+	/* Assign new subscripts to ascending struts of the same kind */
+	for (kind=0; kind < NMG_N_KINDS; kind++) {
+#if 0		/* Compacting */
+		if ( kind == NMG_KIND_NMGREGION_A ||
+		     kind == NMG_KIND_SHELL_A ||
+		     kind == NMG_KIND_LOOP_G )) {
+		     	for (i=0; i<m->maxinde; i++) {
+		     		if (ptrs[i] == (long *)0) continue;
+		     		if (ecnt[i].kind != kind) continue;
+		     		ecnt[i].new_subscript = DISK_INDEX_NULL;
+		     	}
+		     	continue;
+		}
+#endif
+		for (i=0; m->maxindex;i++) {
+			if (ptrs[i] == (long *)0) continue;
+			if (ecnt[i].kind != kind) continue;
+			ecnt[i].new_subscript = subscript++;
+		}
+	}
+	/* Tack on the variable sized fastf_t arrays at the end */
+	rt_nmg_cur_fastf_subscript = subscript;
+	subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
+
+	/* Now do some checking to make sure the world is not totally mad */
+	for (i=0; i<m->maxindex; i++) {
+		if (ptrs[i] == (long *)0) continue;
+
+		if (nmg_index_of_struct(ptrs[i]) != i) {
+			bu_log("***ERROR, ptrs[%d]->index = %d\n",
+				i, nmg_index_of_struct(ptrs[i]));
+		}
+		if (rt_nmg_magic_to_kind(*ptrs[i]) != ecnt[i].kind ) {
+			bu_log("***ERROR, ptrs[%d] kind(%d) != %d\n",
+			    i, rt_nmg_magic_to_kind(*ptrs[i]),
+			    ecnt[i].kind);
+		}
+
+	}
+
+	tot_size = 0;
+	for (i=0; i< NMG_N_KINDS; i++) {
+		if (kind_counts[i] <= 0) {
+			disk_arrays[i] = GENPTR_NULL;
+			continue;
+		}
+		tot_size += kind_counts[i] * rt_nmg_disk_sizes[i];
+	}
+
+	/* Account for variable sized double arrays, at the end */
+	tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) + 
+	    double_count*8;
+
+	ecnt[i].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = tot_size;
+	ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
+	dp = ep->ext_buf;
+	(void)bu_plong((char *)dp, DISK_MODEL_VERSION);
+	dp+=SIZEOF_NETWORK_LONG;
+
+	for (kind=0; kind <NMG_N_KINDS; kind++) {
+		(void)bu_plong((char *) dp, kind_counts[kind]);
+		dp+=SIZEOF_NETWORK_LONG;
+	}
+	for (i=0; i< NMG_N_KINDS; i++) {
+		disk_arrays[i] = (genptr_t)dp;
+		dp += kind_counts[i] * rt_nmg_disk_sizes[i];
+	}
+	rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
+
+	for (i = m->maxindex-1;i >=0; i--) {
+		if (ptrs[i] == (long *)0) continue;
+		kind = ecnt[i].kind;
+		if (kind_counts[kind] <= 0) continue;
+		rt_nmg_edisk((genptr_t)(disk_arrays[kind]),
+			(genptr_t)(ptrs[i]), ecnt, i, local2mm);
+	}
+
+	bu_free((char *)ptrs, "ptrs[]");
+	bu_free((char *)ecnt, "ecnt[]");
+	return 0;		/* OK */
 }
 
 /*
