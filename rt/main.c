@@ -90,7 +90,7 @@ char **argv;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
 
-	if( argc < 1 )  {
+	if( argc <= 1 )  {
 		fprintf(stderr, usage);
 		exit(1);
 	}
