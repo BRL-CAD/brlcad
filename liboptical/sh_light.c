@@ -130,7 +130,18 @@ char	*dp;
 		f = (f+0.5) * lp->lt_fraction;
 	}
 #if RT_MULTISPECTRAL
-	bn_tabdata_scale( swp->msw_color, lp->lt_spectrum, f );
+	/* Support a shader having modified the temperature of the source */
+	if( swp->sw_temperature > 0 )  {
+		rt_spect_black_body( swp->msw_color, swp->sw_temperature, 5 );
+		bn_tabdata_scale( swp->msw_color, swp->msw_color, f );
+		if( rdebug & RDEBUG_LIGHT )  {
+			bu_log("light %s xy=%d,%d temp=%g\n",
+			pp->pt_regionp->reg_name, ap->a_x, ap->a_y,
+			swp->sw_temperature );
+		}
+	} else {
+		bn_tabdata_scale( swp->msw_color, lp->lt_spectrum, f );
+	}
 #else
 	VSCALE( swp->sw_color, lp->lt_color, f );
 #endif
@@ -229,14 +240,22 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 
 #if RT_MULTISPECTRAL
 	BN_GET_TABDATA(lp->lt_spectrum, spectrum);
-	if( rp->reg_mater.ma_color_valid )  {
+	if( rp->reg_mater.ma_temperature > 0 )  {
+		rt_spect_black_body( lp->lt_spectrum,
+			rp->reg_mater.ma_temperature, 5 );
+		if( rdebug & RDEBUG_LIGHT )  {
+			bu_log("Light %s temp is %g degK, emission is pure black-body\n",
+				rp->reg_name, rp->reg_mater.ma_temperature);
+		}
+	} else if( rp->reg_mater.ma_color_valid )  {
 		rt_spect_reflectance_rgb( lp->lt_spectrum, rp->reg_mater.ma_color );
+		/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
+		bn_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum,
+			lp->lt_intensity * 0.001 ); /* XXX */
 	} else {
 		/* Default: Perfectly even emission across whole spectrum */
-		bn_tabdata_constval( lp->lt_spectrum, 1.0 );
+		bn_tabdata_constval( lp->lt_spectrum, 0.001 );
 	}
-	/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
-	bn_tabdata_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity * 0.001 ); /* XXX */
 #else
 	if( rp->reg_mater.ma_color_valid )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
