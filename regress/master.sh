@@ -304,9 +304,9 @@ log "Running [$CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG
 $CVS -q -d $REPOSITORY export -D today -d $REGRESS_DIR -N $CVS_TAG >> ${REGRESS_DIR}/$CVS_LOGFILE
 # make sure cvs export exited nicely
 if [ $? != 0 ] ; then 
-    bomb "cvs export failed"
+    bomb "cvs export failed" "$REGRSS_DIR/$CVS_LOGFILE"
 else
-    log "...done with cvs export"
+    log "OK: cvs export completed"
 fi
 
 #
