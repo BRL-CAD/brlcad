@@ -14,6 +14,10 @@
 #	Quit AnimMate
 #	General Procedures
 
+if ![info exists tk_version] {
+    loadtk
+}
+
 #Conventions:
 # 1.> for each main widget *foo*, the calling routine should call
 #  sketch_init_*foo* once before making any calls to sketch_popup_*foo*
@@ -33,7 +37,8 @@ proc sketch_init_main {} {
 	uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
 
 	#note - change this variable in production version
-	set version "developement"
+#	set version "developement"
+        set version ""
 	if { $version == "developement" } {
 		uplevel #0 {set mged_sketch_anim_path "/m/cad/.anim.6d/"}
 		uplevel #0 {set mged_sketch_tab_path "/m/cad/.tab.6d/"}
@@ -3547,7 +3552,7 @@ proc sketch_preview { filename } {
 
 	#save list of curves currently displayed
 	set clist ""
-	set vlist [mged_glob "dummy_cmd _VDRW*"]
+	set vlist [db_glob "dummy_cmd _VDRW*"]
 	foreach name [lrange $vlist 1 end] {
 		lappend clist [string range $name 5 end]
 	}
@@ -4105,8 +4110,8 @@ proc sketch_text_from_table {tid {needcol -1}} {
 # Uncomment the following command in order to run the animator 
 # automatically when anim.tcl is sourced.
 
-proc animmate {} {
-	sketch_popup_main
+proc animmate { {p .} } {
+	sketch_popup_main $p
 }
 
 #animmate
