@@ -1023,6 +1023,8 @@ struct rt_tol		*tol;
 
 			/* Convert sphere normal to ellipsoid normal */
 			MAT4X3VEC( strips[i].norms[j], state.invRoS, sphere_pt );
+			/* May not be unit length anymore */
+			VUNITIZE( strips[i].norms[j] );
 		}
 	}
 
