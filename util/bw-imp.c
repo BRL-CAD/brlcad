@@ -72,9 +72,9 @@ static int	width;			/* input width */
 
 static int	thresh = -1;		/* Threshold */
 
-static long		swath[32][64];	/* assumes long has 32 bits */
-
-static unsigned char	line[4096];	/* grey-scale input buffer */
+#define MAXWIDTH	2600
+long		swath[32][MAXWIDTH/32];	/* assumes long has 32 bits */
+unsigned char	line[MAXWIDTH];		/* grey-scale input buffer */
 
 static int	im_mag;			/* magnification (1, 2 or 4) */
 static int	im_width;		/* image size (in Imagen dots) */
@@ -86,8 +86,9 @@ bool	im_close();
 bool	im_header();
 void	im_write();
 
-char usage[] = "Usage: bw-impress [-h] [-s squaresize] [-H height] [-W width]\n\
-	[-t thresh] [-D] [file]\n";
+char usage[] = "\
+Usage: bw-impress [-h -D] [-s squaresize] [-W width] [-H height]\n\
+	[-t thresh] [file]\n";
 
 bool
 get_args( argc, argv )
@@ -95,11 +96,15 @@ register char	**argv;
 {
 	register int	c;
 
-	while ( (c = getopt( argc, argv, "hs:H:W:t:D" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hDs:H:W:t:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
 			height = width = 1024;
+			break;
+		case 'D':
+			/* halftone instead of dither */
+			pattern = halftone;
 			break;
 		case 's':
 			/* square size */
@@ -113,10 +118,6 @@ register char	**argv;
 			break;
 		case 't':
 			thresh = atoi(optarg);
-			break;
-		case 'D':
-			/* halftone instead of dither */
-			pattern = halftone;
 			break;
 
 		default:		/* '?' */
@@ -165,7 +166,8 @@ char		*argv[];
 	} else {
 		if( width > 512 )  im_mag = 2;
 		else if( width > 256 )  im_mag = 4;
-		else im_mag = 8;
+		else if( width > 128 )  im_mag = 8;
+		else im_mag = 16;
 	}
 	im_width  = (width * im_mag) & (~31);
 	im_wpatches = (im_width+31) / 32;
@@ -277,7 +279,7 @@ int y;
 	}
 
 	/* output the swath */
-	for ( x1 = 0; x1 < im_hpatches; ++x1 )  {
+	for ( x1 = 0; x1 < im_wpatches; ++x1 )  {
 		for ( y1 = 0; y1 < 32; ++y1 )  {
 			register long	b = swath[y1][x1];
 
@@ -292,8 +294,8 @@ int y;
 bool
 im_close()
 {
-	/*	(void)putchar( 219 );		/* ENDPAGE */
-	/*	(void)flush( stdout );	*/
+/*	(void)putchar( 219 );		/* ENDPAGE */
 
+	(void)fflush( stdout );
 	return true;
 }
