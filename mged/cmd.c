@@ -315,11 +315,12 @@ static struct funtab {
  * when non-blocking I/O is used instead of select.
  */
 int
-cmdline()
+cmdline(line)
+char	*line;
 {
 	int	i;
 
-	i = parse_line();
+	i = parse_line(line);
 	if( i == 0 ) {
 		mged_cmd( numargs, cmd_args );
 		return 1;
@@ -338,28 +339,14 @@ cmdline()
  * Returns less than zero if there is no input to read.
  */
 int
-parse_line()
+parse_line(line)
+char	*line;
 {
 	register char *lp;
 	register char *lp1;
-	static char line[MAXLINE];
 
 	numargs = 0;
 	lp = &line[0];
-	*lp = '\0';
-
-	/* Read input line */
-	if( fgets( line, MAXLINE, stdin ) == NULL ) {
-		if( !feof( stdin ) )
-			return -1;	/* nothing to read */
-	}
-
-	/* Check for Control-D (EOF) */
-	if( feof( stdin ) )  {
-		/* Control-D typed, let's hit the road */
-		f_quit();
-		/* NOTREACHED */
-	}
 
 	/* Delete leading white space */
 	while( (*lp == ' ') || (*lp == '\t'))

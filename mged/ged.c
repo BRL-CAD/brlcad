@@ -265,8 +265,22 @@ char **argv;
 		 */
 		i = dmp->dmr_input( 0, rateflag );	/* fd 0 for cmds */
 		if( i )  {
-			if( cmdline() )
-				pr_prompt();
+			static char line[MAXLINE];
+
+			line[0] = '\0';
+
+			/* Read input line */
+			if( fgets( line, MAXLINE, stdin ) != NULL ) {
+				if( cmdline( line ) )
+					pr_prompt();
+			} else {
+				/* Check for Control-D (EOF) */
+				if( feof( stdin ) )  {
+					/* EOF, let's hit the road */
+					f_quit();
+					/* NOTREACHED */
+				}
+			}
 		}
 
 		rateflag = 0;
