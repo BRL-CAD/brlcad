@@ -35,7 +35,7 @@
 #endif
 
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define         OPT_STRING      "u:?"
+#define         OPT_STRING      "u:x:?"
 
 /*	MACROS WITH ARGUMENTS	*/
 #define    max(a,b)             (((a)>(b))?(a):(b))
