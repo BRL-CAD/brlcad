@@ -381,7 +381,7 @@ struct soltab {
 	int		st_bit;		/* solids bit vector index (const) */
 	int		st_maxreg;	/* highest bit set in st_regions */
 	bitv_t		*st_regions;	/* bit vect of region #'s (const) */
-	mat_t		st_pathmat;	/* Xform matrix on path */
+	matp_t		st_matp;	/* solid coords to model space, NULL=identity */
 };
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
@@ -1822,5 +1822,6 @@ extern CONST double rt_inv2pi;
 extern CONST double rt_inv255;
 extern CONST double rt_degtorad;
 extern CONST double rt_radtodeg;
+extern CONST mat_t  rt_identity;
 
 #endif /* RAYTRACE_H */
