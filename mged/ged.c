@@ -311,6 +311,7 @@ char **argv;
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
 	BU_GETSTRUCT(mged_variables, _mged_variables);
 	*mged_variables = default_mged_variables;	/* struct copy */
+	BU_GETSTRUCT(color_scheme, _color_scheme);
 	*color_scheme = default_color_scheme;		/* struct copy */
 	am_mode = AMM_IDLE;
 	rc = 1;
