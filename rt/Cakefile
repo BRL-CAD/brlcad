@@ -8,7 +8,7 @@
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
 			rtg3 rtcell rtxray rthide rtfrac rtrange \
-			rtregis rtscale rtsil rtweight rtedge rt_simple
+			rtregis rtscale rtsil rtweight rtedge rt_simple rtarea
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -45,6 +45,13 @@ rtray:	RTRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	newvers.sh version "RT Ray"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtray
+
+#define RTAREA_OBJ	RTUIF viewarea.o
+
+rtarea:	RTAREA_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Area"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTAREA_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtarea
 
 #define RTPP_OBJ	RTUIF viewpp.o
 
