@@ -112,7 +112,7 @@ int argc;
 char *argv[];
 {
 	int	i;
-	register float	*randp;
+	register float	*randp = rand_tab;
 	struct color_rec {
 		unsigned char red,green,blue;
 	} cur_color;
