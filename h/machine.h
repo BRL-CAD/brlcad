@@ -202,6 +202,25 @@ typedef long	bitv_t;		/* largest integer type */
 
 #endif
 
+#ifdef n16
+/********************************
+ *				*
+ *     Encore Multi-Max		*
+ *				*
+ ********************************/
+#define IEEE_FLOAT	1	/* Uses IEEE style floating point */
+#define LITTLE_ENDIAN	1	/* Under the influence of National Semiconductor */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define MAX_PSW		32	/* This number is uncertain */
+#define DEFAULT_PSW	1
+#define PARALLEL	1
+#endif
+
 #ifndef LOCAL
 /********************************
  *				*
