@@ -3,6 +3,7 @@
 pl\(hypl \- convert an extended to a simple UnixPlot file
 .SH SYNOPSIS
 .B pl-pl
+.RB [ \-v ]
 .RB [ \-S ]
 < unix_plot > unix_plot
 .SH DESCRIPTION
@@ -22,7 +23,10 @@ integer conversion is done by simple truncation.  If the
 option is given, the "space" command in the plot file is used to
 center and scale the plot to the full 16 bit signed interger plotting
 space (-32767 to +32767).  This is particularly useful for converting
-floating point files.
+floating point files.  The
+.B \-v
+verbose option causes each plot command to be described as it is being
+converted.
 .SH DIAGNOSTICS
 A warning message is given if the input plot file did not contain
 a space command since most older UnixPlot programs require them.
