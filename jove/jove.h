@@ -462,7 +462,9 @@ extern char
 	*getblock(),
 	*IOerr(),
 	*bufmod(),
+#if !defined(__sp3__)
 	*index(),
+#endif
 	*RunEdit(),
 	*getline(),
 	*getblock(),
@@ -473,7 +475,9 @@ extern char
 	*realloc(),
 	*getright(),
 	*getcptr(),
+#if !defined(__sp3__)
 	*rindex(),
+#endif
 	*getenv(),
 	*tgoto(),
 	*StrIndex();
