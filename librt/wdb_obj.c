@@ -211,6 +211,7 @@ static int wdb_remove_tcl();
 static int wdb_region_tcl();
 static int wdb_comb_tcl();
 static int wdb_find_tcl();
+static int wdb_facetize_tcl();
 static int wdb_which_tcl();
 static int wdb_title_tcl();
 static int wdb_tree_tcl();
@@ -282,6 +283,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"dump",	wdb_dump_tcl},
 	{"dup",		wdb_dup_tcl},
 	{"expand",	wdb_expand_tcl},
+	{"facetize",	wdb_facetize_tcl},
 	{"find",	wdb_find_tcl},
 	{"form",	wdb_form_tcl},
 	{"g",		wdb_group_tcl},
@@ -4232,6 +4234,276 @@ wdb_find_ref(struct db_i		*dbip,
 	Tcl_AppendElement(interp, comb_name);
 }
 
+HIDDEN union tree *
+facetize_region_end( tsp, pathp, curtree, client_data )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+genptr_t		client_data;
+{
+	struct bu_list		vhead;
+	union tree		**facetize_tree;
+
+	facetize_tree = (union tree **)client_data;
+	BU_LIST_INIT( &vhead );
+
+	if( curtree->tr_op == OP_NOP )  return  curtree;
+
+	if( *facetize_tree )  {
+		union tree	*tr;
+		tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
+		tr->magic = RT_TREE_MAGIC;
+		tr->tr_op = OP_UNION;
+		tr->tr_b.tb_regionp = REGION_NULL;
+		tr->tr_b.tb_left = *facetize_tree;
+		tr->tr_b.tb_right = curtree;
+		*facetize_tree = tr;
+	} else {
+		*facetize_tree = curtree;
+	}
+
+	/* Tree has been saved, and will be freed later */
+	return( TREE_NULL );
+}
+
+int
+wdb_facetize_cmd(struct rt_wdb	*wdbp,
+	     Tcl_Interp		*interp,
+	     int		argc,
+	     char 		**argv)
+{
+	int			i;
+	register int		c;
+	int			triangulate;
+	char			*newname;
+	struct rt_db_internal	intern;
+	struct directory	*dp;
+	int			failed;
+	int			nmg_use_tnurbs = 0;
+	int			make_bot;
+	struct db_tree_state	init_state;
+	struct db_i		*dbip;
+	union tree		*facetize_tree;
+	struct model		*nmg_model;
+
+	if(argc < 3){
+		Tcl_AppendResult(interp,
+				 "Usage: ",
+				 argv[0],
+				 " new_object old_object [old_object2 old_object3 ...]\n",
+				 (char *)NULL );
+	  return TCL_ERROR;
+	}
+
+	dbip = wdbp->dbip;
+	RT_CHECK_DBI(dbip);
+
+	db_init_db_tree_state( &init_state, dbip, wdbp->wdb_resp );
+
+	/* Establish tolerances */
+	init_state.ts_ttol = &wdbp->wdb_ttol;
+	init_state.ts_tol = &wdbp->wdb_tol;
+
+	/* Initial vaues for options, must be reset each time */
+	triangulate = 0;
+	make_bot = 1;
+
+	/* Parse options. */
+	bu_optind = 1;		/* re-init bu_getopt() */
+	while( (c=bu_getopt(argc,argv,"ntT")) != EOF )  {
+		switch(c)  {
+		case 'n':
+			make_bot = 0;
+			break;
+		case 'T':
+			triangulate = 1;
+			break;
+		case 't':
+			nmg_use_tnurbs = 1;
+			break;
+		default:
+		  {
+		    struct bu_vls tmp_vls;
+
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "option '%c' unknown\n", c);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls),
+				     "Usage: facetize [-ntT] object(s)\n",
+				     "\t-n make NMG primitives rather than BOT's\n",
+				     "\t-t Perform CSG-to-tNURBS conversion\n",
+				     "\t-T enable triangulator\n", (char *)NULL);
+		    bu_vls_free(&tmp_vls);
+		  }
+		  break;
+		}
+	}
+	argc -= bu_optind;
+	argv += bu_optind;
+	if( argc < 0 ){
+	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	newname = argv[0];
+	argv++;
+	argc--;
+	if( argc < 0 ){
+	  Tcl_AppendResult(interp, "facetize: missing argument\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
+	  Tcl_AppendResult(interp, "error: solid '", newname,
+			   "' already exists, aborting\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
+
+	{
+	  struct bu_vls tmp_vls;
+
+	  bu_vls_init(&tmp_vls);
+	  bu_vls_printf(&tmp_vls,
+			"facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
+			wdbp->wdb_ttol.abs, wdbp->wdb_ttol.rel, wdbp->wdb_ttol.norm );
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
+	}
+	facetize_tree = (union tree *)0;
+  	nmg_model = nmg_mm();
+	init_state.ts_m = &nmg_model;
+
+	i = db_walk_tree( dbip, argc, (const char **)argv,
+		1,
+		&init_state,
+		0,			/* take all regions */
+		facetize_region_end,
+  		nmg_use_tnurbs ?
+  			nmg_booltree_leaf_tnurb :
+			nmg_booltree_leaf_tess,
+		(genptr_t)&facetize_tree
+		);
+
+
+	if( i < 0 )  {
+	  Tcl_AppendResult(interp, "facetize: error in db_walk_tree()\n", (char *)NULL);
+	  /* Destroy NMG */
+	  nmg_km( nmg_model );
+	  return TCL_ERROR;
+	}
+
+	if( facetize_tree )
+	{
+		/* Now, evaluate the boolean tree into ONE region */
+		Tcl_AppendResult(interp, "facetize:  evaluating boolean expressions\n", (char *)NULL);
+
+		if( BU_SETJUMP )
+		{
+			BU_UNSETJUMP;
+			Tcl_AppendResult(interp, "WARNING: facetization failed!!!\n", (char *)NULL );
+			if( facetize_tree )
+				db_free_tree( facetize_tree, &rt_uniresource );
+			facetize_tree = (union tree *)NULL;
+			nmg_km( nmg_model );
+			nmg_model = (struct model *)NULL;
+			return TCL_ERROR;
+		}
+
+		failed = nmg_boolean( facetize_tree, nmg_model, &wdbp->wdb_tol, &rt_uniresource );
+		BU_UNSETJUMP;
+	}
+	else
+		failed = 1;
+
+	if( failed )  {
+	  Tcl_AppendResult(interp, "facetize:  no resulting region, aborting\n", (char *)NULL);
+	  if( facetize_tree )
+		db_free_tree( facetize_tree, &rt_uniresource );
+	  facetize_tree = (union tree *)NULL;
+	  nmg_km( nmg_model );
+	  nmg_model = (struct model *)NULL;
+	  return TCL_ERROR;
+	}
+	/* New region remains part of this nmg "model" */
+	NMG_CK_REGION( facetize_tree->tr_d.td_r );
+	Tcl_AppendResult(interp, "facetize:  ", facetize_tree->tr_d.td_name,
+			 "\n", (char *)NULL);
+
+	/* Triangulate model, if requested */
+	if( triangulate && !make_bot )
+	{
+		Tcl_AppendResult(interp, "facetize:  triangulating resulting object\n", (char *)NULL);
+		if( BU_SETJUMP )
+		{
+			BU_UNSETJUMP;
+			Tcl_AppendResult(interp, "WARNING: triangulation failed!!!\n", (char *)NULL );
+			if( facetize_tree )
+				db_free_tree( facetize_tree, &rt_uniresource );
+			facetize_tree = (union tree *)NULL;
+			nmg_km( nmg_model );
+			nmg_model = (struct model *)NULL;
+			return TCL_ERROR;
+		}
+		nmg_triangulate_model( nmg_model , &wdbp->wdb_tol );
+		BU_UNSETJUMP;
+	}
+
+	if( make_bot )
+	{
+		struct rt_bot_internal *bot;
+		struct nmgregion *r;
+		struct shell *s;
+
+		Tcl_AppendResult(interp, "facetize:  converting to BOT format\n", (char *)NULL);
+
+		r = BU_LIST_FIRST( nmgregion, &nmg_model->r_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
+		bot = (struct rt_bot_internal *)nmg_bot( s, &wdbp->wdb_tol );
+		nmg_km( nmg_model );
+		nmg_model = (struct model *)NULL;
+
+		/* Export BOT as a new solid */
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_BOT;
+		intern.idb_meth = &rt_functab[ID_BOT];
+		intern.idb_ptr = (genptr_t) bot;
+	}
+	else
+	{
+
+		Tcl_AppendResult(interp, "facetize:  converting NMG to database format\n", (char *)NULL);
+
+		/* Export NMG as a new solid */
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+		intern.idb_type = ID_NMG;
+		intern.idb_meth = &rt_functab[ID_NMG];
+		intern.idb_ptr = (genptr_t)nmg_model;
+		nmg_model = (struct model *)NULL;
+	}
+
+	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
+	{
+		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
+	{
+		Tcl_AppendResult(interp, "Failed to write ", newname, " to database\n", (char *)NULL );
+		rt_db_free_internal( &intern, &rt_uniresource );
+		return TCL_ERROR;
+	}
+	
+	facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
+
+	/* Free boolean tree, and the regions in it */
+	db_free_tree( facetize_tree, &rt_uniresource );
+    	facetize_tree = (union tree *)NULL;
+
+	return TCL_OK;
+}
+
 int
 wdb_find_cmd(struct rt_wdb	*wdbp,
 	     Tcl_Interp		*interp,
@@ -4274,6 +4546,19 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
 
 	return TCL_OK;
 }
+
+static int
+wdb_facetize_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+	return wdb_facetize_cmd(wdbp, interp, argc-1, argv+1);
+}
+
 
 /*
  * Usage:
