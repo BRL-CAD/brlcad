@@ -492,7 +492,10 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
-#	if 0
+#	undef	sun_no_opts
+#	define	sun_x11
+#	undef	sun_x11_gds
+#	ifdef sun_no_opts
 /*		Normal Sun configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
@@ -500,15 +503,28 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	dm-sun
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
-#	else
+#	endif
+#	ifdef sun_x11
 /*		Sun with X11 configuration */
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+			-I/usr/X11/include -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
+			-L/usr/X11/lib -lX11
+#		define	MGED_OBJS	dm-sun dm-X
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/X11/include
+#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+			-L/usr/X11/lib -lX11
+#	endif
+#	ifdef sun_x11_gds
+/*		Sun with X11 configuration and GDS hardware*/
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_ts
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
 			-I/usr/X11/include -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
 			-L/usr/X11/lib -lX11 -lgds
 #		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X
+#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/X11/include
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
 			-L/usr/X11/lib -lX11
 #	endif
