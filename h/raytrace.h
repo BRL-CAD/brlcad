@@ -1362,26 +1362,29 @@ RT_EXTERN(void mat_copy, (mat_t dest, mat_t src) );
 RT_EXTERN(void mat_mul, (mat_t dest, mat_t a, mat_t b) );
 RT_EXTERN(void matXvec, (vect_t dest, mat_t m, vect_t src) );
 RT_EXTERN(void mat_inv, (mat_t dest, mat_t src) );
-/* XXX these two need mat_ on their names */
-RT_EXTERN(void vtoh_move, (hvect_t dest, vect_t src) );
-RT_EXTERN(void htov_move, (vect_t dest, hvect_t src) );
+RT_EXTERN(void mat_vtoh_move, (hvect_t dest, CONST vect_t src) );
+RT_EXTERN(void mat_htov_move, (vect_t dest, CONST hvect_t src) );
+#define vtoh_move(_d,_s)	mat_vtoh_move(_d,_s)	/* compat */
+#define htov_move(_d,_s)	mat_htov_move(_d,_s)
 RT_EXTERN(void mat_print, (char *title, mat_t m) );
 RT_EXTERN(void mat_trn, (mat_t dest, mat_t src) );
 RT_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
-/* XXX new name */
-RT_EXTERN(void ae_vec, (fastf_t *azp, fastf_t *elp, vect_t src) );
+RT_EXTERN(void mat_ae_vec, (fastf_t *azp, fastf_t *elp, vect_t src) );
+#define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
 RT_EXTERN(void mat_angles, (mat_t dest, double alpha, double beta, double ggamma) );
-/* XXX new name */
 RT_EXTERN(void eigen2x2, (fastf_t *val1, fastf_t *val2,
 	vect_t vec1, vect_t vec2, double a, double b, double c) );
+#define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
+	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
 RT_EXTERN(void mat_fromto, (mat_t dest, vect_t from, vect_t to) );
 RT_EXTERN(void mat_xrot, (mat_t dest, double sinx, double cosx) );
 RT_EXTERN(void mat_yrot, (mat_t dest, double siny, double cosy) );
 RT_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
 RT_EXTERN(void mat_lookat, (mat_t dest, vect_t dir, int yflip) );
-/* XXX new names */
-RT_EXTERN(void vec_ortho, (vect_t dest, vect_t src) );
-RT_EXTERN(void vec_perp, (vect_t dest, vect_t src) );
+RT_EXTERN(void mat_vec_ortho, (vect_t dest, CONST vect_t src) );
+RT_EXTERN(void mat_vec_perp, (vect_t dest, CONST vect_t src) );
+#define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
+#define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
 
 /*****************************************************************
  *                                                               *
@@ -1609,6 +1612,10 @@ RT_EXTERN(int rt_id_solid, (struct rt_external *ep));
 /* magic.c */
 RT_EXTERN(char *rt_identify_magic, (long magic));
 
+/* units.c */
+RT_EXTERN(double rt_units_conversion, (CONST char *str) );
+RT_EXTERN(char *rt_units_string, (CONST double mm) );
+
 /************************************************************************
  *									*
  *			N M G Support Function Declarations		*
@@ -1806,6 +1813,7 @@ RT_EXTERN(long			**nmg_m_struct_count,
 /*
  *  Constants provided and used by the RT library.
  */
+extern CONST struct db_tree_state	rt_initial_tree_state;
 extern CONST double rt_pi;
 extern CONST double rt_twopi;
 extern CONST double rt_halfpi;
