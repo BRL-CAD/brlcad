@@ -2565,6 +2565,7 @@ struct faceuse		*fu2;
 			rt_log("\t\tedge colinear with isect line.  Listing vu1a, vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
+/* XXX XYZZY What happens here?  Do vu's get added to other list??? */
 		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
 		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
 		ret = 0;
@@ -2578,16 +2579,20 @@ struct faceuse		*fu2;
 	/* Edges not colinear. Either list a vertex,
 	 * or break eu1.
 	 */
-	if( dist[1] == 0 )  {
+	if( status == 1 || dist[1] == 0 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1a\n");
+		if( !rt_pt3_pt3_equal(hit_pt, vu1a->v_p->vg_p->coord, &(is->tol) ) )
+			rt_bomb("vu1a does not match calculated point\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		nmg_insert_fu_vu_in_other_list( is, list, vu1a->v_p, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 		ret = 0;
-	} else if( dist[1] == 1 )  {
+	} else if( status == 2 || dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1b\n");
+		if( !rt_pt3_pt3_equal(hit_pt, vu1b->v_p->vg_p->coord, &(is->tol) ) )
+			rt_bomb("vu1b does not match calculated point\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
 		nmg_insert_fu_vu_in_other_list( is, list, vu1b->v_p, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
@@ -2596,8 +2601,25 @@ struct faceuse		*fu2;
 		/* Intersection is in the middle of eu1, split edge */
 		struct vertexuse	*vu1_final;
 		struct vertex		*new_v;
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		    	VPRINT("\t\tBreaking eu1 at intersect point (2d)", hit_pt);
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			fastf_t	dist;
+			int	code;
+			rt_log("\t2D: pt2d=(%g, %g), dir2d=(%g, %g)\n",
+				is->pt2d[X], is->pt2d[Y],
+				is->dir2d[X], is->dir2d[Y] );
+			rt_log("\t2D: eu1_start=(%g, %g), eu1_dir=(%g, %g)\n",
+				eu1_start[X], eu1_start[Y],
+				eu1_dir[X], eu1_dir[Y] );
+			VPRINT("\t3D: is->pt ", is->pt);
+			VPRINT("\t3D: is->dir", is->dir);
+		    	VPRINT("\t\t2d: Breaking eu1 at isect. 3D pt=", hit_pt);
+			/* XXX Perform a (not-so) quick check */
+			code = rt_isect_pt_lseg( &dist, vu1a->v_p->vg_p->coord,
+				vu1b->v_p->vg_p->coord,
+				hit_pt, &(is->tol) );
+			rt_log("rt_isect_pt_lseg() dist=%g, ret=%d\n", dist, code);
+			if( code < 0 )  rt_bomb("3D point not on 3D lseg\n");
+		}
 
 		/* if we can't find the appropriate vertex in the other
 		 * shell by a geometry search, build a new vertex.
