@@ -1494,6 +1494,9 @@ struct bu_vls *vls;
 				while( isspace( *iptr ) )
 					iptr++;
 
+				if( !(*iptr) )
+					break;
+
 				if( *iptr == ';' )
 				{
 					/* found end of a stack element */
