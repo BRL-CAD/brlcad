@@ -131,14 +131,15 @@ void
 nmg_veg(eg)
 long *eg;
 {
-	if( !eg )  rt_bomb("nmg_veg() null eg\n");
+	NMG_CK_EDGE_G_EITHER(eg);
 	switch( *eg )  {
 	case NMG_EDGE_G_LSEG_MAGIC:
-		return;
+		nmg_ck_list( &((struct edge_g_lseg *)eg)->eu_hd2, "nmg_veg() edge_g_lseg eu_hd2 list" );
+		break;
 	case NMG_EDGE_G_CNURB_MAGIC:
-		return;
+		nmg_ck_list( &((struct edge_g_cnurb *)eg)->eu_hd2, "nmg_veg() edge_g_cnurb eu_hd2 list" );
+		break;
 	}
-	rt_bomb("nmg_veg() bad magic\n");
 }
 
 /*
@@ -206,6 +207,8 @@ long	*up_magic_p;
 	struct edgeuse	*eulast;
 	long		up_magic;
 
+	nmg_ck_list( hp, "nmg_veu() edegeuse list head" );
+
 	up_magic = *up_magic_p;
 	for( RT_LIST_FOR( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
@@ -269,6 +272,11 @@ long	*up_magic_p;
 			rt_bomb("nmg_veu() edgeuse radial denies knowing edgeuse\n");
 
 		nmg_vedge(eu->e_p, eu);
+
+		if( !eu->l2.forw )
+			rt_bomb("nmg_veu() l2.forw is NULL\n");
+		if( !eu->l2.back )
+			rt_bomb("nmg_veu() l2.back is NULL\n");
 
 		if( eu->g.magic_p != eu->eumate_p->g.magic_p )
 			rt_bomb("nmg_veu() edgeuse and mate don't share geometry\n");
