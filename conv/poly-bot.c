@@ -67,6 +67,7 @@ char *argv[];
 	int polys=0;
 	int frees=0;
 	int others=0;
+	int first=1;
 
 	ifp = stdin;
 	ofp = stdout;
@@ -210,6 +211,14 @@ top:
 				bu_log( "ERROR: Unattached polysolid data record!!!!\n" );
 				continue;
 			default:
+				if( first )
+				{
+					if( record.u_id != ID_IDENT ) {
+						bu_log( "This is not a 'v4' database!!!\n" );
+						exit( 1 );
+					}
+					first = 0;
+				}
 				others++;
 				if( fwrite( &record, sizeof( union record ), 1, ofp ) < 1 )
 					bu_bomb( "Write failed!!!\n" );
