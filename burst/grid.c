@@ -589,7 +589,7 @@ struct partition *pt_headp;
 					CopyVec( burstnorm, exitnorm );
 					}
 				prntSeg( ap, pp, OUTSIDE_AIR,
-					entrynorm, exitnorm );
+					entrynorm, exitnorm, pp == bp );
 				}
 			else
 			/* If air expicitly follows, output space code. */
@@ -612,7 +612,7 @@ struct partition *pt_headp;
 					CopyVec( burstnorm, exitnorm );
 					}
 				prntSeg( ap, pp, nregp->reg_aircode,
-					entrynorm, exitnorm );
+					entrynorm, exitnorm, pp == bp );
 				}
 			else
 			if( np == pt_headp )
@@ -622,7 +622,7 @@ struct partition *pt_headp;
 				rt_log( "\t\tlast component\n" );
 #endif
 				prntSeg( ap, pp, EXIT_AIR,
-					entrynorm, exitnorm );
+					entrynorm, exitnorm, pp == bp );
 				}
 			else
 			/* No air follows component. */
@@ -644,7 +644,7 @@ struct partition *pt_headp;
 				rt_log( "\t\tdifferent component follows\n" );
 #endif
 				prntSeg( ap, pp, 0,
-					entrynorm, exitnorm );
+					entrynorm, exitnorm, pp == bp );
 					/* component follows */
 				}
 			}
