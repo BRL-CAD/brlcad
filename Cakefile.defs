@@ -2376,7 +2376,7 @@ set -S2 "/bin/sh"
 #		define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
 #		define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
 #	endif
-#	if !defined(LIBITCL_DIR)
+#	if !defined(LIBITK_DIR)
 #		define	LIBITK_DIR	../libitcl''ITCL_VERS/itk
 #	endif
 #	define  LIBTCLCAD_DIR	../libtclcad
