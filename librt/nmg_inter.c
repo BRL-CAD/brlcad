@@ -48,12 +48,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h (for nmg_ck.c) */
-RT_EXTERN(void		nmg_ck_v_in_2fus, (CONST struct vertex *vp,
-			CONST struct faceuse *fu1, CONST struct faceuse *fu2,
-			CONST struct rt_tol *tol));
-
-
 struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
@@ -88,6 +82,50 @@ static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
 			struct faceuse *eu_fu));
 
 
+/*
+ *		N M G _ I N S E R T _ O T H E R _ F U _ V _ I N _ L I S T
+ *
+ *  Insert the vu from fu2 that corresponds to v1 onto
+ *  the OTHER face's (fu2's) intersect list.
+ *  If such a vu does not exist, make a self-loop in fu2.
+ */
+struct vertexuse *
+nmg_insert_other_fu_v_in_list( is, list, v1, fu2 )
+struct nmg_inter_struct	*is;
+struct nmg_ptbl		*list;
+struct vertex		*v1;
+struct faceuse		*fu2;
+{
+	struct vertexuse	*vu2;
+	struct nmg_ptbl		*lp;
+	struct loopuse		*plu;		/* point loopuse */
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_PTBL(list);
+	NMG_CK_VERTEX(v1);
+	NMG_CK_FACEUSE(fu2);
+
+	if( is->l1 == list )
+		lp = is->l2;
+	else
+		lp = is->l1;
+	if( vu2 = nmg_find_v_in_face( v1, fu2 ) )  {
+		(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
+		return vu2;
+	}
+	/* Insert copy of this vertex into other face, as self-loop. */
+	plu = nmg_mlv(&fu2->l.magic, v1, OT_UNSPEC);
+	nmg_loop_g(plu->l_p);
+	vu2 = RT_LIST_FIRST( vertexuse, &plu->down_hd );
+	NMG_CK_VERTEXUSE(vu2);
+	(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		rt_log("nmg_insert_other_fu_v_in_list: v1=x%x, made self-loop for fu2: vu2=x%x\n",
+			v1, vu2);
+	}
+	return vu2;
+}
 
 /*
  *			N M G _ G E T _ 2 D _ V E R T E X
@@ -475,6 +513,7 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 {
 	struct vertexuse *vu1_final;
 	struct vertexuse *vu2_final;	/* hit_pt's vu in fu2 */
+	struct vertex	*v2;
 	struct loopuse	*plu2;		/* "point" loopuse */
 	struct edgeuse	*eu1forw;	/* New eu, after break, forw of eu1 */
 	struct vertex	*v1;
@@ -535,16 +574,17 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 	/* if we can't find the appropriate vertex in the
 	 * other face by a geometry search, build a new vertex.
 	 * Otherwise, re-use the existing one.
+	 * Can't just search other face, might miss relevant vert.
 	 */
-	vu2_final = nmg_find_pt_in_face(hit_pt, fu2, &(is->tol));
-	if (vu2_final) {
+	v2 = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol));
+	if (v2) {
 		/* the other face has a convenient vertex for us */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("re-using vertex v=x%x from other face\n", vu2_final->v_p);
+			rt_log("re-using vertex v=x%x from other shell\n", v2);
 
-		eu1forw = nmg_ebreak(vu2_final->v_p, eu1);
+		eu1forw = nmg_ebreak(v2, eu1);
 		vu1_final = eu1forw->vu_p;
-		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2_final->l.magic);
+		vu2_final = nmg_insert_other_fu_v_in_list( is, is->l2, v2, fu2 );
 	} else {
 		/* The other face has no vertex in this vicinity */
 		/* If hit_pt falls outside all the loops in fu2,
@@ -1226,6 +1266,7 @@ struct faceuse		*fu2;
 	struct vertexuse *vu2_final = (struct vertexuse *)NULL;
 	struct vertex	*v1a;		/* vertex at start of eu1 */
 	struct vertex	*v1b;		/* vertex at end of eu1 */
+	struct vertex	*v2;
 	point_t		hit_pt;
 	vect_t		edge_vect;
 	fastf_t		edge_len;	/* MAGNITUDE(edge_vect) */
@@ -1438,20 +1479,20 @@ struct faceuse		*fu2;
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1_final->l.magic);
 
 		/* XXX SHouldn't this be a topology search, since vertex fuser has already run? */
-		vu2_final = nmg_find_pt_in_face(v1a->vg_p->coord, fu2, &(is->tol));
-		if (vu2_final) {
+		v2 = nmg_find_pt_in_shell(fu2->s_p, v1a->vg_p->coord, &(is->tol));
+		if (v2) {
 			register pointp_t	p3;
-			/* Face has a very similar vertex.  Add to list */
+			/* Other shell has a very similar vertex.  Add to list */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("A: Reusing vu2=x%x, v=x%x from fu2\n", vu2_final, vu2_final->v_p);
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2_final->l.magic);
+				rt_log("A: v1a=x%x Other shell has v2=x%x\n", v1a, v2);
 #if 0
 			/* Make new coordinates be the midpoint */
-			p3 = vu2_final->v_p->vg_p->coord;
+			p3 = v2->vg_p->coord;
 			VADD2SCALE(v1a->vg_p->coord, v1a->vg_p->coord, p3, 0.5);
 #endif
 			/* Combine the two vertices */
-			nmg_jv(v1a, vu2_final->v_p);
+			nmg_jv(v1a, v2);
+			vu2_final = nmg_insert_other_fu_v_in_list( is, is->l2, v1a, fu2 );
 			nmg_ck_v_in_2fus(v1a, fu1, fu2, &is->tol);
 		} else {
 			/* Insert copy of this vertex into face */
@@ -1495,20 +1536,20 @@ struct faceuse		*fu2;
 		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu1_final->l.magic);
 
 		/* XXX Shouldn't this be a topology search, rather than geom?  Vert fuser has already run */
-		vu2_final = nmg_find_pt_in_face(v1b->vg_p->coord, fu2, &(is->tol));
-		if (vu2_final) {
+		v2 = nmg_find_pt_in_shell(fu2->s_p, v1b->vg_p->coord, &(is->tol));
+		if (v2) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
-				rt_log("B: Reusing vu2=x%x, v=x%x from fu2\n", vu2_final, vu2_final->v_p);
-			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2_final->l.magic);
+				rt_log("B: v1b=x%x Other shell has v2=x%x\n", v1b, v2);
 #if 0
 			/* Make new coordinates be the midpoint */
-			p3 = vu2_final->v_p->vg_p->coord;
+			p3 = v2->vg_p->coord;
 			VADD2SCALE(v1b->vg_p->coord, v1b->vg_p->coord, p3, 0.5);
 #endif
 			/* Combine the two vertices */
 			nmg_jv(v1b, vu2_final->v_p);
+			vu2_final = nmg_insert_other_fu_v_in_list( is, is->l2, v1b, fu2 );
 			nmg_ck_v_in_2fus(v1b, fu1, fu2, &is->tol);
 		} else {
 			/* Insert copy of this vertex into face */
@@ -2166,50 +2207,6 @@ out:
 }
 
 /*
- *		N M G _ I N S E R T _ O T H E R _ F U _ V U _ I N _ L I S T
- *
- *  Insert the vu from fu2 that corresponds to vu1 onto
- *  the OTHER face's (fu2's) intersect list.
- *  If such a vu does not exist, make a self-loop in fu2.
- */
-void
-nmg_insert_other_fu_vu_in_list( is, list, vu1, fu2 )
-struct nmg_inter_struct	*is;
-struct nmg_ptbl		*list;
-struct vertexuse	*vu1;
-struct faceuse		*fu2;
-{
-	struct vertexuse	*vu2;
-	struct nmg_ptbl		*lp;
-	struct loopuse		*plu;		/* point loopuse */
-
-	NMG_CK_INTER_STRUCT(is);
-	NMG_CK_PTBL(list);
-	NMG_CK_VERTEXUSE(vu1);
-	NMG_CK_FACEUSE(fu2);
-
-	if( is->l1 == list )
-		lp = is->l2;
-	else
-		lp = is->l1;
-	if( vu2 = nmg_find_v_in_face( vu1->v_p, fu2 ) )  {
-		(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
-		return;
-	}
-	/* Insert copy of this vertex into other face, as self-loop. */
-	plu = nmg_mlv(&fu2->l.magic, vu1->v_p, OT_UNSPEC);
-	nmg_loop_g(plu->l_p);
-	vu2 = RT_LIST_FIRST( vertexuse, &plu->down_hd );
-	NMG_CK_VERTEXUSE(vu2);
-	(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
-
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("nmg_insert_other_fu_vu_in_list: vu1=x%x, made self-loop for fu2: vu2=x%x\n",
-			vu1, vu2);
-	}
-}
-
-/*
  * NEWLINE!
  *			N M G _ I S E C T _ L I N E 2 _ E D G E 2 P
  *
@@ -2296,8 +2293,8 @@ struct faceuse		*fu2;
 			rt_log("\t\tedge colinear with isect line.  Listing vu1a, vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
-		nmg_insert_other_fu_vu_in_list( is, list, vu1a, fu2 );
-		nmg_insert_other_fu_vu_in_list( is, list, vu1b, fu2 );
+		nmg_insert_other_fu_v_in_list( is, list, vu1a->v_p, fu2 );
+		nmg_insert_other_fu_v_in_list( is, list, vu1b->v_p, fu2 );
 		goto out;
 	}
 
@@ -2312,33 +2309,27 @@ struct faceuse		*fu2;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1a\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1a->l.magic);
-		nmg_insert_other_fu_vu_in_list( is, list, vu1a, fu2 );
+		nmg_insert_other_fu_v_in_list( is, list, vu1a->v_p, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 	} else if( dist[1] == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\t\tintersect point is vu1b\n");
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1b->l.magic);
-		nmg_insert_other_fu_vu_in_list( is, list, vu1b, fu2 );
+		nmg_insert_other_fu_v_in_list( is, list, vu1b->v_p, fu2 );
 		nmg_ck_face_worthless_edges( fu1 );
 	} else {
 		/* Intersection is in the middle of eu1, split edge */
-		struct vertexuse	*vu2;
 		struct vertexuse	*vu1_final;
 		struct vertex		*new_v;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		    	VPRINT("\t\tBreaking eu1 at intersect point (2d)", hit_pt);
 
-		/* if we can't find the appropriate vertex in the OTHER
-		 * face by a geometry search, build a new vertex.
+		/* if we can't find the appropriate vertex in the other
+		 * shell by a geometry search, build a new vertex.
 		 * Otherwise, re-use the existing one.
+		 * Can't just search other face, might miss relevant vert.
 		 */
-		vu2 = nmg_find_pt_in_face(hit_pt, fu2, &(is->tol));
-		if (vu2) {
-			/* the other face has a convenient vertex for us */
-			new_v = vu2->v_p;
-		} else {
-			new_v = (struct vertex *)NULL;
-		}
+		new_v = nmg_find_pt_in_shell(fu2->s_p, hit_pt, &(is->tol));
 		vu1_final = nmg_ebreak(new_v, eu1)->vu_p;
 		(void)nmg_tbl(list, TBL_INS_UNIQUE, &vu1_final->l.magic);
 		if( !new_v )  {
@@ -2350,7 +2341,7 @@ struct faceuse		*fu2;
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("\t\tre-using vertex v=x%x from face, vu=x%x\n", new_v, vu1_final);
 		}
-		nmg_insert_other_fu_vu_in_list( is, list, vu1_final, fu2 );
+		nmg_insert_other_fu_v_in_list( is, list, vu1_final->v_p, fu2 );
 
 		nmg_ck_face_worthless_edges( fu1 );
 	}
