@@ -3,7 +3,7 @@
  *	
  */
 #ifndef lint
-static const char RCSid[] = "$Header$";
+static char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -338,6 +338,7 @@ int	outcom_type;	/* Type of output command */
     if (*uos != '\0')
     {
 	fprintf(stderr, "Error: More output items than conversion specs\n");
+	fprintf( stderr, "Offending spec:\n\t%s\n", mycopy );
 	rt_free(mycopy, "Copy of user's output spec");
 	return;
     }

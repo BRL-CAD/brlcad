@@ -1,6 +1,6 @@
 /*      INTERACT.C      */
 #ifndef lint
-static const char RCSid[] = "$Header$";
+static char RCSid[] = "$Header$";
 #endif
 
 /*	INCLUDES	*/ 
@@ -143,7 +143,10 @@ void	*sPtr;
 		break;
 	    if (Ch == EOF)
 		if ((input_source == READING_FILE) && (sPtr == stdin))
+		{
+		    bu_log( "Unexpected EOF in input!!\n");
 		    exit(1);
+		}
 		else
 		    return;
 	    if (key_len == 0 && (Ch == ' ' || Ch == '\t'))
