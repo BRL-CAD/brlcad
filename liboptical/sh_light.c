@@ -36,21 +36,70 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
 
+
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
 RT_EXTERN(HIDDEN void	aim_set, (CONST struct bu_structparse *sdp, CONST char *name,
 CONST char *base, char *value));
 
+/***********************************************************************
+ *
+ *  light_cvt_visible()
+ *
+ *  Convert "visible" flag to "invisible" variable 
+ */
+void
+light_cvt_visible( sdp, name, base, value )
+register CONST struct bu_structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
+{
+	int *p = (int *)(base+sdp->sp_offset);
+
+	/* reconvert with optional units */
+	*p = !*p;
+}
+
+
+struct bu_structparse light_print_tab[] = {
+{"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	3, "dir",	LIGHT_OA(lt_dir),	aim_set },
+{"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
+{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+};
 struct bu_structparse light_parse[] = {
-	{"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%f",	3, "aim",	LIGHT_OA(lt_dir),	aim_set },
-	{"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "invisible",	LIGHT_O(lt_invisible),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+
+{"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	1, "b",		LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	1, "inten",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	1, "a",		LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+{"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"%f",	3, "dir",	LIGHT_OA(lt_dir),	aim_set },
+{"%f",	3, "d",		LIGHT_OA(lt_dir),	aim_set },
+{"%f",	3, "aim",	LIGHT_OA(lt_dir),	aim_set },
+
+{"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",  1, "invisible",	LIGHT_O(lt_visible),	light_cvt_visible },
+{"%d",	1, "v",		LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
+
+{"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -172,7 +221,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	BU_LIST_MAGIC_SET( &(lp->l), LIGHT_MAGIC );
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
-	lp->lt_invisible = 0;		/* explicitly modeled */
+	lp->lt_visible = 1;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
 	lp->lt_angle = 180;		/* spherical emission by default */
 	lp->lt_exaim = 0;		/* use default aiming mechanism */
@@ -279,7 +328,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	}
 	BU_LIST_INSERT( &(LightHead.l), &(lp->l) );
 
-	if( lp->lt_invisible )  {
+	if( ! lp->lt_visible )  {
 		lp->lt_rp = REGION_NULL;
 		/* Note that *dpp (reg_udata) is left null */
 		return(0);	/* don't show light, destroy it */
@@ -297,7 +346,7 @@ light_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	bu_struct_print(rp->reg_name, light_parse, (char *)dp);
+	bu_struct_print(rp->reg_name, light_print_tab, (char *)dp);
 }
 
 /*
@@ -379,7 +428,7 @@ mat_t	v2m;
 		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;
 		lp->lt_radius = 0.1;		/* mm, "point" source */
-		lp->lt_invisible = 1;		/* NOT explicitly modeled */
+		lp->lt_visible = 0;		/* NOT explicitly modeled */
 		lp->lt_shadows = 0;		/* no shadows for speed */
 		lp->lt_angle = 180;		/* spherical emission */
 		lp->lt_cosangle = -1;		/* cos(180) */
@@ -447,7 +496,7 @@ light_init()
 			    lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z] );
 			bu_log( "  %s: %s, %s, %g lumens (%d%%), halfang=%g\n",
 			    lp->lt_name,
-			    lp->lt_invisible ? "invisible":"visible",
+			    lp->lt_visible ? "visible":"invisible",
 			    lp->lt_shadows ? "casts shadows":"no shadows",
 			    lp->lt_intensity,
 			    (int)(lp->lt_fraction*100),
@@ -482,7 +531,7 @@ light_cleanup()
 	}
 	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lp);
-		if( lp->lt_rp != REGION_NULL && lp->lt_invisible == 0 )  {
+		if( lp->lt_rp != REGION_NULL && lp->lt_visible != 0 )  {
 			/* Will be cleaned up by mlib_free() */
 			continue;
 		}
@@ -610,7 +659,7 @@ struct seg *finished_segs;
 		pp=PartHeadp->pt_forw;
 		RT_CK_PT(pp);
 
-		if( lp->lt_invisible || lp->lt_infinite )  {
+		if( (! lp->lt_visible) || lp->lt_infinite )  {
 			light_visible = 1;
 #if RT_MULTISPECTRAL
 			bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
@@ -700,7 +749,7 @@ struct seg *finished_segs;
 	}
 
 	/* or something futher away than a finite invisible light */
-	if( lp->lt_invisible && !(lp->lt_infinite) ) {
+	if( (!lp->lt_visible) && !(lp->lt_infinite) ) {
 		vect_t	tolight;
 		VSUB2( tolight, lp->lt_pos, ap->a_ray.r_pt );
 		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
@@ -836,9 +885,10 @@ light_miss(ap)
 register struct application *ap;
 {
 	struct light_specific *lp = (struct light_specific *)(ap->a_uptr);
+	bu_log("miss\n");
 
 	RT_CK_LIGHT(lp);
-	if( lp->lt_invisible || lp->lt_infinite ) {
+	if( (!lp->lt_visible) || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
 		if( rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=1\n");
 		return(1);		/* light_visible = 1 */
@@ -848,6 +898,308 @@ register struct application *ap;
 	if( rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=0\n");
 	return(0);			/* light_visible = 0 */
 }
+
+struct light_obs_stuff {
+	struct application *ap;
+	struct shadework *swp;
+	int have;
+	struct light_specific *lp;
+	int *rand_idx;
+
+	void *inten;
+	int iter;
+	vect_t to_light_center;	/* coordinate system on light */
+	vect_t light_x;
+	vect_t light_y;
+};
+
+
+static int 
+light_vis(los)
+struct light_obs_stuff *los;
+{
+	fastf_t f;
+	float t;
+	struct application sub_ap;
+	int tmp;
+	double radius, angle, x, y; 
+	point_t shoot_pt;
+	vect_t shoot_dir;
+
+	if( rdebug & RDEBUG_LIGHT ) bu_log("light_vis\n");
+
+	/* compute the light direction */
+	if( los->lp->lt_infinite ) {
+		/* Infinite lights are point sources, no fuzzy penumbra */
+		VMOVE( shoot_dir, los->lp->lt_vec );
+
+	} else {
+
+		/* We're going to shoot at a point on the apporximating
+		 * sphere for the light source.  We pick a point on the 
+		 * circle (presented area) for the light source from this
+		 * angle.  This is done by picking random radius and angle 
+		 * values on the disc.
+		 */
+		radius = los->lp->lt_radius * 
+		/*			drand48(); */
+			(bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
+		angle =  M_PI * 2.0 * 
+		/*			drand48(); */
+			(bn_rand_half(los->ap->a_resource->re_randptr) + 0.5);
+
+		x = radius * cos(angle);
+		y = radius * sin(angle);
+
+		VJOIN2(shoot_pt, los->lp->lt_pos, 
+		       x, los->light_x,
+		       y, los->light_y);
+
+		VSUB2(shoot_dir, shoot_pt, los->swp->sw_hit.hit_point);
+	}
+
+	if (rdebug & RDEBUG_LIGHT) {
+		VPRINT("shoot_dir", shoot_dir);
+	}
+
+
+	if (rdebug& RDEBUG_RAYPLOT) {
+		point_t ray_endpt;
+
+ /* Yelow -- light visibility ray */
+		pl_color(stdout, 200, 200, 0);
+		VADD2(ray_endpt, los->swp->sw_hit.hit_point, shoot_dir);
+		pdv_3line(stdout, los->swp->sw_hit.hit_point, ray_endpt);
+	}
+
+	VUNITIZE( shoot_dir ); /* xxx We should just reuse to_light */
+
+
+
+	/*
+	 * See if ray from hit point to light lies within light beam
+	 * Note: this is should always be true for infinite lights!
+	 */
+	if( -VDOT(shoot_dir, los->lp->lt_aim) < los->lp->lt_cosangle )  {
+		/* dark (outside of light beam) */
+		if (rdebug & RDEBUG_LIGHT)
+			bu_log("point outside beam, obscured: %s\n",
+			       los->lp->lt_name);
+		return 0;
+	}
+
+
+	if( !(los->lp->lt_shadows) )  {
+	       /* "fill light" in beam, don't care about shadows */
+		if (rdebug & RDEBUG_LIGHT)
+			bu_log("fill light, no shadow, visible: %s\n",
+			       los->lp->lt_name);
+#if RT_MULTISPECTRAL
+		/* XXX Need a power level for this! */
+		bn_tabdata_constval( ((struct bn_tabdata *)los->inten), 1.0);
+#else
+		VSETALL( ((vectp_t)los->inten), 1 );
+#endif
+
+		return -1;
+	}
+
+
+
+	/*
+	 *  Fire ray at light source to check for shadowing.
+	 *  (This SHOULD actually return an energy spectrum).
+	 *  Advance start point slightly off surface.
+	 */
+	sub_ap = *los->ap;			/* struct copy */
+
+	VMOVE( sub_ap.a_ray.r_dir, shoot_dir );
+	{
+		register fastf_t f;
+		f = los->ap->a_rt_i->rti_tol.dist;
+		VJOIN1( sub_ap.a_ray.r_pt, los->swp->sw_hit.hit_point, f, 
+			shoot_dir);
+	}
+	sub_ap.a_rbeam = los->ap->a_rbeam + 
+		los->swp->sw_hit.hit_dist * 
+		los->ap->a_diverge;
+	sub_ap.a_diverge = los->ap->a_diverge;
+
+	sub_ap.a_hit = light_hit;
+	sub_ap.a_miss = light_miss;
+	sub_ap.a_user = -1;		/* sanity */
+	sub_ap.a_uptr = (genptr_t)los->lp;	/* so we can tell.. */
+	sub_ap.a_level = 0;
+	/* Will need entry & exit pts, for filter glass ==> 2 */
+	/* Continue going through air ==> negative */
+	sub_ap.a_onehit = -2;
+
+	VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
+	sub_ap.a_purpose = los->lp->lt_name;	/* name of light shot at */
+
+	RT_CK_LIGHT((struct light_specific *)(sub_ap.a_uptr));
+
+
+	if( rt_shootray( &sub_ap ) )  {
+		/* light visible */
+		if (rdebug & RDEBUG_LIGHT)
+			bu_log("light visible: %s\n", los->lp->lt_name);
+
+#if RT_MULTISPECTRAL
+		if (swp->msw_intensity[i] == BN_TABDATA_NULL) {
+			swp->msw_intensity[i] = sub_ap.a_spectrum;
+		} else {
+			bn_tabdata_add(swp->msw_intensity[i],
+				       swp->msw_intensity[i],
+				       sub_ap.a_spectrum);
+
+			bn_tabdata_free(sub_ap.a_spectrum);
+		}
+		sub_ap.a_spectrum = BN_TABDATA_NULL;
+#else
+		VMOVE( ((vectp_t)los->inten), sub_ap.a_color );
+#endif
+		return 1;
+	}
+	/* dark (light obscured) */
+	if (rdebug & RDEBUG_LIGHT)
+		bu_log("light obscured: %s\n", los->lp->lt_name);
+
+	return 0;
+}
+
+/*
+ *			L I G H T _ O B S C U R A T I O N
+ *
+ *	Determine the visibility of each light source in the scene from a
+ *	particular location.
+ */
+void
+light_obs(ap, swp, have)
+struct application *ap;
+struct shadework *swp;
+int have;
+{
+	register struct light_specific *lp;
+	register int	i;
+#if !RT_MULTISPECTRAL
+	register fastf_t *intensity;
+#endif
+	register fastf_t *tl_p;
+	register fastf_t f;
+	int vis_ray;
+	int tot_vis_rays;
+	int visibility;
+	vect_t light_tmp;
+	int ret;
+	struct light_obs_stuff los;
+	static int rand_idx;
+
+	if( rdebug & RDEBUG_LIGHT )
+		bu_log("computing Light obscuration: start\n");
+
+	los.rand_idx = &rand_idx;
+	los.ap = ap;
+	los.swp = swp;
+	los.have = have;
+
+	/*
+	 *  Determine light visibility
+	 *
+	 *  The sw_intensity field does NOT include the light's
+	 *  emission spectrum (color), only path attenuation.
+	 *  sw_intensity=(1,1,1) for no attenuation.
+	 */
+	tl_p = swp->sw_tolight;
+
+	i = 0;
+	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		RT_CK_LIGHT(lp);
+
+		if (rdebug & RDEBUG_LIGHT)
+			bu_log("computing for light %d\n", i);
+		swp->sw_lightfract[i] = 0.0;
+
+		if( lp->lt_infinite )	tot_vis_rays = 1;
+		else			tot_vis_rays = lp->lt_shadows;
+
+		los.lp = lp;
+#if RT_MULTISPECTRAL
+		los.inten = (void *)&swp->msw_intensity[i];
+#else
+		los.inten = (void *)&swp->sw_intensity[i];
+#endif
+
+		/* create a coordinate system about the light center
+		 * with the hitpoint->light ray as one of the axes
+		 */
+		VSUB2(los.to_light_center, lp->lt_pos, swp->sw_hit.hit_point);
+
+		VUNITIZE(los.to_light_center);
+		bn_vec_ortho( los.light_x, los.to_light_center);
+		VCROSS(los.light_y, los.to_light_center, los.light_x);
+
+		/*
+		 *  If we have a normal, test against light direction
+		 */
+		if( (have & MFI_NORMAL) && (swp->sw_transmit <= 0) )  {
+			if (VDOT(swp->sw_hit.hit_normal,
+				 los.to_light_center)      < 0 ) {
+				/* backfacing, opaque */
+				if (rdebug & RDEBUG_LIGHT)
+				    bu_log("norm backfacing, opaque surf:%s\n",
+					   lp->lt_name);
+				continue;
+			}
+		}
+
+		visibility = 0;
+		for (vis_ray = 0 ; vis_ray < tot_vis_rays ; vis_ray ++) {
+			los.iter = vis_ray;
+
+			switch (light_vis(&los)) {
+			case 1:
+				/* remember the last ray that hit */
+				VMOVE(tl_p, los.to_light_center);
+				visibility++;
+				break;
+			case -1:
+				/* this is our clue to give up on
+				 * this light source.  Probably an infinite
+				 * point light source.
+				 */
+				VMOVE(tl_p, los.to_light_center);
+				visibility = vis_ray = tot_vis_rays;
+				break;
+			case -2:
+				visibility = 0;
+				vis_ray = tot_vis_rays;
+				break;
+			}
+		}
+		if (visibility) {
+			swp->sw_visible[i] = (char *)lp;
+			swp->sw_lightfract[i] =
+				(fastf_t)visibility / (fastf_t)tot_vis_rays;
+		} else {
+			swp->sw_visible[i] = (char *)0;
+		}
+
+		/* Advance to next light */
+#if RT_MULTISPECTRAL
+		/* Release sub_ap? */
+		bn_tabdata_scale(swp->msw_intensity[i], swp->sw_lightfract[i]);
+#else
+		intensity += 3;
+#endif
+		tl_p += 3;
+		i++;
+	}
+
+	if( rdebug & RDEBUG_LIGHT ) bu_log("computing Light obscruration: end\n");
+}
+
+
 
 /*
  *			L I G H T _ V I S I B I L I T Y
@@ -1003,9 +1355,18 @@ int have;
 				bu_log("light visible: %s\n", lp->lt_name);
 			swp->sw_visible[i] = (char *)lp;
 #if RT_MULTISPECTRAL
-			BU_ASSERT( swp->msw_intensity[i] == BN_TABDATA_NULL );
-			swp->msw_intensity[i] = sub_ap.a_spectrum;
+			if (swp->msw_intensity[i] == BN_TABDATA_NULL) {
+				swp->msw_intensity[i] = sub_ap.a_spectrum;
+			} else {
+				bn_tabdata_add(swp->msw_intensity[i],
+					       swp->msw_intensity[i],
+					       sub_ap.a_spectrum);
+
+				bn_tabdata_free(sub_ap.a_spectrum);
+				bn_tabdata_scale(swp->msw_intensity[i], iter);
+			}
 			sub_ap.a_spectrum = BN_TABDATA_NULL;
+
 #else
 			VMOVE( intensity, sub_ap.a_color );
 #endif
@@ -1028,3 +1389,5 @@ next:
 
 	if( rdebug & RDEBUG_LIGHT ) bu_log("computing Light visibility: end\n");
 }
+
+

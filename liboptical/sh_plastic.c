@@ -322,6 +322,7 @@ char	*dp;
 	register struct light_specific *lp;
 #if !RT_MULTISPECTRAL
 	register fastf_t *intensity;
+	vect_t  inten;
 	register fastf_t refl;
 #endif
 	register fastf_t *to_light;
@@ -389,7 +390,7 @@ char	*dp;
 	 * may have been changed by another shader in a stack.  There is no
 	 * way that anyone else can tell us whether lights are visible.
 	 */
-	light_visibility(ap, swp, ps->mfp->mf_inputs);
+	light_obs(ap, swp, ps->mfp->mf_inputs);
 
 	/* Consider effects of each light source */
 	for( i=ap->a_rt_i->rti_nlights-1; i>=0; i-- )  {
@@ -400,11 +401,13 @@ char	*dp;
 		/* Light is not shadowed -- add this contribution */
 #if !RT_MULTISPECTRAL
 		intensity = swp->sw_intensity+3*i;
+		/* Scale for the amount of the light we could actually see */
+		VSCALE(inten, intensity, swp->sw_lightfract[i]);
 #endif
 		to_light = swp->sw_tolight+3*i;
 
 		/* Diffuse reflectance from this light source. */
-		if( (cosine = VDOT( swp->sw_hit.hit_normal, to_light )) > 0.0 )  {
+		if( (cosine=VDOT(swp->sw_hit.hit_normal, to_light)) > 0.0 )  {
 			if( cosine > 1.00001 )  {
 				bu_log("cosI=1+%g (x%d,y%d,lvl%d)\n", cosine-1,
 					ap->a_x, ap->a_y, ap->a_level);
@@ -418,7 +421,7 @@ char	*dp;
 				cosine * ps->wgt_diffuse );
 #else
 			refl = cosine * lp->lt_fraction * ps->wgt_diffuse;
-			VELMUL3( work, matcolor, lp->lt_color, intensity );
+			VELMUL3( work, matcolor, lp->lt_color, inten );
 			VJOIN1( swp->sw_color, swp->sw_color,
 				refl, work );
 #endif
@@ -457,10 +460,8 @@ char	*dp;
 #else
 				phg_ipow(cosine, ps->shine);
 #endif /* PHAST_PHONG */
-			VELMUL( work, lp->lt_color,
-				intensity );
-			VJOIN1( swp->sw_color, swp->sw_color,
-				refl, work );
+			VELMUL( work, lp->lt_color, inten );
+			VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 #endif
 		}
 	}

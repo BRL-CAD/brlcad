@@ -94,9 +94,9 @@ struct noise_specific {
 	vect_t	delta;
 	mat_t	m_to_sh;	/* model to shader space matrix */
 	mat_t	sh_to_m;	/* shader to model space matrix */
-	double max_delta;
-	double nsd;
-	double minval;		/* don't use noise value less than this */
+	double	max_delta;
+	double	nsd;
+	double	minval;		/* don't use noise value less than this */
 	int	shader_number;
 };
 
