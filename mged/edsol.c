@@ -8586,6 +8586,7 @@ rt_arb_calc_planes(
 		  bu_vls_printf(&tmp_vls, "rt_arb_calc_planes: No eqn for face %d%d%d%d\n",
 				p1+1, p2+1, p3+1, arb_faces[type][i*4+3]+1);
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+			bu_vls_free(&tmp_vls);
 		  return -1;
 		}
 	}
