@@ -145,7 +145,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 #if CRAY && !__STDC__
 		loc = ((char *)base) + ((int)ip->sp_offset*sizeof(int));
 #else
-		loc = ((char *)base) + ((int)ip->sp_offset);
+		loc = ((char *)base) + ip->sp_offset;
 #endif
 
 		switch( ip->sp_fmt[0] )  {
@@ -292,7 +292,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 #if CRAY && !__STDC__
 		loc = ((char *)base) + ((int)ip->sp_offset*sizeof(int));
 #else
-		loc = ((char *)base) + ((int)ip->sp_offset);
+		loc = ((char *)base) + ip->sp_offset;
 #endif
 
 		switch( ip->sp_fmt[0] )  {
@@ -619,7 +619,7 @@ bu_struct_lookup(register const struct bu_structparse *sdp, register const char 
 #if CRAY && !__STDC__
 		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)sdp->sp_offset));
+		loc = (char *)(base + sdp->sp_offset);
 #endif
 
 		if (sdp->sp_fmt[0] == 'i') {
@@ -939,7 +939,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 #if CRAY && !__STDC__
     loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-    loc = (char *)(base + ((int)sdp->sp_offset));
+    loc = (char *)(base + sdp->sp_offset);
 #endif
 
     if (sdp->sp_fmt[0] == 'i' )  {
@@ -1052,7 +1052,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 #if CRAY && !__STDC__
 		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)sdp->sp_offset));
+		loc = (char *)(base + sdp->sp_offset);
 #endif
 
 		if (sdp->sp_fmt[0] == 'i' )  {
@@ -1225,7 +1225,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 #if CRAY && !__STDC__
 		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)sdp->sp_offset));
+		loc = (char *)(base + sdp->sp_offset);
 #endif
 
 		if (sdp->sp_fmt[0] == 'i')  {
@@ -1402,7 +1402,7 @@ bu_vls_struct_print2(struct bu_vls			*vls_out,
 #if CRAY && !__STDC__
 		loc = (char *)(base + ((int)sdp->sp_offset*sizeof(int)));
 #else
-		loc = (char *)(base + ((int)sdp->sp_offset));
+		loc = (char *)(base + sdp->sp_offset);
 #endif
 
 		if (sdp->sp_fmt[0] == 'i' )  {
