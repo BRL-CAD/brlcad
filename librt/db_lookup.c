@@ -250,8 +250,6 @@ int			noisy;
  * Add an entry to the directory.
  * Try to make the regular path through the code as fast as possible,
  * to speed up building the table of contents.
- * Note: This is used only for v4 databases.
- * v5 databases use db5_diradd_handler()
  */
 struct directory *
 db_diradd( dbip, name, laddr, len, flags, ptr )
@@ -279,7 +277,11 @@ genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (mino
 	}
 
 	bu_vls_init(&local);
-	bu_vls_strncpy(&local, name, NAMESIZE);
+	if( dbip->dbi_version < 5 ) {
+		bu_vls_strncpy(&local, name, NAMESIZE);
+	} else {
+		bu_vls_strcpy(&local, name);
+	}
 	if (db_dircheck(dbip, &local, 0, &headp) < 0) {
 		bu_vls_free(&local);
 		return DIR_NULL;
