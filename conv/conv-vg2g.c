@@ -23,6 +23,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "db.h"
 
+void	mat_pr();
+
 union record rec;
 
 char line[256];
@@ -57,7 +59,7 @@ char *argv[];
 		if( strcmp(rec.i.i_version, ID_VERSION) == 0 ) {
 			(void)printf("%s: NO conversion necessary\n", argv[1]);
 			(void)putchar(7);
-			return;
+			exit(0);
 		}
 
 		else {
@@ -193,6 +195,7 @@ top:
 	printf("%d database granules written\n", count);
 }
 
+void
 mat_pr( title, mp )
 char *title;
 float *mp;
