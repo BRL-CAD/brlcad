@@ -124,15 +124,6 @@ static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
 #define MAG1	51.0	/* magnitude of dither noise in color cube */
 #define MAG2	8.0	/* magnitude of dither noise along primaries*/
 
-/* map an 8 bit value into a "bin" on the color cube */
-#define MAP(x, c) { \
-	if (c < 26 ) x=0; \
-	else if (c < 77 ) x=1; \
-	else if (c < 128 ) x=2; \
-	else if (c < 179 ) x=3; \
-	else if (c < 230 ) x=4; \
-	else x=5; }
-
 #define DITHER(d, v, noise, mag) { \
 	if ( (d = v + noise * mag) > 255) d=255; \
 	else if (d < 0) d = 0; }
@@ -145,9 +136,9 @@ double *end_table = &table[10];
 /* convert 24 bit pixel into appropriate 8 bit pixel */
 #define DITHERMAP(red, green, blue, i) {\
 	register _r, _g, _b; double dr, dg, db; \
-	dr = NOISE(); DITHER(_r, red, dr, MAG1); MAP(_r, _r); \
-	dg = NOISE(); DITHER(_g, green, dg, MAG1); MAP(_g, _g); \
-	db = NOISE(); DITHER(_b, blue, db, MAG1); MAP(_b, _b); \
+	dr = NOISE(); DITHER(_r, red, dr, MAG1); _r = (_r+26) / 51; \
+	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
+	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \
 	if (_r == _g) { \
 		if (_r == _b) {		/* grey */ \
 			DITHER(_r, red, dr, MAG2); \
@@ -177,7 +168,7 @@ double *end_table = &table[10];
 
 #define REMAPIXEL(red, green, blue, i) {\
 	register unsigned char _r, _g, _b; \
-	MAP(_r, red); MAP(_g, green); MAP(_b, blue); \
+	_r = (red+26)/51; _g = (green+26)/51; _b = (blue+26)/51; \
 	if (_r == _g) { \
 	    if (_r == _b) i = nvec[ ( (red+green+blue) /3) >> 4]; /* grey */ \
 	    else if (_r == 0)  i = bvec[blue/16];	   /* all blue */ \
