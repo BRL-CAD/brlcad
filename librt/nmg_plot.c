@@ -765,30 +765,12 @@ CONST struct loopuse	*lu;
 long			*b;
 int			red, green, blue;
 {
-#if 0
-	struct edgeuse	*eu;
-	long		magic1;
-
-	NMG_CK_LOOPUSE(lu);
-	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, lu->index);
-
-	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
-	if (magic1 == NMG_VERTEXUSE_MAGIC &&
-	    lu->orientation != OT_BOOLPLACE) {
-	    	nmg_pl_v(fp, RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, b);
-	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			nmg_pl_eu(fp, eu, b, red, green, blue);
-		}
-	}
-#else
 	struct rt_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0, 0);
 	rt_plot_vlblock(fp, vbp);
 	rt_vlblock_free(vbp);
-#endif
 }
 
 /*
@@ -801,18 +783,6 @@ CONST struct faceuse	*fu;
 long			*b;
 int			red, green, blue;
 {
-#if 0
-	struct loopuse *lu;
-
-	NMG_CK_FACEUSE(fu);
-
-	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, fu->index);
-
-	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
-
-		nmg_pl_lu(fp, lu, b, red, green, blue);
-	}
-#else
 	struct loopuse		*lu;
 	struct rt_vlblock	*vbp;
 	int 		loopnum = 0;
@@ -828,7 +798,6 @@ int			red, green, blue;
 
 	rt_plot_vlblock(fp, vbp);
 	rt_vlblock_free(vbp);
-#endif
 }
 
 /*
@@ -842,57 +811,26 @@ nmg_pl_s(fp, s)
 FILE			*fp;
 CONST struct shell	*s;
 {
-#if 0
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	long		*b;
-
-	NMG_CK_SHELL(s);
-	if( s->sa_p )  {
-		NMG_CK_SHELL_A( s->sa_p );
-		pdv_3space( fp, s->sa_p->min_pt, s->sa_p->max_pt );
-	}
-
-	/* get space for flag array, to ensure each item is done once */
-	b = (long *)rt_calloc( s->r_p->m_p->maxindex, sizeof(long),
-		"nmg_pl_s flag[]" );
-
-	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
-		NMG_CK_FACEUSE(fu);
-		nmg_pl_fu(fp, fu, b, 80, 100, 170);
-	}
-
-	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		NMG_CK_LOOPUSE(lu);
-		nmg_pl_lu(fp, lu, b, 255, 0, 0);
-	}
-
-	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
-		NMG_CK_EDGEUSE(eu);
-		NMG_CK_EDGE(eu->e_p);
-
-		nmg_pl_eu(fp, eu, b, 200, 200, 0 );
-	}
-	if (s->vu_p) {
-		nmg_pl_v(fp, s->vu_p->v_p, b );
-	}
-
-	if( RT_LIST_IS_EMPTY( &s->fu_hd ) &&
-	    RT_LIST_IS_EMPTY( &s->lu_hd ) &&
-	    RT_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p) {
-	    	rt_log("WARNING nmg_pl_s(): shell has no children\n");
-	}
-
-	rt_free( (char *)b, "nmg_pl_s flag[]" );
-#else
 	struct rt_vlblock	*vbp;
 
 	vbp = rt_vlblock_init();
 	nmg_vlblock_s(vbp, s, 0);
 	rt_plot_vlblock(fp, vbp);
 	rt_vlblock_free(vbp);
-#endif
+}
+
+void
+nmg_pl_shell(fp, s, fancy)
+FILE			*fp;
+CONST struct shell	*s;
+int			fancy;
+{
+	struct rt_vlblock	*vbp;
+
+	vbp = rt_vlblock_init();
+	nmg_vlblock_s(vbp, s, fancy);
+	rt_plot_vlblock(fp, vbp);
+	rt_vlblock_free(vbp);
 }
 
 /*
