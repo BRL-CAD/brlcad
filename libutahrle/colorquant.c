@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 10.3  94/12/30  00:37:27  mike
+ * DEC Alpha
+ * 
  * Revision 10.2  94/08/10  23:19:00  gdurf
  * Altered #defines and #includes to conform to BRL-CAD standards
  * 
