@@ -84,10 +84,8 @@ extern Tk_Window tkwin;
 #include "./dm.h"
 
 #ifdef XMGED
-void	slewview();
 
 extern void     (*axis_color_hook)();
-extern int     (*bindkey_hook)();
 extern int      (*editline_hook)();
 extern int	(*fgetc_hook)();
 extern int	(*fputc_hook)();
@@ -127,6 +125,7 @@ int		dmaflag;		/* Set to 1 to force new screen DMA */
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
+int             (*bindkey_hook)() = NULL;
 int		(*cmdline_hook)() = NULL;
 void		(*viewpoint_hook)() = NULL;
 
@@ -138,6 +137,7 @@ void            (*cmdline_sig)();
 void		sig2();
 void		new_mats();
 void		usejoy();
+void            slewview();
 int		interactive = 0;	/* >0 means interactive */
 int             cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
@@ -187,7 +187,6 @@ char **argv;
 
 #ifdef XMGED
 	axis_color_hook = NULL;
-	bindkey_hook = NULL;
 	editline_hook = NULL;
 	fputc_hook = NULL;
 	fputs_hook = NULL;
@@ -337,7 +336,19 @@ char **argv;
 
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
+#if 0
 		mged_cmd( argc-2, argv+2, (struct funtab *)NULL );
+#else
+		/*
+		   Call cmdline instead of calling mged_cmd directly
+		   so that access to tcl is possible.
+	        */
+		for(argc -= 2, argv += 2; argc; --argc, ++argv)
+		  rt_vls_strcat(&input_str, *argv);
+
+		cmdline(&input_str, TRUE);
+		rt_vls_free(&input_str);
+#endif
 		f_quit(0, NULL);
 		/* NOTREACHED */
 	}
