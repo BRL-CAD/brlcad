@@ -12,7 +12,7 @@ Release 2.3
 (2-Nov-87)
 .fi
 .sp
-.sp "VERSION"
+.IP "VERSION"
 .sp
 This document is printed from the README file in the CAD distribution.
 The printed copies are usually somewhat older
@@ -29,7 +29,7 @@ half-inch magtape is the strongly preferred format, and can be written
 at either 1600 or 6250 bpi, in either TAR format with 10k byte records,
 or CPIO format with 5k byte records. For sites with no half-inch tape
 drives, Silicon Graphics and SUN tape cartridges can also be
-accommodated, with more difficulty for BRL.
+accommodated.
 .sp
 2)  A letter indicating:
 .sp
@@ -40,28 +40,33 @@ accommodated, with more difficulty for BRL.
 	-- That you agree to the conditions listed below.
 .fi
 .sp
-The software is distributed free of charge with the following conditions:
+This software is an unpublished work that is not generally available to the
+public, except through the terms of this limited distribution.
+The United States Department of the Army grants a royalty-free,
+nonexclusive, nontransferable license and right to use,
+free of charge, with the following terms and conditions:
 .sp
-1.  The BRL CAD package source files won't be passed on to third parties.  If
-someone wants them, have them contact BRL.  We need to know who has
-what, and what it is being used for.
+1.  The BRL CAD package source files will not be disclosed to third
+parties.  BRL needs to know who has what, and what it is being used for.
 .sp
 2.  BRL will be credited should the software be used in a product or written
 about in any publication.  BRL will be referenced as the original
 source in any advertisements.
 .sp
-3.  BRL assumes no legal responsibility for source code and its subsequent
-use.  No warranty is expressed or implied.
+3.  The software is provided "as is", without warranty by BRL.
+In no event shall BRL be liable for any loss or for any indirect,
+special, punitive, exemplary, incidental, or consequential damages
+arising from use, possession, or performance of the software.
 .sp
-4.  If any bugs or problems are found they will be reported back to BRL.
-.fi
+4.  When bugs or problems are found, you will make a reasonable effort
+to report them back to BRL.
 .sp
-You will own full rights to any databases or images you create with this
+5.  Before using the software at additional sites, or for permission to
+use this work as part of a commercial package, you agree to first obtain
+authorization from BRL.
+.sp
+6. You will own full rights to any databases or images you create with this
 package.
-.sp
-To obtain authorization for use at additional sites, or for permission
-to use this work as part of a commercial package, please contact the
-authors at the address below.
 .sp
 For non-US sites, an extra step is required. Any requests from Foreign
 governments should be sent on a Government to Government basis. You must
@@ -336,6 +341,7 @@ brl-vgr	VAX 780, FPA, 4.3 BSD
 brl-virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
 brl-vista	SGI 3030, w/FP chip, UNIX release 3.5
 brl-vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
+brl-vhs	Silicon Graphics 4D/60T, 12.5 Mhz clock 8MB memory
 c1east	Convex C1 XP (2 IOPs, 4 Multibus, 4-way disk striping, 64 Mbytes), Convex Unix 6.0.1.12
 elxsi-gnu	Elxsi 6420, BSD 4.2 16 MB
 elxsi-gnuy	Elxsi 6420, Sys Vr2, 16MB
@@ -367,6 +373,7 @@ Pix/sec	Ray/sec	*780	Machine & OS
 _
   83.2	  118.8	  1.00	brl-vgr
  262.8	  375.4	  3.16	brl-vmb, UTX 2.0
+ 670.9	  958.3	  8.07	brl-vhs, -O2 optimization
 2420.2	 3456.5	 29.10	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
@@ -434,6 +441,7 @@ Pix/sec	Ray/sec	*780	Machine & OS
 _
   36.0	   64.9	  1.00	brl-vgr
  121.3	  218.6	  3.37	brl-vmb, UTX 2.0
+ 302.6	  545.6	  9.41	brl-vhs, -O2 optimization
  938.4	 1691.8	 26.07	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
@@ -491,6 +499,7 @@ Pix/sec	Ray/sec	*780	Machine & OS
 _
   30.5	   36.5	 1.00	brl-vgr
  156.0	  186.4	 5.11	brl-vmb, UTX 2.0
+ 374.0	  447.0	12.25	brl-vhs, -O2 optimization
  978.2	 1169.0	32.03	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
@@ -548,6 +557,7 @@ Pix/sec	Ray/sec	*780	Machine & OS
 _
   23.0	   34.2	  1.00	brl-vgr
  132.0	  196.2	  5.74	brl-vgr, UTX 2.0
+ 278.6	  414.1	12.11	brl-vhs, -O2 optimization
  702.1	 1043.6	 30.51	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
