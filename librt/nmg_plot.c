@@ -562,9 +562,7 @@ struct nmg_ptbl *b;
 	pointp_t p;
 	static char label[128];
 
-	if (nmg_tbl(b, TBL_LOC, &v->magic) >= 0) return;
-
-	(void)nmg_tbl(b, TBL_INS, &v->magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &v->magic) >= 0) return;
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_VERTEX_G(v->vg_p);
@@ -592,9 +590,7 @@ int		red, green, blue;
 	point_t end0, end1;
 	vect_t v;
 
-	if (nmg_tbl(b, TBL_LOC, &e->magic) >= 0) return;
-
-	(void)nmg_tbl(b, TBL_INS, &e->magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &e->magic) >= 0) return;
 	
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
@@ -648,8 +644,7 @@ int		red, green, blue;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	if (nmg_tbl(b, TBL_LOC, &eu->l.magic) >= 0) return;
-	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &eu->l.magic) >= 0) return;
 
 	nmg_pl_e(fp, eu->e_p, b, red, green, blue);
 
@@ -696,9 +691,7 @@ int		red, green, blue;
 	long		magic1;
 
 	NMG_CK_LOOPUSE(lu);
-	if (nmg_tbl(b, TBL_LOC, &lu->l.magic) >= 0) return;
-
-	(void)nmg_tbl(b, TBL_INS, &lu->l.magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &lu->l.magic) >= 0) return;
 
 	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
@@ -722,8 +715,7 @@ struct nmg_ptbl *b;
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
-	if (nmg_tbl(b, TBL_LOC, &fu->l.magic) >= 0) return;
-	(void)nmg_tbl(b, TBL_INS, &fu->l.magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &fu->l.magic) >= 0) return;
 
 	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pl_lu(fp, lu, b, 80, 100, 170 );
@@ -827,9 +819,7 @@ struct nmg_ptbl *b;
 	static char label[128];
 	struct vlhead	*vh;
 
-	if (nmg_tbl(b, TBL_LOC, &v->magic) >= 0) return;
-
-	(void)nmg_tbl(b, TBL_INS, &v->magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &v->magic) >= 0) return;
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_VERTEX_G(v->vg_p);
@@ -861,9 +851,7 @@ int		red, green, blue;
 	vect_t v;
 	struct vlhead	*vh;
 
-	if (nmg_tbl(b, TBL_LOC, &e->magic) >= 0) return;
-
-	(void)nmg_tbl(b, TBL_INS, &e->magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &e->magic) >= 0) return;
 	
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
@@ -919,8 +907,7 @@ int		red, green, blue;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	if (nmg_tbl(b, TBL_LOC, &eu->l.magic) >= 0) return;
-	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &eu->l.magic) >= 0) return;
 
 	nmg_vlblock_e(vbp, eu->e_p, b, red, green, blue);
 
@@ -964,9 +951,7 @@ int		red, green, blue;
 	long		magic1;
 
 	NMG_CK_LOOPUSE(lu);
-	if (nmg_tbl(b, TBL_LOC, &lu->l.magic) >= 0) return;
-
-	(void)nmg_tbl(b, TBL_INS, &lu->l.magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &lu->l.magic) >= 0) return;
 
 	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
@@ -990,8 +975,7 @@ struct nmg_ptbl *b;
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
-	if (nmg_tbl(b, TBL_LOC, &fu->l.magic) >= 0) return;
-	(void)nmg_tbl(b, TBL_INS, &fu->l.magic);
+	if (nmg_tbl(b, TBL_INS_UNIQUE, &fu->l.magic) >= 0) return;
 
 	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_vlblock_lu(vbp, lu, b, 80, 100, 170 );
