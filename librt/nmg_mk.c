@@ -860,7 +860,7 @@ register struct vertexuse *vu;
 	/* erase existence of this vertexuse from parent */
 	if (*vu->up.magic_p == NMG_SHELL_MAGIC)  {
 		vu->up.s_p->vu_p = (struct vertexuse *)NULL;
-		ret = nmg_is_shell_empty(vu->up.s_p);
+		ret = nmg_shell_is_empty(vu->up.s_p);
 	} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 		/* Reset the hack */
 		RT_LIST_INIT( &vu->up.lu_p->down_hd );
@@ -990,6 +990,8 @@ struct loopuse *lu1;
 		while( RT_LIST_NON_EMPTY( &lu1->down_hd ) )  {
 			(void)nmg_keu(RT_LIST_FIRST(edgeuse, &lu1->down_hd) );
 		}
+	} else if ( magic1 == RT_LIST_HEAD_MAGIC )  {
+		/* down_hd list is empty, no problem */
 	} else {
 		rt_log("nmg_klu(x%x) magic=%s\n", lu1, rt_identify_magic(magic1) );
 		rt_bomb("nmg_klu: unknown type for loopuse child\n");
