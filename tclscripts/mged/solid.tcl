@@ -15,7 +15,7 @@
 #
 # Description -
 #	solid_data_vv_pairs - an array that holds the default variable/value pairs.
-#	solid_data_init - initializes the solid_data variable.
+#	solid_data_init - initializes the solid_data variables.
 #
 
 set solid_data_vv_pairs {
