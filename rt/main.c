@@ -109,7 +109,6 @@ char **argv;
 	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
 
 	beginptr = sbrk(0);
-	width = height = 512;
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
 
@@ -127,6 +126,12 @@ char **argv;
 		(void)fputs(usage, stderr);
 		exit(1);
 	}
+
+	/* If user gave no sizing info at all, use 512 as default */
+	if( width <= 0 && cell_width <= 0 )
+		width = 512;
+	if( height <= 0 && cell_height <= 0 )
+		height = 512;
 
 	if( incr_mode )  {
 		x = height;
