@@ -32,15 +32,15 @@ dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
 
-AC_INIT(librt/bool.c)
-AC_PREREQ(2.50)
-
 MAJOR_VERSION=6
 MINOR_VERSION=1
 PATCH_VERSION=0
 CONFIG_DATE=`date +%Y%m%d`
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
+
+AC_INIT(librt/bool.c)
+AC_PREREQ(2.50)
 
 # necessary for proper file creation on nfs volumes
 umask 022
@@ -143,7 +143,10 @@ AC_SUBST(GL_LIBS)
 LEX_CFLAGS="-Dyylex=cmd_nop"
 AC_SUBST(LEX_CFLAGS)
 
-AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique), AC_ERROR("Don't know the endian of this machine!"))
+AC_C_BIGENDIAN(AC_DEFINE(NATURAL_IEEE,,64b floating point storage technique), 
+	       AC_DEFINE(REVERSED_IEEE,,64b floating point storage technique),
+	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	       AC_MSG_ERROR([*** Don't know the endian of this machine! ***]) )
 
 AC_DEFINE(USE_PROTOTYPES,1,heh)
 AC_DEFINE(USE_REGCOMP,1,new regex stuff)
@@ -186,8 +189,10 @@ AC_ARG_ENABLE(only-rts, AC_HELP_STRING(--enable-only-rts,
 		if ! test "x$enableval" = "xno" ; then
 			only_rts="yes"
 			if test "x$only_benchmark" = "xyes" ; then
+				AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 				AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
 				AC_MSG_WARN(Building both benchmark and librtserver)
+				AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 			fi
 		fi
 	]
@@ -217,7 +222,8 @@ if ! test "x$enable_doxygen" = "xno" ; then
 	AC_PATH_PROG(DOXYGEN, doxygen, , $PATH)
 	if test "x$DOXYGEN" = "x" ; then
 		if test "x$enable_doxygen" = "xyes" ; then
-			AC_MSG_ERROR([cound not find doxygen])
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_ERROR([*** Unable to find doxygen ***])
 		fi
 		enable_doxygen=no
 	fi
@@ -233,6 +239,7 @@ int main(){exit(0);}
 	[	AC_MSG_RESULT(yes) ],
 	[
 		AC_MSG_RESULT(no)
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_ERROR([*** compiler cannot create working executables, check config.log ***])
 	]
 )
@@ -246,7 +253,9 @@ SAVELIBS="${LIBS}"
 
 dnl need curses, would prefer ncurses
 LIBS=
-AC_SEARCH_LIBS(initscr, ncurses curses,, AC_MSG_ERROR([Need curses!]))
+AC_SEARCH_LIBS(initscr, ncurses curses,, 
+	       AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+	       AC_MSG_ERROR([*** Need curses! ***]) )
 CURSES="${LIBS}"
 
 LIBS=
@@ -355,9 +364,45 @@ AC_CHECK_HEADER(jni.h,
 		found_jni_h=yes )
 if ! test "x$found_jni_h" = "xyes" ; then
 	if test "x$with_java" = "xyes" ; then
-		AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
+		with_java=no
+
+		# darwin systems may have a prior jni.h stashed away elsewhere
+		pre_cflags="$CFLAGS"
+		pre_cppflags="$CPPFLAGS"
+		macjvmdir=/System/Library/Frameworks/JavaVM.framework/Versions
+		if test -d "$macjvmdir"  ; then
+			for dir in `ls $macjvmdir` ; do
+				if test -d "$macjvmdir/$dir" ; then
+					CFLAGS="-I$macjvmdir/$dir/Headers $CFLAGS"
+					CPPFLAGS="-I$macjvmdir/$dir/Headers $CPPFLAGS"
+				fi
+			done
+		fi
+
+		# try one last time to find jni.h
+		unset ac_cv_header_jni_h
+		AC_CHECK_HEADER(jni.h,
+				AC_DEFINE(HAVE_JNI_H,
+					  1,
+					  [Define to 1 if you have the `<jni.h>' header file])
+				found_jni_h=yes )
+
+		if test "x$found_jni_h" = "xyes" ; then
+			with_java=yes
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_WARN([jni.h was found by hunting through the JavaVM framework])
+			AC_MSG_WARN([This means you probably need to install the latest Java SDK])
+			AC_MSG_WARN([Build will try to use what it found, but you should update])
+			AC_MSG_NOTICE([See http://developer.apple.com/java/ for updates])
+			AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+		else
+			CFLAGS="$pre_cflags"
+			CPPFLAGS="$pre_cppflags"
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_WARN([Code dependant upon java and jni.h will not be built])
+			AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+		fi
 	fi
-	with_java=no
 fi
 
 
@@ -429,7 +474,11 @@ AC_CHECK_FUNC(popen, AC_DEFINE(HAVE_POPEN_DECL,1,popen))
 AC_CHECK_FUNC(getopt, AC_DEFINE(HAVE_GETOPT_DECL,1,getopt))
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 
-AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
+AC_CHECK_FUNCS(socket, SOCKET="" ,
+	       [AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", 
+			     AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
+			     AC_MSG_ERROR([*** No internet socket found ***]))
+	       ])
 AC_SUBST(SOCKET)
 
 dnl AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
@@ -442,8 +491,9 @@ dnl *********************************
 
 if test "x$only_rts" = "xyes" ; then
 	if ! test "x$with_java" = "xyes" ; then
+		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
-		AC_MSG_ERROR([Cannot locate jni.h for building librtserver])
+		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
 fi
 AM_CONDITIONAL(JAVA, test "x$with_java" = "xyes")
@@ -698,5 +748,5 @@ echo Only build librtserver ...............: $only_rts
 echo Generate doxygen documentation .......: $enable_doxygen
 echo
 echo ---
-echo $0 complete, type \'make\' to begin building
+echo "$0 complete, type \'make\' to begin building"
 echo
