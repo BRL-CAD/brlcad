@@ -93,7 +93,7 @@ char **argv;
 	if (num_read<4){
 		fprintf(stderr,"Anim_fly: Not enough lines in input table./n");
 		fprintf(stderr,"/tIncrease number of lines or reduce the desired stepsize with -s.\n");
-		return;
+		exit(0);
 	}
 
 	count = 0;
