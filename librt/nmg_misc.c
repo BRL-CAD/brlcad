@@ -41,6 +41,114 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+/* 	N M G _ I S E C T _ S H E L L _ S E L F
+ *
+ * Intersects all faces in a shell with all other faces in the same shell
+ * Intended for use after extrusion
+ *
+ */
+void
+nmg_isect_shell_self( s , tol )
+struct shell *s;
+CONST struct rt_tol *tol;
+{
+	struct model *m;
+	struct nmgregion *r;
+	struct shell *s_fu;
+	struct faceuse *fu;
+	struct nmg_ptbl fus;
+	int fu_no;
+	int fu2_no;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	m = nmg_find_model( &s->l.magic );
+	NMG_CK_MODEL( m );
+
+	nmg_vmodel( m );
+
+	r = s->r_p;
+	NMG_CK_REGION( r );
+
+	s_fu = nmg_msv( r );
+	NMG_CK_SHELL( s_fu );
+
+	nmg_tbl( &fus , TBL_INIT , (long *)NULL );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation == OT_SAME )
+			nmg_tbl( &fus , TBL_INS , (long *)fu );
+	}
+
+	/* intersect each face with every other face in the shell */
+	for( fu_no=0 ; fu_no < NMG_TBL_END( &fus ) ; fu_no ++ )
+	{
+		struct faceuse *fu2;
+		struct faceuse *next_fu;
+
+		fu = (struct faceuse *)NMG_TBL_GET( &fus , fu_no );
+
+		NMG_CK_FACEUSE( fu );
+
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+			rt_log( "nmg_extrude_cleanup: fu=x%x\n" );
+
+		/* move fu to another shell to avoid radial edge problems */
+		nmg_mv_fu_between_shells( s_fu, s, fu );
+
+		/* consider intersection this faceuse with all the faceuses
+		 * after it in the list
+		 */
+		for( fu2_no=fu_no+1 ; fu2_no < NMG_TBL_END( &fus ) ; fu2_no++ )
+		{
+			struct face *f,*f2;
+
+			fu2 = (struct faceuse *)NMG_TBL_GET( &fus , fu2_no );
+
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_extrude_cleanup: fu=x%x, fu2=x%x\n" , fu , fu2 );
+
+			/* skip faceuses radial to fu or not OT_SAME */
+			if( fu2->orientation != OT_SAME || nmg_faces_are_radial( fu , fu2 ) )
+				continue;
+
+			f = fu->f_p;
+			f2 = fu2->f_p;
+
+			/* skip faceuse pairs that don't have overlapping BB's */
+			if( !V3RPP_OVERLAP( f->min_pt , f->max_pt , f2->min_pt , f2->max_pt ) )
+				continue;
+
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_extrude_cleanup: calling nmg_isect_two_generic_faces( fu=x%x , fu2=x%x )\n" , fu , fu2 );
+
+			nmg_isect_two_generic_faces( fu , fu2 , tol );
+		}
+		/* move fu back where it belongs */
+		while( RT_LIST_NON_EMPTY( &s_fu->fu_hd ) )
+		{
+			struct faceuse *fu_tmp;
+
+			fu_tmp = RT_LIST_FIRST( faceuse , &s_fu->fu_hd );
+			NMG_CK_FACEUSE( fu_tmp );
+
+			if( rt_g.NMG_debug & DEBUG_BASIC )
+				rt_log( "nmg_extrude_cleanup: moving fu x%x back\n" , fu_tmp );
+
+			nmg_mv_fu_between_shells( s, s_fu, fu_tmp );
+		}
+	}
+
+	/* get rid of the temporary shell */
+	nmg_ks( s_fu );
+
+
+}
+
 /*	N M G _ N E X T _ R A D I A L _ E D G E U S E
  *
  * Traverse radial edgeuse around specified edgeuse looking for
