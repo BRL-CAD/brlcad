@@ -45,6 +45,13 @@
 
 #include "./debug.h"
 
+#define DGO_CHECK_WDBP_NULL(_dgop,_interp) \
+	if (_dgop->dgo_wdbp == RT_WDB_NULL) \
+	{ \
+		Tcl_AppendResult(_interp, "Not associated with a database!\n", (char *)NULL); \
+		return TCL_ERROR; \
+	}	
+
 /*
  *  It is expected that entries on this mater list will be sorted
  *  in strictly ascending order, with no overlaps (ie, monotonicly
@@ -69,10 +76,12 @@ static int dgo_overlay_tcl();
 static int dgo_get_autoview_tcl();
 static int dgo_zap_tcl();
 static int dgo_blast_tcl();
+static int dgo_assoc_tcl();
 #if 0
 static int dgo_tol_tcl();
 #endif
 static int dgo_rtcheck_tcl();
+static int dgo_observer_tcl();
 
 static union tree *dgo_wireframe_region_end();
 static union tree *dgo_wireframe_leaf();
@@ -90,12 +99,13 @@ static int dgo_build_tops();
 static void dgo_rt_write();
 static void dgo_rt_set_eye_model();
 
-static void dgo_callback();
+static void dgo_notify();
 
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
 
 static struct bu_cmdtab dgo_cmds[] = {
+	"assoc",		dgo_assoc_tcl,
 	"blast",		dgo_blast_tcl,
 	"clear",		dgo_zap_tcl,
 	"close",		dgo_close_tcl,
@@ -114,6 +124,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"vdraw",		dgo_vdraw_tcl,
 	"who",			dgo_who_tcl,
 	"zap",			dgo_zap_tcl,
+	"observer",		dgo_observer_tcl,
 	(char *)0,		(int (*)())0
 };
 
@@ -157,6 +168,9 @@ dgo_deleteProc(clientData)
      ClientData clientData;
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	/* free observers */
+	bu_observer_free(&dgop->dgo_observers);
 
 	bu_vls_free(&dgop->dgo_name);
 
@@ -235,9 +249,13 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	}
 
 	if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l)) {
+#if 0
 		Tcl_AppendResult(interp, "dgo_open: bad database object - ", argv[2],
 				 "\n", (char *)NULL);
 		return TCL_ERROR;
+#else
+		wdbp = RT_WDB_NULL;
+#endif
 	}
 
 	/* acquire dg_obj struct */
@@ -249,6 +267,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	dgop->dgo_wdbp = wdbp;
 	BU_LIST_INIT(&dgop->dgo_headSolid.l);
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
+	BU_LIST_INIT(&dgop->dgo_observers.l);
 
 #if 0
 	/* initilize tolerance structures */
@@ -363,6 +382,8 @@ dgo_draw_tcl(clientData, interp, argc, argv)
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	int kind;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc < 3) {
 		struct bu_vls vls;
 
@@ -380,7 +401,7 @@ dgo_draw_tcl(clientData, interp, argc, argv)
 		kind = 1;
 
 	dgo_draw(dgop, interp, argc, argv, kind);
-	dgo_callback(dgop, interp);
+	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
@@ -418,6 +439,8 @@ dgo_erase_tcl(clientData, interp, argc, argv)
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct bu_vls vls;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc < 3) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib dgo_erase");
@@ -427,7 +450,7 @@ dgo_erase_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_erase(dgop, interp, argc-2, argv+2);
-	dgo_callback(dgop, interp);
+	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
@@ -462,6 +485,8 @@ dgo_erase_all_tcl(clientData, interp, argc, argv)
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct bu_vls vls;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc < 3) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib dgo_erase");
@@ -471,7 +496,7 @@ dgo_erase_all_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_erase_all(dgop, interp, argc-2, argv+2);
-	dgo_callback(dgop, interp);
+	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
@@ -492,6 +517,8 @@ dgo_who_tcl(clientData, interp, argc, argv)
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	register struct solid *sp;
 	int skip_real, skip_phony;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
 
 	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
@@ -594,6 +621,8 @@ char	**argv;
 	double char_size;
 	char		*name;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc < 4 || 5 < argc) {
 		struct bu_vls vls;
 
@@ -624,7 +653,7 @@ char	**argv;
 	}
 
 	dgo_overlay(dgop, interp, fp, name, char_size);
-	dgo_callback(dgop, interp);
+	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
@@ -647,6 +676,8 @@ char	**argv;
 	vect_t		minus, plus;
 	vect_t		center;
 	vect_t		radial;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
 
 	VSETALL(min,  INFINITY);
 	VSETALL(max, -INFINITY);
@@ -697,6 +728,8 @@ char	**argv;
 	struct view_obj *vop;
 	register char **vp;
 	register int i;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
 
 	if (argc < 3 || MAXARGS < argc) {
 	  struct bu_vls vls;
@@ -777,6 +810,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	return bu_cmd(clientData, interp, argc, argv, vdraw_cmds, 2);
 }
 
@@ -819,6 +856,8 @@ dgo_zap_tcl(clientData, interp, argc, argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc != 2) {
 	  struct bu_vls vls;
 
@@ -830,7 +869,7 @@ dgo_zap_tcl(clientData, interp, argc, argv)
 	}
 
 	dgo_zap(dgop, interp);
-	dgo_callback(dgop, interp);
+	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
@@ -848,6 +887,8 @@ dgo_blast_tcl(clientData, interp, argc, argv)
 {
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc < 3) {
 		struct bu_vls vls;
 
@@ -864,7 +905,7 @@ dgo_blast_tcl(clientData, interp, argc, argv)
 
 	/* Now, draw the new object(s). */
 	dgo_draw(dgop, interp, argc, argv, 1);
-	dgo_callback(dgop, interp);
+	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
@@ -891,6 +932,8 @@ dgo_tol_tcl(clientData, interp, argc, argv)
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 	struct bu_vls vls;
 	double	f;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
 
 	if (argc < 2 || 4 < argc){
 		bu_vls_init(&vls);
@@ -1210,6 +1253,8 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	vect_t temp;
 	vect_t eye_model;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
 
@@ -1328,6 +1373,96 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 			      dgo_rtcheck_output_handler, (ClientData)e_pipe[0]);
 
 	return TCL_OK;
+}
+
+/*
+ * Associate this drawable geometry object with a database object.
+ *
+ * Usage:
+ *        procname assoc [wdb_obj]
+ */
+static int
+dgo_assoc_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	struct rt_wdb *wdbp;
+	struct bu_vls vls;
+
+	/* Get associated database object */
+	if (argc == 2) {
+		Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_wdbp->wdb_name), (char *)NULL);
+		return TCL_OK;
+	}
+
+	/* Set associated database object */
+	if (argc == 3) {
+		/* search for database object */
+		for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+			if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
+				break;
+		}
+
+		if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l)) {
+#if 0
+			Tcl_AppendResult(interp, "dgo_open: bad database object - ", argv[2],
+					 "\n", (char *)NULL);
+			return TCL_ERROR;
+#else
+			wdbp = RT_WDB_NULL;
+#endif
+		}
+
+		if (dgop->dgo_wdbp != RT_WDB_NULL)
+			dgo_zap(dgop, interp);
+
+		dgop->dgo_wdbp = wdbp;
+		dgo_notify(dgop, interp);
+
+		return TCL_OK;
+	}
+
+	/* return help message */
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib dgo_assoc");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+
+	return TCL_ERROR;
+}
+
+/*
+ * Attach/detach observers to/from list.
+ *
+ * Usage:
+ *	  procname observer cmd [args]
+ *
+ */
+static int
+dgo_observer_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	if (argc < 3) {
+		struct bu_vls vls;
+
+		/* return help message */
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dg_observer");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	return bu_cmd((ClientData)&dgop->dgo_observers,
+		      interp, argc - 2, argv + 2, bu_observer_cmds, 0);
 }
 
 /****************** utility routines ********************/
@@ -2184,8 +2319,10 @@ dgo_eraseobjall_callback(dbip, interp, dp)
 
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
 		/* drawable geometry objects associated database matches */
-		if (dgop->dgo_wdbp->dbip == dbip)
+		if (dgop->dgo_wdbp->dbip == dbip) {
 			dgo_eraseobjall(dgop, interp, dp);
+			dgo_notify(dgop, interp);
+		}
 }
 
 /*
@@ -2567,15 +2704,24 @@ dgo_run_rt(dgop, vop)
 }
 
 static void
-dgo_callback(dgop, interp)
+dgo_notify(dgop, interp)
      struct dg_obj *dgop;
      Tcl_Interp *interp;
 {
-	struct bu_vls vls;
+	bu_observer_notify(interp, &dgop->dgo_observers, bu_vls_addr(&dgop->dgo_name));
+}
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "catch {dgo_callback %s}", bu_vls_addr(&dgop->dgo_name));
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	Tcl_ResetResult(interp);
+void
+dgo_impending_wdb_close(wdbp, interp)
+     struct rt_wdb *wdbp;
+     Tcl_Interp *interp;
+{
+	struct dg_obj *dgop;
+
+	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+		if (dgop->dgo_wdbp == wdbp) {
+			dgo_zap(dgop, interp);
+			dgop->dgo_wdbp = RT_WDB_NULL;
+			dgo_notify(dgop, interp);
+		}
 }
