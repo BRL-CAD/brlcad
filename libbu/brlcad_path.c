@@ -90,16 +90,18 @@ CONST char *rhs;
 		goto ok;
 
 	/* Could use some huristics here, but being overly clever is probably bad. */
+
 	bu_log("\
-Unable to find the directory that BRL-CAD is installed in\n\
-while seeking '%s'.\n\
-This version of LIBBU was compiled to expect BRL-CAD in '%s'.\n\
+Unable to find the directory that BRL-CAD is installed in while seeking: \n\
+	%s\n\
+This version of LIBBU was compiled to expect BRL-CAD in: \n\
+	%s\n\
 Please set your environment variable BRLCAD_ROOT with the correct path.\n\
 csh/tcsh users:\n\
-	setenv BRLCAD_ROOT /usr/brlcad\n\
+	setenv BRLCAD_ROOT %s\n\
 sh/bash users:\n\
-	BRLCAD_ROOT=/usr/brlcad; export BRLCAD_ROOT\n",
-		rhs, lhs);
+	BRLCAD_ROOT=%s; export BRLCAD_ROOT\n",
+		rhs, lhs, lhs, lhs);
 	bu_bomb("bu_brlcad_path()");
 
 ok:
