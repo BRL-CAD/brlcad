@@ -41,11 +41,18 @@ int
 Dm_Init(interp)
 Tcl_Interp *interp;
 {
+  char *version_number;
+
   /* register commands */
   bu_register_cmds(interp, cmdtab);
 
   /* initialize display manager object code */
   Dmo_Init(interp);
+
+  Tcl_SetVar(interp, "dm_version", (char *)dm_version+5, TCL_GLOBAL_ONLY);
+  Tcl_Eval(interp, "lindex $dm_version 2");
+  version_number = Tcl_GetStringResult(interp);
+  Tcl_PkgProvide(interp,  "Dm", version_number);
 
   return TCL_OK;
 }
