@@ -343,6 +343,8 @@ CONST struct rt_comb_internal *combp;
 
 	RT_CK_COMB(combp);
 	tp = combp->tree;
+	if( !tp )
+		return( -1 );
 	RT_CK_TREE(tp);
 	if( tp->tr_l.tl_op != OP_DB_LEAF )
 		return 0;	/* proceed as usual */
