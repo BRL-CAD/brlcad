@@ -1943,4 +1943,5 @@ genptr_t clientdata;
 genptr_t str;
 {
   /* do nothing */
+  return( 0 );
 }

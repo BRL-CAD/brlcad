@@ -450,6 +450,9 @@ int op;
 		}
 		return( A );
 	}
+
+	/* should never get here */
+	return( (struct seg *)NULL );   /* for the compilers */
 }
 
 HIDDEN struct seg *
@@ -479,6 +482,9 @@ union E_tree *eptr;
 			B = eval_etree( eptr->n.right );
 			return( eval_op( A, eptr->n.op, B ) );
 	}
+
+	/* should never get here */
+	return( (struct seg *)NULL );	/* for the compilers */
 }
 
 HIDDEN void

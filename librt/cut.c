@@ -767,7 +767,7 @@ int			ncpu;
 	switch( rtip->rti_space_partition ) {
 	case RT_PART_NUGRID:
 		rtip->rti_CutHead.cut_type = CUT_NUGRIDNODE;
-		rt_nugrid_cut( &rtip->rti_CutHead.nugn, finp, rtip, 0 );
+		rt_nugrid_cut( &rtip->rti_CutHead.nugn, &finp->bn, rtip, 0 );
 		rt_fr_cut( rtip, finp ); /* done with finite solids box */
 		bu_free( (genptr_t)finp, "finite solid box" );
 		break;

@@ -231,6 +231,7 @@ int flags;
  **
  **/
 
+void
 mged_variable_setup(interp)
 Tcl_Interp *interp;    
 {

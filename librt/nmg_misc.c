@@ -11641,7 +11641,8 @@ CONST struct bn_tol *tol;
 			{
 				struct edgeuse *eu1, *eu2;
 				vect_t vec1, vec2;
-				vect_t norma, normb;
+				vect_t norma;
+				plane_t normb;
 				struct vertex_g *vg1, *vg2;
 				fastf_t dist;
 
