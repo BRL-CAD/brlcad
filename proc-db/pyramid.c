@@ -44,7 +44,7 @@ char	**argv;
 
 	do_leaf("leaf");
 	do_pleaf("polyleaf");
-	do_tree("tree", depth);
+	do_tree("tree", "leaf", depth);
 }
 
 /* Make a leaf node out of an ARB4 */
@@ -141,9 +141,10 @@ int	npts;
 	}
 }
 
-do_tree(name, level)
-char *name;
-int level;
+do_tree(name, lname, level)
+char	*name;
+char	*lname;
+int	level;
 {
 	register int i;
 	mat_t m;
@@ -152,11 +153,11 @@ int level;
 	int scale;
 
 	if( level <= 1 )
-		leafp = "leaf";		/* XXX */
+		leafp = lname;
 	else
 		leafp = nm;
 
-	scale = 1;
+	scale = 100;
 	for( i=1; i<level; i++ )
 		scale *= 2;
 
@@ -184,6 +185,6 @@ int level;
 		return;
 	for( i=0; i<4; i++ )  {
 		sprintf(nm, "%s%c", name, "LRBTx"[i] );
-		do_tree( nm, level-1 );
+		do_tree( nm, lname, level-1 );
 	}
 }
