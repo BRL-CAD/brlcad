@@ -207,8 +207,8 @@ HOW TO PATCH A RELEASE
 
 	0) Create a patch branch off of the release tag to work with:
 
-	    cvs rtag -b -r rel-<revision>-<date> rel-<revision>-<date>-patch
-		cvs checkout -b rel-<revision>-<date>-patch
+            cvs rtag -b -r rel-<revision>-<date> rel-<revision>-<date>-patch brlcad
+            cvs checkout -b rel-<revision>-<date>-patch brlcad
 
 	1) Make source modifications and patches as needed.  Test, fix,
        and retest as needed.
@@ -241,13 +241,13 @@ HOW TO MAKE A BRANCH
 
         If you want to use the main trunk as the anchor for your branch:
 
-            cvs rtag -b <keyword>-<revision>-branch
-            cvs checkout -b <keyword>-<revision>-branch
+            cvs rtag -b <keyword>-<revision>-branch brlcad
+            cvs checkout -b <keyword>-<revision>-branch brlcad
 
         If you want to use some other tag as the anchor for your branch:
 
-            cvs rtag -b -r <tag> <keyword>-<revision>-branch
-            cvs checkout -b <keyword>-<revision>-branch
+            cvs rtag -b -r <tag> <keyword>-<revision>-branch brlcad
+            cvs checkout -b <keyword>-<revision>-branch brlcad
 
     CASE 2: You have a checked out revision, and you want to tag it and start
     using it as a branch:
@@ -381,8 +381,12 @@ USEFUL ADVICE
 REFERENCES
 
     This CVS policy was derived off of other projects such as the
-    XFree86 DRI project, Zope, FreeBSD, and AT&T's SML/NJ among
-    others.    
+    Linux Documentation Project, the XFree86 DRI project, Zope, FreeBSD, 
+    and AT&T's SML/NJ among others.
+
+
+CVS Best Practices
+http://www.magic-cauldron.com/cm/cvs-bestpractices/index.html
 
 XFree86 DRI
 http://dri.sourceforge.net/doc/cvspolicy.txt
@@ -393,7 +397,7 @@ http://dev.zope.org/CVS/ZopeReleasePolicy
 FreeBSD
 http://www.linuxsecurity.com/articles/vendors_products_article-3004.html
 
-AT&T
+AT&T SML/NJ
 http://cm.bell-labs.com/cm/cs/what/smlnj/DEV/policy.html
 
 
