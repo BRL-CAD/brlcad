@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"			/* for NAMESIZE */
+#include "rtstring.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
@@ -43,6 +44,52 @@ static int	col_len;		/* length of previous name */
 #define TERMINAL_WIDTH	80		/* XXX */
 #define	COLUMNS	((TERMINAL_WIDTH + NAMESIZE - 1) / NAMESIZE)
 
+/*
+ *			V L S _ C O L _ I T E M
+ */
+void
+vls_col_item( str, cp )
+struct rt_vls	*str;
+register char	*cp;
+{
+	/* Output newline if last column printed. */
+	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
+		/* line now full */
+		rt_vls_putc( str, '\n' );
+		col_count = 0;
+	} else if ( col_count != 0 ) {
+		/* Space over before starting new column */
+		do {
+			rt_vls_putc( str, ' ' );
+			col_len++;
+		}  while ( (col_len % NAMESIZE) != 0 );
+	}
+	/* Output string and save length for next tab. */
+	col_len = 0;
+	while ( *cp != '\0' )  {
+		rt_vls_putc( str, *cp );
+		++cp;
+		++col_len;
+	}
+	col_count++;
+}
+
+/*
+ */
+void
+vls_col_eol( str )
+struct rt_vls	*str;
+{
+	if ( col_count != 0 )		/* partial line */
+		rt_vls_putc( str, '\n' );
+	col_count = 0;
+	col_len = 0;
+}
+
+
+/*
+ *			C O L _ I T E M
+ */
 void
 col_item(cp)
 register char *cp;
