@@ -19,15 +19,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static char	sccsid[] = "@(#)cad_parea.c	1.6";
 #endif
 
+#include "conf.h"
+
 #include	<stdio.h>
 #include	<string.h>
 
 #include	"./vld_std.h"
 
-extern void	exit();
-extern int	getopt();
-
-extern char	*optarg;
+#include "machine.h"
+#include "externs.h"
 
 typedef struct
 	{
