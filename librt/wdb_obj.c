@@ -91,6 +91,12 @@ HIDDEN int wdb_region_tcl();
 HIDDEN void wdb_deleteProc();
 HIDDEN void wdb_deleteProc_rt();
 
+struct do_trace_state {
+	Tcl_Interp *interp;
+	int	pathpos;
+	matp_t	old_xlate;
+	int	flag;
+};
 HIDDEN void wdb_do_trace();
 HIDDEN void wdb_trace();
 
@@ -1174,28 +1180,23 @@ wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
      union tree		*comb_leaf;
      genptr_t		user_ptr1, user_ptr2, user_ptr3;
 {
-	int			*pathpos;
-	int			*flag;
-	matp_t			old_xlate;
 	mat_t			new_xlate;
 	struct directory	*nextdp;
+	struct do_trace_state	*dtsp = (struct do_trace_state *)user_ptr1;
 
 	RT_CK_DBI(dbip);
 	RT_CK_TREE(comb_leaf);
 
-	pathpos = (int *)user_ptr1;
-	old_xlate = (matp_t)user_ptr2;
-	flag = (int *)user_ptr3;
-
 	if (comb_leaf->tr_l.tl_mat)  {
-		bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
+		bn_mat_mul(new_xlate, dtsp->old_xlate, comb_leaf->tr_l.tl_mat);
 	} else {
-		bn_mat_copy(new_xlate, old_xlate);
+		bn_mat_copy(new_xlate, dtsp->old_xlate);
 	}
 	if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
 		return;
 
-	wdb_trace(curr_interp, dbip, nextdp, (*pathpos)+1, new_xlate, *flag);
+	wdb_trace(dtsp->interp, dbip, nextdp, dtsp->pathpos+1,
+		new_xlate, dtsp->flag);
 }
 
 /*
@@ -1242,9 +1243,15 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag)
 
 		wdb_path[pathpos] = dp;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if (comb->tree)
+		if (comb->tree)  {
+			struct do_trace_state	dts;
+			dts.interp = interp;
+			dts.pathpos = pathpos;
+			dts.old_xlate = old_xlate;
+			dts.flag = flag;
 			db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_trace,
-					 (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)&flag);
+				(genptr_t)&dts, NULL, NULL );
+		}
 		rt_comb_ifree(&intern);
 		return;
 	}
