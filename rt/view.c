@@ -1033,9 +1033,9 @@ CONST point_t			new_view_pt;
 }
 
 /* Local communication a.la. worker() */
-int		per_processor_chunk = 0;	/* how many pixels to do at once */
-HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
-HIDDEN int last_pixel;		/* last pixel number */
+extern int	per_processor_chunk = 0;	/* how many pixels to do at once */
+extern int cur_pixel;		/* current pixel number, 0..last_pixel */
+extern int last_pixel;		/* last pixel number */
 
 /*
  *			R E P R O J E C T _ W O R K E R
