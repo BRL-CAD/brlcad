@@ -42,7 +42,7 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "./polyno.h"
 
 RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
-	struct rt_i *rtip));
+	struct rt_i *rtip, CONST struct rt_tol *tol));
 
 static void	rt_tgc_rotate(), rt_tgc_shear();
 static void	rt_tgc_scale();
@@ -80,10 +80,11 @@ struct  tgc_specific {
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
 int
-rt_tgc_prep( stp, ip, rtip )
+rt_tgc_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_tgc_internal	*tip;
 	register struct tgc_specific *tgc;
@@ -105,7 +106,7 @@ struct rt_i		*rtip;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
-	if( rt_rec_prep( stp, ip, rtip ) == 0 )
+	if( rt_rec_prep( stp, ip, rtip, tol ) == 0 )
 		return(0);		/* OK */
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
@@ -488,11 +489,12 @@ register struct soltab	*stp;
  *  the points of intersection in the original coordinate system.
  */
 int
-rt_tgc_shot( stp, rp, ap, seghead )
+rt_tgc_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
@@ -893,12 +895,13 @@ struct seg		*seghead;
  *  The Homer vectorized version.
  */
 void
-rt_tgc_vshot( stp, rp, segp, n, resp )
+rt_tgc_vshot( stp, rp, segp, n, resp, tol )
 struct soltab		*stp[];
 register struct xray	*rp[];
 struct  seg            segp[]; /* array of segs (results returned) */
 int                         n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
 	register struct tgc_specific	*tgc;
 	register int		ix;
@@ -1690,12 +1693,11 @@ struct rt_db_internal	*ip;
  *			R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_tgc_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
@@ -1821,13 +1823,12 @@ struct soltab *stp;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_tgc_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_tgc_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	struct shell		*s;
 	register int		i;
@@ -1905,7 +1906,7 @@ double			norm_tol;
 
 	/* Associate the face geometry */
 	for (i=0 ; i < 2*16+2 ; ++i) {
-		if( nmg_fu_planeeqn( outfaceuses[i] ) < 0 )
+		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
 			return -1;		/* FAIL */
 	}
 

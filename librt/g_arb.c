@@ -107,6 +107,8 @@ static struct arb_info {
 	{ "4378", 7, 6, 2, 3 }
 };
 
+static struct rt_tol	rt_arb_tol;
+
 RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
 /*
@@ -394,11 +396,12 @@ skip_pt:		;
  *	!0	failure
  */
 HIDDEN int
-rt_arb_setup( stp, aip, rtip, uv_wanted )
+rt_arb_setup( stp, aip, rtip, uv_wanted, tol )
 struct soltab		*stp;
 struct rt_arb_internal	*aip;
 struct rt_i		*rtip;
 int			uv_wanted;
+CONST struct rt_tol	*tol;
 {
 	register int		i;
 	struct prep_arb		pa;
@@ -406,7 +409,7 @@ int			uv_wanted;
 	RT_ARB_CK_MAGIC(aip);
 
 	pa.pa_doopt = uv_wanted;
-	pa.pa_tol_sq = 0.005;
+	pa.pa_tol_sq = tol->dist_sq;
 
 	if( rt_arb_mk_planes( &pa, aip ) < 0 )  {
 		return(-2);		/* Error */
@@ -485,17 +488,20 @@ int			uv_wanted;
  *	!0	failure
  */
 int
-rt_arb_prep( stp, ip, rtip )
+rt_arb_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_arb_internal	*aip;
 
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	return( rt_arb_setup( stp, aip, rtip, 0 ) );
+	if( rt_arb_tol.para <= 0 )  rt_arb_tol = *tol;	/* struct copy */
+
+	return( rt_arb_setup( stp, aip, rtip, 0, tol ) );
 }
 
 /*
@@ -547,11 +553,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_arb_shot( stp, rp, ap, seghead )
+rt_arb_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
 	LOCAL int		iplane, oplane;
@@ -625,12 +632,13 @@ struct seg		*seghead;
  *  This is the Becker vector version
  */
 void
-rt_arb_vshot( stp, rp, segp, n, resp)
+rt_arb_vshot( stp, rp, segp, n, resp, tol)
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		 	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
 	register int    j, i;
 	register struct arb_specific *arbp;
@@ -799,7 +807,7 @@ register struct uvcoord *uvp;
 		 */
 		RES_ACQUIRE( &rt_g.res_model );
 		if( arbp->arb_opt == (struct oface *)0 )  {
-			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1);
+			ret = rt_arb_setup(stp, aip, ap->a_rt_i, 1, &rt_arb_tol);
 		}
 		RES_RELEASE( &rt_g.res_model );
 
@@ -860,12 +868,11 @@ register struct soltab *stp;
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
 int
-rt_arb_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct rt_list	*vhead;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_arb_plot( vhead, ip, ttol, tol )
+struct rt_list			*vhead;
+struct rt_db_internal		 *ip;
+CONST struct rt_tess_tol	*ttol;
+struct rt_tol			*tol;
 {
 	struct rt_arb_internal	*aip;
 	int			i;
@@ -1050,13 +1057,12 @@ struct rt_db_internal	*ip;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_arb_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol	*ttol;
+struct rt_tol		*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1072,7 +1078,7 @@ double		norm_tol;
 
 	bzero( (char *)&pa, sizeof(pa) );
 	pa.pa_doopt = 0;		/* no UV stuff */
-	pa.pa_tol_sq = 0.005;	/* XXX need real tolerance here! XXX */
+	pa.pa_tol_sq = tol->dist_sq;
 	if( rt_arb_mk_planes( &pa, aip ) < 0 )  return(-2);
 
 	for( i=0; i<8; i++ )  verts[i] = (struct vertex *)0;
@@ -1123,7 +1129,7 @@ double		norm_tol;
 		nmg_face_g( fu[i], pa.pa_face[i].peqn );
 #else
 		/* For the cautious, ensure topology and geometry match */
-		if( nmg_fu_planeeqn( fu[i], pa.pa_tol_sq ) < 0 )
+		if( nmg_fu_planeeqn( fu[i], tol ) < 0 )
 			return -1;		/* FAIL */
 #endif
 	}

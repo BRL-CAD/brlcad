@@ -74,9 +74,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	-1	failure
  */
 int
-nmg_fu_planeeqn( fu, tol_sq )
-struct faceuse	*fu;
-double		tol_sq;
+nmg_fu_planeeqn( fu, tol )
+struct faceuse		*fu;
+CONST struct rt_tol	*tol;
 {
 	struct edgeuse		*eu, *eu_final, *eu_next;
 	struct loopuse		*lu;
@@ -113,7 +113,7 @@ double		tol_sq;
 	} while( c == b );
 
 	if (rt_mk_plane_3pts(plane,
-	    a->vg_p->coord, b->vg_p->coord, c->vg_p->coord, tol_sq) < 0 ) {
+	    a->vg_p->coord, b->vg_p->coord, c->vg_p->coord, tol) < 0 ) {
 		rt_log("nmg_fu_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
 			V3ARGS( a->vg_p->coord ),
 			V3ARGS( b->vg_p->coord ),
@@ -966,9 +966,9 @@ struct edgeuse *eu;
  *	
  */
 struct vertexuse *nmg_find_vu_in_face(pt, fu, tol)
-point_t		pt;
-struct faceuse	*fu;
-fastf_t		tol;
+point_t			pt;
+struct faceuse		*fu;
+CONST struct rt_tol	*tol;
 {
 	register struct loopuse	*lu;
 	struct edgeuse		*eu;
@@ -986,14 +986,14 @@ fastf_t		tol;
 			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 			pp = vu->v_p->vg_p->coord;
 			VSUB2(delta, pp, pt);
-			if ( MAGSQ(delta) < tol)
+			if ( MAGSQ(delta) < tol->dist_sq)
 				return(vu);
 		}
 		else if (magic1 == NMG_EDGEUSE_MAGIC) {
 			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 				pp = eu->vu_p->v_p->vg_p->coord;
 				VSUB2(delta, pp, pt);
-				if ( MAGSQ(delta) < tol)
+				if ( MAGSQ(delta) < tol->dist_sq)
 					return(eu->vu_p);
 			}
 		} else
@@ -1779,8 +1779,8 @@ struct edgeuse *eu;
  */
 void
 nmg_ck_list( hd, str )
-struct rt_list	*hd;
-char		*str;
+CONST struct rt_list	*hd;
+CONST char		*str;
 {
 	struct rt_list	*cur;
 	int	head_count = 0;

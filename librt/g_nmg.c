@@ -65,10 +65,11 @@ struct nmg_specific {
  *  	stp->st_specific for use by nmg_shot().
  */
 int
-rt_nmg_prep( stp, ip, rtip )
+rt_nmg_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct model		*m;
 	register struct nmg_specific	*nmg;
@@ -170,11 +171,12 @@ struct faceuse *fu;
  *	>0	HIT
  */
 int
-rt_nmg_shot( stp, rp, ap, seghead )
+rt_nmg_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;	/* info about the ray */
 struct application	*ap;	
 struct seg		*seghead;	/* intersection w/ ray */
+CONST struct rt_tol	*tol;
 {
 	register struct nmg_specific *nmg =
 		(struct nmg_specific *)stp->st_specific;
@@ -187,9 +189,6 @@ struct seg		*seghead;	/* intersection w/ ray */
 	int seg_count=0;
 	struct hitlist *hl, *a_hit, *b_hit, *isect_ray_nmg();
 	long *novote;	/* faces that can't vode in hit/miss/list */
-
-	fastf_t tol=0.05;
-
 
 	/* check validity of nmg specific structure */
  	if (nmg->nmg_smagic != G_NMG_START_MAGIC)
@@ -219,7 +218,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 	}
 
 	rt_g.NMG_debug |= DEBUG_NMGRT;
-	hl = isect_ray_nmg(rp, nmg->nmg_invdir, nmg->nmg_model, tol);
+	hl = isect_ray_nmg(rp, nmg->nmg_invdir, nmg->nmg_model, &tol);
 
 	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
@@ -237,7 +236,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 				a_hit->hit->hit_point[2]);
 	}
 
-	return(0);
+return(0);	/* XXX */
 
 
 	/* build up the list of segments based upon the hit points.
@@ -353,14 +352,15 @@ struct seg		*seghead;	/* intersection w/ ray */
  *  Vectorized version.
  */
 void
-rt_nmg_vshot( stp, rp, segp, n, resp)
+rt_nmg_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
-	rt_vstub( stp, rp, segp, n, resp );
+	rt_vstub( stp, rp, segp, n, resp, tol );
 }
 
 /*
@@ -465,12 +465,11 @@ int		poly_markers;
  *			R T _ N M G _ P L O T
  */
 int
-rt_nmg_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_nmg_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	LOCAL struct model	*m;
 
@@ -491,13 +490,12 @@ double			norm_tol;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_nmg_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_nmg_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	LOCAL struct model	*lm;
 	struct nmgregion	*lr;

@@ -109,11 +109,12 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
  *
  */
 int
-rt_vol_shot( stp, rp, ap, seghead )
+rt_vol_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
@@ -582,10 +583,11 @@ struct rt_db_internal	*ip;
  *	in stp->st_specific for use by rt_vol_shot().
  */
 int
-rt_vol_prep( stp, ip, rtip )
+rt_vol_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_vol_internal	*vip;
 	register struct rt_vol_specific *volp;
@@ -761,12 +763,11 @@ rt_vol_class()
  *			R T _ V O L _ P L O T
  */
 int
-rt_vol_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_vol_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register struct rt_vol_internal *vip;
 	register short	x,y,z;
@@ -898,13 +899,12 @@ register struct rt_vol_internal	*vip;
  *			R T _ V O L _ T E S S
  */
 int
-rt_vol_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_vol_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	struct rt_vol_internal	*vip;
 	register int	i;

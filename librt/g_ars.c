@@ -290,10 +290,11 @@ struct rt_db_internal	*ip;
  *  database records to obtain all the necessary information.
  */
 int
-rt_ars_prep( stp, ip, rtip )
+rt_ars_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	LOCAL fastf_t	dx, dy, dz;	/* For finding the bounding spheres */
 	register int	i, j;
@@ -491,11 +492,12 @@ register struct soltab *stp;
  *  	!0	HIT
  */
 int
-rt_ars_shot( stp, rp, ap, seghead )
+rt_ars_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -757,12 +759,11 @@ rt_ars_class()
  *			R T _ A R S _ P L O T
  */
 int
-rt_ars_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_ars_plot( vhead, ip, ttol, tol )
 struct rt_list	*vhead;
 struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register int	i;
 	register int	j;
@@ -802,13 +803,12 @@ double		norm_tol;
  *			R T _ A R S _ T E S S
  */
 int
-rt_ars_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_ars_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register int	i;
 	register int	j;
@@ -816,18 +816,10 @@ double		norm_tol;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	*fu;
-	fastf_t		tol;
-	fastf_t		tol_sq;
 
 	RT_CK_DB_INTERNAL(ip);
 	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
-
-	/* rel_tol is hard to deal with, given we don't know the RPP yet */
-	tol = abs_tol;
-	if( tol <= 0.0 )
-		tol = 0.1;	/* mm */
-	tol_sq = tol * tol;
 
 	/* Build the topology of the ARS.  Start by allocating storage */
 
@@ -843,7 +835,7 @@ double		norm_tol;
 #define FIND_IJ(a,b)	\
 	if( !(verts[IJ(a,b)]) )  { \
 		verts[IJ(a,b)] = \
-		rt_nmg_find_pt_in_shell( s, ARS_PT(a,b), tol_sq ); \
+		rt_nmg_find_pt_in_shell( s, ARS_PT(a,b), tol ); \
 	}
 #define ASSOC_GEOM(corn, a,b)	\
 	if( !((*corners[corn])->vg_p) )  { \
@@ -862,7 +854,7 @@ double		norm_tol;
 			 *  First triangular face
 			 */
 			if( rt_3pts_distinct( ARS_PT(0,0), ARS_PT(1,1),
-			    ARS_PT(0,1), tol_sq )
+			    ARS_PT(0,1), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
 				FIND_IJ(0, 0);
@@ -882,14 +874,14 @@ double		norm_tol;
 				ASSOC_GEOM( 0, 0, 0 );
 				ASSOC_GEOM( 1, 0, 1 );
 				ASSOC_GEOM( 2, 1, 1 );
-				if( nmg_fu_planeeqn( fu ) < 0 )  return -1;
+				if( nmg_fu_planeeqn( fu, tol ) < 0 )  return -1;
 			}
 
 			/*
 			 *  Second triangular face
 			 */
 			if( rt_3pts_distinct( ARS_PT(1,0), ARS_PT(1,1),
-			    ARS_PT(0,0), tol_sq )
+			    ARS_PT(0,0), tol )
 			)  {
 				/* Locate these points, if previously mentioned */
 				FIND_IJ(1, 0);
@@ -909,7 +901,7 @@ double		norm_tol;
 				ASSOC_GEOM( 0, 1, 0 );
 				ASSOC_GEOM( 1, 0, 0 );
 				ASSOC_GEOM( 2, 1, 1 );
-				if( nmg_fu_planeeqn( fu ) < 0 )  return -1;
+				if( nmg_fu_planeeqn( fu, tol ) < 0 )  return -1;
 			}
 		}
 	}

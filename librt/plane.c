@@ -23,6 +23,7 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 
 /*
  *			R T _ 3 P T S _ D I S T I N C T
@@ -36,20 +37,20 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
  *	0	If two or more points are closer together than dist_tol_sq
  */
 int
-rt_3pts_distinct( a, b, c, dist_tol_sq )
-point_t	a, b, c;
-double	dist_tol_sq;
+rt_3pts_distinct( a, b, c, tol )
+CONST point_t		a, b, c;
+CONST struct rt_tol	*tol;
 {
 	vect_t	B_A;
 	vect_t	C_A;
 	vect_t	C_B;
 
 	VSUB2( B_A, b, a );
-	if( MAGSQ( B_A ) <= dist_tol_sq )  return(0);
+	if( MAGSQ( B_A ) <= tol->dist_sq )  return(0);
 	VSUB2( C_A, c, a );
-	if( MAGSQ( C_A ) <= dist_tol_sq )  return(0);
+	if( MAGSQ( C_A ) <= tol->dist_sq )  return(0);
 	VSUB2( C_B, c, b );
-	if( MAGSQ( C_B ) <= dist_tol_sq )  return(0);
+	if( MAGSQ( C_B ) <= tol->dist_sq )  return(0);
 	return(1);
 }
 
@@ -92,10 +93,10 @@ double	dist_tol_sq;
  *	plane	The plane equation is stored here.
  */
 int
-rt_mk_plane_3pts( plane, a, b, c, dist_tol_sq )
-plane_t	plane;
-point_t	a, b, c;
-double	dist_tol_sq;
+rt_mk_plane_3pts( plane, a, b, c, tol )
+plane_t			plane;
+CONST point_t		a, b, c;
+CONST struct rt_tol	*tol;
 {
 	vect_t	B_A;
 	vect_t	C_A;
@@ -103,11 +104,11 @@ double	dist_tol_sq;
 	register fastf_t mag;
 
 	VSUB2( B_A, b, a );
-	if( MAGSQ( B_A ) <= dist_tol_sq )  return(-1);
+	if( MAGSQ( B_A ) <= tol->dist_sq )  return(-1);
 	VSUB2( C_A, c, a );
-	if( MAGSQ( C_A ) <= dist_tol_sq )  return(-1);
+	if( MAGSQ( C_A ) <= tol->dist_sq )  return(-1);
 	VSUB2( C_B, c, b );
-	if( MAGSQ( C_B ) <= dist_tol_sq )  return(-1);
+	if( MAGSQ( C_B ) <= tol->dist_sq )  return(-1);
 
 	VCROSS( plane, B_A, C_A );
 
@@ -150,8 +151,8 @@ double	dist_tol_sq;
  */
 int
 rt_mkpoint_3planes( pt, a, b, c )
-point_t	pt;
-plane_t	a, b, c;
+point_t		pt;
+CONST plane_t	a, b, c;
 {
 	vect_t	v1, v2, v3;
 	register fastf_t det;
@@ -194,10 +195,10 @@ plane_t	a, b, c;
  */
 int
 rt_isect_ray_plane( dist, pt, dir, plane )
-fastf_t	*dist;
-point_t	pt;
-vect_t	dir;
-plane_t	plane;
+fastf_t		*dist;
+CONST point_t	pt;
+CONST vect_t	dir;
+CONST plane_t	plane;
 {
 	register fastf_t	slant_factor;
 	register fastf_t	norm_dist;
@@ -245,26 +246,24 @@ plane_t	plane;
  *	dir	Direction vector of line of intersection (unit length)
  */
 int
-rt_isect_2planes( pt, dir, a, b, rpp_min )
-point_t	pt;
-vect_t	dir;
-plane_t	a;
-plane_t	b;
-vect_t	rpp_min;
+rt_isect_2planes( pt, dir, a, b, rpp_min, tol )
+point_t		pt;
+vect_t		dir;
+CONST plane_t	a;
+CONST plane_t	b;
+CONST vect_t	rpp_min;
+CONST struct rt_tol	*tol;
 {
 	register fastf_t	d;
 	LOCAL vect_t		abs_dir;
 	LOCAL plane_t		pl;
-	/* XXX These should be parameters */
-	fastf_t			cos_ang_tol = 0.999999;
-	fastf_t			dist_tol = 0.005;
 
 	/* Check to see if the planes are parallel */
 	d = VDOT( a, b );
-	if( !NEAR_ZERO( d, cos_ang_tol ) )  {
+	if( RT_VECT_ARE_PARALLEL(d, tol) )  {
 		/* See if the planes are identical */
 		d = a[3] - b[3];
-		if( NEAR_ZERO( d, dist_tol ) )  {
+		if( NEAR_ZERO( d, tol->dist ) )  {
 			return(-1);	/* FAIL -- planes are identical */
 		}
 		return(-2);		/* FAIL -- parallel & distinct */
@@ -337,8 +336,6 @@ vect_t	rpp_min;
  *
  *  The direction vectors C and D need not have unit length.
  *
- *  XXX Tolerancing around zero, as always, remains a problem.
- *
  *  Explicit Return -
  *	-1	no intersection
  *	 0	lines are co-linear (t returned for u=0 to give distance to A)
@@ -352,12 +349,14 @@ vect_t	rpp_min;
  *		substituting either of these into the original ray equations.
  */
 int
-rt_isect_2lines( t, u, p, d, a, c )
-fastf_t		*t, *u;
-point_t		p;
-vect_t		d;
-point_t		a;
-vect_t		c;
+rt_isect_2lines( t, u, p, d, a, c, tol )
+fastf_t			*t;
+fastf_t			*u;
+CONST point_t		p;
+CONST vect_t		d;
+CONST point_t		a;
+CONST vect_t		c;
+CONST struct rt_tol	*tol;
 {
 	LOCAL vect_t		n;
 	LOCAL vect_t		abs_n;
@@ -377,10 +376,9 @@ vect_t		c;
 	 *  P and A must lie on parallel planes that are different
 	 *  distances from the origin.
 	 */
-#define DIFFERENCE_TOL	(1.0e-10)
 	VCROSS( n, d, c );
 	det = VDOT( n, p ) - VDOT( n, a );
-	if( !NEAR_ZERO( det, DIFFERENCE_TOL ) )  {
+	if( !NEAR_ZERO( det, tol->dist ) )  {
 		return(-1);		/* No intersection */
 	}
 
@@ -510,10 +508,10 @@ vect_t		c;
 	/*
 	 *  Check that these values of t and u satisfy the 3rd equation
 	 *  as well!
-	 *  XXX It isn't clear what tolerance to use here.
+	 *  XXX It isn't clear that "det" is exactly a model-space distance.
 	 */
 	det = *t * d[s] - *u * c[s] - h[s];
-	if( !NEAR_ZERO( det, DIFFERENCE_TOL ) )  {
+	if( !NEAR_ZERO( det, tol->dist ) )  {
 		/* This tolerance needs to be much less loose than
 		 * SQRT_SMALL_FASTF.
 		 */
@@ -554,19 +552,19 @@ vect_t		c;
  *		the endpoints.
  */
 int
-rt_isect_line_lseg( t, p, d, a, b )
-fastf_t		*t;
-point_t		p;
-vect_t		d;
-point_t		a;
-point_t		b;
+rt_isect_line_lseg( t, p, d, a, b, tol )
+fastf_t			*t;
+CONST point_t		p;
+CONST vect_t		d;
+CONST point_t		a;
+CONST point_t		b;
+CONST struct rt_tol	*tol;
 {
 	LOCAL vect_t	c;		/* Direction vector from A to B */
 	auto fastf_t	u;		/* As in, A + u * C = X */
 	register fastf_t f;
 	register int	ret;
-	/* XXX should be a parameter */
-	fastf_t		dist_tol_sq = SMALL_FASTF;
+	fastf_t		fuzz;
 
 	VSUB2( c, b, a );
 	/*
@@ -575,11 +573,11 @@ point_t		b;
 	 *  However, it is a good idea to make sure that
 	 *  C is a non-zero vector, (ie, that A and B are distinct).
 	 */
-	if( MAGSQ(c) < dist_tol_sq )  {
-		return(-3);		/* A and B are not distinct */
+	if( (fuzz = MAGSQ(c)) < tol->dist_sq )  {
+		return(-3);		/* points A and B are not distinct */
 	}
 
-	if( (ret = rt_isect_2lines( t, &u, p, d, a, c )) < 0 )  {
+	if( (ret = rt_isect_2lines( t, &u, p, d, a, c, tol )) < 0 )  {
 		/* No intersection found */
 		return( -1 );
 	}
@@ -593,16 +591,20 @@ point_t		b;
 	 *  If the u parameter is outside the range (0..1),
 	 *  reject the intersection, because it falls outside
 	 *  the line segment A--B.
+	 *
+	 *  Convert the tol->dist into allowable deviation in terms of
+	 *  (0..1) range of the parameters.
 	 */
-	if( u < -SQRT_SMALL_FASTF )
+	fuzz = tol->dist / sqrt(fuzz);
+	if( u < -fuzz )
 		return(-2);		/* Intersection outside of A--B */
-	if( (f=(u-1)) > SQRT_SMALL_FASTF )
+	if( (f=(u-1)) > fuzz )
 		return(-2);		/* Intersection outside of A--B */
 
 	/* Check for fuzzy intersection with one of the verticies */
-	if( u < SQRT_SMALL_FASTF )
+	if( u < fuzz )
 		return( 1 );		/* Intersection at A */
-	if( f >= -SQRT_SMALL_FASTF )
+	if( f >= -fuzz )
 		return( 2 );		/* Intersection at B */
 
 	return(3);			/* Intersection between A and B */
@@ -620,19 +622,18 @@ point_t		b;
  */
 double
 rt_dist_line_point( pt, dir, a )
-point_t	pt;
-vect_t	dir;
-point_t	a;
+CONST point_t	pt;
+CONST vect_t	dir;
+CONST point_t	a;
 {
 	LOCAL vect_t		f;
 	register fastf_t	FdotD;
 
 	VSUB2( f, pt, a );
 	FdotD = VDOT( f, dir );
-	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= 0 ||
-	    (FdotD = sqrt( FdotD )) < SQRT_SMALL_FASTF )
+	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
 		return(0.0);
-	return( FdotD );
+	return( sqrt(FdotD) );
 }
 
 /*
@@ -647,16 +648,15 @@ point_t	a;
  */
 double
 rt_dist_line_origin( pt, dir )
-point_t	pt;
-vect_t	dir;
+CONST point_t	pt;
+CONST vect_t	dir;
 {
 	register fastf_t	PTdotD;
 
 	PTdotD = VDOT( pt, dir );
-	if( (PTdotD = VDOT( pt, pt ) - PTdotD * PTdotD ) <= 0 ||
-	    (PTdotD = sqrt( PTdotD )) < SQRT_SMALL_FASTF )
+	if( (PTdotD = VDOT( pt, pt ) - PTdotD * PTdotD ) <= SMALL_FASTF )
 		return(0.0);
-	return( PTdotD );
+	return( sqrt(PTdotD) );
 }
 
 /*
@@ -667,7 +667,7 @@ vect_t	dir;
  */
 double
 rt_area_of_triangle( a, b, c )
-register point_t a, b, c;
+register CONST point_t a, b, c;
 {
 	register double	t;
 	register double	area;
@@ -689,7 +689,8 @@ register point_t a, b, c;
 }
 
 
-/*	R T _ I S E C T _ P T _ L S E G
+/*
+ *			R T _ I S E C T _ P T _ L S E G
  *
  * Intersect a point P with the line segment defined by two distinct
  * points A and B.
@@ -715,27 +716,24 @@ register point_t a, b, c;
  *	tol = distance limit from line to pt P;
  *	dist = distance from A to P'
  */
-int rt_isect_pt_lseg(dist, a, b, p, dist_tol_sq)
-fastf_t *dist;		/* distance along line from A to P */
-point_t a, b, p;	/* points for line and intersect */
-fastf_t dist_tol_sq;	/* dist tol (squared) for pt on line or other-point */
+int rt_isect_pt_lseg(dist, a, b, p, tol)
+fastf_t			*dist;		/* distance along line from A to P */
+CONST point_t		a, b, p;	/* points for line and intersect */
+CONST struct rt_tol	*tol;
 {
 	vect_t	AtoP,
 		BtoP,
 		AtoB,
 		ABunit;	/* unit vector from A to B */
-
-	fastf_t	APprABunit;	/* Magnitude of the projection of
-				 * AtoP onto ABunit
-				 */
-	fastf_t distsq;		/* distance^2 from parametric line to pt */
+	fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
+	fastf_t	distsq;
 
 	VSUB2(AtoP, p, a);
-	if (MAGSQ(AtoP) < dist_tol_sq)
+	if (MAGSQ(AtoP) < tol->dist_sq)
 		return(1);	/* P at A */
 
 	VSUB2(BtoP, p, b);
-	if (MAGSQ(BtoP) < dist_tol_sq)
+	if (MAGSQ(BtoP) < tol->dist_sq)
 		return(2);	/* P at B */
 
 	VSUB2(AtoB, b, a);
@@ -756,20 +754,21 @@ fastf_t dist_tol_sq;	/* dist tol (squared) for pt on line or other-point */
 
 	if (distsq < 0)
 		distsq = 0.0;
-
-	if (distsq > dist_tol_sq)
+	else if (distsq > tol->dist_sq)
 		return(-1);	/* dist pt to line too large */
 
 	/* Distance from the point to the line is within tolerance. */
 	*dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
 
+	/* XXX This formula does not give a tol->dist radius around endpts */
 	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
 		return(-2);
 
 	return(3);	/* P on AtoB */
 }
 
-/*	R T _ D I S T _ P T _ L S E G
+/*
+ *			R T _ D I S T _ P T _ L S E G
  *
  *	Find the distance from a point P to a line segment described
  *	by the two endpoints A and B.
@@ -780,11 +779,13 @@ fastf_t dist_tol_sq;	/* dist tol (squared) for pt on line or other-point */
  *	Implicit return
  *	    pca 	the point of closest approach
  */
-double rt_dist_pt_lseg(pca, a, b, p)
-point_t pca, a, b, p;
+double rt_dist_pt_lseg(pca, a, b, p, tol)
+point_t		pca;
+CONST point_t	a, b, p;
+CONST struct rt_tol *tol;
 {
 	vect_t ENDPTtoP, AtoB;
-	double Pr_prop;		/* projection of a-p onto a-b as a proportion of a-b */
+	double Pr_prop;		/* proj of a-p onto a-b as proportion of a-b */
 	double distance;	/* distance of point from lseg */
 	
 	VSUB2(ENDPTtoP, p, a);
@@ -793,6 +794,7 @@ point_t pca, a, b, p;
 	/* compute distance along line to pca */
 	Pr_prop = VDOT(ENDPTtoP, AtoB) / MAGSQ(AtoB);
 
+	/* XXX This does not provide a tol->dist circle around endpoints */
 	if (Pr_prop < 1.0 && Pr_prop > 0.0) {
 		/* pt is along edge of lseg, scale AtoB by Pr_prop to
 		 * get a vector from A to the P.C.A.
@@ -801,12 +803,10 @@ point_t pca, a, b, p;
 		VUNITIZE(AtoB);
 
 		distance = rt_dist_line_point(a, AtoB, p);
-
 		return(distance);
 	}
 
 	/* pt is closer to an endpoint than to the line segment */
-
 	if (Pr_prop >= 1.0) {
 		VSUB2(ENDPTtoP, p, b);
 		VMOVE(pca, b);
@@ -815,7 +815,6 @@ point_t pca, a, b, p;
 	}
 
 	distance = MAGNITUDE(ENDPTtoP);
-
 	return(distance);
 }
 
@@ -832,9 +831,9 @@ void
 rt_rotate_bbox( omin, omax, mat, imin, imax )
 point_t		omin;
 point_t		omax;
-mat_t		mat;
-point_t		imin;
-point_t		imax;
+CONST mat_t	mat;
+CONST point_t	imin;
+CONST point_t	imax;
 {
 	point_t		rmin, rmax;
 	point_t		pt;
@@ -875,8 +874,8 @@ point_t		imax;
 void
 rt_rotate_plane( oplane, mat, iplane )
 plane_t		oplane;
-mat_t		mat;
-plane_t		iplane;
+CONST mat_t	mat;
+CONST plane_t	iplane;
 {
 	point_t		orig_pt;
 	point_t		new_pt;

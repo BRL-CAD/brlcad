@@ -106,10 +106,11 @@ struct local_hit	*rt_spl_ray_poly();
  * surface so that the subdivision works.
  */
 int
-rt_spl_prep( stp, ip, rtip )
+rt_spl_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_spl_internal	*sip;
 	struct b_head		*nlist = (struct b_head *) 0;
@@ -222,12 +223,11 @@ rt_spl_class()
  *			R T _ S P L _ P L O T
  */
 int
-rt_spl_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_spl_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	struct rt_spl_internal	*sip;
 	register int	i;
@@ -647,11 +647,12 @@ register struct xray *rp;
 struct b_head * curr_tree;
 
 int
-rt_spl_shot( stp,  rp, ap, seghead )
+rt_spl_shot( stp,  rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	struct b_head * nlist = ( struct b_head *) stp->st_specific;
 	auto vect_t invdir;
@@ -1062,13 +1063,12 @@ struct spl_poly * p1;
  *			R T _ S P L _ T E S S
  */
 int
-rt_spl_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_spl_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	struct rt_spl_internal	*sip;
 	int	i;

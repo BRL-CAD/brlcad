@@ -31,9 +31,6 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-#define DIST_TOL	(1.0e-8)
-#define DIST_TOL_SQ	(1.0e-10)
-
 RT_EXTERN(void rt_arbn_print, (struct soltab *stp) );
 RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
 
@@ -45,10 +42,11 @@ RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
  *	!0	failure
  */
 int
-rt_arbn_prep( stp, ip, rtip )
+rt_arbn_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_arbn_internal	*aip;
 	vect_t		work;
@@ -80,7 +78,7 @@ struct rt_i		*rtip;
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( aip->eqn[i], aip->eqn[j] );
-			if( !NEAR_ZERO( dot, 0.999999 ) )  continue;
+			if( RT_VEC_ARE_PARALLEL(dot, tol) )  continue;
 
 			/* Have an edge line, isect with higher numbered planes */
 			for( k=j+1; k<aip->neqn; k++ )  {
@@ -92,7 +90,7 @@ struct rt_i		*rtip;
 				/* See if point is outside arb */
 				for( m=0; m<aip->neqn; m++ )  {
 					if( i==m || j==m || k==m )  continue;
-					if( VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > DIST_TOL )
+					if( VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > tol->dist )
 						goto next_k;
 				}
 				VMINMAX( stp->st_min, stp->st_max, pt );
@@ -151,11 +149,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_arbn_shot( stp, rp, ap, seghead )
+rt_arbn_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct rt_arbn_internal	*aip =
 		(struct rt_arbn_internal *)stp->st_specific;
@@ -226,14 +225,15 @@ struct seg		*seghead;
  *			R T _ A R B N _ V S H O T
  */
 void
-rt_arbn_vshot( stp, rp, segp, n, resp)
+rt_arbn_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		 	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
-	rt_vstub( stp, rp, segp, n, resp );
+	rt_vstub( stp, rp, segp, n, resp, tol );
 }
 
 /*
@@ -324,12 +324,11 @@ register struct soltab *stp;
  *  Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct rt_list	*vhead;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_arbn_plot( vhead, ip, ttol, tol )
+struct rt_list		*vhead;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register struct rt_arbn_internal	*aip;
 	register int	i;
@@ -349,7 +348,7 @@ double		norm_tol;
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( aip->eqn[i], aip->eqn[j] );
-			if( !NEAR_ZERO( dot, 0.999999 ) )  continue;
+			if( RT_VEC_ARE_PARALLEL(dot, tol) )  continue;
 
 			/* Have an edge line, isect with all other planes */
 			point_count = 0;
@@ -363,7 +362,7 @@ double		norm_tol;
 				/* See if point is outside arb */
 				for( m=0; m<aip->neqn; m++ )  {
 					if( i==m || j==m || k==m )  continue;
-					if( VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > DIST_TOL )
+					if( VDOT(pt, aip->eqn[m])-aip->eqn[m][3] > tol->dist )
 						goto next_k;
 				}
 
@@ -372,14 +371,14 @@ double		norm_tol;
 					VMOVE( a, pt );
 				} else if( point_count == 1 )  {
 					VSUB2( dist, pt, a );
-					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
+					if( MAGSQ(dist) < tol->dist_sq )  continue;
 					RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 					VMOVE( b, pt );
 				} else {
 					VSUB2( dist, pt, a );
-					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
+					if( MAGSQ(dist) < tol->dist_sq )  continue;
 					VSUB2( dist, pt, b );
-					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
+					if( MAGSQ(dist) < tol->dist_sq )  continue;
 					rt_log("rt_arbn_plot() error, point_count=%d (>2) on edge %d/%d, non-convex\n",
 						point_count+1,
 						i, j );
@@ -416,13 +415,12 @@ rt_arbn_class()
  *  into another.
  */
 int
-rt_arbn_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_arbn_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	return(-1);
 }

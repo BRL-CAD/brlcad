@@ -52,10 +52,11 @@ HIDDEN int rt_pgface();
  *  
  */
 int
-rt_pg_prep( stp, ip, rtip )
+rt_pg_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_pg_internal	*pgp;
 	register int	i;
@@ -83,7 +84,7 @@ struct rt_i		*rtip;
 
 			/* output a face */
 			(void)rt_pgface( stp,
-				work[0], work[1], work[2], norm );
+				work[0], work[1], work[2], norm, tol );
 
 			/* Chop off a triangle, and continue */
 			VMOVE( work[1], work[2] );
@@ -125,10 +126,11 @@ struct rt_i		*rtip;
  *	#pts	(3) if a valid plane resulted.
  */
 HIDDEN int
-rt_pgface( stp, ap, bp, cp, np )
+rt_pgface( stp, ap, bp, cp, np, tol )
 struct soltab	*stp;
 fastf_t		*ap, *bp, *cp;
 fastf_t		*np;
+CONST struct rt_tol	*tol;
 {
 	register struct tri_specific *trip;
 	vect_t work;
@@ -146,8 +148,8 @@ fastf_t		*np;
 	VSUB2( work, bp, cp );
 	m3 = MAGNITUDE( work );
 	m4 = MAGNITUDE( trip->tri_wn );
-	if( NEAR_ZERO(m1, 0.0001) || NEAR_ZERO(m2, 0.0001) ||
-	    NEAR_ZERO(m3, 0.0001) || NEAR_ZERO(m4, 0.0001) )  {
+	if( m1 < tol->dist || m2 < tol->dist ||
+	    m3 < tol->dist || m4 < tol->dist )  {
 		free( (char *)trip);
 		if( rt_g.debug & DEBUG_ARB8 )
 			rt_log("pg(%s): degenerate facet\n", stp->st_name);
@@ -209,11 +211,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_pg_shot( stp, rp, ap, seghead )
+rt_pg_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -397,12 +400,11 @@ rt_pg_class()
  *			R T _ P G _ P L O T
  */
 int
-rt_pg_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_pg_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -498,10 +500,10 @@ double		tol_sq;
  *	NULL
  */
 struct vertex *
-rt_nmg_find_pt_in_shell( s, pt, tol_sq )
-struct shell	*s;
-point_t		pt;
-double		tol_sq;
+rt_nmg_find_pt_in_shell( s, pt, tol )
+struct shell		*s;
+CONST point_t		pt;
+CONST struct rt_tol	*tol;
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -517,7 +519,7 @@ double		tol_sq;
 	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
 		/* Shell has faces */
 		NMG_CK_FACEUSE(fu);
-			if( (vu = nmg_find_vu_in_face( pt, fu, tol_sq )) )
+			if( (vu = nmg_find_vu_in_face( pt, fu, tol )) )
 				return(vu->v_p);
 
 			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
@@ -534,7 +536,7 @@ double		tol_sq;
 			if (vg = vu->v_p->vg_p) {
 				NMG_CK_VERTEX_G(vg);
 				VSUB2( delta, vg->coord, pt );
-				if( MAGSQ(delta) < tol_sq )
+				if( MAGSQ(delta) < tol->dist_sq )
 					return(vu->v_p);
 			}
 		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
@@ -551,7 +553,7 @@ double		tol_sq;
 				if( (vg = v->vg_p) )  {
 					NMG_CK_VERTEX_G(vg);
 					VSUB2( delta, vg->coord, pt );
-					if( MAGSQ(delta) < tol_sq )
+					if( MAGSQ(delta) < tol->dist_sq )
 						return(v);
 				}
 			}
@@ -581,7 +583,7 @@ double		tol_sq;
 		if( (vg = v->vg_p) )  {
 			NMG_CK_VERTEX_G(vg);
 			VSUB2( delta, vg->coord, pt );
-			if( MAGSQ(delta) < tol_sq )
+			if( MAGSQ(delta) < tol->dist_sq )
 				return(v);
 		}
 	}
@@ -594,7 +596,7 @@ double		tol_sq;
 		if( (vg = v->vg_p) )  {
 			NMG_CK_VERTEX_G( vg );
 			VSUB2( delta, vg->coord, pt );
-			if( MAGSQ(delta) < tol_sq )
+			if( MAGSQ(delta) < tol->dist_sq )
 				return(v);
 		}
 	}
@@ -605,21 +607,18 @@ double		tol_sq;
  *			R T _ P G _ T E S S
  */
 int
-rt_pg_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_pg_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register int	i;
 	struct shell	*s;
 	struct vertex	**verts;	/* dynamic array of pointers */
 	struct vertex	***vertp;/* dynamic array of ptrs to pointers */
 	struct faceuse	*fu;
-	fastf_t		tol;
-	fastf_t		tol_sq;
 	register int	p;	/* current polygon number */
 	struct rt_pg_internal	*pgp;
 
@@ -629,13 +628,6 @@ double			norm_tol;
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = RT_LIST_FIRST(shell, &(*r)->s_hd);
-
-
-	/* rel_tol is hard to deal with, given we don't know the RPP yet */
-	tol = abs_tol;
-	if( tol <= 0.0 )
-		tol = 0.1;	/* mm */
-	tol_sq = tol * tol;
 
 	verts = (struct vertex **)rt_malloc(
 		pgp->max_npts * sizeof(struct vertex *), "pg_tess verts[]");
@@ -652,7 +644,7 @@ double			norm_tol;
 		/* Locate these points, if previously mentioned */
 		for( i=0; i < pp->npts; i++ )  {
 			verts[i] = rt_nmg_find_pt_in_shell( s,
-				&pp->verts[3*i], tol_sq );
+				&pp->verts[3*i], tol->dist_sq );
 		}
 
 		/* Construct the face.  Verts should be in CCW order */
@@ -668,7 +660,8 @@ double			norm_tol;
 		}
 
 		/* Associate face geometry */
-		if( nmg_fu_planeeqn( fu ) < 0 )  return -1;	/* FAIL */
+		if( nmg_fu_planeeqn( fu, tol ) < 0 )
+			return -1;			/* FAIL */
 	}
 
 	/* Compute "geometry" for region and shell */

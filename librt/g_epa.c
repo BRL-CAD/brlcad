@@ -1,4 +1,6 @@
 /*
+ * XXX Re-do this from g_xxx.c!  Out of data already.
+ *
  *			G _ E P A . C
  *
  *  Purpose -

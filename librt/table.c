@@ -31,9 +31,11 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #if __STDC__ && !alliant && !apollo
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
-			struct rt_db_internal *ip, struct rt_i *rtip)); \
+			struct rt_db_internal *ip, struct rt_i *rtip, \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_##name##_shot, (struct soltab *stp, struct xray *rp, \
-			struct application *ap, struct seg *seghead)); \
+			struct application *ap, struct seg *seghead, \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(void rt_##name##_print, (struct soltab *stp)); \
 	RT_EXTERN(void rt_##name##_norm, (struct hit *hitp, \
 			struct soltab *stp, struct xray *rp)); \
@@ -46,13 +48,16 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
 	RT_EXTERN(int rt_##name##_plot, (struct rt_list *vhead, \
 			struct rt_db_internal *ip, \
-			double abs_tol, double rel_tol, double norm_tol)); \
+			CONST struct rt_tess_tol *ttol, \
+			struct rt_tol *tol)); \
 	RT_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
-			struct seg segp[], int n, struct resource *resp)); \
+			struct seg segp[], int n, struct resource *resp, \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
 			struct model *m, struct rt_db_internal *ip, \
-			double abs_tol, double rel_tol, double norm_tol)); \
+			CONST struct rt_tess_tol *ttol, \
+			struct rt_tol *tol)); \
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
 	RT_EXTERN(int rt_##name##_export, (struct rt_external *ep, \
@@ -65,9 +70,11 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #else
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
-			struct rt_db_internal *ip, struct rt_i *rtip)); \
+			struct rt_db_internal *ip, struct rt_i *rtip, \
+			CONST struct rt_tol *)); \
 	RT_EXTERN(int rt_/**/name/**/_shot, (struct soltab *stp, struct xray *rp, \
-			struct application *ap, struct seg *seghead)); \
+			struct application *ap, struct seg *seghead, \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(void rt_/**/name/**/_print, (struct soltab *stp)); \
 	RT_EXTERN(void rt_/**/name/**/_norm, (struct hit *hitp, \
 			struct soltab *stp, struct xray *rp)); \
@@ -80,13 +87,16 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 	RT_EXTERN(void rt_/**/name/**/_free, (struct soltab *stp)); \
 	RT_EXTERN(int rt_/**/name/**/_plot, (struct rt_list *vhead, \
 			struct rt_db_internal *ip, \
-			double abs_tol, double rel_tol, double norm_tol)); \
+			CONST struct rt_tess_tol *ttol, \
+			struct rt_tol *tol)); \
 	RT_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
-			struct seg segp[], int n, struct resource *resp)); \
+			struct seg segp[], int n, struct resource *resp, \
+			CONST struct rt_tol *tol)); \
 	RT_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
 			struct model *m, struct rt_db_internal *ip, \
-			double abs_tol, double rel_tol, double norm_tol)); \
+			CONST struct rt_tess_tol *ttol, \
+			struct rt_tol *tol)); \
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
 	RT_EXTERN(int rt_/**/name/**/_export, (struct rt_external *ep, \
@@ -260,11 +270,13 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 
 int IDEF(rt_nul_prep,(struct soltab *stp,
 			struct rt_db_internal *ip,
-			struct rt_i *rtip))
+			struct rt_i *rtip,
+			CONST struct rt_tol *tol))
 int IDEF(rt_nul_shot,(struct soltab *stp,
 			struct xray *rp,
 			struct application *ap,
-			struct seg *seghead))
+			struct seg *seghead,
+			CONST struct rt_tol *tol))
 void DEF(rt_nul_print,(struct soltab *stp))
 void DEF(rt_nul_norm,(struct hit *hitp,
 			struct soltab *stp,
@@ -280,15 +292,18 @@ int IDEF(rt_nul_class,())
 void DEF(rt_nul_free,(struct soltab *stp))
 int NDEF(rt_nul_plot,(struct rt_list *vhead,
 			struct rt_db_internal *ip,
-			double abs_tol, double rel_tol, double norm_tol))
+			CONST struct rt_tess_tol *ttol,
+			struct rt_tol *tol))
 void DEF(rt_nul_vshot,(struct soltab *stp[],
 			struct xray *rp[],
 			struct seg segp[], int n,
-			struct resource *resp))
+			struct resource *resp,
+			CONST struct rt_tol *tol))
 int NDEF(rt_nul_tess,(struct nmgregion **r,
 			struct model *m,
 			struct rt_db_internal *ip,
-			double abs_tol, double rel_tol, double norm_tol))
+			CONST struct rt_tess_tol *ttol,
+			struct rt_tol *tol))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			struct rt_external *ep,
 			mat_t mat))

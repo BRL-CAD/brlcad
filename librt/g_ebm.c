@@ -681,10 +681,11 @@ vect_t	imin, imax;
  *	in stp->st_specific for use by rt_ebm_shot().
  */
 int
-rt_ebm_prep( stp, ip, rtip )
+rt_ebm_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_ebm_internal	*eip;
 	register struct rt_ebm_specific *ebmp;
@@ -765,11 +766,12 @@ register struct soltab	*stp;
  *	>0	HIT
  */
 int
-rt_ebm_shot( stp, rp, ap, seghead )
+rt_ebm_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct rt_ebm_specific *ebmp =
 		(struct rt_ebm_specific *)stp->st_specific;
@@ -918,12 +920,11 @@ rt_ebm_class()
  *			R T _ E B M _ P L O T
  */
 int
-rt_ebm_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_ebm_plot( vhead, ip, ttol, tol )
 struct rt_list	*vhead;
 struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register struct rt_ebm_internal *eip;
 	register int	x,y;
@@ -1013,13 +1014,12 @@ register struct rt_list	*vhead;
  *			R T _ E B M _ T E S S
  */
 int
-rt_ebm_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_ebm_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	struct rt_ebm_internal	*eip;
 	register int	i;

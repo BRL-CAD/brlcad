@@ -54,10 +54,11 @@ struct xxx_specific {
  *  	stp->st_specific for use by xxx_shot().
  */
 int
-rt_xxx_prep( stp, ip, rtip )
+rt_xxx_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_xxx_internal		*xip;
 	register struct xxx_specific	*xxx;
@@ -90,11 +91,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_xxx_shot( stp, rp, ap, seghead )
+rt_xxx_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
@@ -111,12 +113,13 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-rt_xxx_vshot( stp, rp, segp, n, resp)
+rt_xxx_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
 	rt_vstub( stp, rp, segp, n, resp );
 }
@@ -203,12 +206,11 @@ rt_xxx_class()
  *			R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_xxx_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	LOCAL struct rt_xxx_internal	*xip;
 
@@ -227,13 +229,12 @@ double			norm_tol;
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_xxx_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	LOCAL struct rt_xxx_internal	*xip;
 

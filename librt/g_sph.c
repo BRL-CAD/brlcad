@@ -75,10 +75,11 @@ struct sph_specific {
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
 int
-rt_sph_prep( stp, ip, rtip )
+rt_sph_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	register struct sph_specific *sph;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
@@ -215,11 +216,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_sph_shot( stp, rp, ap, seghead )
+rt_sph_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
@@ -266,12 +268,13 @@ struct seg		*seghead;
  *  This is the Becker vectorized version
  */
 void
-rt_sph_vshot( stp, rp, segp, n, resp)
+rt_sph_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
 	register struct sph_specific *sph;
 	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */

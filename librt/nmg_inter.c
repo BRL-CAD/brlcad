@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct nmg_inter_struct {
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
 	struct nmg_ptbl *l2;		/* intersection between planes */
-	fastf_t		tol;
+	struct rt_tol	tol;
 	point_t		pt;		/* line of intersection */
 	vect_t		dir;
 	int		coplanar;
@@ -106,7 +106,7 @@ struct faceuse *fu;
 	pt = vu->v_p->vg_p->coord;
 	dist = NMG_DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
 
-	if ( !NEAR_ZERO(dist, bs->tol) )  return;
+	if ( !NEAR_ZERO(dist, bs->tol.dist) )  return;
 
 	if (nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic) < 0) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -256,7 +256,7 @@ struct faceuse *fu;
 		rt_log("\tedge_len=%g, dist=%g, dist_to_plane=%g\n",
 			edge_len, dist, dist_to_plane);
 
-	if ( dist_to_plane < -(bs->tol) )  {
+	if ( dist_to_plane < -(bs->tol.dist) )  {
 		/* Hit is behind first point */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tplane behind first point\n");
@@ -269,13 +269,13 @@ struct faceuse *fu;
 	 * and give up on this edge, knowing that we'll pick up the
 	 * intersection of the next edgeuse with the face later.
 	 */
-	if ( dist_to_plane < bs->tol )  {
+	if ( dist_to_plane < bs->tol.dist )  {
 		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 
-		vu_other = nmg_find_vu_in_face(v1->vg_p->coord, fu, bs->tol);
+		vu_other = nmg_find_vu_in_face(v1->vg_p->coord, fu, &(bs->tol));
 		if (vu_other) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
@@ -298,7 +298,7 @@ struct faceuse *fu;
 		}
 		return;
 	}
-	if ( dist_to_plane < edge_len - bs->tol) {
+	if ( dist_to_plane < edge_len - bs->tol.dist) {
 		struct edgeuse	*euforw;
 
 		/* Intersection is between first and second vertex points.
@@ -314,7 +314,7 @@ struct faceuse *fu;
 		 * other face, we'll build a new vertex.  Otherwise
 		 * we re-use an old one.
 		 */
-		vu_other = nmg_find_vu_in_face(hit_pt, fu, bs->tol);
+		vu_other = nmg_find_vu_in_face(hit_pt, fu, &(bs->tol));
 		if (vu_other) {
 			/* the other face has a convenient vertex for us */
 
@@ -423,7 +423,7 @@ struct faceuse *fu;
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &euforw->vu_p->l.magic);
 		return;
 	}
-	if ( dist_to_plane < edge_len + bs->tol) {
+	if ( dist_to_plane < edge_len + bs->tol.dist) {
 		/* Second point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge ends at plane intersect\n");
@@ -436,7 +436,7 @@ struct faceuse *fu;
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 #endif
 
-		vu_other = nmg_find_vu_in_face(v1mate->vg_p->coord, fu, bs->tol);
+		vu_other = nmg_find_vu_in_face(v1mate->vg_p->coord, fu, &(bs->tol));
 		if (vu_other) {
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
@@ -558,8 +558,8 @@ struct faceuse	*fu2;
  *	Intersect a pair of faces
  */
 static void nmg_isect_2faces(fu1, fu2, tol)
-struct faceuse *fu1, *fu2;
-fastf_t tol;
+struct faceuse		*fu1, *fu2;
+CONST struct rt_tol	*tol;
 {
 	struct nmg_ptbl vert_list1, vert_list2;
 	struct nmg_inter_struct	bs;
@@ -599,7 +599,8 @@ fastf_t tol;
 	/* Extents of face1 overlap face2 */
 	VMOVE(min_pt, f1->fg_p->min_pt);
 	VMIN(min_pt, f2->fg_p->min_pt);
-	status = rt_isect_2planes( bs.pt, bs.dir, f1->fg_p->N, f2->fg_p->N, min_pt );
+	status = rt_isect_2planes( bs.pt, bs.dir, f1->fg_p->N, f2->fg_p->N,
+		min_pt, tol );
 	switch( status )  {
 	case 0:
 		/* All is well */
@@ -624,7 +625,7 @@ fastf_t tol;
 
     	bs.l1 = &vert_list1;
     	bs.l2 = &vert_list2;
-    	bs.tol = tol/50.0;
+    	bs.tol = *tol;		/* struct copy */
 
     	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_COMBINE|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
@@ -703,8 +704,9 @@ fastf_t tol;
  *	in preparation for performing boolean operations on the shells.
  */
 void nmg_crackshells(s1, s2, tol)
-struct shell *s1, *s2;
-fastf_t tol;
+struct shell		*s1;
+struct shell		*s2;
+CONST struct rt_tol	*tol;
 {
 	struct face	*f1;
 	struct faceuse	*fu1, *fu2;

@@ -35,7 +35,7 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
-	struct rt_i *rtip));
+	struct rt_i *rtip, CONST struct rt_tol *tol));
 
 /*
  *  Algorithm:
@@ -157,10 +157,11 @@ struct ell_specific {
  *  	stp->st_specific for use by rt_ell_shot().
  */
 int
-rt_ell_prep( stp, ip, rtip )
+rt_ell_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	register struct ell_specific *ell;
 	struct rt_ell_internal	*eip;
@@ -182,7 +183,7 @@ struct rt_i		*rtip;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( rt_sph_prep( stp, ip, rtip ) == 0 )
+	if( rt_sph_prep( stp, ip, rtip, tol ) == 0 )
 		return(0);		/* OK */
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
@@ -324,11 +325,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_ell_shot( stp, rp, ap, seghead )
+rt_ell_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -375,12 +377,13 @@ struct seg		*seghead;
  *  This is the Becker vector version.
  */
 void
-rt_ell_vshot( stp, rp, segp, n, resp)
+rt_ell_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
 	register int    i;
 	register struct ell_specific *ell;
@@ -607,12 +610,11 @@ fastf_t *A, *B;
  *			R T _ E L L _ P L O T
  */
 int
-rt_ell_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
-struct rt_list	*vhead;
-struct rt_db_internal *ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+rt_ell_plot( vhead, ip, ttol, tol )
+struct rt_list		*vhead;
+struct rt_db_internal	*ip;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	register int		i;
 	struct rt_ell_internal	*eip;
@@ -728,13 +730,12 @@ struct vert_strip {
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_ell_tess( r, m, ip, abs_tol, rel_tol, norm_tol )
+rt_ell_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -759,6 +760,7 @@ double		norm_tol;
 	int	toff;		/* top offset */
 	int	blim;		/* base subscript limit */
 	int	tlim;		/* top subscrpit limit */
+	fastf_t	rel;		/* Absolutized relative tolerance */
 
 	RT_CK_DB_INTERNAL(ip);
 	state.eip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -839,36 +841,34 @@ double		norm_tol;
 	/*
 	 *  Establish tolerances
 	 */
-	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
-		rel_tol = 0.0;		/* none */
+	if( ttol->rel <= 0.0 || ttol->rel >= 1.0 )  {
+		rel = 0.0;		/* none */
 	} else {
 		/* Convert rel to absolute by scaling by diameter */
-		rel_tol *= 2*radius;
+		rel = ttol->rel * 2 * radius;
 	}
-	if( abs_tol <= 0.0 )  {
-		if( rel_tol <= 0.0 )  {
+	if( ttol->abs <= 0.0 )  {
+		if( rel <= 0.0 )  {
 			/* No tolerance given, use a default */
-			abs_tol = 2 * 0.10 * radius;	/* 10% */
+			rel = 2 * 0.10 * radius;	/* 10% */
 		} else {
 			/* Use absolute-ized relative tolerance */
-			abs_tol = rel_tol;
 		}
 	} else {
 		/* Absolute tolerance was given, pick smaller */
-		if( rel_tol > 0.0 && rel_tol < abs_tol )
-			abs_tol = rel_tol;
+		if( ttol->rel <= 0.0 || rel > ttol->abs )
+			rel = ttol->abs;
 	}
 
 	/*
 	 *  Converte distance tolerance into a maximum permissible
 	 *  angle tolerance.  'radius' is largest radius.
 	 */
-	state.theta_tol = 2 * acos( 1.0 - abs_tol / radius );
+	state.theta_tol = 2 * acos( 1.0 - rel / radius );
 
 	/* To ensure normal tolerance, remain below this angle */
-	if( norm_tol > 0.0 && norm_tol < state.theta_tol )  {
-		state.theta_tol = norm_tol;
-		abs_tol = radius * ( 1 - cos( state.theta_tol * 0.5 ) );
+	if( ttol->norm > 0.0 && ttol->norm < state.theta_tol )  {
+		state.theta_tol = ttol->norm;
 	}
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
@@ -1023,7 +1023,7 @@ double		norm_tol;
 	/* Associate face geometry.  Equator has no faces */
 	for( i=0; i < nstrips; i++ )  {
 		for( j=0; j < strips[i].nfaces; j++ )  {
-			if( nmg_fu_planeeqn( strips[i].fu[j] ) < 0 )
+			if( nmg_fu_planeeqn( strips[i].fu[j], tol ) < 0 )
 				goto fail;
 		}
 	}

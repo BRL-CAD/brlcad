@@ -84,10 +84,11 @@ struct nurb_hit * rt_return_nurb_hit();
  */
 
 int
-rt_nurb_prep( stp, ip, rtip )
+rt_nurb_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal 	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_nurb_internal	*sip;
 	struct nurb_specific 	*nurbs;
@@ -189,11 +190,12 @@ register struct soltab *stp;
  */
 
 int
-rt_nurb_shot( stp, rp, ap, seghead )
+rt_nurb_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct nurb_specific * nurb =
 		(struct nurb_specific *)stp->st_specific;
@@ -229,9 +231,8 @@ struct seg		*seghead;
 	/* Note: the equation of the plane in BRLCAD is
 	 * Ax + By + Cz = D represented by [A B C D]
 	 */
-
-	rt_mk_plane_3pts( plane1, p1, p3, p2, 0.005);
-	rt_mk_plane_3pts( plane2, p1, p2, p4, 0.005);
+	rt_mk_plane_3pts( plane1, p1, p3, p2, tol );
+	rt_mk_plane_3pts( plane2, p1, p2, p4, tol );
 	
 	/* make sure that the hit_list is zero */
 
@@ -344,14 +345,15 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-rt_nurb_vshot( stp, rp, segp, n, resp)
+rt_nurb_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
-	rt_vstub( stp, rp, segp, n, resp );
+	rt_vstub( stp, rp, segp, n, resp, tol );
 }
 
 /*
@@ -595,12 +597,11 @@ rt_nurb_class()
  *			R T _ N U R B _ P L O T
  */
 int
-rt_nurb_plot( vhead, ip, abs_tol, rel_tol, norm_tol )
+rt_nurb_plot( vhead, ip, ttol, tol )
 struct rt_list		*vhead;
 struct rt_db_internal	*ip;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	struct rt_nurb_internal *sip;
 	register int		i;
@@ -701,14 +702,13 @@ double			norm_tol;
  *			R T _ N U R B _ T E S S
  */
 int
-rt_nurb_tess( r, m, rp, dp, abs_tol, rel_tol, norm_tol )
+rt_nurb_tess( r, m, rp, dp, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 union record		*rp;
 struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+CONST struct rt_tess_tol *ttol;
+struct rt_tol		*tol;
 {
 	return(-1);
 }

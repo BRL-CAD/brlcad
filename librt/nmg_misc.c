@@ -850,7 +850,8 @@ struct nmgregion	*r;
 }
 
 
-/*	P O L Y T O N M G
+/*
+ *			N M G _ P O L Y T O N M G
  *
  *	Read a polygon file and convert it to an NMG shell
  *
@@ -868,9 +869,10 @@ struct nmgregion	*r;
  *		r->s_p	A new shell containing all the faces from the
  *			polygon file
  */
-struct shell *polytonmg(fd, r)
-FILE *fd;
-struct nmgregion *r;
+struct shell *nmg_polytonmg(fp, r, tol)
+FILE *fp;
+struct nmgregion	*r;
+CONST struct rt_tol	*tol;
 {
 	int i, j, num_pts, num_facets, pts_this_face, facet;
 	int vl_len;
@@ -889,7 +891,7 @@ struct nmgregion *r;
 	nmg_kvu(s->vu_p);
 
 	/* get number of points & number of facets in file */
-	if (fscanf(fd, "%d %d", &num_pts, &num_facets) != 2)
+	if (fscanf(fp, "%d %d", &num_pts, &num_facets) != 2)
 		rt_bomb("polytonmg() Error in first line of poly file\n");
 	else
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
@@ -908,7 +910,7 @@ struct nmgregion *r;
 
 	/* read in the coordinates of the vertices */
 	for (i=0 ; i < num_pts ; ++i) {
-		if (fscanf(fd, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
+		if (fscanf(fp, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
 			rt_bomb("polytonmg() Error reading point");
 		else
 			if (rt_g.NMG_debug & DEBUG_POLYTO)
@@ -922,7 +924,7 @@ struct nmgregion *r;
 		"vertex parameter list");
 
 	for (facet = 0 ; facet < num_facets ; ++facet) {
-		if (fscanf(fd, "%d", &pts_this_face) != 1)
+		if (fscanf(fp, "%d", &pts_this_face) != 1)
 			rt_bomb("polytonmg() error getting pt count for this face");
 
 		if (rt_g.NMG_debug & DEBUG_POLYTO)
@@ -937,7 +939,7 @@ struct nmgregion *r;
 		}
 
 		for (i=0 ; i < pts_this_face ; ++i) {
-			if (fscanf(fd, "%d", &j) != 1)
+			if (fscanf(fp, "%d", &j) != 1)
 				rt_bomb("polytonmg() error getting point index for v in f");
 			vl[i] = v[j-1];
 		}
@@ -950,7 +952,7 @@ struct nmgregion *r;
 		if (rt_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
 		    RT_LIST_PNEXT(edgeuse,eu)->vu_p->v_p->vg_p->coord,
 		    RT_LIST_PLAST(edgeuse,eu)->vu_p->v_p->vg_p->coord,
-		    1.0e-6 ) )  {
+		    tol ) )  {
 			rt_log("At %d in %s\n", __LINE__, __FILE__);
 			rt_bomb("polytonmg() cannot make plane equation\n");
 		}

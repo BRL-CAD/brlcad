@@ -163,10 +163,11 @@ struct rec_specific {
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
 int
-rt_rec_prep( stp, ip, rtip )
+rt_rec_prep( stp, ip, rtip, tol )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
+CONST struct rt_tol	*tol;
 {
 	struct rt_tgc_internal	*tip;
 	register struct rec_specific *rec;
@@ -387,11 +388,12 @@ register struct soltab *stp;
  *	>0	HIT
  */
 int
-rt_rec_shot( stp, rp, ap, seghead )
+rt_rec_shot( stp, rp, ap, seghead, tol )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
+CONST struct rt_tol	*tol;
 {
 	register struct rec_specific *rec =
 		(struct rec_specific *)stp->st_specific;
@@ -504,12 +506,13 @@ check_plates:
  *  This is the Becker vector version
  */
 void
-rt_rec_vshot( stp, rp, segp, n, resp)
+rt_rec_vshot( stp, rp, segp, n, resp, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct resource         *resp; /* pointer to a list of free segs */
+CONST struct rt_tol	*tol;
 {
 	register int    i;
 	register struct rec_specific *rec;

@@ -86,24 +86,12 @@ long		*novote;
 	    	return;
 	}
 
-	rt_log("nmg intersection: assuming miss\n");
-	return;
-
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )
 		EUPRINT("Hard question time", eu);
 
 
-
-
-
-
-
-
-
-
-
-
-
+	rt_log("nmg intersection: assuming miss\n");
+	return;
 }
 
 /*	P T _ H I T M I S _ E
@@ -119,7 +107,7 @@ static void pt_hitmis_e(pt, eu, closest, tol, novote)
 point_t		pt;
 struct edgeuse	*eu;
 struct neighbor	*closest;
-fastf_t		tol;
+CONST struct rt_tol	*tol;
 long		*novote;
 {
 	vect_t	N,	/* plane normal */
@@ -143,7 +131,7 @@ long		*novote;
 		VPRINT("pt_hitmis_e\tProjected pt", pt);
 		EUPRINT("          \tVS. eu", eu);
 	}
-	dist = rt_dist_pt_lseg(pca, eupt, matept, pt);
+	dist = rt_dist_pt_lseg(pca, eupt, matept, pt, tol);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		rt_log("          \tdist: %g\n", dist);
@@ -160,11 +148,11 @@ long		*novote;
 		if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-		    	if (NEAR_ZERO(dist, tol)) {
+		    	if (NEAR_ZERO(dist, tol->dist)) {
 		    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			    		VPRINT("Vertex", pt);
 			    		EUPRINT("hits edge, calling Joint_HitMiss", eu);
-			    		rt_log("distance: %g   tol: %g\n", dist, tol);
+			    		rt_log("distance: %g   tol: %g\n", dist, tol->dist);
 		    		}
 
 		    		joint_hitmiss2(eu, pt, closest, novote);
@@ -173,7 +161,7 @@ long		*novote;
 		    		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 			    		VPRINT("Vertex", pt);
 			    		EUPRINT("Misses edge", eu);
-			    		rt_log("distance: %g   tol: %g\n", dist, tol);
+			    		rt_log("distance: %g   tol: %g\n", dist, tol->dist);
 		    		}
 		    	}
 
@@ -242,7 +230,7 @@ static void pt_hitmis_l(pt, lu, closest, tol, novote)
 point_t		pt;
 struct loopuse	*lu;
 struct neighbor	*closest;
-fastf_t		tol;
+CONST struct rt_tol	*tol;
 long		*novote;
 {
 	vect_t	delta;
@@ -314,7 +302,7 @@ int
 nmg_pt_hitmis_f(pt, fu, tol, novote)
 point_t		pt;
 struct faceuse	*fu;
-fastf_t		tol;
+CONST struct rt_tol	*tol;
 long		*novote;
 {
 	struct loopuse *lu;
@@ -349,7 +337,7 @@ long		*novote;
 static pt_inout_s(pt, s, tol)
 point_t pt;
 struct shell *s;
-fastf_t tol;
+CONST struct rt_tol	*tol;
 {
 	int		hitcount = 0;
 	int		stat;
@@ -970,7 +958,3 @@ long		*classlist[4];
 		(void)class_vu_vs_s(sA->vu_p, sB, classlist);
 	}
 }
-
-
-
-

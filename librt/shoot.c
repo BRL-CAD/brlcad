@@ -556,6 +556,7 @@ register struct application *ap;
 	int			end_free_len;
 	AUTO struct rt_i	*rtip;
 	int			debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	struct rt_tol		tol;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )  {
@@ -577,6 +578,13 @@ register struct application *ap;
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
 	}
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	/* Since this count provides the RTFM, it must be semaphored */
 	RES_ACQUIRE( &rt_g.res_stats );
@@ -663,7 +671,7 @@ register struct application *ap;
 			BITSET( solidbits->be_v, stp->st_bit );
 			rtip->nshots++;
 			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ap->a_ray, ap, &waiting_segs ) <= 0 )  {
+			    stp, &ap->a_ray, ap, &waiting_segs, &tol ) <= 0 )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
 			}
@@ -782,7 +790,7 @@ register struct application *ap;
 			rtip->nshots++;
 			RT_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
+			    stp, &ss.newray, ap, &new_segs, &tol ) <= 0 )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
 			}
@@ -1210,12 +1218,13 @@ miss:
 
 /* Stub function which will "similate" a call to a vector shot routine */
 /*void*/
-rt_vstub( stp, rp, segp, n, ap)
+rt_vstub( stp, rp, segp, n, ap, tol )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
 int		  	    n; /* Number of ray/object pairs */
 struct application        *ap; /* pointer to an application */
+CONST struct rt_tol	*tol;
 {
 	register int    i;
 	register struct seg *tmp_seg;
@@ -1227,7 +1236,7 @@ struct application        *ap; /* pointer to an application */
 	for (i = 0; i < n; i++) {
 		if (stp[i] != 0){ /* skip call if solid table pointer is NULL */
 			/* do scalar call, place results in segp array */
-			if( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead) <= 0 )  {
+			if( rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead, tol) <= 0 )  {
 				SEG_MISS(segp[i]);
 			} else {
 				tmp_seg = RT_LIST_FIRST(seg, &(seghead.l) );
