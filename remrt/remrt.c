@@ -808,12 +808,12 @@ struct pkg_conn *pc;
 	fd = pc->pkc_fd;
 
 	fromlen = sizeof (from);
-	if (getpeername(fd, &from, &fromlen) < 0) {
+	if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
 		perror("getpeername");
 		close(fd);
 		return;
 	}
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof (on)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (CONST char *)&on, sizeof (on)) < 0)
 		perror("setsockopt (SO_KEEPALIVE)");
 
 	if( (ihp = host_lookup_by_addr( &from, 1 )) == IHOST_NULL )  {
@@ -3106,7 +3106,7 @@ int	enter;
 		from->sin_family);
 #else
 	addr_tmp = from->sin_addr.s_addr;
-	addr = gethostbyaddr(&from->sin_addr, sizeof (struct in_addr),
+	addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
 		from->sin_family);
 #endif
 	if( addr != NULL )
