@@ -72,6 +72,7 @@ set help_data(facetize)		{{[-tT] [-P#] new_obj old_obj(s)}	{convert objects to f
 set help_data(find)		{{<objects>}	{find all references to objects}}
 set help_data(fracture)		{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face\n}}
 set help_data(g)		{{groupname <objects>}	{group objects}}
+set help_data(garbage_collect)	{{}	{eliminate unused space in database file}}
 set help_data(get_comb)		{{comb_name} {get information about combination}}
 #set help_data(getknob)		{{knobname}	{Gets the current setting of the given knob}}
 set help_data(get_rect)		{{} {Get the rectangle of the current display manager}}
