@@ -122,10 +122,10 @@ set -S2 "/bin/sh"
 /* 1==YES, 0==NO */
 
 /* Read above for the meaning and implications of each flag! */
-#define BUILD_OPTIMIZED	        1
-#define BUILD_SHARED	        1
-#define BUILD_XWINDOWS	        1
-#define BUILD_OPENGL	        0
+#define BUILD_OPTIMIZED		1
+#define BUILD_SHARED			1
+#define BUILD_XWINDOWS		1
+#define BUILD_OPENGL			0
 #define BUILD_PRODUCTION	0
 
 
@@ -1069,7 +1069,6 @@ set -S2 "/bin/sh"
 #			define	MGED_OBJS	
 #			define	MGED_CONFIG	
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
-#			define	LIBTK_DIR	/**/
 #			define	LIBTK		/**/
 #			define	LIBTK_DEP	/**/
 #			define	NO_LIBTK
@@ -1155,7 +1154,6 @@ set -S2 "/bin/sh"
 #			define	MGED_OBJS	
 #			define	MGED_CONFIG	
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
-#			define	LIBTK_DIR	/**/
 #			define	LIBTK		/**/
 #			define	LIBTK_DEP	/**/
 #			define	NO_LIBTK
@@ -1244,7 +1242,6 @@ set -S2 "/bin/sh"
 #			define	MGED_OBJS	
 #			define	MGED_CONFIG	
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES
-#			define	LIBTK_DIR	/**/
 #			define	LIBTK		/**/
 #			define	LIBTK_DEP	/**/
 #			define	NO_LIBTK
@@ -2348,29 +2345,45 @@ set -S2 "/bin/sh"
 #	define	LIBSYSV_DIR	../libsysv
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
-#    if !defined(LIBTCL)
-#	define	LIBTCL_DIR	../libtcl''TCLTK_VERS
-#	define	LIBTCL		-L''LIBTCL_DIR -ltcl''TCLTK_VERS
-#	define	LIBTCL_DEP	[[LIBVERS LIBTCL_DIR/libtcl''TCLTK_VERS.''ARCH_SUF]]
-#    endif
-#    if !defined(LIBTK)
-#	define	LIBTK_DIR	../libtk''TCLTK_VERS
-#	define	LIBTK		-L''LIBTK_DIR -ltk''TCLTK_VERS
-#	define	LIBTK_DEP	[[LIBVERS LIBTK_DIR/libtk''TCLTK_VERS.''ARCH_SUF]]
-#    endif
-#    if !defined(LIBITCL)
-#	define	LIBITCL_DIR	../libitcl''ITCL_VERS/itcl
-#	define	LIBITCL		-L''LIBITCL_DIR -litcl''ITCL_VERS
-#	define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
-#    endif
-#    if !defined(LIBITK)
-#	define	LIBITK_DIR	../libitcl''ITCL_VERS/itk
-#	define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
-#	define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
-#    endif
+
+/* tcl/tk defines
+ * The directories are maintained separately since they are independant of whether
+ * the platform will build that package (e.g. need LIBTK_DIR to build itcl even if there
+ * is no X support)
+ */
+#	if !defined(LIBTCL)
+#		define	LIBTCL		-L''LIBTCL_DIR -ltcl''TCLTK_VERS
+#		define	LIBTCL_DEP	[[LIBVERS LIBTCL_DIR/libtcl''TCLTK_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBTCL_DIR)
+#		define	LIBTCL_DIR	../libtcl''TCLTK_VERS
+#	endif
+#	if !defined(LIBTK)
+#		define	LIBTK		-L''LIBTK_DIR -ltk''TCLTK_VERS
+#		define	LIBTK_DEP	[[LIBVERS LIBTK_DIR/libtk''TCLTK_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBTK_DIR)
+#		define	LIBTK_DIR	../libtk''TCLTK_VERS
+#	endif
+# if !defined(LIBITCL)
+#		define	LIBITCL		-L''LIBITCL_DIR -litcl''ITCL_VERS
+#		define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBITCL_DIR)
+#		define	LIBITCL_DIR	../libitcl''ITCL_VERS/itcl
+#	endif
+#	if !defined(LIBITK)
+#		define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
+#		define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBITCL_DIR)
+#		define	LIBITK_DIR	../libitcl''ITCL_VERS/itk
+#	endif
 #	define  LIBTCLCAD_DIR	../libtclcad
 #	define  LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
 #	define	LIBTCLCAD_DEP	[[LIBVERS ../libtclcad/libtclcad.ARCH_SUF]]
+/* end tcl/tk defines */
+
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../libpkg
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
@@ -2452,29 +2465,45 @@ set -S2 "/bin/sh"
 #	define	LIBSYSV_DIR	../.libsysv.MTYPE
 #	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
-#    if !defined(LIBTCL)
-#	define	LIBTCL_DIR	../.libtcl''TCLTK_VERS.''MTYPE
-#	define	LIBTCL		-L''LIBTCL_DIR -ltcl''TCLTK_VERS
-#	define	LIBTCL_DEP	[[LIBVERS LIBTCL_DIR/libtcl''TCLTK_VERS.''ARCH_SUF]]
-#    endif
-#    if !defined(LIBTK)
-#	define	LIBTK_DIR	../.libtk''TCLTK_VERS.''MTYPE
-#	define	LIBTK		-L''LIBTK_DIR -ltk''TCLTK_VERS
-#	define	LIBTK_DEP	[[LIBVERS LIBTK_DIR/libtk''TCLTK_VERS.''ARCH_SUF]]
-#    endif
-#    if !defined(LIBITCL)
-#	define	LIBITCL_DIR	../.libitcl''ITCL_VERS.''MTYPE/itcl
-#	define	LIBITCL		-L''LIBITCL_DIR -litcl''ITCL_VERS
-#	define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
-#    endif
-#    if !defined(LIBITK)
-#	define	LIBITK_DIR	../.libitcl''ITCL_VERS.''MTYPE/itk
-#	define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
-#	define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
-#    endif
+
+/* tcl/tk nfs defines
+ * The directories are maintained separately since they are independant of whether
+ * the platform will build that package (e.g. need LIBTK_DIR to build itcl even if there
+ * is no X support)
+ */
+#	if !defined(LIBTCL)
+#		define	LIBTCL		-L''LIBTCL_DIR -ltcl''TCLTK_VERS
+#		define	LIBTCL_DEP	[[LIBVERS LIBTCL_DIR/libtcl''TCLTK_VERS.''ARCH_SUF]]
+#	endif
+# if !defined(LIBTCL_DIR)
+#		define	LIBTCL_DIR	../.libtcl''TCLTK_VERS.''MTYPE
+#	endif
+#	if !defined(LIBTK)
+#		define	LIBTK		-L''LIBTK_DIR -ltk''TCLTK_VERS
+#		define	LIBTK_DEP	[[LIBVERS LIBTK_DIR/libtk''TCLTK_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBTK_DIR)
+#		define	LIBTK_DIR	../.libtk''TCLTK_VERS.''MTYPE
+#	endif
+#	if !defined(LIBITCL)
+#		define	LIBITCL		-L''LIBITCL_DIR -litcl''ITCL_VERS
+#		define	LIBITCL_DEP	[[LIBVERS LIBITCL_DIR/libitcl''ITCL_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBITCL_DIR)
+#		define	LIBITCL_DIR	../.libitcl''ITCL_VERS.''MTYPE/itcl
+#	endif
+#	if !defined(LIBITK)
+#		define	LIBITK		-L''LIBITK_DIR -litk''ITCL_VERS
+#		define	LIBITK_DEP	[[LIBVERS LIBITK_DIR/libitk''ITCL_VERS.''ARCH_SUF]]
+#	endif
+#	if !defined(LIBITK_DIR)
+#		define	LIBITK_DIR	../.libitcl''ITCL_VERS.''MTYPE/itk
+#	endif
 #	define	LIBTCLCAD_DIR	../.libtclcad.MTYPE
 #	define	LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
 #	define	LIBTCLCAD_DEP	[[LIBVERS ../.libtclcad.MTYPE/libtclcad.ARCH_SUF]]
+/* end tcl/tk nfs defines */
+
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../.libpkg.MTYPE
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
