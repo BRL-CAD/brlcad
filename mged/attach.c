@@ -347,6 +347,7 @@ char *screen;
   if(tkwin != NULL)
     return TCL_OK;
 
+#if 0
   if((tkwin = Tk_CreateMainWindow(interp, screen, "MGED", "MGED")) == NULL){
     bu_log("gui_setup: Failed to create main window.\n");
     return TCL_ERROR;
@@ -357,6 +358,28 @@ char *screen;
     bu_log("Tk_Init error %s\n", interp->result);
     return TCL_ERROR;
   }
+#else
+
+#if 0
+  {
+    Display *tkdpy;
+
+    tkdpy = XOpenDisplay(":0.0");
+    printf("stop\n");
+  }
+#endif
+
+  /* This runs the tk.tcl script */
+  if (Tk_Init(interp) == TCL_ERROR){
+    bu_log("Tk_Init error %s\n", interp->result);
+    return TCL_ERROR;
+  }
+
+  if((tkwin = Tk_MainWindow(interp)) == NULL){
+    bu_log("gui_setup: Failed to get main window.\n");
+    return TCL_ERROR;
+  }
+#endif
 
   Tcl_Eval( interp, "wm withdraw .");
 
