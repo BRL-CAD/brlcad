@@ -531,7 +531,7 @@ register double *dp;
 	rt_vls_extend(vls, strlen(name) + 3 + 32 * count);
 
 	cp = &vls->vls_str[vls->vls_len];
-	sprintf(cp, " %s=%.27G", name, *dp++);
+	sprintf(cp, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
 
@@ -612,10 +612,11 @@ char				*base;	/* structure ponter */
 				else
 					sprintf(cp, "%s%s=\"%c\"",
 						(vls->vls_len?" ":""),
-						sdp->sp_name,
-						*(signed char *)loc);
+						sdp->sp_name, 
+						*loc);
 			} else {
-				register char *p;
+				register char *p; 
+				char *strchr();
 				register int count=0;
 
 				/* count the quote characters */
@@ -655,8 +656,9 @@ char				*base;	/* structure ponter */
 					strlen(sdp->sp_name) );
 
 				cp = &vls->vls_str[vls->vls_len];
-				sprintf(cp, "%s%s=\"%s\"", sdp->sp_name,
+				sprintf(cp, "%s%s=\"%s\"",
 					(vls->vls_len?" ":""),
+					sdp->sp_name,
 					rt_vls_addr(vls_p) );
 				vls->vls_len += strlen(cp);
 			}
