@@ -937,6 +937,21 @@ if test "x$fno_strict_aliasing_flag_works" = "xno" ; then
 	LDFLAGS="$PRELDFLAGS"
 fi
 
+dnl check for -fno-common (libtcl needs it on darwin)
+fno_common_flag="-fno-common"
+AC_MSG_CHECKING([if the compiler understands $fno_common_flag])
+fno_common_flag_works=yes
+PRECFLAGS="$CFLAGS"
+PRELDFLAGS="$LDFLAGS"
+CFLAGS="$CFLAGS $fno_common_flag"
+LDFLAGS="$LDFLAGS $fno_common_flag"
+AC_TRY_COMPILE( [], [], [], [fno_common_flag_works=no])
+AC_MSG_RESULT($fno_common_flag_works)
+if test "x$fno_common_flag_works" = "xno" ; then
+	CFLAGS="$PRECFLAGS"
+	LDFLAGS="$PRELDFLAGS"
+fi
+
 dnl check for -search_paths_first linker flag when making dylibs
 search_paths_first_flag="-Wl,-search_paths_first -mdynamic-no-pic"
 AC_MSG_CHECKING([if the compiler understands $search_paths_first_flag])
