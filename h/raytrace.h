@@ -635,9 +635,9 @@ struct directory  {
 	struct directory *d_forw;		/* link to next dir entry */
 	struct animate	*d_animate;		/* link to animation */
 	long		d_uses;			/* # uses, from instancing */
+	long		d_len;			/* # of db granules used */
+	long		d_nref;			/* # times ref'ed by COMBs */
 	short		d_flags;		/* flags */
-	short		d_len;			/* # of db granules used */
-	short		d_nref;			/* # times ref'ed by COMBs */
 };
 #define DIR_NULL	((struct directory *)0)
 
