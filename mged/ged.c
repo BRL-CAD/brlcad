@@ -356,6 +356,15 @@ char **argv;
 	btn_head_menu(0,0,0);
 	mged_slider_link_vars(curr_dm_list);
 
+	{
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "set version \"%s\"", version+5);
+	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	}
+
 	/* Initialize libdm */
 	(void)dm_tclInit(interp);
 
