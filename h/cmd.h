@@ -1,6 +1,8 @@
 #ifndef SEEN_CMD_H
 #define SEEN_CMD_H
 
+#include <sys/time.h>
+#include <time.h>
 #include "bu.h"
 
 #define MAXARGS 9000
