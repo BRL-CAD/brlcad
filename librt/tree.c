@@ -94,7 +94,6 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
-	register struct combined_tree_state	*cts;
 	struct region		*rp;
 	struct directory	*dp;
 	vect_t			region_min, region_max;
