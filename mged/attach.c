@@ -178,7 +178,8 @@ static unsigned Nu_unsign() { return(0); }
 static
 Nu_input( fd, noblock )
 {
-	(void)bsdselect( 1<<fd, 9999999, 0 );
+	if( isatty(fd) )
+		(void)bsdselect( 1<<fd, 9999999, 0 );
 	return(1);
 }
 
