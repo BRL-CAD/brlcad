@@ -1930,12 +1930,14 @@ struct rt_i		*rtip;
 		bu_bomb("Unknown cut_type\n");
 	}
 
-	/* Plot every solid listed in this cell */
-	stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
-	for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-		register struct soltab *stp = *stpp;
+	if( cutp->bn.bn_len > 0 ) {
+		/* Plot every solid listed in this cell */
+		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
+		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
+			register struct soltab *stp = *stpp;
 
-		rt_plot_solid( fp, rtip, stp, ap->a_resource );
+			rt_plot_solid( fp, rtip, stp, ap->a_resource );
+		}
 	}
 
 	/* Plot interval of ray in box, in green */
