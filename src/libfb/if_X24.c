@@ -2527,7 +2527,7 @@ using private memory instead, errno %d\n", errno);
 	}
 	case MODE10_MALLOC:
 
-		if ((mem = malloc(size)) == 0) {
+		if ((mem = (char *)malloc(size)) == 0) {
 			fb_log("if_X24: Unable to allocate %d bytes of backing \
 store\n  Run shell command 'limit datasize unlmited' and try again.\n", size);
 			return (-1);
