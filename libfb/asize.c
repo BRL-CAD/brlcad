@@ -42,6 +42,9 @@ struct sizes fb_common_sizes[] = {
 	{  640,  512 },		/* half 1280x1024 */
 	{  640,  400 },		/* PC screen format */
 	{  640,	 480 },		/* Common video format */
+	{  640,	 485 },		/* Common video format, most correct */
+	{  640,	 486 },		/* Common video format */
+	{  720,	 485 },		/* Abekas video format, most correct */
 	{  720,	 486 },		/* Abekas video format */
 	{ 1024,	 768 },		/* SGI-3D screen size */
 	{ 1152,  900 },		/* Sun screen size */
@@ -50,8 +53,12 @@ struct sizes fb_common_sizes[] = {
 	{ 1280,	1024 },		/* SGI-4D screen size */
 	{ 1440,  972 },		/* double Abekas video format */
 	{ 2048, 2048 },
+	{ 3200, 4000 },		/* 8x10 inches, 400 dpi */
+	{ 3400, 4400 },		/* 8.5x11 inches, 400 dpi */
 	{ 4096, 4096 },
 	{ 8192, 8192 },
+	{16386,16384 },
+	{32768,32768 },
 	{    0,	   0 }
 };
 
