@@ -27,14 +27,14 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1985,1991 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
 static char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
-char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
+char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991 by the United States Army";
 
 #include <stdio.h>
 #include <math.h>
