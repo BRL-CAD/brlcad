@@ -127,6 +127,54 @@ extern char	*realloc();
 #endif
 
 /*
+ *  Macros to check and validate a structure pointer, given that
+ *  the first entry in the structure is a magic number.
+ */
+#define rt_identify_magic(s)	"(unimplemented)"	/* XXX */
+#define RT_CKMAG(_ptr, _magic, _str)	\
+	if( !(_ptr) )  { \
+		rt_log("ERROR: null %s ptr, file %s, line %d\n", \
+			_str, __FILE__, __LINE__ ); \
+		rt_bomb("NULL pointer"); \
+	} else if( *((long *)(_ptr)) != (_magic) )  { \
+		rt_log("ERROR: bad %s ptr x%x, s/b x%x, was %s(x%x), file %s, line %d\n", \
+			_str, _ptr, _magic, \
+			rt_identify_magic( *((long *)(_ptr)) ), \
+			*((long *)(_ptr)), __FILE__, __LINE__ ); \
+		rt_bomb("Bad pointer"); \
+	}
+
+/*
+ *			R T _ E X T E R N A L
+ * 
+ *  An "opaque" handle for holding onto objects,
+ *  typically in some kind of external form that is not directly
+ *  usable without passing through an "importation" function.
+ */
+struct rt_external  {
+	long	ext_magic;
+	int	ext_nbytes;
+	genptr_t ext_buf;
+};
+#define RT_EXTERNAL_MAGIC	0x768dbbd0
+#define RT_INIT_EXTERNAL(_p)	{(_p)->ext_magic = RT_EXTERNAL_MAGIC;}
+#define RT_CK_EXTERNAL(_p)	RT_CKMAG(_p, RT_EXTERNAL_MAGIC, "rt_external")
+
+/*
+ *			R T _ D B _ I N T E R N A L
+ *
+ *  A handle on the internal format of an MGED database object.
+ */
+struct rt_db_internal  {
+	long	idb_magic;
+	int	idb_type;		/* ID_xxx */
+	genptr_t idb_ptr;
+};
+#define RT_DB_INTERNAL_MAGIC	0x0dbbd867
+#define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC;}
+#define RT_CK_DB_INTERNAL(_p)	RT_CKMAG(_p, RT_DB_INTERNAL_MAGIC, "rt_db_internal")
+
+/*
  *			X R A Y
  *
  * All necessary information about a ray.
