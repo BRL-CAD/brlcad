@@ -614,6 +614,118 @@ char **argv;
 }
 
 /*
+ *			B U _ G E T _ A L L _ K E Y W O R D _ V A L U E S
+ *
+ *  Given arguments of alternating keywords and values,
+ *  establish local variables named after the keywords, with the
+ *  indicated values.
+ *
+ *	example:  bu_get_all_keyword_values az 35 elev 25 temp 9.6
+ *
+ *  If only one argument is given it is interpreted
+ *  as a list in the same format.
+ *
+ *	example:  bu_get_all_keyword_values {az 35 elev 25 temp 9.6}
+ *
+ *  For security reasons, the name of the local variable assigned to
+ *  is that of the input keyword with "key_" prepended.
+ *  This prevents a playful user from overriding variables inside
+ *  the function, e.g. loop iterator "i", etc.
+ *  This could be even worse when called in global context.
+ *
+ *  Processing order is left-to-right, rightmost value for a repeated
+ *  keyword will be the one used.
+ *
+ *  Sample use:
+ *	 bu_get_all_keyword_values [concat type [.inmem get box.s]]
+ *
+ *  Returns -
+ *	List of variable names that were assigned to.
+ *	This lets you detect at runtime what assignments
+ *	were actually performed.
+ */
+int
+bu_get_all_keyword_values(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct bu_vls	variable;
+	int	listc;
+	char	**listv;
+	char	**tofree = (char **)NULL;
+	int	i;
+
+	if( argc < 2 )  {
+		char	buf[32];
+		sprintf(buf, "%d", argc);
+		Tcl_AppendResult( interp,
+			"bu_get_all_keyword_values: wrong # of args (", buf, ").\n",
+			"Usage: bu_get_all_keyword_values {list}\n",
+			"Usage: bu_get_all_keyword_values key1 val1 key2 val2 ... keyN valN\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( argc == 2 )  {
+		if( Tcl_SplitList( interp, argv[1], &listc, &listv ) != TCL_OK )  {
+			Tcl_AppendResult( interp,
+				"bu_get_all_keyword_values: unable to split '",
+				argv[1], "'\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+		tofree = listv;
+	} else {
+		/* Take search list from remaining arguments */
+		listc = argc - 1;
+		listv = argv + 1;
+	}
+
+	if( (listc & 1) != 0 )  {
+		char	buf[32];
+		sprintf(buf, "%d", listc);
+		Tcl_AppendResult( interp,
+			"bu_get_all_keyword_values: odd # of items in list (",
+			buf, "), aborting.\n",
+			(char *)NULL );
+		if(tofree) free( (char *)tofree );	/* not bu_free() */
+		return TCL_ERROR;
+	}
+
+
+	/* Process all the pairs */
+	bu_vls_init( &variable );
+	for( i=0; i < listc; i += 2 )  {
+		bu_vls_strcpy( &variable, "key_" );
+		bu_vls_strcat( &variable, listv[i] );
+		/* If value is a list, don't nest it in another list */
+		if( listv[i+1][0] == '{' )  {
+			struct bu_vls	str;
+			bu_vls_init( &str );
+			/* Skip leading { */
+			bu_vls_strcat( &str, &listv[i+1][1] );
+			/* Trim trailing } */
+			bu_vls_trunc( &str, -1 );
+			Tcl_SetVar( interp, bu_vls_addr(&variable),
+				bu_vls_addr(&str), 0);
+			bu_vls_free( &str );
+		} else {
+			Tcl_SetVar( interp, bu_vls_addr(&variable),
+				listv[i+1], 0 );
+		}
+		Tcl_AppendResult( interp, bu_vls_addr(&variable),
+			" ", (char *)NULL );
+		bu_vls_trunc( &variable, 0 );
+	}
+	
+	/* All done */
+	bu_vls_free( &variable );
+	if(tofree) free( (char *)tofree );	/* not bu_free() */
+	return TCL_OK;
+}
+
+/*
  *			B U _ T C L _ R G B _ T O _ H S V
  */
 int
@@ -827,6 +939,9 @@ Tcl_Interp *interp;
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_printb",		bu_tcl_printb,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp,
+		"bu_get_all_keyword_values", bu_get_all_keyword_values,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_get_value_by_keyword", bu_get_value_by_keyword,
