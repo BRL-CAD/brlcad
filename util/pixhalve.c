@@ -174,9 +174,9 @@ char	**argv;
 
 	eof_seen = 0;
 	for(;;)  {
-		filter( rout, rlines, out_width );
-		filter( gout, glines, out_width );
-		filter( bout, blines, out_width );
+		filter5( rout, rlines, out_width );
+		filter5( gout, glines, out_width );
+		filter5( bout, blines, out_width );
 		combine( outbuf, rout, gout, bout, out_width );
 		if( fwrite( outbuf, 3, out_width, stdout ) != out_width )  {
 			perror("stdout");
@@ -288,14 +288,14 @@ int	num;
 }
 
 /*
- *			F I L T E R
+ *			F I L T E R 5
  *
  *  Apply a 5x5 image pyramid to the input scanline, taking every other
  *  input position to make an output.
  *
  *  Code is arranged so as to vectorize, on machines that can.
  */
-filter( op, lines, num )
+filter5( op, lines, num )
 int	*op;
 int	*lines[];
 int	num;
