@@ -53,10 +53,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./mgedtcl.h"
 
+extern float default_wireframe_color[];
+extern int wireframe_highlight_color[];
+
+#define DEFAULT_WIREFRAME_COLOR 1
+#define WIREFRAME_HIGHLIGHT_COLOR 2
+
+
 int get_more_default();
 int set_more_default();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
+void mged_global_variable_setup();
+char *handle_global_variable_read_traces();
+char *handle_global_variable_write_traces();
+char *handle_global_variable_unset_traces();
 
 extern int cmd_get_comb(), cmd_put_comb();	/* in red.c */
 extern void set_scroll();			/* in set.c */
@@ -730,15 +741,16 @@ mged_setup()
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	history_setup();
+	mged_global_variable_setup(interp);
 #if !TRY_NEW_MGED_VARS
 	mged_variable_setup(interp);
 #endif
 
-	Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
-	Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
-	Tcl_LinkVar(interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
-
-	bu_vls_init(&edit_info_vls);
+#if 0
+	/*XXX
+	 * The variables below are no longer necessary. They were
+	 * once used by Tcl/Tk sliders.
+	 */
 	bu_vls_init(&edit_rate_model_tran_vls[X]);
 	bu_vls_init(&edit_rate_model_tran_vls[Y]);
 	bu_vls_init(&edit_rate_model_tran_vls[Z]);
@@ -772,7 +784,6 @@ mged_setup()
 	bu_vls_init(&edit_absolute_view_rotate_vls[Z]);
 	bu_vls_init(&edit_absolute_scale_vls);
 
-	bu_vls_strcpy(&edit_info_vls, "edit_info");
 	bu_vls_strcpy(&edit_rate_model_tran_vls[X], "edit_rate_model_tran(X)");
 	bu_vls_strcpy(&edit_rate_model_tran_vls[Y], "edit_rate_model_tran(Y)");
 	bu_vls_strcpy(&edit_rate_model_tran_vls[Z], "edit_rate_model_tran(Z)");
@@ -870,6 +881,7 @@ mged_setup()
 		    (char *)&edit_absolute_view_rotate[Z], TCL_LINK_DOUBLE);
 	Tcl_LinkVar(interp, bu_vls_addr(&edit_absolute_scale_vls),
 		    (char *)&edit_absolute_scale, TCL_LINK_DOUBLE);
+#endif
 
 #ifdef BRLCAD_TCL_LIBRARY
 	filename = BRLCAD_TCL_LIBRARY;
@@ -2254,4 +2266,197 @@ f_winset(clientData, interp, argc, argv)
 	Tcl_AppendResult(interp, "Unrecognized pathname - ", argv[1],
 			 "\n", (char *)NULL);
 	return TCL_ERROR;
+}
+
+void
+mged_global_variable_setup(interp)
+Tcl_Interp *interp;
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+
+  Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
+  Tcl_LinkVar(interp, "edit_solid_flag", (char *)&es_edflag, TCL_LINK_INT);
+  Tcl_LinkVar(interp, "edit_object_flag", (char *)&edobj, TCL_LINK_INT);
+
+  bu_vls_init(&edit_info_vls);
+  bu_vls_strcpy(&edit_info_vls, "edit_info");
+
+  /* Set up variable traces */
+  bu_vls_strcpy(&vls, "default_wireframe_color");
+  Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+	       handle_global_variable_read_traces, (ClientData)DEFAULT_WIREFRAME_COLOR);
+  Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+	       handle_global_variable_write_traces, (ClientData)DEFAULT_WIREFRAME_COLOR);
+  Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+	       handle_global_variable_unset_traces, (ClientData)DEFAULT_WIREFRAME_COLOR);
+
+  bu_vls_strcpy(&vls, "wireframe_highlight_color");
+  Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+	       handle_global_variable_read_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+  Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+	       handle_global_variable_write_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+  Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+	       handle_global_variable_unset_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+
+  bu_vls_free(&vls);
+}
+
+char *
+handle_global_variable_read_traces(clientData, interp, name1, name2, flags)
+ClientData clientData;
+Tcl_Interp *interp;
+char *name1, *name2;
+int flags;
+{
+  int global_var = (int)clientData;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+
+  switch (global_var) {
+  case DEFAULT_WIREFRAME_COLOR:
+    bu_vls_printf(&vls, "%d %d %d",
+		  (int)(default_wireframe_color[0] * 255.0),
+		  (int)(default_wireframe_color[1] * 255.0),
+		  (int)(default_wireframe_color[2] * 255.0));
+    break;
+  case WIREFRAME_HIGHLIGHT_COLOR:
+    bu_vls_printf(&vls, "%d %d %d",
+		  wireframe_highlight_color[0],
+		  wireframe_highlight_color[1],
+		  wireframe_highlight_color[2]);
+    break;
+  }
+
+  (void)Tcl_SetVar2(interp, name1, name2, bu_vls_addr(&vls),
+		    (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+
+  bu_vls_free(&vls);
+  return (char *)0;
+}
+
+char *
+handle_global_variable_write_traces(clientData, interp, name1, name2, flags)
+ClientData clientData;
+Tcl_Interp *interp;
+char *name1, *name2;
+int flags;
+{
+  int global_var = (int)clientData;
+  char *val;
+
+  val = Tcl_GetVar2(interp, name1, name2,
+		   (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+
+  switch (global_var) {
+  case DEFAULT_WIREFRAME_COLOR:
+    {
+      int r, g, b;
+
+      if(sscanf(val, "%d %d %d", &r, &g, &b) != 3){
+	return (char *)0;
+      }
+
+      /* check range and clamp if necessary */
+      if(r < 0)
+	r = 0;
+      else if(r > 255)
+	r = 255;
+      
+      if(g < 0)
+	g = 0;
+      else if(g > 255)
+	g = 255;
+      
+      if(b < 0)
+	b = 0;
+      else if(b > 255)
+	b = 255;
+
+      default_wireframe_color[0] = r / 255.0;
+      default_wireframe_color[1] = g / 255.0;
+      default_wireframe_color[2] = b / 255.0;
+    }
+
+    break;
+  case WIREFRAME_HIGHLIGHT_COLOR:
+    {
+      int r, g, b;
+
+      if(sscanf(val, "%d %d %d", &r, &g, &b) != 3){
+	return (char *)0;
+      }
+
+      /* check range and clamp if necessary */
+      if(r < 0)
+	r = 0;
+      else if(r > 255)
+	r = 255;
+      
+      if(g < 0)
+	g = 0;
+      else if(g > 255)
+	g = 255;
+      
+      if(b < 0)
+	b = 0;
+      else if(b > 255)
+	b = 255;
+      
+      wireframe_highlight_color[0] = r;
+      wireframe_highlight_color[1] = g;
+      wireframe_highlight_color[2] = b;
+    }
+
+    if(state != ST_VIEW)
+      update_views = 1;
+
+    break;
+  }
+
+  return (char *)0;
+}
+
+char *
+handle_global_variable_unset_traces(clientData, interp, name1, name2, flags)
+ClientData clientData;
+Tcl_Interp *interp;
+char *name1, *name2;
+int flags;
+{
+  int global_var = (int)clientData;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+
+  switch (global_var) {
+  case DEFAULT_WIREFRAME_COLOR:
+    /* reset traces */
+    bu_vls_strcpy(&vls, "default_wireframe_color");
+    Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		 handle_global_variable_read_traces, (ClientData)DEFAULT_WIREFRAME_COLOR);
+    Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		 handle_global_variable_write_traces, (ClientData)DEFAULT_WIREFRAME_COLOR);
+    Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		 handle_global_variable_unset_traces, (ClientData)DEFAULT_WIREFRAME_COLOR);
+
+    break;
+  case WIREFRAME_HIGHLIGHT_COLOR:
+    /* reset traces */
+    bu_vls_strcpy(&vls, "wireframe_highlight_color");
+    Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		 handle_global_variable_read_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+    Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		 handle_global_variable_write_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+    Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		 handle_global_variable_unset_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+
+    break;
+  }
+
+  bu_vls_free(&vls);
+
+  return (char *)0;
 }
