@@ -2,7 +2,7 @@
 
 #	last edit:	85/03/14	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.6
+#	SCCS ID:	@(#)Makefile	1.7
 
 PRODUCT	= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -27,7 +27,7 @@ INS	= cp
 	$(GET) $(GFLAGS) -p s.$@ > ${TESTDIR}/$@
 	touch $@
 
-all:	fbzoom ${PRODUCT} # ${MANUAL}
+all:	fbzoom ${PRODUCT} ${MANUAL}
 
 ${PRODUCT}:	$$@.o
 	$(CC) -o $@ ${LDFLAGS} $@.o ${LIBES} 
