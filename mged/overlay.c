@@ -158,16 +158,25 @@ struct uplot uplot_letters[] = {
 static int	getshort();
 extern void	vlist_3symbol();
 
+struct color_vlist {
+	long		rgb;
+	struct vlhead	head;
+};
+
 /* Usage:  overlay file.plot [name] */
 void
 f_overlay( argc, argv )
 int	argc;
 char	**argv;
 {
-	char	*name;
-	FILE	*fp;
+	char		*name;
+	FILE		*fp;
 	struct vlhead	vhead;
-	int	ret;
+	int		ret;
+	int		i;
+	struct color_vlist	color_vlist[32];
+	char		shortname[32];
+	char		namebuf[64];
 
 	if( argc <= 2 )
 		name = "_PLOT_OVERLAY_";
@@ -179,12 +188,26 @@ char	**argv;
 		return;
 	}
 
-	vhead.vh_first = vhead.vh_last = VL_NULL;
-	ret = uplot_vlist( &vhead, fp );
+	for( i=0; i<32; i++ )  {
+		color_vlist[i].rgb = 0;		/* black, unused */
+		color_vlist[i].head.vh_first =
+			color_vlist[i].head.vh_last = VL_NULL;
+	}
+	ret = uplot_vlist( color_vlist, 32, fp );
 	fclose(fp);
 	if( ret < 0 )  return;
 
-	invent_solid( name, &vhead );
+	for( i=0; i<32; i++ )  {
+		if( i== 0 )  {
+			invent_solid( name, &color_vlist[0] );
+			continue;
+		}
+		strncpy( shortname, name, 16-6 );
+		shortname[16-6] = '\0';
+		sprintf( namebuf, "%s%x",
+			shortname, color_vlist[i].rgb );
+		invent_solid( namebuf, &color_vlist[i] );
+	}
 
 	dmaflag++;
 }
@@ -199,14 +222,17 @@ char	**argv;
  *  This parallels much of the code in dodraw.c
  */
 int
-invent_solid( name, vhead )
+invent_solid( name, cvl )
 char	*name;
-struct vlhead	*vhead;
+struct color_vlist	*cvl;
 {
 	register struct directory *dp;
 	register struct solid *sp;
 	register struct vlist *vp;
+	struct vlhead	*vhead;
 	vect_t		max, min;
+
+	vhead = &cvl->head;
 
 #define PHONY_ADDR	(-1L)
 	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
@@ -249,10 +275,10 @@ struct vlhead	*vhead;
 
 	sp->s_iflag = DOWN;
 	sp->s_soldash = 0;
-	sp->s_Eflag = 0;		/* This is a solid */
-	sp->s_color[0] = sp->s_basecolor[0] = 255;
-	sp->s_color[1] = sp->s_basecolor[1] = 255;
-	sp->s_color[2] = sp->s_basecolor[2] = 0;
+	sp->s_Eflag = 1;		/* Can't be solid edited! */
+	sp->s_color[0] = sp->s_basecolor[0] = (cvl->rgb>>16) & 0xFF;
+	sp->s_color[1] = sp->s_basecolor[1] = (cvl->rgb>> 8) & 0xFF;
+	sp->s_color[2] = sp->s_basecolor[2] = (cvl->rgb    ) & 0xFF;
 	sp->s_regionid = 0;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;
@@ -285,10 +311,12 @@ struct vlhead	*vhead;
  *  This might be more naturally located in mged/plot.c
  */
 int
-uplot_vlist( vhead, fp )
-register struct vlhead	*vhead;
+uplot_vlist( cvl, ncvl, fp )
+struct color_vlist	*cvl;
+int			ncvl;
 register FILE		*fp;
 {
+	register struct vlhead	*vhead;
 	register int	c;
 	mat_t	mat;
 	struct	uplot *up;
@@ -300,6 +328,9 @@ register FILE		*fp;
 	int	cc;
 	int	i;
 	int	j;
+
+	cvl[0].rgb = 0xFFFF00L;		/* Yellow */
+	vhead = &cvl[0].head;
 
 	while( (c = getc(fp)) != EOF ) {
 		/* look it up */
@@ -403,6 +434,21 @@ register FILE		*fp;
 			break;
 		case 'C':
 			/* Color */
+			{
+				long	new;
+				int	n;
+				new = ((carg[0]&0xFF)<<16)|((carg[1]&0xFF)<<8)|(carg[2]&0xFF);
+				for( n=0; n<ncvl; n++ )  {
+					if( cvl[n].rgb == 0 )  {
+						cvl[n].rgb = new;
+						goto match;
+					}
+					if( cvl[n].rgb == new )  goto match;
+				}
+				n = 0;	/* not found, table full => yellow */
+match:
+				vhead = &cvl[n].head;
+			}
 			break;
 		case 't':
 			/* Text string */
