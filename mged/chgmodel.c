@@ -1315,6 +1315,7 @@ char	**argv;
 	struct bu_vls vls;
 	CONST char	*str;
 	fastf_t sf;
+	int sflag = 0;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -1329,10 +1330,22 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
+	if(argc == 2 && strcmp(argv[1], "-s") == 0){
+	  --argc;
+	  ++argv;
+
+	  sflag = 1;
+	}
+
 	if( argc < 2 )  {
 	  str = rt_units_string(dbip->dbi_local2base);
-	  bu_vls_printf(&vls, "You are currently editing in '%s'.  1 %s = %g mm \n",
-			str, str, dbip->dbi_local2base );
+
+	  if(sflag)
+	    bu_vls_printf(&vls, "%s", str);
+	  else
+	    bu_vls_printf(&vls, "You are currently editing in '%s'.  1 %s = %g mm \n",
+			  str, str, dbip->dbi_local2base );
+
 	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	  bu_vls_free(&vls);
 	  return TCL_OK;
