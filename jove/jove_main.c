@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/04/01  04:25:24  mike
+ * Arg to FIONREAD is an "int", not a "long" these days.
+ * 
  * Revision 10.1  91/10/12  06:54:00  mike
  * Release_4.0
  * 
@@ -88,12 +91,17 @@ static char RCSid[] = "@(#)$Header$";
 #include "./termcap.h"
 
 #include <signal.h>
-#ifndef SYS5
-#include <sgtty.h>
+#if HAS_TERMIOS
+# include <termios.h>
+# include <fcntl.h>
 #else
-#include <termio.h>
-#include <fcntl.h>
-#endif 
+# ifndef SYS5
+#  include <sgtty.h>
+# else
+#  include <termio.h>
+#  include <fcntl.h>
+# endif
+#endif
 #include <errno.h>
 
 extern char	*version;
@@ -266,7 +274,7 @@ charp()
 		if (ioctl(0, FIONREAD, (char *) &c) == -1)
 			c = 0;
 #else
-#ifdef SYS5
+#if defined(SYS5) || defined(HAS_TERMIOS)
 		int c, flags;
 
 		/* Since VMIN=1, we need to be able to poll for input
@@ -384,18 +392,22 @@ register int	prompt;
 int	OKXonXoff = 0;		/* ^S and ^Q initially DON'T work */
 
 #ifndef	BRLUNIX
-#ifdef SYS5
+# if defined(HAS_TERMIOS)
 struct termio	oldtty, newtty;
-#else
+# else
+#  if defined(SYS5)
+struct termio	oldtty, newtty;
+#  else
 struct sgttyb	oldtty, newtty;
-#endif
+#  endif
+# endif
 #else
 struct sg_brl	oldtty, newtty;
 #endif
 
 ttsetup() {
 #ifndef BRLUNIX
-#ifdef SYS5
+#if defined(SYS5) || defined(HAS_TERMIOS)
 	if (ioctl (0, TCGETA, &oldtty) < 0) {
 #else
 	if (ioctl(0, TIOCGETP, (char *) &oldtty) == -1) {
@@ -410,7 +422,7 @@ ttsetup() {
 	/* One time setup of "raw mode" stty struct */
 	newtty = oldtty;
 #ifndef BRLUNIX
-#ifndef SYS5
+#if !defined(SYS5) && !defined(HAS_TERMIOS)
 	newtty.sg_flags &= ~(ECHO | CRMOD);
 	newtty.sg_flags |= CBREAK;
 #else
@@ -501,10 +513,14 @@ ttinit()
 #ifndef BRLUNIX
 ttyset(n)
 {
-#ifdef SYS5
+#if defined(HAS_TERMIOS)
 	struct termio	tty;
 #else
+# if defined(SYS5)
+	struct termio	tty;
+# else
 	struct sgttyb	tty;
+# endif
 #endif
 
 	if (n)
@@ -512,7 +528,7 @@ ttyset(n)
 	else
 		tty = oldtty;
 
-#ifndef SYS5
+#if !defined(SYS5) && !defined(HAS_TERMIOS)
 	if (ioctl(0, TIOCSETN, (char *) &tty) == -1)
 #else
 	if (ioctl (0, TCSETAW, (char *) &tty) == -1)
@@ -607,7 +623,7 @@ register char	*argv[];
 	BUFFER	*secondbuf = 0;
 	register char	c;
 
-	s_mess("Jonathan's Own Version of Emacs  (BRL %s)", version);
+	s_mess("Jonathan's Own Version of Emacs  (ARL %s)", version);
 
 	*argv = (char *) 0;
 	argvp = argv + 1;
