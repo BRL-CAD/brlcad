@@ -5,8 +5,10 @@ static const char RCSid[] = "$Header$";
 # include "config.h"
 #endif
 
-
-
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+                                                                                                                                                                            
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
@@ -59,6 +61,9 @@ static const char RCSid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.2  2004/06/08 22:04:15  morrison
+ * obliterate externs.h
+ *
  * Revision 1.1  2004/05/20 15:19:10  morrison
  * Vast reorganization begins.  Sources moved from top-level directories into src/.
  *

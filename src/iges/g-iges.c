@@ -29,8 +29,10 @@ static const char RCSrev[] = "$Revision$";
 # include "config.h"
 #endif
 
-
-
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+                                                                                                                                                                            
 extern char	version[];
 
 #include <stdio.h>
