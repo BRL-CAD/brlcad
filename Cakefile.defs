@@ -880,9 +880,9 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__nb) || defined(__CAKE__nb86)
 /* system running NetBSD 1.0 from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
 #	if defined(i386)
-#		define	MTYPE 		nb86
+#		define	MTYPE	nb86
 #	else
-#		define	MTYPE		nb
+#		define	MTYPE	nb
 #	endif
 #	define	HAS_TCP		1
 #	define	HAS_SYMLINKS 	1
@@ -900,8 +900,13 @@ set -S2 "/bin/sh"
 
 	/* i386 users have XFree86, usually */
 #	if defined(i386)
+#if 0
 #		define	XINCDIR	/usr/X386/include
 #		define	XLIBDIR	/usr/X386/lib
+#else
+#		define	XINCDIR	/usr/X11R6/include
+#		define	XLIBDIR	/usr/X11R6/lib
+#endif
 #	endif
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
