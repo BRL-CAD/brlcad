@@ -14,7 +14,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -142,7 +142,7 @@ int			format;
 		bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
 	}
 	bu_bomb("db5_decode_length(): unknown width code\n");
-	/* NOTREACHED */
+	return 0;
 }
 
 /*
@@ -182,7 +182,7 @@ int			format;
 		bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
 	}
 	bu_bomb("db5_decode_length(): unknown width code\n");
-	/* NOTREACHED */
+	return 0;
 }
 
 /*
@@ -212,7 +212,7 @@ db5_encode_length(
 		bu_bomb("db5_encode_length(): encountered 64-bit length\n");
 	}
 	bu_bomb("db5_encode_length(): unknown width code\n");
-	/* NOTREACHED */
+	return 0;
 }
 
 /*
@@ -913,8 +913,6 @@ struct db_i		*dbip;
 struct rt_db_internal	*ip;
 {
 	struct bu_external	ext;
-	int			major, minor;
-	int			ret;
 
 	RT_CK_DIR(dp);
 	RT_CK_DBI(dbip);
@@ -964,7 +962,6 @@ struct rt_db_internal	*ip;
 double			conv2mm;
 {
 	struct bu_external	ext;
-	int			major, minor;
 
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_FUNCTAB( ip->idb_meth );
