@@ -2305,6 +2305,9 @@ f_opendb(
 		return TCL_ERROR;
 	}
 
+	/* increment use count for this db instance */
+	dbip->dbi_uses++;
+
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	/* This creates "db" and ".inmem" Tcl objects */
 	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
