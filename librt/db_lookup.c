@@ -190,7 +190,7 @@ register CONST char	*name;
 long			laddr;
 int			len;
 int			flags;
-genptr_t		ptr;		/* unused client_data from db_scan() */
+genptr_t		ptr;		/* for db version 5, this is a pointer to an unsigned char (minor_type) */
 {
 	struct directory **headp;
 	register struct directory *dp;
@@ -258,8 +258,10 @@ genptr_t		ptr;		/* unused client_data from db_scan() */
 	dp->d_animate = NULL;
 	dp->d_nref = 0;
 	dp->d_uses = 0;
-	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
-	dp->d_minor_type = *(unsigned char *)ptr;
+	if( dbip->dbi_version > 4 ) {
+		dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
+		dp->d_minor_type = *(unsigned char *)ptr;
+	}
 	return( dp );
 }
 
