@@ -9,18 +9,19 @@
  *
  *	The surfaces of the bounding box of the dsp (in dsp coordinates)
  *	are 0 .. 6 where:
- *		0	X == 0
- *		1	XMAX
- *		2	Y == 0
- *		3	YMAX
- *		4	Z == 0
- *		5	DSP_MAX
- *		6	DSP_MIN	up
+ *					Surf #
+ *		0	X == 0		-1
+ *		1	XMAX		-2
+ *		2	Y == 0		-3
+ *		3	YMAX		-4
+ *		4	Z == 0		-5
+ *		5	DSP_MAX		-6
+ *		6	DSP_MIN		-7	(upward normal)
  *
  *	The top surfaces of the dsp are numbered 0 .. wid*len*2
  *	(2 triangles per ``cell'')
- *	The bounding planes on the sides and bottom are numbered -5 .. -1
- *	The pseudo-surface on the top of the bounding box is -6
+ *	The bounding planes on the sides and bottom are numbered -6 .. -1
+ *	The pseudo-surface on the top of the bounding box is -7
  *
  *  Authors -
  *  	Lee A. Butler
@@ -51,6 +52,7 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 
+#define BBSURF(_s) (-((_s)+1))	/* bounding box surface */
 #define BBOX_PLANES	7	/* 2 tops & 5 other sides */
 #define XMIN 0
 #define XMAX 1
@@ -71,7 +73,8 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 #define XSIZ(_p) (((struct dsp_specific *)_p)->xsiz)
 #define YSIZ(_p) (((struct dsp_specific *)_p)->ysiz)
 
-
+#define CELL_MIN(_t) 1
+#define CELL_MAX(_t) 1
 
 /* per-solid ray tracing form of solid, including precomputed terms
  *
@@ -80,8 +83,6 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
  */
 struct dsp_specific {
 	struct rt_dsp_internal dsp_i;	/* MUST BE FIRST */
-	unsigned short	*cell_min;
-	unsigned short	*cell_max;
 	double		dsp_pl_dist[BBOX_PLANES];
 	int		xsiz;
 	int		ysiz;
@@ -105,6 +106,7 @@ struct isect_stuff {
 	struct application	*ap;
 	struct soltab		*stp;
 	struct bn_tol		*tol;
+
 
 	char	NdotDbits;	/* bit field of perpendicular faces */
 	double	NdotD[8];	/* array of VDOT(plane, dir) values */
@@ -162,7 +164,7 @@ struct bu_structparse rt_dsp_ptab[] = {
 static void
 dsp_print(vls, dsp_ip)
 struct bu_vls *vls;
-struct rt_dsp_internal *dsp_ip;
+CONST struct rt_dsp_internal *dsp_ip;
 {
 	point_t pt, v;
 	RT_DSP_CK_MAGIC(dsp_ip);
@@ -203,7 +205,7 @@ register CONST struct soltab *stp;
  
 	RT_DSP_CK_MAGIC(dsp);
 
-	dsp_print(&vls, &dsp->dsp_i);
+	dsp_print(&vls, &(dsp->dsp_i) );
 
 	bu_log("%s", bu_vls_addr( &vls));
 	bu_vls_free( &vls );
@@ -234,16 +236,11 @@ struct rt_i		*rtip;
 {
 	struct rt_dsp_internal		*dsp_ip;
 	register struct dsp_specific	*dsp;
-	CONST struct rt_tol		*tol = &rtip->rti_tol;
 	int x, y;
 	unsigned short dsp_min, dsp_max;
-	unsigned short left_min, left_max;
-	unsigned short right_min, right_max;
-	unsigned short *cell_min, *cell_max;
 	point_t pt, bbpt;
 	vect_t work;
 	fastf_t f;
-	int cells;
 
 
 	if (rt_g.debug & DEBUG_HF)
@@ -258,57 +255,20 @@ struct rt_i		*rtip;
 	dsp->dsp_i = *dsp_ip;		/* struct copy */
 	dsp->xsiz = dsp_ip->dsp_xcnt-1;	/* size is # cells or values-1 */
 	dsp->ysiz = dsp_ip->dsp_ycnt-1;	/* size is # cells or values-1 */
-	cells = dsp->xsiz * dsp->ysiz;	/* Total # cells in map */
-
-	/* build two maps:
-	 *	Cell min values
-	 *	Cell max values
-	 * and compute min/max values for entire map
-	 */
-	cell_min = dsp->cell_min = (unsigned short *)
-		rt_malloc( sizeof(*dsp->cell_min) * cells * 2, "min/max map" );
-	cell_max = dsp->cell_max = & dsp->cell_min[cells];
 
 	dsp_min = 0xffff;
 	dsp_max = 0;
 
 	for (y=0 ; y < YSIZ(dsp) ; y++) {
 
-		if (DSP(dsp, 0, y) < DSP(dsp, 0, y+1)) {
-			left_min = DSP(dsp, 0, y);
-			left_max = DSP(dsp, 0, y+1);
-		} else {
-			left_min = DSP(dsp, 0, y+1);
-			left_max = DSP(dsp, 0, y);
-		}
-
 		for (x=1 ; x < XCNT(dsp) ; x++) {
 
-			if (DSP(dsp, x, y) < DSP(dsp, x, y+1)) {
-				right_min = DSP(dsp, x, y);
-				right_max = DSP(dsp, x, y+1);
-			} else {
-				right_min = DSP(dsp, x, y+1);
-				right_max = DSP(dsp, x, y);
-			}
+			if (DSP(dsp, x, y) < dsp_min)
+				dsp_min = DSP(dsp, x, y);
 
-			if (left_min < right_min)
-				*cell_min = left_min;
-			else
-				*cell_min = right_min;
+			if (DSP(dsp, x, y) > dsp_max)
+				dsp_max = DSP(dsp, x, y);
 
-			if (left_max > right_max)
-				*cell_max = left_max;
-			else
-				*cell_max = right_max;
-
-			if (*cell_min < dsp_min) dsp_min = *cell_min;
-			if (*cell_max > dsp_max) dsp_max = *cell_max;
-
-			left_min = right_min;
-			left_max = right_max;
-			cell_max++;
-			cell_min++;
 		}
 	}
 
@@ -360,7 +320,119 @@ struct rt_i		*rtip;
 	return 0;
 }
 
+#if 1
+/*
+ *  Intersect the ray with the bounding box of the dsp solid.
+ */
+static int
+isect_ray_bbox(isect)
+register struct isect_stuff *isect;
+{
+	register double NdotD;
+	register double NdotPt;
+	double dist;
+	register int i;
 
+	isect->bbox.in_dist = - (isect->bbox.out_dist = MAX_FASTF);
+	isect->bbox.in_surf = isect->bbox.out_surf = -1;
+
+	/* intersect the ray with the bounding box */
+	for (i=0 ; i < BBOX_PLANES ; i++) {
+		NdotD = VDOT(dsp_pl[i], isect->r.r_dir);
+		NdotPt = VDOT(dsp_pl[i], isect->r.r_pt);
+
+		/* if N/ray vectors are perp, ray misses plane */
+		if (BN_VECT_ARE_PERP(NdotD, isect->tol)) {
+			if ( (NdotPt - isect->dsp->dsp_pl_dist[i]) >
+			    SQRT_SMALL_FASTF ) {
+				if (rt_g.debug & DEBUG_HF)
+					bu_log("ray parallel and above bbox surf %d\n", i);
+
+				return 0; /* MISS */
+			    }
+		}
+
+		dist = - ( NdotPt - isect->dsp->dsp_pl_dist[i] ) / NdotD;
+
+		if (rt_g.debug & DEBUG_HF)
+			bu_log("surf[%d](%g %g %g %g) dot:%g dist:%g\n",
+				i, V3ARGS(dsp_pl[i]),
+				isect->dsp->dsp_pl_dist[i],
+				NdotD, dist);
+
+		if ( i > 5) /* dsp_min elevation not valid bbox limit */
+			continue;
+
+		if (NdotD < 0.0) {
+			/* entering */
+			if (dist > isect->bbox.in_dist) {
+				isect->bbox.in_dist = dist;
+				isect->bbox.in_surf = i;
+			}
+		} else { /*  (NdotD > 0.0) */
+			/* leaving */
+			if (dist < isect->bbox.out_dist) {
+				isect->bbox.out_dist = dist;
+				isect->bbox.out_surf = i;
+			}
+		}
+	}
+
+	if (rt_g.debug & DEBUG_HF) {
+		vect_t pt;
+		VJOIN1(pt, isect->r.r_pt, isect->bbox.in_dist, isect->r.r_dir);
+		bu_log("solid rpp in  surf[%d] dist:%g (%g %g %g)\n",
+			isect->bbox.in_surf, isect->bbox.in_dist, V3ARGS(pt));
+		VJOIN1(pt, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
+		bu_log("solid rpp out surf[%d] dist:%g  (%g %g %g)\n",
+			isect->bbox.out_surf, isect->bbox.out_dist, V3ARGS(pt));
+	}
+
+	/* validate */
+	if (isect->bbox.in_dist >= isect->bbox.out_dist ||
+	    isect->bbox.out_dist >= MAX_FASTF ) 
+		return 0; /* MISS */
+
+
+	/* copmute "minbox" the bounding box of the rpp under the lowest
+	 * displacement height
+	 */
+
+	isect->minbox.in_dist = isect->bbox.in_dist;
+	isect->minbox.in_surf = isect->bbox.in_surf;
+	isect->minbox.out_dist = isect->bbox.out_dist;
+	isect->minbox.out_surf = isect->bbox.out_surf;
+
+	if (NdotD < 0.0) {
+		/* entering */
+		if (dist > isect->bbox.in_dist) {
+			isect->minbox.in_dist = dist;
+			isect->minbox.in_surf = 6;
+		}
+	} else { /*  (NdotD > 0.0) */
+		/* leaving */
+		if (dist < isect->bbox.out_dist) {
+			isect->minbox.out_dist = dist;
+			isect->minbox.out_surf = 6;
+		}
+	}
+
+	if (rt_g.debug & DEBUG_HF) {
+		vect_t pt;
+		VJOIN1(pt, isect->r.r_pt, isect->minbox.in_dist, isect->r.r_dir);
+
+		bu_log("solid minbox rpp in  surf[%d] dist:%g (%g %g %g)\n",
+			isect->minbox.in_surf, isect->minbox.in_dist, V3ARGS(pt));
+
+		VJOIN1(pt, isect->r.r_pt, isect->minbox.out_dist, isect->r.r_dir);
+		bu_log("solid minbox rpp out surf[%d] dist:%g (%g %g %g)\n",
+			isect->minbox.out_surf, isect->minbox.out_dist, V3ARGS(pt));
+	}
+
+	return 1;
+}
+
+#else
 /*
  *  Intersect the ray with the bounding box of the dsp solid.
  *  We also pre-compute some per-ray things that will be useful later.
@@ -488,6 +560,7 @@ register struct isect_stuff *isect;
 	return 1;
 }
 
+
 /*
  *  Intersect a ray with a cell bounding box.  Uses data from isect_ray_bbox.
  *
@@ -562,7 +635,7 @@ register struct bbox_isect *bbi;
 	return 1;
 }
 
-
+#endif
 
 
 /*
@@ -584,11 +657,135 @@ static void
 isect_ray_dsp(isect)
 struct isect_stuff *isect;
 {
-	vect_t pDX, pDY;	/* vector for 1 cell change in x, y */
-	int outX, outY;		/* cell index which idicates we're outside */
-	double tDX, tDY;	/* dist from cell start to next cell */
-	double tX, tY;		/* dist to end of first cell */
-	int stepX, stepY;
+#if 1
+	point_t curr_pt;
+	point_t next_pt;
+	int	grid_cell[3];	/* grid cell of current point */
+	int	rising;		/* boolean:  Ray Z dir sign is positive */
+	int	stepX, stepY;	/* signed step delta for grid cell marching */
+	int	outX, outY;	/* cell index which idicates we're outside */
+	vect_t	pDX, pDY;	/* vector for 1 cell change in x, y */
+	double	tDX;		/* dist along ray to span 1 cell in X dir */
+	double	tDY;		/* dist along ray to span 1 cell in Y dir */
+	double	tX, tY;	/* dist along ray from hit pt. to next cell boundary */
+	double	out_dist = isect->bbox.out_dist;
+	double	dsp_max = isect->dsp->dsp_pl_dist[ZMAX];
+				
+	/* compute BBox entry point and starting grid cell */
+	VJOIN1(curr_pt, isect->r.r_pt, isect->bbox.in_dist, isect->r.r_dir);
+	VMOVE(grid_cell, curr_pt);	/* int/float conversion */
+
+	rising = (isect->r.r_dir[Z] > 0.); /* compute Z direction */
+
+	if (isect->r.r_dir[X] < 0) {
+		stepX = -1;	/* cell delta for stepping X dir on ray */
+		outX = -1;	/* cell beyond last valid in X direction */
+		tDX = -1.0 / isect->r.r_dir[X];
+	} else {
+		stepX = 1;
+		outX = isect->dsp->dsp_i.dsp_xcnt;
+		tDX = 1.0 / isect->r.r_dir[X];
+	}
+	if (isect->r.r_dir[Y] < 0) {
+		stepY = -1;
+		outY = -1;
+		tDY = -1.0 / isect->r.r_dir[Y];
+	} else {
+		stepY = 1;
+		outY = isect->dsp->dsp_i.dsp_ycnt;
+		tDY = 1.0 / isect->r.r_dir[Y];
+	}
+
+	VSCALE(pDX, isect->r.r_dir, tDX);	/* vect for going tDX dist */
+	VSCALE(pDY, isect->r.r_dir, tDY);
+
+	/* since we're probably starting in the middle of a cell, we need
+	 * to compute the distance along the ray to the initial
+	 * X and Y boundaries.
+	 */
+	tX = (curr_pt[X] - grid_cell[X]) / isect->r.r_dir[X];
+	tY = (curr_pt[Y] - grid_cell[Y]) / isect->r.r_dir[Y];
+	
+	do {
+		if (tX < tY) {
+			/* dist along ray to next X cell boundary is closer
+			 * than dist to next Y cell boundary
+			 */
+			VJOIN1(next_pt, curr_pt, tX, isect->r.r_dir);
+
+			if (rising) {
+				if (next_pt[Z] < CELL_MIN(grid_cell)) {
+					/* in base */
+				} else if (curr_pt[Z] > CELL_MAX(grid_cell)) {
+					/* miss above */
+				} else {
+					/* intersect */
+				}
+			} else {
+				if (next_pt[Z] > CELL_MAX(grid_cell)) {
+					/* miss above */
+				} else if (curr_pt[Z] < CELL_MIN(grid_cell)){
+					/* in base */
+				} else {
+					/* intersect */
+				}
+			}
+
+			/* step to next cell in X direction */
+			VMOVE(curr_pt, next_pt);
+			grid_cell[X] += stepX;
+			
+			if (grid_cell[X] == outX) {
+				/* just stepped out of last cell in X */
+				break;
+			}
+
+			/* update dist along ray to next X cell boundary */
+			tX += tDX;
+		} else {
+			/* dist along ray to next Y cell boundary is closer
+			 * than dist to next X cell boundary
+			 */
+			VJOIN1(next_pt, curr_pt, tY, isect->r.r_dir);
+
+			if (rising) {
+				if (next_pt[Z] < CELL_MIN(grid_cell)) {
+					/* in base */
+				} else if (curr_pt[Z] > CELL_MAX(grid_cell)) {
+					/* miss above */
+				} else {
+					/* intersect */
+				}
+			} else {
+				if (next_pt[Z] > CELL_MAX(grid_cell)) {
+					/* miss above */
+				} else if (curr_pt[Z] < CELL_MIN(grid_cell)){
+					/* in base */
+				} else {
+					/* intersect */
+				}
+			}
+
+			/* step to next cell in Y direction */
+			VMOVE(curr_pt, next_pt);
+			grid_cell[Y] += stepY;
+			
+			if (grid_cell[Y] == outY) {
+				/* just stepped out of last cell in Y */
+				break;
+			}
+
+			/* update dist along ray to next Y cell boundary */
+			tY += tDY;
+		}
+
+
+	} while ( (tX < out_dist || tY < out_dist) ||
+		  (rising && curr_pt[Z] < dsp_max) ||
+		 (!rising && curr_pt[Z] > 0.0) );
+		
+
+#else
 	int rising; /* boolean: ray Z positive */
 	int xcnt, ycnt;
 	int grid_cell[3];
@@ -615,43 +812,6 @@ struct isect_stuff *isect;
 	VJOIN1(out_pt, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
 	VMOVE(out_cell, out_pt);	/* int/float conversion */
 
-	if (isect->minbox.in_surf < 5) {
-		isect->inside = 1;
-
-		RT_GET_SEG( isect->segp, isect->ap->a_resource );
-		isect->segp->seg_stp = isect->stp;
-		isect->segp->seg_in.hit_dist = isect->bbox.in_dist;
-		isect->segp->seg_in.hit_surfno = -isect->bbox.in_surf;
-		isect->segp->seg_in.hit_vpriv[X] = grid_cell[X];
-		isect->segp->seg_in.hit_vpriv[Y] = grid_cell[Y];
-
-		if ( isect->minbox.out_surf < 5 ) {
-			/* we actually hit and exit the dsp 
-			 * BELOW the min value.  For example:
-			 *			     o ray origin
-			 *	     /\dsp	    /
-			 *	   _/  \__   /\_   /
-			 *	_ |       \_/   | / ray
-			 *	| |		|/
-			 * Minbox |		*in point
-			 *	| |	       /|
-			 *	- +-----------*-+
-			 *		     / out point
-			 */
-
-			isect->segp->seg_out.hit_dist = isect->bbox.out_dist;
-			isect->segp->seg_out.hit_surfno = -isect->bbox.out_surf;
-			isect->segp->seg_out.hit_vpriv[X] = out_cell[X];
-			isect->segp->seg_out.hit_vpriv[Y] = out_cell[Y];
-
-			BU_LIST_INSERT( &isect->seglist, &(isect->segp->l) );
-
-			return;
-		} else {
-			isect->segp->seg_out.hit_vpriv[X] = -1;
-			isect->segp->seg_out.hit_vpriv[Y] = -1;
-		}
-	}
 
 
 
@@ -761,6 +921,7 @@ next_iter:
 		BU_LIST_INSERT( &isect->seglist, &(isect->segp->l) );
 	}
 
+#endif
 
 }
 
@@ -829,9 +990,37 @@ struct seg		*seghead;
 		return 0;
 
 
-	/* intersect ray with dsp data */
 	BU_LIST_INIT(&isect.seglist);
-	isect_ray_dsp(&isect);
+
+	if (isect.minbox.in_surf < 5 && isect.minbox.out_surf < 5 ) {
+
+		/*  We actually hit and exit the dsp BELOW the min value.
+		 *  For example:
+		 *			     o ray origin
+		 *	     /\dsp	    /
+		 *	   _/  \__   /\_   /
+		 *	_ |       \_/   | / ray
+		 *	| |		|/
+		 * Minbox |		*in point
+		 *	| |	       /|
+		 *	- +-----------*-+
+		 *		     / out point
+		 */
+
+		RT_GET_SEG( isect.segp, isect.ap->a_resource );
+		isect.segp->seg_stp = isect.stp;
+		isect.segp->seg_in.hit_dist = isect.bbox.in_dist;
+		isect.segp->seg_in.hit_surfno = -(isect.bbox.in_surf+1);
+
+		isect.segp->seg_out.hit_dist = isect.bbox.out_dist;
+		isect.segp->seg_out.hit_surfno = -(isect.bbox.out_surf+1);
+
+		BU_LIST_INSERT( &isect.seglist, &(isect.segp->l) );
+	} else {
+
+		/* intersect ray with dsp data */
+		isect_ray_dsp(&isect);
+	}
 
 	/* if we missed it all, give up now */
 	if (BU_LIST_IS_EMPTY(&isect.seglist))
@@ -865,7 +1054,7 @@ struct seg		*seghead;
 	if (rt_g.debug & DEBUG_HF) {
 		double NdotD;
 		double d;
-		CONST static plane_t plane = {0.0, 0.0, -1.0, 0.0};
+		static CONST plane_t plane = {0.0, 0.0, -1.0, 0.0};
 
 		NdotD = VDOT(plane, rp->r_dir);
 		d = - ( (VDOT(plane, rp->r_pt) - plane[H]) / NdotD);	
@@ -920,9 +1109,9 @@ register struct xray	*rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	if (hitp->hit_surfno < 0) {
 		MAT4X3VEC( N, dsp->dsp_i.dsp_stom, 
-			dsp_pl[ -hitp->hit_surfno ] );
+			dsp_pl[ BBSURF(hitp->hit_surfno) ] );
 	} else {
-		switch (hitp->hit_surfno) {
+		switch (  hitp->hit_surfno ) {
 		case XMIN:
 		case XMAX:
 		case YMIN:
@@ -1021,7 +1210,6 @@ register struct soltab *stp;
 	RT_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	rt_close_mapped_file(dsp->dsp_i.dsp_mp);
 
-	rt_free( (char *)dsp->cell_min, "min/max map" );
 	rt_free( (char *)dsp, "dsp_specific" );
 }
 
@@ -1053,7 +1241,6 @@ struct rt_tol		*tol;
 	point_t s_pt;
 	int x, y;
 	int step;
-	int half_step;
 	int xlim = dsp_ip->dsp_xcnt - 1;
 	int ylim = dsp_ip->dsp_ycnt - 1;
 	int xfudge, yfudge;
@@ -1160,7 +1347,7 @@ struct rt_tol		*tol;
 			);
 	}
 	if( step < 1 )  step = 1;
-	if( (half_step = step/2) < 1 )  half_step = 1;
+
 
 	xfudge = (dsp_ip->dsp_xcnt % step + step) / 2 ;
 	yfudge = (dsp_ip->dsp_ycnt % step + step) / 2 ;
@@ -1248,8 +1435,8 @@ register CONST mat_t		mat;
 	struct bu_vls			str;
 	mat_t tmp;
 
-#define IMPORT_FAIL(s) \
-	bu_log("rt_ebm_import(%d) '%s' %s\n", __LINE__, dsp_ip->dsp_file, s); \
+#define IMPORT_FAIL(_s) \
+	bu_log("rt_ebm_import(%d) '%s' %s\n", __LINE__, dsp_ip->dsp_file,_s);\
 	bu_free( (char *)dsp_ip , "rt_dsp_import: dsp_ip" ); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
