@@ -304,7 +304,8 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
 		pp->fp_names[nslash++] = dp;
 		cp = slashp+1;
 	}
-	bu_free( copy, "db_string_to_path() rt_strdip");
+	BU_ASSERT_LONG( nslash, ==, pp->fp_len );
+	bu_free( copy, "db_string_to_path() duplicate string");
 	return ret;
 }
 
