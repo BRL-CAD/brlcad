@@ -1,111 +1,100 @@
-.TH PIX-FB 1 BRL/CAD
+.TH HALFTONE 1 BRL/CAD
 .SH NAME
-pix\(hyfb \- display a pix format RGB image file on a framebuffer
+halftone \- Translate a bw file to a halftoned bw file
 .SH SYNOPSIS
-.B pix-fb
-.RB [ \-hicz ]
-.RB [ \-F\  framebuffer]
+.B halftone
+.RB [ \-hRS ]
 .RB [ \-s\  squarefilesize]
 .RB [ \-w\  file_width]
 .RB [ \-n\  file_height]
-.RB [ \-S\  squarescrsize]
-.RB [ \-W\  scr_width]
-.RB [ \-N\  scr_height]
-.RB [ \-x\  file_xoff]
-.RB [ \-y\  file_yoff]
-.RB [ \-X\  scr_xoff]
-.RB [ \-Y\  scr_yoff]
-<\ file.pix
+.RB [ \-B\  contrast]
+.RB [ \-I\  Number_Intensity_Levels]
+.RB [ \-M\  Method]
+.RB [ \-T\  Tone_Scale_Curve_Points]
+<\ file.bw
 .SH DESCRIPTION
-.I Pix-fb
+.I Halftone
 reads a
-.IR pix (5)
+.IR bw (5)
 format file from the named file, or from
-standard in if no file is specified, and displays the
-image on the currently selected framebuffer.
-The environment variable FB_FILE specifies
-the current framebuffer, see
-.IR brlcad (1).
-Alternatively, the framebuffer may be explicitly specified
-by using the
-.B \-F
-flag.
+standard in if no file is specified, and reduces the number of intensity
+levels from 256 to a default of 2.  Halftone trys to preserve as much
+information as possable by applying dither.
 .PP
 By default, the
-.I pix
-file, and the requested framebuffer size, is assumed to be 512x512 pixels.
+.I bw
+file is assumed to be 512x512 pixels.
 Specifying the
 .B \-h
 flag changes the size to 1024x1024.
 .PP
 If the
-.B \-i
-flag is specified, the image is output from top to bottom.
-Customarily,
-.I pix
-files are stored bottom to top, so this flag
-inverts the image.
+.B \-R
+flag is specified random noise is added to the dither which can sometimes
+improve the results.
 .PP
 The
-.B \-c
-flag causes the screen to be cleared before the image is displayed.
-The default behavior is to overwrite the current image
-with the new image without clearing the screen.
-.PP
-The
-.B \-z
-flag will zoom and center on the image being displayed
-to make it fill the display area, using the libfb fb_zoom() routine.
-fb_zoom only offers integer zoom factors, so displays with non-square
-screens (such as the SGI 3D machines) may find this option of limited
-usefulness.
+.B \-S
+flag causes a surpentine raster to be used rather than a left to right
+scan.
 .PP
 The
 .BI \-w\  file_width
 flag specifies the width of each scanline in the input file, in pixels.
-.BI \-W\  scr_width
-does the same for the display device.
 .PP
 The
 .BI \-n\  file_height
-and
-.BI \-N\  scr_height
-flags specifies the height in scanlines of the input file or display device
-respectively.
+flag specifies the height in scanlines of the input file.
 .PP
 .BI \-s\  squarefilesize
-and
-.BI \-S\  squarescrsize
-set both the height and width to the size given.
+sets both the height and width to the size given.
 .PP
-.BI \-x\  file_xoff\  \-y\  file_yoff
-and
-.BI \-X\  scr_xoff\  \-Y\  scr_yoff
-will offset into the file or onto the screen by the given amounts.
-The coordinate system for these offsets is first quadrant, with
-the origin at the lower left corner of the image.
+.BI \-B\  contrast
+will define a floating point value to be used as the Beta portion
+of a edge sharpening algorthm.  The default is 0.0 which is no 
+sharpening.
+.PP
+.BI \-I\  Levels
+defines the number of different intensity levels to use on output.  The
+default is 2 (1 bit) and the max is 256 (8 bits).
+.PP
+The 
+.BI \-M\  method
+allows a choice of dither methods.  The default is
+0 a Floyd-Steinburg diffused error dither,
+1 is a 45 degree classical clustered halftone screen,
+2 is a simple threshold dither,
+3 is a 0 degree dispersed halftone screen.
+.PP
+The
+.BI \-T\  x1\ y1\ x2\ y2\ ...
+parameter is used to define a curve to be used as a tone scale.  The
+resulting curve is used to map input pixels to output pixels.  The default
+curve is
+-T  0 0 128 128 255 255
+a curve suggested by Robert Ulichney in
+Digital Halftoning
+is
+-T  0  0  15  0  128  100  200  200  240  255  255  255.
 .SH FORMAT
 A
-.IR pix (5)
+.IR bw (5)
 file contains sequences of pixels.
-Each pixel is stored as three \fBunsigned char\fRs,
-first red, then green, then blue.
+Each pixel is stored as one
+.B unsigned char.
 The first pixel in a
-.I pix
+.I bw
 file is the lower left corner of the image.
 The pixels proceed from left-to-right across each scanline,
 with scanlines being written from the bottom to the top of the image.
-By convention
-.I pix
-images are usually square.
+.PP
+The output from
+.BI halftone
+is scaled so that each intensity level is output as 255/Levels*value.
 .SH "SEE ALSO"
-rt(1), fb-pix(1), libfb(3), pix(5)
-.SH DIAGNOSTICS
-If the
-.I pix
-file is shorter than expected, the program exits silently.
+rt(1), pix-bw(1), bw(5), bw-fb(1)
 .SH AUTHOR
-Michael John Muuss
+Christopher T. Johnson
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br
