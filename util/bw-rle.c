@@ -19,6 +19,8 @@
 static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <time.h>
 
@@ -34,8 +36,6 @@ static char			host[128];
 static rle_pixel		**rows;
 static long			now;
 static char			*who;
-
-extern char			*strdup();
 
 static FILE	*infp;
 static char	*infile;
@@ -61,8 +61,6 @@ get_args( argc, argv )
 register char	**argv;
 {
 	register int	c;
-	extern int	optind;
-	extern char	*optarg;
 
 	while( (c = getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
 		switch( c )  {
@@ -155,7 +153,7 @@ char	*argv[];
 	outrle.xmin = outrle.ymin = 0;
 	outrle.xmax = file_width-1;
 	outrle.ymax = file_height-1;
-	outrle.comments = (CONST_DECL char **)0;
+	outrle.comments = (CONST char **)0;
 
 	/* Add comments to the header file, since we have one */
 	sprintf( comment, "converted_from=%s", infile );
