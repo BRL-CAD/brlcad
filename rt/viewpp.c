@@ -32,7 +32,6 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
 
 int		use_air = 0;		/* Handling of air in librt */
 

@@ -28,7 +28,6 @@ static char RCScell[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"
-#include "./material.h"
 #include "./ext.h"
 
 #include "rdebug.h"

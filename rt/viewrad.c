@@ -31,7 +31,6 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
 #include "./rdebug.h"
 #include "./rad.h"
 

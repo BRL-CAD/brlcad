@@ -39,7 +39,6 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
 
 #define OVLP_TOL	0.1
 
