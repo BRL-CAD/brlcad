@@ -1280,7 +1280,7 @@ struct rt_wdb		*wdb;
 		}
 
 		dp_curr = DB_FULL_PATH_CUR_DIR( &new_path );
-		ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
+		ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY, 0 );
 		db_free_full_path( &old_path );
 		db_free_full_path( &new_path );
 
