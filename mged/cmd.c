@@ -165,6 +165,7 @@ int	f_xpush();
 int	f_gui();
 
 int gui_mode = 0;
+char text_widget_name[200];
 
 Tcl_Interp *interp;
 Tk_Window tkwin;
@@ -1005,10 +1006,12 @@ char *str;
 	char buf[10240];
 	char *old;
 
-	sprintf(buf, ".i.f.text insert insert \"%s\"", str);
+	sprintf(buf, "%s insert insert \"%s\"", text_widget_name, str);
 	Tcl_Eval(interp, buf);
-	Tcl_Eval(interp, ".i.f.text yview -pickplace insert");
-	Tcl_Eval(interp, "set printend [.i.f.text index insert]");
+	sprintf(buf, "%s yview -pickplace insert", text_widget_name);
+	Tcl_Eval(interp, buf);
+	sprintf(buf, "set printend [%s index insert]", text_widget_name);
+	Tcl_Eval(interp, buf);
 
 	return strlen(str);
 }
@@ -1252,6 +1255,13 @@ f_gui( argc, argv )
 int argc;
 char **argv;
 {
+	if( argc < 2 ) {
+		rt_log("Error: need an interaction window name\n");
+		return CMD_BAD;
+	}
+
+	strncpy(text_widget_name, argv[1]);
+
 	rt_log("Please direct your attention to the mged interaction window.\n");
 	rt_add_hook( gui_output );
 	Tcl_CreateCommand(interp, "cmdline", gui_cmdline, (ClientData)NULL,
