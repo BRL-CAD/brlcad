@@ -612,7 +612,7 @@ genptr_t		user_ptr3;
 {
 	char *obj_name;
 	char *comb_name;
-	register int sflag = (int)user_ptr3;
+	register int sflag = (int)(((long)user_ptr3) & 0xFFFF);	/* only need lsb */
 
 	RT_CK_TREE( comb_leaf );
 
