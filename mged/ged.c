@@ -2021,15 +2021,19 @@ char	**argv;
 	int status;
 
 	if(dpy_string != (char *)NULL)
-	  bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
+	  bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
 			dpy_string, argv[1]);
 	else
-	  bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 OK Cancel",
+	  bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
 			argv[1]);
 
 	status = Tcl_Eval(interp, bu_vls_addr(&vls));
 
-	if(status != TCL_OK || interp->result[0] != '0') {
+	if(status != TCL_OK || interp->result[0] == '2') {
+	  mged_finish(0);
+	}
+
+	if(interp->result[0] == '1') {
 	  bu_log("opendb: no database is currently opened!\n");
 	  bu_vls_free(&vls);
 	  bu_vls_free(&msg);
