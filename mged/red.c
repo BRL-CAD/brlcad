@@ -41,15 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include <ctype.h>
 
-
-/* XXXXX tree_list struct definition copied from db_comb.c, needs to be in raytrace.h */
-struct tree_list {
-        union tree *tl_tree;
-        int     tl_op;
-};
-#define TREE_LIST_NULL  ((struct tree_list *)0)
-
-
 static char	red_tmpfil[] = "/tmp/GED.aXXXXX";
 static char	red_tmpcomb[] = "red_tmp.aXXXXX";
 static char	*delims = " \t/";	/* allowable delimiters */
@@ -232,7 +223,7 @@ struct rt_comb_internal	*comb;
 char *name;
 {
 /*	Writes the file for later editing */
-	struct tree_list	*tree_list;
+	struct rt_tree_array	*rt_tree_array;
 	FILE			*fp;
 	int			offset,i;
 	int			node_count;
@@ -277,15 +268,15 @@ char *name;
 	node_count = db_tree_nleaves( comb->tree );
 	if( node_count > 0 )
 	{
-		tree_list = (struct tree_list *)bu_calloc( node_count,
-			sizeof( struct tree_list ), "tree list" );
-		actual_count = (struct tree_list *)db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
+			sizeof( struct rt_tree_array ), "tree list" );
+		actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
 		if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
 		if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
 	}
 	else
 	{
-		tree_list = (struct tree_list *)NULL;
+		rt_tree_array = (struct rt_tree_array *)NULL;
 		actual_count = 0;
 	}
 
@@ -327,7 +318,7 @@ char *name;
 	{
 		char op;
 
-		switch( tree_list[i].tl_op )
+		switch( rt_tree_array[i].tl_op )
 		{
 			case OP_UNION:
 				op = 'u';
@@ -345,14 +336,14 @@ char *name;
 				return( 1 );
 				break;
 		}
-		if( fprintf( fp , " %c %s" , op , tree_list[i].tl_tree->tr_l.tl_name ) <= 0 )
+		if( fprintf( fp , " %c %s" , op , rt_tree_array[i].tl_tree->tr_l.tl_name ) <= 0 )
 		{
 			Tcl_AppendResult(interp, "Cannot write to temp file (", red_tmpfil,
 				"). Aborting edit\n", (char *)NULL );
 			fclose( fp );
 			return( 1 );
 		}
-		print_matrix( fp, tree_list[i].tl_tree->tr_l.tl_mat );
+		print_matrix( fp, rt_tree_array[i].tl_tree->tr_l.tl_mat );
 		fprintf( fp, "\n" );
 	}
 	fclose( fp );
@@ -595,7 +586,7 @@ char *old_name;
 	int done=0;
 	int region;
 	struct directory *dp1;
-	struct tree_list *tree_list;
+	struct rt_tree_array *rt_tree_array;
 	int tree_index=0;
 	union tree *tp;
 	union tree *final_tree;
@@ -633,9 +624,9 @@ char *old_name;
 
 	/* build tree list */
 	if( node_count )
-		tree_list = (struct tree_list *)bu_calloc( node_count , sizeof( struct tree_list ) , "tree list" );
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "tree list" );
 	else
-		tree_list = (struct tree_list *)NULL;
+		rt_tree_array = (struct rt_tree_array *)NULL;
 
 	if( dp == DIR_NULL )
 		NAMEMOVE( old_name, new_name );
@@ -810,8 +801,8 @@ char *old_name;
 		if( (dp1=db_lookup( dbip , name , LOOKUP_NOISY )) == DIR_NULL )
 		{
 		  Tcl_AppendResult(interp, " ", name, " does not exist\n", (char *)NULL);
-		  if( tree_list )
-			bu_free( (char *)tree_list, "red: tree list" );
+		  if( rt_tree_array )
+			bu_free( (char *)rt_tree_array, "red: tree list" );
 		  fclose( fp );
 		  return( 1 );
 		}
@@ -834,8 +825,8 @@ char *old_name;
 					Tcl_AppendResult(interp, "incomplete matrix for member ",
 						name, " No changes made\n", (char *)NULL );
 					bu_free( (char *)matrix, "red: matrix" );
-					if( tree_list )
-						bu_free( (char *)tree_list, "red: tree list" );
+					if( rt_tree_array )
+						bu_free( (char *)rt_tree_array, "red: tree list" );
 					fclose( fp );
 					return( 1 );
 				}
@@ -852,20 +843,20 @@ char *old_name;
 		switch( relation )
 		{
 			case '+':
-				tree_list[tree_index].tl_op = OP_INTERSECT;
+				rt_tree_array[tree_index].tl_op = OP_INTERSECT;
 				break;
 			case '-':
-				tree_list[tree_index].tl_op = OP_SUBTRACT;
+				rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 				break;
 			default:
 				Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
 					(char *)NULL );
 			case 'u':
-				tree_list[tree_index].tl_op = OP_UNION;
+				rt_tree_array[tree_index].tl_op = OP_UNION;
 				break;
 		}
 		BU_GETUNION( tp, tree );
-		tree_list[tree_index].tl_tree = tp;
+		rt_tree_array[tree_index].tl_tree = tp;
 		tp->tr_l.magic = RT_TREE_MAGIC;
 		tp->tr_l.tl_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup( name );
@@ -876,7 +867,7 @@ char *old_name;
 	fclose( fp );
 
 	if( tree_index )
-		final_tree = (union tree *)db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
+		final_tree = (union tree *)db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
 	else
 		final_tree = (union tree *)NULL;
 
