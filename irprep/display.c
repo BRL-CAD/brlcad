@@ -36,9 +36,15 @@
 /*	25 November 1991 - Start of original program.  */
 /*	12 March 1992	 - Add some comments.  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"

@@ -21,8 +21,14 @@
 /*			    to be written.  */
 
 /*  Include files needed.  */
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

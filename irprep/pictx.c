@@ -6,8 +6,14 @@
 /*  model and/or diplay it using the PRISM temperature output file.  */
 
 /*  Include files.  */
+#include "conf.h"
+
 #include<stdio.h>
+#ifdef USE_STRING_H
 #include<string.h>
+#else
+#include <strings.h>
+#endif
 #include<math.h>
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
