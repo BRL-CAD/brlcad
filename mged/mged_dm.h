@@ -69,6 +69,7 @@ struct dm {
 	void	(*dmr_window)();	/* Change window boundry */
 	void	(*dmr_debug)();		/* Set DM debug level */
 	int	dmr_displaylist;	/* !0 means device has displaylist */
+	int	dmr_releasedisplay;	/* !0 release for other programs */
 	double	dmr_bound;		/* zoom-in limit */
 	char	*dmr_name;		/* short name of device */
 	char	*dmr_lname;		/* long name of device */
