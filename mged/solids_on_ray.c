@@ -67,7 +67,9 @@ struct sol_name_dist
  *
  *	The function to order solids alphabetically by name
  */
-static int sol_comp_name (void *v1, void *v2)
+static int
+sol_comp_name(v1, v2)
+void *v1, *v2;    
 {
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
@@ -83,7 +85,9 @@ static int sol_comp_name (void *v1, void *v2)
  *
  *	The function to order solids by distance along the ray
  */
-static int sol_comp_dist (void *v1, void *v2)
+static int
+sol_comp_dist(v1, v2)
+void *v1, *v2;    
 {
     struct sol_name_dist	*s1 = v1;
     struct sol_name_dist	*s2 = v2;
@@ -102,11 +106,10 @@ static int sol_comp_dist (void *v1, void *v2)
 /*
  *			M K _ S O L I D
  */
-static struct sol_name_dist *mk_solid (name, dist)
-
+static struct sol_name_dist *
+mk_solid(name, dist)
 char	*name;
 fastf_t	dist;
-
 {
     struct sol_name_dist	*sp;
 
@@ -127,8 +130,8 @@ fastf_t	dist;
  *	an indication whether the name member of the solid should
  *	also be freed.
  */
-static void free_solid (sol, free_name)
-
+static void
+free_solid(sol, free_name)
 struct sol_name_dist	*sol;
 int			free_name;
 
@@ -143,8 +146,8 @@ int			free_name;
 /*
  *			P R I N T _ S O L I D
  */
-static void print_solid (vp, depth)
-
+static void
+print_solid(vp, depth)
 void	*vp;
 int	depth;
 
@@ -163,11 +166,10 @@ int	depth;
  *
  *	Does nothing.  Returns 1.
  */
-static int no_op (ap, ph)
-
+static int
+no_op(ap, ph)
 struct application	*ap;
 struct partition	*ph;
-
 {
     return (1);
 }
@@ -177,11 +179,10 @@ struct partition	*ph;
  *
  *	Builds the slash-separated path name for a struct solid.
  */
-void build_path_name_of_solid (vp, sp)
-
+void
+build_path_name_of_solid(vp, sp)
 struct rt_vls	*vp;
 struct solid	*sp;
-
 {
     int		i;
 
@@ -208,11 +209,10 @@ struct solid	*sp;
  *	otherwise, just its basename.  It returns 1.
  */
 
-static int rpt_solids (ap, ph)
-
+static int
+rpt_solids(ap, ph)
 struct application	*ap;
 struct partition	*ph;
-
 {
     char			**result;
     struct db_full_path		*fp;
@@ -388,11 +388,10 @@ struct partition	*ph;
  *	Stuffs the address of a null string in ap->a_uptr and returns 0.
  */
 
-static int rpt_miss (ap, ph)
-
+static int
+rpt_miss(ap, ph)
 struct application	*ap;
 struct partition	*ph;
-
 {
     ap -> a_uptr = rt_malloc(sizeof(char *), "names of solids on ray");
     *((char **) (ap -> a_uptr)) = 0;
