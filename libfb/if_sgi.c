@@ -203,7 +203,7 @@ _LOCAL_ ColorMap _sgi_cmap;
 #define WIN_T	(ifp->if_height-1+MARGIN)
 
 #define MAP_RESERVED	16		/* # slots reserved by MEX */
-#define MAP_TOL		28		/* pixel delta across all channels */
+#define MAP_TOL		15		/* pixel delta across all channels */
 /* TOL of 28 gives good rendering of the dragon picture without running out */
 static int map_size;			/* # of color map slots available */
 
@@ -412,7 +412,7 @@ register FBIO	*ifp;
 					chunk = 127;
 				PASSCMD(hole, chunk, FBCdrawpixels);
 				i -= chunk;
-				for( ; chunk > 0; chunk-- )  {
+				for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
 					hole->s = get_Color_Index( ifp, ip );
 				}
 			}
@@ -948,7 +948,7 @@ register ColorMap	*cmp;
 		sgw_inqueue(ifp);
 
 	/* Just parrot back the stored colormap */
-	for( i = 0; i < 255; i++)
+	for( i = 0; i < 256; i++)
 	{
 		cmp->cm_red[i] = _sgi_cmap.cm_red[i]<<8;
 		cmp->cm_green[i] = _sgi_cmap.cm_green[i]<<8;
@@ -971,7 +971,7 @@ register ColorMap	*cmp;
 		sgw_inqueue(ifp);
 
 	if ( cmp == COLORMAP_NULL)  {
-		for( i = 0; i < 255; i++)  {
+		for( i = 0; i < 256; i++)  {
 			_sgi_cmap.cm_red[i] = i;
 			_sgi_cmap.cm_green[i] = i;
 			_sgi_cmap.cm_blue[i] = i;
@@ -980,7 +980,7 @@ register ColorMap	*cmp;
 		return(0);
 	}
 	
-	for(i = 0; i < 255; i++)  {
+	for(i = 0; i < 256; i++)  {
 		_sgi_cmap.cm_red[i] = cmp -> cm_red[i]>>8;
 		_sgi_cmap.cm_green[i] = cmp-> cm_green[i]>>8; 
 		_sgi_cmap.cm_blue[i] = cmp-> cm_blue[i]>>8;
@@ -1097,7 +1097,9 @@ register RGBpixel	*pixelp;
 
 	/* Find best fit in existing table */
 	best = 0;
-	for( i = 0, sp = rgb_table; i < SGI(ifp)->si_rgb_ct; sp++, i++ ) {
+	for(	i = MAP_RESERVED, sp = (RGBpixel *)rgb_table[MAP_RESERVED];
+		i < SGI(ifp)->si_rgb_ct;
+		sp++, i++ ) {
 		register int	diff;
 		register int	d;
 
@@ -1168,9 +1170,10 @@ int	width, height;
 		register char *cp;
 		int mode;
 		/* "/dev/sgiw###" gives optional mode */
-		for( cp = file; *cp != NULL && !isdigit(*cp); cp++ ) ;
+		for( cp = file; *cp != '\0' && !isdigit(*cp); cp++ ) ;
 		mode = MODE_APPROX;
-		(void)sscanf( cp, "%d", &mode );
+		if( isdigit(*cp) )
+			(void)sscanf( cp, "%d", &mode );
 		if( mode < MODE_APPROX || mode > MODE_FIT )
 			mode = MODE_APPROX;
 		SGI(ifp)->si_mode = mode;
