@@ -173,7 +173,7 @@ struct db_tree_state *tsp;
 FILE *fp_out;
 {
 	struct shell *s;
-	struct facets *faces;
+	struct facets *faces = NULL;
 	int i,j;
 
 	NMG_CK_REGION( r );
@@ -266,7 +266,7 @@ FILE *fp_out;
 			}
 			else if( no_of_loops == no_of_holes + 1 )
 			{
-				struct loopuse *outer_lu;
+				struct loopuse *outer_lu = NULL;
 
 				/* only one outer loop, so find it */
 				for( i=0 ; i<no_of_loops ; i++ )

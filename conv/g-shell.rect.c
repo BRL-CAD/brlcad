@@ -866,7 +866,7 @@ struct bu_ptbl *tab;
 		{
 			struct loopuse *new_lu;
 			struct vertexuse *vu_cut;
-			fastf_t cut_value;
+			fastf_t cut_value = -1;
 			struct vertexuse *vu1_cut, *vu2_cut;
 
 			switch( cur_dir )

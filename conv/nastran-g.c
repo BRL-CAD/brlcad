@@ -1181,9 +1181,9 @@ char *argv[];
 	struct pbar *pb;
 	struct wmember head;
 	struct wmember all_head;
-	char *nastran_file;
+	char *nastran_file = "Converted from NASTRAN file (stdin)";
 
-	fdin = (FILE *)NULL;
+	fdin = stdin;
 
 	units = INCHES;
 

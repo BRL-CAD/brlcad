@@ -85,7 +85,7 @@ genptr_t		client_data;
 	struct bu_vls		shader_params;
 	char nmg_name[16];
 	unsigned char rgb[3];
-	unsigned char *color;
+	unsigned char *color = (unsigned char *)NULL;
 	char *shader;
 	char *matparm;
 	struct wmember headp;

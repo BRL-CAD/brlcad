@@ -181,8 +181,8 @@ vect_t		Ext;	/* Extrusion vector. */
 
 	char	token[80];	/* Token read from ascii nmg file. */
 	fastf_t	x, y, z;	/* Coordinates of a vertex. */
-	int	dir,		/* Direction of face. */
-		i,
+	int	dir = OT_NONE;	/* Direction of face. */
+	int	i,
 		lu_verts[MAXV],	/* Vertex names making up loop. */
 		n,		/* Number of vertices so far in loop. */
 		stat,		/* Set to EOF when finished ascii file. */

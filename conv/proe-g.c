@@ -379,13 +379,13 @@ Convert_assy( line )
 char line[MAX_LINE_LEN];
 {
 	struct wmember head;
-	struct wmember *wmem;
+	struct wmember *wmem = NULL;
 	char line1[MAX_LINE_LEN];
 	char name[80];
 	unsigned int obj;
 	char memb_name[80];
 	unsigned int memb_obj;
-	char *brlcad_name;
+	char *brlcad_name = NULL;
 	float mat_col[4];
 	float junk;
 	int start;

@@ -2590,8 +2590,8 @@ do_quad()
 {
 	int element_id;
 	int pt1,pt2,pt3,pt4;
-	fastf_t thick;
-	int pos;
+	fastf_t thick = 0.0;
+	int pos = 0;
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
