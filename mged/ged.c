@@ -124,7 +124,13 @@ struct db_i	*dbip;			/* database instance pointer */
 
 struct device_values dm_values;		/* Dev Values, filled by dm-XX.c */
 
+#ifdef MULTI_ATTACH
+int    update_views;
+extern struct dm dm_Null;
+#else
 int		dmaflag;		/* Set to 1 to force new screen DMA */
+#endif
+
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
@@ -137,6 +143,7 @@ int             (*perspective_hook)() = NULL;
 int		(*cmdline_hook)() = NULL;
 void		(*viewpoint_hook)() = NULL;
 void            (*axis_color_hook)() = NULL;
+void            (*knob_offset_hook)() = NULL;
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
@@ -160,7 +167,6 @@ extern char	version[];		/* from vers.c */
 struct rt_tol	mged_tol;		/* calculation tolerance */
 
 #ifdef XMGED
-extern int    update_views;
 extern int      already_scandb;
 #endif
 
@@ -272,12 +278,18 @@ char **argv;
 	FreeSolid = SOLID_NULL;
 	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
+#ifdef MULTI_ATTACH
+	RT_LIST_INIT( &head_dm_list.l );
+	head_dm_list._dmp = &dm_Null;
+	curr_dm_list = &head_dm_list;
+#endif
+
 	state = ST_VIEW;
 	es_edflag = -1;
 	inpara = newedge = 0;
 
-	/* init rotation matrix */
 	mat_idn( identity );		/* Handy to have around */
+	/* init rotation matrix */
 	Viewscale = 500;		/* => viewsize of 1000mm (1m) */
 	mat_idn( Viewrot );
 	mat_idn( toViewcenter );
@@ -315,14 +327,14 @@ char **argv;
 	mmenu_init();
 	btn_head_menu(0,0,0);		/* unlabeled menu */
 
+	dmaflag = 1;
+
 	windowbounds[0] = XMAX;		/* XHR */
 	windowbounds[1] = XMIN;		/* XLR */
 	windowbounds[2] = YMAX;		/* YHR */
 	windowbounds[3] = YMIN;		/* YLR */
 	windowbounds[4] = 2047;		/* ZHR */
 	windowbounds[5] = -2048;	/* ZLR */
-
-	dmaflag = 1;
 
 	/* Open the database, attach a display manager */
 	f_opendb( argc, argv );
@@ -344,7 +356,7 @@ char **argv;
 #else
 		/*
 		   Call cmdline instead of calling mged_cmd directly
-		   so that access to tcl is possible.
+		   so that access to Tcl/Tk is possible.
 	        */
 		for(argc -= 2, argv += 2; argc; --argc, ++argv)
 		  rt_vls_strcat(&input_str, *argv);
@@ -969,12 +981,30 @@ again:
 void
 refresh()
 {
+#ifdef MULTI_ATTACH
+  register struct dm_list *p;
+  struct dm_list *save_dm_list;
+
+  save_dm_list = curr_dm_list;
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    /*
+     * if something has changed, then go update the display.
+     * Otherwise, we are happy with the view we have
+     */
+
+    curr_dm_list = p;
+
+    if(update_views || dmaflag) {
+      double	elapsed_time;
+
+#else
 	/*
 	 * if something has changed, then go update the display.
 	 * Otherwise, we are happy with the view we have
 	 */
 	if( dmaflag )  {
 		double	elapsed_time;
+#endif
 
 		/* XXX VR hack */
 		if( viewpoint_hook )  (*viewpoint_hook)();
@@ -1017,13 +1047,22 @@ refresh()
 			/* Smoothly transition to new speed */
 			frametime = 0.9 * frametime + 0.1 * elapsed_time;
 		}
-	} else {
+#ifdef MULTI_ATTACH
+      dmaflag = 0;
+    }
+  }
+
+  curr_dm_list = save_dm_list;
+  update_views = 0;
+#else
+  } else {
 		/* For displaylist machines??? */
 		dmp->dmr_prolog();	/* update displaylist prolog */
 		dmp->dmr_update();
 	}
 
 	dmaflag = 0;
+#endif
 }
 
 /*
@@ -1395,86 +1434,6 @@ f_opendb( argc, argv )
 int	argc;
 char	**argv;
 {
-#ifdef XMGED
-        struct db_i *o_dbip;
-
-	o_dbip = dbip;  /* save pointer to old database */
-
-	/* Get input file */
-	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
-		char line[128];
-
-		dbip = o_dbip; /* reinitialize in case of control-C */
-
-		if( isatty(0) ) {
-		    perror( argv[1] );
-		    rt_log("Create new database (y|n)[n]? ");
-		    (void)mged_fgets(line, sizeof(line), stdin);
-		    if( line[0] != 'y' && line[0] != 'Y' ){
-		      if(dbip != DBI_NULL){
-			rt_log( "Still using %s\n", dbip->dbi_title);
-			return(CMD_OK);
-		      }
-
-		      exit(0);		/* NOT finish() */
-		    }
-		} else
-		  rt_log("Creating new database \"%s\"\n", argv[1]);
-
-		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
-			perror( argv[1] );
-			exit(2);		/* NOT finish() */
-		}
-	}
-
-	already_scandb = 0;
-	if( o_dbip )  {
-		/* Clear out anything in the display */
-		f_zap( 0, (char **)NULL );
-
-		/* Close current database.  Releases rt_material_head, etc. too. */
-		db_close(o_dbip);
-
-		log_event( "CEASE", "(close)" );
-	}
-
-	if( dbip->dbi_read_only )
-		(void)rt_log( "%s:  READ ONLY\n", dbip->dbi_filename );
-
-	/* Quick -- before he gets away -- write a logfile entry! */
-	log_event( "START", argv[1] );
-
-	if( interactive && is_dm_null() )  {
-		/*
-		 * This is an interactive mged, with no display yet.
-		 * Ask which DM, and fire up the display manager.
-		 * Ask this question BEFORE the db_scan, because
-		 * that can take a long time for large models.
-		 */
-		get_attached();
-	}
-
-	/* --- Scan geometry database and build in-memory directory --- */
-	if(!already_scandb){	/* need this because the X display manager may
-					scan the database */
-		db_scan( dbip, (int (*)())db_diradd, 1);
-		already_scandb = 1;
-	}
-
-	/* XXX - save local units */
-	localunit = dbip->dbi_localunit;
-	local2base = dbip->dbi_local2base;
-	base2local = dbip->dbi_base2local;
-
-	/* Print title/units information */
-	if( interactive )
-		(void)rt_log( "%s (units=%s)\n", dbip->dbi_title,
-			units_str[dbip->dbi_localunit] );
-
-	update_views = 1;
-	return(CMD_OK);
-#else
 	if( dbip )  {
 		/* Clear out anything in the display */
 		f_zap( 0, (char **)NULL );
@@ -1509,7 +1468,7 @@ char	**argv;
 	if( dbip->dbi_read_only )
 		rt_log("%s:  READ ONLY\n", dbip->dbi_filename );
 
-	/* Quick -- before he gets away -- write a logfile entry! */
+ 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
 
 	if( interactive && is_dm_null() )  {
@@ -1535,5 +1494,4 @@ char	**argv;
 			units_str[dbip->dbi_localunit] );
 	
 	return CMD_OK;
-#endif
 }

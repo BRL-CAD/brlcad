@@ -40,7 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef XMGED
 extern point_t orig_pos;
-extern int	update_views;
 extern mat_t	ModelDelta;
 void (*adc_hook)();
 #endif
@@ -401,7 +400,7 @@ static int ill_common()  {
 	movedir = 0;		/* No edit modes set */
 	mat_idn( modelchanges );	/* No changes yet */
 	dmaflag++;
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 	return(1);		/* OK */
@@ -515,7 +514,7 @@ static void be_o_rotate()  {
 static void be_accept()  {
 	register struct solid *sp;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 
@@ -563,7 +562,7 @@ static void be_accept()  {
 static void be_reject()  {
 	register struct solid *sp;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 

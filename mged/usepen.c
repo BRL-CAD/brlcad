@@ -46,14 +46,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <errno.h>
 #include "./sedit.h"
 
-extern int update_views;
 extern int using_dmX;
 extern void (*tran_hook)();
 extern void (*set_tran_hook)();
 extern double tran_x;
 extern double tran_y;
 extern double tran_z;
-
 #endif
 
 /*	Degree <-> Radian conversion factors	*/
@@ -315,8 +313,15 @@ illuminate( y )  {
 	}else
 		--dmaflag;	/* illiminates unnecessary redrawing */
 #else
+#ifdef MULTI_ATTACH
+	if( saveillump != illump ){
+	  update_views = 1;
+	  dmaflag++;
+	}
+#else
 	if( saveillump != illump )
 		dmaflag++;
+#endif
 #endif
 }
 
@@ -373,7 +378,7 @@ char *argv[];
     illump = sp;
   }
 
-#if 0
+#ifdef MULTI_ATTACH
   update_views = 1;
 #endif
   dmaflag = 1;

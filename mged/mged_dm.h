@@ -64,9 +64,10 @@ extern struct dm *dmp;			/* ptr to current display mgr */
 struct dm_list {
   struct rt_list l;
   struct dm *_dmp;
-  int *dm_vars;   /* pointer to display manager variables */
 
 /* New stuff to allow more than one active display manager */
+  char *_dm_vars;   /* pointer to display manager variables */
+  struct rt_vls _pathName; /* full name of drawing window */
   int     _dmaflag;
   fastf_t _Viewscale;
   mat_t   _Viewrot;
@@ -99,8 +100,41 @@ struct dm_list {
   fastf_t  _absolute_zoom;
 };
 
-extern struct rt_list dm_list_head;  /* list of active display managers */
-extern struct dm_list *dm_list_curr;
+extern int update_views;   /* from dm-X.h */
+extern struct dm_list head_dm_list;  /* list of active display managers */
+extern struct dm_list *curr_dm_list;
+
+#define DM_LIST_NULL ((struct dm_list *)NULL)
+#define dmp curr_dm_list->_dmp
+#define dm_vars curr_dm_list->_dm_vars
+#define pathName curr_dm_list->_pathName
+#define mged_variables curr_dm_list->_mged_variables
+#define dmaflag curr_dm_list->_dmaflag
+
+#define adcflag curr_dm_list->_adcflag
+#define curs_x curr_dm_list->_curs_x
+#define curs_y curr_dm_list->_curs_y
+#define c_tdist curr_dm_list->_c_tdist
+#define angle1 curr_dm_list->_angle1
+#define angle2 curr_dm_list->_angle2
+
+#define rateflag_slew curr_dm_list->_rateflag_slew
+#define rate_slew curr_dm_list->_rate_slew
+#define absolute_slew curr_dm_list->_absolute_slew
+#define rateflag_rotate curr_dm_list->_rateflag_rotate
+#define rate_rotate curr_dm_list->_rate_rotate
+#define absolute_rotate curr_dm_list->_absolute_rotate
+#define rateflag_zoom curr_dm_list->_rateflag_zoom
+#define rate_zoom curr_dm_list->_rate_zoom
+#define absolute_zoom curr_dm_list->_absolute_zoom
+
+#define Viewscale curr_dm_list->_Viewscale
+#define Viewrot curr_dm_list->_Viewrot
+#define toViewcenter curr_dm_list->_toViewcenter
+#define model2view curr_dm_list->_model2view
+#define view2model curr_dm_list->_view2model
+#define model2objview curr_dm_list->_model2objview
+#define objview2model curr_dm_list->_objview2model
 #endif
 
 /*

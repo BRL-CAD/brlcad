@@ -67,7 +67,6 @@ extern int tran_set;
 extern double tran_x;
 extern double tran_y;
 extern double tran_z;
-extern int      update_views;
 extern int      savedit;
 
 void set_tran();
@@ -2031,7 +2030,7 @@ sedit()
 	static float la, lb, lc, ld;	/* TGC: length of vectors */
 
 	sedraw = 0;
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 
@@ -3162,7 +3161,7 @@ CONST vect_t	mousevec;
 	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	temp;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 	mat_idn( incr_change );

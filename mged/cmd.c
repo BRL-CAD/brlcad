@@ -71,7 +71,6 @@ extern int      in_middle;
 extern mat_t    ModelDelta;
 extern FILE	*journal_file;
 extern int	journal;	/* initialize to off */
-extern int update_views;
 
 typedef struct _cmd{
 	struct _cmd	*prev;
@@ -121,6 +120,7 @@ int     f_perspective(), f_cue(), f_light(), f_zbuffer(), f_zclip();
 int     f_tran(), f_irot();
 int     f_ps();
 #endif /* XMGED */
+
 extern int (*knob_hook)();
 extern int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
 extern int (*light_hook)(), (*perspective_hook)();
@@ -580,6 +580,8 @@ static struct funtab funtab[] = {
 	f_vrot_center, 5, 5,FALSE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,FALSE,
+"winset", "pathname", "sets the window focus to the Tcl/Tk window with pathname",
+        f_winset, 1, 2, FALSE,
 "x", "lvl", "print solid table & vector list",
 	f_debug, 1,2,FALSE,
 "xpush", "object", "Experimental Push Command",
@@ -827,6 +829,59 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
+#ifdef MULTI_ATTACH
+/*XXX I need to come back later and fix this */
+    register int i;
+
+    static struct {
+	char *knobname;
+	fastf_t *variable;
+    } knobs[] = {
+	"ax", (fastf_t *)NULL, 
+	"ay", (fastf_t *)NULL,
+	"az", (fastf_t *)NULL,
+	"aX", (fastf_t *)NULL,
+	"aY", (fastf_t *)NULL,
+	"aZ", (fastf_t *)NULL,
+	"aS", (fastf_t *)NULL,
+	"x", (fastf_t *)NULL,
+	"y", (fastf_t *)NULL,
+	"z", (fastf_t *)NULL,
+	"X", (fastf_t *)NULL,
+	"Y", (fastf_t *)NULL,
+	"Z", (fastf_t *)NULL,
+	"S", (fastf_t *)NULL
+    };
+
+    knobs[0].variable = &curr_dm_list->_absolute_rotate[X];
+    knobs[1].variable = &curr_dm_list->_absolute_rotate[Y];
+    knobs[2].variable = &curr_dm_list->_absolute_rotate[Z];
+    knobs[3].variable = &curr_dm_list->_absolute_slew[X];
+    knobs[4].variable = &curr_dm_list->_absolute_slew[Y];
+    knobs[5].variable = &curr_dm_list->_absolute_slew[Z];
+    knobs[6].variable = &curr_dm_list->_absolute_zoom;
+    knobs[7].variable = &curr_dm_list->_rate_rotate[X];
+    knobs[8].variable = &curr_dm_list->_rate_rotate[Y];
+    knobs[9].variable = &curr_dm_list->_rate_rotate[Z];
+    knobs[10].variable = &curr_dm_list->_rate_slew[X];
+    knobs[11].variable = &curr_dm_list->_rate_slew[Y];
+    knobs[12].variable = &curr_dm_list->_rate_slew[Z];
+    knobs[13].variable = &curr_dm_list->_rate_zoom;
+	
+    if( argc < 2 ) {
+	Tcl_SetResult(interp, "getknob: need a knob name", TCL_STATIC);
+	return TCL_ERROR;
+    }
+
+    for (i = 0; i < sizeof(knobs); i++)
+	if (strcmp(knobs[i].knobname, argv[1]) == 0) {
+	    sprintf(interp->result, "%lf", *(knobs[i].variable));
+	    return TCL_OK;
+	}
+    
+    Tcl_SetResult(interp, "getknob: invalid knob name", TCL_STATIC);
+    return TCL_ERROR;
+#else
     register int i;
 
     static struct {
@@ -862,6 +917,7 @@ char **argv;
     
     Tcl_SetResult(interp, "getknob: invalid knob name", TCL_STATIC);
     return TCL_ERROR;
+#endif
 }
 
 /*
@@ -2067,6 +2123,8 @@ set_e_axis_pos()
     (*rot_hook)();
 
   irot_x = irot_y = irot_z = 0;
+#endif
+#ifdef MULTI_ATTACH
   update_views = 1;
 #endif
 
@@ -2161,4 +2219,29 @@ set_e_axis_pos()
     VMOVE(e_axis_pos, es_keypoint);
     break;
   }
+}
+
+int
+f_winset( argc, argv )
+int     argc;
+char    **argv;
+{
+  register struct dm_list *p;
+
+  /* print pathname of drawing window with primary focus */
+  if( argc == 1 ){
+    rt_log( "%s", &pathName );
+    return CMD_OK;
+  }
+
+  /* change primary focus to window argv[1] */
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
+    if( !strcmp( argv[1], rt_vls_addr( &p->_pathName ) ) ){
+      curr_dm_list = p;
+      return CMD_OK;
+    }
+  }
+
+  rt_log( "Unrecognized pathname - %s\n", argv[1] );
+  return CMD_BAD;
 }

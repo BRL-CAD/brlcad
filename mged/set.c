@@ -25,17 +25,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
+#ifdef MULTI_ATTACH
+#include "./dm.h"
+#endif
 
 #include "tcl.h"
-
-#ifdef XMGED
-extern int update_views;
-#endif
 
 extern void	predictor_hook();		/* in ged.c */
 extern void	reattach();			/* in attach.c */
 
+#ifdef MULTI_ATTACH
+struct _mged_variables default_mged_variables = {
+#else
 struct mged_variables mged_variables = {
+#endif
 /* autosize */			1,
 /* rateknobs */			1,
 /* sgi_win_size */		0,
@@ -83,7 +86,11 @@ nmg_eu_dist_set()
 
 	rt_log( "New nmg_eue_dist = %g\n", nmg_eue_dist);
 }
+#ifdef MULTI_ATTACH
+#define MV_O(_m)	offsetof(struct _mged_variables, _m)
+#else
 #define MV_O(_m)	offsetof(struct mged_variables, _m)
+#endif
 struct structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	FUNC_NULL },
@@ -253,7 +260,7 @@ char *av[];
 	}
 	rt_vls_free(&vls);
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 	return bad ? CMD_BAD : CMD_OK;

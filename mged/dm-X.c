@@ -879,15 +879,17 @@ char	*name;
     rt_vls_init(&str);
     rt_vls_printf(&str, "loadtk %s\n", name);
 
-    if(cmdline(&str, FALSE) == CMD_BAD){
-      rt_vls_free(&str);
-      return -1;
+    if(tkwin == NULL){
+      if(cmdline(&str, FALSE) == CMD_BAD){
+	rt_vls_free(&str);
+	return -1;
+      }
     }
 
     rt_vls_free(&str);
 
     /* Use interp with all its registered commands. */
-#if 0
+#if 1
     /* Make xtkwin a toplevel window */
     xtkwin = Tk_CreateWindow(interp, tkwin, "mged", name);
 #else

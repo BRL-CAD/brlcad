@@ -119,9 +119,10 @@ extern struct dm dm_glx;
 #endif
 
 #ifdef MULTI_ATTACH
-struct rt_list dm_list_head;  /* list of active display managers */
-struct dm_list *dm_list_curr;
-void initialize_dm();
+extern struct _mged_variables default_mged_variables;
+struct dm_list head_dm_list;  /* list of active display managers */
+struct dm_list *curr_dm_list;
+void dm_var_init();
 #else
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 #endif
@@ -201,6 +202,7 @@ char *name;
 
 #ifdef MULTI_ATTACH
   register struct dm_list *dmlp;
+  register struct dm_list *o_dm_list;
 
   for( dp=which_dm; *dp != (struct dm *)0; dp++ )  {
     if( strcmp( (*dp)->dmr_name, name ) != 0 )
@@ -208,10 +210,12 @@ char *name;
 
     dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
 				       "dm_list");
-    RT_LIST_APPEND(&dm_list_head, &dmlp->l);
-    dm_list_curr = dmlp;
-    dm_list_curr->_dmp = *dp;
-    initialize_dm();
+    bzero((void *)dmlp, sizeof(struct dm_list));
+    RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
+    o_dm_list = curr_dm_list;
+    curr_dm_list = dmlp;
+    dmp = *dp;
+    dm_var_init(o_dm_list);
 
     no_memory = 0;
     if( dmp->dmr_open() )
@@ -238,12 +242,16 @@ char *name;
     return;
   }
   rt_log("attach(%s): BAD\n", name);
+#if 0
   dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
 				     "dm_list");
-  RT_LIST_APPEND(&dm_list_head, &dmlp->l);
-  dm_list_curr = dmlp;
-  dm_list_curr->_dmp = &dm_Null;
-  initialize_dm();
+  RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
+  curr_dm_list = dmlp;
+  curr_dm_list->_dmp = &dm_Null;
+  dm_var_init(o_dm_list);
+#else
+  curr_dm_list = &head_dm_list;
+#endif
 #else
 	if( dmp != &dm_Null )
 		release();
@@ -412,7 +420,7 @@ int
 is_dm_null()
 {
 #ifdef MULTI_ATTACH
-  return dm_list_curr == NULL;
+  return curr_dm_list == &head_dm_list;
 #else
 	return dmp == &dm_Null;
 #endif
@@ -421,8 +429,10 @@ is_dm_null()
 
 #ifdef MULTI_ATTACH
 void
-initialize_dm()
+dm_var_init(initial_dm_list)
+struct dm_list *initial_dm_list;
 {
+#if 0
   /* init rotation matrix */
   Viewscale = 500;		/* => viewsize of 1000mm (1m) */
   mat_idn( Viewrot );
@@ -430,5 +440,21 @@ initialize_dm()
 
   new_mats();
   setview( 0.0, 0.0, 0.0 );
+#else
+  Viewscale = initial_dm_list->_Viewscale;
+  mat_copy( Viewrot, initial_dm_list->_Viewrot );
+  mat_copy( toViewcenter, initial_dm_list->_toViewcenter);
+  mat_copy( model2view, initial_dm_list->_model2view );
+  mat_copy( view2model, view2model);
+
+  if( state != ST_VIEW ) {
+    mat_mul( model2objview, model2view, modelchanges );
+    mat_inv( objview2model, model2objview );
+  }
+
+  dmaflag = 1;
+#endif
+
+  mged_variables = default_mged_variables;
 }
 #endif

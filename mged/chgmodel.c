@@ -71,7 +71,6 @@ extern int tran_set;
 extern double tran_x;
 extern double tran_y;
 extern double tran_z;
-extern int      update_views;
 
 void set_tran();
 #endif
@@ -1101,6 +1100,8 @@ char	**argv;
 	  irot_z = atof(argv[3]);
 	}
 
+#endif
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 
@@ -1175,7 +1176,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 
@@ -1242,7 +1243,7 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Translation") )
 		return CMD_BAD;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 

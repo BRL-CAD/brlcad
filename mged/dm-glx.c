@@ -64,7 +64,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
 
-#if MIXED_MODE
 #include <X11/X.h>
 #include <gl/glws.h>
 #include "tk.h"
@@ -72,15 +71,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/extensions/XInput.h>
 #include <X11/Xutil.h>
 #include "tkGLX.h"
-extern Tcl_Interp *interp;
-extern Tk_Window tkwin;
-static Tk_Window xtkwin;
-static Display  *dpy;
-static Window   win;
-static int devmotionnotify = LASTEvent;
-static int devbuttonpress = LASTEvent;
-static int devbuttonrelease = LASTEvent;
-#endif
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -105,7 +95,12 @@ static int devbuttonrelease = LASTEvent;
 #if TRY_PIPES
 extern int ged_pipe[];
 #endif
+
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
 extern inventory_t	*getinvent();
+extern void (*knob_offset_hook)();
+void set_knob_offset();
 
 /* Display Manager package interface */
 
@@ -144,9 +139,6 @@ static int	lighting_on = 0;	/* Lighting model on */
 static int	glx_debug;		/* 2 for basic, 3 for full */
 static int	no_faceplate = 0;	/* Don't draw faceplate */
 static int	glx_linewidth = 1;	/* Line drawing width */
-#if 0
-static int      focus = 0;              /* send key events to the command window */
-#endif
 static int      dummy_perspective = 1;
 static int      perspective_mode = 0;	/* Perspective flag */
 /*
@@ -161,7 +153,6 @@ static int	min_scr_z;		/* based on getgdesc(GD_ZMIN) */
 static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
 
-#if MIXED_MODE
 static int irsetup();
 GLXconfig glxConfig [] = {
   { GLX_NORMAL, GLX_DOUBLE, TRUE },
@@ -169,11 +160,61 @@ GLXconfig glxConfig [] = {
   { GLX_NORMAL, GLX_ZSIZE, GLX_NOCONFIG },
   { 0, 0, 0 }
 };
+
+#ifdef MULTI_ATTACH
+#define dpy (((struct glx_vars *)dm_vars)->_dpy)
+#define win (((struct glx_vars *)dm_vars)->_win)
+#define xtkwin (((struct glx_vars *)dm_vars)->_xtkwin)
+#define win_l (((struct glx_vars *)dm_vars)->_win_l)
+#define win_b (((struct glx_vars *)dm_vars)->_win_b)
+#define win_r (((struct glx_vars *)dm_vars)->_win_r)
+#define win_t (((struct glx_vars *)dm_vars)->_win_t)
+#define winx_size (((struct glx_vars *)dm_vars)->_winx_size)
+#define winy_size (((struct glx_vars *)dm_vars)->_winy_size)
+#define perspective_angle (((struct glx_vars *)dm_vars)->_perspective_angle)
+#define devmotionnotify (((struct glx_vars *)dm_vars)->_devmotionnotify)
+#define devbuttonpress (((struct glx_vars *)dm_vars)->_devbuttonpress)
+#define devbuttonrelease (((struct glx_vars *)dm_vars)->_devbuttonrelease)
+#define knobs (((struct glx_vars *)dm_vars)->_knobs)
+#define knobs_offset (((struct glx_vars *)dm_vars)->_knobs_offset)
+#define stereo_is_on (((struct glx_vars *)dm_vars)->_stereo_is_on)
+#define ref (((struct glx_vars *)dm_vars)->_ref)
+
+struct glx_vars {
+  Display *_dpy;
+  Window _win;
+  Tk_Window _xtkwin;
+  long _win_l, _win_b, _wind_r, _win_t;
+  long _winx_size, _winy_size;
+  int _perspective_angle;
+  int _devmotionnotify;
+  int _devbuttonpress;
+  int _devbuttonrelease;
+  int _knobs[8];
+  int _knobs_offset[8];
+  int _stereo_is_on;
+  char *_ref;
+};
+
+void glx_var_init();
+static struct dm_list *get_dm_list();
+#else
+static Tk_Window xtkwin;
+static Display  *dpy;
+static Window   win;
+static long win_l, win_b, win_r, win_t;
+static long winx_size, winy_size;
+static int perspective_angle =3;	/* Angle of perspective */
+static int devmotionnotify = LASTEvent;
+static int devbuttonpress = LASTEvent;
+static int devbuttonrelease = LASTEvent;
+static int knobs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+static int knobs_offset[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+static int	stereo_is_on = 0;
 #endif
 
 static int	glx_fd;			/* GL file descriptor to select() on */
 static CONST char glx_title[] = "BRL MGED";
-static int perspective_angle =3;	/* Angle of perspective */
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
@@ -181,7 +222,6 @@ static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
 static mat_t	aspect_corr;
-static int	stereo_is_on = 0;
 
 void		glx_colorit();
 
@@ -295,11 +335,8 @@ struct structparse Glx_vparse[] = {
 };
 
 
-static char ref[] = "mged";
 static int	glx_oldmonitor;		/* Old monitor type */
 static long gr_id;
-static long win_l, win_b, win_r, win_t;
-static long winx_size, winy_size;
 
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
@@ -482,6 +519,7 @@ Glx_open()
 	char	display[82];
 	char	*envp;
 
+	glx_var_init();
 	/* get or create the default display */
 	if( (envp = getenv("DISPLAY")) == NULL ) {
 		/* Env not set, use local host */
@@ -508,6 +546,8 @@ Glx_open()
 	/* Ignore the old scrollbars and menus */
 	ignore_scroll_and_menu = 1;
 
+	knob_offset_hook = set_knob_offset;
+
 	return(0);			/* OK */
 }
 
@@ -515,27 +555,40 @@ static int
 irsetup( name )
 char *name;
 {
-	register int	i;
-	Matrix		m;
-	inventory_t	*inv;
-	int		win_size=1000;
-	int		win_o_x=272;
-	int		win_o_y=12;
-	struct rt_vls str;
-	int j, k;
-	int ndevices;
-	int nclass = 0;
-	XDeviceInfoPtr olist, list;
-	XDevice *dev;
-	XEventClass e_class[15];
-	XInputClassInfo *cip;
-	XAnyClassPtr any;
+  register int	i;
+  static int ref_count = 0;
+  char tmp_str[64];
+  Matrix		m;
+  inventory_t	*inv;
+  int		win_size=1000;
+  int		win_o_x=272;
+  int		win_o_y=12;
+  struct rt_vls str;
+  int j, k;
+  int ndevices;
+  int nclass = 0;
+  XDeviceInfoPtr olist, list;
+  XDevice *dev;
+  XEventClass e_class[15];
+  XInputClassInfo *cip;
+  XAnyClassPtr any;
+  Display *tmp_dpy;
 
+  sprintf(tmp_str, "%s%d", "mged", ref_count++);
+  ref = strdup(tmp_str);
+
+  rt_vls_init(&pathName);
+  rt_vls_printf(&pathName, ".%s.glx", ref);
+
+	  
 	rt_vls_init(&str);
 	rt_vls_printf(&str, "loadtk %s\n", name);
-	if(cmdline(&str, FALSE) == CMD_BAD){
-	  rt_vls_free(&str);
-	  return -1;
+
+	if(tkwin == NULL){
+	  if(cmdline(&str, FALSE) == CMD_BAD){
+	    rt_vls_free(&str);
+	    return -1;
+	  }
 	}
 	
 	(void)TkGLX_Init(interp, tkwin);
@@ -544,18 +597,31 @@ char *name;
 	if( Glx_loadGLX() )
 	  return -1;
 
+#if 0
 	dpy = Tk_Display(tkwin);
 	winx_size = DisplayWidth(dpy, Tk_ScreenNumber(tkwin)) - 20;
 	winy_size = DisplayHeight(dpy, Tk_ScreenNumber(tkwin)) - 20;
+#else
+	if((tmp_dpy = XOpenDisplay(name)) == NULL)
+	  return -1;
+
+	winx_size = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+	winy_size = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+
+	XCloseDisplay(tmp_dpy);
+#endif
 	if(winx_size > winy_size)
 	  winx_size = winy_size;
 	else
 	  winy_size = winx_size;
 
 	rt_vls_strcpy(&str, "create_glx ");
-	rt_vls_printf(&str, ".%s %s %d %d true true\n", ref, ref,
-		      winx_size, winy_size);
+	rt_vls_printf(&str, "%s .%s glx %s %d %d true true\n", name,
+		      ref, ref, winx_size, winy_size);
+	rt_vls_printf(&str, "bindem .%s\n", ref);
+#if 0
 	rt_vls_printf(&str, "pack .%s -expand 1 -fill both\n", ref);
+#endif
 	if(cmdline(&str, FALSE) == CMD_BAD){
 	  rt_vls_free(&str);
 	  return -1;
@@ -567,6 +633,8 @@ char *name;
 	  xtkwin = TkGLXwin_RefGetTkwin(ref);
 	  if(xtkwin == NULL)
 	    return -1;
+
+	  dpy = Tk_Display(xtkwin);
 	}else{
 	  rt_log("Glx_open: ref - %s doesn't exist!!!\n", ref);
 	  return -1;
@@ -839,6 +907,11 @@ Glx_close()
 
 	/* Stop ignoring the old scrollbars and menus */
 	ignore_scroll_and_menu = 0;
+
+	knob_offset_hook = NULL;
+	rt_free(dm_vars, "dm_vars");
+	rt_vls_free(&pathName);
+	free(ref);
 }
 
 /*
@@ -852,6 +925,19 @@ Glx_close()
 void
 Glx_prolog()
 {
+  struct rt_vls str;
+
+  rt_vls_init(&str);
+  rt_vls_printf(&str, "%s winset\n", rt_vls_addr(&pathName));
+
+  if(cmdline(&str, FALSE) == CMD_BAD){
+    rt_vls_free(&str);
+    rt_log("Glx_prolog: winset failed\n");
+    return;
+  }
+
+  rt_vls_free(&str);
+
 	if (glx_debug)
 		rt_log( "Glx_prolog\n");
 #if 0
@@ -1373,7 +1459,7 @@ input_waiting:
 	return;
 }
 
-#if MIXED_MODE
+
 /*
    This routine does not get key events. The key events are
    being processed via the TCL/TK bind command. Eventually, I'd also
@@ -1387,26 +1473,22 @@ XEvent *eventPtr;
 {
   XEvent event;
   static int button0  = 0;   /*  State of button 0 */
-  static int knobs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  static int knobs_offset[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   static int knobs_during_help[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+#ifdef MULTI_ATTACH
+  register struct dm_list *save_dm_list;
+  struct rt_vls cmd;
 
 /*XXX still drawing too much!!!
 i.e. drawing 2 or more times when resizing the window to a larger size.
 once for the Configure and once for the expose. This is especially
 annoying when running remotely. */
 
-  if (eventPtr->xany.window != win)
-    return TCL_OK;
+  rt_vls_init(&cmd);
+  save_dm_list = curr_dm_list;
+  curr_dm_list = get_dm_list(eventPtr->xany.window);
 
-#if 0
-if(eventPtr->type == Expose)
-  rt_log("Glx_checkevents:%d\t%d\tevent type - %d\tcount - %d\n",
-	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
-else if( eventPtr->type == ConfigureNotify )
-  rt_log("Glx_checkevents:%d\t%d\tevent type - %d\n",
-	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
-#endif
+  if(curr_dm_list == DM_LIST_NULL)
+    goto end;
 
 #if TRY_PIPES
   if(mged_variables.focus && eventPtr->type == KeyPress){
@@ -1416,6 +1498,10 @@ else if( eventPtr->type == ConfigureNotify )
 		  (KeySym *)NULL, (XComposeStatus *)NULL);
 
     write(ged_pipe[1], buffer, 1);
+    rt_vls_free(&cmd);
+    curr_dm_list = save_dm_list;
+
+    /* Use this so that these events won't propagate */
     return TCL_RETURN;
   }
 #endif
@@ -1435,7 +1521,163 @@ else if( eventPtr->type == ConfigureNotify )
       Glx_configure_window_shape();
 
       if (eventPtr->xany.window != win)
-	return TCL_OK;
+	goto end;
+
+      dmaflag = 1;
+      if( glx_has_doublebuffer) /* to fix back buffer */
+	refresh();
+      dmaflag = 1;
+  }else if( eventPtr->type == MotionNotify ) {
+    int x, y;
+
+    x = (eventPtr->xmotion.x/(double)winx_size - 0.5) * 4095;
+    y = (0.5 - eventPtr->xmotion.y/(double)winy_size) * 4095;
+    /* Constant tracking (e.g. illuminate mode) bound to M mouse */
+    rt_vls_printf( &cmd, "M 0 %d %d\n", x, y );
+  }else if( eventPtr->type == devmotionnotify ){
+    XDeviceMotionEvent *M;
+    int setting;
+
+    M = (XDeviceMotionEvent * ) eventPtr;
+
+    if(button0){
+      knobs_during_help[M->first_axis] = M->axis_data[0];
+      glx_dbtext(
+		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+      goto end;
+    }else{
+      knobs[M->first_axis] = M->axis_data[0];
+      setting = irlimit(knobs[M->first_axis] - knobs_offset[M->first_axis]);
+    }
+
+    switch(DIAL0 + M->first_axis){
+    case DIAL0:
+      if(adcflag) {
+	rt_vls_printf( &cmd, "knob ang1 %d\n",
+		      setting );
+      }
+      break;
+    case DIAL1:
+      rt_vls_printf( &cmd , "knob S %f\n",
+		    setting / 2048.0 );
+      break;
+    case DIAL2:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob ang2 %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob z %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL3:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob distadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob Z %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL4:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob yadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob y %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL5:
+      rt_vls_printf( &cmd , "knob Y %f\n",
+		    setting / 2048.0 );
+      break;
+    case DIAL6:
+      if(adcflag)
+	rt_vls_printf( &cmd , "knob xadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &cmd , "knob x %f\n",
+		      setting / 2048.0 );
+      break;
+    case DIAL7:
+      rt_vls_printf( &cmd , "knob X %f\n",
+		    setting / 2048.0 );
+      break;
+    default:
+      break;
+    }
+
+  }else if( eventPtr->type == devbuttonpress ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1){
+      button0 = 1;
+      goto end;
+    }
+
+    if(button0){
+      glx_dbtext(label_button(bmap[B->button - 1]));
+    }else if(B->button == 4){
+      rt_vls_strcat(&cmd, "knob zero\n");
+      set_knob_offset();
+    }else
+      rt_vls_printf(&cmd, "press %s\n",
+		    label_button(bmap[B->button - 1]));
+  }else if( eventPtr->type == devbuttonrelease ){
+    XDeviceButtonEvent *B;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+    if(B->button == 1){
+      int i;
+
+      button0 = 0;
+
+      /* update the offset */
+      for(i = 0; i < 8; ++i)
+	knobs_offset[i] += knobs_during_help[i] - knobs[i];
+    }
+  }
+
+end:
+  (void)cmdline(&cmd, FALSE);
+  rt_vls_free(&cmd);
+  curr_dm_list = save_dm_list;
+#else
+
+/*XXX still drawing too much!!!
+i.e. drawing 2 or more times when resizing the window to a larger size.
+once for the Configure and once for the expose. This is especially
+annoying when running remotely. */
+
+  if(eventPtr->xany.window != win)
+    goto end;
+
+#if TRY_PIPES
+  if(mged_variables.focus && eventPtr->type == KeyPress){
+    char buffer[1];
+
+    XLookupString(&(eventPtr->xkey), buffer, 1,
+		  (KeySym *)NULL, (XComposeStatus *)NULL);
+
+    write(ged_pipe[1], buffer, 1);
+    goto end;
+  }
+#endif
+
+
+  /* Now getting X events */
+  if(eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+    /* Window may have moved */
+    Glx_configure_window_shape();
+
+    dmaflag = 1;
+    if( glx_has_doublebuffer) /* to fix back buffer */
+      refresh();
+    dmaflag = 1;
+  }else if( eventPtr->type == ConfigureNotify ){
+      /* Window may have moved */
+      Glx_configure_window_shape();
 
       dmaflag = 1;
       if( glx_has_doublebuffer) /* to fix back buffer */
@@ -1458,7 +1700,7 @@ else if( eventPtr->type == ConfigureNotify )
       knobs_during_help[M->first_axis] = M->axis_data[0];
       glx_dbtext(
 		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
-      return TCL_OK;
+      goto end;
     }else{
       knobs[M->first_axis] = M->axis_data[0];
       setting = irlimit(knobs[M->first_axis] - knobs_offset[M->first_axis]);
@@ -1526,25 +1768,14 @@ else if( eventPtr->type == ConfigureNotify )
 
     if(B->button == 1){
       button0 = 1;
-      return TCL_OK;
+      goto end;
     }
 
     if(button0){
       glx_dbtext(label_button(bmap[B->button - 1]));
     }else if(B->button == 4){
-      int i;
-
       rt_vls_strcat(&dm_values.dv_string, "knob zero\n");
-      for(i = 0; i < 8; ++i){
-#if 0 /* Not surprising that this really doesn't work. */
-	/* Not supposed to use this in mixed mode; trying it anyway:-). */
-	setvaluator(DIAL0+i, 0, -2048-NOISE, 2047+NOISE);
-
-	knobs[i] = 0;
-#else
-	knobs_offset[i] = knobs[i];
-#endif
-      }
+      set_knob_offset();
     }else
       rt_vls_printf(&dm_values.dv_string, "press %s\n",
 		    label_button(bmap[B->button - 1]));
@@ -1563,367 +1794,12 @@ else if( eventPtr->type == ConfigureNotify )
 	knobs_offset[i] += knobs_during_help[i] - knobs[i];
     }
   }
+end:
+#endif
 
   return TCL_OK;
 }
-#else
-/*
- *  C H E C K E V E N T S
- *
- *  Look at events to check for button, dial, and mouse movement.
- */
-void
-Glx_checkevents()  {
-#define NVAL 48
-	short values[NVAL];
-	register short *valp;
-	register int ret;
-	register int n;
-	static	button0  = 0;	/*  State of button 0 */
-	static	knobs[8];	/*  Save values of dials  */
-	static char	pending_button = 'M';
-	static int	pending_val = 0;
-	static	pending_x = 0;
-	static	pending_y = 0;
 
-	/*
-	if (qtest() == 0)
-	    return;
- */
-	n = blkqread( values, NVAL );	/* n is # of shorts returned */
-	if( glx_debug ) rt_log("blkqread gave %d\n", n);
-	for( valp = values; n > 0; n -= 2, valp += 2 )  {
-
-		ret = *valp;
-		if( glx_debug ) rt_log("qread ret=%d, val=%d\n", ret, valp[1]);
-#if IR_BUTTONS
-		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
-		    || (ret >= F1KEY && ret <= F12KEY)
-		    ) {
-			register int	i;
-
-			/*
-			 *  Switch 0 is help key.
-			 *  Holding down key 0 and pushing another
-			 *  button or turning the knob will display
-			 *  what it is in the button box displya.
-			 */
-			if(ret == SW_HELP_KEY)  {
-				button0 = valp[1];
-#if IR_KNOBS
-				/*
-				 *  Save and restore dial settings
-				 *  so that when the user twists them
-				 *  while holding down button 0 he
-				 *  really isn't changing them.
-				 */
-				for(i = 0; i < 8; i++)
-					if(button0)
-						knobs[i] =
-						    getvaluator(DIAL0+i);
-					else setvaluator(DIAL0+i,knobs[i],
-					    -2048-NOISE, 2047+NOISE);
-#endif
-				if(button0)
-					glx_dbtext("Help Key");
-# if 0
-else
-	glx_dbtext(glx_title);
-# endif
-continue;
-
-			}
-
-#if IR_KNOBS
-			/*
-			 *  If button 1 is pressed, reset run away knobs.
-			 */
-			if(ret == SW_ZERO_KEY || ret == F12KEY)  {
-				if(!valp[1]) continue; /* Ignore release */
-				/*  Help mode */
-				if(button0)  {
-					glx_dbtext("ZeroKnob");
-					continue;
-				}
-#if IR_KNOBS
-				/* zap the knobs */
-				for(i = 0; i < 8; i++)  {
-					setvaluator(DIAL0+i, 0,
-					    -2048-NOISE, 2047+NOISE);
-					knobs[i] = 0;
-				}
-#endif
-				rt_vls_printf(&dm_values.dv_string,
-				    "knob zero\n");
-				continue;
-			}
-#endif
-			/*
-			 *  If PFkey 1 is pressed, toggle depthcueing.
-			 */
-			if(ret == F1KEY)  {
-				if(!valp[1]) continue; /* Ignore release */
-				/*  Help mode */
-				if(button0)  {
-					glx_dbtext("Depthcue");
-					continue;
-				}
-				/* toggle depthcueing and remake colormap */
-				rt_vls_printf(&dm_values.dv_string,
-				    "dm set depthcue !\n");
-				continue;
-			} else if(ret == F2KEY)  {
-				if(!valp[1]) continue; /* Ignore release */
-				/*  Help mode */
-				if(button0)  {
-					glx_dbtext("Z clip");
-					continue;
-				}
-				/* toggle zclipping */
-				rt_vls_printf(&dm_values.dv_string,
-				    "dm set zclip !\n");
-				continue;
-			} else if(ret == F3KEY)  {
-				if(!valp[1]) continue; /* Ignore release */
-				/*  Help mode */
-				if(button0)  {
-					glx_dbtext("Perspect");
-					continue;
-				}
-				perspective_mode = 1-perspective_mode;
-				rt_vls_printf( &dm_values.dv_string,
-				    "set perspective %d\n",
-				    perspective_mode ?
-				    perspective_table[perspective_angle] :
-				    -1 );
-				dmaflag = 1;
-				continue;
-			} else if(ret == F4KEY)  {
-				if(!valp[1]) continue; /* Ignore release */
-				/*  Help mode */
-				if(button0)  {
-					glx_dbtext("Zbuffing");
-					continue;
-				}
-				/* toggle zbuffer status */
-				rt_vls_printf(&dm_values.dv_string,
-				    "dm set zbuffer !\n");
-				continue;
-			} else if(ret == F5KEY)  {
-				if(!valp[1]) continue; /* Ignore release */
-				/*  Help mode */
-				if(button0)  {
-					glx_dbtext("Lighting");
-					continue;
-				}
-				/* toggle status */
-				rt_vls_printf(&dm_values.dv_string,
-				    "dm set lighting !\n");
-				continue;
-			} else if (ret == F6KEY) {
-				if (!valp[1]) continue; /* Ignore release */
-				/* Help mode */
-				if (button0) {
-					glx_dbtext("P-Angle");
-					continue;
-				}
-				/* toggle perspective matrix */
-				if (--perspective_angle < 0) perspective_angle = 3;
-				if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
-				    "set perspective %d\n",
-				    perspective_table[perspective_angle] );
-				dmaflag = 1;
-				continue;
-			} else if (ret == F7KEY) {
-				if (!valp[1]) continue; /* Ignore release */
-				/* Help mode */
-				if (button0) {
-					glx_dbtext("NoFace");
-					continue;
-				}
-				/* Toggle faceplate on/off */
-				no_faceplate = !no_faceplate;
-				rt_vls_strcat( &dm_values.dv_string,
-				    no_faceplate ?
-				    "set faceplate 0\n" :
-				    "set faceplate 1\n" );
-				Glx_configure_window_shape();
-				dmaflag = 1;
-				continue;
-			}
-			/*
-			 * If button being depressed (as opposed to
-			 * being released) either display the cute
-			 * message or process the button depending
-			 * on whether button0 is also being held down.
-			 */
-			i = bmap[ret - SWBASE];
-
-
-
-			if(!valp[1]) continue;
-			if(button0) {
-				glx_dbtext(label_button(i));
-			} else {
-				/* An actual button press */
-#				if 0
-				/* old way -- an illegal upcall */
-				button(i);
-#				else
-				/* better way -- queue a string command */
-				rt_vls_strcat( &dm_values.dv_string,
-				    "press " );
-				rt_vls_strcat( &dm_values.dv_string,
-				    label_button(i) );
-				rt_vls_strcat( &dm_values.dv_string,
-				    "\n" );
-#				endif
-			}
-			continue;
-		}
-#endif
-#if IR_KNOBS
-		/*  KNOBS, uh...er...DIALS  */
-		/*	6	7
-		 *	4	5
-		 *	2	3
-		 *	0	1
-		 */
-		if(ret >= DIAL0 && ret <= DIAL8)  {
-			int	setting;
-			/*  Help MODE */
-			if(button0)  {
-				glx_dbtext(
-				    (adcflag ? kn1_knobs:kn2_knobs)[ret-DIAL0]);
-				continue;
-			}
-			/* Make a dead zone around 0 */
-			setting = irlimit(valp[1]);
-			switch(ret)  {
-			case DIAL0:
-				if(adcflag) {
-					rt_vls_printf( &dm_values.dv_string, "knob ang1 %d\n",
-							setting );
-				}
-				break;
-			case DIAL1:
-				rt_vls_printf( &dm_values.dv_string , "knob S %f\n",
-							setting/2048.0 );
-				break;
-			case DIAL2:
-				if(adcflag)
-					rt_vls_printf( &dm_values.dv_string , "knob ang2 %d\n",
-							setting );
-				else
-					rt_vls_printf( &dm_values.dv_string , "knob z %f\n",
-							setting/2048.0 );
-				break;
-			case DIAL3:
-				if(adcflag)
-					rt_vls_printf( &dm_values.dv_string , "knob distadc %d\n",
-							setting );
-				else
-					rt_vls_printf( &dm_values.dv_string , "knob Z %f\n",
-							setting/2048.0 );
-				break;
-			case DIAL4:
-				if(adcflag)
-					rt_vls_printf( &dm_values.dv_string , "knob yadc %d\n",
-							setting );
-				else
-					rt_vls_printf( &dm_values.dv_string , "knob y %f\n",
-							setting/2048.0 );
-				break;
-			case DIAL5:
-				rt_vls_printf( &dm_values.dv_string , "knob Y %f\n",
-							setting/2048.0 );
-				break;
-			case DIAL6:
-				if(adcflag)
-					rt_vls_printf( &dm_values.dv_string , "knob xadc %d\n",
-							setting );
-				else
-					rt_vls_printf( &dm_values.dv_string , "knob x %f\n",
-							setting/2048.0 );
-				break;
-			case DIAL7:
-				rt_vls_printf( &dm_values.dv_string , "knob X %f\n",
-							setting/2048.0 );
-				break;
-			}
-			continue;
-		}
-#endif
-		switch( ret )  {
-		case LEFTMOUSE:
-			pending_button = 'L';
-			pending_val = (int)valp[1] ? 1 : 0;
-			break;
-		case RIGHTMOUSE:
-			pending_button = 'R';
-			pending_val = (int)valp[1] ? 1 : 0;
-			break;
-		case MIDDLEMOUSE:
-			/* Will be followed by MOUSEX and MOUSEY hits */
-			pending_button = 'M';
-			pending_val = (int)valp[1] ? 1 : 0;
-			/* Don't signal DV_PICK until MOUSEY event */
-			break;
-		case MOUSEX:
-			pending_x = irisX2ged( (int)valp[1] );
-			if(glx_debug>1)printf("mousex %d\n", pending_x);
-			break;
-		case MOUSEY:
-			pending_y = irisY2ged( (int)valp[1] );
-			if(glx_debug>1)printf("mousey %d\n", pending_y);
-			/*
-			 *  Thanks to the tie() call, when a MIDDLEMOUSE
-			 *  event is signalled, it will be (eventually)
-			 *  followed by a MOUSEX and MOUSEY event.
-			 *  The MOUSEY event may not be in the same
-			 *  blkqread() buffer, owing to time delays in
-			 *  the outputting of the tie()'ed events.
-			 *  So, don't report the mouse event on MIDDLEMOUSE;
-			 *  instead, the flag pending_val flag is set,
-			 *  and the mouse event is signaled here, which
-			 *  may need multiple trips through this subroutine.
-			 *
-			 *  MOUSEY may be queued all by itself to support
-			 *  illuminate mode;  in those cases, pending_val
-			 *  will be zero already, and we just parrot the last
-			 *  X value.
-			 */
-			rt_vls_printf( &dm_values.dv_string, "%c %d %d %d\n",
-			    pending_button,
-			    pending_val,
-			    pending_x, pending_y);
-			pending_button = 'M';
-			pending_val = 0;
-			break;
-		case REDRAW:
-			/* Window may have moved */
-			Glx_configure_window_shape();
-			dmaflag = 1;
-			if( glx_has_doublebuffer) /* to fix back buffer */
-				refresh();
-			dmaflag = 1;
-			break;
-		case INPUTCHANGE:
-			/* Means we got or lost the keyboard.  Ignore */
-			break;
-		case WMREPLY:
-			/* This guy speaks, but has nothing to say */
-			break;
-		case 0:
-			/* These show up as a consequence of using qgetfd().  Most regrettable.  Ignore. */
-			break;
-		default:
-			rt_log("IRIS device %d gave %d?\n", ret, valp[1]);
-			break;
-		}
-	}
-}
-#endif
 
 /* 
  *			I R _ L I G H T
@@ -2901,3 +2777,45 @@ char	**argv;
 	rt_log("dm: bad command - %s\n", argv[0]);
 	return CMD_BAD;
 }
+
+void
+set_knob_offset()
+{
+  int i;
+
+  for(i = 0; i < 8; ++i){
+    knobs_offset[i] = knobs[i];
+  }
+}
+
+#ifdef MULTI_ATTACH
+void
+glx_var_init()
+{
+  dm_vars = (char *)rt_malloc(sizeof(struct glx_vars),
+					    "glx_vars");
+  devmotionnotify = LASTEvent;
+  devbuttonpress = LASTEvent;
+  devbuttonrelease = LASTEvent;
+}
+
+struct dm_list *
+get_dm_list(window)
+Window window;
+{
+  register struct dm_list *p;
+  struct rt_vls str;
+
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    if(window == ((struct glx_vars *)p->_dm_vars)->_win){
+      rt_vls_init(&str);
+      rt_vls_printf(&str, "%s winset\n", rt_vls_addr(&pathName));
+      cmdline(&str, FALSE);
+      rt_vls_free(&str);
+      return p;
+    }
+  }
+
+  return DM_LIST_NULL;
+}
+#endif

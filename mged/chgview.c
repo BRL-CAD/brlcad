@@ -75,7 +75,6 @@ extern int (*tran_hook)();
 int local_rt_arb_describe();
 void check_nonzero_rates();
 
-extern int update_views;   /* from dm-X.h */
 extern int irot_set;
 extern double irot_x;
 extern double irot_y;
@@ -86,6 +85,7 @@ extern double tran_z;
 extern point_t orig_pos;
 #endif
 
+extern void (*knob_offset_hook)();
 extern int (*knob_hook)();
 extern long	nvectors;	/* from dodraw.c */
 
@@ -124,7 +124,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 
@@ -231,7 +231,7 @@ f_edit(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef XMGED
+#ifdef MULTI_ATTACH
         update_views = 1;
 #endif
 
@@ -244,7 +244,7 @@ f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef XMGED
+#ifdef MULTI_ATTACH
         update_views = 1;
 #endif
 
@@ -268,7 +268,7 @@ f_evedit(argc, argv)
 int	argc;
 char	**argv;
 {
-#ifdef XMGED
+#ifdef MULTI_ATTACH
         update_views = 1
 #endif
 
@@ -737,7 +737,7 @@ char	**argv;
 	register struct solid *nsp;
 	struct directory	*dp;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 	no_memory = 0;
@@ -857,7 +857,7 @@ register struct directory *dp;
 	static struct solid *nsp;
 	register int i;
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 	RT_CK_DIR(dp);
@@ -1096,7 +1096,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-#ifdef XMGED
+#ifdef MULTI_ATTACH
 	update_views = 1;
 #endif
 
@@ -1398,6 +1398,9 @@ char	**argv;
 		av[1] = "reset";
 		av[2] = (char *)NULL;
 		(void)f_adc( 2, av );
+
+		if(knob_offset_hook)
+		  knob_offset_hook();
 	} else {
 usage:
 		rt_log("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
