@@ -554,7 +554,6 @@ struct seg		*seghead;
 
 	if( (nhits&1) )  {
 		register int i;
-		static int nerrors = 0;		/* message counter */
 		/*
 		 * If this condition exists, it is almost certainly due to
 		 * the dn==0 check above.  Thus, we will make the last
@@ -563,6 +562,8 @@ struct seg		*seghead;
 		 * presence of this solid known.  There may be something
 		 * better we can do.
 		 */
+#if 0
+		static int nerrors = 0;		/* message counter */
 
 		if( nerrors++ < 6 )  {
 			bu_log("rt_bot_makesegs(%s): WARNING %d hits:\n", stp->st_name, nhits);
@@ -579,7 +580,7 @@ struct seg		*seghead;
 					bu_log("\texit at dist=%f (%g %g %g)\n", hits[i].hit_dist, V3ARGS( tmp_pt ) );
 			}
 		}
-
+#endif
 		if( nhits > 2 )
 		{
 			fastf_t dot1,dot2;
@@ -634,7 +635,6 @@ struct seg		*seghead;
 		/* XXX This consumes an extra hit structure in the array */
 		hits[nhits] = hits[nhits-1];	/* struct copy */
 		hits[nhits].hit_vpriv[X] = -hits[nhits].hit_vpriv[X];
-		bu_log( "\t\tadding fictitious hit at %f (%s)\n", hits[nhits].hit_dist, stp->st_name );
 		nhits++;
 #else
 		nhits--;
