@@ -322,10 +322,16 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG		-64 -mips3 -KPIC -G 7
+#	if 1	/* PRODUCTION=1 */
+/*		32-bit version, compatible with HLA, etc. etc. */
+#		define	GFLAG		-n32 -mips3 -KPIC -G 7
+#	else
+/*		64-bit version */
+#		define	GFLAG		-64 -mips3 -KPIC -G 7
+#endif
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
-#	if 1	/* PRODUCTION=1 */
+#	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
