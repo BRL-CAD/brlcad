@@ -152,6 +152,7 @@ char	*mode;
 			   in agreement at start of file */
 			if( lseek( dbip->dbi_fd, 0, SEEK_SET ) == (-1) )
 				goto fail;
+			dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
 			if(rt_g.debug&DEBUG_DB)
 				rt_log("db_open: in-memory file\n");
 		}
