@@ -99,6 +99,7 @@ CONST struct model *m;
 		return;
 	}
 	rt_log("%8x ma_p\n", m->ma_p);
+	rt_log("%ld maxindex\n", m->maxindex);
 
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		nmg_pr_r(r, (char *)NULL);
