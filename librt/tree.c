@@ -378,9 +378,12 @@ struct mater_info *materp;
 	/* Handle combinations which are the top of a "region" */
 	if( rp->c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			rt_log("Warning:  region %s below region %s, ignored\n",
-				rt_path_str(path,pathpos),
-				argregion->reg_name );
+			if(rt_g.debug&DEBUG_REGIONS)  {
+				rt_log("Warning:  region %s below region %s, ignored\n",
+					rt_path_str(path,pathpos),
+					argregion->reg_name );
+			}
+			/* Just go on as if it was not a region */
 		} else {
 			register struct region *nrp;
 
