@@ -537,13 +537,16 @@ proc pattern_rect { args } {
 	set x_index 0
 	foreach x $list_x {
 		incr x_index
+	        set x_vec [vscale $xdir $x]
 		set y_index 0
 		foreach y $list_y {
 			incr y_index
+		        set y_vec [vscale $ydir $y]
 			set z_index 0
 			foreach z $list_z {
 				incr z_index
-				set mat [mat_deltas_vec [mat_idn] [vadd3 $x $y $z]]
+			        set z_vec [vscale $zdir $z]
+				set mat [mat_deltas_vec [mat_idn] [vadd3 $x_vec $y_vec $z_vec]]
 				foreach obj $objs {
 					switch $depth {
 						"top" {
