@@ -296,9 +296,9 @@ char	**argv;
 	/* Now, pkg_permport has tcp port number */
 
 	(void)signal( SIGPIPE, SIG_IGN );
-	(void)signal( SIGINT, SIG_IGN );
 
 	if( argc <= 1 )  {
+		(void)signal( SIGINT, SIG_IGN );
 		printf("Interactive REMRT listening at port %d\n", pkg_permport);
 		clients = (1<<0);
 
