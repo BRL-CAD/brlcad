@@ -1,0 +1,57 @@
+.TH STL-G 1 BRL-CAD
+.SH NAME
+stl-g \- Stereolithography Translator (STL to BRL-CAD)
+.SH SYNOPSIS
+.B stl-g
+[-dpsa] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.stl file.g
+.SH DESCRIPTION
+.I stl-g\^
+converts the specified
+.I file.stl
+to a BRL-CAD
+.I file.g
+file.
+The
+.I -d
+option prints debugging information.
+The
+.I -p
+option results in a BRL-CAD model built from polysolids instead of NMGs.
+The
+.I -s
+option requests that the Pro/E parts be written as BRL-CAD
+.I ARB
+solds, if possible. This will only be done if this simplification
+results in no loss of accuracy. The
+.I ARB
+solid will raytrace faster than
+.I polysolids
+or
+.I NMG's.
+The
+.I -a
+option implies that all the parts in the Pro/E model should be converted to
+BRL-CAD
+.I air
+regions.
+The
+The
+.I file.stl
+file is expected to be a stereolithography file.
+.SH EXAMPLE
+.RS
+$ \|\fIstl-g -p \|sample.stl \|sample.g\fP
+.RE
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHOR
+John Anderson
+.SH SOURCE
+SLAD/BVLD/VMB Advanced Computer Systems Team
+.br
+The U. S. Army  Research Laboratory
+.br
+Aberdeen Proving Ground, MD  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
