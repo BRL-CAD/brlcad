@@ -32,7 +32,7 @@ SUBDIRS = \
 	bwish \
 	comgeom-g \
 	conv \
-        db \
+	db \
 	doc \
 	fb \
 	fbed \
@@ -67,7 +67,7 @@ SUBDIRS = \
 DIST_SUBDIRS = $(SUBDIRS)
 
 EXTRA_DIST = ChangeLog $(PACKAGE).spec.in
- 
+
 MAINTAINERCLEANFILES = \
 	COPYING \
 	INSTALL \
