@@ -95,6 +95,9 @@ static char *title_file, *title_obj;	/* name of file and first object */
 
 #define MAX_WIDTH	(16*1024)
 
+static int	avail_cpus;		/* # of cpus avail on this system */
+static int	max_cpus;		/* max # cpus for use, <= avail_cpus */
+
 /*
  * Package Handlers.
  */
@@ -141,6 +144,7 @@ char **argv;
 {
 	register int	n;
 	auto int	ibits;
+	FILE		*fp;
 
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
@@ -258,8 +262,24 @@ char **argv;
 
 	beginptr = sbrk(0);
 
+#define PUBLIC_CPUS	"/tmp/public_cpus"
+	max_cpus = avail_cpus = rt_avail_cpus();
+	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
+		(void)fscanf( fp, "%d", &max_cpus );
+		fclose(fp);
+		if( max_cpus < 0 )  max_cpus = avail_cpus + max_cpus;
+		if( max_cpus > avail_cpus )  max_cpus = avail_cpus;
+	} else {
+		(void)unlink(PUBLIC_CPUS);
+		if( (fp = fopen(PUBLIC_CPUS, "w")) != NULL )  {
+			fprintf(fp, "%d\n", avail_cpus);
+			fclose(fp);
+			(void)chmod(PUBLIC_CPUS, 0666);
+		}
+	}
+
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
-	npsw = rt_avail_cpus();
+	npsw = max_cpus;
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
 	} else
@@ -271,7 +291,12 @@ char **argv;
 	RES_INIT( &rt_g.res_model );
 	/* DO NOT USE rt_log() before this point! */
 
-	if( npsw > 1 )  rt_log("%d processors\n", npsw );
+	rt_log("using %d of %d cpus\n",
+		npsw, avail_cpus );
+	if( max_cpus <= 0 )  {
+		pkg_close(pcsrv);
+		exit(0);
+	}
 
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
 
@@ -531,7 +556,7 @@ char	*buf;
 	/* Just in case command processed was "opt -P" */
 	if( npsw < 0 )  {
 		/* Negative number means "all but" npsw */
-		npsw = rt_avail_cpus() + npsw;
+		npsw = max_cpus + npsw;
 	}
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
