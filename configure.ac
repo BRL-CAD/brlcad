@@ -308,7 +308,6 @@ AC_MSG_RESULT($use_jove)
 AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
 
 # optimized
-AC_MSG_CHECKING(whether to enable optimized compilation)
 use_optimized=no
 AC_ARG_ENABLE(optimized,
 	AC_HELP_STRING(--enable-optimized,
@@ -317,7 +316,6 @@ AC_ARG_ENABLE(optimized,
 		use_optimized=yes
 	fi]
 )
-AC_MSG_RESULT($use_optimized)
 
 # warnings
 use_warnings=no
@@ -357,9 +355,28 @@ AC_ARG_ENABLE(profiling,
 
 # argument aliases go below here (they should all become a single blank line)
 
+# optimized
+AC_ARG_ENABLE(optimization,,
+	[if test "x$enable_optimization" != "xno" ; then
+		use_optimized=yes
+	fi]
+)
+AC_ARG_ENABLE(optimizations,,
+	[if test "x$enable_optimizations" != "xno" ; then
+		use_optimized=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to enable optimized compilation)
+AC_MSG_RESULT($use_optimized)
+
 # profiling alias
 AC_ARG_ENABLE(profile,,
 	[if test "x$enable_profile" != "xno" ; then
+		use_profiling=yes
+	fi]
+)
+AC_ARG_ENABLE(profiled,,
+	[if test "x$enable_profiled" != "xno" ; then
 		use_profiling=yes
 	fi]
 )
@@ -369,6 +386,11 @@ AC_MSG_RESULT($use_profiling)
 # verbose warnings alias
 AC_ARG_ENABLE(verbose-warnings,,
 	[if test "x$enable_verbose_warnings" != "xno" ; then
+		use_warnings=yes
+	fi]
+)
+AC_ARG_ENABLE(warning,,
+	[if test "x$enable_warning" != "xno" ; then
 		use_warnings=yes
 	fi]
 )
@@ -816,7 +838,7 @@ if test "x$use_optimized" != "xno" ; then
 	fi
 
 	dnl check for a slew of gcc optimizations that may or may not be available with -O3
-	extra_optimization_flag="-fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+	extra_optimization_flag="-fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations -fomit-frame-pointer -finline-functions"
 	AC_MSG_CHECKING([if the compiler understands extra optimization flags])
 	extra_optimization_flag_works=yes
 	PRECFLAGS="$CFLAGS"
