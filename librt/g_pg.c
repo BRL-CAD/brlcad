@@ -207,7 +207,7 @@ struct seg		*seghead;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
-#define MAXHITS 32		/* # surfaces hit, must be even */
+#define MAXHITS 128		/* # surfaces hit, must be even */
 	LOCAL struct hit hits[MAXHITS];
 	register struct hit *hp;
 	LOCAL int	nhits;
