@@ -15,11 +15,15 @@
 static
 char	sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #endif
+
 #include <stdio.h>
+#ifdef SYS5
 #include <termio.h>
-#include <fb.h>
+#endif
+#include "fb.h"
 #include "./popup.h"
 #include "./extern.h"
+
 #define	P_FLAG		0100
 #define	P_DATA		0077
 #define	P_BUTTONS	0074

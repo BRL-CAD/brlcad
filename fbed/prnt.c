@@ -14,11 +14,13 @@
 static
 char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 #endif
+
 #include <stdio.h>
-#include <std.h>
-#include <fb.h>
+#include "fb.h"
+#include "./std.h"
 #include "./popup.h"
 #include "./extern.h"
+
 #define PIXEL_MOVE()		MvCursor( 7, 1 )
 #define PAINT_MOVE()		MvCursor( 26, 1 )
 #define STRIDE_MOVE()		MvCursor( 46, 1 )
@@ -45,19 +47,19 @@ void	init_Status();
 void	prnt_Status(), prnt_Usage(), prnt_Debug(), prnt_Scroll();
 void	prnt_Prompt();
 void	prnt_Macro();
-void	prnt_FBC();
+/**void	prnt_FBC();**/
 
 /*	p r n t _ S t a t u s ( )					*/
 void
 prnt_Status()
-	{	Pixel		pixel;
+	{	RGBpixel		pixel;
 	if( ! tty )
 		return;
-	fb_Get_Pixel( &pixel );
+	fb_Get_Pixel( pixel );
 	PIXEL_MOVE();
-	(void) printf( "%3d %3d %3d", pixel.red, pixel.green, pixel.blue );
+	(void) printf( "%3d %3d %3d", pixel[RED], pixel[GRN], pixel[BLU] );
 	PAINT_MOVE();
-	(void) printf( "%3d %3d %3d", paint.red, paint.green, paint.blue );
+	(void) printf( "%3d %3d %3d", paint[RED], paint[GRN], paint[BLU] );
 	STRIDE_MOVE();
 	(void) printf( "%4d", gain );
 	BRUSH_SIZE_MOVE();
@@ -124,14 +126,14 @@ prnt_Usage()
 void
 prnt_Pixel( msg, pixelp )
 char	*msg;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 	{
 	prnt_Scroll(	"%s : %03d %03d %03d %03d",
 			msg,
-			(int) pixelp->red,
-			(int) pixelp->green,
-			(int) pixelp->blue,
-			(int) pixelp->spare
+			(int) pixelp[RED],
+			(int) pixelp[GRN],
+			(int) pixelp[BLU],
+			0
 			);
 	return;
 	}
@@ -204,7 +206,7 @@ va_dcl
 	return;
 	}
 
-#include "fb_ik.h"
+#ifdef never
 void
 prnt_FBC()
 	{	extern struct ik_fbc	ikfbcmem;
@@ -238,6 +240,7 @@ prnt_FBC()
 			);
 	return;
 	}
+#endif
 
 void
 prnt_Prompt( msg )

@@ -7,8 +7,8 @@
  * Date:	Tue Jan  8 1985
  */
 #include <stdio.h>
-#include <fb.h>
-#include "font.h"
+#include "fb.h"
+#include "./font.h"
 
 /*	f i l l _ b u f ( )
 	Fills in the buffer by reading a row of a bitmap from the

@@ -1,7 +1,7 @@
 /*
 	SCCS id:	@(#) ascii.h	1.8
 	Last edit: 	4/24/86 at 13:11:47
-	Retrieved: 	8/6/86 at 13:31:44
+	Retrieved: 	4/24/86 at 13:14:58
 	SCCS archive:	/vld/moss/src/fbed/s.ascii.h
 
 	Author:		Gary S. Moss

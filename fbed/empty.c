@@ -14,16 +14,25 @@
 static
 char	sccsTag[] = "@(#) empty.c	1.3	last edit 8/5/86 at 10:59:26";
 #endif
+
 #ifdef BSD
 #include <sys/time.h>
-#else
+#endif
+
+#ifdef SYSV
+#ifdef VLDSYSV
+/* BRL SysV under 4.2 */
 #define select	_select
 struct timeval
 	{
 	long	tv_sec;		/* seconds */
 	long	tv_usec;	/* and microseconds */
 	};
+#else
+/* Regular SysV */
+xxx?;
 #endif
+#endif SYSV
 
 /*	e m p t y ( )
 	Examine file descriptor for input with no time delay.

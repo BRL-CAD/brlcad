@@ -12,13 +12,6 @@
 */
 #define INCL_POPUP
 #define MENU_FONT	"/usr/lib/vfont/fix.6"
-#if defined( pdp11 )
-#define MAX_DMA		(1024*16)
-#else
-#define MAX_DMA		(1024*64)
-#endif
-#define DMA_PIXELS	(MAX_DMA/sizeof(Pixel))
-#define DMA_SCANS	(DMA_PIXELS/_fbsize)
 
 typedef struct
 	{
@@ -36,7 +29,7 @@ Rectangle;
 
 typedef struct
 	{
-	Pixel	color;
+	RGBpixel	color;
 	void	(*func)();
 	char	*label;
 	} Seg;
@@ -49,16 +42,17 @@ typedef struct
 	int		on_flag, cmap_base;
 	int		last_pick;
 	Rectangle	rect;
-	Pixel		*outlines, *touching, *selected;
-	Pixel		*under, *image;
+	RGBpixel	*outlines, *touching, *selected;
+	RGBpixel	*under, *image;
 	char		*title, *font;
 	Seg		*segs;
+	ColorMap	cmap;
 	}
 Menu;
 
 typedef struct
 	{
-	Pixel  *n_buf;
+	RGBpixel  *n_buf;
 	int	n_wid;
 	int	n_hgt;
 	}

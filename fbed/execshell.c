@@ -14,11 +14,14 @@
 static
 char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 #endif lint
+
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
 #include "./extern.h"
+
 #define DFL_SHELL	"/bin/sh"
+
 extern void		perror(), exit();
 extern char		*getenv();
 extern int		errno;
@@ -57,7 +60,9 @@ char	*args[];
 			{	register int	pid;
 				int		stat_loc;
 #if defined( BSD )
+#ifndef SIGCLD
 #define SIGCLD	SIGCHLD
+#endif
 				register int	(*istat)(), (*qstat)(), (*cstat)();
 #else
 				register void	(*istat)(), (*qstat)(), (*cstat)();

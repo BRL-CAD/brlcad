@@ -25,10 +25,12 @@
 #if ! defined( INCL_TRY )
 #include "try.h"
 #endif
+
+extern FBIO	*fbp;
 extern ColorMap	cmap;
 extern Menu	pick_one, pallet;
-extern Pixel	*menu_addr;
-extern Pixel	paint;
+extern RGBpixel	*menu_addr;
+extern RGBpixel	paint;
 extern Point	cursor_pos;
 extern Try	*try_rootp;
 extern char	cread_buf[BUFSIZ], *cptr;
@@ -45,7 +47,7 @@ extern int	tty_fd;
 extern int	LI, CO;
 
 extern Func_Tab	*get_Func_Name();
-extern Pixel	*get_Fb_Panel();
+extern RGBpixel	*get_Fb_Panel();
 extern char	*char_To_String();
 extern char	*getenv();
 extern char	*malloc();
@@ -73,3 +75,8 @@ extern void	do_Key_Cmd();
 				__FILE__, __LINE__ \
 				); \
 		return	0;
+
+#ifndef _LOCAL_
+/* For production use, set to "static" */
+#define _LOCAL_ /**/
+#endif

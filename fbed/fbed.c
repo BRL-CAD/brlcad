@@ -14,19 +14,21 @@
 static
 char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 #endif
+
 #include <stdio.h>
 #include <ctype.h>
-#include <std.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <fb.h>
-#include "try.h"
-#include "extern.h"
+#include "fb.h"
+#include "./std.h"
+#include "./try.h"
+#include "./extern.h"
 
 static long cursor[32] =
 	{
 #include "cursorbits.h"
 	};
+
 #define JUMP		(40/zoom_factor)
 #define CLR_LEN		12
 #define Fgets_Bomb() \
@@ -57,11 +59,10 @@ _LOCAL_ int	general_Handler();
 _LOCAL_ void	general_Handler();
 #endif
 _LOCAL_ void	do_Menu_Press();
-_LOCAL_ void	init_Globs();
 _LOCAL_ void	init_Try();
 _LOCAL_ void	fb_Paint();
 _LOCAL_ void	fb_Wind();
-_LOCAL_ Pixel	*pixel_Avg();
+_LOCAL_ RGBpixel	*pixel_Avg();
 
 _LOCAL_ int	/* ^X  */ ft_Execute_Function(),
 		/* ^I  */ ft_Nop(),
@@ -258,6 +259,9 @@ Func_Tab func_tab[] =
 static Func_Tab	*bindings[DEL+1];
 static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined.	*/
 
+FBIO	*fbp;				/* Current framebuffer */
+int	cur_width = 512;
+
 /*	m a i n ( )							*/
 main( argc, argv )
 char	*argv[];
@@ -274,7 +278,6 @@ char	*argv[];
 		(void) fprintf( stderr, "Could not initialize terminal.\n" );
 		return	1;
 		}
-	init_Globs();
 	getfont();
 	init_Status();
 	if( fb_Setup() == -1 )
@@ -318,7 +321,7 @@ char	*argv[];
 			*(cptr = cread_buf) = NUL;
 		else
 			{	char	c;
-			(void) fbcursor( 1, cursor_pos.p_x, cursor_pos.p_y );
+			(void) fb_cursor( fbp, 1, cursor_pos.p_x, cursor_pos.p_y );
 			if( ! empty( tty_fd ) )
 				if(  read( tty_fd, &c, 1 ) == 1 )
 					{
@@ -349,7 +352,7 @@ char	*argv[];
 			fb_Pick_Menu( menu_press, &pick_one );
 		if( status_change )
 			{
-			(void) fbflush();
+			(void) fb_flush(fbp);
 			if( report_status )
 				prnt_Status();
 			}
@@ -452,7 +455,7 @@ ft_Win_Lft( buf ) /* Move window left.					*/
 char	*buf;
 	{
 	windo_center.p_x += gain;
-	return	fbwindow( windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
+	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
 _LOCAL_ int
@@ -461,7 +464,7 @@ ft_Win_Dwn( buf ) /* Move window down.					*/
 char	*buf;
 	{
 	windo_center.p_y -= gain;
-	return	fbwindow( windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
+	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
 _LOCAL_ int
@@ -470,7 +473,7 @@ ft_Win_Up( buf ) /* Move window up.					*/
 char	*buf;
 	{
 	windo_center.p_y += gain;
-	return	fbwindow( windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
+	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
 _LOCAL_ int
@@ -479,7 +482,7 @@ ft_Win_Rgt( buf ) /* Move window right.					*/
 char	*buf;
 	{
 	windo_center.p_x -= gain;
-	return	fbwindow( windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
+	return	fb_window( fbp, windo_center.p_x, windo_center.p_y ) != -1 ? 1 : 0;
 	}
 
 _LOCAL_ int
@@ -489,7 +492,7 @@ char	*buf;
 	{
 	cursor_pos.p_x = image_center.p_x;
 	cursor_pos.p_y = image_center.p_y;
-	size_viewport = _fbsize;
+	size_viewport = fb_getwidth(fbp);
 	fb_Wind();
 	return	1;
 	}
@@ -852,29 +855,29 @@ ft_Crunch_Image( buf ) /* Average image to half its size.		*/
 char	*buf;
 	{	char	answer[2];
 		register int	x, y;
-		Pixel	*p_buff;
+		RGBpixel	*p_buff;
 	if( ! get_Input( answer, 2, "Crunch image [n=no] ? " ) )
 		return	0;
 	if( answer[0] == 'n' )
 		return	1;
-	if( (p_buff = (Pixel *) malloc( sizeof(Pixel) * _fbsize * 2 ))
-		== (Pixel *) NULL
+	if( (p_buff = (RGBpixel *) malloc( sizeof(RGBpixel) * fb_getwidth(fbp) * 2 ))
+		== (RGBpixel *) NULL
 		)
 		{
 		Malloc_Bomb();
 		}
-	for( y = 0; y < _fbsize; y += 2 )
-		{	register Pixel	*p_avg;
-		fbread( 0, y, p_buff, _fbsize * 2 );
-		for( x = 0; x < _fbsize; x +=2 )
+	for( y = 0; y < fb_getheight(fbp); y += 2 )
+		{	register RGBpixel	*p_avg;
+		fb_read( fbp, 0, y, p_buff, fb_getwidth(fbp) * 2 );
+		for( x = 0; x < fb_getwidth(fbp); x +=2 )
 			{
 			p_avg = pixel_Avg(	p_buff+x,
 						p_buff+x+1,
-						p_buff+x+_fbsize,
-						p_buff+x+_fbsize+1
+						p_buff+x+fb_getwidth(fbp),
+						p_buff+x+fb_getwidth(fbp)+1
 						);
-			(void) fbseek( x/2, y/2 );
-				(void) fbwpixel( p_avg );
+			(void) fb_seek( fbp, x/2, y/2 );
+			FB_WPIXEL( fbp, *p_avg );
 			}
 		}
 	free( (char *) p_buff );
@@ -898,11 +901,11 @@ char	*buf;
 	for( y = top; y <= btm ; y++ )
 		{
 		x = lft;
-		(void) fbseek( x, y );
+		(void) fb_seek( fbp, x, y );
 		for( ; x <= rgt; x++ )
-			(void) fbwpixel( &paint );
+			FB_WPIXEL( fbp, paint );
 		}
-	(void) fbflush();
+	(void) fb_flush(fbp);
 	return	1;
 	}
 
@@ -966,8 +969,7 @@ _LOCAL_ int
 ft_Dump_FBC( buf ) /* Dump frame buffer controller (FBC) registers.	*/
 char	*buf;
 	{
-	if( fbgettype() == FB_IKONAS )
-		prnt_FBC();
+	prnt_Debug( "Dump_FBC unimplemented" );
 	return	1;
 	}
 
@@ -980,8 +982,7 @@ char	*buf;
 		return	0;
 	if( answer[0] != 'n' )
 		{
-		(void) fbclear();
-		fbioinit();
+		(void) fb_clear(fbp, RGBPIXEL_NULL);
 		}
 	return	1;
 	}
@@ -991,9 +992,10 @@ _LOCAL_ int
 ft_Flip_Resolution( buf ) /* Flip framebuffer resolution.		*/
 char	*buf;
 	{	char	answer[2];
+		int	is_hires = fb_getwidth(fbp) > 512;
 	if( ! get_Input(	answer,
 				2,
-				fbgetsize() == 1024 ?
+				is_hires ?
 				"Flip framebuffer to low res [n=no] ? " :
 				"Flip framebuffer to high res [n=no] ? "
 				)
@@ -1005,11 +1007,10 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	(void) fbcursor( 0, cursor_pos.p_x, cursor_pos.p_y );
-	if( fbclose( _fbfd ) == -1 )
+	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
+	if( fb_close( fbp ) == -1 )
 		return	0;
-	fbsetsize( fbgetsize() == 512 ? 1024 : 512 );
-	init_Globs();
+	cur_width = is_hires ? 512 : 1024;
 	if( fb_Setup() == -1 )
 		exit( 1 );
 	return	1;
@@ -1024,7 +1025,7 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	if( panel.n_buf != (Pixel *) NULL )
+	if( panel.n_buf != (RGBpixel *) NULL )
 		free( (char *) panel.n_buf );
 	prnt_Debug(	"Storing rectangle [%d,%d],[%d,%d].",
 			current.r_origin.p_x,
@@ -1055,10 +1056,10 @@ _LOCAL_ int
 ft_Jump_Dwn( buf ) /* Move cursor down.					*/
 char	*buf;
 	{
-	if( cursor_pos.p_y <= _fbsize - JUMP )
+	if( cursor_pos.p_y <= fb_getheight(fbp) - JUMP )
 		cursor_pos.p_y += JUMP;
 	else
-		cursor_pos.p_y = _fbsize - 1;
+		cursor_pos.p_y = fb_getheight(fbp) - 1;
 	return	1;
 	}
 
@@ -1079,10 +1080,10 @@ _LOCAL_ int
 ft_Jump_Rgt( buf ) /* Move cursor right.				*/
 char	*buf;
 	{
-	if( cursor_pos.p_x <= _fbsize - JUMP )
+	if( cursor_pos.p_x <= fb_getwidth(fbp) - JUMP )
 		cursor_pos.p_x += JUMP;
 	else
-		cursor_pos.p_x = _fbsize - 1;
+		cursor_pos.p_x = fb_getwidth(fbp) - 1;
 	return	1;
 	}
 
@@ -1099,7 +1100,7 @@ char	*buf;
 		if( fudge_flag )
 			{
 			prnt_Debug( "Correcting image." );
-			fudge_Picture( _fbfd, RESERVED_CMAP );
+			fudge_Picture( fbp, RESERVED_CMAP );
 			fudge_flag = false;
 			}
 		prnt_Debug( "Popup menu initialized." );
@@ -1157,8 +1158,8 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	(void) fbcursor( 0, cursor_pos.p_x, cursor_pos.p_y );
-	if( fbclose( _fbfd ) == -1 )
+	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
+	if( fb_close( fbp ) == -1 )
 		{
 		(void) fclose( rle_fp );
 		return	0;
@@ -1180,7 +1181,7 @@ char	*buf;
 			{
 			"fb-rle", rle_file_nm, NULL, NULL
 			};
-	if( _fbsize == 1024 )
+	if( fb_getwidth(fbp) == 1024 )
 		{
 		args[1] = "-h";
 		args[2] = rle_file_nm;
@@ -1210,7 +1211,7 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	if( fbclose( _fbfd ) == -1 )
+	if( fb_close( fbp ) == -1 )
 		return	0;
 	if( exec_Shell( args ) == 0 )
 		prnt_Debug( "Image saved in \"%s\".", rle_file_nm );
@@ -1228,7 +1229,7 @@ ft_Transliterate( buf ) /* Transliterate pixels of color1 to target color2.*/
 char	*buf;
 	{	static char	old_color[CLR_LEN], new_color[CLR_LEN];
 		static int	red, grn, blu;
-		Pixel		old, new, cur;
+		RGBpixel		old, new, cur;
 		register int	x, y;
 		register int	lft, rgt, top, btm;
 	lft = current.r_origin.p_x;
@@ -1247,9 +1248,9 @@ char	*buf;
 	    &&	blu >= 0 && blu <= 255
 		)
 		{
-		old.red = red;
-		old.green = grn;
-		old.blue = blu;
+		old[RED] = red;
+		old[GRN] = grn;
+		old[BLU] = blu;
 		}
 	else
 		{
@@ -1264,9 +1265,9 @@ char	*buf;
 	    &&	blu >= 0 && blu <= 255
 		)
 		{
-		new.red = red;
-		new.green = grn;
-		new.blue = blu;
+		new[RED] = red;
+		new[GRN] = grn;
+		new[BLU] = blu;
 		}
 	else
 		{
@@ -1276,17 +1277,17 @@ char	*buf;
 	for( y = top; y <= btm ; y++ )
 		{
 		x = lft;
-		(void) fbseek( x, y );
+		(void) fb_seek( fbp, x, y );
 		for( ; x <= rgt; x++ )
 			{
-			(void) fbrpixel( &cur );
-			if(	cur.red == old.red
-			    &&	cur.green == old.green
-			    &&	cur.blue == old.blue
+			(void) fb_rpixel( fbp, cur );
+			if(	cur[RED] == old[RED]
+			    &&	cur[GRN] == old[GRN]
+			    &&	cur[BLU] == old[BLU]
 				)
 				{
-				(void) fbseek( x, y );
-				(void) fbwpixel( &new );
+				(void) fb_seek( fbp, x, y );
+				FB_WPIXEL( fbp, new );
 				}
 			}
 		}
@@ -1398,7 +1399,7 @@ _LOCAL_ int
 ft_Set_Pixel( buf ) /* Set "paint" pixel color.				*/
 char	*buf;
 	{
-	fb_Get_Pixel( &paint );
+	fb_Get_Pixel( paint );
 	return	1;
 	}
 
@@ -1419,7 +1420,7 @@ _LOCAL_ int
 ft_Zoom_In( buf ) /* Halve window size.					*/
 char	*buf;
 	{
-	if( size_viewport > _fbsize / 16 )
+	if( size_viewport > fb_getwidth(fbp) / 16 )
 		{
 		size_viewport /= 2;
 		fb_Wind();
@@ -1432,10 +1433,10 @@ _LOCAL_ int
 ft_Move_Dwn( buf ) /* Move cursor down.					*/
 char	*buf;
 	{
-	if( cursor_pos.p_y <= _fbsize - step )
+	if( cursor_pos.p_y <= fb_getheight(fbp) - step )
 		cursor_pos.p_y += step;
 	else
-		cursor_pos.p_y = _fbsize - 1;
+		cursor_pos.p_y = fb_getwidth(fbp) - 1;
 	return	1;
 	}
 
@@ -1456,10 +1457,10 @@ _LOCAL_ int
 ft_Move_Rgt( buf ) /* Move cursor right.				*/
 char	*buf;
 	{
-	if( cursor_pos.p_x <= _fbsize - step )
+	if( cursor_pos.p_x <= fb_getwidth(fbp) - step )
 		cursor_pos.p_x += step;
 	else
-		cursor_pos.p_x = _fbsize - 1;
+		cursor_pos.p_x = fb_getwidth(fbp) - 1;
 	return	1;
 	}
 
@@ -1479,7 +1480,7 @@ _LOCAL_ int
 ft_Zoom_Out( buf ) /* Double window size.				*/
 char	*buf;
 	{
-	if( size_viewport < _fbsize )
+	if( size_viewport < fb_getwidth(fbp) )
 		{
 		size_viewport *= 2;
 		fb_Wind();
@@ -1501,9 +1502,9 @@ char	*buf;
 	    &&	blu >= 0 && blu <= 255
 		)
 		{
-		paint.red = red;
-		paint.green = grn;
-		paint.blue = blu;
+		paint[RED] = red;
+		paint[GRN] = grn;
+		paint[BLU] = blu;
 		}
 	else
 		{
@@ -1524,11 +1525,7 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	/* Can't read cmap from Raster Tech.				*/
-	if( _fbtype == FB_RASTER_TECH )
-		(void) fb_wmap( (ColorMap *) NULL );
-	else
-		(void) fb_wmap( &cmap );
+	(void) fb_wmap( fbp, &cmap );
 	exit( 0 );
 	/*NOTREACHED*/
 	}
@@ -1538,7 +1535,7 @@ _LOCAL_ int
 ft_Read_Fb( buf ) /* Read frame buffer image from file.			*/
 char	*buf;
 	{	static char	image[MAX_LN];
-		static int	image_fd;
+		static FBIO	*imp;
 	if( ! get_Input( image, MAX_LN, "Enter framebuffer name : " ) )
 		return	0;
 	if( image[0] == NUL )
@@ -1547,7 +1544,7 @@ char	*buf;
 		return	0;
 		}
 	else
-	if( (image_fd = open( image, O_RDONLY )) == -1 )
+	if( (imp = fb_open( image, 512, 512 )) == FBIO_NULL )	/* XXX */
 		{
 		prnt_Debug(	"Can't open \"%s\" for reading.",
 				image
@@ -1559,13 +1556,13 @@ char	*buf;
 		fb_Off_Menu( &pallet );
 	if( pick_one.on_flag )
 		fb_Off_Menu( &pick_one );
-	(void) fbcursor( 0, cursor_pos.p_x, cursor_pos.p_y );
-	if( fudge_Picture( image_fd, RESERVED_CMAP ) == -1 )
+	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
+	if( fudge_Picture( imp, RESERVED_CMAP ) == -1 )
 		{
 		prnt_Debug( "Read of \"%s\" failed.", image );
 		return	0;
 		}
-	(void) close( image_fd );
+	(void) fb_close( imp );
 	fudge_flag = false;
 	return	1;
 	}
@@ -1578,7 +1575,7 @@ char	*buf;
 	if( ! get_Input( label, MAX_LN, "Enter text string : " ) )
 		return	0;
 	prnt_Debug( "Drawing \"%s\".", label );
-	do_line( cursor_pos.p_x, cursor_pos.p_y, label, (Pixel *)NULL );
+	do_line( cursor_pos.p_x, cursor_pos.p_y, label, (RGBpixel *)NULL );
 	return	1;
 	}
 
@@ -1589,7 +1586,7 @@ char	*buf;
 	{	register int	rectwid = brush_sz / 2;
 	fb_Paint(	cursor_pos.p_x - rectwid, cursor_pos.p_y - rectwid,
 			cursor_pos.p_x + rectwid, cursor_pos.p_y + rectwid,
-			&paint
+			paint
 			);
 	return	1;
 	}
@@ -1602,8 +1599,8 @@ char	*buf;
 	if( ! get_Input( x_str, 5, "Enter X coordinate : " ) )
 		return	0;
 	(void) sscanf( x_str, "%d", &cursor_pos.p_x );
-	if( cursor_pos.p_x > _fbsize )
-		cursor_pos.p_x = _fbsize;
+	if( cursor_pos.p_x > fb_getwidth(fbp) )
+		cursor_pos.p_x = fb_getwidth(fbp);
 	if( cursor_pos.p_x < 0 )
 		cursor_pos.p_x = 0;
 	return	1;
@@ -1617,23 +1614,11 @@ char	*buf;
 	if( ! get_Input( y_str, 5, "Enter Y coordinate : " ) )
 		return	0;
 	(void) sscanf( y_str, "%d", &cursor_pos.p_y );
-	if( cursor_pos.p_y > _fbsize )
-		cursor_pos.p_y = _fbsize;
+	if( cursor_pos.p_y > fb_getheight(fbp) )
+		cursor_pos.p_y = fb_getheight(fbp);
 	if( cursor_pos.p_y < 0 )
 		cursor_pos.p_y = 0;
 	return	1;
-	}
-
-/*	i n i t _ G l o b s ( )
-	Initialize things for normal view.
- */
-_LOCAL_ void
-init_Globs()
-	{
-	windo_center.p_x = cursor_pos.p_x = image_center.p_x = _fbsize / 2;
-	windo_center.p_y = cursor_pos.p_y = image_center.p_y = _fbsize / 2;
-	size_viewport = _fbsize;
-	return;
 	}
 
 /*	p a r s _ A r g v ( )						*/
@@ -1649,7 +1634,7 @@ register char	**argv;
 		switch( c )
 			{
 		case 'h' :
-			fbsetsize( 1024 );
+			cur_width = 1024;
 			break;
 		case 'p' :
 			pad_flag = true;
@@ -1670,22 +1655,35 @@ register char	**argv;
 _LOCAL_ int
 fb_Setup()
 	{
-	if( fbopen( NULL, APPEND ) == -1 )
+	if( fbp != FBIO_NULL )
 		{
-		prnt_Debug( "Can't open %s", _fbfile );
+		prnt_Debug( "fb_open:  closing previous FB" );
+		(void)fb_close( fbp );
+		}
+	if( (fbp = fb_open( NULL, cur_width, cur_width )) == FBIO_NULL )
+		{
+		prnt_Debug( "fb_open(%d) failed", cur_width );
 		return	-1;
 		}
-	fbioinit();
-	if( fb_rmap( &cmap ) == -1 )
+	fb_ioinit( fbp );
+	if( fb_rmap( fbp, &cmap ) == -1 )
 		{
 		prnt_Debug( "Can't read color map." );
 		return	0;
 		}
-	if( fbsetcursor( cursor ) == -1 )
+	if( fb_wmap( fbp, &cmap ) == -1 )
+		{
+		prnt_Debug( "Can't write color map." );
+		return	0;
+		}
+	if( fb_setcursor( fbp, cursor ) == -1 )
 		{
 		prnt_Debug( "Can't set up cursor." );
 		return	0;
 		}
+	windo_center.p_x = cursor_pos.p_x = image_center.p_x = fb_getwidth(fbp) / 2;
+	windo_center.p_y = cursor_pos.p_y = image_center.p_y = fb_getheight(fbp) / 2;
+	size_viewport = fb_getwidth(fbp);
 	return	0;
 	}
 
@@ -1693,12 +1691,11 @@ fb_Setup()
 _LOCAL_ void
 fb_Wind()
 	{
-	zoom_factor = _fbsize / size_viewport;
-	if( zoom_factor >= 1 && zoom_factor <= 16 )
-		(void) fbzoom( zoom_factor, zoom_factor );
+	zoom_factor = fb_getwidth(fbp) / size_viewport;
+	(void) fb_zoom( fbp, zoom_factor, zoom_factor );
 	windo_anchor.p_x = windo_center.p_x = cursor_pos.p_x;
 	windo_anchor.p_y = windo_center.p_y = cursor_pos.p_y;
-	(void) fbwindow( windo_center.p_x, windo_center.p_y );
+	(void) fb_window( fbp, windo_center.p_x, windo_center.p_y );
 	return;
 	}
 
@@ -1706,17 +1703,19 @@ fb_Wind()
 _LOCAL_ void
 fb_Paint( x0, y0, x1, y1, color )
 register int	x0, y0, x1, y1;
-Pixel		*color;
+RGBpixel		*color;
 	{	register int	x;
 	x0 = x0 < 1 ? 1 : x0;
-	x1 = x1 > _fbsize ? _fbsize : x1;
+	x1 = x1 > fb_getwidth(fbp) ? fb_getwidth(fbp) : x1;
 	y0 = y0 < 1 ? 1 : y0;
-	y1 = y1 > _fbsize ? _fbsize : y1;
+	y1 = y1 > fb_getheight(fbp) ? fb_getheight(fbp) : y1;
 	for( ; y0 <= y1 ; ++y0 )
 		{
-		(void) fbseek( x0, y0 );
+		(void) fb_seek( fbp, x0, y0 );
 		for( x = x0; x <= x1; ++x )
-			(void) fbwpixel( color );
+			{
+			FB_WPIXEL( fbp, *color );
+			}
 		}
 	return;
 	}
@@ -1799,7 +1798,7 @@ init_Tty()
 	{
 	if( pad_flag )
 		{
-		if( pad_open( _fbsize ) == -1 )
+		if( pad_open( fb_getwidth(fbp) ) == -1 )
 			pad_flag = false;
 		}
 	save_Tty( tty_fd );
@@ -1814,7 +1813,7 @@ init_Tty()
 void
 restore_Tty()
 	{
-	(void) fbcursor( 0, cursor_pos.p_x, cursor_pos.p_y );
+	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	MvCursor( 1, LI );
 	if( pad_flag )
 		pad_close();
@@ -1848,7 +1847,7 @@ register Point	*pointp;
 				(bitpad.p_x-image_center.p_x)/zoom_factor;
 		pointp->p_y = windo_anchor.p_y +
 				(bitpad.p_y-image_center.p_y)/zoom_factor;
-		(void) fbcursor( 1, pointp->p_x, pointp->p_y );
+		(void) fb_cursor( fbp, 1, pointp->p_x, pointp->p_y );
 		return	press;
 		}
 	return	-1;
@@ -1857,17 +1856,16 @@ register Point	*pointp;
 /*	f b _ G e t _ P i x e l ( )					*/
 void
 fb_Get_Pixel( pixel )
-Pixel	*pixel;
+RGBpixel	pixel;
 	{
 	if( pallet.on_flag && in_Menu_Area( &pallet, cursor_pos.p_x, cursor_pos.p_y ) )
-		*pixel = pallet.segs[pallet.last_pick-1].color;
-	else
-	if( _fbtype == FB_RASTER_TECH ) /* Optimization for Raster Tech. */
-		(void) _rat_rpixel( cursor_pos.p_x, cursor_pos.p_y, pixel );
+		{
+		COPYRGB( pixel, pallet.segs[pallet.last_pick-1].color );
+		}
 	else
 		{
-		(void) fbseek( cursor_pos.p_x, cursor_pos.p_y );
-		(void) fbrpixel( pixel );
+		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+		(void) fb_rpixel( fbp, pixel );
 		}
 	return;
 	}
@@ -1884,14 +1882,14 @@ register int	x, y;
 	   &&	y < menup->rect.r_corner.p_y;
 	}
 
-_LOCAL_ Pixel	*
+_LOCAL_ RGBpixel	*
 pixel_Avg( p1, p2, p3, p4 )
-register Pixel	*p1, *p2, *p3, *p4;
-	{	static Pixel	p_avg;
-	p_avg.red = ((int) p1->red + (int) p2->red + (int) p3->red + (int) p4->red) / 4;
-	p_avg.green = ((int) p1->green + (int) p2->green + (int) p3->green + (int) p4->green) / 4;
-	p_avg.blue = ((int) p1->blue + (int) p2->blue + (int) p3->blue + (int) p4->blue) / 4;
-	return	&p_avg;
+register RGBpixel	*p1, *p2, *p3, *p4;
+	{	static RGBpixel	p_avg;
+	p_avg[RED] = ((int) p1[RED] + (int) p2[RED] + (int) p3[RED] + (int) p4[RED]) / 4;
+	p_avg[GRN] = ((int) p1[GRN] + (int) p2[GRN] + (int) p3[GRN] + (int) p4[GRN]) / 4;
+	p_avg[BLU] = ((int) p1[BLU] + (int) p2[BLU] + (int) p3[BLU] + (int) p4[BLU]) / 4;
+	return	(RGBpixel *)p_avg;
 	}
 
 char	*

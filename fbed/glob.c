@@ -14,14 +14,16 @@
 static
 char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 #endif
+
 #include <stdio.h>
-#include <std.h>
-#include <fb.h>
-#include "popup.h"
-#include "extern.h"
+#include "fb.h"
+#include "./std.h"
+#include "./popup.h"
+#include "./extern.h"
+
 ColorMap	cmap;
-Pixel		*menu_addr;
-Pixel		paint;
+RGBpixel	*menu_addr;
+RGBpixel	paint;
 Menu		pick_one;
 Menu		pallet;
 Point		cursor_pos;	/* Current location in image space.	*/

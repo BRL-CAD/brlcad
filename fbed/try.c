@@ -15,9 +15,9 @@ static
 char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 #endif
 #include <stdio.h>
-#include <rt/ascii.h>
-#include "try.h"
-#include "extern.h"
+#include "./ascii.h"
+#include "./try.h"
+#include "./extern.h"
 #define NewTry( p ) \
 		if( ((p) = (Try *) malloc( sizeof(Try) )) == TRY_NULL ) \
 			{ \

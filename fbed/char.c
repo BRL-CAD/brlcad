@@ -8,6 +8,7 @@
 static
 char	sccsTag[] = "@(#) char.c 1.13, modified 5/6/86 at 15:33:30, archive /vld/moss/src/fbed/s.char.c";
 #endif
+
 /* 
  * char.c - display a character on the ikonas frambuffer
  * 
@@ -17,10 +18,11 @@ char	sccsTag[] = "@(#) char.c 1.13, modified 5/6/86 at 15:33:30, archive /vld/mo
  * Date:	Tue Jan  8 1985
  */
 #include <stdio.h>
-#include <fb.h>
+#include "fb.h"
 #include "./font.h"
 #include "./popup.h"
 #include "./extern.h"
+
 extern void	fudge_Pixel();
 extern void	fill_buf(), clear_buf();
 extern void	squash();
@@ -31,7 +33,7 @@ void
 do_line( xpos, ypos, line, menu_border )
 int		xpos, ypos;
 register char	*line;
-Pixel		*menu_border; /* Menu outline color, if NULL, do filtering. */
+RGBpixel		*menu_border; /* Menu outline color, if NULL, do filtering. */
 	{	register int    currx;
 		register int    char_count, char_id;
 		register int	len = strlen( line );
@@ -52,10 +54,10 @@ Pixel		*menu_border; /* Menu outline color, if NULL, do filtering. */
 		width = dir[char_id].left + dir[char_id].right;
 		height = dir[char_id].up + dir[char_id].down;
 
-		if( currx + width > _fbsize - 1 )
+		if( currx + width > fb_getwidth(fbp) - 1 )
 			break;		/* won't fit on screen */
 
-		if( menu_border == (Pixel *) NULL )
+		if( menu_border == RGBPIXEL_NULL )
 			dochar( char_id, currx, curry, dir[char_id].down%2 );
 		else
 			menu_char(	currx,
@@ -81,7 +83,7 @@ int xpos, ypos, odd;
 	int     	totwid = width;
 	int     	up, down;
 	static float	resbuf[BUFFSIZ];
-	static Pixel	fbline[BUFFSIZ * BUFFSIZ / 4],
+	static RGBpixel	fbline[BUFFSIZ * BUFFSIZ / 4],
 			fbbuff[BUFFSIZ * BUFFSIZ / 4];
 
 	/* Read in the character bit map, with two blank lines on each end. */
@@ -106,7 +108,7 @@ int xpos, ypos, odd;
 		fbbuff
 		);
 
-	/* Produce a Pixel buffer from a description of the character and
+	/* Produce a RGBpixel buffer from a description of the character and
 	 	the read back data from the frame buffer for anti-aliasing.
 	 */
 	for (i = height + base, k = 0; i >= base; i--, k++)
@@ -119,17 +121,17 @@ int xpos, ypos, odd;
 			);
 		for (j = 0; j < (totwid + 3) - 1; j++)
 			{	register int	h = (k*((totwid+3)-1))+j;
-			fbline[h].red =
-				(int)(paint.red*resbuf[j]+(1-resbuf[j]) *
-		    		(fbbuff[h].red & 0377))
+			fbline[h][RED] =
+				(int)(paint[RED]*resbuf[j]+(1-resbuf[j]) *
+		    		(fbbuff[h][RED] & 0377))
 			 	& 0377;
-			fbline[h].green =
-				(int)(paint.green*resbuf[j]+(1-resbuf[j]) *
-				(fbbuff[h].green & 0377))
+			fbline[h][GRN] =
+				(int)(paint[GRN]*resbuf[j]+(1-resbuf[j]) *
+				(fbbuff[h][GRN] & 0377))
 				& 0377;
-			fbline[h].blue =
-				(int)(paint.blue*resbuf[j]+(1-resbuf[j]) *
-				(fbbuff[h].blue & 0377))
+			fbline[h][BLU] =
+				(int)(paint[BLU]*resbuf[j]+(1-resbuf[j]) *
+				(fbbuff[h][BLU] & 0377))
 				& 0377;
 			}
 		}
@@ -147,7 +149,7 @@ void
 menu_char( x_adjust, menu_wid, odd, menu_border )
 int x_adjust, menu_wid, odd;
 register
-Pixel	*menu_border;
+RGBpixel	menu_border;
 	{	register int    i, j, k;
 		int		embold = 1;
 		int		base;
@@ -170,11 +172,13 @@ Pixel	*menu_border;
 
 	/* Change bits in menu that correspond to character bitmap.	*/
 	for (i = height + base, k = 0; i >= base; i--, k++)
-		{	register Pixel	*menu;
+		{	register RGBpixel	*menu;
 		menu = menu_addr + k * menu_wid + x_adjust;
 		for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
 			if( filterbuf[i][j] )
-				*menu = *menu_border;
+				{
+				COPYRGB(*menu, menu_border);
+				}
 		}
 	return;
 	}
