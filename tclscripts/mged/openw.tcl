@@ -23,11 +23,7 @@
 check_externs "_mged_attach _mged_tie _mged_view_ring"
 
 if ![info exists mged_default(html_dir)] {
-    if [info exists env(BRLCAD_ROOT)] {
-	set mged_default(html_dir) $env(BRLCAD_ROOT)/html/manuals/mged
-    } else {
-	set mged_default(html_dir) /usr/brlcad/html/manuals/mged
-    }
+    set mged_default(html_dir) [bu_brlcad_path html/manuals/mged]
 }
 
 if [info exists env(MGED_HTML_DIR)] {
