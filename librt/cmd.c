@@ -95,7 +95,7 @@ register FILE	*fp;
 	return( buf );				/* OK */
 }
 
-#define MAXWORDS		64	/* Max # of args per command */
+#define MAXWORDS	4096	/* Max # of args per command */
 
 /*
  *			R T _ D O _ C M D
