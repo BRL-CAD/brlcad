@@ -924,7 +924,6 @@ AC_CHECK_HEADERS( \
 	sys/types.h \
 	sys/unistd.h \
 	syslog.h \
-	term.h \
 	termcap.h \
 	termio.h \
 	termios.h \
@@ -946,6 +945,15 @@ AC_CHECK_HEADER(sys/mount.h,
 #  include <sys/param.h>
 #endif
 #include <sys/mount.h>
+])
+
+AC_CHECK_HEADER(term.h,
+		AC_DEFINE(HAVE_TERM_H, 1, Define to 1 if you have the <term.h> header file.),,
+		[
+#ifdef HAVE_CURSES_H
+#  include <curses.h>
+#endif
+#include <term.h>
 ])
 
 found_regex_h=no
