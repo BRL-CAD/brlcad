@@ -22,13 +22,14 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+
+#include "machine.h"
+#include "externs.h"		/* For getopt */
 #include "fb.h"
 #include "./vas4.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 int		debug;
 
