@@ -100,6 +100,7 @@ struct do_trace_state {
 	int	pathpos;
 	matp_t	old_xlate;
 	int	flag;
+	CONST struct db_full_path *des_path;
 };
 static void wdb_do_trace();
 static int wdb_trace();
@@ -117,8 +118,6 @@ struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
 /* ==== BEGIN evil stuff ==== */
 
 static struct directory *wdb_accumulated_path[WDB_MAX_LEVELS];
-
-static struct db_full_path	wdb_desired_path;
 
 /* ==== END evil stuff ==== */
 
@@ -1193,18 +1192,20 @@ wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 		return;
 
 	wdb_trace(dtsp->interp, dbip, nextdp, dtsp->pathpos+1,
-		new_xlate, dtsp->flag);
+		new_xlate, dtsp->flag, dtsp->des_path);
 }
 
 /*
  *			W D B _ T R A C E
+ *
+ *  XXX Why are we not using db_follow_path()?
  *
  *  Return -
  *	0	path not found
  *	1	OK
  */
 static int
-wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
+wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform, des_path)
      Tcl_Interp			*interp;
      struct db_i		*dbip;
      register struct directory *dp;
@@ -1212,6 +1213,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
      mat_t old_xlate;
      int flag;
      mat_t wdb_xform;
+     CONST struct db_full_path *des_path;
 {
 	struct directory *nextdp;
 	struct rt_db_internal intern;
@@ -1252,6 +1254,7 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 			dts.pathpos = pathpos;
 			dts.old_xlate = old_xlate;
 			dts.flag = flag;
+			dts.des_path = des_path;
 			/* Recursively invoke wdb_trace() via wdb_do_trace () */
 			db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_trace,
 				(genptr_t)&dts, NULL, NULL );
@@ -1266,14 +1269,14 @@ wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform)
 	wdb_accumulated_path[pathpos] = dp;
 
 	/* check for desired path */
-	for (k=0; k<wdb_desired_path.fp_len; k++) {
-		if (wdb_accumulated_path[k] != wdb_desired_path.fp_names[k]) {
+	for (k=0; k<des_path->fp_len; k++) {
+		if (wdb_accumulated_path[k] != des_path->fp_names[k]) {
 			/* not the desired path */
 			return 0;
 		}
 	}
 
-	/* have the desired path up to wdb_desired_path_end */
+	/* have the desired path */
 	bn_mat_copy(wdb_xform, old_xlate);
 
 	if (flag == WDB_CPEVAL)
@@ -1325,6 +1328,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
 	int i, flag;
 	mat_t	wdb_xform;
+	struct db_full_path	desired_path;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -1355,27 +1359,30 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 	}
 
 	if (argc == 2 && strchr(argv[1], '/')) {
-		if( db_string_to_path( &wdb_desired_path, wdbop->wdb_wp->dbip, argv[1] ) < 0 )
+		if( db_string_to_path( &desired_path, wdbop->wdb_wp->dbip, argv[1] ) < 0 )
 			goto err;
 	} else {
-		if( db_argv_to_path( &wdb_desired_path, wdbop->wdb_wp->dbip, argc-1, argv+1 ) < 0 )
+		if( db_argv_to_path( &desired_path, wdbop->wdb_wp->dbip, argc-1, argv+1 ) < 0 )
 			goto err;
 	}
 
 	bn_mat_idn( wdb_xform );
 
 	if( wdb_trace(interp, wdbop->wdb_wp->dbip,
-	    wdb_desired_path.fp_names[0], 0,
-	    bn_mat_identity, flag, wdb_xform) != 0 )
+	    desired_path.fp_names[0], 0,
+	    bn_mat_identity, flag, wdb_xform, &desired_path) != 0
+	)  {
+		db_free_full_path( &desired_path );
 		return TCL_OK;
+	}
 
 err:
 	/* path not found */
 	Tcl_AppendResult(interp, "Path:  ", (char *)NULL);
-	db_full_path_appendresult( interp, &wdb_desired_path );
+	db_full_path_appendresult( interp, &desired_path );
 	Tcl_AppendResult(interp, "  not found\n", (char *)NULL);
 
-	db_free_full_path( &wdb_desired_path );
+	db_free_full_path( &desired_path );
     	return TCL_ERROR;
 }
 
