@@ -52,9 +52,12 @@ static char RCSid[] = "$Header$";
 
 #define		LINELEN		128	/* Length of char array for input line */
 
+#define		REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
+
 static char	line[LINELEN];		/* Space for input line */
 static FILE	*fdin;			/* Input FASTGEN4 file pointer */
 static FILE	*fdout;			/* Output BRL-CAD file pointer */
+static FILE	*fd_plot=NULL;		/* file for plot output */
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */
 static int	max_grid_no=0;		/* Maximum grid number used */
 static int	mode=0;			/* Plate mode (1) or volume mode (2) */
@@ -83,7 +86,11 @@ static long	curr_sect=0;		/* Offset into input file for current section card */
 static long	prev_sect=0;		/* Offset into input file for previous section card */
 static int	try_count=0;		/* Counter for number of tries to build currect section */
 static int	arb6_worked=0;		/* flag notifying of Make_arb6_obj() success */
-static int	use_arb6=0;		/* flag indicating tha all plate-mode should be converted as ARB6's */
+static int	use_arb6=0;		/* flag indicating that all plate-mode should be converted as ARB6's */
+static int	do_skips=0;		/* flag indicating that not all components will be processed */
+static int	*region_list;		/* array of region_ids to be processed */
+static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
+static int	do_plot=0;		/* flag indicating plot file should be created */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
@@ -102,13 +109,15 @@ static int	int_list_count=0;	/* Number of ints in above array */
 static int	int_list_length=0;	/* Length of int_list array */
 #define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
 
-static char	*usage="Usage:\n\tfast4-g [-dnwp] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
+static char	*usage="Usage:\n\tfast4-g [-dnwp] [-c component_list] [-o plot_file] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
 	a - set minimum allowed angle (degrees) between adjacent faces in PLATE mode\n\
 		components with smaller angles will be converted using ARB6 solids\n\
 	d - print debugging info\n\
 	n - produce NMG solids rather than polysolids\n\
 	w - print warnings about creating default names\n\
 	p - convert all plate-mode components as ARB6 solids\n\
+	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
+	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
 	x - set RT debug flag\n\
 	X - set NMG debug flag\n\
 	D - set tolerance distance (mm)\n\
@@ -261,6 +270,16 @@ struct elem_list
 static int elem_match[4]={1,2,4,8};
 
 #define NMG_PUSH( _ptr , _stack )       bu_ptbl_ins_unique( _stack , (long *) _ptr )
+
+void
+plot_tri( pt1, pt2, pt3 )
+int pt1, pt2, pt3;
+{
+	pdv_3move( fd_plot, grid_pts[pt1].pt );
+	pdv_3cont( fd_plot, grid_pts[pt2].pt );
+	pdv_3cont( fd_plot, grid_pts[pt3].pt );
+	pdv_3cont( fd_plot, grid_pts[pt1].pt );
+}
 
 struct fast_fus *
 Find_fus( fu )
@@ -5707,6 +5726,8 @@ do_tri()
 		return;
 	}
 
+	if( do_plot )
+		plot_tri( pt1, pt2, pt3 );
 	make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
 	Add_elem( element_id, 3, pt1, pt2, pt3, -1 );
 }
@@ -5816,7 +5837,11 @@ do_quad()
 			skipped = 1;
 		}
 		else
+		{
+			if( do_plot )
+				plot_tri( pt1, pt2, pt3 );
 			make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
+		}
 	}
 
 	if( pt1 == pt3 || pt3 == pt4 || pt1 == pt4 )
@@ -5844,7 +5869,11 @@ do_quad()
 			skipped += 2;
 		}
 		else
+		{
+			if( do_plot )
+				plot_tri( pt1, pt3, pt4 );
 			make_fast_fu( pt1 , pt3 , pt4 , element_id , thick , pos );
+		}
 	}
 
 	if( !skipped )
@@ -5853,6 +5882,24 @@ do_quad()
 		Add_elem( element_id, 3, pt1, pt3, pt4, -1 );
 	else if( skipped == 2 )
 		Add_elem( element_id, 3, pt1, pt2, pt3, -1 );
+}
+
+int
+skip_region( id )
+int id;
+{
+	int i;
+
+	if( !do_skips )
+		return( 0 );
+
+	for( i=0 ; i<do_skips ; i++ )
+	{
+		if( id == region_list[i] )
+			return( 0 );
+	}
+
+	return( 1 );
 }
 
 /*	cleanup from previous component and start a new one */
@@ -5874,7 +5921,7 @@ int final;
 		if( try_count )
 			region_id = old_region_id;
 
-		if( region_id )
+		if( region_id && !skip_region( region_id ) )
 		{
 			if( !try_count )
 				comp_count++;
@@ -6003,6 +6050,25 @@ int final;
 		strncpy( field , &line[16] , 8 );
 		comp_id = atoi( field );
 
+		region_id = group_id * 1000 + comp_id;
+
+		if( skip_region( region_id ) ) /* do not process this component */
+		{
+			long section_start;
+
+			/* skip to start of next section */
+			section_start = ftell( fdin );
+			(void)getline();
+			while( line[0] &&  strncmp( line, "SECTION" , 7 ) )
+			{
+				section_start = ftell( fdin );
+				(void)getline();
+			}
+			/* seek to start of the section */
+			fseek( fdin, section_start, SEEK_SET );
+			return;
+		}
+
 		if( pass )
 			rt_log( "Making component %s, group #%d, component #%d\n",
 				name_name, group_id , comp_id );
@@ -6012,8 +6078,6 @@ int final;
 			rt_log( "Illegal component id number %d, changed to 999\n" , comp_id );
 			comp_id = 999;
 		}
-
-		region_id = group_id * 1000 + comp_id;
 
 		strncpy( field , &line[24] , 8 );
 		mode = atoi( field );
@@ -6430,12 +6494,165 @@ int pass_number;
 	return( 0 );
 }
 
+void
+list_regions( dbip, dp )
+struct db_i *dbip;
+struct directory *dp;
+{
+	struct directory	*dp2;
+	struct rt_db_internal   internal, internal2;
+	struct rt_comb_internal *comb, *comb2;
+	union tree		*tree, *tree2;
+
+	/* only process regions */
+	if( !(dp->d_flags & DIR_REGION) )
+		return;
+
+	if( rt_db_get_internal( &internal, dp, dbip, NULL ) < 0 )
+	{
+		bu_log( "Failed to get internal representation of %s\n", dp->d_namep );
+		bu_bomb( "rt_db_get_internal() Failed!!!\n" );
+	}
+
+	if( internal.idb_type != ID_COMBINATION )
+	{
+		bu_log( "%s is not a combination!!!!\n", dp->d_namep );
+		bu_bomb( "Expecting a combination!!!!\n" );
+	}
+
+	comb = (struct rt_comb_internal *)internal.idb_ptr;
+	if( !comb->region_flag )
+	{
+		bu_log( "%s is not a region!!!!\n", dp->d_namep );
+		bu_bomb( "Expecting a region!!!!\n" );
+	}
+	RT_CK_COMB( comb );
+	tree = comb->tree;
+
+	if( tree->tr_op != MKOP(12) )
+	{
+		rt_db_free_internal( &internal );
+		return;
+	}
+
+	/* only one element in tree */
+
+	if( (dp2=db_lookup( dbip, tree->tr_l.tl_name, 0 )) == DIR_NULL )
+	{
+		bu_log( "Could not find %s\n", tree->tr_l.tl_name );
+		rt_db_free_internal( &internal );
+		return;
+	}
+
+	if( rt_db_get_internal( &internal2, dp2, dbip, NULL ) < 0 )
+	{
+		bu_log( "Failed to get internal representation of %s\n", dp2->d_namep );
+		bu_bomb( "rt_db_get_internal() Failed!!!\n" );
+	}
+
+	if( internal2.idb_type != ID_COMBINATION )
+	{
+		bu_log( "%s is not a combination!!!!\n", dp2->d_namep );
+		bu_bomb( "Expecting a combination!!!!\n" );
+	}
+
+	comb2 = (struct rt_comb_internal *)internal2.idb_ptr;
+	RT_CK_COMB( comb2 );
+
+	/* move the second tree into the first */
+	tree2 = comb2->tree;
+	comb->tree = tree2;
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	{
+		bu_log( "Failed to write region %s\n", dp->d_namep );
+		bu_bomb( "rt_db_put_internal() failed!!!\n" );
+	}
+
+	/* now kill the second combination */
+	db_delete( dbip, dp2 );
+	db_dirdelete( dbip, dp2 );
+
+	db_free_tree( tree );
+
+}
+
+void
+Post_process( output_file )
+char *output_file;
+{
+	struct db_i *dbip;
+	struct directory *dp;
+
+	if ((dbip = db_open( output_file , "rw")) == DBI_NULL)
+	{
+		bu_log( "Cannot open %s, post processing not completed\n", output_file );
+		return;
+	}
+
+	db_scan(dbip, (int (*)())db_diradd, 1);
+
+	/* make a list of all the regions to be modified */
+	if( (dp=db_lookup( dbip, "all", 0 )) == DIR_NULL )
+	{
+		bu_log( "Cannot find group 'all' in model, post processing not completed\n" );
+		db_close( dbip );
+		return;
+	}
+	db_functree( dbip, dp, list_regions, 0 );
+}
+
+void
+make_region_list( str )
+char *str;
+{
+	char *ptr, *ptr2;
+
+	region_list = (int *)bu_calloc( REGION_LIST_BLOCK, sizeof( int ), "region_list" );
+	region_list_len = REGION_LIST_BLOCK;
+	do_skips = 0;
+
+	ptr = strtok( str, "," );
+	while( ptr )
+	{
+		if( (ptr2=strchr( ptr, '-')) )
+		{
+			int i, start, stop;
+
+			*ptr2 = '\0';
+			ptr2++;
+			start = atoi( ptr );
+			stop = atoi( ptr2 );
+			for( i=start ; i<=stop ; i++ )
+			{
+				if( do_skips == region_list_len )
+				{
+					region_list_len += REGION_LIST_BLOCK;
+					bu_realloc( region_list, region_list_len*sizeof( int ), "region_list" );
+				}
+				region_list[do_skips++] = i;
+			}
+		}
+		else
+		{
+			if( do_skips == region_list_len )
+			{
+				region_list_len += REGION_LIST_BLOCK;
+				bu_realloc( region_list, region_list_len*sizeof( int ), "region_list" );
+			}
+			region_list[do_skips++] = atoi( ptr );
+		}
+		ptr = strtok( (char *)NULL, "," );
+	}
+}
+
 main( argc , argv )
 int argc;
 char *argv[];
 {
 	int i;
 	int c;
+	char *output_file;
+	char *plot_file=NULL;
 
 	/* Initialze tolerance struct */
         tol.magic = RT_TOL_MAGIC;
@@ -6446,10 +6663,17 @@ char *argv[];
 
 	max_cos = cos( MIN_ANG*bn_pi/180.0 );
 
-	while( (c=getopt( argc , argv , "pa:dnwx:b:X:D:P:" ) ) != EOF )
+	while( (c=getopt( argc , argv , "o:c:pa:dnwx:b:X:D:P:" ) ) != EOF )
 	{
 		switch( c )
 		{
+			case 'o':	/* output a plotfile of original FASTGEN4 elements */
+				do_plot = 1;
+				plot_file = optarg;
+				break;
+			case 'c':	/* convert only the specified components */
+				make_region_list( optarg );
+				break;
 			case 'p':	/* convert plate-mode componnets as ARB6's */
 				use_arb6 = 1;
 				break;
@@ -6512,6 +6736,16 @@ char *argv[];
 		perror( "fast4-g" );
 		exit( 1 );
 	}
+	output_file = argv[optind+1];
+
+	if( plot_file )
+	{
+		if( (fd_plot=fopen( plot_file, "w")) == NULL )
+		{
+			bu_log( "Cannot open plot file (%s)\n", plot_file );
+			bu_bomb( usage );
+		}
+	}
 
 	if( rt_g.debug )
 	{
@@ -6573,6 +6807,10 @@ char *argv[];
 
 	if( debug )
 		List_holes();
+
+	/* post process */
+	fclose( fdout );
+	Post_process( output_file );
 
 	rt_log( "%d components converted out of %d attempted\n" , conv_count , comp_count );
 	rt_log( "\t%d rejections or failures converted on second try (as a group of ARB6 solids)\n", second_chance );
