@@ -157,6 +157,7 @@ extern fastf_t edit_absolute_scale;
 extern fastf_t edit_rate_scale;
 extern int edit_rateflag_scale;
 
+extern struct bu_vls edit_info_vls;
 extern struct bu_vls edit_rate_tran_vls[3];
 extern struct bu_vls edit_rate_rotate_vls[3];
 extern struct bu_vls edit_rate_scale_vls;

@@ -343,12 +343,7 @@ char **argv;
 	  /* NOTREACHED */
 	}
 
-#if 1
 	refresh();			/* Put up faceplate */
-#else
-	/* Force mged_display variables to be initialized */
-	dotitles(1);
-#endif
 
 #if 0
 	/* Reset the lights */
@@ -1206,6 +1201,9 @@ refresh()
 {
   struct dm_list *p;
   struct dm_list *save_dm_list;
+  struct bu_vls overlay_vls;
+  struct bu_vls tmp_vls;
+  register int do_overlay = 1;
 
   if(dbip == DBI_NULL)
     return;
@@ -1220,6 +1218,12 @@ refresh()
      */
     curr_dm_list = p;
     if(update_views || dmaflag || dirty) {
+      if(do_overlay){
+	bu_vls_init(&overlay_vls);
+	bu_vls_init(&tmp_vls);
+	create_text_overlay(&overlay_vls);
+	do_overlay = 0;
+      }
 
       /* XXX VR hack */
       if( viewpoint_hook )  (*viewpoint_hook)();
@@ -1255,11 +1259,9 @@ refresh()
 	adcursor();
 
       /* Display titles, etc., if desired */
-#if 0
-      dotitles(mged_variables.faceplate);
-#else
-      dotitles();
-#endif
+      bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+      dotitles(&tmp_vls);
+      bu_vls_trunc(&tmp_vls, 0);
 
       /* Draw center dot */
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
@@ -1285,6 +1287,11 @@ refresh()
 
   curr_dm_list = save_dm_list;
   update_views = 0;
+
+  if(!do_overlay){
+    bu_vls_free(&overlay_vls);
+    bu_vls_free(&tmp_vls);
+  }
 }
 
 /*

@@ -862,6 +862,7 @@ mged_setup()
 
   Tcl_LinkVar(interp, "edit_class", (char *)&es_edclass, TCL_LINK_INT);
 
+  bu_vls_init(&edit_info_vls);
   bu_vls_init(&edit_rate_tran_vls[X]);
   bu_vls_init(&edit_rate_tran_vls[Y]);
   bu_vls_init(&edit_rate_tran_vls[Z]);
@@ -877,6 +878,7 @@ mged_setup()
   bu_vls_init(&edit_absolute_rotate_vls[Z]);
   bu_vls_init(&edit_absolute_scale_vls);
 
+  bu_vls_strcpy(&edit_info_vls, "edit_info");
   bu_vls_strcpy(&edit_rate_tran_vls[X], "edit_rate_tran(X)");
   bu_vls_strcpy(&edit_rate_tran_vls[Y], "edit_rate_tran(Y)");
   bu_vls_strcpy(&edit_rate_tran_vls[Z], "edit_rate_tran(Z)");
