@@ -1813,10 +1813,24 @@ char	**argv;
 	intern.idb_ptr = (genptr_t)mged_nmg_model;
 	mged_nmg_model = (struct model *)NULL;
 
-	if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
-	{
-		Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
-		return TCL_ERROR;
+	if( dbip->dbi_version < 5 ) {
+		if( (dp=db_diradd( dbip, newname, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL ) {
+			Tcl_AppendResult(interp, "Cannot add ", newname, " to directory\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+	} else {
+		struct bu_attribute_value_set avs;
+
+		bu_avs_init( &avs, 1, "avs" );
+		if ((dp = db_diradd5(dbip, newname, -1L,
+				     intern.idb_major_type, intern.idb_type,
+				     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+			bu_avs_free( &avs );
+			Tcl_AppendResult(interp, "An error has occured while adding '",
+					 newname, "' to the database.\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+		bu_avs_free( &avs );
 	}
 
 	if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
