@@ -246,9 +246,7 @@ char **argv;
 			rt_log("rt:  can't open frame buffer\n");
 			exit(12);
 		}
-		fb_clear( fbp, PIXEL_NULL );
-		fb_wmap( fbp, COLORMAP_NULL );
-		/* KLUDGE ALERT:  The library want zoom before window! */
+		/* ALERT:  The library wants zoom before window! */
 		fb_zoom( fbp, fb_getwidth(fbp)/npts, fb_getheight(fbp)/npts );
 		fb_window( fbp, npts/2, npts/2 );
 	} else if( outputfile == (char *)0 )  {
