@@ -2464,6 +2464,98 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ N M G _ I M P O R T 5
+ */
+int
+rt_nmg_import5( struct rt_db_internal	*ip,
+		struct bu_external	*ep,
+		register const mat_t	mat,
+		const struct db_i	*dbip )
+{
+	struct model		*m;
+	struct bn_tol		tol;
+	int			maxindex;
+	int			kind;
+	int			kind_counts[NMG_N_KINDS];
+	genptr_t		dp, startdata;	/* data pointer */
+	long			**real_ptrs;
+	long			**ptrs;
+	struct nmg_exp_counts	*ecnt;
+	register int		i;
+	static long		bad_magic = 0x999;
+
+	BU_CK_EXTERNAL( ep );
+	dp = (genptr_t)ep->ext_buf;
+
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
+	{
+		int version;
+		version = bu_glong(dp);
+		dp+= SIZEOF_NETWORK_LONG;
+		if (version != DISK_MODEL_VERSION ) {
+			bu_log("rt_nmg_import: expected NMG '.g' format version %d, got %d, aborting nmg solid import\n",
+				DISK_MODEL_VERSION, version);
+			return -1;
+		}
+	}
+	maxindex = 1;
+	for (kind =0 ; kind < NMG_N_KINDS; kind++) {
+		kind_counts[kind] = bu_glong( dp );
+		dp+= SIZEOF_NETWORK_DOUBLE;
+		maxindex += kind_counts[kind];
+	}
+
+	startdata = dp;
+
+	/* Collect overall new subscripts, and structure-specific indices */
+	ecnt = (struct nmg_exp_counts *) bu_calloc( maxindex+3, 
+		sizeof(struct nmg_exp_counts), "ecnt[]");
+	real_ptrs = (long **)bu_calloc( maxindex+3, sizeof(long *), "ptrs[]");
+	/* some safety checking.  Indexing by, -1, 0, n+1, N+2 give interesting results */
+	ptrs = real_ptrs+1;
+	ptrs[-1] = &bad_magic;
+	ptrs[0] = (long *)0;
+	ptrs[maxindex] = &bad_magic;
+	ptrs[maxindex+1] = &bad_magic;
+
+	m = rt_nmg_ialloc( ptrs, ecnt, kind_counts );
+
+	rt_nmg_i2alloc( ecnt, dp, kind_counts, maxindex );
+
+	/* Now import each structure, in turn */
+	for (i=1; i < maxindex; i++) {
+		/* We know that the DOUBLE_ARRAY is the last thing to process */
+		if (ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY) break;
+		if (rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)dp, ecnt,
+		    i, ptrs, mat, (unsigned char *)startdata) < 0) {
+		    	return -1;
+		    }
+		dp += rt_nmg_disk_sizes[ecnt[i].kind];
+	}
+
+	/* Always? */
+	nmg_rebound(m, &tol);
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_NMG;
+	ip->idb_meth = &rt_functab[ ID_NMG ];
+	ip->idb_ptr = (genptr_t)m;
+	NMG_CK_MODEL(m);
+	bu_free( (char *)ecnt, "ecnt[]");
+	bu_free( (char *)real_ptrs, "ptrs[]");
+
+	if ( rt_g.debug || rt_g.NMG_debug ) {
+		nmg_vmodel(m);
+	}
+	return 0;		/* OK */
+}
+
+/*
  *			R T _ N M G _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
