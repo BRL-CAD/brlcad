@@ -1321,7 +1321,7 @@ AC_CHECK_FUNCS(\
 	bzero \
 	calloc \
 	dlopen \
-	drand \
+	drand48 \
 	dup2 \
 	endgrent \
 	endpwent \
