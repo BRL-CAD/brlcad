@@ -29,7 +29,6 @@
 #endif
 
 #define CBARS_TIME	10		/* Normal */
-/*#define CBARS_TIME	2		/* Testing mode */
 
 void
 record_seq(number_of_images, number_of_frames, start_seq_number)
@@ -38,9 +37,6 @@ int start_seq_number;
 {
 	char cmd[100];
 	int i;
-	int scene_number = 1;
-	int start_frame = 1;
-
 
 	fprintf(stderr,
 		"number of images is %d, number of frames per image is %d\n",

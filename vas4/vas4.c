@@ -356,7 +356,6 @@ int	new;
 int	scene_number;
 int	start_frame;
 {
-	char str[100];
 	int number_of_frames = 1;
 
 	/* Enter VAS IV program mode */	
@@ -509,8 +508,6 @@ int	frame;
 int
 reset_tape_time()
 {
-	int	reply;
-
 	vas_putc(C_RESET_TAPETIME);
 	return(0);
 }

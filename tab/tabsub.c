@@ -115,7 +115,6 @@ FILE	*fp;
 	int	ntokenwords;
 	register char	*cp;
 	register char	*tp;
-	int	chan;
 	int	i;
 
 	for( line=0; /*NIL*/; line++ )  {
@@ -272,7 +271,6 @@ int	nwords;
 		return(0);
 	}
 	if( strcmp( words[0], "rot_at" ) == 0 )  {
-		register int i;
 		mat_t	mat;
 		mat_t	mat1;
 		mat_t	mat2;

@@ -447,7 +447,6 @@ char	**argv;
 {
 	double		a, b;
 	register int	i;
-	int		ch;
 
 	a = atof(argv[1]);
 	b = atof(argv[2]);
@@ -774,7 +773,6 @@ register struct chan	*chp;
 register fastf_t	*times;
 {
 	register int	t;		/* output time index */
-	register int	i;		/* input time index */
 	register double	ival;
 	register double	rate;
 
@@ -800,7 +798,6 @@ register struct chan	*chp;
 register fastf_t	*times;
 {
 	register int	t;		/* output time index */
-	register int	i;		/* input time index */
 	double	ival;
 	double	mul;
 	register double scale;
