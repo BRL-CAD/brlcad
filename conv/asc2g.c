@@ -105,10 +105,12 @@ char **argv;
 void
 solbld()	/* Build Solid record */
 {
-	int temp1, temp2;
+	register int i;
+	auto int temp1, temp2;
 
-		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 */
-	(void)sscanf( buf, "%c %d %s %d %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e",
+	i=sscanf( buf,
+		/*	      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 */
+		"%c %d %s %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
 		&record.s.s_id,
 		&temp1,
 		&record.s.s_name[0],
@@ -138,6 +140,11 @@ solbld()	/* Build Solid record */
 		&record.s.s_values[22],
 		&record.s.s_values[23]
 	);
+	if( i != 24+4 )  {
+		fprintf(stderr,"solbld(%s)  %d items converted, dropped\n",
+			record.s.s_name, i);
+		return;
+	}
 	record.s.s_type = (char)temp1;
 	record.s.s_cgtype = (short)temp2;
 
@@ -206,7 +213,7 @@ membbld()	/* Build Member record */
 	int temp1;
 
 		/*		      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
-	(void)sscanf( buf, "%c %c %s %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %d", 
+	(void)sscanf( buf, "%c %c %s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %d", 
 		&record.M.m_id,
 		&record.M.m_relation,
 		&record.M.m_instname[0],
@@ -239,7 +246,7 @@ arsabld()	/* Build ARS A record */
 {
 	int temp1, temp2, temp3, temp4, temp5;
 
-	(void)sscanf( buf, "%c %d %s %d %d %d %d %e %e %e %e %e %e",
+	(void)sscanf( buf, "%c %d %s %d %d %d %d %f %f %f %f %f %f",
 		&record.a.a_id,
 		&temp1,
 		&record.a.a_name[0],
@@ -270,7 +277,7 @@ arsbbld()	/* Build ARS B record */
 	int temp1, temp2, temp3;
 
 		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 */
-	(void)sscanf( buf, "%c %d %d %d %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e",
+	(void)sscanf( buf, "%c %d %d %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
 		&record.b.b_id,
 		&temp1,
 		&temp2,
@@ -360,7 +367,7 @@ polydbld()	/* Build Polydata record */
 
 #ifdef later
 		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 */
-	(void)sscanf( buf, "%c %d %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e %e", 
+	(void)sscanf( buf, "%c %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", 
 		&record.q.q_id,
 		&temp1,
 		&record.q.q_verts[0][0],
@@ -427,7 +434,7 @@ bsplbld()	/* Build B-spline solid record */
 {
 	int temp1;
 
-	(void)sscanf( buf, "%c %s %d %e",
+	(void)sscanf( buf, "%c %s %d %f",
 		&record.B.B_id,
 		&record.B.B_name[0],
 		&temp1,
@@ -501,7 +508,7 @@ bsurfbld()	/* Build d-spline surface description record */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
 	for( i = 0; i < count; i++ )  {
 		fgets( buf, BUFSIZE, stdin );
-		(void)sscanf( buf, "%e", vp++);
+		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
 	(void)fwrite( (char *)&fp, nbytes, 1, stdout );
@@ -522,7 +529,7 @@ bsurfbld()	/* Build d-spline surface description record */
 		record.d.d_geom_type;
 	for( i = 0; i < count; i++ )  {
 		fgets( buf, BUFSIZE, stdin );
-		(void)sscanf( buf, "%e", vp++);
+		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
 	(void)fwrite( (char *)&fp, nbytes, 1, stdout );
