@@ -622,22 +622,24 @@ extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
 extern int	bu_debug;
 /* These definitions are each for one bit */
 #define BU_DEBUG_OFF		0	/* No debugging */
-#define BU_DEBUG_MEM_CHECK	0x00000001	/* 001 Mem barrier & leak checking */
-#define BU_DEBUG_MEM_LOG	0x00000002	/* 002 Print all dynamic memory operations */
+
+#define BU_DEBUG_COREDUMP	0x00000001	/* 001 If set, bu_bomb() will dump core */
+
+#define BU_DEBUG_MEM_CHECK	0x00000002	/* 002 Mem barrier & leak checking */
+#define BU_DEBUG_MEM_LOG	0x00000004	/* 003 Print all dynamic memory operations */
 
 #define BU_DEBUG_PARALLEL	0x00000010	/* 005 parallel support */
 
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
 #define BU_DEBUG_PTBL		0x00000200	/* 012 bu_ptbl_*() logging */
 
-#define BU_DEBUG_COREDUMP	0x00001000	/* 015 If set, bu_bomb() will dump core */
 
 /* Format string for bu_printb() */
 #define BU_DEBUG_FORMAT	\
 "\020\
-\015COREDUMP\
+\015?\
 \012PTBL\011MATH\010?\7?\6?\5PARALLEL\
-\4?\3?\2MEM_LOG\1MEM_CHECK"
+\4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
 /*----------------------------------------------------------------------*/
 /* parse.c */
