@@ -262,13 +262,14 @@ char **argv;
 	bu_vls_strcpy(&tkName, "nu");
 	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
 	mged_variables = default_mged_variables;
-	am_mode = ALT_MOUSE_MODE_IDLE;
+	am_mode = ALT_IDLE;
 	rc = 1;
 	owner = 1;
 	frametime = 1;
 	adc_a1_deg = adc_a2_deg = 45.0;
 	curr_dm_list->s_info->opp = &pathName;
-	mged_view_init();
+	mged_view_init(curr_dm_list);
+	BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
 
 	bu_vls_init(&fps_name);
 	bu_vls_printf(&fps_name, "mged_display(%S,fps)",
@@ -283,7 +284,7 @@ char **argv;
 	bn_mat_idn( ModelDelta );
 	bn_mat_idn( acc_rot_sol );
 
-	MAT_DELTAS_GET(orig_pos, toViewcenter);
+	MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
 	i_Viewscale = Viewscale;
 
 	state = ST_VIEW;
@@ -316,9 +317,6 @@ char **argv;
 	mged_setup();
 	mmenu_init();
 	btn_head_menu(0,0,0);
-#if TRY_NEW_MGED_VARS
-	mged_variable_setup(curr_dm_list);
-#endif
 	mged_slider_link_vars(curr_dm_list);
 
 	setview( 0.0, 0.0, 0.0 );
@@ -1588,18 +1586,20 @@ int	argc;
 char	**argv;
 {
   static int first = 1;
+  int force_new = 0;
+  struct db_i *save_dbip;
 
-	if( argc <= 1 )  {
-		/* Invoked without args, return name of current database */
-		if( dbip )  {
-			Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
-			return TCL_OK;
-		}
-		Tcl_AppendResult(interp, "opendb: No database presently open\n", (char *)NULL);
-		return TCL_ERROR;
-	}
+  if( argc <= 1 )  {
+    /* Invoked without args, return name of current database */
+    if( dbip )  {
+      Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
+      return TCL_OK;
+    }
+    Tcl_AppendResult(interp, "opendb: No database presently open\n", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-  if( 3 < argc || (strlen(argv[1]) == 0)){
+  if(3 < argc || (strlen(argv[1]) == 0)){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -1609,21 +1609,20 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if( dbip )  {
-    char *av[2];
+  if(argc == 3 &&
+     strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
+     strcmp("n", argv[2]) && strcmp("N", argv[2])){
+    struct bu_vls vls;
 
-    av[0] = "zap";
-    av[1] = NULL;
-
-    /* Clear out anything in the display */
-    f_zap(clientData, interp, 1, av);
-
-    /* Close current database.  Releases MaterHead, etc. too. */
-    db_close(dbip);
-    dbip = DBI_NULL;
-
-    log_event( "CEASE", "(close)" );
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help opendb");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
   }
+
+  save_dbip = dbip;
+  dbip = DBI_NULL;
 
   /* Get input file */
   if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
@@ -1639,19 +1638,18 @@ char	**argv;
 	  exit(0);                /* NOT finish() */
       } else {
 	if(argc == 2){
-	  perror( argv[1] );
-
+	  /* need to reset this before returning */
+	  dbip = save_dbip;
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 			   (char *)NULL);
 	  bu_vls_printf(&curr_cmd_list->more_default, "n");
-
-	  dmaflag = 0;
-	  update_views = 0;
 	  return TCL_ERROR;
 	}
 
-	if( *argv[2] != 'y' && *argv[2] != 'Y' )
-	  exit(0);		/* NOT finish() */
+	if( *argv[2] != 'y' && *argv[2] != 'Y' ){
+	  dbip = save_dbip;
+	  return TCL_OK;
+	}
       }
     }
 
@@ -1662,6 +1660,21 @@ char	**argv;
       perror( argv[1] );
       exit(2);		/* NOT finish() */
     }
+  }
+
+  if( save_dbip )  {
+    char *av[2];
+
+    av[0] = "zap";
+    av[1] = NULL;
+
+    /* Clear out anything in the display */
+    f_zap(clientData, interp, 1, av);
+
+    /* Close current database.  Releases MaterHead, etc. too. */
+    db_close(save_dbip);
+
+    log_event( "CEASE", "(close)" );
   }
 
   if( dbip->dbi_read_only )
