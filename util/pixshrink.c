@@ -189,7 +189,8 @@ int ac;
 char *av[];
 {
 	int  c;
-	
+	char *strrchr();
+
 	if (!(progname = strrchr(*av, '/')))
 		progname = *av;
 	
