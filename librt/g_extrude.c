@@ -1107,6 +1107,7 @@ struct soltab		*stp;
 	struct carc_seg *csg;
 	fastf_t radius, a, b, a_sq, b_sq;
 	fastf_t curvature, tmp, dota, dotb;
+	fastf_t der;
 	vect_t diff;
 	vect_t ra, rb;
 
@@ -1120,6 +1121,9 @@ struct soltab		*stp;
 			break;
 		case CARC_SEG:
 		case -CARC_SEG:
+			/* curvature for an ellipse (the rotated and projected circular arc) in XY-plane
+			 * based on curvature for ellipse = |ra||rb|/(|derivative|**3)
+			 */
 			csg = (struct carc_seg *)hitp->hit_private;
 			VCROSS( cvp->crv_pdir, extr->unit_h, hitp->hit_normal );
 			VSUB2( diff, hitp->hit_point, hitp->hit_vpriv );
@@ -1137,8 +1141,8 @@ struct soltab		*stp;
 			dota = VDOT( diff, ra );
 			dotb = VDOT( diff, rb );
 			tmp = (a_sq/(b_sq*b_sq))*dotb*dotb + (b_sq/(a_sq*a_sq))*dota*dota;
-			tmp = sqrt( tmp );
-			curvature = a*b/(tmp*tmp*tmp);
+			der = sqrt( tmp );
+			curvature = a*b/(der*der*der);
 			if( VDOT( hitp->hit_normal, diff ) > 0.0 )
 				cvp->crv_c1 = curvature;
 			else
