@@ -928,23 +928,25 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 	VMOVEN(plane_eq, fu2->f_p->fg_p->N, 4);
 	p.magic_p = b->buffer;
 	for (i=0 ; i < b->end ; ++i) {
-		NMG_CK_VERTEXUSE(p.vu[i]);
-		NMG_CK_VERTEX(p.vu[i]->v_p);
-		NMG_CK_VERTEX_G(p.vu[i]->v_p->vg_p);
+		register struct vertexuse	*vu;
+		vu = p.vu[i];
+		NMG_CK_VERTEXUSE(vu);
+		NMG_CK_VERTEX(vu->v_p);
+		NMG_CK_VERTEX_G(vu->v_p->vg_p);
 
 		if (rt_g.NMG_debug & DEBUG_COMBINE) {
 			rt_log("%d\t%g, %g, %g\t", i,
-				p.vu[i]->v_p->vg_p->coord[X],
-				p.vu[i]->v_p->vg_p->coord[Y],
-				p.vu[i]->v_p->vg_p->coord[Z]);
-			if (*p.vu[i]->up.magic_p == NMG_EDGEUSE_MAGIC) {
+				vu->v_p->vg_p->coord[X],
+				vu->v_p->vg_p->coord[Y],
+				vu->v_p->vg_p->coord[Z]);
+			if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
 				register struct vertex_g *tmpvg;
 
-				NMG_CK_EDGEUSE(p.vu[i]->up.eu_p->eumate_p);
-				NMG_CK_VERTEXUSE(p.vu[i]->up.eu_p->eumate_p->vu_p);
-				NMG_CK_VERTEX(p.vu[i]->up.eu_p->eumate_p->vu_p->v_p);
+				NMG_CK_EDGEUSE(vu->up.eu_p->eumate_p);
+				NMG_CK_VERTEXUSE(vu->up.eu_p->eumate_p->vu_p);
+				NMG_CK_VERTEX(vu->up.eu_p->eumate_p->vu_p->v_p);
 
-				tmpvg = p.vu[i]->up.eu_p->eumate_p->vu_p->v_p->vg_p;
+				tmpvg = vu->up.eu_p->eumate_p->vu_p->v_p->vg_p;
 
 				NMG_CK_VERTEX_G(tmpvg);
 				rt_log("EDGEUSE -> %g, %g, %g\n",
@@ -952,16 +954,16 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 					tmpvg->coord[1],
 					tmpvg->coord[2]);
 
-				nmg_pl_eu(fp, p.vu[i]->up.eu_p, tab, 180, 180, 180);
+				nmg_pl_eu(fp, vu->up.eu_p, tab, 180, 180, 180);
 
-			} else if (*p.vu[i]->up.magic_p == NMG_LOOPUSE_MAGIC) {
+			} else if (*vu->up.magic_p == NMG_LOOPUSE_MAGIC) {
 				rt_log("LOOPUSE\n");
-				nmg_pl_lu(fp, p.vu[i]->up.lu_p, tab, 80, 180, 100);
+				nmg_pl_lu(fp, vu->up.lu_p, tab, 80, 180, 100);
 
-				if ((struct vertexuse *)p.vu[i]->up.lu_p->down_hd.forw !=
-					p.vu[i]) {
+				if ((struct vertexuse *)vu->up.lu_p->down_hd.forw !=
+					vu) {
 					rt_log("vertexuse's parent disowns us!\n");
-						if (((struct vertexuse *)(p.vu[i]->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
+						if (((struct vertexuse *)(vu->up.lu_p->lumate_p->down_hd.forw))->l.magic == NMG_VERTEXUSE_MAGIC)
 							rt_bomb("lumate has vertexuse\n");
 						else
 							rt_bomb("lumate has garbage\n");
@@ -972,8 +974,11 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 
 	}
 
-	if (rt_g.NMG_debug & DEBUG_COMBINE)
+	if (rt_g.NMG_debug & DEBUG_COMBINE)  {
+		rt_free( (char *)tab, "nmg_face_combine flags[]" );
+		tab = (long *)0;		/* sanity */
 		(void)fclose(fp);
+	}
 
 	/* We don't want to start an edge on a loop of one vertex
 	 * becuase such a vertex will lie outside of the face.  Thus
@@ -1051,9 +1056,5 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 		nmg_pl_comb_fu( pn, vn++, fu1 );
 
 	nmg_face_bb(fu1->f_p);
-
-	if (rt_g.NMG_debug & DEBUG_COMBINE)  {
-		rt_free( (char *)tab, "nmg_face_combine flags[]" );
-	}
 }
                                                                                                                                       
