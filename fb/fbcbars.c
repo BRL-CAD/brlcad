@@ -127,11 +127,20 @@ static  RGBpixel eia_top[7] = {
 };
 
 static RGBpixel botpart[5] = {
+#ifdef SYSV
+	/* SysV can't handle floating-point formulas as initializers */
+	{ 0,		68,		114 },		/* 40 IRE -I */
+	{ 255,		255,		255 },		/* 100% white */
+	{ 69,		0,		129 },		/* 40 IRE Q */
+	{ 0,		0,		0 },		/* black */
+	{ 0,		0,		0 }		/* black */
+#else
 	{ 0,		COMP(0.2472),	COMP(0.4123) },	/* 40 IRE -I */
 	{ 255,		255,		255 },		/* 100% white */
 	{ COMP(0.2508),	0,		COMP(0.4670) },	/* 40 IRE Q */
 	{ 0,		0,		0 },		/* black */
 	{ 0,		0,		0 }		/* black */
+#endif
 };
 
 static char usage[] = "\
