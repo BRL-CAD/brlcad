@@ -255,7 +255,7 @@ union tree		*curtree;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	r = nmg_booltree_evaluate(curtree, &tol);	/* librt/nmg_bool.c */
+	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	regions_done++;
 	if (r != 0) {
