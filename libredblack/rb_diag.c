@@ -37,7 +37,7 @@ static void describe_node (struct rb_node *node, int depth, int order)
 			(rb_get_color(node, order) == RB_RED) ? "RED"
 							      : "BLACK");
     fprintf(stderr, "%*s  data:   <%x>\n",
-			depth * 2, "", node -> rbn_data);
+			depth * 2, "", rb_data(node, order));
 }
 
 /*		    I N T E R N A L _ W A L K ( )
@@ -56,13 +56,12 @@ static void internal_walk (struct rb_node *root, int depth,
 {
 
     /* Check data type of the parameter "root" */
-    if (root != 0)
-    {
-	RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
-	visit(root, depth, order);
-	internal_walk (rb_left_child(root, order), depth + 1, order, visit);
-	internal_walk (rb_right_child(root, order), depth + 1, order, visit);
-    }
+    RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+    if (root == rb_null(root -> rbn_tree))
+	return;
+    visit(root, depth, order);
+    internal_walk (rb_left_child(root, order), depth + 1, order, visit);
+    internal_walk (rb_right_child(root, order), depth + 1, order, visit);
 }
 
 /*		    R B _ D I A G N O S E _ T R E E ( )
@@ -79,6 +78,12 @@ void rb_diagnose_tree (rb_tree *tree, int order)
     fprintf(stderr, "-------- Red-black tree <%x> contents --------\n", tree);
     fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
     fprintf(stderr, "Order:       %d of %d\n", order, tree -> rbt_nm_orders);
+    if (rb_root(tree, order) == rb_null(tree))
+	fprintf(stderr, "Empty tree!  %x %x\n",
+	    rb_root(tree, order), rb_null(tree));
+    else
+	fprintf(stderr, "Non-empty tree!  %x %x\n",
+	    rb_root(tree, order), rb_null(tree));
     internal_walk(rb_root(tree, order), 0, order, describe_node);
     fprintf(stderr, "--------------------------------------------------\n");
 }
@@ -98,18 +103,21 @@ void rb_summarize_tree (rb_tree *tree)
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     fprintf(stderr, "-------- Red-black tree <%x> summary --------\n", tree);
     fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
+    fprintf(stderr, "Empty node:  <%x>\n", tree -> rbt_empty_node);
     if (tree -> rbt_nm_orders <= 0)
 	fputs("No orders\n", stderr);
     else
+    {
+	fprintf(stderr, "i    Order[i]     Root[i]       Data[i]\n");
 	for (i = 0; i < tree -> rbt_nm_orders; ++i)
 	{
-	    fprintf(stderr,
-		    "Order[%d]:   <%x>\n", i, rb_order_func(tree, i));
-	    fprintf(stderr,
-		    "Root[%d]:    <%x>\n", i, rb_root(tree, i));
-	    if (rb_root(tree, 0) != RB_NODE_NULL)
-		fprintf(stderr,
-		    "Data[%d]:    <%x>\n", i, rb_root(tree, i) -> rbn_data);
+	    fprintf(stderr, "%-3d  <%x>    <%x>    <%x>\n",
+		    i,
+		    rb_order_func(tree, i),
+		    rb_root(tree, i),
+		    (rb_root(tree, i) == RB_NODE_NULL) ? 0 :
+			rb_root(tree, i) -> rbn_data[i]);
 	}
+    }
     fprintf(stderr, "-------------------------------------------------\n");
 }
