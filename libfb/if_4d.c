@@ -99,6 +99,7 @@ _LOCAL_ int	sgi_dopen(),
 		sgi_curs_set(),
 		sgi_cmemory_addr(),
 		sgi_writerect(),
+		sgi_free(),
 		sgi_help();
 
 /* This is the ONLY thing that we "export" */
@@ -121,7 +122,7 @@ FBIO sgi_interface =
 		fb_sim_readrect,
 		sgi_writerect,
 		fb_null,		/* flush */
-		sgi_dclose,		/* free - XXX */
+		sgi_free,		/* free*/
 		sgi_help,
 		"Silicon Graphics Iris '4D'",
 		XMAXSCREEN+1,		/* max width */
@@ -1156,6 +1157,94 @@ int	width, height;
 }
 
 /*
+ *			S G I _ F I N A L _ C L O S E
+ *
+ *  Handle the real work of restoring the state of the hardware and
+ *  closing the window.
+ */
+_LOCAL_ int
+sgi_final_close( ifp )
+FBIO	*ifp;
+{
+	/*
+	 *  User is finally done with the frame buffer,
+	 *  return control to our caller (who may have more to do).
+	 *  set a 20 minute screensave blanking when fb is closed.
+	 *  We have no way of knowing if there are other libfb windows
+	 *  still open.
+	 */
+#if 0
+	blanktime( (long) 67 * 60 * 20L );
+#else
+	/*
+	 *  Set an 8 minute screensaver blanking, which will light up
+	 *  the screen again if it was dark, and will protect it otherwise.
+	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
+	 */
+	blanktime( (long) 32767L );
+#endif
+
+	/* Restore initial operation mode, if this was 30Hz */
+	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
+		setvideo( DE_R1, SGI(ifp)->mi_der1 );
+
+	/*
+	 *  Note that for the MODE_5GENLOCK mode, the monitor will
+	 *  be left in NTSC mode until the user issues a "Set60"
+	 *  command.  This is vitally necessary because the Lyon-
+	 *  Lamb and VTR equipment need a stedy source of NTSC sync
+	 *  pulses while in the process of laying down frames.
+	 */
+
+	/* Always leave cursor on when done */
+	if( SGI(ifp)->mi_curs_on == 0 )  {
+		setcursor( 0, 1, 0 );		/* system default cursor */
+		curson();
+	}
+
+	winclose( ifp->if_fd );		/* close window */
+
+	if( SGIL(ifp) != NULL ) {
+		/* free up memory associated with image */
+		if( SGI(ifp)->mi_shmid != -1 ) {
+			/* detach from shared memory */
+			if( shmdt( ifp->if_mem ) == -1 ) {
+				fb_log("sgi_dclose shmdt failed, errno=%d\n", errno);
+				return -1;
+			}
+		} else {
+			/* free private memory */
+			(void)free( ifp->if_mem );
+		}
+		/* free state information */
+		(void)free( (char *)SGIL(ifp) );
+		SGIL(ifp) = NULL;
+	}
+
+	sgi_nwindows--;
+	return(0);
+}
+
+/*
+ *			S G I _ F R E E
+ *
+ *  Free shared memory resources, and close.
+ */
+_LOCAL_ int
+sgi_free( ifp )
+FBIO	*ifp;
+{
+	int	ret;
+
+	/* Close the framebuffer */
+	ret = sgi_final_close( ifp );
+
+	/* Zap memory after closing the framebuffer */
+	sgi_zapmem();
+	return ret;
+}
+
+/*
  *			S G I _ D C L O S E
  *
  */
@@ -1172,7 +1261,7 @@ FBIO	*ifp;
 
 	if( sgi_nwindows > 1 ||
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
-		goto out;
+		return sgi_final_close( ifp );
 
 	/*
 	 *  LINGER mode.  Don't return to caller until user mouses "close"
@@ -1259,65 +1348,9 @@ FBIO	*ifp;
 		}
 	}
 out:
-	/*
-	 *  User is finally done with the frame buffer,
-	 *  return control to our caller (who may have more to do).
-	 *  set a 20 minute screensave blanking when fb is closed.
-	 *  We have no way of knowing if there are other libfb windows
-	 *  still open.
-	 */
-#if 0
-	blanktime( (long) 67 * 60 * 20L );
-#else
-	/*
-	 *  Set an 8 minute screensaver blanking, which will light up
-	 *  the screen again if it was dark, and will protect it otherwise.
-	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
-	 */
-	blanktime( (long) 32767L );
-#endif
-
-	/* Restore initial operation mode, if this was 30Hz */
-	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
-		setvideo( DE_R1, SGI(ifp)->mi_der1 );
-
-	/*
-	 *  Note that for the MODE_5GENLOCK mode, the monitor will
-	 *  be left in NTSC mode until the user issues a "Set60"
-	 *  command.  This is vitally necessary because the Lyon-
-	 *  Lamb and VTR equipment need a stedy source of NTSC sync
-	 *  pulses while in the process of laying down frames.
-	 */
-
-	/* Always leave cursor on when done */
-	if( SGI(ifp)->mi_curs_on == 0 )  {
-		setcursor( 0, 1, 0 );		/* system default cursor */
-		curson();
-	}
-
-	winclose( ifp->if_fd );		/* close window */
-
 	if( fp ) fclose(fp);		/* close our "complaints window" */
 
-	if( SGIL(ifp) != NULL ) {
-		/* free up memory associated with image */
-		if( SGI(ifp)->mi_shmid != -1 ) {
-			/* detach from shared memory */
-			if( shmdt( ifp->if_mem ) == -1 ) {
-				fb_log("sgi_dclose shmdt failed, errno=%d\n", errno);
-				return -1;
-			}
-		} else {
-			/* free private memory */
-			(void)free( ifp->if_mem );
-		}
-		/* free state information */
-		(void)free( (char *)SGIL(ifp) );
-		SGIL(ifp) = NULL;
-	}
-
-	sgi_nwindows--;
-	return(0);
+	return sgi_final_close( ifp );
 }
 
 /*
