@@ -765,7 +765,7 @@ va_dcl					/* format, optional arguments */
 	(void)fflush( stdout );
 	(void)fputs( "cad_boundp: ", stderr );
 #ifdef HAVE_VPRINTF
-	(void)vrt_log( fmt, ap );
+	(void)vprintf( fmt, ap );
 #else
 	(void) _doprnt( fmt, ap, stderr );
 #endif
@@ -818,7 +818,7 @@ register coords *coop;		/* -> coords to be output */
 	if ( vflag )
 	{
 		if ( !initial )
-			rt_log( "%g %g %g %g\n",
+			printf( "%g %g %g %g\n",
 			    (double)last.x, (double)last.y,
 			    (double)coop->x, (double)coop->y
 			    );
@@ -826,7 +826,7 @@ register coords *coop;		/* -> coords to be output */
 		last = *coop;		/* save for next start point */
 	}
 	else
-		rt_log( "%g %g\n",
+		printf( "%g %g\n",
 		    (double)coop->x, (double)coop->y
 		    );
 #ifdef	DEBUG

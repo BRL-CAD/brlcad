@@ -47,7 +47,7 @@ static void	Output(), Usage();
 static void
 Usage() 				/* print usage message */
 {
-	(void)rt_log( "usage: cad_parea[ -i input][ -o output]\n"
+	(void)printf( "usage: cad_parea[ -i input][ -o output]\n"
 	    );
 }
 
@@ -108,7 +108,7 @@ char		*argv[];	/* argument strings */
 		case 'i':
 			if ( iflag )
 			{
-				(void)rt_log(
+				(void)printf(
 				    "cad_parea: too many -i options\n"
 				    );
 				return false;
@@ -118,7 +118,7 @@ char		*argv[];	/* argument strings */
 			if ( strcmp( optarg, "-" ) != 0
 			    && freopen( optarg, "r", stdin ) == NULL
 			    )	{
-				(void)rt_log(
+				(void)printf(
 				    "cad_parea: can't open \"%s\"\n",
 				    optarg
 				    );
@@ -129,7 +129,7 @@ char		*argv[];	/* argument strings */
 		case 'o':
 			if ( oflag )
 			{
-				(void)rt_log(
+				(void)printf(
 				    "cad_parea: too many -o options\n"
 				    );
 				return false;
@@ -139,7 +139,7 @@ char		*argv[];	/* argument strings */
 			if ( strcmp( optarg, "-" ) != 0
 			    && freopen( optarg, "w", stdout ) == NULL
 			    )	{
-				(void)rt_log(
+				(void)printf(
 				    "cad_parea: can't create \"%s\"\n",
 				    optarg
 				    );
@@ -174,7 +174,7 @@ register point	*coop;		/* -> input coordinates */
 		if ( cvt == 2 )
 			return true;	/* successfully converted */
 
-		(void)rt_log( "cad_parea: bad input:\n%s\n", inbuf
+		(void)printf( "cad_parea: bad input:\n%s\n", inbuf
 		    );
 		Output( 0.0 );
 		exit( 2 );		/* return false insufficient */
@@ -188,5 +188,5 @@ static void
 Output( result )			/* output computed area */
 double	result; 		/* computed area */
 {
-	rt_log( "%g\n", result );
+	printf( "%g\n", result );
 }
