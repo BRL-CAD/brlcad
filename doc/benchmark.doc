@@ -476,8 +476,14 @@ _
 Abs	vmb	409.5	201.9	181.0	179.0	?	UTX 2.0 [PRELIM]
 *vgr	vmb	?	?	?	?	?
 _
-Abs	vector	5289.9	2255.5	1696.1	1489.2	?	3.0 [PRELIM]
-*vgr	vector	?	?	?	?	?	8 ACEs, no vectors
+Abs	sun4	767.7	373.7	315.5	284.5	435.6	Unix 3.5
+*vgr	sun4	6.26	6.3	6.81	6.19	6.38	-O2 optimization
+_
+Abs     vhs     954.81  471.90  409.78  392.55  557.26  IRix 3.1 
+*vgr    vhs     7.78    7.95    8.85    8.54    8.28    Parallel code -P1
+_
+Abs	vector	5802.92	2261.92	1640.83	1419.19	2781.21	Alliant 3.0
+*vgr	vector	47.31	38.12	35.45	30.88	37.94	8 Processors
 .TE
 .NH 1
 ADDITIONAL STATISTICS
