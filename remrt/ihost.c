@@ -94,14 +94,14 @@ int		enter;
 	addr2 = gethostbyname(addr->h_name);
 	if( addr != addr2 )  {
 		bu_log("host_lookup_by_hostent(%s) got %s?\n",
-			addr->h_name, addr2->h_name );
+			addr->h_name, addr2 ? addr2->h_name : "NULL" );
 		return IHOST_NULL;
 	}
 	addr3 = gethostbyaddr(addr2->h_addr_list[0],
 	    sizeof(struct in_addr), addr2->h_addrtype);
 	if( addr != addr3 )  {
 		bu_log("host_lookup_by_hostent(%s) got %s?\n",
-			addr->h_name, addr3->h_name );
+			addr->h_name, addr3 ? addr3->h_name : "NULL" );
 		return IHOST_NULL;
 	}
 	/* Now addr->h_name points to the "formal" name of the host */
