@@ -215,6 +215,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 	/* initialize the lists of things that have been hit/missed */
 	RT_LIST_INIT(&rd.rd_hit);
 	RT_LIST_INIT(&rd.rd_miss);
+	rd.magic = NMG_RAY_DATA_MAGIC;
 
 	/* intersect the ray with the geometry */
 	nmg_isect_ray_model(&rd);
