@@ -30,7 +30,13 @@ typedef	int	Cast;
 #if defined(i386) && defined(__bsdi__)
 #	define	CPP	"/usr/bin/cpp"
 #endif
-#if defined(i386) && !defined(__bsdi__)
+#if defined(__386BSD__)
+#	define	CPP	"/usr/bin/cpp"
+#endif
+#if defined(__NetBSD__)
+#	define	CPP	"/usr/bin/cpp"
+#endif
+#if defined(i386) && !defined(__bsdi__) && !defined(__386BSD__) && !defined(__NetBSD__)
 	/* CPP is necessary on the PC/AT, cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
 #endif
