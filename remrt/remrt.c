@@ -162,6 +162,7 @@ struct frame {
 	struct frame	*fr_back;
 	int		fr_magic;	/* magic number */
 	long		fr_number;	/* frame number */
+	long		fr_server;	/* server number assigned. */
 	char		*fr_filename;	/* name of output file */
 	int		fr_tempfile;	/* if !0, output file is temporary */
 	/* options */
@@ -299,7 +300,13 @@ struct servers {
 	double		sr_sq_elapsed;	/* sum of pix/elapsed_sec squared */
 	double		sr_l_cpu;	/* cpu_sec for last scanline */
 	double		sr_s_cpu;	/* sum of all cpu times */
+	double		sr_s_pix;	/* sum of all pixels */
+	double		sr_s_e;		/* sum of all elapsed seconds */
+	double		sr_s_sq_cpu;	/* sum of cpu times squared */
+	double		sr_s_sq_pix;	/* sum of pixels squared */
+	double		sr_s_sq_e;	/* sum of all elapsed seceonds squared */
 	int		sr_nsamp;	/* number of samples summed over */
+	double		sr_prep_cpu;	/* sum of cpu time for preps */
 	double		sr_l_percent;	/* last: percent of CPU */
 } servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
@@ -377,6 +384,14 @@ extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 int		rem_debug;		/* dispatcher debugging flag */
 
 extern int	version[];	/* From vers.c */
+#define	OPT_FRAME	0	/* Free for all */
+#define OPT_LOAD	1	/* 10% per server per frame */
+#define OPT_MOVIE	2	/* one server per frame */
+int	work_allocate_method = OPT_MOVIE;
+char *allocate_method[] = {
+	"Frame",
+	"Load Avaraging",
+	"One per Frame"};
 
 /*
  *			T V S U B
@@ -551,6 +566,7 @@ char	**argv;
 			fprintf(stderr,"remrt:  bad arg list\n");
 			exit(1);
 		}
+		if (interactive) work_allocate_method = OPT_FRAME;
 
 		/* take note of database name and treetops */
 		if( optind+2 > argc )  {
@@ -832,6 +848,7 @@ char	*why;
 	}
 	oldstate = sp->sr_state;
 	sp->sr_state = SRST_CLOSING;
+	sp->sr_curframe = FRAME_NULL;
 
 	/* Only remark on servers that got out of "NEW" state.
 	 * This keeps the one-shot commands from blathering here.
@@ -1457,7 +1474,6 @@ register struct frame *fr;
 			perror( fr->fr_filename );
 	}
 
-	destroy_frame( fr );
 
 	/* Run any end-of-frame script */
 	if (frame_script) {
@@ -1470,6 +1486,7 @@ register struct frame *fr;
 		(void) system(cmd);
 		(void) free(cmd);
 	}
+	destroy_frame( fr );
 }
 
 /*
@@ -1480,6 +1497,7 @@ destroy_frame( fr )
 register struct frame	*fr;
 {
 	register struct list	*lp;
+	register struct servers	*sp;
 
 	CHECK_FRAME(fr);
 
@@ -1495,6 +1513,12 @@ register struct frame	*fr;
 	if( fr->fr_filename )  {
 		rt_free( fr->fr_filename, "filename" );
 		fr->fr_filename = (char *)0;
+	}
+	for (sp=&servers[0]; sp<&servers[MAXSERVERS]; sp++) {
+		if (sp->sr_pc == PKC_NULL) continue;
+		if (sp->sr_curframe == fr) {
+			sp->sr_curframe = FRAME_NULL;
+		}
 	}
 	DEQUEUE_FRAME(fr);
 	FREE_FRAME(fr);
@@ -1610,6 +1634,7 @@ struct timeval	*nowp;
 	register struct frame *fr;
 	register struct frame *fr2;
 	int		another_pass;
+	int		nxt_frame;
 	static int	scheduler_going = 0;	/* recursion protection */
 	int		ret;
 
@@ -1679,6 +1704,7 @@ next_frame: ;
 top:
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
 		CHECK_FRAME(fr);
+		nxt_frame=0;
 		do {
 			another_pass = 0;
 			if( fr->fr_todo.li_forw == &(fr->fr_todo) )
@@ -1696,11 +1722,26 @@ top:
 				if( (ret = task_server(fr,sp,nowp)) < 0 )  {
 					/* fr is no longer valid */
 					goto top;
+				} else if (ret == 2) {
+					/* This frame is assigned, move on */
+					nxt_frame=1;
+					break;
+				} else if (ret == 3) {
+					/* we have a server that wants to move on */
+					nxt_frame = 2;
 				} else if( ret > 0 )  {
 					another_pass++;
 				}
 			}
-		} while( another_pass > 0 );
+		/* while servers still hungry for work */
+		} while( !nxt_frame && another_pass > 0 );
+	}
+	if (nxt_frame == 1 && work_allocate_method > 0) {
+		rt_log("%s Change work allocation method (%s to %s)\n",
+		    stamp(), allocate_method[work_allocate_method],
+		    allocate_method[work_allocate_method-1]);
+		work_allocate_method--;
+		goto top;
 	}
 	/* No work remains to be assigned, or servers are stuffed full */
 out:
@@ -1776,6 +1817,7 @@ struct timeval		*nowp;
 	register struct list	*lp;
 	int			a, b;
 	int			lump;
+	int			maxlump;
 
 	if( sp->sr_pc == PKC_NULL )  return(0);
 
@@ -1830,12 +1872,21 @@ struct timeval		*nowp;
 	 *  viewpoint.
 	 */
 	if( sp->sr_curframe != fr )  {
+		if (sp->sr_curframe != FRAME_NULL ) return 3;
+		if (work_allocate_method==OPT_MOVIE) {
+			register struct servers *csp;
+			for (csp=&servers[0]; csp < &servers[MAXSERVERS]; csp++ ){
+				if (csp->sr_curframe == fr) return 2;
+			}
+		} else if (work_allocate_method==OPT_LOAD) {
+			return 2;	/* need more work */
+		}
 		sp->sr_curframe = fr;
 		send_matrix( sp, fr );
 		/* XXX should see if this is necessary... */
 		send_gettrees( sp, fr );
 		/* Now in state SRST_DOING_GETTREES */
-		return(1);	/* need more work */
+		return 1;	/* need more work */
 	}
 
 	/* Special handling for the first assignment of each frame */
@@ -1861,7 +1912,20 @@ struct timeval		*nowp;
 	if( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
 	/* Provide some bounds checking */
 	if( lump < 32 )  lump = 32;
-	else if( lump > REMRT_MAX_PIXELS )  lump = REMRT_MAX_PIXELS;
+	else if( lump > REMRT_MAX_PIXELS ) lump = REMRT_MAX_PIXELS;
+
+	/*
+	 * Besides the hard limit for lump size, try and keep the 
+	 * lump size to 1/32 of the total image.
+	 * With the old way, 640x480 = 307200 / (32*1024) = 9.375 or a little
+	 * less than 1/9th of the total image.  And it was not uncommon
+	 * for the server to be given three lumps that size or 1/3 of the
+	 * image. 
+	 */
+	maxlump = fr->fr_height / 32;
+	if (maxlump < 1) maxlump = 1;
+	maxlump *= fr->fr_width;
+	if (lump > maxlump) lump=maxlump;
 	sp->sr_lump = lump;
 
 	a = lp->li_start;
@@ -3391,6 +3455,21 @@ char	**argv;
 	add_host( ihp );
 	return 0;
 }
+cd_allocate( argc, argv )
+int argc;
+char **argv;
+{
+	if (strcmp(argv[1], "frame") == 0) {
+		work_allocate_method = OPT_FRAME;
+	} else if ( strcmp(argv[1], "movie") == 0 ) {
+		work_allocate_method = OPT_MOVIE;
+	} else if ( strcmp(argv[1], "load") == 0 ) {
+		work_allocate_method = OPT_LOAD;
+	} else {
+		rt_log("%s Bad allocateby type '%s'\n", stamp(), argv[1]);
+	}
+}
+		
 
 cd_restart( argc, argv )
 int	argc;
@@ -3838,6 +3917,7 @@ int	argc;
 char	**argv;
 {
 	exit(0);
+	/*NOTREACHED*/
 	return 0;
 }
 
@@ -3885,6 +3965,8 @@ struct command_tab cmd_tab[] = {
 		cd_hold,	2, 2,
 	"resume","host",	"resume a host processing",
 		cd_resume,	2, 2,
+	"allocteby", "allocateby", "Work allocation method",
+		cd_allocate,	2, 2,
 	"restart", "[host]",	"restart one or all hosts",
 		cd_restart,	1, 2,
 	"go", "",		"start scheduling frames",
