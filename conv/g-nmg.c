@@ -38,11 +38,11 @@ static char RCSid[] = "$Header$";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
+#include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "db.h"
 #include "../librt/debug.h"
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
