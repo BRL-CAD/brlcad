@@ -1085,20 +1085,6 @@ char line[MAX_LINE_LEN];
 	top_level = 0;
 
 	return;
-
-#if 0
-empty_model:
-	{
-		char *save_name;
-
-		bu_log( "\t%s is empty, ignoring\n" , name );
-		save_name = (char *)bu_malloc( NAMESIZE*sizeof( char ), "save_name" );
-		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
-		strncpy( save_name, brlcad_name, NAMESIZE );
-		bu_ptbl_ins( &null_parts, (long *)save_name );
-		return;
-	}
-#endif
 }
 
 static void
@@ -1134,14 +1120,7 @@ Rm_nulls()
 	struct db_i *dbip;
 	int i;	
 
-/* XXX you can just use existing fd_out->dbip here. */
-	dbip = db_open( brlcad_file, "rw" );
-	if( dbip == DBI_NULL )
-	{
-		bu_log( "Cannot db_open %s\n", brlcad_file );
-		bu_log( "References to NULL parts not removed\n" );
-		return;
-	}
+	dbip = fd_out->dbip;
 
 	if( debug || BU_PTBL_END( &null_parts )  )
 	{
@@ -1154,8 +1133,6 @@ Rm_nulls()
 			bu_log( "\t%s\n" , save_name );
 		}
 	}
-
-	db_dirbuild( dbip );
 
 	for( i=0 ; i<RT_DBNHASH ; i++ )
 	{
@@ -1172,6 +1149,10 @@ Rm_nulls()
 
 			/* skip solids */
 			if( dp->d_flags & DIR_SOLID )
+				continue;
+
+			/* skip non-geometry */
+			if( !(dp->d_flags & ( DIR_SOLID | DIR_COMB ) ) )
 				continue;
 
 			if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL, &rt_uniresource ) < 1 )
@@ -1260,7 +1241,6 @@ Rm_nulls()
 			bu_free( (char *)tree_list, "tree_list" );
 		}
 	}
-	db_close( dbip );
 }
 
 /*
@@ -1411,9 +1391,11 @@ char	*argv[];
 	}
 
 	fclose( fd_in );
-	wdb_close( fd_out );
 
 	/* Remove references to null parts */
 	Rm_nulls();
+
+	wdb_close( fd_out );
+
 	return 0;
 }
