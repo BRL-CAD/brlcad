@@ -6,7 +6,7 @@
 
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
-			pipetest nmgmodel brickwall wall \
+			pipetest nmgmodel brickwall wall tea_nmg \
 			mk_bolt mk_handle mk_window mk_winfrm mk_gastank \
 			mk_wire pipe
 #define STATIC_PRODUCTS		\
@@ -54,6 +54,9 @@ molecule:	molecule.o
 
 teapot:		tea.o
 	CC LDFLAGS tea.o LIBWDB LIBRT LIBRT_LIBES LIBES -o teapot
+
+tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP
+	CC LDFLAGS tea_nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o tea_nmg
 
 pipetest:	pipetest.o
 	CC LDFLAGS pipetest.o LIBWDB LIBRT LIBRT_LIBES LIBES -o pipetest
