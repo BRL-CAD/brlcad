@@ -391,8 +391,10 @@ printf("X24_open() mode:0x%x\n", mode);
 	/* Set up an X window, graphics context, etc. */
 
 	if ((ret = xsetup(ifp, width, height)) < 0) {
+#if X_DBG
 		fb_log("if_X24: Can't get 24 bit Visual on X display \"%s\"\n",
 		       XDisplayName(NULL));
+#endif
 		X24_destroy(xi);
 		return(-1);
 	}
@@ -401,8 +403,10 @@ printf("X24_open() mode:0x%x\n", mode);
 		extern FBIO X_interface;	/* from if_X.c */
 		char	*nametemp;
 
+#if X_DBG
 		fb_log("if_X24: Can't get 24 bit Visual on X display \"%s\", trying 8/1-bit code\n",
 		       XDisplayName(NULL));
+#endif
 		X24_destroy(xi);
 
 		/* Let if_X take a crack at it */
