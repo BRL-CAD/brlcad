@@ -968,7 +968,7 @@ main( argc, argv )
 				if ( verbose )
 					Message( "global color map used" );
 
-				(void)bcopy( g_cmap, cmap, 3 * entries );
+				(void)bcopy( (char *)g_cmap, (char *)cmap, 3 * entries );
 				}
 
 			/* `image' is 0 if all images are to be displayed;

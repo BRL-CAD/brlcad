@@ -91,7 +91,7 @@ FBIO *fb;
 	if ((altline = (unsigned char *) malloc(scr_width*3)) == (unsigned char *)NULL) {
 		exit(-1);
 	} else {
-		bzero(altline, scr_width*3);
+		bzero( (char *)altline, scr_width*3);
 	}
 
 	mk_ramp(fb, 1, 1, 1, 0);

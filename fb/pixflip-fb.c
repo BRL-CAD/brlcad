@@ -186,7 +186,7 @@ char **argv;
 			(void)fprintf(stderr,"pixflip-fb:  malloc %d failure\n", scanbytes );
 			break;
 		}
-		bzero( obuf, scanbytes );
+		bzero( (char *)obuf, scanbytes );
 		frames[maxframe] = obuf;
 
 		fprintf(stderr,"%d ", framenumber);  fflush(stdout);

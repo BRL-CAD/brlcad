@@ -883,7 +883,7 @@ slop_lines(nlines)
 	if (rlines < nlines) {
 		if (writelines(rlines, buf0p) < 0)
 			exit(1);
-		bzero(buf0p, rlines * bytes_per_line);
+		bzero( (char *)buf0p, rlines * bytes_per_line);
 		buf0p = buffer;
 		nlines -= rlines;
 		xpos -= rlines;
@@ -891,7 +891,7 @@ slop_lines(nlines)
 	}
 	if (writelines(nlines, buf0p) < 0)
 		exit(1);
-	bzero(buf0p, bytes_per_line * nlines);
+	bzero( (char *)buf0p, bytes_per_line * nlines);
 	buf0p += bytes_per_line * nlines;
 	if (buf0p >= &buffer[BUFFER_SIZE])
 		buf0p -= BUFFER_SIZE;
