@@ -3,6 +3,15 @@
  *
  *      This program generages a chain-link fence.  Every parameter of
  *      the fence may be adjusted.  Default values are held in fence.h
+ *      Be wary of long fences...  
+ *
+ *      Note: It would be much more optimal for there to be a fence
+ *      object type (or a mesh object type) so that memory usage is 
+ *      minimized.  I.e. instead of creating a thousand little
+ *      translations, rotations, and copies of basic primitives for a
+ *      short 5 foot fence, we would just store the height, width, 
+ *      and mesh parameters (angle of twists in xyz, vertical separation,
+ *      horizontal separation, and depth).
  *
  *  Author -
  *      Christopher Sean Morrison
@@ -23,10 +32,6 @@
  ***********************************************************************/
 
 #include "./fence.h"
-
-#ifndef M_PI
-#define M_PI            3.14159265358979323846
-#endif
 
 /* command-line options are described in the parseArguments function
  */
@@ -117,12 +122,17 @@ void argumentHelp(fp, progname, message)
      char *progname;
      char *message;
 {
-  if (message) (void) fputs(strcat(message, "\n"), fp);
+  fflush(stdout);
+  if (message) {
+    fprintf(fp, "%s\n", message);
+  }
+  fflush(stdout);
 
   fprintf(fp, "Usage Format: \n%s %s\n\n", progname, \
 	   "-[ivdonuhHlLrRjatTbBcCfpmwseEgGxXzZ]" \
 	  );
   fprintf(fp, "\t-[ivd]\n\t\tspecifies interactive, verbose, and/or debug modes\n");
+  fprintf(fp, "\t-[IVD]\n\t\ttoggles interactive, verbose, and/or debug modes\n");
   fprintf(fp, "\t-o filename\n\t\tspecifies the name of the file to output to\n");
   fprintf(fp, "\t-n 'string'\n\t\tthe 'string' name of the csg database\n");
   fprintf(fp, "\t-u 'units'\n\t\tthe units of the data in the csg database\n");
@@ -133,8 +143,8 @@ void argumentHelp(fp, progname, message)
   fprintf(fp, "\t-a angle\n\t\tthe primary angle of the wire 'zig-zagging'\n");
   fprintf(fp, "\t-j distance\n\t\tthe maximum spacing between the poles\n");
   fprintf(fp, "\t-[tT] 'material'\n\t\tthe material of the fence (t) or \n\t\tthe material of all generated regions (T)\n");
-  fprintf(fp, "\n-[bB] 'parameters'\n\t\tthe parameter string for the fence material(b)\n\t\tor of all region materials (B)\n");
-  fprintf(fp, "\n-[cC] 'rval gval bval'\b\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= vlaues <= 255)\n"); 
+  fprintf(fp, "\t-[bB] 'parameters'\n\t\tthe parameter string for the fence material(b)\n\t\tor of all region materials (B)\n");
+  fprintf(fp, "\t-[cC] 'rval gval bval'\b\t\tthe RGB color of the fence (c)\n\t\tor of all region materials (C)\n\t\t(0 <= values <= 255)\n"); 
   fprintf(fp, "\t-f fencename\n\t\tthe base name of the fence objects in the database\n");
   fprintf(fp, "\t-p polename\n\t\tthe base name of the pole objects in the database\n");
   fprintf(fp, "\t-m meshname\n\t\tthe base name of the mesh objects in the database\n");
@@ -144,7 +154,9 @@ void argumentHelp(fp, progname, message)
   fprintf(fp, "\t-[gG] [fpm]\n\t\tspecifies which parts of the fence object(s) to generate\n\t\t'g' specifies to generate the object(s)\n\t\t'G' specifies to do the opposite of the default(s)\n");
   fprintf(fp, "\t-[xX]\n\t\tdisplays some command-line parameter examples\n");
   fprintf(fp, "\t-[zZ]\n\t\tdisplays the default settings\n");
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
+
+  fflush(stdout);
 
   return;
 }
@@ -165,7 +177,7 @@ void argumentExamples(fp, progname)
 	   "-o", outputFilename, \
 	   "-e", "f" \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   fprintf(fp, "Full Interactive-Mode Example: \n%s %s %s %s %s %s\n", 
 	   progname, \
@@ -173,7 +185,7 @@ void argumentExamples(fp, progname)
 	   "-o", outputFilename, \
 	   "-e", "fpmw" \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   fprintf(fp, "Simple Parameter-Specified Example: \n%s %s %s %s %.1f %s %.1f\n", 
 	   progname, \
@@ -181,7 +193,7 @@ void argumentExamples(fp, progname)
 	   "-H", MAGNITUDE(fenceHeight), \
 	   "-L", MAGNITUDE(fenceWidth) \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   fprintf(fp, "Extended Parameter-Specified Example: \n%s %s %s %s %s %s %s %s '%.1f %.1f %.1f' %s '%.1f %.1f %.1f' %s %.1f %s %.1f %s %.1f %s %.1f %s '%d %d %d' %s %s\n", 
 	   progname, \
@@ -197,7 +209,7 @@ void argumentExamples(fp, progname)
 	   "-c", fenceMaterialColor[0], fenceMaterialColor[1], fenceMaterialColor[2], \
 	   "-e", "fpm" \
 	  );
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
 
   return;
 }
@@ -236,7 +248,7 @@ void defaultSettings(fp)
   fprintf(fp, "\t\t\t\tMaterial[%s] \n\t\t\t\tMaterial Parameters[%s] \n\t\t\t\tMaterial Color[%d %d %d]\n\n", wireMaterial, wireMaterialParams, wireMaterialColor[0], wireMaterialColor[1], wireMaterialColor[2]);
   fprintf(fp, "\tCombination Names: \n");
   fprintf(fp, "\t\tFence: [%s] \n\t\tPoles: [%s] \n\t\tMesh: [%s] \n\t\tWires: [%s] \n\t\tSegments: [%s] \n\n", fenceName, poleName, meshName, wireName, segmentName);
-  putc((int)'\n', fp);
+  fprintf(fp, "\n");
   fprintf(fp, "No action performed.\n");
 }
 
@@ -255,12 +267,21 @@ int parseArguments(argc, argv)
   double d=0.0;
   char *progname;
   int color[3];
-  progname = calloc(64,sizeof(char));
 
-  if ((progname = strrchr(*argv, '/')))
-    progname++;
-  else
-    progname = *argv;
+  if ((progname = (char *) calloc(DEFAULT_MAXNAMELENGTH,sizeof(char))) == NULL) {
+    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "parseArguments:(char *)progname calloc FAILED\n");
+    exit(1);
+  }
+
+  fflush(stdout);
+
+  if (argc > 1) {
+    strncpy(progname, argv[0], (strlen(argv[0])>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])));
+  }
+  else {
+    strncpy(progname, "fence\0", 6);
+  }
+  fflush(stdout);
 
   opterr = 0;
 
@@ -610,16 +631,20 @@ int parseArguments(argc, argv)
       break;
 
     case '?' :
+  fflush(stdout);
       (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Command-line argument assistance");
       exit(1);
       break;
 
     default  : /*shouldn't be reached since getopt throws a ? for args not found*/
+  fflush(stdout);
       (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Illegal command-line argument");
       exit(1);
       break;
     }
   }
+  fflush(stdout);
+
   return(optind);
 }
 
@@ -734,8 +759,7 @@ int generateFence(fp, fencename, startposition, heightvector, widthvector)
   VMOVE(fenceWidth, widthvector);
   
   if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nBeginning fence [%s] generation...\n", fencename);
-  
-  
+
   if ((mk_id_units(fp, id, units))==0) {
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:id[%s], units[%s]\n", id, units);
     if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\"%s\" (units==\"%s\")\n", id, units);
