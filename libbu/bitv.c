@@ -72,7 +72,7 @@ struct bu_bitv *bv;
 {
 	BU_CK_BITV(bv);
 
-	bv->l.forw = bv->.l.back = BU_LIST_NULL;	/* sanity */
+	bv->l.forw = bv->l.back = BU_LIST_NULL;	/* sanity */
 	bu_free( (char *)bv, "struct bu_bitv" );
 }
 
