@@ -71,7 +71,9 @@ FBIO ug_interface =  {
 	ug_cscreen_addr,		/* cursor_move_screen_addr */
 	fb_sim_readrect,
 	fb_sim_writerect,
-/* XXX add help here */
+	fb_null,			/* flush		*/
+	ug_dclose,			/* free			*/
+	fb_null,			/* XXX add help here	*/
 	"Ultra Graphics",		/* device description	*/
 	1280,				/* max width		*/
 	1024,				/* max height		*/
