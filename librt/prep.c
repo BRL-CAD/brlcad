@@ -393,6 +393,8 @@ struct rt_i	*rtip;
  *  Returns -
  *	<0	failure
  *	 0	OK
+ *
+ *  XXX This shouldn't be bn_, but rt_!
  */
 int
 bn_vlist_solid( vhead, rtip, stp )
