@@ -451,6 +451,10 @@ register double			wl;
  *
  *  This assumes interpretation (2) of the data, i.e. that the values
  *  are the average value across the interval.
+ *
+ *  XXX Really should check to see if more than one input value spans
+ *  interval in output, and if so, average those inputs together
+ *  weighted by their fraction of the span.
  */
 struct rt_tabdata *
 rt_tabdata_resample( newtable, olddata )
