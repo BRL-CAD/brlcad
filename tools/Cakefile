@@ -96,8 +96,13 @@ rlestereo: rlestereo.o
 rlesplice: rlesplice.o
 	CC LDFLAGS rlesplice.o LIBRLE LIBES -o rlesplice
 
+#ifdef __NetBSD__
+rlespiff: rlespiff.o
+	CC LDFLAGS rlespiff.o LIBRLE LIBES -lcompat -o rlespiff
+#else
 rlespiff: rlespiff.o
 	CC LDFLAGS rlespiff.o LIBRLE LIBES -o rlespiff
+#endif
 
 rlenoise: rlenoise.o
 	CC LDFLAGS rlenoise.o LIBRLE LIBES -o rlenoise
