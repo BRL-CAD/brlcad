@@ -56,8 +56,6 @@ char **argv;
 	y = nlines-1;
 	while( read( infd, (char *)scanline, scanbytes ) == scanbytes )  {
 		clustwrite( scanline, y, nlines );
-		/* Done twice to avoid hardware problems right now... */
-		clustwrite( scanline, y, nlines );
 		if( --y < 0 )
 			break;
 	}
