@@ -414,7 +414,7 @@ int flag;
 	/* NOTE - only reach here if flag == LISTEVAL */
 	/* do_list will print actual solid name */
 	rt_log("/");
-	do_list( stdout, dp, 1 );
+	do_list( stderr, dp, 1 );
 }
 
 /*
