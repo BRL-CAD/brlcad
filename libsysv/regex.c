@@ -32,6 +32,8 @@ char	regex_dummy;      /* some systems can't handle empty object modules */
 #endif
 #else
 
+/* For systems with SYSV regular expression support */
+#if defined(USE_SYSV_RE)
 extern struct re_msg
 	{
 	int	number;
@@ -118,4 +120,42 @@ re_exec( s )				/* returns 1 if s matches, else 0 */
 	locs = 0;			/* ??? */
 	return step( s, re_buf );
 	}
+#endif
+
+
+/* For systems with the POSIX regcomp() support */
+#if defined(USE_REGCOMP)
+
+#include <sys/types.h>
+#include <regex.h>
+
+static regex_t reg;
+
+char *
+re_comp(s)
+char *s;
+{
+	int i;
+	static char errbuf[1024];
+	i = regcomp(&reg, s, REG_BASIC|REG_NOSUB);
+
+	if (i) {
+		regerror(i, &reg, errbuf, sizeof(errbuf));
+		return errbuf;
+	}
+	return (char *)0;
+}
+
+int
+re_exec(s)
+char *s;
+{
+	int i;
+
+	i = regexec(&reg, s, (size_t) 0, (regmatch_t *)0, 0);
+
+	return !i;
+}
+#endif
+
 #endif
