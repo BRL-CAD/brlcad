@@ -103,8 +103,28 @@ if test "x$build_vendor" = "xsgi" ; then
    PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
 fi
 
+# where are we coming from and where are we going to.
+# prefix is set to NONE until AC_OUTPUT unless --prefix is used
 AC_CONFIG_SRCDIR([src/librt/bool.c])
-AC_PREFIX_DEFAULT(/usr/brlcad)
+AC_PREFIX_DEFAULT([/usr/brlcad])
+AC_MSG_CHECKING([where BRL-CAD is to be installed])
+if test "x$prefix" = "xNONE" ; then
+	prefix="$ac_default_prefix"
+fi
+AC_DEFINE_UNQUOTED([BRLCAD_ROOT], "${prefix}", "Location where BRL-CAD is installed")
+AC_MSG_RESULT($prefix)
+if test ! "x$BRLCAD_ROOT" = "x" ; then
+	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+	AC_MSG_WARN([BRLCAD_ROOT should only be used to override an install directory at runtime])
+	AC_MSG_WARN([BRLCAD_ROOT is presently set to "${BRLCAD_ROOT}"])
+	AC_MSG_NOTICE([It is highly recommended that BRLCAD_ROOT be unset and not used])
+	if test "x$BRLCAD_ROOT" = "x$prefix" ; then
+		AC_MSG_WARN([BRLCAD_ROOT is not necessary and may cause unexpected behavior])
+		AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+	else
+		AC_MSG_ERROR([*** Environment variable BRLCAD_ROOT conflicts with --prefix ***])
+	fi
+fi
 
 AC_MSG_CHECKING([whether dependency tracking should be enabled])
 if test -d $srcdir/CVS ; then
@@ -635,7 +655,6 @@ else
 	AC_MSG_RESULT([not found])
 fi
 
-AC_DEFINE_UNQUOTED([INSTALL_DIRECTORY], "${prefix}", "Location where BRLCAD is installed")
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(USE_MESA_GL,1,[Assume mesagl is always around (fixme)])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
@@ -1834,7 +1853,7 @@ TCL_LIB_FLAG='-ltcl8.4'
 AC_SUBST(TCL_LIB_FLAG)
 TCL_BUILD_LIB_SPEC='-L../../libtcl/.libs -ltcl8.4 -Wl,--rpath -Wl,${libdir}'
 AC_SUBST(TCL_BUILD_LIB_SPEC)
-TCL_INCLUDE_SPEC="-I${prefix}/include -I../../libtcl/generic"
+TCL_INCLUDE_SPEC='-I${prefix}/include -I../../libtcl/generic'
 AC_SUBST(TCL_INCLUDE_SPEC)
 TCL_LIB_VERSIONS_OK='ok'
 AC_SUBST(TCL_LIB_VERSIONS_OK)
@@ -1851,7 +1870,7 @@ AC_SUBST(TCL_BUILD_STUB_LIB_SPEC)
 AC_SUBST(TCL_STUB_LIB_SPEC)
 TCL_BUILD_STUB_LIB_PATH="../../libtcl/.libs/libtclstub8.4.a"
 AC_SUBST(TCL_BUILD_STUB_LIB_PATH)
-TCL_STUB_LIB_PATH="${prefix}/lib/libtclstub8.4.a"
+TCL_STUB_LIB_PATH='${prefix}/lib/libtclstub8.4.a'
 AC_SUBST(TCL_STUB_LIB_PATH)
 TCL_THREADS=0
 AC_SUBST(TCL_THREADS)
