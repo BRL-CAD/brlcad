@@ -24,6 +24,10 @@
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 
+#if !defined(M_PI)
+#define M_PI            3.14159265358979323846
+#endif
+
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 #define CLAMP(v, l, h)  if (v < l) v = l; if (v > h) v = h
 
