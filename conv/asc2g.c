@@ -4,7 +4,7 @@
  *  This program generates a GED database from an
  *  ASCII GED data file.
  *
- *  Usage:  asc2g < file.asc > file.g
+ *  Usage:  asc2g file.asc file.g
  *  
  *  Authors -
  *  	Charles M Kennedy
@@ -67,7 +67,6 @@ void		strsolbld(), nmgbld();
 static union record	record;			/* GED database record */
 static char 		buf[BUFSIZE];		/* Record input buffer */
 char			name[NAMESIZE + 2];
-int 			debug;
 
 FILE	*ifp;
 struct rt_wdb	*ofp;
@@ -80,7 +79,7 @@ static fastf_t **ars_curves=NULL;
 
 static char usage[] = "\
 Usage: asc2g file.asc file.g\n\
- Convert an ASCII v4 BRL-CAD database to binary form\n\
+ Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
 int
@@ -110,85 +109,51 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-	int c1;
-	ifp = stdin;
+	char c1[3];
 
 	bu_debug = BU_DEBUG_COREDUMP;
 
-
-	if( argc > 1 && strcmp( argv[1], "-d" ) == 0 )  {
-		argc--; argv++;
-		debug = 1;
+	if( argc != 3 ) {
+		bu_log( "%s", usage );
+		exit( 1 );
 	}
 
-	if( argc == 3 ) {
-		if( strcmp(argv[1], "-") == 0 )
-			ifp = stdin;
-		else
-			ifp = fopen(argv[1],"r");
-		if( !ifp )  perror(argv[1]);
-
-		ofp = wdb_fopen(argv[2]);
-		if( !ofp )  perror(argv[2]);
-		if (ifp == NULL || ofp == NULL) {
-			(void)fprintf(stderr, "asc2g: can't open files.");
-			exit(1);
-		}
-	} else {
-		fprintf(stderr, "%s", usage);
-		return 2;
+	ifp = fopen(argv[1],"r");
+	if( !ifp )  perror(argv[1]);
+	
+	ofp = wdb_fopen(argv[2]);
+	if( !ofp )  perror(argv[2]);
+	if (ifp == NULL || ofp == NULL) {
+		(void)fprintf(stderr, "asc2g: can't open files.");
+		exit(1);
 	}
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	c1 = fgetc( ifp );
-	if( c1 == EOF ) {
+	if( fgets( c1, 3, ifp ) == NULL ) {
 		bu_bomb( "Unexpected EOF!!!\n" );
 	}
 
-	if( c1 == 'd' ) {
+	if( !strncmp( c1, "db", 2 ) ) {
 		Tcl_Interp     *interp;
 
 		/* this is a Tcl script */
 
-		ungetc( c1, ifp );
+		rewind( ifp );
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
 		interp = Tcl_CreateInterp();
 		if( wdb_init_obj( interp, ofp, "db" ) != TCL_OK ) {
 			bu_bomb( "Failed to initialize wdb_obj!!\n" );
 		}
 
-		if( ifp == stdin ) {
-			Tcl_Obj	*input_script;
-			struct bu_vls	str;
-			char ch_block[BUFSIZE];
-
-			bu_vls_init( &str );
-
-			while( fgets( ch_block, BUFSIZE, ifp ) ) {
-				bu_vls_strcat( &str, ch_block );
-			}
-
-			input_script = Tcl_NewStringObj( bu_vls_addr( &str ), bu_vls_strlen( &str ) );
-			bu_vls_free( &str );
-
-			if( Tcl_EvalObjEx(interp, input_script, TCL_EVAL_DIRECT ) != TCL_OK ) {
-				bu_log( "Failed to process input from stdin!!\n" );
-				bu_log( "%s\n", Tcl_GetStringResult(interp) );
-				bu_log( "script:\n%s\n", bu_vls_addr( &str ) );
-				exit( 1 );
-			}
-
-		} else {
-			if( Tcl_EvalFile( interp, argv[1] ) != TCL_OK ) {
-				bu_log( "Failed to process input file (%s)!!\n", argv[1] );
-				bu_log( "%s\n", Tcl_GetStringResult(interp) );
-				exit( 1 );
-			}
+		if( Tcl_EvalFile( interp, argv[1] ) != TCL_OK ) {
+			bu_log( "Failed to process input file (%s)!!\n", argv[1] );
+			bu_log( "%s\n", Tcl_GetStringResult(interp) );
+			exit( 1 );
 		}
 		exit( 0 );
 	} else {
-		ungetc( c1, ifp );
+		rewind( ifp );
 	}
 
 	/* Read ASCII input file, each record on a line */
@@ -199,8 +164,6 @@ after_read:
 		(void)bzero( (char *)&record, sizeof(record) );
 
 		/* Check record type */
-		if( debug )
-			bu_log("rec %c\n", buf[0] );
 		switch( buf[0] )  {
 		case ID_SOLID:
 			solbld();
