@@ -130,3 +130,5 @@ INCLUDES = \
 BUILT_SOURCES = vers.c
 vers.c:
 	sh $(top_srcdir)/sh/vers.sh version "Geometry Editor (MGED)"> $@
+
+EXTRA_DIST = $(man_MANS)
