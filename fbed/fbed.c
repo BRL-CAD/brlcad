@@ -24,8 +24,12 @@ char	sccsTag[] = "%Z% %M%	%I%	last edit %G% at %U%";
 #include "./try.h"
 #include "./extern.h"
 
-static long cursor[32] =
+static struct
 	{
+	int	xbits, ybits;
+	int	xorig, yorig;
+	unsigned char bits[32*4];
+	} cursor = {
 #include "cursorbits.h"
 	};
 
@@ -1684,7 +1688,8 @@ fb_Setup()
 		prnt_Debug( "Can't write color map." );
 		return	0;
 		}
-	if( fb_setcursor( fbp, cursor ) == -1 )
+	if( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
+	    cursor.xorig, cursor.yorig ) == -1 )
 		{
 		prnt_Debug( "Can't set up cursor." );
 		return	0;
