@@ -16,13 +16,9 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
 #include "debug.h"
-#include "cut.h"
 
 int rt_cutLen = 3;			/* normal limit on number objs per box node */
 int rt_cutDepth = 32;		/* normal limit on depth of cut tree */
-
-union cutter CutHead;		/* Global head of cutting tree */
-union cutter *CutFree;		/* Head of freelist */
 
 HIDDEN int rt_ck_overlap();
 HIDDEN void rt_cut_add(), rt_cut_box(), rt_cut_optim();
@@ -46,17 +42,17 @@ void
 rt_cut_it()  {
 	register struct soltab *stp;
 
-	CutHead.bn.bn_type = CUT_BOXNODE;
-	VMOVE( CutHead.bn.bn_min, rt_i.mdl_min );
-	VMOVE( CutHead.bn.bn_max, rt_i.mdl_max );
-	CutHead.bn.bn_len = 0;
-	CutHead.bn.bn_maxlen = rt_i.nsolids+1;
-	CutHead.bn.bn_list = (struct soltab **)rt_malloc(
-		CutHead.bn.bn_maxlen * sizeof(struct soltab *),
+	rt_i.rti_CutHead.bn.bn_type = CUT_BOXNODE;
+	VMOVE( rt_i.rti_CutHead.bn.bn_min, rt_i.mdl_min );
+	VMOVE( rt_i.rti_CutHead.bn.bn_max, rt_i.mdl_max );
+	rt_i.rti_CutHead.bn.bn_len = 0;
+	rt_i.rti_CutHead.bn.bn_maxlen = rt_i.nsolids+1;
+	rt_i.rti_CutHead.bn.bn_list = (struct soltab **)rt_malloc(
+		rt_i.rti_CutHead.bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: root list" );
 	for(stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-		CutHead.bn.bn_list[CutHead.bn.bn_len++] = stp;
-		if( CutHead.bn.bn_len > CutHead.bn.bn_maxlen )  {
+		rt_i.rti_CutHead.bn.bn_list[rt_i.rti_CutHead.bn.bn_len++] = stp;
+		if( rt_i.rti_CutHead.bn.bn_len > rt_i.rti_CutHead.bn.bn_maxlen )  {
 			rt_log("rt_cut_it:  rt_i.nsolids wrong, dropping solids\n");
 			break;
 		}
@@ -71,12 +67,12 @@ rt_cut_it()  {
 	if( rt_cutDepth < 9 )  rt_cutDepth = 9;
 	if( rt_cutDepth > 24 )  rt_cutDepth = 24;		/* !! */
 rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
-	rt_cut_optim( &CutHead, 0 );
-	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &CutHead, 0 );
+	rt_cut_optim( &rt_i.rti_CutHead, 0 );
+	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &rt_i.rti_CutHead, 0 );
 	if(rt_g.debug&DEBUG_PLOTBOX && (plotfp=fopen("rtbox.plot", "w"))!=NULL) {
 		space3( 0,0,0, 4096, 4096, 4096);
 		/* First, all the cutting boxes */
-		rt_plot_cut( &CutHead, 0 );
+		rt_plot_cut( &rt_i.rti_CutHead, 0 );
 		/* Then, all the solid bounding boxes, in white */
 		plot_color( 255, 255, 255 );
 		for(stp=rt_i.HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
@@ -148,6 +144,17 @@ int depth;
 	}
 
 	/* Just add to list at this box node */
+	rt_cut_extend( cutp, stp );
+}
+
+/*
+ *			R T _ C U T _ E X T E N D
+ */
+void
+rt_cut_extend( cutp, stp )
+register union cutter *cutp;
+struct soltab *stp;
+{
 	if( cutp->bn.bn_len >= cutp->bn.bn_maxlen )  {
 		/* Need to get more space in list.  */
 		if( cutp->bn.bn_maxlen <= 0 )  {
@@ -160,7 +167,8 @@ int depth;
 				cutp->bn.bn_maxlen * sizeof(struct soltab *),
 				"rt_cut_add: initial list alloc" );
 		} else {
-			char *newlist;
+			register char *newlist;
+
 			newlist = rt_malloc(
 				sizeof(struct soltab *) * cutp->bn.bn_maxlen * 2,
 				"rt_cut_add: list extend" );
@@ -202,7 +210,7 @@ register int axis;
 	 *  Split distance between min and max in half.
 	 *  Find the closest edge of a solid's bounding RPP
 	 *  to the mid-point, and split there.
-	 *  This should ordinarily guarantee that each side of the
+	 *  This should ordinarily guarantee that at least one side of the
 	 *  cut has one less item in it.
 	 */
 	cutp->cn.cn_point =
@@ -264,6 +272,7 @@ register int axis;
 		bp->bn_list[bp->bn_len++] = oldbox.bn.bn_list[i];
 	}
 	rt_free( (char *)oldbox.bn.bn_list, "rt_cut_box:  old list" );
+	oldbox.bn.bn_list = (struct soltab **)0;
 }
 
 /*
@@ -352,19 +361,19 @@ rt_cut_get()
 {
 	register union cutter *cutp;
 
-	if( CutFree == CUTTER_NULL )  {
+	if( rt_g.rtg_CutFree == CUTTER_NULL )  {
 		register int bytes;
 
 		bytes = rt_byte_roundup(64*sizeof(union cutter));
 		cutp = (union cutter *)rt_malloc(bytes," rt_cut_get");
 		while( bytes >= sizeof(union cutter) )  {
-			cutp->cut_forw = CutFree;
-			CutFree = cutp++;
+			cutp->cut_forw = rt_g.rtg_CutFree;
+			rt_g.rtg_CutFree = cutp++;
 			bytes -= sizeof(union cutter);
 		}
 	}
-	cutp = CutFree;
-	CutFree = cutp->cut_forw;
+	cutp = rt_g.rtg_CutFree;
+	rt_g.rtg_CutFree = cutp->cut_forw;
 	return(cutp);
 }
 
