@@ -32,15 +32,19 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include <time.h>
 #if defined(IRIX) && IRIX == 5
 #define _BSD_COMPAT
 #endif
 #include <sys/time.h>
-#ifdef HAVE_CONFIG_H
-# include "config.h"
-#endif
-
 
 #include "tcl.h"
 
