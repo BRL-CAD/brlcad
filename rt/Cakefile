@@ -8,7 +8,8 @@
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
 			rtg3 rtcell rtxray rthide rtfrac rtrange \
-			rtregis rtscale rtsil rtweight rtedge rt_simple rtarea
+			rtregis rtscale rtsil rtweight rtedge rt_simple rtarea \
+			rt_bot_faces
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -38,6 +39,12 @@ rt:	RT_OBJ LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RT_OBJ vers.o LIBOPTICAL LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES  LIBES -o rt
 
+#define RT_BOT_FACES_OBJ	RTUIF view_bot_faces.o
+
+rt_bot_faces:	RT_BOT_FACES_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT BOT FACES"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RT_BOT_FACES_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rt_bot_faces
 
 #define RTRAY_OBJ	RTUIF viewray.o wray.o
 
