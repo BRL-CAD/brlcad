@@ -410,13 +410,7 @@ struct faceuse *fu;
 		/* Start point lies on plane of other face */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tStart point lies on plane of other face\n");
-
-#define VSUBDOT(_pt2, _pt, _dir)	( \
-	((_pt2)[X] - (_pt)[X]) * (_dir)[X] + \
-	((_pt2)[Y] - (_pt)[Y]) * (_dir)[Y] + \
-	((_pt2)[Z] - (_pt)[Z]) * (_dir)[Z] )
-
-		dist = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect )
+		dist = VSUB2DOT( v1->vg_p->coord, start_pt, edge_vect )
 				/ edge_len;
 	}
 
@@ -763,7 +757,7 @@ CONST struct rt_tol	*tol;
     	bs.l2 = &vert_list2;
     	bs.tol = *tol;		/* struct copy */
 
-    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_COMBINE|DEBUG_MESH)
+    	if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
     	    && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fno=1;
     	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu1, fu2, 0 );
@@ -771,7 +765,7 @@ CONST struct rt_tol	*tol;
 
 	nmg_isect_2face_loops(&bs, fu1, fu2);
 
-    	if (rt_g.NMG_debug & DEBUG_COMBINE) {
+    	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_2faces(fu1=x%x, fu2=x%x) vert_lists A:\n", fu1, fu2);
     		nmg_pr_vert_list( "vert_list1", &vert_list1 );
     		nmg_pr_vert_list( "vert_list2", &vert_list2 );
@@ -785,7 +779,7 @@ CONST struct rt_tol	*tol;
 	nmg_purge_unwanted_intersection_points(&vert_list2, fu1);
 
 
-    	if (rt_g.NMG_debug & DEBUG_COMBINE) {
+    	if (rt_g.NMG_debug & DEBUG_FCUT) {
 	    	rt_log("nmg_isect_2faces(fu1=x%x, fu2=x%x) vert_lists B:\n", fu1, fu2);
     		nmg_pr_vert_list( "vert_list1", &vert_list1 );
     		nmg_pr_vert_list( "vert_list2", &vert_list2 );
