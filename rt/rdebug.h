@@ -29,7 +29,7 @@ extern int	rdebug;
 #define RDEBUG_MATERIAL	0x00000002	/* 2 Material properties */
 #define RDEBUG_SHOWERR	0x00000004	/* 3 Colorful markers on errors */
 #define RDEBUG_RTMEM	0x00000008	/* 4 Debug librt mem after startup */
-#define RDEBUG_PARALLEL	0x00000010	/* 5 Debug parallelism */
+/*			0x00000010	/* 5 unused */
 #define RDEBUG_PARSE	0x00000020	/* 6 Command parsing */
 #define RDEBUG_LIGHT	0x00000040	/* 7 Debug lighting */
 #define RDEBUG_REFRACT	0x00000080	/* 8 Debug reflection & refraction */
@@ -41,4 +41,4 @@ extern int	rdebug;
 /* Format string for rt_printb() */
 #define RDEBUG_FORMAT	\
 "\020\040RAYPLOT\037RAYWRITE\
-\1HITS\2MATERIAL\3SHOWERR\4RTMEM\5PARALLEL\6PARSE\7LIGHT\010REFRACT"
+\1HITS\2MATERIAL\3SHOWERR\4RTMEM\6PARSE\7LIGHT\010REFRACT"
