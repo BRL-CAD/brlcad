@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* XXX move to raytrace.h */
 RT_EXTERN(double nmg_measure_2fu_angle, (CONST struct edgeuse *eu1, CONST struct edgeuse *eu2));
+RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
 
 
 /*
@@ -214,6 +215,105 @@ CONST struct edgeuse *eu1, *eu2;
 }
 
 /*
+ *  Given an edgeuse, return two arbitrary unit-length vectors which
+ *  are perpendicular to each other and to the edgeuse, such that
+ *  they can be considered the +X and +Y axis, and the edgeuse is +Z.
+ *  That is, X cross Y = Z.
+ *
+ *  Useful for erecting a coordinate system around an edge suitable
+ *  for measuring the angles of other edges and faces with.
+ */
+void
+nmg_eu_2vecs_perp( xvec, yvec, zvec, eu )
+vect_t		xvec;
+vect_t		yvec;
+vect_t		zvec;
+CONST struct edgeuse	*eu;
+{
+	CONST struct vertex	*v1, *v2;
+
+	NMG_CK_EDGEUSE(eu);
+	v1 = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v1);
+	v2 = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(v2);
+	if( v1 == v2 )  rt_bomb("nmg_eu_2vecs_perp() start&end vertex of edge are the same!\n");
+
+	/* XXX Could really use 'tol' arg here, to see if v1~=v2, within tol */
+
+	NMG_CK_VERTEX_G(v1->vg_p);
+	NMG_CK_VERTEX_G(v2->vg_p);
+	VSUB2( zvec, v2->vg_p->coord, v1->vg_p->coord );
+	VUNITIZE( zvec );
+
+	mat_vec_perp( xvec, zvec );
+	VCROSS( yvec, zvec, xvec );
+VPRINT("xvec", xvec);
+VPRINT("yvec", yvec);
+VPRINT("zvec", zvec);
+}
+
+/*
+ *			N M G _ M E A S U R E _ F U _ A N G L E
+ *
+ *  Return the angle in radians from the interior portion of the faceuse
+ *  associated with edgeuse 'eu', measured in the coordinate system
+ *  defined by xvec and yvec, which are known to be perpendicular to
+ *  each other, and to the edge vector.
+ *
+ *  This is done by finding the "left-ward" vector for the edge in the
+ *  face, which points into the interior of the face, and measuring
+ *  the angle it forms relative to xvec and yvec.
+ */
+double
+nmg_measure_fu_angle( eu, xvec, yvec, zvec )
+CONST struct edgeuse	*eu;
+CONST vect_t		xvec;
+CONST vect_t		yvec;
+CONST vect_t		zvec;
+{
+	CONST struct loopuse	*lu;
+	CONST struct faceuse	*fu;
+	vect_t			Norm;
+	vect_t			edgevect;
+	vect_t			left;
+	double			ret;
+
+	NMG_CK_EDGEUSE(eu);
+	lu = eu->up.lu_p;
+	NMG_CK_LOOPUSE(lu);
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	NMG_CK_FACE_G(fu->f_p->fg_p);
+
+	/* get Normal vectors for edgeuse faceUSEs */
+	if (fu->orientation == OT_SAME) {
+		VMOVE(Norm, fu->f_p->fg_p->N);
+	} else if (fu->orientation == OT_OPPOSITE){
+		VREVERSE(Norm, fu->f_p->fg_p->N);
+	} else rt_bomb("bad fu orientation\n");
+
+	VSUB2( edgevect, eu->eumate_p->vu_p->v_p->vg_p->coord, eu->vu_p->v_p->vg_p->coord );
+	VUNITIZE( edgevect );
+
+	/* Make sure the edge is aligned with +Z or -Z */
+	ret = fabs(VDOT(edgevect, zvec)) - 1;
+	if( !NEAR_ZERO(ret, 1.0e-6) )
+		rt_log("nmg_measure_fu_angle() WARNING: bad edge/zvec dot=%g\n", ret);
+
+	VCROSS( left, Norm, edgevect );
+
+	ret = rt_angle_measure( left, xvec, yvec );
+
+	if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
+		rt_log("\tnmg_measure_fu_angle(x%x) = %g radians (%g deg)\n",
+			eu, ret, ret * rt_radtodeg);
+	}
+	return ret;
+}
+
+/*
  *			N M G _ R A D I A L _ J O I N _ E U
  *
  *	Make all the edgeuses around eu2's edge to refer to eu1's edge,
@@ -239,6 +339,10 @@ struct edgeuse *eu1, *eu2;
 	fastf_t		angle1r;	/* Angle from eu1 to eu1's radial */
 	fastf_t		angler2;	/* Angle from eu1's radial to eu2 */
 	int	iteration1, iteration2;
+	vect_t		xvec, yvec, zvec;
+	fastf_t		abs1;
+	fastf_t		abs2;
+	fastf_t		absr;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu1->radial_p);
@@ -263,6 +367,8 @@ struct edgeuse *eu1, *eu2;
 
 	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge\n");
 
+	nmg_eu_2vecs_perp( xvec, yvec, zvec, original_eu1 );
+
 	if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
 		rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
 			eu1, eu2,
@@ -270,21 +376,14 @@ struct edgeuse *eu1, *eu2;
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
 		rt_log( "Faces around eu1:\n" );
-		nmg_pr_fu_around_eu( eu1 );
+		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec );
 		rt_log( "Faces around eu2:\n" );
-		nmg_pr_fu_around_eu( eu2 );
+		nmg_pr_fu_around_eu( eu2, xvec, yvec, zvec );
 	}
+
 	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
 		struct edgeuse	*first_eu1 = eu1;
 		/* Resume where we left off from last eu2 insertion */
-#if 0
-		/* For early debugging only, reset position to original.
-		 * Not only inefficient, but can give different results,
-		 * but it makes examining the printouts easier.
-		 */
-		first_eu1 = eu1 = original_eu1;
-		rt_log("Reset eu1 to x%x\n", original_eu1);
-#endif
 
 		/* because faces are always created with counter-clockwise
 		 * exterior loops and clockwise interior loops, radial
@@ -300,10 +399,25 @@ struct edgeuse *eu1, *eu2;
 			angle1r = nmg_measure_2fu_angle(eu1, eu1->radial_p);
 			angler2 = nmg_measure_2fu_angle(eu1->radial_p->eumate_p, eu2);
 
+			abs1 = nmg_measure_fu_angle( eu1, xvec, yvec, zvec );
+			abs2 = nmg_measure_fu_angle( eu2, xvec, yvec, zvec );
+			absr = nmg_measure_fu_angle( eu1->radial_p, xvec, yvec, zvec );
+
 			if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) )  {
 				rt_log("  angle12=%g, angle1r=%g, angler2=%g\n",
 					angle12*rt_radtodeg, angle1r*rt_radtodeg, angler2*rt_radtodeg );
+				rt_log("  abs1=%g, abs2=%g, absr=%g\n",
+					abs1*rt_radtodeg,
+					abs2*rt_radtodeg,
+					absr*rt_radtodeg );
 			}
+
+			/*
+			 *  If abs1 < abs2 < absr
+			 *  (taking into account 360 wrap),
+			 *  then insert face here.
+			 *  Special handling if abs1==abs2 or abs2==absr.
+			 */
 
 			/* XXX I believe the problem here is with this (non-circular)
 			 * relation ('if' test).
@@ -356,7 +470,7 @@ struct edgeuse *eu1, *eu2;
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
 			rt_log("Now, faces around original_eu1:\n");
-			nmg_pr_fu_around_eu( original_eu1 );
+			nmg_pr_fu_around_eu_vecs( original_eu1, xvec, yvec, zvec );
 		}
 		/* This will catch the errors, anyway */
 		if( nmg_check_radial(eu1) )
