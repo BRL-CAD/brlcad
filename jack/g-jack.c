@@ -38,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 void	nmg_to_psurf();
+void	jack_faces();
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -49,7 +50,7 @@ Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n\
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	no_file_output;	/* -f:  Don't bother writing output files */
+static int	no_file_output=0;	/* -f:  Don't bother writing output files */
 static int	debug_plots;	/* Make debugging plots */
 static int	ncpu = 1;	/* Number of processors */
 static char	*prefix = NULL;	/* output filename prefix. */
@@ -262,7 +263,9 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	extern FILE		*fp_fig;
+	union tree		*ret_tree;
 	struct rt_list		vhead;
+	struct nmgregion	*r;
 	int			failed;
 
 	RT_CK_FULL_PATH(pathp);
@@ -315,10 +318,14 @@ union tree		*curtree;
 			goto out;
 		}
 	}
-	failed = nmg_boolean( curtree, *tsp->ts_m, tsp->ts_tol );	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate( curtree, tsp->ts_tol );	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
+	if( ret_tree )
+		r = ret_tree->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
 	regions_done++;
-	if( !failed && !no_file_output )  {
+	if( r && !no_file_output )  {
 		FILE	*fp_psurf;
 		int	i;
 		struct rt_vls	file_base;
@@ -372,7 +379,7 @@ union tree		*curtree;
 		if ((fp_psurf = fopen(rt_vls_addr(&file), "w")) == NULL)
 			perror(rt_vls_addr(&file));
 		else {
-			nmg_to_psurf(curtree->tr_d.td_r, fp_psurf);
+			nmg_to_psurf(r, fp_psurf);
 			fclose(fp_psurf);
 			if(verbose) rt_log("*** Wrote %s\n", rt_vls_addr(&file));
 		}
@@ -394,7 +401,7 @@ union tree		*curtree;
 					(int)(tsp->ts_mater.ma_color[2] * 255) );
 				/* nmg_pl_r( fp, r ); */
 				RT_LIST_INIT( &vhead );
-				nmg_r_to_vlist( &vhead, curtree->tr_d.td_r, 0 );
+				nmg_r_to_vlist( &vhead, r, 0 );
 				rt_vlist_to_uplot( fp, &vhead );
 				fclose(fp);
 				RT_FREE_VLIST( &vhead );
@@ -481,6 +488,7 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 *	stored in a heap.  Using this heap and the nmg structure, a
 *	list of face vertices is written to the Jack data base file.
 */
+void
 jack_faces(r, fp_psurf, map)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write face vertices to. */
