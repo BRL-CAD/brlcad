@@ -59,6 +59,7 @@ in all countries except the USA.  All rights reserved.";
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#include <sys/errno.h>
 
 #include "tk.h"
 
@@ -2014,9 +2015,11 @@ char	**argv;
       ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
     char line[128];
 
-    /* check to see if we can access the database */
-    if (access(argv[1], R_OK|W_OK) != 0) {
-      perror("opendb");
+    /*
+     * Check to see if we can access the database
+     */
+    if (access(argv[1], R_OK|W_OK) != 0 && errno != ENOENT) {
+      perror(argv[1]);
       return TCL_ERROR;
     }
 
