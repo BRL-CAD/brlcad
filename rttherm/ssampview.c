@@ -239,11 +239,54 @@ Tcl_Interp	*inter;
 	return TCL_OK;
 }
 
+extern check( double x, double y, double z);
+/* Check XYZ value to spectrum and back */
+check( x, y, z )
+double x, y, z;
+{
+	point_t	xyz;
+	point_t	new;
+	struct rt_tabdata	*tabp;
+
+	RT_GET_TABDATA( tabp, spectrum );
+	xyz[X] = x;
+	xyz[Y] = y;
+	xyz[Z] = z;
+	VPRINT( "\nxyz", xyz );
+
+	rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z );
+	rt_pr_table_and_tabdata( "/dev/tty", tabp );
+
+	rt_spect_curve_to_xyz( new, tabp, cie_x, cie_y, cie_z );
+
+	VPRINT( "new", new );
+	rt_free( (char *)tabp, "struct rt_tabdata" );
+exit(2);
+}
+
 main( argc, argv )
 char	**argv;
 {
 
 	rt_g.debug = 1;
+
+#if 0
+/* Code for testing library routines */
+spectrum = rt_table_make_uniform( 10, 380.0, 770.0 );
+rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
+rt_pr_table_and_tabdata( "/dev/tty", cie_x );
+rt_pr_table_and_tabdata( "/dev/tty", cie_y );
+rt_pr_table_and_tabdata( "/dev/tty", cie_z );
+check( 1, 0, 0 );
+check( 0, 1, 0 );
+check( 0, 0, 1 );
+check( 1, 1, 1 );
+check( 1, 1, 0 );
+check( 1, 0, 1 );
+check( 0, 1, 1 );
+check( .5, .5, .5 );
+exit(1);
+#endif
 
 	rt_make_ntsc_xyz2rgb( xyz2rgb );
 
@@ -261,7 +304,7 @@ char	**argv;
 
 	/* Read atmosphere curve -- input is in microns, not nm */
 	atmosphere_orig = rt_read_table_and_tabdata( "std_day_1km.dat" );
-	rt_table_scale( atmosphere_orig->table, 1000.0 );
+	rt_table_scale( (struct rt_table *)(atmosphere_orig->table), 1000.0 );
 	atmosphere = rt_tabdata_resample( spectrum, atmosphere_orig );
 
 	/* Allocate and read 2-D spectrum array */
@@ -426,13 +469,11 @@ int	off;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
-	struct rt_tabdata	*xyzsamp;
 
 	cp = (char *)data;
 	nbytes = RT_SIZEOF_TABDATA(spectrum);
 
 	pp = pixels;
-	RT_GET_TABDATA(xyzsamp, spectrum);
 
 	scale = 255 / (maxval - minval);
 
@@ -454,15 +495,10 @@ int	off;
 		sp = (struct rt_tabdata *)cp;
 		RT_CK_TABDATA(sp);
 
-		/* XXX For efficiency, these two steps could be done together */
-		rt_tabdata_mul( xyzsamp, sp, cie_x );
-		xyz[X] = rt_tabdata_area1( xyzsamp );
-
-		rt_tabdata_mul( xyzsamp, sp, cie_y );
-		xyz[Y] = rt_tabdata_area1( xyzsamp );
-
-		rt_tabdata_mul( xyzsamp, sp, cie_z );
-		xyz[Z] = rt_tabdata_area1( xyzsamp );
+		/* rt_spect_curve_to_xyz( xyz, sp, cie_x, cie_y, cie_z ); */
+		xyz[X] = rt_tabdata_mul_area1( sp, cie_x );
+		xyz[Y] = rt_tabdata_mul_area1( sp, cie_y );
+		xyz[Z] = rt_tabdata_mul_area1( sp, cie_z );
 
 		MAT3X3VEC( rgb, xyz2rgb, xyz );
 
@@ -481,5 +517,4 @@ int	off;
 		else if( val < 0 ) val = 0;
 		pp[BLU] = val;
 	}
-	rt_free( (char *)xyzsamp, "xyz sample");
 }
