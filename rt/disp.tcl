@@ -1,5 +1,9 @@
+#			D I S P . T C L
+#
 # GUI for "disp" program
 #  -Mike Muuss, 7-Mar-96
+#
+#  $Header$
 
 set wavel 0
 global wavel
