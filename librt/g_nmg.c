@@ -2488,11 +2488,11 @@ mat_t		mat;
 			d = &((struct disk_vertexuse *)ip)[iindex];
 			NMG_CK_VERTEXUSE(vu);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEXUSE_MAGIC );
-			INDEXL_HD( d, vu, l, vu->l );
 			vu->up.magic_p = (long *)ptrs[rt_glong(d->up)];
 			INDEX( d, vu, vertex, v_p );
 			INDEX( d, vu, vertexuse_a, vua_p );
 			NMG_CK_VERTEX(vu->v_p);
+			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE_A:
