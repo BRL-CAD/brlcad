@@ -965,27 +965,43 @@ char	**argv;
 	register int i;
 	int nmatch;
 	char	**path_piece;
+	char	*basename;
+
+	/*
+	 *	XXX
+	 *
+	 *	Have to reject before returning??
+	 */
 
 	path_piece = path_parse(argv[1]);
-	while (*path_piece != 0)
-	    rt_log("OK, next piece is '%s'\n", *path_piece++);
+	for (i = 0; path_piece[i] != 0; ++i)
+	    rt_log("OK, next piece is '%s'\n", path_piece[i]);
 
-	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if (i == 0)
+	{
+	    rt_log("Bad solid path: '%s'\n", argv[1]);
+	    return CMD_BAD;
+	}
+	basename = path_piece[i - 1];
+	rt_log("OK, now, basename is '%s'\n", basename);
+
+	if( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
 	if( state != ST_O_PICK && state != ST_S_PICK )  {
 		state_err("keyboard illuminate pick");
 		return CMD_BAD;
 	}
 	nmatch = 0;
-	FOR_ALL_SOLIDS( sp )  {
-		for( i=0; i<=sp->s_last; i++ )  {
-			if( sp->s_path[i] == dp )  {
-				lastfound = sp;
-				nmatch++;
-				break;
-			}
+	FOR_ALL_SOLIDS (sp)
+	{
+	    for (i = 0; i <= sp -> s_last; i++)
+		if (sp -> s_path[i] == dp)
+		{
+		    lastfound = sp;
+		    nmatch++;
+		    break;
 		}
-		sp->s_iflag = DOWN;
+	    sp -> s_iflag = DOWN;
 	}
 	if( nmatch <= 0 )  {
 		rt_log("%s not being displayed\n", argv[1]);
@@ -1587,25 +1603,30 @@ char	*path;
     char	**result;
     char	*copy;
 
-    while (*path == '/')
-	++path;
-
-    nm_constituents = 1;
+    nm_constituents = ((*path != '/') && (*path != '\0'));
     for (pp = path; *pp != '\0'; ++pp)
 	if (*pp == '/')
-	    ++nm_constituents;
+	{
+	    while (*++pp == '/')
+		;
+	    if (*pp != '\0')
+		++nm_constituents;
+	}
     
     result = (char **) rt_malloc((nm_constituents + 1) * sizeof(char *),
 			"array of strings");
     
     for (i = 0, pp = path; i < nm_constituents; ++i)
     {
+	while (*pp == '/')
+	    ++pp;
 	start_addr = pp;
-	while (*++pp != '/')
+	while ((*++pp != '/') && (*pp != '\0'))
 	    ;
-	result[i] = (char *) rt_malloc((pp - start_addr) * sizeof(char),
+	result[i] = (char *) rt_malloc((pp - start_addr + 1) * sizeof(char),
 			"string");
 	strncpy(result[i], start_addr, (pp - start_addr));
+	result[i][pp - start_addr] = '\0';
     }
     result[nm_constituents] = 0;
 
