@@ -3,6 +3,12 @@
  *
  *  Tcl interfaces to LIBRT routines.
  *
+ *  LIBRT routines are not for casual command-line use;
+ *  as a result, the Tcl name for the function should be exactly
+ *  the same as the C name for the underlying function.
+ *  Typing "rt_" is no hardship when writing Tcl procs, and
+ *  clarifies the origin of the routine.
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -143,9 +149,41 @@ CONST char		*name;
 }
 
 /*
- *			R T _ I N M E M _ R G B
+ *			R T _ D I R E C T C H A N G E _ R G B
+ *
+ *  Go poke the rgb values of a region, on the fly.
+ *  This does not update the inmemory database, and will vanish on next re-prep.
  */
-rt_inmem_rgb( clientData, interp, argc, argv )
+rt_directchange_rgb( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	if( argc != 6 )  {
+		Tcl_AppendResult(interp, "Usage: rt_directchange_rgb $rtip comb r g b\n", NULL);
+		return TCL_ERROR;
+	}
+
+	/* Validate rtip */
+	/* Ensure rti has been prepped */
+	/* Find all region names which match /comb/ pattern */
+	/* Modify their color */
+
+#if 0
+	/* Make mods to comb here */
+	comb->rgb[0] = atoi(argv[3+0]);
+	comb->rgb[1] = atoi(argv[3+1]);
+	comb->rgb[2] = atoi(argv[3+2]);
+#endif
+
+	return TCL_OK;
+}
+
+/*
+ *			R T _ W D B _ I N M E M _ R G B
+ */
+rt_wdb_inmem_rgb( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -155,7 +193,7 @@ char **argv;
 	struct rt_comb_internal	*comb;
 
 	if( argc != 6 )  {
-		Tcl_AppendResult(interp, "Usage: inmem_rgb $dbip comb r g b\n", NULL);
+		Tcl_AppendResult(interp, "Usage: rt_wdb_inmem_rgb $dbip comb r g b\n", NULL);
 		return TCL_ERROR;
 	}
 
@@ -177,9 +215,9 @@ char **argv;
 }
 
 /*
- *			R T _ I N M E M _ S H A D E R
+ *			R T _ W D B _ I N M E M _ S H A D E R
  */
-rt_inmem_shader( clientData, interp, argc, argv )
+rt_wdb_inmem_shader( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
@@ -189,7 +227,7 @@ char **argv;
 	struct rt_comb_internal	*comb;
 
 	if( argc < 4 )  {
-		Tcl_AppendResult(interp, "Usage: inmem_shader $dbip comb shader [params]\n", NULL);
+		Tcl_AppendResult(interp, "Usage: rt_wdb_inmem_shader $dbip comb shader [params]\n", NULL);
 		return TCL_ERROR;
 	}
 
@@ -222,9 +260,11 @@ void
 rt_tcl_setup(interp)
 Tcl_Interp *interp;
 {
-	(void)Tcl_CreateCommand(interp, "inmem_rgb", rt_inmem_rgb,
+	(void)Tcl_CreateCommand(interp, "rt_directchange_rgb", rt_directchange_rgb,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "inmem_shader", rt_inmem_shader,
+	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_rgb", rt_wdb_inmem_rgb,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "rt_wdb_inmem_shader", rt_wdb_inmem_shader,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
