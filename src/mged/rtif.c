@@ -881,7 +881,7 @@ cmd_rtcheck(ClientData	clientData,
  *  Return basename of path, removing leading slashes and trailing suffix.
  */
 HIDDEN char *
-basename(register char *p1, register char *suff)
+basename_without_suffix(register char *p1, register char *suff)
 {
 	register char *p2, *p3;
 	static char buf[128];
@@ -932,7 +932,7 @@ f_saveview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	base = basename( argv[1], ".sh" );
+	base = basename_without_suffix( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
 	/* Do not specify -v option to rt; batch jobs must print everything. -Mike */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
