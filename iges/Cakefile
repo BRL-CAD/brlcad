@@ -13,7 +13,7 @@
 #define FILES	 main usage readstart recsize readrec readglobal \
 	readstrg readint readflt readtime makedir readcols \
 	findp summary stack readtree showtree convtree \
-	copytree arrange bubbleup treecheck freetree \
+	freetree \
 	makemembers convsolids readname convassem matmult \
 	readcnv evalxform readmatrix makegroup block2 \
 	sphere wedge tor cyl cone ell convinst \
@@ -34,7 +34,7 @@
 #define I_G_OBJ main.o usage.o readstart.o recsize.o readrec.o readglobal.o \
         readstrg.o readint.o readflt.o readtime.o makedir.o readcols.o \
         findp.o summary.o stack.o readtree.o showtree.o convtree.o \
-        copytree.o arrange.o bubbleup.o treecheck.o freetree.o \
+        freetree.o \
         makemembers.o convsolids.o readname.o convassem.o matmult.o \
         readcnv.o evalxform.o readmatrix.o makegroup.o block2.o \
         sphere.o wedge.o tor.o cyl.o cone.o ell.o convinst.o \
