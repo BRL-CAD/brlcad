@@ -3,6 +3,7 @@ static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
 extern int Debug;
+extern int Levels;
 static unsigned char	ordered[4][4] = {
 	{2,16,3,13},
 	{12,8,9,5},
@@ -35,6 +36,9 @@ static unsigned char	ordered[4][4] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.1  90/04/10  01:01:51  cjohnson
+ * Initial revision
+ * 
  * 
  */
 tone_folly(Pix,X,Y,NX,NY,New)
@@ -42,5 +46,5 @@ int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
-	return (Pix >= 16*ordered[ X % 4][ Y % 4] );
+	return (Pix*Levels / (16*ordered[ X % 4][ Y % 4] ));
 }
