@@ -45,7 +45,6 @@ static int PS_load_startup();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-static int	PS_init();
 static int	PS_open();
 static int	PS_close();
 static int	PS_drawBegin(), PS_drawEnd();
@@ -59,7 +58,6 @@ static unsigned PS_cvtvecs(), PS_load();
 static int	PS_setWinBounds(), PS_debug();
 
 struct dm dm_PS = {
-  PS_init,
   PS_open,
   PS_close,
   PS_drawBegin,
@@ -85,6 +83,7 @@ struct dm dm_PS = {
   0,
   0,
   0,
+  0,
   0
 };
 
@@ -93,8 +92,14 @@ char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inche
 
 struct ps_vars head_ps_vars;
 
+/*
+ *			P S _ O P E N
+ *
+ * Open the output file, and output the PostScript prolog.
+ *
+ */
 static int
-PS_init(dmp, argc, argv)
+PS_open(dmp, argc, argv)
 struct dm *dmp;
 int argc;
 char *argv[];
@@ -105,6 +110,7 @@ char *argv[];
   if(!count)
     (void)PS_load_startup(dmp);
 
+  bu_vls_init(&dmp->dm_pathName);
   bu_vls_printf(&dmp->dm_pathName, ".dm_ps%d", count++);
 
   dmp->dm_vars = bu_calloc(1, sizeof(struct ps_vars), "PS_init: ps_vars");
@@ -203,22 +209,9 @@ char *argv[];
 
   bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->fname, argv[1]);
 
-  if(dmp->dm_vars)
-    return TCL_OK;
+  if(!dmp->dm_vars)
+    return TCL_ERROR;
 
-  return TCL_ERROR;
-}
-
-/*
- *			P S _ O P E N
- *
- * Open the output file, and output the PostScript prolog.
- *
- */
-static int
-PS_open(dmp)
-struct dm *dmp;
-{
   if( (((struct ps_vars *)dmp->dm_vars)->ps_fp =
        fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->fname), "w")) == NULL){
     Tcl_AppendResult(interp, "f_ps: Error opening file - ",
