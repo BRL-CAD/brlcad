@@ -1089,8 +1089,7 @@ char *buf;
 	}
 	i = fr->fr_size*3;
 	if( pc->pkc_len-2 < i )  i = pc->pkc_len-2;
-	bcopy( buf+2, fr->fr_picture + 
-		(fr->fr_size-line-1)*fr->fr_size*3, i );
+	bcopy( buf+2, fr->fr_picture + line*fr->fr_size*3, i );
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
