@@ -51,6 +51,13 @@ flag, the size is changed to 1024x1024.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.
+In general, the
+.B fbgamma
+manipulates the RGB color maps in the graphics hardware, and
+has effect on the entire screen, not just the portion containing
+the current framebuffer display.
+As such, there is no need to match the display size on the
+command line.
 .PP
 A framebuffer may be explicitly selected with the
 .B \-F
