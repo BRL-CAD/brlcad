@@ -176,6 +176,14 @@ char **argv;
 	argc -= (optind - 1);
 	argv += (optind - 1);
 
+	/* Check again for proper invocation */
+	if( argc < 2 )  {
+	  argv -= (optind - 1);
+	  fprintf(stdout, "Usage:  %s [-r] database [command]\n", argv[0]);
+	  fflush(stdout);
+	  return(1);		/* NOT finish() */
+	}
+
 	/* Identify ourselves if interactive */
 	if( argc == 2 )  {
 		if( isatty(fileno(stdin)) )
@@ -190,8 +198,7 @@ char **argv;
 #endif
  		    cbreak_mode = COMMAND_LINE_EDITING;
 		}
-
-	    }
+	}
 
 	/* Set up for character-at-a-time terminal IO. */
 	if (cbreak_mode) 
@@ -213,20 +220,13 @@ char **argv;
 	 * Do not use bu_log() or bu_malloc() before here.
 	 */
 	if( bu_avail_cpus() > 1 )  {
-		rt_g.rtg_parallel = 1;
-#if 0
-		RES_INIT( &rt_g.res_syscall );
-		RES_INIT( &rt_g.res_worker );
-		RES_INIT( &rt_g.res_stats );
-		RES_INIT( &rt_g.res_results );
-		RES_INIT( &rt_g.res_model );
-#else
-		bu_semaphore_init( 5 );
-		bu_semaphore_init( 5 );
-		bu_semaphore_init( 5 );
-		bu_semaphore_init( 5 );
-		bu_semaphore_init( 5 );
-#endif
+	  rt_g.rtg_parallel = 1;
+
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
+	  bu_semaphore_init( 5 );
 	}
 
 	/* Set up linked lists */
@@ -1632,100 +1632,91 @@ char	**argv;
 {
   static int first = 1;
 
-	if( dbip )  {
-	  char *av[2];
+  if(argc < 2 || 3 < argc || (strlen(argv[1]) == 0)){
+    struct bu_vls vls;
 
-	  av[0] = "zap";
-	  av[1] = NULL;
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help opendb");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
 
-	  if(argc < 2 || 3 < argc){
-	    struct bu_vls vls;
+  if( dbip )  {
+    char *av[2];
 
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help opendb");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	  }
+    av[0] = "zap";
+    av[1] = NULL;
 
-	  /* Clear out anything in the display */
-	  f_zap(clientData, interp, 1, av);
+    /* Clear out anything in the display */
+    f_zap(clientData, interp, 1, av);
 
-	  /* Close current database.  Releases MaterHead, etc. too. */
-	  db_close(dbip);
-	  dbip = DBI_NULL;
+    /* Close current database.  Releases MaterHead, etc. too. */
+    db_close(dbip);
+    dbip = DBI_NULL;
 
-	  log_event( "CEASE", "(close)" );
+    log_event( "CEASE", "(close)" );
+  }
+
+  /* Get input file */
+  if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+      ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+    char line[128];
+
+    if( isatty(0) ) {
+      if(first){
+	perror( argv[1] );
+	bu_log("Create new database (y|n)[n]? ");
+	(void)fgets(line, sizeof(line), stdin);
+	if( line[0] != 'y' && line[0] != 'Y' )
+	  exit(0);                /* NOT finish() */
+      } else {
+	if(argc == 2){
+	  perror( argv[1] );
+
+	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
+			   (char *)NULL);
+	  bu_vls_printf(&curr_cmd_list->more_default, "n");
+
+	  dmaflag = 0;
+	  update_views = 0;
+	  return TCL_ERROR;
 	}
 
-	/* Get input file */
-	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
-	  char line[128];
+	if( *argv[2] != 'y' && *argv[2] != 'Y' )
+	  exit(0);		/* NOT finish() */
+      }
+    }
 
-	  if( isatty(0) ) {
-	    if(first){
-	      perror( argv[1] );
-	      bu_log("Create new database (y|n)[n]? ");
-	      (void)fgets(line, sizeof(line), stdin);
-	      if( line[0] != 'y' && line[0] != 'Y' )
-		exit(0);                /* NOT finish() */
-	    } else {
-	      if(argc == 2){
-		perror( argv[1] );
+    Tcl_AppendResult(interp, "Creating new database \"", argv[1],
+		     "\"\n", (char *)NULL);
 
-		Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
-				 (char *)NULL);
-		bu_vls_printf(&curr_cmd_list->more_default, "n");
+    if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+      perror( argv[1] );
+      exit(2);		/* NOT finish() */
+    }
+  }
 
-		dmaflag = 0;
-		update_views = 0;
-		return TCL_ERROR;
-	      }
+  if( dbip->dbi_read_only )
+    Tcl_AppendResult(interp, dbip->dbi_filename, ":  READ ONLY\n", (char *)NULL);
 
-	      if( *argv[2] != 'y' && *argv[2] != 'Y' )
-		exit(0);		/* NOT finish() */
-	    }
-	  }
+  /* Quick -- before he gets away -- write a logfile entry! */
+  log_event( "START", argv[1] );
 
-	  Tcl_AppendResult(interp, "Creating new database \"", argv[1],
-			   "\"\n", (char *)NULL);
+  if(first){
+    first = 0;
 
-	  if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
-	    perror( argv[1] );
-	    exit(2);		/* NOT finish() */
-	  }
-	}
-	if( dbip->dbi_read_only )
-	  Tcl_AppendResult(interp, dbip->dbi_filename, ":  READ ONLY\n", (char *)NULL);
+    if( interactive )
+      get_attached();
+  }
 
- 	/* Quick -- before he gets away -- write a logfile entry! */
-	log_event( "START", argv[1] );
+  /* --- Scan geometry database and build in-memory directory --- */
+  db_scan( dbip, (int (*)())db_diradd, 1);
 
-	if(first){
-	  first = 0;
+  /* Print title/units information */
+  if( interactive )
+    Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
+		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
 
-	  if( interactive )
-	    get_attached();
-#if 0
-	  Tcl_AppendResult(interp, "Note: the attach command can be used\n",
-			   "      to open a display window.\n\n", (char *)NULL);
-#endif
-	}
-
-	/* --- Scan geometry database and build in-memory directory --- */
-	db_scan( dbip, (int (*)())db_diradd, 1);
-	/* XXX - save local units */
-#if 0
-	localunit = dbip->dbi_localunit;
-	local2base = dbip->dbi_local2base;
-	base2local = dbip->dbi_base2local;
-#endif
-	/* Print title/units information */
-	if( interactive )
-	  Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
-			   units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
-	
-
-	return TCL_OK;
+  return TCL_OK;
 }
