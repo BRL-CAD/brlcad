@@ -949,7 +949,7 @@ struct spl_poly * p1;
 	VMOVE(h0->hit_normal, pln.nrm );
 	VUNITIZE(h0->hit_normal);
 	if( VDOT( rp->r_dir, h0->hit_normal ) > 0 )
-		VREVERSE( h0->hit_normal );
+		VREVERSE( h0->hit_normal, h0->hit_normal );
 	
 	VMOVE(h0->hit_point, itr_point);
 	h0->hit_vpriv[0] = uv[0];
