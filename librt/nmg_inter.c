@@ -171,6 +171,7 @@ rt_log("parallel\n");
 		if( dist[0] < 0 || dist[0] > 1 )  dist[0] = -10;
 		if( dist[0] + dist[1] <= -20 )
 			return -1;	/* colinear, but not overlapping */
+rt_log("  HIT colinear!\n");
 		return 0;		/* colinear and overlapping */
 	}
 
@@ -192,6 +193,7 @@ rt_log("dist[0] = %g, dist[1] = %g\n", dist[0], dist[1] );
 rt_log("ptol=%g, qtol=%g\n", ptol, qtol);
 	if( dist[0] < 0 || dist[0] > 1 || dist[1] < 0 || dist[1] > 1 )
 		return -1;		/* missed */
+rt_log("  HIT!\n");
 	return 0;			/* hit, normal intersection */
 }
 
@@ -221,41 +223,49 @@ struct ee_2d_state {
 };
 
 /*
+ *			N M G _ G E T _ 2 D _ V E R T E X
  *
- *  Visit all the vertices, and compute their 2d projection.
+ *  A "lazy evaluator" to obtain the 2D projection of a vertex.
+ *  The lazy approach is not a luxury, since new (3D) vertices are created
+ *  as the edge/edge intersection proceeds, and their 2D coordinates may
+ *  be needed later on in the calculation.
+ *  The alternative would be to store the 2D projection each time a
+ *  new vertex is created, but that is likely to be a lot of bothersome
+ *  code, where one omission would be deadly.
  *
- * XXX Replace with common subroutine used to obtain 2d from 3d.
- * XXX That will give lazy evaluation, and protection for new
- * XXX vertices that geometric intersection adds to the fray.
+ *  The return is a 3-tuple, with the Z coordinate set to 0.0 for safety.
+ *  This is especially useful when the projected value is printed using
+ *  one of the 3D print routines.
  */
-void
-nmg_isect2d_vis_vertex( magicp, state, flag )
-long		*magicp;
-genptr_t	state;
-int		flag;
+static void
+nmg_get_2d_vertex( v2d, v, is )
+point_t		v2d;		/* a 3-tuple */
+struct vertex	*v;
+struct nmg_inter_struct	*is;
 {
-	struct vertex	*v = (struct vertex *)magicp;
-	struct nmg_inter_struct	*is = (struct nmg_inter_struct *)state;
-	fastf_t		*opt;
-	point_t		pt;
 	register fastf_t	*pt2d;
+	point_t			pt;
+	struct vertex_g		*vg;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEX(v);
-
-	if( !v->vg_p )  rt_bomb("nmg_isect2d_vis_vertex:  vertex with no geometry!\n");
+	if( !v->vg_p )  rt_bomb("nmg_get_2d_vertex:  vertex with no geometry!\n");
+	vg = v->vg_p;
+	NMG_CK_VERTEX_G(vg);
 	pt2d = &is->vert2d[v->index*3];
 	if( pt2d[2] == 0 )  {
-		/* Flag set.  Been here before */
+		/* Flag set.  Conversion is done.  Been here before */
+		v2d[0] = pt2d[0];
+		v2d[1] = pt2d[1];
+		v2d[2] = 0;
 		return;
 	}
 
-	opt = v->vg_p->coord;
-	MAT4X3PNT( pt, is->proj, opt );
-	pt2d[0] = pt[0];
-	pt2d[1] = pt[1];
-	pt2d[2] = 0;		/* flag */
-rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n", v->index, V3ARGS(opt), V3ARGS(pt) );
+	MAT4X3PNT( pt, is->proj, vg->coord );
+	v2d[0] = pt2d[0] = pt[0];
+	v2d[1] = pt2d[1] = pt[1];
+	v2d[2] = pt2d[2] = 0;		/* flag */
+rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n", v->index, V3ARGS(vg->coord), V3ARGS(pt) );
 }
 
 /*
@@ -274,10 +284,9 @@ rt_log("%d (%g,%g,%g) becomes (%g,%g) %g\n", v->index, V3ARGS(opt), V3ARGS(pt) )
  *  that slot has not been filled yet, and 0 when it has been.
  */
 void
-nmg_isect2d_prep( is, f1, f2 )
+nmg_isect2d_prep( is, f1 )
 struct nmg_inter_struct	*is;
 struct face		*f1;
-struct face		*f2;
 {
 	struct model	*m;
 	struct face_g	*fg;
@@ -286,11 +295,9 @@ struct face		*f2;
 	point_t		centroid;
 	point_t		centroid_proj;
 	register int	i;
-	struct nmg_visit_handlers	handlers;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACE(f1);
-	NMG_CK_FACE(f2);
 	fg = f1->fg_p;
 	NMG_CK_FACE_G(fg);
 
@@ -323,14 +330,6 @@ mat_print("3d->2d xform matrix", is->proj);
 	for( i = words-1-2; i >= 0; i -= 3 )  {
 		VSET( &is->vert2d[i], 0, 0, -1 );
 	}
-
-	/* Project all the vertices in both faces */
-	handlers = nmg_null_handlers;	/* struct copy */
-	handlers.vis_vertex = nmg_isect2d_vis_vertex;
-rt_log("projecting face1:\n");
-	nmg_visit( f1->fu_p, &handlers, (genptr_t)is );
-rt_log("projecting face2:\n");
-	nmg_visit( f2->fu_p, &handlers, (genptr_t)is );
 }
 
 /*
@@ -662,10 +661,8 @@ int		flag;
 
 	NMG_CK_EDGEUSE(eu);
 
-	pt2d = &state->is->vert2d[eu->vu_p->v_p->index*3];
-	VMOVE( other_start, pt2d );
-	pt2d = &state->is->vert2d[eu->eumate_p->vu_p->v_p->index*3];
-	VMOVE( other_end, pt2d );
+	nmg_get_2d_vertex( other_start, eu->vu_p->v_p, state->is );
+	nmg_get_2d_vertex( other_end, eu->eumate_p->vu_p->v_p, state->is );
 	VSUB2( other_dir, other_end, other_start );
 
 	status = rt_isect_2dlseg_2dlseg(&dist[0], state->start, state->dir, other_start, other_dir, &state->is->tol );
@@ -799,7 +796,12 @@ int		flag;
 /*
  *			N M G _ I S E C T _ 2 E D G E _ 2 F A C E
  *
- *  Intersect 2D line segments with each other.
+ *  Intersect a given edgeuse "eu" with all the edges of a different
+ *  but (coplanar) face.  "eu" defines a line of intersection along which
+ *  all the vertices will lie.
+ *  The caller of this routine should immediately process them
+ *  through the state machine to take the appropriate loop-level actions
+ *  (cut, join, jaunt, etc).
  */
 static void
 nmg_isect_2edge_2face(is, eu, fu)
@@ -888,22 +890,16 @@ struct faceuse *fu;
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
-#if 0
-	VMOVE( state.start, v1->vg_p->coord );
-	VMOVE( state.end, v1mate->vg_p->coord );
-#else
-	{
-		register fastf_t	*pt2d;
-		pt2d = &is->vert2d[v1->index*3];
-		VMOVE( state.start, pt2d );
-		pt2d = &is->vert2d[v1mate->index*3];
-		VMOVE( state.end, pt2d );
-	}
-#endif
+	nmg_get_2d_vertex( state.start, v1, is );
+	nmg_get_2d_vertex( state.end, v1mate, is );
 	VSUB2(state.dir, state.end, state.start);
 	edge_len = MAGNITUDE(state.dir);
 
+#if 0
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+#else
+	{
+#endif
 		rt_log("Testing2d (%g, %g, %g) -> (%g, %g, %g) dir=(%g, %g, %g)\n",
 			V3ARGS(state.start),
 			V3ARGS(v1mate->vg_p->coord),
@@ -1384,7 +1380,7 @@ CONST struct rt_tol	*tol;
 		bs.coplanar = 1;
 		nmg_isect2d_prep( &bs, f1, f2 );
 		rt_log("Skipping, for now.\n");
-#if 1
+#if 0
 		/* Use this for real, for now. */
 		return;	/* XXX break */
 #else
