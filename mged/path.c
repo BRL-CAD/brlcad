@@ -127,21 +127,6 @@ matp_t old_xlate;
 		}
 		if( (nextdp = lookup( mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
 			continue;
-		if( mp->m_brname[0] != '\0' )  {
-			register struct directory *tdp;		/* XXX */
-			/*
-			 * Create an alias.  First step towards full
-			 * branch naming.  User is responsible for his
-			 * branch names being unique.
-			 */
-			tdp = lookup( mp->m_brname, LOOKUP_QUIET );
-			if( tdp != DIR_NULL )
-				nextdp = tdp; /* use existing alias */
-			else
-				nextdp = dir_add( mp->m_brname,
-					nextdp->d_addr,	DIR_BRANCH,
-					nextdp->d_len );
-		}
 
 		/* s' = M3 . M2 . M1 . s
 		 * Here, we start at M3 and descend the tree.
@@ -184,8 +169,7 @@ matp_t matp;
 		for( j=1; j < parentp->d_len; j++ )  {
 			/* Examine Member records */
 			db_getrec( parentp, &rec, j );
-			if( strcmp( kidp->d_namep, rec.M.m_instname ) == 0 ||
-			    strcmp( kidp->d_namep, rec.M.m_brname ) == 0 )  {
+			if( strcmp( kidp->d_namep, rec.M.m_instname ) == 0 ) {
 				    mat_mul( tmat, matp, rec.M.m_mat );
 				    mat_copy( matp, tmat );
 				    goto next_level;

@@ -811,9 +811,6 @@ dir_nref( )
 	     !feof(fp))  {
 		if( record.u_id != ID_MEMB )
 			continue;
-		if( record.M.m_brname[0] != '\0' &&
-		    (dp = lookup(record.M.m_brname, LOOKUP_QUIET)) != DIR_NULL )
-			dp->d_nref++;
 		if( record.M.m_instname[0] != '\0' &&
 		    (dp = lookup(record.M.m_instname, LOOKUP_QUIET)) != DIR_NULL )
 			dp->d_nref++;

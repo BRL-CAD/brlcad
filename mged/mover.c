@@ -180,9 +180,8 @@ matp_t xlate;
 	for( i=1; i < cdp->d_len; i++ )  {
 		db_getrec( cdp, &record, i );
 
-		/* Check for match, including alias (branch name) */
-		if( strcmp( dp->d_namep, record.M.m_instname ) == 0 ||
-		    strcmp( dp->d_namep, record.M.m_brname ) == 0 )  {
+		/* Check for match */
+		if( strcmp( dp->d_namep, record.M.m_instname ) == 0 )  {
 			/* Apply the Homogeneous Transformation Matrix */
 			mat_mul(temp, xlate, record.M.m_mat);
 			mat_copy( record.M.m_mat, temp );
@@ -201,32 +200,19 @@ matp_t xlate;
  *
  * Add an instance of object 'dp' to combination 'name'.
  * If the combination does not exist, it is created.
+ * Flag is 'r' (region), or 'g' (group).
  */
 struct directory *
-combadd( objp, combname, elementname, flag, relation, ident, air )
+combadd( objp, combname, region_flag, relation, ident, air )
 register struct directory *objp;
-char *combname, *elementname;
-int flag;				/* flag character */
+char *combname;
+int region_flag;			/* true if adding region */
 int relation;				/* = UNION, SUBTRACT, INTERSECT */
 int ident;				/* "Region ID" */
 int air;				/* Air code */
 {
 	register struct directory *dp;
 	union record record;
-	int instf,regf,groupf;          /* instance, region, group flags */
-
-	if ( elementname == NULL )
-		elementname = "";	/* safety first */
-
-	instf = 1;
-	regf = groupf = 0;
-
-	if( flag == 'r' )
-		regf = 1;
-	if( flag == 'g' )
-		groupf = 1;
-	if( regf == 1 || groupf == 1 )
-		instf = 0;
 
 	/*
 	 * Check to see if we have to create a new combination
@@ -246,7 +232,7 @@ int air;				/* Air code */
 		record.c.c_regionid = -1;
 		record.c.c_material = record.c.c_los = 0;
 		NAMEMOVE( combname, record.c.c_name );
-		if( regf ) {       /* creating a region */
+		if( region_flag ) {       /* creating a region */
 			record.c.c_flags = 'R';
 			record.c.c_regionid = ident;
 			record.c.c_aircode = air;
@@ -257,12 +243,6 @@ int air;				/* Air code */
 
 		/* create first member record */
 		(void)strcpy( record.M.m_instname, objp->d_namep );
-
-		if( instf )		/* creating an instance */
-			/* Insert name of this branch */
-			(void)strcpy( record.M.m_brname, elementname );
-		else
-			record.M.m_brname[0] = '\0';
 
 		record.M.m_id = ID_MEMB;
 		record.M.m_relation = relation;
@@ -282,7 +262,7 @@ int air;				/* Air code */
 		return DIR_NULL;
 	}
 
-	if( regf ) {
+	if( region_flag ) {
 		if( record.c.c_flags != 'R' ) {
 			(void)printf("%s: not a region\n",combname);
 			return DIR_NULL;
@@ -297,12 +277,6 @@ int air;				/* Air code */
 	record.M.m_relation = relation;
 	mat_idn( record.M.m_mat );
 	(void)strcpy( record.M.m_instname, objp->d_namep );
-
-	if( instf )
-		/* Record the name of this branch */
-		(void)strcpy( record.M.m_brname, elementname );
-	else
-		record.M.m_brname[0] = '\0';
 
 	db_putrec( dp, &record, dp->d_len-1 );
 	return( dp );

@@ -11,7 +11,7 @@
  *	f_region	add solids to a region or create the region
  *	f_kill		remove an object or several from the description
  *	f_group		"grouping" command
- *	f_delmem	delete members of a combination
+ *	f_rm	delete members of a combination
  *
  *  Author -
  *	Michael John Muuss
@@ -154,7 +154,7 @@ f_copy()
 }
 
 /* Create an instance of something */
-/* Format: i object combname instname [op]	*/
+/* Format: i object combname [op]	*/
 void
 f_instance()
 {
@@ -166,13 +166,12 @@ f_instance()
 
 	oper = UNION;
 	if( numargs == 5 )
-		oper = cmd_args[4][0];
+		oper = cmd_args[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
 		(void)printf("bad operation: %c\n", oper );
 		return;
 	}
-	if( combadd( dp, cmd_args[2], cmd_args[3], '\0', oper, 0, 0 ) ==
-	    DIR_NULL )
+	if( combadd( dp, cmd_args[2], 0, oper, 0, 0 ) == DIR_NULL )
 		return;
 }
 
@@ -222,8 +221,7 @@ f_region()
 			}
 		}
 
-		if( combadd( dp, cmd_args[1], (char *)NULL, 'r', oper, ident,
-							air ) == DIR_NULL )  {
+		if( combadd( dp, cmd_args[1], 1, oper, ident, air ) == DIR_NULL )  {
 			(void)printf("error in combadd\n");
 			return;
 		}
@@ -259,11 +257,10 @@ f_group()
 	/* get objects to add to group */
 	for( i = 2; i < numargs; i++ )  {
 		if( (dp = lookup( cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )  {
-			if( combadd( dp, cmd_args[1], (char *)NULL, 'g',
+			if( combadd( dp, cmd_args[1], 0,
 				UNION, 0, 0) == DIR_NULL )
 				return;
-		}
-		else
+		}  else
 			(void)printf("skip member %s\n", cmd_args[i]);
 	}
 }
@@ -271,7 +268,7 @@ f_group()
 /* Delete members of a combination */
 /* Format: D comb memb1 memb2 .... membn	*/
 void
-f_delmem()
+f_rm()
 {
 	register struct directory *dp;
 	register int i, rec, num_deleted;
@@ -287,8 +284,7 @@ f_delmem()
 top:
 		/* Compare this member to each command arg */
 		for( i = 2; i < numargs; i++ )  {
-			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 &&
-			    strcmp( cmd_args[i], record.M.m_brname ) != 0 )
+			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 )
 				continue;
 			(void)printf("deleting member %s\n", cmd_args[i] );
 			num_deleted++;

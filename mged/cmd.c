@@ -55,7 +55,7 @@ void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
 void	f_region(), f_itemair(), f_modify(), f_kill(), f_list();
 void	f_zap(), f_group(), f_param(), f_mirror(), f_extrude();
-void	f_delmem(), f_arbdef(), f_comm(), f_quit();
+void	f_rm(), f_arbdef(), f_comm(), f_quit();
 void	f_edcomb(), f_status(), f_vrot();
 void	f_refresh(), f_fix(), f_rt(), f_saveview();
 void	f_make(), f_attach(), f_release();
@@ -92,8 +92,8 @@ static struct funtab {
 	f_name,3,3,
 "cp", "from to", "copy [duplicate] object",
 	f_copy,3,3,
-"i", "object comb inst [operation]", "create instance",
-	f_instance,4,5,
+"i", "obj combination [operation]", "add instance of obj to comb",
+	f_instance,3,4,
 "r", "region <operation solid>", "create region",
 	f_region,4,MAXARGS,
 "item", "region item [air]", "change item # or air code",
@@ -119,7 +119,7 @@ static struct funtab {
 "extrude", "#### distance", "extrude dist from face",
 	f_extrude,3,3,
 "rm", "comb <members>", "remove members from comb",
-	f_delmem,3,MAXARGS,
+	f_rm,3,MAXARGS,
 "arb", "name rot fb", "make arb8, rotation + fallback",
 	f_arbdef,4,4,
 "units", "<mm|cm|m|in|ft>", "change units",

@@ -315,8 +315,6 @@ do_list( dp )
 		(void)printf("  %c %s",
 			record.M.m_relation, record.M.m_instname );
 
-		if( record.M.m_brname[0] != '\0' )
-			(void)printf(" br name=%s", record.M.m_brname );
 #define Mat record.M.m_mat
 		if( Mat[0] != 1.0 || Mat[5] != 1.0 || Mat[10] != 1.0 )
 			(void)printf(" (Rotated)");
