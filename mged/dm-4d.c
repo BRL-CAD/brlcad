@@ -326,17 +326,25 @@ static void
 Ir_configure_window_shape()
 {
 	int		npix;
+#if MIXED_MODE
+	XWindowAttributes xwa;
+#endif
 
 	xlim_view = 1.0;
 	ylim_view = 1.0;
 	mat_idn(aspect_corr);
 
+#if MIXED_MODE
+	XGetWindowAttributes( dpy, win, &xwa );
+	winx_size = xwa.width;
+	winy_size = xwa.height;
+#else
 	getsize( &winx_size, &winy_size);
 	getorigin( &win_l, & win_b );
 
 	win_r = win_l + winx_size;
 	win_t = win_b + winy_size;
-
+#endif
 	/* Write enable all the bloody bits after resize! */
 	viewport(0, winx_size, 0, winy_size);
 
@@ -1765,8 +1773,9 @@ XEvent *eventPtr;
   XEvent event;
 
 /*XXX still drawing too much!!!
-i.e. drawing atleast 2 times when resizing the window to a larger size.
-once for the Configure and once for the expose */
+i.e. drawing 2 or more times when resizing the window to a larger size.
+once for the Configure and once for the expose. This is especially
+annoying when running remotely. */
 
 #if 1
   if (eventPtr->xany.window != win)
