@@ -152,6 +152,18 @@ grid_setup()
 	if( NEAR_ZERO(ap.a_rbeam, SMALL) && NEAR_ZERO(ap.a_diverge, SMALL) )
 		rt_bomb("zero-radius beam");
 	MAT4X3PNT( viewbase_model, view2model, temp );
+
+	if( cell_width <= 0 || cell_width >= INFINITY ||
+	    cell_height <= 0 || cell_height >= INFINITY )  {
+		rt_log("grid_setup: cell size ERROR (%g, %g) mm\n",
+			cell_width, cell_height );
+	    	rt_bomb("cell size");
+	}
+	if( width <= 0 || height <= 0 )  {
+		rt_log("grid_setup: ERROR bad image size (%d, %d)\n",
+			width, height );
+		rt_bomb("bad size");
+	}
 }
 
 /*
