@@ -606,6 +606,80 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ C L I N E _ I M P O R T 5
+ *
+ *  Import an cline from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_cline_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_cline_internal	*cline_ip;
+	fastf_t				vec[8];
+
+	BU_CK_EXTERNAL( ep );
+
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 8 );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_CLINE;
+	ip->idb_meth = &rt_functab[ID_CLINE];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_cline_internal), "rt_cline_internal");
+
+	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
+	cline_ip->magic = RT_CLINE_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 8 );
+
+	cline_ip->thickness = vec[0] / mat[15];
+	cline_ip->radius = vec[1] / mat[15];
+	MAT4X3PNT(cline_ip->v, mat, &vec[2]);
+	MAT4X3VEC(cline_ip->h, mat, &vec[5]);
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ C L I N E _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_cline_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_cline_internal	*cline_ip;
+	fastf_t				vec[8];
+
+	RT_CK_DB_INTERNAL(ip);
+	if (ip->idb_type != ID_CLINE)  return(-1);
+	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
+	RT_CLINE_CK_MAGIC(cline_ip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "cline external");
+
+	vec[0] = cline_ip->thickness * local2mm;
+	vec[1] = cline_ip->radius * local2mm;
+	VSCALE(&vec[2], cline_ip->v, local2mm);
+	VSCALE(&vec[5], cline_ip->h, local2mm);
+
+	/* Convert from internal (host) to database (network) format */
+	htond(ep->ext_buf, (unsigned char *)vec, 8);
+
+	return(0);
+}
+
+/*
  *			R T _ C L I N E _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
