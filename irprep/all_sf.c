@@ -302,11 +302,11 @@ char **argv;
 	   (void)fflush(stdout);
 	   (void)scanf("%ld",&seed);
 	}
-	#ifdef MSRMAXTBL
+#	ifdef MSRMAXTBL
 	   msr = msr_unif_init(seed,0);
-	#else
+#	else
 	   (void)srand48(seed);
-	#endif
+#	endif
 	(void)printf("Seed initialized\n");
 	(void)fflush(stdout);
 
@@ -334,18 +334,18 @@ char **argv;
 		/*  Find point on the bounding sphere.  The negative  */
 		/*  of the unit vector of this point will be the  */
 		/*  firing direction.  */
-		#ifdef MSRMAXTBL
+#		ifdef MSRMAXTBL
 		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-		#else
+#		else
 		   q = drand48();
-		#endif
+#		endif
 		theta = q * 2. * PI;
 
-		#ifdef MSRMAXTBL
+#		ifdef MSRMAXTBL
 		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-		#else
+#		else
 		   q = drand48();
-		#endif
+#		endif
 		phi = (q * 2.) - 1.;
 		phi = acos(phi);
 
@@ -360,18 +360,18 @@ char **argv;
 		az = theta;
 
 		/*  Find vector in yz-plane.  */
-		#ifdef MSRMAXTBL
+#		ifdef MSRMAXTBL
 		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-		#else
+#		else
 		   q = drand48();
-		#endif
+#		endif
 		theta = q * 2. * PI;
 
-		#ifdef MSRMAXTBL
+#		ifdef MSRMAXTBL
 		   q = MSR_UNIF_DOUBLE(msr) + 0.5;
-		#else
+#		else
 		   q = drand48();
-		#endif
+#		endif
 		rds = rho * sqrt(q);
 		s[X] = 0.;
 		s[Y] = rds * cos(theta);
