@@ -128,7 +128,7 @@ AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP_DECL,1,strdup))
 AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(dld, dlopen, DL="-ldld", AC_MSG_ERROR([No dynamic loader found])))])
 AC_CHECK_FUNCS(drand gethostname vprintf sbrk vfork dlopen bzero strdup strchr getopt writev regex strdup)
 AC_CHECK_FUNCS(socket, SOCKET="" ,[AC_CHECK_LIB(socket, socket, SOCKET="-lsocket", AC_MSG_ERROR([No internet socket found]))])
-AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHEC_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
+AC_CHECK_FUNCS(re_comp, REGEX_LIB="", [AC_CHECK_LIB(compat, re_comp, REGEX_LIB="-lcompat",)])
 
 dnl TODO this needs to be fixed to actually test...
 case "$target" in
