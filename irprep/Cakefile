@@ -4,7 +4,8 @@
 #define CONFIGDEFS	RT_CONFIG
 
 #define SRCDIR	irprep
-#define PRODUCTS	firpass secpass shapefact
+#define PRODUCTS	firpass secpass shapefact \
+			display see pictx
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -24,9 +25,21 @@ secpass:        secpass.o subroutines.o LIBRT
 shapefact:  shapefact.o LIBRT
         CC LDFLAGS shapefact.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
 
+display:  display.o LIBRT
+        CC LDFLAGS display.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o display
+
+see:	see.o
+	CC LDFLAGS see.o -L/usr/X11/lib -lX11 -o see
+
+pictx:	pictx.o
+	CC LDFLAGS pictx.o -L/usr/X11/lib -lX11 -o pictx
+
 lint:
 	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
 	lint LFLAGS -I''INCDIR ../irprep/secpass.c ../irprep/subroutines.c >> SRCDIR.lint
 	lint LFLAGS -I''INCDIR ../irprep/shapefact.c ../irprep/subroutines.c >> SRCDIR.lint
+	lint LFLAGS -I''INCDIR ../irprep/display.c >>SRCDIR.lint
+	lint LFLAGS -I''INCDIR ../irprep/see.c >>SRCDIR.lint
+	lint LFLAGS -I''INCDIR ../irprep/pictx.c >>SRCDIR.lint
 
 #include "../Cakefile.rules"
