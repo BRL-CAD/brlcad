@@ -34,7 +34,6 @@ static char RCSprep[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-HIDDEN void	rt_fr_tree();
 HIDDEN void	rt_solid_bitfinder();
 
 extern struct resource	rt_uniresource;		/* from shoot.c */
@@ -55,10 +54,12 @@ register struct rt_i *rtip;
 	register int		i;
 	vect_t			diag;
 
-	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_prep:  bad rtip\n");
+	RT_CK_RTI(rtip);
 
-	if(!rtip->needprep)
-		rt_bomb("rt_prep: invoked a second time");
+	if(!rtip->needprep)  {
+		rt_log("WARNING: rt_prep() invoked a second time, ignored");
+		return;
+	}
 	rtip->needprep = 0;
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
@@ -435,7 +436,7 @@ register struct rt_i *rtip;
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
 		register struct region *nextregp = regp->reg_forw;
 
-		rt_fr_tree( regp->reg_treetop );
+		db_free_tree( regp->reg_treetop );
 		rt_free( (char *)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
 		rt_free( (char *)regp, "struct region");
@@ -547,52 +548,12 @@ register struct region *delregp;
 	rt_log("rt_del_region:  unable to find %s\n", delregp->reg_name);
 	return(-1);
 zot:
-	rt_fr_tree( delregp->reg_treetop );
+	db_free_tree( delregp->reg_treetop );
+	delregp->reg_treetop = TREE_NULL;
 	rt_free( (char *)delregp->reg_name, "region name str");
 	delregp->reg_name = (char *)0;
 	rt_free( (char *)delregp, "struct region");
 	return(0);
-}
-
-/*
- *			R T _ F R  _ T R E E
- *
- *  Free a boolean operation tree.
- *  Pointers to children are nulled out, to prevent any stray references
- *  to this tree node from being sucessful.
- *  XXX should iterate, rather than recurse.
- */
-HIDDEN void
-rt_fr_tree( tp )
-register union tree *tp;
-{
-
-	switch( tp->tr_op )  {
-	case OP_NOP:
-		tp->tr_op = 0;
-		rt_free( (char *)tp, "NOP union tree");
-		return;
-	case OP_SOLID:
-		rt_free( tp->tr_a.tu_name, "leaf name" );
-		tp->tr_a.tu_name = (char *)0;
-		tp->tr_op = 0;
-		rt_free( (char *)tp, "leaf tree union");
-		return;
-	case OP_SUBTRACT:
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_XOR:
-		rt_fr_tree( tp->tr_b.tb_left );
-		tp->tr_b.tb_left = TREE_NULL;
-		rt_fr_tree( tp->tr_b.tb_right );
-		tp->tr_b.tb_right = TREE_NULL;
-		tp->tr_op = 0;
-		rt_free( (char *)tp, "binary tree union");
-		return;
-	default:
-		rt_log("rt_fr_tree: bad op x%x\n", tp->tr_op);
-		return;
-	}
 }
 
 /*
