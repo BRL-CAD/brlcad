@@ -3,16 +3,8 @@
 brlcad \- BRL CAD programs for solid modeling, raytracing,
 graphics, and image processing
 .SH DESCRIPTION
-.I brlcad
-is good.
-.I brlcad
-is free!
-.P
 The BRL CAD Distribution contains many directories of materials.
 The major categories of programs are:
-.TP
-.B libsysv
-Some System-V compatability routines
 .TP
 .B mged
 A multi-device interactive editor for constructing and updating
@@ -84,6 +76,9 @@ etc.
 .B rfbd
 TCP-based network server which implements remote frame-buffer services.
 .TP
+.B libsysv
+Some System-V compatability routines
+.TP
 .B libtermio
 A library to handle terminal mode setting
 on both Berkeley or SystemV machines.
@@ -92,8 +87,8 @@ on both Berkeley or SystemV machines.
 A public-domain version of the UNIX-Plot library
 which differs from that of the standard
 .IR libplot (3),
-only by the addition of 3-D primatives, color, and the
-use of a file pointer parameter.
+by the addition of 3-D primatives, color, floating point
+coordinate routines, and the use of a file pointer parameter.
 See
 .IR libplot3 (3),
 .IR plot3 (5).
@@ -103,9 +98,13 @@ A Run-Length-Encoding (RLE) library,
 providing functions
 originally from the University of Utah in a library package.
 Note that the current version of this library reads
-Edition-1 and Edition-2 RLE files.
-The University of Utah is currently preparing Edition-3
-of this format.
+Edition-3 RLE files.
+[Edition-1 and Edition-2 RLE files can be read and written
+with the
+.B liborle
+and
+.B orle
+programs.]
 See
 .IR rle-fb (1),
 .IR fb-rle (1),
@@ -119,7 +118,7 @@ each constructed as individual tools intended to be used in combination.
 See
 .IR ap-pix (1),
 .IR bw-fb (1),
-.IR bw-impress (1),
+.IR bw-imp (1),
 .IR bw-pix (1),
 .IR bw3-pix (1),
 .IR bwcrop (1),
@@ -137,7 +136,6 @@ See
 .IR fb-pix (1),
 .IR fb-rle (1),
 .IR fbanim (1),
-.IR pixbackgnd (1),
 .IR fbclear (1),
 .IR fbcmap (1),
 .IR fbcmrot (1),
@@ -151,6 +149,7 @@ See
 .IR pix-bw (1),
 .IR pix-bw3 (1),
 .IR pix-fb (1),
+.IR pixbackgnd (1),
 .IR pixbustup (1),
 .IR pixdiff (1),
 .IR pixfilter (1),
@@ -163,7 +162,7 @@ See
 .IR pixscale (1),
 .IR pixstat (1),
 .IR pixtile (1),
-.IR plot-fb (1),
+.IR pl-fb (1),
 .IR pp-fb (1),
 .IR rle-fb (1),
 .IR rle-pix (1),
@@ -265,7 +264,7 @@ Various.  Typically means zoom-in on current area of display.
 Behavior is undefined when the 
 .B \-s
 flag is used in conjunction with the
-BR \-w\  or \-n
+.BR \-w\  or\  \-n
 flags.
 .TP
 .BI \-w\  file_width
@@ -277,7 +276,7 @@ flags.
 Behavior is undefined when the 
 .B \-S
 flag is used in conjunction with the
-BR \-W\  or \-N
+.BR \-W\  or\  \-N
 flags.
 .TP
 .BI \-W\  screen_width
@@ -305,7 +304,16 @@ in pipelines with the image tools, our ``standard''
 image format remains.
 .PP
 Regardless of image resolution, all tape records are 24k bytes long.
+If an image does not occupy an integral number of tape records,
+the last record is padded out.
+For example, NTSC images in 640x480 format use
+37.5 records per image.
+The
+.IR files-tape (1)
+utility is helpful in performing this function.
 .PP
+The capacity of an averate 2400 foot reel of tape at 6250 is 6144 records
+of 24k bytes each.
 For the various combinations of density and image resolution,
 a convention for the number of frames/reel exists:
 .br
@@ -313,17 +321,29 @@ Density\ \ Resolution\ \ Frames/reel
 .br
 \ 6250\ \ \ \ \ \ \ \ 1k\ \ \ \ \ \ \ \ \ \ 48
 .br
+\ 6250\ \ \ \ \ \ 640x480\ \ \ \ \ \ 160
+.br
 \ 6250\ \ \ \ \ \ \ 512\ \ \ \ \ \ \ \ \ 192
 .br
 \ 1600\ \ \ \ \ \ \ \ 1k\ \ \ \ \ \ \ \ \ \ 12
 .br
 \ 1600\ \ \ \ \ \ \ 512\ \ \ \ \ \ \ \ \ 48
+.SH "FILES"
+At BRL, the software is installed in the directories:
+.br
+ /usr/brlcad/bin
+ /usr/brlcad/lib
+ /usr/brlcad/etc
+.br
+The master source tree resides on the machine SPARK.BRL.MIL:
+ /m/cad
+.B 
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br
 The U. S. Army Ballistic Research Laboratory
 .br
-Aberdeen Proving Ground, Maryland  21005
+Aberdeen Proving Ground, Maryland  21005-5066
 .SH BUG REPORTS
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
