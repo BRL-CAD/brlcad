@@ -66,7 +66,6 @@ struct rt_i		*rtip;
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
-	rt_pipe_ifree( ip );
 	return(-1);	/* unfinished */
 }
 
