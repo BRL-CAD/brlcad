@@ -276,7 +276,7 @@ register struct soltab	*stp;
 		db_free_external( &ext );
 	    	return(-2);
 	}
-    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	rt_functab[id].ft_ifree( &intern );
 	db_free_external( &ext );
 
 	/* Take color from one region */
