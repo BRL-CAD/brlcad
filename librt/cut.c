@@ -239,8 +239,9 @@ struct soltab *stp;
  *	 0	Node has been cut
  */
 HIDDEN int
-rt_ct_plan( cutp )
+rt_ct_plan( cutp, depth )
 union cutter	*cutp;
+int		depth;
 {
 	int	axis;
 	int	status[3];
@@ -248,6 +249,7 @@ union cutter	*cutp;
 	double	offcenter[3];
 	int	best;
 	double	bestoff;
+	int	i;
 
 	for( axis = X; axis <= Z; axis++ )  {
 		status[axis] = rt_ct_assess(
@@ -257,7 +259,8 @@ union cutter	*cutp;
 	for(;;)  {
 		best = -1;
 		bestoff = INFINITY;
-		for( axis = X; axis <= Z; axis++ )  {
+		for( i = X; i <= Z; i++ )  {
+			axis = (depth + i) % 3;
 			if( status[axis] <= 0 )  continue;
 			if( offcenter[axis] >= bestoff )  continue;
 			/* This one is better than previous ones */
@@ -541,7 +544,7 @@ int	depth;
 	/*
 	 *  Attempt to make an optimal cut
 	 */
-	if( rt_ct_plan( cutp ) < 0 )  {
+	if( rt_ct_plan( cutp, depth ) < 0 )  {
 		/* Unable to further subdivide this box node */
 		return;
 	}
