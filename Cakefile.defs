@@ -126,7 +126,7 @@ set -S2 "/bin/sh"
 #	define BUILD_SHARED	1
 #	define BUILD_XWINDOWS	1
 #	define BUILD_OPENGL	0
-# 	define BUILD_PRODUCTION	1
+# 	define BUILD_PRODUCTION	0
 #	define BUILD_SMP	0
 #else
 #	define BUILD_OPTIMIZED	0
