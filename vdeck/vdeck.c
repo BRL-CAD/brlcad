@@ -1,6 +1,6 @@
 /*
- *	@(#) vdeck.c		retrieved 8/13/86 at 08:05:00,
- *	@(#) version 1.5		  created 2/25/83 at 13:39:41.
+ *	@(#) vdeck.c		retrieved 8/13/86 at 08:05:20,
+ *	@(#) version 1.6		  created 3/29/83 at 10:53:50.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -26,15 +26,16 @@ char	*cmd[] = {
 "",
 "C O M M A N D                  D E S C R I P T I O N",
 "",
-"deck [output file prefix]      produce COM GEOM card deck",
-"erase                          erase current list of objects",
-"insert [object[s]]             add an object to current list",
-"list [object[s]]               display current list of selected objects",
-"number [solid] [region]        specify starting numbers for objects",
-"quit                           terminate run",
-"remove [object[s]]             remove an object from current list",
-"toc [object[s]]                table of contents of solids database",
-"! [shell command]              execute a UNIX shell command",
+"deck [output file prefix]      Produce COM GEOM card deck.",
+"erase                          Erase current list of objects.",
+"insert [object[s]]             Add an object to current list.",
+"list [object[s]]               Display current list of selected objects.",
+"number [solid] [region]        Specify starting numbers for objects.",
+"quit                           Terminate run.",
+"remove [object[s]]             Remove an object from current list.",
+"sort                           Sort table of contents alphabetically.",
+"toc [object[s]]                Table of contents of solids database.",
+"! [shell command]              Execute a UNIX shell command.",
 "",
 "NOTE:",
 "First letter of command is sufficient, and all arguments are optional.",
@@ -140,6 +141,9 @@ main( argc, argv )	char	*argv[];
 				getcmd( arg_list, arg_ct );
 			}
 			shell( arg_list );
+			break;
+		case SORT_TOC:
+			sort( toc_list, toc_ct );
 			break;
 		case TOC:
 			list_toc( arg_list );
@@ -688,35 +692,32 @@ Record *rec;
 	float	work[3], worc[3];
 	vect_t	v_work, v_workk;
 	float	xmin, xmax, ymin, ymax, zmin, zmax;
+	int	univecs[8], samevecs[11];
 	
-	if( rec->s.s_type == GENARB8 )	/*** KLUDGE ****/
-		if( rec->s.s_num > 0 )	rec->s.s_num = ARB8;
-		else			rec->s.s_num *= -1;
-
-	/* operate on vertex
-	 */
+	/* Operate on vertex.						*/
 	vtoh_move( v_workk, &(rec->s.s_values[0]) );
 	matXvec( v_work, xform, v_workk );
 	htov_move( &(rec->s.s_values[0]), v_work );
 
-	/* rest of vectors
-	 */
+	/* Rest of vectors.						*/
 	for( i = 3; i <= 21; i += 3 ) {
 		vtoh_move( v_workk, &(rec->s.s_values[i]) );
 		matXvec( v_work, notrans, v_workk );
 		htov_move( v_workk, v_work );
 
-		/* point notation
-		 */
+		/* Point notation.					*/
 		VADD2(	&(rec->s.s_values[i]),
 			&(rec->s.s_values[0]),
 			v_workk
 		);
 	}
 
+	/* Enter new arb code.						*/
+	if( (i = cgarbs( rec, univecs, samevecs )) == 0 ) return;
+	redoarb( rec, univecs, samevecs, i );
+	rec->s.s_num *= -1;
 	
-	/* print the solid parameters
-	 */
+	/* Print the solid parameters.					*/
 	switch( rec->s.s_num ) {
 	case ARB8:
 		write( solfd, "arb8   ", 7 );
