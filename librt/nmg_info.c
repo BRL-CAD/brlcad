@@ -452,8 +452,8 @@ CONST struct rt_list	*fu_hd;
  */
 struct edgeuse *
 nmg_eu_with_vu_in_lu( lu, vu )
-struct loopuse		*lu;
-struct vertexuse	*vu;
+CONST struct loopuse		*lu;
+CONST struct vertexuse	*vu;
 {
 	register struct edgeuse	*eu;
 
@@ -616,4 +616,122 @@ CONST struct rt_tol	*tol;
 	rt_log("nmg_loop_is_ccw(x%x):  unable to determine CW/CCW, theta=%g (%g)\n",
 		theta, rad );
 	return 0;
+}
+
+/*
+ *			N M G _ F I N D _ P T _ I N _ S H E L L
+ *
+ *  Given a point in 3-space and a shell pointer, try to find a vertex
+ *  anywhere in the shell which is within sqrt(tol_sq) distance of
+ *  the given point.
+ *
+ *  The algorithm is a brute force, and should be used sparingly.
+ *  Mike Gigante's NUgrid technique would work well here, if
+ *  searching was going to be needed for more than a few points.
+ *
+ *  Returns -
+ *	pointer to vertex with matching geometry
+ *	NULL
+ */
+struct vertex *
+nmg_find_pt_in_shell( s, pt, tol )
+CONST struct shell	*s;
+CONST point_t		pt;
+CONST struct rt_tol	*tol;
+{
+	CONST struct faceuse	*fu;
+	CONST struct loopuse	*lu;
+	CONST struct edgeuse	*eu;
+	CONST struct vertexuse	*vu;
+	struct vertex		*v;
+	CONST struct vertex_g	*vg;
+	vect_t		delta;
+
+	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
+
+	fu = RT_LIST_FIRST(faceuse, &s->fu_hd);
+	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
+		/* Shell has faces */
+		NMG_CK_FACEUSE(fu);
+			if( (vu = nmg_find_vu_in_face( pt, fu, tol )) )
+				return(vu->v_p);
+
+			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
+			else
+				fu = RT_LIST_PNEXT(faceuse, fu);
+	}
+
+	for (RT_LIST_FOR(lu, loopuse, &s->lu_hd)) {
+		NMG_CK_LOOPUSE(lu);
+		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
+			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+			NMG_CK_VERTEX(vu->v_p);
+			if (vg = vu->v_p->vg_p) {
+				NMG_CK_VERTEX_G(vg);
+				VSUB2( delta, vg->coord, pt );
+				if( MAGSQ(delta) < tol->dist_sq )
+					return(vu->v_p);
+			}
+		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
+			rt_log("in %s at %d ", __FILE__, __LINE__);
+			rt_bomb("loopuse has bad child\n");
+		} else {
+			/* loopuse made of edgeuses */
+			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+				
+				NMG_CK_EDGEUSE(eu);
+				NMG_CK_VERTEXUSE(eu->vu_p);
+				v = eu->vu_p->v_p;
+				NMG_CK_VERTEX(v);
+				if( (vg = v->vg_p) )  {
+					NMG_CK_VERTEX_G(vg);
+					VSUB2( delta, vg->coord, pt );
+					if( MAGSQ(delta) < tol->dist_sq )
+						return(v);
+				}
+			}
+		}
+	}
+
+	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
+	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
+
+			NMG_CK_LOOPUSE(lu);
+			/* XXX what to do here? */
+			rt_log("nmg_find_vu_in_face(): lu?\n");
+
+			if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
+				lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
+			else
+				lu = RT_LIST_PNEXT(loopuse, lu);
+	}
+
+	for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_VERTEXUSE(eu->vu_p);
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( (vg = v->vg_p) )  {
+			NMG_CK_VERTEX_G(vg);
+			VSUB2( delta, vg->coord, pt );
+			if( MAGSQ(delta) < tol->dist_sq )
+				return(v);
+		}
+	}
+
+
+	if (s->vu_p) {
+		NMG_CK_VERTEXUSE(s->vu_p);
+		v = s->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( (vg = v->vg_p) )  {
+			NMG_CK_VERTEX_G( vg );
+			VSUB2( delta, vg->coord, pt );
+			if( MAGSQ(delta) < tol->dist_sq )
+				return(v);
+		}
+	}
+	return( (struct vertex *)0 );
 }
