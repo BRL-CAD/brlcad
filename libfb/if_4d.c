@@ -768,6 +768,15 @@ int	width, height;
 	}
 #endif
 
+	/*
+	 *  Allocate extension memory section,
+	 *  addressed by SGI(ifp)->mi_xxx
+	 */
+	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
+		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
+		return(-1);
+	}
+
 	/* the Silicon Graphics Library Window management routines
 	 * use shared memory. This causes lots of problems when you
 	 * want to pass a window structure to a child process.
@@ -800,11 +809,6 @@ int	width, height;
 
 			exit(0);
 		}
-	}
-
-	if( (SGIL(ifp) = (char *)calloc( 1, sizeof(struct sgiinfo) )) == NULL )  {
-		fb_log("sgi_dopen:  sgiinfo malloc failed\n");
-		return(-1);
 	}
 
 	/*
