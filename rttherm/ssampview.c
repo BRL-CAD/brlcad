@@ -71,6 +71,63 @@ void	find_minmax();
 void	rescale(BU_ARGS(int wav));
 void	show_color(BU_ARGS(int off));
 
+char			*first_command = "no_command?";
+
+/*
+ *  Temporary testing function
+ *  Takes no args, sets three Tcl variables, ntsc_r, ntsc_g, ntsc_b
+ */
+int
+getntsccurves( cd, interp, argc, argv )
+ClientData	cd;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	struct bu_vls	str;
+
+	bu_vls_init(&str);
+
+	/* These are the curves as fitted to our spectrum sampling */
+	bu_vls_trunc(&str, 0);
+	rt_tabdata_to_tcl(&str, ntsc_r);
+	Tcl_SetVar( interp, "ntsc_r", bu_vls_addr(&str), 0 );
+
+	bu_vls_trunc(&str, 0);
+	rt_tabdata_to_tcl(&str, ntsc_g);
+	Tcl_SetVar( interp, "ntsc_g", bu_vls_addr(&str), 0 );
+
+	bu_vls_trunc(&str, 0);
+	rt_tabdata_to_tcl(&str, ntsc_b);
+	Tcl_SetVar( interp, "ntsc_b", bu_vls_addr(&str), 0 );
+
+	Tcl_AppendResult( interp, "ntsc_r ntsc_g ntsc_b", (char *)NULL );
+
+	{
+	/* These are the curves from the data tables in the library */
+	extern struct rt_tabdata *rt_NTSC_r_tabdata;
+	extern struct rt_tabdata *rt_NTSC_g_tabdata;
+	extern struct rt_tabdata *rt_NTSC_b_tabdata;
+
+	bu_vls_trunc(&str, 0);
+	rt_tabdata_to_tcl(&str, rt_NTSC_r_tabdata);
+	Tcl_SetVar( interp, "ntsc_r_orig", bu_vls_addr(&str), 0 );
+
+	bu_vls_trunc(&str, 0);
+	rt_tabdata_to_tcl(&str, rt_NTSC_g_tabdata);
+	Tcl_SetVar( interp, "ntsc_g_orig", bu_vls_addr(&str), 0 );
+
+	bu_vls_trunc(&str, 0);
+	rt_tabdata_to_tcl(&str, rt_NTSC_b_tabdata);
+	Tcl_SetVar( interp, "ntsc_b_orig", bu_vls_addr(&str), 0 );
+	}
+
+	bu_vls_free(&str);
+
+	Tcl_AppendResult( interp, "ntsc_r_orig ntsc_g_orig ntsc_b_orig", (char *)NULL );
+	return TCL_OK;
+}
+
 /*
  *
  *  With no args, returns the number of wavelengths.
@@ -138,6 +195,12 @@ char		*argv[];
 		interp->result = "wavelength out of range";
 		return TCL_ERROR;
 	}
+
+	if( !data )  {
+		interp->result = "pixel data table not loaded yet";
+		return TCL_ERROR;
+	}
+
 	cp = (char *)data;
 	cp = cp + (y * width + x) * RT_SIZEOF_TABDATA(spectrum);
 	sp = (struct rt_tabdata *)cp;
@@ -178,6 +241,11 @@ char		*argv[];
 
 	if( x < 0 || x > width || y < 0 || y > height )  {
 		interp->result = "x or y out of range";
+		return TCL_ERROR;
+	}
+
+	if( !data )  {
+		interp->result = "pixel data table not loaded yet";
 		return TCL_ERROR;
 	}
 	cp = (char *)data;
@@ -271,6 +339,11 @@ Tcl_Interp	*inter;
 	/* Run tk.tcl script */
 	if( Tk_Init(interp) == TCL_ERROR )  return TCL_ERROR;
 
+	/* Add commands offered by the libraries */
+	bu_tcl_setup(interp);
+	rt_tcl_setup(interp);
+
+	/* Add commands offered by this program */
 	Tcl_CreateCommand(interp, "fb_cursor", tcl_fb_cursor, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "fb_readpixel", tcl_fb_readpixel, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
@@ -280,6 +353,7 @@ Tcl_Interp	*inter;
 	Tcl_CreateCommand(interp, "getspectval", getspectval, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "getspectrum", getspectrum, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_CreateCommand(interp, "getspectxy", getspectxy, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getntsccurves", getntsccurves, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_LinkVar( interp, "minval", (char *)&minval, TCL_LINK_DOUBLE );
 	Tcl_LinkVar( interp, "maxval", (char *)&maxval, TCL_LINK_DOUBLE );
@@ -289,10 +363,13 @@ Tcl_Interp	*inter;
 	Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "use_cie_xyz", (char *)&use_cie_xyz, TCL_LINK_INT );
 
+	/* Tell Tcl script what to do first */
+	Tcl_SetVar( interp, "first_command", first_command, 0 );
+
 	/* Specify startup file to invoke when run interactively */
 	/* Source the TCL part of this lashup */
 	/* Tcl7 way:  tcl_RcFileName = "./disp.tcl"; */
-	Tcl_SetVar(interp, "tcl_rcFileName", "./disp.tcl", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, "tcl_rcFileName", "../rt/disp.tcl", TCL_GLOBAL_ONLY);
 
 	return TCL_OK;
 }
@@ -338,27 +415,20 @@ double x, y, z;
 exit(2);
 }
 
-int
-main( argc, argv )
-char	**argv;
+void
+conduct_tests()
 {
+	struct rt_tabdata	*flat;
+	vect_t			xyz;
 
-	rt_g.debug = 1;
-
-	rt_make_ntsc_xyz2rgb( xyz2rgb );
-
-#if 1
-{
-struct rt_tabdata	*flat;
-vect_t			xyz;
-/* Code for testing library routines */
-spectrum = rt_table_make_uniform( 20, 380.0, 770.0 );
-rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
+	/* Code for testing library routines */
+	spectrum = rt_table_make_uniform( 20, 340.0, 760.0 );
+	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 bu_log("X:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_x );
 bu_log("Y:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_y );
 bu_log("Z:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_z );
 
-rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
+	rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
 bu_log("R:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_r );
 bu_log("G:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_g );
 bu_log("B:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_b );
@@ -371,27 +441,48 @@ bu_log("B:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_b );
 	}
 
 /* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
-flat = rt_tabdata_get_constval( 42.0, spectrum );
-bu_log("flat:\n");rt_pr_table_and_tabdata( "/dev/tty", flat );
-rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
-VPRINT("flat xyz?", xyz);
+	flat = rt_tabdata_get_constval( 42.0, spectrum );
+	bu_log("flat:\n");rt_pr_table_and_tabdata( "/dev/tty", flat );
+	rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
+	VPRINT("flat xyz?", xyz);
 
-/* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
-check( 0.313,     0.329,      0.358);	/* D6500 white */
-check( 0.670,     0.330,      0.000);	/* NTSC red primary */
-check( 0.210,     0.710,      0.080);	/* NTSC green primary */
-check( 0.140,     0.080,      0.780);	/* NTSC blue primary */
-check( .5, .5, .5 );
-check( 1, 0, 0 );
-check( 0, 1, 0 );
-check( 0, 0, 1 );
-check( 1, 1, 1 );
-check( 1, 1, 0 );
-check( 1, 0, 1 );
-check( 0, 1, 1 );
-exit(1);
+return;
+
+	/* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
+	check( 0.313,     0.329,      0.358);	/* D6500 white */
+	check( 0.670,     0.330,      0.000);	/* NTSC red primary */
+	check( 0.210,     0.710,      0.080);	/* NTSC green primary */
+	check( 0.140,     0.080,      0.780);	/* NTSC blue primary */
+	check( .5, .5, .5 );
+	check( 1, 0, 0 );
+	check( 0, 1, 0 );
+	check( 0, 0, 1 );
+	check( 1, 1, 1 );
+	check( 1, 1, 0 );
+	check( 1, 0, 1 );
+	check( 0, 1, 1 );
 }
-#endif
+
+/*
+ *			M A I N
+ */
+int
+main( argc, argv )
+char	**argv;
+{
+
+	rt_g.debug = 1;
+
+	rt_make_ntsc_xyz2rgb( xyz2rgb );
+
+	if( argc > 1 )  {
+		conduct_tests();
+		first_command = "do_testing";
+		Tk_Main( 1, argv, tcl_appinit );
+		/* NOTREACHED */
+		exit(0);
+	}
+	first_command = "doit1 42";
 
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
 		rt_bomb("Unable to open fb\n");
@@ -419,7 +510,7 @@ exit(1);
 	find_minmax();
 	rt_log("min = %g, max=%g Watts\n", minval, maxval );
 
-	Tk_Main( argc, argv, tcl_appinit );
+	Tk_Main( 1, argv, tcl_appinit );
 	/* NOTREACHED */
 
 	return 0;
@@ -462,7 +553,12 @@ char		*argv[];
 		return TCL_ERROR;
 	}
 
-	rt_log("%d: %g um to %g um\n",
+	if( !data )  {
+		interp->result = "pixel data table not loaded yet";
+		return TCL_ERROR;
+	}
+
+	rt_log("doit1 %d: %g um to %g um\n",
 		wl,
 		spectrum->x[wl] * 0.001,
 		spectrum->x[wl+1] * 0.001 );
