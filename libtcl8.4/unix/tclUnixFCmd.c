@@ -457,7 +457,7 @@ CopyFile(src, dst, statBufPtr)
 	if (fstatfs(srcFd, &fs
 #ifndef linux
 			, sizeof(fs), 0
-#endif				
+#endif
 				) == 0) {
 	    blockSize = fs.f_bsize;
 	} else {
