@@ -52,7 +52,8 @@ char usage[] = "\
 Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
 	hue saturation\n\
-or	r g b\n";
+or	r g b\n\
+	> file.pix";
 
 get_args( argc, argv )
 register char **argv;
