@@ -49,6 +49,7 @@ char	**args;
 	{
 	for( ; ; )
 		{
+		prnt_Status();
 		if( qtest() )
 			{	short	val;
 				long	dev = qread( &val );
@@ -139,8 +140,8 @@ sgi_Init_Popup_Menu()
 	winconstraints(); /* Free window of constraints.		*/
 	winattach();
 	buffering_menu = defpup( "buffering %t|unbuffered %x0|paged buffering %x1|scan line buffered%x2" );
-	cursorect_menu = defpup( "cursor input %t|tag pixel %x0|sweep rectangle %x1|window in %x2|window out %x3" );
-	debugging_menu = defpup( "debugging %t|reset all flags %x0|solids %x1|hits %x2|all shots %x4|rootfinder %x8|regions and booleans %x16|arb8 %x32|partitioning %x64|space subdivision %x128|box checking %x256|shootray processing %x512|plot(3) of bounding RPPs %x1024|ray(4V) output %x2048|splines %x4096|database %x8192|RGB %x65536|refraction %x131072|normals %x262144|shadows %x524288|gaussian beam %x1048576|octree %x2097152" );
+	cursorect_menu = defpup( "cursor input %t|tag pixel %x0|sweep rectangle %x1|window in %x2|window out %x3|query region %x4" );
+	debugging_menu = defpup( "debugging %t|reset all flags %x0|all rays %x1|shoot %x2|db %x16|solids %x32|regions %x64|arb8 %x128|spline %x256|roots %x4096|partitioning %x8192|cut %x16384|boxing %x32768|memory allocation %x65536|testing %x131072|fdiff %x262144|RGB %x524288|refraction %x1048576|normals %x2097152|shadows %x4194304|gaussian beam %x8388608|octree %x16777216" );
 	grid_cntl_menu = defpup( "gridding parameters %t|resolution %x71|distance to model centroid %x102|perspective %x112|roll %x97|field of view %x103|image translation %x68|grid translation %x116|over sampling factor %x65|key frame input %x106|movie setup %x74|animate %x70" );
 	grid_size_menu = defpup( "resolution %t|16-by-16 %x16|32-by-32 %x32|64-by-64 %x64|128-by-128 %x128|256-by-256 %x256|512-by-512 %x512|1024-by-1024 %x1024" );
 	file_name_menu = defpup( "files %t|frame buffer %x111|error/debug log %x79|write script %x83|save image %x72|read image %x104|texture map %x84" );
@@ -337,7 +338,9 @@ int	origin, x, y, x0, y0;
 		case MIDDLEMOUSE :
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
 			sgi_Pt_Select( x, y, &x0, &y0, &origin );
-			(void) ray_Trace();
+			user_interrupt = FALSE;
+			render_Model();
+			qreset();
 			break;
 		case MOUSEX :
 			x = val;
@@ -595,4 +598,10 @@ sgi_Getchar()
 	return	(int) val;
 	}
 
+int
+sgi_Ungetchar( c )
+int	c;
+	{	short	val = c;
+	return	qenter( KEYBD, val );
+	}
 #endif
