@@ -440,18 +440,16 @@ struct _mged_variables {
     	int	sgi_win_size;
 	int	sgi_win_origin[2];
 	int	faceplate;
-        int     show_menu;
-	int     w_axes;  /* world view axes */
+        int     orig_gui;
+	int     m_axes;  /* model axes */
 	int     v_axes;  /* view axes */
 	int     e_axes;  /* edit axes */
         int     send_key;
         int     hot_key;
-	int	edit;
         int     context;
-        int     eyerot;
-	int	constrain;
-	int	model;
-	char	origin;
+	char	coords;
+	char	rotate_about;
+        char    transform;
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
