@@ -45,7 +45,6 @@
  *  This structure is used for MSG_PIXELS messages
  */
 struct line_info  {
-	int	li_len;
 	int	li_startpix;
 	int	li_endpix;
 	int	li_frame;
@@ -58,7 +57,6 @@ struct line_info  {
 #define LINE_O(x)	offsetof(struct  line_info, x)
 
 struct rt_imexport desc_line_info[] =  {
-	"len",		LINE_O(li_len),		1,
 	"%d",		LINE_O(li_startpix),	1,
 	"%d",		LINE_O(li_endpix),	1,
 	"%d",		LINE_O(li_frame),	1,
