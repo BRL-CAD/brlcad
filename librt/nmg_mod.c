@@ -807,6 +807,7 @@ int		n;
 	NMG_CK_VERTEXUSE(vu);
 	eu = nmg_meonvu(vu);
 	NMG_CK_EDGEUSE(eu);
+	euold = eu;
 
 	if (!(*verts[n-1]))  {
 		NMG_CK_VERTEXUSE(eu->vu_p);
