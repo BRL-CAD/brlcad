@@ -12,31 +12,37 @@
 # The information in this file is specific to a single platform.
 
 # Itcl's version number.
-ITCL_VERSION='@ITCL_VERSION@'
-ITCL_MAJOR_VERSION='@ITCL_MAJOR_VERSION@'
-ITCL_MINOR_VERSION='@ITCL_MINOR_VERSION@'
+ITK_VERSION='@VERSION@'
+ITK_MAJOR_VERSION='@MAJOR_VERSION@'
+ITK_MINOR_VERSION='@MINOR_VERSION@'
 
 # The name of the Itk library (may be either a .a file or a shared library):
-ITK_LIB_FILE=@ITK_LIB_FILE@
+itk_LIB_FILE=@itk_LIB_FILE@
+ITK_LIB_FILE=@itk_LIB_FILE@
 
 # String to pass to linker to pick up the Itk library from its
 # build directory.
-ITK_BUILD_LIB_SPEC='@ITK_BUILD_LIB_SPEC@'
+itk_BUILD_LIB_SPEC='@itk_BUILD_LIB_SPEC@'
+ITK_BUILD_LIB_SPEC='@itk_BUILD_LIB_SPEC@'
 
 # String to pass to linker to pick up the Itk library from its
 # installed directory.
-ITK_LIB_SPEC='@ITK_LIB_SPEC@'
+itk_LIB_SPEC='@itk_LIB_SPEC@'
+ITK_LIB_SPEC='@itk_LIB_SPEC@'
 
 # The name of the Itk stub library (a .a file):
-ITK_STUB_LIB_FILE=@ITK_STUB_LIB_FILE@
+itk_STUB_LIB_FILE=@itk_STUB_LIB_FILE@
+ITK_STUB_LIB_FILE=@itk_STUB_LIB_FILE@
 
 # String to pass to linker to pick up the Itk stub library from its
 # build directory.
-ITK_BUILD_STUB_LIB_SPEC='@ITK_BUILD_STUB_LIB_SPEC@'
+itk_BUILD_STUB_LIB_SPEC='@itk_BUILD_STUB_LIB_SPEC@'
+ITK_BUILD_STUB_LIB_SPEC='@itk_BUILD_STUB_LIB_SPEC@'
 
 # String to pass to linker to pick up the Itk stub library from its
 # installed directory.
-ITK_STUB_LIB_SPEC='@ITK_STUB_LIB_SPEC@'
+itk_STUB_LIB_SPEC='@itk_STUB_LIB_SPEC@'
+ITK_STUB_LIB_SPEC='@itk_STUB_LIB_SPEC@'
 
 # Location of the top-level source directories from which [incr Tk]
 # was built.  This is the directory that contains a README file as well
@@ -44,4 +50,5 @@ ITK_STUB_LIB_SPEC='@ITK_STUB_LIB_SPEC@'
 # compiled in a different place than the directory containing the source
 # files, this points to the location of the sources, not the location
 # where [incr Tk] was compiled.
-ITK_SRC_DIR='@ITK_SRC_DIR@'
+itk_SRC_DIR='@itk_SRC_DIR@'
+ITK_SRC_DIR='@itk_SRC_DIR@'

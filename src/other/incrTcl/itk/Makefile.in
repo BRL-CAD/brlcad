@@ -23,9 +23,9 @@
 # This will be used when a dist target is added to the Makefile.
 #========================================================================
 
-WIN_DIR		= $(srcdir)/win
-UNIX_DIR	= $(srcdir)/unix
-GENERIC_DIR	= $(srcdir)/generic
+WIN_DIR		= @itk_SRC_DIR@/win
+UNIX_DIR	= @itk_SRC_DIR@/unix
+GENERIC_DIR	= @itk_SRC_DIR@/generic
 PLATFORM_DIR	= @PLATFORM_DIR@
 
 WIN_SOURCES	= $(PLATFORM_DIR)/tclAppInit.c $(PLATFORM_DIR)/dllEntryPoint.c
@@ -71,8 +71,8 @@ itclstub_LIB_FILE = @itclstub_LIB_FILE@
 #========================================================================
 
 GENERIC_HDRS	= \
-	$(srcdir)/generic/itk.h \
-	$(srcdir)/generic/itkDecls.h
+	@itk_SRC_DIR@/generic/itk.h \
+	@itk_SRC_DIR@/generic/itkDecls.h
 
 #========================================================================
 # Add additional lines to handle any additional AC_SUBST cases that
@@ -173,7 +173,7 @@ EXTRA_PATH	= $(top_builddir):$(TCL_BIN_DIR):$(TK_BIN_DIR)
 TCLSH_ENV	= TCL_LIBRARY=`@CYGPATH@ $(TCL_SRC_DIR)/library` \
 		  TK_LIBRARY=`@CYGPATH@ $(TK_SRC_DIR)/library` \
 		  ITCL_LIBRARY=`@CYGPATH@ @itcl_SRC_DIR@/library` \
-		  ITK_LIBRARY=`@CYGPATH@ $(srcdir)/library` \
+		  ITK_LIBRARY=`@CYGPATH@ @itk_SRC_DIR@/library` \
 		  LD_LIBRARY_PATH="$(EXTRA_PATH):$(LD_LIBRARY_PATH)" \
 		  LIBPATH="$(EXTRA_PATH):${LIBPATH}" \
 		  SHLIB_PATH="$(EXTRA_PATH):${SHLIB_PATH}" \
@@ -245,7 +245,7 @@ install-libraries: libraries
 	done;
 	@mkdir -p $(DESTDIR)$(pkglibdir)
 	@echo "Installing library files in $(DESTDIR)$(pkglibdir)"
-	@for i in $(srcdir)/library/*.* $(srcdir)/library/tclIndex ; do \
+	@for i in @itk_SRC_DIR@/library/*.* @itk_SRC_DIR@/library/tclIndex ; do \
 	    echo "Installing $$i" ; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(pkglibdir) ; \
 	done;
@@ -258,14 +258,14 @@ install-libraries: libraries
 install-doc: doc
 	@mkdir -p $(DESTDIR)$(mandir)/mann
 	@echo "Installing man pages in $(DESTDIR)$(mandir)"
-	@for i in $(srcdir)/doc/*.n; do \
+	@for i in @itk_SRC_DIR@/doc/*.n; do \
 	    echo "Installing $$i"; \
 	    rm -f $(DESTDIR)$(mandir)/mann/`basename $$i`; \
 	    $(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/mann ; \
 	done
 
 test: binaries libraries
-	$(WISH) `@CYGPATH@ $(srcdir)/tests/all.tcl` $(TESTFLAGS) | cat
+	$(WISH) `@CYGPATH@ @itk_SRC_DIR@/tests/all.tcl` $(TESTFLAGS) | cat
 
 shell: binaries libraries
 	@$(WISH) $(SCRIPT)
@@ -302,19 +302,19 @@ $($(PACKAGE)stub_LIB_FILE): $($(PACKAGE)stub_OBJECTS)
 #========================================================================
 # We need to enumerate the list of .c to .o lines here.
 #
-# In the following lines, $(srcdir) refers to the toplevel directory
+# In the following lines, @itk_SRC_DIR@ refers to the toplevel directory
 # containing your extension.  If your sources are in a subdirectory,
 # you will have to modify the paths to reflect this:
 #
-# exampleA.$(OBJEXT): $(srcdir)/src/win/exampleA.c
-# 	$(COMPILE) -c `@CYGPATH@ $(srcdir)/src/win/exampleA.c` -o $@
+# exampleA.$(OBJEXT): @itk_SRC_DIR@/src/win/exampleA.c
+# 	$(COMPILE) -c `@CYGPATH@ @itk_SRC_DIR@/src/win/exampleA.c` -o $@
 #
 # Setting the VPATH variable to a list of paths will cause the makefile
 # to look into these paths when resolving .c to .obj dependencies.
-# As necessary, add $(srcdir):$(srcdir)/compat:....
+# As necessary, add @itk_SRC_DIR@:@itk_SRC_DIR@/compat:....
 #========================================================================
 
-VPATH = $(srcdir)/generic:$(PLATFORM_DIR)
+VPATH = @itk_SRC_DIR@/generic:$(PLATFORM_DIR)
 
 dllEntryPoint.$(OBJEXT): $(WIN_DIR)/dllEntryPoint.c
 	$(COMPILE) -c `@CYGPATH@ $(WIN_DIR)/dllEntryPoint.c` -o $@
@@ -392,7 +392,7 @@ install-bin-binaries:
 
 .SUFFIXES: .c .$(OBJEXT)
 
-Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
+Makefile: @itk_SRC_DIR@/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) \
 	  && CONFIG_FILES=$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
