@@ -3,7 +3,7 @@
 # This file contains procedures that change the color palette used
 # by Tk.
 #
-# SCCS: @(#) palette.tcl 1.11 97/06/23 20:35:44
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 #
@@ -34,41 +34,41 @@ proc tk_setPalette {args} {
     } else {
 	array set new $args
     }
-    if ![info exists new(background)] {
+    if {![info exists new(background)]} {
 	error "must specify a background color"
     }
-    if ![info exists new(foreground)] {
+    if {![info exists new(foreground)]} {
 	set new(foreground) black
     }
     set bg [winfo rgb . $new(background)]
     set fg [winfo rgb . $new(foreground)]
-    set darkerBg [format #%02x%02x%02x [expr (9*[lindex $bg 0])/2560] \
-	    [expr (9*[lindex $bg 1])/2560] [expr (9*[lindex $bg 2])/2560]]
+    set darkerBg [format #%02x%02x%02x [expr {(9*[lindex $bg 0])/2560}] \
+	    [expr {(9*[lindex $bg 1])/2560}] [expr {(9*[lindex $bg 2])/2560}]]
     foreach i {activeForeground insertBackground selectForeground \
 	    highlightColor} {
-	if ![info exists new($i)] {
+	if {![info exists new($i)]} {
 	    set new($i) $new(foreground)
 	}
     }
-    if ![info exists new(disabledForeground)] {
+    if {![info exists new(disabledForeground)]} {
 	set new(disabledForeground) [format #%02x%02x%02x \
-		[expr (3*[lindex $bg 0] + [lindex $fg 0])/1024] \
-		[expr (3*[lindex $bg 1] + [lindex $fg 1])/1024] \
-		[expr (3*[lindex $bg 2] + [lindex $fg 2])/1024]]
+		[expr {(3*[lindex $bg 0] + [lindex $fg 0])/1024}] \
+		[expr {(3*[lindex $bg 1] + [lindex $fg 1])/1024}] \
+		[expr {(3*[lindex $bg 2] + [lindex $fg 2])/1024}]]
     }
-    if ![info exists new(highlightBackground)] {
+    if {![info exists new(highlightBackground)]} {
 	set new(highlightBackground) $new(background)
     }
-    if ![info exists new(activeBackground)] {
+    if {![info exists new(activeBackground)]} {
 	# Pick a default active background that islighter than the
 	# normal background.  To do this, round each color component
 	# up by 15% or 1/3 of the way to full white, whichever is
 	# greater.
 
 	foreach i {0 1 2} {
-	    set light($i) [expr [lindex $bg $i]/256]
-	    set inc1 [expr ($light($i)*15)/100]
-	    set inc2 [expr (255-$light($i))/3]
+	    set light($i) [expr {[lindex $bg $i]/256}]
+	    set inc1 [expr {($light($i)*15)/100}]
+	    set inc2 [expr {(255-$light($i))/3}]
 	    if {$inc1 > $inc2} {
 		incr light($i) $inc1
 	    } else {
@@ -81,13 +81,13 @@ proc tk_setPalette {args} {
 	set new(activeBackground) [format #%02x%02x%02x $light(0) \
 		$light(1) $light(2)]
     }
-    if ![info exists new(selectBackground)] {
+    if {![info exists new(selectBackground)]} {
 	set new(selectBackground) $darkerBg
     }
-    if ![info exists new(troughColor)] {
+    if {![info exists new(troughColor)]} {
 	set new(troughColor) $darkerBg
     }
-    if ![info exists new(selectColor)] {
+    if {![info exists new(selectColor)]} {
 	set new(selectColor) #b03060
     }
 
@@ -187,23 +187,22 @@ proc tkRecolorTree {w colors} {
 #		by 10%.
 
 proc tkDarken {color percent} {
-    set l [winfo rgb . $color]
-    set red [expr [lindex $l 0]/256]
-    set green [expr [lindex $l 1]/256]
-    set blue [expr [lindex $l 2]/256]
-    set red [expr ($red*$percent)/100]
+    foreach {red green blue} [winfo rgb . $color] {
+      set red [expr {($red/256)*$percent/100}]
+      set green [expr {($green/256)*$percent/100}]
+      set blue [expr {($blue/256)*$percent/100}]
+      break
+    }
     if {$red > 255} {
 	set red 255
     }
-    set green [expr ($green*$percent)/100]
     if {$green > 255} {
 	set green 255
     }
-    set blue [expr ($blue*$percent)/100]
     if {$blue > 255} {
 	set blue 255
     }
-    format #%02x%02x%02x $red $green $blue
+    return [format "#%02x%02x%02x" $red $green $blue]
 }
 
 # tk_bisque --

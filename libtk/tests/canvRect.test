@@ -3,14 +3,13 @@
 # in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) canvRect.test 1.18 97/08/06 15:33:39
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -294,7 +293,7 @@ test canvRect-10.1 {TranslateRectOval procedure} {
 # This test is non-portable because different color information
 # will get generated on different displays (e.g. mono displays
 # vs. color).
-test canvRect-11.1 {RectOvalToPostscript procedure} {nonPortable win32sCrash macCrash} {
+test canvRect-11.1 {RectOvalToPostscript procedure} {nonPortable macCrash} {
     # Crashes on Mac because the XGetImage() call isn't implemented, causing a
     # dereference of NULL.
     
@@ -327,3 +326,20 @@ restore showpage
 end
 %%EOF
 }
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

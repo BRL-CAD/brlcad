@@ -3,7 +3,7 @@
 #	Color selection dialog for platforms that do not support a
 #	standard color selection dialog.
 #
-# SCCS: @(#) clrpick.tcl 1.3 96/09/05 09:59:24
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
 #
@@ -59,7 +59,7 @@ proc tkColorDialog {args} {
     tkColorDialog_Config $w $args
     tkColorDialog_InitValues $w
 
-    if ![winfo exists $w] {
+    if {![winfo exists $w]} {
 	toplevel $w -class tkColorDialog
 	tkColorDialog_BuildDialog $w
     }
@@ -72,10 +72,10 @@ proc tkColorDialog {args} {
 
     wm withdraw $w
     update idletasks
-    set x [expr [winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
-	- [winfo vrootx [winfo parent $w]]]
-    set y [expr [winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
-	- [winfo vrooty [winfo parent $w]]]
+    set x [expr {[winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
+	    - [winfo vrootx [winfo parent $w]]}]
+    set y [expr {[winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
+	    - [winfo vrooty [winfo parent $w]]}]
     wm geom $w +$x+$y
     wm deiconify $w
     wm title $w $data(-title)
@@ -84,7 +84,7 @@ proc tkColorDialog {args} {
 
     set oldFocus [focus]
     set oldGrab [grab current $w]
-    if {$oldGrab != ""} {
+    if {[string compare $oldGrab ""]} {
 	set grabStatus [grab status $oldGrab]
     }
     grab $w
@@ -101,8 +101,8 @@ proc tkColorDialog {args} {
     grab release $w
     destroy $w
     unset data
-    if {$oldGrab != ""} {
-	if {$grabStatus == "global"} {
+    if {[string compare $oldGrab ""]} {
+	if {![string compare $grabStatus "global"]} {
 	    grab -global $oldGrab
 	} else {
 	    grab $oldGrab
@@ -120,19 +120,19 @@ proc tkColorDialog_InitValues {w} {
 
     # IntensityIncr is the difference in color intensity between a colorbar
     # and its neighbors.
-    set data(intensityIncr) [expr 256 / $data(NUM_COLORBARS)]
+    set data(intensityIncr) [expr {256 / $data(NUM_COLORBARS)}]
 
     # ColorbarWidth is the width of each colorbar
     set data(colorbarWidth) \
-	[expr $data(BARS_WIDTH) / $data(NUM_COLORBARS)]
+	    [expr {$data(BARS_WIDTH) / $data(NUM_COLORBARS)}]
 
     # Indent is the width of the space at the left and right side of the
     # colorbar. It is always half the selector polygon width, because the
     # polygon extends into the space.
-    set data(indent) [expr $data(PLGN_WIDTH) / 2]
+    set data(indent) [expr {$data(PLGN_WIDTH) / 2}]
 
     set data(colorPad) 2
-    set data(selPad)   [expr $data(PLGN_WIDTH) / 2]
+    set data(selPad)   [expr {$data(PLGN_WIDTH) / 2}]
 
     #
     # minX is the x coordinate of the first colorbar
@@ -142,13 +142,13 @@ proc tkColorDialog_InitValues {w} {
     #
     # maxX is the x coordinate of the last colorbar
     #
-    set data(maxX) [expr $data(BARS_WIDTH) + $data(indent)-1]
+    set data(maxX) [expr {$data(BARS_WIDTH) + $data(indent)-1}]
 
     #
     # canvasWidth is the width of the entire canvas, including the indents
     #
-    set data(canvasWidth) [expr $data(BARS_WIDTH) + \
-	$data(PLGN_WIDTH)]
+    set data(canvasWidth) [expr {$data(BARS_WIDTH) + \
+	    $data(PLGN_WIDTH)}]
 
     # Set the initial color, specified by -initialcolor, or the
     # color chosen by the user the last time.
@@ -156,9 +156,9 @@ proc tkColorDialog_InitValues {w} {
     set data(finalColor)  $data(-initialcolor)
     set rgb [winfo rgb . $data(selection)]
 
-    set data(red,intensity)   [expr [lindex $rgb 0]/0x100]
-    set data(green,intensity) [expr [lindex $rgb 1]/0x100]
-    set data(blue,intensity)  [expr [lindex $rgb 2]/0x100]
+    set data(red,intensity)   [expr {[lindex $rgb 0]/0x100}]
+    set data(green,intensity) [expr {[lindex $rgb 1]/0x100}]
+    set data(blue,intensity)  [expr {[lindex $rgb 2]/0x100}]
 }
 
 # tkColorDialog_Config  --
@@ -181,10 +181,10 @@ proc tkColorDialog_Config {w argList} {
     #
     tclParseConfigSpec $w $specs "" $argList
 
-    if ![string compare $data(-title) ""] {
+    if {![string compare $data(-title) ""]} {
 	set data(-title) " "
     }
-    if ![string compare $data(-initialcolor) ""] {
+    if {![string compare $data(-initialcolor) ""]} {
 	if {[info exists tkPriv(selectColor)] && \
 		[string compare $tkPriv(selectColor) ""]} {
 	    set data(-initialcolor) $tkPriv(selectColor)
@@ -192,12 +192,12 @@ proc tkColorDialog_Config {w argList} {
 	    set data(-initialcolor) [. cget -background]
 	}
     } else {
-	if [catch {winfo rgb . $data(-initialcolor)} err] {
+	if {[catch {winfo rgb . $data(-initialcolor)} err]} {
 	    error $err
 	}
     }
 
-    if ![winfo exists $data(-parent)] {
+    if {![winfo exists $data(-parent)]} {
 	error "bad window path name \"$data(-parent)\""
     }
 }
@@ -233,8 +233,8 @@ proc tkColorDialog_BuildDialog {w} {
 	pack $box -side left -fill both
 
 	set height [expr \
-	    [winfo reqheight $box.entry] - \
-	    2*([$box.entry cget -highlightthickness] + [$box.entry cget -bd])]
+	    {[winfo reqheight $box.entry] - \
+	    2*([$box.entry cget -highlightthickness] + [$box.entry cget -bd])}]
 
 	canvas $f.color -height $height\
 	    -width $data(BARS_WIDTH) -relief sunken -bd 2
@@ -341,7 +341,7 @@ proc tkColorDialog_SetRGBValue {w color} {
 proc tkColorDialog_XToRgb {w x} {
     upvar #0 $w data
     
-    return [expr ($x * $data(intensityIncr))/ $data(colorbarWidth)]
+    return [expr {($x * $data(intensityIncr))/ $data(colorbarWidth)}]
 }
 
 # tkColorDialog_RgbToX
@@ -351,7 +351,7 @@ proc tkColorDialog_XToRgb {w x} {
 proc tkColorDialog_RgbToX {w color} {
     upvar #0 $w data
     
-    return [expr ($color * $data(colorbarWidth)/ $data(intensityIncr))]
+    return [expr {($color * $data(colorbarWidth)/ $data(intensityIncr))}]
 }
 
 
@@ -370,7 +370,7 @@ proc tkColorDialog_DrawColorScale {w c {create 0}} {
     set sel $data($c,sel)
 
     # First handle the case that we are creating everything for the first time.
-    if $create {
+    if {$create} {
 	# First remove all the lines that already exist.
 	if { $data(lines,$c,last) > $data(lines,$c,start)} {
 	    for {set i $data(lines,$c,start)} \
@@ -379,7 +379,7 @@ proc tkColorDialog_DrawColorScale {w c {create 0}} {
 	    }
 	}
 	# Delete the selector if it exists
-	if [info exists data($c,index)] {
+	if {[info exists data($c,index)]} {
 	    $sel delete $data($c,index)
 	}
 	
@@ -418,10 +418,10 @@ proc tkColorDialog_DrawColorScale {w c {create 0}} {
     
     # Draw the color bars.
     set highlightW [expr \
-	[$col cget -highlightthickness] + [$col cget -bd]]
+	    {[$col cget -highlightthickness] + [$col cget -bd]}]
     for {set i 0} { $i < $data(NUM_COLORBARS)} { incr i} {
-	set intensity [expr $i * $data(intensityIncr)]
-	set startx [expr $i * $data(colorbarWidth) + $highlightW]
+	set intensity [expr {$i * $data(intensityIncr)}]
+	set startx [expr {$i * $data(colorbarWidth) + $highlightW}]
 	if { $c == "red" } {
 	    set color [format "#%02x%02x%02x" \
 			   $intensity \
@@ -439,21 +439,21 @@ proc tkColorDialog_DrawColorScale {w c {create 0}} {
 			   $intensity]
 	}
 
-	if $create {
+	if {$create} {
 	    set index [$col create rect $startx $highlightW \
-		[expr $startx +$data(colorbarWidth)] \
-		[expr [winfo height $col] + $highlightW]\
+		    [expr {$startx +$data(colorbarWidth)}] \
+		    [expr {[winfo height $col] + $highlightW}]\
 	        -fill $color -outline $color]
 	} else {
-	    $col itemconf $l -fill $color -outline $color
+	    $col itemconfigure $l -fill $color -outline $color
 	    incr l
 	}
     }
     $sel raise $data($c,index)
 
-    if $create {
+    if {$create} {
 	set data(lines,$c,last) $index
-	set data(lines,$c,start) [expr $index - $data(NUM_COLORBARS) + 1 ]
+	set data(lines,$c,start) [expr {$index - $data(NUM_COLORBARS) + 1}]
     }
 
     tkColorDialog_RedrawFinalColor $w
@@ -484,7 +484,7 @@ proc tkColorDialog_RedrawFinalColor {w} {
     set color [format "#%02x%02x%02x" $data(red,intensity) \
 	$data(green,intensity) $data(blue,intensity)]
     
-    $data(finalCanvas) conf -bg $color
+    $data(finalCanvas) configure -bg $color
     set data(finalColor) $color
     set data(selection) $color
     set data(finalRGB) [list \
@@ -539,7 +539,7 @@ proc tkColorDialog_RedrawColorBars {w colorChanged} {
 proc tkColorDialog_StartMove {w sel color x delta {dontMove 0}} {
     upvar #0 $w data
 
-    if !$dontMove {
+    if {!$dontMove} {
 	tkColorDialog_MoveSelector $w $sel $color $x $delta
     }
 }
@@ -561,11 +561,11 @@ proc tkColorDialog_MoveSelector {w sel color x delta} {
     if { $x < 0 } {
 	set x 0
     } elseif { $x >= $data(BARS_WIDTH)} {
-	set x [expr $data(BARS_WIDTH) - 1]
+	set x [expr {$data(BARS_WIDTH) - 1}]
     }
-    set diff [expr  $x - $data($color,x)]
+    set diff [expr {$x - $data($color,x)}]
     $sel move $data($color,index) $diff 0
-    set data($color,x) [expr $data($color,x) + $diff]
+    set data($color,x) [expr {$data($color,x) + $diff}]
     
     # Return the x value that it was actually set at
     return $x
@@ -603,7 +603,7 @@ proc tkColorDialog_ResizeColorBars {w} {
     }
     tkColorDialog_InitValues $w
     foreach color { red green blue } {
-	$data($color,col) conf -width $data(canvasWidth)
+	$data($color,col) configure -width $data(canvasWidth)
 	tkColorDialog_DrawColorScale $w $color 1
     }
 }
@@ -617,14 +617,14 @@ proc tkColorDialog_HandleSelEntry {w} {
 
     set text [string trim $data(selection)]
     # Check to make sure that the color is valid
-    if [catch {set color [winfo rgb . $text]} ] {
+    if {[catch {set color [winfo rgb . $text]} ]} {
 	set data(selection) $data(finalColor)
 	return
     }
     
-    set R [expr [lindex $color 0]/0x100]
-    set G [expr [lindex $color 1]/0x100]
-    set B [expr [lindex $color 2]/0x100]
+    set R [expr {[lindex $color 0]/0x100}]
+    set G [expr {[lindex $color 1]/0x100}]
+    set B [expr {[lindex $color 2]/0x100}]
 
     tkColorDialog_SetRGBValue $w "$R $G $B"
     set data(selection) $text
@@ -638,9 +638,9 @@ proc tkColorDialog_HandleRGBEntry {w} {
     upvar #0 $w data
 
     foreach c {red green blue} {
-	if [catch {
-	    set data($c,intensity) [expr int($data($c,intensity))]
-	}] {
+	if {[catch {
+	    set data($c,intensity) [expr {int($data($c,intensity))}]
+	}]} {
 	    set data($c,intensity) 0
 	}
 

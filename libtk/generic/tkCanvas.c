@@ -6,12 +6,13 @@
  *	objects such as rectangles, lines, and texts.
  *
  * Copyright (c) 1991-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1998-1999 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvas.c 1.126 97/07/31 09:05:52
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -25,18 +26,19 @@
 
 /*
  * The structure defined below is used to keep track of a tag search
- * in progress.  Only the "prevPtr" field should be accessed by anyone
- * other than StartTagSearch and NextItem.
+ * in progress.  No field should be accessed by anyone other than
+ * StartTagSearch and NextItem.
  */
 
 typedef struct TagSearch {
     TkCanvas *canvasPtr;	/* Canvas widget being searched. */
     Tk_Uid tag;			/* Tag to search for.   0 means return
 				 * all items. */
-    Tk_Item *prevPtr;		/* Item just before last one found (or NULL
-				 * if last one found was first in the item
-				 * list of canvasPtr). */
     Tk_Item *currentPtr;	/* Pointer to last item returned. */
+    Tk_Item *lastPtr;		/* The item right before the currentPtr
+				 * is tracked so if the currentPtr is
+				 * deleted we don't have to start from the
+				 * beginning. */
     int searchOver;		/* Non-zero means NextItem should always
 				 * return NULL. */
 } TagSearch;
@@ -148,20 +150,6 @@ static Tk_ItemType *typeList = NULL;	/* NULL means initialization hasn't
 extern Tk_ItemType tkArcType, tkBitmapType, tkImageType, tkLineType;
 extern Tk_ItemType tkOvalType, tkPolygonType;
 extern Tk_ItemType tkRectangleType, tkTextType, tkWindowType;
-
-/*
- * Various Tk_Uid's used by this module (set up during initialization):
- */
-
-static Tk_Uid allUid = NULL;
-static Tk_Uid currentUid = NULL;
-
-/*
- * Statistics counters:
- */
-
-static int numIdSearches;
-static int numSlowSearches;
 
 /*
  * Prototypes for procedures defined later in this file:
@@ -353,6 +341,7 @@ Tk_CanvasCmd(clientData, interp, argc, argv)
     canvasPtr->flags = 0;
     canvasPtr->nextId = 1;
     canvasPtr->psInfoPtr = NULL;
+    Tcl_InitHashTable(&canvasPtr->idTable, TCL_ONE_WORD_KEYS);
 
     Tk_SetClass(canvasPtr->tkwin, "Canvas");
     TkSetClassProcs(canvasPtr->tkwin, &canvasClass, (ClientData) canvasPtr);
@@ -369,7 +358,7 @@ Tk_CanvasCmd(clientData, interp, argc, argv)
 	goto error;
     }
 
-    interp->result = Tk_PathName(canvasPtr->tkwin);
+    Tcl_SetResult(interp, Tk_PathName(canvasPtr->tkwin), TCL_STATIC);
     return TCL_OK;
 
     error:
@@ -472,7 +461,10 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    }
 	}
 	if (gotAny) {
-	    sprintf(interp->result, "%d %d %d %d", x1, y1, x2, y2);
+	    char buf[TCL_INTEGER_SPACE * 4];
+	    
+	    sprintf(buf, "%d %d %d %d", x1, y1, x2, y2);
+	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	}
     } else if ((c == 'b') && (strncmp(argv[1], "bind", length) == 0)
 	    && (length >= 2)) {
@@ -494,18 +486,18 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	if (isdigit(UCHAR(argv[2][0]))) {
 	    int id;
 	    char *end;
+	    Tcl_HashEntry *entryPtr;
 
 	    id = strtoul(argv[2], &end, 0);
 	    if (*end != 0) {
 		goto bindByTag;
 	    }
-	    for (itemPtr = canvasPtr->firstItemPtr; itemPtr != NULL;
-		    itemPtr = itemPtr->nextPtr) {
-		if (itemPtr->id == id) {
-		    object = (ClientData) itemPtr;
-		    break;
-		}
+	    entryPtr = Tcl_FindHashEntry(&canvasPtr->idTable, (char *) id);
+	    if (entryPtr != NULL) {
+		itemPtr = (Tk_Item *) Tcl_GetHashValue(entryPtr);
+		object = (ClientData) itemPtr;
 	    }
+
 	    if (object == 0) {
 		Tcl_AppendResult(interp, "item \"", argv[2],
 			"\" doesn't exist", (char *) NULL);
@@ -562,15 +554,30 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    command = Tk_GetBinding(interp, canvasPtr->bindingTable,
 		    object, argv[3]);
 	    if (command == NULL) {
-		goto error;
+		char *string;
+
+		string = Tcl_GetStringResult(interp); 
+		/*
+		 * Ignore missing binding errors.  This is a special hack
+		 * that relies on the error message returned by FindSequence
+		 * in tkBind.c.
+		 */
+
+		if (string[0] != '\0') {
+		    goto error;
+		} else {
+		    Tcl_ResetResult(interp);
+		}
+	    } else {
+		Tcl_SetResult(interp, command, TCL_STATIC);
 	    }
-	    interp->result = command;
 	} else {
 	    Tk_GetAllBindings(interp, canvasPtr->bindingTable, object);
 	}
     } else if ((c == 'c') && (strcmp(argv[1], "canvasx") == 0)) {
 	int x;
 	double grid;
+	char buf[TCL_DOUBLE_SPACE];
 
 	if ((argc < 3) || (argc > 4)) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -590,10 +597,12 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    grid = 0.0;
 	}
 	x += canvasPtr->xOrigin;
-	Tcl_PrintDouble(interp, GridAlign((double) x, grid), interp->result);
+	Tcl_PrintDouble(interp, GridAlign((double) x, grid), buf);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'c') && (strcmp(argv[1], "canvasy") == 0)) {
 	int y;
 	double grid;
+	char buf[TCL_DOUBLE_SPACE];
 
 	if ((argc < 3) || (argc > 4)) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -613,7 +622,8 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    grid = 0.0;
 	}
 	y += canvasPtr->yOrigin;
-	Tcl_PrintDouble(interp, GridAlign((double) y, grid), interp->result);
+	Tcl_PrintDouble(interp, GridAlign((double) y, grid), buf);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'c') && (strncmp(argv[1], "cget", length) == 0)
 	    && (length >= 2)) {
 	if (argc != 3) {
@@ -664,6 +674,9 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	Tk_ItemType *typePtr;
 	Tk_ItemType *matchPtr = NULL;
 	Tk_Item *itemPtr;
+	char buf[TCL_INTEGER_SPACE];
+	int isNew = 0;
+	Tcl_HashEntry *entryPtr;
 
 	if (argc < 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -702,6 +715,10 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    goto error;
 	}
 	itemPtr->nextPtr = NULL;
+	entryPtr = Tcl_CreateHashEntry(&canvasPtr->idTable,
+		(char *) itemPtr->id, &isNew);
+	Tcl_SetHashValue(entryPtr, itemPtr);
+	itemPtr->prevPtr = canvasPtr->lastItemPtr;
 	canvasPtr->hotPtr = itemPtr;
 	canvasPtr->hotPrevPtr = canvasPtr->lastItemPtr;
 	if (canvasPtr->lastItemPtr == NULL) {
@@ -713,7 +730,8 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	Tk_CanvasEventuallyRedraw((Tk_Canvas) canvasPtr,
 		itemPtr->x1, itemPtr->y1, itemPtr->x2, itemPtr->y2);
 	canvasPtr->flags |= REPICK_NEEDED;
-	sprintf(interp->result, "%d", itemPtr->id);
+	sprintf(buf, "%d", itemPtr->id);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'd') && (strncmp(argv[1], "dchars", length) == 0)
 	    && (length >= 2)) {
 	int first, last;
@@ -760,6 +778,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
     } else if ((c == 'd') && (strncmp(argv[1], "delete", length) == 0)
 	    && (length >= 2)) {
 	int i;
+	Tcl_HashEntry *entryPtr;
 
 	for (i = 2; i < argc; i++) {
 	    for (itemPtr = StartTagSearch(canvasPtr, argv[i], &search);
@@ -775,16 +794,23 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 		if (itemPtr->tagPtr != itemPtr->staticTagSpace) {
 		    ckfree((char *) itemPtr->tagPtr);
 		}
-		if (search.prevPtr == NULL) {
+		entryPtr = Tcl_FindHashEntry(&canvasPtr->idTable,
+			(char *) itemPtr->id);
+		Tcl_DeleteHashEntry(entryPtr);
+		if (itemPtr->nextPtr != NULL) {
+		    itemPtr->nextPtr->prevPtr = itemPtr->prevPtr;
+		}
+		if (itemPtr->prevPtr != NULL) {
+		    itemPtr->prevPtr->nextPtr = itemPtr->nextPtr;
+		}
+		if (canvasPtr->firstItemPtr == itemPtr) {
 		    canvasPtr->firstItemPtr = itemPtr->nextPtr;
 		    if (canvasPtr->firstItemPtr == NULL) {
 			canvasPtr->lastItemPtr = NULL;
 		    }
-		} else {
-		    search.prevPtr->nextPtr = itemPtr->nextPtr;
 		}
 		if (canvasPtr->lastItemPtr == itemPtr) {
-		    canvasPtr->lastItemPtr = search.prevPtr;
+		    canvasPtr->lastItemPtr = itemPtr->prevPtr;
 		}
 		ckfree((char *) itemPtr);
 		if (itemPtr == canvasPtr->currentItemPtr) {
@@ -853,7 +879,10 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	itemPtr = canvasPtr->textInfo.focusItemPtr;
 	if (argc == 2) {
 	    if (itemPtr != NULL) {
-		sprintf(interp->result, "%d", itemPtr->id);
+		char buf[TCL_INTEGER_SPACE];
+		
+		sprintf(buf, "%d", itemPtr->id);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	    }
 	    goto done;
 	}
@@ -923,6 +952,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
     } else if ((c == 'i') && (strncmp(argv[1], "index", length) == 0)
 	    && (length >= 3)) {
 	int index;
+	char buf[TCL_INTEGER_SPACE];
 
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -945,7 +975,8 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 		itemPtr, argv[3], &index) != TCL_OK) {
 	    goto error;
 	}
-	sprintf(interp->result, "%d", index);
+	sprintf(buf, "%d", index);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'i') && (strncmp(argv[1], "insert", length) == 0)
 	    && (length >= 3)) {
 	int beforeThis;
@@ -1027,7 +1058,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    }
 	}
     } else if ((c == 'l') && (strncmp(argv[1], "lower", length) == 0)) {
-	Tk_Item *prevPtr;
+	Tk_Item *itemPtr;
 
 	if ((argc != 3) && (argc != 4)) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -1042,18 +1073,17 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	 */
 
 	if (argc == 3) {
-	    prevPtr = NULL;
+	    itemPtr = NULL;
 	} else {
-	    prevPtr = StartTagSearch(canvasPtr, argv[3], &search);
-	    if (prevPtr != NULL) {
-		prevPtr = search.prevPtr;
-	    } else {
+	    itemPtr = StartTagSearch(canvasPtr, argv[3], &search);
+	    if (itemPtr == NULL) {
 		Tcl_AppendResult(interp, "tag \"", argv[3],
 			"\" doesn't match any items", (char *) NULL);
 		goto error;
 	    }
+	    itemPtr = itemPtr->prevPtr;
 	}
-	RelinkItems(canvasPtr, argv[2], prevPtr);
+	RelinkItems(canvasPtr, argv[2], itemPtr);
     } else if ((c == 'm') && (strncmp(argv[1], "move", length) == 0)) {
 	double xAmount, yAmount;
 
@@ -1129,7 +1159,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    goto error;
 	}
 	if ((xScale == 0.0) || (yScale == 0.0)) {
-	    interp->result = "scale factor cannot be zero";
+	    Tcl_SetResult(interp, "scale factor cannot be zero", TCL_STATIC);
 	    goto error;
 	}
 	for (itemPtr = StartTagSearch(canvasPtr, argv[2], &search);
@@ -1264,8 +1294,10 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 		goto error;
 	    }
 	    if (canvasPtr->textInfo.selItemPtr != NULL) {
-		sprintf(interp->result, "%d",
-			canvasPtr->textInfo.selItemPtr->id);
+		char buf[TCL_INTEGER_SPACE];
+		
+		sprintf(buf, "%d", canvasPtr->textInfo.selItemPtr->id);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	    }
 	} else if ((c == 't') && (strncmp(argv[2], "to", length) == 0)) {
 	    if (argc != 5) {
@@ -1289,7 +1321,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	}
 	itemPtr = StartTagSearch(canvasPtr, argv[2], &search);
 	if (itemPtr != NULL) {
-	    interp->result = itemPtr->typePtr->name;
+	    Tcl_SetResult(interp, itemPtr->typePtr->name, TCL_STATIC);
 	}
     } else if ((c == 'x') && (strncmp(argv[1], "xview", length) == 0)) {
 	int count, type;
@@ -1301,7 +1333,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    PrintScrollFractions(canvasPtr->xOrigin + canvasPtr->inset,
 		    canvasPtr->xOrigin + Tk_Width(canvasPtr->tkwin)
 		    - canvasPtr->inset, canvasPtr->scrollX1,
-		    canvasPtr->scrollX2, interp->result);
+		    canvasPtr->scrollX2, Tcl_GetStringResult(interp));
 	} else {
 	    type = Tk_GetScrollInfo(interp, argc, argv, &fraction, &count);
 	    switch (type) {
@@ -1339,7 +1371,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 	    PrintScrollFractions(canvasPtr->yOrigin + canvasPtr->inset,
 		    canvasPtr->yOrigin + Tk_Height(canvasPtr->tkwin)
 		    - canvasPtr->inset, canvasPtr->scrollY1,
-		    canvasPtr->scrollY2, interp->result);
+		    canvasPtr->scrollY2, Tcl_GetStringResult(interp));
 	} else {
 	    type = Tk_GetScrollInfo(interp, argc, argv, &fraction, &count);
 	    switch (type) {
@@ -1434,6 +1466,7 @@ DestroyCanvas(memPtr)
      * stuff.
      */
 
+    Tcl_DeleteHashTable(&canvasPtr->idTable);
     if (canvasPtr->pixmapGC != None) {
 	Tk_FreeGC(canvasPtr->display, canvasPtr->pixmapGC);
     }
@@ -1456,7 +1489,7 @@ DestroyCanvas(memPtr)
  *
  * Results:
  *	The return value is a standard Tcl result.  If TCL_ERROR is
- *	returned, then interp->result contains an error message.
+ *	returned, then the interp's result contains an error message.
  *
  * Side effects:
  *	Configuration information, such as colors, border width,
@@ -1806,17 +1839,19 @@ DisplayCanvas(clientData)
 		    canvasPtr->borderWidth, canvasPtr->relief);
 	}
 	if (canvasPtr->highlightWidth != 0) {
-	    GC gc;
-    
-	    if (canvasPtr->textInfo.gotFocus) {
-		gc = Tk_GCForColor(canvasPtr->highlightColorPtr,
-			Tk_WindowId(tkwin));
-	    } else {
-		gc = Tk_GCForColor(canvasPtr->highlightBgColorPtr,
-			Tk_WindowId(tkwin));
-	    }
-	    Tk_DrawFocusHighlight(tkwin, gc, canvasPtr->highlightWidth,
+	    GC fgGC, bgGC;
+
+	    bgGC = Tk_GCForColor(canvasPtr->highlightBgColorPtr,
 		    Tk_WindowId(tkwin));
+	    if (canvasPtr->textInfo.gotFocus) {
+		fgGC = Tk_GCForColor(canvasPtr->highlightColorPtr,
+			Tk_WindowId(tkwin));
+	    	TkpDrawHighlightBorder(tkwin, fgGC, bgGC,
+			canvasPtr->highlightWidth, Tk_WindowId(tkwin));
+	    } else {
+	    	TkpDrawHighlightBorder(tkwin, bgGC, bgGC,
+			canvasPtr->highlightWidth, Tk_WindowId(tkwin));
+	    }
 	}
     }
 
@@ -2124,8 +2159,6 @@ InitCanvas()
     tkBitmapType.nextPtr = &tkArcType;
     tkArcType.nextPtr = &tkWindowType;
     tkWindowType.nextPtr = NULL;
-    allUid = Tk_GetUid("all");
-    currentUid = Tk_GetUid("current");
 }
 
 /*
@@ -2162,10 +2195,15 @@ StartTagSearch(canvasPtr, tag, searchPtr)
 					 * will be initialized here. */
 {
     int id;
-    Tk_Item *itemPtr, *prevPtr;
+    Tk_Item *itemPtr, *lastPtr;
     Tk_Uid *tagPtr;
     Tk_Uid uid;
     int count;
+    TkWindow *tkwin;
+    TkDisplay *dispPtr;
+
+    tkwin = (TkWindow *) canvasPtr->tkwin;
+    dispPtr = tkwin->dispPtr;
 
     /*
      * Initialize the search.
@@ -2183,40 +2221,41 @@ StartTagSearch(canvasPtr, tag, searchPtr)
 
     if (isdigit(UCHAR(*tag))) {
 	char *end;
+	Tcl_HashEntry *entryPtr;
 
-	numIdSearches++;
+	dispPtr->numIdSearches++;
 	id = strtoul(tag, &end, 0);
 	if (*end == 0) {
 	    itemPtr = canvasPtr->hotPtr;
-	    prevPtr = canvasPtr->hotPrevPtr;
-	    if ((itemPtr == NULL) || (itemPtr->id != id) || (prevPtr == NULL)
-		    || (prevPtr->nextPtr != itemPtr)) {
-		numSlowSearches++;
-		for (prevPtr = NULL, itemPtr = canvasPtr->firstItemPtr;
-			itemPtr != NULL;
-			prevPtr = itemPtr, itemPtr = itemPtr->nextPtr) {
-		    if (itemPtr->id == id) {
-			break;
-		    }
+            lastPtr = canvasPtr->hotPrevPtr;
+	    if ((itemPtr == NULL) || (itemPtr->id != id) || (lastPtr == NULL)
+		    || (lastPtr->nextPtr != itemPtr)) {
+		dispPtr->numSlowSearches++;
+		entryPtr = Tcl_FindHashEntry(&canvasPtr->idTable, (char *) id);
+		if (entryPtr != NULL) {
+		    itemPtr = (Tk_Item *)Tcl_GetHashValue(entryPtr);
+		    lastPtr = itemPtr->prevPtr;
+		} else {
+		    lastPtr = itemPtr = NULL;
 		}
 	    }
-	    searchPtr->prevPtr = prevPtr;
+	    searchPtr->lastPtr = lastPtr;
 	    searchPtr->searchOver = 1;
 	    canvasPtr->hotPtr = itemPtr;
-	    canvasPtr->hotPrevPtr = prevPtr;
+	    canvasPtr->hotPrevPtr = lastPtr;
 	    return itemPtr;
 	}
     }
 
     searchPtr->tag = uid = Tk_GetUid(tag);
-    if (uid == allUid) {
+    if (uid == Tk_GetUid("all")) {
 
 	/*
 	 * All items match.
 	 */
 
 	searchPtr->tag = NULL;
-	searchPtr->prevPtr = NULL;
+	searchPtr->lastPtr = NULL;
 	searchPtr->currentPtr = canvasPtr->firstItemPtr;
 	return canvasPtr->firstItemPtr;
     }
@@ -2225,18 +2264,18 @@ StartTagSearch(canvasPtr, tag, searchPtr)
      * None of the above.  Search for an item with a matching tag.
      */
 
-    for (prevPtr = NULL, itemPtr = canvasPtr->firstItemPtr; itemPtr != NULL;
-	    prevPtr = itemPtr, itemPtr = itemPtr->nextPtr) {
+    for (lastPtr = NULL, itemPtr = canvasPtr->firstItemPtr; itemPtr != NULL;
+	    lastPtr = itemPtr, itemPtr = itemPtr->nextPtr) {
 	for (tagPtr = itemPtr->tagPtr, count = itemPtr->numTags;
 		count > 0; tagPtr++, count--) {
 	    if (*tagPtr == uid) {
-		searchPtr->prevPtr = prevPtr;
+		searchPtr->lastPtr = lastPtr;
 		searchPtr->currentPtr = itemPtr;
 		return itemPtr;
 	    }
 	}
     }
-    searchPtr->prevPtr = prevPtr;
+    searchPtr->lastPtr = lastPtr;
     searchPtr->searchOver = 1;
     return NULL;
 }
@@ -2267,7 +2306,7 @@ NextItem(searchPtr)
     TagSearch *searchPtr;		/* Record describing search in
 					 * progress. */
 {
-    Tk_Item *itemPtr, *prevPtr;
+    Tk_Item *itemPtr, *lastPtr;
     int count;
     Tk_Uid uid;
     Tk_Uid *tagPtr;
@@ -2277,11 +2316,11 @@ NextItem(searchPtr)
      * one to return), and return if there are no items left.
      */
 
-    prevPtr = searchPtr->prevPtr;
-    if (prevPtr == NULL) {
+    lastPtr = searchPtr->lastPtr;
+    if (lastPtr == NULL) {
 	itemPtr = searchPtr->canvasPtr->firstItemPtr;
     } else {
-	itemPtr = prevPtr->nextPtr;
+	itemPtr = lastPtr->nextPtr;
     }
     if ((itemPtr == NULL) || (searchPtr->searchOver)) {
 	searchPtr->searchOver = 1;
@@ -2291,12 +2330,12 @@ NextItem(searchPtr)
 	/*
 	 * The structure of the list has changed.  Probably the
 	 * previously-returned item was removed from the list.
-	 * In this case, don't advance prevPtr;  just return
+	 * In this case, don't advance lastPtr;  just return
 	 * its new successor (i.e. do nothing here).
 	 */
     } else {
-	prevPtr = itemPtr;
-	itemPtr = prevPtr->nextPtr;
+	lastPtr = itemPtr;
+	itemPtr = lastPtr->nextPtr;
     }
 
     /*
@@ -2305,7 +2344,7 @@ NextItem(searchPtr)
 
     uid = searchPtr->tag;
     if (uid == NULL) {
-	searchPtr->prevPtr = prevPtr;
+	searchPtr->lastPtr = lastPtr;
 	searchPtr->currentPtr = itemPtr;
 	return itemPtr;
     }
@@ -2314,17 +2353,17 @@ NextItem(searchPtr)
      * Look for an item with a particular tag.
      */
 
-    for ( ; itemPtr != NULL; prevPtr = itemPtr, itemPtr = itemPtr->nextPtr) {
+    for ( ; itemPtr != NULL; lastPtr = itemPtr, itemPtr = itemPtr->nextPtr) {
 	for (tagPtr = itemPtr->tagPtr, count = itemPtr->numTags;
 		count > 0; tagPtr++, count--) {
 	    if (*tagPtr == uid) {
-		searchPtr->prevPtr = prevPtr;
+		searchPtr->lastPtr = lastPtr;
 		searchPtr->currentPtr = itemPtr;
 		return itemPtr;
 	    }
 	}
     }
-    searchPtr->prevPtr = prevPtr;
+    searchPtr->lastPtr = lastPtr;
     searchPtr->searchOver = 1;
     return NULL;
 }
@@ -2344,7 +2383,7 @@ NextItem(searchPtr)
  *
  * Side effects:
  *	If tag is NULL then itemPtr's id is added as a list element
- *	to interp->result;  otherwise tag is added to itemPtr's
+ *	to the interp's result;  otherwise tag is added to itemPtr's
  *	list of tags.
  *
  *--------------------------------------------------------------
@@ -2366,7 +2405,8 @@ DoItem(interp, itemPtr, tag)
      */
 
     if (tag == NULL) {
-	char msg[30];
+	char msg[TCL_INTEGER_SPACE];
+
 	sprintf(msg, "%d", itemPtr->id);
 	Tcl_AppendElement(interp, msg);
 	return;
@@ -2420,9 +2460,9 @@ DoItem(interp, itemPtr, tag)
  * Results:
  *	A standard Tcl return value.  If newTag is NULL, then a
  *	list of ids from all the items that match argc/argv is
- *	returned in interp->result.  If newTag is NULL, then
- *	the normal interp->result is an empty string.  If an error
- *	occurs, then interp->result will hold an error message.
+ *	returned in the interp's result.  If newTag is NULL, then
+ *	the normal the interp's result is an empty string.  If an error
+ *	occurs, then the interp's result will hold an error message.
  *
  * Side effects:
  *	If newTag is non-NULL, then all the items that match the
@@ -2445,7 +2485,7 @@ FindItems(interp, canvasPtr, argc, argv, newTag, cmdName, option)
     char *newTag;			/* If non-NULL, gives new tag to set
 					 * on all found items;  if NULL, then
 					 * ids of found items are returned
-					 * in interp->result. */
+					 * in the interp's result. */
     char *cmdName;			/* Name of original Tcl command, for
 					 * use in error messages. */
     char *option;			/* For error messages:  gives option
@@ -2493,14 +2533,18 @@ FindItems(interp, canvasPtr, argc, argv, newTag, cmdName, option)
 	    DoItem(interp, itemPtr, uid);
 	}
     } else if ((c == 'b') && (strncmp(argv[0], "below", length) == 0)) {
+	Tk_Item *itemPtr;
+
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
 		    cmdName, option, " below tagOrId", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	(void) StartTagSearch(canvasPtr, argv[1], &search);
-	if (search.prevPtr != NULL) {
-	    DoItem(interp, search.prevPtr, uid);
+	itemPtr = StartTagSearch(canvasPtr, argv[1], &search);
+	if (itemPtr != NULL) {
+	    if (itemPtr->prevPtr != NULL) {
+		DoItem(interp, itemPtr->prevPtr, uid);
+	    }
 	}
     } else if ((c == 'c') && (strncmp(argv[0], "closest", length) == 0)) {
 	double closestDist;
@@ -2651,9 +2695,9 @@ FindItems(interp, canvasPtr, argc, argv, newTag, cmdName, option)
  * Results:
  *	A standard Tcl return value.  If newTag is NULL, then a
  *	list of ids from all the items overlapping or enclosed
- *	by the rectangle given by argc is returned in interp->result.
- *	If newTag is NULL, then the normal interp->result is an
- *	empty string.  If an error occurs, then interp->result will
+ *	by the rectangle given by argc is returned in the interp's result.
+ *	If newTag is NULL, then the normal the interp's result is an
+ *	empty string.  If an error occurs, then the interp's result will
  *	hold an error message.
  *
  * Side effects:
@@ -2676,7 +2720,7 @@ FindArea(interp, canvasPtr, argv, uid, enclosed)
     Tk_Uid uid;				/* If non-NULL, gives new tag to set
 					 * on all found items;  if NULL, then
 					 * ids of found items are returned
-					 * in interp->result. */
+					 * in the interp's result. */
     int enclosed;			/* 0 means overlapping or enclosed
 					 * items are OK, 1 means only enclosed
 					 * items are OK. */
@@ -2773,19 +2817,27 @@ RelinkItems(canvasPtr, tag, prevPtr)
 	     * moved!  Switch to insert after its predecessor.
 	     */
 
-	    prevPtr = search.prevPtr;
+	    prevPtr = prevPtr->prevPtr;
 	}
-	if (search.prevPtr == NULL) {
+	if (itemPtr->prevPtr == NULL) {
+	    if (itemPtr->nextPtr != NULL) {
+		itemPtr->nextPtr->prevPtr = NULL;
+	    }
 	    canvasPtr->firstItemPtr = itemPtr->nextPtr;
 	} else {
-	    search.prevPtr->nextPtr = itemPtr->nextPtr;
+	    if (itemPtr->nextPtr != NULL) {
+		itemPtr->nextPtr->prevPtr = itemPtr->prevPtr;
+	    }
+	    itemPtr->prevPtr->nextPtr = itemPtr->nextPtr;
 	}
 	if (canvasPtr->lastItemPtr == itemPtr) {
-	    canvasPtr->lastItemPtr = search.prevPtr;
+	    canvasPtr->lastItemPtr = itemPtr->prevPtr;
 	}
 	if (firstMovePtr == NULL) {
+	    itemPtr->prevPtr = NULL;
 	    firstMovePtr = itemPtr;
 	} else {
+	    itemPtr->prevPtr = lastMovePtr;
 	    lastMovePtr->nextPtr = itemPtr;
 	}
 	lastMovePtr = itemPtr;
@@ -2803,10 +2855,19 @@ RelinkItems(canvasPtr, tag, prevPtr)
 	return;
     }
     if (prevPtr == NULL) {
+	if (canvasPtr->firstItemPtr != NULL) {
+	    canvasPtr->firstItemPtr->prevPtr = lastMovePtr;
+	}
 	lastMovePtr->nextPtr = canvasPtr->firstItemPtr;
 	canvasPtr->firstItemPtr = firstMovePtr;
     } else {
+	if (prevPtr->nextPtr != NULL) {
+	    prevPtr->nextPtr->prevPtr = lastMovePtr;
+	}
 	lastMovePtr->nextPtr = prevPtr->nextPtr;
+	if (firstMovePtr != NULL) {
+	    firstMovePtr->prevPtr = prevPtr;
+	}
 	prevPtr->nextPtr = firstMovePtr;
     }
     if (canvasPtr->lastItemPtr == prevPtr) {
@@ -3077,7 +3138,7 @@ PickCurrentItem(canvasPtr, eventPtr)
 
 	if ((itemPtr == canvasPtr->currentItemPtr) && !buttonDown) {
 	    for (i = itemPtr->numTags-1; i >= 0; i--) {
-		if (itemPtr->tagPtr[i] == currentUid) {
+		if (itemPtr->tagPtr[i] == Tk_GetUid("current")) {
 		    itemPtr->tagPtr[i] = itemPtr->tagPtr[itemPtr->numTags-1];
 		    itemPtr->numTags--;
 		    break;
@@ -3107,7 +3168,8 @@ PickCurrentItem(canvasPtr, eventPtr)
     if (canvasPtr->currentItemPtr != NULL) {
 	XEvent event;
 
-	DoItem((Tcl_Interp *) NULL, canvasPtr->currentItemPtr, currentUid);
+	DoItem((Tcl_Interp *) NULL, canvasPtr->currentItemPtr, 
+                Tk_GetUid("current"));
 	event = canvasPtr->pickEvent;
 	event.type = EnterNotify;
 	event.xcrossing.detail = NotifyAncestor;
@@ -3223,7 +3285,7 @@ CanvasDoEvent(canvasPtr, eventPtr)
 	objectPtr = (ClientData *) ckalloc((unsigned)
 		(numObjects * sizeof(ClientData)));
     }
-    objectPtr[0] = (ClientData) allUid;
+    objectPtr[0] = (ClientData) Tk_GetUid("all");
     for (i = itemPtr->numTags-1; i >= 0; i--) {
 	objectPtr[i+1] = (ClientData) itemPtr->tagPtr[i];
     }

@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkTextBTree.c 1.37 97/04/25 16:52:00
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -535,7 +535,7 @@ SplitSeg(indexPtr)
     TkTextSegment *prevPtr, *segPtr;
     int count;
 
-    for (count = indexPtr->charIndex, prevPtr = NULL,
+    for (count = indexPtr->byteIndex, prevPtr = NULL,
 	    segPtr = indexPtr->linePtr->segPtr; segPtr != NULL;
 	    count -= segPtr->size, prevPtr = segPtr, segPtr = segPtr->nextPtr) {
 	if (segPtr->size > count) {
@@ -1530,7 +1530,7 @@ FindTagStart(tree, tagPtr, indexPtr)
 		 */
 		indexPtr->tree = tree;
 		indexPtr->linePtr = linePtr;
-		indexPtr->charIndex = offset;
+		indexPtr->byteIndex = offset;
 		return segPtr;
 	    }
 	}
@@ -1619,7 +1619,7 @@ FindTagEnd(tree, tagPtr, indexPtr)
     }
     indexPtr->tree = tree;
     indexPtr->linePtr = lastLinePtr;
-    indexPtr->charIndex = lastoffset2;
+    indexPtr->byteIndex = lastoffset2;
     return last2SegPtr;
 }
 
@@ -1694,7 +1694,7 @@ TkBTreeStartSearch(index1Ptr, index2Ptr, tagPtr, searchPtr)
 	searchPtr->curIndex = *index1Ptr;
 	searchPtr->segPtr = NULL;
 	searchPtr->nextPtr = TkTextIndexToSeg(index1Ptr, &offset);
-	searchPtr->curIndex.charIndex -= offset;
+	searchPtr->curIndex.byteIndex -= offset;
     }
     searchPtr->lastPtr = TkTextIndexToSeg(index2Ptr, (int *) NULL);
     searchPtr->tagPtr = tagPtr;
@@ -1709,9 +1709,9 @@ TkBTreeStartSearch(index1Ptr, index2Ptr, tagPtr, searchPtr)
 	 * the range, unless the range is artificially moved up to index0.
 	 */
 	if (((index1Ptr == &index0) && 
-		(index1Ptr->charIndex > index2Ptr->charIndex)) ||
+		(index1Ptr->byteIndex > index2Ptr->byteIndex)) ||
 	    ((index1Ptr != &index0) && 
-		(index1Ptr->charIndex >= index2Ptr->charIndex))) {
+		(index1Ptr->byteIndex >= index2Ptr->byteIndex))) {
 		searchPtr->linesLeft = 0;
 	}
     }
@@ -1793,7 +1793,7 @@ TkBTreeStartSearchBack(index1Ptr, index2Ptr, tagPtr, searchPtr)
     }
     searchPtr->segPtr = NULL;
     searchPtr->nextPtr = TkTextIndexToSeg(&searchPtr->curIndex, &offset);
-    searchPtr->curIndex.charIndex -= offset;
+    searchPtr->curIndex.byteIndex -= offset;
 
     /*
      * Adjust the end of the search so it does find toggles that are right
@@ -1801,7 +1801,7 @@ TkBTreeStartSearchBack(index1Ptr, index2Ptr, tagPtr, searchPtr)
      */
 
     if ((TkBTreeLineIndex(index2Ptr->linePtr) == 0) &&
-	    (index2Ptr->charIndex == 0)) {
+	    (index2Ptr->byteIndex == 0)) {
 	backOne = *index2Ptr;
 	searchPtr->lastPtr = NULL;	/* Signals special case for 1.0 */
     } else {
@@ -1819,7 +1819,7 @@ TkBTreeStartSearchBack(index1Ptr, index2Ptr, tagPtr, searchPtr)
 	 * first.
 	 */
 
-	if (index1Ptr->charIndex <= backOne.charIndex) {
+	if (index1Ptr->byteIndex <= backOne.byteIndex) {
 	    searchPtr->linesLeft = 0;
 	}
     }
@@ -1889,7 +1889,7 @@ TkBTreeNextTag(searchPtr)
 		searchPtr->tagPtr = segPtr->body.toggle.tagPtr;
 		return 1;
 	    }
-	    searchPtr->curIndex.charIndex += segPtr->size;
+	    searchPtr->curIndex.byteIndex += segPtr->size;
 	}
     
 	/*
@@ -1906,7 +1906,7 @@ TkBTreeNextTag(searchPtr)
 	}
 	if (searchPtr->curIndex.linePtr != NULL) {
 	    segPtr = searchPtr->curIndex.linePtr->segPtr;
-	    searchPtr->curIndex.charIndex = 0;
+	    searchPtr->curIndex.byteIndex = 0;
 	    continue;
 	}
 	if (nodePtr == searchPtr->tagPtr->tagRootPtr) {
@@ -1972,7 +1972,7 @@ TkBTreeNextTag(searchPtr)
 	 */
 
 	searchPtr->curIndex.linePtr = nodePtr->children.linePtr;
-	searchPtr->curIndex.charIndex = 0;
+	searchPtr->curIndex.byteIndex = 0;
 	segPtr = searchPtr->curIndex.linePtr->segPtr;
 	if (searchPtr->linesLeft <= 0) {
 	    goto searchOver;
@@ -2022,7 +2022,7 @@ TkBTreePrevTag(searchPtr)
     register TkTextLine *linePtr, *prevLinePtr;
     register Node *nodePtr, *node2Ptr, *prevNodePtr;
     register Summary *summaryPtr;
-    int charIndex;
+    int byteIndex;
     int pastLast;			/* Saw last marker during scan */
     int linesSkipped;
 
@@ -2041,7 +2041,7 @@ TkBTreePrevTag(searchPtr)
 	/*
 	 * Check for the last toggle before the current segment on this line.
 	 */
-	charIndex = 0;
+	byteIndex = 0;
 	if (searchPtr->lastPtr == NULL) {
 	    /* 
 	     * Search back to the very beginning, so pastLast is irrelevent.
@@ -2058,13 +2058,13 @@ TkBTreePrevTag(searchPtr)
 		    && (searchPtr->allTags
 		    || (segPtr->body.toggle.tagPtr == searchPtr->tagPtr))) {
 		prevPtr = segPtr;
-		searchPtr->curIndex.charIndex = charIndex;
+		searchPtr->curIndex.byteIndex = byteIndex;
 	    }
 	    if (segPtr == searchPtr->lastPtr) {
 	        prevPtr = NULL;   /* Segments earlier than last don't count */
 		pastLast = 1;
 	    }
-	    charIndex += segPtr->size;
+	    byteIndex += segPtr->size;
 	}
 	if (prevPtr != NULL) {
 	    if (searchPtr->linesLeft == 1 && !pastLast) {
@@ -2191,7 +2191,7 @@ TkBTreePrevTag(searchPtr)
 	    /* empty loop body */ ;
 	}
 	searchPtr->curIndex.linePtr = prevLinePtr;
-	searchPtr->curIndex.charIndex = 0;
+	searchPtr->curIndex.byteIndex = 0;
 	if (searchPtr->linesLeft <= 0) {
 	    goto searchOver;
 	}
@@ -2241,7 +2241,7 @@ TkBTreeCharTagged(indexPtr, tagPtr)
 
     toggleSegPtr = NULL;
     for (index = 0, segPtr = indexPtr->linePtr->segPtr;
-	    (index + segPtr->size) <= indexPtr->charIndex;
+	    (index + segPtr->size) <= indexPtr->byteIndex;
 	    index += segPtr->size, segPtr = segPtr->nextPtr) {
 	if (((segPtr->typePtr == &tkTextToggleOnType)
 		|| (segPtr->typePtr == &tkTextToggleOffType))
@@ -2360,7 +2360,7 @@ TkBTreeGetTags(indexPtr, numTagsPtr)
      */
 
     for (index = 0, segPtr = indexPtr->linePtr->segPtr;
-	    (index + segPtr->size) <= indexPtr->charIndex;
+	    (index + segPtr->size) <= indexPtr->byteIndex;
 	    index += segPtr->size, segPtr = segPtr->nextPtr) {
 	if ((segPtr->typePtr == &tkTextToggleOnType)
 		|| (segPtr->typePtr == &tkTextToggleOffType)) {
@@ -3580,6 +3580,25 @@ ToggleCheckProc(segPtr, linePtr)
 
 int
 TkBTreeCharsInLine(linePtr)
+    TkTextLine *linePtr;		/* Line whose characters should be
+					 * counted. */
+{
+    TkTextSegment *segPtr;
+    int count;
+
+    count = 0;
+    for (segPtr = linePtr->segPtr; segPtr != NULL; segPtr = segPtr->nextPtr) {
+	if (segPtr->typePtr == &tkTextCharType) {
+	    count += Tcl_NumUtfChars(segPtr->body.chars, segPtr->size);
+	} else {
+	    count += segPtr->size;
+	}
+    }
+    return count;
+}
+
+int
+TkBTreeBytesInLine(linePtr)
     TkTextLine *linePtr;		/* Line whose characters should be
 					 * counted. */
 {

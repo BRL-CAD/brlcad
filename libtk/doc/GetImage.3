@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) GetImage.3 1.8 96/03/26 18:10:29
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tk_GetImage 3 4.0 Tk "Tk Library Procedures"
@@ -79,7 +79,7 @@ If the image doesn't exist then \fBTk_GetImage\fR returns NULL
 and leaves an error message in \fIinterp->result\fR.
 .PP
 When a widget wishes to actually display an image it must
-call \fBTk_RedrawWidget\fR, identifying the image (\fIimage\fR),
+call \fBTk_RedrawImage\fR, identifying the image (\fIimage\fR),
 a region within the image to redisplay (\fIimageX\fR, \fIimageY\fR,
 \fIwidth\fR, and \fIheight\fR), and a place to display the
 image (\fIdrawable\fR, \fIdrawableX\fR, and \fIdrawableY\fR).

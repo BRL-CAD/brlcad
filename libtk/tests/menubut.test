@@ -3,25 +3,25 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) menubut.test 1.26 97/07/31 10:08:50
+# RCS: @(#) $Id$
 
 # XXX This test file is woefully incomplete right now.  If any part
 # XXX of a procedure has tests then the whole procedure has tests,
 # XXX but many procedures have no tests.
 
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
+
 if {[lsearch [image types] test] < 0} {
     puts "This application hasn't been compiled with the \"test\" image"
     puts "type, so I can't run this test.  Are you sure you're using"
     puts "tktest instead of wish?"
+    ::tcltest::cleanupTests
     return
-}
-
-if {[info procs test] != "test"} {
-    source defs
 }
 
 foreach i [winfo children .] {
@@ -51,7 +51,7 @@ foreach test {
 	    {unknown color name "non-existent"}}
     {-activeforeground #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
-    {-anchor nw nw bogus {bad anchor position "bogus": must be n, ne, e, se, s, sw, w, nw, or center}}
+    {-anchor nw nw bogus {bad anchor "bogus": must be n, ne, e, se, s, sw, w, nw, or center}}
     {-background #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
     {-bd 4 4 badValue {bad screen distance "badValue"}}
@@ -59,7 +59,7 @@ foreach test {
     {-bitmap questhead questhead badValue {bitmap "badValue" not defined}}
     {-borderwidth 1.3 1 badValue {bad screen distance "badValue"}}
     {-cursor arrow arrow badValue {bad cursor spec "badValue"}}
-    {-direction below below badValue {bad direction value "badValue": must be above, below, left, right, or flush}}
+    {-direction below below badValue {bad direction "badValue": must be above, below, flush, left, or right}}
     {-disabledforeground #00ff00 #00ff00 xyzzy {unknown color name "xyzzy"}}
     {-fg #110022 #110022 bogus {unknown color name "bogus"}}
     {-font {Helvetica 12} {Helvetica 12} {} {font "" doesn't exist}}
@@ -74,8 +74,8 @@ foreach test {
     {-menu "any old string" "any old string" {} {}}
     {-padx 12 12 420x {bad screen distance "420x"}}
     {-pady 12 12 420x {bad screen distance "420x"}}
-    {-relief groove groove 1.5 {bad relief type "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
-    {-state normal normal bogus {bad state value "bogus": must be normal, active, or disabled}}
+    {-relief groove groove 1.5 {bad relief "1.5": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-state normal normal bogus {bad state "bogus": must be active, disabled, or normal}}
     {-takefocus "any string" "any string" {} {}}
     {-text "Sample text" {Sample text} {} {}}
     {-textvariable i i {} {}}
@@ -122,7 +122,7 @@ test menubutton-3.1 {MenuButtonWidgetCmd procedure} {
 } {1 {wrong # args: should be ".mb option ?arg arg ...?"}}
 test menubutton-3.2 {ButtonWidgetCmd procedure, "cget" option} {
     list [catch {.mb c} msg] $msg
-} {1 {bad option "c": must be cget or configure}}
+} {1 {ambiguous option "c": must be cget or configure}}
 test menubutton-3.3 {ButtonWidgetCmd procedure, "cget" option} {
     list [catch {.mb cget} msg] $msg
 } {1 {wrong # args: should be ".mb cget option"}}
@@ -191,7 +191,7 @@ test menubutton-4.4 {ConfigureMenuButton procedure} {
     (processing -height option)
     invoked from within
 ".mb1 configure -height 0.5x"}}
-test menubutton-4.5 {ConfigureMenuButton procedure} {fonts} {
+test menubutton-4.5 {ConfigureMenuButton procedure} {nonPortable fonts} {
     catch {destroy .mb1}
     button .mb1 -text "Sample text" -width 10 -height 2
     pack .mb1
@@ -204,7 +204,7 @@ test menubutton-4.6 {ConfigureMenuButton procedure - bad direction} {
     menubutton .mb -text "Test"
     list [catch {.mb configure -direction badValue} msg] $msg \
 	[.mb cget -direction] [destroy .mb]
-} {1 {bad direction value "badValue": must be above, below, left, right, or flush} below {}}
+} {1 {bad direction "badValue": must be above, below, flush, left, or right} below {}}
 
 # XXX Need to add tests for several procedures here. XXX
 
@@ -307,14 +307,14 @@ test menubutton-7.12 {ComputeMenuButtonGeometry procedure} {fonts} {
     pack .mb
     list [winfo reqwidth .mb] [winfo reqheight .mb]
 } {62 30}
-test menubutton-7.13 {ComputeMenuButtonGeometry procedure} {fonts} {
+test menubutton-7.13 {ComputeMenuButtonGeometry procedure} {nonPortable fonts} {
     catch {destroy .mb}
     menubutton .mb -text String -bd 2 -relief raised \
 	    -highlightthickness 1 -indicatoron 1
     pack .mb
     list [winfo reqwidth .mb] [winfo reqheight .mb]
 } {78 28}
-test menubutton-7.14 {ComputeMenuButtonGeometry procedure} {unix nonPortable} {
+test menubutton-7.14 {ComputeMenuButtonGeometry procedure} {unixOnly nonPortable} {
     # The following test is non-portable because the indicator's pixel
     # size varies to maintain constant absolute size.
 
@@ -324,7 +324,7 @@ test menubutton-7.14 {ComputeMenuButtonGeometry procedure} {unix nonPortable} {
     pack .mb
     list [winfo reqwidth .mb] [winfo reqheight .mb]
 } {64 23}
-test menubutton-7.15 {ComputeMenuButtonGeometry procedure} {pc nonPortable} {
+test menubutton-7.15 {ComputeMenuButtonGeometry procedure} {pcOnly nonPortable} {
     # The following test is non-portable because the indicator's pixel
     # size varies to maintain constant absolute size.
 
@@ -349,4 +349,20 @@ test menubutton-8.1 {menubutton vs hidden commands} {
 eval image delete [image names]
 eval destroy [winfo children .]
 option clear
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
 

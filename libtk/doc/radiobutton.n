@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) radiobutton.n 1.41 97/10/31 12:58:51
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH radiobutton n 4.4 Tk "Tk Built-In Commands"

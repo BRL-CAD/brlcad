@@ -4,17 +4,20 @@
 # Tcl tests.
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) macscrollbar.test 1.3 97/06/24 13:48:34
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 # Only run this test on the Macintosh
-if {$tcl_platform(platform) != "macintosh"} return
-
-if {[info procs test] != "test"} {
-    source defs
+if {$tcl_platform(platform) != "macintosh"} {
+    puts "skipping: Mac only tests..."
+    ::tcltest::cleanupTests
+    return
 }
 
 foreach i [winfo children .] {
@@ -98,4 +101,20 @@ test macscroll-1.7 {TkpDisplayScrollbar procedure} {
 foreach i [winfo children .] {
     destroy $i
 }
-concat {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

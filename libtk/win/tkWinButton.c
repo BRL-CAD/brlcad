@@ -4,12 +4,12 @@
  *	This file implements the Windows specific portion of the button
  *	widgets.
  *
- * Copyright (c) 1996 by Sun Microsystems, Inc.
+ * Copyright (c) 1996-1998 by Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWinButton.c 1.12 97/09/02 13:18:27
+ * RCS: @(#) $Id$
  */
 
 #define OEMRESOURCE
@@ -65,26 +65,20 @@ enum {
 };
 
 /*
- * Set to non-zero if this module is initialized.
+ * Cached information about the boxes bitmap, and the default border 
+ * width for a button in string form for use in Tk_OptionSpec for 
+ * the various button widget classes.
  */
 
-static int initialized = 0;
-
-/*
- * Variables for the cached information about the boxes bitmap.
- */
-
-static BITMAPINFOHEADER *boxesPtr = NULL;   /* Information about the bitmap. */
-static DWORD *boxesPalette = NULL;	    /* Pointer to color palette. */
-static LPSTR boxesBits = NULL;		    /* Pointer to bitmap data. */
-static DWORD boxHeight = 0, boxWidth = 0;    /* Size of each sub-image. */
-
-/*
- * This variable holds the default border width for a button in string
- * form for use in a Tk_ConfigSpec.
- */
-
-static char defWidth[8];
+typedef struct ThreadSpecificData { 
+    BITMAPINFOHEADER *boxesPtr;   /* Information about the bitmap. */
+    DWORD *boxesPalette;	  /* Pointer to color palette. */
+    LPSTR boxesBits;		  /* Pointer to bitmap data. */
+    DWORD boxHeight;              /* Height of each sub-image. */
+    DWORD boxWidth ;              /* Width of each sub-image. */
+    char defWidth[TCL_INTEGER_SPACE];
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Declarations for functions defined in this file.
@@ -99,7 +93,6 @@ static DWORD		ComputeStyle _ANSI_ARGS_((WinButton* butPtr));
 static Window		CreateProc _ANSI_ARGS_((Tk_Window tkwin,
 			    Window parent, ClientData instanceData));
 static void		InitBoxes _ANSI_ARGS_((void));
-static void		UpdateButtonDefaults _ANSI_ARGS_((void));
 
 /*
  * The class procedure table for the button widgets.
@@ -146,65 +139,75 @@ InitBoxes()
     HGLOBAL hblk;
     LPBITMAPINFOHEADER newBitmap;
     DWORD size;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     hrsrc = FindResource(module, "buttons", RT_BITMAP);
     if (hrsrc) {
 	hblk = LoadResource(module, hrsrc);
-	boxesPtr = (LPBITMAPINFOHEADER)LockResource(hblk);
+	tsdPtr->boxesPtr = (LPBITMAPINFOHEADER)LockResource(hblk);
     }
 
     /*
      * Copy the DIBitmap into writable memory.
      */
 
-    if (boxesPtr != NULL && !(boxesPtr->biWidth % 4)
-	    && !(boxesPtr->biHeight % 2)) {
-	size = boxesPtr->biSize + (1 << boxesPtr->biBitCount) * sizeof(RGBQUAD)
-	    + boxesPtr->biSizeImage;
+    if (tsdPtr->boxesPtr != NULL && !(tsdPtr->boxesPtr->biWidth % 4)
+	    && !(tsdPtr->boxesPtr->biHeight % 2)) {
+	size = tsdPtr->boxesPtr->biSize + (1 << tsdPtr->boxesPtr->biBitCount) 
+                * sizeof(RGBQUAD) + tsdPtr->boxesPtr->biSizeImage;
 	newBitmap = (LPBITMAPINFOHEADER) ckalloc(size);
-	memcpy(newBitmap, boxesPtr, size);
-	boxesPtr = newBitmap;
-	boxWidth = boxesPtr->biWidth / 4;
-	boxHeight = boxesPtr->biHeight / 2;
-	boxesPalette = (DWORD*) (((LPSTR)boxesPtr) + boxesPtr->biSize);
-	boxesBits = ((LPSTR)boxesPalette)
-	    + ((1 << boxesPtr->biBitCount) * sizeof(RGBQUAD));
+	memcpy(newBitmap, tsdPtr->boxesPtr, size);
+	tsdPtr->boxesPtr = newBitmap;
+	tsdPtr->boxWidth = tsdPtr->boxesPtr->biWidth / 4;
+	tsdPtr->boxHeight = tsdPtr->boxesPtr->biHeight / 2;
+	tsdPtr->boxesPalette = (DWORD*) (((LPSTR) tsdPtr->boxesPtr) 
+                + tsdPtr->boxesPtr->biSize);
+	tsdPtr->boxesBits = ((LPSTR) tsdPtr->boxesPalette)
+	    + ((1 << tsdPtr->boxesPtr->biBitCount) * sizeof(RGBQUAD));
     } else {
-	boxesPtr = NULL;
+	tsdPtr->boxesPtr = NULL;
     }
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * UpdateButtonDefaults --
+ * TkpButtonSetDefaults --
  *
- *	This function retrieves the current system defaults for
- *	the button widgets.
+ *	This procedure is invoked before option tables are created for
+ *	buttons.  It modifies some of the default values to match the
+ *	current values defined for this platform.
  *
  * Results:
- *	None.
+ *	Some of the default values in *specPtr are modified.
  *
  * Side effects:
- *	Updates the configuration defaults for buttons.
+ *	Updates some of.
  *
  *----------------------------------------------------------------------
  */
 
 void
-UpdateButtonDefaults()
+TkpButtonSetDefaults(specPtr)
+    Tk_OptionSpec *specPtr;	/* Points to an array of option specs,
+				 * terminated by one with type
+				 * TK_OPTION_END. */
 {
-    Tk_ConfigSpec *specPtr;
-    int width = GetSystemMetrics(SM_CXEDGE);
+    int width;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (width == 0) {
-	width = 1;
+    if (tsdPtr->defWidth[0] == 0) {
+	width = GetSystemMetrics(SM_CXEDGE);
+	if (width == 0) {
+	    width = 1;
+	}
+	sprintf(tsdPtr->defWidth, "%d", width);
     }
-    sprintf(defWidth, "%d", width);
-    for (specPtr = tkpButtonConfigSpecs; specPtr->type != TK_CONFIG_END;
-	    specPtr++) {
-	if (specPtr->offset == Tk_Offset(TkButton, borderWidth)) {
-	    specPtr->defValue = defWidth;
+    for ( ; specPtr->type != TK_OPTION_END; specPtr++) {
+	if (specPtr->internalOffset == Tk_Offset(TkButton, borderWidth)) {
+	    specPtr->defValue = tsdPtr->defWidth;
 	}
     }
 }
@@ -230,11 +233,6 @@ TkpCreateButton(tkwin)
     Tk_Window tkwin;
 {
     WinButton *butPtr;
-
-    if (!initialized) {
-	UpdateButtonDefaults();
-	initialized = 1;
-    }
 
     butPtr = (WinButton *)ckalloc(sizeof(WinButton));
     butPtr->hwnd = NULL;
@@ -354,23 +352,28 @@ TkpDisplayButton(clientData)
 				 * it is a flavor of button, so we offset
 				 * the text to make the button appear to
 				 * move up and down as the relief changes. */
+    DWORD *boxesPalette;
 
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
+    boxesPalette= tsdPtr->boxesPalette;
     butPtr->flags &= ~REDRAW_PENDING;
     if ((butPtr->tkwin == NULL) || !Tk_IsMapped(tkwin)) {
 	return;
     }
 
     border = butPtr->normalBorder;
-    if ((butPtr->state == tkDisabledUid) && (butPtr->disabledFg != NULL)) {
+    if ((butPtr->state == STATE_DISABLED) && (butPtr->disabledFg != NULL)) {
 	gc = butPtr->disabledGC;
-    } else if ((butPtr->state == tkActiveUid)
+    } else if ((butPtr->state == STATE_ACTIVE)
 	    && !Tk_StrictMotif(butPtr->tkwin)) {
 	gc = butPtr->activeTextGC;
 	border = butPtr->activeBorder;
     } else {
 	gc = butPtr->normalTextGC;
     }
-    if ((butPtr->flags & SELECTED) && (butPtr->state != tkActiveUid)
+    if ((butPtr->flags & SELECTED) && (butPtr->state != STATE_ACTIVE)
 	    && (butPtr->selectBorder != NULL) && !butPtr->indicatorOn) {
 	border = butPtr->selectBorder;
     }
@@ -391,7 +394,7 @@ TkpDisplayButton(clientData)
      */
 
     if (butPtr->type == TYPE_BUTTON) {
-	defaultWidth = ((butPtr->defaultState == tkActiveUid)
+	defaultWidth = ((butPtr->defaultState == DEFAULT_ACTIVE)
 		? butPtr->highlightWidth : 0);
 	offset = 1;
     } else {
@@ -500,17 +503,17 @@ TkpDisplayButton(clientData)
      */
 
     if ((butPtr->type >= TYPE_CHECK_BUTTON) && butPtr->indicatorOn
-	    && boxesPtr) {
+	    && tsdPtr->boxesPtr) {
 	int xSrc, ySrc;
 
 	x -= butPtr->indicatorSpace;
 	y -= butPtr->indicatorDiameter / 2;
 
-	xSrc = (butPtr->flags & SELECTED) ? boxWidth : 0;
-	if (butPtr->state == tkActiveUid) {
-	    xSrc += boxWidth*2;
+	xSrc = (butPtr->flags & SELECTED) ? tsdPtr->boxWidth : 0;
+	if (butPtr->state == STATE_ACTIVE) {
+	    xSrc += tsdPtr->boxWidth*2;
 	}
-	ySrc = (butPtr->type == TYPE_RADIO_BUTTON) ? 0 : boxHeight;
+	ySrc = (butPtr->type == TYPE_RADIO_BUTTON) ? 0 : tsdPtr->boxHeight;
 		
 	/*
 	 * Update the palette in the boxes bitmap to reflect the current
@@ -530,7 +533,7 @@ TkpDisplayButton(clientData)
 		border, TK_3D_LIGHT2));
 	boxesPalette[PAL_BOTTOM_OUTER] = FlipColor(TkWinGetBorderPixels(tkwin,
 		border, TK_3D_LIGHT_GC));
-	if (butPtr->state == tkDisabledUid) {
+	if (butPtr->state == STATE_DISABLED) {
 	    boxesPalette[PAL_INTERIOR] = FlipColor(TkWinGetBorderPixels(tkwin,
 		border, TK_3D_LIGHT2));
 	} else if (butPtr->selectBorder != NULL) {
@@ -543,9 +546,10 @@ TkpDisplayButton(clientData)
 		border, TK_3D_FLAT_GC));
 
 	dc = TkWinGetDrawableDC(butPtr->display, pixmap, &state);
-	StretchDIBits(dc, x, y, boxWidth, boxHeight, xSrc, ySrc, 
-		boxWidth, boxHeight, boxesBits, (LPBITMAPINFO)boxesPtr, 
-		DIB_RGB_COLORS, SRCCOPY);
+	StretchDIBits(dc, x, y, tsdPtr->boxWidth, tsdPtr->boxHeight, 
+                xSrc, ySrc, tsdPtr->boxWidth, tsdPtr->boxHeight, 
+                tsdPtr->boxesBits, (LPBITMAPINFO) tsdPtr->boxesPtr, 
+                DIB_RGB_COLORS, SRCCOPY);
 	TkWinReleaseDrawableDC(pixmap, dc, &state);
     }
 
@@ -556,7 +560,7 @@ TkpDisplayButton(clientData)
      * must temporarily modify the GC.
      */
 
-    if ((butPtr->state == tkDisabledUid)
+    if ((butPtr->state == STATE_DISABLED)
 	    && ((butPtr->disabledFg == NULL) || (butPtr->image != NULL))) {
 	if ((butPtr->flags & SELECTED) && !butPtr->indicatorOn
 		&& (butPtr->selectBorder != NULL)) {
@@ -636,6 +640,8 @@ TkpComputeButtonGeometry(butPtr)
 {
     int width, height, avgWidth;
     Tk_FontMetrics fm;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (butPtr->highlightWidth < 0) {
 	butPtr->highlightWidth = 0;
@@ -643,7 +649,7 @@ TkpComputeButtonGeometry(butPtr)
     butPtr->inset = butPtr->highlightWidth + butPtr->borderWidth;
     butPtr->indicatorSpace = 0;
 
-    if (!boxesPtr) {
+    if (!tsdPtr->boxesPtr) {
 	InitBoxes();
     }
 
@@ -657,8 +663,8 @@ TkpComputeButtonGeometry(butPtr)
 	    height = butPtr->height;
 	}
 	if ((butPtr->type >= TYPE_CHECK_BUTTON) && butPtr->indicatorOn) {
-	    butPtr->indicatorSpace = boxWidth * 2;
-	    butPtr->indicatorDiameter = boxHeight;
+	    butPtr->indicatorSpace = tsdPtr->boxWidth * 2;
+	    butPtr->indicatorDiameter = tsdPtr->boxHeight;
 	}
     } else if (butPtr->bitmap != None) {
 	Tk_SizeOfBitmap(butPtr->display, butPtr->bitmap, &width, &height);
@@ -666,8 +672,8 @@ TkpComputeButtonGeometry(butPtr)
     } else {
 	Tk_FreeTextLayout(butPtr->textLayout);
 	butPtr->textLayout = Tk_ComputeTextLayout(butPtr->tkfont,
-		butPtr->text, -1, butPtr->wrapLength, butPtr->justify, 0,
-		&butPtr->textWidth, &butPtr->textHeight);
+		Tcl_GetString(butPtr->textPtr), -1, butPtr->wrapLength,
+		butPtr->justify, 0, &butPtr->textWidth, &butPtr->textHeight);
 
 	width = butPtr->textWidth;
 	height = butPtr->textHeight;
@@ -682,7 +688,7 @@ TkpComputeButtonGeometry(butPtr)
 	}
 
 	if ((butPtr->type >= TYPE_CHECK_BUTTON) && butPtr->indicatorOn) {
-	    butPtr->indicatorDiameter = boxHeight;
+	    butPtr->indicatorDiameter = tsdPtr->boxHeight;
 	    butPtr->indicatorSpace = butPtr->indicatorDiameter + avgWidth;
 	}
 
@@ -783,12 +789,20 @@ ButtonProc(hwnd, message, wParam, lParam)
 	    BeginPaint(hwnd, &ps);
 	    EndPaint(hwnd, &ps);
 	    TkpDisplayButton((ClientData)butPtr);
+
+	    /*
+	     * Special note: must cancel any existing idle handler
+	     * for TkpDisplayButton;  it's no longer needed, and
+	     * TkpDisplayButton cleared the REDRAW_PENDING flag.
+	     */
+           
+	    Tcl_CancelIdleCall(TkpDisplayButton, (ClientData)butPtr);
 	    return 0;
 	}
 	case BN_CLICKED: {
 	    int code;
 	    Tcl_Interp *interp = butPtr->info.interp;
-	    if (butPtr->info.state != tkDisabledUid) {
+	    if (butPtr->info.state != STATE_DISABLED) {
 		Tcl_Preserve((ClientData)interp);
 		code = TkInvokeButton((TkButton*)butPtr);
 		if (code != TCL_OK && code != TCL_CONTINUE

@@ -3,19 +3,18 @@
 # fashion for Tcl tests.
 #
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) select.test 1.17 96/12/09 17:25:48
+# RCS: @(#) $Id$
 
 #
 # Note: Multiple display selection handling will only be tested if the
 # environment variable TK_ALT_DISPLAY is set to an alternate display.
 #
 
-if {[string compare test [info procs test]] == 1} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 eval destroy [winfo child .]
@@ -449,10 +448,10 @@ test select-5.10 {Tk_GetSelection procedure} {unixOnly} {
     set selInfo ""
     selection own .f1
     set result ""
-    fileevent $fd readable {}
-    puts $fd {catch {selection get TEST} msg; update; puts $msg; flush stdout}
-    flush $fd
-    lappend result [gets $fd]
+    fileevent $::tcltest::fd readable {}
+    puts $::tcltest::fd {catch {selection get TEST} msg; update; puts $msg; flush stdout}
+    flush $::tcltest::fd
+    lappend result [gets $::tcltest::fd]
     cleanupbg
     lappend result $selInfo
 } {{selection owner didn't respond} {}}
@@ -814,14 +813,14 @@ test select-10.1 {ConvertSelection procedure, race with selection clear} {unixOn
     set selInfo ""
     selection handle .f1 {handler STRING}
     update
-    puts $fd {puts "[catch {selection get} msg] $msg"; puts **DONE**; flush stdout}
-    flush $fd
+    puts $::tcltest::fd {puts "[catch {selection get} msg] $msg"; puts **DONE**; flush stdout}
+    flush $::tcltest::fd
     after 200
     selection own .
-    set bgData {}
-    tkwait variable bgDone
+    set ::tcltest::bgData {}
+    tkwait variable ::tcltest::bgDone
     cleanupbg
-    list $bgData $selInfo
+    list $::tcltest::bgData $selInfo
 } {{1 PRIMARY selection doesn't exist or form "STRING" not defined} {}}
 test select-10.2 {ConvertSelection procedure} {unixOnly} {
     setup
@@ -984,4 +983,20 @@ test select-13.1 {SelectionSize procedure, handler deleted} {unixOnly} {
 } {{PRIMARY selection doesn't exist or form "STRING" not defined} {.f1 STRING 0 4000 .f1 STRING 4000 4000}}
 
 catch {rename weirdHandler {}}
-concat
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

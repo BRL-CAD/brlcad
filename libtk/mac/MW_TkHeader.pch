@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS:  @(#) MW_TkHeader.pch 1.26 97/11/20 19:37:29
+ * RCS: @(#) $Id$
  */
 
 /*
@@ -31,40 +31,11 @@
 #pragma precompile_target "MW_TkHeader68K"
 #endif
 
-/*
- * Macintosh Tcl must be compiled with certain compiler options to
- * ensure that it will work correctly.  The following pragmas are 
- * used to ensure that those options are set correctly.  An error
- * will occur at compile time if they are not set correctly.
- */
+#include "tclMacCommonPch.h"
 
-#if !__option(enumsalwaysint)
-#error Tcl requires the Metrowerks setting "Enums always ints".
+#ifdef TCL_DEBUG
+    #define TK_TEST
 #endif
-
-#if !defined(__POWERPC__)
-#if !__option(far_data)
-#error Tcl requires the Metrowerks setting "Far data".
-#endif
-#endif
-
-#if !defined(__POWERPC__)
-#if !__option(fourbyteints)
-#error Tcl requires the Metrowerks setting "4 byte ints".
-#endif
-#endif
-
-#if !defined(__POWERPC__)
-#if !__option(IEEEdoubles)
-#error Tcl requires the Metrowerks setting "8 byte doubles".
-#endif
-#endif
-
-/*
- * The define is used most everywhere to tell Tk (or any Tk
- * extensions) that we are compiling for the Macintosh platform.
- */
-#define MAC_TCL
 
 /*
  * The following defines are for the Xlib.h file to force 
@@ -75,47 +46,6 @@
 
 #define NeedFunctionPrototypes 1
 #define NeedWidePrototypes 0
-
-/*
- * The following defines control the behavior of the Macintosh
- * Universial Headers.
- */
-
-#define SystemSevenOrLater 1
-#define STRICT_CONTROLS 0
-#define STRICT_WINDOWS  0
-
-/*
- * The appearance manager has not yet been shiped by Apple (10/29/97).
- * It's currently in beta testing which is why we were able to write
- * some code that depends on it.  If you have access to the appearance
- * manager you can define the symbol HAVE_APPEARANCE below to compile
- * the code that uses the new appearance manager.
- */
-
-/* #define HAVE_APPEARANCE 1 */
-
-/*
- * Define the following symbol if you want
- * comprehensive debugging turned on.
- */
-
-/* #define TCL_DEBUG */
-
-#ifdef TCL_DEBUG
-#   define TCL_MEM_DEBUG
-#   define TK_TEST
-#   define TCL_TEST
-#endif
-
-/*
- * Apple's Universal Headers 2.0 & 3.0 change alot of names and constants.
- * We will switch to the new names as soon as we can be reasonably sure the
- * number of people with older versions of CodeWarrior, who will then not be
- * able to build Tcl/Tk, is negligible.
- */
- 
-#define OLDROUTINENAMES 1
 
 /*
  * Place any includes below that will are needed by the majority of the

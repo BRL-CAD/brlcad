@@ -6,16 +6,30 @@
  *	a focus highlight.
  *
  * Copyright (c) 1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUtil.c 1.13 97/06/06 11:16:22
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
 #include "tkPort.h"
+
+/*
+ * The structure below defines the implementation of the "statekey"
+ * Tcl object, used for quickly finding a mapping in a TkStateMap.
+ */
+
+static Tcl_ObjType stateKeyType = {
+    "statekey",				/* name */
+    (Tcl_FreeInternalRepProc *) NULL,	/* freeIntRepProc */
+    (Tcl_DupInternalRepProc *) NULL,	/* dupIntRepProc */
+    (Tcl_UpdateStringProc *) NULL,	/* updateStringProc */
+    (Tcl_SetFromAnyProc *) NULL		/* setFromAnyProc */
+};
+
 
 /*
  *----------------------------------------------------------------------
@@ -50,22 +64,6 @@ TkDrawInsetFocusHighlight(tkwin, gc, width, drawable, padding)
 {
     XRectangle rects[4];
 
-    /*
-     * On the Macintosh the highlight ring needs to be "padded"
-     * out by one pixel.  Unfortunantly, none of the Tk widgets
-     * had a notion of padding between the focus ring and the
-     * widget.  So we add this padding here.  This introduces
-     * two things to worry about:
-     *
-     * 1) The widget must draw the background color covering
-     *    the focus ring area before calling Tk_DrawFocus.
-     * 2) It is impossible to draw a focus ring of width 1.
-     *    (For the Macintosh Look & Feel use width of 3)
-     */
-#ifdef MAC_TCL
-    width--;
-#endif
-
     rects[0].x = padding;
     rects[0].y = padding;
     rects[0].width = Tk_Width(tkwin) - (2 * padding);
@@ -92,6 +90,12 @@ TkDrawInsetFocusHighlight(tkwin, gc, width, drawable, padding)
  *
  *	This procedure draws a rectangular ring around the outside of
  *	a widget to indicate that it has received the input focus.
+ *
+ *      This function is now deprecated.  Use TkpDrawHighlightBorder instead,
+ *      since this function does not handle drawing the Focus ring properly
+ *      on the Macintosh - you need to know the background GC as well 
+ *      as the foreground since the Mac focus ring separated from the widget
+ *      by a 1 pixel border.
  *
  * Results:
  *	None.
@@ -132,7 +136,7 @@ Tk_DrawFocusHighlight(tkwin, gc, width, drawable)
  *	took.  If TK_SCROLL_MOVETO, *dblPtr is filled in with the
  *	desired position;  if TK_SCROLL_PAGES or TK_SCROLL_UNITS,
  *	*intPtr is filled in with the number of lines to move (may be
- *	negative);  if TK_SCROLL_ERROR, interp->result contains an
+ *	negative);  if TK_SCROLL_ERROR, the interp's result contains an
  *	error message.
  *
  * Side effects:
@@ -192,6 +196,85 @@ Tk_GetScrollInfo(interp, argc, argv, dblPtr, intPtr)
 	}
     }
     Tcl_AppendResult(interp, "unknown option \"", argv[2],
+	    "\": must be moveto or scroll", (char *) NULL);
+    return TK_SCROLL_ERROR;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_GetScrollInfoObj --
+ *
+ *	This procedure is invoked to parse "xview" and "yview"
+ *	scrolling commands for widgets using the new scrolling
+ *	command syntax ("moveto" or "scroll" options).
+ *
+ * Results:
+ *	The return value is either TK_SCROLL_MOVETO, TK_SCROLL_PAGES,
+ *	TK_SCROLL_UNITS, or TK_SCROLL_ERROR.  This indicates whether
+ *	the command was successfully parsed and what form the command
+ *	took.  If TK_SCROLL_MOVETO, *dblPtr is filled in with the
+ *	desired position;  if TK_SCROLL_PAGES or TK_SCROLL_UNITS,
+ *	*intPtr is filled in with the number of lines to move (may be
+ *	negative);  if TK_SCROLL_ERROR, the interp's result contains an
+ *	error message.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+Tk_GetScrollInfoObj(interp, objc, objv, dblPtr, intPtr)
+    Tcl_Interp *interp;			/* Used for error reporting. */
+    int objc;				/* # arguments for command. */
+    Tcl_Obj *CONST objv[];		/* Arguments for command. */
+    double *dblPtr;			/* Filled in with argument "moveto"
+					 * option, if any. */
+    int *intPtr;			/* Filled in with number of pages
+					 * or lines to scroll, if any. */
+{
+    int c;
+    size_t length;
+    char *arg2, *arg4;
+
+    arg2 = Tcl_GetString(objv[2]);
+    length = strlen(arg2);
+    c = arg2[0];
+    if ((c == 'm') && (strncmp(arg2, "moveto", length) == 0)) {
+	if (objc != 4) {
+	    Tcl_WrongNumArgs(interp, 2, objv, "moveto fraction");
+	    return TK_SCROLL_ERROR;
+	}
+	if (Tcl_GetDoubleFromObj(interp, objv[3], dblPtr) != TCL_OK) {
+	    return TK_SCROLL_ERROR;
+	}
+	return TK_SCROLL_MOVETO;
+    } else if ((c == 's')
+	    && (strncmp(arg2, "scroll", length) == 0)) {
+	if (objc != 5) {
+	    Tcl_WrongNumArgs(interp, 2, objv, "scroll number units|pages");
+	    return TK_SCROLL_ERROR;
+	}
+	if (Tcl_GetIntFromObj(interp, objv[3], intPtr) != TCL_OK) {
+	    return TK_SCROLL_ERROR;
+	}
+	arg4 = Tcl_GetString(objv[4]);
+	length = (strlen(arg4));
+	c = arg4[0];
+	if ((c == 'p') && (strncmp(arg4, "pages", length) == 0)) {
+	    return TK_SCROLL_PAGES;
+	} else if ((c == 'u')
+		&& (strncmp(arg4, "units", length) == 0)) {
+	    return TK_SCROLL_UNITS;
+	} else {
+	    Tcl_AppendResult(interp, "bad argument \"", arg4,
+		    "\": must be units or pages", (char *) NULL);
+	    return TK_SCROLL_ERROR;
+	}
+    }
+    Tcl_AppendResult(interp, "unknown option \"", arg2,
 	    "\": must be moveto or scroll", (char *) NULL);
     return TK_SCROLL_ERROR;
 }
@@ -310,7 +393,7 @@ TkFindStateString(mapPtr, numKey)
  *	Returns the numKey associated with the last element (the NULL
  *	string one) in the table if strKey was not equal to any of the
  *	string keys in the table.  In that case, an error message is
- *	also left in interp->result (if interp is not NULL).
+ *	also left in the interp's result (if interp is not NULL).
  *
  * Side effects.
  *	None.
@@ -319,17 +402,13 @@ TkFindStateString(mapPtr, numKey)
  */
 
 int
-TkFindStateNum(interp, field, mapPtr, strKey)
+TkFindStateNum(interp, option, mapPtr, strKey)
     Tcl_Interp *interp;		/* Interp for error reporting. */
-    CONST char *field;		/* String to use when constructing error. */
+    CONST char *option;		/* String to use when constructing error. */
     CONST TkStateMap *mapPtr;	/* Lookup table. */
     CONST char *strKey;		/* String to try to find in lookup table. */
 {
     CONST TkStateMap *mPtr;
-
-    if (mapPtr->strKey == NULL) {
-	panic("TkFindStateNum: no choices in lookup table");
-    }
 
     for (mPtr = mapPtr; mPtr->strKey != NULL; mPtr++) {
 	if (strcmp(strKey, mPtr->strKey) == 0) {
@@ -338,10 +417,55 @@ TkFindStateNum(interp, field, mapPtr, strKey)
     }
     if (interp != NULL) {
 	mPtr = mapPtr;
-	Tcl_AppendResult(interp, "bad ", field, " value \"", strKey,
+	Tcl_AppendResult(interp, "bad ", option, " value \"", strKey,
 		"\": must be ", mPtr->strKey, (char *) NULL);
 	for (mPtr++; mPtr->strKey != NULL; mPtr++) {
-	    Tcl_AppendResult(interp, ", ", mPtr->strKey, (char *) NULL);
+	    Tcl_AppendResult(interp, 
+		    ((mPtr[1].strKey != NULL) ? ", " : ", or "), 
+		    mPtr->strKey, (char *) NULL);
+	}
+    }
+    return mPtr->numKey;
+}
+
+int
+TkFindStateNumObj(interp, optionPtr, mapPtr, keyPtr)
+    Tcl_Interp *interp;		/* Interp for error reporting. */
+    Tcl_Obj *optionPtr;		/* String to use when constructing error. */
+    CONST TkStateMap *mapPtr;	/* Lookup table. */
+    Tcl_Obj *keyPtr;		/* String key to find in lookup table. */
+{
+    CONST TkStateMap *mPtr;
+    CONST char *key;
+    CONST Tcl_ObjType *typePtr;
+
+    if ((keyPtr->typePtr == &stateKeyType)
+	    && (keyPtr->internalRep.twoPtrValue.ptr1 == (VOID *) mapPtr)) {
+	return (int) keyPtr->internalRep.twoPtrValue.ptr2;
+    }
+
+    key = Tcl_GetStringFromObj(keyPtr, NULL);
+    for (mPtr = mapPtr; mPtr->strKey != NULL; mPtr++) {
+	if (strcmp(key, mPtr->strKey) == 0) {
+	    typePtr = keyPtr->typePtr;
+	    if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
+		(*typePtr->freeIntRepProc)(keyPtr);
+	    }
+	    keyPtr->internalRep.twoPtrValue.ptr1 = (VOID *) mapPtr;
+	    keyPtr->internalRep.twoPtrValue.ptr2 = (VOID *) mPtr->numKey;
+	    keyPtr->typePtr = &stateKeyType;	    
+	    return mPtr->numKey;
+	}
+    }
+    if (interp != NULL) {
+	mPtr = mapPtr;
+	Tcl_AppendResult(interp, "bad ",
+		Tcl_GetStringFromObj(optionPtr, NULL), " value \"", key,
+		"\": must be ", mPtr->strKey, (char *) NULL);
+	for (mPtr++; mPtr->strKey != NULL; mPtr++) {
+	    Tcl_AppendResult(interp, 
+		((mPtr[1].strKey != NULL) ? ", " : ", or "), 
+		mPtr->strKey, (char *) NULL);
 	}
     }
     return mPtr->numKey;

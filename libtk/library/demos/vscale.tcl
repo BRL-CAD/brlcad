@@ -2,7 +2,7 @@
 #
 # This demonstration script shows an example with a vertical scale.
 #
-# SCCS: @(#) vscale.tcl 1.4 97/03/02 16:28:34
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

@@ -1,8 +1,4 @@
-#include <X11/X.h>
-#include <X11/Xlib.h>
-#include <stdio.h>
-#include <tkInt.h>
-#include <tkPort.h>
+#include "tk.h"
 
 /*
  * Undocumented Xlib internal function

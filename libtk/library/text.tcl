@@ -3,10 +3,11 @@
 # This file defines the default bindings for Tk text widgets and provides
 # procedures that help in implementing the bindings.
 #
-# SCCS: @(#) text.tcl 1.58 97/09/17 18:54:56
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998 by Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -85,11 +86,6 @@ bind Text <ButtonRelease-1> {
 }
 bind Text <Control-1> {
     %W mark set insert @%x,%y
-}
-bind Text <ButtonRelease-2> {
-    if {!$tkPriv(mouseMoved) || $tk_strictMotif} {
-	tkTextPaste %W %x %y
-    }
 }
 bind Text <Left> {
     tkTextSetCursor %W insert-1c
@@ -206,7 +202,7 @@ bind Text <Return> {
     tkTextInsert %W \n
 }
 bind Text <Delete> {
-    if {[%W tag nextrange sel 1.0 end] != ""} {
+    if {[string compare [%W tag nextrange sel 1.0 end] ""]} {
 	%W delete sel.first sel.last
     } else {
 	%W delete insert
@@ -214,9 +210,9 @@ bind Text <Delete> {
     }
 }
 bind Text <BackSpace> {
-    if {[%W tag nextrange sel 1.0 end] != ""} {
+    if {[string compare [%W tag nextrange sel 1.0 end] ""]} {
 	%W delete sel.first sel.last
-    } elseif [%W compare insert != 1.0] {
+    } elseif {[%W compare insert != 1.0]} {
 	%W delete insert-1c
 	%W see insert
     }
@@ -254,6 +250,11 @@ bind Text <<Paste>> {
 bind Text <<Clear>> {
     catch {%W delete sel.first sel.last}
 }
+bind Text <<PasteSelection>> {
+    if {!$tkPriv(mouseMoved) || $tk_strictMotif} {
+	tkTextPaste %W %x %y
+    }
+}
 bind Text <Insert> {
     catch {tkTextInsert %W [selection get -displayof %W]}
 }
@@ -271,40 +272,40 @@ bind Text <Meta-KeyPress> {# nothing}
 bind Text <Control-KeyPress> {# nothing}
 bind Text <Escape> {# nothing}
 bind Text <KP_Enter> {# nothing}
-if {$tcl_platform(platform) == "macintosh"} {
+if {![string compare $tcl_platform(platform) "macintosh"]} {
 	bind Text <Command-KeyPress> {# nothing}
 }
 
 # Additional emacs-like bindings:
 
 bind Text <Control-a> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W {insert linestart}
     }
 }
 bind Text <Control-b> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W insert-1c
     }
 }
 bind Text <Control-d> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete insert
     }
 }
 bind Text <Control-e> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W {insert lineend}
     }
 }
 bind Text <Control-f> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W insert+1c
     }
 }
 bind Text <Control-k> {
-    if !$tk_strictMotif {
-	if [%W compare insert == {insert lineend}] {
+    if {!$tk_strictMotif} {
+	if {[%W compare insert == {insert lineend}]} {
 	    %W delete insert
 	} else {
 	    %W delete insert {insert lineend}
@@ -312,67 +313,67 @@ bind Text <Control-k> {
     }
 }
 bind Text <Control-n> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W [tkTextUpDownLine %W 1]
     }
 }
 bind Text <Control-o> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W insert insert \n
 	%W mark set insert insert-1c
     }
 }
 bind Text <Control-p> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W [tkTextUpDownLine %W -1]
     }
 }
 bind Text <Control-t> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextTranspose %W
     }
 }
 
-if {$tcl_platform(platform) != "windows"} {
+if {[string compare $tcl_platform(platform) "windows"]} {
 bind Text <Control-v> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextScrollPages %W 1
     }
 }
 }
 
 bind Text <Meta-b> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W [tkTextPrevPos %W insert tcl_startOfPreviousWord]
     }
 }
 bind Text <Meta-d> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete insert [tkTextNextWord %W insert]
     }
 }
 bind Text <Meta-f> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W [tkTextNextWord %W insert]
     }
 }
 bind Text <Meta-less> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W 1.0
     }
 }
 bind Text <Meta-greater> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkTextSetCursor %W end-1c
     }
 }
 bind Text <Meta-BackSpace> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete [tkTextPrevPos %W insert tcl_startOfPreviousWord] insert
     }
 }
 bind Text <Meta-Delete> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete [tkTextPrevPos %W insert tcl_startOfPreviousWord] insert
     }
 }
@@ -380,7 +381,7 @@ bind Text <Meta-Delete> {
 # Macintosh only bindings:
 
 # if text black & highlight black -> text white, other text the same
-if {$tcl_platform(platform) == "macintosh"} {
+if {![string compare $tcl_platform(platform) "macintosh"]} {
 bind Text <FocusIn> {
     %W tag configure sel -borderwidth 0
     %W configure -selectbackground systemHighlight -selectforeground systemHighlightText
@@ -420,15 +421,15 @@ bind Text <Shift-Option-Down> {
 # A few additional bindings of my own.
 
 bind Text <Control-h> {
-    if !$tk_strictMotif {
-	if [%W compare insert != 1.0] {
+    if {!$tk_strictMotif} {
+	if {[%W compare insert != 1.0]} {
 	    %W delete insert-1c
 	    %W see insert
 	}
     }
 }
 bind Text <2> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W scan mark %x %y
 	set tkPriv(x) %x
 	set tkPriv(y) %y
@@ -436,16 +437,24 @@ bind Text <2> {
     }
 }
 bind Text <B2-Motion> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	if {(%x != $tkPriv(x)) || (%y != $tkPriv(y))} {
 	    set tkPriv(mouseMoved) 1
 	}
-	if $tkPriv(mouseMoved) {
+	if {$tkPriv(mouseMoved)} {
 	    %W scan dragto %x %y
 	}
     }
 }
 set tkPriv(prevPos) {}
+
+# The MouseWheel will typically only fire on Windows.  However,
+# someone could use the "event generate" command to produce one
+# on other platforms.
+
+bind Text <MouseWheel> {
+    %W yview scroll [expr {- (%D / 120) * 4}] units
+}
 
 # tkTextClosestGap --
 # Given x and y coordinates, this procedure finds the closest boundary
@@ -460,7 +469,7 @@ set tkPriv(prevPos) {}
 proc tkTextClosestGap {w x y} {
     set pos [$w index @$x,$y]
     set bbox [$w bbox $pos]
-    if ![string compare $bbox ""] {
+    if {![string compare $bbox ""]} {
 	return $pos
     }
     if {($x - [lindex $bbox 0]) < ([lindex $bbox 2]/2)} {
@@ -487,7 +496,7 @@ proc tkTextButton1 {w x y} {
     set tkPriv(pressX) $x
     $w mark set insert [tkTextClosestGap $w $x $y]
     $w mark set anchor insert
-    if {[$w cget -state] == "normal"} {focus $w}
+    if {![string compare [$w cget -state] "normal"]} {focus $w}
 }
 
 # tkTextSelectTo --
@@ -506,7 +515,7 @@ proc tkTextSelectTo {w x y} {
     global tkPriv tcl_platform
 
     set cur [tkTextClosestGap $w $x $y]
-    if [catch {$w index anchor}] {
+    if {[catch {$w index anchor}]} {
 	$w mark set anchor $cur
     }
     set anchor [$w index anchor]
@@ -515,7 +524,7 @@ proc tkTextSelectTo {w x y} {
     }
     switch $tkPriv(selectMode) {
 	char {
-	    if [$w compare $cur < anchor] {
+	    if {[$w compare $cur < anchor]} {
 		set first $cur
 		set last anchor
 	    } else {
@@ -524,7 +533,7 @@ proc tkTextSelectTo {w x y} {
 	    }
 	}
 	word {
-	    if [$w compare $cur < anchor] {
+	    if {[$w compare $cur < anchor]} {
 		set first [tkTextPrevPos $w "$cur + 1c" tcl_wordBreakBefore]
 		set last [tkTextNextPos $w "anchor" tcl_wordBreakAfter]
 	    } else {
@@ -533,7 +542,7 @@ proc tkTextSelectTo {w x y} {
 	    }
 	}
 	line {
-	    if [$w compare $cur < anchor] {
+	    if {[$w compare $cur < anchor]} {
 		set first [$w index "$cur linestart"]
 		set last [$w index "anchor - 1c lineend + 1c"]
 	    } else {
@@ -542,8 +551,9 @@ proc tkTextSelectTo {w x y} {
 	    }
 	}
     }
-    if {$tkPriv(mouseMoved) || ($tkPriv(selectMode) != "char")} {
-	if {$tcl_platform(platform) != "unix" && [$w compare $cur < anchor]} {
+    if {$tkPriv(mouseMoved) || [string compare $tkPriv(selectMode) "char"]} {
+      if {[string compare $tcl_platform(platform) "unix"]
+              && [$w compare $cur < anchor]} {
 	    $w mark set insert $first
 	} else {
 	    $w mark set insert $last
@@ -568,11 +578,11 @@ proc tkTextKeyExtend {w index} {
     global tkPriv
 
     set cur [$w index $index]
-    if [catch {$w index anchor}] {
+    if {[catch {$w index anchor}]} {
 	$w mark set anchor $cur
     }
     set anchor [$w index anchor]
-    if [$w compare $cur < anchor] {
+    if {[$w compare $cur < anchor]} {
 	set first $cur
 	set last anchor
     } else {
@@ -595,7 +605,7 @@ proc tkTextKeyExtend {w index} {
 proc tkTextPaste {w x y} {
     $w mark set insert [tkTextClosestGap $w $x $y]
     catch {$w insert insert [selection get -displayof $w]}
-    if {[$w cget -state] == "normal"} {focus $w}
+    if {![string compare [$w cget -state] "normal"]} {focus $w}
 }
 
 # tkTextAutoScan --
@@ -640,7 +650,7 @@ proc tkTextAutoScan {w} {
 proc tkTextSetCursor {w pos} {
     global tkPriv
 
-    if [$w compare $pos == end] {
+    if {[$w compare $pos == end]} {
 	set pos {end - 1 chars}
     }
     $w mark set insert $pos
@@ -661,15 +671,15 @@ proc tkTextSetCursor {w pos} {
 proc tkTextKeySelect {w new} {
     global tkPriv
 
-    if {[$w tag nextrange sel 1.0 end] == ""} {
-	if [$w compare $new < insert] {
+    if {![string compare [$w tag nextrange sel 1.0 end] ""]} {
+	if {[$w compare $new < insert]} {
 	    $w tag add sel $new insert
 	} else {
 	    $w tag add sel insert $new
 	}
 	$w mark set anchor insert
     } else {
-	if [$w compare $new < anchor] {
+	if {[$w compare $new < anchor]} {
 	    set first $new
 	    set last anchor
 	} else {
@@ -702,18 +712,18 @@ proc tkTextKeySelect {w new} {
 proc tkTextResetAnchor {w index} {
     global tkPriv
 
-    if {[$w tag ranges sel] == ""} {
+    if {![string compare [$w tag ranges sel] ""]} {
 	$w mark set anchor $index
 	return
     }
     set a [$w index $index]
     set b [$w index sel.first]
     set c [$w index sel.last]
-    if [$w compare $a < $b] {
+    if {[$w compare $a < $b]} {
 	$w mark set anchor sel.last
 	return
     }
-    if [$w compare $a > $c] {
+    if {[$w compare $a > $c]} {
 	$w mark set anchor sel.first
 	return
     }
@@ -749,7 +759,8 @@ proc tkTextResetAnchor {w index} {
 # s -		The string to insert (usually just a single character)
 
 proc tkTextInsert {w s} {
-    if {($s == "") || ([$w cget -state] == "disabled")} {
+    if {![string compare $s ""] ||
+          ![string compare [$w cget -state] "disabled"]} {
 	return
     }
     catch {
@@ -783,7 +794,7 @@ proc tkTextUpDownLine {w n} {
     if {[string compare $tkPriv(prevPos) $i] != 0} {
 	set tkPriv(char) $char
     }
-    set new [$w index [expr $line + $n].$tkPriv(char)]
+    set new [$w index [expr {$line + $n}].$tkPriv(char)]
     if {[$w compare $new == end] || [$w compare $new == "insert linestart"]} {
 	set new $i
     }
@@ -803,13 +814,14 @@ proc tkTextUpDownLine {w n} {
 proc tkTextPrevPara {w pos} {
     set pos [$w index "$pos linestart"]
     while 1 {
-	if {(([$w get "$pos - 1 line"] == "\n") && ([$w get $pos] != "\n"))
-		|| ($pos == "1.0")} {
-	    if [regexp -indices {^[ 	]+(.)} [$w get $pos "$pos lineend"] \
-		    dummy index] {
+      if {(![string compare [$w get "$pos - 1 line"] "\n"]
+              && [string compare [$w get $pos] "\n"])
+              || ![string compare $pos "1.0"]} {
+	    if {[regexp -indices {^[ 	]+(.)} [$w get $pos "$pos lineend"] \
+		    dummy index]} {
 		set pos [$w index "$pos + [lindex $index 0] chars"]
 	    }
-	    if {[$w compare $pos != insert] || ($pos == "1.0")} {
+          if {[$w compare $pos != insert] || ![string compare $pos 1.0]} {
 		return $pos
 	    }
 	}
@@ -828,20 +840,20 @@ proc tkTextPrevPara {w pos} {
 
 proc tkTextNextPara {w start} {
     set pos [$w index "$start linestart + 1 line"]
-    while {[$w get $pos] != "\n"} {
-	if [$w compare $pos == end] {
+    while {[string compare [$w get $pos] "\n"]} {
+	if {[$w compare $pos == end]} {
 	    return [$w index "end - 1c"]
 	}
 	set pos [$w index "$pos + 1 line"]
     }
-    while {[$w get $pos] == "\n"} {
+    while {![string compare [$w get $pos] "\n"]} {
 	set pos [$w index "$pos + 1 line"]
-	if [$w compare $pos == end] {
+	if {[$w compare $pos == end]} {
 	    return [$w index "end - 1c"]
 	}
     }
-    if [regexp -indices {^[ 	]+(.)} [$w get $pos "$pos lineend"] \
-	    dummy index] {
+    if {[regexp -indices {^[ 	]+(.)} [$w get $pos "$pos lineend"] \
+	    dummy index]} {
 	return [$w index "$pos + [lindex $index 0] chars"]
     }
     return $pos
@@ -862,8 +874,8 @@ proc tkTextNextPara {w start} {
 proc tkTextScrollPages {w count} {
     set bbox [$w bbox insert]
     $w yview scroll $count pages
-    if {$bbox == ""} {
-	return [$w index @[expr [winfo height $w]/2],0]
+    if {![string compare $bbox ""]} {
+	return [$w index @[expr {[winfo height $w]/2}],0]
     }
     return [$w index @[lindex $bbox 0],[lindex $bbox 1]]
 }
@@ -880,11 +892,11 @@ proc tkTextScrollPages {w count} {
 
 proc tkTextTranspose w {
     set pos insert
-    if [$w compare $pos != "$pos lineend"] {
+    if {[$w compare $pos != "$pos lineend"]} {
 	set pos [$w index "$pos + 1 char"]
     }
     set new [$w get "$pos - 1 char"][$w get  "$pos - 2 char"]
-    if [$w compare "$pos - 1 char" == 1.0] {
+    if {[$w compare "$pos - 1 char" == 1.0]} {
 	return
     }
     $w delete "$pos - 2 char" $pos
@@ -932,7 +944,7 @@ proc tk_textCut w {
 proc tk_textPaste w {
     global tcl_platform
     catch {
-	if {"$tcl_platform(platform)" != "unix"} {
+      if {[string compare $tcl_platform(platform) "unix"]} {
 	    catch {
 		$w delete sel.first sel.last
 	    }
@@ -951,7 +963,7 @@ proc tk_textPaste w {
 # w -		The text window in which the cursor is to move.
 # start -	Position at which to start search.
 
-if {$tcl_platform(platform) == "windows"}  {
+if {![string compare $tcl_platform(platform) "windows"]}  {
     proc tkTextNextWord {w start} {
 	tkTextNextPos $w [tkTextNextPos $w $start tcl_endOfWord] \
 	    tcl_startOfNextWord

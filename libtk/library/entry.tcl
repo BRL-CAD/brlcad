@@ -3,7 +3,7 @@
 # This file defines the default bindings for Tk entry widgets and provides
 # procedures that help in implementing those bindings.
 #
-# SCCS: @(#) entry.tcl 1.49 97/09/17 19:08:48
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -26,31 +26,31 @@
 #			char, word, or line.
 # x, y -		Last known mouse coordinates for scanning
 #			and auto-scanning.
+# data -		Used for Cut and Copy
 #-------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------
 # The code below creates the default class bindings for entries.
 #-------------------------------------------------------------------------
-
 bind Entry <<Cut>> {
-    if {![catch {set data [string range [%W get] [%W index sel.first]\
-		 [expr [%W index sel.last] - 1]]}]} {
+    if {![catch {tkEntryGetSelection %W} tkPriv(data)]} {
 	clipboard clear -displayof %W
-	clipboard append -displayof %W $data
+	clipboard append -displayof %W $tkPriv(data)
 	%W delete sel.first sel.last
+	unset tkPriv(data)
     }
 }
 bind Entry <<Copy>> {
-    if {![catch {set data [string range [%W get] [%W index sel.first]\
-		 [expr [%W index sel.last] - 1]]}]} {
+    if {![catch {tkEntryGetSelection %W} tkPriv(data)]} {
 	clipboard clear -displayof %W
-	clipboard append -displayof %W $data
+	clipboard append -displayof %W $tkPriv(data)
+	unset tkPriv(data)
     }
 }
 bind Entry <<Paste>> {
     global tcl_platform
     catch {
-	if {"$tcl_platform(platform)" != "unix"} {
+      if {[string compare $tcl_platform(platform) "unix"]} {
 	    catch {
 		%W delete sel.first sel.last
 	    }
@@ -61,6 +61,11 @@ bind Entry <<Paste>> {
 }
 bind Entry <<Clear>> {
     %W delete sel.first sel.last
+}
+bind Entry <<PasteSelection>> {
+    if {!$tkPriv(mouseMoved) || $tk_strictMotif} {
+	tkEntryPaste %W %x
+    }
 }
 
 # Standard Motif bindings:
@@ -108,24 +113,19 @@ bind Entry <ButtonRelease-1> {
 bind Entry <Control-1> {
     %W icursor @%x
 }
-bind Entry <ButtonRelease-2> {
-    if {!$tkPriv(mouseMoved) || $tk_strictMotif} {
-	tkEntryPaste %W %x
-    }
-}
 
 bind Entry <Left> {
-    tkEntrySetCursor %W [expr [%W index insert] - 1]
+    tkEntrySetCursor %W [expr {[%W index insert] - 1}]
 }
 bind Entry <Right> {
-    tkEntrySetCursor %W [expr [%W index insert] + 1]
+    tkEntrySetCursor %W [expr {[%W index insert] + 1}]
 }
 bind Entry <Shift-Left> {
-    tkEntryKeySelect %W [expr [%W index insert] - 1]
+    tkEntryKeySelect %W [expr {[%W index insert] - 1}]
     tkEntrySeeInsert %W
 }
 bind Entry <Shift-Right> {
-    tkEntryKeySelect %W [expr [%W index insert] + 1]
+    tkEntryKeySelect %W [expr {[%W index insert] + 1}]
     tkEntrySeeInsert %W
 }
 bind Entry <Control-Left> {
@@ -158,7 +158,7 @@ bind Entry <Shift-End> {
 }
 
 bind Entry <Delete> {
-    if [%W selection present] {
+    if {[%W selection present]} {
 	%W delete sel.first sel.last
     } else {
 	%W delete insert
@@ -202,78 +202,82 @@ bind Entry <Escape> {# nothing}
 bind Entry <Return> {# nothing}
 bind Entry <KP_Enter> {# nothing}
 bind Entry <Tab> {# nothing}
-if {$tcl_platform(platform) == "macintosh"} {
+if {![string compare $tcl_platform(platform) "macintosh"]} {
 	bind Entry <Command-KeyPress> {# nothing}
 }
 
-bind Entry <Insert> {
-    catch {tkEntryInsert %W [selection get -displayof %W]}
+# On Windows, paste is done using Shift-Insert.  Shift-Insert already
+# generates the <<Paste>> event, so we don't need to do anything here.
+if {[string compare $tcl_platform(platform) "windows"]} {
+    bind Entry <Insert> {
+	catch {tkEntryInsert %W [selection get -displayof %W]}
+    }
 }
 
 # Additional emacs-like bindings:
 
 bind Entry <Control-a> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkEntrySetCursor %W 0
     }
 }
 bind Entry <Control-b> {
-    if !$tk_strictMotif {
-	tkEntrySetCursor %W [expr [%W index insert] - 1]
+    if {!$tk_strictMotif} {
+	tkEntrySetCursor %W [expr {[%W index insert] - 1}]
     }
 }
 bind Entry <Control-d> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete insert
     }
 }
 bind Entry <Control-e> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkEntrySetCursor %W end
     }
 }
 bind Entry <Control-f> {
-    if !$tk_strictMotif {
-	tkEntrySetCursor %W [expr [%W index insert] + 1]
+    if {!$tk_strictMotif} {
+	tkEntrySetCursor %W [expr {[%W index insert] + 1}]
     }
 }
 bind Entry <Control-h> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkEntryBackspace %W
     }
 }
 bind Entry <Control-k> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete insert end
     }
 }
 bind Entry <Control-t> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkEntryTranspose %W
     }
 }
 bind Entry <Meta-b> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkEntrySetCursor %W [tkEntryPreviousWord %W insert]
     }
 }
 bind Entry <Meta-d> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete insert [tkEntryNextWord %W insert]
     }
 }
 bind Entry <Meta-f> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	tkEntrySetCursor %W [tkEntryNextWord %W insert]
     }
 }
 bind Entry <Meta-BackSpace> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete [tkEntryPreviousWord %W insert] insert
     }
 }
 bind Entry <Meta-Delete> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W delete [tkEntryPreviousWord %W insert] insert
     }
 }
@@ -281,7 +285,7 @@ bind Entry <Meta-Delete> {
 # A few additional bindings of my own.
 
 bind Entry <2> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	%W scan mark %x
 	set tkPriv(x) %x
 	set tkPriv(y) %y
@@ -289,7 +293,7 @@ bind Entry <2> {
     }
 }
 bind Entry <B2-Motion> {
-    if !$tk_strictMotif {
+    if {!$tk_strictMotif} {
 	if {abs(%x-$tkPriv(x)) > 2} {
 	    set tkPriv(mouseMoved) 1
 	}
@@ -332,7 +336,7 @@ proc tkEntryButton1 {w x} {
     set tkPriv(pressX) $x
     $w icursor [tkEntryClosestGap $w $x]
     $w selection from insert
-    if {[lindex [$w configure -state] 4] == "normal"} {focus $w}
+    if {![string compare [$w cget -state] "normal"]} {focus $w}
 }
 
 # tkEntryMouseSelect --
@@ -356,7 +360,7 @@ proc tkEntryMouseSelect {w x} {
     }
     switch $tkPriv(selectMode) {
 	char {
-	    if $tkPriv(mouseMoved) {
+	    if {$tkPriv(mouseMoved)} {
 		if {$cur < $anchor} {
 		    $w selection range $cur $anchor
 		} elseif {$cur > $anchor} {
@@ -369,10 +373,10 @@ proc tkEntryMouseSelect {w x} {
 	word {
 	    if {$cur < [$w index anchor]} {
 		set before [tcl_wordBreakBefore [$w get] $cur]
-		set after [tcl_wordBreakAfter [$w get] [expr $anchor-1]]
+		set after [tcl_wordBreakAfter [$w get] [expr {$anchor-1}]]
 	    } else {
 		set before [tcl_wordBreakBefore [$w get] $anchor]
-		set after [tcl_wordBreakAfter [$w get] [expr $cur - 1]]
+		set after [tcl_wordBreakAfter [$w get] [expr {$cur - 1}]]
 	    }
 	    if {$before < 0} {
 		set before 0
@@ -402,7 +406,7 @@ proc tkEntryPaste {w x} {
 
     $w icursor [tkEntryClosestGap $w $x]
     catch {$w insert insert [selection get -displayof $w]}
-    if {[lindex [$w configure -state] 4] == "normal"} {focus $w}
+    if {![string compare [$w cget -state] "normal"]} {focus $w}
 }
 
 # tkEntryAutoScan --
@@ -440,7 +444,7 @@ proc tkEntryAutoScan {w} {
 #		actually been moved to this position yet).
 
 proc tkEntryKeySelect {w new} {
-    if ![$w selection present] {
+    if {![$w selection present]} {
 	$w selection from insert
 	$w selection to $new
     } else {
@@ -459,7 +463,7 @@ proc tkEntryKeySelect {w new} {
 # s -		The string to insert (usually just a single character)
 
 proc tkEntryInsert {w s} {
-    if {$s == ""} {
+    if {![string compare $s ""]} {
 	return
     }
     catch {
@@ -482,7 +486,7 @@ proc tkEntryInsert {w s} {
 # w -		The entry window in which to backspace.
 
 proc tkEntryBackspace w {
-    if [$w selection present] {
+    if {[$w selection present]} {
 	$w delete sel.first sel.last
     } else {
 	set x [expr {[$w index insert] - 1}]
@@ -491,7 +495,7 @@ proc tkEntryBackspace w {
 	    set range [$w xview]
 	    set left [lindex $range 0]
 	    set right [lindex $range 1]
-	    $w xview moveto [expr $left - ($right - $left)/2.0]
+	    $w xview moveto [expr {$left - ($right - $left)/2.0}]
 	}
     }
 }
@@ -547,11 +551,11 @@ proc tkEntryTranspose w {
     if {$i < [$w index end]} {
 	incr i
     }
-    set first [expr $i-2]
+    set first [expr {$i-2}]
     if {$first < 0} {
 	return
     }
-    set new [string index [$w get] [expr $i-1]][string index [$w get] $first]
+    set new [string index [$w get] [expr {$i-1}]][string index [$w get] $first]
     $w delete $first $i
     $w insert insert $new
     tkEntrySeeInsert $w
@@ -567,7 +571,7 @@ proc tkEntryTranspose w {
 # w -		The entry window in which the cursor is to move.
 # start -	Position at which to start search.
 
-if {$tcl_platform(platform) == "windows"}  {
+if {![string compare $tcl_platform(platform) "windows"]}  {
     proc tkEntryNextWord {w start} {
 	set pos [tcl_endOfWord [$w get] [$w index $start]]
 	if {$pos >= 0} {
@@ -604,4 +608,18 @@ proc tkEntryPreviousWord {w start} {
     }
     return $pos
 }
+# tkEntryGetSelection --
+#
+# Returns the selected text of the entry with respect to the -show option.
+#
+# Arguments:
+# w -         The entry window from which the text to get
 
+proc tkEntryGetSelection {w} {
+    set entryString [string range [$w get] [$w index sel.first] \
+                       [expr [$w index sel.last] - 1]]
+    if {[$w cget -show] != ""} {
+      regsub -all . $entryString [string index [$w cget -show] 0] entryString
+    }
+    return $entryString
+}

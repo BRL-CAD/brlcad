@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkFileFilter.h 1.1 96/08/27 15:05:38
+ * RCS: @(#) $Id$
  *
  */
 
@@ -20,6 +20,11 @@
 #include <StandardFile.h>
 #else
 #define OSType long
+#endif
+
+#ifdef BUILD_tk
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 typedef struct GlobPattern {
@@ -80,4 +85,8 @@ EXTERN void		TkInitFileFilters _ANSI_ARGS_((
 EXTERN int		TkGetFileFilters _ANSI_ARGS_ ((Tcl_Interp *interp,
     			    FileFilterList * flistPtr, char * string,
 			    int isWindows));
+
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLIMPORT
+
 #endif

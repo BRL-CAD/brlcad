@@ -4,14 +4,13 @@
 # standard fashion for Tcl tests.
 #
 # Copyright (c) 1995 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) focusTcl.test 1.7 96/09/26 10:25:58
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 eval destroy [winfo children .]
@@ -277,3 +276,20 @@ test focusTcl-5.11 {tkFocusOK procedure, -takefocus "", check for bindings} {
 bind Frame <Key> {}
 . configure -takefocus 0 -highlightthickness 0
 option clear
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

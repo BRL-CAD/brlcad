@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) tkvars.n 1.22 96/08/27 13:21:38
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH tkvars n 4.1 Tk "Tk Built-In Commands"

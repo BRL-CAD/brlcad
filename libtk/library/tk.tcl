@@ -3,26 +3,26 @@
 # Initialization script normally executed in the interpreter for each
 # Tk-based application.  Arranges class bindings for widgets.
 #
-# SCCS: @(#) tk.tcl 1.98 97/10/28 15:21:04
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 Scriptics Corporation.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 # Insist on running with compatible versions of Tcl and Tk.
 
-package require -exact Tk 8.0
-package require -exact Tcl 8.0
+package require -exact Tk 8.2
+package require -exact Tcl 8.2
 
 # Add Tk's directory to the end of the auto-load search path, if it
 # isn't already on the path:
 
-if {[info exists auto_path]} {
-    if {[lsearch -exact $auto_path $tk_library] < 0} {
-	lappend auto_path $tk_library
-    }
+if {[info exists auto_path] && [string compare {} $tk_library] && \
+	[lsearch -exact $auto_path $tk_library] < 0} {
+    lappend auto_path $tk_library
 }
 
 # Turn off strict Motif look and feel as a default.
@@ -42,7 +42,7 @@ set tk_strictMotif 0
 proc tkScreenChanged screen {
     set x [string last . $screen]
     if {$x > 0} {
-	set disp [string range $screen 0 [expr $x - 1]]
+	set disp [string range $screen 0 [expr {$x - 1}]]
     } else {
 	set disp $screen
     }
@@ -51,31 +51,33 @@ proc tkScreenChanged screen {
     global tkPriv
     global tcl_platform
 
-    if [info exists tkPriv] {
+    if {[info exists tkPriv]} {
 	set tkPriv(screen) $screen
 	return
     }
-    set tkPriv(activeMenu) {}
-    set tkPriv(activeItem) {}
-    set tkPriv(afterId) {}
-    set tkPriv(buttons) 0
-    set tkPriv(buttonWindow) {}
-    set tkPriv(dragging) 0
-    set tkPriv(focus) {}
-    set tkPriv(grab) {}
-    set tkPriv(initPos) {}
-    set tkPriv(inMenubutton) {}
-    set tkPriv(listboxPrev) {}
-    set tkPriv(menuBar) {}
-    set tkPriv(mouseMoved) 0
-    set tkPriv(oldGrab) {}
-    set tkPriv(popup) {}
-    set tkPriv(postedMb) {}
-    set tkPriv(pressX) 0
-    set tkPriv(pressY) 0
-    set tkPriv(prevPos) 0
+    array set tkPriv {
+      activeMenu      {}
+      activeItem      {}
+      afterId         {}
+      buttons         0
+      buttonWindow    {}
+      dragging        0
+      focus           {}
+      grab            {}
+      initPos         {}
+      inMenubutton    {}
+      listboxPrev     {}
+      menuBar         {}
+      mouseMoved      0
+      oldGrab         {}
+      popup           {}
+      postedMb        {}
+      pressX          0
+      pressY          0
+      prevPos         0
+      selectMode      char
+    }
     set tkPriv(screen) $screen
-    set tkPriv(selectMode) char
     if {[string compare $tcl_platform(platform) "unix"] == 0} {
 	set tkPriv(tearoff) 1
     } else {
@@ -101,7 +103,7 @@ tkScreenChanged [winfo screen .]
 proc tkEventMotifBindings {n1 dummy dummy} {
     upvar $n1 name
     
-    if $name {
+    if {$name} {
 	set op delete
     } else {
 	set op add
@@ -113,6 +115,40 @@ proc tkEventMotifBindings {n1 dummy dummy} {
 }
 
 #----------------------------------------------------------------------
+# Define common dialogs on platforms where they are not implemented 
+# using compiled code.
+#----------------------------------------------------------------------
+
+if {![string compare [info commands tk_chooseColor] ""]} {
+    proc tk_chooseColor {args} {
+	return [eval tkColorDialog $args]
+    }
+}
+if {![string compare [info commands tk_getOpenFile] ""]} {
+    proc tk_getOpenFile {args} {
+	if {$::tk_strictMotif} {
+	    return [eval tkMotifFDialog open $args]
+	} else {
+	    return [eval tkFDialog open $args]
+	}
+    }
+}
+if {![string compare [info commands tk_getSaveFile] ""]} {
+    proc tk_getSaveFile {args} {
+	if {$::tk_strictMotif} {
+	    return [eval tkMotifFDialog save $args]
+	} else {
+	    return [eval tkFDialog save $args]
+	}
+    }
+}
+if {![string compare [info commands tk_messageBox] ""]} {
+    proc tk_messageBox {args} {
+	return [eval tkMessageBox $args]
+    }
+}
+	
+#----------------------------------------------------------------------
 # Define the set of common virtual events.
 #----------------------------------------------------------------------
 
@@ -121,6 +157,7 @@ switch $tcl_platform(platform) {
 	event add <<Cut>> <Control-Key-x> <Key-F20> 
 	event add <<Copy>> <Control-Key-c> <Key-F16>
 	event add <<Paste>> <Control-Key-v> <Key-F18>
+	event add <<PasteSelection>> <ButtonRelease-2>
 	trace variable tk_strictMotif w tkEventMotifBindings
 	set tk_strictMotif $tk_strictMotif
     }
@@ -128,11 +165,13 @@ switch $tcl_platform(platform) {
 	event add <<Cut>> <Control-Key-x> <Shift-Key-Delete>
 	event add <<Copy>> <Control-Key-c> <Control-Key-Insert>
 	event add <<Paste>> <Control-Key-v> <Shift-Key-Insert>
+	event add <<PasteSelection>> <ButtonRelease-2>
     }
     "macintosh" {
 	event add <<Cut>> <Control-Key-x> <Key-F2> 
 	event add <<Copy>> <Control-Key-c> <Key-F3>
 	event add <<Paste>> <Control-Key-v> <Key-F4>
+	event add <<PasteSelection>> <ButtonRelease-2>
 	event add <<Clear>> <Clear>
     }
 }
@@ -141,14 +180,15 @@ switch $tcl_platform(platform) {
 # Read in files that define all of the class bindings.
 # ----------------------------------------------------------------------
 
-if {$tcl_platform(platform) != "macintosh"} {
-    source $tk_library/button.tcl
-    source $tk_library/entry.tcl
-    source $tk_library/listbox.tcl
-    source $tk_library/menu.tcl
-    source $tk_library/scale.tcl
-    source $tk_library/scrlbar.tcl
-    source $tk_library/text.tcl
+if {[string compare $tcl_platform(platform) "macintosh"] &&
+    [string compare {} $tk_library]} {
+    source [file join $tk_library button.tcl]
+    source [file join $tk_library entry.tcl]
+    source [file join $tk_library listbox.tcl]
+    source [file join $tk_library menu.tcl]
+    source [file join $tk_library scale.tcl]
+    source [file join $tk_library scrlbar.tcl]
+    source [file join $tk_library text.tcl]
 }
 
 # ----------------------------------------------------------------------
@@ -181,9 +221,9 @@ proc tkCancelRepeat {} {
 # w - Window to which focus should be set.
 
 proc tkTabToWindow {w} {
-    if {"[winfo class $w]" == "Entry"} {
-	$w select range 0 end
-	$w icur end
+    if {![string compare [winfo class $w] Entry]} {
+	$w selection range 0 end
+	$w icursor end
     }
     focus $w
 }

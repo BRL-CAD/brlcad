@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacLibrary.r 1.9 97/11/20 18:31:20
+ * RCS: @(#) $Id$
  */
 
 /*
@@ -118,8 +118,6 @@ read 'TEXT' (TK_LIBRARY_RESOURCES+16, "msgbox", purgeable, preload)
 	"::library:msgbox.tcl";
 read 'TEXT' (TK_LIBRARY_RESOURCES+17, "comdlg", purgeable, preload) 
 	"::library:comdlg.tcl";
-read 'TEXT' (TK_LIBRARY_RESOURCES+18, "prolog", purgeable, preload) 
-	"::library:prolog.ps";
 
 /*
  * The following two resources define the default "About Box" for Mac Tk.

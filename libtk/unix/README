@@ -1,6 +1,12 @@
+Tk UNIX README
+--------------
+
 This is the directory where you configure, compile, test, and install
 UNIX versions of Tk.  This directory also contains source files for Tk
 that are specific to UNIX.
+
+The information in this file is maintained at:
+    http://www.scriptics.com/support/howto/compile.html
 
 The rest of this file contains instructions on how to do this.  The
 release should compile and run either "out of the box" or with trivial
@@ -10,14 +16,14 @@ SGI, as well as PCs running Linux, BSDI, and SCO UNIX.  To compile for
 a PC running Windows, see the README file in the directory ../win.  To
 compile for a Macintosh, see the README file in the directory ../mac.
 
-SCCS: @(#) README 1.24 97/08/13 17:31:19
+RCS: @(#) $Id$
 
 How To Compile And Install Tk:
 ------------------------------
 
-(a) Make sure that the Tcl 8.0 release is present in the directory
-    ../../tcl8.0 (or else use the "--with-tcl" switch described below). 
-    This release of Tk will only work with Tcl 8.0. Also, be sure that
+(a) Make sure that the Tcl 8.2 release is present in the directory
+    ../../tcl8.2 (or else use the "--with-tcl" switch described below). 
+    This release of Tk will only work with Tcl 8.2. Also, be sure that
     you have configured Tcl before you configure Tk.
 
 (b) Check for patches as described in ../README.
@@ -78,23 +84,15 @@ How To Compile And Install Tk:
     TCL_LIBRARY environment variable as well (see the Tcl README file
     for information on this).  Note that installed versions of wish,
     libtk.a, libtk.so, and the Tk library have a version number in their
-    names, such as "wish8.0" or "libtk8.0.so"; to use the installed
+    names, such as "wish8.2" or "libtk8.2.so"; to use the installed
     versions, either specify the version number or create a symbolic
-    link (e.g. from "wish" to "wish8.0").
+    link (e.g. from "wish" to "wish8.2").
 
-If you have trouble compiling Tk, read through the file "porting.notes".
-It contains information that people have provided about changes they had
-to make to compile Tcl in various environments.  Or, check out the
-following Web URL:
-    http://www.sunlabs.com/cgi-bin/tcl/info.8.0
-This is an on-line database of porting information.  We make no guarantees
-that this information is accurate, complete, or up-to-date, but you may
-find it useful.  If you get Tk running on a new configuration and had to
-make non-trivial changes to do it, we'd be happy to receive new information
-to add to "porting.notes".  You can also make a new entry into the
-on-line Web database.  We're also interested in hearing how to change the
-configuration setup so that Tcl compiles on additional platforms "out of
-the box".
+If you have trouble compiling Tk, read through the file
+"porting.notes".  It contains information that people have provided
+about changes they had to make to compile Tcl in various environments.
+We're also interested in hearing how to change the configuration setup
+so that Tcl compiles on additional platforms "out of the box".
 
 Test suite
 ----------

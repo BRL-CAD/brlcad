@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacResource.r 1.35 97/11/03 17:16:34
+ * RCS: @(#) $Id$
  */
 
 /*
@@ -73,12 +73,7 @@ resource 'vers' (2) {
  * will load the TEXT resource named "Init".
  */
 
-read 'TEXT' (0, "Init", purgeable, preload) 
-	":::tcl" TCL_VERSION ":library:init.tcl";
-read 'TEXT' (1, "History", purgeable, preload) 
-	":::tcl" TCL_VERSION ":library:history.tcl";
-read 'TEXT' (2, "Word", purgeable,preload) 
-	":::tcl" TCL_VERSION ":library:word.tcl";
+#include "tclMacTclCode.r"
 
 read 'TEXT' (10, "tk", purgeable, preload) "::library:tk.tcl";
 read 'TEXT' (11, "button", purgeable, preload) "::library:button.tcl";
@@ -97,8 +92,6 @@ read 'TEXT' (23, "tkerror", purgeable, preload) "::library:bgerror.tcl";
 read 'TEXT' (24, "Console", purgeable, preload) "::library:console.tcl";
 read 'TEXT' (25, "msgbox", purgeable, preload) "::library:msgbox.tcl";
 read 'TEXT' (26, "comdlg", purgeable, preload) "::library:comdlg.tcl";
-read 'TEXT' (27, "prolog", purgeable, preload) "::library:prolog.ps";
-
 
 /*
  * The following resource is used when creating the 'env' variable in
@@ -130,18 +123,20 @@ resource 'STR#' (128, "Tcl Environment Variables") {
  */
  
 resource 'DLOG' (128, "Default About Box", purgeable) {
-    {85, 107, 243, 406}, dBoxProc, visible, goAway, 0,
+    {85, 107, 260, 412}, dBoxProc, visible, goAway, 0,
      128, "", centerMainScreen
 };
 
 resource 'DITL' (128, "About Box", purgeable) {
     {
-	{128, 128, 148, 186}, Button	    {enabled, "Ok"},
-	{ 14, 108, 117, 310}, StaticText    {disabled, 
+	{143, 147, 167, 201}, Button	    {enabled, "Ok"},
+	{ 14, 108, 137, 314}, StaticText    {disabled, 
 	    "Wish - Windowing Shell" "\n" "based on Tcl " 
-	    TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n" "Ray Johnson" "\n"
-	    "Sun Microsystems Labs" "\n" "ray.johnson@eng.sun.com"},	    
-        { 11,  24, 111,  92}, Picture  {enabled, 128}
+	    TCL_PATCH_LEVEL " & Tk " TK_PATCH_LEVEL "\n\n" 
+            "Ray Johnson & Jim Ingham" "\n"
+	    "Sun Microsystems Labs" "\n" "ray.johnson@eng.sun.com"
+            "\n" "jim.ingham@eng.sun.com"},	    
+        { 19,  24, 119,  92}, Picture  {enabled, 128}
     }
 };
 

@@ -3,7 +3,7 @@
 # This demonstration script creates a canvas widget with a text
 # item that can be edited and reconfigured in various ways.
 #
-# SCCS: @(#) ctext.tcl 1.6 97/03/02 16:21:02
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

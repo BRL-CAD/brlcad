@@ -2,7 +2,7 @@
 # for bitmaps in canvases.  It is part of the Tk visual test suite,
 # which is invoked via the "visual" script.
 #
-# SCCS: @(#) canvPsArc.tcl 1.3 96/02/16 10:55:43
+# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t
@@ -43,3 +43,16 @@ $c create arc .5i 4.5i 2i 6i -style arc -start 135 -extent 315 -width 3m \
     -outline black -outlinestipple gray25
 $c create arc 3.5i 4.5i 5.5i 5.5i -style arc -start 45 -extent -90 -width 1m \
     -outline black
+
+
+
+
+
+
+
+
+
+
+
+
+

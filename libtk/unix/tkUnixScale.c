@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixScale.c 1.5 96/07/31 14:22:29
+ * RCS: @(#) $Id$
  */
 
 #include "tkScale.h"
@@ -177,7 +177,7 @@ DisplayVerticalScale(scalePtr, drawable, drawnAreaPtr)
 	    (unsigned) scalePtr->width,
 	    (unsigned) (Tk_Height(tkwin) - 2*scalePtr->inset
 		- 2*scalePtr->borderWidth));
-    if (scalePtr->state == tkActiveUid) {
+    if (scalePtr->state == STATE_ACTIVE) {
 	sliderBorder = scalePtr->activeBorder;
     } else {
 	sliderBorder = scalePtr->bgBorder;
@@ -210,8 +210,9 @@ DisplayVerticalScale(scalePtr, drawable, drawnAreaPtr)
 
 	Tk_GetFontMetrics(scalePtr->tkfont, &fm);
 	Tk_DrawChars(scalePtr->display, drawable, scalePtr->textGC,
-		scalePtr->tkfont, scalePtr->label, scalePtr->labelLength,
-		scalePtr->vertLabelX, scalePtr->inset + (3*fm.ascent)/2);
+		scalePtr->tkfont, Tcl_GetString(scalePtr->labelPtr), 
+                scalePtr->labelLength, scalePtr->vertLabelX,
+                scalePtr->inset + (3*fm.ascent)/2);
     }
 }
 
@@ -376,7 +377,7 @@ DisplayHorizontalScale(scalePtr, drawable, drawnAreaPtr)
 	    (unsigned) (Tk_Width(tkwin) - 2*scalePtr->inset
 		- 2*scalePtr->borderWidth),
 	    (unsigned) scalePtr->width);
-    if (scalePtr->state == tkActiveUid) {
+    if (scalePtr->state == STATE_ACTIVE) {
 	sliderBorder = scalePtr->activeBorder;
     } else {
 	sliderBorder = scalePtr->bgBorder;
@@ -409,8 +410,9 @@ DisplayHorizontalScale(scalePtr, drawable, drawnAreaPtr)
 
 	Tk_GetFontMetrics(scalePtr->tkfont, &fm);
 	Tk_DrawChars(scalePtr->display, drawable, scalePtr->textGC,
-		scalePtr->tkfont, scalePtr->label, scalePtr->labelLength,
-		scalePtr->inset + fm.ascent/2, scalePtr->horizLabelY + fm.ascent);
+		scalePtr->tkfont, Tcl_GetString(scalePtr->labelPtr), 
+                scalePtr->labelLength, scalePtr->inset + fm.ascent/2, 
+                scalePtr->horizLabelY + fm.ascent);
     }
 }
 
@@ -512,10 +514,12 @@ TkpDisplayScale(clientData)
 
     Tcl_Preserve((ClientData) scalePtr);
     Tcl_Preserve((ClientData) interp);
-    if ((scalePtr->flags & INVOKE_COMMAND) && (scalePtr->command != NULL)) {
+    if ((scalePtr->flags & INVOKE_COMMAND) 
+            && (scalePtr->commandPtr != NULL)) {
 	sprintf(string, scalePtr->format, scalePtr->value);
-	result = Tcl_VarEval(interp, scalePtr->command,	" ", string,
-                             (char *) NULL);
+
+	result = Tcl_VarEval(interp, Tcl_GetString(scalePtr->commandPtr),
+                " ", string, (char *) NULL);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
 	    Tcl_BackgroundError(interp);
@@ -549,7 +553,7 @@ TkpDisplayScale(clientData)
      * different.
      */
 
-    if (scalePtr->vertical) {
+    if (scalePtr->orient == ORIENT_VERTICAL) {
 	DisplayVerticalScale(scalePtr, pixmap, &drawnArea);
     } else {
 	DisplayHorizontalScale(scalePtr, pixmap, &drawnArea);
@@ -575,7 +579,8 @@ TkpDisplayScale(clientData)
 	    if (scalePtr->flags & GOT_FOCUS) {
 		gc = Tk_GCForColor(scalePtr->highlightColorPtr, pixmap);
 	    } else {
-		gc = Tk_GCForColor(scalePtr->highlightBgColorPtr, pixmap);
+		gc = Tk_GCForColor(
+                        Tk_3DBorderColor(scalePtr->highlightBorder), pixmap);
 	    }
 	    Tk_DrawFocusHighlight(tkwin, gc, scalePtr->highlightWidth, pixmap);
 	}
@@ -621,7 +626,7 @@ TkpScaleElement(scalePtr, x, y)
 {
     int sliderFirst;
 
-    if (scalePtr->vertical) {
+    if (scalePtr->orient == ORIENT_VERTICAL) {
 	if ((x < scalePtr->vertTroughX)
 		|| (x >= (scalePtr->vertTroughX + 2*scalePtr->borderWidth +
 		scalePtr->width))) {
@@ -712,11 +717,11 @@ TkpSetScaleValue(scalePtr, value, setVar, invokeCommand)
     }
     TkEventuallyRedrawScale(scalePtr, REDRAW_SLIDER);
 
-    if (setVar && (scalePtr->varName != NULL)) {
+    if (setVar && (scalePtr->varNamePtr != NULL)) {
 	sprintf(string, scalePtr->format, scalePtr->value);
 	scalePtr->flags |= SETTING_VAR;
-	Tcl_SetVar(scalePtr->interp, scalePtr->varName, string,
-	       TCL_GLOBAL_ONLY);
+	Tcl_SetVar(scalePtr->interp, Tcl_GetString(scalePtr->varNamePtr), 
+	        string, TCL_GLOBAL_ONLY);
 	scalePtr->flags &= ~SETTING_VAR;
     }
 }
@@ -748,7 +753,7 @@ TkpPixelToValue(scalePtr, x, y)
 {
     double value, pixelRange;
 
-    if (scalePtr->vertical) {
+    if (scalePtr->orient == ORIENT_VERTICAL) {
 	pixelRange = Tk_Height(scalePtr->tkwin) - scalePtr->sliderLength
 		- 2*scalePtr->inset - 2*scalePtr->borderWidth;
 	value = y;
@@ -809,7 +814,8 @@ TkpValueToPixel(scalePtr, value)
     double valueRange;
 
     valueRange = scalePtr->toValue - scalePtr->fromValue;
-    pixelRange = (scalePtr->vertical ? Tk_Height(scalePtr->tkwin)
+    pixelRange = (scalePtr->orient == ORIENT_VERTICAL 
+            ? Tk_Height(scalePtr->tkwin)
 	    : Tk_Width(scalePtr->tkwin)) - scalePtr->sliderLength
 	    - 2*scalePtr->inset - 2*scalePtr->borderWidth;
     if (valueRange == 0) {

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) winfo.n 1.45 97/01/25 13:45:04
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH winfo n 4.3 Tk "Tk Built-In Commands"

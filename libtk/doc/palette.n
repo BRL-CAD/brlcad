@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) palette.n 1.5 96/03/26 18:26:11
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH tk_setPalette n 4.0 Tk "Tk Built-In Commands"

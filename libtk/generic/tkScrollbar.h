@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkScrollbar.h 1.8 96/11/05 11:34:58
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKSCROLLBAR
@@ -17,6 +17,11 @@
 
 #ifndef _TKINT
 #include "tkInt.h"
+#endif
+
+#ifdef BUILD_tk
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 /*
@@ -196,5 +201,8 @@ EXTERN void		TkpConfigureScrollbar _ANSI_ARGS_((
 			    TkScrollbar *scrollPtr));
 EXTERN int		TkpScrollbarPosition _ANSI_ARGS_((
 			    TkScrollbar *scrollPtr, int x, int y));
+
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKSCROLLBAR */

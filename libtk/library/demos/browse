@@ -7,7 +7,7 @@ exec wish "$0" "$@"
 # directory and allows you to open files or subdirectories by
 # double-clicking.
 #
-# SCCS: @(#) browse 1.8 96/02/16 10:49:18
+# RCS: @(#) $Id$
 
 # Create a scrollbar on the right side of the main window and a listbox
 # on the left side.

@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacAppInit.c 1.35 97/07/28 11:18:55
+ * RCS: @(#) $Id$
  */
 
 #include <Gestalt.h>
@@ -18,19 +18,23 @@
 #include <Dialogs.h>
 #include <SegLoad.h>
 #include <Traps.h>
+#include <Appearance.h>
 
 #include "tk.h"
 #include "tkInt.h"
 #include "tkMacInt.h"
+#include "tclInt.h"
 #include "tclMac.h"
 
 #ifdef TK_TEST
-EXTERN int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif /* TK_TEST */
 
 #ifdef TCL_TEST
-EXTERN int		TclObjTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
-EXTERN int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Procbodytest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Procbodytest_SafeInit _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		TclObjTest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif /* TCL_TEST */
 
 Tcl_Interp *gStdoutInterp = NULL;
@@ -51,8 +55,6 @@ short			SIOUXHandleOneEvent _ANSI_ARGS_((EventRecord *event));
  * Prototypes for functions from the tkConsole.c file.
  */
  
-EXTERN void		TkConsoleCreate _ANSI_ARGS_((void));
-EXTERN int		TkConsoleInit _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN void		TkConsolePrint _ANSI_ARGS_((Tcl_Interp *interp,
 			    int devId, char *buffer, long size));
 /*
@@ -94,6 +96,15 @@ main(
     argc = 1;
     newArgv[0] = "Wish";
     newArgv[1] = NULL;
+    
+    /* Tk_Main is actually #defined to 
+     *     Tk_MainEx(argc, argv, Tcl_AppInit, Tcl_CreateInterp())
+     * Unfortunately, you also HAVE to call Tcl_FindExecutable
+     * BEFORE creating the first interp, or the tcl_library will not
+     * get set properly.  So we call it by hand here...
+     */
+    
+    Tcl_FindExecutable(newArgv[0]);
     Tk_Main(argc, newArgv, Tcl_AppInit);
 }
 
@@ -108,7 +119,7 @@ main(
  *
  * Results:
  *	Returns a standard Tcl completion code, and leaves an error
- *	message in interp->result if an error occurs.
+ *	message in the interp's result if an error occurs.
  *
  * Side effects:
  *	Depends on the startup script.
@@ -148,6 +159,11 @@ Tcl_AppInit(
     if (TclObjTest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+    if (Procbodytest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "procbodytest", Procbodytest_Init,
+            Procbodytest_SafeInit);
 #endif /* TCL_TEST */
 
 #ifdef TK_TEST
@@ -221,6 +237,17 @@ MacintoshInit()
      */
     tcl_macQdPtr = &qd;
 
+    /*
+     * If appearance is present, then register Tk as an Appearance client
+     * This means that the mapping from non-Appearance to Appearance cdefs
+     * will be done for Tk regardless of the setting in the Appearance
+     * control panel.  
+     */
+     
+     if (TkMacHaveAppearance()) {
+         RegisterAppearanceClient();
+     }
+
     InitGraf(&tcl_macQdPtr->thePort);
     InitFonts();
     InitWindows();
@@ -255,8 +282,6 @@ MacintoshInit()
 
 
     Tcl_MacSetEventProc(TkMacConvertEvent);
-    TkConsoleCreate();
-
     return TCL_OK;
 }
 
@@ -293,7 +318,7 @@ SetupMainInterp(
 
     if (strcmp(Tcl_GetVar(interp, "tcl_interactive", TCL_GLOBAL_ONLY), "1")
 	    == 0) {
-	if (TkConsoleInit(interp) == TCL_ERROR) {
+	if (Tk_CreateConsoleWindow(interp) == TCL_ERROR) {
 	    goto error;
 	}
     }
@@ -307,7 +332,7 @@ SetupMainInterp(
     return TCL_OK;
 
 error:
-    panic(interp->result);
+    panic(Tcl_GetStringResult(interp));
     return TCL_ERROR;
 }
 

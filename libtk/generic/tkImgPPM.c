@@ -13,7 +13,7 @@
  *	   Department of Computer Science,
  *	   Australian National University.
  *
- * SCCS: @(#) tkImgPPM.c 1.16 97/10/28 14:51:46
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -110,7 +110,7 @@ FileMatchPPM(chan, fileName, formatString, widthPtr, heightPtr)
  *
  * Results:
  *	A standard TCL completion code.  If TCL_ERROR is returned
- *	then an error message is left in interp->result.
+ *	then an error message is left in the interp's result.
  *
  * Side effects:
  *	The access position in file f is changed, and new data is
@@ -151,7 +151,7 @@ FileReadPPM(interp, chan, fileName, formatString, imageHandle, destX, destY,
 	return TCL_ERROR;
     }
     if ((maxIntensity <= 0) || (maxIntensity >= 256)) {
-	char buffer[30];
+	char buffer[TCL_INTEGER_SPACE];
 
 	sprintf(buffer, "%d", maxIntensity);
 	Tcl_AppendResult(interp, "PPM image file \"", fileName,
@@ -183,6 +183,7 @@ FileReadPPM(interp, chan, fileName, formatString, imageHandle, destX, destY,
 	block.offset[1] = 1;
 	block.offset[2] = 2;
     }
+    block.offset[3] = 0;
     block.width = width;
     block.pitch = block.pixelSize * fileWidth;
 
@@ -243,7 +244,7 @@ FileReadPPM(interp, chan, fileName, formatString, imageHandle, destX, destY,
  *
  * Results:
  *	A standard TCL completion code.  If TCL_ERROR is returned
- *	then an error message is left in interp->result.
+ *	then an error message is left in the interp's result.
  *
  * Side effects:
  *	Data is written to the file given by "fileName".
@@ -262,13 +263,22 @@ FileWritePPM(interp, fileName, formatString, blockPtr)
     int w, h;
     int greenOffset, blueOffset, nBytes;
     unsigned char *pixelPtr, *pixLinePtr;
-    char header[30];
+    char header[16 + TCL_INTEGER_SPACE * 2];
 
     chan = Tcl_OpenFileChannel(interp, fileName, "w", 0666);
     if (chan == NULL) {
 	return TCL_ERROR;
     }
 
+    if (Tcl_SetChannelOption(interp, chan, "-translation", "binary")
+	    != TCL_OK) {
+	return TCL_ERROR;
+    }
+    if (Tcl_SetChannelOption(interp, chan, "-encoding", "binary")
+	    != TCL_OK) {
+	return TCL_ERROR;
+    }
+    
     sprintf(header, "P6\n%d %d\n255\n", blockPtr->width, blockPtr->height);
     Tcl_Write(chan, header, -1);
 	

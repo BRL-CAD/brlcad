@@ -9,8 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkFileFilter.c 1.6 97/04/30 15:55:35
- *
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"

@@ -4,12 +4,12 @@
  *	This file implements the Unix specific portion of the button
  *	widgets.
  *
- * Copyright (c) 1996 by Sun Microsystems, Inc.
+ * Copyright (c) 1996-1997 by Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixButton.c 1.4 97/06/06 11:21:40
+ * RCS: @(#) $Id$
  */
 
 #include "tkButton.h"
@@ -85,12 +85,11 @@ TkpDisplayButton(clientData)
     int x = 0;			/* Initialization only needed to stop
 				 * compiler warning. */
     int y, relief;
-    register Tk_Window tkwin = butPtr->tkwin;
+    Tk_Window tkwin = butPtr->tkwin;
     int width, height;
-    int offset;			/* 0 means this is a label widget.  1 means
-				 * it is a flavor of button, so we offset
-				 * the text to make the button appear to
-				 * move up and down as the relief changes. */
+    int offset;			/* 1 means this is a button widget, so we
+				 * offset the text to make the button appear
+				 * to move up and down as the relief changes. */
 
     butPtr->flags &= ~REDRAW_PENDING;
     if ((butPtr->tkwin == NULL) || !Tk_IsMapped(tkwin)) {
@@ -98,16 +97,16 @@ TkpDisplayButton(clientData)
     }
 
     border = butPtr->normalBorder;
-    if ((butPtr->state == tkDisabledUid) && (butPtr->disabledFg != NULL)) {
+    if ((butPtr->state == STATE_DISABLED) && (butPtr->disabledFg != NULL)) {
 	gc = butPtr->disabledGC;
-    } else if ((butPtr->state == tkActiveUid)
+    } else if ((butPtr->state == STATE_ACTIVE)
 	    && !Tk_StrictMotif(butPtr->tkwin)) {
 	gc = butPtr->activeTextGC;
 	border = butPtr->activeBorder;
     } else {
 	gc = butPtr->normalTextGC;
     }
-    if ((butPtr->flags & SELECTED) && (butPtr->state != tkActiveUid)
+    if ((butPtr->flags & SELECTED) && (butPtr->state != STATE_ACTIVE)
 	    && (butPtr->selectBorder != NULL) && !butPtr->indicatorOn) {
 	border = butPtr->selectBorder;
     }
@@ -141,7 +140,7 @@ TkpDisplayButton(clientData)
      * Display image or bitmap or text for button.
      */
 
-    if (butPtr->image != None) {
+    if (butPtr->image != NULL) {
 	Tk_SizeOfImage(butPtr->image, &width, &height);
 
 	imageOrBitmap:
@@ -213,7 +212,7 @@ TkpDisplayButton(clientData)
 	y -= dim/2;
 	if (dim > 2*butPtr->borderWidth) {
 	    Tk_Draw3DRectangle(tkwin, pixmap, border, x, y, dim, dim,
-		    butPtr->borderWidth, 
+		    butPtr->borderWidth,
 		    (butPtr->flags & SELECTED) ? TK_RELIEF_SUNKEN :
 		    TK_RELIEF_RAISED);
 	    x += butPtr->borderWidth;
@@ -222,7 +221,7 @@ TkpDisplayButton(clientData)
 	    if (butPtr->flags & SELECTED) {
 		GC gc;
 
-		gc = Tk_3DBorderGC(tkwin,(butPtr->selectBorder != NULL)
+		gc = Tk_3DBorderGC(tkwin, (butPtr->selectBorder != NULL)
 			? butPtr->selectBorder : butPtr->normalBorder,
 			TK_3D_FLAT_GC);
 		XFillRectangle(butPtr->display, pixmap, gc, x, y,
@@ -269,7 +268,7 @@ TkpDisplayButton(clientData)
      * must temporarily modify the GC.
      */
 
-    if ((butPtr->state == tkDisabledUid)
+    if ((butPtr->state == STATE_DISABLED)
 	    && ((butPtr->disabledFg == NULL) || (butPtr->image != NULL))) {
 	if ((butPtr->flags & SELECTED) && !butPtr->indicatorOn
 		&& (butPtr->selectBorder != NULL)) {
@@ -297,7 +296,8 @@ TkpDisplayButton(clientData)
 
     if (relief != TK_RELIEF_FLAT) {
 	int inset = butPtr->highlightWidth;
-	if (butPtr->defaultState == tkActiveUid) {
+
+	if (butPtr->defaultState == DEFAULT_ACTIVE) {
 	    /*
 	     * Draw the default ring with 2 pixels of space between the
 	     * default ring and the button and the default ring and the
@@ -319,15 +319,14 @@ TkpDisplayButton(clientData)
 		    Tk_Height(tkwin) - 2*inset, 2, TK_RELIEF_FLAT);
 
 	    inset += 2;
-	} else if (butPtr->defaultState == tkNormalUid) {
+	} else if (butPtr->defaultState == DEFAULT_NORMAL) {
 	    /*
 	     * Leave room for the default ring and write over any text or
 	     * background color.
 	     */
 
 	    Tk_Draw3DRectangle(tkwin, pixmap, butPtr->highlightBorder, 0,
-		    0, Tk_Width(tkwin),
-		    Tk_Height(tkwin), 5, TK_RELIEF_FLAT);
+		    0, Tk_Width(tkwin), Tk_Height(tkwin), 5, TK_RELIEF_FLAT);
 	    inset += 5;
 	}
 
@@ -339,7 +338,7 @@ TkpDisplayButton(clientData)
 		Tk_Width(tkwin) - 2*inset, Tk_Height(tkwin) - 2*inset,
 		butPtr->borderWidth, relief);
     }
-    if (butPtr->highlightWidth != 0) {
+    if (butPtr->highlightWidth > 0) {
 	GC gc;
 
 	if (butPtr->flags & GOT_FOCUS) {
@@ -354,7 +353,7 @@ TkpDisplayButton(clientData)
 	 * padding space left for a default ring.
 	 */
 
-	if (butPtr->defaultState == tkNormalUid) {
+	if (butPtr->defaultState == DEFAULT_NORMAL) {
 	    TkDrawInsetFocusHighlight(tkwin, gc, butPtr->highlightWidth,
 		    pixmap, 5);
 	} else {
@@ -398,16 +397,13 @@ TkpComputeButtonGeometry(butPtr)
     int width, height, avgWidth;
     Tk_FontMetrics fm;
 
-    if (butPtr->highlightWidth < 0) {
-	butPtr->highlightWidth = 0;
-    }
     butPtr->inset = butPtr->highlightWidth + butPtr->borderWidth;
 
     /*
      * Leave room for the default ring if needed.
      */
 
-    if (butPtr->defaultState != tkDisabledUid) {
+    if (butPtr->defaultState != DEFAULT_DISABLED) {
 	butPtr->inset += 5;
     }
     butPtr->indicatorSpace = 0;
@@ -433,9 +429,10 @@ TkpComputeButtonGeometry(butPtr)
 	goto imageOrBitmap;
     } else {
 	Tk_FreeTextLayout(butPtr->textLayout);
+
 	butPtr->textLayout = Tk_ComputeTextLayout(butPtr->tkfont,
-		butPtr->text, -1, butPtr->wrapLength, butPtr->justify, 0,
-		&butPtr->textWidth, &butPtr->textHeight);
+		Tcl_GetString(butPtr->textPtr), -1, butPtr->wrapLength,
+		butPtr->justify, 0, &butPtr->textWidth, &butPtr->textHeight);
 
 	width = butPtr->textWidth;
 	height = butPtr->textHeight;

@@ -3,14 +3,13 @@
 # The files is organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) imgPPM.test 1.14 97/10/28 14:47:05
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -154,3 +153,20 @@ test imgPPM-3.13 {ReadPPMFileHeader procedure, file ends too soon} {
 removeFile test.ppm
 removeFile test2.ppm
 eval image delete [image names]
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

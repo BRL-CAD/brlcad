@@ -6,12 +6,12 @@
  *	widgets.
  *
  * Copyright (c) 1994 The Regents of the University of California.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkImage.c 1.15 97/10/09 09:57:50
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -71,12 +71,11 @@ typedef struct ImageMaster {
 				 * derived from this name. */
 } ImageMaster;
 
-/*
- * The following variable points to the first in a list of all known
- * image types.
- */
-
-static Tk_ImageType *imageTypeList = NULL;
+typedef struct ThreadSpecificData {
+    Tk_ImageType *imageTypeList;/* First in a list of all known image 
+				 * types. */  
+} ThreadSpecificData;           
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Prototypes for local procedures:
@@ -110,8 +109,11 @@ Tk_CreateImageType(typePtr)
 				 * in by caller.  Must not have been passed
 				 * to Tk_CreateImageType previously. */
 {
-    typePtr->nextPtr = imageTypeList;
-    imageTypeList = typePtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
+    typePtr->nextPtr = tsdPtr->imageTypeList;
+    tsdPtr->imageTypeList = typePtr;
 }
 
 /*
@@ -146,8 +148,10 @@ Tk_ImageCmd(clientData, interp, argc, argv)
     Image *imagePtr;
     Tcl_HashEntry *hPtr;
     Tcl_HashSearch search;
-    char idString[30], *name;
-    static int id = 0;
+    char idString[16 + TCL_INTEGER_SPACE], *name;
+    TkDisplay *dispPtr = winPtr->dispPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -168,7 +172,7 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	 * Look up the image type.
 	 */
 
-	for (typePtr = imageTypeList; typePtr != NULL;
+	for (typePtr = tsdPtr->imageTypeList; typePtr != NULL;
 		typePtr = typePtr->nextPtr) {
 	    if ((c == typePtr->name[0])
 		    && (strcmp(argv[2], typePtr->name) == 0)) {
@@ -186,8 +190,8 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	 */
 
 	if ((argc == 3) || (argv[3][0] == '-')) {
-	    id++;
-	    sprintf(idString, "image%d", id);
+	    dispPtr->imageId++;
+	    sprintf(idString, "image%d", dispPtr->imageId);
 	    name = idString;
 	    firstOption = 3;
 	} else {
@@ -248,7 +252,9 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	   imagePtr->instanceData = (*typePtr->getProc)(
 		   imagePtr->tkwin, masterPtr->masterData);
 	}
-	interp->result = Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr);
+	Tcl_SetResult(interp,
+		Tcl_GetHashKey(&winPtr->mainPtr->imageTable, hPtr),
+		TCL_STATIC);
     } else if ((c == 'd') && (strncmp(argv[1], "delete", length) == 0)) {
 	for (i = 2; i < argc; i++) {
 	    hPtr = Tcl_FindHashEntry(&winPtr->mainPtr->imageTable, argv[i]);
@@ -261,6 +267,8 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	    DeleteImage(masterPtr);
 	}
     } else if ((c == 'h') && (strncmp(argv[1], "height", length) == 0)) {
+	char buf[TCL_INTEGER_SPACE];
+	
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 		    " height name\"", (char *) NULL);
@@ -273,7 +281,8 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	masterPtr = (ImageMaster *) Tcl_GetHashValue(hPtr);
-	sprintf(interp->result, "%d", masterPtr->height);
+	sprintf(buf, "%d", masterPtr->height);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'n') && (strncmp(argv[1], "names", length) == 0)) {
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -299,7 +308,7 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	}
 	masterPtr = (ImageMaster *) Tcl_GetHashValue(hPtr);
 	if (masterPtr->typePtr != NULL) {
-	    interp->result = masterPtr->typePtr->name;
+	    Tcl_SetResult(interp, masterPtr->typePtr->name, TCL_STATIC);
 	}
     } else if ((c == 't') && (strcmp(argv[1], "types") == 0)) {
 	if (argc != 2) {
@@ -307,11 +316,13 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 		    " types\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	for (typePtr = imageTypeList; typePtr != NULL;
+	for (typePtr = tsdPtr->imageTypeList; typePtr != NULL;
 		typePtr = typePtr->nextPtr) {
 	    Tcl_AppendElement(interp, typePtr->name);
 	}
     } else if ((c == 'w') && (strncmp(argv[1], "width", length) == 0)) {
+	char buf[TCL_INTEGER_SPACE];
+
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 		    " width name\"", (char *) NULL);
@@ -324,7 +335,8 @@ Tk_ImageCmd(clientData, interp, argc, argv)
 	    return TCL_ERROR;
 	}
 	masterPtr = (ImageMaster *) Tcl_GetHashValue(hPtr);
-	sprintf(interp->result, "%d", masterPtr->width);
+	sprintf(buf, "%d", masterPtr->width);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else {
 	Tcl_AppendResult(interp, "bad option \"", argv[1],
 		"\": must be create, delete, height, names, type, types,",
@@ -416,7 +428,7 @@ Tk_NameOfImage(imageMaster)
  * Results:
  *	The return value is a token for the image.  If there is no image
  *	by the given name, then NULL is returned and an error message is
- *	left in interp->result.
+ *	left in the interp's result.
  *
  * Side effects:
  *	Tk records the fact that the widget is using the image, and

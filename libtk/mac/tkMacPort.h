@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacPort.h 1.52 97/07/28 11:18:59
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKMACPORT
@@ -48,6 +48,7 @@
 #include <Xatom.h>
 #include <Xfuncproto.h>
 #include <Xutil.h>
+#include "tkIntXlibDecls.h"
 
 /*
  * Not all systems declare the errno variable in errno.h. so this
@@ -69,7 +70,9 @@ extern int errno;
  * in any other header file.
  */
 
+#ifndef panic	/* In a stubs-aware setting, this could confuse the #define */
 extern void 		panic  _ANSI_ARGS_(TCL_VARARGS(char *, string));
+#endif
 extern int		strcasecmp _ANSI_ARGS_((CONST char *s1,
 			    CONST char *s2));
 extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
@@ -90,15 +93,15 @@ extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
 #define XVisualIDFromVisual(visual) (visual->visualid)
 
 /*
- * The following functions are not used on the Mac, so we stub it out.
+ * The following functions are not used on the Mac, so we stub them out.
  */
 
 #define TkFreeWindowId(dispPtr,w)
 #define TkInitXId(dispPtr)
+#define TkpButtonSetDefaults(specPtr) {}
 #define TkpCmapStressed(tkwin,colormap) (0)
 #define TkpFreeColor(tkColPtr)
 #define TkSetPixmapColormap(p,c) {}
-#define Tk_FreeXId(display,xid)
 #define TkpSync(display)
 
 /*
@@ -141,5 +144,6 @@ extern int		strncasecmp _ANSI_ARGS_((CONST char *s1,
 #define MENU_BACKGROUND_PIXEL		47
 #define MENU_DISABLED_PIXEL		49
 #define MENU_TEXT_PIXEL			51
+#define APPEARANCE_PIXEL		52
 
 #endif /* _TKMACPORT */

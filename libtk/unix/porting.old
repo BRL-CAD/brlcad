@@ -14,7 +14,7 @@ questions about porting Tcl to a particular machine;  in these
 cases the person's name and e-mail address are listed.  I'd be
 happy to receive corrections or updates.
 
-sccsid = SCCS: @(#) porting.old 1.2 96/02/16 10:27:30
+RCS: @(#) $Id$
 
 ---------------------------------------------
 DEC Alphas:

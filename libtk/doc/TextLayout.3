@@ -4,10 +4,10 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) TextLayout.3 1.6 96/12/16 16:48:12
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH Tk_ComputeTextLayout 3 "" Tk "Tk Library Procedures"
+.TH Tk_ComputeTextLayout 3 8.1 Tk "Tk Library Procedures"
 .BS
 .SH NAME
 Tk_ComputeTextLayout, Tk_FreeTextLayout, Tk_DrawTextLayout, Tk_UnderlineTextLayout, Tk_PointToChar, Tk_CharBbox, Tk_DistanceToTextLayout, Tk_IntersectTextLayout, Tk_TextLayoutToPostscript \- routines to measure and display single-font, multi-line, justified text.
@@ -55,7 +55,10 @@ lifetime of the text layout.
 .AP int numChars in
 The number of characters to consider from \fIstring\fR.  If
 \fInumChars\fR is less than 0, then assumes \fIstring\fR is null
-terminated and uses \fBstrlen(\fIstring\fB)\fR.
+.VS 8.1
+terminated and uses \fBTcl_NumUtfChars\fR to determine the length of
+\fIstring\fR.
+.VE
 .AP int wrapLength in
 Longest permissible line length, in pixels.  Lines in \fIstring\fR will
 automatically be broken at word boundaries and wrapped when they reach
@@ -133,7 +136,14 @@ justified text.  To measure and display simple single-font, single-line
 strings, refer to the documentation for \fBTk_MeasureChars\fR.  There is
 no programming interface in the core of Tk that supports multi-font,
 multi-line text; support for that behavior must be built on top of
-simpler layers.
+simpler layers.  
+.VS 8.1
+Note that unlike the lower level text display routines, the functions
+described here all operate on character-oriented lengths and indices
+rather than byte-oriented values.  See the description of
+\fBTcl_UtfAtIndex\fR for more details on converting between character
+and byte offsets.
+.VE 8.1
 .PP
 The routines described here are built on top of the programming interface
 described in the \fBTk_MeasureChars\fR documentation.  Tab characters and
@@ -182,7 +192,7 @@ to the point.  Given a \fIlayout\fR with no characters, the value 0 will
 always be returned, referring to a hypothetical zero-width placeholder
 character.  
 .PP
-\fBTk_CharBBox\fR uses the information in \fIlayout\fR to return the
+\fBTk_CharBbox\fR uses the information in \fIlayout\fR to return the
 bounding box for the character specified by \fIindex\fR.  The width of the
 bounding box is the advance width of the character, and does not include any
 left or right bearing.  Any character that extends partially outside of 

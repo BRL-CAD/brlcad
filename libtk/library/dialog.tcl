@@ -3,7 +3,7 @@
 # This file defines the procedure tk_dialog, which creates a dialog
 # box containing a bitmap, a message, and one or more buttons.
 #
-# SCCS: @(#) dialog.tcl 1.33 97/06/06 11:20:04
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1992-1993 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -47,13 +47,13 @@ proc tk_dialog {w title text bitmap default args} {
     # even though its grab keeps the rest of the application from being used.
 
     wm transient $w [winfo toplevel [winfo parent $w]]
-    if {$tcl_platform(platform) == "macintosh"} {
+    if {![string compare $tcl_platform(platform) "macintosh"]} {
 	unsupported1 style $w dBoxProc
     }
 
     frame $w.bot
     frame $w.top
-    if {$tcl_platform(platform) == "unix"} {
+    if {![string compare $tcl_platform(platform) "unix"]} {
 	$w.bot configure -relief raised -bd 1
 	$w.top configure -relief raised -bd 1
     }
@@ -61,19 +61,20 @@ proc tk_dialog {w title text bitmap default args} {
     pack $w.top -side top -fill both -expand 1
 
     # 2. Fill the top part with bitmap and message (use the option
-    # database for -wraplength so that it can be overridden by
-    # the caller).
+    # database for -wraplength and -font so that they can be
+    # overridden by the caller).
 
     option add *Dialog.msg.wrapLength 3i widgetDefault
-    label $w.msg -justify left -text $text
-    if {$tcl_platform(platform) == "macintosh"} {
-	$w.msg configure -font system
+    if {![string compare $tcl_platform(platform) "macintosh"]} {
+	option add *Dialog.msg.font system widgetDefault
     } else {
-	$w.msg configure -font {Times 18}
+	option add *Dialog.msg.font {Times 12} widgetDefault
     }
+
+    label $w.msg -justify left -text $text
     pack $w.msg -in $w.top -side right -expand 1 -fill both -padx 3m -pady 3m
-    if {$bitmap != ""} {
-	if {($tcl_platform(platform) == "macintosh") && ($bitmap == "error")} {
+    if {[string compare $bitmap ""]} {
+      if {![string compare $tcl_platform(platform) "macintosh"] && ![string compare $bitmap "error"]} {
 	    set bitmap "stop"
 	}
 	label $w.bitmap -bitmap $bitmap
@@ -93,9 +94,9 @@ proc tk_dialog {w title text bitmap default args} {
 	grid $w.button$i -in $w.bot -column $i -row 0 -sticky ew -padx 10
 	grid columnconfigure $w.bot $i
 	# We boost the size of some Mac buttons for l&f
-	if {$tcl_platform(platform) == "macintosh"} {
+      if {![string compare $tcl_platform(platform) "macintosh"]} {
 	    set tmp [string tolower $but]
-	    if {($tmp == "ok") || ($tmp == "cancel")} {
+          if {![string compare $tmp "ok"] || ![string compare $tmp "cancel"]} {
 		grid columnconfigure $w.bot $i -minsize [expr 59 + 20]
 	    }
 	}
@@ -107,7 +108,7 @@ proc tk_dialog {w title text bitmap default args} {
 
     if {$default >= 0} {
 	bind $w <Return> "
-	    $w.button$default configure -state active -relief sunken
+          [list $w.button$default] configure -state active -relief sunken
 	    update idletasks
 	    after 100
 	    set tkPriv(button) $default
@@ -126,10 +127,10 @@ proc tk_dialog {w title text bitmap default args} {
 
     wm withdraw $w
     update idletasks
-    set x [expr [winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
-	    - [winfo vrootx [winfo parent $w]]]
-    set y [expr [winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
-	    - [winfo vrooty [winfo parent $w]]]
+    set x [expr {[winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
+	    - [winfo vrootx [winfo parent $w]]}]
+    set y [expr {[winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
+	    - [winfo vrooty [winfo parent $w]]}]
     wm geom $w +$x+$y
     wm deiconify $w
 
@@ -137,7 +138,7 @@ proc tk_dialog {w title text bitmap default args} {
 
     set oldFocus [focus]
     set oldGrab [grab current $w]
-    if {$oldGrab != ""} {
+    if {[string compare $oldGrab ""]} {
 	set grabStatus [grab status $oldGrab]
     }
     grab $w
@@ -163,11 +164,11 @@ proc tk_dialog {w title text bitmap default args} {
 	bind $w <Destroy> {}
 	destroy $w
     }
-    if {$oldGrab != ""} {
-	if {$grabStatus == "global"} {
-	    grab -global $oldGrab
-	} else {
+    if {[string compare $oldGrab ""]} {
+      if {[string compare $grabStatus "global"]} {
 	    grab $oldGrab
+      } else {
+          grab -global $oldGrab
 	}
     }
     return $tkPriv(button)

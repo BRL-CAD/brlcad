@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) bindtags.n 1.9 96/11/30 14:54:49
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH bindtags n 4.0 Tk "Tk Built-In Commands"

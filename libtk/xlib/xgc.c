@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) xgc.c 1.8 96/10/11 14:59:39
+ * RCS: @(#) $Id$
  */
 
 #include <tkInt.h>
@@ -150,8 +150,7 @@ XChangeGC(d, gc, mask, values)
  *----------------------------------------------------------------------
  */
 
-void
-XFreeGC(d, gc)
+void XFreeGC(d, gc)
     Display * d;
     GC gc;
 {

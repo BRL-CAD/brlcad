@@ -5,15 +5,21 @@
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
  * Copyright (c) 1994 Software Research Associates, Inc.
+ * Copyright (c) 1998 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWinX.c 1.51 97/09/02 13:06:57
+ * RCS: @(#) $Id$
  */
 
-#include "tkInt.h"
 #include "tkWinInt.h"
+
+/*
+ * The zmouse.h file includes the definition for WM_MOUSEWHEEL.
+ */
+
+#include <zmouse.h>
 
 /*
  * Definitions of extern variables supplied by this file.
@@ -25,13 +31,23 @@ int tkpIsWin32s = -1;
  * Declarations of static variables used in this file.
  */
 
-static HINSTANCE tkInstance = (HINSTANCE) NULL;
-				/* Global application instance handle. */
-static TkDisplay *winDisplay;	/* Display that represents Windows screen. */
-static char winScreenName[] = ":0";
-				/* Default name of windows display. */
-static WNDCLASS childClass;	/* Window class for child windows. */
-static childClassInitialized = 0; /* Registered child class? */
+static char winScreenName[] = ":0"; /* Default name of windows display. */
+static HINSTANCE tkInstance;        /* Application instance handle. */
+static int childClassInitialized;   /* Registered child class? */
+static WNDCLASS childClass;	    /* Window class for child windows. */
+
+TCL_DECLARE_MUTEX(winXMutex)
+
+/*
+ * Thread local storage.  Notice that now each thread must have its
+ * own TkDisplay structure, since this structure contains most of
+ * the thread-specific date for threads.
+ */
+typedef struct ThreadSpecificData {
+    TkDisplay *winDisplay;       /* TkDisplay structure that *
+				  *  represents Windows screen. */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Forward declarations of procedures used in this file.
@@ -135,7 +151,21 @@ TkWinXInit(hInstance)
 
     tkInstance = hInstance;
 
+    /*
+     * When threads are enabled, we cannot use CLASSDC because
+     * threads will then write into the same device context.
+     * 
+     * This is a hack; we should add a subsystem that manages
+     * device context on a per-thread basis.  See also tkWinWm.c,
+     * which also initializes a WNDCLASS structure.
+     */
+
+#ifdef TCL_THREADS
+    childClass.style = CS_HREDRAW | CS_VREDRAW;
+#else
     childClass.style = CS_HREDRAW | CS_VREDRAW | CS_CLASSDC;
+#endif
+
     childClass.cbClsExtra = 0;
     childClass.cbWndExtra = 0;
     childClass.hInstance = hInstance;
@@ -229,10 +259,10 @@ TkGetDefaultScreenName(interp, screenName)
  *	specific information.
  *
  * Results:
- *	Returns a Display structure on success or NULL on failure.
+ *	Returns a TkDisplay structure on success or NULL on failure.
  *
  * Side effects:
- *	Allocates a new Display structure.
+ *	Allocates a new TkDisplay structure.
  *
  *----------------------------------------------------------------------
  */
@@ -245,10 +275,13 @@ TkpOpenDisplay(display_name)
     HDC dc;
     TkWinDrawable *twdPtr;
     Display *display;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (winDisplay != NULL) {
-	if (strcmp(winDisplay->display->display_name, display_name) == 0) {
-	    return winDisplay;
+    if (tsdPtr->winDisplay != NULL) {
+	if (strcmp(tsdPtr->winDisplay->display->display_name, display_name) 
+                == 0) {
+	    return tsdPtr->winDisplay;
 	} else {
 	    return NULL;
 	}
@@ -350,9 +383,9 @@ TkpOpenDisplay(display_name)
     display->default_screen = 0;
     screen->cmap = XCreateColormap(display, None, screen->root_visual,
 	    AllocNone);
-    winDisplay = (TkDisplay *) ckalloc(sizeof(TkDisplay));
-    winDisplay->display = display;
-    return winDisplay;
+    tsdPtr->winDisplay = (TkDisplay *) ckalloc(sizeof(TkDisplay));
+    tsdPtr->winDisplay->display = display;
+    return tsdPtr->winDisplay;
 }
 
 /*
@@ -378,8 +411,10 @@ TkpCloseDisplay(dispPtr)
 {
     Display *display = dispPtr->display;
     HWND hwnd;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (dispPtr != winDisplay) {
+    if (dispPtr != tsdPtr->winDisplay) {
         panic("TkpCloseDisplay: tried to call TkpCloseDisplay on another display");
         return;
     }
@@ -398,7 +433,7 @@ TkpCloseDisplay(dispPtr)
 	}
     }
 
-    winDisplay = NULL;
+    tsdPtr->winDisplay = NULL;
 
     if (display->display_name != (char *) NULL) {
         ckfree(display->display_name);
@@ -481,7 +516,6 @@ TkWinChildProc(hwnd, message, wParam, lParam)
 
 	case WM_CREATE:
 	case WM_ERASEBKGND:
-	case WM_WINDOWPOSCHANGED:
 	    result = 0;
 	    break;
 
@@ -591,7 +625,13 @@ Tk_TranslateWinEvent(hwnd, message, wParam, lParam, resultPtr)
 	case WM_SYSKEYUP:
 	case WM_KEYDOWN:
 	case WM_KEYUP:
+	case WM_MOUSEWHEEL:
  	    GenerateXEvent(hwnd, message, wParam, lParam);
+	    return 1;
+	case WM_MENUCHAR:
+	    GenerateXEvent(hwnd, message, wParam, lParam);
+	    /* MNC_CLOSE is the only one that looks right.  This is a hack. */
+	    *resultPtr = MAKELONG (0, MNC_CLOSE);
 	    return 1;
     }
     return 0;
@@ -693,6 +733,13 @@ GenerateXEvent(hwnd, message, wParam, lParam)
 	    event.xselectionclear.time = TkpGetMS();
 	    break;
 	    
+	case WM_MOUSEWHEEL:
+	    /*
+	     * The mouse wheel event is closer to a key event than a
+	     * mouse event in that the message is sent to the window
+	     * that has focus.
+	     */
+	    
 	case WM_CHAR:
 	case WM_SYSKEYDOWN:
 	case WM_SYSKEYUP:
@@ -734,6 +781,18 @@ GenerateXEvent(hwnd, message, wParam, lParam)
 	     */
 
 	    switch (message) {
+		case WM_MOUSEWHEEL:
+		    /*
+		     * We have invented a new X event type to handle
+		     * this event.  It still uses the KeyPress struct.
+		     * However, the keycode field has been overloaded
+		     * to hold the zDelta of the wheel.
+		     */
+		    
+		    event.type = MouseWheelEvent;
+		    event.xany.send_event = -1;
+		    event.xkey.keycode = (short) HIWORD(wParam);
+		    break;
 		case WM_SYSKEYDOWN:
 		case WM_KEYDOWN:
 		    /*
@@ -763,19 +822,61 @@ GenerateXEvent(hwnd, message, wParam, lParam)
 		     */
 		    event.type = KeyRelease;
 		    event.xkey.keycode = wParam;
-		    event.xkey.nchars = 0;
+		    event.xkey.nbytes = 0;
 		    break;
 
 		case WM_CHAR:
 		    /*
 		     * Synthesize both a KeyPress and a KeyRelease.
+		     * Strings generated by Input Method Editor are handled
+		     * in the following manner:
+		     * 1. A series of WM_KEYDOWN & WM_KEYUP messages that 
+		     *    cause GetTranslatedKey() to be called and return
+		     *    immediately because the WM_KEYDOWNs have no 
+		     *	  associated WM_CHAR messages -- the IME window is 
+		     *	  accumulating the characters and translating them 
+		     *    itself.  In the "bind" command, you get an event
+		     *	  with a mystery keysym and %A == "" for each 
+		     *	  WM_KEYDOWN that actually was meant for the IME.
+		     * 2. A WM_KEYDOWN corresponding to the "confirm typing"
+		     *    character.  This causes GetTranslatedKey() to be 
+		     *	  called.
+		     * 3. A WM_IME_NOTIFY message saying that the IME is 
+		     *	  done.  A side effect of this message is that 
+		     *    GetTranslatedKey() thinks this means that there
+		     *	  are no WM_CHAR messages and returns immediately.
+		     *    In the "bind" command, you get an another event
+		     *	  with a mystery keysym and %A == "".
+		     * 4. A sequence of WM_CHAR messages that correspond to 
+		     *	  the characters in the IME window.  A bunch of 
+		     *    simulated KeyPress/KeyRelease events will be 
+		     *    generated, one for each character.  Adjacent 
+		     *    WM_CHAR messages may actually specify the high
+		     *	  and low bytes of a multi-byte character -- in that
+		     *    case the two WM_CHAR messages will be combined into
+		     *	  one event.  It is the event-consumer's 
+		     *	  responsibility to convert the string returned from
+		     *	  XLookupString from system encoding to UTF-8.
+		     * 5. And finally we get the WM_KEYUP for the "confirm
+		     *    typing" character.
 		     */
 
 		    event.type = KeyPress;
 		    event.xany.send_event = -1;
 		    event.xkey.keycode = 0;
-		    event.xkey.nchars = 1;
+		    event.xkey.nbytes = 1;
 		    event.xkey.trans_chars[0] = (char) wParam;
+
+		    if (IsDBCSLeadByte((BYTE) wParam)) {
+			MSG msg;
+
+			if ((PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) != 0)
+				&& (msg.message == WM_CHAR)) {
+			    GetMessage(&msg, NULL, 0, 0);
+			    event.xkey.nbytes = 2;
+			    event.xkey.trans_chars[1] = (char) msg.wParam;
+			}
+		    }
 		    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
 		    event.type = KeyRelease;
 		    break;
@@ -874,7 +975,7 @@ GetState(message, wParam, lParam)
  *	given KeyPress event.
  *
  * Results:
- *	Sets the trans_chars and nchars member of the key event.
+ *	Sets the trans_chars and nbytes member of the key event.
  *
  * Side effects:
  *	Removes any WM_CHAR messages waiting on the top of the system
@@ -888,18 +989,29 @@ GetTranslatedKey(xkey)
     XKeyEvent *xkey;
 {
     MSG msg;
+    char buf[XMaxTransChars];
     
-    xkey->nchars = 0;
+    xkey->nbytes = 0;
 
-    while (xkey->nchars < XMaxTransChars
+    while ((xkey->nbytes < XMaxTransChars)
 	    && PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-	if (msg.message == WM_CHAR) {
-	    xkey->trans_chars[xkey->nchars] = (char) msg.wParam;
-	    xkey->nchars++;
+	if ((msg.message == WM_CHAR) || (msg.message == WM_SYSCHAR)) {
 	    GetMessage(&msg, NULL, 0, 0);
+
+	    /*
+	     * If this is a normal character message, we may need to strip
+	     * off the Alt modifier (e.g. Alt-digits).  Note that we don't
+	     * want to do this for system messages, because those were
+	     * presumably generated as an Alt-char sequence (e.g. accelerator
+	     * keys).
+	     */
+
 	    if ((msg.message == WM_CHAR) && (msg.lParam & 0x20000000)) {
 		xkey->state = 0;
 	    }
+	    buf[xkey->nbytes] = (char) msg.wParam;
+	    xkey->trans_chars[xkey->nbytes] = (char) msg.wParam;
+	    xkey->nbytes++;
 	} else {
 	    break;
 	}

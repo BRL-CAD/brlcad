@@ -7,12 +7,12 @@
  *	attributes.
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkFrame.c 1.82 97/08/08 17:26:26
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -441,7 +441,7 @@ TkCreateFrame(clientData, interp, argc, argv, toplevel, appName)
     if (toplevel) {
 	Tcl_DoWhenIdle(MapFrame, (ClientData) framePtr);
     }
-    interp->result = Tk_PathName(new);
+    Tcl_SetResult(interp, Tk_PathName(new), TCL_STATIC);
     return TCL_OK;
 
     error:
@@ -597,7 +597,7 @@ DestroyFrame(memPtr)
  *
  * Results:
  *	The return value is a standard Tcl result.  If TCL_ERROR is
- *	returned, then interp->result contains an error message.
+ *	returned, then the interp's result contains an error message.
  *
  * Side effects:
  *	Configuration information, such as text string, colors, font,
@@ -694,7 +694,6 @@ DisplayFrame(clientData)
 {
     register Frame *framePtr = (Frame *) clientData;
     register Tk_Window tkwin = framePtr->tkwin;
-    GC gc;
 
     framePtr->flags &= ~REDRAW_PENDING;
     if ((framePtr->tkwin == NULL) || !Tk_IsMapped(tkwin)
@@ -711,15 +710,19 @@ DisplayFrame(clientData)
 		framePtr->borderWidth, framePtr->relief);
     }
     if (framePtr->highlightWidth != 0) {
+        GC fgGC, bgGC;
+        
+	bgGC = Tk_GCForColor(framePtr->highlightBgColorPtr,
+		Tk_WindowId(tkwin));
 	if (framePtr->flags & GOT_FOCUS) {
-	    gc = Tk_GCForColor(framePtr->highlightColorPtr,
+	    fgGC = Tk_GCForColor(framePtr->highlightColorPtr,
+		    Tk_WindowId(tkwin));
+	    TkpDrawHighlightBorder(tkwin, fgGC, bgGC, framePtr->highlightWidth,
 		    Tk_WindowId(tkwin));
 	} else {
-	    gc = Tk_GCForColor(framePtr->highlightBgColorPtr,
+	    TkpDrawHighlightBorder(tkwin, bgGC, bgGC, framePtr->highlightWidth,
 		    Tk_WindowId(tkwin));
 	}
-	Tk_DrawFocusHighlight(tkwin, gc, framePtr->highlightWidth,
-		Tk_WindowId(tkwin));
     }
 }
 

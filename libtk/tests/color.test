@@ -1,15 +1,20 @@
 # This file is a Tcl script to test out the procedures in the file
 # tkColor.c.  It is organized in the standard fashion for Tcl tests.
 #
-# Copyright (c) 1995 Sun Microsystems, Inc.
+# Copyright (c) 1995-1998 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) color.test 1.5 96/02/16 10:56:05
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
+
+if {[info commands testcolor] != "testcolor"} {
+    puts "testcolor command not available; skipping tests"
+    ::tcltest::cleanupTests
+    return
 }
 
 eval destroy [winfo children .]
@@ -103,11 +108,13 @@ proc colorsFree {w {red 31} {green 245} {blue 192}} {
 # test file.
 
 if [catch {toplevel .t -visual {pseudocolor 8} -colormap new}] {
+    ::tcltest::cleanupTests
     return
 }
 wm geom .t +0+0
 if {[winfo depth .t] != 8} {
     destroy .t
+    ::tcltest::cleanupTests
     return
 }
 mkColors .t.c 40 6 0 0 0 0 6 0 0 0 40
@@ -115,31 +122,75 @@ pack .t.c
 update
 if ![colorsFree .t.c 101 233 17] {
     destroy .t
+    ::tcltest::cleanupTests
     return
 }
 mkColors .t.c2 20 1 250 0 0 -10 0 0 0 0 0
 pack .t.c2
 if [colorsFree .t.c] {
     destroy .t
+    ::tcltest::cleanupTests
     return
 }
 destroy .t.c .t.c2
 
-test color-1.1 {Tk_GetColor procedure} {
-    c255 [winfo rgb .t red]
+test color-1.1 {Tk_AllocColorFromObj - converting internal reps} {
+    set x green
+    lindex $x 0
+    destroy .b1
+    button .b1 -foreground $x -text .b1
+    lindex $x 0
+    testcolor green
+} {{1 0}}
+test color-1.2 {Tk_AllocColorFromObj - discard stale color} {
+    set x green
+    destroy .b1 .b2
+    button .b1 -foreground $x -text First
+    destroy .b1
+    set result {}
+    lappend result [testcolor green]
+    button .b2 -foreground $x -text Second
+    lappend result [testcolor green]
+} {{} {{1 1}}}
+test color-1.3 {Tk_AllocColorFromObj - reuse existing color} {
+    set x green
+    destroy .b1 .b2
+    button .b1 -foreground $x -text First
+    set result {}
+    lappend result [testcolor green]
+    button .b2 -foreground $x -text Second
+    pack .b1 .b2 -side top
+    lappend result [testcolor green]
+} {{{1 1}} {{2 1}}}
+test color-1.4 {Tk_AllocColorFromObj - try other colors in list} {
+    set x purple
+    destroy .b1 .b2 .t.b
+    button .b1 -foreground $x -text First
+    pack .b1 -side top
+    set result {}
+    lappend result [testcolor purple]
+    button .t.b -foreground $x -text Second
+    pack .t.b -side top
+    lappend result [testcolor purple]
+    button .b2 -foreground $x -text Third
+    pack .b2 -side top
+    lappend result [testcolor purple]
+} {{{1 1}} {{1 1} {1 0}} {{1 0} {2 1}}}
+
+test color-2.1 {Tk_GetColor procedure} {
+    c255 [winfo rgb .t #FF0000]
 } {255 0 0}
-test color-1.2 {Tk_GetColor procedure} {
+test color-2.2 {Tk_GetColor procedure} {
     list [catch {winfo rgb .t noname} msg] $msg
 } {1 {unknown color name "noname"}}
-
-test color-1.3 {Tk_GetColor procedure} {
+test color-2.3 {Tk_GetColor procedure} {
     c255 [winfo rgb .t #123456]
 } {18 52 86}
-test color-1.4 {Tk_GetColor procedure} {
+test color-2.4 {Tk_GetColor procedure} {
     list [catch {winfo rgb .t #xyz} msg] $msg
 } {1 {invalid color name "#xyz"}}
 
-test color-2.1 {Tk_FreeColor procedure, reference counting} {
+test color-3.1 {Tk_FreeColor procedure, reference counting} {
     eval destroy [winfo child .t]
     mkColors .t.c 40 6 0 240 240 0 -6 0 0 0 -40
     pack .t.c
@@ -153,7 +204,7 @@ test color-2.1 {Tk_FreeColor procedure, reference counting} {
     .t.c2 delete $last
     lappend result [colorsFree .t]
 } {0 1}
-test color-2.2 {Tk_FreeColor procedure, flushing stressed cmap information} {
+test color-3.2 {Tk_FreeColor procedure, flushing stressed cmap information} {
     eval destroy [winfo child .t]
     mkColors .t.c 40 6 0 240 240 0 -6 0 0 0 -40
     pack .t.c
@@ -163,5 +214,86 @@ test color-2.2 {Tk_FreeColor procedure, flushing stressed cmap information} {
     update
     closest .t 241 241 1
 } {240 240 0}
+test color-3.3 {Tk_FreeColorFromObj - reference counts} {
+    set x purple
+    destroy .b1 .b2 .t.b
+    button .b1 -foreground $x -text First
+    pack .b1 -side top
+    button .t.b -foreground $x -text Second
+    pack .t.b -side top
+    button .b2 -foreground $x -text Third
+    pack .b2 -side top
+    set result {}
+    lappend result [testcolor purple]
+    destroy .b1
+    lappend result [testcolor purple]
+    destroy .b2
+    lappend result [testcolor purple]
+    destroy .t.b
+    lappend result [testcolor purple]
+} {{{1 0} {2 1}} {{1 0} {1 1}} {{1 0}} {}}
+test color-3.4 {Tk_FreeColorFromObj - unlinking from list} {
+    destroy .b .t.b .t2 .t3
+    toplevel .t2 -visual {pseudocolor 8} -colormap new
+    toplevel .t3 -visual {pseudocolor 8} -colormap new
+    set x purple
+    button .b -foreground $x -text .b1
+    button .t.b1 -foreground $x -text .t.b1
+    button .t.b2 -foreground $x -text .t.b2
+    button .t2.b1 -foreground $x -text .t2.b1
+    button .t2.b2 -foreground $x -text .t2.b2
+    button .t2.b3 -foreground $x -text .t2.b3
+    button .t3.b1 -foreground $x -text .t3.b1
+    button .t3.b2 -foreground $x -text .t3.b2
+    button .t3.b3 -foreground $x -text .t3.b3
+    button .t3.b4 -foreground $x -text .t3.b4
+    set result {}
+    lappend result [testcolor purple]
+    destroy .t2
+    lappend result [testcolor purple]
+    destroy .b
+    lappend result [testcolor purple]
+    destroy .t3
+    lappend result [testcolor purple]
+    destroy .t
+    lappend result [testcolor purple]
+} {{{4 1} {3 0} {2 0} {1 0}} {{4 1} {2 0} {1 0}} {{4 1} {2 0}} {{2 0}} {}}
+
+test color-4.1 {FreeColorObjProc} {
+    destroy .b
+    set x [format purple]
+    button .b -foreground $x -text .b1
+    set y [format purple]
+    .b configure -foreground $y
+    set z [format purple]
+    .b configure -foreground $z
+    set result {}
+    lappend result [testcolor purple]
+    set x red
+    lappend result [testcolor purple]
+    set z 32
+    lappend result [testcolor purple]
+    destroy .b
+    lappend result [testcolor purple]
+    set y bogus
+    set result
+} {{{1 3}} {{1 2}} {{1 1}} {}}
 
 destroy .t
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

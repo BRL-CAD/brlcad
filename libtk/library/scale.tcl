@@ -3,7 +3,7 @@
 # This file defines the default bindings for Tk scale widgets and provides
 # procedures that help in implementing the bindings.
 #
-# SCCS: @(#) scale.tcl 1.12 96/04/16 11:42:25
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
@@ -19,7 +19,7 @@
 # Standard Motif bindings:
 
 bind Scale <Enter> {
-    if $tk_strictMotif {
+    if {$tk_strictMotif} {
 	set tkPriv(activeBg) [%W cget -activebackground]
 	%W config -activebackground [%W cget -background]
     }
@@ -29,10 +29,10 @@ bind Scale <Motion> {
     tkScaleActivate %W %x %y
 }
 bind Scale <Leave> {
-    if $tk_strictMotif {
+    if {$tk_strictMotif} {
 	%W config -activebackground $tkPriv(activeBg)
     }
-    if {[%W cget -state] == "active"} {
+    if {![string compare [%W cget -state] "active"]} {
 	%W configure -state normal
     }
 }
@@ -107,10 +107,10 @@ bind Scale <End> {
 
 proc tkScaleActivate {w x y} {
     global tkPriv
-    if {[$w cget -state] == "disabled"} {
-	return;
+    if {![string compare [$w cget -state] "disabled"]} {
+      return
     }
-    if {[$w identify $x $y] == "slider"} {
+    if {![string compare [$w identify $x $y] "slider"]} {
 	$w configure -state active
     } else {
 	$w configure -state normal
@@ -129,16 +129,16 @@ proc tkScaleButtonDown {w x y} {
     global tkPriv
     set tkPriv(dragging) 0
     set el [$w identify $x $y]
-    if {$el == "trough1"} {
+    if {![string compare $el "trough1"]} {
 	tkScaleIncrement $w up little initial
-    } elseif {$el == "trough2"} {
+    } elseif {![string compare $el "trough2"]} {
 	tkScaleIncrement $w down little initial
-    } elseif {$el == "slider"} {
+    } elseif {![string compare $el "slider"]} {
 	set tkPriv(dragging) 1
 	set tkPriv(initValue) [$w get]
 	set coords [$w coords]
-	set tkPriv(deltaX) [expr $x - [lindex $coords 0]]
-	set tkPriv(deltaY) [expr $y - [lindex $coords 1]]
+	set tkPriv(deltaX) [expr {$x - [lindex $coords 0]}]
+	set tkPriv(deltaY) [expr {$y - [lindex $coords 1]}]
 	$w configure -sliderrelief sunken
     }
 }
@@ -155,11 +155,11 @@ proc tkScaleButtonDown {w x y} {
 
 proc tkScaleDrag {w x y} {
     global tkPriv
-    if !$tkPriv(dragging) {
+    if {!$tkPriv(dragging)} {
 	return
     }
-    $w set [$w get [expr $x - $tkPriv(deltaX)] \
-	    [expr $y - $tkPriv(deltaY)]]
+    $w set [$w get [expr {$x - $tkPriv(deltaX)}] \
+	    [expr {$y - $tkPriv(deltaY)}]]
 }
 
 # tkScaleEndDrag --
@@ -194,10 +194,10 @@ proc tkScaleEndDrag {w} {
 proc tkScaleIncrement {w dir big repeat} {
     global tkPriv
     if {![winfo exists $w]} return
-    if {$big == "big"} {
+    if {![string compare $big "big"]} {
 	set inc [$w cget -bigincrement]
 	if {$inc == 0} {
-	    set inc [expr abs([$w cget -to] - [$w cget -from])/10.0]
+	    set inc [expr {abs([$w cget -to] - [$w cget -from])/10.0}]
 	}
 	if {$inc < [$w cget -resolution]} {
 	    set inc [$w cget -resolution]
@@ -205,15 +205,15 @@ proc tkScaleIncrement {w dir big repeat} {
     } else {
 	set inc [$w cget -resolution]
     }
-    if {([$w cget -from] > [$w cget -to]) ^ ($dir == "up")} {
-	set inc [expr -$inc]
+    if {([$w cget -from] > [$w cget -to]) ^ ![string compare $dir "up"]} {
+	set inc [expr {-$inc}]
     }
-    $w set [expr [$w get] + $inc]
+    $w set [expr {[$w get] + $inc}]
 
-    if {$repeat == "again"} {
+    if {![string compare $repeat "again"]} {
 	set tkPriv(afterId) [after [$w cget -repeatinterval] \
 		tkScaleIncrement $w $dir $big again]
-    } elseif {$repeat == "initial"} {
+    } elseif {![string compare $repeat "initial"]} {
 	set delay [$w cget -repeatdelay]
 	if {$delay > 0} {
 	    set tkPriv(afterId) [after $delay \
@@ -233,9 +233,9 @@ proc tkScaleIncrement {w dir big repeat} {
 
 proc tkScaleControlPress {w x y} {
     set el [$w identify $x $y]
-    if {$el == "trough1"} {
+    if {![string compare $el "trough1"]} {
 	$w set [$w cget -from]
-    } elseif {$el == "trough2"} {
+    } elseif {![string compare $el "trough2"]} {
 	$w set [$w cget -to]
     }
 }
@@ -252,8 +252,8 @@ proc tkScaleControlPress {w x y} {
 proc tkScaleButton2Down {w x y} {
     global tkPriv
 
-    if {[$w cget -state] == "disabled"} {
-	return;
+    if {![string compare [$w cget -state] "disabled"]} {
+      return
     }
     $w configure -state active
     $w set [$w get $x $y]

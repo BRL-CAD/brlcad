@@ -3,14 +3,13 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) scale.test 1.28 97/07/31 10:20:43
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -56,18 +55,18 @@ foreach test {
     {-label "Some text" {Some text} {} {}}
     {-length 130 130 badValue {bad screen distance "badValue"}}
     {-orient horizontal horizontal badValue
-	    {bad orientation "badValue": must be vertical or horizontal}}
+	    {bad orient "badValue": must be horizontal or vertical}}
     {-orient horizontal horizontal {} {}}
-    {-relief ridge ridge badValue {bad relief type "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-relief ridge ridge badValue {bad relief "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
     {-repeatdelay 14 14 bogus {expected integer but got "bogus"}}
     {-repeatinterval 14 14 bogus {expected integer but got "bogus"}}
     {-resolution 2.0 2.0 badValue
 	    {expected floating-point number but got "badValue"}}
     {-showvalue 0 0 badValue {expected boolean value but got "badValue"}}
     {-sliderlength 86 86 badValue {bad screen distance "badValue"}}
-    {-sliderrelief raised raised badValue {bad relief type "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-sliderrelief raised raised badValue {bad relief "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
     {-state disabled disabled badValue
-	    {bad state value "badValue": must be normal, active, or disabled}}
+	    {bad state "badValue": must be active, disabled, or normal}}
     {-state normal normal {} {}}
     {-takefocus "any string" "any string" {} {}}
     {-tickinterval 4.3 4.0 badValue
@@ -93,8 +92,8 @@ foreach test {
     .s configure $name [lindex [.s configure $name] 3]
     incr i
 }
-
 destroy .s
+
 test scale-2.1 {Tk_ScaleCmd procedure} {
     list [catch {scale} msg] $msg
 } {1 {wrong # args: should be "scale pathName ?options?"}}
@@ -212,10 +211,10 @@ test scale-3.29 {ScaleWidgetCmd procedure} {
 } {1 {bad option "dumb": must be cget, configure, coords, get, identify, or set}}
 test scale-3.30 {ScaleWidgetCmd procedure} {
     list [catch {.s c} msg] $msg
-} {1 {bad option "c": must be cget, configure, coords, get, identify, or set}}
+} {1 {ambiguous option "c": must be cget, configure, coords, get, identify, or set}}
 test scale-3.31 {ScaleWidgetCmd procedure} {
     list [catch {.s co} msg] $msg
-} {1 {bad option "co": must be cget, configure, coords, get, identify, or set}}
+} {1 {ambiguous option "co": must be cget, configure, coords, get, identify, or set}}
 test scale-3.32 {ScaleWidgetCmd procedure, Tk_Preserve} {
     proc kill args {
 	destroy .s
@@ -270,7 +269,7 @@ test scale-5.4 {ConfigureScale procedure} {
     catch {destroy .s}
     scale .s -from 0 -to 100
     list [catch {.s configure -orient dumb} msg] $msg
-} {1 {bad orientation "dumb": must be vertical or horizontal}}
+} {1 {bad orient "dumb": must be horizontal or vertical}}
 test scale-5.5 {ConfigureScale procedure} {
     catch {destroy .s}
     scale .s -from 1.11 -to 1.89 -resolution .1 -tickinterval .76
@@ -288,7 +287,7 @@ test scale-5.6 {ConfigureScale procedure} {
 test scale-5.7 {ConfigureScale procedure} {
     catch {destroy .s}
     list [catch {scale .s -from 0 -to 100 -state bogus} msg] $msg
-} {1 {bad state value "bogus": must be normal, active, or disabled}}
+} {1 {bad state "bogus": must be active, disabled, or normal}}
 
 catch {destroy .s}
 scale .s -orient horizontal -length 200
@@ -329,8 +328,8 @@ test scale-6.6 {ComputeFormat procedure} {nonPortable} {
 test scale-6.7 {ComputeFormat procedure} {
     .s configure -from 1000000000 -to 10000000000 -resolution 1000000000
     .s set 4930000000
-    .s get
-} {5.0e+09}
+    expr {[.s get] == 5.0e+09}
+} 1
 test scale-6.8 {ComputeFormat procedure} {
     .s configure -from .1 -to 1 -resolution .1
     .s set .6
@@ -359,8 +358,8 @@ test scale-6.12 {ComputeFormat procedure} {
 test scale-6.13 {ComputeFormat procedure} {
     .s configure -from .000001 -to .00001 -resolution .000001
     .s set .000006
-    .s get
-} {6.0e-06}
+    expr {[.s get] == 6.0e-06}
+} {1}
 test scale-6.14 {ComputeFormat procedure} {
     .s configure -to .00001 -from .0001 -resolution .00001
     .s set .00006
@@ -369,13 +368,13 @@ test scale-6.14 {ComputeFormat procedure} {
 test scale-6.15 {ComputeFormat procedure} {
     .s configure -to .000001 -from .00001 -resolution .000001
     .s set .000006
-    .s get
-} {6.0e-06}
+    expr {[.s get] == 6.0e-06}
+} {1}
 test scale-6.16 {ComputeFormat procedure} {
     .s configure -from .00001 -to .0001 -resolution .00001 -digits 1
     .s set .00006
-    .s get
-} {6e-05}
+    expr {[.s get] == 6e-05}
+} {1}
 test scale-6.17 {ComputeFormat procedure} {
     .s configure -from 10000000 -to 100000000 -resolution 10000000 -digits 3
     .s set 49300000
@@ -397,7 +396,7 @@ test scale-6.20 {ComputeFormat procedure} {
     .s get
 } {1001.235}
 
-test scale-7.1 {ComputeScaleGeometry procedure} {fonts} {
+test scale-7.1 {ComputeScaleGeometry procedure} {nonPortable fonts} {
     catch {destroy .s}
     scale .s -from 0 -to 10 -label "Short" -orient vertical -length 5i
     pack .s
@@ -427,7 +426,7 @@ test scale-7.4 {ComputeScaleGeometry procedure} {fonts} {
     update
     list [winfo reqwidth .s] [winfo reqheight .s]
 } {39 114}
-test scale-7.5 {ComputeScaleGeometry procedure} {fonts} {
+test scale-7.5 {ComputeScaleGeometry procedure} {nonPortable fonts} {
     catch {destroy .s}
     scale .s -from 0 -to 10 -label "Short" -orient horizontal -length 5i
     pack .s
@@ -797,5 +796,36 @@ test scale-16.1 {scale widget vs hidden commands} {
     list [winfo children .] [interp hidden]
 } [list {} $l]
 
+test scale-17.1 {bug fix 1786} {
+    # Perhaps x is set to {}, depending on what other tests have run.
+    # If x is unset, or set to something not convertable to a double,
+    # then the scale try to initialize its value with the contents
+    # of uninitialized memory.  Sometimes that causes an FPE.
+
+    set x {}
+    scale .s -from 100 -to 300
+    pack .s
+    update
+    .s configure -variable x   ;# CRASH! -> Floating point exception
+    set x
+} {}
+
 catch {destroy .s}
 option clear
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

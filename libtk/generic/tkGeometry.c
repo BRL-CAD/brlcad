@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkGeometry.c 1.31 96/02/15 18:53:32
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -51,19 +51,6 @@ typedef struct MaintainMaster {
     MaintainSlave *slavePtr;	/* First in list of all slaves associated
 				 * with this master. */
 } MaintainMaster;
-
-/*
- * Hash table that maps from a master's Tk_Window token to a list of
- * Maintains for that master:
- */
-
-static Tcl_HashTable maintainHashTable;
-
-/*
- * Has maintainHashTable been initialized yet?
- */
-
-static int initialized = 0;
 
 /*
  * Prototypes for static procedures in this file:
@@ -261,10 +248,11 @@ Tk_MaintainGeometry(slave, master, x, y, width, height)
     register MaintainSlave *slavePtr;
     int new, map;
     Tk_Window ancestor, parent;
+    TkDisplay *dispPtr = ((TkWindow *) master)->dispPtr;
 
-    if (!initialized) {
-	initialized = 1;
-	Tcl_InitHashTable(&maintainHashTable, TCL_ONE_WORD_KEYS);
+    if (!dispPtr->geomInit) {
+	dispPtr->geomInit = 1;
+	Tcl_InitHashTable(&dispPtr->maintainHashTable, TCL_ONE_WORD_KEYS);
     }
 
     /*
@@ -273,7 +261,8 @@ Tk_MaintainGeometry(slave, master, x, y, width, height)
      */
 
     parent = Tk_Parent(slave);
-    hPtr = Tcl_CreateHashEntry(&maintainHashTable, (char *) master, &new);
+    hPtr = Tcl_CreateHashEntry(&dispPtr->maintainHashTable, 
+            (char *) master, &new);
     if (!new) {
 	masterPtr = (MaintainMaster *) Tcl_GetHashValue(hPtr);
     } else {
@@ -383,16 +372,17 @@ Tk_UnmaintainGeometry(slave, master)
     MaintainMaster *masterPtr;
     register MaintainSlave *slavePtr, *prevPtr;
     Tk_Window ancestor;
+    TkDisplay *dispPtr = ((TkWindow *) slave)->dispPtr;
 
-    if (!initialized) {
-	initialized = 1;
-	Tcl_InitHashTable(&maintainHashTable, TCL_ONE_WORD_KEYS);
+    if (!dispPtr->geomInit) {
+	dispPtr->geomInit = 1;
+	Tcl_InitHashTable(&dispPtr->maintainHashTable, TCL_ONE_WORD_KEYS);
     }
 
     if (!(((TkWindow *) slave)->flags & TK_ALREADY_DEAD)) {
 	Tk_UnmapWindow(slave);
     }
-    hPtr = Tcl_FindHashEntry(&maintainHashTable, (char *) master);
+    hPtr = Tcl_FindHashEntry(&dispPtr->maintainHashTable, (char *) master);
     if (hPtr == NULL) {
 	return;
     }

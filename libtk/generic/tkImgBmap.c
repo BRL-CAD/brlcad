@@ -5,11 +5,12 @@
  *
  * Copyright (c) 1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1999 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkImgBmap.c 1.33 97/07/31 09:08:22
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -227,7 +228,7 @@ ImgBmapCreate(interp, name, argc, argv, typePtr, master, clientDataPtr)
  *
  * Results:
  *	A standard Tcl return value.  If TCL_ERROR is returned then
- *	an error message is left in masterPtr->interp->result.
+ *	an error message is left in the masterPtr->interp's result.
  *
  * Side effects:
  *	Existing instances of the image will be redisplayed to match
@@ -278,7 +279,8 @@ ImgBmapConfigureMaster(masterPtr, argc, argv, flags)
     if ((masterPtr->maskFileString != NULL)
 	    || (masterPtr->maskDataString != NULL)) {
 	if (masterPtr->data == NULL) {
-	    masterPtr->interp->result = "can't have mask without bitmap";
+	    Tcl_SetResult(masterPtr->interp, "can't have mask without bitmap",
+		    TCL_STATIC);
 	    return TCL_ERROR;
 	}
 	masterPtr->maskData = TkGetBitmapData(masterPtr->interp,
@@ -291,7 +293,8 @@ ImgBmapConfigureMaster(masterPtr, argc, argv, flags)
 		|| (maskHeight != masterPtr->height)) {
 	    ckfree(masterPtr->maskData);
 	    masterPtr->maskData = NULL;
-	    masterPtr->interp->result = "bitmap and mask have different sizes";
+	    Tcl_SetResult(masterPtr->interp,
+		    "bitmap and mask have different sizes", TCL_STATIC);
 	    return TCL_ERROR;
 	}
     }
@@ -340,6 +343,7 @@ ImgBmapConfigureInstance(instancePtr)
     XGCValues gcValues;
     GC gc;
     unsigned int mask;
+    Pixmap oldMask;
 
     /*
      * For each of the options in masterPtr, translate the string
@@ -382,16 +386,23 @@ ImgBmapConfigureInstance(instancePtr)
 		(unsigned) masterPtr->height);
     }
 
-    if (instancePtr->mask != None) {
-	Tk_FreePixmap(Tk_Display(instancePtr->tkwin), instancePtr->mask);
-	instancePtr->mask = None;
-    }
+    /*
+     * Careful:  We have to allocate a new mask Pixmap before deleting
+     * the old one.  Otherwise, The XID allocator will always return
+     * the same XID for the new Pixmap as was used for the old Pixmap.
+     * And that will prevent the mask from changing in the GC below.
+     */
+    oldMask = instancePtr->mask;
+    instancePtr->mask = None;
     if (masterPtr->maskData != NULL) {
 	instancePtr->mask = XCreateBitmapFromData(
 		Tk_Display(instancePtr->tkwin),
 		RootWindowOfScreen(Tk_Screen(instancePtr->tkwin)),
 		masterPtr->maskData, (unsigned) masterPtr->width,
 		(unsigned) masterPtr->height);
+    }
+    if (oldMask != None) {
+      Tk_FreePixmap(Tk_Display(instancePtr->tkwin), oldMask);
     }
 
     if (masterPtr->data != NULL) {
@@ -451,7 +462,7 @@ ImgBmapConfigureInstance(instancePtr)
  *	*heightPtr.  *hotXPtr and *hotYPtr are set to the bitmap
  *	hotspot if one is defined, otherwise they are set to -1, -1.
  *	If an error occurred, NULL is returned and an error message is
- *	left in interp->result.
+ *	left in the interp's result.
  *
  * Side effects:
  *	A bitmap is created.
@@ -462,7 +473,7 @@ ImgBmapConfigureInstance(instancePtr)
 char *
 TkGetBitmapData(interp, string, fileName, widthPtr, heightPtr,
 	hotXPtr, hotYPtr)
-    Tcl_Interp *interp;			/* For reporting errors. */
+    Tcl_Interp *interp;			/* For reporting errors, or NULL. */
     char *string;			/* String describing bitmap.  May
 					 * be NULL. */
     char *fileName;			/* Name of file containing bitmap
@@ -481,7 +492,7 @@ TkGetBitmapData(interp, string, fileName, widthPtr, heightPtr,
 
     pi.string = string;
     if (string == NULL) {
-        if (Tcl_IsSafe(interp)) {
+        if ((interp != NULL) && Tcl_IsSafe(interp)) {
             Tcl_AppendResult(interp, "can't get bitmap data from a file in a",
                     " safe interpreter", (char *) NULL);
             return NULL;
@@ -493,11 +504,23 @@ TkGetBitmapData(interp, string, fileName, widthPtr, heightPtr,
 	pi.chan = Tcl_OpenFileChannel(interp, expandedFileName, "r", 0);
 	Tcl_DStringFree(&buffer);
 	if (pi.chan == NULL) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "couldn't read bitmap file \"",
-		    fileName, "\": ", Tcl_PosixError(interp), (char *) NULL);
+	    if (interp != NULL) {
+		Tcl_ResetResult(interp);
+		Tcl_AppendResult(interp, "couldn't read bitmap file \"",
+			fileName, "\": ", Tcl_PosixError(interp),
+			(char *) NULL);
+	    }
 	    return NULL;
 	}
+	
+        if (Tcl_SetChannelOption(interp, pi.chan, "-translation", "binary")
+		!= TCL_OK) {
+            return NULL;
+        }
+        if (Tcl_SetChannelOption(interp, pi.chan, "-encoding", "binary")
+		!= TCL_OK) {
+            return NULL;
+        }
     } else {
 	pi.chan = NULL;
     }
@@ -573,9 +596,11 @@ TkGetBitmapData(interp, string, fileName, widthPtr, heightPtr,
 		}
 	    }
 	} else if ((pi.word[0] == '{') && (pi.word[1] == 0)) {
-	    Tcl_AppendResult(interp, "format error in bitmap data; ",
-		    "looks like it's an obsolete X10 bitmap file",
-		    (char *) NULL);
+	    if (interp != NULL) {
+		Tcl_AppendResult(interp, "format error in bitmap data; ",
+			"looks like it's an obsolete X10 bitmap file",
+			(char *) NULL);
+	    }
 	    goto errorCleanup;
 	}
     }
@@ -615,7 +640,10 @@ TkGetBitmapData(interp, string, fileName, widthPtr, heightPtr,
     return data;
 
     error:
-    interp->result = "format error in bitmap data";
+    if (interp != NULL) {
+	Tcl_SetResult(interp, "format error in bitmap data", TCL_STATIC);
+    }
+    
     errorCleanup:
     if (data != NULL) {
 	ckfree(data);
@@ -725,9 +753,8 @@ ImgBmapCmd(clientData, interp, argc, argv)
     size_t length;
 
     if (argc < 2) {
-	sprintf(interp->result,
-		"wrong # args: should be \"%.50s option ?arg arg ...?\"",
-		argv[0]);
+	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
+		" option ?arg arg ...?\"", (char *) NULL);
 	return TCL_ERROR;
     }
     c = argv[1][0];

@@ -9,18 +9,19 @@
 # at all sites.  
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) unixFont.test 1.7 97/06/24 13:34:24
+# RCS: @(#) $Id$
 
-if {$tcl_platform(platform)!="unix"} {
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
-if {[string compare test [info procs test]] != 0} {
-    source defs
+if {$tcl_platform(platform)!="unix"} {
+    puts "skipping: Unix only tests..."
+    ::tcltest::cleanupTests
+    return
 }
 
 catch {destroy .b}
@@ -222,23 +223,25 @@ test unixfont-8.1 {AllocFont procedure: use old font} {
     font delete xyz
 } {}
 test unixfont-8.2 {AllocFont procedure: parse information from XLFD} {
-    expr [lindex [font actual {-family times -size 0}] 3]==0
+    expr {[lindex [font actual {-family times -size 0}] 3] == 0}
 } {0}
 test unixfont-8.3 {AllocFont procedure: can't parse info from name} {
-    if [catch {set a [font actual a12biluc]}]==0 {
-	string compare $a "-family a12biluc -size 0 -weight normal -slant roman -underline 0 -overstrike 0"
-    } else {
-	set a 0
-    }
-} {0}
+    catch {unset fontArray}
+    # check that font actual returns the correct attributes.
+    # the values of those attributes are system dependent.
+    array set fontArray [font actual a12biluc]
+    set result [lsort [array names fontArray]]
+    catch {unset fontArray}
+    set result
+} {-family -overstrike -size -slant -underline -weight}
 test unixfont-8.4 {AllocFont procedure: classify characters} {
     set x 0
-    incr x [font measure $courier "\001"]   ;# 4
+    incr x [font measure $courier "\u4000"]   ;# 6
     incr x [font measure $courier "\002"]   ;# 4
     incr x [font measure $courier "\012"]   ;# 2
     incr x [font measure $courier "\101"]   ;# 1
     set x
-} [expr $cx*11]
+} [expr $cx*13]
 test unixfont-8.5 {AllocFont procedure: setup widths of normal chars} {
     font metrics $courier -fixed
 } {1}
@@ -281,7 +284,7 @@ test unixfont-9.1 {GetControlCharSubst procedure: 2 chars subst} {
 } {0 1 1 2}
 test unixfont-9.2 {GetControlCharSubst procedure: 4 chars subst} {
     .b.c dchars $t 0 end
-    .b.c insert $t 0 "0\1770"
+    .b.c insert $t 0 "0\0010"
     set x {}
     lappend x [.b.c index $t @[expr $ax*0],0]
     lappend x [.b.c index $t @[expr $ax*1],0]
@@ -290,4 +293,20 @@ test unixfont-9.2 {GetControlCharSubst procedure: 4 chars subst} {
     lappend x [.b.c index $t @[expr $ax*4],0]
     lappend x [.b.c index $t @[expr $ax*5],0]
 } {0 1 1 1 1 2}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -12,7 +12,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkScrollbar.c 1.94 97/07/31 09:12:44
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -193,7 +193,7 @@ Tk_ScrollbarCmd(clientData, interp, argc, argv)
 	return TCL_ERROR;
     }
 
-    interp->result = Tk_PathName(scrollPtr->tkwin);
+    Tcl_SetResult(interp, Tk_PathName(scrollPtr->tkwin), TCL_STATIC);
     return TCL_OK;
 }
 
@@ -240,9 +240,15 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	int oldActiveField;
 	if (argc == 2) {
 	    switch (scrollPtr->activeField) {
-		case TOP_ARROW:		interp->result = "arrow1";	break;
-		case SLIDER:		interp->result = "slider";	break;
-		case BOTTOM_ARROW:	interp->result = "arrow2";	break;
+		case TOP_ARROW:
+		    Tcl_SetResult(interp, "arrow1", TCL_STATIC);
+		    break;
+		case SLIDER:
+		    Tcl_SetResult(interp, "slider", TCL_STATIC);
+		    break;
+		case BOTTOM_ARROW:
+		    Tcl_SetResult(interp, "arrow2", TCL_STATIC);
+		    break;
 	    }
 	    goto done;
 	}
@@ -292,6 +298,7 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
     } else if ((c == 'd') && (strncmp(argv[1], "delta", length) == 0)) {
 	int xDelta, yDelta, pixels, length;
 	double fraction;
+	char buf[TCL_DOUBLE_SPACE];
 
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -316,10 +323,12 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	} else {
 	    fraction = ((double) pixels / (double) length);
 	}
-	sprintf(interp->result, "%g", fraction);
+	sprintf(buf, "%g", fraction);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'f') && (strncmp(argv[1], "fraction", length) == 0)) {
 	int x, y, pos, length;
 	double fraction;
+	char buf[TCL_DOUBLE_SPACE];
 
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -349,7 +358,8 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	} else if (fraction > 1.0) {
 	    fraction = 1.0;
 	}
-	sprintf(interp->result, "%g", fraction);
+	sprintf(buf, "%g", fraction);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'g') && (strncmp(argv[1], "get", length) == 0)) {
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -363,9 +373,12 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	    Tcl_PrintDouble(interp, scrollPtr->lastFraction, last);
 	    Tcl_AppendResult(interp, first, " ", last, (char *) NULL);
 	} else {
-	    sprintf(interp->result, "%d %d %d %d", scrollPtr->totalUnits,
+	    char buf[TCL_INTEGER_SPACE * 4];
+
+	    sprintf(buf, "%d %d %d %d", scrollPtr->totalUnits,
 		    scrollPtr->windowUnits, scrollPtr->firstUnit,
 		    scrollPtr->lastUnit);
+	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	}
     } else if ((c == 'i') && (strncmp(argv[1], "identify", length) == 0)) {
 	int x, y, thing;
@@ -381,11 +394,21 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
 	}
 	thing = TkpScrollbarPosition(scrollPtr, x,y);
 	switch (thing) {
-	    case TOP_ARROW:	interp->result = "arrow1";	break;
-	    case TOP_GAP:	interp->result = "trough1";	break;
-	    case SLIDER:	interp->result = "slider";	break;
-	    case BOTTOM_GAP:	interp->result = "trough2";	break;
-	    case BOTTOM_ARROW:	interp->result = "arrow2";	break;
+	    case TOP_ARROW:
+		Tcl_SetResult(interp, "arrow1", TCL_STATIC);
+		break;
+	    case TOP_GAP:
+		Tcl_SetResult(interp, "trough1", TCL_STATIC);
+		break;
+	    case SLIDER:
+		Tcl_SetResult(interp, "slider", TCL_STATIC);
+		break;
+	    case BOTTOM_GAP:
+		Tcl_SetResult(interp, "trough2", TCL_STATIC);
+		break;
+	    case BOTTOM_ARROW:
+		Tcl_SetResult(interp, "arrow2", TCL_STATIC);
+		break;
 	}
     } else if ((c == 's') && (strncmp(argv[1], "set", length) == 0)) {
 	int totalUnits, windowUnits, firstUnit, lastUnit;
@@ -488,7 +511,7 @@ ScrollbarWidgetCmd(clientData, interp, argc, argv)
  *
  * Results:
  *	The return value is a standard Tcl result.  If TCL_ERROR is
- *	returned, then interp->result contains an error message.
+ *	returned, then the interp's result contains an error message.
  *
  * Side effects:
  *	Configuration information, such as colors, border width,

@@ -3,12 +3,12 @@
  *
  *	Routines to support keyboard events on the Macintosh.
  *
- * Copyright (c) 1995-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacKeyboard.c 1.14 96/08/15 15:34:00
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -137,7 +137,7 @@ XKeycodeToKeysym(
     int	index)
 {
     register Tcl_HashEntry *hPtr;
-    register char c;
+    int c;
     char virtualKey;
     int newKeycode;
     unsigned long dummy, newChar;
@@ -146,8 +146,11 @@ XKeycodeToKeysym(
 	InitKeyMaps();
     }
 	
-    c = keycode & charCodeMask;
-    virtualKey = (keycode & keyCodeMask) >> 8;
+    virtualKey = (char) (keycode >> 16);    
+    c = (keycode) & 0xffff;
+    if (c > 255) {
+        return NoSymbol;
+    }
 
     /*
      * When determining what keysym to produce we firt check to see if
@@ -161,8 +164,6 @@ XKeycodeToKeysym(
 	    return (KeySym) Tcl_GetHashValue(hPtr);
 	}
     }
-    
-    
     hPtr = Tcl_FindHashEntry(&keycodeTable, (char *) virtualKey);
     if (hPtr != NULL) {
 	return (KeySym) Tcl_GetHashValue(hPtr);
@@ -190,60 +191,63 @@ XKeycodeToKeysym(
 /*
  *----------------------------------------------------------------------
  *
- * XLookupString --
+ * TkpGetString --
  *
  *	Retrieve the string equivalent for the given keyboard event.
  *
  * Results:
- *	Returns the number of characters stored in buffer_return.
+ *	Returns the UTF string.
  *
  * Side effects:
- *	Retrieves the characters stored in the event and inserts them
- *	into buffer_return.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-int 
-XLookupString(
-    XKeyEvent* event_struct,
-    char* buffer_return,
-    int	bytes_buffer,
-    KeySym* keysym_return,
-    XComposeStatus* status_in_out)
+char *
+TkpGetString(
+    TkWindow *winPtr,		/* Window where event occurred:  needed to
+				 * get input context. */
+    XEvent *eventPtr,		/* X keyboard event. */
+    Tcl_DString *dsPtr)		/* Uninitialized or empty string to hold
+				 * result. */
 {
     register Tcl_HashEntry *hPtr;
     char string[3];
     char virtualKey;
-    char c;
+    int c, len;
 
     if (!initialized) {
 	InitKeyMaps();
     }
-	
-    c = event_struct->keycode & charCodeMask;
-    string[0] = c;
-    string[1] = '\0';
+    
+    Tcl_DStringInit(dsPtr);
+    
+    virtualKey = (char) (eventPtr->xkey.keycode >> 16);    
+    c = (eventPtr->xkey.keycode) & 0xffff;
+    
+    if (c < 256) {
+        string[0] = (char) c;
+        len = 1;
+    } else {
+        string[0] = (char) (c >> 8);
+        string[1] = (char) c;
+        len = 2;
+    }
     
     /*
      * Just return NULL if the character is a function key or another
      * non-printing key.
      */
     if (c == 0x10) {
-	string[0] = '\0';
+	len = 0;
     } else {
-	virtualKey = (event_struct->keycode & keyCodeMask) >> 8;
 	hPtr = Tcl_FindHashEntry(&keycodeTable, (char *) virtualKey);
 	if (hPtr != NULL) {
-	    string[0] = '\0';
+	    len = 0;
 	}
     }
-
-    if (buffer_return != NULL) {
-	strncpy(buffer_return, string, bytes_buffer);
-    }
-
-    return strlen(string);
+    return Tcl_ExternalToUtfDString(NULL, string, len, dsPtr);
 }
 
 /*
@@ -377,7 +381,7 @@ XKeysymToKeycode(
             virtualKeyCode = 0x24;
             keysym = '\r';
         }
-	keycode = keysym + ((virtualKeyCode << 8) & keyCodeMask);
+	keycode = keysym + (virtualKeyCode <<16);
     }
 
     return keycode;

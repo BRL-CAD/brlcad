@@ -6,7 +6,7 @@
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
 '\"
-'\" SCCS: @(#) frame.n 1.30 97/10/31 12:58:48
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH frame n 8.0 Tk "Tk Built-In Commands"

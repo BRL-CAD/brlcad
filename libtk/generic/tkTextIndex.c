@@ -5,12 +5,12 @@
  *	text widgets.
  *
  * Copyright (c) 1992-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkTextIndex.c 1.15 97/06/17 17:49:24
+ * RCS: @(#) $Id$
  */
 
 #include "default.h"
@@ -34,27 +34,118 @@ static char *		StartEnd _ANSI_ARGS_(( char *string,
 			    TkTextIndex *indexPtr));
 
 /*
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
- * TkTextMakeIndex --
+ * TkTextMakeByteIndex --
  *
- *	Given a line index and a character index, look things up
- *	in the B-tree and fill in a TkTextIndex structure.
+ *	Given a line index and a byte index, look things up in the B-tree
+ *	and fill in a TkTextIndex structure.
  *
  * Results:
- *	The structure at *indexPtr is filled in with information
- *	about the character at lineIndex and charIndex (or the
- *	closest existing character, if the specified one doesn't
- *	exist), and indexPtr is returned as result.
+ *	The structure at *indexPtr is filled in with information about the
+ *	character at lineIndex and byteIndex (or the closest existing
+ *	character, if the specified one doesn't exist), and indexPtr is
+ *	returned as result.
  *
  * Side effects:
  *	None.
  *
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 TkTextIndex *
-TkTextMakeIndex(tree, lineIndex, charIndex, indexPtr)
+TkTextMakeByteIndex(tree, lineIndex, byteIndex, indexPtr)
+    TkTextBTree tree;		/* Tree that lineIndex and charIndex refer
+				 * to. */
+    int lineIndex;		/* Index of desired line (0 means first
+				 * line of text). */
+    int byteIndex;		/* Byte index of desired character. */
+    TkTextIndex *indexPtr;	/* Structure to fill in. */
+{
+    TkTextSegment *segPtr;
+    int index;
+    char *p, *start;
+    Tcl_UniChar ch;
+
+    indexPtr->tree = tree;
+    if (lineIndex < 0) {
+	lineIndex = 0;
+	byteIndex = 0;
+    }
+    if (byteIndex < 0) {
+	byteIndex = 0;
+    }
+    indexPtr->linePtr = TkBTreeFindLine(tree, lineIndex);
+    if (indexPtr->linePtr == NULL) {
+	indexPtr->linePtr = TkBTreeFindLine(tree, TkBTreeNumLines(tree));
+	byteIndex = 0;
+    }
+    if (byteIndex == 0) {
+	indexPtr->byteIndex = byteIndex;
+	return indexPtr;
+    }
+
+    /*
+     * Verify that the index is within the range of the line and points
+     * to a valid character boundary.  
+     */
+
+    index = 0;
+    for (segPtr = indexPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr) {
+	if (segPtr == NULL) {
+	    /*
+	     * Use the index of the last character in the line.  Since
+	     * the last character on the line is guaranteed to be a '\n',
+	     * we can back up a constant sizeof(char) bytes.
+	     */
+	     
+	    indexPtr->byteIndex = index - sizeof(char);
+	    break;
+	}
+	if (index + segPtr->size > byteIndex) {
+	    indexPtr->byteIndex = byteIndex;
+	    if ((byteIndex > index) && (segPtr->typePtr == &tkTextCharType)) {
+		/*
+		 * Prevent UTF-8 character from being split up by ensuring
+		 * that byteIndex falls on a character boundary.  If index
+		 * falls in the middle of a UTF-8 character, it will be
+		 * adjusted to the end of that UTF-8 character.
+		 */
+
+		start = segPtr->body.chars + (byteIndex - index);
+		p = Tcl_UtfPrev(start, segPtr->body.chars);
+		p += Tcl_UtfToUniChar(p, &ch);
+		indexPtr->byteIndex += p - start;
+	    }
+	    break;
+	}
+	index += segPtr->size;
+    }
+    return indexPtr;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkTextMakeCharIndex --
+ *
+ *	Given a line index and a character index, look things up in the
+ *	B-tree and fill in a TkTextIndex structure.
+ *
+ * Results:
+ *	The structure at *indexPtr is filled in with information about the
+ *	character at lineIndex and charIndex (or the closest existing
+ *	character, if the specified one doesn't exist), and indexPtr is
+ *	returned as result.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+TkTextIndex *
+TkTextMakeCharIndex(tree, lineIndex, charIndex, indexPtr)
     TkTextBTree tree;		/* Tree that lineIndex and charIndex refer
 				 * to. */
     int lineIndex;		/* Index of desired line (0 means first
@@ -63,7 +154,9 @@ TkTextMakeIndex(tree, lineIndex, charIndex, indexPtr)
     TkTextIndex *indexPtr;	/* Structure to fill in. */
 {
     register TkTextSegment *segPtr;
-    int index;
+    char *p, *start, *end;
+    int index, offset;
+    Tcl_UniChar ch;
 
     indexPtr->tree = tree;
     if (lineIndex < 0) {
@@ -84,53 +177,76 @@ TkTextMakeIndex(tree, lineIndex, charIndex, indexPtr)
      * If not, just use the index of the last character in the line.
      */
 
-    for (index = 0, segPtr = indexPtr->linePtr->segPtr; ;
-	    segPtr = segPtr->nextPtr) {
+    index = 0;
+    for (segPtr = indexPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr) {
 	if (segPtr == NULL) {
-	    indexPtr->charIndex = index-1;
+	    /*
+	     * Use the index of the last character in the line.  Since
+	     * the last character on the line is guaranteed to be a '\n',
+	     * we can back up a constant sizeof(char) bytes.
+	     */
+	     
+	    indexPtr->byteIndex = index - sizeof(char);
 	    break;
 	}
-	index += segPtr->size;
-	if (index > charIndex) {
-	    indexPtr->charIndex = charIndex;
-	    break;
+	if (segPtr->typePtr == &tkTextCharType) {
+	    /*
+	     * Turn character offset into a byte offset.
+	     */
+
+	    start = segPtr->body.chars;
+	    end = start + segPtr->size;
+	    for (p = start; p < end; p += offset) {
+		if (charIndex == 0) {
+		    indexPtr->byteIndex = index;
+		    return indexPtr;
+		}
+		charIndex--;
+		offset = Tcl_UtfToUniChar(p, &ch);
+		index += offset;
+	    }
+	} else {
+	    if (charIndex < segPtr->size) {
+		indexPtr->byteIndex = index;
+		break;
+	    }
+	    charIndex -= segPtr->size;
+	    index += segPtr->size;
 	}
     }
     return indexPtr;
 }
 
 /*
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TkTextIndexToSeg --
  *
- *	Given an index, this procedure returns the segment and
- *	offset within segment for the index.
+ *	Given an index, this procedure returns the segment and offset
+ *	within segment for the index.
  *
  * Results:
- *	The return value is a pointer to the segment referred to
- *	by indexPtr;  this will always be a segment with non-zero
- *	size.  The variable at *offsetPtr is set to hold the
- *	integer offset within the segment of the character
- *	given by indexPtr.
+ *	The return value is a pointer to the segment referred to by
+ *	indexPtr; this will always be a segment with non-zero size.  The
+ *	variable at *offsetPtr is set to hold the integer offset within
+ *	the segment of the character given by indexPtr.
  *
  * Side effects:
  *	None.
  *
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 TkTextSegment *
 TkTextIndexToSeg(indexPtr, offsetPtr)
-    TkTextIndex *indexPtr;		/* Text index. */
-    int *offsetPtr;			/* Where to store offset within
-					 * segment, or NULL if offset isn't
-					 * wanted. */
+    CONST TkTextIndex *indexPtr;/* Text index. */
+    int *offsetPtr;		/* Where to store offset within segment, or
+				 * NULL if offset isn't wanted. */
 {
-    register TkTextSegment *segPtr;
+    TkTextSegment *segPtr;
     int offset;
 
-    for (offset = indexPtr->charIndex, segPtr = indexPtr->linePtr->segPtr;
+    for (offset = indexPtr->byteIndex, segPtr = indexPtr->linePtr->segPtr;
 	    offset >= segPtr->size;
 	    offset -= segPtr->size, segPtr = segPtr->nextPtr) {
 	/* Empty loop body. */
@@ -142,30 +258,29 @@ TkTextIndexToSeg(indexPtr, offsetPtr)
 }
 
 /*
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TkTextSegToOffset --
  *
- *	Given a segment pointer and the line containing it, this
- *	procedure returns the offset of the segment within its
- *	line.
+ *	Given a segment pointer and the line containing it, this procedure
+ *	returns the offset of the segment within its line.
  *
  * Results:
- *	The return value is the offset (within its line) of the
- *	first character in segPtr.
+ *	The return value is the offset (within its line) of the first
+ *	character in segPtr.
  *
  * Side effects:
  *	None.
  *
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 int
 TkTextSegToOffset(segPtr, linePtr)
-    TkTextSegment *segPtr;		/* Segment whose offset is desired. */
-    TkTextLine *linePtr;		/* Line containing segPtr. */
+    CONST TkTextSegment *segPtr;/* Segment whose offset is desired. */
+    CONST TkTextLine *linePtr;	/* Line containing segPtr. */
 {
-    TkTextSegment *segPtr2;
+    CONST TkTextSegment *segPtr2;
     int offset;
 
     offset = 0;
@@ -177,23 +292,22 @@ TkTextSegToOffset(segPtr, linePtr)
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TkTextGetIndex --
  *
- *	Given a string, return the line and character indices that
- *	it describes.
+ *	Given a string, return the index that is described.
  *
  * Results:
- *	The return value is a standard Tcl return result.  If
- *	TCL_OK is returned, then everything went well and the index
- *	at *indexPtr is filled in;  otherwise TCL_ERROR is returned
- *	and an error message is left in interp->result.
+ *	The return value is a standard Tcl return result.  If TCL_OK is
+ *	returned, then everything went well and the index at *indexPtr is
+ *	filled in; otherwise TCL_ERROR is returned and an error message
+ *	is left in the interp's result.
  *
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 int
@@ -203,8 +317,7 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
     char *string;		/* Textual description of position. */
     TkTextIndex *indexPtr;	/* Index structure to fill in. */
 {
-    register char *p;
-    char *end, *endOfBase;
+    char *p, *end, *endOfBase;
     Tcl_HashEntry *hPtr;
     TkTextTag *tagPtr;
     TkTextSearch search;
@@ -259,8 +372,8 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 	    goto tryxy;
 	}
 	tagPtr = (TkTextTag *) Tcl_GetHashValue(hPtr);
-	TkTextMakeIndex(textPtr->tree, 0, 0, &first);
-	TkTextMakeIndex(textPtr->tree, TkBTreeNumLines(textPtr->tree), 0,
+	TkTextMakeByteIndex(textPtr->tree, 0, 0, &first);
+	TkTextMakeByteIndex(textPtr->tree, TkBTreeNumLines(textPtr->tree), 0,
 		&last);
 	TkBTreeStartSearch(&first, &last, tagPtr, &search);
 	if (!TkBTreeCharTagged(&first, tagPtr) && !TkBTreeNextTag(&search)) {
@@ -324,7 +437,7 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 	    }
 	    endOfBase = end;
 	}
-	TkTextMakeIndex(textPtr->tree, lineIndex, charIndex, indexPtr);
+	TkTextMakeCharIndex(textPtr->tree, lineIndex, charIndex, indexPtr);
 	goto gotBase;
     }
 
@@ -353,7 +466,7 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 	 * Base position is end of text.
 	 */
 
-	TkTextMakeIndex(textPtr->tree, TkBTreeNumLines(textPtr->tree),
+	TkTextMakeByteIndex(textPtr->tree, TkBTreeNumLines(textPtr->tree),
 		0, indexPtr);
 	goto gotBase;
     } else {
@@ -420,13 +533,12 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TkTextPrintIndex --
- *
  *	
- *	This procedure generates a string description of an index,
- *	suitable for reading in again later.
+ *	This procedure generates a string description of an index, suitable
+ *	for reading in again later.
  *
  * Results:
  *	The characters pointed to by string are modified.
@@ -434,49 +546,69 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 void
 TkTextPrintIndex(indexPtr, string)
-    TkTextIndex *indexPtr;	/* Pointer to index. */
+    CONST TkTextIndex *indexPtr;/* Pointer to index. */
     char *string;		/* Place to store the position.  Must have
 				 * at least TK_POS_CHARS characters. */
 {
+    TkTextSegment *segPtr;
+    int numBytes, charIndex;
+
+    numBytes = indexPtr->byteIndex;
+    charIndex = 0;
+    for (segPtr = indexPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr) {
+	if (numBytes <= segPtr->size) {
+	    break;
+	}
+	if (segPtr->typePtr == &tkTextCharType) {
+	    charIndex += Tcl_NumUtfChars(segPtr->body.chars, segPtr->size);
+	} else {
+	    charIndex += segPtr->size;
+	}
+	numBytes -= segPtr->size;
+    }
+    if (segPtr->typePtr == &tkTextCharType) {
+	charIndex += Tcl_NumUtfChars(segPtr->body.chars, numBytes);
+    } else {
+	charIndex += numBytes;
+    }
     sprintf(string, "%d.%d", TkBTreeLineIndex(indexPtr->linePtr) + 1,
-	    indexPtr->charIndex);
+	    charIndex);
 }
 
 /*
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * TkTextIndexCmp --
  *
- *	Compare two indices to see which one is earlier in
- *	the text.
+ *	Compare two indices to see which one is earlier in the text.
  *
  * Results:
- *	The return value is 0 if index1Ptr and index2Ptr refer
- *	to the same position in the file, -1 if index1Ptr refers
- *	to an earlier position than index2Ptr, and 1 otherwise.
+ *	The return value is 0 if index1Ptr and index2Ptr refer to the same
+ *	position in the file, -1 if index1Ptr refers to an earlier position
+ *	than index2Ptr, and 1 otherwise.
  *
  * Side effects:
  *	None.
  *
- *--------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 int
 TkTextIndexCmp(index1Ptr, index2Ptr)
-    TkTextIndex *index1Ptr;		/* First index. */
-    TkTextIndex *index2Ptr;		/* Second index. */
+    CONST TkTextIndex *index1Ptr;		/* First index. */
+    CONST TkTextIndex *index2Ptr;		/* Second index. */
 {
     int line1, line2;
 
     if (index1Ptr->linePtr == index2Ptr->linePtr) {
-	if (index1Ptr->charIndex < index2Ptr->charIndex) {
+	if (index1Ptr->byteIndex < index2Ptr->byteIndex) {
 	    return -1;
-	} else if (index1Ptr->charIndex > index2Ptr->charIndex) {
+	} else if (index1Ptr->byteIndex > index2Ptr->byteIndex) {
 	    return 1;
 	} else {
 	    return 0;
@@ -494,23 +626,23 @@ TkTextIndexCmp(index1Ptr, index2Ptr)
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
  * ForwBack --
  *
- *	This procedure handles +/- modifiers for indices to adjust
- *	the index forwards or backwards.
+ *	This procedure handles +/- modifiers for indices to adjust the
+ *	index forwards or backwards.
  *
  * Results:
- *	If the modifier in string is successfully parsed then the
- *	return value is the address of the first character after the
- *	modifier, and *indexPtr is updated to reflect the modifier.
- *	If there is a syntax error in the modifier then NULL is returned.
+ *	If the modifier in string is successfully parsed then the return
+ *	value is the address of the first character after the modifier,
+ *	and *indexPtr is updated to reflect the modifier.  If there is a
+ *	syntax error in the modifier then NULL is returned.
  *
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 static char *
@@ -550,7 +682,7 @@ ForwBack(string, indexPtr)
      */
 
     units = p; 
-    while ((*p != 0) && !isspace(UCHAR(*p)) && (*p != '+') && (*p != '-')) {
+    while ((*p != '\0') && !isspace(UCHAR(*p)) && (*p != '+') && (*p != '-')) {
 	p++;
     }
     length = p - units;
@@ -578,7 +710,18 @@ ForwBack(string, indexPtr)
 		lineIndex = 0;
 	    }
 	}
-	TkTextMakeIndex(indexPtr->tree, lineIndex, indexPtr->charIndex,
+	/*
+	 * This doesn't work quite right if using a proportional font or
+	 * UTF-8 characters with varying numbers of bytes.  The cursor will
+	 * bop around, keeping a constant number of bytes (not characters)
+	 * from the left edge (but making sure not to split any UTF-8
+	 * characters), regardless of the x-position the index corresponds
+	 * to.  The proper way to do this is to get the x-position of the
+	 * index and then pick the character at the same x-position in the
+	 * new line.
+	 */
+
+	TkTextMakeByteIndex(indexPtr->tree, lineIndex, indexPtr->byteIndex,
 		indexPtr);
     } else {
 	return NULL;
@@ -587,44 +730,42 @@ ForwBack(string, indexPtr)
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
- * TkTextIndexForwChars --
+ * TkTextIndexForwBytes --
  *
- *	Given an index for a text widget, this procedure creates a
- *	new index that points "count" characters ahead of the source
- *	index.
+ *	Given an index for a text widget, this procedure creates a new
+ *	index that points "count" bytes ahead of the source index.
  *
  * Results:
- *	*dstPtr is modified to refer to the character "count" characters
- *	after srcPtr, or to the last character in the file if there aren't
- *	"count" characters left in the file.
+ *	*dstPtr is modified to refer to the character "count" bytes after
+ *	srcPtr, or to the last character in the TkText if there aren't
+ *	"count" bytes left.
  *
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
 void
-TkTextIndexForwChars(srcPtr, count, dstPtr)
-    TkTextIndex *srcPtr;		/* Source index. */
-    int count;				/* How many characters forward to
-					 * move.  May be negative. */
-    TkTextIndex *dstPtr;		/* Destination index: gets modified. */
+TkTextIndexForwBytes(srcPtr, byteCount, dstPtr)
+    CONST TkTextIndex *srcPtr;	/* Source index. */
+    int byteCount;		/* How many bytes forward to move.  May be
+				 * negative. */
+    TkTextIndex *dstPtr;	/* Destination index: gets modified. */
 {
     TkTextLine *linePtr;
     TkTextSegment *segPtr;
     int lineLength;
 
-    if (count < 0) {
-	TkTextIndexBackChars(srcPtr, -count, dstPtr);
+    if (byteCount < 0) {
+	TkTextIndexBackBytes(srcPtr, -byteCount, dstPtr);
 	return;
     }
 
     *dstPtr = *srcPtr;
-    dstPtr->charIndex += count;
+    dstPtr->byteIndex += byteCount;
     while (1) {
 	/*
 	 * Compute the length of the current line.
@@ -641,13 +782,13 @@ TkTextIndexForwChars(srcPtr, count, dstPtr)
 	 * Otherwise go on to the next line.
 	 */
 
-	if (dstPtr->charIndex < lineLength) {
+	if (dstPtr->byteIndex < lineLength) {
 	    return;
 	}
-	dstPtr->charIndex -= lineLength;
+	dstPtr->byteIndex -= lineLength;
 	linePtr = TkBTreeNextLine(dstPtr->linePtr);
 	if (linePtr == NULL) {
-	    dstPtr->charIndex = lineLength - 1;
+	    dstPtr->byteIndex = lineLength - 1;
 	    return;
 	}
 	dstPtr->linePtr = linePtr;
@@ -655,44 +796,133 @@ TkTextIndexForwChars(srcPtr, count, dstPtr)
 }
 
 /*
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  *
- * TkTextIndexBackChars --
+ * TkTextIndexForwChars --
  *
- *	Given an index for a text widget, this procedure creates a
- *	new index that points "count" characters earlier than the
- *	source index.
+ *	Given an index for a text widget, this procedure creates a new
+ *	index that points "count" characters ahead of the source index.
  *
  * Results:
  *	*dstPtr is modified to refer to the character "count" characters
- *	before srcPtr, or to the first character in the file if there aren't
- *	"count" characters earlier than srcPtr.
+ *	after srcPtr, or to the last character in the TkText if there
+ *	aren't "count" characters left in the file.
  *
  * Side effects:
  *	None.
  *
- *----------------------------------------------------------------------
+ *---------------------------------------------------------------------------
  */
 
 void
-TkTextIndexBackChars(srcPtr, count, dstPtr)
-    TkTextIndex *srcPtr;		/* Source index. */
-    int count;				/* How many characters backward to
-					 * move.  May be negative. */
-    TkTextIndex *dstPtr;		/* Destination index: gets modified. */
+TkTextIndexForwChars(srcPtr, charCount, dstPtr)
+    CONST TkTextIndex *srcPtr;	/* Source index. */
+    int charCount;		/* How many characters forward to move.
+				 * May be negative. */
+    TkTextIndex *dstPtr;	/* Destination index: gets modified. */
 {
+    TkTextLine *linePtr;
     TkTextSegment *segPtr;
-    int lineIndex;
+    int byteOffset;
+    char *start, *end, *p;
+    Tcl_UniChar ch;
 
-    if (count < 0) {
-	TkTextIndexForwChars(srcPtr, -count, dstPtr);
+    if (charCount < 0) {
+	TkTextIndexBackChars(srcPtr, -charCount, dstPtr);
 	return;
     }
 
     *dstPtr = *srcPtr;
-    dstPtr->charIndex -= count;
+
+    /*
+     * Find seg that contains src byteIndex.
+     * Move forward specified number of chars.
+     */
+
+    segPtr = TkTextIndexToSeg(dstPtr, &byteOffset);
+    while (1) {
+	/*
+	 * Go through each segment in line looking for specified character
+	 * index.
+	 */
+
+	for ( ; segPtr != NULL; segPtr = segPtr->nextPtr) {
+	    if (segPtr->typePtr == &tkTextCharType) {
+		start = segPtr->body.chars + byteOffset;
+		end = segPtr->body.chars + segPtr->size;
+		for (p = start; p < end; p += Tcl_UtfToUniChar(p, &ch)) {
+		    if (charCount == 0) {
+			dstPtr->byteIndex += (p - start);
+			return;
+		    }
+		    charCount--;
+		}
+	    } else {
+		if (charCount < segPtr->size - byteOffset) {
+		    dstPtr->byteIndex += charCount;
+		    return;
+		}
+		charCount -= segPtr->size - byteOffset;
+	    }
+	    dstPtr->byteIndex += segPtr->size - byteOffset;
+	    byteOffset = 0;
+	}
+
+	/*
+	 * Go to the next line.  If we are at the end of the text item,
+	 * back up one byte (for the terminal '\n' character) and return
+	 * that index.
+	 */
+	 
+	linePtr = TkBTreeNextLine(dstPtr->linePtr);
+	if (linePtr == NULL) {
+	    dstPtr->byteIndex -= sizeof(char);
+	    return;
+	}
+	dstPtr->linePtr = linePtr;
+	dstPtr->byteIndex = 0;
+	segPtr = dstPtr->linePtr->segPtr;
+    }
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkTextIndexBackBytes --
+ *
+ *	Given an index for a text widget, this procedure creates a new
+ *	index that points "count" bytes earlier than the source index.
+ *
+ * Results:
+ *	*dstPtr is modified to refer to the character "count" bytes before
+ *	srcPtr, or to the first character in the TkText if there aren't
+ *	"count" bytes earlier than srcPtr.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+void
+TkTextIndexBackBytes(srcPtr, byteCount, dstPtr)
+    CONST TkTextIndex *srcPtr;	/* Source index. */
+    int byteCount;		/* How many bytes backward to move.  May be
+				 * negative. */
+    TkTextIndex *dstPtr;	/* Destination index: gets modified. */
+{
+    TkTextSegment *segPtr;
+    int lineIndex;
+
+    if (byteCount < 0) {
+	TkTextIndexForwBytes(srcPtr, -byteCount, dstPtr);
+	return;
+    }
+
+    *dstPtr = *srcPtr;
+    dstPtr->byteIndex -= byteCount;
     lineIndex = -1;
-    while (dstPtr->charIndex < 0) {
+    while (dstPtr->byteIndex < 0) {
 	/*
 	 * Move back one line in the text.  If we run off the beginning
 	 * of the file then just return the first character in the text.
@@ -702,7 +932,7 @@ TkTextIndexBackChars(srcPtr, count, dstPtr)
 	    lineIndex = TkBTreeLineIndex(dstPtr->linePtr);
 	}
 	if (lineIndex == 0) {
-	    dstPtr->charIndex = 0;
+	    dstPtr->byteIndex = 0;
 	    return;
 	}
 	lineIndex--;
@@ -714,8 +944,124 @@ TkTextIndexBackChars(srcPtr, count, dstPtr)
 
 	for (segPtr = dstPtr->linePtr->segPtr; segPtr != NULL;
 		segPtr = segPtr->nextPtr) {
-	    dstPtr->charIndex += segPtr->size;
+	    dstPtr->byteIndex += segPtr->size;
 	}
+    }
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkTextIndexBackChars --
+ *
+ *	Given an index for a text widget, this procedure creates a new
+ *	index that points "count" characters earlier than the source index.
+ *
+ * Results:
+ *	*dstPtr is modified to refer to the character "count" characters
+ *	before srcPtr, or to the first character in the file if there
+ *	aren't "count" characters earlier than srcPtr.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+void
+TkTextIndexBackChars(srcPtr, charCount, dstPtr)
+    CONST TkTextIndex *srcPtr;	/* Source index. */
+    int charCount;		/* How many characters backward to move.
+				 * May be negative. */
+    TkTextIndex *dstPtr;	/* Destination index: gets modified. */
+{
+    TkTextSegment *segPtr, *oldPtr;
+    int lineIndex, segSize;
+    char *p, *start, *end;
+
+    if (charCount <= 0) {
+	TkTextIndexForwChars(srcPtr, -charCount, dstPtr);
+	return;
+    }
+
+    *dstPtr = *srcPtr;
+
+    /*
+     * Find offset within seg that contains byteIndex.
+     * Move backward specified number of chars.
+     */
+
+    lineIndex = -1;
+    
+    segSize = dstPtr->byteIndex;
+    for (segPtr = dstPtr->linePtr->segPtr; ; segPtr = segPtr->nextPtr) {
+	if (segSize <= segPtr->size) {
+	    break;
+	}
+	segSize -= segPtr->size;
+    }
+    while (1) {
+	if (segPtr->typePtr == &tkTextCharType) {
+	    start = segPtr->body.chars;
+	    end = segPtr->body.chars + segSize;
+	    for (p = end; ; p = Tcl_UtfPrev(p, start)) {
+		if (charCount == 0) {
+		    dstPtr->byteIndex -= (end - p);
+		    return;
+		}
+		if (p == start) {
+		    break;
+		}
+		charCount--;
+	    }
+	} else {
+	    if (charCount <= segSize) {
+		dstPtr->byteIndex -= charCount;
+		return;
+	    }
+	    charCount -= segSize;
+	}
+	dstPtr->byteIndex -= segSize;
+
+	/*
+	 * Move back into previous segment.
+	 */
+
+	oldPtr = segPtr;
+	segPtr = dstPtr->linePtr->segPtr;
+	if (segPtr != oldPtr) {
+	    for ( ; segPtr->nextPtr != oldPtr; segPtr = segPtr->nextPtr) {
+		/* Empty body. */
+	    }
+	    segSize = segPtr->size;
+	    continue;
+	}
+
+	/*
+	 * Move back to previous line.
+	 */
+
+	if (lineIndex < 0) {
+	    lineIndex = TkBTreeLineIndex(dstPtr->linePtr);
+	}
+	if (lineIndex == 0) {
+	    dstPtr->byteIndex = 0;
+	    return;
+	}
+	lineIndex--;
+	dstPtr->linePtr = TkBTreeFindLine(dstPtr->tree, lineIndex);
+
+	/*
+	 * Compute the length of the line and add that to dstPtr->byteIndex.
+	 */
+
+	oldPtr = dstPtr->linePtr->segPtr;
+	for (segPtr = oldPtr; segPtr != NULL; segPtr = segPtr->nextPtr) {
+	    dstPtr->byteIndex += segPtr->size;
+	    oldPtr = segPtr;
+	}
+	segPtr = oldPtr;
+	segSize = segPtr->size;
     }
 }
 
@@ -762,15 +1108,15 @@ StartEnd(string, indexPtr)
     length = p-string;
     if ((*string == 'l') && (strncmp(string, "lineend", length) == 0)
 	    && (length >= 5)) {
-	indexPtr->charIndex = 0;
+	indexPtr->byteIndex = 0;
 	for (segPtr = indexPtr->linePtr->segPtr; segPtr != NULL;
 		segPtr = segPtr->nextPtr) {
-	    indexPtr->charIndex += segPtr->size;
+	    indexPtr->byteIndex += segPtr->size;
 	}
-	indexPtr->charIndex -= 1;
+	indexPtr->byteIndex -= sizeof(char);
     } else if ((*string == 'l') && (strncmp(string, "linestart", length) == 0)
 	    && (length >= 5)) {
-	indexPtr->charIndex = 0;
+	indexPtr->byteIndex = 0;
     } else if ((*string == 'w') && (strncmp(string, "wordend", length) == 0)
 	    && (length >= 5)) {
 	int firstChar = 1;
@@ -791,7 +1137,7 @@ StartEnd(string, indexPtr)
 		firstChar = 0;
 	    }
 	    offset += 1;
-	    indexPtr->charIndex += 1;
+	    indexPtr->byteIndex += sizeof(char);
 	    if (offset >= segPtr->size) {
 		segPtr = TkTextIndexToSeg(indexPtr, &offset);
 	    }
@@ -820,10 +1166,10 @@ StartEnd(string, indexPtr)
 		firstChar = 0;
 	    }
 	    offset -= 1;
-	    indexPtr->charIndex -= 1;
+	    indexPtr->byteIndex -= sizeof(char);
 	    if (offset < 0) {
-		if (indexPtr->charIndex < 0) {
-		    indexPtr->charIndex = 0;
+		if (indexPtr->byteIndex < 0) {
+		    indexPtr->byteIndex = 0;
 		    goto done;
 		}
 		segPtr = TkTextIndexToSeg(indexPtr, &offset);

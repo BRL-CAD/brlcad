@@ -3,14 +3,14 @@
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) text.test 1.46 97/10/13 15:18:31
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then \
-  {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 eval destroy [winfo child .]
 
@@ -906,7 +906,7 @@ test text-20.17 {TextSearchCmd procedure, pattern case conversion} {
 } {2.13 {}}
 test text-20.18 {TextSearchCmd procedure, bad regular expression pattern} {
     list [catch {.t search -regexp a( 1.0} msg] $msg
-} {1 {couldn't compile regular expression pattern: unmatched ()}}
+} {1 {couldn't compile regular expression pattern: parentheses () not balanced}}
 test text-20.19 {TextSearchCmd procedure, skip dummy last line} {
     .t search -backwards BaR end 1.0
 } {2.23}
@@ -1082,6 +1082,27 @@ test text-20.62 {TextSearchCmd, freeing copy of pattern} {
     set p $p$p$p$p$p
     .t search -nocase $p 1.0
 } {}
+test text-20.63 {TextSearchCmd, unicode} {
+    .t delete 1.0 end
+    .t insert end "foo\u30c9\u30cabar"
+    .t search \u30c9\u30ca 1.0
+} 1.3
+test text-20.64 {TextSearchCmd, unicode} {
+    .t delete 1.0 end
+    .t insert end "foo\u30c9\u30cabar"
+    list [.t search -count n \u30c9\u30ca 1.0] $n
+} {1.3 2}
+test text-20.65 {TextSearchCmd, unicode with non-text segments} {
+    .t delete 1.0 end
+    button .b1 -text baz
+    .t insert end "foo\u30c9"
+    .t window create end -window .b1
+    .t insert end "\u30cabar"
+    set result [list [.t search -count n \u30c9\u30ca 1.0] $n]
+    destroy .b1
+    set result
+} {1.3 3}
+
 
 eval destroy [winfo child .]
 text .t2 -highlightthickness 0 -bd 0 -relief flat -padx 0 -width 100
@@ -1258,5 +1279,35 @@ test text-23.1 {text widget vs hidden commands} {
     list [winfo children .] [interp hidden]
 } [list {} $l]
 
+test text-24.1 {bug fix - 1642} {
+    catch {destroy .t}
+    text .t
+    pack .t
+    .t insert end "line 1\n"
+    .t insert end "line 2\n"
+    .t insert end "line 3\n"
+    .t insert end "line 4\n"
+    .t insert end "line 5\n"
+    tkTextSetCursor .t 3.0
+    .t search -backward -regexp "\$" insert 1.0
+} {2.6}
+
 eval destroy [winfo child .]
 option clear
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

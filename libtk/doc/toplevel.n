@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) toplevel.n 1.29 97/10/31 12:58:53
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH toplevel n 8.0 Tk "Tk Built-In Commands"

@@ -26,7 +26,7 @@ and Tk to compile.  You can also add new entries to that database
 when you install Tcl and Tk on a new platform.  The Web database is
 likely to be more up-to-date than this file.
 
-sccsid = SCCS: @(#) porting.notes 1.10 96/04/10 15:38:54
+RCS: @(#) $Id$
 
 --------------------------------------------
 Solaris, various versions

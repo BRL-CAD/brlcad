@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) wm.n 1.37 96/10/14 11:07:58
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH wm n 4.3 Tk "Tk Built-In Commands"
@@ -99,7 +99,9 @@ Arrange for \fIwindow\fR to be displayed in normal (non-iconified) form.
 This is done by mapping the window.  If the window has never been
 mapped then this command will not map the window, but it will ensure
 that when the window is first mapped it will be displayed
-in de-iconified form.  Returns an empty string.
+in de-iconified form.  On Windows, a deiconified window will also be
+raised and be given the focus (made the active window).
+Returns an empty string.
 .TP
 \fBwm focusmodel \fIwindow\fR ?\fBactive\fR|\fBpassive\fR?
 If \fBactive\fR or \fBpassive\fR is supplied as an optional argument
@@ -317,7 +319,7 @@ window at the given place without asking the user for assistance.
 If \fIwho\fR is specified as an empty string, then the current position
 source is cancelled.
 If \fIwho\fR is specified, then the command returns an empty string.
-Otherwise it returns \fBuser\fR or \fBwindow\fR to indicate the
+Otherwise it returns \fBuser\fR or \fBprogram\fR to indicate the
 source of the window's current position, or an empty string if
 no source has been specified yet.  Most window managers interpret
 ``no source'' as equivalent to \fBprogram\fR.

@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacSubwindows.c 1.81 97/10/29 11:46:54
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -27,7 +27,7 @@ static RgnHandle tmpRgn = NULL;
 
 static void UpdateOffsets _ANSI_ARGS_((TkWindow *winPtr, int deltaX, int deltaY));
 
-void MacMoveWindow _ANSI_ARGS_((WindowRef window, int x, int y));
+void tkMacMoveWindow _ANSI_ARGS_((WindowRef window, int x, int y));
 
 /*
  *----------------------------------------------------------------------
@@ -288,67 +288,76 @@ XResizeWindow(
 
     display->request++;
     SetPort((GrafPtr) destPort);
-    if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
-	/* 
-	 * NOTE: we are not adding the new space to the update
-	 * region.  It is currently assumed that Tk will need
-	 * to completely redraw anway.
-	 */
-	SizeWindow((WindowRef) destPort,
-		(short) width, (short) height, false);
-	TkMacInvalidateWindow(macWin, TK_WINDOW_ONLY);
-	TkMacInvalClipRgns(macWin->winPtr);
+    if (Tk_IsTopLevel(macWin->winPtr)) {
+	if (!Tk_IsEmbedded(macWin->winPtr)) {
+	    /* 
+	     * NOTE: we are not adding the new space to the update
+	     * region.  It is currently assumed that Tk will need
+	     * to completely redraw anway.
+	     */
+	    SizeWindow((WindowRef) destPort,
+		    (short) width, (short) height, false);
+	    TkMacInvalidateWindow(macWin, TK_WINDOW_ONLY);
+	    TkMacInvalClipRgns(macWin->winPtr);
+	} else {
+	    int deltaX, deltaY;
+	    
+	    /*
+	     * Find the Parent window -
+	     *    For an embedded window this will be its container.
+	     */
+	    TkWindow *contWinPtr;
+	    
+	    contWinPtr = TkpGetOtherWindow(macWin->winPtr);
+	    
+	    if (contWinPtr != NULL) {
+	        MacDrawable *macParent = contWinPtr->privatePtr;
+
+		TkMacInvalClipRgns(macParent->winPtr);	
+		TkMacInvalidateWindow(macWin, TK_PARENT_WINDOW);
+		
+		deltaX = macParent->xOff +
+		    macWin->winPtr->changes.x - macWin->xOff;
+		deltaY = macParent->yOff +
+		    macWin->winPtr->changes.y - macWin->yOff;
+		
+		UpdateOffsets(macWin->winPtr, deltaX, deltaY);
+	    } else {
+	        /*
+	         * This is the case where we are embedded in
+	         * another app.  At this point, we are assuming that
+	         * the changes.x,y is not maintained, if you need
+		 * the info get it from Tk_GetRootCoords,
+	         * and that the toplevel sits at 0,0 when it is drawn.
+	         */
+		
+		TkMacInvalidateWindow(macWin, TK_PARENT_WINDOW);
+		UpdateOffsets(macWin->winPtr, 0, 0);
+	    }
+	         
+	}   
     } else {
 	/* TODO: update all xOff & yOffs */
 	int deltaX, deltaY, parentBorderwidth;
 	MacDrawable *macParent = macWin->winPtr->parentPtr->privatePtr;
-
-        /*
-         * Find the Parent window -
-         *    For an embedded window this will be its container.
-         */
-         
-	if (Tk_IsEmbedded(macWin->winPtr)) {
-	    TkWindow *contWinPtr;
-	    
-	    contWinPtr = TkpGetOtherWindow(macWin->winPtr);
-	    if (contWinPtr == NULL) {
-	            panic("XMoveResizeWindow could not find container");
-	    }
-	    macParent = contWinPtr->privatePtr;
-	    
-	    /*
-	     * NOTE: Here we should handle out of process embedding.
-	     */
 	
-	} else {
-	    macParent = macWin->winPtr->parentPtr->privatePtr;   
-	    if (macParent == NULL) {
-	        return; /* TODO: Probably should be a panic */
-	    }
+	if (macParent == NULL) {
+	    return; /* TODO: Probably should be a panic */
 	}
 	
-	TkMacInvalClipRgns(macParent->winPtr);
+	TkMacInvalClipRgns(macParent->winPtr);	
 	TkMacInvalidateWindow(macWin, TK_PARENT_WINDOW);
 
 	deltaX = - macWin->xOff;
 	deltaY = - macWin->yOff;
 
-        /*
-	 * If macWin->winPtr is an embedded window, don't offset by its
-	 *  parent's borderwidth...
-	 */
-	 
-	if (!Tk_IsEmbedded(macWin->winPtr)) {
-	    parentBorderwidth = macWin->winPtr->parentPtr->changes.border_width;
-	} else {
-	    parentBorderwidth = 0;
-	}
+	parentBorderwidth = macWin->winPtr->parentPtr->changes.border_width;
+	
 	deltaX += macParent->xOff + parentBorderwidth +
 	    macWin->winPtr->changes.x;
 	deltaY += macParent->yOff + parentBorderwidth +
 	    macWin->winPtr->changes.y;
-
+        
 	UpdateOffsets(macWin->winPtr, deltaX, deltaY);
     }
 }
@@ -396,7 +405,7 @@ XMoveResizeWindow(
 	
 	SizeWindow((WindowRef) destPort,
 		(short) width, (short) height, false);
-	MacMoveWindow((WindowRef) destPort, x, y);
+	tkMacMoveWindow((WindowRef) destPort, x, y);
 	
 	/* TODO: is the following right? */
 	TkMacInvalidateWindow(macWin, TK_WINDOW_ONLY);
@@ -498,7 +507,7 @@ XMoveWindow(
 	 * region.  It is currently assumed that Tk will need
 	 * to completely redraw anway.
 	 */
-	MacMoveWindow((WindowRef) destPort, x, y);
+	tkMacMoveWindow((WindowRef) destPort, x, y);
 
 	/* TODO: is the following right? */
 	TkMacInvalidateWindow(macWin, TK_WINDOW_ONLY);
@@ -744,6 +753,9 @@ TkMacUpdateClipRgn(
  	        TkMacUpdateClipRgn(contWinPtr);
 	        SectRgn(rgn, 
 		        contWinPtr->privatePtr->aboveClipRgn, rgn);
+   	    } else if (gMacEmbedHandler != NULL) {
+   	        gMacEmbedHandler->getClipProc((Tk_Window) winPtr, tmpRgn);
+   	        SectRgn(rgn, tmpRgn, rgn);
    	    }
 	    
 	    /*
@@ -883,6 +895,7 @@ TkMacGetDrawablePort(
     Drawable drawable)
 {
     MacDrawable *macWin = (MacDrawable *) drawable;
+    GWorldPtr resultPort = NULL;
     
     if (macWin == NULL) {
         return NULL;
@@ -917,8 +930,14 @@ TkMacGetDrawablePort(
 	contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
 	
     	if (contWinPtr != NULL) {
-    	    return TkMacGetDrawablePort((Drawable) contWinPtr->privatePtr);
-    	} else {
+    	    resultPort = TkMacGetDrawablePort(
+		(Drawable) contWinPtr->privatePtr);
+    	} else if (gMacEmbedHandler != NULL) {
+	    resultPort = gMacEmbedHandler->getPortProc(
+                    (Tk_Window) macWin->winPtr);
+    	} 
+	
+	if (resultPort == NULL) {
     	    panic("TkMacGetDrawablePort couldn't find container");
     	    return NULL;
     	}	
@@ -928,7 +947,7 @@ TkMacGetDrawablePort(
 	 */
 		    
     }
-
+    return resultPort;
 }
 
 /*
@@ -1032,7 +1051,7 @@ TkMacWinBounds(
 /*
  *----------------------------------------------------------------------
  *
- * MacMoveWindow --
+ * tkMacMoveWindow --
  *
  *	A replacement for the Macintosh MoveWindow function.  This
  *	function adjusts the inputs to MoveWindow to offset the root of 
@@ -1049,7 +1068,7 @@ TkMacWinBounds(
  */
 
 void 
-MacMoveWindow(
+tkMacMoveWindow(
     WindowRef window,
     int x,
     int y)

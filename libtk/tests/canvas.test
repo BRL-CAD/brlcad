@@ -3,14 +3,13 @@
 # standard fashion for Tcl tests.
 #
 # Copyright (c) 1995-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) canvas.test 1.10 97/07/31 10:22:48
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -74,7 +73,16 @@ canvas .c -width 60 -height 40 -scrollregion {0 0 200 150} -bd 0 \
 	-highlightthickness 0
 pack .c
 update
-test canvas-2.1 {CanvasWidgetCmd, xview option} {
+
+test canvas-2.1 {CanvasWidgetCmd, bind option} {
+    set i [.c create rect 10 10 100 100]
+    list [catch {.c bind $i <a>} msg] $msg
+} {0 {}}
+test canvas-2.2 {CanvasWidgetCmd, bind option} {
+    set i [.c create rect 10 10 100 100]
+    list [catch {.c bind $i <} msg] $msg
+} {1 {no event type or button # or keysym}}
+test canvas-2.3 {CanvasWidgetCmd, xview option} {
     .c configure -xscrollincrement 40 -yscrollincrement 5
     .c xview moveto 0
     update
@@ -83,7 +91,7 @@ test canvas-2.1 {CanvasWidgetCmd, xview option} {
     update
     lappend x [.c xview]
 } {{0 0.3} {0.4 0.7}}
-test canvas-2.2 {CanvasWidgetCmd, xview option} {nonPortable} {
+test canvas-2.4 {CanvasWidgetCmd, xview option} {nonPortable} {
     # This test gives slightly different results on platforms such
     # as NetBSD.  I don't know why...
     .c configure -xscrollincrement 0 -yscrollincrement 5
@@ -190,3 +198,65 @@ test canvas-7.1 {canvas widget vs hidden commands} {
     destroy .c
     list [winfo children .] [interp hidden]
 } [list {} $l]
+
+test canvas-8.1 {canvas arc bbox} {
+    catch {destroy .c}
+    canvas .c
+    .c create arc -100 10 100 210 -start 10 -extent 50 -style arc -tags arc1
+    set arcBox [.c bbox arc1]
+    .c create arc 100 10 300 210 -start 10 -extent 50 -style chord -tags arc2
+    set coordBox [.c bbox arc2]
+    .c create arc 300 10 500 210 -start 10 -extent 50 -style pieslice -tags arc3
+    set pieBox [.c bbox arc3]
+    list $arcBox $coordBox $pieBox
+} {{48 21 100 94} {248 21 300 94} {398 21 500 112}}
+test canvas-9.1 {canvas id creation and deletion} {
+    # With Tk 8.0.4 the ids are now stored in a hash table.  You
+    # can use this test as a performance test with older versions
+    # by changing the value of size.
+    set size 15
+
+    catch {destroy .c}
+    set c [canvas .c]
+    for {set i 0} {$i < $size} {incr i} {
+	set x [expr {-10 + 3*$i}]
+	for {set j 0; set y -10} {$j < 10} {incr j; incr y 3} {
+	    $c create rect ${x}c ${y}c [expr $x+2]c [expr $y+2]c \
+		    -outline black -fill blue -tags rect
+	    $c create text [expr $x+1]c [expr $y+1]c -text "$i,$j" \
+		    -anchor center -tags text
+	}
+    }
+
+    # The actual bench mark - this code also exercises all the hash
+    # table changes.
+
+    set time [lindex [time {
+	foreach id [$c find withtag all] {
+	    $c lower $id
+	    $c raise $id
+	    $c find withtag $id
+	    $c bind <Return> $id {}
+	    $c delete $id
+	}
+    }] 0]
+	
+    set x ""
+} {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

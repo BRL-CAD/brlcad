@@ -5,12 +5,12 @@
  *	for Tk based on absolute placement or "rubber-sheet" placement.
  *
  * Copyright (c) 1992-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkPlace.c 1.27 96/08/20 17:05:31
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -99,15 +99,6 @@ typedef struct Master {
 #define PARENT_RECONFIG_PENDING	1
 
 /*
- * The hash tables below both use Tk_Window tokens as keys.  They map
- * from Tk_Windows to Slave and Master structures for windows, if they
- * exist.
- */
-
-static int initialized = 0;
-static Tcl_HashTable masterTable;
-static Tcl_HashTable slaveTable;
-/*
  * The following structure is the official type record for the
  * placer:
  */
@@ -168,15 +159,18 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
     Tcl_HashEntry *hPtr;
     size_t length;
     int c;
+    TkDisplay *dispPtr;
+
+    dispPtr = ((TkWindow *) clientData)->dispPtr;
 
     /*
      * Initialize, if that hasn't been done yet.
      */
 
-    if (!initialized) {
-	Tcl_InitHashTable(&masterTable, TCL_ONE_WORD_KEYS);
-	Tcl_InitHashTable(&slaveTable, TCL_ONE_WORD_KEYS);
-	initialized = 1;
+    if (!dispPtr->placeInit) {
+	Tcl_InitHashTable(&dispPtr->masterTable, TCL_ONE_WORD_KEYS);
+	Tcl_InitHashTable(&dispPtr->slaveTable, TCL_ONE_WORD_KEYS);
+	dispPtr->placeInit = 1;
     }
 
     if (argc < 3) {
@@ -225,7 +219,7 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 		    argv[0], " forget pathName\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	hPtr = Tcl_FindHashEntry(&slaveTable, (char *) tkwin);
+	hPtr = Tcl_FindHashEntry(&dispPtr->slaveTable, (char *) tkwin);
 	if (hPtr == NULL) {
 	    return TCL_OK;
 	}
@@ -243,14 +237,14 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 	Tk_UnmapWindow(tkwin);
 	ckfree((char *) slavePtr);
     } else if ((c == 'i') && (strncmp(argv[1], "info", length) == 0)) {
-	char buffer[50];
+	char buffer[32 + TCL_INTEGER_SPACE];
 
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
 		    argv[0], " info pathName\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	hPtr = Tcl_FindHashEntry(&slaveTable, (char *) tkwin);
+	hPtr = Tcl_FindHashEntry(&dispPtr->slaveTable, (char *) tkwin);
 	if (hPtr == NULL) {
 	    return TCL_OK;
 	}
@@ -306,7 +300,7 @@ Tk_PlaceCmd(clientData, interp, argc, argv)
 		    argv[0], " slaves pathName\"", (char *) NULL);
 	    return TCL_ERROR;
 	}
-	hPtr = Tcl_FindHashEntry(&masterTable, (char *) tkwin);
+	hPtr = Tcl_FindHashEntry(&dispPtr->masterTable, (char *) tkwin);
 	if (hPtr != NULL) {
 	    Master *masterPtr;
 	    masterPtr = (Master *) Tcl_GetHashValue(hPtr);
@@ -348,8 +342,9 @@ FindSlave(tkwin)
     Tcl_HashEntry *hPtr;
     register Slave *slavePtr;
     int new;
+    TkDisplay * dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
-    hPtr = Tcl_CreateHashEntry(&slaveTable, (char *) tkwin, &new);
+    hPtr = Tcl_CreateHashEntry(&dispPtr->slaveTable, (char *) tkwin, &new);
     if (new) {
 	slavePtr = (Slave *) ckalloc(sizeof(Slave));
 	slavePtr->tkwin = tkwin;
@@ -441,8 +436,9 @@ FindMaster(tkwin)
     Tcl_HashEntry *hPtr;
     register Master *masterPtr;
     int new;
+    TkDisplay * dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
-    hPtr = Tcl_CreateHashEntry(&masterTable, (char *) tkwin, &new);
+    hPtr = Tcl_CreateHashEntry(&dispPtr->masterTable, (char *) tkwin, &new);
     if (new) {
 	masterPtr = (Master *) ckalloc(sizeof(Master));
 	masterPtr->tkwin = tkwin;
@@ -467,7 +463,7 @@ FindMaster(tkwin)
  *
  * Results:
  *	A standard Tcl result.  If an error occurs then a message is
- *	left in interp->result.
+ *	left in the interp's result.
  *
  * Side effects:
  *	Information in slavePtr may change, and slavePtr's master is
@@ -843,7 +839,7 @@ RecomputePlacement(clientData)
 	/*
 	 * Step 5: reconfigure the window and map it if needed.  If the
 	 * slave is a child of the master, we do this ourselves.  If the
-	 * slave isn't a child of the master, let Tk_MaintainWindow do
+	 * slave isn't a child of the master, let Tk_MaintainGeometry do
 	 * the work (it will re-adjust things as relevant windows map,
 	 * unmap, and move).
 	 */
@@ -902,6 +898,7 @@ MasterStructureProc(clientData, eventPtr)
 {
     register Master *masterPtr = (Master *) clientData;
     register Slave *slavePtr, *nextPtr;
+    TkDisplay *dispPtr = ((TkWindow *) masterPtr->tkwin)->dispPtr;
 
     if (eventPtr->type == ConfigureNotify) {
 	if ((masterPtr->slavePtr != NULL)
@@ -916,7 +913,7 @@ MasterStructureProc(clientData, eventPtr)
 	    nextPtr = slavePtr->nextPtr;
 	    slavePtr->nextPtr = NULL;
 	}
-	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&masterTable,
+	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->masterTable,
 		(char *) masterPtr->tkwin));
 	if (masterPtr->flags & PARENT_RECONFIG_PENDING) {
 	    Tcl_CancelIdleCall(RecomputePlacement, (ClientData) masterPtr);
@@ -971,10 +968,11 @@ SlaveStructureProc(clientData, eventPtr)
     XEvent *eventPtr;		/* Describes what just happened. */
 {
     register Slave *slavePtr = (Slave *) clientData;
+    TkDisplay * dispPtr = ((TkWindow *) slavePtr->tkwin)->dispPtr;
 
     if (eventPtr->type == DestroyNotify) {
 	UnlinkSlave(slavePtr);
-	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&slaveTable,
+	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->slaveTable,
 		(char *) slavePtr->tkwin));
 	ckfree((char *) slavePtr);
     }
@@ -1047,13 +1045,15 @@ PlaceLostSlaveProc(clientData, tkwin)
     Tk_Window tkwin;		/* Tk's handle for the slave window. */
 {
     register Slave *slavePtr = (Slave *) clientData;
+    TkDisplay * dispPtr = ((TkWindow *) slavePtr->tkwin)->dispPtr;
 
     if (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin)) {
 	Tk_UnmaintainGeometry(slavePtr->tkwin, slavePtr->masterPtr->tkwin);
     }
     Tk_UnmapWindow(tkwin);
     UnlinkSlave(slavePtr);
-    Tcl_DeleteHashEntry(Tcl_FindHashEntry(&slaveTable, (char *) tkwin));
+    Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->slaveTable, 
+            (char *) tkwin));
     Tk_DeleteEventHandler(tkwin, StructureNotifyMask, SlaveStructureProc,
 	    (ClientData) slavePtr);
     ckfree((char *) slavePtr);

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) raise.n 1.9 96/06/14 14:20:02
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH raise n 3.3 Tk "Tk Built-In Commands"

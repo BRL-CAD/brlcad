@@ -4,14 +4,13 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1995 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) bind.test 1.39 97/07/01 18:01:05
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] != 0} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 catch {destroy .b}
@@ -216,6 +215,13 @@ test bind-5.1 {Tk_CreateBindingTable procedure} {
 } {}
 
 
+if {[string compare testcbind [info commands testcbind]] != 0} {
+    puts "This application hasn't been compiled with the testcbind command,"
+    puts "therefore I am skipping all of these tests."
+    ::tcltest::cleanupTests
+    return
+}
+
 test bind-6.1 {Tk_DeleteBindTable procedure} {
     catch {destroy .b.c}
     canvas .b.c
@@ -247,7 +253,7 @@ test bind-6.2 {Tk_DeleteBindTable procedure: pending bindings deleted later} {
     set x
 } {a1 bye.all2 bye.a1 b1 bye.c1}
 
-test bind-7.1 {Tk_CreateBinding procedure: error} {
+test bind-7.1 {Tk_CreateBinding procedure: bad binding} {
     catch {destroy .b.c}
     canvas .b.c
     list [catch {.b.c bind foo <} msg] $msg
@@ -1463,8 +1469,11 @@ test bind-16.35 {ExpandPercents procedure} {nonPortable} {
     event gen .b.f <Key-space>
     event gen .b.f <Key-dollar> -state 1
     event gen .b.f <Key-braceleft> -state 1
+    event gen .b.f <Key-Multi_key>
+    event gen .b.f <Key-e>
+    event gen .b.f <Key-apostrophe>
     set x
-} "a A {	} {\r} {{}} {{}} { } {\$} \\\{"
+} "a A {	} {\r} {{}} {{}} { } {\$} \\\{ {{}} {{}} \u00e9"
 test bind-16.36 {ExpandPercents procedure} {
     setup
     bind .b.f <Configure> {set x "%B"}
@@ -1532,10 +1541,10 @@ test bind-16.43 {ExpandPercents procedure} {
 
 test bind-17.1 {event command} {
     list [catch {event} msg] $msg
-} {1 {wrong # args: should be "event option ?arg1?"}}
+} {1 {wrong # args: should be "event option ?arg?"}}
 test bind-17.2 {event command} {
-    list [catch {event {}} msg] $msg
-} {1 {bad option "": should be add, delete, generate, info}}
+    list [catch {event xyz} msg] $msg
+} {1 {bad option "xyz": must be add, delete, generate, or info}}
 test bind-17.3 {event command: add} {
     list [catch {event add} msg] $msg
 } {1 {wrong # args: should be "event add virtual sequence ?sequence ...?"}}
@@ -1604,8 +1613,7 @@ test bind-17.16 {event command: generate} {
 } {1 {bad event type or keysym "xyz"}}
 test bind-17.17 {event command} {
     list [catch {event foo} msg] $msg
-} {1 {bad option "foo": should be add, delete, generate, info}}
-
+} {1 {bad option "foo": must be add, delete, generate, or info}}
 
 test bind-18.1 {CreateVirtualEvent procedure: GetVirtualEventUid} {
     list [catch {event add asd <Ctrl-v>} msg] $msg
@@ -1964,73 +1972,73 @@ test bind-22.16 {HandleEventGenerate} {
 } {foo 99 100 101 102}
 test bind-22.17 {HandleEventGenerate} {
     list [catch {event gen . <Button> -when xyz} msg] $msg
-} {1 {bad position "xyz": should be now, head, mark, tail}}
-set i 14
+} {1 {bad -when value "xyz": must be now, head, mark, or tail}}
+set i 18
 foreach check {
     {<Configure> %a {-above .xyz} {{1 {bad window path name ".xyz"}}}}
     {<Configure> %a {-above .b} {[winfo id .b]}}
-    {<Configure> %a {-above xyz} {{1 {expected integer but got "xyz"}}}}
+    {<Configure> %a {-above xyz} {{1 {bad window name/identifier "xyz"}}}}
     {<Configure> %a {-above [winfo id .b]} {[winfo id .b]}}
-    {<Key> %b    {-above .} {{1 {bad option to <Key> event: "-above"}}}}
+    {<Key> %b    {-above .} {{1 {<Key> event doesn't accept "-above" option}}}}
 
     {<Configure> %B {-borderwidth xyz} {{1 {bad screen distance "xyz"}}}}    
     {<Configure> %B {-borderwidth 2i} {[winfo pixels .b.f 2i]}}
-    {<Key> %k	    {-borderwidth 2i} {{1 {bad option to <Key> event: "-borderwidth"}}}}
+    {<Key> %k	    {-borderwidth 2i} {{1 {<Key> event doesn't accept "-borderwidth" option}}}}
 
     {<Button> %b    {-button xyz} {{1 {expected integer but got "xyz"}}}}
     {<Button> %b    {-button 1} 1}
-    {<Key> %k	    {-button 1} {{1 {bad option to <Key> event: "-button"}}}}
+    {<Key> %k	    {-button 1} {{1 {<Key> event doesn't accept "-button" option}}}}
 
     {<Expose> %c    {-count xyz} {{1 {expected integer but got "xyz"}}}}
     {<Expose> %c    {-count 20} 20}
-    {<Key> %b	    {-count 20} {{1 {bad option to <Key> event: "-count"}}}}
+    {<Key> %b	    {-count 20} {{1 {<Key> event doesn't accept "-count" option}}}}
 
-    {<Enter> %d	    {-detail xyz} {{1 {bad -detail value "xyz": must be NotifyAncestor, NotifyVirtual, NotifyInferior, NotifyNonlinear, NotifyNonlinearVirtual, NotifyPointer, NotifyPointerRoot, NotifyDetailNone}}}}
+    {<Enter> %d	    {-detail xyz} {{1 {bad -detail value "xyz": must be NotifyAncestor, NotifyVirtual, NotifyInferior, NotifyNonlinear, NotifyNonlinearVirtual, NotifyPointer, NotifyPointerRoot, or NotifyDetailNone}}}}
     {<FocusIn> %d   {-detail NotifyVirtual} {{}}}
     {<Enter> %d	    {-detail NotifyVirtual} NotifyVirtual}
-    {<Key> %k	    {-detail NotifyVirtual} {{1 {bad option to <Key> event: "-detail"}}}}
+    {<Key> %k	    {-detail NotifyVirtual} {{1 {<Key> event doesn't accept "-detail" option}}}}
 
     {<Enter> %f	    {-focus xyz} {{1 {expected boolean value but got "xyz"}}}}
     {<Enter> %f	    {-focus 1} 1}
-    {<Key> %k	    {-focus 1} {{1 {bad option to <Key> event: "-focus"}}}}
+    {<Key> %k	    {-focus 1} {{1 {<Key> event doesn't accept "-focus" option}}}}
 
     {<Expose> %h    {-height xyz} {{1 {bad screen distance "xyz"}}}}
     {<Expose> %h    {-height 2i} {[winfo pixels .b.f 2i]}}
     {<Configure> %h {-height 2i} {[winfo pixels .b.f 2i]}}
-    {<Key> %k	    {-height 2i} {{1 {bad option to <Key> event: "-height"}}}}
+    {<Key> %k	    {-height 2i} {{1 {<Key> event doesn't accept "-height" option}}}}
 
     {<Key> %k	    {-keycode xyz} {{1 {expected integer but got "xyz"}}}}
     {<Key> %k	    {-keycode 20} 20}
-    {<Button> %b    {-keycode 20} {{1 {bad option to <Button> event: "-keycode"}}}}
+    {<Button> %b    {-keycode 20} {{1 {<Button> event doesn't accept "-keycode" option}}}}
 
     {<Key> %K	    {-keysym xyz} {{1 {unknown keysym "xyz"}}}}
     {<Key> %K	    {-keysym a} a}
-    {<Button> %b    {-keysym a} {{1 {bad option to <Button> event: "-keysym"}}}}
+    {<Button> %b    {-keysym a} {{1 {<Button> event doesn't accept "-keysym" option}}}}
 
-    {<Enter> %m	    {-mode xyz} {{1 {bad -mode value "xyz": must be NotifyNormal, NotifyGrab, NotifyUngrab, NotifyWhileGrabbed}}}}
+    {<Enter> %m	    {-mode xyz} {{1 {bad -mode value "xyz": must be NotifyNormal, NotifyGrab, NotifyUngrab, or NotifyWhileGrabbed}}}}
     {<Enter> %m	    {-mode NotifyNormal} NotifyNormal}
     {<FocusIn> %m   {-mode NotifyNormal} {{}}}
-    {<Key> %k	    {-mode NotifyNormal} {{1 {bad option to <Key> event: "-mode"}}}}
+    {<Key> %k	    {-mode NotifyNormal} {{1 {<Key> event doesn't accept "-mode" option}}}}
 
     {<Map> %o	    {-override xyz} {{1 {expected boolean value but got "xyz"}}}}
     {<Map> %o	    {-override 1} 1}
     {<Reparent> %o  {-override 1} 1}
     {<Configure> %o {-override 1} 1}
-    {<Key> %k	    {-override 1} {{1 {bad option to <Key> event: "-override"}}}}
+    {<Key> %k	    {-override 1} {{1 {<Key> event doesn't accept "-override" option}}}}
 
-    {<Circulate> %p {-place xyz} {{1 {bad -place value "xyz": must be PlaceOnTop, PlaceOnBottom}}}}
+    {<Circulate> %p {-place xyz} {{1 {bad -place value "xyz": must be PlaceOnTop, or PlaceOnBottom}}}}
     {<Circulate> %p {-place PlaceOnTop} PlaceOnTop}
-    {<Key> %k	    {-place PlaceOnTop} {{1 {bad option to <Key> event: "-place"}}}}
+    {<Key> %k	    {-place PlaceOnTop} {{1 {<Key> event doesn't accept "-place" option}}}}
 
     {<Key> %R	    {-root .xyz} {{1 {bad window path name ".xyz"}}}}
     {<Key> %R	    {-root .b} {[winfo id .b]}}
-    {<Key> %R	    {-root xyz} {{1 {expected integer but got "xyz"}}}}
+    {<Key> %R	    {-root xyz} {{1 {bad window name/identifier "xyz"}}}}
     {<Key> %R	    {-root [winfo id .b]} {[winfo id .b]}}
     {<Button> %R    {-root .b} {[winfo id .b]}}
     {<Motion> %R    {-root .b} {[winfo id .b]}}
     {<<Paste>> %R   {-root .b} {[winfo id .b]}}
     {<Enter> %R	    {-root .b} {[winfo id .b]}}
-    {<Configure> %R {-root .b} {{1 {bad option to <Configure> event: "-root"}}}}
+    {<Configure> %R {-root .b} {{1 {<Configure> event doesn't accept "-root" option}}}}
 
     {<Key> %X	    {-rootx xyz} {{1 {bad screen distance "xyz"}}}}
     {<Key> %X	    {-rootx 2i} {[winfo pixels .b.f 2i]}}
@@ -2038,7 +2046,7 @@ foreach check {
     {<Motion> %X    {-rootx 2i} {[winfo pixels .b.f 2i]}}
     {<<Paste>> %X   {-rootx 2i} {[winfo pixels .b.f 2i]}}
     {<Enter> %X	    {-rootx 2i} {[winfo pixels .b.f 2i]}}
-    {<Configure> %X {-rootx 2i} {{1 {bad option to <Configure> event: "-rootx"}}}}
+    {<Configure> %X {-rootx 2i} {{1 {<Configure> event doesn't accept "-rootx" option}}}}
 
     {<Key> %Y	    {-rooty xyz} {{1 {bad screen distance "xyz"}}}}
     {<Key> %Y	    {-rooty 2i} {[winfo pixels .b.f 2i]}}
@@ -2046,7 +2054,7 @@ foreach check {
     {<Motion> %Y    {-rooty 2i} {[winfo pixels .b.f 2i]}}
     {<<Paste>> %Y   {-rooty 2i} {[winfo pixels .b.f 2i]}}
     {<Enter> %Y	    {-rooty 2i} {[winfo pixels .b.f 2i]}}
-    {<Configure> %Y {-rooty 2i} {{1 {bad option to <Configure> event: "-rooty"}}}}
+    {<Configure> %Y {-rooty 2i} {{1 {<Configure> event doesn't accept "-rooty" option}}}}
 
     {<Key> %E	    {-sendevent xyz} {{1 {expected boolean value but got "xyz"}}}}
     {<Key> %E	    {-sendevent 1} 1}
@@ -2062,19 +2070,19 @@ foreach check {
     {<Motion> %s    {-state 1} 1}
     {<<Paste>> %s   {-state 1} 1}
     {<Enter> %s	    {-state 1} 1}
-    {<Visibility> %s {-state xyz} {{1 {bad -state value "xyz": must be VisibilityUnobscured, VisibilityPartiallyObscured, VisibilityFullyObscured}}}}
+    {<Visibility> %s {-state xyz} {{1 {bad -state value "xyz": must be VisibilityUnobscured, VisibilityPartiallyObscured, or VisibilityFullyObscured}}}}
     {<Visibility> %s {-state VisibilityUnobscured} VisibilityUnobscured}
-    {<Configure> %s {-state xyz} {{1 {bad option to <Configure> event: "-state"}}}}
+    {<Configure> %s {-state xyz} {{1 {<Configure> event doesn't accept "-state" option}}}}
 
     {<Key> %S	    {-subwindow .xyz} {{1 {bad window path name ".xyz"}}}}
     {<Key> %S	    {-subwindow .b} {[winfo id .b]}}
-    {<Key> %S	    {-subwindow xyz} {{1 {expected integer but got "xyz"}}}}
+    {<Key> %S	    {-subwindow xyz} {{1 {bad window name/identifier "xyz"}}}}
     {<Key> %S	    {-subwindow [winfo id .b]} {[winfo id .b]}}
     {<Button> %S    {-subwindow .b} {[winfo id .b]}}
     {<Motion> %S    {-subwindow .b} {[winfo id .b]}}
     {<<Paste>> %S   {-subwindow .b} {[winfo id .b]}}
     {<Enter> %S	    {-subwindow .b} {[winfo id .b]}}
-    {<Configure> %S {-subwindow .b} {{1 {bad option to <Configure> event: "-subwindow"}}}}
+    {<Configure> %S {-subwindow .b} {{1 {<Configure> event doesn't accept "-subwindow" option}}}}
 
     {<Key> %t	    {-time xyz} {{1 {expected integer but got "xyz"}}}}
     {<Key> %t	    {-time 100} 100}
@@ -2083,16 +2091,16 @@ foreach check {
     {<<Paste>> %t   {-time 100} 100}
     {<Enter> %t	    {-time 100} 100}
     {<Property> %t  {-time 100} 100}
-    {<Configure> %t {-time 100} {{1 {bad option to <Configure> event: "-time"}}}}
+    {<Configure> %t {-time 100} {{1 {<Configure> event doesn't accept "-time" option}}}}
 
     {<Expose> %w    {-width xyz} {{1 {bad screen distance "xyz"}}}}
     {<Expose> %w    {-width 2i} {[winfo pixels .b.f 2i]}}
     {<Configure> %w {-width 2i} {[winfo pixels .b.f 2i]}}
-    {<Key> %k	    {-width 2i} {{1 {bad option to <Key> event: "-width"}}}}
+    {<Key> %k	    {-width 2i} {{1 {<Key> event doesn't accept "-width" option}}}}
 
     {<Unmap> %W    {-window .xyz} {{1 {bad window path name ".xyz"}}}}
     {<Unmap> %W    {-window .b.f} .b.f}
-    {<Unmap> %W    {-window xyz} {{1 {expected integer but got "xyz"}}}}
+    {<Unmap> %W    {-window xyz} {{1 {bad window name/identifier "xyz"}}}}
     {<Unmap> %W    {-window [winfo id .b.f]} .b.f}
     {<Unmap> %W	    {-window .b.f} .b.f}
     {<Map> %W	    {-window .b.f} .b.f}
@@ -2100,7 +2108,7 @@ foreach check {
     {<Configure> %W {-window .b.f} .b.f}
     {<Gravity> %W   {-window .b.f} .b.f}
     {<Circulate> %W {-window .b.f} .b.f}
-    {<Key> %W	    {-window .b.f} {{1 {bad option to <Key> event: "-window"}}}}
+    {<Key> %W	    {-window .b.f} {{1 {<Key> event doesn't accept "-window" option}}}}
 
     {<Key> %x	    {-x xyz} {{1 {bad screen distance "xyz"}}}}
     {<Key> %x	    {-x 2i} {[winfo pixels .b.f 2i]}}
@@ -2112,7 +2120,7 @@ foreach check {
     {<Configure> %x {-x 2i} {[winfo pixels .b.f 2i]}}
     {<Gravity> %x   {-x 2i} {[winfo pixels .b.f 2i]}}
     {<Reparent> %x  {-x 2i} {[winfo pixels .b.f 2i]}}
-    {<Map> %x	    {-x 2i} {{1 {bad option to <Map> event: "-x"}}}}
+    {<Map> %x	    {-x 2i} {{1 {<Map> event doesn't accept "-x" option}}}}
 
     {<Key> %y	    {-y xyz} {{1 {bad screen distance "xyz"}}}}
     {<Key> %y	    {-y 2i} {[winfo pixels .b.f 2i]}}
@@ -2124,9 +2132,9 @@ foreach check {
     {<Configure> %y {-y 2i} {[winfo pixels .b.f 2i]}}
     {<Gravity> %y   {-y 2i} {[winfo pixels .b.f 2i]}}
     {<Reparent> %y  {-y 2i} {[winfo pixels .b.f 2i]}}
-    {<Map> %y	    {-y 2i} {{1 {bad option to <Map> event: "-y"}}}}
+    {<Map> %y	    {-y 2i} {{1 {<Map> event doesn't accept "-y" option}}}}
 
-    {<Key> %k	    {-xyz 1} {{1 {bad option to <Key> event: "-xyz"}}}}
+    {<Key> %k	    {-xyz 1} {{1 {bad option "-xyz": must be -when, -above, -borderwidth, -button, -count, -delta, -detail, -focus, -height, -keycode, -keysym, -mode, -override, -place, -root, -rootx, -rooty, -sendevent, -serial, -state, -subwindow, -time, -width, -window, -x, or -y}}}}
 } {
     set event [lindex $check 0]
     test bind-22.$i "HandleEventGenerate: options $event [lindex $check 2]" {
@@ -2237,7 +2245,17 @@ test bind-24.12 {FindSequence procedure: not new sequence, don't create} {
     bind .b.f <Control-Button-2> "foo"
     bind .b.f <Button-2>
 } {}
-
+test bind-24.13 {FindSequence procedure: no binding} {
+    catch {destroy .b.f}
+    frame .b.f -class Test -width 150 -height 100
+    list [catch {bind .b.f <a>} msg] $msg
+} {0 {}}
+test bind-24.14 {FindSequence procedure: no binding} {
+    catch {destroy .b.f}
+    canvas .b.f
+    set i [.b.f create rect 10 10 100 100]
+    list [catch {.b.f bind $i <a>} msg] $msg
+} {0 {}}
 
 test bind-25.1 {ParseEventDescription procedure} {
     list [catch {bind .b \x7 test} msg] $msg
@@ -2526,5 +2544,44 @@ test bind-30.2 {Tk_BackgroundError procedure} {
     (command bound to event)}}
 rename bgerror {}
 
+test bind-31.1 {MouseWheel events} {
+    setup
+    set x {}
+    bind .b.f <MouseWheel> {set x Wheel}
+    event gen .b.f <MouseWheel>
+    set x
+} {Wheel}
+test bind-31.2 {MouseWheel events} {
+    setup
+    set x {}
+    bind .b.f <MouseWheel> {set x %D}
+    event gen .b.f <MouseWheel> -delta 120
+    set x
+} {120}
+test bind-31.2 {MouseWheel events} {
+    setup
+    set x {}
+    bind .b.f <MouseWheel> {set x "%D %x %y"}
+    event gen .b.f <MouseWheel> -delta 240 -x 10 -y 30
+    set x
+} {240 10 30}
+
 
 destroy .b
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

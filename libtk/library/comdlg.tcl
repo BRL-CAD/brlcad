@@ -3,7 +3,7 @@
 #	Some functions needed for the common dialog boxes. Probably need to go
 #	in a different file.
 #
-# SCCS: @(#) comdlg.tcl 1.4 96/09/05 09:07:54
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
 #
@@ -52,13 +52,12 @@ proc tclParseConfigSpec {w specs flags argList} {
 	set verproc($cmdsw) [lindex $spec 4]
     }
 
-    if {[expr [llength $argList] %2] != 0} {
-	foreach {cmdsw value} $argList {
-	    if ![info exists cmd($cmdsw)] {
-	        error "unknown option \"$cmdsw\", must be [tclListValidFlags cmd]"
-	    }
+    if {[llength $argList] & 1} {
+	set cmdsw [lindex $argList end]
+	if {![info exists cmd($cmdsw)]} {
+	    error "bad option \"$cmdsw\": must be [tclListValidFlags cmd]"
 	}
-	error "value for \"[lindex $argList end]\" missing"
+	error "value for \"$cmdsw\" missing"
     }
 
     # 2: set the default values
@@ -70,8 +69,8 @@ proc tclParseConfigSpec {w specs flags argList} {
     # 3: parse the argument list
     #
     foreach {cmdsw value} $argList {
-	if ![info exists cmd($cmdsw)] {
-	    error "unknown option \"$cmdsw\", must be [tclListValidFlags cmd]"
+	if {![info exists cmd($cmdsw)]} {
+	    error "bad option \"$cmdsw\": must be [tclListValidFlags cmd]"
 	}
 	set data($cmdsw) $value
     }
@@ -90,7 +89,7 @@ proc tclListValidFlags {v} {
 	append errormsg "$separator$cmdsw"
 	incr i
 	if {$i == $len} {
-	    set separator " or "
+	    set separator ", or "
 	} else {
 	    set separator ", "
 	}
@@ -137,10 +136,10 @@ proc tclVerifyInteger {string} {
 #
 proc tkFocusGroup_Create {t} {
     global tkPriv
-    if [string compare [winfo toplevel $t] $t] {
+    if {[string compare [winfo toplevel $t] $t]} {
 	error "$t is not a toplevel window"
     }
-    if ![info exists tkPriv(fg,$t)] {
+    if {![info exists tkPriv(fg,$t)]} {
 	set tkPriv(fg,$t) 1
 	set tkPriv(focus,$t) ""
 	bind $t <FocusIn>  "tkFocusGroup_In  $t %W %d"
@@ -156,7 +155,7 @@ proc tkFocusGroup_Create {t} {
 #
 proc tkFocusGroup_BindIn {t w cmd} {
     global tkFocusIn tkPriv
-    if ![info exists tkPriv(fg,$t)] {
+    if {![info exists tkPriv(fg,$t)]} {
 	error "focus group \"$t\" doesn't exist"
     }
     set tkFocusIn($t,$w) $cmd
@@ -171,7 +170,7 @@ proc tkFocusGroup_BindIn {t w cmd} {
 #
 proc tkFocusGroup_BindOut {t w cmd} {
     global tkFocusOut tkPriv
-    if ![info exists tkPriv(fg,$t)] {
+    if {![info exists tkPriv(fg,$t)]} {
 	error "focus group \"$t\" doesn't exist"
     }
     set tkFocusOut($t,$w) $cmd
@@ -185,7 +184,7 @@ proc tkFocusGroup_BindOut {t w cmd} {
 proc tkFocusGroup_Destroy {t w} {
     global tkPriv tkFocusIn tkFocusOut
 
-    if ![string compare $t $w] {
+    if {![string compare $t $w]} {
 	unset tkPriv(fg,$t)
 	unset tkPriv(focus,$t) 
 
@@ -196,8 +195,8 @@ proc tkFocusGroup_Destroy {t w} {
 	    unset tkFocusOut($name)
 	}
     } else {
-	if [info exists tkPriv(focus,$t)] {
-	    if ![string compare $tkPriv(focus,$t) $w] {
+	if {[info exists tkPriv(focus,$t)]} {
+	    if {![string compare $tkPriv(focus,$t) $w]} {
 		set tkPriv(focus,$t) ""
 	    }
 	}
@@ -218,14 +217,14 @@ proc tkFocusGroup_Destroy {t w} {
 proc tkFocusGroup_In {t w detail} {
     global tkPriv tkFocusIn
 
-    if ![info exists tkFocusIn($t,$w)] {
+    if {![info exists tkFocusIn($t,$w)]} {
 	set tkFocusIn($t,$w) ""
 	return
     }
-    if ![info exists tkPriv(focus,$t)] {
+    if {![info exists tkPriv(focus,$t)]} {
 	return
     }
-    if ![string compare $tkPriv(focus,$t) $w] {
+    if {![string compare $tkPriv(focus,$t) $w]} {
 	# This is already in focus
 	#
 	return
@@ -250,10 +249,10 @@ proc tkFocusGroup_Out {t w detail} {
 	# This is caused by mouse moving out of the window
 	return
     }
-    if ![info exists tkPriv(focus,$t)] {
+    if {![info exists tkPriv(focus,$t)]} {
 	return
     }
-    if ![info exists tkFocusOut($t,$w)] {
+    if {![info exists tkFocusOut($t,$w)]} {
 	return
     } else {
 	eval $tkFocusOut($t,$w)
@@ -280,18 +279,18 @@ proc tkFDGetFileTypes {string} {
 	set label [lindex $t 0]
 	set exts {}
 
-	if [info exists hasDoneType($label)] {
+	if {[info exists hasDoneType($label)]} {
 	    continue
 	}
 
 	set name "$label ("
 	set sep ""
 	foreach ext $fileTypes($label) {
-	    if ![string compare $ext ""] {
+	    if {![string compare $ext ""]} {
 		continue
 	    }
 	    regsub {^[.]} $ext "*." ext
-	    if ![info exists hasGotExt($label,$ext)] {
+	    if {![info exists hasGotExt($label,$ext)]} {
 		append name $sep$ext
 		lappend exts $ext
 		set hasGotExt($label,$ext) 1

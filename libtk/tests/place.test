@@ -2,14 +2,13 @@
 # organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1995 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) place.test 1.6 96/02/16 10:56:01
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -218,4 +217,20 @@ test place-8.2 {MasterStructureProc, mapping and unmapping slaves} {
 } {1 0 42 32 0 1}
 
 catch {destroy .t}
-concat
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacScale.c 1.3 96/10/17 13:16:18
+ * RCS: @(#) $Id$
  */
 
 #include "tkScale.h"
@@ -156,10 +156,10 @@ TkpDisplayScale(clientData)
      */
 
     Tcl_Preserve((ClientData) scalePtr);
-    if ((scalePtr->flags & INVOKE_COMMAND) && (scalePtr->command != NULL)) {
+    if ((scalePtr->flags & INVOKE_COMMAND) && (scalePtr->commandPtr != NULL)) {
 	Tcl_Preserve((ClientData) interp);
 	sprintf(string, scalePtr->format, scalePtr->value);
-	result = Tcl_VarEval(interp, scalePtr->command,	" ", string,
+	result = Tcl_VarEval(interp, scalePtr->commandPtr," ", string,
                              (char *) NULL);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
@@ -186,7 +186,7 @@ TkpDisplayScale(clientData)
 	if (scalePtr->flags & GOT_FOCUS) {
 	    gc = Tk_GCForColor(scalePtr->highlightColorPtr, Tk_WindowId(tkwin));
 	} else {
-	    gc = Tk_GCForColor(scalePtr->highlightBgColorPtr, Tk_WindowId(tkwin));
+	    gc = Tk_GCForColor(scalePtr->highlightColorPtr, Tk_WindowId(tkwin));
 	}
 	Tk_DrawFocusHighlight(tkwin, gc, scalePtr->highlightWidth, Tk_WindowId(tkwin));
     }
@@ -316,13 +316,13 @@ TkpScaleElement(scalePtr, x, y)
     	case inSlider:
 	    return SLIDER;
     	case inInc:
-	    if (scalePtr->vertical) {
+	    if (scalePtr->orient == ORIENT_VERTICAL) {
 		return TROUGH1;
 	    } else {
 		return TROUGH2;
 	    }
     	case inDecr:
-	    if (scalePtr->vertical) {
+	    if (scalePtr->orient == ORIENT_VERTICAL) {
 		return TROUGH2;
 	    } else {
 		return TROUGH1;
@@ -382,10 +382,10 @@ TkpSetScaleValue(scalePtr, value, setVar, invokeCommand)
     }
     TkEventuallyRedrawScale(scalePtr, REDRAW_SLIDER);
 
-    if (setVar && (scalePtr->varName != NULL)) {
+    if (setVar && (scalePtr->varNamePtr != NULL)) {
 	sprintf(string, scalePtr->format, scalePtr->value);
 	scalePtr->flags |= SETTING_VAR;
-	Tcl_SetVar(scalePtr->interp, scalePtr->varName, string,
+	Tcl_ObjSetVar2(scalePtr->interp, scalePtr->varNamePtr, NULL, Tcl_NewStringObj(string, -1),
 	       TCL_GLOBAL_ONLY);
 	scalePtr->flags &= ~SETTING_VAR;
     }
@@ -418,7 +418,7 @@ TkpPixelToValue(scalePtr, x, y)
 {
     double value, pixelRange;
 
-    if (scalePtr->vertical) {
+    if (scalePtr->orient == ORIENT_VERTICAL) {
 	pixelRange = Tk_Height(scalePtr->tkwin) - scalePtr->sliderLength
 		- 2*scalePtr->inset - 2*scalePtr->borderWidth;
 	value = y;
@@ -479,7 +479,7 @@ TkpValueToPixel(scalePtr, value)
     double valueRange;
 
     valueRange = scalePtr->toValue - scalePtr->fromValue;
-    pixelRange = (scalePtr->vertical ? Tk_Height(scalePtr->tkwin)
+    pixelRange = (scalePtr->orient == ORIENT_VERTICAL ? Tk_Height(scalePtr->tkwin)
 	    : Tk_Width(scalePtr->tkwin)) - scalePtr->sliderLength
 	    - 2*scalePtr->inset - 2*scalePtr->borderWidth;
     if (valueRange == 0) {

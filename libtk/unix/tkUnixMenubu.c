@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixMenubu.c 1.9 97/05/23 16:25:01
+ * RCS: @(#) $Id$
  */
 
 #include "tkMenubutton.h"
@@ -84,10 +84,11 @@ TkpDisplayMenuButton(clientData)
 	return;
     }
 
-    if ((mbPtr->state == tkDisabledUid) && (mbPtr->disabledFg != NULL)) {
+    if ((mbPtr->state == STATE_DISABLED) && (mbPtr->disabledFg != NULL)) {
 	gc = mbPtr->disabledGC;
 	border = mbPtr->normalBorder;
-    } else if ((mbPtr->state == tkActiveUid) && !Tk_StrictMotif(mbPtr->tkwin)) {
+    } else if ((mbPtr->state == STATE_ACTIVE)
+	       && !Tk_StrictMotif(mbPtr->tkwin)) {
 	gc = mbPtr->activeTextGC;
 	border = mbPtr->activeBorder;
     } else {
@@ -142,8 +143,8 @@ TkpDisplayMenuButton(clientData)
      * foreground color, generate the stippled effect.
      */
 
-    if ((mbPtr->state == tkDisabledUid)
-	    && ((mbPtr->disabledFg == NULL) || (mbPtr->image != NULL))) {
+    if ((mbPtr->state == STATE_DISABLED) 
+            && ((mbPtr->disabledFg == NULL) || (mbPtr->image != NULL))) {
 	XFillRectangle(mbPtr->display, pixmap, mbPtr->disabledGC,
 		mbPtr->inset, mbPtr->inset,
 		(unsigned) (Tk_Width(tkwin) - 2*mbPtr->inset),
@@ -248,7 +249,7 @@ TkpDestroyMenuButton(mbPtr)
 
 void
 TkpComputeMenuButtonGeometry(mbPtr)
-    register TkMenuButton *mbPtr;	/* Widget record for menu button. */
+    TkMenuButton *mbPtr;	/* Widget record for menu button. */
 {
     int width, height, mm, pixels;
 

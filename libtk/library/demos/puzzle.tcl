@@ -3,7 +3,7 @@
 # This demonstration script creates a 15-puzzle game using a collection
 # of buttons.
 #
-# SCCS: @(#) puzzle.tcl 1.5 97/03/02 16:26:32
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

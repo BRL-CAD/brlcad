@@ -4,18 +4,19 @@
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) unixWm.test 1.46 97/10/27 16:15:36
+# RCS: @(#) $Id$
 
-if {$tcl_platform(platform) != "unix"} {
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
-if {[string compare test [info procs test]] == 1} {
-    source defs
+if {$tcl_platform(platform) != "unix"} {
+    puts "skipping: Unix only tests..."
+    ::tcltest::cleanupTests
+    return
 }
 
 proc sleep ms {
@@ -195,7 +196,7 @@ test unixWm-6.3 {size changes} {
     update
     wm geom .t
 } 170x140+10+10
-test unixWm-6.4 {size changes} {nonPortable} {
+test unixWm-6.4 {size changes} {nonPortable userInteraction} {
     wm minsize .t 1 1
     update
     puts stdout "Please resize window \"t\" with the mouse (but don't move it!),"
@@ -351,6 +352,13 @@ test unixWm-8.9 {icon windows} {nonPortable} {
     update
     lappend result [winfo ismapped .icon] [wm state .icon]
 } {icon 1 0 0 withdrawn 1 normal}
+
+if {[string compare testwrapper [info commands testwrapper]] != 0} {
+    puts "This application hasn't been compiled with the testwrapper command,"
+    puts "therefore I am skipping all of these tests."
+    ::tcltest::cleanupTests
+    return
+}
 
 test unixWm-9.1 {TkWmMapWindow procedure, client property} {unixOnly} {
     catch {destroy .t}
@@ -1303,7 +1311,7 @@ test unixWm-41.1 {ConfigureEvent procedure, internally generated size changes} {
     sleep 500
     lappend result [winfo width .t] [winfo height .t]
 } {400 150 200 300}
-test unixWm-41.2 {ConfigureEvent procedure, menubars} {unixOnly} {
+test unixWm-41.2 {ConfigureEvent procedure, menubars} {nonPortable} {
     catch {destroy .t}
     toplevel .t -width 300 -height 200 -bd 2 -relief raised
     wm geom .t +0+0
@@ -1467,22 +1475,26 @@ test unixWm-44.6 {UpdateGeometryInfo procedure, negative height} {
     update
     list [winfo width .t] [winfo height .t]
 } {100 1}
+
+catch {destroy .t}
+toplevel .t -width 80 -height 60
 test unixWm-44.7 {UpdateGeometryInfo procedure, computing position} {
-    catch {destroy .t}
-    toplevel .t -width 80 -height 60
     wm geometry .t +5-10
     wm overrideredirect .t 1
     tkwait visibility .t
     list [winfo x .t] [winfo y .t]
-} "5 [expr [winfo screenheight .t] - 70]"
+} [list 5 [expr [winfo screenheight .t] - 70]]
+
+catch {destroy .t}
+toplevel .t -width 80 -height 60
 test unixWm-44.8 {UpdateGeometryInfo procedure, computing position} {
-    catch {destroy .t}
-    toplevel .t -width 80 -height 60
     wm geometry .t -30+2
     wm overrideredirect .t 1
     tkwait visibility .t
     list [winfo x .t] [winfo y .t]
-} "[expr [winfo screenwidth .t] - 110] 2"
+} [list [expr [winfo screenwidth .t] - 110] 2]
+catch {destroy .t}
+
 test unixWm-44.9 {UpdateGeometryInfo procedure, updating fixed dimensions} {unixOnly} {
     catch {destroy .t}
     toplevel .t -width 80 -height 60
@@ -1582,7 +1594,7 @@ test unixWm-46.1 {WaitForEvent procedure, use of modal timeout} {
     list $result $x
 } {no yes}
 
-test unixWm-47.1 {WaitRestrictProc procedure} {
+test unixWm-47.1 {WaitRestrictProc procedure} {nonPOrtable} {
     catch {destroy .t}
     toplevel .t -width 300 -height 200
     frame .t.f -bd 2 -relief raised
@@ -2285,6 +2297,37 @@ test unixWm-57.2 {MenubarReqProc procedure} {unixOnly} {
     lappend result [expr [winfo rootx .t] - $x] [expr [winfo rooty .t] - $y]
 } {0 20 0 1}
 
+test unixWm-58.1 {UpdateCommand procedure, DString gets reallocated} {unixOnly} {
+    catch {destroy .t}
+    toplevel .t -width 100 -height 50
+    wm geom .t +0+0
+    wm command .t "argumentNumber0 argumentNumber1 argumentNumber2 argumentNumber0 argumentNumber3 argumentNumber4 argumentNumber5 argumentNumber6 argumentNumber0 argumentNumber7 argumentNumber8 argumentNumber9 argumentNumber10 argumentNumber0 argumentNumber11 argumentNumber12 argumentNumber13 argumentNumber14 argumentNumber15 argumentNumber16 argumentNumber17 argumentNumber18"
+    update
+    testprop [testwrapper .t] WM_COMMAND
+} {argumentNumber0
+argumentNumber1
+argumentNumber2
+argumentNumber0
+argumentNumber3
+argumentNumber4
+argumentNumber5
+argumentNumber6
+argumentNumber0
+argumentNumber7
+argumentNumber8
+argumentNumber9
+argumentNumber10
+argumentNumber0
+argumentNumber11
+argumentNumber12
+argumentNumber13
+argumentNumber14
+argumentNumber15
+argumentNumber16
+argumentNumber17
+argumentNumber18
+}
+
 # Test exit processing and cleanup:
 
 test unixWm-58.1 {exit processing} {
@@ -2295,7 +2338,7 @@ test unixWm-58.1 {exit processing} {
 	exit
     }
     close $fd
-    if {[catch {exec $tktest script -geometry 10x10+0+0} msg]} {
+    if {[catch {exec $::tcltest::tktest script -geometry 10x10+0+0} msg]} {
 	set error 1
     } else {
 	set error 0
@@ -2314,7 +2357,7 @@ test unixWm-58.2 {exit processing} {
 	exit
     }
     close $fd
-    if {[catch {exec $tktest script -geometry 10x10+0+0} msg]} {
+    if {[catch {exec $::tcltest::tktest script -geometry 10x10+0+0} msg]} {
 	set error 1
     } else {
 	set error 0
@@ -2339,7 +2382,7 @@ test unixWm-58.3 {exit processing} {
 	exit
     }
     close $fd
-    if {[catch {exec $tktest script -geometry 10x10+0+0} msg]} {
+    if {[catch {exec $::tcltest::tktest script -geometry 10x10+0+0} msg]} {
 	set error 1
     } else {
 	set error 0
@@ -2347,6 +2390,21 @@ test unixWm-58.3 {exit processing} {
     list $error $msg
 } {0 {}}
 
-    
+# cleanup
 catch {destroy .t}
-concat {}
+catch {removeFile script}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -4,73 +4,36 @@
 #	Unix platform. This implementation is used only if the
 #	"tk_strictMotif" flag is set.
 #
-# SCCS: @(#) xmfbox.tcl 1.6 97/10/01 15:06:07
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-
 
 # tkMotifFDialog --
 #
 #	Implements a file dialog similar to the standard Motif file
 #	selection box.
 #
-# Return value:
+# Arguments:
+#	type		"open" or "save"
+#	args		Options parsed by the procedure.
 #
+# Results:
 #	A list of two members. The first member is the absolute
 #	pathname of the selected file or "" if user hits cancel. The
 #	second member is the name of the selected file type, or ""
 #	which stands for "default file type"
-#
-proc tkMotifFDialog {args} {
+
+proc tkMotifFDialog {type args} {
     global tkPriv
-    set w __tk_filedialog
-    upvar #0 $w data
+    set dataName __tk_filedialog
+    upvar #0 $dataName data
 
-    if ![string compare [lindex [info level 0] 0] tk_getOpenFile] {
-	set type open
-    } else {
-	set type save
-    }
+    set w [tkMotifFDialog_Create $dataName $type $args]
 
-    tkMotifFDialog_Config $w $type $args
-
-    if {![string compare $data(-parent) .]} {
-        set w .$w
-    } else {
-        set w $data(-parent).$w
-    }
-
-    # (re)create the dialog box if necessary
-    #
-    if {![winfo exists $w]} {
-	tkMotifFDialog_Create $w
-    } elseif {[string compare [winfo class $w] TkMotifFDialog]} {
-	destroy $w
-	tkMotifFDialog_Create $w
-    }
-    wm transient $w $data(-parent)
-
-    tkMotifFDialog_Update $w
-
-    # 5. Withdraw the window, then update all the geometry information
-    # so we know how big it wants to be, then center the window in the
-    # display and de-iconify it.
-
-    wm withdraw $w
-    update idletasks
-    set x [expr [winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
-	    - [winfo vrootx [winfo parent $w]]]
-    set y [expr [winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
-	    - [winfo vrooty [winfo parent $w]]]
-    wm geom $w +$x+$y
-    wm deiconify $w
-    wm title $w $data(-title)
-
-    # 6. Set a grab and claim the focus too.
+    # Set a grab and claim the focus too.
 
     set oldFocus [focus]
     set oldGrab [grab current $w]
@@ -82,7 +45,7 @@ proc tkMotifFDialog {args} {
     $data(sEnt) select from 0
     $data(sEnt) select to   end
 
-    # 7. Wait for the user to respond, then restore the focus and
+    # Wait for the user to respond, then restore the focus and
     # return the index of the selected button.  Restore the focus
     # before deleting the window, since otherwise the window manager
     # may take the focus away so we can't redirect it.  Finally,
@@ -102,8 +65,89 @@ proc tkMotifFDialog {args} {
     return $tkPriv(selectFilePath)
 }
 
-proc tkMotifFDialog_Config {w type argList} {
-    upvar #0 $w data
+# tkMotifFDialog_Create --
+#
+#	Creates the Motif file dialog (if it doesn't exist yet) and
+#	initialize the internal data structure associated with the
+#	dialog.
+#
+#	This procedure is used by tkMotifFDialog to create the
+#	dialog. It's also used by the test suite to test the Motif
+#	file dialog implementation. User code shouldn't call this
+#	procedure directly.
+#
+# Arguments:
+#	dataName	Name of the global "data" array for the file dialog.
+#	type		"Save" or "Open"
+#	argList		Options parsed by the procedure.
+#
+# Results:
+#	Pathname of the file dialog.
+
+proc tkMotifFDialog_Create {dataName type argList} {
+    global tkPriv
+    upvar #0 $dataName data
+
+    tkMotifFDialog_Config $dataName $type $argList
+
+    if {![string compare $data(-parent) .]} {
+        set w .$dataName
+    } else {
+        set w $data(-parent).$dataName
+    }
+
+    # (re)create the dialog box if necessary
+    #
+    if {![winfo exists $w]} {
+	tkMotifFDialog_BuildUI $w
+    } elseif {[string compare [winfo class $w] TkMotifFDialog]} {
+	destroy $w
+	tkMotifFDialog_BuildUI $w
+    } else {
+	set data(fEnt) $w.top.f1.ent
+	set data(dList) $w.top.f2.a.l
+	set data(fList) $w.top.f2.b.l
+	set data(sEnt) $w.top.f3.ent
+	set data(okBtn) $w.bot.ok
+	set data(filterBtn) $w.bot.filter
+	set data(cancelBtn) $w.bot.cancel
+    }
+
+    wm transient $w $data(-parent)
+
+    tkMotifFDialog_Update $w
+
+    # Withdraw the window, then update all the geometry information
+    # so we know how big it wants to be, then center the window in the
+    # display and de-iconify it.
+
+    wm withdraw $w
+    update idletasks
+    set x [expr [winfo screenwidth $w]/2 - [winfo reqwidth $w]/2 \
+	    - [winfo vrootx [winfo parent $w]]]
+    set y [expr [winfo screenheight $w]/2 - [winfo reqheight $w]/2 \
+	    - [winfo vrooty [winfo parent $w]]]
+    wm geom $w +$x+$y
+    wm deiconify $w
+    wm title $w $data(-title)
+
+    return $w
+}
+
+# tkMotifFDialog_Config --
+#
+#	Iterates over the optional arguments to determine the option
+#	values for the Motif file dialog; gives default values to
+#	unspecified options.
+#
+# Arguments:
+#	dataName	The name of the global variable in which
+#			data for the file dialog is stored.
+#	type		"Save" or "Open"
+#	argList		Options parsed by the procedure.
+
+proc tkMotifFDialog_Config {dataName type argList} {
+    upvar #0 $dataName data
 
     set data(type) $type
 
@@ -120,7 +164,7 @@ proc tkMotifFDialog_Config {w type argList} {
 
     # 2: default values depending on the type of the dialog
     #
-    if ![info exists data(selectPath)] {
+    if {![info exists data(selectPath)]} {
 	# first time the dialog has been popped up
 	set data(selectPath) [pwd]
 	set data(selectFile) ""
@@ -128,10 +172,10 @@ proc tkMotifFDialog_Config {w type argList} {
 
     # 3: parse the arguments
     #
-    tclParseConfigSpec $w $specs "" $argList
+    tclParseConfigSpec $dataName $specs "" $argList
 
-    if ![string compare $data(-title) ""] {
-	if ![string compare $type "open"] {
+    if {![string compare $data(-title) ""]} {
+	if {![string compare $type "open"]} {
 	    set data(-title) "Open"
 	} else {
 	    set data(-title) "Save As"
@@ -141,12 +185,19 @@ proc tkMotifFDialog_Config {w type argList} {
     # 4: set the default directory and selection according to the -initial
     #    settings
     #
-    if [string compare $data(-initialdir) ""] {
-	if [file isdirectory $data(-initialdir)] {
+    if {[string compare $data(-initialdir) ""]} {
+	if {[file isdirectory $data(-initialdir)]} {
 	    set data(selectPath) [glob $data(-initialdir)]
 	} else {
-	    error "\"$data(-initialdir)\" is not a valid directory"
+	    set data(selectPath) [pwd]
 	}
+
+	# Convert the initialdir to an absolute path name.
+
+	set old [pwd]
+	cd $data(selectPath)
+	set data(selectPath) [pwd]
+	cd $old
     }
     set data(selectFile) $data(-initialfile)
 
@@ -156,19 +207,29 @@ proc tkMotifFDialog_Config {w type argList} {
     #
     set data(-filetypes) [tkFDGetFileTypes $data(-filetypes)]
 
-    if ![info exists data(filter)] {
+    if {![info exists data(filter)]} {
 	set data(filter) *
     }
-    if ![winfo exists $data(-parent)] {
+    if {![winfo exists $data(-parent)]} {
 	error "bad window path name \"$data(-parent)\""
     }
 }
 
-proc tkMotifFDialog_Create {w} {
+# tkMotifFDialog_BuildUI --
+#
+#	Builds the UI components of the Motif file dialog.
+#
+# Arguments:
+# 	w		Pathname of the dialog to build.
+#
+# Results:
+# 	None.
+
+proc tkMotifFDialog_BuildUI {w} {
     set dataName [lindex [split $w .] end]
     upvar #0 $dataName data
 
-    # 1: Create the dialog ...
+    # Create the dialog toplevel and internal frames.
     #
     toplevel $w -class TkMotifFDialog
     set top [frame $w.top -relief raised -bd 1]
@@ -246,7 +307,22 @@ proc tkMotifFDialog_Create {w} {
     wm protocol $w WM_DELETE_WINDOW "tkMotifFDialog_CancelCmd $w"
 }
 
-proc tkMotifFDialog_MakeSList {w f label under cmd} {
+# tkMotifFDialog_MakeSList --
+#
+#	Create a scrolled-listbox and set the keyboard accelerator
+#	bindings so that the list selection follows what the user
+#	types.
+#
+# Arguments:
+#	w		Pathname of the dialog box.
+#	f		Frame widget inside which to create the scrolled
+#			listbox. This frame widget already exists.
+#	label		The string to display on top of the listbox.
+#	under		Sets the -under option of the label.
+#	cmdPrefix	Specifies procedures to call when the listbox is
+#			browsed or activated.
+
+proc tkMotifFDialog_MakeSList {w f label under cmdPrefix} {
     label $f.lab -text $label -under $under -anchor w
     listbox $f.l -width 12 -height 5 -selectmode browse -exportselection 0\
 	-xscrollcommand "$f.h set" \
@@ -268,13 +344,14 @@ proc tkMotifFDialog_MakeSList {w f label under cmd} {
     # bindings for the listboxes
     #
     set list $f.l
-    bind $list <Up>        "tkMotifFDialog_Browse$cmd $w"
-    bind $list <Down>      "tkMotifFDialog_Browse$cmd $w"
-    bind $list <space>     "tkMotifFDialog_Browse$cmd $w"
-    bind $list <1>         "tkMotifFDialog_Browse$cmd $w"
-    bind $list <B1-Motion> "tkMotifFDialog_Browse$cmd $w"
-    bind $list <Double-1>  "tkMotifFDialog_Activate$cmd $w"
-    bind $list <Return>    "tkMotifFDialog_Browse$cmd $w; tkMotifFDialog_Activate$cmd $w"
+    bind $list <Up>        "tkMotifFDialog_Browse$cmdPrefix $w"
+    bind $list <Down>      "tkMotifFDialog_Browse$cmdPrefix $w"
+    bind $list <space>     "tkMotifFDialog_Browse$cmdPrefix $w"
+    bind $list <1>         "tkMotifFDialog_Browse$cmdPrefix $w"
+    bind $list <B1-Motion> "tkMotifFDialog_Browse$cmdPrefix $w"
+    bind $list <Double-ButtonRelease-1> "tkMotifFDialog_Activate$cmdPrefix $w"
+    bind $list <Return>    "tkMotifFDialog_Browse$cmdPrefix $w; \
+	    tkMotifFDialog_Activate$cmdPrefix $w"
 
     bindtags $list "Listbox $list [winfo toplevel $list] all"
     tkListBoxKeyAccel_Set $list
@@ -282,140 +359,61 @@ proc tkMotifFDialog_MakeSList {w f label under cmd} {
     return $f.l
 }
 
-proc tkMotifFDialog_BrowseDList {w} {
-    upvar #0 [winfo name $w] data
-
-    focus $data(dList)
-    if ![string compare [$data(dList) curselection] ""] {
-	return
-    }
-    set subdir [$data(dList) get [$data(dList) curselection]]
-    if ![string compare $subdir ""] {
-	return
-    }
-
-    $data(fList) selection clear 0 end
-
-    set list [tkMotifFDialog_InterpFilter $w]
-    set data(filter) [lindex $list 1]
-
-    case $subdir {
-	. {
-	    set newSpec [file join $data(selectPath) $data(filter)]
-	}
-	.. {
-	    set newSpec [file join [file dirname $data(selectPath)] \
-		$data(filter)]
-	}
-	default {
-	    set newSpec [file join $data(selectPath) $subdir $data(filter)]
-	}
-    }
-
-    $data(fEnt) delete 0 end
-    $data(fEnt) insert 0 $newSpec
-}
-
-proc tkMotifFDialog_ActivateDList {w} {
-    upvar #0 [winfo name $w] data
-
-    if ![string compare [$data(dList) curselection] ""] {
-	return
-    }
-    set subdir [$data(dList) get [$data(dList) curselection]]
-    if ![string compare $subdir ""] {
-	return
-    }
-
-    $data(fList) selection clear 0 end
-
-    case $subdir {
-	. {
-	    set newDir $data(selectPath)
-	}
-	.. {
-	    set newDir [file dirname $data(selectPath)]
-	}
-	default {
-	    set newDir [file join $data(selectPath) $subdir]
-	}
-    }
-
-    set data(selectPath) $newDir
-    tkMotifFDialog_Update $w
-
-    if [string compare $subdir ..] {
-	$data(dList) selection set 0
-	$data(dList) activate 0
-    } else {
-	$data(dList) selection set 1
-	$data(dList) activate 1
-    }
-}
-
-proc tkMotifFDialog_BrowseFList {w} {
-    upvar #0 [winfo name $w] data
-
-    focus $data(fList)
-    if ![string compare [$data(fList) curselection] ""] {
-	return
-    }
-    set data(selectFile) [$data(fList) get [$data(fList) curselection]]
-    if ![string compare $data(selectFile) ""] {
-	return
-    }
-
-    $data(dList) selection clear 0 end
-
-    $data(fEnt) delete 0 end
-    $data(fEnt) insert 0 [file join $data(selectPath) $data(filter)]
-    $data(fEnt) xview end
- 
-    $data(sEnt) delete 0 end
-    $data(sEnt) insert 0 [file join $data(selectPath) $data(selectFile)]
-    $data(sEnt) xview end
-}
-
-proc tkMotifFDialog_ActivateFList {w} {
-    upvar #0 [winfo name $w] data
-
-    if ![string compare [$data(fList) curselection] ""] {
-	return
-    }
-    set data(selectFile) [$data(fList) get [$data(fList) curselection]]
-    if ![string compare $data(selectFile) ""] {
-	return
-    } else {
-	tkMotifFDialog_ActivateSEnt $w
-    }
-}
-
-proc tkMotifFDialog_ActivateFEnt {w} {
-    upvar #0 [winfo name $w] data
-
-    set list [tkMotifFDialog_InterpFilter $w]
-    set data(selectPath) [lindex $list 0]
-    set data(filter)    [lindex $list 1]
-
-    tkMotifFDialog_Update $w
-}
+# tkMotifFDialog_InterpFilter --
+#
+#	Interpret the string in the filter entry into two components:
+#	the directory and the pattern. If the string is a relative
+#	pathname, give a warning to the user and restore the pattern
+#	to original.
+#
+# Arguments:
+#	w		pathname of the dialog box.
+#
+# Results:
+# 	A list of two elements. The first element is the directory
+# 	specified # by the filter. The second element is the filter
+# 	pattern itself.
 
 proc tkMotifFDialog_InterpFilter {w} {
     upvar #0 [winfo name $w] data
 
     set text [string trim [$data(fEnt) get]]
+
     # Perform tilde substitution
     #
-    if ![string compare [string index $text 0] ~] {
+    set badTilde 0
+    if {[string compare [string index $text 0] ~] == 0} {
 	set list [file split $text]
 	set tilde [lindex $list 0]
-	catch {
-	    set tilde [glob $tilde]
+	if [catch {set tilde [glob $tilde]}] {
+	    set badTilde 1
+	} else {
+	    set text [eval file join [concat $tilde [lrange $list 1 end]]]
 	}
-	set text [eval file join [concat $tilde [lrange $list 1 end]]]
     }
 
-    set resolved [file join [file dirname $text] [file tail $text]]
+    # If the string is a relative pathname, combine it
+    # with the current selectPath.
+
+    set relative 0
+    if {[file pathtype $text] == "relative"} {
+	set relative 1
+    } elseif {$badTilde} {
+	set relative 1	
+    }
+
+    if {$relative} {
+	tk_messageBox -icon warning -type ok \
+	    -message "\"$text\" must be an absolute pathname"
+
+	$data(fEnt) delete 0 end
+	$data(fEnt) insert 0 [tkFDialog_JoinFile $data(selectPath) \
+		$data(filter)]
+
+	return [list $data(selectPath) $data(filter)]
+    }
+
+    set resolved [tkFDialog_JoinFile [file dirname $text] [file tail $text]]
 
     if [file isdirectory $resolved] {
 	set dir $resolved
@@ -428,6 +426,278 @@ proc tkMotifFDialog_InterpFilter {w} {
     return [list $dir $fil]
 }
 
+# tkMotifFDialog_Update
+#
+#	Load the files and synchronize the "filter" and "selection" fields
+#	boxes.
+#
+# Arguments:
+# 	w 		pathname of the dialog box.
+#
+# Results:
+#	None.
+
+proc tkMotifFDialog_Update {w} {
+    upvar #0 [winfo name $w] data
+
+    $data(fEnt) delete 0 end
+    $data(fEnt) insert 0 [tkFDialog_JoinFile $data(selectPath) $data(filter)]
+    $data(sEnt) delete 0 end
+    $data(sEnt) insert 0 [tkFDialog_JoinFile $data(selectPath) \
+	    $data(selectFile)]
+ 
+    tkMotifFDialog_LoadFiles $w
+}
+
+# tkMotifFDialog_LoadFiles --
+#
+#	Loads the files and directories into the two listboxes according
+#	to the filter setting.
+#
+# Arguments:
+# 	w 		pathname of the dialog box.
+#
+# Results:
+#	None.
+
+proc tkMotifFDialog_LoadFiles {w} {
+    upvar #0 [winfo name $w] data
+
+    $data(dList) delete 0 end
+    $data(fList) delete 0 end
+
+    set appPWD [pwd]
+    if [catch {
+	cd $data(selectPath)
+    }] {
+	cd $appPWD
+
+	$data(dList) insert end ".."
+	return
+    }
+
+    # Make the dir list
+    #
+    foreach f [lsort -dictionary [glob -nocomplain .* *]] {
+	if [file isdir ./$f] {
+	    $data(dList) insert end $f
+	}
+    }
+    # Make the file list
+    #
+    if ![string compare $data(filter) *] {
+	set files [lsort -dictionary [glob -nocomplain .* *]]
+    } else {
+	set files [lsort -dictionary \
+	    [glob -nocomplain $data(filter)]]
+    }
+
+    set top 0
+    foreach f $files {
+	if ![file isdir ./$f] {
+	    regsub {^[.]/} $f "" f
+	    $data(fList) insert end $f
+	    if [string match .* $f] {
+		incr top
+	    }
+	}
+    }
+
+    # The user probably doesn't want to see the . files. We adjust the view
+    # so that the listbox displays all the non-dot files
+    $data(fList) yview $top
+
+    cd $appPWD
+}
+
+# tkMotifFDialog_BrowseFList --
+#
+#	This procedure is called when the directory list is browsed
+#	(clicked-over) by the user.
+#
+# Arguments:
+# 	w		The pathname of the dialog box.
+#
+# Results:
+#	None.	
+
+proc tkMotifFDialog_BrowseDList {w} {
+    upvar #0 [winfo name $w] data
+
+    focus $data(dList)
+    if {![string compare [$data(dList) curselection] ""]} {
+	return
+    }
+    set subdir [$data(dList) get [$data(dList) curselection]]
+    if {![string compare $subdir ""]} {
+	return
+    }
+
+    $data(fList) selection clear 0 end
+
+    set list [tkMotifFDialog_InterpFilter $w]
+    set data(filter) [lindex $list 1]
+
+    switch -- $subdir {
+	. {
+	    set newSpec [tkFDialog_JoinFile $data(selectPath) $data(filter)]
+	}
+	.. {
+	    set newSpec [tkFDialog_JoinFile [file dirname $data(selectPath)] \
+		$data(filter)]
+	}
+	default {
+	    set newSpec [tkFDialog_JoinFile [tkFDialog_JoinFile \
+		    $data(selectPath) $subdir] $data(filter)]
+	}
+    }
+
+    $data(fEnt) delete 0 end
+    $data(fEnt) insert 0 $newSpec
+}
+
+# tkMotifFDialog_ActivateDList --
+#
+#	This procedure is called when the directory list is activated
+#	(double-clicked) by the user.
+#
+# Arguments:
+# 	w		The pathname of the dialog box.
+#
+# Results:
+#	None.	
+
+proc tkMotifFDialog_ActivateDList {w} {
+    upvar #0 [winfo name $w] data
+
+    if {![string compare [$data(dList) curselection] ""]} {
+	return
+    }
+    set subdir [$data(dList) get [$data(dList) curselection]]
+    if {![string compare $subdir ""]} {
+	return
+    }
+
+    $data(fList) selection clear 0 end
+
+    switch -- $subdir {
+	. {
+	    set newDir $data(selectPath)
+	}
+	.. {
+	    set newDir [file dirname $data(selectPath)]
+	}
+	default {
+	    set newDir [tkFDialog_JoinFile $data(selectPath) $subdir]
+	}
+    }
+
+    set data(selectPath) $newDir
+    tkMotifFDialog_Update $w
+
+    if {[string compare $subdir ..]} {
+	$data(dList) selection set 0
+	$data(dList) activate 0
+    } else {
+	$data(dList) selection set 1
+	$data(dList) activate 1
+    }
+}
+
+# tkMotifFDialog_BrowseFList --
+#
+#	This procedure is called when the file list is browsed
+#	(clicked-over) by the user.
+#
+# Arguments:
+# 	w		The pathname of the dialog box.
+#
+# Results:
+#	None.	
+
+proc tkMotifFDialog_BrowseFList {w} {
+    upvar #0 [winfo name $w] data
+
+    focus $data(fList)
+    if {![string compare [$data(fList) curselection] ""]} {
+	return
+    }
+    set data(selectFile) [$data(fList) get [$data(fList) curselection]]
+    if {![string compare $data(selectFile) ""]} {
+	return
+    }
+
+    $data(dList) selection clear 0 end
+
+    $data(fEnt) delete 0 end
+    $data(fEnt) insert 0 [tkFDialog_JoinFile $data(selectPath) $data(filter)]
+    $data(fEnt) xview end
+ 
+    $data(sEnt) delete 0 end
+    $data(sEnt) insert 0 [tkFDialog_JoinFile $data(selectPath) \
+	    $data(selectFile)]
+    $data(sEnt) xview end
+}
+
+# tkMotifFDialog_ActivateFList --
+#
+#	This procedure is called when the file list is activated
+#	(double-clicked) by the user.
+#
+# Arguments:
+# 	w		The pathname of the dialog box.
+#
+# Results:
+#	None.	
+
+proc tkMotifFDialog_ActivateFList {w} {
+    upvar #0 [winfo name $w] data
+
+    if {![string compare [$data(fList) curselection] ""]} {
+	return
+    }
+    set data(selectFile) [$data(fList) get [$data(fList) curselection]]
+    if {![string compare $data(selectFile) ""]} {
+	return
+    } else {
+	tkMotifFDialog_ActivateSEnt $w
+    }
+}
+
+# tkMotifFDialog_ActivateFEnt --
+#
+#	This procedure is called when the user presses Return inside
+#	the "filter" entry. It updates the dialog according to the
+#	text inside the filter entry.
+#
+# Arguments:
+# 	w		The pathname of the dialog box.
+#
+# Results:
+#	None.	
+
+proc tkMotifFDialog_ActivateFEnt {w} {
+    upvar #0 [winfo name $w] data
+
+    set list [tkMotifFDialog_InterpFilter $w]
+    set data(selectPath) [lindex $list 0]
+    set data(filter)    [lindex $list 1]
+
+    tkMotifFDialog_Update $w
+}
+
+# tkMotifFDialog_ActivateSEnt --
+#
+#	This procedure is called when the user presses Return inside
+#	the "selection" entry. It sets the tkPriv(selectFilePath) global
+#	variable so that the vwait loop in tkMotifFDialog will be
+#	terminated.
+#
+# Arguments:
+# 	w		The pathname of the dialog box.
+#
+# Results:
+#	None.	
 
 proc tkMotifFDialog_ActivateSEnt {w} {
     global tkPriv
@@ -436,7 +706,6 @@ proc tkMotifFDialog_ActivateSEnt {w} {
     set selectFilePath [string trim [$data(sEnt) get]]
     set selectFile     [file tail    $selectFilePath]
     set selectPath     [file dirname $selectFilePath]
-
 
     if {![string compare $selectFilePath ""]} {
 	tkMotifFDialog_FilterCmd $w
@@ -450,32 +719,32 @@ proc tkMotifFDialog_ActivateSEnt {w} {
 	return
     }
 
-    if [string compare [file pathtype $selectFilePath] "absolute"] {
+    if {[string compare [file pathtype $selectFilePath] "absolute"]} {
 	tk_messageBox -icon warning -type ok \
 	    -message "\"$selectFilePath\" must be an absolute pathname"
 	return
     }
 
-    if ![file exists $selectPath] {
+    if {![file exists $selectPath]} {
 	tk_messageBox -icon warning -type ok \
 	    -message "Directory \"$selectPath\" does not exist."
 	return
     }
 
-    if ![file exists $selectFilePath] {
-	if ![string compare $data(type) open] {
+    if {![file exists $selectFilePath]} {
+	if {![string compare $data(type) open]} {
 	    tk_messageBox -icon warning -type ok \
 		-message "File \"$selectFilePath\" does not exist."
 	    return
 	}
     } else {
-	if ![string compare $data(type) save] {
+	if {![string compare $data(type) save]} {
 	    set message [format %s%s \
 		"File \"$selectFilePath\" already exists.\n\n" \
 		"Replace existing file?"]
 	    set answer [tk_messageBox -icon warning -type yesno \
 		-message $message]
-	    if ![string compare $answer "no"] {
+	    if {![string compare $answer "no"]} {
 		return
 	    }
 	}
@@ -507,75 +776,6 @@ proc tkMotifFDialog_CancelCmd {w} {
     set tkPriv(selectPath)     ""
 }
 
-# tkMotifFDialog_Update
-#
-#	Load the files and synchronize the "filter" and "selection" fields
-#	boxes.
-#
-# popup:
-#	If this is true, then update the selection field according to the
-#	"-selection" flag
-#
-proc tkMotifFDialog_Update {w} {
-    upvar #0 [winfo name $w] data
-
-    $data(fEnt) delete 0 end
-    $data(fEnt) insert 0 [file join $data(selectPath) $data(filter)]
-    $data(sEnt) delete 0 end
-    $data(sEnt) insert 0 [file join $data(selectPath) $data(selectFile)]
- 
-    tkMotifFDialog_LoadFiles $w
-}
-
-proc tkMotifFDialog_LoadFiles {w} {
-    upvar #0 [winfo name $w] data
-
-    $data(dList) delete 0 end
-    $data(fList) delete 0 end
-
-    set appPWD [pwd]
-    if [catch {
-	cd $data(selectPath)
-    }] {
-	cd $appPWD
-
-	$data(dList) insert end ".."
-	return
-    }
-
-    # Make the dir list
-    #
-    foreach f [lsort -command tclSortNoCase [glob -nocomplain .* *]] {
-	if [file isdir $f] {
-	    $data(dList) insert end $f
-	}
-    }
-    # Make the file list
-    #
-    if ![string compare $data(filter) *] {
-	set files [lsort -command tclSortNoCase [glob -nocomplain .* *]]
-    } else {
-	set files [lsort -command tclSortNoCase \
-	    [glob -nocomplain $data(filter)]]
-    }
-
-    set top 0
-    foreach f $files {
-	if ![file isdir $f] {
-	    $data(fList) insert end $f
-	    if [string match .* $f] {
-		incr top
-	    }
-	}
-    }
-
-    # The user probably doesn't want to see the . files. We adjust the view
-    # so that the listbox displays all the non-dot files
-    $data(fList) yview $top
-
-    cd $appPWD
-}
-
 proc tkListBoxKeyAccel_Set {w} {
     bind Listbox <Any-KeyPress> ""
     bind $w <Destroy> "tkListBoxKeyAccel_Unset $w"
@@ -589,6 +789,20 @@ proc tkListBoxKeyAccel_Unset {w} {
     catch {unset tkPriv(lbAccel,$w)}
     catch {unset tkPriv(lbAccel,$w,afterId)}
 }
+
+# tkListBoxKeyAccel_Key--
+#
+#	This procedure maintains a list of recently entered keystrokes
+#	over a listbox widget. It arranges an idle event to move the
+#	selection of the listbox to the entry that begins with the
+#	keystrokes.
+#
+# Arguments:
+# 	w		The pathname of the listbox.
+#	key		The key which the user just pressed.
+#
+# Results:
+#	None.	
 
 proc tkListBoxKeyAccel_Key {w key} {
     global tkPriv

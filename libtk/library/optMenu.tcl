@@ -3,7 +3,7 @@
 # This file defines the procedure tk_optionMenu, which creates
 # an option button and its associated menu.
 #
-# SCCS: @(#) optMenu.tcl 1.11 97/08/22 14:21:13
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
@@ -30,7 +30,7 @@
 proc tk_optionMenu {w varName firstValue args} {
     upvar #0 $varName var
 
-    if ![info exists var] {
+    if {![info exists var]} {
 	set var $firstValue
     }
     menubutton $w -textvariable $varName -indicatoron 1 -menu $w.menu \

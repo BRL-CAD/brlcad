@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixPort.h 1.38 97/05/17 16:48:19
+ * RCS: @(#) $Id$
  */
 
 #ifndef _UNIXPORT
@@ -158,12 +158,6 @@ extern int errno;
 	srcy, width, height);
 
 /*
- * The following Tk functions are implemented as macros under Windows.
- */
-
-#define TkGetNativeProlog(interp) TkGetProlog(interp)
-
-/*
  * Supply macros for seek offsets, if they're not already provided by
  * an include file.
  */
@@ -185,12 +179,12 @@ extern int errno;
  * in any other header file.
  */
 
-extern void		panic _ANSI_ARGS_(TCL_VARARGS(char *, string));
 
 /*
  * These functions do nothing under Unix, so we just eliminate calls to them.
  */
 
+#define TkpButtonSetDefaults(specPtr) {}
 #define TkpDestroyButton(butPtr) {}
 #define TkSelUpdateClipboard(a,b) {}
 #define TkSetPixmapColormap(p,c) {}
@@ -230,6 +224,8 @@ extern void		panic _ANSI_ARGS_(TCL_VARARGS(char *, string));
  * that is needed for portability reasons.
  */
 
-EXTERN void		TclpGetTime _ANSI_ARGS_((Tcl_Time *time));
+#ifndef _TCLINT
+#include <tclInt.h>
+#endif
 
 #endif /* _UNIXPORT */

@@ -9,11 +9,11 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWin3d.c 1.6 97/08/12 14:28:54
+ * RCS: @(#) $Id$
  */
 
-#include <tk3d.h>
-#include <tkWinInt.h>
+#include "tkWinInt.h"
+#include "tk3d.h"
 
 /*
  * This structure is used to keep track of the extra colors used by

@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacClipboard.c 1.18 97/05/01 15:41:17
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -32,7 +32,7 @@
  * Results:
  *	The return value is a standard Tcl return value.
  *	If an error occurs (such as no selection exists)
- *	then an error message is left in interp->result.
+ *	then an error message is left in the interp's result.
  *
  * Side effects:
  *	None.
@@ -119,7 +119,7 @@ XSetSelectionOwner(
      * It expects a Tk_Window, even though it only needs a Tk_Display.
      */
 
-    tkwin = (Tk_Window)tkMainWindowList->winPtr;
+    tkwin = (Tk_Window) TkGetMainInfoList()->winPtr;
 
     if (selection == Tk_InternAtom(tkwin, "CLIPBOARD")) {
 
@@ -128,7 +128,7 @@ XSetSelectionOwner(
 	 * owner of the clipboard.
 	 */
 
-	dispPtr = tkMainWindowList->winPtr->dispPtr;
+	dispPtr = TkGetMainInfoList()->winPtr->dispPtr;
 	if (dispPtr->clipboardActive) {
 	    return;
 	}
@@ -241,7 +241,7 @@ TkSuspendClipboard()
     char *buffer, *p, *endPtr, *buffPtr;
     long length;
 
-    dispPtr = tkDisplayList;
+    dispPtr = TkGetDisplayList();
     if ((dispPtr == NULL) || !dispPtr->clipboardActive) {
 	return;
     }
@@ -283,9 +283,9 @@ TkSuspendClipboard()
      * it needs it.  (Window list NULL if quiting.)
      */
 
-    if (tkMainWindowList != NULL) {
-	Tk_ClearSelection((Tk_Window) tkMainWindowList->winPtr, 
-		Tk_InternAtom((Tk_Window) tkMainWindowList->winPtr,
+    if (TkGetMainInfoList() != NULL) {
+	Tk_ClearSelection((Tk_Window) TkGetMainInfoList()->winPtr, 
+		Tk_InternAtom((Tk_Window) TkGetMainInfoList()->winPtr,
 			"CLIPBOARD"));
     }
 

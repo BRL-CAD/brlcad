@@ -1,14 +1,15 @@
 '\"
 '\" Copyright (c) 1990 The Regents of the University of California.
 '\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\" Copyright (c) 1998 by Scriptics Corporation.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) bind.n 1.41 96/10/03 18:27:05
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH bind n 4.1 Tk "Tk Built-In Commands"
+.TH bind n 8.0 Tk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -158,19 +159,58 @@ time and space requirement.
 .SH "EVENT TYPES"
 .PP
 The \fItype\fR field may be any of the standard X event types, with a
-few extra abbreviations.  Below is a list of all the valid types;
-where two names appear together, they are synonyms.
+few extra abbreviations.  The \fItype\fR field will also accept a
+couple non-standard X event types that were added to better support
+the Macintosh and Windows platforms.  Below is a list of all the valid
+types; where two names appear together, they are synonyms.
 .DS C
 .ta 5c 10c
-\fBButtonPress, Button	Expose	Map
-ButtonRelease	FocusIn	Motion
-Circulate	FocusOut	Property	
+\fBActivate	Enter	Map
+ButtonPress, Button	Expose	Motion
+.VS
+ButtonRelease	FocusIn	MouseWheel	
+.VE
+Circulate	FocusOut	Property
 Colormap	Gravity	Reparent
 Configure	KeyPress, Key	Unmap
-Destroy	KeyRelease	Visibility
-Enter	Leave	Activate
-Deactivate\fR
+Deactivate	KeyRelease	Visibility
+Destroy	Leave\fR
 .DE
+.PP
+.VS
+Most of the above events have the same fields and behaviors as events
+in the X Windowing system.  You can find more detailed descriptions of
+these events in any X window programming book.  A couple of the events
+are extensions to the X event system to support features unique to the
+Macintosh and Windows platforms.  We provide a little more detail on
+these events here.  These include:
+.IP \fBActivate\fR 5
+.IP \fBDeactivate\fR 5
+These two events are sent to every sub-window of a toplevel when they
+change state.  In addition to the focus Window, the Macintosh platform
+and Windows platforms have a notion of an active window (which often
+has but is not required to have the focus).  On the Macintosh, widgets
+in the active window have a different appearance than widgets in
+deactive windows.  The \fBActivate\fR event is sent to all the
+sub-windows in a toplevel when it changes from being deactive to
+active.  Likewise, the \fBDeactive\fR event is sent when the window's
+state changes from active to deactive.  There are no useful percent
+substitutions you would make when binding to these events.
+.IP \fBMouseWheel\fR 5
+Some mice on the Windows platform support a mouse wheel which is used
+for scrolling documents without using the scrollbars.  By rolling the
+wheel, the system will generate \fBMouseWheel\fR events that the
+application can use to scroll.  Like \fBKey\fR events the event is
+always routed to the window that currently has focus. When the event
+is received you can use the \fB%D\fR substitution to get the
+\fIdelta\fR field for the event which is a integer value of motion
+that the mouse wheel has moved.  The smallest value for which the
+system will report is defined by the OS.  On Windows 95 & 98 machines
+this value is at least 120 before it is reported.  However, higher
+resolution devices may be available in the future.  The sign of the
+value determines which direction your widget should scroll.  Positive
+values should scroll up and negative values should scroll down.
+.VE
 .PP
 The last part of a long event specification is \fIdetail\fR.  In the
 case of a \fBButtonPress\fR or \fBButtonRelease\fR event, it is the
@@ -258,7 +298,7 @@ The \fIfocus\fR field from the event (\fB0\fR or \fB1\fR).  Valid only
 for \fBEnter\fR and \fBLeave\fR events.
 .IP \fB%h\fR 5
 .VS
-The \fIheight\fR field from the event.  Valid only for \fBConfigure\fR and
+The \fIheight\fR field from the event.  Valid for the \fBConfigure\fR and
 \fBExpose\fR events.
 .VE
 .IP \fB%k\fR 5
@@ -308,6 +348,15 @@ Valid only for \fBKeyPress\fR and \fBKeyRelease\fR events.
 .IP \fB%B\fR 5
 The \fIborder_width\fR field from the event.  Valid only for
 \fBConfigure\fR events.
+.VS
+.IP \fB%D\fR 5
+This reports the \fIdelta\fR value of a \fBMouseWheel\fR event.  The
+\fIdelta\fR value represents the rotation units the mouse wheel has
+been moved.  On Windows 95 & 98 systems the smallest value for the
+delta is 120.  Future systems may support higher resolution values for
+the delta.  The sign of the value represents the direction the mouse
+wheel was scrolled.
+.VE
 .IP \fB%E\fR 5
 The \fIsend_event\fR field from the event.  Valid for all event types.
 .IP \fB%K\fR 5

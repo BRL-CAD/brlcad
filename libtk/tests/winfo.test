@@ -3,14 +3,13 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) winfo.test 1.19 97/05/16 08:49:01
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -18,6 +17,10 @@ foreach i [winfo children .] {
 }
 wm geometry . {}
 raise .
+
+# Some tests require the testwrapper command
+set ::tcltest::testConfig(testwrapper) \
+	[expr {[info commands testwrapper] != {}}]
 
 # eatColors --
 # Creates a toplevel window and allocates enough colors in it to
@@ -88,32 +91,33 @@ test winfo-2.7 {"winfo atom" command} {
     winfo atomname -displayof . 2
 } SECONDARY
 
-if {([winfo depth .] == 8) && ([winfo visual .] == "pseudocolor")} {
-    test winfo-3.1 {"winfo colormapfull" command} {
-	list [catch {winfo colormapfull} msg] $msg
-    } {1 {wrong # args: should be "winfo colormapfull window"}}
-    test winfo-3.2 {"winfo colormapfull" command} {
-	list [catch {winfo colormapfull a b} msg] $msg
-    } {1 {wrong # args: should be "winfo colormapfull window"}}
-    test winfo-3.3 {"winfo colormapfull" command} {
-	list [catch {winfo colormapfull foo} msg] $msg
-    } {1 {bad window path name "foo"}}
-    test winfo-3.4 {"winfo colormapfull" command} {macOrUnix} {
-	eatColors .t {-colormap new}
-	set result [list [winfo colormapfull .] [winfo colormapfull .t]]
-	.t.c delete 34
-	lappend result [winfo colormapfull .t]
-	.t.c create rectangle 30 30 80 80 -fill #441739
-	lappend result [winfo colormapfull .t]
-	.t.c create rectangle 40 40 90 90 -fill #ffeedd
-	lappend result [winfo colormapfull .t]
-	destroy .t.c
-	lappend result [winfo colormapfull .t]
-    } {0 1 0 0 1 0}
-    catch {destroy .t}
-}
+# Some tests require the "pseudocolor" visual class.
+set ::tcltest::testConfig(pseudocolor) \
+	[expr {([winfo depth .] == 8) && ([winfo visual .] == "pseudocolor")}]
 
+test winfo-3.1 {"winfo colormapfull" command} {pseudocolor} {
+    list [catch {winfo colormapfull} msg] $msg
+} {1 {wrong # args: should be "winfo colormapfull window"}}
+test winfo-3.2 {"winfo colormapfull" command} {pseudocolor} {
+    list [catch {winfo colormapfull a b} msg] $msg
+} {1 {wrong # args: should be "winfo colormapfull window"}}
+test winfo-3.3 {"winfo colormapfull" command} {pseudocolor} {
+    list [catch {winfo colormapfull foo} msg] $msg
+} {1 {bad window path name "foo"}}
+test winfo-3.4 {"winfo colormapfull" command} {macOrUnix pseudocolor} {
+    eatColors .t {-colormap new}
+    set result [list [winfo colormapfull .] [winfo colormapfull .t]]
+    .t.c delete 34
+    lappend result [winfo colormapfull .t]
+    .t.c create rectangle 30 30 80 80 -fill #441739
+    lappend result [winfo colormapfull .t]
+    .t.c create rectangle 40 40 90 90 -fill #ffeedd
+    lappend result [winfo colormapfull .t]
+    destroy .t.c
+    lappend result [winfo colormapfull .t]
+} {0 1 0 0 1 0}
 catch {destroy .t}
+
 toplevel .t -width 550 -height 400
 frame .t.f -width 80 -height 60 -bd 2 -relief raised
 place .t.f -x 50 -y 50
@@ -206,7 +210,7 @@ test winfo-7.6 {"winfo pathname" command} {
 test winfo-7.7 {"winfo pathname" command} {
     winfo pathname -displayof .b [winfo id .]
 } {.}
-test winfo-7.8 {"winfo pathname" command} {unixOnly} {
+test winfo-7.8 {"winfo pathname" command} {unixOnly testwrapper} {
     winfo pathname [testwrapper .]
 } {}
 
@@ -311,7 +315,7 @@ proc MakeEmbed {} {
     pack .emb.b -expand yes -fill both
     update
 }
-test winfo-13.1 {root coordinates of embedded toplevel} {macOrUnix} {
+test winfo-13.1 {root coordinates of embedded toplevel} {
     MakeEmbed
     set z [expr [winfo rootx .emb] == [winfo rootx .con] && \
 		[winfo rooty .emb] == [winfo rooty .con]]
@@ -319,8 +323,8 @@ test winfo-13.1 {root coordinates of embedded toplevel} {macOrUnix} {
     destroy .con
     set z
 } {1}
-test winfo-13.2 {destroying embedded toplevel} {macOrUnix} {
-    catch {destroy .emb}
+test winfo-13.2 {destroying embedded toplevel} {
+    destroy .emb
     update
     expr [winfo exists .emb.b] || [winfo exists .con]
 } 0
@@ -329,7 +333,7 @@ foreach i [winfo children .] {
     destroy $i
 }
 
-test winfo-13.3 {destroying container window} {macOrUnix} {
+test winfo-13.3 {destroying container window} {
     MakeEmbed
     destroy .con
     update
@@ -343,7 +347,7 @@ foreach i [winfo children .] {
     destroy $i
 }
 
-test winfo-13.4 {[winfo containing] with embedded windows} {macOrUnix} {
+test winfo-13.4 {[winfo containing] with embedded windows} {
     MakeEmbed
     button .b
     pack .b -expand yes -fill both
@@ -359,3 +363,19 @@ test winfo-13.4 {[winfo containing] with embedded windows} {macOrUnix} {
 foreach i [winfo children .] {
     catch {destroy $i}
 }
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

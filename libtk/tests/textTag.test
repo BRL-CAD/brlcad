@@ -3,19 +3,20 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) textTag.test 1.30 97/11/06 16:57:02
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then \
-  {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 catch {destroy .t}
 if [catch {text .t -font {Courier 12} -width 20 -height 10}] {
     puts "The font needed by these tests isn't available, so I'm"
     puts "going to skip the tests."
+    ::tcltest::cleanupTests
     return
 }
 pack append . .t {top expand fill}
@@ -183,7 +184,14 @@ test textTag-3.7 {TkTextTagCmd - "bind" option} {
     .t tag bind x <Enter>
 } {script1
 script2}
-
+test textTag-3.7 {TkTextTagCmd - "bind" option} {
+    .t tag delete x
+    list [catch {.t tag bind x <Enter>} msg] $msg
+} {0 {}}
+test textTag-3.8 {TkTextTagCmd - "bind" option} {
+    .t tag delete x
+    list [catch {.t tag bind x <} msg] $msg
+} {1 {no event type or button # or keysym}}
 
 test textTag-4.1 {TkTextTagCmd - "cget" option} {
     list [catch {.t tag cget a} msg] $msg
@@ -753,4 +761,20 @@ test textTag-16.7 {TkTextPickCurrent procedure} {
 } {3.1}
 
 catch {destroy .t}
-concat {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

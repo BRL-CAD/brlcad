@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) ximage.c 1.6 96/07/23 16:59:10
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -20,6 +20,11 @@
  * XCreateBitmapFromData --
  *
  *	Construct a single plane pixmap from bitmap data.
+ *
+ *	NOTE: This procedure has the correct behavior on Windows and
+ *	the Macintosh, but not on UNIX.  This is probably because the
+ *	emulation for XPutImage on those platforms compensates for whatever
+ *	is wrong here :-)
  *
  * Results:
  *	Returns a new Pixmap.
@@ -63,53 +68,4 @@ XCreateBitmapFromData(display, d, data, width, height)
     TkPutImage(NULL, 0, display, pix, gc, &ximage, 0, 0, 0, 0, width, height);
     XFreeGC(display, gc);
     return pix;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * XReadBitmapFile --
- *
- *	Loads a bitmap image in X bitmap format into the specified
- *	drawable.
- *
- * Results:
- *	Sets the size, hotspot, and bitmap on success.
- *
- * Side effects:
- *	Creates a new bitmap from the file data.
- *
- *----------------------------------------------------------------------
- */
-
-int
-XReadBitmapFile(display, d, filename, width_return, height_return,
-	bitmap_return, x_hot_return, y_hot_return) 
-    Display* display;
-    Drawable d;
-    _Xconst char* filename;
-    unsigned int* width_return;
-    unsigned int* height_return;
-    Pixmap* bitmap_return;
-    int* x_hot_return;
-    int* y_hot_return;
-{
-    Tcl_Interp *dummy;
-    char *data;
-
-    dummy = Tcl_CreateInterp();
-
-    data = TkGetBitmapData(dummy, NULL, (char *) filename,
-	    (int *) width_return, (int *) height_return, x_hot_return,
-	    y_hot_return);
-    if (data == NULL) {
-	return BitmapFileInvalid;
-    }
-
-    *bitmap_return = XCreateBitmapFromData(display, d, data, *width_return,
-	    *height_return);
-
-    Tcl_DeleteInterp(dummy);
-    ckfree(data);
-    return BitmapSuccess;
 }

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" @(#) CrtWindow.c 1.21 96/11/01 09:42:20
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tk_CreateWindow 3 4.2 Tk "Tk Library Procedures"
@@ -125,7 +125,7 @@ created with \fBTk_CreateEventHandler\fR.  In addition,
 \fBTk_DestroyWindow\fR will delete any children of \fItkwin\fR
 recursively (where children are defined in the Tk sense, consisting
 of all windows that were created with the given window as \fIparent\fR).
-If \fItkwin\fR was created by \fBTk_CreateInternalWindow\fR then event
+If \fItkwin\fR is an internal window, then event
 handlers interested in destroy events
 are invoked immediately.  If \fItkwin\fR is a top-level or main window,
 then the event handlers will be invoked later, after X has seen

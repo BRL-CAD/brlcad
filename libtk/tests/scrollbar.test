@@ -4,14 +4,13 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) scrollbar.test 1.33 97/08/13 17:37:19
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -170,16 +169,16 @@ test scrollbar-3.10 {ScrollbarWidgetCmd procedure, "cget" option} {
     list [catch {.s cget -orient} msg] $msg
 } {0 vertical}
 scrollbar .s2
-test scrollbar-3.11 {ScrollbarWidgetCmd procedure, "cget" option} {pc} {
+test scrollbar-3.11 {ScrollbarWidgetCmd procedure, "cget" option} {pcOnly} {
     list [catch {.s2 cget -bd} msg] $msg
 } {0 0}
-test scrollbar-3.12 {ScrollbarWidgetCmd procedure, "cget" option} {!pc} {
+test scrollbar-3.12 {ScrollbarWidgetCmd procedure, "cget" option} {macOrUnix} {
     list [catch {.s2 cget -bd} msg] $msg
 } {0 2}
-test scrollbar-3.13 {ScrollbarWidgetCmd procedure, "cget" option} {pc} {
+test scrollbar-3.13 {ScrollbarWidgetCmd procedure, "cget" option} {pcOnly} {
     list [catch {.s2 cget -highlightthickness} msg] $msg
 } {0 0}
-test scrollbar-3.14 {ScrollbarWidgetCmd procedure, "cget" option} {!pc} {
+test scrollbar-3.14 {ScrollbarWidgetCmd procedure, "cget" option} {macOrUnix} {
     list [catch {.s2 cget -highlightthickness} msg] $msg
 } {0 1}
 destroy .s2
@@ -662,4 +661,20 @@ test scrollbar-9.1 {scrollbar widget vs hidden commands} {
 
 catch {destroy .s}
 catch {destroy .t}
-concat {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -8,11 +8,12 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWin32Dll.c 1.9 96/08/06 15:59:08
+ * RCS: @(#) $Id$
  */
 
-#include "tkPort.h"
 #include "tkWinInt.h"
+
+static int tkPlatformId;
 
 /*
  * The following declaration is for the VC++ DLL entry point.
@@ -70,6 +71,8 @@ DllMain(hInstance, reason, reserved)
     DWORD reason;
     LPVOID reserved;
 {
+    OSVERSIONINFO os;
+
     /*
      * If we are attaching to the DLL from a new process, tell Tk about
      * the hInstance to use. If we are detaching then clean up any
@@ -77,9 +80,40 @@ DllMain(hInstance, reason, reserved)
      */
     
     if (reason == DLL_PROCESS_ATTACH) {
+	os.dwOSVersionInfoSize = sizeof(os);
+	GetVersionEx(&os);
+	tkPlatformId = os.dwPlatformId;
+
         TkWinXInit(hInstance);
     } else if (reason == DLL_PROCESS_DETACH) {
         TkWinXCleanup(hInstance);
     }
     return(TRUE);
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkWinGetPlatformId --
+ *
+ *	Determines whether running under NT, 95, or Win32s, to allow 
+ *	runtime conditional code.
+ *
+ * Results:
+ *	The return value is one of:
+ *	    VER_PLATFORM_WIN32s		Win32s on Windows 3.1. 
+ *	    VER_PLATFORM_WIN32_WINDOWS	Win32 on Windows 95.
+ *	    VER_PLATFORM_WIN32_NT	Win32 on Windows NT
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int		
+TkWinGetPlatformId()
+{
+    return tkPlatformId;
+}
+

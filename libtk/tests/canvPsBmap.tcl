@@ -2,7 +2,7 @@
 # for bitmaps in canvases.  It is part of the Tk visual test suite,
 # which is invoked via the "visual" script.
 #
-# SCCS: @(#) canvPsBmap.tcl 1.5 96/07/25 15:54:14
+# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t
@@ -69,3 +69,16 @@ $c create bitmap 5.5i 5.5i \
     -bitmap @[file join $tk_library demos/images/flagup.bmp] \
     -background {} -foreground black -anchor se
 $c create rect 5.47i 5.47i 5.53i 5.53i -fill {} -outline black
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -7,38 +7,57 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1997 by Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) winClipboard.test 1.3 97/07/01 18:10:37
+# RCS: @(#) $Id$
 
-if {$tcl_platform(platform)!="windows"} {
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
-if {[string compare test [info procs test]] == 1} {
-    source defs
-}
+# Note that these tests may fail if another application is grabbing the
+# clipboard (e.g. an X server)
 
-test winClipboard-1.1 {TkSelGetSelection} {
+test winClipboard-1.1 {TkSelGetSelection} {pcOnly} {
     clipboard clear
     catch {selection get -selection CLIPBOARD} msg
     set msg
 } {CLIPBOARD selection doesn't exist or form "STRING" not defined}
-test winClipboard-1.2 {TkSelGetSelection} {
+test winClipboard-1.2 {TkSelGetSelection} {pcOnly} {
     clipboard clear
     clipboard append {}
     list [selection get -selection CLIPBOARD] [testclipboard]
 } {{} {}}
-test winClipboard-1.3 {TkSelGetSelection & TkWinClipboardRender} {
+test winClipboard-1.3 {TkSelGetSelection & TkWinClipboardRender} {pcOnly} {
     clipboard clear
     clipboard append abcd
     list [selection get -selection CLIPBOARD] [testclipboard]
 } {abcd abcd}
-test winClipboard-1.4 {TkSelGetSelection & TkWinClipboardRender} {
+test winClipboard-1.4 {TkSelGetSelection & TkWinClipboardRender} {pcOnly} {
     clipboard clear
     clipboard append "line 1\nline 2"
     list [selection get -selection CLIPBOARD] [testclipboard]
 } [list "line 1\nline 2" "line 1\r\nline 2"]
+test winClipboard-1.5 {TkSelGetSelection & TkWinClipboardRender} {pcOnly} {
+    clipboard clear
+    clipboard append "line 1\u00c7\nline 2"
+    list [selection get -selection CLIPBOARD] [testclipboard]
+} [list "line 1\u00c7\nline 2" [bytestring "line 1\u00c7\r\nline 2"]]
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,5 +1,6 @@
 /*
  * This file is generated from $(INCLUDESRC)/keysymdef.h.  Do not edit.
+ * RCS: $Id$ 
  */
 { "BackSpace", 0xFF08 },
 { "Tab", 0xFF09 },
@@ -20,6 +21,9 @@
 { "Next", 0xFF56 },
 { "End", 0xFF57 },
 { "Begin", 0xFF58 },
+{ "Win_L", 0xFF5B },
+{ "Win_R", 0xFF5C },
+{ "App", 0xFF5D },
 { "Select", 0xFF60 },
 { "Print", 0xFF61 },
 { "Execute", 0xFF62 },

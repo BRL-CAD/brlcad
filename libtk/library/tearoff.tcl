@@ -2,7 +2,7 @@
 #
 # This file contains procedures that implement tear-off menus.
 #
-# SCCS: @(#) tearoff.tcl 1.20 97/08/21 14:49:27
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
@@ -40,16 +40,16 @@ proc tkTearOffMenu {w {x 0} {y 0}} {
     }
 
     set parent [winfo parent $w]
-    while {([winfo toplevel $parent] != $parent)
-	    || ([winfo class $parent] == "Menu")} {
+    while {[string compare [winfo toplevel $parent] $parent]
+          || ![string compare [winfo class $parent] "Menu"]} {
 	set parent [winfo parent $parent]
     }
-    if {$parent == "."} {
+    if {![string compare $parent "."]} {
 	set parent ""
     }
     for {set i 1} 1 {incr i} {
 	set menu $parent.tearoff$i
-	if ![winfo exists $menu] {
+	if {![winfo exists $menu]} {
 	    break
 	}
     }
@@ -61,7 +61,7 @@ proc tkTearOffMenu {w {x 0} {y 0}} {
     # entry.  If it's a menubutton then use its text.
 
     set parent [winfo parent $w]
-    if {[$menu cget -title] != ""} {
+    if {[string compare [$menu cget -title] ""]} {
     	wm title $menu [$menu cget -title]
     } else {
     	switch [winfo class $parent] {
@@ -92,7 +92,7 @@ proc tkTearOffMenu {w {x 0} {y 0}} {
     # now.
 
     set cmd [$w cget -tearoffcommand]
-    if {$cmd != ""} {
+    if {[string compare $cmd ""]} {
 	uplevel #0 $cmd $w $menu
     }
     return $menu
@@ -121,7 +121,7 @@ proc tkMenuDup {src dst type} {
     }
     eval $cmd
     set last [$src index last]
-    if {$last == "none"} {
+    if {![string compare $last "none"]} {
 	return
     }
     for {set i [$src cget -tearoff]} {$i <= $last} {incr i} {
@@ -134,12 +134,33 @@ proc tkMenuDup {src dst type} {
 
     # Duplicate the binding tags and bindings from the source menu.
 
-    regsub -all . $src {\\&} quotedSrc
-    regsub -all . $dst {\\&} quotedDst
-    regsub -all $quotedSrc [bindtags $src] $dst x
+    set tags [bindtags $src]
+    set srcLen [string length $src]
+ 
+    # Copy tags to x, replacing each substring of src with dst.
+
+    while {[set index [string first $src $tags]] != -1} {
+      append x [string range $tags 0 [expr {$index - 1}]]$dst
+      set tags [string range $tags [expr {$index + $srcLen}] end]
+    }
+    append x $tags
+
     bindtags $dst $x
+
     foreach event [bind $src] {
-	regsub -all $quotedSrc [bind $src $event] $dst x
+	unset x
+	set script [bind $src $event]
+	set eventLen [string length $event]
+
+	# Copy script to x, replacing each substring of event with dst.
+
+	while {[set index [string first $event $script]] != -1} {
+          append x [string range $script 0 [expr {$index - 1}]]
+	    append x $dst
+          set script [string range $script [expr {$index + $eventLen}] end]
+	}
+	append x $script
+
 	bind $dst $event $x
     }
 }

@@ -1,579 +1,1630 @@
 /* 
  * tkConfig.c --
  *
- *	This file contains the Tk_ConfigureWidget procedure.
+ *	This file contains procedures that manage configuration options
+ *	for widgets and other things.
  *
- * Copyright (c) 1990-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1997-1998 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkConfig.c 1.53 96/04/26 10:29:31
+ * RCS: @(#) $Id$
  */
-
-#include "tkPort.h"
-#include "tk.h"
 
 /*
- * Values for "flags" field of Tk_ConfigSpec structures.  Be sure
- * to coordinate these values with those defined in tk.h
- * (TK_CONFIG_COLOR_ONLY, etc.).  There must not be overlap!
- *
- * INIT -		Non-zero means (char *) things have been
- *			converted to Tk_Uid's.
+ * Temporary flag for working on new config package.
  */
 
-#define INIT		0x20
+#if 0
+
+/*
+ * used only for removing the old config code
+ */
+
+#define __NO_OLD_CONFIG
+#endif
+
+#include "tk.h"
+#include "tkInt.h"
+#include "tkPort.h"
+#include "tkFont.h"
+
+/*
+ * The following definition is an AssocData key used to keep track of
+ * all of the option tables that have been created for an interpreter.
+ */
+
+#define OPTION_HASH_KEY "TkOptionTable"
+
+/*
+ * The following two structures are used along with Tk_OptionSpec
+ * structures to manage configuration options.  Tk_OptionSpec is
+ * static templates that are compiled into the code of a widget
+ * or other object manager.  However, to look up options efficiently
+ * we need to supplement the static information with additional
+ * dynamic information, and this dynamic information may be different
+ * for each application.  Thus we create structures of the following
+ * two types to hold all of the dynamic information; this is done
+ * by Tk_CreateOptionTable.
+ * 
+ * One of the following structures corresponds to each Tk_OptionSpec.
+ * These structures exist as arrays inside TkOptionTable structures.
+ */
+
+typedef struct TkOption {
+    CONST Tk_OptionSpec *specPtr;	/* The original spec from the template
+					 * passed to Tk_CreateOptionTable.*/
+    Tk_Uid dbNameUID;		 	/* The Uid form of the option database 
+					 * name. */
+    Tk_Uid dbClassUID;			/* The Uid form of the option database
+					 * class name. */
+    Tcl_Obj *defaultPtr;		/* Default value for this option. */
+    union {
+	Tcl_Obj *monoColorPtr;		/* For color and border options, this
+					 * is an alternate default value to
+					 * use on monochrome displays. */
+	struct TkOption *synonymPtr;	/* For synonym options, this points to
+					 * the master entry. */
+    } extra;
+    int flags;				/* Miscellaneous flag values; see
+					 * below for definitions. */
+} Option;
+
+/*
+ * Flag bits defined for Option structures:
+ *
+ * OPTION_NEEDS_FREEING -	1 means that FreeResources must be
+ *				invoke to free resources associated with
+ *				the option when it is no longer needed.
+ */
+
+#define OPTION_NEEDS_FREEING		1
+
+/*
+ * One of the following exists for each Tk_OptionSpec array that has
+ * been passed to Tk_CreateOptionTable.
+ */
+
+typedef struct OptionTable {
+    int refCount;			/* Counts the number of uses of this
+					 * table (the number of times
+					 * Tk_CreateOptionTable has returned
+					 * it).  This can be greater than 1 if
+					 * it is shared along several option
+					 * table  chains, or if the same table
+					 * is used for multiple purposes. */
+    Tcl_HashEntry *hashEntryPtr;	/* Hash table entry that refers to this
+					 * table; used to delete the entry. */
+    struct OptionTable *nextPtr;	/* If templatePtr was part of a chain
+					 * of templates, this points to the
+					 * table corresponding to the next
+					 * template in the chain. */
+    int numOptions;			/* The number of items in the options
+					 * array below. */
+    Option options[1];			/* Information about the individual
+					 * options in the table.  This must be
+					 * the last field in the structure:
+					 * the actual size of the array will
+					 * be numOptions, not 1. */
+} OptionTable;
 
 /*
  * Forward declarations for procedures defined later in this file:
  */
 
-static int		DoConfig _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_Window tkwin, Tk_ConfigSpec *specPtr,
-			    Tk_Uid value, int valueIsUid, char *widgRec));
-static Tk_ConfigSpec *	FindConfigSpec _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_ConfigSpec *specs, char *argvName,
-			    int needFlags, int hateFlags));
-static char *		FormatConfigInfo _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_Window tkwin, Tk_ConfigSpec *specPtr,
-			    char *widgRec));
-static char *		FormatConfigValue _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tk_Window tkwin, Tk_ConfigSpec *specPtr,
-			    char *widgRec, char *buffer,
-			    Tcl_FreeProc **freeProcPtr));
+static int		DoObjConfig _ANSI_ARGS_((Tcl_Interp *interp,
+			    char *recordPtr, Option *optionPtr,
+			    Tcl_Obj *valuePtr, Tk_Window tkwin, 
+			    Tk_SavedOption *savePtr));
+static void		DestroyOptionHashTable _ANSI_ARGS_((
+			    ClientData clientData, Tcl_Interp *interp));
+static void		FreeResources _ANSI_ARGS_((Option *optionPtr, 
+			    Tcl_Obj *objPtr, char *internalPtr,
+			    Tk_Window tkwin));
+static Tcl_Obj *	GetConfigList _ANSI_ARGS_((char *recordPtr,
+			    Option *optionPtr, Tk_Window tkwin));
+static Tcl_Obj *	GetObjectForOption _ANSI_ARGS_((char *recordPtr,
+			    Option *optionPtr, Tk_Window tkwin));
+static Option *		GetOptionFromObj _ANSI_ARGS_((Tcl_Interp *interp,
+			    Tcl_Obj *objPtr, OptionTable *tablePtr));
+static int		ObjectIsEmpty _ANSI_ARGS_((Tcl_Obj *objPtr));
+static int		SetOptionFromAny _ANSI_ARGS_((Tcl_Interp *interp,
+			    Tcl_Obj *objPtr));
+
+/*
+ * The structure below defines an object type that is used to cache the
+ * result of looking up an option name.  If an object has this type, then
+ * its internalPtr1 field points to the OptionTable in which it was looked up,
+ * and the internalPtr2 field points to the entry that matched.
+ */
+
+Tcl_ObjType optionType = {
+    "option",				/* name */
+    (Tcl_FreeInternalRepProc *) NULL,	/* freeIntRepProc */
+    (Tcl_DupInternalRepProc *) NULL,	/* dupIntRepProc */
+    (Tcl_UpdateStringProc *) NULL,	/* updateStringProc */
+    SetOptionFromAny			/* setFromAnyProc */
+};
 
 /*
  *--------------------------------------------------------------
  *
- * Tk_ConfigureWidget --
+ * Tk_CreateOptionTable --
  *
- *	Process command-line options and database options to
- *	fill in fields of a widget record with resources and
- *	other parameters.
+ *	Given a template for configuration options, this procedure
+ *	creates a table that may be used to look up options efficiently.
  *
  * Results:
- *	A standard Tcl return value.  In case of an error,
- *	interp->result will hold an error message.
+ *	Returns a token to a structure that can be passed to procedures
+ *	such as Tk_InitOptions, Tk_SetOptions, and Tk_FreeConfigOptions.
  *
  * Side effects:
- *	The fields of widgRec get filled in with information
- *	from argc/argv and the option database.  Old information
- *	in widgRec's fields gets recycled.
+ *	Storage is allocated.
+ *
+ *--------------------------------------------------------------
+ */
+
+Tk_OptionTable
+Tk_CreateOptionTable(interp, templatePtr)
+    Tcl_Interp *interp;			/* Interpreter associated with the
+					 * application in which this table
+					 * will be used. */
+    CONST Tk_OptionSpec *templatePtr;	/* Static information about the
+					 * configuration options. */
+{
+    Tcl_HashTable *hashTablePtr;
+    Tcl_HashEntry *hashEntryPtr;
+    int newEntry;
+    OptionTable *tablePtr;
+    CONST Tk_OptionSpec *specPtr, *specPtr2;
+    Option *optionPtr;
+    int numOptions, i;
+
+    /*
+     * We use an AssocData value in the interpreter to keep a hash
+     * table of all the option tables we've created for this application.
+     * This is used for two purposes.  First, it allows us to share the
+     * tables (e.g. in several chains) and second, we use the deletion
+     * callback for the AssocData to delete all the option tables when
+     * the interpreter is deleted.  The code below finds the hash table
+     * or creates a new one if it doesn't already exist.
+     */
+
+    hashTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp, OPTION_HASH_KEY,
+	    NULL);
+    if (hashTablePtr == NULL) {
+	hashTablePtr = (Tcl_HashTable *) ckalloc(sizeof(Tcl_HashTable));
+	Tcl_InitHashTable(hashTablePtr, TCL_ONE_WORD_KEYS);
+	Tcl_SetAssocData(interp, OPTION_HASH_KEY, DestroyOptionHashTable,
+		(ClientData) hashTablePtr);
+    }
+
+    /*
+     * See if a table has already been created for this template.  If
+     * so, just reuse the existing table.
+     */
+
+    hashEntryPtr = Tcl_CreateHashEntry(hashTablePtr, (char *) templatePtr,
+	    &newEntry);
+    if (!newEntry) {
+	tablePtr = (OptionTable *) Tcl_GetHashValue(hashEntryPtr);
+	tablePtr->refCount++;
+	return (Tk_OptionTable) tablePtr;
+    }
+
+    /*
+     * Count the number of options in the template, then create the
+     * table structure.
+     */
+
+    numOptions = 0;
+    for (specPtr = templatePtr; specPtr->type != TK_OPTION_END; specPtr++) {
+	numOptions++;
+    }
+    tablePtr = (OptionTable *) (ckalloc(sizeof(OptionTable)
+	    + ((numOptions - 1)  * sizeof(Option))));
+    tablePtr->refCount = 1;
+    tablePtr->hashEntryPtr = hashEntryPtr;
+    tablePtr->nextPtr = NULL;
+    tablePtr->numOptions = numOptions;
+
+    /*
+     * Initialize all of the Option structures in the table.
+     */
+
+    for (specPtr = templatePtr, optionPtr = tablePtr->options;
+	    specPtr->type != TK_OPTION_END; specPtr++, optionPtr++) {
+	optionPtr->specPtr = specPtr;
+	optionPtr->dbNameUID = NULL;
+	optionPtr->dbClassUID = NULL;
+	optionPtr->defaultPtr = NULL;
+	optionPtr->extra.monoColorPtr = NULL;
+	optionPtr->flags = 0;
+
+	if (specPtr->type == TK_OPTION_SYNONYM) {
+	    /*
+	     * This is a synonym option; find the master option that it
+	     * refers to and create a pointer from the synonym to the
+	     * master.
+	     */
+
+	    for (specPtr2 = templatePtr, i = 0; ; specPtr2++, i++) {
+		if (specPtr2->type == TK_OPTION_END) {
+		    panic("Tk_CreateOptionTable couldn't find synonym");
+		}
+		if (strcmp(specPtr2->optionName,
+			(char *) specPtr->clientData) == 0) {
+		    optionPtr->extra.synonymPtr = tablePtr->options + i;
+		    break;
+		}
+	    }
+	} else {
+	    if (specPtr->dbName != NULL) {
+		optionPtr->dbNameUID = Tk_GetUid(specPtr->dbName);
+	    }
+	    if (specPtr->dbClass != NULL) {
+		optionPtr->dbClassUID = 
+			Tk_GetUid(specPtr->dbClass);
+	    }
+	    if (specPtr->defValue != NULL) {
+		optionPtr->defaultPtr =
+			Tcl_NewStringObj(specPtr->defValue, -1);
+		Tcl_IncrRefCount(optionPtr->defaultPtr);
+	    }
+	    if (((specPtr->type == TK_OPTION_COLOR)
+		    || (specPtr->type == TK_OPTION_BORDER))
+		    && (specPtr->clientData != NULL)) {
+		optionPtr->extra.monoColorPtr =
+			Tcl_NewStringObj((char *) specPtr->clientData, -1);
+		Tcl_IncrRefCount(optionPtr->extra.monoColorPtr);
+	    }
+	}
+	if (((specPtr->type == TK_OPTION_STRING)
+		&& (specPtr->internalOffset >= 0))
+		|| (specPtr->type == TK_OPTION_COLOR)
+		|| (specPtr->type == TK_OPTION_FONT)
+		|| (specPtr->type == TK_OPTION_BITMAP)
+		|| (specPtr->type == TK_OPTION_BORDER)
+		|| (specPtr->type == TK_OPTION_CURSOR)) {
+	    optionPtr->flags |= OPTION_NEEDS_FREEING;
+	}
+    }
+    tablePtr->hashEntryPtr = hashEntryPtr;
+    Tcl_SetHashValue(hashEntryPtr, tablePtr);
+
+    /*
+     * Finally, check to see if this template chains to another template
+     * with additional options.  If so, call ourselves recursively to
+     * create the next table(s).
+     */
+
+    if (specPtr->clientData != NULL) {
+	tablePtr->nextPtr = (OptionTable *) Tk_CreateOptionTable(interp,
+		(Tk_OptionSpec *) specPtr->clientData);
+    }
+
+    return (Tk_OptionTable) tablePtr;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_DeleteOptionTable --
+ *
+ *	Called to release resources used by an option table when 
+ *	the table is no longer needed.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The option table and associated resources (such as additional
+ *	option tables chained off it) are destroyed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tk_DeleteOptionTable(optionTable)
+    Tk_OptionTable optionTable;		/* The option table to delete. */
+{
+    OptionTable *tablePtr = (OptionTable *) optionTable;
+    Option *optionPtr;
+    int count;
+
+    tablePtr->refCount--;
+    if (tablePtr->refCount > 0) {
+	return;
+    }
+
+    if (tablePtr->nextPtr != NULL) {
+	Tk_DeleteOptionTable((Tk_OptionTable) tablePtr->nextPtr);
+    }
+
+    for (count = tablePtr->numOptions - 1, optionPtr = tablePtr->options;
+	    count > 0;  count--, optionPtr++) {
+	if (optionPtr->defaultPtr != NULL) {
+	    Tcl_DecrRefCount(optionPtr->defaultPtr);
+	}
+	if (((optionPtr->specPtr->type == TK_OPTION_COLOR)
+		|| (optionPtr->specPtr->type == TK_OPTION_BORDER))
+		&& (optionPtr->extra.monoColorPtr != NULL)) {
+	    Tcl_DecrRefCount(optionPtr->extra.monoColorPtr);
+	}
+    }
+    Tcl_DeleteHashEntry(tablePtr->hashEntryPtr);
+    ckfree((char *) tablePtr);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * DestroyOptionHashTable --
+ *
+ *	This procedure is the deletion callback associated with the
+ *	AssocData entry created by Tk_CreateOptionTable.  It is
+ *	invoked when an interpreter is deleted, and deletes all of
+ *	the option tables associated with that interpreter.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The option hash table is destroyed along with all of the
+ *	OptionTable structures that it refers to.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+DestroyOptionHashTable(clientData, interp)
+    ClientData clientData;	/* The hash table we are destroying */
+    Tcl_Interp *interp;		/* The interpreter we are destroying */
+{
+    Tcl_HashTable *hashTablePtr = (Tcl_HashTable *) clientData;
+    Tcl_HashSearch search;
+    Tcl_HashEntry *hashEntryPtr;
+    OptionTable *tablePtr;
+
+    for (hashEntryPtr = Tcl_FirstHashEntry(hashTablePtr, &search);
+	    hashEntryPtr != NULL;
+	    hashEntryPtr = Tcl_NextHashEntry(&search)) {
+	tablePtr = (OptionTable *) Tcl_GetHashValue(hashEntryPtr);
+
+	/*
+	 * The following statements do two tricky things:
+	 * 1. They ensure that the option table is deleted, even if
+	 *    there are outstanding references to it.
+	 * 2. They ensure that Tk_DeleteOptionTable doesn't delete
+	 *    other tables chained from this one; we'll do it when
+	 *    we come across the hash table entry for the chained
+	 *    table (in fact, the chained table may already have
+	 *    been deleted).
+	 */
+
+	tablePtr->refCount = 1;
+	tablePtr->nextPtr = NULL;
+	Tk_DeleteOptionTable((Tk_OptionTable) tablePtr);
+    }
+    Tcl_DeleteHashTable(hashTablePtr);
+    ckfree((char *) hashTablePtr);
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Tk_InitOptions --
+ *
+ *	This procedure is invoked when an object such as a widget
+ *	is created.  It supplies an initial value for each configuration
+ *	option (the value may come from the option database, a system
+ *	default, or the default in the option table).
+ *
+ * Results:
+ *	The return value is TCL_OK if the procedure completed
+ *	successfully, and TCL_ERROR if one of the initial values was
+ *	bogus.  If an error occurs and interp isn't NULL, then an
+ *	error message will be left in its result.
+ *
+ * Side effects:
+ *	Fields of recordPtr are filled in with initial values.
  *
  *--------------------------------------------------------------
  */
 
 int
-Tk_ConfigureWidget(interp, tkwin, specs, argc, argv, widgRec, flags)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. */
-    Tk_Window tkwin;		/* Window containing widget (needed to
-				 * set up X resources). */
-    Tk_ConfigSpec *specs;	/* Describes legal options. */
-    int argc;			/* Number of elements in argv. */
-    char **argv;		/* Command-line options. */
-    char *widgRec;		/* Record whose fields are to be
-				 * modified.  Values must be properly
-				 * initialized. */
-    int flags;			/* Used to specify additional flags
-				 * that must be present in config specs
-				 * for them to be considered.  Also,
-				 * may have TK_CONFIG_ARGV_ONLY set. */
+Tk_InitOptions(interp, recordPtr, optionTable, tkwin)
+    Tcl_Interp *interp;		/* Interpreter for error reporting.    NULL
+				 * means don't leave an error message. */
+    char *recordPtr;		/* Pointer to the record to configure.
+				 * Note: the caller should have properly
+				 * initialized the record with NULL
+				 * pointers for each option value. */
+    Tk_OptionTable optionTable;	/* The token which matches the config
+				 * specs for the widget in question. */
+    Tk_Window tkwin;		/* Certain options types (such as
+				 * TK_OPTION_COLOR) need fields out
+				 * of the window they are used in to
+				 * be able to calculate their values.
+				 * Not needed unless one of these
+				 * options is in the configSpecs record. */
 {
-    register Tk_ConfigSpec *specPtr;
-    Tk_Uid value;		/* Value of option from database. */
-    int needFlags;		/* Specs must contain this set of flags
-				 * or else they are not considered. */
-    int hateFlags;		/* If a spec contains any bits here, it's
-				 * not considered. */
-
-    needFlags = flags & ~(TK_CONFIG_USER_BIT - 1);
-    if (Tk_Depth(tkwin) <= 1) {
-	hateFlags = TK_CONFIG_COLOR_ONLY;
-    } else {
-	hateFlags = TK_CONFIG_MONO_ONLY;
-    }
+    OptionTable *tablePtr = (OptionTable *) optionTable;
+    Option *optionPtr;
+    int count;
+    char *value;
+    Tcl_Obj *valuePtr;
+    enum {
+	OPTION_DATABASE, SYSTEM_DEFAULT, TABLE_DEFAULT
+    } source;
 
     /*
-     * Pass one:  scan through all the option specs, replacing strings
-     * with Tk_Uids (if this hasn't been done already) and clearing
-     * the TK_CONFIG_OPTION_SPECIFIED flags.
+     * If this table chains to other tables, handle their initialization
+     * first.  That way, if both tables refer to the same field of the
+     * record, the value in the first table will win.
      */
 
-    for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
-	if (!(specPtr->specFlags & INIT) && (specPtr->argvName != NULL)) {
-	    if (specPtr->dbName != NULL) {
-		specPtr->dbName = Tk_GetUid(specPtr->dbName);
-	    }
-	    if (specPtr->dbClass != NULL) {
-		specPtr->dbClass = Tk_GetUid(specPtr->dbClass);
-	    }
-	    if (specPtr->defValue != NULL) {
-		specPtr->defValue = Tk_GetUid(specPtr->defValue);
-	    }
-	}
-	specPtr->specFlags = (specPtr->specFlags & ~TK_CONFIG_OPTION_SPECIFIED)
-		| INIT;
-    }
-
-    /*
-     * Pass two:  scan through all of the arguments, processing those
-     * that match entries in the specs.
-     */
-
-    for ( ; argc > 0; argc -= 2, argv += 2) {
-	specPtr = FindConfigSpec(interp, specs, *argv, needFlags, hateFlags);
-	if (specPtr == NULL) {
+    if (tablePtr->nextPtr != NULL) {
+	if (Tk_InitOptions(interp, recordPtr,
+		(Tk_OptionTable) tablePtr->nextPtr, tkwin) != TCL_OK) {
 	    return TCL_ERROR;
+	}
+    }
+
+    /*
+     * Iterate over all of the options in the table, initializing each in
+     * turn.
+     */
+
+    for (optionPtr = tablePtr->options, count = tablePtr->numOptions;
+	    count > 0; optionPtr++, count--) {
+
+	if (optionPtr->specPtr->type == TK_OPTION_SYNONYM) {
+	    continue;
+	}
+	source = TABLE_DEFAULT;
+
+	/*
+	 * We look in three places for the initial value, using the first
+	 * non-NULL value that we find.  First, check the option database.
+	 */
+
+	valuePtr = NULL;
+	if (optionPtr->dbNameUID != NULL) {
+	    value = Tk_GetOption(tkwin, optionPtr->dbNameUID, 
+		    optionPtr->dbClassUID);
+	    if (value != NULL) {
+		valuePtr = Tcl_NewStringObj(value, -1);
+		source = OPTION_DATABASE;
+	    }
 	}
 
 	/*
-	 * Process the entry.
+	 * Second, check for a system-specific default value.
 	 */
 
-	if (argc < 2) {
-	    Tcl_AppendResult(interp, "value for \"", *argv,
-		    "\" missing", (char *) NULL);
-	    return TCL_ERROR;
+	if ((valuePtr == NULL)
+		&& (optionPtr->dbNameUID != NULL)) {
+	    valuePtr = TkpGetSystemDefault(tkwin, optionPtr->dbNameUID,
+		    optionPtr->dbClassUID);
+	    if (valuePtr != NULL) {
+		source = SYSTEM_DEFAULT;
+	    }
 	}
-	if (DoConfig(interp, tkwin, specPtr, argv[1], 0, widgRec) != TCL_OK) {
-	    char msg[100];
 
-	    sprintf(msg, "\n    (processing \"%.40s\" option)",
-		    specPtr->argvName);
-	    Tcl_AddErrorInfo(interp, msg);
-	    return TCL_ERROR;
-	}
-	specPtr->specFlags |= TK_CONFIG_OPTION_SPECIFIED;
-    }
+	/*
+	 * Third and last, use the default value supplied by the option
+	 * table.  In the case of color objects, we pick one of two
+	 * values depending on whether the screen is mono or color.
+	 */
 
-    /*
-     * Pass three:  scan through all of the specs again;  if no
-     * command-line argument matched a spec, then check for info
-     * in the option database.  If there was nothing in the
-     * database, then use the default.
-     */
-
-    if (!(flags & TK_CONFIG_ARGV_ONLY)) {
-	for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
-	    if ((specPtr->specFlags & TK_CONFIG_OPTION_SPECIFIED)
-		    || (specPtr->argvName == NULL)
-		    || (specPtr->type == TK_CONFIG_SYNONYM)) {
-		continue;
-	    }
-	    if (((specPtr->specFlags & needFlags) != needFlags)
-		    || (specPtr->specFlags & hateFlags)) {
-		continue;
-	    }
-	    value = NULL;
-	    if (specPtr->dbName != NULL) {
-		value = Tk_GetOption(tkwin, specPtr->dbName, specPtr->dbClass);
-	    }
-	    if (value != NULL) {
-		if (DoConfig(interp, tkwin, specPtr, value, 1, widgRec) !=
-			TCL_OK) {
-		    char msg[200];
-    
-		    sprintf(msg, "\n    (%s \"%.50s\" in widget \"%.50s\")",
-			    "database entry for",
-			    specPtr->dbName, Tk_PathName(tkwin));
-		    Tcl_AddErrorInfo(interp, msg);
-		    return TCL_ERROR;
-		}
+	if (valuePtr == NULL) {
+	    if ((tkwin != NULL) 
+		    && ((optionPtr->specPtr->type == TK_OPTION_COLOR)
+		    || (optionPtr->specPtr->type == TK_OPTION_BORDER))
+		    && (Tk_Depth(tkwin) <= 1) 
+		    && (optionPtr->extra.monoColorPtr != NULL)) {
+		valuePtr = optionPtr->extra.monoColorPtr;
 	    } else {
-		value = specPtr->defValue;
-		if ((value != NULL) && !(specPtr->specFlags
-			& TK_CONFIG_DONT_SET_DEFAULT)) {
-		    if (DoConfig(interp, tkwin, specPtr, value, 1, widgRec) !=
-			    TCL_OK) {
-			char msg[200];
-	
-			sprintf(msg,
-				"\n    (%s \"%.50s\" in widget \"%.50s\")",
-				"default value for",
-				specPtr->dbName, Tk_PathName(tkwin));
-			Tcl_AddErrorInfo(interp, msg);
-			return TCL_ERROR;
-		    }
-		}
+		valuePtr = optionPtr->defaultPtr;
 	    }
 	}
-    }
 
+	if (valuePtr == NULL) {
+	    continue;
+	}
+
+	if (DoObjConfig(interp, recordPtr, optionPtr, valuePtr, tkwin,
+		(Tk_SavedOption *) NULL) != TCL_OK) {
+	    if (interp != NULL) {
+		char msg[200];
+    
+		switch (source) {
+		    case OPTION_DATABASE:
+			sprintf(msg, "\n    (database entry for \"%.50s\")",
+				optionPtr->specPtr->optionName);
+			break;
+		    case SYSTEM_DEFAULT:
+			sprintf(msg, "\n    (system default for \"%.50s\")",
+				optionPtr->specPtr->optionName);
+			break;
+		    case TABLE_DEFAULT:
+			sprintf(msg, "\n    (default value for \"%.50s\")",
+				optionPtr->specPtr->optionName);
+		}
+		if (tkwin != NULL) {
+		    sprintf(msg + strlen(msg) - 1, " in widget \"%.50s\")",
+			    Tk_PathName(tkwin));
+		}
+		Tcl_AddErrorInfo(interp, msg);
+	    }
+	    return TCL_ERROR;
+	}
+    }
     return TCL_OK;
 }
 
 /*
  *--------------------------------------------------------------
  *
- * FindConfigSpec --
+ * DoObjConfig --
  *
- *	Search through a table of configuration specs, looking for
- *	one that matches a given argvName.
- *
- * Results:
- *	The return value is a pointer to the matching entry, or NULL
- *	if nothing matched.  In that case an error message is left
- *	in interp->result.
- *
- * Side effects:
- *	None.
- *
- *--------------------------------------------------------------
- */
-
-static Tk_ConfigSpec *
-FindConfigSpec(interp, specs, argvName, needFlags, hateFlags)
-    Tcl_Interp *interp;		/* Used for reporting errors. */
-    Tk_ConfigSpec *specs;	/* Pointer to table of configuration
-				 * specifications for a widget. */
-    char *argvName;		/* Name (suitable for use in a "config"
-				 * command) identifying particular option. */
-    int needFlags;		/* Flags that must be present in matching
-				 * entry. */
-    int hateFlags;		/* Flags that must NOT be present in
-				 * matching entry. */
-{
-    register Tk_ConfigSpec *specPtr;
-    register char c;		/* First character of current argument. */
-    Tk_ConfigSpec *matchPtr;	/* Matching spec, or NULL. */
-    size_t length;
-
-    c = argvName[1];
-    length = strlen(argvName);
-    matchPtr = NULL;
-    for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
-	if (specPtr->argvName == NULL) {
-	    continue;
-	}
-	if ((specPtr->argvName[1] != c)
-		|| (strncmp(specPtr->argvName, argvName, length) != 0)) {
-	    continue;
-	}
-	if (((specPtr->specFlags & needFlags) != needFlags)
-		|| (specPtr->specFlags & hateFlags)) {
-	    continue;
-	}
-	if (specPtr->argvName[length] == 0) {
-	    matchPtr = specPtr;
-	    goto gotMatch;
-	}
-	if (matchPtr != NULL) {
-	    Tcl_AppendResult(interp, "ambiguous option \"", argvName,
-		    "\"", (char *) NULL);
-	    return (Tk_ConfigSpec *) NULL;
-	}
-	matchPtr = specPtr;
-    }
-
-    if (matchPtr == NULL) {
-	Tcl_AppendResult(interp, "unknown option \"", argvName,
-		"\"", (char *) NULL);
-	return (Tk_ConfigSpec *) NULL;
-    }
-
-    /*
-     * Found a matching entry.  If it's a synonym, then find the
-     * entry that it's a synonym for.
-     */
-
-    gotMatch:
-    specPtr = matchPtr;
-    if (specPtr->type == TK_CONFIG_SYNONYM) {
-	for (specPtr = specs; ; specPtr++) {
-	    if (specPtr->type == TK_CONFIG_END) {
-		Tcl_AppendResult(interp,
-			"couldn't find synonym for option \"",
-			argvName, "\"", (char *) NULL);
-		return (Tk_ConfigSpec *) NULL;
-	    }
-	    if ((specPtr->dbName == matchPtr->dbName) 
-		    && (specPtr->type != TK_CONFIG_SYNONYM)
-		    && ((specPtr->specFlags & needFlags) == needFlags)
-		    && !(specPtr->specFlags & hateFlags)) {
-		break;
-	    }
-	}
-    }
-    return specPtr;
-}
-
-/*
- *--------------------------------------------------------------
- *
- * DoConfig --
- *
- *	This procedure applies a single configuration option
- *	to a widget record.
+ *	This procedure applies a new value for a configuration option
+ *	to the record being configured.
  *
  * Results:
- *	A standard Tcl return value.
+ *	The return value is TCL_OK if the procedure completed
+ *	successfully.  If an error occurred then TCL_ERROR is
+ *	returned and an error message is left in interp's result, if
+ *	interp isn't NULL.  In addition, if oldValuePtrPtr isn't
+ *	NULL then it *oldValuePtrPtr is filled in with a pointer
+ *	to the option's old value.
  *
  * Side effects:
- *	WidgRec is modified as indicated by specPtr and value.
- *	The old value is recycled, if that is appropriate for
- *	the value type.
+ *	RecordPtr gets modified to hold the new value in the form of
+ *	a Tcl_Obj, an internal representation, or both.  The old
+ *	value is freed if oldValuePtrPtr is NULL.
  *
  *--------------------------------------------------------------
  */
 
 static int
-DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. */
-    Tk_Window tkwin;		/* Window containing widget (needed to
-				 * set up X resources). */
-    Tk_ConfigSpec *specPtr;	/* Specifier to apply. */
-    char *value;		/* Value to use to fill in widgRec. */
-    int valueIsUid;		/* Non-zero means value is a Tk_Uid;
-				 * zero means it's an ordinary string. */
-    char *widgRec;		/* Record whose fields are to be
-				 * modified.  Values must be properly
-				 * initialized. */
+DoObjConfig(interp, recordPtr, optionPtr, valuePtr, tkwin, savedOptionPtr)
+    Tcl_Interp *interp;		/* Interpreter for error reporting.  If
+				 * NULL, then no message is left if an error
+				 * occurs. */
+    char *recordPtr;		/* The record to modify to hold the new
+				 * option value. */
+    Option *optionPtr;		/* Pointer to information about the
+				 * option. */
+    Tcl_Obj *valuePtr;		/* New value for option. */
+    Tk_Window tkwin;		/* Window in which option will be used (needed
+				 * to allocate resources for some options).
+				 * May be NULL if the option doesn't
+				 * require window-related resources. */
+    Tk_SavedOption *savedOptionPtr;
+				/* If NULL, the old value for the option will
+				 * be freed. If non-NULL, the old value will
+				 * be stored here, and it becomes the property
+				 * of the caller (the caller must eventually
+				 * free the old value). */
 {
-    char *ptr;
-    Tk_Uid uid;
-    int nullValue;
+    Tcl_Obj **slotPtrPtr, *oldPtr;
+    char *internalPtr;		/* Points to location in record where
+				 * internal representation of value should
+				 * be stored, or NULL. */
+    char *oldInternalPtr;	/* Points to location in which to save old
+				 * internal representation of value. */
+    Tk_SavedOption internal;	/* Used to save the old internal representation
+				 * of the value if savedOptionPtr is NULL. */
+    CONST Tk_OptionSpec *specPtr;
+    int nullOK;
 
-    nullValue = 0;
-    if ((*value == 0) && (specPtr->specFlags & TK_CONFIG_NULL_OK)) {
-	nullValue = 1;
+    /*
+     * Save the old object form for the value, if there is one.
+     */
+
+    specPtr = optionPtr->specPtr;
+    if (specPtr->objOffset >= 0) {
+	slotPtrPtr = (Tcl_Obj **) (recordPtr + specPtr->objOffset);
+	oldPtr = *slotPtrPtr;
+    } else {
+	slotPtrPtr = NULL;
+	oldPtr = NULL;
     }
 
-    do {
-	ptr = widgRec + specPtr->offset;
-	switch (specPtr->type) {
-	    case TK_CONFIG_BOOLEAN:
-		if (Tcl_GetBoolean(interp, value, (int *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_INT:
-		if (Tcl_GetInt(interp, value, (int *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_DOUBLE:
-		if (Tcl_GetDouble(interp, value, (double *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_STRING: {
-		char *old, *new;
+    /*
+     * Apply the new value in a type-specific way.  Also remember the
+     * old object and internal forms, if they exist.
+     */
 
-		if (nullValue) {
-		    new = NULL;
-		} else {
-		    new = (char *) ckalloc((unsigned) (strlen(value) + 1));
-		    strcpy(new, value);
-		}
-		old = *((char **) ptr);
-		if (old != NULL) {
-		    ckfree(old);
-		}
-		*((char **) ptr) = new;
-		break;
-	    }
-	    case TK_CONFIG_UID:
-		if (nullValue) {
-		    *((Tk_Uid *) ptr) = NULL;
-		} else {
-		    uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		    *((Tk_Uid *) ptr) = uid;
-		}
-		break;
-	    case TK_CONFIG_COLOR: {
-		XColor *newPtr, *oldPtr;
+    if (specPtr->internalOffset >= 0) {
+	internalPtr = recordPtr + specPtr->internalOffset;
+    } else {
+	internalPtr = NULL;
+    }
+    if (savedOptionPtr != NULL) {
+	savedOptionPtr->optionPtr = optionPtr;
+	savedOptionPtr->valuePtr = oldPtr;
+	oldInternalPtr = (char *) &savedOptionPtr->internalForm;
+    } else {
+	oldInternalPtr = (char *) &internal.internalForm;
+    }
+    nullOK = (optionPtr->specPtr->flags & TK_OPTION_NULL_OK);
+    switch (optionPtr->specPtr->type) {
+	case TK_OPTION_BOOLEAN: {
+	    int new;
 
-		if (nullValue) {
-		    newPtr = NULL;
-		} else {
-		    uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		    newPtr = Tk_GetColor(interp, tkwin, uid);
-		    if (newPtr == NULL) {
-			return TCL_ERROR;
-		    }
-		}
-		oldPtr = *((XColor **) ptr);
-		if (oldPtr != NULL) {
-		    Tk_FreeColor(oldPtr);
-		}
-		*((XColor **) ptr) = newPtr;
-		break;
-	    }
-	    case TK_CONFIG_FONT: {
-		Tk_Font new;
-
-		if (nullValue) {
-		    new = NULL;
-		} else {
-		    new = Tk_GetFont(interp, tkwin, value);
-		    if (new == NULL) {
-			return TCL_ERROR;
-		    }
-		}
-		Tk_FreeFont(*((Tk_Font *) ptr));
-		*((Tk_Font *) ptr) = new;
-		break;
-	    }
-	    case TK_CONFIG_BITMAP: {
-		Pixmap new, old;
-
-		if (nullValue) {
-		    new = None;
-	        } else {
-		    uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		    new = Tk_GetBitmap(interp, tkwin, uid);
-		    if (new == None) {
-			return TCL_ERROR;
-		    }
-		}
-		old = *((Pixmap *) ptr);
-		if (old != None) {
-		    Tk_FreeBitmap(Tk_Display(tkwin), old);
-		}
-		*((Pixmap *) ptr) = new;
-		break;
-	    }
-	    case TK_CONFIG_BORDER: {
-		Tk_3DBorder new, old;
-
-		if (nullValue) {
-		    new = NULL;
-		} else {
-		    uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		    new = Tk_Get3DBorder(interp, tkwin, uid);
-		    if (new == NULL) {
-			return TCL_ERROR;
-		    }
-		}
-		old = *((Tk_3DBorder *) ptr);
-		if (old != NULL) {
-		    Tk_Free3DBorder(old);
-		}
-		*((Tk_3DBorder *) ptr) = new;
-		break;
-	    }
-	    case TK_CONFIG_RELIEF:
-		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		if (Tk_GetRelief(interp, uid, (int *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_CURSOR:
-	    case TK_CONFIG_ACTIVE_CURSOR: {
-		Tk_Cursor new, old;
-
-		if (nullValue) {
-		    new = None;
-		} else {
-		    uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		    new = Tk_GetCursor(interp, tkwin, uid);
-		    if (new == None) {
-			return TCL_ERROR;
-		    }
-		}
-		old = *((Tk_Cursor *) ptr);
-		if (old != None) {
-		    Tk_FreeCursor(Tk_Display(tkwin), old);
-		}
-		*((Tk_Cursor *) ptr) = new;
-		if (specPtr->type == TK_CONFIG_ACTIVE_CURSOR) {
-		    Tk_DefineCursor(tkwin, new);
-		}
-		break;
-	    }
-	    case TK_CONFIG_JUSTIFY:
-		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		if (Tk_GetJustify(interp, uid, (Tk_Justify *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_ANCHOR:
-		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		if (Tk_GetAnchor(interp, uid, (Tk_Anchor *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_CAP_STYLE:
-		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		if (Tk_GetCapStyle(interp, uid, (int *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_JOIN_STYLE:
-		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
-		if (Tk_GetJoinStyle(interp, uid, (int *) ptr) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_PIXELS:
-		if (Tk_GetPixels(interp, tkwin, value, (int *) ptr)
-			!= TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_MM:
-		if (Tk_GetScreenMM(interp, tkwin, value, (double *) ptr)
-			!= TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    case TK_CONFIG_WINDOW: {
-		Tk_Window tkwin2;
-
-		if (nullValue) {
-		    tkwin2 = NULL;
-		} else {
-		    tkwin2 = Tk_NameToWindow(interp, value, tkwin);
-		    if (tkwin2 == NULL) {
-			return TCL_ERROR;
-		    }
-		}
-		*((Tk_Window *) ptr) = tkwin2;
-		break;
-	    }
-	    case TK_CONFIG_CUSTOM:
-		if ((*specPtr->customPtr->parseProc)(
-			specPtr->customPtr->clientData, interp, tkwin,
-			value, widgRec, specPtr->offset) != TCL_OK) {
-		    return TCL_ERROR;
-		}
-		break;
-	    default: {
-		sprintf(interp->result, "bad config table: unknown type %d",
-			specPtr->type);
+	    if (Tcl_GetBooleanFromObj(interp, valuePtr, &new)
+		    != TCL_OK) {
 		return TCL_ERROR;
 	    }
+	    if (internalPtr != NULL) {
+		*((int *) oldInternalPtr) = *((int *) internalPtr);
+		*((int *) internalPtr) = new;
+	    }
+	    break;
 	}
-	specPtr++;
-    } while ((specPtr->argvName == NULL) && (specPtr->type != TK_CONFIG_END));
+	case TK_OPTION_INT: {
+	    int new;
+	    
+	    if (Tcl_GetIntFromObj(interp, valuePtr, &new) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((int *) oldInternalPtr) = *((int *) internalPtr);
+		*((int *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_DOUBLE: {
+	    double new;
+	    
+	    if (Tcl_GetDoubleFromObj(interp, valuePtr, &new) 
+		    != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((double *) oldInternalPtr) = *((double *) internalPtr);
+		*((double *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_STRING: {
+	    char *new, *value;
+	    int length;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		valuePtr = NULL;
+	    }
+	    if (internalPtr != NULL) {
+		if (valuePtr != NULL) {
+		    value = Tcl_GetStringFromObj(valuePtr, &length);
+		    new = ckalloc((unsigned) (length + 1));
+		    strcpy(new, value);
+		} else {
+		    new = NULL;
+		}
+		*((char **) oldInternalPtr) = *((char **) internalPtr);
+		*((char **) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_STRING_TABLE: {
+	    int new;
+
+	    if (Tcl_GetIndexFromObj(interp, valuePtr,
+		    (char **) optionPtr->specPtr->clientData,
+		    optionPtr->specPtr->optionName+1, 0, &new) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((int *) oldInternalPtr) = *((int *) internalPtr);
+		*((int *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_COLOR: {
+	    XColor *newPtr;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		valuePtr = NULL;
+		newPtr = NULL;
+	    } else {
+		newPtr = Tk_AllocColorFromObj(interp, tkwin, valuePtr);
+		if (newPtr == NULL) {
+		    return TCL_ERROR;
+		}
+	    }
+	    if (internalPtr != NULL) {
+		*((XColor **) oldInternalPtr) = *((XColor **) internalPtr);
+		*((XColor **) internalPtr) = newPtr;
+	    }
+	    break;
+	}
+	case TK_OPTION_FONT: {
+	    Tk_Font new;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		valuePtr = NULL;
+		new = NULL;
+	    } else {
+		new = Tk_AllocFontFromObj(interp, tkwin, valuePtr);
+		if (new == NULL) {
+		    return TCL_ERROR;
+		}
+	    }
+	    if (internalPtr != NULL) {
+		*((Tk_Font *) oldInternalPtr) = *((Tk_Font *) internalPtr);
+		*((Tk_Font *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_BITMAP: {
+	    Pixmap new;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		valuePtr = NULL;
+		new = None;
+	    } else {
+		new = Tk_AllocBitmapFromObj(interp, tkwin, valuePtr);
+		if (new == None) {
+		    return TCL_ERROR;
+		}
+	    }
+	    if (internalPtr != NULL) {
+		*((Pixmap *) oldInternalPtr) = *((Pixmap *) internalPtr);
+		*((Pixmap *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_BORDER: {
+	    Tk_3DBorder new;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		valuePtr = NULL;
+		new = NULL;
+	    } else {
+		new = Tk_Alloc3DBorderFromObj(interp, tkwin, valuePtr);
+		if (new == NULL) {
+		    return TCL_ERROR;
+		}
+	    }
+	    if (internalPtr != NULL) {
+		*((Tk_3DBorder *) oldInternalPtr) =
+			*((Tk_3DBorder *) internalPtr);
+		*((Tk_3DBorder *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_RELIEF: {
+	    int new;
+
+	    if (Tk_GetReliefFromObj(interp, valuePtr, &new) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((int *) oldInternalPtr) = *((int *) internalPtr);
+		*((int *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_CURSOR: {
+	    Tk_Cursor new;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		new = None;
+		valuePtr = NULL;
+	    } else {
+		new = Tk_AllocCursorFromObj(interp, tkwin, valuePtr);
+		if (new == None) {
+		    return TCL_ERROR;
+		}
+	    }
+	    if (internalPtr != NULL) {
+		*((Tk_Cursor *) oldInternalPtr) = *((Tk_Cursor *) internalPtr);
+		*((Tk_Cursor *) internalPtr) = new;
+	    }
+	    Tk_DefineCursor(tkwin, new);
+	    break;
+	}
+	case TK_OPTION_JUSTIFY: {
+	    Tk_Justify new;
+
+	    if (Tk_GetJustifyFromObj(interp, valuePtr, &new) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((Tk_Justify *) oldInternalPtr)
+			= *((Tk_Justify *) internalPtr);
+		*((Tk_Justify *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_ANCHOR: {
+	    Tk_Anchor new;
+
+	    if (Tk_GetAnchorFromObj(interp, valuePtr, &new) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((Tk_Anchor *) oldInternalPtr)
+			= *((Tk_Anchor *) internalPtr);
+		*((Tk_Anchor *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_PIXELS: {
+	    int new;
+	    
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr,
+		    &new) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (internalPtr != NULL) {
+		*((int *) oldInternalPtr) = *((int *) internalPtr);
+		*((int *) internalPtr) = new;
+	    }
+	    break;
+	}
+	case TK_OPTION_WINDOW: {
+	    Tk_Window new;
+
+	    if (nullOK && ObjectIsEmpty(valuePtr)) {
+		valuePtr = NULL;
+		new = None;
+	    } else {
+		if (TkGetWindowFromObj(interp, tkwin, valuePtr, &new)
+			!= TCL_OK) {
+		    return TCL_ERROR;
+		}
+	    }
+	    if (internalPtr != NULL) {
+		*((Tk_Window *) oldInternalPtr) = *((Tk_Window *) internalPtr);
+		*((Tk_Window *) internalPtr) = new;
+	    }
+	    break;
+	}
+	default: {
+	    sprintf(interp->result, "bad config table: unknown type %d",
+		    optionPtr->specPtr->type);
+	    return TCL_ERROR;
+	}
+    }
+
+    /*
+     * Release resources associated with the old value, if we're not
+     * returning it to the caller, then install the new object value into
+     * the record.
+     */
+
+    if (savedOptionPtr == NULL) {
+	if (optionPtr->flags & OPTION_NEEDS_FREEING) {
+	    FreeResources(optionPtr, oldPtr, oldInternalPtr, tkwin);
+	}
+	if (oldPtr != NULL) {
+	    Tcl_DecrRefCount(oldPtr);
+	}
+    }
+    if (slotPtrPtr != NULL) {
+	*slotPtrPtr = valuePtr;
+	if (valuePtr != NULL) {
+	    Tcl_IncrRefCount(valuePtr);
+	}
+    }
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * ObjectIsEmpty --
+ *
+ *	This procedure tests whether the string value of an object is
+ *	empty.
+ *
+ * Results:
+ *	The return value is 1 if the string value of objPtr has length
+ *	zero, and 0 otherwise.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+ObjectIsEmpty(objPtr)
+    Tcl_Obj *objPtr;		/* Object to test.  May be NULL. */
+{
+    int length;
+
+    if (objPtr == NULL) {
+	return 1;
+    }
+    if (objPtr->bytes != NULL) {
+	return (objPtr->length == 0);
+    }
+    Tcl_GetStringFromObj(objPtr, &length);
+    return (length == 0);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * GetOptionFromObj --
+ *
+ *	This procedure searches through a chained option table to find
+ *	the entry for a particular option name.
+ *
+ * Results:
+ *	The return value is a pointer to the matching entry, or NULL
+ *	if no matching entry could be found.  If NULL is returned and
+ *	interp is not NULL than an error message is left in its result.
+ *	Note: if the matching entry is a synonym then this procedure
+ *	returns a pointer to the synonym entry, *not* the "real" entry
+ *	that the synonym refers to.
+ *
+ * Side effects:
+ *	Information about the matching entry is cached in the object
+ *	containing the name, so that future lookups can proceed more
+ *	quickly.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static Option *
+GetOptionFromObj(interp, objPtr, tablePtr)
+    Tcl_Interp *interp;		/* Used only for error reporting; if NULL
+				 * no message is left after an error. */
+    Tcl_Obj *objPtr;		/* Object whose string value is to be
+				 * looked up in the option table. */
+    OptionTable *tablePtr;	/* Table in which to look up objPtr. */
+{
+    Option *bestPtr, *optionPtr;
+    OptionTable *tablePtr2;
+    char *p1, *p2, *name;
+    int count;
+
+    /*
+     * First, check to see if the object already has the answer cached.
+     */
+
+    if (objPtr->typePtr == &optionType) {
+	if (objPtr->internalRep.twoPtrValue.ptr1 == (VOID *) tablePtr) {
+	    return (Option *) objPtr->internalRep.twoPtrValue.ptr2;
+	}
+    }
+
+    /*
+     * The answer isn't cached.  Search through all of the option tables
+     * in the chain to find the best match.  Some tricky aspects:
+     *
+     * 1. We have to accept unique abbreviations.
+     * 2. The same name could appear in different tables in the chain.
+     *    If this happens, we use the entry from the first table. We
+     *    have to be careful to distinguish this case from an ambiguous
+     *    abbreviation.
+     */
+
+    bestPtr = NULL;
+    name = Tcl_GetStringFromObj(objPtr, (int *) NULL);
+    for (tablePtr2 = tablePtr; tablePtr2 != NULL;
+	    tablePtr2 = tablePtr2->nextPtr) {
+	for (optionPtr = tablePtr2->options, count = tablePtr2->numOptions;
+		count > 0; optionPtr++, count--) {
+	    for (p1 = name, p2 = optionPtr->specPtr->optionName;
+		    *p1 == *p2; p1++, p2++) {
+		if (*p1 == 0) {
+		    /*
+		     * This is an exact match.  We're done.
+		     */
+
+		    bestPtr = optionPtr;
+		    goto done;
+		}
+	    }
+	    if (*p1 == 0) {
+		/*
+		 * The name is an abbreviation for this option.  Keep
+		 * to make sure that the abbreviation only matches one
+		 * option name.  If we've already found a match in the
+		 * past, then it is an error unless the full names for
+		 * the two options are identical; in this case, the first
+		 * option overrides the second.
+		 */
+
+		if (bestPtr == NULL) {
+		    bestPtr = optionPtr;
+		} else {
+		    if (strcmp(bestPtr->specPtr->optionName,
+			    optionPtr->specPtr->optionName) != 0) {
+			goto error;
+		    }
+		}
+	    }
+	}
+    }
+    if (bestPtr == NULL) {
+	goto error;
+    }
+
+    done:
+    if ((objPtr->typePtr != NULL)
+	    && (objPtr->typePtr->freeIntRepProc != NULL)) {
+	objPtr->typePtr->freeIntRepProc(objPtr);
+    }
+    objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) tablePtr;
+    objPtr->internalRep.twoPtrValue.ptr2 = (VOID *) bestPtr;
+    objPtr->typePtr = &optionType;
+    return bestPtr;
+
+    error:
+    if (interp != NULL) {
+	Tcl_AppendResult(interp, "unknown option \"", name,
+		"\"", (char *) NULL);
+    }
+    return NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * SetOptionFromAny --
+ *
+ *	This procedure is called to convert a Tcl object to option
+ *	internal form. However, this doesn't make sense (need to have a
+ *	table of options in order to do the conversion) so the
+ *	procedure always generates an error.
+ *
+ * Results:
+ *	The return value is always TCL_ERROR, and an error message is
+ *	left in interp's result if interp isn't NULL. 
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+SetOptionFromAny(interp, objPtr)
+    Tcl_Interp *interp;		/* Used for error reporting if not NULL. */
+    register Tcl_Obj *objPtr;	/* The object to convert. */
+{
+    Tcl_AppendToObj(Tcl_GetObjResult(interp),
+	    "can't convert value to option except via GetOptionFromObj API",
+	    -1);
+    return TCL_ERROR;
 }
 
 /*
  *--------------------------------------------------------------
  *
- * Tk_ConfigureInfo --
+ * Tk_SetOptions --
  *
- *	Return information about the configuration options
- *	for a window, and their current values.
+ *	Process one or more name-value pairs for configuration options
+ *	and fill in fields of a record with new values.
  *
  * Results:
- *	Always returns TCL_OK.  Interp->result will be modified
- *	hold a description of either a single configuration option
- *	available for "widgRec" via "specs", or all the configuration
- *	options available.  In the "all" case, the result will
- *	available for "widgRec" via "specs".  The result will
- *	be a list, each of whose entries describes one option.
- *	Each entry will itself be a list containing the option's
- *	name for use on command lines, database name, database
- *	class, default value, and current value (empty string
- *	if none).  For options that are synonyms, the list will
- *	contain only two values:  name and synonym name.  If the
- *	"name" argument is non-NULL, then the only information
- *	returned is that for the named argument (i.e. the corresponding
- *	entry in the overall list is returned).
+ *	If all goes well then TCL_OK is returned and the old values of
+ *	any modified objects are saved in *savePtr, if it isn't NULL (the
+ *	caller must eventually call Tk_RestoreSavedOptions or
+ *	Tk_FreeSavedOptions to free the contents of *savePtr).  In
+ *	addition, if maskPtr isn't NULL then *maskPtr is filled in with
+ *	the OR of the typeMask bits from all modified options.  If an
+ *	error occurs then TCL_ERROR is returned and a message 
+ *	is left in interp's result unless interp is NULL; nothing is
+ *	saved in *savePtr or *maskPtr in this case.
+ *
+ * Side effects:
+ *	The fields of recordPtr get filled in with object pointers
+ *	from objc/objv.  Old information in widgRec's fields gets 
+ * 	recycled.  Information may be left at *savePtr.
+ *
+ *--------------------------------------------------------------
+ */
+
+int
+Tk_SetOptions(interp, recordPtr, optionTable, objc, objv, tkwin, savePtr,
+	maskPtr)
+    Tcl_Interp *interp;			/* Interpreter for error reporting.
+					 * If NULL, then no error message is
+					 * returned.*/
+    char *recordPtr;	    		/* The record to configure. */
+    Tk_OptionTable optionTable;		/* Describes valid options. */
+    int objc;				/* The number of elements in objv. */
+    Tcl_Obj *CONST objv[];		/* Contains one or more name-value
+					 * pairs. */
+    Tk_Window tkwin;			/* Window associated with the thing
+					 * being configured; needed for some
+					 * options (such as colors). */
+    Tk_SavedOptions *savePtr;		/* If non-NULL, the old values of
+					 * modified options are saved here
+					 * so that they can be restored
+					 * after an error. */
+    int *maskPtr;			/* It non-NULL, this word is modified
+					 * on a successful return to hold the
+					 * bit-wise OR of the typeMask fields
+					 * of all options that were modified
+					 * by this call.  Used by the caller
+					 * to figure out which options
+					 * actually changed. */
+{
+    OptionTable *tablePtr = (OptionTable *) optionTable;
+    Option *optionPtr;
+    Tk_SavedOptions *lastSavePtr, *newSavePtr;
+    int mask;
+
+    if (savePtr != NULL) {
+	savePtr->recordPtr = recordPtr;
+	savePtr->tkwin = tkwin;
+	savePtr->numItems = 0;
+	savePtr->nextPtr = NULL;
+    }
+    lastSavePtr = savePtr;
+
+    /*
+     * Scan through all of the arguments, processing those
+     * that match entries in the option table.
+     */
+
+    mask = 0;
+    for ( ; objc > 0; objc -= 2, objv += 2) {
+	optionPtr = GetOptionFromObj(interp, objv[0], tablePtr);
+	if (optionPtr == NULL) {
+	    goto error;
+	}
+	if (optionPtr->specPtr->type == TK_OPTION_SYNONYM) {
+	    optionPtr = optionPtr->extra.synonymPtr;
+	}
+
+	if (objc < 2) {
+	    if (interp != NULL) {
+		Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+			"value for \"", Tcl_GetStringFromObj(*objv, NULL),
+			"\" missing", (char *) NULL);
+		goto error;
+	    }
+	}
+	if ((savePtr != NULL)
+		&& (lastSavePtr->numItems >= TK_NUM_SAVED_OPTIONS)) {
+	    /*
+	     * We've run out of space for saving old option values.  Allocate
+	     * more space.
+	     */
+
+	    newSavePtr = (Tk_SavedOptions *) ckalloc(sizeof(
+		    Tk_SavedOptions));
+	    newSavePtr->recordPtr = recordPtr;
+	    newSavePtr->tkwin = tkwin;
+	    newSavePtr->numItems = 0;
+	    newSavePtr->nextPtr = NULL;
+	    lastSavePtr->nextPtr = newSavePtr;
+	    lastSavePtr = newSavePtr;
+	}
+	if (DoObjConfig(interp, recordPtr, optionPtr, objv[1], tkwin,
+		(savePtr != NULL) ? &lastSavePtr->items[lastSavePtr->numItems]
+		: (Tk_SavedOption *) NULL) != TCL_OK) {
+	    char msg[100];
+
+	    sprintf(msg, "\n    (processing \"%.40s\" option)",
+		    Tcl_GetStringFromObj(*objv, NULL));
+	    Tcl_AddErrorInfo(interp, msg);
+	    goto error;
+	}
+	if (savePtr != NULL) {
+	    lastSavePtr->numItems++;
+	}
+	mask |= optionPtr->specPtr->typeMask;
+    }
+    if (maskPtr != NULL) {
+	*maskPtr = mask;
+    }
+    return TCL_OK;
+
+    error:
+    if (savePtr != NULL) {
+	Tk_RestoreSavedOptions(savePtr);
+    }
+    return TCL_ERROR;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_RestoreSavedOptions --
+ *
+ *	This procedure undoes the effect of a previous call to
+ *	Tk_SetOptions by restoring all of the options to their value
+ *	before the call to Tk_SetOptions.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The configutation record is restored and all the information
+ *	stored in savePtr is freed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tk_RestoreSavedOptions(savePtr)
+    Tk_SavedOptions *savePtr;	/* Holds saved option information; must
+				 * have been passed to Tk_SetOptions. */
+{
+    int i;
+    Option *optionPtr;
+    Tcl_Obj *newPtr;		/* New object value of option, which we
+				 * replace with old value and free.  Taken
+				 * from record. */
+    char *internalPtr;		/* Points to internal value of option in
+				 * record. */
+    CONST Tk_OptionSpec *specPtr;
+
+    /*
+     * Be sure to restore the options in the opposite order they were
+     * set.  This is important because it's possible that the same
+     * option name was used twice in a single call to Tk_SetOptions.
+     */
+
+    if (savePtr->nextPtr != NULL) {
+	Tk_RestoreSavedOptions(savePtr->nextPtr);
+	ckfree((char *) savePtr->nextPtr);
+	savePtr->nextPtr = NULL;
+    }
+    for (i = savePtr->numItems - 1; i >= 0; i--) {
+	optionPtr = savePtr->items[i].optionPtr;
+	specPtr = optionPtr->specPtr;
+
+	/*
+	 * First free the new value of the option, which is currently
+	 * in the record.
+	 */
+
+	if (specPtr->objOffset >= 0) {
+	    newPtr = *((Tcl_Obj **) (savePtr->recordPtr + specPtr->objOffset));
+	} else {
+	    newPtr = NULL;
+	}
+	if (specPtr->internalOffset >= 0) {
+	    internalPtr = savePtr->recordPtr + specPtr->internalOffset;
+	} else {
+	    internalPtr = NULL;
+	}
+	if (optionPtr->flags & OPTION_NEEDS_FREEING) {
+	    FreeResources(optionPtr, newPtr, internalPtr, savePtr->tkwin);
+	}
+	if (newPtr != NULL) {
+	    Tcl_DecrRefCount(newPtr);
+	}
+
+	/*
+	 * Now restore the old value of the option.
+	 */
+
+	if (specPtr->objOffset >= 0) {
+	    *((Tcl_Obj **) (savePtr->recordPtr + specPtr->objOffset))
+		    = savePtr->items[i].valuePtr;
+	}
+	if (specPtr->internalOffset >= 0) {
+	    switch (specPtr->type) {
+		case TK_OPTION_BOOLEAN: {
+		    *((int *) internalPtr)
+			    = *((int *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_INT: {
+		    *((int *) internalPtr)
+			    = *((int *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_DOUBLE: {
+		    *((double *) internalPtr)
+			    = *((double *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_STRING: {
+		    *((char **) internalPtr)
+			    = *((char **) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_STRING_TABLE: {
+		    *((int *) internalPtr)
+			    = *((int *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_COLOR: {
+		    *((XColor **) internalPtr)
+			    = *((XColor **) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_FONT: {
+		    *((Tk_Font *) internalPtr)
+			    = *((Tk_Font *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_BITMAP: {
+		    *((Pixmap *) internalPtr)
+			    = *((Pixmap *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_BORDER: {
+		    *((Tk_3DBorder *) internalPtr)
+			    = *((Tk_3DBorder *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_RELIEF: {
+		    *((int *) internalPtr)
+			    = *((int *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_CURSOR: {
+		    *((Tk_Cursor *) internalPtr)
+			    = *((Tk_Cursor *) &savePtr->items[i].internalForm);
+		    Tk_DefineCursor(savePtr->tkwin,
+			    *((Tk_Cursor *) internalPtr));
+		    break;
+		}
+		case TK_OPTION_JUSTIFY: {
+		    *((Tk_Justify *) internalPtr)
+			    = *((Tk_Justify *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_ANCHOR: {
+		    *((Tk_Anchor *) internalPtr)
+			    = *((Tk_Anchor *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_PIXELS: {
+		    *((int *) internalPtr)
+			    = *((int *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		case TK_OPTION_WINDOW: {
+		    *((Tk_Window *) internalPtr)
+			    = *((Tk_Window *) &savePtr->items[i].internalForm);
+		    break;
+		}
+		default: {
+		    panic("bad option type in Tk_RestoreSavedOptions");
+		}
+	    }
+	}
+    }
+    savePtr->numItems = 0;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Tk_FreeSavedOptions --
+ *
+ *	Free all of the saved configuration option values from a
+ *	previous call to Tk_SetOptions.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Storage and system resources are freed.
+ *
+ *--------------------------------------------------------------
+ */
+
+void
+Tk_FreeSavedOptions(savePtr)
+    Tk_SavedOptions *savePtr;	/* Contains options saved in a previous
+				 * call to Tk_SetOptions. */
+{
+    int count;
+    Tk_SavedOption *savedOptionPtr;
+
+    if (savePtr->nextPtr != NULL) {
+	Tk_FreeSavedOptions(savePtr->nextPtr);
+	ckfree((char *) savePtr->nextPtr);
+    }
+    for (count = savePtr->numItems,
+	    savedOptionPtr = &savePtr->items[savePtr->numItems-1];
+	    count > 0;  count--, savedOptionPtr--) {
+	if (savedOptionPtr->optionPtr->flags & OPTION_NEEDS_FREEING) {
+	    FreeResources(savedOptionPtr->optionPtr, savedOptionPtr->valuePtr,
+		    (char *) &savedOptionPtr->internalForm, savePtr->tkwin);
+	}
+	if (savedOptionPtr->valuePtr != NULL) {
+	    Tcl_DecrRefCount(savedOptionPtr->valuePtr);
+	}
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_FreeConfigOptions --
+ *
+ *	Free all resources associated with configuration options.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	All of the Tcl_Obj's in recordPtr that are controlled by
+ *	configuration options in optionTable are freed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+	/* ARGSUSED */
+void
+Tk_FreeConfigOptions(recordPtr, optionTable, tkwin)
+    char *recordPtr;		/* Record whose fields contain current
+				 * values for options. */
+    Tk_OptionTable optionTable;	/* Describes legal options. */
+    Tk_Window tkwin;		/* Window associated with recordPtr; needed
+				 * for freeing some options. */
+{
+    OptionTable *tablePtr;
+    Option *optionPtr;
+    int count;
+    Tcl_Obj **oldPtrPtr, *oldPtr; 
+    char *oldInternalPtr;
+    CONST Tk_OptionSpec *specPtr;
+
+    for (tablePtr = (OptionTable *) optionTable; tablePtr != NULL;
+	    tablePtr = tablePtr->nextPtr) {
+	for (optionPtr = tablePtr->options, count = tablePtr->numOptions;
+		count > 0; optionPtr++, count--) {
+	    specPtr = optionPtr->specPtr;
+	    if (specPtr->type == TK_OPTION_SYNONYM) {
+		continue;
+	    }
+	    if (specPtr->objOffset >= 0) {
+		oldPtrPtr = (Tcl_Obj **) (recordPtr + specPtr->objOffset);
+		oldPtr = *oldPtrPtr;
+		*oldPtrPtr = NULL;
+	    } else {
+		oldPtr = NULL;
+	    }
+	    if (specPtr->internalOffset >= 0) {
+		oldInternalPtr = recordPtr + specPtr->internalOffset;
+	    } else {
+		oldInternalPtr = NULL;
+	    }
+	    if (optionPtr->flags & OPTION_NEEDS_FREEING) {
+		FreeResources(optionPtr, oldPtr, oldInternalPtr, tkwin);
+	    }
+	    if (oldPtr != NULL) {
+		Tcl_DecrRefCount(oldPtr);
+	    }
+	}
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * FreeResources --
+ *
+ *	Free system resources associated with a configuration option,
+ *	such as colors or fonts.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Any system resources associated with objPtr are released.  However,
+ *	objPtr itself is not freed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+FreeResources(optionPtr, objPtr, internalPtr, tkwin)
+    Option *optionPtr;		/* Description of the configuration option. */
+    Tcl_Obj *objPtr;		/* The current value of the option, specified
+				 * as an object. */
+    char *internalPtr;		/* A pointer to an internal representation for
+				 * the option's value, such as an int or
+				 * (XColor *).  Only valid if
+				 * optionPtr->specPtr->internalOffset >= 0. */
+    Tk_Window tkwin;		/* The window in which this option is used. */
+{
+    int internalFormExists;
+
+    /*
+     * If there exists an internal form for the value, use it to free
+     * resources (also zero out the internal form).  If there is no
+     * internal form, then use the object form.
+     */
+
+    internalFormExists = optionPtr->specPtr->internalOffset >= 0;
+    switch (optionPtr->specPtr->type) {
+	case TK_OPTION_STRING:
+	    if (internalFormExists) {
+		if (*((char **) internalPtr) != NULL) {
+		    ckfree(*((char **) internalPtr));
+		    *((char **) internalPtr) = NULL;
+		}
+	    }
+	    break;
+	case TK_OPTION_COLOR:
+	    if (internalFormExists) {
+		if (*((XColor **) internalPtr) != NULL) {
+		    Tk_FreeColor(*((XColor **) internalPtr));
+		    *((XColor **) internalPtr) = NULL;
+		}
+	    } else if (objPtr != NULL) {
+		Tk_FreeColorFromObj(tkwin, objPtr);
+	    }
+	    break;
+	case TK_OPTION_FONT:
+	    if (internalFormExists) {
+		Tk_FreeFont(*((Tk_Font *) internalPtr));
+		*((Tk_Font *) internalPtr) = NULL;
+	    } else if (objPtr != NULL) {
+		Tk_FreeFontFromObj(tkwin, objPtr);
+	    }
+	    break;
+	case TK_OPTION_BITMAP:
+	    if (internalFormExists) {
+		if (*((Pixmap *) internalPtr) != None) {
+		    Tk_FreeBitmap(Tk_Display(tkwin), *((Pixmap *) internalPtr));
+		    *((Pixmap *) internalPtr) = None;
+		}
+	    } else if (objPtr != NULL) {
+		Tk_FreeBitmapFromObj(tkwin, objPtr);
+	    }
+	    break;
+	case TK_OPTION_BORDER:
+	    if (internalFormExists) {
+		if (*((Tk_3DBorder *) internalPtr) != NULL) {
+		    Tk_Free3DBorder(*((Tk_3DBorder *) internalPtr));
+		    *((Tk_3DBorder *) internalPtr) = NULL;
+		}
+	    } else if (objPtr != NULL) {
+		Tk_Free3DBorderFromObj(tkwin, objPtr);
+	    }
+	    break;
+	case TK_OPTION_CURSOR:
+	    if (internalFormExists) {
+		if (*((Tk_Cursor *) internalPtr) != None) {
+		    Tk_FreeCursor(Tk_Display(tkwin),
+			    *((Tk_Cursor *) internalPtr));
+		    *((Tk_Cursor *) internalPtr) = None;
+		}
+	    } else if (objPtr != NULL) {
+		Tk_FreeCursorFromObj(tkwin, objPtr);
+	    }
+	    break;
+	default:
+	    break;
+    }
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Tk_GetOptionInfo --
+ *
+ *	Returns a list object containing complete information about
+ *	either a single option or all the configuration options in a
+ *	table.
+ *
+ * Results:
+ *	This procedure normally returns a pointer to an object.
+ *	If namePtr isn't NULL, then the result object is a list with
+ *	five elements: the option's name, its database name, database
+ *	class, default value, and current value.  If the option is a
+ *	synonym then the list will contain only two values: the option
+ *	name and the name of the option it refers to.  If namePtr is
+ *	NULL, then information is returned for every option in the
+ *	option table: the result will have one sub-list (in the form
+ *	described above) for each option in the table.  If an error
+ *	occurs (e.g. because namePtr isn't valid) then NULL is returned
+ *	and an error message will be left in interp's result unless
+ *	interp is NULL.
  *
  * Side effects:
  *	None.
@@ -581,47 +1632,40 @@ DoConfig(interp, tkwin, specPtr, value, valueIsUid, widgRec)
  *--------------------------------------------------------------
  */
 
-int
-Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. */
-    Tk_Window tkwin;		/* Window corresponding to widgRec. */
-    Tk_ConfigSpec *specs;	/* Describes legal options. */
-    char *widgRec;		/* Record whose fields contain current
+Tcl_Obj *
+Tk_GetOptionInfo(interp, recordPtr, optionTable, namePtr, tkwin)
+    Tcl_Interp *interp;		/* Interpreter for error reporting.  If	
+				 * NULL, then no error message is created. */
+    char *recordPtr;		/* Record whose fields contain current
 				 * values for options. */
-    char *argvName;		/* If non-NULL, indicates a single option
-				 * whose info is to be returned.  Otherwise
-				 * info is returned for all options. */
-    int flags;			/* Used to specify additional flags
-				 * that must be present in config specs
-				 * for them to be considered. */
+    Tk_OptionTable optionTable;	/* Describes all the legal options. */
+    Tcl_Obj *namePtr;		/* If non-NULL, the string value selects
+				 * a single option whose info is to be
+				 * returned.  Otherwise info is returned for
+				 * all options in optionTable. */
+    Tk_Window tkwin;		/* Window associated with recordPtr; needed
+				 * to compute correct default value for some
+				 * options. */
 {
-    register Tk_ConfigSpec *specPtr;
-    int needFlags, hateFlags;
-    char *list;
-    char *leader = "{";
-
-    needFlags = flags & ~(TK_CONFIG_USER_BIT - 1);
-    if (Tk_Depth(tkwin) <= 1) {
-	hateFlags = TK_CONFIG_COLOR_ONLY;
-    } else {
-	hateFlags = TK_CONFIG_MONO_ONLY;
-    }
+    Tcl_Obj *resultPtr;
+    OptionTable *tablePtr = (OptionTable *) optionTable;
+    Option *optionPtr;
+    int count;
 
     /*
      * If information is only wanted for a single configuration
      * spec, then handle that one spec specially.
      */
 
-    Tcl_SetResult(interp, (char *) NULL, TCL_STATIC);
-    if (argvName != NULL) {
-	specPtr = FindConfigSpec(interp, specs, argvName, needFlags,
-		hateFlags);
-	if (specPtr == NULL) {
-	    return TCL_ERROR;
+    if (namePtr != NULL) {
+	optionPtr = GetOptionFromObj(interp, namePtr, tablePtr);
+	if (optionPtr == NULL) {
+	    return (Tcl_Obj *) NULL;
 	}
-	interp->result = FormatConfigInfo(interp, tkwin, specPtr, widgRec);
-	interp->freeProc = TCL_DYNAMIC;
-	return TCL_OK;
+	if (optionPtr->specPtr->type == TK_OPTION_SYNONYM) {
+	    optionPtr = optionPtr->extra.synonymPtr;
+	}
+	return GetConfigList(recordPtr, optionPtr, tkwin);
     }
 
     /*
@@ -629,29 +1673,21 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
      * their information.
      */
 
-    for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
-	if ((argvName != NULL) && (specPtr->argvName != argvName)) {
-	    continue;
+    resultPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
+    for (; tablePtr != NULL; tablePtr = tablePtr->nextPtr) {
+	for (optionPtr = tablePtr->options, count = tablePtr->numOptions;
+		count > 0; optionPtr++, count--) {
+	    Tcl_ListObjAppendElement(interp, resultPtr,
+		    GetConfigList(recordPtr, optionPtr, tkwin));
 	}
-	if (((specPtr->specFlags & needFlags) != needFlags)
-		|| (specPtr->specFlags & hateFlags)) {
-	    continue;
-	}
-	if (specPtr->argvName == NULL) {
-	    continue;
-	}
-	list = FormatConfigInfo(interp, tkwin, specPtr, widgRec);
-	Tcl_AppendResult(interp, leader, list, "}", (char *) NULL);
-	ckfree(list);
-	leader = " {";
     }
-    return TCL_OK;
+    return resultPtr;
 }
 
 /*
  *--------------------------------------------------------------
  *
- * FormatConfigInfo --
+ * GetConfigList --
  *
  *	Create a valid Tcl list holding the configuration information
  *	for a single configuration option.
@@ -666,67 +1702,209 @@ Tk_ConfigureInfo(interp, tkwin, specs, widgRec, argvName, flags)
  *--------------------------------------------------------------
  */
 
-static char *
-FormatConfigInfo(interp, tkwin, specPtr, widgRec)
-    Tcl_Interp *interp;			/* Interpreter to use for things
-					 * like floating-point precision. */
-    Tk_Window tkwin;			/* Window corresponding to widget. */
-    register Tk_ConfigSpec *specPtr;	/* Pointer to information describing
-					 * option. */
-    char *widgRec;			/* Pointer to record holding current
-					 * values of info for widget. */
+static Tcl_Obj *
+GetConfigList(recordPtr, optionPtr, tkwin)
+    char *recordPtr;		/* Pointer to record holding current
+				 * values of configuration options. */
+    Option *optionPtr;		/* Pointer to information describing a
+				 * particular option. */
+    Tk_Window tkwin;		/* Window corresponding to recordPtr. */
 {
-    char *argv[6], *result;
-    char buffer[200];
-    Tcl_FreeProc *freeProc = (Tcl_FreeProc *) NULL;
+    Tcl_Obj *listPtr, *elementPtr;
 
-    argv[0] = specPtr->argvName;
-    argv[1] = specPtr->dbName;
-    argv[2] = specPtr->dbClass;
-    argv[3] = specPtr->defValue;
-    if (specPtr->type == TK_CONFIG_SYNONYM) {
-	return Tcl_Merge(2, argv);
-    }
-    argv[4] = FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer,
-	    &freeProc);
-    if (argv[1] == NULL) {
-	argv[1] = "";
-    }
-    if (argv[2] == NULL) {
-	argv[2] = "";
-    }
-    if (argv[3] == NULL) {
-	argv[3] = "";
-    }
-    if (argv[4] == NULL) {
-	argv[4] = "";
-    }
-    result = Tcl_Merge(5, argv);
-    if (freeProc != NULL) {
-	if ((freeProc == TCL_DYNAMIC) || (freeProc == (Tcl_FreeProc *) free)) {
-	    ckfree(argv[4]);
+    listPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
+    Tcl_ListObjAppendElement((Tcl_Interp *) NULL, listPtr, 
+	    Tcl_NewStringObj(optionPtr->specPtr->optionName, -1));
+
+    if (optionPtr->specPtr->type == TK_OPTION_SYNONYM) {
+	elementPtr = Tcl_NewStringObj(
+		optionPtr->extra.synonymPtr->specPtr->optionName, -1);
+	Tcl_ListObjAppendElement((Tcl_Interp *) NULL, listPtr, elementPtr);
+    } else {
+	if (optionPtr->dbNameUID == NULL) {
+	    elementPtr = Tcl_NewObj();
 	} else {
-	    (*freeProc)(argv[4]);
+	    elementPtr = Tcl_NewStringObj(optionPtr->dbNameUID, -1);
 	}
+	Tcl_ListObjAppendElement((Tcl_Interp *) NULL, listPtr, elementPtr);
+
+	if (optionPtr->dbClassUID == NULL) {
+	    elementPtr = Tcl_NewObj();
+	} else {
+	    elementPtr = Tcl_NewStringObj(optionPtr->dbClassUID, -1);
+	}
+	Tcl_ListObjAppendElement((Tcl_Interp *) NULL, listPtr, elementPtr);
+
+	if ((tkwin != NULL) && ((optionPtr->specPtr->type == TK_OPTION_COLOR)
+		|| (optionPtr->specPtr->type == TK_OPTION_BORDER))
+		&& (Tk_Depth(tkwin) <= 1)
+		&& (optionPtr->extra.monoColorPtr != NULL)) {
+	    elementPtr = optionPtr->extra.monoColorPtr;
+	} else if (optionPtr->defaultPtr != NULL) {
+	    elementPtr = optionPtr->defaultPtr;
+	} else {
+	    elementPtr = Tcl_NewObj();
+	}
+	Tcl_ListObjAppendElement((Tcl_Interp *) NULL, listPtr, elementPtr);
+
+	if (optionPtr->specPtr->objOffset >= 0) {
+	    elementPtr = *((Tcl_Obj **) (recordPtr
+		    + optionPtr->specPtr->objOffset));
+	    if (elementPtr == NULL) {
+		elementPtr = Tcl_NewObj();
+	    }
+	} else {
+	    elementPtr = GetObjectForOption(recordPtr, optionPtr, tkwin);
+	}
+	Tcl_ListObjAppendElement((Tcl_Interp *) NULL, listPtr, elementPtr);
     }
-    return result;
+    return listPtr;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * FormatConfigValue --
+ * GetObjectForOption --
  *
- *	This procedure formats the current value of a configuration
+ *	This procedure is called to create an object that contains the
+ *	value for an option.  It is invoked by GetConfigList and
+ *	Tk_GetOptionValue when only the internal form of an option is
+ *	stored in the record.
+ *
+ * Results:
+ *	The return value is a pointer to a Tcl object.  The caller
+ *	must call Tcl_IncrRefCount on this object to preserve it.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static Tcl_Obj *
+GetObjectForOption(recordPtr, optionPtr, tkwin)
+    char *recordPtr;		/* Pointer to record holding current
+				 * values of configuration options. */
+    Option *optionPtr;		/* Pointer to information describing an
+				 * option whose internal value is stored
+				 * in *recordPtr. */
+    Tk_Window tkwin;		/* Window corresponding to recordPtr. */
+{
+    Tcl_Obj *objPtr;
+    char *internalPtr;		/* Points to internal value of option in
+				 * record. */
+
+    internalPtr = recordPtr + optionPtr->specPtr->internalOffset;
+    objPtr = NULL;
+    switch (optionPtr->specPtr->type) {
+	case TK_OPTION_BOOLEAN: {
+	    objPtr = Tcl_NewIntObj(*((int *) internalPtr));
+	    break;
+	}
+	case TK_OPTION_INT: {
+	    objPtr = Tcl_NewIntObj(*((int *) internalPtr));
+	    break;
+	}
+	case TK_OPTION_DOUBLE: {
+	    objPtr = Tcl_NewDoubleObj(*((double *) internalPtr));
+	    break;
+	}
+	case TK_OPTION_STRING: {
+	    objPtr = Tcl_NewStringObj(*((char **) internalPtr), -1);
+	    break;
+	}
+	case TK_OPTION_STRING_TABLE: {
+	    objPtr = Tcl_NewStringObj(
+		    ((char **) optionPtr->specPtr->clientData)[
+		    *((int *) internalPtr)], -1);
+	    break;
+	}
+	case TK_OPTION_COLOR: { 
+	    XColor *colorPtr = *((XColor **) internalPtr);
+	    if (colorPtr != NULL) {
+		objPtr = Tcl_NewStringObj(Tk_NameOfColor(colorPtr), -1);
+	    }
+	    break;
+	}
+	case TK_OPTION_FONT: {
+	    Tk_Font tkfont = *((Tk_Font *) internalPtr);
+	    if (tkfont != NULL) {
+		objPtr = Tcl_NewStringObj(Tk_NameOfFont(tkfont), -1);
+	    }
+	    break;
+	}
+	case TK_OPTION_BITMAP: {
+	    Pixmap pixmap = *((Pixmap *) internalPtr);
+	    if (pixmap != None) {
+		objPtr = Tcl_NewStringObj(Tk_NameOfBitmap(Tk_Display(tkwin),
+			pixmap), -1);
+	    }
+	    break;
+	}
+	case TK_OPTION_BORDER: {
+	    Tk_3DBorder border = *((Tk_3DBorder *) internalPtr);
+	    if (border != NULL) {
+		objPtr = Tcl_NewStringObj(Tk_NameOf3DBorder(border), -1);
+	    }
+	    break;
+	}
+	case TK_OPTION_RELIEF: {
+	    objPtr = Tcl_NewStringObj(Tk_NameOfRelief(
+		    *((int *) internalPtr)), -1);
+	    break;
+	}
+	case TK_OPTION_CURSOR: {
+	    Tk_Cursor cursor = *((Tk_Cursor *) internalPtr);
+	    if (cursor != None) {
+		objPtr = Tcl_NewStringObj(
+			Tk_NameOfCursor(Tk_Display(tkwin), cursor), -1);
+	    }
+	    break;
+	}
+	case TK_OPTION_JUSTIFY: {
+	    objPtr = Tcl_NewStringObj(Tk_NameOfJustify(
+		    *((Tk_Justify *) internalPtr)), -1);
+	    break;
+	}
+	case TK_OPTION_ANCHOR: {
+	    objPtr = Tcl_NewStringObj(Tk_NameOfAnchor(
+		    *((Tk_Anchor *) internalPtr)), -1);
+	    break;
+	}
+	case TK_OPTION_PIXELS: {
+	    objPtr = Tcl_NewIntObj(*((int *) internalPtr));
+	    break;
+	}
+	case TK_OPTION_WINDOW: {
+	    Tk_Window tkwin = *((Tk_Window *) internalPtr);
+	    if (tkwin != NULL) {
+		objPtr = Tcl_NewStringObj(Tk_PathName(tkwin), -1);
+	    }
+	    break;
+	}
+	default: {
+	    panic("bad option type in GetObjectForOption");
+	}
+    }
+    if (objPtr == NULL) {
+	objPtr = Tcl_NewObj();
+    }
+    return objPtr;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_GetOptionValue --
+ *
+ *	This procedure returns the current value of a configuration
  *	option.
  *
  * Results:
- *	The return value is the formatted value of the option given
- *	by specPtr and widgRec.  If the value is static, so that it
- *	need not be freed, *freeProcPtr will be set to NULL;  otherwise
- *	*freeProcPtr will be set to the address of a procedure to
- *	free the result, and the caller must invoke this procedure
- *	when it is finished with the result.
+ *	The return value is the object holding the current value of
+ *	the option given by namePtr.  If no such option exists, then
+ *	the return value is NULL and an error message is left in
+ *	interp's result (if interp isn't NULL).
  *
  * Side effects:
  *	None.
@@ -734,257 +1912,113 @@ FormatConfigInfo(interp, tkwin, specPtr, widgRec)
  *----------------------------------------------------------------------
  */
 
-static char *
-FormatConfigValue(interp, tkwin, specPtr, widgRec, buffer, freeProcPtr)
-    Tcl_Interp *interp;		/* Interpreter for use in real conversions. */
-    Tk_Window tkwin;		/* Window corresponding to widget. */
-    Tk_ConfigSpec *specPtr;	/* Pointer to information describing option.
-				 * Must not point to a synonym option. */
-    char *widgRec;		/* Pointer to record holding current
-				 * values of info for widget. */
-    char *buffer;		/* Static buffer to use for small values.
-				 * Must have at least 200 bytes of storage. */
-    Tcl_FreeProc **freeProcPtr;	/* Pointer to word to fill in with address
-				 * of procedure to free the result, or NULL
-				 * if result is static. */
-{
-    char *ptr, *result;
-
-    *freeProcPtr = NULL;
-    ptr = widgRec + specPtr->offset;
-    result = "";
-    switch (specPtr->type) {
-	case TK_CONFIG_BOOLEAN:
-	    if (*((int *) ptr) == 0) {
-		result = "0";
-	    } else {
-		result = "1";
-	    }
-	    break;
-	case TK_CONFIG_INT:
-	    sprintf(buffer, "%d", *((int *) ptr));
-	    result = buffer;
-	    break;
-	case TK_CONFIG_DOUBLE:
-	    Tcl_PrintDouble(interp, *((double *) ptr), buffer);
-	    result = buffer;
-	    break;
-	case TK_CONFIG_STRING:
-	    result = (*(char **) ptr);
-	    if (result == NULL) {
-		result = "";
-	    }
-	    break;
-	case TK_CONFIG_UID: {
-	    Tk_Uid uid = *((Tk_Uid *) ptr);
-	    if (uid != NULL) {
-		result = uid;
-	    }
-	    break;
-	}
-	case TK_CONFIG_COLOR: {
-	    XColor *colorPtr = *((XColor **) ptr);
-	    if (colorPtr != NULL) {
-		result = Tk_NameOfColor(colorPtr);
-	    }
-	    break;
-	}
-	case TK_CONFIG_FONT: {
-	    Tk_Font tkfont = *((Tk_Font *) ptr);
-	    if (tkfont != NULL) {
-		result = Tk_NameOfFont(tkfont);
-	    }
-	    break;
-	}
-	case TK_CONFIG_BITMAP: {
-	    Pixmap pixmap = *((Pixmap *) ptr);
-	    if (pixmap != None) {
-		result = Tk_NameOfBitmap(Tk_Display(tkwin), pixmap);
-	    }
-	    break;
-	}
-	case TK_CONFIG_BORDER: {
-	    Tk_3DBorder border = *((Tk_3DBorder *) ptr);
-	    if (border != NULL) {
-		result = Tk_NameOf3DBorder(border);
-	    }
-	    break;
-	}
-	case TK_CONFIG_RELIEF:
-	    result = Tk_NameOfRelief(*((int *) ptr));
-	    break;
-	case TK_CONFIG_CURSOR:
-	case TK_CONFIG_ACTIVE_CURSOR: {
-	    Tk_Cursor cursor = *((Tk_Cursor *) ptr);
-	    if (cursor != None) {
-		result = Tk_NameOfCursor(Tk_Display(tkwin), cursor);
-	    }
-	    break;
-	}
-	case TK_CONFIG_JUSTIFY:
-	    result = Tk_NameOfJustify(*((Tk_Justify *) ptr));
-	    break;
-	case TK_CONFIG_ANCHOR:
-	    result = Tk_NameOfAnchor(*((Tk_Anchor *) ptr));
-	    break;
-	case TK_CONFIG_CAP_STYLE:
-	    result = Tk_NameOfCapStyle(*((int *) ptr));
-	    break;
-	case TK_CONFIG_JOIN_STYLE:
-	    result = Tk_NameOfJoinStyle(*((int *) ptr));
-	    break;
-	case TK_CONFIG_PIXELS:
-	    sprintf(buffer, "%d", *((int *) ptr));
-	    result = buffer;
-	    break;
-	case TK_CONFIG_MM:
-	    Tcl_PrintDouble(interp, *((double *) ptr), buffer);
-	    result = buffer;
-	    break;
-	case TK_CONFIG_WINDOW: {
-	    Tk_Window tkwin;
-
-	    tkwin = *((Tk_Window *) ptr);
-	    if (tkwin != NULL) {
-		result = Tk_PathName(tkwin);
-	    }
-	    break;
-	}
-	case TK_CONFIG_CUSTOM:
-	    result = (*specPtr->customPtr->printProc)(
-		    specPtr->customPtr->clientData, tkwin, widgRec,
-		    specPtr->offset, freeProcPtr);
-	    break;
-	default: 
-	    result = "?? unknown type ??";
-    }
-    return result;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tk_ConfigureValue --
- *
- *	This procedure returns the current value of a configuration
- *	option for a widget.
- *
- * Results:
- *	The return value is a standard Tcl completion code (TCL_OK or
- *	TCL_ERROR).  Interp->result will be set to hold either the value
- *	of the option given by argvName (if TCL_OK is returned) or
- *	an error message (if TCL_ERROR is returned).
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-int
-Tk_ConfigureValue(interp, tkwin, specs, widgRec, argvName, flags)
-    Tcl_Interp *interp;		/* Interpreter for error reporting. */
-    Tk_Window tkwin;		/* Window corresponding to widgRec. */
-    Tk_ConfigSpec *specs;	/* Describes legal options. */
-    char *widgRec;		/* Record whose fields contain current
+Tcl_Obj *
+Tk_GetOptionValue(interp, recordPtr, optionTable, namePtr, tkwin)
+    Tcl_Interp *interp;		/* Interpreter for error reporting.  If
+				 * NULL then no messages are provided for
+				 * errors. */
+    char *recordPtr;		/* Record whose fields contain current
 				 * values for options. */
-    char *argvName;		/* Gives the command-line name for the
+    Tk_OptionTable optionTable;	/* Describes legal options. */
+    Tcl_Obj *namePtr;		/* Gives the command-line name for the
 				 * option whose value is to be returned. */
-    int flags;			/* Used to specify additional flags
-				 * that must be present in config specs
-				 * for them to be considered. */
+    Tk_Window tkwin;		/* Window corresponding to recordPtr. */
 {
-    Tk_ConfigSpec *specPtr;
-    int needFlags, hateFlags;
+    OptionTable *tablePtr = (OptionTable *) optionTable;
+    Option *optionPtr;
+    Tcl_Obj *resultPtr;
 
-    needFlags = flags & ~(TK_CONFIG_USER_BIT - 1);
-    if (Tk_Depth(tkwin) <= 1) {
-	hateFlags = TK_CONFIG_COLOR_ONLY;
+    optionPtr = GetOptionFromObj(interp, namePtr, tablePtr);
+    if (optionPtr == NULL) {
+	return NULL;
+    }
+    if (optionPtr->specPtr->type == TK_OPTION_SYNONYM) {
+	optionPtr = optionPtr->extra.synonymPtr;
+    }
+    if (optionPtr->specPtr->objOffset >= 0) {
+	resultPtr = *((Tcl_Obj **) (recordPtr + optionPtr->specPtr->objOffset));
+	if (resultPtr == NULL) {
+	    /*
+	     * This option has a null value and is represented by a null
+	     * object pointer.  We can't return the null pointer, since that
+	     * would indicate an error.  Instead, return a new empty object.
+	     */
+    
+	    resultPtr = Tcl_NewObj();
+	} 
     } else {
-	hateFlags = TK_CONFIG_MONO_ONLY;
+	resultPtr = GetObjectForOption(recordPtr, optionPtr, tkwin);
     }
-    specPtr = FindConfigSpec(interp, specs, argvName, needFlags, hateFlags);
-    if (specPtr == NULL) {
-	return TCL_ERROR;
-    }
-    interp->result = FormatConfigValue(interp, tkwin, specPtr, widgRec,
-	    interp->result, &interp->freeProc);
-    return TCL_OK;
+    return resultPtr;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * Tk_FreeOptions --
+ * TkDebugConfig --
  *
- *	Free up all resources associated with configuration options.
+ *	This is a debugging procedure that returns information about
+ *	one of the configuration tables that currently exists for an
+ *	interpreter.
  *
  * Results:
- *	None.
+ *	If the specified table exists in the given interpreter, then a
+ *	list is returned describing the table and any other tables that
+ *	it chains to: for each table there will be three list elements
+ *	giving the reference count for the table, the number of elements
+ *	in the table, and the command-line name for the first option
+ *	in the table.  If the table doesn't exist in the interpreter
+ *	then an empty object is returned.  The reference count for the
+ *	returned object is 0.
  *
  * Side effects:
- *	Any resource in widgRec that is controlled by a configuration
- *	option (e.g. a Tk_3DBorder or XColor) is freed in the appropriate
- *	fashion.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-	/* ARGSUSED */
-void
-Tk_FreeOptions(specs, widgRec, display, needFlags)
-    Tk_ConfigSpec *specs;	/* Describes legal options. */
-    char *widgRec;		/* Record whose fields contain current
-				 * values for options. */
-    Display *display;		/* X display; needed for freeing some
-				 * resources. */
-    int needFlags;		/* Used to specify additional flags
-				 * that must be present in config specs
-				 * for them to be considered. */
+Tcl_Obj *
+TkDebugConfig(interp, table)
+    Tcl_Interp *interp;			/* Interpreter in which the table is
+					 * defined. */
+    Tk_OptionTable table;		/* Table about which information is to
+					 * be returned.  May not necessarily
+					 * exist in the interpreter anymore. */
 {
-    register Tk_ConfigSpec *specPtr;
-    char *ptr;
+    OptionTable *tablePtr = (OptionTable *) table;
+    Tcl_HashTable *hashTablePtr;
+    Tcl_HashEntry *hashEntryPtr;
+    Tcl_HashSearch search;
+    Tcl_Obj *objPtr;
 
-    for (specPtr = specs; specPtr->type != TK_CONFIG_END; specPtr++) {
-	if ((specPtr->specFlags & needFlags) != needFlags) {
-	    continue;
-	}
-	ptr = widgRec + specPtr->offset;
-	switch (specPtr->type) {
-	    case TK_CONFIG_STRING:
-		if (*((char **) ptr) != NULL) {
-		    ckfree(*((char **) ptr));
-		    *((char **) ptr) = NULL;
-		}
-		break;
-	    case TK_CONFIG_COLOR:
-		if (*((XColor **) ptr) != NULL) {
-		    Tk_FreeColor(*((XColor **) ptr));
-		    *((XColor **) ptr) = NULL;
-		}
-		break;
-	    case TK_CONFIG_FONT:
-		Tk_FreeFont(*((Tk_Font *) ptr));
-		*((Tk_Font *) ptr) = NULL;
-		break;
-	    case TK_CONFIG_BITMAP:
-		if (*((Pixmap *) ptr) != None) {
-		    Tk_FreeBitmap(display, *((Pixmap *) ptr));
-		    *((Pixmap *) ptr) = None;
-		}
-		break;
-	    case TK_CONFIG_BORDER:
-		if (*((Tk_3DBorder *) ptr) != NULL) {
-		    Tk_Free3DBorder(*((Tk_3DBorder *) ptr));
-		    *((Tk_3DBorder *) ptr) = NULL;
-		}
-		break;
-	    case TK_CONFIG_CURSOR:
-	    case TK_CONFIG_ACTIVE_CURSOR:
-		if (*((Tk_Cursor *) ptr) != None) {
-		    Tk_FreeCursor(display, *((Tk_Cursor *) ptr));
-		    *((Tk_Cursor *) ptr) = None;
-		}
+    objPtr = Tcl_NewObj();
+    hashTablePtr = (Tcl_HashTable *) Tcl_GetAssocData(interp, OPTION_HASH_KEY,
+	    NULL);
+    if (hashTablePtr == NULL) {
+	return objPtr;
+    }
+
+    /*
+     * Scan all the tables for this interpreter to make sure that the
+     * one we want still is valid.
+     */
+
+    for (hashEntryPtr = Tcl_FirstHashEntry(hashTablePtr, &search);
+	    hashEntryPtr != NULL;
+	    hashEntryPtr = Tcl_NextHashEntry(&search)) {
+	if (tablePtr == (OptionTable *) Tcl_GetHashValue(hashEntryPtr)) {
+	    for ( ; tablePtr != NULL; tablePtr = tablePtr->nextPtr) {
+		Tcl_ListObjAppendElement((Tcl_Interp *) NULL, objPtr,
+			Tcl_NewIntObj(tablePtr->refCount));
+		Tcl_ListObjAppendElement((Tcl_Interp *) NULL, objPtr,
+			Tcl_NewIntObj(tablePtr->numOptions));
+		Tcl_ListObjAppendElement((Tcl_Interp *) NULL, objPtr,
+			Tcl_NewStringObj(
+				tablePtr->options[0].specPtr->optionName,
+			-1));
+	    }
+	    break;
 	}
     }
+    return objPtr;
 }

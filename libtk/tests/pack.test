@@ -3,14 +3,14 @@
 #
 # Copyright (c) 1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) pack.test 1.27 97/07/01 18:06:56
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then \
-  {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 # Utility procedures:
 
@@ -924,6 +924,13 @@ test pack-17.1 {PackLostSlaveProc procedure} {
 } {place 20x40+40+10 1 {window ".pack.a" isn't packed}}
 
 test pack-18.1 {unmap slaves when master unmapped} {tempNotPc} {
+
+    # adjust the position of .pack before test to avoid a screen switch
+    # that occurs with window managers that have desktops four times as big
+    # as the screen (screen switch causes scale and other tests to fail).
+
+    wm geometry .pack +100+100
+
     # On the PC, when the width/height is configured while the window is 
     # unmapped, the changes don't take effect until the window is remapped.
     # Who knows why?
@@ -945,6 +952,12 @@ test pack-18.1 {unmap slaves when master unmapped} {tempNotPc} {
     lappend result [winfo ismapped .pack.a]
 } {1 0 200 75 0 1}
 test pack-18.2 {unmap slaves when master unmapped} {
+
+    # adjust the position of .pack before test to avoid a screen switch
+    # that occurs with window managers that have desktops four times as big
+    # as the screen (screen switch causes scale and other tests to fail).
+
+    wm geometry .pack +100+100
     eval destroy [winfo child .pack]
     frame .pack.a -relief raised -bd 2
     frame .pack.b -width 70 -height 30 -relief sunken -bd 2
@@ -967,3 +980,20 @@ destroy .pack
 foreach i {pack1 pack2 pack3 pack4} {
     rename $i {}
 }
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

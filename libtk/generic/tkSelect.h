@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkSelect.h 1.4 95/11/03 13:22:41
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKSELECT
@@ -95,6 +95,10 @@ typedef struct TkSelRetrievalInfo {
     int idleTime;		/* Number of seconds that have gone by
 				 * without hearing anything from the
 				 * selection owner. */
+    Tcl_EncodingState encState;	/* Holds intermediate state during translations
+				 * of data that cross buffer boundaries. */
+    int encFlags;		/* Encoding translation state flags. */
+    Tcl_DString buf;		/* Buffer to hold translation data. */
     struct TkSelRetrievalInfo *nextPtr;
 				/* Next in list of all pending
 				 * selection retrievals.  NULL means
@@ -146,14 +150,6 @@ typedef struct TkSelInProgress {
 } TkSelInProgress;
 
 /*
- * Declarations for variables shared among the selection-related files:
- */
-
-extern TkSelInProgress *pendingPtr;
-				/* Topmost search in progress, or
-				 * NULL if none. */
-
-/*
  * Chunk size for retrieving selection.  It's defined both in
  * words and in bytes;  the word size is used to allocate
  * buffer space that's guaranteed to be word-aligned and that
@@ -167,6 +163,11 @@ extern TkSelInProgress *pendingPtr;
  * Declarations for procedures that are used by the selection-related files
  * but shouldn't be used anywhere else in Tk (or by Tk clients):
  */
+
+extern TkSelInProgress * 
+                        TkSelGetInProgress _ANSI_ARGS_((void));
+extern void             TkSelSetInProgress _ANSI_ARGS_((
+                            TkSelInProgress *pendingPtr));
 
 extern void		TkSelClearSelection _ANSI_ARGS_((Tk_Window tkwin,
 			    XEvent *eventPtr));

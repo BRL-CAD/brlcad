@@ -5,13 +5,18 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) unixButton.test 1.6 97/07/01 18:11:30
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 if {$tcl_platform(platform)!="unix"} {
+    puts "skipping: Unix only tests..."
+    ::tcltest::cleanupTests
     return
 }
 
@@ -19,11 +24,8 @@ if {[lsearch [image types] test] < 0} {
     puts "This application hasn't been compiled with the \"test\""
     puts "image, so I can't run this test.  Are you sure you're using"
     puts "tktest instead of wish?"
+    ::tcltest::cleanupTests
     return
-}
-
-if {[info procs test] != "test"} {
-    source defs
 }
 
 foreach i [winfo children .] {
@@ -180,3 +182,20 @@ test unixbutton-1.11 {TkpComputeButtonGeometry procedure} {
 } {27 37}
 
 eval destroy [winfo children .]
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -3,18 +3,13 @@
 # standard fashion for Tcl tests.
 #
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) focus.test 1.24 97/08/11 09:39:34
+# RCS: @(#) $Id$
 
-if {$tcl_platform(platform) != "unix"} {
-    return
-}
-
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 eval destroy [winfo children .]
@@ -47,7 +42,7 @@ proc focusSetupAlt {} {
 }
 
 # Make sure the window manager knows who has focus
-fixfocus
+catch {fixfocus}
 
 # The following procedure ensures that there is no input focus
 # in this application.  It does it by arranging for another
@@ -65,8 +60,8 @@ proc focusClear {} {
 }
 
 focusSetup
-set altDisplay [info exists env(TK_ALT_DISPLAY)]
-if $altDisplay {
+set ::tcltest::testConfig(altDisplay) [info exists env(TK_ALT_DISPLAY)]
+if {$::tcltest::testConfig(altDisplay)} {
     focusSetupAlt
 }
 update
@@ -81,37 +76,35 @@ bind all <KeyPress> {
     append focusInfo "press %W %K"
 }
 
-test focus-1.1 {Tk_FocusCmd procedure} {
+test focus-1.1 {Tk_FocusCmd procedure} {unixOnly} {
     focusClear
     focus
 } {}
-if $altDisplay {
-    test focus-1.2 {Tk_FocusCmd procedure} {
-	focus .alt.b
-	focus
-    } {}
-}
-test focus-1.3 {Tk_FocusCmd procedure} {
+test focus-1.2 {Tk_FocusCmd procedure} {unixOnly altDisplay} {
+    focus .alt.b
+    focus
+} {}
+test focus-1.3 {Tk_FocusCmd procedure} {unixOnly} {
     focusClear
     focus .t.b3
     focus
 } {}
-test focus-1.4 {Tk_FocusCmd procedure} {
+test focus-1.4 {Tk_FocusCmd procedure} {unixOnly} {
     list [catch {focus ""} msg] $msg
 } {0 {}}
-test focus-1.5 {Tk_FocusCmd procedure} {
+test focus-1.5 {Tk_FocusCmd procedure} {unixOnly} {
     focusClear
     focus -force .t
     focus .t.b3
     focus
 } {.t.b3}
-test focus-1.6 {Tk_FocusCmd procedure} {
+test focus-1.6 {Tk_FocusCmd procedure} {unixOnly} {
     list [catch {focus .gorp} msg] $msg
 } {1 {bad window path name ".gorp"}}
-test focus-1.7 {Tk_FocusCmd procedure} {
+test focus-1.7 {Tk_FocusCmd procedure} {unixOnly} {
     list [catch {focus .gorp a} msg] $msg
 } {1 {bad option ".gorp": must be -displayof, -force, or -lastfor}}
-test focus-1.8 {Tk_FocusCmd procedure, focussing on dead window} {
+test focus-1.8 {Tk_FocusCmd procedure, focussing on dead window} {unixOnly} {
     toplevel .t2
     wm geom .t2 +10+10
     frame .t2.f -width 200 -height 100 -bd 2 -relief raised
@@ -130,84 +123,88 @@ test focus-1.8 {Tk_FocusCmd procedure, focussing on dead window} {
     destroy .t2
     set x
 } {.t2.f2 .t2 .t2}
-test focus-1.9 {Tk_FocusCmd procedure, -displayof option} {
+test focus-1.9 {Tk_FocusCmd procedure, -displayof option} {unixOnly} {
     list [catch {focus -displayof} msg] $msg
 } {1 {wrong # args: should be "focus -displayof window"}}
-test focus-1.10 {Tk_FocusCmd procedure, -displayof option} {
+test focus-1.10 {Tk_FocusCmd procedure, -displayof option} {unixOnly} {
     list [catch {focus -displayof a b} msg] $msg
 } {1 {wrong # args: should be "focus -displayof window"}}
-test focus-1.11 {Tk_FocusCmd procedure, -displayof option} {
+test focus-1.11 {Tk_FocusCmd procedure, -displayof option} {unixOnly} {
     list [catch {focus -displayof .lousy} msg] $msg
 } {1 {bad window path name ".lousy"}}
-test focus-1.12 {Tk_FocusCmd procedure, -displayof option} {
+test focus-1.12 {Tk_FocusCmd procedure, -displayof option} {unixOnly} {
     focusClear
     focus .t
     focus -displayof .t.b3
 } {}
-test focus-1.13 {Tk_FocusCmd procedure, -displayof option} {
+test focus-1.13 {Tk_FocusCmd procedure, -displayof option} {unixOnly} {
     focusClear
     focus -force .t
     focus -displayof .t.b3
 } {.t}
-if $altDisplay {
-    test focus-1.14 {Tk_FocusCmd procedure, -displayof option} {
-	focus -force .alt.c
-	focus -displayof .alt
-    } {.alt.c}
-}
-test focus-1.15 {Tk_FocusCmd procedure, -force option} {
+test focus-1.14 {Tk_FocusCmd procedure, -displayof option} {unixOnly altDisplay} {
+    focus -force .alt.c
+    focus -displayof .alt
+} {.alt.c}
+test focus-1.15 {Tk_FocusCmd procedure, -force option} {unixOnly} {
     list [catch {focus -force} msg] $msg
 } {1 {wrong # args: should be "focus -force window"}}
-test focus-1.16 {Tk_FocusCmd procedure, -force option} {
+test focus-1.16 {Tk_FocusCmd procedure, -force option} {unixOnly} {
     list [catch {focus -force a b} msg] $msg
 } {1 {wrong # args: should be "focus -force window"}}
-test focus-1.17 {Tk_FocusCmd procedure, -force option} {
+test focus-1.17 {Tk_FocusCmd procedure, -force option} {unixOnly} {
     list [catch {focus -force foo} msg] $msg
 } {1 {bad window path name "foo"}}
-test focus-1.18 {Tk_FocusCmd procedure, -force option} {
+test focus-1.18 {Tk_FocusCmd procedure, -force option} {unixOnly} {
     list [catch {focus -force ""} msg] $msg
 } {0 {}}
-test focus-1.19 {Tk_FocusCmd procedure, -force option} {
+test focus-1.19 {Tk_FocusCmd procedure, -force option} {unixOnly} {
     focusClear
     focus .t.b1
     set x  [list [focus]]
     focus -force .t.b1
     lappend x [focus]
 } {{} .t.b1}
-test focus-1.20 {Tk_FocusCmd procedure, -lastfor option} {
+test focus-1.20 {Tk_FocusCmd procedure, -lastfor option} {unixOnly} {
     list [catch {focus -lastfor} msg] $msg
 } {1 {wrong # args: should be "focus -lastfor window"}}
-test focus-1.21 {Tk_FocusCmd procedure, -lastfor option} {
+test focus-1.21 {Tk_FocusCmd procedure, -lastfor option} {unixOnly} {
     list [catch {focus -lastfor 1 2} msg] $msg
 } {1 {wrong # args: should be "focus -lastfor window"}}
-test focus-1.22 {Tk_FocusCmd procedure, -lastfor option} {
+test focus-1.22 {Tk_FocusCmd procedure, -lastfor option} {unixOnly} {
     list [catch {focus -lastfor who_knows?} msg] $msg
 } {1 {bad window path name "who_knows?"}}
-test focus-1.23 {Tk_FocusCmd procedure, -lastfor option} {
+test focus-1.23 {Tk_FocusCmd procedure, -lastfor option} {unixOnly} {
     focus .b
     focus .t.b1
     list [focus -lastfor .] [focus -lastfor .t.b3]
 } {.b .t.b1}
-test focus-1.24 {Tk_FocusCmd procedure, -lastfor option} {
+test focus-1.24 {Tk_FocusCmd procedure, -lastfor option} {unixOnly} {
     destroy .t
     focusSetup
     update
     focus -lastfor .t.b2
 } {.t}
-test focus-1.25 {Tk_FocusCmd procedure} {
+test focus-1.25 {Tk_FocusCmd procedure} {unixOnly} {
     list [catch {focus -unknown} msg] $msg
 } {1 {bad option "-unknown": must be -displayof, -force, or -lastfor}}
 
-test focus-2.1 {TkFocusFilterEvent procedure} {nonPortable} {
+# Some tests require the testwrapper command
+
+set ::tcltest::testConfig(testwrapper) \
+	[expr {[info commands testwrapper] != {}}]
+
+test focus-2.1 {TkFocusFilterEvent procedure} {unixOnly nonPortable testwrapper} {
     focus -force .b
     destroy .t
     focusSetup
     update
     set focusInfo {}
-    event gen [testwrapper .t] <FocusIn> -detail NotifyAncestor -sendevent 0x54217567
+    event gen [testwrapper .t] <FocusIn> -detail NotifyAncestor \
+	    -sendevent 0x54217567
     list $focusInfo
 } {{}}
-test focus-2.2 {TkFocusFilterEvent procedure} {nonPortable} {
+test focus-2.2 {TkFocusFilterEvent procedure} {unixOnly nonPortable testwrapper} {
     focus -force .b
     destroy .t
     focusSetup
@@ -217,7 +214,7 @@ test focus-2.2 {TkFocusFilterEvent procedure} {nonPortable} {
     list $focusInfo [focus]
 } {{in .t NotifyAncestor
 } .b}
-test focus-2.3 {TkFocusFilterEvent procedure} {nonPortable} {
+test focus-2.3 {TkFocusFilterEvent procedure} {unixOnly nonPortable testwrapper} {
     focus -force .b
     destroy .t
     focusSetup
@@ -230,7 +227,8 @@ test focus-2.3 {TkFocusFilterEvent procedure} {nonPortable} {
 out . NotifyNonlinearVirtual
 in .t NotifyNonlinear
 } .t}
-test focus-2.4 {TkFocusFilterEvent procedure, FocusIn events} {nonPortable} {
+test focus-2.4 {TkFocusFilterEvent procedure, FocusIn events} \
+	{unixOnly nonPortable testwrapper} {
     set result {}
     focus .t.b1
     # Important to end with NotifyAncestor, which is an
@@ -260,7 +258,8 @@ in .t.b1 NotifyNonlinear
 in .t NotifyNonlinearVirtual
 in .t.b1 NotifyNonlinear
 }}
-test focus-2.5 {TkFocusFilterEvent procedure, creating FocusInfo struct} {nonPortable} {
+test focus-2.5 {TkFocusFilterEvent procedure, creating FocusInfo struct} \
+	{unixOnly nonPortable testwrapper} {
     focusSetup
     focus .t.b1
     update
@@ -270,7 +269,8 @@ test focus-2.5 {TkFocusFilterEvent procedure, creating FocusInfo struct} {nonPor
 in .t NotifyNonlinearVirtual
 in .t.b1 NotifyNonlinear
 } .t.b1}
-test focus-2.6 {TkFocusFilterEvent procedure, FocusIn events} {
+test focus-2.6 {TkFocusFilterEvent procedure, FocusIn events} \
+	{unixOnly testwrapper} {
     focus .t.b1
     focus .
     update
@@ -280,7 +280,8 @@ test focus-2.6 {TkFocusFilterEvent procedure, FocusIn events} {
     event gen . <KeyPress-x>
     list $x $focusInfo
 } {.t.b1 {press .t.b1 x}}
-test focus-2.7 {TkFocusFilterEvent procedure, FocusOut events} {
+test focus-2.7 {TkFocusFilterEvent procedure, FocusOut events} \
+	{unixOnly testwrapper} {
     set result {}
     foreach detail {NotifyAncestor NotifyInferior NotifyNonlinear
 	    NotifyNonlinearVirtual NotifyPointer NotifyPointerRoot
@@ -292,17 +293,20 @@ test focus-2.7 {TkFocusFilterEvent procedure, FocusOut events} {
     }
     set result
 } {{} .t.b1 {} {} .t.b1 .t.b1 {}}
-test focus-2.8 {TkFocusFilterEvent procedure, FocusOut events} {
+test focus-2.8 {TkFocusFilterEvent procedure, FocusOut events} \
+	{unixOnly testwrapper} {
     focus -force .t.b1
     event gen .t.b1 <FocusOut> -detail NotifyAncestor
     focus
 } {.t.b1}
-test focus-2.9 {TkFocusFilterEvent procedure, FocusOut events} {
+test focus-2.9 {TkFocusFilterEvent procedure, FocusOut events} \
+	{unixOnly testwrapper} {
     focus .t.b1
     event gen [testwrapper .] <FocusOut> -detail NotifyAncestor
     focus
 } {}
-test focus-2.10 {TkFocusFilterEvent procedure, Enter events} {
+test focus-2.10 {TkFocusFilterEvent procedure, Enter events} \
+	{unixOnly testwrapper} {
     set result {}
     focus .t.b1
     focusClear
@@ -316,14 +320,16 @@ test focus-2.10 {TkFocusFilterEvent procedure, Enter events} {
     }
     set result
 } {.t.b1 {} .t.b1 .t.b1 .t.b1}
-test focus-2.11 {TkFocusFilterEvent procedure, Enter events} {
+test focus-2.11 {TkFocusFilterEvent procedure, Enter events} \
+	{unixOnly testwrapper} {
     focusClear
     set focusInfo {}
     event gen [testwrapper .t] <Enter> -detail NotifyAncestor
     update
     set focusInfo
 } {}
-test focus-2.12 {TkFocusFilterEvent procedure, Enter events} {
+test focus-2.12 {TkFocusFilterEvent procedure, Enter events} \
+	{unixOnly testwrapper} {
     focus -force .b
     update
     set focusInfo {}
@@ -331,7 +337,8 @@ test focus-2.12 {TkFocusFilterEvent procedure, Enter events} {
     update
     set focusInfo
 } {}
-test focus-2.13 {TkFocusFilterEvent procedure, Enter events} {
+test focus-2.13 {TkFocusFilterEvent procedure, Enter events} \
+	{unixOnly testwrapper} {
     focus .t.b1
     focusClear
     event gen [testwrapper .t] <Enter> -detail NotifyAncestor -focus 1
@@ -341,7 +348,7 @@ test focus-2.13 {TkFocusFilterEvent procedure, Enter events} {
 } {in .t NotifyVirtual
 in .t.b1 NotifyAncestor
 }
-test focus-2.14 {TkFocusFilterEvent procedure, Enter events, ignore errors when setting focus due to implicit focus} {
+test focus-2.14 {TkFocusFilterEvent procedure, Enter events, ignore errors when setting focus due to implicit focus} {unixOnly testwrapper} {
     focusClear
     catch {destroy .t2}
     toplevel .t2
@@ -352,7 +359,8 @@ test focus-2.14 {TkFocusFilterEvent procedure, Enter events, ignore errors when 
     update
     destroy .t2
 } {}
-test focus-2.15 {TkFocusFilterEvent procedure, Leave events} {
+test focus-2.15 {TkFocusFilterEvent procedure, Leave events} \
+	{unixOnly testwrapper} {
     set result {}
     focus .t.b1
     foreach detail {NotifyAncestor NotifyInferior NotifyNonlinear
@@ -366,7 +374,8 @@ test focus-2.15 {TkFocusFilterEvent procedure, Leave events} {
     }
     set result
 } {{} .t.b1 {} {} {}}
-test focus-2.16 {TkFocusFilterEvent procedure, Leave events} {
+test focus-2.16 {TkFocusFilterEvent procedure, Leave events} \
+	{unixOnly testwrapper} {
     set result {}
     focus .t.b1
     event gen [testwrapper .t] <Enter> -detail NotifyAncestor -focus 1
@@ -378,7 +387,8 @@ test focus-2.16 {TkFocusFilterEvent procedure, Leave events} {
 } {out .t.b1 NotifyAncestor
 out .t NotifyVirtual
 }
-test focus-2.17 {TkFocusFilterEvent procedure, Leave events} {
+test focus-2.17 {TkFocusFilterEvent procedure, Leave events} \
+	{unixOnly testwrapper} {
     set result {}
     focus .t.b1
     event gen [testwrapper .t] <Enter> -detail NotifyAncestor -focus 1
@@ -392,7 +402,8 @@ test focus-2.17 {TkFocusFilterEvent procedure, Leave events} {
 out .t NotifyVirtual
 } {}}
 
-test focus-3.1 {SetFocus procedure, create record on focus} {
+test focus-3.1 {SetFocus procedure, create record on focus} \
+	{unixOnly testwrapper} {
     toplevel .t2 -width 250 -height 100
     wm geometry .t2 +0+0
     update
@@ -404,7 +415,8 @@ catch {destroy .t2}
 # This test produces no result, but it will generate a protocol
 # error if Tk forgets to make the window exist before focussing
 # on it.
-test focus-3.2 {SetFocus procedure, making window exist} {
+test focus-3.2 {SetFocus procedure, making window exist} \
+	{unixOnly testwrapper} {
     update
     button .b2 -text "Another button"
     focus .b2
@@ -414,12 +426,14 @@ catch {destroy .b2}
 update
 # The following test doesn't produce a check-able result, but if
 # there are bugs it may generate an X protocol error.
-test focus-3.3 {SetFocus procedure, delaying claim of X focus} {
+test focus-3.3 {SetFocus procedure, delaying claim of X focus} \
+	{unixOnly testwrapper} {
     focusSetup
     focus -force .t.b2
     update
 } {}
-test focus-3.4 {SetFocus procedure, delaying claim of X focus} {
+test focus-3.4 {SetFocus procedure, delaying claim of X focus} \
+	{unixOnly testwrapper} {
     focusSetup
     wm withdraw .t
     focus -force .t.b2
@@ -432,7 +446,8 @@ test focus-3.4 {SetFocus procedure, delaying claim of X focus} {
     wm deiconify .t
 } {}
 catch {destroy .t2}
-test focus-3.5 {SetFocus procedure, generating events} {
+test focus-3.5 {SetFocus procedure, generating events} \
+	{unixOnly testwrapper} {
     focusSetup
     focusClear
     set focusInfo {}
@@ -442,7 +457,8 @@ test focus-3.5 {SetFocus procedure, generating events} {
 } {in .t NotifyVirtual
 in .t.b2 NotifyAncestor
 }
-test focus-3.6 {SetFocus procedure, generating events} {
+test focus-3.6 {SetFocus procedure, generating events} \
+	{unixOnly testwrapper} {
     focusSetup
     focus -force .b
     update
@@ -455,7 +471,8 @@ out . NotifyNonlinearVirtual
 in .t NotifyNonlinearVirtual
 in .t.b2 NotifyNonlinear
 }
-test focus-3.7 {SetFocus procedure, generating events} {nonPortable} {
+test focus-3.7 {SetFocus procedure, generating events} \
+	{unixOnly nonPortable testwrapper} {
     # Non-portable because some platforms generate extra events.
 
     focusSetup
@@ -466,7 +483,7 @@ test focus-3.7 {SetFocus procedure, generating events} {nonPortable} {
     set focusInfo
 } {}
 
-test focus-4.1 {TkFocusDeadWindow procedure} {
+test focus-4.1 {TkFocusDeadWindow procedure} {unixOnly testwrapper} {
     focusSetup
     update
     focus -force .b
@@ -474,7 +491,7 @@ test focus-4.1 {TkFocusDeadWindow procedure} {
     destroy .t
     focus
 } {.b}
-test focus-4.2 {TkFocusDeadWindow procedure} {
+test focus-4.2 {TkFocusDeadWindow procedure} {unixOnly testwrapper} {
     focusSetup
     update
     focus -force .t.b2
@@ -488,7 +505,7 @@ test focus-4.2 {TkFocusDeadWindow procedure} {
 # Non-portable due to wm-specific redirection of input focus when
 # windows are deleted:
 
-test focus-4.3 {TkFocusDeadWindow procedure} {nonPortable} {
+test focus-4.3 {TkFocusDeadWindow procedure} {unixOnly nonPortable testwrapper} {
     focusSetup
     update
     focus .t
@@ -497,7 +514,7 @@ test focus-4.3 {TkFocusDeadWindow procedure} {nonPortable} {
     update
     focus
 } {}
-test focus-4.4 {TkFocusDeadWindow procedure} {
+test focus-4.4 {TkFocusDeadWindow procedure} {unixOnly testwrapper} {
     focusSetup
     focus -force .t.b2
     update
@@ -508,7 +525,21 @@ test focus-4.4 {TkFocusDeadWindow procedure} {
 # I don't know how to test most of the remaining procedures of this file
 # explicitly;  they've already been exercised by the preceding tests.
 
-test focus-5.1 {ChangeXFocus procedure, don't take focus unless have it} {
+# If send is disabled because of inadequate security, don't run any
+# of these tests at all.
+
+setupbg
+set app [dobg {tk appname}]
+set ::tcltest::testConfig(secureServer) 1
+if {[catch {send $app set a 0} msg] == 1} {
+    if [string match "X server insecure *" $msg] {
+	set ::tcltest::testConfig(secureServer) 0
+    }
+}
+cleanupbg
+setupbg
+test focus-5.1 {ChangeXFocus procedure, don't take focus unless have it} \
+	{unixOnly testwrapper secureServer} {
     focusSetup
     focus -force .t
     update
@@ -518,7 +549,7 @@ test focus-5.1 {ChangeXFocus procedure, don't take focus unless have it} {
     focus .t.b2
     update
     lappend result [focus]
-} {.t .t {}}
+} {.t {} {}}
 
 catch {destroy .t}
 bind all <FocusIn> {}
@@ -527,7 +558,8 @@ bind all <KeyPress> {}
 cleanupbg
 fixfocus
 
-test focus-6.1 {miscellaneous - embedded application in same process} {unixOnly} {
+test focus-6.1 {miscellaneous - embedded application in same process} \
+	{unixOnly testwrapper} {
     eval interp delete [interp slaves]
     catch {destroy .t}
     toplevel .t
@@ -576,7 +608,8 @@ test focus-6.1 {miscellaneous - embedded application in same process} {unixOnly}
     interp delete child
     set result
 } {{.t.f2.e1 {} {focus out .t.f2.e1 NotifyNonlinear} {focus out .t.f2 NotifyNonlinearVirtual} {focus in .t.f1 NotifyNonlinear} | {focus out .t.f1 NotifyNonlinear} {focus in .t.f2 NotifyNonlinearVirtual} {focus in .t.f2.e1 NotifyNonlinear}} {{focus in . NotifyVirtual} {focus in .e1 NotifyAncestor} | {focus out .e1 NotifyAncestor} {focus out . NotifyVirtual}}}
-test focus-6.2 {miscellaneous - embedded application in different process} {unixOnly} {
+test focus-6.2 {miscellaneous - embedded application in different process} \
+	{unixOnly testwrapper} {
     eval interp delete [interp slaves]
     catch {destroy .t}
     setupbg
@@ -628,3 +661,20 @@ test focus-6.2 {miscellaneous - embedded application in different process} {unix
 eval destroy [winfo children .]
 bind all <FocusIn> {}
 bind all <FocusOut> {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

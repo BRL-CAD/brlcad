@@ -4,12 +4,12 @@
  *	This file implements arc items for canvas widgets.
  *
  * Copyright (c) 1992-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvArc.c 1.34 97/04/25 16:50:56
+ * RCS: @(#) $Id$
  */
 
 #include <stdio.h>
@@ -168,14 +168,6 @@ Tk_ItemType tkArcType = {
 #    define PI 3.14159265358979323846
 #endif
 
-/*
- * The uid's below comprise the legal values for the "-style"
- * option for arcs.
- */
-
-static Tk_Uid arcUid =  NULL;
-static Tk_Uid chordUid =  NULL;
-static Tk_Uid pieSliceUid = NULL;
 
 /*
  *--------------------------------------------------------------
@@ -188,7 +180,7 @@ static Tk_Uid pieSliceUid = NULL;
  * Results:
  *	A standard Tcl return value.  If an error occurred in
  *	creating the item, then an error message is left in
- *	interp->result;  in this case itemPtr is
+ *	the interp's result;  in this case itemPtr is
  *	left uninitialized, so it can be safely freed by the
  *	caller.
  *
@@ -218,16 +210,6 @@ CreateArc(interp, canvas, itemPtr, argc, argv)
     }
 
     /*
-     * Carry out once-only initialization.
-     */
-
-    if (arcUid == NULL) {
-	arcUid = Tk_GetUid("arc");
-	chordUid = Tk_GetUid("chord");
-	pieSliceUid = Tk_GetUid("pieslice");
-    }
-
-    /*
      * Carry out initialization that is needed in order to clean
      * up after errors during the the remainder of this procedure.
      */
@@ -241,7 +223,7 @@ CreateArc(interp, canvas, itemPtr, argc, argv)
     arcPtr->fillColor = NULL;
     arcPtr->fillStipple = None;
     arcPtr->outlineStipple = None;
-    arcPtr->style = pieSliceUid;
+    arcPtr->style = Tk_GetUid("pieslice");
     arcPtr->outlineGC = None;
     arcPtr->fillGC = None;
 
@@ -276,7 +258,7 @@ CreateArc(interp, canvas, itemPtr, argc, argv)
  *	on what it does.
  *
  * Results:
- *	Returns TCL_OK or TCL_ERROR, and sets interp->result.
+ *	Returns TCL_OK or TCL_ERROR, and sets the interp's result.
  *
  * Side effects:
  *	The coordinates for the given item may be changed.
@@ -319,9 +301,10 @@ ArcCoords(interp, canvas, itemPtr, argc, argv)
 	}
 	ComputeArcBbox(canvas, arcPtr);
     } else {
-	sprintf(interp->result,
-		"wrong # coordinates: expected 0 or 4, got %d",
-		argc);
+	char buf[64 + TCL_INTEGER_SPACE];
+	
+	sprintf(buf, "wrong # coordinates: expected 0 or 4, got %d", argc);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -337,7 +320,7 @@ ArcCoords(interp, canvas, itemPtr, argc, argv)
  *
  * Results:
  *	A standard Tcl result code.  If an error occurs, then
- *	an error message is left in interp->result.
+ *	an error message is left in the interp's result.
  *
  * Side effects:
  *	Configuration information, such as colors and stipple
@@ -381,12 +364,13 @@ ConfigureArc(interp, canvas, itemPtr, argc, argv, flags)
     i = (int) (arcPtr->extent/360.0);
     arcPtr->extent -= i*360.0;
 
-    if ((arcPtr->style != arcUid) && (arcPtr->style != chordUid)
-	    && (arcPtr->style != pieSliceUid)) {
+    if ((arcPtr->style != Tk_GetUid("arc")) 
+            && (arcPtr->style != Tk_GetUid("chord"))
+	    && (arcPtr->style != Tk_GetUid("pieslice"))) {
 	Tcl_AppendResult(interp, "bad -style option \"",
 		arcPtr->style, "\": must be arc, chord, or pieslice",
 		(char *) NULL);
-	arcPtr->style = pieSliceUid;
+	arcPtr->style = Tk_GetUid("pieslice");
 	return TCL_ERROR;
     }
 
@@ -412,11 +396,11 @@ ConfigureArc(interp, canvas, itemPtr, argc, argv, flags)
     }
     arcPtr->outlineGC = newGC;
 
-    if ((arcPtr->fillColor == NULL) || (arcPtr->style == arcUid)) {
+    if ((arcPtr->fillColor == NULL) || (arcPtr->style == Tk_GetUid("arc"))) {
 	newGC = None;
     } else {
 	gcValues.foreground = arcPtr->fillColor->pixel;
-	if (arcPtr->style == chordUid) {
+	if (arcPtr->style == Tk_GetUid("chord")) {
 	    gcValues.arc_mode = ArcChord;
 	} else {
 	    gcValues.arc_mode = ArcPieSlice;
@@ -545,7 +529,7 @@ ComputeArcBbox(canvas, arcPtr)
     TkIncludePoint((Tk_Item *) arcPtr, arcPtr->center2);
     center[0] = (arcPtr->bbox[0] + arcPtr->bbox[2])/2;
     center[1] = (arcPtr->bbox[1] + arcPtr->bbox[3])/2;
-    if (arcPtr->style != arcUid) {
+    if (arcPtr->style == Tk_GetUid("pieslice")) {
 	TkIncludePoint((Tk_Item *) arcPtr, center);
     }
 
@@ -689,10 +673,10 @@ DisplayArc(canvas, itemPtr, display, drawable, x, y, width, height)
 	    Tk_CanvasDrawableCoords(canvas, arcPtr->center2[0],
 		    arcPtr->center2[1], &x2, &y2);
 
-	    if (arcPtr->style == chordUid) {
+	    if (arcPtr->style == Tk_GetUid("chord")) {
 		XDrawLine(display, drawable, arcPtr->outlineGC,
 			x1, y1, x2, y2);
-	    } else if (arcPtr->style == pieSliceUid) {
+	    } else if (arcPtr->style == Tk_GetUid("pieslice")) {
 		short cx, cy;
 
 		Tk_CanvasDrawableCoords(canvas,
@@ -704,10 +688,10 @@ DisplayArc(canvas, itemPtr, display, drawable, x, y, width, height)
 			cx, cy, x2, y2);
 	    }
 	} else {
-	    if (arcPtr->style == chordUid) {
+	    if (arcPtr->style == Tk_GetUid("chord")) {
 		TkFillPolygon(canvas, arcPtr->outlinePtr, CHORD_OUTLINE_PTS,
 			display, drawable, arcPtr->outlineGC, None);
-	    } else if (arcPtr->style == pieSliceUid) {
+	    } else if (arcPtr->style == Tk_GetUid("pieslice")) {
 		TkFillPolygon(canvas, arcPtr->outlinePtr, PIE_OUTLINE1_PTS,
 			display, drawable, arcPtr->outlineGC, None);
 		TkFillPolygon(canvas, arcPtr->outlinePtr + 2*PIE_OUTLINE1_PTS,
@@ -765,8 +749,14 @@ ArcToPoint(canvas, itemPtr, pointPtr)
 
     vertex[0] = (arcPtr->bbox[0] + arcPtr->bbox[2])/2.0;
     vertex[1] = (arcPtr->bbox[1] + arcPtr->bbox[3])/2.0;
-    t1 = (pointPtr[1] - vertex[1])/(arcPtr->bbox[3] - arcPtr->bbox[1]);
-    t2 = (pointPtr[0] - vertex[0])/(arcPtr->bbox[2] - arcPtr->bbox[0]);
+    t1 = arcPtr->bbox[3] - arcPtr->bbox[1];
+    if (t1 != 0.0) {
+	t1 = (pointPtr[1] - vertex[1]) / t1;
+    }
+    t2 = arcPtr->bbox[2] - arcPtr->bbox[0];
+    if (t2 != 0.0) {
+	t2 = (pointPtr[0] - vertex[0]) / t2;
+    }
     if ((t1 == 0.0) && (t2 == 0.0)) {
 	pointAngle = 0;
     } else {
@@ -785,7 +775,7 @@ ArcToPoint(canvas, itemPtr, pointPtr)
      * we're dealing with.
      */
 
-    if (arcPtr->style == arcUid) {
+    if (arcPtr->style == Tk_GetUid("arc")) {
 	if (angleInRange) {
 	    return TkOvalToPoint(arcPtr->bbox, (double) arcPtr->width,
 		    0, pointPtr);
@@ -811,7 +801,7 @@ ArcToPoint(canvas, itemPtr, pointPtr)
 	width = arcPtr->width;
     }
 
-    if (arcPtr->style == pieSliceUid) {
+    if (arcPtr->style == Tk_GetUid("pieslice")) {
 	if (width > 1.0) {
 	    dist = TkPolygonToPoint(arcPtr->outlinePtr, PIE_OUTLINE1_PTS,
 		    pointPtr);
@@ -966,7 +956,7 @@ ArcToArea(canvas, itemPtr, rectPtr)
     numPoints = 2;
     pointPtr += 4;
 
-    if ((arcPtr->style == pieSliceUid) && (arcPtr->extent < 180.0)) {
+    if ((arcPtr->style == Tk_GetUid("pieslice")) && (arcPtr->extent < 180.0)) {
 	pointPtr[0] = 0.0;
 	pointPtr[1] = 0.0;
 	numPoints++;
@@ -1040,7 +1030,7 @@ ArcToArea(canvas, itemPtr, rectPtr)
      * polygon(s) forming the sides of a chord or pie-slice.
      */
 
-    if (arcPtr->style == pieSliceUid) {
+    if (arcPtr->style == Tk_GetUid("pieslice")) {
 	if (width >= 1.0) {
 	    if (TkPolygonToArea(arcPtr->outlinePtr, PIE_OUTLINE1_PTS,
 		    rectPtr) != -1)  {
@@ -1056,7 +1046,7 @@ ArcToArea(canvas, itemPtr, rectPtr)
 		return 0;
 	    }
 	}
-    } else if (arcPtr->style == chordUid) {
+    } else if (arcPtr->style == Tk_GetUid("chord")) {
 	if (width >= 1.0) {
 	    if (TkPolygonToArea(arcPtr->outlinePtr, CHORD_OUTLINE_PTS,
 		    rectPtr) != -1) {
@@ -1307,7 +1297,7 @@ ComputeArcOutline(arcPtr)
      * center point.  The second point is the corner point.
      */
 
-    if (arcPtr->style == chordUid) {
+    if (arcPtr->style == Tk_GetUid("chord")) {
 	outlinePtr[0] = outlinePtr[12] = corner1[0];
 	outlinePtr[1] = outlinePtr[13] = corner1[1];
 	TkGetButtPoints(arcPtr->center2, arcPtr->center1,
@@ -1322,7 +1312,7 @@ ComputeArcOutline(arcPtr)
 		- arcPtr->center1[0];
 	outlinePtr[9] = arcPtr->center2[1] + outlinePtr[11]
 		- arcPtr->center1[1];
-    } else if (arcPtr->style == pieSliceUid) {
+    } else if (arcPtr->style == Tk_GetUid("pieslice")) {
 	/*
 	 * For pie slices, generate two polygons, one for each side
 	 * of the pie slice.  The first arm has a shape like this,
@@ -1574,7 +1564,7 @@ AngleInRange(x, y, start, extent)
  * Results:
  *	The return value is a standard Tcl result.  If an error
  *	occurs in generating Postscript then an error message is
- *	left in interp->result, replacing whatever used
+ *	left in the interp's result, replacing whatever used
  *	to be there.  If no error occurs, then Postscript for the
  *	item is appended to the result.
  *
@@ -1618,7 +1608,7 @@ ArcToPostscript(interp, canvas, itemPtr, prepass)
 		(arcPtr->bbox[0] + arcPtr->bbox[2])/2, (y1 + y2)/2,
 		(arcPtr->bbox[2] - arcPtr->bbox[0])/2, (y1 - y2)/2);
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
-	if (arcPtr->style == chordUid) {
+	if (arcPtr->style == Tk_GetUid("chord")) {
 	    sprintf(buffer, "0 0 1 %.15g %.15g arc closepath\nsetmatrix\n",
 		    ang1, ang2);
 	} else {
@@ -1670,9 +1660,9 @@ ArcToPostscript(interp, canvas, itemPtr, prepass)
 	} else {
 	    Tcl_AppendResult(interp, "stroke\n", (char *) NULL);
 	}
-	if (arcPtr->style != arcUid) {
+	if (arcPtr->style != Tk_GetUid("arc")) {
 	    Tcl_AppendResult(interp, "grestore gsave\n", (char *) NULL);
-	    if (arcPtr->style == chordUid) {
+	    if (arcPtr->style == Tk_GetUid("chord")) {
 		Tk_CanvasPsPath(interp, canvas, arcPtr->outlinePtr,
 			CHORD_OUTLINE_PTS);
 	    } else {

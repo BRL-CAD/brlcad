@@ -9,7 +9,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacCursors.r 1.3 96/01/25 10:24:15
+ * RCS: @(#) $Id$
  */
 
 /*

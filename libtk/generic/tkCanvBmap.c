@@ -4,12 +4,12 @@
  *	This file implements bitmap items for canvas widgets.
  *
  * Copyright (c) 1992-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvBmap.c 1.30 96/05/03 10:49:00
+ * RCS: @(#) $Id$
  */
 
 #include <stdio.h>
@@ -129,7 +129,7 @@ Tk_ItemType tkBitmapType = {
  * Results:
  *	A standard Tcl return value.  If an error occurred in
  *	creating the item, then an error message is left in
- *	interp->result;  in this case itemPtr is left uninitialized,
+ *	the interp's result;  in this case itemPtr is left uninitialized,
  *	so it can be safely freed by the caller.
  *
  * Side effects:
@@ -194,7 +194,7 @@ CreateBitmap(interp, canvas, itemPtr, argc, argv)
  *	details on what it does.
  *
  * Results:
- *	Returns TCL_OK or TCL_ERROR, and sets interp->result.
+ *	Returns TCL_OK or TCL_ERROR, and sets the interp's result.
  *
  * Side effects:
  *	The coordinates for the given item may be changed.
@@ -228,8 +228,10 @@ BitmapCoords(interp, canvas, itemPtr, argc, argv)
 	}
 	ComputeBitmapBbox(canvas, bmapPtr);
     } else {
-	sprintf(interp->result,
-		"wrong # coordinates: expected 0 or 2, got %d", argc);
+	char buf[64 + TCL_INTEGER_SPACE];
+
+	sprintf(buf, "wrong # coordinates: expected 0 or 2, got %d", argc);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -245,7 +247,7 @@ BitmapCoords(interp, canvas, itemPtr, argc, argv)
  *
  * Results:
  *	A standard Tcl result code.  If an error occurs, then
- *	an error message is left in interp->result.
+ *	an error message is left in the interp's result.
  *
  * Side effects:
  *	Configuration information may be set for itemPtr.
@@ -690,7 +692,7 @@ TranslateBitmap(canvas, itemPtr, deltaX, deltaY)
  * Results:
  *	The return value is a standard Tcl result.  If an error
  *	occurs in generating Postscript then an error message is
- *	left in interp->result, replacing whatever used to be there.
+ *	left in the interp's result, replacing whatever used to be there.
  *	If no error occurs, then Postscript for the item is appended
  *	to the result.
  *
@@ -715,7 +717,7 @@ BitmapToPostscript(interp, canvas, itemPtr, prepass)
     double x, y;
     int width, height, rowsAtOnce, rowsThisTime;
     int curRow;
-    char buffer[200];
+    char buffer[100 + TCL_DOUBLE_SPACE * 2 + TCL_INTEGER_SPACE * 4];
 
     if (bmapPtr->bitmap == None) {
 	return TCL_OK;
@@ -749,7 +751,7 @@ BitmapToPostscript(interp, canvas, itemPtr, prepass)
     if (bmapPtr->bgColor != NULL) {
 	sprintf(buffer,
 		"%.15g %.15g moveto %d 0 rlineto 0 %d rlineto %d %s\n",
-		x, y, width, height, -width,"0 rlineto closepath");
+		x, y, width, height, -width, "0 rlineto closepath");
 	Tcl_AppendResult(interp, buffer, (char *) NULL);
 	if (Tk_CanvasPsColor(interp, canvas, bmapPtr->bgColor) != TCL_OK) {
 	    return TCL_ERROR;

@@ -5,14 +5,14 @@
 #
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) textBTree.test 1.8 96/03/21 15:51:12
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then \
-  {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 catch {destroy .t}
 text .t
@@ -893,5 +893,21 @@ test btree-18.9 {tag search back, large complex btree spans} {
     list [.t tag prev x end] [.t tag prev x 433.0]
 } {{500.0 520.0} {200.0 220.0}}
 
-
 destroy .t
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

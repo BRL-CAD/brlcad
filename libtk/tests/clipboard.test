@@ -3,19 +3,18 @@
 # fashion for Tcl tests.
 #
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) clipboard.test 1.15 96/12/09 17:26:02
+# RCS: @(#) $Id$
 
 #
 # Note: Multiple display clipboard handling will only be tested if the
 # environment variable TK_ALT_DISPLAY is set to an alternate display.
 #
 
-if {[string compare test [info procs test]] == 1} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 eval destroy [winfo child .]
@@ -232,3 +231,20 @@ test clipboard-7.13 {Tk_ClipboardCmd procedure} {
 test clipboard-7.14 {Tk_ClipboardCmd procedure} {
     list [catch {clipboard error} msg] $msg
 } {1 {bad option "error": must be clear or append}}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -14,6 +14,7 @@
 #endif
 
 #if !defined(BUILD_LIBRARY)
+#define BUILD_LIBRARY	ar r
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
@@ -38,7 +39,8 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\A\F\T\E\R\_\M\A\K\E=\"AFTER_MAKE\"; \
 		\R\A\N\L\I\B=\"RANLIB\";\
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
-		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \A\F\T\E\R\_\M\A\K\E; \
+		\B\U\I\L\D\_\L\I\B\R\A\R\Y=\"BUILD_LIBRARY\"; \
+		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \B\U\I\L\D\_\L\I\B\R\A\R\Y \A\F\T\E\R\_\M\A\K\E; \
 		 ../SRCDIR/"unix"/configure TK_OPTS; \
 		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
@@ -49,7 +51,7 @@ noprod&:
 	rm -rf *.so *.a wish
 
 clobber&: 
-	rm -f *.o libtk.* wish *.MTYPE tkConfig.sh config.log config.status Makefile 
+	rm -f *.o libtk* wish *.MTYPE tkConfig.sh config.log config.status Makefile 
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install

@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkListbox.c 1.120 97/10/29 13:06:59
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -24,7 +24,7 @@
  */
 
 typedef struct Element {
-    int textLength;		/* # non-NULL characters in text. */
+    int textLength;		/* # non-NULL bytes in text string. */
     int lBearing;		/* Distance from first character's
 				 * origin to left edge of character. */
     int pixelWidth;		/* Total width of element in pixels (including
@@ -428,7 +428,7 @@ Tk_ListboxCmd(clientData, interp, argc, argv)
 	goto error;
     }
 
-    interp->result = Tk_PathName(listPtr->tkwin);
+    Tcl_SetResult(interp, Tk_PathName(listPtr->tkwin), TCL_STATIC);
     return TCL_OK;
 
     error:
@@ -518,12 +518,14 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	if ((index >= listPtr->topIndex) && (index < listPtr->numElements)
 		    && (index < (listPtr->topIndex + listPtr->fullLines
 		    + listPtr->partialLine))) {
+	    char buf[TCL_INTEGER_SPACE * 4];
+
 	    x = listPtr->inset + listPtr->selBorderWidth - listPtr->xOffset;
 	    y = ((index - listPtr->topIndex)*listPtr->lineHeight)
 		    + listPtr->inset + listPtr->selBorderWidth;
 	    Tk_GetFontMetrics(listPtr->tkfont, &fm);
-	    sprintf(interp->result, "%d %d %d %d", x, y, elPtr->pixelWidth,
-		    fm.linespace);
+	    sprintf(buf, "%d %d %d %d", x, y, elPtr->pixelWidth, fm.linespace);
+	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	}
     } else if ((c == 'c') && (strncmp(argv[1], "cget", length) == 0)
 	    && (length >= 2)) {
@@ -550,7 +552,6 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
     } else if ((c == 'c') && (strncmp(argv[1], "curselection", length) == 0)
 	    && (length >= 2)) {
 	int i, count;
-	char index[20];
 	Element *elPtr;
 
 	if (argc != 2) {
@@ -563,6 +564,8 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	for (i = 0, elPtr = listPtr->firstPtr; elPtr != NULL;
 		i++, elPtr = elPtr->nextPtr) {
 	    if (elPtr->selected) {
+		char index[TCL_INTEGER_SPACE];
+
 		sprintf(index, "%d", i);
 		Tcl_AppendElement(interp, index);
 		count++;
@@ -609,8 +612,10 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	if (GetListboxIndex(interp, listPtr, argv[2], 0, &first) != TCL_OK) {
 	    goto error;
 	}
-	if ((argc == 4) && (GetListboxIndex(interp, listPtr, argv[3],
-		0, &last) != TCL_OK)) {
+	last = first;
+	if ((argc == 4)
+		&& (GetListboxIndex(interp, listPtr, argv[3], 0,
+			&last) != TCL_OK)) {
 	    goto error;
 	}
 	if (first >= listPtr->numElements) {
@@ -627,7 +632,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	if (elPtr != NULL) {
 	    if (argc == 3) {
 		if (first >= 0) {
-		    interp->result = elPtr->text;
+		    Tcl_SetResult(interp, elPtr->text, TCL_STATIC);
 		}
 	    } else {
 		for (  ; i <= last; i++, elPtr = elPtr->nextPtr) {
@@ -638,6 +643,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
     } else if ((c == 'i') && (strncmp(argv[1], "index", length) == 0)
 	    && (length >= 3)) {
 	int index;
+	char buf[TCL_INTEGER_SPACE];
 
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -649,7 +655,8 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 		!= TCL_OK) {
 	    goto error;
 	}
-	sprintf(interp->result, "%d", index);
+	sprintf(buf, "%d", index);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'i') && (strncmp(argv[1], "insert", length) == 0)
 	    && (length >= 3)) {
 	int index;
@@ -667,6 +674,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	InsertEls(listPtr, index, argc-3, argv+3);
     } else if ((c == 'n') && (strncmp(argv[1], "nearest", length) == 0)) {
 	int index, y;
+	char buf[TCL_INTEGER_SPACE];
 
 	if (argc != 3) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -677,7 +685,8 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	    goto error;
 	}
 	index = NearestListboxElement(listPtr, y);
-	sprintf(interp->result, "%d", index);
+	sprintf(buf, "%d", index);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 's') && (length >= 2)
 	    && (strncmp(argv[1], "scan", length) == 0)) {
 	int x, y;
@@ -788,7 +797,7 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 		goto error;
 	    }
 	    if ((first < 0) || (first >= listPtr->numElements)) {
-		interp->result = "0";
+		Tcl_SetResult(interp, "0", TCL_STATIC);
 		goto done;
 	    }
 	    for (elPtr = listPtr->firstPtr, i = 0; i < first;
@@ -796,9 +805,9 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 		/* Empty loop body. */
 	    }
 	    if (elPtr->selected) {
-		interp->result = "1";
+		Tcl_SetResult(interp, "1", TCL_STATIC);
 	    } else {
-		interp->result = "0";
+		Tcl_SetResult(interp, "0", TCL_STATIC);
 	    }
 	} else if ((c == 's') && (strncmp(argv[2], "set", length) == 0)) {
 	    ListboxSelect(listPtr, first, last, 1);
@@ -810,12 +819,15 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	}
     } else if ((c == 's') && (length >= 2)
 	    && (strncmp(argv[1], "size", length) == 0)) {
+	char buf[TCL_INTEGER_SPACE];
+
 	if (argc != 2) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"",
 		    argv[0], " size\"", (char *) NULL);
 	    goto error;
 	}
-	sprintf(interp->result, "%d", listPtr->numElements);
+	sprintf(buf, "%d", listPtr->numElements);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
     } else if ((c == 'x') && (strncmp(argv[1], "xview", length) == 0)) {
 	int index, count, type, windowWidth, windowUnits;
 	int offset = 0;		/* Initialized to stop gcc warnings. */
@@ -825,15 +837,18 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 	    - 2*(listPtr->inset + listPtr->selBorderWidth);
 	if (argc == 2) {
 	    if (listPtr->maxWidth == 0) {
-		interp->result = "0 1";
+		Tcl_SetResult(interp, "0 1", TCL_STATIC);
 	    } else {
+		char buf[TCL_DOUBLE_SPACE * 2];
+		
 		fraction = listPtr->xOffset/((double) listPtr->maxWidth);
 		fraction2 = (listPtr->xOffset + windowWidth)
 			/((double) listPtr->maxWidth);
 		if (fraction2 > 1.0) {
 		    fraction2 = 1.0;
 		}
-		sprintf(interp->result, "%g %g", fraction, fraction2);
+		sprintf(buf, "%g %g", fraction, fraction2);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	    }
 	} else if (argc == 3) {
 	    if (Tcl_GetInt(interp, argv[2], &index) != TCL_OK) {
@@ -869,15 +884,18 @@ ListboxWidgetCmd(clientData, interp, argc, argv)
 
 	if (argc == 2) {
 	    if (listPtr->numElements == 0) {
-		interp->result = "0 1";
+		Tcl_SetResult(interp, "0 1", TCL_STATIC);
 	    } else {
+		char buf[TCL_DOUBLE_SPACE * 2];
+
 		fraction = listPtr->topIndex/((double) listPtr->numElements);
 		fraction2 = (listPtr->topIndex+listPtr->fullLines)
 			/((double) listPtr->numElements);
 		if (fraction2 > 1.0) {
 		    fraction2 = 1.0;
 		}
-		sprintf(interp->result, "%g %g", fraction, fraction2);
+		sprintf(buf, "%g %g", fraction, fraction2);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	    }
 	} else if (argc == 3) {
 	    if (GetListboxIndex(interp, listPtr, argv[2], 0, &index)
@@ -986,7 +1004,7 @@ DestroyListbox(memPtr)
  *
  * Results:
  *	The return value is a standard Tcl result.  If TCL_ERROR is
- *	returned, then interp->result contains an error message.
+ *	returned, then the interp's result contains an error message.
  *
  * Side effects:
  *	Configuration information, such as colors, border width,
@@ -1254,14 +1272,17 @@ DisplayListbox(clientData)
 	    Tk_Height(tkwin) - 2*listPtr->highlightWidth,
 	    listPtr->borderWidth, listPtr->relief);
     if (listPtr->highlightWidth > 0) {
-	GC gc;
+	GC fgGC, bgGC;
 
+	bgGC = Tk_GCForColor(listPtr->highlightBgColorPtr, pixmap);
 	if (listPtr->flags & GOT_FOCUS) {
-	    gc = Tk_GCForColor(listPtr->highlightColorPtr, pixmap);
+	    fgGC = Tk_GCForColor(listPtr->highlightColorPtr, pixmap);
+	    TkpDrawHighlightBorder(tkwin, fgGC, bgGC, 
+	            listPtr->highlightWidth, pixmap);
 	} else {
-	    gc = Tk_GCForColor(listPtr->highlightBgColorPtr, pixmap);
+	    TkpDrawHighlightBorder(tkwin, bgGC, bgGC, 
+	            listPtr->highlightWidth, pixmap);
 	}
-	Tk_DrawFocusHighlight(tkwin, gc, listPtr->highlightWidth, pixmap);
     }
     XCopyArea(listPtr->display, pixmap, Tk_WindowId(tkwin),
 	    listPtr->textGC, 0, 0, (unsigned) Tk_Width(tkwin),
@@ -1718,7 +1739,7 @@ ListboxCmdDeletedProc(clientData)
  * Results:
  *	A standard Tcl result.  If all went well, then *indexPtr is
  *	filled in with the index (into listPtr) corresponding to
- *	string.  Otherwise an error message is left in interp->result.
+ *	string.  Otherwise an error message is left in the interp's result.
  *
  * Side effects:
  *	None.

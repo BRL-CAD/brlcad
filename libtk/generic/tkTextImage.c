@@ -5,12 +5,12 @@
  *	nested inside text widgets.  It also implements the "image"
  *	widget command for texts.
  *
- * Copyright (c) 1996 Sun Microsystems, Inc.
+ * Copyright (c) 1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkTextImage.c 1.7 97/08/25 15:47:27
+ * RCS: @(#) $Id$
  */
 
 #include "tk.h"
@@ -221,7 +221,7 @@ TkTextImageCmd(textPtr, interp, argc, argv)
 	lineIndex = TkBTreeLineIndex(index.linePtr);
 	if (lineIndex == TkBTreeNumLines(textPtr->tree)) {
 	    lineIndex--;
-	    TkTextMakeIndex(textPtr->tree, lineIndex, 1000000, &index);
+	    TkTextMakeByteIndex(textPtr->tree, lineIndex, 1000000, &index);
 	}
 
 	/*
@@ -288,7 +288,7 @@ TkTextImageCmd(textPtr, interp, argc, argv)
  *
  * Results:
  *	The return value is a standard Tcl result.  If TCL_ERROR is
- *	returned, then interp->result contains an error message..
+ *	returned, then the interp's result contains an error message..
  *
  * Side effects:
  *	Configuration information for the embedded image changes,
@@ -384,7 +384,7 @@ EmbImageConfigure(textPtr, eiPtr, argc, argv)
     Tcl_DStringAppend(&newName,name, -1);
 
     if (conflict) {
-    	char buf[10];
+    	char buf[4 + TCL_INTEGER_SPACE];
 	sprintf(buf, "#%d",count+1);
 	Tcl_DStringAppend(&newName,buf, -1);
     }
@@ -604,8 +604,8 @@ EmbImageLayoutProc(textPtr, indexPtr, eiPtr, offset, maxX, maxChars,
 				 * many characters. */
     int noCharsYet;		/* Non-zero means no characters have been
 				 * assigned to this line yet. */
-    Tk_Uid wrapMode;		/* Wrap mode to use for line: tkTextCharUid,
-				 * tkTextNoneUid, or tkTextWordUid. */
+    Tk_Uid wrapMode;		/* Wrap mode to use for line: char, 
+				 * text, or word. */
     register TkTextDispChunk *chunkPtr;
 				/* Structure to fill in with information
 				 * about this chunk.  The x field has already
@@ -630,7 +630,7 @@ EmbImageLayoutProc(textPtr, indexPtr, eiPtr, offset, maxX, maxChars,
 	height += 2*eiPtr->body.ei.padY;
     }
     if ((width > (maxX - chunkPtr->x))
-	    && !noCharsYet && (textPtr->wrapMode != tkTextNoneUid)) {
+	    && !noCharsYet && (textPtr->wrapMode != Tk_GetUid("none"))) {
 	return 0;
     }
 
@@ -642,7 +642,7 @@ EmbImageLayoutProc(textPtr, indexPtr, eiPtr, offset, maxX, maxChars,
     chunkPtr->undisplayProc = (Tk_ChunkUndisplayProc *) NULL;
     chunkPtr->measureProc = (Tk_ChunkMeasureProc *) NULL;
     chunkPtr->bboxProc = EmbImageBboxProc;
-    chunkPtr->numChars = 1;
+    chunkPtr->numBytes = 1;
     if (eiPtr->body.ei.align == ALIGN_BASELINE) {
 	chunkPtr->minAscent = height - eiPtr->body.ei.padY;
 	chunkPtr->minDescent = eiPtr->body.ei.padY;
@@ -857,7 +857,7 @@ TkTextImageIndex(textPtr, name, indexPtr)
     eiPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
     indexPtr->tree = textPtr->tree;
     indexPtr->linePtr = eiPtr->body.ei.linePtr;
-    indexPtr->charIndex = TkTextSegToOffset(eiPtr, indexPtr->linePtr);
+    indexPtr->byteIndex = TkTextSegToOffset(eiPtr, indexPtr->linePtr);
     return 1;
 }
 
@@ -893,6 +893,6 @@ EmbImageProc(clientData, x, y, width, height, imgWidth, imgHeight)
 
     index.tree = eiPtr->body.ei.textPtr->tree;
     index.linePtr = eiPtr->body.ei.linePtr;
-    index.charIndex = TkTextSegToOffset(eiPtr, eiPtr->body.ei.linePtr);
+    index.byteIndex = TkTextSegToOffset(eiPtr, eiPtr->body.ei.linePtr);
     TkTextChanged(eiPtr->body.ei.textPtr, &index, &index);
 }

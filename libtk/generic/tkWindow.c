@@ -12,44 +12,36 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWindow.c 1.233 97/10/31 09:55:23
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
 #include "tkInt.h"
 
-/*
- * Count of number of main windows currently open in this process.
+#if !defined(__WIN32__) && !defined(MAC_TCL)
+#include "tkUnixInt.h"
+#endif
+
+
+typedef struct ThreadSpecificData {
+    int numMainWindows;    /* Count of numver of main windows currently
+			    * open in this thread. */
+    TkMainInfo *mainWindowList;
+                           /* First in list of all main windows managed
+			    * by this thread. */
+    TkDisplay *displayList;
+                           /* List of all displays currently in use by 
+			    * the current thread. */
+    int initialized;       /* 0 means the structures above need 
+			    * initializing. */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
+
+/* 
+ * The Mutex below is used to lock access to the Tk_Uid structs above. 
  */
 
-static int numMainWindows;
-
-/*
- * First in list of all main windows managed by this process.
- */
-
-TkMainInfo *tkMainWindowList = NULL;
-
-/*
- * List of all displays currently in use.
- */
-
-TkDisplay *tkDisplayList = NULL;
-
-/*
- * Have statics in this module been initialized?
- */
-
-static int initialized = 0;
-
-/*
- * The variables below hold several uid's that are used in many places
- * in the toolkit.
- */
-
-Tk_Uid tkDisabledUid = NULL;
-Tk_Uid tkActiveUid = NULL;
-Tk_Uid tkNormalUid = NULL;
+TCL_DECLARE_MUTEX(windowMutex)
 
 /*
  * Default values for "changes" and "atts" fields of TkWindows.  Note
@@ -94,6 +86,10 @@ typedef struct {
     int isSafe;			/* If !0, this command will be exposed in
                                  * a safe interpreter. Otherwise it will be
                                  * hidden in a safe interpreter. */
+    int passMainWindow;		/* 0 means provide NULL clientData to
+				 * command procedure; 1 means pass main
+				 * window as clientData to command
+				 * procedure. */
 } TkCmd;
 
 static TkCmd commands[] = {
@@ -101,62 +97,67 @@ static TkCmd commands[] = {
      * Commands that are part of the intrinsics:
      */
 
-    {"bell",		Tk_BellCmd,		NULL,			0},
-    {"bind",		Tk_BindCmd,		NULL,			1},
-    {"bindtags",	Tk_BindtagsCmd,		NULL,			1},
-    {"clipboard",	Tk_ClipboardCmd,	NULL,			0},
-    {"destroy",		Tk_DestroyCmd,		NULL,			1},
-    {"event",		Tk_EventCmd,		NULL,			1},
-    {"focus",		Tk_FocusCmd,		NULL,			1},
-    {"font",		NULL,			Tk_FontObjCmd,		1},
-    {"grab",		Tk_GrabCmd,		NULL,			0},
-    {"grid",		Tk_GridCmd,		NULL,			1},
-    {"image",		Tk_ImageCmd,		NULL,			1},
-    {"lower",		Tk_LowerCmd,		NULL,			1},
-    {"option",		Tk_OptionCmd,		NULL,			1},
-    {"pack",		Tk_PackCmd,		NULL,			1},
-    {"place",		Tk_PlaceCmd,		NULL,			1},
-    {"raise",		Tk_RaiseCmd,		NULL,			1},
-    {"selection",	Tk_SelectionCmd,	NULL,			0},
-    {"tk",		NULL,			Tk_TkObjCmd,		0},
-    {"tkwait",		Tk_TkwaitCmd,		NULL,			1},
-    {"tk_chooseColor",  Tk_ChooseColorCmd,	NULL,			0},
-    {"tk_getOpenFile",  Tk_GetOpenFileCmd,	NULL,			0},
-    {"tk_getSaveFile",  Tk_GetSaveFileCmd,	NULL,			0},
-    {"tk_messageBox",   Tk_MessageBoxCmd,	NULL,			0},
-    {"update",		Tk_UpdateCmd,		NULL,			1},
-    {"winfo",		NULL,			Tk_WinfoObjCmd,		1},
-    {"wm",		Tk_WmCmd,		NULL,			0},
+    {"bell",		NULL,			Tk_BellObjCmd,		0, 1},
+    {"bind",		Tk_BindCmd,		NULL,			1, 1},
+    {"bindtags",	Tk_BindtagsCmd,		NULL,			1, 1},
+    {"clipboard",	Tk_ClipboardCmd,	NULL,			0, 1},
+    {"destroy",		Tk_DestroyCmd,		NULL,			1, 1},
+    {"event",		NULL,			Tk_EventObjCmd,		1, 1},
+    {"focus",		NULL,			Tk_FocusObjCmd,		1, 1},
+    {"font",		NULL,			Tk_FontObjCmd,		1, 1},
+    {"grab",		Tk_GrabCmd,		NULL,			0, 1},
+    {"grid",		Tk_GridCmd,		NULL,			1, 1},
+    {"image",		Tk_ImageCmd,		NULL,			1, 1},
+    {"lower",		Tk_LowerCmd,		NULL,			1, 1},
+    {"option",		Tk_OptionCmd,		NULL,			1, 1},
+    {"pack",		Tk_PackCmd,		NULL,			1, 1},
+    {"place",		Tk_PlaceCmd,		NULL,			1, 1},
+    {"raise",		Tk_RaiseCmd,		NULL,			1, 1},
+    {"selection",	Tk_SelectionCmd,	NULL,			0, 1},
+    {"tk",		NULL,			Tk_TkObjCmd,		0, 1},
+    {"tkwait",		Tk_TkwaitCmd,		NULL,			1, 1},
+#if defined(__WIN32__) || defined(MAC_TCL)
+    {"tk_chooseColor",  NULL,			Tk_ChooseColorObjCmd,	0, 1},
+    {"tk_chooseDirectory", NULL,		Tk_ChooseDirectoryObjCmd, 0, 1},
+    {"tk_getOpenFile",  NULL,			Tk_GetOpenFileObjCmd,	0, 1},
+    {"tk_getSaveFile",  NULL,			Tk_GetSaveFileObjCmd,	0, 1},
+#endif
+#ifdef __WIN32__
+    {"tk_messageBox",   NULL,			Tk_MessageBoxObjCmd,	0, 1},
+#endif
+    {"update",		NULL,			Tk_UpdateObjCmd,	1, 1},
+    {"winfo",		NULL,			Tk_WinfoObjCmd,		1, 1},
+    {"wm",		Tk_WmCmd,		NULL,			0, 1},
 
     /*
      * Widget class commands.
      */
-    {"button",		Tk_ButtonCmd,		NULL,			1},
-    {"canvas",		Tk_CanvasCmd,		NULL,			1},
-    {"checkbutton",	Tk_CheckbuttonCmd,	NULL,			1},
-    {"entry",		Tk_EntryCmd,		NULL,			1},
-    {"frame",		Tk_FrameCmd,		NULL,			1},
-    {"label",		Tk_LabelCmd,		NULL,			1},
-    {"listbox",		Tk_ListboxCmd,		NULL,			1},
-    {"menu",		Tk_MenuCmd,		NULL,			0},
-    {"menubutton",	Tk_MenubuttonCmd,	NULL,			1},
-    {"message",		Tk_MessageCmd,		NULL,			1},
-    {"radiobutton",	Tk_RadiobuttonCmd,	NULL,			1},
-    {"scale",		Tk_ScaleCmd,		NULL,			1},
-    {"scrollbar",	Tk_ScrollbarCmd,	NULL,			1},
-    {"text",		Tk_TextCmd,		NULL,			1},
-    {"toplevel",	Tk_ToplevelCmd,		NULL,			0},
+
+    {"button",		NULL,			Tk_ButtonObjCmd,	1, 0},
+    {"canvas",		Tk_CanvasCmd,		NULL,			1, 1},
+    {"checkbutton",	NULL,			Tk_CheckbuttonObjCmd,	1, 0},
+    {"entry",		NULL,                   Tk_EntryObjCmd,		1, 0},
+    {"frame",		Tk_FrameCmd,		NULL,			1, 1},
+    {"label",		NULL,			Tk_LabelObjCmd,		1, 0},
+    {"listbox",		Tk_ListboxCmd,		NULL,			1, 1},
+    {"menubutton",	NULL,                   Tk_MenubuttonObjCmd,	1, 0},
+    {"message",		Tk_MessageCmd,		NULL,			1, 1},
+    {"radiobutton",	NULL,			Tk_RadiobuttonObjCmd,	1, 0},
+    {"scale",		NULL,	                Tk_ScaleObjCmd,		1, 0},
+    {"scrollbar",	Tk_ScrollbarCmd,	NULL,			1, 1},
+    {"text",		Tk_TextCmd,		NULL,			1, 1},
+    {"toplevel",	Tk_ToplevelCmd,		NULL,			0, 1},
 
     /*
      * Misc.
      */
 
 #ifdef MAC_TCL
-    {"unsupported1",	TkUnsupported1Cmd,	NULL,			1},
+    {"unsupported1",	TkUnsupported1Cmd,	NULL,			1, 1},
 #endif
     {(char *) NULL,	(int (*) _ANSI_ARGS_((ClientData, Tcl_Interp *, int, char **))) NULL, NULL, 0}
 };
-    
+
 /*
  * The variables and table below are used to parse arguments from
  * the "argv" variable in Tk_Init.
@@ -221,7 +222,7 @@ static void		UnlinkWindow _ANSI_ARGS_((TkWindow *winPtr));
  *	The return value is a token for the new window, or NULL if
  *	an error prevented the new window from being created.  If
  *	NULL is returned, an error message will be left in
- *	interp->result.
+ *	the interp's result.
  *
  * Side effects:
  *	A new window structure is allocated locally.  An X
@@ -249,12 +250,11 @@ CreateTopLevelWindow(interp, parent, name, screenName)
     register TkWindow *winPtr;
     register TkDisplay *dispPtr;
     int screenId;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (!initialized) {
-	initialized = 1;
-	tkActiveUid = Tk_GetUid("active");
-	tkDisabledUid = Tk_GetUid("disabled");
-	tkNormalUid = Tk_GetUid("normal");
+    if (!tsdPtr->initialized) {
+	tsdPtr->initialized = 1;
 
 	/*
 	 * Create built-in image types.
@@ -331,7 +331,7 @@ CreateTopLevelWindow(interp, parent, name, screenName)
  * Results:
  *	The return value is a pointer to information about the display,
  *	or NULL if the display couldn't be opened.  In this case, an
- *	error message is left in interp->result.  The location at
+ *	error message is left in the interp's result.  The location at
  *	*screenPtr is overwritten with the screen number parsed from
  *	screenName.
  *
@@ -354,6 +354,8 @@ GetScreen(interp, screenName, screenPtr)
     char *p;
     int screenId;
     size_t length;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Separate the screen number from the rest of the display
@@ -364,8 +366,9 @@ GetScreen(interp, screenName, screenPtr)
 
     screenName = TkGetDefaultScreenName(interp, screenName);
     if (screenName == NULL) {
-	interp->result =
-	    "no display name and no $DISPLAY environment variable";
+	Tcl_SetResult(interp,
+		"no display name and no $DISPLAY environment variable",
+		TCL_STATIC);
 	return (TkDisplay *) NULL;
     }
     length = strlen(screenName);
@@ -384,7 +387,7 @@ GetScreen(interp, screenName, screenPtr)
      * then open a new connection.
      */
 
-    for (dispPtr = tkDisplayList; ; dispPtr = dispPtr->nextPtr) {
+    for (dispPtr = TkGetDisplayList(); ; dispPtr = dispPtr->nextPtr) {
 	if (dispPtr == NULL) {
 	    dispPtr = TkpOpenDisplay(screenName);
 	    if (dispPtr == NULL) {
@@ -392,29 +395,35 @@ GetScreen(interp, screenName, screenPtr)
 			screenName, "\"", (char *) NULL);
 		return (TkDisplay *) NULL;
 	    }
-	    dispPtr->nextPtr = tkDisplayList;
+	    dispPtr->nextPtr = TkGetDisplayList();
 	    dispPtr->name = (char *) ckalloc((unsigned) (length+1));
 	    dispPtr->lastEventTime = CurrentTime;
-	    strncpy(dispPtr->name, screenName, length);
-	    dispPtr->name[length] = '\0';
+	    dispPtr->borderInit = 0;
+	    dispPtr->atomInit = 0;
 	    dispPtr->bindInfoStale = 1;
 	    dispPtr->modeModMask = 0;
 	    dispPtr->metaModMask = 0;
 	    dispPtr->altModMask = 0;
 	    dispPtr->numModKeyCodes = 0;
 	    dispPtr->modKeyCodes = NULL;
-	    OpenIM(dispPtr);
+	    dispPtr->bitmapInit = 0;
+	    dispPtr->bitmapAutoNumber = 0;
+	    dispPtr->numIdSearches = 0;
+	    dispPtr->numSlowSearches = 0;
+	    dispPtr->colorInit = 0;
+	    dispPtr->stressPtr = NULL;
+	    dispPtr->cursorInit = 0;
+	    dispPtr->cursorString[0] = '\0';
+	    dispPtr->cursorFont = None;
 	    dispPtr->errorPtr = NULL;
 	    dispPtr->deleteCount = 0;
-	    dispPtr->commTkwin = NULL;
-	    dispPtr->selectionInfoPtr = NULL;
-	    dispPtr->multipleAtom = None;
-	    dispPtr->clipWindow = NULL;
-	    dispPtr->clipboardActive = 0;
-	    dispPtr->clipboardAppPtr = NULL;
-	    dispPtr->clipTargetPtr = NULL;
-	    dispPtr->atomInit = 0;
-	    dispPtr->cursorFont = None;
+	    dispPtr->delayedMotionPtr = NULL;
+	    dispPtr->focusDebug = 0;
+	    dispPtr->implicitWinPtr = NULL;
+	    dispPtr->focusPtr = NULL;
+	    dispPtr->gcInit = 0;
+	    dispPtr->geomInit = 0;
+	    dispPtr->uidInit = 0;
 	    dispPtr->grabWinPtr = NULL;
 	    dispPtr->eventualGrabWinPtr = NULL;
 	    dispPtr->buttonWinPtr = NULL;
@@ -422,18 +431,32 @@ GetScreen(interp, screenName, screenPtr)
 	    dispPtr->firstGrabEventPtr = NULL;
 	    dispPtr->lastGrabEventPtr = NULL;
 	    dispPtr->grabFlags = 0;
-	    TkInitXId(dispPtr);
+	    dispPtr->gridInit = 0;
+	    dispPtr->imageId = 0;
+	    dispPtr->packInit = 0;
+	    dispPtr->placeInit = 0;
+	    dispPtr->selectionInfoPtr = NULL;
+	    dispPtr->multipleAtom = None;
+	    dispPtr->clipWindow = NULL;
+	    dispPtr->clipboardActive = 0;
+	    dispPtr->clipboardAppPtr = NULL;
+	    dispPtr->clipTargetPtr = NULL;
+	    dispPtr->commTkwin = NULL;
+	    dispPtr->wmTracing = 0;
+	    dispPtr->firstWmPtr = NULL;
+	    dispPtr->foregroundWmPtr = NULL;
 	    dispPtr->destroyCount = 0;
 	    dispPtr->lastDestroyRequest = 0;
 	    dispPtr->cmapPtr = NULL;
-	    dispPtr->implicitWinPtr = NULL;
-	    dispPtr->focusPtr = NULL;
-	    dispPtr->stressPtr = NULL;
-	    dispPtr->delayedMotionPtr = NULL;
 	    Tcl_InitHashTable(&dispPtr->winTable, TCL_ONE_WORD_KEYS);
+
             dispPtr->refCount = 0;
-            
-	    tkDisplayList = dispPtr;
+	    strncpy(dispPtr->name, screenName, length);
+	    dispPtr->name[length] = '\0';
+	    OpenIM(dispPtr);
+	    TkInitXId(dispPtr);
+
+	    tsdPtr->displayList = dispPtr;
 	    break;
 	}
 	if ((strncmp(dispPtr->name, screenName, length) == 0)
@@ -442,7 +465,10 @@ GetScreen(interp, screenName, screenPtr)
 	}
     }
     if (screenId >= ScreenCount(dispPtr->display)) {
-	sprintf(interp->result, "bad screen number \"%d\"", screenId);
+	char buf[32 + TCL_INTEGER_SPACE];
+	
+	sprintf(buf, "bad screen number \"%d\"", screenId);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return (TkDisplay *) NULL;
     }
     *screenPtr = screenId;
@@ -472,8 +498,10 @@ TkGetDisplay(display)
      Display *display;          /* X's display pointer */
 {
     TkDisplay *dispPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    for (dispPtr = tkDisplayList; dispPtr != NULL;
+    for (dispPtr = tsdPtr->displayList; dispPtr != NULL;
 	    dispPtr = dispPtr->nextPtr) {
 	if (dispPtr->display == display) {
 	    break;
@@ -482,6 +510,58 @@ TkGetDisplay(display)
     return dispPtr;
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * TkGetDisplayList --
+ *
+ *	This procedure returns a pointer to the thread-local
+ *      list of TkDisplays corresponding to the open displays.
+ *
+ * Results:
+ *	The return value is a pointer to the first TkDisplay
+ *      structure in thread-local-storage.
+ *
+ * Side effects:
+ *      None.
+ *
+ *--------------------------------------------------------------
+ */
+TkDisplay *
+TkGetDisplayList()
+{
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+    
+    return tsdPtr->displayList;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * TkGetMainInfoList --
+ *
+ *	This procedure returns a pointer to the list of structures
+ *      containing information about all main windows for the
+ *      current thread.
+ *
+ * Results:
+ *	The return value is a pointer to the first TkMainInfo
+ *      structure in thread local storage.
+ *
+ * Side effects:
+ *      None.
+ *
+ *--------------------------------------------------------------
+ */
+TkMainInfo *
+TkGetMainInfoList()
+{
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+    
+    return tsdPtr->mainWindowList;
+}
 /*
  *--------------------------------------------------------------
  *
@@ -675,7 +755,7 @@ NameWindow(interp, winPtr, parentPtr, name)
  *	The return value is a token for the new window, or NULL if
  *	an error prevented the new window from being created.  If
  *	NULL is returned, an error message will be left in
- *	interp->result.
+ *	the interp's result.
  *
  * Side effects:
  *	A new window structure is allocated locally;  "interp" is
@@ -703,6 +783,9 @@ TkCreateMainWindow(interp, screenName, baseName)
     register TkMainInfo *mainPtr;
     register TkWindow *winPtr;
     register TkCmd *cmdPtr;
+    ClientData clientData;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     
     /*
      * Panic if someone updated the TkWindow structure without
@@ -734,6 +817,7 @@ TkCreateMainWindow(interp, screenName, baseName)
     mainPtr->refCount = 1;
     mainPtr->interp = interp;
     Tcl_InitHashTable(&mainPtr->nameTable, TCL_STRING_KEYS);
+    TkEventInit();
     TkBindInit(mainPtr);
     TkFontPkgInit(mainPtr);
     mainPtr->tlFocusPtr = NULL;
@@ -745,8 +829,8 @@ TkCreateMainWindow(interp, screenName, baseName)
 	    TCL_LINK_BOOLEAN) != TCL_OK) {
 	Tcl_ResetResult(interp);
     }
-    mainPtr->nextPtr = tkMainWindowList;
-    tkMainWindowList = mainPtr;
+    mainPtr->nextPtr = tsdPtr->mainWindowList;
+    tsdPtr->mainWindowList = mainPtr;
     winPtr->mainPtr = mainPtr;
     hPtr = Tcl_CreateHashEntry(&mainPtr->nameTable, ".", &dummy);
     Tcl_SetHashValue(hPtr, winPtr);
@@ -774,12 +858,17 @@ TkCreateMainWindow(interp, screenName, baseName)
 	if ((cmdPtr->cmdProc == NULL) && (cmdPtr->objProc == NULL)) {
 	    panic("TkCreateMainWindow: builtin command with NULL string and object procs");
 	}
+	if (cmdPtr->passMainWindow) {
+	    clientData = (ClientData) tkwin;
+	} else {
+	    clientData = (ClientData) NULL;
+	}
 	if (cmdPtr->cmdProc != NULL) {
 	    Tcl_CreateCommand(interp, cmdPtr->name, cmdPtr->cmdProc,
-		    (ClientData) tkwin, (void (*) _ANSI_ARGS_((ClientData))) NULL);
+		    clientData, (void (*) _ANSI_ARGS_((ClientData))) NULL);
 	} else {
 	    Tcl_CreateObjCommand(interp, cmdPtr->name, cmdPtr->objProc,
-		    (ClientData) tkwin, NULL);
+		    clientData, NULL);
 	}
         if (isSafe) {
             if (!(cmdPtr->isSafe)) {
@@ -788,6 +877,8 @@ TkCreateMainWindow(interp, screenName, baseName)
         }
     }
 
+    TkCreateMenuCmd(interp);
+
     /*
      * Set variables for the intepreter.
      */
@@ -795,7 +886,7 @@ TkCreateMainWindow(interp, screenName, baseName)
     Tcl_SetVar(interp, "tk_patchLevel", TK_PATCH_LEVEL, TCL_GLOBAL_ONLY);
     Tcl_SetVar(interp, "tk_version", TK_VERSION, TCL_GLOBAL_ONLY);
 
-    numMainWindows++;
+    tsdPtr->numMainWindows++;
     return tkwin;
 }
 
@@ -811,7 +902,7 @@ TkCreateMainWindow(interp, screenName, baseName)
  *	The return value is a token for the new window.  This
  *	is not the same as X's token for the window.  If an error
  *	occurred in creating the window (e.g. no such display or
- *	screen), then an error message is left in interp->result and
+ *	screen), then an error message is left in the interp's result and
  *	NULL is returned.
  *
  * Side effects:
@@ -825,7 +916,7 @@ TkCreateMainWindow(interp, screenName, baseName)
 Tk_Window
 Tk_CreateWindow(interp, parent, name, screenName)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting.
-				 * Interp->result is assumed to be
+				 * the interp's result is assumed to be
 				 * initialized by the caller. */
     Tk_Window parent;		/* Token for parent of new window. */
     char *name;			/* Name for new window.  Must be unique
@@ -878,7 +969,7 @@ Tk_CreateWindow(interp, parent, name, screenName)
  *	The return value is a token for the new window.  This
  *	is not the same as X's token for the window.  If an error
  *	occurred in creating the window (e.g. no such display or
- *	screen), then an error message is left in interp->result and
+ *	screen), then an error message is left in the interp's result and
  *	NULL is returned.
  *
  * Side effects:
@@ -892,7 +983,7 @@ Tk_CreateWindow(interp, parent, name, screenName)
 Tk_Window
 Tk_CreateWindowFromPath(interp, tkwin, pathName, screenName)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting.
-				 * Interp->result is assumed to be
+				 * the interp's result is assumed to be
 				 * initialized by the caller. */
     Tk_Window tkwin;		/* Token for any window in application
 				 * that is to contain new window. */
@@ -1011,6 +1102,8 @@ Tk_DestroyWindow(tkwin)
     TkWindow *winPtr = (TkWindow *) tkwin;
     TkDisplay *dispPtr = winPtr->dispPtr;
     XEvent event;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->flags & TK_ALREADY_DEAD) {
 	/*
@@ -1054,19 +1147,19 @@ Tk_DestroyWindow(tkwin)
 
     if (winPtr->mainPtr->winPtr == winPtr) {
         dispPtr->refCount--;
-	if (tkMainWindowList == winPtr->mainPtr) {
-	    tkMainWindowList = winPtr->mainPtr->nextPtr;
+	if (tsdPtr->mainWindowList == winPtr->mainPtr) {
+	    tsdPtr->mainWindowList = winPtr->mainPtr->nextPtr;
 	} else {
 	    TkMainInfo *prevPtr;
 
-	    for (prevPtr = tkMainWindowList;
+	    for (prevPtr = tsdPtr->mainWindowList;
 		    prevPtr->nextPtr != winPtr->mainPtr;
 		    prevPtr = prevPtr->nextPtr) {
 		/* Empty loop body. */
 	    }
 	    prevPtr->nextPtr = winPtr->mainPtr->nextPtr;
 	}
-	numMainWindows--;
+	tsdPtr->numMainWindows--;
     }
 
     /*
@@ -1222,8 +1315,8 @@ Tk_DestroyWindow(tkwin)
                 
 	    Tcl_DeleteHashTable(&winPtr->mainPtr->nameTable);
 	    TkBindFree(winPtr->mainPtr);
-	    TkFontPkgFree(winPtr->mainPtr);
 	    TkDeleteAllImages(winPtr->mainPtr);
+	    TkFontPkgFree(winPtr->mainPtr);
 
             /*
              * When embedding Tk into other applications, make sure 
@@ -1257,7 +1350,7 @@ Tk_DestroyWindow(tkwin)
                  * Splice this display out of the list of displays.
                  */
                 
-                for (theDispPtr = tkDisplayList, backDispPtr = NULL;
+                for (theDispPtr = displayList, backDispPtr = NULL;
                          (theDispPtr != winPtr->dispPtr) &&
                              (theDispPtr != NULL);
                          theDispPtr = theDispPtr->nextPtr) {
@@ -1267,7 +1360,7 @@ Tk_DestroyWindow(tkwin)
                     panic("could not find display to close!");
                 }
                 if (backDispPtr == NULL) {
-                    tkDisplayList = theDispPtr->nextPtr;
+                    displayList = theDispPtr->nextPtr;
                 } else {
                     backDispPtr->nextPtr = theDispPtr->nextPtr;
                 }
@@ -1993,7 +2086,7 @@ TkSetClassProcs(tkwin, procs, instanceData)
  * Results:
  *	The return result is either a token for the window corresponding
  *	to "name", or else NULL to indicate that there is no such
- *	window.  In this case, an error message is left in interp->result.
+ *	window.  In this case, an error message is left in the interp's result.
  *
  * Side effects:
  *	None.
@@ -2048,7 +2141,7 @@ Tk_IdToWindow(display, window)
     TkDisplay *dispPtr;
     Tcl_HashEntry *hPtr;
 
-    for (dispPtr = tkDisplayList; ; dispPtr = dispPtr->nextPtr) {
+    for (dispPtr = TkGetDisplayList(); ; dispPtr = dispPtr->nextPtr) {
 	if (dispPtr == NULL) {
 	    return NULL;
 	}
@@ -2274,7 +2367,7 @@ Tk_RestackWindow(tkwin, aboveBelow, other)
  * Results:
  *	If interp has a Tk application associated with it, the main
  *	window for the application is returned.  Otherwise NULL is
- *	returned and an error message is left in interp->result.
+ *	returned and an error message is left in the interp's result.
  *
  * Side effects:
  *	None.
@@ -2289,14 +2382,16 @@ Tk_MainWindow(interp)
 					 * reporting also. */
 {
     TkMainInfo *mainPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    for (mainPtr = tkMainWindowList; mainPtr != NULL;
+    for (mainPtr = tsdPtr->mainWindowList; mainPtr != NULL;
 	    mainPtr = mainPtr->nextPtr) {
 	if (mainPtr->interp == interp) {
 	    return (Tk_Window) mainPtr->winPtr;
 	}
     }
-    interp->result = "this isn't a Tk application";
+    Tcl_SetResult(interp, "this isn't a Tk application", TCL_STATIC);
     return NULL;
 }
 
@@ -2407,7 +2502,10 @@ OpenIM(dispPtr)
 int
 Tk_GetNumMainWindows()
 {
-    return numMainWindows;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
+    return tsdPtr->numMainWindows;
 }
 
 /*
@@ -2433,8 +2531,10 @@ DeleteWindowsExitProc(clientData)
 {
     TkDisplay *displayPtr, *nextPtr;
     Tcl_Interp *interp;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     
-    while (tkMainWindowList != NULL) {
+    while (tsdPtr->mainWindowList != NULL) {
         /*
          * We must protect the interpreter while deleting the window,
          * because of <Destroy> bindings which could destroy the interpreter
@@ -2442,14 +2542,14 @@ DeleteWindowsExitProc(clientData)
          * the call stack pointing at deleted memory, causing core dumps.
          */
         
-        interp = tkMainWindowList->winPtr->mainPtr->interp;
+        interp = tsdPtr->mainWindowList->winPtr->mainPtr->interp;
         Tcl_Preserve((ClientData) interp);
-	Tk_DestroyWindow((Tk_Window) tkMainWindowList->winPtr);
+	Tk_DestroyWindow((Tk_Window) tsdPtr->mainWindowList->winPtr);
         Tcl_Release((ClientData) interp);
     }
     
-    displayPtr = tkDisplayList;
-    tkDisplayList = NULL;
+    displayPtr = tsdPtr->displayList;
+    tsdPtr->displayList = NULL;
     
     /*
      * Iterate destroying the displays until no more displays remain.
@@ -2458,9 +2558,9 @@ DeleteWindowsExitProc(clientData)
      * as well as the old ones.
      */
     
-    for (displayPtr = tkDisplayList;
+    for (displayPtr = tsdPtr->displayList;
          displayPtr != NULL;
-         displayPtr = tkDisplayList) {
+         displayPtr = tsdPtr->displayList) {
 
         /*
          * Now iterate over the current list of open displays, and first
@@ -2471,7 +2571,8 @@ DeleteWindowsExitProc(clientData)
          * if it needs to dispatch a message.
          */
         
-        for (tkDisplayList = NULL; displayPtr != NULL; displayPtr = nextPtr) {
+        for (tsdPtr->displayList = NULL; displayPtr != NULL; 
+                displayPtr = nextPtr) {
             nextPtr = displayPtr->nextPtr;
             if (displayPtr->name != (char *) NULL) {
                 ckfree(displayPtr->name);
@@ -2481,12 +2582,9 @@ DeleteWindowsExitProc(clientData)
         }
     }
     
-    numMainWindows = 0;
-    tkMainWindowList = NULL;
-    initialized = 0;
-    tkDisabledUid = NULL;
-    tkActiveUid = NULL;
-    tkNormalUid = NULL;
+    tsdPtr->numMainWindows = 0;
+    tsdPtr->mainWindowList = NULL;
+    tsdPtr->initialized = 0;
 }
 
 /*
@@ -2504,7 +2602,7 @@ DeleteWindowsExitProc(clientData)
  *	the arguments that are extracted).
  *
  * Results:
- *	Returns a standard Tcl completion code and sets interp->result
+ *	Returns a standard Tcl completion code and sets the interp's result
  *	if there is an error.
  *
  * Side effects:
@@ -2529,7 +2627,7 @@ Tk_Init(interp)
  *	invokes the internal procedure that does the real work.
  *
  * Results:
- *	Returns a standard Tcl completion code and sets interp->result
+ *	Returns a standard Tcl completion code and sets the interp's result
  *	if there is an error.
  *
  * Side effects:
@@ -2582,6 +2680,9 @@ Tk_SafeInit(interp)
     return Initialize(interp);
 }
 
+
+extern TkStubs tkStubs;
+
 /*
  *----------------------------------------------------------------------
  *
@@ -2589,8 +2690,8 @@ Tk_SafeInit(interp)
  *
  *
  * Results:
- *	A standard Tcl result. Also leaves an error message in interp->result
- *	if there was an error.
+ *	A standard Tcl result. Also leaves an error message in the interp's
+ *	result if there was an error.
  *
  * Side effects:
  *	Depends on the initialization scripts that are invoked.
@@ -2606,7 +2707,19 @@ Initialize(interp)
     int argc, code;
     char **argv, *args[20];
     Tcl_DString class;
-    char buffer[30];
+    ThreadSpecificData *tsdPtr;
+    
+    /*
+     * Ensure that we are getting the matching version of Tcl.  This is
+     * really only an issue when Tk is loaded dynamically.
+     */
+
+    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+        return TCL_ERROR;
+    }
+
+    tsdPtr = (ThreadSpecificData *) 
+	Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Start by initializing all the static variables to default acceptable
@@ -2614,6 +2727,7 @@ Initialize(interp)
      * code.
      */
 
+    Tcl_MutexLock(&windowMutex);
     synchronize = 0;
     name = NULL;
     display = NULL;
@@ -2624,18 +2738,97 @@ Initialize(interp)
     rest = 0;
 
     /*
-     * If there is an "argv" variable, get its value, extract out
-     * relevant arguments from it, and rewrite the variable without
-     * the arguments that we used.
+     * We start by resetting the result because it might not be clean
      */
+    Tcl_ResetResult(interp);
 
-    p = Tcl_GetVar2(interp, "argv", (char *) NULL, TCL_GLOBAL_ONLY);
+    if (Tcl_IsSafe(interp)) {
+	/*
+	 * Get the clearance to start Tk and the "argv" parameters
+	 * from the master.
+	 */
+	Tcl_DString ds;
+	
+	/*
+	 * Step 1 : find the master and construct the interp name
+	 * (could be a function if new APIs were ok).
+	 * We could also construct the path while walking, but there
+	 * is no API to get the name of an interp either.
+	 */
+	Tcl_Interp *master = interp;
+
+	while (1) {
+	    master = Tcl_GetMaster(master);
+	    if (master == NULL) {
+		Tcl_DStringFree(&ds);
+		Tcl_AppendResult(interp, "NULL master", (char *) NULL);
+		Tcl_MutexUnlock(&windowMutex);
+		return TCL_ERROR;
+	    }
+	    if (!Tcl_IsSafe(master)) {
+		/* Found the trusted master. */
+		break;
+	    }
+	}
+	/*
+	 * Construct the name (rewalk...)
+	 */
+	if (Tcl_GetInterpPath(master, interp) != TCL_OK) {
+	    Tcl_AppendResult(interp, "error in Tcl_GetInterpPath",
+		    (char *) NULL);
+	    Tcl_MutexUnlock(&windowMutex);
+	    return TCL_ERROR;
+	}
+	/*
+	 * Build the string to eval.
+	 */
+	Tcl_DStringInit(&ds);
+	Tcl_DStringAppendElement(&ds, "::safe::TkInit");
+	Tcl_DStringAppendElement(&ds, Tcl_GetStringResult(master));
+	
+	/*
+	 * Step 2 : Eval in the master. The argument is the *reversed*
+	 * interp path of the slave.
+	 */
+	
+	if (Tcl_Eval(master, Tcl_DStringValue(&ds)) != TCL_OK) {
+	    /*
+	     * We might want to transfer the error message or not.
+	     * We don't. (no API to do it and maybe security reasons).
+	     */
+	    Tcl_DStringFree(&ds);
+	    Tcl_AppendResult(interp, 
+		    "not allowed to start Tk by master's safe::TkInit",
+		    (char *) NULL);
+	    Tcl_MutexUnlock(&windowMutex);
+	    return TCL_ERROR;
+	}
+	Tcl_DStringFree(&ds);
+	/* 
+	 * Use the master's result as argv.
+	 * Note: We don't use the Obj interfaces to avoid dealing with
+	 * cross interp refcounting and changing the code below.
+	 */
+
+	p = Tcl_GetStringResult(master);
+    } else {
+	/*
+	 * If there is an "argv" variable, get its value, extract out
+	 * relevant arguments from it, and rewrite the variable without
+	 * the arguments that we used.
+	 */
+
+	p = Tcl_GetVar2(interp, "argv", (char *) NULL, TCL_GLOBAL_ONLY);
+    }
     argv = NULL;
     if (p != NULL) {
+	char buffer[TCL_INTEGER_SPACE];
+
 	if (Tcl_SplitList(interp, p, &argc, &argv) != TCL_OK) {
 	    argError:
 	    Tcl_AddErrorInfo(interp,
 		    "\n    (processing arguments in argv variable)");
+	    Tcl_MutexUnlock(&windowMutex);
 	    return TCL_ERROR;
 	}
 	if (Tk_ParseArgv(interp, (Tk_Window) NULL, &argc, argv,
@@ -2668,8 +2861,8 @@ Initialize(interp)
     }
 
     p = Tcl_DStringValue(&class);
-    if (islower(UCHAR(*p))) {
-	*p = toupper(UCHAR(*p));
+    if (*p) {
+	Tcl_UtfToTitle(p);
     }
 
     /*
@@ -2693,7 +2886,7 @@ Initialize(interp)
 	 * that it will be available to subprocesses created by us.
 	 */
 
-	if (numMainWindows == 0) {
+	if (tsdPtr->numMainWindows == 0) {
 	    Tcl_SetVar2(interp, "env", "DISPLAY", display, TCL_GLOBAL_ONLY);
 	}
     }
@@ -2740,14 +2933,27 @@ Initialize(interp)
 	}
         geometry = NULL;
     }
+    Tcl_MutexUnlock(&windowMutex);
+
     if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 1) == NULL) {
 	code = TCL_ERROR;
 	goto done;
     }
-    code = Tcl_PkgProvide(interp, "Tk", TK_VERSION);
+
+    /*
+     * Provide Tk and its stub table.
+     */
+
+    code = Tcl_PkgProvideEx(interp, "Tk", TK_VERSION, (ClientData) &tkStubs);
     if (code != TCL_OK) {
 	goto done;
     }
+
+#ifdef Tk_InitStubs
+#undef Tk_InitStubs
+#endif
+
+    Tk_InitStubs(interp, TK_VERSION, 1);
 
     /*
      * Invoke platform-specific initialization.

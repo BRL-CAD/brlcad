@@ -4,27 +4,22 @@
  *	Xlib emulation routines for Windows related to creating,
  *	displaying and destroying windows.
  *
- * Copyright (c) 1995 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWinWindow.c 1.23 97/07/01 18:14:13
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
 
-/*
- * The windowTable maps from HWND to Tk_Window handles.
- */
-
-static Tcl_HashTable windowTable;
-
-/*
- * Have statics in this module been initialized?
- */
-
-static int initialized = 0;
+typedef struct ThreadSpecificData {
+    int initialized;            /* 0 means table below needs initializing. */
+    Tcl_HashTable windowTable;  /* The windowTable maps from HWND to 
+				 * Tk_Window handles. */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Forward declarations for procedures defined in this file:
@@ -61,10 +56,12 @@ Tk_AttachHWND(tkwin, hwnd)
     int new;
     Tcl_HashEntry *entryPtr;
     TkWinDrawable *twdPtr = (TkWinDrawable *) Tk_WindowId(tkwin);
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (!initialized) {
-	Tcl_InitHashTable(&windowTable, TCL_ONE_WORD_KEYS);
-	initialized = 1;
+    if (!tsdPtr->initialized) {
+	Tcl_InitHashTable(&tsdPtr->windowTable, TCL_ONE_WORD_KEYS);
+	tsdPtr->initialized = 1;
     }
 
     /*
@@ -77,7 +74,7 @@ Tk_AttachHWND(tkwin, hwnd)
 	twdPtr->type = TWD_WINDOW;
 	twdPtr->window.winPtr = (TkWindow *) tkwin;
     } else if (twdPtr->window.handle != NULL) {
-	entryPtr = Tcl_FindHashEntry(&windowTable,
+	entryPtr = Tcl_FindHashEntry(&tsdPtr->windowTable,
 		(char *)twdPtr->window.handle);
 	Tcl_DeleteHashEntry(entryPtr);
     }
@@ -87,7 +84,7 @@ Tk_AttachHWND(tkwin, hwnd)
      */
 
     twdPtr->window.handle = hwnd;
-    entryPtr = Tcl_CreateHashEntry(&windowTable, (char *)hwnd, &new);
+    entryPtr = Tcl_CreateHashEntry(&tsdPtr->windowTable, (char *)hwnd, &new);
     Tcl_SetHashValue(entryPtr, (ClientData)tkwin);
 
     return (Window)twdPtr;
@@ -114,7 +111,15 @@ Tk_Window
 Tk_HWNDToWindow(hwnd)
     HWND hwnd;
 {
-    Tcl_HashEntry *entryPtr = Tcl_FindHashEntry(&windowTable, (char*)hwnd);
+    Tcl_HashEntry *entryPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
+    if (!tsdPtr->initialized) {
+	Tcl_InitHashTable(&tsdPtr->windowTable, TCL_ONE_WORD_KEYS);
+	tsdPtr->initialized = 1;
+    }
+    entryPtr = Tcl_FindHashEntry(&tsdPtr->windowTable, (char*)hwnd);
     if (entryPtr != NULL) {
 	return (Tk_Window) Tcl_GetHashValue(entryPtr);
     }
@@ -185,7 +190,7 @@ TkpPrintWindowId(buf, window)
  *	The return value is normally TCL_OK;  in this case *idPtr
  *	will be set to the X Window id equivalent to string.  If
  *	string is improperly formed then TCL_ERROR is returned and
- *	an error message will be left in interp->result.  If the
+ *	an error message will be left in the interp's result.  If the
  *	number does not correspond to a Tk Window, then *idPtr will
  *	be set to None.
  *
@@ -256,9 +261,9 @@ TkpMakeWindow(winPtr, parent)
      * stacking order.
      */
 
-    hwnd = CreateWindow(TK_WIN_CHILD_CLASS_NAME, NULL, style,
-	    Tk_X(winPtr), Tk_Y(winPtr), Tk_Width(winPtr), Tk_Height(winPtr),
-	    parentWin, NULL, Tk_GetHINSTANCE(), NULL);
+    hwnd = CreateWindowEx(WS_EX_NOPARENTNOTIFY, TK_WIN_CHILD_CLASS_NAME, NULL,
+	    style, Tk_X(winPtr), Tk_Y(winPtr), Tk_Width(winPtr),
+	    Tk_Height(winPtr), parentWin, NULL, Tk_GetHINSTANCE(), NULL);
     SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
 		    SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
     return Tk_AttachHWND((Tk_Window)winPtr, hwnd);
@@ -290,6 +295,8 @@ XDestroyWindow(display, w)
     TkWinDrawable *twdPtr = (TkWinDrawable *)w;
     TkWindow *winPtr = TkWinGetWinPtr(w);
     HWND hwnd = Tk_GetHWND(w);
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     display->request++;
 
@@ -300,7 +307,7 @@ XDestroyWindow(display, w)
 
     TkPointerDeadWindow(winPtr);
 
-    entryPtr = Tcl_FindHashEntry(&windowTable, (char*)hwnd);
+    entryPtr = Tcl_FindHashEntry(&tsdPtr->windowTable, (char*)hwnd);
     if (entryPtr != NULL) {
 	Tcl_DeleteHashEntry(entryPtr);
     }

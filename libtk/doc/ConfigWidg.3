@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) ConfigWidg.3 1.30 96/08/27 13:21:18
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tk_ConfigureWidget 3 4.1 Tk "Tk Library Procedures"
@@ -26,10 +26,11 @@ int
 \fBTk_ConfigureInfo(\fIinterp, tkwin, specs, widgRec, argvName, flags\fB)\fR
 .sp
 int
+\fBTk_ConfigureValue(\fIinterp, tkwin, specs, widgRec, argvName, flags\fB)\fR
 .sp
 \fBTk_FreeOptions(\fIspecs, widgRec, display, flags\fB)\fR
 .SH ARGUMENTS
-.AS Tk_ConfigSpec *widgRec
+.AS Tk_ConfigSpec *widgRec in/out
 .AP Tcl_Interp *interp in
 Interpreter to use for returning error messages.
 .AP Tk_Window tkwin in
@@ -257,13 +258,13 @@ will never match any arguments.
 .TP
 \fBTK_CONFIG_FONT\fR
 The value must be an ASCII string identifying a font in a form
-suitable for passing to \fBTk_GetFontStruct\fR.  The value is converted
-to an (\fBXFontStruct *\fR) by calling \fBTk_GetFontStruct\fR and the result
+suitable for passing to \fBTk_GetFont\fR.  The value is converted
+to an (\fBXFontStruct *\fR) by calling \fBTk_GetFont\fR and the result
 is stored in the target.
 If TK_CONFIG_NULL_OK is specified in \fIspecFlags\fR then the value
 may be an empty string, in which case the target will be set to NULL.
 If the previous value of the target
-wasn't NULL, then it is freed by passing it to \fBTk_FreeFontStruct\fR.
+wasn't NULL, then it is freed by passing it to \fBTk_FreeFont\fR.
 .TP
 \fBTK_CONFIG_INT\fR
 The value must be an ASCII integer string

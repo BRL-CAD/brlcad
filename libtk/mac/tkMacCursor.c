@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacCursor.c 1.20 97/09/17 19:33:13
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -64,9 +64,16 @@ static struct CursorName {
 
 static TkMacCursor * gCurrentCursor = NULL;  /* A pointer to the current
 					      * cursor. */
-static int gResizeOverride = false;	     /* A boolean indicating wether
+static int gResizeOverride = false;	     /* A boolean indicating whether
 					      * we should use the resize
 					      * cursor during installations. */
+static int gTkOwnsCursor = true;             /* A boolean indicating whether
+                                                Tk owns the cursor.  If not (for
+                                                instance, in the case where a Tk 
+                                                window is embedded in another app's
+                                                window, and the cursor is out of
+                                                the tk window, we will not attempt
+                                                to adjust the cursor */
 
 /*
  * Declarations of procedures local to this file
@@ -102,13 +109,23 @@ FindCursorByName(
 {
     Handle resource;
     Str255 curName;
+    int destWrote, inCurLen;
     
-    curName[0] = strlen(string);
-    if (curName[0] > 255) {
+    inCurLen = strlen(string);
+    if (inCurLen > 255) {
         return;
     }
-    
-    strcpy((char *) curName + 1, string);
+
+    /*
+     * macRoman is the encoding that the resource fork uses.
+     */
+
+    Tcl_UtfToExternal(NULL, Tcl_GetEncoding(NULL, "macRoman"), string,
+	    inCurLen, 0, NULL, 
+	    (char *) &curName[1],
+	    255, NULL, &destWrote, NULL); /* Internalize native */
+    curName[0] = destWrote;
+
     resource = GetNamedResource('crsr', curName);
 
     if (resource != NULL) {
@@ -245,7 +262,7 @@ TkCreateCursorFromData(
 /*
  *----------------------------------------------------------------------
  *
- * TkFreeCursor --
+ * TkpFreeCursor --
  *
  *	This procedure is called to release a cursor allocated by
  *	TkGetCursorByName.
@@ -260,7 +277,7 @@ TkCreateCursorFromData(
  */
 
 void
-TkFreeCursor(
+TkpFreeCursor(
     TkCursor *cursorPtr)
 {
     TkMacCursor *macCursorPtr = (TkMacCursor *) cursorPtr;
@@ -277,8 +294,6 @@ TkFreeCursor(
     if (macCursorPtr == gCurrentCursor) {
 	gCurrentCursor = NULL;
     }
-    
-    ckfree((char *) macCursorPtr);
 }
 
 /*
@@ -348,6 +363,9 @@ void
 TkpSetCursor(
     TkpCursor cursor)
 {
+    if (!gTkOwnsCursor) {
+        return;
+    }
     if (cursor == None) {
 	gCurrentCursor = NULL;
     } else {
@@ -357,4 +375,27 @@ TkpSetCursor(
     if (tkMacAppInFront) {
 	TkMacInstallCursor(gResizeOverride);
     }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_MacTkOwnsCursor --
+ *
+ *	Sets whether Tk has the right to adjust the cursor.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	May keep Tk from changing the cursor.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tk_MacTkOwnsCursor(
+    int tkOwnsIt)
+{
+    gTkOwnsCursor = tkOwnsIt;
 }

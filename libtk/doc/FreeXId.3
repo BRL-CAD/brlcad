@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) FreeXId.3 1.5 96/03/26 18:07:59
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tk_FreeXId 3 4.0 Tk "Tk Library Procedures"
@@ -37,7 +37,7 @@ allows identifiers to be reused.
 In order for this to work, \fBTk_FreeXId\fR must be called to
 tell the allocator about resources that have been freed.
 Tk automatically calls \fBTk_FreeXId\fR whenever it frees a
-resource, so if you use procedures like \fBTk_GetFontStruct\fR,
+resource, so if you use procedures like \fBTk_GetFont\fR,
 \fBTk_GetGC\fR, and \fBTk_GetPixmap\fR then you need not call
 \fBTk_FreeXId\fR.
 However, if you allocate resources directly from Xlib, for example

@@ -4,21 +4,21 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) image.test 1.15 97/07/31 10:17:25
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 if {[lsearch [image types] test] < 0} {
     puts "This application hasn't been compiled with the \"test\" image"
     puts "type, so I can't run this test.  Are you sure you're using"
     puts "tktest instead of wish?"
+    ::tcltest::cleanupTests
     return
-}
-
-if {[info procs test] != "test"} {
-    source defs
 }
 
 foreach i [winfo children .] {
@@ -355,3 +355,20 @@ test image-13.1 {image command vs hidden commands} {
     
 destroy .c
 eval image delete [image names]
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

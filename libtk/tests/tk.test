@@ -2,14 +2,13 @@
 # It is organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) tk.test 1.3 97/05/20 15:17:44
+# RCS: @(#) $Id$
 
-if {[info commands test] == ""} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 test tk-1.1 {tk command: general} {
@@ -17,7 +16,7 @@ test tk-1.1 {tk command: general} {
 } {1 {wrong # args: should be "tk option ?arg?"}}
 test tk-1.2 {tk command: general} {
     list [catch {tk xyz} msg] $msg
-} {1 {bad option "xyz": must be appname, or scaling}}
+} {1 {bad option "xyz": must be appname or scaling}}
 
 set appname [tk appname]
 test tk-2.1 {tk command: appname} {
@@ -78,3 +77,20 @@ test tk-3.11 {tk command: scaling: heightmm} {
     expr {int((25.4*[winfo screenheight .])/(72*1.25)+0.5)-[winfo screenmmheight .]}
 } {0}
 tk scaling $scaling
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) destroy.n 1.14 96/12/12 17:54:59
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH destroy n "" Tk "Tk Built-In Commands"

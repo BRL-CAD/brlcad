@@ -3,12 +3,12 @@
  *
  *	This file contains X specific cursor manipulation routines.
  *
- * Copyright (c) 1995 Sun Microsystems, Inc.
+ * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnixCursor.c 1.4 96/10/08 09:33:08
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -218,7 +218,7 @@ TkGetCursorByName(interp, tkwin, string)
 	if (dispPtr->cursorFont == None) {
 	    dispPtr->cursorFont = XLoadFont(display, CURSORFONT);
 	    if (dispPtr->cursorFont == None) {
-		interp->result = "couldn't load cursor font";
+		Tcl_SetResult(interp, "couldn't load cursor font", TCL_STATIC);
 		goto cleanup;
 	    }
 	}
@@ -250,7 +250,7 @@ TkGetCursorByName(interp, tkwin, string)
 	if ((argc != 2) && (argc != 4)) {
 	    goto badString;
 	}
-	if (XReadBitmapFile(display,
+	if (TkReadBitmapFile(display,
 		RootWindowOfScreen(Tk_Screen(tkwin)), &argv[0][1],
 		(unsigned int *) &width, (unsigned int *) &height,
 		&source, &xHot, &yHot) != BitmapSuccess) {
@@ -273,7 +273,7 @@ TkGetCursorByName(interp, tkwin, string)
 	    cursor = XCreatePixmapCursor(display, source, source,
 		    &fg, &fg, (unsigned) xHot, (unsigned) yHot);
 	} else {
-	    if (XReadBitmapFile(display,
+	    if (TkReadBitmapFile(display,
 		    RootWindowOfScreen(Tk_Screen(tkwin)), argv[1],
 		    (unsigned int *) &maskWidth, (unsigned int *) &maskHeight,
 		    &mask, &dummy1, &dummy2) != BitmapSuccess) {
@@ -282,8 +282,9 @@ TkGetCursorByName(interp, tkwin, string)
 		goto cleanup;
 	    }
 	    if ((maskWidth != width) && (maskHeight != height)) {
-		interp->result =
-			"source and mask bitmaps have different sizes";
+		Tcl_SetResult(interp,
+			"source and mask bitmaps have different sizes",
+			TCL_STATIC);
 		goto cleanup;
 	    }
 	    if (XParseColor(display, Tk_Colormap(tkwin), argv[2],
@@ -323,6 +324,9 @@ TkGetCursorByName(interp, tkwin, string)
 
 
     badString:
+    if (argv) {
+	ckfree((char *) argv);
+    }
     Tcl_AppendResult(interp, "bad cursor spec \"", string, "\"",
 	    (char *) NULL);
     return NULL;
@@ -382,7 +386,7 @@ TkCreateCursorFromData(tkwin, source, mask, width, height, xHot, yHot,
 /*
  *----------------------------------------------------------------------
  *
- * TkFreeCursor --
+ * TkpFreeCursor --
  *
  *	This procedure is called to release a cursor allocated by
  *	TkGetCursorByName.
@@ -397,11 +401,10 @@ TkCreateCursorFromData(tkwin, source, mask, width, height, xHot, yHot,
  */
 
 void
-TkFreeCursor(cursorPtr)
+TkpFreeCursor(cursorPtr)
     TkCursor *cursorPtr;
 {
     TkUnixCursor *unixCursorPtr = (TkUnixCursor *) cursorPtr;
     XFreeCursor(unixCursorPtr->display, (Cursor) unixCursorPtr->info.cursor);
     Tk_FreeXId(unixCursorPtr->display, (XID) unixCursorPtr->info.cursor);
-    ckfree((char *) unixCursorPtr);
 }

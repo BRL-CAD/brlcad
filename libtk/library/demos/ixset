@@ -9,7 +9,7 @@ exec wish "$0" "$@"
 #   91/11/23 : pda@masi.ibp.fr, jt@ratp.fr : design
 #   92/08/01 : pda@masi.ibp.fr : cleaning
 #
-# SCCS: @(#) ixset 1.7 96/02/16 10:49:19
+# RCS: @(#) $Id$
 
 #
 # Button actions

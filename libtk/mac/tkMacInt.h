@@ -8,19 +8,15 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacInt.h 1.67 97/11/20 18:30:38
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKMACINT
 #define _TKMACINT
 
 #include "tkInt.h"
-#include "tkPort.h"
 
-#ifndef _TKMAC
-#    include "tkMac.h"
-#endif /* _TKMAC */
-
+#include "tkMac.h"
 
 #include <AppleEvents.h>
 #include <Windows.h>
@@ -71,6 +67,24 @@ typedef struct TkMacWindowList {
  * what the correct port is after the TKWindow  structure has been freed.  This 
  * actually happens when you bind destroy of a toplevel to Destroy of a child.
  */
+
+/*
+ * This structure is for handling Netscape-type in process
+ * embedding where Tk does not control the top-level.  It contains
+ * various functions that are needed by Mac specific routines, like
+ * TkMacGetDrawablePort.  The definitions of the function types
+ * are in tclMac.h.
+ */
+
+typedef struct {
+	Tk_MacEmbedRegisterWinProc *registerWinProc;
+	Tk_MacEmbedGetGrafPortProc *getPortProc;
+	Tk_MacEmbedMakeContainerExistProc *containerExistProc;
+	Tk_MacEmbedGetClipProc *getClipProc;
+	Tk_MacEmbedGetOffsetInParentProc *getOffsetProc;
+} TkMacEmbedHandler;
+
+extern TkMacEmbedHandler *gMacEmbedHandler;
 
 /*
  * Defines used for TkMacInvalidateWindow
@@ -190,93 +204,6 @@ typedef TkMenuDefProcPtr TkMenuDefUPP;
 	(whichItemPtr), (globalsPtr))
 #endif
 
-/*
- * Internal procedures shared among Macintosh Tk modules but not exported
- * to the outside world:
- */
-
-extern int		HandleWMEvent _ANSI_ARGS_((EventRecord *theEvent));
-extern void 		TkAboutDlg _ANSI_ARGS_((void));
-extern void		TkCreateMacEventSource _ANSI_ARGS_((void));
-extern void 		TkFontList _ANSI_ARGS_((Tcl_Interp *interp,
-			    Display *display));
-extern Window		TkGetTransientMaster _ANSI_ARGS_((TkWindow *winPtr));
-extern int		TkGenerateButtonEvent _ANSI_ARGS_((int x, int y,
-			    Window window, unsigned int state));
-extern int 		TkGetCharPositions _ANSI_ARGS_((
-			    XFontStruct *font_struct, char *string,
-			    int count, short *buffer));
-extern void		TkGenWMDestroyEvent _ANSI_ARGS_((Tk_Window tkwin));
-extern void		TkGenWMConfigureEvent _ANSI_ARGS_((Tk_Window tkwin,
-			    int x, int y, int width, int height, int flags));
-extern unsigned int	TkMacButtonKeyState _ANSI_ARGS_((void));
-extern void		TkMacClearMenubarActive _ANSI_ARGS_((void));
-extern int		TkMacConvertEvent _ANSI_ARGS_((EventRecord *eventPtr));
-extern int		TkMacDispatchMenuEvent _ANSI_ARGS_((int menuID, 
-			    int index));
-extern void		TkMacInstallCursor _ANSI_ARGS_((int resizeOverride));
-extern int		TkMacConvertTkEvent _ANSI_ARGS_((EventRecord *eventPtr,
-			    Window window));
-extern void		TkMacHandleTearoffMenu _ANSI_ARGS_((void));
-extern void		tkMacInstallMWConsole _ANSI_ARGS_((
-			    Tcl_Interp *interp));
-extern void		TkMacInvalClipRgns _ANSI_ARGS_((TkWindow *winPtr));
-extern void		TkMacDoHLEvent _ANSI_ARGS_((EventRecord *theEvent));
-extern void 		TkMacFontInfo _ANSI_ARGS_((Font fontId, short *family,
-			    short *style, short *size));
-extern Time		TkMacGenerateTime _ANSI_ARGS_(());
-extern GWorldPtr 	TkMacGetDrawablePort _ANSI_ARGS_((Drawable drawable));
-extern TkWindow * 	TkMacGetScrollbarGrowWindow _ANSI_ARGS_((
-			    TkWindow *winPtr));
-extern Window 		TkMacGetXWindow _ANSI_ARGS_((WindowRef macWinPtr));
-extern int		TkMacGrowToplevel _ANSI_ARGS_((WindowRef whichWindow,
-			    Point start));
-extern void 		TkMacHandleMenuSelect _ANSI_ARGS_((long mResult,
-			    int optionKeyPressed));
-extern void		TkMacInitAppleEvents _ANSI_ARGS_((Tcl_Interp *interp));
-extern void 		TkMacInitMenus _ANSI_ARGS_((Tcl_Interp 	*interp));
-extern void		TkMacInvalidateWindow _ANSI_ARGS_((MacDrawable *macWin, int flag));
-extern int		TkMacIsCharacterMissing _ANSI_ARGS_((Tk_Font tkfont,
-			    unsigned int searchChar));
-extern void		TkMacMakeRealWindowExist _ANSI_ARGS_((
-			    TkWindow *winPtr));
-extern BitMapPtr	TkMacMakeStippleMap(Drawable, Drawable);
-extern void		TkMacMenuClick _ANSI_ARGS_((void));
-extern void		TkMacRegisterOffScreenWindow _ANSI_ARGS_((Window window,
-			    GWorldPtr portPtr));
-extern int		TkMacResizable _ANSI_ARGS_((TkWindow *winPtr));
-extern void		TkMacSetEmbedRgn _ANSI_ARGS_((TkWindow *winPtr, RgnHandle rgn));
-extern void		TkMacSetHelpMenuItemCount _ANSI_ARGS_((void));
-extern void		TkMacSetScrollbarGrow _ANSI_ARGS_((TkWindow *winPtr,
-			    int flag));
-extern void		TkMacSetUpClippingRgn _ANSI_ARGS_((Drawable drawable));
-extern void		TkMacSetUpGraphicsPort _ANSI_ARGS_((GC gc));
-extern void 		TkMacUpdateClipRgn _ANSI_ARGS_((TkWindow *winPtr));
-extern void		TkMacUnregisterMacWindow _ANSI_ARGS_((GWorldPtr portPtr));
-extern int		TkMacUseMenuID _ANSI_ARGS_((short macID));
-extern RgnHandle 	TkMacVisableClipRgn _ANSI_ARGS_((TkWindow *winPtr));
-extern void		TkMacWinBounds _ANSI_ARGS_((TkWindow *winPtr,
-			    Rect *geometry));
-extern void		TkMacWindowOffset _ANSI_ARGS_((WindowRef wRef, 
-			    int *xOffset, int *yOffset));
-extern void		TkResumeClipboard _ANSI_ARGS_((void));
-extern int 		TkSetMacColor _ANSI_ARGS_((unsigned long pixel,
-			    RGBColor *macColor));
-extern void 		TkSetWMName _ANSI_ARGS_((TkWindow *winPtr,
-			    Tk_Uid titleUid));
-extern void		TkSuspendClipboard _ANSI_ARGS_((void));
-extern int		TkWMGrowToplevel _ANSI_ARGS_((WindowRef whichWindow,
-			    Point start));
-extern int		TkMacZoomToplevel _ANSI_ARGS_((WindowPtr whichWindow, 
-			    Point where, short zoomPart));
-extern Tk_Window	Tk_TopCoordsToWindow _ANSI_ARGS_((Tk_Window tkwin,
-			    int rootX, int rootY, int *newX, int *newY));
-extern MacDrawable *	TkMacContainerId _ANSI_ARGS_((TkWindow *winPtr));
-extern MacDrawable *	TkMacGetHostToplevel  _ANSI_ARGS_((TkWindow *winPtr));
-/*
- * The following prototypes need to go into tkMac.h
- */
-EXTERN void		Tk_UpdatePointer _ANSI_ARGS_((Tk_Window tkwin,
-			    int x, int y, int state));
+#include "tkIntPlatDecls.h"
 
 #endif /* _TKMACINT */

@@ -3,18 +3,19 @@
 # tests.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) unixEmbed.test 1.7 97/08/13 11:13:21
+# RCS: @(#) $Id$
 
-if {$tcl_platform(platform) != "unix"} {
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
-if {[info procs test] != "test"} {
-    source defs
+if {$tcl_platform(platform) != "unix"} {
+    puts "skipping: Unix only tests..."
+    ::tcltest::cleanupTests
+    return
 }
 
 eval destroy [winfo children .]
@@ -72,7 +73,7 @@ test unixEmbed-1.2 {TkpUseWindow procedure, bad window identifier} {
     catch {destroy .t}
     list [catch {toplevel .t -use 47} msg] $msg
 } {1 {couldn't create child of window "47"}}
-test unixEmbed-1.3 {TkpUseWindow procedure, inheriting colormap} {
+test unixEmbed-1.3 {TkpUseWindow procedure, inheriting colormap} {nonPortable} {
     catch {destroy .t}
     catch {destroy .x}
     toplevel .t -colormap new
@@ -84,7 +85,7 @@ test unixEmbed-1.3 {TkpUseWindow procedure, inheriting colormap} {
     destroy .t
     set result
 } {0}
-test unixEmbed-1.4 {TkpUseWindow procedure, inheriting colormap} {
+test unixEmbed-1.4 {TkpUseWindow procedure, inheriting colormap} {nonPortable} {
     catch {destroy .t}
     catch {destroy .t2}
     catch {destroy .x}
@@ -96,6 +97,15 @@ test unixEmbed-1.4 {TkpUseWindow procedure, inheriting colormap} {
     destroy .t
     set result
 } {1}
+
+if {[string compare testembed [info commands testembed]] != 0} {
+    puts "This application hasn't been compiled with the testembed command,"
+    puts "therefore I am skipping all of these tests."
+    cleanupbg
+    ::tcltest::cleanupTests
+    return
+}
+
 test unixEmbed-1.5 {TkpUseWindow procedure, creating Container records} {
     eval destroy [winfo child .]
     frame .f1 -container 1 -width 200 -height 50
@@ -193,7 +203,8 @@ test unixEmbed-2.4 {EmbeddedEventProc procedure} {
     list $x [testembed]
 } {{{XXX .f1 {} {}}} {}}
 
-test unixEmbed-3.1 {ContainerEventProc procedure, detect creation} {
+test unixEmbed-3.1 {ContainerEventProc procedure, detect creation} \
+	{nonPortable} {
     foreach w [winfo child .] {
 	catch {destroy $w}
     }
@@ -613,8 +624,23 @@ test unixEmbed-10.2 {geometry propagation in tkUnixWm.c/UpdateGeometryInfo} {
     wm geometry .t1
 } {70x300+0+0}
 
-
+# cleanup
 foreach w [winfo child .] {
     catch {destroy $w}
 }
 cleanupbg
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

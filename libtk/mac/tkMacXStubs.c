@@ -11,7 +11,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacXStubs.c 1.87 97/11/20 18:35:29
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -28,6 +28,7 @@
 #include <ToolUtils.h>
 #include <Sound.h>
 #include "tkMacInt.h"
+#include "tkPort.h"
 
 /*
  * Because this file is still under major development Debugger statements are
@@ -46,7 +47,7 @@
  */
 
 static TkDisplay *gMacDisplay = NULL; /* Macintosh display. */
-static char *macScreenName = "Macintosh:0";
+static char *macScreenName = ":0";
 				/* Default name of macintosh display. */
 
 /*
@@ -515,6 +516,14 @@ XForceScreenSaver(
      */
     display->request++;
 }
+
+void
+Tk_FreeXId (
+    Display *display,
+    XID xid)
+{
+    /* no-op function needed for stubs implementation. */
+}
 
 /*
  *----------------------------------------------------------------------
@@ -541,7 +550,8 @@ TkGetServerInfo(
     Tk_Window tkwin)		/* Token for window;  this selects a
 				 * particular display and server. */
 {
-    char buffer[50], buffer2[50];
+    char buffer[8 + TCL_INTEGER_SPACE * 2];
+    char buffer2[TCL_INTEGER_SPACE];
 
     sprintf(buffer, "X%dR%d ", ProtocolVersion(Tk_Display(tkwin)),
 	    ProtocolRevision(Tk_Display(tkwin)));
@@ -678,6 +688,31 @@ XSetWindowColormap(
     Colormap colormap)
 {
     Debugger();
+}
+
+Status		
+XStringListToTextProperty(
+    char** list, 
+    int count, 
+    XTextProperty* text_prop_return)
+{
+    Debugger();
+    return (Status) 0;
+}
+void		
+XSetWMClientMachine(
+    Display* display, 
+    Window w, 
+    XTextProperty* text_prop)
+{
+    Debugger();
+}
+XIC		
+XCreateIC(
+    void)
+{
+    Debugger();
+    return (XIC) 0;
 }
 
 /*

@@ -10,36 +10,153 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tk3d.c 1.60 97/01/13 17:23:10
+ * RCS: @(#) $Id$
  */
 
-#include <tk3d.h>
+#include "tk3d.h"
 
 /*
- * Hash table to map from a border's values (color, etc.) to a
- * Border structure for those values.
+ * The following table defines the string values for reliefs, which are
+ * used by Tk_GetReliefFromObj.
  */
 
-static Tcl_HashTable borderTable;
-typedef struct {
-    Tk_Uid colorName;		/* Color for border. */
-    Colormap colormap;		/* Colormap used for allocating border
-				 * colors. */
-    Screen *screen;		/* Screen on which border will be drawn. */
-} BorderKey;
-
-static int initialized = 0;	/* 0 means static structures haven't
-				 * been initialized yet. */
+static char *reliefStrings[] = {"flat", "groove", "raised", "ridge", "solid",
+	"sunken", (char *) NULL};
 
 /*
  * Forward declarations for procedures defined in this file:
  */
 
-static void		BorderInit _ANSI_ARGS_((void));
+static void		BorderInit _ANSI_ARGS_((TkDisplay *dispPtr));
+static void		DupBorderObjProc _ANSI_ARGS_((Tcl_Obj *srcObjPtr,
+			    Tcl_Obj *dupObjPtr));
+static void		FreeBorderObjProc _ANSI_ARGS_((Tcl_Obj *objPtr));
 static int		Intersect _ANSI_ARGS_((XPoint *a1Ptr, XPoint *a2Ptr,
 			    XPoint *b1Ptr, XPoint *b2Ptr, XPoint *iPtr));
+static void		InitBorderObj _ANSI_ARGS_((Tcl_Obj *objPtr));
 static void		ShiftLine _ANSI_ARGS_((XPoint *p1Ptr, XPoint *p2Ptr,
 			    int distance, XPoint *p3Ptr));
+
+/*
+ * The following structure defines the implementation of the "border" Tcl
+ * object, used for drawing. The border object remembers the hash table entry
+ * associated with a border. The actual allocation and deallocation of the
+ * border should be done by the configuration package when the border option
+ * is set.
+ */
+
+static Tcl_ObjType borderObjType = {
+    "border",			/* name */
+    FreeBorderObjProc,		/* freeIntRepProc */
+    DupBorderObjProc,		/* dupIntRepProc */
+    NULL,			/* updateStringProc */
+    NULL			/* setFromAnyProc */
+};
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_Alloc3DBorderFromObj --
+ *
+ *	Given a Tcl_Obj *, map the value to a corresponding
+ *	Tk_3DBorder structure based on the tkwin given.
+ *
+ * Results:
+ *	The return value is a token for a data structure describing a
+ *	3-D border.  This token may be passed to procedures such as
+ *	Tk_Draw3DRectangle and Tk_Free3DBorder.  If an error prevented
+ *	the border from being created then NULL is returned and an error
+ *	message will be left in the interp's result.
+ *
+ * Side effects:
+ *	The border is added to an internal database with a reference
+ *	count. For each call to this procedure, there should eventually
+ *	be a call to FreeBorderObjProc so that the database is
+ *	cleaned up when borders aren't in use anymore.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tk_3DBorder
+Tk_Alloc3DBorderFromObj(interp, tkwin, objPtr)
+    Tcl_Interp *interp;		/* Interp for error results. */
+    Tk_Window tkwin;		/* Need the screen the border is used on.*/
+    Tcl_Obj *objPtr;		/* Object giving name of color for window
+				 * background. */
+{
+    TkBorder *borderPtr;
+
+    if (objPtr->typePtr != &borderObjType) {
+	InitBorderObj(objPtr);
+    }
+    borderPtr = (TkBorder *) objPtr->internalRep.twoPtrValue.ptr1;
+
+    /*
+     * If the object currently points to a TkBorder, see if it's the
+     * one we want.  If so, increment its reference count and return.
+     */
+
+    if (borderPtr != NULL) {
+	if (borderPtr->resourceRefCount == 0) {
+	    /*
+	     * This is a stale reference: it refers to a border that's
+	     * no longer in use.  Clear the reference.
+	     */
+
+	    FreeBorderObjProc(objPtr);
+	    borderPtr = NULL;
+	} else if ((Tk_Screen(tkwin) == borderPtr->screen)
+		&& (Tk_Colormap(tkwin) == borderPtr->colormap)) {
+	    borderPtr->resourceRefCount++;
+	    return (Tk_3DBorder) borderPtr;
+	}
+    }
+
+    /*
+     * The object didn't point to the border that we wanted.  Search
+     * the list of borders with the same name to see if one of the
+     * others is the right one.
+     */
+
+    /*
+     * If the cached value is NULL, either the object type was not a
+     * color going in, or the object is a color type but had
+     * previously been freed.
+     *
+     * If the value is not NULL, the internal rep is the value
+     * of the color the last time this object was accessed. Check
+     * the screen and colormap of the last access, and if they
+     * match, we are done.
+     */
+
+    if (borderPtr != NULL) {
+	TkBorder *firstBorderPtr = 
+		(TkBorder *) Tcl_GetHashValue(borderPtr->hashPtr);
+	FreeBorderObjProc(objPtr);
+	for (borderPtr = firstBorderPtr ; borderPtr != NULL;
+		borderPtr = borderPtr->nextPtr) {
+	    if ((Tk_Screen(tkwin) == borderPtr->screen)
+		&& (Tk_Colormap(tkwin) == borderPtr->colormap)) {
+		borderPtr->resourceRefCount++;
+		borderPtr->objRefCount++;
+		objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) borderPtr;
+		return (Tk_3DBorder) borderPtr;
+	    }
+	}
+    }
+
+    /*
+     * Still no luck.  Call Tk_Get3DBorder to allocate a new border.
+     */
+
+    borderPtr = (TkBorder *) Tk_Get3DBorder(interp, tkwin,
+	    Tcl_GetString(objPtr));
+    objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) borderPtr;
+    if (borderPtr != NULL) {
+	borderPtr->objRefCount++;
+    }
+    return (Tk_3DBorder) borderPtr;
+}
 
 /*
  *--------------------------------------------------------------
@@ -49,12 +166,11 @@ static void		ShiftLine _ANSI_ARGS_((XPoint *p1Ptr, XPoint *p2Ptr,
  *	Create a data structure for displaying a 3-D border.
  *
  * Results:
- *	The return value is a token for a data structure
- *	describing a 3-D border.  This token may be passed
- *	to Tk_Draw3DRectangle and Tk_Free3DBorder.  If an
- *	error prevented the border from being created then
- *	NULL is returned and an error message will be left
- *	in interp->result.
+ *	The return value is a token for a data structure describing a
+ *	3-D border.  This token may be passed to procedures such as
+ *	Tk_Draw3DRectangle and Tk_Free3DBorder.  If an error prevented
+ *	the border from being created then NULL is returned and an error
+ *	message will be left in the interp's result.
  *
  * Side effects:
  *	Data structures, graphics contexts, etc. are allocated.
@@ -69,70 +185,75 @@ Tk_Get3DBorder(interp, tkwin, colorName)
     Tcl_Interp *interp;		/* Place to store an error message. */
     Tk_Window tkwin;		/* Token for window in which border will
 				 * be drawn. */
-    Tk_Uid colorName;		/* String giving name of color
+    char *colorName;		/* String giving name of color
 				 * for window background. */
 {
-    BorderKey key;
     Tcl_HashEntry *hashPtr;
-    register TkBorder *borderPtr;
+    TkBorder *borderPtr, *existingBorderPtr;
     int new;
     XGCValues gcValues;
+    XColor *bgColorPtr;
+    TkDisplay *dispPtr;
 
-    if (!initialized) {
-	BorderInit();
+    dispPtr = ((TkWindow *) tkwin)->dispPtr;
+
+    if (!dispPtr->borderInit) {
+	BorderInit(dispPtr);
+    }
+
+    hashPtr = Tcl_CreateHashEntry(&dispPtr->borderTable, colorName, &new);
+    if (!new) {
+	existingBorderPtr = (TkBorder *) Tcl_GetHashValue(hashPtr);
+	for (borderPtr = existingBorderPtr; borderPtr != NULL;
+		borderPtr = borderPtr->nextPtr) {
+	    if ((Tk_Screen(tkwin) == borderPtr->screen)
+		    && (Tk_Colormap(tkwin) == borderPtr->colormap)) {
+		borderPtr->resourceRefCount++;
+		return (Tk_3DBorder) borderPtr;
+	    }
+	}
+    } else {
+	existingBorderPtr = NULL;
     }
 
     /*
-     * First, check to see if there's already a border that will work
-     * for this request.
+     * No satisfactory border exists yet.  Initialize a new one.
      */
 
-    key.colorName = colorName;
-    key.colormap = Tk_Colormap(tkwin);
-    key.screen = Tk_Screen(tkwin);
-
-    hashPtr = Tcl_CreateHashEntry(&borderTable, (char *) &key, &new);
-    if (!new) {
-	borderPtr = (TkBorder *) Tcl_GetHashValue(hashPtr);
-	borderPtr->refCount++;
-    } else {
-	XColor *bgColorPtr;
-
-	/*
-	 * No satisfactory border exists yet.  Initialize a new one.
-	 */
-    
-	bgColorPtr = Tk_GetColor(interp, tkwin, colorName);
-	if (bgColorPtr == NULL) {
+    bgColorPtr = Tk_GetColor(interp, tkwin, colorName);
+    if (bgColorPtr == NULL) {
+	if (new) {
 	    Tcl_DeleteHashEntry(hashPtr);
-	    return NULL;
 	}
-
-	borderPtr = TkpGetBorder();
-	borderPtr->screen = Tk_Screen(tkwin);
-	borderPtr->visual = Tk_Visual(tkwin);
-	borderPtr->depth = Tk_Depth(tkwin);
-	borderPtr->colormap = key.colormap;
-	borderPtr->refCount = 1;
-	borderPtr->bgColorPtr = bgColorPtr;
-	borderPtr->darkColorPtr = NULL;
-	borderPtr->lightColorPtr = NULL;
-	borderPtr->shadow = None;
-	borderPtr->bgGC = None;
-	borderPtr->darkGC = None;
-	borderPtr->lightGC = None;
-	borderPtr->hashPtr = hashPtr;
-	Tcl_SetHashValue(hashPtr, borderPtr);
-    
-	/*
-	 * Create the information for displaying the background color,
-	 * but delay the allocation of shadows until they are actually
-	 * needed for drawing.
-	 */
-    
-	gcValues.foreground = borderPtr->bgColorPtr->pixel;
-	borderPtr->bgGC = Tk_GetGC(tkwin, GCForeground, &gcValues);
+	return NULL;
     }
+
+    borderPtr = TkpGetBorder();
+    borderPtr->screen = Tk_Screen(tkwin);
+    borderPtr->visual = Tk_Visual(tkwin);
+    borderPtr->depth = Tk_Depth(tkwin);
+    borderPtr->colormap = Tk_Colormap(tkwin);
+    borderPtr->resourceRefCount = 1;
+    borderPtr->objRefCount = 0;
+    borderPtr->bgColorPtr = bgColorPtr;
+    borderPtr->darkColorPtr = NULL;
+    borderPtr->lightColorPtr = NULL;
+    borderPtr->shadow = None;
+    borderPtr->bgGC = None;
+    borderPtr->darkGC = None;
+    borderPtr->lightGC = None;
+    borderPtr->hashPtr = hashPtr;
+    borderPtr->nextPtr = existingBorderPtr;
+    Tcl_SetHashValue(hashPtr, borderPtr);
+
+    /*
+     * Create the information for displaying the background color,
+     * but delay the allocation of shadows until they are actually
+     * needed for drawing.
+     */
+
+    gcValues.foreground = borderPtr->bgColorPtr->pixel;
+    borderPtr->bgGC = Tk_GetGC(tkwin, GCForeground, &gcValues);
     return (Tk_3DBorder) borderPtr;
 }
 
@@ -208,7 +329,7 @@ Tk_NameOf3DBorder(border)
 {
     TkBorder *borderPtr = (TkBorder *) border;
 
-    return ((BorderKey *) borderPtr->hashPtr->key.words)->colorName;
+    return borderPtr->hashPtr->key.string;
 }
 
 /*
@@ -303,35 +424,151 @@ void
 Tk_Free3DBorder(border)
     Tk_3DBorder border;		/* Token for border to be released. */
 {
-    register TkBorder *borderPtr = (TkBorder *) border;
+    TkBorder *borderPtr = (TkBorder *) border;
     Display *display = DisplayOfScreen(borderPtr->screen);
+    TkBorder *prevPtr;
 
-    borderPtr->refCount--;
-    if (borderPtr->refCount == 0) {
-	TkpFreeBorder(borderPtr);
-	if (borderPtr->bgColorPtr != NULL) {
-	    Tk_FreeColor(borderPtr->bgColorPtr);
+    borderPtr->resourceRefCount--;
+    if (borderPtr->resourceRefCount > 0) {
+	return;
+    }
+
+    prevPtr = (TkBorder *) Tcl_GetHashValue(borderPtr->hashPtr);
+    TkpFreeBorder(borderPtr);
+    if (borderPtr->bgColorPtr != NULL) {
+	Tk_FreeColor(borderPtr->bgColorPtr);
+    }
+    if (borderPtr->darkColorPtr != NULL) {
+	Tk_FreeColor(borderPtr->darkColorPtr);
+    }
+    if (borderPtr->lightColorPtr != NULL) {
+	Tk_FreeColor(borderPtr->lightColorPtr);
+    }
+    if (borderPtr->shadow != None) {
+	Tk_FreeBitmap(display, borderPtr->shadow);
+    }
+    if (borderPtr->bgGC != None) {
+	Tk_FreeGC(display, borderPtr->bgGC);
+    }
+    if (borderPtr->darkGC != None) {
+	Tk_FreeGC(display, borderPtr->darkGC);
+    }
+    if (borderPtr->lightGC != None) {
+	Tk_FreeGC(display, borderPtr->lightGC);
+    }
+    if (prevPtr == borderPtr) {
+	if (borderPtr->nextPtr == NULL) {
+	    Tcl_DeleteHashEntry(borderPtr->hashPtr);
+	} else {
+	    Tcl_SetHashValue(borderPtr->hashPtr, borderPtr->nextPtr);
 	}
-	if (borderPtr->darkColorPtr != NULL) {
-	    Tk_FreeColor(borderPtr->darkColorPtr);
+    } else {
+	while (prevPtr->nextPtr != borderPtr) {
+	    prevPtr = prevPtr->nextPtr;
 	}
-	if (borderPtr->lightColorPtr != NULL) {
-	    Tk_FreeColor(borderPtr->lightColorPtr);
-	}
-	if (borderPtr->shadow != None) {
-	    Tk_FreeBitmap(display, borderPtr->shadow);
-	}
-	if (borderPtr->bgGC != None) {
-	    Tk_FreeGC(display, borderPtr->bgGC);
-	}
-	if (borderPtr->darkGC != None) {
-	    Tk_FreeGC(display, borderPtr->darkGC);
-	}
-	if (borderPtr->lightGC != None) {
-	    Tk_FreeGC(display, borderPtr->lightGC);
-	}
-	Tcl_DeleteHashEntry(borderPtr->hashPtr);
+	prevPtr->nextPtr = borderPtr->nextPtr;
+    }
+    if (borderPtr->objRefCount == 0) {
 	ckfree((char *) borderPtr);
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_Free3DBorderFromObj --
+ *
+ *	This procedure is called to release a border allocated by
+ *	Tk_Alloc3DBorderFromObj. It does not throw away the Tcl_Obj *;
+ *	it only gets rid of the hash table entry for this border
+ *	and clears the cached value that is normally stored in the object.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The reference count associated with the border represented by
+ *	objPtr is decremented, and the border's resources are released 
+ *	to X if there are no remaining uses for it.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tk_Free3DBorderFromObj(tkwin, objPtr)
+    Tk_Window tkwin;		/* The window this border lives in. Needed
+				 * for the screen and colormap values. */
+    Tcl_Obj *objPtr;		/* The Tcl_Obj * to be freed. */
+{
+    Tk_Free3DBorder(Tk_Get3DBorderFromObj(tkwin, objPtr));
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * FreeBorderObjProc -- 
+ *
+ *	This proc is called to release an object reference to a border.
+ *	Called when the object's internal rep is released or when
+ *	the cached borderPtr needs to be changed.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The object reference count is decremented. When both it
+ *	and the hash ref count go to zero, the border's resources
+ *	are released.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static void
+FreeBorderObjProc(objPtr)
+    Tcl_Obj *objPtr;		/* The object we are releasing. */
+{
+    TkBorder *borderPtr = (TkBorder *) objPtr->internalRep.twoPtrValue.ptr1;
+
+    if (borderPtr != NULL) {
+	borderPtr->objRefCount--;
+	if ((borderPtr->objRefCount == 0) 
+		&& (borderPtr->resourceRefCount == 0)) {
+	    ckfree((char *) borderPtr);
+	}
+	objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) NULL;
+    }
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * DupBorderObjProc -- 
+ *
+ *	When a cached border object is duplicated, this is called to
+ *	update the internal reps.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The border's objRefCount is incremented and the internal rep
+ *	of the copy is set to point to it.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+static void
+DupBorderObjProc(srcObjPtr, dupObjPtr)
+    Tcl_Obj *srcObjPtr;		/* The object we are copying from. */
+    Tcl_Obj *dupObjPtr;		/* The object we are copying to. */
+{
+    TkBorder *borderPtr = (TkBorder *) srcObjPtr->internalRep.twoPtrValue.ptr1;
+    
+    dupObjPtr->typePtr = srcObjPtr->typePtr;
+    dupObjPtr->internalRep.twoPtrValue.ptr1 = (VOID *) borderPtr;
+
+    if (borderPtr != NULL) {
+	borderPtr->objRefCount++;
     }
 }
 
@@ -360,6 +597,35 @@ Tk_SetBackgroundFromBorder(tkwin, border)
     register TkBorder *borderPtr = (TkBorder *) border;
 
     Tk_SetWindowBackground(tkwin, borderPtr->bgColorPtr->pixel);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_GetReliefFromObj --
+ *
+ *	Return an integer value based on the value of the objPtr.
+ *
+ * Results:
+ *	The return value is a standard Tcl result. If an error occurs during
+ *	conversion, an error message is left in the interpreter's result
+ *	unless "interp" is NULL.
+ *
+ * Side effects:
+ *	The object gets converted by Tcl_GetIndexFromObj.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+Tk_GetReliefFromObj(interp, objPtr, resultPtr)
+    Tcl_Interp *interp;		/* Used for error reporting. */
+    Tcl_Obj *objPtr;		/* The object we are trying to get the 
+				 * value from. */
+    int *resultPtr;		/* Where to place the answer. */
+{
+    return Tcl_GetIndexFromObj(interp, objPtr, reliefStrings, "relief", 0, 
+	    resultPtr);
 }
 
 /*
@@ -407,8 +673,11 @@ Tk_GetRelief(interp, name, reliefPtr)
     } else if ((c == 's') && (strncmp(name, "sunken", length) == 0)) {
 	*reliefPtr = TK_RELIEF_SUNKEN;
     } else {
-	sprintf(interp->result, "bad relief type \"%.50s\": must be %s",
+	char buf[200];
+
+	sprintf(buf, "bad relief type \"%.50s\": must be %s",
 		name, "flat, groove, raised, ridge, solid, or sunken");
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -782,10 +1051,11 @@ Tk_Fill3DPolygon(tkwin, drawable, border, pointPtr, numPoints,
  */
 
 static void
-BorderInit()
+BorderInit(dispPtr)
+     TkDisplay * dispPtr;     /* Used to access thread-specific data. */
 {
-    initialized = 1;
-    Tcl_InitHashTable(&borderTable, sizeof(BorderKey)/sizeof(int));
+    dispPtr->borderInit = 1;
+    Tcl_InitHashTable(&dispPtr->borderTable, TCL_STRING_KEYS);
 }
 
 /*
@@ -946,4 +1216,171 @@ Intersect(a1Ptr, a2Ptr, b1Ptr, b2Ptr, iPtr)
 	iPtr->y = (p + q/2)/q;
     }
     return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_Get3DBorderFromObj --
+ *
+ *	Returns the border referred to by a Tcl object.  The border must
+ *	already have been allocated via a call to Tk_Alloc3DBorderFromObj 
+ *	or Tk_Get3DBorder.
+ *
+ * Results:
+ *	Returns the Tk_3DBorder that matches the tkwin and the string rep
+ *	of the name of the border given in objPtr.
+ *
+ * Side effects:
+ *	If the object is not already a border, the conversion will free
+ *	any old internal representation. 
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tk_3DBorder
+Tk_Get3DBorderFromObj(tkwin, objPtr)
+    Tk_Window tkwin;
+    Tcl_Obj *objPtr;		/* The object whose string value selects
+				 * a border. */
+{
+    TkBorder *borderPtr = NULL;
+    Tcl_HashEntry *hashPtr;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
+
+    if (objPtr->typePtr != &borderObjType) {
+	InitBorderObj(objPtr);
+    }
+
+    borderPtr = (TkBorder *) objPtr->internalRep.twoPtrValue.ptr1;
+    if (borderPtr != NULL) {
+	if ((borderPtr->resourceRefCount > 0)
+		&& (Tk_Screen(tkwin) == borderPtr->screen)
+		&& (Tk_Colormap(tkwin) == borderPtr->colormap)) {
+	    /*
+	     * The object already points to the right border structure.
+	     * Just return it.
+	     */
+
+	    return (Tk_3DBorder) borderPtr;
+	}
+	hashPtr = borderPtr->hashPtr;
+	FreeBorderObjProc(objPtr);
+    } else {
+	hashPtr = Tcl_FindHashEntry(&dispPtr->borderTable, 
+                Tcl_GetString(objPtr));
+	if (hashPtr == NULL) {
+	    goto error;
+	}
+    }
+
+    /*
+     * At this point we've got a hash table entry, off of which hang
+     * one or more  TkBorder structures.  See if any of them will work.
+     */
+
+    for (borderPtr = (TkBorder *) Tcl_GetHashValue(hashPtr);
+	    (borderPtr != NULL); borderPtr = borderPtr->nextPtr) {
+	if ((Tk_Screen(tkwin) == borderPtr->screen)
+		&& (Tk_Colormap(tkwin) == borderPtr->colormap)) {
+	    objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) borderPtr;
+	    borderPtr->objRefCount++;
+	    return (Tk_3DBorder) borderPtr;
+	}
+    }
+
+    error:
+    panic("Tk_Get3DBorderFromObj called with non-existent border!");
+    /*
+     * The following code isn't reached; it's just there to please compilers.
+     */
+    return NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * InitBorderObj --
+ *
+ *	Attempt to generate a border internal form for the Tcl object
+ *	"objPtr".
+ *
+ * Results:
+ *	The return value is a standard Tcl result. If an error occurs during
+ *	conversion, an error message is left in the interpreter's result
+ *	unless "interp" is NULL.
+ *
+ * Side effects:
+ *	If no error occurs, a blank internal format for a border value
+ *	is intialized. The final form cannot be done without a Tk_Window.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+InitBorderObj(objPtr)
+    Tcl_Obj *objPtr;		/* The object to convert. */
+{
+    Tcl_ObjType *typePtr;
+
+    /*
+     * Free the old internalRep before setting the new one. 
+     */
+
+    Tcl_GetString(objPtr);
+    typePtr = objPtr->typePtr;
+    if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
+	(*typePtr->freeIntRepProc)(objPtr);
+    }
+    objPtr->typePtr = &borderObjType;
+    objPtr->internalRep.twoPtrValue.ptr1 = (VOID *) NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkDebugBorder --
+ *
+ *	This procedure returns debugging information about a border.
+ *
+ * Results:
+ *	The return value is a list with one sublist for each TkBorder
+ *	corresponding to "name".  Each sublist has two elements that
+ *	contain the resourceRefCount and objRefCount fields from the
+ *	TkBorder structure.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_Obj *
+TkDebugBorder(tkwin, name)
+    Tk_Window tkwin;		/* The window in which the border will be
+				 * used (not currently used). */
+    char *name;			/* Name of the desired color. */
+{
+    TkBorder *borderPtr;
+    Tcl_HashEntry *hashPtr;
+    Tcl_Obj *resultPtr, *objPtr;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
+
+    resultPtr = Tcl_NewObj();
+    hashPtr = Tcl_FindHashEntry(&dispPtr->borderTable, name);
+    if (hashPtr != NULL) {
+	borderPtr = (TkBorder *) Tcl_GetHashValue(hashPtr);
+	if (borderPtr == NULL) {
+	    panic("TkDebugBorder found empty hash table entry");
+	}
+	for ( ; (borderPtr != NULL); borderPtr = borderPtr->nextPtr) {
+	    objPtr = Tcl_NewObj();
+	    Tcl_ListObjAppendElement(NULL, objPtr,
+		    Tcl_NewIntObj(borderPtr->resourceRefCount));
+	    Tcl_ListObjAppendElement(NULL, objPtr,
+		    Tcl_NewIntObj(borderPtr->objRefCount)); 
+	    Tcl_ListObjAppendElement(NULL, resultPtr, objPtr);
+	}
+    }
+    return resultPtr;
 }

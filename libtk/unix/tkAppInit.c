@@ -5,15 +5,16 @@
  *	use in wish and similar Tk-based applications.
  *
  * Copyright (c) 1993 The Regents of the University of California.
- * Copyright (c) 1994 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkAppInit.c 1.22 96/05/29 09:47:08
+ * RCS: @(#) $Id$
  */
 
 #include "tk.h"
+#include "locale.h"
 
 /*
  * The following variable is a special hack that is needed in order for
@@ -24,7 +25,8 @@ extern int matherr();
 int *tclDummyMathPtr = (int *) matherr;
 
 #ifdef TK_TEST
-EXTERN int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Tcltest_Init _ANSI_ARGS_((Tcl_Interp *interp));
+extern int		Tktest_Init _ANSI_ARGS_((Tcl_Interp *interp));
 #endif /* TK_TEST */
 
 /*
@@ -64,7 +66,7 @@ main(argc, argv)
  *
  * Results:
  *	Returns a standard Tcl completion code, and leaves an error
- *	message in interp->result if an error occurs.
+ *	message in the interp's result if an error occurs.
  *
  * Side effects:
  *	Depends on the startup script.
@@ -84,6 +86,11 @@ Tcl_AppInit(interp)
     }
     Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
 #ifdef TK_TEST
+    if (Tcltest_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init,
+            (Tcl_PackageInitProc *) NULL);
     if (Tktest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }

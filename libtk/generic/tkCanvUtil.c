@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkCanvUtil.c 1.7 96/05/03 10:54:22
+ * RCS: @(#) $Id$
  */
 
 #include "tk.h"
@@ -177,7 +177,7 @@ Tk_CanvasWindowCoords(canvas, x, y, screenXPtr, screenYPtr)
  *	TCL_OK is returned, then everything went well and the
  *	canvas coordinate is stored at *doublePtr;  otherwise
  *	TCL_ERROR is returned and an error message is left in
- *	interp->result.
+ *	the interp's result.
  *
  * Side effects:
  *	None.

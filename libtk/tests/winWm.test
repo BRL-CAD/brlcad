@@ -6,18 +6,13 @@
 # generates output for errors.  No output means no errors were found.
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) winWm.test 1.5 97/08/13 15:42:46
+# RCS: @(#) $Id$
 
-if {$tcl_platform(platform) != "windows"} {
-    return
-}
-
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -41,7 +36,7 @@ update
 set menuheight [expr $menuheight - [winfo y .t]]
 destroy .t
 
-test winWm-1.1 {TkWmMapWindow} {
+test winWm-1.1 {TkWmMapWindow} {pcOnly} {
     toplevel .t
     wm override .t 1
     wm geometry .t +0+0
@@ -50,7 +45,7 @@ test winWm-1.1 {TkWmMapWindow} {
     destroy .t
     set result
 } {0 0}
-test winWm-1.2 {TkWmMapWindow} {
+test winWm-1.2 {TkWmMapWindow} {pcOnly} {
     toplevel .t
     wm transient .t .
     update
@@ -62,7 +57,7 @@ test winWm-1.2 {TkWmMapWindow} {
     destroy .t
     set msg
 } {can't iconify ".t": it is a transient}
-test winWm-1.3 {TkWmMapWindow} {
+test winWm-1.3 {TkWmMapWindow} {pcOnly} {
     toplevel .t
     update
     toplevel .t2
@@ -71,7 +66,7 @@ test winWm-1.3 {TkWmMapWindow} {
     destroy .t .t2
     set result
 } 1
-test winWm-1.4 {TkWmMapWindow} {
+test winWm-1.4 {TkWmMapWindow} {pcOnly} {
     toplevel .t
     wm geometry .t +10+10
     update
@@ -82,7 +77,7 @@ test winWm-1.4 {TkWmMapWindow} {
     destroy .t .t2
     set result
 } {10 40}
-test winWm-1.5 {TkWmMapWindow} {
+test winWm-1.5 {TkWmMapWindow} {pcOnly} {
     toplevel .t
     wm iconify .t
     update
@@ -91,7 +86,7 @@ test winWm-1.5 {TkWmMapWindow} {
     set result
 } iconic
 
-test winWm-2.1 {TkpWmSetState} {
+test winWm-2.1 {TkpWmSetState} {pcOnly} {
     toplevel .t
     wm geometry .t 150x50+10+10
     update
@@ -105,7 +100,7 @@ test winWm-2.1 {TkpWmSetState} {
     destroy .t
     set result
 } {normal iconic normal}
-test winWm-2.2 {TkpWmSetState} {
+test winWm-2.2 {TkpWmSetState} {pcOnly} {
     toplevel .t
     wm geometry .t 150x50+10+10
     update
@@ -122,7 +117,7 @@ test winWm-2.2 {TkpWmSetState} {
     destroy .t
     set result
 } {normal withdrawn iconic normal}
-test winWm-2.3 {TkpWmSetState} {
+test winWm-2.3 {TkpWmSetState} {pcOnly} {
     set result {}
     toplevel .t
     wm geometry .t 150x50+10+10
@@ -142,7 +137,7 @@ test winWm-2.3 {TkpWmSetState} {
 } {{normal 150x50+10+10} {iconic 150x50+10+10} {iconic 150x50+10+10} {normal 200x50+10+10}}
 
 
-test winWm-3.1 {ConfigureTopLevel: window geometry propagation} {
+test winWm-3.1 {ConfigureTopLevel: window geometry propagation} {pcOnly} {
     toplevel .t
     wm geometry .t +0+0
     button .t.b
@@ -161,7 +156,7 @@ test winWm-3.1 {ConfigureTopLevel: window geometry propagation} {
     set x
 } 1
 
-test winWm-4.1 {ConfigureTopLevel: menu resizing} {
+test winWm-4.1 {ConfigureTopLevel: menu resizing} {pcOnly} {
     set result {}
     toplevel .t
     frame .t.f -width 150 -height 50 -bg red
@@ -178,7 +173,7 @@ test winWm-4.1 {ConfigureTopLevel: menu resizing} {
     set result
 } [expr $menuheight + 1]
 
-test winWm-5.1 {UpdateGeometryInfo: menu resizing} {
+test winWm-5.1 {UpdateGeometryInfo: menu resizing} {pcOnly} {
     set result {}
     toplevel .t
     frame .t.f -width 150 -height 50 -bg red
@@ -197,7 +192,7 @@ test winWm-5.1 {UpdateGeometryInfo: menu resizing} {
     destroy .t
     set result
 } {50 50 50}
-test winWm-5.2 {UpdateGeometryInfo: menu resizing} {
+test winWm-5.2 {UpdateGeometryInfo: menu resizing} {pcOnly} {
     set result {}
     toplevel .t
     frame .t.f -width 150 -height 50 -bg red
@@ -217,3 +212,19 @@ test winWm-5.2 {UpdateGeometryInfo: menu resizing} {
     destroy .t
     set result
 } {50 50 0}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+

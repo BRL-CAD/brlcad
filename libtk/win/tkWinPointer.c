@@ -4,11 +4,12 @@
  *	Windows specific mouse tracking code.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1998-1999 by Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWinPointer.c 1.28 97/10/31 08:40:07
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -241,6 +242,31 @@ MouseTimerProc(clientData)
 /*
  *----------------------------------------------------------------------
  *
+ * TkWinCancelMouseTimer --
+ *
+ *    If the mouse timer is set, cancel it.
+ *
+ * Results:
+ *    None.
+ *
+ * Side effects:
+ *    May cancel the mouse timer.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkWinCancelMouseTimer()
+{
+    if (mouseTimerSet) {
+	Tcl_DeleteTimerHandler(mouseTimer);
+	mouseTimerSet = 0;
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TkGetPointerCoords --
  *
  *	Fetch the position of the mouse pointer.
@@ -408,6 +434,15 @@ TkpChangeFocus(winPtr, force)
 
     if (winPtr->window == None) {
 	panic("ChangeXFocus got null X window");
+    }
+ 
+    /*
+     * Change the foreground window so the focus window is raised to the top of
+     * the system stacking order and gets the keyboard focus.
+     */
+
+    if (force) {
+	TkWinSetForegroundWindow(winPtr);
     }
     XSetInputFocus(dispPtr->display, winPtr->window, RevertToParent,
 	    CurrentTime);

@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWinDraw.c 1.30 97/03/21 11:20:05
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -105,6 +105,12 @@ static int bltModes[] = {
 
 typedef BOOL (CALLBACK *WinDrawFunc) _ANSI_ARGS_((HDC dc,
 			    CONST POINT* points, int npoints));
+
+typedef struct ThreadSpecificData {
+    POINT *winPoints;    /* Array of points that is reused. */
+    int nWinPoints;	/* Current size of point array. */
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Forward declarations for procedures defined in this file:
@@ -212,7 +218,8 @@ TkWinReleaseDrawableDC(d, dc, state)
  *	Returns the converted array of POINTs.
  *
  * Side effects:
- *	Allocates a block of memory that should not be freed.
+ *	Allocates a block of memory in thread local storage that 
+ *      should not be freed.
  *
  *----------------------------------------------------------------------
  */
@@ -224,8 +231,8 @@ ConvertPoints(points, npoints, mode, bbox)
     int mode;			/* CoordModeOrigin or CoordModePrevious. */
     RECT *bbox;			/* Bounding box of points. */
 {
-    static POINT *winPoints = NULL; /* Array of points that is reused. */
-    static int nWinPoints = -1;	    /* Current size of point array. */
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     int i;
 
     /*
@@ -233,16 +240,16 @@ ConvertPoints(points, npoints, mode, bbox)
      * we reuse the last array if it is large enough.
      */
 
-    if (npoints > nWinPoints) {
-	if (winPoints != NULL) {
-	    ckfree((char *) winPoints);
+    if (npoints > tsdPtr->nWinPoints) {
+	if (tsdPtr->winPoints != NULL) {
+	    ckfree((char *) tsdPtr->winPoints);
 	}
-	winPoints = (POINT *) ckalloc(sizeof(POINT) * npoints);
-	if (winPoints == NULL) {
-	    nWinPoints = -1;
+	tsdPtr->winPoints = (POINT *) ckalloc(sizeof(POINT) * npoints);
+	if (tsdPtr->winPoints == NULL) {
+	    tsdPtr->nWinPoints = -1;
 	    return NULL;
 	}
-	nWinPoints = npoints;
+	tsdPtr->nWinPoints = npoints;
     }
 
     bbox->left = bbox->right = points[0].x;
@@ -250,26 +257,26 @@ ConvertPoints(points, npoints, mode, bbox)
     
     if (mode == CoordModeOrigin) {
 	for (i = 0; i < npoints; i++) {
-	    winPoints[i].x = points[i].x;
-	    winPoints[i].y = points[i].y;
-	    bbox->left = MIN(bbox->left, winPoints[i].x);
-	    bbox->right = MAX(bbox->right, winPoints[i].x);
-	    bbox->top = MIN(bbox->top, winPoints[i].y);
-	    bbox->bottom = MAX(bbox->bottom, winPoints[i].y);
+	    tsdPtr->winPoints[i].x = points[i].x;
+	    tsdPtr->winPoints[i].y = points[i].y;
+	    bbox->left = MIN(bbox->left, tsdPtr->winPoints[i].x);
+	    bbox->right = MAX(bbox->right, tsdPtr->winPoints[i].x);
+	    bbox->top = MIN(bbox->top, tsdPtr->winPoints[i].y);
+	    bbox->bottom = MAX(bbox->bottom, tsdPtr->winPoints[i].y);
 	}
     } else {
-	winPoints[0].x = points[0].x;
-	winPoints[0].y = points[0].y;
+	tsdPtr->winPoints[0].x = points[0].x;
+	tsdPtr->winPoints[0].y = points[0].y;
 	for (i = 1; i < npoints; i++) {
-	    winPoints[i].x = winPoints[i-1].x + points[i].x;
-	    winPoints[i].y = winPoints[i-1].y + points[i].y;
-	    bbox->left = MIN(bbox->left, winPoints[i].x);
-	    bbox->right = MAX(bbox->right, winPoints[i].x);
-	    bbox->top = MIN(bbox->top, winPoints[i].y);
-	    bbox->bottom = MAX(bbox->bottom, winPoints[i].y);
+	    tsdPtr->winPoints[i].x = tsdPtr->winPoints[i-1].x + points[i].x;
+	    tsdPtr->winPoints[i].y = tsdPtr->winPoints[i-1].y + points[i].y;
+	    bbox->left = MIN(bbox->left, tsdPtr->winPoints[i].x);
+	    bbox->right = MAX(bbox->right, tsdPtr->winPoints[i].x);
+	    bbox->top = MIN(bbox->top, tsdPtr->winPoints[i].y);
+	    bbox->bottom = MAX(bbox->bottom, tsdPtr->winPoints[i].y);
 	}
     }
-    return winPoints;
+    return tsdPtr->winPoints;
 }
 
 /*
@@ -1262,3 +1269,37 @@ TkWinFillRect(dc, x, y, width, height, pixel)
     ExtTextOut(dc, 0, 0, ETO_OPAQUE, &rect, NULL, 0, NULL);
     SetBkColor(dc, oldColor);
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpDrawHighlightBorder --
+ *
+ *	This procedure draws a rectangular ring around the outside of
+ *	a widget to indicate that it has received the input focus.
+ *
+ *      On Windows, we just draw the simple inset ring.  On other sytems,
+ *      e.g. the Mac, the focus ring is a little more complicated, so we
+ *      need this abstraction.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	A rectangle "width" pixels wide is drawn in "drawable",
+ *	corresponding to the outer area of "tkwin".
+ *
+ *----------------------------------------------------------------------
+ */
+
+void 
+TkpDrawHighlightBorder (
+        Tk_Window tkwin, 
+        GC fgGC, 
+        GC bgGC, 
+        int highlightWidth,
+        Drawable drawable)
+{
+    TkDrawInsetFocusHighlight (tkwin, fgGC, highlightWidth, drawable, 0);
+}
+        

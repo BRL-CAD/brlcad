@@ -10,7 +10,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkUnix.c 1.5 97/01/07 11:41:39
+ * RCS: @(#) $Id$
  */
 
 #include <tkInt.h>
@@ -40,7 +40,8 @@ TkGetServerInfo(interp, tkwin)
     Tk_Window tkwin;		/* Token for window;  this selects a
 				 * particular display and server. */
 {
-    char buffer[50], buffer2[50];
+    char buffer[8 + TCL_INTEGER_SPACE * 2];
+    char buffer2[TCL_INTEGER_SPACE];
 
     sprintf(buffer, "X%dR%d ", ProtocolVersion(Tk_Display(tkwin)),
 	    ProtocolRevision(Tk_Display(tkwin)));
@@ -76,4 +77,32 @@ TkGetDefaultScreenName(interp, screenName)
 	screenName = Tcl_GetVar2(interp, "env", "DISPLAY", TCL_GLOBAL_ONLY);
     }
     return screenName;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * Tk_UpdatePointer --
+ *
+ *	Unused function in UNIX
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+Tk_UpdatePointer(tkwin, x, y, state)
+    Tk_Window tkwin;		/* Window to which pointer event
+				 * is reported. May be NULL. */
+    int x, y;			/* Pointer location in root coords. */
+    int state;			/* Modifier state mask. */
+{
+  /*
+   * This function intentionally left blank
+   */
 }

@@ -3,7 +3,7 @@
 # This demonstration script creates a canvas widet that displays the
 # floorplan for DEC's Western Research Laboratory.
 #
-# SCCS: @(#) floor.tcl 1.6 97/03/02 16:23:32
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

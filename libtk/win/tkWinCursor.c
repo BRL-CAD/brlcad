@@ -8,7 +8,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkWinCursor.c 1.10 97/09/02 13:21:01
+ * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -152,7 +152,7 @@ TkCreateCursorFromData(tkwin, source, mask, width, height, xHot, yHot,
 /*
  *----------------------------------------------------------------------
  *
- * TkFreeCursor --
+ * TkpFreeCursor --
  *
  *	This procedure is called to release a cursor allocated by
  *	TkGetCursorByName.
@@ -167,11 +167,10 @@ TkCreateCursorFromData(tkwin, source, mask, width, height, xHot, yHot,
  */
 
 void
-TkFreeCursor(cursorPtr)
+TkpFreeCursor(cursorPtr)
     TkCursor *cursorPtr;
 {
     TkWinCursor *winCursorPtr = (TkWinCursor *) cursorPtr;
-    ckfree((char *) winCursorPtr);
 }
 
 /*

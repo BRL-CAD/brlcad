@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) HandleEvent.3 1.6 96/03/26 18:13:34
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH Tk_HandleEvent 3 "" Tk "Tk Library Procedures"
@@ -26,15 +26,15 @@ Pointer to X event to dispatch to relevant handler(s).
 .SH DESCRIPTION
 .PP
 \fBTk_HandleEvent\fR is a lower-level procedure that deals with window
-events.  It is called by \fBTk_ServiceEvent\fR (and indirectly by
+events.  It is called by \fBTcl_ServiceEvent\fR (and indirectly by
 \fBTk_DoOneEvent\fR), and in a few other cases within Tk.
 It makes callbacks to any window event
 handlers (created by calls to \fBTk_CreateEventHandler\fR)
 that match \fIeventPtr\fR and then returns.  In some cases
 it may be useful for an application to bypass the Tk event
 queue and call \fBTk_HandleEvent\fR directly instead of
-calling \fBTk_QueueEvent\fR followed by
-\fBTk_ServiceEvent\fR.
+calling \fBTcl_QueueEvent\fR followed by
+\fBTcl_ServiceEvent\fR.
 .PP
 This procedure may be invoked recursively.  For example,
 it is possible to invoke \fBTk_HandleEvent\fR recursively

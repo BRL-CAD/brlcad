@@ -13,7 +13,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkAtom.c 1.13 96/02/15 18:51:34
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"

@@ -3,14 +3,13 @@
 # fashion for Tcl tests.
 #
 # Copyright (c) 1996-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) canvText.test 1.8 97/06/24 13:34:16
+# RCS: @(#) $Id$
 
-if {"[info procs test]" != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -34,6 +33,7 @@ set ax [font measure $font 0]
 foreach test {
     {-anchor nw nw xyz {bad anchor position "xyz": must be n, ne, e, se, s, sw, w, nw, or center}}
     {-fill #ff0000 #ff0000 xyz {unknown color name "xyz"}}
+    {-fill {} {} {} {}}
     {-font {Times 40} {Times 40} {} {font "" doesn't exist}}
     {-justify left left xyz {bad justification "xyz": must be left, right, or center}}
     {-stipple gray50 gray50 xyz {bitmap "xyz" not defined}}
@@ -173,7 +173,7 @@ test canvText-5.1 {ConfigureText procedure: adjust cursor} {
     .c delete x
 } {}
 
-test canvText-6.1 {ComputeTextBbox procedure} {fonts} {
+test canvText-6.1 {ComputeTextBbox procedure} {fonts nonPortable} {
     .c itemconfig test -font $font -text 0
     .c coords test 0 0
     set x {}
@@ -199,7 +199,7 @@ test canvText-6.1 {ComputeTextBbox procedure} {fonts} {
 focus .c
 .c focus test
 .c itemconfig test -text "abcd\nefghi\njklmnopq"
-test canvText-7.1 {DisplayText procedure: stippling} {
+test canvText-7.0 {DisplayText procedure: stippling} {
     .c itemconfig test -stipple gray50
     update
     .c itemconfig test -stipple {}
@@ -238,6 +238,19 @@ test canvText-7.7 {DisplayText procedure: selected text different color} {
 } {}
 test canvText-7.8 {DisplayText procedure: not selected} {
     .c select clear
+    update
+} {}
+test canvText-7.9 {DisplayText procedure: select end} {
+    catch {destroy .t}
+    toplevel .t
+    canvas .t.c
+    pack .t.c
+    set id [.t.c create text 0 0 -text Dummy -anchor nw]
+    update
+    .t.c select from $id 0
+    .t.c select to $id end
+    update
+    #catch {destroy .t}
     update
 } {}
 
@@ -490,3 +503,19 @@ restore showpage
 end
 %%EOF
 "
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -3,13 +3,12 @@
  *
  *	Contains the Mac implementation of the common dialog boxes.
  *
- * Copyright (c) 1996 Sun Microsystems, Inc.
+ * Copyright (c) 1996-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacDialog.c 1.12 96/12/03 11:15:12
- *
+ * RCS: @(#) $Id$
  */
 
 #include <Gestalt.h>
@@ -24,7 +23,15 @@
 #include "tkPort.h"
 #include "tkInt.h"
 #include "tclMacInt.h"
+#include "tkMacInt.h"
 #include "tkFileFilter.h"
+
+#ifndef StrLength
+#define StrLength(s) 		(*((unsigned char *) (s)))
+#endif
+#ifndef StrBody
+#define StrBody(s)		((char *) (s) + 1)
+#endif
 
 /*
  * The following are ID's for resources that are defined in tkMacResource.r
@@ -45,38 +52,27 @@
  * information about the file dialog and the file filters.
  */
 typedef struct _OpenFileData {
-    Tcl_Interp * interp;
-    char * initialFile;			/* default file to appear in the
-					 * save dialog */
-    char * defExt;			/* default extension (not used on the
-					 * Mac) */
     FileFilterList fl;			/* List of file filters. */
     SInt16 curType;			/* The filetype currently being
-					 * listed */
-    int isOpen;				/* True if this is an Open dialog,
-					 * false if it is a Save dialog. */
-    MenuHandle menu;			/* Handle of the menu in the popup*/
-    short dialogId;			/* resource ID of the dialog */
-    int popupId;			/* resource ID of the popup */
-    short popupItem;			/* item number of the popup in the
-					 * dialog */
+					 * listed. */
+    short popupItem;			/* Item number of the popup in the
+					 * dialog. */
     int usePopup;			/* True if we show the popup menu (this
     					 * is an open operation and the
-					 * -filetypes option is set)
-    					 */
+					 * -filetypes option is set). */
 } OpenFileData;
 
 static pascal Boolean	FileFilterProc _ANSI_ARGS_((CInfoPBPtr pb,
 			    void *myData));
-static int 		GetFileName _ANSI_ARGS_ ((
-			    ClientData clientData, Tcl_Interp *interp,
-    			    int argc, char **argv, int isOpen ));
+static int 		GetFileName _ANSI_ARGS_ ((ClientData clientData, 
+			    Tcl_Interp *interp, int objc, 
+			    Tcl_Obj *CONST objv[], int isOpen));
 static Boolean		MatchOneType _ANSI_ARGS_((CInfoPBPtr pb,
-			    OpenFileData * myDataPtr, FileFilter * filterPtr));
+			    OpenFileData *myofdPtr, FileFilter *filterPtr));
 static pascal short 	OpenHookProc _ANSI_ARGS_((short item,
-			    DialogPtr theDialog, OpenFileData * myDataPtr));
+			    DialogPtr theDialog, OpenFileData * myofdPtr));
 static int 		ParseFileDlgArgs _ANSI_ARGS_ ((Tcl_Interp * interp,
-			    OpenFileData * myDataPtr, int argc, char ** argv,
+			    OpenFileData * myofdPtr, int argc, char ** argv,
 			    int isOpen));
 
 /*
@@ -92,68 +88,7 @@ static DlgHookYDUPP saveHook = NULL;
 /*
  *----------------------------------------------------------------------
  *
- * EvalArgv --
- *
- *	Invokes the Tcl procedure with the arguments. argv[0] is set by
- *	the caller of this function. It may be different than cmdName.
- *	The TCL command will see argv[0], not cmdName, as its name if it
- *	invokes [lindex [info level 0] 0]
- *
- * Results:
- *	TCL_ERROR if the command does not exist and cannot be autoloaded.
- *	Otherwise, return the result of the evaluation of the command.
- *
- * Side effects:
- *	The command may be autoloaded.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-EvalArgv(
-    Tcl_Interp *interp,		/* Current interpreter. */
-    char * cmdName,		/* Name of the TCL command to call */
-    int argc,			/* Number of arguments. */
-    char **argv)		/* Argument strings. */
-{
-    Tcl_CmdInfo cmdInfo;
-
-    if (!Tcl_GetCommandInfo(interp, cmdName, &cmdInfo)) {
-	char * cmdArgv[2];
-
-	/*
-	 * This comand is not in the interpreter yet -- looks like we
-	 * have to auto-load it
-	 */
-	if (!Tcl_GetCommandInfo(interp, "auto_load", &cmdInfo)) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "cannot execute command \"auto_load\"",
-		NULL);
-	    return TCL_ERROR;
-	}
-
-	cmdArgv[0] = "auto_load";
-	cmdArgv[1] = cmdName;
-
-	if ((*cmdInfo.proc)(cmdInfo.clientData, interp, 2, cmdArgv)!= TCL_OK){ 
-	    return TCL_ERROR;
-	}
-
-	if (!Tcl_GetCommandInfo(interp, cmdName, &cmdInfo)) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "cannot auto-load command \"",
-		cmdName, "\"",NULL);
-	    return TCL_ERROR;
-	}
-    }
-
-    return (*cmdInfo.proc)(cmdInfo.clientData, interp, argc, argv);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * Tk_ChooseColorCmd --
+ * Tk_ChooseColorObjCmd --
  *
  *	This procedure implements the color dialog box for the Mac
  *	platform. See the user documentation for details on what it
@@ -169,23 +104,86 @@ EvalArgv(
  */
 
 int
-Tk_ChooseColorCmd(
+Tk_ChooseColorObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    char **argv)		/* Argument strings. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    Tk_Window parent = Tk_MainWindow(interp);
-    char * colorStr = NULL;
-    XColor * colorPtr = NULL;
-    char * title = "Choose a color:";
-    int i, version;
-    long response = 0;
-    OSErr err = noErr;
-    char buff[40];
-    static RGBColor in;
+    Tk_Window parent;
+    char *title;
+    int i, picked, srcRead, dstWrote;
+    long response;
+    OSErr err;
     static inited = 0;
+    static RGBColor in;
+    static char *optionStrings[] = {
+	"-initialcolor",    "-parent",	    "-title",	    NULL
+    };
+    enum options {
+	COLOR_INITIAL,	    COLOR_PARENT,   COLOR_TITLE
+    };
 
+    if (inited == 0) {
+    	/*
+    	 * 'in' stores the last color picked.  The next time the color dialog
+    	 * pops up, the last color will remain in the dialog.
+    	 */
+    	 
+        in.red = 0xffff;
+        in.green = 0xffff;
+        in.blue = 0xffff;
+        inited = 1;
+    }
+    
+    parent = (Tk_Window) clientData;
+    title = "Choose a color:";
+    picked = 0;
+        
+    for (i = 1; i < objc; i += 2) {
+    	int index;
+    	char *option, *value;
+    	
+        if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings, "option",
+		TCL_EXACT, &index) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (i + 1 == objc) {
+	    option = Tcl_GetStringFromObj(objv[i], NULL);
+	    Tcl_AppendResult(interp, "value for \"", option, "\" missing", 
+		    (char *) NULL);
+	    return TCL_ERROR;
+	}
+	value = Tcl_GetStringFromObj(objv[i + 1], NULL);
+	
+	switch ((enum options) index) {
+	    case COLOR_INITIAL: {
+		XColor *colorPtr;
+
+		colorPtr = Tk_GetColor(interp, parent, value);
+		if (colorPtr == NULL) {
+		    return TCL_ERROR;
+		}
+		in.red   = colorPtr->red;
+		in.green = colorPtr->green;
+                in.blue  = colorPtr->blue;
+                Tk_FreeColor(colorPtr);
+		break;
+	    }
+	    case COLOR_PARENT: {
+		parent = Tk_NameToWindow(interp, value, parent);
+		if (parent == NULL) {
+		    return TCL_ERROR;
+		}
+		break;
+	    }
+	    case COLOR_TITLE: {
+	        title = value;
+		break;
+	    }
+	}
+    }
+        
     /*
      * Use the gestalt manager to determine how to bring
      * up the color picker.  If versin 2.0 isn't available
@@ -194,92 +192,12 @@ Tk_ChooseColorCmd(
      */
      
     err = Gestalt(gestaltColorPicker, &response); 
-    if ((err == noErr) || (response == 0x0200L)) {
-    	version = 2;
-    } else {
-    	version = 1;
-    }
- 
-    for (i=1; i<argc; i+=2) {
-        int v = i+1;
-	int len = strlen(argv[i]);
+    if ((err == noErr) && (response == 0x0200L)) {
+	ColorPickerInfo cpinfo;
 
-        if (strncmp(argv[i], "-initialcolor", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-
-	    colorStr = argv[v];
-	} else if (strncmp(argv[i], "-parent", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-
-	    parent=Tk_NameToWindow(interp, argv[v], Tk_MainWindow(interp));
-	    if (parent == NULL) {
-		return TCL_ERROR;
-	    }
-	} else if (strncmp(argv[i], "-title", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-
-	    title = argv[v];
-	} else {
-    	    Tcl_AppendResult(interp, "unknown option \"", 
-		    argv[i], "\", must be -initialcolor, -parent or -title",
-		    NULL);
-	    return TCL_ERROR;
-	}
-    }
-
-    if (colorStr) {
-        colorPtr = Tk_GetColor(interp, parent, colorStr);
-        if (colorPtr == NULL) {
-            return TCL_ERROR;
-        }
-    }
-
-    if (!inited) {
-        inited = 1;
-        in.red = 0xffff;
-        in.green = 0xffff;
-        in.blue = 0xffff;
-    }
-    if (colorPtr) {
-        in.red   = colorPtr->red;
-        in.green = colorPtr->green;
-        in.blue  = colorPtr->blue;
-    }
-        
-    if (version == 1) {
-        /*
-         * Use version 1.0 of the color picker
-         */
-    	
-    	RGBColor out;
-    	Str255 prompt;
-    	Point point = {-1, -1};
-    	
-        prompt[0] = strlen(title);
-        strncpy((char*) prompt+1, title, 255);
-        
-        if (GetColor(point, prompt, &in, &out)) {
-            /*
-             * user selected a color
-             */
-            sprintf(buff, "#%02x%02x%02x", out.red >> 8, out.green >> 8,
-                out.blue >> 8);
-            Tcl_SetResult(interp, buff, TCL_VOLATILE);
-
-            /*
-             * Save it for the next time
-             */
-            in.red   = out.red;
-            in.green = out.green;
-            in.blue  = out.blue;
-        } else {
-            Tcl_ResetResult(interp);
-    	}
-    } else {
         /*
          * Version 2.0 of the color picker is available. Let's use it
          */
-	ColorPickerInfo cpinfo;
 
     	cpinfo.theColor.profile = 0L;
     	cpinfo.theColor.color.rgb.red   = in.red;
@@ -292,41 +210,50 @@ Tk_ChooseColorCmd(
     	cpinfo.eventProc = NULL;
     	cpinfo.colorProc = NULL;
     	cpinfo.colorProcData = NULL;
+    	
+    	Tcl_UtfToExternal(NULL, NULL, title, -1, 0, NULL, 
+		StrBody(cpinfo.prompt), 255, &srcRead, &dstWrote, NULL);
+    	StrLength(cpinfo.prompt) = (unsigned char) dstWrote;
 
-        cpinfo.prompt[0] = strlen(title);
-        strncpy((char*)cpinfo.prompt+1, title, 255);
-        
-        if ((PickColor(&cpinfo) == noErr) && cpinfo.newColorChosen) {
-            sprintf(buff, "#%02x%02x%02x",
-		cpinfo.theColor.color.rgb.red   >> 8, 
-                cpinfo.theColor.color.rgb.green >> 8,
-		cpinfo.theColor.color.rgb.blue  >> 8);
-            Tcl_SetResult(interp, buff, TCL_VOLATILE);
-            
-            in.blue  = cpinfo.theColor.color.rgb.red;
-    	    in.green = cpinfo.theColor.color.rgb.green;
-    	    in.blue  = cpinfo.theColor.color.rgb.blue;
-          } else {
-            Tcl_ResetResult(interp);
+        if ((PickColor(&cpinfo) == noErr) && (cpinfo.newColorChosen != 0)) {
+            in.red 	= cpinfo.theColor.color.rgb.red;
+            in.green 	= cpinfo.theColor.color.rgb.green;
+            in.blue 	= cpinfo.theColor.color.rgb.blue;
+            picked = 1;
         }
-    }
+    } else {
+    	RGBColor out;
+    	Str255 prompt;
+    	Point point = {-1, -1};
+    	
+        /*
+         * Use version 1.0 of the color picker
+         */
+    	
+    	Tcl_UtfToExternal(NULL, NULL, title, -1, 0, NULL, StrBody(prompt), 
+		255, &srcRead, &dstWrote, NULL);
+    	StrLength(prompt) = (unsigned char) dstWrote;
 
-    if (colorPtr) {
-	Tk_FreeColor(colorPtr);
-    }
+        if (GetColor(point, prompt, &in, &out)) {
+            in = out;
+            picked = 1;
+        }
+    } 
+    
+    if (picked != 0) {
+        char result[32];
 
+        sprintf(result, "#%02x%02x%02x", in.red >> 8, in.green >> 8, 
+        	in.blue >> 8);
+	Tcl_AppendResult(interp, result, NULL);
+    }
     return TCL_OK;
-
-  arg_missing:
-    Tcl_AppendResult(interp, "value for \"", argv[argc-1], "\" missing",
-	NULL);
-    return TCL_ERROR;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * Tk_GetOpenFileCmd --
+ * Tk_GetOpenFileObjCmd --
  *
  *	This procedure implements the "open file" dialog box for the
  *	Mac platform. See the user documentation for details on what
@@ -341,19 +268,19 @@ Tk_ChooseColorCmd(
  */
 
 int
-Tk_GetOpenFileCmd(
+Tk_GetOpenFileObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    char **argv)		/* Argument strings. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    return GetFileName(clientData, interp, argc, argv, OPEN_FILE);
+    return GetFileName(clientData, interp, objc, objv, OPEN_FILE);
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * Tk_GetSaveFileCmd --
+ * Tk_GetSaveFileObjCmd --
  *
  *	Same as Tk_GetOpenFileCmd but opens a "save file" dialog box
  *	instead
@@ -367,13 +294,13 @@ Tk_GetOpenFileCmd(
  */
 
 int
-Tk_GetSaveFileCmd(
+Tk_GetSaveFileObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    char **argv)		/* Argument strings. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[])	/* Argument objects. */
 {
-    return GetFileName(clientData, interp, argc, argv, SAVE_FILE);
+    return GetFileName(clientData, interp, objc, objv, SAVE_FILE);
 }
 
 /*
@@ -389,8 +316,8 @@ Tk_GetSaveFileCmd(
  *
  * Side effects:
  *	If the user selects a file, the native pathname of the file
- *	is returned in interp->result. Otherwise an empty string
- *	is returned in interp->result.
+ *	is returned in the interp's result. Otherwise an empty string
+ *	is returned in the interp's result.
  *
  *----------------------------------------------------------------------
  */
@@ -399,32 +326,124 @@ static int
 GetFileName(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    char **argv,		/* Argument strings. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *CONST objv[],	/* Argument objects. */
     int isOpen)			/* true if we should call GetOpenFileName(),
 				 * false if we should call GetSaveFileName() */
 {
-    int code = TCL_OK;
-    int i;
-    OpenFileData myData, *myDataPtr;
+    int i, result;
+    OpenFileData ofd;
     StandardFileReply reply;
     Point mypoint;
-    Str255 str;
-
-    myDataPtr = &myData;
+    MenuHandle menu;
+    Str255 initialFile;
+    char *choice[6];
+    Tk_Window parent;
+    static char *optionStrings[] = {
+	"-defaultextension", "-filetypes", "-initialdir", "-initialfile",
+	"-parent",	"-title",	NULL
+    };
+    enum options {
+	FILE_DEFAULT,	FILE_TYPES,	FILE_INITDIR,	FILE_INITFILE,
+	FILE_PARENT,	FILE_TITLE
+    };
 
     if (openFilter == NULL) {
 	openFilter = NewFileFilterYDProc(FileFilterProc);
 	openHook = NewDlgHookYDProc(OpenHookProc);
 	saveHook = NewDlgHookYDProc(OpenHookProc);
     }
+    
+    result = TCL_ERROR;    
+    parent = (Tk_Window) clientData;    
+    memset(choice, 0, sizeof(choice));
 
-    /*
-     * 1. Parse the arguments.
-     */
-    if (ParseFileDlgArgs(interp, myDataPtr, argc, argv, isOpen) 
-	!= TCL_OK) {
-	return TCL_ERROR;
+    for (i = 1; i < objc; i += 2) {
+	int index;
+	char *string;
+
+	if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings, "option",
+		TCL_EXACT, &index) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (i + 1 == objc) {
+	    string = Tcl_GetStringFromObj(objv[i], NULL);
+	    Tcl_AppendResult(interp, "value for \"", string, "\" missing", 
+		    (char *) NULL);
+	    return TCL_ERROR;
+	}
+	choice[index] = Tcl_GetStringFromObj(objv[i + 1], NULL);
+    }
+    
+    StrLength(initialFile) = 0;
+    menu = NULL;
+    
+    TkInitFileFilters(&ofd.fl);
+    ofd.curType		= 0;
+    ofd.popupItem	= OPEN_POPUP_ITEM;
+    ofd.usePopup 	= isOpen;
+    
+    if (choice[FILE_TYPES] != NULL) {
+        if (TkGetFileFilters(interp, &ofd.fl, choice[FILE_TYPES], 0) != TCL_OK) {
+            goto end;
+        }
+    }
+    if (choice[FILE_INITDIR] != NULL) {
+        FSSpec dirSpec;
+	Tcl_DString ds;
+	long dirID;
+	OSErr err;
+	Boolean isDirectory;
+	char *string;
+	Str255 dir;
+	int srcRead, dstWrote;
+	
+	string = choice[FILE_INITDIR];
+	if (Tcl_TranslateFileName(interp, string, &ds) == NULL) {
+	    goto end;
+	}
+	Tcl_UtfToExternal(NULL, NULL, Tcl_DStringValue(&ds), 
+		Tcl_DStringLength(&ds), 0, NULL, StrBody(dir), 255, 
+		&srcRead, &dstWrote, NULL);
+        StrLength(dir) = (unsigned char) dstWrote;
+	Tcl_DStringFree(&ds);
+          
+	err = FSpLocationFromPath(StrLength(dir), StrBody(dir), &dirSpec);
+	if (err != noErr) {
+	    Tcl_AppendResult(interp, "bad directory \"", string, "\"", NULL);
+	    goto end;
+	}
+	err = FSpGetDirectoryID(&dirSpec, &dirID, &isDirectory);
+	if ((err != noErr) || !isDirectory) {
+	    Tcl_AppendResult(interp, "bad directory \"", string, "\"", NULL);
+	    goto end;
+	}
+	/*
+	 * Make sure you negate -dirSpec.vRefNum because the 
+	 * standard file package wants it that way !
+	 */
+	
+	LMSetSFSaveDisk(-dirSpec.vRefNum);
+	LMSetCurDirStore(dirID);
+    }
+    if (choice[FILE_INITFILE] != NULL) {
+        Tcl_DString ds;
+        int srcRead, dstWrote;
+        
+        if (Tcl_TranslateFileName(interp, choice[FILE_INITFILE], &ds) == NULL) {
+            goto end;
+        }
+        Tcl_UtfToExternal(NULL, NULL, Tcl_DStringValue(&ds), 
+        	Tcl_DStringLength(&ds), 0, NULL, 
+		StrBody(initialFile), 255, &srcRead, &dstWrote, NULL);
+        StrLength(initialFile) = (unsigned char) dstWrote;
+        Tcl_DStringFree(&ds);
+    }
+    if (choice[FILE_PARENT] != NULL) {
+        parent = Tk_NameToWindow(interp, choice[FILE_PARENT], parent);
+	if (parent == NULL) {
+	    return TCL_ERROR;
+	}
     }
 
     /*
@@ -436,237 +455,89 @@ GetFileName(
      * left overs from previous invocation of this command
      */
 
-    if (myDataPtr->usePopup) {
-	FileFilter * filterPtr;
-
-        for (i=CountMItems(myDataPtr->menu); i>0; i--) {
+    if (ofd.usePopup) {
+	FileFilter *filterPtr;
+	
+	menu = GetMenu(OPEN_MENU);
+        for (i = CountMItems(menu); i > 0; i--) {
             /*
              * The item indices are one based. Also, if we delete from
              * the beginning, the items may be re-numbered. So we
              * delete from the end
     	     */
-    	     DeleteMenuItem(myDataPtr->menu, i);
+    	     
+    	     DeleteMenuItem(menu, i);
         }
 
-	if (myDataPtr->fl.filters) {
-	    for (filterPtr=myDataPtr->fl.filters; filterPtr;
-		    filterPtr=filterPtr->next) {
-		strncpy((char*)str+1, filterPtr->name, 254);
-		str[0] = strlen(filterPtr->name);
-		AppendMenu(myDataPtr->menu, (ConstStr255Param) str);
-	    }
+	filterPtr = ofd.fl.filters;
+	if (filterPtr == NULL) {
+	    ofd.usePopup = 0;
 	} else {
-	    myDataPtr->usePopup = 0;
+	    for ( ; filterPtr != NULL; filterPtr = filterPtr->next) {
+	        Str255 str;
+	        
+	    	StrLength(str) = (unsigned char) strlen(filterPtr->name);
+	    	strcpy(StrBody(str), filterPtr->name);
+		AppendMenu(menu, str);
+	    }
 	}
     }
 
     /*
      * 3. Call the toolbox file dialog function.
      */
+     
     SetPt(&mypoint, -1, -1);
     TkpSetCursor(NULL);
-    
-    if (myDataPtr->isOpen) {
-        if (myDataPtr->usePopup) {
-	    CustomGetFile(openFilter, (short) -1, NULL, &reply, 
-	        myDataPtr->dialogId, 
-	        mypoint, openHook, NULL, NULL, NULL, (void*)myDataPtr);
+    if (isOpen) {
+        if (ofd.usePopup) {
+	    CustomGetFile(openFilter, (short) -1, NULL, &reply, OPEN_BOX,
+	    	    mypoint, openHook, NULL, NULL, NULL, (void*) &ofd);
 	} else {
 	    StandardGetFile(NULL, -1, NULL, &reply);
 	}
     } else {
-	Str255 prompt, def;
-
-	strcpy((char*)prompt+1, "Save as");
-	prompt[0] = strlen("Save as");
-   	if (myDataPtr->initialFile) {
-   	    strncpy((char*)def+1, myDataPtr->initialFile, 254);
-	    def[0] = strlen(myDataPtr->initialFile);
-        } else {
-            def[0] = 0;
-        }
-   	if (myDataPtr->usePopup) {
+	static Str255 prompt = "\pSave as";
+	
+   	if (ofd.usePopup) {
    	    /*
    	     * Currently this never gets called because we don't use
    	     * popup for the save dialog.
    	     */
-	    CustomPutFile(prompt, def, &reply, myDataPtr->dialogId, mypoint, 
-	        saveHook, NULL, NULL, NULL, myDataPtr);
+	    CustomPutFile(prompt, initialFile, &reply, OPEN_BOX, 
+	    	    mypoint, saveHook, NULL, NULL, NULL, (void *) &ofd);
 	} else {
-	    StandardPutFile(prompt, def, &reply);
+	    StandardPutFile(prompt, initialFile, &reply);
 	}
     }
 
-    Tcl_ResetResult(interp);    
     if (reply.sfGood) {
         int length;
-    	Handle pathHandle = NULL;
-    	char * pathName = NULL;
+    	Handle pathHandle;
     	
+    	pathHandle = NULL;
     	FSpPathFromLocation(&reply.sfFile, &length, &pathHandle);
-
 	if (pathHandle != NULL) {
+	    Tcl_DString ds;
+	    
 	    HLock(pathHandle);
-	    pathName = (char *) ckalloc((unsigned) (length + 1));
-	    strcpy(pathName, *pathHandle);
+	    Tcl_ExternalToUtfDString(NULL, (char *) *pathHandle, -1, &ds);
+	    Tcl_AppendResult(interp, Tcl_DStringValue(&ds), NULL);
+	    Tcl_DStringFree(&ds);
 	    HUnlock(pathHandle);
 	    DisposeHandle(pathHandle);
-
-	    /*
-	     * Return the full pathname of the selected file
-	     */
-
-	    Tcl_SetResult(interp, pathName, TCL_DYNAMIC);
 	}
     }
-
-  done:
-    TkFreeFileFilters(&myDataPtr->fl);
-    return code;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ParseFileDlgArgs --
- *
- *	Parses the arguments passed to tk_getOpenFile and tk_getSaveFile.
- *
- * Results:
- *	A standard TCL return value.
- *
- * Side effects:
- *	The OpenFileData structure is initialized and modified according
- *	to the arguments.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-ParseFileDlgArgs(
-    Tcl_Interp * interp,		/* Current interpreter. */
-    OpenFileData * myDataPtr,		/* Information about the file dialog */
-    int argc,				/* Number of arguments */
-    char ** argv,			/* Argument strings */
-    int isOpen)				/* TRUE if this is an "open" dialog */
-{
-    int i;
-
-    myDataPtr->interp      	= interp;
-    myDataPtr->initialFile 	= NULL;
-    myDataPtr->curType		= 0;
-
-    TkInitFileFilters(&myDataPtr->fl);
     
-    if (isOpen) {
-	myDataPtr->isOpen    = 1;
-        myDataPtr->usePopup  = 1;
-	myDataPtr->menu      = GetMenu(OPEN_MENU);
-	myDataPtr->dialogId  = OPEN_BOX;
-	myDataPtr->popupId   = OPEN_POPUP;
-	myDataPtr->popupItem = OPEN_POPUP_ITEM;
-	if (myDataPtr->menu == NULL) {
-	    Debugger();
-	}
-    } else {
-        myDataPtr->isOpen    = 0;
-	myDataPtr->usePopup  = 0;
+    result = TCL_OK;
+
+    end:
+    TkFreeFileFilters(&ofd.fl);
+    if (menu != NULL) {
+    	DisposeMenu(menu);
     }
-
-    for (i=1; i<argc; i+=2) {
-        int v = i+1;
-	int len = strlen(argv[i]);
-
-	if (strncmp(argv[i], "-defaultextension", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-
-	    myDataPtr->defExt = argv[v];
-	}
-	else if (strncmp(argv[i], "-filetypes", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-
-	    if (TkGetFileFilters(interp, &myDataPtr->fl,argv[v],0) != TCL_OK) {
-		return TCL_ERROR;
-	    }
-	}
-	else if (strncmp(argv[i], "-initialdir", len)==0) {
-	    FSSpec dirSpec;
-	    char * dirName;
-	    Tcl_DString dstring;
-	    long dirID;
-	    OSErr err;
-	    Boolean isDirectory;
-
-	    if (v==argc) {goto arg_missing;}
-	    
-	    if (Tcl_TranslateFileName(interp, argv[v], &dstring) == NULL) {
-	        return TCL_ERROR;
-	    }
-	    dirName = dstring.string;
-	    if (FSpLocationFromPath(strlen(dirName), dirName, &dirSpec) != 
-		    noErr) {
-		Tcl_AppendResult(interp, "bad directory \"", argv[v],
-	            "\"", NULL);
-	        return TCL_ERROR;
-	    }
-	    err = FSpGetDirectoryID(&dirSpec, &dirID, &isDirectory);
-	    if ((err != noErr) || !isDirectory) {
-		Tcl_AppendResult(interp, "bad directory \"", argv[v],
-	            "\"", NULL);
-	        return TCL_ERROR;
-	    }
-	    /*
-	     * Make sure you negate -dirSpec.vRefNum because the standard file
-	     * package wants it that way !
-	     */
-	    LMSetSFSaveDisk(-dirSpec.vRefNum);
-	    LMSetCurDirStore(dirID);
-	    Tcl_DStringFree(&dstring);
-    	}
-	else if (strncmp(argv[i], "-initialfile", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-	    
-	    myDataPtr->initialFile = argv[v];
-	}
-	else if (strncmp(argv[i], "-parent", len)==0) {
-	    /*
-	     * Ignored on the Mac, but make sure that it's a valid window
-	     * pathname
-	     */
-	    Tk_Window parent;
-
-	    if (v==argc) {goto arg_missing;}
-	    	    
-	    parent=Tk_NameToWindow(interp, argv[v], Tk_MainWindow(interp));
-	    if (parent == NULL) {
-		return TCL_ERROR;
-	    }	    
-	}
-	else if (strncmp(argv[i], "-title", len)==0) {
-	    if (v==argc) {goto arg_missing;}
-	    
-	    /*
-	     * This option is ignored on the Mac because the Mac file
-	     * dialog do not support titles.
-	     */
-	}
-	else {
-    	    Tcl_AppendResult(interp, "unknown option \"", 
-		argv[i], "\", must be -defaultextension, ",
-		"-filetypes, -initialdir, -initialfile, -parent or -title",
-		NULL);
-	    return TCL_ERROR;
-	}
-    }
-
-    return TCL_OK;
-
-  arg_missing:
-    Tcl_AppendResult(interp, "value for \"", argv[argc-1], "\" missing",
-	NULL);
-    return TCL_ERROR;
+    return result;
 }
-
 /*
  *----------------------------------------------------------------------
  *
@@ -689,7 +560,7 @@ static pascal short
 OpenHookProc(
     short item,			/* Event description. */
     DialogPtr theDialog,	/* The dialog where the event occurs. */
-    OpenFileData * myDataPtr)	/* Information about the file dialog. */
+    OpenFileData *ofdPtr)	/* Information about the file dialog. */
 {
     short ignore;
     Rect rect;
@@ -698,29 +569,29 @@ OpenHookProc(
 
     switch (item) {
 	case sfHookFirstCall:
-	    if (myDataPtr->usePopup) {
+	    if (ofdPtr->usePopup) {
 		/*
 		 * Set the popup list to display the selected type.
 		 */
-		GetDialogItem(theDialog, myDataPtr->popupItem,
-			&ignore, &handle, &rect);
-		SetControlValue((ControlRef) handle, myDataPtr->curType + 1);
+		GetDialogItem(theDialog, ofdPtr->popupItem, &ignore, &handle, 
+			&rect);
+		SetControlValue((ControlRef) handle, ofdPtr->curType + 1);
 	    }
 	    return sfHookNullEvent;
       
 	case OPEN_POPUP_ITEM:
-	    if (myDataPtr->usePopup) {
-		GetDialogItem(theDialog, myDataPtr->popupItem,
+	    if (ofdPtr->usePopup) {
+		GetDialogItem(theDialog, ofdPtr->popupItem,
 			&ignore, &handle, &rect);
 		newType = GetCtlValue((ControlRef) handle) - 1;
-		if (myDataPtr->curType != newType) {
-		    if (newType<0 || newType>myDataPtr->fl.numFilters) {
+		if (ofdPtr->curType != newType) {
+		    if (newType<0 || newType>ofdPtr->fl.numFilters) {
 			/*
 			 * Sanity check. Looks like the user selected an
 			 * non-existent menu item?? Don't do anything.
 			 */
 		    } else {
-			myDataPtr->curType = newType;
+			ofdPtr->curType = newType;
 		    }
 		    return sfHookRebuildList;
 		}
@@ -755,10 +626,10 @@ FileFilterProc(
     void *myData)		/* Client data for this file dialog */
 {
     int i;
-    OpenFileData * myDataPtr = (OpenFileData*)myData;
+    OpenFileData * ofdPtr = (OpenFileData*)myData;
     FileFilter * filterPtr;
 
-    if (myDataPtr->fl.numFilters == 0) {
+    if (ofdPtr->fl.numFilters == 0) {
 	/*
 	 * No types have been specified. List all files by default
 	 */
@@ -772,13 +643,13 @@ FileFilterProc(
     	return MATCHED;
     }
 
-    if (myDataPtr->usePopup) {
-        i = myDataPtr->curType;
-	for (filterPtr=myDataPtr->fl.filters; filterPtr && i>0; i--) {
+    if (ofdPtr->usePopup) {
+        i = ofdPtr->curType;
+	for (filterPtr=ofdPtr->fl.filters; filterPtr && i>0; i--) {
 	    filterPtr = filterPtr->next;
 	}
 	if (filterPtr) {
-	    return MatchOneType(pb, myDataPtr, filterPtr);
+	    return MatchOneType(pb, ofdPtr, filterPtr);
 	} else {
 	    return UNMATCHED;
         }
@@ -788,9 +659,9 @@ FileFilterProc(
 	 * considered matched if it matches any of the file filters.
 	 */
 
-	for (filterPtr=myDataPtr->fl.filters; filterPtr;
+	for (filterPtr=ofdPtr->fl.filters; filterPtr;
 		filterPtr=filterPtr->next) {
-	    if (MatchOneType(pb, myDataPtr, filterPtr) == MATCHED) {
+	    if (MatchOneType(pb, ofdPtr, filterPtr) == MATCHED) {
 	        return MATCHED;
 	    }
 	}
@@ -818,7 +689,7 @@ FileFilterProc(
 static Boolean
 MatchOneType(
     CInfoPBPtr pb,		/* Information about the file */
-    OpenFileData * myDataPtr,	/* Information about this file dialog */
+    OpenFileData * ofdPtr,	/* Information about this file dialog */
     FileFilter * filterPtr)	/* Match the file described by pb against
 				 * this filter */
 {
@@ -909,31 +780,33 @@ MatchOneType(
 
     return UNMATCHED;
 }
-
 /*
  *----------------------------------------------------------------------
  *
- * Tk_MessageBoxCmd --
+ * Tk_ChooseDirectoryObjCmd --
  *
- *	This procedure implements the MessageBox window for the
- *	Mac platform. See the user documentation for details on what
- *	it does.
+ *	This procedure implements the "tk_chooseDirectory" dialog box 
+ *	for the Windows platform. See the user documentation for details 
+ *	on what it does.
  *
  * Results:
- *      A standard Tcl result.
+ *	See user documentation.
  *
  * Side effects:
- *	See user documentation.
+ *	A modal dialog window is created.  Tcl_SetServiceMode() is
+ *	called to allow background events to be processed
  *
  *----------------------------------------------------------------------
  */
 
 int
-Tk_MessageBoxCmd(
-    ClientData clientData,	/* Main window associated with interpreter. */
-    Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    char **argv)		/* Argument strings. */
+Tk_ChooseDirectoryObjCmd(clientData, interp, objc, objv)
+    ClientData clientData;	/* Main window associated with interpreter. */
+    Tcl_Interp *interp;		/* Current interpreter. */
+    int objc;			/* Number of arguments. */
+    Tcl_Obj *CONST objv[];	/* Argument objects. */
 {
-    return EvalArgv(interp, "tkMessageBox", argc, argv);
+    return TCL_ERROR;
 }
+
+

@@ -4,28 +4,31 @@
 #
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) send.test 1.26 96/12/09 17:26:42
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 if {$tcl_platform(platform) == "macintosh"} {
     puts "send is not available on the Mac - skipping tests"
+    ::tcltest::cleanupTests
     return
 }
 if {$tcl_platform(platform) == "window"} {
     puts "send is not available under Windows - skipping tests"
+    ::tcltest::cleanupTests
     return
 }
 if {[auto_execok xhost] == ""} {
     puts "xhost application isn't available - skipping tests"
+    ::tcltest::cleanupTests
     return
 }
 
-if {[info procs test] != "test"} {
-    source defs
-}
 if {[info commands testsend] == "testsend"} {
     set gotTestCmds 1
 } else {
@@ -48,6 +51,7 @@ if {[catch {send $app set a 0} msg] == 1} {
 	puts -nonewline "Your X server is insecure, so \"send\" can't be used;"
 	puts " skipping \"send\" tests."
 	cleanupbg
+	::tcltest::cleanupTests
 	return
     }
 }
@@ -325,6 +329,8 @@ if $gotTestCmds {
     while executing
 "open bogus_file_name"
     invoked from within
+"if 1 {open bogus_file_name}"
+    invoked from within
 "send t_s_1 {if 1 {open bogus_file_name}}"} {POSIX ENOENT {no such file or directory}}}
     test send-8.16 {Tk_SendCmd procedure, bogusCommWindow} {
 	testsend prop root InterpRegistry "10234 bogus\n"
@@ -546,7 +552,7 @@ r
 	setupbg
 	dobg {tk appname t_s_3}
 	set x [list [catch {send t_s_3 exit} msg] $msg]
-	close $fd
+	close $::tcltest::fd
 	set x
     } {1 {target application died}}
 
@@ -577,15 +583,15 @@ test send-12.2 {TimeoutProc procedure} {
     tk appname tktest
     update
     setupbg
-    puts $fd {after 10 {after 5000; exit}; puts [tk appname]; puts **DONE**; flush stdout}
-    set bgDone 0
-    set bgData {}
-    flush $fd
-    tkwait variable bgDone
-    set app $bgData
+    puts $::tcltest::fd {after 10 {after 5000; exit}; puts [tk appname]; puts **DONE**; flush stdout}
+    set ::tcltest::bgDone 0
+    set ::tcltest::bgData {}
+    flush $::tcltest::fd
+    tkwait variable ::tcltest::bgDone
+    set app $::tcltest::bgData
     after 200
     set result [list [catch {send $app foo} msg] $msg]
-    close $fd
+    close $::tcltest::fd
     set result
 } {1 {target application died}}
 
@@ -654,3 +660,20 @@ if $gotTestCmds {
     testdeleteapps
 }
 rename newApp {}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

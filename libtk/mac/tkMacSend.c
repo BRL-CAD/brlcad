@@ -6,17 +6,40 @@
  *	to interpreter.  This current implementation for the Mac
  *	has most functionality stubed out.
  *
+ *	The current plan, which we have not had time to implement, is
+ *	for the first Wish app to create a gestalt of type 'WIsH'.
+ *	This gestalt will point to a table, in system memory, of
+ *	Tk apps.  Each Tk app, when it starts up, will register their
+ *	name, and process ID, in this table.  This will allow us to 
+ *	implement "tk appname".
+ *
+ *	Then the send command will look up the process id of the target
+ *	app in this table, and send an AppleEvent to that process.  The
+ *	AppleEvent handler is much like the do script handler, except that
+ *      you have to specify the name of the tk app as well, since there may
+ *	be many interps in one wish app, and you need to send it to the
+ *	right one.
+ *
+ *	Implementing this has been on our list of things to do, but what
+ *	with the demise of Tcl at Sun, and the lack of resources at 
+ *	Scriptics it may not get done for awhile.  So this sketch is
+ *	offered for the brave to attempt if they need the functionality...
+ *
  * Copyright (c) 1989-1994 The Regents of the University of California.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1998 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMacSend.c 1.7 96/12/03 11:48:27
+ * RCS: @(#) $Id$
  */
 
+#include <Gestalt.h>
 #include "tkPort.h"
 #include "tkInt.h"
+
+EXTERN int		Tk_SendObjCmd _ANSI_ARGS_((ClientData clientData,
+			    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 
      /* 
       * The following structure is used to keep track of the
@@ -27,16 +50,11 @@ typedef struct RegisteredInterp {
     char *name;			/* Interpreter's name (malloc-ed). */
     Tcl_Interp *interp;		/* Interpreter associated with
 				 * name. */
-    TkWindow *winPtr;		/* Main window for the application. */
     struct RegisteredInterp *nextPtr;
     /* Next in list of names associated
      * with interps in this process.
      * NULL means end of list. */
 } RegisteredInterp;
-
-static RegisteredInterp *registry = NULL;
-/* List of all interpreters
- * registered by this process. */
 
 /*
  * A registry of all interpreters for a display is kept in a
@@ -61,54 +79,19 @@ typedef struct NameRegistry {
 				 * been modified, so it needs to be written
 				 * out when the NameRegistry is closed. */
     unsigned long propLength;	/* Length of the property, in bytes. */
-    char *property;		/* The contents of the property.  See format
-				 * above;  this is *not* terminated by the
-				 * first null character.  Dynamically
-				 * allocated. */
+    char *property;		/* The contents of the property, or NULL
+				 * if none.  See format description above;
+				 * this is *not* terminated by the first
+				 * null character.  Dynamically allocated. */
     int allocedByX;		/* Non-zero means must free property with
 				 * XFree;  zero means use ckfree. */
 } NameRegistry;
 
-     /*
-      * When a result is being awaited from a sent command, one of
-      * the following structures is present on a list of all outstanding
-      * sent commands.  The information in the structure is used to
-      * process the result when it arrives.  You're probably wondering
-      * how there could ever be multiple outstanding sent commands.
-      * This could happen if interpreters invoke each other recursively.
-      * It's unlikely, but possible.
-      */
+static initialized = false;	/* A flag to denote if we have initialized yet. */
 
-typedef struct PendingCommand {
-    int serial;			/* Serial number expected in
-				 * result. */
-    TkDisplay *dispPtr;		/* Display being used for communication. */
-    char *target;		/* Name of interpreter command is
-				 * being sent to. */
-    Window commWindow;		/* Target's communication window. */
-    Tk_TimerToken timeout;	/* Token for timer handler used to check
-				 * up on target during long sends. */
-    Tcl_Interp *interp;		/* Interpreter from which the send
-				 * was invoked. */
-    int code;			/* Tcl return code for command
-				 * will be stored here. */
-    char *result;		/* String result for command (malloc'ed),
-				 * or NULL. */
-    char *errorInfo;		/* Information for "errorInfo" variable,
-				 * or NULL (malloc'ed). */
-    char *errorCode;		/* Information for "errorCode" variable,
-				 * or NULL (malloc'ed). */
-    int gotResponse;		/* 1 means a response has been received,
-				 * 0 means the command is still outstanding. */
-    struct PendingCommand *nextPtr;
-       /* Next in list of all outstanding
-	* commands.  NULL means end of
-	* list. */
-} PendingCommand;
-
-static PendingCommand *pendingCommands = NULL;
-/* List of all commands currently
- * being waited for. */
+static RegisteredInterp *interpListPtr = NULL;
+/* List of all interpreters
+ * registered by this process. */
 
      /*
       * The information below is used for communication between processes
@@ -206,9 +189,6 @@ int tkSendSerial = 0;
 
 static int		AppendErrorProc _ANSI_ARGS_((ClientData clientData,
 				XErrorEvent *errorPtr));
-static void		AppendPropCarefully _ANSI_ARGS_((Display *display,
-				 Window window, Atom property, char *value,
-				 int length, PendingCommand *pendingPtr));
 static void		DeleteProc _ANSI_ARGS_((ClientData clientData));
 static void		RegAddName _ANSI_ARGS_((NameRegistry *regPtr,
 				char *name, Window commWindow));
@@ -221,8 +201,7 @@ static NameRegistry *	RegOpen _ANSI_ARGS_((Tcl_Interp *interp,
 			     TkWindow *winPtr, int lock));
 static void		SendEventProc _ANSI_ARGS_((ClientData clientData,
 							   XEvent *eventPtr));
-static int		SendInit _ANSI_ARGS_((Tcl_Interp *interp,
-			      TkWindow *winPtr));
+static int		SendInit _ANSI_ARGS_((Tcl_Interp *interp));
 static Bool		SendRestrictProc _ANSI_ARGS_((Display *display,
 			      XEvent *eventPtr, char *arg));
 static int		ServerSecure _ANSI_ARGS_((TkDisplay *dispPtr));
@@ -265,13 +244,103 @@ Tk_SetAppName(
 				 * "send" commands.  Must be globally
 				 * unique. */
 {
-    return name;
+    TkWindow *winPtr = (TkWindow *) tkwin;
+    Tcl_Interp *interp = winPtr->mainPtr->interp;
+    int i, suffix, offset, result;
+    int createCommand = 0;
+    RegisteredInterp *riPtr, *prevPtr;
+    char *actualName;
+    Tcl_DString dString;
+    Tcl_Obj *resultObjPtr, *interpNamePtr;
+    char *interpName;
+
+    if (!initialized) {
+	SendInit(interp);
+    }
+
+    /*
+     * See if the application is already registered; if so, remove its
+     * current name from the registry. The deletion of the command
+     * will take care of disposing of this entry.
+     */
+
+    for (riPtr = interpListPtr, prevPtr = NULL; riPtr != NULL; 
+	    prevPtr = riPtr, riPtr = riPtr->nextPtr) {
+	if (riPtr->interp == interp) {
+	    if (prevPtr == NULL) {
+		interpListPtr = interpListPtr->nextPtr;
+	    } else {
+		prevPtr->nextPtr = riPtr->nextPtr;
+	    }
+	    break;
+	}
+    }
+
+    /*
+     * Pick a name to use for the application.  Use "name" if it's not
+     * already in use.  Otherwise add a suffix such as " #2", trying
+     * larger and larger numbers until we eventually find one that is
+     * unique.
+     */
+
+    actualName = name;
+    suffix = 1;
+    offset = 0;
+    Tcl_DStringInit(&dString);
+
+    TkGetInterpNames(interp, tkwin);
+    resultObjPtr = Tcl_GetObjResult(interp);
+    Tcl_IncrRefCount(resultObjPtr);
+    for (i = 0; ; ) {
+	result = Tcl_ListObjIndex(NULL, resultObjPtr, i, &interpNamePtr);
+	if (interpNamePtr == NULL) {
+	    break;
+	}
+	interpName = Tcl_GetStringFromObj(interpNamePtr, NULL);
+	if (strcmp(actualName, interpName) == 0) {
+	    if (suffix == 1) {
+		Tcl_DStringAppend(&dString, name, -1);
+		Tcl_DStringAppend(&dString, " #", 2);
+		offset = Tcl_DStringLength(&dString);
+		Tcl_DStringSetLength(&dString, offset + 10);
+		actualName = Tcl_DStringValue(&dString);
+	    }
+	    suffix++;
+	    sprintf(actualName + offset, "%d", suffix);
+	    i = 0;
+	} else {
+	    i++;
+	}
+    }
+
+    Tcl_DecrRefCount(resultObjPtr);
+    Tcl_ResetResult(interp);
+
+    /*
+     * We have found a unique name. Now add it to the registry.
+     */
+
+    riPtr = (RegisteredInterp *) ckalloc(sizeof(RegisteredInterp));
+    riPtr->interp = interp;
+    riPtr->name = ckalloc(strlen(actualName) + 1);
+    riPtr->nextPtr = interpListPtr;
+    interpListPtr = riPtr;
+    strcpy(riPtr->name, actualName);
+
+    Tcl_CreateObjCommand(interp, "send", Tk_SendObjCmd, 
+	    (ClientData) riPtr, NULL /* TODO: DeleteProc */);
+    if (Tcl_IsSafe(interp)) {
+	Tcl_HideCommand(interp, "send", "send");
+    }
+    Tcl_DStringFree(&dString);
+
+    return riPtr->name;
 }
 
 /*
  *--------------------------------------------------------------
  *
- * Tk_SendCmd --
+ * Tk_SendObjCmd --
  *
  *	This procedure is invoked to process the "send" Tcl command.
  *	See the user documentation for details on what it does.
@@ -286,15 +355,127 @@ Tk_SetAppName(
  */
 
 int
-Tk_SendCmd(
-    ClientData clientData,		/* Information about sender (only
-					 * dispPtr field is used). */
-    Tcl_Interp *interp,			/* Current interpreter. */
-    int argc,				/* Number of arguments. */
-    char **argv)			/* Argument strings. */
+Tk_SendObjCmd(
+    ClientData clientData,	/* Used only for deletion */
+    Tcl_Interp *interp,		/* The interp we are sending from */
+    int objc,			/* Number of arguments */
+    Tcl_Obj *CONST objv[])	/* The arguments */
 {
-    Tcl_SetResult(interp, "Send not yet implemented", TCL_STATIC);
-    return TCL_ERROR;
+    static char *sendOptions[] = {"-async", "-displayof", "-", (char *) NULL};
+    char *stringRep, *destName;
+    int async = 0;
+    int i, index, firstArg;
+    RegisteredInterp *riPtr;
+    Tcl_Obj *resultPtr, *listObjPtr;
+    int result;
+
+    for (i = 1; i < (objc - 1); ) {
+	stringRep = Tcl_GetStringFromObj(objv[i], NULL);
+	if (stringRep[0] == '-') {
+	    if (Tcl_GetIndexFromObj(interp, objv[i], sendOptions, "option", 0,
+		    &index) != TCL_OK) {
+		return TCL_ERROR;
+	    }
+	    if (index == 0) {
+		async = 1;
+		i++;
+	    } else if (index == 1) {
+		i += 2;
+	    } else {
+		i++;
+	    }
+	} else {
+	    break;
+	}
+    }
+	
+    if (objc < (i + 2)) {
+	Tcl_WrongNumArgs(interp, 1, objv,
+		"?options? interpName arg ?arg ...?");
+	return TCL_ERROR;
+    }
+
+    destName = Tcl_GetStringFromObj(objv[i], NULL);
+    firstArg = i + 1;
+
+    resultPtr = Tcl_GetObjResult(interp);
+
+    /*
+     * See if the target interpreter is local.  If so, execute
+     * the command directly without going through the DDE server.
+     * The only tricky thing is passing the result from the target
+     * interpreter to the invoking interpreter.  Watch out:  they
+     * could be the same!
+     */
+
+    for (riPtr = interpListPtr; (riPtr != NULL) 
+	    && (strcmp(destName, riPtr->name)); riPtr = riPtr->nextPtr) {
+	/*
+	 * Empty loop body.
+	 */
+    
+    }
+
+    if (riPtr != NULL) {
+	/*
+	 * This command is to a local interp. No need to go through
+	 * the server.
+	 */
+
+	Tcl_Interp *localInterp;
+
+	Tcl_Preserve((ClientData) riPtr);
+	localInterp = riPtr->interp;
+	Tcl_Preserve((ClientData) localInterp);
+	if (firstArg == (objc - 1)) {
+	    /*
+	     * This might be one of those cases where the new
+	     * parser is faster.
+	     */
+
+	    result = Tcl_EvalObjEx(localInterp, objv[firstArg], TCL_EVAL_DIRECT);
+	} else {
+	    listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
+	    for (i = firstArg; i < objc; i++) {
+		Tcl_ListObjAppendList(interp, listObjPtr, objv[i]);
+	    }
+	    Tcl_IncrRefCount(listObjPtr);
+	    result = Tcl_EvalObjEx(localInterp, listObjPtr, TCL_EVAL_DIRECT);
+	    Tcl_DecrRefCount(listObjPtr);
+	}
+	if (interp != localInterp) {
+	    if (result == TCL_ERROR) {
+		/* Tcl_Obj *errorObjPtr; */
+
+		/*
+		 * An error occurred, so transfer error information from the
+		 * destination interpreter back to our interpreter.  Must clear
+		 * interp's result before calling Tcl_AddErrorInfo, since
+		 * Tcl_AddErrorInfo will store the interp's result in errorInfo
+		 * before appending riPtr's $errorInfo;  we've already got
+		 * everything we need in riPtr's $errorInfo.
+		 */
+
+		Tcl_ResetResult(interp);
+		Tcl_AddErrorInfo(interp, Tcl_GetVar2(localInterp,
+			"errorInfo", (char *) NULL, TCL_GLOBAL_ONLY));
+		/* errorObjPtr = Tcl_GetObjVar2(localInterp, "errorCode", NULL,
+			TCL_GLOBAL_ONLY);
+		Tcl_SetObjErrorCode(interp, errorObjPtr); */
+	    }
+	    Tcl_SetObjResult(interp, Tcl_GetObjResult(localInterp));
+	}
+	Tcl_Release((ClientData) riPtr);
+	Tcl_Release((ClientData) localInterp);
+    } else {
+	/*
+	 * This is a non-local request. Send the script to the server and poll
+	 * it for a result. TODO!!!
+	 */
+    }
+
+done:
+    return result;
 }
 
 /*
@@ -324,8 +505,19 @@ TkGetInterpNames(
     Tk_Window tkwin)		/* Window whose display is to be used
 				 * for the lookup. */
 {
-    Tcl_SetResult(interp, "Send not yet implemented", TCL_STATIC);
-    return TCL_ERROR;
+    Tcl_Obj *listObjPtr;
+    RegisteredInterp *riPtr;
+
+    listObjPtr = Tcl_NewListObj(0, (Tcl_Obj **) NULL);
+    riPtr = interpListPtr;
+    while (riPtr != NULL) {
+	Tcl_ListObjAppendElement(interp, listObjPtr, 
+		Tcl_NewStringObj(riPtr->name, -1));
+	riPtr = riPtr->nextPtr;
+    }
+    
+    Tcl_SetObjResult(interp, listObjPtr);
+    return TCL_OK;
 }
 
 /*
@@ -348,11 +540,9 @@ TkGetInterpNames(
 
 static int
 SendInit(
-    Tcl_Interp *interp,		/* Interpreter to use for error reporting
+    Tcl_Interp *interp)		/* Interpreter to use for error reporting
 				 * (no errors are ever returned, but the
 				 * interpreter is needed anyway). */
-    TkWindow *winPtr)		/* Window that identifies the display to
-				 * initialize. */
 {
     return TCL_OK;
 }

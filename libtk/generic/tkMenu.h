@@ -3,12 +3,12 @@
  *
  *	Declarations shared among all of the files that implement menu widgets.
  *
- * Copyright (c) 1996-1997 by Sun Microsystems, Inc.
+ * Copyright (c) 1996-1998 by Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkMenu.h 1.60 97/06/20 14:43:21
+ * RCS: @(#) $Id$
  */
 
 #ifndef _TKMENU
@@ -24,6 +24,11 @@
 
 #ifndef _DEFAULT
 #include "default.h"
+#endif
+
+#ifdef BUILD_tk
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 /*
@@ -42,66 +47,72 @@ typedef struct TkMenuEntry {
     int type;			/* Type of menu entry;  see below for
 				 * valid types. */
     struct TkMenu *menuPtr;	/* Menu with which this entry is associated. */
-    char *label;		/* Main text label displayed in entry (NULL
-				 * if no label).  Malloc'ed. */
+    Tk_OptionTable optionTable;	/* Option table for this menu entry. */
+    Tcl_Obj *labelPtr;		/* Main text label displayed in entry (NULL
+				 * if no label). */
     int labelLength;		/* Number of non-NULL characters in label. */
-    Tk_Uid state;		/* State of button for display purposes:
+    int state;			/* State of button for display purposes:
 				 * normal, active, or disabled. */
-    int underline;		/* Index of character to underline. */
-    Pixmap bitmap;		/* Bitmap to display in menu entry, or None.
+    int underline;		/* Value of -underline option: specifies index
+				 * of character to underline (<0 means don't
+				 * underline anything). */
+    Tcl_Obj *underlinePtr;	/* Index of character to underline. */
+    Tcl_Obj *bitmapPtr;		/* Bitmap to display in menu entry, or None.
 				 * If not None then label is ignored. */
-    char *imageString;		/* Name of image to display (malloc'ed), or
+    Tcl_Obj *imagePtr;		/* Name of image to display, or
 				 * NULL.  If non-NULL, bitmap, text, and
 				 * textVarName are ignored. */
     Tk_Image image;		/* Image to display in menu entry, or NULL if
 				 * none. */
-    char *selectImageString;	/* Name of image to display when selected
-				 * (malloc'ed), or NULL. */
+    Tcl_Obj *selectImagePtr;	/* Name of image to display when selected, or 
+				 * NULL. */
     Tk_Image selectImage;	/* Image to display in entry when selected,
 				 * or NULL if none.  Ignored if image is
 				 * NULL. */
-    char *accel;		/* Accelerator string displayed at right
+    Tcl_Obj *accelPtr;		/* Accelerator string displayed at right
 				 * of menu entry.  NULL means no such
 				 * accelerator.  Malloc'ed. */
     int accelLength;		/* Number of non-NULL characters in
 				 * accelerator. */
     int indicatorOn;		/* True means draw indicator, false means
-				 * don't draw it. */
+				 * don't draw it. This field is ignored unless
+				 * the entry is a radio or check button. */
     /*
      * Display attributes
      */
 
-    Tk_3DBorder border;		/* Structure used to draw background for
+    Tcl_Obj *borderPtr;		/* Structure used to draw background for
 				 * entry.  NULL means use overall border
 				 * for menu. */
-    XColor *fg;			/* Foreground color to use for entry.  NULL
+    Tcl_Obj *fgPtr;		/* Foreground color to use for entry.  NULL
 				 * means use foreground color from menu. */
-    Tk_3DBorder activeBorder;	/* Used to draw background and border when
+    Tcl_Obj *activeBorderPtr;	/* Used to draw background and border when
 				 * element is active.  NULL means use
 				 * activeBorder from menu. */
-    XColor *activeFg;		/* Foreground color to use when entry is
+    Tcl_Obj *activeFgPtr;	/* Foreground color to use when entry is
 				 * active.  NULL means use active foreground
 				 * from menu. */
-    XColor *indicatorFg;	/* Color for indicators in radio and check
+    Tcl_Obj *indicatorFgPtr;	/* Color for indicators in radio and check
 				 * button entries.  NULL means use indicatorFg
 				 * GC from menu. */
-    Tk_Font tkfont;		/* Text font for menu entries.  NULL means
+    Tcl_Obj *fontPtr;		/* Text font for menu entries.  NULL means
 				 * use overall font for menu. */
     int columnBreak;		/* If this is 0, this item appears below
 				 * the item in front of it. If this is
-				 * 1, this item starts a new column. */
+				 * 1, this item starts a new column. This
+				 * field is always 0 for tearoff and separator
+				 * entries. */
     int hideMargin;		/* If this is 0, then the item has enough
-    				 * margin to accomodate a standard check
-    				 * mark and a default right margin. If this 
-    				 * is 1, then the item has no such margins.
-    				 * and checkbuttons and radiobuttons with
-    				 * this set will have a rectangle drawn
-    				 * in the indicator around the item if
-    				 * the item is checked.
-    				 * This is useful palette menus.*/ 
+    				 * margin to accomodate a standard check mark
+    				 * and a default right margin. If this is 1,
+    				 * then the item has no such margins.  and
+    				 * checkbuttons and radiobuttons with this set
+    				 * will have a rectangle drawn in the indicator
+    				 * around the item if the item is checked. This
+    				 * is useful for palette menus.  This field is
+    				 * ignored for separators and tearoffs. */
     int indicatorSpace;		/* The width of the indicator space for this
-				 * entry.
-				 */
+				 * entry. */
     int labelWidth;		/* Number of pixels to allow for displaying
 				 * labels in menu entries. */
 
@@ -109,15 +120,15 @@ typedef struct TkMenuEntry {
      * Information used to implement this entry's action:
      */
 
-    char *command;		/* Command to invoke when entry is invoked.
+    Tcl_Obj *commandPtr;	/* Command to invoke when entry is invoked.
 				 * Malloc'ed. */
-    char *name;			/* Name of variable (for check buttons and
+    Tcl_Obj *namePtr;		/* Name of variable (for check buttons and
 				 * radio buttons) or menu (for cascade
 				 * entries).  Malloc'ed.*/
-    char *onValue;		/* Value to store in variable when selected
+    Tcl_Obj *onValuePtr;	/* Value to store in variable when selected
 				 * (only for radio and check buttons).
 				 * Malloc'ed. */
-    char *offValue;		/* Value to store in variable when not
+    Tcl_Obj *offValuePtr;	/* Value to store in variable when not
 				 * selected (only for check buttons).
 				 * Malloc'ed. */
     
@@ -174,7 +185,7 @@ typedef struct TkMenuEntry {
     				 * does not yet exist. */
     TkMenuPlatformEntryData platformEntryData;
     				/* The data for the specific type of menu.
-  				 * Depends on platform and menu type what
+				 * Depends on platform and menu type what
   				 * kind of options are in this structure.
   				 */
 } TkMenuEntry;
@@ -186,9 +197,9 @@ typedef struct TkMenuEntry {
  *				button and that it should be drawn in
  *				the "selected" state.
  * ENTRY_NEEDS_REDISPLAY:	Non-zero means the entry should be redisplayed.
- * ENTRY_LAST_COLUMN:		Used by the drawing code. If the entry is in the
- *				last column, the space to its right needs to
- *				be filled.
+ * ENTRY_LAST_COLUMN:		Used by the drawing code. If the entry is in
+ *				the last column, the space to its right needs
+ *				to be filled.
  * ENTRY_PLATFORM_FLAG1 - 4	These flags are reserved for use by the
  *				platform-dependent implementation of menus
  *				and should not be used by anything else.
@@ -206,25 +217,22 @@ typedef struct TkMenuEntry {
  * Types defined for MenuEntries:
  */
 
-#define COMMAND_ENTRY		0
-#define SEPARATOR_ENTRY		1
-#define CHECK_BUTTON_ENTRY	2
-#define RADIO_BUTTON_ENTRY	3
-#define CASCADE_ENTRY		4
-#define TEAROFF_ENTRY		5
+#define CASCADE_ENTRY 0
+#define CHECK_BUTTON_ENTRY 1
+#define COMMAND_ENTRY 2
+#define RADIO_BUTTON_ENTRY 3
+#define SEPARATOR_ENTRY 4
+#define TEAROFF_ENTRY 5
 
 /*
- * Mask bits for above types:
+ * Menu states
  */
 
-#define COMMAND_MASK		TK_CONFIG_USER_BIT
-#define SEPARATOR_MASK		(TK_CONFIG_USER_BIT << 1)
-#define CHECK_BUTTON_MASK	(TK_CONFIG_USER_BIT << 2)
-#define RADIO_BUTTON_MASK	(TK_CONFIG_USER_BIT << 3)
-#define CASCADE_MASK		(TK_CONFIG_USER_BIT << 4)
-#define TEAROFF_MASK		(TK_CONFIG_USER_BIT << 5)
-#define ALL_MASK		(COMMAND_MASK | SEPARATOR_MASK \
-	| CHECK_BUTTON_MASK | RADIO_BUTTON_MASK | CASCADE_MASK | TEAROFF_MASK)
+EXTERN char *tkMenuStateStrings[];
+
+#define ENTRY_ACTIVE 0
+#define ENTRY_NORMAL 1
+#define ENTRY_DISABLED 2
 
 /*
  * A data structure of the following type is kept for each
@@ -248,7 +256,7 @@ typedef struct TkMenu {
 				 * nothing active. */
     int menuType;		/* MASTER_MENU, TEAROFF_MENU, or MENUBAR.
     				 * See below for definitions. */
-    char *menuTypeName;		/* Used to control whether created tkwin
+    Tcl_Obj *menuTypePtr;	/* Used to control whether created tkwin
 				 * is a toplevel or not. "normal", "menubar",
 				 * or "toplevel" */
 
@@ -256,20 +264,21 @@ typedef struct TkMenu {
      * Information used when displaying widget:
      */
 
-    Tk_3DBorder border;		/* Structure used to draw 3-D
+    Tcl_Obj *borderPtr;		/* Structure used to draw 3-D
 				 * border and background for menu. */
-    int borderWidth;		/* Width of border around whole menu. */
-    Tk_3DBorder activeBorder;	/* Used to draw background and border for
+    Tcl_Obj *borderWidthPtr;	/* Width of border around whole menu. */
+    Tcl_Obj *activeBorderPtr;	/* Used to draw background and border for
 				 * active element (if any). */
-    int activeBorderWidth;	/* Width of border around active element. */
-    int relief;			/* 3-d effect: TK_RELIEF_RAISED, etc. */
-    Tk_Font tkfont;		/* Text font for menu entries. */
-    XColor *fg;			/* Foreground color for entries. */
-    XColor *disabledFg;		/* Foreground color when disabled.  NULL
+    Tcl_Obj *activeBorderWidthPtr;
+				/* Width of border around active element. */
+    Tcl_Obj *reliefPtr;		/* 3-d effect: TK_RELIEF_RAISED, etc. */
+    Tcl_Obj *fontPtr;		/* Text font for menu entries. */
+    Tcl_Obj *fgPtr;		/* Foreground color for entries. */
+    Tcl_Obj *disabledFgPtr;	/* Foreground color when disabled.  NULL
 				 * means use normalFg with a 50% stipple
 				 * instead. */
-    XColor *activeFg;		/* Foreground color for active entry. */
-    XColor *indicatorFg;	/* Color for indicators in radio and check
+    Tcl_Obj *activeFgPtr;	/* Foreground color for active entry. */
+    Tcl_Obj *indicatorFgPtr;	/* Color for indicators in radio and check
 				 * button entries. */
     Pixmap gray;		/* Bitmap for drawing disabled entries in
 				 * a stippled fashion.  None means not
@@ -300,7 +309,7 @@ typedef struct TkMenu {
      * Miscellaneous information:
      */
 
-    int tearOff;		/* 1 means this menu can be torn off. On some
+    int tearoff;		/* 1 means this menu can be torn off. On some
     				 * platforms, the user can drag an outline
     				 * of the menu by just dragging outside of
     				 * the menu, and the tearoff is created where
@@ -308,17 +317,17 @@ typedef struct TkMenu {
 				 * indicator (such as a dashed stripe) is
 				 * drawn, and when the menu is selected, the
 				 * tearoff is created. */
-    char *title;		/* The title to use when this menu is torn
+    Tcl_Obj *titlePtr;		/* The title to use when this menu is torn
     				 * off. If this is NULL, a default scheme
     				 * will be used to generate a title for
     				 * tearoff. */
-    char *tearOffCommand;	/* If non-NULL, points to a command to
+    Tcl_Obj *tearoffCommandPtr;	/* If non-NULL, points to a command to
 				 * run whenever the menu is torn-off. */
-    char *takeFocus;		/* Value of -takefocus option;  not used in
+    Tcl_Obj *takeFocusPtr;	/* Value of -takefocus option;  not used in
 				 * the C code, but used by keyboard traversal
 				 * scripts.  Malloc'ed, but may be NULL. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
-    char *postCommand;		/* Used to detect cycles in cascade hierarchy
+    Tcl_Obj *cursorPtr;		/* Current cursor for window, or None. */
+    Tcl_Obj *postCommandPtr;	/* Used to detect cycles in cascade hierarchy
     				 * trees when preprocessing postcommands
     				 * on some platforms. See PostMenu for
     				 * more details. */
@@ -336,6 +345,9 @@ typedef struct TkMenu {
     				/* A pointer to the original menu for this
     				 * clone chain. Points back to this structure
     				 * if this menu is a master menu. */
+    struct TkMenuOptionTables *optionTablesPtr;
+				/* A pointer to the collection of option tables
+				 * that work with menus and menu entries. */
     Tk_Window parentTopLevelPtr;/* If this menu is a menubar, this is the
     				 * toplevel that owns the menu. Only applicable
     				 * for menubar clones.
@@ -355,6 +367,13 @@ typedef struct TkMenu {
   				 * Depends on platform and menu type what
   				 * kind of options are in this structure.
   				 */
+    Tk_OptionSpec *extensionPtr;
+				/* Needed by the configuration package for
+				 * this widget to be extended. */
+    Tk_SavedOptions *errorStructPtr;
+				/* We actually have to allocate these because
+				 * multiple menus get changed during one
+				 * ConfigureMenu call. */
 } TkMenu;
 
 /*
@@ -400,6 +419,16 @@ typedef struct TkMenuReferences {
     				 * be around when we are deleting.
     				 */
 } TkMenuReferences;
+
+/*
+ * This structure contains all of the option tables that are needed
+ * by menus.
+ */
+
+typedef struct TkMenuOptionTables {
+    Tk_OptionTable menuOptionTable;	/* The option table for menus. */
+    Tk_OptionTable entryOptionTables[6];/* The tables for menu entries. */
+} TkMenuOptionTables;
 
 /*
  * Flag bits for menus:
@@ -448,13 +477,6 @@ typedef struct TkMenuReferences {
 #define DECORATION_BORDER_WIDTH 2
 
 /*
- * Configuration specs. Needed for platform-specific default initializations.
- */
-
-EXTERN Tk_ConfigSpec tkMenuEntryConfigSpecs[];
-EXTERN Tk_ConfigSpec tkMenuConfigSpecs[];
-
-/*
  * Menu-related procedures that are shared among Tk modules but not exported
  * to the outside world:
  */
@@ -465,21 +487,26 @@ EXTERN void		TkBindMenu _ANSI_ARGS_((
 			    Tk_Window tkwin, TkMenu *menuPtr));
 EXTERN TkMenuReferences *
 			TkCreateMenuReferences _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *pathName));
+			    char *name));
 EXTERN void		TkDestroyMenu _ANSI_ARGS_((TkMenu *menuPtr));
-EXTERN void             TkEventuallyRecomputeMenu _ANSI_ARGS_((TkMenu *menuPtr));
+EXTERN void             TkEventuallyRecomputeMenu _ANSI_ARGS_((
+			    TkMenu *menuPtr));
 EXTERN void		TkEventuallyRedrawMenu _ANSI_ARGS_((
     			    TkMenu *menuPtr, TkMenuEntry *mePtr));
 EXTERN TkMenuReferences *
 			TkFindMenuReferences _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *pathName));
+			    char *name));
+EXTERN TkMenuReferences *
+			TkFindMenuReferencesObj _ANSI_ARGS_((
+			    Tcl_Interp *interp, Tcl_Obj *namePtr));
 EXTERN void		TkFreeMenuReferences _ANSI_ARGS_((
 			    TkMenuReferences *menuRefPtr));
 EXTERN Tcl_HashTable *	TkGetMenuHashTable _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN int		TkGetMenuIndex _ANSI_ARGS_((Tcl_Interp *interp,
-			    TkMenu *menuPtr, char *string, int lastOK,
+			    TkMenu *menuPtr, Tcl_Obj *objPtr, int lastOK,
 			    int *indexPtr));
-EXTERN void		TkMenuInitializeDrawingFields _ANSI_ARGS_((TkMenu *menuPtr));
+EXTERN void		TkMenuInitializeDrawingFields _ANSI_ARGS_((
+			    TkMenu *menuPtr));
 EXTERN void		TkMenuInitializeEntryDrawingFields _ANSI_ARGS_((
 			    TkMenuEntry *mePtr));
 EXTERN int		TkInvokeMenu _ANSI_ARGS_((Tcl_Interp *interp,
@@ -501,8 +528,8 @@ EXTERN void		TkMenuSelectImageProc _ANSI_ARGS_
 			    ((ClientData clientData, int x, int y,
 			    int width, int height, int imgWidth,
 			    int imgHeight));
-EXTERN char *		TkNewMenuName _ANSI_ARGS_((Tcl_Interp *interp, 
-			    char *parentName, TkMenu *menuPtr));
+EXTERN Tcl_Obj *	TkNewMenuName _ANSI_ARGS_((Tcl_Interp *interp, 
+			    Tcl_Obj *parentNamePtr, TkMenu *menuPtr));
 EXTERN int		TkPostCommand _ANSI_ARGS_((TkMenu *menuPtr));
 EXTERN int		TkPostSubmenu _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkMenu *menuPtr, TkMenuEntry *mePtr));
@@ -516,7 +543,8 @@ EXTERN void             TkRecomputeMenu _ANSI_ARGS_((TkMenu *menuPtr));
  * common code.
  */
 
-EXTERN void		TkpComputeMenubarGeometry _ANSI_ARGS_((TkMenu *menuPtr));
+EXTERN void		TkpComputeMenubarGeometry _ANSI_ARGS_((
+			    TkMenu *menuPtr));
 EXTERN void		TkpComputeStandardMenuGeometry _ANSI_ARGS_
 			    ((TkMenu *menuPtr));
 EXTERN int		TkpConfigureMenuEntry
@@ -536,6 +564,9 @@ EXTERN int		TkpPostMenu _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkMenu *menuPtr, int x, int y));
 EXTERN void		TkpSetWindowMenuBar _ANSI_ARGS_((Tk_Window tkwin,
 			    TkMenu *menuPtr));
+
+# undef TCL_STORAGE_CLASS
+# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKMENU */
 

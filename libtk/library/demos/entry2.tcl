@@ -3,7 +3,7 @@
 # This demonstration script is the same as the entry1.tcl script
 # except that it creates scrollbars for the entries.
 #
-# SCCS: @(#) entry2.tcl 1.5 97/03/02 16:22:24
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

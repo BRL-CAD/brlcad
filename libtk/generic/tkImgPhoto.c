@@ -15,13 +15,17 @@
  *	   Department of Computer Science,
  *	   Australian National University.
  *
- * SCCS: @(#) tkImgPhoto.c 1.60 97/08/08 11:32:46
+ * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
 #include "tkPort.h"
 #include "tclMath.h"
 #include <ctype.h>
+
+#ifdef __WIN32__
+#include "tkWinInt.h"
+#endif
 
 /*
  * Declaration for internal Xlib function used here:
@@ -125,6 +129,9 @@ typedef struct ColorTable {
  * MAP_COLORS:			1 means pixel values should be mapped
  *				through pixelMap.
  */
+#ifdef COLOR_WINDOW
+#undef COLOR_WINDOW
+#endif
 
 #define BLACK_AND_WHITE		1
 #define COLOR_WINDOW		2
@@ -290,6 +297,12 @@ Tk_ImageType tkPhotoImageType = {
     (Tk_ImageType *) NULL	/* nextPtr */
 };
 
+typedef struct ThreadSpecificData {
+    Tk_PhotoImageFormat *formatList;  /* Pointer to the first in the 
+				       * list of known photo image formats.*/
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
+
 /*
  * Default configuration
  */
@@ -331,12 +344,6 @@ static int imgPhotoColorHashInitialized;
 #define N_COLOR_HASH	(sizeof(ColorTableId) / sizeof(int))
 
 /*
- * Pointer to the first in the list of known photo image formats.
- */
-
-static Tk_PhotoImageFormat *formatList = NULL;
-
-/*
  * Forward declarations
  */
 
@@ -361,7 +368,8 @@ static int		IsValidPalette _ANSI_ARGS_((PhotoInstance *instancePtr,
 			    char *palette));
 static int		CountBits _ANSI_ARGS_((pixel mask));
 static void		GetColorTable _ANSI_ARGS_((PhotoInstance *instancePtr));
-static void		FreeColorTable _ANSI_ARGS_((ColorTable *colorPtr));
+static void		FreeColorTable _ANSI_ARGS_((ColorTable *colorPtr,
+			    int force));
 static void		AllocateColors _ANSI_ARGS_((ColorTable *colorPtr));
 static void		DisposeColorTable _ANSI_ARGS_((ClientData clientData));
 static void		DisposeInstance _ANSI_ARGS_((ClientData clientData));
@@ -415,13 +423,15 @@ Tk_CreatePhotoImageFormat(formatPtr)
 				 * to Tk_CreatePhotoImageFormat previously. */
 {
     Tk_PhotoImageFormat *copyPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     copyPtr = (Tk_PhotoImageFormat *) ckalloc(sizeof(Tk_PhotoImageFormat));
     *copyPtr = *formatPtr;
     copyPtr->name = (char *) ckalloc((unsigned) (strlen(formatPtr->name) + 1));
     strcpy(copyPtr->name, formatPtr->name);
-    copyPtr->nextPtr = formatList;
-    formatList = copyPtr;
+    copyPtr->nextPtr = tsdPtr->formatList;
+    tsdPtr->formatList = copyPtr;
 }
 
 /*
@@ -522,7 +532,6 @@ ImgPhotoCmd(clientData, interp, argc, argv)
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
     Tk_Window tkwin;
-    char string[16];
     XColor color;
     Tk_PhotoImageFormat *imageFormat;
     int imageWidth, imageHeight;
@@ -530,6 +539,8 @@ ImgPhotoCmd(clientData, interp, argc, argv)
     Tcl_Channel chan;
     Tk_PhotoHandle srcHandle;
     size_t length;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -678,6 +689,8 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	 * photo get command - first parse and check parameters.
 	 */
 
+	char string[TCL_INTEGER_SPACE * 3];
+
 	if (argc != 4) {
 	    Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
 		    " get x y\"", (char *) NULL);
@@ -789,6 +802,7 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	block.offset[0] = 0;
 	block.offset[1] = 1;
 	block.offset[2] = 2;
+	block.offset[3] = 0;
 	Tk_PhotoPutBlock((ClientData)masterPtr, &block,
 		options.toX, options.toY, options.toX2 - options.toX,
 		options.toY2 - options.toY);
@@ -838,6 +852,11 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 		!= TCL_OK) {
             return TCL_ERROR;
         }
+        if (Tcl_SetChannelOption(interp, chan, "-encoding", "binary")
+		!= TCL_OK) {
+            return TCL_ERROR;
+        }
+    
 	if (MatchFileFormat(interp, chan, options.name, options.format,
 		&imageFormat, &imageWidth, &imageHeight) != TCL_OK) {
 	    Tcl_Close(NULL, chan);
@@ -974,7 +993,7 @@ ImgPhotoCmd(clientData, interp, argc, argv)
 	 */
 
 	matched = 0;
-	for (imageFormat = formatList; imageFormat != NULL;
+	for (imageFormat = tsdPtr->formatList; imageFormat != NULL;
 	     imageFormat = imageFormat->nextPtr) {
 	    if ((options.format == NULL)
 		    || (strncasecmp(options.format, imageFormat->name,
@@ -1254,7 +1273,7 @@ ParseSubcommandOptions(optPtr, interp, allowedOptions, optIndexPtr, argc, argv)
  *
  * Results:
  *	A standard Tcl return value.  If TCL_ERROR is returned then
- *	an error message is left in masterPtr->interp->result.
+ *	an error message is left in the masterPtr->interp's result.
  *
  * Side effects:
  *	Existing instances of the image will be redisplayed to match
@@ -1348,6 +1367,10 @@ ImgPhotoConfigureMaster(interp, masterPtr, argc, argv, flags)
 	    return TCL_ERROR;
 	}
         if (Tcl_SetChannelOption(interp, chan, "-translation", "binary")
+		!= TCL_OK) {
+            return TCL_ERROR;
+        }
+        if (Tcl_SetChannelOption(interp, chan, "-encoding", "binary")
 		!= TCL_OK) {
             return TCL_ERROR;
         }
@@ -1486,7 +1509,7 @@ ImgPhotoConfigureInstance(instancePtr)
 
 	if (colorTablePtr != NULL) {
 	    colorTablePtr->liveRefCount -= 1;
-	    FreeColorTable(colorTablePtr);
+	    FreeColorTable(colorTablePtr, 0);
 	}
 	GetColorTable(instancePtr);
 
@@ -1597,7 +1620,7 @@ ImgPhotoGet(tkwin, masterData)
     int mono, nRed, nGreen, nBlue;
     XVisualInfo visualInfo, *visInfoPtr;
     XRectangle validBox;
-    char buf[16];
+    char buf[TCL_INTEGER_SPACE * 3];
     int numVisuals;
     XColor *white, *black;
     XGCValues gcValues;
@@ -1646,7 +1669,7 @@ ImgPhotoGet(tkwin, masterData)
 
 		Tcl_CancelIdleCall(DisposeInstance, (ClientData) instancePtr);
 		if (instancePtr->colorTablePtr != NULL) {
-		    FreeColorTable(instancePtr->colorTablePtr);
+		    FreeColorTable(instancePtr->colorTablePtr, 0);
 		}
 		GetColorTable(instancePtr);
 	    }
@@ -2484,15 +2507,22 @@ GetColorTable(instancePtr)
  */
 
 static void
-FreeColorTable(colorPtr)
+FreeColorTable(colorPtr, force)
     ColorTable *colorPtr;	/* Pointer to the color table which is
 				 * no longer required by an instance. */
+    int force;			/* Force free to happen immediately. */
 {
     colorPtr->refCount--;
     if (colorPtr->refCount > 0) {
 	return;
     }
-    if ((colorPtr->flags & DISPOSE_PENDING) == 0) {
+    if (force) {
+	if ((colorPtr->flags & DISPOSE_PENDING) != 0) {
+	    Tcl_CancelIdleCall(DisposeColorTable, (ClientData) colorPtr);
+	    colorPtr->flags &= ~DISPOSE_PENDING;
+	}
+	DisposeColorTable((ClientData) colorPtr);
+    } else if ((colorPtr->flags & DISPOSE_PENDING) == 0) {
 	Tcl_DoWhenIdle(DisposeColorTable, (ClientData) colorPtr);
 	colorPtr->flags |= DISPOSE_PENDING;
     }
@@ -2958,7 +2988,7 @@ DisposeInstance(clientData)
 	ckfree((char *) instancePtr->error);
     }
     if (instancePtr->colorTablePtr != NULL) {
-	FreeColorTable(instancePtr->colorTablePtr);
+	FreeColorTable(instancePtr->colorTablePtr, 1);
     }
 
     if (instancePtr->masterPtr->instancePtr == instancePtr) {
@@ -3011,6 +3041,8 @@ MatchFileFormat(interp, chan, fileName, formatString, imageFormatPtr,
 {
     int matched;
     Tk_PhotoImageFormat *formatPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Scan through the table of file format handlers to find
@@ -3018,7 +3050,7 @@ MatchFileFormat(interp, chan, fileName, formatString, imageFormatPtr,
      */
 
     matched = 0;
-    for (formatPtr = formatList; formatPtr != NULL;
+    for (formatPtr = tsdPtr->formatList; formatPtr != NULL;
 	 formatPtr = formatPtr->nextPtr) {
 	if (formatString != NULL) {
 	    if (strncasecmp(formatString, formatPtr->name,
@@ -3101,6 +3133,8 @@ MatchStringFormat(interp, string, formatString, imageFormatPtr,
 {
     int matched;
     Tk_PhotoImageFormat *formatPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Scan through the table of file format handlers to find
@@ -3108,7 +3142,7 @@ MatchStringFormat(interp, string, formatString, imageFormatPtr,
      */
 
     matched = 0;
-    for (formatPtr = formatList; formatPtr != NULL;
+    for (formatPtr = tsdPtr->formatList; formatPtr != NULL;
 	    formatPtr = formatPtr->nextPtr) {
 	if (formatString != NULL) {
 	    if (strncasecmp(formatString, formatPtr->name,
@@ -4140,5 +4174,6 @@ Tk_PhotoGetImage(handle, blockPtr)
     blockPtr->offset[0] = 0;
     blockPtr->offset[1] = 1;
     blockPtr->offset[2] = 2;
+    blockPtr->offset[3] = 0;
     return 1;
 }

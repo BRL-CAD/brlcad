@@ -5,12 +5,12 @@
  *	geometry manager for Tk.
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
- * Copyright (c) 1994-1995 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkPack.c 1.64 96/05/03 10:51:52
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -94,19 +94,6 @@ typedef struct Packer {
 #define EXPAND			8
 #define OLD_STYLE		16
 #define DONT_PROPAGATE		32
-
-/*
- * Hash table used to map from Tk_Window tokens to corresponding
- * Packer structures:
- */
-
-static Tcl_HashTable packerHashTable;
-
-/*
- * Have statics in this module been initialized?
- */
-
-static int initialized = 0;
 
 /*
  * The following structure is the official type record for the
@@ -281,7 +268,7 @@ Tk_PackCmd(clientData, interp, argc, argv)
     } else if ((c == 'i') && (strncmp(argv[1], "info", length) == 0)) {
 	register Packer *slavePtr;
 	Tk_Window slave;
-	char buffer[300];
+	char buffer[64 + TCL_INTEGER_SPACE * 4];
 	static char *sideNames[] = {"top", "bottom", "left", "right"};
 
 	if (argc != 3) {
@@ -342,9 +329,9 @@ Tk_PackCmd(clientData, interp, argc, argv)
 	masterPtr = GetPacker(master);
 	if (argc == 3) {
 	    if (masterPtr->flags & DONT_PROPAGATE) {
-		interp->result = "0";
+		Tcl_SetResult(interp, "0", TCL_STATIC);
 	    } else {
-		interp->result = "1";
+		Tcl_SetResult(interp, "1", TCL_STATIC);
 	    }
 	    return TCL_OK;
 	}
@@ -957,10 +944,11 @@ GetPacker(tkwin)
     register Packer *packPtr;
     Tcl_HashEntry *hPtr;
     int new;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
-    if (!initialized) {
-	initialized = 1;
-	Tcl_InitHashTable(&packerHashTable, TCL_ONE_WORD_KEYS);
+    if (!dispPtr->packInit) {
+	dispPtr->packInit = 1;
+	Tcl_InitHashTable(&dispPtr->packerHashTable, TCL_ONE_WORD_KEYS);
     }
 
     /*
@@ -968,7 +956,8 @@ GetPacker(tkwin)
      * then create a new one.
      */
 
-    hPtr = Tcl_CreateHashEntry(&packerHashTable, (char *) tkwin, &new);
+    hPtr = Tcl_CreateHashEntry(&dispPtr->packerHashTable, (char *) tkwin, 
+            &new);
     if (!new) {
 	return (Packer *) Tcl_GetHashValue(hPtr);
     }
@@ -1324,6 +1313,8 @@ PackStructureProc(clientData, eventPtr)
     XEvent *eventPtr;			/* Describes what just happened. */
 {
     register Packer *packPtr = (Packer *) clientData;
+    TkDisplay *dispPtr;
+
     if (eventPtr->type == ConfigureNotify) {
 	if ((packPtr->slavePtr != NULL)
 		&& !(packPtr->flags & REQUESTED_REPACK)) {
@@ -1353,8 +1344,11 @@ PackStructureProc(clientData, eventPtr)
 	    nextPtr = slavePtr->nextPtr;
 	    slavePtr->nextPtr = NULL;
 	}
-	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&packerHashTable,
-		(char *) packPtr->tkwin));
+	if (packPtr->tkwin != NULL) {
+	    dispPtr = ((TkWindow *) packPtr->tkwin)->dispPtr;
+            Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->packerHashTable,
+		    (char *) packPtr->tkwin));
+	}
 	if (packPtr->flags & REQUESTED_REPACK) {
 	    Tcl_CancelIdleCall(ArrangePacking, (ClientData) packPtr);
 	}
@@ -1398,7 +1392,7 @@ PackStructureProc(clientData, eventPtr)
  *
  * Results:
  *	TCL_OK is returned if all went well.  Otherwise, TCL_ERROR is
- *	returned and interp->result is set to contain an error message.
+ *	returned and the interp's result is set to contain an error message.
  *
  * Side effects:
  *	Slave windows get taken over by the packer.

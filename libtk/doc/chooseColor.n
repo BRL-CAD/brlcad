@@ -4,7 +4,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) chooseColor.n 1.4 96/09/19 17:01:44
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH tk_chooseColor n 4.2 Tk "Tk Built-In Commands"

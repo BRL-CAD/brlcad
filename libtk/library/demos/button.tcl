@@ -3,7 +3,7 @@
 # This demonstration script creates a toplevel window containing
 # several button widgets.
 #
-# SCCS: @(#) button.tcl 1.5 97/03/02 16:19:39
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) options.n 1.47 97/05/31 17:12:19
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH options n 4.4 Tk "Tk Built-In Commands"
@@ -278,7 +278,8 @@ particular widget and may be determined by other options, such as
 \fBanchor\fR or \fBjustify\fR.
 .OP \-troughcolor troughColor Background
 Specifies the color to use for the rectangular trough areas
-in widgets such as scrollbars and scales.
+in widgets such as scrollbars and scales.  This option is ignored for
+scrollbars on Windows (native widget doesn't recognize this option).
 .OP \-underline underline Underline
 Specifies the integer index of a character to underline in the widget.
 This option is used by the default bindings to implement keyboard

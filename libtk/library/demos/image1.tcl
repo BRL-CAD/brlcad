@@ -2,7 +2,7 @@
 #
 # This demonstration script displays two image widgets.
 #
-# SCCS: @(#) image1.tcl 1.6 97/03/02 16:24:35
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

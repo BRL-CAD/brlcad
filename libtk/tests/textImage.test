@@ -1,7 +1,17 @@
-# SCCS: @(#) textImage.test 1.8 97/07/01 18:11:54
+# textImage.test -- test images embedded in text widgets
+#
+# This file contains a collection of tests for one or more of the Tcl
+# built-in commands.  Sourcing this file into Tcl runs the tests and
+# generates output for errors.  No output means no errors were found.
+#
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
+#
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then \
-  {source ../tests/defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 # Test Arguments:
 # name -                Name of test, in the form foo-1.2.
@@ -9,7 +19,7 @@ if {[string compare test [info procs test]] == 1} then \
 #                       help humans understand what it does.
 # constraints -         A list of one or more keywords, each of
 #                       which must be the name of an element in
-#                       the array "testConfig".  If any of these
+#                       the array "::tcltest::testConfig".  If any of these
 #                       elements is zero, the test is skipped.
 #                       This argument may be omitted.
 # script -              Script to run to carry out the test.  It must
@@ -351,3 +361,20 @@ test textImage-4.3 {alignment and padding checking} {fonts} {
 catch {destroy .t}
 foreach image [image names] {image delete $image}
 font delete test_font
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

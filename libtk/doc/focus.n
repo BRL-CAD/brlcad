@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) focus.n 1.22 96/08/27 13:21:42
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH focus n 4.0 Tk "Tk Built-In Commands"

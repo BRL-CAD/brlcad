@@ -2,23 +2,27 @@
 # It is organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) msgbox.test 1.7 97/07/31 10:05:25
+# RCS: @(#) $Id$
 #
 
-if {[string compare test [info procs test]] == 1} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
+
+# Some tests require user interaction on non-unix platform
+set ::tcltest::testConfig(nonUnixUserInteraction) \
+    [expr {$::tcltest::testConfig(userInteraction) || \
+	$::tcltest::testConfig(unixOnly)}]
 
 test msgbox-1.1 {tk_messageBox command} {
     list [catch {tk_messageBox -foo} msg] $msg
-} {1 {unknown option "-foo", must be -default, -icon, -message, -parent, -title or -type}}
+} {1 {bad option "-foo": must be -default, -icon, -message, -parent, -title, or -type}}
 test msgbox-1.2 {tk_messageBox command} {
     list [catch {tk_messageBox -foo bar} msg] $msg
-} {1 {unknown option "-foo", must be -default, -icon, -message, -parent, -title or -type}}
+} {1 {bad option "-foo": must be -default, -icon, -message, -parent, -title, or -type}}
 
 catch {tk_messageBox -foo bar} msg
 regsub -all ,      $msg "" options
@@ -38,23 +42,31 @@ test msgbox-1.4 {tk_messageBox command} {
 
 test msgbox-1.5 {tk_messageBox command} {
     list [catch {tk_messageBox -type foo} msg] $msg
-} {1 {invalid message box type "foo", must be abortretryignore, ok, okcancel, retrycancel, yesno or yesnocancel}}
+} {1 {bad -type value "foo": must be abortretryignore, ok, okcancel, retrycancel, yesno, or yesnocancel}}
+
+proc createPlatformMsg {val} {
+    global tcl_platform
+    if {$tcl_platform(platform) == "unix"} {
+	return "invalid default button \"$val\""
+    }
+    return "bad -default value \"$val\": must be abort, retry, ignore, ok, cancel, no, or yes"
+}
 
 test msgbox-1.6 {tk_messageBox command} {
     list [catch {tk_messageBox -default 1.1} msg] $msg
-} {1 {invalid default button "1.1"}}
+} [list 1 [createPlatformMsg "1.1"]]
 
 test msgbox-1.7 {tk_messageBox command} {
     list [catch {tk_messageBox -default foo} msg] $msg
-} {1 {invalid default button "foo"}}
+} [list 1 [createPlatformMsg "foo"]]
 
 test msgbox-1.8 {tk_messageBox command} {
     list [catch {tk_messageBox -type yesno -default 3} msg] $msg
-} {1 {invalid default button "3"}}
+} [list 1 [createPlatformMsg "3"]]
 
 test msgbox-1.9 {tk_messageBox command} {
     list [catch {tk_messageBox -icon foo} msg] $msg
-} {1 {invalid icon "foo", must be error, info, question or warning}}
+} {1 {bad -icon value "foo": must be error, info, question, or warning}}
 
 test msgbox-1.10 {tk_messageBox command} {
     list [catch {tk_messageBox -parent foo.bar} msg] $msg
@@ -64,14 +76,6 @@ if {[info commands tkMessageBox] == ""} {
     set isNative 1
 } else {
     set isNative 0
-}
-
-if {$isNative && ![info exists INTERACTIVE]} {
-    puts " Some tests were skipped because they could not be performed"
-    puts " automatically on this platform. If you wish to execute them"
-    puts " interactively, set the TCL variable INTERACTIVE and re-run"
-    puts " the test"
-    return
 }
 
 proc ChooseMsg {parent btn} {
@@ -128,30 +132,52 @@ set specs {
 # Try out all combinations of (type) x (default button) and
 # (type) x (icon).
 #
+set count 1
 foreach spec $specs {
     set type [lindex $spec 0]
     set buttons [lindex $spec 3]
 
     set button [lindex $buttons 0]
-    test msgbox-2.1 {tk_messageBox command} {
+    test msgbox-2.$count {tk_messageBox command} {nonUnixUserInteraction} {
 	ChooseMsg $parent $button
 	tk_messageBox -title Hi -message "Please press $button" \
 	    -type $type
     } $button
+    incr count
 
     foreach icon {warning error info question} {
-	test msgbox-2.2 {tk_messageBox command -icon option} {
+	test msgbox-2.$count {tk_messageBox command -icon option} \
+		{nonUnixUserInteraction} {
 	    ChooseMsg $parent $button
 	    tk_messageBox -title Hi -message "Please press $button" \
 		-type $type -icon $icon
 	} $button
+        incr count
     }
 
     foreach button $buttons {
-	test msgbox-2.3 {tk_messageBox command} {
+	test msgbox-2.$count {tk_messageBox command} {nonUnixUserInteraction} {
 	    ChooseMsg $parent $button
 	    tk_messageBox -title Hi -message "Please press $button" \
 		-type $type -default $button
 	} "$button"
+        incr count
     }
 }
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

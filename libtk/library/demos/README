@@ -43,4 +43,4 @@ browse -	A simple directory browser.  Invoke it with and argument
 		Double-click on files or subdirectories to browse them.
 		Control-c and control-q cause the program to exit.
 
-sccs id = SCCS: @(#) README 1.3 96/02/16 10:49:14
+RCS: @(#) $Id$

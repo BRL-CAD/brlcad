@@ -3,14 +3,14 @@
 #
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) util.test 1.4 96/02/16 10:55:50
+# RCS: @(#) $Id$
 
-if {[string compare test [info procs test]] == 1} then \
-  {source defs}
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
+}
 
 foreach i [winfo children .] {
     destroy $i
@@ -68,3 +68,20 @@ test util-1.11 {Tk_GetScrollInfo procedure} {
 test util-1.12 {Tk_GetScrollInfo procedure} {
     list [catch {.l yview dropdead 3 times} msg] $msg
 } {1 {unknown option "dropdead": must be moveto or scroll}}
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

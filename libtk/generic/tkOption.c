@@ -6,12 +6,12 @@
  *	with windows either by name or by class or both.
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
- * Copyright (c) 1994-1996 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * SCCS: @(#) tkOption.c 1.57 96/10/17 15:16:45
+ * RCS: @(#) $Id$
  */
 
 #include "tkPort.h"
@@ -141,13 +141,6 @@ typedef struct ElArray {
  */
 
 #define NUM_STACKS 8
-static ElArray *stacks[NUM_STACKS];
-static TkWindow *cachedWindow = NULL;	/* Lowest-level window currently
-					 * loaded in stacks at present. 
-					 * NULL means stacks have never
-					 * been used, or have been
-					 * invalidated because of a change
-					 * to the database. */
 
 /*
  * One of the following structures is used to keep track of each
@@ -163,33 +156,41 @@ typedef struct StackLevel {
 				 * fields when popping out of a level. */
 } StackLevel;
 
-/*
- * Information about all of the stack levels that are currently
- * active.  This array grows dynamically to become as large as needed.
- */
+typedef struct ThreadSpecificData {
+    int initialized;            /* 0 means the ThreadSpecific Data structure
+				 * for the current thread needs to be
+				 * initialized. */
+    ElArray *stacks[NUM_STACKS];
+    TkWindow *cachedWindow;
+                                /* Lowest-level window currently
+				 * loaded in stacks at present. 
+				 * NULL means stacks have never
+				 * been used, or have been
+				 * invalidated because of a change
+				 * to the database. */
+    /*
+     * Information about all of the stack levels that are currently
+     * active.  This array grows dynamically to become as large as needed.
+     */
 
-static StackLevel *levels = NULL;
-				/* Array describing current stack. */
-static int numLevels = 0;	/* Total space allocated. */
-static int curLevel = -1;	/* Highest level currently in use.  Note:
+    StackLevel *levels;	        /* Array describing current stack. */
+    int numLevels;	        /* Total space allocated. */
+    int curLevel;	        /* Highest level currently in use.  Note:
 				 * curLevel is never 0!  (I don't remember
 				 * why anymore...) */
+    /*
+     * The variable below is a serial number for all options entered into
+     * the database so far.  It increments on each addition to the option
+     * database.  It is used in computing option priorities, so that the
+     * most recent entry wins when choosing between options at the same
+     * priority level.
+     */
 
-/*
- * The variable below is a serial number for all options entered into
- * the database so far.  It increments on each addition to the option
- * database.  It is used in computing option priorities, so that the
- * most recent entry wins when choosing between options at the same
- * priority level.
- */
-
-static int serial = 0;
-
-/*
- * Special "no match" Element to use as default for searches.
- */
-
-static Element defaultMatch;
+    int serial;
+    Element defaultMatch;       /* Special "no match" Element to use as 
+				 * default for searches.*/
+} ThreadSpecificData;
+static Tcl_ThreadDataKey dataKey;
 
 /*
  * Forward declarations for procedures defined in this file:
@@ -248,11 +249,13 @@ Tk_AddOption(tkwin, name, value, priority)
     int count, firstField, length;
 #define TMP_SIZE 100
     char tmp[TMP_SIZE+1];
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->mainPtr->optionRootPtr == NULL) {
 	OptionInit(winPtr->mainPtr);
     }
-    cachedWindow = NULL;	/* Invalidate the cache. */
+    tsdPtr->cachedWindow = NULL;	/* Invalidate the cache. */
 
     /*
      * Compute the priority for the new element, including both the
@@ -265,8 +268,8 @@ Tk_AddOption(tkwin, name, value, priority)
     } else if (priority > TK_MAX_PRIO) {
 	priority = TK_MAX_PRIO;
     }
-    newEl.priority = (priority << 24) + serial;
-    serial++;
+    newEl.priority = (priority << 24) + tsdPtr->serial;
+    tsdPtr->serial++;
 
     /*
      * Parse the option one field at a time.
@@ -396,28 +399,30 @@ Tk_GetOption(tkwin, name, className)
     Tk_Uid nameId, classId;
     register Element *elPtr, *bestPtr;
     register int count;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Note:  no need to call OptionInit here:  it will be done by
      * the SetupStacks call below (squeeze out those nanoseconds).
      */
 
-    if (tkwin != (Tk_Window) cachedWindow) {
+    if (tkwin != (Tk_Window) tsdPtr->cachedWindow) {
 	SetupStacks((TkWindow *) tkwin, 1);
     }
 
     nameId = Tk_GetUid(name);
-    bestPtr = &defaultMatch;
-    for (elPtr = stacks[EXACT_LEAF_NAME]->els,
-	    count = stacks[EXACT_LEAF_NAME]->numUsed; count > 0;
+    bestPtr = &tsdPtr->defaultMatch;
+    for (elPtr = tsdPtr->stacks[EXACT_LEAF_NAME]->els,
+	    count = tsdPtr->stacks[EXACT_LEAF_NAME]->numUsed; count > 0;
 	    elPtr++, count--) {
 	if ((elPtr->nameUid == nameId)
 		&& (elPtr->priority > bestPtr->priority)) {
 	    bestPtr = elPtr;
 	}
     }
-    for (elPtr = stacks[WILDCARD_LEAF_NAME]->els,
-	    count = stacks[WILDCARD_LEAF_NAME]->numUsed; count > 0;
+    for (elPtr = tsdPtr->stacks[WILDCARD_LEAF_NAME]->els,
+	    count = tsdPtr->stacks[WILDCARD_LEAF_NAME]->numUsed; count > 0;
 	    elPtr++, count--) {
 	if ((elPtr->nameUid == nameId)
 		&& (elPtr->priority > bestPtr->priority)) {
@@ -426,17 +431,17 @@ Tk_GetOption(tkwin, name, className)
     }
     if (className != NULL) {
 	classId = Tk_GetUid(className);
-	for (elPtr = stacks[EXACT_LEAF_CLASS]->els,
-		count = stacks[EXACT_LEAF_CLASS]->numUsed; count > 0;
+	for (elPtr = tsdPtr->stacks[EXACT_LEAF_CLASS]->els,
+		count = tsdPtr->stacks[EXACT_LEAF_CLASS]->numUsed; count > 0;
 		elPtr++, count--) {
 	    if ((elPtr->nameUid == classId)
 		    && (elPtr->priority > bestPtr->priority)) {
 		bestPtr = elPtr;
 	    }
 	}
-	for (elPtr = stacks[WILDCARD_LEAF_CLASS]->els,
-		count = stacks[WILDCARD_LEAF_CLASS]->numUsed; count > 0;
-		elPtr++, count--) {
+	for (elPtr = tsdPtr->stacks[WILDCARD_LEAF_CLASS]->els,
+		count = tsdPtr->stacks[WILDCARD_LEAF_CLASS]->numUsed; 
+                count > 0; elPtr++, count--) {
 	    if ((elPtr->nameUid == classId)
 		    && (elPtr->priority > bestPtr->priority)) {
 		bestPtr = elPtr;
@@ -474,6 +479,8 @@ Tk_OptionCmd(clientData, interp, argc, argv)
     Tk_Window tkwin = (Tk_Window) clientData;
     size_t length;
     char c;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
@@ -513,7 +520,7 @@ Tk_OptionCmd(clientData, interp, argc, argv)
 	    ClearOptionTree(mainPtr->optionRootPtr);
 	    mainPtr->optionRootPtr = NULL;
 	}
-	cachedWindow = NULL;
+	tsdPtr->cachedWindow = NULL;
 	return TCL_OK;
     } else if ((c == 'g') && (strncmp(argv[1], "get", length) == 0)) {
 	Tk_Window window;
@@ -530,7 +537,7 @@ Tk_OptionCmd(clientData, interp, argc, argv)
 	}
 	value = Tk_GetOption(window, argv[3], argv[4]);
 	if (value != NULL) {
-	    interp->result = value;
+	    Tcl_SetResult(interp, value, TCL_STATIC);
 	}
 	return TCL_OK;
     } else if ((c == 'r') && (strncmp(argv[1], "readfile", length) == 0)) {
@@ -581,6 +588,9 @@ void
 TkOptionDeadWindow(winPtr)
     register TkWindow *winPtr;		/* Window to be cleaned up. */
 {
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
     /*
      * If this window is in the option stacks, then clear the stacks.
      */
@@ -588,11 +598,11 @@ TkOptionDeadWindow(winPtr)
     if (winPtr->optionLevel != -1) {
 	int i;
 
-	for (i = 1; i <= curLevel; i++) {
-	    levels[i].winPtr->optionLevel = -1;
+	for (i = 1; i <= tsdPtr->curLevel; i++) {
+	    tsdPtr->levels[i].winPtr->optionLevel = -1;
 	}
-	curLevel = -1;
-	cachedWindow = NULL;
+	tsdPtr->curLevel = -1;
+	tsdPtr->cachedWindow = NULL;
     }
 
     /*
@@ -632,6 +642,8 @@ TkOptionClassChanged(winPtr)
 {
     int i, j, *basePtr;
     ElArray *arrayPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->optionLevel == -1) {
 	return;
@@ -642,22 +654,22 @@ TkOptionClassChanged(winPtr)
      * flush all of the levels above the matching one.
      */
 
-    for (i = 1; i <= curLevel; i++) {
-	if (levels[i].winPtr == winPtr) {
-	    for (j = i; j <= curLevel; j++) {
-		levels[j].winPtr->optionLevel = -1;
+    for (i = 1; i <= tsdPtr->curLevel; i++) {
+	if (tsdPtr->levels[i].winPtr == winPtr) {
+	    for (j = i; j <= tsdPtr->curLevel; j++) {
+		tsdPtr->levels[j].winPtr->optionLevel = -1;
 	    }
-	    curLevel = i-1;
-	    basePtr = levels[i].bases;
+	    tsdPtr->curLevel = i-1;
+	    basePtr = tsdPtr->levels[i].bases;
 	    for (j = 0; j < NUM_STACKS; j++) {
-		arrayPtr = stacks[j];
+		arrayPtr = tsdPtr->stacks[j];
 		arrayPtr->numUsed = basePtr[j];
 		arrayPtr->nextToUse = &arrayPtr->els[arrayPtr->numUsed];
 	    }
-	    if (curLevel <= 0) {
-		cachedWindow = NULL;
+	    if (tsdPtr->curLevel <= 0) {
+		tsdPtr->cachedWindow = NULL;
 	    } else {
-		cachedWindow = levels[curLevel].winPtr;
+		tsdPtr->cachedWindow = tsdPtr->levels[tsdPtr->curLevel].winPtr;
 	    }
 	    break;
 	}
@@ -674,7 +686,7 @@ TkOptionClassChanged(winPtr)
  * Results:
  *	The return value is the integer priority level corresponding
  *	to string, or -1 if string doesn't point to a valid priority level.
- *	In this case, an error message is left in interp->result.
+ *	In this case, an error message is left in the interp's result.
  *
  * Side effects:
  *	None.
@@ -734,7 +746,7 @@ ParsePriority(interp, string)
  * Results:
  *	The return value is a standard Tcl return code.  In the case of
  *	an error in parsing string, TCL_ERROR will be returned and an
- *	error message will be left in interp->result.  The memory at
+ *	error message will be left in the interp's result.  The memory at
  *	string is totally trashed by this procedure.  If you care about
  *	its contents, make a copy before calling here.
  *
@@ -797,8 +809,10 @@ AddFromString(interp, tkwin, string, priority)
 	dst = name = src;
 	while (*src != ':') {
 	    if ((*src == '\0') || (*src == '\n')) {
-		sprintf(interp->result, "missing colon on line %d",
-			lineNum);
+		char buf[32 + TCL_INTEGER_SPACE];
+		
+		sprintf(buf, "missing colon on line %d", lineNum);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 		return TCL_ERROR;
 	    }
 	    if ((src[0] == '\\') && (src[1] == '\n')) {
@@ -830,7 +844,10 @@ AddFromString(interp, tkwin, string, priority)
 	    src++;
 	}
 	if (*src == '\0') {
-	    sprintf(interp->result, "missing value on line %d", lineNum);
+	    char buf[32 + TCL_INTEGER_SPACE];
+	    
+	    sprintf(buf, "missing value on line %d", lineNum);
+	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	    return TCL_ERROR;
 	}
 
@@ -842,8 +859,10 @@ AddFromString(interp, tkwin, string, priority)
 	dst = value = src;
 	while (*src != '\n') {
 	    if (*src == '\0') {
-		sprintf(interp->result, "missing newline on line %d",
-			lineNum);
+		char buf[32 + TCL_INTEGER_SPACE];
+		
+		sprintf(buf, "missing newline on line %d", lineNum);
+		Tcl_SetResult(interp, buf, TCL_VOLATILE);
 		return TCL_ERROR;
 	    }
 	    if ((src[0] == '\\') && (src[1] == '\n')) {
@@ -879,7 +898,7 @@ AddFromString(interp, tkwin, string, priority)
  * Results:
  *	The return value is a standard Tcl return code.  In the case of
  *	an error in parsing string, TCL_ERROR will be returned and an
- *	error message will be left in interp->result.
+ *	error message will be left in the interp's result.
  *
  * Side effects:
  *	None.
@@ -1062,6 +1081,8 @@ SetupStacks(winPtr, leaf)
     int level, i, *iPtr;
     register StackLevel *levelPtr;
     register ElArray *arrayPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * The following array defines the order in which the current
@@ -1086,7 +1107,7 @@ SetupStacks(winPtr, leaf)
 
     if (winPtr->parentPtr != NULL) {
 	level = winPtr->parentPtr->optionLevel;
-	if ((level == -1) || (cachedWindow == NULL)) {
+	if ((level == -1) || (tsdPtr->cachedWindow == NULL)) {
 	    SetupStacks(winPtr->parentPtr, 0);
 	    level = winPtr->parentPtr->optionLevel;
 	}
@@ -1100,19 +1121,19 @@ SetupStacks(winPtr, leaf)
      * mark those windows as no longer having cached information.
      */
 
-    if (curLevel >= level) {
-	while (curLevel >= level) {
-	    levels[curLevel].winPtr->optionLevel = -1;
-	    curLevel--;
+    if (tsdPtr->curLevel >= level) {
+	while (tsdPtr->curLevel >= level) {
+	    tsdPtr->levels[tsdPtr->curLevel].winPtr->optionLevel = -1;
+	    tsdPtr->curLevel--;
 	}
-	levelPtr = &levels[level];
+	levelPtr = &tsdPtr->levels[level];
 	for (i = 0; i < NUM_STACKS; i++) {
-	    arrayPtr = stacks[i];
+	    arrayPtr = tsdPtr->stacks[i];
 	    arrayPtr->numUsed = levelPtr->bases[i];
 	    arrayPtr->nextToUse = &arrayPtr->els[arrayPtr->numUsed];
 	}
     }
-    curLevel = winPtr->optionLevel = level;
+    tsdPtr->curLevel = winPtr->optionLevel = level;
 
     /*
      * Step 3:  if the root database information isn't loaded or
@@ -1120,11 +1141,11 @@ SetupStacks(winPtr, leaf)
      * database root (this only happens if winPtr is a main window).
      */
 
-    if ((curLevel == 1)
-	    && ((cachedWindow == NULL)
-	    || (cachedWindow->mainPtr != winPtr->mainPtr))) {
+    if ((tsdPtr->curLevel == 1)
+	    && ((tsdPtr->cachedWindow == NULL)
+	    || (tsdPtr->cachedWindow->mainPtr != winPtr->mainPtr))) {
 	for (i = 0; i < NUM_STACKS; i++) {
-	    arrayPtr = stacks[i];
+	    arrayPtr = tsdPtr->stacks[i];
 	    arrayPtr->numUsed = 0;
 	    arrayPtr->nextToUse = arrayPtr->els;
 	}
@@ -1138,33 +1159,41 @@ SetupStacks(winPtr, leaf)
      * any more).
      */
 
-    if (curLevel >= numLevels) {
+    if (tsdPtr->curLevel >= tsdPtr->numLevels) {
 	StackLevel *newLevels;
 
 	newLevels = (StackLevel *) ckalloc((unsigned)
-		(numLevels*2*sizeof(StackLevel)));
-	memcpy((VOID *) newLevels, (VOID *) levels,
-		(numLevels*sizeof(StackLevel)));
-	ckfree((char *) levels);
-	numLevels *= 2;
-	levels = newLevels;
+		(tsdPtr->numLevels*2*sizeof(StackLevel)));
+	memcpy((VOID *) newLevels, (VOID *) tsdPtr->levels,
+		(tsdPtr->numLevels*sizeof(StackLevel)));
+	ckfree((char *) tsdPtr->levels);
+	tsdPtr->numLevels *= 2;
+	tsdPtr->levels = newLevels;
     }
-    levelPtr = &levels[curLevel];
+    levelPtr = &tsdPtr->levels[tsdPtr->curLevel];
     levelPtr->winPtr = winPtr;
-    arrayPtr = stacks[EXACT_LEAF_NAME];
+    arrayPtr = tsdPtr->stacks[EXACT_LEAF_NAME];
     arrayPtr->numUsed = 0;
     arrayPtr->nextToUse = arrayPtr->els;
-    arrayPtr = stacks[EXACT_LEAF_CLASS];
+    arrayPtr = tsdPtr->stacks[EXACT_LEAF_CLASS];
     arrayPtr->numUsed = 0;
     arrayPtr->nextToUse = arrayPtr->els;
-    levelPtr->bases[EXACT_LEAF_NAME] = stacks[EXACT_LEAF_NAME]->numUsed;
-    levelPtr->bases[EXACT_LEAF_CLASS] = stacks[EXACT_LEAF_CLASS]->numUsed;
-    levelPtr->bases[EXACT_NODE_NAME] = stacks[EXACT_NODE_NAME]->numUsed;
-    levelPtr->bases[EXACT_NODE_CLASS] = stacks[EXACT_NODE_CLASS]->numUsed;
-    levelPtr->bases[WILDCARD_LEAF_NAME] = stacks[WILDCARD_LEAF_NAME]->numUsed;
-    levelPtr->bases[WILDCARD_LEAF_CLASS] = stacks[WILDCARD_LEAF_CLASS]->numUsed;
-    levelPtr->bases[WILDCARD_NODE_NAME] = stacks[WILDCARD_NODE_NAME]->numUsed;
-    levelPtr->bases[WILDCARD_NODE_CLASS] = stacks[WILDCARD_NODE_CLASS]->numUsed;
+    levelPtr->bases[EXACT_LEAF_NAME] = tsdPtr->stacks[EXACT_LEAF_NAME]
+            ->numUsed;
+    levelPtr->bases[EXACT_LEAF_CLASS] = tsdPtr->stacks[EXACT_LEAF_CLASS]
+            ->numUsed;
+    levelPtr->bases[EXACT_NODE_NAME] = tsdPtr->stacks[EXACT_NODE_NAME]
+            ->numUsed;
+    levelPtr->bases[EXACT_NODE_CLASS] = tsdPtr->stacks[EXACT_NODE_CLASS]
+            ->numUsed;
+    levelPtr->bases[WILDCARD_LEAF_NAME] = tsdPtr->stacks[WILDCARD_LEAF_NAME]
+            ->numUsed;
+    levelPtr->bases[WILDCARD_LEAF_CLASS] = tsdPtr->stacks[WILDCARD_LEAF_CLASS]
+            ->numUsed;
+    levelPtr->bases[WILDCARD_NODE_NAME] = tsdPtr->stacks[WILDCARD_NODE_NAME]
+            ->numUsed;
+    levelPtr->bases[WILDCARD_NODE_CLASS] = tsdPtr->stacks[WILDCARD_NODE_CLASS]
+            ->numUsed;
 
 
     /*
@@ -1184,7 +1213,7 @@ SetupStacks(winPtr, leaf)
 	} else {
 	    id = winPtr->nameUid;
 	}
-	elPtr = stacks[i]->els;
+	elPtr = tsdPtr->stacks[i]->els;
 	count = levelPtr->bases[i];
 
 	/*
@@ -1203,7 +1232,7 @@ SetupStacks(winPtr, leaf)
 	    ExtendStacks(elPtr->child.arrayPtr, leaf);
 	}
     }
-    cachedWindow = winPtr;
+    tsdPtr->cachedWindow = winPtr;
 }
 
 /*
@@ -1232,13 +1261,16 @@ ExtendStacks(arrayPtr, leaf)
 {
     register int count;
     register Element *elPtr;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     for (elPtr = arrayPtr->els, count = arrayPtr->numUsed;
 	    count > 0; elPtr++, count--) {
 	if (!(elPtr->flags & (NODE|WILDCARD)) && !leaf) {
 	    continue;
 	}
-	stacks[elPtr->flags] = ExtendArray(stacks[elPtr->flags], elPtr);
+	tsdPtr->stacks[elPtr->flags] = ExtendArray(
+                tsdPtr->stacks[elPtr->flags], elPtr);
     }
 }
 
@@ -1266,24 +1298,32 @@ OptionInit(mainPtr)
 {
     int i;
     Tcl_Interp *interp;
+    ThreadSpecificData *tsdPtr = (ThreadSpecificData *) 
+            Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+    Element *defaultMatchPtr = &tsdPtr->defaultMatch;
 
     /*
      * First, once-only initialization.
      */
+    
+    if (tsdPtr->initialized == 0) {
+        tsdPtr->initialized = 1;
+        tsdPtr->cachedWindow = NULL;
+	tsdPtr->numLevels = 5;
+	tsdPtr->curLevel = -1;
+	tsdPtr->serial = 0;
 
-    if (numLevels == 0) {
-
-	numLevels = 5;
-	levels = (StackLevel *) ckalloc((unsigned) (5*sizeof(StackLevel)));
+	tsdPtr->levels = (StackLevel *) ckalloc((unsigned) 
+                (5*sizeof(StackLevel)));
 	for (i = 0; i < NUM_STACKS; i++) {
-	    stacks[i] = NewArray(10);
-	    levels[0].bases[i] = 0;
+	    tsdPtr->stacks[i] = NewArray(10);
+	    tsdPtr->levels[0].bases[i] = 0;
 	}
     
-	defaultMatch.nameUid = NULL;
-	defaultMatch.child.valueUid = NULL;
-	defaultMatch.priority = -1;
-	defaultMatch.flags = 0;
+	defaultMatchPtr->nameUid = NULL;
+	defaultMatchPtr->child.valueUid = NULL;
+	defaultMatchPtr->priority = -1;
+	defaultMatchPtr->flags = 0;
     }
 
     /*

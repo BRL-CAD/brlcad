@@ -2,7 +2,7 @@
 #
 # Support procs to use Tk in safe interpreters.
 #
-# SCCS: @(#) safetk.tcl 1.8 97/10/29 14:59:16
+# RCS: @(#) $Id$
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 #
@@ -13,20 +13,16 @@
 
 #
 #
-# Note: It is UNSAFE to let any untrusted code being executed
+# Note: It is now ok to let untrusted code being executed
 #       between the creation of the interp and the actual loading
-#       of Tk in that interp.
-#       You should "loadTk $slave" right after safe::tkInterpCreate
-#       Otherwise, if you are using an application with Tk
-#       and don't want safe slaves to have access to Tk, potentially
-#       in a malevolent way, you should use 
-#            ::safe::interpCreate -nostatics -accesspath {directories...}
-#       where the directory list does NOT contain any Tk dynamically
-#       loadable library
+#       of Tk in that interp because the C side Tk_Init will
+#       now look up the master interp and ask its safe::TkInit
+#       for the actual parameters to use for it's initialization (if allowed),
+#       not relying on the slave state.
 #
 
 # We use opt (optional arguments parsing)
-package require opt 0.1;
+package require opt 0.4.1;
 
 namespace eval ::safe {
 
@@ -35,20 +31,22 @@ namespace eval ::safe {
 
     #
     # tkInterpInit : prepare the slave interpreter for tk loading
-    #
+    #                most of the real job is done by loadTk
     # returns the slave name (tkInterpInit does)
     #
-    proc ::safe::tkInterpInit {slave} {
+    proc ::safe::tkInterpInit {slave argv} {
 	global env tk_library
-	if {[info exists env(DISPLAY)]} {
-	    $slave eval [list set env(DISPLAY) $env(DISPLAY)];
-	}
+
+	# Clear Tk's access for that interp (path).
+	allowTk $slave $argv
+
 	# there seems to be an obscure case where the tk_library
 	# variable value is changed to point to a sym link destination
 	# dir instead of the sym link itself, and thus where the $tk_library
 	# would then not be anymore one of the auto_path dir, so we use
 	# the addToAccessPath which adds if it's not already in instead
-	# of the more conventional findInAccessPath
+	# of the more conventional findInAccessPath.
+	# Might be usefull for masters without Tk really loaded too.
 	::interp eval $slave [list set tk_library [::safe::interpAddToAccessPath $slave $tk_library]]
 	return $slave;
     }
@@ -64,46 +62,170 @@ namespace eval ::safe {
 # empty definition for auto_mkIndex
 proc ::safe::loadTk {} {}
    
-    ::tcl::OptProc loadTk {
-	{slave -interp "name of the slave interpreter"}
-	{-use  -windowId {} "window Id to use (new toplevel otherwise)"}
-    } {
-	if {![::tcl::OptProcArgGiven "-use"]} {
-	    # create a decorated toplevel
-	    ::tcl::Lassign [tkTopLevel $slave] w use;
-	    # set our delete hook (slave arg is added by interpDelete)
-	    Set [DeleteHookName $slave] [list tkDelete {} $w];
-	}
-	tkInterpInit $slave;
-	::interp eval $slave [list set argv [list "-use" $use]];
-	::interp eval $slave [list set argc 2];
-	load {} Tk $slave
-	# Remove env(DISPLAY) if it's in there (if it has been set by
-	# tkInterpInit)
-	::interp eval $slave {catch {unset env(DISPLAY)}}
-	return $slave
-    }
-
-    proc ::safe::tkDelete {W window slave} {
-	# we are going to be called for each widget... skip untill it's
-	# top level
-	Log $slave "Called tkDelete $W $window" NOTICE;
-	if {[::interp exists $slave]} {
-	    if {[catch {::safe::interpDelete $slave} msg]} {
-		Log $slave "Deletion error : $msg";
+::tcl::OptProc loadTk {
+    {slave -interp "name of the slave interpreter"}
+    {-use  -windowId {} "window Id to use (new toplevel otherwise)"}
+    {-display -displayName {} "display name to use (current one otherwise)"}
+} {
+    set displayGiven [::tcl::OptProcArgGiven "-display"]
+    if {!$displayGiven} {
+	
+	# Try to get the current display from "."
+	# (which might not exist if the master is tk-less)
+	
+	if {[catch {set display [winfo screen .]}]} {
+	    if {[info exists ::env(DISPLAY)]} {
+		set display $::env(DISPLAY)
+	    } else {
+		Log $slave "no winfo screen . nor env(DISPLAY)" WARNING
+		set display ":0.0"
 	    }
 	}
-	if {[winfo exists $window]} {
-	    Log $slave "Destroy toplevel $window" NOTICE;
-	    destroy $window;
+    }
+    if {![::tcl::OptProcArgGiven "-use"]} {
+	
+	# create a decorated toplevel
+	
+	::tcl::Lassign [tkTopLevel $slave $display] w use;
+	
+	# set our delete hook (slave arg is added by interpDelete)
+	# to clean up both window related code and tkInit(slave)
+	Set [DeleteHookName $slave] [list tkDelete {} $w];
+
+    } else {
+
+	# set our delete hook (slave arg is added by interpDelete)
+	# to clean up tkInit(slave)
+	    
+	Set [DeleteHookName $slave] [list disallowTk]
+
+	# Let's be nice and also accept tk window names instead of ids
+	
+	if {[string match ".*" $use]} {
+	    set windowName $use
+	    set use [winfo id $windowName]
+	    set nDisplay [winfo screen $windowName]
+	} else {
+
+	    # Check for a better -display value
+	    # (works only for multi screens on single host, but not
+	    #  cross hosts, for that a tk window name would be better
+	    #  but embeding is also usefull for non tk names)
+	    
+	    if {![catch {winfo pathname $use} name]} {
+		set nDisplay [winfo screen $name]
+	    } else {
+
+		# Can't have a better one
+		
+		set nDisplay $display
+	    }
+	}
+	if {[string compare $nDisplay $display]} {
+	    if {$displayGiven} {
+		error "conflicting -display $display and -use\
+			$use -> $nDisplay"
+	    } else {
+		set display $nDisplay
+	    }
 	}
     }
 
-proc ::safe::tkTopLevel {slave} {
+    # Prepares the slave for tk with those parameters
+    
+    tkInterpInit $slave [list "-use" $use "-display" $display]
+    
+    load {} Tk $slave
+
+    return $slave
+}
+
+proc ::safe::TkInit {interpPath} {
+    variable tkInit
+    if {[info exists tkInit($interpPath)]} {
+	set value $tkInit($interpPath)
+	Log $interpPath "TkInit called, returning \"$value\"" NOTICE
+	return $value
+    } else {
+	Log $interpPath "TkInit called for interp with clearance:\
+		preventing Tk init" ERROR
+	error "not allowed"
+    }
+}
+
+# safe::allowTk --
+#
+#	Set tkInit(interpPath) to allow Tk to be initialized in
+#	safe::TkInit.
+#
+# Arguments:
+#	interpPath	slave interpreter handle
+#	argv		arguments passed to safe::TkInterpInit
+#
+# Results:
+#	none.
+
+proc ::safe::allowTk {interpPath argv} {
+    variable tkInit
+    set tkInit($interpPath) $argv
+    return
+}
+
+
+# safe::disallowTk --
+#
+#	Unset tkInit(interpPath) to disallow Tk from getting initialized
+#	in safe::TkInit.
+#
+# Arguments:
+#	interpPath	slave interpreter handle
+#
+# Results:
+#	none.
+
+proc ::safe::disallowTk {interpPath} {
+    variable tkInit
+    unset tkInit($interpPath)
+    none
+}
+
+
+# safe::disallowTk --
+#
+#	Clean up the window associated with the interp being deleted.
+#
+# Arguments:
+#	interpPath	slave interpreter handle
+#
+# Results:
+#	none.
+
+proc ::safe::tkDelete {W window slave} {
+
+    # we are going to be called for each widget... skip untill it's
+    # top level
+
+    Log $slave "Called tkDelete $W $window" NOTICE;
+    if {[::interp exists $slave]} {
+	if {[catch {::safe::interpDelete $slave} msg]} {
+	    Log $slave "Deletion error : $msg";
+	}
+    }
+    if {[winfo exists $window]} {
+	Log $slave "Destroy toplevel $window" NOTICE;
+	destroy $window;
+    }
+    
+    # clean up tkInit(slave)
+    disallowTk $slave
+    return
+}
+
+proc ::safe::tkTopLevel {slave display} {
     variable tkSafeId;
     incr tkSafeId;
     set w ".safe$tkSafeId";
-    if {[catch {toplevel $w -class SafeTk} msg]} {
+    if {[catch {toplevel $w -screen $display -class SafeTk} msg]} {
 	return -code error "Unable to create toplevel for\
 		safe slave \"$slave\" ($msg)";
     }

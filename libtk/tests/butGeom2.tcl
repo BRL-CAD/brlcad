@@ -1,7 +1,7 @@
 # This file creates a visual test for button layout.  It is part of
 # the Tk visual test suite, which is invoked via the "visual" script.
 #
-# SCCS: @(#) butGeom2.tcl 1.3 97/06/13 17:00:32
+# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t
@@ -111,3 +111,16 @@ proc config-but {option value} {
 	$w configure $option $value
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

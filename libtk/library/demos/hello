@@ -6,7 +6,7 @@ exec wish "$0" "$@"
 # Simple Tk script to create a button that prints "Hello, world".
 # Click on the button to terminate the program.
 #
-# SCCS: @(#) hello 1.6 96/02/16 10:49:18
+# RCS: @(#) $Id$
 # 
 # The first line below creates the button, and the second line
 # asks the packer to shrink-wrap the application's main window

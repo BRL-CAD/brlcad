@@ -3,7 +3,7 @@
 # This demonstration script creates a text widget that describes
 # the basic editing functions.
 #
-# SCCS: @(#) text.tcl 1.6 97/03/02 16:28:12
+# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."

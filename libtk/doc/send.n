@@ -5,7 +5,7 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) send.n 1.18 96/08/27 13:21:47
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
 .TH send n 4.0 Tk "Tk Built-In Commands"
@@ -70,8 +70,8 @@ command.
 
 .SH SECURITY
 .PP
-The \fBsend\fR command is potentially a serious security loophole,
-since any application that can connect to your X server can send
+The \fBsend\fR command is potentially a serious security loophole. On Unix,
+any application that can connect to your X server can send
 scripts to your applications.
 These incoming scripts can use Tcl to read and
 write your files and invoke subprocesses under your name.
@@ -87,6 +87,11 @@ list of enabled hosts is empty.
 This means that applications cannot connect to your server unless
 they use some other form of authorization
 such as that provide by \fBxauth\fR.
-
+.VS
+Under Windows, \fBsend\fR is currently disabled.  Most of the
+functionality is provided by the \fBdde\fR command instead.
+.VE
 .SH KEYWORDS
-application, name, remote execution, security, send
+.VS
+application, dde, name, remote execution, security, send
+.VE

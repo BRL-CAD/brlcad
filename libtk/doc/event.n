@@ -1,13 +1,14 @@
 '\"
 '\" Copyright (c) 1996 Sun Microsystems, Inc.
+'\" Copyright (c) 1998 by Scriptics Corporation.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SCCS: @(#) event.n 1.6 97/10/31 12:58:54
+'\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH event n 4.4 Tk "Tk Built-In Commands"
+.TH event n 8.0 Tk "Tk Built-In Commands"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -104,6 +105,19 @@ Corresponds to the \fB%b\fR substitution for binding scripts.
 \fINumber\fR must be an integer;  it specifies the \fIcount\fR field
 for the event.  Valid for \fBExpose\fR events.
 Corresponds to the \fB%c\fR substitution for binding scripts.
+.TP
+\fB\-delta\fI number\fR
+.VS
+\fINumber\fR must be an integer;  it specifies the \fIdelta\fR field
+for the \fBMouseWheel\fR event.  The \fIdelta\fR refers to the
+direction and magnitude the mouse wheel was rotated.  Note the value
+is not a screen distance but are units of motion in the mouse wheel.
+Typically these values are multiples of 120.  For example, 120 should
+scroll the text widget up 4 lines and -240 would scroll the text
+widget down 8 lines.  Of course, other widgets may define different
+behaviors for mouse wheel motion.  This field corresponds to the
+\fB%D\fR substitution for binding scripts.
+.VE
 .TP
 \fB\-detail\fI detail\fR
 \fIDetail\fR specifies the \fIdetail\fR field for the event

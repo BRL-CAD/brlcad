@@ -4,16 +4,15 @@
 #
 # Copyright (c) 1994 The Australian National University
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
-#
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
 # Author: Paul Mackerras (paulus@cs.anu.edu.au)
 #
-# SCCS: @(#) imgPhoto.test 1.23 97/08/08 11:29:25
+# RCS: @(#) $Id$
 
-if {[info procs test] != "test"} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
 
 foreach i [winfo children .] {
@@ -28,6 +27,30 @@ canvas .c
 pack .c
 update
 
+# temporarily copy the README fiel from testsDir to tmpDir
+if {![file exists README]} {
+    set newREADME [file join $::tcltest::workingDir README]
+    file copy [file join $::tcltest::testsDir README] $newREADME
+    set removeREADME 1
+}
+
+# find the teapot.ppm file for use in these tests
+# first look in $tk_library/demos/images/teapot.ppm
+# then look in <this file>/../../library/demos/images/teapot.ppm
+# skip this file if you can't find the teapot.ppm file.
+set teapotPhotoFile [file join $tk_library demos images teapot.ppm]
+if {![file exists $teapotPhotoFile]} {
+    set newLib [file dirname $::tcltest::testsDir]
+    set teapotPhotoFile \
+	[file join $newLib library demos images teapot.ppm]
+    if {![file exists $teapotPhotoFile]} {
+	puts "Can't find [file join demos images teapot.ppm] in $tk_library"
+	puts "your Tk library is incomplete, so I am skipping imgPhoto tests."    
+	::tcltest::cleanupTests
+	return 0
+    }
+}
+
 test imgPhoto-1.1 {options for photo images} {
     image create photo p1 -width 79 -height 83
     list [lindex [p1 configure -width] 4] [lindex [p1 configure -height] 4] \
@@ -38,21 +61,19 @@ test imgPhoto-1.2 {options for photo images} {
 	[string tolower $err]
 } {1 {couldn't open "no.such.file": no such file or directory}}
 test imgPhoto-1.3 {options for photo images} {
-    list [catch {image create photo p1 -file \
-	    [file join $tk_library demos/images/teapot.ppm] \
+    list [catch {image create photo p1 -file $teapotPhotoFile \
 	    -format no.such.format} err] $err
 } {1 {image file format "no.such.format" is not supported}}
 test imgPhoto-1.4 {options for photo images} {
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
     list [image width p1] [image height p1]
 } {256 256}
 test imgPhoto-1.5 {options for photo images} {
-    image create photo p1 \
-	    -file [file join $tk_library demos/images/teapot.ppm] \
+    image create photo p1 -file $teapotPhotoFile \
 	    -format ppm -width 79 -height 83
     list [image width p1] [image height p1] \
 	[lindex [p1 configure -file] 4] [lindex [p1 configure -format] 4]
-} [list 79 83 [file join $tk_library demos/images/teapot.ppm] ppm]
+} [list 79 83 $teapotPhotoFile ppm]
 test imgPhoto-1.6 {options for photo images} {
     image create photo p1 -palette 2/2/2 -gamma 2.2
     list [format %.1f [lindex [p1 configure -gamma] 4]] \
@@ -85,11 +106,11 @@ test imgPhoto-2.2 {ImgPhotoCreate procedure} {
 # } {couldn't open "bogus.img": no such file or directory}
 
 test imgPhoto-3.1 {ImgPhotoConfigureMaster procedure} {
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
-    p1 configure -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
+    p1 configure -file $teapotPhotoFile
 } {}
 test imgPhoto-3.2 {ImgPhotoConfigureMaster procedure} {
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
     list [catch {p1 configure -file bogus} err] [string tolower $err] \
 	[image width p1] [image height p1]
 } {1 {couldn't open "bogus": no such file or directory} 256 256}
@@ -98,7 +119,7 @@ test imgPhoto-3.3 {ImgPhotoConfigureMaster procedure} {
     .c create image 10 10 -image p1 -tags p1.1 -anchor nw
     .c create image 300 10 -image p1 -tags p1.2 -anchor nw
     update
-    p1 configure -file [file join $tk_library demos/images/teapot.ppm]
+    p1 configure -file $teapotPhotoFile
     update
     list [image width p1] [image height p1] [.c bbox p1.1] [.c bbox p1.2]
 } {256 256 {10 10 266 266} {300 10 556 266}}
@@ -139,7 +160,7 @@ test imgPhoto-4.9 {ImgPhotoCmd procedure: configure option} {
     list [catch {p1 configure -palette {} -gamma} msg] $msg
 } {1 {value for "-gamma" missing}}
 test imgPhoto-4.10 {ImgPhotoCmd procedure: copy option} {
-    image create photo p2 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p2 -file $teapotPhotoFile
     p1 configure -width 0 -height 0 -palette {} -gamma 1
     p1 copy p2
     list [image width p1] [image height p1] [p1 get 100 100]
@@ -198,7 +219,7 @@ test imgPhoto-4.21 {ImgPhotoCmd procedure: copy option} {
     lappend result [image width p1] [image height p1]
 } {256 256 49 51 49 51 49 51 10 51 10 10}
 test imgPhoto-4.22 {ImgPhotoCmd procedure: get option} {
-    p1 read [file join $tk_library demos/images/teapot.ppm]
+    p1 read $teapotPhotoFile
     list [p1 get 100 100] [p1 get 150 100] [p1 get 100 150]
 } {{169 117 90} {172 115 84} {35 35 35}}
 test imgPhoto-4.23 {ImgPhotoCmd procedure: get option} {
@@ -227,26 +248,23 @@ test imgPhoto-4.30 {ImgPhotoCmd procedure: read option} {
     list [catch {p1 read} err] $err
 } {1 {wrong # args: should be "p1 read fileName ?-format format-name? ?-from x1 y1 x2 y2? ?-to x y? ?-shrink?"}}
 test imgPhoto-4.31 {ImgPhotoCmd procedure: read option} {
-    list [catch {p1 read [file join $tk_library demos/images/teapot.ppm] \
-	 -zoom 2} err] $err
+    list [catch {p1 read $teapotPhotoFile -zoom 2} err] $err
 } {1 {unrecognized option "-zoom": must be -format, -from, -shrink, or -to}}
 test imgPhoto-4.32 {ImgPhotoCmd procedure: read option} {
     list [catch {p1 read bogus} err] [string tolower $err]
 } {1 {couldn't open "bogus": no such file or directory}}
 test imgPhoto-4.33 {ImgPhotoCmd procedure: read option} {
-    list [catch {p1 read [file join $tk_library demos/images/teapot.ppm] \
-	    -format bogus} err] $err
+    list [catch {p1 read $teapotPhotoFile -format bogus} err] $err
 } {1 {image file format "bogus" is not supported}}
 test imgPhoto-4.34 {ImgPhotoCmd procedure: read option} {
     list [catch {p1 read README} err] $err
 } {1 {couldn't recognize data in image file "README"}}
 test imgPhoto-4.35 {ImgPhotoCmd procedure: read option} {
-    p1 read [file join $tk_library demos/images/teapot.ppm] -shrink
+    p1 read $teapotPhotoFile
     list [image width p1] [image height p1] [p1 get 120 120]
 } {256 256 {161 109 82}}
 test imgPhoto-4.36 {ImgPhotoCmd procedure: read option} {
-    p1 read [file join $tk_library demos/images/teapot.ppm] \
-	     -from 0 70 60 120 -to 10 10 -shrink
+    p1 read $teapotPhotoFile -from 0 70 60 120 -to 10 10 -shrink
     list [image width p1] [image height p1] [p1 get 29 19]
 } {70 60 {244 180 144}}
 test imgPhoto-4.37 {ImgPhotoCmd procedure: redither option} {
@@ -263,7 +281,7 @@ test imgPhoto-4.39 {ImgPhotoCmd procedure: write option} {
 test imgPhoto-5.1 {ImgPhotoGet/Free procedures, shared instances} {
     eval image delete [image names]
     .c delete all
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
     .c create image 0 0 -image p1 -tags p1.1
     .c create image 256 0 -image p1 -tags p1.2
     .c create image 0 256 -image p1 -tags p1.3
@@ -288,14 +306,14 @@ test imgPhoto-6.1 {ImgPhotoDisplay procedure, blank display} {
 test imgPhoto-7.1 {ImgPhotoFree procedure, resource freeing} {
     eval image delete [image names]
     .c delete all
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
     .c create image 0 0 -image p1 -anchor nw
     update
     .c delete all
     image delete p1
 } {}
 test imgPhoto-7.2 {ImgPhotoFree procedures, unlinking} {
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
     .c create image 10 10 -image p1 -anchor nw
     button .b1 -image p1
     button .b2 -image p1
@@ -311,7 +329,7 @@ test imgPhoto-7.2 {ImgPhotoFree procedures, unlinking} {
     .c delete all
 } {}
 test imgPhoto-7.3 {ImgPhotoFree procedures, multiple visuals} {
-    image create photo p1 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p1 -file $teapotPhotoFile
     button .b1 -image p1
     frame .f -visual best
     button .f.b2 -image p1
@@ -327,16 +345,16 @@ test imgPhoto-7.3 {ImgPhotoFree procedures, multiple visuals} {
 } {}
 
 test imgPhoto-8.1 {ImgPhotoDelete procedure} {
-    image create photo p2 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p2 -file $teapotPhotoFile
     image delete p2
 } {}
 test imagePhoto-8.2 {ImgPhotoDelete procedure} {
-    image create photo p2 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p2 -file $teapotPhotoFile
     rename p2 newp2
     set x [list [info command p2] [info command new*] [newp2 cget -file]]
     image delete p2
-    lappend x [info command new*]
-} [list {} newp2 [file join $tk_library demos/images/teapot.ppm] {}]
+    append x [info command new*]
+} [list {} newp2 $teapotPhotoFile]
 test imagePhoto-8.3 {ImgPhotoDelete procedure, name cleanup} {
     image create photo p1
     image create photo p2 -width 10 -height 10
@@ -345,7 +363,7 @@ test imagePhoto-8.3 {ImgPhotoDelete procedure, name cleanup} {
 } {1 {image "p2" doesn't exist or is not a photo image}}
 
 test imagePhoto-9.1 {ImgPhotoCmdDeletedProc procedure} {
-    image create photo p2 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p2 -file $teapotPhotoFile
     rename p2 {}
     list [lsearch -exact [image names] p2] [catch {p2 foo} msg] $msg
 } {-1 1 {invalid command name "p2"}}
@@ -367,7 +385,7 @@ test imgPhoto-11.1 {Tk_FindPhoto} {
 } {1 {image "i1" doesn't exist or is not a photo image}}
 
 test imgPhoto-12.1 {Tk_PhotoPutZoomedBlock} {
-    image create photo p3 -file [file join $tk_library demos/images/teapot.ppm]
+    image create photo p3 -file $teapotPhotoFile
     set result [list [p3 get 50 50] [p3 get 100 100]]
     p3 copy p3 -zoom 2
     lappend result [image width p3] [image height p3] [p3 get 100 100]
@@ -421,3 +439,23 @@ test imgPhoto-13.1 {check separation of images in different interpreters} {
 
 destroy .c
 eval image delete [image names]
+
+# cleanup
+if {[info exists removeREADME]} {
+    catch {file delete -force $newREADME}
+}
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -2,16 +2,14 @@
 # It is organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# All rights reserved.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# SCCS: @(#) bgerror.test 1.1 97/08/06 09:28:30
+# RCS: @(#) $Id$
 
-if {[info commands test] == ""} {
-    source defs
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    source [file join [pwd] [file dirname [info script]] defs.tcl]
 }
-
 
 test bgerror-1.1 {bgerror / tkerror compat} {
     set errRes {}
@@ -56,4 +54,20 @@ catch {rename tkerror {}}
 # some testing of the default error dialog
 # would be needed too, but that's not easy at all
 # to emulate.
+
+# cleanup
+::tcltest::cleanupTests
+return
+
+
+
+
+
+
+
+
+
+
+
+
 
