@@ -11,7 +11,7 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-patch-g:	patch-g.o LIBRT
+patch-g:	patch-g.o LIBRT LIBWDB
 	CC LDFLAGS  patch-g.o LIB_PRE''LIBWDB LIB_PRE''LIBRT RT_CONFIG LIBRT_LIBES LIBES -o patch-g
 
 rpatch:		../SRCDIR/rpatch.f
