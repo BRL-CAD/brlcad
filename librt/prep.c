@@ -71,11 +71,6 @@ int			ncpu;
 		return;
 	}
 
-	/* This table is used for discovering the per-cpu resource structures */
-	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
-
-	rt_uniresource.re_magic = RESOURCE_MAGIC;
-
 	if( rtip->nsolids <= 0 )  {
 		if( rtip->rti_air_discards > 0 )
 			bu_log("rt_prep: %d solids discarded due to air regions\n", rtip->rti_air_discards );

@@ -54,6 +54,11 @@ struct db_i	*dbip;
 	rtip->rti_dbip = dbip;
 	rtip->needprep = 1;
 
+	/* This table is used for discovering the per-cpu resource structures */
+	bu_ptbl_init( &rtip->rti_resources, MAX_PSW, "rti_resources ptbl" );
+
+	rt_uniresource.re_magic = RESOURCE_MAGIC;
+
 	VSETALL( rtip->mdl_min,  INFINITY );
 	VSETALL( rtip->mdl_max, -INFINITY );
 	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
