@@ -14,8 +14,6 @@
 #	(10 elements per line) with the output sorted so that pairs of regions
 #	are kept together, and the "worst" overlap pairs come first.
 
-check_externs "vdraw db kill .inmem B mged_update opendb mat_inv mat_mul"
-
 #	return the index into the 'g_lint' output that is the start point
 #	of the last consectutive line that refers to the next region overlap pair
 #	The input is:
@@ -439,7 +437,19 @@ proc glint_setup { id } {
 # This is the top level entry point
 proc overlap_tool { id } {
     global over_cont comb_control localunit local2base
-    global tkPriv
+    global tkPriv tk_version
+
+    if { [info exists tk_version] == 0 } {
+	puts "Cannot run the overlap tool without Tk loaded"
+	return
+    }
+
+    set db [opendb]
+    if { [string length $db] == 0 } {
+	tk_messageBox -icon warning -type ok -title "No Database Open" -message \
+		"Cannot run the overlap tool without a database open"
+	return
+    }
 
 	set over_cont($id,top) .fovr_$id
 	if [winfo exists $over_cont($id,top)] {
