@@ -130,6 +130,7 @@ extern struct _rubber_band default_rubber_band;
 int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
+struct rt_wdb *wdbp = RT_WDB_NULL;
 int update_views = 0;
 int (*cmdline_hook)() = NULL;
 jmp_buf	jmp_env;		/* For non-local gotos */
@@ -1546,76 +1547,86 @@ refresh()
 
       DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
 
-      if(dbip != DBI_NULL){
-	/* do framebuffer underlay */
-	if(mged_variables->mv_fb && !mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mv_mouse_behavior != 'z')
-	    paint_rect_area();
-	}
+      if (dbip != DBI_NULL) {
+	      /* do framebuffer underlay */
+	      if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
+		      if (mged_variables->mv_fb_all)
+			      fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+		      else if (mged_variables->mv_mouse_behavior != 'z')
+			      paint_rect_area();
+	      }
 
-	/*  Draw each solid in it's proper place on the screen
-	 *  by applying zoom, rotation, & translation.
-	 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
-	 */
-	if( dmp->dm_stereo == 0 || mged_variables->mv_eye_sep_dist <= 0 )  {
-	  /* Normal viewing */
-	  dozoom(0);
-	} else {
-	  /* Stereo viewing */
-	  dozoom(1);
-	  dozoom(2);
-	}
+	      /* do framebuffer overlay for entire window */
+	      if (mged_variables->mv_fb &&
+		  mged_variables->mv_fb_overlay &&
+		  mged_variables->mv_fb_all) {
+		      fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+	      } else {
+		      /*  Draw each solid in it's proper place on the screen
+		       *  by applying zoom, rotation, & translation.
+		       *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
+		       */
 
-	/* do framebuffer overlay */
-	if(mged_variables->mv_fb && mged_variables->mv_fb_overlay){
-	  if(mged_variables->mv_fb_all)
-	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mv_mouse_behavior != 'z')
-	    paint_rect_area();
-	}
+		      if (dmp->dm_stereo == 0 ||
+			  mged_variables->mv_eye_sep_dist <= 0) {
+			      /* Normal viewing */
+			      dozoom(0);
+		      } else {
+			      /* Stereo viewing */
+			      dozoom(1);
+			      dozoom(2);
+		      }
 
-	/* Restore to non-rotated, full brightness */
-	DM_NORMAL(dmp);
+		      /* do framebuffer overlay in rectangular area */
+		      if (mged_variables->mv_fb &&
+			  mged_variables->mv_fb_overlay &&
+			  mged_variables->mv_mouse_behavior != 'z')
+			      paint_rect_area();
+	      }
 
-	/* only if not doing overlay */
-	if(!mged_variables->mv_fb || mged_variables->mv_fb_overlay != 2){
-	  if(rubber_band->rb_active || rubber_band->rb_draw)
-	    draw_rect();
 
-	  if(grid_state->gr_draw)
-	    draw_grid();
+	      /* Restore to non-rotated, full brightness */
+	      DM_NORMAL(dmp);
 
-	  /* Compute and display angle/distance cursor */
-	  if (adc_state->adc_draw)
-	    adcursor();
+	      /* only if not doing overlay */
+	      if (!mged_variables->mv_fb ||
+		  mged_variables->mv_fb_overlay != 2) {
+		      if (rubber_band->rb_active || rubber_band->rb_draw)
+			      draw_rect();
 
-	  if(axes_state->ax_view_draw)
-	    draw_v_axes();
+		      if (grid_state->gr_draw)
+			      draw_grid();
 
-	  if(axes_state->ax_model_draw)
-	    draw_m_axes();
+		      /* Compute and display angle/distance cursor */
+		      if (adc_state->adc_draw)
+			      adcursor();
 
-	  if(axes_state->ax_edit_draw &&
-	     (state == ST_S_EDIT || state == ST_O_EDIT))
-	    draw_e_axes();
+		      if (axes_state->ax_view_draw)
+			      draw_v_axes();
 
-	  /* Display titles, etc., if desired */
-	  bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
-	  dotitles(&tmp_vls);
-	  bu_vls_trunc(&tmp_vls, 0);
-	}
+		      if (axes_state->ax_model_draw)
+			      draw_m_axes();
+
+		      if (axes_state->ax_edit_draw &&
+			  (state == ST_S_EDIT || state == ST_O_EDIT))
+			      draw_e_axes();
+
+		      /* Display titles, etc., if desired */
+		      bu_vls_strcpy(&tmp_vls, bu_vls_addr(&overlay_vls));
+		      dotitles(&tmp_vls);
+		      bu_vls_trunc(&tmp_vls, 0);
+	      }
       }
 
       /* only if not doing overlay */
-      if(!mged_variables->mv_fb || mged_variables->mv_fb_overlay != 2){
-	/* Draw center dot */
-	DM_SET_FGCOLOR(dmp,
-		       color_scheme->cs_center_dot[0],
-		       color_scheme->cs_center_dot[1],
-		       color_scheme->cs_center_dot[2], 1);
-	DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+      if (!mged_variables->mv_fb ||
+	  mged_variables->mv_fb_overlay != 2) {
+	      /* Draw center dot */
+	      DM_SET_FGCOLOR(dmp,
+			     color_scheme->cs_center_dot[0],
+			     color_scheme->cs_center_dot[1],
+			     color_scheme->cs_center_dot[2], 1);
+	      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
       }
 
       DM_DRAW_END(dmp);
@@ -1700,11 +1711,16 @@ int	exitcode;
 	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
 
+	/* Release all displays */
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l){
 	  curr_dm_list = p;
 
 	  DM_CLOSE(dmp);
 	}
+
+	/* Be certain to close the database cleanly before exiting */
+	if( wdbp )  wdb_close(wdbp);
+	if( dbip )  db_close(dbip);
 
 	if (cbreak_mode > 0)
 	    reset_Tty(fileno(stdin)); 
@@ -1951,210 +1967,223 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  struct db_i *save_dbip;
-  struct bu_vls vls;
-  struct bu_vls msg;	/* use this to hold returned message */
+	struct db_i *save_dbip;
+	struct bu_vls vls;
+	struct bu_vls msg;	/* use this to hold returned message */
 
-  bu_vls_init(&vls);
-  bu_vls_init(&msg);
+	bu_vls_init(&vls);
+	bu_vls_init(&msg);
 
-  if( argc <= 1 )  {
-    bu_vls_free(&vls);
-    bu_vls_free(&msg);
+	if( argc <= 1 )  {
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
 
-    /* Invoked without args, return name of current database */
-    if( dbip != DBI_NULL )  {
-      Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
-      return TCL_OK;
-    }
+		/* Invoked without args, return name of current database */
+		if( dbip != DBI_NULL )  {
+			Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
+			return TCL_OK;
+		}
 
-    Tcl_AppendResult(interp, "", (char *)NULL);
-    return TCL_OK;
-  }
-
-  if(3 < argc || (strlen(argv[1]) == 0)){
-    bu_vls_printf(&vls, "help opendb");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    bu_vls_free(&msg);
-    return TCL_ERROR;
-  }
-
-  if(argc == 3 &&
-     strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
-     strcmp("n", argv[2]) && strcmp("N", argv[2])){
-    bu_vls_printf(&vls, "help opendb");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    bu_vls_free(&msg);
-    return TCL_ERROR;
-  }
-
-  save_dbip = dbip;
-  dbip = DBI_NULL;
-
-  /* Get input file */
-  if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-      ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
-    char line[128];
-
-    /*
-     * Check to see if we can access the database
-     */
-    if (access(argv[1], R_OK|W_OK) != 0 && errno != ENOENT) {
-      perror(argv[1]);
-      return TCL_ERROR;
-    }
-
-    if (interactive) {
-      if(mged_init_flag){
-	if(classic_mged){
-	  perror( argv[1] );
-	  bu_log("Create new database (y|n)[n]? ");
-	  (void)fgets(line, sizeof(line), stdin);
-	  if( line[0] != 'y' && line[0] != 'Y' ) {
-	    bu_log("Warning: no database is currently opened!\n");
-	    bu_vls_free(&vls);
-	    bu_vls_free(&msg);
-	    return TCL_OK;
-	  }
-	}else{
-	  int status;
-
-	  if(dpy_string != (char *)NULL)
-	    bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
-			  dpy_string, argv[1]);
-	  else
-	    bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
-			  argv[1]);
-
-	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-
-	  if(status != TCL_OK || interp->result[0] == '2') {
-	    mged_finish(0);
-	  }
-
-	  if(interp->result[0] == '1') {
-	    bu_log("opendb: no database is currently opened!\n");
-	    bu_vls_free(&vls);
-	    bu_vls_free(&msg);
-	    return TCL_OK;
-	  }
-	}
-      } else { /* not initializing mged */
-	if(argc == 2){
-	  /* need to reset this before returning */
-	  dbip = save_dbip;
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
-			   (char *)NULL);
-	  bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
-	  bu_vls_free(&vls);
-	  bu_vls_free(&msg);
-	  return TCL_ERROR;
+		Tcl_AppendResult(interp, "", (char *)NULL);
+		return TCL_OK;
 	}
 
-	if( *argv[2] != 'y' && *argv[2] != 'Y' ){
-	  dbip = save_dbip; /* restore previous database */
-	  bu_vls_free(&vls);
-	  bu_vls_free(&msg);
-	  return TCL_OK;
+	if(3 < argc || (strlen(argv[1]) == 0)){
+		bu_vls_printf(&vls, "help opendb");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
+		return TCL_ERROR;
 	}
-      }
-    }
 
-    if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
-      dbip = save_dbip; /* restore previous database */
-      bu_vls_free(&vls);
-      bu_vls_free(&msg);
+	if(argc == 3 &&
+	    strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
+	    strcmp("n", argv[2]) && strcmp("N", argv[2])){
+		bu_vls_printf(&vls, "help opendb");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
+		return TCL_ERROR;
+	}
 
-      if (mged_init_flag) {
-	/* we need to use bu_log here */
-	bu_log("opendb: failed to create %s\n", argv[1]);
-	bu_log("opendb: no database is currently opened!\n");
-	return TCL_OK;
-      }
-      
-      Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n",\
+	save_dbip = dbip;
+	dbip = DBI_NULL;
+
+	/* Get input file */
+	if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
+	    ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
+		char line[128];
+
+		/*
+	         * Check to see if we can access the database
+	         */
+		if (access(argv[1], R_OK|W_OK) != 0 && errno != ENOENT) {
+			perror(argv[1]);
+			return TCL_ERROR;
+		}
+
+	    	/* File does not exist */
+		if (interactive) {
+			if(mged_init_flag){
+				if(classic_mged){
+					perror( argv[1] );
+					bu_log("Create new database (y|n)[n]? ");
+					(void)fgets(line, sizeof(line), stdin);
+					if( line[0] != 'y' && line[0] != 'Y' ) {
+						bu_log("Warning: no database is currently opened!\n");
+						bu_vls_free(&vls);
+						bu_vls_free(&msg);
+						return TCL_OK;
+					}
+				} else{
+					int status;
+
+					if(dpy_string != (char *)NULL)
+						bu_vls_printf(&vls, "cad_dialog .createdb %s \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
+						    dpy_string, argv[1]);
+					else
+						bu_vls_printf(&vls, "cad_dialog .createdb :0 \"Create New Database?\" \"Create new database named %s?\" \"\" 0 Yes No Quit",
+						    argv[1]);
+
+					status = Tcl_Eval(interp, bu_vls_addr(&vls));
+
+					if(status != TCL_OK || interp->result[0] == '2') {
+						mged_finish(0);
+					}
+
+					if(interp->result[0] == '1') {
+						bu_log("opendb: no database is currently opened!\n");
+						bu_vls_free(&vls);
+						bu_vls_free(&msg);
+						return TCL_OK;
+					}
+				}
+			} else { /* not initializing mged */
+				if(argc == 2){
+					/* need to reset this before returning */
+					dbip = save_dbip;
+					Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
+					    (char *)NULL);
+					bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
+					bu_vls_free(&vls);
+					bu_vls_free(&msg);
+					return TCL_ERROR;
+				}
+
+				if( *argv[2] != 'y' && *argv[2] != 'Y' ){
+					dbip = save_dbip; /* restore previous database */
+					bu_vls_free(&vls);
+					bu_vls_free(&msg);
+					return TCL_OK;
+				}
+			}
+		}
+
+	    	/* File does not exist, and should be created */
+		if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
+			dbip = save_dbip; /* restore previous database */
+			bu_vls_free(&vls);
+			bu_vls_free(&msg);
+
+			if (mged_init_flag) {
+				/* we need to use bu_log here */
+				bu_log("opendb: failed to create %s\n", argv[1]);
+				bu_log("opendb: no database is currently opened!\n");
+				return TCL_OK;
+			}
+
+			Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n",\
 		       (char *)NULL);
-      if (dbip == DBI_NULL)
-	Tcl_AppendResult(interp, "opendb: no database is currently opened!", \
+			if (dbip == DBI_NULL)
+				Tcl_AppendResult(interp, "opendb: no database is currently opened!", \
 			 (char *)NULL);
 
-      return TCL_ERROR;
-    }
+			return TCL_ERROR;
+		}
+	    	/* New database has already had db_dirbuild() by here */
 
-    bu_vls_printf(&msg, "The new database %s was successfully created.\n", argv[1]);
-  }/* if( ((dbip = db_open( argv[1] ..... */
+		bu_vls_printf(&msg, "The new database %s was successfully created.\n", argv[1]);
+	} else {
+		/* Opened existing database file */
 
-  if( save_dbip )  {
-    char *av[2];
+		/* Scan geometry database and build in-memory directory */
+		(void)db_dirbuild( dbip );
+	}
 
-    av[0] = "zap";
-    av[1] = NULL;
+	if( save_dbip )  {
+		char *av[2];
 
-    /* Clear out anything in the display */
-    f_zap(clientData, interp, 1, av);
+		av[0] = "zap";
+		av[1] = NULL;
 
-    /* Close the Tcl database objects */
-    Tcl_Eval(interp, "db close; .inmem close");
+		/* Clear out anything in the display */
+		f_zap(clientData, interp, 1, av);
 
-    /* Close current database.  Releases MaterHead, etc. too. */
-    db_close(save_dbip);
+		/* Close the Tcl database objects */
+		Tcl_Eval(interp, "db close; .inmem close");
 
-    log_event( "CEASE", "(close)" );
-  }
+		/* Close current database.  Releases MaterHead, etc. too. */
+		db_close(save_dbip);
 
-  if( dbip->dbi_read_only )
-    bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
+		log_event( "CEASE", "(close)" );
+	}
 
-  /* Quick -- before he gets away -- write a logfile entry! */
-  log_event( "START", argv[1] );
+	if( dbip->dbi_read_only )
+		bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
 
-  /* --- Scan geometry database and build in-memory directory --- */
-  (void)db_dirbuild( dbip );
+	/* Quick -- before he gets away -- write a logfile entry! */
+	log_event( "START", argv[1] );
 
-  /* Close previous databases, if any.  Ignore errors. */
-  bu_vls_strcpy(&vls, "db close; .inmem close");
-  (void)Tcl_Eval( interp, bu_vls_addr(&vls) );
+	/* Close previous databases, if any.  Ignore errors. */
+	bu_vls_strcpy(&vls, "db close; .inmem close");
+	(void)Tcl_Eval( interp, bu_vls_addr(&vls) );
 
-  /* Establish TCL access to both disk and in-memory databases */
-  bu_vls_strcpy(&vls, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]");
-  if( Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK )  {
-    bu_vls_printf(&msg, "%s\n%s\n",
-		  interp->result,
-		  Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
-    Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
-    bu_vls_free(&vls);
-    bu_vls_free(&msg);
-    return TCL_ERROR;
-  }
+	/* Provide LIBWDB C access to the on-disk database */
+	if( wdbp )  wdb_close(wdbp);
+	if( (wdbp = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )  {
+		Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
+		return TCL_ERROR;
+	}
 
-  /* Perhaps do something special with the GUI */
-  bu_vls_trunc(&vls, 0);
-  bu_vls_printf(&vls, "opendb_callback %s", dbip->dbi_filename);
-  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+	/* Establish LIBWDB TCL access to both disk and in-memory databases */
+	/* This creates "db" and ".inmem" Tcl objects */
+	bu_vls_strcpy(&vls, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]");
+	if( Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK )  {
+		bu_vls_printf(&msg, "%s\n%s\n",
+		    interp->result,
+		    Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+		Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+		bu_vls_free(&vls);
+		bu_vls_free(&msg);
+		return TCL_ERROR;
+	}
 
-  bu_vls_strcpy(&vls, "local2base");
-  Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
-  Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&local2base,
-	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+	/* Perhaps do something special with the GUI */
+	bu_vls_trunc(&vls, 0);
+	bu_vls_printf(&vls, "opendb_callback %s", dbip->dbi_filename);
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 
-  bu_vls_strcpy(&vls, "base2local");
-  Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
-  Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&base2local,
-	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
+	bu_vls_strcpy(&vls, "local2base");
+	Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&local2base,
+	    TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
-  set_localunit_TclVar();
+	bu_vls_strcpy(&vls, "base2local");
+	Tcl_UnlinkVar(interp, bu_vls_addr(&vls));
+	Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&base2local,
+	    TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
-  /* Print title/units information */
-  if( interactive )
-    bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
-		  bu_units_string(dbip->dbi_local2base) );
+	set_localunit_TclVar();
 
-  Tcl_ResetResult( interp );
-  Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+	/* Print title/units information */
+	if( interactive )
+		bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
+		    bu_units_string(dbip->dbi_local2base) );
 
-  bu_vls_free(&vls);
-  bu_vls_free(&msg);
-  return TCL_OK;
+	Tcl_ResetResult( interp );
+	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+
+	bu_vls_free(&vls);
+	bu_vls_free(&msg);
+	return TCL_OK;
 }
