@@ -506,6 +506,10 @@ char	**argv;
 	char outbuf[132];
 	register int i;
 
+	if( argc <= 1 )  {
+		def_tree( rtip );		/* Load the default trees */
+		return(0);
+	}
 	rt_prep_timer();
 	for( i=1; i < argc; i++ )  {
 		if( rt_gettree(rtip, argv[i]) < 0 )
@@ -513,6 +517,7 @@ char	**argv;
 	}
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"GETTREE: %s\n", outbuf);
+	return(0);
 }
 
 cm_multiview( argc, argv )
@@ -537,27 +542,62 @@ char	**argv;
 	return(-1);	/* end RT by returning an error */
 }
 
-/** experimental animation code ***/
+/*
+ *			C M _ A N I M
+ *
+ *  Experimental animation code
+ *
+ *  Usage:  anim <path> <type> args
+ */
 cm_anim( argc, argv )
 int	argc;
 char	**argv;
 {
-	static struct directory *dir[4];
-	static struct animate a;
-	int k;
+	struct rt_i *rtip = ap.a_rt_i;
+	struct animate *anp;
+	struct directory **dir;
+	int i;
 
-#ifdef never
-	dir[0] = rt_dir_lookup("tor.r", LOOKUP_NOISY);
-	a.an_path = dir;
-	a.an_pathlen = 1;
-	a.an_type = AN_MATRIX;
-	a.an_u.anu_m.anm_op = ANM_RMUL;
-	mat_idn( a.an_u.anu_m.anm_mat );
-	MAT_DELTAS( a.an_u.anu_m.anm_mat, 0, 60, 0 );
-	k = rt_add_anim( rtip, &a );
-	rt_log("return=%d\n", k);
-	rt_pr_dir(rtip);
-#endif
+	/* Eventually might want to note leading slash or not */
+	if( (i = rt_plookup( rtip, &dir, argv[1], LOOKUP_NOISY )) <= 0 )
+		return(-1);		/* error */
+
+	GETSTRUCT( anp, animate );
+	anp->an_path = dir;
+	anp->an_pathlen = i;
+
+	if( strcmp( argv[2], "matrix" ) == 0 )  {
+		anp->an_type = AN_MATRIX;
+		if( strcmp( argv[3], "rstack" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RSTACK;
+		else if( strcmp( argv[3], "rarc" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RARC;
+		else if( strcmp( argv[3], "lmul" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_LMUL;
+		else if( strcmp( argv[3], "rmul" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RMUL;
+		else if( strcmp( argv[3], "rboth" ) == 0 )
+			anp->an_u.anu_m.anm_op = ANM_RBOTH;
+		else  {
+			fprintf(stderr,"cm_anim:  Matrix op %s unknown\n",
+				argv[3]);
+			goto bad;
+		}
+		for( i=0; i<16; i++ )
+			anp->an_u.anu_m.anm_mat[i] = atof( argv[i+4] );
+	} else {
+		fprintf(stderr,"cm_anim:  type %s unknown\n", argv[2]);
+		goto bad;
+	}
+	if( rt_add_anim( rtip, anp ) < 0 )  {
+		fprintf(stderr,"cm_anim:  %s %s failed\n", argv[1], argv[2]);
+		goto bad;
+	}
+	return(0);
+bad:
+	rt_free( (char *)dir, "directory []");
+	rt_free( (char *)anp, "animate");
+	return(-1);		/* BAD */
 }
 
 /*

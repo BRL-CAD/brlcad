@@ -104,7 +104,7 @@ static struct cmd_tab cmdtab[] = {
 	"end",		"",		cm_end,		1, 1,
 	"multiview",	"",		cm_multiview,	1, 1,
 	"anim",		"path type args", cm_anim,	4, MAXWORDS,
-	"tree",		"treetop(s)",	cm_tree,	2, MAXWORDS,
+	"tree",		"treetop(s)",	cm_tree,	1, MAXWORDS,
 	(char *)0,	(char *)0,	0,		0, 0	/* END */
 };
 
