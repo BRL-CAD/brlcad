@@ -688,7 +688,7 @@ char		*argv[];
 		show_color(wl);
 	else
 		rescale(wl);
-	got = fb_writerect( fbp, 0, 0, width, height, pixels );
+	(void)fb_writerect( fbp, 0, 0, width, height, pixels );
 	fb_poll(fbp);
 
 	/* export C variables to TCL, one-way */
