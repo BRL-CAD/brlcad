@@ -408,8 +408,10 @@ struct disk_rt_list  {
 };
 
 #define DISK_MODEL_MAGIC	0x4e6d6f64	/* Nmod */
+#define DISK_MODEL_VERSION	0x656c2032	/* el 2 */
 struct disk_model {
 	unsigned char		magic[4];
+	unsigned char		version[4];
 	index_t			ma_p;
 	struct disk_rt_list	r_hd;
 };
@@ -457,13 +459,16 @@ struct disk_shell_a {
 #define DISK_FACE_MAGIC		0x4e666163	/* Nfac */
 struct disk_face {
 	unsigned char		magic[4];
+	struct disk_rt_list	l;
 	index_t			fu_p;
 	index_t			fg_p;
+	unsigned char		flip[4];
 };
 
 #define DISK_FACE_G_MAGIC	0x4e665f61	/* Nf_a */
 struct disk_face_g {
 	unsigned char		magic[4];
+	struct disk_rt_list	f_hd;
 	unsigned char		N[4*8];
 	/*
 	 * Note that min_pt and max_pt are not stored on disk,
@@ -795,6 +800,7 @@ double		local2mm;
 			d = &((struct disk_model *)op)[oindex];
 			NMG_CK_MODEL(m);
 			PUTMAGIC( DISK_MODEL_MAGIC );
+			rt_plong( d->version, DISK_MODEL_VERSION );
 			INDEX( d, m, ma_p );
 			INDEXL( d, m, r_hd );
 		}
@@ -900,8 +906,10 @@ double		local2mm;
 			d = &((struct disk_face *)op)[oindex];
 			NMG_CK_FACE(f);
 			PUTMAGIC( DISK_FACE_MAGIC );
+			INDEXL( d, f, l );
 			INDEX( d, f, fu_p );
 			INDEX( d, f, fg_p );
+			rt_plong( d->flip, f->flip );
 		}
 		return;
 	case NMG_KIND_FACE_G:
@@ -912,6 +920,7 @@ double		local2mm;
 			d = &((struct disk_face_g *)op)[oindex];
 			NMG_CK_FACE_G(fg);
 			PUTMAGIC( DISK_FACE_G_MAGIC );
+			INDEXL( d, fg, f_hd );
 			VMOVE( plane, fg->N );
 			plane[3] = fg->N[3] * local2mm;
 			htond( d->N, plane, 4 );
@@ -1100,7 +1109,7 @@ double		local2mm;
  *
  *  Import a given structure from disk to memory format.
  */
-void
+int
 rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat )
 genptr_t	op;		/* ptr to in-memory structure */
 genptr_t	ip;		/* base of disk array */
@@ -1120,10 +1129,19 @@ mat_t		mat;
 			d = &((struct disk_model *)ip)[iindex];
 			NMG_CK_MODEL(m);
 			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_MAGIC );
+			/*
+			 * In the future, it may be necessary to be able to
+			 * read older versions as well.  This is the hook.
+			 */
+			if( rt_glong( d->version ) != DISK_MODEL_VERSION )  {
+				rt_log("rt_nmg_idisk() NMG version number mis-match, got x%x, s/b x%x\n",
+					rt_glong(d->version), DISK_MODEL_MAGIC );
+				return -1;
+			}
 			INDEX( d, m, model_a, ma_p );
 			INDEXL_HD( d, m, r_hd, m->r_hd );
 		}
-		return;
+		return 0;
 	case NMG_KIND_MODEL_A:
 		{
 			struct model_a	*ma = (struct model_a *)op;
@@ -1132,7 +1150,7 @@ mat_t		mat;
 			NMG_CK_MODEL_A(ma);
 			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_A_MAGIC );
 		}
-		return;
+		return 0;
 	case NMG_KIND_NMGREGION:
 		{
 			struct nmgregion	*r = (struct nmgregion *)op;
@@ -1146,7 +1164,7 @@ mat_t		mat;
 			INDEXL_HD( d, r, l, r->m_p->r_hd ); /* do after m_p */
 			NMG_CK_MODEL(r->m_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_NMGREGION_A:
 		{
 			struct nmgregion_a	*r = (struct nmgregion_a *)op;
@@ -1159,7 +1177,7 @@ mat_t		mat;
 			ntohd( max, d->max_pt, 3 );
 			rt_rotate_bbox( r->min_pt, r->max_pt, mat, min, max );
 		}
-		return;
+		return 0;
 	case NMG_KIND_SHELL:
 		{
 			struct shell	*s = (struct shell *)op;
@@ -1176,7 +1194,7 @@ mat_t		mat;
 			INDEXL_HD( d, s, l, s->r_p->s_hd ); /* after s->r_p */
 			NMG_CK_REGION(s->r_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_SHELL_A:
 		{
 			struct shell_a	*sa = (struct shell_a *)op;
@@ -1189,7 +1207,7 @@ mat_t		mat;
 			ntohd( max, d->max_pt, 3 );
 			rt_rotate_bbox( sa->min_pt, sa->max_pt, mat, min, max );
 		}
-		return;
+		return 0;
 	case NMG_KIND_FACEUSE:
 		{
 			struct faceuse	*fu = (struct faceuse *)op;
@@ -1207,7 +1225,7 @@ mat_t		mat;
 			NMG_CK_FACE(fu->f_p);
 			NMG_CK_FACEUSE(fu->fumate_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_FACEUSE_A:
 		{
 			struct faceuse_a	*fua = (struct faceuse_a *)op;
@@ -1216,7 +1234,7 @@ mat_t		mat;
 			NMG_CK_FACEUSE_A(fua);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACEUSE_A_MAGIC );
 		}
-		return;
+		return 0;
 	case NMG_KIND_FACE:
 		{
 			struct face	*f = (struct face *)op;
@@ -1226,9 +1244,11 @@ mat_t		mat;
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_MAGIC );
 			INDEX( d, f, faceuse, fu_p );
 			INDEX( d, f, face_g, fg_p );
+			f->flip = rt_glong( d->flip );
+			INDEXL_HD( d, f, l, f->fg_p->f_hd ); /* after fu->fg_p set */
 			NMG_CK_FACEUSE(f->fu_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_FACE_G:
 		{
 			struct face_g	*fg = (struct face_g *)op;
@@ -1237,10 +1257,11 @@ mat_t		mat;
 			d = &((struct disk_face_g *)ip)[iindex];
 			NMG_CK_FACE_G(fg);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_MAGIC );
+			INDEXL_HD( d, fg, f_hd, fg->f_hd );
 			ntohd( plane, d->N, 4 );
 			rt_rotate_plane( fg->N, mat, plane );
 		}
-		return;
+		return 0;
 	case NMG_KIND_LOOPUSE:
 		{
 			struct loopuse	*lu = (struct loopuse *)op;
@@ -1268,7 +1289,7 @@ mat_t		mat;
 				rt_bomb("rt_nmg_idisk: null loopuse down_hd.forw\n");
 			NMG_CK_LOOP(lu->l_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_LOOPUSE_A:
 		{
 			struct loopuse_a	*lua = (struct loopuse_a *)op;
@@ -1277,7 +1298,7 @@ mat_t		mat;
 			NMG_CK_LOOPUSE_A(lua);
 			RT_CK_DISKMAGIC( d->magic, DISK_LOOPUSE_A_MAGIC );
 		}
-		return;
+		return 0;
 	case NMG_KIND_LOOP:
 		{
 			struct loop	*loop = (struct loop *)op;
@@ -1289,7 +1310,7 @@ mat_t		mat;
 			INDEX( d, loop, loop_g, lg_p );
 			NMG_CK_LOOPUSE(loop->lu_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_LOOP_G:
 		{
 			struct loop_g	*lg = (struct loop_g *)op;
@@ -1302,7 +1323,7 @@ mat_t		mat;
 			ntohd( max, d->max_pt, 3 );
 			rt_rotate_bbox( lg->min_pt, lg->max_pt, mat, min, max );
 		}
-		return;
+		return 0;
 	case NMG_KIND_EDGEUSE:
 		{
 			struct edgeuse	*eu = (struct edgeuse *)op;
@@ -1332,7 +1353,7 @@ mat_t		mat;
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_EDGEUSE_A:
 		{
 			struct edgeuse_a	*eua = (struct edgeuse_a *)op;
@@ -1341,7 +1362,7 @@ mat_t		mat;
 			NMG_CK_EDGEUSE_A(eua);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGEUSE_A_MAGIC );
 		}
-		return;
+		return 0;
 	case NMG_KIND_EDGE:
 		{
 			struct edge	*e = (struct edge *)op;
@@ -1354,7 +1375,7 @@ mat_t		mat;
 			INDEX( d, e, edge_g, eg_p );
 			NMG_CK_EDGEUSE(e->eu_p);
 		}
-		return;
+		return 0;
 	case NMG_KIND_EDGE_G:
 		{
 			struct edge_g	*eg = (struct edge_g *)op;
@@ -1366,7 +1387,7 @@ mat_t		mat;
 			ntohd(eg->e_pt, d->e_pt, 3);
 			ntohd(eg->e_dir, d->e_dir, 3);
 		}
-		return;
+		return 0;
 	case NMG_KIND_VERTEXUSE:
 		{
 			struct vertexuse	*vu = (struct vertexuse *)op;
@@ -1380,7 +1401,7 @@ mat_t		mat;
 			NMG_CK_VERTEX(vu->v_p);
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
 		}
-		return;
+		return 0;
 	case NMG_KIND_VERTEXUSE_A:
 		{
 			struct vertexuse_a	*vua = (struct vertexuse_a *)op;
@@ -1392,7 +1413,7 @@ mat_t		mat;
 			ntohd( plane, d->N, 4 );
 			rt_rotate_plane( vua->N, mat, plane );
 		}
-		return;
+		return 0;
 	case NMG_KIND_VERTEX:
 		{
 			struct vertex	*v = (struct vertex *)op;
@@ -1403,7 +1424,7 @@ mat_t		mat;
 			INDEXL_HD( d, v, vu_hd, v->vu_hd );
 			INDEX( d, v, vertex_g, vg_p );
 		}
-		return;
+		return 0;
 	case NMG_KIND_VERTEX_G:
 		{
 			struct vertex_g	*vg = (struct vertex_g *)op;
@@ -1415,9 +1436,10 @@ mat_t		mat;
 			ntohd( pt, d->coord, 3 );
 			MAT4X3PNT( vg->coord, mat, pt );
 		}
-		return;
+		return 0;
 	}
 	rt_log("rt_nmg_idisk kind=%d unknown\n", ecnt[index].kind);
+	return -1;
 }
 
 /*
@@ -1519,7 +1541,7 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 				{
 					struct face	*f;
 					GET_FACE( f, m );
-					f->magic = NMG_FACE_MAGIC;
+					f->l.magic = NMG_FACE_MAGIC;
 					ptrs[subscript] = (long *)f;
 				}
 				break;
@@ -1659,11 +1681,12 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
  *	 0	indicates that a null pointer should be used.
  */
 int
-rt_nmg_import_internal( ip, ep, mat, rebound )
+rt_nmg_import_internal( ip, ep, mat, rebound, tol )
 struct rt_db_internal		*ip;
 CONST struct rt_external	*ep;
 CONST register mat_t		mat;
 int				rebound;
+CONST struct rt_tol		*tol;
 {
 	struct model			*m;
 	union record			*rp;
@@ -1678,6 +1701,7 @@ int				rebound;
 	static long			bad_magic = 0x999;
 
 	RT_CK_EXTERNAL( ep );
+	RT_CK_TOL( tol );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_NMG )  {
@@ -1712,14 +1736,15 @@ int				rebound;
 	/* Import each structure, in turn */
 	cp = (char *)(rp+1);	/* start at first granule in */
 	for( i=1; i < maxindex; i++ )  {
-		rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
-			ecnt, i, ptrs, mat );
+		if( rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
+			ecnt, i, ptrs, mat ) < 0 )
+				return -1;	/* FAIL */
 		cp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
 
 	if( rebound )  {
 		/* Recompute all bounding boxes in model */
-		nmg_rebound(m);
+		nmg_rebound(m, tol);
 	} else {
 		/*
 		 *  Need to recompute bounding boxes for the faces here.
@@ -1728,7 +1753,7 @@ int				rebound;
 		 */
 		for( i=1; i < maxindex; i++ )  {
 			if( ecnt[i].kind != NMG_KIND_FACE )  continue;
-			nmg_face_bb( (struct face *)ptrs[i] );
+			nmg_face_bb( (struct face *)ptrs[i], tol );
 		}
 	}
 
