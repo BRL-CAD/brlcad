@@ -421,10 +421,6 @@ CONST struct edge_g_cnurb *cnrb;
 	/* Check if all control points are either the start point or end point */
 	for( i=1 ; i<cnrb->c_size-2 ; i++ )
 	{
-		int index;
-
-		index = i*coords;
-
 		if( VEQUAL( &cnrb->ctl_points[0], &cnrb->ctl_points[i] ) )
 			continue;
 		if( VEQUAL( &cnrb->ctl_points[last_index], &cnrb->ctl_points[i] ) )
@@ -780,8 +776,6 @@ struct bu_list *head;
 CONST struct bn_tol *tol;
 {
 	fastf_t t;
-	int done=0;
-	point_t xyz;
 	struct pt_list *pt0,*pt1;
 
 	NMG_CK_EDGE_G_CNURB( cnrb );
@@ -889,8 +883,6 @@ CONST fastf_t uvw2[3];
 struct bu_list *head;
 CONST struct bn_tol *tol;
 {
-	int done=0;
-	point_t xyz;
 	fastf_t uvw[3];
 	struct pt_list *pt0,*pt1;
 
@@ -1707,7 +1699,6 @@ CONST struct bn_tol	*tol;
 	register struct face_g_plane	*fg1;
 	register struct face_g_plane	*fg2;
 	int			flip2 = 0;
-	int			code;
 
 	NMG_CK_FACE(f1);
 	NMG_CK_FACE(f2);
@@ -2369,8 +2360,6 @@ fastf_t amax;
 	/* Need to exchange eu with eu->eumate_p for each eu on the list */
 	for( BU_LIST_FOR( rad, nmg_radial, hd ) )
 	{
-		struct faceuse *fu;
-
 		rad->eu = rad->eu->eumate_p;
 		rad->fu = nmg_find_fu_of_eu( rad->eu );
 	}
@@ -2413,13 +2402,11 @@ CONST vect_t		yvec;
 CONST vect_t		zvec;
 CONST struct bn_tol	*tol;		/* for printing */
 {
-	fastf_t			angle;
 	struct edgeuse		*teu;
 	struct nmg_radial	*rad;
 	fastf_t			amin;
 	fastf_t			amax;
 	int			non_wire_edges=0;
-	int			edge_count;
 	struct nmg_radial	*rmin = (struct nmg_radial *)NULL;
 	struct nmg_radial	*rmax = (struct nmg_radial *)NULL;
 	struct nmg_radial	*first;
@@ -2647,8 +2634,6 @@ CONST struct bn_tol	*tol;
 	CONST struct loopuse	*lu;
 	CONST struct edge	*e;
 	point_t			midpt;
-	vect_t			diff;
-	fastf_t			diff_len;
 	CONST fastf_t		*a, *b;
 	int			class;
 
@@ -2668,8 +2653,6 @@ CONST struct bn_tol	*tol;
 	VADD2SCALE( midpt, a, b, 0.5 );
 
 	/* Ensure edge is long enough so midpoint is not within tol of verts */
-	VSUB2( diff, a, b );
-	diff_len = MAGNITUDE(diff);
 	{
 #if 1
 		/* all we want here is a classification of the midpoint,
@@ -2773,7 +2756,6 @@ CONST struct edge	*e1;
 CONST struct edge	*e2;		/* may be NULL */
 {
 	register CONST struct edgeuse	*neu;
-	register CONST struct edge	*e;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_LOOPUSE(eu->up.lu_p);	/* sanity */
@@ -2934,7 +2916,6 @@ CONST struct bn_tol	*tol;
 {
 	register struct nmg_radial	*rad;
 	struct nmg_radial	*fallback = (struct nmg_radial *)NULL;
-	struct nmg_radial	*wire = (struct nmg_radial *)NULL;
 	int			seen_shell = 0;
 
 	BU_CK_LIST_HEAD(hd);
@@ -3108,7 +3089,6 @@ CONST struct bu_ptbl	*shells;
 CONST struct bn_tol	*tol;
 {
 	struct nmg_radial	*rad;
-	struct nmg_radial	*other;
 	struct shell		**sp;
 	struct nmg_radial	*orig;
 	register int		expected_ot;
@@ -3184,7 +3164,6 @@ again:
 	skipped = 0;
 	for( BU_LIST_FOR( rad, nmg_radial, hd ) )  {
 		struct edgeuse	*dest;
-		struct edgeuse	*src;
 
 		if( rad->existing_flag )  continue;
 		prev = BU_LIST_PPREV_CIRC( nmg_radial, rad );
@@ -3521,7 +3500,6 @@ CONST struct bn_tol	*tol;
 {
 	struct edgeuse		*eu1ref;		/* reference eu for eu1 */
 	struct edgeuse		*eu2ref;
-	struct edge_g_lseg	*best_eg;
 	struct faceuse		*fu1;
 	struct faceuse		*fu2;
 	struct nmg_radial	*rad;
@@ -3529,8 +3507,6 @@ CONST struct bn_tol	*tol;
 	struct bu_list		list1;
 	struct bu_list		list2;
 	struct bu_ptbl		shell_tbl;
-	struct shell		**sp;
-	int			count1, count2;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
@@ -3638,10 +3614,6 @@ CONST struct bn_tol	*tol;
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
 	count2 = nmg_radial_check_parity( &list2, &shell_tbl, tol );
 	if( count1 || count2 ) bu_log("nmg_radial_join_eu_NEW() bad parity at the outset, %d, %d\n", count1, count2);
-
-	best_eg = nmg_pick_best_edge_g( eu1, eu2, tol );
-#else
-	best_eg = eu1->g.lseg_p;
 #endif
 
 	/* Merge the two lists, sorting by angles */
@@ -3708,8 +3680,6 @@ struct bu_list		*hd;
 CONST struct bn_tol	*tol;		/* for printing */
 {
 	struct nmg_radial	*rad;
-	struct nmg_radial	*prev;
-	int			skipped;
 
 	BU_CK_LIST_HEAD(hd);
 	BN_CK_TOL(tol);
@@ -3825,14 +3795,13 @@ struct edgeuse		*eu;
 struct shell		*s;
 CONST struct bn_tol	*tol;
 {
+#if 1
+	return( 0 );
+#else
 	struct bu_list	list;
 	vect_t		xvec, yvec, zvec;
 	struct nmg_radial	*rad;
 	int	nflip;
-	struct faceuse	*fu;
-#if 1
-	return( 0 );
-#else
 
 	NMG_CK_EDGEUSE(eu);
 	BN_CK_TOL(tol);
@@ -3896,8 +3865,6 @@ CONST struct bn_tol	*tol;
 {
 	struct bu_ptbl	edges;
 	struct edgeuse	*eu;
-	struct bu_list	list;
-	vect_t		xvec, yvec, zvec;
 	struct edge	**ep;
 
 	NMG_CK_SHELL(s);
