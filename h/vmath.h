@@ -48,8 +48,8 @@
 
 #ifndef sqrt
 	/* In case <math.h> has not been included, define sqrt() here */
-#	if defined(__STDC__)
-		extern double sqrt(double x);
+#	if __STDC__
+		extern double sqrt(double);
 #	else
 #		if (defined(sgi) && defined(mips) && !defined(SGI4D_Rel2))
 			/* What could SGI have been thinking of? */
