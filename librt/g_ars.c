@@ -796,6 +796,17 @@ struct rt_tol		*tol;
 	return(0);
 }
 
+#define IJ(ii,jj)	(((i+(ii))*(arip->pts_per_curve+1))+(j+(jj)))
+#define ARS_PT(ii,jj)	(&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
+#define FIND_IJ(a,b)	\
+	if( !(verts[IJ(a,b)]) )  { \
+		verts[IJ(a,b)] = \
+		nmg_find_pt_in_shell( s, ARS_PT(a,b), tol ); \
+	}
+#define ASSOC_GEOM(corn, a,b)	\
+	if( !((*corners[corn])->vg_p) )  { \
+		nmg_vertex_gv( *(corners[corn]), ARS_PT(a,b) ); \
+	}
 /*
  *			R T _ A R S _ T E S S
  */
@@ -816,10 +827,44 @@ struct rt_tol		*tol;
 	struct faceuse	*fu;
 	struct nmg_ptbl	kill_fus;
 	struct nmg_ptbl tbl;
+	int		bad_ars=0;
 
 	RT_CK_DB_INTERNAL(ip);
 	arip = (struct rt_ars_internal *)ip->idb_ptr;
 	RT_ARS_CK_MAGIC(arip);
+
+	/* Check for a legal ARS */
+	for( i = 0; i < arip->ncurves-1; i++ )
+	{
+		for( j = 2; j < arip->pts_per_curve; j++ )
+		{
+			fastf_t dist;
+			vect_t pca;
+			int code;
+
+			if( VAPPROXEQUAL( ARS_PT(0,-2), ARS_PT(0,-1), tol->dist ) )
+				continue;
+
+			code = rt_dist_pt3_lseg3( &dist, pca, ARS_PT(0,-2), ARS_PT(0,-1), ARS_PT(0,0), tol );
+
+			if( code < 2 )
+			{
+				rt_log( "ARS curve backtracks on itself!!!\n" );
+				rt_log( "\tCurve #%d, points #%d through %d are:\n", i, j-2, j );
+				rt_log( "\t\t%d (%f %f %f)\n", j-2, V3ARGS( ARS_PT(0,-2) ) );
+				rt_log( "\t\t%d (%f %f %f)\n", j-1, V3ARGS( ARS_PT(0,-1) ) );
+				rt_log( "\t\t%d (%f %f %f)\n", j, V3ARGS( ARS_PT(0,0) ) );
+				bad_ars = 1;
+				j++;
+			}
+		}
+	}
+
+	if( bad_ars )
+	{
+		rt_log( "TESSELATION FAILURE: This ARS solid has not been tesselated.\n\tAny result you may obtain is incorrect.\n" );
+		return( -1 );
+	}
 
 	nmg_tbl( &kill_fus, TBL_INIT, (long *)NULL );
 
@@ -831,18 +876,6 @@ struct rt_tol		*tol;
 	verts = (struct vertex **)rt_calloc( arip->ncurves * (arip->pts_per_curve+1),
 		sizeof(struct vertex *),
 		"rt_tor_tess *verts[]" );
-
-#define IJ(ii,jj)	(((i+(ii))*(arip->pts_per_curve+1))+(j+(jj)))
-#define ARS_PT(ii,jj)	(&arip->curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
-#define FIND_IJ(a,b)	\
-	if( !(verts[IJ(a,b)]) )  { \
-		verts[IJ(a,b)] = \
-		nmg_find_pt_in_shell( s, ARS_PT(a,b), tol ); \
-	}
-#define ASSOC_GEOM(corn, a,b)	\
-	if( !((*corners[corn])->vg_p) )  { \
-		nmg_vertex_gv( *(corners[corn]), ARS_PT(a,b) ); \
-	}
 
 	/*
 	 *  Draw the "waterlines", by tracing each curve.
