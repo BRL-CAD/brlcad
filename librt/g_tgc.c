@@ -439,6 +439,9 @@ register struct soltab	*stp;
 	rt_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
 }
 
+/* To be clean, hit_private (a char *), is set to one of these */
+static char tgc_compute[4];
+
 /*
  *			T G C _ S H O T
  *
@@ -656,17 +659,17 @@ register struct xray	*rp;
 		segp->seg_stp = stp;
 
 		segp->seg_in.hit_dist = pt[IN] * t_scale;
-		segp->seg_in.hit_private = (char *)0;	/* flag: compute */
+		segp->seg_in.hit_private = &tgc_compute[0];	/* compute N */
 		VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[IN], dprime );
 
 		segp->seg_out.hit_dist = pt[OUT] * t_scale;
-		segp->seg_out.hit_private = (char *)0;	/* flag: compute */
+		segp->seg_out.hit_private = &tgc_compute[0];	/* compute N */
 		VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 
 		return( segp );
 	}
 	if ( intersect == 1 )  {
-		int nflag;		/* 1 = normal, 2 = reverse normal */
+		char *nflag;	/* tgc_compute[1] = normal, [2] = reverse normal */
 		/*
 		 *  If only one between-plane intersection exists (pt[OUT]),
 		 *  then the other intersection must be on
@@ -696,10 +699,10 @@ register struct xray	*rp;
 
 		if ( alf1 <= 1.0 ){
 			pt[IN] = b;
-			nflag = 2;		/* copy reverse normal */
+			nflag = &tgc_compute[2]; /* copy reverse normal */
 		} else if ( alf2 <= 1.0 ){
 			pt[IN] = t;
-			nflag = 1;		/* copy normal */
+			nflag = &tgc_compute[1];	/* copy normal */
 		} else {
 			/* intersection apparently invalid  */
 			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
@@ -711,20 +714,20 @@ register struct xray	*rp;
 		/* pt[OUT] on skin, pt[IN] on end */
 		if ( pt[OUT] >= pt[IN] )  {
 			segp->seg_in.hit_dist = pt[IN] * t_scale;
-			segp->seg_in.hit_private = (char *)nflag;
+			segp->seg_in.hit_private = nflag;
 
 			segp->seg_out.hit_dist = pt[OUT] * t_scale;
-			segp->seg_out.hit_private = (char *)0;	/* compute */
+			segp->seg_out.hit_private = &tgc_compute[0];	/* compute N */
 			/* transform-space vector needed for normal */
 			VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 		} else {
 			segp->seg_in.hit_dist = pt[OUT] * t_scale;
 			/* transform-space vector needed for normal */
-			segp->seg_in.hit_private = (char *)0;	/* compute */
+			segp->seg_in.hit_private = &tgc_compute[0];	/* compute N */
 			VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[OUT], dprime );
 
 			segp->seg_out.hit_dist = pt[IN] * t_scale;
-			segp->seg_out.hit_private = (char *)nflag;
+			segp->seg_out.hit_private = nflag;
 		}
 		return( segp );
 	}
@@ -773,16 +776,16 @@ register struct xray	*rp;
 	 */
 	if ( dir > 0.0 ){
 		segp->seg_in.hit_dist = b * t_scale;
-		segp->seg_in.hit_private = (char *)2;	/* reverse normal */
+		segp->seg_in.hit_private = &tgc_compute[2];	/* reverse normal */
 
 		segp->seg_out.hit_dist = t * t_scale;
-		segp->seg_out.hit_private = (char *)1;	/* normal */
+		segp->seg_out.hit_private = &tgc_compute[1];	/* normal */
 	} else {
 		segp->seg_in.hit_dist = t * t_scale;
-		segp->seg_in.hit_private = (char *)1;	/* normal */
+		segp->seg_in.hit_private = &tgc_compute[1];	/* normal */
 
 		segp->seg_out.hit_dist = b * t_scale;
-		segp->seg_out.hit_private = (char *)2;	/* reverse normal */
+		segp->seg_out.hit_private = &tgc_compute[2];	/* reverse normal */
 	}
 	return( segp );
 }
@@ -862,24 +865,30 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 	/* Hits on the end plates are easy */
-	if( ((int)hitp->hit_private) == 1 )  {
+	switch( hitp->hit_private-tgc_compute )  {
+	case 1:
 		VMOVE( hitp->hit_normal, tgc->tgc_N );
-		return;
-	} else if ( ((int)hitp->hit_private) == 2 )  {
+		break;
+	case 2:
 		VREVERSE( hitp->hit_normal, tgc->tgc_N );
-		return;
+		break;
+	case 0:
+		/* Compute normal, given hit point on standard (unit) cone */
+		R = 1 + tgc->tgc_CA_H * hitp->hit_vpriv[Z];
+		Q = 1 + tgc->tgc_DB_H * hitp->hit_vpriv[Z];
+		stdnorm[X] = 2 * hitp->hit_vpriv[X] * Q * Q;
+		stdnorm[Y] = 2 * hitp->hit_vpriv[Y] * R * R;
+		stdnorm[Z] = 2 * ( Q * tgc->tgc_DB_H *
+				(hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R*R)
+			     + R * tgc->tgc_CA_H *
+				(hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q) );
+		MAT4X3VEC( hitp->hit_normal, tgc->tgc_invRtShSc, stdnorm );
+		VUNITIZE( hitp->hit_normal );
+		break;
+	default:
+		rt_log("tgc_norm: bad flag x%x\n", (int)hitp->hit_private);
+		break;
 	}
-	/* Compute normal, given hit point on standard (unit) cone */
-	R = 1 + tgc->tgc_CA_H * hitp->hit_vpriv[Z];
-	Q = 1 + tgc->tgc_DB_H * hitp->hit_vpriv[Z];
-	stdnorm[X] = 2 * hitp->hit_vpriv[X] * Q * Q;
-	stdnorm[Y] = 2 * hitp->hit_vpriv[Y] * R * R;
-	stdnorm[Z] = 2 * ( Q * tgc->tgc_DB_H *
-			(hitp->hit_vpriv[X]*hitp->hit_vpriv[X] - R*R)
-		     + R * tgc->tgc_CA_H *
-			(hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] - Q*Q) );
-	MAT4X3VEC( hitp->hit_normal, tgc->tgc_invRtShSc, stdnorm );
-	VUNITIZE( hitp->hit_normal );
 }
 
 tgc_uv()
