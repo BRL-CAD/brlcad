@@ -179,6 +179,7 @@ struct dm {
 
 extern int dm_tclInit();
 extern struct dm *dm_open();
+extern int dm_share_dlist();
 extern fastf_t dm_Xx2Normal();
 extern int dm_Normal2Xx();
 extern fastf_t dm_Xy2Normal();
