@@ -197,13 +197,14 @@ register mat_t		o;
  *			M A T X V E C
  *
  * Multiply the matrix "im" by the vector "iv" and store the result
- * in the vector "ov".  Note this is post-multiply.
+ * in the vector "ov".  Note this is post-multiply, and
+ * operates on 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
  */
 void
 matXvec(ov, im, iv)
-register vect_t ov;
+register hvect_t ov;
 register CONST mat_t im;
-register CONST vect_t iv;
+register CONST hvect_t iv;
 {
 	register int eo = 0;		/* Position in output vector */
 	register int em = 0;		/* Position in input matrix */
