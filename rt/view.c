@@ -658,6 +658,10 @@ register struct shadework *swp;
 	if( (swp->sw_inputs & want) != want )
 		shade_inputs( ap, pp, swp, want );
 
+	if( rdebug&RDEBUG_SHADE ) {
+		pr_shadework( "before mf_render", swp );
+	}
+
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
 
@@ -1149,5 +1153,4 @@ register struct application *ap;
 	ibackground[0] = background[0] * 255;
 	ibackground[1] = background[1] * 255;
 	ibackground[2] = background[2] * 255;
-
 }
