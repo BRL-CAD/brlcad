@@ -121,7 +121,8 @@ matp_t xlate;
 		if( tp != TREE_NULL )
 		{
 			found = 1;
-			bn_mat_mul2( xlate, tp->tr_l.tl_mat );
+			if( tp->tr_l.tl_mat )
+				bn_mat_mul2( xlate, tp->tr_l.tl_mat );
 			if( rt_db_put_internal( cdp, dbip, &intern ) < 0 )
 			{
 				Tcl_AppendResult(interp, "rt_db_put_internal failed for ",
