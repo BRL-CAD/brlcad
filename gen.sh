@@ -168,6 +168,8 @@ BDIRS="bench \
 	libredblack \
 	libtermio \
 	libtcl \
+	libtclad \
+	libdm \
 	conv \
 	db \
 	rt \
@@ -221,7 +223,7 @@ fi
 # The 7d platform (R8000 TFP with Irix 6) does not have GL.
 if test "${MACHINE}" != "4d" -a "${MACHINE}" != "5d" -a "${MACHINE}" != "6d"
 then
-	BDIRS=`echo ${BDIRS} | sed -e  's/edpix//'`
+	BDIRS=`echo ${BDIRS} | sed -e  's/edpix// s/canon//'`
 fi
 
 if test "$1" = ""
