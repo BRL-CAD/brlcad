@@ -33,8 +33,6 @@ static char RCStorus[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 #include "./polyno.h"
 
-static void	TorPtSort();
-
 /*
  * The TORUS has the following input fields:
  *	V	V from origin to center
@@ -444,7 +442,7 @@ register struct xray *rp;
 	}
 
 	/* Sort most distant to least distant. */
-	TorPtSort( k, i );
+	rt_pt_sort( k, i );
 
 	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
 	if( k[0] <= 0.0 )
@@ -524,40 +522,6 @@ register struct xray *rp;
 		  w * hitp->hit_vpriv[Z] );
 	VUNITIZE( work );
 	MAT3XVEC( hitp->hit_normal, tor->tor_invR, work );
-}
-
-/*	>>>  s o r t ( )  <<<
- *
- *  Sorts the values of 't' in descending order.
- *  When done, t[0] > t[npts-1]
- *  The sort is simplified to deal with only 4 values.
- */
-static void
-TorPtSort( t, npts )
-register double	t[];
-{
-	LOCAL double	u;
-	register int	n;
-
-#define TOR_XCH(a,b)	{u=a; a=b; b=u;}
-	if( npts == 2 )  {
-		if ( t[0] < t[1] )  {
-			TOR_XCH( t[0], t[1] );
-		}
-		return;
-	}
-
-	for ( n=0; n < 2; ++n ){
-		if ( t[n] < t[n+2] ){
-			TOR_XCH( t[n], t[n+2] );
-		}
-	}
-	for ( n=0; n < 3; ++n ){
-		if ( t[n] < t[n+1] ){
-			TOR_XCH( t[n], t[n+1] );
-		}
-	}
-	return;
 }
 
 tor_uv()
