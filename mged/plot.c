@@ -105,21 +105,21 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 	if( argv[1][0] == '|' )  {
-		struct rt_vls	str;
-		rt_vls_init( &str );
-		rt_vls_strcpy( &str, &argv[1][1] );
+		struct bu_vls	str;
+		bu_vls_init( &str );
+		bu_vls_strcpy( &str, &argv[1][1] );
 		while( (++argv)[1] != (char *)0 )  {
-			rt_vls_strcat( &str, " " );
-			rt_vls_strcat( &str, argv[1] );
+			bu_vls_strcat( &str, " " );
+			bu_vls_strcat( &str, argv[1] );
 		}
-		if( (fp = popen( rt_vls_addr( &str ), "w" ) ) == NULL )  {
-			perror( rt_vls_addr( &str ) );
+		if( (fp = popen( bu_vls_addr( &str ), "w" ) ) == NULL )  {
+			perror( bu_vls_addr( &str ) );
 			return TCL_ERROR;
 		}
 
-		Tcl_AppendResult(interp, "piped to ", rt_vls_addr( &str ),
+		Tcl_AppendResult(interp, "piped to ", bu_vls_addr( &str ),
 				 "\n", (char *)NULL);
-		rt_vls_free( &str );
+		bu_vls_free( &str );
 		is_pipe = 1;
 	}  else  {
 		if( (fp = fopen( argv[1], "w" )) == NULL )  {
@@ -286,14 +286,14 @@ char	**argv;
 	  sprintf( buf, "cad_boundp -t %s | cad_parea", argv[1] );
 	  Tcl_AppendResult(interp, "Tolerance is ", argv[1], "\n", (char *)NULL);
 	}  else  {
-	  struct rt_vls tmp_vls;
+	  struct bu_vls tmp_vls;
 	  double tol = VIEWSIZE * 0.001;
 
-	  rt_vls_init(&tmp_vls);
+	  bu_vls_init(&tmp_vls);
 	  sprintf( buf, "cad_boundp -t %e | cad_parea", tol );
-	  rt_vls_printf(&tmp_vls, "Auto-tolerance of 0.1%% is %e\n", tol);
-	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
-	  rt_vls_free(&tmp_vls);
+	  bu_vls_printf(&tmp_vls, "Auto-tolerance of 0.1%% is %e\n", tol);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
 	}
 
 	if( (fp = popen( buf, "w" )) == NULL )  {
@@ -339,10 +339,9 @@ char	**argv;
 			}
 		}
 	}
-
 	Tcl_AppendResult(interp, "Presented area from this viewpoint, square ",
 			 rt_units_string(dbip->dbi_local2base), ":\n", (char *)NULL);
-	pclose( fp );
 
+	pclose( fp );
 	return TCL_OK;
 }
