@@ -103,6 +103,11 @@ FBIO remote_interface =
 void	pkg_queue(), flush_queue();
 static	struct pkg_conn *pcp;
 
+/* from getput.c */
+extern unsigned short getshort();
+extern unsigned long getlong();
+extern char *putshort(), *putlong();
+
 /*
  * Open a connection to the remote libfb.
  * We send 4 bytes of mode, 4 bytes of size, then the
@@ -115,11 +120,9 @@ register char	*devicename;
 int	width, height;
 {
 	register int	i;
-	char	buf[24];
+	char	buf[128];
 	char	*file;
 	char	hostname[MAX_HOSTNAME];
-	long	*lp;
-	int	ret;
 
 	if( devicename == NULL || (file = strchr( devicename, ':' )) == NULL ) {
 		fb_log( "remote_dopen : bad device name \"%s\"\n",
@@ -137,29 +140,28 @@ int	width, height;
 	ifp->if_fd = PCP(ifp)->pkc_fd;
 	ifp->if_width = width;
 	ifp->if_height = height;
-	lp = (long *)&buf[0];
-	*lp++ = htonl( ifp->if_width );
-	*lp = htonl( ifp->if_height );
 
+	(void)putlong( ifp->if_width, &buf[0] );
+	(void)putlong( ifp->if_height, &buf[4] );
 	(void) strcpy( &buf[8], file + 1 );
 	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, PCP(ifp) );
 
 	/* XXX - need to get the size back! */
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong( buf ) );
 }
 
 _LOCAL_ int
 rem_dclose( ifp )
 FBIO	*ifp;
 {
-	int	ret;
+	char	buf[4+1];
 
 	/* send a close package to remote */
 	pkg_send( MSG_FBCLOSE, 0L, 0L, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
 	pkg_close( PCP(ifp) );
-	return	ntohl( ret );
+	return( getlong( buf ) );
 }
 
 _LOCAL_ int
@@ -167,15 +169,18 @@ rem_dclear( ifp, bgpp )
 FBIO	*ifp;
 Pixel	*bgpp;
 {
-	int	ret;
+	char	buf[4+1];
 
 	/* XXX - need to send background color */
 	/* send a clear package to remote */
 	pkg_send( MSG_FBCLEAR, 0L, 0L, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong( buf ) );
 }
 
+/*
+ *  Send as longs:  x, y, num
+ */
 _LOCAL_ int
 rem_bread( ifp, x, y, pixelp, num )
 FBIO	*ifp;
@@ -184,21 +189,17 @@ Pixel	*pixelp;
 int	num;
 {
 	int	ret;
-	struct	{
-		int	x;
-		int	y;
-		int	num;
-	} cmd;
+	char	buf[3*4+1];
 
 	/* Send Read Command */
-	cmd.x = htonl( x );
-	cmd.y = htonl( y );
-	cmd.num = htonl( num );
-	pkg_send( MSG_FBREAD, &cmd, sizeof(cmd), PCP(ifp) );
+	(void)putlong( x, &buf[0] );
+	(void)putlong( y, &buf[4] );
+	(void)putlong( num, &buf[8] );
+	pkg_send( MSG_FBREAD, buf, 3*4, PCP(ifp) );
 
 	/* Get return first, to see how much data there is */
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	ret = ntohl( ret );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	ret = getlong( buf );
 
 	/* Get Data */
 	if( ret == 0 )
@@ -208,6 +209,9 @@ int	num;
 	return	ret;
 }
 
+/*
+ * As longs, x, y, num
+ */
 _LOCAL_ int
 rem_bwrite( ifp, x, y, pixelp, num )
 FBIO	*ifp;
@@ -216,85 +220,78 @@ Pixel	*pixelp;
 int	num;
 {
 	int	ret;
-	struct	{
-		int	x;
-		int	y;
-		int	num;
-	} cmd;
+	char	buf[3*4+1];
 
 	/* Send Write Command */
-	cmd.x = htonl( x );
-	cmd.y = htonl( y );
-	cmd.num = htonl( num );
-	pkg_send( MSG_FBWRITE+MSG_NORETURN, &cmd, sizeof(cmd), PCP(ifp) );
+	(void)putlong( x, &buf[0] );
+	(void)putlong( y, &buf[4] );
+	(void)putlong( num, &buf[8] );
+	pkg_send( MSG_FBWRITE+MSG_NORETURN, buf, 3*4, PCP(ifp) );
 
 	/* Send DATA */
 	pkg_send( MSG_DATA, (char *)pixelp, num*4, PCP(ifp) );
 #ifdef NEVER
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	ret = getlong( buf );
+	return(ret);
 #endif
 	return	0;	/* No error return, sacrificed for speed.	*/
 }
 
+/*
+ *  32-bit longs: mode, x, y
+ */
 _LOCAL_ int
 rem_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-	int	ret;
-	struct	{
-		int	mode;
-		int	x;
-		int	y;
-	} cmd;
+	char	buf[3*4+1];
 	
 	/* Send Command */
-	cmd.mode = htonl( mode );
-	cmd.x = htonl( x );
-	cmd.y = htonl( y );
-	pkg_send( MSG_FBCURSOR, &cmd, sizeof(cmd), PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	(void)putlong( mode, &buf[0] );
+	(void)putlong( x, &buf[4] );
+	(void)putlong( y, &buf[8] );
+	pkg_send( MSG_FBCURSOR, buf, 3*4, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong( buf ) );
 }
 
+/*
+ *	x,y
+ */
 _LOCAL_ int
 rem_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
-	int	ret;
-	struct	{
-		int	x;
-		int	y;
-	} cmd;
+	char	buf[3*4+1];
 	
 	/* Send Command */
-	cmd.x = htonl( x );
-	cmd.y = htonl( y );
-	pkg_send( MSG_FBWINDOW, &cmd, sizeof(cmd), PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	(void)putlong( x, &buf[0] );
+	(void)putlong( y, &buf[4] );
+	pkg_send( MSG_FBWINDOW, buf, 2*4, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong( buf ) );
 }
 
+/*
+ *	x,y
+ */
 _LOCAL_ int
 rem_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
-	int	ret;
-	struct	{
-		int	x;
-		int	y;
-	} cmd;
+	char	buf[3*4+1];
 
 	/* Send Command */
-	cmd.x = htonl( x );
-	cmd.y = htonl( y );
-	pkg_send( MSG_FBZOOM, &cmd, sizeof(cmd), PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	(void)putlong( x, &buf[0] );
+	(void)putlong( y, &buf[4] );
+	pkg_send( MSG_FBZOOM, buf, 2*4, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong( buf ) );
 }
 
 _LOCAL_ int
@@ -302,12 +299,12 @@ rem_cmread( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
-	int	ret;
+	char	buf[4+1];
 
 	pkg_send( MSG_FBRMAP, 0, 0, PCP(ifp) );
 	pkg_waitfor( MSG_DATA, cmap, sizeof(*cmap), PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong(buf) );
 }
 
 _LOCAL_ int
@@ -315,14 +312,14 @@ rem_cmwrite( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
-	int	ret;
+	char	buf[4+1];
 
 	if( cmap == COLORMAP_NULL )
 		pkg_send( MSG_FBWMAP, 0, 0, PCP(ifp) );
 	else
 		pkg_send( MSG_FBWMAP, cmap, sizeof(*cmap), PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, &ret, 4, PCP(ifp) );
-	return	ntohl( ret );
+	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
+	return( getlong(buf) );
 }
 
 /*
