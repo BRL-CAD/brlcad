@@ -192,36 +192,40 @@ end:
       rect_view2image();
       rb_set_dirty_flag();
     }else if(mged_variables->mv_mouse_behavior == 's' && !stolen){
+#if 0
       if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
-      
+#endif
       bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
     }else if(mged_variables->mv_mouse_behavior == 'm' && !stolen){
+#if 0
       if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
-      
+#endif
       bu_vls_printf(&vls, "mouse_matrix_edit_select %d %d", x, y);
     }else if(mged_variables->mv_mouse_behavior == 'c' && !stolen){
+#if 0
       if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
-      
+#endif
       bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
     } else if(mged_variables->mv_mouse_behavior == 'o' && !stolen){
+#if 0
       if(grid_state->gr_snap){
 	snap_to_grid(&fx, &fy);
 	x = fx * GED_MAX;
 	y = fy * GED_MAX;
       }
-      
+#endif
       bu_vls_printf(&vls, "mouse_rt_obj_select %d %d", x, y);
     }else if(adc_state->adc_draw && mged_variables->mv_transform == 'a' && !stolen) {
       point_t model_pt;
