@@ -88,7 +88,7 @@ char *av[];
 				break;
 		case 'm'	: make_mortar = !make_mortar;
 				break;
-		case 'u'	: units_conv = rt_units_conversion(optarg);
+		case 'u'	: units_conv = bu_units_conversion(optarg);
 				break;
 		case 'D'	: debug = !debug;
 				break;
