@@ -7,7 +7,7 @@
  *  $Header$
  */
 
-%&::
+%&:
 	/bin/sh gen.sh %
 
 all&::
