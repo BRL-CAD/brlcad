@@ -25,10 +25,14 @@
 static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -36,10 +40,9 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
+#ifdef HAVE_SBRK
 extern char	*sbrk();
+#endif
 
 extern char	usage[];
 
@@ -94,22 +97,13 @@ char **argv;
 	register int	x;
 	char idbuf[132];		/* First ID record info */
 
-#ifdef BSD
-	setlinebuf( stderr );
-#else
-#	if defined( SYSV ) && !defined( sgi ) && !defined(CRAY2) && \
-	 !defined(n16)
-		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
-#	endif
-#	if defined(sgi) && defined(mips)
-		if( setlinebuf( stderr ) != 0 )
-			perror("setlinebuf(stderr)");
-#	endif
-#endif
+	port_setlinebuf( stderr );
 
 	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
 
+#ifdef HAVE_SBRK
 	beginptr = sbrk(0);
+#endif
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
 
@@ -244,8 +238,10 @@ char **argv;
 			exit(14);
 		}
 	}
+#ifdef HAVE_SBRK
 	fprintf(stderr,"initial dynamic memory use=%d.\n",sbrk(0)-beginptr );
 	beginptr = sbrk(0);
+#endif
 
 	if( !matflag )  {
 		def_tree( rtip );		/* Load the default trees */
