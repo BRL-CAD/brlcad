@@ -155,7 +155,7 @@ char		*argv[];
 
 	height = width = 512;		/* Defaults */
 
-	if ( !get_args( argc, argv ) )  {
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
 		return 1;
 	}
