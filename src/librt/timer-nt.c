@@ -34,7 +34,8 @@ static const char RCStimer_nt[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 
 #include "machine.h"
-#include "bu.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 /* Standard System V stuff */
 static clock_t start;
