@@ -436,6 +436,89 @@ vect_t	c, d;
 	return(0);		/* OK */
 }
 
+/*		M K _ T R C
+ *
+ *  mk_trc( name, base, height, radius)
+ *  Make a truncated right cylinder. 
+ */
+int
+mk_trc( fp, name, base, top, radbase,radtop )
+FILE	*fp;
+char	*name;
+point_t	base;
+point_t	top;
+fastf_t	radbase;
+fastf_t	radtop;
+{
+	vect_t	height;
+	static union record rec;
+	static float pi = 3.14159265358979323264;
+	fastf_t m1, m2;
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.s.s_id = ID_SOLID;
+	rec.s.s_type = GENTGC;
+	rec.s.s_cgtype = TRC;
+	NAMEMOVE(name, rec.s.s_name);
+
+	VSUB2(height,top,base);
+
+	VMOVE( F1, base );
+	VMOVE( F2, height  );
+	base[0] += pi;
+	base[1] += pi;
+	base[2] += pi;
+	VCROSS( F3, base, F2 );
+	m1 = MAGNITUDE( F3 );
+	if( m1 == 0.0 )  {
+		base[1] = 0.0;		/* Vector is colinear, so */
+		base[2] = 0.0;		/* make it different */
+		VCROSS( F3, base, F2 );
+		m1 = MAGNITUDE( F3 );
+		if( m1 == 0.0 )  {
+			(void)printf("ERROR, magnitude is zero!\n");
+			return(-1);	/* failure */
+		}
+	}
+	VSCALE( F3, F3, radbase/m1 );
+	VCROSS( F4, F2, F3 );
+	m2 = MAGNITUDE( F4 );
+	if( m2 == 0.0 )  {
+		(void)printf("ERROR, magnitude is zero!\n");
+		return(-1);	/* failure */
+	}
+
+	VSCALE( F4, F4, radbase/m2 );
+
+	VMOVE(F5,F3);
+	VMOVE(F6,F4);
+
+	m1 = MAGNITUDE( F5 );
+	if( m1 == 0.0 )  {
+		base[1] = 0.0;		/* Vector is colinear, so */
+		base[2] = 0.0;		/* make it different */
+		VCROSS( F5, F2, top );
+		m1 = MAGNITUDE( F5 );
+		if( m1 == 0.0 )  {
+			(void)printf("ERROR, magnitude is zero!\n");
+			return(-1);	/* failure */
+		}
+	}
+
+	VSCALE( F5, F5, radtop/m1 );
+
+	m2 = MAGNITUDE( F6 );
+	if( m2 == 0.0 )  {
+		(void)printf("ERROR, magnitude is zero!\n");
+		return(-1);	/* failure */
+	}
+
+	VSCALE( F6, F6, radtop/m2 );
+
+	fwrite( (char *)&rec, sizeof( rec), 1, fp);
+	return(0);	/* OK */
+}
+
 /*
  *			M K _ P O L Y S O L I D
  *
