@@ -642,3 +642,20 @@ double x1, y1, z1, x2, y2, z2;
 	pd_3move( plotfp, x1, y2, z2 );
 	pd_3cont( plotfp, x2, y2, z2 );
 }
+
+/*
+ *  Draw a ray
+ */
+void
+pdv_3ray( fp, pt, dir, t )
+FILE		*fp;
+CONST point_t	pt;
+CONST vect_t	dir;
+double		t;
+{
+	point_t	tip;
+
+	VJOIN1( tip, pt, t, dir );
+	pdv_3move( fp, pt );
+	pdv_3cont( fp, tip );
+}

@@ -80,6 +80,7 @@ BU_EXTERN(void pd_3move, (FILE *plotfp, double x, double y, double z));
 BU_EXTERN(void pd_3cont, (FILE *plotfp, double x, double y, double z));
 BU_EXTERN(void pd_3line, (FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2));
 BU_EXTERN(void pd_3box, (FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2));
+BU_EXTERN(void pdv_3ray, (FILE *fp, CONST point_t pt, CONST vect_t dir, double t));
 
 /*
  *  The following routines are taken from the BRL TIG-PACK
