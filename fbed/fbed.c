@@ -1178,8 +1178,8 @@ STATIC int
 f_DrawLine( buf )
 char *buf;
 	{	Rectangle lineseg;
-		register int major;
-		register int minor;
+		register int majdelta;
+		register int mindelta;
 		register int xsign;
 		register int ysign;
 		register int error;
@@ -1202,21 +1202,21 @@ char *buf;
 		lineseg.r_origin = lineseg.r_corner;
 		lineseg.r_corner = temp;
 		}
-	major = lineseg.r_corner.p_x - lineseg.r_origin.p_x;
-	xsign = major ? 1 : 0;
-	minor = lineseg.r_corner.p_y - lineseg.r_origin.p_y;
-	ysign = minor ? (minor > 0 ? 1 : -1) : 0;
+	majdelta = lineseg.r_corner.p_x - lineseg.r_origin.p_x;
+	xsign = majdelta ? 1 : 0;
+	mindelta = lineseg.r_corner.p_y - lineseg.r_origin.p_y;
+	ysign = mindelta ? (mindelta > 0 ? 1 : -1) : 0;
 	if( ysign < 0 )
-		minor = -minor;
+		mindelta = -mindelta;
 	/* If X is not really major, correct the assignments. */
-	if( ! (xmajor = minor <= major) )
-		{	register int temp = minor;
-		minor = major;
-		major = temp;
+	if( ! (xmajor = mindelta <= majdelta) )
+		{	register int temp = mindelta;
+		mindelta = majdelta;
+		majdelta = temp;
 		}
 
-	error = major / 2 - minor; /* Initial DDA error. */
-	de = major - minor;
+	error = majdelta / 2 - mindelta; /* Initial DDA error. */
+	de = majdelta - mindelta;
 	for( x = lineseg.r_origin.p_x; x <= lineseg.r_corner.p_x; )
 		{
 		(void) fb_write(	fbp,
@@ -1224,7 +1224,7 @@ char *buf;
 					(RGBpixel *) paint,
 					1
 					);
-		if( major-- == 0 ) /* Done! */
+		if( majdelta-- == 0 ) /* Done! */
 			return 1;
 		if( error < 0 )	 /* Advance major and minor. */
 			{
@@ -1238,7 +1238,7 @@ char *buf;
 				x++;
 			else		/* Y is major direction. */
 				lineseg.r_origin.p_y += ysign;
-			error -= minor;
+			error -= mindelta;
 			}
 		}
 	return 1;
