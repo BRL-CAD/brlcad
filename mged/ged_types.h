@@ -25,8 +25,8 @@ typedef	float	*matp_t;
 typedef	float	vect_t[4];
 typedef	float	*vectp_t;
 
-#define	X	0
-#define	Y	1
+#define X	0
+#define Y	1
 #define Z	2
 #define H	3
 
