@@ -150,6 +150,12 @@ do
 	fi
 done
 
+# Make our permissions track those in Cakefile.defs
+BINPERM=`grep BINPERM Cakefile.defs | head -1| awk '{print $3}' `
+MANPERM=`grep MANPERM Cakefile.defs | head -1| awk '{print $3}' `
+echo BINPERM=${BINPERM}, MANPERM=${MANPERM}
+
+
 ############################################################################
 #
 # Install the entire set of shell scripts from "sh/" into BINDIR
@@ -172,7 +178,7 @@ do
 		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
 	fi
 	sed -e 's,=/usr/brlcad$,='${BASEDIR}, < ${i} > ${BINDIR}/${i}
-	chmod 555 ${BINDIR}/${i}
+	chmod ${BINPERM} ${BINDIR}/${i}
 done
 cd ..
 
@@ -216,9 +222,11 @@ then
 			mv -f ${BINDIR}/$i ${BINDIR}/$i.bak
 		fi
 		cp $i ${BINDIR}/.
+		chmod ${BINPERM} ${BINDIR}/$i
 	done
 	make ${SILENT} clobber
-	cp *.1 ${MANDIR}/.
+	cp cakesub.1 ${MANDIR}/.
+	chmod ${MANPERM} ${MANDIR}/cakesub.1
 	cd ..
 fi
 
