@@ -4724,7 +4724,7 @@ wdb_units_tcl(clientData, interp, argc, argv)
 		/* One of the recognized db.h units */
 		/* change database to remember the new local unit */
 		if (wdbp->dbip->dbi_read_only ||
-		    db_ident(wdbp->dbip, wdbp->dbip->dbi_title, new_unit) < 0)
+		    db_update_ident(wdbp->dbip, wdbp->dbip->dbi_title, new_unit) < 0)
 			Tcl_AppendResult(interp,
 					 "Warning: unable to stash working units into database\n",
 					 (char *)NULL);
