@@ -882,7 +882,6 @@ int arg;
 			struct edgeuse *eu;
 			fastf_t area;
 			int wire_loop_count=0;
-			long *trans_tbl;
 
 			m = (struct model *)es_int.idb_ptr;
 			NMG_CK_MODEL( m );
@@ -1011,9 +1010,6 @@ int arg;
 			
 			if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
 			{
-				long *trans_tbl;
-				struct loopuse *new_lu;
-
 				/* make a new shell to hold the extruded solid */
 
 				r = RT_LIST_FIRST( nmgregion , &m->r_hd );
@@ -1685,7 +1681,7 @@ replot_editing_solid()
 void
 transform_editing_solid(os, mat, is, free)
 struct rt_db_internal	*os;		/* output solid */
-mat_t			mat;
+CONST mat_t		mat;
 struct rt_db_internal	*is;		/* input solid */
 int			free;
 {
@@ -2876,7 +2872,7 @@ CONST mat_t			mat;
 	RT_CK_DB_INTERNAL(ip);
 
 	id = ip->idb_type;
-	transform_editing_solid( &intern, mat, ip, 0 );
+	transform_editing_solid( &intern, mat, (struct rt_db_internal *)ip, 0 );
 
 	if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 	    base2local ) < 0 )
