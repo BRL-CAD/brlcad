@@ -57,70 +57,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define MORE_ARGS_STR    "more arguments needed::"
 
-#ifdef XMGED
-
-#define DEFSHELL "/bin/sh"
-#define TIME_STR_SIZE 32
-#define NFUNC   ( (sizeof(funtab)) / (sizeof(struct funtab)) )
-
-extern void (*dotitles_hook)();
-extern FILE     *ps_fp;
-extern struct dm dm_PS;
-extern char     ps_ttybuf[];
-extern int      in_middle;
-extern FILE	*journal_file;
-extern int	journal;	/* initialize to off */
-
-typedef struct _cmd{
-	struct _cmd	*prev;
-	struct _cmd	*next;
-	char	*cmd;
-	char	time[TIME_STR_SIZE];
-	int	num;
-}Cmd, *CmdList;
-
-typedef struct _alias{
-	struct _alias	*left;
-	struct _alias	*right;
-	char	*name;	/* name of the alias */
-	char	*def;	/* definition of the alias */
-	int	marked;
-}Alias, *AliasList;
-
-CmdList	hhead=NULL, htail=NULL, hcurr=NULL;	/* for history list */
-AliasList atop = NULL;
-AliasList alias_free = NULL;
-
-int 	savedit = 0;
-int     mged_wait();
-int chg_state();
-
-int	f_history(), f_alias(), f_unalias();
-int	f_journal(), f_button(), f_savedit(), f_slider();
-int	f_slewview(), f_openw(), f_closew();
-int	(*button_hook)(), (*slider_hook)();
-int	(*openw_hook)(), (*closew_hook)();
-
-int     f_perspective(), f_cue(), f_light(), f_zbuffer(), f_zclip();
-int     f_ps();
-#endif /* XMGED */
-
 #ifdef VIRTUAL_TRACKBALL
-int (*tran_hook)(), (*rot_hook)();
-int (*set_tran_hook)();
 int f_tran(), f_irot();
 void set_tran();
-static void make_command();
 
 extern mat_t    ModelDelta;
-
-int rot_set = 0;
-int tran_set = 0;
 #endif
 
-extern int (*knob_hook)();
-extern int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
-extern int (*light_hook)(), (*perspective_hook)();
 extern int f_nmg_simplify();
 extern int f_make_bb();
 
@@ -245,7 +188,7 @@ static struct funtab funtab[] = {
 	f_blast,2,MAXARGS,FALSE,
 "bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
 	f_bev, 2, MAXARGS, FALSE,
-#ifdef XMGED
+#if 0
 "button", "number", "simulates a button press, not intended for the user",
 	f_button, 2, 2, FALSE,
 #endif
@@ -255,10 +198,6 @@ static struct funtab funtab[] = {
 	f_cat,2,MAXARGS,FALSE,
 "center", "x y z", "set view center",
 	f_center, 4,4, FALSE,
-#ifdef XMGED
-"closew", "[host]", "close drawing window associated with host",
-	f_closew, 1, 2, FALSE,
-#endif
 "color", "low high r g b str", "make color entry",
 	f_color, 7, 7, FALSE,
 "comb", "comb_name <operation solid>", "create or extend combination w/booleans",
@@ -425,10 +364,6 @@ static struct funtab funtab[] = {
 	cmd_oed, 3, 3, TRUE,
 "opendb", "database.g", "Close current .g file, and open new .g file",
 	f_opendb, 2, 2,FALSE,
-#ifdef XMGED
-"openw", "[host]", "open a drawing window on host",
-	f_openw, 1, 2,FALSE,
-#endif
 "orientation", "x y z w", "Set view direction from quaternion",
 	f_orientation, 5, 5,FALSE,
 "orot", "xdeg ydeg zdeg", "rotate object being edited",
@@ -457,7 +392,7 @@ static struct funtab funtab[] = {
 	f_preview, 2, MAXARGS,FALSE,
 "press", "button_label", "emulate button press",
 	f_press,2,MAXARGS,FALSE,
-#ifdef XMGED
+#if 0
 "ps", "[f] file", "create postscript file of current view with or without the faceplate",
         f_ps, 2, 3,FALSE,
 #endif
@@ -503,7 +438,7 @@ static struct funtab funtab[] = {
 	f_rt,1,MAXARGS,FALSE,
 "rtcheck", "[options]", "check for overlaps in current view",
 	f_rtcheck,1,MAXARGS,FALSE,
-#ifdef XMGED
+#if 0
 "savedit", "", "save current edit and remain in edit state",
 	f_savedit, 1, 1,FALSE,
 #endif
@@ -527,7 +462,7 @@ static struct funtab funtab[] = {
 	f_shader, 3,MAXARGS,FALSE,
 "size", "size", "set view size",
 	f_view, 2,2,FALSE,
-#ifdef XMGED
+#if 0
 "slider", "slider number, value", "adjust sliders using keyboard",
 	f_slider, 3,3,FALSE,
 #endif
@@ -1432,11 +1367,7 @@ char	**argv;
 		mged_finish( 11 );
 	}
 
-#ifdef XMGED
-	while ((rpid = mged_wait(&retcode, pid)) != pid && rpid != -1)
-#else
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
-#endif
 		;
 	(void)signal(SIGINT, cur_sigint);
 	rt_log("!\n");
@@ -1673,7 +1604,7 @@ char	*argv[];
     return TCL_OK;
 }
 
-#ifdef XMGED
+#if 0
 int
 f_button(argc, argv)
 int	argc;
@@ -1929,26 +1860,9 @@ set_e_axis_pos()
 {
   int	i;
 
-#if 0
-  /* If there is more than one active view, then tran_x/y/z
-     needs to be initialized for each view. */
-  if(set_tran_hook){
-    point_t pos;
-
-    VSETALL(pos, 0.0);
-    (*set_tran_hook)(pos);
-  }else{
-    tran_x = tran_y = tran_z = 0;
-  }
-
-  if(rot_hook)
-    (*rot_hook)();
-
-  rot_x = rot_y = rot_z = 0;
-#else
   tran_x = tran_y = tran_z = 0;
   rot_x = rot_y = rot_z = 0;
-#endif
+
 #ifdef MULTI_ATTACH
   update_views = 1;
 #endif
@@ -2074,25 +1988,6 @@ char    **argv;
 #endif
 
 #ifdef VIRTUAL_TRACKBALL
-static void
-make_command(line, diff)
-char	*line;
-point_t	diff;
-{
-
-  if(state == ST_O_EDIT)
-    (void)sprintf(line, "translate %f %f %f\n",
-		  (e_axis_pos[X] + diff[X]) * base2local,
-		  (e_axis_pos[Y] + diff[Y]) * base2local,
-		  (e_axis_pos[Z] + diff[Z]) * base2local);
-  else
-    (void)sprintf(line, "p %f %f %f\n",
-		  (e_axis_pos[X] + diff[X]) * base2local,
-		  (e_axis_pos[Y] + diff[Y]) * base2local,
-		  (e_axis_pos[Z] + diff[Z]) * base2local);
-
-}
-
 /*
  *                         S E T _ T R A N
  *
@@ -2162,23 +2057,13 @@ char    *argv[];
   MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
   VSUB2( diff, new_pos, old_pos );
 
-#if 1
   if(state == ST_S_EDIT || state == ST_O_EDIT)
     sprintf(cmd, "M %d %d %d\n", 1, (int)(tran_x*2048.0), (int)(tran_y*2048.0));
-#else
-  if(state == ST_O_EDIT)
-    make_command(cmd, diff);
-  else if(state == ST_S_EDIT)
-    make_command(cmd, diff);
-#endif
   else{
     VADD2(new_pos, orig_pos, diff);
     MAT_DELTAS_VEC( toViewcenter, new_pos);
     MAT_DELTAS_VEC( ModelDelta, new_pos);
     new_mats();
-
-    if(tran_hook)
-      (*tran_hook)();
 
     rt_vls_free(&str);
     return CMD_OK;
@@ -2189,11 +2074,6 @@ char    *argv[];
   cmdline(&str, False);
   rt_vls_free(&str);
   tran_set = 0;
-
-  /* If there is more than one active view, then tran_x/y/z
-     needs to be initialized for each view. */
-  if(set_tran_hook)
-    (*set_tran_hook)(diff);
 
   return CMD_OK;
 }
@@ -2247,9 +2127,6 @@ char *argv[];
     tran_x = new_pos[X];
     tran_y = new_pos[Y];
     tran_z = new_pos[Z];
-
-    if(tran_hook)
-      (*tran_hook)();
   }
 
   return CMD_OK;

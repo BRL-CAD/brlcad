@@ -61,11 +61,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 
 #ifdef VIRTUAL_TRACKBALL
-extern void (*tran_hook)();
-extern void (*rot_hook)();
-extern int rot_set;
-extern int tran_set;
-
 void set_tran();
 #endif
 
@@ -128,9 +123,6 @@ char	**argv;
 	union record record;
 	int r=0, g=0, b=0;
 	char	*nlp;
-#ifdef XMGED
-	int	num_params = 8;	/* number of parameters */
-#endif
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
@@ -145,7 +137,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-#ifdef XMGED
+#if 0
 	if( argc >= 3 )  {
 		if( strncmp( argv[2], "del", 3 ) != 0 )  {
 		/* Material */
@@ -1145,11 +1137,6 @@ char	**argv;
 	new_mats();
 	dmaflag = 1;
 
-#ifdef VIRTUAL_TRACKBALL
-	if(rot_hook)
-          (*rot_hook)();
-#endif
-
 	return CMD_OK;
 }
 
@@ -1262,14 +1249,6 @@ char	**argv;
 	mat_copy(old,modelchanges);
 	mat_mul(modelchanges, incr, old);
 	new_mats();
-
-#ifdef VIRTUAL_TRACKBALL
-	if(!tran_set) /*   not calling from f_tran()   */
-	  set_tran(new_vertex[0], new_vertex[1], new_vertex[2]);
-
-	if(tran_hook)
-	  (*tran_hook)();
-#endif
 
 	return CMD_OK;
 }

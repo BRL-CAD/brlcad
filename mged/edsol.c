@@ -58,14 +58,10 @@ extern struct rt_tol		mged_tol;	/* from ged.c */
 extern void set_e_axis_pos();
 
 #ifdef VIRTUAL_TRACKBALL
-extern void (*tran_hook)();
-extern void (*rot_hook)();
 void set_tran();
-extern int rot_set;
-extern int tran_set;
 #endif
 
-#ifdef XMGED
+#if 0
 extern int      savedit;
 #endif
 
@@ -2111,12 +2107,10 @@ sedit()
 						    arb_vertices[type][loc+i]);
 				}
 				rt_log(") [%d]: ",arb_vertices[type][loc]);
-#ifdef XMGED
-				(void)mged_gets( line ); /* Null terminated */
-#else
+
 				(void)fgets( line, sizeof(line), stdin );
 				line[strlen(line)-1] = '\0';		/* remove newline */
-#endif
+
 				if( feof(stdin) )  quit();
 				if( line[0] == '\0' )
 					fixv = arb_vertices[type][loc]; 	/* default */
@@ -4337,15 +4331,9 @@ char	**argv;
 	    rot_y = es_para[1];
 	    rot_z = es_para[2];
 	  }
-
-	  if(rot_hook)
-	    (*rot_hook)();
 	}else if(es_edflag >= STRANS && es_edflag <= PTARB){
 	  if(!tran_set)
 	    set_tran(es_para[0], es_para[1], es_para[2]);
-
-	  if(tran_hook)
-	    (*tran_hook)();
 	}
 
 	return CMD_OK;

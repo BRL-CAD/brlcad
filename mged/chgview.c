@@ -67,21 +67,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2		1.41421356237309504880
 #endif
 
-#ifdef XMGED
-int local_rt_arb_describe();
-void check_nonzero_rates();
+#if 0
 #endif
-
-#ifdef VIRTUAL_TRACKBALL
-extern int (*rot_hook)();
-extern int (*set_tran_hook)();
-extern int (*tran_hook)();
-
-extern int rot_set;
-#endif
-
-extern void (*knob_offset_hook)();
-extern int (*knob_hook)();
 extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
@@ -171,11 +158,6 @@ char	**argv;
 	usejoy(	atof(argv[1]) * degtorad,
 		atof(argv[2]) * degtorad,
 		atof(argv[3]) * degtorad );
-
-#ifdef VIRTUAL_TRACKBALL
-	if(rot_hook)
-          (*rot_hook)();
-#endif
 
 	return CMD_OK;
 }
@@ -357,18 +339,44 @@ int	catch_sigint;
 	}
 
 	if( catch_sigint )
-#ifdef XMGED
-		(void)signal( SIGINT, cur_sigint );	/* allow interupts after here */
-#else
 		(void)signal( SIGINT, sig2 );	/* allow interupts after here */
-#endif
 
 	nvectors = 0;
 	rt_prep_timer();
 	drawtrees( argc, argv, kind );
 	(void)rt_get_timer( (struct rt_vls *)0, &elapsed_time );
 	rt_log("%ld vectors in %g sec\n", nvectors, elapsed_time );
-	
+
+#ifdef MULTI_ATTACH
+	{
+	  register struct dm_list *p;
+	  struct dm_list *save_dm_list;
+
+	  save_dm_list = curr_dm_list;
+	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	    curr_dm_list = p;
+
+	    /* If we went from blank screen to non-blank, resize */
+	    if (mged_variables.autosize  && initial_blank_screen &&
+		HeadSolid.s_forw != &HeadSolid)  {
+	      size_reset();
+	      new_mats();
+
+#ifdef VIRTUAL_TRACKBALL
+	      MAT_DELTAS_GET(orig_pos, toViewcenter);
+	      tran_x = 0.0;
+	      tran_y = 0.0;
+	      tran_z = 0.0;
+#endif
+	    }
+
+	    dmp->dmr_colorchange();
+	    dmaflag = 1;
+	  }
+
+	  curr_dm_list = save_dm_list;
+	}
+#else	
 	/* If we went from blank screen to non-blank, resize */
 	if (mged_variables.autosize  && initial_blank_screen &&
 	    HeadSolid.s_forw != &HeadSolid)  {
@@ -385,7 +393,7 @@ int	catch_sigint;
 
 	dmp->dmr_colorchange();
 	dmaflag = 1;
-
+#endif
 	return CMD_OK;
 }
 
@@ -399,11 +407,8 @@ char	**argv;
 	if( argc > 1 )  lvl = atoi(argv[1]);
 
 	rt_log("ndrawn=%d\n", ndrawn);
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-#endif
+
 	pr_schain( &HeadSolid, lvl );
 
 	return CMD_OK;
@@ -448,11 +453,8 @@ f_debugmem( argc, argv )
 int	argc;
 char	**argv;
 {
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-#endif
+
 	rt_prmem("Invoked via MGED command");
 	return CMD_OK;
 }
@@ -651,11 +653,7 @@ char	**argv;
 
 	rt_vls_init( &str );
 
-#ifdef XMGED
-	(void)signal( SIGINT, cur_sigint );	/* allow interupts */
-#else	
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
-#endif
 	for( arg = 1; arg < argc; arg++ )  {
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
@@ -1139,9 +1137,6 @@ char	**argv;
 #if 1
   int iknob;
 
-  if(knob_hook != NULL)
-    return (*knob_hook)(argc, argv);
-
   if(!strcmp(argv[0], "iknob"))
     iknob = 1;
   else
@@ -1571,9 +1566,6 @@ char	**argv;
 	  tran_y = new_pos[Y];
 	  tran_z = new_pos[Z];
 	}
-
-	if(tran_hook)
-	  (*tran_hook)();
 #endif
 
 	return CMD_OK;

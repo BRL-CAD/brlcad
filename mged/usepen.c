@@ -42,16 +42,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./menu.h"
 #include "./dm.h"
 
-#ifdef XMGED
-#include <errno.h>
+#ifdef VIRTUAL_TRACKBALL
 #include "./sedit.h"
-
-extern int using_dmX;
-extern void (*tran_hook)();
-extern void (*set_tran_hook)();
-extern double tran_x;
-extern double tran_y;
-extern double tran_z;
 #endif
 
 /*	Degree <-> Radian conversion factors	*/
@@ -111,9 +103,7 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
-	if (mged_variables.faceplate) {
-
-	if(mged_variables.show_menu){
+	if (mged_variables.faceplate && mged_variables.show_menu) {
         /*
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.
@@ -149,7 +139,6 @@ char	**argv;
 		/* Otherwise, fall through */
 	}
       }
-      }
 
 	/*
 	 *  In the best of all possible worlds, nothing should happen
@@ -182,10 +171,6 @@ char	**argv;
 			(ypos+2048L) * (illump->s_last+1) / 4096);
 		if( ipathpos != isave )
 			dmaflag++;
-#ifdef XMGED
-		else
-		  dmaflag = 0;
-#endif
 		return CMD_OK;
 
 	} else switch( state )  {
@@ -211,19 +196,8 @@ char	**argv;
 		return CMD_OK;
 
 	case ST_S_EDIT:
-		sedit_mouse( mousevec );
-#ifdef XMGED
-		if(es_edflag >= STRANS && es_edflag <= PTARB && tran_hook){
-		  point_t new_pos;
-		  point_t old_pos;
-		  point_t diff;
-
-		  MAT4X3PNT( new_pos, view2model, mousevec);
-		  set_tran(new_pos[X], new_pos[Y], new_pos[Z]);
-/*		  (*tran_hook)();*/
-		}
-#endif
-		return CMD_OK;
+	  sedit_mouse( mousevec );
+	  return CMD_OK;
 
 	case ST_O_PATH:
 		/*
@@ -253,15 +227,6 @@ char	**argv;
 
 	case ST_O_EDIT:
 		objedit_mouse( mousevec );
-#ifdef XMGED
-		if(edobj == BE_O_X || edobj == BE_O_Y || edobj == BE_O_XY){
-		  point_t new_pos;
-
-		  MAT4X3PNT( new_pos, view2model, mousevec);
-		  set_tran(new_pos[X], new_pos[Y], new_pos[Z]);
-/*		  (*tran_hook)();*/
-		}
-#endif
 		return CMD_OK;
 
 	default:
@@ -306,13 +271,7 @@ illuminate( y )  {
 			}
 		}
 	}
-#ifdef Xmged
-	if( saveillump != illump ){
-	  update_views = 1;
-	  dmaflag++;
-	}else
-		--dmaflag;	/* illiminates unnecessary redrawing */
-#else
+
 #ifdef MULTI_ATTACH
 	if( saveillump != illump ){
 	  update_views = 1;
@@ -321,7 +280,6 @@ illuminate( y )  {
 #else
 	if( saveillump != illump )
 		dmaflag++;
-#endif
 #endif
 }
 
