@@ -51,21 +51,14 @@ struct ogl_vars {
   struct modifiable_ogl_vars mvars;
 };
 
-extern struct dm *Ogl_open();
-extern void Ogl_configure_window_shape();
-extern void Ogl_establish_zbuffer();
-extern void Ogl_establish_lighting();
-extern void Ogl_establish_perspective();
-extern void Ogl_set_perspective();
-extern void Ogl_do_fog();
-extern void Ogl_do_linewidth();
-#ifdef IR_KNOBS
-extern int Ogl_add_tol();
-extern int Ogl_irlimit();			/* provides knob dead spot */
-#endif
-extern int Ogl_irisX2ged();
-extern int Ogl_irisY2ged();
-extern struct dm dm_ogl;
+extern void ogl_configure_window_shape();
+extern void ogl_establish_zbuffer();
+extern void ogl_establish_lighting();
+extern void ogl_establish_perspective();
+extern void ogl_set_perspective();
+extern void ogl_do_fog();
+extern int ogl_irisX2ged();
+extern int ogl_irisY2ged();
 extern struct ogl_vars head_ogl_vars;
 
 #endif /* SEEN_DM_OGL */
