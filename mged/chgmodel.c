@@ -881,7 +881,7 @@ char	**argv;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct vertex *v_new, *v;
-	int tw, tf, tp;
+	unsigned long tw, tf, tp;
 	double log10();
 
 	rt_log("fracture:");
