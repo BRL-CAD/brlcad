@@ -69,12 +69,14 @@ online access to the DARPA InterNet may obtain the BRL-CAD Package via
 FTP file transfer, at no cost, after completing and returning a signed
 copy of the printed distribution agreement. A blank agreement form is
 available only via anonymous FTP from host ftp.brl.mil (address
-128.63.16.158) from file "brl-cad/agreement". One printed set of BRL-CAD
+128.63.16.158) from file "brl-cad/agreement". The FTP-able files are
+encrypted;  directions on how to decrypt the files will be sent to you
+upon receipt of your signed agreement. One printed set of BRL-CAD
 documentation will be mailed to you at no cost. Note that installation
 assistance or telephone support are available only with full service
 distributions.
 
-2.  Full service distribution:  The Survivability/Vulnerability
+2.  FULL SERVICE distribution:  The Survivability/Vulnerability
 Information Analysis Center (SURVIAC) administers the supported BRL-CAD
 distributions and information exchange programs for BRL.  Full service
 distributions cost US$500, and include a copy of the full distribution
@@ -113,3 +115,7 @@ Advanced Computer Systems		SURVIAC
 Ballistic Research Lab			Aberdeen Satellite Office
 
 
+
+
+
+$Version$
