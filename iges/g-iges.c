@@ -370,7 +370,15 @@ char	*argv[];
 			/* Now walk the same trees again, but only output groups */
 			for( i=1 ; i<argc ; i++ )
 			{
-				dp = db_lookup( dbip , argv[i] , 1 );
+				char *ptr;
+
+				ptr = strrchr( argv[i], '/' );
+				if( ptr != NULL ) {
+					ptr++;
+				} else {
+					ptr = argv[i];
+				}
+				dp = db_lookup( dbip , ptr , 1 );
 				db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
 			}
 		}
