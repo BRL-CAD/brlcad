@@ -2944,8 +2944,7 @@ CONST struct db_i		*dbip;
 	/* convert matrix */
 	ntohd((unsigned char *)dsp_ip->dsp_stom, cp, 16);
 	cp += SIZEOF_NETWORK_DOUBLE * 16;
-	bn_mat_inv(dsp_ip->dsp_stom, dsp_ip->dsp_mtos);
-
+	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
 	/* convert smooth flag */
 	dsp_ip->dsp_smooth = bu_gshort( cp );
@@ -2956,7 +2955,7 @@ CONST struct db_i		*dbip;
 	bu_vls_strcpy( &dsp_ip->dsp_file, (char *)cp );
 
 	if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
-		IMPORT_FAIL("DSP data");
+		IMPORT_FAIL("unable to read DSP data");
 	}
 
 	return 0; /* OK */
