@@ -1726,9 +1726,16 @@ RT_EXTERN(double		rt_angle_measure, (vect_t vec, vect_t x_dir,
 extern void rt_pr_roots();		/* print complex roots */
 
 /* pr.c */
-RT_EXTERN(void rt_pr_fallback_angle, (struct rt_vls *str, char *prefix,
-	double angles[5]));
-RT_EXTERN(void rt_find_fallback_angle, (double angles[5], vect_t vec));
+RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
+RT_EXTERN(void rt_pr_hit_vls, (struct rt_vls *v, CONST char *str,
+	CONST struct hit *hitp));
+RT_EXTERN(void rt_pr_pt_vls, (struct rt_vls *v, CONST struct rt_i *rtip,
+	CONST struct partition *pp));
+RT_EXTERN(void rt_pr_bitv_vls, (struct rt_vls *v, CONST bitv_t *bv, int len));
+RT_EXTERN(void rt_logindent_vls, (struct rt_vls	*v));
+RT_EXTERN(void rt_pr_fallback_angle, (struct rt_vls *str, CONST char *prefix,
+	CONST double angles[5]));
+RT_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
 
 /* table.c */
 RT_EXTERN(int rt_id_solid, (struct rt_external *ep));
