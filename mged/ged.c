@@ -326,7 +326,8 @@ char **argv;
 	windowbounds[5] = -2048;	/* ZLR */
 
 	/* Open the database, attach a display manager */
-	if(f_opendb( (ClientData)NULL, interp, argc, argv ) == TCL_ERROR)
+	/* Command line may have more than 2 args, opendb only wants 2 */
+	if(f_opendb( (ClientData)NULL, interp, 2, argv ) == TCL_ERROR)
 	  mged_finish(1);
 	else
 	  bu_log("%s", interp->result);
@@ -1642,7 +1643,17 @@ char	**argv;
 {
   static int first = 1;
 
-  if(argc < 2 || 3 < argc || (strlen(argv[1]) == 0)){
+	if( argc <= 1 )  {
+		/* Invoked without args, return name of current database */
+		if( dbip )  {
+			Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
+			return TCL_OK;
+		}
+		Tcl_AppendResult(interp, "opendb: No database presently open\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+  if( 3 < argc || (strlen(argv[1]) == 0)){
     struct bu_vls vls;
 
     bu_vls_init(&vls);
