@@ -2053,7 +2053,7 @@ char    **argv;
 
   /* print pathname of drawing window with primary focus */
   if( argc == 1 ){
-    rt_log( "%s\n", &pathName );
+    rt_log( "%s\n", rt_vls_addr(&pathName) );
     return CMD_OK;
   }
 
@@ -2102,6 +2102,9 @@ set_tran(x, y, z)
 fastf_t x, y, z;
 {
   point_t diff;
+  point_t old_pos;
+  point_t new_pos;
+  point_t view_pos;
 
   diff[X] = x - e_axis_pos[X];
   diff[Y] = y - e_axis_pos[Y];
@@ -2109,21 +2112,13 @@ fastf_t x, y, z;
   
   /* If there is more than one active view, then tran_x/y/z
      needs to be initialized for each view. */
-  if(set_tran_hook)
-    (*set_tran_hook)(diff);
-  else{
-    point_t old_pos;
-    point_t new_pos;
-    point_t view_pos;
+  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+  VADD2(new_pos, old_pos, diff);
+  MAT4X3PNT(view_pos, model2view, new_pos);
 
-    MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
-    VADD2(new_pos, old_pos, diff);
-    MAT4X3PNT(view_pos, model2view, new_pos);
-
-    tran_x = view_pos[X];
-    tran_y = view_pos[Y];
-    tran_z = view_pos[Z];
-  }
+  tran_x = view_pos[X];
+  tran_y = view_pos[Y];
+  tran_z = view_pos[Z];
 }
 
 
@@ -2159,9 +2154,14 @@ char    *argv[];
     tran_z = z;
   }
 
+  VSET( view_pos, tran_x, tran_y, tran_z );
+  MAT4X3PNT( new_pos, view2model, view_pos );
+  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
+  VSUB2( diff, new_pos, old_pos );
+
 #if 1
   if(state == ST_S_EDIT || state == ST_O_EDIT)
-    sprintf(cmd, "M %d %d %d\n", 1, (int)(tran_x*2048), (int)(tran_y*2048));
+    sprintf(cmd, "M %d %d %d\n", 1, (int)(tran_x*2048.0), (int)(tran_y*2048.0));
 #else
   if(state == ST_O_EDIT)
     make_command(cmd, diff);
@@ -2169,11 +2169,6 @@ char    *argv[];
     make_command(cmd, diff);
 #endif
   else{
-    VSET(view_pos, tran_x, tran_y, tran_z);
-    MAT4X3PNT( new_pos, view2model, view_pos );
-    MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
-    VSUB2( diff, new_pos, old_pos );
-
     VADD2(new_pos, orig_pos, diff);
     MAT_DELTAS_VEC( toViewcenter, new_pos);
     MAT_DELTAS_VEC( ModelDelta, new_pos);
