@@ -126,11 +126,14 @@ res_pr()
 
 	res = &resource[0];
 	for( i=0; i<npsw; i++, res++ )  {
-		fprintf(stderr,"seg  len=%10d get=%10d free=%10d\n",
+		fprintf(stderr,"cpu%d seg  len=%10d get=%10d free=%10d\n",
+			i,
 			res->re_seglen, res->re_segget, res->re_segfree );
-		fprintf(stderr,"part len=%10d get=%10d free=%10d\n",
+		fprintf(stderr,"cpu%d part len=%10d get=%10d free=%10d\n",
+			i,
 			res->re_partlen, res->re_partget, res->re_partfree );
-		fprintf(stderr,"bitv len=%10d get=%10d free=%10d\n",
+		fprintf(stderr,"cpu%d bitv len=%10d get=%10d free=%10d\n",
+			i,
 			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
 	}
 }
