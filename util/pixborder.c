@@ -183,15 +183,15 @@ fastf_t		*hsv;
     /*
      *	Compute value
      */
-    max = min = red = rgb[RED] / 255.0;
+    max = min = red = (fastf_t)rgb[RED] / 255.0;
 
-    grn = rgb[GRN] / 255.0;
+    grn = (fastf_t)rgb[GRN] / 255.0;
     if (grn < min)
 	min = grn;
     else if (grn > max)
 	max = grn;
 
-    blu = rgb[BLU] / 255.0;
+    blu = (fastf_t)rgb[BLU] / 255.0;
     if (blu < min)
 	min = blu;
     else if (blu > max)
