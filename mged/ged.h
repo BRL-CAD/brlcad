@@ -85,20 +85,6 @@ extern int		dmaflag;	       /* !0 forces screen update */
 # define True (1)
 #endif
 
-#ifdef XMGED
-/* new I/O routines */
-extern char	*mged_fgets();
-extern char	*mged_gets();
-extern int	mged_fgetc();
-extern int	mged_fputc();
-extern int	mged_fputs();
-#if __STDC__
-extern void	mged_fprintf(FILE *, char *, ...);
-#else
-extern void	mged_fprintf();
-#endif
-#endif
-
 /* Tolerances */
 extern double		mged_abs_tol;		/* abs surface tolerance */
 extern double		mged_rel_tol;		/* rel surface tolerance */
@@ -320,50 +306,6 @@ extern char *state_str[];		/* identifying strings */
  *  to enable editor searches for the word "return" to succeed.
  */
 /* For errors from db_get() or db_getmrec() */
-#ifdef XMGED
-#define READ_ERR { \
-	(void)rt_log("Database read error, aborting\n"); }
-
-#define READ_ERR_return		{ \
-	READ_ERR; \
-	return;  }
-
-/* For errors from db_put() */
-#define WRITE_ERR { \
-	(void)rt_log("Database write error, aborting.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }	
-
-#define WRITE_ERR_return	{ \
-	WRITE_ERR; \
-	return;  }
-
-/* For errors from db_diradd() or db_alloc() */
-#define ALLOC_ERR { \
-	(void)rt_log("\
-An error has occured while adding a new object to the database.\n"); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define ALLOC_ERR_return	{ \
-	ALLOC_ERR; \
-	return;  }
-
-/* For errors from db_delete() or db_dirdelete() */
-#define DELETE_ERR(_name)	{ \
-	(void)rt_log("\
-An error has occurred while deleting '%s' from the database.\n", _name); \
-	ERROR_RECOVERY_SUGGESTION; }
-
-#define DELETE_ERR_return(_name)	{  \
-	DELETE_ERR(_name); \
-	return;  }
-
-/* A verbose message to attempt to soothe and advise the user */
-#define	ERROR_RECOVERY_SUGGESTION	\
-	(void)rt_log("\
-The in-memory table of contents may not match the status of the on-disk\n\
-database.  The on-disk database should still be intact.  For safety,\n\
-you should exit MGED now, and resolve the I/O problem, before continuing.\n")
-#else
 #define READ_ERR { \
 	(void)printf("Database read error, aborting\n"); }
 
@@ -406,7 +348,6 @@ An error has occurred while deleting '%s' from the database.\n", _name); \
 The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
-#endif
 
 
 /* mged command variables for affecting the user environment */
@@ -417,11 +358,9 @@ struct mged_variables {
 	int	sgi_win_origin[2];
 	int	faceplate;
 	int	predictor;
-#ifdef XMGED
 	int     w_axis;  /* world view axis */
 	int     v_axis;  /* view axis */
 	int     e_axis;  /* edit axis */
-#endif
 	double	predictor_advance;
 	double	predictor_length;
 	double	perspective;	/* >0 implies perspective viewing is on. */
@@ -457,6 +396,7 @@ extern	char	ogl_sgi_used;
 MGED_EXTERN(int f_3ptarb, (int argc, char **argv));
 MGED_EXTERN(int f_adc, (int argc, char **argv));
 MGED_EXTERN(int f_aeview, (int argc, char **argv));
+MGED_EXTERN(int f_aip, (int argc, char **argv));
 MGED_EXTERN(int f_amtrack, (int argc, char **argv));
 MGED_EXTERN(int f_analyze, (int argc, char **argv));
 MGED_EXTERN(int f_arbdef, (int argc, char **argv));
@@ -569,6 +509,7 @@ MGED_EXTERN(int f_shells, (int argc, char **argv));
 MGED_EXTERN(int f_source, (int argc, char **argv));
 MGED_EXTERN(int f_status, (int argc, char **argv));
 MGED_EXTERN(int f_summary, (int argc, char **argv));
+MGED_EXTERN(int f_slewview, (int argc, char **argv));
 MGED_EXTERN(int f_sync, (int argc, char **argv));
 MGED_EXTERN(int f_tables, (int argc, char **argv));
 MGED_EXTERN(int f_tabobj, (int argc, char **argv));
