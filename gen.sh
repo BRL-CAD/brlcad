@@ -780,7 +780,7 @@ Version: ${RELEASE}
 Release: ${REV}
 Copyright:  Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 Group: Applications/Graphics
-Source:  ftp.arl.mil:/pub/brl-cad/Rel${RELEASE}/src/
+Source:  http://ftp.arl.mil:/brl-cad/Downloads/Rel${RELEASE}/
 URL:  http://ftp.arl.mil/brlcad/
 Vendor: The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
 Packager: Mike Muuss <Mike@arl.mil>
@@ -792,7 +792,7 @@ a generic framebuffer library, a network-distributed image-processing
 and signal-processing capability, and a large collection of related
 tools and utilities.
 
-This version was compiled on RedHat Linux 5.2
+This version was compiled on RedHat Linux 6.2
 
 %prep
         exit 0
