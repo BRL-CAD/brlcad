@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 rt_vlist_3string( vhead, string, origin, rot, scale )
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 CONST char	*string;	/* string of chars to be plotted */
 CONST point_t	origin;		/* lower left corner of 1st char */
 CONST mat_t	rot;		/* Transform matrix (WARNING: may xlate) */
@@ -61,9 +61,9 @@ double		scale;		/* scale factor to change 1x1 char sz */
 	 *  If the user provided translation or
 	 *  scaling in his matrix, it will *also* be applied.
 	 */
-	mat_idn( xlate_to_origin );
+	bn_mat_idn( xlate_to_origin );
 	MAT_DELTAS( xlate_to_origin,	origin[X], origin[Y], origin[Z] );
-	mat_mul( mat, xlate_to_origin, rot );
+	bn_mat_mul( mat, xlate_to_origin, rot );
 
 	/* Check to see if initialization is needed */
 	if( tp_cindex[040] == 0 )  tp_setup();
@@ -116,7 +116,7 @@ double		scale;		/* scale factor to change 1x1 char sz */
  */
 void
 rt_vlist_2string( vhead, string, x, y, scale, theta )
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 CONST char	*string;	/* string of chars to be plotted */
 double	x;			/* x,y of lower left corner of 1st char */
 double	y;
@@ -126,7 +126,7 @@ double	theta;			/* degrees ccw from X-axis */
 	mat_t	mat;
 	vect_t	p;
 
-	mat_angles( mat, 0.0, 0.0, theta );
+	bn_mat_angles( mat, 0.0, 0.0, theta );
 	VSET( p, x, y, 0 );
 	rt_vlist_3string( vhead, string, p, mat, scale );
 }
