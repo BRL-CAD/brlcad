@@ -36,7 +36,7 @@
 #include "rle_code.h"
 #include "rle_raw.h"
 
-#define	map_pixel( pix, cmaplen, cmap )	((pix) > cmaplen ? (pix) : \
+#define	map_pixel( pix, cmaplen, cmap )	((pix) > (unsigned)cmaplen ? (pix) : \
 					 (cmap[pix]) >> 8)
 
 /*****************************************************************
