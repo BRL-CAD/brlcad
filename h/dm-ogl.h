@@ -14,6 +14,7 @@ struct modifiable_ogl_vars {
   int zclipping_on;
   int zbuffer_on;
   int lighting_on;
+  int transparency_on;
   int fastfog;
   double fogdensity;
   int zbuf;

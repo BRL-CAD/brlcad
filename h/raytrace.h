@@ -1238,9 +1238,7 @@ struct dg_obj {
 	struct dg_qray_color	dgo_qray_even_color;
 	struct dg_qray_color	dgo_qray_void_color;
 	struct dg_qray_color	dgo_qray_overlap_color;
-#if defined(USE_SURVICE_MODS)
 	int			dgo_shaded_mode;	/* 1 - draw bots shaded by default */
-#endif
 };
 extern struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 #define RT_DGO_NULL		((struct dg_obj *)NULL)

@@ -69,7 +69,6 @@ struct dg_client_data {
 	struct bn_vlblock	*draw_edge_uses_vbp;
 };
 
-#if USE_SURVICE_MODS
 #define DGO_SHADED_MODE_BOTS 1
 #define DGO_SHADED_MODE_ALL 2
 static union tree *dgo_bot_check_region_end();
@@ -82,7 +81,6 @@ struct dgo_bot_check_data {
 
 int dgo_shaded_mode_cmd();
 static int dgo_shaded_mode_tcl();
-#endif
 
 /* XXX this should be done else where? */
 int rt_pg_plot(struct bu_list *, struct rt_db_internal *,
@@ -206,9 +204,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"rtabort",		dgo_rtabort_tcl},
 	{"rtcheck",		dgo_rtcheck_tcl},
 	{"rtedge",		dgo_rt_tcl},
-#if USE_SURVICE_MODS
 	{"shaded_mode",		dgo_shaded_mode_tcl},
-#endif
 #if 0
 	{"tol",			dgo_tol_tcl},
 #endif
@@ -602,7 +598,6 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 	 */
 	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
 
-#if USE_SURVICE_MODS
 	/*
 	 * If asking for wireframe and in shaded_mode,
 	 * draw shaded polygons for each object's primitives if possible.
@@ -640,11 +635,10 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 			 dgo_bot_check_leaf,
 			 (genptr_t)&bcd);
 	  }
-	} else
+	} else {
 	  dgo_drawtrees(dgop, interp, argc, argv, kind);
-#else
-	dgo_drawtrees(dgop, interp, argc, argv, kind);
-#endif
+	}
+
 	dgo_color_soltab(&dgop->dgo_headSolid);
 
 	return TCL_OK;
@@ -2377,7 +2371,6 @@ dgo_nirt_tcl(ClientData	clientData,
 	return dgo_nirt_cmd(dgop, vop, interp, argc-2, argv+2);
 }
 
-#if USE_SURVICE_MODS
 int
 dgo_shaded_mode_cmd(struct dg_obj	*dgop,
 		    Tcl_Interp		*interp,
@@ -2431,7 +2424,6 @@ dgo_shaded_mode_tcl(ClientData	clientData,
 
 	return dgo_shaded_mode_cmd(dgop, interp, argc-1, argv+1);
 }
-#endif
 
 #if 0
 /* skeleton functions for dg_obj methods */
@@ -4162,7 +4154,6 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 	bu_vls_free(&tmp_vls);
 }
 
-#if USE_SURVICE_MODS
 static union tree *
 dgo_bot_check_region_end(register struct db_tree_state	*tsp,
 			 struct db_full_path		*pathp,
@@ -4213,4 +4204,3 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
 
   return curtree;
 }
-#endif

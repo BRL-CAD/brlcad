@@ -412,9 +412,7 @@ static struct cmdtab cmdtab[] = {
 	{"setview", cmd_setview},
 	{"shader", f_shader},
 	{"share", f_share},
-#if USE_SURVICE_MODS
 	{"shaded_mode", cmd_shaded_mode},
-#endif
 	{"shells", cmd_shells},
 	{"showmats", cmd_showmats},
 	{"sill",		be_s_illuminate},
@@ -3304,7 +3302,6 @@ void gettimeofday(struct timeval *tp, struct timezone *tzp)
 #endif
 
 
-#if USE_SURVICE_MODS
 int
 cmd_shaded_mode(ClientData	clientData,
 		Tcl_Interp	*interp,
@@ -3330,4 +3327,3 @@ cmd_shaded_mode(ClientData	clientData,
 
 	return dgo_shaded_mode_cmd(dgop, interp, argc, argv);
 }
-#endif

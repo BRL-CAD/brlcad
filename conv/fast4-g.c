@@ -130,7 +130,6 @@ static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file]
 void make_region_name(int g_id, int c_id);
 char * make_solid_name(char type, int element_id, int c_id, int g_id, int inner);
 
-#if USE_SURVICE_MODS
 unsigned char *get_fast4_color();
 
 struct fast4_color {
@@ -143,7 +142,7 @@ struct fast4_color {
 struct fast4_color HeadColor;
 
 /* convenient macro for building regions */
-#define		MK_REGION( fp , headp , name , r_id, rgb ) \
+#define	MK_REGION( fp , headp , name , r_id, rgb ) \
 			{\
 				if( mode == 1 ) {\
 					if( !quiet )\
@@ -164,30 +163,6 @@ struct fast4_color HeadColor;
 					bu_log( "\tRegion not made!!!!!\n");\
 				}\
 			}
-#else
-/* convenient macro for building regions */
-#define		MK_REGION( fp , headp , name , r_id ) \
-			{\
-				if( mode == 1 ) {\
-					if( !quiet )\
-						bu_log( "Making region: %s (PLATE)\n", name ); \
-					mk_fastgen_region( fp , name , &((headp)->l) , 'P' ,\
-						(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
-				}\
-				else if( mode == 2 ) {\
-					if( !quiet ) \
-						bu_log( "Making region: %s (VOLUME)\n", name ); \
-					mk_fastgen_region( fp , name , &((headp)->l) , 'V' ,\
-						(char *)NULL, (char *)NULL, (unsigned char *)NULL, r_id, 0, 0, 0, 0 ); \
-				}\
-				else\
-				{\
-					bu_log( "Illegal mode (%d), while trying to make region (%s)\n",\
-						mode, name );\
-					bu_log( "\tRegion not made!!!!!\n");\
-				}\
-			}
-#endif
 
 #define	PUSH( ptr )	bu_ptbl_ins( &stack , (long *)ptr )
 #define POP( structure , ptr )	{ if( BU_PTBL_END( &stack ) == 0 ) \
@@ -3336,11 +3311,7 @@ void make_regions(void)
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
 			}
-#if USE_SURVICE_MODS
 			MK_REGION( fdout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id) )
-#else
-			MK_REGION( fdout, &region, ptr1->name, ptr1->region_id )
-#endif
 
 			/* create new region by subtracting halfspace */
 			BU_LIST_INIT( &region.l );
@@ -3359,18 +3330,10 @@ void make_regions(void)
 			}
 			ptr2 = Search_ident( name_root, splt->new_ident, &found );
 			if( found ) {
-#if USE_SURVICE_MODS
 				MK_REGION( fdout, &region, ptr2->name, splt->new_ident, get_fast4_color(splt->new_ident) )
-#else
-				MK_REGION( fdout, &region, ptr2->name, splt->new_ident )
-#endif
 			} else {
 				sprintf( reg_name, "comp_%d.r", splt->new_ident );
-#if USE_SURVICE_MODS
 				MK_REGION( fdout, &region, reg_name, splt->new_ident, get_fast4_color(splt->new_ident) )
-#else
-				MK_REGION( fdout, &region, reg_name, splt->new_ident )
-#endif
 			}
 		}
 		else
@@ -3386,11 +3349,7 @@ void make_regions(void)
 					bu_log( "make_regions: mk_addmember failed to add %s to %s\n", hole_name, ptr1->name );
 				lptr = lptr->next;
 			}
-#if USE_SURVICE_MODS
 			MK_REGION( fdout, &region, ptr1->name, ptr1->region_id, get_fast4_color(ptr1->region_id) )
-#else
-			MK_REGION( fdout, &region, ptr1->name, ptr1->region_id )
-#endif
 		}
 cont1:
 		ptr1 = ptr1->rright;
@@ -3404,7 +3363,6 @@ cont1:
 	}
 }
 
-#if USE_SURVICE_MODS
 #define COLOR_LINE_LEN 256
 
 void read_fast4_colors(char *color_file) {
@@ -3454,7 +3412,7 @@ get_fast4_color(int r_id) {
 
   return (unsigned char *)NULL;
 }
-#endif
+
 
 int
 main(int argc, char **argv)
@@ -3462,9 +3420,7 @@ main(int argc, char **argv)
 	int i;
 	int c;
 	char *plot_file=NULL;
-#if USE_SURVICE_MODS
 	char *color_file=NULL;
-#endif
 
 	while( (c=getopt( argc , argv , "qm:o:c:dwx:b:X:C:" ) ) != EOF )
 	{
@@ -3500,11 +3456,9 @@ main(int argc, char **argv)
 			case 'b':
 				sscanf( optarg, "%x", (unsigned int *)&bu_debug );
 				break;
-#if USE_SURVICE_MODS
 			case 'C':
 				color_file = optarg;
 				break;
-#endif
 			default:
 				bu_log( "Unrecognzed option (%c)\n", c );
 				rt_bomb( usage );
@@ -3556,11 +3510,9 @@ main(int argc, char **argv)
 		bu_log("\n");
 	}
 
-#if USE_SURVICE_MODS
 	BU_LIST_INIT(&HeadColor.l);
 	if (color_file)
 	  read_fast4_colors(color_file);
-#endif
 
 	grid_size = GRID_BLOCK;
 	grid_pts = (point_t *)bu_malloc( grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
