@@ -2487,6 +2487,7 @@ CONST struct rt_tol   *tol;
 	RT_CK_TOL(tol);
 	NMG_CK_MODEL(m);
 
+	rt_log("Triangulating NMG\n");
 	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
 		NMG_CK_REGION(r);
 		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
