@@ -1170,7 +1170,7 @@ CONST struct db_i		*dbip;
 	union record		*rec;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_ELL )  return(-1);
+	if( ip->idb_type != ID_ELL && ip->idb_type != ID_SPH )  return(-1);
 	tip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 
