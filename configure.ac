@@ -55,8 +55,10 @@ PATCH_VERSION=0
 CONFIG_DATE=`date +%Y%m%d`
 CONFIG_TIME="`date '+%H %M %S'`"
 BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
-echo "Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
-echo "=================================================="
+echo "*********************************************************"
+echo "*** Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE ***"
+echo "*********************************************************"
+
 # necessary for proper file creation on nfs volumes
 umask 022
 
