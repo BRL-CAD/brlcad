@@ -78,6 +78,7 @@ _LOCAL_ int	rem_open(),
 		rem_zoom(),		/* OLD */
 		rem_cursor(),
 		rem_getcursor(),
+		rem_setcursor(),
 		rem_readrect(),
 		rem_writerect(),
 		rem_poll(),
@@ -96,7 +97,7 @@ FBIO remote_interface = {
 	rem_wmap,
 	rem_view,
 	rem_getview,
-	fb_null,			/* fb_setcursor */
+	rem_setcursor,
 	rem_cursor,
 	rem_getcursor,
 	rem_readrect,
@@ -580,6 +581,21 @@ int	*x, *y;
 	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
 		return	-4;		/* fail */
 	return( 0 );			/* OK */
+}
+
+/*
+ */
+_LOCAL_ int
+rem_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
+FBIO	*ifp;
+unsigned char	*bits;
+int		xbits, ybits;
+int		xorig, yorig;
+{
+
+	/* XXX For some reason, we don't implement this over the net? */
+	fb_log("rem_setcursor() unimplemented\n");
+	return -1;
 }
 
 /*
