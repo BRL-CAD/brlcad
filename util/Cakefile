@@ -7,6 +7,7 @@
 		pixbustup pixdiff pixinterp2x pixtile pixuntile \
 		pixflip-fb pixfade pixfields \
 		pp-fb fbclear fbgrid \
+		cell-fb \
 		orle-fb fb-orle orle-pix pix-orle \
 		rle-fb fb-rle rle-pix pix-rle \
 		fbcmap fb-cmap cmap-fb fbgamma \
@@ -21,7 +22,7 @@
 		pl-sgi pldebug plgetframe plrot \
 		dunncolor dunnsnap cat-fb polar-fb \
 		buffer files-tape \
-		plcolor plline2 pl-pl pl-ps \
+		plcolor plline2 pl-pl pl-ps pl-hpgl \
 		spm-fb pix-spm \
 		fbfree fbhelp gif2fb pix3filter \
 		fbfade fbstretch gif-fb \
@@ -373,10 +374,16 @@ plstat: plstat.o
 pl-asc: pl-asc.o
 	CC LDFLAGS -o pl-asc pl-asc.o LIB_PRE''LIBPLOT LIBES
 
+pl-hpgl: pl-hpgl.o
+	CC LDFLAGS -o pl-hpgl pl-hpgl.o LIB_PRE''LIBPLOT LIBES
+
 xyz-pl: xyz-pl.o
 	CC LDFLAGS -o xyz-pl xyz-pl.o LIB_PRE''LIBPLOT LIBES
 
 polar-fb:		polar-fb.o LIBFB
 	CC LDFLAGS -o polar-fb polar-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
+
+cell-fb:		cell-fb.o LIBFB
+	CC LDFLAGS -o cell-fb cell-fb.o LIB_PRE''LIBFB LIBFB_LIBES LIBES
 
 #include "../Cakefile.rules"
