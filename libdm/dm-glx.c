@@ -102,7 +102,6 @@ static void set_window();
 static XVisualInfo *extract_visual();
 static unsigned long extract_value();
 
-static int Glx_load_startup();
 static void Glx_var_init();
 static void Glx_make_materials();
 static void Glx_clear_to_black();
@@ -236,8 +235,10 @@ char *argv[];
 #endif
 
   /* Only need to do this once for this display manager */
-  if(!count)
-    (void)Glx_load_startup(dmp);
+  if(!count){
+    bzero((void *)&head_glx_vars, sizeof(struct glx_vars));
+    BU_LIST_INIT( &head_glx_vars.l );
+  }
 
   dmp->dm_vars = bu_calloc(1, sizeof(struct glx_vars), "Glx_init: struct glx_vars");
   if(!dmp->dm_vars){
@@ -330,6 +331,8 @@ char *argv[];
 	Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
     }
 
+    bu_vls_free(&top_vls);
+
     /* Make xtkwin an embedded window */
     ((struct glx_vars *)dmp->dm_vars)->xtkwin =
       Tk_CreateWindow(interp, ((struct glx_vars *)dmp->dm_vars)->top,
@@ -349,9 +352,8 @@ char *argv[];
 
 #if 1
   bu_vls_init(&str);
-  bu_vls_printf(&str, "_new_init_dm %S %S %S\n",
+  bu_vls_printf(&str, "_init_dm %S %S \n",
 		&dmp->dm_initWinProc,
-		&top_vls,
 		&dmp->dm_pathName);
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
@@ -361,7 +363,6 @@ char *argv[];
   }
 
   bu_vls_free(&str);
-  bu_vls_free(&top_vls);
 
   ((struct glx_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct glx_vars *)dmp->dm_vars)->top);
@@ -586,21 +587,6 @@ Done:
   return dmp;
 }
 
-/*XXX Just experimenting */
-static int
-Glx_load_startup(dmp)
-struct dm *dmp;
-{
-  char *filename;
-
-  bzero((void *)&head_glx_vars, sizeof(struct glx_vars));
-  BU_LIST_INIT( &head_glx_vars.l );
-
-  if((filename = getenv("DM_GLX_RCFILE")) != (char *)NULL )
-    return Tcl_EvalFile(interp, filename);
-
-  return TCL_OK;
-}
 
 /* 
  *			I R _ C O N F I G U R E _ W I N D O W _ S H A P E
