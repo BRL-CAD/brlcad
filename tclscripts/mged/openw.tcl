@@ -84,6 +84,10 @@ if ![info exists mged_default_edit_style] {
     set mged_default_edit_style emacs
 }
 
+if ![info exists player_screen(mged)] {
+    set player_screen(mged) $mged_default_display
+}
+
 set do_tearoffs 0
 
 proc gui_create_default { args } {
@@ -387,12 +391,17 @@ menu .$id.m.file.m.cm_saveview -tearoff $do_tearoffs
 menubutton .$id.m.edit -text "Edit" -underline 0 -menu .$id.m.edit.m
 menu .$id.m.edit.m -tearoff $do_tearoffs
 .$id.m.edit.m add cascade -label "Add" -menu .$id.m.edit.m.cm_add
-.$id.m.edit.m add command -label "Solid" -underline 0 -command "build_esolmenu_all $id"
-.$id.m.edit.m add command -label "Matrix" -underline 0 -command "press oill"
-.$id.m.edit.m add command -label "Region" -underline 0 -command "init_red $id"
+.$id.m.edit.m add command -label "Solid" -underline 0 \
+	-command "winset \$mged_active_dm($id); build_edit_menu_all s"
+.$id.m.edit.m add command -label "Matrix" -underline 0 \
+	-command "winset \$mged_active_dm($id); build_edit_menu_all o"
+.$id.m.edit.m add command -label "Combination" -underline 0 \
+	-command "init_comb $id"
 #.$id.m.edit.m add separator
-#.$id.m.edit.m add command -label "Reject" -underline 0 -command "press reject" 
-#.$id.m.edit.m add command -label "Accept" -underline 0 -command "press accept"
+#.$id.m.edit.m add command -label "Reject" -underline 0 \
+	-command "press reject" 
+#.$id.m.edit.m add command -label "Accept" -underline 0 \
+	-command "press accept"
 
 menu .$id.m.edit.m.cm_add -tearoff $do_tearoffs
 .$id.m.edit.m.cm_add add command -label "Solid..." -command "solcreate $id"
@@ -505,6 +514,8 @@ menu .$id.m.settings.m.cm_mb -tearoff $do_tearoffs
 	-label "Solid Edit" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value o -variable mged_mouse_behavior($id)\
 	-label "Object Edit" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
+.$id.m.settings.m.cm_mb add radiobutton -value c -variable mged_mouse_behavior($id)\
+	-label "Combination Edit" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 .$id.m.settings.m.cm_mb add radiobutton -value d -variable mged_mouse_behavior($id)\
 	-label "Default" -command "mged_apply $id \"set mouse_behavior \$mged_mouse_behavior($id)\""
 
