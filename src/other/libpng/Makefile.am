@@ -40,3 +40,6 @@ include_HEADERS = png.h pngconf.h
 
 dist_man_MANS = ansi2knr.1 libpng.3 libpngpf.3 png.5
 
+.PHONY : test
+test:	pngtest
+	./pngtest ${top_srcdir}/src/other/libpng/pngtest.png
