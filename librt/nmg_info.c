@@ -34,6 +34,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"	/* For librt debug flags, XXX temp */
 
+/* XXX move to raytrace.h */
+RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1, CONST struct faceuse *fu2));
 
 CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 
@@ -1107,6 +1109,80 @@ CONST struct edgeuse *eu;
 		}
 	}
 	return(eur);
+}
+
+/*
+ *			N M G _ F I N D _ E D G E _ B E T W E E N _ 2 F U
+ *
+ *  Perform a topology search to determine if two faces (specified by
+ *  their faceuses) share an edge in common.  If so, return an edgeuse
+ *  in fu1 of that edge.
+ *
+ *  If there are multiple edgeuses in common, ensure that they all refer
+ *  to the same edge_g geometry structure.  The intersection of two planes
+ *  (non-coplanar) must be a single line.
+ *
+ *  Calling this routine when the two faces share face geometry
+ *  and have more than one edge in common gives
+ *  a NULL return, as there is no unique answer.
+ *
+ *  NULL is also returned if no common edge could be found.
+ */
+CONST struct edgeuse *
+nmg_find_edge_between_2fu(fu1, fu2)
+CONST struct faceuse	*fu1;
+CONST struct faceuse	*fu2;
+{
+	CONST struct loopuse	*lu1;
+	CONST struct edgeuse	*ret = (CONST struct edgeuse *)NULL;
+
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_FACEUSE(fu2);
+
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		CONST struct edgeuse	*eu1;
+		NMG_CK_LOOPUSE(lu1);
+		if( RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC )
+			continue;
+		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+			CONST struct edgeuse *eur;
+
+			NMG_CK_EDGEUSE(eu1);
+			/* Walk radially around the edge */
+			eur = eu1->radial_p;
+			NMG_CK_EDGEUSE(eur);
+
+			while (eur != eu1->eumate_p) {
+				if (*eur->up.magic_p == NMG_LOOPUSE_MAGIC &&
+				    *eur->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+				    eur->up.lu_p->up.fu_p->f_p == fu2->f_p) {
+				    	/* Found the other face on this edge! */
+				    	if( !ret )  {
+				    		/* First common edge found */
+				    		if( eur->up.lu_p->up.fu_p == fu2)  {
+				    			ret = eur;
+				    		} else {
+				    			ret = eur->eumate_p;
+				    		}
+				    	} else {
+				    		/* Previous edge found, check edge_g */
+				    		if( eur->e_p->eg_p != ret->e_p->eg_p )  {
+				    			rt_log("eur=x%x, eg_p=x%x;  ret=x%x, eg_p=x%x\n",
+				    				eur, eur->e_p->eg_p,
+				    				ret, ret->e_p->eg_p );
+				    			rt_bomb("nmg_find_edge_between_2fu() 2 faces intersect with differing edge geometries?\n");
+				    		}
+				    	}
+				} else {
+					eur = eur->eumate_p->radial_p;
+					NMG_CK_EDGEUSE(eur);
+				}
+			}
+		}
+	}
+	if (rt_g.NMG_debug & DEBUG_BASIC)  rt_log("nmg_find_edge_between_2fu(fu1=x%x, fu2=x%x) edgeuse=x%x\n", fu1, fu2, ret);
+	return ret;
+
 }
 
 /*
