@@ -536,7 +536,7 @@ struct partition *PartHeadp;
 	pixelp = (struct rt_spect_sample *)ap->a_uptr;
 	RT_CK_SPECT_SAMPLE(pixelp);
 
-	degK = 700;	/* XXX extract from region! */
+	degK = 10000;	/* XXX extract from region! */
 
 	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		hitp->hit_dist, ap->a_ray.r_dir );
