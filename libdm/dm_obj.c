@@ -12,9 +12,15 @@
  * Author -
  *	Robert G. Parker
  */
+#if 1
+#define USE_FBSERV
+#endif
+
 #include "conf.h"
 #include <math.h>
-#include "tcl.h"
+#include "tk.h"
+#include <X11/Xutil.h>
+
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -23,15 +29,31 @@
 #include "dm.h"
 #include "solid.h"
 #include "cmd.h"
+#ifdef USE_FBSERV
+#include "dm-X.h"
+#ifdef DM_OGL
+#include <GL/glx.h>
+#include <GL/gl.h>
+#include "dm-ogl.h"
+#include "dm_xvars.h"
+#endif
+#include "./fbserv_obj.h"
+#endif
+
+/* These functions live in libfb. */
+extern int _X24_open_existing();
+extern int X24_close_existing();
+extern int X24_refresh();
+extern int _ogl_open_existing();
+extern int ogl_close_existing();
+extern int ogl_refresh();
 
 struct dm_obj {
   struct bu_list	l;
   struct bu_vls		dmo_name;		/* display manager name/cmd */
   struct dm		*dmo_dmp;		/* display manager pointer */
-  int	 		dmo_perspective;	/* !0 means using perspective */
 #ifdef USE_FBSERV
-  struct fbserv_obj	*dmo_fbsp;		/* fbserv pointer */
-  int			dmo_fbactive;		/* !0 means framebuffer is active */
+  struct fbserv_obj	dmo_fbs;		/* fbserv object */
 #endif
 };
 
@@ -56,6 +78,8 @@ HIDDEN int dmo_debug_tcl();
 #ifdef USE_FBSERV
 HIDDEN int dmo_openFb_tcl();
 HIDDEN int dmo_closeFb_tcl();
+HIDDEN int dmo_listen_tcl();
+HIDDEN int dmo_refreshFb_tcl();
 #endif
 
 HIDDEN struct dm_obj HeadDMObj;	/* head of display manager object list */
@@ -82,6 +106,8 @@ HIDDEN struct cmdtab dmo_cmds[] = {
 #ifdef USE_FBSERV
 	"openfb",		dmo_openFb_tcl,
 	"closefb",		dmo_closeFb_tcl,
+	"listen",		dmo_listen_tcl,
+	"refreshfb",		dmo_refreshFb_tcl,
 #endif
 	(char *)0,		(int (*)())0
 };
@@ -127,6 +153,7 @@ ClientData clientData;
   DM_CLOSE(dmop->dmo_dmp);
   BU_LIST_DEQUEUE(&dmop->l);
   bu_free((genptr_t)dmop, "dmo_deleteProc: dmop");
+
 }
 
 /*
@@ -240,9 +267,10 @@ char    **argv;
   bu_vls_init(&dmop->dmo_name);
   bu_vls_strcpy(&dmop->dmo_name,argv[2]);
   dmop->dmo_dmp = dmp;
-  dmop->dmo_perspective = 0;
   VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
   VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
+  dmop->dmo_fbs.fbs_listener.l_fbsp = &dmop->dmo_fbs;
+  dmop->dmo_fbs.fbs_listener.l_fd = -1;
 
   /* append to list of dm_obj's */
   BU_LIST_APPEND(&HeadDMObj.l,&dmop->l);
@@ -454,7 +482,7 @@ char    **argv;
   /* XXX this causes a core dump if vp is bogus */
   BN_CK_VLIST_TCL(interp,vp);
 
-  return DM_DRAW_VLIST(dmop->dmo_dmp,vp,dmop->dmo_perspective);
+  return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
 }
 
 /*
@@ -518,9 +546,7 @@ char    **argv;
 		   (short)sp->s_color[0],
 		   (short)sp->s_color[1],
 		   (short)sp->s_color[2], 0);
-    DM_DRAW_VLIST(dmop->dmo_dmp,
-		  (struct rt_vlist *)&sp->s_vlist,
-		  dmop->dmo_perspective);
+    DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
   }
 
   return TCL_OK;
@@ -902,7 +928,7 @@ char    **argv;
   /* get perspective mode */
   if (argc == 2) {
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%d", dmop->dmo_perspective);
+    bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_perspective);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -911,12 +937,12 @@ char    **argv;
   /* set perspective mode */
   if (argc == 3) {
     if (sscanf(argv[2], "%d", &perspective) != 1) {
-      Tcl_AppendResult(interp, "dmo_perspective: invalid debug level - ",
+      Tcl_AppendResult(interp, "dmo_perspective: invalid perspective mode - ",
 		       argv[2], "\n", (char *)NULL);
       return TCL_ERROR;
     }
 
-    dmop->dmo_perspective = perspective;
+    dmop->dmo_dmp->dm_perspective = perspective;
     return TCL_OK;
   }
 
@@ -971,16 +997,89 @@ char    **argv;
   return TCL_ERROR;
 }
 
+#ifdef USE_FBSERV
 /*
  * Open/activate the display managers framebuffer.
  *
  * Usage:
- *	  procname fb
+ *	  procname openfb
  *
- * Returns the port number in interp->result.
  */
 HIDDEN int
-dmo_fb_tcl(clientData, interp, argc, argv)
+dmo_openFb_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+  struct bu_vls vls;
+  char *X_name = "/dev/X";
+#ifdef DM_OGL
+  char *ogl_name = "/dev/ogl";
+#endif
+
+  if((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
+    Tcl_AppendResult(interp, "openfb: failed to allocate framebuffer memory\n",
+		     (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  switch (dmop->dmo_dmp->dm_type) {
+  case DM_TYPE_X:
+    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
+
+    dmop->dmo_fbs.fbs_fbp->if_name = malloc((unsigned)strlen(X_name) + 1);
+    (void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, X_name);
+
+    /* Mark OK by filling in magic number */
+    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+    _X24_open_existing(dmop->dmo_fbs.fbs_fbp,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+		       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->pix,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+		       dmop->dmo_dmp->dm_width,
+		       dmop->dmo_dmp->dm_height,
+		       ((struct x_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->gc);
+    break;
+#ifdef DM_OGL
+  case DM_TYPE_OGL:
+    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
+
+    dmop->dmo_fbs.fbs_fbp->if_name = malloc((unsigned)strlen(ogl_name) + 1);
+    (void)strcpy(dmop->dmo_fbs.fbs_fbp->if_name, ogl_name);
+
+    /* Mark OK by filling in magic number */
+    dmop->dmo_fbs.fbs_fbp->if_magic = FB_MAGIC;
+
+    _ogl_open_existing(dmop->dmo_fbs.fbs_fbp,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->cmap,
+		       ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->vip,
+		       dmop->dmo_dmp->dm_width,
+		       dmop->dmo_dmp->dm_height,
+		       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->glxc,
+		       ((struct ogl_vars *)dmop->dmo_dmp->dm_vars.priv_vars)->mvars.doublebuffer,
+		       0);
+    break;
+#endif
+  }
+
+  return TCL_OK;
+}
+
+/*
+ * Close/de-activate the display managers framebuffer.
+ *
+ * Usage:
+ *	  procname closefb
+ *
+ */
+HIDDEN int
+dmo_closeFb_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
@@ -989,5 +1088,100 @@ char    **argv;
   struct dm_obj *dmop = (struct dm_obj *)clientData;
   struct bu_vls vls;
 
+  _fb_pgflush(dmop->dmo_fbs.fbs_fbp);
+
+  switch (dmop->dmo_dmp->dm_type) {
+  case DM_TYPE_X:
+    X24_close_existing(dmop->dmo_fbs.fbs_fbp);
+    break;
+#ifdef DM_OGL
+  case DM_TYPE_OGL:
+    ogl_close_existing(dmop->dmo_fbs.fbs_fbp);
+    break;
+#endif
+  }
+
+  /* free framebuffer memory */
+  if(dmop->dmo_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
+    free((void *)dmop->dmo_fbs.fbs_fbp->if_pbase);
+  free((void *)dmop->dmo_fbs.fbs_fbp->if_name);
+  free((void *)dmop->dmo_fbs.fbs_fbp);
+
   return TCL_OK;
 }
+
+/*
+ * Listen for framebuffer clients.
+ *
+ * Usage:
+ *	  procname listen port
+ *
+ * Returns the port number actually used in interp->result.
+ *
+ */
+HIDDEN int
+dmo_listen_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+
+  /* return the port number */
+  if (argc == 2) {
+    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.l_port);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+  }
+
+  if (argc == 3) {
+    int port;
+
+    if (sscanf(argv[2], "%d", &port) != 1) {
+      Tcl_AppendResult(interp, "listen: bad value - ", argv[2], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+
+    fbs_open(interp, &dmop->dmo_fbs, port);
+    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.l_port);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+    bu_vls_free(&vls);
+
+    return TCL_OK;
+  }
+
+  bu_vls_printf(&vls, "helplib listen");
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  return TCL_ERROR;
+}
+
+/*
+ * Refresh the display managers framebuffer.
+ *
+ * Usage:
+ *	  procname refresh
+ *
+ */
+HIDDEN int
+dmo_refreshFb_tcl(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  struct dm_obj *dmop = (struct dm_obj *)clientData;
+  struct bu_vls vls;
+
+  fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0, dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
+  
+  return TCL_OK;
+}
+#endif
