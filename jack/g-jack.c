@@ -448,6 +448,7 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 
 	sz = 1000;
 	verts[0] = init_heap(sz);
+	cnt = 0;
 
 	for (RT_LIST_FOR(s, shell, &r->s_hd)) {
 		/* Shell is made of faces. */
@@ -524,12 +525,19 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 		}
 	}
 
+	/* XXX What to do if cnt == 0 ? */
+
 	/* Print list of unique vertices and convert from mm to cm. */
-	for (i = 1; i < cnt; i++)
+	for (i = 1; i < cnt; i++)  {
+		register struct vertex_g	*vg;
+		NMG_CK_VERTEX(verts[0][i]);
+		vg = verts[0][i]->vg_p;
+		NMG_CK_VERTEX_G(vg);
 		fprintf(fp_psurf, "%f\t%f\t%f\n",
-			verts[0][i]->vg_p->coord[X] / 10.,
-			verts[0][i]->vg_p->coord[Y] / 10.,
-			verts[0][i]->vg_p->coord[Z] / 10.);
+			vg->coord[X] / 10.,
+			vg->coord[Y] / 10.,
+			vg->coord[Z] / 10.);
+	}
 	fprintf(fp_psurf, ";;\n");
 	jack_faces(r, fp_psurf, verts[0], cnt-1);
 	rt_free((char *)(verts[0]), "heap");
