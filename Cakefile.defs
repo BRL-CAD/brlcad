@@ -1305,43 +1305,54 @@ set -S2 "/bin/sh"
 #	ifndef __sp3__ /* is not defined until we get to cc, so define for use in Cakefile */
 #	define __sp3__
 #	endif
-#	if 0
-#		define SP3_USE_64_BIT
-#	else
-#		define SP3_USE_32_BIT
-#	endif
 #	define	MTYPE	sp3
 #	define	HAS_TCP	1
 #	define	HAS_SYMLINKS 1
 #	define	BSD	44
-#	define	CC	/usr/local/bin/gcc
-#	ifdef	SP3_USE_64_BIT
-/* #		define	FLAG_64	-q64 */
+#	define	CC	cc_r
+#	define  USE_64 1
+#	if USE_64
+#		define CC_OPTS -D__sp3__ -qlanglvl=ansi -q64 -qstrict
 #	else
-/* #		define	FLAG_64	-q32 */
+#		define CC_OPTS -D__sp3__ -qlanglvl=ansi -qstrict
 #	endif
-#	define	CC_OPTS	-D__sp3__ -mminimal-toc 
-/* #	define	CC_OPTS -D__sp3__ -mno-fp-in-toc */
-/* #	define	CC_OPTS	-D__sp3__ -qmaxmem=32768 -qlanglvl=extended */
+#	define LD_OPTS -lc -lm
 #	define	GETHOST	hostname
 #	define	LIBRT_TIMER	timerunix
-#	define	OPTIMIZER	-O3
+#	if BUILD_OPTIMIZED
+#		define OPTIMIZER -O5
+#	endif
+#	if USE_64
+#		define GFLAG -q64
+#		define LDFLAGS -q64 LD_OPTS
+#	else
+#		define LDFLAGS LD_OPTS
+#	endif
 /*	BUILD_SHARED is not quite working yet, so set BUILD_SHARED to 0 */
 /*	to get a static build (but it's over 600 MBytes installed) */
 #	if BUILD_SHARED
+#		define	RESOLVE_LIBRARIES
 /* 		-fPIC ignored for AIX (all code is position independent) */
 /*		define	CC_DEFS	-fPIC	*/
 #		define	ARCH_SUF	so
 #		define	LIBVERS	../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	/usr/local/bin/gcc -shared -Wl,-G -o
+/*#		define	BUILD_LIBRARY	cc -G -L LIBDIR:/usr/lib -o*/
+#		if USE_64
+#			define	LDSHARED	ldAix.sh /bin/ld -b64 -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry -lc -lm
+#		else
+#			define	LDSHARED	ldAix.sh /bin/ld -b32 -bhalt:4 -bM:SRE -bE:lib.exp -H512 -T512 -bnoentry -lc -lm
+
+#		endif
+#		define	BUILD_LIBRARY	LDSHARED -o
+/*#		define	EXTRA_OBJ_NO_DEPENDENCY	-lX11 -lpthread -lm -lc */
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lpthreads -Wl,-G
+#		define	STANDARD_LIBES	-Wl,-G -L LIBDIR:/usr/lib -lm -lc
 /* #		define	LD_OPTS		GFLAG	*/
 #	else
 #		define	ARCH_SUF	a
 #		define	LIBVERS	../sh/newvers.sh
 #		define	RANLIB	ranlib5.sh
-#		define	STANDARD_LIBES	-lm -lpthreads
+#		define	STANDARD_LIBES	-lc -lm -lpthreads 
 /* #		define	STANDARD_LIBES	-lm -lmalloc	*/
 /* #		define	LD_OPTS		GFLAG	*/
 #	endif
