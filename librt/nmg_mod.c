@@ -56,8 +56,8 @@ CONST int		simplify;
 {
 	struct model	*m;
 	int		len;
-	int		*flags1;
-	int		*flags2;
+	char		*flags1;
+	char		*flags2;
 	struct faceuse	*fu1;
 	struct faceuse	*fu2;
 	struct face	*f1;
@@ -67,10 +67,10 @@ CONST int		simplify;
 
 	NMG_CK_SHELL(s);
 	m = nmg_find_model( &s->l.magic );
-	len = sizeof(int) * m->maxindex;
-	flags1 = (int *)rt_calloc( sizeof(int), m->maxindex,
+	len = sizeof(char) * m->maxindex * 2;
+	flags1 = (char *)rt_calloc( sizeof(char), m->maxindex * 2,
 		"nmg_shell_coplanar_face_merge flags1[]" );
-	flags2 = (int *)rt_calloc( sizeof(int), m->maxindex,
+	flags2 = (char *)rt_calloc( sizeof(char), m->maxindex * 2,
 		"nmg_shell_coplanar_face_merge flags2[]" );
 
 	/* Visit each face in the shell */
@@ -104,6 +104,9 @@ CONST int		simplify;
 
 			fg2 = f2->fg_p;
 			NMG_CK_FACE_G(fg2);
+
+			if( fu2->fumate_p == fu1 || fu1->fumate_p == fu2 )
+				rt_bomb("nmg_shell_coplanar_face_merge() mate confusion\n");
 
 			/* See if face geometry is shared & same direction */
 			if( fg1 != fg2 || f1->flip != f2->flip )  {
