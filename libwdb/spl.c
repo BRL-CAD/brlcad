@@ -74,7 +74,7 @@ double	res;
 int
 mk_bsurf( filep, srf )
 FILE	* filep;
-struct snurb * srf;
+struct face_g_snurb * srf;
 {
 	union record rec;
 	dbfloat_t	*kp;		/* knot vector area */
@@ -84,8 +84,8 @@ struct snurb * srf;
 	register int	i;
 	int		n;
 
-	if( srf->u_knots.k_size != srf->s_size[RT_NURB_SPLIT_COL] + srf->order[0] ||
-	    srf->v_knots.k_size != srf->s_size[RT_NURB_SPLIT_ROW] + srf->order[1]) {
+	if( srf->u.k_size != srf->s_size[RT_NURB_SPLIT_COL] + srf->order[0] ||
+	    srf->v.k_size != srf->s_size[RT_NURB_SPLIT_ROW] + srf->order[1]) {
 	    	fprintf(stderr,"mk_bsurf:  mis-matched knot/mesh/order\n");
 	    	return(-1);
 	}
@@ -93,15 +93,15 @@ struct snurb * srf;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.d.d_id = ID_BSURF;
 
-	n = srf->u_knots.k_size + srf->v_knots.k_size;
+	n = srf->u.k_size + srf->v.k_size;
 	n = ((n * sizeof(dbfloat_t)) + sizeof(rec)-1) / sizeof(rec);
 	kp = (dbfloat_t *)malloc(n*sizeof(rec));
 	bzero( (char *)kp, n*sizeof(rec) );
 	rec.d.d_nknots = n;
 	rec.d.d_order[RT_NURB_SPLIT_ROW] = srf->order[RT_NURB_SPLIT_ROW];	/* [0] */
 	rec.d.d_order[RT_NURB_SPLIT_COL] = srf->order[RT_NURB_SPLIT_COL];	/* [1] */
-	rec.d.d_kv_size[RT_NURB_SPLIT_ROW] = srf->u_knots.k_size;
-	rec.d.d_kv_size[RT_NURB_SPLIT_COL] = srf->v_knots.k_size;
+	rec.d.d_kv_size[RT_NURB_SPLIT_ROW] = srf->u.k_size;
+	rec.d.d_kv_size[RT_NURB_SPLIT_COL] = srf->v.k_size;
 
 	n = srf->s_size[RT_NURB_SPLIT_ROW] * srf->s_size[RT_NURB_SPLIT_COL] *
 	    RT_NURB_EXTRACT_COORDS(srf->pt_type);
@@ -115,10 +115,10 @@ struct snurb * srf;
 
 	/* Reformat the knot vectors */
 	dbp = kp;
-	for( i=0; i<srf->u_knots.k_size; i++ )
-		*dbp++ = srf->u_knots.knots[i];
-	for( i=0; i<srf->v_knots.k_size; i++ )
-		*dbp++ = srf->v_knots.knots[i];
+	for( i=0; i<srf->u.k_size; i++ )
+		*dbp++ = srf->u.knots[i];
+	for( i=0; i<srf->v.k_size; i++ )
+		*dbp++ = srf->v.knots[i];
 
 	/* Reformat the mesh */
 	dbp = mp;
