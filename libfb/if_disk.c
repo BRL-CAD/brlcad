@@ -17,20 +17,9 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include <stdio.h>
+#include <fcntl.h>
 #include "fb.h"
 #include "./fblocal.h"
-
-#ifndef O_CREAT
-#ifdef O_RDONLY
-#undef O_RDONLY
-#undef O_WRONLY
-#undef O_RDWR
-#undef O_NDELAY
-#undef O_APPEND
-#endif
-#include <sys/types.h>
-#include <sys/file.h>
-#endif
 
 #define FILE_CMAP_ADDR	((long) ifp->if_width*ifp->if_height\
 			*sizeof(Pixel))
