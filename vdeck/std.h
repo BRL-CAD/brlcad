@@ -25,14 +25,6 @@ typedef int	bool;			/* Boolean data */
 #define 	false	0
 #define 	true	1
 
-typedef unsigned char	u_char;		/* unsigned integer types */
-typedef unsigned short	u_short;
-#ifdef	pdp11
-typedef long		u_long;		/* (not in Ritchie compiler) */
-#else
-typedef unsigned long	u_long;
-#endif
-
 typedef char	*pointer;		/* generic pointer (void *) */
 
 #define	const		/* nothing */	/* (undefine for ANSI C) */
