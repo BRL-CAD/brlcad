@@ -152,12 +152,8 @@ proc hoc_dialog { w index } {
     if [info exists hoc_data($index)] {
 	set subject [lindex $hoc_data($index) 0]
 	set description [lindex $hoc_data($index) 1]
-    } else {
-	set subject "Information not found"
-	set description "No information was found for $index"
+	cad_dialog $w.hocDialog $screen $subject $description info 0 Dismiss
     }
-
-    cad_dialog $w.hocDialog $screen $subject $description info 0 Dismiss
 }
 
 # hoc_menu_callback --
