@@ -2117,6 +2117,15 @@ struct rt_tol *tol;
 	struct hitmiss *a_hit;
 	int hit_count = 0;
 
+	VUNITIZE(rp->r_dir);
+	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
+
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
+		rt_log("nmg_ray_vs_shell(pt(%g %g %g), dir(%g %g %g))\n",
+			V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
+	}
+
 	memset(&ap, 0, sizeof(struct application));
 
 	ap.a_resource = &rt_uniresource;
@@ -2124,7 +2133,6 @@ struct rt_tol *tol;
 
 	rd.rd_m = nmg_find_model( &s->l.magic );
 	rd.manifolds = nmg_manifolds(rd.rd_m);
-
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( rp->r_dir[X], SQRT_SMALL_FASTF ) )  {
@@ -2167,7 +2175,7 @@ struct rt_tol *tol;
 	}
 
 	/* count the number of hits */
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 		rt_log("%s[%d]: shell Hits:\n", __FILE__, __LINE__);
 	}
 
@@ -2175,11 +2183,11 @@ struct rt_tol *tol;
 		RT_LIST_DEQUEUE( &a_hit->l );
 		if (a_hit->hit.hit_dist >= 0.0) {
 			hit_count++;
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+			if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 				rt_log("Positive direction hit\n");
 				nmg_rt_print_hitmiss(a_hit);
 			}
-		} else if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
+		} else if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
 			rt_log("Negative direction hit\n");
 			nmg_rt_print_hitmiss(a_hit);
 		}
@@ -2189,5 +2197,7 @@ struct rt_tol *tol;
 	/* free the hitmiss table */
 	rt_free( (char *)rd.hitmiss, "free nmg geom hit list");
 
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
+		rt_log("nmg_ray_vs_shell() returns %d\n", hit_count);
 	return hit_count;
 }
