@@ -138,7 +138,7 @@ namespace eval RtWizard {
 	#
 	# Run rt
 	#
-	rtCmd $fcp $fb $w $h
+	rtCmd $hp $fb $w $h
 
 	#
 	# Run RtEdge

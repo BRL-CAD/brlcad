@@ -546,7 +546,6 @@ namespace eval RtWizard {
     #                    based on the status variables
     # 
     itcl::body Wizard::updateRenderMenu {} {
-	puts "updateRenderMenu entered"
 	
 	if {[llength $statusVariables] == 0} {
 	    return 
@@ -554,12 +553,12 @@ namespace eval RtWizard {
 
 	set state 1
 	foreach var $statusVariables {
-
-
+	    
+	    #
+	    # Retrieve the value of the variable whose name is
+	    # stored in $var.
+	    #
 	    upvar #0 $var val
-
-	    puts "var = $var"
-	    puts "val = $val"
 
 	    if { $state == 1 && $val == 1} {
 		set state 1
@@ -569,11 +568,9 @@ namespace eval RtWizard {
 	}
 	
 	if {$state == 1} {
-	    puts "Activating Render Menu"
 	    $itk_component(menubar) menuconfigure render \
 		    -state normal
 	} else {
-	    puts "Deactivating Render Menu"
 	    $itk_component(menubar) menuconfigure render \
 		    -state disabled
 	}
