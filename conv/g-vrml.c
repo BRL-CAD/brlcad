@@ -116,10 +116,10 @@ static int	regions_converted = 0;
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
 static int
-select_lights( tsp, pathp, curtree, client_data )
+select_lights( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-union tree			*curtree;
+CONST struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
 	struct directory *dp;
@@ -163,13 +163,13 @@ genptr_t			client_data;
 }
 
 static int
-select_non_lights( tsp, pathp, curtree, client_data )
+select_non_lights( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-union tree			*curtree;
+CONST struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
-	return( !select_lights( tsp, pathp, curtree ) );
+	return( !select_lights( tsp, pathp, combp, client_data ) );
 }
 
 /*
