@@ -215,14 +215,163 @@ typedef long bitv_t;
 // assume only one processor for now
 #define MAX_PSW	4
 #define DEFAULT_PSW	1
-//#define PARALLEL	0
-#define IEEE_FLOAT 	1
-#define LITTLE_ENDIAN	1
-#define MAX_FASTF	1.00E+74
-#define SQRT_MAX_FASTF	1.00E+37
-#define SMALL_FASTF	1.00E-74
-#define SQRT_SMALL_FASTF	1.00E-37
-#define SMALL SQRT_SMALL_FASTF
+#define PARALLEL	1
+#define MALLOC_NOT_MP_SAFE 1
+#endif
+
+#ifdef ipsc860
+/********************************
+ *				*
+ *   Intel iPSC/860 Hypercube	*
+ *				*
+ ********************************/
+/* icc compiler gets confused on const typedefs */
+#define	const	/**/
+#define	const	/**/
+#define MALLOC_NOT_MP_SAFE 1
+#endif
+
+#if defined(SUNOS) && SUNOS >= 50
+/********************************
+ *				*
+ *   Sun Running Solaris 2.X    *
+ *   aka SunOS 5.X              *
+ *				*
+ ********************************/
+
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define MAX_PSW		256	/* need to increase this for Super Dragon? */
+#define DEFAULT_PSW	bu_avail_cpus()
+#define PARALLEL	1
+
+#endif
+
+#if defined(hppa) 
+/********************************
+ *				*
+ *   HP 9000/700                *
+ *   Running HP-UX 9.1          *
+ *				*
+ ********************************/
+
+#define IEEE_FLOAT 1		/* Uses IEEE style floating point */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* static|auto, for serial|parallel cpu */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define const   /**/            /* Does not support const keyword */
+#define const   /**/            /* Does not support const keyword */
+
+#define MAX_PSW		1	/* only one processor, max */
+#define DEFAULT_PSW	1
+#define MALLOC_NOT_MP_SAFE 1
+
+#endif
+
+#ifdef __ppc__
+/********************************
+ *                              *
+ *      Macintosh PowerPC       *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
+typedef double  fastf_t;        /* double|float, "Fastest" float type */
+#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
+#define FAST    register        /* LOCAL|register, for fastest floats */
+typedef long    bitv_t;         /* could use long long */
+#define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
+#define MAX_PSW         512       /* Unused, but useful for thread debugging */
+#define DEFAULT_PSW     bu_avail_cpus()	/* use as many as we can */
+#define PARALLEL        1
+/* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
+#endif
+
+#ifdef __sp3__
+/********************************
+ *                              *
+ *      IBM SP3                 *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
+typedef double  fastf_t;        /* double|float, "Fastest" float type */
+#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
+#define FAST    register        /* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#if 1	/* Multi-CPU SP3 build */
+#	define MAX_PSW		32     	/* they can go 32-way per single image */
+#	define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are configured by default */
+#	define	PARALLEL	1
+#	define	HAS_POSIX_THREADS	1
+#	define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
+#else	/* 1 CPU SP3 build */
+#	define MAX_PSW		1	/* only one processor, max */
+#	define DEFAULT_PSW	1
+#endif
+
+#endif
+
+#ifdef linux
+/********************************
+ *                              *
+ *        Linux on IA32         *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1      /* Uses IEEE style floating point */
+#define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
+
+typedef double fastf_t;       /* double|float, "Fastest" float type */
+typedef long bitv_t;          /* could use long long */
+
+/*
+ * Note that by default a Linux installation supports parallel using
+ * pthreads. For a 1 cpu installation, toggle these blocks
+ */
+# if 1 /* multi-cpu linux build */
+
+# define LOCAL auto             /* static|auto, for serial|parallel cpu */
+# define FAST register          /* LOCAL|register, for fastest floats */
+# define MAX_PSW         16
+# define DEFAULT_PSW     bu_avail_cpus()	/* use as many processors as are available */
+# define PARALLEL        1
+# define HAS_POSIX_THREADS 1    /* formerly in conf.h */
+# define MALLOC_NOT_MP_SAFE 1   /* uncertain, but this is safer for now */
+
+# else  /* 1 CPU Linux build */
+
+# define LOCAL static		/* static|auto, for serial|parallel cpu */
+# define FAST LOCAL		/* LOCAL|register, for fastest floats */
+# define MAX_PSW        1	/* only one processor, max */
+# define DEFAULT_PSW	1
+
+# endif
+#endif /* linux */
+
+#ifndef LOCAL
+/********************************
+ *				*
+ * Default 32-bit uniprocessor	*
+ *  VAX, Gould, SUN, SGI	*
+ *				*
+ ********************************/
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	static		/* static|auto, for serial|parallel cpu */
+#define FAST	LOCAL		/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define MAX_PSW		4	/* allow for a dual core dual */
+#define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are available by default */ 
+
 #endif
 
 /*
@@ -283,6 +432,9 @@ typedef long bitv_t;
 
 #if defined(WIN32)
 #	define hypot _hypot
+#endif
+#if defined(SUNOS) && SUNOS >= 52
+        extern double hypot(double, double);
 #endif
 
 #endif

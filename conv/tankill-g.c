@@ -16,7 +16,7 @@
  *	The BRL-CAD Pacakge" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army
+ *	This software is Copyright (C) 1993-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -168,13 +168,13 @@ char *argv[];
         tol.para = 1 - tol.perp;
 
 	in_fp = stdin;
-	polysolids = 0;
+	polysolids = 1;
 	input_file = (char *)NULL;
 	id_root = (struct comp_idents *)NULL;
 	bu_ptbl_init( &faces , 64, " &faces ");
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "vkpt:i:o:x:X:")) != EOF)
+	while ((c = getopt(argc, argv, "vknt:i:o:x:X:")) != EOF)
 	{
 		switch( c )
 		{
@@ -194,8 +194,8 @@ char *argv[];
 			case 'k': /* keep component codes of 1001 */
 				keep_1001 = 1;
 				break;
-			case 'p': /* choose polysolid output */
-				polysolids = 1;
+			case 'n': /* choose NMG output */
+				polysolids = 0;
 				break;
 			case 't': /* tolerance */
 				tol.dist = atof( optarg );

@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1995 by the United States Army
+ *	This software is Copyright (C) 1995-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -837,7 +837,7 @@ bn_cmd_random(ClientData clientData,
 		  char **argv)
 {
 	int val;
-	char *str;
+	const char *str;
 	double rnd;
 	char buf[32];
 
@@ -898,33 +898,34 @@ Tcl_Interp *interp;
 	struct math_func_link *mp;
 
 	for (mp = math_funcs; mp->name != NULL; mp++) {
-		(void)Tcl_CreateCommand(interp, mp->name, bn_math_cmd,
+		(void)Tcl_CreateCommand(interp, mp->name,
+		    (Tcl_CmdProc *)bn_math_cmd,
 		    (ClientData)mp->func, /* Function-to-Object pointer cast */
 		    (Tcl_CmdDeleteProc *)NULL);
 	}
 
 	(void)Tcl_CreateCommand(interp, "bn_noise_perlin",
-		bn_cmd_noise_perlin, (ClientData)NULL,
+		(Tcl_CmdProc *)bn_cmd_noise_perlin, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_noise_turb",
-		bn_cmd_noise, (ClientData)NULL,
+		(Tcl_CmdProc *)bn_cmd_noise, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_noise_fbm",
-		bn_cmd_noise, (ClientData)NULL,
+		(Tcl_CmdProc *)bn_cmd_noise, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_noise_slice",
-		bn_cmd_noise_slice, (ClientData)NULL,
+		(Tcl_CmdProc *)bn_cmd_noise_slice, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_common_file_size",
-		bn_cmd_common_file_size, (ClientData)NULL,
+		(Tcl_CmdProc *)bn_cmd_common_file_size, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_random",
-		bn_cmd_random, (ClientData)NULL,
+		(Tcl_CmdProc *)bn_cmd_random, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
 

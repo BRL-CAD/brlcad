@@ -82,9 +82,11 @@ char	**argv;
 	long	errors = 0, skipped = 0;
 	name[16] = '\0';
 
-        /* XXX These need to be improved */
+	/* this tolerance structure is only used for converting polysolids to BOT's
+	 * use zero distance to avoid losing any polysolid facets
+	 */
         tol.magic = BN_TOL_MAGIC;
-        tol.dist = 0.005;
+        tol.dist = 0.0;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
@@ -161,7 +163,7 @@ char	**argv;
 	db_dirbuild( dbip );
 
         if( (strcmp( dbip->dbi_title, "Untitled v4 BRL-CAD Database" )==0) && (dbip->dbi_version == 4) ) {
-          dbip->dbi_title="Untitled BRL-CAD Database";
+		dbip->dbi_title=bu_strdup( "Untitled BRL-CAD Database" );
         }
 	db_update_ident( fp->dbip, dbip->dbi_title, dbip->dbi_local2base );
 
@@ -249,60 +251,3 @@ char	**argv;
 	fprintf(stderr, "%ld objects failed to convert\n", errors);
 	return 0;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -18,7 +18,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -421,7 +421,7 @@ static int dmo_open_tcl(
 
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dmop->dmo_name),
-				dmo_cmd,
+				(Tcl_CmdProc *)dmo_cmd,
 				(ClientData)dmop,
 				dmo_deleteProc);
 

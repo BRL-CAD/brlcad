@@ -10,6 +10,10 @@
 
 #include "../Cakefile.defs"
 
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -lpthread -brtl -L../.libtcl8.4.sp3 -ltcl8.4
+#endif
+
 #define FILES	\
 	badmagic bitv bomb \
 	convert association \
@@ -21,7 +25,7 @@
 	rb_rotate rb_search rb_walk		\
 	vfont brlcad_path xdr lex \
 	vls htond htonf units bu_tcl color cmd \
-	cmdhist cmdhist_obj observer avs hook mro fopen_uniq
+	cmdhist cmdhist_obj observer avs hook mro fopen_uniq hash
 
 #define VERSION_VARIABLE	bu_version
 #define LIBRARY_TITLE		"The BRL-CAD Utility Library"

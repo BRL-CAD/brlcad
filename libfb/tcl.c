@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1997 by the United States Army
+ *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 
@@ -95,7 +95,7 @@ int
 Fb_Init(interp)
      Tcl_Interp *interp;
 {
-	char *version_number;
+	const char *version_number;
 
 	/* register commands */
 	bu_register_cmds(interp, cmdtab);

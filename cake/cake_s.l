@@ -266,7 +266,10 @@ reg	char	text[];
 				return;
 			}
 		} else {
-			printf("cake: Don't grok %s\n", text);
+/* XXX - quell the annoying blather about not groking since apple gcc 3.3
+ * outputs a pragma gcc for each file that it cannot grok.
+ *			printf("cake: Don't grok %s\n", text);
+ */
 			return;
 		}
 	}

@@ -16,7 +16,7 @@
  *      The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 1998 by the United States Army
+ *      This software is Copyright (C) 1998-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 
@@ -27,11 +27,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include "png.h"
 #include "machine.h"
 #include "externs.h"			/* For getopt */
 #include "bu.h"
 #include "fb.h"
-#include "png.h"
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
@@ -208,6 +208,10 @@ char **argv;
 	bit_depth = png_get_bit_depth( png_p, info_p );
 	if( bit_depth == 16 )
 		png_set_strip_16( png_p );
+
+	if (color_type == PNG_COLOR_TYPE_GRAY ||
+	    color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb(png_p);
 
 	file_width = png_get_image_width( png_p, info_p );
 	file_height = png_get_image_height( png_p, info_p );

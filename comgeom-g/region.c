@@ -9,7 +9,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -76,7 +76,7 @@ getregion()
 	int	op;
 	int	reg_reg_flag;
 	int	reg_num;
-	char	inst_name[32];
+	char	*inst_name=NULL;
 	int	inst_num;
 	char *cp;
 
@@ -110,7 +110,7 @@ top:
 				return(-1);
 			}
 
-			namecvt( reg_num, wmp[reg_num].wm_name, 'r' );
+			namecvt( reg_num, &(wmp[reg_num].wm_name), 'r' );
 		} else {
 			if( getline( rcard, sizeof(rcard), "region card" ) == EOF )  {
 				printf("getregion: premature EOF\n");
@@ -188,12 +188,13 @@ top:
 
 			/* In Gift5, regions can reference regions */
 			if( reg_reg_flag )
-				namecvt(inst_num, inst_name, 'r');
+				namecvt(inst_num, &inst_name, 'r');
 			else
-				namecvt( inst_num, inst_name, 's' );
+				namecvt( inst_num, &inst_name, 's' );
 			reg_reg_flag = 0;
 
 			(void)mk_addmember( inst_name, &wmp[reg_num].l, NULL, op );
+			bu_free( inst_name, "inst_name" );
 		}
 	}
 
@@ -258,10 +259,6 @@ region_register( reg_num, id, air, mat, los )
 {
 	register struct wmember	*wp;
 
-#if 0
-printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
-#endif
-
 	wp = &wmp[reg_num];
 	if( RT_LIST_IS_EMPTY( &wp->l ) )  {
 		if( verbose )  {
@@ -273,7 +270,6 @@ printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 		}
 		return;
 	}
-
 	mk_lrcomb( outfp, wp->wm_name, wp, 1,
 		"", "", (unsigned char *)0, id, air, mat, los, 0 );
 		/* Add region to the one group that it belongs to. */
@@ -331,7 +327,7 @@ char	*name;
 	wp = &groups[ngroups].grp_wm;
 
 	sprintf( nbuf, "%s%s", name, name_it );
-	strncpy( wp->wm_name, nbuf, sizeof(wp->wm_name) );
+	wp->wm_name = bu_strdup( nbuf );
 
 	RT_LIST_INIT( &wp->l );
 

@@ -142,7 +142,7 @@ int ir_mapping = IR_OFF;	/* IR mapping.				*/
 int lgt_db_size = 0;		/* Current size of light data base.	*/
 int li;				/* Number of lines in window.		*/
 int max_bounce = 0;		/* Recursion level for raytracer.	*/
-int npsw = DEFAULT_PSW;		/* Number of worker PSWs to run.	*/
+int npsw = 1;			/* Number of worker PSWs to run.	*/
 int pix_buffered = B_LINE;	/* Scan line buffering is default.	*/
 int query_region = false;	/* If (true) spit out region info.	*/
 int report_overlaps = true;	/* If (false) shut-up about overlaps.	*/

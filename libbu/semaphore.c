@@ -138,7 +138,11 @@ struct bu_semaphores {
 #endif	/* SUNOS */
 
 #if defined(HAS_POSIX_THREADS)
+#ifdef __sp3__
+#	include	<unistd.h>
+#else
 #	include <sys/unistd.h>
+#endif
 #	include <pthread.h>
 struct bu_semaphores {
 	long	magic;

@@ -352,7 +352,8 @@ const char	*str;
 	unsigned	len;
 	genptr_t	ret;
 
-	ret = bu_malloc( (len = nelem*elsize), str );
+	len = nelem*elsize;
+	ret = bu_malloc( len, str );
 	bzero( ret, len );
 	return ret;
 }

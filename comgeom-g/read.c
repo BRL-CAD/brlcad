@@ -16,7 +16,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1989-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 
 extern FILE	*infp;
 
@@ -112,11 +113,12 @@ int	len;
 /*		N A M E C V T	 */
 void
 namecvt( n, cp, c )
-register char *cp;
+register char **cp;
 register int n;
+char c;
 {
-	static char str[32];
+	char str[16];
 
-	sprintf( str, "%c%d%s", c, n, name_it );
-	strncpy( cp, str, 16 );		/* truncate str to 16 chars.*/
+	sprintf( str, "%c%d%.13s", c, n, name_it );
+	*cp = bu_strdup( str );
 }

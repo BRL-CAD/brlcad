@@ -36,6 +36,8 @@ extern "C" {
  * win/makefile.vc	(not patchlevel)
  * README		(sections 0 and 1)
  * mac/README		(not patchlevel)
+ * macosx/Wish.pbproj/project.pbxproj
+ * 			(14 LOC total, 4 LOC patch)
  * win/README		(not patchlevel)
  * unix/README		(not patchlevel)
  * unix/tk.spec		(3 LOC Major/Minor, 2 LOC patch)
@@ -47,18 +49,18 @@ extern "C" {
 
 #define TK_MAJOR_VERSION   8
 #define TK_MINOR_VERSION   4
-#define TK_RELEASE_LEVEL   TCL_ALPHA_RELEASE
-#define TK_RELEASE_SERIAL  3
+#define TK_RELEASE_LEVEL   TCL_FINAL_RELEASE
+#define TK_RELEASE_SERIAL  6
 
 #define TK_VERSION	"8.4"
-#define TK_PATCH_LEVEL	"8.4a3"
+#define TK_PATCH_LEVEL	"8.4.6"
 
 /*
  * The following definitions set up the proper options for Macintosh
  * compilers.  We use this method because there is no autoconf equivalent.
  */
 
-#ifdef MAC_TCL
+#if defined(MAC_TCL) || defined(MAC_OSX_TK)
 #   ifndef REDO_KEYSYM_LOOKUP
 #	define REDO_KEYSYM_LOOKUP
 #   endif
@@ -66,19 +68,30 @@ extern "C" {
 
 #ifndef _TCL
 #   include <tcl.h>
+#   if (TCL_MAJOR_VERSION != 8) || (TCL_MINOR_VERSION != 4)
+#	error Tk 8.4 must be compiled with tcl.h from Tcl 8.4
+#   endif
 #endif
 
 /* 
- * A special definition used to allow this header file to be included 
- * in resource files.
+ * A special definition used to allow this header file to be included
+ * from windows or mac resource files so that they can obtain version
+ * information.  RC_INVOKED is defined by default by the windows RC tool
+ * and manually set for macintosh.
+ *
+ * Resource compilers don't like all the C stuff, like typedefs and
+ * procedure declarations, that occur below, so block them out.
  */
-
-#ifndef RESOURCE_INCLUDED
-
+    
+#ifndef RC_INVOKED
+    
 #ifndef _XLIB_H
-#   ifdef MAC_TCL
+#   if defined (MAC_TCL)
 #	include <Xlib.h>
 #	include <X.h>
+#   elif defined(MAC_OSX_TK)
+#	include <X11/Xlib.h>
+#	include <X11/X.h>
 #   else
 #	include <X11/Xlib.h>
 #   endif
@@ -116,12 +129,15 @@ typedef struct Tk_PostscriptInfo_ *Tk_PostscriptInfo;
 typedef struct Tk_TextLayout_ *Tk_TextLayout;
 typedef struct Tk_Window_ *Tk_Window;
 typedef struct Tk_3DBorder_ *Tk_3DBorder;
+typedef struct Tk_Style_ *Tk_Style;
+typedef struct Tk_StyleEngine_ *Tk_StyleEngine;
+typedef struct Tk_StyledElement_ *Tk_StyledElement;
 
 /*
  * Additional types exported to clients.
  */
 
-typedef char *Tk_Uid;
+typedef CONST char *Tk_Uid;
 
 /*
  * The enum below defines the valid types for Tk configuration options
@@ -146,7 +162,8 @@ typedef enum {
     TK_OPTION_PIXELS,
     TK_OPTION_WINDOW,
     TK_OPTION_END,
-    TK_OPTION_CUSTOM
+    TK_OPTION_CUSTOM,
+    TK_OPTION_STYLE
 } Tk_OptionType;
 
 /*
@@ -318,7 +335,7 @@ typedef struct Tk_SavedOptions {
 #ifndef __NO_OLD_CONFIG
 
 typedef int (Tk_OptionParseProc) _ANSI_ARGS_((ClientData clientData,
-	Tcl_Interp *interp, Tk_Window tkwin, char *value, char *widgRec,
+	Tcl_Interp *interp, Tk_Window tkwin, CONST84 char *value, char *widgRec,
 	int offset));
 typedef char *(Tk_OptionPrintProc) _ANSI_ARGS_((ClientData clientData,
 	Tk_Window tkwin, char *widgRec, int offset,
@@ -349,9 +366,9 @@ typedef struct Tk_ConfigSpec {
 				 * table must have type TK_CONFIG_END. */
     char *argvName;		/* Switch used to specify option in argv.
 				 * NULL means this spec is part of a group. */
-    char *dbName;		/* Name for option in option database. */
-    char *dbClass;		/* Class for option in database. */
-    char *defValue;		/* Default value for option if not
+    Tk_Uid dbName;		/* Name for option in option database. */
+    Tk_Uid dbClass;		/* Class for option in database. */
+    Tk_Uid defValue;		/* Default value for option if not
 				 * specified in command line or database. */
     int offset;			/* Where in widget record to store value;
 				 * use Tk_Offset macro to generate values
@@ -715,10 +732,27 @@ typedef XActivateDeactivateEvent XDeactivateEvent;
     (((Tk_FakeWin *) (tkwin))->flags & TK_MAPPED)
 #define Tk_IsTopLevel(tkwin) \
     (((Tk_FakeWin *) (tkwin))->flags & TK_TOP_LEVEL)
+#define Tk_HasWrapper(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->flags & TK_HAS_WRAPPER)
+#define Tk_WinManaged(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->flags & TK_WIN_MANAGED)
+#define Tk_TopWinHierarchy(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->flags & TK_TOP_HIERARCHY)
 #define Tk_ReqWidth(tkwin)		(((Tk_FakeWin *) (tkwin))->reqWidth)
 #define Tk_ReqHeight(tkwin)		(((Tk_FakeWin *) (tkwin))->reqHeight)
+/* Tk_InternalBorderWidth is deprecated */
 #define Tk_InternalBorderWidth(tkwin) \
-    (((Tk_FakeWin *) (tkwin))->internalBorderWidth)
+    (((Tk_FakeWin *) (tkwin))->internalBorderLeft)
+#define Tk_InternalBorderLeft(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->internalBorderLeft)
+#define Tk_InternalBorderRight(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->internalBorderRight)
+#define Tk_InternalBorderTop(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->internalBorderTop)
+#define Tk_InternalBorderBottom(tkwin) \
+    (((Tk_FakeWin *) (tkwin))->internalBorderBottom)
+#define Tk_MinReqWidth(tkwin)		(((Tk_FakeWin *) (tkwin))->minReqWidth)
+#define Tk_MinReqHeight(tkwin)		(((Tk_FakeWin *) (tkwin))->minReqHeight)
 #define Tk_Parent(tkwin)		(((Tk_FakeWin *) (tkwin))->parentPtr)
 #define Tk_Colormap(tkwin)		(((Tk_FakeWin *) (tkwin))->atts.colormap)
 
@@ -764,11 +798,16 @@ typedef struct Tk_FakeWin {
     char *dummy14;		/* geomMgrPtr */
     ClientData dummy15;		/* geomData */
     int reqWidth, reqHeight;
-    int internalBorderWidth;
+    int internalBorderLeft;
     char *dummy16;		/* wmInfoPtr */
     char *dummy17;		/* classProcPtr */
     ClientData dummy18;		/* instanceData */
     char *dummy19;		/* privatePtr */
+    int internalBorderRight;
+    int internalBorderTop;
+    int internalBorderBottom;
+    int minReqWidth;
+    int minReqHeight;
 } Tk_FakeWin;
 
 /*
@@ -776,9 +815,7 @@ typedef struct Tk_FakeWin {
  *
  * TK_MAPPED:			1 means window is currently mapped,
  *				0 means unmapped.
- * TK_TOP_LEVEL:		1 means this is a top-level window (it
- *				was or will be created as a child of
- *				a root window).
+ * TK_TOP_LEVEL:		1 means this is a top-level widget.
  * TK_ALREADY_DEAD:		1 means the window is in the process of
  *				being destroyed already.
  * TK_NEED_CONFIG_NOTIFY:	1 means that the window has been reconfigured
@@ -830,6 +867,18 @@ typedef struct Tk_FakeWin {
  *				special Unix menubar windows.
  * TK_ANONYMOUS_WINDOW:		1 means that this window has no name, and is
  *				thus not accessible from Tk.
+ * TK_HAS_WRAPPER		1 means that this window has a wrapper window
+ * TK_WIN_MANAGED		1 means that this window is a child of the
+ *				root window, and is managed by the window
+ *				manager.
+ * TK_TOP_HIERARCHY		1 means this window is at the top of a
+ *				physical window hierarchy within this
+ *				process, i.e. the window's parent
+ *				either doesn't exist or is not owned by
+ *				this Tk application.
+ * TK_PROP_PROPCHANGE		1 means that PropertyNotify events in
+ *				this window's children should propagate
+ *				up to this window.
  */
 
 
@@ -848,6 +897,10 @@ typedef struct Tk_FakeWin {
 #define TK_WRAPPER		0x1000
 #define TK_REPARENTED		0x2000
 #define TK_ANONYMOUS_WINDOW	0x4000
+#define TK_HAS_WRAPPER		0x8000
+#define TK_WIN_MANAGED		0x10000
+#define TK_TOP_HIERARCHY	0x20000
+#define TK_PROP_PROPCHANGE	0x40000
 
 /*
  *--------------------------------------------------------------
@@ -1254,6 +1307,15 @@ typedef struct Tk_PhotoImageBlock {
 } Tk_PhotoImageBlock;
 
 /*
+ * The following values control how blocks are combined into photo
+ * images when the alpha component of a pixel is not 255, a.k.a. the
+ * compositing rule.
+ */
+
+#define TK_PHOTO_COMPOSITE_OVERLAY	0
+#define TK_PHOTO_COMPOSITE_SET		1
+
+/*
  * Procedure prototypes and structures used in reading and
  * writing photo images:
  */
@@ -1340,6 +1402,77 @@ EXTERN void		Tk_CreateOldPhotoImageFormat _ANSI_ARGS_((
 #define Tk_CreatePhotoImageFormat Tk_CreateOldPhotoImageFormat
 #endif
 
+
+/*
+ *--------------------------------------------------------------
+ *
+ * Procedure prototypes and structures used for managing styles:
+ *
+ *--------------------------------------------------------------
+ */
+
+/*
+ * Style support version tag.
+ */
+#define TK_STYLE_VERSION_1      0x1
+#define TK_STYLE_VERSION        TK_STYLE_VERSION_1
+
+/*
+ * The following structures and prototypes are used as static templates to
+ * declare widget elements.
+ */
+
+typedef void (Tk_GetElementSizeProc) _ANSI_ARGS_((ClientData clientData,
+        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
+        int width, int height, int inner, int *widthPtr, int *heightPtr));
+typedef void (Tk_GetElementBoxProc) _ANSI_ARGS_((ClientData clientData,
+        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
+        int x, int y, int width, int height, int inner, int *xPtr, int *yPtr,
+        int *widthPtr, int *heightPtr));
+typedef int (Tk_GetElementBorderWidthProc) _ANSI_ARGS_((ClientData clientData,
+        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin));
+typedef void (Tk_DrawElementProc) _ANSI_ARGS_((ClientData clientData,
+        char *recordPtr, CONST Tk_OptionSpec **optionsPtr, Tk_Window tkwin,
+        Drawable d, int x, int y, int width, int height, int state));
+
+typedef struct Tk_ElementOptionSpec {
+    char *name;                 /* Name of the required option. */
+    Tk_OptionType type;         /* Accepted option type. TK_OPTION_END means
+                                 * any. */
+} Tk_ElementOptionSpec;
+
+typedef struct Tk_ElementSpec {
+    int version;                /* Version of the style support. */
+    char *name;                 /* Name of element. */
+    Tk_ElementOptionSpec *options;
+                                /* List of required options. Last one's name
+                                 * must be NULL. */
+
+    /*
+     * Hooks
+     */
+
+    Tk_GetElementSizeProc *getSize;
+                                /* Compute the external (resp. internal) size of
+                                 * the element from its desired internal (resp.
+                                 * external) size. */
+    Tk_GetElementBoxProc *getBox;
+                                /* Compute the inscribed or bounding boxes
+                                 * within a given area. */
+    Tk_GetElementBorderWidthProc *getBorderWidth;
+                                /* Return the element's internal border width.
+                                 * Mostly useful for widgets. */
+    Tk_DrawElementProc *draw;   /* Draw the element in the given bounding box.*/
+} Tk_ElementSpec;
+
+/*
+ * Element state flags. Can be OR'ed.
+ */
+
+#define TK_ELEMENT_STATE_ACTIVE         1<<0
+#define TK_ELEMENT_STATE_DISABLED       1<<1
+#define TK_ELEMENT_STATE_FOCUS          1<<2
+#define TK_ELEMENT_STATE_PRESSED        1<<3
 
 /*
  *--------------------------------------------------------------
@@ -1443,14 +1576,34 @@ typedef int (Tk_SelectionProc) _ANSI_ARGS_((ClientData clientData,
 #include "tkDecls.h"
 
 /*
+ * Allow users to say that they don't want to alter their source to
+ * add the extra argument to Tk_PhotoPutBlock(); DO NOT DEFINE THIS
+ * WHEN BUILDING TK.
+ *
+ * This goes after the inclusion of the stubbed-decls so that the
+ * declarations of what is actually there can be correct.
+ */
+
+#ifdef USE_COMPOSITELESS_PHOTO_PUT_BLOCK
+#   ifdef Tk_PhotoPutBlock
+#	undef Tk_PhotoPutBlock
+#   endif
+#   define Tk_PhotoPutBlock		Tk_PhotoPutBlock_NoComposite
+#   ifdef Tk_PhotoPutZoomedBlock
+#	undef Tk_PhotoPutZoomedBlock
+#   endif
+#   define Tk_PhotoPutZoomedBlock	Tk_PhotoPutZoomedBlock_NoComposite
+#endif /* USE_COMPOSITELESS_PHOTO_PUT_BLOCK */
+
+/*
  * Tcl commands exported by Tk:
  */
 
 
-#endif /* RESOURCE_INCLUDED */
-
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
+
+#endif /* RC_INVOKED */
 
 /*
  * end block for C++

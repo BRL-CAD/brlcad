@@ -135,7 +135,7 @@ char	*argv[];
 	fpin = stdin;
 	efile = NULL;
 	bfile = "euclid.g";
-	polysolids = 0;
+	polysolids = 1;
 	debug = 0;
 
         tol.magic = BN_TOL_MAGIC;
@@ -146,7 +146,7 @@ char	*argv[];
 
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "d:vi:o:px:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "d:vi:o:nx:X:")) != EOF) {
 		switch (c) {
 		case 'd':
 			tol.dist = atof( optarg );
@@ -168,8 +168,8 @@ char	*argv[];
 		case 'o':
 			bfile = optarg;
 			break;
-		case 'p':
-			polysolids = 1;
+		case 'n':
+			polysolids = 0;
 			break;
 		case 'x':
 			sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -250,7 +250,7 @@ int		reg_id;
 
 	sprintf(sname, "%s.s", id);
 	if( polysolids )
-		write_shell_as_polysolid( fpout , sname , s );
+		mk_bot_from_nmg( fpout , sname , s );
 	else
 	{
 		int something_left=1;
@@ -452,7 +452,7 @@ int reg_id;
 		}
 
 		if( polysolids )
-			write_shell_as_polysolid( fpout, sol_name, shells[shell_no] );
+			mk_bot_from_nmg( fpout, sol_name, shells[shell_no] );
 		else
 		{
 			struct model *m_tmp;

@@ -3,7 +3,7 @@
 tankill-g \- TANKILL Translator (TANKILL to BRL-CAD)
 .SH SYNOPSIS
 .B tankill-g
-[-p] [-t tolerance] [-i input_tankill_file] [-o database.g]
+[-n] [-t tolerance] [-i input_tankill_file] [-o database.g]
 .SH DESCRIPTION
 .I tankill-g\^
 converts the specified
@@ -14,9 +14,9 @@ file. The
 .I tolerance
 provided is the maximum distance (in mm) between two
 vertices at which they will be considered to be the same vertex. The
-.I -p
-option provides output in the form of polysolids rather than the
-default which is NMG objects. The
+.I -n
+option provides output in the form of NMG primitives rather than the
+default which is BOT objects. The
 .I input_tankill_file
 is expected to be in the
 .I TANKILL
@@ -25,7 +25,7 @@ a simple triangular patch format where each object is described
 by a series of vertices. Triangular facets are built from the first,
 second, and third vertices; from the second, third, and fourth vertices;
 from the third, fourth and fifth; and so on. Each object is converted
-to a single NMG object which is then placed into its own region and
+to a single BOT object which is then placed into its own region and
 assigned the component code provided in the TANKILL file.
 .SH EXAMPLE
 .RS
@@ -43,4 +43,4 @@ The U. S. Army Research Laboratory
 Aberdeen Proving Ground, MD  21005
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.MIL>.
+mail to <CAD@ARL.ARMY.MIL>.

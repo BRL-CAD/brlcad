@@ -474,7 +474,7 @@ struct rt_bot_internal
 	long		magic;
 	unsigned char	mode;
 	unsigned char	orientation;
-	unsigned char	error_mode;		/* may be used to indicate error handling (ignored for now) */
+	unsigned char	bot_flags;		/* flags, (indicates surface normals available, for example) */
 	int		num_vertices;
 	int		num_faces;
 	int		*faces;			/* array of ints for faces [num_faces*3] */
@@ -486,6 +486,10 @@ struct rt_bot_internal
 						 * in ray direction (if bit is set), otherwise thickness is centered
 						 * about hit point (NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID).
 						 */
+	int		num_normals;
+	fastf_t		*normals;		/* array of unit surface normals [num_normals*3] */
+	int		num_face_normals;	/* current size of the face_normals array below (number of faces in the array) */
+	int		*face_normals;		/* array of indices into the "normals" array, one per face vertex [num_face_normals*3] */
 };
 
 /* orientationss for BOT */
@@ -501,6 +505,11 @@ struct rt_bot_internal
 						 * This is the FASTGEN "plate" mode. Orientation is ignored. */
 #define RT_BOT_PLATE_NOCOS		4	/* same as plate mode, but LOS is set equal to face thickness, not
 						 * the thickness divided by the cosine of the obliquity angle */
+
+/* flags for bot_flags */
+#define RT_BOT_HAS_SURFACE_NORMALS    0x1     /* This primitive may have surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS	      0x2     /* Use the surface normals if they exist */
+#define RT_BOT_USE_FLOATS	      0x4     /* Use the single precision version of "tri_specific" during prep */
 
 #define	RT_BOT_INTERNAL_MAGIC		0x626F7472	/* botr */
 #define RT_BOT_CK_MAGIC(_p)	BU_CKMAG(_p,RT_BOT_INTERNAL_MAGIC,"rt_bot_internal")

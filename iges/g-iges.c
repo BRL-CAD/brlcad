@@ -22,10 +22,8 @@
  *		     zero otherwise.
  */
 
-#ifndef lint
 static const char RCSid[] = "$Header$";
 static const char RCSrev[] = "$Revision$";
-#endif
 
 #include "conf.h"
 
@@ -112,7 +110,6 @@ static FILE	*fp_param;	/* IGES parameter section */
 static struct rt_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
-static mat_t			identity_mat;
 struct db_i		*dbip;
 
 static struct db_tree_state	tree_state;	/* includes tol & model */
@@ -194,8 +191,6 @@ char	*argv[];
 
 	bu_log( "%s", version+5);
 	bu_log( "Please direct bug reports to <acst@arl.army.mil>\n\n" );
-
-	MAT_IDN( identity_mat );
 
 	tree_state = rt_initial_tree_state;	/* struct copy */
 	tree_state.ts_tol = &tol;
@@ -370,7 +365,15 @@ char	*argv[];
 			/* Now walk the same trees again, but only output groups */
 			for( i=1 ; i<argc ; i++ )
 			{
-				dp = db_lookup( dbip , argv[i] , 1 );
+				char *ptr;
+
+				ptr = strrchr( argv[i], '/' );
+				if( ptr != NULL ) {
+					ptr++;
+				} else {
+					ptr = argv[i];
+				}
+				dp = db_lookup( dbip , ptr , 1 );
 				db_functree( dbip , dp , csg_comb_func , 0 , &rt_uniresource , NULL );
 			}
 		}

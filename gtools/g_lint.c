@@ -17,7 +17,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1995 by the United States Army
+ *	This software is Copyright (C) 1995-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -206,8 +206,8 @@ struct g_lint_seg *create_segment ()
  */
 void print_segment (r1name, r2name, seg_length, origin, entrypt, exitpt)
 
-char 	*r1name;
-char 	*r2name;
+const char 	*r1name;
+const char 	*r2name;
 double	seg_length;
 point_t	origin;
 point_t	entrypt;

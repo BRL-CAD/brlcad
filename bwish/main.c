@@ -18,7 +18,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  */
@@ -136,6 +136,13 @@ Cad_AppInit(interp)
 	}
 
 #ifdef BWISH
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
+	  return TCL_ERROR;
+	}
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	  return TCL_ERROR;
+	}
+
 	/* Initialize libdm */
 	if (Dm_Init(interp) == TCL_ERROR) {
 		bu_log("Dm_Init error %s\n", interp->result);

@@ -24,6 +24,10 @@
 
 #include "../Cakefile.defs"
 
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -lX11 -brtl -L../.libbu.sp3 -lbu -L../.libpkg.sp3 -lpkg -L../.libtcl8.4.sp3 -ltcl8.4
+#endif
+
 #ifdef	LIBFB_SETUP
 #define	EXTRA_SETUP	LIBFB_SETUP
 #endif

@@ -18,7 +18,7 @@
  *	The BRL-CAD Package" license agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1998 by the United States Army
+ *	This software is Copyright (C) 1998-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  */
@@ -235,7 +235,7 @@ cho_open_tcl(
 
 		(void)Tcl_CreateCommand(interp,
 					bu_vls_addr(&chop->cho_name),
-					cho_cmd,
+					(Tcl_CmdProc *)cho_cmd,
 					(ClientData)chop,
 					cho_deleteProc);
 

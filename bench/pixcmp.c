@@ -19,7 +19,7 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
+ *	This software is Copyright (C) 1988-2004 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -41,9 +41,11 @@ long	offmany;
 
 char usage[] = "Usage: pixcmp f1.pix f2.pix\n";
 
+int main(int argc, char **argv);
+
+
 int
-main(argc, argv)
-char **argv;
+main(int argc, char **argv)
 {
 	register FILE *f1, *f2;
 

@@ -16,7 +16,7 @@
  *      The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *      This software is Copyright (C) 2001 by the United States Army
+ *      This software is Copyright (C) 2001-2004 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
 static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
