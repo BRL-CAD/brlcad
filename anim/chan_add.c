@@ -31,7 +31,7 @@ char **argv;
 
 	if (argc < 3) {
 		fprintf(stderr,"Usage: chan_add value num_columns column [column ...] < in.file > out.file\n");
-		return;
+		return(-1);
 	}
 
 	sscanf(*(argv+1),"%lf",&addend);

@@ -30,7 +30,7 @@ char **argv;
 
 	if (argc < 4){
 		fprintf(stderr,"Usage: chan_mult factor num_columnss column [col ... ] < in.file > out.file\n");
-		return;
+		return(-1);
 	}
 
 	sscanf(*(argv+1),"%lf",&factor);
