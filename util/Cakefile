@@ -4,6 +4,7 @@
  *  $Header$
  */
 
+#define STATIC_PRODUCTS morphedit.tcl
 #define SRCDIR	util
 #define PRODUCTS	\
 	alias-pix ap-pix asc-pl azel bary buffer dbcp \
