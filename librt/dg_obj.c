@@ -253,12 +253,12 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	}
 
 	/* search for database object */
-	for (BU_LIST_FOR(wdbp, rt_wdb, &HeadWDB.l)) {
+	for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
 		if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
 			break;
 	}
 
-	if (BU_LIST_IS_HEAD(wdbp, &HeadWDB.l)) {
+	if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l)) {
 		Tcl_AppendResult(interp, "dgo_open: bad database object - ", argv[2],
 				 "\n", (char *)NULL);
 		return TCL_ERROR;

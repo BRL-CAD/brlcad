@@ -104,9 +104,6 @@ void wdb_do_list();
 struct directory ** wdb_getspace();
 struct directory *wdb_combadd();
 
-/* XXX move this to rt_g */
-struct rt_wdb HeadWDB;	/* head of BRLCAD database object list */
-
 static struct bu_cmdtab wdb_cmds[] = {
 	"match",	wdb_match_tcl,
 	"get",		wdb_get_tcl,
@@ -172,7 +169,6 @@ int
 Wdb_Init(interp)
      Tcl_Interp *interp;
 {
-	BU_LIST_INIT(&HeadWDB.l);
 	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open_tcl,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
@@ -277,7 +273,7 @@ wdb_open_tcl(clientData, interp, argc, argv)
 
 	if (argc == 1) {
 		/* get list of database objects */
-		for (BU_LIST_FOR(wdbp, rt_wdb, &HeadWDB.l))
+		for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l))
 			Tcl_AppendResult(interp, bu_vls_addr(&wdbp->wdb_name), " ", (char *)NULL);
 
 		return TCL_OK;
@@ -353,7 +349,7 @@ Usage: wdb_open\n\
 	wdbp->wdb_los_default = 100;
 
 	/* append to list of rt_wdb's */
-	BU_LIST_APPEND(&HeadWDB.l,&wdbp->l);
+	BU_LIST_APPEND(&rt_g.rtg_headwdb.l,&wdbp->l);
 
 	/* Instantiate the newprocname, with clientData of wdbp */
 	/* Beware, returns a "token", not TCL_OK. */
