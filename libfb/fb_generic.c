@@ -23,6 +23,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./fblocal.h"
 
+extern char *getenv();
+
 /*
  *		f b _ n u l l
  *
@@ -34,12 +36,35 @@ FBIO *ifp;
 	return	0;
 }
 
+#ifdef IF_REMOTE
+extern FBIO remote_interface;	/* not in list[] */
+#endif
+#ifdef IF_PTTY
+extern FBIO ptty_interface;	/* not in list[] */
+#endif
+
+#ifdef IF_ADAGE
+extern FBIO adage_interface;
+#endif
+#ifdef IF_SUN
+extern FBIO sun_interface;
+#endif
+#ifdef IF_SGI
+extern FBIO sgi_interface;
+#endif
+#ifdef IF_RAT
+extern FBIO rat_interface;
+#endif
+
+extern FBIO debug_interface, disk_interface;	/* Always included */
+
+/* First element of list is default device when no name given */
 static
 FBIO *_if_list[] = {
 #ifdef IF_ADAGE
 	&adage_interface,
 #endif
-#ifdef IF_SUN		/* XXX - perhaps the default should be the first one */
+#ifdef IF_SUN
 	&sun_interface,
 #endif
 #ifdef IF_SGI
@@ -48,20 +73,9 @@ FBIO *_if_list[] = {
 #ifdef IF_RAT
 	&rat_interface,
 #endif
-#ifdef	IF_DEBUG
 	&debug_interface,
-#endif
 	(FBIO *) 0
 };
-
-/* Default device name.	 Very BRL specific!	*/
-#if defined( vax )
-#define FB_DEFAULT_NAME	"/dev/ik0l"
-#else
-#if defined( gould ) || defined( sel )
-#define FB_DEFAULT_NAME	"vgr:/dev/ik0l"
-#endif
-#endif
 
 #define	DEVNAMLEN	80
 
@@ -81,9 +95,12 @@ int	width, height;
 	}
 	if( file == NULL )  {
 		/* No name given, check environment variable first.	*/
-		if( (file = getenv( "FB_FILE" )) == NULL )
-			/* None set, use this host's default device.	*/
-			file = FB_DEFAULT_NAME;
+		if( (file = getenv( "FB_FILE" )) == NULL )  {
+			/* None set, use first device as default */
+			*ifp = *(_if_list[0]);	/* struct copy */
+			file = ifp->if_name;
+			goto found_interface;
+		}
 	}
 	/*
 	 * Determine what type of hardware the device name refers to.
@@ -132,13 +149,7 @@ int	width, height;
 	if( _if_list[i] != (FBIO *)NULL )
 		*ifp = *(_if_list[i]);
 	else {
-#ifdef IF_DISK
 		*ifp = disk_interface;
-#else
-		fb_log( "fb_open : device type \"%s\" wrong.\n", file );
-		free( (void *) ifp );
-		return	FBIO_NULL;
-#endif IF_DISK
 	}
 
 found_interface:

@@ -18,21 +18,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <fcntl.h>
 #include "/vld/moss/src/dmdfb/dmdfb.h"		/* XXX */
 #include "fb.h"
 #include "./fblocal.h"
-
-#ifndef O_CREAT
-#ifdef O_RDONLY
-#undef O_RDONLY
-#undef O_WRONLY
-#undef O_RDWR
-#undef O_NDELAY
-#undef O_APPEND
-#endif
-#include <sys/types.h>
-#include <sys/file.h>
-#endif
 
 #define MAX_DIMENSION	256
 #define CVT2DMD( _i )		((_i)/(ifp->if_width/MAX_DIMENSION)*3)

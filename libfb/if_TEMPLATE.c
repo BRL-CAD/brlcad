@@ -7,9 +7,8 @@
  *  shortname (what you will look it up as).
  * Set the unimplemented functions to "fb_null"
  *  (and remove the skeletons if you're tidy)
- * Go add an "devname_interface" to fblocal.h.
  * Go add an "ifdef IF_devname" to fb_generic.c.
- * Fix the Makefile.
+ * Fix Makefile.loc in 3 places.
  * Replace this header.
  */
 

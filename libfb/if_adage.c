@@ -33,6 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 #include <stdio.h>
 #include <sys/types.h>
+#include <fcntl.h>
+#include "fb.h"
+#include "./fblocal.h"
+#include "./adage.h"
 
 #if defined( BSD )
 #include	<sys/ioctl.h>
@@ -44,22 +48,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include	<sys/ioctl.h>
 #endif
-#endif
-
-#include "fb.h"
-#include "./fblocal.h"
-#include "./adage.h"
-
-#ifndef O_CREAT
-#ifdef O_RDONLY
-#undef O_RDONLY
-#undef O_WRONLY
-#undef O_RDWR
-#undef O_NDELAY
-#undef O_APPEND
-#endif
-#include <sys/types.h>
-#include <sys/file.h>
 #endif
 
 _LOCAL_ int	adage_device_open(),
