@@ -1837,6 +1837,9 @@ char *params;
 	return( 0 );
 }
 
+/*
+ *			B U _ S H A D E R _ T O _ K E Y _ E Q
+ */
 int
 bu_shader_to_key_eq( in, vls )
 char *in;
@@ -1937,9 +1940,7 @@ struct bu_vls *vls;
  *	0	OK
  */
 int
-bu_fwrite_external( fp, ep )
-FILE			*fp;
-CONST struct bu_external *ep;
+bu_fwrite_external( FILE *fp, const struct bu_external *ep )
 {
 	BU_CK_EXTERNAL(ep);
 
@@ -1952,10 +1953,7 @@ CONST struct bu_external *ep;
  *			B U _ H E X D U M P _ E X T E R N A L
  */
 void
-bu_hexdump_external( fp, ep, str )
-FILE			*fp;
-CONST struct bu_external *ep;
-CONST char		*str;
+bu_hexdump_external( FILE *fp, CONST struct bu_external *ep, CONST char *str)
 {
 	const unsigned char	*cp;
 	const unsigned char	*endp;
@@ -1998,8 +1996,7 @@ CONST char		*str;
  *			B U _ F R E E _ E X T E R N A L
  */
 void
-bu_free_external( ep )
-register struct bu_external	*ep;
+bu_free_external( register struct bu_external *ep)
 {
 	BU_CK_EXTERNAL(ep);
 	if( ep->ext_buf )  {
