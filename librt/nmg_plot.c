@@ -30,6 +30,81 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /************************************************************************
  *									*
+ *			Generic VLBLOCK routines			*
+ *									*
+ ************************************************************************/
+
+struct vlblock *
+rt_vlblock_init()
+{
+	struct vlblock *vbp;
+	int	i;
+
+	GETSTRUCT( vbp, vlblock );
+	vbp->count = 32;
+	vbp->cvp = (struct color_vlhead *)rt_malloc(
+		vbp->count * sizeof(struct color_vlhead),
+		"color_vlhead[]");
+
+	for( i=0; i < vbp->count; i++ )  {
+		vbp->cvp[i].rgb = 0;	/* black, unused */
+		vbp->cvp[i].head.vh_first = VL_NULL;
+		vbp->cvp[i].head.vh_last = VL_NULL;
+	}
+	vbp->cvp[0].rgb = 0xFFFF00L;	/* Yellow, default */
+	vbp->cvp[1].rgb = 0xFFFFFFL;	/* White */
+
+	return(vbp);
+}
+
+void
+rt_vlblock_free(vbp)
+struct vlblock *vbp;
+{
+	int	i;
+
+	for( i=0; i < vbp->count; i++ )  {
+		/* Release any remaining vlist storage */
+		if( vbp->cvp[i].rgb == 0 )  continue;
+		if( vbp->cvp[i].head.vh_first == VL_NULL) continue;
+		FREE_VL( vbp->cvp[i].head.vh_first );
+	}
+
+	rt_free( (char *)(vbp->cvp), "color_vlhead[]" );
+	rt_free( (char *)vbp, "vlblock" );
+}
+
+struct vlhead *
+rt_vlblock_find( vbp, r, g, b )
+struct vlblock *vbp;
+int	r, g, b;
+{
+	long	new;
+	int	n;
+
+	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
+
+	/* Map black plots into default color (yellow) */
+	if( new == 0 ) return( &vbp->cvp[0].head );
+
+	for( n=0; n < vbp->count; n++ )  {
+		if( vbp->cvp[n].rgb == 0 )  {
+			/* Allocate empty slot */
+			vbp->cvp[n].rgb = new;
+			return( &vbp->cvp[n].head );
+		}
+		if( vbp->cvp[n].rgb == new )
+			return( &vbp->cvp[n].head );
+	}
+	/*  RGB does not match any existing entry, and table is full.
+	 *  Eventually, enlarge table.
+	 *  For now, just default to yellow.
+	 */
+	return( &vbp->cvp[0].head );
+}
+
+/************************************************************************
+ *									*
  *		NMG to VLIST routines, for MGED interface		*
  *									*
  ************************************************************************/
