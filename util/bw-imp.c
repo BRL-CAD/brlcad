@@ -87,8 +87,8 @@ bool	im_header();
 void	im_write();
 
 char usage[] = "\
-Usage: bw-impress [-h -D] [-s squaresize] [-W width] [-H height]\n\
-	[-t thresh] [file]\n";
+Usage: bw-impress [-h -D] [-s squaresize] [-w width] [-n height]\n\
+	[-t thresh] [file.bw] > impress\n";
 
 bool
 get_args( argc, argv )
@@ -96,7 +96,7 @@ register char	**argv;
 {
 	register int	c;
 
-	while ( (c = getopt( argc, argv, "hDs:H:W:t:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hDs:n:w:t:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -110,10 +110,10 @@ register char	**argv;
 			/* square size */
 			height = width = atoi(optarg);
 			break;
-		case 'H':
+		case 'n':
 			height = atoi(optarg);
 			break;
-		case 'W':
+		case 'w':
 			width = atoi(optarg);
 			break;
 		case 't':
