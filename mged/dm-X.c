@@ -109,6 +109,7 @@ X_fb_open()
   _X24_open_existing(fbp,
 		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		     ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
+		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
 		     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
 		     dmp->dm_width, dmp->dm_height,
