@@ -5476,7 +5476,7 @@ Copy_comb(struct db_i		*dbip,
 	/* copy members */
 	if (comb->tree)
 		db_tree_funcleaf(dbip, comb, comb->tree, Do_copy_membs,
-				 (genptr_t)xform, (genptr_t)interp, (genptr_t)NULL);
+				 (genptr_t)xform, (genptr_t)interp, (genptr_t)wdbp);
 
 	/* Get a use of this object */
 	found = DIR_NULL;
