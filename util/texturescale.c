@@ -16,7 +16,7 @@
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1996 by the United States Army
+ *	This software is Copyright (C) 1997 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
@@ -41,29 +41,12 @@ static FILE		*infp;
 
 static int		fileinput = 0;	/* Is input a file (not stdin)? */
 static int		autosize = 0;	/* Try to guess input dimensions? */
-static int		tol_using_rgb = 1; /* Compare via RGB, not HSV? */
 
 static int		file_width = 512;
 static int		file_height = 512;
 
 static int		solid_type = SPHERE;
 static fastf_t		r1, r2;		/* radii */
-
-#define	COLORS_NEITHER	0
-#define	COLORS_INTERIOR	1
-#define	COLORS_EXTERIOR	2
-#define	COLORS_BOTH	(COLORS_INTERIOR | COLORS_EXTERIOR)
-static int		colors_specified = COLORS_NEITHER;
-
-static unsigned char	border_rgb[3];
-static unsigned char	exterior_rgb[3];
-static unsigned char	interior_rgb[3];
-static unsigned char	rgb_tol[3];
-
-fastf_t			border_hsv[3];
-fastf_t			exterior_hsv[3];
-fastf_t			interior_hsv[3];
-fastf_t			hsv_tol[3];
 
 #define	OPT_STRING	"ahn:s:w:ST:?"
 
@@ -74,30 +57,6 @@ static char usage[] = "\
 Usage: texturescale [-T 'r1 r2' | -S]\n\
                  [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
                  [file.pix]\n";
-
-/*
- *		    R E A D _ R G B ( )
- *
- *	Read in an RGB triple as ints and then (implicitly)
- *	cast them as unsigned chars.
- */
-static int read_rgb (rgbp, buf)
-
-unsigned char	*rgbp;
-char		*buf;
-
-{
-    int		tmp[3];
-    int		i;
-
-    if (sscanf(buf, "%d %d %d", tmp, tmp + 1, tmp + 2) != 3)
-	return (0);
-    for (i = 0; i < 3; ++i)
-	if ((tmp[i] < 0) || (tmp[i] > 255))
-	    return (0);
-    VMOVE(rgbp, tmp);
-    return (1);
-}
 
 /*
  *		    R E A D _ R A D I I ( )
@@ -140,20 +99,6 @@ FILE		*infp;
     *(rp + 3 * (file_width + 1) + GRN) =
     *(rp + 3 * (file_width + 1) + BLU) = 0;
     return (1);
-}
-
-/*
- *		    S A M E _ R G B ( )
- */
-static int same_rgb (color1, color2)
-
-unsigned char	*color1;
-unsigned char	*color2;
-
-{
-    return ((abs(color1[RED] - color2[RED]) <= (int) rgb_tol[RED]) &&
-	    (abs(color1[GRN] - color2[GRN]) <= (int) rgb_tol[GRN]) &&
-	    (abs(color1[BLU] - color2[BLU]) <= (int) rgb_tol[BLU]));
 }
 
 /*
@@ -247,14 +192,18 @@ int	argc;
 char	*argv[];
 
 {
-    char		*outbuf;
-    unsigned char	*inrow[3];
-    int			col_nm;
-    int			i;
-    int			next_row;
-    int			prev_row;
-    int			row_nm;
-    int			this_row;
+    char		*inbuf;		/* The input scanline */
+    char		*outbuf;	/*  "  output    "    */
+    char		*in, *out;	/* Pointers into inbuf and outbuf */
+    fastf_t		twice_r1r2;
+    fastf_t		squares;
+    fastf_t		scale_fac;
+    fastf_t		theta;
+    fastf_t		x;		/* Scale factor for pixel blending */
+    int			i;		/* Pixel index in inbuf */
+    int			j;		/*   "     "    " outbuf */
+    int			row;
+    int			row_width;
 
     if (!get_args( argc, argv ))
     {
@@ -262,16 +211,16 @@ char	*argv[];
 	exit (1);
     }
 
-#if 1
-    if (solid_type == TORUS)
-	(void) fprintf(stderr,
-	    "We'll produce a torus with r1=%g and r2=%g\n", r1, r2);
-    else if (solid_type == SPHERE)
-	(void) fprintf(stderr, "We'll produce a sphere\n");
-    else
-	(void) fprintf(stderr, "Funny type %d\n", solid_type);
-}
-#else
+    if (solid_type == SPHERE)
+    {
+	(void) fprintf(stderr, "Sphere scaling not yet implemented\n");
+	exit (1);
+    }
+    else if (solid_type != TORUS)
+    {
+	(void) fprintf(stderr, "Illegal solid type %d\n", solid_type);
+	exit (0);
+    }
 
     /*
      *	Autosize the input if appropriate
@@ -290,100 +239,67 @@ char	*argv[];
     }
 
     /*
-     *	Allocate a 1-scanline output buffer
-     *	and a circular input buffer of 3 scanlines
+     *	Initialize some runtime constants
+     */
+    twice_r1r2 = 2 * r1 * r2;
+    squares = r1 * r1 + r2 * r2;
+    scale_fac = file_width / (r1 + r2);
+
+    /*
+     *	Allocate 1-scanline buffers for input and output
      */
     outbuf = malloc(3*file_width);
-    for (i = 0; i < 3; ++i)
-	inrow[i] = malloc(3*(file_width + 2));
-    prev_row = 0;
-    this_row = 1;
-    next_row = 2;
+    inbuf  = malloc(3*file_width);
 
     /*
-     *	Initialize previous-row buffer
+     *	Do the filtering
      */
-    for (i = 0; i < 3 * (file_width + 2); ++i)
-	*(inrow[prev_row] + i) = 0;
-
-    /*
-     *	Initialize current- and next-row buffers
-     */
-    if ((! read_row(inrow[this_row], file_width, infp))
-     || (! read_row(inrow[next_row], file_width, infp)))
-    {
-	perror(file_name);
-	(void) fprintf(stderr, "texturescale:  fread() error\n");
-	exit(1);
-    }
-
-    /*
-     *		Do the filtering
-     */
-    for (row_nm = 0; row_nm < file_height; ++row_nm)
+    for (row = 0; row < file_height; ++row)
     {
 	/*
-	 *	Fill the output-scanline buffer
+	 *	Read an input scanline
 	 */
-	if ((row_nm < bottom_edge) || (row_nm > top_edge))
+	if (! read_row(inbuf, file_width, infp))
 	{
-	    if (fwrite(inrow[this_row] + 3, 3, file_width, stdout)
-		!= file_width)
-	    {
-		perror("stdout");
-		exit(2);
-	    }
-	}
-	else
-	{
-	    for (col_nm = 0; col_nm < file_width; ++col_nm)
-	    {
-		unsigned char	*color_ptr;
-
-		if ((col_nm >= left_edge) && (col_nm <= right_edge)
-		 && is_border(inrow[prev_row], inrow[this_row],
-			    inrow[next_row], col_nm))
-		    color_ptr = border_rgb;
-		else
-		    color_ptr = inrow[this_row] + (col_nm + 1) * 3;
-
-		VMOVE(outbuf + col_nm * 3, color_ptr);
-	    }
-
-	    /*
-	     *	Write the output scanline
-	     */
-	    if (fwrite(outbuf, 3, file_width, stdout) != file_width)
-	    {
-		perror("stdout");
-		exit(2);
-	    }
+	    perror(file_name);
+	    (void) fprintf(stderr, "texturescale:  fread() error\n");
+	    exit(1);
 	}
 
 	/*
-	 *	Advance the circular input buffer
+	 *	Determine how much of the input scanline we want
 	 */
-	prev_row = this_row;
-	this_row = next_row;
-	next_row = ++next_row % 3;
+	theta = 2 * M_PI * row / file_height;
+	row_width = scale_fac * sqrt(squares - twice_r1r2 * cos(theta));
+	in = inbuf + ((file_width - row_width) / 2) * 3;
+	out = outbuf;
 
 	/*
-	 *	Grab the next input scanline
+	 *	Scale the input scanline into the output scanline
 	 */
-	if (row_nm < file_height - 2)
+	for (i = j = 1; j <= file_width; ++j)
 	{
-	    if (! read_row(inrow[next_row], file_width, infp))
+	    if (i * file_width < j * row_width)
 	    {
-		perror(file_name);
-		(void) fprintf(stderr, "texturescale:  fread() error\n");
-		exit(1);
+		x = j - (i * file_width) / row_width;
+		VBLEND2(out, (1.0 - x), in, x, in + 3);
+		++i;
+		in += 3;
 	    }
+	    else
+		VMOVE(out, in);
+	    out += 3;
 	}
-	else
-	    for (i = 0; i < 3 * (file_width + 2); ++i)
-		*(inrow[next_row] + i) = 0;
+
+	/*
+	 *	Write the output scanline
+	 */
+	if (fwrite(outbuf, 3, file_width, stdout) != file_width)
+	{
+	    perror("stdout");
+	    exit(2);
+	}
     }
 
     exit (1);
 }
-#endif
