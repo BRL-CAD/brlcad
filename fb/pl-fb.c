@@ -432,6 +432,8 @@ DoFile( )	/* returns vpl status code */
 	register int	c;		/* input character */
 	coords		newpos; 	/* current input coordinates */
 	coords		virpos; 	/* virtual pen position */
+	static unsigned char buf3[6*2];
+	static unsigned char buf2[4*2];
 
 	/* process each frame into a raster image file */
 
@@ -543,20 +545,19 @@ DoFile( )	/* returns vpl status code */
 
 			case 'S':
 				{
-					unsigned char buf[6*2];
 				if( debug )
 					fprintf( stderr,"space3\n");
-				if( fread( (char *)buf,
-					   (int)sizeof buf, 1, pfin)
+				if( fread( (char *)buf3,
+					   (int)sizeof buf3, 1, pfin)
 					   != 1
 				  )
 				  	return Foo( -11 );
 				/* Only need X and Y, ignore Z */
-				space.left  = sxt16((buf[1]<<8) | buf[0]); /* x1 */
-				space.bottom= sxt16((buf[3]<<8) | buf[2]); /* y1 */
+				space.left  = sxt16((buf3[1]<<8) | buf3[0]); /* x1 */
+				space.bottom= sxt16((buf3[3]<<8) | buf3[2]); /* y1 */
 				/* z1 */
-				space.right = sxt16((buf[7]<<8) | buf[6]); /* x2 */
-				space.top   = sxt16((buf[9]<<8) | buf[8]); /* y2 */
+				space.right = sxt16((buf3[7]<<8) | buf3[6]); /* x2 */
+				space.top   = sxt16((buf3[9]<<8) | buf3[8]); /* y2 */
 				/* z2 */
 				goto spacend;
 				}
@@ -565,16 +566,15 @@ DoFile( )	/* returns vpl status code */
 				if( debug )
 					fprintf( stderr,"space\n");
 				{
-					unsigned char buf[4*2];
-				if ( fread( (char *)buf,
-					    (int)sizeof buf, 1, pfin
+				if ( fread( (char *)buf2,
+					    (int)sizeof buf2, 1, pfin
 					  ) != 1
 				   )
 					return Foo( -11 );
-				space.left  = sxt16((buf[1]<<8) | buf[0]); /* x1 */
-				space.bottom= sxt16((buf[3]<<8) | buf[2]); /* y1 */
-				space.right = sxt16((buf[5]<<8) | buf[4]); /* x2 */
-				space.top   = sxt16((buf[7]<<8) | buf[6]); /* y2 */
+				space.left  = sxt16((buf2[1]<<8) | buf2[0]); /* x1 */
+				space.bottom= sxt16((buf2[3]<<8) | buf2[2]); /* y1 */
+				space.right = sxt16((buf2[5]<<8) | buf2[4]); /* x2 */
+				space.top   = sxt16((buf2[7]<<8) | buf2[6]); /* y2 */
 				}
 
 spacend:
