@@ -25,6 +25,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
@@ -32,11 +34,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "wdb.h"
-
-#if defined(SYSV) && !defined(bzero)
-#define bzero(str,n)		memset( str, '\0', n )
-#define bcopy(from,to,count)	memcpy( to, from, count )
-#endif
 
 /* so we don't have to include mat.o */
 static fastf_t ident_mat[16] = {
