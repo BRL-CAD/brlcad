@@ -315,8 +315,7 @@ char	*dp;
 	swp->sw_reflect = ps->reflect;
 	swp->sw_refrac_index = ps->refrac_index;
 	swp->sw_extinction = ps->extinction;
-	if( swp->sw_xmitonly )
-	{
+	if( swp->sw_xmitonly ) {
 		if( swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 			(void)rr_render( ap, pp, swp );
 		return(1);	/* done */
