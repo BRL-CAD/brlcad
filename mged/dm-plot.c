@@ -21,6 +21,7 @@
  *	This software is Copyright (C) 1985 by the United States Army.
  *	All rights reserved.
  */
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
@@ -50,7 +51,7 @@ char *argv[];
 {
   dm_var_init(o_dm_list);
 
-  if((dmp = dm_open(DM_TYPE_PLOT, DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
+  if((dmp = dm_open(DM_TYPE_PLOT, argc, argv)) == DM_NULL)
     return TCL_ERROR;
 
   curr_dm_list->s_info->opp = &pathName;
