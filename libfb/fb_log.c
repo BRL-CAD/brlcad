@@ -16,15 +16,20 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
+#include "conf.h"
+
 #include <stdio.h>
-#if __STDC__ && !apollo
-# include <stdarg.h>
-#else
-# include <varargs.h>
+#ifdef HAVE_STDARG_H
+#	include <stdarg.h>
+#elif HAVE_VARARGS_H
+#	include <varargs.h>
 #endif
+
 #include "machine.h"
 
-#if __STDC__ && !apollo
+#if defined(HAVE_STDARG_H)
+
 /*
  *  			F B _ L O G
  *  
@@ -39,16 +44,9 @@ fb_log( char *fmt, ... )
 	(void)vfprintf( stderr, fmt, ap );
 	va_end(ap);
 }
-#else /* __STDC__ */
 
-#ifdef CRAY1
-void
-fb_log( fmt, a,b,c,d,e,f,g,h,i )
-char	*fmt;
-{
-	fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
-}
-#else
+#elif defined(HAVE_VARARGS_H)
+
 /* VARARGS */
 void
 fb_log( fmt, va_alist )
@@ -56,13 +54,23 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	va_start( ap );
-#if defined(alliant) && defined(i860)
+# ifdef HAVE_VPRINTF
 	(void) vfprintf( stderr, fmt, ap);
-#else
+# else
 	(void) _doprnt( fmt, ap, stderr );
-#endif
+# endif
 	va_end( ap );
 	return;
 	}
+
+#else 
+
+void
+fb_log( fmt, a,b,c,d,e,f,g,h,i )
+char	*fmt;
+{
+	fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
+}
+
 #endif
-#endif /* !__STDC__ */
+
