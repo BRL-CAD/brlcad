@@ -1,4 +1,4 @@
-
+TEST="geometry"
 PRIMITIVES="tor arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc torus vol xxx"
 VER="4 5"
 
@@ -8,7 +8,7 @@ for PRIM in $PRIMITIVES ; do
     echo "Evaluating $PRIM"
     echo "===================="
 
-    rm -f ${PRIM}.*
+    rm -f ${GEOMETRY}.*
 
     if [ "x${PRIM}_IN_ARGS" = "x" ] ; then
         warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
@@ -20,6 +20,9 @@ for PRIM in $PRIMITIVES ; do
         initializeVariable DB_ARGS "${PRIM}_DB_ARGS"
 
         mged -c <<EOF
+#
+# Start MGED script
+#
 
 set glob_compat_mode 0
 
@@ -286,7 +289,7 @@ foreach version { 4 5 } {
 
     set mged_default(db_version) \$version
 
-    opendb ${PRIM}.\$version.g
+    opendb ${TEST}.${PRIM}.\$version.g
 
     set autosize 0
     units mm
@@ -300,13 +303,13 @@ foreach version { 4 5 } {
     #
     set inval "in ${PRIM}.in.s $PRIM $IN_ARGS"
     eval \$inval
-    saveview ${PRIM}.\$version.in.rt
+    saveview ${TEST}.${PRIM}.\$version.in.rt
 
     Z
     viewsize 100 
     ae 35 25
     make ${PRIM}.make.s $PRIM
-    saveview ${PRIM}.\$version.make.rt
+    saveview ${TEST}.${PRIM}.\$version.make.rt
 
     Z
     viewsize 100 
@@ -317,7 +320,7 @@ foreach version { 4 5 } {
     #
     set dbput "db put ${PRIM}.dbput.s $PRIM $DB_ARGS"
     eval \$dbput
-    saveview ${PRIM}.\$version.dbput.rt
+    saveview ${TEST}.${PRIM}.\$version.dbput.rt
 
     Z
     viewsize 100 
@@ -334,33 +337,37 @@ foreach version { 4 5 } {
     viewsize 100 
     ae 35 25
     e ${PRIM}.in.r
-    saveview ${PRIM}.\$version.trans.rt
+    saveview ${TEST}.${PRIM}.\$version.trans.rt
 } 
 
 q
 
+#
+# End MGED script
+#
+
 EOF
 
     for version in $VER ; do
-        echo "Testing v$version database"
-        if [ -f ${PRIM}.${version}.g ] ; then
+        log "Testing v$version database"
+        if [ -f ${TEST}.${PRIM}.${version}.g ] ; then
 
-            [ -f ./${PRIM}.${version}.in.rt ] && ./${PRIM}.${version}.in.rt
-            [ -f ./${PRIM}.${version}.make.rt ] && ./${PRIM}.${version}.make.rt
-            [ -f ./${PRIM}.${version}.dbput.rt ] && ./${PRIM}.${version}.dbput.rt
-            [ -f ./${PRIM}.${version}.trans.rt ] && ./${PRIM}.${version}.trans.rt
-            echo "	Done raytracing"
+            [ -f ./${TEST}.${PRIM}.${version}.in.rt ] && ./${TEST}.${PRIM}.${version}.in.rt
+            [ -f ./${TEST}.${PRIM}.${version}.make.rt ] && ./${TEST}.${PRIM}.${version}.make.rt
+            [ -f ./${TEST}.${PRIM}.${version}.dbput.rt ] && ./${TEST}.${PRIM}.${version}.dbput.rt
+            [ -f ./${TEST}.${PRIM}.${version}.trans.rt ] && ./${TEST}.${PRIM}.${version}.trans.rt
+            log "	Done raytracing"
         
-            echo "	Converting to ascii (g2asc)"
-            g2asc ${PRIM}.${version}.g ${PRIM}.asc
-            echo "	Converting to binary (asc2g)"
-            asc2g ${PRIM}.asc ${PRIM}.${version}.asc2g.g
-            echo "	Database diffing (g_diff)"
-            g_diff -f ${PRIM}.${version}.asc2g.g ${PRIM}.5.g
+            log "	Converting to ascii (g2asc)"
+            g2asc ${TEST}.${PRIM}.${version}.g ${TEST}.${PRIM}.asc
+            log "	Converting to binary (asc2g)"
+            asc2g ${TEST}.${PRIM}.asc ${TEST}.${PRIM}.${version}.asc2g.g
+            log "	Database diffing (g_diff)"
+            g_diff -f ${TEST}.${PRIM}.${version}.asc2g.g ${TEST}.${PRIM}.5.g
         else
-            echo "ERROR: No v$version database was created"
+            bomb "No v$version database was created"
         fi
-        echo "Done testing $version database"
+        log "Done testing $version database"
 
     done  
     # end loop over vers
