@@ -227,7 +227,7 @@ TSDIRS=". mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
 HTML_DIRS="html/manuals html/manuals/shaders html/manuals/Anim_Tutorial html/manuals/libdm html/manuals/mged html/manuals/mged/animmate html/ReleaseNotes html/ReleaseNotes/Rel5.0 html/ReleaseNotes/Rel5.0/Summary"
 INSTALL_ONLY_DIRS="sample_applications $HTML_DIRS"
-PROE_DIRS="sun4_solaris sgi_elf2 text text/fullhelp text/menus"
+PROE_DIRS=". sun4_solaris sgi_elf2 text text/fullhelp text/menus"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
