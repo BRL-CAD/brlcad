@@ -51,6 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "rtgeom.h"
 #include "./ged.h"
 #include "./dm.h"
 
@@ -64,7 +65,7 @@ int		newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern int	maxargs;	/* size of cmd_args[] */
 extern char	*cmd_args[];	/* array of pointers to args */
-char		**promp;	/* pointer to a pointer to a char */
+char		**promp;	/* the prompt string */
 
 char *p_half[] = {
 	"Enter X, Y, Z of outward pointing normal vector: ",
@@ -557,28 +558,18 @@ char		*sol;
 /*
  *			A R S _ I N
  */
-
-/* XXX this should come from a header file.  Must match librt/g_ars.c */
-/* The internal (in memory) form of an ARS */
-struct ars_internal {
-	int	magic;
-	int	ncurves;
-	int	pts_per_curve;
-	fastf_t	**curves;
-};
-#define RT_ARS_INTERNAL_MAGIC	0x77ddbbe3
-
 int
 ars_in( argc, argv, intern )
 int			argc;
 char			**argv;
 struct rt_db_internal	*intern;
 {
-	struct ars_internal	*arip;
-	int			i;
+	register struct rt_ars_internal	*arip;
+	register int			i;
 	int			total_points;
 	int			cv;	/* current curve (waterline) # */
 	int			axis;	/* current fastf_t in waterline */
+	int			ncurves_minus_one;
 
 	while (args < 5) {
 		(void)printf("%s", p_ars[args-3]);
@@ -590,8 +581,8 @@ struct rt_db_internal	*intern;
 
 	RT_INIT_DB_INTERNAL( intern );
 	intern->idb_type = ID_ARS;
-	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct ars_internal), "ars_internal");
-	arip = (struct ars_internal *)intern->idb_ptr;
+	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ars_internal), "rt_ars_internal");
+	arip = (struct rt_ars_internal *)intern->idb_ptr;
 	arip->magic = RT_ARS_INTERNAL_MAGIC;
 
 	if ((arip->pts_per_curve = atoi(cmd_args[3])) < 3 ||
@@ -600,7 +591,8 @@ struct rt_db_internal	*intern;
 		return(1);
 	}
 	printf("Waterlines: %d, curve points: %d\n", arip->ncurves, arip->pts_per_curve);
-	/* */
+	ncurves_minus_one = arip->ncurves - 1;
+
 	total_points = arip->ncurves * arip->pts_per_curve;
 
 	arip->curves = (fastf_t **)rt_malloc(
@@ -643,7 +635,7 @@ struct rt_db_internal	*intern;
 
 	/* go get the waterline points from the user */
 	while( cv < arip->ncurves )  {
-		if (cv < arip->ncurves-1)
+		if (cv < ncurves_minus_one)
 			(void)printf("%s for Waterline %d, Point %d : ",
 				p_ars[5+axis%3], cv, axis/3 );
 		else
@@ -664,13 +656,13 @@ struct rt_db_internal	*intern;
 				cv++;
 			}
 		}
-		if( cv >= arip->ncurves-1 && axis >= ELEMENTS_PER_PT )  break;
+		if( cv >= ncurves_minus_one && axis >= ELEMENTS_PER_PT )  break;
 	}
 
 	/* The first point is duplicated across the last curve */
 	for (i=1 ; i < arip->pts_per_curve ; ++i) {
-		VMOVE( arip->curves[arip->ncurves-1]+3*i,
-			arip->curves[arip->ncurves-1] );
+		VMOVE( arip->curves[ncurves_minus_one]+3*i,
+			arip->curves[ncurves_minus_one] );
 	}
 	return(0);
 }
