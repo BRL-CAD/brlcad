@@ -76,7 +76,7 @@ register FILE *plotfp;
 register char *s;
 {
 	putc( 'f', plotfp );
-	while( *s != NULL )
+	while( *s )
 		putc( *s++, plotfp );
 	putc( '\n', plotfp );
 }
@@ -107,7 +107,7 @@ register FILE *plotfp;
 register char *s;
 {
 	putc( 't', plotfp );
-	while( *s != NULL )
+	while( *s )
 		putc( *s++, plotfp );
 	putc( '\n', plotfp );
 }
