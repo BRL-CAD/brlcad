@@ -334,11 +334,13 @@ double			mm2local;
 		arip->ncurves, arip->pts_per_curve );
 	bu_vls_strcat( str, buf );
 
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		arip->curves[0][X] * mm2local,
-		arip->curves[0][Y] * mm2local,
-		arip->curves[0][Z] * mm2local );
-	bu_vls_strcat( str, buf );
+	if( arip->ncurves > 0 ) {
+		sprintf(buf, "\tV (%g, %g, %g)\n",
+			arip->curves[0][X] * mm2local,
+			arip->curves[0][Y] * mm2local,
+			arip->curves[0][Z] * mm2local );
+		bu_vls_strcat( str, buf );
+	}
 
 	if( !verbose )  return(0);
 
@@ -1369,6 +1371,12 @@ char			**argv;
 						if( *ptr == '{' || *ptr == '}' )
 							*ptr = ' ';
 						ptr++;
+					}
+					if( !ars->curves[i] ) {
+						ars->curves[i] = (fastf_t *)bu_calloc(
+								  ars->pts_per_curve * 3,
+								  sizeof( fastf_t ),
+								  "ars->curves[i]" );
 					}
 					if( tcl_list_to_fastf_array( interp, argv[1],
 						   &ars->curves[i],
