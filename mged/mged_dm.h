@@ -21,7 +21,6 @@
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
-#define TRY_NEW_MGED_VARS 0
 #define DO_NEW_EDIT_MATS
 
 struct device_values  {
@@ -34,12 +33,39 @@ extern int dm_pipe[];
 
 #define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
 
-#define ALT_MOUSE_MODE_IDLE 0
-#define ALT_MOUSE_MODE_ROTATE 1 
-#define ALT_MOUSE_MODE_TRANSLATE 2
-#define ALT_MOUSE_MODE_ZOOM 3
+#define ALT_IDLE 0
+#define ALT_ROT 1 
+#define ALT_TRAN 2
+#define ALT_ZOOM 3
+#define ALT_ADC 4
+#define ALT_CON_ROT_X 5
+#define ALT_CON_ROT_Y 6
+#define ALT_CON_ROT_Z 7
+#define ALT_CON_TRAN_X 8
+#define ALT_CON_TRAN_Y 9
+#define ALT_CON_TRAN_Z 10
+#define ALT_CON_XADC 11
+#define ALT_CON_YADC 12
+#define ALT_CON_ANG1 13
+#define ALT_CON_ANG2 14
+#define ALT_CON_TICK 15
 
-#define VIEW_TABLE_SIZE 5    /* enough to hold the menu's view selections */
+#define IS_CONSTRAINED_ROT(_mode) ( \
+	(_mode) == ALT_CON_ROT_X || \
+	(_mode) == ALT_CON_ROT_Y || \
+	(_mode) == ALT_CON_ROT_Z )
+
+#define IS_CONSTRAINED_TRAN(_mode) ( \
+	(_mode) == ALT_CON_TRAN_X || \
+	(_mode) == ALT_CON_TRAN_Y || \
+	(_mode) == ALT_CON_TRAN_Z )
+
+struct view_list {
+  struct bu_list l;
+  mat_t   vrot_mat;
+  fastf_t vscale;
+  int     vid;
+};
 
 struct shared_info {
   fastf_t _Viewscale;
@@ -54,9 +80,9 @@ struct shared_info {
   mat_t   _model2objview;
   mat_t   _objview2model;
 
-  mat_t	  _viewrot_table[VIEW_TABLE_SIZE];
-  fastf_t _viewscale_table[VIEW_TABLE_SIZE];
-  int	  _current_view;
+  struct view_list _headView;
+  struct view_list *_current_view;
+  struct view_list *_last_view;
 
 /* Angle/distance cursor stuff */
   int	  _dv_xadc;
@@ -73,16 +99,28 @@ struct shared_info {
   fastf_t _adc_a2_deg;
 
 /* Rate stuff */
+  int     _rateflag_model_tran;
+  vect_t  _rate_model_tran;
+
+  int     _rateflag_model_rotate;
+  vect_t  _rate_model_rotate;
+  char    _rate_model_origin;
+
   int	  _rateflag_tran;
   vect_t  _rate_tran;
 
   int	  _rateflag_rotate;
   vect_t  _rate_rotate;
+  char    _rate_origin;
 	
   int	  _rateflag_scale;
   fastf_t _rate_scale;
 
+  int     _rateflag_azimuth;
+  fastf_t _rate_azimuth;
+
 /* Absolute stuff */
+  vect_t  _absolute_model_tran;
   vect_t  _absolute_tran;
   vect_t  _absolute_rotate;
   vect_t  _last_absolute_rotate;
@@ -93,11 +131,6 @@ struct shared_info {
 
   int _dmaflag;
   int _rc;         /* reference count */
-
-#if TRY_NEW_MGED_VARS
-  /* Tcl variable names for mged_variables */
-  struct bu_vls mged_variable_names[27];
-#endif
 
   /* Tcl variable names for display info */
   struct bu_vls _aet_name;
@@ -110,9 +143,11 @@ struct shared_info {
   struct bu_vls _rate_tran_vls[3];
   struct bu_vls _rate_rotate_vls[3];
   struct bu_vls _rate_scale_vls;
+  struct bu_vls _rate_azimuth_vls;
   struct bu_vls _absolute_tran_vls[3];
   struct bu_vls _absolute_rotate_vls[3];
   struct bu_vls _absolute_scale_vls;
+  struct bu_vls _absolute_azimuth_vls;
   struct bu_vls _xadc_vls;
   struct bu_vls _yadc_vls;
   struct bu_vls _ang1_vls;
@@ -123,6 +158,13 @@ struct shared_info {
   struct bu_vls *opp;
 };
 
+struct menu_vars {
+  int _menuflag;
+  int _menu_top;
+  int _cur_menu;
+  int _cur_menu_item;
+  struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
+};
 
 struct dm_list {
   struct bu_list l;
@@ -131,18 +173,15 @@ struct dm_list {
 /* New stuff to allow more than one active display manager */
   struct shared_info *s_info;  /* info that can be used by display managers that are tied */
   int _dirty;      /* true if received an expose or configuration event */
+  int _mapped;
   int _owner;      /* true if owner of the shared info */
   int _am_mode;    /* alternate mouse mode */
   int _ndrawn;
   double _frametime;/* time needed to draw last frame */
   struct bu_vls _fps_name;
   struct cmd_list *aim;
-  struct  _mged_variables _mged_variables;
-  struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
-  int _menuflag;
-  int _menu_top;
-  int _cur_menu;
-  int _cur_menu_item;
+  struct _mged_variables _mged_variables;
+  struct menu_vars *menu_vars;
 
 /* Slider stuff */
   int _scroll_top;
@@ -171,6 +210,7 @@ extern struct dm_list *curr_dm_list;
 #define tkName dmp->dm_tkName
 #define dName dmp->dm_dName
 #define dirty curr_dm_list->_dirty
+#define mapped curr_dm_list->_mapped
 #define owner curr_dm_list->_owner
 #define am_mode curr_dm_list->_am_mode
 #define ndrawn curr_dm_list->_ndrawn
@@ -181,18 +221,21 @@ extern struct dm_list *curr_dm_list;
 #define cmd_hook curr_dm_list->_cmd_hook
 #define state_hook curr_dm_list->_state_hook
 #define viewpoint_hook curr_dm_list->_viewpoint_hook
-
-#if 0
-#define mged_variables curr_dm_list->s_info->_mged_variables
-#else
 #define mged_variables curr_dm_list->_mged_variables
-#endif
 
+#if 1
+#define menu_array curr_dm_list->menu_vars->_menu_array
+#define menuflag curr_dm_list->menu_vars->_menuflag
+#define menu_top curr_dm_list->menu_vars->_menu_top
+#define cur_menu curr_dm_list->menu_vars->_cur_menu
+#define cur_item curr_dm_list->menu_vars->_cur_menu_item
+#else
 #define menu_array curr_dm_list->_menu_array
 #define menuflag curr_dm_list->_menuflag
 #define menu_top curr_dm_list->_menu_top
 #define cur_menu curr_dm_list->_cur_menu
 #define cur_item curr_dm_list->_cur_menu_item
+#endif
 
 #define curs_x curr_dm_list->s_info->_curs_x
 #define curs_y curr_dm_list->s_info->_curs_y
@@ -207,6 +250,13 @@ extern struct dm_list *curr_dm_list;
 #define dv_2adc curr_dm_list->s_info->_dv_2adc
 #define dv_distadc curr_dm_list->s_info->_dv_distadc
 
+#define rate_model_tran curr_dm_list->s_info->_rate_model_tran
+#define rate_model_rotate curr_dm_list->s_info->_rate_model_rotate
+#define rate_model_origin curr_dm_list->s_info->_rate_model_origin
+#define rateflag_model_tran curr_dm_list->s_info->_rateflag_model_tran
+#define rateflag_model_rotate curr_dm_list->s_info->_rateflag_model_rotate
+#define absolute_model_tran curr_dm_list->s_info->_absolute_model_tran
+
 #define rateflag_slew curr_dm_list->s_info->_rateflag_tran
 #define rateflag_tran curr_dm_list->s_info->_rateflag_tran
 #define rate_slew curr_dm_list->s_info->_rate_tran
@@ -215,11 +265,14 @@ extern struct dm_list *curr_dm_list;
 #define absolute_tran curr_dm_list->s_info->_absolute_tran
 #define rateflag_rotate curr_dm_list->s_info->_rateflag_rotate
 #define rate_rotate curr_dm_list->s_info->_rate_rotate
+#define rate_origin curr_dm_list->s_info->_rate_origin
 #define absolute_rotate curr_dm_list->s_info->_absolute_rotate
 #define last_absolute_rotate curr_dm_list->s_info->_last_absolute_rotate
 #define rateflag_zoom curr_dm_list->s_info->_rateflag_scale
 #define rate_zoom curr_dm_list->s_info->_rate_scale
 #define absolute_zoom curr_dm_list->s_info->_absolute_scale
+#define rate_azimuth curr_dm_list->s_info->_rate_azimuth
+#define rateflag_azimuth curr_dm_list->s_info->_rateflag_azimuth
 
 #define Viewscale curr_dm_list->s_info->_Viewscale
 #define i_Viewscale curr_dm_list->s_info->_i_Viewscale
@@ -229,9 +282,9 @@ extern struct dm_list *curr_dm_list;
 #define view2model curr_dm_list->s_info->_view2model
 #define model2objview curr_dm_list->s_info->_model2objview
 #define objview2model curr_dm_list->s_info->_objview2model
-#define viewrot_table curr_dm_list->s_info->_viewrot_table
-#define viewscale_table curr_dm_list->s_info->_viewscale_table
+#define headView curr_dm_list->s_info->_headView
 #define current_view curr_dm_list->s_info->_current_view
+#define last_view curr_dm_list->s_info->_last_view
 
 #define rot_x curr_dm_list->s_info->_rot_x
 #define rot_y curr_dm_list->s_info->_rot_y
@@ -253,29 +306,23 @@ extern struct dm_list *curr_dm_list;
 #define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
 #define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
 #define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
+#define rate_azimuth_vls curr_dm_list->s_info->_rate_azimuth_vls
 #define absolute_tran_vls curr_dm_list->s_info->_absolute_tran_vls
 #define absolute_rotate_vls curr_dm_list->s_info->_absolute_rotate_vls
 #define absolute_scale_vls curr_dm_list->s_info->_absolute_scale_vls
+#define absolute_azimuth_vls curr_dm_list->s_info->_absolute_azimuth_vls
 #define xadc_vls curr_dm_list->s_info->_xadc_vls
 #define yadc_vls curr_dm_list->s_info->_yadc_vls
 #define ang1_vls curr_dm_list->s_info->_ang1_vls
 #define ang2_vls curr_dm_list->s_info->_ang2_vls
 #define distadc_vls curr_dm_list->s_info->_distadc_vls
 
-#if 0
-#define scroll_top curr_dm_list->s_info->_scroll_top
-#define scroll_active curr_dm_list->s_info->_scroll_active
-#define scroll_y curr_dm_list->s_info->_scroll_y
-#define scroll_edit curr_dm_list->s_info->_scroll_edit
-#define scroll_array curr_dm_list->s_info->_scroll_array
-#else
 #define scroll_top curr_dm_list->_scroll_top
 #define scroll_active curr_dm_list->_scroll_active
 #define scroll_y curr_dm_list->_scroll_y
 #define scroll_edit curr_dm_list->_scroll_edit
 #define scroll_array curr_dm_list->_scroll_array
 #define scroll_edit_vls curr_dm_list->_scroll_edit_vls
-#endif
 
 #define last_v_axes curr_dm_list->_last_v_axes
 
