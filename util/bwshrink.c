@@ -6,7 +6,6 @@
  *	h	help
  */
 #include <stdio.h>
-#include <malloc.h>
 #include <sys/types.h>
 #ifdef BSD
 #include <strings.h>
@@ -14,6 +13,7 @@
 #ifdef SYSV
 #include <string.h>
 #endif
+#include "externs.h"
 
 /* declarations to support use of getopt() system call */
 char *options = "uhs:w:n:f:";
