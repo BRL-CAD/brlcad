@@ -123,9 +123,10 @@ matp_t old_xlate;
 
 	/* Read all the member records */
 	i = sizeof(union record) * (dp->d_len-1);
+	if( i <= 0 )  return;				/* OK */
 	if( (members = (union record *)malloc(i)) == (union record *)0  )  {
 		fprintf(stderr,"drawHobj:  %s malloc failure\n", dp->d_namep);
-	    	return;
+	    	return;					/* ERROR */
 	}
 	db_getmany( dp, members, 1, dp->d_len-1 );
 
@@ -138,7 +139,7 @@ matp_t old_xlate;
 			fprintf(stderr,"drawHobj:  %s bad member rec\n",
 				dp->d_namep);
 			free( (char *)members );
-			return;
+			return;				/* ERROR */
 		}
 		cur_path[pathpos] = dp;
 		if( regmemb > 0  ) { 
