@@ -274,7 +274,7 @@ unsigned char	*pp;
 	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
 		int	bytes = ifp->if_width*ifp->if_height*3;
 		if( v[RED] == 0 )
-			bzero( cp, bytes );		/* all black */
+			bzero( (char *)cp, bytes );	/* all black */
 		else
 			memset( cp, v[RED], bytes );	/* all grey */
 	} else {
