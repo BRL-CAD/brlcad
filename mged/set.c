@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"
+#include "./sedit.h"
 #include "./ged.h"
 #include "./dm.h"
 
@@ -269,6 +270,9 @@ char *argv[];
 static void
 set_view()
 {
+  point_t model_pos;
+  point_t new_pos;
+
   /* save current view */
   mat_copy(viewrot_table[current_view], Viewrot);
 
@@ -285,10 +289,20 @@ set_view()
             current_view = VIEW_TABLE_SIZE - 1;
   }
 
+  if(EDIT_TRAN)
+    MAT4X3PNT(model_pos, view2model, absolute_slew);
+
   /* restore previously saved view and Viewscale */
   mat_copy(Viewrot, viewrot_table[current_view]);
   Viewscale = viewscale_table[current_view];
   new_mats();
+
+  if(EDIT_TRAN){
+    MAT4X3PNT(absolute_slew, model2view, model_pos);
+  }else{
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }
 }
 
 static void
