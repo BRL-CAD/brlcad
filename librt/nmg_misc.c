@@ -3867,7 +3867,6 @@ CONST struct rt_tol *tol;
 	struct edgeuse *eu,*eu1;
 	struct edge_g *eg;
 	struct model *m;
-	struct nmg_ptbl shells;
 	vect_t e_dir;
 	long *flags;
 
@@ -3877,23 +3876,54 @@ CONST struct rt_tol *tol;
 	m = nmg_find_model( &mv_eu->l.magic );
 	NMG_CK_MODEL( m );
 
-	/* keep a list of affected shells */
-	nmg_tbl( &shells , TBL_INIT , NULL );
+	/* get edge direction */
+	eg = mv_eu->e_p->eg_p;
+	if( eg )
+	{
+		VMOVE( e_dir , eg->e_dir );
+		if( mv_eu->orientation == OT_OPPOSITE )
+		{
+			VREVERSE( e_dir , e_dir );
+		}
+	}
+	else
+	{
+		VSUB2( e_dir , mv_eu->eumate_p->vu_p->v_p->vg_p->coord , mv_eu->vu_p->v_p->vg_p->coord );
+		VUNITIZE( e_dir );
+	}
+
+	eu = mv_eu;
+	fu1 = nmg_find_fu_of_eu( eu );
+
+	if( fu1 == NULL )
+	{
+		vect_t to_pt;
+		vect_t move_v;
+		fastf_t edir_comp;
+		point_t new_loc;
+
+		/* This must be a wire edge, just adjust the endpoints */
+		/* keep edge the same length, and move vertices perpendicular to e_dir */
+
+		VSUB2( to_pt , pt , eu->vu_p->v_p->vg_p->coord );
+		edir_comp = VDOT( to_pt , e_dir );
+		VJOIN1( move_v , to_pt , -edir_comp , e_dir );
+
+		/* move the vertices */
+		VADD2( new_loc , eu->vu_p->v_p->vg_p->coord , move_v );
+		nmg_vertex_gv( eu->vu_p->v_p , new_loc );
+		VADD2( new_loc , eu->eumate_p->vu_p->v_p->vg_p->coord , move_v );
+		nmg_vertex_gv( eu->eumate_p->vu_p->v_p , new_loc );
+		return( 0 );
+	}
 
 	/* Move edge geometry to new point */
-	eg = mv_eu->e_p->eg_p;
-	VMOVE( eg->e_pt , pt );
-
-	/* get edge direction */
-	VMOVE( e_dir , eg->e_dir );
-	if( mv_eu->orientation == OT_OPPOSITE )
+	if( eg )
 	{
-		VREVERSE( e_dir , e_dir );
+		VMOVE( eg->e_pt , pt );
 	}
 
 	/* modify plane equation for each face radial to mv_eu */
-	eu = mv_eu;
-	fu1 = nmg_find_fu_of_eu( eu );
 	fu = fu1;
 	do
 	{
@@ -3940,7 +3970,10 @@ CONST struct rt_tol *tol;
 				mag = 1.0/mag;
 				VSCALE( plane , plane , mag );
 				plane[3] = VDOT( plane , pt );
-				nmg_face_g( fu , plane );
+				if( fu->orientation == OT_SAME )
+					nmg_face_g( fu , plane );
+				else
+					nmg_face_g( fu->fumate_p , plane );
 				done = 1;
 			}
 		}
@@ -3965,8 +3998,6 @@ CONST struct rt_tol *tol;
 		struct loopuse *lu;
 		struct edgeuse *eu;
 		struct vertex *v;
-
-		nmg_tbl( &shells , TBL_INS_UNIQUE , (long *)fu->s_p );
 
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
@@ -4039,22 +4070,6 @@ CONST struct rt_tol *tol;
 	while( fu != fu1 && fu != fu1->fumate_p );
 
 	rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
-
-	/* cleanup */
-	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
-	{
-		struct shell *s;
-
-		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
-		{
-			if( nmg_tbl( &shells , TBL_LOC , (long *)s ) != (-1) )
-			{
-				s = nmg_extrude_cleanup( s , tol );
-			}
-		}
-	}
-
-	nmg_tbl( &shells , TBL_FREE , NULL );
 
 	return( 0 );
 }
