@@ -19,12 +19,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #if IRIX == 4
 #define _BSD_COMPAT	1
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <stdio.h>
 #ifdef HAVE_STRING_H
 #include <string.h>
