@@ -1267,7 +1267,7 @@ CONST struct db_i		*dbip;
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	RT_ETO_CK_MAGIC(tip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "eto external");
 	eto = (union record *)ep->ext_buf;
@@ -1364,7 +1364,7 @@ CONST struct db_i		*dbip;
 	tip = (struct rt_eto_internal *)ip->idb_ptr;
 	RT_ETO_CK_MAGIC(tip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "eto external");
 

@@ -831,7 +831,7 @@ CONST struct db_i		*dbip;
 		bu_mem_barriercheck();
 	}
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 
 	nbytes = sizeof(union record);		/* base record */
 	nbytes += sketch_ip->vert_count*(8*2);	/* vertex list */
@@ -1160,7 +1160,7 @@ CONST struct db_i		*dbip;
 	sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
 	RT_SKETCH_CK_MAGIC(sketch_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 
 	/* tally up size of buffer needed */
 	ep->ext_nbytes = 3 * (3 * SIZEOF_NETWORK_DOUBLE)	/* V, u_vec, v_vec */

@@ -1174,7 +1174,7 @@ CONST struct db_i		*dbip;
 	tip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ell external");
 	rec = (union record *)ep->ext_buf;
@@ -1256,7 +1256,7 @@ CONST struct db_i		*dbip;
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*4;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ell external");
 

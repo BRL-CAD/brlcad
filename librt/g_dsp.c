@@ -2836,7 +2836,7 @@ CONST struct db_i		*dbip;
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
 	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "dsp external");
 	rec = (union record *)ep->ext_buf;
@@ -2956,7 +2956,7 @@ CONST struct db_i		*dbip;
 
 	name_len = bu_vls_strlen(&dsp_ip->dsp_file) + 1;
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = 138 + name_len;
 	ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
 	cp = (unsigned char *)ep->ext_buf;

@@ -3493,7 +3493,7 @@ CONST struct db_i		*dbip;
 		(count-1) * sizeof(struct exported_pipept);
 	ngran = (nbytes + sizeof(union record) - 1) / sizeof(union record);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = ngran * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "pipe external");
 	rec = (union record *)ep->ext_buf;
@@ -3620,7 +3620,7 @@ CONST struct db_i		*dbip;
 	total_count = 4 + byte_count;
 	vec = (fastf_t *)bu_malloc(byte_count, "rt_pipe_export5: vec");
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = total_count;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "pipe external");
 

@@ -1019,7 +1019,7 @@ register struct uvcoord *uvp;
 		struct rt_db_internal	intern;
 		struct rt_arb_internal	*aip;
 
-		BU_INIT_EXTERNAL(&ext);
+		BU_CK_EXTERNAL(&ext);
 		if( db_get_external( &ext, stp->st_dp, ap->a_rt_i->rti_dbip ) < 0 )  {
 			bu_log("rt_arb_uv(%s) db_get_external failure\n",
 				stp->st_name);
@@ -1246,7 +1246,7 @@ CONST struct db_i		*dbip;
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "arb external");
 	rec = (union record *)ep->ext_buf;
@@ -1316,7 +1316,7 @@ CONST struct db_i		*dbip;
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8 * 3;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "arb external");
 	for (i=0; i<8; i++) {

@@ -341,7 +341,7 @@ CONST struct db_i		*dbip;
 	gip = (struct rt_grip_internal *)ip->idb_ptr;
 	RT_GRIP_CK_MAGIC(gip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "grip external");
 	rec = (union record *)ep->ext_buf;

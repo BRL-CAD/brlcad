@@ -1209,7 +1209,7 @@ CONST struct db_i		*dbip;
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof( struct bot_rec ) - 1 +
 		bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 3 * 4;
 	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
@@ -1386,7 +1386,7 @@ CONST struct db_i               *dbip;
 	bip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC( bip );
 
-	BU_INIT_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 
 	if( bip->mode == RT_BOT_PLATE || bip->mode == RT_BOT_PLATE_NOCOS )
 	{

@@ -2095,7 +2095,7 @@ CONST struct db_i		*dbip;
 	xip->ylen /= local2mm;
 	xip->zscale /= local2mm;
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record) * DB_SS_NGRAN;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "hf external");
 	rec = (union record *)ep->ext_buf;

@@ -484,7 +484,7 @@ CONST struct db_i		*dbip;
 	tip = (struct rt_sph_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(tip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "sph external");
 	rec = (union record *)ep->ext_buf;

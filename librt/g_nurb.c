@@ -859,7 +859,7 @@ CONST struct db_i		*dbip;
 		total_grans += rt_nurb_grans(sip->srfs[s]);
 	}
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = total_grans * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc(1,ep->ext_nbytes,"nurb external");
 	rec = (union record *)ep->ext_buf;

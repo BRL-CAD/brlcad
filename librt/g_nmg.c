@@ -2379,7 +2379,7 @@ bu_log("Mapping of old index to new index, and kind\n");
 	ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
 
 	additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "nmg external");
 	rp = (union record *)ep->ext_buf;
@@ -2723,7 +2723,7 @@ rt_nmg_export5(
 
 	ecnt[i].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = tot_size;
 	ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
 	dp = ep->ext_buf;

@@ -341,7 +341,7 @@ CONST struct db_i		*dbip;
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	RT_XXX_CK_MAGIC(xxx_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
 	rec = (union record *)ep->ext_buf;
@@ -437,7 +437,7 @@ CONST struct db_i		*dbip;
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
 	RT_XXX_CK_MAGIC(xxx_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "xxx external");
 

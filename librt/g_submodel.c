@@ -862,7 +862,7 @@ bu_log("export: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, si
 	/* Ignores scale factor */
 	BU_ASSERT( local2mm == 1.0 );
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
 	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "submodel external");
 	rec = (union record *)ep->ext_buf;

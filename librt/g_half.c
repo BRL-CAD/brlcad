@@ -628,7 +628,7 @@ CONST struct db_i		*dbip;
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "half external");
 	rec = (union record *)ep->ext_buf;
@@ -718,7 +718,7 @@ CONST struct db_i               *dbip;
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC( hip );
 
-	BU_INIT_EXTERNAL( ep );
+	BU_CK_EXTERNAL( ep );
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 4;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "half external" );
 

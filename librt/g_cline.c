@@ -585,7 +585,7 @@ CONST struct db_i		*dbip;
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
 	RT_CLINE_CK_MAGIC(cline_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "cline external");
 	rec = (union record *)ep->ext_buf;
@@ -664,7 +664,7 @@ CONST struct db_i		*dbip;
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
 	RT_CLINE_CK_MAGIC(cline_ip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 8;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "cline external");
 

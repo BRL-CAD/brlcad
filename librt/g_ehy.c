@@ -1475,7 +1475,7 @@ CONST struct db_i		*dbip;
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "ehy external");
 	ehy = (union record *)ep->ext_buf;
@@ -1588,7 +1588,7 @@ CONST struct db_i		*dbip;
 	xip = (struct rt_ehy_internal *)ip->idb_ptr;
 	RT_EHY_CK_MAGIC(xip);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 3*4;
 	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "ehy external");
 

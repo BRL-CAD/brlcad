@@ -709,7 +709,7 @@ CONST struct db_i		*dbip;
 	pgp = (struct rt_pg_internal *)ip->idb_ptr;
 	RT_PG_CK_MAGIC(pgp);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + pgp->npoly) * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "pg external");
 	rec = (union record *)ep->ext_buf;

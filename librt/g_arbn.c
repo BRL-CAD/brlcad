@@ -874,7 +874,7 @@ CONST struct db_i		*dbip;
 	ngrans = (aip->neqn * 8 * 4 + sizeof(union record)-1 ) /
 		sizeof(union record);
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = (ngrans + 1) * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "arbn external");
 	rec = (union record *)ep->ext_buf;
@@ -991,7 +991,7 @@ CONST struct db_i		*dbip;
 	double_count = aip->neqn * ELEMENTS_PER_PLANE;
 	byte_count = double_count * SIZEOF_NETWORK_DOUBLE;
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = 4 + byte_count;
 	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "arbn external");
 

@@ -1212,7 +1212,7 @@ CONST struct db_i		*dbip;
 
 	per_curve_grans = (sip->pts_per_curve+7)/8;
 
-	BU_INIT_EXTERNAL(ep);
+	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + per_curve_grans * sip->ncurves) *
 		sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "spl external");
