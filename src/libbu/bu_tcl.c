@@ -146,7 +146,7 @@ bu_badmagic_tcl(Tcl_Interp	*interp,
  */
 void
 bu_structparse_get_terse_form(Tcl_Interp			*interp,
-			      register struct bu_structparse	*sp)
+			      const struct bu_structparse	*sp)
 {
 	struct bu_vls	str;
 	int		i;

@@ -2264,7 +2264,7 @@ BU_EXPORT BU_EXTERN(void bu_badmagic_tcl,
 
 BU_EXPORT BU_EXTERN(void bu_structparse_get_terse_form,
 		    (Tcl_Interp	*interp,
-		     register struct bu_structparse *sp));
+		     const struct bu_structparse *sp));
 
 BU_EXPORT BU_EXTERN(int bu_structparse_argv,
 		    (Tcl_Interp				*interp,
