@@ -924,7 +924,7 @@ cmd_zap(ClientData	clientData,
 	dgo_zap_cmd(dgop, interp);
 
 	/* Keeping freelists improves performance.  When debugging, give mem back */
-	if (rt_g.debug)
+	if (RT_G_DEBUG)
 		mged_freemem();
 
 	(void)chg_state(state, state, "zap");
