@@ -959,7 +959,7 @@ struct edgeuse *eu;
 }
 
 /*
- *			F I N D _ V U _ I N _ F A C E
+ *			N M G _ F I N D _ V U _ I N _ F A C E
  *
  *	try to find a vertex(use) in a face wich appoximately matches the
  *	coordinates given.  
@@ -1804,5 +1804,30 @@ CONST char		*str;
 	if( head_count != 1 )  {
 		rt_log("nmg_ck_list(%s) head_count = %d\n", head_count);
 		rt_bomb("headless!\n");
+	}
+}
+
+/*
+ *			N M G _ M O V E _ F U _ F U
+ *
+ *  Move everything from the source faceuse into the destination faceuse.
+ */
+void nmg_move_fu_fu( dest_fu, src_fu )
+register struct faceuse	*dest_fu;
+register struct faceuse	*src_fu;
+{
+	register struct loopuse	*lu;
+
+	NMG_CK_FACEUSE(dest_fu);
+	NMG_CK_FACEUSE(src_fu);
+
+	if( dest_fu->orientation != src_fu->orientation )
+		rt_bomb("nmg_move_fu_fu: differing orientations\n");
+
+	/* Move all loopuses from src to dest faceuse */
+	while( RT_LIST_WHILE( lu, loopuse, &src_fu->lu_hd ) )  {
+		RT_LIST_DEQUEUE( &(lu->l) );
+		RT_LIST_INSERT( &(dest_fu->lu_hd), &(lu->l) );
+		lu->up.fu_p = dest_fu;
 	}
 }
