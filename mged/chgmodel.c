@@ -958,10 +958,10 @@ char	**argv;
 				NMG_CK_REGION(new_r);
 				new_s = RT_LIST_FIRST(shell, &new_r->s_hd);
 				NMG_CK_SHELL(new_s);
-	nmg_start_dup(m);
+/*	nmg_start_dup(m); */
 				NMG_CK_SHELL(new_s);
 				nmg_dup_face(fu, new_s);
-	nmg_end_dup();
+/*	nmg_end_dup(); */
 
 				sprintf(newname, "%s%0*d", prefix, maxdigits, i++);
 				mged_add_nmg_part(newname, new_model,
