@@ -143,13 +143,12 @@ char **argv;
 		RT_CK_DBI(dbip);
 		db_dirbuild( dbip );
 		if( dbip->dbi_title[0] ) {
-			unsigned char *c;
+			char *c;
 
 			fprintf( ofp, "db title ");
 			c = dbip->dbi_title;
 			while( *c ) {
 				if( ispunct( *c ) ) {
-					bu_log( "Adding a \\ to %c\n", *c );
 					putc( '\\', ofp );
 				}
 				putc( *c, ofp );
@@ -159,6 +158,7 @@ char **argv;
 		}
 		FOR_ALL_DIRECTORY_START(dp, dbip)  {
 			struct rt_db_internal	intern;
+			struct bu_attribute_value_set *avs;
 
 			if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 				bu_log("Unable to read '%s', skipping\n", dp->d_namep);
@@ -169,11 +169,21 @@ char **argv;
 				bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 				continue;
 			}
-			rt_db_free_internal( &intern, &rt_uniresource );
 			fprintf( ofp, "db put %s %s\n",
 				dp->d_namep,
 				interp->result );
+			avs = &intern.idb_avs;
+			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
+				int i;
+
+				fprintf( ofp, "attr %s", dp->d_namep );
+				for( i=0 ; i<avs->count ; i++ ) {
+					fprintf( ofp, " %s {%s}", avs->avp[i].name, avs->avp[i].value );
+				}
+				fprintf( ofp, "\n" );
+			}
 			Tcl_ResetResult( interp );
+			rt_db_free_internal( &intern, &rt_uniresource );
 		} FOR_ALL_DIRECTORY_END;
 		return 0;
 	} else {
