@@ -27,6 +27,7 @@ Convsurfs()
 
 	int i,totsurfs=0,convsurf=0;
 	struct face_g_snurb **surfs;
+	struct face_g_snurb *srf;
 
 	bu_log( "\n\nConverting NURB entities:\n" );
 
@@ -41,8 +42,10 @@ Convsurfs()
 
 	for( i=0 ; i<totentities ; i++ )
 	{
-		if( dir[i]->type == 128 )
-			convsurf += spline( i, surfs[convsurf] );
+		if( dir[i]->type == 128 ) {
+			if( spline( i, &srf ) )
+				surfs[convsurf++] = srf;
+		}
 	}
 
         if( totsurfs )

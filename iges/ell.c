@@ -17,6 +17,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+int
 ell( entityno )
 int entityno;
 { 

@@ -3,7 +3,7 @@
 iges-g \- IGES Translator (IGES CSG to BRL-CAD)
 .SH SYNOPSIS
 .B iges-g
-[-X NMG_debug_flag] [-x rt_debug_flag] [-N solid_name] [-n|d|3|t] -o database.g file.iges
+[-X NMG_debug_flag] [-x rt_debug_flag] [-N solid_name] [-b] [-n|d|3|t] -o database.g file.iges
 .SH DESCRIPTION
 .I iges-g\^
 converts the specified
@@ -46,6 +46,10 @@ respectively. See
 and
 .I debug.h
 for details.
+The
+.I -b
+option indicates that BREP solids should be written to the BRL-CAD model as NMG solids rather than
+the default BOT solids.
 The absence of any of the
 .I -n
 , 

@@ -44,6 +44,7 @@ struct trclist
 	struct trclist *next,*prev;
 };
 
+int
 revolve( entityno )
 int entityno;
 { 

@@ -371,6 +371,7 @@ int face_orient;
 	}
 
 	return( 1 );
+#if 0
 err:
 	for( i=0 ; i<no_of_edges ; i++ )
 	{
@@ -390,6 +391,7 @@ err:
 	bu_free( (char *)verts, "Add_nurb_loop_to_face: (vertex list)" );
 
 	return( 0 );
+#endif
 }
 
 struct faceuse *

@@ -2,6 +2,8 @@
 #define		CARDLEN		71 /* length of data portion in Global records */
 #define		PARAMLEN	63 /* length of data portion in Parameter records */
 
+extern int bu_debug;
+
 extern int do_projection;
 extern char eor; /* IGES end of record delimeter */
 extern char eof; /* IGES end of field delimeter */
@@ -21,7 +23,7 @@ extern int ntypes; /* Number of different types of IGES entities recognized by
 			this code */
 extern int brlcad_att_de; /* DE sequence number for BRLCAD attribute
 		definition entity */
-extern int do_polysolids; /* flag indicating NMG solids should be written as polysolids */
+extern int do_bots; /* flag indicating NMG solids should be written as BOT solids */
 extern FILE *fd; /* file pointer for IGES file */
 extern struct rt_wdb *fdout; /* file pointer for BRLCAD output file */
 extern char brlcad_file[]; /* name of brlcad output file (".g" file) */

@@ -16,6 +16,7 @@
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+int
 Extrudcirc( entityno , curve , evect )
 int entityno;	/* extrusion entity number */
 int curve;	/* circular arc entity number */

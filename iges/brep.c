@@ -22,6 +22,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+int
 brep( entityno )
 int entityno;
 { 
@@ -93,14 +94,15 @@ int entityno;
 		nmg_invert_shell( void_shells[i] , &tol );
 	}
 
-	if( do_polysolids )
+	if( do_bots )
 	{
 		/* Merge all shells into one */
 		for( i=0 ; i<num_of_voids ; i++ )
 			nmg_js( s_outer, void_shells[i], &tol );
 
-		/* write out polysolid */
-		write_shell_as_polysolid( fdout, dir[entityno]->name, s_outer );
+		/* write out BOT */
+		if( mk_bot_from_nmg( fdout, dir[entityno]->name, s_outer ) )
+			goto err;
 	}
 	else
 	{
@@ -118,7 +120,6 @@ int entityno;
 		bu_free( (char *)void_orient , "BREP: void shell orients" );
 		bu_free( (char *)void_shells , "brep: void shell list" );
 	}
-	nmg_km( m );
 
 	v_list = vertex_root;
 	while( v_list != NULL )

@@ -13,6 +13,7 @@
  */
 #include "./iges_struct.h"
 #include "./iges_extern.h"
+#include <ctype.h>
 
 char *
 Add_brl_name( name )

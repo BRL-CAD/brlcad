@@ -17,9 +17,10 @@
 
 #define	PATCH_COUNT	1
 
+int
 spline( entityno, b_patch )
 int entityno;
-struct face_g_snurb *b_patch;
+struct face_g_snurb **b_patch;
 {
 	int	k1;	/* upper index of first sum */
 	int	k2;	/* upper index of second sum */
@@ -70,7 +71,7 @@ struct face_g_snurb *b_patch;
 	 *	num_cols	num control points in U direction
 	 *	point_size	number of values in a point (e.g. 3 or 4)
 	 */
-	b_patch = rt_nurb_new_snurb(
+	(*b_patch) = rt_nurb_new_snurb(
 		m1+1, m2+1,
 		n1+2*m1+1, n2+2*m2+1,
 		k2+1, k1+1, RT_NURB_MAKE_PT_TYPE( 4 , 2 , 0 ), (struct resource *)NULL );
@@ -79,16 +80,16 @@ struct face_g_snurb *b_patch;
 	min_knot = 0.0;
 	for (i = 0; i <= n1+2*m1; i++)
 	{
-		Readdbl( &b_patch->u.knots[i] , "" );
-		if( b_patch->u.knots[i] < min_knot )
-			min_knot = b_patch->u.knots[i];
+		Readdbl( &(*b_patch)->u.knots[i] , "" );
+		if( (*b_patch)->u.knots[i] < min_knot )
+			min_knot = (*b_patch)->u.knots[i];
 	}
 
 	if( min_knot < 0.0 )
 	{
 		for (i = 0; i <= n1+2*m1; i++)
 		{
-			b_patch->u.knots[i] -= min_knot;
+			(*b_patch)->u.knots[i] -= min_knot;
 		}
 	}
 
@@ -96,15 +97,15 @@ struct face_g_snurb *b_patch;
 	/* V knot vector */
 	for (i = 0; i <= n2+2*m2; i++)
 	{
-		Readdbl( &b_patch->v.knots[i] , "" );
-		if( b_patch->v.knots[i] < min_knot )
-			min_knot = b_patch->v.knots[i];
+		Readdbl( &(*b_patch)->v.knots[i] , "" );
+		if( (*b_patch)->v.knots[i] < min_knot )
+			min_knot = (*b_patch)->v.knots[i];
 	}
 	if( min_knot < 0.0 )
 	{
 		for (i = 0; i <= n1+2*m1; i++)
 		{
-			b_patch->v.knots[i] -= min_knot;
+			(*b_patch)->v.knots[i] -= min_knot;
 		}
 	}
 
@@ -116,9 +117,9 @@ struct face_g_snurb *b_patch;
 	{
 		for( j=0 ; j<= k1 ; j++ )
 		{
-			Readdbl( &b_patch->ctl_points[ count*4 + 3 ] , "" );
-			if( b_patch->ctl_points[ count*4 + 3 ] > max_wt )
-				max_wt = b_patch->ctl_points[ count*4 + 3 ];
+			Readdbl( &(*b_patch)->ctl_points[ count*4 + 3 ] , "" );
+			if( (*b_patch)->ctl_points[ count*4 + 3 ] > max_wt )
+				max_wt = (*b_patch)->ctl_points[ count*4 + 3 ];
 			count++;
 		}
 	}
@@ -129,9 +130,9 @@ struct face_g_snurb *b_patch;
 	{
 		for (j = 0; j <= k1; j++)
 		{
-			Readcnv( &b_patch->ctl_points[ count*4 ] , "" );
-			Readcnv( &b_patch->ctl_points[ count*4 + 1 ] , "" );
-			Readcnv( &b_patch->ctl_points[ count*4 + 2 ] , "" );
+			Readcnv( &(*b_patch)->ctl_points[ count*4 ] , "" );
+			Readcnv( &(*b_patch)->ctl_points[ count*4 + 1 ] , "" );
+			Readcnv( &(*b_patch)->ctl_points[ count*4 + 2 ] , "" );
 			count++;
 		}
 	}
@@ -143,7 +144,7 @@ struct face_g_snurb *b_patch;
 		for (j = 0; j <= k1; j++)
 		{
 			for( k=0 ; k<3 ; k++ )
-				b_patch->ctl_points[ count*4 + k ] *= b_patch->ctl_points[ count*4 + 3];
+				(*b_patch)->ctl_points[ count*4 + k ] *= (*b_patch)->ctl_points[ count*4 + 3];
 			count++;
 		}
 	}

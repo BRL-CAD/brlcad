@@ -137,7 +137,7 @@ Convinst()
 				   these matrices need to be combined */
 
 				rot = (mat_t *)bu_malloc( sizeof( mat_t ), "Convinst: rot" );
-				Matmult( *(dir[i]->rot) , dir[pointer]->rot , rot );
+				Matmult( *(dir[i]->rot) , *(dir[pointer]->rot) , *rot );
 				dir[i]->rot = rot;
 			}
 		}

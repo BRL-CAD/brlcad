@@ -55,7 +55,7 @@ mat_t *matp;
 				bu_log( "Unknown entity type (%d) at D%07d\n", -dir[k]->type, dir[k]->direct );
 				return( (union tree *)NULL );
 			}
-			ptr->tr_l.tl_name = strdup( dir[k]->name );
+			ptr->tr_l.tl_name = bu_strdup( dir[k]->name );
 			if( matp && dir[k]->rot )
 			{
 				new_mat = (matp_t)bu_malloc( sizeof( mat_t ), "new_mat" );

@@ -58,7 +58,7 @@ extern char	version[];
 static int do_splines=0;
 static int do_drawings=0;
 static int trimmed_surf=0;
-int do_polysolids=0;
+int do_bots=0;
 
 static char *iges_file;
 
@@ -138,7 +138,8 @@ char *argv[];
 	int file_count=0;
 	char *output_file=(char *)NULL;
 
-	while( (c=getopt( argc , argv , "3dntpo:x:X:N:" )) != EOF )
+
+	while( (c=getopt( argc , argv , "3dntbo:x:X:N:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -158,8 +159,8 @@ char *argv[];
 			case 't':
 				trimmed_surf = 1;
 				break;
-			case 'p':
-				do_polysolids = 1;
+			case 'b':
+				do_bots = 1;
 				break;
 			case 'N':
 				solid_name = optarg;
@@ -186,8 +187,11 @@ char *argv[];
 		exit(1);
 	}
 
-	if( rt_g.debug & DEBUG_MEM_FULL )
+	if( bu_debug & BU_DEBUG_MEM_CHECK )
+	{
+		bu_log( "Memory checking enabled\n" );
 		bu_mem_barriercheck();
+	}
 
 	bu_log( "%s", version+5);
 	bu_log( "Please direct bug reports to <jra@brl.mil>\n\n" );
