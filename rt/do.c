@@ -392,7 +392,7 @@ int framenumber;
 			} else {
 				if(rdebug&RDEBUG_MATERIAL)
 					((struct mfuncs *)(regp->reg_mfuncs))->
-						mf_print( regp );
+						mf_print( regp, regp->reg_udata );
 				/* Perhaps this should be a function? */
 			}
 		}
