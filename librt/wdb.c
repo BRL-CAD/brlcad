@@ -98,6 +98,7 @@ wdb_dbopen( struct db_i *dbip, int mode )
 	wdbp->l.magic = RT_WDB_MAGIC;
 	wdbp->type = mode;
 	wdbp->dbip = dbip;
+	wdbp->dbip->dbi_wdbp = wdbp;
 
 	dbip->dbi_uses++;
 
