@@ -1037,6 +1037,8 @@ nmg_s_radial_check( sA, tol );
 		if( rt_g.NMG_debug & DEBUG_VERIFY )
 			nmg_vshell( &rA->s_hd, rA );
 
+		(void) nmg_unbreak_region_edges( &sA->l.magic );
+
 #if 1
 	if( rt_g.NMG_debug & DEBUG_BOOL )
 	{
