@@ -55,8 +55,6 @@ is different from the factory default.
 #include "./dm.h"
 #include "./solid.h"
 
-typedef unsigned char u_char;
-
 /* Display Manager package interface */
  
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
@@ -363,7 +361,7 @@ T49_update()
 /* ARGSUSED */
 void
 T49_puts( str, x, y, size, color )
-register u_char *str;
+register char *str;
 {
 	t49move(x,y);
 	t49label(str);

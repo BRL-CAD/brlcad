@@ -33,8 +33,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./solid.h"
 
-typedef unsigned char u_char;
-
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
@@ -317,7 +315,7 @@ PS_update()
 /* ARGSUSED */
 void
 PS_puts( str, x, y, size, color )
-register u_char *str;
+register char *str;
 {
 	if( !ps_fp )  return;
 
