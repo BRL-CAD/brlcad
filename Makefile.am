@@ -54,25 +54,19 @@ EXTRA_DIST = \
 	README \
 	TODO \
 	autogen.sh \
-	$(PACKAGE).spec.in \
-	ltconfig
+	brlcad.spec.in \
+	libtool
 
 MAINTAINERCLEANFILES = \
+	@CONFIG_CACHE@ \
 	Makefile.in \
 	aclocal.m4 \
 	autom4te.cache \
 	brlcad.spec \
-	config.guess \
 	config.log \
 	config.status \
-	config.sub \
 	configure \
-	depcomp \
-	install-sh \
-	libtool \
-	ltmain.sh \
-	missing \
-	mkinstalldirs
+	libtool
 
 
 ##############
@@ -90,6 +84,19 @@ rpm: dist
 packages: rpm
 
 benchmark: all
-	@SH@ $(srcdir)/bench/run.sh
+	@SH@ $(top_srcdir)/bench/run.sh
 
 bench: benchmark
+
+all-local:
+	@@ECHO@
+	@@ECHO@ "Done."
+	@@ECHO@
+	@@ECHO@ @ECHO_N@ "Elapsed compilation time: @ECHO_C@"
+	@sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/build_date.h | grep Compilation`
+	@@ECHO@ @ECHO_N@ "Elapsed time since configuration: @ECHO_C@"
+	@sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@
+	@@ECHO@ "---"
+	@@ECHO@ "Run 'make install' to begin installation into $(prefix)"
+	@@ECHO@ "Run 'make benchmark' to run the BRL-CAD Benchmark Suite"
+	@@ECHO@

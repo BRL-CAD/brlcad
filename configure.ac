@@ -47,6 +47,7 @@ dnl
 AC_PREREQ(2.50)
 
 AC_INIT(BRL-CAD, 7.0, [http://brlcad.org], brlcad)
+AC_CONFIG_AUX_DIR(misc)
 
 dnl If any of the version numbers are incremented up to a 2-digit
 dnl number, remember to add an asterisk to both echo lines below.
@@ -55,6 +56,9 @@ dnl See HACKING for details on how to properly update the version
 MAJOR_VERSION=7
 MINOR_VERSION=0
 PATCH_VERSION=0
+AC_SUBST(MAJOR_VERSION)
+AC_SUBST(MINOR_VERSION)
+AC_SUBST(PATCH_VERSION)
 
 CONFIG_DATE=`date +%Y%m%d`
 CONFIG_TIME="`date '+%H %M %S'`"
@@ -62,6 +66,9 @@ BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 echo "*********************************************************"
 echo "*** Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE ***"
 echo "*********************************************************"
+AC_SUBST(CONFIG_DATE)
+AC_SUBST(CONFIG_TIME)
+AC_SUBST(BRLCAD_VERSION)
 
 # necessary for proper file creation on nfs volumes
 umask 022
@@ -74,12 +81,13 @@ AC_CANONICAL_TARGET
 if test "x$build_vendor" = "xsgi" ; then
    PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
 fi
-AM_INIT_AUTOMAKE
-AC_CONFIG_AUX_DIR(.)
+
 AC_CONFIG_SRCDIR([src/librt/bool.c])
+AC_PREFIX_DEFAULT(/usr/brlcad)
+
+AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(include/config.h)
 
-AC_PREFIX_DEFAULT(/usr/brlcad)
 
 
 dnl ***********************
@@ -375,16 +383,28 @@ AC_PATH_PROG(MV, mv)
 AC_PATH_PROG(CP, cp)
 AC_PATH_PROG(RM, rm)
 
+dnl figure out which compiler is seems like we are using
+dnl supported values include: gcc, mipspro, icc, sunw
+compiler=unknown
+
+dnl Determine whether we are using GCC
+if test "x$GCC" = "xyes" ; then
+	compiler=gcc
+fi
+
 dnl Determine whether we are using the MIPSpro compiler on SGI systems
 if test "x$build_vendor" = "xsgi" ; then
-   AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
-   using_mipspro=no
-   AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
+	AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
+	using_mipspro=no
+	AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
 If we get here, we are using the MIPSPro compiler (and the link should fail).
 #endif
 int main() { return 0; }
-   ], [using_mipspro=no], [using_mipspro=yes])
-   AC_MSG_RESULT($using_mipspro)
+	], [using_mipspro=no], [using_mipspro=yes])
+	AC_MSG_RESULT($using_mipspro)
+	if test "x$using_mipspro" = "xyes" ; then
+		compiler=mipspro
+	fi
 fi
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
@@ -402,13 +422,16 @@ AC_MSG_RESULT($use_doxygen)
 dnl now that the compiler is known, we can enable a compiler-specific cache file
 dnl unless we are on sgi, where bash may choke on sed syntax in the cache
 AC_MSG_CHECKING(what cache file is set to)
+CONFIG_CACHE=""
 if test "x$cache_file" = "x/dev/null" ; then
 	if ! test "x$host_os" = "xirix6.5" ; then
 		compiler="`echo $CC | awk '{print $1}'`"
 		cache_file="config.cache.${compiler}.${host_os}"
+		CONFIG_CACHE="$cache_file"
 	fi
 fi
 AC_MSG_RESULT($cache_file)
+AC_SUBST(CONFIG_CACHE)
 
 
 dnl ***************************
@@ -675,29 +698,81 @@ dnl ******************************************
 dnl *** Check for compiler characteristics ***
 dnl ******************************************
 
-# XXX some of these flags are presently GCC-specific
+dnl flags that should work across any compiler
 CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/include"
-CFLAGS="$CFLAGS -fno-strict-aliasing"
 
+dnl flags that are required but not tied to a compilation style
+case "x$compiler" in
+	xgcc*)
+		CFLAGS="$CFLAGS -fno-strict-aliasing"
+		;;
+esac
+
+dnl optimization flags
 if ! test "x$use_optimized" = "xno" ; then
-	CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
-	LDFLAGS="$LDFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+	case "x$compiler" in
+		xgcc*)
+			CFLAGS="$CFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+			LDFLAGS="$LDFLAGS -O3 -fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations"
+			;;
+		xmipspro*)
+			CFLAGS="$CFLAGS -O3"
+			LDFLAGS="$LDFLAGS -O3"
+			;;
+		*)
+			AC_MSG_WARN([Don't know how to compile optimized with this compiler])
+			CFLAGS="$CFLAGS -O3"
+			LDFLAGS="$LDFLAGS -O3"
+			AC_MSG_NOTICE([Will try to use -O3 (use CFLAGS and LDFLAGS to override)])
+			;;
+	esac
 fi
 
+dnl debug flags
 if ! test "x$use_debug" = "xno" ; then
-	CFLAGS="$CFLAGS -g"
-	LDFLAGS="$LDFLAGS -g"
+	case "x$compiler" in
+		xgcc*)
+			CFLAGS="$CFLAGS -g"
+			LDFLAGS="$LDFLAGS -g"
+			;;
+		xmipspro*)
+			CFLAGS="$CFLAGS -g"
+			LDFLAGS="$LDFLAGS -g"
+			;;
+		*)
+			AC_MSG_WARN([Do not know how to debug with this compiler])
+			CFLAGS="$CFLAGS -g"
+			LDFLAGS="$LDFLAGS -g"
+			AC_MSG_NOTICE([Will try to use -g (use CFLAGS and LDFLAGS to override)])
+			;;
+	esac
 fi
 
+dnl profile flags
 if ! test "x$use_profiling" = "xno" ; then
-	CFLAGS="$CFLAGS -pg"
-	LDFLAGS="$LDFLAGS -pg"
+	case "x$compiler" in
+		xgcc*)
+			CFLAGS="$CFLAGS -pg"
+			LDFLAGS="$LDFLAGS -pg"
+			;;
+		*)
+			AC_MSG_WARN([Don't know how to profile with this compiler])
+			;;
+	esac
 fi
 
+dnl verbose warning flags
 if ! test "x$use_warnings" = "xno" ; then
-	CFLAGS="$CFLAGS -W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
-	# XXX also of interest
-	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
+	case "x$compiler" in
+		xgcc*)
+			CFLAGS="$CFLAGS -W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline -Wconversion"
+			# XXX also of interest
+			# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
+			;;
+		*)
+			AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
+			;;
+	esac
 fi
 
 AC_C_CONST
@@ -1196,64 +1271,10 @@ mandir=`eval "echo $mandir"`
 dnl
 dnl Compute configuration time elapsed
 dnl
-time_elapsed=""
-pre_hour="`echo $CONFIG_TIME | awk '{print $1}'`"
-pre_min="`echo $CONFIG_TIME | awk '{print $2}'`"
-pre_sec="`echo $CONFIG_TIME | awk '{print $3}'`"
-hour_seconds_before="`expr $pre_hour \* 60 \* 60`"
-min_seconds_before="`expr $pre_min \* 60`"
-total_pre="`expr $hour_seconds_before + $min_seconds_before + $pre_sec`"
-
-post_conf_time="`date '+%H %M %S'`"
-post_hour="`echo $post_conf_time | awk '{print $1}'`"
-post_min="`echo $post_conf_time | awk '{print $2}'`"
-post_sec="`echo $post_conf_time | awk '{print $3}'`"
-hour_seconds_after="`expr $post_hour \* 60 \* 60`"
-min_seconds_after="`expr $post_min \* 60`"
-total_post="`expr $hour_seconds_after + $min_seconds_after + $post_sec`"
-
-sec_elapsed="`expr $total_post - $total_pre`"
-min_elapsed="0"
-if ! test "x$sec_elapsed" = "x0" ; then
-	min_elapsed="`expr $sec_elapsed / 60`"
-	sec_elapsed2="`expr $min_elapsed \* 60`"
-	sec_elapsed="`expr $sec_elapsed - $sec_elapsed2`"
-fi
-hour_elapsed="0"
-if ! test "x$min_elapsed" = "x0" ; then
-	hour_elapsed="`expr $min_elapsed / 60`"
-	min_elapsed2="`expr $hour_elapsed \* 60`"
-	min_elapsed="`expr $min_elapsed - $min_elapsed2`"
-fi
-
-if ! test "x$hour_elapsed" = "x0" ; then
-	if test "x$hour_elapsed" = "x1" ; then
-		time_elapsed="$hour_elapsed hour"
-	else
-		time_elapsed="$hour_elapsed hours"
-	fi
-fi
-if ! test "x$min_elapsed" = "x0" ; then
-	if ! test "x$time_elapsed" = "x" ; then
-		time_elapsed="${time_elapsed}, "
-	fi
-	time_elapsed="${time_elapsed}${min_elapsed}"
-	if test "x$min_elapsed" = "x1" ; then
-		time_elapsed="${time_elapsed} minute"
-	else
-		time_elapsed="${time_elapsed} minutes"
-	fi
-fi
-if ! test "x$sec_elapsed" = "x0" ; then
-	if ! test "x$time_elapsed" = "x" ; then
-		time_elapsed="${time_elapsed}, "
-	fi
-	time_elapsed="${time_elapsed}${sec_elapsed}"
-	if test "x$sec_elapsed" = "x1" ; then
-		time_elapsed="${time_elapsed} second"
-	else
-		time_elapsed="${time_elapsed} seconds"
-	fi
+if test -x "${srcdir}/sh/elapsed.sh" ; then
+	time_elapsed="`${srcdir}/sh/elapsed.sh $CONFIG_TIME`"
+else
+	time_elapsed="unknown"
 fi
 
 
@@ -1261,8 +1282,9 @@ dnl **********************
 dnl *** Report Summary ***
 dnl **********************
 
+echo "Done."
 echo
-echo BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE
+echo "BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
 echo
 echo "             Prefix: ${prefix}"
 echo "           Binaries: ${bindir}"
@@ -1300,7 +1322,9 @@ echo Only build benchmark suite ...........: $only_benchmark
 echo Only build librtserver ...............: $only_rts
 echo Generate doxygen documentation .......: $use_doxygen
 echo
+if ! test "x$time_elapsed" = "xunknown" ; then
 echo Elapsed configuration time ...........: $time_elapsed
+fi
 echo ---
 echo "$0 complete, type 'make' to begin building"
 echo
