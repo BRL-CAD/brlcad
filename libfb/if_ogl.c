@@ -984,14 +984,14 @@ int	width, height;
 	OGL(ifp)->wind = Tk_WindowId(OGL(ifp)->tkwin);
 
 	{
+	  char *str;
 	  struct bu_vls vls;
 	  int status;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "wm title . \"%s\";", title);
-	  bu_vls_printf(&vls, "wm resizable . 0 0");
-	  status = Tcl_Eval(OGL(ifp)->interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
+	  str = (char *)malloc( strlen( title ) + 40 );
+	  sprintf( str, "wm title . \"%s\"; wm resizable . 0 0", title );
+	  status = Tcl_Eval(OGL(ifp)->interp, str);
+	  free( str );
 	}
 	
 	/* 
