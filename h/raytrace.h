@@ -1764,6 +1764,7 @@ RT_EXTERN(struct rt_list *rt_vlblock_find, (struct rt_vlblock *vbp,
 	int r, int g, int b) );
 
 /* plane.c */
+RT_EXTERN(double rt_dist_pt3_pt3, (CONST point_t a, CONST point_t b));
 RT_EXTERN(int rt_3pts_distinct, (CONST point_t a, CONST point_t b,
 	CONST point_t c, CONST struct rt_tol *tol) );
 RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, CONST point_t a,
@@ -2021,7 +2022,8 @@ RT_EXTERN(struct edgeuse	*nmg_find_eu_with_vu_in_lu, (CONST struct loopuse *lu,
 				CONST struct vertexuse *vu) );
 RT_EXTERN(CONST struct edgeuse	*nmg_faceradial, (CONST struct edgeuse *eu) );
 RT_EXTERN(CONST struct edgeuse	*nmg_radial_face_edge_in_shell, (CONST struct edgeuse *eu) );
-RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1, CONST struct faceuse *fu2));
+RT_EXTERN(CONST struct edgeuse *nmg_find_edge_between_2fu, (CONST struct faceuse *fu1,
+				CONST struct faceuse *fu2, CONST struct rt_tol *tol));
 RT_EXTERN(struct edge		*nmg_find_e_nearest_pt2, (long *magic_p,
 				CONST point_t pt2, CONST mat_t mat,
 				CONST struct rt_tol *tol) );
