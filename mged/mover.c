@@ -59,9 +59,7 @@ moveHobj( dp, xlate )
 register struct directory *dp;
 matp_t xlate;
 {
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
-	register int		i;
 	int			id;
 
 	if(dbip == DBI_NULL)
@@ -100,11 +98,8 @@ struct directory *cdp;
 struct directory *dp;
 matp_t xlate;
 {
-	register int i;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	int found=0;
-	mat_t temp, xmat;		/* Temporary for mat_mul */
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -120,7 +115,6 @@ matp_t xlate;
 		tp = (union tree *)db_find_named_leaf( comb->tree, dp->d_namep );
 		if( tp != TREE_NULL )
 		{
-			found = 1;
 			if( tp->tr_l.tl_mat )
 				bn_mat_mul2( xlate, tp->tr_l.tl_mat );
 			else

@@ -640,7 +640,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  register int	i,j,k;
+  register int	i,k;
   register int sflag = 0;
   register struct directory *dp;
   struct rt_db_internal intern;
@@ -744,7 +744,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int	i,j,k;	
+	register int	i,k;	
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
@@ -1140,7 +1140,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int	i,j,k;	
+	register int	i;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal *comb;
@@ -1407,8 +1407,6 @@ register struct directory *dp;
 genptr_t	ptr;
 {
   Tcl_Interp	*interp = (Tcl_Interp *)ptr;
-  register struct dm_list *dmlp;
-  register struct dm_list *save_dmlp;
 
   if(dbip == DBI_NULL)
     return;

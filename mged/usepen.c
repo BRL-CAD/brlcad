@@ -314,8 +314,6 @@ int argc;
 char *argv[];
 {
   register struct solid *sp;
-  static int count = -1;
-  int i;
 
   if(argc < 1 || 2 < argc){
     struct bu_vls vls;

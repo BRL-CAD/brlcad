@@ -639,7 +639,6 @@ mged_setup()
 {
 	struct bu_vls str;
 	char *filename;
-	register int i, n;
 
 	/* The following is for GUI output hooks: contains name of function to
 	   run with output */
@@ -1482,7 +1481,6 @@ f_sync(clientData, interp, argc, argv)
 	int argc;
 	char **argv;
 {
-	register int i;
 
 	if(argc < 1 || 1 < argc){
 		struct bu_vls vls;
@@ -1760,7 +1758,6 @@ f_tie(clientData, interp, argc, argv)
 {
 	register int uflag = 0;		/* untie flag */
 	struct cmd_list *clp;
-	struct cmd_list *save_cclp;
 	struct dm_list *dlp;
 	struct bu_vls vls;
 
@@ -1885,7 +1882,6 @@ f_ps(clientData, interp, argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i;
 	int status;
 	char *av[2];
 	struct dm_list *dml;
@@ -1942,7 +1938,6 @@ f_pl(clientData, interp, argc, argv)
 	int argc;
 	char *argv[];
 {
-	int i;
 	int status;
 	char *av[2];
 	struct dm_list *dml;
