@@ -36,6 +36,9 @@
 #define SWABV(shrt)	(shrt)
 #endif
 
+/* The char fields in struct dispatch are signed.  Extend sign */
+#define	SXT(c)		((c)|((c&0x80)?(~0xFF):0))
+
 struct header {
 	short		magic;
 	unsigned short	size;
@@ -207,8 +210,8 @@ register char	*line;
 		char_id = (int) line[char_count] & 0377;
 
 		/* Obtain the dimensions for the character */
-		width = dir[char_id].right + dir[char_id].left;
-		height = dir[char_id].up + dir[char_id].down;
+		width = SXT(dir[char_id].right) + SXT(dir[char_id].left);
+		height = SXT(dir[char_id].up) + SXT(dir[char_id].down);
 		if(debug) fprintf(stderr,"%c w=%2d h=%2d, currx=%d\n", char_id, width, height, currx);
 
 		/*
@@ -217,11 +220,11 @@ register char	*line;
 		 */
 	 	if( width <= 1 )  {
 	 		char_id = 'n';	/* 1-en space */
-			width = dir[char_id].right + dir[char_id].left;
+			width = SXT(dir[char_id].right) + SXT(dir[char_id].left);
 	 		if( width <= 1 )  {
 		 		char_id = 'N';	/* 1-en space */
-				width = (dir[char_id].right) +
-					(dir[char_id].left);
+				width = SXT(dir[char_id].right) +
+					SXT(dir[char_id].left);
 	 			if( width <= 1 )
 	 				width = 16;	/* punt */
 	 		}
@@ -245,7 +248,7 @@ register char	*line;
 			break;
 		}
 
-		do_char( char_id, currx, ypos, dir[char_id].down%2 );
+		do_char( char_id, currx, ypos, SXT(dir[char_id].down)%2 );
 		currx += SWABV(dir[char_id].width) + 2;
 	 }
 	 return;
@@ -271,8 +274,8 @@ int x, y, odd;
 	 for (i = height + 2; i < height + 4; i++)
 		 clear_buf (totwid, filterbuf[i]);
 
-	 up = dir[c].up;
-	 down = dir[c].down;
+	 up = SXT(dir[c].up);
+	 down = SXT(dir[c].down);
 
 	 /* Initial base line for filtering depends on odd flag. */
 	 base = (odd ? 1 : 2);
