@@ -286,13 +286,13 @@ struct nmg_list  {
 /* Return pointer to circular next element; ie, ignoring the list head */
 #define NMG_LIST_PNEXT_CIRC(structure,p)	\
 	((NMG_LIST_FIRST_MAGIC((struct nmg_list *)(p)) == NMG_LIST_MAGIC) ? \
-		NMG_LIST_FIRST(structure,(struct nmg_list *)(p)) : \
+		NMG_LIST_PNEXT_PNEXT(structure,(struct nmg_list *)(p)) : \
 		NMG_LIST_PNEXT(structure,p) )
 
 /* Return pointer to circular last element; ie, ignoring the list head */
 #define NMG_LIST_PLAST_CIRC(structure,p)	\
 	((NMG_LIST_LAST_MAGIC((struct nmg_list *)(p)) == NMG_LIST_MAGIC) ? \
-		NMG_LIST_LAST(structure,(struct nmg_list *)(p)) : \
+		NMG_LIST_PLAST_PLAST(structure,(struct nmg_list *)(p)) : \
 		NMG_LIST_PLAST(structure,p) )
 
 /*	W A R N I N G !
