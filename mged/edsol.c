@@ -5495,7 +5495,7 @@ CONST mat_t			mat;
 	id = ip->idb_type;
 	transform_editing_solid( &intern, mat, (struct rt_db_internal *)ip, 0 );
 
-	if( id != ID_ARS && id != ID_POLY )
+	if( id != ID_ARS && id != ID_POLY && id != ID_BOT )
 	{
 		if( rt_functab[id].ft_describe( vp, &intern, 1 /*verbose*/,
 		    base2local ) < 0 )
