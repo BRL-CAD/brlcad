@@ -1591,12 +1591,13 @@ CONST struct edgeuse *eu;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( broken_tab, eu->e_p->index );
 
 	p0 = eu->vu_p->v_p->vg_p->coord;
 	p1 = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
 	/* leave a little room between the edge endpoints and the vertex
-	 * compute endpoints by forming a vector between verets, scale vector
+	 * compute endpoints by forming a vector between verts, scale vector,
 	 * and modify points
 	 */
 	VSUB2SCALE(v, p1, p0, 0.90);
@@ -1640,8 +1641,7 @@ CONST struct edgeuse *eu;
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_EDGE(eu->e_p);
 
-	if ( ! NMG_INDEX_TEST_AND_SET(broken_tab, eu->e_p) )
-		show_broken_e(vbp, eu, fancy);
+	show_broken_e(vbp, eu, fancy);
 
 	if (!fancy) return;
 
