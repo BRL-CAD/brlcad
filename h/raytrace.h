@@ -1962,7 +1962,7 @@ RT_EXTERN(double	noise_vc, (point_t pt) );
 RT_EXTERN(double	noise_g, (point_t pt) );
 RT_EXTERN(double	noise_gv, (point_t pt) );
 RT_EXTERN(double	noise_sc, (point_t pt) );
-RT_EXTERN(double	noise_init, () );
+RT_EXTERN(void		noise_init, () );
 RT_EXTERN(double	noise_perlin, (point_t pt) );
 RT_EXTERN(void		noise_vec, (point_t point, point_t result) );
 RT_EXTERN(double	noise_fbm, (point_t point, double h_val, double lacunarity, double octaves) );
