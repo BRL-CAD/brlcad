@@ -44,11 +44,11 @@ typedef void *genptr_t;
 #define CV_TYPE_SHIFT	10
 #define CV_CONVERT_SHIFT 13
 
-#define CV_8	0x0000
-#define	CV_16	0x0400
-#define CV_32	0x0800
-#define CV_64	0x0c00
-#define CV_D	0x1000
+#define CV_8	0x0400
+#define	CV_16	0x0800
+#define CV_32	0x0c00
+#define CV_64	0x1000
+#define CV_D	0x1400
 
 #define CV_CLIP		0x0000
 #define CV_NORMAL	0x2000
@@ -57,7 +57,7 @@ typedef void *genptr_t;
 #define	IND_NOTSET	0
 #define IND_BIG		1
 #define IND_LITTLE	2
-#define IND_ILL		3		/* Vax ish ? */
+#define IND_ILL		3		/* PDP-11 */
 #define IND_CRAY	4
 
 static int Indian = IND_NOTSET;
@@ -223,6 +223,16 @@ int	count;
  *	outcookie	output format cookie.
  *	size		size of output buffer in bytes;
  *
+ *
+ * A worst case would be:	ns16 on vax to ns32
+ *	ns16 	-> hs16
+ *		-> hd
+ *		-> hs32
+ *		-> ns32
+ * The worst case is probably the easiest to deal with because all steps are
+ * done.  The more difficult cases are when only a subset of steps need to
+ * be done.
+ *
  * Method:
  *	HOSTDBL defined as true or false
  *	if ! hostother then
@@ -230,26 +240,26 @@ int	count;
  *	fi
  *	if (infmt == double) then
  *		if (HOSTDBL == SAME) {
- *			invert = host;
+ *			inIsHost = host;
  *		fi
  *	else
  *		if (hostother == SAME) {
- *			invert = host;
+ *			inIsHost = host;
  *		fi
  *	fi
  *	if (outfmt == double) then
  *		if (HOSTDBL == SAME) {
- *			outvert == host;
+ *			outIsHost == host;
  *	else
  *		if (hostother == SAME) {
- *			outvert = host;
+ *			outIsHost = host;
  *		fi
  *	fi
  *	if (infmt == outfmt) {
- *		if (invert == outvert) {
+ *		if (inIsHost == outIsHost) {
  *			copy(in,out)
  *			exit
- *		else if (invert == net) {
+ *		else if (inIsHost == net) {
  *			ntoh?(in,out);
  *			exit
  *		else
@@ -261,12 +271,12 @@ int	count;
  *	while not done {
  *		from = in;
  *
- *		if (invert == net) {
+ *		if (inIsHost == net) {
  *			ntoh?(from,t1);
  *			from = t1;
  *		fi
  *		if (infmt != double ) {
- *			if (outvert == host) {
+ *			if (outIsHost == host) {
  *				to = out;
  *			else
  *				to = t2;
@@ -276,11 +286,11 @@ int	count;
  *		fi
  *
  *		if (outfmt == double ) {
- *			if (outvert == net) {
+ *			if (outIsHost == net) {
  *				hton?(from,out);
  *			fi
  *		else 
- *			if (outvert == host) {
+ *			if (outIsHost == host) {
  *				dblcast(from,out);
  *			else
  *				dblcast(from,t3);
@@ -302,7 +312,7 @@ int	count;
 	static int net_size_table[5] = {1,2,4,8,8};
 	int	work_count = 4096;
 	int	number_done = 0;
-	int	invert,outvert,infmt,outfmt,insize,outsize;
+	int	inIsHost,outIsHost,infmt,outfmt,insize,outsize;
 	int	bufsize;
 	genptr_t	t1,t2,t3;
 	genptr_t	from,to;
@@ -341,8 +351,8 @@ int	count;
  * Conversion is net<-->host.
  * Format is 8/16/32/64/D casting.
  */
-	invert = incookie & CV_HOST_MASK;	/* not zero if host */
-	outvert= outcookie& CV_HOST_MASK;
+	inIsHost = incookie & CV_HOST_MASK;	/* not zero if host */
+	outIsHost= outcookie& CV_HOST_MASK;
 	infmt  =  incookie & CV_TYPE_MASK;
 	outfmt = outcookie & CV_TYPE_MASK;
 
@@ -359,11 +369,11 @@ int	count;
  */
 	if (infmt == CV_D) {
 		if (DBL_FORMAT == DBL_IEEE) {
-			invert = CV_HOST_MASK;	/* host == net format */
+			inIsHost = CV_HOST_MASK;	/* host == net format */
 		}
 	} else {
 		if (Indian == IND_BIG || infmt == CV_8) {
-			invert = CV_HOST_MASK; /* host == net format */
+			inIsHost = CV_HOST_MASK; /* host == net format */
 		}
 	}
 
@@ -372,24 +382,24 @@ int	count;
  */
 	if (outfmt == CV_D) {
 		if (DBL_FORMAT == DBL_IEEE) {
-			outvert = CV_HOST_MASK;
+			outIsHost = CV_HOST_MASK;
 		}
 	} else {
 		if (Indian == IND_BIG || outfmt == CV_8) {
-			outvert = CV_HOST_MASK;
+			outIsHost = CV_HOST_MASK;
 		}
 	}
 /*
- * outvert and invert now correctly show network or host formats.  If
+ * outIsHost and inIsHost now correctly show network or host formats.  If
  * network format is the same as host format for THIS conversion then
  * network was changed to host conversion.
  *
  * Now that the conversion (Host or net) has been determended, us
  * the format to find the per entry size of an entry.
  */
-	outsize = (outvert) ? host_size_table[outfmt >> CV_TYPE_SHIFT] :
+	outsize = (outIsHost) ? host_size_table[outfmt >> CV_TYPE_SHIFT] :
 	    net_size_table[outfmt >> CV_TYPE_SHIFT];
-	insize = (invert) ? host_size_table[infmt >> CV_TYPE_SHIFT] :
+	insize = (inIsHost) ? host_size_table[infmt >> CV_TYPE_SHIFT] :
 	    net_size_table[infmt >> CV_TYPE_SHIFT];
 
 /*
@@ -402,7 +412,7 @@ int	count;
  * Input format is the same as output format, do we need to do a
  * host/net conversion?
  */
-		if (invert == outvert) {
+		if (inIsHost == outIsHost) {
 
 /*
  * No conversion required.
@@ -424,10 +434,10 @@ int	count;
 /*
  * Well it's still the same format but the conversion are different.
  * Only one of the *vert variables can be HOST therefore if
- * invert != HOST then outvert must be host format.
+ * inIsHost != HOST then outIsHost must be host format.
  */
 
-		} else if (invert != CV_HOST_MASK) { /* net format */
+		} else if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 				return(	ntohss(out, size, in, count));
@@ -443,7 +453,7 @@ int	count;
 			}
 
 /*
- * Since invert != outvert and invert == HOST then outvert must be
+ * Since inIsHost != outIsHost and inIsHost == HOST then outIsHost must be
  * in net format.  call the correct subroutine to do the conversion.
  */
 		} else {
@@ -529,7 +539,7 @@ int	count;
  * this means that there will be at least two conversions taking place
  * if the input is in net format.  (from net to host then at least one cast)
  */
-		if (invert != CV_HOST_MASK) { /* net format */
+		if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
 				(void) ntohss(t1, bufsize , from, work_count);
@@ -568,7 +578,7 @@ int	count;
  * if the output conversion is HOST and output format is DOUBLE
  * then this will be the last step.
  */
-			if (outvert == CV_HOST_MASK && outfmt == CV_D) {
+			if (outIsHost == CV_HOST_MASK && outfmt == CV_D) {
 				to = out;
 			} else {
 				to = t2;
@@ -625,20 +635,14 @@ int	count;
 			from = hold;
 		}
 
-/*
- * If the output format is DOUBLE then we know that the conversion
- * is to network.  (We tested for outfmt=D and outvert=H earlier.
- */
-		if (outfmt == CV_D) {
-			(void) htond(out,from,work_count);
-		} else {
+		if (outfmt != CV_D) {
 /*
  * The input point is now pointing to a double in host format.  If the
  * output is also in host format then the next conversion will be
  * the last conversion, set the destination to reflect this.
  */
 
-			if (outvert == CV_HOST_MASK) {
+			if (outIsHost == CV_HOST_MASK) {
 				to = out;
 			} else {
 				to = t3;
@@ -709,9 +713,12 @@ int	count;
  * If the output conversion is network then do a host to net call
  * for either 16 or 32 bit values using Host TO Network All Short | Long
  */
-			if (outvert != CV_HOST_MASK) {
-#if 0
+			if (outIsHost != CV_HOST_MASK) {
 				switch (outfmt) {
+				case CV_D:
+					(void) htond(out,from, work_count);
+					break;
+#if 0
 				case CV_16:
 					(void) htonas(out, bufsize, from,
 					    work_count);
@@ -720,8 +727,8 @@ int	count;
 					(void) htonal(out, bufsize, from,
 					    work_count);
 					break;
-				}
 #endif
+				}
 			}
 					
 		}
