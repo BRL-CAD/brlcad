@@ -338,6 +338,7 @@ label_edited_solid()
 	point_t		temp;
 	point_t		pos_view;
 	mat_t		xform;		/* model2objview * es_mat */
+	char		kvt[4];		/* Used to change chars to strings */
 
 	mat_mul( xform, model2objview, es_mat );
 
@@ -354,10 +355,10 @@ label_edited_solid()
 			VMOVE(&temp_rec.s.s_values[15], &temp_rec.s.s_values[18]);
 		}
 		for(i=1; i<es_type; i++) {
-			static char kvt[4] = "X\0";/* Cvts chars to strings */
 			VADD2( work, es_rec.s.s_values, &temp_rec.s.s_values[i*3] );
 			MAT4X3PNT(pos_view, xform, work);
 			kvt[0] = i + '1';
+			kvt[1] = '\0';
 			dmp->dmr_puts( kvt, ((int)(pos_view[X]*2048))+15, ((int)(pos_view[Y]*2048))+15, 0, DM_WHITE );
 		}
 		break;
