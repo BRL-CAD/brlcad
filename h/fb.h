@@ -164,9 +164,11 @@ extern int	fb_null();
 extern int	_fb_pgin();
 extern int	_fb_pgout();
 extern int	_fb_pgflush();
-extern int	_disk_enable;
+extern int	_fb_disk_enable;
 extern int	fb_sim_readrect();
 extern int	fb_sim_writerect();
+extern int	fb_is_linear_cmap();
+extern void	fb_make_linear_cmap();
 
 /*
  * Copy one RGB pixel to another.
