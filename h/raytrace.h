@@ -138,7 +138,7 @@ struct curvature {
  */
 #define RT_CURVE( curvp, hitp, stp )  { \
 	register int id = (stp)->st_id; \
-	if( id < 0 || id >= rt_nfunctab )  { \
+	if( id <= 0 || id > ID_MAXIMUM )  { \
 		rt_log("stp=x%x, id=%d.\n", stp, id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
 	} \
@@ -202,6 +202,7 @@ struct soltab {
 	int		*st_specific;	/* -> ID-specific (private) struct */
 	struct soltab	*st_forw;	/* Forward linked list of solids */
 	struct soltab	*st_back;	/* Backward links */
+	struct directory *st_dp;	/* Directory entry of solid */
 	char		*st_name;	/* Leaf name of solid */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
@@ -229,6 +230,8 @@ struct soltab {
 #define	ID_STRINGSOL	11	/* String-defined solid */
 #define ID_EBM		12	/* Extruded bitmap solid */
 
+#define ID_MAXIMUM	12	/* Maximum defined ID_xxx value */
+
 /*
  *			F U N C T A B
  *
@@ -247,6 +250,7 @@ struct rt_functab {
 	int		(*ft_classify)();
 	void		(*ft_free)();
 	void		(*ft_plot)();
+	void		(*ft_vshot)();
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
@@ -339,7 +343,7 @@ struct region  {
  */
 #define RT_HIT_NORM( hitp, stp, rayp )  { \
 	register int id = (stp)->st_id; \
-	if( id < 0 || id >= rt_nfunctab ) { \
+	if( id <= 0 || id > ID_MAXIMUM ) { \
 		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", stp, id, hitp, rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
 	} \
@@ -612,6 +616,12 @@ struct resource {
 };
 #define RESOURCE_NULL	((struct resource *)0)
 #define RESOURCE_MAGIC	0x83651835
+#define RT_RESOURCE_CHECK(_resp)	\
+	{if((_resp)->re_magic != RESOURCE_MAGIC) {\
+		rt_log("resp=x%x, magic s/b x%x was x%x, file %s line %d\n", \
+			(_resp), RESOURCE_MAGIC, (_resp)->re_magic, \
+			__FILE__, __LINE__ ); \
+		rt_bomb("bad resource struct"); } }
 
 /*
  *			S T R U C T P A R S E
@@ -751,6 +761,9 @@ struct rt_i {
 	int		rti_cut_nbins;	/* number of cut bins (leaves) */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
 	int		rti_cut_maxdepth;/* max depth of cut tree */
+	struct soltab	**rti_sol_by_type[ID_MAXIMUM+1];
+	int		rti_nsol_by_type[ID_MAXIMUM+1];
+	int		rti_maxsol_by_type;
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x01016580	/* magic # for integrity check */
@@ -893,6 +906,8 @@ extern void mat_zero(), mat_idn(), mat_copy(), mat_mul(), matXvec();
 extern void mat_inv(), mat_trn(), mat_ae(), mat_angles();
 extern void vtoh_move(), htov_move(), mat_print();
 extern void eigen2x2(), mat_fromto(), mat_lookat();
+extern void ae_vec(), vec_ortho(), vec_perp();
+extern void mat_xrot(), mat_yrot(), mat_zrot();
 extern double mat_atan2();
 
 /*****************************************************************
@@ -927,6 +942,8 @@ extern void rt_boolfinal(struct partition *InputHdp,
 					/* Eval bool tree node */
 extern int rt_booleval(union tree *treep, struct partition *partp,
 	 struct region **trueregp, struct resource *resp);
+
+extern void rt_grow_boolstack(struct resource *res);
 					/* Approx Floating compare */
 extern int rt_fdiff(double a, double b);
 					/* Relative Difference */
@@ -960,6 +977,8 @@ extern void rt_bitv_or(bitv_t *out, bitv_t *in, int nbits);
 extern void rt_cut_it(struct rt_i *rtip);
 					/* print cut node */
 extern void rt_pr_cut(union cutter *cutp, int lvl);
+					/* free a cut tree */
+extern void rt_fr_cut(union cutter *cutp);
 					/* regionid-driven color override */
 extern void rt_region_color_map(struct region *regp);
 					/* process ID_MATERIAL record */
@@ -969,6 +988,11 @@ extern void rt_cut_extend(union cutter *cutp, struct soltab *stp);
 					/* find RPP of one region */
 extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp);
+
+extern int rt_add_anim(struct rt_i *rtip, struct animate *anp, int root);
+extern int rt_do_anim(struct animate *anp, mat_t stack, mat_t arc,
+	struct mater_info *materp);
+extern void rt_fr_anim(struct rt_i *rtip);
 
 /* The database library */
 /* open.c */
@@ -1024,6 +1048,14 @@ extern int rt_avail_cpus(void);
 					/* run func in parallel */
 extern void rt_parallel( void (*func)(), int ncpu );
 
+/* memalloc.c */
+extern unsigned long memalloc(struct mem_map **pp, unsigned size);
+extern unsigned long memget(struct mem_map **pp, unsigned int size,
+	unsigned int place);
+extern void memfree(struct mem_map **pp, unsigned size, unsigned long addr);
+extern void mempurge(struct mem_map **pp);
+extern void memprint(struct mem_map **pp);
+
 #else
 
 extern char *rt_malloc();		/* visible malloc() */
@@ -1035,6 +1067,7 @@ extern char *rt_strdup();		/* Duplicate str w/malloc */
 extern void rt_boolweave();		/* Weave segs into partitions */
 extern void rt_boolfinal();		/* Eval booleans over partitions */
 extern int rt_booleval();		/* Eval bool tree node */
+extern void rt_grow_boolstack();
 extern int rt_fdiff();			/* Approx Floating compare */
 extern double rt_reldiff();		/* Relative Difference */
 extern void rt_pr_region();		/* Print a region */
@@ -1051,11 +1084,15 @@ extern int rt_byte_roundup();		/* malloc rounder */
 extern void rt_bitv_or();		/* logical OR on bit vectors */
 extern void rt_cut_it();		/* space partitioning */
 extern void rt_pr_cut();		/* print cut node */
+extern void rt_fr_cut();		/* free a cut tree */
 extern void rt_draw_box();		/* unix-plot an RPP */
 extern void rt_region_color_map();	/* regionid-driven color override */
 extern void rt_color_addrec();		/* process ID_MATERIAL record */
 extern void rt_cut_extend();		/* extend a cut box */
 extern int rt_rpp_region();		/* find RPP of one region */
+extern int rt_add_anim();
+extern int rt_do_anim();
+extern void rt_fr_anim();
 
 /* The database library */
 #ifndef mips
@@ -1104,6 +1141,13 @@ extern int rt_avail_cpus();		/* find # of CPUs available */
 extern void rt_parallel();		/* run func in parallel */
 
 #endif
+
+/* memalloc.c */
+extern unsigned long memalloc();
+extern unsigned long memget();
+extern void memfree();
+extern void mempurge();
+extern void memprint();
 
 #endif
 
