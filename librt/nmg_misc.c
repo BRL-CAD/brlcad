@@ -36,17 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* #define DEBUG_PLEU */
-
-NMG_EXTERN(void			nmg_pr_fu_briefly, (struct faceuse *fu,
-				char *h) );
-NMG_EXTERN(void			nmg_pr_lu_briefly, (struct loopuse *lu,
-				char *h) );
-NMG_EXTERN(void			nmg_pr_eu_briefly, (struct edgeuse *eu,
-				char *h) );
-NMG_EXTERN(void			nmg_pr_vu_briefly, (struct vertexuse *vu,
-				char *h) );
-
 
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
@@ -301,6 +290,11 @@ struct nmg_ptbl *b;
 	return(0);
 }
 
+/*
+ *			N M G _ O R I E N T A T I O N
+ *
+ *  Convert orientation code to string.
+ */
 char *
 nmg_orientation(orientation)
 int	orientation;
@@ -849,7 +843,8 @@ char *h;
  *	1	bad edgeuse mate
  *	2	unclosed space
  */
-static int nmg_check_radial(eu)
+int
+nmg_check_radial(eu)
 struct edgeuse *eu;
 {
 	char curr_orient;
@@ -1333,6 +1328,9 @@ struct model	*m;
 	rt_free( (char *)flags, "rebound flags[]" );
 }
 
+/*
+ *			N M G _ C O U N T _ S H E L L _ K I D S
+ */
 void
 nmg_count_shell_kids(m, total_faces, total_wires, total_points)
 struct model *m;
