@@ -137,6 +137,40 @@ char		*str;
 }
 
 /*
+ *			R T _ M E M _ B A R R I E R C H E C K
+ *
+ *  Check *all* entries in the memory debug table for barrier word
+ *  corruption.
+ *  Intended to be called periodicly through an application during debugging.
+ *
+ *  Returns -
+ *	-1	something is wrong
+ *	 0	all is OK;
+ */
+int
+rt_mem_barriercheck()
+{
+	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
+	register long	*ip;
+
+	if( rt_memdebug == (struct memdebug *)0 )  {
+		rt_log("rt_mem_barriercheck()  no memdebug table yet\n");
+		return 0;
+	}
+	for( ; mp >= rt_memdebug; mp-- )  {
+		if( mp->mdb_len <= 0 )  continue;
+		ip = (long *)(mp->mdb_addr+mp->mdb_len-sizeof(long));
+		if( *ip != MDB_MAGIC )  {
+			rt_log("ERROR rt_mem_barriercheck(x%x, len=%d) barrier word corrupted!\nbarrier at x%x was=x%x s/b=x%x\n",
+				mp->mdb_addr, mp->mdb_len,
+				ip, *ip, MDB_MAGIC);
+			return -1;	/* FAIL */
+		}
+	}
+	return 0;			/* OK */
+}
+
+/*
  *			R T _ M E M D E B U G _ M O V E
  *
  *  realloc() has moved to a new memory block.
