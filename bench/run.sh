@@ -2,31 +2,79 @@
 # A Shell script to run the BRL-CAD Benchmark Test
 #  @(#)$Header$ (BRL)
 
+# set RT, DB, and/or CMP environment variables to override default locations
+
+echo "B R L - C A D   B E N C H M A R K"
+echo "================================="
+
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
-if test -f ../.rt.$MACHINE/rt
-then
-	RT=../.rt.$MACHINE/rt
-	DB=../.db.$MACHINE
-	LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
-else
-	if test ! -f ../rt/rt
-	then
-		echo "Can't find RT"
-		exit 1
-	fi
-	RT=../rt/rt
-	DB=../db
-	LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
-fi
-export LD_LIBRARY_PATH
 
-CMP=./pixcmp
-if test ! -f $CMP
+echo Looking for RT...
+# find RT (environment variable overrides)
+if test x${RT} = x
 then
-	cake pixcmp
+	echo ...checking for NFS or local build...
+	# check for NFS build
+	if test -x ../.rt.$MACHINE/rt
+	then
+		echo ...found NFS build
+		RT=../.rt.$MACHINE/rt
+		if test x${DB} != x ; then DB=../.db.$MACHINE ; fi
+		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+	# check for local build
+	elif test -f ../rt/rt
+	then
+		echo ...found local build
+		RT=../rt/rt
+		if test x${DB} != x ; then DB=../db ; fi
+		LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+	fi
+fi
+
+echo Looking for geometry database directory...
+# find geometry database directory if we do not already know where it is
+# DB environment variable overrides
+if test x${DB} = x
+then
+	echo ...checking for NFS or local build...	
+	# check for NFS build
+	if test -f ../.db.$MACHINE/sphflake.g 
+	then 
+		echo ...found NFS build
+		DB=../.db.$MACHINE
+		LD_LIBRARY_PATH=../.libbu.$MACHINE:../.libbn.$MACHINE:../.librt.$MACHINE:../.libfb.$MACHINE:../.libpkg.$MACHINE:../.libsysv.$MACHINE:$LD_LIBRARY_PATH
+	# check for local build
+	elif test -f ../db/sphflake.g
+	then
+		echo ...found local build
+		DB=../db
+		LD_LIBRARY_PATH=../libbu:../libbn:../librt:../libfb:../libpkg:../libsysv:$LD_LIBRARY_PATH
+	fi
+
+fi
+
+echo Checking for pixel comparison utility...
+# find pixel comparison utility
+# CMP environment variable overrides
+if test x${CMP} = x
+then
+	echo ...checking for NFS of local build...
+	if test -x ../.bench.$MACHINE/pixcmp
+	then
+		echo ...found NFS build
+		CMP=../.bench.$MACHINE/pixcmp
+	elif test -x ./pixcmp
+	then
+		echo ...found local build
+		CMP=./pixcmp
+	else
+		echo ...need to build pixcmp
+		cake pixcmp
+		CMP=./pixcmp
+	fi
 fi
 
 # Alliant NFS hack
@@ -37,6 +85,33 @@ then
 	RT=/tmp/rt
 	CMP=/tmp/pixcmp
 fi
+
+
+# print results or choke
+if test x${RT} = x
+then
+	echo "ERROR:  Could not find RT"
+	exit 1
+else
+	echo "Using [$RT] for RT"
+fi
+if test x${DB} = x
+then
+	echo "ERROR:  Could not find database directory"
+	exit 1
+else
+	echo "Using [$DB] for DB"
+fi
+if test x${CMP} = x
+then
+	echo "ERROR:  Could not find pixel comparison utility"
+	exit 1
+else
+	echo "Using [$CMP] for CMP"
+fi
+export LD_LIBRARY_PATH
+
+echo 
 
 # Run the tests
 
@@ -58,6 +133,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
+if test -f gmon.out; then mv -f gmon.out gmon.moss.out; fi
 ${CMP} ../pix/moss.pix moss.pix
 if test $? = 0
 then
@@ -84,6 +160,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
+if test -f gmon.out; then mv -f gmon.out gmon.world.out; fi
 ${CMP} ../pix/world.pix world.pix
 if test $? = 0
 then
@@ -109,6 +186,7 @@ viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
 start 0;
 end;
 EOF
+if test -f gmon.out; then mv -f gmon.out gmon.star.out; fi
 ${CMP} ../pix/star.pix star.pix
 if test $? = 0
 then
@@ -135,6 +213,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
+if test -f gmon.out; then mv -f gmon.out gmon.bldg391.out; fi
 ${CMP} ../pix/bldg391.pix bldg391.pix
 if test $? = 0
 then
@@ -160,6 +239,7 @@ viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
 start 0;
 end;
 EOF
+if test -f gmon.out; then mv -f gmon.out gmon.m35.out; fi
 ${CMP} ../pix/m35.pix m35.pix
 if test $? = 0
 then
@@ -183,6 +263,7 @@ eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
 start 0;
 end;
 EOF
+if test -f gmon.out; then mv -f gmon.out gmon.sphflake.out; fi
 ${CMP} ../pix/sphflake.pix sphflake.pix
 if test $? = 0
 then

@@ -26,11 +26,15 @@
 clobber&: xxclober
 	@echo "About to wipe out all pictures and binary files in this directory"
 	@echo "Send SIGINT (typ. ^C) within 3 seconds to abort"
-	@sleep 5
+	@sleep 3
 	rm -f *.log.* *.pix.*	# old versions
 	rm -f *.log *.pix	# last try
 
 #define clobber	xxclober	/* rename "clobber" in Cakefile.rules */
+
+clean&:
+	@echo "Removing object files and pixcmp"
+	rm -f *.o pixcmp
 
 pixcmp:		OBJ
 	CC LDFLAGS -o pixcmp OBJ
