@@ -294,7 +294,20 @@ int	count;
 #if 0
 	f_pixar_ff(&dest,&size,2,pixelp);
 #else
+#	if 0
+	/* This way dumps core if writes are longer than 1020 bytes -M */
 	f_pixar_ff(&dest,&size,3,lbuf);
+#	else
+	if( count > 800 )  {
+		size.width = 800;
+		f_pixar_ff(&dest,&size,3,lbuf);
+		size.width = count-800;
+		dest.x = 800;
+		f_pixar_ff(&dest,&size,3,&lbuf[800]);
+	} else {
+		f_pixar_ff(&dest,&size,3,lbuf);
+	}
+#	endif
 #endif
 
 	return(count);
