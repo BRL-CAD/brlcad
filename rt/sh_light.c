@@ -57,7 +57,7 @@ HIDDEN int	light_setup(), light_render();
 HIDDEN void	light_print();
 void		light_free();
 
-CONST struct mfuncs light_mfuncs[] = {
+struct mfuncs light_mfuncs[] = {
 	{MF_MAGIC,	"light",	0,		MFI_NORMAL,	0,
 	light_setup,	light_render,	light_print,	light_free },
 

@@ -43,7 +43,7 @@ struct bu_structparse rtrans_parse[] = {
 HIDDEN int	rtrans_setup(), rtrans_render();
 HIDDEN void	rtrans_print(), rtrans_free();
 
-CONST struct mfuncs rtrans_mfuncs[] = {
+struct mfuncs rtrans_mfuncs[] = {
 	{MF_MAGIC,	"rtrans",	0,		0,	0,
 	rtrans_setup,	rtrans_render,	rtrans_print,	rtrans_free },
 

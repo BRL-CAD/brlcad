@@ -47,7 +47,7 @@ struct bu_structparse cloud_parse[] = {
 HIDDEN int	cloud_setup(), cloud_render();
 HIDDEN void	cloud_print(), cloud_free();
 
-CONST struct mfuncs cloud_mfuncs[] = {
+struct mfuncs cloud_mfuncs[] = {
 	{MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
 	cloud_setup,	cloud_render,	cloud_print,	cloud_free },
 

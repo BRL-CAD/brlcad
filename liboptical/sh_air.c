@@ -49,7 +49,7 @@ struct bu_structparse air_parse[] = {
 HIDDEN int	air_setup(), airtest_render(), air_render(), emist_render(), tmist_render();
 HIDDEN void	air_print(), air_free();
 
-CONST struct mfuncs air_mfuncs[] = {
+struct mfuncs air_mfuncs[] = {
 	{MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
 	air_setup,	airtest_render,	air_print,	air_free },
 

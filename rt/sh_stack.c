@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 HIDDEN int	stk_setup(), stk_render();
 HIDDEN void	stk_print(), stk_free();
 
-CONST struct mfuncs stk_mfuncs[] = {
+struct mfuncs stk_mfuncs[] = {
 	{MF_MAGIC,	"stack",	0,		0,	0,
 	stk_setup,	stk_render,	stk_print,	stk_free},
 

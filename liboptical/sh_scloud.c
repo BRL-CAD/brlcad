@@ -68,7 +68,7 @@ struct bu_structparse scloud_parse[] = {
 HIDDEN int	scloud_setup(), scloud_render(), tsplat_render();
 HIDDEN void	scloud_print(), scloud_free();
 
-CONST struct mfuncs scloud_mfuncs[] = {
+struct mfuncs scloud_mfuncs[] = {
 	{MF_MAGIC,	"scloud",	0,	MFI_HIT, MFF_PROC,
 	scloud_setup,	scloud_render,	scloud_print,	scloud_free },
 

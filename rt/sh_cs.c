@@ -74,7 +74,7 @@ HIDDEN void	cs_print(), cs_free();
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
  */
-CONST struct mfuncs cs_mfuncs[] = {
+struct mfuncs cs_mfuncs[] = {
 	{MF_MAGIC,	"cs",		0,		MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	cs_setup,	cs_render,	cs_print,	cs_free },
 

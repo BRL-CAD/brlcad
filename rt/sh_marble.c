@@ -217,7 +217,7 @@ struct	bu_structparse marble_parse[] = {
  */
 
 #ifdef eRT
-CONST struct	mfuncs marble_mfuncs[] = {
+struct	mfuncs marble_mfuncs[] = {
 	{MF_MAGIC,	"marble",	0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
 	marble_prep,	marble_setup,	marble_render,	mlib_void,	marble_free },
 
@@ -228,7 +228,7 @@ CONST struct	mfuncs marble_mfuncs[] = {
 	0,		0,		0,		0,		0 }
 };
 #else
-CONST struct mfuncs marble_mfuncs[] = {
+struct mfuncs marble_mfuncs[] = {
 	{MF_MAGIC,	"marble",	0,		MFI_HIT|MFI_NORMAL|MFI_LIGHT,	0,
 	marble_setup,	marble_render,	mlib_void,	marble_free},
 

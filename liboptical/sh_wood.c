@@ -100,7 +100,7 @@ HIDDEN void	wood_D_set RT_ARGS((CONST struct bu_structparse *, CONST char *, CON
  */
 
 #ifdef eRT
-CONST struct mfuncs wood_mfuncs[] = {
+struct mfuncs wood_mfuncs[] = {
 	{MF_MAGIC,	"wood",	0,		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
 	wood_init,	wood_setup,	wood_render,	wood_print,	wood_free},
 
@@ -111,7 +111,7 @@ CONST struct mfuncs wood_mfuncs[] = {
 	0,		0,		0,		0,		0}
 };
 #else
-CONST struct mfuncs wood_mfuncs[] = {
+struct mfuncs wood_mfuncs[] = {
 	{MF_MAGIC,	"wood",	0, 		MFI_HIT|MFI_UV|MFI_NORMAL,	0,
 	wood_setup,	wood_render,	wood_print,	wood_free},
 

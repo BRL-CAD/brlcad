@@ -165,7 +165,7 @@ HIDDEN void	gravel_print(), gravel_free();
  *
  * WARNING:  The order of this table is critical for these shaders.
  */
-CONST struct mfuncs gravel_mfuncs[] = {
+struct mfuncs gravel_mfuncs[] = {
 	{MF_MAGIC,	"gravel",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	0,
 	gravel_setup,	fractal_render,	gravel_print,	gravel_free },
 

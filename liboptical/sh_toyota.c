@@ -105,7 +105,7 @@ fastf_t
 	skylight_spectral_dist(),
 	zenith_luminance();
 
-CONST struct mfuncs toyota_mfuncs[] = {
+struct mfuncs toyota_mfuncs[] = {
 	{MF_MAGIC,	"toyota",	0,		MFI_NORMAL|MFI_LIGHT,	0,
 	toyota_setup,	toyota_render,	toyota_print,	toyota_free },
 

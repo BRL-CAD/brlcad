@@ -177,7 +177,7 @@ HIDDEN void	grass_print(), grass_free();
  * and "plastic" are all names for the same shader with different default
  * values for the parameters.
  */
-CONST struct mfuncs grass_mfuncs[] = {
+struct mfuncs grass_mfuncs[] = {
 	{MF_MAGIC,	"grass",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,  MFF_PROC,
 	grass_setup,	grass_render,	grass_print,	grass_free },
 

@@ -79,7 +79,8 @@ HIDDEN int phong_render();
 HIDDEN void	phong_print();
 HIDDEN void	phong_free();
 
-CONST struct mfuncs phg_mfuncs[] = {
+/* This can't be CONST, so the forward link can be written later */
+struct mfuncs phg_mfuncs[] = {
 	{MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },
 

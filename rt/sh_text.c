@@ -47,7 +47,7 @@ HIDDEN int envmap_setup();
 extern int mlib_zero(), mlib_one();
 extern void	mlib_void();
 
-CONST struct mfuncs txt_mfuncs[] = {
+struct mfuncs txt_mfuncs[] = {
 	{MF_MAGIC,	"texture",	0,		MFI_UV,		0,
 	txt_setup,	txt_render,	txt_print,	txt_free },
 

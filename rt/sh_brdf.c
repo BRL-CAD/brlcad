@@ -86,7 +86,7 @@ HIDDEN int brdf_render();
 HIDDEN void	brdf_print();
 HIDDEN void	brdf_free();
 
-CONST struct mfuncs brdf_mfuncs[] = {
+struct mfuncs brdf_mfuncs[] = {
 	{MF_MAGIC,	"brdf",		0,		MFI_NORMAL|MFI_LIGHT,	0,
 	brdf_setup,	brdf_render,	brdf_print,	brdf_free },
 
