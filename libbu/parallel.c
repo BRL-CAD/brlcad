@@ -68,6 +68,10 @@ typedef __uint64_t k_sigset_t;  /* signal set type */
 /* <malloc.h> #include's <stddef.h> */
 
 #include <sys/wait.h>
+#if IRIX >= 6
+# include <sched.h>
+struct sched_param param;
+#endif
 
 #endif /* SGI_4D */
 
