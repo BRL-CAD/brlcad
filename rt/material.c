@@ -119,6 +119,8 @@ found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
 
+	if(rdebug&RDEBUG_MATERIAL)
+		bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
 	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip )) < 0 )  {
 		rt_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
 			rp->reg_name, material, RT_VLS_ADDR(&param) );
