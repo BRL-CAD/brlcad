@@ -27,8 +27,7 @@
 	LIB_PRE''LIBRT RT_LIBES LIBMALLOC MGED_LIBES LIBES
 
 mged:	OBJ LIBRT
-	-rm -f vers.c
-	sh ../SRCDIR/newvers.sh
+	sh ../newvers.sh version "Graphics Editor (MGED)"
 	CC CFLAGS -c vers.c
 	CC -o mged LDFLAGS OBJ COMPLETE_LIBES vers.o
 
