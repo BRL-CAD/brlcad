@@ -61,19 +61,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  NAMESIZE chars.
  *  The most common example of such a function is db_diradd().
  *
+ *  Note that the handler may do I/O, including repositioning the
+ *  file pointer, so this must be taken into account.
+ *
  * Returns -
  *	 0	Success
  *	-1	Fatal Error
  */
 int
-db_scan( dbip, handler )
+db_scan( dbip, handler, do_old_matter )
 register struct db_i	*dbip;
 int			(*handler)();
+int			do_old_matter;
 {
 	union record	record;		/* Initial record, holds name */
 	union record	rec2;		/* additional record(s) */
 	register long	addr;		/* start of current rec */
 	register long	here;		/* intermediate positions */
+	register long	next;		/* start of next rec */
 	register int	nrec;		/* # records for this solid */
 	register int	totrec;		/* # records for database */
 	register int	j;
@@ -89,19 +94,22 @@ int			(*handler)();
 	    	return(-1);
 	}
 	rewind( dbip->dbi_fp );
+	next = ftell(dbip->dbi_fp);
 
-	here = addr = -1;
+	here = addr = -1L;
 	totrec = 0;
 	while(1)  {
 		nrec = 0;
-		if( (addr = ftell(dbip->dbi_fp)) == EOF )  {
-			rt_log("db_scan:  ftell() failure\n");
+		if( fseek(dbip->dbi_fp, next, 0) != 0 )  {
+			rt_log("db_scan:  fseek(offset=%d) failure\n", next);
 			return(-1);
 		}
+		addr = next;
 
 		if( fread( (char *)&record, sizeof record, 1, dbip->dbi_fp ) != 1
 		    || feof(dbip->dbi_fp) )
 			break;
+		next = ftell(dbip->dbi_fp);
 		DEBUG_PR( addr, record );
 
 		nrec++;
@@ -136,6 +144,7 @@ int			(*handler)();
 				}
 				nrec++;
 			}
+			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.a.a_name, addr, nrec,
 				DIR_SOLID );
 			break;
@@ -151,8 +160,10 @@ int			(*handler)();
 				DIR_SOLID );
 			break;
 		case ID_MATERIAL:
-			/* This is common to RT and MGED */
-			rt_color_addrec( &record, addr );
+			if( do_old_matter ) {
+				/* This is common to RT and MGED */
+				rt_color_addrec( &record, addr );
+			}
 			break;
 		case ID_P_HEAD:
 			while(1) {
@@ -167,6 +178,7 @@ int			(*handler)();
 				}
 				nrec++;
 			}
+			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.p.p_name, addr, nrec,
 				DIR_SOLID );
 			break;
@@ -191,6 +203,7 @@ int			(*handler)();
 				nrec += j+1;
 				while( j-- > 0 )
 					fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+				next = ftell(dbip->dbi_fp);
 			}
 			handler( dbip, record.B.B_name, addr, nrec,
 				DIR_SOLID );
@@ -209,6 +222,7 @@ int			(*handler)();
 			nrec += record.n.n_grans;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.n.n_name, addr, nrec,
 				DIR_SOLID );
 			break;
@@ -221,6 +235,7 @@ int			(*handler)();
 			nrec += record.pw.pw_count-1;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.pw.pw_name, addr, nrec,
 				DIR_SOLID );
 			break;
@@ -240,6 +255,7 @@ int			(*handler)();
 				}
 				nrec++;
 			}
+			next = ftell(dbip->dbi_fp);
 			handler( dbip, record.c.c_name, addr, nrec,
 				record.c.c_flags == 'R' ?
 					DIR_COMB|DIR_REGION : DIR_COMB );
