@@ -328,20 +328,30 @@ CONST struct rt_tol	*tol;
 
 	/* Ensure that vertices on edge 2 are within tol of e1 */
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
-	    e2->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	    e2->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 	if( rt_distsq_line3_pt3( eg1->e_pt, eg1->e_dir,
-	    e2->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	    e2->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 
 	/* Ensure that vertices of both edges are within tol of other eg */
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
-	    e1->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	    e1->eu_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 	if( rt_distsq_line3_pt3( eg2->e_pt, eg2->e_dir,
-	    e1->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  return 0;
+	    e1->eu_p->eumate_p->vu_p->v_p->vg_p->coord ) > tol->dist_sq )  goto trouble;
 
 	/* Perhaps check for ultra-short edges (< 10*tol->dist)? */
 
 	/* Do not use rt_isect_line3_line3() -- it's MUCH too strict */
 
+	return 1;
+trouble:
+	if( !rt_2line3_colinear( eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir,
+	     1e5, tol ) )
+		return 0;
+
+	/* XXX debug */
+	nmg_pr_eg( eg1, 0 );
+	nmg_pr_eg( eg2, 0 );
+	rt_log("nmg_2edge_g_coincident() lines colinear, vertex check fails, calling colinear anyway.\n");
 	return 1;
 }
 
