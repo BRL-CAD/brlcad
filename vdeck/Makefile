@@ -1,8 +1,8 @@
 #	Makefile -- for vdeck
 
-#	last edit:	85/10/08	G S Moss
+#	last edit:	85/12/20	G S Moss
 
-#	SCCSID	@(#)Makefile	2.5
+#	SCCSID	@(#)Makefile	2.6
 
 PRODUCT = vdeck
 HEADERS = ${PRODUCT}.h ged_types.h 3d.h vextern.h
@@ -10,7 +10,7 @@ CFILES	= ${PRODUCT}.c cgarbs.c match.c parsarg.c vproc.c vglobal.c vsort.c
 OBJS	= ${PRODUCT}.o cgarbs.o match.o parsarg.o vproc.o vglobal.o vsort.o
 VMBLIB	= # /vld/lib/libVMB.a
 LIBES	= ${VMBLIB} -lm
-LDFLAGS = -i -n
+LDFLAGS = -n# -m 6 # NEED -m flag on GOULDS.
 TFILES	= ${PRODUCT}.in ${PRODUCT}.exp
 BINDIR	= /vld/bin
 LIBDIR	= /vld/lib
@@ -50,7 +50,7 @@ print:		${PRODUCT}.1 Makefile ${HEADERS} ${CFILES}
 				${TESTDIR}/${PRODUCT}.1 ) | lpr
 
 lint:		${HEADERS} ${CFILES}
-	lint -I${INCDIR} ${CFILES} > ${TESTDIR}/${PRODUCT}.lint
+	lint -I${INCDIR} ${CFILES} ${LIBES} > ${TESTDIR}/${PRODUCT}.lint
 
 flow:		${HEADERS} ${CFILES}
 	cflow ${CFILES} > ${TESTDIR}/${PRODUCT}.flow
