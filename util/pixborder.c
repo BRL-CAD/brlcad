@@ -71,8 +71,8 @@ fastf_t			hsv_tol[3];
 
 #define	OPT_STRING	"ab:e:hi:n:s:t:w:x:y:B:E:I:T:X:Y:?"
 
-#define	made_it()	fprintf(stderr, "Made it to %s:%d\n",	\
-				__FILE__, __LINE__);		\
+#define	made_it()	(void) fprintf(stderr, "Made it to %s:%d\n",	\
+				__FILE__, __LINE__);			\
 				fflush(stderr)
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
@@ -278,7 +278,7 @@ unsigned char	*rgb;
 	    case 4: VSET(float_rgb, t, p, val); break;
 	    case 5: VSET(float_rgb, val, p, q); break;
 	    default:
-		fprintf(stderr, "%s:%d: This shouldn't happen\n",
+		(void) fprintf(stderr, "%s:%d: This shouldn't happen\n",
 		    __FILE__, __LINE__);
 		exit (1);
 	}
@@ -434,14 +434,14 @@ register char **argv;
 	    case 'b':
 		if (! read_rgb(border_rgb, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		break;
 	    case 'e':
 		if (! read_rgb(exterior_rgb, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		rgb_to_hsv(exterior_rgb, exterior_hsv);
@@ -454,7 +454,7 @@ register char **argv;
 	    case 'i':
 		if (! read_rgb(interior_rgb, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		rgb_to_hsv(interior_rgb, interior_hsv);
@@ -471,7 +471,7 @@ register char **argv;
 	    case 't':
 		if (! read_rgb(rgb_tol, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		tol_using_rgb = 1;
@@ -489,7 +489,7 @@ register char **argv;
 	    case 'B':
 		if (! read_hsv(border_hsv, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		hsv_to_rgb(border_hsv, border_rgb);
@@ -497,7 +497,7 @@ register char **argv;
 	    case 'E':
 		if (! read_hsv(exterior_hsv, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		hsv_to_rgb(exterior_hsv, exterior_rgb);
@@ -506,7 +506,7 @@ register char **argv;
 	    case 'I':
 		if (! read_hsv(interior_hsv, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		hsv_to_rgb(interior_hsv, interior_rgb);
@@ -515,7 +515,7 @@ register char **argv;
 	    case 'T':
 		if (! read_hsv(hsv_tol, optarg))
 		{
-		    fprintf(stderr, "Illegal color: '%s'\n", optarg);
+		    (void) fprintf(stderr, "Illegal color: '%s'\n", optarg);
 		    return (0);
 		}
 		tol_using_rgb = 0;
@@ -599,13 +599,17 @@ char	*argv[];
 	exit (1);
     }
 
-    fprintf(stderr,
+#if 0
+    (void) fprintf(stderr,
 	"We'll put a border of %d/%d/%d around regions of %d/%d/%d\n",
 	V3ARGS(border_rgb), V3ARGS(interior_rgb));
     if (tol_using_rgb)
-	fprintf(stderr, "With an RGB tol of %d/%d/%d\n", V3ARGS(rgb_tol));
+	(void) fprintf(stderr, "With an RGB tol of %d/%d/%d\n",
+	V3ARGS(rgb_tol));
     else
-	fprintf(stderr, "With an HSV tol of %g/%g/%g\n", V3ARGS(hsv_tol));
+	(void) fprintf(stderr, "With an HSV tol of %g/%g/%g\n",
+	V3ARGS(hsv_tol));
+#endif
 
     /*
      *	Autosize the input if appropriate
@@ -620,7 +624,7 @@ char	*argv[];
 	    file_height = h;
 	}
 	else
-	    fprintf(stderr, "pixhalve: unable to autosize\n");
+	    (void) fprintf(stderr, "pixborder: unable to autosize\n");
     }
 
     /*
@@ -647,7 +651,7 @@ char	*argv[];
      || (! read_row(inrow[next_row], file_width, infp)))
     {
 	perror(file_name);
-	fprintf(stderr, "pixborder:  fread() error\n");
+	(void) fprintf(stderr, "pixborder:  fread() error\n");
 	exit(1);
     }
 
@@ -709,7 +713,7 @@ char	*argv[];
 	    if (! read_row(inrow[next_row], file_width, infp))
 	    {
 		perror(file_name);
-		fprintf(stderr, "pixborder:  fread() error\n");
+		(void) fprintf(stderr, "pixborder:  fread() error\n");
 		exit(1);
 	    }
 	}
