@@ -391,15 +391,13 @@ char *h;
 	MKPAD(h);
 	NMG_CK_VERTEX_G(vg);
 
-	rt_log("%sVERTEX_G %8x\n", h, vg);
 	if (!vg || vg->magic != NMG_VERTEX_G_MAGIC) {
+		rt_log("%sVERTEX_G %8x\n", h, vg);
 		rt_log("bad vertex_g magic\n");
 		Return;
 	}
-	rt_log("%s%f coord[X]\n", h, vg->coord[X]);
-	rt_log("%s%f coord[Y]\n", h, vg->coord[Y]);
-	rt_log("%s%f coord[Z]\n", h, vg->coord[Z]);
-
+	rt_log("%sVERTEX_G %8x %f %f %f = XYZ coord\n",
+		h, vg, V3ARGS(vg->coord) );
 	Return;
 }
 
