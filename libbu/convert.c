@@ -174,27 +174,38 @@ char *in;			/* input format */
 void
 cv_fmt_cookie( buf, buflen, cookie )
 char	*buf;
-int	buflen;
+size_t	buflen;
 int	cookie;
 {
 	register char *cp = buf;
 	int	len;
 
+	if( buflen == 0 )
+	{
+		fprintf( stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+		return;
+	}
 	buflen--;
 	if( cookie == 0 )  {
 		strncpy( cp, "bogus!", buflen );
 		return;
 	}
-	/* Make sure there is enough room */
-	if (buflen < 5) {
-		if( buflen < 0 )  fprintf(stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
-		return;
-	}
+
 	sprintf( cp, "%d", cookie & CV_CHANNEL_MASK );
 	len = strlen(cp);
 	cp += len;
+	if( buflen < len )
+	{
+		fprintf( stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+		return;
+	}
 	buflen -= len;
 
+	if( buflen == 0 )
+	{
+		fprintf( stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+		return;
+	}
 	if( cookie & CV_HOST_MASK )  {
 		*cp++ = 'h';
 		buflen--;
@@ -203,6 +214,11 @@ int	cookie;
 		buflen--;
 	}
 
+	if( buflen == 0 )
+	{
+		fprintf( stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+		return;
+	}
 	if( cookie & CV_SIGNED_MASK )  {
 		*cp++ = 's';
 		buflen--;
@@ -211,11 +227,11 @@ int	cookie;
 		buflen--;
 	}
 
-	if (buflen < 3) {
-		if( buflen < 0 )  fprintf(stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+	if( buflen == 0 )
+	{
+		fprintf( stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
 		return;
 	}
-		
 	switch( cookie & CV_TYPE_MASK )  {
 	case CV_8:
 		*cp++ = '8';
@@ -246,6 +262,11 @@ int	cookie;
 		break;
 	}
 
+	if( buflen == 0 )
+	{
+		fprintf( stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
+		return;
+	}
 	switch( cookie & CV_CONVERT_MASK )  {
 	case CV_CLIP:
 		*cp++ = 'C';
@@ -265,7 +286,6 @@ int	cookie;
 		break;
 	}
 	*cp = '\0';
-	if( buflen < 0 )  fprintf(stderr, "cv_pr_cookie:  call me with a bigger buffer\n");
 }
 
 void

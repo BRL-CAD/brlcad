@@ -123,7 +123,7 @@ CONST char			*title;
 {
 	register int	i;
 	long		maxcount;
-	CONST static char	marks[] = "################################################################";
+	static CONST char	marks[] = "################################################################";
 #define	NMARKS	50
 	char		buf[256];
 	int		percent;

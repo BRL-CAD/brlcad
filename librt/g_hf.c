@@ -139,7 +139,7 @@ struct rt_i		*rtip;
 	CONST struct rt_tol		*tol = &rtip->rti_tol;
 	double	dot;
 	vect_t	height, work;
-	static first_time=1;
+	static int first_time=1;
 
 	if (first_time) {
 		rt_log("%s\n",RCSid);

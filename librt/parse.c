@@ -52,10 +52,10 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 HIDDEN int
 rt_parse_double(str, count, loc)
 CONST char	*str;
-int		count;
+long		count;
 double		*loc;
 {
-	int	i;
+	long	i;
 	int	dot_seen;
 	CONST char	*numstart;
 	double	tmp_double;
@@ -720,7 +720,7 @@ HIDDEN void
 rt_vls_print_double(vls, name, count, dp)
 struct rt_vls		*vls;
 CONST char		*name;
-register int		count;
+register long		count;
 register CONST double	*dp;
 {
 	register int tmpi;

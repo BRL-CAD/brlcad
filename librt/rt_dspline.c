@@ -51,7 +51,7 @@ GetBeta(m, bias, tension)
 mat_t m;
 CONST double bias, tension;
 {
-	register i;
+	register int i;
 	double d, b2, b3;
 	register double tmp;
 

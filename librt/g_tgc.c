@@ -48,7 +48,7 @@ RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
 struct rt_i *rtip));
 
 static void	rt_tgc_rotate(), rt_tgc_shear();
-static void	rt_tgc_scale();
+static void	rt_tgc_scale(),  nmg_tgc_disk(), nmg_tgc_nurb_cyl();
 void rt_pt_sort();
 
 struct  tgc_specific {
@@ -2394,6 +2394,7 @@ struct rt_tol		*tol;
 	nmg_je( bot_eu, eu );
 	nmg_region_a( *r,tol);
 
+	return( 0 );
 }
 
 
@@ -2423,6 +2424,7 @@ fastf_t nmg_uv_unitcircle[27] = {
 	1.0,   .5,  1.0
 };
 
+void
 nmg_tgc_disk(fu, rmat, height, flip)
 struct faceuse	* fu;
 mat_t 	rmat;
@@ -2575,7 +2577,7 @@ int	flip;
  * for the top row of the surface and the bot row of the surface
  * respectively.
  */
-
+void
 nmg_tgc_nurb_cyl(fu, top_mat, bot_mat)
 struct faceuse *fu;
 mat_t	top_mat;

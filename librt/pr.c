@@ -44,7 +44,7 @@ rt_logindent_vls( v )
 struct rt_vls	*v;
 {
 	register int	i, todo;
-	CONST static char	spaces[65] = "                                                                ";
+	static CONST char	spaces[65] = "                                                                ";
 
 	RT_VLS_CHECK( v );
 

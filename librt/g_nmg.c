@@ -877,7 +877,7 @@ fastf_t *
 rt_nmg_import_fastf( base, ecnt, subscript, mat, len, pt_type )
 CONST unsigned char	*base;
 struct nmg_exp_counts	*ecnt;
-int			subscript;
+long			subscript;
 CONST matp_t		mat;
 int			len;		/* expected size */
 int			pt_type;
@@ -2080,7 +2080,7 @@ int
 rt_nmg_import_internal( ip, ep, mat, rebound, tol )
 struct rt_db_internal		*ip;
 CONST struct rt_external	*ep;
-CONST register mat_t		mat;
+register CONST mat_t		mat;
 int				rebound;
 CONST struct rt_tol		*tol;
 {

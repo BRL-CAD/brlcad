@@ -86,6 +86,8 @@ double	last;
 		first += delta;
 	}
 	tabp->x[num] = last;
+
+	return( tabp );
 }
 
 /*
@@ -100,7 +102,8 @@ CONST struct rt_tabdata	*in1;
 CONST struct rt_tabdata	*in2;
 {
 	register int		j;
-	register fastf_t	*op, *i1, *i2;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2;
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 );
@@ -131,7 +134,8 @@ CONST struct rt_tabdata	*in1;
 CONST struct rt_tabdata	*in2;
 {
 	register int		j;
-	register fastf_t	*op, *i1, *i2;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2;
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 );
@@ -162,7 +166,8 @@ CONST struct rt_tabdata	*in1;
 register double			scale;
 {
 	register int		j;
-	register fastf_t	*op, *i1;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1;
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 );
@@ -215,7 +220,8 @@ register double			scale;
 CONST struct rt_tabdata		*in2;
 {
 	register int		j;
-	register fastf_t	*op, *i1, *i2;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2;
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 )
@@ -250,7 +256,8 @@ register double			scale3;
 CONST struct rt_tabdata		*in3;
 {
 	register int		j;
-	register fastf_t	*op, *i1, *i2, *i3;
+	register fastf_t	*op;
+	register CONST fastf_t	*i1, *i2, *i3;
 
 	RT_CK_TABDATA( out );
 	RT_CK_TABDATA( in1 )
@@ -287,7 +294,7 @@ rt_tabdata_area1( in )
 CONST struct rt_tabdata	*in;
 {
 	FAST fastf_t		area;
-	register fastf_t	*ip;
+	register CONST fastf_t	*ip;
 	register int		j;
 
 	RT_CK_TABDATA(in);
@@ -345,7 +352,7 @@ CONST struct rt_tabdata	*in1;
 CONST struct rt_tabdata	*in2;
 {
 	FAST fastf_t		area;
-	register fastf_t	*i1, *i2;
+	register CONST fastf_t	*i1, *i2;
 	register int		j;
 
 	RT_CK_TABDATA(in1);
