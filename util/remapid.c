@@ -872,7 +872,7 @@ char	*db_name;
 		continue;
 	    ip = (struct rt_db_internal *)
 		bu_malloc(sizeof(struct rt_db_internal), "rt_db_internal");
-	    if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL) < 0)
+	    if (rt_db_get_internal(ip, dp, dbip, (fastf_t *) NULL, &rt_uniresource) < 0)
 	    {
 		bu_log("remapid: rt_db_get_internal(%s) failed.  ",
 		    dp -> d_namep);
@@ -913,7 +913,7 @@ int	depth;
 	    comb = (struct rt_comb_internal *) rp -> rr_ip -> idb_ptr;
 	    RT_CK_COMB(comb);
 	    comb -> region_id = region_id;
-	    if (rt_db_put_internal(rp -> rr_dp, dbip, rp -> rr_ip) < 0)
+	    if (rt_db_put_internal(rp -> rr_dp, dbip, rp -> rr_ip, &rt_uniresource) < 0)
 	    {
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
 		    rp -> rr_dp -> d_namep);
@@ -1046,6 +1046,8 @@ char	*argv[];
 	    print_usage();
 	    exit (1);
     }
+
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
     /*
      *	Open database and specification file, as necessary

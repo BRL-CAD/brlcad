@@ -100,6 +100,8 @@ char	*argv[];
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	the_model = nmg_mm();
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
@@ -253,7 +255,7 @@ genptr_t		client_data;
 			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
 			/* Release the tree memory & input regions */
-			db_free_tree(curtree);		/* Does an nmg_kr() */
+			db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 			/* Get rid of (m)any other intermediate structures */
 			if( (*tsp->ts_m)->magic != -1L )
@@ -265,7 +267,7 @@ genptr_t		client_data;
 		}
 	}
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
 	if( ret_tree )
 		r = ret_tree->tr_d.td_r;
@@ -366,7 +368,7 @@ genptr_t		client_data;
 	 *  A return of TREE_NULL from this routine signals an error,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
+	db_free_tree(curtree, &rt_uniresource);		/* Does an nmg_kr() */
 
 out:
 	GETUNION(curtree, tree);

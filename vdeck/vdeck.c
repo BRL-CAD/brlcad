@@ -231,6 +231,8 @@ char	*argv[];
 		exit( 1 );
 	}
 
+	rt_init_resource( &rt_uniresource, 0, NULL );
+
 	/* Build directory from object file.	 	*/
 	if( db_scan( dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 		fprintf(stderr,"db_scan failure\n");
@@ -467,7 +469,7 @@ genptr_t		client_data;
 		rt_vls_strcat( &flat, "" );
 	} else {
 		/* Rewrite tree so that all unions are at tree top */
-		db_non_union_push( curtree );
+		db_non_union_push( curtree, &rt_uniresource );
 		flatten_tree( &flat, curtree, "  ", 0 );
 	}
 
