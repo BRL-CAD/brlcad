@@ -35,7 +35,7 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 struct ars_internal {
 	int ncurves;
 	int pts_per_curve;
-	fastf_t ** curves
+	fastf_t ** curves;
 };
 
 
@@ -130,7 +130,7 @@ struct rt_i	*rtip;
 	LOCAL fastf_t	f;
 	LOCAL struct ars_internal ari;
 
-	i = rt_ars_readin( &ari, rp, stp->st_pathmat );
+	i = rt_ars_import( &ari, rp, stp->st_pathmat );
 
 	if ( i < 0) {
 		rt_log("rt_ars_prep(%s): db import failure\n", stp->st_name);
