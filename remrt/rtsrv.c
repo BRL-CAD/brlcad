@@ -122,16 +122,18 @@ void	ph_lines();
 void	ph_end();
 void	ph_restart();
 void	ph_loglvl();
+void	ph_cd();
 struct pkg_switch pkgswitch[] = {
-	{ MSG_START, ph_start, "Startup" },
-	{ MSG_MATRIX, ph_enqueue, "Set Matrix" },
-	{ MSG_OPTIONS, ph_options, "Options" },
-	{ MSG_LINES, ph_enqueue, "Compute lines" },
-	{ MSG_END, ph_end, "End" },
-	{ MSG_PRINT, ph_unexp, "Log Message" },
-	{ MSG_LOGLVL, ph_loglvl, "Change log level" },
-	{ MSG_RESTART, ph_restart, "Restart" },
-	{ 0, 0, (char *)0 }
+	{ MSG_START,	ph_start,	"Startup" },
+	{ MSG_MATRIX,	ph_enqueue,	"Set Matrix" },
+	{ MSG_OPTIONS,	ph_options,	"Options" },
+	{ MSG_LINES,	ph_enqueue,	"Compute lines" },
+	{ MSG_END,	ph_end,		"End" },
+	{ MSG_PRINT,	ph_unexp,	"Log Message" },
+	{ MSG_LOGLVL,	ph_loglvl,	"Change log level" },
+	{ MSG_RESTART,	ph_restart,	"Restart" },
+	{ MSG_CD,	ph_cd,		"Change Dir" },
+	{ 0,		0,		(char *)0 }
 };
 
 #define MAXARGS 48
@@ -291,6 +293,19 @@ char	*buf;
 	lp->li_start = (int)pc->pkc_type;
 	lp->li_stop = (int)buf;
 	APPEND_LIST( lp, WorkHead.li_back );
+}
+
+void
+ph_cd(pc, buf)
+register struct pkg_comm *pc;
+char *buf;
+{
+	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
+	if( chdir( buf ) < 0 )  {
+		rt_log("chdir(%s) failure\n", buf);
+		exit(1);
+	}
+	(void)free(buf);
 }
 
 void
