@@ -169,6 +169,6 @@ Tcl_Interp *interp;
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 
 	Tcl_SetVar(interp, "bu_version", (char *)bu_version+5, TCL_GLOBAL_ONLY);	/* from vers.c */
-	Tcl_setVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, "BU_DEBUG_FORMAT", BU_DEBUG_FORMAT, TCL_GLOBAL_ONLY);
 	Tcl_LinkVar(interp, "bu_debug", (char *)&bu_debug, TCL_INT );
 }
