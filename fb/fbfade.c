@@ -39,8 +39,7 @@
 	out_fb_file	same as -F out_fb_file, for convenience
 */
 #ifndef lint
-static char	RCSid[] =		/* for "what" utility */
-	"@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #define	USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"

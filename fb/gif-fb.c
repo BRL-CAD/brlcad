@@ -43,8 +43,7 @@
 			no explicit GIF file name is specified)
 */
 #ifndef lint
-static char	RCSid[] =		/* for "what" utility */
-	"@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #define	USAGE	"gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]"

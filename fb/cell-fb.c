@@ -193,7 +193,7 @@ static bool	log_flag = false;	/* Make a log file? */
 
 static int	compute_fb_height;	/* User supplied height?  Else what? */
 static int	compute_fb_width;	/* User supplied width?  Else what? */
-static int	debug_flag = 0;		/* Control diagnostic prints */
+static unsigned int	debug_flag = 0;	/* Control diagnostic prints */
 static int	fb_height = -1;		/* Height of frame buffer in pixels */
 static int	fb_width = -1;		/* Width of frame buffer in pixels */
 static int	field = 1;		/* The field that is of interest */
@@ -942,7 +942,7 @@ register char	**argv;
 		    log_flag = false;
 		break;
             case 'x':
-		if (sscanf(optarg, "%x", &bu_debug) < 1)
+		if (sscanf(optarg, "%x", (unsigned int *)&bu_debug) < 1)
 		{
 		    bu_log("Invalid debug flag: '%s'\n", optarg);
 		    return (false);

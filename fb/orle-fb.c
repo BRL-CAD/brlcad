@@ -179,7 +179,7 @@ char	*argv[];
 	{	register int	page_fault = 1;
 		register int	dirty_flag = 1;
 		int		ymax = ypos + (ylen-1);
-		int		start_y;
+		int		start_y = 0;
 	for( y = 0; y < width; y++ )  {
 		if( page_fault )  {
 			start_y = y;

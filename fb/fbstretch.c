@@ -56,8 +56,7 @@
 	out_fb		same as -F out_fb, for convenience
 */
 #ifndef lint
-static char	RCSid[] =		/* for "what" utility */
-	"@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #define	USAGE1	"fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
