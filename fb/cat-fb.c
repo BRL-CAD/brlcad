@@ -695,6 +695,8 @@ outc(code)
 	if (vdp->vd_nbytes <= 0 )
 		return(0);
 
+	/* xpos is vertical (typ. called Y), ypos is horizontal (typ. X)
+	 * like a strip-chart recorder */
 	addr = &fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
 	llen = (vdp->vd_left + vdp->vd_right+7)/8;
 	nlines = vdp->vd_up + vdp->vd_down;
@@ -705,18 +707,19 @@ outc(code)
 	if (scanp < &buffer[0])
 		scanp += BUFFER_SIZE;
 	scanp_inc = BYTES_PER_LINE-llen;
-	offset = -((ypos-vdp->vd_left)&07);
-	off8 = offset+8;
+	offset = (ypos-vdp->vd_left)&07;
+	off8 = 8-offset;
 	for (i = 0; i < nlines; i++) {
 		if (scanp >= &buffer[BUFFER_SIZE])
 			scanp -= BUFFER_SIZE;
 		count = llen;
+		/* This buffer goes left-to-right [0], [1], ... */
 		if (scanp + count <= &buffer[BUFFER_SIZE])
 			do {
 				fontdata = *addr++;
-				*scanp |= (fontdata << offset) &~ M[off8];
+				*scanp |= (fontdata >> offset);
 				scanp++;
-				*scanp |= (fontdata << off8) &~ N[off8];
+				*scanp |= (fontdata << off8);
 				count--;
 			} while (count > 0);
 		scanp += scanp_inc+count;
