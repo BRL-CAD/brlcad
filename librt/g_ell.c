@@ -40,6 +40,8 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 	struct rt_i *rtip));
 
+static void  nmg_sphere_face_snurb();
+
 /*
  *  Algorithm:
  *  
@@ -1476,6 +1478,7 @@ VPRINT("surf(u,v)", param);
  *  u,v=(0,0) is supposed to be the south pole, at Z=-1.0
  *  The V direction runs from the south to the north pole.
  */
+static void
 nmg_sphere_face_snurb( fu, m )
 struct faceuse	*fu;
 CONST matp_t	m;
