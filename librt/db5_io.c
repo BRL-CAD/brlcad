@@ -37,6 +37,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 BU_EXTERN(CONST unsigned char *db5_get_raw_internal_ptr, (struct db5_raw_internal *rip, unsigned char * CONST ip));
 
+CONST static int db5_enc_len[4] = {
+	1,
+	2,
+	4,
+	8
+};
+
 /*
  *			D B 5 _ H E A D E R _ I S _ V A L I D
  *
@@ -62,11 +69,16 @@ CONST unsigned char *hp;
 	if( ((odp->db5h_hflags & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >> DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
-	/* iflags */
-	if( (odp->db5h_iflags & DB5HDR_IFLAGS_ZZZ_MASK) != DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED )  return 0;
-	if( odp->db5h_iflags & DB5HDR_IFLAGS_ATTRIBUTES_PRESENT )  return 0;
-	if( odp->db5h_iflags & DB5HDR_IFLAGS_BODY_PRESENT )  return 0;
-	if( ((odp->db5h_iflags & DB5HDR_IFLAGS_INTERIOR_WIDTH_MASK) >> DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT)
+	/* aflags */
+	if( (odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5HDR_ZZZ_UNCOMPRESSED )  return 0;
+	if( odp->db5h_aflags & DB5HDR_AFLAGS_PRESENT )  return 0;
+	if( ((odp->db5h_aflags & DB5HDR_AFLAGS_WIDTH_MASK) >> DB5HDR_AFLAGS_WIDTH_SHIFT)
+	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
+
+	/* bflags */
+	if( (odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5HDR_ZZZ_UNCOMPRESSED )  return 0;
+	if( odp->db5h_bflags & DB5HDR_BFLAGS_PRESENT )  return 0;
+	if( ((odp->db5h_bflags & DB5HDR_BFLAGS_WIDTH_MASK) >> DB5HDR_BFLAGS_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* major and minor type */
@@ -74,10 +86,7 @@ CONST unsigned char *hp;
 	if( odp->db5h_minor_type != 0 )  return 0;
 
 	/* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
-	if( hp[5] != 1 )  return 0;
-
-	/* Ensure pad is zero */
-	if( hp[6] != 0 )  return 0;
+	if( hp[6] != 1 )  return 0;
 
 	return 1;		/* valid */
 }
@@ -188,25 +197,38 @@ CONST unsigned char		*cp;
 	rip->h_object_width = (cp[1] & DB5HDR_HFLAGS_OBJECT_WIDTH_MASK) >>
 		DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT;
 	rip->h_name_present = (cp[1] & DB5HDR_HFLAGS_NAME_PRESENT);
+	rip->h_name_width = (cp[1] & DB5HDR_HFLAGS_NAME_WIDTH_MASK) >>
+		DB5HDR_HFLAGS_NAME_WIDTH_SHIFT;
 
-	/* iflags */
-	rip->i_object_width = (cp[2] & DB5HDR_IFLAGS_INTERIOR_WIDTH_MASK) >>
-		DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT;
-	rip->i_attributes_present = (cp[2] & DB5HDR_IFLAGS_ATTRIBUTES_PRESENT);
-	rip->i_body_present = (cp[2] & DB5HDR_IFLAGS_BODY_PRESENT);
-	rip->i_zzz = (cp[2] & DB5HDR_IFLAGS_ZZZ_MASK);
+	/* aflags */
+	rip->a_width = (cp[2] & DB5HDR_AFLAGS_WIDTH_MASK) >>
+		DB5HDR_AFLAGS_WIDTH_SHIFT;
+	rip->a_present = (cp[2] & DB5HDR_AFLAGS_PRESENT);
+	rip->a_zzz = (cp[2] & DB5HDR_AFLAGS_ZZZ_MASK);
 
-	rip->major_type = cp[3];
-	rip->minor_type = cp[4];
+	/* bflags */
+	rip->b_width = (cp[3] & DB5HDR_BFLAGS_WIDTH_MASK) >>
+		DB5HDR_BFLAGS_WIDTH_SHIFT;
+	rip->b_present = (cp[3] & DB5HDR_BFLAGS_PRESENT);
+	rip->b_zzz = (cp[3] & DB5HDR_BFLAGS_ZZZ_MASK);
 
-	if(rt_g.debug&DEBUG_DB) bu_log("db5_crack_disk_header() h_dli=%d, h_object_width=%d, h_name_present=%d, i_object_width=%d, i_attributes_present=%d, i_body_present=%d, i_zzz=%d, major=%d, minor=%d\n",
+	rip->major_type = cp[4];
+	rip->minor_type = cp[5];
+
+	if(rt_g.debug&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
+	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d,\n\
+	a_width=%d, a_present=%d, a_zzz=%d,\n\
+	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
 		rip->h_dli,
 		rip->h_object_width,
 		rip->h_name_present,
-		rip->i_object_width,
-		rip->i_attributes_present,
-		rip->i_body_present,
-		rip->i_zzz,
+		rip->h_name_width,
+		rip->a_width,
+		rip->a_present,
+		rip->a_zzz,
+		rip->b_width,
+		rip->b_present,
+		rip->b_zzz,
 		rip->major_type,
 		rip->minor_type );
 
@@ -241,7 +263,7 @@ unsigned char		* CONST ip;
 
 	/* Grab name, if present */
 	if( rip->h_name_present )  {
-		cp += db5_decode_length( &rip->name_length, cp, rip->i_object_width );
+		cp += db5_decode_length( &rip->name_length, cp, rip->h_name_width );
 		rip->name = (char *)cp;		/* discard CONST */
 		cp += rip->name_length;
 	} else {
@@ -249,15 +271,24 @@ unsigned char		* CONST ip;
 		rip->name = NULL;
 	}
 
-	/* Point to object interior, if present */
-	if( rip->i_attributes_present || rip->i_body_present )  {
-		/* interior_length will include any pad bytes but not magic2 */
-		/* Because it may be compressed, we don't know exact len yet */
-		rip->interior_length = cp - rip->buf - 1;
-		rip->interior = (unsigned char *)cp;	/* discard CONST */
+	/* Point to attributes, if present */
+	if( rip->a_present )  {
+		cp += db5_decode_length( &rip->attribute_length, cp, rip->a_width );
+		rip->attributes = (unsigned char *)cp;	/* discard CONST */
+		cp += rip->attribute_length;
 	} else {
-		rip->interior_length = 0;
-		rip->interior = NULL;
+		rip->attribute_length = 0;
+		rip->attributes = NULL;
+	}
+
+	/* Point to body, if present */
+	if( rip->b_present )  {
+		cp += db5_decode_length( &rip->body_length, cp, rip->b_width );
+		rip->body = (unsigned char *)cp;	/* discard CONST */
+		cp += rip->body_length;
+	} else {
+		rip->body_length = 0;
+		rip->body = NULL;
 	}
 
 	rip->buf = NULL;	/* no buffer needs freeing */
@@ -337,7 +368,7 @@ FILE			*fp;
 
 	/* Grab name, if present */
 	if( rip->h_name_present )  {
-		cp += db5_decode_length( &rip->name_length, cp, rip->i_object_width );
+		cp += db5_decode_length( &rip->name_length, cp, rip->h_name_width );
 		rip->name = (char *)cp;
 		cp += rip->name_length;
 	} else {
@@ -345,15 +376,24 @@ FILE			*fp;
 		rip->name = NULL;
 	}
 
-	/* Point to object interior, if present */
-	if( rip->i_attributes_present || rip->i_body_present )  {
-		/* interior_length will include any pad bytes but not magic2 */
-		/* Because it may be compressed, we don't know exact len yet */
-		rip->interior_length = cp - rip->buf - 1;
-		rip->interior = cp;
+	/* Point to attributes, if present */
+	if( rip->a_present )  {
+		cp += db5_decode_length( &rip->attribute_length, cp, rip->a_width );
+		rip->attributes = (unsigned char *)cp;	/* discard CONST */
+		cp += rip->attribute_length;
 	} else {
-		rip->interior_length = 0;
-		rip->interior = NULL;
+		rip->attribute_length = 0;
+		rip->attributes = NULL;
+	}
+
+	/* Point to body, if present */
+	if( rip->b_present )  {
+		cp += db5_decode_length( &rip->body_length, cp, rip->b_width );
+		rip->body = (unsigned char *)cp;	/* discard CONST */
+		cp += rip->body_length;
+	} else {
+		rip->body_length = 0;
+		rip->body = NULL;
 	}
 
 	return 0;		/* success */
@@ -382,8 +422,7 @@ int				zzz;		/* compression, someday */
 	register unsigned char	*cp;
 	long	namelen = 0;
 	long	need;
-	long	ineed = 0;	/* sizes of internal parts */
-	int	h_width, i_width;	
+	int	h_width, n_width, a_width, b_width;
 	long	togo;
 
 	/*
@@ -394,18 +433,24 @@ int				zzz;		/* compression, someday */
 	need += 8;	/* for object_length */
 	if( name )  {
 		namelen = strlen(name) + 1;	/* includes null */
-		need += namelen + 8;
-		ineed = namelen;
+		n_width = db5_select_length_encoding(namelen);
+		need += namelen + db5_enc_len[n_width];
+	} else {
+		n_width = 0;
 	}
 	if( attrib )  {
 		BU_CK_EXTERNAL(attrib);
-		need += attrib->ext_nbytes + 8;
-		ineed |= attrib->ext_nbytes;
+		a_width = db5_select_length_encoding(attrib->ext_nbytes);
+		need += attrib->ext_nbytes + db5_enc_len[a_width];
+	} else {
+		a_width = 0;
 	}
 	if( body )  {
 		BU_CK_EXTERNAL(body);
-		need += body->ext_nbytes + 8;
-		ineed |= body->ext_nbytes;
+		b_width = db5_select_length_encoding(body->ext_nbytes);
+		need += body->ext_nbytes + db5_enc_len[b_width];
+	} else {
+		b_width = 0;
 	}
 	need += 8;	/* pad and magic2 */
 
@@ -415,9 +460,8 @@ int				zzz;		/* compression, someday */
 	out->ext_buf = bu_malloc( need, "external object3" );
 	out->ext_nbytes = need;		/* temporary */
 
-	/* Determine encoding for the two kinds of length fields */
+	/* Determine encoding for the header length field */
 	h_width = db5_select_length_encoding( (need+7)>>3 );
-	i_width = db5_select_length_encoding( ineed );
 
 	/* prepare combined external object */
 	odp = (struct db5_ondisk_header *)out->ext_buf;
@@ -426,13 +470,21 @@ int				zzz;		/* compression, someday */
 	/* hflags */
 	odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
 			(dli & DB5HDR_HFLAGS_DLI_MASK);
-	if( name )  odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT;
+	if( name )  {
+		odp->db5h_hflags |= DB5HDR_HFLAGS_NAME_PRESENT |
+			(n_width << DB5HDR_HFLAGS_NAME_WIDTH_SHIFT);
+		
+	}
 
-	/* iflags */
-	odp->db5h_iflags = i_width << DB5HDR_IFLAGS_INTERIOR_WIDTH_SHIFT;
-	if( attrib )  odp->db5h_iflags |= DB5HDR_IFLAGS_ATTRIBUTES_PRESENT;
-	if( body )  odp->db5h_iflags |= DB5HDR_IFLAGS_BODY_PRESENT;
-	odp->db5h_iflags |= zzz & DB5HDR_IFLAGS_ZZZ_MASK;
+	/* aflags */
+	odp->db5h_aflags = a_width << DB5HDR_AFLAGS_WIDTH_SHIFT;
+	if( attrib )  odp->db5h_aflags |= DB5HDR_AFLAGS_PRESENT;
+	odp->db5h_aflags |= zzz & DB5HDR_AFLAGS_ZZZ_MASK;
+
+	/* bflags */
+	odp->db5h_bflags = b_width << DB5HDR_BFLAGS_WIDTH_SHIFT;
+	if( body )  odp->db5h_bflags |= DB5HDR_BFLAGS_PRESENT;
+	odp->db5h_bflags |= zzz & DB5HDR_BFLAGS_ZZZ_MASK;
 
 	if( zzz )  bu_bomb("db5_export_object3: compression not supported yet\n");
 
@@ -445,19 +497,19 @@ int				zzz;		/* compression, someday */
 	cp = db5_encode_length( cp, 7L, h_width );	/* will be replaced below */
 
 	if( name )  {
-		cp = db5_encode_length( cp, namelen, i_width );
+		cp = db5_encode_length( cp, namelen, n_width );
 		bcopy( name, cp, namelen );	/* includes null */
 		cp += namelen;
 	}
 
 	if( attrib )  {
-		cp = db5_encode_length( cp, attrib->ext_nbytes, i_width );
+		cp = db5_encode_length( cp, attrib->ext_nbytes, a_width );
 		bcopy( attrib->ext_buf, cp, attrib->ext_nbytes );
 		cp += attrib->ext_nbytes;
 	}
 
 	if( body )  {
-		cp = db5_encode_length( cp, body->ext_nbytes, i_width );
+		cp = db5_encode_length( cp, body->ext_nbytes, b_width );
 		bcopy( body->ext_buf, cp, body->ext_nbytes );
 		cp += body->ext_nbytes;
 	}
@@ -562,7 +614,7 @@ double		local2mm;
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
 		NULL, NULL, NULL,
 		DB5HDR_MAJORTYPE_RESERVED, 0,
-		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED );
+		DB5HDR_ZZZ_UNCOMPRESSED );
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 
@@ -581,7 +633,7 @@ double		local2mm;
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		"_GLOBAL", &attr, NULL,
 		DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY, 0,
-		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
+		DB5HDR_ZZZ_UNCOMPRESSED);
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 	bu_free_external( &attr );
@@ -633,7 +685,7 @@ CONST struct bu_attribute_value_pair	*attr;
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		dp->d_namep, attr, &body,
 		major, minor,
-		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
+		DB5HDR_ZZZ_UNCOMPRESSED);
 	db_free_external( &body );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
@@ -690,7 +742,7 @@ CONST struct bu_attribute_value_pair	*attr;
 	db5_export_object3( &ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		name, attr, &body,
 		major, minor,
-		DB5HDR_IFLAGS_ZZZ_UNCOMPRESSED);
+		DB5HDR_ZZZ_UNCOMPRESSED);
 	db_free_external( &body );
 
 	if( bu_fwrite_external( fp, &ext ) < 0 )  {
