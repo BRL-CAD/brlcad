@@ -1534,8 +1534,9 @@ CONST struct rt_tol	*tol;
 	/* Ensure edge is long enough so midpoint is not within tol of verts */
 	VSUB2( diff, a, b );
 	if( MAGNITUDE(diff) < 3 * tol->dist )  {
+		rt_pr_tol(tol);
 		rt_log(" eu=x%x, len=%g\n", eu, MAGNITUDE(diff) );
-		rt_bomb("nmg_is_crack_outie() edge is too short to bisect\n");
+		rt_bomb("nmg_is_crack_outie() edge is too short to bisect.  Increase tolerance and re-run.\n");
 	}
 	
 	class = nmg_class_pt_lu_except( midpt, lu, e, tol );
@@ -2378,8 +2379,12 @@ CONST struct rt_tol	*tol;
  *			N M G  _ E U _ R A D I A L _ C H E C K
  *
  *  Where the radial edgeuse parity has become disrupted, note it.
+ *
+ *  Returns -
+ *	0	OK
+ *	!0	Radial parity problem detected
  */
-int		/* XXX should be void */
+int
 nmg_eu_radial_check( eu, s, tol )
 struct edgeuse		*eu;
 struct shell		*s;
@@ -2393,6 +2398,10 @@ CONST struct rt_tol	*tol;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_eu_radial_check(eu=x%x, s=x%x)\n", eu, s);
+	}
 
 	fu = nmg_find_fu_of_eu(eu);
 	if( fu && fu->orientation != OT_SAME )  eu = eu->eumate_p;
@@ -2423,6 +2432,7 @@ if (rt_g.NMG_debug)  rt_bomb("nmg_eu_radial_check\n");
 		RT_LIST_DEQUEUE( &rad->l );
 		rt_free( (char *)rad, "nmg_radial" );
 	}
+	return nflip;
 }
 
 /*
