@@ -10,7 +10,7 @@
 #include "redblack.h"
 #include "rb_internals.h"
 
-/*		        _ R B _ E X T R E M E ( )
+/*		        R B _ E X T R E M E ( )
  *
  *	    Return the minimum or maximum node in a red-black tree
  *
@@ -19,7 +19,7 @@
  *	(min or max).  On success, _rb_extreme() returns a pointer to
  *	the extreme node.  Otherwise, it returns RB_NODE_NULL.
  */
-void *_rb_extreme (rb_tree *tree, int order_nm, int sense)
+void *rb_extreme (rb_tree *tree, int order_nm, int sense)
 {
     int			(*order)();  /* Comparison functions */
     struct rb_node	*child;
