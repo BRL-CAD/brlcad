@@ -626,6 +626,7 @@ register int	want;
 		register int	i;
 		register fastf_t *intensity;
 		register fastf_t f;
+		vect_t to_light;
 		struct application sub_ap;
 
 		/*
@@ -647,17 +648,21 @@ register int	want;
 			/*
 			 *  An explicit light source, and the shader desires
 			 *  light visibility information.
-			 *  Fire ray at light source to check for shadowing.
-			 *  (This SHOULD actually return an energy value)
 			 *  Dither light pos for penumbra by +/- 0.5 light radius;
 			 *  this presently makes a cubical light source distribution.
 			 */
-			sub_ap = *ap;			/* struct copy */
 			f = lp->lt_radius * 0.9;
-			sub_ap.a_ray.r_dir[X] =  lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
-			sub_ap.a_ray.r_dir[Y] =  lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
-			sub_ap.a_ray.r_dir[Z] =  lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
-			VUNITIZE( sub_ap.a_ray.r_dir );
+			to_light[X] = lp->lt_pos[X] + rand_half()*f - swp->sw_hit.hit_point[X];
+			to_light[Y] = lp->lt_pos[Y] + rand_half()*f - swp->sw_hit.hit_point[Y];
+			to_light[Z] = lp->lt_pos[Z] + rand_half()*f - swp->sw_hit.hit_point[Z];
+			if( have & MFI_NORMAL )  {
+				if( VDOT(swp->sw_hit.hit_normal,to_light) < 0 ) {
+					/* backfacing */
+					swp->sw_visible[i] = (char *)0;
+					continue;
+				}
+			}
+			VUNITIZE( to_light );
 
 			/*
 			 * See if ray from hit point to light lies within light beam
@@ -673,6 +678,13 @@ register int	want;
 				VSETALL( intensity, 1 );
 				continue;
 			}
+
+			/*
+			 *  Fire ray at light source to check for shadowing.
+			 *  (This SHOULD actually return an energy value)
+			 */
+			sub_ap = *ap;			/* struct copy */
+			VMOVE( sub_ap.a_ray.r_dir, to_light );
 			VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
 			sub_ap.a_hit = light_hit;
 			sub_ap.a_miss = light_miss;
