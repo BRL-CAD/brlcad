@@ -4105,6 +4105,7 @@ double	xangle, yangle, zangle;
 {
 	mat_t	newrot;		/* NEW rot matrix, from joystick */
 
+#if 0
 	if( state == ST_S_EDIT )  {
 		if( sedit_rotate( xangle, yangle, zangle ) > 0 )
 			return;		/* solid edit claimed event */
@@ -4112,6 +4113,7 @@ double	xangle, yangle, zangle;
 		if( objedit_rotate( xangle, yangle, zangle ) > 0 )
 			return;		/* object edit claimed event */
 	}
+#endif
 
 	/* NORMAL CASE.
 	 * Apply delta viewing rotation for non-edited parts.
@@ -5695,7 +5697,11 @@ fastf_t sfactor;
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
+#if 0
     MAT4X3PNT(temp, es_mat, es_keypoint);
+#else
+    VMOVE(temp, es_keypoint);
+#endif
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, smat, modelchanges, pos_model);
 
