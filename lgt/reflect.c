@@ -691,6 +691,7 @@ int *id;
 			if( *p == '=' )
 				{
 				value = p+1;
+				*p = '\0';
 				break;
 				}
 		if( value == NULL )
