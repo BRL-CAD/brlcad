@@ -56,10 +56,15 @@ struct phong_specific {
 
 struct matparse phong_parse[] = {
 	"shine",	(int)&(PL_NULL->shine),		"%d",
+	"sh",		(int)&(PL_NULL->shine),		"%d",
 	"specular",	(int)&(PL_NULL->wgt_specular),	"%f",
+	"sp",		(int)&(PL_NULL->wgt_specular),	"%f",
 	"diffuse",	(int)&(PL_NULL->wgt_diffuse),	"%f",
+	"di",		(int)&(PL_NULL->wgt_diffuse),	"%f",
 	"transmit",	(int)&(PL_NULL->transmit),	"%f",
+	"tr",		(int)&(PL_NULL->transmit),	"%f",
 	"reflect",	(int)&(PL_NULL->reflect),	"%f",
+	"re",		(int)&(PL_NULL->reflect),	"%f",
 	"ri",		(int)&(PL_NULL->refrac_index),	"%f",
 	(char *)0,	0,				(char *)0
 };
