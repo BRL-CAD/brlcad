@@ -60,6 +60,10 @@ void	calc_planes();
 static short int fixv;		/* used in ROTFACE,f_eqn(): fixed vertex */
 
 /* data for solid editing */
+struct rt_external	es_ext;
+struct rt_db_internal	es_int;
+struct rt_db_internal	es_int_orig;
+
 union record es_rec;		/* current solid record */
 union record es_orig;		/* original solid record */
 int     es_edflag;		/* type of editing for this solid */
@@ -572,12 +576,14 @@ int arg;
  *
  *  First time in for this solid, set things up.
  *  If all goes well, change state to ST_S_EDIT.
+ *  Solid editing is completed only via sedit_accept() / sedit_reject().
  */
 void
 init_sedit()
 {
 	struct solidrec temprec;	/* copy of solid to determine type */
 	register int i, type, p1, p2, p3;
+	int			id;
 
 	/*
 	 * Check for a processed region or other illegal solid.
@@ -589,10 +595,26 @@ init_sedit()
 	}
 
 	/* Read solid description.  Save copy of original data */
-	db_get( dbip,  illump->s_path[illump->s_last], &es_orig, 0 , 1);
+	RT_INIT_EXTERNAL(&es_ext);
+	RT_INIT_DB_INTERNAL(&es_int);
+	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 )
+		READ_ERR_return;
+
+	id = rt_id_solid( &es_ext );
+	if( rt_functab[id].ft_import( &es_int, &es_ext, rt_identity ) < 0 )  {
+		rt_log("init_sedit(%s):  solid import failure\n",
+			illump->s_path[illump->s_last]->d_namep );
+	    	if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+		db_free_external( &es_ext );
+		return;				/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( &es_int );
+
+
+	bcopy( (char *)es_ext.ext_buf, (char *)&es_orig, sizeof(es_orig) );
 	es_rec = es_orig;		/* struct copy */
 
-	if( es_rec.u_id != ID_SOLID )  {
+	if( es_orig.u_id != ID_SOLID )  {
 		(void)printf(
 "Unable to Solid_Edit %c record;  select a primitive instead\n");
 		return;
@@ -1793,13 +1815,56 @@ f_eqn()
 void
 sedit_accept()
 {
+	union record		*rec;
+	int			ngran;
+	struct directory	*dp;
+	int	id;
+
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
 
 	/* write editing changes out to disc */
-	db_put( dbip, illump->s_path[illump->s_last], &es_rec, 0, 1 );
+	dp = illump->s_path[illump->s_last];
+#if 1
+	db_put( dbip, dp, &es_rec, 0, 1 );
+#else
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0 ) < 0 )  {
+		rt_log("sedit_accept(%s):  solid export failure\n", dp->d_namep);
+	    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+		db_free_external( &es_ext );
+		return;				/* FAIL */
+	}
+    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+
+	/* Depends on solid names always being in the same place */
+	rec = (union record *)es_ext.ext_buf;
+	NAMEMOVE( dp->d_namep, rec->s.s_name );
+
+	ngran = (es_ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
+	if( ngran != dp->d_len )  {
+		if( ngran < dp->d_len )  {
+			if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
+			    	ALLOC_ERR_return;
+		} else if( ngran > dp->d_len )  {
+			if( db_delete( dbip, dp ) < 0 || 
+			    db_alloc( dbip, dp, ngran ) < 0 )  {
+			    	ALLOC_ERR_return;
+			}
+		}
+	}
+
+	if( db_put_external( &es_ext, dp, dbip ) < 0 )  {
+		db_free_external( &es_ext );
+		ERROR_RECOVERY_SUGGESTION;
+		WRITE_ERR_return;
+	}
+#endif
 	es_edflag = -1;
 	menuflag = 0;
 	movedir = 0;
+
+    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	db_free_external( &es_ext );
 }
 
 void
@@ -1813,4 +1878,7 @@ sedit_reject()
 	menuflag = 0;
 	movedir = 0;
 	es_edflag = -1;
+
+    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
+	db_free_external( &es_ext );
 }
