@@ -246,7 +246,7 @@ CONST struct rt_tol	*tol;
 	VCROSS( plane, B_A, C_A );
 
 	/* Ensure unit length normal */
-	if( (mag = MAGNITUDE(plane)) <= SQRT_SMALL_FASTF )
+	if( (mag = MAGNITUDE(plane)) <= SMALL_FASTF )
 		return(-1);	/* FAIL */
 	mag = 1/mag;
 	VSCALE( plane, plane, mag );
@@ -312,7 +312,7 @@ CONST plane_t	a, b, c;
 	 *  (I suspect there is some deep significance to this!)
 	 */
 	det = VDOT( a, v1 );
-	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  return(-1);
+	if( NEAR_ZERO( det, SMALL_FASTF ) )  return(-1);
 
 	VCROSS( v2, a, c );
 	VCROSS( v3, a, b );
@@ -411,10 +411,10 @@ CONST struct rt_tol	*tol;
 	norm_dist = plane[3] - VDOT( plane, pt );
 	slant_factor = VDOT( plane, dir );
 
-	if( slant_factor < -SQRT_SMALL_FASTF )  {
+	if( slant_factor < -SMALL_FASTF )  {
 		*dist = norm_dist/slant_factor;
 		return 1;			/* HIT, entering */
-	} else if( slant_factor > SQRT_SMALL_FASTF )  {
+	} else if( slant_factor > SMALL_FASTF )  {
 		*dist = norm_dist/slant_factor;
 		return 2;			/* HIT, leaving */
 	}
@@ -1072,7 +1072,7 @@ struct rt_tol	*tol;
 		return -1;	/* No intersection */
 	}
 	pmag = MAGNITUDE(pdir);
-	if( pmag < SQRT_SMALL_FASTF )
+	if( pmag < SMALL_FASTF )
 		rt_bomb("rt_isect_lseg3_lseg3: |p|=0\n");
 	if( status == 0 )  {
 		int	nogood = 0;
@@ -1104,7 +1104,7 @@ struct rt_tol	*tol;
 	else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
 
 	qmag = MAGNITUDE(qdir);
-	if( qmag < SQRT_SMALL_FASTF )
+	if( qmag < SMALL_FASTF )
 		rt_bomb("rt_isect_lseg3_lseg3: |q|=0\n");
 	qtol = tol->dist / qmag;
 	if( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
