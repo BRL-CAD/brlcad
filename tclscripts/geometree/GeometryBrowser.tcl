@@ -1,4 +1,48 @@
-# !!! do not forget to remove this line when we are done
+#
+#   G e o m e t r y B r o w s e r . t c l
+#
+# Author -
+# 	Christopher Sean Morrison
+#
+# Source -
+#		The U.S. Army Research Laboratory
+#		Aberdeen Proving Ground, Maryland  21005
+#
+# Distribution Notice -
+# 	Redistribution of this software is restricted, as described in your
+# 	"Statement of Terms and Conditions for the Release of The BRL-CAD
+# 	Package" agreement.
+#
+# Description -
+#
+# This is the GeometryBrowser object script.  It's the actual guts and magic
+# that "is" the geometree browser.  It generates a hierarchical view of
+# geometry database objects.
+#
+# Bugs -
+# 
+# Besides a whole slew of them that have been run into with the hierarchy
+# megawidget, there are a bunch of little nitpicks that would be nice to 
+# see eventually get fixed.  Off the top of my head, they are as follows:
+#   1) mged has no publish/subscribe model in place so we poll.  that sucks.
+#   2) nice fancy icons.  need a good way to describe the difference 
+#      between a combination and a region, and to distinguish different prims
+#   3) better context menu bindings.  tcl or the widget has akward key 
+#      bindings that require holding a mouse while clicking a second to select.
+#   4) implement the right info panel.  the code for the panel is in place,
+#      just absolutely no logic is implemented to describe them.  I'm thinking
+#      a representative raytrace of the primitive types, all of their
+#      potential parameters and current values.
+#   5) weak recognition of db changes.  the hierarchy updates, but not the
+#      way it probably should.  if we open two databases in a row, and then
+#      open the original again, it would appear as though the widget kept
+#      the prior hierarchy nodes/settings (just not visible/active).  This
+#      could get nasty after working on a set of databases for a while.
+#   6) color selection support (right now, it's a hard-wired list)
+#
+#
+
+
 global glob_compat_mode
 set prevGlobCompatMode [ set glob_compat_mode ]
 set glob_compat_mode 0
@@ -7,10 +51,7 @@ package require Itcl
 package require Itk
 package require Iwidgets
 
-if [ catch {delete object .gm } error ] {
-#	puts $error
-}
-
+# go ahead and blow away the class if we are reloading
 if [ catch {delete class GeometryBrowser} error ] { 
 #	puts $error
 }
@@ -18,14 +59,16 @@ if [ catch {delete class GeometryBrowser} error ] {
 
 class GeometryBrowser {
 	inherit itk::Toplevel
+
+	package provide GeometryBrowser 1.0
 	
 	constructor {} {}
 	destructor {} 
 	
 	public {
-		# querycommand
-		method getNodeChildren { { node "" } } {} 
+		method getNodeChildren { { node "" } { updateLists "no" } } {} 
 		method toggleNode { { string "" } } {} 
+		method updateGeometryLists { { node "" } } {}
 
 		method displayNode { { node "" } { display "appended" } } {} 
 		method undisplayNode { { node "" } } {} 
@@ -47,6 +90,9 @@ class GeometryBrowser {
 	}
 
 	protected {
+		# hook to the idle loop callback for automatic updates
+		variable _updateHook
+
 		# menu toggle options
 		variable _showAllGeometry
 		variable _autoRender
@@ -55,8 +101,14 @@ class GeometryBrowser {
 		variable _itemMenu
 		variable _bgMenu
 
+		# list of geometry to validate against on events, if something changes
+		# we need to redraw asap
+		variable _goodGeometry
+		variable _badGeometry
+
 		method prepNodeMenu {} {} 
 		method getObjectType { node } {}
+		method validateGeometry {} {}
 	}
 
 	private {
@@ -100,6 +152,9 @@ body GeometryBrowser::constructor {} {
 	set _autoRender 0
 	set _popup ""
 
+	set _goodGeometry ""
+	set _badGeometry ""
+
 	# pick some randomly high port for preview rendering and hope it, or one of
 	# its neighbors is open.
 
@@ -141,22 +196,12 @@ body GeometryBrowser::constructor {} {
 	set pane(0) [lindex $children 0]
 #	set pane(1) [lindex $children 1]
 
-	# figure out what title to put in the label space.  XXX we could use
-	# the format command to generate a nicely formatted paragraph, but
-	# it's behavior is not consistent.  Plus... the titles could potentially
-	# be huge and we'd still need to trim, so just trim short anyways.
-	set titleLabel ""
-	if { [ string length [ title ] ] <= 32 } {
-		set titleLabel [ title ]
-	} else {
-		set titleLabel "[ format "%32.32s" [ title ] ]..."
-	}
-
 	itk_component add cadtree {
 		Hierarchy $itk_interior.cadtree \
-				-labeltext $titleLabel \
-				-querycommand [ code $this getNodeChildren {%n} ] \
-				-dblclickcommand [ code $this displayNode {%n} ] \
+				-labeltext "...loading..." \
+				-querycommand [ code $this getNodeChildren %n yes ] \
+				-imagecommand [ code $this updateGeometryLists %n ] \
+				-dblclickcommand [ code $this displayNode %n ] \
 				-textmenuloadcommand [ code $this prepNodeMenu ] \
 				-imagemenuloadcommand [ code $this prepNodeMenu ] \
 				-markforeground blue \
@@ -385,8 +430,6 @@ body GeometryBrowser::constructor {} {
 	# save the index of this menu entry so we may modify its label later
 	set _autorenderBgMenuIndex [ $_bgMenu index end ]
 
-
-
 #	itk_component add t_info {
 #		text $pane(1).t_info -relief sunken -bd 1 -yscrollcommand "$pane(1).s_info set"
 #	}
@@ -394,7 +437,6 @@ body GeometryBrowser::constructor {} {
 #	itk_component add s_info {
 #		scrollbar $pane(1).s_info -command "$itk_component(t_info) yview"
 #	}
-		
 
 	grid $itk_component(cadtree) -sticky nsew -in $pane(0) -row 0 -column 0
 #	grid $itk_component(t_info) -sticky nsew -in $pane(1) -row 0 -column 0
@@ -407,10 +449,17 @@ body GeometryBrowser::constructor {} {
 	grid columnconfigure $pane(0) 0 -weight 1
 #	grid rowconfigure $pane(1) 0 -weight 1
 #	grid columnconfigure $pane(1) 0 -weight 1
+
+	# run redraw now and start initial updateHook
+	$this validateGeometry
 }
 
 
 body GeometryBrowser::destructor {} {
+	if { $_debug } {
+		puts "destructor"
+	}
+
 #	itk_component delete [ $itk_interior component colorMenu ]
 #	itk_component delete [ $itk_interior component menubar ]
 #	itk_component delete [ $itk_interior component cadtree ]
@@ -424,6 +473,10 @@ body GeometryBrowser::destructor {} {
 			puts "Unable to properly clean up after our fbserv"
 		}
 	}
+
+	# cancel our callback if it is pending
+	after cancel $_updateHook
+
 }
 
 ###########
@@ -437,17 +490,41 @@ body GeometryBrowser::destructor {} {
 
 # getNodeChildren is the -querycommand
 #
-# returns the geometry at any node in the directed tree.
+# returns the geometry at any node in the directed tree.  it also maintains a
+# list of what geometry is displayed in the browser, regardless of whether the
+# geometry is actually a valid database object (it keeps a list of good and
+# bad geometry).  every event notification, the list is validated (see
+# validateGeometry) and if it does not match, getNodeChildren gets recalled
+# to update the list and reinform geometry
+#
+# the second parameter controls whether the displayed geometry lists will be
+# maintained or whether we are merely getting a list of children at a point
 # 
-body GeometryBrowser::getNodeChildren { { node "" } } {
+body GeometryBrowser::getNodeChildren { { node "" } { updateLists "no" }} {
 	if { $_debug } {
-		puts "getNodeChildren $node"
+		puts "getNodeChildren $node $updateLists"
 	}
 
 	# get a list of children for the current node.  the result in childList
 	# should be a list of adorned children nodes.
 	set childList ""
 	if {$node == ""} {
+
+		# figure out what title to put in the label space.  XXX we could use
+		# the format command to generate a nicely formatted paragraph, but
+		# it's behavior is not consistent.  Plus... the titles could potentially
+		# be huge and we'd still need to trim, so just trim short anyways.
+		set titleLabel ""
+		if [ catch { title } tit ] {
+			set titleLabel "No database open"
+		} else {
+			set titleLabel "$tit"
+		}
+		if { [ string length $titleLabel ] >= 32 } {
+			set titleLabel "[ format "%32.32s" [ title ] ]..."
+		}
+		$itk_interior.cadtree configure -labeltext $titleLabel
+
 		# process top geometry
 		
 		if { $_showAllGeometry } {
@@ -457,7 +534,9 @@ body GeometryBrowser::getNodeChildren { { node "" } } {
 		}
 
 		if [ catch $topsCommand roots ] {
-			puts $roots
+			# puts $roots
+			set _goodGeometry ""
+			set _badGeometry ""
 			return
 		}
 
@@ -493,6 +572,11 @@ body GeometryBrowser::getNodeChildren { { node "" } } {
 		# node is a branch or not.
 		if { [ catch { ls $childName } lsName ] } {
 			puts "$lsName"
+			if { [ string compare $updateLists "yes" ] == 0 } {
+				if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
+					lappend _badGeometry "$childName"
+				}
+			}
 			continue
 		}
 
@@ -500,8 +584,14 @@ body GeometryBrowser::getNodeChildren { { node "" } } {
 		if { [ string compare $lsName "" ] == 0 } {
 			# !!! for some reason the mark blabbers back that the node is not valid?!?
 			# WTF?!?  And, of course, it works if type the exact same thing into mged..
-			puts "WANT TO MARK NODE INVALID BUT CANNOT (command fails):\n$itk_interior.cadtree mark add $node/$childName"
+			#			puts "WANT TO MARK NODE INVALID BUT CANNOT (hierarchy widget command fails):\n$itk_interior.cadtree mark add $node/$childName"
 			# $itk_interior.cadtree mark add $node/$childName
+
+			if { [ string compare $updateLists "yes" ] == 0 } {
+				if { [ lsearch -exact $_badGeometry $childName ] == -1 } {
+					lappend _badGeometry "$childName"
+				}
+			}
 		}
 
 		set nodeType leaf
@@ -510,6 +600,18 @@ body GeometryBrowser::getNodeChildren { { node "" } } {
 		} elseif { [ string compare "R" [ string index $lsName end-1 ] ] == 0 } {
 			if { [ string compare "/" [ string index $lsName end-2 ] ] == 0 } {
 				set nodeType branch
+			}
+		}
+
+		# check whether to update good/bad lists
+		if { [ string compare $updateLists "yes" ] == 0 } {
+			# if we did not just add it as bad geometry, it must be good..
+			if { [ string compare [ lindex $_badGeometry end ] $childName ] != 0 } {
+				
+				# make sure it is not a repeat
+				if { [ lsearch -exact $_goodGeometry $childName ] == -1 } {
+					lappend _goodGeometry "$childName"
+				}
 			}
 		}
 
@@ -537,6 +639,72 @@ body GeometryBrowser::toggleNode { { node "" } } {
 }
 
 
+# updateGeometryLists is the -imagecommand
+#
+# updates the lists of valid and invalid geometry based on the user expanding
+# and collapsing nodes.  getNodeChildren adds new nodes as they are expanded.
+# this routine removes them as they are collapsed.
+# 
+body GeometryBrowser::updateGeometryLists { { node "" } } {
+	if { $_debug } {
+		puts "updateGeometryLists $node"
+	}
+
+	if { $_showAllGeometry } {
+		set topsCommand "tops -n"
+	} else {
+		set topsCommand "tops -n -u"
+	}
+	
+	if [ catch $topsCommand objs ] {
+		puts $objs
+		return
+	}
+	set objects ""
+	foreach obj $objs {
+		lappend objects $obj
+	}
+	
+	# iterate over nodes displayed and generate list of geometry
+	foreach currentNode [ $itk_interior.cadtree expState ] {
+		set children [ $this getNodeChildren $currentNode no ]
+		foreach child $children {
+			set childName [ lindex $child 1 ]
+			if { [ lsearch -exact $objects $childName ] == -1 } {
+				lappend objects $childName
+			}
+		}
+	}
+
+	#regenerate good/bad lists
+	set _goodGeometry ""
+	set _badGeometry ""
+	foreach object $objects {
+
+		# catch an ls failure (should not happen)
+		if { [ catch { ls $object } lsName ] } {
+			puts "$lsName"
+			if { [ lsearch -exact $_badGeometry $object ] == -1 } {
+				lappend _badGeometry $object
+			}
+			continue
+		}
+		# if the node could not be stat'd with ls, add to bad list
+		if { [ string compare $lsName "" ] == 0 } {
+			if { [ lsearch -exact $_badGeometry $object ] == -1 } {
+				lappend _badGeometry $object
+			}
+		} else {
+			if { [ lsearch -exact $_goodGeometry $object ] == -1 } {
+				lappend _goodGeometry $object
+			}
+		}
+	}
+
+	return
+}
+
+
 # displayNode is the -dblclickcommand
 #
 # displayes the geometry of a given node to the mged window.  later it will be
@@ -557,6 +725,13 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 	# XXX hack to handle the pop-up window since it does not call current properly
 	if { $node == "" } {
 		set node [ $itk_interior.cadtree current ]
+	} elseif { [ string compare $node "/" ] == 0 } {
+		set node ""
+	}
+
+	# if we are still empty, we need to stop
+	if { $node == "" } {
+		error "Must specify a node!"
 	}
 
 	if { [ string compare $display "" ] == 0 } {
@@ -1127,6 +1302,95 @@ body GeometryBrowser::getObjectType { node } {
 	return "p"
 }
 
+# validateGeometry
+#
+# iterates over all of the geometry actually discovered and makes sure that
+# nothing has changed
+#
+# XXX since there is no publish/subscribe model set up in mged to get
+# interrupt notifications to update our model/view, we manually poll (eck..)
+# periodically.  
+#
+body GeometryBrowser::validateGeometry { } {
+	if { $_debug } {
+		puts "validateGeometry"
+	}
+
+	set redraw 0
+	set dbNotOpen 0
+
+	# see if the database is open
+	if [ catch { opendb } notopen ] {
+		set dbNotOpen 1
+	}
+
+	puts "dbnotopen: $dbNotOpen"
+	puts "goodGeom: $_goodGeometry"
+
+	# do nothing until a database is open
+	if { $dbNotOpen == 0 } {
+
+		# if there is no good or bad geometry listed, try to redraw regardless
+		if { $_goodGeometry == "" } {
+			incr redraw 
+		} else {
+			# make sure our lists match up, the lists are maintained by getNodeChildren
+			# and updateGeometryLists.
+			foreach geom $_goodGeometry {
+				# only need one redraw command
+				if { $redraw == 0 } {
+					if { [ catch { ls $geom } shouldFind ] } {
+						incr redraw
+					}
+					if { $shouldFind == "" } {
+						incr redraw
+					}
+				}
+			}
+#  XXX we need a better way than "ls" to stat objects to avoid the garbage
+#  that is output.
+#			foreach geom $_badGeometry {
+#				if { $redraw == 0 } {
+#					if { ! [ catch { ls $geom } shouldNot ] } {
+#						incr redraw
+#					}
+#				}
+#			}
+		}
+
+		puts "redraw: $redraw"
+
+		# redraw, invokes a recall of getNodeChildren for all displayed nodes
+		if { $redraw > 0 } {
+			# if a database is open, recompute the display lists
+			if { $dbNotOpen == 0 } {
+				$this updateGeometryLists
+			} else {
+				set _goodGeometry ""
+				set _badGeometry ""
+			}
+			# !!! for some reason, one fails, but two is ok.. (!)
+			# heh.. silly tcl, tk's for kids.
+			$itk_interior.cadtree draw
+			$itk_interior.cadtree draw
+		}
+	}
+
+	# cancel any prior pending hook
+	after cancel _updateHook
+
+	# if the database is not open, poll a little slower
+	if { $dbNotOpen == 1 } {
+		# set up the next hook for 7 seconds
+		set _updateHook [ after 7000 [ code $this validateGeometry ] ]
+	} else {
+		# set up the next hook for 4 seconds
+		set _updateHook [ after 4000 [ code $this validateGeometry ] ]
+	}
+	return
+}
+
+
 ##########
 # end protected methods
 ##########
@@ -1230,8 +1494,10 @@ body GeometryBrowser::extractNodeName { { node "" } } {
 ##########
 
 
-GeometryBrowser .gm 
+#GeometryBrowser .gm 
 
 # !!! remove glob hack once included into menu properly
 # restore previous globbing mode
-set glob_compat_mode [ set prevGlobCompatMode ]
+if { [ catch { set glob_compat_mode [ set prevGlobCompatMode ] } error ] } {
+	puts "unable to restore glob_compat_mode?"
+}
