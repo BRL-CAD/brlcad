@@ -97,7 +97,7 @@ proc gui_create_default { args } {
     global mged_collaborators
     global mged_display
     global mged_use_air
-    global mged_echo_query_ray_cmd
+    global mged_query_ray_cmd_echo
     global mged_listen
     global mged_fb
     global mged_fb_all
@@ -447,10 +447,10 @@ menu .$id.m.modes.m -tearoff $do_tearoffs
 	-label "Rateknobs" -underline 0 -command "doit $id \"set rateknobs \$mged_rateknobs($id)\""
 #.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_use_air($id)\
 #	-label "Use Air" -underline 0 -command "doit $id \"set use_air \$mged_use_air($id)\""
-#.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_echo_query_ray_cmd($id)\
-#	-label "Echo Query Ray Command" -underline 0 -command "doit $id \"set echo_query_ray_cmd \$mged_echo_query_ray_cmd($id)\""
+#.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_query_ray_cmd_echo($id)\
+#	-label "Echo Query Ray Command" -underline 0 -command "doit $id \"set query_ray_cmd_echo \$mged_query_ray_cmd_echo($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_rubber_band($id)\
-	-label "Rubber Band" -underline 7 -command "doit $id \"set rubber_band \$mged_rubber_band($id)\""
+	-label "Draw Rubber Band" -underline 7 -command "doit $id \"set rubber_band \$mged_rubber_band($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_draw($id)\
 	-label "Draw Grid" -command "doit $id \"set grid_draw \$mged_grid_draw($id)\""
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_grid_snap($id)\
@@ -459,8 +459,6 @@ menu .$id.m.modes.m -tearoff $do_tearoffs
 	-label "Multi Pane" -underline 0 -command "setmv $id"
 .$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
 	-label "Framebuffer" -underline 0 -command "set_fb $id"
-.$id.m.modes.m add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
-	-label "Listen For Clients" -underline 0 -command "set_listen $id" -state disabled
 
 menubutton .$id.m.settings -text "Settings" -underline 0 -menu .$id.m.settings.m
 menu .$id.m.settings.m -tearoff $do_tearoffs
@@ -549,6 +547,9 @@ menu .$id.m.settings.m.cm_fb -tearoff $do_tearoffs
 	-label "Overlay" -command "doit $id \"set fb_overlay \$mged_fb_overlay($id)\""
 .$id.m.settings.m.cm_fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
 	-label "Underlay" -command "doit $id \"set fb_overlay \$mged_fb_overlay($id)\""
+.$id.m.settings.m.cm_fb add separator
+.$id.m.settings.m.cm_fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
+	-label "Listen For Clients" -underline 0 -command "set_listen $id" -state disabled
 
 menu .$id.m.settings.m.cm_grid -tearoff $do_tearoffs
 .$id.m.settings.m.cm_grid add cascade -label "Spacing" -menu .$id.m.settings.m.cm_grid.cm_spacing
@@ -978,8 +979,8 @@ proc update_mged_vars { id } {
     global mged_e_axes
     global use_air
     global mged_use_air
-    global echo_query_ray_cmd
-    global mged_echo_query_ray_cmd
+    global query_ray_cmd_echo
+    global mged_query_ray_cmd_echo
     global listen
     global mged_listen
     global fb
@@ -1013,7 +1014,7 @@ proc update_mged_vars { id } {
     set mged_v_axes_pos($id) $v_axes_pos
     set mged_e_axes($id) $e_axes
     set mged_use_air($id) $use_air
-    set mged_echo_query_ray_cmd($id) $echo_query_ray_cmd
+    set mged_query_ray_cmd_echo($id) $query_ray_cmd_echo
     set mged_fb($id) $fb
     set mged_fb_all($id) $fb_all
     set mged_fb_overlay($id) $fb_overlay
@@ -1027,10 +1028,10 @@ proc update_mged_vars { id } {
     set mged_grid_snap($id) $grid_snap
 
     if {$mged_fb($id)} {
-	.$id.m.modes.m entryconfigure 8 -state normal
+	.$id.m.settings.m.cm_fb entryconfigure 6 -state normal
 	set mged_listen($id) $listen
     } else {
-	.$id.m.modes.m entryconfigure 8 -state disabled
+	.$id.m.settings.m.cm_fb entryconfigure 6 -state disabled
 	set mged_listen($id) $listen
     }
 }
@@ -1595,7 +1596,7 @@ proc set_listen { id } {
     global listen
     global mged_listen
 
-    doit $id "set listen $mged_listen($id)"
+    doit $id "set listen \$mged_listen($id)"
 
 # In case things didn't work.
     set mged_listen($id) $listen
@@ -1607,12 +1608,14 @@ proc set_fb { id } {
     global listen
     global mged_listen
 
-    doit $id "set fb $mged_fb($id)"
+    doit $id "set fb \$mged_fb($id)"
 
     if {$mged_fb($id)} {
-	.$id.m.modes.m entryconfigure 8 -state normal
+	.$id.m.settings.m.cm_fb entryconfigure 6 -state normal
+	set mged_listen($id) 1
+	doit $id "set listen \$mged_listen($id)"
     } else {
+	.$id.m.settings.m.cm_fb entryconfigure 6 -state disabled
 	set mged_listen($id) 0
-	.$id.m.modes.m entryconfigure 8 -state disabled
     }
 }
