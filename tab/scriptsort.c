@@ -159,6 +159,10 @@ FILE *in;
 			new->flags |= FLAG_CLEAN;
 		} else {
 			addtext(new, yytext);
+			/* Can't concatenate commands to comments. */
+			if (token == COMMENT) {
+				addtext(new, "\n");
+			}
 		}
 	}
 	token = yylex();	/* scarf the semi-colon */
