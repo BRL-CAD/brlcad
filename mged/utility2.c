@@ -1109,6 +1109,7 @@ struct directory *dp;
 		bn_mat_zero( use->xform );
 		use->used = 0;
 		NAMEMOVE( dp->d_namep, name );
+		name[NAMESIZE] = '\0';                /* ensure null termination */
 
 		/* Add an entry for the original at the end of the list
 		 * This insures that the original will be last to be modified
