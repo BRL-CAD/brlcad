@@ -49,6 +49,8 @@ int hex_out = 0;	/* Binary or Hex .pix output file */
 /***** end of sharing with viewing model *****/
 
 /***** variables shared with worker() */
+static int	stereo = 0;	/* stereo viewing */
+vect_t left_eye_delta;
 static int	hypersample=0;	/* number of extra rays to fire */
 static int	perspective=0;	/* perspective view -vs- parallel view */
 vect_t	dx_model;	/* view delta-X as model-space vector */
@@ -103,6 +105,9 @@ char **argv;
 	argc--; argv++;
 	while( argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
+		case 'S':
+			stereo = 1;
+			break;
 		case 'h':
 			hypersample = atoi( &argv[0][2] );
 			break;
@@ -333,6 +338,13 @@ do_more:
 	MAT4X3VEC( dx_model, view2model, temp );
 	VSET( temp, 0, 2.0/npts, 0 );
 	MAT4X3VEC( dy_model, view2model, temp );
+	if( stereo )  {
+		/* Move left 2.5 inches (63.5mm) */
+		VSET( temp, 2.0*(-63.5/viewsize), 0, 0 );
+		rt_log("red eye: moving %f relative screen (left)\n", temp[X]);
+		MAT4X3VEC( left_eye_delta, view2model, temp );
+		VPRINT("left_eye_delta", left_eye_delta);
+	}
 
 	/* "Lower left" corner of viewing plane */
 	if( perspective )  {
@@ -419,6 +431,9 @@ out:
 	return(0);
 }
 
+#define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
+#define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
+
 /*
  *  			W O R K E R
  *  
@@ -429,7 +444,7 @@ worker( ap )
 register struct application *ap;
 {
 	LOCAL struct application a;
-	LOCAL vect_t tempdir;
+	LOCAL vect_t point;		/* Ref point on eye or view plane */
 	LOCAL vect_t colorsum;
 	register int com;
 
@@ -456,25 +471,47 @@ register struct application *ap;
 				FAST fastf_t dx, dy;
 				dx = a.a_x + rand_half();
 				dy = (npts-a.a_y-1) + rand_half();
-				VJOIN2( a.a_ray.r_pt, viewbase_model,
+				VJOIN2( point, viewbase_model,
 					dx, dx_model, dy, dy_model );
 			}  else  {
 				register int yy = npts-a.a_y-1;
-				VJOIN2( a.a_ray.r_pt, viewbase_model,
+				VJOIN2( point, viewbase_model,
 					a.a_x, dx_model,
 					yy, dy_model );
 			}
 			if( perspective )  {
 				VSUB2( a.a_ray.r_dir,
-					a.a_ray.r_pt, eye_model );
+					point, eye_model );
 				VUNITIZE( a.a_ray.r_dir );
 				VMOVE( a.a_ray.r_pt, eye_model );
 			} else {
+				VMOVE( a.a_ray.r_pt, point );
 			 	VMOVE( a.a_ray.r_dir, ap->a_ray.r_dir );
 			}
-
 			a.a_level = 0;		/* recursion level */
 			rt_shootray( &a );
+
+			if( stereo )  {
+				FAST fastf_t right,left;
+
+				right = CRT_BLEND(a.a_color);
+
+				VADD2(  point, point,
+					left_eye_delta );
+				if( perspective )  {
+					VSUB2( a.a_ray.r_dir,
+						point, eye_model );
+					VUNITIZE( a.a_ray.r_dir );
+					VMOVE( a.a_ray.r_pt, eye_model );
+				} else {
+					VMOVE( a.a_ray.r_pt, point );
+				}
+				a.a_level = 0;		/* recursion level */
+				rt_shootray( &a );
+
+				left = CRT_BLEND(a.a_color);
+				VSET( a.a_color, left, 0, right );
+			}
 			VADD2( colorsum, colorsum, a.a_color );
 		}
 		if( hypersample )  {
@@ -511,7 +548,7 @@ register struct application *ap;
 	}
 }
 
-#ifdef cray
+#ifdef CRAY_COS
 /* Routines that seem to be missing under COS on the XMP. */
 perror(str)
 char *str;
