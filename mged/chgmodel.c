@@ -41,6 +41,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -97,7 +103,7 @@ f_itemair()
 }
 
 /* Modify material information */
-/* Usage:  mater name [del] */
+/* Usage:  mater name */
 void
 f_mater()
 {
@@ -105,6 +111,7 @@ f_mater()
 	char line[80];
 	union record record;
 	int r=0, g=0, b=0;
+	char	*nlp;
 
 	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -128,21 +135,28 @@ f_mater()
 	/* Material */
 	(void)printf("Material = %s\nMaterial?  (CR to skip) ", record.c.c_matname);
 	fflush(stdout);
-	(void)gets(line);
-	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )
+	(void)fgets(line,sizeof(line),stdin);
+	nlp = strchr( line, '\n' );
+	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )  {
 		record.c.c_matname[0] = '\0';
-	else if( line[0] != '\n' && line[0] != '\0' )
+	} else if( line[0] != '\n' && line[0] != '\0' ) {
+		if( nlp != NULL )  *nlp = '\0';
 		strncpy( record.c.c_matname, line,
 			sizeof(record.c.c_matname)-1);
+	}
 
 	/* Parameters */
 	(void)printf("Param = %s\nParameter string? (CR to skip) ", record.c.c_matparm);
 	fflush(stdout);
-	(void)gets(line);
-	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )
+	(void)fgets(line,sizeof(line),stdin);
+	nlp = strchr( line, '\n' );
+	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )  {
 		record.c.c_matparm[0] = '\0';
-	else if( line[0] != '\n' && line[0] != '\0' )
-		strncpy( record.c.c_matparm, line, sizeof(record.c.c_matparm)-1 );
+	} else if( line[0] != '\n' && line[0] != '\0' ) {
+		if( nlp != NULL )  *nlp = '\0';
+		strncpy( record.c.c_matparm, line,
+			sizeof(record.c.c_matparm)-1 );
+	}
 
 	/* Color */
 	if( record.c.c_override )
@@ -152,17 +166,19 @@ f_mater()
 			record.c.c_rgb[2] );
 	else
 		(void)printf("Color = (No color specified)\n");
-	(void)printf("Color R G B (0..255)? (CR to skip) ");
+	(void)printf("Color R G B (0..255)? ('del' to delete, CR to skip) ");
 	fflush(stdout);
-	(void)gets(line);
+	(void)fgets(line,sizeof(line),stdin);
 	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 ) {
 		record.c.c_override = 0;
-	} else {
-		sscanf(line, "%d %d %d", &r, &g, &b);
+	} else if( sscanf(line, "%d %d %d", &r, &g, &b) >= 3 )  {
 		record.c.c_rgb[0] = r;
 		record.c.c_rgb[1] = g;
 		record.c.c_rgb[2] = b;
 		record.c.c_override = 1;
+	} else {
+		/* Else, leave it unchanged */
+		printf(" (color unchanged)\n");
 	}
 
 	/* Inherit */
@@ -180,7 +196,7 @@ f_mater()
 	}
 	(void)printf("Inheritance (0|1)? (CR to skip) ");
 	fflush(stdout);
-	(void)gets(line);
+	(void)fgets(line,sizeof(line),stdin);
 	switch( line[0] )  {
 	case '1':
 		record.c.c_inherit = DB_INH_HIGHER;
