@@ -96,10 +96,10 @@ struct partition *PartHeadp;
 	register int i;	/* XXX */
 
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
-		/* TODO: Not all may have both in & out points! */
 		VMOVE( &(vldray.ox), pp->pt_inhit->hit_point );
 		VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
 			pp->pt_inhit->hit_point );
+		/* Check pt_inflip, pt_outflip for normals! */
 		vldray.na = vldray.ne = 0.0;	/* need angle/azim */
 		i = pp->pt_regionp->reg_regionid;
 		vldray.ob_lo = i & 0xFFFF;
@@ -121,7 +121,11 @@ struct partition *PartHeadp;
 	register int i,j;
 
 #define pchar(c) {putc(c,outfp);if(col++==74){putc('\n',outfp);col=0;}}
-	if( (cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir)) <= 0.0 )  {
+
+	cosI0 = -VDOT(hitp->hit_normal, ap->a_ray.r_dir);
+	if( pp->pt_inflip )
+		cosI0 = -cosI0;
+	if( cosI0 <= 0.0 )  {
 		ntomiss++;
 		return;
 	}
@@ -172,6 +176,9 @@ struct partition *PartHeadp;
 	/*
 	 * Diffuse reflectance from each light source
 	 */
+	if( pp->pt_inflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
 	if( lightmodel == 1 )  {
 		/* Light from the "eye" (ray source).  Note sign change */
 		diffuse0 = 0;

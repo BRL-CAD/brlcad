@@ -42,6 +42,16 @@ struct partition *FreePart = PT_NULL;		 /* Head of freelist */
 
 /*
  *			B O O L _ R E G I O N S
+ *
+ *  Weave the segments into the partitions.
+ *  The edge of each partition is an inhit or outhit of some solid (seg).
+ *
+ *  NOTE:  When the final partitions are completed, it is the users
+ *  responsibility to honor the inflip and outflip flags.  They can
+ *  not be flipped here because an outflip=1 edge and an inflip=0 edge
+ *  following it may in fact be the same edge.  This could be dealt with
+ *  by giving the partition struct a COPY of the inhit and outhit rather
+ *  than a pointer, but that's more cycles than it's worth.
  */
 void
 bool_regions( segp_in, FinalHdp )
@@ -114,11 +124,15 @@ struct partition *FinalHdp;	/* Heads final circ list */
 			/*
 			 * Segment ends beyond the end of the last
 			 * partition.  Create an additional partition.
+			 *	PPPPPPPP
+			 *	    SSSSSSSS
+			 *	        |> pp
 			 */
 			GET_PT_INIT( pp );
 			pp->pt_solhit[stp->st_bin] = TRUE;
 			pp->pt_instp = PartHd.pt_back->pt_outstp;
 			pp->pt_inhit = PartHd.pt_back->pt_outhit;
+			pp->pt_inflip = 1;
 			pp->pt_outstp = stp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, PartHd.pt_back );
@@ -131,7 +145,10 @@ struct partition *FinalHdp;	/* Heads final circ list */
 				 * or exactly at the end.
 				 */
 				if( pp->pt_forw == &PartHd )  {
-					/* beyond last part. end */
+					/* seg starts beyond last part. end:
+					 *	PPPP
+					 *	      SSSS
+					 */
 					GET_PT_INIT( newpp );
 					newpp->pt_solhit[stp->st_bin] = TRUE;
 					newpp->pt_instp = stp;
@@ -154,12 +171,18 @@ equal_start:			/*
 					/*
 					 * Segment and partition end
 					 * (nearly) together
+					 *	PPPP
+					 *	SSSS
 					 */
 					pp->pt_solhit[stp->st_bin] = TRUE;
 					goto done_weave;
 				}
 				if( i > 0 )  {
-					/* Seg continues beyond part. end */
+					/* Seg continues beyond part. end
+					 *	PPPPPPPP
+					 *	    SSSSSSSS
+					 *	pp  |  newpp
+					 */
 					pp->pt_solhit[stp->st_bin] = TRUE;
 					dist = pp->pt_outdist;
 					if( pp->pt_forw == &PartHd )  {
@@ -168,6 +191,7 @@ equal_start:			/*
 						newpp->pt_solhit[stp->st_bin] = TRUE;
 						newpp->pt_instp = pp->pt_outstp;
 						newpp->pt_inhit = pp->pt_outhit;
+						newpp->pt_inflip = 1;
 						newpp->pt_outstp = stp;
 						newpp->pt_outhit = &segp->seg_out;
 						APPEND_PT( newpp, pp );
@@ -179,13 +203,20 @@ equal_start:			/*
 					 */
 					continue;
 				}
-				/* Segment ends before partition ends */
+				/* Segment ends before partition ends
+				 *	PPPPPPPPPP
+				 *	SSSSSS
+				 *	newpp| pp
+				 */
 				GET_PT( newpp );
 				*newpp = *pp;		/* struct copy */
 				/* new partition contains segment */
 				newpp->pt_solhit[stp->st_bin] = TRUE;
-				newpp->pt_outstp = pp->pt_instp = stp;
-				newpp->pt_outhit = pp->pt_inhit = &segp->seg_out;
+				newpp->pt_outstp = stp;
+				newpp->pt_outhit = &segp->seg_out;
+				pp->pt_instp = stp;
+				pp->pt_inhit = &segp->seg_out;
+				pp->pt_inflip = 1;
 				INSERT_PT( newpp, pp );
 				goto done_weave;
 			}
@@ -193,6 +224,9 @@ equal_start:			/*
 				/*
 				 * Seg starts before current partition starts,
 				 * but after the previous partition ends.
+				 *	SSSSSSSS...
+				 *	     PPPPP...
+				 *	newpp|pp
 				 */
 				GET_PT_INIT( newpp );
 				newpp->pt_solhit[stp->st_bin] = TRUE;
@@ -207,6 +241,7 @@ equal_start:			/*
 				}
 				newpp->pt_outstp = pp->pt_instp;
 				newpp->pt_outhit = pp->pt_inhit;
+				newpp->pt_outflip = 1;
 				/* dist = pp->pt_indist; */
 				goto equal_start;
 			}
@@ -216,12 +251,18 @@ equal_start:			/*
 			 *  Segment starts after partition starts,
 			 *  but before the end of the partition.
 			 *  Note:  pt_solhit will be marked in equal_start.
+			 *	PPPPPPPPPPPP
+			 *	     SSSS...
+			 *	newpp|pp
 			 */
 			GET_PT( newpp );
 			*newpp = *pp;			/* struct copy */
 			/* new partition is span before seg joins partition */
-			newpp->pt_outstp = pp->pt_instp = stp;
-			newpp->pt_outhit = pp->pt_inhit = &segp->seg_in;
+			pp->pt_instp = stp;
+			pp->pt_inhit = &segp->seg_in;
+			newpp->pt_outstp = stp;
+			newpp->pt_outhit = &segp->seg_in;
+			newpp->pt_outflip = 1;
 			INSERT_PT( newpp, pp );
 			goto equal_start;
 		}
@@ -288,6 +329,7 @@ done_weave:	;
 			DEQUEUE_PT( newpp );
 			newpp->pt_regionp = lastregion;
 			APPEND_PT( newpp, FinalHdp->pt_back );
+
 			/* Shameless efficiency hack */
 			if( !debug && one_hit_flag )  break;
 		}
@@ -351,15 +393,17 @@ register struct partition *partp;
 		break;
 
 	case OP_SUBTRACT:
-		if( bool_eval( treep->tr_left, partp ) == FALSE )
+		if( treep->tr_right->tr_op != OP_SOLID )  {
+			fprintf(stderr,"bool_eval: rhs of MINUS not Solid\n");
 			ret = FALSE;
+			break;
+		}
+		if( bool_eval( treep->tr_left, partp ) == FALSE )
+			ret = FALSE;		/* FALSE = FALSE - X */
 		else  {
+			/* TRUE = TRUE - FALSE */
+			/* FALSE = TRUE - TRUE */
 			ret = !bool_eval( treep->tr_right, partp );
-			if( ret == FALSE )  {
-				/* Was subtracted, flip exit normal */
-				VREVERSE( partp->pt_outhit->hit_normal,
-					  partp->pt_outhit->hit_normal );
-			}
 		}
 		break;
 
@@ -400,7 +444,7 @@ char *title;
 		for( i=0; i<NBINS; i++ )
 			if( pp->pt_solhit[i] )
 				fprintf(stderr,"%d, ", i );
-		putchar('\n');
+		putc('\n',stderr);
 	}
 	fprintf(stderr,"----\n");
 }
