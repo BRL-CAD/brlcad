@@ -2874,6 +2874,7 @@ struct bn_tol *tol;
 			return( NMG_CLASS_AoutB );	/* shell s2 is not inside shell s */
 		}
 	}
+	bu_ptbl_free( &verts );
 
 	/* every point of s2 is on s !!!!!!! */
 	return( NMG_CLASS_Unknown );
