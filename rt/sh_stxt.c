@@ -51,7 +51,7 @@ struct	structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
 	"%C",	"transp",	0,			FUNC_NULL,
-	"%s",	"file",		8,			FUNC_NULL,
+	"%s",	"file",		1,			FUNC_NULL,
 #else
 	"%C",	"transp",	offsetofarray(struct stxt_specific, stx_transp),	FUNC_NULL,
 	"%s",	"file",		offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
