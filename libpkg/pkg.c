@@ -50,7 +50,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
 #include <netdb.h>
-#include <sys/time.h>		/* for struct timeval */
+#endif
+
+/*
+ *  The situation with sys/time.h and time.h is crazy.
+ *  We need sys/time.h for struct timeval,
+ *  and time.h for struct tm.
+ *
+ *  on BSD (and SGI 4D), sys/time.h includes time.h,
+ *  on the XMP (UNICOS 3 & 4), time.h includes sys/time.h,
+ *  on the Cray-2, there is no automatic including.
+ *
+ *  Note that on many SYSV machines, the Cakefile has to set BSD
+ */
+#if BSD && !SYSV
+#  include <sys/time.h>		/* includes <time.h> */
+#else
+#  if CRAY1
+#	include <time.h>	/* includes <sys/time.h> */
+#  else
+#	include <sys/time.h>
+#	include <time.h>
+#  endif
 #endif
 
 #if defined(BSD) && !defined(CRAY) && !defined(mips)
@@ -93,6 +114,9 @@ static int pkg_dispatch();
 static int pkg_gethdr();
 
 static char errbuf[80];
+static FILE	*pkg_debug;
+static void	pkg_ck_debug();
+static void	pkg_timestamp();
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
 			sprintf(errbuf,"pkg: bad pointer x%x\n",p);\
@@ -194,6 +218,16 @@ void (*errlog)();
 	register struct hostent *hp;
 	register int netfd;
 	unsigned long addr_tmp;
+
+	pkg_ck_debug();
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_open(%s, %s, %s, %s, (passwd), switchp=x%x, errlog=x%x)\n",
+			host, service, protocol, uname,
+			switchp, errlog );
+		fflush(pkg_debug);
+	}
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -309,6 +343,15 @@ pkg_transerver( switchp, errlog )
 struct pkg_switch *switchp;
 void (*errlog)();
 {
+	pkg_ck_debug();
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_transerver(switchp=x%x, errlog=x%x)\n",
+			switchp, errlog );
+		fflush(pkg_debug);
+	}
+
 	/*
 	 * XXX - Somehow the system has to know what connection
 	 * was accepted, it's protocol, etc.  For UNIX/inetd
@@ -340,6 +383,15 @@ void (*errlog)();
 	register struct servent *sp;
 	int	pkg_listenfd;
 	int	on = 1;
+
+	pkg_ck_debug();
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_permserver(%s, %s, backlog=%d, errlog=x%x\n",
+			service, protocol, backlog, errlog );
+		fflush(pkg_debug);
+	}
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -423,6 +475,14 @@ void (*errlog)();
 	auto int fromlen = sizeof (from);
 	auto int onoff;
 
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_getclient(fd=%d, switchp=x%x, errlog=x%x, nodelay=%d)\n",
+			fd, switchp, errlog, nodelay );
+		fflush(pkg_debug);
+	}
+
 	/* Check for default error handler */
 	if( errlog == NULL )
 		errlog = pkg_errlog;
@@ -487,6 +547,14 @@ void (*errlog)();
 {
 	register struct pkg_conn *pc;
 
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_makeconn(fd=%d, switchp=x%x, errlog=x%x)\n",
+			fd, switchp, errlog );
+		fflush(pkg_debug);
+	}
+
 	/* Check for default error handler */
 	if( errlog == NULL )
 		errlog = pkg_errlog;
@@ -516,10 +584,25 @@ pkg_close(pc)
 register struct pkg_conn *pc;
 {
 	PKG_CK(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_close(pc=x%x) fd=%d\n",
+			pc, pc->pkc_fd );
+		fflush(pkg_debug);
+	}
+
+	/* Flush any queued stream output first. */
+	if( pc->pkc_strpos > 0 )  {
+		(void)pkg_flush( pc );
+	}
+
+	if( pc->pkc_buf != (char *)0 )  {
+		pc->pkc_errlog("pkg_close(x%x):  buf=x%x clash\n",
+			pc, pc->pkc_buf);
+	}
 	(void)close(pc->pkc_fd);
 	pc->pkc_fd = -1;		/* safety */
-	if( pc->pkc_buf != (char *)0 )
-		fprintf(stderr, "pkg_close(x%x):  buffer clash\n", pc->pkc_buf);
 	pc->pkc_buf = (char *)0;	/* safety */
 	pc->pkc_magic = 0;		/* safety */
 	(void)free( (char *)pc );
@@ -591,6 +674,14 @@ register struct pkg_conn *pc;
 	PKG_CK(pc);
 	if( len < 0 )  len=0;
 
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_send(type=%d, buf=x%x, len=%d, pc=x%x)\n",
+			 type, buf, len, pc );
+		fflush(pkg_debug);
+	}
+
 	/* Finish any partially read message */
 	do  {
 		if( pc->pkc_left > 0 )
@@ -653,7 +744,15 @@ register struct pkg_conn *pc;
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 #else
-	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
+	if( (i = write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) )) != sizeof(hdr) )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_send: header write");
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_send header of %d, wrote %d\n", sizeof(hdr), i);
+		(pc->pkc_errlog)(errbuf);
+		return(-1);		/* amount of user data sent */
+	}
 	if( len <= 0 )  return(0);
 	if( (i = write( pc->pkc_fd, buf, len )) != len )  {
 		if( i < 0 )  {
@@ -693,6 +792,14 @@ register struct pkg_conn *pc;
 	PKG_CK(pc);
 	if( len1 < 0 )  len1=0;
 	if( len2 < 0 )  len2=0;
+
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_send2(type=%d, buf1=x%x, len1=%d, buf2=x%x, len2=%d, pc=x%x)\n",
+			 type, buf1, len1, buf2, len2, pc );
+		fflush(pkg_debug);
+	}
 
 	/* Finish any partially read message */
 	do  {
@@ -784,6 +891,14 @@ register struct pkg_conn *pc;
 {
 	static struct pkg_header hdr;
 
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_stream(type=%d, buf=x%x, len=%d, pc=x%x)\n",
+			 type, buf, len, pc );
+		fflush(pkg_debug);
+	}
+
 	if( len > MAXQLEN )
 		return( pkg_send(type, buf, len, pc) );
 
@@ -815,6 +930,14 @@ pkg_flush( pc )
 register struct pkg_conn *pc;
 {
 	register int	i;
+
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_flush( pc=x%x )\n",
+			pc );
+		fflush(pkg_debug);
+	}
 
 	if( pc->pkc_strpos <= 0 ) {
 		pc->pkc_strpos = 0;	/* sanity for < 0 */
@@ -857,13 +980,20 @@ register struct pkg_conn *pc;
 	register int i;
 
 	PKG_CK(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_waitfor(type=%d, buf=x%x, len=%d, pc=x%x)\n",
+			type, buf, len, pc );
+		fflush(pkg_debug);
+	}
 again:
 	if( pc->pkc_left >= 0 )
 		if( pkg_block( pc ) < 0 )
 			return(-1);
 
 	if( pc->pkc_buf != (char *)0 )  {
-		fprintf( stderr, "pkg_waitfor:  buffer clash\n");
+		pc->pkc_errlog("pkg_waitfor:  buffer clash\n");
 		return(-1);
 	}
 	if( pkg_gethdr( pc, buf ) < 0 )  return(-1);
@@ -918,6 +1048,12 @@ again:
 		(pc->pkc_errlog)(errbuf);
 		return(-1);
 	}
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_waitfor() message type=%d arrived\n", type);
+		fflush(pkg_debug);
+	}
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
 	pc->pkc_left = -1;		/* safety */
@@ -946,13 +1082,20 @@ register struct pkg_conn *pc;
 	register char *tmpbuf;
 
 	PKG_CK(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_bwaitfor(type=%d, pc=x%x)\n",
+			type, pc );
+		fflush(pkg_debug);
+	}
 	do  {
 		/* Finish any unsolicited msg */
 		if( pc->pkc_left >= 0 )
 			if( pkg_block(pc) < 0 )
 				return((char *)0);
 		if( pc->pkc_buf != (char *)0 )  {
-			fprintf( stderr, "pkg_bwaitfor:  buffer clash\n");
+			pc->pkc_errlog("pkg_bwaitfor:  buffer clash\n");
 			return((char *)0);
 		}
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )
@@ -1004,6 +1147,13 @@ register struct pkg_conn *pc;
 	auto long bits;
 
 	PKG_CK(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_get(pc=x%x)\n",
+			pc );
+		fflush(pkg_debug);
+	}
 	if( pc->pkc_left < 0 )  {
 		if( pkg_gethdr( pc, (char *)0 ) < 0 )  return(-1);
 		if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
@@ -1048,6 +1198,13 @@ register struct pkg_conn *pc;
 	register int i;
 
 	PKG_CK(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_dispatch(pc=x%x) type=%d, buf=x%x, len=%d\n",
+			pc, pc->pkc_type, pc->pkc_buf, pc->pkc_len );
+		fflush(pkg_debug);
+	}
 	if( pc->pkc_left != 0 )  return(-1);
 
 	/* Whole message received, process it via switchout table */
@@ -1163,6 +1320,13 @@ pkg_block(pc)
 register struct pkg_conn *pc;
 {
 	PKG_CK(pc);
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fprintf( pkg_debug,
+			"pkg_block( pc=x%x )\n",
+			pc );
+		fflush(pkg_debug);
+	}
 	if( pc->pkc_left == 0 )  return( pkg_dispatch(pc) );
 
 	/* If no read outstanding, start one. */
@@ -1209,6 +1373,11 @@ static void
 pkg_errlog( s )
 char *s;
 {
+	if( pkg_debug )  {
+		pkg_timestamp();
+		fputs( s, pkg_debug );
+		fflush(pkg_debug);
+	}
 	fputs( s, stderr );
 }
 
@@ -1322,3 +1491,37 @@ again:
 	return (val);
 }
 #endif
+
+static void
+pkg_ck_debug()
+{
+	char	place[128];
+	sprintf( place, "/usr/tmp/pkg.%d", getpid() );
+/*#define PLACE	"/usr/tmp/pkg.log"*/
+#define PLACE	place
+	if( pkg_debug )  return;
+/*	if( access( PLACE, 2 ) < 0 )  return; */
+	if( (pkg_debug = fopen( PLACE, "a" )) == NULL )  return;
+}
+
+/*
+ *			P K G _ T I M E S T A M P
+ *
+ *  Output a timestamp to the log, suitable for starting each line with.
+ */
+static void
+pkg_timestamp()
+{
+	long		now;
+	struct tm	*tmp;
+	register char	*cp;
+
+	if( !pkg_debug )  return;
+	(void)time( &now );
+	tmp = localtime( &now );
+	fprintf(pkg_debug, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d [%5d] ",
+		tmp->tm_mon+1, tmp->tm_mday,
+		tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
+		getpid() );
+	/* Don't fflush here, wait for rest of line */
+}
