@@ -18,6 +18,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
+#include "vmath.h"
 #include <sys/time.h>
 #include "fb.h"
 
@@ -54,6 +56,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 /* Map user units into pixels */
 #define XFB(_x) (int)(xorigin+(((_x)-xmin)/cell_size)*(wid+grid_flag))
+
+/* Translate between different coordinate systems at play: h,v (GIFT),
+ * view_port (VP), the subdivision of the framebuffer where the image is
+ * located and seen, and screen_x, _y coordinates, which are the framebuffer
+ * coordinates.
+ */
+
+#define H2VPX(_h)	((_h) - xmin)/cell_size * (wid + grid_flag)
+#define V2VPY(_v)	((_v) - ymin)/cell_sixe * (hgt + grid_flag)
+#define VPX2SCRX(_vp_x)	((_vp_x) + xorigin)
+#define VPY2SCRY(_vp_y)	((_vp_y) + yorigin)
+#define SCRX2H(_scr_x)	((_scr_x) - xorigin) * (cell_size/(wid + grid_flag) ) + xmin
+#define SCRY2V(_scr_y)  ((_scr_y) - yorigin) * (cell_size/(hgt + grid_flag) ) + ymin
+
 /* Map pixels into user units */
 #define	fbh2uu(_h)	(cell_size*(((_h)-xorigin)/(wid+grid_flag)-.5)+xmin)
 #define	fbv2uu(_v)	(cell_size*(((_v)-yorigin)/(hgt+grid_flag)-key_height)+ymin)
@@ -388,8 +404,12 @@ long	ncells;
     if ((fbiop = fb_open((fbfile[0] != '\0') ? fbfile : NULL, fb_width, fb_height))
 	== FBIO_NULL)
 	return (false);
-    if (compute_fb_height || compute_fb_width)
-	(void) fprintf(stderr, "fb_size: %d %d\n", fb_width, fb_height);
+    if (compute_fb_height || compute_fb_width)  {
+	(void) fprintf(stderr, "fb_size requested: %d %d\n", fb_width, fb_height);
+    	fb_width = fb_getwidth(fbiop);
+    	fb_height = fb_getheight(fbiop);
+	(void) fprintf(stderr, "fb_size  obtained: %d %d\n", fb_width, fb_height);
+    }
     if (fb_wmap(fbiop, COLORMAP_NULL) == -1)
 	fb_log("Cannot initialize color map\n");
     if (fb_zoom(fbiop, zoom, zoom) == -1)
@@ -808,6 +828,13 @@ STATIC void log_Run()
     static char         *mon_nam[] =
                         { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    mat_t		model2hv;		/* model to h,v matrix */
+    mat_t		hv2model;		/* h,v tp model matrix */
+    quat_t		orient;			/* orientation */
+    point_t		hv_eye;			/* eye position in h,v coords */
+    point_t		m_eye;			/* eye position in model coords */
+    fastf_t		hv_viewsize;		/* size of view in h,v coords */
+    fastf_t		m_viewsize;		/* size of view in model coords. */
 
     /* Current date and time get printed in header comment */
     (void) time(&clock);
@@ -821,4 +848,53 @@ STATIC void log_Run()
     (void) printf("view_extrema: %f %f %f %f\n",
 	fbh2uu(0), fbh2uu(fb_width), fbv2uu(0), fbv2uu(fb_height));
     (void) printf("fb_size: %d %d\n", fb_width, fb_height);
+
+	/* Produce the orientation, the model eye_pos, and the model
+	 * view size for input into rtregis.
+ 	 * First use the azimuth and elevation to produce the model2hv
+	 * matrix and use that to find the orientation.
+	 */
+
+	mat_idn( model2hv );
+	mat_idn( hv2model );
+
+	/** mat_ae( model2hv, az, el ); **/
+	/* Formula from rt/do.c */
+	mat_angles( model2hv, 270.0+el, 0.0, 270.0-az );
+	model2hv[15] = 25.4;		/* input is in inches */
+	mat_inv( hv2model, model2hv);
+
+	quat_mat2quat( orient, model2hv );
+
+	printf("Orientation: %g, %g, %g, %g\n", V4ARGS(orient) );
+
+	/* Now find the eye position in h, v space.  Note that the eye
+	 * is located at the center of the image; in this case, the center
+	 * of the screen space, i.e., the framebuffer. )
+	 * Also find the hv_viewsize at this time.
+	 */
+
+	hv_viewsize = SCRX2H( fb_width - 1 ) - SCRX2H( 0 );
+	hv_eye[0] = SCRX2H( fb_width/2 );
+	hv_eye[1] = SCRY2V( fb_height/2 );
+	hv_eye[2] = hv_viewsize/2;
+
+printf("SCRX2H(fb_width -1) = %g; SCRX2H(0) = %g; hv_viewsize= %g\n",
+	SCRX2H(fb_width - 1), SCRX2H(0), hv_viewsize);
+
+	/* Now find the model eye_position and report on that */
+
+printf("hv_eye= %g\n", hv_eye);
+
+	MAT4X3PNT( m_eye, hv2model, hv_eye );
+
+	printf("Eye_pos: %g, %g, %g\n", V3ARGS(m_eye) );
+
+	/* Now find the view size in model coordinates and print that
+	 * as well.
+	 */
+
+	m_viewsize = hv_viewsize/hv2model[15];
+	printf("Size: %g\n", m_viewsize);
+
 }
