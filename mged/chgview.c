@@ -611,11 +611,11 @@ int	verbose;
 					if( status & STAT_PERSP) *cp++ = 'P';
 					*cp = '\0';
 				}
-				col_item( rt_vls_addr(&str) );
+				vls_col_item( outstrp, rt_vls_addr(&str) );
 				rt_vls_trunc( &str, 0 );
 			}
 		}
-		if( !verbose )  col_eol();
+		if( !verbose )  vls_col_eol( outstrp );
 		goto out;
 	}
 
