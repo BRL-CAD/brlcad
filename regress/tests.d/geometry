@@ -58,32 +58,32 @@ VER="4 5"
 # 
 # in args =>
 #
-arb4_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 -50 50 -50"
-arb4_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 50 50} V5 {-50 50 -50} V6 {-50 50 -50} V7 {-50 50 -50} V8 {-50 50 -50}"
+# arb4_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 -50 50 -50"
+# arb4_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 50 50} V5 {-50 50 -50} V6 {-50 50 -50} V7 {-50 50 -50} V8 {-50 50 -50}"
 
 #
 # Arbitrary Regular Polyhedron with 5-faces (arb5) Arguments
 # 
 # in args =>
 #
-arb5_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 0"
-arb5_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 0} V6 {-50 0 0} V7 {-50 0 0} V8 {-50 0 0}"
+# arb5_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 0"
+# arb5_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 0} V6 {-50 0 0} V7 {-50 0 0} V8 {-50 0 0}"
 
 #
 # Arbitrary Regular Polyhedron with 6-faces (arb6) Arguments
 # 
 # in args =>
 #
-arb6_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 -50 -50 0 50"
-arb6_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 -50} V6 {-50 0 -50} V7 {-50 0 50} V8 {-50 0 50}"
+# arb6_IN_ARGS="50 -50 -50 50 50 -50 50 50 50 50 -50 50 -50 0 -50 -50 0 50"
+# arb6_DB_ARGS="V1 {50 -50 -50} V2 {50 50 -50} V3 {50 50 50} V4 {50 -50 50} V5 {-50 0 -50} V6 {-50 0 -50} V7 {-50 0 50} V8 {-50 0 50}"
 
 #
 # Arbitrary Regular Polyhedron with 7-faces (arb7) Arguments
 # 
 # in args =>
 #
-arb7_IN_ARGS="50 -50 -25 50 50 -25 50 50 75 50 -50 25 -50 -50 -25 -50 50 -25 -50 50 25"
-arb7_DB_ARGS="V1 {50 -50 -25} V2 {50 50 -25} V3 {50 50 75} V4 {50 -50 25} V5 {-50 -50 -25} V6 {-50 50 -25} V7 {-50 50 25} V8 {-50 -50 -25}"
+# arb7_IN_ARGS="50 -50 -25 50 50 -25 50 50 75 50 -50 25 -50 -50 -25 -50 50 -25 -50 50 25"
+# arb7_DB_ARGS="V1 {50 -50 -25} V2 {50 50 -25} V3 {50 50 75} V4 {50 -50 25} V5 {-50 -50 -25} V6 {-50 50 -25} V7 {-50 50 25} V8 {-50 -50 -25}"
 
 #
 # Arbitrary Regular Polyhedron with 8-faces (arb8) Arguments
@@ -340,7 +340,7 @@ for PRIM in $PRIMITIVES ; do
     log "Evaluating $PRIM"
     log "===================="
 
-    rm -f ${GEOMETRY}.*
+    [ ! "x$TEST" = "x" ] && rm -f ${TEST}.*
 
     if [ "x${PRIM}_IN_ARGS" = "x" ] ; then
         warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
