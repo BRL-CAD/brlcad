@@ -661,6 +661,9 @@ struct mem_map {
  *
  *  One of these structures is used to describe each separate instance
  *  of a model database file.
+ *
+ *  The contents of this structure are intended to be "opaque" to
+ *  application programmers.
  */
 struct db_i  {
 	int			dbi_magic;	/* magic number */
@@ -927,35 +930,57 @@ struct histogram  {
  *			A P P L I C A T I O N
  *
  *  This structure is the only parameter to rt_shootray().
+ *  The entire structure should be zeroed (e.g. by bzero() ) before it
+ *  is used the first time.
  *
  *  When calling rt_shootray(), these fields are mandatory:
  *	a_ray.r_pt	Starting point of ray to be fired
  *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
- *	a_hit		Routine to call when something is hit
- *	a_miss		Routine to call when ray misses everything
+ *	a_hit()		Routine to call when something is hit
+ *	a_miss()	Routine to call when ray misses everything
+ *	a_rt_i		Must be set to the value returned by rt_dirbuild().
+ *
+ *  In addition, these fields are used by the library.  If they are
+ *  set to zero, default behavior will be used.
+ *	a_resource	Pointer to CPU-specific resources.  Multi-CPU only.
+ *	a_overlap()	If non-null, this routine will be called to
+ *			handle overlap conditions.  See librt/bool.c
+ *			for calling sequence.
+ *			Return of 0 eliminates partition with overlap entirely
+ *			Return of !0 retains one (random) partition in output
+ *	a_level		Printed by librt on errors, but otherwise not used.
+ *	a_x		Printed by librt on errors, but otherwise not used.
+ *	a_y		Printed by librt on errors, but otherwise not used.
+ *	a_purpose	Printed by librt on errors, but otherwise not used.
+ *	a_rbeam		Used to compute beam coverage on geometry,
+ *	a_diverge	for spline subdivision & many UV mappings.
  *
  *  Note that rt_shootray() returns the (int) return of the a_hit()/a_miss()
- *  function called.
+ *  function called, as well as placing it in a_return.
+ *  A future "multiple rays" interface will only provide a_return.
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
 	struct xray	a_ray;		/* Actual ray to be shot */
 	int		(*a_hit)();	/* called when shot hits model */
 	int		(*a_miss)();	/* called when shot misses */
-	int		(*a_overlap)();	/* called when overlaps occur */
-	int		a_level;	/* recursion level (for printing) */
 	int		a_onehit;	/* flag to stop on first hit */
 	struct rt_i	*a_rt_i;	/* this librt instance */
-	struct resource	*a_resource;	/* dynamic memory resources */
 	int		a_zero1;	/* must be zero (sanity check) */
-	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
+	/* THESE ELEMENTS ARE USED BY THE LIBRARY, BUT MAY BE LEFT ZERO */
+	struct resource	*a_resource;	/* dynamic memory resources */
+	int		(*a_overlap)();	/* called when overlaps occur */
+	int		a_level;	/* recursion level (for printing) */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
 	char		*a_purpose;	/* Debug string:  purpose of ray */
-	int		a_user;		/* application-specific value */
-	genptr_t	a_uptr;		/* application-specific pointer */
 	fastf_t		a_rbeam;	/* initial beam radius (mm) */
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
+	int		a_return;	/* Return of a_hit()/a_miss() */
+	/* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
+	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
+	int		a_user;		/* application-specific value */
+	genptr_t	a_uptr;		/* application-specific pointer */
 	fastf_t		a_color[3];	/* application-specific color */
 	vect_t		a_uvec;		/* application-specific vector */
 	vect_t		a_vvec;		/* application-specific vector */
@@ -1000,12 +1025,20 @@ extern struct rt_g rt_g;
  */
 struct rt_i {
 	long		rti_magic;	/* magic # for integrity check */
+	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ & MODIFY */
+	int		useair;		/* "air" regions are used */
+	int		rti_nlights;	/* number of light sources */
+	/* THESE ITEMS ARE AVAILABLE FOR APPLICATIONS TO READ */
+	vect_t		mdl_min;	/* min corner of model bounding RPP */
+	vect_t		mdl_max;	/* max corner of model bounding RPP */
+	vect_t		rti_pmin;	/* for plotting, min RPP */
+	vect_t		rti_pmax;	/* for plotting, max RPP */
+	double		rti_radius;	/* radius of model bounding sphere */
+	struct db_i	*rti_dbip;	/* prt to Database instance struct */
+	/* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct rt_list	rti_headsolid;	/* list of active solids */
 	struct region	*HeadRegion;	/* ptr of list of regions in model */
-	struct db_i	*rti_dbip;	/* prt to Database instance struct */
-	vect_t		mdl_min;	/* min corner of model bounding RPP */
-	vect_t		mdl_max;	/* max corner of model bounding RPP */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
 	long		nshots;		/* # of calls to ft_shot() */
@@ -1015,15 +1048,11 @@ struct rt_i {
 	long		nmiss;		/* solid ft_shot() returned a miss */
 	long		nhits;		/* solid ft_shot() returned a hit */
 	int		needprep;	/* needs rt_prep */
-	int		useair;		/* "air" regions are used */
 	int		rti_nrays;	/* # calls to rt_shootray() */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	int		rti_pt_bytes;	/* length of partition struct */
 	int		rti_bv_bytes;	/* length of BITV array */
-	vect_t		rti_pmin;	/* for plotting, min RPP */
-	vect_t		rti_pmax;	/* for plotting, max RPP */
-	int		rti_nlights;	/* number of light sources */
 	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
 	int		rti_cut_nbins;	/* number of cut bins (leaves) */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
@@ -1035,7 +1064,6 @@ struct rt_i {
 	struct histogram rti_hist_cellsize; /* occupancy of cut cells */
 	struct histogram rti_hist_cutdepth; /* depth of cut tree */
 	struct soltab	**rti_Solids;	/* ptrs to soltab [st_bit] */
-	double		rti_radius;	/* radius of model bounding sphere */
 };
 #define RTI_NULL	((struct rt_i *)0)
 #define RTI_MAGIC	0x99101658	/* magic # for integrity check */
