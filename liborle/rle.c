@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.7
-	Last edit: 	3/27/85 at 20:47:02	G S M
-	Retrieved: 	8/13/86 at 10:28:04
+	SCCS id:	@(#) librle.c	1.8
+	Last edit: 	5/28/85 at 10:10:48	G S M
+	Retrieved: 	8/13/86 at 10:28:21
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,7 +15,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.7	last edit 3/27/85 at 20:47:02";
+char	sccsTag[] = "@(#) librle.c	1.8	last edit 5/28/85 at 10:10:48";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -38,7 +38,7 @@ typedef unsigned char	u_char;
 	writing 2 bytes of data.
  */
 #define putshort(s) \
-	{register int v = s; \
+	{register short v = s; \
 	(void) putc( v & 0xFF, fp ); (void) putc( (v>>8) & 0xFF, fp );}
 
 /* short instructions */
@@ -141,7 +141,7 @@ Pixel		*bgpixel;
 	{
 	/* Magic numbers for output file.				*/
 	register int	bbw;
-	static int	x_magic = XtndRMAGIC; /* Extended magic number.	*/
+	static short	x_magic = XtndRMAGIC; /* Extended magic number.	*/
 
 	/* If black and white mode, compute NTSC value of background.	*/
 	if( ncolors == 1 )
@@ -506,6 +506,7 @@ Pixel	*scan_buf;
 			{ register char *p = (char *) &word;
 			*p++ = getc( fp );
 			*p++ = getc( fp );
+			SWAB( word );
 			}
 			PRNT_A2_DEBUG( "Run-Data", n,	word );
 			if( ! _bw_flag )
@@ -889,7 +890,7 @@ register int	*datum;
 		*opcode &= ~LONG;
 		*p++ = getc( fp );
 		*p++ = getc( fp );
-		SWAB(long_data);
+		SWAB( long_data );
 		*datum = long_data;
 		}
 	if( feof( fp ) )
@@ -909,6 +910,7 @@ register int	*datum;
 
 	*p++ = getc( fp );
 	*p++ = getc( fp );
+ 	SWAB( *((short *)&instruction) );
 	if( feof( fp ) )
 		return	EOF;
 	*opcode = instruction.opcode;
