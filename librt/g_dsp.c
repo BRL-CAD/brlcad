@@ -142,15 +142,15 @@ struct dsp_specific {
 
 /* access to the array */
 #ifdef FULL_DSP_DEBUGGING
-#define DSP(_p,_x,_y) dsp_val(_p, _x, _y)
+#define DSP(_p,_x,_y) dsp_val(_p, _x, _y, __FILE__, __LINE__)
 unsigned short
-dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y)
+dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int line)
 {
     RT_DSP_CK_MAGIC(dsp_i);
 
     if (x >= dsp_i->dsp_xcnt || y >= dsp_i->dsp_ycnt) {
 	bu_log("%s:%d xy: %u,%u cnt: %u,%u\n",
-	       __FILE__, __LINE__, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
+	       file, line, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
 	bu_bomb("");
     }
 
@@ -3146,11 +3146,13 @@ rt_dsp_plot( vhead, ip, ttol, tol )
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
     point_t s_pt;
+    point_t o_pt;
     int x, y;
     int step;
     int xlim = dsp_ip->dsp_xcnt - 1;
     int ylim = dsp_ip->dsp_ycnt - 1;
     int xfudge, yfudge;
+    int drawing;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_plot()\n");
@@ -3159,51 +3161,51 @@ rt_dsp_plot( vhead, ip, ttol, tol )
     RT_DSP_CK_MAGIC(dsp_ip);
 
 
-#define MOVE() \
+#define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, s_pt); \
 	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_MOVE )
 
-#define DRAW() \
+#define DRAW(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, s_pt); \
 	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_DRAW )
 
 
     /* Draw the Bottom */
     VSETALL(s_pt, 0.0);
-    MOVE();
+    MOVE(s_pt);
 
     s_pt[X] = xlim;
-    DRAW();
+    DRAW(s_pt);
 
     s_pt[Y] = ylim;
-    DRAW();
+    DRAW(s_pt);
 
     s_pt[X] = 0.0;
-    DRAW();
+    DRAW(s_pt);
 
     s_pt[Y] = 0.0;
-    DRAW();
+    DRAW(s_pt);
 
 
     /* Draw the corners */
     s_pt[Z] = DSP(dsp_ip, 0, 0);
-    DRAW();
+    DRAW(s_pt);
 
     VSET(s_pt, xlim, 0.0, 0.0);
-    MOVE();
+    MOVE(s_pt);
     s_pt[Z] = DSP(dsp_ip, xlim, 0);
-    DRAW();
+    DRAW(s_pt);
 
 
     VSET(s_pt, xlim, ylim, 0.0);
-    MOVE();
+    MOVE(s_pt);
     s_pt[Z] = DSP(dsp_ip, xlim, ylim);
-    DRAW();
+    DRAW(s_pt);
 
     VSET(s_pt, 0.0, ylim, 0.0);
-    MOVE();
+    MOVE(s_pt);
     s_pt[Z] = DSP(dsp_ip, 0, ylim);
-    DRAW();
+    DRAW(s_pt);
 
 
     /* Draw the outside line of the top 
@@ -3213,24 +3215,24 @@ rt_dsp_plot( vhead, ip, ttol, tol )
      */
     for (y=0 ; y < dsp_ip->dsp_ycnt ; y += ylim ) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
-	MOVE();
+	MOVE(s_pt);
 
 	for (x=0 ; x < dsp_ip->dsp_xcnt ; x++) {
 	    s_pt[X] = x;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
-	    DRAW();
+	    DRAW(s_pt);
 	}
     }
 
 
     for (x=0 ; x < dsp_ip->dsp_xcnt ; x += xlim ) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
-	MOVE();
+	MOVE(s_pt);
 
 	for (y=0 ; y < dsp_ip->dsp_ycnt ; y++) {
 	    s_pt[Y] = y;
 	    s_pt[Z] = DSP(dsp_ip, x, y);
-	    DRAW();
+	    DRAW(s_pt);
 	}
     }
 
@@ -3262,35 +3264,103 @@ rt_dsp_plot( vhead, ip, ttol, tol )
     if (xfudge < 1) xfudge = 1;
     if (yfudge < 1) yfudge = 1;
 
+    /* draw the horizontal (y==const) lines */
     for (y=yfudge ; y < ylim ; y += step ) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
-	MOVE();
+	VMOVE(o_pt, s_pt);
+	if (o_pt[Z]) {
+	    drawing = 1;
+	    MOVE(o_pt);
+	} else {
+	    drawing = 0;
+	}
 
 	for (x=xfudge ; x < xlim ; x+=step ) {
 	    s_pt[X] = x;
-	    s_pt[Z] = DSP(dsp_ip, x, y);
-	    DRAW();
+	    
+	    if (s_pt[Z] = DSP(dsp_ip, x, y)) {
+		if (drawing) {
+		    DRAW(s_pt);
+		} else {
+		    MOVE(o_pt);
+		    DRAW(s_pt);
+		    drawing = 1;
+		}
+	    } else {
+		if (drawing) {
+		    DRAW(s_pt);
+		    drawing = 0;
+		}
+	    }
+
+	    VMOVE(o_pt, s_pt);
 	}
 		
 	s_pt[X] = xlim;
-	s_pt[Z] = DSP(dsp_ip, xlim, y);
-	DRAW();
+	if (s_pt[Z] = DSP(dsp_ip, xlim, y)) {
+	    if (drawing) {
+		DRAW(s_pt);
+	    } else {
+		MOVE(o_pt);
+		DRAW(s_pt);
+		drawing = 1;
+	    }
+	} else {
+	    if (drawing) {
+		DRAW(s_pt);
+		drawing = 0;
+	    }
+	}
 
     }
 
     for (x=xfudge ; x < xlim ; x += step ) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
-	MOVE();
+	VMOVE(o_pt, s_pt);
+	if (o_pt[Z]) {
+	    drawing = 1;
+	    MOVE(o_pt);
+	} else {
+	    drawing = 0;
+	}
+
 		
 	for (y=yfudge ; y < ylim ; y+=step) {
 	    s_pt[Y] = y;
-	    s_pt[Z] = DSP(dsp_ip, x, y);
-	    DRAW();
+
+	    if (s_pt[Z] = DSP(dsp_ip, x, y)) {
+		if (drawing) {
+		    DRAW(s_pt);
+		} else {
+		    MOVE(o_pt);
+		    DRAW(s_pt);
+		    drawing = 1;
+		}
+	    } else {
+		if (drawing) {
+		    DRAW(s_pt);
+		    drawing = 0;
+		}
+	    }
+
+	    VMOVE(o_pt, s_pt);
 	}
 		
 	s_pt[Y] = ylim;
-	s_pt[Z] = DSP(dsp_ip, x, ylim);
-	DRAW();
+	if (s_pt[Z] = DSP(dsp_ip, x, ylim)) {
+	    if (drawing) {
+		DRAW(s_pt);
+	    } else {
+		MOVE(o_pt);
+		DRAW(s_pt);
+		drawing = 1;
+	    }
+	} else {
+	    if (drawing) {
+		DRAW(s_pt);
+		drawing = 0;
+	    }
+	}
     }
 
 #undef MOVE
