@@ -33,7 +33,7 @@ extern char usage[];
 extern double atof();
 
 /***** Variables shared with viewing model *** */
-double AmbientIntensity = 0.1;	/* Ambient light intensity */
+double AmbientIntensity = 0.3;	/* Ambient light intensity */
 double azimuth, elevation;
 int lightmodel;		/* Select lighting model */
 mat_t view2model;
@@ -137,8 +137,10 @@ char **argv;
 	prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
-	if( dir_build( argv[0], 1 ) < 0 )
-		rtbomb("Unable to continue");
+	if( dir_build( argv[0], 1 ) < 0 )  {
+		fprintf(stderr,"rt:  dir_build failure\n");
+		exit(2);
+	}
 	argc--; argv++;
 
 	(void)pr_timer("DB TOC");
@@ -161,8 +163,8 @@ char **argv;
 	(void)pr_timer("PREP");
 
 	if( HeadSolid == SOLTAB_NULL )  {
-		rtbomb("No solids remain after prep.\n");
-		/* NOTREACHED */
+		fprintf(stderr,"rt: No solids remain after prep.\n");
+		exit(3);
 	}
 	fprintf(stderr,"shooting at %d solids in %d regions\n",
 		nsolids, nregions );
