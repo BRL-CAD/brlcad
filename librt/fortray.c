@@ -60,13 +60,13 @@ int			fr_hit(), fr_miss();
 struct partition	fr_global_head;
 
 /*
- *			S T R I N G _ C 2 F
+ *			F R _ S T R I N G _ C 2 F
  *
  *  Take a null-terminated C string, and place it with space padding
  *  on the right into a FORTRAN string of given length.
  */
 void
-string_c2f( fstr, cstr, flen )
+fr_string_c2f( fstr, cstr, flen )
 register char	*fstr;
 register char	*cstr;
 register int	flen;
@@ -81,17 +81,17 @@ register int	flen;
 }
 
 /*
- *			S T R I N G _ F 2 C
+ *			F R _ S T R I N G _ F 2 C
  *
  *  Take a FORTRAN string with a length, and return a pointer to
  *  null terminated copy of that string in a STATIC buffer.
  */
 static char *
-string_f2c( str, maxlen )
+fr_string_f2c( str, maxlen )
 char	*str;
 int	maxlen;
 {
-	static char	buf[128];
+	static char	buf[512];
 	int	len;
 	int	i;
 
@@ -127,7 +127,7 @@ int		filelen;
 {
 	char	*file;
 
-	file = string_f2c( filename, filelen );
+	file = fr_string_f2c( filename, filelen );
 	*rtip = rt_dirbuild( file, (char *)0, 0 );
 }
 
@@ -145,7 +145,7 @@ int		objlen;
 {
 	char	*obj;
 
-	obj = string_f2c( objname, objlen );
+	obj = fr_string_f2c( objname, objlen );
 	*fail = rt_gettree( *rtip, obj );
 }
 
@@ -356,13 +356,13 @@ int		fbuflen;
 	int	len;
 	int	offset;
 	int	rnum;
-	char	buf[128];
+	char	buf[512];
 
 	rnum = *region_num-1;
 	if( rnum < 0 || rnum > (*rtip)->nregions )  {
 		sprintf( buf, "Region id %d out of range, max=%ld",
 			*region_num, (long)((*rtip)->nregions) );
-		string_c2f( fbuf, buf, fbuflen );
+		fr_string_c2f( fbuf, buf, fbuflen );
 		return;
 	}
 	for( rp = (*rtip)->HeadRegion; rp != REGION_NULL; rp=rp->reg_forw )  {
@@ -379,5 +379,5 @@ int		fbuflen;
 		return;
 	}
 	sprintf(fbuf, "Unable to find region %d", *region_num );
-	string_c2f( fbuf, buf, fbuflen );
+	fr_string_c2f( fbuf, buf, fbuflen );
 }
