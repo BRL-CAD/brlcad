@@ -1617,7 +1617,7 @@ struct db_i	*dbip;
 
 	if( op != ip && !free )
 	{
-		RT_CK_DB_INTERNAL( op );
+		RT_INIT_DB_INTERNAL(op);
 		botop = (struct rt_bot_internal *)bu_malloc( sizeof( struct rt_bot_internal ), "botop" );
 		botop->magic = RT_BOT_INTERNAL_MAGIC;
 		botop->mode = botip->mode;
@@ -2220,6 +2220,7 @@ char			**argv;
 		      for( i=0 ; i<len ; i++ )
 			{
 			  v_str = Tcl_GetStringFromObj( obj_array[i], NULL );
+			  while( isspace( *v_str ) ) v_str++;
 			  if( *v_str == '\0' )
 			    {
 			      Tcl_SetResult( interp, "incomplete list of vertices", TCL_STATIC );
@@ -2256,6 +2257,7 @@ char			**argv;
 			  return( TCL_ERROR );
 			}
 		      v_str = Tcl_GetStringFromObj( list, NULL );
+		       while( isspace( *v_str ) ) v_str++;
 		      bot->vertices[i*3] = atof( v_str );
 		      v_str = next_tok( v_str );
 		      if( *v_str == '\0' )
@@ -2294,6 +2296,7 @@ char			**argv;
 			for( i=0 ; i<len ; i++ )
 			  {
 			    f_str = Tcl_GetStringFromObj( obj_array[i], NULL );
+			     while( isspace( *f_str ) ) f_str++;
 			    if( *f_str == '\0' )
 			      {
 				Tcl_SetResult( interp, "incomplete list of faces", TCL_STATIC );
@@ -2329,6 +2332,7 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 			f_str = Tcl_GetStringFromObj( list, NULL );
+			while( isspace( *f_str ) ) f_str++;
 			bot->faces[i*3] = atoi( f_str );
 			f_str = next_tok( f_str );
 			if( *f_str == '\0' )
