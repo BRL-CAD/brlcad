@@ -44,7 +44,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "_dm.h"
+#include "dm.h"
 #include "dm-X.h"
 
 /*XXX This is just temporary!!! */
@@ -64,8 +64,8 @@ void     X_set_perspective();
 
 static void	label();
 static void	draw();
-static int	X_setup();
 static void     x_var_init();
+static void X_load_startup();
 
 /* Display Manager package interface */
 
@@ -83,8 +83,6 @@ static unsigned X_cvtvecs(), X_load();
 static void	X_viewchange(), X_colorchange();
 static void	X_window(), X_debug();
 
-static void X_load_startup();
-
 #if TRY_COLOR_CUBE
 static unsigned long get_pixel();
 static void get_color_slot();
@@ -101,10 +99,10 @@ struct dm dm_X = {
   X_puts, X_2d_line,
   X_light,
   X_object,	X_cvtvecs, X_load,
-  0,
+  Nu_void,
   X_viewchange,
   X_colorchange,
-  X_window, X_debug, 0, 0,
+  X_window, X_debug, Nu_int0, Nu_int0,
   0,				/* no displaylist */
   0,				/* multi-window */
   PLOTBOUND,
@@ -116,17 +114,26 @@ struct dm dm_X = {
 };
 
 /* Currently, the application must define these. */
-extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
 struct x_vars head_x_vars;
 static int perspective_table[] = { 30, 45, 60, 90 };
 
 static int
-X_init(dmp, color_func)
+X_init(dmp, color_func, argc, argv)
 struct dm *dmp;
 void (*color_func)();
+int argc;
+char *argv[];
 {
+  static int count = 0;
+
+  /* Only need to do this once for this display manager */
+  if(!count)
+    X_load_startup(dmp);
+
+  bu_vls_printf(&dmp->dmr_pathName, ".dm_x%d", count++);
+
   dmp->dmr_vars = bu_malloc(sizeof(struct x_vars), "X_init: x_vars");
   bzero((void *)dmp->dmr_vars, sizeof(struct x_vars));
   ((struct x_vars *)dmp->dmr_vars)->perspective_angle = 3;
@@ -151,7 +158,170 @@ static int
 X_open(dmp)
 struct dm *dmp;
 {
-  return X_setup(dmp);
+  XGCValues gcv;
+  XColor a_color;
+  Visual *a_visual;
+  int a_screen;
+  Colormap  a_cmap;
+  struct bu_vls str;
+  Display *tmp_dpy;
+
+  bu_vls_init(&str);
+
+  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
+    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
+
+  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dmr_vars)->l);
+
+  /* Make xtkwin a toplevel window */
+  ((struct x_vars *)dmp->dmr_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+				       bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
+
+  /*
+   * Create the X drawing window by calling init_x which
+   * is defined in xinit.tcl
+   */
+  bu_vls_strcpy(&str, "init_x ");
+  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
+
+  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    bu_vls_free(&str);
+    return TCL_ERROR;
+  }
+
+  bu_vls_free(&str);
+
+  ((struct x_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+  ((struct x_vars *)dmp->dmr_vars)->width =
+    DisplayWidth(((struct x_vars *)dmp->dmr_vars)->dpy,
+		 DefaultScreen(((struct x_vars *)dmp->dmr_vars)->dpy)) - 20;
+  ((struct x_vars *)dmp->dmr_vars)->height =
+    DisplayHeight(((struct x_vars *)dmp->dmr_vars)->dpy,
+		  DefaultScreen(((struct x_vars *)dmp->dmr_vars)->dpy)) - 20;
+
+  /* Make window square */
+  if(((struct x_vars *)dmp->dmr_vars)->height < ((struct x_vars *)dmp->dmr_vars)->width)
+    ((struct x_vars *)dmp->dmr_vars)->width = ((struct x_vars *)dmp->dmr_vars)->height;
+  else
+    ((struct x_vars *)dmp->dmr_vars)->height = ((struct x_vars *)dmp->dmr_vars)->width;
+
+  Tk_GeometryRequest(((struct x_vars *)dmp->dmr_vars)->xtkwin,
+		     ((struct x_vars *)dmp->dmr_vars)->width, 
+		     ((struct x_vars *)dmp->dmr_vars)->height);
+
+#if 0
+  /*XXX*/
+  XSynchronize(((struct x_vars *)dmp->dmr_vars)->dpy, TRUE);
+#endif
+
+  Tk_MakeWindowExist(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+  ((struct x_vars *)dmp->dmr_vars)->win =
+      Tk_WindowId(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+
+  ((struct x_vars *)dmp->dmr_vars)->pix = Tk_GetPixmap(((struct x_vars *)dmp->dmr_vars)->dpy,
+    DefaultRootWindow(((struct x_vars *)dmp->dmr_vars)->dpy), ((struct x_vars *)dmp->dmr_vars)->width,
+    ((struct x_vars *)dmp->dmr_vars)->height, Tk_Depth(((struct x_vars *)dmp->dmr_vars)->xtkwin));
+
+  a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+  a_visual = Tk_Visual(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+
+  /* Get color map indices for the colors we use. */
+  ((struct x_vars *)dmp->dmr_vars)->black = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+  ((struct x_vars *)dmp->dmr_vars)->white = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+
+#if TRY_COLOR_CUBE
+  ((struct x_vars *)dmp->dmr_vars)->cmap = a_cmap = Tk_Colormap(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+#else
+  a_cmap = Tk_Colormap(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+#endif
+  a_color.red = 255<<8;
+  a_color.green=0;
+  a_color.blue=0;
+  a_color.flags = DoRed | DoGreen| DoBlue;
+  if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+    Tcl_AppendResult(interp, "dm-X: Can't Allocate red\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  ((struct x_vars *)dmp->dmr_vars)->red = a_color.pixel;
+    if ( ((struct x_vars *)dmp->dmr_vars)->red == ((struct x_vars *)dmp->dmr_vars)->white )
+      ((struct x_vars *)dmp->dmr_vars)->red = ((struct x_vars *)dmp->dmr_vars)->black;
+
+    a_color.red = 200<<8;
+    a_color.green=200<<8;
+    a_color.blue=0<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+      Tcl_AppendResult(interp, "dm-X: Can't Allocate yellow\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+    ((struct x_vars *)dmp->dmr_vars)->yellow = a_color.pixel;
+    if ( ((struct x_vars *)dmp->dmr_vars)->yellow == ((struct x_vars *)dmp->dmr_vars)->white )
+      ((struct x_vars *)dmp->dmr_vars)->yellow = ((struct x_vars *)dmp->dmr_vars)->black;
+    
+    a_color.red = 0;
+    a_color.green=0;
+    a_color.blue=255<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+      Tcl_AppendResult(interp, "dm-X: Can't Allocate blue\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+    ((struct x_vars *)dmp->dmr_vars)->blue = a_color.pixel;
+    if ( ((struct x_vars *)dmp->dmr_vars)->blue == ((struct x_vars *)dmp->dmr_vars)->white )
+      ((struct x_vars *)dmp->dmr_vars)->blue = ((struct x_vars *)dmp->dmr_vars)->black;
+
+    a_color.red = 128<<8;
+    a_color.green=128<<8;
+    a_color.blue= 128<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
+      Tcl_AppendResult(interp, "dm-X: Can't Allocate gray\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+    ((struct x_vars *)dmp->dmr_vars)->gray = a_color.pixel;
+    if ( ((struct x_vars *)dmp->dmr_vars)->gray == ((struct x_vars *)dmp->dmr_vars)->white )
+      ((struct x_vars *)dmp->dmr_vars)->gray = ((struct x_vars *)dmp->dmr_vars)->black;
+
+    /* Select border, background, foreground colors,
+     * and border width.
+     */
+    if( a_visual->class == GrayScale || a_visual->class == StaticGray ) {
+	((struct x_vars *)dmp->dmr_vars)->is_monochrome = 1;
+	((struct x_vars *)dmp->dmr_vars)->bd = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct x_vars *)dmp->dmr_vars)->bg = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct x_vars *)dmp->dmr_vars)->fg = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+    } else {
+	/* Hey, it's a color server.  Ought to use 'em! */
+	((struct x_vars *)dmp->dmr_vars)->is_monochrome = 0;
+	((struct x_vars *)dmp->dmr_vars)->bd = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct x_vars *)dmp->dmr_vars)->bg = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+	((struct x_vars *)dmp->dmr_vars)->fg = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
+    }
+
+    if( !((struct x_vars *)dmp->dmr_vars)->is_monochrome &&
+	((struct x_vars *)dmp->dmr_vars)->fg != ((struct x_vars *)dmp->dmr_vars)->red &&
+	((struct x_vars *)dmp->dmr_vars)->red != ((struct x_vars *)dmp->dmr_vars)->black )
+      ((struct x_vars *)dmp->dmr_vars)->fg = ((struct x_vars *)dmp->dmr_vars)->red;
+
+    gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->fg;
+    gcv.background = ((struct x_vars *)dmp->dmr_vars)->bg;
+    ((struct x_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct x_vars *)dmp->dmr_vars)->dpy,
+					       ((struct x_vars *)dmp->dmr_vars)->win,
+					       (GCForeground|GCBackground),
+					       &gcv);
+
+#if TRY_COLOR_CUBE
+    allocate_color_cube(dmp);
+#endif
+
+#ifndef CRAY2
+    X_configure_window_shape(dmp);
+#endif
+
+    Tk_SetWindowBackground(((struct x_vars *)dmp->dmr_vars)->xtkwin, ((struct x_vars *)dmp->dmr_vars)->bg);
+    Tk_MapWindow(((struct x_vars *)dmp->dmr_vars)->xtkwin);
+
+    return TCL_OK;
 }
 
 /*
@@ -181,7 +351,7 @@ struct dm *dmp;
   if(((struct x_vars *)dmp->dmr_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct x_vars *)dmp->dmr_vars)->l);
 
-  bu_free(dmp->dmr_vars, "X_close: dmp->dmr_vars");
+  bu_free(dmp->dmr_vars, "X_close: x_vars");
 
   if(BU_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_DeleteGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
@@ -626,185 +796,6 @@ char	*str;
   XDrawString( ((struct x_vars *)dmp->dmr_vars)->dpy,
 	       ((struct x_vars *)dmp->dmr_vars)->pix,
 	       ((struct x_vars *)dmp->dmr_vars)->gc, sx, sy, str, strlen(str) );
-}
-
-static int
-X_setup( dmp )
-struct dm *dmp;
-{
-  static int count = 0;
-  int first_event, first_error;
-  char *cp;
-  XGCValues gcv;
-  XColor a_color;
-  Visual *a_visual;
-  int a_screen;
-  Colormap  a_cmap;
-  struct bu_vls str;
-  Display *tmp_dpy;
-
-  bu_vls_init(&str);
-
-  /* Only need to do this once for this display manager */
-  if(!count)
-    X_load_startup(dmp);
-
-  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_CreateGenericHandler(dmp->dmr_eventhandler, (ClientData)NULL);
-
-  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dmr_vars)->l);
-
-  bu_vls_printf(&dmp->dmr_pathName, ".dm_x%d", count++);
-
-  /* Make xtkwin a toplevel window */
-  ((struct x_vars *)dmp->dmr_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-				       bu_vls_addr(&dmp->dmr_pathName), dmp->dmr_dname);
-
-  /*
-   * Create the X drawing window by calling init_x which
-   * is defined in xinit.tcl
-   */
-  bu_vls_strcpy(&str, "init_x ");
-  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dmr_pathName));
-
-  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
-    bu_vls_free(&str);
-    return TCL_ERROR;
-  }
-
-  bu_vls_free(&str);
-
-  ((struct x_vars *)dmp->dmr_vars)->dpy = Tk_Display(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-  ((struct x_vars *)dmp->dmr_vars)->width =
-    DisplayWidth(((struct x_vars *)dmp->dmr_vars)->dpy,
-		 DefaultScreen(((struct x_vars *)dmp->dmr_vars)->dpy)) - 20;
-  ((struct x_vars *)dmp->dmr_vars)->height =
-    DisplayHeight(((struct x_vars *)dmp->dmr_vars)->dpy,
-		  DefaultScreen(((struct x_vars *)dmp->dmr_vars)->dpy)) - 20;
-
-  /* Make window square */
-  if(((struct x_vars *)dmp->dmr_vars)->height < ((struct x_vars *)dmp->dmr_vars)->width)
-    ((struct x_vars *)dmp->dmr_vars)->width = ((struct x_vars *)dmp->dmr_vars)->height;
-  else
-    ((struct x_vars *)dmp->dmr_vars)->height = ((struct x_vars *)dmp->dmr_vars)->width;
-
-  Tk_GeometryRequest(((struct x_vars *)dmp->dmr_vars)->xtkwin,
-		     ((struct x_vars *)dmp->dmr_vars)->width, 
-		     ((struct x_vars *)dmp->dmr_vars)->height);
-
-#if 0
-  /*XXX*/
-  XSynchronize(((struct x_vars *)dmp->dmr_vars)->dpy, TRUE);
-#endif
-
-  Tk_MakeWindowExist(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-  ((struct x_vars *)dmp->dmr_vars)->win =
-      Tk_WindowId(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-
-  ((struct x_vars *)dmp->dmr_vars)->pix = Tk_GetPixmap(((struct x_vars *)dmp->dmr_vars)->dpy,
-    DefaultRootWindow(((struct x_vars *)dmp->dmr_vars)->dpy), ((struct x_vars *)dmp->dmr_vars)->width,
-    ((struct x_vars *)dmp->dmr_vars)->height, Tk_Depth(((struct x_vars *)dmp->dmr_vars)->xtkwin));
-
-  a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-  a_visual = Tk_Visual(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-
-  /* Get color map indices for the colors we use. */
-  ((struct x_vars *)dmp->dmr_vars)->black = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-  ((struct x_vars *)dmp->dmr_vars)->white = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-
-#if TRY_COLOR_CUBE
-  ((struct x_vars *)dmp->dmr_vars)->cmap = a_cmap = Tk_Colormap(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-#else
-  a_cmap = Tk_Colormap(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-#endif
-  a_color.red = 255<<8;
-  a_color.green=0;
-  a_color.blue=0;
-  a_color.flags = DoRed | DoGreen| DoBlue;
-  if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-    Tcl_AppendResult(interp, "dm-X: Can't Allocate red\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-  ((struct x_vars *)dmp->dmr_vars)->red = a_color.pixel;
-    if ( ((struct x_vars *)dmp->dmr_vars)->red == ((struct x_vars *)dmp->dmr_vars)->white )
-      ((struct x_vars *)dmp->dmr_vars)->red = ((struct x_vars *)dmp->dmr_vars)->black;
-
-    a_color.red = 200<<8;
-    a_color.green=200<<8;
-    a_color.blue=0<<8;
-    a_color.flags = DoRed | DoGreen| DoBlue;
-    if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-      Tcl_AppendResult(interp, "dm-X: Can't Allocate yellow\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-    ((struct x_vars *)dmp->dmr_vars)->yellow = a_color.pixel;
-    if ( ((struct x_vars *)dmp->dmr_vars)->yellow == ((struct x_vars *)dmp->dmr_vars)->white )
-      ((struct x_vars *)dmp->dmr_vars)->yellow = ((struct x_vars *)dmp->dmr_vars)->black;
-    
-    a_color.red = 0;
-    a_color.green=0;
-    a_color.blue=255<<8;
-    a_color.flags = DoRed | DoGreen| DoBlue;
-    if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-      Tcl_AppendResult(interp, "dm-X: Can't Allocate blue\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-    ((struct x_vars *)dmp->dmr_vars)->blue = a_color.pixel;
-    if ( ((struct x_vars *)dmp->dmr_vars)->blue == ((struct x_vars *)dmp->dmr_vars)->white )
-      ((struct x_vars *)dmp->dmr_vars)->blue = ((struct x_vars *)dmp->dmr_vars)->black;
-
-    a_color.red = 128<<8;
-    a_color.green=128<<8;
-    a_color.blue= 128<<8;
-    a_color.flags = DoRed | DoGreen| DoBlue;
-    if ( ! XAllocColor(((struct x_vars *)dmp->dmr_vars)->dpy, a_cmap, &a_color)) {
-      Tcl_AppendResult(interp, "dm-X: Can't Allocate gray\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-    ((struct x_vars *)dmp->dmr_vars)->gray = a_color.pixel;
-    if ( ((struct x_vars *)dmp->dmr_vars)->gray == ((struct x_vars *)dmp->dmr_vars)->white )
-      ((struct x_vars *)dmp->dmr_vars)->gray = ((struct x_vars *)dmp->dmr_vars)->black;
-
-    /* Select border, background, foreground colors,
-     * and border width.
-     */
-    if( a_visual->class == GrayScale || a_visual->class == StaticGray ) {
-	((struct x_vars *)dmp->dmr_vars)->is_monochrome = 1;
-	((struct x_vars *)dmp->dmr_vars)->bd = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct x_vars *)dmp->dmr_vars)->bg = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct x_vars *)dmp->dmr_vars)->fg = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-    } else {
-	/* Hey, it's a color server.  Ought to use 'em! */
-	((struct x_vars *)dmp->dmr_vars)->is_monochrome = 0;
-	((struct x_vars *)dmp->dmr_vars)->bd = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct x_vars *)dmp->dmr_vars)->bg = BlackPixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-	((struct x_vars *)dmp->dmr_vars)->fg = WhitePixel( ((struct x_vars *)dmp->dmr_vars)->dpy, a_screen );
-    }
-
-    if( !((struct x_vars *)dmp->dmr_vars)->is_monochrome &&
-	((struct x_vars *)dmp->dmr_vars)->fg != ((struct x_vars *)dmp->dmr_vars)->red &&
-	((struct x_vars *)dmp->dmr_vars)->red != ((struct x_vars *)dmp->dmr_vars)->black )
-      ((struct x_vars *)dmp->dmr_vars)->fg = ((struct x_vars *)dmp->dmr_vars)->red;
-
-    gcv.foreground = ((struct x_vars *)dmp->dmr_vars)->fg;
-    gcv.background = ((struct x_vars *)dmp->dmr_vars)->bg;
-    ((struct x_vars *)dmp->dmr_vars)->gc = XCreateGC(((struct x_vars *)dmp->dmr_vars)->dpy,
-					       ((struct x_vars *)dmp->dmr_vars)->win,
-					       (GCForeground|GCBackground),
-					       &gcv);
-
-#if TRY_COLOR_CUBE
-    allocate_color_cube(dmp);
-#endif
-
-#ifndef CRAY2
-    X_configure_window_shape(dmp);
-#endif
-
-    Tk_SetWindowBackground(((struct x_vars *)dmp->dmr_vars)->xtkwin, ((struct x_vars *)dmp->dmr_vars)->bg);
-    Tk_MapWindow(((struct x_vars *)dmp->dmr_vars)->xtkwin);
-
-    return TCL_OK;
 }
 
 void
