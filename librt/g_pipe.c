@@ -1,4 +1,3 @@
-#define NEW_IF	0
 /*
  *			G _ P I P E . C
  *
@@ -58,9 +57,9 @@ RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
  */
 #if NEW_IF
 int
-rt_pipe_prep( stp, ep, rtip )
+rt_pipe_prep( stp, ip, rtip )
 struct soltab		*stp;
-struct rt_external	*ep;
+struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
 #else
@@ -71,9 +70,9 @@ union record		*rec;
 struct rt_i		*rtip;
 {
 	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
 #endif
 	register struct pipe_specific *pipe;
-	struct rt_db_internal	intern;
 	struct pipe_internal	*pip;
 	int			i;
 
@@ -84,16 +83,17 @@ struct rt_i		*rtip;
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_buf = (genptr_t)rec;
 	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-#endif
+	ip = &intern;
 	i = rt_pipe_import( &intern, ep, stp->st_pathmat );
 	if( i < 0 )  {
 		rt_log("rt_pipe_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
-	RT_CK_DB_INTERNAL( &intern );
-	pip = (struct pipe_internal *)intern.idb_ptr;
+#endif
+	RT_CK_DB_INTERNAL( ip );
+	pip = (struct pipe_internal *)ip->idb_ptr;
 
-	rt_pipe_ifree( &intern );
+	rt_pipe_ifree( ip );
 	return(-1);	/* unfinished */
 }
 
@@ -270,9 +270,9 @@ double		norm_tol;
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_buf = (genptr_t)rp;
 	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_part_import( &intern, ep, mat );
+	i = rt_pipe_import( &intern, ep, mat );
 	if( i < 0 )  {
-		rt_log("rt_part_plot(): db import failure\n");
+		rt_log("rt_pipe_plot(): db import failure\n");
 		return(-1);		/* BAD */
 	}
 	ip = &intern;

@@ -87,12 +87,24 @@ struct tgc_internal {
  *  space to the original space.  This NOT the inverse of the transformation
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
+#if NEW_IF
+int
+rt_tgc_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_tgc_prep( stp, rec, rtip )
 struct soltab		*stp;
 union record		*rec;
 struct rt_i		*rtip;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct tgc_internal	*tip;
 	register struct tgc_specific *tgc;
 	register fastf_t	f;
 	LOCAL fastf_t	prod_ab, prod_cd;
@@ -103,25 +115,40 @@ struct rt_i		*rtip;
 	LOCAL mat_t	tmp;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
-	LOCAL struct tgc_internal	ti;
 
 	/*
 	 *  For a fast way out, hand this solid off to the REC routine.
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is a TGC.
 	 */
+#if NEW_IF
+	if( rt_rec_prep( stp, ep, rtip ) == 0 )
+		return(0);		/* OK */
+#else
 	if( rt_rec_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
+#endif
 
-	if( rt_tgc_import( &ti, rec, stp->st_pathmat ) < 0 )
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_tgc_import( ip, ep, stp->st_pathmat ) < 0 )
 		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	tip = (struct tgc_internal *)ip->idb_ptr;
 
 	/* Validate that |H| > 0, compute |A| |B| |C| |D|		*/
-	mag_h = sqrt( magsq_h = MAGSQ( ti.h ) );
-	mag_a = sqrt( magsq_a = MAGSQ( ti.a ) );
-	mag_b = sqrt( magsq_b = MAGSQ( ti.b ) );
-	mag_c = sqrt( magsq_c = MAGSQ( ti.c ) );
-	mag_d = sqrt( magsq_d = MAGSQ( ti.d ) );
+	mag_h = sqrt( magsq_h = MAGSQ( tip->h ) );
+	mag_a = sqrt( magsq_a = MAGSQ( tip->a ) );
+	mag_b = sqrt( magsq_b = MAGSQ( tip->b ) );
+	mag_c = sqrt( magsq_c = MAGSQ( tip->c ) );
+	mag_d = sqrt( magsq_d = MAGSQ( tip->d ) );
 	prod_ab = mag_a * mag_b;
 	prod_cd = mag_c * mag_d;
 
@@ -152,17 +179,17 @@ struct rt_i		*rtip;
 		/* Exchange ends, so that in solids with one degenerate end,
 		 * the CD end always is always the degenerate one
 		 */
-		VADD2( ti.v, ti.v, ti.h );
-		VREVERSE( ti.h, ti.h );
+		VADD2( tip->v, tip->v, tip->h );
+		VREVERSE( tip->h, tip->h );
 #define VEXCHANGE( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
-		VEXCHANGE( ti.a, ti.c, work );
-		VEXCHANGE( ti.b, ti.d, work );
+		VEXCHANGE( tip->a, tip->c, work );
+		VEXCHANGE( tip->b, tip->d, work );
 		rt_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
 	}
 
 	/* Ascertain whether H lies in A-B plane 			*/
-	VCROSS( work, ti.a, ti.b );
-	f = VDOT( ti.h, work ) / ( prod_ab*mag_h );
+	VCROSS( work, tip->a, tip->b );
+	f = VDOT( tip->h, work ) / ( prod_ab*mag_h );
 	if ( NEAR_ZERO(f, RT_DOT_TOL) ) {
 		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
@@ -170,30 +197,30 @@ struct rt_i		*rtip;
 
 	if( prod_ab > SMALL )  {
 		/* Validate that A.B == 0 */
-		f = VDOT( ti.a, ti.b ) / prod_ab;
+		f = VDOT( tip->a, tip->b ) / prod_ab;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not perpendicular to B, f=%g\n",
 				stp->st_name, f);
 			rt_log("tgc: dot=%g / a*b=%g\n",
-				VDOT( ti.a, ti.b ),  prod_ab );
+				VDOT( tip->a, tip->b ),  prod_ab );
 			return(1);		/* BAD */
 		}
 	}
 	if( prod_cd > SMALL )  {
 		/* Validate that C.D == 0 */
-		f = VDOT( ti.c, ti.d ) / prod_cd;
+		f = VDOT( tip->c, tip->d ) / prod_cd;
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  C not perpendicular to D, f=%g\n",
 				stp->st_name, f);
 			rt_log("tgc: dot=%g / c*d=%g\n",
-				VDOT( ti.c, ti.d ), prod_cd );
+				VDOT( tip->c, tip->d ), prod_cd );
 			return(1);		/* BAD */
 		}
 	}
 
 	if( mag_a * mag_c > SMALL )  {
 		/* Validate that  A || C */
-		f = 1.0 - VDOT( ti.a, ti.c ) / (mag_a * mag_c);
+		f = 1.0 - VDOT( tip->a, tip->c ) / (mag_a * mag_c);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  A not parallel to C, f=%g\n",
 				stp->st_name, f);
@@ -203,7 +230,7 @@ struct rt_i		*rtip;
 
 	if( mag_b * mag_d > SMALL )  {
 		/* Validate that  B || D, for parallel planes	*/
-		f = 1.0 - VDOT( ti.b, ti.d ) / (mag_b * mag_d);
+		f = 1.0 - VDOT( tip->b, tip->d ) / (mag_b * mag_d);
 		if( ! NEAR_ZERO(f, RT_DOT_TOL) ) {
 			rt_log("tgc(%s):  B not parallel to D, f=%g\n",
 				stp->st_name, f);
@@ -215,7 +242,7 @@ struct rt_i		*rtip;
 	GETSTRUCT( tgc, tgc_specific );
 	stp->st_specific = (genptr_t)tgc;
 
-	VMOVE( tgc->tgc_V, ti.v );
+	VMOVE( tgc->tgc_V, tip->v );
 	tgc->tgc_A = mag_a;
 	tgc->tgc_B = mag_b;
 	tgc->tgc_C = mag_c;
@@ -237,8 +264,8 @@ struct rt_i		*rtip;
 	 */
 	f = rt_reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
 	tgc->tgc_AD_CB = (f < 0.0001);		/* A*D == C*B */
-	rt_tgc_rotate( ti.a, ti.b, ti.h, Rot, iRot, tgc );
-	MAT4X3VEC( nH, Rot, ti.h );
+	rt_tgc_rotate( tip->a, tip->b, tip->h, Rot, iRot, tgc );
+	MAT4X3VEC( nH, Rot, tip->h );
 	tgc->tgc_sH = nH[Z];
 
 	tgc->tgc_CdAm1 = tgc->tgc_C/tgc->tgc_A - 1.0;
@@ -272,30 +299,30 @@ struct rt_i		*rtip;
 
 		/* There are 8 corners to the bounding RPP */
 		/* This may not be minimal, but does fully contain the TGC */
-		VADD2( temp, tgc->tgc_V, ti.a );
-		VADD2( work, temp, ti.b );
+		VADD2( temp, tgc->tgc_V, tip->a );
+		VADD2( work, temp, tip->b );
 #define TGC_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
 		TGC_MM( work );	/* V + A + B */
-		VSUB2( work, temp, ti.b );
+		VSUB2( work, temp, tip->b );
 		TGC_MM( work );	/* V + A - B */
 
-		VSUB2( temp, tgc->tgc_V, ti.a );
-		VADD2( work, temp, ti.b );
+		VSUB2( temp, tgc->tgc_V, tip->a );
+		VADD2( work, temp, tip->b );
 		TGC_MM( work );	/* V - A + B */
-		VSUB2( work, temp, ti.b );
+		VSUB2( work, temp, tip->b );
 		TGC_MM( work );	/* V - A - B */
 
-		VADD3( temp, tgc->tgc_V, ti.h, ti.c );
-		VADD2( work, temp, ti.d );
+		VADD3( temp, tgc->tgc_V, tip->h, tip->c );
+		VADD2( work, temp, tip->d );
 		TGC_MM( work );	/* V + H + C + D */
-		VSUB2( work, temp, ti.d );
+		VSUB2( work, temp, tip->d );
 		TGC_MM( work );	/* V + H + C - D */
 
-		VADD2( temp, tgc->tgc_V, ti.h );
-		VSUB2( temp, temp, ti.c );
-		VADD2( work, temp, ti.d );
+		VADD2( temp, tgc->tgc_V, tip->h );
+		VSUB2( temp, temp, tip->c );
+		VADD2( work, temp, tip->d );
 		TGC_MM( work );	/* V + H - C + D */
-		VSUB2( work, temp, ti.d );
+		VSUB2( work, temp, tip->d );
 		TGC_MM( work );	/* V + H - C - D */
 
 		VSET( stp->st_center,
@@ -1460,18 +1487,27 @@ rt_tgc_class()
  *  Apply modeling transformations as well.
  */
 int
-rt_tgc_import( tip, rp, mat )
-struct tgc_internal	*tip;
-union record		*rp;
+rt_tgc_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
 register mat_t		mat;
 {
+	struct tgc_internal	*tip;
+	union record		*rp;
 	LOCAL fastf_t	vec[3*6];
 
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
 		rt_log("rt_tgc_import: defective record\n");
 		return(-1);
 	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_TGC;
+	ip->idb_ptr = rt_malloc( sizeof(struct tgc_internal), "tgc_internal");
+	tip = (struct tgc_internal *)ip->idb_ptr;
 
 	/* Convert from database to internal format */
 	rt_fastf_float( vec, rp->s.s_values, 6 );
@@ -1488,8 +1524,104 @@ register mat_t		mat;
 }
 
 /*
+ *			R T _ T G C _ E X P O R T
+ */
+int
+rt_tgc_export( ep, ip )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+{
+	return(-1);
+}
+
+/*
+ *			R T _ T G C _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_tgc_describe( str, ip, verbose )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+{
+	register struct tgc_internal	*tip =
+		(struct tgc_internal *)ip->idb_ptr;
+	char	buf[256];
+	double	angles[5];
+	vect_t	unitv;
+	fastf_t	Hmag;
+
+	rt_vls_strcat( str, "truncated general cone (TGC)\n");
+
+	sprintf(buf, "\tV (%g, %g, %g)\n", V3ARGS(tip->v) );
+	rt_vls_strcat( str, buf );
+
+	Hmag = MAGNITUDE(tip->h);
+	sprintf(buf, "\tH (%g, %g, %g) mag=%g\n",
+		V3ARGS(tip->h), Hmag );
+	rt_vls_strcat( str, buf );
+	if( Hmag < VDIVIDE_TOL )  {
+		rt_vls_strcat( str, "H vector is zero!\n");
+	} else {
+		register double	f = 1/Hmag;
+		VSCALE( unitv, tip->h, f );
+		rt_find_fallback_angle( angles, unitv );
+		rt_pr_fallback_angle( str, "\tH", angles );
+	}
+
+	sprintf(buf, "\tA (%g, %g, %g) mag=%g\n",
+		V3ARGS(tip->a), MAGNITUDE(tip->a) );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
+		V3ARGS(tip->b), MAGNITUDE(tip->b) );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
+		V3ARGS(tip->c), MAGNITUDE(tip->c) );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tD (%g, %g, %g) mag=%g\n",
+		V3ARGS(tip->d), MAGNITUDE(tip->d) );
+	rt_vls_strcat( str, buf );
+
+	VCROSS( unitv, tip->c, tip->d );
+	VUNITIZE( unitv );
+	rt_find_fallback_angle( angles, unitv );
+	rt_pr_fallback_angle( str, "\tAxB", angles );
+
+	return(0);
+}
+
+/*
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ *  XXX The suffix of this name is temporary.
+ */
+void
+rt_tgc_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	RT_CK_DB_INTERNAL(ip);
+	rt_free( ip->idb_ptr, "tgc ifree" );
+}
+
+/*
  *			R T _ T G C _ P L O T
  */
+#if NEW_IF
+int
+rt_tgc_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_tgc_plot( rp, mat, vhead, dp )
 union record	*rp;
@@ -1497,18 +1629,36 @@ register mat_t	mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	LOCAL struct tgc_internal	*tip;
 	register int		i;
 	LOCAL fastf_t		top[16*3];
 	LOCAL fastf_t		bottom[16*3];
 	LOCAL vect_t		work;		/* Vec addition work area */
 	LOCAL fastf_t		points[3*8];
-	LOCAL struct tgc_internal	ti;
 
-	if( rt_tgc_import( &ti, rp, mat ) < 0 )  return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_tgc_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_tgc_plot(): db import failure\n");
+		return(-1);		/* BAD */
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct tgc_internal *)ip->idb_ptr;
 
-	ell_16pts( bottom, ti.v, ti.a, ti.b );
-	VADD2( work, ti.v, ti.h );
-	ell_16pts( top, work, ti.c, ti.d );
+	ell_16pts( bottom, tip->v, tip->a, tip->b );
+	VADD2( work, tip->v, tip->h );
+	ell_16pts( top, work, tip->c, tip->d );
 
 	/* Draw the top */
 	ADD_VL( vhead, &top[15*ELEMENTS_PER_VECT], 0 );
@@ -1618,6 +1768,18 @@ struct soltab *stp;
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
+#if NEW_IF
+int
+rt_tgc_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_tgc_tess( r, m, rp, mat, dp )
 struct nmgregion	**r;
@@ -1626,6 +1788,9 @@ union record	*rp;
 register mat_t	mat;
 struct directory *dp;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	struct shell		*s;
 	register int		i;
 	LOCAL fastf_t		top[16*3];
@@ -1635,24 +1800,37 @@ struct directory *dp;
 	struct vertex		*vtemp[16+1];
 	LOCAL vect_t		work;		/* Vec addition work area */
 	LOCAL fastf_t		points[3*8];
-	LOCAL struct tgc_internal	ti;
+	LOCAL struct tgc_internal	*tip;
 	struct faceuse		*outfaceuses[2*16+2];
 	struct vertex		*vertlist[4];
 	struct edgeuse		*eu, *eu2;
 	int			face;
 	plane_t			plane;
 
-	if( rt_tgc_import( &ti, rp, mat ) < 0 )  {
-		rt_log("rt_tgc_tess(%s): import failure\n", dp->d_namep);
-		return(-1);
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_tgc_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_tgc_tess(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	tip = (struct tgc_internal *)ip->idb_ptr;
 
 	/* Create two 16 point ellipses
 	 *  Note that in both cases the points go counterclockwise.
 	 */
-	ell_16pts( bottom, ti.v, ti.a, ti.b );
-	VADD2( work, ti.v, ti.h );
-	ell_16pts( top, work, ti.c, ti.d );
+	ell_16pts( bottom, tip->v, tip->a, tip->b );
+	VADD2( work, tip->v, tip->h );
+	ell_16pts( top, work, tip->c, tip->d );
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
 	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);

@@ -1,4 +1,3 @@
-#define NEW_IF	0
 /*
  *			G _ P A R T . C
  *
@@ -221,9 +220,9 @@ RT_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
 #if NEW_IF
 /* new way */
 int
-rt_part_prep( stp, ep, rtip )
+rt_part_prep( stp, ip, rtip )
 struct soltab		*stp;
-struct rt_external	*ep;
+struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
 #else
@@ -235,9 +234,9 @@ union record		*rec;
 struct rt_i		*rtip;
 {
 	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
 #endif
 	register struct part_specific *part;
-	struct rt_db_internal	intern;
 	struct part_internal	*pip;
 	int			i;
 	vect_t		Hunit;
@@ -254,19 +253,19 @@ struct rt_i		*rtip;
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_buf = (genptr_t)rec;
 	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-#endif
-	i = rt_part_import( &intern, ep, stp->st_pathmat );
+	ip = &intern;
+	i = rt_part_import( ip, ep, stp->st_pathmat );
 	if( i < 0 )  {
 		rt_log("rt_part_setup(%s): db import failure\n", stp->st_name);
 		return(-1);		/* BAD */
 	}
-	RT_CK_DB_INTERNAL( &intern );
+#endif
+	RT_CK_DB_INTERNAL( ip );
 
 	GETSTRUCT( part, part_specific );
 	stp->st_specific = (genptr_t)part;
-	part->part_int = *((struct part_internal *)intern.idb_ptr);	/* struct copy */
+	part->part_int = *((struct part_internal *)ip->idb_ptr);	/* struct copy */
 	pip = &part->part_int;
-	intern.idb_ptr = GENPTR_NULL;	/* sanity */
 
 	if( pip->part_type == RT_PARTICLE_TYPE_SPHERE )  {
 		/* Compute bounding sphere and RPP */
@@ -278,7 +277,6 @@ struct rt_i		*rtip;
 		stp->st_max[Y] = pip->part_V[Y] + pip->part_vrad;
 		stp->st_min[Z] = pip->part_V[Z] - pip->part_vrad;
 		stp->st_max[Z] = pip->part_V[Z] + pip->part_vrad;
-		rt_part_ifree( &intern );
 		return(0);		/* OK */
 	}
 
@@ -336,7 +334,6 @@ struct rt_i		*rtip;
 		stp->st_aradius = f;
 		stp->st_bradius = MAGNITUDE(work);
 	}
-	rt_part_ifree( &intern );
 	return(0);			/* OK */
 }
 
