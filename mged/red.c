@@ -312,6 +312,10 @@ char *line;
 
   ptr = strtok(line , delims);
 
+  /* more sanity */
+  if (ptr == NULL)
+    return 0;
+
   while (!done) {
     /* First non-white is the relation operator */
     relation = (*ptr);
@@ -408,20 +412,25 @@ char *str;
   bu_vls_init(&vls);
   while (line != (char *)NULL) {
     int n;
+
     bu_vls_strcpy(&vls, line);
-    BU_GETSTRUCT(llp, line_list);
-    BU_LIST_INSERT(&HeadLines.l, &llp->l);
-    llp->line = line;
 
     if ((n = count_nodes(bu_vls_addr(&vls))) < 0) {
       bu_vls_free(&vls);
       bu_list_free(&HeadLines.l);
       return TCL_ERROR;
-    } else
+    } else if (n > 0) {
+      BU_GETSTRUCT(llp, line_list);
+      BU_LIST_INSERT(&HeadLines.l, &llp->l);
+      llp->line = line;
+
       node_count += n;
+    } /* else blank line */
 
     if (ptr != NULL && *(ptr+1) != '\0') {
+      /* leap frog past EOS */
       line = ptr + 1;
+
       ptr = strchr(line, '\n');
       if (ptr != NULL)
 	*ptr = '\0';
