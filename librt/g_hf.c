@@ -2185,8 +2185,9 @@ const struct bu_external	*ep;
 const mat_t			mat;
 const struct db_i		*dbip;
 {
-	bu_log( "Import of HF solids from a version 5 database is not allowed.\n" );
-	bu_log( "\tHF solids should be converted to DSP solids using the rt_hf_to_dsp() routine or g4-g5 utility.\n" );
+	bu_log( "As of release 6.0 the HF primitive is superceded by the DSP primitive.\n" );
+	bu_log( "\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
+	/* The rt_hf_to_dsp() routine can also be used */
 	return -1;
 }
 
@@ -2197,8 +2198,9 @@ const struct rt_db_internal	*ip;
 double				local2mm;
 const struct db_i		*dbip;
 {
-	bu_log( "Export of HF solids from a version 5 database is not allowed.\n" );
-	bu_log( "\tHF solids should be converted to DSP solids using the rt_hf_to_dsp() routine or g4-g5 utility.\n" );
+	bu_log( "As of release 6.0 the HF primitive is superceded by the DSP primitive.\n" );
+	bu_log( "\tTo convert HF primitives to DSP, use 'dbupgrade'.\n" );
+	/* The rt_hf_to_dsp() routine can also be used */
 	return -1;
 }
 
