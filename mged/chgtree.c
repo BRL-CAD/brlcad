@@ -57,6 +57,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* XXX Move to raytrace.h */
 BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
 				int argc, CONST char **argv));
+BU_EXTERN(union tree		*db_find_named_leaf, (union tree *tp,
+				CONST char *cp));
+
 
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
@@ -585,8 +588,10 @@ char	**argv;
 	struct directory	*dp;
 	mat_t			stack;
 	mat_t			arc;
-	union record		*rec;
 	int			i;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	union tree		*tp;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -601,6 +606,10 @@ char	**argv;
 	if( !(anp = db_parse_1anim( dbip, argc, (CONST char **)argv ) ) )  {
 	  Tcl_AppendResult(interp, "arced: unable to parse command\n", (char *)NULL);
 	  return TCL_ERROR;
+	}
+	if( anp->an_path.fp_len < 2 )  {
+		Tcl_AppendResult(interp, "arced: path spec has insufficient elements\n", (char *)NULL);
+		return TCL_ERROR;
 	}
 #if 0
 	if( anp->an_path.fp_len != 2 )  {
@@ -620,59 +629,55 @@ char	**argv;
 	bn_mat_idn( stack );
 
 	/* Load the combination into memory */
-	dp = anp->an_path.fp_names[0];
+	dp = anp->an_path.fp_names[anp->an_path.fp_len-2];
+	RT_CK_DIR(dp);
 	if( (dp->d_flags & DIR_COMB) == 0 )  {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( (rec = db_getmrec( dbip, dp )) == (union record *)NULL )  {
-	  TCL_READ_ERR;
-	  db_free_1anim( anp );
-	  return TCL_ERROR;
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )  {
+		db_free_1anim( anp );
+		TCL_READ_ERR_return;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	RT_CK_COMB(comb);
+	if( !comb->tree )  {
+		Tcl_AppendResult(interp, dp->d_namep, ": empty combination\n", (char *)NULL);
+		goto fail;
 	}
 
 	/* Search for first mention of arc */
-	for( i=1; i < dp->d_len; i++ )  {
-		if( rec[i].u_id != ID_MEMB )  {
-		  struct bu_vls tmp_vls;
-
-		  bu_vls_init(&tmp_vls);
-		  bu_vls_printf(&tmp_vls, "%s: element %d not a member! Database corrupted.\n",
-				dp->d_namep, i);
-		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		  bu_vls_free(&tmp_vls);
-		  goto fail;
-		}
-		if( strncmp( rec[i].M.m_instname,
-		    anp->an_path.fp_names[1]->d_namep,
-		    NAMESIZE ) != 0 )  continue;
-
-		/* Found match */
-		/* XXX For future, also import/export materials here */
-		rt_mat_dbmat( arc, rec[i].M.m_mat );
-
-		if( db_do_anim( anp, stack, arc, NULL ) < 0 )  {
-			goto fail;
-		}
-		rt_dbmat_mat( rec[i].M.m_mat, arc );
-
-		/* Write back */
-		if( db_put( dbip, dp, rec, 0, dp->d_len ) < 0 )  {
-		  Tcl_AppendResult(interp, "arced: write error, aborting\n", (char *)NULL);
-		  TCL_ERROR_RECOVERY_SUGGESTION;
-		  goto fail;
-		}
-		bu_free( (genptr_t)rec, "union record []");
-		db_free_1anim( anp );
-		return TCL_OK;
+	if( (tp = db_find_named_leaf( comb->tree, anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep )) == TREE_NULL )  {
+		Tcl_AppendResult(interp, "Unable to find instance of '",
+			anp->an_path.fp_names[anp->an_path.fp_len-1]->d_namep,
+			"' in combination '",
+			anp->an_path.fp_names[anp->an_path.fp_len-2]->d_namep,
+			"', error\n", (char *)NULL);
+		goto fail;
 	}
 
-	Tcl_AppendResult(interp, "Unable to find instance of '",
-			 anp->an_path.fp_names[1]->d_namep, "' in combination '",
-			 anp->an_path.fp_names[0]->d_namep, "', error\n", (char *)NULL);
+	/* Found match.  Update tl_mat in place. */
+	if( !tp->tr_l.tl_mat )
+		tp->tr_l.tl_mat = bn_mat_dup( bn_mat_identity );
+
+	if( db_do_anim( anp, stack, tp->tr_l.tl_mat, NULL ) < 0 )  {
+		goto fail;
+	}
+
+	if( bn_mat_is_identity( tp->tr_l.tl_mat ) )  {
+		bu_free( (genptr_t)tp->tr_l.tl_mat, "tl_mat" );
+		tp->tr_l.tl_mat = (matp_t)NULL;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR;
+		goto fail;
+	}
+	db_free_1anim( anp );
+	return TCL_OK;
 		
 fail:
-	bu_free( (genptr_t)rec, "union record []");
+	rt_db_free_internal( &intern );
 	db_free_1anim( anp );
 	return TCL_ERROR;
 }
