@@ -113,16 +113,18 @@ struct edgeuse *eu1, *eu2;
 	} else if (eu1->up.lu_p->up.fu_p->orientation == OT_OPPOSITE){
 		VREVERSE(Norm1, eu1->up.lu_p->up.fu_p->f_p->fg_p->N);
 		Norm1[3] = -eu1->up.lu_p->up.fu_p->f_p->fg_p->N[3];
-	}
+	} else rt_bomb("bad fu1 orientation\n");
 
 	if (eu2->up.lu_p->up.fu_p->orientation == OT_SAME) {
 		VMOVEN(Norm2, eu2->up.lu_p->up.fu_p->f_p->fg_p->N, 4);
 	} else if (eu2->up.lu_p->up.fu_p->orientation == OT_OPPOSITE){
 		VREVERSE(Norm2, eu2->up.lu_p->up.fu_p->f_p->fg_p->N);
 		Norm2[3] = -eu2->up.lu_p->up.fu_p->f_p->fg_p->N[3];
-	}
+	} else rt_bomb("bad fu2 orientation\n");
 
-	/* get vectors for edgeuses (should be opposite) */
+	/* get vectors for edgeuses (edgeuse mates should point
+	 * in opposite directions)
+	 */
 	pt = eu2->vu_p->v_p->vg_p->coord;
 	ptmate = eu2->eumate_p->vu_p->v_p->vg_p->coord;
 	VSUB2(veu2, ptmate, pt); VUNITIZE(veu2);
@@ -131,9 +133,14 @@ struct edgeuse *eu1, *eu2;
 	ptmate = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 	VSUB2(veu1, ptmate, pt); VUNITIZE(veu1);
 
-	/* get vectors in the plane of each face */
-	VCROSS(plvec1, veu1, Norm1);	VUNITIZE(plvec1);
-	VCROSS(plvec2, veu2, Norm2);	VUNITIZE(plvec2);
+	/* Get vectors which lie in the plane of each face,
+	 * and point left, towards the interior of the CCW loop.
+	 */
+	VCROSS(plvec1, Norm1, veu1);
+	VCROSS(plvec2, Norm2, veu2);
+
+	VUNITIZE(plvec1);
+	VUNITIZE(plvec2);
 
 	cosangle = VDOT(plvec1, plvec2);
 
@@ -198,8 +205,8 @@ struct edgeuse *eu1, *eu2;
 	}
 	while (eu2) {
 
-		/* because faces are always created with clockwise exterior
-		 * loops and counter-clockwise interior loops, radial
+		/* because faces are always created with counter-clockwise
+		 * exterior loops and clockwise interior loops, radial
 		 * edgeuses will never share the same vertex.  We thus make
 		 * sure that eu2 is an edgeuse which might be radial to eu1
 		 */
