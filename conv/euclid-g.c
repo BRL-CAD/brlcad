@@ -184,7 +184,8 @@ int		reg_id;
 		rt_bomb( "add_nmg_to_db: FAILED\n" );
 	}
 
-	if( mk_lrcomb( fpout, rname, &head, 1, (char *)NULL, (char *)NULL, (char *)NULL, gift_ident, 0, 0, 100, 0 ) )
+	if( mk_lrcomb( fpout, rname, &head, 1, (char *)NULL, (char *)NULL,
+	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
 	{
 		rt_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , rname );
 		rt_bomb( "add_nmg_to_db: FAILED\n" );
