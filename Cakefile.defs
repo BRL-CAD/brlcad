@@ -120,7 +120,7 @@ set -S2 "/bin/sh"
  *	FC							*
  *	GETHOST							*
  *	RANLIB							*
- *	BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR			*
+ *	BASEDIR BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR		*
  *	XLIBDIR, XINCDIR					*
  *	ARCH_SUF						*
  *	MANDIR							*
@@ -1793,6 +1793,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #if	!defined(BINDIR)
 /*	Define places where users can find "installed" copies of things */
 /*	Note that MANDIR is handled separately */
+#	define	BASEDIR	/usr/brlcad
 #	define	BINDIR	/usr/brlcad/bin
 #	define	LIBDIR	/usr/brlcad/lib
 #	define	ETCDIR	/usr/brlcad/etc
