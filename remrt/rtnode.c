@@ -836,7 +836,6 @@ char			*buf;
 		rt_prep_timer();
 		do_run( start_line*width, end_line*width+width-1 );
 		(void)rt_read_timer( (char *)0, 0 );
-		view_end(&ap);
 
 		if( fullfloat_mode )  {
 			unsigned char		*bigbuf;
@@ -861,6 +860,7 @@ char			*buf;
 			if( npix < 0 )  rt_bomb("rtnode: fb_writerect() error\n");
 			bu_free( (char *)bigbuf, "bigbuf[] full image buffer");
 		}
+		view_end(&ap);
 	}
 
 	/*
