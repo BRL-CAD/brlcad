@@ -25,7 +25,7 @@ fi
 
 FILE=$1
 
-eval `basename $FILE|sed -e 's/.*\\.\\(.*\\)/;SUFFIX=\\1;/' -e 's/^/LHS=/' `
+eval `basename $FILE|sed -e 's/\\(.*\\)\\.\\(.*\\)/\\1;SUFFIX=\\2;/' -e 's/^/LHS=/' `
 
 # First, see if size is encoded in the name.
 BASE=
