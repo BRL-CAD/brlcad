@@ -660,6 +660,7 @@ char			*promp[];
 		return CMD_MORE;
 	}
 
+#if 0
 	if( argc < 8+((num_curves-2)*num_pts*3) ) {
 		rt_log("%s for Waterline %d, Point %d : ",
 			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%
@@ -672,6 +673,20 @@ char			*promp[];
 			promp[5+(argc-8)%3]);
 		return CMD_MORE;
 	}
+#else
+	if( argc < 5+3*(num_curves-1)*num_pts ) {
+		rt_log("%s for Waterline %d, Point %d : ",
+			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%
+			num_pts );
+		return CMD_MORE;
+	}
+
+	if( argc < 5+3*num_curves*num_pts ) {
+		rt_log("%s for point of last waterline : ",
+			promp[5+(argc-8)%3]);
+		return CMD_MORE;
+	}
+#endif
 
 	intern->idb_type = ID_ARS;
 	intern->idb_ptr = (genptr_t)rt_malloc( sizeof(struct rt_ars_internal), "rt_ars_internal");
