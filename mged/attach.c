@@ -603,12 +603,14 @@ void
 mged_slider_free_vls(p)
 struct dm_list *p;
 {
-  bu_vls_free(&p->dml_fps_name);
-  bu_vls_free(&p->dml_aet_name);
-  bu_vls_free(&p->dml_ang_name);
-  bu_vls_free(&p->dml_center_name);
-  bu_vls_free(&p->dml_size_name);
-  bu_vls_free(&p->dml_adc_name);
+  if (BU_VLS_IS_INITIALIZED(&p->dml_fps_name)) {
+    bu_vls_free(&p->dml_fps_name);
+    bu_vls_free(&p->dml_aet_name);
+    bu_vls_free(&p->dml_ang_name);
+    bu_vls_free(&p->dml_center_name);
+    bu_vls_free(&p->dml_size_name);
+    bu_vls_free(&p->dml_adc_name);
+  }
 }
 
 void
