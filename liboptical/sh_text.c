@@ -488,8 +488,8 @@ char	*dp;
 	j = swp->sw_uv.uv_v * (tp->tx_l-1);
 	cp = (unsigned char *)(tp->tx_pixels +
 	     (j) * tp->tx_w * 3  +  i * 3);
-	pertU = (*cp - 128) / 256.0;
-	pertV = (*(cp+2) - 128) / 256.0;
+	pertU = (*cp - 128) / 128.0;
+	pertV = (*(cp+2) - 128) / 128.0;
 
 	VJOIN2( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v );
 	VUNITIZE( swp->sw_hit.hit_normal );
