@@ -333,6 +333,13 @@ register int	cookie;
 		}
 		if (sizeof (long int) == 8) {
 			Indian = IND_CRAY;	/* is this good enough? */
+			if ( ( testval >> 32) == 0x01020304) {
+				Indian = IND_BIG; /* XXX 64bit */
+			} else if (testval == 0x04030201) {
+				Indian = IND_LITTLE;	/* 64 bit */
+			} else {
+				rt_bomb("cv_optimize: can not tell indian of host.\n");
+			}
 		} else if (testval == 0x01020304) {
 			Indian = IND_BIG;
 		} else if (testval == 0x04030201) {
