@@ -40,8 +40,8 @@ static char	*font1 = NULL;
 FBIO		*fbp;
 
 static char usage[] = "\
-Usage: fblabel [-h -c ] [-F framebuffer]\n\
-	[-f fontstring] [-r red] [-g green] [-b blue] xpos ypos textstring\n";
+Usage: fblabel [-h -c ] [-F framebuffer] [-C r/g/b]\n\
+	[-f fontstring] xpos ypos textstring\n";
 
 /* Variables controlling the font itself */
 
@@ -72,7 +72,7 @@ register char **argv;
 	pixcolor[GRN]  = 255;
 	pixcolor[BLU]  = 255;
 
-	while ( (c = getopt( argc, argv, "dhcF:f:r:g:b:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "dhcF:f:r:g:b:C:" )) != EOF )  {
 		switch( c )  {
 		case 'd':
 			debug = 1;
@@ -90,6 +90,20 @@ register char **argv;
 		case 'f':
 			font1 = optarg;
 			break;
+		case 'C':
+			{
+				register char *cp = optarg;
+				register unsigned char *conp
+					= (unsigned char *)pixcolor;
+
+				/* premature null => atoi gives zeros */
+				for( c=0; c < width; c++ )  {
+					*conp++ = atoi(cp);
+					while( *cp && *cp++ != '/' ) ;
+				}
+			}
+			break;
+		/* backword compatability */
 		case 'r':
 		        pixcolor[RED] = atoi( optarg );
 			break;
