@@ -26,18 +26,15 @@
  *	coordinates, and the point is output in derotated form:
  *
  *			x  y  z  field_1  field_2  ...  field_n.
- *
  *  Author -
  *	Paul J. Tanenbaum
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066  USA
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
