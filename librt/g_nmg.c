@@ -2872,24 +2872,25 @@ const char			*attr;
 		}
 		bu_vls_strcat( &vls, " }" );
 
+		/* use the backwards macros here so that "asc2g" will build the same structures */
 		/* now all the nmgregions */
-		for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) ) {
+		for( BU_LIST_FOR_BACKWARDS( r, nmgregion, &m->r_hd ) ) {
 			/* bu_vls_strcat( &vls, " R {" ); */
 
 			/* and all the shells */
-			for( BU_LIST_FOR( s, shell, &r->s_hd ) ) {
+			for( BU_LIST_FOR_BACKWARDS( s, shell, &r->s_hd ) ) {
 				/* bu_vls_strcat( &vls, " S {" ); */
 
 				/* all the faces */
 				if( BU_LIST_NON_EMPTY( &s->fu_hd ) ) {
-					for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) ) {
+					for( BU_LIST_FOR_BACKWARDS( fu, faceuse, &s->fu_hd ) ) {
 						if( fu->orientation != OT_SAME )
 							continue;
 
 						bu_vls_strcat( &vls, " F {" );
 
 						/* all the loops in this face */
-						for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) ) {
+						for( BU_LIST_FOR_BACKWARDS( lu, loopuse, &fu->lu_hd ) ) {
 
 							if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC ) {
 								vu = BU_LIST_FIRST( vertexuse, &lu->down_hd );
