@@ -331,6 +331,18 @@ else
     fi
 
     $ECHO "Found GNU Libtool version $_maj_version.$_min_version.$_pat_version"
+
+    # temporary BRL-CAD hack due to libtool incompatibility
+    if [ $_maj_version -eq 1 ] ; then
+      if [ $_min_version -eq 5 ] ; then
+	$ECHO 
+	$ECHO "Warning: Libtool 1.5 breaks compatiblity with Libtool 1.4 requiring an edit of"
+	$ECHO "         the configure.ac script to replace AC_PROG_LIBTOOL with LT_INIT."
+	$ECHO "         Configuration and/or compilation may fail without making that edit."
+	$ECHO
+      fi
+    fi
+
   fi
 fi
 if [ "x$_report_error" = "xyes" ] ; then
