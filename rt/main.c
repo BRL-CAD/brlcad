@@ -99,8 +99,9 @@ char **argv;
 
 	port_setlinebuf( stderr );
 
-	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
-	(void)fprintf(stderr, "Using librt version:\n%s\n", rt_version+5);
+	(void)fprintf(stderr, "%s%s\n",
+		version+5,
+		rt_version+5 );	/* +5 to skip @(#) */
 
 #ifdef HAVE_SBRK
 	beginptr = (char *) sbrk(0);
