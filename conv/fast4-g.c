@@ -44,7 +44,6 @@ extern int errno;
 static char	line[LINELEN];		/* Space for input line */
 static FILE	*fdin;			/* Input FASTGEN4 file pointer */
 static FILE	*fdout;			/* Output BRL-CAD file pointer */
-static point_t	*grid_pts;		/* Points from GRID cards */
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */
 static int	max_grid_no=0;		/* Maximum grid number used */
 static int	mode=0;			/* Plate mode (1) or volume mode (2) */
@@ -57,9 +56,18 @@ static char	vehicle[17];		/* Title for BRLCAD model from VEHICLE card */
 static char	name_name[NAMESIZE+1];	/* Component name built from $NAME card */
 static int	name_count;		/* Count of number of times this name_name has been used */
 static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry ) */
-static struct cline	*cline_last_ptr; /* Pointer to last element in linked list of clines */
-static struct wmember group_head[11];	/* Lists of regions for groups */
+static int	nmgs=0;			/* Flag: >0 -> There are NMG's in current component */
+static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
+static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
+static struct model	*m;		/* NMG model for surface elements */
+static struct nmgregion	*r;		/* NMGregion */
+static struct shell	*s;		/* NMG shell */
+static struct shell	*s2;		/* NMG shell extruded from 's' for plate mode */
+static struct rt_tol	tol;		/* Tolerance struct for NMG's */
+
+RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
+RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
 
 static char	*mode_str[3]=		/* mode strings */
 {
@@ -70,6 +78,9 @@ static char	*mode_str[3]=		/* mode strings */
 
 #define		PLATE_MODE	1
 #define		VOLUME_MODE	2
+
+#define		POS_CENTER	1	/* face positions for facets */
+#define		POS_FRONT	2
 
 #define		END_OPEN	1	/* End closure codes for cones */
 #define		END_CLOSED	2
@@ -84,6 +95,7 @@ static char	*mode_str[3]=		/* mode strings */
 #define		CCONE1		'c'
 #define		CCONE2		'd'
 #define		CSPHERE		's'
+#define		NMG		'n'
 
 /* convenient macro for building regions */
 #define		MK_REGION( fp , headp , g_id , c_id , e_id , type ) \
@@ -106,6 +118,22 @@ static char	*mode_str[3]=		/* mode strings */
 			  } \
 			}
 
+#define	NHEX_FACES	12
+int hex_faces[12][3]={
+	{ 0 , 1 , 4 }, /* 1 */
+	{ 1 , 5 , 4 }, /* 2 */
+	{ 1 , 2 , 5 }, /* 3 */
+	{ 2 , 6 , 5 }, /* 4 */
+	{ 2 , 3 , 6 }, /* 5 */
+	{ 3 , 7 , 6 }, /* 6 */
+	{ 3 , 0 , 7 }, /* 7 */
+	{ 0 , 4 , 7 }, /* 8 */
+	{ 4 , 6 , 7 }, /* 9 */
+	{ 4 , 5 , 6 }, /* 10 */
+	{ 0 , 1 , 2 }, /* 11 */
+	{ 0 , 2 , 3 }  /* 12 */
+};
+
 struct cline
 {
 	int pt1,pt2;
@@ -119,10 +147,13 @@ struct cline
 struct name_tree
 {
 	int region_id;
-	int element_id;
+	int element_id;		/* > 0  -> normal fastgen4 element id
+				 * < 0  -> CLINE element (-pt1)
+				 * == 0 -> component name
+				 */
 	char name[NAMESIZE+1];
 	struct name_tree *nleft,*nright,*rleft,*rright;
-} *sect_name_root,*model_name_root;
+} *name_root;
 
 struct hole_list
 {
@@ -138,6 +169,20 @@ struct holes
 	struct hole_list *holes;
 	struct holes *next;
 } *hole_root;
+
+struct fast_verts
+{
+	point_t pt;
+	struct vertex *v;
+} *grid_pts;
+
+struct fast_fus
+{
+	struct faceuse *fu,*fu2;
+	fastf_t thick;
+	int pos;
+	struct fast_fus *next;
+} *fus_root;
 
 void
 Subtract_holes( head , comp_id , group_id )
@@ -160,7 +205,7 @@ int group_id;
 				int reg_id;
 
 				reg_id = list_ptr->group * 1000 + list_ptr->component;
-				ptr = model_name_root;
+				ptr = name_root;
 				while( ptr && ptr->region_id != reg_id )
 				{
 					int diff;
@@ -227,59 +272,14 @@ List_holes()
 }
 
 void
-Free_tree()
-{
-	struct name_tree *ptr;
-	struct name_tree *tmp_ptr;
-
-	nmg_tbl( &stack , TBL_RST , (long *)NULL );
-
-	ptr = sect_name_root;
-	while( 1 )
-	{
-		while( ptr )
-		{
-			PUSH( ptr );
-			ptr = ptr->nleft;
-		}
-		POP( name_tree , ptr );
-		if( !ptr )
-			break;
-
-		tmp_ptr = ptr;
-		ptr = ptr->nright;
-		rt_free( (char *)tmp_ptr , "Free_tree: ptr" );
-	}
-
-	sect_name_root = (struct name_tree *)NULL;
-}
-
-void
 List_names()
 {
 	struct name_tree *ptr;
 
 	nmg_tbl( &stack , TBL_RST , (long *)NULL );
 
-	rt_log( "\nNames for current section in alphabetical order:\n" );
-	ptr = sect_name_root;
-	while( 1 )
-	{
-		while( ptr )
-		{
-			PUSH( ptr );
-			ptr = ptr->nleft;
-		}
-		POP( name_tree , ptr );
-		if( !ptr )
-			break;
-
-		rt_log( "%s %d %d\n" , ptr->name , ptr->region_id , ptr->element_id );
-		ptr = ptr->nright;
-	}
-
-	rt_log( "\nNames for current section in ident order:\n" );
-	ptr = sect_name_root;
+	rt_log( "\nNames in ident order:\n" );
+	ptr = name_root;
 	while( 1 )
 	{
 		while( ptr )
@@ -295,8 +295,8 @@ List_names()
 		ptr = ptr->rright;
 	}
 
-	rt_log( "\tAlphabetical list of all names used in this model:\n" );
-	ptr = model_name_root;
+	rt_log( "\tAlphabetical list of names:\n" );
+	ptr = name_root;
 	while( 1 )
 	{
 		while( ptr )
@@ -594,14 +594,6 @@ char *name;
 }
 
 void
-Delete_name_everywhere( name )
-char *name;
-{
-	Delete_name( sect_name_root , name );
-	Delete_name( model_name_root , name );
-}
-
-void
 Insert_name( root , name )
 struct name_tree **root;
 char *name;
@@ -663,13 +655,12 @@ int reg_id;
 int el_id;
 {
 	struct name_tree *nptr_model,*rptr_model;
-	struct name_tree *nptr_sect,*rptr_sect;
 	struct name_tree *new_ptr;
 	int foundn,foundr;
 	int diff;
 
-	rptr_model = Search_ident( model_name_root , reg_id , el_id , &foundr );
-	nptr_model = Search_names( model_name_root , name , &foundn );
+	rptr_model = Search_ident( name_root , reg_id , el_id , &foundr );
+	nptr_model = Search_names( name_root , name , &foundn );
 
 	if( foundn && foundr )
 		return;
@@ -682,71 +673,6 @@ int el_id;
 		rt_bomb( "\tCannot insert new node\n" );
 	}
 
-	/* Add to tree for this section */
-	new_ptr = (struct name_tree *)rt_malloc( sizeof( struct name_tree ) , "Insert_region_name: new_ptr" );
-	new_ptr->rleft = (struct name_tree *)NULL;
-	new_ptr->rright = (struct name_tree *)NULL;
-	new_ptr->nleft = (struct name_tree *)NULL;
-	new_ptr->nright = (struct name_tree *)NULL;
-	new_ptr->region_id = reg_id;
-	new_ptr->element_id = el_id;
-	strncpy( new_ptr->name , name , NAMESIZE+1 );
-
-	if( !sect_name_root )
-		sect_name_root = new_ptr;
-	else
-	{
-		rptr_sect = Search_ident( sect_name_root , reg_id , el_id , &foundr );
-		nptr_sect = Search_names( sect_name_root , name , &foundn );
-
-		diff = strncmp( name , nptr_sect->name , NAMESIZE );
-
-		if( diff > 0 )
-		{
-			if( nptr_sect->nright )
-			{
-				rt_log( "Insert_region_name: nptr_sect->nright not null\n" );
-				rt_bomb( "\tCannot insert new node\n" );
-			}
-			nptr_sect->nright = new_ptr;
-		}
-		else
-		{
-			if( nptr_sect->nleft )
-			{
-				rt_log( "Insert_region_name( %s, reg_id=%d, el_id=%d: nptr_sect->nleft not null\n" , name , reg_id , el_id );
-				List_names();
-				rt_bomb( "\tCannot insert new node\n" );
-			}
-			nptr_sect->nleft = new_ptr;
-		}
-
-
-		diff = reg_id - rptr_sect->region_id;
-
-		if( diff == 0 )
-			diff = el_id - rptr_sect->element_id;
-
-		if( diff > 0 )
-		{
-			if( rptr_sect->rright )
-			{
-				rt_log( "Insert_region_name: rptr_sect->rright not null\n" );
-				rt_bomb( "\tCannot insert new node\n" );
-			}
-			rptr_sect->rright = new_ptr;
-		}
-		else
-		{
-			if( rptr_sect->rleft )
-			{
-				rt_log( "Insert_region_name: rptr_sect->rleft not null\n" );
-				rt_bomb( "\tCannot insert new node\n" );
-			}
-			rptr_sect->rleft = new_ptr;
-		}
-	}
-
 	/* Add to tree for entire model */
 	new_ptr = (struct name_tree *)rt_malloc( sizeof( struct name_tree ) , "Insert_region_name: new_ptr" );
 	new_ptr->rleft = (struct name_tree *)NULL;
@@ -757,8 +683,8 @@ int el_id;
 	new_ptr->element_id = el_id;
 	strncpy( new_ptr->name , name , NAMESIZE+1 );
 
-	if( !model_name_root )
-		model_name_root = new_ptr;
+	if( !name_root )
+		name_root = new_ptr;
 	else
 	{
 		diff = strncmp( name , nptr_model->name , NAMESIZE );
@@ -821,7 +747,7 @@ int el_id;
 
 	reg_id = g_id * 1000 + c_id;
 
-	ptr = Search_ident( model_name_root , reg_id , el_id , &found );
+	ptr = Search_ident( name_root , reg_id , el_id , &found );
 
 	if( found )
 		return( ptr->name );
@@ -840,7 +766,7 @@ make_comp_group()
 
 	nmg_tbl( &stack , TBL_RST , (long *)NULL );
 
-	ptr = sect_name_root;
+	ptr = name_root;
 	while( 1 )
 	{
 		while( ptr )
@@ -852,7 +778,7 @@ make_comp_group()
 		if( !ptr )
 			break;
 
-		if( ptr->element_id )
+		if(ptr->region_id == region_id && ptr->element_id )
 		{
 			if( mk_addmember( ptr->name , &g_head , WMOP_UNION ) == (struct wmember *)NULL )
 			{
@@ -873,7 +799,7 @@ make_comp_group()
 		{
 			sprintf( name , "comp_%d" , region_id );
 			make_unique_name( name );
-			Insert_name( &model_name_root , name );
+			Insert_name( &name_root , name );
 		}
 
 		mk_lfcomb( fdout , name , &g_head , 0 );
@@ -1011,7 +937,7 @@ char *name;
 
 	len = strlen( name );
 
-	ptr = Search_names( model_name_root , name , &found );
+	ptr = Search_names( name_root , name , &found );
 	while( found )
 	{
 		sprintf( append , "_%d" , name_count );
@@ -1023,7 +949,7 @@ char *name;
 		else
 			strcpy( &name[NAMESIZE-append_len] , append );
 
-		ptr = Search_names( model_name_root , name , &found );
+		ptr = Search_names( name_root , name , &found );
 	}
 }
 
@@ -1076,7 +1002,7 @@ int inner;
 {
 	get_solid_name( name , type , element_id , c_id , g_id , inner );
 
-	Insert_name( &model_name_root , name );
+	Insert_name( &name_root , name );
 }
 
 void
@@ -1125,10 +1051,12 @@ do_grid()
 	while( grid_no > grid_size - 1 )
 	{
 		grid_size += GRID_BLOCK;
-		grid_pts = (point_t *)rt_realloc( (char *)grid_pts , grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
+		grid_pts = (struct fast_verts *)rt_realloc( (char *)grid_pts , grid_size * sizeof( struct fast_verts ) , "fast4-g: grid_pts" );
 	}
 
-	VSET( grid_pts[grid_no] , x*25.4 , y*25.4 , z*25.4 );
+	VSET( grid_pts[grid_no].pt , x*25.4 , y*25.4 , z*25.4 );
+	grid_pts[grid_no].v = (struct vertex *)NULL;
+
 	if( grid_no > max_grid_no )
 		max_grid_no = grid_no;
 }
@@ -1152,7 +1080,6 @@ make_cline_regions()
 		/* Add endpoints to points list */
 		nmg_tbl( &points , TBL_INS_UNIQUE , (long *)cline_ptr->pt1 );
 		nmg_tbl( &points , TBL_INS_UNIQUE , (long *)cline_ptr->pt2 );
-
 		
 		cline_ptr = cline_ptr->next;
 	}
@@ -1197,8 +1124,8 @@ make_cline_regions()
 
 			/* make sphere solid at cline joint */
 			sprintf( name , "%d.%d.j0" , region_id , pt_no );
-			Insert_name( &model_name_root , name );
-			mk_sph( fdout , name , grid_pts[pt_no] , sph_radius );
+			Insert_name( &name_root , name );
+			mk_sph( fdout , name , grid_pts[pt_no].pt , sph_radius );
 
 			/* Union sphere */
 			if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
@@ -1212,8 +1139,8 @@ make_cline_regions()
 			if( sph_inner_radius > 0.0 && sph_inner_radius < sph_radius )
 			{
 				sprintf( name , "%d.%d.j1" , region_id , pt_no );
-				Insert_name( &model_name_root , name );
-				mk_sph( fdout , name , grid_pts[pt_no] , sph_inner_radius );
+				Insert_name( &name_root , name );
+				mk_sph( fdout , name , grid_pts[pt_no].pt , sph_inner_radius );
 
 				if( mk_addmember( name , &head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 				{
@@ -1253,7 +1180,7 @@ make_cline_regions()
 			 */
 			bad_name = find_region_name( group_id , comp_id , -pt_no );
 			if( bad_name )
-				Delete_name_everywhere( bad_name );
+				Delete_name( name_root , bad_name );
 		}
 
 		/* make regions for all CLINE elements that start at this pt_no */
@@ -1378,7 +1305,7 @@ do_sphere()
 	RT_LIST_INIT( &sphere_region.l );
 
 	make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 0 );
-	mk_sph( fdout , name , grid_pts[center_pt] , radius );
+	mk_sph( fdout , name , grid_pts[center_pt].pt , radius );
 
 	if( mk_addmember( name ,  &sphere_region , WMOP_UNION ) == (struct wmember *)NULL )
 	{
@@ -1395,7 +1322,7 @@ do_sphere()
 	}
 
 	make_solid_name( name , CSPHERE , element_id , comp_id , group_id , 1 );
-	mk_sph( fdout , name , grid_pts[center_pt] , inner_radius );
+	mk_sph( fdout , name , grid_pts[center_pt].pt , inner_radius );
 
 	if( mk_addmember( name , &sphere_region , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 	{
@@ -1409,51 +1336,333 @@ do_sphere()
 	MK_REGION( fdout , &sphere_region , group_id , comp_id , element_id , CSPHERE )
 }
 
-/*	cleanup from previous component and start a new one */
 void
-do_section( final )
-int final;
+make_nmg_name( name , r_id )
+char *name;
+int r_id;
 {
+	sprintf( name , "nmg.%d" , r_id );
 
-	if( pass )
+	make_unique_name( name );
+}
+
+void
+Check_normals()
+{
+	/* XXXX This routine is far from complete */
+	struct nmgregion *r1;
+	struct nmg_ptbl verts;
+
+	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+
+	NMG_CK_SHELL( s );
+	nmg_decompose_shell( s , &tol );
+
+	for( RT_LIST_FOR( r1 , nmgregion , &m->r_hd ) )
 	{
-		make_cline_regions();
-		if( final )
+		struct shell *s1;
+
+		NMG_CK_REGION( r1 );
+
+		/* Calculate center of shell */
+		for( RT_LIST_FOR( s1 , shell , &r1->s_hd ) )
 		{
-			make_comp_group();
-			List_names();
-			Free_tree();
+			struct vertex *v;
+			point_t shell_center;
+			struct faceuse *fu;
+			int i;
+
+			NMG_CK_SHELL( s1 );
+
+			VSET( shell_center , 0.0 , 0.0 , 0.0 );
+
+			nmg_vertex_tabulate( &verts , &s1->l.magic );
+
+			for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+			{
+				v = (struct vertex *)NMG_TBL_GET( &verts , i );
+				VADD2( shell_center , shell_center , v->vg_p->coord );
+			}
+
+			VSCALE( shell_center , shell_center , (fastf_t)(NMG_TBL_END( &verts ) ) );
+
+			nmg_tbl( &verts , TBL_RST , (long *)NULL );
+
+			/* check if outward normal points away from center */
+			for( RT_LIST_FOR( fu , faceuse , &s1->fu_hd ) )
+			{
+				vect_t norm;
+				vect_t to_center;
+				struct loopuse *lu;
+				struct edgeuse *eu;
+				fastf_t dot;
+
+				NMG_CK_FACEUSE( fu );
+
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				NMG_GET_FU_NORMAL( norm , fu );
+				lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+				NMG_CK_LOOPUSE( lu );
+				eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+				NMG_CK_EDGEUSE( eu );
+
+				v = eu->vu_p->v_p;
+
+				NMG_CK_VERTEX( v );
+
+				VSUB2( to_center , shell_center , v->vg_p->coord )
+
+				dot = VDOT( to_center , norm );
+				if( RT_VECT_ARE_PERP( dot , &tol ) )
+				{
+					/* shell center is on face, probably only one face */
+					continue;
+				}
+
+				if( dot > 0.0 )
+				{
+					/* outward normal points inward */
+				}
+			}
 		}
 	}
 
-	if( !final )
+	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+}
+void
+Extrude_faces()
+{
+	struct fast_fus *fus;
+	struct nmg_ptbl verts;
+	int i;
+	int centers=0;
+	long **trans_tbl;
+
+	Check_normals();
+
+	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+
+	fus = fus_root;
+	while( fus )
 	{
-		strncpy( field , &line[8] , 8 );
-		group_id = atoi( field );
-
-		strncpy( field , &line[16] , 8 );
-		comp_id = atoi( field );
-
-		if( comp_id > 999 )
+		if( fus->pos == POS_CENTER )
 		{
-			rt_log( "Illegal component id number %d, changed to 999\n" , comp_id );
-			comp_id = 999;
+			centers = 1;
+			break;
 		}
-
-		region_id = group_id * 1000 + comp_id;
-
-		strncpy( field , &line[24] , 8 );
-		mode = atoi( field );
-		if( mode != 1 && mode != 2 )
-		{
-			rt_log( "Illegal mode (%d) for group %d component %d, using volume mode\n",
-				mode, group_id, comp_id );
-			mode = 2;
-		}
-
-		if( pass )
-			name_name[0] = '\0';
+		fus = fus->next;
 	}
+
+	if( centers )
+	{
+		/* must extrude twice
+		 * first extrude normalward
+		 */
+		fus = fus_root;
+		while( fus )
+		{
+			struct faceuse *fu;
+			struct face_g *fg;
+
+			if( fus->pos == POS_CENTER )
+			{
+				fu = fus->fu;
+				NMG_CK_FACEUSE( fu );
+				fg = fu->f_p->fg_p;
+				NMG_CK_FACE_G( fg );
+
+				if( fu->f_p->flip )
+					fg->N[3] -= fus->thick;
+				else
+					fg->N[3] += fus->thick;
+			}
+
+			fus = fus->next;
+		}
+
+		/* adjust all vertices */
+		nmg_vertex_tabulate( &verts , &s2->l.magic );
+
+		for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+		{
+			struct vertex *v;
+
+			v = (struct vertex *)NMG_TBL_GET( &verts , i );
+			if( nmg_in_vert( v , &tol ) )
+			{
+				rt_log( "Extrude_faces: Could not find new vertex for extruded face\n" );
+			}
+		}
+		nmg_tbl( &verts , TBL_RST , (long *)NULL );
+	}
+
+	/* extrude faces anti-normalward */
+
+	/* first duplicate the plate mode faceuses */
+	s2 = nmg_dup_shell( s , &trans_tbl );
+
+	/* now move the face planes */
+	fus = fus_root;
+	while( fus )
+	{
+		struct faceuse *fu;
+		struct face_g *fg;
+
+		fu = NMG_INDEX_GETP( faceuse , trans_tbl , fus->fu );
+		NMG_CK_FACEUSE( fu );
+		fg = fu->f_p->fg_p;
+		NMG_CK_FACE_G( fg );
+
+		if( fu->f_p->flip )
+			fg->N[3] += fus->thick;
+		else
+			fg->N[3] -= fus->thick;
+
+		fus = fus->next;
+	}
+
+	/* now reverse normals for entire shell */
+	nmg_invert_shell( s2 , &tol );
+
+	/* adjust all vertices */
+	nmg_vertex_tabulate( &verts , &s2->l.magic );
+
+	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	{
+		struct vertex *v;
+
+		v = (struct vertex *)NMG_TBL_GET( &verts , i );
+		if( nmg_in_vert( v , &tol ) )
+		{
+			rt_log( "Extrude_faces: Could not find new vertex for extruded face\n" );
+		}
+	}
+	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+
+	if( nmg_ck_closed_surf( s , &tol ) )
+	{
+		if( !nmg_ck_closed_surf( s2 , &tol ) )
+		{
+			rt_log( "Extrude_faces: shell is not closed, calling nmg_close_shell\n" );
+
+			nmg_close_shell( s2 );
+		}
+
+		/* now merge the inside and outside shells */
+		nmg_js( s , s2 , &tol );
+	}
+	else
+	{
+		if( nmg_ck_closed_surf( s2 , &tol ) )
+		{
+			rt_log( "Extrude_faces: one shell is closed, other isn't!!\n" );
+			nmg_js( s , s2 , &tol );
+		}
+		else
+		{
+			/* connect the boundaries of the two open shells */
+			nmg_open_shells_connect( s , s2 , trans_tbl , &tol );
+		}
+	}
+}
+
+void
+make_nmg_objects()
+{
+	struct faceuse *fu;
+	struct nmg_ptbl faces;
+	struct fast_fus *fus;
+	struct wmember head;
+	char name[NAMESIZE+1];
+
+	if( !m )
+		return;
+
+	/* first fuse vertices in model */
+	(void)nmg_model_vertex_fuse( m , &tol );
+
+	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		nmg_tbl( &faces , TBL_INS , (long *)fu );
+	}
+
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+
+	nmg_fix_normals( s , &tol );
+
+	if( mode == PLATE_MODE )
+		Extrude_faces();
+
+	/* fuse vertices in model again */
+	(void)nmg_model_vertex_fuse( m , &tol );
+
+	nmg_tbl( &faces , TBL_RST , (long *)NULL );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		nmg_tbl( &faces , TBL_INS , (long *)fu );
+	}
+
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+
+	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+
+
+	nmg_shell_coplanar_face_merge( s , &tol , 0 );
+	nmg_simplify_shell( s );
+
+	/* recompute the bounding boxes */
+	nmg_region_a( s->r_p , &tol );
+
+	nmg_pr_s_briefly( s , (char *)NULL );
+
+	make_nmg_name( name , region_id );
+
+	mk_nmg( fdout , name , m );
+
+	nmg_km( m );
+
+	m = (struct model *)NULL;
+
+	fus = fus_root;
+	while( fus )
+	{
+		struct fast_fus *tmp;
+
+		tmp = fus;
+		fus = fus->next;
+		rt_free( (char *)tmp , "make_nmg_objects: fus" );
+	}
+
+	fus_root = (struct fast_fus *)NULL;
+
+	/* make region containing nmg object */
+	RT_LIST_INIT( &head.l );
+
+	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
+	{
+		rt_log( "make_nmg_objects: mk_addmember failed\n" , name );
+		rt_bomb( "Cannot make nmg region\n" );
+	}
+
+	/* subtract any holes for this component */
+	Subtract_holes( &head , comp_id , group_id );
+
+	MK_REGION( fdout , &head , group_id , comp_id , nmgs , NMG )
 }
 
 void
@@ -1545,10 +1754,10 @@ do_cline()
 	strncpy( field , &line[64] , 8 );
 	radius = atof( field ) * 25.4;
 
-	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
+	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
 
 	make_solid_name( name , CLINE , element_id , comp_id , group_id , 0 );
-	mk_rcc( fdout , name , grid_pts[pt1] , height , radius );
+	mk_rcc( fdout , name , grid_pts[pt1].pt , height , radius );
 
 	if( thick > radius )
 	{
@@ -1560,7 +1769,7 @@ do_cline()
 	else if( thick > 0.0 )
 	{
 		make_solid_name( name , CLINE , element_id , comp_id , group_id , 1 );
-		mk_rcc( fdout , name , grid_pts[pt1] , height , radius-thick );
+		mk_rcc( fdout , name , grid_pts[pt1].pt , height , radius-thick );
 	}
 
 	Add_to_clines( element_id , pt1 , pt2 , thick , radius );
@@ -1685,9 +1894,9 @@ do_ccone1()
 		r2 = SQRT_SMALL_FASTF;
 
 	/* make outside TGC */
-	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
+	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
 	make_solid_name( outer_name , CCONE1 , element_id , comp_id , group_id , 0 );
-	mk_trc_h( fdout , outer_name , grid_pts[pt1] , height , r1 , r2 );
+	mk_trc_h( fdout , outer_name , grid_pts[pt1].pt , height , r1 , r2 );
 
 	RT_LIST_INIT( &r_head.l );
 	if( mk_addmember( outer_name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
@@ -1710,12 +1919,12 @@ do_ccone1()
 		if( end1 == END_OPEN )
 		{
 			inner_r1 = r1 - thick;
-			VMOVE( base , grid_pts[pt1] );
+			VMOVE( base , grid_pts[pt1].pt );
 		}
 		else
 		{
 			inner_r1 = r1 + thick * (r2 - r1)/length - thick;
-			VJOIN1( base , grid_pts[pt1] , thick , height_dir );
+			VJOIN1( base , grid_pts[pt1].pt , thick , height_dir );
 		}
 
 		if( inner_r1 < SQRT_SMALL_FASTF )
@@ -1725,18 +1934,18 @@ do_ccone1()
 			inner_r1 = SQRT_SMALL_FASTF;
 			dist_to_new_base = length * ( thick + inner_r1 - r1)/(r2 - r1);
 
-			VJOIN1( base , grid_pts[pt1] , dist_to_new_base , height_dir );
+			VJOIN1( base , grid_pts[pt1].pt , dist_to_new_base , height_dir );
 		}
 
 		if( end2 == END_OPEN )
 		{
 			inner_r2 = r2 - thick;
-			VMOVE( top , grid_pts[pt2] );
+			VMOVE( top , grid_pts[pt2].pt );
 		}
 		else
 		{
 			inner_r2 = r1 + (length - thick)*(r2 - r1)/length - thick;
-			VJOIN1( top , grid_pts[pt2] , -thick , height_dir );
+			VJOIN1( top , grid_pts[pt2].pt , -thick , height_dir );
 		}
 
 		if( inner_r2 < SQRT_SMALL_FASTF )
@@ -1746,7 +1955,7 @@ do_ccone1()
 			inner_r2 = SQRT_SMALL_FASTF;
 			dist_to_new_top = length * ( thick + inner_r1 - r1)/(r2 - r1);
 
-			VJOIN1( top , grid_pts[pt1] , dist_to_new_top , height );
+			VJOIN1( top , grid_pts[pt1].pt , dist_to_new_top , height );
 		}
 
 		VSUB2( inner_height , top , base );
@@ -1871,16 +2080,16 @@ do_ccone2()
 
 	RT_LIST_INIT( &r_head.l );
 
-	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
+	VSUB2( height , grid_pts[pt2].pt , grid_pts[pt1].pt );
 
 	make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 0 );
-	mk_trc_h( fdout , name , grid_pts[pt1] , height , ro1 , ro2 );
+	mk_trc_h( fdout , name , grid_pts[pt1].pt , height , ro1 , ro2 );
 
 	if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "mk_addmember failed!\n" );
 
 	make_solid_name( name , CCONE2 , element_id , comp_id , group_id , 1 );
-	mk_trc_h( fdout , name , grid_pts[pt1] , height , ri1 , ri2 );
+	mk_trc_h( fdout , name , grid_pts[pt1].pt , height , ri1 , ri2 );
 
 	if( mk_addmember( name , &r_head , WMOP_SUBTRACT ) == (struct wmember *)NULL )
 		rt_bomb( "mk_addmember failed!\n" );
@@ -2006,6 +2215,8 @@ getline()
 {
 	int len;
 
+	bzero( (void *)line , LINELEN );
+
 	if( fgets( line , LINELEN , fdin ) == (char *)NULL )
 		return( 0 );
 
@@ -2014,6 +2225,419 @@ getline()
 		line[len-1] = '\0';
 
 	return( 1 );
+}
+
+void
+do_tri()
+{
+	int element_id;
+	int pt1,pt2,pt3;
+	fastf_t thick;
+	int pos;
+
+	strncpy( field , &line[8] , 8 );
+	element_id = atoi( field );
+
+	if( !nmgs )
+		nmgs = element_id;
+
+	if( !pass )
+		return;
+
+	strncpy( field , &line[24] , 8 );
+	pt1 = atoi( field );
+
+	strncpy( field , &line[32] , 8 );
+	pt2 = atoi( field );
+
+	strncpy( field , &line[40] , 8 );
+	pt3 = atoi( field );
+
+	if( pt1 == pt2 || pt2 == pt3 || pt1 == pt3 )
+	{
+		rt_log( "do_tri: ignoring degenerate CTRI element\n" );
+		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		return;
+	}
+
+	if( mode == PLATE_MODE )
+	{
+		strncpy( field , &line[56] , 8 );
+		thick = atof( field ) * 25.4;
+		if( thick <= 0.0 )
+		{
+			rt_log( "do_tri: illegal thickness (%f), skipping CTRI element\n" , thick );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+
+		strncpy( field , &line[64] , 8 );
+		pos = atoi( field );
+
+		if( pos == 0 )	/* use default */
+			pos = POS_FRONT;
+
+		if( pos != POS_CENTER && pos != POS_FRONT )
+		{
+			rt_log( "do_tri: illegal postion parameter (%d), must be one or two\n" , pos );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+	}
+
+	make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
+}
+
+void
+make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos )
+int pt1,pt2,pt3;
+int element_id;
+fastf_t thick;
+int pos;
+{
+	struct vertex **verts[3];
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct fast_fus *fus;
+	fastf_t area;
+	plane_t pl;
+
+	verts[0] = &grid_pts[pt1].v;
+	verts[1] = &grid_pts[pt2].v;
+	verts[2] = &grid_pts[pt3].v;
+
+	if( !m )
+	{
+		m = nmg_mm();
+		r = nmg_mrsv( m );
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+	}
+
+	fu = nmg_cmface( s , verts , 3 );
+	if( !fu )
+	{
+		rt_log( "do_tri: nmg_cmface failed\n" );
+		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		return;
+	}
+
+	lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+	nmg_vertex_gv( grid_pts[pt1].v , grid_pts[pt1].pt );
+	nmg_vertex_gv( grid_pts[pt2].v , grid_pts[pt2].pt );
+	nmg_vertex_gv( grid_pts[pt3].v , grid_pts[pt3].pt );
+
+	area = nmg_loop_plane_area( lu , pl );
+	if( area < 0.0 )
+	{
+		(void)nmg_kfu( fu );
+		rt_log( "do_tri: ignoring degenerate CTRI element\n" );
+		rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+		return;
+	}
+
+	nmg_face_g( fu , pl );
+
+	/* save faceuse and thickness info for plate mode */
+	if( mode == PLATE_MODE )
+	{
+		if( !fus_root )
+		{
+			fus_root = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus_root" );
+			fus = fus_root;
+		}
+		else
+		{
+			fus = fus_root;
+			while( fus->next )
+				fus = fus->next;
+			fus->next = (struct fast_fus *)rt_malloc( sizeof( struct fast_fus ) , "Do_tri: fus" );
+			fus = fus->next;
+		}
+
+		fus->next = (struct fast_fus *)NULL;
+		fus->fu = fu;
+		fus->thick = thick;
+		fus->pos = pos;
+	}
+}
+
+void
+do_quad()
+{
+	int element_id;
+	int pt1,pt2,pt3,pt4;
+	fastf_t thick;
+	int pos;
+
+	strncpy( field , &line[8] , 8 );
+	element_id = atoi( field );
+
+	if( !nmgs )
+		nmgs = element_id;
+
+	if( !pass )
+		return;
+
+	strncpy( field , &line[24] , 8 );
+	pt1 = atoi( field );
+
+	strncpy( field , &line[32] , 8 );
+	pt2 = atoi( field );
+
+	strncpy( field , &line[40] , 8 );
+	pt3 = atoi( field );
+
+	strncpy( field , &line[48] , 8 );
+	pt4 = atoi( field );
+
+	if( mode == PLATE_MODE )
+	{
+		strncpy( field , &line[56] , 8 );
+		thick = atof( field ) * 25.4;
+		if( thick < 0.0 )
+		{
+			rt_log( "do_quad: illegal thickness (%f), skipping CQUAD element\n" , thick );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+
+		strncpy( field , &line[64] , 8 );
+		pos = atoi( field );
+
+		if( pos == 0 )	/* use default */
+			pos = POS_FRONT;
+
+		if( pos != POS_CENTER && pos != POS_FRONT )
+		{
+			rt_log( "do_quad: illegal postion parameter (%d), must be one or two\n" , pos );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+	}
+
+	if( pt1 != pt2 && pt2 != pt3 && pt1 != pt3 )
+	{
+
+		make_fast_fu( pt1 , pt2 , pt3 , element_id , thick , pos );
+	}
+
+	if( pt1 != pt3 && pt3 != pt4 && pt1 != pt4 )
+	{
+
+		make_fast_fu( pt1 , pt3 , pt4 , element_id , thick , pos );
+	}
+}
+
+/*	cleanup from previous component and start a new one */
+void
+do_section( final )
+int final;
+{
+
+	if( pass )
+	{
+		if( region_id )
+		{
+			make_nmg_objects();
+			make_cline_regions();
+			make_comp_group();
+		}
+		if( final ) /* The ENDATA card has been found */
+			List_names();
+	}
+	else if( nmgs )
+	{
+		char	name[NAMESIZE+1];
+
+		make_region_name( name , group_id , comp_id , nmgs , NMG );
+	}
+
+	if( !final )
+	{
+		strncpy( field , &line[8] , 8 );
+		group_id = atoi( field );
+
+		strncpy( field , &line[16] , 8 );
+		comp_id = atoi( field );
+
+		if( comp_id > 999 )
+		{
+			rt_log( "Illegal component id number %d, changed to 999\n" , comp_id );
+			comp_id = 999;
+		}
+
+		region_id = group_id * 1000 + comp_id;
+
+		strncpy( field , &line[24] , 8 );
+		mode = atoi( field );
+		if( mode != 1 && mode != 2 )
+		{
+			rt_log( "Illegal mode (%d) for group %d component %d, using volume mode\n",
+				mode, group_id, comp_id );
+			mode = 2;
+		}
+
+		if( pass )
+			name_name[0] = '\0';
+
+		nmgs = 0;
+	}
+}
+
+void
+do_hex1()
+{
+	fastf_t thick=0.0;
+	int pos;
+	int pts[8];
+	int element_id;
+	int i;
+	int cont1,cont2;
+
+	strncpy( field , &line[8] , 8 );
+	element_id = atoi( field );
+
+	if( !nmgs )
+		nmgs = element_id;
+
+	if( !pass )
+	{
+		if( !getline() )
+		{
+			rt_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+				group_id, comp_id, element_id , cont1 );
+			rt_bomb( "CHEX1\n" );
+		}
+		return;
+	}
+
+	for( i=0 ; i<6 ; i++ )
+	{
+		strncpy( field , &line[24 + i*8] , 8 );
+		pts[i] = atoi( field );
+	}
+
+	strncpy( field , &line[72] , 8 );
+	cont1 = atoi( field );
+
+	if( !getline() )
+	{
+		rt_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
+		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+			group_id, comp_id, element_id , cont1 );
+		rt_bomb( "CHEX1\n" );
+	}
+
+	strncpy( field , line , 8 );
+	cont2 = atoi( field );
+
+	if( cont1 != cont2 )
+	{
+		rt_log( "Continuation card numbers do not match for CHEX1 element (%d vs %d)\n", cont1 , cont2 );
+		rt_log( "\tskipping CHEX1 element: group_id = %d, comp_id = %d, element_id = %d\n",
+			group_id, comp_id, element_id );
+		return;
+	}
+
+	strncpy( field , &line[8] , 8 );
+	pts[6] = atoi( field );
+
+	strncpy( field , &line[16] , 8 );
+	pts[7] = atoi( field );
+
+	if( mode == PLATE_MODE )
+	{
+		strncpy( field , &line[56] , 8 );
+		thick = atof( field ) * 25.4;
+		if( thick <= 0.0 )
+		{
+			rt_log( "do_hex1: illegal thickness (%f), skipping CHEX1 element\n" , thick );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+
+		strncpy( field , &line[64] , 8 );
+		pos = atoi( field );
+
+		if( pos == 0 )	/* use default */
+			pos = POS_FRONT;
+
+		if( pos != POS_CENTER && pos != POS_FRONT )
+		{
+			rt_log( "do_hex1: illegal postion parameter (%d), must be 1 or 2, skipping CHEX1 element\n" , pos );
+			rt_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
+			return;
+		}
+	}
+
+	for( i=0 ; i<NHEX_FACES ; i++ )
+		make_fast_fu( pts[hex_faces[i][0]] , pts[hex_faces[i][1]] , pts[hex_faces[i][2]] ,
+			element_id , thick , pos );
+
+}
+
+void
+do_hex2()
+{
+	int pts[8];
+	int element_id;
+	int i;
+	int cont1,cont2;
+
+	strncpy( field , &line[8] , 8 );
+	element_id = atoi( field );
+
+	if( !nmgs )
+		nmgs = element_id;
+
+	if( !pass )
+	{
+		if( !getline() )
+		{
+			rt_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+				group_id, comp_id, element_id , cont1 );
+			rt_bomb( "CHEX2\n" );
+		}
+		return;
+	}
+
+	for( i=0 ; i<6 ; i++ )
+	{
+		strncpy( field , &line[24 + i*8] , 8 );
+		pts[i] = atoi( field );
+	}
+
+	strncpy( field , &line[72] , 8 );
+	cont1 = atoi( field );
+
+	if( !getline() )
+	{
+		rt_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
+		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+			group_id, comp_id, element_id , cont1 );
+		rt_bomb( "CHEX2\n" );
+	}
+
+	strncpy( field , line , 8 );
+	cont2 = atoi( field );
+
+	if( cont1 != cont2 )
+	{
+		rt_log( "Continuation card numbers do not match for CHEX2 element (%d vs %d)\n", cont1 , cont2 );
+		rt_log( "\tskipping CHEX2 element: group_id = %d, comp_id = %d, element_id = %d\n",
+			group_id, comp_id, element_id );
+		return;
+	}
+
+	strncpy( field , &line[8] , 8 );
+	pts[6] = atoi( field );
+
+	strncpy( field , &line[16] , 8 );
+	pts[7] = atoi( field );
+
+	/* XXX Need some code here */
 }
 
 void
@@ -2027,6 +2651,7 @@ int pass_number;
 		rt_bomb( "Process_input" );
 	}
 
+	region_id = 0;
 	pass = pass_number;
 	while( getline() )
 	{
@@ -2048,13 +2673,13 @@ int pass_number;
 		else if( !strncmp( line , "CLINE" , 5 ) )
 			do_cline();
 		else if( !strncmp( line , "CHEX1" , 5 ) )
-			rt_log( "\tchex1\n" );
+			do_hex1();
 		else if( !strncmp( line , "CHEX2" , 5 ) )
-			rt_log( "\tchex2\n" );
+			do_hex2();
 		else if( !strncmp( line , "CTRI" , 4 ) )
-			rt_log( "\tctri\n" );
+			do_tri();
 		else if( !strncmp( line , "CQUAD" , 5 ) )
-			rt_log( "\tcquad\n" );
+			do_quad();
 		else if( !strncmp( line , "CCONE1" , 6 ) )
 			do_ccone1();
 		else if( !strncmp( line , "CCONE2" , 6 ) )
@@ -2101,18 +2726,28 @@ char *argv[];
 	}
 
 	grid_size = GRID_BLOCK;
-	grid_pts = (point_t *)rt_malloc( grid_size * sizeof( point_t ) , "fast4-g: grid_pts" );
+	grid_pts = (struct fast_verts *)rt_malloc( grid_size * sizeof( struct fast_verts ) , "fast4-g: grid_pts" );
 
 	cline_root = (struct cline *)NULL;
 	cline_last_ptr = (struct cline *)NULL;
 
-	sect_name_root = (struct name_tree *)NULL;
-	model_name_root = (struct name_tree *)NULL;
+	name_root = (struct name_tree *)NULL;
 
 	hole_root = (struct holes *)NULL;
 
+	fus_root = (struct fast_fus *)NULL;
+
 	name_name[0] = '\0';
 	name_count = 0;
+
+	/* Initialze tolerance struct */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
+	m = (struct model *)NULL;
 
 	nmg_tbl( &stack , TBL_INIT , (long *)NULL );
 
