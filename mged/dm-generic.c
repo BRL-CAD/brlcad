@@ -117,133 +117,167 @@ char **argv;
   }
 
   if(!strcmp(argv[0], "m")){
+    int x;
+    int y;
+    int old_orig_gui;
+    int stolen = 0;
+    fastf_t fx, fy;
+
     if(argc < 3){
       Tcl_AppendResult(interp, "dm m: need more parameters\n",
 		       "dm m xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
 
-    {
-      int x;
-      int y;
-      int old_orig_gui;
-      int stolen = 0;
-      fastf_t fx, fy;
+    old_orig_gui = mged_variables->orig_gui;
 
-      old_orig_gui = mged_variables->orig_gui;
+    fx = dm_Xx2Normal(dmp, atoi(argv[1]));
+    fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
+    x = fx * 2047.0;
+    y = fy * 2047.0;
 
-      fx = dm_Xx2Normal(dmp, atoi(argv[1]));
-      fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
-      x = fx * 2047.0;
-      y = fy * 2047.0;
-
-      if(mged_variables->faceplate &&
-	 mged_variables->orig_gui){
+    if(mged_variables->faceplate &&
+       mged_variables->orig_gui){
 #define        MENUXLIM        (-1250)
 
-	if(x >= MENUXLIM && scroll_select(x, y, 0)){
-	  stolen = 1;
-	  goto end;
-	}
-
-	if(x < MENUXLIM && mmenu_select(y, 0)){
-	  stolen = 1;
-	  goto end;
-	}
+      if(x >= MENUXLIM && scroll_select(x, y, 0)){
+	stolen = 1;
+	goto end;
       }
 
-      mged_variables->orig_gui = 0;
-      fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
-      y = fy * 2047.0;
+      if(x < MENUXLIM && mmenu_select(y, 0)){
+	stolen = 1;
+	goto end;
+      }
+    }
+
+    mged_variables->orig_gui = 0;
+    fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
+    y = fy * 2047.0;
 
 end:
-      bu_vls_init(&vls);
-      if(mged_variables->mouse_behavior == 'q' && !stolen){
-	point_t view_pt;
-	point_t model_pt;
+    bu_vls_init(&vls);
+    if(mged_variables->mouse_behavior == 'q' && !stolen){
+      point_t view_pt;
+      point_t model_pt;
 
-	VSET(view_pt, fx, fy, 1.0);
-	MAT4X3PNT(model_pt, view2model, view_pt);
-	VSCALE(model_pt, model_pt, base2local);
-	if(*zclip_ptr)
-	  bu_vls_printf(&vls, "nirt %lf %lf %lf",
-			model_pt[X], model_pt[Y], model_pt[Z]);
-	else
-	  bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
-			model_pt[X], model_pt[Y], model_pt[Z]);
-      }else if((mged_variables->mouse_behavior == 'p' ||
-		mged_variables->mouse_behavior == 'r' ||
-		mged_variables->mouse_behavior == 'z') && !stolen){
-	rubber_band_active = 1;
-	rect_x = fx;
-	rect_y = fy;
-	rect_width = 0.0;
-	rect_height = 0.0;
-
-	dirty = 1;
-      }else if(mged_variables->grid_snap && !stolen &&
-	       state != ST_S_PICK && state != ST_O_PICK &&
-	       state != ST_O_PATH && !SEDIT_PICK){
-	point_t view_pt;
-	point_t model_pt;
-
+      if(mged_variables->grid_snap)
 	snap_to_grid(&fx, &fy);
 
-	if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	   mged_variables->transform == 'e'){
-	  int save_edflag = -1;
+      VSET(view_pt, fx, fy, 1.0);
+      MAT4X3PNT(model_pt, view2model, view_pt);
+      VSCALE(model_pt, model_pt, base2local);
+      if(*zclip_ptr)
+	bu_vls_printf(&vls, "nirt %lf %lf %lf",
+		      model_pt[X], model_pt[Y], model_pt[Z]);
+      else
+	bu_vls_printf(&vls, "nirt -b %lf %lf %lf",
+		      model_pt[X], model_pt[Y], model_pt[Z]);
+    }else if((mged_variables->mouse_behavior == 'p' ||
+	      mged_variables->mouse_behavior == 'r' ||
+	      mged_variables->mouse_behavior == 'z') && !stolen){
 
-	  if(state == ST_S_EDIT){
-	    save_edflag = es_edflag;
-	    if(!SEDIT_TRAN)
-	      es_edflag = STRANS;
-	  }else{
-	    save_edflag = edobj;
-	    edobj = BE_O_XY;
-	  }
+      if(mged_variables->grid_snap)
+	snap_to_grid(&fx, &fy);
 
-	  MAT4X3PNT(view_pt, model2view, e_axes_pos);
-	  view_pt[X] = fx;
-	  view_pt[Y] = fy;
-	  MAT4X3PNT(model_pt, view2model, view_pt);
-	  VSCALE(model_pt, model_pt, base2local);
-	  bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
+      rubber_band_active = 1;
+      rect_x = fx;
+      rect_y = fy;
+      rect_width = 0.0;
+      rect_height = 0.0;
 
-	  if(state == ST_S_EDIT)
-	    es_edflag = save_edflag;
-	  else
-	    edobj = save_edflag;
+      dirty = 1;
+    }else if(mged_variables->mouse_behavior == 's' && !stolen){
+      if(mged_variables->grid_snap){
+	snap_to_grid(&fx, &fy);
+	x = fx * 2047.0;
+	y = fy * 2047.0;
+      }
+      
+      bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
+    }else if(mged_variables->mouse_behavior == 'o' && !stolen){
+      if(mged_variables->grid_snap){
+	snap_to_grid(&fx, &fy);
+	x = fx * 2047.0;
+	y = fy * 2047.0;
+      }
+      
+      bu_vls_printf(&vls, "mouse_object_edit_select %d %d", x, y);
+    }else if(mged_variables->mouse_behavior == 'c' && !stolen){
+      if(mged_variables->grid_snap){
+	snap_to_grid(&fx, &fy);
+	x = fx * 2047.0;
+	y = fy * 2047.0;
+      }
+      
+      bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
+    }else if(adc_draw && mged_variables->transform == 'a' && !stolen) {
+      point_t model_pt;
+      point_t view_pt;
 
-	  mged_variables->orig_gui = old_orig_gui;
-	  bu_vls_free(&vls);
-	  return status;
+      if(mged_variables->grid_snap)
+	snap_to_grid(&fx, &fy);
+
+      VSET(view_pt, fx, fy, 1.0);
+      MAT4X3PNT(model_pt, view2model, view_pt);
+      VSCALE(model_pt, model_pt, base2local);
+      bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
+    }else if(mged_variables->grid_snap && !stolen &&
+	     state != ST_S_PICK && state != ST_O_PICK &&
+	     state != ST_O_PATH && !SEDIT_PICK){
+      point_t view_pt;
+      point_t model_pt;
+
+      snap_to_grid(&fx, &fy);
+
+      if((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	 mged_variables->transform == 'e'){
+	int save_edflag = -1;
+
+	if(state == ST_S_EDIT){
+	  save_edflag = es_edflag;
+	  if(!SEDIT_TRAN)
+	    es_edflag = STRANS;
 	}else{
-	  point_t vcenter;
-
-	  MAT_DELTAS_GET_NEG(vcenter, toViewcenter);
-	  MAT4X3PNT(view_pt, model2view, vcenter);
-	  view_pt[X] = fx;
-	  view_pt[Y] = fy;
-	  MAT4X3PNT(model_pt, view2model, view_pt);
-	  VSCALE(model_pt, model_pt, base2local);
-	  bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	  save_edflag = edobj;
+	  edobj = BE_O_XY;
 	}
-      }else if(mged_variables->mouse_behavior == 's' && !stolen){
-	bu_vls_printf(&vls, "mouse_solid_edit_select %d %d", x, y);
-      }else if(mged_variables->mouse_behavior == 'o' && !stolen){
-	bu_vls_printf(&vls, "mouse_object_edit_select %d %d", x, y);
-      }else if(mged_variables->mouse_behavior == 'c' && !stolen){
-	bu_vls_printf(&vls, "mouse_comb_edit_select %d %d", x, y);
-      }else
-	bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
 
-      status = Tcl_Eval(interp, bu_vls_addr(&vls));
-      mged_variables->orig_gui = old_orig_gui;
-      bu_vls_free(&vls);
+	MAT4X3PNT(view_pt, model2view, e_axes_pos);
+	view_pt[X] = fx;
+	view_pt[Y] = fy;
+	MAT4X3PNT(model_pt, view2model, view_pt);
+	VSCALE(model_pt, model_pt, base2local);
+	bu_vls_printf(&vls, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	status = Tcl_Eval(interp, bu_vls_addr(&vls));
 
-      return status;
-    }
+	if(state == ST_S_EDIT)
+	  es_edflag = save_edflag;
+	else
+	  edobj = save_edflag;
+
+	mged_variables->orig_gui = old_orig_gui;
+	bu_vls_free(&vls);
+	return status;
+      }else{
+	point_t vcenter;
+
+	MAT_DELTAS_GET_NEG(vcenter, toViewcenter);
+	MAT4X3PNT(view_pt, model2view, vcenter);
+	view_pt[X] = fx;
+	view_pt[Y] = fy;
+	MAT4X3PNT(model_pt, view2model, view_pt);
+	VSCALE(model_pt, model_pt, base2local);
+	bu_vls_printf(&vls, "center %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+      }
+    }else
+      bu_vls_printf(&vls, "M 1 %d %d\n", x, y);
+
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+    mged_variables->orig_gui = old_orig_gui;
+    bu_vls_free(&vls);
+
+    return status;
   }
 
   if(!strcmp(argv[0], "am")){
@@ -353,6 +387,10 @@ end:
 	bu_vls_init(&vls);
 
 	VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
+
+	if(mged_variables->grid_snap)
+	  snap_to_grid(&view_pt[X], &view_pt[Y]);
+
 	MAT4X3PNT(model_pt, view2model, view_pt);
 	VSCALE(model_pt, model_pt, base2local);
 
@@ -547,7 +585,7 @@ end:
       start_catching_output(&tmp_vls);
 
       /* Bare set command, print out current settings */
-      bu_struct_print("dm internal variables", dm_xvars_vparse,
+      bu_struct_print("dm internal X variables", dm_xvars_vparse,
 		      (CONST char *)dmp->dm_vars.pub_vars);
 
       stop_catching_output(&tmp_vls);
