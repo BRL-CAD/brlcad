@@ -585,6 +585,7 @@ be_accept()  {
 			sp->s_iflag = DOWN;
 
 		illump = SOLID_NULL;
+		color_soltab();
 		dmp->dmr_colorchange(dmp);
 		(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
 	}  else if( state == ST_O_EDIT )  {
@@ -598,6 +599,7 @@ be_accept()  {
 		oedit_accept();
 
 		illump = SOLID_NULL;
+		color_soltab();
 		dmp->dmr_colorchange(dmp);
 		(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
 	} else {
@@ -663,6 +665,7 @@ be_reject()  {
 	/* Clear illumination flags */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
+	color_soltab();
 	dmp->dmr_colorchange(dmp);
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
 }

@@ -316,6 +316,7 @@ char    **argv;
     }
   }
 
+  color_soltab();
   dmp->dmr_colorchange(dmp);
   dmp->dmr_viewchange( dmp, DM_CHGV_REDO, SOLID_NULL );
   ++dmaflag;

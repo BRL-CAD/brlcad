@@ -1037,6 +1037,7 @@ int		copy;
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
 	dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
+	color_soltab();
 	dmp->dmr_colorchange(dmp);
 #endif
 	return(0);		/* OK */
