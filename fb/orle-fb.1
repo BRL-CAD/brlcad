@@ -4,11 +4,11 @@ rle-fb \- decode run-length encoded image onto a frame buffer
 .SH SYNOPSIS
 .B rle-fb
 [
-.B \-Otv
+.B \-Otdv
 ] [
 .B \-b
 {
-.B rgbBG
+.B rgbwBG
 } ] [
 .B \-p
 x y ] [ file.rle ]
@@ -42,6 +42,10 @@ Note that the image is inverted in memory, using as large a buffer as
 will permit.  This means that the entire image will be decoded
 before output will begin appearing.
 .TP
+.B \-d
+Debug option, provides verbose description of file structure and 
+processes called, written on standard error.
+.TP
 .B \-v
 Provides a verbose description of the parameters of the saved image
 on standard error.
@@ -68,6 +72,8 @@ can be any of
 (green),
 .B b
 (blue),
+.B w
+(white),
 .B B
 (black), or
 .B G
