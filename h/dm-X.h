@@ -5,6 +5,7 @@
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
+#define ColormapNull (Colormap *)NULL
 
 /*
  * Display coordinate conversion:
@@ -39,7 +40,7 @@ struct x_vars {
   XFontStruct *fontstruct;
   GC gc;
   Pixmap pix;
-  int is_monochrome;
+  int is_trueColor;
   unsigned long black,gray,white,yellow,red,blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
   Colormap cmap;
