@@ -14,7 +14,7 @@
 #	The U. S. Army Ballistic Research Laboratory		#
 #	Aberdeen Proving Ground, Maryland  21005-5066		#
 #								#
-#  $Header$		#
+#  $Header$	#
 #								#
 #################################################################
 
@@ -29,7 +29,8 @@ NFS=0
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=3.5;	RCS_REVISION=9;		REL_DATE=23-May-89
+RELEASE=3.6;	RCS_REVISION=9;		REL_DATE=25-May-89
+#RELEASE=3.5;	RCS_REVISION=9;		REL_DATE=23-May-89	# internal
 #RELEASE=3.4;	RCS_REVISION=8;		REL_DATE=18-May-89	# internal
 #RELEASE=3.3;	RCS_REVISION=8;		REL_DATE=17-May-89	# internal
 #RELEASE=3.2;	RCS_REVISION=8;		REL_DATE=05-May-89	# internal
