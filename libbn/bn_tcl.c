@@ -194,10 +194,11 @@ char **argv;
 		vect_t vec_ae, vec_twist;
 
 		if (argc < 4 || decode_vect(vec_ae, argv[1]) < 3 ||
-		    decode_vect(vec_twist, argv[2]) < 3) {
-			rt_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
-			    argv[0]);
-			goto error;
+		    decode_vect(vec_twist, argv[2]) < 3 ||
+		    sscanf(argv[3], "%lf", &accuracy) < 1) {
+		  rt_vls_printf(&result, "usage: %s vec_ae vec_twist accuracy",
+				argv[0]);
+		  goto error;
 		}
 
 		(*math_func)(&az, &el, &twist, vec_ae, vec_twist, accuracy);
