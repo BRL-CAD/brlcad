@@ -1146,12 +1146,13 @@ struct edge *e;
 	NMG_CK_VERTEX_G(e->eu_p->eumate_p->vu_p->v_p->vg_p);
 
 	/* make sure we've got a valid edge_g structure */
-	if (e->eg_p) {
-		NMG_CK_EDGE_G(e->eg_p);
+	if (eg_p = e->eg_p) {
+		NMG_CK_EDGE_G(eg_p);
 	} else {
 		m = nmg_find_model(&e->eu_p->l.magic);
-		GET_EDGE_G(eg_p, m);
+		GET_EDGE_G(eg_p, m);	/* sets usage=1 */
 		eg_p->magic = NMG_EDGE_G_MAGIC;
+		e->eg_p = eg_p;
 	}
 
 	/* copy the point from the vertex of one of our edgeuses */
@@ -1161,8 +1162,32 @@ struct edge *e;
 	/* compute the direction from the endpoints of the edgeuse(s) */
 	pt = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 	VSUB2(eg_p->e_dir, eg_p->e_pt, pt);	
+	/* XXX What happens if e_dir has zero length,
+	 * XXX such as when eumate_p->vu_p == eu_p->vu_p
+	 */
 }
 
+/*
+ *			N M G _ U S E _ E D G E _ G
+ *
+ *  Make a use of the edge geometry structure "eg" in edge "e",
+ *  releasing the use of any previous edge geometry by "e".
+ */
+void
+nmg_use_edge_g( e, eg )
+struct edge	*e;
+struct edge_g	*eg;
+{
+	NMG_CK_EDGE(e);
+	NMG_CK_EDGE_G(eg);
+
+	if( e->eg_p )  {
+		/* Macro releases previous edge geom, if usage hits zero */
+		FREE_EDGE_G(e->eg_p);
+	}
+	e->eg_p = eg;
+	eg->usage++;
+}
 
 /*			N M G _ L O O P _ G
  *
@@ -1200,6 +1225,7 @@ struct loop *l;
 			vg = eu->vu_p->v_p->vg_p;
 			NMG_CK_VERTEX_G(vg);
 			VMINMAX(lg->min_pt, lg->max_pt, vg->coord);
+			if( !eu->e_p->eg_p )  nmg_edge_g(eu->e_p);
 		}
 	} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		struct vertexuse	*vu;
@@ -1323,8 +1349,7 @@ struct shell *s;
 
 	/* */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
-		if (!fu->f_p->fg_p)
-			nmg_face_bb(fu->f_p);
+		nmg_face_bb(fu->f_p);
 
 		fg = fu->f_p->fg_p;
 		VMIN(sa->min_pt, fg->min_pt);
@@ -1337,8 +1362,7 @@ struct shell *s;
 		}
 	}
 	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
-		if (!lu->l_p->lg_p)
-			nmg_loop_g(lu->l_p);
+		nmg_loop_g(lu->l_p);
 
 		VMIN(sa->min_pt, lu->l_p->lg_p->min_pt);
 		VMAX(sa->max_pt, lu->l_p->lg_p->max_pt);
