@@ -93,13 +93,15 @@ extern double ipow();
  *			P H O N G _ S E T U P
  */
 HIDDEN int
-phong_setup( rp )
+phong_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct phong_specific *pp;
 
 	GETSTRUCT( pp, phong_specific );
-	rp->reg_udata = (char *)pp;
+	*dpp = (char *)pp;
 
 	pp->shine = 10;
 	pp->wgt_specular = 0.7;
@@ -108,7 +110,7 @@ register struct region *rp;
 	pp->reflect = 0.0;
 	pp->refrac_index = RI_AIR;
 
-	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
+	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
 
 	VSCALE( rp->reg_mater.ma_transmit, 
 		rp->reg_mater.ma_color, pp->transmit );
@@ -119,13 +121,15 @@ register struct region *rp;
  *			M I R R O R _ S E T U P
  */
 HIDDEN int
-mirror_setup( rp )
+mirror_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct phong_specific *pp;
 
 	GETSTRUCT( pp, phong_specific );
-	rp->reg_udata = (char *)pp;
+	*dpp = (char *)pp;
 
 	pp->shine = 4;
 	pp->wgt_specular = 0.6;
@@ -134,7 +138,7 @@ register struct region *rp;
 	pp->reflect = 0.75;
 	pp->refrac_index = 1.65;
 
-	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
+	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
 	if(rdebug&RDEBUG_MATERIAL)
 		mlib_print(rp->reg_name, phong_parse, (mp_off_ty)pp);
 
@@ -147,13 +151,15 @@ register struct region *rp;
  *			G L A S S _ S E T U P
  */
 HIDDEN int
-glass_setup( rp )
+glass_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct phong_specific *pp;
 
 	GETSTRUCT( pp, phong_specific );
-	rp->reg_udata = (char *)pp;
+	*dpp = (char *)pp;
 
 	pp->shine = 4;
 	pp->wgt_specular = 0.7;
@@ -163,7 +169,7 @@ register struct region *rp;
 	/* leaving 0.1 for diffuse/specular */
 	pp->refrac_index = 1.65;
 
-	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
+	mlib_parse( matparm, phong_parse, (mp_off_ty)pp );
 	if(rdebug&RDEBUG_MATERIAL)
 		mlib_print(rp->reg_name, phong_parse, (mp_off_ty)pp);
 
@@ -176,10 +182,11 @@ register struct region *rp;
  *			P H O N G _ P R I N T
  */
 HIDDEN int
-phong_print( rp )
+phong_print( rp, dp )
 register struct region *rp;
+char	*dp;
 {
-	mlib_print(rp->reg_name, phong_parse, (mp_off_ty)rp->reg_udata);
+	mlib_print(rp->reg_name, phong_parse, (mp_off_ty)dp);
 }
 
 /*
@@ -260,10 +267,11 @@ char *cp;
 	n	'Shininess' of the material,  range 1 to 10.
  */
 HIDDEN int
-phong_render( ap, pp, swp )
+phong_render( ap, pp, swp, dp )
 register struct application *ap;
 struct partition	*pp;
 struct shadework	*swp;
+char	*dp;
 {
 	register struct light_specific *lp;
 	auto struct application sub_ap;
@@ -277,7 +285,7 @@ struct shadework	*swp;
 	auto vect_t	to_light;
 	auto point_t	matcolor;		/* Material color */
 	struct phong_specific *ps =
-		(struct phong_specific *)pp->pt_regionp->reg_udata;
+		(struct phong_specific *)dp;
 
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;

@@ -57,13 +57,14 @@ struct mfuncs light_mfuncs[] = {
  *  If we have a direct view of the light, return it's color.
  */
 HIDDEN int
-light_render( ap, pp, swp )
+light_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
+char	*dp;
 {
 	register struct light_specific *lp =
-		(struct light_specific *)pp->pt_regionp->reg_udata;
+		(struct light_specific *)dp;
 
 	VSCALE( swp->sw_color, lp->lt_color, lp->lt_fraction );
 }
@@ -74,18 +75,20 @@ struct shadework	*swp;
  *  Called once for each light-emitting region.
  */
 HIDDEN int
-light_setup( rp )
+light_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct light_specific *lp;
 
 	GETSTRUCT( lp, light_specific );
-	rp->reg_udata = (char *)lp;
+	*dpp = (char *)lp;
 
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
 	lp->lt_explicit = 1;		/* explicitly modeled */
-	mlib_parse( rp->reg_mater.ma_matparm, light_parse, (mp_off_ty)lp );
+	mlib_parse( matparm, light_parse, (mp_off_ty)lp );
 
 	/* Determine position and size */
 	if( rp->reg_treetop->tr_op == OP_SOLID )  {
@@ -126,10 +129,11 @@ register struct region *rp;
  *			L I G H T _ P R I N T
  */
 HIDDEN int
-light_print( rp )
+light_print( rp, dp )
 register struct region *rp;
+char	*dp;
 {
-	mlib_print(rp->reg_name, light_parse, (mp_off_ty)rp->reg_udata);
+	mlib_print(rp->reg_name, light_parse, (mp_off_ty)dp);
 }
 
 /*

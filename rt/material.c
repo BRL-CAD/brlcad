@@ -59,12 +59,14 @@ mlib_init()
 	extern struct mfuncs cloud_mfuncs[];
 	extern struct mfuncs spm_mfuncs[];
 	extern struct mfuncs txt_mfuncs[];
+	extern struct mfuncs stk_mfuncs[];
 
 	mlib_add( phg_mfuncs );
 	mlib_add( light_mfuncs );
 	mlib_add( cloud_mfuncs );
 	mlib_add( spm_mfuncs );
 	mlib_add( txt_mfuncs );
+	mlib_add( stk_mfuncs );
 }
 
 /*
@@ -99,7 +101,7 @@ def:
 found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
-	if( mfp->mf_setup( rp ) < 0 )  {
+	if( mfp->mf_setup( rp, rp->reg_mater.ma_matparm, &rp->reg_udata ) < 0 )  {
 		/* What to do if setup fails? */
 		if( mfp != phg_mfuncs )
 			goto def;

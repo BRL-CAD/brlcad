@@ -387,13 +387,14 @@ struct mfuncs spm_mfuncs[] = {
  *  return a pointer to the relevant pixel.
  */
 HIDDEN int
-spm_render( ap, pp, swp )
+spm_render( ap, pp, swp, dp )
 struct application *ap;
 struct partition *pp;
 struct shadework	*swp;
+char	*dp;
 {
 	register struct spm_specific *spp =
-		(struct spm_specific *)pp->pt_regionp->reg_udata;
+		(struct spm_specific *)dp;
 	int	x, y;
 	register unsigned char *cp;
 
@@ -413,17 +414,19 @@ struct shadework	*swp;
  *	>0	success
  */
 HIDDEN int
-spm_setup( rp )
+spm_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct spm_specific *spp;
 
 	GETSTRUCT( spp, spm_specific );
-	rp->reg_udata = (char *)spp;
+	*dpp = (char *)spp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_n = -1;
-	mlib_parse( rp->reg_mater.ma_matparm, spm_parse, (mp_off_ty)spp );
+	mlib_parse( matparm, spm_parse, (mp_off_ty)spp );
 	if( spp->sp_n < 0 )  spp->sp_n = 512;
 	if( spp->sp_file[0] == '\0' )
 		goto fail;
@@ -441,10 +444,11 @@ fail:
  *			S P H _ P R I N T
  */
 HIDDEN int
-spm_print( rp )
+spm_print( rp, dp )
 register struct region *rp;
+char	*dp;
 {
-	mlib_print("spm_setup", spm_parse, (mp_off_ty)rp->reg_udata);
+	mlib_print("spm_setup", spm_parse, (mp_off_ty)dp);
 	/* Should be more here */
 }
 

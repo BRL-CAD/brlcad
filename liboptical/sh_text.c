@@ -126,13 +126,14 @@ register struct txt_specific *tp;
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN
-txt_render( ap, pp, swp )
+txt_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
+char	*dp;
 {
 	register struct txt_specific *tp =
-		(struct txt_specific *)pp->pt_regionp->reg_udata;
+		(struct txt_specific *)dp;
 	fastf_t xmin, xmax, ymin, ymax;
 	int line;
 	int dx, dy;
@@ -232,17 +233,19 @@ struct shadework	*swp;
  *			T X T _ S E T U P
  */
 HIDDEN int
-txt_setup( rp )
+txt_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct txt_specific *tp;
 
 	GETSTRUCT( tp, txt_specific );
-	rp->reg_udata = (char *)tp;
+	*dpp = (char *)tp;
 
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_fw = tp->tx_l = -1;
-	mlib_parse( rp->reg_mater.ma_matparm, txt_parse, (mp_off_ty)tp );
+	mlib_parse( matparm, txt_parse, (mp_off_ty)tp );
 	if( tp->tx_w < 0 )  tp->tx_w = 512;
 	if( tp->tx_l < 0 )  tp->tx_l = tp->tx_w;
 	if( tp->tx_fw < 0 )  tp->tx_fw = tp->tx_w;
@@ -294,13 +297,14 @@ struct matparse ckr_parse[] = {
  *			C K R _ R E N D E R
  */
 HIDDEN int
-ckr_render( ap, pp, swp )
+ckr_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 register struct shadework	*swp;
+char	*dp;
 {
 	register struct ckr_specific *ckp =
-		(struct ckr_specific *)pp->pt_regionp->reg_udata;
+		(struct ckr_specific *)dp;
 	auto struct uvcoord uv;
 	register unsigned char *cp;
 	FAST fastf_t f;
@@ -319,14 +323,16 @@ register struct shadework	*swp;
  *			C K R _ S E T U P
  */
 HIDDEN int
-ckr_setup( rp )
+ckr_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct ckr_specific *ckp;
 
 	GETSTRUCT( ckp, ckr_specific );
-	rp->reg_udata = (char *)ckp;
-	mlib_parse( rp->reg_mater.ma_matparm, ckr_parse, (mp_off_ty)ckp );
+	*dpp = (char *)ckp;
+	mlib_parse( matparm, ckr_parse, (mp_off_ty)ckp );
 	return(1);
 }
 
@@ -357,10 +363,11 @@ char *cp;
  *  Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN
-tstm_render( ap, pp, swp )
+tstm_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 register struct shadework	*swp;
+char	*dp;
 {
 	VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 	return(1);
@@ -387,10 +394,11 @@ static vect_t star_colors[] = {
  *			S T A R _ R E N D E R
  */
 HIDDEN
-star_render( ap, pp, swp )
+star_render( ap, pp, swp, dp )
 register struct application *ap;
 register struct partition *pp;
 struct shadework	*swp;
+char	*dp;
 {
 	/* Probably want to diddle parameters based on what part of sky */
 	if( rand0to1() >= 0.98 )  {
@@ -429,13 +437,14 @@ struct phong_specific {
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN
-bmp_render( ap, pp, swp )
+bmp_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
+char	*dp;
 {
 	register struct txt_specific *tp =
-		(struct txt_specific *)pp->pt_regionp->reg_udata;
+		(struct txt_specific *)dp;
 	unsigned char *cp;
 	fastf_t	pertU, pertV;
 	vect_t	x, y;		/* world coordinate axis vectors */
@@ -480,9 +489,6 @@ struct shadework	*swp;
 	VJOIN2( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v );
 	VUNITIZE( swp->sw_hit.hit_normal );
 
-	save = pp->pt_regionp->reg_udata;
-	pp->pt_regionp->reg_udata = (char *)&junk;
-	phong_render( ap, pp, swp );
-	pp->pt_regionp->reg_udata = save;
+	/*phong_render( ap, pp, swp, &junk );*/
 	return(1);
 }

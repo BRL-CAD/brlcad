@@ -40,10 +40,11 @@ extern vect_t	background;
  *			R R _ R E N D E R
  */
 HIDDEN int
-rr_render( ap, pp, swp )
+rr_render( ap, pp, swp, dp )
 register struct application *ap;
 struct partition *pp;
 struct shadework	*swp;
+char	*dp;
 {
 	auto struct application sub_ap;
 	auto fastf_t	f;

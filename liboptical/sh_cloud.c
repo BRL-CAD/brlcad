@@ -108,17 +108,19 @@ float Contrast, initFx, initFy;
  *			C L O U D _ S E T U P
  */
 HIDDEN int
-cloud_setup( rp )
+cloud_setup( rp, matparm, dpp )
 register struct region *rp;
+char	*matparm;
+char	**dpp;
 {
 	register struct cloud_specific *cp;
 
 	GETSTRUCT( cp, cloud_specific );
-	rp->reg_udata = (char *)cp;
+	*dpp = (char *)cp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	mlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (mp_off_ty)cp );
+	mlib_parse( matparm, cloud_parse, (mp_off_ty)cp );
 	return(1);
 }
 
@@ -126,10 +128,11 @@ register struct region *rp;
  *			C L O U D _ P R I N T
  */
 HIDDEN int
-cloud_print( rp )
+cloud_print( rp, dp )
 register struct region *rp;
+char	*dp;
 {
-	mlib_print( rp->reg_name, cloud_parse, (mp_off_ty)rp->reg_udata );
+	mlib_print( rp->reg_name, cloud_parse, (mp_off_ty)dp );
 }
 
 /*
@@ -151,13 +154,14 @@ char *cp;
  *   from 0 to 1.
  *  thresh=0.35, range=0.3 for decent clouds.
  */
-cloud_render( ap, pp, swp )
+cloud_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
+char	*dp;
 {
 	register struct cloud_specific *cp =
-		(struct cloud_specific *)pp->pt_regionp->reg_udata;
+		(struct cloud_specific *)dp;
 	double intensity;
 	FAST fastf_t	TR;
 
