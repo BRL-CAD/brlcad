@@ -90,7 +90,7 @@ struct application	*ap;
 	/* See if this segment ends before start of first partition */
 	if( segp->seg_out.hit_dist < PartHdp->pt_forw->pt_inhit->hit_dist )  {
 		GET_PT_INIT( rtip, pp, res );
-		BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+		bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
 		pp->pt_inseg = segp;
 		pp->pt_inhit = &segp->seg_in;
 		pp->pt_outseg = segp;
@@ -129,7 +129,7 @@ struct application	*ap;
 		    	struct partition	*npp;
 			if(rt_g.debug&DEBUG_PARTITION) rt_log("0-len segment after existing partition, but before next partition.\n");
 			GET_PT_INIT( rtip, npp, res );
-			BITSET(npp->pt_solhit, segp->seg_stp->st_bit);
+			bu_ptbl_ins_unique( &npp->pt_solids_hit, (long *)segp->seg_stp );
 			npp->pt_inseg = segp;
 			npp->pt_inhit = &segp->seg_in;
 			npp->pt_outseg = segp;
@@ -254,7 +254,7 @@ struct application	*ap;
 		if( PartHdp->pt_forw == PartHdp )  {
 			/* No partitions yet, simple! */
 			GET_PT_INIT( rtip, pp, res );
-			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+			bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outseg = segp;
@@ -282,7 +282,7 @@ struct application	*ap;
 					PartHdp->pt_back->pt_outhit->hit_dist);
 			}
 			GET_PT_INIT( rtip, pp, res );
-			BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+			bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
 			pp->pt_inseg = segp;
 			pp->pt_inhit = &segp->seg_in;
 			pp->pt_outseg = segp;
@@ -342,13 +342,12 @@ struct application	*ap;
 				 *
 				 *  Segment starts after partition starts,
 				 *  but before the end of the partition.
-				 *  Note:  pt_solhit will be marked in equal_start.
+				 *  Note:  pt_solids_hit will be updated in equal_start.
 				 *	PPPPPPPPPPPP
 				 *	     SSSS...
 				 *	newpp|pp
 				 */
-				GET_PT( rtip, newpp, res );
-				COPY_PT( rtip, newpp, pp );
+				RT_DUP_PT( rtip, newpp, pp, res );
 				/* new partition is the span before seg joins partition */
 				pp->pt_inseg = segp;
 				pp->pt_inhit = &segp->seg_in;
@@ -403,7 +402,7 @@ equal_start:
 					 *	SSSSSSSS
 					 *	pp  |  newpp
 					 */
-					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+					bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
 					lasthit = pp->pt_outhit;
 					lastseg = pp->pt_outseg;
 					lastflip = 1;
@@ -418,7 +417,7 @@ equal_start:
 					 *	PPPP
 					 *	SSSS
 					 */
-					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+					bu_ptbl_ins_unique( &pp->pt_solids_hit, (long *)segp->seg_stp );
 					if(rt_g.debug&DEBUG_PARTITION) rt_log("same start&end\n");
 					goto done_weave;
 				} else {
@@ -431,10 +430,9 @@ equal_start:
 					 *	SSSSSS
 					 *	newpp| pp
 					 */
-					GET_PT( rtip, newpp, res );
-					COPY_PT( rtip, newpp,pp);
+					RT_DUP_PT( rtip, newpp, pp, res );
 					/* new partition contains segment */
-					BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
+					bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
 					newpp->pt_outseg = segp;
 					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outflip = 0;
@@ -457,7 +455,7 @@ equal_start:
 				 *	newpp|pp
 				 */
 				GET_PT_INIT( rtip, newpp, res );
-				BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
+				bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
 				newpp->pt_inseg = lastseg;
 				newpp->pt_inhit = lasthit;
 				newpp->pt_inflip = lastflip;
@@ -530,7 +528,7 @@ equal_start:
 		 */
 		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond partition end\n");
 		GET_PT_INIT( rtip, newpp, res );
-		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
+		bu_ptbl_ins_unique( &newpp->pt_solids_hit, (long *)segp->seg_stp );
 		newpp->pt_inseg = lastseg;
 		newpp->pt_inhit = lasthit;
 		newpp->pt_inflip = lastflip;
@@ -716,11 +714,11 @@ choose:
  *  The caller must free whatever is in both partition chains.
  */
 int
-rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regionbits, ap )
+rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regiontable, ap )
 struct partition *InputHdp;
 struct partition *FinalHdp;
 fastf_t startdist, enddist;
-struct bu_ptbl	*regionbits;
+struct bu_ptbl	*regiontable;
 struct application *ap;
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
@@ -734,7 +732,7 @@ struct application *ap;
 
 	RT_CK_PT_HD(InputHdp);
 	RT_CK_PT_HD(FinalHdp);
-	BU_CK_PTBL(regionbits);
+	BU_CK_PTBL(regiontable);
 	RT_CHECK_RTI(ap->a_rt_i);
 
 	if( enddist <= 0 )
@@ -861,29 +859,29 @@ struct application *ap;
 		}
 
 		/* Start with a clean slate when evaluating this partition */
-		bu_ptbl_reset(regionbits);
+		bu_ptbl_reset(regiontable);
 
 		/*
 		 *  For each solid that lies in this partition,
-		 *  set (OR) that solid's region bit vector into "regionbits".
+		 *  add the list of regions that refer to that solid
+		 *  into the "regiontable" array.
 		 */
-/* XXX Change pt_solhit over to a bu_ptbl too! */
-		RT_BITV_LOOP_START( pp->pt_solhit, ap->a_rt_i->nsolids )  {
-			struct soltab	*stp;
-			register struct region	**regp;
-
-			stp = ap->a_rt_i->rti_Solids[RT_BITV_LOOP_INDEX];
-			RT_CK_SOLTAB(stp);
-			bu_ptbl_cat_uniq( regionbits, &stp->st_regions );
-		} RT_BITV_LOOP_END;
+		{
+			struct soltab **spp;
+			for( BU_PTBL_FOR(spp, (struct soltab **), &pp->pt_solids_hit) )  {
+				struct soltab	*stp = *spp;
+				RT_CK_SOLTAB(stp);
+				bu_ptbl_cat_uniq( regiontable, &stp->st_regions );
+			}
+		}
 
 		if(rt_g.debug&DEBUG_PARTITION)
-			bu_pr_ptbl( "regionbits", regionbits, 1 );
+			bu_pr_ptbl( "regiontable", regiontable, 1 );
 
 		/* Evaluate the boolean trees of any regions involved */
 		{
 		struct region **regpp;
-		for( BU_PTBL_FOR( regpp, (struct region **), regionbits ) )  {
+		for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
 			register struct region *regp;
 			int	code;
 
@@ -1014,10 +1012,13 @@ struct application *ap;
 				lastpp->pt_outflip = newpp->pt_outflip;
 				lastpp->pt_outseg = newpp->pt_outseg;
 
-				/* Don't lose the fact that this partition (solid) contributed */
-				BITSET( lastpp->pt_solhit, newpp->pt_inseg->seg_stp->st_bit);
-				BITSET( lastpp->pt_solhit, newpp->pt_outseg->seg_stp->st_bit);
-
+				/* Don't lose the fact that the two solids
+				 * of this partition contributed.
+				 */
+				bu_ptbl_ins_unique( &lastpp->pt_solids_hit,
+					(long *)newpp->pt_inseg->seg_stp );
+				bu_ptbl_ins_unique( &lastpp->pt_solids_hit,
+					(long *)newpp->pt_outseg->seg_stp );
 
 				FREE_PT( newpp, ap->a_resource );
 				newpp = lastpp;
@@ -1084,8 +1085,10 @@ stack:
 		ret = 0;
 		goto pop;
 	case OP_SOLID:
-		ret = treep->tr_a.tu_stp->st_bit;	/* register temp */
-		ret = BITTEST( partp->pt_solhit, ret );
+		if( bu_ptbl_locate( &partp->pt_solids_hit, (long *)treep->tr_a.tu_stp ) == -1 )
+			ret = 0;
+		else
+			ret = 1;
 		goto pop;
 	case OP_UNION:
 	case OP_INTERSECT:
