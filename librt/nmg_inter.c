@@ -2969,7 +2969,9 @@ nmg_fu_touchingloops(fu2);
 	}
 
 	if( f1->fg_p == f2->fg_p )  {
-		rt_log("co-planar faces (shared fg)\n");
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			rt_log("co-planar faces (shared fg)\n");
+		}
 		goto coplanar;
 	}
 
@@ -3025,7 +3027,7 @@ nmg_fu_touchingloops(fu2);
 		break;
 	case -1:
 		/* co-planar faces */
-rt_log("co-planar faces (rt_isect_2planes).\n");
+rt_log("co-planar faces (rt_isect_2planes)  WARNING: faces not shared.\n");
 coplanar:
 		bs.coplanar = 1;
 		nmg_isect_two_face2p( &bs, fu1, fu2 );
