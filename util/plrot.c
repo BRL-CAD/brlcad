@@ -568,17 +568,17 @@ two_dcoord_out( fp, m )
 FILE	*fp;
 mat_t	m;
 {
-	char	buf[2*8];
+	unsigned char	buf[2*8];
 	double	p1[3];
 	double	p2[3];
 
 	fread( buf, 1, 2*8, fp );
-	ntohd( p1, buf, 2 );
+	ntohd( (unsigned char *)p1, buf, 2 );
 	p1[2] = 0;		/* no Z  */
 
 	MAT4X3PNT( p2, m, p1 );
 
-	htond( buf, p2, 3 );
+	htond( buf, (unsigned char *)p2, 3 );
 	fwrite( buf, 1, 3*8, stdout );
 }
 
@@ -587,16 +587,16 @@ three_dcoord_out( fp, m )
 FILE	*fp;
 mat_t	m;
 {
-	char	buf[3*8];
+	unsigned char	buf[3*8];
 	double	p1[3];
 	double	p2[3];
 
 	fread( buf, 1, 3*8, fp );
-	ntohd( p1, buf, 3 );
+	ntohd( (unsigned char *)p1, buf, 3 );
 
 	MAT4X3PNT( p2, m, p1 );
 
-	htond( buf, p2, 3 );
+	htond( buf, (unsigned char *)p2, 3 );
 	fwrite( buf, 1, 3*8, stdout );
 }
 
@@ -620,8 +620,8 @@ getdouble( fp )
 FILE	*fp;
 {
 	double	d;
-	char	buf[8];
+	unsigned char	buf[8];
 	fread( buf, 8, 1, fp );
-	ntohd( &d, buf, 1 );
+	ntohd( (unsigned char *)&d, buf, 1 );
 	return( d );
 }
