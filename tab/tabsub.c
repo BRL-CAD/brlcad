@@ -192,13 +192,15 @@ FILE	*fp;
 			ntokenwords = rt_split_cmd( tokenwords, NTOKENWORDS+1,
 				token );
 
-			/*  If first character of a word is '%', that
+			/*  If first character of a word is '@' or '%', that
 			 *  signifies substituting the value of the
 			 *  indicated channel.  Otherwise the word is literal.
 			 */
 			for( i=1; i<ntokenwords; i++ )  {
+				char	c;
 				int	chan;
-				if( tokenwords[i][0] != '%' )  continue;
+				c = tokenwords[i][0];
+				if( c != '@' && c != '%' )  continue;
 				chan = str2chan_index( &tokenwords[i][1] );
 				tokenwords[i] = chanwords[chan];
 			}
