@@ -95,32 +95,6 @@ struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
 /*
- *		R T _ C O P Y _ V L I S T
- *
- *  Duplicate the contents of a vlist.  Note that the copy may be more
- *  densely packed than the source.
- *
- *  XXX Move this support routine to librt.
- */
-void
-rt_copy_vlist( dest, src )
-struct rt_list	*dest;
-CONST struct rt_list	*src;
-{
-	struct rt_vlist	*vp;
-
-	for( RT_LIST_FOR( vp, rt_vlist, src ) )  {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
-		for( i = 0; i < nused; i++,cmd++,pt++ )  {
-			RT_ADD_VLIST( dest, *pt, *cmd );
-		}
-	}
-}
-
-/*
  *		M G E D _ P L O T _ A N I M _ U P C A L L _ H A N D L E R
  *
  *  Used via upcall by routines deep inside LIBRT, to have a UNIX-plot
@@ -536,6 +510,7 @@ A production implementation will exist in the maintenance release.\n");
 /*
  *  Compute the min, max, and center points of the solid.
  *  Also finds s_vlen;
+ * XXX Should split out a separate rt_vlist_rpp() routine, for librt/vlist.c
  */
 mged_bound_solid( sp )
 register struct solid *sp;
@@ -864,7 +839,7 @@ int			copy;
 	shortname[16-6] = '\0';
 	/* Remove any residue colors from a previous overlay w/same name */
 	rt_vls_init(&str);
-	rt_vls_printf( &str, "kill %s*\n", shortname );
+	rt_vls_printf( &str, "kill -f %s*\n", shortname );
 	(void)cmdline(&str);
 	rt_vls_free(&str);
 
@@ -928,7 +903,7 @@ int		copy;
 
 	if( copy )  {
 		RT_LIST_INIT( &(sp->s_vlist) );
-		rt_copy_vlist( &(sp->s_vlist), vhead );
+		rt_vlist_copy( &(sp->s_vlist), vhead );
 	} else {
 		/* For efficiency, just swipe the vlist */
 		RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
