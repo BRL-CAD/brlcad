@@ -48,7 +48,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "nurb.h"
 #include "plot3.h"
-#include "rtstring.h"
 
 #define US_DELAY	10	/* Additional delay between frames */
 

@@ -29,7 +29,6 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "rtlist.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"

@@ -28,8 +28,6 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "db.h"
-#include "rtstring.h"
-#include "rtlist.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "nurb.h"

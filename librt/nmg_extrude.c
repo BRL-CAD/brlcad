@@ -1,4 +1,5 @@
 /*		N M G _ E X T R U D E . C
+ *
  *	Routines for extruding nmg's.
  *
  *  Authors -
@@ -32,7 +33,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "rtlist.h"
 #include "./debug.h"
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl, CONST struct bn_tol *tol ) );

@@ -21,7 +21,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtstring.h"
 #include "rtlex.h"
 
 static int rt_lex_reading_comment = 0;

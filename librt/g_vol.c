@@ -31,8 +31,6 @@ static char RCSvol[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "rtlist.h"
-#include "rtstring.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"

@@ -25,7 +25,7 @@ static char RCSanim[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./debug.h"
 

@@ -50,7 +50,6 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "nmg.h"
 #include "db.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "nurb.h"
 #include "rtgeom.h"
