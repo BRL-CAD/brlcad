@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.9  91/08/30  20:29:44  mike
+ * Added extern int read().
+ * 
  * Revision 2.8  91/08/30  19:34:16  mike
  * Changed VMUNIX to !defined(pdp11)
  * 
@@ -693,11 +696,11 @@ disk_line	atl;
 	return obuff + off;
 }
 
-#if !defined(pdp11)
-/* Cache the first 64 disk blocks of temp file in memory */
+#if !defined(pdp11) && !defined(CRAY1)
+/* Cache the first 64 disk blocks of temp file in memory, and block align */
 #define	INCORB	64
-char	incorb[INCORB+1][BSIZ];
-#define	pagrnd(a)	((char *)(((int)a)&~(BSIZ-1)))
+char	incorb[(INCORB+1)*BSIZ];
+#define	pageround(a)	((a) & ~(BSIZ-1))
 #endif
 
 blkio(b, buf, iofcn)
@@ -710,10 +713,10 @@ int	(*iofcn)();
 #ifdef INCORB
 	if (b < INCORB) {
 		if (iofcn == read) {
-			bcopy(pagrnd(incorb[b+1]), buf, BSIZ);
+			bcopy(&incorb[pageround((b+1)*BSIZ)], buf, BSIZ);
 			return;
 		}
-		bcopy(buf, pagrnd(incorb[b+1]), BSIZ);
+		bcopy(buf, &incorb[pageround((b+1)*BSIZ)], BSIZ);
 		return;
 	}
 #endif
