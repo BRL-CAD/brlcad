@@ -3667,7 +3667,17 @@ fi
 	LD_SEARCH_FLAGS='-L${LIB_RUNTIME_DIR}'
 	TCL_SHARED_LIB_SUFFIX='${VERSION}.a'
 	;;
-    IRIX-5.*|IRIX-6.*)
+    IRIX-5.*)
+	SHLIB_CFLAGS=""
+	SHLIB_LD="ld -shared -rdata_shared"
+	SHLIB_LD_LIBS=""
+	SHLIB_SUFFIX=".so"
+	DL_OBJS="tclLoadDl.o"
+	DL_LIBS=""
+	LD_FLAGS=""
+	LD_SEARCH_FLAGS='-Wl,-rpath,${LIB_RUNTIME_DIR}'
+	;;
+    IRIX-6.*)
 	SHLIB_CFLAGS=""
 	SHLIB_LD="ld -n32 -shared -rdata_shared"
 	SHLIB_LD_LIBS=""
