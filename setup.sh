@@ -243,13 +243,12 @@ fi
 #
 # Note that the installation directory is "burned in" as they are copied.
 #
-# Note also the rtwizard wrapper script is here.
 ############################################################################
 if [ X${SILENT} = X ] ; then
 	echo -n "Installing shell scripts..."
 fi
 cd sh
-for i in *.sh rtwizard
+for i in *.sh
 do
 	if test -f ${BRLCAD_BINDIR}/${i}
 	then

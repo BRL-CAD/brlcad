@@ -30,7 +30,7 @@
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
 	pixborder mst texturescale pixclump pixcount imgdims remapid \
-	wavelet pixsubst terrain ttcp dsp_add morphedit.tcl
+	wavelet pixsubst terrain ttcp dsp_add morphedit.tcl rtwizard
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -424,6 +424,11 @@ dsp_add:	dsp_add.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 morphedit.tcl:	../SRCDIR/morphedit.tcl
 	#ifdef NFS
 	cp ../SRCDIR/morphedit.tcl morphedit.tcl
+	#endif
+	
+rtwizard:	../SRCDIR/rtwizard
+	#ifdef NFS
+	cp ../SRCDIR/rtwizard rtwizard
 	#endif
 
 #include "../Cakefile.rules"
