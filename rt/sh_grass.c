@@ -255,7 +255,7 @@ vect_t wind;
 		o->leaf[seg].magic = i->leaf[seg].magic;
 #define WIND 1
 #if WIND
-		if (seg == BLADE_LAST) {
+		if (seg <= BLADE_LAST-1) {
 			MAT4X3VEC(v, m, i->leaf[seg].blade);
 			VADD2(v, v, wind);
 			VUNITIZE(v);
@@ -421,7 +421,7 @@ struct grass_specific *grass_sp;
   grass_sp->proto.b[blade].magic = BLADE_MAGIC;
   grass_sp->proto.b[blade].tot_len = 0.0;
   grass_sp->proto.b[blade].segs = BLADE_SEGS_MAX;
-  grass_sp->proto.b[blade].width = grass_sp->blade_width * 0.5;
+  grass_sp->proto.b[blade].width = grass_sp->blade_width;
 
 
 /* XXX need to get the height of the stalks to vary more somehow */
@@ -589,8 +589,7 @@ vect_t wind;		/* wind direction vector */
 
 
 	plant_scale(pl, w);	/* must come first */
-	plant_rot(pl, BN_RANDOM(idx) * M_PI * 2.0, wind);
-
+	plant_rot(pl, BN_RANDOM(idx) * bn_twopi, wind);
 
 	/* set bounding boxes */
 	for (blade=0 ; blade < pl->blades ; blade++) {
@@ -968,9 +967,13 @@ struct grass_specific	*grass_sp;
 	vect_t wind_vec;
 	VSET(wind_vec, 0.70710678, 0.70710678, 0.0);
 	VSCALE(c, cell, grass_sp->size);
-	VJOIN1(c, c, swp->sw_frametime*.5, wind_vec);
+
+	/* how often do we move */
+	VJOIN1(c, c, swp->sw_frametime*2, wind_vec); 
 	bn_noise_vec(c, wind);
-	VSCALE(wind, wind, .25);
+
+	/* how much do we move when we move */
+	VSCALE(wind, wind, .125); 
 }
 #else
 	VSET(wind, 0.0, 0.0, 0.0);
