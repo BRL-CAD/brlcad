@@ -118,7 +118,7 @@ int num_in_list;
 
 	qsort( (genptr_t)list_of_names,
 		(unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-		cmpdirname);
+		(int (*)())cmpdirname);
 	/*
 	 * For the number of (full and partial) lines that will be needed,
 	 * print in vertical format.
