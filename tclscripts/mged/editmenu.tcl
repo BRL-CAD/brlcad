@@ -27,6 +27,7 @@ check_externs "_mged_x _mged_press _mged_who _mged_ill"
 
 proc build_edit_menu_all { type } {
     global player_screen
+    global mged_players
     global mged_mouse_behavior
     global mouse_behavior
     global mged_active_dm
@@ -52,19 +53,15 @@ proc build_edit_menu_all { type } {
     _mged_press reject
     build_solid_menu $type $id $paths
 
-#    if {$mouse_behavior == "c" || \
-#	    $mouse_behavior == "o" || \
-#	    $mouse_behavior == "s"} {
-#	set mouse_behavior d
-#	if {[info exists mged_active_dm($id)] && $win == $mged_active_dm($id)} {
-#	    set mged_mouse_behavior($id) d
-#	    set tmp ""
-#	}
-#    }
+    mged_apply_all "set mouse_behavior d"
+    foreach id $mged_players {
+	set mged_mouse_behavior($id) d
+    }
 }
 
 proc ray_build_edit_menu { type x y } {
     global player_screen
+    global mged_players
     global mged_mouse_behavior
     global mouse_behavior
     global mged_active_dm
@@ -114,15 +111,10 @@ proc ray_build_edit_menu { type x y } {
 	}
     }
 
-#    if {$mouse_behavior == "c" || \
-#	    $mouse_behavior == "o" || \
-#	    $mouse_behavior == "s"} {
-#	set mouse_behavior d
-#	if {[info exists mged_active_dm($id)] && $win == $mged_active_dm($id)} {
-#	    set mged_mouse_behavior($id) d
-#	    set tmp ""
-#	}
-#    }
+    mged_apply_all "set mouse_behavior d"
+    foreach id $mged_players {
+	set mged_mouse_behavior($id) d
+    }
 }
 
 proc build_solid_menu { type id paths } {
@@ -151,12 +143,23 @@ proc build_solid_menu { type id paths } {
 
     switch $type {
 	s {
-	    bind_listbox $top "<ButtonPress-1>" "solid_illum %W %x %y 1"
-	    bind_listbox $top "<Double-1>" "solid_illum %W %x %y 0; destroy $top"
+	    bind_listbox $top "<ButtonPress-1>"\
+		    "set item \[get_listbox_entry %W %x %y\];\
+		    solid_illum \$item"
+	    bind_listbox $top "<Double-1>"\
+		    "set item \[get_listbox_entry %W %x %y\];\
+		    _mged_press sill;\
+		    _mged_ill \$item;\
+		    destroy $top"
 	}
 	o {
-	    bind_listbox $top "<ButtonPress-1>" "obj_illum $id %W %x %y 1"
-	    bind_listbox $top "<Double-1>" "obj_illum $id %W %x %y 0; destroy $top"
+	    bind_listbox $top "<ButtonPress-1>"\
+		    "set item \[get_listbox_entry %W %x %y\];\
+		    solid_illum \$item"
+	    bind_listbox $top "<Double-1>"\
+		    "set item \[get_listbox_entry %W %x %y\];\
+		    build_matrix_menu $id \$item;\
+		    destroy $top"
 	}
 	default {
 	    destroy $top
@@ -193,8 +196,16 @@ proc build_matrix_menu { id path } {
     create_listbox $top $screen Matrix $path_components "_mged_press reject; destroy $top"
     set mged_edit_menu($id) $top
 
-    bind_listbox $top "<ButtonPress-1>" "matrix_illum %W %x %y 1"
-    bind_listbox $top "<Double-1>" "matrix_illum %W %x %y 0; destroy $top"
-    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject;\
-	    _mged_press oill; _mged_ill $path"
+    bind_listbox $top "<ButtonPress-1>"\
+	    "set path_pos \[%W index @%x,%y\];\
+	    matrix_illum $path \$path_pos"
+    bind_listbox $top "<Double-1>"\
+	    "set path_pos \[%W index @%x,%y\];\
+	    _mged_press oill;\
+	    _mged_ill $path;\
+	    _mged_matpick \$path_pos;\
+	    destroy $top"
+    bind_listbox $top "<ButtonRelease-1>"\
+	    "%W selection clear 0 end;\
+	    _mged_press reject"
 }
