@@ -368,7 +368,6 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		/* Just for inspection, print out the 0,0,0 cell */
 		rt_pr_cut( nu_grid, 0 );
 	}
-#endif
 
 	/*  Finished with NUgrid data structures */
 	rt_hist_free( &xhist );
@@ -381,6 +380,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	rt_free( (char *)nu_xbox.bn_list, "nu_xbox bn_list[]" );
 	rt_free( (char *)nu_ybox.bn_list, "nu_ybox bn_list[]" );
 	rt_free( (char *)nu_zbox.bn_list, "nu_zbox bn_list[]" );
+#endif	/* NUgrid */
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
