@@ -1,6 +1,7 @@
 #
 #			P R J _ A D D . T C L
 #
+# "more arguments needed::[lindex $prompts $i]"
 # Author -
 #	Lee A. Butler
 #
@@ -26,13 +27,15 @@
 # Usage: prj_add shaderfile image_filename image_width image_height
 #
 proc prj_add {args} {
+    global local2base
+
 	set prompts {{shaderfile: } {image_file: } {width: } {height: }}
 	set usage "Usage:
 \tprj_add \[-t\] \[-n\] \[-b\] shaderfile \[image_file\] \[width\] \[height\]
 \tAppends image filename + current view parameters to shader"
 
 	set argc [llength $args]
-	if {7 < $argc} {
+	if {$argc > 7} {
 	    error $usage
 	}
 
@@ -63,7 +66,7 @@ proc prj_add {args} {
 	set i [expr {$argc - $n}]
 	switch -- $i {
 	    0 {
-		error "more arguments needed::[lindex $prompts $i]"
+		error $usage
 	    }
 	    1 {
 		error "more arguments needed::[lindex $prompts $i]"
@@ -101,8 +104,11 @@ proc prj_add {args} {
 	puts $fd "through=$through"
 	puts $fd "antialias=$antialias"
 	puts $fd "behind=$behind"
-	puts $fd "viewsize=[view size]"
-	regsub -all { } [view eye] "," eye_pt
+
+	
+
+	puts $fd "viewsize=[expr [view size] * $local2base]"
+	regsub -all { } [vscale [view eye] $local2base] "," eye_pt
 	puts $fd "eye_pt=$eye_pt"
 
 	regsub -all { } [view quat] "," orientation
