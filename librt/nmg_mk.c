@@ -2101,7 +2101,9 @@ struct faceuse *fu1, *fu2;
 		mag[i] = MAGNITUDE(vect);
 	}
 
-	/* a trashy bubble-head sort */
+	/* a trashy bubble-head sort, because I hope this list is never
+	 * very long.
+	 */
 	for(i=0 ; i < b->next - 1 ; ++i) {
 		for (j=i+1; j < b->next ; ++j) {
 			if (mag[i] > mag[j]) {
@@ -2115,7 +2117,14 @@ struct faceuse *fu1, *fu2;
 			}
 		}
 	}
-
+	/*
+	 * We should do something here to "properly"
+	 * order vertexuses which share a vertex
+	 * or whose coordinats are equal.
+	 *
+	 * Just what should be done & how is not
+	 * clear to me at this hour of the night.
+	 */
 	rt_free((char *)mag, "vector magnitudes");
 }
 
@@ -2319,6 +2328,7 @@ struct faceuse *fu1, *fu2;
 				} else {
 					eu = nmg_eins(p.vu[i]->up.eu_p);
 					eu = nmg_eusplit(p.vu[j]->v_p, eu);
+					nmg_moveeu(eu, eu->last);
 					nmg_klu(p.vu[j]->up.lu_p);
 					p.vu[j] = eu->vu_p;
 				}
@@ -2418,7 +2428,7 @@ struct faceuse *fu1, *fu2;
 				}
 			} else {
 				/* we're joining 2 different loops together */
-				rt_bomb("Unimplemented!");
+				rt_bomb("Join of 2 separate loops is unimplemented at this time!\n");
 				/* if ( We are cutting accross both loops )
 				 *	join loops at intersection points
 				 *	start next line at j+1
@@ -2503,6 +2513,13 @@ nmg_pr_fu(fu1->fumate_p, (char *)NULL);
 
 						tbl_vsort(&verts2, fu2, fu1);
 						combine(&verts2, fu2, fu1);
+
+						/* When two faces are intersected
+						 * with each other, they should share the
+						 * same edge(s) of intersection.
+					    	 * This needs to be implemented
+						 */
+
 					    	nmg_tbl(&verts1, TBL_FREE, (long *)NULL);
 					    	nmg_tbl(&verts2, TBL_FREE, (long *)NULL);
 					}
@@ -2551,6 +2568,11 @@ int oper;
 	/* if oper == subtraction
 	 *	make shell from all face-loops in s1 outside s2 and
 	 *	all face-loops in s2 inside s1
+	 */
+
+	/* now we should go back and combine loops
+	 * of faces back together wherever possible
+	 * to reduce the loop/edge count.
 	 */
 }
 
