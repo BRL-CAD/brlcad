@@ -25,9 +25,6 @@
 all&:
 	@echo "SRCDIR:  all done"
 
-mged_cmd_index.html:	mged_cmds.html mged_devel_cmds.html
-	./build_def_index.sh
-
 clean&:
 	@echo "" > /dev/null
 

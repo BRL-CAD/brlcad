@@ -1,4 +1,11 @@
 #!/bin/sh
+
+echo "WARNING: The MGED Command Help file has been manually set from the"
+echo "         export of the MGED Users Manual (external document) and is"
+echo "         no longer in sync with the previous html command files"
+echo "         stored here.  (This is a temporary solution until a better"
+echo "         system is in place)"
+
 #########################################################################
 #									#
 #			    build_def_index.sh				#
