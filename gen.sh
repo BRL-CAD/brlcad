@@ -130,6 +130,8 @@ done
 
 # This will set Shell variables MACHINE, UNIXTYPE, HAS_TCP, and BASEDIR
 eval `machinetype.sh -b`
+BRLCAD_ROOT=${BASEDIR}
+export BRLCAD_ROOT
 
 DISTDIR=/m/dist/.
 ARCHDIR=/m/.
@@ -238,6 +240,7 @@ fi
 
 echo
 echo "This Release = ${RELEASE} of ${REL_DATE}      Making Target: ${TARGET}"
+echo " BRLCAD_ROOT = ${BRLCAD_ROOT}"
 echo "Has Symlinks = ${HAS_SYMLINKS}"
 echo "   UNIX Type = ${UNIXTYPE}"
 echo "     Has TCP = ${HAS_TCP}"
