@@ -819,7 +819,7 @@ bn_cmd_random(ClientData clientData,
 		  char **argv)
 {
 	int val;
-	char *str;
+	const char *str;
 	double rnd;
 	char buf[32];
 

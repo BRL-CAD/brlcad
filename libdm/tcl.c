@@ -47,7 +47,7 @@ int
 Dm_Init(interp)
      Tcl_Interp *interp;
 {
-	char		*version_number;
+	const char		*version_number;
 	struct bu_vls	vls;
 
 	/* register commands */
