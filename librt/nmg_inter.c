@@ -58,6 +58,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h */
+RT_EXTERN(double		rt_dist_pt3_pt3, (CONST point_t a, CONST point_t b));
+
 /* XXX move to plane.c */
 double
 rt_dist_pt3_pt3( a, b )
@@ -1121,9 +1124,15 @@ CONST struct rt_tol	*tol;
 			continue;
 		a = rt_dist_pt3_along_line3( eg->e_pt, dir, va->vg_p->coord );
 		b = rt_dist_pt3_along_line3( eg->e_pt, dir, vb->vg_p->coord );
+		if( NEAR_ZERO( a-vdist, tol->dist ) )  continue;
+		if( NEAR_ZERO( b-vdist, tol->dist ) )  continue;
 		if( !rt_between( a, vdist, b, tol ) )  continue;
 		new_eu = nmg_ebreak( v, *eup );
+#if 0
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+#else
+		{
+#endif
 			rt_log("nmg_break_eg_on_v( eg=x%x, v=x%x ) new_eu=x%x\n",
 				eg, v, new_eu );
 		}
@@ -3297,6 +3306,74 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			N M G _ R E P A I R _ V _ N E A R _ V
+ *
+ *  Attempt to join two vertices which both claim to be the intersection
+ *  of two lines.  If they are close enough, repair the damage.
+ *
+ *  Returns -
+ *	hit_v	If repair succeeds.  vertex 'v' is now invalid.
+ *	NULL	If repair fails.
+ *		If 'bomb' is non-zero, rt_bomb() is called.
+ */
+struct vertex *
+nmg_repair_v_near_v( hit_v, v, eg1, eg2, bomb, tol )
+struct vertex		*hit_v;
+struct vertex		*v;
+struct edge_g		*eg1;		/* edge_g of hit_v */
+struct edge_g		*eg2;		/* edge_g of v */
+int			bomb;
+CONST struct rt_tol	*tol;
+{
+	NMG_CK_VERTEX(hit_v);
+	NMG_CK_VERTEX(v);
+	NMG_CK_EDGE_G(eg1);
+	NMG_CK_EDGE_G(eg2);
+	RT_CK_TOL(tol);
+
+	rt_log("nmg_repair_v_near_v(hit_v=x%x, v=x%x)\n", hit_v, v );
+
+	VPRINT("v  ", v->vg_p->coord);
+	VPRINT("hit", hit_v->vg_p->coord);
+	rt_log("dist v-hit=%g, equal=%d\n",
+		rt_dist_pt3_pt3(v->vg_p->coord, hit_v->vg_p->coord),
+		rt_pt3_pt3_equal(v->vg_p->coord, hit_v->vg_p->coord, tol)
+	    );
+	rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
+		rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, v->vg_p->coord ),
+		rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord ) );
+	rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
+		rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, v->vg_p->coord ),
+		rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord ) );
+	nmg_pr_eg(eg1, 0);
+	nmg_pr_eg(eg2, 0);
+
+	if( rt_dist_pt3_pt3(v->vg_p->coord,
+	      hit_v->vg_p->coord) < 10 * tol->dist )  {
+		struct edgeuse	*eu0;
+		rt_log("NOTICE: The intersection of two lines has resulted in 2 different intersect points\n");
+		rt_log("  Since the two points are 'close', they are being fused.\n");
+
+		/* See if there is an edge between them */
+		eu0 = nmg_findeu(hit_v, v, (struct shell *)NULL,
+			(struct edgeuse *)NULL, 0);
+		if( eu0 )  {
+			rt_log("DANGER: a 0-length edge is being created eu0=x%x\n", eu0);
+			goto out;	/* XXX blow up, for now */
+		}
+
+		nmg_jv(hit_v, v);
+		/* XXX Kill all uses of the 0-length edge? */
+		return hit_v;
+	}
+out:
+	/* Separate is too great */
+	if( bomb )
+		rt_bomb("nmg_repair_v_near_v() separation is too great to repair.\n");
+	return (struct vertex *)NULL;
+}
+
+/*
  *  Search all edgeuses referring to this vu's vertex.
  *  If the vertex is used by edges on both eg1 and eg2, then it's a "hit"
  *  between the two edge geometries.
@@ -3354,40 +3431,8 @@ CONST struct rt_tol		*tol;
 		/* Different vertices, this "can't happen" */
 		rt_log("vu=x%x, v=x%x; hit_v=x%x\n",
 			vu, v, hit_v);
-		VPRINT("vu ", vu->v_p->vg_p->coord);
-		VPRINT("hit", hit_v->vg_p->coord);
-		rt_log("dist vu-hit=%g, equal=%d\n",
-			rt_dist_pt3_pt3(vu->v_p->vg_p->coord,
-				hit_v->vg_p->coord),
-			rt_pt3_pt3_equal(vu->v_p->vg_p->coord,
-				hit_v->vg_p->coord, tol)
-		    );
-		rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
-			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, vu->v_p->vg_p->coord ),
-			rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord ) );
-		rt_log("eg2: line/ vu dist=%g, hit dist=%g\n",
-			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, vu->v_p->vg_p->coord ),
-			rt_dist_line3_pt3( eg2->e_pt, eg2->e_dir, hit_v->vg_p->coord ) );
-		nmg_pr_eg(eg1, 0);
-		nmg_pr_eg(eg2, 0);
-
-		if( rt_dist_pt3_pt3(vu->v_p->vg_p->coord,
-		      hit_v->vg_p->coord) < 10 * tol->dist )  {
-			struct edgeuse	*eu0;
-			rt_log("NOTICE: The intersection of two lines has resulted in 2 different intersect points\n");
-			rt_log("  Since the two points are 'close', they are being fused.\n");
-
-			/* See if there is an edge between them */
-			eu0 = nmg_findeu(hit_v, v, (struct shell *)NULL,
-				(struct edgeuse *)NULL, 0);
-			if( eu0 )  {
-				rt_log("DANGER: a 0-length edge is being created eu0=x%x\n", eu0);
-			}
-
-			nmg_jv(hit_v, v);
-			/* XXX Kill all uses of the 0-length edge? */
+		if( nmg_repair_v_near_v( hit_v, v, eg1, eg2, 0, tol ) )
 			return hit_v;
-		}
 
 		rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
 	}
@@ -3631,15 +3676,30 @@ hit_b:
 			 *  with comparisons elsewhere.
 			 */
 			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) <= is->tol.dist_sq  )  {
-				/* XXX What if hit_v already set, differently? */
-				if( hit_v && hit_v != vu1a->v_p ) rt_bomb("nmg_isect_line2_face2pNEW() hitv != vu1a\n");
-				hit_v = vu1a->v_p;
-				goto hit_a;
+				if( !hit_v )  {
+					hit_v = vu1a->v_p;
+					goto hit_a;
+				}
+				if( hit_v == vu1a->v_p )  goto hit_a;
+#if 0
+				nmg_repair_v_near_v( hit_v, vu1a->v_p,
+					is->on_eg, *eg1, 1, &(is->tol) );
+#else
+				/* Fall through to rt_isect_pt2_lseg2() */
+#endif
 			}
 			if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) <= is->tol.dist_sq )  {
-				if( hit_v && hit_v != vu1b->v_p ) rt_bomb("nmg_isect_line2_face2pNEW() hitv != vu1b\n");
-				hit_v = vu1b->v_p;
-				goto hit_b;
+				if( !hit_v )  {
+					hit_v = vu1b->v_p;
+					goto hit_b;
+				}
+				if( hit_v == vu1b->v_p )  goto hit_b;
+#if 0
+				nmg_repair_v_near_v( hit_v, vu1b->v_p,
+					is->on_eg, *eg1, 1, &(is->tol) );
+#else
+				/* Fall through to rt_isect_pt2_lseg2() */
+#endif
 			}
 
 			/* Third, a geometry check of the HITPT -vs- the line segment */
@@ -3658,11 +3718,19 @@ hit_b:
 				continue;	/* Point not on lseg */
 			case 1:
 				/* Point is at A (vu1a) by geometry */
+				if( hit_v && hit_v != vu1a->v_p )  {
+					nmg_repair_v_near_v( hit_v, vu1a->v_p,
+						is->on_eg, *eg1, 1, &(is->tol) );
+				}
 				hit_v = vu1a->v_p;
 				if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1a)\n", hit_v);
 				goto hit_a;
 			case 2:
 				/* Point is at B (vu1b) by geometry */
+				if( hit_v && hit_v != vu1b->v_p )  {
+					nmg_repair_v_near_v( hit_v, vu1b->v_p,
+						is->on_eg, *eg1, 1, &(is->tol) );
+				}
 				hit_v = vu1b->v_p;
 				if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\thit_v = x%x (vu1b)\n", hit_v);
 				goto hit_b;
