@@ -27,7 +27,7 @@
 			 --with-tcl=../TCL_DIR
 #define PRODUCTS	libtk.so wish
 #define	SHARED_PRODUCT  libtk.so''[[LIBVERS]]
-#define	AFTER_MAKE	mv libtk.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
+#define	AFTER_MAKE	mv -f libtk.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE

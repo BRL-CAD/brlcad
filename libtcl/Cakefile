@@ -17,7 +17,7 @@
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	libtcl.so tclsh
 #define SHARED_PRODUCT	libtcl.so''[[LIBVERS]]
-#define	AFTER_MAKE	mv libtcl.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
+#define	AFTER_MAKE	mv -f libtcl.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
