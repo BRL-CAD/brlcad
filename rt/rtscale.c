@@ -45,7 +45,6 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "wdb.h"
 
-#define TICKS	10		/* a hack for now: needs to be a variable */
 #define NAMELEN 40
 #define BUFF_LEN 256
 #define FALSE 0
@@ -79,13 +78,11 @@ char	**argv;
 
 	mat_t		model2view;		/* matrix for converting from model to view space */
 	mat_t		view2model;		/* matrix for converting from view to model space */
-	char		units[BUFF_LEN];	/* string denoting the type of units */
-	int		intervals;		/* number of intervals desired */
-	int		ret;			/* return code from functions */
-	fastf_t		m_len;			/* length of scale in model size */
-
-	fastf_t	len;				/* temporary */
-	fastf_t	conv;				/* temporary */
+	char		units[BUFF_LEN];	/* string for units type */
+	char		label[BUFF_LEN];	/* string for scale labeling */
+	int		intervals;		/* number of intervals */
+	int		ret;			/* function return code */
+	fastf_t		m_len;			/* scale length in model size */
 
 	mat_idn(view2model);			/* makes an identity matrix */
 	mat_idn(model2view);
@@ -101,14 +98,15 @@ char	**argv;
 
 	/* Now process the arguments from main */	
 
+	strcpy(label, argv[1]);
 	strcpy(units, argv[2]);
+	strcat(label, units);
+
+fprintf(stderr, "label=%s\n", label);
+
 	intervals = atof(argv[3]);
 
-	len = atof(argv[1]);
-	conv = mk_cvt_factor(argv[2]);
 	m_len = atof(argv[1]) * mk_cvt_factor(argv[2]);
-
-fprintf(stderr, "len=%g, conv=%g, units=%s, m_len=%g\n", len, conv, units, m_len);
 
 	/* Check to make sure there has been a valid conversion. */
 	if(m_len <= 0)  {
@@ -132,9 +130,10 @@ fprintf(stderr, "len=%g, conv=%g, units=%s, m_len=%g\n", len, conv, units, m_len
 
 	mat_inv(view2model, model2view);
 
-mat_print("view2model", view2model);
+/* mat_print("view2model", view2model);
+ */
 
-	ret = layout_n_plot(stdout, view2model, intervals, m_len);
+	ret = layout_n_plot(stdout, label, view2model, intervals, m_len);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -147,14 +146,17 @@ mat_print("view2model", view2model);
 /*
  *		L A Y O U T _ N _ P L O T
  *
- *  This routine lays out the scale in view coordinates.  It receives a
- *  pointer to a view2model matrix and to stdout.  This makes it very
- *  general.  Lastly, it returns 0 okay, <0 failure.
+ *  This routine lays out the scale in view coordinates.  These are then
+ *  converted to model space.
+ *  It receives pointers to stdout, a label, and a view2model matrix, as 
+ *  well as a number of intervals and the length of the scale on model units.
+ *  This makes it very general.  Lastly, it returns 0 okay, <0 failure.
  */
 
 int
-layout_n_plot(outfp, v2mod, intervals, m_len)
+layout_n_plot(outfp, label, v2mod, intervals, m_len)
 FILE	*outfp;
+char	*label;
 mat_t	v2mod;
 int	intervals;
 fastf_t	m_len;
@@ -168,6 +170,7 @@ fastf_t	m_len;
 	float		m_tick_hgt;	/* total height of tick marks, model space */
 	vect_t		v_hgtv;		/* height vector for ticks, view space */
 	vect_t		m_hgtv;		/* height vector for ticks, model space */
+	vect_t		m_inv_hgtv;
 	vect_t		v_lenv;		/* direction vector along x-axis, view space */
 	vect_t		m_lenv;		/* direction vector along x-axis, model space */
 	point_t		v_startpt;	/* starting point of scales, view space */
@@ -184,11 +187,11 @@ fastf_t	m_len;
 	 */
 
 	nticks =  intervals - 1;
-	v_tick_hgt = 100.0;
+	v_tick_hgt = 0.05;
 
 
- fprintf(stderr, "plot: nticks=%d,\n", nticks);
-
+/*  fprintf(stderr, "plot: nticks=%d,\n", nticks);
+ */
 	/* Make the starting point (in view-coordinates) of the scale.
 	 * Note that there is no Z coordinate since the view-coordinate
 	 * system is a flat world.  The length and height vectors also
@@ -199,22 +202,26 @@ fastf_t	m_len;
 	VSET(v_hgtv, 0.0, 1.0, 0.0);
 	VSET(v_startpt, -0.9, -0.9, 0.0);
 
-	/* Now convert all necessary points to model coordinates */
+	/* Now convert all necessary points and vectors to model coordinates.
+	 * Unitize all direction vectors, and invert the height vector so
+	 * it can be used to make the bottom half of the ticks.
+	 */
 
 	MAT4X3VEC(m_lenv, v2mod, v_lenv);
 	VUNITIZE(m_lenv);
 	MAT4X3VEC(m_hgtv, v2mod, v_hgtv);
 	VUNITIZE(m_hgtv);
+	VREVERSE(m_inv_hgtv, m_hgtv);
 	MAT4X3VEC(m_startpt, v2mod, v_startpt);
-	m_tick_hgt = v_tick_hgt * v2mod[15];		/* scale tick_hgt */
+	m_tick_hgt = v_tick_hgt / v2mod[15];		/* scale tick_hgt */
 
-fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", m_tick_hgt, v_tick_hgt);
-
+/* fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", m_tick_hgt, v_tick_hgt);
+ */
 	/* Draw the basic scale with the two freebie end ticks.  Then,
 	 * if nticks is 0, nothing further is needed.
 	 */
 
-	ret = drawscale(outfp, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv);
+	ret = drawscale(outfp, label, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv, m_inv_hgtv);
 	if( ret < 0 )  {
 		fprintf(stderr, "Layout: drawscale failed\n");
 		return(-1);
@@ -224,13 +231,17 @@ fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", m_tick_hgt, v_tick_hgt
 		return( 0 );
 	}
 	
-	/* Now make the ticks within the basic scale */
+	/* Now make the ticks within the basic scale.  The ticks should
+	 * be half the height of the end ticks to be distinguishable.
+	 */
 
 	for( tickno = 1; tickno < nticks; tickno++ )  {
-fprintf(stderr, "making ticks tickno=%d\n", tickno);
+
 		VJOIN1(centerpt, m_startpt, m_len * tickno/nticks, m_lenv);
-VPRINT("centerpt", centerpt);
-		ret = drawticks(outfp, centerpt, m_hgtv, m_tick_hgt * 0.75 );
+/* VPRINT("centerpt", centerpt);
+ */
+
+		ret = drawticks(outfp, centerpt, m_hgtv, m_tick_hgt * 0.5, m_inv_hgtv );
 		if( ret < 0 )  {
 			fprintf(stderr, "layout: drawtick skipping tickno %d\n",
 				tickno);
@@ -262,7 +273,7 @@ mat_t 	model2view;
 	char		*ret;			/* return code for fgets */
 	char		string[BUFF_LEN];	/* temporary buffer */
 	char		*arg_ptr;		/* place holder */
-	char		forget_it[9];		/* need for sscanf, then forget */
+	char		forget_it[9];		/* "azimuth" catcher, then forget */
 	int		i;			/* reusable counter */
 	int		num;			/* return code for sscanf */
 	int		seen_view;		/* these are flags.  */
@@ -360,9 +371,6 @@ mat_t 	model2view;
 		 */
 
 		if(strcmp(string, "View") == 0)  {
-
-/* fprintf(stderr, "found view\n");
- */
 			num = sscanf(arg_ptr, "%lf %s %lf", &azimuth, forget_it, &elevation);
 			if( num != 3)  {
 				fprintf(stderr, "View= %g %s %g elevation\n", azimuth, forget_it, elevation);
@@ -370,9 +378,6 @@ mat_t 	model2view;
 			}
 			seen_view = TRUE;
 		} else if(strcmp(string, "Orientation") == 0)  {
-
-/* fprintf(stderr, "found orientation\n");
- */
 			num = sscanf(arg_ptr, "%lf, %lf, %lf, %lf",
 				&orientation[0], &orientation[1], &orientation[2],
 				&orientation[3]);
@@ -385,9 +390,6 @@ mat_t 	model2view;
 			}
 			seen_orientation = TRUE;
 		} else if(strcmp(string, "Eye_pos") == 0)  {
-
-/* fprintf(stderr, "found eye_pos\n");
- */
 			num = sscanf(arg_ptr, "%lf, %lf, %lf", &eye_pos[0],
 				&eye_pos[1], &eye_pos[2]);
 			if( num != 3)  {
@@ -397,9 +399,6 @@ mat_t 	model2view;
 			}
 			seen_eye_pos = TRUE;
 		} else if(strcmp(string, "Size") == 0)  {
-
-/* fprintf(stderr, "found size\n");
- */
 			num = sscanf(arg_ptr, "%lf", &m_size);
 			if(num != 1)  {
 				fprintf(stderr, "Size=%g\n", m_size);
@@ -411,8 +410,6 @@ mat_t 	model2view;
 
 	/* Check that all the information to proceed is available */
 
-/* fprintf(stderr, "now checking data\n");
- */
 	if( seen_view != TRUE )  {
 		fprintf(stderr, "View not read!\n");
 		return(-1);
@@ -441,11 +438,7 @@ mat_t 	model2view;
 	fprintf(stderr, "eye_pos= %g, %g, %g\n", eye_pos[0], eye_pos[1], eye_pos[2]);
 	fprintf(stderr, "size= %gmm\n", m_size);
 
-	/* Build the view2model matrix (matp points at this).  Variables 
-	 * used only for this transaction are initialized here.
-	 * 
-	 */
-
+	/* Build the view2model matrix. */
 
 	quat_quat2mat( rotate, orientation );
 	rotate[15] = 0.5 * m_size;
@@ -453,8 +446,8 @@ mat_t 	model2view;
 	MAT_DELTAS( xlate, -eye_pos[0], -eye_pos[1], -eye_pos[2] );
 	mat_mul( model2view, rotate, xlate );
 
-mat_print("model2view", model2view);
-	
+/* mat_print("model2view", model2view);
+ */	
 	return(0);
 }
 
@@ -465,22 +458,26 @@ mat_print("model2view", model2view);
  *
  * This routine draws the basic scale: it draws a line confined by two
  * end tick marks.  It return either 0 okay < 0 failure.
- * The parameters are an outfile pointer, a start point in model coordinates,
- * a direction vector, a total distance to go, the scalar height of the
- * tick marks, and the height vector of the tick marks.
+ * The parameters are pointers to stdout  and a lable, as well as a start 
+ * point, a height, a length vector, a height vector, and an inverse height
+ * vector.
  */
 
 int
-drawscale(outfp, startpt, len, hgt, lenv, hgtv)
+drawscale(outfp, label, startpt, len, hgt, lenv, hgtv, inv_hgtv)
 FILE		*outfp;
+char		*label;
 point_t		startpt;
 fastf_t		len;
 fastf_t		hgt;
 vect_t		lenv;
 vect_t		hgtv;
+vect_t		inv_hgtv;
 {
 
 	point_t		endpt;
+	point_t		st_label;
+
 
 	/* Make an end point.  Call drawtick to make the two ticks. */
 
@@ -489,12 +486,20 @@ vect_t		hgtv;
 	pdv_3move(outfp, startpt);
 	pdv_3cont(outfp, endpt);
 
-fprintf(stderr, "drawscale invoked drawticks\n");
-VPRINT("startpt", startpt);
-VPRINT("endpt", endpt);
+	/* Lable the scale *
 
-	drawticks(outfp, startpt, hgtv, hgt);
-	drawticks(outfp, endpt, hgtv, hgt);
+/*	VJOIN1(st_label, startpt, 3 * hgt, inv_hgtv);
+ *	pdv_3move(outfp, st_label);
+ *	pl_label(outfp, label);
+ */
+	
+/* fprintf(stderr, "drawscale invoked drawticks\n");
+ * VPRINT("startpt", startpt);
+ * VPRINT("endpt", endpt);
+ */
+
+	drawticks(outfp, startpt, hgtv, hgt, inv_hgtv);
+	drawticks(outfp, endpt, hgtv, hgt, inv_hgtv);
 
 	return(0);
 }
@@ -509,30 +514,27 @@ VPRINT("endpt", endpt);
  */
 
 int
-drawticks(outfp, centerpt, hgtv, hgt)
+drawticks(outfp, centerpt, hgtv, hgt, inv_hgtv)
 FILE		*outfp;
 point_t		centerpt;
 vect_t		hgtv;
 fastf_t		hgt;
+vect_t		inv_hgtv;
 {
 
 	point_t		top;		/* top of tick mark */
 	point_t		bot;		/* bottom of tick mark */
-	vect_t		inv_hgtv;	/* height vector pointing down */
 
-VPRINT("hgtv", hgtv);
-
-	VREVERSE(inv_hgtv, hgtv);
-
-VPRINT("inv_hgtv", inv_hgtv);
+/* VPRINT("hgtv", hgtv);
+ */
 
 	VJOIN1(top, centerpt, hgt, hgtv);
 	VJOIN1(bot, centerpt, hgt, inv_hgtv);
 
-VPRINT("top", top);
-VPRINT("bot", bot);
-fprintf(stderr, "drawticks now using top, bot to plot\n");
-
+/* VPRINT("top", top);
+ * VPRINT("bot", bot);
+ * fprintf(stderr, "drawticks now using top, bot to plot\n");
+ */
 	pdv_3move(outfp, top);
 	pdv_3cont(outfp, bot);
 
