@@ -1,5 +1,6 @@
 /*	U - B W . C -- convert unsigned shorts to unsigned char
  */
+#include <unistd.h>
 #include <stdio.h>
 
 unsigned short ibuf[512];
