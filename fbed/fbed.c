@@ -1827,6 +1827,8 @@ int	sig;
 	case SIGTSTP :
 		(void) f_Stop( (char *) NULL );
 		break;
+	case SIGCONT :
+		break;
 #else
 #	ifdef VLDSYSV
 	case 18 :
@@ -1837,7 +1839,7 @@ int	sig;
 #endif
 	default :
 		prnt_Event( "\"%s\", signal(%d).", __FILE__, sig );
-		restore_Tty();
+		/* restore_Tty(); */
 		break;
 		}
 	(void) signal( sig, general_Handler );
