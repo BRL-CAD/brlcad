@@ -37,8 +37,8 @@ proc do_grid_spacing { id spacing_type } {
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
 
-    label $top.tickSpacingL -text "Tick Spacing\n($localunit per tick)"
-    label $top.majorSpacingL -text "Major Spacing\n(ticks per major)"
+    label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
+    label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
 
     if {$spacing_type == "h"} {
 	label $top.resL -text "Horiz." -anchor w
@@ -286,8 +286,8 @@ proc init_grid_control { id } {
     frame $top.colorF
     frame $top.colorFF -relief sunken -bd 2
 
-    label $top.tickSpacingL -text "Tick Spacing\n($localunit per tick)"
-    label $top.majorSpacingL -text "Major Spacing\n(ticks per major)"
+    label $top.tickSpacingL -text "Tick Spacing\n($localunit/tick)"
+    label $top.majorSpacingL -text "Major Spacing\n(ticks/major)"
 
     label $top.hL -text "Horiz." -anchor w
     entry $top.hE -relief sunken -width 12 -textvar grid_control_h($id)
@@ -401,6 +401,7 @@ proc init_grid_control { id } {
 
     grid_control_load $id $top
     grid_control_set_colorMB $id $top
+    set grid_control_square($id) 1
     set_grid_square $id
 
     set pxy [winfo pointerxy $top]
@@ -540,9 +541,6 @@ proc set_grid_square { id } {
 	    $top.vE configure -textvar grid_control_h($id)
 	    $top.maj_vE configure -textvar grid_control_maj_h($id)
 	} else {
-#	    set grid_control_v($id) $grid_control_h($id)
-#	    set grid_control_maj_v($id) $grid_control_maj_h($id)
-
 	    $top.vE configure -textvar grid_control_v($id)
 	    $top.maj_vE configure -textvar grid_control_maj_v($id)
 	}
@@ -577,12 +575,12 @@ proc grid_control_update { sf } {
 
 	set top .$id.grid_control
 	if [winfo exists $top] {
-	    $top.tickSpacingL configure -text "Tick Spacing\n($localunit per tick)"
+	    $top.tickSpacingL configure -text "Tick Spacing\n($localunit/tick)"
 	}
 
 	set top .$id.grid_spacing
 	if [winfo exists $top] {
-	    $top.tickSpacingL configure -text "Tick Spacing\n($localunit per tick)"
+	    $top.tickSpacingL configure -text "Tick Spacing\n($localunit/tick)"
 	}
     }
 }
@@ -594,14 +592,30 @@ proc grid_control_autosize { id } {
     global grid_control_v
     global grid_control_maj_h
     global grid_control_maj_v
+    global base2local
 
-    set result [regexp "^.*=\(.*\)" $mged_display($mged_active_dm($id),size) match size]
-    set val [expr $size / 64]
+# Gives between 10 and 100 ticks in metric units
+#    set result [regexp "\(\[0-9\]+\)" [_mged_viewget size] match val]
+#    set pow [expr [string length $val] - 1]
+#    set val [expr pow(10,$pow-1) * $base2local]
+
+# Gives between 20 and 200 ticks in user units
+    set lower [expr log10(20)]
+    set upper [expr $lower+1]
+    set s [expr log10([_mged_view size])]
+
+    if {$s < $lower} {
+	set val [expr pow(10, floor($s - $lower))]
+    } elseif {$upper < $s} {
+	set val [expr pow(10, ceil($s - $upper))]
+    } else {
+	set val 1.0
+    }
 
     set grid_control_h($id) $val
     set grid_control_v($id) $val
-    set grid_control_maj_h($id) 5
-    set grid_control_maj_v($id) 5
+    set grid_control_maj_h($id) 10
+    set grid_control_maj_v($id) 10
 }
 
 proc grid_spacing_apply { id spacing_type } {
@@ -674,4 +688,85 @@ proc grid_spacing_load { id spacing_type } {
 	set grid_control_h($id) $grid_res_h
 	set grid_control_maj_h($id) $grid_res_major_h
     }
+}
+
+proc set_grid_spacing { id grid_unit } {
+    global mged_active_dm
+    global grid_control_h
+    global grid_control_v
+    global grid_control_maj_h
+    global grid_control_maj_v
+    global grid_res_h
+    global grid_res_v
+    global grid_res_major_h
+    global grid_res_major_v
+    global grid_control_square
+    global base2local
+
+    winset $mged_active_dm($id)
+
+    switch $grid_unit {
+	micrometer {
+	    set res [expr 0.001 * $base2local]
+	    set res_major 10
+	}
+	millimeter {
+	    set res $base2local
+	    set res_major 10
+	}
+	centimeter {
+	    set res [expr 10 * $base2local]
+	    set res_major 10
+	}
+	decimeter {
+	    set res [expr 100 * $base2local]
+	    set res_major 10
+	}
+	meter {
+	    set res [expr 1000 * $base2local]
+	    set res_major 10
+	}
+	kilometer {
+	    set res [expr 1000000 * $base2local]
+	    set res_major 10
+	}
+	"1/10 inch" {
+	    set res [expr 2.54 * $base2local]
+	    set res_major 10
+	}
+	"1/4 inch" {
+	    set res [expr 6.35 * $base2local]
+	    set res_major 4
+	}
+	"1/2 inch" {
+	    set res [expr 12.7 * $base2local]
+	    set res_major 2
+	}
+	inch {
+	    set res [expr 25.4 * $base2local]
+	    set res_major 12
+	}
+	foot {
+	    set res [expr 304.8 * $base2local]
+	    set res_major 10
+	}
+	yard {
+	    set res [expr 914.4 * $base2local]
+	    set res_major 10
+	}
+	mile {
+	    set res [expr 63360 * $base2local]
+	    set res_major 10
+	}
+    }
+
+    set grid_res_h $res
+    set grid_res_v $res
+    set grid_res_major_h $res_major
+    set grid_res_major_v $res_major
+
+    set grid_control_h($id) $res
+    set grid_control_v($id) $res
+    set grid_control_maj_h($id) $res_major
+    set grid_control_maj_h($id) $res_major
 }
