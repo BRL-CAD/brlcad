@@ -178,59 +178,59 @@ CDIRS="sh cake cakeaux html"
 # These will be built in the order listed.
 # db depends on conv, conv depends on libwdb, libwdb depends on librt
 BDIRS="bench \
-	libsysv \
-	libbu \
-	libbn \
-	libwdb \
-	libpkg \
-	libfb \
 	libtcl8.4 \
 	libtk8.4 \
 	libitcl3.2 \
         iwidgets4.0.1 \
-	libdm \
 	libz \
 	libpng \
-	fbserv \
-	librt \
-	liboptical \
-	libmultispectral \
-	libtermio \
-	libtclcad \
-	conv \
-        unigraphics \
-	db \
-	rt \
-	mged \
-	remrt \
-	libcursor \
+	libsysv \
 	liborle \
 	libutahrle \
 	libfft \
-	proc-db \
-	jack \
-	mk \
-	comgeom-g \
-	iges \
+	libpkg \
+	libcursor \
+	libbu \
+	libbn \
+	librt \
+	liboptical \
+	libfb \
+	libwdb \
+	libdm \
+	libmultispectral \
+	libtermio \
+	libtclcad \
+	rt \
+	fbserv \
 	fb \
-	util \
 	fbed \
+	conv \
+	util \
+	db \
+	mged \
+	remrt \
+	proc-db \
+	tools \
+	mk \
+	iges \
 	lgt \
 	patch \
 	vas4 \
 	vdeck \
 	sig \
 	tab \
-	tools \
 	anim \
 	off \
 	halftone \
 	nirt \
+	jack \
 	irprep \
-	jove \
 	canon \
 	burst \
 	gtools \
+	comgeom-g \
+        unigraphics \
+	jove \
 	bwish \
 	btclsh \
 "			# This ends the list.
