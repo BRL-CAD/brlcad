@@ -206,9 +206,7 @@ CONST point_t		pt;
 CONST struct edgeuse	*eu;
 CONST struct rt_tol	*tol;
 {
-	vect_t	norm,	/* plane normal */
-		euvect,	/* vector of edgeuse */
-		ptvec;	/* vector from lseg to pt */
+	vect_t	ptvec;	/* vector from lseg to pt */
 	vect_t	left;	/* vector left of edge -- into inside of loop */
 	CONST fastf_t	*eupt;
 	CONST fastf_t	*matept;
@@ -301,19 +299,13 @@ CONST struct rt_tol	*tol;
     		}
     	}
 
-	/* The point did not lie exactly ON the edge */
-	/* calculate in/out */
-	NMG_GET_FU_NORMAL(norm, eu->up.lu_p->up.fu_p);
-
-	VSUB2(euvect, matept, eupt);
-    	if (rt_g.NMG_debug & DEBUG_CLASSIFY) VPRINT("\t\teuvect unnorm", euvect);
-	VUNITIZE(euvect);
+	/* The point did not lie exactly ON the edge, calculate in/out */
 
     	/* Get vector which lies on the plane, and points
     	 * left, towards the interior of the loop, regardless of
 	 * whether it's an interior (OT_OPPOSITE) or exterior (OT_SAME) loop.
     	 */
-    	VCROSS( left, norm, euvect );	/* left vector */
+	if( nmg_find_eu_leftvec( left, eu ) < 0 )  rt_bomb("nmg_class_pt_e() bad LEFT vector\n");
 
 	VSUB2(ptvec, pt, pca);		/* pt - pca */
     	if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
