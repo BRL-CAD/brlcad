@@ -1774,7 +1774,7 @@ CONST struct rt_tol	*tol;
 	}
 	nmg_tbl( &vtab, TBL_FREE, 0 );
 
-	if ( count != 0 || rt_g.NMG_debug & DEBUG_BASIC)  {
+	if ( count && (rt_g.NMG_debug & DEBUG_BASIC))  {
 		rt_log("nmg_ck_fu_verts(fu1=x%x, f2=x%x, tol=%g) f1=x%x, ret=%d, worst=%gmm (%e)\n",
 			fu1, f2, tol->dist, fu1->f_p,
 			count, worst, worst );
@@ -1886,7 +1886,7 @@ CONST struct rt_tol	*tol;
 		}
 		return 0;	/* Already shared */
 	}
-
+#if 0
 	/*
 	 *  First, a topology check.
 	 *  If the two faces share one entire loop (of at least 3 verts)
@@ -1923,6 +1923,19 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_two_face_fuse(x%x, x%x) coplanar faces, rt_coplanar code=%d, flip2=%d\n",
 			f1, f2, code, flip2);
 	}
+#else
+	if( VDOT( fg1->N, fg2->N ) > 0.0 )
+		flip2 = 0;
+	else
+		flip2 = 1;
+
+	if( nmg_ck_fg_verts( f1->fu_p, f2, tol ) != 0 )  {
+		if (rt_g.NMG_debug & DEBUG_MESH)  {
+			rt_log("nmg_two_face_fuse: f1 verts not within tol of f2's surface, can't fuse\n");
+		}
+		return 0;
+	}
+#endif
 
 	/*
 	 *  Plane equations match, within tol.
@@ -2087,6 +2100,7 @@ CONST struct rt_tol *tol;
 		if( code < 1 )  continue;	/* missed */
 		if( code == 1 || code == 2 )  {
 			rt_log("nmg_model_break_all_es_on_v() code=%d, why wasn't this vertex fused?\n", code);
+			rt_log( "\teu=x%x, v=x%x\n", eu, v );
 			continue;
 		}
 		/* Break edge on vertex, but don't fuse yet. */
@@ -2179,6 +2193,10 @@ CONST struct rt_tol		*tol;
 					rt_log("nmg_model_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
 					continue;
 				}
+
+				if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC) )
+					rt_log( "nmg_model_break_e_on_v(): breaking eu x%x (e=x%x) at vertex x%x\n", eu,eu->e_p, v );
+
 				/* Break edge on vertex, but don't fuse yet. */
 				new_eu = nmg_ebreak( v, eu );
 				/* Put new edges into follow-on list */
@@ -2228,19 +2246,53 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(m);
 	RT_CK_TOL(tol);
 
+	/* XXXX vertex fusing and edge breaking can produce vertices that are
+	 * not within tolerance of their face. Edge breaking needs to be moved
+	 * to step 1.5, then a routine to make sure all vertices are within
+	 * tolerance of owning face must be called if "total" is greater than zero.
+	 * This routine may have to triangulate the face if an appropriate plane
+	 * cannot be calculated.
+	 */
+
 	/* Step 1 -- the vertices. */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_model_fuse: vertices\n" );
 	total += nmg_model_vertex_fuse( m, tol );
 
-	/* Step 2 -- the face geometry */
-	total += nmg_model_face_fuse( m, tol );
-
-	/* Step 2.5 -- break edges on vertices, before fusing edges */
+	/* Step 1.5 -- break edges on vertices, before fusing edges */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_model_fuse: break edges\n" );
 	total += nmg_model_break_e_on_v( m, tol );
 
+	if( total )
+	{
+		struct nmgregion *r;
+		struct shell *s;
+
+		/* vertices and/or edges have been moved,
+		 * may have created out-of-tolerance faces
+		 */
+
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+				nmg_make_faces_within_tol( s, tol );
+		}
+	}
+
+	/* Step 2 -- the face geometry */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_model_fuse: faces\n" );
+	total += nmg_model_face_fuse( m, tol );
+
 	/* Step 3 -- edges */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_model_fuse: edges\n" );
 	total += nmg_model_edge_fuse( m, tol );
 
 	/* Step 4 -- edge geometry */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_model_fuse: edge geometries\n" );
 	total += nmg_model_edge_g_fuse( m, tol );
 
 	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
@@ -3360,6 +3412,121 @@ CONST struct rt_tol	*tol;		/* for printing */
 	}
 }
 
+void
+nmg_do_radial_join( hd, eu1ref, xvec, yvec, zvec, tol )
+struct rt_list *hd;
+struct edgeuse *eu1ref;
+vect_t xvec, yvec, zvec;
+CONST struct rt_tol *tol;
+{
+	struct nmg_radial	*rad;
+	struct nmg_radial	*prev;
+	vect_t			ref_dir;
+	int			skipped;
+
+	RT_CK_LIST_HEAD( hd );
+	NMG_CK_EDGEUSE( eu1ref );
+	RT_CK_TOL( tol );
+
+	if (rt_g.NMG_debug & DEBUG_MESH_EU )
+		rt_log( "nmg_do_radial_join() START\n" );
+
+	VSUB2( ref_dir, eu1ref->eumate_p->vu_p->v_p->vg_p->coord, eu1ref->vu_p->v_p->vg_p->coord );
+
+	if (rt_g.NMG_debug & DEBUG_MESH_EU )
+		rt_log( "ref_dir = ( %g %g %g )\n", V3ARGS( ref_dir ) );
+
+top:
+
+	if (rt_g.NMG_debug & DEBUG_MESH_EU )
+	{
+		rt_log( "At top of nmg_do_radial_join:\n" );
+		nmg_pr_radial_list( hd, tol );
+	}
+
+	skipped = 0;
+	for( RT_LIST_FOR( rad, nmg_radial, hd ) )
+	{
+		struct edgeuse *dest;
+		struct edgeuse *src;
+		struct faceuse *fu_src;
+		struct faceuse *fu_dest;
+		vect_t src_dir;
+		vect_t dest_dir;
+
+		if( rad->existing_flag )
+			continue;
+
+		prev = RT_LIST_PPREV_CIRC( nmg_radial, rad );
+		if( !prev->existing_flag )
+		{
+			skipped++;
+			continue;
+		}
+
+		VSUB2( dest_dir, prev->eu->eumate_p->vu_p->v_p->vg_p->coord, prev->eu->vu_p->v_p->vg_p->coord );
+		VSUB2( src_dir, rad->eu->eumate_p->vu_p->v_p->vg_p->coord, rad->eu->vu_p->v_p->vg_p->coord );
+
+		fu_dest = nmg_find_fu_of_eu( prev->eu );
+		fu_src = nmg_find_fu_of_eu( rad->eu );
+
+		if( !fu_dest || !fu_src )
+		{
+			nmg_je( prev->eu, rad->eu );
+			continue;
+		}
+
+		NMG_CK_FACEUSE( fu_dest );
+		NMG_CK_FACEUSE( fu_src );
+
+		if( VDOT( dest_dir, ref_dir ) < 0.0 )
+			dest = prev->eu->eumate_p;
+		else
+			dest = prev->eu;
+
+		if( VDOT( src_dir, ref_dir ) > 0.0 )
+			src = rad->eu->eumate_p;
+		else
+			src = rad->eu;
+
+		if (rt_g.NMG_debug & DEBUG_MESH_EU )
+		{
+			rt_log("Before -- ");
+			nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
+			nmg_pr_radial("prev:", prev);
+			nmg_pr_radial(" rad:", rad);
+
+			if( VDOT( dest_dir, ref_dir ) < 0.0 )
+				rt_log( "dest_dir disagrees with eu1ref\n" );
+			else
+				rt_log( "dest_dir agrees with eu1ref\n" );
+			rt_log( "dest_fu is %s\n", nmg_orientation( fu_dest->orientation ) );
+			
+			if( VDOT( src_dir, ref_dir ) < 0.0 )
+				rt_log( "src_dir disagrees with eu1ref\n" );
+			else
+				rt_log( "src_dir agrees with eu1ref\n" );
+			rt_log( "src_fu is %s\n", nmg_orientation( fu_src->orientation ) );
+
+			rt_log( "Joining dest_eu=x%x to src_eu=x%x\n", dest, src );
+		}
+
+		nmg_je( dest, src );
+		rad->existing_flag = 1;
+		if (rt_g.NMG_debug & DEBUG_MESH_EU )
+		{
+			rt_log("After -- ");
+			nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
+		}
+	}
+
+	if( skipped )
+		goto top;
+
+	if (rt_g.NMG_debug & DEBUG_MESH_EU )
+		rt_log( "nmg_do_radial_join() DONE\n\n" );
+}
+
 /*
  *			N M G _ R A D I A L _ J O I N _ E U
  *
@@ -3412,7 +3579,8 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
-	if( eu1->eumate_p->radial_p == eu1 && eu2->eumate_p->radial_p == eu2 )
+	if( eu1->eumate_p->radial_p == eu1 && eu2->eumate_p->radial_p == eu2 &&
+		nmg_find_s_of_eu( eu1 ) == nmg_find_s_of_eu( eu2 ) )
 	{
 		/* Only joining two edges, let's keep it simple */
 		nmg_je( eu1, eu2 );
@@ -3485,6 +3653,17 @@ CONST struct rt_tol	*tol;
 	/* Merge the two lists, sorting by angles */
 	nmg_radial_merge_lists( &list1, &list2, tol );
 	nmg_radial_verify_monotone( &list1, tol );
+
+#if 1
+	if (rt_g.NMG_debug & DEBUG_MESH_EU )
+	{
+		rt_log( "Before nmg_do_radial_join():\n" );
+		rt_log( "xvec=(%g %g %g), yvec=(%g %g %g), zvec=(%g %g %g)\n" , V3ARGS( xvec ), V3ARGS( yvec ), V3ARGS( zvec ) );
+		nmg_pr_fu_around_eu_vecs( eu2ref, xvec, yvec, zvec, tol );
+	}
+	nmg_do_radial_join( &list1, eu1ref, xvec, yvec, zvec, tol );
+	return;
+#endif
 
 	nmg_radial_mark_cracks( &list1, eu1->e_p, eu2->e_p, tol );
 
