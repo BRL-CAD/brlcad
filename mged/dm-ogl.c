@@ -136,12 +136,7 @@ Ogl_fb_open()
 }
 
 /*
-   This routine is being called from doEvent().
-   It does not handle mouse button or key events. The key
-   events are being processed via the TCL/TK bind command or are being
-   piped to ged.c/stdin_input(). Eventually, I'd also like to have the
-   dials+buttons bindable. That would leave this routine to handle only
-   events like Expose and ConfigureNotify.
+   This routine is being called from doEvent() to handle Expose events.
 */
 static int
 Ogl_doevent(clientData, eventPtr)
