@@ -83,3 +83,4 @@ extern		get_trail();
 extern	int	carry_out();
 extern	int	action();
 extern	int	cake_wait();
+extern	char	*expand_cmds();

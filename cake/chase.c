@@ -455,7 +455,7 @@ set_buddies(node, entry)
 reg	Node	*node;
 reg	Entry	*entry;
 {
-	extern	Node	*chase_node();
+	extern	Node	*chase_node(), *chase();
 	reg	List	*list;
 	reg	List	*ptr;
 	reg	Node	*newnode;
