@@ -151,28 +151,28 @@ int argc; char **argv;
 		ip = &scan[1][RED];
 		op = &outline[0][RED];
 		for( x = 0; x < scr_width; x++, op += 3, ip += 3 ) {
-			if( y > ip[RED] ) {
+			if( y > (int)ip[RED] ) {
 				op[RED] = 0;
 			} else {
-				if( y >= ip[RED-3] || y >= ip[RED+3] || y == ip[RED] )
+				if( y >= (int)ip[RED-3] || y >= (int)ip[RED+3] || y == ip[RED] )
 					op[RED] = 255;
 				else
 					op[RED] = 0;
 			}
 
-			if( y > ip[GRN] ) {
+			if( y > (int)ip[GRN] ) {
 				op[GRN] = 0;
 			} else {
-				if( y >= ip[GRN-3] || y >= ip[GRN+3] || y == ip[GRN] )
+				if( y >= (int)ip[GRN-3] || y >= (int)ip[GRN+3] || y == ip[GRN] )
 					op[GRN] = 255;
 				else
 					op[GRN] = 0;
 			}
 
-			if( y > ip[BLU] ) {
+			if( y > (int)ip[BLU] ) {
 				op[BLU] = 0;
 			} else {
-				if( y >= ip[BLU-3] || y >= ip[BLU+3] || y == ip[BLU] )
+				if( y >= (int)ip[BLU-3] || y >= (int)ip[BLU+3] || y == ip[BLU] )
 					op[BLU] = 255;
 				else
 					op[BLU] = 0;
