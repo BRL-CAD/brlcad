@@ -367,14 +367,74 @@ struct seg		*segHeadp;
 			&inseg->seg_in,
 			inseg->seg_stp,
 			inseg->seg_in.hit_rayp );
+if(BN_VEC_NON_UNIT_LEN(inseg->seg_in.hit_normal) ) {
+bu_log("submodel(%s) bad inseg normal, %d\n",
+inseg->seg_stp->st_name, count);
+VPRINT("inseg->seg_in.hit_normal", inseg->seg_in.hit_normal);
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+			99,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+			V3ARGS(ap->a_ray.r_pt),
+			ap->a_onehit );
+		VPRINT("Dir", ap->a_ray.r_dir);
+mat_print("subm2m", submodel->subm2m);
+rt_pr_pt(ap->a_rt_i, pp);}
 		outseg->seg_stp->st_meth->ft_norm(
 			&outseg->seg_out,
 			outseg->seg_stp,
 			outseg->seg_out.hit_rayp );
-		MAT4X3VEC( up_segp->seg_in.hit_normal, submodel->subm2m,
+if(BN_VEC_NON_UNIT_LEN(outseg->seg_out.hit_normal) ) {
+bu_log("submodel(%s) bad outseg normal, %d\n",
+outseg->seg_stp->st_name,count);
+VPRINT("outseg->seg_in.hit_normal", outseg->seg_out.hit_normal);
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+			99,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+			V3ARGS(ap->a_ray.r_pt),
+			ap->a_onehit );
+		VPRINT("Dir", ap->a_ray.r_dir);
+mat_print("subm2m", submodel->subm2m);
+rt_pr_pt(ap->a_rt_i, pp);}
+		MAT3X3VEC( up_segp->seg_in.hit_normal, submodel->subm2m,
 			inseg->seg_in.hit_normal );
-		MAT4X3VEC( up_segp->seg_out.hit_normal, submodel->subm2m,
+if(BN_VEC_NON_UNIT_LEN(up_segp->seg_in.hit_normal) ) {
+bu_log("submodel(%s) bad up_seg in normal, %d\n",
+inseg->seg_stp->st_name,count);
+VPRINT("up_segp->seg_in.hit_normal", up_segp->seg_in.hit_normal);
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+			99,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+			V3ARGS(ap->a_ray.r_pt),
+			ap->a_onehit );
+		VPRINT("Dir", ap->a_ray.r_dir);
+mat_print("subm2m", submodel->subm2m);
+rt_pr_pt(ap->a_rt_i, pp);}
+		MAT3X3VEC( up_segp->seg_out.hit_normal, submodel->subm2m,
 			outseg->seg_out.hit_normal );
+if(BN_VEC_NON_UNIT_LEN(up_segp->seg_out.hit_normal) ) {
+bu_log("submodel(%s) bad up_seg out normal, %d\n",
+outseg->seg_stp->st_name,count);
+VPRINT("up_segp->seg_out.hit_normal", up_segp->seg_out.hit_normal);
+		bu_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+			99,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+		bu_log("Pnt (%g, %g, %g) a_onehit=%d\n",
+			V3ARGS(ap->a_ray.r_pt),
+			ap->a_onehit );
+		VPRINT("Dir", ap->a_ray.r_dir);
+mat_print("subm2m", submodel->subm2m);
+rt_pr_pt(ap->a_rt_i, pp);}
 
 		/* RT_HIT_UV */
 		{
@@ -456,6 +516,13 @@ struct seg		*seghead;
 	sub_ap.a_miss = rt_submodel_a_miss;
 	sub_ap.a_uptr = (genptr_t)&gb;
 	sub_ap.a_purpose = "rt_submodel_shot";
+
+	/* Ensure even # of accurate hits, for building good partitions */
+	if( sub_ap.a_onehit < 0 )  {
+		if( sub_ap.a_onehit&1 )  sub_ap.a_onehit--;
+	} else {
+		if( sub_ap.a_onehit&1 )  sub_ap.a_onehit++;
+	}
 
 	/*
 	 * Obtain the resource structure for this CPU.
