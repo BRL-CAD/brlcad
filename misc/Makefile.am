@@ -6,9 +6,10 @@ EXTRA_DIST = \
 	cvs2cl.pl
 
 SUBDIRS = \
-	enigma \
 	macosx \
 	pro-engineer \
 	vfont
+
+DIST_SUBDIRS = engima
 
 MAINTAINERCLEANFILES = Makefile.in
