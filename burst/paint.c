@@ -19,7 +19,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include "./vecmath.h"
 #include "machine.h"
 #include "vmath.h"

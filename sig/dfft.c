@@ -6,7 +6,11 @@
  *  Presently 512 point spectrum only.
  *  Which means we need a 1K data segment to get spectrum at midpoint.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

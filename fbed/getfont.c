@@ -18,7 +18,11 @@ static const char RCSid[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, a
 /* 
 	getfont.c - Load a new font by reading in the header and directory.
  */ 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include <stdio.h>
 
 #ifdef USE_STRING_H

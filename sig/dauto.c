@@ -7,7 +7,11 @@
  *  The first value is based on L samples, the last on only one.
  *  Zeros are assumed outside of the range of an input record.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

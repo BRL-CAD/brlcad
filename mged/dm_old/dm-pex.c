@@ -28,7 +28,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	(c).rgb.green = (g); \
 	(c).rgb.blue = (b);}
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <sys/time.h>		/* for struct timeval */
 #include <X11/X.h>

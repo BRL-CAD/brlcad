@@ -14,7 +14,11 @@
 static const char RCSid[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, archive /vld/moss/src/fbed/s.sgi_dep.c";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #if HAS_SGIGL
 

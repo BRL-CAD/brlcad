@@ -22,7 +22,11 @@
 /*	30 September 1994 - Change name from see.c to ir-X.c	*/
 
 /*  Include files needed.  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef USE_STRING_H

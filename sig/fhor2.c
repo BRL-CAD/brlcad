@@ -4,7 +4,11 @@
  *  given at the same resolution as the screen.
  *  No lines need to be drawn, nor intersection computed!
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

@@ -28,7 +28,11 @@
  * Copyright (c) 1986, Spencer W. Thomas
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

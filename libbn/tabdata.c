@@ -31,7 +31,11 @@
 static const char RCStabdata[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include <stdio.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>

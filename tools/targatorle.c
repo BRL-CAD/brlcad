@@ -38,7 +38,11 @@
  * the last line (in the file) as the upper left of the image.
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <sys/types.h>

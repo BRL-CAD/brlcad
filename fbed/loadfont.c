@@ -17,7 +17,11 @@ char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vl
  * Date:		Tue Jan  8 1985
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

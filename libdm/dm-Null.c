@@ -1,4 +1,8 @@
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include "tcl.h"
 
 #define PLOTBOUND       1000.0  /* Max magnification in Rot matrix */

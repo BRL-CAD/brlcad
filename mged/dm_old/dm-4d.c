@@ -24,7 +24,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 /* Forwards compat with IRIX 5.0.1 */
 #define class	inv_class	/* Map Irix 4 name into Irix 5 name */

@@ -10,7 +10,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

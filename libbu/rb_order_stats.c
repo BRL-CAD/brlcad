@@ -22,7 +22,11 @@
 static const char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <math.h>

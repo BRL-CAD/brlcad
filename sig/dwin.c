@@ -4,7 +4,11 @@
  *  Extract sliding windows of double values.
  *  Apply window functions if desired.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

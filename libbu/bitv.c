@@ -24,7 +24,11 @@
 static const char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>		/* for bzero() */

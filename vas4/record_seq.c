@@ -11,7 +11,11 @@
  *	that will display the appropriate image on the framebuffer.
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdlib.h>
 #include <stdio.h>

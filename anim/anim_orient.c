@@ -29,7 +29,11 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>

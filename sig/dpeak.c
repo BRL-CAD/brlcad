@@ -4,7 +4,11 @@
  *  An EXPERIMENTAL routine to find the N peak values in data set.
  *  Where "peak" means negative second difference, local maximum.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

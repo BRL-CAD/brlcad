@@ -16,7 +16,11 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 extern int rfft_adds, rfft_mults;
 

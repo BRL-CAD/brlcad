@@ -37,7 +37,11 @@
  *	    point to arrays of unsigned char to hold the RGB values.
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

@@ -37,7 +37,11 @@
 #define _BSD_COMPAT
 #endif
 #include <sys/time.h>
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include "tcl.h"
 
 #ifdef USE_STRING_H

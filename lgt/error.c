@@ -21,7 +21,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	Idea originated by Mike John Muuss
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #if defined(HAVE_STDARG_H)

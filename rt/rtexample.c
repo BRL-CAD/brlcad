@@ -5,7 +5,11 @@
  *
  *    cc -I/usr/include/brlcad -o rtexample rtexample.c librt.a -lm
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <math.h>

@@ -35,7 +35,11 @@
  *        (Chicago, July 26-31, 1992).
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <stdlib.h>

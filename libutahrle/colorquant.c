@@ -28,6 +28,9 @@
  * $Id$
  *
  * $Log$
+ * Revision 11.6  2004/04/05 07:40:44  morrison
+ * merge of ansi-6-0-branch into HEAD
+ *
  * Revision 11.5.2.1  2002/09/19 18:01:55  morrison
  * Initial ANSIfication
  *
@@ -104,7 +107,11 @@
  * "whichbox" in GreatestVariance() is now initialized to 0.
  * 
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <math.h>

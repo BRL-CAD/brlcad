@@ -25,8 +25,9 @@
 #ifndef __FENCE_H__
 #define __FENCE_H__
 
-
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

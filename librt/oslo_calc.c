@@ -27,7 +27,11 @@
  * paper we can use a one dimensional array for the ah.
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include "machine.h"

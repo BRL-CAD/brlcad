@@ -19,7 +19,11 @@
  * Default is 4 (because that's what I needed.)
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <math.h>

@@ -11,7 +11,11 @@
  *  are thrown away, while the last M-1 points of each input section
  *  are saved for the next xform.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>

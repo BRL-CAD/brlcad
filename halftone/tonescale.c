@@ -2,7 +2,11 @@
 static const char RCSid[] = "$Header$";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 
@@ -49,6 +53,9 @@ int eq_cubic(int x);
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 11.7  2004/04/05 07:47:59  morrison
+ * merge of ansi-6-0-branch into HEAD
+ *
  * Revision 11.6.2.1  2002/09/19 18:00:59  morrison
  * Initial ANSIfication
  *

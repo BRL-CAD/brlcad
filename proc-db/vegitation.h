@@ -26,12 +26,15 @@
 #ifndef __VEGITATION_H__
 #define __VEGITATION_H__
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include <stdio.h>
 #include <limits.h>
 #include <math.h>
 #include <time.h>
 
-#include "conf.h"
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"

@@ -17,7 +17,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 		SCCS archive:	/v/src/libcursor/s.libcursor.c
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #include <stdio.h>
 

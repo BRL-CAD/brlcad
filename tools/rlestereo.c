@@ -26,7 +26,11 @@
  * Copyright (C) 1990, Craig E. Kolb
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

@@ -58,7 +58,11 @@ static const char sccsid[] = "@(#)if_X24.c version 1.40 (22 Nov 1994)";
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <errno.h>
 #include <stdio.h>

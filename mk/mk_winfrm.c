@@ -11,7 +11,11 @@
 /*  (0,0,0) and extends in the negative x-direction the depth of the  */
 /*  window frame.  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H

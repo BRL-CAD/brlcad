@@ -43,6 +43,10 @@
 #ifndef SEEN_BU_H
 #define SEEN_BU_H seen
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 /* Included for Tcl_Interp definition */
 #include "tcl.h"
 

@@ -42,7 +42,11 @@
 static const char RCSregis[] = "@(#)$Header$";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

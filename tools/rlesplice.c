@@ -25,7 +25,11 @@
  * Date:	Mon Apr 23 1990 (The Apocalypse)
  * Copyright (c) 1990, Martin R. Friedmann
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

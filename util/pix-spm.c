@@ -6,7 +6,11 @@
  *  Phil Dykstra
  *  12 Aug 1986
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <stdlib.h>

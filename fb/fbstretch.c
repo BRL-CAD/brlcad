@@ -64,7 +64,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
 #define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifndef DEBUG
 #define	NDEBUG

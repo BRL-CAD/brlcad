@@ -16,7 +16,11 @@
  * specified, does separate white, red, green, and blue scales. 
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #include <math.h>

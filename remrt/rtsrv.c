@@ -17,7 +17,11 @@
  */
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #if IRIX == 4
 #define _BSD_COMPAT	1

@@ -24,7 +24,11 @@
 static const char libbu_ptbl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include <stdio.h>
 #include "machine.h"
 #include "bu.h"

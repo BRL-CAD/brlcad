@@ -12,7 +12,11 @@
  *	t1 <= N < t2		 c2
  *	t2 <= N <= 1		 c3
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H

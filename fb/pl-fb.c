@@ -63,7 +63,11 @@
 static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #if DEBUG
 # define STATIC	/* nothing, for debugging */

@@ -7,7 +7,9 @@
 	$Header$ (BRL)
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #if defined(HAVE_STDARG_H)
 # include <stdarg.h>

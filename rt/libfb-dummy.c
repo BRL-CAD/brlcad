@@ -2,7 +2,11 @@
  *			L I B F B - D U M M Y . C
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 

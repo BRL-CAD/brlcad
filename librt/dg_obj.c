@@ -27,7 +27,11 @@
  *	This software is Copyright (C) 1997-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef USE_STRING_H
@@ -38,7 +42,11 @@
 #include <fcntl.h>
 #include <math.h>
 #include <signal.h>
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include "tcl.h"
 #include "machine.h"

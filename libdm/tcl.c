@@ -11,7 +11,11 @@
  * Author -
  *	Robert G. Parker
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include <math.h>
 #include "tcl.h"
 #include "machine.h"

@@ -47,7 +47,11 @@ The BRL-CAD Pacakge' agreement. \
 This software is Copyright (C) 1985,1987,1990,1993 by the United States Army \
 in all countries except the USA.  All rights reserved.";
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef USE_STRING_H

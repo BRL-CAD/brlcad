@@ -8,7 +8,11 @@
  * Copyright (c) 1987, University of Utah
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #if HAVE_UNISTD_H
 #include <unistd.h>

@@ -9,7 +9,11 @@
 /*  Enters only the coordinates of the endpoints and the radius  */
 /*  of the lines.  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef HAVE_STDLIB_H

@@ -22,7 +22,11 @@
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include "machine.h"
 
 const fastf_t	turb_table[20][20][20] = {

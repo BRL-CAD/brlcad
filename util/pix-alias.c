@@ -26,7 +26,11 @@
  *	
  *	Run length of 0 seems to be meaningless.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #include <stdio.h>
 #ifdef HAVE_STRING_H

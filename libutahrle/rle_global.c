@@ -30,7 +30,11 @@
  * $Id$
  */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #if __sgi
 #     define  __EXTENSIONS__          1       /* To define "stdout" */

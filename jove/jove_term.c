@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.7  2001/10/15 19:58:03  morrison
+ * Added "Darwin on Power Macintosh" support (finally)
+ *
  * Revision 11.6  2000/08/24 23:12:24  mike
  *
  * lint, RCSid
@@ -85,7 +88,11 @@ static const char RCSid[] = "@(#)$Header$";
    Gets the termcap information and complains if there are not enough
    of the basic features on the particular terminal. */
 
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 #include "./jove.h"
 
 #if HAVE_TERMIOS_H

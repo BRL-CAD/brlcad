@@ -3,7 +3,11 @@
  *
  *  Data Display - shows doubles on a framebuffer in various ways.
  */
-#include "conf.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+
 
 #ifdef USE_STRING_H
 #include <string.h>
