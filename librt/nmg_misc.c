@@ -71,6 +71,36 @@ CONST mat_t m;
 
 }
 
+/*	N M G _ M A R K _ E D G E S _ R E A L
+ *
+ * Sets the "is_real" flag on all edges at or below the
+ * pointer passed. Returns the number of flags set.
+ */
+int
+nmg_mark_edges_real( magic_p )
+CONST long *magic_p;
+{
+	struct nmg_ptbl edges;
+	int i,count;
+
+	nmg_edge_tabulate( &edges , magic_p );
+
+	count = NMG_TBL_END( &edges );
+	for( i=0 ; i<count ; i++ )
+	{
+		struct edge *e;
+
+		e = (struct edge *)NMG_TBL_GET( &edges , i );
+		NMG_CK_EDGE( e );
+
+		e->is_real = 1;
+	}
+
+	nmg_tbl( &edges , TBL_FREE , (long *)NULL );
+
+	return( count );
+}
+
 /*	N M G _ T A B U L A T E _ F A C E _ G _ V E R T S
  *
  * Tabulates all vertices in faces that use fg
