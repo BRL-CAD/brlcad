@@ -488,7 +488,7 @@ int	verbose;
 						xmat[MDY]*base2local,
 						xmat[MDZ]*base2local);
 				if( status & STAT_SCALE )
-					(void)fprintf(outfp," scale %g", xmat[15] );
+					(void)fprintf(outfp," scale %g", 1.0/xmat[15] );
 				if( status & STAT_PERSP )
 					(void)fprintf(outfp," ??Perspective=[%g,%g,%g]??",
 						xmat[12], xmat[13], xmat[14] );
