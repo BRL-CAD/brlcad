@@ -139,8 +139,9 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 # Has Cakefile, but no compilation or tools needed, not machine specific
 ADIRS="h doc pix vfont whetstone awf brlman"
 
-# Has no Cakefile, just copy it verbatim.  Only used in "dist" command.
-CDIRS="cake cakeaux papers contributed pro-engineer"
+# Has no Cakefile, just copy it (and all sub-directories!) verbatim.
+# Only used in "dist" command.
+CDIRS="cake cakeaux html papers contributed pro-engineer"
 
 # Source directories that will have Machine specific binary directories
 # These will be built in the order listed.
@@ -459,9 +460,10 @@ arch)
 	echo 'papers/*' >> ${EXCLUDE}
 	echo 'vfont/*' >> ${EXCLUDE}
 	echo 'contributed/*' >> ${EXCLUDE}
+	echo 'doc/*' >> ${EXCLUDE}
 	echo 'html/*' >> ${EXCLUDE}
 	echo 'pix/*' >> ${EXCLUDE}
-	/usr/gnu/bin/tar cfv - Copy* README doc papers \
+
 	/usr/gnu/bin/tar cfv - Copy* README doc html papers \
 	    zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-a.Z
