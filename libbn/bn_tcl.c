@@ -579,6 +579,179 @@ char **argv;
     return TCL_OK;
 }
 
+int
+bn_cmd_noise_perlin(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char **argv)
+{
+	point_t pt;
+	double	v;
+
+	if (argc != 4) {
+		Tcl_AppendResult(interp, "wrong # args: should be \"",
+				 argv[0], " X Y Z \"",
+				 NULL);
+		return TCL_ERROR;
+	}
+
+	pt[X] = atof(argv[1]);
+	pt[Y] = atof(argv[2]);
+	pt[Z] = atof(argv[3]);
+
+	v = noise_perlin( pt );
+	sprintf(interp->result, "%g", v );
+
+	return TCL_OK;
+}
+/*
+ *  usage: bn_noise_fbm pt h_val lacunarity octaves
+ *
+ *
+ *
+ */
+int
+bn_cmd_noise(ClientData clientData,
+		 Tcl_Interp *interp,
+		 int argc,
+		 char **argv)
+{
+	point_t pt;
+	double h_val;
+	double lacunarity;
+	double octaves;
+	double val;
+
+	if (argc != 7) {
+		Tcl_AppendResult(interp, "wrong # args: should be \"",
+				 argv[0], " X Y Z h_val lacunarity octaves\"",
+				 NULL);
+		return TCL_ERROR;
+	}
+
+	pt[0] = atof(argv[1]);
+	pt[1] = atof(argv[2]);
+	pt[2] = atof(argv[3]);
+
+	h_val = atof(argv[4]);
+	lacunarity = atof(argv[5]);
+	octaves = atof(argv[6]);
+
+
+	if (!strcmp("bn_noise_turb", argv[0])) {
+		val = bn_noise_turb(pt, h_val, lacunarity, octaves);
+
+		sprintf(interp->result, "%g", val );
+	} else 	if (!strcmp("bn_noise_fbm", argv[0])) {
+		val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
+		sprintf(interp->result, "%g", val );
+	} else {
+		Tcl_AppendResult(interp, "Unknown noise type \"",
+				 argv[0], "\"",	 NULL);
+		return TCL_ERROR;
+	}
+	return TCL_OK;
+}
+
+
+/*
+ *	usage: noise_slice xdim ydim inv h_val lac octaves dX dY dZ sX [sY sZ]
+ *
+ *
+ */
+int
+bn_cmd_noise_slice(ClientData clientData,
+		  Tcl_Interp *interp,
+		  int argc,
+		  char **argv)
+{
+	double h_val;
+	double lacunarity;
+	double octaves;
+
+	vect_t delta; 	/* translation to noise space */
+	vect_t scale; 	/* scale to noise space */
+	unsigned xdim;	/* # samples X direction */
+	unsigned ydim;	/* # samples Y direction */
+	unsigned xval, yval;
+#define NOISE_FBM 0
+#define NOISE_TURB 1
+
+	int noise_type;
+	double val;
+	point_t pt;
+	double *img;
+
+	if (argc != 7) {
+		Tcl_AppendResult(interp, "wrong # args: should be \"",
+				 argv[0], " X Y Z h_val lacunarity octaves\"",
+				 NULL);
+		return TCL_ERROR;
+	}
+
+	xdim = atoi(argv[0]);
+	ydim = atoi(argv[1]);
+
+
+
+	img = bu_malloc(xdim*ydim*sizeof(double), "noise array");
+
+	pt[Z] = delta[Z];
+	switch (noise_type) {
+	case NOISE_FBM: 
+		for (yval = 0 ; yval < ydim ; yval++) {
+
+		    pt[Y] = yval * scale[Y] + delta[Y];
+
+		    for (xval = 0 ; xval < xdim ; xval++) {
+			pt[X] = xval * scale[X]; + delta[X];
+
+			val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
+
+		    }
+		}
+		break;
+	case NOISE_TURB:
+		for (yval = 0 ; yval < ydim ; yval++) {
+
+		    pt[Y] = yval * scale[Y] + delta[Y];
+
+		    for (xval = 0 ; xval < xdim ; xval++) {
+			pt[X] = xval * scale[X]; + delta[X];
+
+			val = bn_noise_turb(pt, h_val, lacunarity, octaves);
+
+		    }
+		}
+		break;
+	}
+	 
+
+	pt[0] = atof(argv[1]);
+	pt[1] = atof(argv[2]);
+	pt[2] = atof(argv[3]);
+
+	h_val = atof(argv[4]);
+	lacunarity = atof(argv[5]);
+	octaves = atof(argv[6]);
+
+
+	if (!strcmp("bn_noise_turb", argv[0])) {
+		val = bn_noise_turb(pt, h_val, lacunarity, octaves);
+
+		sprintf(interp->result, "%g", val );
+	} else 	if (!strcmp("bn_noise_fbm", argv[0])) {
+		val = bn_noise_fbm(pt, h_val, lacunarity, octaves);
+		sprintf(interp->result, "%g", val );
+	} else {
+		Tcl_AppendResult(interp, "Unknown noise type \"",
+				 argv[0], "\"",	 NULL);
+		return TCL_ERROR;
+	}
+	return TCL_OK;
+}
+
+
 /*
  *			B N _ T C L _ S E T U P
  *
@@ -597,10 +770,30 @@ Tcl_Interp *interp;
 		    (Tcl_CmdDeleteProc *)NULL);
 	}
 
+	(void)Tcl_CreateCommand(interp, "bn_noise_perlin",
+		bn_cmd_noise_perlin, (ClientData)NULL,
+		(Tcl_CmdDeleteProc *)NULL);
+
+	(void)Tcl_CreateCommand(interp, "bn_noise_turb",
+		bn_cmd_noise, (ClientData)NULL,
+		(Tcl_CmdDeleteProc *)NULL);
+
+	(void)Tcl_CreateCommand(interp, "bn_noise_fbm",
+		bn_cmd_noise, (ClientData)NULL,
+		(Tcl_CmdDeleteProc *)NULL);
+
+	(void)Tcl_CreateCommand(interp, "bn_noise_slice",
+		bn_cmd_noise_slice, (ClientData)NULL,
+		(Tcl_CmdDeleteProc *)NULL);
 
 	(void)Tcl_CreateCommand(interp, "bn_common_file_size",
 		bn_cmd_common_file_size, (ClientData)NULL,
 		(Tcl_CmdDeleteProc *)NULL);
 
+
 	Tcl_SetVar(interp, "bn_version", (char *)bn_version+5, TCL_GLOBAL_ONLY);
 }
+
+
+double bn_noise_fbm(point_t point,double h_val,double lacunarity,double octaves);
+double bn_noise_turb(point_t point,double h_val,double lacunarity,double octaves);
