@@ -284,7 +284,10 @@ snap_keypoint_to_grid()
   VSCALE(model_pt, model_pt, base2local);
 
   bu_vls_init(&cmd);
-  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+  if (state == ST_S_EDIT)
+	  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+  else
+	  bu_vls_printf(&cmd, "translate %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
   (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
   bu_vls_free(&cmd);
 
