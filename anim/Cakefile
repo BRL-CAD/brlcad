@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	anim
-#define PRODUCTS	qinterp keyread
+#define PRODUCTS	qinterp keyread convert
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -16,6 +16,9 @@
 
 ascript: ascript.o anim.o
 	CC LDFLAGS ascript.o anim.o LIBRT -lm -lmpc -o ascript
+
+convert: convert.o
+	CC LDFLAGS convert.o -lm -o convert
 
 fly: fly.o
 	CC LDFLAGS fly.o -lm -o fly
