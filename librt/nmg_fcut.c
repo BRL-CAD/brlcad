@@ -563,7 +563,10 @@ int			pos;
 	 */
 	if( (i = nmg_is_v_on_rs_list(rs, otherv)) > -1 )  {
 		struct vertex	*farv;
+		struct edgeuse	*fareu;
+		int		start, end;
 
+		fareu = othereu;
 again:
 		/* Edge's far end is ON the ray.  Which way does it go? */
 		if(rt_g.NMG_debug&DEBUG_FCUT)
@@ -577,13 +580,13 @@ again:
 		 *  If not on list, use *that* vertex to assess left/right.
 		 */
 		if( forw )  {
-			othereu = RT_LIST_PNEXT_CIRC( edgeuse, othereu );
+			fareu = RT_LIST_PNEXT_CIRC( edgeuse, fareu );
 		} else {
-			othereu = RT_LIST_PLAST_CIRC( edgeuse, othereu );
+			fareu = RT_LIST_PLAST_CIRC( edgeuse, fareu );
 		}
-		if( othereu == eu )  goto really_on;	/* All eu's are ON! */
-		if( othereu->e_p->eg_p != eu->e_p->eg_p )  goto really_on;
-		farv = othereu->vu_p->v_p;
+		if( fareu == eu )  goto really_on;	/* All eu's are ON! */
+		if( fareu->e_p->eg_p != eu->e_p->eg_p )  goto really_on;
+		farv = fareu->vu_p->v_p;
 rt_log("farv = x%x, on_index=%d\n", farv, nmg_is_v_on_rs_list(rs, farv) );
 		if( nmg_is_v_on_rs_list(rs, farv) > -1 )  {
 			/* farv is ON list, try going further back */
@@ -622,18 +625,39 @@ really_on:
 				ret2 = NMG_E_ASSESSMENT_ON_FORW;
 			else
 				ret2 = NMG_E_ASSESSMENT_ON_REV;
+			start = pos+1;
+			end = i;
 		} else {
 			/* i < pos  (They can't be equal) */
 			if( forw )
 				ret2 = NMG_E_ASSESSMENT_ON_REV;
 			else
 				ret2 = NMG_E_ASSESSMENT_ON_FORW;
+			start = i+1;
+			end = pos;
 		}
 		if( ret != ret2 )  {
 			rt_log("ret=%s, ret2=%s?\n",
 				nmg_e_assessment_names[ret],
 				nmg_e_assessment_names[ret2]);
 			rt_bomb("nmg_assess_eu() assessment inconsistency\n");
+		}
+		/*
+		 *  Verify that any other vertexuses on the intersect line
+		 *  along the ON edge are uses of one of the two edge
+		 *  endpoints.  Otherwise, something awful has happened.
+		 */
+		for( i=start; i<end; i++ )  {
+			if( rs->vu[i]->v_p == v ||
+			    rs->vu[i]->v_p == otherv )
+				continue;
+			rt_log("In edge interval (%d,%d), ON vertexuse [%d] = x%x appears?\n",
+				start, end, i, rs->vu[i] );
+			for( i=start-1; i<=end; i++ )  {
+				rt_log(" %d ", i);
+				nmg_pr_vu_briefly( rs->vu[i], (char *)0 );
+			}
+			rt_bomb("nmg_assess_eu():  ON vertexuse in middle of edge?\n");
 		}
 		goto out;
 	}
