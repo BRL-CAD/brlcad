@@ -692,6 +692,9 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
 	bu_avs_init( avs, count+3, "db5_import_attributes" );
 
+#if 0
+	/* XXX regression test "shaders.sh" bombs when this code is used! */
+	/* Conserve malloc/free activity -- use strings in input buffer */
 	/* Signal region of memory that input comes from */
 	avs->readonly_min = ap->ext_buf;
 	avs->readonly_max = avs->readonly_min + ap->ext_nbytes-1;
@@ -707,12 +710,21 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 		app++;
 		avs->count++;
 	}
+	app->name = NULL;
+	app->value = NULL;
+#else
+	/* Expensive but safer version */
+	cp = (const char *)ap->ext_buf;
+	while( *cp != '\0' )  {
+		const char	*newname = cp;
+		cp += strlen(cp)+1;	/* name */
+		bu_avs_add( avs, newname, cp );
+		cp += strlen(cp)+1;	/* value */
+	}
+#endif
 	BU_ASSERT_PTR( cp+1, ==, ep );
 	BU_ASSERT_LONG( avs->count, <, avs->max );
 	BU_ASSERT_LONG( avs->count, ==, count );
-
-	app->name = NULL;
-	app->value = NULL;
 
 if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_import_attributes");
 	return avs->count;
