@@ -249,6 +249,7 @@ struct dg_client_data *dgcdp;
 			    (bot=nmg_bot( s, &dgcdp->dgop->dgo_wdbp->wdb_tol ) ) == (struct rt_bot_internal *)NULL )
 			{
 				eptr->l.stp->st_id = id;
+				eptr->l.stp->st_meth = &rt_functab[id];
 				if( rt_functab[id].ft_prep( eptr->l.stp, &intern, dgcdp->rtip ) < 0 )
 					Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 						"'\n", (char *)NULL );
@@ -260,6 +261,7 @@ struct dg_client_data *dgcdp;
 				intern2.idb_meth = &rt_functab[ID_BOT];
 				intern2.idb_ptr = (genptr_t)bot;
 				eptr->l.stp->st_id = ID_BOT;
+				eptr->l.stp->st_meth = &rt_functab[ID_BOT];
 				if (rt_functab[ID_BOT].ft_prep( eptr->l.stp, &intern2, dgcdp->rtip ) < 0 )
 				{
 					Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
@@ -274,6 +276,7 @@ struct dg_client_data *dgcdp;
 			/* prep this solid */
 
 			eptr->l.stp->st_id = id;
+			eptr->l.stp->st_meth = &rt_functab[id];
 			if( rt_functab[id].ft_prep( eptr->l.stp, &intern, dgcdp->rtip ) < 0 )
 				Tcl_AppendResult(dgcdp->interp, "Prep failure for solid '", dp->d_namep,
 					"'\n", (char *)NULL );
@@ -365,6 +368,8 @@ struct bu_list *seg;
 					bu_log( "\t %g to %g (IN)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
 				else
 					bu_log( "\t %g to %g (?)\n", ptr->seg_in.hit_dist, ptr->seg_out.hit_dist );
+				bu_log( "\t\t( %g %g %g) <-> (%g %g %g)\n", V3ARGS( ptr->seg_in.hit_point),
+					V3ARGS( ptr->seg_out.hit_point ) );
 			}
 		}
 	}
@@ -1412,14 +1417,21 @@ shoot_and_plot(point_t			start_pt,
 
 }
 
+#define HITS_BLOCK	20
+
 HIDDEN void
 Eplot(union E_tree		*eptr,
       struct bu_list		*vhead,
       struct dg_client_data	*dgcdp)
 {
+	point_t start_pt;
 	int leaf_no;
 	union E_tree *leaf_ptr;
-	int hit_count=0;
+	int hit_count1=0, hit_count2=0;
+	point_t *hits1=NULL, *hits2=NULL;
+	int hits_avail1=0, hits_avail2=0;
+	int i;
+	struct bu_list *result;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
 		bu_log( "Error at start of Eplot()\n" );
@@ -1485,6 +1497,10 @@ Eplot(union E_tree		*eptr,
 		}
 	}
 
+	hits1 = (point_t *)bu_calloc( HITS_BLOCK, sizeof( point_t ), "hits" );
+	hits_avail1 = HITS_BLOCK;
+	hits2 = (point_t *)bu_calloc( HITS_BLOCK, sizeof( point_t ), "hits" );
+	hits_avail2 = HITS_BLOCK;
 	/* Now draw solid intersection lines */
 	for( leaf_no=0 ; leaf_no < BU_PTBL_END( &dgcdp->leaf_list ) ; leaf_no++ )
 	{
@@ -1505,6 +1521,7 @@ Eplot(union E_tree		*eptr,
 			struct loopuse *lu1, *lu2;
 			struct edgeuse *eu1, *eu2;
 			struct vertex_g *vg1a, *vg1b, *vg2a, *vg2b;
+			struct bu_list *A, *B;
 
 			leaf2_ptr = (union E_tree *)BU_PTBL_GET( &dgcdp->leaf_list, leaf2 );
 			if( !leaf2_ptr->l.m )
@@ -1528,14 +1545,13 @@ Eplot(union E_tree		*eptr,
 				for( BU_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )
 				{
 					fastf_t dist;
-					fastf_t len,start_len;
-					point_t hits[4];
-					point_t start_pt;
 					vect_t dir;
-					vect_t to_hit;
-					fastf_t inv_len;
-					fastf_t lena, lenb;
 					vect_t diff;
+					fastf_t *dists1, *dists2;
+					fastf_t min_dist, max_dist;
+					int	min_hit, max_hit;
+					int done;
+					struct seg *aseg;
 
 					if( fu2->orientation != OT_SAME )
 						continue;
@@ -1552,7 +1568,8 @@ Eplot(union E_tree		*eptr,
 					if( bn_coplanar( pl1, pl2, &dgcdp->dgop->dgo_wdbp->wdb_tol ) )
 						continue;
 
-					hit_count=0;
+					hit_count1=0;
+					hit_count2=0;
 					for( BU_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )
 					{
 						if( BU_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
@@ -1573,20 +1590,21 @@ Eplot(union E_tree		*eptr,
 							if( dist < 0.0 || dist > 1.0 )
 								continue;
 
-							VJOIN1( hits[hit_count], vg1a->coord, dist, dir )
-							if( hit_count == 1 )
-							{
-								VSUB2( diff, hits[hit_count], hits[hit_count-1] )
-								len = MAGSQ( diff );
-								if ( NEAR_ZERO( len, dgcdp->dgop->dgo_wdbp->wdb_tol.dist_sq ) )
-									continue;
+							if( hit_count1 >= hits_avail1 ) {
+								hits_avail1 += HITS_BLOCK;
+								hits1 = (point_t *)bu_realloc( hits1,
+									 hits_avail1 * sizeof( point_t ), "hits1" );
 							}
-							hit_count++;
-							if( hit_count == 2 )
-								break;
+							VJOIN1( hits1[hit_count1], vg1a->coord, dist, dir )
+#if 0
+							VSUB2( diff, hits1[hit_count1], hits1[hit_count1-1] )
+							len = MAGSQ( diff );
+							if ( NEAR_ZERO( len, dgcdp->dgop->dgo_wdbp->wdb_tol.dist_sq ) )
+								continue;
+#endif
+
+							hit_count1++;
 						}
-						if( hit_count == 2 )
-							break;
 					}
 					for( BU_LIST_FOR( lu2, loopuse, &fu2->lu_hd ) )
 					{
@@ -1609,71 +1627,176 @@ Eplot(union E_tree		*eptr,
 							if( dist < 0.0 || dist > 1.0 )
 								continue;
 
-							VJOIN1( hits[hit_count], vg2a->coord, dist, dir )
-							if( hit_count == 3 )
-							{
-								VSUB2( diff, hits[hit_count], hits[hit_count-1] )
-								len = MAGSQ( diff );
-								if ( NEAR_ZERO( len, dgcdp->dgop->dgo_wdbp->wdb_tol.dist_sq ) )
-									continue;
+							if( hit_count2 >= hits_avail2 ) {
+								hits_avail2 += HITS_BLOCK;
+								hits2 = (point_t *)bu_realloc( hits2,
+									 hits_avail2 * sizeof( point_t ), "hits2" );
 							}
-							hit_count++;
-							if( hit_count == 4 )
-								break;
+							VJOIN1( hits2[hit_count2], vg2a->coord, dist, dir )
+#if 0
+
+							VSUB2( diff, hits2[hit_count2], hits2[hit_count2-1] )
+							len = MAGSQ( diff );
+							if ( NEAR_ZERO( len, dgcdp->dgop->dgo_wdbp->wdb_tol.dist_sq ) )
+								continue;
+#endif
+							hit_count2++;
 						}
-						if( hit_count == 4 )
-							break;
 					}
 
-					/* now should have 4 hit points along line of intersection */
-					if( hit_count != 4 )
+					if( hit_count1 < 2 || hit_count2 < 2 ) {
+						/* nothing to plot */
 						continue;
-
-					VSUB2( dir, hits[1], hits[0] )
-					len = MAGNITUDE( dir );
-					if( len < dgcdp->dgop->dgo_wdbp->wdb_tol.dist )
-						continue;
-					inv_len = 1.0/len;
-					VSCALE( dir, dir, inv_len )
-					VSUB2( to_hit, hits[2], hits[0] )
-					lena = VDOT( to_hit, dir );
-					VSUB2( to_hit, hits[3], hits[0] )
-					lenb = VDOT( to_hit, dir );
-					if( lena > lenb )
-					{
-						dist = lena;
-						lena = lenb;
-						lenb = dist;
-						VMOVE( start_pt, hits[3] )
-						VMOVE( hits[2], hits[3] )
-						VMOVE( hits[3], start_pt )
 					}
 
-					if( lena > len )
-						continue;
-					if( lenb < 0.0 )
-						continue;
-
-					if( lena > 0.0 )
-					{
-						VMOVE( start_pt, hits[2] )
-						start_len = lena;
+					/* sort the hits on face 1 */
+					dists1 = (fastf_t *)bu_calloc( hit_count1,
+							 sizeof( fastf_t ), "dists1" );
+					dists2 = (fastf_t *)bu_calloc( hit_count2,
+							 sizeof( fastf_t ), "dists2" );
+					VMOVE( start_pt, hits1[0] );
+					dists1[0] = 0.0;
+					min_dist = 0.0;
+					min_hit = 0;
+					VSUB2( dir, hits1[1], hits1[0] );
+					dists1[1] = MAGNITUDE( dir );
+					VUNITIZE( dir );
+					max_dist = dists1[1];
+					max_hit = 1;
+					for( i=2 ; i<hit_count1 ; i++ ) {
+						VSUB2( diff, hits1[i], start_pt );
+						dists1[i] = MAGNITUDE( diff );
+						if( VDOT( dir, diff ) < 0.0 )
+							dists1[i] = -dists1[i];
+						if( dists1[i] > max_dist ) {
+							max_dist = dists1[i];
+							max_hit = i;
+						}
+						if( dists1[i] < min_dist ) {
+							min_dist = dists1[i];
+							min_hit = i;
+						}
 					}
-					else
-					{
-						VMOVE( start_pt, hits[0] )
-						start_len = 0.0;
+
+					/* recalculate dir */
+					VSUB2( dir, hits1[max_hit], hits1[min_hit] );
+					VUNITIZE( dir );
+
+					done = 0;
+					while( !done ) {
+						done = 1;
+						for( i=1 ; i<hit_count1 ; i++ ) {
+							if( dists1[i-1] > dists1[i] ) {
+								fastf_t tmp;
+								point_t tmp_pt;
+
+								done = 0;
+								tmp = dists1[i];
+								VMOVE( tmp_pt, hits1[i] );
+								dists1[i] = dists1[i-1];
+								VMOVE( hits1[i], hits1[i-1] );
+								dists1[i-1] = tmp;
+								VMOVE( hits1[i-1], tmp_pt );
+							}
+						}
 					}
 
-					if( lenb < len )
-						len = lenb;
+					/* sort the hits on face 2 */
+					min_dist = MAX_FASTF;
+					min_hit = -1;
+					max_dist = -min_dist;
+					max_hit = -1;
+					for( i=0 ; i<hit_count2 ; i++ ) {
+						VSUB2( diff, hits2[i], start_pt );
+						dists2[i] = MAGNITUDE( diff );
+						if( VDOT( dir, diff ) < 0.0 )
+							dists2[i] = -dists2[i];
+						if( dists2[i] > max_dist ) {
+							max_dist = dists2[i];
+							max_hit = i;
+						}
+						if( dists2[i] < min_dist ) {
+							min_dist = dists2[i];
+							min_hit = i;
+						}
+					}
 
-					shoot_and_plot( start_pt, dir, vhead, len-start_len, leaf_no, leaf2, eptr, ON_INT, dgcdp );
+					done = 0;
+					while( !done ) {
+						done = 1;
+						for( i=1 ; i<hit_count2 ; i++ ) {
+							if( dists2[i-1] > dists2[i] ) {
+								fastf_t tmp;
+								point_t tmp_pt;
+
+								done = 0;
+								tmp = dists2[i];
+								VMOVE( tmp_pt, hits2[i] );
+								dists2[i] = dists2[i-1];
+								VMOVE( hits2[i], hits2[i-1] );
+								dists2[i-1] = tmp;
+								VMOVE( hits2[i-1], tmp_pt );
+							}
+						}
+					}
+
+					/* build a segment list for each solid */
+					A = (struct bu_list *)bu_calloc( 1, sizeof( struct bu_list ), "A" );
+					B = (struct bu_list *)bu_calloc( 1, sizeof( struct bu_list ), "B" );
+					BU_LIST_INIT( A );
+					BU_LIST_INIT( B );
+
+					for( i=1 ; i<hit_count1 ; i += 2 ) {
+						RT_GET_SEG( aseg, dgcdp->ap->a_resource );
+						aseg->l.magic = RT_SEG_MAGIC;
+						aseg->seg_stp = ON_INT;
+						VMOVE( aseg->seg_in.hit_point, hits1[i-1] );
+						aseg->seg_in.hit_dist = dists1[i-1];
+						VMOVE( aseg->seg_out.hit_point, hits1[i] );
+						aseg->seg_out.hit_dist = dists1[i];
+
+						BU_LIST_APPEND( A, &aseg->l );
+					}
+
+					for( i=1 ; i<hit_count2 ; i += 2 ) {
+						RT_GET_SEG( aseg, dgcdp->ap->a_resource );
+						aseg->l.magic = RT_SEG_MAGIC;
+						aseg->seg_stp = ON_INT;
+						VMOVE( aseg->seg_in.hit_point, hits2[i-1] );
+						aseg->seg_in.hit_dist = dists2[i-1];
+						VMOVE( aseg->seg_out.hit_point, hits2[i] );
+						aseg->seg_out.hit_dist = dists2[i];
+
+						BU_LIST_APPEND( B, &aseg->l );
+					}
+
+					result = eval_op( A, OP_INTERSECT, B, dgcdp );
+
+					for( BU_LIST_FOR( aseg, seg, result ) ) {
+						point_t ray_start;
+
+						VJOIN1( ray_start, start_pt, aseg->seg_in.hit_dist, dir );
+						if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
+							bu_log( "memory corruption detected at file %s, line %d\n",
+								__FILE__, __LINE__ );
+						shoot_and_plot( ray_start, dir, vhead,
+								aseg->seg_out.hit_dist - aseg->seg_in.hit_dist,
+								leaf_no, leaf2, eptr, ON_INT, dgcdp );
+						if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
+							bu_log( "memory corruption detected at file %s, line %d\n",
+								__FILE__, __LINE__ );
+					}
+					MY_FREE_SEG_LIST( result, dgcdp->ap->a_resource );
+
+					bu_free( (char *)dists1, "dists1" );
+					bu_free( (char *)dists2, "dists2" );
 				}
 			}
 		}
 	}
 
+	bu_free( (char *)hits1, "hits1" );
+	bu_free( (char *)hits2, "hits2" );
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )
 		bu_log( "Error at end of Eplot()\n" );
 
