@@ -1961,8 +1961,11 @@ struct rt_db_internal	*ip;
 	RT_HF_CK_MAGIC(xip);
 	xip->magic = 0;			/* sanity */
 
-	RT_CK_MAPPED_FILE(xip->mp);
-	rt_close_mapped_file(xip->mp);
+	if( xip->mp )
+	{
+		RT_CK_MAPPED_FILE(xip->mp);
+		rt_close_mapped_file(xip->mp);
+	}
 
 	rt_free( (char *)xip, "hf ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
