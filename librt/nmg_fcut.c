@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "machine.h"
 #include "vmath.h"
+#include "db.h"		/* XXX just for debugging */
 #include "nmg.h"
 #include "raytrace.h"
 
@@ -876,6 +877,34 @@ nmg_state_names[stp->new_state], action_names[stp->action] );
 		nmg_pr_lu_briefly(lu, (char *)0);
 		rt_log("The whole face\n");
 		nmg_pr_fu(lu->up.fu_p, (char *)0);
+		/* Store this face in a .g file for examination! */
+		{
+			FILE	*fp = fopen("error.g", "w");
+			struct rt_external	ext;
+			struct rt_db_internal	intern;
+			static union record		rec;
+
+			RT_INIT_DB_INTERNAL(&intern);
+			intern.idb_type = ID_NMG;
+			intern.idb_ptr = (genptr_t)nmg_find_model((long*)lu);
+			RT_INIT_EXTERNAL( &ext );
+
+			/* Scale change on export is 1.0 -- no change */
+			if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+				rt_log("solid export failure\n");
+				if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
+				db_free_external( &ext );
+				rt_bomb("zappo");
+			}
+			rt_functab[ID_NMG].ft_ifree( &intern );
+			NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
+
+			rec.u_id = ID_IDENT;
+			strcpy( rec.i.i_version, ID_VERSION );
+			strcpy( rec.i.i_title, "nmg_comb.c error dump" );
+			fwrite( (char *)&rec, sizeof(rec), 1, fp );
+			fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
+		}
 		/* Explode */
 		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
 	case NMG_ACTION_NONE:
