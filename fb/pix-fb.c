@@ -176,7 +176,6 @@ char **argv;
 
 	if( clear )  {
 		fb_clear( fbp, PIXEL_NULL );
-		fb_wmap( fbp, COLORMAP_NULL );
 	}
 	if( zoom ) {
 		/* Zoom in, and center the display */
