@@ -114,6 +114,7 @@ proc build_comb_menu { id combs } {
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
 	    matrix_illum \$spath \$path_pos"
+if 0 {
     bind_listbox $top "<ButtonPress-1>"\
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
@@ -123,6 +124,10 @@ proc build_comb_menu { id combs } {
 	    "set comb_control($id,name) \[%W get @%x,%y\];\
 	    comb_reset $id;\
 	    destroy $top"
+} else {
+    bind_listbox $top "<ButtonPress-1>" \
+	    "lbdcHack %W %x %y %t $id c2 junkpath"
+}
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
 	    _mged_press reject"
@@ -168,10 +173,15 @@ proc build_comb_menu2 { id combs } {
     create_listbox $top $screen Combination $combs "destroy $top"
     set mged_gui($id,edit_menu) $top
 
+if 0 {
     bind_listbox $top "<Double-1>"\
 	    "set comb_control($id,name) \[%W get @%x,%y\];\
 	    comb_reset $id;\
 	    destroy $top"
+} else {
+    bind_listbox $top "<ButtonPress-1>" \
+	    "lbdcHack %W %x %y %t $id c3 junkpath"
+}
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end"
 }
