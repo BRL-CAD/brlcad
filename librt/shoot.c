@@ -487,7 +487,7 @@ weave:
 	 *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	 */
 hitit:
-	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(&FinalPart,"a_hit()");
+	if(rt_g.debug&DEBUG_SHOOT)  rt_pr_partitions(ap->a_rt_i,&FinalPart,"a_hit()");
 
 	ret = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
