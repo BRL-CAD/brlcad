@@ -322,10 +322,15 @@ CONST mat_t	input;
 	LOCAL int	z[4];			/* Temporary */
 	LOCAL fastf_t	b[4];			/* Temporary */
 	LOCAL fastf_t	c[4];			/* Temporary */
-
+	char	is_identity=1;
+	
 	bn_mat_copy( output, input );	/* Duplicate */
 
-	/* Initialization */
+	/* If we've got an identity matrix the inverse is the same */
+	if (memcmp(input, bn_mat_identity, sizeof(bn_mat_identity)))
+		return;
+
+        /* Initialization */
 	for( j = 0; j < 4; j++ )
 		z[j] = j;
 
