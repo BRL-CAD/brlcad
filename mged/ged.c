@@ -1356,9 +1356,9 @@ int	non_blocking;
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-		      rate_model_tran[X] * 0.1,
-		      rate_model_tran[Y] * 0.1,
-		      rate_model_tran[Z] * 0.1);
+		      rate_model_tran[X] * 0.05 * Viewscale * base2local,
+		      rate_model_tran[Y] * 0.05 * Viewscale * base2local,
+		      rate_model_tran[Z] * 0.05 * Viewscale * base2local);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1383,9 +1383,9 @@ int	non_blocking;
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-		      rate_tran[X] * 0.1,
-		      rate_tran[Y] * 0.1,
-		      rate_tran[Z] * 0.1);
+		      rate_tran[X] * 0.05 * Viewscale * base2local,
+		      rate_tran[Y] * 0.05 * Viewscale * base2local,
+		      rate_tran[Z] * 0.05 * Viewscale * base2local);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
