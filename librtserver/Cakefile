@@ -2,11 +2,6 @@
  *			librtserver/Cakefile
  */
 #define SRCDIR	librtserver
-#ifdef __ppc__
-#  define PRODUCTS	librtserver.jnilib
-#else
-#  define PRODUCTS	librtserver.ARCH_SUF
-#endif
 #define FILES	rtserver
 #define	SRCSUFF	.c
 #define VERSION_VARIABLE	rtserver_version
@@ -15,15 +10,25 @@
 
 #include "../Cakefile.defs"
 
+#if defined __ppc__
+#  define PRODUCTS	librtserver.jnilib
+#elif defined JNI_INC
+#  define PRODUCTS	librtserver.ARCH_SUF
+#else
+#  undef PRODUCTS
+#endif
+
 #undef CONFIGDEFS
-#ifdef __ppc__
+#if defined __ppc__
 #  undef RANLIB
 #  undef BUILD_LIBRARY
 #  define RANLIB	true
 #  define CONFIGDEFS	/**/
 #  define BUILD_LIBRARY	cc -bundle -framework JavaVM -o
+#elif defined JNI_INC
+#  define CONFIGDEFS	JNI_INC
 #else
-#  define CONFIGDEFS	-I/usr/java/j2sdk1.4.2_02/include "-I/usr/java/j2sdk1.4.2_02/include/linux"
+#  define CONFIGDEFS	/**/
 #endif
 
 /* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
@@ -35,5 +40,12 @@
 
 #define EXTRA_OBJ_NO_DEPENDENCY -L../.librt.''MTYPE -lrt -L../.libbn.''MTYPE -lbn -L../.libbu.''MTYPE -lbu -L../.libtcl8.4.''MTYPE -ltcl8.4
 
+#ifdef PRODUCTS
 #include "../Cakefile.lib"
 #include "../Cakefile.rules"
+#else
+
+dummy&:
+	@echo "Nothing to do here, JNI_INC must be defined (in Cakefile.defs) to the directory where jni.h is located"
+
+#endif
