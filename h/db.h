@@ -60,12 +60,13 @@ union record  {
 	char	u_size[128];	/* Total record size */
 	struct material_rec {
 		char	md_id;		/* = ID_MATERIAL color override */
-		char	md_pad;
+		char	md_flags;	/* UNUSED */
 		short	md_low;		/* lower end of region IDs affected */
 		short	md_hi;		/* upper end of region IDs affected */
 		unsigned char md_r;
 		unsigned char md_g;	/* color of these regions:  0..255 */
 		unsigned char md_b;
+		char	md_material[100]; /* UNUSED now */
 	} md;
 	struct b_spline_head {
 		char    d_id;		/* = B_SPLINE_HEAD */
@@ -175,7 +176,7 @@ union record  {
 		short	c_regionid;		/* region ID code */
 		short	c_aircode;		/* air space code */
 		short	c_length;		/* # of members */
-		short	c_pad;
+		short	c_num;			/* DEPRECATED */
 		short	c_material;		/* (GIFT) material code */
 		short	c_los;			/* equivalent LOS estimate */
 		char	c_override;		/* non-0 ==> c_rgb is color */
