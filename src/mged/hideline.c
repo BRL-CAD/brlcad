@@ -36,13 +36,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -52,6 +50,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "./ged.h"
 #include "solid.h"
 #include "./mged_dm.h"
+
 
 #define MAXOBJECTS	3000
 

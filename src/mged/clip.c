@@ -27,8 +27,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -37,11 +35,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "mged_dm.h"
 
+
 static int	code();
 
 int
-clip (xp1, yp1, xp2, yp2)
-vect_t	xp1, yp1, xp2, yp2;
+clip (vect_t xp1, vect_t yp1, vect_t xp2, vect_t yp2)
 {
 	char code1, code2;
 
@@ -94,8 +92,7 @@ vect_t	xp1, yp1, xp2, yp2;
 }
 
 static int
-code (x, y)
-fastf_t x, y;
+code (fastf_t x, fastf_t y)
 {
 	int cval;
 
