@@ -14,7 +14,12 @@
  *	All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
+#include "machine.h"
+#include "bu.h"
+
 
 char *message="Usage:  iges-g [-N solid_name] [-X nmg_debug_flag] [-x rt_debug_flag] [-n|d|t] -o file.g file.iges\n\
 	-n - Convert all rational B-spline surfaces to a single spline solid\n\
@@ -35,6 +40,6 @@ options, it is ignored for all other options\n";
 void
 usage()
 {
-	rt_log( message );
+	bu_log( message );
 	exit( 1 );
 }
