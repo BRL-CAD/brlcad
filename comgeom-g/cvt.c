@@ -306,7 +306,7 @@ char **argv;
 	if(verbose)printf("\nRegion table\n");
 
 	i = sizeof(struct wmember) * (reg_total+2);
-	if( (wmp = (struct wmember *)malloc(i)) == (struct wmember *)0 )  {
+	if( (wmp = (struct wmember *)bu_calloc(reg_total+2, sizeof( struct wmember ), "wmp")) == (struct wmember *)0 )  {
 		printf("malloc(%d) failed\n", i );
 		exit(42);
 	}

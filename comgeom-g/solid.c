@@ -206,9 +206,10 @@ getsolid()
 	double	r1, r2;
 	vect_t	work;
 	double	m1, m2;		/* Magnitude temporaries */
-	char	name[16+2];
+	char	*name=NULL;
 	double	dd[4*6];	/* 4 cards of 6 nums each */
 	point_t	tmp[8];		/* 8 vectors of 3 nums each */
+	int	ret;
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i][0]))
 
@@ -275,11 +276,12 @@ getsolid()
 		}
 	}
 
-	namecvt( sol_work, name, 's' );
+	namecvt( sol_work, &name, 's' );
 	if(verbose) col_pr( name );
 
 	if( strcmp( solid_type, "end" ) == 0 )  {
 		/* DoE/MORSE version 1 format */
+		bu_free( name, "name" );
 		return(1);		/* END */
 	}
 
@@ -287,7 +289,6 @@ getsolid()
 		int		ncurves;
 		int		pts_per_curve;
 		double		**curve;
-		int		ret;
 
 		ncurves = getint( scard, 10, 10 );
 		pts_per_curve = getint( scard, 20, 10 );
@@ -322,6 +323,7 @@ getsolid()
 			free( (char *)curve[i] );
 		}
 		free( (char *)curve);
+		bu_free( name, "name" );
 		return(ret);
 	}
 
@@ -332,7 +334,9 @@ getsolid()
 			return(-1);
 		VSET( min, dd[0], dd[2], dd[4] );
 		VSET( max, dd[1], dd[3], dd[5] );
-		return( mk_rpp( outfp, name, min, max ) );
+		ret = mk_rpp( outfp, name, min, max );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "box" ) == 0 )  {
@@ -347,7 +351,9 @@ getsolid()
 		VADD3( T(5), D(0), D(3), D(2) );
 		VADD4( T(6), D(0), D(3), D(2), D(1) );
 		VADD3( T(7), D(0), D(3), D(1) );
-		return( mk_arb8( outfp, name, &tmp[0][X] ) );
+		ret = mk_arb8( outfp, name, &tmp[0][X] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "raw" ) == 0 ||
@@ -364,7 +370,9 @@ getsolid()
 		VADD3( T(5), D(0), D(3), D(2) );
 		VMOVE( T(6), T(5) );
 		VADD3( T(7), D(0), D(3), D(1) );
-		return( mk_arb8( outfp, name, &tmp[0][X] ) );
+		ret = mk_arb8( outfp, name, &tmp[0][X] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "rvw" ) == 0 )  {
@@ -398,7 +406,9 @@ getsolid()
 		VADD2( T(5), T(1), c );
 		VMOVE( T(6), T(5) );
 		VADD2( T(7), T(3), c );
-		return( mk_arb8( outfp, name, &tmp[0][X] ) );
+		ret = mk_arb8( outfp, name, &tmp[0][X] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arw" ) == 0) {
@@ -415,20 +425,26 @@ getsolid()
 
 		VADD3( T(6), D(0), D(1), D(3) );
 		VMOVE( T(7), T(6) );
-		return( mk_arb8( outfp, name, &tmp[0][X]) );
+		ret = mk_arb8( outfp, name, &tmp[0][X]);
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arb8" ) == 0 )  {
 		if( getsoldata( dd, 8*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb8( outfp, name, dd ) );
+		ret = mk_arb8( outfp, name, dd );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arb7" ) == 0 )  {
 		if( getsoldata( dd, 7*3, sol_work ) < 0 )
 			return(-1);
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, dd ) );
+		ret = mk_arb8( outfp, name, dd );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arb6" ) == 0 )  {
@@ -438,7 +454,9 @@ getsolid()
 		VMOVE( D(7), D(5) );
 		VMOVE( D(6), D(5) );
 		VMOVE( D(5), D(4) );
-		return( mk_arb8( outfp, name, dd ) );
+		ret = mk_arb8( outfp, name, dd );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arb5" ) == 0 )  {
@@ -447,35 +465,45 @@ getsolid()
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
 		VMOVE( D(7), D(4) );
-		return( mk_arb8( outfp, name, dd ) );
+		ret = mk_arb8( outfp, name, dd );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arb4" ) == 0 )  {
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_arb4( outfp, name, dd ) );
+		ret = mk_arb4( outfp, name, dd );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "rcc" ) == 0 )  {
 		/* V, H, r */
 		if( getsoldata( dd, 2*3+1, sol_work ) < 0 )
 			return(-1);
-		return( mk_rcc( outfp, name, D(0), D(1), dd[6] ) );
+		ret = mk_rcc( outfp, name, D(0), D(1), dd[6] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "rec" ) == 0 )  {
 		/* V, H, A, B */
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_tgc( outfp, name, D(0), D(1),
-			D(2), D(3), D(2), D(3) ) );
+		ret = mk_tgc( outfp, name, D(0), D(1),
+			      D(2), D(3), D(2), D(3) );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "trc" ) == 0 )  {
 		/* V, H, r1, r2 */
 		if( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 			return(-1);
-		return( mk_trc_h( outfp, name, D(0), D(1), dd[6], dd[7] ) );
+		ret = mk_trc_h( outfp, name, D(0), D(1), dd[6], dd[7] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "tec" ) == 0 )  {
@@ -485,8 +513,10 @@ getsolid()
 		r1 = 1.0/dd[12];	/* P */
 		VSCALE( D(4), D(2), r1 );
 		VSCALE( D(5), D(3), r1 );
-		return( mk_tgc( outfp, name, D(0), D(1),
-			D(2), D(3), D(4), D(5) ) );
+		ret = mk_tgc( outfp, name, D(0), D(1),
+			      D(2), D(3), D(4), D(5) );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "tgc" ) == 0 )  {
@@ -497,15 +527,19 @@ getsolid()
 		r2 = dd[13] / MAGNITUDE( D(3) );	/* B/|B| * D */
 		VSCALE( D(4), D(2), r1 );
 		VSCALE( D(5), D(3), r2 );
-		return( mk_tgc( outfp, name, D(0), D(1),
-			D(2), D(3), D(4), D(5) ) );
+		ret = mk_tgc( outfp, name, D(0), D(1),
+			D(2), D(3), D(4), D(5) );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "sph" ) == 0 )  {
 		/* V, radius */
 		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 			return(-1);
-		return( mk_sph( outfp, name, D(0), dd[3] ) );
+		ret = mk_sph( outfp, name, D(0), dd[3] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strncmp( solid_type, "wir", 3 ) == 0 )  {
@@ -554,6 +588,7 @@ getsolid()
 		if( mk_pipe( outfp, name, &head ) < 0 )
 			return(-1);
 		mk_pipe_free( &head );
+		bu_free( name, "name" );
 		return(0);		/* OK */
 	}
 
@@ -561,40 +596,50 @@ getsolid()
 		/* V, H, B, r */
 		if( getsoldata( dd, 3*3+1, sol_work ) < 0 )
 			return(-1);
-		return( mk_rpc( outfp, name, D(0), D(1),
-			D(2), dd[9] ) );
+		ret = mk_rpc( outfp, name, D(0), D(1),
+			D(2), dd[9] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "rhc" ) == 0 )  {
 		/* V, H, B, r, c */
 		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 			return(-1);
-		return( mk_rhc( outfp, name, D(0), D(1),
-			D(2), dd[9], dd[10] ) );
+		ret = mk_rhc( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "epa" ) == 0 )  {
 		/* V, H, Au, r1, r2 */
 		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 			return(-1);
-		return( mk_epa( outfp, name, D(0), D(1),
-			D(2), dd[9], dd[10] ) );
+		ret = mk_epa( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "ehy" ) == 0 )  {
 		/* V, H, Au, r1, r2, c */
 		if( getsoldata( dd, 3*3+3, sol_work ) < 0 )
 			return(-1);
-		return( mk_ehy( outfp, name, D(0), D(1),
-			D(2), dd[9], dd[10], dd[11] ) );
+		ret = mk_ehy( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10], dd[11] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "eto" ) == 0 )  {
 		/* V, N, C, r, rd */
 		if( getsoldata( dd, 3*3+2, sol_work ) < 0 )
 			return(-1);
-		return( mk_eto( outfp, name, D(0), D(1),
-			D(2), dd[9], dd[10] ) );
+		ret = mk_eto( outfp, name, D(0), D(1),
+			D(2), dd[9], dd[10] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 			
@@ -645,32 +690,41 @@ ell1:
 		VSCALE( D(3), D(3), m2 );
 
 		/* Now we have V, A, B, C */
-		return( mk_ell( outfp, name, D(0), D(1), D(2), D(3) ) );
+		ret = mk_ell( outfp, name, D(0), D(1), D(2), D(3) );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "ellg" ) == 0 )  {
 		/* V, A, B, C */
 		if( getsoldata( dd, 4*3, sol_work ) < 0 )
 			return(-1);
-		return( mk_ell( outfp, name, D(0), D(1), D(2), D(3) ) );
+		ret = mk_ell( outfp, name, D(0), D(1), D(2), D(3) );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "tor" ) == 0 )  {
 		/* V, N, r1, r2 */
 		if( getsoldata( dd, 2*3+2, sol_work ) < 0 )
 			return(-1);
-		return( mk_tor( outfp, name, D(0), D(1), dd[6], dd[7] ) );
+		ret = mk_tor( outfp, name, D(0), D(1), dd[6], dd[7] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "haf" ) == 0 )  {
 		/* N, d */
 		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 			return(-1);
-		return( mk_half( outfp, name, D(0), -dd[3] ) );
+		ret = mk_half( outfp, name, D(0), -dd[3] );
+		bu_free( name, "name" );
+		return(ret);
 	}
 
 	if( strcmp( solid_type, "arbn" ) == 0 )  {
-		return( read_arbn( name ) );
+		ret = read_arbn( name );
+		bu_free( name, "name" );
 	}
 
 	/*
