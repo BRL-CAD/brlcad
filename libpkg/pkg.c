@@ -20,7 +20,6 @@
  *	pkg_flush	Empty the stream buffer of any queued messages
  *	pkg_waitfor	Wait for a specific msg, user buf, processing others
  *	pkg_bwaitfor	Wait for specific msg, malloc buf, processing others
- *	pkg_get		Read bytes from connection, assembling message
  *	pkg_block	Wait until a full message has been read
  *
  *  Authors -
@@ -123,14 +122,15 @@ static void	pkg_timestamp();
 static void	pkg_checkin();
 
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
-			sprintf(errbuf,"pkg: bad pointer x%x\n",p);\
-			(p->pkc_errlog)(errbuf);abort();}}
+			sprintf(errbuf,"%s: bad pointer x%x line %d\n",__FILE__, p, __LINE__);\
+			pkg_errlog(errbuf);abort();}}
 
 #define	MAXQLEN	512	/* largest packet we will queue on stream */
 
 /* A macro for logging a string message when the debug file is open */
 #if 1
-#define DMSG(s) if(pkg_debug){pkg_timestamp();fprintf(pkg_debug,s);fflush(pkg_debug);}
+#define DMSG(s) if(pkg_debug) { \
+	pkg_timestamp(); fprintf(pkg_debug,s); fflush(pkg_debug);}
 #else
 #define DMSG(s)	/**/
 #endif
@@ -621,6 +621,9 @@ register struct pkg_conn *pc;
  * number of characters.  This can be necessary because pipes
  * and network connections don't deliver data with the same
  * grouping as it is written with.  Written by Robert S. Miles, BRL.
+ *
+ *  Superceeded by pkg_inget() in this version.
+ *  This code is retained because of it's general usefulness.
  */
 static int
 pkg_mread(pc, bufp, n)
@@ -939,8 +942,7 @@ register struct pkg_conn *pc;
  *  This routine implements a blocking read on the network connection
  *  until a message of 'type' type is received.  This can be useful for
  *  implementing the synchronous portions of a query/reply exchange.
- *  All messages of any other type are processed by pkg_get() and
- *  handed off to the handler for that type message in pkg_switch[].
+ *  All messages of any other type are processed by pkg_block().
  *
  *  Returns the length of the message actually received, or -1 on error.
  */
@@ -962,9 +964,11 @@ register struct pkg_conn *pc;
 		fflush(pkg_debug);
 	}
 again:
-	if( pc->pkc_left >= 0 )
+	if( pc->pkc_left >= 0 )  {
+		/* Finish up remainder of partially received message */
 		if( pkg_block( pc ) < 0 )
 			return(-1);
+	}
 
 	if( pc->pkc_buf != (char *)0 )  {
 		pc->pkc_errlog("pkg_waitfor:  buffer clash\n");
@@ -985,6 +989,8 @@ again:
 	pc->pkc_left = -1;
 	if( pc->pkc_len == 0 )
 		return(0);
+
+	/* See if incomming message is larger than user's buffer */
 	if( pc->pkc_len > len )  {
 		register char *bp;
 		int excess;
@@ -992,9 +998,9 @@ again:
 			"pkg_waitfor:  message %d exceeds buffer %d\n",
 			pc->pkc_len, len );
 		(pc->pkc_errlog)(errbuf);
-		if( (i = pkg_mread( pc, buf, len )) != len )  {
+		if( (i = pkg_inget( pc, buf, len )) != len )  {
 			sprintf(errbuf,
-				"pkg_waitfor:  pkg_mread %d gave %d\n", len, i );
+				"pkg_waitfor:  pkg_inget %d gave %d\n", len, i );
 			(pc->pkc_errlog)(errbuf);
 			return(-1);
 		}
@@ -1003,9 +1009,9 @@ again:
 			pkg_perror(pc->pkc_errlog, "pkg_waitfor: excess message, malloc failed");
 			return(-1);
 		}
-		if( (i = pkg_mread( pc, bp, excess )) != excess )  {
+		if( (i = pkg_inget( pc, bp, excess )) != excess )  {
 			sprintf(errbuf,
-				"pkg_waitfor: pkg_mread of excess, %d gave %d\n",
+				"pkg_waitfor: pkg_inget of excess, %d gave %d\n",
 				excess, i );
 			(pc->pkc_errlog)(errbuf);
 			(void)free(bp);
@@ -1040,8 +1046,8 @@ again:
  *  This routine implements a blocking read on the network connection
  *  until a message of 'type' type is received.  This can be useful for
  *  implementing the synchronous portions of a query/reply exchange.
- *  All messages of any other type are processed by pkg_get() and
- *  handed off to the handler for that type message in pkg_switch[].
+ *  All messages of any other type are processed by pkg_block().
+ *
  *  The buffer to contain the actual message is acquired via malloc(),
  *  and the caller must free it.
  *
@@ -1095,148 +1101,156 @@ register struct pkg_conn *pc;
 }
 
 /*
- *  			P K G _ G E T
+ *  			P K G _ P R O C E S S
  *
- *  This routine should be called whenever select() indicates that there
- *  is data waiting on the network connection and the user's program is
- *  not blocking on the arrival of a particular message type.
  *
- *  As portions of the message body arrive, they are read and stored.
- *  When the entire message body has been read, it is dispatched.
+ *  This routine should be called to process all PKGs that are
+ *  stored in the internal buffer pkc_inbuf.  This routine does
+ *  no I/O, and is used in a "polling" paradigm.
  *
- *  If this routine is called when there is no message already being
- *  assembled, and there is no input on the network connection, it will
- *  block, waiting for the arrival of the header.
+ *  Only after pkg_process() has been called on all PKG connections
+ *  should the user process suspend itself in a select() operation,
+ *  otherwise packages that have been read into the internal buffer
+ *  will remain unprocessed, potentially forever.
  *
- *  The companion routine is pkg_block(), which does one full message.
+ *  If an error code is returned, then select() must NOT be called
+ *  until pkg_process has been called again.
  *
- *  Returns -1 on error, 0 if more data comming, 1 if user handler called.
- *  The user handler is responsible for calling free()
- *  on the message buffer when finished with it.
+ *  A plausable code sample might be:
+ *
+ *	for(;;)  {
+ *		if( pkg_process( pc ) < 0 )  {
+ *			printf("pkg_process error encountered\n");
+ *			continue;
+ *		}
+ *		if( bsdselect( pc->pkc_fd, 99, 0 ) != 0 )  {
+ *			if( pkg_suckin( pc ) <= 0 )  {
+ *				printf("pkg_suckin error or EOF\n");
+ *				break;
+ *			}
+ *		}
+ *	}
+ *
+ *  Returns -
+ *	<0	some internal error encountered; DO NOT call select() next.
+ *	 0	All ok, no packages processed
+ *	>0	All ok, return is # of packages processed (for the curious)
  */
 int
-pkg_get(pc)
+pkg_process(pc)
 register struct pkg_conn *pc;
 {
 	register int	len;
 	register int	available;
+	register int	errcnt;
 	register int	ret;
+	int		goodcnt;
 
-top:
+	goodcnt = 0;
+
 	PKG_CK(pc);
-	if( pkg_debug )  {
-		if( pc->pkc_left < 0 )  {
-			sprintf(errbuf, "awaiting new header");
-		} else if( pc->pkc_left > 0 )  {
-			sprintf(errbuf, "more data to come");
-		} else {
-			sprintf(errbuf, "all here");
-		}
-		pkg_timestamp();
-		fprintf( pkg_debug,
-			"pkg_get(pc=x%x) pkc_left=%d %s\n",
-			pc, pc->pkc_left, errbuf );
-		fflush(pkg_debug);
-	}
-	if( pc->pkc_left < 0 )  {
-		if( pkg_gethdr( pc, (char *)0 ) < 0 )  {
-			DMSG("pkg_gethdr < 0\n");
-			ret = -1;
-			goto out;
-		}
-	}
-	if( pc->pkc_left < 0 )  {
-		/* pkg_gethdr() didn't get a header */
-		DMSG("pkc_left < 0 after pkg_gethdr\n");
-		ret = -3;
-		goto out;
-	}
-	/* Now pkc_left >= 0 */
-
-
-	/* copy what is here already, and dispatch when all here */
-	if( pc->pkc_left > 0 )  {
-		/* Sanity check -- user buffer should be allocated */
-		if( pc->pkc_curpos == 0 )  {
-			DMSG("curpos=0\n");
-			(pc->pkc_errlog)("pkg_get: curpos=0");
-			ret = -9;
-			goto out;
-		}
-
-		/*
-		 * Header has been seen, stop briefly to
-		 * see if any more of the message body has arrived yet
-		 */
-		pkg_checkin( pc, 0 );
-
+	/* This loop exists only to cut off "hard" errors */
+	for( errcnt=0; errcnt < 500; )  {
 		available = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
-		if( available > pc->pkc_left )  {
-			/* There is more in input buf than just this pkg */
-			len = pc->pkc_left; /* trim to amt needed */
-		} else {
-			/* Take all that there is */
-			len = available;
-		}
 		if( pkg_debug )  {
+			if( pc->pkc_left < 0 )  {
+				sprintf(errbuf, "awaiting new header");
+			} else if( pc->pkc_left > 0 )  {
+				sprintf(errbuf, "need more data");
+			} else {
+				sprintf(errbuf, "pkg is all here");
+			}
 			pkg_timestamp();
 			fprintf( pkg_debug,
-				"pkg_get() taking %d, %d more in inbuf\n",
-				len, available-len);
-fprintf(pkg_debug, "pkg_get() pkc_buf=x%x, pkc_curpos=x%x\n",
-pc->pkc_buf, pc->pkc_curpos);
+				"pkg_process(pc=x%x) pkc_left=%d %s (avail=%d)\n",
+				pc, pc->pkc_left, errbuf, available );
 			fflush(pkg_debug);
 		}
-		if( len > 0 )  {
-			if( pc->pkc_curpos == 0 )  {
-				DMSG("len>0, curpos==0\n");
-				ret = -99;
-				goto out;
+		if( pc->pkc_left < 0 )  {
+			/*
+			 *  Need to get a new PKG header.
+			 *  Do so ONLY if the full header is already in the
+			 *  internal buffer, to prevent blocking in pkg_gethdr().
+			 */
+			if( available < sizeof(struct pkg_header) )
+				break;
+
+			if( pkg_gethdr( pc, (char *)0 ) < 0 )  {
+				DMSG("pkg_gethdr < 0\n");
+				errcnt++;
+				continue;
 			}
-			bcopy( &pc->pkc_inbuf[pc->pkc_incur],
-				pc->pkc_curpos, len );
-			pc->pkc_incur += len;
+
+			if( pc->pkc_left < 0 )  {
+				/* pkg_gethdr() didn't get a header */
+				DMSG("pkc_left still < 0 after pkg_gethdr()\n");
+				errcnt++;
+				continue;
+			}
+		}
+		/*
+		 *  Now pkc_left >= 0, implying header has been obtained.
+		 *  Find amount still available in input buffer.
+		 */
+		available = pc->pkc_inend - pc->pkc_incur;
+
+		/* copy what is here already, and dispatch when all here */
+		if( pc->pkc_left > 0 )  {
+			if( available <= 0 )  break;
+
+			/* Sanity check -- buffer must be allocated by now */
+			if( pc->pkc_curpos == 0 )  {
+				DMSG("curpos=0\n");
+				errcnt++;
+				continue;
+			}
+
+			if( available > pc->pkc_left )  {
+				/* There is more in input buf than just this pkg */
+				len = pc->pkc_left; /* trim to amt needed */
+			} else {
+				/* Take all that there is */
+				len = available;
+			}
+			len = pkg_inget( pc, pc->pkc_curpos, len );
 			pc->pkc_curpos += len;
 			pc->pkc_left -= len;
-			DMSG("bcopy done\n");
+			if( pc->pkc_left > 0 )  {
+				/* Input buffer must now be exhausted */
+				DMSG("more data needed to finish this PKG\n");
+				break;
+			}
 		}
-		if( pc->pkc_left > 0 )  {
-			/* more is on the way */
-			DMSG("more is on the way\n");
-			ret = 0;
-			goto out;
+
+		if( pc->pkc_left != 0 )  {
+			/* Somehow, a full PKG has not yet been obtained */
+			DMSG("pkc_left != 0\n");
+			errcnt++;
+			continue;
+		}
+
+		/* Now, pkc_left == 0, dispatch the message */
+		if( pkg_dispatch(pc) <= 0 )  {
+			/* something bad happened */
+			DMSG("pkg_dispatch failed\n");
+			errcnt++;
+		} else {
+			DMSG("pkg_dispatch worked\n");
+			goodcnt++;
 		}
 	}
 
-	if( pc->pkc_left != 0 )  {
-		DMSG("pkc_left != 0\n");
-		ret = -5;
-		goto out;
+	if( errcnt > 0 )  {
+		ret = -errcnt;
+	} else {
+		ret = goodcnt;
 	}
-	/* Now, pkc_left == 0, dispatch the message */
-	len = pkg_dispatch(pc);
-	if( len <= 0 )  {
-		/* something bad happened */
-		DMSG("pkg_dispatch failed\n");
-		ret = -2;
-		goto out;
-	}
-	DMSG("pkg_dispatch worked\n");
 
-	/* If a full header of another pkg is here, process it too */
-	len = pc->pkc_inend - pc->pkc_incur;	/* amt in input buf */
-	if( len >= sizeof(struct pkg_header) )  goto top;
-
-	/* Indicate that user handler was called */
-	DMSG("indicating success\n");
-	ret = 1;
-	/* Fall through */
-out:
 	if( pkg_debug )  {
 		pkg_timestamp();
 		fprintf( pkg_debug,
-			"pkg_get() returns %d, pkc_left=%d\n",
-			ret, pc->pkc_left);
+			"pkg_process() returns %d, pkc_left=%d, errcnt=%d, goodcnt=%d\n",
+			ret, pc->pkc_left, errcnt, goodcnt);
 		fflush(pkg_debug);
 	}
 	return( ret );
@@ -1274,18 +1288,18 @@ register struct pkg_conn *pc;
 			continue;
 		/*
 		 * NOTICE:  User Handler must free() message buffer!
-		 * WARNING:  Handler may recurse back to pkg_get() --
+		 * WARNING:  Handler may recurse back to pkg_suckin() --
 		 * reset all connection state variables first!
 		 */
 		tempbuf = pc->pkc_buf;
 		pc->pkc_buf = (char *)0;
 		pc->pkc_curpos = (char *)0;
 		pc->pkc_left = -1;		/* safety */
-		/* pc->pkc_type, pc->pkc_len are preserved */
+		/* pc->pkc_type, pc->pkc_len are preserved for handler */
 		pc->pkc_switch[i].pks_handler(pc, tempbuf);
 		return(1);
 	}
-	sprintf(errbuf,"pkg_get:  no handler for message type %d, len %d\n",
+	sprintf(errbuf,"pkg_dispatch:  no handler for message type %d, len %d\n",
 		pc->pkc_type, pc->pkc_len );
 	(pc->pkc_errlog)(errbuf);
 	(void)free(pc->pkc_buf);
@@ -1365,13 +1379,13 @@ char *buf;
  *  
  *  This routine blocks, waiting for one complete message to arrive from
  *  the network.  The actual handling of the message is done with
- *  pkg_get(), which invokes the user-supplied message handler.
+ *  pkg_dispatch(), which invokes the user-supplied message handler.
  *
  *  This routine can be used in a loop to pass the time while waiting
  *  for a flag to be changed by the arrival of an asynchronous message,
  *  or for the arrival of a message of uncertain type.
  *
- *  The companion routine is pkg_get(), which does not block.
+ *  The companion routine is pkg_process(), which does not block.
  *  
  *  Control returns to the caller after one full message is processed.
  *  Returns -1 on error, etc.
@@ -1492,6 +1506,18 @@ pkg_timestamp()
 
 /*
  *			P K G _ S U C K I N
+ *
+ *  Suck all data from the operating system into the internal buffer.
+ *  This is done with large buffers, to maximize the efficiency of the
+ *  data transfer from kernel to user.
+ *
+ *  It is expected that the read() system call will return as much
+ *  data as the kernel has, UP TO the size indicated.
+ *  The only time the read() may be expected to block is when the
+ *  kernel does not have any data at all.
+ *  Thus, it is wise to call call this routine only if:
+ *	a)  select() has indicated the presence of data, or
+ *	b)  blocking is acceptable.
  *
  *  This routine is the only place where data is taken off the network.
  *  All input is appended to the internal buffer for later processing.
