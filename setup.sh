@@ -62,7 +62,10 @@ SCRIPTS="machinetype.sh cakeinclude.sh cray.sh"
 
 for i in ${SCRIPTS}
 do
-	mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
+	if test -f ${BINDIR}/${i}
+	then
+		mv -f ${BINDIR}/${i} ${BINDIR}/`basename ${i} .sh`.bak
+	fi
 	cp ${i} ${BINDIR}/.
 done
 

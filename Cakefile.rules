@@ -102,14 +102,24 @@ do-uninstall-stub&:  [[SUB ../SRCDIR/X.stub X.uninstall-stub ../SRCDIR/''*.stub]
 %.uninstall-stub&:
 	rm -f MANDIR''MANSECTION/% MANDIR''MANSECTION/%.bak
 
-/* XXX Something needs to be done about checking for the master machine!! */ 
-
+#if !defined(DONT_INSTALL)
 install&: install-prod install-man install-stub inst-dist
 
-#if defined(PRODUCTS) && !defined(DONT_INSTALL)
+install-nobak&: install-prod-nobak install-man install-stub inst-dist
+#else
+install&:  inst-dist
+
+install-nobak&: inst-dist
+#endif
+
+#if defined(PRODUCTS)
 install-prod&: [[SUB X X.install-prod PRODUCTS]]
+
+install-prod-nobak&: [[SUB X X.install-prod PRODUCTS]]
 #else
 install-prod&:
+
+install-prod-nobak&:
 #endif
 
 /* Here is where we depend on having /bin/sh as the shell */
@@ -118,6 +128,18 @@ install-prod&:
 	if cmp -s BINDIR/% %; \
 	then	exit 0; fi; \
 	mv -f BINDIR/% BINDIR/%.bak 2>/dev/null; \
+	if INS % BINDIR/%; \
+	then	if test x''AFTERINSTALL != x'AFTERINSTALL'; \
+		then	AFTERINSTALL BINDIR/%; fi; \
+		echo "++++++INSTALLED" BINDIR/% 1>&2; \
+		chmod BINPERM BINDIR/%; \
+	fi
+
+%.install-prod-nobak&: %
+	@echo ......checking % 1>&2 ; \
+	if cmp -s BINDIR/% %; \
+	then	exit 0; fi; \
+	rm -f BINDIR/% 2>/dev/null; \
 	if INS % BINDIR/%; \
 	then	if test x''AFTERINSTALL != x'AFTERINSTALL'; \
 		then	AFTERINSTALL BINDIR/%; fi; \

@@ -4,6 +4,7 @@
 eval `grep "^BINDIR=" setup.sh`		# sets BINDIR
 LIBDIR=`echo $BINDIR | sed -e 's/bin$/lib/'`
 ETCDIR=`echo $BINDIR | sed -e 's/bin$/etc/'`
+INCLUDE_DIR=/usr/include/brlcad
 
 echo "Current BINDIR is $BINDIR"
 echo
@@ -25,6 +26,7 @@ echo
 echo "BINDIR was $BINDIR, will be $NEW"
 echo "LIBDIR was $LIBDIR, will be $NEW"
 echo "ETCDIR was $ETCDIR, will be $NEW"
+echo "MANDIR and INCLUDE_DIR will be $NEW"
 echo
 
 for i in Cakefile.defs setup.sh cray.sh cake/Makefile cakeaux/Makefile
@@ -35,6 +37,9 @@ f
 g,$BINDIR,s,,$NEW,p
 g,$LIBDIR,s,,$NEW,p
 g,$ETCDIR,s,,$NEW,p
+g,$INCLUDE_DIR,s,,$NEW,p
+g,INCLUDE_DIR	.*,s,,INCLUDE_DIR	$NEW,p
+g,MANDIR	.*,s,,MANDIR	$NEW,p
 w
 q
 EOF
