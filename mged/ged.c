@@ -454,6 +454,7 @@ fastf_t xangle, yangle, zangle;
 
 		/* accumulate change matrix - do it wrt a point NOT view center */
 		mat_mul(tempp, modelchanges, es_mat);
+		/* XXX should have an es_keypoint for this */
 		MAT4X3PNT(point, tempp, es_rec.s.s_values);
 		wrt_point(modelchanges, incr_change, modelchanges, point);
 
