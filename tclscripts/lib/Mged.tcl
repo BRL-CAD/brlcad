@@ -89,7 +89,7 @@ class Mged {
 
 body Mged::constructor {file {type X} args} {
     set db [Database #auto $file]
-    set dg [$db Drawable::get_name]
+    set dg [$db Drawable::get_dgname]
     addall $dg
 
     catch {eval itk_initialize $args}
