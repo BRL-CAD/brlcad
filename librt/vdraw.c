@@ -112,6 +112,7 @@ Acknowledgements:
 
 /* defined in librt/dg_obj.c */
 extern int dgo_invent_solid();
+extern void dgo_notify();
 
 static int vdraw_write_tcl();
 static int vdraw_insert_tcl();
@@ -558,10 +559,13 @@ vdraw_send_tcl(clientData, interp, argc, argv)
 #endif
 
 	/* 0 means OK, -1 means conflict with real solid name */
-	index = dgo_invent_solid(solid_name,
+	index = dgo_invent_solid(dgop,
+				 interp,
+				 solid_name,
 				 &(dgop->dgo_currVHead->vdc_vhd),
 				 dgop->dgo_currVHead->vdc_rgb,
 				 1);
+	dgo_notify(dgop, interp);
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls,"%d",index);
