@@ -85,12 +85,14 @@ wdb_dbopen( struct db_i *dbip, int mode )
 		return RT_WDB_NULL;
 	}
 
+#if 0
 	if( (mode == RT_WDB_TYPE_DB_DISK || mode == RT_WDB_TYPE_DB_DISK_APPEND_ONLY ) &&
 	    dbip->dbi_read_only )  {
 		/* In-mem updates happen regardless of disk read-only flag */
 		bu_log("wdb_dbopen(%s): read-only\n",
 			dbip->dbi_filename );
 	}
+#endif
 
 	if( rt_uniresource.re_magic != RESOURCE_MAGIC )
 		rt_init_resource( &rt_uniresource, 0, NULL );
