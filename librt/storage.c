@@ -210,6 +210,7 @@ char	*str;
 
 		/* Install a barrier word at the end of the dynamic arena */
 		/* Correct location depends on 'cnt' being rounded up, above */
+
 		*((long *)(ptr+cnt-sizeof(long))) = MDB_MAGIC;
 	}
 	return(ptr);
@@ -506,4 +507,56 @@ register int nbytes;
 	}
 	return(amt-OVERHEAD-sizeof(int));
 #endif
+}
+
+/*	R T _ C K _ M A L L O C _ P T R
+ *
+ *	Check the magic number stored with memory allocated with rt_malloc
+ *	when DEBUG_MEM_FULL is set.
+ *
+ *	return:
+ *		0	pointer good or DEBUG_MEM_FULL not set
+ *		other	memory corrupted.
+ */
+void
+rt_ck_malloc_ptr( ptr, str )
+char	*ptr;
+char	*str;
+{
+	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
+	register long	*ip;
+
+
+	/* if memory debugging isn't turned on, we have no way
+	 * of knowing if the pointer is good or not
+	 */
+	if ((rt_g.debug&DEBUG_MEM_FULL) == 0) return;
+
+
+	if (ptr == (char *)NULL) {
+		rt_log("rt_ck_malloc_ptr(x%x, %s) null pointer\n\n", ptr, str);
+		rt_bomb("Goodbye");
+	}
+
+	if( rt_memdebug == (struct memdebug *)0 )  {
+		rt_log("rt_ck_malloc_ptr(x%x, %s)  no memdebug table yet\n",
+			ptr, str);
+		rt_bomb("Goodbye");
+	}
+
+	for( ; mp >= rt_memdebug; mp-- )  {
+		if( mp->mdb_len <= 0 || mp->mdb_addr != ptr )  continue;
+
+		ip = (long *)(ptr+mp->mdb_len-sizeof(long));
+		if( *ip != MDB_MAGIC )  {
+			rt_log("ERROR rt_ck_malloc_ptr(x%x, %s) barrier word corrupted! was=x%x s/b=x%x\n",
+				ptr, str, *ip, MDB_MAGIC);
+			rt_bomb("Goodbye");
+		}
+		return;		/* OK */
+	}
+	rt_log("ERROR rt_ck_malloc_ptr(x%x, %s)\n\
+	pointer not in table of allocated memory.\n", ptr, str);
+
+	rt_bomb("Goodbye");
 }
