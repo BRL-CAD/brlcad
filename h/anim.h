@@ -36,7 +36,7 @@
 #define VPRINTN(t,a)	printf("%s %f %f %f\n",t,(a)[0],(a)[1],(a)[2])
 
 #define MAT0(m)		MAT_ZERO(m)
-#define MAT_MOVE(m)	MAT_COPY(m)
+#define MAT_MOVE(m,n)	MAT_COPY(m,n)
 
 /***** 3x3 matrix format *****/
 
