@@ -2228,7 +2228,7 @@ nmg_break_long_edges( struct shell *s , struct rt_tol *tol )
 	struct loopuse *lu;
 	struct edgeuse *eu;
 
-	/* look for edgeuses that do not have any radials */
+	/* look at every edgeuse in the shell */
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		NMG_CK_FACEUSE( fu );
@@ -2247,43 +2247,39 @@ nmg_break_long_edges( struct shell *s , struct rt_tol *tol )
 
 			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 			{
-				if( eu->eumate_p == eu->radial_p )
+				struct vertexuse *vu;
+
+				/* look for an edgeuse that terminates on this vertex */
+				for( RT_LIST_FOR( vu , vertexuse , &eu->vu_p->v_p->vu_hd ) )
 				{
-					struct vertexuse *vu;
+					struct edgeuse *eu1;
 
-					/* found an edgeuse with no radials */
-					/* look for an edgeuse that terminates on this vertex */
-					for( RT_LIST_FOR( vu , vertexuse , &eu->vu_p->v_p->vu_hd ) )
+					/* skip vertexuses that are not part of an edge */
+					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+						continue;
+
+					/* don't consider the edge we already found!!! */
+					if( vu->up.eu_p == eu )
+						continue;
+
+					/* get the mate (so it terminates at "vu") */
+					eu1 = vu->up.eu_p->eumate_p;
+
+					/* make sure it is collinear with "eu" */
+					if( rt_3pts_collinear( eu->vu_p->v_p->vg_p->coord ,
+						eu->eumate_p->vu_p->v_p->vg_p->coord ,
+						eu1->vu_p->v_p->vg_p->coord , tol ) )
 					{
-						struct edgeuse *eu1;
+						/* make sure we break the longer edge
+						 * and that the edges are in opposite directions */
+						vect_t v0,v1;
+						struct edgeuse *tmp_eu;
 
-						/* skip vertexuses that are not part of an edge */
-						if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
-							continue;
+						VSUB2( v0 , eu->eumate_p->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
+						VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
 
-						/* don't consider the edge we already found!!! */
-						if( vu->up.eu_p == eu )
-							continue;
-
-						/* get the mate (so it terminates at "vu" */
-						eu1 = vu->up.eu_p->eumate_p;
-
-						/* make sure it is collinear with "eu" */
-						if( rt_3pts_collinear( eu->vu_p->v_p->vg_p->coord ,
-							eu->eumate_p->vu_p->v_p->vg_p->coord ,
-							eu1->vu_p->v_p->vg_p->coord , tol ) )
-						{
-							/* make sure we break the longer edge
-							 * and that the edges are in opposite directions */
-							vect_t v0,v1;
-							struct edgeuse *tmp_eu;
-
-							VSUB2( v0 , eu->eumate_p->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
-							VSUB2( v1 , eu1->eumate_p->vu_p->v_p->vg_p->coord , eu1->vu_p->v_p->vg_p->coord );
-
-							if (MAGSQ( v0 ) > MAGSQ( v1 ) && VDOT( v0 , v1 ) < 0.0 )
-								tmp_eu = nmg_esplit(eu1->vu_p->v_p, eu);
-						}
+						if (MAGSQ( v0 ) > MAGSQ( v1 ) && VDOT( v0 , v1 ) < 0.0 )
+							tmp_eu = nmg_esplit(eu1->vu_p->v_p, eu);
 					}
 				}
 			}
