@@ -6,7 +6,7 @@ The Ballistic Research Laboratory CAD Package
 .br
 Release 3.0
 .br
-(4-Sept-1988)
+(31-Sept-1988)
 .RT
 .IP "VERSION"
 .sp
@@ -162,6 +162,16 @@ If you find bugs, please report your experiences via E-mail.
 While BRL makes no
 offer of support, we are most interested in hearing about your
 experiences.
+.sp
+.IP "FUTURE EVENTS"
+.sp
+It is expected that new releases of this software will be issued
+between once and twice a year.
+Information about new releases will be routinely provided
+by both paper and electronic mail
+to recipients of this software.
+If your address changes, please let us
+know, so we can update our records.
 .sp
 The BRL-CAD Symposium '88 was a big success.
 If you would be interested in attending the Symposium in '89,
