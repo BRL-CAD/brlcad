@@ -270,7 +270,6 @@ char	**argv;
 	register struct rt_vlist	*vp;
 	static vect_t last;
 	static vect_t fin;
-	char buf[128];
 	FILE *fp_r;
 	FILE *fp_w;
 	int fd1[2]; /* mged | cad_boundp */

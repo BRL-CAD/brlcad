@@ -1052,10 +1052,7 @@ int	argc;
 char	**argv;
 
 {
-    int			i;			/* Dummy loop index */
     int			result = TCL_OK;	/* Return code */
-    char		*ep;			/* Matrix element */
-    char		*eep;			/* End of element */
     char		*newargv[20+2];
     struct bu_vls	*avp;
     int			got;

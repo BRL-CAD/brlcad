@@ -231,8 +231,6 @@ struct ihost *
 host_lookup_of_fd(fd)
 int	fd;
 {
-	struct ihost	*ihp;
-	int		on = 1;
 	auto int	fromlen;
 	struct sockaddr_in from;
 
