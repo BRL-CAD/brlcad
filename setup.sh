@@ -16,6 +16,7 @@ export SHELL
 # or change it in:
 # Cakefile.defs, cake/Makefile, cakeaux/Makefile, setup.sh, cray.sh
 # This is unfortunate, and needs to come from some file, somehow.
+# Script newbindir.sh can be run to change them all.
 
 BINDIR=/usr/brlcad/bin
 
@@ -81,67 +82,6 @@ do
 	cp ${i} ${BINDIR}/.
 done
 
-############################################################################
-#
-# Handle any vendor-specific configurations and setups.
-# This is messy, and should be avoided where possible.
-#
-############################################################################
-chmod 664 Cakefile.defs
-
-############################################################################
-#
-#  Finally, after potentially having edited Cakefile.defs, 
-#  ensure that machinetype.sh and Cakefile.defs are set up the same way.
-#  This is mostly a double-check on people porting to new machines.
-#
-#  Note that the `echo MTYPE` is necessary because some newer AT&T cpp's
-#  add a space around each macro substitution.
-#
-############################################################################
-IN_FILE=/tmp/setup$$.c
-OUT_FILE=/tmp/setup$$
-trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
-
-cat << EOF > ${IN_FILE}
-#line 1 "$0"
-#include "Cakefile.defs"
-
-C_MACHINE=\`echo MTYPE\`;
-#ifdef BSD
-	C_UNIXTYPE="BSD";
-#else
-	C_UNIXTYPE="SYSV";
-#endif
-C_HAS_TCP=\`echo HAS_TCP\`;
-EOF
-# Run the file through the macro preprocessor.
-# Many systems don't provide many built-in symbols with bare CPP,
-# so try to run through the compiler.
-# Using cc is essential for the IBM RS/6000, and helpful on the SGI.
-cc -E -I. -DDEFINES_ONLY ${IN_FILE} > ${OUT_FILE}
-if test $? -ne 0
-then
-	# Must be an old C compiler without -E, fall back to /lib/cpp
-	/lib/cpp -DDEFINES_ONLY < ${IN_FILE} > ${OUT_FILE}
-fi
-
-# Note that we depend on CPP's "#line" messages to be ignored as comments
-# when sourced by the "." command here:
-. ${OUT_FILE}
-/bin/rm -f ${IN_FILE} ${OUT_FILE}
-
-# See if things match up
-if test x${MACHINE} != x${C_MACHINE} -o \
-	x${UNIXTYPE} != x${C_UNIXTYPE} -o \
-	x${HAS_TCP} != x${C_HAS_TCP}
-then
-	echo "$0 ERROR:  Mis-match between machinetype.sh and Cakefile.defs"
-	echo "$0 ERROR:  machinetype.sh claims ${MACHINE} ${UNIXTYPE} ${HAS_TCP}"
-	echo "$0 ERROR:  Cakefile.defs claims ${C_MACHINE} ${C_UNIXTYPE} ${C_HAS_TCP}"
-	exit 1		# Die
-fi
-
 
 ############################################################################
 #
@@ -169,3 +109,71 @@ then
 	make clobber
 	cd ..
 fi
+
+############################################################################
+#
+#  Finally, after potentially having edited Cakefile.defs, 
+#  ensure that machinetype.sh and Cakefile.defs are set up the same way.
+#  This is mostly a double-check on people porting to new machines.
+#
+#  Rather than invoke CPP here trying to guess exactly how CAKE
+#  is invoking it, just run CAKE on a trivial Cakefile and compare
+#  the results.
+#
+############################################################################
+IN_FILE=/tmp/Cakefile$$
+OUT_FILE=/tmp/setup$$
+trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
+
+rm -f ${OUT_FILE}
+
+cat << EOF > ${IN_FILE}
+#line 1 "$0"
+#include "Cakefile.defs"
+
+#ifdef BSD
+${OUT_FILE}:
+	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
+	echo C_UNIXTYPE=\"BSD\" ';' >> ${OUT_FILE}
+	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
+#else
+${OUT_FILE}:
+	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
+	echo C_UNIXTYPE=\"SYSV\" ';' >> ${OUT_FILE}
+	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
+#endif
+EOF
+
+# Run the file through CAKE.
+cake -f ${IN_FILE} ${OUT_FILE} > /dev/null
+if test $? -ne 0
+then
+	/bin/rm -f ${IN_FILE} ${OUT_FILE}
+	echo "$0: cake returned error code"
+	exit 1
+fi
+
+if test ! -f ${OUT_FILE}
+then
+	/bin/rm -f ${IN_FILE} ${OUT_FILE}
+	echo "$0: cake run failed to create expected output file"
+	exit 1
+fi
+
+# Source the output file as a shell script, to set C_* variables here.
+. ${OUT_FILE}
+
+/bin/rm -f ${IN_FILE} ${OUT_FILE}
+
+# See if things match up
+if test x${MACHINE} != x${C_MACHINE} -o \
+	x${UNIXTYPE} != x${C_UNIXTYPE} -o \
+	x${HAS_TCP} != x${C_HAS_TCP}
+then
+	echo "$0 ERROR:  Mis-match between machinetype.sh and Cakefile.defs"
+	echo "$0 ERROR:  machinetype.sh claims ${MACHINE} ${UNIXTYPE} ${HAS_TCP}"
+	echo "$0 ERROR:  Cakefile.defs claims ${C_MACHINE} ${C_UNIXTYPE} ${C_HAS_TCP}"
+	exit 1		# Die
+fi
+
+# Congratulations.  Everything is fine.
