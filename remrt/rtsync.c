@@ -661,7 +661,7 @@ char *
 stamp()
 {
 	static char	buf[128];
-	long		now;
+	time_t		now;
 	struct tm	*tmp;
 	register char	*cp;
 
