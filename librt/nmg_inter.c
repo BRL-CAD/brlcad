@@ -2734,6 +2734,31 @@ nmg_pr_eu_briefly(eu->eumate_p, 0);
 	return count;
 }
 
+/*	N M G _ R E M O V E _ 0 E U S _ F R O M _ L I S T
+ *
+ * Remove zero length edgeuses around vertex "v" from the list "eu_list"
+ *
+ */
+void
+nmg_remove_0eus_from_list( v, eu_list )
+struct vertex *v;
+struct nmg_ptbl *eu_list;
+{
+	struct vertexuse *vu;
+	struct edgeuse *eu;
+
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )
+	{
+		NMG_CK_VERTEXUSE(vu);
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+		eu = vu->up.eu_p;
+		NMG_CK_EDGEUSE(eu);
+		if( eu->eumate_p->vu_p->v_p != v )  continue;
+		nmg_tbl( eu_list, TBL_RM, (long *)eu );
+		nmg_tbl( eu_list, TBL_RM, (long *)eu->eumate_p );
+	}
+}
+
 /*
  *			N M G _ R E P A I R _ V _ N E A R _ V
  *
@@ -2746,11 +2771,12 @@ nmg_pr_eu_briefly(eu->eumate_p, 0);
  *		If 'bomb' is non-zero, rt_bomb() is called.
  */
 struct vertex *
-nmg_repair_v_near_v( hit_v, v, eg1, eg2, bomb, tol )
+nmg_repair_v_near_v( hit_v, v, eg1, eg2, eu_list, bomb, tol )
 struct vertex		*hit_v;
 struct vertex		*v;
 CONST struct edge_g_lseg		*eg1;		/* edge_g_lseg of hit_v */
 CONST struct edge_g_lseg		*eg2;		/* edge_g_lseg of v */
+struct nmg_ptbl				*eu_list;	/* eu list that may contain an EU that we kill */
 int			bomb;
 CONST struct rt_tol	*tol;
 {
@@ -2795,6 +2821,8 @@ CONST struct rt_tol	*tol;
 		}
 
 		nmg_jv(hit_v, v);
+	      	if( eu_list )
+		      	nmg_remove_0eus_from_list( hit_v, eu_list );
 		(void)nmg_k0eu(hit_v);
 		goto out;
 	}
@@ -2882,7 +2910,7 @@ CONST struct rt_tol		*tol;
 		/* Different vertices, this "can't happen" */
 		rt_log("ERROR seen1=x%x, seen2=x%x, hit_v=x%x != v=x%x\n",
 			seen1, seen2, hit_v, v);
-		if( nmg_repair_v_near_v( hit_v, v, eg1, eg2, 0, tol ) )
+		if( nmg_repair_v_near_v( hit_v, v, eg1, eg2, (struct nmg_ptbl *)0, 0, tol ) )
 			break;
 
 		rt_bomb("nmg_search_v_eg() two different vertices for intersect point?\n");
@@ -3297,7 +3325,7 @@ hit_b:
 				if( hit_v == vu1a->v_p )  goto hit_a;
 #if 0
 				nmg_repair_v_near_v( hit_v, vu1a->v_p,
-					is->on_eg, *eg1, 1, &(is->tol) );
+					is->on_eg, *eg1, eu1_list, 1, &(is->tol) );
 				nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 				goto re_tabulate;
 #else
@@ -3312,7 +3340,7 @@ hit_b:
 				if( hit_v == vu1b->v_p )  goto hit_b;
 #if 0
 				nmg_repair_v_near_v( hit_v, vu1b->v_p,
-					is->on_eg, *eg1, 1, &(is->tol) );
+					is->on_eg, *eg1, eu1_list, 1, &(is->tol) );
 				nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 				goto re_tabulate;
 #else
@@ -3338,7 +3366,7 @@ hit_b:
 				/* Point is at A (vu1a) by geometry */
 				if( hit_v && hit_v != vu1a->v_p )  {
 					nmg_repair_v_near_v( hit_v, vu1a->v_p,
-						is->on_eg, *eg1, 1, &(is->tol) );
+						is->on_eg, *eg1, eu1_list, 1, &(is->tol) );
 					nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 					goto re_tabulate;
 				}
@@ -3349,7 +3377,7 @@ hit_b:
 				/* Point is at B (vu1b) by geometry */
 				if( hit_v && hit_v != vu1b->v_p )  {
 					nmg_repair_v_near_v( hit_v, vu1b->v_p,
-						is->on_eg, *eg1, 1, &(is->tol) );
+						is->on_eg, *eg1, eu1_list, 1, &(is->tol) );
 					nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 					goto re_tabulate;
 				}
