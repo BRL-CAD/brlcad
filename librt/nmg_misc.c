@@ -6534,10 +6534,11 @@ CONST struct rt_tol *tol;
 	v2 = mv_eu->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX( v2 );
 
+	eg = mv_eu->g.lseg_p;
+
 	/* get edge direction */
 	if( v1 != v2 )
 	{
-		eg = mv_eu->g.lseg_p;
 		if( eg )
 		{
 			NMG_CK_EDGE_G_LSEG(eg);
@@ -6549,7 +6550,9 @@ CONST struct rt_tol *tol;
 		}
 		else
 		{
-			VSUB2( e_dir , v2->vg_p->coord , v1->vg_p->coord );
+			nmg_edge_g( mv_eu );
+			eg = mv_eu->g.lseg_p;
+			VMOVE( e_dir , eg->e_dir );
 		}
 		VUNITIZE( e_dir );
 	}
@@ -6580,6 +6583,37 @@ CONST struct rt_tol *tol;
 			VADD2( new_loc , v2->vg_p->coord , move_v );
 			nmg_vertex_gv( v2 , new_loc );
 		}
+
+		/* adjust edge geometry */
+		if( !eg )
+			nmg_edge_g( eu );
+		else
+			VMOVE( eg->e_pt , new_loc )
+
+		if( *eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+		{
+			struct edgeuse *tmp_eu;
+
+			/* edge is part of a wire loop
+			 * need to adjust geometry neighbor edges
+			 */
+
+			tmp_eu = RT_LIST_PNEXT_CIRC( edgeuse , &eu->l );
+			NMG_CK_EDGEUSE( tmp_eu );
+			if( *tmp_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
+			{
+				VMOVE( tmp_eu->g.lseg_p->e_pt , tmp_eu->vu_p->v_p->vg_p->coord )
+				VSUB2( tmp_eu->g.lseg_p->e_dir, tmp_eu->eumate_p->vu_p->v_p->vg_p->coord, tmp_eu->g.lseg_p->e_pt)
+			}
+			tmp_eu = RT_LIST_PPREV_CIRC( edgeuse , &eu->l );
+			NMG_CK_EDGEUSE( tmp_eu );
+			if( *tmp_eu->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
+			{
+				VMOVE( tmp_eu->g.lseg_p->e_pt , tmp_eu->vu_p->v_p->vg_p->coord )
+				VSUB2( tmp_eu->g.lseg_p->e_dir, tmp_eu->eumate_p->vu_p->v_p->vg_p->coord, tmp_eu->g.lseg_p->e_pt)
+			}
+		}
+
 		return( 0 );
 	}
 
@@ -6764,13 +6798,47 @@ CONST struct rt_tol *tol;
 						return( 1 );
 					}
 
-					if( nmg_simple_vertex_solve( vu->v_p , &faces ) )
+					if( NMG_TBL_END( &faces ) == 1 &&
+						(mv_eu->vu_p->v_p == vu->v_p ||
+						 mv_eu->eumate_p->vu_p->v_p == vu->v_p) )
 					{
-						/* failed */
-						rt_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
-						nmg_tbl( &faces , TBL_FREE , (long *)NULL );
-						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
-						return( 1 );
+						vect_t to_pt;
+						vect_t mv_vect;
+						vect_t eu_dir;
+
+						/* special case for edge of a dangling face */
+
+						/* just move vertex to new edge geometry */
+						VSUB2( eu_dir, eu->eumate_p->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord );
+						VUNITIZE( eu_dir );
+						VSUB2( to_pt, pt , vu->v_p->vg_p->coord );
+						VJOIN1( mv_vect, to_pt, -VDOT( e_dir, to_pt ), e_dir );
+						VADD2( vu->v_p->vg_p->coord, vu->v_p->vg_p->coord, mv_vect);
+					}
+					else
+					{
+						if( nmg_simple_vertex_solve( vu->v_p , &faces ) )
+						{
+							/* failed */
+							rt_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
+							nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+							rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+							return( 1 );
+						}
+					}
+
+					/* adjust edge geometry */
+					if( eu->e_p != mv_eu->e_p )
+					{
+						if( !eu->g.magic_p )
+							nmg_edge_g( eu );
+						else
+						{
+							VMOVE( eu->g.lseg_p->e_pt, vu->v_p->vg_p->coord );
+							VSUB2( eu->g.lseg_p->e_dir,
+								eu->eumate_p->vu_p->v_p->vg_p->coord,
+								vu->v_p->vg_p->coord );
+						}
 					}
 				}
 			}
