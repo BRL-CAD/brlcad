@@ -1,25 +1,64 @@
+/*
+ *				T C L . C
+ *
+ * LIBDM's tcl interface.
+ * 
+ * Source -
+ *	SLAD CAD Team
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *
+ * Author -
+ *	Robert G. Parker
+ */
 #include "conf.h"
-#include "tk.h"
+#include <math.h>
+#include "tcl.h"
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
+#include "vmath.h"
 #include "dm.h"
+#include "cmd.h"
 
+/* from libdm/query.c */
 extern int dm_validXType();
 extern char *dm_bestXType();
 
-static int dm_validXType_tcl();
-static int dm_bestXType_tcl();
+/* from libdm/dm-generic.c */
+extern struct dm *dm_open();
 
-struct cmdtab {
-  char *ct_name;
-  int (*ct_func)();
-};
+/* from libdm/dm_obj.c */
+extern int dmo_open_tcl();
+extern int Dmo_Init();
 
-static struct cmdtab cmdtab[] = {
-  "dm_validXType", dm_validXType_tcl,
-  "dm_bestXType", dm_bestXType_tcl,
-  0, 0
+/* from libdm/view_obj.c */
+extern int vo_open_tcl();
+extern int Vo_Init();
+
+/* from libdm/geometry_obj.c */
+extern int geo_open_tcl();
+extern int Geo_Init();
+
+#if 1
+/* from libdm/db_obj.c */
+extern int dbo_open_tcl();
+extern int Dbo_Init();
+#endif
+
+HIDDEN int dm_validXType_tcl();
+HIDDEN int dm_bestXType_tcl();
+
+HIDDEN struct cmdtab cmdtab[] = {
+	"dm_validXType",	dm_validXType_tcl,
+	"dm_bestXType",		dm_bestXType_tcl,
+	"dm_open",		dmo_open_tcl,
+	"vo_open",		vo_open_tcl,
+	"geo_open",		geo_open_tcl,
+#if 1
+	"db_open",		dbo_open_tcl,
+#endif
+	(char *)0,		(int (*)())0
 };
 
 int
@@ -28,15 +67,27 @@ Tcl_Interp *interp;
 {
   register struct cmdtab *ctp;
 
-  for(ctp = cmdtab; ctp->ct_name != (char *)NULL; ctp++){
+  for (ctp = cmdtab; ctp->ct_name != (char *)NULL; ctp++) {
     (void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
-			   (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
   }
+
+  /* initialize display manager object code */
+  Dmo_Init(interp);
+
+  /* initialize view object code */
+  Vo_Init(interp);
+
+  /* initialize geometry object code */
+  Geo_Init(interp);
+
+  /* initialize database object */
+  Dbo_Init(interp);
 
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 dm_validXType_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -61,14 +112,14 @@ char    **argv;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 dm_bestXType_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  if(argc != 2){
+  if (argc != 2) {
     struct bu_vls vls;
 
     bu_vls_init(&vls);
