@@ -302,10 +302,9 @@ count_nodes(line)
 char *line;
 {
   char *ptr;
-  char name[NAMESIZE+1];
+  char *name;
   char relation;
   int node_count=0;
-  int j;
 
   /* sanity */
   if (line == NULL)
@@ -316,18 +315,6 @@ char *line;
   while (ptr) {
     /* First non-white is the relation operator */
     relation = (*ptr);
-    if (relation == '\0')
-      break;
-
-    /* Next must be the member name */
-    ptr = strtok((char *)NULL, delims);
-    strncpy(name, ptr, NAMESIZE);
-    name[NAMESIZE] = '\0';
-
-    /* Eliminate trailing white space from name */
-    j = NAMESIZE;
-    while (isspace(name[--j]))
-      name[j] = '\0';
 
     if (relation != '+' && relation != 'u' && relation != '-') {
       struct bu_vls tmp_vls;
@@ -339,7 +326,10 @@ char *line;
       return( -1 );
     }
 
-    if (name[0] == '\0') {
+    /* Next must be the member name */
+    name = strtok((char *)NULL, delims);
+
+    if (name == NULL) {
       Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
       return( -1 );
     }
@@ -731,7 +721,6 @@ char **argv;
 
   strcpy(red_tmpfil, red_tmpfil_init);
   strcpy(red_tmpcomb, red_tmpcomb_init);
-  bu_log( "comb name is %s\n", argv[1] );
   dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
   if(dp != DIR_NULL){
     if( !(dp->d_flags & DIR_COMB) ){
@@ -988,7 +977,9 @@ checkcomb(void)
 	int i,j,done,ch;
 	int done2,first;
 	char relation;
-	char name[NAMESIZE+1];
+	char name_v4[NAMESIZE+1];
+	char *name_v5=NULL;
+	char *name=NULL;
 	char line[MAXLINE];
 	char *ptr;
 	int region=(-1);
@@ -1035,7 +1026,18 @@ checkcomb(void)
 
 		if( (ptr=find_keyword(i, line, "NAME" ) ) )
 		{
-			strncpy( name, ptr, NAMESIZE );
+			if( dbip->dbi_version < 5 ) {
+				int len;
+
+				len = strlen( ptr );
+				if( len >= NAMESIZE ) {
+					while( len > 1 && isspace( ptr[len-1] ) )
+						len--;
+				}
+				if( len >= NAMESIZE ) {
+					Tcl_AppendResult(interp, "Name too long for v4 database: ", ptr, "\n", (char *)NULL );
+				}
+			}
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "REGION" ) ) )
@@ -1140,6 +1142,10 @@ checkcomb(void)
 		ptr = strtok( line , delims );
 
 		while (!done2) {
+			if( name_v5 ) {
+				bu_free( name_v5, "name_v5" );
+				name_v5 = NULL;
+			}
 			/* First non-white is the relation operator */
 			if( !ptr )
 			{
@@ -1160,13 +1166,28 @@ checkcomb(void)
 
 			/* Next must be the member name */
 			ptr = strtok( (char *)NULL, delims );
-			strncpy( name , ptr , NAMESIZE );
-			name[NAMESIZE] = '\0';
+			name = NULL;
+			if( dbip->dbi_version < 5 ) {
+				strncpy( name_v4 , ptr , NAMESIZE );
+				name_v4[NAMESIZE] = '\0';
 
-			/* Eliminate trailing white space from name */
-			j = NAMESIZE;
-			while( isspace( name[--j] ) )
-				name[j] = '\0';
+				/* Eliminate trailing white space from name */
+				j = NAMESIZE;
+				while( isspace( name_v4[--j] ) )
+					name_v4[j] = '\0';
+				name = name_v4;
+			} else {
+				int len;
+
+				len = strlen( ptr );
+				name_v5 = (char *)bu_malloc( len + 1, "name_v5" );
+				strcpy( name_v5, ptr );
+				while( isspace( name_v5[len-1] ) ) {
+					len--;
+					name_v5[len] = '\0';
+				}
+				name = name_v5;
+			}
 
 			if( relation != '+' && relation != 'u' && relation != '-' )
 			{
@@ -1177,15 +1198,19 @@ checkcomb(void)
 			  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 			  bu_vls_free(&tmp_vls);
 			  fclose( fp );
+			  if( dbip->dbi_version >= 5 )
+				  bu_free( name_v5, "name_v5" );
 			  return( -1 );
 			}
 			if( relation != '-' )
 				nonsubs++;
 
-			if( name[0] == '\0' )
+			if( name == NULL || name[0] == '\0' )
 			{
 				Tcl_AppendResult(interp, " operand name missing\n", (char *)NULL);
 				fclose( fp );
+				if( dbip->dbi_version >= 5 )
+					bu_free( name_v5, "name_v5" );
 				return( -1 );
 			}
 
@@ -1205,6 +1230,8 @@ checkcomb(void)
 					{
 						Tcl_AppendResult(interp, "expecting a matrix\n", (char *)NULL);
 						fclose( fp );
+						if( dbip->dbi_version >= 5 )
+							bu_free( name_v5, "name_v5" );
 						return( -1 );
 					}
 				}
@@ -1216,6 +1243,9 @@ checkcomb(void)
 			node_count++;
 		}
 	}
+
+	if( dbip->dbi_version >= 5 && name_v5 )
+		bu_free( name_v5, "name_v5" );
 
 	fclose( fp );
 
@@ -1316,8 +1346,9 @@ char *old_name;
 
 	FILE *fp;
 	char relation;
-	char name[NAMESIZE+1];
-	char new_name[NAMESIZE+1];
+	char *name=NULL, *new_name;
+	char name_v4[NAMESIZE+1];
+	char new_name_v4[NAMESIZE+1];
 	char line[MAXLINE];
 	char *ptr;
 	int ch;
@@ -1367,10 +1398,18 @@ char *old_name;
 	else
 		rt_tree_array = (struct rt_tree_array *)NULL;
 
-	if( dp == DIR_NULL )
-		NAMEMOVE( old_name, new_name );
-	else
-		NAMEMOVE( dp->d_namep, new_name );
+	if( dbip->dbi_version < 5 ) {
+		if( dp == DIR_NULL )
+			NAMEMOVE( old_name, new_name_v4 );
+		else
+			NAMEMOVE( dp->d_namep, new_name_v4 );
+		new_name = new_name_v4;
+	} else {
+		if( dp == DIR_NULL )
+			new_name = bu_strdup( old_name );
+		else
+			new_name = bu_strdup( dp->d_namep );
+	}
 
 	/* Read edited file */
 	while( !done )
@@ -1399,7 +1438,12 @@ char *old_name;
 
 		if( (ptr=find_keyword(i, line, "NAME" ) ) )
 		{
-			NAMEMOVE( ptr, new_name );
+			if( dbip->dbi_version < 5 )
+				NAMEMOVE( ptr, new_name_v4 );
+			else {
+				bu_free( new_name, "new_name" );
+				new_name = bu_strdup( ptr );
+			}
 			continue;
 		}
 		else if( (ptr=find_keyword( i, line, "REGION_ID" ) ) )
@@ -1530,11 +1574,21 @@ char *old_name;
 
 			/* Next must be the member name */
 			ptr = strtok( (char *)NULL, delims );
-			strncpy( name , ptr, NAMESIZE );
-			name[NAMESIZE] = '\0';
+			if( dbip->dbi_version < 5 ) {
+				strncpy( name_v4 , ptr, NAMESIZE );
+				name_v4[NAMESIZE] = '\0';
+				name = name_v4;
+			} else {
+				if( name )
+					bu_free( name, "name" );
+				name = bu_strdup( ptr );
+			}
 	
 			/* Eliminate trailing white space from name */
-			i = NAMESIZE;
+			if( dbip->dbi_version < 5 )
+				i = NAMESIZE;
+			else
+				i = strlen( name );
 			while( isspace( name[--i] ) )
 				name[i] = '\0';
 
@@ -1612,6 +1666,12 @@ char *old_name;
 	fclose( fp );
 
 	return make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+
+	if( dbip->dbi_version >= 5 ) {
+		if( name )
+			bu_free( name, "name " );
+		bu_free( new_name, "new_name" );
+	}
 }
 
 void
@@ -1690,10 +1750,10 @@ restore_comb( dp )
 struct directory *dp;
 {
   char *av[4];
-  char name[NAMESIZE];
+  char *name;
 
   /* Save name of original combo */
-  strcpy( name , dp->d_namep );
+  name = bu_strdup( dp->d_namep );
 
   av[0] = "kill";
   av[1] = name;
@@ -1706,4 +1766,6 @@ struct directory *dp;
   av[2] = name;
 
   (void)f_name((ClientData)NULL, interp, 3, av);
+
+  bu_free( name, "bu_strdup'd name" );
 }
