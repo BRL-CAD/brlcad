@@ -462,8 +462,8 @@ FBIO	*ifp;
  *  name to messages, so we don't touch them ourselves.
  */
 static void
-pkgerror(pcp, buf)
-struct pkg_conn *pcp;
+pkgerror(pcpp, buf)
+struct pkg_conn *pcpp;
 char *buf;
 {
 	fb_log( "%s", buf );
