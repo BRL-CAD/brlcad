@@ -103,7 +103,7 @@ struct bu_structparse bbd_print_tab[] = {
 };
 struct bu_structparse bbd_parse_tab[] = {
     {"i",bu_byteoffset(bbd_print_tab[0]), "bbd_print_tab", 0, BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
+    {"",	0, (const char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL }
 };
 
 HIDDEN int	bbd_setup(), bbd_render();
