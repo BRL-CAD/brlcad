@@ -69,6 +69,15 @@ char	**argv;
 				errors++;
 				continue;
 			}
+			if ( id == ID_HF ) {
+				if (hf_to_dsp( &intern )) {
+					fprintf(stderr,
+						"%s: Conversion from HF to DSP failed for solid %s\n",
+						argv[0], dp->d_namep );
+					errors++;
+					continue;
+				}
+			}
 			if( id == ID_POLY)
 			{
 				if( pg_bot( &intern, &tol ) )
