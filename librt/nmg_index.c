@@ -455,10 +455,10 @@ register long	newindex;
 	}
 #undef ASSIGN_VU
 
-#if 1
- rt_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
- 	m->maxindex, m->index, newindex );
-#endif
+	if( rt_g.NMG_debug & DEBUG_BASIC )  {
+		 rt_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
+		 	m->maxindex, m->index, newindex );
+	}
 	m->maxindex = newindex;
 }
 
