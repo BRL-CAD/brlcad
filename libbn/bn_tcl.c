@@ -1,4 +1,5 @@
 /*
+ *			B N _ T C L . C
  *			M A T H . C
  *
  *  Author -
@@ -26,31 +27,18 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
-#include <signal.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
-#include <sys/time.h>
-#include <time.h>
 
-#if 0
 #include "tcl.h"
-#include "tk.h"
-#endif
 
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
-#include "rtgeom.h"
-#include "externs.h"
-#include "./ged.h"
-#include "./mged_solid.h"
-
-#include "./mgedtcl.h"
 
 
 /* Support routines for the math functions */
@@ -463,12 +451,14 @@ static struct math_func_link {
 };
 
 /*
- *			M A T H _ S E T U P
+ *			B N _ T C L _ S E T U P
  *
- *  Called from cmd_setup()
+ *  Add all the supported Tcl interfaces to LIBBN routines to
+ *  the list of commands known by the given interpreter.
  */
 void
-math_setup()
+bn_tcl_setup(interp)
+Tcl_Interp *interp;
 {
 	struct math_func_link *mp;
 
