@@ -108,13 +108,13 @@ ADIRS="h doc pix"
 CDIRS="cake cakeaux papers contributed patch"
 
 # Source directories that will have Machine specific binary directories
+# These will be built in the order listed.
+# db depends on conv, conv depends on libwdb, libwdb depends on librt
 BDIRS="bench \
 	libsysv \
 	libmalloc \
 	libplot3 \
 	libwdb \
-	conv \
-	db \
 	libpkg \
 	libfb \
 	rfbd \
@@ -126,7 +126,10 @@ BDIRS="bench \
 	liborle \
 	librle \
 	libfft \
-	libspl librt rt \
+	libspl librt \
+	conv \
+	db \
+	rt \
 	remrt \
 	mged \
 	proc-db \
@@ -206,8 +209,6 @@ benchmark)
 	(cd ${DIRPRE}bench${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libwdb${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libplot3${DIRSUF};  cake -k)
-	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
-	(cd ${DIRPRE}db${DIRSUF}; cake -k)
 	if test ${HAS_TCP} = 1
 	then
 		(cd ${DIRPRE}libpkg${DIRSUF};  cake -k)  # needed for IF_REMOTE
@@ -215,6 +216,8 @@ benchmark)
 	(cd ${DIRPRE}libfb${DIRSUF};  cake -k)
 	(cd ${DIRPRE}libspl${DIRSUF};  cake -k)
 	(cd ${DIRPRE}librt${DIRSUF};  cake -k)
+	(cd ${DIRPRE}conv${DIRSUF}; cake -k)
+	(cd ${DIRPRE}db${DIRSUF}; cake -k)
 	(cd ${DIRPRE}rt${DIRSUF};  cake -k)
 	;;
 
