@@ -28,7 +28,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-#if __STDC__ && !alliant && !apollo
+#if (__STDC__ || defined(__convexc__) ) && !alliant && !apollo
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
 			struct rt_db_internal *ip, struct rt_i *rtip )); \
