@@ -434,8 +434,12 @@ extern int rt_bot_tri_per_piece;
 	/* "Lazy" way.  Works on reasonable machines with byte addressing */
 #	define byteoffset(_i)	((int)((char *)&(_i)))
 #    else
-	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#       if defined(__ia64__)
+#		define byteoffset(_i)	((long)(((void *)&(_i))-((void *)0)))
+#	else
+        	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+#		define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#	endif
 #    endif
 #  endif
 #endif

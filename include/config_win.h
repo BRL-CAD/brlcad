@@ -42,7 +42,7 @@
 #define HAVE_VFORK	1
 #define HAVE_VPRINTF	1
 #define USE_PROTOTYPES	1
-#define USE_STRING_H	1
+#define HAVE_STRING_H	1
 #define HAVE_REGEX_H	1
 #define HAVE_STRCHR 1
 #define HAVE_TIME 1

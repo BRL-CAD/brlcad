@@ -1219,7 +1219,7 @@ BU_EXPORT extern int	bu_debug;
 #      define bu_byteoffset(_i)	((int)((char *)&(_i)))
 #    else
 #      if defined(__ia64__)
-#        define bu_byteoffset(_i)	((long)(((char *)&(_i))-((char *)0)))
+#        define bu_byteoffset(_i)	((long)(((void *)&(_i))-((void *)0)))
 
 #      else
          /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
