@@ -1,7 +1,7 @@
 # $Id$
 
 bin_PROGRAMS = a-d d-a i-d d-i bw-d d-bw f-d d-f f-i i-f c-d i-a u-a u-d u-f u-bw d-u dwin dauto dmod dfft dconv imod umod ddisp fhor dstat dsel dpeak syn damdf dauto2 ihist istat ustat
-
+noinst_HEADERS = complex.h
 
 BU=$(top_builddir)/libbu/libbu.la @TCL_LIBS@ @PTHREAD_LIBS@ -lm 
 FB=$(top_builddir)/libfb/libfb.la @X_LIBS@ $(PKG) $(BU)

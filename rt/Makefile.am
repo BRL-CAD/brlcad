@@ -34,7 +34,7 @@ LDADD = ../libbu/libbu.la ../libbn/libbn.la ../librt/librt.la ../libfb/libfb.la 
 rt_LDADD = ../liboptical/liboptical.la $(LDADD)
 
 man_MANS = rt.1 rtcheck.1 rtedge.1 rtg3.1 rthide.1 rtpp.1 rtrange.1 rtray.1 rtregis.1 rtscale.1 rtshot.1 rtwalk.1 rtweight.1 rtxray.1
-EXTRA_DIST=$(man_MANS)
+EXTRA_DIST=$(man_MANS) $(ALLSRCS)
 
 BUILT_SOURCES = vers.c
 vers.c: $(ALLSRCS)

@@ -3,9 +3,8 @@
 tcldir = $(prefix)/tclscripts/lib
 
 tcl_SCRIPTS = CellPlot.tcl ColorEntry.tcl ComboBox.tcl Command.tcl Database.tcl Db.tcl Display.tcl Dm.tcl Drawable.tcl Help.tcl Legend.tcl Mged.tcl QuadDisplay.tcl RtControl.tcl Splash.tcl Table.tcl TableView.tcl View.tcl
-
-
 tcl_DATA = tclIndex
+EXTRA_DIST = $(tcl_SCRIPTS) $(tcl_DATA)
 
 .PHONY : tclIndex
 tclIndex:
