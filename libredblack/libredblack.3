@@ -28,16 +28,25 @@ libredblack \- red-black tree subroutines
 .B int (*order_func)();
 .\"
 .PP
-.B void rb_extreme (tree, order, sense)
+.B void rb_delete (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.\"
+.PP
+.B void rb_diagnose_tree (tree, order, trav_type)
 .br
 .B rb_tree *tree;
 .br
 .B int order;
 .br
-.B int sense;
+.B int trav_type;
 .\"
 .PP
-.B void rb_neighbor (order, sense)
+.B void *rb_extreme (tree, order, sense)
+.br
+.B rb_tree *tree;
 .br
 .B int order;
 .br
@@ -51,6 +60,15 @@ libredblack \- red-black tree subroutines
 .B void *data;
 .\"
 .PP
+.B void *rb_neighbor (tree, order, sense)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.br
+.B int sense;
+.\"
+.PP
 .B void *rb_search (tree, order, data)
 .br
 .B rb_tree *tree;
@@ -60,13 +78,20 @@ libredblack \- red-black tree subroutines
 .B void *data;
 .\"
 .PP
-.B void rb_walk (tree, order, visit)
+.B void rb_summarize_tree (tree)
+.br
+.B rb_tree *tree;
+.\"
+.PP
+.B void rb_walk (tree, order, visit, trav_type)
 .br
 .B rb_tree *tree;
 .br
 .B int order;
 .br
 .B void (*visit)();
+.br
+.B int trav_type;
 .\"
 .\"
 .SH DESCRIPTION
@@ -109,13 +134,10 @@ Each function must return an integer
 less than, equal to, or greater than zero
 according as the first argument is to be considered
 less than, equal to, or greater than the second.
-On success,
 .I rb_create
 returns a pointer to
 an
 .I rb_tree.
-Otherwise, it returns
-.I RB_TREE_NULL.
 This pointer must be saved,
 as it is a required argument to all the other subroutines.
 .I rb_create1
@@ -132,11 +154,11 @@ and adds it to
 The node is inserted in the appropriate place
 in each order,
 as determined by the comparison functions.
-On failure,
 .I rb_insert
-returns -1.
-Otherwise it returns the number of orders
+returns the number of orders
 for which the new node compared equal to an existing node in the tree.
+This provides a mechanism by which the application
+can enforce uniqueness, if desired.
 .PP
 .I rb_extreme
 searches through
@@ -188,37 +210,54 @@ except that it searches the first (perhaps only) order.
 traverses
 .I tree
 according to the comparison function specified by
-.I order
-and applies a specified funtion.
-.I Visit
+.I order.
+The function
+.I visit
 is called for each node in turn,
-with one argument that points
-to the data at that node.
+being passed two arguments:
+a pointer to the data at that node
+and the depth of the node in the tree for the specified order.
+The type of tree traversal to perform,
+specified by
+.I trav_type,
+may be any one of
+.I PREORDER, INORDER,
+and
+.I POSTORDER.
 .PP
-Libredblack maintains an internal pointer called
-.I current_node
-that points to the node most recently inserted, accessed, etc.
+The
+.I rb_tree
+structure includes a pointer to
+the node most recently accessed
+(e.g., inserted or discovered in a search).
 The following commands make use of
-.I current_node
-for various relative-addressing purposes.
+this current node:
+.PP
+.I rb_delete
+removes a block of application data from
+.I tree.
+Because the algorithms sometimes cause a single block of data
+to be stored in different nodes for the different orders,
+the application specifies
+.I order,
+which indicates the block of data
+(in the current node) to be removed.
+.I rb_delete
+removes this block of data from every order.
 .PP
 .I rb_neighbor
-finds the node adjacent to
-.I current_node
-in one of the orders.
-.I Order
-specifies the order
-and
+finds the node adjacent (in \fIorder\fR) to
+the current node.
 .I sense,
-one of
+which may be one of
 .I SENSE_MIN
 and
 .I SENSE_MAX,
 specifies either predecessor or successor, respectively.
 The macros
-.I rb_pred(order)
+.I rb_pred(tree, order)
 and
-.I rb_succ(order),
+.I rb_succ(tree, order),
 available in
 \fI"redblack.h"\fR,
 are implemented in terms of
