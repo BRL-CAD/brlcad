@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "externs.h"		/* For malloc, getopt */
 #include "bu.h"
 #include "vmath.h"
-
+#include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
 #include "../libfb/pkgtypes.h"
@@ -58,8 +58,6 @@ static void new_client_handler();
 static void existing_client_handler();
 static void comm_error();
 static void setup_socket();
-
-int fb_busy_flag = 0;
 
 /*
  *			N E W _ C L I E N T
@@ -120,6 +118,7 @@ void
 set_port()
 {
   register int i;
+  int save_port;
   char portname[32];
 
   /* Check to see if previously active --- if so then deactivate */
@@ -142,6 +141,29 @@ set_port()
     return;
   }
 
+#if 1
+#define MAX_PORT_TRIES 100
+
+  save_port = mged_variables->port;
+  if(mged_variables->port < 0)
+    mged_variables->port = 0;
+
+  /* Try a reasonable number of times to hang a listen */
+  for(i = 0; i < MAX_PORT_TRIES; ++i){
+    if(mged_variables->port < 1024)
+      sprintf(portname,"%d", mged_variables->port + 5559);
+    else
+      sprintf(portname,"%d", mged_variables->port);
+
+    /*
+     * Hang an unending listen for PKG connections
+     */
+    if( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
+      ++mged_variables->port;
+    else
+      break;
+  }
+#else
   if(mged_variables->port < 0){
     mged_variables->listen = 0;
     bu_log("set_port: invalid port number - %d\n", mged_variables->port);
@@ -162,9 +184,16 @@ set_port()
 
     return;
   }
+#endif
 
-  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)netfd, TCL_UNIX_FD),
-			TCL_READABLE, new_client_handler, (ClientData)netfd);
+  if(netfd < 0){
+    mged_variables->port = save_port;
+    mged_variables->listen = 0;
+    bu_log("set_port: failed to hang a listen on ports %d - %d\n",
+	   mged_variables->port, mged_variables->port + MAX_PORT_TRIES - 1);
+  }else
+    Tcl_CreateFileHandler(Tcl_GetFile((ClientData)netfd, TCL_UNIX_FD),
+			  TCL_READABLE, new_client_handler, (ClientData)netfd);
 }
 
 /*
@@ -194,8 +223,6 @@ found:
 
   /* restore */
   curr_dm_list = scdlp;
-
-  ++fb_busy_flag;
 }
 
 /*
@@ -208,6 +235,7 @@ int mask;
 {
   register int i;
   int fd = (int)clientData;
+  int npp;			/* number of processed packages */
   struct dm_list *dlp;
   struct dm_list *scdlp;  /* save current dm_list pointer */
 
@@ -228,9 +256,11 @@ found:
     if(clients[i].fd == 0)
       continue;
 
-    if(pkg_process(clients[i].pkg) < 0){
+    if((npp = pkg_process(clients[i].pkg)) < 0)
       bu_log("pkg_process error encountered (1)\n");
-    }
+
+    if(npp > 0)
+      dirty = 1;
 
     if(clients[i].fd != fd)
       continue;
@@ -238,14 +268,15 @@ found:
     if(pkg_suckin(clients[i].pkg) <= 0){
       /* Probably EOF */
       drop_client(i);
-      --fb_busy_flag;
 
       continue;
     }
 
-    if(pkg_process(clients[i].pkg) < 0){
+    if((npp = pkg_process(clients[i].pkg)) < 0)
       bu_log("pkg_process error encountered (2)\n");
-    }
+
+    if(npp > 0)
+      dirty = 1;
   }
 
   /* restore */
