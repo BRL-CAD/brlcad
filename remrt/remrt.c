@@ -75,6 +75,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./list.h"
 #include "./protocol.h"
+#include "./ihost.h"
 
 #ifndef HAVE_VFORK
 # define vfork	fork
@@ -318,37 +319,6 @@ struct servers {
 } servers[MAXSERVERS];
 #define SERVERS_NULL	((struct servers *)0)
 
-/* Internal Host table */
-struct ihost {
-	char		*ht_name;	/* Official name of host */
-	int		ht_flags;	/* Control info about this host */
-#define HT_HOLD		0x1
-	int		ht_when;	/* When to use this host */
-#define HT_ALWAYS	1		/* Always try to use this one */
-#define HT_NIGHT	2		/* Only use at night */
-#define HT_PASSIVE	3		/* May call in, never initiated */
-#define HT_RS		4		/* While rays/second > ht_rs */
-#define HT_PASSRS	5		/* passive rays/second */
-#define HT_HACKNIGHT	6		/* Only use during "hackers night" */
-	int		ht_rs;		/* rays/second level */
-	int		ht_rs_miss;	/* number of consecutive misses */
-	int		ht_rs_wait;	/* # of auto adds to wait before */
-					/* restarting this server */
-	int		ht_where;	/* Where to find database */
-#define HT_CD		1		/* cd to ht_path first */
-#define HT_CONVERT	2		/* cd to ht_path, asc2g database */
-#define HT_USE		3		/* cd to ht_path, use asc database */
-					/* best of cd and convert */
-	char		*ht_path;	/* remote directory to run in */
-	struct ihost	*ht_next;
-};
-struct ihost		*HostHead;
-#define IHOST_NULL	((struct ihost *)0)
-struct ihost		*host_lookup_by_name();
-struct ihost		*host_lookup_by_addr();
-struct ihost		*host_lookup_by_hostent();
-struct ihost		*make_default_host();
-
 /* variables shared with viewing model */
 extern double	AmbientIntensity;
 extern double	azimuth, elevation;
@@ -386,7 +356,8 @@ char	file_fullname[128];	/* contains full file name */
 char	object_list[512];	/* contains list of "MGED" objects */
 
 FILE	*helper_fp;		/* pipe to rexec helper process */
-char	ourname[512];
+
+char		*our_hostname;
 
 int	tcp_listen_fd;
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
@@ -498,23 +469,8 @@ char	**argv;
 	register int i, done;
 
 	/* Random inits */
-	/*
-	 * There is a problem in some hosts that gethostname() will only
-	 * return the host name and *not* the fully qualified host name
-	 * with domain name.
-	 *
-	 * gethostbyname() will return a host table (nameserver) entry
-	 * where h_name is the "offical name", i.e. fully qualified.
-	 * Therefore the following piece of code.
-	 */
-	{
-		char temp[512];
-		struct hostent *hp;
-		gethostname(temp, sizeof(temp));
-		hp = gethostbyname(temp);
-		strcpy(ourname, hp->h_name);
-	}
-	fprintf(stderr,"%s %s %s\n", stamp(), ourname, version+5 );
+	our_hostname = get_our_hostname();
+	fprintf(stderr,"%s %s %s\n", stamp(), our_hostname, version+5 );
 	fflush(stderr);
 
 	width = height = 512;			/* same size as RT */
@@ -550,7 +506,7 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		(void)signal( SIGINT, SIG_IGN );
-		rt_log("%s Interactive REMRT on %s\n", stamp(), ourname );
+		rt_log("%s Interactive REMRT on %s\n", stamp(), our_hostname );
 		rt_log("%s Listening at port %d\n", stamp(), pkg_permport);
 		FD_ZERO(&clients);
 		FD_SET(fileno(stdin), &clients);
@@ -573,7 +529,7 @@ char	**argv;
 		 */
 		rt_log("%s Out of clients\n", stamp());
 	} else {
-		rt_log("%s Automatic REMRT on %s\n", stamp(), ourname );
+		rt_log("%s Automatic REMRT on %s\n", stamp(), our_hostname );
 		rt_log("%s Listening at port %d, reading script on stdin\n",
 			stamp(), pkg_permport);
 		FD_ZERO(&clients);
@@ -941,7 +897,8 @@ struct timeval	*nowp;
 	rt_log("%s Seeking servers to start\n", stamp() );
 	hackers_night = is_hackers_night( nowp );
 	night = is_night( nowp );
-	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
+	for( RT_LIST_FOR( ihp, ihost, &HostHead ) )  {
+		CK_IHOST(ihp);
 
 		/* Skip hosts which are not eligible for add/drop */
 		add = 1;
@@ -2936,7 +2893,7 @@ FILE	*fp;
 		if( cnt == 3 )  {
 			sprintf(cmd,
 				"cd %s; rtsrv %s %d",
-				rem_dir, ourname, port );
+				rem_dir, our_hostname, port );
 			if(rem_debug)  {
 				rt_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
@@ -2976,7 +2933,7 @@ FILE	*fp;
 				loc_db,
 				RSH, host,
 				rem_dir, rem_db,
-				ourname, port );
+				our_hostname, port );
 			if(rem_debug)  {
 				rt_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
@@ -3081,140 +3038,6 @@ int	startc;
 		cp += len;
 	}
 	*cp++ = '\0';
-}
-
-/*
- *			H O S T _ L O O K U P _ B Y _ H O S T E N T
- *
- *  We have a hostent structure, of which, the only thing of interest is
- *  the host name.  Go from name to address back to name, to get formal name.
- *
- *  Used by host_lookup_by_addr, too.
- */
-struct ihost *
-host_lookup_by_hostent( addr, enter )
-struct hostent	*addr;
-int		enter;
-{
-	register struct ihost	*ihp;
-
-	if( !(addr == gethostbyname(addr->h_name)) )
-		return IHOST_NULL;
-	if( !(addr == gethostbyaddr(addr->h_addr_list[0],
-	    sizeof(struct in_addr), addr->h_addrtype)) )
-		return IHOST_NULL;
-	/* Now addr->h_name points to the "formal" name of the host */
-
-	/* Search list for existing instance */
-	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
-		if( strcmp( ihp->ht_name, addr->h_name ) != 0 )
-			continue;
-		return( ihp );
-	}
-	if( enter == 0 )
-		return( IHOST_NULL );
-
-	/* If not found and enter==1, enter in host table w/defaults */
-	/* Note: gethostbyxxx() routines keep stuff in a static buffer */
-	return( make_default_host( addr->h_name ) );
-}
-
-/*
- *			M A K E _ D E F A U L T _ H O S T
- *
- *  Add a new host entry to the list of known hosts, with
- *  default parameters.
- *  This routine is used to handle unexpected volunteers.
- */
-struct ihost *
-make_default_host( name )
-char	*name;
-{
-	register struct ihost	*ihp;
-
-	GETSTRUCT( ihp, ihost );
-
-	/* Make private copy of host name -- callers have static buffers */
-	ihp->ht_name = rt_strdup( name );
-
-	/* Default host parameters */
-	ihp->ht_flags = 0x0;
-	ihp->ht_when = HT_PASSIVE;
-	ihp->ht_where = HT_CONVERT;
-	ihp->ht_path = "/tmp";
-
-	/* Add to linked list of known hosts */
-	ihp->ht_next = HostHead;
-	HostHead = ihp;
-	return(ihp);
-}
-
-/*
- *			H O S T _ L O O K U P _ B Y _ A D D R
- */
-struct ihost *
-host_lookup_by_addr( from, enter )
-struct sockaddr_in	*from;
-int	enter;
-{
-	register struct ihost	*ihp;
-	struct hostent	*addr;
-	unsigned long	addr_tmp;
-	char		name[64];
-
-	addr_tmp = from->sin_addr.s_addr;
-	addr = gethostbyaddr( (char *)&from->sin_addr, sizeof (struct in_addr),
-		from->sin_family);
-	if( addr != NULL )
-		return( host_lookup_by_hostent( addr, enter ) );
-
-	/* Host name is not known */
-	addr_tmp = ntohl(addr_tmp);
-	sprintf( name, "%d.%d.%d.%d",
-		(addr_tmp>>24) & 0xff,
-		(addr_tmp>>16) & 0xff,
-		(addr_tmp>> 8) & 0xff,
-		(addr_tmp    ) & 0xff );
-	if( enter == 0 )  {
-		rt_log("%s: unknown host\n");
-		return( IHOST_NULL );
-	}
-
-	/* See if this host has been previously entered by number */
-	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
-		if( strcmp( ihp->ht_name, name ) == 0 )
-			return( ihp );
-	}
-
-	/* Create a new hostent structure */
-	return( make_default_host( name ) );
-}
-
-/*
- *			H O S T _ L O O K U P _ B Y _ N A M E
- */
-struct ihost *
-host_lookup_by_name( name, enter )
-char	*name;
-int	enter;
-{
-	struct sockaddr_in	sockhim;
-	struct hostent		*addr;
-
-	/* Determine name to be found */
-	if( isdigit( *name ) )  {
-		/* Numeric */
-		sockhim.sin_family = AF_INET;
-		sockhim.sin_addr.s_addr = inet_addr(name);
-		return( host_lookup_by_addr( &sockhim, enter ) );
-	} else {
-		addr = gethostbyname(name);
-	}
-	if( addr == NULL )  {
-		rt_log("%s:  bad host\n", name);
-		return( IHOST_NULL );
-	}
-	return( host_lookup_by_hostent( addr, enter ) );
 }
 
 /*** Commands ***/
@@ -3788,7 +3611,7 @@ char	**argv;
 	rt_log("%s Printing of remote messages is %s\n",
 		s, print_on?"ON":"Off" );
     	rt_log("%s Listening at %s, port %d\n",
-		s, ourname, pkg_permport);
+		s, our_hostname, pkg_permport);
 
 	/* Print work assignments */
 	rt_log("%s Worker assignment interval=%d seconds:\n",
@@ -3927,7 +3750,8 @@ char	**argv;
 
 	if( argc < 5 )  {
 		rt_log("%s Registered Host Table:\n", stamp() );
-		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
+		for( RT_LIST_FOR( ihp, ihost, &HostHead ) )  {
+			CK_IHOST(ihp);
 			rt_log("  %s 0x%x ", ihp->ht_name, ihp->ht_flags);
 			switch(ihp->ht_when)  {
 			case HT_ALWAYS:
