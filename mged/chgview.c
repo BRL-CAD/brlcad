@@ -3404,6 +3404,8 @@ int edit_flag;
     mged_etran(tvec);
   else if(model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
     mged_mtran(tvec);
+  else if(mged_variables->mv_coords == 'o')
+    mged_otran(tvec);
   else
     mged_vtran(tvec);
 
@@ -3422,9 +3424,11 @@ int edit_flag;
 		      !view_flag && !model_flag) || edit_flag))
     mged_erot_xyz(origin, rvec);
   else if(model_flag || (mged_variables->mv_coords == 'm' && !view_flag))
-    mged_mrot_xyz(origin, rvec);
+    mged_vrot_xyz(origin, 'm', rvec);
+  else if(mged_variables->mv_coords == 'o')
+    mged_vrot_xyz(origin, 'o', rvec);
   else
-    mged_vrot_xyz(origin, rvec);
+    mged_vrot_xyz(origin, 'v', rvec);
 
   return TCL_OK;
 }
@@ -5020,8 +5024,7 @@ mat_t newrot;
       break;
     case 'k':
     default:
-      MAT4X3PNT(model_pt, es_mat, es_keypoint);
-      MAT4X3PNT(point, modelchanges, model_pt);
+      MAT4X3PNT(point, modelchanges, es_keypoint);
     }
 
     /* 
@@ -5046,104 +5049,6 @@ vect_t rvec;
   buildHrot(newrot, rvec[X]*degtorad, rvec[Y]*degtorad, rvec[Z]*degtorad);
 
   return mged_erot(origin, newrot);
-}
-
-/*
- *                     M G E D _ M R O T
- */
-mged_mrot(origin, newrot)
-char origin;
-mat_t newrot;
-{
-  static int recurse = 1;
-  mat_t invtvc;
-  mat_t viewchg, viewchginv;
-  point_t new_model_center;
-  point_t new_view_center;
-  point_t new_origin;
-  point_t vrot_pt;
-  point_t old_pos, new_pos;
-  point_t diff;
-  vect_t view_direc, model_direc;
-
-  bn_mat_idn( invtvc );
-
-  if(origin == 'e' || origin == 'm'){
-    /* find view direction vector */
-    VSET( model_direc, 0.0, 0.0, 1.0 );
-    MAT4X3VEC( view_direc, view_state->vs_model2view, model_direc );
-
-    VSET( new_origin, 0.0, 0.0, 0.0 );    /* point in model space */
-
-    /* find view rotation point */
-    if(origin == 'e'){
-      /*XXXXX rotating in model space about the view eye does not work, yet!!! */
-      VSET( vrot_pt, 0.0, 0.0, 1.0 );          /* point to rotate around */
-    }else{
-      MAT4X3PNT( vrot_pt, view_state->vs_model2view, new_origin ); /* point in view space */
-    }
-
-    /* find view rotation matrix */
-    wrt_point_direc( viewchg, newrot, bn_mat_identity, vrot_pt, view_direc );
-    bn_mat_inv( viewchginv, viewchg );
-
-    /* find new toViewcenter */
-    MAT4X3PNT( new_view_center, viewchginv, new_origin );
-    MAT4X3PNT( new_model_center, view_state->vs_view2model, new_view_center );
-    MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_model_center );
-
-    /* find new view2model  ---  used to find new model2view */
-    bn_mat_mul2( newrot, view_state->vs_view2model );
-
-    /* find inverse of toViewcenter  ---  used to find new Viewrot */
-    MAT_DELTAS_VEC( invtvc, new_model_center );
-
-    /* find new model2view  --- used to find new Viewrot */
-    bn_mat_inv( view_state->vs_model2view, view_state->vs_view2model );
-    view_state->vs_model2view[15] = 1.0;
-
-    /* find new Viewrot */
-    bn_mat_mul( view_state->vs_Viewrot, view_state->vs_model2view, invtvc );
-
-    view_state->vs_Viewrot[3] = 0.0;
-    view_state->vs_Viewrot[7] = 0.0;
-    view_state->vs_Viewrot[11] = 0.0;
-
-    /* recalculate toViewcenter */
-    bn_mat_inv( viewchginv, view_state->vs_Viewrot );
-    bn_mat_mul( view_state->vs_toViewcenter, viewchginv, view_state->vs_model2view );
-  }else{
-    /* find new view2model  ---  used to find new model2view */
-    wrt_view( view_state->vs_view2model, newrot, view_state->vs_view2model);
-
-    /* find inverse of toViewcenter  ---  used to find new Viewrot */
-    MAT_DELTAS( invtvc, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ] );
-
-    /* find new model2view  --- used to find new Viewrot */
-    bn_mat_inv( view_state->vs_model2view, view_state->vs_view2model );
-    view_state->vs_model2view[15] = 1.0;
-
-    /* find new Viewrot */
-    bn_mat_mul( view_state->vs_Viewrot, view_state->vs_model2view, invtvc );
-  }
-
-  new_mats();
-  set_absolute_tran();
-
-  return TCL_OK;
-}
-
-int
-mged_mrot_xyz(origin, rvec)
-char origin;
-vect_t rvec;
-{
-  mat_t newrot;
-
-  bn_mat_idn(newrot);
-  buildHrot(newrot, -rvec[X]*degtorad, -rvec[Y]*degtorad, -rvec[Z]*degtorad);
-
-  return mged_mrot(origin, newrot);
 }
 
 int
@@ -5180,7 +5085,7 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  return mged_mrot_xyz(mged_variables->mv_rotate_about, rvec);
+  return mged_vrot_xyz(mged_variables->mv_rotate_about, 'm', rvec);
 }
 
 /*
@@ -5196,7 +5101,7 @@ mat_t newrot;
 
   bn_mat_inv( newinv, newrot );
 
-  if(origin == 'e' || origin == 'm'){
+  if(origin != 'v'){
     point_t		rot_pt;
     point_t		new_origin;
     mat_t		viewchg, viewchginv;
@@ -5206,10 +5111,18 @@ mat_t newrot;
     if(origin == 'e'){
       /* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
       VSET( rot_pt, 0.0, 0.0, 1.0 );		/* point to rotate around */
+    }else if(origin == 'k' && state == ST_S_EDIT){
+      /* rotate around keypoint */
+      MAT4X3PNT(rot_pt, view_state->vs_model2view, curr_e_axes_pos);
+    }else if(origin == 'k' && state == ST_O_EDIT){
+      point_t kpWmc;
+
+      MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
+      MAT4X3PNT(rot_pt, view_state->vs_model2view, kpWmc);
     }else{
       /* rotate around model center (0,0,0) */
       VSET( new_origin, 0.0, 0.0, 0.0 );
-      MAT4X3PNT( rot_pt, view_state->vs_model2view, new_origin);  /* point to rotate around */
+      MAT4X3PNT( rot_pt, view_state->vs_model2view, new_origin );  /* point to rotate around */
     }
 
     bn_mat_xform_about_pt( viewchg, newrot, rot_pt );
@@ -5224,39 +5137,49 @@ mat_t newrot;
     /* XXX This should probably capture the translation too */
     /* XXX I think the only consumer of ModelDelta is the predictor frame */
     wrt_view( view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta );		/* pure rotation */
-
-    /* Update the rotation component of the model2view matrix */
-    bn_mat_mul2( newrot, view_state->vs_Viewrot );			/* pure rotation */
-    new_mats();
-
-    set_absolute_tran();
-  } else {
+  } else
     /* Traditional method:  rotate around view center (0,0,0) viewspace */
     wrt_view( view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta );
 
-    /* Update the rotation component of the model2view matrix */
-    bn_mat_mul2( newrot, view_state->vs_Viewrot );			/* pure rotation */
-    new_mats();
+  /* Update the rotation component of the model2view matrix */
+  bn_mat_mul2( newrot, view_state->vs_Viewrot ); /* pure rotation */
+  new_mats();
 
-    if(view_state->vs_absolute_tran[X] != 0.0 ||
-       view_state->vs_absolute_tran[Y] != 0.0 ||
-       view_state->vs_absolute_tran[Z] != 0.0){
-      set_absolute_tran();
-    }
-  }
+  set_absolute_tran();
 
   return TCL_OK;
 }
 
 int
-mged_vrot_xyz(origin, rvec)
+mged_vrot_xyz(origin, coords, rvec)
 char origin;
+char coords;
 vect_t rvec;
 {
   mat_t newrot;
+  mat_t temp1, temp2;
 
   bn_mat_idn(newrot);
   buildHrot(newrot, rvec[X]*degtorad, rvec[Y]*degtorad, rvec[Z]*degtorad);
+
+  if (coords == 'm') {
+    /* transform model rotations into view rotations */
+    bn_mat_inv(temp1, view_state->vs_Viewrot);
+    bn_mat_mul(temp2, view_state->vs_Viewrot, newrot);
+    bn_mat_mul(newrot, temp2, temp1);
+  } else if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	     coords == 'o') {
+
+    /* first, transform object rotations into model rotations */
+    bn_mat_inv(temp1, acc_rot_sol);
+    bn_mat_mul(temp2, acc_rot_sol, newrot);
+    bn_mat_mul(newrot, temp2, temp1);
+
+    /* now transform model rotations into view rotations */
+    bn_mat_inv(temp1, view_state->vs_Viewrot);
+    bn_mat_mul(temp2, view_state->vs_Viewrot, newrot);
+    bn_mat_mul(newrot, temp2, temp1);
+  } /* else assume already view rotations */
 
   return mged_vrot(origin, newrot);
 }
@@ -5297,7 +5220,7 @@ char	**argv;
 
   VSCALE(rvec, rvec, -1.0);
 
-  return mged_vrot_xyz(mged_variables->mv_rotate_about, rvec);
+  return mged_vrot_xyz(mged_variables->mv_rotate_about, 'v', rvec);
 }
 
 mged_rot(origin, newrot)
@@ -5309,8 +5232,14 @@ mat_t newrot;
     return mged_erot(origin, newrot);
 
   /* apply to View */
-  if(mged_variables->mv_coords == 'm')
-    return mged_mrot(origin, newrot);
+  if(mged_variables->mv_coords == 'm'){
+    mat_t temp1, temp2;
+
+    /* transform model rotations into view rotations */
+    bn_mat_inv(temp1, view_state->vs_Viewrot);
+    bn_mat_mul(temp2, view_state->vs_Viewrot, newrot);
+    bn_mat_mul(newrot, temp2, temp1);
+  }
 
   return mged_vrot(origin, newrot);
 }
@@ -5469,6 +5398,20 @@ point_t pt;
 }
 
 int
+mged_otran(tvec)
+vect_t tvec;
+{
+  vect_t work;
+
+  if(state == ST_S_EDIT || state == ST_O_EDIT){
+    /* apply acc_rot_sol to tvec */
+    MAT4X3PNT(work, acc_rot_sol, tvec);
+  }
+
+  return mged_mtran(work);
+}
+
+int
 mged_mtran(tvec)
 vect_t tvec;
 {
@@ -5483,7 +5426,7 @@ vect_t tvec;
 
   /* calculate absolute_tran */
   set_absolute_view_tran();
-
+  
   return TCL_OK;
 }
 
@@ -5521,6 +5464,9 @@ vect_t tvec;
   /* apply to View */
   if(mged_variables->mv_coords == 'm')
     return mged_mtran(tvec);
+
+  if(mged_variables->mv_coords == 'o')
+    return mged_otran(tvec);
 
   return mged_vtran(tvec);
 }
