@@ -1,6 +1,5 @@
 #!/bin/sh
-# the next line restarts using bwish \
-exec bwish "$0" "$@"
+
 #
 # Author -
 #	Glenn Durfee
@@ -25,8 +24,17 @@ exec bwish "$0" "$@"
 # Note: this utility needs to be run under BRL-CAD's "bwish" environment, as
 # it needs the PIX image type and the bn_common_file_size functions.
 
-set PIXFB pix-fb
-set PIXMORPH pixmorph
+# Use the bwish that's in the same bin directory as morphedit.tcl
+# this is a comment \
+CADPATH=`dirname $0`
+# this is a comment \
+BWISH=$CADPATH/bwish
+# the next line restarts using bwish \
+exec $BWISH "$0" "$@"
+
+set brlcad_path [bu_brlcad_path bin]
+set PIXFB [file join $brlcad_path pix-fb]
+set PIXMORPH [file join $brlcad_path pixmorph]
 
 set colors(normal) red
 set colors(highlighted) orange
@@ -49,8 +57,10 @@ proc usage {} {
     puts "     separate     : images are placed in separate windows"
     exit
 }
-    
-if { $argc < 3 } then usage
+
+if {$argc < 3} {
+    usage
+}
 
 set width 0
 set height 0
