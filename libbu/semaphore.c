@@ -303,7 +303,7 @@ unsigned int	nsemaphores;
 #	if SUNOS
 	for( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, (void *)0)) {
+		if (mutex_init( &bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
 			fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on %d\n", i);
 			abort();
 		}
@@ -313,7 +313,7 @@ unsigned int	nsemaphores;
 #	if HAS_POSIX_THREADS
 	for( i=0; i < nsemaphores; i++ )  {
 		bu_semaphores[i].magic = BU_SEMAPHORE_MAGIC;
-		if (pthread_mutex_init( &bu_semaphores[i].mu,  (void *)0)) {
+		if (pthread_mutex_init( &bu_semaphores[i].mu,  NULL)) {
 			fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on %d\n", i);
 			abort();
 		}
