@@ -31,16 +31,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "db.h"
 #include "wdb.h"
+#include "externs.h"
 
 
-#define BUFSIZE			1024		/* Record input buffer size */
+#define BUFSIZE			(8*1024)	/* input line buffer size */
 #define TYPELEN			10
 #define NAMELEN			20
-
-extern void	exit();
-extern int	atoi();	/* bzero()? */
-extern char	*strcpy();
-extern double	atof();
 
 void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
 void		solbld(), combbld(), membbld(), arsabld(), arsbbld();
@@ -392,7 +388,7 @@ membbld()
 
 /*		A R S B L D
  *
- * This routine builds ARS's.  Leave alone for now.
+ * This routine builds ARS's.
  */
 
 void
@@ -446,15 +442,12 @@ arsabld()
 
 /*		A R S B L D
  *
- * This is the second half of the ars-building.  It builds the ARS B record.
- * Also leave alone for now.
+ * This is the second half of the ARS-building.  It builds the ARS B record.
  */
 
 void
 arsbbld()
 {
-
-
 	register char *cp;
 	register int i;
 	point_t	      pnt[8];		/* need 8 points */
@@ -546,7 +539,6 @@ identbld()
 	zap_nl();
 	(void)strncpy( title, buf, sizeof(title)-1 );
 
-	/* Call mk_id() */
 	mk_id(stdout, title);
 }
 
@@ -575,7 +567,6 @@ polyhbld()
 		*np++ = *cp++;
 	}
 
-	/* Call mk_polysolid()  */
 	mk_polysolid(stdout, name);
 }
 
@@ -614,7 +605,6 @@ polydbld()
 		}
 	}
 
-	/* Call mk_poly() */
 	mk_poly(stdout, count, verts, norms);
 }
 
@@ -680,7 +670,6 @@ bsplbld()
 	cp = nxt_spc( cp );
 	resolution = atof( cp );
 
-	/* Call mk_bsolid() */
 	mk_bsolid(stdout, name, nsurf, resolution);
 }
 
