@@ -4391,6 +4391,8 @@ Check_edge_uses()
 				V3ARGS( vg1->coord ), V3ARGS( vg2->coord ) );
 		}
 	}
+
+	bu_ptbl_free( &edges );
 }
 
 int
