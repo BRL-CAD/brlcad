@@ -111,18 +111,25 @@ rt_write(fp, eye_model)
 FILE *fp;
 vect_t eye_model;
 {
-	register int i;
+	register int	i;
+	quat_t		quat;
 
-	(void)fprintf(fp, "viewsize %.9e;\n", VIEWSIZE );
-	(void)fprintf(fp, "eye_pt %.9e %.9e %.9e;\n",
+	(void)fprintf(fp, "viewsize %.15e;\n", VIEWSIZE );
+	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
+#if 0
 	(void)fprintf(fp, "viewrot ");
 	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.9e ", Viewrot[i] );
+		(void)fprintf( fp, "%.15e ", Viewrot[i] );
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
 	}
 	(void)fprintf(fp, ";\n");
+#else
+	quat_mat2quat( quat, Viewrot );
+	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n",
+		V4ARGS( quat ) );
+#endif
 	(void)fprintf(fp, "start 0;\nend;\n");
 }
 
