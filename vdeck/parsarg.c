@@ -1,6 +1,6 @@
 /*
- *	@(#) parsarg.c			retrieved: 8/13/86 at 08:01:52
- *	@(#) version 2.1		last edit: 6/1/84 at 14:04:47
+ *	@(#) parsarg.c			retrieved: 8/13/86 at 08:01:59
+ *	@(#) version 2.2		last edit: 1/31/85 at 15:00:26
  *
  *	Written by:	Gary S. Moss
  *			U. S. Army Ballistic Research Laboratory
@@ -9,7 +9,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) parsarg.c	2.1	last edit 6/1/84 at 14:04:47";
+char	sccsTag[] = "@(#) parsarg.c	2.2	last edit 1/31/85 at 15:00:26";
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
