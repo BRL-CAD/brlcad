@@ -101,7 +101,8 @@ CONST struct rt_tol	*tol;
 		if( eu_next == eu )  return -1;
 		b = eu_next->vu_p->v_p;
 		NMG_CK_VERTEX(b);
-	} while( b == a );
+	} while( b == a
+		|| VAPPROXEQUAL(a->vg_p->coord, b->vg_p->coord, tol->dist) );
 
 	eu_final = eu_next;
 	do {
@@ -110,7 +111,11 @@ CONST struct rt_tol	*tol;
 		if( eu_final == eu )  return -1;
 		c = eu_final->vu_p->v_p;
 		NMG_CK_VERTEX(c);
-	} while( c == b );
+	} while( c == b
+		|| VAPPROXEQUAL(a->vg_p->coord, c->vg_p->coord, tol->dist)
+		|| VAPPROXEQUAL(b->vg_p->coord, c->vg_p->coord, tol->dist)
+		|| collinear(a->vg_p->coord, b->vg_p->coord, c->vg_p->coord,
+			tol->dist));
 
 	if (rt_mk_plane_3pts(plane,
 	    a->vg_p->coord, b->vg_p->coord, c->vg_p->coord, tol) < 0 ) {
