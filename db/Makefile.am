@@ -41,6 +41,9 @@ EXTRA_DIST = \
 	${MODELS} \
 	db.php
 
+MAINTAINERCLEANFILES = Makefile.in
+
+
 all: ${MODELS:asc=g}
 
 install-data-hook: ${MODELS:asc=g}
