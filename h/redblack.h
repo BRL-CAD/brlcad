@@ -17,10 +17,20 @@ typedef struct
     char		*rbt_description; /* Comment for diagnostics */
     int		 	rbt_nm_orders;	  /* Number of simultaneous orders */
     int			(**rbt_order)();  /* Comparison functions */
+    void		(*rbt_print)();	  /* Data pretty-print function */
     struct rb_node	**rbt_root;	  /* The actual trees */
+    struct rb_node	*rbt_current;	  /* Current node */
     struct rb_node	*rbt_empty_node;  /* Sentinel representing nil */
 }	rb_tree;
 #define	RB_TREE_NULL	((rb_tree *) 0)
+
+struct rb_package
+{
+    long		rbp_magic;	/* Magic no. for integrity check */
+    struct rb_node	**rbp_node;	/* Containing nodes */
+    void		*rbp_data;	/* Application data */
+};
+#define	RB_PKG_NULL	((struct rb_package *) 0)
 
 struct rb_node
 {
@@ -30,8 +40,8 @@ struct rb_node
     struct rb_node	**rbn_left;	/* Left subtrees */
     struct rb_node	**rbn_right;	/* Right subtrees */
     char		*rbn_color;	/* Colors of this node */
-    void		**rbn_data;	/* Contents of this node */
-    int			rbn_data_refs;	/* How many orders are being used? */
+    struct rb_package	**rbn_package;	/* Contents of this node */
+    int			rbn_pkg_refs;	/* How many orders are being used? */
 };
 #define	RB_NODE_NULL	((struct rb_node *) 0)
 
@@ -42,8 +52,8 @@ struct rb_node
 #define	rb_min(t,o)	rb_extreme((t), (o), SENSE_MIN)
 #define	SENSE_MAX	1
 #define	rb_max(t,o)	rb_extreme((t), (o), SENSE_MAX)
-#define rb_pred(o)	rb_neighbor((o), SENSE_MIN)
-#define rb_succ(o)	rb_neighbor((o), SENSE_MAX)
+#define rb_pred(t,o)	rb_neighbor((t), (o), SENSE_MIN)
+#define rb_succ(t,o)	rb_neighbor((t), (o), SENSE_MAX)
 #define rb_search1(t,n)	rb_search((t), 0, (n))
 
 /*
@@ -58,9 +68,9 @@ rb_tree *rb_create1	(
 			    char	*description,
 			    int		(*order_func)()
 			);
-int rb_delete		(
+void rb_delete		(
 			    rb_tree	*tree,
-			    void	*data
+			    int		order
 			);
 void rb_diagnose_tree	(
 			    rb_tree	*tree,
@@ -75,7 +85,12 @@ int rb_insert		(
 			    rb_tree	*tree,
 			    void	*data
 			);
+void rb_install_print	(
+			    rb_tree	*tree,
+			    void	(*print_func)()
+			);
 void *rb_neighbor	(
+			    rb_tree	*tree,
 			    int		order,
 			    int		sense
 			);
