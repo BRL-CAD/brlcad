@@ -119,8 +119,10 @@ HMitem	*itemp;
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
 	(void) fprintf( stderr, "prompt=\"%s\"\n", itemp->prompt == NULL ? "(null)" : itemp->prompt );
 	(void) fprintf( stderr, "next=0x%x\n", (int) itemp->next );
+#ifndef sgi
 	(void) fprintf( stderr, "dfn=0x%x\n", (int) itemp->dfn );
 	(void) fprintf( stderr, "bfn=0x%x\n", (int) itemp->bfn );
+#endif
 	(void) fprintf( stderr, "hfn=0x%x\n", (int) itemp->hfn );
 	(void) fprintf( stderr, "data=%d\n--\n", itemp->data );
 	return;
