@@ -60,7 +60,7 @@ static long	fg_cnt;
 static long	bg_cnt;
 
 static char usage[] = "\
-Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-c r/g/b]\n\
+Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
 	foreground.pix background.pix > out.pix\n";
 
 get_args( argc, argv )
@@ -68,7 +68,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "glenw:c:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "glenw:C:c:" )) != EOF )  {
 		switch( c )  {
 		case 'g':
 			wanted |= GT;
@@ -91,7 +91,8 @@ register char **argv;
 			if( c > 1 && c < sizeof(pconst) )
 				width = c;
 			break;
-		case 'c':
+		case 'C':
+		case 'c':	/* backword compatability */
 			{
 				register char *cp = optarg;
 				register unsigned char *conp = pconst;
