@@ -200,8 +200,17 @@ int			(*handler)();
 
 			/* Just skip over knots and control mesh */
 			j = (record.d.d_nknots + record.d.d_nctls);
+			nrec += j;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			break;
+		case DBID_ARBN:
+			j = record.n.n_grans;
+			nrec += record.n.n_grans;
+			while( j-- > 0 )
+				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+			handler( dbip, record.n.n_name, addr, nrec,
+				DIR_SOLID );
 			break;
 		case ID_MEMB:
 			rt_log("db_scan ERROR: Unattached combination MEMBER record\n");
