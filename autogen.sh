@@ -166,7 +166,7 @@ else
   [ ! $? = 0 ] && echo "ERROR: aclocal failed" && exit 2
   autoheader 
   [ ! $? = 0 ] && echo "ERROR: autoheader failed" && exit 2
-  automake -f -a -c 
+  automake -a -c 
   [ ! $? = 0 ] && echo "ERROR: automake failed" && exit 2
   autoconf -f
   [ ! $? = 0 ] && echo "ERROR: autoconf failed" && exit 2
