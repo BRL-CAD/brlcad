@@ -103,6 +103,8 @@ union E_tree
 		struct bu_list seghead;		/* head of list of segments for this leaf solid */
 		struct bu_ptbl edge_list;	/* list of edges from above NMG */
 		struct soltab *stp;		/* the usual soltab pointer */
+		unsigned char do_not_free_model; /* A flag indicating that the NMG model pointer is a reference to the
+						 * NMG model in the soltab structure */
 	} l;
 };
 
@@ -124,6 +126,7 @@ matp_t mat;
 	struct nmgregion *r;
 	struct rt_db_internal intern;
 	int id;
+	int solid_is_plate_mode_bot=0;
 
 	BU_GETUNION( eptr, E_tree );
 	eptr->magic = E_TREE_MAGIC;
@@ -152,10 +155,33 @@ matp_t mat;
 		return( eptr );
 	}
 
+	if( id == ID_BOT )
+	{
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
+
+		/* if this is a plate mode BOT, lie to the tesselator to get
+		 * an approximation
+		 */
+
+		RT_BOT_CK_MAGIC( bot );
+
+		if( bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS )
+		{
+			solid_is_plate_mode_bot = 1;
+			bot->mode = RT_BOT_SOLID;
+		}
+	}
+
 	if( id == ID_HALF )
 	{
 		eptr->l.m = NULL;
 		num_halfs++;
+	}
+	else if( id == ID_NMG )
+	{
+		/* steal the nmg model */
+		eptr->l.m = (struct model *)intern.idb_ptr;
+		eptr->l.do_not_free_model = 1;
 	}
 	else
 	{
@@ -186,7 +212,7 @@ matp_t mat;
 
 			BU_GETSTRUCT( pg, rt_pg_internal );
 
-			if( ! eptr->l.m || !nmg_to_poly( eptr->l.m, pg, &mged_tol ) )
+			if( !solid_is_plate_mode_bot || !eptr->l.m || !nmg_to_poly( eptr->l.m, pg, &mged_tol ) )
 			{
 				bu_free( (char *)pg, "rt_pg_internal" );
 				eptr->l.stp->st_id = id;
@@ -221,7 +247,8 @@ matp_t mat;
 		}
 	}
 
-	rt_db_free_internal( &intern );
+	if( id != ID_NMG )
+		rt_db_free_internal( &intern );
 
 	/* add this leaf to the leaf list */
 	bu_ptbl_ins( &leaf_list, (long *)eptr );
@@ -1623,9 +1650,11 @@ union E_tree *eptr;
 			break;
 		case OP_DB_LEAF:
 		case OP_SOLID:
-			if( eptr->l.m )
+			if( eptr->l.m && !eptr->l.do_not_free_model )
 			{
 				nmg_km( eptr->l.m );
+				if( eptr->l.m == eptr->l.stp->st_specific )
+					eptr->l.stp->st_specific = GENPTR_NULL;
 				eptr->l.m = (struct model *)NULL;
 			}
 			if( BU_LIST_NON_EMPTY( &eptr->l.seghead ) )
@@ -1638,7 +1667,8 @@ union E_tree *eptr;
 			}
 			if( eptr->l.stp )
 			{
-				rt_functab[eptr->l.stp->st_id].ft_free( eptr->l.stp );
+				if( eptr->l.stp->st_specific )
+					rt_functab[eptr->l.stp->st_id].ft_free( eptr->l.stp );
 				bu_free( (char *)eptr->l.stp, "struct soltab" );
 			}
 
