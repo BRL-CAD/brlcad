@@ -550,7 +550,7 @@ ipu_put_image(struct dsreq *dsp,
 }
 
 static unsigned char ipu_units[] = {
-	0x23, /* Page Code print units */
+	0x23,	/* Page Code "print measurement parameters" */
 	6,	/* Parameter Length */
 	IPU_UNITS_INCH,
 	0,	/* Reserved */
@@ -613,7 +613,7 @@ ipu_print_config(struct dsreq *dsp,
 	toshort(&ipu_units[4], divisor);
 
 	bzero(p=(u_char *)CMDBUF(dsp), 16);
-	p[0] = 0x15;
+	p[0] = 0x15;		/* MODE SELECT */
 	p[1] = 0x10;
 	CMDLEN(dsp) = 6;
 
@@ -726,7 +726,6 @@ ipu_scan_config(struct dsreq *dsp,
 
 	if (ipu_debug) fprintf(stderr, "ipu_scan_config()\n");
 
-	ipu_units[2] = 0x22;	/* scan mode parameters */
 	ipu_units[2] = units;
 	toshort(&ipu_units[4], divisor);
 
@@ -744,7 +743,7 @@ ipu_scan_config(struct dsreq *dsp,
 	toshort(&sc_mode[4], rotation);
 
 	bzero(p=(u_char *)CMDBUF(dsp), 16);
-	p[0] = 0x15;
+	p[0] = 0x15;			/* MODE SELECT */
 	p[1] = 0x10;
 	CMDLEN(dsp) = 6;
 
@@ -1067,6 +1066,67 @@ ipu_get_conf_long(struct dsreq *dsp)
 	(void)fprintf(stderr, "Block Descriptor Length %u\n",
 		((unsigned)params[6] << 8) + params[7]);
 	return 0;
+}
+
+/*
+ *			I P U _ S E T _ P A L E T T E
+ *
+ *  For 8-bit mode, program the color palette.
+ *  Works in the same manner as LIBFB color maps.
+ *
+ *  If 'cmap' is NULL, then linear ramp is used.
+ *  If 'cmap' is non-NULL, then it points to a 768 byte array
+ *  arranged as r0, g0, b0, r1, g1, b1, ...
+ */
+int
+ipu_set_palette( dsp, cmap )
+struct dsreq	*dsp;
+unsigned char	*cmap;		/* NULL or [768] */
+{
+	register u_char *p;
+	unsigned char	linear[768];
+	int		i;
+	int		ret;
+
+	if (ipu_debug) fprintf(stderr, "ipu_set_palette(cmap=x%x)\n", cmap);
+	if( cmap == NULL )  {
+		register int	j;
+		register unsigned char *cp = linear;
+		for( j=0; j < 256; j++ )  {
+			*cp++ = j;
+			*cp++ = j;
+			*cp++ = j;
+		}
+		cmap = linear;
+	}
+
+	/* The Palette has to be sent in 4 parts */
+	for( i=0; i < 4; i++ )  {
+		unsigned char	buf[4+2+192];
+
+		bzero(p=CMDBUF(dsp), 16);
+		p[0] = 0x15;		/* MODE SELECT, Group code 0 (6 byte) */
+		/* Lun 0=scanner, Lun 3=printer */
+		p[1] = (3<<5) | 0x10;	/* Lun, PF=1 (page format) */
+		p[4] = sizeof(buf);
+		CMDLEN(dsp) = 6;
+
+		/* buf[0]:  Parameter header, 4 bytes long. */
+		toint( buf, 192+2 );
+
+		/* buf[4]: MODE PARAMETERS, block(s) of page codes. */
+		buf[4] = 0x30 + i;	/* PAGE CODE "Color Palette Parameters" */
+		buf[5] = 0xC0;		/* 192 bytes follow */
+		bcopy( cmap+i*192, buf+4+2, 192 );
+
+		filldsreq(dsp, buf, sizeof(buf), DSRQ_WRITE|DSRQ_SENSE);
+
+		if ( ret=doscsireq(getfd(dsp), dsp) )  {
+			fprintf(stderr, "ipu_set_palette(%d) failed\n", i);
+			scsi_perror(ret, dsp);
+			exit(-1);
+		}
+	}
 }
 
 #endif /* __sgi__ */
