@@ -11,12 +11,21 @@
  *
  *****************************************************************************/
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 #include "./rletogif.h"
 
+#ifndef TRUE
 #define TRUE 1
+#endif
+#ifndef FALSE
 #define FALSE 0
+#endif
 
 static int Width, Height;
 static int curx, cury;

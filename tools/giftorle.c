@@ -21,27 +21,18 @@
 /* |   don't try to make money off it, or pretend that you wrote it.  | */
 /* +------------------------------------------------------------------+ */
 
+#include "conf.h"
+
 #include	<stdio.h>
-#include	"rle.h"
-
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
-
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
 
-#ifdef VOID_STAR
-extern void *malloc();
-#else
-extern char *malloc();
-#endif
-extern void free();
-
-#endif /* USE_STDLIB_H */
+#include "machine.h"
+#include "externs.h"
+#include	"rle.h"
 
 #ifndef lint
 static char rcsid[] = "$Id$";
@@ -49,8 +40,12 @@ static char rcsid[] = "$Id$";
 
 #define	MAXCOLORMAPSIZE		256
 
+#ifndef TRUE
 #define	TRUE	1
+#endif
+#ifndef FALSE
 #define	FALSE	0
+#endif
 
 #define CM_RED		0
 #define CM_GREEN	1

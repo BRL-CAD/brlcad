@@ -26,8 +26,13 @@
  * 
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#include <rle.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "rle.h"
 
 void read_cubi_hdr(), read_cubi_row(), read_cubi_chan(), bit_read();
 
