@@ -70,7 +70,7 @@ static char *usage="proe-g [-p] [-d] [-x rt_debug_flag] [-X nmg_debug_flag] proe
 	The -X option specifies an NMG debug flag (see cad/h/nmg.h).\n";
 static FILE *fd_in;		/* input file (from Pro/E) */
 static FILE *fd_out;		/* Resulting BRL-CAD file */
-static struct db_i *dbip;
+static struct nmg_ptbl null_parts; /* Table of NULL solids */
 
 struct render_verts
 {
@@ -95,6 +95,283 @@ struct name_conv_list
 #define	ASSEMBLY_TYPE	1
 #define	PART_TYPE	2
 
+int
+nmg_process_imported_model( m, outfaceuses, nfaces, tol )
+struct model *m;
+struct faceuse *outfaceuses[];
+int nfaces;
+struct rt_tol *tol;
+{
+	struct nmgregion *r;
+	struct shell *s;
+	int return_val=0;
+	int i;
+
+	NMG_CK_MODEL( m );
+	RT_CK_TOL( tol );
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+	{
+		rt_log( "Barrier check at start of nmg_process_imported_model:\n" );
+		if( rt_mem_barriercheck() )
+			rt_bomb( "Barrier check failed!!!\n" );
+	}
+
+	if( debug )
+		rt_log( "\tvertex fuse\n" );
+	(void)nmg_model_vertex_fuse( m, tol );
+
+	/* Break edges on vertices */
+	if( debug )
+		rt_log( "\tBreak edges\n" );
+	(void)nmg_model_break_e_on_v( m, tol );
+
+	/* kill zero length edgeuses */
+	if( debug )
+		rt_log( "\tKill zero length edges\n" );
+	if( nmg_kill_zero_length_edgeuses( m ) )
+		return( 1 );
+
+	/* kill cracks */
+	if( debug )
+		rt_log( "\tKill cracks\n" );
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
+	{
+		struct nmgregion *next_r;
+
+		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+					return_val = 1;
+			}
+			if( return_val )
+				break;
+			s = next_s;
+		}
+		if( return_val )
+			break;
+		r = next_r;
+	}
+
+	if( return_val )
+		return( return_val );
+
+	/* Associate the face geometry. */
+	if( debug )
+		rt_log( "\tCalculate Face geometry\n" );
+	for (i = 0; i < nfaces; i++)
+	{
+		/* skip faceuses that were killed */
+		if( outfaceuses[i]->l.magic != NMG_FACEUSE_MAGIC )
+			continue;
+
+		/* calculate plane for this faceuse */
+		if( nmg_calc_face_g( outfaceuses[i] ) )
+		{
+			rt_log( "nmg_calc_face_g failed\n" );
+			nmg_pr_fu_briefly( outfaceuses[i], "" );
+		}
+	}
+
+	/* Compute "geometry" for model, region, and shell */
+	if( debug )
+		rt_log( "\trebound\n" );
+	nmg_rebound( m , tol );
+#if 0
+
+	/* Break edges on vertices */
+	if( debug )
+		rt_log( "\tBreak edges\n" );
+	(void)nmg_model_break_e_on_v( m, tol );
+
+	/* kill cracks */
+	if( debug )
+		rt_log( "\tKill cracks\n" );
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
+	{
+		struct nmgregion *next_r;
+
+		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+					return_val = 1;
+			}
+			if( return_val )
+				break;
+			s = next_s;
+		}
+		if( return_val )
+			break;
+		r = next_r;
+	}
+
+	if( return_val )
+		return( return_val );
+
+	/* kill zero length edgeuses */
+	if( debug )
+		rt_log( "\tKill zero length edges\n" );
+	if( nmg_kill_zero_length_edgeuses( m ) )
+		return( 1 );
+#endif
+	/* Glue faceuses together. */
+	if( debug )
+		rt_log( "\tEdge fuse\n" );
+	(void)nmg_model_edge_fuse( m, tol );
+
+	/* Compute "geometry" for model, region, and shell */
+	if( debug )
+		rt_log( "\trebound\n" );
+	nmg_rebound( m , tol );
+
+	/* fix the normals */
+	if( debug )
+		rt_log( "\tFix normals\n" );
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			nmg_fix_normals( s, tol );
+	}
+
+	if( debug )
+		rt_log( "\tJoin touching loops\n" );
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			nmg_s_join_touchingloops( s, tol );
+	}
+
+	/* kill cracks */
+	if( debug )
+		rt_log( "\tKill cracks\n" );
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
+	{
+		struct nmgregion *next_r;
+
+		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+					return_val = 1;
+			}
+			if( return_val )
+				break;
+			s = next_s;
+		}
+		if( return_val )
+			break;
+		r = next_r;
+	}
+
+	if( return_val )
+		return( return_val );
+
+	if( debug )
+		rt_log( "\tSplit touching loops\n" );
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			nmg_s_split_touchingloops( s, tol);
+	}
+
+	/* kill cracks */
+	if( debug )
+		rt_log( "\tKill cracks\n" );
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+	while( RT_LIST_NOT_HEAD( &r->l, &m->r_hd ) )
+	{
+		struct nmgregion *next_r;
+
+		next_r = RT_LIST_PNEXT( nmgregion, &r->l );
+
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+					return_val = 1;
+			}
+			if( return_val )
+				break;
+			s = next_s;
+		}
+		if( return_val )
+			break;
+		r = next_r;
+	}
+
+	if( return_val )
+		return( return_val );
+
+	/* verify face plane calculations */
+	if( debug )
+		rt_log( "\tMake faces within tolerance\n" );
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			nmg_make_faces_within_tol( s, tol );
+	}
+#if 0
+	/* Fuse */
+	if( debug )
+		rt_log( "\tFuse\n" );
+	(void)nmg_model_fuse( m, tol );
+
+	if( debug )
+		rt_log( "\tJoin and split touching loops\n" );
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			nmg_s_join_touchingloops( s, tol );
+			nmg_s_split_touchingloops( s, tol);
+		}
+	}
+#endif
+	if( rt_g.debug & DEBUG_MEM_FULL )
+	{
+		rt_log( "Barrier check at end of nmg_process_imported_model:\n" );
+		if( rt_mem_barriercheck() )
+			rt_bomb( "Barrier check failed!!!\n" );
+	}
+
+	return( 0 );
+}
+
 struct name_conv_list *
 Add_new_name( name , obj , type )
 char *name,*obj;
@@ -114,7 +391,7 @@ int type;
 	/* Add a new name */
 	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
-	strcpy( ptr->name , name );
+	strncpy( ptr->name , name, 80 );
 	ptr->obj = obj;
 	strncpy( ptr->brlcad_name , name , NAMESIZE-2 );
 	ptr->brlcad_name[NAMESIZE-2] = '\0';
@@ -123,7 +400,10 @@ int type;
 
 	/* make sure brlcad_name is unique */
 	len = strlen( ptr->brlcad_name );
-	strcpy( tmp_name , ptr->brlcad_name );
+	if( len >= NAMESIZE )
+		len = NAMESIZE - 1;
+
+	NAMEMOVE( ptr->brlcad_name, tmp_name );
 	ptr2 = name_root;
 	while( ptr2 )
 	{
@@ -135,7 +415,7 @@ int type;
 			if( try_char == '{' )
 				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
 
-			strcpy( tmp_name , ptr->brlcad_name );
+			NAMEMOVE( ptr->brlcad_name, tmp_name );
 			sprintf( &tmp_name[len-2] , "_%c" , try_char );
 			ptr2 = name_root;
 		}
@@ -143,7 +423,7 @@ int type;
 			ptr2 = ptr2->next;
 	}
 
-	strcpy( ptr->brlcad_name , tmp_name );
+	NAMEMOVE( tmp_name, ptr->brlcad_name );
 
 	if( type == ASSEMBLY_TYPE )
 	{
@@ -159,8 +439,12 @@ int type;
 
 	/* make sure solid name is unique */
 	len = strlen( ptr->solid_name );
-	strcpy( tmp_name , ptr->solid_name );
+	if( len >= NAMESIZE )
+		len = NAMESIZE - 1;
+
+	NAMEMOVE( ptr->solid_name, tmp_name );
 	ptr2 = name_root;
+	try_char = '@';
 	while( ptr2 )
 	{
 		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE-2 ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE-2 ) )
@@ -171,7 +455,7 @@ int type;
 			if( try_char == '{' )
 				rt_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
 
-			strcpy( tmp_name , ptr->solid_name );
+			NAMEMOVE( ptr->solid_name, tmp_name );
 			sprintf( &tmp_name[len-2] , "_%c" , try_char );
 			ptr2 = name_root;
 		}
@@ -179,7 +463,7 @@ int type;
 			ptr2 = ptr2->next;
 	}
 
-	strcpy( ptr->solid_name , tmp_name );
+	NAMEMOVE( tmp_name, ptr->solid_name );
 
 	return( ptr );
 }
@@ -253,10 +537,17 @@ char line[MAX_LINE_LEN];
 	char memb_name[80];
 	char *memb_obj;
 	char *brlcad_name;
-	double mat_col[4];
-	double conv_factor;
+	float mat_col[4];
+	float conv_factor;
 	int start;
 	int i;
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+	{
+		rt_log( "Barrier check at start of Convert_assy:\n" );
+		if( rt_mem_barriercheck() )
+			rt_bomb( "Barrier check failed!!!\n" );
+	}
 
 	RT_LIST_INIT( &head.l );
 
@@ -329,22 +620,27 @@ char line[MAX_LINE_LEN];
 			for( j=0 ; j<4 ; j++ )
 			{
 				fgets( line1, MAX_LINE_LEN, fd_in );
-				sscanf( line1 , "%lf %lf %lf %lf" , &mat_col[0] , &mat_col[1] , &mat_col[2] , &mat_col[3] );
+				sscanf( line1 , "%f %f %f %f" , &mat_col[0] , &mat_col[1] , &mat_col[2] , &mat_col[3] );
 				for( i=0 ; i<4 ; i++ )
 					wmem->wm_mat[4*i+j] = mat_col[i];
 			}
-
-			for( j=0 ; j<15 ; j++ )
-			{
-				/* element #15 should not be affected by conversion factor */
-				wmem->wm_mat[j] *= conv_factor;
-			}
+#if 0
+			wmem->wm_mat[15] /= conv_factor;
+#endif
 		}
 		else
 		{
 			fprintf( stderr , "Unrecognized line in assembly (%s)\n%s\n" , name , line1 );
 		}
 	}
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+	{
+		rt_log( "Barrier check at end of Convet_assy:\n" );
+		if( rt_mem_barriercheck() )
+			rt_bomb( "Barrier check failed!!!\n" );
+	}
+
 }
 
 void
@@ -368,14 +664,28 @@ char line[MAX_LINE_LEN];
 	char *brlcad_name;
 	struct wmember head;
 	vect_t normal;
-	double conv_factor;
+	float conv_factor;
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+		rt_prmem( "At start of Conv_prt():\n" );
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+	{
+		rt_log( "Barrier check at start of Convet_part:\n" );
+		if( rt_mem_barriercheck() )
+			rt_bomb( "Barrier check failed!!!\n" );
+	}
+
 
 	RT_LIST_INIT( &head.l );
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
 
 	m = nmg_mm();
+	NMG_CK_MODEL( m );
 	r = nmg_mrsv( m );
+	NMG_CK_REGION( r );
 	s = RT_LIST_FIRST( shell , &r->s_hd );
+	NMG_CK_SHELL( s );
 
 	start = (-1);
 	/* skip leading blanks */
@@ -404,6 +714,9 @@ char line[MAX_LINE_LEN];
 
 	if( debug )
 		rt_log( "Conv_part %s x%x\n" , name , obj );
+
+	if( rt_g.debug & DEBUG_MEM || rt_g.debug & DEBUG_MEM_FULL )
+		rt_prmem( "At start of Convert_part()" );
 
 	while( fgets( line1, MAX_LINE_LEN, fd_in ) != NULL )
 	{
@@ -451,16 +764,39 @@ char line[MAX_LINE_LEN];
 				{
 					float x,y,z;
 
+
 					sscanf( &line1[start+6] , "%f%f%f" , &x , &y , &z );
+
+					if( vert_no > 2 )
+					{
+						int n;
+
+						rt_log( "Non-triangular loop:\n" );
+						for( n=0 ; n<3 ; n++ )
+							rt_log( "\t( %g %g %g )\n", V3ARGS( verts[n].pt ) );
+
+						rt_log( "\t( %g %g %g )\n", x, y, z );
+					}
 					VSET( verts[vert_no].pt , x , y , z );
 					vert_no++;
 				}
+				else
+					rt_log( "Unrecognized line: %s\n", line1 );
 			}
 
 			for( i=0 ; i<3 ; i++ )
 			{
 				verts[i].v = (struct vertex *)NULL;
 				vts[i] = &verts[i].v;
+			}
+
+			if( debug )
+			{
+				int n;
+
+				rt_log( "Making Face:\n" );
+				for( n=0 ; n<3; n++ )
+					rt_log( "\t( %g %g %g )\n" , V3ARGS( verts[n].pt ) );
 			}
 
 			fu = nmg_cmface( s , vts , 3 );
@@ -493,11 +829,27 @@ char line[MAX_LINE_LEN];
 	/* Check if this part has any solid parts */
 	if( NMG_TBL_END( &faces ) == 0 )
 	{
+		char *save_name;
+
 		rt_log( "\t%s has no solid parts, ignoring\n" , name );
+		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "proe-g: save_name" );
+		NAMEMOVE( name, save_name );
+		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
+		nmg_tbl( &faces, TBL_FREE, (long *)NULL );
 		nmg_km( m );
 		return;
 	}
 
+#if 1
+	if( nmg_process_imported_model( m, (struct faceuse **)NMG_TBL_BASEADDR( &faces), NMG_TBL_END( &faces ), &tol ) )
+	{
+		nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+		nmg_km( m );
+		rt_log( "Note: %s is an empty solid\n" , name );
+		return;
+	}
+	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+#else
 	/* fuse vertices that are within tolerance of each other */
 	rt_log( "\tFusing vertices for part\n" );
 	(void)nmg_model_vertex_fuse( m , &tol );
@@ -506,7 +858,7 @@ char line[MAX_LINE_LEN];
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
-/*	if( !polysolid )
+	if( !polysolid )
 	{
 		nmg_shell_coplanar_face_merge( s , &tol , 0 );
 
@@ -517,9 +869,9 @@ char line[MAX_LINE_LEN];
 		(void)nmg_model_vertex_fuse( m , &tol );
 	}
 	else
-*/
-		nmg_rebound( m , &tol );
 
+		nmg_rebound( m , &tol );
+#endif
 	solid_count++;
 	solid_name = Get_solid_name( name , obj );
 
@@ -548,6 +900,14 @@ char line[MAX_LINE_LEN];
 	mk_lrcomb( fd_out, brlcad_name, &head, 1, (char *)NULL, (char *)NULL,
 	color, id_no, 0, 1, 100, 0 );
 	id_no++;
+
+	if( rt_g.debug & DEBUG_MEM_FULL )
+	{
+		rt_log( "Barrier check at end of Convert_part:\n" );
+		if( rt_mem_barriercheck() )
+			rt_bomb( "Barrier check failed!!!\n" );
+	}
+
 }
 
 void
@@ -566,6 +926,75 @@ Convert_input()
 	}
 }
 
+void
+Rm_nulls()
+{
+	struct db_i *dbip;
+	int i;	
+
+	dbip = db_open( brlcad_file, "rw" );
+	if( dbip == DBI_NULL )
+	{
+		rt_log( "Cannot db_open %s\n", brlcad_file );
+		rt_log( "References to NULL pat not removed\n" );
+		return;
+	}
+
+	db_scan(dbip, (int (*)())db_diradd, 1);
+	for( i=0 ; i<RT_DBNHASH ; i++ )
+	{
+		struct directory *dp;
+
+		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
+		{
+			union record *rp;
+			int j;
+
+			/* skip solids */
+			if( dp->d_flags & DIR_SOLID )
+				continue;
+
+			if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
+			{
+				rt_log( "Cannot get records for combination %s\n" , dp->d_namep );
+				continue;
+			}
+
+top:
+			for( j=1; j<dp->d_len; j++ )
+			{
+				int k;
+				int found=0;
+
+				for( k=0 ; k<NMG_TBL_END( &null_parts ) ; k++ )
+				{
+					char *save_name;
+
+					save_name = (char *)NMG_TBL_GET( &null_parts, k );
+					if( !strncmp( save_name, rp[j].M.m_instname, NAMESIZE ) )
+					{
+						found = 1;
+						break;
+					}
+				}
+				if( found )
+				{
+					/* This is a NULL part, delete the reference */
+					if( db_delrec( dbip, dp, j ) < 0 )
+					{
+						rt_log( "Error in deleting reference to null part (%s)\n", rp[j].M.m_instname );
+						rt_log( "Your database should still be O.K., but there may be\n" );
+						rt_log( "references to NULL parts (just a nuisance)\n" );
+						exit( 1 );
+					}
+					goto top;
+				}
+			}
+		}
+	}
+	db_close( dbip );
+}
+
 /*
  *			M A I N
  */
@@ -578,10 +1007,12 @@ char	*argv[];
 
         /* XXX These need to be improved */
         tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.0005;
+        tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
+
+	nmg_tbl( &null_parts, TBL_INIT, (long *)NULL );
 
 	if( argc < 2 )
 	{
@@ -597,9 +1028,13 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
+			rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			rt_log("\n");
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
+			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+			rt_log("\n");
 			break;
 		case 'p':
 			polysolid = 1;
@@ -630,4 +1065,9 @@ char	*argv[];
 
 	Convert_input();
 
+	fclose( fd_in );
+	fclose( fd_out );
+
+	/* Remove references to null parts */
+	Rm_nulls();
 }
