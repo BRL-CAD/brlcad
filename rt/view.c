@@ -361,22 +361,6 @@ register struct application *ap;
 	s	is the angle between the reflected ray and the observer.
 	n	'Shininess' of the material,  range 1 to 10.
  */
-
-/*	d i f f R e f l e c ( )
- *	Return the diffuse reflectance from 'light' source.
- */
-double
-diffReflec( norml, light, illum, cosI )
-double	*norml, *light;
-double	illum;
-double	*cosI;	/* Cosine of the angle of incidence */
-{
-	if( (*cosI = VDOT( norml, light )) < 0.0 ) {
-		return	0.0;
-	} else
-		return	*cosI * illum;
-}
-
 colorview( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
@@ -424,7 +408,7 @@ struct partition *PartHeadp;
 		register char *cp;
 		cp = (stp = pp->pt_inseg->seg_stp)->st_name;
 		if( stp == l0stp )  {
-			VSET( ap->a_color, 1, 1, 1 );	/* White */
+			VMOVE( ap->a_color, l0color );
 			goto finish;
 		}
 		/* Clouds "Texture" map */
@@ -434,7 +418,7 @@ struct partition *PartHeadp;
 			extern double texture();
 			functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
 				pp->pt_inseg->seg_stp, hitp, uv );
-			inten = texture( uv[0], uv[1], 1.0, 2.2, 1.0 );
+			inten = texture( uv[0], uv[1], 1.0, 2.0, 1.0 );
 			skycolor( inten, ap->a_color, 0.35, 0.3 );
 			goto finish;
 		}
@@ -495,12 +479,14 @@ colorit:
 	/* Diffuse reflectance from primary light source. */
 	VSUB2( to_light, l0pos, hitp->hit_point );
 	VUNITIZE( to_light );
-#define illum_pri_src	0.7
-	Rd1 = diffReflec( hitp->hit_normal, to_light, illum_pri_src, &cosI1 );
+	Rd1 = 0;
+	if( (cosI1 = VDOT( hitp->hit_normal, to_light )) > 0.0 )
+		Rd1 = cosI1 * (1 - AmbientIntensity);
 
 	/* Diffuse reflectance from secondary light source (at eye) */
-#define illum_sec_src	0.4
-	d_a = diffReflec( hitp->hit_normal, to_eye, illum_sec_src, &cosI2 );
+	d_a = 0;
+	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )
+		d_a = cosI2 * AmbientIntensity;
 
 	/* Apply secondary (ambient) (white) lighting. */
 	VSCALE( ap->a_color, mcolor, d_a );
