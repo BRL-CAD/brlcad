@@ -83,6 +83,7 @@ static long	curr_sect=0;		/* Offset into input file for current section card */
 static long	prev_sect=0;		/* Offset into input file for previous section card */
 static int	try_count=0;		/* Counter for number of tries to build currect section */
 static int	arb6_worked=0;		/* flag notifying of Make_arb6_obj() success */
+static int	use_arb6=0;		/* flag indicating tha all plate-mode should be converted as ARB6's */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
@@ -101,12 +102,13 @@ static int	int_list_count=0;	/* Number of ints in above array */
 static int	int_list_length=0;	/* Length of int_list array */
 #define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
 
-static char	*usage="Usage:\n\tfast4-g [-dnw] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
+static char	*usage="Usage:\n\tfast4-g [-dnwp] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
 	a - set minimum allowed angle (degrees) between adjacent faces in PLATE mode\n\
 		components with smaller angles will be converted using ARB6 solids\n\
 	d - print debugging info\n\
 	n - produce NMG solids rather than polysolids\n\
 	w - print warnings about creating default names\n\
+	p - convert all plate-mode components as ARB6 solids\n\
 	x - set RT debug flag\n\
 	X - set NMG debug flag\n\
 	D - set tolerance distance (mm)\n\
@@ -4508,7 +4510,7 @@ make_nmg_objects()
 		}
 
 	}
-	else if( mode == PLATE_MODE && try_count )
+	else if( mode == PLATE_MODE && (try_count || use_arb6) )
 	{
 		Make_arb6_obj();
 		arb6_worked = 1;
@@ -6444,10 +6446,13 @@ char *argv[];
 
 	max_cos = cos( MIN_ANG*bn_pi/180.0 );
 
-	while( (c=getopt( argc , argv , "a:dnwx:b:X:D:P:" ) ) != EOF )
+	while( (c=getopt( argc , argv , "pa:dnwx:b:X:D:P:" ) ) != EOF )
 	{
 		switch( c )
 		{
+			case 'p':	/* convert plate-mode componnets as ARB6's */
+				use_arb6 = 1;
+				break;
 			case 'a':	/* minimum angle */
 				max_cos = cos( atof( optarg )*bn_pi/180.0 );
 				break;
