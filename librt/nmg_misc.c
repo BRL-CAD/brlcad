@@ -40,76 +40,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 
 #include "db.h"		/* for debugging stuff at bottom */
-void
-nmg_find_bad_edges( magic_p )
-CONST long *magic_p;
-{
-	struct nmg_ptbl eu_tab;
-	struct rt_tol tol_tmp;
-	int i;
-
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
-
-	nmg_tbl( &eu_tab , TBL_INIT , NULL );
-
-	nmg_edgeuse_tabulate( &eu_tab , magic_p );
-
-	rt_log( "nmg_find_bad_edges: checking %d edgeuses\n" , NMG_TBL_END( &eu_tab ) );
-
-	for( i=0 ; i<NMG_TBL_END( &eu_tab ) ; i++ )
-	{
-		struct edgeuse *eur;
-		struct edgeuse *eurm;
-		struct edgeuse *eu;
-		struct edge *e;
-		int found=0;
-
-		eu = (struct edgeuse *)NMG_TBL_GET( &eu_tab , i );
-
-		NMG_CK_EDGEUSE( eu );
-		e = eu->e_p;
-		NMG_CK_EDGE( e );
-		if( e->eu_p->l.magic != NMG_EDGEUSE_MAGIC )
-		{
-			rt_log( "ERROR: e->eu_p points to bad edgeuse\n" );
-			rt_log( "eu = x%x , e = x%x , bad eu = x%x\n" , eu , e , e->eu_p );
-			rt_bomb( "BAD BAD BAD\n" );
-		}
-
-		if( e->eu_p == eu || e->eu_p == eu->eumate_p )
-			continue;
-
-		eur = e->eu_p->radial_p;
-		eurm = eur->eumate_p;
-		if( eur == eu || eurm == eu )
-			found = 1;
-		while( eur != e->eu_p && eurm != e->eu_p && !found )
-		{
-			if( eur == eu || eurm == eu )
-			{
-				found = 1;
-				break;
-			}
-
-			eur = eurm->radial_p;
-			eurm = eur->eumate_p;
-		}
-
-		if( !found )
-		{
-			rt_log( "eu x%x points to e x%x which points to eu x%x, but is not in its radial list\n" , eu , e , e->eu_p );
-			nmg_pr_fu_around_eu( eu , &tol_tmp );
-			nmg_pr_fu_around_eu( e->eu_p , &tol_tmp );
-			rt_bomb( "BAD BAD BAD\n" );
-		}
-		
-	}
-	nmg_tbl( &eu_tab , TBL_FREE , NULL );
-}
 
 /*	N M G _ L O O P _ P L A N E _ A R E A
  *
@@ -141,6 +71,10 @@ plane_t pl;
 
 	/* make sure we have a loop of edges */
 	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( (fastf_t)(-1.0) );
+
+	/* check if this loop is a crack */
+	if( nmg_loop_is_a_crack( lu ) )
 		return( (fastf_t)(-1.0) );
 
 	/* calculate a translation to put one vertex at the origin
@@ -852,7 +786,7 @@ int *loop_size;
  *	N M G _ C L O S E _ S H E L L
  *
  *	Examines the passed shell and, if there are holes, closes them
- *	note that note much care is taken as to how the holes are closed
+ *	note that not much care is taken as to how the holes are closed
  *	so the results are not entirely predictable.
  *	A list of free edges is created (edges bounding only one face).
  *	New faces are constructed by taking two consecutive edges
@@ -3050,35 +2984,17 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
 
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
-
 	vg = new_v->vg_p;
 	NMG_CK_VERTEX_G( vg );
 
 	switch( NMG_TBL_END( faces ) )
 	{
-		struct face *fp1,*fp2,*fp3,*fp4,*face;
-		fastf_t	vert_move_len;
-		vect_t vert_move_dir;
-		point_t rpp_min,line_start;
-		vect_t line_dir;
-		point_t pts[3];
-		plane_t **pls;
-		plane_t **pl;
+		struct face *fp1,*fp2,*fp3;
 		plane_t pl1;
-		vect_t normal,normal2;
-		double theta;
-		int k,ret_val;
-		int face_no;
-		int done;
+		fastf_t	vert_move_len;
 
 		case 0:
-			rt_log( "nmg_inside_vert: vertex not in any face planes!!!\n" );
+			rt_log( "nmg_simple_vertex_solve: vertex not in any face planes!!!\n" );
 			failed = 1;
 			break;
 		case 1:
@@ -3094,7 +3010,7 @@ CONST struct rt_tol *tol;
 			pl1[3] = VDOT( vg->coord , pl1 );
 			if( rt_mkpoint_3planes( vg->coord , fp1->fg_p->N , fp2->fg_p->N , pl1 ) )
 			{
-				rt_log( "nmg_inside_vert: Cannot find new coords for two planes\n" );
+				rt_log( "nmg_simple_vertex_solve: Cannot find new coords for two planes\n" );
 				failed = 1;
 				break;
 			}
@@ -3105,31 +3021,9 @@ CONST struct rt_tol *tol;
 			fp3 = (struct face *)NMG_TBL_GET( faces , 2 );
 			if( rt_mkpoint_3planes( vg->coord , fp1->fg_p->N , fp2->fg_p->N , fp3->fg_p->N ) )
 			{
-				/* Check if the three planes happen to intersect at a line */
-				if( ret_val=rt_isect_2planes( line_start , line_dir , fp1->fg_p->N , fp2->fg_p->N , rpp_min , &tol_tmp ) )
-				{
-					rt_log( "Two of three planes do not intersect (%d)\n" , ret_val );
-					rt_log( "\tx%x ( %f %f %f ) %f\n" , fp1 , V3ARGS( fp1->fg_p->N ) , fp1->fg_p->N[3] );
-					rt_log( "\tx%x ( %f %f %f ) %f\n" , fp2 , V3ARGS( fp2->fg_p->N ) , fp2->fg_p->N[3] );
-					rt_log( "\tError at vertex ( %f %f %f )\n" , V3ARGS( vg->coord ) );
-					failed = 1;
-					break;
-				}
-				else if( ret_val=rt_isect_line3_plane( &vert_move_len , line_start , line_dir , fp3->fg_p->N , &tol_tmp )  )
-				{
-					rt_log( "Line is not on third plane (%d):\n" , ret_val );
-					rt_log( "\tx%x ( %f %f %f ) %f\n" , fp1 , V3ARGS( fp1->fg_p->N ) , fp1->fg_p->N[3] );
-					rt_log( "\tx%x ( %f %f %f ) %f\n" , fp2 , V3ARGS( fp2->fg_p->N ) , fp2->fg_p->N[3] );
-					rt_log( "\tx%x ( %f %f %f ) %f\n" , fp3 , V3ARGS( fp3->fg_p->N ) , fp3->fg_p->N[3] );
-					rt_log( "\tError at vertex ( %f %f %f )\n" , V3ARGS( vg->coord ) );
-					failed = 1;
-					break;
-				}
-				else
-				{
-					(void)rt_dist_pt3_line3( &vert_move_len , vg->coord , line_start , line_dir , vg->coord , &tol_tmp );
-					break;
-				}
+				rt_log( "nmg_simple_vertex_solve: failed for  3 planes\n" );
+				failed = 1;
+				break;
 			}
 			break;
 		default:
@@ -3139,248 +3033,6 @@ CONST struct rt_tol *tol;
 	}
 
 	return( failed );
-}
-/*
- *			N M G _ R A D I A L _ J O I N _ E U _ N O _ C K
- *
- *	Make all the edgeuses around eu2's edge to refer to eu1's edge,
- *	taking care to organize them into the proper angular orientation,
- *	so that the attached faces are correctly arranged radially
- *	around the edge.
- *
- *	This depends on both edges being part of face loops,
- *	with vertex and face geometry already associated.
- *
- *	Don't do a radial parity check
- *
- *  Some of the edgeuses around both edges may be wires.
- */
-void
-nmg_radial_join_eu_no_ck(eu1, eu2, tol)
-struct edgeuse		*eu1;
-struct edgeuse		*eu2;
-CONST struct rt_tol	*tol;
-{
-	struct edgeuse	*original_eu1 = eu1;
-	struct edgeuse	*nexteu;
-	struct edgeuse	*eur;
-	int		iteration1, iteration2;
-	vect_t		xvec, yvec, zvec;
-	fastf_t		abs1;
-	fastf_t		abs2;
-	fastf_t		absr;
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_radial_join_eu_no_ck( eu1=x%x , eu2=x%x )\n" , eu1 , eu2 );
-
-	NMG_CK_EDGEUSE(eu1);
-	NMG_CK_EDGEUSE(eu1->radial_p);
-	NMG_CK_EDGEUSE(eu1->eumate_p);
-	NMG_CK_EDGEUSE(eu2);
-	NMG_CK_EDGEUSE(eu2->radial_p);
-	NMG_CK_EDGEUSE(eu2->eumate_p);
-	RT_CK_TOL(tol);
-
-	if( eu1->e_p == eu2->e_p )  return;
-
-	if( eu1->vu_p->v_p == eu2->vu_p->v_p && 
-	    eu1->eumate_p->vu_p->v_p == eu2->eumate_p->vu_p->v_p )  {
-	    	/* Both edgeuses are oriented in the same direction */
-	} else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
-	    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )  {
-	    	/* Edgeuses are oriented in opposite directions */
-		if (rt_g.NMG_debug & DEBUG_MESH_EU)
-			rt_log("nmg_radial_join_eu_no_ck() FLIP eu2\n");
-	    	eu2 = eu2->eumate_p;
-	} else {
-		rt_bomb("nmg_radial_join_eu_no_ck(): edgeuses don't share both vertices\n");
-	}
-
-	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu_no_ck(): 0 length edge (topology)\n");
-
-	if( rt_pt3_pt3_equal( eu1->vu_p->v_p->vg_p->coord,
-	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
-		rt_bomb("nmg_radial_join_eu_no_ck(): 0 length edge (geometry)\n");
-
-	/*  Construct local coordinate system for this edge,
-	 *  so all angles can be measured relative to a common reference.
-	 */
-	nmg_eu_2vecs_perp( xvec, yvec, zvec, original_eu1, tol );
-
-	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
-		rt_log("nmg_radial_join_eu_no_ck(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
-			eu1, eu2,
-			eu1->e_p, eu2->e_p);
-		nmg_euprint("\tJoining", eu1);
-		nmg_euprint("\t     to", eu2);
-		rt_log( "Faces around eu1:\n" );
-		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
-		rt_log( "Faces around eu2:\n" );
-		nmg_pr_fu_around_eu_vecs( eu2, xvec, yvec, zvec, tol );
-	}
-
-	for ( iteration1=0; eu2 && iteration1 < 10000; iteration1++ ) {
-		int	code = 0;
-		struct edgeuse	*first_eu1 = eu1;
-		int	wire_skip = 0;
-		/* Resume where we left off from last eu2 insertion */
-
-		/* because faces are always created with counter-clockwise
-		 * exterior loops and clockwise interior loops, radial
-		 * edgeuses will never share the same vertex.  We thus make
-		 * sure that eu2 is an edgeuse which might be radial to eu1
-		 */
-		if (eu2->vu_p->v_p == eu1->vu_p->v_p)
-			eu2 = eu2->eumate_p;
-
-		/* find a place to insert eu2 around eu1's edge */
-		for ( iteration2=0; iteration2 < 10000; iteration2++ ) {
-			struct faceuse	*fu1, *fu2, *fur;
-
-			abs1 = abs2 = absr = -rt_twopi;
-
-			eur = eu1->radial_p;
-			NMG_CK_EDGEUSE(eur);
-
-			fu2 = nmg_find_fu_of_eu(eu2);
-			if( fu2 == (struct faceuse *)NULL )  {
-				/* eu2 is a wire, it can go anywhere */
-				goto insert;
-			}
-			fu1 = nmg_find_fu_of_eu(eu1);
-			if( fu1 == (struct faceuse *)NULL )  {
-				/* eu1 is a wire, skip on to real face eu */
-				wire_skip++;
-				goto cont;
-			}
-			fur = nmg_find_fu_of_eu(eur);
-			while( fur == (struct faceuse *)NULL )  {
-				/* eur is wire, advance eur */
-				eur = eur->eumate_p->radial_p;
-				wire_skip++;
-				if( eur == eu1->eumate_p )  {
-					/* Went all the way around */
-					goto insert;
-				}
-				fur = nmg_find_fu_of_eu(eur);
-			}
-			NMG_CK_FACEUSE(fu1);
-			NMG_CK_FACEUSE(fu2);
-			NMG_CK_FACEUSE(fur);
-
-			/*
-			 *  Can't just check for shared fg here,
-			 *  the angle changes by +/- 180 degrees,
-			 *  depending on which side of the eu the loop is on
-			 *  along this edge.
-			 */
-			abs1 = nmg_measure_fu_angle( eu1, xvec, yvec, zvec );
-			abs2 = nmg_measure_fu_angle( eu2, xvec, yvec, zvec );
-			absr = nmg_measure_fu_angle( eur, xvec, yvec, zvec );
-
-			if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
-				rt_log("  abs1=%g, abs2=%g, absr=%g\n",
-					abs1*rt_radtodeg,
-					abs2*rt_radtodeg,
-					absr*rt_radtodeg );
-			}
-
-			/* If abs1 == absr, warn about unfused faces, and skip. */
-			if( NEAR_ZERO( abs1-absr, 1.0e-8 ) )  {
-				if( fu1->f_p->fg_p == fur->f_p->fg_p )  {
-					/* abs1 == absr, faces are fused, don't insert here. */
-					if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
-						rt_log("fu1 and fur share face geometry x%x (flip1=%d, flip2=%d), skip\n",
-							fu1->f_p->fg_p, fu1->f_p->flip, fur->f_p->flip );
-					}
-					goto cont;
-				}
-
-				rt_log("nmg_radial_join_eu_no_ck: WARNING 2 faces should have been fused, may be ambiguous.\n  abs1=%e, absr=%e, asb2=%e\n",
-					abs1*rt_radtodeg, absr*rt_radtodeg, abs2*rt_radtodeg);
-				rt_log("  fu1=x%x, f1=x%x, f1->flip=%d, fg1=x%x\n",
-					fu1, fu1->f_p, fu1->f_p->flip, fu1->f_p->fg_p );
-				rt_log("  fu2=x%x, f2=x%x, f2->flip=%d, fg2=x%x\n",
-					fu2, fu2->f_p, fu2->f_p->flip, fu2->f_p->fg_p );
-				rt_log("  fur=x%x, fr=x%x, fr->flip=%d, fgr=x%x\n",
-					fur, fur->f_p, fur->f_p->flip, fur->f_p->fg_p );
-				PLPRINT("  fu1", fu1->f_p->fg_p->N );
-				PLPRINT("  fu2", fu2->f_p->fg_p->N );
-				PLPRINT("  fur", fur->f_p->fg_p->N );
-				rt_log("  skipping\n");
-				goto cont;
-			}
-
-			/*
-			 *  If abs1 < abs2 < absr
-			 *  (taking into account 360 wrap),
-			 *  then insert face here.
-			 *  Special handling if abs1==abs2 or abs2==absr.
-			 */
-			code = nmg_is_angle_in_wedge( abs1, absr, abs2 );
-			if (rt_g.NMG_debug & DEBUG_MESH_EU )
-				rt_log("    code=%d %s\n", code, (code!=0)?"INSERT_HERE":"skip");
-			if( code > 0 )  break;
-			if( code == -1 )  {
-				/* absr == abs2 */
-				break;
-			}
-			if( code <= -2 )  {
-				/* abs1 == abs2 */
-				break;
-			}
-
-cont:
-			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
-			/* If eu1 is only one pair of edgeuses, done */
-			if( eu1 == eur->eumate_p )  break;
-			eu1 = eur->eumate_p;
-			if( eu1 == first_eu1 )  {
-				/* If all eu's were wires, here is fine */
-				if( wire_skip >= iteration2 )  break;
-				/* Nope, something bad happened */
-				rt_bomb("nmg_radial_join_eu_no_ck():  went full circle, no face insertion point.\n");
-				break;
-			}
-		}
-		if(iteration2 >= 10000)  {
-			rt_bomb("nmg_radial_join_eu_no_ck: infinite loop (2)\n");
-		}
-
-		/* find the next use of the edge eu2 is on.  If eu2 and it's
-		 * mate are the last uses of the edge, there will be no next
-		 * edgeuse to move. (Loop termination condition).
-		 */
-insert:
-		nexteu = eu2->radial_p;
-		if (nexteu == eu2->eumate_p)
-			nexteu = (struct edgeuse *)NULL;
-
-		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
-			rt_log("  Inserting.  code=%d\n", code);
-			rt_log("joining eu1=x%x eu2=x%x with abs1=%g, absr=%g\n",
-				eu1, eu2,
-				abs1*rt_radtodeg, absr*rt_radtodeg);
-		}
-
-		/*
-		 *  Make eu2 radial to eu1.
-		 *  This should insert eu2 between eu1 and eu1->radial_p
-		 *  (which may be less far around than eur, but thats OK).
-		 */
-		nmg_moveeu(eu1, eu2);
-
-		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
-			rt_log("After nmg_moveeu(), faces around original_eu1 are:\n");
-			nmg_pr_fu_around_eu_vecs( original_eu1, xvec, yvec, zvec, tol );
-		}
-
-		/* Proceed to the next source edgeuse */
-		eu2 = nexteu;
-	}
-	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu_no_ck:  infinite loop (1)\n");
-
-	if (rt_g.NMG_debug & DEBUG_MESH_EU)  rt_log("nmg_radial_join_eu_no_ck: END\n");
 }
 
 /*	N M G _ C K _ V E R T _ O N _ F U S
@@ -3405,8 +3057,6 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL( tol );
 
 	NMG_CK_VERTEX_G( v->vg_p );
-
-rt_log( "nmg_ck_vert_on_fus( v=x%x , tol->dist=%f )\n" , v , tol->dist );
 
 	for( RT_LIST_FOR( vu , vertexuse , &v->vu_hd ) )
 	{
@@ -3561,154 +3211,6 @@ CONST struct nmg_ptbl *int_faces;
 	num++;
 }
 
-/*	N M G _ K I L L _ S H O R T _ L U S
- *
- *	Look for loops that have less than three edges and kill them
- *
- * returns:
- *	0 - All is well
- *	1 - nmgregion r is now empty!!!
- */
-int
-nmg_kill_short_lus( r , tol )
-struct nmgregion *r;
-CONST struct rt_tol *tol;
-{
-	struct shell *s;
-	int ret_val=0;
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_kill_short_lus( r=x%x )\n" , r );
-
-	NMG_CK_REGION( r );
-
-	s = RT_LIST_FIRST( shell , &r->s_hd );
-	while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
-	{
-		int bad_shell=0;
-		struct faceuse *fu;
-		struct shell *next_s;
-
-		next_s = RT_LIST_PNEXT( shell , &s->l );
-
-		fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
-		while( RT_LIST_NOT_HEAD( fu , &s->fu_hd ) )
-		{
-			int bad_face=0;
-			struct faceuse *next_fu;
-			struct loopuse *lu;
-
-			if( fu->orientation != OT_SAME )
-			{
-				fu = RT_LIST_PNEXT( faceuse , &fu->l );
-				continue;
-			}
-
-			next_fu = RT_LIST_PNEXT( faceuse , &fu->l );
-			while( RT_LIST_NOT_HEAD( next_fu , &s->fu_hd ) && next_fu->fumate_p == fu )
-				next_fu = RT_LIST_PNEXT( faceuse , &next_fu->l );
-
-			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
-			while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
-			{
-				int eu_count=0;
-				struct loopuse *next_lu;
-				struct edgeuse *eu;
-
-				next_lu = RT_LIST_PNEXT( loopuse , &lu->l );
-
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-				{
-					lu = next_lu;
-					continue;
-				}
-
-				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-					eu_count++;
-
-				if( eu_count > 2 )
-				{
-					lu = next_lu;
-					continue;
-				}
-
-				if( eu_count < 2 )
-					bad_face += nmg_klu( lu );
-				else if( eu_count == 2 )
-				{
-					struct edgeuse *eu1,*eu2;
-					struct edge *e1,*e2;
-
-					eu1 = RT_LIST_FIRST( edgeuse , &lu->down_hd );
-					eu2 = RT_LIST_PNEXT( edgeuse , &eu1->l );
-					e1 = eu1->e_p;
-					e2 = eu2->e_p;
-
-					if( !EDGESADJ( eu1 , eu2 ) )
-					{
-						rt_log( "Build_solid: face with two edges, loop not closed\n" );
-						nmg_pr_fu_briefly( fu , (char *)NULL );
-						return( 1 );
-					}
-
-					bad_face += nmg_klu( lu );
-					nmg_radial_join_eu( e1->eu_p , e2->eu_p , tol );
-				}
-				lu = next_lu;
-			}
-			if( bad_face )
-				bad_shell += nmg_kfu( fu );
-
-			fu = next_fu;
-		}
-		if( bad_shell )
-			ret_val += nmg_ks( s );
-
-		s = next_s;
-	}
-
-	return( ret_val );
-}
-
-/*	N M G _ C O M P L E X _ J V
- *
- * Does a nmg_jv(new_vp , old_vp), but also makes sure
- * that the int_faces table is updated by changing all occurrences
- * of old_vp to new_vp;
- *
- */
-static void
-nmg_complex_jv( old_vp , new_vp , int_faces )
-struct vertex *old_vp,*new_vp;
-struct nmg_ptbl *int_faces;
-{
-	int edge_no;
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_complex_jv( old_vp=x%x , new_vp=x%x , int_faces=x%X )\n" , old_vp , new_vp , int_faces );
-
-	NMG_CK_VERTEX( old_vp );
-	NMG_CK_VERTEX( new_vp );
-
-	if( old_vp == new_vp )
-		return;
-
-	for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
-	{
-		struct intersect_fus *i_fus;
-
-		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
-
-		if( i_fus->vp == old_vp )
-		{
-			i_fus->vp = new_vp;
-			VMOVE( i_fus->pt , new_vp->vg_p->coord );
-		}
-	}
-
-	nmg_jv( new_vp , old_vp );
-}
-
 /*	N M G _ G E T _ E D G E _ L I N E S
  *
  * Fill in the intersect_fus structures for edges around
@@ -3731,7 +3233,6 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu;
 	int done=0;
 	int edge_no;
-	struct rt_tol tol_tmp;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_get_edge_lines( new_v=x%x , int_faces=x%X )\n" , new_v , int_faces );
@@ -3740,13 +3241,6 @@ CONST struct rt_tol *tol;
 	vg = new_v->vg_p;
 	NMG_CK_VERTEX_G( vg );
 	RT_CK_TOL( tol );
-
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
 
 	eu1 = (struct edgeuse *)NULL;
 	for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
@@ -3860,67 +3354,17 @@ CONST struct rt_tol *tol;
 			 * the line is defined by start and dir */
 
 			NMG_GET_FU_NORMAL( normal1 , fu1 );
-			if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , new_v->vg_p->coord , &tol_tmp ) )
+			if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , new_v->vg_p->coord , tol ) )
 			{
-				if( ret_val == (-1) )
-				{
-					/* faces are coplanar */
-					VMOVE( dir , eu_dir );
-					VUNITIZE( dir );
-					if( rt_isect_line3_plane( &dist , new_v->vg_p->coord , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , &tol_tmp ) < 1 )
-					{
-						rt_log( "nmg_inside_vert: Cannot find new edge between two identical planes\n" );
-						continue;
-					}
-					VJOIN1( start , new_v->vg_p->coord , dist , normal1 );
-				}
-				else if( ret_val == (-2) )
-				{
-					/* faces are parallel but distinct */
-					plane_t plane1,plane2;
-					vect_t v1,v2;
-					point_t p1,p2;
-					fastf_t dist2[2];
-
-					NMG_GET_FU_PLANE( plane2 , fu2 );
-					NMG_GET_FU_PLANE( plane1 , fu1 );
-					rt_log( "\nplanes are parallel and distinct at ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
-					rt_log( "dot product of normals = %g\n" , VDOT( normal1 , plane2 ) );
-					rt_log( "tol->para = %g\n" , tol->para );
-					VCROSS( dir , normal1 , plane2 );
-					rt_log( "cross_product of normals = ( %g %g %g )\n" , V3ARGS( dir ) );
-					rt_log( "length of dir = %g\n" , MAGNITUDE( dir ) );
-					VUNITIZE( dir );
-					rt_log( "unitized cross_product of normals = ( %f %f %f )\n" , V3ARGS( dir ) );
-					VSUB2( v1 , eu->eumate_p->vu_p->v_p->vg_p->coord , eu->vu_p->v_p->vg_p->coord );
-					VUNITIZE( v1 );
-					rt_log( "direction of old edge = ( %f %f %f )\n" , V3ARGS( v1 ) );
-					VCROSS( v1 , dir , plane1 );
-					VUNITIZE( v1 );
-					VSCALE( p1 , plane1 , plane1[3] );
-					VCROSS( v2 , dir , plane2 );
-					VUNITIZE( v2 );
-					VSCALE( p2 , plane2 , plane2[3] );
-					ret_val = rt_isect_line2_line2( dist2 , p1 , v1 , p2 , v2 , &tol_tmp );
-					if( ret_val == (-1) )
-					{
-						rt_log( "No intersection\n" );
-						return( 1 );
-					}
-					else if( ret_val == 0 )
-					{
-						rt_log( "Lines are collinear\n" );
-						return( 1 );
-					}
-					else if( ret_val == 1 )
-					{
-						VJOIN1( start , p1 , dist2[0] , v1 );
-						rt_log( "intersection is at ( %f %f %f )\n" , V3ARGS( start ) );
-					}
-				}
+				rt_log( "nmg_inside_vert: Cannot find new edge between two planes\n" );
+				rt_log( "\tplanes are ( %f %f %f %f ) and ( %f %f %f %f )\n" ,
+					V4ARGS( fu1->f_p->fg_p->N ),
+					V4ARGS( fu2->f_p->fg_p->N ) );
+				rt_log( "\tfus x%x and x%x, faces x%x and x%x\n" ,
+					fu1, fu2, fu1->f_p, fu2->f_p );
 			}
 			/* Make the start point at closest approach to old vertex */
-			(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , &tol_tmp );
+			(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , tol );
 
 			/* Make sure the calculated direction is away from the vertex */
 			if( VDOT( eu_dir , dir ) < 0.0 )
@@ -3958,9 +3402,6 @@ CONST struct rt_tol *tol;
 		}
 	}
 
-rt_log( "At end of nmg_get_edge_lines\n" );
-nmg_pr_inter( new_v , int_faces );
-
 	return( 0 );
 }
 
@@ -3981,23 +3422,15 @@ CONST struct rt_tol *tol;
 {
 	int edge_no;
 	point_t ave_pt;
-	struct rt_tol tol_tmp;
 	fastf_t edge_count=0.0;
 	int free_edges=0;
 	struct intersect_fus *free_fus[2];
 
-/*	if( rt_g.NMG_debug & DEBUG_BASIC ) */
+	if( rt_g.NMG_debug & DEBUG_BASIC ) 
 		rt_log( "nmg_get_max_edge_inters( new_v = x%x , %d intersect_fus structs , %d faces )\n" , new_v , NMG_TBL_END( int_faces ) , NMG_TBL_END( faces ) );
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
-
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
 
 	VSET( ave_pt , 0.0 , 0.0 , 0.0 );
 
@@ -4088,8 +3521,6 @@ CONST struct rt_tol *tol;
 	NMG_CK_VERTEX_G( vg );
 	RT_CK_TOL( tol );
 
-rt_log( "nmg_fix_folded_inters( new_v = x%x , %d intersect_fus)\n" , new_v , NMG_TBL_END( int_faces ) );
-
 	for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
 	{
 		struct intersect_fus *edge_fus,*next_fus,*prev_fus;
@@ -4142,17 +3573,13 @@ CONST struct rt_tol *tol;
 {
 	int edge_no;
 
-/*	if( rt_g.NMG_debug & DEBUG_BASIC ) */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_split_edges_at_pts( new_v = x%x , %d intersect_fus structs)\n" , new_v , NMG_TBL_END( int_faces ) );
 
 	RT_CK_TOL( tol );
 	NMG_CK_VERTEX( new_v );
 
-rt_log( "at start of nmg_split_edges_at_pts:\n" );
-nmg_pr_inter( new_v , int_faces );
-
 	/* loop through all edges departing from new_v */
-
 	for( edge_no=0 ; edge_no < NMG_TBL_END( int_faces ) ; edge_no++ )
 	{
 		struct intersect_fus *i_fus;
@@ -4176,9 +3603,6 @@ nmg_pr_inter( new_v , int_faces );
 			nmg_vertex_gv( i_fus->vp , i_fus->pt );
 	}
 
-rt_log( "In nmg_split_edges_at_pts before loops of same face:\n" );
-nmg_pr_inter( new_v , int_faces );
-
 	/* Now take care of edges between two loops of same face */
 	edge_no = 0;
 	while( edge_no < NMG_TBL_END( int_faces ) )
@@ -4193,7 +3617,6 @@ nmg_pr_inter( new_v , int_faces );
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
 		j_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , next_edge_no );
 
-rt_log( "Checking intersct_fus structs x%x and x%x\n" , i_fus , j_fus );
 		while( j_fus != i_fus && j_fus->fu[0]
 			&& ( !j_fus->fu[1] || (j_fus->fu[0]->f_p == j_fus->fu[1]->f_p) )
 			&& (j_fus->fu[0]->f_p == i_fus->fu[1]->f_p) )
@@ -4204,11 +3627,7 @@ rt_log( "Checking intersct_fus structs x%x and x%x\n" , i_fus , j_fus );
 
 
 			if( i_fus->free_edge && j_fus->free_edge )
-			{
-rt_log( "\tBoth are free edges\n" );
 				break;
-			}
-rt_log( "\tremoving edge %d j_fus = x%x\n" , next_edge_no , j_fus );
 
 			radial_eu = j_fus->eu->radial_p;
 
@@ -4242,15 +3661,10 @@ rt_log( "\tremoving edge %d j_fus = x%x\n" , next_edge_no , j_fus );
 			rt_free( (char *)j_fus , "nmg_split_edges_at_pts: j_fus " );
 
 			j_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , next_edge_no );
-rt_log( "in nmg_split_edges_at_pts after removing an intersect_fus struct:\n" );
-nmg_pr_inter( new_v , int_faces );
 
 		}
-
 		edge_no++;
 	}
-rt_log( "At end of nmg_split_edges_at_pts:\n" );
-nmg_pr_inter( new_v , int_faces );
 }
 
 static void
@@ -4259,14 +3673,11 @@ CONST struct vertex *new_v;
 struct nmg_ptbl *int_faces;
 CONST struct rt_tol *tol;
 {
-	int edge_no;
+	int edge_no=0;
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
 
-rt_log( "nmg_fus_inter_verts( new_v = x%x , %d intersect_fus structures) \n" , new_v , NMG_TBL_END( int_faces ) );
-
-	edge_no=0;
 	while( edge_no < NMG_TBL_END( int_faces ) )
 	{
 		struct intersect_fus *edge_fus,*next_fus;
@@ -4317,14 +3728,10 @@ rt_log( "nmg_fus_inter_verts( new_v = x%x , %d intersect_fus structures) \n" , n
 
 			nmg_tbl( int_faces , TBL_RM , (long *)next_fus );
 			rt_free( (char *)next_fus , "nmg_split_edges_at_pts: next_fus " );
-rt_log( "In nmg_fuse_inter_verts after fusing verts:\n" );
-nmg_pr_inter( new_v , int_faces );
 		}
 		else
 			edge_no++;
 	}
-rt_log( "At end of nmg_fuse_inter_verts:\n" );
-nmg_pr_inter( new_v , int_faces );
 }
 
 /*	N M G _ M A K E _ F A C E S _ A T _ V E R T
@@ -4344,23 +3751,15 @@ CONST struct rt_tol *tol;
 {
 	struct model *m;
 	struct loopuse *old_lu;
-	struct rt_tol tol_tmp;
 	int edge_no=0,next_edge_no,j;
 
-/*	if( rt_g.NMG_debug & DEBUG_BASIC ) */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_make_faces_at_vert( x%x , %d intersect_fus structs)\n" , new_v , NMG_TBL_END( int_faces ) );
 
 	NMG_CK_VERTEX( new_v );
 	RT_CK_TOL( tol );
 
 	m = nmg_find_model( &new_v->magic );
-
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
 
 	if( NMG_TBL_END( int_faces ) == 1 )
 	{
@@ -4393,10 +3792,6 @@ CONST struct rt_tol *tol;
 
 		return;
 	}
-
-rt_log( "In nmg_make_faces_at_vert:\n" );
-nmg_pr_inter( new_v , int_faces );
-	
 
 	/* Need to make new faces.
 	 * loop around the vertex, looking at
@@ -4445,6 +3840,7 @@ nmg_pr_inter( new_v , int_faces );
 			continue;
 		}
 
+		/* Don't make faces with two vertices the same */
 		if( i_fus->vp == new_v || j_fus->vp == new_v )
 		{
 			edge_no++;
@@ -4456,11 +3852,11 @@ nmg_pr_inter( new_v , int_faces );
 		NMG_CK_EDGEUSE( i_fus->eu );
 		NMG_CK_EDGEUSE( j_fus->eu );
 
-		/* if the two vertices are within tolerance, fuse them */
+		/* if the two vertices are within tolerance,
+		 * they should have been fused
+		 */
 		if( rt_pt3_pt3_equal( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , tol ) )
-		{
 			rt_bomb( "nmg_make_faces_at_vert: ERROR: vertices should have been fused\n" );
-		}
 		else if( rt_3pts_collinear( i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord , new_v->vg_p->coord , tol ) )
 		{
 			fastf_t i_dist,j_dist,diff_dist;
@@ -4481,7 +3877,6 @@ nmg_pr_inter( new_v , int_faces );
 				edge_no++;
 				continue;
 			}
-rt_log( "\tCollinear x%x x%x x%x\n" , i_fus->vp , j_fus->vp , new_v );
 
 			VSUB2( diff_vect , i_fus->vp->vg_p->coord , j_fus->vp->vg_p->coord );
 			diff_dist = MAGSQ( diff_vect );
@@ -4489,15 +3884,12 @@ rt_log( "\tCollinear x%x x%x x%x\n" , i_fus->vp , j_fus->vp , new_v );
 			j_dist = MAGSQ( j_dist_to_new_v );
 
 			if( diff_dist < tol->dist_sq )
-			{
 				rt_bomb( "nmg_make_faces_at_vert: ERROR: vertices are collinear and within tolerance\n" );
-			}
 			if( i_dist < tol->dist_sq )
 			{
 				/* i point is within tolerance of new_v
 				 * fuse with new_v
 				 */
-rt_log( "\tJoining x%x to x%x\n" , i_fus->vp , new_v );
 				nmg_jv( new_v , i_fus->vp );
 				i_fus->vp = (struct vertex *)NULL;
 				i_fus->eu = (struct edgeuse *)NULL;
@@ -4509,105 +3901,15 @@ rt_log( "\tJoining x%x to x%x\n" , i_fus->vp , new_v );
 				 * fuse with new_v
 				 */
 
-rt_log( "\tJoining x%x to x%x\n" , j_fus->vp , new_v );
 				nmg_jv( new_v , j_fus->vp );
 				j_fus->vp = (struct vertex *)NULL;
 				j_fus->eu = (struct edgeuse *)NULL;
 				kill_zero_length_edges = 1;
 			}
-			if( i_dist > j_dist && j_dist > tol->dist_sq )
-			{
-				struct edgeuse *new_eu;
-				struct edgeuse *prev_eu;
-				struct edgeuse *radial_eu;
-
-				/* j point is closer to new_v than i point
-				 * split edge at j point
-				 */
-
-rt_log( "\tSplitting eu x%x at vertex x%x (location 1)\n" , i_fus->eu , j_fus->vp );
-nmg_find_bad_edges( &m->magic );
-				new_eu = nmg_esplit( j_fus->vp , i_fus->eu );
-rt_log( "\tAfter nmg_esplit:\n" );
-nmg_find_bad_edges( &m->magic );
-				radial_eu = j_fus->eu->radial_p;
-				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &j_fus->eu->l );
-
-				if( EDGESADJ( prev_eu , j_fus->eu ) )
-				{
-					nmg_keu( prev_eu );
-					nmg_keu( j_fus->eu );
-					j_fus->eu = (struct edgeuse *)NULL;
-				}
-				else
-					rt_bomb( "nmg_make_faces_at_vert: ERROR: can't find adjacent edges to kill\n" );
-
-nmg_find_bad_edges( &m->magic );
-				i_fus->fu[1] = j_fus->fu[1];
-
-				if( !i_fus->fu[0] )
-					i_fus->eu = new_eu;
-				else if( j_fus->fu[1] )
-				{
-rt_log( "\tRadial join x%x and x%x\n" , i_fus->eu , radial_eu );
-					nmg_radial_join_eu( i_fus->eu , radial_eu , tol );
-rt_log( "\tDone radial join\n" );
-				}
-nmg_find_bad_edges( &m->magic );
-
-				NMG_CK_EDGEUSE( i_fus->eu );
-			}
-			else if( j_dist > i_dist && i_dist > tol->dist_sq )
-			{
-				struct edgeuse *new_eu;
-				struct edgeuse *prev_eu;
-				struct edgeuse *radial_eu;
-
-				/* i point is closer to new_v than j point
-				 * split edge at i point
-				 */
-
-rt_log( "\tSplitting eu x%x at vertex x%x (location 2)\n" , j_fus->eu , i_fus->vp );
-rt_log( "Before nmg_esplit, eu and mate:\n" );
-nmg_pr_eu_briefly( j_fus->eu , (char *)NULL );
-nmg_pr_eu_briefly( j_fus->eu->eumate_p , (char *)NULL );
-rt_log( "to be split at ( %f %f %f )\n" , V3ARGS( i_fus->vp->vg_p->coord ) );
-nmg_pr_fu_around_eu( j_fus->eu , tol );
-nmg_find_bad_edges( &m->magic );
-				new_eu = nmg_esplit( i_fus->vp , j_fus->eu );
-rt_log( "\tAfter nmg_esplit:\n" );
-nmg_find_bad_edges( &m->magic );
-				radial_eu = j_fus->eu->radial_p;
-				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &j_fus->eu->l );
-
-				if( EDGESADJ( prev_eu , j_fus->eu ) )
-				{
-					nmg_keu( prev_eu );
-					nmg_keu( j_fus->eu );
-					j_fus->eu = (struct edgeuse *)NULL;
-				}
-				else
-					rt_bomb( "nmg_make_faces_at_vert: ERROR: can't find adjacent edges to kill\n" );
-
-nmg_find_bad_edges( &m->magic );
-				i_fus->fu[1] = j_fus->fu[1];
-
-				if( j_fus->fu[1] )
-				{
-rt_log( "\tRadial join x%x and x%x\n" , i_fus->eu , radial_eu );
-					nmg_radial_join_eu( i_fus->eu , radial_eu , tol );
-rt_log( "\tDone radial join 2\n" );
-				}
-nmg_find_bad_edges( &m->magic );
-
-				NMG_CK_EDGEUSE( i_fus->eu );
-			}
 			if( kill_zero_length_edges )
 			{
 				struct vertexuse *vu;
 
-rt_log( "\tKilling zero length edges\n" );
-nmg_find_bad_edges( &m->magic );
 				vu = RT_LIST_FIRST( vertexuse , &new_v->vu_hd );
 				while( RT_LIST_NOT_HEAD( vu , &new_v->vu_hd ) )
 				{
@@ -4639,7 +3941,75 @@ nmg_find_bad_edges( &m->magic );
 					else
 						vu = RT_LIST_NEXT( vertexuse , &vu->l );
 				}
-nmg_find_bad_edges( &m->magic );
+			}
+
+			if( i_fus->free_edge && j_fus->free_edge )
+			{
+				edge_no++;
+				continue;
+			}
+
+			if( i_dist > j_dist && j_dist > tol->dist_sq )
+			{
+				struct edgeuse *new_eu;
+				struct edgeuse *prev_eu;
+				struct edgeuse *radial_eu;
+
+				/* j point is closer to new_v than i point
+				 * split edge at j point
+				 */
+
+				new_eu = nmg_esplit( j_fus->vp , i_fus->eu );
+				radial_eu = j_fus->eu->radial_p;
+				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &j_fus->eu->l );
+
+				if( EDGESADJ( prev_eu , j_fus->eu ) )
+				{
+					nmg_keu( prev_eu );
+					nmg_keu( j_fus->eu );
+					j_fus->eu = (struct edgeuse *)NULL;
+				}
+				else
+					rt_bomb( "nmg_make_faces_at_vert: ERROR: can't find adjacent edges to kill\n" );
+
+				i_fus->fu[1] = j_fus->fu[1];
+
+				if( !i_fus->fu[0] )
+					i_fus->eu = new_eu;
+				else if( j_fus->fu[1] )
+					nmg_radial_join_eu( i_fus->eu , radial_eu , tol );
+
+				NMG_CK_EDGEUSE( i_fus->eu );
+			}
+			else if( j_dist > i_dist && i_dist > tol->dist_sq )
+			{
+				struct edgeuse *new_eu;
+				struct edgeuse *prev_eu;
+				struct edgeuse *radial_eu;
+
+				/* i point is closer to new_v than j point
+				 * split edge at i point
+				 */
+
+				new_eu = nmg_esplit( i_fus->vp , j_fus->eu );
+				radial_eu = j_fus->eu->radial_p;
+				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &j_fus->eu->l );
+
+				if( EDGESADJ( prev_eu , j_fus->eu ) )
+				{
+					nmg_keu( prev_eu );
+					nmg_keu( j_fus->eu );
+					j_fus->eu = (struct edgeuse *)NULL;
+				}
+				else
+					rt_bomb( "nmg_make_faces_at_vert: ERROR: can't find adjacent edges to kill\n" );
+
+				i_fus->fu[1] = j_fus->fu[1];
+
+				if( j_fus->fu[1] )
+					nmg_radial_join_eu( i_fus->eu , radial_eu , tol );
+
+				NMG_CK_EDGEUSE( i_fus->eu );
 			}
 
 			edge_no++;
@@ -4735,43 +4105,13 @@ nmg_find_bad_edges( &m->magic );
 		}
 
 		/* make the new face from the new loop */
-nmg_find_bad_edges( &m->magic );
 		new_fu = nmg_mk_new_face_from_loop( lu );
-nmg_find_bad_edges( &m->magic );
 
 		NMG_CK_FACEUSE( new_fu );
 
 		/* calculate a plane equation for the new face */
 		if( nmg_fu_planeeqn( new_fu , tol ) )
 		{
-			struct edgeuse *eu1,*eu2,*eu3;
-			struct vertex *v1,*v2,*v3;
-
-			lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
-			eu1 = RT_LIST_FIRST( edgeuse , &lu->down_hd );
-			eu2 = RT_LIST_PNEXT_CIRC( edgeuse , &eu1->l );
-			eu3 = RT_LIST_PNEXT_CIRC( edgeuse , &eu2->l );
-			v1 = eu1->vu_p->v_p;
-			v2 = eu2->vu_p->v_p;
-			v3 = eu3->vu_p->v_p;
-			if( rt_3pts_collinear( v1->vg_p->coord , v2->vg_p->coord , v3->vg_p->coord , tol ) )
-				rt_log( "\tpoints are collinear (123)\n" );
-			if( rt_3pts_collinear( v1->vg_p->coord , v3->vg_p->coord , v2->vg_p->coord , tol ) )
-				rt_log( "\tpoints are collinear (132)\n" );
-			if( rt_3pts_collinear( v2->vg_p->coord , v3->vg_p->coord , v1->vg_p->coord , tol ) )
-				rt_log( "\tpoints are collinear (231)\n" );
-			if( rt_3pts_collinear( v2->vg_p->coord , v1->vg_p->coord , v3->vg_p->coord , tol ) )
-				rt_log( "\tpoints are collinear (213)\n" );
-			if( rt_3pts_collinear( v3->vg_p->coord , v2->vg_p->coord , v1->vg_p->coord , tol ) )
-				rt_log( "\tpoints are collinear (321)\n" );
-			if( rt_3pts_collinear( v3->vg_p->coord , v1->vg_p->coord , v2->vg_p->coord , tol ) )
-				rt_log( "\tpoints are collinear (312)\n" );
-			if( rt_pt3_pt3_equal( v1->vg_p->coord , v2->vg_p->coord , tol ) )
-				rt_log( "\tx%x within tolerance of x%x\n" , v1 , v2 );
-			if( rt_pt3_pt3_equal( v1->vg_p->coord , v3->vg_p->coord , tol ) )
-				rt_log( "\tx%x within tolerance of x%x\n" , v1 , v3 );
-			if( rt_pt3_pt3_equal( v3->vg_p->coord , v2->vg_p->coord , tol ) )
-				rt_log( "\tx%x within tolerance of x%x\n" , v3 , v2 );
 			rt_log( "nmg_make_faces_at_vert: Failed to calculate plane eqn for face:\n " );
 			rt_log( "\tnew_v is x%x at ( %f %f %f )\n" , new_v , V3ARGS( new_v->vg_p->coord ) );
 			nmg_pr_fu_briefly( new_fu , " " );
@@ -4792,7 +4132,6 @@ void
 nmg_kill_cracks_at_vertex( vp )
 CONST struct vertex *vp;
 {
-	struct model *m;
 	struct nmg_ptbl fus_at_vert;
 	struct vertexuse *vu;
 	struct faceuse *fu;
@@ -4802,8 +4141,6 @@ CONST struct vertex *vp;
 		rt_log( "nmg_kill_cracks_at_vertex( vp=x%x )\n" , vp );
 
 	NMG_CK_VERTEX( vp );
-
-m = nmg_find_model( &vp->magic );
 
 	/* first make a list of all the faceuses at this vertex */
 	nmg_tbl( &fus_at_vert , TBL_INIT , NULL );
@@ -4861,18 +4198,6 @@ m = nmg_find_model( &vp->magic );
 				/* Check for a crack */
 				if( EDGESADJ( eu , eu_prev ) )
 				{
-struct rt_tol tol;
-tol.magic = RT_TOL_MAGIC;
-tol.dist = 0.005;
-tol.dist_sq = tol.dist * tol.dist;
-tol.perp = 1e-6;
-tol.para = 1 - tol.perp;
-nmg_pr_fu_around_eu( eu, &tol );
-nmg_pr_fu_around_eu( eu_prev, &tol );
-
-if( eu->e_p == eu_prev->e_p ) rt_log( "Edgeuses x%x and x%x share same edge x%x\n" , eu , eu_prev , eu->e_p );
-rt_log( "Verify model in nmg_kill_cracks_at_vertex before keu:\n" );
-nmg_vmodel( m );
 					/* found a crack, kill it */
 					if( nmg_keu( eu ) )
 					{
@@ -4883,12 +4208,9 @@ nmg_vmodel( m );
 					}
 					if( nmg_keu( eu_prev ) )
 					{
-rt_log( "nmg_keu left empty loop x%x\n" , lu );
 						bad_loop = 1;
 						break;
 					}
-rt_log( "Verify model in nmg_kill_cracks_at_vertex after keu's:\n" );
-nmg_vmodel( m );
 				}
 				eu = eu_next;
 			}
@@ -4942,23 +4264,14 @@ struct nmg_ptbl *int_faces;
 CONST struct rt_tol *tol;
 {
 	int edge_no=0;
-	struct rt_tol tol_tmp;
 
-/*	if( rt_g.NMG_debug & DEBUG_BASIC ) */
+	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_fix_crossed_loops( new_v = x%x , %d intersect_fus structs )\n" , new_v , NMG_TBL_END( int_faces ) );
 
 	RT_CK_TOL( tol );
 	NMG_CK_VERTEX( new_v );
 
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
-
 	/* look for crossed edges */
-	edge_no = 0;
 	while( edge_no < NMG_TBL_END( int_faces ) )
 	{
 		int next_edge_no;
@@ -5113,7 +4426,6 @@ CONST struct rt_tol *tol;
 	struct vertexuse *vu;
 	struct edgeuse *eu1,*eu;
 	struct nmg_ptbl int_faces;
-	struct rt_tol tol_tmp;
 	struct intersect_fus *k_fus;
 	point_t ave_pt;
 	vect_t ave_norm,x_vec,y_vec;
@@ -5135,16 +4447,8 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL( tol );
 
 	m = nmg_find_model( &new_v->magic );
-	nmg_find_bad_edges( &m->magic );
 
 	VSET( rpp_min , 0.0 , 0.0 , 0.0 );
-
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
 
 	nmg_tbl( &int_faces , TBL_INIT , NULL );
 
@@ -5165,32 +4469,23 @@ CONST struct rt_tol *tol;
 
 	/* split edges at intersection points */
 	nmg_split_edges_at_pts( new_v , &int_faces , tol );
-	nmg_find_bad_edges( &m->magic );
 
 	/* fuse intersection points within tolerance */
 	nmg_fuse_inter_verts( new_v , &int_faces , tol );
-	nmg_find_bad_edges( &m->magic );
 
 	/* vertex fusion will create cracks */
 	nmg_kill_cracks_at_vertex( new_v );
-	nmg_find_bad_edges( &m->magic );
 
 	/* fix intersection points that cause loops that cross themselves */
 	nmg_fix_crossed_loops( new_v , &int_faces , tol );
-	nmg_find_bad_edges( &m->magic );
 
 	/* Build needed faces */
 	nmg_make_faces_at_vert( new_v , &int_faces , tol );
-	nmg_find_bad_edges( &m->magic );
 
 	nmg_region_a( RT_LIST_FIRST( nmgregion , &m->r_hd ) , tol );
 
 	/* Where faces were not built, cracks have formed */
 	nmg_kill_cracks_at_vertex( new_v );
-	nmg_find_bad_edges( &m->magic );
-
-	rt_log( "Verify model after nmg_kill_cracks_at_vertex:\n" );
-	nmg_vmodel( m );
 
 	/* free some memory */
 	for( i=0 ; i<NMG_TBL_END( &int_faces ) ; i++ )
@@ -5344,106 +4639,6 @@ CONST struct faceuse *fu1,*fu2;
 			}
 		}
 	}
-
-	return( 0 );
-}
-
-/*	N M G _ S H E L L S _ W I T H I N _ D I S T
- *
- * check if any vertex in shell s1 is within dist of any face in
- * shell s2.
- *
- * returns:
- *	0 - shells are not within dist of each other
- *	1 - shells are within dist of each other
- */
-int
-nmg_shells_within_dist( s1 , s2 , dist , tol )
-CONST struct shell *s1,*s2;
-CONST fastf_t dist;
-CONST struct rt_tol *tol;
-{
-	long *flags_s2,*flags_s1;
-	struct faceuse *fu1;
-	struct model *m1,*m2;;
-
-	m1 = nmg_find_model( &s1->l.magic );
-	m2 = nmg_find_model( &s2->l.magic );
-	flags_s1 = (long *)rt_calloc( m1->maxindex , sizeof( long ) , "nmg_shells_within_dist: flags_s1" );
-	flags_s2 = (long *)rt_calloc( m2->maxindex , sizeof( long ) , "nmg_shells_within_dist: flags_s2" );
-
-	for( RT_LIST_FOR( fu1 , faceuse , &s1->fu_hd ) )
-	{
-		plane_t pl1;
-
-		if( fu1->orientation != OT_SAME )
-			continue;
-
-		NMG_GET_FU_PLANE( pl1 , fu1 );
-
-		if( NMG_INDEX_TEST_AND_SET( flags_s1 , fu1 ) )
-		{
-			struct faceuse *fu2;
-
-#ifdef SYSV
-			(void)memset( flags_s2 , '\0' , m2->maxindex * sizeof( long ) );
-#else
-			bzero( flags_s2 , m2->maxindex * sizeof( long ) );
-#endif
-
-			for( RT_LIST_FOR( fu2 , faceuse , &s2->fu_hd ) )
-			{
-				struct loopuse *lu2;
-
-				if( fu2->orientation != OT_SAME )
-					continue;
-
-				for( RT_LIST_FOR( lu2 , loopuse , &fu2->lu_hd ) )
-				{
-					struct edgeuse *eu2;
-
-					if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
-						continue;
-
-					for( RT_LIST_FOR( eu2 , edgeuse , &lu2->down_hd ) )
-					{
-						struct vertex *v;
-						struct vertex_g *vg;
-						point_t pt;
-						fastf_t dist_to_plane;
-
-						v = eu2->vu_p->v_p;
-						NMG_CK_VERTEX( v );
-						vg = v->vg_p;
-						NMG_CK_VERTEX_G( vg );
-
-						if( NMG_INDEX_TEST_AND_SET( flags_s2 , vg ) )
-						{
-							dist_to_plane = DIST_PT_PLANE( vg->coord , pl1 );
-
-							if( dist_to_plane > (dist - tol->dist ) ||
-							    dist_to_plane < (-(dist - tol->dist )) )
-								continue;
-
-							/* project vertex to plane of face fu1 */
-							VJOIN1( pt , vg->coord , -dist_to_plane , pl1 );
-
-							/* check if this point is within the face */
-							if( nmg_class_pt_f( pt , fu1 , tol ) != NMG_CLASS_AoutB )
-							{
-								rt_free( (char *)flags_s1 , "nmg_shells_within_dist: flags_s1" );
-								rt_free( (char *)flags_s2 , "nmg_shells_within_dist: flags_s2" );
-								return( 1 );
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	rt_free( (char *)flags_s1 , "nmg_shells_within_dist: flags_s1" );
-	rt_free( (char *)flags_s2 , "nmg_shells_within_dist: flags_s2" );
 
 	return( 0 );
 }
@@ -6405,160 +5600,205 @@ struct rt_list *vhead;
 		}
 	}
 }
+
 static void
 nmg_find_middle_verts( vp1 , vp2 , vp3 , vp4 )
 struct vertex *vp1,*vp2,*vp3,*vp4;
 {
-	int done=0;
-	struct vertexuse *vu1,*vu2,*vu3,*vu4;
+    int done=0;
+    struct vertexuse *vu1,*vu2,*vu3,*vu4;
 
-	NMG_CK_VERTEX( vp1 );
-	NMG_CK_VERTEX( vp4 );
+    NMG_CK_VERTEX( vp1 );
+    NMG_CK_VERTEX( vp4 );
 
-	/* first check if there are no intervening vertices */
-	for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
-	{
-		struct edgeuse *eu1;
+    /* first check if there are no intervening vertices */
+    for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
+    {
+        struct edgeuse *eu1;
 
-		NMG_CK_VERTEXUSE( vu1 );
+        NMG_CK_VERTEXUSE( vu1 );
 
-		if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
-			continue;
+        if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
+            continue;
 
-		eu1 = vu1->up.eu_p;
-		NMG_CK_EDGEUSE( eu1 );
+        eu1 = vu1->up.eu_p;
+        NMG_CK_EDGEUSE( eu1 );
 
-		/* skip edges that are not free edges */
-		if( eu1->eumate_p != eu1->radial_p )
-			continue;
+        if( eu1->eumate_p->vu_p->v_p == vp4 )
+        {
+            done = 1;
+            break;
+        }
+    }
+    if( done )
+	return;
 
-		if( eu1->eumate_p->vu_p->v_p == vp4 )
-		{
-			done = 1;
-			break;
-		}
-	}
+    /*  look for intervening vertices */
+    /* look for the case with just one intervening vertex */
+    for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
+    {
+        struct edgeuse *eu1;
 
-	/* if necessary, look for intervening vertices */
-	if( !done )
-	{
-		/* look for the case with just one intervening vertex */
-		for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
-		{
-			struct edgeuse *eu1;
+        NMG_CK_VERTEXUSE( vu1 );
 
-			NMG_CK_VERTEXUSE( vu1 );
+        if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
+            continue;
 
-			if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
-				continue;
+        eu1 = vu1->up.eu_p;
 
-			eu1 = vu1->up.eu_p;
+        NMG_CK_EDGEUSE( eu1 );
 
-			NMG_CK_EDGEUSE( eu1 );
+        /* must be on a free edge */
+        if( eu1->eumate_p != eu1->radial_p )
+            continue;
 
-			/* must be on a free edge */
-			if( eu1->eumate_p != eu1->radial_p )
-				continue;
+        for( RT_LIST_FOR( vu4 , vertexuse , &vp4->vu_hd ) )
+        {
+            struct edgeuse *eu4;
 
-			for( RT_LIST_FOR( vu4 , vertexuse , &vp4->vu_hd ) )
-			{
-				struct edgeuse *eu4;
+            NMG_CK_VERTEXUSE( vu4 );
 
-				NMG_CK_VERTEXUSE( vu4 );
+            if( *vu4->up.magic_p != NMG_EDGEUSE_MAGIC )
+                continue;
 
-				if( *vu4->up.magic_p != NMG_EDGEUSE_MAGIC )
-					continue;
+            eu4 = vu4->up.eu_p;
 
-				eu4 = vu4->up.eu_p;
+            NMG_CK_EDGEUSE( eu4 );
 
-				NMG_CK_EDGEUSE( eu4 );
+            /* also must be on a free edge */
+            if( eu4->eumate_p != eu4->radial_p )
+                continue;
 
-				/* also must be on a free edge */
-				if( eu4->eumate_p != eu4->radial_p )
-					continue;
+            if( eu4->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p )
+            {
+                done = 1;
+                vp2 = eu4->eumate_p->vu_p->v_p;
+                break;
+            }
+        }
+        if( done )
+            break;
+    }
+    if( done )
+	return;
 
-				if( eu4->eumate_p->vu_p->v_p == eu1->eumate_p->vu_p->v_p )
-				{
-					done = 1;
-					vp2 = eu4->eumate_p->vu_p->v_p;
-					break;
-				}
-			}
-			if( done )
-				break;
-		}
-		if( !done )
-		{
-			/* look for two intervening vertices */
-			for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
-			{
-				struct edgeuse *eu1;
+    /* look for two intervening vertices */
+    for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
+    {
+        struct edgeuse *eu1;
 
-				NMG_CK_VERTEXUSE( vu1 );
+        NMG_CK_VERTEXUSE( vu1 );
 
-				if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
-					continue;
+        if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
+            continue;
 
-				eu1 = vu1->up.eu_p;
+        eu1 = vu1->up.eu_p;
 
-				NMG_CK_EDGEUSE( eu1 );
+        NMG_CK_EDGEUSE( eu1 );
 
-				/* must be on a free edge */
-				if( eu1->eumate_p != eu1->radial_p )
-					continue;
+        /* must be on a free edge */
+        if( eu1->eumate_p != eu1->radial_p )
+            continue;
 
-				for( RT_LIST_FOR( vu4 , vertexuse , &vp4->vu_hd ) )
-				{
-					struct edgeuse *eu4;
+        for( RT_LIST_FOR( vu4 , vertexuse , &vp4->vu_hd ) )
+        {
+            struct edgeuse *eu4;
 
-					NMG_CK_VERTEXUSE( vu4 );
+            NMG_CK_VERTEXUSE( vu4 );
 
-					if( *vu4->up.magic_p != NMG_EDGEUSE_MAGIC )
-						continue;
+            if( *vu4->up.magic_p != NMG_EDGEUSE_MAGIC )
+                continue;
 
-					eu4 = vu4->up.eu_p;
+            eu4 = vu4->up.eu_p;
 
-					NMG_CK_EDGEUSE( eu4 );
+            NMG_CK_EDGEUSE( eu4 );
 
-					/* also must be on a free edge */
-					if( eu4->eumate_p != eu4->radial_p )
-						continue;
+            /* also must be on a free edge */
+            if( eu4->eumate_p != eu4->radial_p )
+                continue;
 
-					for( RT_LIST_FOR( vu2 , vertexuse , &eu1->eumate_p->vu_p->v_p->vu_hd ) )
-					{
-						struct edgeuse *eu2;
+            for( RT_LIST_FOR( vu2 , vertexuse , &eu1->eumate_p->vu_p->v_p->vu_hd ) )
+            {
+                struct edgeuse *eu2;
 
-						NMG_CK_VERTEXUSE( vu2 );
+                NMG_CK_VERTEXUSE( vu2 );
 
-						if( *vu2->up.magic_p != NMG_EDGEUSE_MAGIC )
-							continue;
+                if( *vu2->up.magic_p != NMG_EDGEUSE_MAGIC )
+                    continue;
 
-						eu2 = vu2->up.eu_p;
+                eu2 = vu2->up.eu_p;
 
-						NMG_CK_EDGEUSE( eu2 );
+                NMG_CK_EDGEUSE( eu2 );
 
-						/* stick to the free edges */
-						if( eu2->eumate_p != eu2->radial_p )
-							continue;
+                /* stick to the free edges */
+                if( eu2->eumate_p != eu2->radial_p )
+                    continue;
 
-						if( eu2->eumate_p->vu_p->v_p == eu4->eumate_p->vu_p->v_p )
-						{
-							done = 1;
-							vp2 = eu2->vu_p->v_p;
-							vp3 = eu2->eumate_p->vu_p->v_p;
-							break;
-						}
-					}
-					if( done )
-						break;
-				}
-				if( done )
-					break;
-			}
-		}
-	}
-	if( !done )
-		rt_log( "ERROR: nmg_find_middle_verts: cannot find intervening vertices\n" );
+                if( eu2->eumate_p->vu_p->v_p == eu4->eumate_p->vu_p->v_p )
+                {
+                    done = 1;
+                    vp2 = eu2->vu_p->v_p;
+                    vp3 = eu2->eumate_p->vu_p->v_p;
+                    break;
+                }
+            }
+            if( done )
+                break;
+        }
+        if( done )
+            break;
+        }
+    }
+
+    if( !done )
+    {
+        int free_edge_count;
+
+        rt_log( "ERROR: nmg_find_middle_verts: cannot find intervening vertices\n" );
+        rt_log( "verts are: x%x x%x x%x x%x\n", vp1, vp2, vp3, vp4 );
+        if( vp1->magic == NMG_VERTEX_MAGIC )
+            rt_log( "\tvp1 x%x = ( %f %f %f )\n" , vp1 , V3ARGS( vp1->vg_p->coord ) );
+        if( vp2 )
+        {
+            if( vp2->magic == NMG_VERTEX_MAGIC )
+                rt_log( "\tvp2 x%x = ( %f %f %f )\n" , vp2 , V3ARGS( vp2->vg_p->coord ) );
+        }
+        if( vp3 )
+        {
+            if( vp3->magic == NMG_VERTEX_MAGIC )
+                rt_log( "\tvp3 x%x = ( %f %f %f )\n" , vp3 , V3ARGS( vp3->vg_p->coord ) );
+        }
+        if( vp4->magic == NMG_VERTEX_MAGIC )
+            rt_log( "\tvp4 x%x = ( %f %f %f )\n" , vp4 , V3ARGS( vp4->vg_p->coord ) );
+
+        free_edge_count = 0;
+        for( RT_LIST_FOR( vu1 , vertexuse , &vp1->vu_hd ) )
+        {
+            struct edgeuse *eu1;
+
+            if( *vu1->up.magic_p != NMG_EDGEUSE_MAGIC )
+                continue;
+
+            eu1 = vu1->up.eu_p;
+            if( eu1->radial_p == eu1->eumate_p )
+                free_edge_count++;
+        }
+        rt_log( "%d free edges at vertex x%x\n" , free_edge_count , vp1 );
+
+        free_edge_count = 0;
+        for( RT_LIST_FOR( vu4 , vertexuse , &vp4->vu_hd ) )
+        {
+            struct edgeuse *eu4;
+
+            if( *vu4->up.magic_p != NMG_EDGEUSE_MAGIC )
+                continue;
+
+            eu4 = vu4->up.eu_p;
+            if( eu4->radial_p == eu4->eumate_p )
+                free_edge_count++;
+        }
+        rt_log( "%d free edges at vertex x%x\n" , free_edge_count , vp4 );
+    }
 }
 
 static void
@@ -6888,13 +6128,11 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL( tol );
 
 	m = nmg_find_model( &new_v->magic );
-	nmg_find_bad_edges( &m->magic );
 
 	nmg_tbl( &faces , TBL_INIT , NULL );
 
 	/* find all unique faces that intersect at this vertex (new_v) */
 	face_count = nmg_find_isect_faces( new_v , &faces , &free_edges , tol );
-rt_log( "\tfree-edges = %d\n" , free_edges );
 	if( (face_count < 4 && !free_edges) || face_count < 3 )
 	{
 		if( nmg_simple_vertex_solve( new_v , &faces , tol ) )
