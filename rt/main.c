@@ -151,7 +151,6 @@ char **argv;
 		model_min[Y], model_max[Y],
 		model_min[Z], model_max[Z] );
 
-	VSET( tempdir, 0, 0, -1 );
 	if( !matflag )  {
 		/*
 		 * Unrotated view is TOP.
@@ -166,6 +165,7 @@ char **argv;
 
 		if( !(debug&DEBUG_QUICKIE) )  {
 			autosize( model2view, npts );
+		VSET( tempdir, 0, 0, -1 );
 		} else {
 			base[X] = -3;
 			base[Y] = -3;
@@ -184,17 +184,17 @@ char **argv;
 		base[X] = base[Y] = base[Z] = -1;
 		deltas = 2.0 / ((double)npts);
 		mat_inv( view2model, model2view );
+		VSET( tempdir, 0, 0, -1 );
 	}
 
 	MAT4X3VEC( ap.a_ray.r_dir, view2model, tempdir );
 	VUNITIZE( ap.a_ray.r_dir );
 
-	VSET( tempdir, 	base[X], base[Y], base[Z] );
-	MAT4X3PNT( ap.a_ray.r_pt, view2model, tempdir );
+	MAT4X3PNT( ap.a_ray.r_pt, view2model, base );
 
 	fprintf(stderr,"Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
-	/* Determine the Light location(s) in model space, xlate to view */
+	/* Determine the Light location(s) in view space */
 	/* 0:  Blue, at left edge, 1/2 high */
 	tempdir[0] = 2 * (base[X]);
 	tempdir[1] = (2/2) * (base[Y]);
