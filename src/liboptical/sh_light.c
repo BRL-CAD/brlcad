@@ -1783,8 +1783,11 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	/* create a coordinate system about the light center
 	 * with the hitpoint->light ray as one of the axes
 	 */
-	VSUB2(los.to_light_center, lsp->lt_pos, swp->sw_hit.hit_point);
-
+	if (lsp->lt_infinite) {
+	    VMOVE(los.to_light_center, lsp->lt_vec);
+	} else {
+	    VSUB2(los.to_light_center, lsp->lt_pos, swp->sw_hit.hit_point);
+	}
 	VUNITIZE(los.to_light_center);
 	bn_vec_ortho( los.light_x, los.to_light_center);
 	VCROSS(los.light_y, los.to_light_center, los.light_x);
@@ -1821,15 +1824,10 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 		break;
 	    case -1:
 		/* this is our clue to give up on
-		 * this light source.  Probably an infinite
-		 * point light source.
+		 * this light source.
 		 */
 		VMOVE(tl_p, los.to_light_center);
 		visibility = vis_ray = tot_vis_rays;
-		break;
-	    case -2:
-		visibility = 0;
-		vis_ray = tot_vis_rays;
 		break;
 	    case 0:	/* light not visible */
 		if (rdebug & RDEBUG_LIGHT)
