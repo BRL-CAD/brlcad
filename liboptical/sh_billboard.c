@@ -24,7 +24,7 @@
 #include "rtprivate.h"
 #include "plot3.h"
 
-
+#define BBD_IMAGE_CHANNELS 4
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
 		     struct shadework   *swp);
@@ -418,7 +418,7 @@ plot_ray_img(struct application	*ap,
  *
  *	Handle ray interaction with 1 image
  */
-static void
+static int
 do_ray_image(struct application	*ap,
 	     struct partition	*pp,
 	     struct shadework	*swp,	/* defined in ../h/shadework.h */
@@ -429,14 +429,14 @@ do_ray_image(struct application	*ap,
     double x, y, dx, dy, xlo, xhi, ylo, yhi;
     int u, v, ulo, uhi, vlo, vhi;
     unsigned char *pixels, *color;
-    int val;
     static const double rgb255 = 1.0 / 256.0;
-    vect_t cum_color;
     point_t pt;
     vect_t vpt;
     double radius;
     int tot;
-    int color_count;
+    long color_count;
+    long cum_opacity;
+    unsigned long cum_color[3];
     double t, opacity;
 
     if (rdebug&RDEBUG_SHADE) {
@@ -457,7 +457,7 @@ do_ray_image(struct application	*ap,
 	    bu_log("hit outside bounds, leaving color %g %g %g\n",
 		   V3ARGS(swp->sw_color));
 	}
-	return;
+	return 0;
     }
 
 
@@ -501,60 +501,55 @@ do_ray_image(struct application	*ap,
     /* sum up all the pixels in the image under the ray footprint */
     tot = (uhi - ulo + 1) * (vhi - vlo + 1); /* total # of pixels */
     color_count = 0; /* */
+    cum_opacity = 0;
     VSETALL(cum_color, 0.0);
     for (v = vlo ; v <= vhi ; v++) {
 	for (u = ulo ; u <= uhi ; u++) {
-	    color = &pixels[v*bi->img_width*3 + u*3];
-	    val = color[0]+color[1]+color[2];
-	    if (color[0] > bbd_sp->img_threshold ||
-		color[1] > bbd_sp->img_threshold ||
-		color[2] > bbd_sp->img_threshold) {
-		color_count++;
-		VJOIN1(cum_color, cum_color, rgb255, color);
-		if (rdebug&RDEBUG_SHADE) {
-		    bu_log("%d %d %d\n", V3ARGS(color));
-		    VPRINT("cum_color", cum_color);
-		}
+	    color = &pixels[v*bi->img_width*BBD_IMAGE_CHANNELS +
+			    u*BBD_IMAGE_CHANNELS];
+
+	    cum_opacity += color[3];
+	    if (color[3]) {
+		VADD2(cum_color, cum_color, color);
+		color_count ++;
 	    }
+	    if(rdebug&RDEBUG_SHADE)bu_log("color:%d %d %d %d\n",V4ARGS(color));
 	}
-    }
-    if (rdebug&RDEBUG_SHADE) 
-	bu_log("tot:%d color_count: %d\n", tot, color_count);
-
-    if (color_count == 0)  {
-	if (rdebug&RDEBUG_SHADE) 
-	    bu_log("no color contribution, leaving color as %g %g %g\n",
-		   V3ARGS(swp->sw_color));
-	return;
-    }
-
-    /* get average color: scale color by the # of contributions */
-    t = 1.0 / (double)color_count;
-    VSCALE(cum_color, cum_color, t);
-    if (rdebug&RDEBUG_SHADE) {
-	int c[3];
-
-	VSCALE(c, cum_color, 256);
-	bu_log("average color: %d %d %d\n", V3ARGS(c));
     }
 
     /* compute residual transmission */
-    opacity = ((double)color_count / tot); /* opacity */
-    
-    /* scale opacity based opon obliquity */
+    opacity = (double)cum_opacity / (double)tot;
+    if (rdebug&RDEBUG_SHADE) bu_log("image opacity %g\n", opacity);
+
+    /* scale opacity based opon obliquity so that planes that are near
+     * to being edge-on get transparent.  This avoids an annoying artifact
+     */
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
     t = fabs(VDOT(bi->img_plane, ap->a_ray.r_dir));
     t = SMOOTHSTEP(t);
     t = SMOOTHSTEP(t);
     opacity *= t;
-
-    t = swp->sw_transmit*opacity;
-    VJOIN1(swp->sw_color, swp->sw_color, t, cum_color);
-
-    swp->sw_transmit -= opacity;
+    swp->sw_transmit -= opacity / 256.0;
     if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
 
+
+    /* get average color: scale color by the # of contributions */
+    if (color_count > 0) {
+	t = 1.0 / (color_count);
+	VSCALE(cum_color, cum_color, t); /* this for debugging */
+
+	if (rdebug&RDEBUG_SHADE)
+	    bu_log("average color: %d %d %d over (%d of %d samp) opacity %g\n",
+		   V3ARGS(cum_color), color_count, tot, opacity);
+
+	VJOIN1(swp->sw_color, swp->sw_color, rgb255, cum_color);
+
+	return 1;
+    } 
+    if (rdebug&RDEBUG_SHADE) 
+	bu_log("average color: (none) opacity %g\n", opacity);
+    return 0;
 }
 
 
@@ -589,6 +584,7 @@ bbd_render( ap, pp, swp, dp )
     struct bbd_img *bi;
     struct imgdist id[MAX_IMAGES];
     int i;
+    int k;
 
     /* check the validity of the arguments we got */
     RT_AP_CHECK(ap);
@@ -626,28 +622,32 @@ bbd_render( ap, pp, swp, dp )
     
     qsort(id, bbd_sp->img_count, sizeof(id[0]), &imgdist_compare);
 
-    for (i=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {
-	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
+    for (i=k=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {
+	if (id[i].status > 0) 
+	    k += do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
-    if (rdebug&RDEBUG_SHADE) {
-	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
+    if (swp->sw_transmit == 1.0) {
+	VSETALL(swp->sw_color, 1.0); /* no filter glass */
+    } else {
+	double t = 1.0/k;
+	VSCALE(swp->sw_color, swp->sw_color, t);
+	if (rdebug&RDEBUG_SHADE) 
+	    bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
 
-    if (swp->sw_color[0] == 0.0 && swp->sw_color[1] == 0.0 && swp->sw_color[2] == 0.0) {
-	VSETALL(swp->sw_color, 1.0);
-    }
-
-    /* shader must perform transmission/reflection calculations
-     *
-     * 0 < swp->sw_transmit <= 1 causes transmission computations
-     * 0 < swp->sw_reflect <= 1 causes reflection computations
-     */
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
 	int level = ap->a_level;
 	ap->a_level = 0; /* Bogus hack to keep rr_render from giving up */
 	(void)rr_render( ap, pp, swp );
 	ap->a_level = level;
     }
+
+
+    /* shader must perform transmission/reflection calculations
+     *
+     * 0 < swp->sw_transmit <= 1 causes transmission computations
+     * 0 < swp->sw_reflect <= 1 causes reflection computations
+     */
     if (rdebug&RDEBUG_SHADE) {
 	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
