@@ -1423,6 +1423,9 @@ struct rt_functab {
 			struct rt_db_internal * /*ip*/,
 			int /*verbose*/,
 			double /*mm2local*/));
+	int	(*ft_xform) RT_ARGS((struct rt_db_internal * /*op*/,
+			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
+			CONST int /*free*/, CONST char * /*name*/));
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
