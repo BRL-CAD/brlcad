@@ -878,7 +878,12 @@ char	*name;
 #else
     rt_vls_init(&str);
     rt_vls_printf(&str, "loadtk %s\n", name);
-    (void)cmdline(&str, FALSE);
+
+    if(cmdline(&str, FALSE) == CMD_BAD){
+      rt_vls_free(&str);
+      return -1;
+    }
+
     rt_vls_free(&str);
 
     /* Use interp with all its registered commands. */
@@ -889,10 +894,10 @@ char	*name;
     /* Make xtkwin an internal window */
     xtkwin = Tk_CreateWindow(interp, tkwin, "mged", NULL);
 #endif
-#endif
 
 /*XXX* Temporary */
     Tcl_EvalFile(interp, "/m/cad/mged/sample_bindings");
+#endif
 
     /* Open the display - XXX see what NULL does now */
     if( xtkwin == NULL ) {
