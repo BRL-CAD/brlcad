@@ -238,7 +238,7 @@ char	*argv[];
 	BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:u:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -281,6 +281,7 @@ char	*argv[];
 				bu_bomb( "Unrecognized units\n" );
 			}
 			scale_factor = 1.0 / scale_factor;
+			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
 			exit(1);
