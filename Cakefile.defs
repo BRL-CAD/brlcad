@@ -172,13 +172,9 @@ set -S2 "/bin/sh"
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
 #		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
-/*		Use shared libraries */
-#		define	SHARED	_s
 #	else
 /*		This version for debugging with DBX */
-/*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g
-#		define	SHARED	_s
 #	endif
 #	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
@@ -187,12 +183,12 @@ set -S2 "/bin/sh"
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -shared -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath LIBDIR:/usr/lib
+#		define	STANDARD_LIBES	-lm -lmalloc -lc_s -rpath LIBDIR:/usr/lib
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl -lGL
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi''SHARED -lXext''SHARED -lX11''SHARED -lgl''SHARED -lGL''SHARED
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lgl -lGL
 #		define  LIBDM_SAMPLER_LIBES 	MGED_LIBES
 #	else
 /*		Static linked executables */
@@ -209,12 +205,8 @@ set -S2 "/bin/sh"
 #		endif
 
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11_s -lgl_s -lGL
-#if 0
-#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL -l 
-#else
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl_s -lGL
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#endif
 #		define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #	endif
 
@@ -276,7 +268,7 @@ set -S2 "/bin/sh"
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
 /*		Warning 134: weak definition in one library preempts that in another */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134 -Wl,-woff,1048
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
