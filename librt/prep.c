@@ -472,9 +472,14 @@ register struct rt_i *rtip;
 
 		RT_CK_REGION(regp);
 		db_free_tree( regp->reg_treetop );
-		rt_free( (char *)regp->reg_name, "region name str");
+		bu_free( (genptr_t)regp->reg_name, "region name str");
 		regp->reg_name = (char *)0;
-		rt_free( (char *)regp, "struct region");
+		if( regp->reg_mater.ma_matname )
+			bu_free( (genptr_t)regp->reg_mater.ma_matname, "ma_matname" );
+		if( regp->reg_mater.ma_matparm )
+			bu_free( (genptr_t)regp->reg_mater.ma_matparm, "ma_matparm" );
+
+		bu_free( (genptr_t)regp, "struct region");
 		regp = nextregp;
 	}
 	rtip->HeadRegion = REGION_NULL;

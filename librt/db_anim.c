@@ -155,21 +155,23 @@ struct mater_info	*materp;
 		if (!materp) break;
 		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
 		    (anp->an_u.anu_p.anp_op == RT_ANP_RMATERIAL)) {
-			strncpy(materp->ma_matname,
-			    bu_vls_addr(&anp->an_u.anu_p.anp_matname), 32);
-			materp->ma_matname[31] = '\0';
+		    	if( materp->ma_matname ) bu_free( (genptr_t)materp->ma_matname, "ma_matname" );
+			materp->ma_matname = bu_vls_strdup(&anp->an_u.anu_p.anp_matname);
 		}
 		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
 		    (anp->an_u.anu_p.anp_op == RT_ANP_RPARAM)) {
-			strncpy(materp->ma_matparm,
-			    bu_vls_addr(&anp->an_u.anu_p.anp_matparam), 60);
-			materp->ma_matparm[59] = '\0';
+		    	if( materp->ma_matparm )  bu_free( (genptr_t)materp->ma_matparm, "ma_matparm" );
+		    	materp->ma_matparm = bu_vls_strdup(&anp->an_u.anu_p.anp_matparam);
 		}
 		if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
-			strncat(materp->ma_matparm,
-			    bu_vls_addr(&anp->an_u.anu_p.anp_matparam),
-			    60-strlen(materp->ma_matparm));
-			materp->ma_matparm[59] = '\0';
+			struct bu_vls	str;
+
+			bu_vls_init(&str);
+			bu_vls_strcpy( &str, materp->ma_matparm );
+			bu_vls_vlscat( &str, &anp->an_u.anu_p.anp_matparam );
+		    	if( materp->ma_matparm )  bu_free( (genptr_t)materp->ma_matparm, "ma_matparm" );
+			materp->ma_matparm = bu_vls_strgrab( &str );
+			/* bu_vls_free( &str ) is done by bu_vls_strgrab() */
 		}
 		break;
 	case RT_AN_COLOR:

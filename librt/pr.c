@@ -77,10 +77,10 @@ register CONST struct region *rp;
 			(int)rp->reg_mater.ma_color[0]*255.,
 			(int)rp->reg_mater.ma_color[1]*255.,
 			(int)rp->reg_mater.ma_color[2]*255. );
-	if( rp->reg_mater.ma_matname[0] != '\0' )
+	if( rp->reg_mater.ma_matname && rp->reg_mater.ma_matname[0] != '\0' )
 		bu_log("Material '%s' '%s'\n",
 			rp->reg_mater.ma_matname,
-			rp->reg_mater.ma_matparm );
+			rp->reg_mater.ma_matparm ? rp->reg_mater.ma_matparm : "" );
 
 	bu_vls_init(&v);
 	rt_pr_tree_vls(&v, rp->reg_treetop);

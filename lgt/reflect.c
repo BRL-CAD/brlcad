@@ -595,7 +595,7 @@ struct partition *pt_headp;
 			regp->reg_gmater,
 			regp->reg_los
 			);
-	if( regp->reg_mater.ma_matname[0] != '\0' )
+	if( regp->reg_mater.ma_matname && regp->reg_mater.ma_matname[0] != '\0' )
 		{
 		prnt_Scroll(	"\tmaterial info \"%.32s\"\n",
 				regp->reg_mater.ma_matname
@@ -606,7 +606,7 @@ struct partition *pt_headp;
 					regp->reg_mater.ma_color[1],
 					regp->reg_mater.ma_color[2]
 					);
-		if( regp->reg_mater.ma_matparm[0] != '\0' )
+		if( regp->reg_mater.ma_matparm && regp->reg_mater.ma_matparm[0] != '\0' )
 			prnt_Scroll(	"\t\t\tparameters: \"%.60s\"\n",
 					regp->reg_mater.ma_matparm
 					);
@@ -694,8 +694,8 @@ int *id;
 		char *name;
 		char *value;
 		register char *p;
-		unsigned lenparm = sizeof(map->ma_matparm);
-	if( map->ma_matname[0] == '\0' )
+		unsigned lenparm = MA_LENPARM-1;
+	if( map->ma_matname && map->ma_matname[0] == '\0' )
 		return	false;
 	/* guard against changes to length of ma_matparm field */
 	if( lenparm > MA_LENPARM-1 )

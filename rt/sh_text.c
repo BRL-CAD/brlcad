@@ -690,10 +690,8 @@ struct rt_i	*rtip;
 		*cp++ = '\0';
 	}
 
-	strncpy( env_region.reg_mater.ma_matname, RT_VLS_ADDR(&material),
-		sizeof(rp->reg_mater.ma_matname) );
-	strncpy( env_region.reg_mater.ma_matparm, cp,
-		sizeof(rp->reg_mater.ma_matparm) );
+	env_region.reg_mater.ma_matname = bu_vls_strdup( &material );
+	env_region.reg_mater.ma_matparm = bu_strdup( cp );
 
 	if( mlib_setup( &env_region, rtip ) < 0 )
 		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );

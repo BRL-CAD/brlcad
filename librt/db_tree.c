@@ -112,8 +112,8 @@ register CONST struct db_tree_state	*tsp;
 		tsp->ts_mater.ma_color[0],
 		tsp->ts_mater.ma_color[1],
 		tsp->ts_mater.ma_color[2] );
-	bu_log(" ts_mater.ma_matname=%s\n", tsp->ts_mater.ma_matname );
-	bu_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm );
+	bu_log(" ts_mater.ma_matname=%s\n", tsp->ts_mater.ma_matname ? tsp->ts_mater.ma_matname : "" );
+	bu_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm ? tsp->ts_mater.ma_matparm : "" );
 	mat_print("ts_mat", tsp->ts_mat );
 }
 
@@ -189,9 +189,10 @@ register CONST struct rt_comb_internal	*comb;
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_minherit == 0 )  {
 			/* DB_INH_LOWER -- lower nodes in tree override */
-			/* XXX ts_mater should become a bu_vls */
-			strncpy( tsp->ts_mater.ma_matname, bu_vls_addr(&comb->shader_name), sizeof(tsp->ts_mater.ma_matname) );
-			strncpy( tsp->ts_mater.ma_matparm, bu_vls_addr(&comb->shader_param), sizeof(tsp->ts_mater.ma_matparm) );
+			tsp->ts_mater.ma_matname = bu_vls_strdup(
+				&comb->shader_name);
+			tsp->ts_mater.ma_matparm = bu_vls_strdup(
+				&comb->shader_param);
 			tsp->ts_mater.ma_minherit = comb->inherit;
 		}
 	}
