@@ -300,8 +300,8 @@ static struct cmdtab cmdtab[] = {
 #endif
 	"wcodes", f_wcodes,
 	"whatid", f_whatid,
-	"whichair", f_which_air,
-	"whichid", f_which_id,
+	"whichair", f_which,
+	"whichid", f_which,
 	"which_shader", f_which_shader,
 	"who", cmd_who,
 	"winset", f_winset,
