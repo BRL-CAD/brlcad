@@ -92,31 +92,23 @@ lib_LTLIBRARIES = \
 	libtcl.la \
 	libtcl@TCL_VERSION@.la
 
+libtcl_la_CFLAGS = 
 libtcl_la_SOURCES = $(generic_src) $(unix_src)
-
 libtcl_la_LDFLAGS = -version-info 19:1
-
 libtcl_la_LIBADD = ${LIBZ} ${LIBM}
 
-
+libtcl@TCL_VERSION@_la_CFLAGS = $(libtcl_la_CFLAGS)
 libtcl@TCL_VERSION@_la_SOURCES = $(libtcl_la_SOURCES)
-
 libtcl@TCL_VERSION@_la_LDFLAGS = $(libtcl_la_LDFLAGS)
-
 libtcl@TCL_VERSION@_la_LIBADD = $(libtcl_la_LIBADD)
 
-
 bin_PROGRAMS = tclsh tclsh.static
-
 tclsh_SOURCES = unix/tclAppInit.c
-
 tclsh_LDADD = $(lib_LTLIBRARIES) ${TCL}
 
-
-# XXX - should not have to do this, but quick fix for muves folks for now
 tclsh_static_SOURCES = unix/tclAppInit.c
-tclsh_static_LDADD = .libs/libtcl.a
-
+tclsh_static_LDADD = libtcl.la
+tclsh_static_LDFLAGS = -static
 
 tcllibdir = ${libdir}
 
@@ -126,3 +118,6 @@ AM_CPPFLAGS = \
 	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
 	-DUSE_TCLALLOC=0
 
+.PHONY : test
+test: tclsh.static
+	echo 'puts "hi"' | ./tclsh.static
