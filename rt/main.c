@@ -207,11 +207,11 @@ char **argv;
 	if( npsw < 1 || npsw > 128 )
 		npsw = 4;
 	vfree( vmalloc( (20+npsw)*2048, "worker prefetch"), "worker");
-	rtlog("creating %d worker PSWs\n", npsw );
+	fprintf(stderr,"creating %d worker PSWs\n", npsw );
 	for( x=0; x<npsw; x++ )  {
 		Dcreate( worker, &ap );
 	}
-	rtlog("creates done\n");
+	fprintf(stderr,"creates done\n");
 #endif
 
 do_more:
@@ -259,10 +259,6 @@ do_more:
 	fprintf(stderr,"Deltas=%f (model units between rays)\n",
 		model2view[15]*2/npts );
 
-	VSET( temp, 0, 0, -1 );
-	MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
-	VUNITIZE( ap.a_ray.r_dir );
-
 	/* Chop -1.0..+1.0 range into npts parts */
 	VSET( temp, 2.0/npts, 0, 0 );
 	MAT4X3VEC( dx_model, view2model, temp );
@@ -276,6 +272,10 @@ do_more:
 	if( perspective )  {
 		VSET( temp, -1, -1, 0 );	/* viewing plane */
 	}  else  {
+		VSET( temp, 0, 0, -1 );
+		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
+		VUNITIZE( ap.a_ray.r_dir );
+
 		VSET( temp, -1, -1, 1.1 );	/* eye plane */
 	}
 	MAT4X3PNT( viewbase_model, view2model, temp );
