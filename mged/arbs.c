@@ -589,9 +589,12 @@ union record *rec;
 
 	if( (i = cgarbs(uvec, svec)) == 0 )
 		return(0);
+	printf("cgarbs() returned %d\n", i);
 
+#if 0
 	if( redoarb(uvec, svec, i) == 0 )
 		return( 0 );
+#endif
 
 	/* convert to vectors in the rec record */
 	VMOVE(&rec->s.s_values[0], &input.s.s_values[0]);
