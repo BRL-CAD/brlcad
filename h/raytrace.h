@@ -1443,8 +1443,9 @@ RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	fastf_t startdist, fastf_t enddist,
 	bitv_t *regionbits, struct application *ap) );
 					/* Eval bool tree node */
-RT_EXTERN(int rt_booleval, (union tree *treep, struct partition *partp,
-	 struct region **trueregp, struct resource *resp) );
+RT_EXTERN(int rt_booleval, (CONST union tree *treep,
+	CONST struct partition *partp,
+	struct region **trueregp, struct resource *resp) );
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
@@ -1680,6 +1681,12 @@ RT_EXTERN(char *rt_identify_magic, (long magic));
 /* units.c */
 RT_EXTERN(double rt_units_conversion, (CONST char *str) );
 RT_EXTERN(CONST char *rt_units_string, (CONST double mm) );
+
+/* prep.c */
+RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
+RT_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
+RT_EXTERN(void rt_vlist_to_uplot, (FILE *fp, struct rt_list *vhead));
+
 
 /************************************************************************
  *									*
