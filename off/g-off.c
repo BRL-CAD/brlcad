@@ -236,25 +236,27 @@ union tree		*curtree;
 
 	regions_tried++;
 	/* Begin rt_bomb() protection */
-	if( ncpu == 1 && RT_SETJUMP )  {
-		/* Error, bail out */
-		RT_UNSETJUMP;		/* Relinquish the protection */
+	if( ncpu == 1 ) {
+		if( RT_SETJUMP )  {
+			/* Error, bail out */
+			RT_UNSETJUMP;		/* Relinquish the protection */
 
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
-		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+			/* Sometimes the NMG library adds debugging bits when
+			 * it detects an internal error, before rt_bomb().
+			 */
+			rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
-		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
+			/* Release the tree memory & input regions */
+			db_free_tree(curtree);		/* Does an nmg_kr() */
 
-		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic != -1L )
-			nmg_km(*tsp->ts_m);
-	
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
+			/* Get rid of (m)any other intermediate structures */
+			if( (*tsp->ts_m)->magic != -1L )
+				nmg_km(*tsp->ts_m);
+
+			/* Now, make a new, clean model structure for next pass. */
+			*tsp->ts_m = nmg_mm();
+			goto out;
+		}
 	}
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 	RT_UNSETJUMP;		/* Relinquish the protection */
