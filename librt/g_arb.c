@@ -49,6 +49,8 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+#define RT_SLOPPY_DOT_TOL	0.0087	/* inspired by RT_DOT_TOL, but less tight (.5 deg) */
+
 /* The internal (in memory) form of an ARB8 -- 8 points in space */
 struct arb_internal {
 	fastf_t	arbi_pt[3*8];
@@ -162,7 +164,7 @@ int		ptno;	/* current point # on face */
 		VCROSS( afp->peqn, P_A, ofp->arb_U );
 		/* Check for co-linear, ie, |(B-A)x(C-A)| ~= 0 */
 		f = MAGNITUDE( afp->peqn );
-		if( NEAR_ZERO(f,0.005) )  {
+		if( NEAR_ZERO(f,RT_SLOPPY_DOT_TOL) )  {
 			return(-1);			/* BAD */
 		}
 		f = 1/f;
@@ -234,7 +236,7 @@ int		ptno;	/* current point # on face */
 		VSUB2( P_A, point, afp->A );
 		VUNITIZE( P_A );		/* Checking direction only */
 		f = VDOT( afp->peqn, P_A );
-		if( ! NEAR_ZERO(f,0.005) )  {
+		if( ! NEAR_ZERO(f,RT_SLOPPY_DOT_TOL) )  {
 			/* Non-planar face */
 			rt_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
 				pap->pa_name, title, ptno, f );
