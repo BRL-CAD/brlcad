@@ -234,8 +234,9 @@ register int pen_y;
 				(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 #ifdef MULTI_ATTACH
 			update_views = 1;
-#endif
+#else
 			dmaflag = 1;
+#endif
 			return( 1 );		/* menu claims pen value */
 		}
 	}

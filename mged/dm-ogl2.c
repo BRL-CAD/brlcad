@@ -1055,12 +1055,20 @@ XEvent *eventPtr;
     else
        glClear(GL_COLOR_BUFFER_BIT);
 #endif
+#if 0
     dmaflag = 1;
+#else
+    dirty = 1;
+#endif
     refresh();
     goto end;
   } else if( eventPtr->type == ConfigureNotify ) {
     Ogl2_configure_window_shape();
+#if 0
     dmaflag = 1;
+#else
+    dirty = 1;
+#endif
     refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {

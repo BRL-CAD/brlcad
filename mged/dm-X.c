@@ -567,7 +567,7 @@ XEvent *eventPtr;
 #endif
 
 #ifdef SEND_KEY_DOWN_PIPE
-  if(curr_dm_list->_mged_variables.send_key && eventPtr->type == KeyPress){
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
     KeySym keysym;
 
@@ -586,7 +586,11 @@ XEvent *eventPtr;
 #endif
 
   if (eventPtr->type == Expose && eventPtr->xexpose.count == 0){
+#if 0
     dmaflag = 1;
+#else
+    dirty = 1;
+#endif
     refresh();
     goto end;
   }else if(eventPtr->type == ConfigureNotify){
@@ -595,7 +599,12 @@ XEvent *eventPtr;
     ((struct x_vars *)dm_vars)->width = eventPtr->xconfigure.width;
 #endif
     X_configure_window_shape();
+
+#if 0
     dmaflag = 1;
+#else
+    dirty = 1;
+#endif
     refresh();
     goto end;
   } else if( eventPtr->type == MotionNotify ) {

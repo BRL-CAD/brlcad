@@ -421,8 +421,6 @@ Glx_open()
       return(1);	/* BAD */
   }
 
-  knob_offset_hook = set_knob_offset;
-
   return(0);			/* OK */
 }
 
@@ -449,6 +447,7 @@ char *name;
   Display *tmp_dpy;
 
   rt_vls_init(&str);
+  rt_vls_init(&pathName);
 
   /* Only need to do this once */
   if(tkwin == NULL){
@@ -476,7 +475,6 @@ char *name;
 
   RT_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
 
-  rt_vls_init(&pathName);
   rt_vls_printf(&pathName, ".dm_glx%d", ref_count++);
   ref = strdup(rt_vls_addr(&pathName));
   rt_vls_strcat(&pathName, ".win"); 
@@ -782,7 +780,6 @@ Glx_close()
 
   Tk_DestroyWindow(Tk_Parent(xtkwin));
 
-  knob_offset_hook = NULL;
   RT_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
   rt_free(dm_vars, "Glx_close: dm_vars");
   rt_vls_free(&pathName);
@@ -1286,7 +1283,7 @@ XEvent *eventPtr;
 #endif
 
 #ifdef SEND_KEY_DOWN_PIPE
-  if(curr_dm_list->_mged_variables.send_key && eventPtr->type == KeyPress){
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
     KeySym keysym;
 
@@ -1311,14 +1308,22 @@ XEvent *eventPtr;
     /* Window may have moved */
     Glx_configure_window_shape();
 
+#if 0
     dmaflag = 1;
+#else
+    dirty = 1;
+#endif
     refresh();
     goto end;
   }else if( eventPtr->type == ConfigureNotify ){
       /* Window may have moved */
       Glx_configure_window_shape();
 
+#if 0
       dmaflag = 1;
+#else
+      dirty = 1;
+#endif
       refresh();
       goto end;
   }else if( eventPtr->type == MotionNotify ) {
@@ -2639,7 +2644,6 @@ extern int dm_pipe[];
 
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
-extern void (*knob_offset_hook)();
 
 /* Display Manager package interface */
 
