@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSrt[] = "@(#)$Header$ (BRL)";
+static char RCSworker[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
