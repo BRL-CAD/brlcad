@@ -54,11 +54,16 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
-double	mat_degtorad = 0.0174532925199433;
-double	mat_radtodeg = 57.29577951308230698802;
+CONST double	mat_degtorad = 0.0174532925199433;
+CONST double	mat_radtodeg = 57.29577951308230698802;
 
+#if USE_PROTOTYPES
+extern void	mat_print(CONST char *title, CONST mat_t m);
+extern void	mat_vec_perp(vect_t new, CONST vect_t old);
+#else
 extern void	mat_print();
 extern void	mat_vec_perp();
+#endif
 
 /*
  *			M A T _ A T A N 2
