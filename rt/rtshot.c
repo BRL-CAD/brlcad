@@ -39,6 +39,8 @@ char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
  -U #		Set use_air flag\n\
  -x #		Set librt debug flags\n\
+ -X #		Set rt program debug flags\n\
+ -N #		Set NMG debug flags\n\
  -d # # #	Set direction vector\n\
  -p # # #	Set starting point\n\
  -a # # #	Set shoot-at point\n";
