@@ -210,7 +210,7 @@ int n;
 }
 
 /*
- *	N M G _ A D D _ L O O P _ T O _ F A C E
+ *			N M G _ A D D _ L O O P _ T O _ F A C E
  *
  *	Create a new loop within a face, given a list of vertices.
  *	Modified version of nmg_cface().
@@ -236,7 +236,6 @@ int n;
  *	behavior, and to effect the proper vertex order in the final face
  *	loop.
  */
-
 struct faceuse *
 nmg_add_loop_to_face(s, fu, verts, n, dir)
 struct shell *s;
@@ -275,8 +274,12 @@ int n, dir;
 				verts[i] = eu->vu_p->v_p;
 		}
 	} else {
-		lu = nmg_mlv(&s->l.magic, (struct vertex *)NULL, dir);
-		fu = nmg_mf(lu);
+		if (!fu) {
+			lu = nmg_mlv(&s->l.magic, (struct vertex *)NULL, dir);
+			fu = nmg_mf(lu);
+		} else {
+			lu = nmg_mlv(&fu->l.magic, (struct vertex *)NULL, dir);
+		}
 		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
 		eu = nmg_meonvu(vu);
 		while (--n) {
@@ -290,7 +293,7 @@ int n, dir;
  *			N M G _ C M F A C E
  *
  *	Create a face with exactly one exterior loop (and no holes),
- *	given a list of pointers to vertices.
+ *	given an array of pointers to struct vertex pointers.
  *	Intended to help create a "3-manifold" shell, where
  *	each edge has only two faces alongside of it.
  *	(Shades of winged edges!)
@@ -576,18 +579,13 @@ struct edgeuse *oldeu;
 		rt_bomb("nmg_eusplit() bad lu->up\n");
 	NMG_CK_SHELL(s);
 
-	nmg_ck_list( &s->eu_hd, "eusplit A" );
-	nmg_ck_list( &s->lu_hd, "eusplit lu A" );
-
-	/* make a new edge on the vertex */
+	/* Make a new wire edge in the shell */
 	if (v) {
 		/* An edge on the single vertex "V" */
 		eu1 = nmg_me(v, v, s);
 		eu2 = eu1->eumate_p;
 	} else {
-		/* An edge between two new vertices */
-		nmg_ck_list( &s->eu_hd, "eusplit B" );
-		nmg_ck_list( &s->lu_hd, "eusplit lu B" );
+		/* Form a wire edge between two new vertices */
 		eu1 = nmg_me((struct vertex *)NULL, (struct vertex *)NULL, s);
 		eu2 = eu1->eumate_p;
 		/* Make both ends of edge use same vertex.
@@ -599,13 +597,13 @@ struct edgeuse *oldeu;
 	/*
 	 *  The current situation is now:
 	 *
-	 *	      eu1			       oldeu
-	 *	  .------------->		  .------------->
-	 *	 /				 /
-	 *	V ~~~~~~~~~~~~~~~ V (new edge)	A =============== B (edge)
-	 *			 /				 /
-	 *	  <-------------.		  <-------------.
-	 *	      eu2			      oldeumate
+	 *	      eu1				       oldeu
+	 *	  .------------->			  .------------->
+	 *	 /					 /
+	 *	V ~~~~~~~~~~~~~~~ V (new edge)		A =============== B (edge)
+	 *			 /					 /
+	 *	  <-------------.			  <-------------.
+	 *	      eu2				      oldeumate
 	 *
 	 *  Goals:
 	 *  eu1 will become the mate to oldeumate on the existing edge.
@@ -643,7 +641,9 @@ struct edgeuse *oldeu;
 	eu2->eumate_p = oldeu;
 	oldeu->eumate_p = eu2;
 
-	/* Build radial relationship */
+	/*  Build radial relationship.
+	 *  Simply only because this edge has no other uses.
+	 */
 	eu1->radial_p = oldeumate;
 	oldeumate->radial_p = eu1;
 	eu2->radial_p = oldeu;
@@ -735,15 +735,15 @@ struct shell *s;
  */
 struct edgeuse *
 nmg_esplit(v, eu)
-struct vertex	*v;
+struct vertex	*v;		/* New vertex, to go in middle */
 struct edgeuse	*eu;
 {
 	struct edge	*e;	/* eu->e_p */
-	struct edgeuse	*eur,	/* radial edgeuse of eu */
-			*eu2,	/* new edgeuse (next of eur) */
+	struct edgeuse	*teuX,	/* radial edgeuse of eu */
+			*teuY,	/* new edgeuse (next of teuX) */
 			*neu1, *neu2; /* new (split) edgeuses */
 	int 		notdone=1;
-	struct vertex	*v1, *v2;	/* start and end of eu */
+	struct vertex	*vA, *vB;	/* start and end of eu */
 
 	neu1 = neu2 = (struct edgeuse *)NULL;
 
@@ -752,18 +752,18 @@ struct edgeuse	*eu;
 	NMG_CK_EDGE(e);
 
 	NMG_CK_VERTEXUSE(eu->vu_p);
-	v1 = eu->vu_p->v_p;
-	NMG_CK_VERTEX(v1);
+	vA = eu->vu_p->v_p;
+	NMG_CK_VERTEX(vA);
 
 	NMG_CK_EDGEUSE(eu->eumate_p);
 	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-	v2 = eu->eumate_p->vu_p->v_p;
-	NMG_CK_VERTEX(v2);
+	vB = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(vB);
 
-	/* v1 and v2 are the endpoints of the original edge "e" */
-	if( v1 == v2 )
-		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", v1);
-	if( v && ( v == v1 || v == v2 ) )
+	/* vA and vB are the endpoints of the original edge "e" */
+	if( vA == vB )
+		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", vA);
+	if( v && ( v == vA || v == vB ) )
 		rt_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
 
 	/* one at a time, we peel out & split an edgeuse pair of this edge.
@@ -771,66 +771,57 @@ struct edgeuse	*eu;
 	 * we've split the last edge
 	 */
 	do {
-		eur = eu->radial_p;
-		/* eur could runs from v1 to v2 */
-		eu2 = nmg_eusplit(v, eur);
-		/* Now, eur runs from v1 to v, eu2 runs from v to v2 */
-		NMG_CK_EDGEUSE(eur);
-		NMG_CK_EDGEUSE(eu2);
-		NMG_TEST_EDGEUSE(eur);
-		NMG_TEST_EDGEUSE(eu2);
+		/* Peel two temporary edgeuses off the original edge */
+		teuX = eu->radial_p;
+		/* teuX runs from vA to vB */
+		teuY = nmg_eusplit(v, teuX);
+		/* Now, teuX runs from vA to v, teuY runs from v to vB */
+		NMG_CK_EDGEUSE(teuX);
+		NMG_CK_EDGEUSE(teuY);
+		NMG_TEST_EDGEUSE(teuX);
+		NMG_TEST_EDGEUSE(teuY);
 		
 		if (!v)  {
-			/* "v" is the vertex "e" was just split at */
-			v = eu2->vu_p->v_p;
+			/* If "v" parameter was NULL and this is the
+			 * first time through, take note of "v" where
+			 * "e" was just split at.
+			 */
+			v = teuY->vu_p->v_p;
 			NMG_CK_VERTEX(v);
 		}
 
-		if (eu2->e_p == e || eur->e_p == e) notdone = 0;
+		if (teuY->e_p == e || teuX->e_p == e) notdone = 0;
 		
-		NMG_CK_VERTEX(eur->vu_p->v_p);
-		if (eur->vu_p->v_p == v1) {
+		/*  Are the two edgeuses going in same or opposite directions?
+		 *  Move the newly created temporary edge (teuX, teuY)
+		 *  onto the new edge (neu1, neu2).
+		 *  On first pass, just take note of the new edge & edgeuses.
+		 */
+		NMG_CK_VERTEX(teuX->vu_p->v_p);
+		if (teuX->vu_p->v_p == vA) {
 			if (neu1) {
-				nmg_moveeu(neu1, eur);
-				nmg_moveeu(neu2, eu2);
+				nmg_moveeu(neu1, teuX);
+				nmg_moveeu(neu2, teuY);
 			}
-			neu1 = eur->eumate_p;
-			neu2 = eu2->eumate_p;
-		} else if (eur->vu_p->v_p == v2) {
+			neu1 = teuX->eumate_p;
+			neu2 = teuY->eumate_p;
+		} else if (teuX->vu_p->v_p == vB) {
 			if (neu1) {
-				nmg_moveeu(neu2, eur);
-				nmg_moveeu(neu1, eu2);
+				nmg_moveeu(neu2, teuX);
+				nmg_moveeu(neu1, teuY);
 			}
-			neu2 = eur->eumate_p;
-			neu1 = eu2->eumate_p;
+			neu2 = teuX->eumate_p;
+			neu1 = teuY->eumate_p;
 		} else {
 			rt_log("nmg_esplit(v=x%x, e=x%x)\n", v, e);
-			rt_log("nmg_esplit: eur->vu_p->v_p=x%x, v1=x%x, v2=x%x\n", eur->vu_p->v_p, v1, v2 );
-			rt_bomb("nmg_esplit() eur->vu_p->v_p is neither v1 nor v2\n");
+			rt_log("nmg_esplit: teuX->vu_p->v_p=x%x, vA=x%x, vB=x%x\n", teuX->vu_p->v_p, vA, vB );
+			rt_bomb("nmg_esplit() teuX->vu_p->v_p is neither vA nor vB\n");
 		}
 	} while (notdone);
 	/* Here, "e" pointer is invalid -- it no longer exists */
 
-	/* Error checking loops */
-	eu = neu1;
-	do {
-		NMG_CK_EDGEUSE(eu);
-		NMG_CK_EDGEUSE(eu->eumate_p);
-		NMG_TEST_EDGEUSE(eu);
-		NMG_TEST_EDGEUSE(eu->eumate_p);
-		eu = eu->radial_p->eumate_p;
-	} while (eu != neu1);
-	eu = neu2;
-	do {
-		NMG_CK_EDGEUSE(eu);
-		NMG_CK_EDGEUSE(eu->eumate_p);
-		NMG_TEST_EDGEUSE(eu);
-		NMG_TEST_EDGEUSE(eu->eumate_p);
-		eu = eu->radial_p->eumate_p;
-	} while (eu != neu2);
-
-	/* Find an edgeuse that runs from v to v2 */
-	if( neu2->vu_p->v_p == v && neu2->eumate_p->vu_p->v_p == v2 )
+	/* Find an edgeuse that runs from v to vB */
+	if( neu2->vu_p->v_p == v && neu2->eumate_p->vu_p->v_p == vB )
 		return neu2;
 
 	rt_bomb("nmg_esplit() unable to find eu starting at new v\n");
@@ -1708,9 +1699,7 @@ struct vertexuse *vu1, *vu2;
 	oldlu = eu1->up.lu_p;
 	NMG_CK_LOOPUSE(oldlu);
 	if (eu2->up.lu_p != oldlu) {
-		rt_log("nmg_cut_loop() at %d in %s vertices should be decendants of same loop\n",
-			__LINE__, __FILE__);
-		rt_bomb("nmg_cut_loop\n");
+		rt_bomb("nmg_cut_loop() vertices not decendants of same loop\n");
 	}
 	NMG_CK_FACEUSE(oldlu->up.fu_p);
 	m = oldlu->up.fu_p->s_p->r_p->m_p;
@@ -1737,8 +1726,6 @@ struct vertexuse *vu1, *vu2;
 		}
 	}
 
-	nmg_ck_lueu(oldlu, "oldlu (fresh)");
-
 	/* make a new loop structure for the new loop & throw away
 	 * the vertexuse we don't need
 	 */
@@ -1748,6 +1735,7 @@ struct vertexuse *vu1, *vu2;
 	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->down_hd));
 	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
 	/* nmg_kvu() does RT_LIST_INIT() on down_hd */
+	/* The loopuse is considered invalid until it gets some edges */
 
 	/* move the edges into one of the uses of the new loop */
 	for (eu = eu2 ; eu != eu1 ; eu = eunext) {
@@ -1760,9 +1748,8 @@ struct vertexuse *vu1, *vu2;
 		eu->up.lu_p = lu;
 		eu->eumate_p->up.lu_p = lu->lumate_p;
 	}
-	nmg_ck_lueu(lu, "lu check1");	/*LABLABLAB*/
 
-	/* make an edge to "cap off" the new loop */
+	/* make a wire edge in the shell to "cap off" the new loop */
 	neweu = nmg_me(eu1->vu_p->v_p, eu2->vu_p->v_p, nmg_eups(eu1));
 
 	/* move the new edgeuse into the new loopuse */
@@ -1775,9 +1762,6 @@ struct vertexuse *vu1, *vu2;
 	RT_LIST_APPEND(&lu->lumate_p->down_hd, &neweu->eumate_p->l);
 	neweu->eumate_p->up.lu_p = lu->lumate_p;
 
-	nmg_ck_lueu(lu, "lu check2");	/*LABLABLAB*/
-
-
 	/* now we go back and close up the loop we just ripped open */
 	eunext = nmg_me(eu2->vu_p->v_p, eu1->vu_p->v_p, nmg_eups(eu1));
 
@@ -1788,8 +1772,7 @@ struct vertexuse *vu1, *vu2;
 	eunext->up.lu_p = eu1->up.lu_p;
 	eunext->eumate_p->up.lu_p = eu1->eumate_p->up.lu_p;
 
-
-	/* make sure new edgeuses are radial to each other */
+	/* make new edgeuses radial to each other, sharing the new edge */
 	nmg_moveeu(neweu, eunext);
 
 	nmg_ck_lueu(oldlu, "oldlu");
@@ -1814,6 +1797,7 @@ struct vertexuse *vu1, *vu2;
 		rt_free( (char *)tab, "nmg_cut_loop flag[] 2" );
 	}
 
+	/* Recalculate bounding boxes, if they were present */
 	nmg_loop_g(oldlu->l_p);
 	nmg_loop_g(lu->l_p);
 	return lu;
