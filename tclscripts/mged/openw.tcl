@@ -122,7 +122,7 @@ if ![info exists mged_gui(loadScriptDir)] {
     set mged_gui(loadScriptDir) [pwd]
 }
 
-if ![info exists mged_default(text_font)] {
+if {[font names] == ""} {
     font_init
 }
 
