@@ -38,11 +38,8 @@
  * express or implied warranty.
  */
 
-#if 0
-#include "tkConfig.h"
-#endif
 #include "tk.h"
-#include <Xutil.h>
+#include <X11/Xutil.h>
 
 #include <gl/gl.h>
 #include <gl/glws.h>

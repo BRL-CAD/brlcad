@@ -393,7 +393,7 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 	FB_CK_FBIO(ifp);
 
 	mode = 0;
-
+	
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
@@ -1585,15 +1585,16 @@ printf("Creating window\n");
 	{
 	case FLG_VD24:
 	case FLG_VT24:
-		if ((xi->xi_pix = (unsigned char *) calloc(4, width*height)) ==
-		    NULL) {
+	  if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned int),
+						     width*height)) == NULL) {
 			fb_log("X24_open: pix32 malloc failed\n");
 			return(-1);
 		}
 
 		xi->xi_image = XCreateImage(xi->xi_dpy,
 			xi->xi_visual, xi->xi_depth, ZPixmap, 0,
-			(char *) xi->xi_pix, width, height, 32, 0);
+			(char *) xi->xi_pix, width, height,
+			 sizeof(unsigned int) * 8, 0);
 		break;
 
 	case FLG_VP8:
@@ -1817,14 +1818,16 @@ printf("configure, oldht %d oldwid %d newht %d newwid %d\n",
 			/* Make new buffer and new image */
 
 			if ((xi->xi_pix = (unsigned char *)
-			    calloc(4, xi->xi_xwidth*xi->xi_xheight)) == NULL) {
-				fb_log("X24: pix32 malloc failed in resize!\n");
-				return;
+			     calloc(sizeof (unsigned int),
+				    xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+			  fb_log("X24: pix32 malloc failed in resize!\n");
+			  return;
 			}
 
 			xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
 				xi->xi_depth, ZPixmap, 0, (char *) xi->xi_pix,
-				xi->xi_xwidth, xi->xi_xheight, 32, 0);
+				xi->xi_xwidth, xi->xi_xheight,
+				sizeof (unsigned int) * 8, 0);
 
 			break;
 
@@ -2536,10 +2539,11 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 	case FLG_VT24:
 	{
 		unsigned char *irgb;
-		unsigned long *opix;
+		unsigned int *opix;
 
-		opix = (unsigned long *) &(xi->xi_pix[(oy * xi->xi_xwidth +
-			ox) * sizeof (unsigned long)]);
+		opix = (unsigned int *)&(xi->xi_pix[(oy * xi->xi_xwidth +
+			ox) * sizeof(unsigned int)]);
+
 		irgb = &(xi->xi_mem[(y1 * xi->xi_iwidth + x1) * sizeof
 			(RGBpixel)]);
 
@@ -2550,7 +2554,8 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 
 			for (j = y2 - y1 + 1; j; j--) {
 				unsigned char *line_irgb;
-				unsigned long *line_opix;
+				unsigned int *line_opix;
+
 				unsigned char *red = xi->xi_redmap;
 				unsigned char *grn = xi->xi_grnmap;
 				unsigned char *blu = xi->xi_blumap;
@@ -2587,7 +2592,8 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				int pyht;
 				int copied;
 				unsigned char *line_irgb;
-				unsigned long pix, *line_opix, *prev_line;
+				unsigned int pix, *line_opix, *prev_line;
+
 				unsigned char *red = xi->xi_redmap;
 				unsigned char *grn = xi->xi_grnmap;
 				unsigned char *blu = xi->xi_blumap;

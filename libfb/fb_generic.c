@@ -80,7 +80,7 @@ extern FBIO sun_interface;
 extern FBIO sgi_interface;
 #endif
 /* Carl Nuzman experimental version */
-#if defined(IF_5D) && 1
+#ifdef IF_OGL
 extern FBIO ogl_interface;
 #endif
 #ifdef IF_RAT
@@ -120,7 +120,7 @@ FBIO *_if_list[] = {
 	&sgi_interface,
 #endif
 /* Carl Nuzman experimental version */
-#if defined(IF_5D) && 1
+#ifdef IF_OGL
 	&ogl_interface,
 #endif
 #ifdef IF_RAT
