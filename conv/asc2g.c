@@ -173,7 +173,7 @@ char **argv;
 		{
 			int	i;
 			int	ac = 1;
-			char	*av[2];
+			const char	*av[2];
 
 			av[1] = (char *)0;
 			for (i = 0; aliases[i] != (char *)0; ++i) {

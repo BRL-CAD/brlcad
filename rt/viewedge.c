@@ -271,7 +271,7 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
     /*    char idbuf[512]; */
     struct db_i *dbip;
     int nObjs;
-    char **objs;
+    const char **objs;
     int i;
 
     bu_log ("rtedge: loading occlusion geometry from %s.\n", file);
