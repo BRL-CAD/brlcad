@@ -2207,14 +2207,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #endif
 
 /*
- *  Definition of master source machine, and master distribution
- *  directory.  Please don't change these values.		
- *  When the current host is == MASTERHOST, the "make install"	
- *  rules will also handle the distribution source management.	
- *  Even if you have lots of disk space, you don't want that	
- *  to happen.							
+ *  Definition of master distribution directory.
+ *  "cake inst-dist" places a distribution-ready image here.
  */
-#define	MASTERHOST	vapor.arl.mil
 #define	DISTRIBUTION	/m/dist
 
 /* Symbols that should be defined in individual Cakefiles */
