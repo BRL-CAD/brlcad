@@ -52,13 +52,23 @@ fi
 
 if [ -x /usr/ucb/mail ] ; then
 	/usr/ucb/mail -s "BUG REPORT" cad-bugs@arl.mil "$USER" < $BUG_REPORT
-	rm -f $BUG_REPORT
+	if [ $? -eq 0 ] ; then
+		rm -f $BUG_REPORT
+	else
+		echo "mail exited with non-zero status."
+		echo "message file $BUG_REPORT not deleted"
+	fi
 	exit
 fi
 
 if [ -x /bin/mail ] ; then
 	/bin/mail cad-bugs@arl.mil "$USER" < $BUG_REPORT
-	rm -f $BUG_REPORT
+	if [ $? -eq 0 ] ; then
+		rm -f $BUG_REPORT
+	else
+		echo "mail exited with non-zero status."
+		echo "message file $BUG_REPORT not deleted"
+	fi
 	exit
 fi
 
