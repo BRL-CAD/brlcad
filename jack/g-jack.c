@@ -368,7 +368,8 @@ union tree		*curtree;
 
 	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end() path='%s'\n",
+		rt_log("\ndo_region_end(%d) path='%s'\n",
+			regions_tried,
 			sofar);
 		rt_free(sofar, "path string");
 	}
