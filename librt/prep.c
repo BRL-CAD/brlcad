@@ -587,16 +587,6 @@ register struct rt_i *rtip;
 	}
 	rt_cut_clean(rtip);
 
-	/* Reset instancing counters in database directory */
-/* XXX move to dir.c */
-	for( i=0; i < RT_DBNHASH; i++ )  {
-		register struct directory	*dp;
-
-		dp = rtip->rti_dbip->dbi_Head[i];
-		for( ; dp != DIR_NULL; dp = dp->d_forw )
-			dp->d_uses = 0;
-	}
-
 	/* Free animation structures */
 /* XXX modify to only free those from this rtip */
 	db_free_anim(rtip->rti_dbip);

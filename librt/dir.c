@@ -76,6 +76,24 @@ struct db_i	*dbip;
 	rtip->rti_nugrid_dimlimit = 0;
 	rtip->rti_nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 
+	/*
+	 *  Zero the solid instancing counters in dbip database instance.
+	 *  Done here because the same dbip could be used by multiple
+	 *  rti's, and rt_gettrees() can be called multiple times on
+	 *  this one rtip.
+	 *  There is a race (collision!) here on d_uses if rt_gettrees()
+	 *  is called on another rtip of the same dbip
+	 *  before this rtip is done
+	 *  with all it's treewalking.
+	 */
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		register struct directory	*dp;
+
+		dp = rtip->rti_dbip->dbi_Head[i];
+		for( ; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_uses = 0;
+	}
+
 	return rtip;
 }
 
