@@ -56,32 +56,32 @@ static struct pkg_switch pkgswitch[] = {
 	{ 0, NULL, NULL }
 };
 
-_LOCAL_ int	remote_device_open(),
-		remote_device_close(),
-		remote_device_clear(),
-		remote_buffer_read(),
-		remote_buffer_write(),
-		remote_colormap_read(),
-		remote_colormap_write(),
-		remote_window_set(),
-		remote_zoom_set(),
-		remote_cmemory_addr();
+_LOCAL_ int	rem_dopen(),
+		rem_dclose(),
+		rem_dclear(),
+		rem_bread(),
+		rem_bwrite(),
+		rem_cmread(),
+		rem_cmwrite(),
+		rem_window_set(),
+		rem_zoom_set(),
+		rem_cmemory_addr();
 
 FBIO remote_interface =
 		{
-		remote_device_open,
-		remote_device_close,
+		rem_dopen,
+		rem_dclose,
 		fb_null,			/* reset		*/
-		remote_device_clear,
-		remote_buffer_read,
-		remote_buffer_write,
-		remote_colormap_read,
-		remote_colormap_write,
+		rem_dclear,
+		rem_bread,
+		rem_bwrite,
+		rem_cmread,
+		rem_cmwrite,
 		fb_null,			/* viewport_set		*/
-		remote_window_set,
-		remote_zoom_set,
+		rem_window_set,
+		rem_zoom_set,
 		fb_null,			/* cursor_init_bitmap	*/
-		remote_cmemory_addr,
+		rem_cmemory_addr,
 		fb_null,			/* cursor_move_screen_addr */
 		"Remote Device Interface",	/* should be filled in	*/
 		1024,				/* " */
@@ -109,7 +109,7 @@ static	struct pkg_conn *pcp;
  *  devname (or NULL if default).
  */
 _LOCAL_ int
-remote_device_open( ifp, devicename, width, height )
+rem_dopen( ifp, devicename, width, height )
 register FBIO	*ifp;
 register char	*devicename;
 int	width, height;
@@ -125,7 +125,7 @@ int	width, height;
 	extern struct hostent	*gethostbyname();
 
 	if( devicename == NULL || (file = strchr( devicename, ':' )) == NULL ) {
-		fb_log( "remote_device_open : bad device name \"%s\"\n",
+		fb_log( "remote_dopen : bad device name \"%s\"\n",
 			devicename == NULL ? "(null)" : devicename );
 		return	-1;
 	}
@@ -133,13 +133,13 @@ int	width, height;
 		hostname[i] = devicename[i];
 	hostname[i] = '\0';
 	if( (hostentry = gethostbyname( hostname )) == NULL ) {
-		fb_log(	"remote_device_open : host not found \"%s\".\n",
+		fb_log(	"remote_dopen : host not found \"%s\".\n",
 			hostname );
 		return	-1;
 	}
 	(void) strncpy( official_hostname, hostentry->h_name, MAX_HOSTNAME );
 	if( (PCP(ifp) = pkg_open( official_hostname, "mossfb", pkgswitch, fb_log )) < 0 ) {
-		fb_log(	"remote_device_open : can't connect to host \"%s\".\n",
+		fb_log(	"remote_dopen : can't connect to host \"%s\".\n",
 			official_hostname );
 		return	-1;
 	}
@@ -159,7 +159,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-remote_device_close( ifp )
+rem_dclose( ifp )
 FBIO	*ifp;
 {
 	int	ret;
@@ -172,7 +172,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-remote_device_clear( ifp, bgpp )
+rem_dclear( ifp, bgpp )
 FBIO	*ifp;
 Pixel	*bgpp;
 {
@@ -186,7 +186,7 @@ Pixel	*bgpp;
 }
 
 _LOCAL_ int
-remote_buffer_read( ifp, x, y, pixelp, num )
+rem_bread( ifp, x, y, pixelp, num )
 FBIO	*ifp;
 int	x, y;
 Pixel	*pixelp;
@@ -213,12 +213,12 @@ int	num;
 	if( ret == 0 )
 		pkg_waitfor( MSG_DATA, (char *) pixelp,	num*4, PCP(ifp) );
 	else
-		fb_log( "remote_buffer_read : read at <%d,%d> failed.\n", x, y );
+		fb_log( "remote_bread : read at <%d,%d> failed.\n", x, y );
 	return	ret;
 }
 
 _LOCAL_ int
-remote_buffer_write( ifp, x, y, pixelp, num )
+rem_bwrite( ifp, x, y, pixelp, num )
 FBIO	*ifp;
 int		x, y;
 Pixel		*pixelp;
@@ -247,7 +247,7 @@ int		num;
 }
 
 _LOCAL_ int
-remote_cmemory_addr( ifp, mode, x, y )
+rem_cmemory_addr( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -269,7 +269,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-remote_window_set( ifp, x, y )
+rem_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -288,7 +288,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-remote_zoom_set( ifp, x, y )
+rem_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -307,7 +307,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-remote_colormap_read( ifp, cmap )
+rem_cmread( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
@@ -320,7 +320,7 @@ ColorMap	*cmap;
 }
 
 _LOCAL_ int
-remote_colormap_write( ifp, cmap )
+rem_cmwrite( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
