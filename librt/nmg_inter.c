@@ -805,6 +805,11 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
  *  If vu lies between the two endpoints of eu, break eu and
  *  return the new edgeuse pointer.
  *
+ *  If an edgeuse vertex is joined with v2, v2 remains as the survivor,
+ *  as the caller is working on it explicitly, and the edgeuse vertices
+ *  are dealt with implicitly (by dereferencing the eu pointers).
+ *  Otherwise, we will invalidate our caller's v2 pointer.
+ *
  *  Note that no "intersection line" stuff is done, the goal here is
  *  just to get the edge appropriately broken.
  *
@@ -866,11 +871,11 @@ struct nmg_inter_struct	*is;
 		break;
 	case 1:
 		/* P is at A */
-		nmg_jv( v1a, v2 );
+		nmg_jv( v2, v1a );	/* v2 must be surviving vertex */
 		break;
 	case 2:
 		/* P is at B */
-		nmg_jv( v1b, v2 );
+		nmg_jv( v2, v1b );	/* v2 must be surviving vertex */
 		break;
 	case 3:
 		/* P is in the middle, break edge */
@@ -891,7 +896,7 @@ out:
  *
  *  Perform edge mutual breaking only on two colinear edgeuses.
  *  No intersect list stuff is performed.
- *  This can result in 2 new edgeuses showing up in either loop.
+ *  This can result in 2 new edgeuses showing up in either loop (case A & D).
  *
  *  Two colinear line segments (eu1 and eu2, or just "1" and "2" in the
  *  diagram) can overlap each other in one of 9 configurations,
