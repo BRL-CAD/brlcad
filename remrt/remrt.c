@@ -35,6 +35,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -145,8 +148,7 @@ int		benchmark = 0;
 int		rdebug;
 int		use_air = 0;
 
-/* struct rt_g	rt_g; */
-int	rt_g[128];		/* fool the loader */
+struct rt_g	rt_g;
 
 extern double	atof();
 
