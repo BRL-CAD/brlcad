@@ -391,9 +391,50 @@ struct soltab *stp;
 }
 
 int
-rt_hlf_class()
+rt_hlf_class( stp, min, max, tol )
+register CONST struct soltab	*stp;
+CONST vect_t			 min, max;
+CONST struct bn_tol		*tol;
 {
-	return(0);
+	register CONST struct half_specific *halfp =
+		(struct half_specific *)stp->st_specific;
+	int class;
+	fastf_t d;
+
+	if( halfp == HALF_NULL ) {
+		rt_log( "half(%s):  no data?\n", stp->st_name );
+		return 0;
+	}
+
+#define CHECK_PT( x, y, z ) \
+	d = (x)*halfp->half_eqn[0] + (y)*halfp->half_eqn[1] + (z)*halfp->half_eqn[2] - halfp->half_eqn[3]; \
+	if( d < -tol->dist ) { \
+		if( class == RT_CLASSIFY_OUTSIDE ) \
+			return RT_CLASSIFY_OVERLAPPING; \
+		else class = RT_CLASSIFY_INSIDE; \
+	} else if( d > tol->dist ) { \
+		if( class == RT_CLASSIFY_INSIDE ) \
+			return RT_CLASSIFY_OVERLAPPING; \
+		else class = RT_CLASSIFY_OUTSIDE; \
+	} else return RT_CLASSIFY_OVERLAPPING
+
+	class = 0;
+	CHECK_PT( min[X], min[Y], min[Z] );
+	CHECK_PT( min[X], min[Y], max[Z] );
+	CHECK_PT( min[X], max[Y], min[Z] );
+	CHECK_PT( min[X], max[Y], max[Z] );
+	CHECK_PT( max[X], min[Y], min[Z] );
+	CHECK_PT( max[X], min[Y], max[Z] );
+	CHECK_PT( max[X], max[Y], min[Z] );
+	CHECK_PT( max[X], max[Y], max[Z] );
+
+	if( class == 0 )
+		bu_log( "rt_hlf_class: error in implementation\
+min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
+			V3ARGS(min), V3ARGS(max), V3ARGS(halfp->half_eqn),
+			halfp->half_eqn[3]);
+	
+	return class;
 }
 
 /*
