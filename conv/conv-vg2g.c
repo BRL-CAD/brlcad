@@ -38,7 +38,7 @@ char *argv[];
 	double factor;
 
 	if( argc != 3 )  {
-		printf("Usage: cv file.vg file.g\n");
+		printf("Usage: conv-vg2g file.vg file.g\n");
 		exit(11);
 	}
 	if( (ifd = open( argv[1], 0 )) < 0 )  {
