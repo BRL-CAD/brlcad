@@ -57,6 +57,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "./debug.h"
 
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
@@ -3324,6 +3325,8 @@ CONST struct rt_tol	*tol;
 		rt_dist_pt3_pt3(v->vg_p->coord, hit_v->vg_p->coord),
 		rt_pt3_pt3_equal(v->vg_p->coord, hit_v->vg_p->coord, tol)
 	    );
+	if( rt_2line3_colinear( eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol ) )
+		rt_log("ERROR: eg1 and eg2 are colinear!\n");
 	rt_log("eg1: line/ vu dist=%g, hit dist=%g\n",
 		rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, v->vg_p->coord ),
 		rt_dist_line3_pt3( eg1->e_pt, eg1->e_dir, hit_v->vg_p->coord ) );
@@ -3446,6 +3449,10 @@ struct model		*m;		/* XXX */
 	RT_CK_TOL(tol);
 	NMG_CK_MODEL(m);
 
+	if( eg1 == eg2 || rt_2line3_colinear(
+	    eg1->e_pt, eg1->e_dir, eg2->e_pt, eg2->e_dir, 1e5, tol ) )
+		rt_bomb("nmg_isect_2eg() eg1 and eg2 are colinear\n");
+
 	/* XXX "without regard to complexity".  This is a slow algorithm. */
 	/* XXX Re-write once edge_g heads a lists of edges, rather than ->usage */
 
@@ -3463,6 +3470,61 @@ struct model		*m;		/* XXX */
 	}
 	nmg_tbl( &eu1_list, TBL_FREE, (long *)0 );
 	return hit_v;
+}
+
+/* XXX move to plane.c */
+/*
+ *			R T _ 2 L I N E 3 _ C O L I N E A R
+ *
+ *  Returns non-zero if the 3 lines are colinear to within tol->dist
+ *  over the given distance range.
+ *
+ *  Range should be at least one model diameter for most applications.
+ *  1e5 might be OK for a default for "vehicle sized" models.
+ *
+ *  The direction vectors do not need to be unit length.
+ */
+int
+rt_2line3_colinear( p1, d1, p2, d2, range, tol )
+CONST point_t		p1;
+CONST vect_t		d1;
+CONST point_t		p2;
+CONST vect_t		d2;
+double			range;
+CONST struct rt_tol	*tol;
+{
+	fastf_t		mag1;
+	fastf_t		mag2;
+	point_t		tail;
+
+	RT_CK_TOL(tol);
+
+	if( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  rt_bomb("rt_2line3_colinear() mag1 zero\n");
+	if( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  rt_bomb("rt_2line3_colinear() mag2 zero\n");
+
+	/* Impose a general angular tolerance to reject 
+	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
+	if( fabs(VDOT(d1, d2)) < 0.9 * mag1 * mag2  )  goto fail;
+
+	/* See if start points are within tolerance of other line */
+	if( rt_distsq_line3_pt3( p1, d1, p2 ) > tol->dist_sq )  goto fail;
+	if( rt_distsq_line3_pt3( p2, d2, p1 ) > tol->dist_sq )  goto fail;
+
+	VJOIN1( tail, p1, range/mag1, d1 );
+	if( rt_distsq_line3_pt3( p2, d2, tail ) > tol->dist_sq )  goto fail;
+
+	VJOIN1( tail, p2, range/mag2, d2 );
+	if( rt_distsq_line3_pt3( p1, d1, tail ) > tol->dist_sq )  goto fail;
+
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_2line3colinear(range=%g) ret=1\n",range);
+	}
+	return 1;
+fail:
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_2line3colinear(range=%g) ret=0\n",range);
+	}
+	return 0;
 }
 
 /*
@@ -3579,12 +3641,24 @@ colinear:
 		if( code == 0 )  {
 			/* Geometry says lines are colinear.  Egads!  This can't be! */
 			if( is->on_eg )  {
-				rt_bomb("nmg_isect_lien2_face2pNEW() edge_g not shared, geometry says lines are colinear.  Unresolvable inconsistency.\n");
+				rt_bomb("nmg_isect_line2_face2pNEW() edge_g not shared, geometry says lines are colinear.  Unresolvable inconsistency.\n");
 			}
 			/* on_eg wasn't set, use it and continue on */
 			rt_log("WARNING: setting on_eg and continuing.\n");
 			is->on_eg = (*eg1);
 			goto colinear;
+		}
+
+		/* Double check */
+		if( is->on_eg && rt_2line3_colinear(
+		    (*eg1)->e_pt, (*eg1)->e_dir,
+		    is->on_eg->e_pt, is->on_eg->e_dir, 1e5, &(is->tol) ) )  {
+			nmg_pr_eg(*eg1, 0);
+			nmg_pr_eg(is->on_eg, 0);
+			rt_log("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
+		    	/* XXX See if this helps. */
+		    	nmg_model_fuse( nmg_find_model(&fu1->l.magic), &(is->tol) );
+			rt_bomb("nmg_isect_line2_face2pNEW() eg1 colinear to on_eg?\n");
 		}
 
 		/* If on_eg was specified, do a topology search */
