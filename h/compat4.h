@@ -249,7 +249,6 @@ extern "C" {
  *  Again in source file order.
  */
 
-#if 0
 /* complex.c */
 #define complex			bn_complex_t	/* typedef */
 #define	CxCopy			bn_cx_copy
@@ -270,7 +269,6 @@ extern "C" {
 #define CxSqrt( cp )		bn_cx_sqrt( cp, cp )
 
 
-#endif
 
 #ifdef __cplusplus
 }
