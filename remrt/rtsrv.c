@@ -166,6 +166,7 @@ char **argv;
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
 
 	control_host = argv[1];
 	tcp_port = argv[2];
@@ -255,17 +256,38 @@ char **argv;
 	for(;;)  {
 		register struct list	*lp;
 
+		/* First, process any packages in library buffers */
+		if( pkg_process( pcsrv ) < 0 )  {
+			rt_log("pkg_get error\n");
+			break;
+		}
+
+		/* Second, see if any input to read */
 		ibits = 1 << pcsrv->pkc_fd;
 		/* Use library routine from libsysv */
 		ibits = bsdselect( ibits, 
 			WorkHead.li_forw != &WorkHead ? 0 : 9999,
 			0 );
 		if( ibits )  {
-			if( pkg_get(pcsrv) < 0 )
+			n = pkg_suckin(pcsrv);
+			if( n < 0 )  {
+				rt_log("pkg_suckin error\n");
 				break;
+			} else if( n == 0 )  {
+				/* EOF detected */
+				break;
+			} else {
+				/* All is well */
+			}
 		}
 
-		/* More work may have just arrived, check queue */
+		/* Third, process any new packages in library buffers */
+		if( pkg_process( pcsrv ) < 0 )  {
+			rt_log("pkg_get error\n");
+			break;
+		}
+
+		/* Finally, more work may have just arrived, check our list */
 		if( (lp = WorkHead.li_forw) != &WorkHead )  {
 
 			DEQUEUE_LIST( lp );
