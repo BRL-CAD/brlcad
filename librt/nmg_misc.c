@@ -1480,8 +1480,7 @@ struct loopuse *lu;
 		rt_log( "nmg_move_lu_between_fus( dest=x%x, src=x%x, lu=x%x)\n", dest, src, lu );
 		if( src_is_empty )
 			rt_bomb( "\tsrc faceuse contains only lu, but src->fumate_p has more!!\n" );
-		else
-			rt_bomb( "\tsrc->fumate_p faceuse contains only lu->lumate_p, but src has more!!\n" );
+		rt_bomb( "\tsrc->fumate_p faceuse contains only lu->lumate_p, but src has more!!\n" );
 	}
 
 	/* add lu to dest faceuse */
