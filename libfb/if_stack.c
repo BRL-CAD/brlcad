@@ -126,7 +126,7 @@ int	width, height;
 	ifp->if_width = ifp->if_max_width;
 	ifp->if_height = ifp->if_max_height;
 	i = 0;
-	while( i < MAXIF && *cp != NULL ) {
+	while( i < MAXIF && *cp != '\0' ) {
 		register char	*dp;
 		register FBIO	*fbp;
 
