@@ -221,7 +221,7 @@ proc init_Raytrace { id } {
     pack $top.gridF2 $top.gridF3 $top.gridF4 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
 
-    bind $top.colorE <Return> "rt_set_colorMB $id"
+    bind $top.colorE <Return> "rt_set_colorMB $id; break"
     rt_set_colorMB $id
     update_Raytrace $id
 

@@ -76,9 +76,9 @@ proc ia_help { parent screen cmds } {
     }
 
 #    bind $w.l <Button-1> "mged_help %W $w.u $screen"
-    bind $w.l <Button-1> "handle_select %W %y; mged_help %W $w.u $screen"
-    bind $w.l <Button-2> "handle_select %W %y; mged_help %W $w.u $screen"
-    bind $w.l <Return> "mged_help %W $w.u $screen"
+    bind $w.l <Button-1> "handle_select %W %y; mged_help %W $w.u $screen; break"
+    bind $w.l <Button-2> "handle_select %W %y; mged_help %W $w.u $screen; break"
+    bind $w.l <Return> "mged_help %W $w.u $screen; break"
 }
 
 proc handle_select { w y } {

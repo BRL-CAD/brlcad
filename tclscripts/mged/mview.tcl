@@ -230,10 +230,10 @@ proc setupmv { id } {
     wm geometry $mged_top($id) $width\x$height
 #    setmv $id
 
-#    bind $mged_top($id).ul m "togglemv $id"
-#    bind $mged_top($id).ur m "togglemv $id"
-#    bind $mged_top($id).ll m "togglemv $id"
-#    bind $mged_top($id).lr m "togglemv $id"
+#    bind $mged_top($id).ul m "togglemv $id; break"
+#    bind $mged_top($id).ur m "togglemv $id; break"
+#    bind $mged_top($id).ll m "togglemv $id; break"
+#    bind $mged_top($id).lr m "togglemv $id; break"
 }
 
 proc set_default_views { id } {

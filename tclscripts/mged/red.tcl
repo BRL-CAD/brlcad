@@ -205,10 +205,10 @@ proc init_red { id } {
     grid rowconfigure $top 2 -weight 1
     grid columnconfigure $top 0 -weight 1
 
-    bind $top.colorE <Return> "red_set_colorMB $id"
+    bind $top.colorE <Return> "red_set_colorMB $id; break"
     red_set_colorMB $id
 
-    bind $top.nameE <Return> "red_load_defaults $id"
+    bind $top.nameE <Return> "red_load_defaults $id; break"
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]

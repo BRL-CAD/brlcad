@@ -213,10 +213,10 @@ proc init_comb { id } {
     grid rowconfigure $top 2 -weight 1
     grid columnconfigure $top 0 -weight 1
 
-    bind $top.colorE <Return> "comb_set_colorMB $id"
+    bind $top.colorE <Return> "comb_set_colorMB $id; break"
     comb_set_colorMB $id
 
-    bind $top.nameE <Return> "comb_load_defaults $id"
+    bind $top.nameE <Return> "comb_load_defaults $id; break"
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]

@@ -51,7 +51,7 @@ proc init_solid_create { id type } {
     grid columnconfigure $top 1 -weight 1
     grid columnconfigure $top 3 -weight 1
 
-    bind $top <Return> "make_solid $id $top $type"
+    bind $top <Return> "make_solid $id $top $type; break"
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]

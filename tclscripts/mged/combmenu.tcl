@@ -116,14 +116,14 @@ proc build_comb_menu { id combs } {
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
-	    matrix_illum \$spath \$path_pos"
+	    matrix_illum \$spath \$path_pos; break"
     bind_listbox $top "<Double-1>"\
 	    "set comb_name($id) \[%W get @%x,%y\];\
 	    comb_load_defaults $id;\
-	    destroy $top"
+	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
-	    _mged_press reject"
+	    _mged_press reject; break"
 }
 
 proc build_comb_list { paths } {

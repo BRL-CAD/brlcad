@@ -65,13 +65,15 @@ proc eobjmenu {} {
 	    destroy .om
 	    delete_procs illum
 	}
+	break
     }
-    bind .om.meat.objects <ButtonPress-1> {illum 1}
-    bind .om.meat.objects <ButtonRelease-1> {set omready 1}
-    bind .om.meat.objects <ButtonPress-2> {illum 0}
+    bind .om.meat.objects <ButtonPress-1> {illum 1; break}
+    bind .om.meat.objects <ButtonRelease-1> {set omready 1; break}
+    bind .om.meat.objects <ButtonPress-2> {illum 0; break}
     bind .om.meat.objects <ButtonRelease-2> {
 	.om.meat.objects selection clear 0 end
 	_mged_press reject
+	break
     }
     .om.meat.objects configure -width 0
     scrollbar .om.meat.slider -command ".om.meat.objects yview"

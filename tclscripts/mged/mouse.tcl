@@ -51,12 +51,12 @@ proc mouse_get_spath { x y } {
 
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[get_listbox_entry %W %x %y\];\
-	    solid_illum \$item"
+	    solid_illum \$item; break"
     bind_listbox $top "<Double-1>"\
 	    "set mgs_spath \[get_listbox_entry %W %x %y\];\
-	    destroy $top"
+	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end; _mged_press reject"
+	    "%W selection clear 0 end; _mged_press reject; break"
 
     while {$mgs_spath == ""} {
 	mged_update
@@ -97,12 +97,12 @@ proc mouse_get_spath_and_pos { x y } {
 	    "set item \[%W index @%x,%y\];\
 	    _mged_press oill;\
 	    _mged_ill \$mgsp_spath;\
-	    _mged_matpick -n \$item"
+	    _mged_matpick -n \$item; break"
     bind_listbox $top "<Double-1>"\
 	    "set mgsp_path_pos \[%W index @%x,%y\];\
-	    destroy $top"
+	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
-	    "%W selection clear 0 end; _mged_press reject"
+	    "%W selection clear 0 end; _mged_press reject; break"
 
     while {$mgsp_path_pos == -1} {
 	mged_update
@@ -160,13 +160,13 @@ proc mouse_get_comb { x y } {
 	    "set comb \[%W get @%x,%y\];\
 	    set spath \[comb_get_solid_path \$comb\];\
 	    set path_pos \[comb_get_path_pos \$spath \$comb\];\
-	    matrix_illum \$spath \$path_pos"
+	    matrix_illum \$spath \$path_pos; break"
     bind_listbox $top "<Double-1>"\
 	    "set mgc_comb \[%W get @%x,%y\];\
-	    destroy $top"
+	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
-	    _mged_press reject"
+	    _mged_press reject; break"
 
     while {$mgc_comb == ""} {
 	mged_update

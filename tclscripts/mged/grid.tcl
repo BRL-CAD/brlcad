@@ -223,7 +223,7 @@ proc do_grid_color { id } {
 
     grid columnconfigure $top 0 -weight 1
 
-    bind $top.colorE <Return> "grid_control_set_colorMB $id $top"
+    bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
 
     winset $mged_active_dm($id)
     set grid_control_color($id) $grid_color
@@ -470,7 +470,7 @@ proc init_grid_control { id } {
     grid columnconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -minsize 400
 
-    bind $top.colorE <Return> "grid_control_set_colorMB $id $top"
+    bind $top.colorE <Return> "grid_control_set_colorMB $id $top; break"
 
     grid_control_load $id $top
     grid_control_set_colorMB $id $top

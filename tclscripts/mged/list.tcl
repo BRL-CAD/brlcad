@@ -37,7 +37,7 @@ proc create_listbox { top screen type items abort_cmd } {
 }
 
 proc bind_listbox { top event action } {
-    bind $top.listbox $event $action
+    bind $top.listbox $event "$action; break"
 }
 
 proc get_listbox_entry { w x y } {

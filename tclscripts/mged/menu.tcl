@@ -69,8 +69,8 @@ proc mmenu_init { id } {
 	listbox $w.f$i.l -bd 2 -exportselection false
         pack $w.f$i.l -side left -fill both -expand yes
 
-	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W"
-	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W"
+	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W; break"
+	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W; break"
 
 	mmenu_set $w $id $i $menu
 
@@ -110,8 +110,8 @@ proc reconfig_mmenu { id } {
 	listbox $w.f$i.l -bd 2 -exportselection false
         pack $w.f$i.l -side left -fill both -expand yes
 
-	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W"
-	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W"
+	bind $w.f$i.l <Button-1> "handle_select %W %y; mged_press $id %W; break"
+	bind $w.f$i.l <Button-2> "handle_select %W %y; mged_press $id %W; break"
 
 	mmenu_set $w $id $i $menu
 

@@ -145,21 +145,21 @@ proc build_solid_menu { type id paths } {
 	s {
 	    bind_listbox $top "<ButtonPress-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item"
+		    solid_illum \$item; break"
 	    bind_listbox $top "<Double-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
 		    _mged_press sill;\
 		    _mged_ill \$item;\
-		    destroy $top"
+		    destroy $top; break"
 	}
 	o {
 	    bind_listbox $top "<ButtonPress-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
-		    solid_illum \$item"
+		    solid_illum \$item; break"
 	    bind_listbox $top "<Double-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
 		    build_matrix_menu $id \$item;\
-		    destroy $top"
+		    destroy $top; break"
 	}
 	default {
 	    destroy $top
@@ -167,7 +167,7 @@ proc build_solid_menu { type id paths } {
 	}
     }
 
-    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject"
+    bind_listbox $top "<ButtonRelease-1>" "%W selection clear 0 end; _mged_press reject; break"
 }
 
 proc build_matrix_menu { id path } {
@@ -198,14 +198,14 @@ proc build_matrix_menu { id path } {
 
     bind_listbox $top "<ButtonPress-1>"\
 	    "set path_pos \[%W index @%x,%y\];\
-	    matrix_illum $path \$path_pos"
+	    matrix_illum $path \$path_pos; break"
     bind_listbox $top "<Double-1>"\
 	    "set path_pos \[%W index @%x,%y\];\
 	    _mged_press oill;\
 	    _mged_ill $path;\
 	    _mged_matpick \$path_pos;\
-	    destroy $top"
+	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\
-	    _mged_press reject"
+	    _mged_press reject; break"
 }

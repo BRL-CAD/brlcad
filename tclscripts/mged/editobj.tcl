@@ -68,7 +68,7 @@ proc editobj { id oname } {
 			[lindex [lindex $vals [expr $i+1]] $num]
 		set eofin$oname [eval concat \[set eofin$oname\] \
 			\\\[.eo$oname.t.r.f$attr.e$num get\\\]]
-		bind .eo$oname.t.r.f$attr.e$num <Key-Return> "eoapply $oname"
+		bind .eo$oname.t.r.f$attr.e$num <Key-Return> "eoapply $oname; break"
 	    }
 	}
 

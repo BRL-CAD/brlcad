@@ -89,7 +89,7 @@ proc icreate { id args } {
     label $w.t.l.type     -text "Prototype"
     label $w.t.l.comb     -text "Comb to add to"
     label $w.t.l.ref      -text "Reference path" -relief raised -bd 1
-    bind $w.t.l.ref <1> "ic_reflist $w $id"
+    bind $w.t.l.ref <1> "ic_reflist $w $id; break"
 
     pack $w.t.l.format $w.t.l.indexvar $w.t.l.index $w.t.l.oper $w.t.l.type \
 	    $w.t.l.comb $w.t.l.ref -side top -fill y -expand yes -anchor w
@@ -120,8 +120,8 @@ proc icreate { id args } {
     entry $w.t.r.comb     -relief sunken -width 16 -textvar ic($w,comb)
     entry $w.t.r.ref      -relief sunken -width 12 -textvar ic($w,ref)
 
-    bind $w.t.r.indexvar <Key-Return> "ic_newvar $w"
-    bind $w.t.r.index    <Key-Return> "set \$ic($w,indexvar) \$ic($w,index)"
+    bind $w.t.r.indexvar <Key-Return> "ic_newvar $w; break"
+    bind $w.t.r.index    <Key-Return> "set \$ic($w,indexvar) \$ic($w,index); break"
 
     pack $w.t.r.format $w.t.r.indexvar $w.t.r.index $w.t.r.oper $w.t.r.type \
 	    $w.t.r.comb $w.t.r.ref -side top -fill x -expand yes
@@ -228,7 +228,7 @@ proc ic_reflist { w id } {
 	$w.ref.lbox insert end $solid
     }
 
-    bind $w.ref.lbox <Double-Button-1> "set ic($w,ref) \[selection get\]"
+    bind $w.ref.lbox <Double-Button-1> "set ic($w,ref) \[selection get\]; break"
 
     button $w.ref.dismiss -text "Dismiss" -command "destroy $w.ref"
 
