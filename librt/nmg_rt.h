@@ -153,7 +153,7 @@ struct ray_data {
 	/* plane_pt is the intercept point of the ray with the plane of the
 	 * face.
 	 */
-	pointp_t	plane_pt;	/* ray/plane(face) intercept point */
+	point_t	plane_pt;	/* ray/plane(face) intercept point */
 
 	/* ray_dist_to_plane is the parametric distance along the ray from
 	 * the ray origin (rd->rp->r_pt) to the ray/plane intercept point
