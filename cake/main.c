@@ -67,7 +67,9 @@ char	cakeflagbuf[MAXSIZE];
 char	*cppargv[MAXARGS];
 int	cppargc = 0;
 
+#if defined(YACC_DEBUG)
 extern	int	yydebug;
+#endif
 
 extern	void	statistics();
 
@@ -119,10 +121,12 @@ reg	int	base;
 				lexdebug   = TRUE;
 				break;
 		
+#if defined(YACC_DEBUG)
 		case 'Y':	cdebug(" -Y");
 				yydebug    = TRUE;
 				break;
-#endif
+#endif /* YACC_DEBUG */
+#endif /* CAKEDEBUG */
 		case 'G':	cdebug(" -G");
 				Gflag = TRUE;
 				break;
@@ -391,7 +395,9 @@ char	**argv;
 	signal(SIGPIPE, cake_abort);
 	signal(SIGALRM, cake_abort);
 
+#if defined(YACC_DEBUG)
 	yydebug = FALSE;
+#endif
 	active_procs = makelist0();
 
 	if (rindex(argv[0], 'f') != NULL
