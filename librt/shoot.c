@@ -964,6 +964,8 @@ start_cell:
 				}
 
 				/* Allow solid to shoot all pieces at once */
+				if(debug_shoot)bu_log("shooting %s pieces\n", stp->st_name);
+				resp->re_piece_shots++;
 				BU_LIST_INIT( &(new_segs.l) );
 
 				if( rt_functab[stp->st_id].ft_piece_shot(
@@ -1485,13 +1487,13 @@ register struct resource	*resp;
 	rtip->rti_nrays += resp->re_nshootray;
 	rtip->nmiss_model += resp->re_nmiss_model;
 
-	rtip->nshots += resp->re_shots;
-	rtip->nhits += resp->re_shot_hit;
-	rtip->nmiss += resp->re_shot_miss;
+	rtip->nshots += resp->re_shots + resp->re_piece_shots;
+	rtip->nhits += resp->re_shot_hit + resp->re_piece_shot_hit;
+	rtip->nmiss += resp->re_shot_miss + resp->re_piece_shot_miss;
 
 	rtip->nmiss_solid += resp->re_prune_solrpp;
 
-	rtip->ndup += resp->re_ndup;
+	rtip->ndup += resp->re_ndup + resp->re_piece_ndup;
 	rtip->nempty_cells += resp->re_nempty_cells;
 
 	/* Zero out resource totals, so repeated calls are not harmful */
@@ -1506,6 +1508,11 @@ register struct resource	*resp;
 
 	resp->re_ndup = 0;
 	resp->re_nempty_cells = 0;
+
+	resp->re_piece_shots = 0;
+	resp->re_piece_shot_hit = 0;
+	resp->re_piece_shot_miss = 0;
+	resp->re_piece_ndup = 0;
 }
 
 /*

@@ -682,7 +682,6 @@ struct seg		*seghead;
 struct resource		*resp;
 {
 	long		*sol_piece_subscr_p;
-	CONST int	debug_shoot = rt_g.debug & DEBUG_SHOOT;
 	struct soltab	*stp;
 	long		piecenum;
 	LOCAL struct hit hits[MAXHITS];
@@ -724,9 +723,6 @@ struct resource		*resp;
 
 		/* Shoot a ray */
 		BU_BITSET( psp->shot, piecenum );
-
-		if(debug_shoot)bu_log("shooting %s piece %d\n", stp->st_name, piecenum );
-		resp->re_piece_shots++;
 
 		/* Now intersect with each piece */
 		trip = bot->bot_facearray[piecenum];
