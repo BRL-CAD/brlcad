@@ -47,10 +47,10 @@
 
 */
 
-#define X_DBG	0
+#define X_DBG	1
 #define UPD_DBG 0
 #define BLIT_DBG 0
-#define EVENT_DBG 0
+#define EVENT_DBG 1
 
 #define HAVE_MMAP 1
 
@@ -144,7 +144,7 @@ FBIO X24_interface =  {
 	"24 bit X Window System (X11)",	/* device description	*/
 	2048,			/* max width		*/
 	2048,			/* max height		*/
-	"/dev/X24",		/* short device name	*/
+	"/dev/X",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
 	-1,			/* select file desc	*/
@@ -272,7 +272,7 @@ char	*file;
 int	width, height;
 {
 	struct xinfo *xi;
-
+	int ret;
 	int mode;			/* local copy */
 
 #if X_DBG
@@ -286,7 +286,7 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 	/*
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number" or flags.
-	 *  file = "/dev/X24###"
+	 *  file = "/dev/X###"
 	 *  The default mode is zero.
 	 */
 	if (file != NULL)  {
@@ -299,12 +299,15 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 		if (strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 			/* How did this happen?? */
 			mode = 0;
+#if X_DBG
+printf("X24_open(ifp:0x%x, file:%s): if_name:%s, mismatch.\n", file, ifp->if_name);
+#endif
 		}
 		else {
 			/* Parse the options */
 			alpha = 0;
 			mp = &modebuf[0];
-			cp = &file[8];
+			cp = &file[sizeof("/dev/X")-1];
 			while(*cp != '\0' && !isspace(*cp)) {
 				*mp++ = *cp;	/* copy it to buffer */
 				if (isdigit(*cp)) {
@@ -328,6 +331,10 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 				mode = atoi(modebuf);
 		}
 	}
+
+#if X_DBG
+printf("X24_open() mode:0x%x\n", mode);
+#endif
 
 	/* Just zap the shared memory and exit */
 	if ((mode & MODE11_MASK) == MODE11_ZAP) {
@@ -380,9 +387,32 @@ printf("X24_open(ifp:0x%x, file:%s width:%d, height:%d): entered.\n",
 
 	/* Set up an X window, graphics context, etc. */
 
-	if (xsetup(ifp, width, height) < 0) {
+	if ((ret = xsetup(ifp, width, height)) < 0) {
+		fb_log("if_X24: Can't get 24 bit Visual on X display \"%s\"\n",
+		       XDisplayName(NULL));
 		X24_destroy(xi);
 		return(-1);
+	}
+	if (ret == 0 )  {
+		/* xsetup unable to get 24-bit visual. */
+		extern FBIO X_interface;	/* from if_X.c */
+		char	*nametemp;
+
+		fb_log("if_X24: Can't get 24 bit Visual on X display \"%s\", trying 8/1-bit code\n",
+		       XDisplayName(NULL));
+		X24_destroy(xi);
+
+		/* Let if_X take a crack at it */
+		nametemp = ifp->if_name;
+		*ifp = X_interface;	/* struct copy */
+		ifp->if_name = nametemp;
+		ifp->if_magic = FB_MAGIC;
+
+		return X_interface.if_open( ifp, nametemp, width, height );
+		/*
+		 * Because function ptrs in 'ifp' were changed,
+		 * no further calls will be made on if_X24.c.
+		 */
 	}
 
 	/* Allocate the image buffer */
@@ -423,6 +453,10 @@ X24_close(ifp)
 FBIO	*ifp;
 {
 	struct xinfo *xi = XI(ifp);
+
+#if X_DBG
+printf("X24_close(ifp:0x%x): entered.\n", ifp);
+#endif
 
 	XFlush(xi->xi_dpy);
 	if ((xi->xi_mode & MODE1_MASK) == MODE1_LINGERING) {
@@ -1039,6 +1073,14 @@ printf("X24_help(ifp:0x%x) entered\n", ifp);
 }
 
 
+/*
+ *			X S E T U P
+ *
+ *  Returns -
+ *	1	OK, using 24-bit X support in this file
+ *	0	OK, except couldn't get 24-bit visual.
+ *	-1	fatal error
+ */
 static
 xsetup(ifp, width, height)
 FBIO	*ifp;
@@ -1090,10 +1132,7 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 	    &visinfo)) {
 		/* Nothing to do */
 	} else {
-		fb_log("if_X24: Can't get 24 bit Visual on X display \"%s\"\n",
-		       XDisplayName(NULL));
-		XCloseDisplay(xi->xi_dpy);
-		return (-1);
+		return 0;	/* unable to get 24-bit visual */
 	}
 	xi->xi_visual = visinfo.visual;
 
@@ -1217,7 +1256,7 @@ printf("Creating window\n");
 	XFlush(xi->xi_dpy);
 
 
-	return (0);
+	return 1;	/* OK, using if_X24 */
 }
 
 static int alive = 1;
@@ -1231,6 +1270,10 @@ FBIO	*ifp;
 
 	if (fork() != 0)
 		return 1;	/* release the parent */
+
+#if X_DBG
+printf("X24 linger(ifp:0x%x): entered.\n", ifp);
+#endif
 
 	while(alive) {
 		XNextEvent(xi->xi_dpy, &event);
