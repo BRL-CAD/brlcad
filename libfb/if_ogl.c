@@ -1744,6 +1744,7 @@ ogl_help( ifp )
 FBIO	*ifp;
 {
 	struct	modeflags *mfp;
+	XVisualInfo *visual = OGL(ifp)->vip;
 
 	fb_log( "Description: %s\n", ifp->if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
@@ -1758,7 +1759,50 @@ FBIO	*ifp;
 		fb_log( "   %c   %s\n", mfp->c, mfp->help );
 	}
 
-	return(0);
+	fb_log( "\nCurrent internal state:\n");
+	fb_log( "	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer );
+	fb_log( "	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag );
+	fb_log( "	ogl_nwindows=%d\n", ogl_nwindows );
+	fb_log( "	multiple_windows=%d\n", multiple_windows );
+
+	fb_log("X11 Visual:\n");
+
+	switch(visual->class) {
+	case DirectColor:
+		fb_log("\tDirectColor: Alterable RGB maps, pixel RGB subfield indicies\n");
+		fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
+		       visual->green_mask, visual->blue_mask);
+		break;
+	case TrueColor:
+		fb_log("\tTrueColor: Fixed RGB maps, pixel RGB subfield indicies\n");
+		fb_log("\tRGB Masks: 0x%x 0x%x 0x%x\n", visual->red_mask,
+		       visual->green_mask, visual->blue_mask);
+		break;
+	case PseudoColor:
+		fb_log("\tPseudoColor: Alterable RGB maps, single index\n");
+		break;
+	case StaticColor:
+		fb_log("\tStaticColor: Fixed RGB maps, single index\n");
+		break;
+	case GrayScale:
+		fb_log("\tGrayScale: Alterable map (R=G=B), single index\n");
+		break;
+	case StaticGray:
+		fb_log("\tStaticGray: Fixed map (R=G=B), single index\n");
+		break;
+	default:
+		fb_log("\tUnknown visual class %d\n",
+		       visual->class);
+		break;
+	}
+	fb_log("\tColormap Size: %d\n", visual->colormap_size);
+	fb_log("\tBits per RGB: %d\n", visual->bits_per_rgb);
+	fb_log("\tscreen: %d\n", visual->screen);
+	fb_log("\tdepth (total bits per pixel): %d\n", visual->depth);
+	if( visual->depth < 24 )
+		fb_log("\tWARNING: unable to obtain full 24-bits of color, image will be quantized.\n");
+
+	return 0;
 }
 
 
@@ -1792,10 +1836,10 @@ int	xorig, yorig;
 			new_bitmap, &curs_color, &curs_color, 
 			xorig, ybits-yorig-1);
 	XFreePixmap(OGL(ifp)->dispp,new_bitmap);
-	if(CJDEBUG) printf("setcursor: id %d\ton %d\n",new_cursor, SGI(ifp)->mi_curs_on);
+	if(CJDEBUG) fb_log("setcursor: id %d\ton %d\n",new_cursor, SGI(ifp)->mi_curs_on);
 	if ( new_cursor) {
 		if (SGI(ifp)->mi_curs_on){
-			if(CJDEBUG) printf("New cursor defined: %d\n", new_cursor);
+			if(CJDEBUG) fb_log("New cursor defined: %d\n", new_cursor);
 			XDefineCursor(OGL(ifp)->dispp,OGL(ifp)->wind,new_cursor);
 		}
 		XFreeCursor(OGL(ifp)->dispp,OGL(ifp)->cursor);
@@ -1965,7 +2009,7 @@ XEvent *eventPtr;
 	XWindowAttributes xwa;
 	struct ogl_clip *clp;
 
-	if( CJDEBUG ) printf("entering expose_callback()\n");
+	if( CJDEBUG ) fb_log("entering expose_callback()\n");
 
 
 	if( multiple_windows || OGL(ifp)->firstTime ) {
@@ -2075,13 +2119,13 @@ XEvent *eventPtr;
 		glGetIntegerv(GL_VIEWPORT, view);
 		glGetIntegerv(GL_DOUBLEBUFFER,&dbb);
 		glGetIntegerv(GL_DRAW_BUFFER,&db);
-		printf("Viewport: x %d y %d width %d height %d\n",view[0],
+		fb_log("Viewport: x %d y %d width %d height %d\n",view[0],
 		       view[1],view[2],view[3]);
-		printf("expose: double buffered: %d, draw buffer %d\n",dbb,db);
-		printf("front %d\tback%d\n",GL_FRONT,GL_BACK);
+		fb_log("expose: double buffered: %d, draw buffer %d\n",dbb,db);
+		fb_log("front %d\tback%d\n",GL_FRONT,GL_BACK);
 		glGetIntegerv(GL_STEREO,&getster);
 		glGetIntegerv(GL_AUX_BUFFERS,&getaux);
-		printf("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
+		fb_log("double %d, stereo %d, aux %d\n",dbb,getster,getaux);
 	}
 
 	if( multiple_windows ) {
@@ -2145,7 +2189,7 @@ int ybits;
 	if( ( xbytes = xbits/8 ) * 8 != xbits)
 		xbytes++;
 
-	if(CJDEBUG) printf("cursor: xbits %d, ybits %d, xbytes %d\n",xbits,ybits,xbytes);
+	if(CJDEBUG) fb_log("cursor: xbits %d, ybits %d, xbytes %d\n",xbits,ybits,xbytes);
 
 	if (xbytes*ybits > MAX_CURS_BYTES) {
 		fb_log("make_bitmap: cursor %d bits by %d bits too large\n", xbits, ybits);
