@@ -100,6 +100,7 @@ static int wdb_tree_tcl();
 static int wdb_color_tcl();
 static int wdb_prcolor_tcl();
 static int wdb_tol_tcl();
+static int wdb_push_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -114,6 +115,7 @@ void wdb_vls_line_dpp();
 void wdb_do_list();
 struct directory ** wdb_getspace();
 struct directory *wdb_combadd();
+void wdb_identitize();
 
 static struct bu_cmdtab wdb_cmds[] = {
 	"match",	wdb_match_tcl,
@@ -151,10 +153,9 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"color",	wdb_color_tcl,
 	"prcolor",	wdb_prcolor_tcl,
 	"tol",		wdb_tol_tcl,
+	"push",		wdb_push_tcl,
 #if 0
 	"analyze",	wdb_analyze_tcl,
-	"push",		wdb_push_tcl,
-	"xpush",	wdb_xpush_tcl,
 	"keep",		wdb_keep_tcl,
 	"inside",	wdb_inside_tcl,
 	"cat",		wdb_cat_tcl,
@@ -3435,6 +3436,299 @@ wdb_tol_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+/* structure to hold all solids that have been pushed. */
+struct wdb_push_id {
+	long	magic;
+	struct wdb_push_id *forw, *back;
+	struct directory *pi_dir;
+	mat_t	pi_mat;
+};
+
+#define WDB_MAGIC_PUSH_ID	0x50495323
+#define FOR_ALL_WDB_PUSH_SOLIDS(_p,_phead) \
+	for(_p=_phead.forw; _p!=&_phead; _p=_p->forw)
+struct wdb_push_data {
+	Tcl_Interp		*interp;
+	struct wdb_push_id	pi_head;
+	int			push_error;
+};
+
+/*
+ *		P U S H _ L E A F
+ *
+ * This routine must be prepared to run in parallel.
+ *
+ * This routine is called once for eas leaf (solid) that is to
+ * be pushed.  All it does is build at push_id linked list.  The 
+ * linked list could be handled by bu_list macros but it is simple
+ * enough to do hear with out them.
+ */
+static union tree *
+wdb_push_leaf(tsp, pathp, ep, id, client_data)
+     struct db_tree_state	*tsp;
+     struct db_full_path	*pathp;
+     struct bu_external	*ep;
+     int			id;
+     genptr_t		client_data;
+{
+	union tree	*curtree;
+	struct directory *dp;
+	register struct wdb_push_id *pip;
+	struct wdb_push_data *wpdp = (struct wdb_push_data *)client_data;
+
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	BN_CK_TOL(tsp->ts_tol);
+
+	dp = pathp->fp_names[pathp->fp_len-1];
+
+	if (rt_g.debug&DEBUG_TREEWALK) {
+		char *sofar = db_path_to_string(pathp);
+
+		Tcl_AppendResult(wpdp->interp, "wdb_push_leaf(", rt_functab[id].ft_name,
+				 ") path='", sofar, "'\n", (char *)NULL);
+		bu_free((genptr_t)sofar, "path string");
+	}
+/*
+ * XXX - This will work but is not the best method.  dp->d_uses tells us
+ * if this solid (leaf) has been seen before.  If it hasn't just add
+ * it to the list.  If it has, search the list to see if the matricies
+ * match and do the "right" thing.
+ *
+ * (There is a question as to whether dp->d_uses is reset to zero
+ *  for each tree walk.  If it is not, then d_uses is NOT a safe
+ *  way to check and this method will always work.)
+ */
+	bu_semaphore_acquire((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	FOR_ALL_WDB_PUSH_SOLIDS(pip,wpdp->pi_head) {
+		if (pip->pi_dir == dp ) {
+			if (!bn_mat_is_equal(pip->pi_mat,
+					     tsp->ts_mat, tsp->ts_tol)) {
+				char *sofar = db_path_to_string(pathp);
+
+				Tcl_AppendResult(wpdp->interp, "wdb_push_leaf: matrix mismatch between '", sofar,
+						 "' and prior reference.\n", (char *)NULL);
+				bu_free((genptr_t)sofar, "path string");
+				wpdp->push_error = 1;
+			}
+
+			bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+			BU_GETUNION(curtree, tree);
+			curtree->magic = RT_TREE_MAGIC;
+			curtree->tr_op = OP_NOP;
+			return curtree;
+		}
+	}
+/*
+ * This is the first time we have seen this solid.
+ */
+	pip = (struct wdb_push_id *) bu_malloc(sizeof(struct wdb_push_id), "Push ident");
+	pip->magic = WDB_MAGIC_PUSH_ID;
+	pip->pi_dir = dp;
+	bn_mat_copy(pip->pi_mat, tsp->ts_mat);
+	pip->back = wpdp->pi_head.back;
+	wpdp->pi_head.back = pip;
+	pip->forw = &wpdp->pi_head;
+	pip->back->forw = pip;
+	bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	BU_GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
+	curtree->tr_op = OP_NOP;
+	return curtree;
+}
+/*
+ * A null routine that does nothing.
+ */
+static union tree *
+wdb_push_region_end( tsp, pathp, curtree, client_data)
+     register struct db_tree_state *tsp;
+     struct db_full_path	*pathp;
+     union tree		*curtree;
+     genptr_t		client_data;
+{
+	return curtree;
+}
+
+/*
+ * The push command is used to move matrices from combinations 
+ * down to the solids. At some point, it is worth while thinking
+ * about adding a limit to have the push go only N levels down.
+ *
+ * the -d flag turns on the treewalker debugging output.
+ * the -P flag allows for multi-processor tree walking (not useful)
+ *
+ * Usage:
+ *        procname push object(s)
+ */
+static int
+wdb_push_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	struct wdb_push_data *wpdp;
+	struct wdb_push_id *pip;
+	struct bu_external	es_ext;
+	struct rt_db_internal	es_int;
+	int	i;
+	int	id;
+	int	ncpu;
+	int	c;
+	int	old_debug;
+	int	push_error;
+	extern 	int bu_optind;
+	extern	char *bu_optarg;
+
+	if (wdbp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_push");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	RT_CHECK_DBI(wdbp->dbip);
+
+	BU_GETSTRUCT(wpdp,wdb_push_data);
+	wpdp->interp = interp;
+	wpdp->push_error = 0;
+	wpdp->pi_head.magic = WDB_MAGIC_PUSH_ID;
+	wpdp->pi_head.forw = wpdp->pi_head.back = &wpdp->pi_head;
+	wpdp->pi_head.pi_dir = (struct directory *) 0;
+
+	old_debug = rt_g.debug;
+
+	/* Initial values for options, must be reset each time */
+	ncpu = 1;
+
+	/* Parse options */
+	bu_optind = 2;	/* re-init bu_getopt() */
+	while ((c=bu_getopt(argc, argv, "P:d")) != EOF) {
+		switch (c) {
+		case 'P':
+			ncpu = atoi(bu_optarg);
+			if (ncpu<1) ncpu = 1;
+			break;
+		case 'd':
+			rt_g.debug |= DEBUG_TREEWALK;
+			break;
+		case '?':
+		default:
+		  Tcl_AppendResult(interp, "push: usage push [-P processors] [-d] root [root2 ...]\n", (char *)NULL);
+			break;
+		}
+	}
+
+	argc -= bu_optind;
+	argv += bu_optind;
+
+	/*
+	 * build a linked list of solids with the correct
+	 * matrix to apply to each solid.  This will also
+	 * check to make sure that a solid is not pushed in two
+	 * different directions at the same time.
+	 */
+	i = db_walk_tree(wdbp->dbip, argc, (CONST char **)argv,
+			 ncpu,
+			 &wdbp->wdb_initial_tree_state,
+			 0,				/* take all regions */
+			 wdb_push_region_end,
+			 wdb_push_leaf, (genptr_t)wpdp);
+
+	/*
+	 * If there was any error, then just free up the solid
+	 * list we just built.
+	 */
+	if (i < 0 || wpdp->push_error) {
+		while (wpdp->pi_head.forw != &wpdp->pi_head) {
+			pip = wpdp->pi_head.forw;
+			pip->forw->back = pip->back;
+			pip->back->forw = pip->forw;
+			bu_free((genptr_t)pip, "Push ident");
+		}
+		rt_g.debug = old_debug;
+		bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
+		Tcl_AppendResult(interp,
+				 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+/*
+ * We've built the push solid list, now all we need to do is apply
+ * the matrix we've stored for each solid.
+ */
+	FOR_ALL_WDB_PUSH_SOLIDS(pip,wpdp->pi_head) {
+		BU_INIT_EXTERNAL(&es_ext);
+		RT_INIT_DB_INTERNAL(&es_int);
+		if (db_get_external(&es_ext, pip->pi_dir, wdbp->dbip) < 0) {
+			Tcl_AppendResult(interp, "f_push: Read error fetching '",
+				   pip->pi_dir->d_namep, "'\n", (char *)NULL);
+			wpdp->push_error = -1;
+			continue;
+		}
+		id = rt_id_solid(&es_ext);
+		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat, wdbp->dbip) < 0 ) {
+			Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
+					 "): solid import failure\n", (char *)NULL);
+			if (es_int.idb_ptr) rt_functab[id].ft_ifree( &es_int);
+			db_free_external( &es_ext);
+			continue;
+		}
+		RT_CK_DB_INTERNAL(&es_int);
+		if (rt_functab[id].ft_export( &es_ext, &es_int, 1.0, wdbp->dbip) < 0 ) {
+		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
+				   "): solid export failure\n", (char *)NULL);
+		} else {
+			db_put_external(&es_ext, pip->pi_dir, wdbp->dbip);
+		}
+		if (es_int.idb_ptr)
+			rt_functab[id].ft_ifree(&es_int);
+		db_free_external(&es_ext);
+	}
+
+	/*
+	 * Now use the wdb_identitize() tree walker to turn all the
+	 * matricies in a combination to the identity matrix.
+	 * It would be nice to use db_tree_walker() but the tree
+	 * walker does not give us all combinations, just regions.
+	 * This would work if we just processed all matricies backwards
+	 * from the leaf (solid) towards the root, but all in all it
+	 * seems that this is a better method.
+	 */
+
+	while (argc > 0) {
+		struct directory *db;
+		db = db_lookup(wdbp->dbip, *argv++, 0);
+		if (db)
+			wdb_identitize(db, wdbp->dbip, interp);
+		--argc;
+	}
+
+	/*
+	 * Free up the solid table we built.
+	 */
+	while (wpdp->pi_head.forw != &wpdp->pi_head) {
+		pip = wpdp->pi_head.forw;
+		pip->forw->back = pip->back;
+		pip->back->forw = pip->forw;
+		bu_free((genptr_t)pip, "Push ident");
+	}
+
+	rt_g.debug = old_debug;
+	push_error = wpdp->push_error;
+	bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
+
+	return push_error ? TCL_ERROR : TCL_OK;
+}
+
 #if 0
 /*
  * Usage:
@@ -3873,4 +4167,60 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 	bu_free((char *)tree_list, "combadd: tree_list");
 
 	return (dp);
+}
+
+static void
+wdb_do_identitize(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
+     struct db_i		*dbip;
+     struct rt_comb_internal *comb;
+     union tree		*comb_leaf;
+     genptr_t		user_ptr1, user_ptr2, user_ptr3;
+{
+	struct directory *dp;
+	Tcl_Interp *interp = (Tcl_Interp *)user_ptr1;
+
+	RT_CK_DBI(dbip);
+	RT_CK_TREE(comb_leaf);
+
+	if (!comb_leaf->tr_l.tl_mat) {
+		comb_leaf->tr_l.tl_mat = (matp_t)bu_malloc(sizeof(mat_t), "tl_mat");
+	}
+	bn_mat_idn(comb_leaf->tr_l.tl_mat);
+	if ((dp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+		return;
+
+	wdb_identitize(dp, dbip, interp);
+}
+
+/*
+ *			W D B _ I D E N T I T I Z E ( ) 
+ *
+ *	Traverses an objects paths, setting all member matrices == identity
+ *
+ */
+void
+wdb_identitize(dp, dbip, interp)
+     struct directory *dp;
+     struct db_i *dbip;
+     Tcl_Interp *interp;
+{
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+
+	if (dp->d_flags & DIR_SOLID)
+		return;
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		return;
+	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if (comb->tree) {
+		db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_identitize,
+				 (genptr_t)interp, (genptr_t)NULL, (genptr_t)NULL);
+		if (rt_db_put_internal(dp, dbip, &intern) < 0) {
+			Tcl_AppendResult(interp, "Cannot write modified combination (", dp->d_namep,
+					 ") to database\n", (char *)NULL );
+			return;
+		}
+	}
 }
