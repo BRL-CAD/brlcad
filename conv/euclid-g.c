@@ -250,7 +250,7 @@ int		reg_id;
 
 	sprintf(sname, "%s.s", id);
 	if( polysolids )
-		write_shell_as_polysolid( fpout , sname , s );
+		mk_bot_from_nmg( fpout , sname , s );
 	else
 	{
 		int something_left=1;
@@ -452,7 +452,7 @@ int reg_id;
 		}
 
 		if( polysolids )
-			write_shell_as_polysolid( fpout, sol_name, shells[shell_no] );
+			mk_bot_from_nmg( fpout, sol_name, shells[shell_no] );
 		else
 		{
 			struct model *m_tmp;
