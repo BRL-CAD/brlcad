@@ -153,7 +153,7 @@ do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
 		sub_ap.a_purpose = "internal reflection";
-		sub_ap.a_onehit = 1;
+		sub_ap.a_onehit = 0;	/* need 1st EXIT, not just 1st HIT */
 		if( rt_shootray( &sub_ap ) == 0 )  {
 			vect_t	voffset;
 			register fastf_t	f;
@@ -186,7 +186,6 @@ do_inside:
 				-10, incident_dir );
 #endif
 			sub_ap.a_purpose = "backed off, internal reflection";
-			sub_ap.a_onehit = 0;
 			if( rt_shootray( &sub_ap ) == 0 )  {
 				rt_log("rr_render: Refracted ray missed 2x '%s', lvl=%d, xy=%d,%d\n",
 					pp->pt_regionp->reg_name,
@@ -314,8 +313,19 @@ struct partition *PartHeadp;
 		goto bad;
 	}
 
-	hitp = pp->pt_inhit;
-	if( !NEAR_ZERO(hitp->hit_dist, 10) )  {
+	/*
+	 *  At one time, this was a check for pp->pt_inhit->hit_dist
+	 *  being NEAR zero.  This was a mistake, because we may have
+	 *  been at the edge of a subtracted out center piece when
+	 *  internal reflection happened, except that floating point
+	 *  error (being right on the surface of the interior solid)
+	 *  prevents us from "seeing" that solid on the next ray,
+	 *  causing our ray endpoints to be quite far from the starting
+	 *  point.  There is a real problem if the entry point
+	 *  is somehow further ahead than the firing point, ie, >0.
+	 *  If we have a good exit point, just march on.
+	 */
+	if( pp->pt_inhit->hit_dist > 10 )  {
 /**		if(rdebug&RDEBUG_HITS) **/
 		{
 			stp = pp->pt_inseg->seg_stp;
@@ -323,23 +333,25 @@ struct partition *PartHeadp;
 			if( pp->pt_inflip )  {
 				VREVERSE( hitp->hit_normal, hitp->hit_normal );
 			}
-			rt_log("rr_hit:  '%s' inhit %g not near zero!\n",
+			rt_log("rr_hit:  '%s' inhit %g > 0.0!\n",
 				stp->st_name, hitp->hit_dist);
 			rt_pr_hit("inhit", hitp);
 		}
 		goto bad;
 	}
 
-	/* If there is a very small crack in the glass, perhaps formed
+	/*
+	 * If there is a very small crack in the glass, perhaps formed
 	 * by a small error when taking the Union of two solids,
 	 * attempt to find the real exit point.
 	 * NOTE that this is usually taken care of inside librt
 	 * in the bool_weave code, but it is inexpensive to check for it
 	 * here.  If this case is detected, push on, and log it.
 	 * This code is not expected to be needed.
-	 * Since this shot was done with the "one hit" flag set,
+	 *
+	 * If this shot was done with the "one hit" flag set,
 	 * there are no assurances about the accuracy of things behind
-	 * this hit point.  I don't know if this is significant here.
+	 * the ENTRY point.  We need the EXIT point to be accurate.
 	 * Perhaps this might be good motivation for adding support for
 	 * a setting of the "one hit" flag that is accurate through the
 	 * EXIT point, rather than the entry point.
@@ -369,6 +381,7 @@ struct partition *PartHeadp;
 	if( pp->pt_outflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
+rt_pr_hit("uvec", hitp);
 	VMOVE( ap->a_uvec, hitp->hit_point );
 
 	/* Safety check */
