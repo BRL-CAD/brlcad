@@ -1189,10 +1189,14 @@ long	*magic_p;
 			struct face_g_snurb *sp;
 			sp = (struct face_g_snurb *)magic_p;
 			if( RT_LIST_NON_EMPTY( &(sp->f_hd) ) )  return;
-			/* XXX */ rt_bomb("nmg_kfg() free snurb insides??\n");
+			rt_free( (char *)sp->u.knots, "nmg_kfg snurb u knots[]");
+			rt_free( (char *)sp->v.knots, "nmg_kfg snurb v knots[]");
+			rt_free( (char *)sp->ctl_points, "nmg_kfg snurb ctl_points[]");
 			FREE_FACE_G_SNURB(sp);
 		}
 		break;
+	default:
+		rt_bomb("nmg_kfg() bad magic\n");
 	}
 }
 
@@ -1382,7 +1386,8 @@ struct edgeuse	*eu;
 			cp = eu->g.cnurb_p;
 			eu->g.magic_p = (long *)NULL;
 			if( RT_LIST_NON_EMPTY( &cp->eu_hd2 ) )  return 0;
-			/* XXX */ rt_bomb("nmg_keg() cnurb internals?\n");
+			rt_free( (char *)cp->k.knots, "nmg_keg cnurb knots[]");
+			rt_free( (char *)cp->ctl_points, "nmg_keg cnurb ctl_points[]");
 			FREE_EDGE_G_CNURB(cp);
 		}
 		break;
