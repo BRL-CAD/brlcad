@@ -284,19 +284,6 @@ struct directory *dp;
 		tree_state.ts_ttol = &ttol;
 		tree_state.ts_m = &the_model;
 
-		ttol.magic = RT_TESS_TOL_MAGIC;
-		/* Defaults, updated by command line options. */
-		ttol.abs = 0.0;
-		ttol.rel = 0.01;
-		ttol.norm = 0.0;
-
-		/* XXX These need to be improved */
-		tol.magic = RT_TOL_MAGIC;
-		tol.dist = 0.005;
-		tol.dist_sq = tol.dist * tol.dist;
-		tol.perp = 1e-6;
-		tol.para = 1 - tol.perp;
-
 		name = (&(dp->d_namep));
 
 		(void) db_walk_tree( dbip, 1, (CONST char **)name,
@@ -375,14 +362,32 @@ char	*argv[];
 #endif
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
+	ttol.magic = RT_TESS_TOL_MAGIC;
+	/* Defaults, updated by command line options. */
+	ttol.abs = 0.0;
+	ttol.rel = 0.01;
+	ttol.norm = 0.0;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "t:a:n:o:r:vx:P:X:")) != EOF) {
 		switch (c) {
+		case 't':		/* calculational tolerance */
+			tol.dist = atof( optarg );
+			tol.dist_sq = tol.dist * tol.dist;
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
+			ttol.rel = 0.0;
 			break;
 		case 'o':		/* Output file name */
 			out_file = optarg;
