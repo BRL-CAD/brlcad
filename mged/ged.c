@@ -474,31 +474,8 @@ int	non_blocking;
 	 *  (Or "invented" here, for compatability with old dm's).
 	 *  Each one is expected to be newline terminated.
 	 */
-	if( (len = rt_vls_strlen( &dm_values.dv_string )) > 0 )  {
-		register char	*cp = rt_vls_addr( &dm_values.dv_string );
-		char		*ep;
-		char		*end = cp + len;
-		struct rt_vls	cmd;
-
-		rt_vls_init( &cmd );
-
-		while( cp < end )  {
-#ifdef BSD
-			ep = index( cp, '\n' );
-#else
-			ep = strchr( cp, '\n' );
-#endif
-			if( ep == NULL )  break;
-
-			/* Copy one cmd, incl newline.  Null terminate */
-			rt_vls_strncpy( &cmd, cp, ep-cp+1 );
-			/* cmdline insists on ending with newline&null */
-			(void)cmdline( &cmd );
-			cp = ep+1;
-		}
-		rt_vls_trunc( &dm_values.dv_string, 0 );
-		rt_vls_free( &cmd );
-	}
+	(void)cmdline( &dm_values.dv_string );
+	rt_vls_trunc( &dm_values.dv_string, 0 );
 
 	/*
 	 * Set up window so that drawing does not run over into the
