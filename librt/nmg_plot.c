@@ -329,8 +329,8 @@ int			poly_markers;
 		vect_t tocent;
 		point_t tip;
 
-		uv_centroid[0] = (fg->u.knots[fg->u.k_size-1] - fg->u.knots[0])/2.0;
-		uv_centroid[1] = (fg->v.knots[fg->v.k_size-1] - fg->v.knots[0])/2.0;
+		uv_centroid[0] = (fg->u.knots[fg->u.k_size-1] + fg->u.knots[0])/2.0;
+		uv_centroid[1] = (fg->v.knots[fg->v.k_size-1] + fg->v.knots[0])/2.0;
 		uv_centroid[2] = 1.0;
 
 		nmg_snurb_fu_get_norm( fu, uv_centroid[0], uv_centroid[1], fu_norm );
