@@ -63,12 +63,14 @@ typedef void *genptr_t;
 static int Indian = IND_NOTSET;
 #define DBL_IEEE	0
 #define DBL_OTHER	1
-#if defined(sun) || (defined(alliant) && !(defined(i860)) || \
+
+#if defined(sun) || (defined(alliant) && ! defined(i860)) || \
 	defined(ardent) || \
 	defined(stellar) || defined(sparc) || defined(mips) || \
 	defined(pyr) || defined(apollo) || defined(aux)
-#define DBL_FORMAT	DLB_IEEE
-#elseif defined(n16) || defined(i860) || \
+#define DBL_FORMAT	DBL_IEEE
+#else
+#if defined(n16) || defined(i860) || \
 	(defined(sgi) && !defined(mips)) || \
 	defined(vax) || defined(ibm) || defined(gould) || \
 	defined(CRAY1) || defined(CRAY2) || defined(eta10) || \
@@ -76,7 +78,8 @@ static int Indian = IND_NOTSET;
 #define DBL_FORMAT	DBL_OTHER
 #else
 # include "vert.c: ERROR, no HtoND format defined (see htond.c)"
-#fi
+#endif
+#endif
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
  *
@@ -258,27 +261,25 @@ int	count;
  *	while not done {
  *		from = in;
  *
- *		if (outfmt == double ) {
- *			if (invert == net) {
- *				ntoh?(from,t1);
- *				from = t1;
- *			fi
+ *		if (invert == net) {
+ *			ntoh?(from,t1);
+ *			from = t1;
+ *		fi
+ *		if (infmt != double ) {
  *			if (outvert == host) {
- *				castdbl(from,out);
- *				continue;
+ *				to = out;
  *			else
- *				castdbl(from,t2);
- *				hton(t2,out);
+ *				to = t2;
+ *			fi
+ *			castdbl(from,to);
+ *			from = to;
+ *		fi
+ *
+ *		if (outfmt == double ) {
+ *			if (outvert == net) {
+ *				hton?(from,out);
  *			fi
  *		else 
- *			if (invert == net) {
- *				ntoh?(from,t1);
- *				from = t1;
- *			fi
- *			if (infmt != double) {
- *				castdbl(from,t2);
- *				from = t2;
- *			fi
  *			if (outvert == host) {
  *				dblcast(from,out);
  *			else
@@ -302,6 +303,10 @@ int	count;
 	int	work_count = 4096;
 	int	number_done;
 	int	invert,outvert,infmt,outfmt,insize,outsize;
+	int	bufsize;
+	genptr_t	t1,t2,t3;
+	genptr_t	from,to;
+	register int i;
 
 	if (work_count > count) work_count = count;
 
@@ -338,7 +343,7 @@ int	count;
 
 	if (outfmt == CV_D) {
 		if (DBL_FORMAT == DBL_IEEE) {
-			outvert = CV_HOST_MASK:
+			outvert = CV_HOST_MASK;
 		}
 	} else {
 		if (Indian == IND_BIG || outfmt == CV_8) {
@@ -395,6 +400,9 @@ int	count;
 	}
 
 	bufsize = work_count * sizeof(double);
+	t1 = (genptr_t) rt_malloc(bufsize, "vert.c: t1");
+	t2 = (genptr_t) rt_malloc(bufsize, "vert.c: t2");
+	t3 = (genptr_t) rt_malloc(bufsize, "vert.c: t3");
 
 	while ( size >= outsize  && number_done < count) {
 		int remaining;
@@ -406,7 +414,7 @@ int	count;
 		if (remaining < work_count) work_count = remaining;
 
 		from = in;
-		in += work_count * insize;
+		(char *)in = (char *) in + work_count * insize;
 
 		if (invert != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
@@ -429,7 +437,7 @@ int	count;
 			from = t1;
 		}
 
-		if (outfmt == CV_D) {
+		if (infmt != CV_D) {
 			if (outvert == CV_HOST_MASK) {
 				to = out;
 			} else {
@@ -474,20 +482,77 @@ int	count;
 				break;
 			}
 			from = to;
+		}
+
+		if (outfmt == CV_D) {
 			if (outvert != CV_HOST_MASK) {
 				switch(outfmt) {
 				case CV_16:
-					htons(out, bufsize, from, work_count);
+					(void) htonas(out, bufsize, from,
+					    work_count);
 					break;
 				case CV_32:
-					htons(out, bufsize, from, work_count);
+					(void) htonas(out, bufsize, from,
+					    work_count);
 					break;
 				}
 			}
-			out += work_count * outsize;
 		} else {
+			if (outvert == CV_HOST_MASK) {
+				to = out;
+			} else {
+				to = t3;
+			}
+
+			switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+			case CV_SIGNED_MASK | CV_8:
+				(*(signed char *)to)++ =
+				    (*(double *)from)++;
+				break;
+			case CV_8:
+				(*(unsigned char *)to)++ =
+				    (*(double *)from++;
+				break;
+			case CV_SIGNED_MASK | CV_16:
+				(*(signed short *)to)++ =
+				    (*(double *)from)++;
+				break;
+			case CV_16:
+				(*(unsigned short *)to)++ =
+				    (*(double *)from++;
+				break;
+			case CV_SIGNED_MASK | CV_32:
+				(*(signed long int *)to)++ =
+				    (*(double *)from)++;
+				break;
+			case CV_32:
+				(*(unsigned long int *)to)++ =
+				    (*(double *)from++;
+				break;
+			}
+			from = to;
+			if (outvert != CV_HOST_MASK) {
+				switch (outfmt) {
+				case CV_16:
+					(void) htonas(out, bufsize, from,
+					    work_count);
+					break;
+				case CV_32:
+					(void) htonal(out, bufsize, from,
+					    work_count);
+					break;
+				}
+			}
+					
 		}
+		out += work_count * outsize;
+		size -= work_count * outsize;
+		number_done += work_count;
 	}
+	rt_free(t1, "vert.c: t1");
+	rt_free(t2, "vert.c: t2");
+	rt_free(t3, "vert.c: t3");
+	return(work_done);
 }
 
 /*	ntohss	Network TO Host Signed Short
@@ -566,7 +631,7 @@ int				count;
 		*out++ = ((signed char *)in)[0] << 24 |
 		    ((unsigned char *)in)[1] << 16 | 
 		    ((unsigned char *)in)[2] << 8  |
-		    ((unsinged char *)in)[3];
+		    ((unsigned char *)in)[3];
 		in += 4;
 	}
 	return(count);
