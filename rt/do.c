@@ -541,34 +541,39 @@ int framenumber;
 		 *  This code allows the computation of a particular frame
 		 *  to a disk file to be resumed automaticly.
 		 *  This is worthwhile crash protection.
+		 *  This use of stat() and fseek() is UNIX-specific.
 		 */
 		{
 			struct stat sb;
 			if( stat( framename, &sb ) >= 0 && sb.st_size > 0 )  {
 				/* File exists, with partial results */
-				register int pixoff, byteoff;
+				register int pixoff, des_pos, fd;
 				pixoff = sb.st_size / sizeof(RGBpixel);
-				byteoff = pixoff * sizeof(RGBpixel);
+				des_pos = pixoff * sizeof(RGBpixel);
 				if( pix_start == 0 && pix_end > pixoff )  {
-					fprintf(stderr, "Continuing with pixel %d (%d, %d)\n",
+					fprintf(stderr, "Continuing with pixel %d (%d, %d) [size %d, want %d]\n",
 						pixoff,
 						pixoff % width,
-						pixoff / width );
+						pixoff / width,
+						sb.st_size,
+						des_pos );
 					pix_start = pixoff;
-					/* Append to existing file */
-					if( (outfp = fopen( framename, "a" )) == NULL )  {
+					/*
+					 *  Append to existing UNIX file.
+					 *  Ensure that positioning is precisely pixel aligned.
+					 *  The file size is almost certainly
+					 *  not an exact multiple of three bytes.
+					 *  Use UNIX sys-calls here because SYSV
+					 *  stdio & fseek() on append-mode files
+					 *  don't seem to work right, and this
+					 *  way is simpler anyway.
+					 */
+					if( (fd = open( framename, 1 )) < 0 ||
+					    lseek( fd, (long)des_pos, 0 ) < 0 ||
+					    (outfp = fdopen( fd, "w" )) == NULL )  {
 						perror( framename );
 						if( matflag )  return(0);	/* OK */
 						return(-1);			/* Bad */
-					}
-					/*  Ensure that positioning is precisely right.
-					 *  The file size is almost certainly not
-					 *  an exact multiple of three bytes.
-					 */
-					if( fseek( outfp, (long)byteoff, 0 ) != 0 )  {
-						perror("fseek");
-						fclose( outfp );
-						outfp = NULL;
 					}
 				}
 			}
