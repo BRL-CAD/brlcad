@@ -214,7 +214,6 @@ void
 nmg_rm_redundancies(s)
 struct shell	*s;
 {
-	struct faceuse	*fu;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
 	struct vertexuse	*vu;
@@ -322,7 +321,7 @@ struct shell	*s;
 int		orient;
 {
 	struct faceuse *fu;
-	struct loopuse *lu, *lustart;
+	struct loopuse *lu;
 	pointp_t pt;
 
 	NMG_CK_SHELL(s);
@@ -508,7 +507,6 @@ CONST struct rt_tol	*tol;
 	struct edgeuse	*eu;
 	struct edgeuse	*nexteu;
 	struct vertexuse *vu;
-	struct vertex	*v;
 
 	NMG_CK_SHELL(s1);
 	NMG_CK_SHELL(s2);
@@ -971,7 +969,7 @@ struct faceuse *fu;
 struct vertex *verts[];
 int n, dir;
 {
-	int i, j;
+	int i;
 	struct edgeuse *eu;
 	struct loopuse *lu;
 	struct vertexuse *vu;
@@ -1249,8 +1247,7 @@ int
 nmg_simplify_face(fu)
 struct faceuse *fu;
 {
-	struct loopuse *lu, *lu2;
-	int overlap;
+	struct loopuse *lu;
 	int ret_val;
 
 	NMG_CK_FACEUSE(fu);
@@ -1319,7 +1316,6 @@ nmg_reverse_face( fu )
 register struct faceuse	*fu;
 {
 	register struct faceuse	*fumate;
-	register vectp_t	v;
 
 	NMG_CK_FACEUSE(fu);
 	fumate = fu->fumate_p;
@@ -1861,7 +1857,6 @@ struct vertexuse	*vu1;
 struct vertexuse	*vu2;
 {
 	struct edgeuse	*eu1, *eu2;
-	struct edgeuse	*new_eu;
 	struct edgeuse	*first_new_eu;
 	struct edgeuse	*second_new_eu;
 	struct edgeuse	*final_eu2;
@@ -2020,7 +2015,6 @@ struct vertexuse *
 nmg_join_2singvu_loops( vu1, vu2 )
 struct vertexuse	*vu1, *vu2;
 {
-    	struct edgeuse	*eu1;
 	struct edgeuse	*first_new_eu, *second_new_eu;
 	struct loopuse	*lu1, *lu2;
 
@@ -2426,7 +2420,6 @@ CONST struct rt_tol	*tol;
 {
 	struct edgeuse		*eu;
 	struct vertexuse	*vu;
-	struct vertex		*v;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -2439,7 +2432,6 @@ top:
 
 	/* For each edgeuse, get vertexuse and vertex */
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		struct vertexuse	*tvu;
 		struct loopuse		*newlu;
 
 		vu = eu->vu_p;
@@ -2558,7 +2550,6 @@ top:
 		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
 			struct edgeuse		*teu;
 			struct loopuse		*tlu;
-			struct loopuse		*newlu;
 
 			if( tvu == vu )  continue;
 			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
@@ -2629,7 +2620,6 @@ top:
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
 		struct edgeuse	*eu2;
 		struct edgeuse	*eu3;
-		struct vertexuse	*tvu;	/* other touching vu */
 		struct loopuse		*newlu;
 
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
@@ -2642,7 +2632,7 @@ top:
 		if( eu->vu_p->v_p != eu3->vu_p->v_p )  continue;
 
 		/* It's a jaunt, see if tip touches same loop */
-		if( (tvu = nmg_find_repeated_v_in_lu(eu2->vu_p)) == (struct vertexuse *)NULL )
+		if( nmg_find_repeated_v_in_lu(eu2->vu_p) == (struct vertexuse *)NULL )
 			continue;
 
 		/* Tip touches loop.  (What about ring and sleeve?) */
@@ -2931,7 +2921,6 @@ long	**trans_tbl;
 	struct edgeuse *new_eu = (struct edgeuse *)NULL;
 	struct edgeuse *tbl_eu = (struct edgeuse *)NULL;
 	struct edgeuse *eu = (struct edgeuse *)NULL;
-	int i=1;
 
 	NMG_CK_LOOPUSE(lu);
 
@@ -3659,6 +3648,7 @@ int		share_geom;
 	}
 
 	rt_bomb("nmg_esplit() unable to find eu starting at new v\n");
+	/* NOTREACHED */
 }
 
 /*
@@ -4063,7 +4053,6 @@ struct shell		*dest;
 register struct shell	*src;
 register struct vertexuse	*vu;
 {
-	struct loopuse *lu;
 	NMG_CK_VERTEXUSE( vu );
 	NMG_CK_VERTEX( vu->v_p );
 
@@ -4071,7 +4060,7 @@ register struct vertexuse	*vu;
 		rt_log("nmg_mv_vu_between_shells( dest_s=x%x, src_s=x%x, vu=x%x )\n",
 			dest, src, vu);
 	}
-	lu = nmg_mlv( &(dest->l.magic), vu->v_p, OT_SAME );
+	(void) nmg_mlv( &(dest->l.magic), vu->v_p, OT_SAME );
 	if (vu->v_p->vg_p) {
 		NMG_CK_VERTEX_G(vu->v_p->vg_p);
 	}

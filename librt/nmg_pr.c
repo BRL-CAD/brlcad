@@ -780,7 +780,7 @@ char *h;
 	switch( *magic_p )  {
 	case NMG_VERTEXUSE_A_PLANE_MAGIC:
 		rt_log("%s N=(%g, %g, %g, %g)\n", h,
-			V4ARGS( ((struct vertexuse_a_plane *)magic_p)->N ) );
+			V3ARGS( ((struct vertexuse_a_plane *)magic_p)->N ) );
 		break;
 	case NMG_VERTEXUSE_A_CNURB_MAGIC:
 		rt_log("%s param=(%g, %g, %g)\n", h,
@@ -974,11 +974,6 @@ CONST vect_t		zvec;
 CONST struct rt_tol	*tol;
 {
 	CONST struct edgeuse	*eu1;
-	CONST struct loopuse	*lu;
-	CONST struct faceuse	*fu;
-	CONST struct face	*f;
-	int			lu_orient;
-	int			fu_orient;
 
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
@@ -1016,9 +1011,6 @@ nmg_pr_fu_around_eu( eu, tol )
 CONST struct edgeuse *eu;
 CONST struct rt_tol	*tol;
 {
-	CONST struct edgeuse	*eu1;
-	CONST struct loopuse	*lu;
-	CONST struct faceuse	*fu;
 	vect_t			xvec, yvec, zvec;
 
 	NMG_CK_EDGEUSE(eu);
