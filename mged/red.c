@@ -348,7 +348,7 @@ char *str;
       bu_list_free(&HeadLines.l);
       if( rt_tree_array )
 	bu_free( (char *)rt_tree_array, "red: tree list" );
-      Tcl_AppendResult(interp, "no relational operator\n", (char *)NULL);
+      bu_log("no relational operator\n");
       return TCL_ERROR;
     }
 
@@ -358,7 +358,7 @@ char *str;
       bu_list_free(&HeadLines.l);
       if( rt_tree_array )
 	bu_free( (char *)rt_tree_array, "red: tree list" );
-      Tcl_AppendResult(interp, "no name specified\n", (char *)NULL);
+      bu_log("no name specified\n");
       return TCL_ERROR;
     }
     strncpy( name , ptr, NAMESIZE );
@@ -371,8 +371,7 @@ char *str;
 
     /* Check for existence of member */
     if( (dp1=db_lookup( dbip , name , LOOKUP_QUIET )) == DIR_NULL )
-      Tcl_AppendResult(interp, "\tWARNING: '", name,
-		       "' does not exist\n", (char *)NULL);
+      bu_log("\tWARNING: ' %s ' does not exist\n", name);
 
     /* get matrix */
     ptr = strtok( (char *)NULL, delims );
@@ -386,8 +385,7 @@ char *str;
       for( k=1 ; k<16 ; k++ ){
 	ptr = strtok( (char *)NULL, delims );
 	if( !ptr ){
-	  Tcl_AppendResult(interp, "incomplete matrix for member ",
-			   name, " No changes made\n", (char *)NULL );
+	  bu_log("incomplete matrix for member %s - No changes made\n", name);
 	  bu_free( (char *)matrix, "red: matrix" );
 	  if( rt_tree_array )
 	    bu_free( (char *)rt_tree_array, "red: tree list" );
@@ -411,8 +409,7 @@ char *str;
       rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
       break;
     default:
-      Tcl_AppendResult(interp, "unrecognized relation (assume UNION)\n",
-		       (char *)NULL );
+      bu_log("unrecognized relation (assume UNION)\n");
     case 'u':
       rt_tree_array[tree_index].tl_op = OP_UNION;
       break;
@@ -449,23 +446,20 @@ char *str;
 
     if( dp != DIR_NULL ){
       if(  db_delete( dbip, dp ) || db_dirdelete( dbip, dp ) ){
-	Tcl_AppendResult(interp, "ERROR: Unable to delete directory entry for ",
-			 old_name, "\n", (char *)NULL );
+	bu_log("ERROR: Unable to delete directory entry for %s\n", old_name);
 	rt_comb_ifree( &intern );
 	return( 1 );
       }
     }
 
     if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL ){
-      Tcl_AppendResult(interp, "Cannot add ", new_name,
-		       " to directory, no changes made\n", (char *)NULL);
+      bu_log("Cannot add %s to directory, no changes made\n", new_name);
       rt_comb_ifree( &intern );
       return( 1 );
     }
 
     if( db_alloc( dbip, dp, node_count+1) ){
-      Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
-		       "\n", (char *)NULL );
+      bu_log("Cannot allocate file space for %s\n", new_name);
       rt_comb_ifree( &intern );
       return( 1 );
     }
@@ -478,22 +472,20 @@ char *str;
       flags = DIR_COMB;
 
     if( (dp=db_diradd( dbip, new_name, -1, node_count+1, flags)) == DIR_NULL ){
-      Tcl_AppendResult(interp, "Cannot add ", new_name,
-		       " to directory, no changes made\n", (char *)NULL);
+      bu_log("Cannot add %s to directory, no changes made\n", new_name);
       rt_comb_ifree( &intern );
       return TCL_ERROR;
     }
 
     if( db_alloc( dbip, dp, node_count+1) ){
-      Tcl_AppendResult(interp, "Cannot allocate file space for ", new_name,
-		       "\n", (char *)NULL );
+      bu_log("Cannot allocate file space for %s\n", new_name);
       rt_comb_ifree( &intern );
       return TCL_ERROR;
     }
   }
 
   if( rt_db_put_internal( dp, dbip, &intern ) < 0 ){
-    Tcl_AppendResult(interp, "ERROR: Unable to write new combination into database.\n", (char *)NULL);
+    bu_log("ERROR: Unable to write new combination into database.\n");
     return TCL_ERROR;
   }
 
@@ -656,7 +648,7 @@ char **argv;
     Tcl_AppendElement(interp, "");      /* COMBINATION:""   */
     bu_vls_free(&vls);
 
-    return TCL_OK;
+    return TCL_RETURN;
   }
 }
 
@@ -672,6 +664,7 @@ char **argv;
   struct rt_comb_internal *comb;
   char new_name[NAMESIZE+1];
   int offset;
+  int save_comb_flag = 0;
 
   if(dbip == DBI_NULL)
     return TCL_OK;
@@ -704,6 +697,7 @@ char **argv;
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     save_comb(dp); /* Save combination to a temp name */
+    save_comb_flag = 1;
   }else{
     comb = (struct rt_comb_internal *)NULL;
   }
@@ -775,7 +769,7 @@ char **argv;
     }
     (void)unlink(red_tmpfil);
     return TCL_ERROR;
-  }else if(comb){
+  }else if(save_comb_flag){
     /* eliminate the temporary combination */
     char *av[3];
 
