@@ -35,10 +35,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "../librt/debug.h"
 
+#define		MAX_NUM_PTS	15360
+
 struct vlist {
-	fastf_t		pt[3*1024];
-	struct vertex	*vt[1024];
+	fastf_t		pt[3*MAX_NUM_PTS];
+	struct vertex	*vt[MAX_NUM_PTS];
 };
+
+static struct rt_tol	tol;
 
 static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n";
 
@@ -169,16 +173,29 @@ struct vlist	*vert;	/* Array of read in vertices. */
 {
 	fastf_t	x, y, z;
 	int	i;
+	int	bomb=0;
 
 	/* Read vertices. */
 	for (i = 0; fscanf(fp, "%lf %lf %lf", &x, &y, &z) == 3; i++) {
-		vert->pt[3*i+0] = x * 10.;	/* Convert cm to mm. */
-		vert->pt[3*i+1] = y * 10.;
-		vert->pt[3*i+2] = z * 10.;
-		vert->vt[i] = (struct vertex *)0;
+		if( i >= MAX_NUM_PTS )
+			bomb = 1;
+		else
+		{
+			vert->pt[3*i+0] = x * 10.;	/* Convert cm to mm. */
+			vert->pt[3*i+1] = y * 10.;
+			vert->pt[3*i+2] = z * 10.;
+			vert->vt[i] = (struct vertex *)0;
+		}
 		fscanf(fp, "%*[^\n]");
 	}
 	fscanf(fp, ";;");
+
+	if( bomb )
+	{
+		rt_log( "Dataset contains %d data points, code is dimensioned for %d\n", i, MAX_NUM_PTS );
+		rt_bomb( "jack-g\n" );
+	}
+
 	return(i);
 }
 
@@ -210,12 +227,11 @@ struct model	*m;	/* Input/output, nmg model. */
 FILE		*fp;	/* Input, pointer to psurf data file. */
 char		*jfile;	/* Name of Jack data base file. */
 {
-	int		face, fail, i, lst[256], nf, nv;
-	struct faceuse	*outfaceuses[1024];
+	int		face, fail, i, lst[MAX_NUM_PTS], nf, nv;
+	struct faceuse	*outfaceuses[MAX_NUM_PTS];
 	struct nmgregion *r;
-	struct rt_tol	tol;
 	struct shell	*s;
-	struct vertex	*vertlist[1024];
+	struct vertex	*vertlist[MAX_NUM_PTS];
 	struct vlist	vert;
 
 	/* Copied from proc-db/nmgmodel.c */
@@ -253,6 +269,8 @@ char		*jfile;	/* Name of Jack data base file. */
 					jfile, i+1);
 	}
 
+	nmg_model_vertex_fuse( m, &tol );
+
 	/* Associate the face geometry. */
 	for (i = 0, fail = 0; i < face; i++)
 	{
@@ -261,18 +279,29 @@ char		*jfile;	/* Name of Jack data base file. */
 
 		lu = RT_LIST_FIRST( loopuse , &outfaceuses[i]->lu_hd );
 		if( nmg_loop_plane_area( lu , pl ) < 0.0 )
+		{
 			fail = 1;
+			nmg_kfu( outfaceuses[i] );
+		}
 		else
 			nmg_face_g( outfaceuses[i] , pl );
 	}
 	if (fail)
 		return(-1);
 
-	/* Glue edges of outward pointing face uses together. */
-	nmg_gluefaces(outfaceuses, face);
+	if( face )
+	{
+		nmg_kill_zero_length_edgeuses( m );
 
-	/* Compute "geometry" for region and shell */
-	nmg_region_a(r, &tol);
+		/* Compute "geometry" for region and shell */
+		nmg_region_a(r, &tol);
+
+		nmg_model_break_e_on_v( m, &tol );
+		nmg_kill_zero_length_edgeuses( m );
+
+		/* Glue edges of outward pointing face uses together. */
+		nmg_model_edge_fuse( m, &tol );
+	}
 
 	return(0);
 }
@@ -294,6 +323,8 @@ struct model	*m;
 	sname = malloc(sizeof(reg_name) + 3);	/* Solid name. */
 
 	sprintf(sname, "s.%s", reg_name);
+	nmg_kill_zero_length_edgeuses( m );
+	nmg_rebound( m, &tol );
 	mk_nmg(fpout, sname,  m);		/* Make nmg object. */
 	sprintf(rname, "r.%s", reg_name);
 	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
