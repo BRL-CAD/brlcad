@@ -22,7 +22,7 @@
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
- 
+
 #include "conf.h"
 #include <math.h>
 #include <stdio.h>
@@ -39,6 +39,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nurb.h"
 #include "rtgeom.h"
 #include "rtserver.h"
+
+#include "RtServerImpl.h"
 
 /* verbosity flag */
 static int verbose=0;
@@ -382,6 +384,17 @@ rts_clean( int sessionid)
 	}
 }
 
+/* routine to initialize anything that needs initializing */
+void
+rts_init()
+{
+	/* Things like bu_malloc() must have these initialized for use with parallel processing */
+	bu_semaphore_init( RT_SEM_LAST );
+
+	/* initialize the rtserver resources (cached structures) */
+	rts_resource_init();
+}
+
 /* routine to create a new sesion id
  *
  * Uses sessionid 0 if no sessions have been requesdted yet
@@ -495,7 +508,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 	Tcl_Obj *rtserver_data;
 	int i, j;
 	int sessionid;
-	const char *attrs[] = {muves_comp, NULL };
+	const char *attrs[] = {(const char *)"muves_comp", (const char *)NULL };
 
 	/* clean up any prior geometry data */
 	if( rts_geometry ) {
@@ -1184,6 +1197,219 @@ get_muves_components()
 		name_entry = Tcl_NextHashEntry( &search );
 	}
 }
+
+/* JAVA JNI bindings */
+JNIEXPORT jboolean JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit(JNIEnv *env, jobject obj, jobjectArray args) 
+{
+	jsize len=(*env)->GetArrayLength(env, args);
+	jstring jfile_name, *jobj_name;
+	char *file_name;
+	char **obj_list;
+	int num_objects=(len - 3);
+	jboolean ret=JNI_FALSE;
+	int i;
+
+	rts_init();
+
+	if( len < 4 ) {
+		return( JNI_TRUE );
+	}
+
+	jfile_name = (jstring)(*env)->GetObjectArrayElement( env, args, 2 );
+	file_name = (char *)(*env)->GetStringUTFChars(env, jfile_name, 0);
+
+	obj_list = (char **)bu_calloc( num_objects, sizeof( char *), "obj_list" );
+	jobj_name = (jstring *)bu_calloc( num_objects, sizeof( jstring ), "jobj_name" );
+	for( i=0 ; i<num_objects ; i++ ) {
+		jobj_name[i] = (jstring)(*env)->GetObjectArrayElement( env, args, i+3 );
+		obj_list[i] = (char *)(*env)->GetStringUTFChars(env, jobj_name[i], 0);
+	}
+
+	if( rts_load_geometry( file_name, 0, num_objects, obj_list ) < 0 ) {
+		ret = JNI_TRUE;
+	} else {
+		/* get number of queues specified by command line */
+		jstring jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 0 );
+		char *str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
+		num_queues = atoi( str );
+		(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
+
+		/* do not use less than two queues */
+		if( num_queues < 2 ) {
+			num_queues = 2;
+		}
+
+		/* get number of threads from comamnd line */
+		jobj=(jstring)(*env)->GetObjectArrayElement( env, args, 1 );
+		str=(char *)(*env)->GetStringUTFChars(env, jobj, 0);
+		num_threads = atoi( str );
+		(*env)->ReleaseStringChars( env, jobj, (const jchar *)str);
+
+		/* do not use less than one thread */
+		if( num_threads < 1 ) {
+			num_threads = 1;
+		}
+
+		/* start raytrace threads */
+		rts_start_server_threads();
+	}
+
+	(*env)->ReleaseStringChars( env, jfile_name, (const jchar *)file_name);
+	for( i=0 ; i<num_objects ; i++ ) {
+		(*env)->ReleaseStringChars( env, jobj_name[i], (const jchar *)obj_list[i]);
+	}
+
+	bu_free( (char *)obj_list, "obj_list" );
+	bu_free( (char *)jobj_name, "jobj_name" );
+
+	return( ret );
+
+}
+
+
+JNIEXPORT jint JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_openSession(JNIEnv *env, jobject jobj)
+{
+	return( (jint)rts_open_session() );
+}
+
+JNIEXPORT void JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_closeSession(JNIEnv *env, jobject jobj,
+							   jint sessionId)
+{
+	rts_close_session( (int)sessionId );
+}
+
+JNIEXPORT jobject JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject jobj,
+	jobject jstart_pt, jobject jdir, jint sessionId )
+{
+	jclass point_class = (*env)->GetObjectClass( env, jstart_pt );
+	jclass vect_class = (*env)->GetObjectClass( env, jdir );
+	jclass ray_class, rayResult_class, partition_class;
+	jmethodID methodid, partition_constructor_id;
+	jfieldID fid;
+	jobject jrayResult, jray, jpartition;
+	struct rtserver_job *ajob;
+	struct xray *aray;
+	struct rtserver_result *aresult;
+	struct ray_result *ray_res;
+	struct ray_hit *ahit;
+
+	RTS_GET_XRAY( aray );
+	aray->index = 1;
+
+	/* extract start point */
+	fprintf( stderr, "Getting start point [X]\n" );
+	fid = (*env)->GetFieldID( env, point_class, "x", "D" );
+	fprintf( stderr, "Got fid\n" );
+	aray->r_pt[X] = (jdouble)(*env)->GetDoubleField( env, jstart_pt, fid );
+
+	fprintf( stderr, "Getting start point [Y]\n" );
+	fid = (*env)->GetFieldID( env, point_class, "y", "D" );
+	aray->r_pt[Y] = (*env)->GetDoubleField( env, jstart_pt, fid );
+
+	fprintf( stderr, "Getting start point [Z]\n" );
+	fid = (*env)->GetFieldID( env, point_class, "z", "D" );
+	aray->r_pt[Z] = (*env)->GetDoubleField( env, jstart_pt, fid );
+
+	/* extract direction vector */
+	fprintf( stderr, "Getting direction vector [X]\n" );
+	fid = (*env)->GetFieldID( env, vect_class, "x", "D" );
+	aray->r_dir[X] = (*env)->GetDoubleField( env, jdir, fid );
+
+	fprintf( stderr, "Getting direction vector [Y]\n" );
+	fid = (*env)->GetFieldID( env, vect_class, "y", "D" );
+	aray->r_dir[Y] = (*env)->GetDoubleField( env, jdir, fid );
+
+	fprintf( stderr, "Getting direction vector [Z]\n" );
+	fid = (*env)->GetFieldID( env, vect_class, "z", "D" );
+	aray->r_dir[Z] = (*env)->GetDoubleField( env, jdir, fid );
+
+	RTS_GET_RTSERVER_JOB( ajob );
+	ajob->rtjob_id = 1;
+	ajob->sessionid = sessionId;
+	RTS_ADD_RAY_TO_JOB( ajob, aray );
+
+	fprintf( stderr, "submitting job start_pt = (%g %g %g) dir = (%g %g %g)\n",
+		 V3ARGS(aray->r_pt), V3ARGS( aray->r_dir ) );
+	aresult = rts_submit_job_and_wait( ajob );
+	fprintf( stderr, "got a result\n" );
+
+	/* list results */
+	fprintf( stderr, "shot from (%g %g %g) in direction (%g %g %g):\n",
+		 V3ARGS( aray->r_pt ),
+		 V3ARGS( aray->r_dir ) );
+	if( !aresult->got_some_hits ) {
+		fprintf( stderr, "\tMissed\n" );
+	} else {
+		ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
+		for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
+			fprintf( stderr, "\thit on comp %d at dist = %g los = %g\n",
+				 ahit->comp_id, ahit->hit_dist, ahit->los );
+		}
+	}
+
+	/* build result to return */
+	if( (ray_class=(*env)->FindClass( env, "mil/army/arl/muves/math/Ray" )) == NULL ) {
+		fprintf( stderr, "Failed to find Ray class\n" );
+		exit( 1 );
+	}
+
+	if( (methodid=(*env)->GetMethodID( env, ray_class, "<init>",
+	    "(Lmil/army/arl/muves/math/Point;Lmil/army/arl/muves/math/Vect;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for ray constructor\n" );
+		exit( 1 );
+	}
+
+	jray = (*env)->NewObject( env, ray_class, methodid, jstart_pt, jdir );
+
+	if( (rayResult_class=(*env)->FindClass( env,
+	    "mil/army/arl/muves/rtserver/RayResult" )) == NULL ) {
+		fprintf( stderr, "Failed to get class for RayResult\n" );
+		exit( 1 );
+	}
+
+	if( (methodid=(*env)->GetMethodID( env, rayResult_class, "<init>",
+					   "(Lmil/army/arl/muves/math/Ray;)V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
+		exit( 1 );
+	}
+
+	jrayResult = (*env)->NewObject( env, rayResult_class, methodid, jray );
+
+	if( !aresult->got_some_hits ) {
+		RTS_FREE_RTSERVER_RESULT( aresult );
+		return( jrayResult );
+	}
+
+	if( (partition_class=(*env)->FindClass( env,
+	    "mil/army/arl/muves/rtserver/Partition" )) == NULL ) {
+		fprintf( stderr, "Failed to get class for Partition\n" );
+		exit( 1 );
+	}
+
+	if( (partition_constructor_id=(*env)->GetMethodID( env, partition_class, "<init>",
+							   "()V" )) == NULL ) {
+		fprintf( stderr, "Failed to get method id for rayResult constructor\n" );
+		exit( 1 );
+	}
+
+	ray_res = BU_LIST_FIRST( ray_result, &aresult->resultHead.l );
+	for( BU_LIST_FOR( ahit, ray_hit, &ray_res->hitHead.l ) ) {
+		fprintf( stderr, "\thit on comp %d at dist = %g los = %g\n",
+			 ahit->comp_id, ahit->hit_dist, ahit->los );
+	
+		jpartition = (*env)->NewObject( env, partition_class, partition_constructor_id );
+	}
+
+	RTS_FREE_RTSERVER_RESULT( aresult );
+
+	return( jrayResult );
+}
+
+
 #ifdef TESTING
 /* usage statement */
 static char *usage="Usage:\n\t%s [-n num_cpus] [-t num_threads] [-q num_queues] [-a] [-s grid_size] [-v] [-o object] model.g\n";
