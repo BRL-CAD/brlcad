@@ -86,13 +86,14 @@ struct seg *HeadSeg = SEG_NULL;
 
 char usage[] = "\
 Usage:  rt [options] model.vg object [objects]\n\
-Options:  -f[#] -x# -aAz -eElev [-o model.pix]\n";
+Options:  -f[#] -x# -aAz -eElev -A%Ambient [-o model.pix]\n";
 
 /* Used for autosizing */
 static fastf_t xbase, ybase, zbase;
 static fastf_t deltas;
 extern double atof();
 
+double AmbientIntensity = 0.15;		/* Ambient light intensity */
 vect_t l0vec;		/* 0th light vector */
 vect_t l1vec;		/* 1st light vector */
 vect_t l2vec;		/* 2st light vector */
@@ -127,6 +128,9 @@ char **argv;
 	argc--; argv++;
 	while( argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
+		case 'A':
+			AmbientIntensity = atof( &argv[0][2] );
+			break;
 		case 'x':
 			sscanf( &argv[0][2], "%x", &debug );
 			printf("debug=x%x\n", debug);
@@ -226,6 +230,8 @@ char **argv;
 
 	VSET( tempdir, 	xbase, ybase, zbase );
 	MAT3XVEC( rayp->r_pt, viewrot, tempdir );
+
+	printf("Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
 	/* Determine the Light location(s) in model space, xlate to view */
 	/* 0:  Blue, at left edge, 1/2 high */

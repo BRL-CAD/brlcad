@@ -38,9 +38,11 @@ static int scanbytes;		/* # of bytes of scanline to be written */
 vect_t l0color = {  28,  28, 255 };		/* R, G, B */
 vect_t l1color = { 255,  28,  28 };
 vect_t l2color = { 255, 255, 255 };		/* White */
+vect_t ambient_color = { 255, 255, 255 };	/* Ambient white light */
 extern vect_t l0vec;
 extern vect_t l1vec;
 extern vect_t l2vec;
+extern double AmbientIntensity;
 
 viewit( PartHeadp, rayp, xscreen, yscreen )
 struct partition *PartHeadp;
@@ -48,9 +50,9 @@ struct ray *rayp;
 int xscreen, yscreen;
 {
 	static long inten;
-	static double diffuse2, cosI2;
-	static double diffuse1, cosI1;
-	static double diffuse0, cosI0;
+	static fastf_t diffuse2, cosI2;
+	static fastf_t diffuse1, cosI1;
+	static fastf_t diffuse0, cosI0;
 	static vect_t work0, work1;
 	static int r,g,b;
 	register struct partition *pp;
@@ -66,8 +68,14 @@ int xscreen, yscreen;
 	/*
 	 * Diffuse reflectance from each light source
 	 */
-
-	/* For light from eye, use l0vec = rayp->r_dir, -VDOT */
+#ifdef ONE_LIGHT
+	/* Light from the "eye" (ray source).  Note sign change */
+	diffuse0 = 0;
+	if( (cosI0 = -VDOT(hitp->hit_normal, rayp->r_dir)) >= 0.0 )
+		diffuse0 = cosI0 * ( 1.0 - AmbientIntensity);
+	VSCALE( work0, l0color, diffuse0 );
+#else
+	/* Crude attempt at a 3-light model.  It works, but... */
 	diffuse0 = 0;
 	if( (cosI0 = VDOT(hitp->hit_normal, l0vec)) >= 0.0 )
 		diffuse0 = cosI0 * 0.5;		/* % from this src */
@@ -77,11 +85,6 @@ int xscreen, yscreen;
 	diffuse2 = 0;
 	if( (cosI2 = VDOT(hitp->hit_normal, l2vec)) >= 0.0 )
 		diffuse2 = cosI2 * 0.2;		/* % from this src */
-
-	if(debug&DEBUG_HITS)  {
-		hit_print( " In", hitp );
-		printf("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
-	}
 
 #ifdef notyet
 	/* Specular reflectance from first light source */
@@ -99,7 +102,19 @@ int xscreen, yscreen;
 	VADD2( work0, work0, work1 );
 	VSCALE( work1, l2color, diffuse2 );
 	VADD2( work0, work0, work1 );
-	if(debug&DEBUG_HITS)  VPRINT("RGB", work0);
+#endif ONE_LIGHT
+
+	/*
+	 *  Add in contribution from ambient light
+	 */
+	VSCALE( work1, ambient_color, AmbientIntensity );
+	VADD2( work0, work0, work1 );
+
+	if(debug&DEBUG_HITS)  {
+		hit_print( " In", hitp );
+		printf("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0 );
+		VPRINT("RGB", work0);
+	}
 
 	r = work0[0];
 	g = work0[1];
