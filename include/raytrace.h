@@ -6477,7 +6477,7 @@ RT_EXPORT BU_EXTERN(int	dg_E_cmd,
 
 /* defined in view_obj.c */
 RT_EXPORT BU_EXTERN(struct view_obj *vo_open_cmd,
-		    (char *oname));
+		    (const char *oname));
 RT_EXPORT BU_EXTERN(void vo_center,
 		    (struct view_obj *vop,
 		     Tcl_Interp *interp,

@@ -287,7 +287,7 @@ db_free_anim(register struct db_i *dbip)
  *  argv[2] indicates what is to be animated on that arc.
  */
 struct animate	*
-db_parse_1anim(struct db_i *dbip, int argc, const char **argv)
+db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 {
 	struct db_tree_state	ts;
 	struct animate		*anp;
@@ -387,11 +387,11 @@ db_parse_1anim(struct db_i *dbip, int argc, const char **argv)
 		if( (strcmp( argv[3], "replace" ) == 0) ||
 		    (strcmp( argv[3], "rboth" ) == 0) )  {
 			bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
-				argc-4, (char **)&argv[4] );
+				argc-4, (const char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_REPLACE;
 		} else if( strcmp( argv[3], "append" ) == 0 )  {
 			bu_vls_from_argv( &anp->an_u.anu_p.anp_shader,
-				argc-4, (char **)&argv[4] );
+				argc-4, (const char **)&argv[4] );
 			anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
 		} else {
 			bu_log("db_parse_1anim:  material animation '%s' unknown\n",

@@ -45,7 +45,7 @@
 
 int Vo_Init(Tcl_Interp *interp);
 
-static int vo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int vo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
 static int vo_size_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_invSize_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int vo_aet_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -166,7 +166,7 @@ vo_deleteProc(ClientData clientData)
  * Create an command/object named "oname" in "interp".
  */
 struct view_obj *
-vo_open_cmd(char	*oname)
+vo_open_cmd(const char	*oname)
 {
 	Tcl_Interp	*interp = (Tcl_Interp *)NULL;
 	struct view_obj *vop;
@@ -206,7 +206,7 @@ static int
 vo_open_tcl(ClientData	clientData,
 	    Tcl_Interp	*interp,
 	    int		argc,
-	    char	**argv)
+	    const char	**argv)
 {
 	struct view_obj *vop;
 
