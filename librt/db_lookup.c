@@ -111,7 +111,7 @@ int			noisy;
 		}
 	}
 
-	if(noisy || rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) failed\n", name);
+	if(noisy || rt_g.debug&DEBUG_DB) bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
 	return( DIR_NULL );
 }
 
