@@ -314,7 +314,8 @@ both objects. Note - an object can be a solid, region
 or group." } }
     hoc_register_data $top.combL "Boolean Expression" $hoc_data
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
-	    -yscrollcommand "$top.combS set" -setgrid true
+	    -yscrollcommand "$top.combS set" -setgrid true \
+	    -tab {3c}
     hoc_register_data $top.combT "Edit Boolean Expression" $hoc_data
     scrollbar $top.combS -relief flat -command "$top.combT yview"
 
