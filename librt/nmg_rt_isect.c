@@ -310,7 +310,6 @@ char *Pole_name;
 {
 	vect_t pca_to_pole_vect;
 	vect_t VtoPole_prj;
-	vect_t VtoPt;
 	point_t pcaA, pcaB;
 	double distA, distB;
 	int code, status;
@@ -933,8 +932,6 @@ int status;
 	/* XXX we re really should temper the results of vertex_neighborhood()
 	 * with the knowledge of "status"
 	 */
-
-
 
 	hit_ins(rd, myhit);
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
@@ -1645,7 +1642,116 @@ struct fu_pt_info *fpi;
 	ray_hit_vertex(rd, vu, NMG_VERT_UNKNOWN);
 }
 
+static void
+record_face_hit(rd, myhit, plane_pt, dist, fu_p, norm, a_hit)
+struct ray_data *rd;
+struct hitmiss *myhit;
+point_t plane_pt;
+double dist;
+struct faceuse *fu_p;
+plane_t norm;
+struct hitmiss		*a_hit;
+{
+	struct model *m;
+	double cos_angle;
 
+	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_MAGIC);
+	myhit->outbound_use = (long *)NULL;
+	myhit->inbound_use = (long *)NULL;
+
+
+	VMOVE(myhit->hit.hit_point, plane_pt);
+
+	/* also rd->ray_dist_to_plane */
+	myhit->hit.hit_dist = dist; 
+	myhit->hit.hit_private = (genptr_t)fu_p->f_p;
+
+
+	/* compute what the ray-state is before and after this
+	 * encountering this hit point.
+	 */
+	m = nmg_find_model( (long *)fu_p );
+
+	cos_angle = VDOT(norm, rd->rp->r_dir);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		VPRINT("face Normal", norm);
+		rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+	}
+
+
+	if ( ! (NMG_MANIFOLDS(m->manifolds, fu_p) & NMG_3MANIFOLD) ) {
+		myhit->in_out = HMG_HIT_ANY_ANY;
+
+		if (cos_angle < rd->tol->perp) {
+			VMOVE(myhit->inbound_norm, norm);
+			VREVERSE(myhit->outbound_norm, norm);
+			myhit->inbound_use = (long *)fu_p;
+			myhit->outbound_use = (long *)fu_p->fumate_p;
+		} else {
+			VREVERSE(myhit->inbound_norm, norm);
+			VMOVE(myhit->outbound_norm, norm);
+			myhit->inbound_use = (long *)fu_p->fumate_p;
+			myhit->outbound_use = (long *)fu_p;
+		}
+
+		return;
+	}
+
+
+	switch (fu_p->orientation) {
+	case OT_SAME:
+		if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
+			/* perpendicular? */
+			rt_log("%s[%d]: Ray is in plane of face?\n",
+				__FILE__, __LINE__);
+				rt_bomb("I quit\n");
+		} else if (cos_angle > 0.0) {
+			myhit->in_out = HMG_HIT_IN_OUT;
+			VREVERSE(myhit->outbound_norm, norm);
+			myhit->outbound_use = (long *)fu_p;
+			myhit->inbound_use = (long *)fu_p;
+		} else {
+			myhit->in_out = HMG_HIT_OUT_IN;
+			VMOVE(myhit->inbound_norm, norm);
+			myhit->inbound_use = (long *)fu_p;
+			myhit->outbound_use = (long *)fu_p;
+		}
+		break;
+	case OT_OPPOSITE:
+		if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
+			/* perpendicular? */
+			rt_log("%s[%d]: Ray is in plane of face?\n",
+				__FILE__, __LINE__);
+				rt_bomb("I quit\n");
+		} else if (cos_angle > 0.0) {
+			myhit->in_out = HMG_HIT_OUT_IN;
+			VREVERSE(myhit->inbound_norm, norm);
+			myhit->inbound_use = (long *)fu_p;
+			myhit->outbound_use = (long *)fu_p;
+		} else {
+			myhit->in_out = HMG_HIT_IN_OUT;
+			VMOVE(myhit->outbound_norm, norm);
+			myhit->inbound_use = (long *)fu_p;
+			myhit->outbound_use = (long *)fu_p;
+		}
+		break;
+	default:
+		rt_log("%s %d:face orientation not SAME/OPPOSITE\n",
+			__FILE__, __LINE__);
+		rt_bomb("Crash and burn\n");
+	}
+
+	hit_ins(rd, myhit);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		plfu(fu_p, rd->rp->r_pt, myhit->hit.hit_point);
+
+	NMG_CK_HITMISS(myhit);
+
+	NMG_CK_HITMISS_LISTS(a_hit, rd);
+
+
+
+}
 
 /*	I S E C T _ R A Y _ F A C E U S E
  *
@@ -1664,8 +1770,6 @@ struct faceuse *fu_p;
 	int			code;
 	plane_t			norm;
 	struct fu_pt_info	*fpi;
-	double			cos_angle;
-	struct model		*m;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("isect_ray_faceuse(0x%08x, faceuse:0x%08x/face:0x%08x)\n",
@@ -1809,6 +1913,7 @@ struct faceuse *fu_p;
 	myhit->inbound_use = myhit->outbound_use = (long *)NULL;
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
+
 	switch (fpi->pt_class) {
 	case NMG_CLASS_Unknown	:
 		rt_log("%s[line:%d] ray/plane intercept point cannot be classified wrt face\n",
@@ -1833,105 +1938,12 @@ struct faceuse *fu_p;
 			NMG_CK_HITMISS(myhit);
 			NMG_CK_HITMISS_LISTS(a_hit, rd);
 		} else {
-
 			/* The plane_pt was NOT within tolerance of a 
 			 * sub-element, but it WAS within the area of the 
 			 * face.  We need to record a hit on the face
 			 */
-			RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_MAGIC);
-			myhit->outbound_use = (long *)NULL;
-			myhit->inbound_use = (long *)NULL;
-
-
-			VMOVE(myhit->hit.hit_point, plane_pt);
-
-			/* also rd->ray_dist_to_plane */
-			myhit->hit.hit_dist = dist; 
-			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
-
-
-			/* compute what the ray-state is before and after this
-			 * encountering this hit point.
-			 */
-			m = nmg_find_model( (long *)fu_p );
-
-			cos_angle = VDOT(norm, rd->rp->r_dir);
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-				VPRINT("face Normal", norm);
-				rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
-			}
-
-
-			if ( ! (NMG_MANIFOLDS(m->manifolds, fu_p) & NMG_3MANIFOLD) ) {
-				myhit->in_out = HMG_HIT_ANY_ANY;
-
-				if (cos_angle < rd->tol->perp) {
-					VMOVE(myhit->inbound_norm, norm);
-					VREVERSE(myhit->outbound_norm, norm);
-					myhit->inbound_use = (long *)fu_p;
-					myhit->outbound_use = (long *)fu_p->fumate_p;
-				} else {
-					VREVERSE(myhit->inbound_norm, norm);
-					VMOVE(myhit->outbound_norm, norm);
-					myhit->inbound_use = (long *)fu_p->fumate_p;
-					myhit->outbound_use = (long *)fu_p;
-				}
-
-				break;
-			}
-
-
-			switch (fu_p->orientation) {
-			case OT_SAME:
-				if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
-					/* perpendicular? */
-					rt_log("%s[%d]: Ray is in plane of face?\n",
-						__FILE__, __LINE__);
-						rt_bomb("I quit\n");
-				} else if (cos_angle > 0.0) {
-					myhit->in_out = HMG_HIT_IN_OUT;
-					VREVERSE(myhit->outbound_norm, norm);
-					myhit->outbound_use = (long *)fu_p;
-					myhit->inbound_use = (long *)fu_p;
-				} else {
-					myhit->in_out = HMG_HIT_OUT_IN;
-					VMOVE(myhit->inbound_norm, norm);
-					myhit->inbound_use = (long *)fu_p;
-					myhit->outbound_use = (long *)fu_p;
-				}
-				break;
-			case OT_OPPOSITE:
-				if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
-					/* perpendicular? */
-					rt_log("%s[%d]: Ray is in plane of face?\n",
-						__FILE__, __LINE__);
-						rt_bomb("I quit\n");
-				} else if (cos_angle > 0.0) {
-					myhit->in_out = HMG_HIT_OUT_IN;
-					VREVERSE(myhit->inbound_norm, norm);
-					myhit->inbound_use = (long *)fu_p;
-					myhit->outbound_use = (long *)fu_p;
-				} else {
-					myhit->in_out = HMG_HIT_IN_OUT;
-					VMOVE(myhit->outbound_norm, norm);
-					myhit->inbound_use = (long *)fu_p;
-					myhit->outbound_use = (long *)fu_p;
-				}
-				break;
-			default:
-				rt_log("%s %d:face orientation not SAME/OPPOSITE\n",
-					__FILE__, __LINE__);
-				rt_bomb("Crash and burn\n");
-			}
-
-			hit_ins(rd, myhit);
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				plfu(fu_p, rd->rp->r_pt, myhit->hit.hit_point);
-
-			NMG_CK_HITMISS(myhit);
-
-			NMG_CK_HITMISS_LISTS(a_hit, rd);
-
+			record_face_hit(rd, myhit, plane_pt, dist,
+				fu_p, norm, a_hit);
 		}
 		break;
 	case NMG_CLASS_AoutB	:
@@ -1946,6 +1958,8 @@ struct faceuse *fu_p;
 			__FILE__, __LINE__);
 		rt_bomb("bombing");
 	}
+
+
 
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
 
