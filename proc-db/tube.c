@@ -70,15 +70,12 @@ double	spacing;
 main(argc, argv)
 char	**argv;
 {
-	struct b_spline *bp;
 	int	npts;
 	register int i;
-	int	nv;
-	int	cur_kv;
-	fastf_t	*meshp;
-	register int col;
-	int	row;
-	vect_t	point;
+	int	frame;
+	char	name[128];
+
+	mk_id( stdout, "Spline Tube" );
 
 	radius = 5 * inches2mm / 2;	/* 5" diameter */
 	length = 187 * inches2mm;
@@ -86,13 +83,33 @@ char	**argv;
 	npts = ceil(length/spacing);
 	fprintf(stderr,"radius=%gmm, length=%gmm, spacing=%gmm\n", radius, length, spacing);
 
-	/* Generate some dummy sample data */
-	for( i=0; i<npts; i++ )  {
-		sample[i][X] = i * spacing;
-		sample[i][Y] = 0;
-		sample[i][Z] = 4 * radius * sin(
-			((double)i*i)/npts * 2 * 3.14159265358979323 );
+	for( frame=0; frame<16; frame++ )  {
+		/* Generate some dummy sample data */
+		for( i=0; i<npts; i++ )  {
+			sample[i][X] = i * spacing;
+			sample[i][Y] = 0;
+			sample[i][Z] = 4 * radius * sin(
+				((double)i*i)/npts * 2 * 3.14159265358979323 +
+				frame * 3.141592 * 2 / 8 );
+		}
+
+		sprintf( name, "tube%d", frame);
+		build_spline( name, npts );
 	}
+}
+
+build_spline( name, npts )
+char	*name;
+int	npts;
+{
+	struct b_spline *bp;
+	register int i;
+	int	nv;
+	int	cur_kv;
+	fastf_t	*meshp;
+	register int col;
+	int	row;
+	vect_t	point;
 
 	/*
 	 *  This spline will look like a cylinder.
@@ -165,7 +182,7 @@ char	**argv;
 		*meshp++ = 1;
 	}
 		
-	mk_id( stdout, "Spline Tube" );
-	mk_bsolid( stdout, "tube", 1, 0.1 );
+	mk_bsolid( stdout, name, 1, 0.1 );
 	mk_bsurf( stdout, bp );
+	spl_sfree( bp );
 }
