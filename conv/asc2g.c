@@ -27,12 +27,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 
 extern void	exit();
-extern int	printf(), fprintf(), sscanf();		/* bzero()? */
+extern int	printf(), fprintf(), sscanf(), atoi();	/* bzero()? */
 extern char	*strcpy();
+extern double	atof();
 
 void	identbld(), polyhbld(), polydbld();
 void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
 void	materbld(), bsplbld(), bsurfbld();
+char	*nxt_spc();
 
 static union record	record;		/* GED database record */
 #define BUFSIZE		1024		/* Record input buffer size */
@@ -110,48 +112,30 @@ char **argv;
 void
 solbld()	/* Build Solid record */
 {
+	register char *cp;
+	register char *np;
 	register int i;
-	auto int temp1, temp2;
 
-	i=sscanf( buf,
-		/*	      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 */
-		"%c %d %s %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
-		&record.s.s_id,
-		&temp1,
-		&record.s.s_name[0],
-		&temp2,
-		&record.s.s_values[0],
-		&record.s.s_values[1],
-		&record.s.s_values[2],
-		&record.s.s_values[3],
-		&record.s.s_values[4],
-		&record.s.s_values[5],
-		&record.s.s_values[6],
-		&record.s.s_values[7],
-		&record.s.s_values[8],
-		&record.s.s_values[9],
-		&record.s.s_values[10],
-		&record.s.s_values[11],
-		&record.s.s_values[12],
-		&record.s.s_values[13],
-		&record.s.s_values[14],
-		&record.s.s_values[15],
-		&record.s.s_values[16],
-		&record.s.s_values[17],
-		&record.s.s_values[18],
-		&record.s.s_values[19],
-		&record.s.s_values[20],
-		&record.s.s_values[21],
-		&record.s.s_values[22],
-		&record.s.s_values[23]
-	);
-	if( i != 24+4 )  {
-		fprintf(stderr,"solbld(%s)  %d items converted, dropped\n",
-			record.s.s_name, i);
-		return;
+	cp = buf;
+	record.s.s_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.s.s_type = (char)atoi( cp );
+	cp = nxt_spc( cp );
+
+	np = record.s.s_name;
+	while( *cp != ' ' )  {
+		*np++ = *cp++;
 	}
-	record.s.s_type = (char)temp1;
-	record.s.s_cgtype = (short)temp2;
+	cp = nxt_spc( cp );
+
+	record.s.s_cgtype = (short)atoi( cp );
+
+	for( i = 0; i < 24; i++ )  {
+		cp = nxt_spc( cp );
+		record.s.s_values[i] = atof( cp );
+	}
+
 	if( debug )  {
 		fprintf(stderr,"%s ty%d [0]=%f,%f,%f [3]=%e,%e,%e\n",
 			record.s.s_name, record.s.s_type,
@@ -169,42 +153,56 @@ solbld()	/* Build Solid record */
 void
 combbld()	/* Build Combination record */
 {
-	int temp1, temp2, temp3, temp4, temp5, temp6;
-	int temp_override, temp_r, temp_g, temp_b;
+	register char *cp;
+	register char *np;
 	int temp_nflag, temp_pflag;
 
-	temp_override = 0;
-	temp_nflag = temp_pflag = 0;	/* optional fields */
+	record.c.c_override = 0;
+	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
-	(void)sscanf( buf, "%c %c %s %d %d %d %d %d %d %d %d %d %d %d %d",
-		&record.c.c_id,
-		&record.c.c_flags,
-		&record.c.c_name[0],
-		&temp1,
-		&temp2,
-		&temp3,
-		&temp4,
-		&temp5,
-		&temp6,
-		&temp_override,
-		&temp_r, &temp_g, &temp_b,
-		&temp_nflag,
-		&temp_pflag
-	);
+	cp = buf;
+	record.c.c_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.c.c_flags = *cp++;
+	cp = nxt_spc( cp );
+
+	np = record.c.c_name;
+	while( *cp != ' ' )  {
+		*np++ = *cp++;
+	}
+	cp = nxt_spc( cp );
+
+	record.c.c_regionid = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_aircode = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_length = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_num = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_material = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_los = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_override = (char)atoi( cp );
+	cp = nxt_spc( cp );
+
+	record.c.c_rgb[0] = (unsigned char)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_rgb[1] = (unsigned char)atoi( cp );
+	cp = nxt_spc( cp );
+	record.c.c_rgb[2] = (unsigned char)atoi( cp );
+	cp = nxt_spc( cp );
+
+	temp_nflag = atoi( cp );
+	cp = nxt_spc( cp );
+	temp_pflag = atoi( cp );
+
 	if( record.c.c_flags == 'Y' )
 		record.c.c_flags = 'R';
 	else
 		record.c.c_flags = ' ';
-	record.c.c_regionid = (short)temp1;
-	record.c.c_aircode = (short)temp2;
-	record.c.c_length = (short)temp3;
-	record.c.c_num = (short)temp4;
-	record.c.c_material = (short)temp5;
-	record.c.c_los = (short)temp6;
-	record.c.c_override = temp_override;
-	record.c.c_rgb[0] = temp_r;
-	record.c.c_rgb[1] = temp_g;
-	record.c.c_rgb[2] = temp_b;
 
 	if( temp_nflag )  {
 		fgets( buf, BUFSIZE, stdin );
@@ -224,32 +222,29 @@ combbld()	/* Build Combination record */
 void
 membbld()	/* Build Member record */
 {
-	int temp1;
+	register char *cp;
+	register char *np;
+	register int i;
 
-		/*		      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 */
-	(void)sscanf( buf, "%c %c %s %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %d", 
-		&record.M.m_id,
-		&record.M.m_relation,
-		&record.M.m_instname[0],
-		&record.M.m_mat[0],
-		&record.M.m_mat[1],
-		&record.M.m_mat[2],
-		&record.M.m_mat[3],
-		&record.M.m_mat[4],
-		&record.M.m_mat[5],
-		&record.M.m_mat[6],
-		&record.M.m_mat[7],
-		&record.M.m_mat[8],
-		&record.M.m_mat[9],
-		&record.M.m_mat[10],
-		&record.M.m_mat[11],
-		&record.M.m_mat[12],
-		&record.M.m_mat[13],
-		&record.M.m_mat[14],
-		&record.M.m_mat[15],
-		&temp1
-	);
-	record.M.m_num = (short)temp1;
+	cp = buf;
+	record.M.m_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.M.m_relation = *cp++;
+	cp = nxt_spc( cp );
+
+	np = record.M.m_instname;
+	while( *cp != ' ' )  {
+		*np++ = *cp++;
+	}
+	cp = nxt_spc( cp );
+
+	for( i = 0; i < 16; i++ )  {
+		record.M.m_mat[i] = atof( cp );
+		cp = nxt_spc( cp );
+	}
+
+	record.M.m_num = (short)atoi( cp );
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -258,8 +253,44 @@ membbld()	/* Build Member record */
 void
 arsabld()	/* Build ARS A record */
 {
-	int temp1, temp2, temp3, temp4, temp5;
+	register char *cp;
+	register char *np;
 
+	cp = buf;
+	record.a.a_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.a.a_type = (char)atoi( cp );
+	cp = nxt_spc( cp );
+
+	np = record.a.a_name;
+	while( *cp != ' ' )  {
+		*np++ = *cp++;
+	}
+	cp = nxt_spc( cp );
+
+	record.a.a_m = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.a.a_n = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.a.a_curlen = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.a.a_totlen = (short)atoi( cp );
+	cp = nxt_spc( cp );
+
+	record.a.a_xmax = atof( cp );
+	cp = nxt_spc( cp );
+	record.a.a_xmin = atof( cp );
+	cp = nxt_spc( cp );
+	record.a.a_ymax = atof( cp );
+	cp = nxt_spc( cp );
+	record.a.a_ymin = atof( cp );
+	cp = nxt_spc( cp );
+	record.a.a_zmax = atof( cp );
+	cp = nxt_spc( cp );
+	record.a.a_zmin = atof( cp );
+
+#ifdef never
 	(void)sscanf( buf, "%c %d %s %d %d %d %d %f %f %f %f %f %f",
 		&record.a.a_id,
 		&temp1,
@@ -280,6 +311,7 @@ arsabld()	/* Build ARS A record */
 	record.a.a_n = (short)temp3;
 	record.a.a_curlen = (short)temp4;
 	record.a.a_totlen = (short)temp5;
+#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -288,8 +320,25 @@ arsabld()	/* Build ARS A record */
 void
 arsbbld()	/* Build ARS B record */
 {
-	int temp1, temp2, temp3;
+	register char *cp;
+	register int i;
 
+	cp = buf;
+	record.b.b_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.b.b_type = (char)atoi( cp );
+	cp = nxt_spc( cp );
+	record.b.b_n = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.b.b_ngranule = (short)atoi( cp );
+
+	for( i = 0; i < 24; i++ )  {
+		cp = nxt_spc( cp );
+		record.b.b_values[i] = atof( cp );
+	}
+
+#ifdef never
 		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 */
 	(void)sscanf( buf, "%c %d %d %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
 		&record.b.b_id,
@@ -324,6 +373,7 @@ arsbbld()	/* Build ARS B record */
 	record.b.b_type = (char)temp1;
 	record.b.b_n = (short)temp2;
 	record.b.b_ngranule = (short)temp3;
+#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -345,14 +395,20 @@ zap_nl()
 void
 identbld()	/* Build Ident record */
 {
-	int temp1;
+	register char *cp;
+	register char *np;
 
-	(void)sscanf( buf, "%c %d %s",
-		&record.i.i_id,
-		&temp1,
-		&record.i.i_version[0]
-	);
-	record.i.i_units = (char)temp1;
+	cp = buf;
+	record.i.i_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.i.i_units = (char)atoi( cp );
+	cp = nxt_spc( cp );
+
+	np = record.i.i_version;
+	while( *cp != '\n' && *cp != '\0' )  {
+		*np++ = *cp++;
+	}
 
 	(void)fgets( buf, BUFSIZE, stdin);
 	zap_nl();
@@ -365,10 +421,24 @@ identbld()	/* Build Ident record */
 void
 polyhbld()	/* Build Polyhead record */
 {
+	register char *cp;
+	register char *np;
+
+	cp = buf;
+	record.p.p_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	np = record.p.p_name;
+	while( *cp != '\0' )  {
+		*np++ = *cp++;
+	}
+
+#ifdef never
 	(void)sscanf( buf, "%c %s",
 		&record.p.p_id,
 		&record.p.p_name[0]
 	);
+#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -377,9 +447,32 @@ polyhbld()	/* Build Polyhead record */
 void
 polydbld()	/* Build Polydata record */
 {
+	register char *cp;
+	register int i, j;
+
+	cp = buf;
+	record.q.q_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.q.q_count = (char)atoi( cp );
+
+	for( i = 0; i < 5; i++ )  {
+		for( j = 0; j < 3; j++ )  {
+			cp = nxt_spc( cp );
+			record.q.q_verts[i][j] = atof( cp );
+		}
+	}
+
+	for( i = 0; i < 5; i++ )  {
+		for( j = 0; j < 3; j++ )  {
+			cp = nxt_spc( cp );
+			record.q.q_norms[i][j] = atof( cp );
+		}
+	}
+
+#ifdef never
 	int temp1;
 
-#ifdef later
 		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 */
 	(void)sscanf( buf, "%c %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", 
 		&record.q.q_id,
@@ -416,28 +509,32 @@ polydbld()	/* Build Polydata record */
 		&record.q.q_norms[4][2]
 	);
 	record.q.q_count = (char)temp1;
+#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
-#endif
 }
 
 void
 materbld()
 {
-	int flags, low, hi, r, g, b;
+	register char *cp;
 
-	(void)sscanf( buf, "%c %d %d %d %d %d %d",
-		&record.md.md_id,
-		&flags, &low, &hi,
-		&r, &g, &b
-	);
-	record.md.md_flags = (char)flags;
-	record.md.md_low = (short)low;
-	record.md.md_hi = (short)hi;
-	record.md.md_r = (unsigned char)r;
-	record.md.md_g = (unsigned char)g;
-	record.md.md_b = (unsigned char)b;
+	cp = buf;
+	record.md.md_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.md.md_flags = (char)atoi( cp );
+	cp = nxt_spc( cp );
+	record.md.md_low = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.md.md_hi = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.md.md_r = (unsigned char)atoi( cp);
+	cp = nxt_spc( cp );
+	record.md.md_g = (unsigned char)atoi( cp);
+	cp = nxt_spc( cp );
+	record.md.md_b = (unsigned char)atoi( cp);
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -446,8 +543,24 @@ materbld()
 void
 bsplbld()	/* Build B-spline solid record */
 {
-	int temp1;
+	register char *cp;
+	register char *np;
 
+	cp = buf;
+	record.B.B_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	np = record.B.B_name;
+	while( *cp != ' ' )  {
+		*np++ = *cp++;
+	}
+	cp = nxt_spc( cp );
+
+	record.B.B_nsurf = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.B.B_resolution = atof( cp );
+
+#ifdef never
 	(void)sscanf( buf, "%c %s %d %f",
 		&record.B.B_id,
 		&record.B.B_name[0],
@@ -455,6 +568,7 @@ bsplbld()	/* Build B-spline solid record */
 		&record.B.B_resolution
 	);
 	record.B.B_nsurf = (short)temp1;
+#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -463,10 +577,35 @@ bsplbld()	/* Build B-spline solid record */
 void
 bsurfbld()	/* Build d-spline surface description record */
 {
+	register char *cp;
 	register int i;
 	register float *vp;
 	int nbytes, count;
 	float *fp;
+
+	cp = buf;
+	record.d.d_id = *cp++;
+	cp = nxt_spc( cp );		/* skip the space */
+
+	record.d.d_order[0] = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_order[1] = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_kv_size[0] = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_kv_size[1] = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_ctl_size[0] = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_ctl_size[1] = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_geom_type = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_nknots = (short)atoi( cp );
+	cp = nxt_spc( cp );
+	record.d.d_nctls = (short)atoi( cp );
+
+#ifdef never
 	int temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9;
 
 	(void)sscanf( buf, "%c %d %d %d %d %d %d %d %d %d",
@@ -490,6 +629,7 @@ bsurfbld()	/* Build d-spline surface description record */
 	record.d.d_geom_type = (short)temp7;
 	record.d.d_nknots = (short)temp8;
 	record.d.d_nctls = (short)temp9;
+#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -550,6 +690,19 @@ bsurfbld()	/* Build d-spline surface description record */
 
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
+}
+
+char *
+nxt_spc( cp)
+register char *cp;
+{
+	while( *cp != ' ' && *cp != '\t' && *cp !='\0' )  {
+		cp++;
+	}
+	if( *cp != '\0' )  {
+		cp++;
+	}
+	return( cp );
 }
 
 #ifndef BSD42
