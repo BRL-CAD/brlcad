@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:08:44  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -78,8 +81,12 @@ finish(code)
 			putstr("Complete lossage!");
 	}
 	ttyset(0);
+	if (KE)
+		putpad(KE, 1);
 	if (VE)
 		putpad(VE, 1);
+	if (TE)
+		putpad(TE, 1);
 	Placur(LI - 1, 0);
 	putpad(CE, 1);
 	flusho();
@@ -99,7 +106,7 @@ static char	smbuf[NTOBUF],
 static int	nchars = 0;
 
 Ungetc(c)
-int	c;
+register int	c;
 {
 	if (c == EOF || nchars >= NTOBUF)
 		return EOF;
@@ -169,18 +176,28 @@ charp()
 
 ResetTerm()
 {
+	if (IF)
+		dumpIF(IF);
 	if (IS)
 		putpad(IS, 1);
+	if (TI)
+		putpad(TI, 1);
 	if (VS)
 		putpad(VS, 1);
+	if (KS)
+		putpad(KS, 1);
 	ttyset(1);
 }
 
 UnsetTerm()
 {
 	ttyset(0);
+	if (KE)
+		putpad(KE, 1);
 	if (VE)
 		putpad(VE, 1);
+	if (TE)
+		putpad(TE, 1);
 	Placur(LI - 1, 0);
 	flusho();
 }
@@ -400,7 +417,7 @@ deal_with_scroll()
 char *
 emalloc(size)
 {
-	char	*ptr;
+	register char	*ptr;
 
 	if (ptr = malloc((unsigned) size))
 		return ptr;
@@ -414,7 +431,7 @@ emalloc(size)
 dispatch(c)
 register int	c;
 {
-	struct function	*fp;
+	register struct function	*fp;
 
 	fp = mainmap[c];
 	if (fp == 0) {
@@ -431,7 +448,7 @@ int	LastKeyStruck;
 
 getch()
 {
-	int	c;
+	register int	c;
 
 	if (stackp >= 0 && macstack[stackp]->Flags & EXECUTE)
 		c = MacGetc();
@@ -448,11 +465,11 @@ getch()
 }
 
 parse(argc, argv)
-char	*argv[];
+register char	*argv[];
 {
 	BUFFER	*firstbuf = 0;
 	BUFFER	*secondbuf = 0;
-	char	c;
+	register char	c;
 
 	message("Jonathan's Own Version of Emacs");
 
@@ -587,7 +604,7 @@ read_ch()
 
 DoKeys(first)
 {
-	int	c;
+	register int	c;
 	jmp_buf	savejmp;
 
 	copynchar((char *) savejmp, (char *) mainjmp, sizeof savejmp);
@@ -684,17 +701,38 @@ char	*argv[];
 	ignore(joverc(JOVERC));
 	if (home = getenv("HOME"))
 		ignore(joverc(sprint("%s/.joverc", home)));
+
 	ttinit();	/* Initialize terminal (after ~/.joverc) */
 
-	putpad(CL, 1);
+	if (IF)
+		dumpIF(IF);
 	if (IS)
 		putpad(IS, 1);
+	if (TI)
+		putpad(TI, 1);
 	if (VS)
 		putpad(VS, 1);
+	if (KS)
+		putpad(KS, 1);
+	putpad(CL, 1);
 
 	copy_n(origflags, curbuf->b_flags, NFLAGS);
 	/* All new buffers will have these flags when created. */
 	RedrawDisplay();	/* Start the redisplay process */
 	DoKeys(1);
 	finish(0);
+}
+
+dumpIF(file)
+register char	*file;
+{
+	char	buf[100];
+	register int	fd;
+	register int	count;
+
+	if ((fd = open(file)) < 0)
+		return;
+	while ((count = read(fd, buf, 100)) > 0)
+		write (1, buf, count);
+	return;
 }
