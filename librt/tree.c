@@ -315,6 +315,9 @@ register union record *rec;
 		if( strncmp( rec->ss.ss_str, "ebm", 3 ) == 0 )  {
 			id = ID_EBM;
 			break;
+		} else if( strncmp( rec->ss.ss_str, "vol", 3 ) == 0 )  {
+			id = ID_VOL;
+			break;
 		}
 		rt_log("rt_id_solid(%s):  String solid type '%s' unknown\n",
 			rec->ss.ss_name, rec->ss.ss_str );
@@ -324,6 +327,10 @@ register union record *rec;
 		rt_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
 		id = ID_NULL;		/* BAD */
 		break;
+	}
+	if( id < ID_NULL || id > ID_MAXIMUM )  {
+		rt_log("rt_id_solid: internal error, id=%d?\n", id);
+		id = ID_NULL;		/* very BAD */
 	}
 	return(id);
 }
