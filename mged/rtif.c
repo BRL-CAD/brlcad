@@ -630,7 +630,7 @@ char	**argv;
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
 	(void)fprintf(fp," %s\\\n ", dbip->dbi_filename);
 
-	/* Find all unique top-level entrys.
+	/* Find all unique top-level entries.
 	 *  Mark ones already done with s_iflag == UP
 	 */
 	FOR_ALL_SOLIDS( sp )
@@ -1633,4 +1633,73 @@ char		**argv;
     rt_free((char *) snames, "solid names");
 
     return TCL_OK;
+}
+
+
+/* list the objects currently being edited (displayed)*/
+int 
+cmd_who (clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+char 		**argv;
+{
+
+	register struct solid *sp;
+	int skip_real, skip_phony;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
+
+	skip_real = 0;
+	skip_phony = 1;
+	if (argc > 1) {
+		switch (argv[1][0]) {
+		case 'b':
+			skip_real = 0;
+			skip_phony = 0;
+			break;
+		case 'p':
+			skip_real = 1;
+			skip_phony = 0;
+			break;
+		case 'r':
+			skip_real = 0;
+			skip_phony = 1;
+			break;
+		default:
+			Tcl_AppendResult(interp,"who: argument not understood\n", (char *)NULL);
+			return TCL_ERROR;
+			break;
+		}
+	}
+		
+
+	/* Find all unique top-level entries.
+	 *  Mark ones already done with s_iflag == UP
+	 */
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+	FOR_ALL_SOLIDS( sp )  {
+		register struct solid *forw;	/* XXX */
+
+		if( sp->s_iflag == UP )
+			continue;
+		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR){
+			if (skip_phony) continue;
+		} else {
+			if (skip_real) continue;
+		}
+		Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
+		sp->s_iflag = UP;
+		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
+			if( forw->s_path[0] == sp->s_path[0] )
+				forw->s_iflag = UP;
+		}
+	}
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+
+	Tcl_AppendResult(interp, "\n", (char *)NULL);
+	return TCL_OK;
 }

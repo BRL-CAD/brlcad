@@ -88,6 +88,7 @@ void set_e_axes_pos();
 extern int cmd_vdraw();
 extern int cmd_viewget();
 extern int cmd_viewset();
+extern int cmd_who();
 #endif
 
 extern Tcl_CmdProc	cmd_fhelp;
@@ -525,6 +526,8 @@ static struct funtab funtab[] = {
         f_wcodes, 3, MAXARGS, TRUE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,TRUE,
+"who", "[r(eal)|p(hony)|b(oth)]", "list the displayed objects",
+	cmd_who,1,2,TRUE,
 "winset", "pathname", "sets the current display manager to pathname",
         f_winset, 1, 2, TRUE,
 "x", "lvl", "print solid table & vector list",
