@@ -38,6 +38,7 @@ double fbm_size = 1.0;
 vect_t fbm_vscale = {0.0125, 0.0125, 0.0125};
 vect_t fbm_delta = {1000.0, 1000.0, 1000.0};
 double fbm_offset = 1.0;
+int quiet = 0;
 
 int debug;
 
@@ -110,7 +111,8 @@ func_fbm(unsigned short *buf)
 				if (debug) bu_log("clamping noise value %g \n", v);
 			v = v * 0.5 + 0.5;
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 }
@@ -144,7 +146,7 @@ func_turb(unsigned short *buf)
 			if (v > 1.0 || v < 0.0)
 				if (debug) bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 }
@@ -228,7 +230,7 @@ func_multi(short *buf)
 				if (debug) bu_log("clamping noise value %g \n", v);
 				CLAMP(v, 0.0, 1.0);
 			}
-			buf[y*xdim + x] = 1 + 65535000.0 * v;
+			buf[y*xdim + x] = 1 + 65534000.0 * v;
 		}
 	}
 	if (debug) bu_log("min_V: %g   max_V: %g\n", min_V, max_V);
@@ -272,7 +274,7 @@ func_ridged(unsigned short *buf)
 			if (v > 1.0 || v < 0.0)
 				if (debug) bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 }
@@ -486,7 +488,7 @@ func_lee(unsigned short *buf)
 			if (v > 1.0 || v < 0.0)
 				if (debug) bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 	if (debug) bu_log("min: %g max: %g\n", lo, hi);
@@ -538,17 +540,14 @@ func_lunar(unsigned short *buf)
 			if (v > 1.0 || v < 0.0)
 				if (debug) bu_log("clamping noise value %g \n", v);
 			CLAMP(v, 0.0, 1.0);
-			buf[y*xdim + x] = 1.0 + 65535.0 * v;
+			buf[y*xdim + x] = 1.0 + 65534.0 * v;
 		}
 	}
 	if (debug) bu_log("min: %g max: %g\n", lo, hi);
 }
 
-
  
-
-
-
+void (*terrain_func)() = func_fbm;
 
 /*
  *	P A R S E _ A R G S --- Parse through command line flags
@@ -579,6 +578,7 @@ char *av[];
 			break;
 		case 'n': if ((c=atoi(optarg)) > 0) ydim = c;
 			break;
+		case 'q' : quiet = !quiet; break;
 		case 's': if ((c=atoi(optarg)) > 0) xdim = ydim = c;
 			break;
 		case 'L': if ((v=atof(optarg)) >  0.0) fbm_lacunarity = v;
@@ -643,9 +643,6 @@ int ac;
 char *av[];
 {
 	int arg_count;
-	FILE *inp;
-	int status;
-	int x, y;
 	unsigned short *buf;
 	int in_cookie, out_cookie;
 	int count;
