@@ -243,7 +243,7 @@ int y;
 
 		/* Obtain a single line of 8-bit pixels */
 		if( fread( line, 1, width, infp ) != width )  {
-			bzero( line, width );
+			bzero( (char *)line, width );
 		}
 
 		/* construct im_mag scans of Imagen swath */

@@ -62,11 +62,11 @@ char **argv;
 		num = (nr > ng) ? nr : ng;
 		if( nb > num ) num = nb;
 		if( nr < num )
-			bzero( &red[nr], num-nr );
+			bzero( (char *)&red[nr], num-nr );
 		if( ng < num )
-			bzero( &green[ng], num-ng );
+			bzero( (char *)&green[ng], num-ng );
 		if( nb < num )
-			bzero( &blue[nb], num-nb );
+			bzero( (char *)&blue[nb], num-nb );
 
 		obufp = &obuf[0];
 		for( i = 0; i < num; i++ ) {

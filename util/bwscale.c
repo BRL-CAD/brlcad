@@ -195,7 +195,7 @@ int scanlen;
 		fprintf(stderr, "Cannot allocate buffer\n");
 		exit(-1);
 	} else {
-		bzero(buffer, buflines * scanlen);
+		bzero((char *)buffer, buflines * scanlen);
 	}
 }
 

@@ -88,10 +88,10 @@ int argc; char **argv;
 		p2 = &ibuf2[0];
 		op = &obuf[0];
 		if( m < n ) {
-			 bzero( (&ibuf2[m]), (n - m));
+			 bzero( (char *)(&ibuf2[m]), (n - m));
 		}
 		if( m > n ) {
-			 bzero( (&ibuf1[n]), (m - n));
+			 bzero( (char *)(&ibuf1[n]), (m - n));
 			 n = m;
 		}
 		/* unrolled for speed */
