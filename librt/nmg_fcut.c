@@ -1501,7 +1501,6 @@ CONST struct rt_tol	*tol;
 	}
 
 	RT_CK_TOL(tol);
-	rs1.tol = rs2.tol = tol;
 
 	mag1 = (fastf_t *)rt_calloc(b1->end+1, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
@@ -1547,6 +1546,7 @@ CONST struct rt_tol	*tol;
 #endif
 	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir );
 	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir );
+	rs1.tol = rs2.tol = tol;
 
 	nmg_face_combineX( &rs1, mag1, &rs2, mag2 );
 
@@ -2375,6 +2375,7 @@ CONST struct rt_tol	*tol;
 	int	geom_orient;
 
 	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
 
 	ccw = nmg_loop_is_ccw( lu, norm, tol );
 	if( ccw == 0 )  {
