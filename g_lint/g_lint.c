@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #define made_it()	rt_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
-#define	OPT_STRING	"a:ce:g:opr:t:u?"
+#define	OPT_STRING	"a:ce:g:opr:t:ux:?"
 #define	RAND_NUM	((fastf_t)random()/MAXINT)
 #define	RAND_OFFSET	((1 - cell_center) *		\
 			 (RAND_NUM * celsiz - celsiz / 2))
@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 struct g_lint_ctrl
 {
     long		glc_magic;	/* Magic no. for integrity check */
+    long		glc_debug;	/* Bits to tailor diagnostics */
     struct application	*glc_ap;	/* To obtain ray orig. point */
     fastf_t		glc_tol;	/* Overlap/void tolerance */
     unsigned long	glc_what_to_report;	/* Bits to tailor the output */
@@ -111,6 +112,7 @@ static char	*usage[] = {
     "                 32  vacuums\n",
     "  -t tol       Ignore overlaps/voids of length < tol (0.0 mm)\n",
     "  -u           Report on air (overlaps only)\n",
+    "  -x bits      Set diagnostic flag=bits\n",
     0
 };
 
@@ -172,6 +174,7 @@ struct partition	*ph;
     int			do_plot3;
     fastf_t		tolerance;
     unsigned long	what_to_report;
+    unsigned long	debug;
     unsigned char	*color;
 
     RT_AP_CHECK(ap);
@@ -182,7 +185,12 @@ struct partition	*ph;
     do_plot3 = (cp -> glc_how_to_report == G_LINT_PLOT3);
     tolerance = cp -> glc_tol;
     what_to_report = cp -> glc_what_to_report;
+    debug = cp -> glc_debug;
 
+    /*
+     *	Before we do anything else,
+     *	compute all the hit points along this partition
+     */
     for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw)
     {
 	RT_CKMAG(pp, PT_MAGIC, "partition structure");
@@ -191,7 +199,13 @@ struct partition	*ph;
 	    &ap -> a_ray);
 	RT_HIT_NORM(pp -> pt_outhit, pp -> pt_outseg -> seg_stp,
 	    &ap -> a_ray);
+    }
 
+    /*
+     *	Now, do the real work of checking the partitions...
+     */
+    for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw)
+    {
 	/* Check air partitions */
 	if (what_to_report & G_LINT_A_ANY)
 	    if (pp -> pt_regionp -> reg_regionid <= 0)
@@ -201,7 +215,7 @@ struct partition	*ph;
 		{
 		    VSUB2(delta, pp -> pt_inhit -> hit_point,
 			pp -> pt_back -> pt_outhit -> hit_point);
-		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
+		    if ((mag_del = MAGNITUDE(delta)) < tolerance)
 		    {
 			if (do_plot3)
 			{
@@ -256,6 +270,14 @@ struct partition	*ph;
 		{
 		    VSUB2(delta, pp -> pt_inhit -> hit_point,
 			pp -> pt_back -> pt_outhit -> hit_point);
+		    if (debug & G_LINT_A_UNCONF)
+		    {
+			rt_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
+			    V3ARGS(pp -> pt_inhit -> hit_point),
+			    V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
+			rt_log(" = (%g,%g,%g), mag=%g\n",
+			    V3ARGS(delta), MAGNITUDE(delta));
+		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
 		    {
 			if (do_plot3)
@@ -319,6 +341,14 @@ struct partition	*ph;
 		{
 		    VSUB2(delta, pp -> pt_forw -> pt_inhit -> hit_point,
 			pp -> pt_outhit -> hit_point);
+		    if (debug & G_LINT_A_UNCONF)
+		    {
+			rt_log("forw inhit (%g,%g,%g) - outhit (%g,%g,%g) ",
+			    V3ARGS(pp -> pt_forw -> pt_inhit -> hit_point),
+			    V3ARGS(pp -> pt_outhit -> hit_point));
+			rt_log(" = (%g,%g,%g), mag=%g\n",
+			    V3ARGS(delta), MAGNITUDE(delta));
+		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
 		    {
 			if (do_plot3)
@@ -361,12 +391,20 @@ struct partition	*ph;
 	{
 	    VSUB2(delta, pp -> pt_inhit -> hit_point,
 		pp -> pt_back -> pt_outhit -> hit_point);
+	    if (debug & G_LINT_VAC)
+	    {
+		rt_log("inhit (%g,%g,%g) - back outhit (%g,%g,%g) ",
+		    V3ARGS(pp -> pt_inhit -> hit_point),
+		    V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
+		rt_log(" = (%g,%g,%g), mag=%g\n",
+		    V3ARGS(delta), MAGNITUDE(delta));
+	    }
 	    if ((mag_del = MAGNITUDE(delta)) > tolerance)
 	    {
 		if (do_plot3)
 		{
-		    pl_color(cp -> glc_fp,
-			V3ARGS(&(cp -> glc_color[log_2(G_LINT_A_UNCONF)])));
+		    color = get_color(cp -> glc_color, G_LINT_VAC);
+		    pl_color(cp -> glc_fp, V3ARGS(color));
 		    pdv_3line(cp -> glc_fp,
 			pp -> pt_back -> pt_outhit -> hit_point,
 			pp -> pt_inhit -> hit_point);
@@ -539,6 +577,7 @@ char	**argv;
     rt_log("%s\n", rt_version);
 
     control.glc_magic = G_LINT_CTRL_MAGIC;
+    control.glc_debug = 0;
     control.glc_ap = 0;
     control.glc_tol = 0.0;
     control.glc_what_to_report = G_LINT_OVLP;
@@ -633,7 +672,15 @@ char	**argv;
 		break;
 	    case 'u':
 		use_air = 1;
-		control.glc_what_to_report |= G_LINT_A_ANY;
+		break;
+	    case 'x':
+		control.glc_debug = strtoul(optarg, &sp, 16);
+		if (sp == optarg)
+		{
+		    rt_log("Invalid debug-flag specification: '%s'\n", optarg);
+		    printusage();
+		    exit (1);
+		}
 		break;
 	    default:
 		printusage();
@@ -648,7 +695,7 @@ char	**argv;
     rt_log("OK, use_air=%d, what_to_report=0x%x\n",
 	use_air, control.glc_what_to_report);
     if (control.glc_what_to_report & ~G_LINT_ALL)
-	rt_log("WARNING: Ignoring high bits of report specification\n");
+	rt_log("WARNING: Ignoring undefined bits of report specification\n");
 
     /* Read in the geometry model */
     rt_log("Database file:  '%s'\n", argv[optind]);
