@@ -22,8 +22,10 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
-#ifdef HAVE_CONFIG_H
+#ifndef PACAKGE
+# ifdef HAVE_CONFIG_H
 #  include "config.h"
+# endif
 #endif
 
 #ifdef __win32
