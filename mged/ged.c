@@ -119,6 +119,7 @@ static struct bu_vls input_str, scratchline, input_str_prefix;
 static int input_str_index = 0;
 
 static void     mged_insert_char();
+static void	mged_process_char();
 static int	do_rc();
 static void	log_event();
 extern char	version[];		/* from vers.c */
@@ -145,10 +146,14 @@ void pr_prompt(), pr_beep();
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
+Tcl_FileProc dm_pipe_input;
 #else
 void stdin_input();
 void std_out_or_err();
+void dm_pipe_input();
 #endif
+
+struct dm_char_queue head_dm_char_queue;
 
 /* 
  *			M A I N
@@ -265,6 +270,9 @@ char **argv;
 	BU_LIST_INIT(&HeadSolid.l);
 	BU_LIST_INIT(&FreeSolid.l);
 	BU_LIST_INIT( &rt_g.rtg_vlfree );
+
+	bzero((void *)&head_dm_char_queue, sizeof(struct dm_char_queue));
+	BU_LIST_INIT(&head_dm_char_queue.l);
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	BU_LIST_INIT(&head_cmd_list.l);
@@ -441,14 +449,14 @@ char **argv;
 
 	refresh();			/* Put up faceplate */
 
+	(void)pipe(dm_pipe);
+	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
+			      TCL_READABLE, dm_pipe_input, (ClientData)dm_pipe[0]);
+
 	if(classic_mged){
-	  (void)pipe(dm_pipe);
 	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
 				TCL_READABLE, stdin_input,
 				(ClientData)STDIN_FILENO);
-	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)dm_pipe[0], TCL_UNIX_FD),
-				TCL_READABLE, stdin_input,
-				(ClientData)dm_pipe[0]);
 
 	  (void)signal( SIGINT, SIG_IGN );
 
@@ -470,16 +478,7 @@ char **argv;
 	while(1) {
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
-#if 0
-		/* apply solid editing changes if necessary */
-		if( sedraw > 0) {
-			sedit();
-#if 1
-			sedraw = 0;
-			dmaflag = 1;
-#endif
-		}
-#endif
+
 		/*
 		 * Cause the control portion of the displaylist to be
 		 * updated to reflect the changes made above.
@@ -530,10 +529,7 @@ int mask;
 {
     int count;
     char ch;
-    struct bu_vls *vp;
     struct bu_vls temp;
-    static int escaped = 0;
-    static int bracketed = 0;
     static int freshline = 1;
     long fd;
 
@@ -626,7 +622,28 @@ int mask;
       f_quit((ClientData)NULL, interp, 1, av);
     }
 
-    /* Process character */
+#ifdef TRY_STDIN_INPUT_HACK
+    /* Process everything in buf */
+    for(index = 0, ch = buf[index]; index < count; ch = buf[++index]){
+#endif
+      mged_process_char(ch);
+#ifdef TRY_STDIN_INPUT_HACK
+    }
+    }
+#endif	
+}
+
+/* Process character */
+static void
+mged_process_char(ch)
+char ch;
+{
+  struct bu_vls *vp;
+  struct bu_vls temp;
+  static int escaped = 0;
+  static int bracketed = 0;
+  static int freshline = 1;
+
 #define CTRL_A      1
 #define CTRL_B      2
 #define CTRL_D      4
@@ -644,404 +661,396 @@ int mask;
 #define DELETE      127
 
 #define SPACES "                                                                                                                                                                                                                                                                                                           "
-#ifdef TRY_STDIN_INPUT_HACK
-    /* Process everything in buf */
-    for(index = 0, ch = buf[index]; index < count; ch = buf[++index]){
-#endif
-    /* ANSI arrow keys */
+  /* ANSI arrow keys */
     
-    if (escaped && bracketed) {
-	if (ch == 'A') ch = CTRL_P;
-	if (ch == 'B') ch = CTRL_N;
-	if (ch == 'C') ch = CTRL_F;
-	if (ch == 'D') ch = CTRL_B;
-	escaped = bracketed = 0;
+  if (escaped && bracketed) {
+    if (ch == 'A') ch = CTRL_P;
+    if (ch == 'B') ch = CTRL_N;
+    if (ch == 'C') ch = CTRL_F;
+    if (ch == 'D') ch = CTRL_B;
+    escaped = bracketed = 0;
+  }
+
+  switch (ch) {
+  case ESC:           /* Used for building up ANSI arrow keys */
+    escaped = 1;
+    break;
+  case '\n':          /* Carriage return or line feed */
+  case '\r':
+    bu_log("\n");   /* Display newline */
+
+    /* If there are any characters already in the command string (left
+       over from a CMD_MORE), then prepend them to the new input. */
+
+    /* If no input and a default is supplied then use it */
+    if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
+      bu_vls_printf(&input_str_prefix, "%s%S\n",
+		    bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+		    &curr_cmd_list->more_default);
+    else {
+      if (curr_cmd_list->quote_string)
+	bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
+		      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+		      &input_str);
+      else
+	bu_vls_printf(&input_str_prefix, "%s%S\n",
+		      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+		      &input_str);
     }
 
-    switch (ch) {
-    case ESC:           /* Used for building up ANSI arrow keys */
-	escaped = 1;
-	break;
-    case '\n':          /* Carriage return or line feed */
-    case '\r':
-	bu_log("\n");   /* Display newline */
+    curr_cmd_list->quote_string = 0;
+    bu_vls_trunc(&curr_cmd_list->more_default, 0);
 
-	/* If there are any characters already in the command string (left
-	   over from a CMD_MORE), then prepend them to the new input. */
-
-	/* If no input and a default is supplied then use it */
-	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
-	  bu_vls_printf(&input_str_prefix, "%s%S\n",
-			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			&curr_cmd_list->more_default);
-	else {
-	  if (curr_cmd_list->quote_string)
-	    bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
-			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  &input_str);
-	  else
-	    bu_vls_printf(&input_str_prefix, "%s%S\n",
-			  bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			  &input_str);
-	}
-
-	curr_cmd_list->quote_string = 0;
-	bu_vls_trunc(&curr_cmd_list->more_default, 0);
-
-	/* If this forms a complete command (as far as the Tcl parser is
-	   concerned) then execute it. */
+    /* If this forms a complete command (as far as the Tcl parser is
+       concerned) then execute it. */
 	
-	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
-	    curr_cmd_list = &head_cmd_list;
-	    if(curr_cmd_list->aim)
-	      curr_dm_list = curr_cmd_list->aim;
-	    if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
-		reset_Tty(fileno(stdin));
+    if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
+      curr_cmd_list = &head_cmd_list;
+      if(curr_cmd_list->aim)
+	curr_dm_list = curr_cmd_list->aim;
+      if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
+	reset_Tty(fileno(stdin));
 
-		if ((*cmdline_hook)(&input_str_prefix))
-		    pr_prompt();
-
-		set_Cbreak(fileno(stdin));
-		clr_Echo(fileno(stdin));
-
-		bu_vls_trunc(&input_str, 0);
-		bu_vls_trunc(&input_str_prefix, 0);
-		(void)signal( SIGINT, SIG_IGN );
-	    } else {
-		reset_Tty(fileno(stdin)); /* Backwards compatibility */
-		(void)signal( SIGINT, SIG_IGN );
-		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
-		    /* Remove newline */
-		    bu_vls_trunc(&input_str_prefix,
-				 bu_vls_strlen(&input_str_prefix)-1);
-		    bu_vls_trunc(&input_str, 0);
-		    (void)signal( SIGINT, sig2 );
-       /* *** The mged_prompt vls now contains prompt for more input. *** */
-		} else {
-		    /* All done; clear all strings. */
-		    bu_vls_trunc(&input_str_prefix, 0);
-		    bu_vls_trunc(&input_str, 0);
-		    (void)signal( SIGINT, SIG_IGN );
-		}
-		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
-		clr_Echo(fileno(stdin));
-	    }
-	} else {
-	    bu_vls_trunc(&input_str, 0);
-	    bu_vls_strcpy(&mged_prompt, "\r? ");
-
-	    /* Allow the user to hit ^C */
-	    (void)signal( SIGINT, sig2 );
-	}
-	pr_prompt(); /* Print prompt for more input */
-	input_str_index = 0;
-	freshline = 1;
-	escaped = bracketed = 0;
-	break;
-    case BACKSPACE:
-    case DELETE:
-	if (input_str_index <= 0) {
-	    pr_beep();
-	    break;
-	}
-
-	if (input_str_index == bu_vls_strlen(&input_str)) {
-	    bu_log("\b \b");
-	    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
-	} else {
-	    bu_vls_init(&temp);
-	    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
-	    bu_vls_trunc(&input_str, input_str_index-1);
-	    bu_log("\b%S ", &temp);
-	    pr_prompt();
-	    bu_log("%S", &input_str);
-	    bu_vls_vlscat(&input_str, &temp);
-	    bu_vls_free(&temp);
-	}
-	--input_str_index;
-	escaped = bracketed = 0;
-	break;
-    case CTRL_A:                    /* Go to beginning of line */
-	pr_prompt();
-	input_str_index = 0;
-	escaped = bracketed = 0;
-	break;
-    case CTRL_E:                    /* Go to end of line */
-	if (input_str_index < bu_vls_strlen(&input_str)) {
-	    bu_log("%s", bu_vls_addr(&input_str)+input_str_index);
-	    input_str_index = bu_vls_strlen(&input_str);
-	}
-	escaped = bracketed = 0;
-	break;
-    case CTRL_D:                    /* Delete character at cursor */
-	if (input_str_index == bu_vls_strlen(&input_str)) {
-	    pr_beep(); /* Beep if at end of input string */
-	    break;
-	}
-	bu_vls_init(&temp);
-	bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
-	bu_vls_trunc(&input_str, input_str_index);
-	bu_log("%S ", &temp);
-	pr_prompt();
-	bu_log("%S", &input_str);
-	bu_vls_vlscat(&input_str, &temp);
-	bu_vls_free(&temp);
-	escaped = bracketed = 0;
-	break;
-    case CTRL_U:                   /* Delete whole line */
-	pr_prompt();
-	bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-	pr_prompt();
-	bu_vls_trunc(&input_str, 0);
-	input_str_index = 0;
-	escaped = bracketed = 0;
-	break;
-    case CTRL_K:                    /* Delete to end of line */
-	bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
-	bu_vls_trunc(&input_str, input_str_index);
-	pr_prompt();
-	bu_log("%S", &input_str);
-	escaped = bracketed = 0;
-	break;
-    case CTRL_L:                   /* Redraw line */
-	bu_log("\n");
-	pr_prompt();
-	bu_log("%S", &input_str);
-	if (input_str_index == bu_vls_strlen(&input_str))
-	    break;
-	pr_prompt();
-	bu_log("%*S", input_str_index, &input_str);
-	escaped = bracketed = 0;
-	break;
-    case CTRL_B:                   /* Back one character */
-	if (input_str_index == 0) {
-	    pr_beep();
-	    break;
-	}
-	--input_str_index;
-	bu_log("\b"); /* hopefully non-destructive! */
-	escaped = bracketed = 0;
-	break;
-    case CTRL_F:                   /* Forward one character */
-	if (input_str_index == bu_vls_strlen(&input_str)) {
-	    pr_beep();
-	    break;
-	}
-
-	bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
-	++input_str_index;
-	escaped = bracketed = 0;
-	break;
-    case CTRL_T:                  /* Transpose characters */
-	if (input_str_index == 0) {
-	    pr_beep();
-	    break;
-	}
-	if (input_str_index == bu_vls_strlen(&input_str)) {
-	    bu_log("\b");
-	    --input_str_index;
-	}
-	ch = bu_vls_addr(&input_str)[input_str_index];
-	bu_vls_addr(&input_str)[input_str_index] =
-	    bu_vls_addr(&input_str)[input_str_index - 1];
-	bu_vls_addr(&input_str)[input_str_index - 1] = ch;
-	bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
-	++input_str_index;
-	escaped = bracketed = 0;
-	break;
-    case CTRL_N:                  /* Next history command */
-    case CTRL_P:                  /* Last history command */
-	/* Work the history routines to get the right string */
-        curr_cmd_list = &head_cmd_list;
-	if (freshline) {
-	    if (ch == CTRL_P) {
-		vp = history_prev();
-		if (vp == NULL) {
-		    pr_beep();
-		    break;
-		}
-		bu_vls_trunc(&scratchline, 0);
-		bu_vls_vlscat(&scratchline, &input_str);
-		freshline = 0;
-	    } else {
-		pr_beep();
-		break;
-	    }
-	} else {
-	    if (ch == CTRL_P) {
-		vp = history_prev();
-		if (vp == NULL) {
-		    pr_beep();
-		    break;
-		}
-	    } else {
-		vp = history_next();
-		if (vp == NULL) {
-		    vp = &scratchline;
-		    freshline = 1;
-		}
-	    }
-	}
-	pr_prompt();
-	bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
-	pr_prompt();
-	bu_vls_trunc(&input_str, 0);
-	bu_vls_vlscat(&input_str, vp);
-	if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
-	    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	bu_log("%S", &input_str);
-	input_str_index = bu_vls_strlen(&input_str);
-	escaped = bracketed = 0;
-	break;
-    case CTRL_W:                   /* backward-delete-word */
-	{
-	  char *start;
-	  char *curr;
-	  int len;
-
-	  start = bu_vls_addr(&input_str);
-	  curr = start + input_str_index - 1;
-
-	  /* skip spaces */
-	  while(curr > start && *curr == ' ')
-	    --curr;
-
-	  /* find next space */
-	  while(curr > start && *curr != ' ')
-	    --curr;
-
-	  bu_vls_init(&temp);
-	  bu_vls_strcat(&temp, start+input_str_index);
-
-	  if(curr == start)
-	    input_str_index = 0;
-	  else
-	    input_str_index = curr - start + 1;
-
-	  len = bu_vls_strlen(&input_str);
-	  bu_vls_trunc(&input_str, input_str_index);
+	if ((*cmdline_hook)(&input_str_prefix))
 	  pr_prompt();
-	  bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
-	  pr_prompt();
-	  bu_log("%S", &input_str);
-	  bu_vls_vlscat(&input_str, &temp);
-	  bu_vls_free(&temp);
+
+	set_Cbreak(fileno(stdin));
+	clr_Echo(fileno(stdin));
+
+	bu_vls_trunc(&input_str, 0);
+	bu_vls_trunc(&input_str_prefix, 0);
+	(void)signal( SIGINT, SIG_IGN );
+      } else {
+	reset_Tty(fileno(stdin)); /* Backwards compatibility */
+	(void)signal( SIGINT, SIG_IGN );
+	if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+	  /* Remove newline */
+	  bu_vls_trunc(&input_str_prefix,
+		       bu_vls_strlen(&input_str_prefix)-1);
+	  bu_vls_trunc(&input_str, 0);
+	  (void)signal( SIGINT, sig2 );
+	  /* *** The mged_prompt vls now contains prompt for more input. *** */
+	} else {
+	  /* All done; clear all strings. */
+	  bu_vls_trunc(&input_str_prefix, 0);
+	  bu_vls_trunc(&input_str, 0);
+	  (void)signal( SIGINT, SIG_IGN );
 	}
+	set_Cbreak(fileno(stdin)); /* Back to single-character mode */
+	clr_Echo(fileno(stdin));
+      }
+    } else {
+      bu_vls_trunc(&input_str, 0);
+      bu_vls_strcpy(&mged_prompt, "\r? ");
 
-        escaped = bracketed = 0;
-        break;
-    case 'd':
-      if (escaped) {                /* delete-word */
-	char *start;
-	char *curr;
-	int i;
-
-	start = bu_vls_addr(&input_str);
-	curr = start + input_str_index;
-
-	/* skip spaces */
-	while(*curr != '\0' && *curr == ' ')
-	  ++curr;
-
-	/* find next space */
-	while(*curr != '\0' && *curr != ' ')
-	  ++curr;
-
-	i = curr - start;
-	bu_vls_init(&temp);
-	bu_vls_strcat(&temp, curr);
-	bu_vls_trunc(&input_str, input_str_index);
-	pr_prompt();
-	bu_log("%S%S%*s", &input_str, &temp, i - input_str_index, SPACES);
-	pr_prompt();
-	bu_log("%S", &input_str);
-	bu_vls_vlscat(&input_str, &temp);
-	bu_vls_free(&temp);
-      }else
-	mged_insert_char(ch);
-
-      escaped = bracketed = 0;
+      /* Allow the user to hit ^C */
+      (void)signal( SIGINT, sig2 );
+    }
+    pr_prompt(); /* Print prompt for more input */
+    input_str_index = 0;
+    freshline = 1;
+    escaped = bracketed = 0;
+    break;
+  case BACKSPACE:
+  case DELETE:
+    if (input_str_index <= 0) {
+      pr_beep();
       break;
-    case 'f':
-      if (escaped) {                /* forward-word */
-	char *start;
-	char *curr;
+    }
 
-	start = bu_vls_addr(&input_str);
-	curr = start + input_str_index;
-
-	/* skip spaces */
-	while(*curr != '\0' && *curr == ' ')
-	  ++curr;
-
-	/* find next space */
-	while(*curr != '\0' && *curr != ' ')
-	  ++curr;
-
-	input_str_index = curr - start;
-	bu_vls_init(&temp);
-	bu_vls_strcat(&temp, start+input_str_index);
-	bu_vls_trunc(&input_str, input_str_index);
-	pr_prompt();
-	bu_log("%S", &input_str);
-	bu_vls_vlscat(&input_str, &temp);
-	bu_vls_free(&temp);
-      }else
-	mged_insert_char(ch);
-
-      escaped = bracketed = 0;
+    if (input_str_index == bu_vls_strlen(&input_str)) {
+      bu_log("\b \b");
+      bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1);
+    } else {
+      bu_vls_init(&temp);
+      bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index);
+      bu_vls_trunc(&input_str, input_str_index-1);
+      bu_log("\b%S ", &temp);
+      pr_prompt();
+      bu_log("%S", &input_str);
+      bu_vls_vlscat(&input_str, &temp);
+      bu_vls_free(&temp);
+    }
+    --input_str_index;
+    escaped = bracketed = 0;
+    break;
+  case CTRL_A:                    /* Go to beginning of line */
+    pr_prompt();
+    input_str_index = 0;
+    escaped = bracketed = 0;
+    break;
+  case CTRL_E:                    /* Go to end of line */
+    if (input_str_index < bu_vls_strlen(&input_str)) {
+      bu_log("%s", bu_vls_addr(&input_str)+input_str_index);
+      input_str_index = bu_vls_strlen(&input_str);
+    }
+    escaped = bracketed = 0;
+    break;
+  case CTRL_D:                    /* Delete character at cursor */
+    if (input_str_index == bu_vls_strlen(&input_str)) {
+      pr_beep(); /* Beep if at end of input string */
       break;
-    case 'b':
-      if (escaped) {                /* backward-word */
-	char *start;
-	char *curr;
-
-	start = bu_vls_addr(&input_str);
-	curr = start + input_str_index - 1;
-
-	/* skip spaces */
-	while(curr > start && *curr == ' ')
-	  --curr;
-
-	/* find next space */
-	while(curr > start && *curr != ' ')
-	  --curr;
-
-	if(curr == start)
-	  input_str_index = 0;
-	else
-	  input_str_index = curr - start + 1;
-
-	bu_vls_init(&temp);
-	bu_vls_strcat(&temp, start+input_str_index);
-	bu_vls_trunc(&input_str, input_str_index);
-	pr_prompt();
-	bu_log("%S", &input_str);
-	bu_vls_vlscat(&input_str, &temp);
-	bu_vls_free(&temp);
-      }else
-	mged_insert_char(ch);
-
-      escaped = bracketed = 0;
+    }
+    bu_vls_init(&temp);
+    bu_vls_strcat(&temp, bu_vls_addr(&input_str)+input_str_index+1);
+    bu_vls_trunc(&input_str, input_str_index);
+    bu_log("%S ", &temp);
+    pr_prompt();
+    bu_log("%S", &input_str);
+    bu_vls_vlscat(&input_str, &temp);
+    bu_vls_free(&temp);
+    escaped = bracketed = 0;
+    break;
+  case CTRL_U:                   /* Delete whole line */
+    pr_prompt();
+    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+    pr_prompt();
+    bu_vls_trunc(&input_str, 0);
+    input_str_index = 0;
+    escaped = bracketed = 0;
+    break;
+  case CTRL_K:                    /* Delete to end of line */
+    bu_log("%*s", bu_vls_strlen(&input_str)-input_str_index, SPACES);
+    bu_vls_trunc(&input_str, input_str_index);
+    pr_prompt();
+    bu_log("%S", &input_str);
+    escaped = bracketed = 0;
+    break;
+  case CTRL_L:                   /* Redraw line */
+    bu_log("\n");
+    pr_prompt();
+    bu_log("%S", &input_str);
+    if (input_str_index == bu_vls_strlen(&input_str))
       break;
-    case '[':
-	if (escaped) {
-	    bracketed = 1;
-	    break;
+    pr_prompt();
+    bu_log("%*S", input_str_index, &input_str);
+    escaped = bracketed = 0;
+    break;
+  case CTRL_B:                   /* Back one character */
+    if (input_str_index == 0) {
+      pr_beep();
+      break;
+    }
+    --input_str_index;
+    bu_log("\b"); /* hopefully non-destructive! */
+    escaped = bracketed = 0;
+    break;
+  case CTRL_F:                   /* Forward one character */
+    if (input_str_index == bu_vls_strlen(&input_str)) {
+      pr_beep();
+      break;
+    }
+    
+    bu_log("%c", bu_vls_addr(&input_str)[input_str_index]);
+    ++input_str_index;
+    escaped = bracketed = 0;
+    break;
+  case CTRL_T:                  /* Transpose characters */
+    if (input_str_index == 0) {
+      pr_beep();
+      break;
+    }
+    if (input_str_index == bu_vls_strlen(&input_str)) {
+      bu_log("\b");
+      --input_str_index;
+    }
+    ch = bu_vls_addr(&input_str)[input_str_index];
+    bu_vls_addr(&input_str)[input_str_index] =
+      bu_vls_addr(&input_str)[input_str_index - 1];
+    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
+    bu_log("\b%*s", 2, bu_vls_addr(&input_str)+input_str_index-1);
+    ++input_str_index;
+    escaped = bracketed = 0;
+    break;
+  case CTRL_N:                  /* Next history command */
+  case CTRL_P:                  /* Last history command */
+    /* Work the history routines to get the right string */
+    curr_cmd_list = &head_cmd_list;
+    if (freshline) {
+      if (ch == CTRL_P) {
+	vp = history_prev();
+	if (vp == NULL) {
+	  pr_beep();
+	  break;
 	}
-	/* Fall through if not escaped! */
-    default:
-	if (!isprint(ch))
-	    break;
-
-	mged_insert_char(ch);
-	escaped = bracketed = 0;
+	bu_vls_trunc(&scratchline, 0);
+	bu_vls_vlscat(&scratchline, &input_str);
+	freshline = 0;
+      } else {
+	pr_beep();
 	break;
+      }
+    } else {
+      if (ch == CTRL_P) {
+	vp = history_prev();
+	if (vp == NULL) {
+	  pr_beep();
+	  break;
+	}
+      } else {
+	vp = history_next();
+	if (vp == NULL) {
+	  vp = &scratchline;
+	  freshline = 1;
+	}
+      }
     }
-#ifdef TRY_STDIN_INPUT_HACK
+    pr_prompt();
+    bu_log("%*s", bu_vls_strlen(&input_str), SPACES);
+    pr_prompt();
+    bu_vls_trunc(&input_str, 0);
+    bu_vls_vlscat(&input_str, vp);
+    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
+      bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
+    bu_log("%S", &input_str);
+    input_str_index = bu_vls_strlen(&input_str);
+    escaped = bracketed = 0;
+    break;
+  case CTRL_W:                   /* backward-delete-word */
+    {
+      char *start;
+      char *curr;
+      int len;
+      
+      start = bu_vls_addr(&input_str);
+      curr = start + input_str_index - 1;
+      
+      /* skip spaces */
+      while(curr > start && *curr == ' ')
+	--curr;
+      
+      /* find next space */
+      while(curr > start && *curr != ' ')
+	--curr;
+      
+      bu_vls_init(&temp);
+      bu_vls_strcat(&temp, start+input_str_index);
+      
+      if(curr == start)
+	input_str_index = 0;
+      else
+	input_str_index = curr - start + 1;
+      
+      len = bu_vls_strlen(&input_str);
+      bu_vls_trunc(&input_str, input_str_index);
+      pr_prompt();
+      bu_log("%S%S%*s", &input_str, &temp, len - input_str_index, SPACES);
+      pr_prompt();
+      bu_log("%S", &input_str);
+      bu_vls_vlscat(&input_str, &temp);
+      bu_vls_free(&temp);
     }
+  
+  escaped = bracketed = 0;
+  break;
+  case 'd':
+    if (escaped) {                /* delete-word */
+      char *start;
+      char *curr;
+      int i;
+
+      start = bu_vls_addr(&input_str);
+      curr = start + input_str_index;
+
+      /* skip spaces */
+      while(*curr != '\0' && *curr == ' ')
+	++curr;
+
+      /* find next space */
+      while(*curr != '\0' && *curr != ' ')
+	++curr;
+
+      i = curr - start;
+      bu_vls_init(&temp);
+      bu_vls_strcat(&temp, curr);
+      bu_vls_trunc(&input_str, input_str_index);
+      pr_prompt();
+      bu_log("%S%S%*s", &input_str, &temp, i - input_str_index, SPACES);
+      pr_prompt();
+      bu_log("%S", &input_str);
+      bu_vls_vlscat(&input_str, &temp);
+      bu_vls_free(&temp);
+    }else
+      mged_insert_char(ch);
+
+    escaped = bracketed = 0;
+    break;
+  case 'f':
+    if (escaped) {                /* forward-word */
+      char *start;
+      char *curr;
+
+      start = bu_vls_addr(&input_str);
+      curr = start + input_str_index;
+
+      /* skip spaces */
+      while(*curr != '\0' && *curr == ' ')
+	++curr;
+
+      /* find next space */
+      while(*curr != '\0' && *curr != ' ')
+	++curr;
+
+      input_str_index = curr - start;
+      bu_vls_init(&temp);
+      bu_vls_strcat(&temp, start+input_str_index);
+      bu_vls_trunc(&input_str, input_str_index);
+      pr_prompt();
+      bu_log("%S", &input_str);
+      bu_vls_vlscat(&input_str, &temp);
+      bu_vls_free(&temp);
+    }else
+      mged_insert_char(ch);
+
+    escaped = bracketed = 0;
+    break;
+  case 'b':
+    if (escaped) {                /* backward-word */
+      char *start;
+      char *curr;
+
+      start = bu_vls_addr(&input_str);
+      curr = start + input_str_index - 1;
+
+      /* skip spaces */
+      while(curr > start && *curr == ' ')
+	--curr;
+
+      /* find next space */
+      while(curr > start && *curr != ' ')
+	--curr;
+
+      if(curr == start)
+	input_str_index = 0;
+      else
+	input_str_index = curr - start + 1;
+
+      bu_vls_init(&temp);
+      bu_vls_strcat(&temp, start+input_str_index);
+      bu_vls_trunc(&input_str, input_str_index);
+      pr_prompt();
+      bu_log("%S", &input_str);
+      bu_vls_vlscat(&input_str, &temp);
+      bu_vls_free(&temp);
+    }else
+      mged_insert_char(ch);
+
+    escaped = bracketed = 0;
+    break;
+  case '[':
+    if (escaped) {
+      bracketed = 1;
+      break;
     }
-#endif	
+    /* Fall through if not escaped! */
+  default:
+    if (!isprint(ch))
+      break;
+
+    mged_insert_char(ch);
+    escaped = bracketed = 0;
+    break;
+  }
 }
 
 static void
@@ -1108,12 +1117,62 @@ int mask;
   if((count = read((int)fd, line, MAXLINE)) == 0)
     return;
 
+  line[count] = '\0';
+
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "distribute_text {} {} %*s", count, line);
+  bu_vls_printf(&vls, "distribute_text {} {} {%s}", line);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
+}
 
-  return;
+void
+dm_pipe_input(clientData, mask)
+ClientData clientData;
+int mask;
+{
+  int fd = (int)clientData;
+  int count;
+  struct bu_vls vls;
+  char line[2];
+  struct dm_char_queue *dcqp;
+  struct dm_list *dlp;
+
+  /* Get data from dm_pipe */
+  if((count = read((int)fd, line, 1)) == 0)
+     return;
+
+  line[count] = '\0';
+
+  BU_LIST_POP(dm_char_queue, &head_dm_char_queue.l, dcqp);
+  if(dcqp == (struct dm_char_queue *)0){
+    bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
+    return;
+  }
+
+  /* search for dcqp->dlp in list of valid displays */
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+    if(dlp == dcqp->dlp)
+      break;
+
+  /* dcqp->dlp is no longer valid */
+  if(BU_LIST_IS_HEAD(dlp, &head_dm_list.l)){
+    bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
+    return;
+  }
+
+  curr_dm_list = dlp;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "insert_char {%s}", line);
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+  bu_free((genptr_t)dcqp, "dm_pipe_input: dcqp");
+
+  if(classic_mged){
+    /* not claimed by insert_char */
+    if(!strcmp(interp->result, "mged"))
+	mged_process_char(line[0]);
+  }
 }
 
 /*
