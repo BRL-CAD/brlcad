@@ -4,31 +4,6 @@
  *  Purpose -
  *	Intersect a ray with a bag o' triangles
  *
- * Adding a new solid type:
- *	Design disk record
- *
- *	define rt_xxx_internal --- parameters for solid
- *	define xxx_specific --- raytracing form, possibly w/precomuted terms
- *	define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
- *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- *	edit db.h add solidrec s_type define
- *	edit rtgeom.h to add rt_xxx_internal
- *	edit table.c:
- *		RT_DECLARE_INTERFACE()
- *		struct rt_functab entry
- *		rt_id_solid()
- *	edit raytrace.h to make ID_BOT, increment ID_MAXIMUM
- *	edit db_scan.c to add the new solid to db_scan()
- *	edit Cakefile to add g_xxx.c to compile
- *
- *	Then:
- *	go to /cad/libwdb and create mk_xxx() routine
- *	go to /cad/conv and edit g2asc.c and asc2g.c to support the new solid
- *	go to /cad/librt and edit tcl.c to add the new solid to  rt_solid_type_lookup[]
- *	go to /cad/mged and create the edit support
- *
  *  Authors -
  *  	John R. Anderson
  *  Source -
@@ -157,6 +132,9 @@ struct rt_i		*rtip;
 	if( dz > f )  f = dz;
 	stp->st_aradius = f;
 	stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
+
+	if( bot->bot_mode == RT_BOT_PLATE || bot->bot_mode == RT_BOT_PLATE_NOCOS )
+		stp->st_is_platemode = 1;
 
 	return( 0 );
 }
