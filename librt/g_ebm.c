@@ -983,6 +983,256 @@ register struct rt_list	*vhead;
 	RT_ADD_VLIST( vhead, srot, RT_VLIST_LINE_DRAW );
 }
 
+struct ebm_edge
+{
+	struct rt_list	l;
+	int		x1,y1;
+	int		x2,y2;
+	struct vertex	*v;	/* vertex at x1,y1 */
+};
+
+/* either x1==x2, or y1==y2 */
+static void
+rt_ebm_edge( x1, y1, x2, y2, edges )
+int			x1, y1;
+int			x2, y2;
+struct ebm_edge		*edges;
+{
+	struct ebm_edge *new_edge;
+
+	new_edge = (struct ebm_edge *)rt_malloc( sizeof( struct ebm_edge ) , "rt_ebm_tess: new_edge" );	
+
+	/* make all edges go from lower values to larger */
+	if( y1 < y2 || x1 < x2 )
+	{
+		new_edge->x1 = x1;
+		new_edge->y1 = y1;
+		new_edge->x2 = x2;
+		new_edge->y2 = y2;
+	}
+	else
+	{
+		new_edge->x1 = x2;
+		new_edge->y1 = y2;
+		new_edge->x2 = x1;
+		new_edge->y2 = y1;
+	}
+	new_edge->v = (struct vertex *)NULL;
+	RT_LIST_APPEND( &edges->l , &new_edge->l );
+}
+
+static void
+rt_ebm_isect_edges( edges )
+struct ebm_edge *edges;
+{
+	struct ebm_edge *edge1;
+	struct ebm_edge *new_edge1,*new_edge2;
+
+rt_log( "rt_ebm_isect_edges:\n" );
+
+	/* intersect all edges with all other edges */
+	for( RT_LIST_FOR( edge1 , ebm_edge , &edges->l ) )
+	{
+		struct ebm_edge *edge2;
+
+		for( RT_LIST_FOR( edge2 , ebm_edge , &edges->l ) )
+		{
+			int isect_x,isect_y;
+
+			if( edge1 == edge2 )
+				continue;
+
+			/* skip pairs fo edges that don't intersect */
+			if( edge1->x2 <= edge2->x1 || edge1->y2 <= edge2->y1 ||
+			    edge2->x2 <= edge1->x1 || edge2->y2 <= edge1->y1 )
+				continue;
+
+			if( edge1->x1 < edge2->x1 && edge1->x2 > edge2->x2 )
+				isect_x = edge2->x1;
+			else
+				isect_x = edge1->x1;
+
+			if( edge1->y1 < edge2->y1 && edge1->y2 > edge2->y2 )
+				isect_y = edge2->y1;
+			else
+				isect_y = edge1->y1;
+rt_log( "( %d %d ) -> ( %d %d )\n( %d %d ) -> ( %d %d )\n\t intersect at ( %d %d )\n",
+edge1->x1,edge1->y1,edge1->x2,edge1->y2,edge2->x1,edge2->y1,edge2->x2,edge2->y2,isect_x,isect_y );
+
+			new_edge1 = (struct ebm_edge *)rt_malloc( sizeof( struct ebm_edge ) , "rt_ebm_tess: new _edge1" );
+			new_edge2 = (struct ebm_edge *)rt_malloc( sizeof( struct ebm_edge ) , "rt_ebm_tess: new _edge2" );
+
+			new_edge1->x1 = isect_x;
+			new_edge1->y1 = isect_y;
+			new_edge1->x2 = edge1->x2;
+			new_edge1->y2 = edge1->y2;
+			new_edge1->v = (struct vertex *)NULL;
+
+			edge1->x2 = isect_x;
+			edge1->y2 = isect_y;
+			
+			new_edge2->x1 = isect_x;
+			new_edge2->y1 = isect_y;
+			new_edge2->x2 = edge2->x2;
+			new_edge2->y2 = edge2->y2;
+			new_edge2->v = (struct vertex *)NULL;
+
+			edge2->x2 = isect_x;
+			edge2->y2 = isect_y;
+
+			RT_LIST_APPEND( &edges->l , &new_edge1->l );
+			RT_LIST_APPEND( &edges->l , &new_edge2->l );
+		}
+	}
+{
+struct ebm_edge *ee;
+rt_log( "Final edges:\n" );
+for( RT_LIST_FOR( ee , ebm_edge , &edges->l ) )
+{
+	rt_log( "( %d %d ) -> ( %d %d )\n" , ee->x1,ee->y1,ee->x2,ee->y2 );
+}
+}
+}
+
+static void
+rt_ebm_sort_edges( edges )
+struct ebm_edge *edges;
+{
+	struct ebm_edge loops;
+	int vertical;
+	int done;
+	int from_x,from_y,to_x,to_y;
+	int start_x,start_y;
+
+	/* create another list to hold the edges as they are sorted */
+	RT_LIST_INIT( &loops.l );
+
+	while( RT_LIST_NON_EMPTY( &edges->l ) )
+	{
+		struct ebm_edge *start,*next;
+
+		/* look for a vertical edge starting in lower left (smallest x and y ) */
+		start = (struct ebm_edge *)NULL;
+		next = RT_LIST_FIRST( ebm_edge , &edges->l );
+		while( RT_LIST_NOT_HEAD( &next->l , &edges->l ) )
+		{
+			struct ebm_edge *next;
+
+			if( next->x1 != next->x2 )
+				continue;	/* not a vertical edge */
+
+			if( !start )
+				start = next;
+			else if( next->x1 < start->x1 || next->y1 < start->y1 )
+				start = next;
+
+			next = RT_LIST_PNEXT( ebm_edge , &next->l );
+		}
+
+		if( !start )
+			rt_bomb( "rt_ebm_tess: rt_ebm_sort_edges: no vertical edges left!\n" );
+
+		/* put starting edge on the loop list */
+		RT_LIST_DEQUEUE( &start->l );
+		RT_LIST_INSERT( &start->l , &loops.l );
+
+		next = (struct ebm_edge *)NULL;
+		vertical = 0; 	/* look for horizontal edge */
+		done = 0;
+		to_x = start->x2;
+		to_y = start->y2;
+		from_x = start->x1;
+		from_y = start->y1;
+		start_x = from_x;
+		start_y = from_y;
+		while( !done )
+		{
+			struct ebm_edge *e,*e_poss[2];
+			int poss;
+
+			/* now find an edge that starts where this one stops (at to_x,to_y) */
+			poss = 0;
+			for( RT_LIST_FOR( e , ebm_edge , &edges->l ) )
+			{
+				if( (vertical && e->y1 == e->y2) ||
+				   (!vertical && e->x1 == e->x2) )
+					continue;
+
+				if( (e->x1 == to_x && e->y1 == to_y) ||
+				    (e->x2 == to_x && e->y2 == to_y) )
+					e_poss[poss++] = e;
+				if( poss > 2 )
+					rt_bomb( "rt_ebm_tess: rt_ebm_sort_edges: too many edges at one point\n" );
+			}
+
+			if( poss == 0 )
+				rt_bomb( "rt_ebm_tess: rt_ebm_sort_edges: no edge to continue loop\n" );
+			if( poss == 1 )
+			{
+				next = e_poss[0];
+			}
+			else
+			{
+				/* must choose between two possibilities */
+				if( vertical )
+				{
+					if( to_x < from_x )
+					{
+						if( e_poss[0]->y1 > to_y || e_poss[0]->y2 > to_y )
+							next = e_poss[0];
+						else
+							next = e_poss[1];
+					}
+					else
+					{
+						if( e_poss[0]->y1 < to_y || e_poss[0]->y2 < to_y )
+							next = e_poss[0];
+						else
+							next = e_poss[1];
+					}
+				}
+				else
+				{
+					if( to_y < from_y )
+					{
+						if( e_poss[0]->x1 < to_x || e_poss[0]->x2 < to_x )
+							next = e_poss[0];
+						else
+							next = e_poss[1];
+					}
+					else
+					{
+						if( e_poss[0]->x1 > to_x || e_poss[0]->x2 > to_x )
+							next = e_poss[0];
+						else
+							next = e_poss[1];
+					}
+				}
+			}
+			if( next->x2 == to_x && next->y2 == to_y )
+			{
+				/* reverse direction of edge */
+				next->x2 = next->x1;
+				next->y2 = next->y1;
+				next->x1 = to_x;
+				next->y1 = to_y;
+			}
+			to_x = next->x2;
+			to_y = next->y2;
+			from_x = next->x1;
+			from_y = next->y1;
+			RT_LIST_DEQUEUE( &next->l );
+			RT_LIST_INSERT( &next->l , &loops.l );
+
+			if( to_x == start_x && to_y == start_y )
+				done = 1;	/* complete loop */
+		}
+	}
+
+	/* move sorted list back to "edges" */
+	RT_LIST_INSERT_LIST( &edges->l , &loops.l );
+}
+
 /*
  *			R T _ E B M _ T E S S
  */
@@ -995,19 +1245,79 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	struct rt_ebm_internal	*eip;
-#if 0
 	register int	i; 
 	struct shell	*s;
 	struct vertex	**verts;	/* dynamic array of pointers */
 	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
 	struct faceuse	*fu;
-#endif
+	struct ebm_edge	edges;		/* list of edges */
+	int		base,x,y,following;
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
 	RT_EBM_CK_MAGIC(eip);
 
-	/* XXX tess routine needed */
+	RT_LIST_INIT( &edges.l );
+
+	/* Find vertical edges */
+	base = 0;	/* lint */
+	for( x=0; x <= eip->xdim; x++ )  {
+		following = 0;
+		for( y=0; y <= eip->ydim; y++ )  {
+			if( following )  {
+				if( (BIT( eip, x-1, y )==0) != (BIT( eip, x, y )==0) )
+					continue;
+				rt_ebm_edge( x, base, x, y, &edges );
+				following = 0;
+			} else {
+				if( (BIT( eip, x-1, y )==0) == (BIT( eip, x, y )==0) )
+					continue;
+				following = 1;
+				base = y;
+			}
+		}
+	}
+
+	/* Find horizontal edges */
+	for( y=0; y <= eip->ydim; y++ )  {
+		following = 0;
+		for( x=0; x <= eip->xdim; x++ )  {
+			if( following )  {
+				if( (BIT( eip, x, y-1 )==0) != (BIT( eip, x, y )==0) )
+					continue;
+				rt_ebm_edge( base, y, x, y, &edges );
+				following = 0;
+			} else {
+				if( (BIT( eip, x, y-1 )==0) == (BIT( eip, x, y )==0) )
+					continue;
+				following = 1;
+				base = x;
+			}
+		}
+	}
+{
+struct ebm_edge *ee;
+rt_log( "Edges:\n" );
+for( RT_LIST_FOR( ee , ebm_edge , &edges.l ) )
+{
+	rt_log( "( %d %d ) -> ( %d %d )\n" , ee->x1,ee->y1,ee->x2,ee->y2 );
+}
+}
+
+	/* Intersect all edges with all others */
+	rt_ebm_isect_edges( &edges );
+
+	/* Sort edges into loops */
+	rt_ebm_sort_edges( &edges );
+{
+struct ebm_edge *ee;
+rt_log( "Sorted edges:\n" );
+for( RT_LIST_FOR( ee , ebm_edge , &edges.l ) )
+{
+	rt_log( "( %d %d ) -> ( %d %d )\n" , ee->x1,ee->y1,ee->x2,ee->y2 );
+}
+}
+
 	return(-1);
 }
 
