@@ -34,6 +34,7 @@ kitchensink_dirs = \
 	burst \
 	bwish \
 	comgeom-g \
+	canon \
 	conv \
 	fb \
 	fbed \
