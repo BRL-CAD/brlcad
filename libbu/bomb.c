@@ -65,7 +65,6 @@ void
 bu_bomb(str)
 CONST char *str;
 {
-fprintf(stderr, "bu_bomb\n");
 
 	/* First thing, always always always try to print the string */
 	fprintf(stderr,"\n%s\n", str);
