@@ -113,7 +113,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(Nfbm_sp, &Nfbm_defaults, sizeof(struct Nfbm_specific) );
 
-	if( bu_structparse( matparm, Nfbm_parse, (char *)Nfbm_sp ) < 0 )
+	if( bu_struct_parse( matparm, Nfbm_parse, (char *)Nfbm_sp ) < 0 )
 		return(-1);
 
 	/* Optional:  get the matrix which maps model space into

@@ -102,7 +102,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 #endif
 
 	if (rdebug&RDEBUG_SHADE) rt_log("\"%s\"\n", RT_VLS_ADDR(matparm) );
-	if( bu_structparse( matparm, air_parse, (char *)air_sp ) < 0 )
+	if( bu_struct_parse( matparm, air_parse, (char *)air_sp ) < 0 )
 		return(-1);
 
 	return(1);
