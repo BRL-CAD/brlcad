@@ -51,8 +51,9 @@ int		ndrawn;
 /*
  *			P E R S P _ M A T
  *
- *  Compute a perspective matrix.
+ *  Compute a perspective matrix for a right-handed coordinate system.
  *  Reference: SGI Graphics Reference Appendix C
+ *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
  */
 static void
 persp_mat( m, fovy, aspect, near, far, backoff )
@@ -66,8 +67,8 @@ fastf_t	fovy, aspect, near, far, backoff;
 	mat_idn( m2 );
 	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
 	m2[0] = m2[5]/aspect;
-	m2[10] = -(far+near) / (far-near);	/* negate Z! */
-	m2[11] = -2*far*near / (far-near);
+	m2[10] = (far+near) / (far-near);
+	m2[11] = 2*far*near / (far-near);
 
 	m2[14] = -1;
 	m2[15] = 0;
