@@ -106,7 +106,7 @@ f_copy()
 		db_put( dbip, dp, &record, 0, 1 );
 
 		/* draw the new solid */
-		drawHobj(dp, ROOT, 0, identity);
+		drawtree( dp );
 		dmaflag = 1;
 
 		/* color the solid */
@@ -418,7 +418,7 @@ f_copy_inv()
 	db_put( dbip, dp, &record, 0, 1 );
 
 	/* draw the new solid */
-	drawHobj(dp, ROOT, 0, identity);
+	drawtree( dp );
 	dmaflag = 1;
 
 	/* color the solid */

@@ -368,7 +368,7 @@ f_inside()
 
 	db_put( dbip, dp, &newrec, 0, 1 );
 	/* draw the "inside" solid */
-	drawHobj(dp, ROOT, 0, identity);
+	drawtree( dp );
 	dmaflag = 1;
 }
 

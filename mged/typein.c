@@ -424,7 +424,7 @@ f_in()
 
 	db_put( dbip, dp, &record, 0, 1 );
 	/* draw the "typed-in" solid */
-	drawHobj(dp, ROOT, 0, identity);
+	drawtree( dp );
 	dmaflag = 1;
 }
 

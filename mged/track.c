@@ -435,7 +435,7 @@ tryagain:	/* sent here to try next set of names */
 
 	/* draw this track */
 	dp = db_lookup( dbip, grpname, LOOKUP_QUIET);
-	drawHobj( dp, ROOT, 0, identity, 0 );
+	drawtree( dp );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
 

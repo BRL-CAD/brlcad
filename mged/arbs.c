@@ -299,7 +299,7 @@ thickagain:
 		return;
 	db_alloc( dbip, dp, 1 );
 	db_put( dbip,  dp, &record, 0, 1 );
-	drawHobj(dp, ROOT, 0, identity);
+	drawtree( dp );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
 	return;
@@ -537,7 +537,7 @@ thckagain:
 		return;
 	db_alloc( dbip, dp, 1 );
 	db_put( dbip,  dp, &record, 0, 1 );
-	drawHobj(dp, ROOT, 0, identity);
+	drawtree( dp );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
 	return;

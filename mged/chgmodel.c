@@ -60,6 +60,7 @@ extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
 extern char	*strcat();
+extern char	*strchr();
 
 void	aexists();
 void	ext4to6();
@@ -307,7 +308,7 @@ f_mirror()
 			cmd_args[2] );
 		return;
 	}
-	drawHobj( dp, ROOT, 0, identity, 0 );
+	drawtree( dp );
 	dmp->dmr_colorchange();		/* To color new solid */
 	dmaflag = 1;
 }
@@ -624,7 +625,7 @@ f_arbdef()
 			cmd_args[1] );
 		return;
 	}
-	drawHobj( dp, ROOT, 0, identity, 0 );
+	drawtree( dp );
 	dmp->dmr_colorchange();		/* To color new solid */
 	dmaflag = 1;
 }
@@ -1125,7 +1126,7 @@ f_make()  {
 	NAMEMOVE( cmd_args[1], record.s.s_name );
 	db_put( dbip, dp, &record, 0, 1 );
 	/* draw the "made" solid */
-	drawHobj( dp, ROOT, 0, identity, 0 );
+	drawtree( dp );
 	dmp->dmr_colorchange();		/* To color new solid */
 	dmaflag = 1;
 }

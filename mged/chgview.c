@@ -241,7 +241,7 @@ eedit()
 			continue;
 		}
 
-		drawHobj( dp, ROOT, 0, identity, 0 );
+		drawtree( dp );
 		regmemb = -1;
 	}
 	(void)time( &etime );
