@@ -771,7 +771,11 @@ cmd_rt(ClientData	clientData,
 
 	ptr = bu_brlcad_path("bin", 1);
 	if (ptr) {
+#ifdef WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
 	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
 	    argv[0] = buf;
 	}
 
@@ -897,7 +901,11 @@ cmd_rtcheck(ClientData	clientData,
 
 	ptr = bu_brlcad_path("bin", 1);
 	if (ptr) {
+#ifdef WIN32
+	    sprintf(buf, "\"%s/%s\"", ptr, argv[0]);
+#else
 	    sprintf(buf, "%s/%s", ptr, argv[0]);
+#endif
 	    argv[0] = buf;
 	}
 
@@ -1901,7 +1909,16 @@ done:
 
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
+#ifdef WIN32
+	{
+	    char buf[512];
+
+	    sprintf("\"%s\"", dbip->dbi_filename);
+	    *vp++ = buf;
+	}
+#else
 	*vp++ = dbip->dbi_filename;
+#endif
 
 	setup_rt( vp, qray_cmd_echo );
 
