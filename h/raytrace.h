@@ -1425,7 +1425,7 @@ struct rt_functab {
 			double /*mm2local*/));
 	int	(*ft_xform) RT_ARGS((struct rt_db_internal * /*op*/,
 			CONST mat_t /*mat*/, struct rt_db_internal * /*ip*/,
-			CONST int /*free*/));
+			int /*free*/));
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
@@ -2088,6 +2088,9 @@ RT_EXTERN(int			nmg_mesh_face_shell, (struct faceuse *fu1,
 				struct shell *s, CONST struct rt_tol *tol));
 RT_EXTERN(int			nmg_mesh_shell_shell, (struct shell *s1,
 				struct shell *s2, CONST struct rt_tol *tol));
+RT_EXTERN(double		nmg_measure_fu_angle, (CONST struct edgeuse *eu,
+				CONST vect_t xvec, CONST vect_t yvec,
+				CONST vect_t zvec));
 
 /* from nmg_bool.c */
 RT_EXTERN(struct nmgregion	*nmg_do_bool, (struct nmgregion *s1,
@@ -2102,6 +2105,8 @@ RT_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
 				struct rt_external *ep, int id));
 RT_EXTERN(struct nmgregion	*nmg_booltree_evaluate, (union tree *tp,
+				CONST struct rt_tol *tol));
+RT_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
 				CONST struct rt_tol *tol));
 
 /* from nmg_class.c */
@@ -2188,6 +2193,10 @@ extern CONST double rt_inv255;
 extern CONST double rt_degtorad;
 extern CONST double rt_radtodeg;
 extern CONST mat_t  rt_identity;
+
+#if defined(NMG_H)
+extern CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
+#endif
 
 #ifdef __cplusplus
 }
