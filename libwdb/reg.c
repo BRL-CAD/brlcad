@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *
  *  Make a combination with material properties info
  */
+int
 mk_mcomb( fp, name, len, region, matname, matparm, override, rgb )
 FILE	*fp;
 char	*name;
@@ -71,6 +72,7 @@ char	*rgb;
 		rec.c.c_rgb[2] = rgb[2];
 	}
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 
@@ -80,6 +82,7 @@ char	*rgb;
  *  Make a simple combination header.
  * Must be followed by 'len' mk_memb() calls before any other mk_* routines
  */
+int
 mk_comb( fp, name, len, region )
 FILE	*fp;
 char	*name;
@@ -95,6 +98,7 @@ char	*name;
 	NAMEMOVE( name, rec.c.c_name );
 	rec.c.c_length = len;
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -102,6 +106,7 @@ char	*name;
  *
  *  Must be part of combination/member clump of records.
  */
+int
 mk_memb( fp, name, mat, op )
 FILE	*fp;
 char	*name;
@@ -118,6 +123,7 @@ int	op;
 	for( i=0; i<16; i++ )
 		rec.M.m_mat[i] = mat[i];
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -167,6 +173,7 @@ register struct wmember *headp;
  *
  *  A shorthand version is given in wdb.h as a macro.
  */
+int
 mk_lcomb( fp, name, region, matname, matparm, override, rgb, headp )
 FILE	*fp;
 char	*name;
@@ -202,4 +209,5 @@ register struct wmember *headp;
 		wp = next;
 	}
 	headp->wm_forw = headp->wm_back = headp;
+	return(0);
 }

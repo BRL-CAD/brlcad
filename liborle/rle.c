@@ -130,6 +130,10 @@ HIDDEN int	_get_Short();
 HIDDEN int	(*_func_Get_Inst)();	/* Ptr to appropriate function.	*/
 HIDDEN int	_get_Old_Inst();	/* Old format inst. reader.	*/
 HIDDEN int	_get_New_Inst();	/* New extended inst. reader.	*/
+HIDDEN void	_enc_Color_Seg();
+HIDDEN void	_enc_Segment();
+
+void		prnt_XSetup();
 
 static Xtnd_Rle_Header	w_setup;	/* Header being written out.	*/
 static Xtnd_Rle_Header	r_setup;	/* Header being read in.	*/
@@ -721,6 +725,7 @@ register RGBpixel *endpix;
 /*	_ e n c _ C o l o r _ S e g ( )
 	Encode a segment, 'seg', for specified 'color'.
  */
+HIDDEN void
 _enc_Color_Seg( fp, seg, color )
 FILE		*fp;
 register int	seg;
@@ -738,6 +743,7 @@ register int	color;
 /*	_ e n c _ S e g m e n t ( )
 	Output code for segment.
  */
+HIDDEN void
 _enc_Segment( fp, data_p, last_p )
 FILE		*fp;
 register RGBpixel	*data_p;
@@ -969,6 +975,7 @@ register int	*dat;
 	return	1;
 	}
 	
+void
 prnt_XSetup( msg, setup )
 char				*msg;
 register Xtnd_Rle_Header	*setup;

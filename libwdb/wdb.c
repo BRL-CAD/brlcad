@@ -8,6 +8,8 @@
  *  It is expected that this library will grow as experience is gained.
  *  Routines for writing every permissible solid do not yet exist.
  *
+ *  Return codes of 0 are OK, -1 signal an error.
+ *
  *  Authors -
  *	Michael John Muuss
  *	Paul R. Stay
@@ -55,6 +57,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  *			M K _ I D
  */
+int
 mk_id( fp, title )
 FILE	*fp;
 char	*title;
@@ -67,6 +70,7 @@ char	*title;
 	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
 	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -75,6 +79,7 @@ char	*title;
  *  Make a halfspace.  Specified by distance from origin, and
  *  outward pointing normal vector.
  */
+int
 mk_half( fp, name, d, norm )
 FILE	*fp;
 char	*name;
@@ -90,6 +95,7 @@ point_t	norm;
 	VMOVE( rec.s.s_values, norm );
 	rec.s.s_values[3] = d;
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -97,6 +103,7 @@ point_t	norm;
  *
  *  Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
  */
+int
 mk_rpp( fp, name, min, max )
 FILE	*fp;
 char	*name;
@@ -116,11 +123,13 @@ point_t	min, max;
 	VSET( pt8[7], min[X], max[Y], max[Z] );
 
 	mk_arb8( fp, name, pt8 );
+	return(0);
 }
 
 /*
  *			M K _ A R B 4
  */
+int
 mk_arb4( fp, name, pts )
 FILE	*fp;
 char	*name;
@@ -139,7 +148,7 @@ point_t	pts[];
 	VMOVE( pt8[6], pts[3] );
 	VMOVE( pt8[7], pts[3] );
 
-	mk_arb8( fp, name, pt8 );
+	return( mk_arb8( fp, name, pt8 ) );
 }
 
 /*
@@ -152,6 +161,7 @@ point_t	pts[];
  *  the first four points listed must lie on one plate, and
  *  the second four points listed must lie on the other plate.
  */
+int
 mk_arb8( fp, name, pts )
 FILE	*fp;
 char	*name;
@@ -169,6 +179,7 @@ point_t	pts[];
 		VSUB2( &rec.s.s_values[3*i], pts[i], pts[0] );
 	}
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -176,6 +187,7 @@ point_t	pts[];
  *
  * Make a sphere centered at point with radius r.
  */
+int
 mk_sph( fp, name, point, r)
 FILE	*fp;
 char	*name;
@@ -197,6 +209,7 @@ fastf_t	r;
 	VSET( &rec.s.s_values[9], 0, 0, r );
 	
 	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+	return(0);
 }
 
 /*
@@ -206,6 +219,7 @@ fastf_t	r;
  * The eccentricity of the ellipsoid is controlled by the relative
  * lengths of the three radius vectors.
  */
+int
 mk_ell( fp, name, point, a, b, c)
 FILE	*fp;
 char	*name;
@@ -226,6 +240,7 @@ vect_t	a, b, c;
 	VMOVE( &rec.s.s_values[9], c );
 	
 	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+	return(0);
 }
 
 /*
@@ -235,6 +250,7 @@ vect_t	a, b, c;
  * r1:  distance from center point to center of solid part,
  * and r2: radius of solid part.
  */
+int
 mk_tor( fp, name, center, n, r1, r2 )
 FILE	*fp;
 char	*name;
@@ -330,6 +346,7 @@ double	r1, r2;
  *
  * Make a Right Circular Cylinder into a generalized truncated cyinder
  */
+int
 mk_rcc( fp, name, base, height, radius )
 FILE	*fp;
 char	*name;
@@ -385,6 +402,7 @@ fastf_t	radius;
  *
  * Make truncated general cylinder
  */
+int
 mk_tgc( fp, name, v, h, a, b, c, d )
 FILE	*fp;
 char	*name;
@@ -421,6 +439,7 @@ vect_t	c, d;
  *  Must be followed by 1 or more mk_facet() calls before
  *  any other mk_* routines
  */
+int
 mk_polysolid( fp, name )
 FILE	*fp;
 char	*name;
@@ -431,6 +450,7 @@ char	*name;
 	rec.p.p_id = ID_P_HEAD;
 	NAMEMOVE( name, rec.p.p_name );
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -438,6 +458,7 @@ char	*name;
  *
  *  Must follow a call to mk_polysolid() or mk_facet()
  */
+int
 mk_facet( fp, npts, vert, norm )
 FILE	*fp;
 int	npts;

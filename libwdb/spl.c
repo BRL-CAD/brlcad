@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  The call to this routine must be immediately followed by
  *  the appropriate number of calls to mk_bsurf().
  */
+int
 mk_bsolid( fp, name, nsurf, res )
 FILE	*fp;
 char	*name;
@@ -60,6 +61,7 @@ double	res;
 	rec.B.B_resolution = res;
 
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	return(0);
 }
 
 /*
@@ -68,6 +70,7 @@ double	res;
  *  Write the external MGED description of a single B-spline surface
  *  given it's internal form from b_spline.h
  */
+int
 mk_bsurf( filep, bp )
 FILE	*filep;
 struct b_spline *bp;
@@ -83,7 +86,7 @@ struct b_spline *bp;
 	if( bp->u_kv->k_size != bp->ctl_mesh->mesh_size[COL] + bp->order[0] ||
 	    bp->v_kv->k_size != bp->ctl_mesh->mesh_size[ROW] + bp->order[1]) {
 	    	fprintf(stderr,"mk_bsurf:  mis-matched knot/mesh/order\n");
-	    	return;
+	    	return(-1);
 	}
 
 	bzero( (char *)&rec, sizeof(rec) );
@@ -130,4 +133,5 @@ struct b_spline *bp;
 
 	free( (char *)kp );
 	free( (char *)mp );
+	return(0);
 }
