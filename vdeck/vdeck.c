@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.12
-	Last edit: 	12/20/85 at 19:03:57
-	Retrieved: 	8/13/86 at 08:14:09
+	SCCS id:	@(#) vdeck.c	2.13
+	Last edit: 	7/10/86 at 11:07:04
+	Retrieved: 	8/13/86 at 08:14:41
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) vdeck.c	2.12	last edit 12/20/85 at 19:03:57";
+char	sccsTag[] = "@(#) vdeck.c	2.13	last edit 7/10/86 at 11:07:04";
 #endif
 
 /*
@@ -59,13 +59,19 @@ char	sccsTag[] = "@(#) vdeck.c	2.12	last edit 12/20/85 at 19:03:57";
 extern Directory	*diradd();
 extern double		fabs();
 extern long		lseek();
-char			getcmd();
-char			regBuffer[BUFSIZ], *regBufPtr;
+extern void		blank_fill(), menu();
 extern void		quit();
+char			regBuffer[BUFSIZ], *regBufPtr;
+
+char			getcmd();
 void			prompt();
+void			mat_copy(), mat_mul(), matXvec();
+void			vtoh_move(), htov_move();
+void			eread(), ewrite();
+
 #define endRegion( buff ) \
 	     	(void) sprintf( regBufPtr, "%s\n", buff ); \
-	    	(void) write( regfd, regBuffer, (unsigned) strlen( regBuffer ) ); \
+	    	ewrite( regfd, regBuffer, (unsigned) strlen( regBuffer ) ); \
 	    	regBufPtr = regBuffer;
 
 #define putSpaces( s, xx ) \
@@ -90,15 +96,15 @@ char	*argv[];
 	toc();		/* Build table of contents from directory.	*/
 
 	/*      C o m m a n d   I n t e r p r e t e r			*/
-	setjmp( env );	/* Point of re-entry from aborted command.	*/
-	(void) printf( "%s", CMD_PROMPT );	
+	(void) setjmp( env );/* Point of re-entry from aborted command.	*/
+	prompt( CMD_PROMPT );
 	while( 1 )
 		{
 		/* Return to default interrupt handler after every command,
 		 allows exit from program only while command interpreter
 		 is waiting for input from keyboard.
 		 */
-		signal( SIGINT, quit );
+		(void) signal( SIGINT, quit );
 
 		switch( getcmd( arg_list, 0 ) )
 			{
@@ -113,35 +119,35 @@ char	*argv[];
 		case INSERT :
 			if( arg_list[1] == 0 )
 				{
-				(void) printf( "enter object[s] to insert: " );
-				getcmd( arg_list, arg_ct );
+				prompt( "enter object[s] to insert: " );
+				(void) getcmd( arg_list, arg_ct );
 				}
-			insert( arg_list, arg_ct );
+			(void) insert( arg_list, arg_ct );
 			break;
 		case LIST :
 			{	register int	i;
 			if( arg_list[1] == 0 )
 				{
-				col_prt( curr_list, curr_ct );
+				(void) col_prt( curr_list, curr_ct );
 				break;
 				}
 			for( tmp_ct = 0, i = 0; i < curr_ct; i++ )
 				if( match( arg_list[1], curr_list[i] ) )
 					tmp_list[tmp_ct++] = curr_list[i];
-			col_prt( tmp_list, tmp_ct );
+			(void) col_prt( tmp_list, tmp_ct );
 			break;
 			}
 		case MENU :
 			menu( cmd );
-			(void) printf( "%s", PROMPT );
+			prompt( PROMPT );
 			continue;
 		case NUMBER :
 			if( arg_list[1] == 0 )
 				{
-				(void) printf( "enter number of 1st solid: " );
-				getcmd( arg_list, arg_ct );
-				(void) printf( "enter number of 1st region: " );
-				getcmd( arg_list, arg_ct );
+				prompt( "enter number of 1st solid: " );
+				(void) getcmd( arg_list, arg_ct );
+				prompt( "enter number of 1st region: " );
+				(void) getcmd( arg_list, arg_ct );
 				}
 			if( arg_list[1] )
 				delsol = atoi( arg_list[1] ) - 1;
@@ -151,21 +157,21 @@ char	*argv[];
 		case REMOVE :
 			if( arg_list[1] == 0 )
 				{
-				(void) printf( "enter object[s] to remove: " );
-				getcmd( arg_list, arg_ct );
+				prompt( "enter object[s] to remove: " );
+				(void) getcmd( arg_list, arg_ct );
 				}
-			delete( arg_list );
+			(void) delete( arg_list );
 			break;
 		case RETURN :
-			(void) printf( "%s", PROMPT );
+			prompt( PROMPT );
 			continue;
 		case SHELL :
 			if( arg_list[1] == 0 )
 				{
-				(void) printf( "enter shell command: " );
-				getcmd( arg_list, arg_ct );
+				prompt( "enter shell command: " );
+				(void) getcmd( arg_list, arg_ct );
 				}
-			shell( arg_list );
+			(void) shell( arg_list );
 			break;
 		case SORT_TOC :
 			sort( toc_list, ndir );
@@ -178,10 +184,11 @@ char	*argv[];
 			(void) printf( "quitting...\n" );
 			exit( 0 );
 		UNKNOWN :
-			(void) printf( "invalid command\n%s", PROMPT );
+			(void) printf( "Invalid command\n" );
+			prompt( PROMPT );
 			continue;
 			}
-		(void) printf( "%s", CMD_PROMPT );		
+		prompt( CMD_PROMPT );		
 		}
 	}
 
@@ -219,7 +226,7 @@ matp_t			old_xlate;
 		}
 	savepos = lseek( objfd, 0L, 1 );
 	(void) lseek( objfd, dirp->d_addr, 0 );
-	readF( objfd, (char *) &rec, sizeof rec );
+	eread( objfd, (char *) &rec, sizeof rec );
 
 	if( rec.u_id == ID_COMB )
 		{ /* We have a group.					*/
@@ -262,7 +269,7 @@ matp_t			old_xlate;
 			(void) lseek( rd_rrfd, 0L, 0 );
 			for( j = 1; j <= nnr; j++ )
 				{
-				readF( rd_rrfd, name, (unsigned) NAMESIZE );
+				eread( rd_rrfd, name, (unsigned) NAMESIZE );
 				if( strcmp( name, rec.c.c_name ) == 0 )
 					{ /* Region is #j.		*/
 					(void) sprintf( regBufPtr, "%4d", j+delreg );
@@ -330,16 +337,16 @@ matp_t			old_xlate;
 
 			/* Add region to list of regions in desc.	*/
 			(void) lseek( rrfd, 0L, 2 );
-			(void) write( rrfd, rec.c.c_name, NAMESIZE );
+			ewrite( rrfd, rec.c.c_name, NAMESIZE );
 			/* Check for any OR.				*/
 			orflag = 0;
 			if( nparts > 1 )
 				{ /* First OR doesn't count, throw away
 					first member.		 	*/
-				readF( objfd, (char *) &rec, sizeof rec );
+				eread( objfd, (char *) &rec, sizeof rec );
 				for( i = 2; i <= nparts; i++ )
 					{
-					readF( objfd, (char *) &rec, sizeof rec );
+					eread( objfd, (char *) &rec, sizeof rec );
 					if( rec.M.m_relation == UNION )
 						{
 						orflag = 1;
@@ -347,7 +354,7 @@ matp_t			old_xlate;
 						}
 					}
 				(void) lseek( objfd, dirp->d_addr, 0 );
-				readF( objfd, (char *) &rec, sizeof rec );
+				eread( objfd, (char *) &rec, sizeof rec );
 				}
 			/* Write region ident table.			*/
 			itoa( nnr+delreg, buf, 5 );
@@ -355,7 +362,7 @@ matp_t			old_xlate;
 			itoa( rec.c.c_aircode, &buf[10], 5 );
 /* + */			itoa( rec.c.c_material, &buf[15], 5 );
 /* + */			itoa( rec.c.c_los, &buf[20], 5 );
-			(void) write( ridfd, buf, 25 );
+			ewrite( ridfd, buf, 25 );
 			blank_fill( ridfd, 5 );
 			bp = buf;
 			length = strlen( rec.c.c_name );
@@ -374,18 +381,18 @@ matp_t			old_xlate;
 				{
 				bp = buf + (length - 50);
 				*bp = '*';
-				(void) write(	ridfd,
-						bp,
-						(unsigned)(50 - strlen( rec.c.c_name ))
-						);
+				ewrite(	ridfd,
+					bp,
+					(unsigned)(50 - strlen( rec.c.c_name ))
+					);
 				}
 			else
-				(void) write( ridfd, buf, (unsigned)(bp - buf) );
-			(void) write(	ridfd,
-					rec.c.c_name,
-					(unsigned) strlen( rec.c.c_name )
-					);
-			(void) write( ridfd, LF, 1 );
+				ewrite( ridfd, buf, (unsigned)(bp - buf) );
+			ewrite(	ridfd,
+				rec.c.c_name,
+				(unsigned) strlen( rec.c.c_name )
+				);
+			ewrite( ridfd, LF, 1 );
 			(void) printf( "%4d:", nnr+delreg );
 			for( j = 0; j < pathpos; j++ )
 				(void) printf( "/%s", path[j]->d_namep );
@@ -396,7 +403,7 @@ matp_t			old_xlate;
 			{
 			if( ++isave == nparts )
 				isave = -isave;
-			readF( objfd, (char *) &rec, sizeof rec );
+			eread( objfd, (char *) &rec, sizeof rec );
 			mp = &rec.M;
  
 			/* Save this operation.				*/
@@ -478,7 +485,7 @@ matp_t			old_xlate;
 		if( dchar == discr[i] )
 			{ /* Quick look match - check further.		*/
 			(void) lseek( rd_idfd, (long)(i * sizeof d_ident), 0 );
-			readF( rd_idfd, (char *) &idbuf, sizeof d_ident );
+			eread( rd_idfd, (char *) &idbuf, sizeof d_ident );
 			d_ident.i_index = i + 1;
 			if( check( (char *) &d_ident, (char *) &idbuf ) == 1 )
 				{
@@ -508,7 +515,7 @@ matp_t			old_xlate;
 
 	/* Write ident struct at end of idfd file.			*/
 	(void) lseek( idfd, 0L, 2 );
-	(void) write( idfd, (char *) &d_ident, sizeof d_ident );
+	ewrite( idfd, (char *) &d_ident, sizeof d_ident );
 	nnt = nns;
 
 	/* Process this solid.						*/
@@ -516,11 +523,11 @@ matp_t			old_xlate;
 	mat_copy( notrans, xform );
 
 	/* Notrans = homogeneous matrix with a zero translation vector.	*/
-	notrans[3]  = notrans[7]  = notrans[11] = 0.0;
+	notrans[3] = notrans[7] = notrans[11] = 0.0;
 
 	/* Write solid #.						*/
 	itoa( nnt+delsol, buf, 5 );
-	(void) write( solfd, buf, 5 );
+	ewrite( solfd, buf, 5 );
 
 	/* Process appropriate solid type.				*/
 	switch( rec.s.s_type )
@@ -605,15 +612,15 @@ notnew:	/* Sent here if solid already in solid table.			*/
 		(void) sprintf( regBufPtr, rec.s.s_name );
 		regBufPtr += strlen( rec.s.s_name );
 		itoa( nnr+delreg, buf, 5 );
-		(void) write( ridfd, buf, 5 );
+		ewrite( ridfd, buf, 5 );
 
 		/* Values for item, space, material and percentage are
 			meaningless at this point.
 		 */
-		(void) write( ridfd, "    0", 5 );
-		(void) write( ridfd, "    0", 5 );
-		(void) write( ridfd, "    0", 5 );
-		(void) write( ridfd, "    0", 5 );
+		ewrite( ridfd, "    0", 5 );
+		ewrite( ridfd, "    0", 5 );
+		ewrite( ridfd, "    0", 5 );
+		ewrite( ridfd, "    0", 5 );
 		blank_fill( ridfd, 5 );
 		(void) printf( "%4d:", nnr+delreg );
 		bp = buf;
@@ -632,31 +639,31 @@ notnew:	/* Sent here if solid already in solid table.			*/
 			{
 			bp = buf + (length - 50);
 			*bp = '*';
-			(void) write(	ridfd,
-					bp,
-					(unsigned) (50 - strlen( rec.s.s_name ))
-					);
+			ewrite(	ridfd,
+				bp,
+				(unsigned) (50 - strlen( rec.s.s_name ))
+				);
 			}
 		else
-			(void) write( ridfd, buf, (unsigned)(bp - buf) );
+			ewrite( ridfd, buf, (unsigned)(bp - buf) );
 
 		if( rec.u_id == ID_ARS_B )
 			{ /* Ars extension record.	*/
-			printf( "/%s\n", ars_name );
-			(void) write(	ridfd,
-					ars_name,
-					(unsigned) strlen( ars_name )
-					);
+			(void) printf( "/%s\n", ars_name );
+			ewrite(	ridfd,
+				ars_name,
+				(unsigned) strlen( ars_name )
+				);
 			}
 		else
 			{
-			printf( "/%s\n", rec.s.s_name );
-			(void) write(	ridfd,
-					rec.s.s_name,
-					(unsigned) strlen( rec.s.s_name )
-					);
+			(void) printf( "/%s\n", rec.s.s_name );
+			ewrite(	ridfd,
+				rec.s.s_name,
+				(unsigned) strlen( rec.s.s_name )
+				);
 			}
-		(void) write( ridfd, LF, 1 );
+		ewrite( ridfd, LF, 1 );
 		{	int	n;
 		n = 69 - (regBufPtr - regBuffer);
 		putSpaces( regBufPtr, n );
@@ -669,34 +676,52 @@ notnew:	/* Sent here if solid already in solid table.			*/
 	return;
 	}
 
+
+void
+swap_vec( v1, v2, work )
+register float	*v1, *v2, *work;
+	{
+	VMOVE( work, v1 );
+	VMOVE( v1, v2 );
+	VMOVE( v2, work );
+	return;
+	}
+
+void
+swap_dbl( d1, d2 )
+register double	*d1, *d2;
+	{	double	t;
+	t = *d1;
+	*d1 = *d2;
+	*d2 = t;
+	return;
+	}
+
 /*	a d d t o r ( )
 	Process torus.
  */
 addtor( rec )
-register
-Record *rec;
-{
-	int	i;
-	float	work[3];
-	float	rr1,rr2;
-	vect_t	v_work, v_workk;
+register Record	*rec;
+	{	register int	i;
+		float	work[3];
+		double	rr1, rr2;
+		vect_t	v_work, v_workk;
 
-	write( solfd, "tor  ", 5 );
+	ewrite( solfd, "tor  ", 5 );
 
-	/* operate on vertex
-	 */
+	/* Operate on vertex.						*/
 	vtoh_move( v_workk, &(rec->s.s_values[0]) );
 	matXvec( v_work, xform, v_workk );
 	htov_move( &(rec->s.s_values[0]), v_work );
 	VMOVE( &(rec->s.s_values[0]) , v_work );
 
-	/* rest of vectors
-	 */
-	for( i = 3; i <= 21; i += 3 ) {
+	/* Rest of vectors.						*/
+	for( i = 3; i <= 21; i += 3 )
+		{
 		vtoh_move( v_workk, &(rec->s.s_values[i]) );
 		matXvec( v_work, notrans, v_workk );
 		htov_move( &(rec->s.s_values[i]), v_work );
-	}
+		}
 	rr1 = MAGNITUDE( SV2 );	/* r1 */
 	rr2 = MAGNITUDE( SV1 );	/* r2 */    
 
@@ -708,20 +733,18 @@ Record *rec;
 	VMOVE( SV2, work );
 	psp( 3, rec );
 	return;
-}
+	}
 
 /*	a d d a r b ( )
 	Process generalized arb.
  */
 addarb( rec )
-register
-Record *rec;
-{
-	register int	i;
-	float	work[3], worc[3];
-	vect_t	v_work, v_workk;
-	float	xmin, xmax, ymin, ymax, zmin, zmax;
-	int	univecs[8], samevecs[11];
+register Record	*rec;
+	{	register int	i;
+		float	work[3], worc[3];
+		vect_t	v_work, v_workk;
+		double	xmin, xmax, ymin, ymax, zmin, zmax;
+		int	univecs[8], samevecs[11];
 	
 	/* Operate on vertex.						*/
 	vtoh_move( v_workk, &(rec->s.s_values[0]) );
@@ -729,7 +752,8 @@ Record *rec;
 	htov_move( &(rec->s.s_values[0]), v_work );
 
 	/* Rest of vectors.						*/
-	for( i = 3; i <= 21; i += 3 ) {
+	for( i = 3; i <= 21; i += 3 )
+		{
 		vtoh_move( v_workk, &(rec->s.s_values[i]) );
 		matXvec( v_work, notrans, v_workk );
 		htov_move( v_workk, v_work );
@@ -738,63 +762,65 @@ Record *rec;
 		VADD2(	&(rec->s.s_values[i]),
 			&(rec->s.s_values[0]),
 			v_workk
-		);
-	}
+			);
+		}
 
 	/* Enter new arb code.						*/
 	if( (i = cgarbs( rec, univecs, samevecs )) == 0 ) return;
-	redoarb( rec, univecs, samevecs, i );
+	(void) redoarb( rec, univecs, samevecs, i );
 	rec->s.s_cgtype *= -1;
 	
 	/* Print the solid parameters.					*/
-	switch( rec->s.s_cgtype ) {
-	case ARB8:
-		write( solfd, "arb8 ", 5 );
+	switch( rec->s.s_cgtype )
+		{
+	case ARB8 :
+		ewrite( solfd, "arb8 ", 5 );
 		psp( 8, rec );
 		break;
-	case ARB7:
-		write( solfd, "arb7 ", 5 );
+	case ARB7 :
+		ewrite( solfd, "arb7 ", 5 );
 		psp( 7, rec );
 		break;
-	case ARB6:
-		write( solfd, "arb6 ", 5 );
+	case ARB6 :
+		ewrite( solfd, "arb6 ", 5 );
 		VMOVE( SV5, SV6 );
 		psp( 6, rec );
 		break;
-	case ARB5:
-		write( solfd, "arb5 ", 5 );
+	case ARB5 :
+		ewrite( solfd, "arb5 ", 5 );
 		psp( 5, rec );
 		break;
-	case ARB4:
-		write( solfd, "arb4 ", 5 );
+	case ARB4 :
+		ewrite( solfd, "arb4 ", 5 );
 		VMOVE( SV3, SV4 );
 		psp( 4, rec );
 		break;
-	case RAW:
-		write( solfd, "raw  ", 5 );
+	case RAW :
+		ewrite( solfd, "raw  ", 5 );
 		VSUB2( work, SV1, SV0 );
 		VSUB2( SV1, SV3, SV0);		/* H */
 		VMOVE( SV2, work);		/* W */
 		VSUB2( SV3, SV4, SV0);		/* D */
 		psp( 4, rec );
 		break;
-	case BOX:
-		write( solfd, "box  ", 5 );
+	case BOX :
+		ewrite( solfd, "box  ", 5 );
 		VSUB2( work, SV1, SV0 );
 		VSUB2( SV1, SV3, SV0);		/* H */
 		VMOVE( SV2, work);		/* W */
 		VSUB2( SV3, SV4, SV0);		/* D */
 		psp( 4, rec );
 		break;
-	case RPP:
-		write( solfd, "rpp  ", 5 );
+	case RPP :
+		ewrite( solfd, "rpp  ", 5 );
 		xmin = ymin = zmin = 100000000.0;
 		xmax = ymax = zmax = -100000000.0;
-		for(i=0; i<=21; i+=3) {
+		for( i = 0; i <= 21; i += 3 )
+			{
 			MINMAX(xmin, xmax, rec->s.s_values[i]);
 			MINMAX(ymin, ymax, rec->s.s_values[i+1]);
 			MINMAX(zmin, zmax, rec->s.s_values[i+2]);
-		}
+			}
 		work[0] = xmin;
 		work[1] = xmax;
 		work[2] = ymin;
@@ -805,126 +831,120 @@ Record *rec;
 		VMOVE( SV1, worc );
 		psp( 2, rec );
 		break;
-	default:
-		fprintf( stderr, "Unknown arb (%d).\n", rec->s.s_cgtype );
+	default :
+		(void) fprintf( stderr, "Unknown arb (%d).\n", rec->s.s_cgtype );
 		exit( 10 );
-	}
+		}
 	return;
-}
+	}
 
 /*	a d d e l l ( )
 	Process the general ellipsoid.
  */
 addell( rec )
-register
-Record *rec;
-{
-	int	i;
-	float	work[3];
-	vect_t	v_work, v_workk;
-
-	/* operate on vertex
-	 */
+register Record	*rec;
+	{	register int	i;
+		float	work[3];
+		vect_t	v_work, v_workk;
+		double	ma, mb, mc;
+	
+	/* Operate on vertex.						*/
 	vtoh_move( v_workk, &(rec->s.s_values[0]) );
 	matXvec( v_work, xform, v_workk);
 	htov_move( &(rec->s.s_values[0]), v_work );
 
-	/* rest of vectors
-	 */
-	for( i = 3; i <= 9; i += 3 ) {
+	/* Rest of vectors.						*/
+	for( i = 3; i <= 9; i += 3 )
+		{
 		vtoh_move( v_workk, &(rec->s.s_values[i]) );
 		matXvec( v_work, notrans, v_workk );
 		htov_move( &(rec->s.s_values[i]), v_work );
-	}
+		}
 
-	/* check for ell1 or sph
-	 */
-	if( fabs( MAGNITUDE(SV1) - MAGNITUDE(SV2) ) < CONV_EPSILON ) {
-		/* vector A == vector B */
+	/* Check for ell1 or sph.					*/
+	ma = MAGNITUDE( SV1 );
+	mb = MAGNITUDE( SV2 );
+	mc = MAGNITUDE( SV3 );
+	if( fabs( ma-mb ) < CONV_EPSILON )
+		{ /* vector A == vector B */
 		rec->s.s_cgtype = ELL1;
 		/* SPH if vector B == vector C also */
-		if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < CONV_EPSILON)
+		if( fabs( mb-mc ) < CONV_EPSILON )
 			rec->s.s_cgtype = SPH;
-		if(rec->s.s_cgtype != SPH) {
-			/* switch A and C */
-			VMOVE(work, SV1);
-			VMOVE(SV1, SV3);
-			VMOVE(SV3, work);
+		else	/* switch A and C */
+			{
+			swap_vec( SV1, SV3, work );
+			swap_dbl( &ma, &mc );
+			}
 		}
-	}
-
 	else
-	if(fabs(MAGNITUDE(SV1) - MAGNITUDE(SV3)) < CONV_EPSILON) {
-		/* vector A == vector C */
+	if( fabs( ma-mc ) < CONV_EPSILON )
+		{ /* vector A == vector C */
 		rec->s.s_cgtype = ELL1;
 		/* switch vector A and vector B */
-		VMOVE(work, SV1);
-		VMOVE(SV1, SV2);
-		VMOVE(SV2, work);
-	}
-
+		swap_vec( SV1, SV2, work );
+		swap_dbl( &ma, &mb );
+		}
 	else
-	if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < CONV_EPSILON) 
+	if( fabs( mb-mc ) < CONV_EPSILON ) 
 		rec->s.s_cgtype = ELL1;
-
 	else
 		rec->s.s_cgtype = GENELL;
 
-	/* print the solid parameters
-	 */
-	switch( rec->s.s_cgtype ) {
-	case GENELL:
-		write( solfd, "ellg ", 5 );
+	/* Print the solid parameters.					*/
+	switch( rec->s.s_cgtype )
+		{
+	case GENELL :
+		ewrite( solfd, "ellg ", 5 );
 		psp( 4, rec );
 		break;
-	case ELL1:
-		write( solfd, "ell1 ", 5 );
-		work[0] = MAGNITUDE( SV2 );
+	case ELL1 :
+		ewrite( solfd, "ell1 ", 5 );
+		work[0] = mb;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
-	case SPH:
-		write( solfd, "sph  ", 5 );
-		work[0] = MAGNITUDE( SV1 );
+	case SPH :
+		ewrite( solfd, "sph  ", 5 );
+		work[0] = ma;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV1, work );
 		psp( 2, rec );
 		break;
-	default:
-		fprintf( stderr,
-			"Error in type of ellipse (%d).\n", rec->s.s_cgtype );
+	default :
+		(void) fprintf( stderr,
+				"Error in type of ellipse (%d).\n",
+				rec->s.s_cgtype
+				);
 		exit( 10 );
-	}
+		}
 	return;
-}
+	}
 
 /*	a d d t g c ( )
 	Process generalized truncated cone.
  */
 addtgc( rec )
-register
-Record *rec;
-{
-	register int	i;
-	float	work[3], axb[3], cxd[3];
-	vect_t	v_work, v_workk;
-	float	ma, mb, mc, md, maxb, mcxd, mh;
+register Record *rec;
+	{	register int	i;
+		float	work[3], axb[3], cxd[3];
+		vect_t	v_work, v_workk;
+		double	ma, mb, mc, md, maxb, mcxd, mh;
 
-	/* operate on vertex
-	 */
+	/* Operate on vertex.						*/
 	vtoh_move( v_workk, &(rec->s.s_values[0]) );
 	matXvec( v_work, xform, v_workk );
 	htov_move( &(rec->s.s_values[0]), v_work );
 
-	for( i = 3; i <= 15; i += 3 ) {
+	for( i = 3; i <= 15; i += 3 )
+		{
 		vtoh_move( v_workk, &(rec->s.s_values[i]) );
 		matXvec( v_work, notrans, v_workk );
 		htov_move( &(rec->s.s_values[i]), v_work );
-	}
+		}
 
-	/* check for tec rec trc rcc
-	 */
+	/* Check for tec rec trc rcc.					*/
 	rec->s.s_cgtype = TGC;
 	VCROSS( axb, SV2, SV3 );
 	VCROSS( cxd, SV4, SV5 );
@@ -936,23 +956,28 @@ Record *rec;
 	mcxd = MAGNITUDE( cxd );
 	mh = MAGNITUDE( SV1 );
 
-	/* tec if ratio top and bot vectors equal and base parallel to top
+	/* Tec if ratio top and bot vectors equal and base parallel to top.
 	 */
-	if( mc == 0.0 ) {
-		fprintf( stderr, "Error in TGC, C vector has zero magnitude!\n" );
+	if( mc == 0.0 )
+		{
+		(void) fprintf( stderr,
+				"Error in TGC, C vector has zero magnitude!\n"
+				);
 		return;
-	}
-	if( md == 0.0 ) {
-		fprintf( stderr, "Error in TGC, D vector has zero magnitude!\n" );
+		}
+	if( md == 0.0 )
+		{
+		(void) fprintf( stderr,
+				"Error in TGC, D vector has zero magnitude!\n"
+				);
 		return;
-	}
+		}
 	if(	fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON
 	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
 		)
 		rec->s.s_cgtype = TEC;
 
-	/* check for right cylinder
-	 */
+	/* Check for right cylinder.					*/
 	if( fabs( fabs(DOT(SV1,axb)) - (mh*maxb) ) < CONV_EPSILON )
 		{
 		if( fabs( ma-mb ) < CONV_EPSILON )
@@ -967,11 +992,29 @@ Record *rec;
 			rec->s.s_cgtype = REC;
 		}
 
-	/* print the solid parameters
+	/* Insure that magnitude of A is greater than B, and magnitude of 
+		C is greater than D for the GIFT code (boy, is THIS a shame).
+		This need only be done for the elliptical REC and TEC types.
 	 */
-	switch( rec->s.s_cgtype ) {
+	if( rec->s.s_cgtype == REC || rec->s.s_cgtype == TEC )
+		{
+		if( ma < mb )
+			{
+			swap_vec( SV2, SV3, work );
+			swap_dbl( &ma, &mb );
+			}
+		if( mc < md )
+			{
+			swap_vec( SV4, SV5, work );
+			swap_dbl( &mc, &md );
+			}
+		}
+
+	/* Print the solid parameters.					*/
+	switch( rec->s.s_cgtype )
+		{
 	case TGC :
-		write( solfd, "tgc  ", 5 );
+		ewrite( solfd, "tgc  ", 5 );
 		work[0] = mc;
 		work[1] = md;
 		work[2] = 0.0;
@@ -979,14 +1022,14 @@ Record *rec;
 		psp( 5, rec );
 		break;
 	case RCC :
-		write( solfd, "rcc  ", 5 );
+		ewrite( solfd, "rcc  ", 5 );
 		work[0] = ma;
 		work[1] = work[2] = 0.0;
 		VMOVE( SV2, work );
 		psp( 3, rec );
 		break;
 	case TRC :
-		write( solfd, "trc  ", 5 );
+		ewrite( solfd, "trc  ", 5 );
 		work[0] = ma;
 		work[1] = mc;
 		work[2] = 0.0;
@@ -994,7 +1037,7 @@ Record *rec;
 		psp( 3, rec );
 		break;
 	case TEC :
-		write( solfd, "tec  ", 5 );
+		ewrite( solfd, "tec  ", 5 );
 		/* This backwards conversion is to counteract an unnecessary
 			conversion of this ratio in 'psp()'.  Sorry about
 			that.
@@ -1005,14 +1048,16 @@ Record *rec;
 		psp( 5, rec );
 		break;
 	case REC :
-		write( solfd, "rec  ", 5 );
+		ewrite( solfd, "rec  ", 5 );
 		psp( 4, rec );
 		break;
-	default:
-		fprintf( stderr,
-			"Error in tgc type (%d).\n", rec->s.s_cgtype );
+	default :
+		(void) fprintf( stderr,
+				"Error in tgc type (%d).\n",
+				rec->s.s_cgtype
+				);
 		exit( 10 );
-	}
+		}
 	return;
 }
 
@@ -1020,14 +1065,12 @@ Record *rec;
 	Process triangular surfaced polyhedron - ars.
  */
 addars( rec )
-register
-Record *rec;
-{
-	char	buf[10];
-	int	i, vec;
-	int	npt, npts, ncurves, ngrans, granule, totlen;
-	float	work[3], vertex[3];
-	vect_t	v_work, v_workk;
+register Record *rec;
+	{	char	buf[10];
+		register int	i, vec;
+		int	npt, npts, ncurves, ngrans, granule, totlen;
+		float	work[3], vertex[3];
+		vect_t	v_work, v_workk;
 
 	ngrans = rec->a.a_curlen;
 	totlen = rec->a.a_totlen;
@@ -1035,20 +1078,20 @@ Record *rec;
 	ncurves = rec->a.a_m;
 
 	/* Write ars header line in solid table.			*/
-	(void) write( solfd, "ars  ", 5 );
+	ewrite( solfd, "ars  ", 5 );
 	itoa( ncurves, buf, 10 );
-	(void) write( solfd, buf, 10 );
+	ewrite( solfd, buf, 10 );
 	itoa( npts, buf, 10 );
-	(void) write( solfd, buf, 10 );
+	ewrite( solfd, buf, 10 );
 	blank_fill( solfd, 40 );
-	(void) write( solfd, rec->a.a_name, (unsigned) strlen( rec->a.a_name ) );
-	(void) write( solfd, LF, 1 );
+	ewrite( solfd, rec->a.a_name, (unsigned) strlen( rec->a.a_name ) );
+	ewrite( solfd, LF, 1 );
 
 	/* Process the data one granule at a time.			*/
 	for( granule = 1; granule <= totlen; granule++ )
 		{
 		/* Read a granule (ars extension record 'B').		*/
-		readF( objfd, (char *) rec, sizeof record );
+		eread( objfd, (char *) rec, sizeof record );
 		/* Find number of points in this granule.		*/
 		if( rec->b.b_ngranule == ngrans && (npt = npts % 8) != 0 )
 			;
@@ -1101,17 +1144,17 @@ register Record *rec;
 
 		if( (++j & 01) == 0 )
 			{ /* End of line.				*/
-			(void) write( solfd, buf, 60 );
+			ewrite( solfd, buf, 60 );
 			jk = 0;
-			(void) write(	solfd,
-					rec->s.s_name,
-					(unsigned) strlen( rec->s.s_name )
-					);
-			(void) write( solfd, LF, 1 );
+			ewrite(	solfd,
+				rec->s.s_name,
+				(unsigned) strlen( rec->s.s_name )
+				);
+			ewrite( solfd, LF, 1 );
 			if( i != (npts-1)*3 )
 				{   /* new line */
 				itoa( nns+delsol, buf, 5 );
-				(void) write( solfd, buf, 5 );
+				ewrite( solfd, buf, 5 );
 				blank_fill( solfd, 5 );
 				}
 			}
@@ -1120,12 +1163,12 @@ register Record *rec;
 		{ /* Finish off rest of line.				*/
 		for( k = 30; k <= 60; k++ )
 			buf[k] = ' ';
-		(void) write( solfd, buf, 60 );
-		(void) write(	solfd,
-				rec->s.s_name,
-				(unsigned) strlen( rec->s.s_name )
-				);
-		(void) write( solfd, LF, 1 );
+		ewrite( solfd, buf, 60 );
+		ewrite(	solfd,
+			rec->s.s_name,
+			(unsigned) strlen( rec->s.s_name )
+			);
+		ewrite( solfd, LF, 1 );
 		}
 	return;
 	}
@@ -1133,164 +1176,169 @@ register Record *rec;
 /*	p a r s p ( )
 	Print npts points of an ars.
  */
-parsp(	npts,	 rec )
-register
-int	npts;
-register
-Record	*rec;
-{
-	register int	i, j, k, jk;
-	char		bufout[80];
+parsp( npts, rec )
+register int	npts;
+register Record	*rec;
+	{ 	register int	i, j, k, jk;
+		char		bufout[80];
 
 	j = jk = 0;
 
 	itoa( nns+delsol, &bufout[0], 5 );
-	for( i = 5; i < 10; i++ )	bufout[i] = ' ';
-	strncpy( &bufout[70], "curve ", 6 );
+	for( i = 5; i < 10; i++ )
+		bufout[i] = ' ';
+	(void) strncpy( &bufout[70], "curve ", 6 );
 	itoa( rec->b.b_n, &bufout[76], 3 );
 	bufout[79] = '\n';
 
-	for( i = 0; i < npts*3; i += 3 ) {
-		/* write 3 points
-		 */
-		for( k = i; k <= i+2; k++ ) {
+	for( i = 0; i < npts*3; i += 3 )
+		{ /* Write 3 points.  */
+		for( k = i; k <= i+2; k++ )
+			{
 			++jk;
 			rec->b.b_values[k] *= unit_conversion;
 			ftoascii(	rec->b.b_values[k],
 					&bufout[jk*10],
 					10,
-					4 );
-		}
-		if( (++j & 01) == 0 ) {
-			/* end of line
-			 */
+					4
+					);
+			}
+		if( (++j & 01) == 0 )
+			{ /* End of line. */
 			bufout[70] = 'c';
-			write( solfd, bufout, 80 );
+			ewrite( solfd, bufout, 80 );
 			jk = 0;
+			}
 		}
-	}
-
-	if( (j & 01) == 1 ) {
-		/* finish off line
-		 */
-		for( k = 40; k < 70; k++ )	bufout[k] = ' ';
-		write( solfd, bufout, 80 );
-	}
+	if( (j & 01) == 1 )
+		{ /* Finish off line. */
+		for( k = 40; k < 70; k++ )
+			bufout[k] = ' ';
+		ewrite( solfd, bufout, 80 );
+		}
 	return;
-}
+	}
 
 /*	m a t _ z e r o ( )
 	Fill in the matrix "m" with zeros.
  */
-mat_zero(	m )
-register matp_t m;
-{
-	register int	i;
-
-	/* Clear everything */
-	for( i = 0; i < 16; i++ )	*m++ = 0;
-}
+void
+mat_zero( m )
+register matp_t	m;
+	{	register int	i;
+	for( i = 0; i < 16; i++ )
+		*m++ = 0;
+	return;
+	}
 
 /*	m a t _ i d n ( )
 	Fill in the matrix "m" with an identity matrix.
  */
-mat_idn(	m )
+void
+mat_idn( m )
 register matp_t m;
-{
+	{
 	mat_zero( m );
 	m[0] = m[5] = m[10] = m[15] = 1;
-}
+	return;
+	}
 
 /*	m a t _ c o p y ( )
 	Copy the matrix "im" into the matrix "om".
  */
-mat_copy(	om, im )
+void
+mat_copy( om, im )
 register matp_t om, im;
-{
-	register int	i;
-
-	/* Copy all elements.				*/
-	for( i = 0; i< 16; i++ )	*om++ = *im++;
-}
-
+	{	register int	i;
+	for( i = 0; i < 16; i++ )
+		*om++ = *im++;
+	return;
+	}
 
 /*	m a t _ m u l ( )
 	Multiply matrix "im1" by "im2" and store the result in "om".
 	NOTE:  This is different from multiplying "im2" by "im1" (most
 	of the time!)
  */
-mat_mul(	om, im1, im2 )
-register matp_t om, im1, im2;
-{
-	register int em1;	/* Element subscript for im1.	*/
-	register int em2;	/* Element subscript for im2.	*/
-	register int el = 0;	/* Element subscript for om.	*/
-
+void
+mat_mul( om, im1, im2 )
+register matp_t	om, im1, im2;
+	{ 	register int em1;	/* Element subscript for im1.	*/
+		register int em2;	/* Element subscript for im2.	*/
+		register int el = 0;	/* Element subscript for om.	*/
 	/* For each element in the output matrix... */
-	for( ; el < 16; el++ ) { register int i;
+	for( ; el < 16; el++ )
+		{	register int i;
 		om[el] = 0;		/* Start with zero in output.	*/
 		em1 = (el / 4) * 4;	/* Element at rt of row in im1.	*/
 		em2 = el % 4;		/* Element at top of col in im2.*/
-		for( i = 0; i < 4; i++ ) {
+		for( i = 0; i < 4; i++ )
+			{
 			om[el] += im1[em1] * im2[em2];
 			em1++;		/* Next row element in m1.	*/
 			em2 += 4;	/* Next column element in m2.	*/
+			}
 		}
+	return;
 	}
-}
 
 /*	m a t X v e c ( )
 	Multiply the vector "iv" by the matrix "im" and store the result
 	in the vector "ov".
  */
+void
 matXvec( op, mp, vp )
-register vectp_t op;
-register matp_t  mp;
-register vectp_t vp;
-{
-	register int io;	/* Position in output vector.	*/
-	register int im = 0;	/* Position in input matrix.	*/
-	register int iv;	/* Position in input vector.	*/
-
-	/* fill each element of output vector with
-	 */
-	for( io = 0; io < 4; io++ ) {
-		/* dot product of each row with each element of input vec
-		 */
+register vectp_t	op;
+register matp_t		mp;
+register vectp_t	vp;
+	{	register int io;	/* Position in output vector.	*/
+		register int im = 0;	/* Position in input matrix.	*/
+		register int iv;	/* Position in input vector.	*/
+	/* Fill each element of output vector with.			*/
+	for( io = 0; io < 4; io++ )
+		{ /* Dot prod. of each row w/ each element of input vec.*/
 		op[io] = 0.;
-		for( iv = 0; iv < 4; iv++ ) op[io] += mp[im++] * vp[iv];
+		for( iv = 0; iv < 4; iv++ )
+			op[io] += mp[im++] * vp[iv];
+		}
+	return;
 	}
-}
 
-/*	v t o h _ m o v e ( )
- */
-vtoh_move(	h, v)
-register float *h,*v;
-{
+/*	v t o h _ m o v e ( )						*/
+void
+vtoh_move( h, v)
+register float	*h, *v;
+	{
 	*h++ = *v++;
 	*h++ = *v++;
 	*h++ = *v;
-	*h++ = 1.;
-}
+	*h++ = 1.0;
+	return;
+	}
 
-/*	h t o v _ m o v e ( )
- */
-htov_move(	v, h )
-register float *v,*h;
-{	static float inv;
-
-	if( h[3] == 1. ) {
+/*	h t o v _ m o v e ( )						*/
+void
+htov_move( v, h )
+register float	*v, *h;
+	{	static double	inv;
+	if( h[3] == 1.0 )
+		{
 		*v++ = *h++;
 		*v++ = *h++;
 		*v   = *h;
-	} else {
-		if( h[3] == 0. )	inv = 1.;
-		else			inv = 1. / h[3];
+		}
+	else
+		{
+		if( h[3] == 0.0 )
+			inv = 1.0;
+		else
+			inv = 1.0 / h[3];
 		*v++ = *h++ * inv;
 		*v++ = *h++ * inv;
 		*v = *h * inv;
+		}
+	return;
 	}
-}
 
 #include <varargs.h>
 /*	p r o m p t ( )							*/
@@ -1307,30 +1355,48 @@ va_dcl
 	return;
 	}
 
-/*	r e a d F ( )
-	Read with error checking and debugging.
+/*	e r e a d ( )
+	Read with error checking.
  */
-readF( fd, buf, bytes )
+void
+eread( fd, buf, bytes )
 int		fd;
-char   		*buf;
+char		*buf;
 unsigned	bytes;
-	{	register int	bytesRead;
-	if(	(bytesRead = read( fd, buf, bytes )) != (int) bytes
-	   &&	bytesRead != 0
+	{	int	bytes_read;
+	if(	(bytes_read = read( fd, buf, bytes )) != (int) bytes
+	    &&	bytes_read != 0
 		)
 		(void) fprintf( stderr,
 				"ERROR: Read of %d bytes returned %d\n",
 				bytes,
-				bytesRead
+				bytes_read
 				);
-	return	bytesRead;
+	return;
+	}
+
+/*	e w r i t e
+	Write with error checking.
+ */
+void
+ewrite( fd, buf, bytes )
+int		fd;
+char		*buf;
+unsigned	bytes;
+	{	int	bytes_written;
+	if( (bytes_written = write( fd, buf, bytes )) != (int) bytes )
+		(void) fprintf( stderr,
+				"ERROR: Write of %d bytes returned %d\n",
+				bytes,
+				bytes_written
+				);
+	return;
 	}
 
 pr_dir( dirp )
 Directory	*dirp;
 	{
-	(void) fprintf( stdout,
-			"dirp(0x%x)->d_namep=%s d_addr=%ld\n",
+	(void) printf(	"dirp(0x%x)->d_namep=%s d_addr=%ld\n",
 			dirp, dirp->d_namep, dirp->d_addr
 			);
 	(void) fflush( stdout );
