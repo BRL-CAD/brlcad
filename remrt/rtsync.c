@@ -75,6 +75,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "pkg.h"
 #include "fb.h"
 #include "tcl.h"
+#include "tk.h"
 #include "externs.h"
 
 #include "./ihost.h"
@@ -172,6 +173,7 @@ struct rtnode {
 	int		state;
 	int		ncpus;		/* Ready when > 0, for now */
 	int		busy;
+	Tcl_File	tcl_file;	/* Tcl's name for this fd */
 };
 #define MAX_NODES	32
 struct rtnode	rtnodes[MAX_NODES];
@@ -186,12 +188,14 @@ static	int	height = 0;
 int		debug = 0;
 
 Tcl_Interp	*interp = NULL;
+Tk_Window	tkwin;
 
 CONST char	*database;
 struct bu_vls	treetops;
 
 struct timeval	time_start;
 
+BU_EXTERN(void dispatcher, (ClientData clientData));
 void	new_rtnode();
 void	drop_rtnode();
 void	setup_socket();
@@ -200,6 +204,7 @@ char	*stamp();
 
 static char usage[] = "\
 Usage:  rtsync [-d#] [-h] [-S squaresize] [-W width] [-N height] [-F framebuffer]\n\
+	model.g treetop(s)\n\
 ";
 
 /*
@@ -244,6 +249,166 @@ register char **argv;
 }
 
 /*
+ *			P K G _ E V E N T _ H A N D L E R
+ *
+ *  Generic event handler to read from a LIBPKG connection.
+ *  Called from the TCL/Tk event handler
+ */
+void
+pkg_event_handler(clientData, mask)
+ClientData	clientData;	/* *pc */
+int		mask;
+{
+	struct pkg_conn	*pc;
+	int	val;
+
+	pc = (struct pkg_conn *)clientData;
+
+	val = pkg_suckin(pc);
+	if( val < 0 ) {
+		bu_log("pkg_suckin() error\n");
+	} else if( val == 0 )  {
+		bu_log("EOF on pkg connection\n");
+	}
+	if( val <= 0 )  {
+		Tcl_DeleteFileHandler(
+			Tcl_GetFile((ClientData)pc->pkc_fd, TCL_UNIX_FD) );
+		pkg_close(pc);
+		return;
+	}
+	if( pkg_process( pc ) < 0 )
+		bu_log("pc:  pkg_process error encountered\n");
+}
+
+/*
+ *			V R M G R _ E V E N T _ H A N D L E R
+ *
+ *  Event handler to read VRMGR commands from a LIBPKG connection.
+ *  Called from the TCL/Tk event handler.
+ */
+void
+vrmgr_event_handler(clientData, mask)
+ClientData	clientData;	/* *pc */
+int		mask;
+{
+	struct pkg_conn	*pc;
+	int	val;
+
+	pc = (struct pkg_conn *)clientData;
+
+	val = pkg_suckin(pc);
+	if( val < 0 ) {
+		bu_log("vrmgr: pkg_suckin() error\n");
+	} else if( val == 0 )  {
+		bu_log("vrmgr: EOF on pkg connection\n");
+	}
+	if( val <= 0 )  {
+		Tcl_DeleteFileHandler(
+			Tcl_GetFile((ClientData)pc->pkc_fd, TCL_UNIX_FD) );
+		pkg_close(pc);
+		vrmgr_pc = 0;
+		vrmgr_ihost = IHOST_NULL;
+		return;
+	}
+	if( pkg_process( pc ) < 0 )
+		bu_log("vrmgr:  pkg_process error encountered\n");
+}
+
+/*
+ *			R T N O D E _ E V E N T _ H A N D L E R
+ *
+ *  Read from a LIBPKG connection associated with an rtnode.
+ *  Called from the TCL/Tk event handler
+ */
+void
+rtnode_event_handler(clientData, mask)
+ClientData	clientData;	/* subscript to rtnodes[] */
+int		mask;
+{
+	int	i;
+
+	i = (int)clientData;
+	if( rtnodes[i].fd == 0 )  {
+		bu_log("rtnode_event_handler(%d) no fd?\n", i);
+		return;
+	}
+	if( pkg_process( rtnodes[i].pkg ) < 0 ) {
+		bu_log("pkg_process error encountered (1)\n");
+	}
+	if( pkg_suckin( rtnodes[i].pkg ) <= 0 )  {
+		/* Probably EOF */
+		drop_rtnode( i );
+		return;
+	}
+	if( pkg_process( rtnodes[i].pkg ) < 0 ) {
+		bu_log("pkg_process error encountered (2)\n");
+	}
+}
+
+/*
+ *			F B _ E V E N T _ H A N D L E R
+ */
+void
+fb_event_handler(clientData, mask)
+ClientData	clientData;	/* FBIO * */
+int		mask;
+{
+	FBIO	*fbp;
+
+	fbp = (FBIO *)clientData;
+	fb_poll(fbp);
+}
+
+/*
+ *			V R M G R _ L I S T E N _ H A N D L E R
+ */
+void
+vrmgr_listen_handler(clientData, mask)
+ClientData	clientData;	/* fd */
+int		mask;
+{
+	/* Accept any new VRMGR connections.  Only one at a time is permitted. */
+	if( vrmgr_pc )  {
+		bu_log("New VRMGR connection received with one still active, dropping old one.\n");
+		Tcl_DeleteFileHandler(
+			Tcl_GetFile((ClientData)vrmgr_pc->pkc_fd, TCL_UNIX_FD) );
+		pkg_close( vrmgr_pc );
+		vrmgr_pc = 0;
+		vrmgr_ihost = IHOST_NULL;
+	}
+	vrmgr_pc = pkg_getclient( vrmgr_listen_fd, vrmgr_pkgswitch, bu_log, 0 );
+	vrmgr_ihost = host_lookup_of_fd(vrmgr_pc->pkc_fd);
+	if( vrmgr_ihost == IHOST_NULL )  {
+		bu_log("Unable to get hostname of VRMGR, abandoning it\n");
+		pkg_close( vrmgr_pc );
+		vrmgr_pc = 0;
+	} else {
+		bu_log("%s VRMGR link with %s, fd=%d\n",
+			stamp(),
+			vrmgr_ihost->ht_name, vrmgr_pc->pkc_fd);
+		Tcl_CreateFileHandler(
+			Tcl_GetFile((ClientData)vrmgr_pc->pkc_fd, TCL_UNIX_FD),
+			TCL_READABLE|TCL_EXCEPTION, vrmgr_event_handler,
+			(ClientData)vrmgr_pc );
+		FD_SET(vrmgr_pc->pkc_fd, &select_list);
+		if( vrmgr_pc->pkc_fd > max_fd )  max_fd = vrmgr_pc->pkc_fd;
+		setup_socket( vrmgr_pc->pkc_fd );
+	}
+}
+
+/*
+ *			R T S Y N C _ L I S T E N _ H A N D L E R
+ */
+void
+rtsync_listen_handler(clientData, mask)
+ClientData	clientData;	/* fd */
+int		mask;
+{
+	new_rtnode( pkg_getclient( (int)clientData,
+		rtsync_pkgswitch, bu_log, 0 ) );
+}
+
+/*
  *			M A I N
  */
 main(argc, argv)
@@ -275,11 +440,23 @@ char	*argv[];
 
 	/* Initialize the Tcl interpreter */
 	interp = Tcl_CreateInterp();
+
 	/* This runs the init.tcl script */
 	if( Tcl_Init(interp) == TCL_ERROR )
 		bu_log("Tcl_Init error %s\n", interp->result);
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
+
+#if 0
+	/* This runs the tk.tcl script */
+	if(Tk_Init(interp) == TCL_ERROR)  bu_bomb("Try setting TK_LIBRARY environment variable\n");
+	if((tkwin = Tk_MainWindow(interp)) == NULL)
+		bu_bomb("Tk_MainWindow failed\n");
+# if 0
+	(void)Tcl_Eval( interp, "wm withdraw .");
+	(void)Tcl_EvalFile( interp, ".rtsyncrc" );
+# endif
+#endif
 
 	/* Connect up with framebuffer, for control & size purposes */
 	if( !framebuffer )  framebuffer = getenv("FB_FILE");
@@ -297,6 +474,10 @@ char	*argv[];
 		bu_log("Unable to listen on 5555\n");
 		exit(1);
 	}
+	Tcl_CreateFileHandler(
+		Tcl_GetFile((ClientData)vrmgr_listen_fd, TCL_UNIX_FD),
+		TCL_READABLE|TCL_EXCEPTION, vrmgr_listen_handler,
+		(ClientData)vrmgr_listen_fd);
 
 	/* Listen for our RTSYNC client's PKG connections */
 	if( (rtsync_listen_fd = pkg_permserver("rtsrv", "tcp", 8, bu_log)) < 0 )  {
@@ -314,6 +495,10 @@ char	*argv[];
 			exit(1);
 		}
 	}
+	Tcl_CreateFileHandler(
+		Tcl_GetFile((ClientData)rtsync_listen_fd, TCL_UNIX_FD),
+		TCL_READABLE|TCL_EXCEPTION, rtsync_listen_handler,
+		(ClientData)rtsync_listen_fd);
 	/* Now, pkg_permport has tcp port number */
 	bu_log("%s RTSYNC listening on %s port %d\n",
 		stamp(),
@@ -322,6 +507,22 @@ char	*argv[];
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
+#if 0
+	Tcl_CreateFileHandler(
+		Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
+		TCL_READABLE|TCL_EXCEPTION, stdin_input,
+		(ClientData)STDIN_FILENO);
+#endif
+	if( fbp && fbp->if_selfd > 0 )  {
+		Tcl_CreateFileHandler(
+			Tcl_GetFile((ClientData)fbp->if_selfd, TCL_UNIX_FD),
+			TCL_READABLE|TCL_EXCEPTION, fb_event_handler,
+			(ClientData)fbp );
+	}
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
+
+#if 0
 	/* Establish select_list and maxfd, to poll critical fd's */
 	FD_ZERO(&select_list);
 	FD_SET(vrmgr_listen_fd, &select_list);
@@ -350,7 +551,7 @@ char	*argv[];
 			     &tv )) == 0 ) {
 			/* printf("select timeout\n"); */
 			if(fbp) fb_poll(fbp);
-			dispatcher();
+			dispatcher( (ClientData)0 );
 			continue;
 		}
 #if 0
@@ -423,34 +624,43 @@ char	*argv[];
 		}
 
 		/* Dispatch work */
-		dispatcher();
+		dispatcher( (ClientData)0 );
 
 	}
+#else
+	for(;;)  Tcl_DoOneEvent(0);
+#endif
 }
 
 /*
  *			D I S P A T C H E R
+ *
+ *  Where all the work gets sent out.
+ *  
  */
-int
-dispatcher()
+void
+dispatcher(clientData)
+ClientData clientData;
 {
 	register int	i;
 	int		ncpu = 0;
 	int		start_line;
 	int		lowest_index = 0;
 
-	if( !pending_pov )  return 0;
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
+
+	if( !pending_pov )  return;
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
-		if( rtnodes[i].busy )  return 0;	/* Still working on last one */
+		if( rtnodes[i].busy )  return;	/* Still working on last one */
 		ncpu += rtnodes[i].ncpus;
 		lowest_index = i;
 	}
 	bu_log("%s dispatcher() has %d cpus\n", stamp(), ncpu);
-	if( ncpu <= 0 )  return 0;
+	if( ncpu <= 0 )  return;
 
 	/* Record starting time for this frame */
 	(void)gettimeofday( &time_start, (struct timezone *)NULL );
@@ -493,7 +703,6 @@ dispatcher()
 
 	free( pending_pov );
 	pending_pov = NULL;
-	return 0;
 }
 
 /*
@@ -527,6 +736,11 @@ struct pkg_conn	*pcp;
 		if( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
 		setup_socket( pcp->pkc_fd );
 		rtnodes[i].host = host;
+		rtnodes[i].tcl_file = 
+			Tcl_GetFile((ClientData)pcp->pkc_fd, TCL_UNIX_FD);
+		Tcl_CreateFileHandler( rtnodes[i].tcl_file,
+			TCL_READABLE|TCL_EXCEPTION, rtnode_event_handler,
+			(ClientData)i );
 		return;
 	}
 	bu_log("rtsync: too many rtnode clients.  My cup runneth over!\n");
@@ -551,6 +765,7 @@ int	sub;
 		close( rtnodes[sub].fd );
 		rtnodes[sub].fd = 0;
 	}
+	Tcl_DeleteFileHandler( rtnodes[sub].tcl_file );
 }
 
 /*
