@@ -549,7 +549,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( stdout, dp, 99 );	/* very verbose */
+		do_list( stderr, dp, 99 );	/* very verbose */
 	}
 
 	return CMD_OK;
@@ -570,7 +570,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( stdout, dp, 0 );	/* non-verbose */
+		do_list( stderr, dp, 0 );	/* non-verbose */
 	}
 
 	return CMD_OK;
