@@ -24,6 +24,9 @@
 
 #include "./fence.h"
 
+#ifndef M_PI
+#define M_PI            3.14159265358979323846
+#endif
 
 /* command-line options are described in the parseArguments function
  */
