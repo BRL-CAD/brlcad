@@ -828,6 +828,81 @@ if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_export_attributes");
 	BU_ASSERT_LONG( need, ==, ext->ext_nbytes );
 }
 
+
+
+/*
+ *			D B 5 _ R E P L A C E _ A T T R I B U T E S
+ *
+ *  Replace the attributes of a given database object.
+ *  For efficiency, this is done without looking at the object body at all.
+ *
+ *  Contents of the bu_attribute_value_set are freed, but not the struct itself.
+ *
+ *  Returns -
+ *	0 on success
+ *	<0 on error
+ */
+int
+db5_replace_attributes( struct directory *dp, struct bu_attribute_value_set *avsp, struct db_i *dbip )
+{
+	struct bu_external	ext;
+	struct db5_raw_internal	raw;
+	struct bu_external	attr;
+	struct bu_external	ext2;
+	int			ret;
+
+	RT_CK_DIR(dp);
+	BU_CK_AVS(avsp);
+	RT_CK_DBI(dbip);
+
+	if(rt_g.debug&DEBUG_DB)  {
+		bu_log("db5_replace_attributes(%s) dbip=x%x\n",
+			dp->d_namep, dbip );
+		bu_avs_print( avsp, "new attributes" );
+	}
+
+	if( dbip->dbi_read_only )  {
+		bu_log("db5_replace_attributes(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
+		return -1;
+	}
+
+	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
+
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -2;		/* FAIL */
+
+	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
+		bu_log("db5_replace_attributes(%s):  import failure\n",
+			dp->d_namep );
+		bu_free_external( &ext );
+		return -3;
+	}
+
+	db5_export_attributes( &attr, avsp );
+	BU_INIT_EXTERNAL(&ext2);
+	db5_export_object3( &ext2,
+		raw.h_dli,
+		dp->d_namep,
+		raw.h_name_hidden,
+		&attr,
+		&raw.body,
+		raw.major_type, raw.minor_type,
+		raw.a_zzz, raw.b_zzz );
+
+	/* Write it */
+	ret = db_put_external5( &ext2, dp, dbip );
+	if( ret < 0 )  bu_log("db5_update_attributes(%s):  db_put_external5() failure\n",
+		dp->d_namep );
+
+	bu_free_external( &attr );
+	bu_free_external( &ext2 );
+	bu_free_external( &ext );		/* 'raw' is now invalid */
+	bu_avs_free( avsp );
+
+	return ret;
+}
+
 /*
  *			D B 5 _ U P D A T E _ A T T R I B U T E S
  *
