@@ -50,21 +50,3 @@ char *str;
 	(void)strncpy( str, line, len );
 	return( usert );
 }
-
-/* Memory clearing routine */
-bzero( str, n )
-register char *str;
-register int n;
-{
-	while( n-- > 0 )
-		*str++ = 0;
-}
-
-bcopy(from, to, count)		/* not efficient */
-register char *from;
-register char *to;
-register int count;
-{
-	while( count-- > 0 )
-		*to++ = *from++;
-}

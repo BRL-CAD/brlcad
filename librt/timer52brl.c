@@ -220,8 +220,3 @@ register char *cp;
 	*cp++ = ':';
 	sprintf(cp,"%d%d", i / 10, i % 10);
 }
-
-bzero( str, n )
-{
-	memset( str, '\0', n );
-}
