@@ -10,6 +10,8 @@
 		(InputPanel	angle_ctrl)
 		(Label		log_file_l)
 		(InputPanel	log_file)
+		(Label		name_file_l)
+		(InputPanel	name_file)
 		(Label		curr_proc_l)
 		(Label		curr_proc)
 		(CheckButton	facets_only)
@@ -43,6 +45,9 @@
 		(separator5.BottomOffset	4)
 		(separator6.TopOffset		4)
 		(separator6.BottomOffset	4)
+		(name_file_l.Label		"Part Name File:")
+		(name_file.Value		"")
+		(name_file.HelpText		"Enter the name of a part number to part name mapping file (optional)")
 		(log_file_l.Label		"Log File Name:")
 		(log_file.Value			"")
 		(log_file.HelpText		"Enter a file name here to receive verbose debugging output, or leave blank")
@@ -102,11 +107,13 @@
 		(.Label				"Pro/E to BRL-CAD Converter")
 		(.Layout
 			(Grid (Rows 1 1 1 1 1 1 1) (Cols 1)
-				(Grid (Rows 1 1 1 1 1) (Cols 1 1)
+				(Grid (Rows 1 1 1 1 1 1) (Cols 1 1)
 					output_file_l
 					output_file
 					log_file_l
 					log_file
+					name_file_l
+					name_file
 					starting_ident_l
 					starting_ident
 					max_error_l
