@@ -12,7 +12,7 @@ Mged - create and manipulate an mged widget.
 <P>
 
 <H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
-<B>Mged</B> <I>pathName dbFile</I> ?<I>type</I> ?<I>options</I>??
+<B>Mged</B> <I>pathName dbFile</I> ?<I>options</I>?
 <P>
 
 <H2><A NAME="sect3" HREF="#toc3"><B>INHERITANCE</B></A></H2>
@@ -182,14 +182,8 @@ multi_pane refreshall removeall resetall</B>
 </DL>
 <P>
 
-<H2><A NAME="sect14" HREF="#toc14"><B>NOTES</B></A></H2>
-If optional arguments are provided to the Mged
-command, the first such argument must be
-either <I>X</I> or <I>ogl</I> (i.e. the display manager type).
-<P>
-
 <H2><A NAME="sect15" HREF="#toc15"><B>EXAMPLE</B></A></H2>
-cwish> Mged .mged moss.g X -width 400 -height 400
+cwish> Mged .mged moss.g -width 400 -height 400
 <BR>
 .mged
 <BR>
@@ -237,7 +231,6 @@ Robert G. Parker
 <LI><A NAME="toc11" HREF="#sect11">ASSOCIATED METHODS</A></LI>
 <LI><A NAME="toc12" HREF="#sect12">INHERITED METHODS</A></LI>
 <LI><A NAME="toc13" HREF="#sect13">WIDGET-SPECIFIC METHODS</A></LI>
-<LI><A NAME="toc14" HREF="#sect14">NOTES</A></LI>
 <LI><A NAME="toc15" HREF="#sect15">EXAMPLE</A></LI>
 <LI><A NAME="toc16" HREF="#sect16">ACKNOWLEDGEMENTS</A></LI>
 <LI><A NAME="toc17" HREF="#sect17">AUTHOR</A></LI>
