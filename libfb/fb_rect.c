@@ -105,6 +105,7 @@ CONST unsigned char	*pp;
 /*
  *			F B _ S I M _ B W R E A D R E C T
  */
+#define SIMBUF_SIZE	(24*1024)
 int
 fb_sim_bwreadrect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
@@ -115,9 +116,12 @@ unsigned char	*pp;
 	register int	y;
 	register int	tot;
 	int		got;
-	unsigned char	buf[4096*3];
+	unsigned char	buf[SIMBUF_SIZE*3];
 
-	if( width > 4096 )  return -4096;	/* FAIL */
+	if( width > SIMBUF_SIZE )  {
+		fb_log("fb_sim_bwreadrect() width of %d exceeds internal buffer, aborting\n", width);
+		return -SIMBUF_SIZE;	/* FAIL */
+	}
 
 	tot = 0;
 	for( y=ymin; y < ymin+height; y++ )  {
@@ -149,9 +153,12 @@ CONST unsigned char	*pp;
 	register int	tot;
 	int		got;
 	int		xlen;
-	unsigned char	buf[4096*3];
+	unsigned char	buf[SIMBUF_SIZE];
 
-	if( width > 4096 )  return -4096;	/* FAIL */
+	if( width > SIMBUF_SIZE )  {
+		fb_log("fb_sim_bwwriterect() width of %d exceeds internal buffer, aborting\n", width);
+		return -SIMBUF_SIZE;	/* FAIL */
+	}
 
 	xlen = width;
 	if( xmin + width > fb_getwidth(ifp) )
