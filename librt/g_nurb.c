@@ -918,6 +918,209 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+
+/*
+ *			R T _ N U R B _ E X P O R T 5
+ */
+int
+rt_nurb_export5( ep, ip, local2mm, dbip)
+struct bu_external	 	* ep;
+CONST struct rt_db_internal	* ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	register int		rec_ptr;
+	struct rt_nurb_internal	* sip;
+	int			s;
+	int			grans;
+	dbfloat_t		* vp;
+	int			n;
+	unsigned char		*cp;
+	int			coords;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_BSPLINE) return(-1);
+	sip = (struct rt_nurb_internal *) ip->idb_ptr;
+	RT_NURB_CK_MAGIC(sip);
+
+	/* Figure out how many bytes are needed by
+	 * walking through the surfaces and
+	 * calculating the number of bytes
+	 * needed for storage and add it to the total
+	 */
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_LONG;	/* number of surfaces */
+	for( s = 0; s < sip->nsrf; s++)
+	{
+		ep->ext_nbytes += rt_nurb_bytes(sip->srfs[s]);
+	}
+
+	ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes,"nurb external");
+	cp = (unsigned char *)ep->ext_buf;
+
+	(void)bu_plong( cp, sip->nsrf );
+	cp += SIZEOF_NETWORK_LONG;
+	
+	for( s = 0; s < sip->nsrf; s++)
+	{
+		register struct face_g_snurb	*srf = sip->srfs[s];
+
+		NMG_CK_SNURB(srf);
+
+		coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+		(void)bu_plong( cp, coords );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, srf->order[0] );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, srf->order[1] );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, srf->u.k_size );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, srf->v.k_size );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, srf->s_size[0] );
+		cp += SIZEOF_NETWORK_LONG;
+		(void)bu_plong( cp, srf->s_size[1] );
+		cp += SIZEOF_NETWORK_LONG;
+		htond( cp, (unsigned char *)srf->u.knots, srf->u.k_size );
+		cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
+		htond( cp, (unsigned char *)srf->v.knots, srf->v.k_size );
+		cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+
+		htond( cp, (unsigned char *)srf->ctl_points,
+			coords * srf->s_size[0] * srf->s_size[1] );
+		cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+	}
+
+	return(0);
+}
+
+
+/*
+ *			R T _ N U R B _ I M P O R T 5
+ */
+int
+rt_nurb_import5( ip, ep, mat, dbip )
+struct rt_db_internal	*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+
+	struct rt_nurb_internal * sip;
+	register int		i;
+	int			s;
+	char			*cp;
+	fastf_t			tmp_vec[4];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_CK_DB_INTERNAL( ip );
+	ip->idb_type = ID_BSPLINE;
+	ip->idb_meth = &rt_functab[ID_BSPLINE];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_nurb_internal), "rt_nurb_internal");
+	sip = (struct rt_nurb_internal *)ip->idb_ptr;
+	sip->magic = RT_NURB_INTERNAL_MAGIC;
+
+	cp = ep->ext_buf;
+	
+	sip->nsrf = bu_glong( cp );
+	cp += SIZEOF_NETWORK_LONG;
+	sip->srfs = (struct face_g_snurb **) bu_calloc(
+		sip->nsrf, sizeof( struct face_g_snurb *), "nurb srfs[]");
+
+	for( s = 0; s < sip->nsrf; s++)
+	{
+		register struct face_g_snurb	*srf;
+		int			coords;
+		int			pt_type;
+		int			order[2], u_size, v_size;
+		int			s_size[2];
+
+		pt_type = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		order[0] = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		order[1] = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		u_size = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		v_size = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		s_size[0] = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		s_size[1] = bu_glong( cp );
+		cp += SIZEOF_NETWORK_LONG;
+		if( pt_type == 3)
+			pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_PT_XYZ,RT_NURB_PT_NONRAT);
+		else
+			pt_type = RT_NURB_MAKE_PT_TYPE(4,RT_NURB_PT_XYZ,RT_NURB_PT_RATIONAL);
+
+		sip->srfs[s] = (struct face_g_snurb *) rt_nurb_new_snurb(
+			order[0],order[1],
+			u_size,v_size,
+			s_size[0],s_size[1],
+			pt_type, (struct resource *)NULL);
+
+		srf = sip->srfs[s];
+		coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+		ntohd( (unsigned char *)srf->u.knots, cp, srf->u.k_size );
+		cp += srf->u.k_size * SIZEOF_NETWORK_DOUBLE;
+		ntohd( (unsigned char *)srf->v.knots, cp, srf->v.k_size );
+		cp += srf->v.k_size * SIZEOF_NETWORK_DOUBLE;
+
+		rt_nurb_kvnorm( &srf->u);
+		rt_nurb_kvnorm( &srf->v);
+
+		ntohd( (unsigned char *)srf->ctl_points, cp,
+			coords * srf->s_size[0] * srf->s_size[1] );
+
+		cp += coords * srf->s_size[0] * srf->s_size[1] * SIZEOF_NETWORK_DOUBLE;
+
+		for( i=0 ; i<srf->s_size[0] * srf->s_size[1] ; i++ )
+		{
+			if( coords == 3 )
+			{
+				VMOVE( tmp_vec, &srf->ctl_points[i*coords] );
+				MAT4X3PNT( &srf->ctl_points[i*coords], mat, tmp_vec );
+			}
+			else if( coords == 4 )
+			{
+				HMOVE( tmp_vec, &srf->ctl_points[i*coords] );
+				MAT4X4PNT( &srf->ctl_points[i*coords], mat, tmp_vec );
+			}
+			else
+			{
+				bu_log("rt_nurb_internal: %d invalid elements per vect\n", coords);
+				return (-1);
+			}
+		}
+
+		/* bound the surface for tolerancing and other bounding box tests */
+                rt_nurb_s_bound( sip->srfs[s], sip->srfs[s]->min_pt,
+                        sip->srfs[s]->max_pt);
+	}
+	return (0);
+}
+
+int
+rt_nurb_bytes( srf )
+struct face_g_snurb * srf;
+{
+	int	total_bytes=0;
+
+	total_bytes = 3 * SIZEOF_NETWORK_LONG		/* num_coords and order */
+		+ 2 * SIZEOF_NETWORK_LONG		/* k_size in both knot vectors */
+		+ srf->u.k_size * SIZEOF_NETWORK_DOUBLE	/* u knot vector knots */
+		+ srf->v.k_size * SIZEOF_NETWORK_DOUBLE	/* v knot vector knots */
+		+ 2 * SIZEOF_NETWORK_LONG		/* mesh size */
+		+ RT_NURB_EXTRACT_COORDS(srf->pt_type) *
+			(srf->s_size[0] * srf->s_size[1]) * SIZEOF_NETWORK_DOUBLE;	/* control point mesh */
+
+	return total_bytes;
+}
+
 int 
 rt_nurb_grans( srf )
 struct face_g_snurb * srf;

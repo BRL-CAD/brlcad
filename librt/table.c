@@ -514,7 +514,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nurb_uv,	rt_nurb_curve,	rt_nurb_class,	rt_nurb_free,
 		rt_nurb_plot,	rt_vstub,	rt_nurb_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_nurb_import5, rt_nurb_export5,
 		rt_nurb_import,	rt_nurb_export,	rt_nurb_ifree,
 		rt_nurb_describe,rt_nurb_xform,	NULL,
 		sizeof(struct rt_nurb_internal), RT_NURB_INTERNAL_MAGIC,
