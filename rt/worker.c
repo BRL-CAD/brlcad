@@ -270,6 +270,7 @@ worker()
 
 	if( cpu >= MAX_PSW )  rt_bomb("rt/worker() cpu > MAXPSW, array overrun\n");
 	rt_init_resource( &resource[cpu], cpu );
+	rand_init( resource[cpu].re_randptr, cpu );
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
