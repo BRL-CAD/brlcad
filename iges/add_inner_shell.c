@@ -49,8 +49,8 @@ int shell_orient;
 
 	for( face=0 ; face<no_of_faces ; face++ )
 	{
-		Readint( &face_de[face] , "\t\tFACE:" );
-		Readint( &face_orient[face] , "\t\t\tORIENTATION:" );
+		Readint( &face_de[face] , "" );
+		Readint( &face_orient[face] , "" );
 	}
 
 	s = nmg_msv( r );
