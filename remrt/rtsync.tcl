@@ -36,9 +36,11 @@ frame .button_fr ; pack .button_fr -side top
 # Menu bar, acros very top
 menubutton .mbar.file -text "File" -menu .mbar.file.menu
 menubutton .mbar.debug -text "Debug" -menu .mbar.debug.menu
+menubutton .mbar.spacepart -text "SpacePart" -menu .mbar.spacepart.menu
 menubutton .mbar.help -text "Help" -menu .mbar.help.menu
 pack .mbar.file -side left -in .mbar -expand 1 -fill x
 pack .mbar.debug -side left -in .mbar -expand 1 -fill x
+pack .mbar.spacepart -side left -in .mbar -expand 1 -fill x
 pack .mbar.help -side right -in .mbar -expand 1 -fill x
 menu .mbar.file.menu
 .mbar.file.menu add command -label "Exit" -command "exit"
@@ -47,6 +49,9 @@ menu .mbar.help.menu
 menu .mbar.debug.menu
 .mbar.debug.menu add command -label "Net Speed Test ON" -command "net_speed_test 1"
 .mbar.debug.menu add command -label "Net Speed Test OFF" -command "net_speed_test 0"
+menu .mbar.spacepart.menu
+.mbar.spacepart.menu add command -label "Muuss NUBSP" -command "space_partitioning 1"
+.mbar.spacepart.menu add command -label "Gigante NUgrid" -command "space_partitioning 0"
 
 # Title, across the top
 frame .words_fr
@@ -136,6 +141,12 @@ proc apply_color {} {
 proc net_speed_test {val} {
 	node_send \
 		set test_fb_speed $val ";" \
+		set curframe 0
+}
+
+proc space_partitioning {val} {
+	node_send \
+		sh_opt -,$val ";" \
 		set curframe 0
 }
 
