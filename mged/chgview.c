@@ -1534,11 +1534,13 @@ char	**argv;
       VSETALL( edit_rate_tran, 0 );
       edit_rate_scale = 0.0;
       knob_update_rate_vars();
-		
+
       (void)f_adc( clientData, interp, 2, av );
 
       if(knob_hook)
 	knob_hook();
+
+      (void)mged_svbase();
     } else if( strcmp( cmd, "calibrate" ) == 0 ) {
       VSETALL( absolute_slew, 0.0 );
     }else{
@@ -2701,7 +2703,7 @@ mged_svbase()
   VSETALL( absolute_slew, 0.0);
   absolute_zoom = 0.0;
 
-  dmaflag = 1;
+  set_scroll();
 
   return TCL_OK;
 }
