@@ -1,7 +1,29 @@
-/* Minmax reads a binary input file, finds the minimum and maximum values
- * read, and linearly interpolates these values between 0 and 255.
- * S. Muuss, J.D., Feb 04, 1990.
+/*
+ *			D P I X - P I X . C
+ *
+ *  Convert double precision images in .dpix form to a .pix file.
+ *  By default, will determin min/max values to drive exposure
+ *  calculations, and perform linear interpolation on the way to 1-byte
+ *  values.
+ *
+ *  Reads the binary input file, finds the minimum and maximum values
+ *  read, and linearly interpolates these values between 0 and 255.
+ *
+ *  Author -
+ *	S. Muuss, J.D., Feb 04, 1990.
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1990 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 
