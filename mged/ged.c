@@ -43,7 +43,11 @@ char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 #include <fcntl.h>
 #include <signal.h>
 #include <setjmp.h>
+#ifdef BSD
+#include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
+#else
 #include <time.h>
+#endif
 
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
