@@ -51,6 +51,7 @@ static void	tor_anal();
 static void	ars_anal();
 static void	rpc_anal();
 static void	rhc_anal();
+static void	part_anal();
 
 /*
  *			F _ A N A L Y Z E
@@ -191,6 +192,10 @@ CONST struct rt_db_internal	*ip;
 
 	case ID_RHC:
 		rhc_anal(vp, ip);
+		break;
+
+	case ID_PARTICLE:
+		part_anal(vp, ip);
 		break;
 
 	default:
@@ -781,6 +786,17 @@ CONST struct rt_db_internal	*ip;
  * 	bu_vls_printf(vp,"SPLINE analyze not implemented\n");
  * }
  */
+
+/*	analyze particle	*/
+static void
+part_anal(vp, ip)
+struct bu_vls	*vp;
+CONST struct rt_db_internal	*ip;
+{
+	struct rt_part_internal	*part = (struct rt_part_internal *)ip->idb_ptr;
+
+	bu_vls_printf(vp,"PARTICLE analyze not implemented\n");
+}
 
 #define arcsinh(x) (log((x) + sqrt((x)*(x) + 1.)))
 
