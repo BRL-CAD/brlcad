@@ -801,6 +801,7 @@ AC_CONFIG_FILES([
 	misc/pro-engineer/sgi_mips4/mk
 	misc/pro-engineer/text/Makefile
 	misc/vfont/Makefile
+	pix/Makefile
 	sh/Makefile
 	src/Makefile
 	src/anim/Makefile
