@@ -63,64 +63,25 @@ matp_t xlate;
 	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	register int		i;
-	union record		*rec;
 	int			id;
 
-	if( db_get_external( &ext, dp, dbip ) < 0 )
-		READ_ERR_return;
-
-	rec = (union record *)ext.ext_buf;
-	if( rec->u_id == ID_COMB )  {
-		/*
-		 * Move all the references within a combination
-		 * XXX should use combination import/export routines here too!
-		 */
-		for( i=1; i < dp->d_len; i++ )  {
-			static mat_t temp, xmat;
-
-			rt_mat_dbmat( xmat, rec[i].M.m_mat );
-			bn_mat_mul( temp, xlate, xmat );
-			rt_dbmat_mat( rec[i].M.m_mat, temp );
-		}
-		if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		  db_free_external( &ext );
-		  TCL_WRITE_ERR;
-		  return;
-		}
-		db_free_external( &ext );
-		return;				/* OK */
-	}
-
-	/*
-	 *  Import the solid, applying the transform on the way in.
-	 *  Then, export it, and re-write the database record.
-	 *  Will work on all solids.
-	 */
-	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-	  Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
-			   ") unable to identify type\n", (char *)NULL);
-	  return;				/* FAIL */
-	}
-
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, xlate ) < 0 )  {
-	  Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
-			   "):  solid import failure\n", (char *)NULL);
-	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-	  db_free_external( &ext );
-	  return;				/* FAIL */
+	if( (id=rt_db_get_internal( &intern, dp, dbip, xlate )) < 0 )
+	{
+		Tcl_AppendResult(interp, "rt_db_get_internal() failed for ", dp->d_namep,
+			(char *)NULL );
+		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		READ_ERR_return;
 	}
-	RT_CK_DB_INTERNAL( &intern );
-	db_free_external( &ext );
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
-	  Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+	{
+		Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
 			   "):  solid export failure\n", (char *)NULL);
-	  if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-	  TCL_WRITE_ERR;
-	  return;
+		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		TCL_WRITE_ERR;
+		return;
 	}
-	return;					/* OK */
 }
 
 /*
@@ -138,29 +99,39 @@ struct directory *dp;
 matp_t xlate;
 {
 	register int i;
-	union record	*rec;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	int found=0;
 	mat_t temp, xmat;		/* Temporary for mat_mul */
 
-	if( (rec = db_getmrec( dbip, cdp )) == (union record *)0 )
+	if( rt_db_get_internal( &intern, cdp, dbip, (mat_t *)NULL ) < 0 )
 		READ_ERR_return;
-	for( i=1; i < cdp->d_len; i++ )  {
-		/* Check for match */
-		if( strcmp( dp->d_namep, rec[i].M.m_instname ) != 0 )
-			continue;
 
-		rt_mat_dbmat( xmat, rec[i].M.m_mat );
-		bn_mat_mul(temp, xlate, xmat);
-		rt_dbmat_mat( rec[i].M.m_mat, temp );
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+	if( comb->tree )
+	{
+		union tree *tp;
 
-		if( db_put( dbip,  cdp, rec, 0, cdp->d_len ) < 0 )
-			WRITE_ERR_return;
-		bu_free( (genptr_t)rec, "union record");
-		return;
+		tp = (union tree *)db_find_named_leaf( comb->tree, dp->d_namep );
+		if( tp != TREE_NULL )
+		{
+			found = 1;
+			bn_mat_mul2( xlate, tp->tr_l.tl_mat );
+			if( rt_db_put_internal( cdp, dbip, &intern ) < 0 )
+			{
+				Tcl_AppendResult(interp, "rt_db_put_internal failed for ",
+					cdp->d_namep, "\n", (char *)NULL );
+				rt_comb_ifree( &intern );
+			}
+		}
+		else
+		{
+			Tcl_AppendResult(interp, "moveinst:  couldn't find ", cdp->d_namep,
+				"/", dp->d_namep, "\n", (char *)NULL);
+			rt_comb_ifree( &intern );
+		}
+			
 	}
-	bu_free( (genptr_t)rec, "union record");
-	Tcl_AppendResult(interp, "moveinst:  couldn't find ", cdp->d_namep,
-			 "/", dp->d_namep, "\n", (char *)NULL);
-	return;				/* ERROR */
 }
 
 /*
