@@ -71,7 +71,7 @@ static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
 #endif
 static regex_t reg_cmp;		/* compiled regular expression */
-static char *proe_usage="%s [-darS] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n\
+static char *proe_usage="%s [-darS] [-t tolerance] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -d option prints additional debugging information.\n\
@@ -86,8 +86,9 @@ static char *proe_usage="%s [-darS] [-i initial_ident] [-I constant_ident] [-m m
 		This is to allow conversion of parts to be included in\n\
 		previously converted Pro/E assemblies.\n\
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
+	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
-static char *stl_usage="%s [-da] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] input.stl output.g\n\
+static char *stl_usage="%s [-da] [-t tolerance] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
@@ -99,6 +100,7 @@ static char *stl_usage="%s [-da] [-N forced_name] [-i initial_ident] [-I constan
 	The -u option indicates that portions of object names that match the regular expression\n\
 		'reg_exp' should be ignored.\n\
 	The -a option creates BRL-CAD 'air' regions from everything in the model.\n\
+	The -t option specifies the minumim distance between two distinct vertices (mm).\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
 static char *usage;
 static FILE *fd_in;		/* input file (from Pro/E) */
@@ -1229,7 +1231,7 @@ char	*argv[];
 	/* this value selected as a resaonable compromise between eliminating
 	 * needed faces and keeping degenerate faces
 	 */
-        tol.dist = 0.00001;
+        tol.dist = 0.005;	/* default, same as MGED, RT, ... */
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
@@ -1257,8 +1259,20 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "Si:I:m:rsdax:u:N:c:")) != EOF) {
+	while ((c = getopt(argc, argv, "St:i:I:m:rsdax:u:N:c:")) != EOF) {
+		double tmp;
+
 		switch (c) {
+		case 't':	/* tolerance */
+			tmp = atof( optarg );
+			if( tmp <= 0.0 ) {
+				bu_log( "Tolerance must be greater then zero, using default (%g)\n",
+					tol.dist );
+				break;
+			}
+			tol.dist = tmp;
+			tol.dist_sq = tmp * tmp;
+			break;
 		case 'c':	/* convert from units */
 			conv_factor = bu_units_conversion( optarg );
 			if( conv_factor == 0.0 )
