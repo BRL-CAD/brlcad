@@ -5,7 +5,11 @@ pl-fb \- display 3-D UNIX plot on a framebuffer
 .B pl-fb
 .RB [ \-hoid ]
 .RB [ \-t\  line_thickness]
-[filename]
+.RB [ \-F\  framebuffer]
+.RB [ \-S\  squaresize]
+.RB [ \-W\  width]
+.RB [ \-N\  height]
+[file.plot]
 .SH DESCRIPTION
 .I Pl-fb
 displays a BRL extended three dimensional UNIX plot file on a framebuffer.
@@ -21,6 +25,14 @@ By default, the display size is assumed to be 512x512 pixels.
 Specifying the
 .B \-h
 flag, changes the output size to 1024x1024.
+The
+.BI \-S\  squaresize
+.BI \-W\  width
+and
+.BI \-N\  height
+flags allow different screen sizes to be set.  The plotting space
+will fill the given screen dimensions.  No attempt is made at present
+to preserve aspect.
 .PP
 The
 .B \-o
@@ -40,21 +52,21 @@ and the corresponding framebuffer coordinates.
 The
 .B \-t
 flag causes all lines to be thickened perpendicular to their length,
-by the given number of pixels.
+to the given number of pixels.
 This is especially useful when making images for recording on videotape,
 as single pixel lines are difficult to resolve.
 The thickening will be reduced so that a
 line will never be wider than it is long.
 .PP
 If
-.I filename
+.I file.plot
 is not specified,
 the plot commands are read from standard in.
 .PP
 Note that 3-D UNIX plot is a superset of the standard UNIX plot
 format, thus this program can display normal plot files as well.
 .SH "SEE ALSO"
-brlcad(1), libplot3(3).
+pl-sgi(1), plrot(1), pldebug(1), libplot3(3), brlcad(1).
 .SH AUTHORS
 Douglas A. Gwyn
 .br
