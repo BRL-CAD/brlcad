@@ -1091,12 +1091,14 @@ struct rt_tol *tol;
  *
  *
  */
+static void join_mapped_loops();
 static struct pt2d *
-cut_mapped_loop(tbl2d, p1, p2, color, tol)
+cut_mapped_loop(tbl2d, p1, p2, color, tol, void_ok)
 struct rt_list *tbl2d;
 struct pt2d *p1, *p2;
 int color[3];
 struct rt_tol	*tol;
+int void_ok;
 {
 	struct loopuse *new_lu;
 	struct edgeuse *eu;
@@ -1121,6 +1123,10 @@ struct rt_tol	*tol;
 	collect_and_sort_vu(tbl2d, &p1, &p2);
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
+		if (void_ok) {
+			join_mapped_loops(tbl2d, p1, p2, color, tol);
+			return (struct pt2d *)NULL;
+		}
 		rt_bomb("goodnight\n");
 	}
 
@@ -1174,7 +1180,7 @@ struct rt_tol	*tol;
 
 	if (p1->vu_p->up.eu_p->up.lu_p == p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are the same %s %d\n", __FILE__, __LINE__);
-		(void)cut_mapped_loop(tbl2d, p1, p2, color, tol);
+		(void)cut_mapped_loop(tbl2d, p1, p2, color, tol, 1);
 		return;
 	}
 
@@ -1244,11 +1250,11 @@ struct rt_tol	*tol;
 		top = tp->top;
 		bot = tp->bot;
 
-
 		top_next = PT2D_NEXT(tbl2d, top);
 		bot_next = PT2D_NEXT(tbl2d, bot);
 
-		if (top_next == tp->bot || bot_next == tp->top) {
+		if (top_next == tp->bot || bot_next == tp->top ||
+		    top_next == bot || bot_next == top) {
 			rt_log("skipping %g %g/%g %g because pts on same edge\n",
 					tp->top->coord[X],
 					tp->top->coord[Y],
@@ -1275,7 +1281,7 @@ struct rt_tol	*tol;
 
 			/* points are in same loop.  Cut the loop */
 
-			(void)cut_mapped_loop(tbl2d, tp->top, tp->bot, cut_color, tol);
+			(void)cut_mapped_loop(tbl2d, tp->top, tp->bot, cut_color, tol, 1);
 
 			/* if the bottom vertexuse is on a rising edge and
 			 * is a top vertex of another trapezoid then
@@ -1428,7 +1434,7 @@ struct loopuse *lu;
 			/* cut a triangular piece off of the loop to
 			 * create a new loop.
 			 */
-			current = cut_mapped_loop(tbl2d, next, prev, cut_color);
+			current = cut_mapped_loop(tbl2d, next, prev, cut_color, 0);
 			verts--;
 
 			plfu( lu->up.fu_p, tbl2d );
