@@ -2280,6 +2280,7 @@ RT_EXTERN(int			nmg_class_pt_fu_except, (CONST point_t pt,
 				void (*eu_func)(), void (*vu_func)(),
 				CONST char *priv,
 				CONST int call_on_hits,
+				CONST int in_or_out_only,
 				CONST struct rt_tol *tol) );
 
 /* From nmg_plot.c */
