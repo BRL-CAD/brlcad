@@ -45,6 +45,99 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 #include "./canon.h"
 
+static 	struct dsreq *dsp;
+static	int	fd;
+
+struct chore {
+	int	todo;
+	int	buflen;
+	int	pix_y;
+	int	canon_y;
+	unsigned char	*cbuf;			/* ptr to canon buffer */
+	unsigned char	obuf[255*1024];
+};
+
+struct chore	chore1;
+
+int step1(chorep, pix_y)
+struct chore	*chorep;
+int		pix_y;
+{
+	int	canon_y;
+
+	chorep->pix_y = pix_y;
+	chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
+	if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
+	chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
+
+	canon_y = height - (pix_y+chorep->todo);
+
+	chorep->cbuf = ipu_get_image(dsp, 1, 0, canon_y, width, chorep->todo);
+
+	return pix_y + chorep->todo;
+}
+
+void step2(chorep)
+struct chore	*chorep;
+{
+	register unsigned char	*cp;
+	unsigned char *red, *green, *blue;
+	int	buf_y;
+
+	cp = chorep->obuf;
+
+	if( ipu_bytes_per_pixel == 3 )  {
+		green = &chorep->cbuf[width*chorep->todo];
+		blue = &chorep->cbuf[width*chorep->todo*2];
+
+		for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+			int	offset;
+			register unsigned char	*rp, *gp, *bp;
+			register int		x;
+
+			offset = buf_y * width;
+			rp = &chorep->cbuf[offset];
+			gp = &green[offset];
+			bp = &blue[offset];
+			for( x = width-1; x >= 0; x-- )  {
+				*cp++ = *rp++;
+				*cp++ = *gp++;
+				*cp++ = *bp++;
+			}
+			chorep->pix_y++;	/* Record our progress */
+		}
+	} else {
+		/* Monochrome */
+		for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+			int	offset;
+			register unsigned char	*rp;
+			register int		x;
+				offset = buf_y * width;
+			rp = &chorep->cbuf[offset];
+			bcopy( rp, cp, width );
+			cp += width;
+			chorep->pix_y++;	/* Record our progress */
+		}
+	}
+}
+
+/*
+ *  While this step looks innocuous, if the file is located on a slow
+ *  or busy disk drive or (worse yet) is on an NFS partition,
+ *  this can take a long time.
+ */
+void step3(chorep)
+struct chore	*chorep;
+{
+	if( write( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
+		perror("ipuscan write");
+		fprintf(stderr, "buffer write error, line %d\n", chorep->pix_y);
+		exit(2);
+	}
+	(void)free(chorep->cbuf);
+	chorep->cbuf = NULL;
+}
+
 
 /*
  *	M A I N
@@ -57,14 +150,8 @@ int ac;
 char *av[];
 {
 	int arg_index;
-	unsigned char *red, *green, *blue;
-	struct dsreq *dsp;
-	int	fd;
 	int i;
-	int	canon_y;
 	int	pix_y;
-	int	buf_y;
-	u_char	obuf[255*1024];
 
 	/* pick the LUN for the scanner this time */
 	(void)strncpy( scsi_device, "/dev/scsi/sc0d6l0", 1024 );
@@ -117,59 +204,11 @@ char *av[];
 	 * while .pix files are quadrant I.
 	 */
 	for( pix_y=0; pix_y < height; )  {
-		register unsigned char	*cp;
-		int	todo;	/* # scanlines to do */
-		int	buflen;
+		struct chore	*chorep = &chore1;
 
-		todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
-		if( height - pix_y < todo )  todo = height - pix_y;
-		buflen = todo * ipu_bytes_per_pixel * width;
-
-		canon_y = height - (pix_y+todo);
-
-		red = ipu_get_image(dsp, 1, 0, canon_y, width, todo);
-		cp = obuf;
-
-		if( ipu_bytes_per_pixel == 3 )  {
-			green = &red[width*todo];
-			blue = &red[width*todo*2];
-
-			for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
-				int	offset;
-				register unsigned char	*rp, *gp, *bp;
-				register int		x;
-
-				offset = buf_y * width;
-				rp = &red[offset];
-				gp = &green[offset];
-				bp = &blue[offset];
-				for( x = width-1; x >= 0; x-- )  {
-					*cp++ = *rp++;
-					*cp++ = *gp++;
-					*cp++ = *bp++;
-				}
-				pix_y++;	/* Record our progress */
-			}
-		} else {
-			/* Monochrome */
-			for( buf_y = todo-1; buf_y >= 0; buf_y-- )  {
-				int	offset;
-				register unsigned char	*rp;
-				register int		x;
-
-				offset = buf_y * width;
-				rp = &red[offset];
-				bcopy( rp, cp, width );
-				cp += width;
-				pix_y++;	/* Record our progress */
-			}
-		}
-		if( write( fd, obuf, buflen ) != buflen )  {
-			perror("ipuscan write");
-			fprintf(stderr, "buffer write error, line %d\n", pix_y);
-			return(-1);
-		}
-		(void)free(red);
+		pix_y = step1( chorep, pix_y );
+		step2( chorep );
+		step3( chorep );
 	}
 
 	close(fd);
