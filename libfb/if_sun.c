@@ -80,7 +80,7 @@ extern int	fb_sim_readrect(), fb_sim_writerect();
  */
 #define XMAXSCREEN	1152	/* Physical screen width in pixels. */
 #define YMAXSCREEN	896	/* Physical screen height in pixels. */
-#define XMAXWINDOW	512	/* Max. width of frame buffer in pixels. */
+#define XMAXWINDOW	646	/* Max. width of frame buffer in pixels. */
 #define YMAXWINDOW	512	/* Max. height of frame buffer in pixels. */
 #define BANNER		18	/* Height of title bar at top of window. */
 #define BORDER		2	/* Border thickness of window. */
@@ -276,21 +276,30 @@ static unsigned char cubevec[6] = { 0, 51, 102, 153, 204, 255 };
 
 /* additional values for primaries */
 static unsigned char primary[10] = {
-	238, 221, 187, 170, 136, 119, 85, 68, 34, 17
+/*	238, 221, 187, 170, 136, 119, 85, 68, 34, 17 */
+	17, 34, 68, 85, 119, 136, 170, 187, 221, 238
 };
 
 /* indicies of the primary colors and grey values in the color map */
 static unsigned char redvec[16] = {
-215, 225, 224, 214, 223, 222, 213, 221, 220, 212, 219, 218, 211, 217, 216, 210
+/* 215, 225, 224, 214, 223, 222, 213, 221, 
+   220, 212, 219, 218, 211, 217, 216, 210 */
+0,  216, 217, 1, 218, 219, 2, 220, 221, 3, 222, 223, 4, 224, 225, 5
 };
 static unsigned char grnvec[16] = {
-215, 235, 234, 209, 233, 232, 203, 231, 230, 197, 229, 228, 191, 227, 226, 185
+/* 215, 235, 234, 209, 233, 232, 203, 231,
+   230, 197, 229, 228, 191, 227, 226, 185 */
+0, 226, 227, 6, 228, 229, 12, 230, 231, 18, 232, 233, 24, 234, 235, 30
 };
 static unsigned char bluvec[16] = {
-215, 245, 244, 179, 243, 242, 143, 241, 240, 107, 239, 238, 71, 237, 236, 35
+/* 215, 245, 244, 179, 243, 242, 143, 241,
+   240, 107, 239, 238, 71, 237, 236, 35 */
+0, 236, 237, 36, 238, 239, 72, 240, 241, 108, 242, 243, 144, 244, 245, 180
 };
 static unsigned char greyvec[16] = {
-215, 255, 254, 172, 253, 252, 129, 251, 250, 86, 249, 248, 43, 247, 246, 0
+/* 215, 255, 254, 172, 253, 252, 129, 251,
+   250, 86, 249, 248, 43, 247, 246, 0 */
+0, 246, 247, 43, 248, 249, 86, 250, 251, 129, 252, 253, 172, 254, 255, 215
 };
 
 
@@ -327,7 +336,7 @@ register RGBpixel *v;
 		/* all green */
 		return grnvec[((*v)[GRN])/16];
 	}
-	return 215 - (r + g * 6 + b * 36);
+	return r + g * 6 + b * 36;
 }
 
 
@@ -345,9 +354,9 @@ unsigned char redmap[], grnmap[], blumap[];
 	for (r=0 ; r < 6 ; r++)
 		for (g=0 ; g < 6 ; g ++)
 			for (b=0 ; b < 6 ; b++) {
-				redmap[215 - (r + g * 6 + b * 36)] = cubevec[r];
-				grnmap[215 - (r + g * 6 + b * 36)] = cubevec[g];
-				blumap[215 - (r + g * 6 + b * 36)] = cubevec[b];
+				redmap[r + g * 6 + b * 36] = cubevec[r];
+				grnmap[r + g * 6 + b * 36] = cubevec[g];
+				blumap[r + g * 6 + b * 36] = cubevec[b];
 			}
 
 	/* put in the linear sections */
@@ -1080,6 +1089,9 @@ _LOCAL_ int
 sun_dclose(ifp)
 FBIO	*ifp;
 {
+	register Pixrect *p;
+	register int i;
+
 	if( SUNL(ifp) == (char *) NULL ) {
 		fb_log( "sun_dclose: frame buffer not open.\n" );
 		return	-1;
@@ -1096,6 +1108,16 @@ FBIO	*ifp;
 		imagepw = NULL;
 	}
 	else {
+		/* if the user hasn't requested a lingering buffer, clear the 
+		 * colormap so that we can see to log in on the console again
+		 */
+		if( (SUN(ifp)->su_mode & MODE_2MASK) != MODE_2LINGERING) {
+			p = SUNPR(ifp);
+			redmap[0] = grnmap[0] = blumap[0] = 255;
+			for (i=1 ; i < 256 ; ++i)
+				redmap[i] = grnmap[i] = blumap[i] = 0;
+			pr_putcolormap(p, 0, 256, redmap, grnmap, blumap);
+		}
 		pr_close( SUNPR(ifp) );
 	}
 	(void) free( (char *) SUNL(ifp) );
