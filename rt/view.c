@@ -48,6 +48,8 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./light.h"
 
+int		use_air = 0;		/* Handling of air in librt */
+
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
@@ -437,8 +439,9 @@ struct partition *PartHeadp;
 			VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 				hitp->hit_dist, ap->a_ray.r_dir );
 			wraypts( ap->a_ray.r_pt,
+				ap->a_ray.r_dir,
 				hitp->hit_point,
-				ap, stdout );
+				-1, ap, stdout );	/* -1 = air */
 		}
 	}
 	if( rdebug&RDEBUG_RAYPLOT )  {
