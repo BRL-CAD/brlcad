@@ -45,7 +45,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./menu.h"
 
-extern int	printf();
 extern char    *cmd_args[];
 extern int 	numargs;
 

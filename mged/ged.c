@@ -65,7 +65,7 @@ char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States
 extern void	exit(), perror(), sync();
 extern char	*malloc(), *tempnam();
 extern int	close(), dup(), execl(), fork(), getuid(), open(), pipe(),
-		fprintf(), unlink(), write();
+		unlink(), write();
 extern long	time();
 
 #ifdef BSD

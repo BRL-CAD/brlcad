@@ -36,8 +36,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./solid.h"
 
-extern int	printf();
-
 /* default region ident codes */
 int	item_default = 1000;	/* GIFT region ID */
 int	air_default = 0;
