@@ -119,8 +119,13 @@ char **argv;
 
       old_orig_gui = mged_variables->orig_gui;
 
+#ifdef USE_RT_ASPECT
+      fx = dm_Xx2Normal(dmp, atoi(argv[1]));
+      fy = dm_Xy2Normal(dmp, atoi(argv[2]), 0);
+#else
       fx = dm_Xx2Normal(dmp, atoi(argv[1]), 0);
       fy = dm_Xy2Normal(dmp, atoi(argv[2]));
+#endif
       x = fx * 2047.0;
       y = fy * 2047.0;
 
@@ -140,8 +145,13 @@ char **argv;
       }
 
       mged_variables->orig_gui = 0;
+#ifdef USE_RT_ASPECT
+      fy = dm_Xy2Normal(dmp, atoi(argv[2]), 1);
+      y = fy * 2047.0;
+#else
       fx = dm_Xx2Normal(dmp, atoi(argv[1]), 1);
       x = fx * 2047.0;
+#endif
 
 end:
       bu_vls_init(&vls);
@@ -309,42 +319,66 @@ end:
 
     switch(*argv[1]){
     case '1':
+#ifdef USE_RT_ASPECT
+      fx = dm_Xx2Normal(dmp, dml_omx) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 - dv_yadc;
+#else
       fx = dm_Xx2Normal(dmp, dml_omx, 1) * 2047.0 - dv_xadc;
       fy = dm_Xy2Normal(dmp, dml_omy) * 2047.0 - dv_yadc;
+#endif
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
+      bu_vls_printf(&vls, "adc a1 %lf\n", RAD2DEG*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
       am_mode = AMM_ADC_ANG1;
       break;
     case '2':
+#ifdef USE_RT_ASPECT
+      fx = dm_Xx2Normal(dmp, dml_omx) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 - dv_yadc;
+#else
       fx = dm_Xx2Normal(dmp, dml_omx, 1) * 2047.0 - dv_xadc;
       fy = dm_Xy2Normal(dmp, dml_omy) * 2047.0 - dv_yadc;
+#endif
       bu_vls_init(&vls);
-      bu_vls_printf(&vls, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
+      bu_vls_printf(&vls, "adc a2 %lf\n", RAD2DEG*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
       am_mode = AMM_ADC_ANG2;
       break;
     case 't':
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "adc hv %lf %lf\n",
-		    dm_Xx2Normal(dmp, dml_omx, 1) *
-		    Viewscale * base2local,
-		    dm_Xy2Normal(dmp, dml_omy) *
-		    Viewscale * base2local);
-      Tcl_Eval(interp, bu_vls_addr(&vls));
-      bu_vls_free(&vls);
+      {
+	point_t model_pt;
+	point_t view_pt;
 
-      am_mode = AMM_ADC_TRAN;
+	bu_vls_init(&vls);
+
+	VSET(view_pt, dm_Xx2Normal(dmp, dml_omx), dm_Xy2Normal(dmp, dml_omy, 1), 0.0);
+	MAT4X3PNT(model_pt, view2model, view_pt);
+	VSCALE(model_pt, model_pt, base2local);
+
+	bu_vls_printf(&vls, "adc xyz %lf %lf %lf\n", model_pt[X], model_pt[Y], model_pt[Z]);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+
+	bu_vls_free(&vls);
+	am_mode = AMM_ADC_TRAN;
+      }
+
       break;
     case 'd':
+#ifdef USE_RT_ASPECT
+      fx = (dm_Xx2Normal(dmp, dml_omx) * 2047.0 -
+	    dv_xadc) * Viewscale * base2local / 2047.0;
+      fy = (dm_Xy2Normal(dmp, dml_omy, 1) * 2047.0 -
+	    dv_yadc) * Viewscale * base2local / 2047.0;
+#else
       fx = (dm_Xx2Normal(dmp, dml_omx, 1) * 2047.0 -
 	    dv_xadc) * Viewscale * base2local / 2047.0;
       fy = (dm_Xy2Normal(dmp, dml_omy) * 2047.0 -
 	    dv_yadc) * Viewscale * base2local / 2047.0;
+#endif
 
       td = sqrt(fx * fx + fy * fy);
       bu_vls_init(&vls);
