@@ -29,11 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 #include "externs.h"
 
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 char *progname = "(noname)";
 
 char	*file_name;
@@ -159,7 +157,7 @@ void mk_trans_tbl()
 void mk_char_trans_tbl()
 {
 	register int j, i;
-	register signed char d;
+	register SIGNED char d;
 
 	/* create translation map */
 	for (j = 0; j < MAPBUFLEN ; ++j) {
