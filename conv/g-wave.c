@@ -44,6 +44,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
+#ifdef WIN32
+#include <fcntl.h>
+#endif
+
+
 BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
@@ -90,6 +95,11 @@ char	*argv[];
 {
 	register int	c;
 	double		percent;
+
+#ifdef WIN32
+	_fmode = _O_BINARY;
+#endif
+
 #ifdef BSD
 	setlinebuf( stderr );
 #else
