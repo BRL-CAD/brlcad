@@ -153,7 +153,7 @@ static int invisible=0;
 #define LINELEN	2050
 char line[LINELEN];
 
-static char *usage="dxf-g [-d] [-v] [-t tolerance] [-s scale_factor] input_dxf_file output_file.g\n";
+static char *usage="dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_dxf_file output_file.g\n";
 
 static FILE *dxf;
 static struct rt_wdb *out_fp;
@@ -486,6 +486,9 @@ get_layer()
 	int i;
 	int old_layer=curr_layer;
 
+	if( verbose ) {
+		bu_log( "get_layer(): state = %d, substate = %d\n", curr_state->state, curr_state->sub_state );
+	}
 	/* do we already have a layer by this name and color */
 	curr_layer = -1;
 	for( i = 1 ; i < next_layer ; i++ ) {
@@ -520,7 +523,13 @@ get_layer()
 			bu_log( "New layer: %s, color number: %d", line, curr_color );
 		}
 		layers[curr_layer]->name = bu_strdup( curr_layer_name );
-		layers[curr_layer]->vert_tree_root = create_vert_tree();
+		if( curr_state->state == ENTITIES_SECTION && 
+		    (curr_state->sub_state == POLYLINE_ENTITY_STATE ||
+		     curr_state->sub_state == POLYLINE_VERTEX_ENTITY_STATE) ) {
+			layers[curr_layer]->vert_tree_root = layers[old_layer]->vert_tree_root;
+		} else {
+			layers[curr_layer]->vert_tree_root = create_vert_tree();
+		}
 		layers[curr_layer]->color_number = curr_color;
 		bu_ptbl_init( &layers[curr_layer]->solids, 8, "layers[curr_layer]->solids" );
 		if( verbose ) {
@@ -2023,7 +2032,7 @@ main( int argc, char *argv[] )
 			bu_log( "LAYER: %s\n", layers[i]->name );
 		}
 
-		if( layers[i]->curr_tri ) {
+		if( layers[i]->curr_tri && layers[i]->vert_tree_root->curr_vert > 2 ) {
 			bu_log( "\t%d triangles\n", layers[i]->curr_tri );
 			sprintf( tmp_name, "bot.s%d", i );
 			if( mk_bot( out_fp, tmp_name, RT_BOT_SURFACE, RT_BOT_UNORIENTED,0,
