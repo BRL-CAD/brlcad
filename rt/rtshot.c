@@ -93,7 +93,12 @@ char **argv;
 		argc -= 2;
 		argv += 2;
 		break;
-
+	case 'N':
+		sscanf( argv[1], "%x", &rt_g.NMG_debug);
+		fprintf(stderr,"librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
+		argc -= 2;
+		argv += 2;
+		break;
 	case 'd':
 		if( argc < 4 )  goto err;
 		ap.a_ray.r_dir[X] = atof( argv[1] );
@@ -123,7 +128,6 @@ char **argv;
 		argc -= 4;
 		argv += 4;
 		continue;
-
 	default:
 err:
 		(void)fputs(usage, stderr);

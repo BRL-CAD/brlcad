@@ -160,6 +160,9 @@ register char **argv;
 		case 'K':
 			finalframe = atoi( optarg );
 			break;
+		case 'N':
+			sscanf( optarg, "%x", &rt_g.NMG_debug);
+			break;
 		case 'M':
 			matflag = 1;
 			break;
