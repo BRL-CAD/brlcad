@@ -1195,8 +1195,9 @@ struct rt_piecestate  {
 	long		ray_seqno;	/* res_nshootray */
 	struct soltab	*stp;
 	struct bu_bitv	*shot;
-	/* Marked as unused with oddhit.hit_dist >= INFINITY */
-	struct hit	oddhit;
+	fastf_t		mindist;	/* dist ray enters solids bounding volume */
+	fastf_t		maxdist;	/* dist ray leaves solids bounding volume */
+	struct rt_htbl	htab;		/* accumulating hits here */
 };
 #define RT_PIECESTATE_MAGIC	0x70637374	/* pcst */
 #define RT_CK_PIECESTATE(_p)	BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
@@ -1700,10 +1701,13 @@ struct rt_functab {
 	int 	(*ft_piece_shot) BU_ARGS((
 			struct rt_piecestate * /*psp*/,
 			struct rt_piecelist * /*plp*/,
+			double /* dist_corr */,
 			struct xray * /*rp*/,
-			struct application * /*ap*/,
+			struct application * /*ap*/));
+	void 	(*ft_piece_hitsegs) BU_ARGS((
+			struct rt_piecestate * /*psp*/,
 			struct seg * /*seghead*/,
-			struct resource * /*resp*/));
+			struct application * /*ap*/));
 	void	(*ft_uv) BU_ARGS((struct application * /*ap*/,
 			struct soltab * /*stp*/,
 			struct hit * /*hitp*/,
@@ -1827,6 +1831,7 @@ struct rt_shootray_status {
 	vect_t			tv;	      /* next t intercept values */
 	int			out_axis;     /* axis ray will leave through */
 	struct rt_shootray_status	*old_status;
+	int			box_num;	/* which cell along ray */
 };
 
 #define NUGRID_T_SETUP(_ax,_cval,_cno) \
@@ -2530,6 +2535,11 @@ BU_EXTERN(int				curve_to_tcl_list,
 					(struct bu_vls *vls, struct curve *crv));
 #endif
 
+/* htbl.c */
+BU_EXTERN(void			rt_htbl_init, (struct rt_htbl *b, int len, CONST char *str));
+BU_EXTERN(void			rt_htbl_reset, (struct rt_htbl *b));
+BU_EXTERN(void			rt_htbl_free, (struct rt_htbl *b));
+BU_EXTERN(struct hit *		rt_htbl_get, (struct rt_htbl *b));
 
 /************************************************************************
  *									*
