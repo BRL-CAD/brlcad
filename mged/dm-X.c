@@ -29,6 +29,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "externs.h"
 #include "./solid.h"
+#include <X11/X.h>
+#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -81,6 +83,8 @@ static Window	win;			/* X window */
 static GC	gc;			/* X Graphics Context */
 static unsigned long	black,gray,white,yellow,red,blue;
 static XFontStruct *fontstruct;		/* X Font */
+
+static int	no_faceplate = 0;
 
 /*
  * Display coordinate conversion:
@@ -799,28 +803,75 @@ checkevents()
 			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 				x, y );
 		} else if( event.type == ButtonPress ) {
+			/* There may also be ButtonRelease events */
+			int	x, y;
 			/* In MGED this is a "penpress" */
+			x = (event.xbutton.x/(double)width - 0.5) * 4095;
+			y = (0.5 - event.xbutton.y/(double)height) * 4095;
 			switch( event.xbutton.button ) {
 			case Button1:
-				if( dm_values.dv_penpress != DV_PICK )
-					dm_values.dv_penpress = DV_OUTZOOM;
+				/* Left mouse: Zoom out */
+				rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
 				break;
 			case Button2:
-				dm_values.dv_penpress = DV_PICK;
+				/* Middle mouse, up to down transition */
+				rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n",
+					x, y);
 				break;
 			case Button3:
-				if( dm_values.dv_penpress != DV_PICK )
-					dm_values.dv_penpress = DV_INZOOM;
+				/* Right mouse: Zoom in */
+				rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
 				break;
 			}
-			dm_values.dv_xpen = (event.xbutton.x/(double)width - 0.5) * 4095;
-			dm_values.dv_ypen = (0.5 - event.xbutton.y/(double)height) * 4095;
+		} else if( event.type == ButtonRelease ) {
+			int	x, y;
+			x = (event.xbutton.x/(double)width - 0.5) * 4095;
+			y = (0.5 - event.xbutton.y/(double)height) * 4095;
+			switch( event.xbutton.button ) {
+			case Button1:
+				/* Left mouse: Zoom out.  Do nothing more */
+				break;
+			case Button2:
+				/* Middle mouse, down to up transition */
+				rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
+					x, y);
+				break;
+			case Button3:
+				/* Right mouse: Zoom in.  Do nothing more. */
+				break;
+			}
 		} else if( event.type == KeyPress ) {
 			/* Turn these into MGED "buttonpress" or knob functions */
 			key = XLookupKeysym( (XKeyEvent *) &event, 0 );
 			switch( key ) {
+			case '/':
 			case '?':
-				fprintf( stderr, "\nKey Help Menu\n" );
+				fprintf( stderr, "\nKey Help Menu:\
+0	Zap 'knobs'\n\
+x	Increase xrot\n\
+y	Increase yrot\n\
+z	Increase zrot\n\
+X	Increase Xslew\n\
+Y	Increase Yslew\n\
+Z	Increase Zslew\n\
+f	Front view\n\
+t	Top view\n\
+b	Bottom view\n\
+l	Left view\n\
+r	Right view\n\
+R	Rear view\n\
+3	35,25 view\n\
+4	45,45 view\n\
+F	Toggle faceplate\n\
+" );
+				break;
+			case 'F':
+				/* Toggle faceplate on/off */
+				no_faceplate = !no_faceplate;
+				rt_vls_strcat( &dm_values.dv_string,
+					no_faceplate ?
+					"set faceplate=0\n" :
+					"set faceplate=1\n" );
 				break;
 			case '0':
 				dm_values.dv_xjoy = 0;
@@ -851,28 +902,39 @@ checkevents()
 				dm_values.dv_zslew += 0.1;
 				break;
 			case 'f':
-				dm_values.dv_buttonpress = BV_FRONT;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press front\n");
 				break;
 			case 't':
-				dm_values.dv_buttonpress = BV_TOP;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press top\n");
 				break;
 			case 'b':
-				dm_values.dv_buttonpress = BV_BOTTOM;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press bottom\n");
 				break;
 			case 'l':
-				dm_values.dv_buttonpress = BV_LEFT;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press left\n");
 				break;
 			case 'r':
-				dm_values.dv_buttonpress = BV_RIGHT;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press right\n");
 				break;
 			case 'R':
-				dm_values.dv_buttonpress = BV_REAR;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press rear\n");
 				break;
 			case '3':
-				dm_values.dv_buttonpress = BV_35_25;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press 35,25\n");
 				break;
 			case '4':
-				dm_values.dv_buttonpress = BV_45_45;
+				rt_vls_strcat( &dm_values.dv_string,
+					"press 45,45\n");
+				break;
+			default:
+				printf("dm-X: The key '%c' is not defined\n", key);
 				break;
 			}
 		} else
