@@ -60,7 +60,7 @@ register complex	roots[];	/* space to put roots found	*/
 	 * is a root of the equation.
 	 */
 	while ( eqn->cf[eqn->dgr] == 0.0 ){
-		roots[n].im = 0.0;
+		roots[n].re = roots[n].im = 0.0;
 		--eqn->dgr;
 		++n;
 	}
@@ -82,7 +82,7 @@ register complex	roots[];	/* space to put roots found	*/
 		}
 
 		if ( (findRoot( eqn, &roots[n] )) < 0 )
-			return -1;
+			return(n);	/* return those we found, anyways */
 
 		if ( Abs(roots[n].im) > SMALL* Abs(roots[n].re) ){
 			/* If root is complex, its complex conjugate is
@@ -149,16 +149,7 @@ register complex	*nxZ;	/* initial guess for root	*/
 	LOCAL int	n;
 	register int	i;		/* iteration counter		*/
 
-	i = 0;
-	for(;;) {
-		/* If the thing hasn't converged after 20 iterations,
-		 * it probably won't.
-		 */
-		if (++i > 20)  {
-			printf("findRoot:  didn't converge in 20 iterations\n");
-			return -1;
-		}
-
+	for( i=0; i < 20; i++ ) {
 		cZ = *nxZ;
 		synthetic( &cZ, eqn, &p0, &p1, &p2 );
 
@@ -204,8 +195,12 @@ register complex	*nxZ;	/* initial guess for root	*/
 			continue;
 		else if ( diff > (b - diff)*SMALL ) 
 			continue;
-		return i;
+		return(i);	/* OK */
 	}
+
+	/* If the thing hasn't converged yet, it probably won't. */
+	fprintf(stderr,"findRoot:  didn't converge in 20 iterations\n");
+	return(-1);		/* ERROR */
 }
 
 
