@@ -1949,8 +1949,7 @@ char **argv;
 
 		/* check if we alerady got this tree */
 		gottree = 0;
-		for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )
-		{
+		for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 			struct db_full_path tmp_path;
 
 			db_full_path_init( &tmp_path );
@@ -1994,19 +1993,20 @@ char **argv;
 		CONST char *reg_name;
 
 		/* check if input name is a region */
-		for( regp = rtip->HeadRegion; regp != REGION_NULL; regp = regp->reg_forw )
-		{
+		for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 			reg_name = regp->reg_name;
 			if( *argv[i] != '/' && *reg_name == '/' )
 				reg_name++;
 
 			if( !strcmp( reg_name, argv[i] ) )
-				break;
+				goto found;
 				
 		}
+		goto not_found;
 
 		if( regp != REGION_NULL )
 		{
+found:
 			/* input name was a region  */
 			if( rt_bound_tree( regp->reg_treetop, reg_min, reg_max ) )
 			{
@@ -2022,13 +2022,13 @@ char **argv;
 		else
 		{
 			int name_len;
+not_found:
 
 			/* input name may be a group, need to check all regions under
 			 * that group
 			 */
 			name_len = strlen( argv[i] );
-			for( regp = rtip->HeadRegion; regp != REGION_NULL; regp = regp->reg_forw )
-			{
+			for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
 				reg_name = regp->reg_name;
 				if( *argv[i] != '/' && *reg_name == '/' )
 					reg_name++;
