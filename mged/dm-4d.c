@@ -23,6 +23,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 /* Forwards compat with IRIX 5.0.1 */
 #define class	inv_class	/* Map Irix 4 name into Irix 5 name */
 #define type	inv_type	/* Map Irix 4 name into Irix 5 name */
@@ -35,14 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #undef VMIN		/* is used in vmath.h, too */
 #include <ctype.h>
 
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "./ged.h"
-#include "./dm.h"
-#include "externs.h"
-#include "./solid.h"
-
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
 #include <gl/get.h>		/* SGI IRIS library */
@@ -51,6 +45,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/invent.h>
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "./ged.h"
+#include "./dm.h"
+#include "externs.h"
+#include "./solid.h"
 
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
