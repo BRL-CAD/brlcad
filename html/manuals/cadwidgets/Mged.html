@@ -12,7 +12,7 @@ Mged - create and manipulate an mged widget.
 <P>
 
 <H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
-<B>Mged</B> <I>pathName dbFile</I> [<I>type</I> [<I>options</I>]]
+<B>Mged</B> <I>pathName dbFile</I> ?<I>type</I> ?<I>options</I>??
 <P>
 
 <H2><A NAME="sect3" HREF="#toc3"><B>INHERITANCE</B></A></H2>
@@ -72,8 +72,10 @@ None
 
 <H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>
 The <B>Mged</B> command creates a new window
-(given by the <I>pathName</I> argument) and makes it into
-an Mged widget.
+(given by the <I>pathName</I> argument) and makes it into an Mged widget.
+The Mged widget has an associated
+<A HREF="Database.html">database object</A>, which enables it to interact
+with a database.
 Additional options, described above, may be specified on the
 command line or in the option database to configure aspects
 of the Mged widget.
@@ -173,7 +175,7 @@ multi_pane refreshall removeall resetall</B>
 
 <H3><A NAME="sect13" HREF="#toc13"><B>WIDGET-SPECIFIC METHODS</B></A></H3>
 <DL>
-<DT><I>pathName</I> <A NAME = "opendb"><B>opendb</B> [<I>dbfile</I>]</DT>
+<DT><I>pathName</I> <A NAME = "opendb"><B>opendb</B> ?<I>dbfile</I>?</DT>
 <DD>See LIBRT's database object's <A HREF="../librt/wdb_obj.html#open">open</A> method.
 </DD>
 <P>
@@ -181,11 +183,27 @@ multi_pane refreshall removeall resetall</B>
 <P>
 
 <H2><A NAME="sect14" HREF="#toc14"><B>NOTES</B></A></H2>
-
+If optional arguments are provided to the Mged
+command, the first such argument must be
+either <I>X</I> or <I>ogl</I> (i.e. the display manager type).
 <P>
 
 <H2><A NAME="sect15" HREF="#toc15"><B>EXAMPLE</B></A></H2>
-
+cwish> Mged .mged moss.g X -width 400 -height 400
+<BR>
+.mged
+<BR>
+cwish> pack .mged -expand yes -fill both
+<BR>
+cwish> .mged draw all.g
+<BR>
+cwish> .mged pane
+<BR>
+ur
+<BR>
+cwish> .mged multi_pane 0
+<BR>
+cwish> .mged multi_pane 1
 <P>
 
 <H2><A NAME="sect16" HREF="#toc16"><B>ACKNOWLEDGEMENTS:</B></A></H2>
