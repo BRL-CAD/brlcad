@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  86/09/23  22:28:37  mike
+ * Externs now declared properly.
+ * I/O fixes for SysV
+ * 
  * Revision 2.1  86/09/23  22:26:34  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -27,18 +31,7 @@
  * to be edited.
  */
 
-#ifndef VMUNIX
-
-#define	BLKMSK	01777
-#define	BNDRY	16
-#define	INCRMT	0100
-#define	LBTMSK	0760
-#define	NMBLKS	1018
-#define	OFFBTS	6
-#define	OFFMSK	077
-#define	SHFT	3
-
-#else VMUNIX
+#if defined(VMUNIX) || defined(CRAY)
 
 #define	BLKMSK	077777
 #define	BNDRY	2
@@ -48,6 +41,17 @@
 #define	OFFBTS	10
 #define	OFFMSK	01777
 #define	SHFT	0
+
+#else VMUNIX
+
+#define	BLKMSK	01777
+#define	BNDRY	16
+#define	INCRMT	0100
+#define	LBTMSK	0760
+#define	NMBLKS	1018
+#define	OFFBTS	6
+#define	OFFMSK	077
+#define	SHFT	3
 
 #endif VMUNIX
 
