@@ -53,7 +53,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "../librt/debug.h"
 #include "../rt/mathtab.h"
-#include "../rt/material.h"
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
 
