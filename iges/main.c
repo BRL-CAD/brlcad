@@ -21,7 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./iges_struct.h"
 #include "./iges_types.h"
-#include "/m/cad/librt/debug.h"
+#include "../librt/debug.h"
 
 extern char *optarg;
 extern int optind, opterr, optopt;
