@@ -67,12 +67,14 @@ static struct rt_tol tol;	/* tolerances */
 static struct rt_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip=NULL;
 
-#define		NO_OF_TYPES	26
+#define		NO_OF_TYPES	28
 static int	type_count[NO_OF_TYPES][2]={
 			{ 110 , 0 },	/* Line */
 			{ 116 , 0 },	/* Point */
 			{ 123 , 0 },	/* Direction */
 			{ 124 , 0 },	/* Transformation Matrix */
+			{ 126 , 0 },	/* Rational B-spline Curve */
+			{ 128 , 0 },	/* Rational B-spline Surface */
 			{ 150 , 0 },	/* Block */
 			{ 152 , 0 },	/* Right Angle Wedge */
 			{ 154 , 0 },	/* Right Circular Cylinder */
@@ -102,6 +104,8 @@ static char	*type_label[NO_OF_TYPES]={
 			"Point",
 			"Directin",
 			"Matrix",
+			"B-spline",
+			"NURB",
 			"Block",
 			"RA Wedge",
 			"RC Cylin",
@@ -131,6 +135,8 @@ static char	*type_name[NO_OF_TYPES]={
 			"Point",
 			"Direction",
 			"Transformation Matrix",
+			"Rational B_spline Curve",
+			"NURB Surface",
 			"Block",
 			"Right Angle Wedge",
 			"Right Circular Cylinder",
@@ -159,6 +165,7 @@ static char	*unknown="Unknown";
 static int	unknown_count=0;
 extern int	solid_is_brep;
 extern int	comb_form;
+extern int	do_nurbs;
 extern struct db_i	*dbip;
 
 static unsigned char colortab[9][4]={
@@ -334,6 +341,9 @@ FILE *fp_dir,*fp_param;
 	dir_entry[9] = 201;
 	dir_entry[11] = 322;
 	dir_entry[15] = 0;
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ) );
 	
 }
@@ -772,6 +782,9 @@ FILE *fp_dir,*fp_param;
 	dir_entry[11] = 502;
 	dir_entry[15] = 1;
 
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ));
 }
 
@@ -812,6 +825,52 @@ FILE *fp_dir,*fp_param;
 	dir_entry[9] = 10001;
 	dir_entry[11] = 110;
 	dir_entry[15] = 0;
+
+	rt_vls_free( &str );
+
+	return( write_dir_entry( fp_dir , dir_entry ) );
+}
+
+int
+write_linear_bspline( start_vg , end_vg , fp_dir , fp_param )
+struct vertex_g	*start_vg;
+struct vertex_g	*end_vg;
+FILE *fp_dir,*fp_param;
+{
+	struct rt_vls str;
+	int dir_entry[21];
+	int i;
+
+	rt_vls_init( &str );
+
+	/* initialize directory entry */
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
+
+	/* start with parameter data */
+	rt_vls_printf( &str , "126,1,1,0,0,1,0,0.,0.,1.,1.,1.,1.,%g,%g,%g,%g,%g,%g,0.,1.;" ,
+			start_vg->coord[X],
+			start_vg->coord[Y],
+			start_vg->coord[Z],
+			end_vg->coord[X],
+			end_vg->coord[Y],
+			end_vg->coord[Z] );
+
+	/* remember where parameter data is going */
+	dir_entry[2] = param_seq + 1;
+
+	/* get parameter line count */
+	dir_entry[14] =  write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
+
+	/* write directory entry for line entity */
+	dir_entry[1] = 126;
+	dir_entry[8] = 0;
+	dir_entry[9] = 10001;
+	dir_entry[11] = 126;
+	dir_entry[15] = 1;
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ) );
 }
 
@@ -865,7 +924,10 @@ FILE *fp_dir,*fp_param;
 		NMG_CK_VERTEX(end_v);
 		end_vg = end_v->vg_p;
 		NMG_CK_VERTEX_G(end_vg);
-		line_de = write_line_entity( start_vg , end_vg , fp_dir , fp_param );
+		if( do_nurbs )
+			line_de = write_linear_bspline( start_vg , end_vg , fp_dir , fp_param );
+		else
+			line_de = write_line_entity( start_vg , end_vg , fp_dir , fp_param );
 		rt_vls_printf( &str , ",%d,%d,%d,%d,%d",
 			line_de,
 			vert_de , nmg_tbl( vtab , TBL_LOC , (long *)start_v ) + 1,
@@ -885,6 +947,9 @@ FILE *fp_dir,*fp_param;
 	dir_entry[9] = 10001;
 	dir_entry[11] = 504;
 	dir_entry[15] = 1;
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ) );
 }
 
@@ -918,6 +983,9 @@ FILE *fp_dir,*fp_param;
 	dir_entry[9] = 10001;
 	dir_entry[11] = 116;
 	dir_entry[15] = 0;
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ) );
 }
 
@@ -951,6 +1019,9 @@ FILE *fp_dir,*fp_param;
 	dir_entry[9] = 10001;
 	dir_entry[11] = 123;
 	dir_entry[15] = 0;
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ) );
 }
 
@@ -986,8 +1057,127 @@ FILE *fp_dir,*fp_param;
 	dir_entry[9] = 10001;
 	dir_entry[11] = 190;
 	dir_entry[15] = 0;
+
+	rt_vls_free( &str );
+
 	return( write_dir_entry( fp_dir , dir_entry ) );
 	
+}
+
+int
+write_planar_nurb( fu , fp_dir , fp_param )
+struct faceuse *fu;
+FILE *fp_dir;
+FILE *fp_param;
+{
+	struct loopuse		*lu;
+	struct edgeuse		*eu,*eu_next;
+	struct vertex_g		*vg,*vg_next;
+	point_t			ctl_pt;
+	fastf_t			umin,umax,vmin,vmax;
+	struct rt_vls   	str;
+	vect_t			u_dir;
+	vect_t			v_dir;
+	int           	 	dir_entry[21];
+	int             	i;
+
+	NMG_CK_FACEUSE( fu );
+
+	for( i=0 ; i<21 ; i++ )
+		dir_entry[i] = DEFAULT;
+
+	rt_vls_init( &str );
+
+	/* create direction vectors in u and v directions in plane */
+	lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+	NMG_CK_LOOPUSE( lu );
+	while( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC &&
+				RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
+	{
+		lu = RT_LIST_PNEXT( loopuse , lu );
+		NMG_CK_LOOPUSE( lu );
+	}
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+	{
+		rt_log( "Write_planar_nurb: could not find a loop (with edges) in face\n" );
+		return( 0 );
+	}
+
+	eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+	NMG_CK_EDGEUSE( eu );
+	vg = eu->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G( vg );
+	eu_next = RT_LIST_PNEXT( edgeuse , eu );
+	NMG_CK_EDGEUSE( eu_next );
+	vg_next = eu_next->vu_p->v_p->vg_p;
+	NMG_CK_VERTEX_G( vg_next );
+
+	VSUB2( u_dir , vg_next->coord , vg->coord );
+	VUNITIZE( u_dir );
+	VCROSS( v_dir , fu->f_p->fg_p->N , u_dir );
+	VUNITIZE( v_dir );
+
+	/* find the max and min distances from vg along u_dir and v_dir in the face */
+	umin = MAX_FASTF;
+	vmin = MAX_FASTF;
+	umax = (-umin);
+	vmax = (-vmin);
+
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		NMG_CK_LOOPUSE( lu );
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+		{
+			vect_t	tmp_vect;
+			fastf_t	distu,distv;
+
+			NMG_CK_EDGEUSE( eu );
+
+			VSUB2( tmp_vect , eu->vu_p->v_p->vg_p->coord , vg->coord );
+			distu = VDOT( tmp_vect , u_dir );
+			V_MIN( umin , distu );
+			V_MAX( umax , distu );
+			distv = VDOT( tmp_vect , v_dir );
+			V_MIN( vmin , distv );
+			V_MAX( vmax , distv );
+		}
+	}
+
+	/* Put preliminary stuff for planar nurb in string */
+	rt_vls_printf( &str , "128,1,1,1,1,0,0,1,0,0,0.,0.,1.,1.,0.,0.,1.,1.,1.,1.,1.,1." );
+
+	/* Now put control points in string */
+	VJOIN2( ctl_pt , vg->coord , umin , u_dir , vmin , v_dir );
+	rt_vls_printf( &str , ",%g,%g,%g" , V3ARGS( ctl_pt ) );
+	VJOIN1( ctl_pt , ctl_pt , umax-umin , u_dir );
+	rt_vls_printf( &str , ",%g,%g,%g" , V3ARGS( ctl_pt ) );
+	VJOIN2( ctl_pt , vg->coord , umin , u_dir , vmax , v_dir );
+	rt_vls_printf( &str , ",%g,%g,%g" , V3ARGS( ctl_pt ) );
+	VJOIN1( ctl_pt , ctl_pt , umax-umin , u_dir );
+	rt_vls_printf( &str , ",%g,%g,%g" , V3ARGS( ctl_pt ) );
+
+	/* Now put parameter ranges last */
+	rt_vls_printf( &str , ",0.,1.,0.,1.;" );
+
+	/* remember where parameter data is going */
+	dir_entry[2] = param_seq + 1;
+
+	/* get parameter line count */
+	dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
+
+	dir_entry[1] = 128;
+	dir_entry[8] = 0;
+	dir_entry[9] = 10001;
+	dir_entry[11] = 128;
+	dir_entry[15] = 1;
+
+	rt_vls_free( &str );
+
+	return( write_dir_entry( fp_dir , dir_entry ) );
+
 }
 
 int
@@ -1139,7 +1329,7 @@ FILE *fp_dir,*fp_param;
 				/* get parameter line count */
 				dir_entry[14] = write_freeform( fp_param , rt_vls_addr( &str ) , dir_seq+1 , 'P' );
 
-				/* write directory entry for line entity */
+				/* write directory entry for loop entity */
 				dir_entry[1] = 508;
 				dir_entry[8] = 0;
 				dir_entry[9] = 10001;
@@ -1165,10 +1355,16 @@ FILE *fp_dir,*fp_param;
 				loop_list[exterior_loop] = tmp;
 			}
 
-			rt_vls_printf( &str , "510,%d,%d,%d" ,
-				write_plane_entity( fu->f_p->fg_p->N , fp_dir , fp_param ),
-				loop_count,
-				outer_loop_flag );
+			if( do_nurbs )
+				rt_vls_printf( &str , "510,%d,%d,%d" ,
+					write_planar_nurb( fu , fp_dir , fp_param ),
+					loop_count,
+					outer_loop_flag );
+			else
+				rt_vls_printf( &str , "510,%d,%d,%d" ,
+					write_plane_entity( fu->f_p->fg_p->N , fp_dir , fp_param ),
+					loop_count,
+					outer_loop_flag );
 
 			for( i=0 ; i<loop_count ; i++ )
 				rt_vls_printf( &str , ",%d" , loop_list[i] );
@@ -1337,6 +1533,9 @@ struct rt_arb_internal *arb;
 	VSUB2( v0 , arb->pt[3] , arb->pt[0] );
 	VSUB2( v1 , arb->pt[1] , arb->pt[0] );
 	VSUB2( v2 , arb->pt[4] , arb->pt[0] );
+	VUNITIZE( v0 );
+	VUNITIZE( v1 );
+	VUNITIZE( v2 );
 	if( !RT_VECT_ARE_PERP( VDOT( v0 , v1 ) , &tol ) )
 		return( 0 );
 	if( !RT_VECT_ARE_PERP( VDOT( v0 , v2 ) , &tol ) )
@@ -1580,6 +1779,7 @@ FILE *fp_dir,*fp_param;
 	vect_t			a_dir;
 	vect_t			b_dir;
 	vect_t			c_dir;
+	vect_t			tmp_dir;
 	int			dir_entry[21];
 	int			name_de;
 	int			i;
@@ -1611,6 +1811,21 @@ FILE *fp_dir,*fp_param;
 	VUNITIZE( a_dir );
 	VUNITIZE( b_dir );
 	VUNITIZE( c_dir );
+
+	/* c_dir cross a_dir must give b_dir for IGES */
+	VCROSS( tmp_dir , c_dir , a_dir );
+	if( VDOT( b_dir , tmp_dir ) < 0.0 )
+	{
+		/* not a right-handed system, so exchange a_dir with c_dir */
+		double tmp_length;
+
+		VMOVE( tmp_dir , a_dir );
+		VMOVE( a_dir , c_dir );
+		VMOVE( c_dir , tmp_dir );
+		tmp_length = length_a;
+		length_a = length_c;
+		length_c = tmp_length;
+	}
 
 	/* write parameter data into a string */
 	rt_vls_printf( &str , "150,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
