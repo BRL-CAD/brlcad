@@ -195,7 +195,7 @@ CONST char *name;
 		return(DBI_NULL);
 	}
 
-#if 0
+#if 1
 	/* Create a v5 database */
 	if( db5_fwrite_ident( fp, "Untitled v5 BRL-CAD Database", 1.0 ) < 0 )  {
 		(void)fclose(fp);
