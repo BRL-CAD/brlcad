@@ -25,8 +25,8 @@
 	g_arb g_ars g_ebm g_ell g_half g_pg g_rec g_sph g_spline \
 	g_tgc g_torus g_vol g_arbn g_part g_pipe \
 	cmd complex mat qmath mater parse polylib roots plane \
-	machine LIBRT_TIMER log bomb storage const pr hist \
-	sphmap rtstring \
+	machine LIBRT_TIMER log bomb storage const pr hist global \
+	sphmap rtstring inout \
 	nmg_mk nmg_misc nmg_bool nmg_eval nmg_inter nmg_plot nmg_ck \
 	nmg_mesh nmg_comb nmg_class
 
