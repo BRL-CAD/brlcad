@@ -755,7 +755,6 @@ set help_data(sv)		{{x y [z]}	{Move view center to (x, y, z)}}
 set help_data(svb)		{{}	{set view reference base}}
 set help_data(sync)		{{}	{forces UNIX sync}}
 set help_data(t)		{{}	{table of contents}}
-set help_data(tab)		{{object[s]}	{tabulates objects as stored in database}}
 set help_data(ted)		{{}	{text edit a solid's parameters}}
 set help_data(tie)		{{pathName1 pathName2}	{tie display manager pathName1 to display manager pathName2}}
 set help_data(title)		{{[string]}	{print or change the title}}
