@@ -6352,9 +6352,6 @@ do_hex2()
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
-	if( !nmgs )
-		nmgs = element_id;
-
 	if( !pass )
 	{
 		if( !getline() )
@@ -6411,6 +6408,9 @@ do_hex2()
 
 	if( mk_addmember( name , &head , WMOP_UNION ) == (struct wmember *)NULL )
 		rt_bomb( "CHEX2: mk_addmember failed\n" );
+
+	/* subtract any holes for this component */
+	Subtract_holes( &head , comp_id , group_id );
 
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 
