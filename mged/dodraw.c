@@ -773,7 +773,7 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 
 	  	if (mged_draw_edge_uses) {
 	  		cvt_vlblock_to_solids(mged_draw_edge_uses_vbp, "_EDGEUSES_", 0);
-	  		bn_vlblock_free(mged_draw_edge_uses_vbp);
+	  		rt_vlblock_free(mged_draw_edge_uses_vbp);
 			mged_draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
  	  	}
 
@@ -1334,7 +1334,7 @@ int		copy;
 
 	if( copy )  {
 		BU_LIST_INIT( &(sp->s_vlist) );
-		bn_vlist_copy( &(sp->s_vlist), vhead );
+		rt_vlist_copy( &(sp->s_vlist), vhead );
 	} else {
 		/* For efficiency, just swipe the vlist */
 		BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
