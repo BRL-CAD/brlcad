@@ -11668,7 +11668,7 @@ CONST fastf_t min_angle;
 		{
 			int done=0;
 			struct edge *e;
-			struct edgeuse *eu, *eu2;
+			struct edgeuse *eu, *eu2, *eu3;
 			struct faceuse *fu, *fu2;
 			struct vertex *v1, *v2;
 			struct vertexuse *vu;
@@ -11681,6 +11681,7 @@ CONST fastf_t min_angle;
 			fastf_t dot;
 			int flip1, flip2;
 			int no_collapse;
+			int free_edge;
 
 			min_dist1 = MAX_FASTF;
 			min_dist2 = MAX_FASTF;
@@ -11703,6 +11704,36 @@ CONST fastf_t min_angle;
 			NMG_CK_VERTEX( v1 );
 			v2 = eu->eumate_p->vu_p->v_p;
 			NMG_CK_VERTEX( v2 );
+
+			/* don't collapse free edges */
+			free_edge = 0;
+			eu2 = eu;
+			do
+			{
+				eu3 = eu2;
+				do {
+					if( eu3->radial_p->eumate_p == eu3 )
+					{
+						free_edge = 1;
+						break;
+					}
+					eu3 = BU_LIST_PNEXT_CIRC( edgeuse, &eu3->l );
+					
+				} while ( eu3 != eu2 );
+				if( free_edge )
+					break;
+
+				eu2 = eu2->radial_p->eumate_p;
+			} while( eu2 != eu );
+
+			if( free_edge )
+			{
+#if EDGE_COLLAPSE_DEBUG
+				bu_log( "Not collapsing free edge at (%g %g %g)<->(%g %g %g)\n",
+					V3ARGS( v1->vg_p->coord ), V3ARGS( v2->vg_p->coord ) );
+#endif
+				continue;
+			}
 
 			/* consider collapsing this edge */
 #if EDGE_COLLAPSE_DEBUG
