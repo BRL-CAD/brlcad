@@ -67,6 +67,7 @@ int str_dbl(char *buf, double *Result)
 
 }
 
+#ifndef HAVE_BASENAME
 char *basename(char *string)
 {
     char	*sp;
@@ -82,3 +83,4 @@ char *basename(char *string)
     *sp2 = '\0';
     return (sp);
 }
+#endif
