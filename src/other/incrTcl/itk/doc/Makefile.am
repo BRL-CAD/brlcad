@@ -1,11 +1,12 @@
 # $Id$
 
 mann_MANS = \
+	Archetype.n \
+	Toplevel.n \
+	Widget.n \
 	itk.n \
 	itkvars.n \
-	Toplevel.n \
-	usual.n \
-	Widget.n
+	usual.n
 
 EXTRA_DIST = \
 	$(mann_MANS) \
