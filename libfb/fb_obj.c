@@ -921,7 +921,6 @@ fbo_configure_tcl(clientData, interp, argc, argv)
      char **argv;
 {
 	struct fb_obj *fbop = (struct fb_obj *)clientData;
-	struct bu_vls vls;
 	int width, height;
 
 	if (argc != 4) {
