@@ -543,7 +543,7 @@ CONST struct rt_tol	*tol;
 	for (i=0 ; i < vert_list->end ; i++) {
 		vu = (struct vertexuse *)vert_list->buffer[i];
 		NMG_CK_VERTEXUSE(vu);
-		lu = nmg_lu_of_vu( vu );
+		lu = nmg_find_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
 		lg = lu->l_p->lg_p;
 		NMG_CK_LOOP_G(lg);
