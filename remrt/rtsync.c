@@ -249,6 +249,139 @@ register char **argv;
 }
 
 /*
+ *			N O D E _ S E N D
+ *
+ *  Arrange to send a string to all rtnode processes,
+ *  for them to run as a TCL command.
+ */
+int
+node_send( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct bu_vls	cmd;
+	int		i;
+
+	if( argc < 2 )  {
+		Tcl_AppendResult(interp, "Usage: node_send command(s)\n", NULL);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&cmd);
+	bu_vls_from_argv( &cmd, argc-1, argv+1 );
+
+	bu_log("node_send: %s\n", bu_vls_addr(&cmd));
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].ncpus <= 0 )  continue;
+		if( pkg_send_vls( RTSYNCMSG_CMD, &cmd, rtnodes[i].pkg ) < 0 )  {
+			drop_rtnode(i);
+			continue;
+		}
+	}
+	bu_vls_free(&cmd);
+	return TCL_OK;
+}
+
+/*
+ *			V R M G R _ S E N D
+ *
+ *  Arrange to send a string to the VRMGR process
+ *  for it to run as a TCL command.
+ */
+int
+vrmgr_send( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct bu_vls	cmd;
+	int		i;
+
+	if( argc < 2 )  {
+		Tcl_AppendResult(interp, "Usage: vrmgr_send command(s)\n", NULL);
+		return TCL_ERROR;
+	}
+
+	if( !vrmgr_pc )  {
+		Tcl_AppendResult(interp, "vrmgr is not presently connected\n", NULL);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&cmd);
+	bu_vls_from_argv( &cmd, argc-1, argv+1 );
+	bu_vls_putc( &cmd, '\n');
+
+	if( pkg_send_vls( VRMSG_CMD, &cmd, vrmgr_pc ) < 0 )  {
+		pkg_close(vrmgr_pc);
+		vrmgr_pc = 0;
+		Tcl_AppendResult(interp, "Error writing to vrmgr\n", NULL);
+		bu_vls_free(&cmd);
+		return TCL_ERROR;
+	}
+	bu_vls_free(&cmd);
+	return TCL_OK;
+}
+
+/*
+ *			R E P R E P
+ *
+ *  Make all the nodes re-prep.
+ */
+reprep( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int		i;
+	struct bu_vls	cmd;
+
+	if( argc != 1 )  {
+		Tcl_AppendResult(interp, "Usage: reprep\n", NULL);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&cmd);
+	bu_vls_strcpy( &cmd, "rt_clean");
+
+	bu_log("reprep\n");
+
+	for( i = MAX_NODES-1; i >= 0; i-- )  {
+		if( rtnodes[i].fd <= 0 )  continue;
+		if( rtnodes[i].ncpus <= 0 )  continue;
+		if( rtnodes[i].state != STATE_PREPPED )  {
+			Tcl_AppendResult(interp, "reprep: host ",
+				rtnodes[i].host->ht_name,
+				" is in state ",
+				states[rtnodes[i].state],
+				"\n", NULL);
+			drop_rtnode(i);
+			continue;
+		}
+		/* change back to STATE_DIRBUILT and send GETTREES commands */
+		if( change_state( i, STATE_PREPPED, STATE_DIRBUILT ) < 0 )  {
+			drop_rtnode(i);
+			continue;
+		}
+
+		/* Receipt of GETTREES will automatically "clean" previous model first */
+		if( pkg_send_vls( RTSYNCMSG_GETTREES, &treetops,
+		     rtnodes[i].pkg ) < 0 )  {
+			drop_rtnode(i);
+		     	continue;
+		}
+	}
+	return TCL_OK;
+}
+
+/**********************************************************************/
+
+/*
  *			S T D I N _ E V E N T _ H A N D L E R
  *
  *  Read Tcl commands from a "tty" file descriptor.
@@ -370,7 +503,6 @@ ClientData	clientData;	/* subscript to rtnodes[] */
 int		mask;
 {
 	int	i;
-bu_log("rtnode_event_handler() called\n");
 
 	i = (int)clientData;
 	if( rtnodes[i].fd == 0 )  {
@@ -465,6 +597,8 @@ bu_log("rtsync_listen_handler() called\n");
 	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
+/**********************************************************************/
+
 /*
  *			M A I N
  */
@@ -472,6 +606,8 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
+	width = height = 256;	/* keep it modest, by default */
+
 	if ( !get_args( argc, argv ) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
@@ -518,6 +654,14 @@ char	*argv[];
 # endif
 	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )
 		bu_log("ERROR %s\n*** Script aborted\n", interp->result);
+
+	/* Incorporate built-in commands */
+	(void)Tcl_CreateCommand(interp, "vrmgr_send", vrmgr_send,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "node_send", node_send,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "reprep", reprep,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	/* Accept commands on stdin */
 	if( isatty(fileno(stdin)) )  {
@@ -610,7 +754,6 @@ ClientData clientData;
 	int		ncpu = 0;
 	int		start_line;
 	int		lowest_index = 0;
-bu_log("dispatcher() called\n");
 
 	if( !pending_pov )  return;
 
