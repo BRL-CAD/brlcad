@@ -406,9 +406,7 @@ Part_import( int id_start )
 		} else if( !strncmp( line, "FaceCount", 9 ) ) {
 			surf_count = atoi( &line[10] );
 			if( surf_count == 0 ) {
-				/* bug in the Elysium tessellator when no faces */
-				bu_free( (char *)part, "part" );
-				return( (struct obj_info *) NULL );
+				last_surf = 1;
 			}
 		} else if( !strncmp( line, "EndPartId", 9 ) ) {
 			/* found end of part, check id */
@@ -478,36 +476,47 @@ Part_import( int id_start )
 		}
 	}
 
-	/* write this part to database, first make a primitive solid */
-	if( mk_bot( fd_out, part->brlcad_solid, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
-		curr_vert, curr_tri, part_verts, part_tris, NULL, NULL ) ) {
+	if( curr_tri == 0 ) {
+		/* no facets in this part, so ignore it */
+		bu_free( (char *)part, "part" );
+		part = (struct obj_info *)NULL;
+	} else {
+
+		/* write this part to database, first make a primitive solid */
+		if( mk_bot( fd_out, part->brlcad_solid, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0,
+			    curr_vert, curr_tri, part_verts, part_tris, NULL, NULL ) ) {
 			bu_log( "Failed to write primitive %s (%s) to database\n",
 				part->brlcad_solid, part->obj_name );
 			exit( 1 );
-	}
+		}
 
-	/* then a region */
-	BU_LIST_INIT( &reg_head.l );
-	if( mk_addmember( part->brlcad_solid, &reg_head.l, WMOP_UNION ) == WMEMBER_NULL ) {
-		bu_log( "ERROR: Failed to add solid (%s), to region (%s)\n",
-			part->brlcad_solid, part->brlcad_comb );
-		exit( 1 );
-	}
-	if( mk_comb( fd_out, part->brlcad_comb, &reg_head.l, 1, NULL, NULL, rgb, ident++,
-		     0, 0, 0, 0, 0, 0 ) ) {
-		bu_log( "Failed to write region %s (%s) to database\n",
-			part->brlcad_comb, part->obj_name );
-		exit( 1 );
+		/* then a region */
+		BU_LIST_INIT( &reg_head.l );
+		if( mk_addmember( part->brlcad_solid, &reg_head.l, WMOP_UNION ) == WMEMBER_NULL ) {
+			bu_log( "ERROR: Failed to add solid (%s), to region (%s)\n",
+				part->brlcad_solid, part->brlcad_comb );
+			exit( 1 );
+		}
+		if( mk_comb( fd_out, part->brlcad_comb, &reg_head.l, 1, NULL, NULL, rgb, ident++,
+			     0, 0, 0, 0, 0, 0 ) ) {
+			bu_log( "Failed to write region %s (%s) to database\n",
+				part->brlcad_comb, part->obj_name );
+			exit( 1 );
+		}
 	}
 
 	/* free some memory */
 	free_vert_tree( vert_root );
 	vert_root = NULL;
-	bu_free( (char *)part_tris, "part_tris" );
+	if( part_tris ) {
+		bu_free( (char *)part_tris, "part_tris" );
+	}
 	max_tri = 0;
 	curr_tri = 0;
 	part_tris = NULL;
-	bu_free( (char *)part_verts, "part_verts" );
+	if( part_verts ) {
+		bu_free( (char *)part_verts, "part_verts" );
+	}
 	max_vert = 0;
 	curr_vert = 0;
 	part_verts = NULL;
