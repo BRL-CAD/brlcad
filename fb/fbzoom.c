@@ -100,8 +100,8 @@ char **argv;
 		if (new_xPan < MinPan) new_xPan = MinPan;
 		if (new_yPan > MaxYPan) new_yPan = MaxYPan;
 		if (new_yPan < MinPan) new_yPan = MinPan;
-		if (xZoom < MinZoom) xZoom = MinZoom;
-		if (yZoom < MinZoom) yZoom = MinZoom;
+		if (new_xZoom < MinZoom) new_xZoom = MinZoom;
+		if (new_yZoom < MinZoom) new_yZoom = MinZoom;
 
 		if( new_xPan != xPan || new_yPan != yPan
 		  || new_xZoom != xZoom || new_yZoom != yZoom ) {
