@@ -108,6 +108,10 @@ Default is the units of
 .TP 12
 .BI "fmt [" "t format item item ..." "]"
 Sets the action for output statements of type \fIt\fR.
+If this command is given with only one argument,
+a valid statement type,
+.I nirt
+prints the current format and items for the specified type.
 See the discussion of output statements below.
 .TP 12
 .BI "dest [" d "]"
@@ -152,11 +156,59 @@ The state file loaded may contain any
 commands.
 .SS Output Statements
 .I Nirt
-allows the user a high degree of control of
-what information gets printed out for each ray and in what format.
-This control is exercised via the
+allows the user a high degree of control,
+via the
 .I fmt
-command.
+command,
+over what information gets printed out for each ray and in what format.
+There are six types of output statement,
+each of which is executed under appropriate circumstances.
+The types and their use are:
+.TP
+.B r
+Ray.
+The first output statement executed
+whenever the
+.I s
+command is given.
+.TP
+.B h
+Head.
+Executed immediately after the ray statement
+if the ray hits any of the
+.I objects.
+.TP
+.B p
+Partition.
+Executed once for each partition along the ray
+if the ray hits any of the
+.I objects.
+.TP
+.B f
+Foot.
+The last output statement executed
+if the ray hits any of the
+.I objects.
+.TP
+.B m
+Miss.
+Executed immediately after the ray statement
+if the ray does not hit any of the
+.I objects.
+.TP
+.B o
+Overlap.
+Executed once for each overlap along the ray
+if the ray hits any of the
+.I objects.
+
+Each of the output statement types is essentially a
+.I printf(3)
+statement,
+with a format string and a list of output items.
+The items may be chosen from a set of values that
+.I nirt
+updates according to user commands and location along a ray.
 .SH DIAGNOSTICS
 If
 \fIname\fR.s
