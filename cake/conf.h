@@ -4,12 +4,8 @@
 **	$Header$
 */
 
-/* type used when type is not known */
-#if __STDC__
-typedef	void	*Cast;
-#else
-typedef	int	Cast;
-#endif
+/* type used when type is not known.  Needs to be as wide as a (char*) */
+typedef	long	Cast;
 
 /* location of the systemwide cake library */
 /*#define	SLIB		"/u/pgrad/zs/lib/cake" **BRL*/
