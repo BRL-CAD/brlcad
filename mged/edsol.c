@@ -76,7 +76,7 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
 void pscale();
 void	calc_planes();
-void sedit_absolute_tran_update();
+void update_edit_absolute_tran();
 void set_e_axes_pos();
 vect_t e_axes_pos;
 #if 1
@@ -1791,22 +1791,6 @@ set_e_axes_pos()
 {
   int	i;
 
-#if 0
-  update_views = 1;
-
-  if(EDIT_TRAN) {
-    VMOVE(e_axes_pos, es_keypoint);
-    MAT4X3PNT( absolute_slew, model2view, es_keypoint );
-  }else{
-    point_t new_pos;
-
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-
-    if(EDIT_ROTATE)
-      VSETALL( absolute_rotate, 0.0 );
-  }
-#else
   update_views = 1;
   switch(es_int.idb_type){
   case	ID_ARB8:
@@ -1884,7 +1868,12 @@ set_e_axes_pos()
 	break;
       }
 
+#if 1
+    MAT4X3PNT(e_axes_pos, es_mat,
+	      ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+#else
     VMOVE(e_axes_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+#endif
     break;
   case ID_TGC:
   case ID_REC:
@@ -1899,7 +1888,6 @@ set_e_axes_pos()
     VMOVE(e_axes_pos, es_keypoint);
     break;
   }
-#endif
 
   if(EDIT_ROTATE)
     VSETALL( edit_absolute_rotate, 0.0 )
@@ -3766,7 +3754,7 @@ CONST vect_t	mousevec;
 			transform_editing_solid(&es_int, xlatemat, &es_int, 1);
 		}
 
-	        sedit_absolute_tran_update(mousevec);
+	        update_edit_absolute_tran(pos_view);
 		sedraw = 1;
 		return;
 	case ECMD_VTRANS:
@@ -3787,7 +3775,7 @@ CONST vect_t	mousevec;
 		es_mvalid = 1;	/* es_mparam is valid */
 		/* Leave the rest to code in sedit() */
 
-		sedit_absolute_tran_update(mousevec);
+		update_edit_absolute_tran(pos_view);
 		sedraw = 1;
 		return;
 	case ECMD_TGC_MV_H:
@@ -3809,7 +3797,7 @@ CONST vect_t	mousevec;
 			VSUB2( tgc->h, tr_temp, tgc->v );
 		}
 
-	        sedit_absolute_tran_update(mousevec);
+	        update_edit_absolute_tran(pos_view);
 		sedraw = 1;
 		return;
 	case PTARB:
@@ -3831,17 +3819,21 @@ CONST vect_t	mousevec;
 		MAT4X3PNT(pos_model, es_invmat, temp);
 		editarb( pos_model );
 
-		sedit_absolute_tran_update(mousevec);
+		update_edit_absolute_tran(pos_view);
 		sedraw = 1;
 		return;
 	case EARB:
+#if 0
+	  
+#else
 		/* move arb edge, through indicated point */
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
 		MAT4X3PNT( pos_model, es_invmat, temp );
+#endif
 		editarb( pos_model );
 
-		sedit_absolute_tran_update(mousevec);
+		update_edit_absolute_tran(mousevec);
 		sedraw = 1;
 		return;
 	case ECMD_ARB_MOVE_FACE:
@@ -3860,7 +3852,7 @@ CONST vect_t	mousevec;
 			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
 		}
 
-		sedit_absolute_tran_update(mousevec);
+		update_edit_absolute_tran(mousevec);
 		sedraw = 1;
 		return;
 	case ECMD_NMG_EPICK:
@@ -3899,7 +3891,7 @@ CONST vect_t	mousevec;
 			  bu_vls_free(&tmp_vls);
 			}
 
-			sedit_absolute_tran_update(mousevec);
+			update_edit_absolute_tran(mousevec);
 			sedraw = 1;
 		}
 	        break;
@@ -3921,7 +3913,7 @@ CONST vect_t	mousevec;
 		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;
 
-		sedit_absolute_tran_update(mousevec);
+		update_edit_absolute_tran(mousevec);
 		sedraw = 1;
 		return;
 	default:
@@ -3936,17 +3928,14 @@ CONST vect_t	mousevec;
 }
 
 void
-sedit_absolute_tran_update(mousevec)
-vect_t mousevec;
+update_edit_absolute_tran(pos_view)
+vect_t pos_view;
 {
-  vect_t pos_view;
   vect_t model_pos;
   vect_t diff;
   fastf_t inv_Viewscale = 1/Viewscale;
 
-  MAT4X3PNT( pos_view, model2view, es_keypoint);
-  mousevec[Z] = pos_view[Z];
-  MAT4X3PNT(model_pos, view2model, mousevec);
+  MAT4X3PNT(model_pos, view2model, pos_view);
   VSUB2(diff, model_pos, e_axes_pos);
   VSCALE(edit_absolute_tran, diff, inv_Viewscale);
   
@@ -4166,81 +4155,101 @@ void
 objedit_mouse( mousevec )
 CONST vect_t	mousevec;
 {
-	fastf_t			scale;
-	vect_t	pos_view;	 	/* Unrotated view space pos */
-	vect_t	pos_model;	/* Rotated screen space pos */
-	vect_t	tr_temp;		/* temp translation vector */
-	vect_t	temp;
+  fastf_t			scale;
+  vect_t	pos_view;	 	/* Unrotated view space pos */
+  vect_t	pos_model;	/* Rotated screen space pos */
+  vect_t	tr_temp;		/* temp translation vector */
+  vect_t	temp;
 
-	mat_idn( incr_change );
-	scale = 1;
-	if( movedir & SARROW )  {
-		/* scaling option is in effect */
-		scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
-			mousevec[Y] : -mousevec[Y]);
-		if ( mousevec[Y] <= 0 )
-			scale = 1.0 / scale;
+  mat_idn( incr_change );
+  scale = 1;
+  if( movedir & SARROW )  {
+    /* scaling option is in effect */
+    scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
+			    mousevec[Y] : -mousevec[Y]);
+    if ( mousevec[Y] <= 0 )
+      scale = 1.0 / scale;
 
-		/* switch depending on scaling option selected */
-		switch( edobj ) {
+    /* switch depending on scaling option selected */
+    switch( edobj ) {
 
-			case BE_O_SCALE:
-				/* global scaling */
-				incr_change[15] = 1.0 / scale;
-			break;
+    case BE_O_SCALE:
+      /* global scaling */
+      incr_change[15] = 1.0 / scale;
+      
+      acc_sc_obj /= incr_change[15];
+      edit_absolute_scale = acc_sc_obj - 1.0;
+      if(edit_absolute_scale > 0.0)
+	edit_absolute_scale /= 3.0;
+      break;
 
-			case BE_O_XSCALE:
-				/* local scaling ... X-axis */
-				incr_change[0] = scale;
-				/* accumulate the scale factor */
-				acc_sc[0] *= scale;
-			break;
+    case BE_O_XSCALE:
+      /* local scaling ... X-axis */
+      incr_change[0] = scale;
+      /* accumulate the scale factor */
+      acc_sc[0] *= scale;
+      edit_absolute_scale = acc_sc[0] - 1.0;
+      if(edit_absolute_scale > 0.0)
+	edit_absolute_scale /= 3.0;
+      break;
 
-			case BE_O_YSCALE:
-				/* local scaling ... Y-axis */
-				incr_change[5] = scale;
-				/* accumulate the scale factor */
-				acc_sc[1] *= scale;
-			break;
+    case BE_O_YSCALE:
+      /* local scaling ... Y-axis */
+      incr_change[5] = scale;
+      /* accumulate the scale factor */
+      acc_sc[1] *= scale;
+      edit_absolute_scale = acc_sc[1] - 1.0;
+      if(edit_absolute_scale > 0.0)
+	edit_absolute_scale /= 3.0;
+      break;
+      
+    case BE_O_ZSCALE:
+      /* local scaling ... Z-axis */
+      incr_change[10] = scale;
+      /* accumulate the scale factor */
+      acc_sc[2] *= scale;
+      edit_absolute_scale = acc_sc[2] - 1.0;
+      if(edit_absolute_scale > 0.0)
+	edit_absolute_scale /= 3.0;
+      break;
+    }
 
-			case BE_O_ZSCALE:
-				/* local scaling ... Z-axis */
-				incr_change[10] = scale;
-				/* accumulate the scale factor */
-				acc_sc[2] *= scale;
-			break;
-		}
+    /* Have scaling take place with respect to keypoint,
+     * NOT the view center.
+     */
+    MAT4X3PNT(temp, es_mat, es_keypoint);
+    MAT4X3PNT(pos_model, modelchanges, temp);
+    wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
-		/* Have scaling take place with respect to keypoint,
-		 * NOT the view center.
-		 */
-		MAT4X3PNT(temp, es_mat, es_keypoint);
-		MAT4X3PNT(pos_model, modelchanges, temp);
-		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
-	}  else if( movedir & (RARROW|UARROW) )  {
-		mat_t oldchanges;	/* temporary matrix */
+    mat_idn( incr_change );
+    new_mats();
+  }  else if( movedir & (RARROW|UARROW) )  {
+    mat_t oldchanges;	/* temporary matrix */
 
-		/* Vector from object keypoint to cursor */
-		MAT4X3PNT( temp, es_mat, es_keypoint );
-		MAT4X3PNT( pos_view, model2objview, temp );
-		if( movedir & RARROW )
-			pos_view[X] = mousevec[X];
-		if( movedir & UARROW )
-			pos_view[Y] = mousevec[Y];
+    /* Vector from object keypoint to cursor */
+    MAT4X3PNT( temp, es_mat, es_keypoint );
+    MAT4X3PNT( pos_view, model2objview, temp );
+    if( movedir & RARROW )
+      pos_view[X] = mousevec[X];
+    if( movedir & UARROW )
+      pos_view[Y] = mousevec[Y];
 
-		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
-		MAT4X3PNT( tr_temp, modelchanges, temp );
-		VSUB2( tr_temp, pos_model, tr_temp );
-		MAT_DELTAS(incr_change,
-			tr_temp[X], tr_temp[Y], tr_temp[Z]);
-		mat_copy( oldchanges, modelchanges );
-		mat_mul( modelchanges, incr_change, oldchanges );
-	}  else  {
-	  Tcl_AppendResult(interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
-	  return;
-	}
-	mat_idn( incr_change );
-	new_mats();
+    MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
+    MAT4X3PNT( tr_temp, modelchanges, temp );
+    VSUB2( tr_temp, pos_model, tr_temp );
+    MAT_DELTAS(incr_change,
+	       tr_temp[X], tr_temp[Y], tr_temp[Z]);
+    mat_copy( oldchanges, modelchanges );
+    mat_mul( modelchanges, incr_change, oldchanges );
+
+    mat_idn( incr_change );
+    new_mats();
+
+    update_edit_absolute_tran(pos_view);
+  }  else  {
+    Tcl_AppendResult(interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
+    return;
+  }
 }
 
 
@@ -4248,7 +4257,6 @@ void
 oedit_trans(tvec)
 vect_t tvec;
 {
-  vect_t  pos_view;
   vect_t  pos_model;
   vect_t  tr_temp;
   vect_t  temp;
@@ -4291,7 +4299,7 @@ oedit_abs_scale()
 
   case BE_O_SCALE:
     /* global scaling */
-    incr_mat[15] = scale / acc_sc_obj;
+    incr_mat[15] = acc_sc_obj / scale;
     acc_sc_obj = scale;
     break;
 
