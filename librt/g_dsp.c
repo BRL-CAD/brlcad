@@ -1080,10 +1080,10 @@ point_t curr_pt, next_pt;
 	dist1 = VDOT( PA, N1 ) / NdotD1;
 
 tri2:
-	if (rt_g.debug & DEBUG_HF)
+	if (rt_g.debug & DEBUG_HF) {
 		if (hit1)  bu_log("hit tri1 dist %g\n", dist1);
 		else bu_log("missed tria1 %s\n", reason1);
-
+	}
 	VCROSS(N2, AD, AC);
 	NdotD2 = VDOT( N2, isect->r.r_dir);
 
@@ -1120,10 +1120,10 @@ tri2:
 	dist2 = VDOT( PA, N2 ) / NdotD2;
 
 done:
-	if (rt_g.debug & DEBUG_HF)
+	if (rt_g.debug & DEBUG_HF) {
 		if (hit2)  bu_log("hit tri2 dist %g\n", dist2);
 		else bu_log("missed tri2 %s\n", reason2);
-
+	}
 
 	/* plot some diagnostic overlays */
 	if (rt_g.debug & DEBUG_HF && plot_em)
@@ -1567,6 +1567,16 @@ struct cell_stuff *cs;
 		OUTHIT(isect, cs->next_dist, cs->cell_outsurf, 
 			cs->grid_cell,
 			dsp_pl[BBSURF(cs->cell_outsurf)]);
+
+	     	if (BBSURF(cs->cell_outsurf) == ZMIN ||
+		    BBSURF(cs->cell_outsurf) == XMIN ||
+		    BBSURF(cs->cell_outsurf) == XMAX ||
+		    BBSURF(cs->cell_outsurf) == YMIN ||
+		    BBSURF(cs->cell_outsurf) == YMAX ) {
+	     		/* we're leaving the DSP */
+	     		HIT_COMMIT(isect);
+	     	}
+
 		return;
 	}
 
@@ -2080,7 +2090,7 @@ int bool;
 	 *		D
 	 */
 	
-	point_t A, B, C, D, E, tmp;
+	point_t A, C, D, E, tmp;
 	vect_t Vac, Vde;
 
 	if (x == 0) {	VSET(tmp, x, y, DSP(dsp, x, y) );	}
@@ -2125,8 +2135,7 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	vect_t N, t, tmp, A, B, C, D, AB, AC, AD, N_orig;
-	int cell[2];
+	vect_t N, t, tmp, A, B, C, D, N_orig;
 	char buf[32];
 	struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
 	vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
