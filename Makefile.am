@@ -80,7 +80,7 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 	@$(ECHO) "Warning: this package target presently assumes that the install directory"
 	@$(ECHO) "         does not contain extra files and comprises a full clean install."
 	@$(ECHO)
-	@@SH@ sh/make_pkg.sh $(PACKAGE_NAME)-$(VERSION)
+	@@SH@ sh/make_pkg.sh $(PACKAGE_NAME) $(MAJOR_VERSION) $(MINOR_VERSION) $(PATCH_VERSION) $(DESTDIR)$(prefix)
 
 $(PACKAGE_NAME)-$(VERSION).dmg:
 	@$(ECHO) "Building a Disk Image for Mac OS X"
