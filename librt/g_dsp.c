@@ -2739,8 +2739,8 @@ CONST struct db_i		*dbip;
 
 	/* get file */
 	mf = dsp_ip->dsp_mp = 
-		bu_open_mapped_file_with_path(dsp_ip->dsp_file, "dsp",
-					      dbip->dbi_filepath);
+		bu_open_mapped_file_with_path(dbip->dbi_filepath,
+			dsp_ip->dsp_file, "dsp");
 	if (!mf) {
 		IMPORT_FAIL("unable to open");
 	}
