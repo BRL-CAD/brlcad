@@ -233,6 +233,7 @@ genptr_t		client_data;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	BN_CK_TOL(tsp->ts_tol);
+	RT_CK_DB_INTERNAL(ip);
 
 	BU_LIST_INIT( &vhead );
 
