@@ -1,9 +1,0 @@
-# ----------------------------------------------------------------------
-#  DEMO: spintime in [incr Widgets]
-# ----------------------------------------------------------------------
-package require Iwidgets 4.0
-
-option add *textBackground seashell
-
-iwidgets::spintime .st
-pack .st
