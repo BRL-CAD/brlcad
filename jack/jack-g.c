@@ -319,6 +319,8 @@ char		*grp_name, *reg_name;
 struct model	*m;
 {
 	char	*rname, *sname;
+	struct shell *s;
+	struct nmgregion *r;
 
 	rname = malloc(sizeof(reg_name) + 3);	/* Region name. */
 	sname = malloc(sizeof(reg_name) + 3);	/* Solid name. */
@@ -326,7 +328,9 @@ struct model	*m;
 	sprintf(sname, "s.%s", reg_name);
 	nmg_kill_zero_length_edgeuses( m );
 	nmg_rebound( m, &tol );
-	mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+	r = BU_LIST_FIRST( nmgregion, &m->r_hd);
+	s = BU_LIST_FIRST( shell, &r->s_hd );
+	mk_bot_from_nmg(fpout, sname,  s);		/* Make BOT object. */
 	sprintf(rname, "r.%s", reg_name);
 	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
 	if (grp_name) {
