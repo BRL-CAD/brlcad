@@ -374,6 +374,43 @@ char **argv;
 }
 
 /*
+ *			R T _ T C L _ R T _ C H E C K
+ *
+ *  Run some of the internal consistency checkers over the data structures.
+ *
+ *  Usage -
+ *	procname check
+ */
+int
+rt_tcl_rt_check( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+	char			buf[64];
+
+	if( argc != 2 )  {
+		Tcl_AppendResult( interp,
+				"wrong # args: should be \"",
+				argv[0], " ", argv[1], "\"",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Could core dump */
+	RT_AP_CHECK(ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI_TCL(rtip);
+
+	rt_ck(rtip);
+
+	return TCL_OK;
+}
+
+/*
  *			R T _ T C L _ R T _ P R E P
  *
  *  When run with no args, just prints current status of prepping.
@@ -439,6 +476,7 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 	"shootray",	rt_tcl_rt_shootray,
 	"onehit",	rt_tcl_rt_onehit,
 	"no_bool",	rt_tcl_rt_no_bool,
+	"check",	rt_tcl_rt_check,
 	"prep",		rt_tcl_rt_prep,
 	(char *)0,	(int (*)())0
 };
@@ -1515,6 +1553,7 @@ ClientData clientData;
 	RT_AP_CHECK(ap);
 	rtip = ap->a_rt_i;
 	RT_CK_RTI(rtip);
+	rt_ck(rtip);
 
 #if 0
 	/* Warning!  This calls db_close()!  Clobber city. */
@@ -1567,6 +1606,9 @@ char	      **argv;
 	rtip = rt_new_rti( wdp->dbip );
 	newprocname = argv[2];
 
+	/* Delete previous proc (if any) to release all that memory, first */
+	(void)Tcl_DeleteCommand( interp, newprocname );
+
 	if( strcmp( argv[3], "-i" ) == 0 )  {
 		rtip->rti_dont_instance = 1;
 		argc--;
@@ -1608,15 +1650,16 @@ char	      **argv;
 	ap->a_rt_i = rtip;
 	ap->a_purpose = "Conquest!";
 
+	rt_ck(rtip);
+
 	/* Instantiate the proc, with clientData of wdb */
-	/* XXX should we see if it exists first? default=overwrite */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand( interp, newprocname, rt_tcl_rt,
 				 (ClientData)ap, rt_tcl_deleteproc_rt );
 
 	/* Return new function name as result */
 	Tcl_AppendResult( interp, newprocname, (char *)NULL );
-	
+
 	return TCL_OK;
 
 }
@@ -1735,6 +1778,9 @@ Usage: wdb_open newprocname file filename\n\
 		return TCL_ERROR;
 	}
 
+	/* Delete previous proc (if any) to release all that memory, first */
+	(void)Tcl_DeleteCommand( interp, argv[1] );
+
 	if( strcmp( argv[2], "file" ) == 0 )  {
 		wdb = wdb_fopen( argv[3] );
 	} else {
@@ -1764,7 +1810,6 @@ Usage: wdb_open newprocname file filename\n\
 	}
 
 	/* Instantiate the newprocname, with clientData of wdb */
-	/* XXX should we see if it exists first? default=overwrite */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand( interp, argv[1], rt_db,
 				 (ClientData)wdb, rt_tcl_deleteproc_wdb );
