@@ -1678,7 +1678,7 @@ log_event( event, arg )
 char *event;
 char *arg;
 {
-	char line[128];
+	struct bu_vls line;
 	time_t now;
 	char *timep;
 	int logfd;
@@ -1687,7 +1687,8 @@ char *arg;
 	timep = ctime( &now );	/* returns 26 char string */
 	timep[24] = '\0';	/* Chop off \n */
 
-	(void)sprintf(line, "%s [%s] time=%ld uid=%d (%s) %s\n",
+	bu_vls_init(&line);
+	bu_vls_printf(&line, "%s [%s] time=%ld uid=%d (%s) %s\n",
 		      event,
 		      dmp->dm_name,
 		      (long)now,
@@ -1697,9 +1698,11 @@ char *arg;
 	);
 
 	if( (logfd = open( LOGFILE, O_WRONLY|O_APPEND )) >= 0 )  {
-		(void)write( logfd, line, (unsigned)strlen(line) );
+		(void)write( logfd, bu_vls_addr(&line), (unsigned)bu_vls_strlen(&line) );
 		(void)close( logfd );
 	}
+
+	bu_vls_free(&line);
 }
 
 /*
