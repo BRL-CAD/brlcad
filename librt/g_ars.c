@@ -35,7 +35,7 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 extern fastf_t *rd_curve();
 
-void		HitSort();		/* XXX needs rt_ name */
+HIDDEN void	ars_hitsort();
 
 /*
  *			A R S _ P R E P
@@ -76,7 +76,7 @@ struct rt_i	*rtip;
 	 * Read all the curves into memory, and store their pointers
 	 */
 	i = (ncurves+1) * sizeof(fastf_t **);
-	curves = (fastf_t **)malloc( i );
+	curves = (fastf_t **)rt_malloc( i, "ars curve ptrs" );
 	for( i=0; i < ncurves; i++ )  {
 		curves[i] = rd_curve( rtip, pts_per_curve );
 	}
@@ -164,9 +164,9 @@ struct rt_i	*rtip;
 	 *  Free storage for faces
 	 */
 	for( i = 0; i < ncurves; i++ )  {
-		free( (char *)curves[i] );
+		rt_free( (char *)curves[i], "ars curve" );
 	}
-	free( (char *)curves );
+	rt_free( (char *)curves, "ars curve ptrs" );
 
 	return(0);		/* OK */
 }
@@ -191,7 +191,7 @@ int		npts;
 
 	/* Leave room for first point to be repeated */
 	bytes = (npts+1) * sizeof(fastf_t) * ELEMENTS_PER_VECT;
-	if( (fp = (fastf_t *)malloc(bytes)) == (fastf_t *) 0 )
+	if( (fp = (fastf_t *)rt_malloc(bytes, "ars curve")) == (fastf_t *) 0 )
 		rt_bomb("ars.c/rd_curve():  malloc error");
 	base = fp;
 
@@ -205,7 +205,7 @@ int		npts;
 		}
 		lim = (npts>8) ? 8 : npts;
 		for( i=0; i<lim; i++ )  {
-			VMOVE( fp, &r.b.b_values[i*3] );	/* cvt, too */
+			VMOVE( fp, (&(r.b.b_values[i*3])) );	/* cvt from dbfloat_t, too */
 			fp += ELEMENTS_PER_VECT;
 			npts--;
 		}
@@ -246,17 +246,15 @@ pointp_t ap, bp, cp;
 	m4 = MAGNITUDE( trip->tri_wn );
 	if( NEAR_ZERO(m1,0.0001) || NEAR_ZERO(m2,0.0001) ||
 	    NEAR_ZERO(m3,0.0001) || NEAR_ZERO(m4,0.0001) )  {
-		free( (char *)trip);
+		rt_free( (char *)trip, "tri_specific struct");
 		if( rt_g.debug & DEBUG_ARB8 )
 			rt_log("ars(%s): degenerate facet\n", stp->st_name);
 		return(0);			/* BAD */
 	}		
 
-	/*  wn is a GIFT-style
-	 *  normal, needing to point inwards, whereas N is an outward
-	 *  pointing normal.
-	 *  There is no chance of "fixing" the normals, as bumps in the
-	 *  sides of the ARS can point in any direction.
+	/*
+	 *  wn is an inward pointing normal, of non-unit length.
+	 *  tri_N is a unit length outward pointing normal.
 	 */
 	VREVERSE( trip->tri_N, trip->tri_wn );
 	VUNITIZE( trip->tri_N );
@@ -329,11 +327,12 @@ struct application	*ap;
 		LOCAL vect_t	xp;		/* wxb cross ray_dir */
 
 		/*
-		 *  Ray Direction dot N.  (N is outward-pointing normal)
+		 *  Ray Direction dot N.  (wn is inward pointing normal)
 		 */
 		dn = VDOT( trip->tri_wn, rp->r_dir );
 		if( rt_g.debug & DEBUG_ARB8 )
-			rt_log("Face N.Dir=%f\n", dn );
+			rt_log("N.Dir=%g ", dn );
+
 		/*
 		 *  If ray lies directly along the face, drop this face.
 		 */
@@ -364,13 +363,12 @@ struct application	*ap;
 
 		/*  If dn < 0, we should be entering the solid.
 		 *  However, we just assume in/out sorting later will work.
-		 *  It will be verified in ars_norm().
 		 */
 		hp->hit_dist = k;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;
 
-		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: hit dist=%f, dn=%f\n", hp->hit_dist, dn );
+		if(rt_g.debug&DEBUG_ARB8) rt_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 		if( nhits++ >= MAXHITS )  {
 			rt_log("ars(%s): too many hits\n", stp->st_name);
 			break;
@@ -381,7 +379,7 @@ struct application	*ap;
 		return(SEG_NULL);		/* MISS */
 
 	/* Sort hits, Near to Far */
-	HitSort( hits, nhits );
+	ars_hitsort( hits, nhits );
 
 	if( nhits&1 )  {
 		register int i;
@@ -400,7 +398,30 @@ struct application	*ap;
 	/* nhits is even, build segments */
 	{
 		register struct seg *segp;
-		register int	i;
+		register int	i,j;
+
+		/* Check in/out properties */
+		for( i=nhits; i > 0; i -= 2 )  {
+			if( hits[i-2].hit_vpriv[X] >= 0 )
+				continue;		/* seg_in */
+			if( hits[i-1].hit_vpriv[X] <= 0 )
+				continue;		/* seg_out */
+		   	rt_log("ars(%s): in/out error\n", stp->st_name );
+			for( j=nhits-1; j >= 0; j-- )  {
+		   		rt_log("%d %s dist=%g dn=%g\n",
+					j,
+					((hits[j].hit_vpriv[X] > 0) ?
+		   				" In" : "Out" ),
+			   		hits[j].hit_dist,
+					hits[j].hit_vpriv[X] );
+		   	}
+#ifdef CONSERVATIVE
+		   	return(SEG_NULL);
+#else
+			/* For now, just chatter, and return *something* */
+			break;
+#endif
+		}
 
 		segp = SEG_NULL;
 		for( i=nhits; i > 0; i -= 2 )  {
@@ -412,28 +433,17 @@ struct application	*ap;
 			segp->seg_stp = stp;
 			segp->seg_in = hits[i-2];	/* struct copy */
 			segp->seg_out = hits[i-1];	/* struct copy */
-
-			/* Check in/out properties */
-			if( segp->seg_in.hit_vpriv[X] > 0  ||
-			   segp->seg_out.hit_vpriv[X] < 0 )  {
-			   	rt_log("ars(%s): in/out error\n", stp->st_name );
-			   	for( i=0; i<nhits; i++ )  {
-			   		rt_log("%d:  dist=%g, %s\n",
-			   			i,
-				   		hits[i].hit_dist,
-						(hits[i].hit_vpriv[X] < 0) ?
-			   				"In" : "Out" );
-			   	}
-			   	return(SEG_NULL);
-			}
 		}
 		return(segp);			/* HIT */
 	}
 	/* NOTREACHED */
 }
 
-void
-HitSort( h, nh )
+/*
+ *			A R S _ H I T S O R T
+ */
+HIDDEN void
+ars_hitsort( h, nh )
 register struct hit h[];
 register int nh;
 {
@@ -464,16 +474,9 @@ register struct xray *rp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)hitp->hit_private;
-	register fastf_t	dot, dn;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	VMOVE( hitp->hit_normal, trip->tri_N );
-
-	/* If these are < 0, it implies an inward direction */
-	dn = hitp->hit_vpriv[X];
-	if( dn > 0 )  rt_log("ars_norm, dn=%g?\n", dn);
-	dot = VDOT( hitp->hit_normal, rp->r_dir );
-	if( dot > 0 )  rt_log("ars_norm:  flipped N, dn=%g, dot=%g\n", dn, dot);
 }
 
 /*
@@ -526,7 +529,7 @@ register struct uvcoord *uvp;
 	uvp->uv_v = 1.0 - ( VDOT( P_A, trip->tri_CA ) * yylen );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("ars_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
+			rt_log("ars_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
