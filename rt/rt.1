@@ -154,8 +154,8 @@ utility can be used later to display ``.pix'' files.
 .B \-p#
 Sets the perspective, in degrees, ranging  0 <= # < 180.
 .TP
-.B \-r#
-requests that overlapping regions be reported.
+.B \-r
+requests that overlapping regions be reported. (confilcts with -R)
 .TP
 .B \-s#
 specifies the
@@ -262,6 +262,9 @@ On ``dedicated'' multi-processors, such as workstations and super-minis,
 the default is usually set for the maximum number of processors,
 while on shared multi-processors, such as SuperComputers,
 usually just one processor is used by default.
+.TP
+.B \-R
+requests that overlapping regions not be reported. (confilcts with -r)
 .TP
 .B \-S
 Turns on stereo viewing.
