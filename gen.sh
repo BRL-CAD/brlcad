@@ -180,7 +180,7 @@ CDIRS="sh cake cakeaux html"
 BDIRS="bench \
 	libtcl8.4 \
 	libtk8.4 \
-	libitcl3.2 \
+	libitcl \
         iwidgets4.0.1 \
 	libz \
 	libpng \
@@ -329,7 +329,7 @@ benchmark)
 	(T=librt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=liboptical; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=libtcl8.4; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
-	(T=libitcl3.2; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libitcl; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=rt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=conv; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=db; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
@@ -686,7 +686,7 @@ dist)
 	echo 'pro-engineer/*' >> ${EXCLUDE}
 	echo 'libtcl8.4/*' >> ${EXCLUDE}
 	echo 'libtk8.4/*' >> ${EXCLUDE}
-	echo 'libitcl3.2/*' >> ${EXCLUDE}
+	echo 'libitcl/*' >> ${EXCLUDE}
 	echo 'iwidgets4.0.1/*' >> ${EXCLUDE}
 
 	tar cfv - Copy* README doc html \
@@ -730,10 +730,10 @@ dist)
 	chmod 444 ${FTP_ARCHIVE}-h.gz
 	echo "${FTP_ARCHIVE}-h.gz created (pro-engineer)"
 
-	tar cfv - Copy* README libtcl8.4 libtk8.4 libitcl3.2 iwidgets4.0.1 zzzEND |\
+	tar cfv - Copy* README libtcl8.4 libtk8.4 libitcl iwidgets4.0.1 zzzEND |\
 		gzip -9 > ${FTP_ARCHIVE}-i.gz
 	chmod 444 ${FTP_ARCHIVE}-i.gz
-	echo "${FTP_ARCHIVE}-i.gz created (libtcl8.4 libtk8.4 libitcl3.2 iwidgets4.0.1)"
+	echo "${FTP_ARCHIVE}-i.gz created (libtcl8.4 libtk8.4 libitcl iwidgets4.0.1)"
 
 	rm -f ${EXCLUDE}
 

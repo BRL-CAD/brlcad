@@ -5,7 +5,7 @@
 **	$Header$
 */
 
-#if defined(ATT) || ( defined(__FreeBSD__) && __FreeBSD__ >= 5)
+#if defined(ATT) || ( defined(__MACHINETYPE__fbsd) && defined(__FreeBSD__) && __FreeBSD__ >= 5)
 /*
  * Copyright (c) 1982 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
