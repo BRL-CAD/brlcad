@@ -6,6 +6,7 @@
  *  Authors -
  *	Lee A. Butler
  *	Michael John Muuss
+ *	John R. Anderson
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -1358,4 +1359,70 @@ CONST struct rt_tol	*tol;
 		if( ret != 0 )  return(ret);
 	}
 	return(0);
+}
+
+/*	N M G _ C K _ V _ I N _ 2 F U S
+ *
+ *	accepts a vertex pointer, two faceuses, and a tolerance.
+ *	Checks if the vertex is in both faceuses (topologically
+ *	and geometrically within tolerance of plane).
+ *
+ *	Calls rt_bomb if vertex is not in the faceuses topology or
+ *	out of tolerance of either face.
+ *
+ */
+
+void
+nmg_ck_v_in_2fus( struct vertex *vp , struct faceuse *fu1 , struct faceuse *fu2 , struct rt_tol *tol )
+{
+	struct rt_vls str;
+	struct faceuse *fu;
+	struct vertexuse *vu;
+	fastf_t dist1,dist2;
+	int found1=0,found2=0;
+
+	NMG_CK_VERTEX( vp );
+	NMG_CK_FACEUSE( fu1 );
+	NMG_CK_FACEUSE( fu2 );
+	RT_CK_TOL( tol );
+
+	/* topology check */
+	for( RT_LIST_FOR( vu , vertexuse , &vp->vu_hd ) )
+	{
+		fu = nmg_find_fu_of_vu( vu );
+		if( fu == fu1 )
+			found1 = 1;
+		if( fu == fu2 )
+			found2 = 1;
+		if( found1 && found2 )
+			break;
+	}
+
+	if( !found1 || !found2 )
+	{
+		rt_vls_init( &str );
+		rt_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%x not used in" , vp );
+		if( !found1 )
+			rt_vls_printf( &str , " faceuse x%x" , fu1 );
+		if( !found2 )
+			rt_vls_printf( &str , " faceuse x%x" , fu2 );
+		rt_bomb( rt_vls_addr( &str ) );
+	}
+
+	/* geometry check */
+	dist1 = VDOT( vp->vg_p->coord , fu1->f_p->fg_p->N ) - fu1->f_p->fg_p->N[3];
+	dist2 = VDOT( vp->vg_p->coord , fu2->f_p->fg_p->N ) - fu2->f_p->fg_p->N[3];
+
+	if( !NEAR_ZERO( dist1 , tol->dist ) || !NEAR_ZERO( dist2 , tol->dist ) )
+	{
+		rt_vls_init( &str );
+		rt_vls_printf( &str , "nmg_ck_v_in_2fus: vertex x%x ( %g %g %g ) not in plane of" ,
+				vp , V3ARGS( vp->vg_p->coord ) );
+		if( !NEAR_ZERO( dist1 , tol->dist ) )
+			rt_vls_printf( &str , " faceuse x%x (off by %g)" , fu1 , dist1 );
+		if( !NEAR_ZERO( dist2 , tol->dist ) )
+			rt_vls_printf( &str , " faceuse x%x (off by %g)" , fu2 , dist2 );
+		rt_bomb( rt_vls_addr( &str ) );
+	}
+
 }
