@@ -721,6 +721,8 @@ extern double mat_atan2();
 extern char *rt_malloc(unsigned int cnt, char *str);
 					/* visible free() */
 extern void rt_free(char *ptr, char *str);
+					/* visible realloc() */
+extern char *rt_realloc(char *ptr, unsigned int cnt, char *str);
 					/* Duplicate str w/malloc */
 extern char *rt_strdup(char *cp);
 
@@ -786,6 +788,7 @@ extern int rt_rpp_region(struct rt_i *rtip, char *reg_name,
 
 extern char *rt_malloc();		/* visible malloc() */
 extern void rt_free();			/* visible free() */
+extern char *rt_realloc();		/* visible realloc() */
 extern char *rt_strdup();		/* Duplicate str w/malloc */
 
 extern struct directory *rt_dir_lookup();/* Look up name in toc */
