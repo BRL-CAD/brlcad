@@ -1889,6 +1889,8 @@ dgo_report_tcl(clientData, interp, argc, argv)
 {
 	struct dg_obj	*dgop = (struct dg_obj *)clientData;
 
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
 	return dgo_report_cmd(dgop, interp, argc-1, argv+1);
 }
 
