@@ -316,7 +316,7 @@ struct cnurb * crv;
 
 	rt_nurb_free_oslo( oslo );
 
-	/* XXX Who frees new_kv.knots */
+	rt_free( (char *) new_kv.knots, "rt_nurb_c_split; new_kv.knots" );
 
 	crv1->next = crv2;
 	return (struct cnurb *) crv1;
