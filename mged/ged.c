@@ -286,6 +286,7 @@ char **argv;
 
 		pid = fork();
 		if( pid > 0 ) {
+			sleep( 3 );	/* just so it does not appear that MGED has died */
 			exit( 0 );
 		}
 	}
