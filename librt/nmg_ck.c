@@ -1373,6 +1373,10 @@ char *s;
  *
  *  XXX Added code to skip dangling faces (needs to be checked a little more) - JRA
  *
+ *  XXX I think that if dangling faces are to be processed correctly,
+ *  XXX the caller should pass in a table of dangling faces.  -Mike
+ *  XXX I've #if'ed that check out, for now.
+ *
  *	Return
  *	0	OK
  *	1	bad edgeuse mate
@@ -1406,8 +1410,11 @@ CONST struct rt_tol	*tol;
 
 	/* If this eu is a wire, advance to first non-wire (skipping dangling faces). */
 	while( (fu = nmg_find_fu_of_eu(eu)) == (struct faceuse *)NULL ||
-		nmg_find_s_of_eu((struct edgeuse *)eu) != s ||
-		nmg_dangling_face( fu, (char *)NULL ) )  {
+		nmg_find_s_of_eu((struct edgeuse *)eu) != s
+#if BO_DANGLE
+		|| nmg_dangling_face( fu, (char *)NULL )
+#endif
+	)  {
 		eu = eu->radial_p->eumate_p;
 		if( eu == eu1 )  return 0;	/* wires all around */
 	}
@@ -1424,8 +1431,10 @@ CONST struct rt_tol	*tol;
 		 *  Continue search if it is a wire edge or dangling face.
 		 */
 		while( nmg_find_s_of_eu((struct edgeuse *)eur) != s  ||
-		       (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL ||
-			nmg_dangling_face( fu, (char *)NULL )
+		       (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL
+#if BO_DANGLE
+			|| nmg_dangling_face( fu, (char *)NULL )
+#endif
 		)  {
 			/* Advance to next eur */
 			NMG_CK_EDGEUSE(eur->eumate_p);
@@ -1447,13 +1456,15 @@ CONST struct rt_tol	*tol;
 		NMG_CK_FACEUSE(fu);
 		if (fu->orientation != curr_orient &&
 		    eur != eu1->eumate_p ) {
-		    	char buf[80];
+		    	char file[128];
+		    	char buf[128];
+		    	static int num=0;
 
 			p = eu1->vu_p->v_p->vg_p->coord;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
-			rt_log("nmg_check_radial(): Radial orientation problem at edge %g %g %g -> %g %g %g\n",
+			rt_log("nmg_check_radial(): Radial orientation problem\n  edge: %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
-			rt_log("Problem Edgeuses: eu_orig=%8x, eur=%8x, s=x%x, eurstart=x%x, curr_orient=%s\n",
+			rt_log("  eu_orig=%8x, eur=%8x, s=x%x, eurstart=x%x, curr_orient=%s\n",
 				eu_orig, eur, s, eurstart,
 				nmg_orientation(curr_orient) );
 
@@ -1464,10 +1475,11 @@ CONST struct rt_tol	*tol;
 			nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
 				eur->eumate_p->vu_p );
 
-		    	sprintf(buf, "Orientation problem %g %g %g -> %g %g %g\n",
+		    	sprintf(buf, "%g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
-
-		    	nmg_stash_model_to_file("radial.g", 
+		    	
+		    	sprintf(file, "radial%d.g", num++);
+		    	nmg_stash_model_to_file( file, 
 		    		nmg_find_model(&(fu->l.magic)), buf);
 
 			nmg_pr_fu_around_eu( eu_orig, tol );
