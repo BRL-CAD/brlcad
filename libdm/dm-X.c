@@ -21,6 +21,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
+#include <stdio.h>
+#include <limits.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -107,6 +109,9 @@ struct dm dm_X = {
   0,
   0
 };
+
+fastf_t min_short = (fastf_t)SHRT_MIN;
+fastf_t max_short = (fastf_t)SHRT_MAX;
 
 /* Currently, the application must define these. */
 extern Tk_Window tkwin;
@@ -455,15 +460,12 @@ struct dm *dmp;
 register struct rt_vlist *vp;
 mat_t mat;
 {
-    static vect_t   pnt;
-    register struct rt_vlist	*tvp;
+    static vect_t spnt, lpnt, pnt;
+    register struct rt_vlist *tvp;
     XSegment segbuf[1024];		/* XDrawSegments list */
     XSegment *segp;			/* current segment */
     XGCValues gcv;
     int	nseg;			        /* number of segments */
-    int	x, y;
-    int	lastx = 0;
-    int	lasty = 0;
 
     nseg = 0;
     segp = segbuf;
@@ -485,16 +487,12 @@ mat_t mat;
 	    case RT_VLIST_POLY_MOVE:
 	    case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
-		MAT4X3PNT( pnt, mat, *pt );
-		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
-		   pnt[1] < -1e6 || pnt[1] > 1e6 )
+		MAT4X3PNT( lpnt, mat, *pt );
+		if( lpnt[0] < -1e6 || lpnt[0] > 1e6 ||
+		   lpnt[1] < -1e6 || lpnt[1] > 1e6 )
 		    continue; /* omit this point (ugh) */
-		pnt[0] *= 2047 * dmp->dm_aspect;
-		pnt[1] *= 2047;
-		x = GED_TO_Xx(dmp, pnt[0]);
-		y = GED_TO_Xy(dmp, pnt[1]);
-		lastx = x;
-		lasty = y;
+		lpnt[0] *= 2047 * dmp->dm_aspect;
+		lpnt[1] *= 2047;
 		continue;
 	    case RT_VLIST_POLY_DRAW:
 	    case RT_VLIST_POLY_END:
@@ -505,21 +503,38 @@ mat_t mat;
 		   pnt[1] < -1e6 || pnt[1] > 1e6 )
 		    continue; /* omit this point (ugh) */
 
-		/* Integerize and let the X server do the clipping */
-
 		pnt[0] *= 2047 * dmp->dm_aspect;
 		pnt[1] *= 2047;
-		x = GED_TO_Xx(dmp, pnt[0]);
-		y = GED_TO_Xy(dmp, pnt[1]);
 
-		segp->x1 = lastx;
-		segp->y1 = lasty;
-		segp->x2 = x;
-		segp->y2 = y;
+		/* save pnt --- it might get changed by clip() */
+		VMOVE(spnt, pnt);
+
+		/* Check to see if lpnt or pnt contain values that exceed
+		   the capacity of a short (segbuf is an array of XSegments which
+		   contain shorts). If so, do clipping now. Otherwise, let the
+		   X server do the clipping */
+		if(lpnt[0] < min_short || max_short < lpnt[0] ||
+		   lpnt[1] < min_short || max_short < lpnt[1] ||
+		   pnt[0] < min_short || max_short < pnt[0] ||
+		     pnt[1] < min_short || max_short < pnt[1]){
+
+		  /* if the entire line segment will not be visible then ignore it */
+		  if(clip(&lpnt[0], &lpnt[1], &pnt[0], &pnt[1]) == -1){
+		    VMOVE(lpnt, spnt);
+		    continue;
+		  }
+		}
+
+		/* convert to X window coordinates */
+		segp->x1 = (short)GED_TO_Xx(dmp, lpnt[0]);
+		segp->y1 = (short)GED_TO_Xy(dmp, lpnt[1]);
+		segp->x2 = (short)GED_TO_Xx(dmp, pnt[0]);
+		segp->y2 = (short)GED_TO_Xy(dmp, pnt[1]);
+
 		nseg++;
 		segp++;
-		lastx = x;
-		lasty = y;
+		VMOVE(lpnt, spnt);
+
 		if( nseg == 1024 ) {
 		  XDrawSegments( ((struct x_vars *)dmp->dm_vars)->dpy,
 				 ((struct x_vars *)dmp->dm_vars)->pix,
