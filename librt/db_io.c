@@ -60,14 +60,16 @@ struct directory *dp;
 		dp->d_namep, dbip, dp );
 
 	if( dp->d_addr < 0 )
-		return( (union record *)0 );	/* dummy DB entry */
+		return( (union record *)0 );	/* was dummy DB entry */
 	if( (where = (union record *)rt_malloc(
 		dp->d_len * sizeof(union record),
 		dp->d_namep)
 	    ) == ((union record *)0) )
 		return( (union record *)0 );
 
-	if( db_get( dbip, dp, where, 0, dp->d_len ) < 0 )  {
+	if( db_read( dbip, (char *)where,
+	    (long)dp->d_len * sizeof(union record),
+	    dp->d_addr ) < 0 )  {
 		rt_free( (char *)where, dp->d_namep );
 		return( (union record *)0 );	/* VERY BAD */
 	}
@@ -77,7 +79,7 @@ struct directory *dp;
 /*
  *  			D B _ G E T
  *
- *  Retrieve several records from the database,
+ *  Retrieve 'len' records from the database,
  *  "offset" granules into this entry.
  *
  *  Returns -
@@ -92,8 +94,6 @@ union record	*where;
 int		offset;
 int		len;
 {
-	register int	want;
-	register int	got;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB) rt_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
@@ -109,35 +109,9 @@ int		len;
 		where->u_id = '\0';	/* undefined id */
 		return(-1);
 	}
-	if( dbip->dbi_inmem )  {
-		register int	start;
 
-		want = len * sizeof(union record);
-		start = dp->d_addr + offset * sizeof(union record);
-#if defined(SYSV)
-		memcpy( (char *)where, dbip->dbi_inmem + start, want );
-#else
-		bcopy( dbip->dbi_inmem + start, (char *)where, want );
-#endif
-		return(0);
-	}
-	RES_ACQUIRE( &rt_g.res_syscall );
-#if unix
-	want = len * sizeof(union record);
-	(void)lseek( dbip->dbi_fd,
-		(long)(dp->d_addr + offset * sizeof(union record)), 0 );
-	got = read( dbip->dbi_fd, (char *)where, want );
-#else
-	want = len;
-	(void)fseek( dbip->dbi_fp,
-		(long)(dp->d_addr + offset * sizeof(union record)), 0 );
-	got = fread( (char *)where, want, sizeof(union record), dbip->dbi_fp );
-#endif
-	RES_RELEASE( &rt_g.res_syscall );
-	if( got != want )  {
-		perror("db_get");
-		rt_log("db_get(%s):  read error.  Wanted %d, got %d bytes\n",
-			dp->d_namep, want, got );
+	if( db_read( dbip, (char *)where, (long)len * sizeof(union record),
+	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
 		where->u_id = '\0';	/* undefined id */
 		return(-1);
 	}
@@ -147,7 +121,7 @@ int		len;
 /*
  *  			D B _ P U T
  *
- *  Store several records to the database,
+ *  Store 'len' records to the database,
  *  "offset" granules into this entry.
  *
  *  Returns -
@@ -162,8 +136,6 @@ union record	*where;
 int		offset;
 int		len;
 {
-	register int	want;
-	register int	got;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put:  bad dbip\n");
 	if(rt_g.debug&DEBUG_DB) rt_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
@@ -179,25 +151,119 @@ int		len;
 			dp->d_namep, offset, offset+len, dp->d_len );
 		return(-1);
 	}
-	RES_ACQUIRE( &rt_g.res_syscall );
-#if unix
-	want = len * sizeof(union record);
-	(void)lseek( dbip->dbi_fd,
-		(long)(dp->d_addr + offset * sizeof(union record)), 0 );
-	got = write( dbip->dbi_fd, (char *)where, want );
-#else
-	want = len;
-	(void)fseek( dbip->dbi_fp,
-		(long)(dp->d_addr + offset * sizeof(union record)), 0 );
-	got = fwrite( (char *)where, want, sizeof(union record),
-		dbip->dbi_fp );
-#endif
-	RES_RELEASE( &rt_g.res_syscall );
-	if( got != want )  {
-		perror("db_put");
-		rt_log("db_put(%s):  write error.  Sent %d, achieved %d bytes\n",
-			dp->d_namep, want, got );
+
+	if( db_write( dbip, (char *)where, (long)len * sizeof(union record),
+	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
 		return(-1);
 	}
 	return(0);
+}
+
+/*
+ *			D B _ R E A D
+ *
+ *  Reads 'count' bytes at file offset 'offset' into buffer at 'addr'.
+ *  A wrapper for the UNIX read() sys-call that takes into account
+ *  syscall semaphores, stdio-only machines, and in-memory buffering.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+db_read( dbip, addr, count, offset )
+struct db_i	*dbip;
+genptr_t	addr;
+long		count;		/* byte count */
+long		offset;		/* byte offset from start of file */
+{
+	register int	got;
+
+	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_read:  bad dbip\n");
+	if(rt_g.debug&DEBUG_DB)  {
+		rt_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
+			dbip, addr, count, offset );
+	}
+	if( count <= 0 || offset < 0 )  {
+		return(-1);
+	}
+	if( dbip->dbi_inmem )  {
+#if defined(SYSV)
+		memcpy( addr, dbip->dbi_inmem + offset, count );
+#else
+		bcopy( dbip->dbi_inmem + offset, addr, count );
+#endif
+		return(0);
+	}
+	RES_ACQUIRE( &rt_g.res_syscall );
+#if unix
+	(void)lseek( dbip->dbi_fd, offset, 0 );
+	got = read( dbip->dbi_fd, addr, count );
+#else
+	(void)fseek( dbip->dbi_fp, offset, 0 );
+	got = fread( addr, count, 1, dbip->dbi_fp );
+#endif
+	RES_RELEASE( &rt_g.res_syscall );
+	if( got != count )  {
+		perror("db_read");
+		rt_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
+			dbip->dbi_filename, count, got );
+		return(-1);
+	}
+	return(0);			/* OK */
+}
+
+/*
+ *			D B _ W R I T E
+ *
+ *  Writes 'count' bytes into at file offset 'offset' from buffer at 'addr'.
+ *  A wrapper for the UNIX write() sys-call that takes into account
+ *  syscall semaphores, stdio-only machines, and in-memory buffering.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+db_write( dbip, addr, count, offset )
+struct db_i	*dbip;
+genptr_t	addr;
+long		count;
+long		offset;
+{
+	register int	got;
+
+	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_write:  bad dbip\n");
+	if(rt_g.debug&DEBUG_DB)  {
+		rt_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
+			dbip, addr, count, offset );
+	}
+	if( dbip->dbi_read_only )  {
+		rt_log("db_write(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
+		return(-1);
+	}
+	if( count <= 0 || offset < 0 )  {
+		return(-1);
+	}
+	if( dbip->dbi_inmem )  {
+		rt_log("db_write() in memory?\n");
+		return(-1);
+	}
+	RES_ACQUIRE( &rt_g.res_syscall );
+#if unix
+	(void)lseek( dbip->dbi_fd, offset, 0 );
+	got = write( dbip->dbi_fd, addr, count );
+#else
+	(void)fseek( dbip->dbi_fp, offset, 0 );
+	got = fwrite( addr, count, 1, dbip->dbi_fp );
+#endif
+	RES_RELEASE( &rt_g.res_syscall );
+	if( got != count )  {
+		perror("db_write");
+		rt_log("db_write(%s):  write error.  Wanted %d, got %d bytes\n",
+			dbip->dbi_filename, count, got );
+		return(-1);
+	}
+	return(0);			/* OK */
 }
