@@ -126,7 +126,6 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
-	int	i;
 	int	mode;
 	char	*cp;
 	FBIO	*fbp;

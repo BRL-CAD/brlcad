@@ -75,8 +75,6 @@ _LOCAL_ int	rem_open(),
 		rem_wmap(),
 		rem_view(),
 		rem_getview(),
-		rem_window(),		/* OLD */
-		rem_zoom(),		/* OLD */
 		rem_cursor(),
 		rem_getcursor(),
 		rem_setcursor(),
@@ -129,7 +127,6 @@ FBIO remote_interface = {
 };
 
 void	pkg_queue(), flush_queue();
-static	struct pkg_conn *pcp;
 
 /* from getput.c */
 extern unsigned short fbgetshort();
@@ -645,42 +642,6 @@ int	*xzoom, *yzoom;
 	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
 		return	-4;		/* fail */
 	return( 0 );			/* OK */
-}
-
-/*
- *  OLD XXX
- */
-_LOCAL_ int
-rem_window( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	char	buf[3*NET_LONG_LEN+1];
-	
-	/* Send Command */
-	(void)fbputlong( x, &buf[0*NET_LONG_LEN] );
-	(void)fbputlong( y, &buf[1*NET_LONG_LEN] );
-	pkg_send( MSG_FBWINDOW, buf, 2*NET_LONG_LEN, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
-	return( fbgetlong( buf ) );
-}
-
-/*
- *  OLD XXX
- */
-_LOCAL_ int
-rem_zoom( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	char	buf[3*NET_LONG_LEN+1];
-
-	/* Send Command */
-	(void)fbputlong( x, &buf[0*NET_LONG_LEN] );
-	(void)fbputlong( y, &buf[1*NET_LONG_LEN] );
-	pkg_send( MSG_FBZOOM, buf, 2*NET_LONG_LEN, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
-	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
 #define REM_CMAP_BYTES	(256*3*2)
