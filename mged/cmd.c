@@ -60,10 +60,11 @@ int cmd_set();
 int cmd_get();
 int get_more_default();
 int tran(), irot();
-void set_tran(), gui_setup(), mged_setup(), cmd_setup(), mged_compat();
+void set_tran(), mged_setup(), cmd_setup(), mged_compat();
 
 extern mat_t    ModelDelta;
 
+extern int gui_setup();
 extern int cmd_stuff_str();
 extern int f_nmg_simplify();
 extern int f_make_bb();
@@ -748,8 +749,17 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  gui_setup();
-  return TCL_OK;
+  int status;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if(argc == 1)
+    status = gui_setup((char *)NULL);
+  else
+    status = gui_setup(argv[1]);
+
+  return status;
 }    
 
 /*
@@ -1007,38 +1017,6 @@ set junk \"\"", filename ? filename : MGED_LIBRARY);
   Tcl_ResetResult(interp);
 #endif
 }
-
-void
-gui_setup()
-{
-  char *filename;
-  int status;
-
-  /* initialize only once */
-  if(tkwin != NULL)
-    return;
-
-  if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
-    bu_log("gui_setup: Failed to create main window.\n");
-    return;
-  }
-
-  /* This runs the tk.tcl script */
-  if (Tk_Init(interp) == TCL_ERROR)
-    bu_log("Tk_Init error %s\n", interp->result);
-
-  Tcl_Eval( interp, "wm withdraw .");
-
-  /* Check to see if user specified MGED_GUIRC */
-  if((filename = getenv("MGED_GUIRC")) == (char *)NULL )
-    return;
-
-  if(Tcl_EvalFile( interp, filename ) == TCL_ERROR)
-    bu_log("gui_setup: %s\n", interp->result);
-
-  return;
-}
-
 
 /* 			C M D _ S E T U P
  * Register all the MGED commands.

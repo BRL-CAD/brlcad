@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
+int gui_setup();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
 static void dm_var_init();
@@ -172,7 +173,7 @@ char *name;
 	dmp->dmr_close(dmp);
 
 	if(!--p->s_info->_rc)
-	  bu_free( (char *)p->s_info, "release: s_info" );
+	  bu_free( (genptr_t)p->s_info, "release: s_info" );
 	else if(p->_owner)
 	  find_new_owner(p);
 
@@ -184,7 +185,8 @@ char *name;
 
 	bu_vls_free(&pathName);
 	BU_LIST_DEQUEUE( &p->l );
-	bu_free( (char *)p, "release: curr_dm_list" );
+	bu_free( (genptr_t)p->_dmp, "release: curr_dm_list->_dmp" );
+	bu_free( (genptr_t)p, "release: curr_dm_list" );
 
 	if(save_dm_list != DM_LIST_NULL)
 	  curr_dm_list = save_dm_list;
@@ -289,8 +291,10 @@ char    **argv;
   no_memory = 0;
 
   /* Only need to do this once */
-  if(tkwin == NULL && NEED_GUI(wp->dp))
-    gui_setup();
+  if(tkwin == NULL && NEED_GUI(wp->dp)){
+    if(gui_setup(argv[2]) == TCL_ERROR)
+      goto Bad;
+  }
 
   if( dm_init(argc - 1, argv + 1) )
     goto Bad;
@@ -325,6 +329,41 @@ Bad:
     release((char *)NULL);
 
   return TCL_ERROR;
+}
+
+
+int
+gui_setup(screen)
+char *screen;
+{
+  char *filename;
+  int status;
+
+  /* initialize only once */
+  if(tkwin != NULL)
+    return TCL_OK;
+
+  if((tkwin = Tk_CreateMainWindow(interp, screen, "MGED", "MGED")) == NULL){
+    bu_log("gui_setup: Failed to create main window.\n");
+    return TCL_ERROR;
+  }
+
+  /* This runs the tk.tcl script */
+  if (Tk_Init(interp) == TCL_ERROR){
+    bu_log("Tk_Init error %s\n", interp->result);
+    return TCL_ERROR;
+  }
+
+  Tcl_Eval( interp, "wm withdraw .");
+
+  /* Check to see if user specified MGED_GUIRC */
+  if((filename = getenv("MGED_GUIRC")) == (char *)NULL )
+    return TCL_OK;
+
+  if(Tcl_EvalFile( interp, filename ) == TCL_ERROR)
+    bu_log("gui_setup: %s\n", interp->result);
+
+  return TCL_OK;
 }
 
 
