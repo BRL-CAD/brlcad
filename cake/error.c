@@ -12,6 +12,7 @@ rcs_id[] = "$Header$";
 **	that prevent the proper update of the given node.
 */
 
+void
 trace_errs(node)
 reg	Node	*node;
 {
