@@ -34,8 +34,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 
+#if 0
 #define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
-
+#else
+#define	MAXBUFBYTES	4096*4096	/* max bytes to malloc in buffer space */
+#endif
 unsigned char	*outbuf;
 unsigned char	*buffer;
 int	scanlen;			/* length of infile (and buffer) scanlines */
@@ -183,11 +186,11 @@ int scanlen;
 	max = MAXBUFBYTES / scanlen;
 
 	/*
-	 * Do a max of 512.  We really should see how big
+	 * XXX We really should see how big
 	 * the input file is to decide if we should buffer
 	 * less than our max.
 	 */
-	if( max > 512 ) max = 512;
+	if( max > 4096) max = 4096;
 
 	buflines = max;
 	if ((buffer = (unsigned char *)malloc( buflines * scanlen ))
@@ -212,7 +215,7 @@ int y;
 
 	if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
 		fprintf( stderr, "bwscale: Can't seek to input pixel!\n" );
-		exit( 3 );
+/*		exit( 3 ); */
 	}
 	fread( buffer, scanlen, buflines, buffp );
 }
