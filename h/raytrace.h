@@ -488,7 +488,7 @@ struct mater_info {
 	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
-	/* XXX These should become bu_vls structures */
+	/* XXX These should become (char *) to bu_strdup() */
 	char	ma_matname[32];		/* Material name */
 	char	ma_matparm[60];		/* String Material parms */
 };
@@ -533,7 +533,7 @@ struct region  {
  */
 
 struct partition {
-	/* This can be thought of as a struct rt_list */
+	/* This can be thought of and operated on as a struct rt_list */
 	long		pt_magic;		/* sanity check */
 	struct partition *pt_forw;		/* forwards link */
 	struct partition *pt_back;		/* backwards link */
@@ -544,8 +544,9 @@ struct partition {
 	struct region	*pt_regionp;		/* ptr to containing region */
 	char		pt_inflip;		/* flip inhit->hit_normal */
 	char		pt_outflip;		/* flip outhit->hit_normal */
-	int		pt_len;			/* rti_pt_bytes when created */
-	bitv_t		pt_solhit[1];		/* VAR bit array:solids hit */
+	struct bu_ptbl	pt_solids_hit;
+/**	int		pt_len;			/* rti_pt_bytes when created */
+/**	bitv_t		pt_solhit[1];		/* VAR bit array:solids hit */
 };
 #define PT_NULL		((struct partition *)0)
 #define PT_MAGIC	0x87687681
@@ -555,28 +556,41 @@ struct partition {
 #define RT_CK_PT(_p)	RT_CKMAG(_p,PT_MAGIC, "struct partition")
 #define RT_CK_PT_HD(_p)	RT_CKMAG(_p,PT_HD_MAGIC, "struct partition list head")
 
-#define COPY_PT(ip,out,in)	{ \
-	bcopy((char *)in, (char *)out, ip->rti_pt_bytes); }
+/* Macros for copying only the essential "middle" part of a partition struct */
+#define RT_PT_MIDDLE_START	pt_inseg		/* 1st elem to copy */
+#define RT_PT_MIDDLE_END	pt_solids_hit.l.magic	/* copy up to this elem (non-inclusive) */
+#define RT_PT_MIDDLE_LEN(p) \
+	(((char *)&(p)->RT_PT_MIDDLE_END) - ((char *)&(p)->RT_PT_MIDDLE_START))
 
-/* Initialize all the bits to FALSE, clear out structure */
+#define RT_DUP_PT(ip,new,old,res)	{ \
+	GET_PT(ip,new,res); \
+	bcopy((char *)(&(old)->RT_PT_MIDDLE_START), (char *)(&(new)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(old) ); \
+	bu_ptbl_cat( &(new)->pt_solids_hit, &(old)->pt_solids_hit );  }
+
+/* Clear out the pointers, empty the hit list */
 #define GET_PT_INIT(ip,p,res)	{\
 	GET_PT(ip,p,res); \
-	bzero( ((char *) (p)), (ip)->rti_pt_bytes ); \
-	(p)->pt_len = (ip)->rti_pt_bytes; \
-	(p)->pt_magic = PT_MAGIC; }
+	bzero( ((char *) &(p)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(p) ); }
+
+/* XXX Move to rtlist.h */
+#define RT_LIST_NON_EMPTY_P(p,structure,hp)	\
+	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
 
 #define GET_PT(ip,p,res)   { \
-	while( ((p) = (struct partition *)res->re_parthead.forw) == (struct partition *)&(res->re_parthead) || \
-	    !(p) || (p)->pt_len != (ip)->rti_pt_bytes ) \
-		rt_get_pt(ip, res); \
-	(p)->pt_magic = PT_MAGIC; \
-	RT_LIST_DEQUEUE((struct rt_list *)p); \
+	if( RT_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
+		RT_LIST_DEQUEUE((struct rt_list *)(p)); \
+		bu_ptbl_reset( &(p)->pt_solids_hit ); \
+	} else { \
+		(p) = (struct partition *)bu_malloc(sizeof(struct partition), "struct partition"); \
+		(p)->pt_magic = PT_MAGIC; \
+		bu_ptbl_init( &(p)->pt_solids_hit, 42 ); \
+		(res)->re_partlen++; \
+	} \
 	res->re_partget++; }
 
 #define FREE_PT(p,res)  { \
-			RT_CHECK_PT(p); \
-			RT_LIST_APPEND( &(res->re_parthead), (struct rt_list *)(p) ); \
-			res->re_partfree++; }
+	RT_LIST_APPEND( &(res->re_parthead), (struct rt_list *)(p) ); \
+	res->re_partfree++; }
 
 #define RT_FREE_PT_LIST( _headp, _res )		{ \
 		register struct partition *_pp, *_zap; \
@@ -596,51 +610,6 @@ struct partition {
 
 /* Dequeue "cur" partition from doubly-linked list */
 #define DEQUEUE_PT(_cur)	RT_LIST_DEQUEUE((struct rt_list *)_cur)
-
-/*
- *  Bit vectors
- */
-
-/*
- *  Bit-string manipulators for arbitrarily long bit strings
- *  stored as an array of bitv_t's.
- *  BITV_SHIFT and BITV_MASK are defined in machine.h
- */
-#define BITS2BYTES(nbits) (((nbits)+BITV_MASK)/8)	/* conservative */
-#define BITTEST(lp,bit)	\
-	((lp[bit>>BITV_SHIFT] & (((bitv_t)1)<<(bit&BITV_MASK)))?1:0)
-#define BITSET(lp,bit)	\
-	(lp[bit>>BITV_SHIFT] |= (((bitv_t)1)<<(bit&BITV_MASK)))
-#define BITCLR(lp,bit)	\
-	(lp[bit>>BITV_SHIFT] &= ~(((bitv_t)1)<<(bit&BITV_MASK)))
-#define BITZERO(lp,nbits) bzero((char *)lp, BITS2BYTES(nbits))
-
-#define RT_BITV_BITS2WORDS(_nb)	(((_nb)+BITV_MASK)>>BITV_SHIFT)
-
-/*
- *  Macros to efficiently find all the bits set in a bit vector.
- *  Counts words down, counts bits in words going up, for speed & portability.
- *  It does not matter if the shift causes the sign bit to smear to the right.
- */
-#define RT_BITV_LOOP_START(_bitv, _lim)	\
-{ \
-	register int		_b;	/* Current bit-in-word number */  \
-	register bitv_t		_val;	/* Current word value */  \
-	register int		_wd;	/* Current word number */  \
-	for( _wd=RT_BITV_BITS2WORDS(_lim)-1; _wd>=0; _wd-- )  {  \
-		_val = (_bitv)[_wd];  \
-		for(_b=0; _val!=0 && _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
-			if( !(_val & 1) )  continue;
-
-#define RT_BITV_LOOP_END	\
-		} /* end for(_b) */ \
-	} /* end for(_wd) */ \
-} /* end block */
-
-/* The two registers are combined when needed;  the assumption is
- * that "one" bits are relatively infrequent with respect to zero bits.
- */
-#define RT_BITV_LOOP_INDEX	((_wd << BITV_SHIFT) | _b)
 
 /*
  *			C U T
@@ -1208,8 +1177,7 @@ struct rt_i {
 	long		nmiss_solid;	/* shots missed solid RPP */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
-	int		rti_pt_bytes;	/* length of partition struct */
-	int		rti_bv_bytes;	/* length of BITV array */
+/* XXX the bu_ptbl of cutter malloc()s should be here or in rt_g, not cut.c */
 	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
 	int		rti_cut_nbins;	/* number of cut bins (leaves) */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
@@ -1648,18 +1616,11 @@ RT_EXTERN(void rt_pr_tree_val, (CONST union tree *tp,
 					/* Print a partition */
 RT_EXTERN(void rt_pr_pt, (CONST struct rt_i *rtip, CONST struct partition *pp) );
 					/* Print a bit vector */
-RT_EXTERN(void rt_pr_bitv, (CONST char *str, CONST bitv_t *bv, int len) );
-					/* Print a hit point */
 RT_EXTERN(void rt_pr_hit, (CONST char *str, CONST struct hit *hitp) );
 /* rt_fastf_float, rt_mat_dbmat, rt_dbmat_mat
  * declarations moved to h/db.h */
 					/* storage obtainers */
 RT_EXTERN(void rt_get_seg, (struct resource *res) );
-RT_EXTERN(void rt_get_pt, (struct rt_i *rtip, struct resource *res) );
-RT_EXTERN(void rt_get_bitv, (struct rt_i *rtip, struct resource *res) );
-					/* malloc rounder */
-RT_EXTERN(void rt_bitv_or, (bitv_t *out, bitv_t *in, int nbits) );
-					/* space partitioning */
 RT_EXTERN(void rt_cut_it, (struct rt_i *rtip, int ncpu) );
 					/* print cut node */
 RT_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
@@ -1893,7 +1854,6 @@ RT_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
 	CONST struct hit *hitp));
 RT_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v, CONST struct rt_i *rtip,
 	CONST struct partition *pp));
-RT_EXTERN(void rt_pr_bitv_vls, (struct bu_vls *v, CONST bitv_t *bv, int len));
 RT_EXTERN(void rt_logindent_vls, (struct bu_vls	*v));
 RT_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
 	CONST double angles[5]));
