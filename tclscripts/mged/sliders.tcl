@@ -44,7 +44,8 @@ proc sliders args {
     global player_screen
     global rateknobs
     global adcflag
-    global scroll_edit
+    global edit_class
+    global transform
     global EDIT_CLASS_TRAN
     global EDIT_CLASS_ROTATE
     global EDIT_CLASS_SCALE
@@ -99,19 +100,19 @@ proc sliders args {
 		    -text "Rate Based Sliders" \
 		    -anchor c
 
-	    if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+	    if { $edit_class == $EDIT_CLASS_TRAN && $transform == e } {
 		build_tran_sliders $w.f $base_id " - EDIT" edit_rate_tran "" ""
 	    } else {
 		build_tran_sliders $w.f $base_id "" rate_tran "$sh_id\," ""
 	    }
 
-	    if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+	    if { $edit_class == $EDIT_CLASS_SCALE && $transform == e } {
 		build_scale_sliders $w.f $base_id " - EDIT" edit_rate_scale "" ""
 	    } else {
 		build_scale_sliders $w.f $base_id "" rate_scale "\($sh_id\)" ""
 	    }
 
-	    if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+	    if { $edit_class == $EDIT_CLASS_ROTATE && $transform == e } {
 		build_rotate_sliders $w.f $base_id " - EDIT" $sliders(rate_rot_from) \
 			$sliders(rate_rot_to) edit_rate_rotate "" ""
 	    } else {
@@ -123,19 +124,19 @@ proc sliders args {
 		    -text "Absolute Sliders" \
 		    -anchor c
 
-	    if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+	    if { $edit_class == $EDIT_CLASS_TRAN && $transform == e } {
 		build_tran_sliders $w.f $base_id " - EDIT" edit_abs_tran "" a
 	    } else {
 		build_tran_sliders $w.f $base_id "" abs_tran "$sh_id\," a
 	    }
 
-	    if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+	    if { $edit_class == $EDIT_CLASS_SCALE && $transform == e } {
 		build_scale_sliders $w.f $base_id " - EDIT" edit_abs_scale "" a
 	    } else {
 		build_scale_sliders $w.f $base_id "" abs_scale "\($sh_id\)" a
 	    }
 
-	    if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+	    if { $edit_class == $EDIT_CLASS_ROTATE && $transform == e } {
 		build_rotate_sliders $w.f $base_id " - EDIT" $sliders(abs_rot_from) \
 			$sliders(abs_rot_to) edit_abs_rotate "" a
 	    } else {
@@ -392,7 +393,8 @@ proc reconfig_sliders { w base_id dm_id sh_id } {
     global sliders
     global rateknobs
     global adcflag
-    global scroll_edit
+    global edit_class
+    global transform
     global EDIT_CLASS_TRAN
     global EDIT_CLASS_ROTATE
     global EDIT_CLASS_SCALE
@@ -401,19 +403,19 @@ proc reconfig_sliders { w base_id dm_id sh_id } {
     if { $rateknobs } {
 	$w.label configure -text "Rate Based Sliders"
 
-	if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+	if { $edit_class == $EDIT_CLASS_TRAN && $transform == e } {
 	    reconfig_tran_sliders $w $base_id " - EDIT" edit_rate_tran "" ""
 	} else {
 	    reconfig_tran_sliders $w $base_id "" rate_tran "$sh_id\," ""
 	}
 
-	if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+	if { $edit_class == $EDIT_CLASS_SCALE && $transform == e } {
 	    reconfig_scale_sliders $w $base_id " - EDIT" edit_rate_scale "" ""
 	} else {
 	    reconfig_scale_sliders $w $base_id "" rate_scale "\($sh_id\)" ""
 	}
 
-	if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+	if { $edit_class == $EDIT_CLASS_ROTATE && $transform == e } {
 	    reconfig_rotate_sliders $w $base_id " - EDIT" $sliders(rate_rot_from) \
 		    $sliders(rate_rot_to) edit_rate_rotate "" ""
 	} else {
@@ -423,19 +425,19 @@ proc reconfig_sliders { w base_id dm_id sh_id } {
     } else {
 	$w.label configure -text "Absolute Sliders"
 
-	if { $scroll_edit($dm_id) == $EDIT_CLASS_TRAN } {
+	if { $edit_class == $EDIT_CLASS_TRAN && $transform == e } {
 	    reconfig_tran_sliders $w $base_id " - EDIT" edit_abs_tran "" a
 	} else {
 	    reconfig_tran_sliders $w $base_id "" abs_tran "$sh_id\," a
 	}
 
-	if { $scroll_edit($dm_id) == $EDIT_CLASS_SCALE } {
+	if { $edit_class == $EDIT_CLASS_SCALE && $transform == e } {
 	    reconfig_scale_sliders $w $base_id " - EDIT" edit_abs_scale "" a
 	} else {
 	    reconfig_scale_sliders $w $base_id "" abs_scale "\($sh_id\)" a
 	}
 
-	if { $scroll_edit($dm_id) == $EDIT_CLASS_ROTATE } {
+	if { $edit_class == $EDIT_CLASS_ROTATE && $transform == e } {
 	    reconfig_rotate_sliders $w $base_id " - EDIT" $sliders(abs_rot_from) \
 		    $sliders(abs_rot_to) edit_abs_rotate "" a
 	} else {
