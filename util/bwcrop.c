@@ -143,6 +143,7 @@ int argc; char **argv;
 			error = fwrite(&value, sizeof(value), 1, ofp);
 		}
 	}
+	return (0);
 }
 
 /*
