@@ -1462,8 +1462,8 @@ CONST struct rt_tol	*tol;
 double
 rt_angle_measure( vec, x_dir, y_dir )
 vect_t	vec;
-vect_t	x_dir;
-vect_t	y_dir;
+CONST vect_t	x_dir;
+CONST vect_t	y_dir;
 {
 	fastf_t		xproj, yproj;
 	fastf_t		gamma;
