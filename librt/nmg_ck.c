@@ -137,12 +137,12 @@ CONST long *eg;
 	NMG_CK_EDGE_G_EITHER(eg);
 	switch( *eg )  {
 	case NMG_EDGE_G_LSEG_MAGIC:
-		nmg_ck_list_magic( &((struct edge_g_lseg *)eg)->eu_hd2,
+		bu_ck_list_magic( &((struct edge_g_lseg *)eg)->eu_hd2,
 			"nmg_veg() edge_g_lseg eu_hd2 list",
 			NMG_EDGEUSE2_MAGIC );
 		break;
 	case NMG_EDGE_G_CNURB_MAGIC:
-		nmg_ck_list_magic( &((struct edge_g_cnurb *)eg)->eu_hd2,
+		bu_ck_list_magic( &((struct edge_g_cnurb *)eg)->eu_hd2,
 			"nmg_veg() edge_g_cnurb eu_hd2 list",
 			NMG_EDGEUSE2_MAGIC );
 		break;
@@ -250,7 +250,7 @@ CONST long	*up_magic_p;
 	struct edgeuse	*eulast;
 	long		up_magic;
 
-	nmg_ck_list_magic( hp, "nmg_veu() edegeuse list head", NMG_EDGEUSE_MAGIC );
+	bu_ck_list_magic( hp, "nmg_veu() edegeuse list head", NMG_EDGEUSE_MAGIC );
 
 	up_magic = *up_magic_p;
 	switch( up_magic )  {
@@ -1202,121 +1202,8 @@ CONST struct faceuse	*fu;
 		}
 	}
 	return 0;
+
 }
-
-/*
- *			N M G _ C K _ L I S T
- *
- *  Generic bu_list doubly-linked list checker.
- *
- *  XXX Probably should be called bu_ck_list().
- */
-void
-nmg_ck_list( hd, str )
-struct bu_list		*hd;
-CONST char		*str;
-{
-	register struct bu_list	*cur;
-	int	head_count = 0;
-
-	cur = hd;
-	do  {
-		if( cur->magic == BU_LIST_HEAD_MAGIC )  head_count++;
-		if( !cur->forw )  {
-			bu_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, hd=x%x\n",
-				str, cur, cur->forw, hd );
-			rt_bomb("nmg_ck_list() forw\n");
-		}
-		if( cur->forw->back != cur )  {
-			bu_log("nmg_ck_list(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
-				str, cur, cur->forw, cur->forw->back, hd );
-			rt_bomb("nmg_ck_list() forw->back\n");
-		}
-		if( !cur->back )  {
-			bu_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, hd=x%x\n",
-				str, cur, cur->back, hd );
-			rt_bomb("nmg_ck_list() back\n");
-		}
-		if( cur->back->forw != cur )  {
-			bu_log("nmg_ck_list(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x\n",
-				str, cur, cur->back, cur->back->forw, hd );
-			rt_bomb("nmg_ck_list() back->forw\n");
-		}
-		cur = cur->forw;
-	} while( cur != hd );
-
-	if( head_count != 1 )  {
-		bu_log("nmg_ck_list(%s) head_count = %d, hd=x%x\n", str, head_count, hd);
-		rt_bomb("nmg_ck_list() headless!\n");
-	}
-}
-
-
-
-
-/*
- *			N M G _ C K _ L I S T _ M A G I C
- *
- *  rt_list doubly-linked list checker which checks the magic number for
- *	all elements in the linked list
- *  XXX Probably should be called bu_ck_list_magic().
- */
-void
-nmg_ck_list_magic( hd, str, magic )
-CONST struct bu_list	*hd;
-CONST char		*str;
-CONST long		magic;
-{
-	register CONST struct bu_list	*cur;
-	int	head_count = 0;
-
-	cur = hd;
-	do  {
-		if( cur->magic == BU_LIST_HEAD_MAGIC )  {
-			head_count++;
-		} else if( cur->magic != magic ) {
-			bu_log("nmg_ck_list(%s) cur magic=(%s)x%x, cur->forw magic=(%s)x%x, hd magic=(%s)x%x\n",
-				str, bu_identify_magic(cur->magic), cur->magic,
-				bu_identify_magic(cur->forw->magic), cur->forw->magic,
-				bu_identify_magic(hd->magic), hd->magic);
-			rt_bomb("nmg_ck_list_magic() cur->magic\n");
-		}
-
-		if( !cur->forw )  {
-			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->forw=x%x, hd=x%x\n",
-				str, cur, cur->forw, hd );
-			rt_bomb("nmg_ck_list_magic() forw\n");
-		}
-		if( cur->forw->back != cur )  {
-			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
-				str, cur, cur->forw, cur->forw->back, hd );
-			bu_log(" cur=%s, cur->forw=%s, cur->forw->back=%s\n",
-				bu_identify_magic(cur->magic),
-				bu_identify_magic(cur->forw->magic),
-				bu_identify_magic(cur->forw->back->magic) );
-			rt_bomb("nmg_ck_list_magic() forw->back\n");
-		}
-		if( !cur->back )  {
-			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->back=x%x, hd=x%x\n",
-				str, cur, cur->back, hd );
-			rt_bomb("nmg_ck_list_magic() back\n");
-		}
-		if( cur->back->forw != cur )  {
-			bu_log("nmg_ck_list_magic(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x\n",
-				str, cur, cur->back, cur->back->forw, hd );
-			rt_bomb("nmg_ck_list_magic() back->forw\n");
-		}
-		cur = cur->forw;
-	} while( cur != hd );
-
-	if( head_count != 1 )  {
-		bu_log("nmg_ck_list_magic(%s) head_count = %d, hd=x%x\n", str, head_count, hd);
-		rt_bomb("nmg_ck_list_magic() headless!\n");
-	}
-}
-
-
-
 
 
 

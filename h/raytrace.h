@@ -2921,9 +2921,6 @@ BU_EXTERN(int			nmg_ck_eg_verts, (CONST struct edge_g_lseg *eg,
 BU_EXTERN(int			nmg_ck_geometry, (CONST struct model *m,
 				CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_ck_face_worthless_edges, (CONST struct faceuse *fu));
-BU_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
-BU_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
-				CONST char *str, CONST long magic) );
 BU_EXTERN(void			nmg_ck_lueu, (CONST struct loopuse *lu, CONST char *s) );
 BU_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
 BU_EXTERN(int			nmg_eu_2s_orient_bad, (CONST struct edgeuse	*eu,
