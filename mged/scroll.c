@@ -185,6 +185,9 @@ double				val;
 {
   struct bu_vls vls;
 
+  if (dbip == DBI_NULL)
+	  return;
+
   if( val < -SL_TOL )   {
     val += SL_TOL;
   } else if( val > SL_TOL )   {

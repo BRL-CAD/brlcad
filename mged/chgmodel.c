@@ -2669,6 +2669,9 @@ set_localunit_TclVar()
   struct bu_vls units_vls;
   CONST char	*str;
 
+  if (dbip == DBI_NULL)
+	  return;
+
   bu_vls_init(&vls);
   bu_vls_init(&units_vls);
 

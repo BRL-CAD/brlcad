@@ -1406,6 +1406,8 @@ char	**argv;
   mat_t mat;
   struct bu_vls vls;
 
+  CHECK_DBI_NULL;
+
   if(argc < 1 || 6 < argc){
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "help view");
@@ -4468,6 +4470,8 @@ char	**argv;
   point_t view_pt;
   point_t model_pt;
 
+  CHECK_DBI_NULL;
+
   bu_vls_init(&vls);
 
   if(argc != 4){
@@ -4508,6 +4512,8 @@ char	**argv;
   fastf_t sf;
   point_t view_pt;
   point_t model_pt;
+
+  CHECK_DBI_NULL;
 
   bu_vls_init(&vls);
 
@@ -4551,6 +4557,8 @@ char	**argv;
   point_t model_pt;
   point_t mo_view_pt;           /* model origin in view space */
   point_t diff;
+
+  CHECK_DBI_NULL;
 
   bu_vls_init(&vls);
 
@@ -4599,6 +4607,8 @@ char    **argv;
   point_t model_pt;
   point_t mo_view_pt;           /* model origin in view space */
   point_t diff;
+
+  CHECK_DBI_NULL;
 
   bu_vls_init(&vls);
 
@@ -4649,6 +4659,8 @@ char	**argv;
   point_t mo_view_pt;           /* model origin in view space */
   point_t diff;
 
+  CHECK_DBI_NULL;
+
   bu_vls_init(&vls);
 
   if(argc != 4){
@@ -4693,6 +4705,8 @@ char    **argv;
   point_t model_pt;
   point_t mo_view_pt;           /* model origin in view space */
   point_t diff;
+
+  CHECK_DBI_NULL;
 
   bu_vls_init(&vls);
 
@@ -5700,6 +5714,8 @@ int     argc;
 char    **argv;
 {
   vect_t tvec;
+
+  CHECK_DBI_NULL;
 
   if(argc != 4){
     struct bu_vls vls;

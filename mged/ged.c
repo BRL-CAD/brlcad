@@ -1213,6 +1213,9 @@ int	non_blocking;
     
     non_blocking = 0;
 
+    if (dbip == DBI_NULL)
+	    return non_blocking;
+
     /*********************************
      *  Handle rate-based processing *
      *********************************/

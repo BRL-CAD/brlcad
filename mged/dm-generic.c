@@ -103,6 +103,9 @@ char **argv;
   int status;
   struct bu_vls vls;
 
+  if (dbip == DBI_NULL)
+	  return TCL_OK;
+
   if(!strcmp(argv[0], "idle")){
     am_mode = AMM_IDLE;
     scroll_active = 0;
