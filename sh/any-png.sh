@@ -10,7 +10,7 @@ export PATH
 
 if test "$1" = ""
 then
-	echo "Usage: any-png.sh [-r] file.pix [flags]"
+	echo "Usage: any-png.sh [-r] image_file [flags]"
 	exit 1
 fi
 
