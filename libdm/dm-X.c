@@ -149,7 +149,6 @@ char *argv[];
   XEventClass e_class[15];
   XInputClassInfo *cip;
   struct bu_vls str;
-  struct bu_vls top_vls;
   struct bu_vls init_proc_vls;
   Display *tmp_dpy;
   struct dm *dmp;
@@ -207,29 +206,28 @@ char *argv[];
 
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
 
-  bu_vls_init(&top_vls);
   if(dmp->dm_top){
     /* Make xtkwin a toplevel window */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 						      bu_vls_addr(&dmp->dm_pathName),
 						      bu_vls_addr(&dmp->dm_dName));
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
-    bu_vls_printf(&top_vls, "%S", &dmp->dm_pathName);
   }else{
     char *cp;
 
     cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
     if(cp == bu_vls_addr(&dmp->dm_pathName)){
       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
-      bu_vls_strcpy(&top_vls, ".");
     }else{
+      struct bu_vls top_vls;
+
+      bu_vls_init(&top_vls);
       bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
 		    bu_vls_addr(&dmp->dm_pathName));
       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
 	Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+      bu_vls_free(&top_vls);
     }
-
-    bu_vls_free(&top_vls);
 
     /* Make xtkwin an embedded window */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
@@ -305,8 +303,6 @@ char *argv[];
     return DM_NULL;
   }
 
-  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip->depth;
-
   Tk_MakeWindowExist(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win =
       Tk_WindowId(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
@@ -341,12 +337,14 @@ char *argv[];
 			    /* cube dimension, uses XStoreColor */
 			    6, CMAP_BASE, 1 );
 
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->bg = dm_get_pixel(DM_BLACK,
-						       ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
-						       CUBE_DIMENSION);
-    ((struct x_vars *)dmp->dm_vars.priv_vars)->fg = dm_get_pixel(DM_RED,
-						       ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
-						       CUBE_DIMENSION);
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->bg =
+      dm_get_pixel(DM_BLACK,
+		   ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
+		   CUBE_DIMENSION);
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->fg =
+      dm_get_pixel(DM_RED,
+		   ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels,
+		   CUBE_DIMENSION);
   }  
 
   gcv.background = ((struct x_vars *)dmp->dm_vars.priv_vars)->bg;
@@ -451,7 +449,7 @@ struct dm *dmp;
 		    ((struct x_vars *)dmp->dm_vars.priv_vars)->pix);
 
     /*XXX Possibly need to free the colormap */
-    if(((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
       XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
@@ -1152,17 +1150,29 @@ struct dm *dmp;
   int num, i, j;
   int tries, baddepth;
   int desire_trueColor = 1;
+  int min_depth = 8;
 
-  vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 0, &vitemp, &num);
+  vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  0, &vitemp, &num);
 
-  while(1){
+  while (1) {
     for (i=0, j=0, vip=vibase; i<num; i++, vip++){
+#if 1
+      /* code to force a particular visual class and depth */
+      if (vip->depth != 8)
+	continue;
+      if (vip->class != PseudoColor)
+	continue;
+#else
       /* requirements */
-      if(desire_trueColor){
-	if(vip->class != TrueColor)
+      if (vip->depth < min_depth)
+	continue;
+      if (desire_trueColor){
+	if (vip->class != TrueColor)
 	  continue;
       }else if (vip->class != PseudoColor)
 	continue;
+#endif
 			
       /* this visual meets criteria */
       good[j++] = i;
@@ -1180,23 +1190,46 @@ struct dm *dmp;
 
       /* make sure Tk handles it */
       if(desire_trueColor){
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap = XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, maxvip->screen),
-								maxvip->visual, AllocNone);
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
+	  XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				     maxvip->screen),
+			  maxvip->visual, AllocNone);
 	((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor = 1;
       }else{
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap = XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, maxvip->screen),
-								maxvip->visual, AllocAll);
+	((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
+	  XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				     maxvip->screen),
+			  maxvip->visual, AllocAll);
 	((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor = 0;
       }
 
-      if (Tk_SetWindowVisual(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, maxvip->visual,
-			     maxvip->depth, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)){
+      if (Tk_SetWindowVisual(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+			     maxvip->visual,
+			     maxvip->depth,
+			     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)){
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = maxvip->depth;
+
+	if (!dmp->dm_top) {
+	  /*
+	   * Try to set the visual of the toplevel window to be the same
+	   * as the display manager window . This seems to be necessary
+	   * to avoid the case where the toplevel window's colormap gets
+	   * swapped in and hoses things up.
+	   */
+	  Tk_SetWindowVisual(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
+			     maxvip->visual,
+			     maxvip->depth,
+			     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+	}
+
 	return maxvip; /* success */
       } else { 
 	/* retry with lesser depth */
 	baddepth = maxvip->depth;
-	XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+	XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
       }
     }
 
