@@ -52,11 +52,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 int
 db_alloc( dbip, dp, count )
-struct db_i	*dbip;
+register struct db_i	*dbip;
 register struct directory *dp;
 int		count;
 {
-	register int	i;
 	unsigned long	addr;
 	union record	rec;
 
