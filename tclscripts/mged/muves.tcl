@@ -253,32 +253,41 @@ proc muves_create_modes { id top parent mode } {
 	    menubutton $parent.pcolorMB -relief raised -bd 2 \
 		    -menu $parent.pcolorMB.m -indicatoron 1
 	    # Set menubutton color
-	    set_WidgetRGBColor $parent.pcolorMB $muves_active($id,pass_color)
+	    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    $muves_active($id,pass_color)
 	    menu $parent.pcolorMB.m -tearoff 0
 	    $parent.pcolorMB.m add command -label black\
 		    -command "set  muves_active($id,pass_color) \"0 0 0\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label white\
 		    -command "set  muves_active($id,pass_color) \"255 255 255\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label red\
 		    -command "set  muves_active($id,pass_color) \"255 0 0\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label green\
 		    -command "set  muves_active($id,pass_color) \"0 255 0\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label blue\
 		    -command "set  muves_active($id,pass_color) \"0 0 255\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label yellow\
 		    -command "set  muves_active($id,pass_color) \"255 255 0\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label cyan\
 		    -command "set  muves_active($id,pass_color) \"0 255 255\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add command -label magenta\
 		    -command "set  muves_active($id,pass_color) \"255 0 255\"; \
-		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+		    setWidgetRGBColor $parent.pcolorMB muves_active($id,pass_color) \
+		    \$muves_active($id,pass_color)"
 	    $parent.pcolorMB.m add separator
 	    $parent.pcolorMB.m add command -label "Color Tool..."\
 		    -command "muves_choose_pcolor $id $top"
@@ -290,32 +299,41 @@ proc muves_create_modes { id top parent mode } {
 	    menubutton $parent.fcolorMB -relief raised -bd 2 \
 		    -menu $parent.fcolorMB.m -indicatoron 1
 	    # Set menubutton color
-	    set_WidgetRGBColor $parent.fcolorMB $muves_active($id,fail_color)
+	    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    $muves_active($id,fail_color)
 	    menu $parent.fcolorMB.m -tearoff 0
 	    $parent.fcolorMB.m add command -label black\
 		    -command "set  muves_active($id,fail_color) \"0 0 0\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label white\
 		    -command "set  muves_active($id,fail_color) \"255 255 255\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label red\
 		    -command "set  muves_active($id,fail_color) \"255 0 0\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label green\
 		    -command "set  muves_active($id,fail_color) \"0 255 0\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label blue\
 		    -command "set  muves_active($id,fail_color) \"0 0 255\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label yellow\
 		    -command "set  muves_active($id,fail_color) \"255 255 0\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label cyan\
 		    -command "set  muves_active($id,fail_color) \"0 255 255\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add command -label magenta\
 		    -command "set  muves_active($id,fail_color) \"255 0 255\"; \
-		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+		    setWidgetRGBColor $parent.fcolorMB muves_active($id,fail_color) \
+		    \$muves_active($id,fail_color)"
 	    $parent.fcolorMB.m add separator
 	    $parent.fcolorMB.m add command -label "Color Tool..."\
 		    -command "muves_choose_fcolor $id $top"
