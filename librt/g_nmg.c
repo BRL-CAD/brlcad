@@ -2379,7 +2379,6 @@ bu_log("Mapping of old index to new index, and kind\n");
 
 	ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
 
-bu_log("total of disk NMG(v4)=%d\n", tot_size);
 	additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
@@ -2398,8 +2397,6 @@ bu_log("total of disk NMG(v4)=%d\n", tot_size);
 	for( i=0; i < NMG_N_KINDS; i++ )  {
 		disk_arrays[i] = (genptr_t)cp;
 		cp += kind_counts[i] * rt_nmg_disk_sizes[i];
-bu_log("V4: kind=%d, count=%d, disk_size = %d, total_size=%d\n",
-    i, kind_counts[i], cp-(char *)disk_arrays[i], cp-(char *)disk_arrays[0]);
 	}
 	/* disk_arrays[NMG_KIND_DOUBLE_ARRAY] is set properly because it is last */
 	rt_nmg_fastf_p = (unsigned char *)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
