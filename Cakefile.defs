@@ -1843,6 +1843,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_DIR	../librt
 #	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../librt/librt.ARCH_SUF]]
+#	define	LIBOPTICAL_DIR	../liboptical
+#	define	LIBOPTICAL	-L''LIBOPTICAL_DIR -loptical
+#	define	LIBOPTICAL_DEP	[[LIBVERS ../liboptical/liboptical.ARCH_SUF]]
 #	define	LIBBU_DIR	../libbu
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../libbu/libbu.ARCH_SUF]]
@@ -1925,6 +1928,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_DIR	../.librt.MTYPE
 #	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../.librt.MTYPE/librt.ARCH_SUF]]
+#	define	LIBOPTICAL_DIR	../.liboptical.MTYPE
+#	define	LIBOPTICAL	-L''LIBOPTICAL_DIR -loptical
+#	define	LIBOPTICAL_DEP	[[LIBVERS ../.liboptical.MTYPE/liboptical.ARCH_SUF]]
 #	define	LIBBU_DIR	../.libbu.MTYPE
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../.libbu.MTYPE/libbu.ARCH_SUF]]
