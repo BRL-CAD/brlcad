@@ -212,7 +212,9 @@ matp_t	mat;
 		}
 		/* Success, we have a match! */
 		nsp->st_uses++;
-		fprintf(stderr,"add_solid:  use %d of %s!!\n", nsp->st_uses, name );
+		if( debug & DEBUG_SOLIDS )
+			fprintf(stderr,"add_solid:  use %d of %s!!\n",
+				nsp->st_uses, name );
 		return(nsp);
 next_one: ;
 	}
