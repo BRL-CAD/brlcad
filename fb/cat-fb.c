@@ -9,13 +9,12 @@
  *
  *  Fonts are operating at 200 dpi, giving this correspondence between
  *  screen pixel widths and troff line lengths:
- *	 512	2.56i
- *	1024	5.12i	(4.7i)
- *	1280	6.4i	(6.0i)
+ *	 512	2.56i	(2.35i)
+ *	1024	5.12i	(4.95i)
+ *	1280	6.4i	(6.2i)
  *
- *  Authors -
+ *  Author -
  *	Ronald B. Natalie
- *	Michael John Muuss
  *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -356,25 +355,30 @@ static char	*framebuffer = NULL;
 static int	scr_width = 0;		/* use device default size */
 static int	scr_height = 0;
 static int	clear = 0;		/* clear screen before writing */
-static int	overlay = 0;		/* overlay FROM STDIN rather than fb */
+static int	overlay_from_stdin = 0;	/* overlay FROM STDIN rather than fb */
 static int	debug = 0;
+static int	output_pix = 0;		/* output pixfile, rather than to fb */
 
 static char usage[] = "\
-Usage: cat-fb [-h -c -O] [-F framebuffer] [-C r/g/b]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [troff_files]\n";
+Usage: cat-fb [-h -c -O -o] [-F framebuffer] [-C r/g/b]\n\
+	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
+	[troff_files]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "dhcOF:S:W:N:C:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "odhcOF:s:S:w:W:n:N:C:" )) != EOF )  {
 		switch( c )  {
+		case 'o':
+			output_pix = 1;
+			break;
 		case 'd':
 			debug = 1;
 			break;
 		case 'O':
-			overlay = 1;
+			overlay_from_stdin = 1;
 			break;
 		case 'h':
 			/* high-res */
@@ -386,12 +390,15 @@ register char **argv;
 		case 'F':
 			framebuffer = optarg;
 			break;
+		case 's':
 		case 'S':
 			scr_height = scr_width = atoi(optarg);
 			break;
+		case 'w':
 		case 'W':
 			scr_width = atoi(optarg);
 			break;
+		case 'n':
 		case 'N':
 			scr_height = atoi(optarg);
 			break;
@@ -433,10 +440,14 @@ main(argc, argv)
 		exit( 1 );
 	}
 
-	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
-		exit(1);
-	scr_width = fb_getwidth(fbp);
-	scr_height = fb_getheight(fbp);
+	if( output_pix && !overlay_from_stdin )
+		clear = 1;
+	if( !output_pix )  {
+		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+			exit(1);
+		scr_width = fb_getwidth(fbp);
+		scr_height = fb_getheight(fbp);
+	}
 	if( (cp = malloc(scr_width*sizeof(RGBpixel))) == (char *)0 )
 		exit(42);
 	scanline = (RGBpixel *)cp;
@@ -448,9 +459,9 @@ main(argc, argv)
 
 	if( optind >= argc )  {
 		/* Process one TROFF file from stdin */
-		if( overlay )  {
+		if( overlay_from_stdin )  {
 			fprintf(stderr,"cat-fb: -O ignored, stdin used for C/A/T code\n");
-			overlay = 0;
+			overlay_from_stdin = 0;
 		}
 		ofile(stdin);
 	} else {
@@ -465,7 +476,8 @@ main(argc, argv)
 		}
 	}
 	slop_lines(NLINES);		/* Flush bitmap buffer */
-	fb_close(fbp);
+	if( fbp )
+		fb_close(fbp);
 	exit(0);
 }
 
@@ -478,10 +490,20 @@ readrailmag()
 
 	if ((rmfd = open(LOCAL_RAILMAG, 0)) < 0)
 		if ((rmfd = open(GLOBAL_RAILMAG, 0)) < 0) {
-			/* Defaults */
-			fontname[0] = "R";
-			fontname[1] = "I";
-			fontname[2] = "B";
+			/*
+			 *  Provide reasonable default font choices.
+			 *  In the Berkeley VFONT set, the Times
+			 *  fonts actually match the default troff
+			 *  widths much better than the R, I, & B
+			 *  fonts.  However, note that the Times fonts
+			 *  don't have ligatures.
+			 *  Also note that the times.s font does not
+			 *  have lots of things that EQN expects out of
+			 *  an "S" font.
+			 */
+			fontname[0] = "times.r";
+			fontname[1] = "times.i";
+			fontname[2] = "times.b";
 			fontname[3] = "S";
 			return;
 		}
@@ -725,7 +747,7 @@ relfont()
 		return(newfont);
 	}
 
-	/* Reuse an existing slot, with Ron's strange heuristic */
+	/* Reuse an existing slot, with a strange heuristic */
 
 	newfont = lastloaded;
 	/*
@@ -779,6 +801,10 @@ outc(code)
 	if(debug)fprintf(stderr,"%c h=%d v=%d  l=%d r=%d  u=%d d=%d  w=%d\n",
 		c, ypos, xpos, vdp->vd_left, vdp->vd_right,
 		vdp->vd_up, vdp->vd_down, vdp->vd_width);
+	if( ypos + vdp->vd_right > bytes_per_line*8 )  {
+		fprintf(stderr, "cat-fb: '%c' off right edge of screen\n", c);
+		return(0);
+	}
 	addr = &fontdes[cfont].vfp->vf_bits[vdp->vd_addr];
 	llen = (vdp->vd_left + vdp->vd_right+7)/8;
 	nlines = vdp->vd_up + vdp->vd_down;
@@ -815,7 +841,6 @@ slop_lines(nlines)
 {
 	register int i, rlines;
 	
-  	/* cur_fb_line += nlines;  */
 	rlines = (&buffer[BUFFER_SIZE] - buf0p) / bytes_per_line;
 	if (rlines < nlines) {
 		if (writelines(rlines, buf0p) < 0)
@@ -838,6 +863,7 @@ slop_lines(nlines)
 
 /*
  *  Overlay framebuffer with indicated lines of bitmap.
+ *  Output proceeds from top to bottom.
  */
 writelines(nlines, buf)
 	int	nlines;		/*  Number of scan lines to put out.  */
@@ -846,21 +872,22 @@ writelines(nlines, buf)
 	register RGBpixel *pp;
 	register int	bit;
 	register int	bufval;
-	int	lpos;
-	int	l;
+	register int	lpos;
+	register int	l;
 
 	for(l = 0; l < nlines; l++)  {
 		if(cur_fb_line < 0 )  {
 			/* Ran off bottom of screen */
-			fb_close(fbp);
+			if( fbp )
+				fb_close(fbp);
 			exit(0);
 		}
 		if( clear )
 			bzero( (char *)scanline, scr_width*3 );
-		else if( overlay )  {
+		else if( overlay_from_stdin )  {
 			if( fread( (char *)scanline, scr_width*3, 1, stdin ) != 1 )  {
 				clear = 1;
-				overlay = 0;
+				overlay_from_stdin = 0;
 			}
 		} else
 			fb_read( fbp, 0, cur_fb_line, scanline, scr_width );
@@ -879,7 +906,10 @@ writelines(nlines, buf)
 			}
 			buf++;
 		}
-		fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
+		if( output_pix )
+			fwrite( scanline, scr_width*3, 1, stdout );
+		else
+			fb_write( fbp, 0, cur_fb_line, scanline, scr_width );
 		cur_fb_line--;
 	}
 	return(0);
