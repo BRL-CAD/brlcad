@@ -280,13 +280,11 @@ register struct directory	*dp;
 struct rt_i			*rtip;
 {
 	register struct soltab	*stp = RT_SOLTAB_NULL;
-	int			have_match;
 	int			hash;
 
 	RT_CK_DIR(dp);
 	RT_CK_RTI(rtip);
 
-	have_match = 0;
 	hash = db_dirhash( dp->d_namep );
 
 	/* Enter the appropriate dual critical-section */
@@ -327,62 +325,78 @@ more_checks:
 			/* As this is nearly always equal, check it last */
 			if( stp->st_rtip != rtip )  continue;
 
-			have_match = 1;
-			break;
+			/*
+			 *  stp now points to re-referenced solid.
+			 *  stp->st_id is non-zero, indicating pre-existing solid.
+			 */
+			RT_CK_SOLTAB(stp);		/* sanity */
+
+			/* Only increment use counter for non-dead solids. */
+			if( !(stp->st_aradius <= -1) )
+				stp->st_uses++;
+			/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
+			if( rt_g.debug & DEBUG_SOLIDS )  {
+				bu_log( mat ?
+				    "rt_find_identical_solid:  %s re-referenced %d\n" :
+				    "rt_find_identical_solid:  %s re-referenced %d (identity mat)\n",
+					dp->d_namep, stp->st_uses );
+			}
+
+			/* Leave the appropriate dual critical-section */
+			RELEASE_SEMAPHORE_TREE(hash);
+			return stp;
 		}
 	}
 
-	if( have_match )  {
-		/*
-		 *  stp now points to re-referenced solid.
-		 *  stp->st_id is non-zero, indicating pre-existing solid.
-		 */
-		RT_CK_SOLTAB(stp);		/* sanity */
-		/* Only increment use counter for non-dead solids. */
-		if( !(stp->st_aradius <= -1) )
-			stp->st_uses++;
-		/* dp->d_uses is NOT incremented, because number of soltab's using it has not gone up. */
-		if( rt_g.debug & DEBUG_SOLIDS )  {
-			bu_log( mat ?
-			    "rt_find_identical_solid:  %s re-referenced %d\n" :
-			    "rt_find_identical_solid:  %s re-referenced %d (identity mat)\n",
-				dp->d_namep, stp->st_uses );
-		}
+	/*
+	 *  Create and link a new solid into the list.
+	 *
+	 *  Ensure the search keys "dp", "st_mat" and "st_rtip"
+	 *  are stored now, while still
+	 *  inside the critical section, because they are searched on, above.
+	 */
+	BU_GETSTRUCT(stp, soltab);
+	stp->l.magic = RT_SOLTAB_MAGIC;
+	stp->l2.magic = RT_SOLTAB2_MAGIC;
+	stp->st_rtip = rtip;
+	stp->st_dp = dp;
+	dp->d_uses++;
+	stp->st_uses = 1;
+	/* stp->st_id is intentionally left zero here, as a flag */
+
+	if( mat )  {
+		stp->st_matp = (matp_t)bu_malloc( sizeof(mat_t), "st_matp" );
+		bn_mat_copy( stp->st_matp, mat );
 	} else {
-		/*
-		 *  Create and link a new solid into the list.
-		 *  Ensure the search keys "dp" and "mat" are stored now.
-		 */
-		BU_GETSTRUCT(stp, soltab);
-		stp->l.magic = RT_SOLTAB_MAGIC;
-		stp->l2.magic = RT_SOLTAB2_MAGIC;
-		stp->st_rtip = rtip;
-		stp->st_uses = 1;
-		stp->st_dp = dp;
-		dp->d_uses++;
-		stp->st_bit = rtip->nsolids++;
-		/* stp->st_id is intentionally left zero here, as a flag */
-
-		if( mat )  {
-			stp->st_matp = (matp_t)bu_malloc( sizeof(mat_t), "st_matp" );
-			bn_mat_copy( stp->st_matp, mat );
-		} else {
-			stp->st_matp = (matp_t)0;
-		}
-		/* Add to the appropriate soltab list head */
-		/* PARALLEL NOTE:  Uses critical section on rt_solidheads element */
-		BU_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
-
-		/* Also add to the directory structure list head */
-		/* PARALLEL NOTE:  Uses critical section on this 'dp' */
-		BU_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
-
-		/* Tables of regions using this solid.  Usually small. */
-		bu_ptbl_init( &stp->st_regions, 7, "st_regions ptbl" );
+		stp->st_matp = (matp_t)0;
 	}
 
-	/* Leave the appropriate dual critical-section */
+	/* Add to the appropriate soltab list head */
+	/* PARALLEL NOTE:  Uses critical section on rt_solidheads element */
+	BU_LIST_INSERT( &(rtip->rti_solidheads[hash]), &(stp->l) );
+
+	/* Also add to the directory structure list head */
+	/* PARALLEL NOTE:  Uses critical section on this 'dp' */
+	BU_LIST_INSERT( &dp->d_use_hd, &(stp->l2) );
+
+	/*
+	 * Leave the 4-way critical-section protecting dp and [hash]
+	 */
 	RELEASE_SEMAPHORE_TREE(hash);
+
+	/* Enter an exclusive critical section to protect nsolids */
+	/* nsolids++ needs to be locked to a SINGLE thread */
+	bu_semaphore_acquire(RT_SEM_STATS);
+	stp->st_bit = rtip->nsolids++;
+	bu_semaphore_release(RT_SEM_STATS);
+
+	/*
+	 *  Fill in the last little bit of the structure in
+	 *  full parallel mode, outside of any critical section.
+	 */
+
+	/* Init tables of regions using this solid.  Usually small. */
+	bu_ptbl_init( &stp->st_regions, 7, "st_regions ptbl" );
 
 	return stp;
 }
