@@ -33,7 +33,8 @@ struct mged_variables mged_variables = {
 /* predictor */		0,
 /* predictor_advance */	1.0,
 /* predictor_length */	2.0,
-/* perspective */	-1
+/* perspective */	-1,
+/* nmg_eu_dist */	0.05
 };
 
 /*
@@ -44,7 +45,15 @@ refresh_hook()
 {
 	dmaflag = 1;
 }
+static void
+nmg_eu_dist_set()
+{
+	extern double nmg_eue_dist;
 
+	nmg_eue_dist = mged_variables.nmg_eu_dist;
+
+	fprintf(stderr, "New nmg_eue_dist = %g\n", nmg_eue_dist);
+}
 #define MV_O(_m)	offsetof(struct mged_variables, _m)
 struct structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
@@ -55,6 +64,7 @@ struct structparse mged_vparse[] = {
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
 	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
+	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
