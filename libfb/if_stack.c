@@ -123,9 +123,8 @@ int	width, height;
 		return(-1);
 	}
 
-	/* Chamelion mode:  be any size he wants */
-	ifp->if_width = width;
-	ifp->if_height = height;
+	ifp->if_width = ifp->if_max_width;
+	ifp->if_height = ifp->if_max_height;
 	i = 0;
 	while( i < MAXIF && *cp != NULL ) {
 		register char	*dp;
@@ -139,14 +138,8 @@ int	width, height;
 		while( *cp != NULL && *cp != ';' )
 			*dp++ = *cp++;
 		*dp = NULL;
-		if( (fbp = fb_open(devbuf, ifp->if_width, ifp->if_height)) != FBIO_NULL )  {
-			/* Use first default size found */
-			if( ifp->if_width == 0 )
-				ifp->if_width = fbp->if_width;
-			if( ifp->if_height == 0 )
-				ifp->if_height = fbp->if_height;
-
-			/* Track the minimum of all the sizes available */
+		if( (fbp = fb_open(devbuf, width, height)) != FBIO_NULL )  {
+			/* Track the minimum of all the actual sizes */
 			if( fbp->if_width < ifp->if_width )
 				ifp->if_width = fbp->if_width;
 			if( fbp->if_height < ifp->if_height )
