@@ -354,6 +354,29 @@ struct timeval	*t1, *t0;
 }
 
 /*
+ *			S T A M P
+ *
+ *  Return a string suitable for use as a timestamp.
+ *  Mostly for stamping log messages with.
+ */
+char *
+stamp()
+{
+	static char	buf[128];
+	long		now;
+	struct tm	*tmp;
+	register char	*cp;
+
+	(void)time( &now );
+	tmp = localtime( &now );
+	sprintf( buf, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d",
+		tmp->tm_mon+1, tmp->tm_mday,
+		tmp->tm_hour, tmp->tm_min, tmp->tm_sec );
+
+	return(buf);
+}
+
+/*
  *			M A I N
  */
 int
@@ -401,7 +424,8 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		(void)signal( SIGINT, SIG_IGN );
-		rt_log("Interactive REMRT listening at port %d\n", pkg_permport);
+		rt_log("%s Interactive REMRT\n", stamp() );
+		rt_log("Listening at port %d\n", pkg_permport);
 		clients = (1<<fileno(stdin));
 
 		/* Read .remrtrc file to acquire server info */
@@ -415,9 +439,10 @@ char	**argv;
 		 * Might want to see if any work remains, and if so,
 		 * record it somewhere
 		 */
-		rt_log("remrt out of clients\n");
+		rt_log("%s Out of clients\n", stamp());
 	} else {
-		rt_log("Automatic REMRT listening at port %d, reading script on stdin\n",
+		rt_log("%s Automatic REMRT\n", stamp());
+		rt_log("Listening at port %d, reading script on stdin\n",
 			pkg_permport);
 		clients = 0;
 
@@ -467,7 +492,7 @@ char	**argv;
 		/* Compute until no work remains */
 		running = 1;
 		do_work(1);		/* auto start servers */
-		rt_log("remrt:  task accomplished\n");
+		rt_log("%s Task accomplished\n", stamp() );
 	}
 	return(0);			/* exit(0); */
 }
@@ -510,8 +535,7 @@ int	auto_start;
 			cur_serv++;
 		}
 		if( cur_serv == 0 && prev_serv > cur_serv )  {
-			rt_log("remrt:  Notice:  all servers down at %s\n",
-				ctime( &(now.tv_sec) ) );
+			rt_log("%s *** All servers down\n", stamp() );
 			fflush(stdout);
 		}
 		prev_serv = cur_serv;
@@ -587,7 +611,7 @@ int waittime;
 	}
 	if( val==0 )  {
 		/* At this point, ibits==0 */
-		if(debug>1) rt_log("select timed out after %d seconds\n", waittime);
+		if(debug>1) rt_log("%s select timed out after %d seconds\n", stamp(), waittime);
 		return;
 	}
 
@@ -666,7 +690,7 @@ struct pkg_conn *pc;
 		/* Maybe free the pkg struct? */
 		return;
 	}
-	if( debug )  rt_log("addclient(%s)\n", ihp->ht_name);
+	if( debug )  rt_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
 
 	clients |= 1<<fd;
 
@@ -709,7 +733,7 @@ char	*why;
 	oldstate = sp->sr_state;
 	sp->sr_state = SRST_CLOSING;
 
-	rt_log("dropping %s (%s)\n", sp->sr_host->ht_name, why);
+	rt_log("%s dropping %s (%s)\n", stamp(), sp->sr_host->ht_name, why);
 
 	pc = sp->sr_pc;
 	if( pc == PKC_NULL )  {
@@ -763,7 +787,7 @@ struct timeval	*nowp;
 	if( tvdiff( nowp, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
 		return;
 
-	rt_log("seeking servers to start\n");
+	rt_log("%s Seeking servers to start\n", stamp() );
 	night = is_night( nowp );
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
 
@@ -799,7 +823,8 @@ struct timeval	*nowp;
 			/* This host is a server */
 			if( add == 0 )  {
 				/* Drop this host -- out of time range */
-				rt_log("auto dropping %s:  out of time range\n",
+				rt_log("%s Auto dropping %s:  out of time range\n",
+					stamp(),
 					ihp->ht_name );
 				drop_server( sp, "outside time-of-day limits for this server" );
 			} else {
@@ -810,7 +835,7 @@ struct timeval	*nowp;
 
 		/* This host is not presently in contact */
 		if( add )  {
-			rt_log("auto adding %s\n", ihp->ht_name);
+			rt_log("%s Auto adding %s\n", stamp(), ihp->ht_name);
 			add_host( ihp );
 		}
 
@@ -1152,7 +1177,7 @@ register struct frame	*fr;
 		char		pbuf[4];
 		register int	pno;	/* index of next unread pixel */
 
-		rt_log("Scanning %s for non-black pixels\n",
+		rt_log("%s Scanning %s for non-black pixels\n", stamp(),
 			fr->fr_filename );
 		if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
 			perror( fr->fr_filename );
@@ -1185,12 +1210,13 @@ register struct frame	*fr;
 				/* non-black */
 				last = pno-1;
 			}
-			rt_log("deleting non-black pixel range %d to %d inclusive\n",
+			rt_log("%s Deleting non-black pixel range %d to %d inclusive\n",
+				stamp(),
 				first, last );
 			list_remove( &(fr->fr_todo), first, last );
 		}
 
-		rt_log("Scanning complete\n");
+		rt_log("%s Scanning complete\n", stamp() );
 	}
 	return(0);				/* OK */
 }
@@ -1209,12 +1235,14 @@ register struct frame *fr;
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
 	if( delta < 0.0001 )  delta=0.0001;
-	rt_log("frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+	rt_log("%s Frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+		stamp(),
 		fr->fr_number,
 		delta,
 		fr->fr_nrays,
 		fr->fr_cpu );
-	rt_log("  RTFM=%g rays/sec (%g rays/cpu sec)\n",
+	rt_log("%s  RTFM=%g rays/sec (%g rays/cpu sec)\n",
+		stamp(),
 		fr->fr_nrays/delta,
 		fr->fr_nrays/fr->fr_cpu );
 
@@ -1231,7 +1259,7 @@ register struct frame *fr;
 		    20); /* spaces and frame number */
 		(void) sprintf(cmd,"%s %s %d",frame_script,fr->fr_filename,
 		    fr->fr_number);
-		if(debug) printf("script %s\n", cmd);
+		if(debug) rt_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);
 		(void) free(cmd);
 	}
@@ -1398,7 +1426,7 @@ struct timeval	*nowp;
 
 		case SRST_CLOSING:
 			/* Handle final closing */
-			if(debug>1) rt_log("final close on %s\n", sp->sr_host->ht_name);
+			if(debug>1) rt_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
 			clients &= ~(1<<sp->sr_pc->pkc_fd);
 			pkg_close(sp->sr_pc);
 
@@ -1431,7 +1459,7 @@ next_frame: ;
 	if( !running )  goto out;
 	if( all_done() )  {
 		running = 0;
-		rt_log("remrt:  All work done!\n");
+		rt_log("%s All work done!\n", stamp() );
 		if( detached )  exit(0);
 		goto out;
 	}
@@ -1524,7 +1552,7 @@ struct timeval		*nowp;
 	if( server_q_len(sp) > 0 &&
 	    sp->sr_sendtime.tv_sec > 0 && 
 	    tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
-		rt_log("%s: *TARDY*\n", sp->sr_host->ht_name);
+		rt_log("%s %s: *TARDY*\n", stamp(), sp->sr_host->ht_name);
 		drop_server( sp, "tardy" );
 		return(0);	/* not worth giving another assignment */
 	}
@@ -1731,8 +1759,12 @@ ph_print(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
-	if(print_on)
-		rt_log("%s:%s", servers[pc->pkc_fd].sr_host->ht_name, buf );
+	if(print_on)  {
+		rt_log("%s %s:%s",
+			stamp(),
+			servers[pc->pkc_fd].sr_host->ht_name,
+			buf );
+	}
 	if(buf) (void)free(buf);
 }
 
@@ -1774,7 +1806,7 @@ char	*buf;
 	register struct servers	*sp;
 
 	sp = &servers[pc->pkc_fd];
-	rt_log("%s: cmd '%s'\n", sp->sr_host->ht_name, buf );
+	rt_log("%s %s: cmd '%s'\n", stamp(), sp->sr_host->ht_name, buf );
 	(void)rt_do_cmd( (struct rt_i *)0, buf, cmd_tab );
 	if(buf) (void)free(buf);
 	drop_server( sp, "one-shot command" );
@@ -1804,7 +1836,8 @@ char *buf;
 
 	sp = &servers[pc->pkc_fd];
 	if( sp->sr_state != SRST_READY )  {
-		rt_log("ignoring package from %s\n", sp->sr_host->ht_name);
+		rt_log("%s Ignoring package from %s\n",
+			stamp(), sp->sr_host->ht_name);
 		goto out;
 	}
 
@@ -1827,7 +1860,8 @@ char *buf;
 		goto out;
 	}
 	if( debug )  {
-		rt_log("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+		rt_log("%s %s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+			stamp(),
 			sp->sr_host->ht_name,
 			info.li_frame, info.li_startpix, info.li_endpix,
 			info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
@@ -2386,8 +2420,10 @@ FILE	*fp;
 			sprintf(cmd,
 				"cd %s; rtsrv %s %d",
 				rem_dir, ourname, port );
-			if(debug)
-				rt_log("%s\n", cmd); fflush(stdout);
+			if(debug)  {
+				rt_log("%s %s\n", stamp(), cmd);
+				fflush(stdout);
+			}
 
 			pid = fork();
 			if( pid == 0 )  {
@@ -2424,8 +2460,10 @@ FILE	*fp;
 				RSH, host,
 				rem_dir, rem_db,
 				ourname, port );
-			if(debug)
-				rt_log("%s\n", cmd); fflush(stdout);
+			if(debug)  {
+				rt_log("%s %s\n", stamp(), cmd);
+				fflush(stdout);
+			}
 
 			pid = fork();
 			if( pid == 0 )  {
@@ -2698,7 +2736,7 @@ char	**argv;
 	} else {
 		sscanf( argv[1], "%x", &debug );
 	}
-	rt_log("dispatcher debug=x%x\n", debug );
+	rt_log("%s Dispatcher debug=x%x\n", stamp(), debug );
 }
 
 /*
@@ -2795,7 +2833,7 @@ char	**argv;
 	}
 	source(fp);
 	fclose(fp);
-	rt_log("read file done\n");
+	rt_log("%s 'read' command done\n", stamp());
 }
 
 source(fp)
@@ -2956,7 +2994,7 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		/* Restart all */
-		rt_log("restarting all\n");
+		rt_log("%s Restarting all\n", stamp() );
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
@@ -2973,7 +3011,7 @@ cd_stop( argc, argv )
 int	argc;
 char	**argv;
 {
-	rt_log("no more scanlines being scheduled, done soon\n");
+	rt_log("%s No more scanlines being scheduled, done soon\n", stamp() );
 	running = 0;
 }
 
@@ -3022,6 +3060,12 @@ char	**argv;
 	fbp = FBIO_NULL;
 }
 
+
+/*
+ *			C D _ F R A M E S
+ *
+ *  Sumarize frames waiting
+ */
 cd_frames( argc, argv )
 int	argc;
 char	**argv;
@@ -3029,8 +3073,7 @@ char	**argv;
 	register struct frame *fr;
 	register int	i;
 
-	/* Sumarize frames waiting */
-	rt_log("Frames waiting:\n");
+	rt_log("%s Frames waiting:\n", stamp() );
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
 		CHECK_FRAME(fr);
 		rt_log("%5d\t", fr->fr_number);
@@ -3050,26 +3093,31 @@ char	**argv;
 {
 	register struct servers *sp;
     	int	num;
+	char	*s;
+
+	s = stamp();
 
 	if( file_fullname[0] == '\0' )
 		rt_log("No model loaded yet\n");
 	else
-		rt_log("\n%s %s %s\n",
+		rt_log("\n%s %s %s %s\n",
+			s,
 			running ? "RUNNING" : "loaded",
 			file_fullname, object_list );
 
 	if( fbp != FBIO_NULL )
-		rt_log("Framebuffer is %s\n", fbp->if_name);
+		rt_log("%s Framebuffer is %s\n", s, fbp->if_name);
 	else
-		rt_log("No framebuffer\n");
+		rt_log("%s No framebuffer\n", s );
 	if( outputfile )
-		rt_log("Output file: %s.###\n", outputfile );
-	rt_log("Printing of remote messages is %s\n",
-		print_on?"ON":"Off" );
-    	rt_log("Listening at %s, port %d\n", ourname, pkg_permport);
+		rt_log("%s Output file: %s.###\n", s, outputfile );
+	rt_log("%s Printing of remote messages is %s\n",
+		s, print_on?"ON":"Off" );
+    	rt_log("%s Listening at %s, port %d\n",
+		s, ourname, pkg_permport);
 
 	/* Print work assignments */
-	rt_log("Servers:\n");
+	rt_log("%s Servers:\n", s);
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 		rt_log("  %2d  %s ", sp->sr_pc->pkc_fd, sp->sr_host->ht_name );
@@ -3139,7 +3187,8 @@ char	**argv;
 		if( sp->sr_pc == PKC_NULL )  continue;
 		send_loglvl( sp );
 	}
-	rt_log("Printing of remote messages is %s\n",
+	rt_log("%s Printing of remote messages is %s\n",
+		stamp(),
 		print_on?"ON":"Off" );
 }
 
@@ -3174,10 +3223,10 @@ char	**argv;
 		 *  servers to finish their assignments.
 		 */
 		while( !all_servers_idle() )  {
-			rt_log("Stopped, waiting for servers to become idle\n");
+			rt_log("%s Stopped, waiting for servers to become idle\n", stamp() );
 			check_input( 30 );	/* delay up to 30 secs */
 		}
-		rt_log("All servers idle\n");
+		rt_log("%s All servers idle\n", stamp() );
 	}
 	clients |= 1<<fileno(stdin);
 }
@@ -3206,7 +3255,7 @@ char	**argv;
 	int argpoint = 1;
 
 	if( argc < 5 )  {
-		rt_log("Registered Host Table:\n");
+		rt_log("%s Registered Host Table:\n", stamp() );
 		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
 			rt_log("  %s ", ihp->ht_name);
 			switch(ihp->ht_when)  {
