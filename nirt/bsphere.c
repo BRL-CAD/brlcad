@@ -12,9 +12,9 @@ static char RCSid[] = "$Header$";
 #include	"./nirt.h"
 #include	"./usrfmt.h"
 
-fastf_t	bsphere_radius;
+fastf_t	bsphere_diameter;
 
-void set_radius(rtip)
+void set_diameter(rtip)
 
 struct rt_i	*rtip;
 
@@ -22,5 +22,5 @@ struct rt_i	*rtip;
     vect_t	diag;
 
     VSUB2(diag, rtip -> mdl_max, rtip -> mdl_min);
-    bsphere_radius = MAGNITUDE(diag) * 0.5;
+    bsphere_diameter = MAGNITUDE(diag);
 }

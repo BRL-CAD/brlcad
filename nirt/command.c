@@ -26,7 +26,7 @@ char		local_u_name[64];
 double		base2local;		/* from db_i struct, not fastf_t */
 double		local2base;		/* from db_i struct, not fastf_t */
 
-extern fastf_t			bsphere_radius;
+extern fastf_t			bsphere_diameter;
 extern struct application	ap;
 extern struct rt_i		*rti_tab[];	/* For use w/ and w/o air */
 extern struct resource		res_tab[];	/* For use w/ and w/o air */
@@ -381,7 +381,7 @@ com_table		*ctp;
     }
     ap.a_rt_i = rti_tab[new_use];
     ap.a_resource = &res_tab[new_use];
-    set_radius(ap.a_rt_i);
+    set_diameter(ap.a_rt_i);
 }
 
 void nirt_units (buffer, ctp)
@@ -557,6 +557,6 @@ int			ctp;
 
     double	dist_default();  /* computes grid[DIST] default val*/
 
-    grid(DIST) = 2 * bsphere_radius;
+    grid(DIST) = bsphere_diameter;
     grid2targ();
 }

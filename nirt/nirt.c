@@ -112,7 +112,7 @@ char **argv;
     void		   targ2grid();
     void		   ae2dir();
     void		   dir2ae();
-    void	           set_radius();
+    void	           set_diameter();
     int	           	   str_dbl();	
     void		   az_el();
     void		   sh_esc();
@@ -206,7 +206,7 @@ char **argv;
     grid(VERT) = 0.0;
     grid(DIST) = 0.0;
     grid2targ();
-    set_radius(rtip);
+    set_diameter(rtip);
 
     /* initialize the output specification */
     default_ospec();
