@@ -66,6 +66,7 @@ struct dm dm_X = {
 	X_colorchange,
 	X_window, X_debug,
 	0,				/* no displaylist */
+	0,				/* multi-window */
 	PLOTBOUND,
 	"X", "X Window"
 };
