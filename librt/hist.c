@@ -3,6 +3,10 @@
  *
  *  General purpose histogram handling routines
  *
+ *  The macro RT_HISTOGRAM_TALLY is used to record items that
+ *  live in a single "bin", while the subroutine rt_hist_range()
+ *  is used to record items that may extend across multiple "bin"s.
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -33,13 +37,17 @@ void
 rt_hist_free( histp )
 struct histogram	*histp;
 {
-	rt_free( (char *)histp->hg_bins, "old histogram bins");
+	if( histp->hg_bins )
+		rt_free( (char *)histp->hg_bins, "old histogram bins");
 	histp->hg_bins = (long *)0;
+	histp->hg_nbins = 0;
 }
 
 /*
  *			R T _ H I S T _ I N I T
  *
+ *  Initialize a histogram structure.
+ *  It is expected that the structure is junk upon entry.
  */
 void
 rt_hist_init( histp, min, max, nbins )
@@ -55,9 +63,6 @@ int			nbins;
 		nbins = 10000;
 	}
 
-	if( histp->hg_bins != (long *)0 )
-		rt_hist_free( histp );
-
 	histp->hg_min = min;
 	histp->hg_max = max;
 	histp->hg_nbins = nbins;
@@ -68,6 +73,33 @@ int			nbins;
 
 	histp->hg_nsamples = 0L;
 	histp->hg_bins = (long *)rt_calloc( nbins+1, sizeof(long), "histogram bins");
+}
+
+/*
+ *			R T _ H I S T _ R A N G E
+ */
+void
+rt_hist_range( hp, low, high )
+register struct histogram	*hp;
+int				low;
+int				high;
+{
+	int		a;
+	int		b;
+	register int	i;
+
+	if( low <= hp->hg_min )
+		a = 0;
+	else
+		a = (low - hp->hg_min) / hp->hg_clumpsize;
+	if( high >= hp->hg_max )
+		b = hp->hg_nbins;
+	else
+		b = (high - hp->hg_min) / hp->hg_clumpsize;
+	for( i=a; i <= b; i++ )  {
+		hp->hg_bins[i]++;
+	}
+	hp->hg_nsamples++;
 }
 
 /*
@@ -114,7 +146,7 @@ char			*title;
 		if( mark_count <= 0 )  {
 			buf[0] = '\0';
 		} else {
-			bcopy( marks, buf, mark_count-1 );
+			bcopy( marks, buf, mark_count );
 			buf[mark_count] = '\0';
 		}
 		val = histp->hg_min + i*histp->hg_clumpsize;
