@@ -32,10 +32,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./fblocal.h"
 
 #include <X11/X.h>
-#ifndef CRAY2	/* not avaiable on CRAY2 */
+#ifdef HAVE_XOSDEFS_H
 #include <X11/Xfuncproto.h>
 #include <X11/Xosdefs.h>
-#endif  /* CRAY2 */
+#endif
 #if defined(linux)
 #	undef	X_NOT_STDC_ENV
 #	undef	X_NOT_POSIX
