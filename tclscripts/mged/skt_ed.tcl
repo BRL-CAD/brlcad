@@ -218,7 +218,9 @@ class Sketch_editor {
 		set canv_width [winfo width $itk_component(canvas)]
 		set min_max [$itk_component(canvas) bbox all]
 		set tmp_scale1 [expr double($canv_width) / ([lindex $min_max 2] - [lindex $min_max 0] + 2.0 * $vert_radius)]
+		if { $tmp_scale1 < 0.0 } {set tmp_scale1 [expr -$tmp_scale1] }
 		set tmp_scale2 [expr double($canv_height) / ([lindex $min_max 3] - [lindex $min_max 1] + 2.0 * $vert_radius)]
+		if { $tmp_scale2 < 0.0 } {set tmp_scale2 [expr -$tmp_scale2] }
 		if { $tmp_scale1 < $tmp_scale2 } {
 			do_scale $tmp_scale1
 		} else {
