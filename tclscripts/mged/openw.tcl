@@ -389,7 +389,7 @@ set mged_gui($id,lastButtonPress) 0
 set mged_gui($id,lastItem) ""
 
 if {![dm_validXType $gscreen $dtype]} {
-    return "gui: $gscreen does not support $dtype"
+    set dtype [dm_bestXType $gscreen]
 }
 
 if { [info exists tk_strictMotif] == 0 } {
