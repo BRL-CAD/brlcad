@@ -1,118 +1,311 @@
-PROPOSAL
+BRL-CAD Concurrent Versions System Policy and Guidelines
+========================================================
 
-        The following is a proposal for a set of guidelines
+The document includes a set of requirements and recommended procedures
+for how to effectively use CVS with this project.  Included are
+details on checking code in and out, effective use of commit messages,
+tag naming conventions, branch management, making releases , and more.
+The following general rules should always be adhered to:
 
-The BRL-CAD Concurrent Versions System Policy and Guidelines
+1. Code committed against HEAD should at least compile and be tested
+   for the developer committing changes.  "Don't break it."
 
+2. There is a STABLE branch that may only have code committed against
+   it that a) compiles on all relevant platforms, b) does not
+   detrimentally degrade performance, and c) runs correctly passing
+   available validation tests.
+
+3. Branches should be used for experimental work that would otherwise
+   leave HEAD in an inconsistent, non-compiling, or untestable state.
+   Branches are not merged into HEAD until the code has been tested
+   for correct proper functionality.
+
+4. Commit and update frequently.  Infrequent commits result in
+   conflicts and/or lengthy diffs and are complicated to review
+   effectively.
+
+5. Be consistent and informative.  Tags need to follow a consistent
+   naming convention.  Commit messages need to be informative.
+
+
+TABLE OF CONTENTS
+-----------------
+    Introduction
+    Table of Contents
+    Overview
+    Checking out sources
+	from HEAD
+	from STABLE
+	from a branch/revision
+    Checking in sources
+        commit messages
+	to HEAD
+	to STABLE
+	to a branch/revision
+    Tag naming convention
+	for releases
+	for branches
+    Making a release
+	creating a maintenance branch
+	applying release patches
+    Merging a branch
+	merging a branch into HEAD
+	merging HEAD into a branch
+    Making a branch
+    Usage Tips
+    References
 
 
 OVERVIEW
+--------
 
-    There are several development guidelines which all developers are
-    expected to observe:
+    Code organizational sanity and consistency are of paramount
+    importance.  As CVS can both help and hinder efforts to keep the
+    sources organized, the policy and guidelines covered overview the
+    manner in which CVS should be used with this project.
 
-    1. All code development is to be done on CVS branches, not the
-       trunk.
+    Basic knowledge of CVS, it's capabilities, and to a lesser extent
+    it's limitations are beyond the scope of this document.  See the
+    CVS website and the "References" section for more information.
 
-    2. Branches are not merged into the trunk until the code has been
-       well tested.
+    That said, CVS branches should be used to separate out the various
+    kinds of source code.  These include:
 
-    3. CVS tags follow a consistant naming convention.
+	1) current or "active" sources
+	2) stable sources
+	3) releases
+	4) experimental sources
 
-    4. Merges to the trunk must be timed so that they cooperate with
-       scheduled releases.
+    The CVS HEAD is for active development.  A separate STABLE branch
+    exists to hold a revision of the sources that is validated and
+    tested across platforms.  Releases are only made off of stable
+    revisions of the source code.  When a release is made, a
+    maintenance branch may exist for making patch releases.  Finally,
+    various experimental and developer undertakings that may benefit
+    from being isolated from changes to HEAD or STABLE may live on a
+    branch of their own as well.
 
+    It's very important that the main CVS HEAD revision be a "mostly"
+    stable code base so that at any given time users may download the
+    latest source, get it to compile with minimal effort, and have the
+    core components mostly function as expected.  See the "Checking in
+    sources to HEAD" section for more details.
 
-INTRODUCTION
-
-    Since the BRL-CAD developers potentially have specific independant
-    development projects, it's imperative that the check-ins which one
-    developer commits does not interfere with the work of the others.
-    Also, it's very important that the main BRL-CAD trunk be a stable
-    code base so that users can download and use it successfully at
-    any time.
-
-    For these reasons, most code development should be done on
-    branches.  Individual branches may be periodically synced with the
-    main trunk over time.  
-
-    We do make exceptions to this rule, however, when making one or
-    two-line bug fixes.  It seems overkill to make a branch in order
-    to commit a trivial bug fix.
-
-    If you feel you *must* work off of the trunk for simplicity, all
-    commits should be extensively tested by hand across all supported
-    platforms before being committed to the tree.
-
-    In addition to maintaining a stable tree, branches are also
-    useful/used to track patches after a release and to test
-    experimental changes.
-
-    Finally, as BRL-CAD release schedules are set, developers will
-    need to merge development branches, as appropriate back into the
-    main trunk.  Appropriate testing, of course, needs to happen prior
-    to commits for those as well.  The rest of this document explains
-    in detail how branches and CVS tags are to be managed.
+    Some users and developers will need from time to time to obtain a
+    relatively recent version of the sources but a version that is
+    certain or at least expected to "work".  This is what the STABLE
+    branch is for.  See the "Checking in sources to STABLE" section
+    for more information.
 
 
+CHECKING OUT SOURCES
+--------------------
 
-HOW TO CHECK OUT THE MAIN TRUNK
+    There are two basic ways to check out the sources: anonymously or
+    as a developer.  Developers have full read-write access to the
+    latest sources.  Anonymous users have read-only access and the
+    version of the checkout sources may lag the actual latest by
+    several hours.  For either access method, CVS_RSH should be set to
+    "ssh".  As BRL-CAD has a long complicated history with several
+    directory reorganizations, be sure to use the "-P" prune option
+    regardless of the checkout method.
+
+    Anonymous users will need to login first:
+
+	cvs -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad login
+
+    Once logged in, the CVSROOT for anonymous users will be via CVS's
+    :pserver: method (provide an empty password if prompted).
+    Developers will checkout using the default implicit :ext: method,
+    and provide your username.
 
 
-    FROM CAD:
+    FROM HEAD:
 
-    cvs -d /c/CVS checkout brlcad
+    As anonymous:
+        cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
 
-
-    FROM ELSEWHERE:
-
-    export CVS_RSH=ssh 
-    cvs -z3 -dusername@cad.arl.army.mil:/c/CVS checkout brlcad
-
-    (replace "username" with you cad account name, of course)
+    As a developer:
+	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P brlcad
 
 
+    FROM STABLE:
 
-HOW TO CHECK OUT A BRANCH
+    Checking out from stable is like checking out from any specific
+    revision or branch -- provide the tag name upon checkout:
 
-    cvs checkout -r <keyword>-<revision>-branch brlcad
+    As anonymous:
+	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P -r STABLE brlcad
 
+    As a developer:
+	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P -r STABLE brlcad
+
+
+    FROM A BRANCH/REVISION:
+
+    The process for checking out a given revision number is pretty
+    much a matter of knowing which revision tag name is desired, and
+    then checking out with that tag name:
+    
+    As anonymous:
+	cvs -z9 -d :pserver:anonymous@cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
+
+    As a developer:
+	cvs -z9 -d <username>@cvs.sf.net:/cvsroot/brlcad checkout -P -r <tagname> brlcad
+
+    If the tag names are not known, you can check out HEAD or STABLE
+    and perform a "cvs log" on any file to see the known tag names:
+
+	cd brlcad
+	cvs log README
+
+    Once you find the revision or branch tag name in question, you can
+    "cvs update" to that revision:
+
+	cvs -z9 update -r <tagname>
+
+    See the CVS manual documentation for more information.
+
+
+CHECKING IN SOURCES
+-------------------
+    Commit access is generally given consideration on a case-by-case
+    basis after careful consideration of the individual's ability to
+    follow the project's coding style, follow this CVS commit policy,
+    and work productively with the other developers.  If you have to
+    ask for commit access, you probably won't get it.  So don't ask.
+    If you are given commit access, you are expected to read and
+    follow this policy and it's guidelines as well as the developer's
+    guide.
+
+
+    COMMIT MESSAGES:
+
+    When code is committed to CVS, a messages should be provided that
+    appropriately describes the change in a succinct and useful
+    manner.  It's important to remember that CVS commit comments are
+    stored per-file.  Care should be taken to not be vague,
+    undescriptive, or ambiguous often tailoring commit messages to
+    individual files even if the change was made as part of a larger
+    modification.
+
+    While the comments need to be descriptive and informative, they
+    should also be as short and to the point as possible.  The CVS
+    commit comments are not the appropriate place for legal
+    disclaimers, usage documentation, extensive debugging details, or
+    mini novels of who/what/when/where/why.
+
+    They should be no more than a few lines long at most, normally
+    only consisting of a short single-line statement.  CVS commit
+    comments are only for documenting changes so that other developers
+    may derive a clue about what the change was without necessarily
+    needing to look at the actual source differences.
+
+    If the changes are merely formatting or whitespace adjustments, a
+    simple commit message of "ws" or "M-x indent-region" is generally
+    understood and sufficient.
+
+    If a file is being moved/renamed, the comment should include both
+    where the file is moved from and where it was moved to in the
+    message, e.g. "moved from librt/bool.c to src/librt/bool.c".
+
+
+    TO HEAD: 
+    
+    It's very important that the main CVS HEAD revision be a "mostly"
+    stable code base so that at any given time users may download the
+    latest source, get it to compile with minimal effort, and have the
+    core components mostly function as expected.  HEAD is where active
+    development takes places, so this necessarily means that there may
+    be small windows of opportunity where the sources do not compile,
+    but those should not persist.  Likewise, since the developers
+    potentially and often have specific or relatively independent
+    development efforts, the CVS commits of one developer should be
+    made in a means that will have limited or understood impact on
+    other developers.
+
+    This minimally means that CVS commits need to at least work for
+    the developer committing the changes.  If it's discovered that the
+    changes break other major supported platforms, the broken state
+    should not be allowed to linger.  Effort and arrangements need to
+    be made to either resolve the problem promptly or the changes
+    should be reverted.
+
+
+    TO STABLE:
+
+    Code being committed to STABLE require special attention and just
+    a little more detail in their commit messages.
+
+    Some users and developers will need from time to time to obtain a
+    relatively recent version of the sources but a version that is
+    certain or at least expected to "work".  This shall be known as
+    the STABLE branch.  For code to make it to the STABLE branch, it
+    needs to pass several criteria and commits should be well
+    documented indicating the nature, purpose, and impact of the
+    change.  These criteria include the following:
+
+    a) Compiles -- The code must compile on ALL supported platforms.
+       This generally requires coordination with other developers if
+       access to other platforms is limited.
+
+    b) Improves -- Without reasonable justification, the changes must
+       not degrade performance, be inconsistent in style or behavior
+       of the sources, or break support for any existing
+       functionality.
+	   
+    c) Passes -- The changes must successfully pass any available
+       validation tests.  If the tests are inadequate, flawed, or
+       simply require modifications, justification and explanations
+       should be provided along with fixes to the tests before
+       submitting code that would otherwise not pass.
+
+
+    TO A BRANCH/REVISION:
+
+    Checking in code to a branch other than STABLE generally do not
+    necessarily follow the same requirements of compiling cleaning or
+    "working" until those changes are merged back in to either STABLE
+    or HEAD unless the branch is a release maintenance branch.
+    Release maintenance branches generally follow the same commit
+    rules as checking into HEAD.
+
+    It's not possible to commit against a non-branch checkout (such as
+    a release tag like "rel-7-0").  Edits to a non-editable release
+    revision can still be applied by performing a diff against a clean
+    checkout of that same revision tag and then applying the patch to
+    a maintenance branch or to HEAD.
 
 
 TAG NAMING CONVENTIONS
+----------------------
+    <keyword>-<revision>[-<date>][-<comment>]
 
-    <keyword>-<revision>-<date>-<comment>
-
-    <keyword> ::= { ansi, jra, sean, ppc, ibm, ... }
+    <keyword> ::= { rel, ansi, jra, sean, ppc, ... }
 
         The <keyword> is normally something short and concise.  For
         release tags, it is "rel".  Other branch keywords may indicate
-        function, persons, etc.
+        functionality, developers, etc.
 
     <revision> ::= <major>[-<minor>[-<patch>]]  (e.g., 6-0-2 and 5-2)
 
-        The <revision> naming convention is fairly standard and common
-        practice:
+        The <revision> numbering convention is fairly standard and
+        common practice:
 
-        <major> is the major revision number and changes very
+        <major> is the major revision number and changes relatively
                 infrequently.  Major releases contain significant
-                architectural changes and are not necessarily
-                backwards compatible with existing code or data.  They
-                may require data and/or code to be converted in order
-                to upgrade.
-
-                Major releases usually go through an alpha release
-                where glaring problems are resolved and features are
-                polished.  A lengthy beta period usually follows where
-                no new features are added.  Subsequent beta releases
-                may be made until the code base is deemed stable.
+                architectural changes and are not generally backwards
+                compatible with existing code or data to some extent.
+                They may require data and/or code to be converted in
+                order to upgrade.
 
         <minor> is the minor revision number a usually changes on a
-                fairly regular basis.  As new features are added, the
-                minor revision number changes to reflect those
-                additions.  Minor releases may or may not be preceeded
-                by alpha and/or beta releases, depending on the extent
-                of changes being made.
+                fairly regular basis.  As new features are added and
+                releases are made, the minor revision number changes
+                to reflect those additions.  Odd minor numbers
+                indicate a developer revision.  Even minor numbers
+                indicate a release revision.  Minor releases may or
+                may not be backwards compatible.
 
         <patch> is the patch revision number and is used to make bug
                 fixes on an as-needed basis.  These changes are not
@@ -122,10 +315,10 @@ TAG NAMING CONVENTIONS
 
     <date> := YYYYMMDD (e.g., 20021231)
         
-        When creating tags, the date a tag is made is noted.  The
-        format of the date is YYYYMMDD and should correspond to tag
-        creation dates.  Subsequent tags that are based off of dated
-        tags should use the original date.
+        When creating tags, the date a tag is made is sometimes noted
+        and useful or even recommended.  The format of the date is
+        YYYYMMDD and should correspond to tag creation dates.  Branch
+        tags should not include a date in the tag name.
 
     <comment>
         
@@ -133,274 +326,375 @@ TAG NAMING CONVENTIONS
         is "patches".  For releases, it is left blank.  For other
         miscellaneous tags, the comment is up to the person tagging.
 
-
     Note that hyphens (-) are used, not underscores.  Periods (.) are
-    never used because they upset CVS's branch naming.  The revision
-    should match the most relevant release tag that the branch is
-    based off of. 
+    never used because they upset CVS's branch naming.
+
+    Tag names (including branches) should be in lower case only.
+    Upper case is reserved for HEAD and STABLE.
+
+    Non-branch tags are used for 1) marking a release, 2) merging
+    branches, and 3) miscellaneous tags (e.g., to remember a specific
+    starting or stopping point).
 
 
+    FOR RELEASES:
 
-BRANCH TAG NAMING SCHEME
+	Release tags are used to indicate a revision of the source
+	code that was made publicly available.  It should match what
+	was released, bugs and all.
 
-    Branches are symbolic tags that are used to anchor a branch as a
-    specific tree revision.  We'll use the following format for branch
-    tags:
+        rel-<revision>
 
-    <keyword>-<revision>-branch
+	    <revision> ::= <major>-<minor>[-<patch>]
 
+	    The revision number should match the version reported by
+	    the source code.
 
-NON-BRANCH TAG NAMING SCHEME
-
-    We use non-branch tags for three things:
-        1) marking a release
-        2) merging branches
-        3) miscellaneous tags (e.g., to remember a specific stopping point)
+	Examples: rel-6-0 rel-7-2-5
 
 
-    FORMAT FOR MAKING A RELEASE:
+    FOR BRANCHES:
 
-        rel-<revision>-<date>
+        Branches are symbolic tags that are used to denote and allow
+	separate isolated revisions of code.  The following format
+	should be used for branch tags:
 
-        <revision> ::= major-minor[-<patch>]  (e.g., 6-0 and 6-0-2a)
+	<keyword>[-<revision>]-branch
 
-        <date> ::= <year><month><day>   (e.g., 19991206)
+	    <keyword> ::= describes the purpose of the branch.
 
+	    If the branch is a maintenance branch, the keyword should
+	    match the revision's keyword and revision.
 
-    FORMAT FOR MAKING A PATCH RELEASE:
-
-        rel-<revision>-<date>-patches
+	Examples: rel-7-0-branch ansi-6-0-branch photonmap-branch
 
 
     FORMAT FOR MERGES:
 
-        On the branch, BEFORE THE MERGE, use the following tag:
+	When joining a branch into HEAD, there should be a tag before
+	and after the merge.  When joining in HEAD into a branch,
+	tagging is optional. Joins into head should be tagged, though.
 
-            <keyword>-<revision>-<date>
+        On HEAD before the merge, use the following tag format:
 
-        On the main trunk, AFTER THE MERGE, use the following tag:
+            <keyword>[-<revision>]-<date>-premerge
 
-            <keyword>-<revision>-<date>-merge
+        On HEAD after the merge, use the following tag format:
+
+            <keyword>[-<revision>]-<date>-merged
+
+	If development on a particular branch is considered "final",
+	it should be marked with a "freeze" tag on the branch:
+
+	    <keyword>[-<revision>]-<date>-branch-freeze
+
+	Examples: ansi-6-0-20040404-premerge ansi-6-0-20040405-merged
+		  windows-6-0-20040315-freeze photonmap-branch-freeze
 
 
     FORMAT FOR MISCELLANEOUS TAGS:
+
+	For everything else, the basic structure of the tags still
+	applies.  Lower case, dash-separated, and hopefully
+	informative tag names should be used.  Dates are highly
+	recommended as CVS tags are not associated by date, but rather
+	to the individual revision of a file at the time specified.
     
-        <keyword>-<revision>-<date>-<comment>
+        <keyword>[-<revision>][-<date>][-<comment>]
+
+    When in doubt, tag.  It's easy to remove or rename tags, but it
+    can be rather complicated to create one after the fact.
 
 
+MAKING A RELEASE
+----------------
+    Making a release is generally a matter of making sure that all
+    desired code changes are committed to HEAD and well tested.  Once
+    HEAD is verified, it may be joined into STABLE, which should
+    likewise be thoroughly tested.
 
-HOW TO TAG A RELEASE
+    Once all the code is verified, then the release should be tagged:
 
-    0) Merge in any branches and hanging updates that need to be committed to
-       the base trunk on a HEAD revision checkout.
+	cvs tag rel-<revision>
 
-    1) Test the release on multiple architectures.  Run the benchmarks
-       for speed and consistency comparisons.  Run the regression
-       suite.  Manually test, fix, and retest, by hand as necessary.
 
-    2) Tag the release:
+    CREATING A MAINTENANCE BRANCH:
 
-        cvs tag rel-<revision>-<date>
+    If minor maintenance is expected to continue and head need to
+    continue development in an incompatible way, a maintenance branch
+    should be made as well:
+
+	cvs rtag -r rel-<revision> -b rel-<revision>-branch
+
+    That will create a branch named rel-<revision>-branch anchored at
+    the same revision of the sources as rel-<revision>.
+
+
+    APPLYING RELEASE PATCHES:
+
+    In general, unified diff patches should be requested from people
+    providing patches whenever possible.  For people working with a
+    cvs checkout, generating a diff is generally a simple matter of
+    running:
+
+	cvs diff -u > my.patch
+
+    This will create a unified diff patch file called "my.patch" that
+    is trivially applied to a checkout using the patch command:
+
+	patch -p0 < my.patch
+
+    Assuming there have not been overlapping/conflicting changes,
+    patch should say on the first attempt that all chunks were
+    successfully applied.  If not, there will be reject files that
+    will have changes that need to be manually merged.
+
+    Users who are perhaps working off of a source tarball instead of a
+    CVS checkout can fairly easily generate a unified diff patch by
+    comparing their modified tree against an unmodified source tree:
+
+	diff -u brlcad brlcad.modified > my.patch
+
+    In this example, brlcad is an unmodified top-level source
+    directory and brlcad.modified is a modified top-level source
+    directory.  That same patch file may then be applied to a checkout
+    and commited to CVS.
+
+    If there is an active maintenance branch close to the patch, it is
+    generally easier to apply the patch to the maintenance branch
+    first and then join the maintenance branch into HEAD as usual
+    instead of merging directly into HEAD.  HEAD will have often
+    changed too significantly and may result in patch being unable to
+    resolve chunks.  See the patch manual documentation for more
+    details.
+
+
+MERGING A BRANCH
+----------------
+    CVS branches can be both very useful or difficult.  Proper usage
+    of branches generally requires a firm understanding of CVS
+    otherwise complications and mistakes are bound to happen as there
+    are several usage pitfalls.  Following the directions shown below
+    should help avoid the pitfalls and assist in making effective use
+    of a CVS branch.
+
+    Regardless if the branch is a maintenance branch or the STABLE
+    branch, the fundamental "action" in performing a merge is called a
+    CVS join.  You can join code commited to one branch revision into
+    another branch revision by passing the "-j" option to the cvs
+    update command.  It's important to note that joins occur on code
+    that is already committed.
+
+    If you have changes that have not yet been commited to CVS, they
+    should first be commited.  Then the join may occur.
+
+
+    MERGING A BRANCH INTO HEAD:
+
+    Merging branches in CVS is generally a matter of "joining" in the
+    changes from one the branch revision into another branch revision.
+    HEAD can itself be considered a branch.  If, for example, you have
+    a maintenance branch named "rel-7-0-branch" that has had changes
+    applied to it and you wish to apply those same changes to HEAD you
+    would checkout HEAD:
+
+	  cvs -z9 -d <CVSROOT> checkout -kk -P brlcad
+
+    The join the changes from the desired branch:
+
+	  cvs update -kk -dP
+	  cvs tag <keyword>-<revision>-<date>-premerge
+	  cvs update -kk -dP -j rel-7-0-branch
+	  [ resolve conflicts ]
+	  cvs commit
+	  cvs tag <keyword>-<revision>-<date>-merged
+
+    If there are any conflicts, they would of course need to be
+    manually resolved.  Once any conflicts are resolved, the changes
+    could then be commited to HEAD.  Be careful to notice any file
+    additions or deletions as CVS will not manage those for you
+    generally speaking.
+
+    In both the checkout and the join update, the -kk flag was used to
+    cause CVS to not expand the CVS variables such as \$Revision\$ and
+    \$Id\$.  If those keyword variables are expanded, you're likely to
+    have many conflicts depending on time-stamps.
     
+    If the branch being checked in an extensive set of changes,
+    testing is essential.  It is also a good idea to warn other
+    developers of what you are planning to do.  You should indicate
+    what parts of the system will be affected and coordinate in detail
+    with other developers as appropriate.
 
 
-HOW TO PATCH A RELEASE
+    MERGING HEAD INTO A BRANCH:
 
-    0) Create a patch branch off of the release tag to work with:
+    Merging changes from HEAD into a branch (such as STABLE) is not
+    really any different than the scenario described for merging a
+    branch into HEAD.  Again, HEAD itself can be simply considered a
+    branch too.
 
-            cvs rtag -b -r rel-<revision>-<date> rel-<revision>-<date>-patches brlcad
-            cvs checkout -b rel-<revision>-<date>-patches brlcad
-
-    1) Make source modifications and patches as needed.  Test, fix,
-       and retest as needed.
-
-    2) Commit changes to the patch branch:
-
-        cvs update -dP
-        cvs commit
-
-    3) Commit changes to the main trunk manually. Patch branches are
-       never merged back into the main trunk as it is not desireable
-       to merge the main trunk into the patch branch first.
-
-       If the patch branch contains any undesireable code (e.g., temp
-       bug fixes) or any code not appropriate for the main trunk, the
-       desired code must be added to a main branch checkout by hand.
-
-       Otherwise, the patch branch, in its entirety, may be merged
-       back into the main trunk via:
-       
-        cvs update -A
-        [ test extensively ]
-        cvs commit
-        cvs tag rel-<revision>-<date>-patches-merge
+    The important step to realize is that your working checkout needs
+    to be the revision you want to join changes into.  When in doubt,
+    commit all your changes to the appropriate branch, delete all your
+    sources, and checkout fresh.  "cvs status README" will tell you
+    what revision you have checked out.
 
 
+MAKING A BRANCH
+---------------
+    Making a branch is a simple matter of using the "-b" option when
+    tagging.  Branch tags are special symbolic CVS tags that
 
-HOW TO MAKE A BRANCH
+    CASE 1: You have no checked out source code revision:
 
-    CASE 1: You have no checked out trees.
-
-        If you want to use the main trunk as the anchor for your branch:
+        If you want to use the main HEAD as the anchor for your
+        branch:
 
             cvs rtag -b <keyword>-<revision>-branch brlcad
-            cvs checkout -b <keyword>-<revision>-branch brlcad
+            cvs checkout -r <keyword>-<revision>-branch brlcad
 
-        If you want to use some other tag as the anchor for your branch:
+        If you want to use some other tag as the anchor for your
+        branch:
 
             cvs rtag -b -r <tag> <keyword>-<revision>-branch brlcad
-            cvs checkout -b <keyword>-<revision>-branch brlcad
+            cvs checkout -r <keyword>-<revision>-branch brlcad
 
-    CASE 2: You have a checked out revision, and you want to tag it and start
-    using it as a branch:
+    CASE 2: You have a checked out revision, and you want to tag it
+    and start using it as a branch:
 
-        cd <root-of-your-checked-out-tree>
         cvs tag -b <keyword>-<revision>-branch
         cvs update -r <keyword>-<revision>-branch
 
-    This makes the <keyword>-<revision>-branch tag sticky.  You can verify
-    this by using 'cvs status', for example, do this:
+    This makes the <keyword>-<revision>-branch tag sticky.  You can
+    verify this by using 'cvs status', for example:
 
-        cvs status Makefile
+        cvs status README
 
+    To see all tags for a particular file:
+
+        cvs status -v README
     or
-
-        cvs status -v Makefile
-
+	cvs log README
 
 
-HOW TO MERGE THE TRUNK INTO YOUR BRANCH
-
-    Before you merge your code into the trunk you should first merge
-    the latest trunk code into your branch.  After merged code has been
-    tested on your branch, merging into the trunk should be simple.
-
-    0) Be sure all the changes on your branch are checked in.
-
-    1) Tag your branch with a 'freeze' tag:
-
-        cvs tag <keyword>-<revision>-<date>-freeze
-
-    2) Merge from the trunk:
-
-        cvs update -d -j HEAD
-
-    3) Resolve any conflicts from the merge.
-
-    4) Recompile and build your branch.  Test it.
-
-    5) Check in your changes from the merge.
-
-    6) Tag your branch with a pre head-merge tag:
-
-        cvs tag <keyword>-<revision>-<date>-merge
-    
-
-
-HOW TO MERGE YOUR BRANCH TO THE MAIN TRUNK
-
-    0) Be sure your <keyword>-<revision>-<date>-merge tag (on the branch) is up
-       to date (i.e., in case you changed some files from between the time you
-       merged the trunk onto the branch until you merged the branch onto the
-       trunk).
-
-       You can make the tag with:
-
-        cvs tag <keyword>-<revision>-<date>
-
-    1) Revert your working tree to the main trunk:
-
-        cvs update -A
-
-       [Alternatively, you can just check out a new copy of the main
-       trunk.]
-
-    2) Merge in the changes from your branch:
-
-        cvs update -j <keyword>-<revision>-branch
-
-    3) Test your merged tree
-
-    4) Check in your merged tree to the main branch;
-
-        cvs commit -m 'Merged <keyword>-<revision>'
-
-    5) Tag your merge so we can find it again:
-
-        cvs tag <keyword>-<revision>-<date>-merge
-
-
-    Say you keep hacking on your branch after the merge to test a few extra 
-    things and you want to merge again.  You get the main trunk checked
-    out, as in step (1), then you merge only those changes between your
-    last merge and the most recent revision in your branch:
-
-        cvs update -j <keyword>-<revision>-<date>
-                   -j <keyword>-<revision>-branch
-
-    If the branch being checked in an extensive set of changes,
-    testing (step 3) is essential.  It is also a good idea to warn
-    other developers of what you are planning to do.  You should
-    indicate what parts of the system will be affected and coordinate
-    in detail with other developers as appropriate.
-    
-
-
-USEFUL ADVICE
-
-    0) To avoid having to specify the repository in each command, and
+USAGE TIPS
+----------
+    0) To avoid having to specify the repository for a checkout, and
        to quell CVS warnings, you can set your CVSROOT environment
        variable to the location of the repository:
 
-       FROM CAD:
+       For anonymous users:
+           export CVSROOT=:pserver:anonymous@cvs.sf.net:/cvsroot/brlcad
 
-          export CVSROOT=/c/CVS
+       For developers with accounts:
+           export CVSROOT=<username>@cvs.sf.net:/cvsroot/brlcad
 
-       FROM ELSEWHERE:
+    1) Checkout with the -P option to prune empty directories:
 
-          export CVSROOT=username@cad.arl.army.mil:/c/CVS
+       cvs checkout -P brlcad
 
-    1) It is useful to have a ~/.cvsrc file with the following:
+    2) Be sure to perform an "update -d" to check for new directories
+       from time to time.
 
-        $ cat ~/.cvsrc
-        update -d -P
-        checktout -P
+       cvs update -d
 
-       The -P switch tells CVS to prune empty directories.  The -d
-       switch tells CVS to add new directories that may have been
-       created in the repository since the last update.
+    3) Update and commit frequently.  Frequent updates are a good
+       thing.  Perform them often to minimize conflicts.
 
-    2) Frequent updates are a good thing.  Perform them often to
-       minimize conflicts.
+    4) Nice easy way to check what files have been modified if you are
+       certain that you've not added any files:
 
-    3) Once a branch is merged back into the trunk, it is usually a
-       good idea to consider the branch dead.  Create a new branch off
-       of the merge tag to start again.
+       cvs -q update | grep -v \?
 
+       That performs a quiet update (the directory tree isn't output)
+       and ignores lines that have a question mark (normally build
+       files).
+
+    5) CVS does not manage directories so care must be taken when
+       creating new directories or moving things around.  Do NOT add
+       directories that include non-static information as part of the
+       directory name.  Examples include adding directories that
+       include a version in their name (e.g. libtcl8) or indicate age
+       (e.g. newRt).
+
+    6) If you need to move a directory, rethink why and try not to.
+       If you still need to move a directory, .. try to find another
+       way to cope.  If you still REALLY need to move a directory, a
+       little find scripting can make it easy.  In case you didn't get
+       the hint DO NOT MOVE/RENAME DIRECTORIES unless there's a _very_
+       good reason.
+
+    7) It is possible to move directories using a little find
+       scripting.  Assuming you've not got build files cluttering
+       things up, and are ready to simply move your files to a new
+       location in CVS, an otherwise complicated task becomes mostly
+       simple with a few find scripts.  Here is an example where a
+       directory ./foo/ is moved to a new location ./src/foo2/:
+
+       cd foo
+       # copy the files to their new home
+       find . -type d -not -name CVS -exec mkdir -p ../src/foo2/{} \;
+       find . -type f -not -regex '.*/CVS/.*' -exec cp -p {} ../src/foo2/{} \;
+       cd ../src
+       # add the new directories to cvs
+       find foo2 -type d -not -name CVS -exec cvs add {} \;
+       find foo2 -type f -not -regex '.*/CVS/.*' -exec cvs add {} \;
+       # commit the new sources
+       cvs commit -m "moved from foo to src/foo" foo2
+       cd ..
+       # delete the old source subtree
+       find foo -type f -not -regex '.*/CVS/.*' -exec rm {} \;
+       find foo -type d -not -name CVS -exec rm -f {} \; -exec cvs delete {} \;
+       cvs commit -m "moved from foo to src/foo" foo
+       cvs update -P foo
+
+       If you don't have CVS keys set up and have too many files to
+       move, each find script could be passed to xargs so that only a
+       single password is prompted instead of one per file.  Since
+       moving/renamed directories in CVS is "bad", though, that's left
+       as an exercise to the reader.
+
+    8) When renaming files, be sure to indicate both where the file
+       was moved from and where it was moved to and/or the name before
+       the move and the name after the move.  Do this both on the
+       committing the file deletion and on committing the file
+       addition.  This way, people reading the file's log will know
+       where to find the rest of the file's history.
+
+    9) If experiencing trouble consolidating conflicts that involve
+       CVS "$" variables, set the keyword sticky flag which will tell
+       CVS to not perform the keyword variable expansions.  Perform a
+       "cvs update -kk" and the conflicts should go away.
 
 
 REFERENCES
+----------
+    This CVS policy and guidelines document was in part derived off
+    some of the principal ideas of other projects' usage of CVS such
+    as the Linux Documentation Project, the XFree86 DRI project, Zope,
+    FreeBSD, and AT&T's SML/NJ among others.
 
-    This CVS policy was derived off of other projects such as the
-    Linux Documentation Project, the XFree86 DRI project, Zope, FreeBSD, 
-    and AT&T's SML/NJ among others.
-
+Version Management with CVS
+https://www.cvshome.org/docs/manual/
 
 CVS Best Practices
 http://www.magic-cauldron.com/cm/cvs-bestpractices/index.html
 
-XFree86 DRI
+XFree86 Direct Rendering Infrastructure CvsPolicy
+http://dri.sourceforge.net/cgi-bin/moin.cgi/CvsPolicy
 http://dri.sourceforge.net/doc/cvspolicy.txt
 
 Zope 
 http://dev.zope.org/CVS/ZopeReleasePolicy
 
 FreeBSD
-http://www.linuxsecurity.com/articles/vendors_products_article-3004.html
+http://www.freebsd.org/doc/en_US.ISO8859-1/books/handbook/cvs-tags.html
 
 AT&T SML/NJ
+http://www.smlnj.org//DEV/policy.html
 http://cm.bell-labs.com/cm/cs/what/smlnj/DEV/policy.html
 
-
-
-
+--- 
+This document was initially written in 2002 and later almost
+completely rewritten in 2004 by Christopher Sean Morrison.
