@@ -36,16 +36,16 @@ struct polygon_header  {
 	int	magic;			/* magic number */
 	int	ident;			/* identification number */
 	int	interior;		/* >0 => interior loop, gives ident # of exterior loop */
-	int	npts;			/* number of points */
 	vect_t	normal;			/* surface normal */
+	int	npts;			/* number of points */
 };
 #define POLYGON_HEADER_MAGIC	0x8623bad2
 struct rt_imexport  polygon_desc[] = {
 	"%d",	offsetof(struct polygon_header, magic),		1,
 	"%d",	offsetof(struct polygon_header, ident),		1,
 	"%d",	offsetof(struct polygon_header, interior),	1,
-	"%d",	offsetof(struct polygon_header, npts),		1,
 	"%f",	offsetofarray(struct polygon_header, normal),	3,
+	"%d",	offsetof(struct polygon_header, npts),		1,
 	"",	0,						0
 };
 struct rt_imexport vertex_desc[] = {
@@ -69,7 +69,7 @@ char	**argv;
 	register struct solid *sp;
 	register struct vlist *vp;
 	FILE	*fp;
-	int	pno = 0;
+	int	pno = 1;
 	struct polygon_header ph;
 #define MAX_VERTS	1024
 	vect_t	verts[MAX_VERTS];
@@ -157,12 +157,10 @@ char	**argv;
 					break;
 				}
 				rt_free( obuf, "vertex buffer" );
-				printf("%d, ", ph.npts);
 				ph.npts = 0;		/* sanity */
 				break;
 			}
 		}
 	}
-	printf("\n");
 	fclose( fp );
 }
