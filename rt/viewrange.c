@@ -61,7 +61,6 @@ char usage[] = "\
 Usage:  rtrange [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
- -A angle	Angle between surface normals (default=5degrees)\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
