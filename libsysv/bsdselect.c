@@ -7,6 +7,9 @@
  *  so this special interface has been created.  This also has the slight
  *  advantage of centralizing the struct timeval stuff.
  */
+#if __STDC__
+# include <unistd.h>
+#endif
 
 #if defined(i386) && !defined(BSD)
 #	define BSD
