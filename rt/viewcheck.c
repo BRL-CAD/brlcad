@@ -94,9 +94,10 @@ static struct overlap_list *olist=NULL;	/* root of the list */
  */
 /*ARGSUSED*/
 int
-hit( ap, PartHeadp )
+hit( ap, PartHeadp, segHeadp )
 struct application *ap;
 register struct partition *PartHeadp;
+struct seg		*segHeadp;
 {
 	return	1;
 }
