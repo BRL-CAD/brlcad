@@ -302,6 +302,8 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 			bu_log("db_dirbuild(%s): improper v5 database, no %s object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 			dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
+			# Missing _GLOBAL object so create it and set default title and units */
+			db5_update_ident(dbip, "Untitled v5 BRL-CAD Database",1.0);
 			return 0;	/* not a fatal error, user may have deleted it */
 		}
 		BU_INIT_EXTERNAL(&ext);
