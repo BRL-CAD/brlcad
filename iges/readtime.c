@@ -77,12 +77,17 @@ Readtime()
 		fprintf( stderr , "\tlength of string=%s (should be 13)\n" , num );
 	}
 
-	i = counter;
-	counter = counter + length;
+	for( i=0 ; i<length ; i++ )
+	{
+		if( counter > lencard )
+			Readrec( ++currec );
+		num[i] = card[counter++];
+	}
+
 	if( length > 5 )
 	{
-		sprintf( crdate , "%c%c/%c%c/%c%c" , card[i+2],card[i+3],card[i+4],card[i+5],
-			card[i],card[i+1] );
+		sprintf( crdate , "%c%c/%c%c/%c%c" , num[2],num[3],num[4],num[5],
+			num[0],num[1] );
 		printf( "%s" , crdate );
 	}
 	else
@@ -90,8 +95,8 @@ Readtime()
 
 	if( length > 12 )
 	{
-		sprintf( crtime , "%c%c:%c%c:%c%c" , card[i+7],card[i+8],card[i+9],
-			card[i+10],card[i+11],card[i+12] );
+		sprintf( crtime , "%c%c:%c%c:%c%c" , num[7],num[8],num[9],
+			num[10],num[11],num[12] );
 		printf( " at %s\n" , crtime );
 	}
 	else
@@ -99,4 +104,3 @@ Readtime()
 
 	counter++;
 }
-
