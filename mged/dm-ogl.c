@@ -233,14 +233,26 @@ XEvent *eventPtr;
 
       break;
     case ALT_MOUSE_MODE_ROTATE:
+#if 0
       bu_vls_printf( &cmd, "knob -i ax %f ay %f\n",
 		     (my - ((struct ogl_vars *)dmp->dm_vars)->omy)/4.0,
 		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/4.0 );
+#else
+      bu_vls_printf( &cmd, "vrot %f %f 0.0",
+		     (my - ((struct ogl_vars *)dmp->dm_vars)->omy) * 0.25,
+		     (mx - ((struct ogl_vars *)dmp->dm_vars)->omx) * 0.25);
+#endif
       break;
     case ALT_MOUSE_MODE_TRANSLATE:
       {
 	fastf_t fx, fy;
-
+#if 1
+	fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/
+	  (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width * 4095.0;
+	fy = (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
+	  (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height * 4095.0;
+	bu_vls_printf( &cmd, "tran -i %f %f", fx, fy);
+#else
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
 	  fx = (mx/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 2;
@@ -253,6 +265,7 @@ XEvent *eventPtr;
 		(fastf_t)((struct ogl_vars *)dmp->dm_vars)->height * 2.0;
 	  bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy);
 	}
+#endif
       }	     
       break;
     case ALT_MOUSE_MODE_ZOOM:
@@ -723,17 +736,14 @@ char	**argv;
       return TCL_ERROR;
     }
 
-    av[0] = "M";
-    av[1] = argv[2];
-    av[2] = xstr;
-    av[3] = ystr;
-    av[4] = NULL;
-
-    sprintf(xstr, "%d", Ogl_irisX2ged(dmp, atoi(argv[3])));
-    sprintf(ystr, "%d", Ogl_irisY2ged(dmp, atoi(argv[4])));
-    status = f_mouse((ClientData)NULL, interp, 4, av);
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "M %s %d %d", argv[2],
+		  Ogl_irisX2ged(dmp, atoi(argv[3])),
+		  Ogl_irisY2ged(dmp, atoi(argv[4])));
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+#if 0
     mged_print_result(status);
-
+#endif
     return status;
   }
 
@@ -761,10 +771,9 @@ char	**argv;
 	break;
       case 't':
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
-
+#if 0
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
-#if 1
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
 			(((struct ogl_vars *)dmp->dm_vars)->omx /
@@ -773,22 +782,8 @@ char	**argv;
 			 (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2);
 	  status = Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
-#else
-	  av[0] = "knob";
-	  av[1] = "aX";
-	  av[2] = xstr;
-	  av[3] = "aY";
-	  av[4] = ystr;
-	  av[5] = NULL;
-
-	  sprintf(xstr, "%f", (((struct ogl_vars *)dmp->dm_vars)->omx/
-			       (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 2);
-	  sprintf(ystr, "%f", (0.5 - ((struct ogl_vars *)dmp->dm_vars)->omy/
-			       (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2);
-	  status = f_knob((ClientData)NULL, interp, 5, av);
-#endif
 	}
-
+#endif
 	break;
       case 'z':
 	am_mode = ALT_MOUSE_MODE_ZOOM;

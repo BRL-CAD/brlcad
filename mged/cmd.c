@@ -60,6 +60,7 @@ int cmd_set();
 int cmd_get();
 int get_more_default();
 int tran(), irot();
+int f_tran();
 void set_tran(), mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
@@ -481,8 +482,8 @@ static struct funtab funtab[] = {
 	f_status, 1,1,TRUE,
 "summary", "[s r g]", "count/list solid/reg/groups",
 	f_summary,1,2,TRUE,
-"sv", "x y", "Move view center to (x, y)",
-	f_slewview, 3, 3,TRUE,
+"sv", "x y [z]", "Move view center to (x, y, z)",
+	f_slewview, 3, 4,TRUE,
 "sync",	"",	"forces UNIX sync",
 	f_sync, 1, 1,TRUE,
 "t", "", "table of contents",
@@ -501,10 +502,8 @@ static struct funtab funtab[] = {
 	f_tops,1,1,TRUE,
 "track", "<parameters>", "adds tracks to database",
 	f_amtrack, 1, 27,TRUE,
-#if 0
-"tran", "x y z", "absolute translate using view coordinates",
-        f_tran, 4, 4,TRUE,
-#endif
+"tran", "[-i] x y [z]", "absolute translate using view coordinates",
+        f_tran, 3, 5,TRUE,
 "translate", "x y z", "trans object to x,y, z",
 	f_tr_obj,4,4,TRUE,
 "tree",	"object(s)", "print out a tree of all members of an object",
@@ -2281,6 +2280,78 @@ char    *argv[];
   return TCL_OK;
 }
 
+
+int
+f_tran(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
+{
+  int incr = 0;
+  int x, y, z;
+  point_t old_pos;
+  point_t new_pos;
+  point_t diff;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  /* Check for -i option */
+  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+    incr = 1;  /* treat arguments as incremental values */
+    ++argv;
+    --argc;
+  }
+
+  if(sscanf(argv[1], "%d", &x) < 1){
+    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
+		     argv[1], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[2], "%d", &y) < 1){
+    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
+		     argv[2], "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(argc == 4){
+    if(sscanf(argv[3], "%d", &z) < 1){
+      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
+		       argv[3], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else{
+    if(incr)
+      z = 0.0;
+    else
+      z = absolute_slew[Z] * 2047.0;
+  }
+
+  if(incr){
+    point_t tpoint;
+
+    VSET(tpoint, x/2047.0, y/2047.0, z/2047.0);
+    VADD2(absolute_slew, absolute_slew, tpoint);
+  }else{
+    VSET(absolute_slew, x/2047.0, y/2047.0, z/2047.0);
+  }
+
+  MAT4X3PNT( new_pos, view2model, absolute_slew );
+  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
+  VSUB2( diff, new_pos, old_pos );
+  VADD2(new_pos, orig_pos, diff);
+  MAT_DELTAS_VEC( toViewcenter, new_pos);
+#if 0
+  MAT_DELTAS_VEC( ModelDelta, new_pos);
+#endif
+  new_mats();
+
+  return TCL_OK;
+}
+
+
 int
 f_slewview(clientData, interp, argc, argv)
 ClientData clientData;
@@ -2288,9 +2359,8 @@ Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
-  int x, y;
-  vect_t tabvec;
-
+  int x, y, z;
+  vect_t slewvec;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -2307,10 +2377,18 @@ char	*argv[];
     return TCL_ERROR;
   }
 
-  tabvec[X] =  x / 2047.0;
-  tabvec[Y] =  y / 2047.0;
-  tabvec[Z] = 0;
-  slewview( tabvec );
+  if(argc == 4){
+    if(sscanf(argv[3], "%d", &z) < 1){
+      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
+		       argv[3], "\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }else
+    z = 0;
+
+  VSET(slewvec, x/2047.0, y/2047.0, z/2047.0);
+  VSUB2(absolute_slew, absolute_slew, slewvec);
+  slewview( slewvec );
 
   return TCL_OK;
 }
@@ -2552,7 +2630,9 @@ vect_t view_pos;
     VSUB2( diff, new_pos, old_pos );
     VADD2(new_pos, orig_pos, diff);
     MAT_DELTAS_VEC( toViewcenter, new_pos);
+#if 0
     MAT_DELTAS_VEC( ModelDelta, new_pos);
+#endif
     new_mats();
   }
 

@@ -78,6 +78,10 @@ extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
 
+vect_t edit_absolute_rotate;
+vect_t edit_absolute_slew;
+vect_t edit_rate_rotate;
+vect_t edit_rate_slew;
 double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
@@ -1561,6 +1565,10 @@ char	**argv;
 
       VSETALL( rate_rotate, 0 );
       VSETALL( rate_slew, 0 );
+      if(state != ST_VIEW){
+	VSETALL( edit_rate_rotate, 0 );
+	VSETALL( edit_rate_slew, 0 );
+      }
       rate_zoom = 0;
 		
       (void)f_adc( clientData, interp, 2, av );
@@ -2064,47 +2072,42 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	double	val;
-	vect_t view_pos;
-	point_t new_pos;
-	point_t old_pos;
-	point_t diff;
+  double	val;
+  point_t new_pos;
+  point_t old_pos;
+  point_t diff;
+  point_t model_pos;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	MAT_DELTAS_GET(old_pos, toViewcenter);
+  if(EDIT_TRAN)
+    MAT4X3PNT(model_pos, view2model, absolute_slew);
 
-	val = atof(argv[1]);
-	if( val < SMALL_FASTF || val > INFINITY )  {
-	  Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+  val = atof(argv[1]);
+  if( val < SMALL_FASTF || val > INFINITY )  {
+    Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
+    return TCL_ERROR;
+  }
 
-	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
-	  return TCL_ERROR;
+  if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
+    return TCL_ERROR;
 
-	Viewscale /= val;
-	new_mats();
+  Viewscale /= val;
+  new_mats();
 
-	absolute_zoom = 1.0 - Viewscale / i_Viewscale;
-	if(absolute_zoom < 0.0)
-	  absolute_zoom /= 9.0;
+  absolute_zoom = 1.0 - Viewscale / i_Viewscale;
+  if(absolute_zoom < 0.0)
+    absolute_zoom /= 9.0;
 
-	if(state == ST_S_EDIT || state == ST_O_EDIT){
-	  absolute_slew[X] *= val;
-	  absolute_slew[Y] *= val;
-	  absolute_slew[Z] *= val;
-	}else{
-	  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-	  VSUB2(diff, new_pos, orig_pos);
-	  VADD2(new_pos, old_pos, diff);
-	  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
-	  MAT4X3PNT( new_pos, model2view, view_pos);
-	  VMOVE( absolute_slew, new_pos );
-	}
+  if(EDIT_TRAN){
+    MAT4X3PNT(absolute_slew, model2view, model_pos);
+  }else{
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }
 
-	return TCL_OK;
+  return TCL_OK;
 }
 
 /*

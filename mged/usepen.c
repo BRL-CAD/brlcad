@@ -196,7 +196,21 @@ char	**argv;
 	   * Use the DT for moving view center.
 	   * Make indicated point be new view center (NEW).
 	   */
+#if 1
+	  {
+	    struct bu_vls vls;
+	    int status;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "sv %d %d", xpos, ypos);
+	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+
+	    return status;
+	  }
+#else
 	  slewview( mousevec );
+#endif
 	  return TCL_OK;
 
 	case ST_O_PICK:
@@ -216,7 +230,21 @@ char	**argv;
 	    mousevec[Z] = absolute_slew[Z];
 	    aslewview( mousevec );
 	  }else
+#if 1
+	  {
+	    struct bu_vls vls;
+	    int status;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "sv %d %d", xpos, ypos);
+	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+
+	    return status;
+	  }
+#else
 	    slewview( mousevec );
+#endif
 	  return TCL_OK;
 
 	case ST_O_PATH:
@@ -249,7 +277,21 @@ char	**argv;
 	  if(!OEDIT_ROTATE && edobj)
 	    aslewview( mousevec );
 	  else
+#if 1
+	  {
+	    struct bu_vls vls;
+	    int status;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "sv %d %d", xpos, ypos);
+	    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+
+	    return status;
+	  }
+#else
 	    slewview( mousevec );
+#endif
 	  return TCL_OK;
 
 	default:
