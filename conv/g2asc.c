@@ -150,7 +150,7 @@ char **argv;
 		if( dbip->dbi_title[0] ) {
 			char *c;
 
-			fprintf( ofp, "db title ");
+			fprintf( ofp, "title ");
 			c = dbip->dbi_title;
 			while( *c ) {
 				if( ispunct( *c ) ) {
@@ -161,7 +161,7 @@ char **argv;
 			}
                         putc( '\n', ofp );
 		}
-		fprintf( ofp, "db units %s\n", bu_units_string( dbip->dbi_local2base ) );
+		fprintf( ofp, "units %s\n", bu_units_string( dbip->dbi_local2base ) );
 		FOR_ALL_DIRECTORY_START(dp, dbip)  {
 			struct rt_db_internal	intern;
 			struct bu_attribute_value_set *avs=NULL;
@@ -192,7 +192,7 @@ char **argv;
 							i );
 						continue;
 					}
-					fprintf( ofp, "db color %s\n",
+					fprintf( ofp, "color %s\n",
 						 Tcl_GetStringFromObj(obj, NULL) );
 				}
 				bu_avs_free( &g_avs );
@@ -210,11 +210,11 @@ char **argv;
 					continue;
 				}
 				if( dp->d_flags & DIR_REGION ) {
-					fprintf( ofp, "db put %s comb region yes tree {%s}\n",
+					fprintf( ofp, "put %s comb region yes tree {%s}\n",
 						 dp->d_namep,
 						 interp->result );
 				} else {
-					fprintf( ofp, "db put %s comb region no tree {%s}\n",
+					fprintf( ofp, "put %s comb region no tree {%s}\n",
 						 dp->d_namep,
 						 interp->result );
 				}
@@ -224,7 +224,7 @@ char **argv;
 					bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 					continue;
 				}
-				fprintf( ofp, "db put %s %s\n",
+				fprintf( ofp, "put %s %s\n",
 					 dp->d_namep,
 					 interp->result );
 			}
@@ -232,7 +232,7 @@ char **argv;
 			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
 				int i;
 
-				fprintf( ofp, "db attr %s", dp->d_namep );
+				fprintf( ofp, "attr %s", dp->d_namep );
 				for( i=0 ; i<avs->count ; i++ ) {
 					fprintf( ofp, " %s {%s}", avs->avp[i].name, avs->avp[i].value );
 				}
