@@ -69,7 +69,7 @@ proc setupmv { id } {
     global mged_faceplate
 
     winset $mged_top($id).ul
-    press top
+    ae 0 90
     set faceplate 0
 
     winset $mged_top($id).ur
@@ -81,7 +81,7 @@ proc setupmv { id } {
     set faceplate 0
 
     winset $mged_top($id).lr
-    press right
+    press left
     set faceplate 0
 
     bind $mged_top($id).ul m "togglemv $id"
