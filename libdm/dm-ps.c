@@ -68,7 +68,10 @@ struct dm dm_ps = {
   ps_setFGColor,
   Nu_int0,
   ps_setLineAttr,
+  Nu_int0,
   ps_setWinBounds,
+  Nu_int0,
+  Nu_int0,
   ps_debug,
   Nu_int0,
   Nu_int0,
@@ -99,6 +102,8 @@ struct dm dm_ps = {
   0,				/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
+  0,				/* no lighting */
+  0,				/* no zbuffer */
   0				/* no zclipping */
 };
 

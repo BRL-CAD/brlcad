@@ -35,6 +35,9 @@ struct dm dm_Null = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
   0,
   0,				/* no displaylist */
   0,				/* no stereo */
@@ -60,6 +63,8 @@ struct dm dm_Null = {
   0,				/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
+  0,				/* no lighting */
+  0,				/* no zbuffer */
   0				/* no zclipping */
 };
 

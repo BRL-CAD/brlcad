@@ -53,27 +53,29 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm_xvars.h"
 #include "solid.h"
 
-void     X_configureWindowShape();
 
-static void	label();
-static void	draw();
-static void     x_var_init();
-static XVisualInfo *X_choose_visual();
+HIDDEN void	label();
+HIDDEN void	draw();
+HIDDEN void     x_var_init();
+HIDDEN XVisualInfo *X_choose_visual();
 
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 struct dm	*X_open();
-static int	X_close();
-static int	X_drawBegin(), X_drawEnd();
-static int	X_normal(), X_loadMatrix();
-static int      X_drawString2D();
-static int	X_drawLine2D();
-static int      X_drawPoint2D();
-static int	X_drawVList();
-static int      X_setFGColor(), X_setBGColor();
-static int	X_setLineAttr();
-static int	X_setWinBounds(), X_debug();
+HIDDEN int	X_close();
+HIDDEN int	X_drawBegin(), X_drawEnd();
+HIDDEN int	X_normal(), X_loadMatrix();
+HIDDEN int      X_drawString2D();
+HIDDEN int	X_drawLine2D();
+HIDDEN int      X_drawPoint2D();
+HIDDEN int	X_drawVList();
+HIDDEN int      X_setFGColor(), X_setBGColor();
+HIDDEN int	X_setLineAttr();
+HIDDEN int	X_configureWin();
+HIDDEN int	X_setLight();
+HIDDEN int	X_setZBuffer();
+HIDDEN int	X_setWinBounds(), X_debug();
 
 struct dm dm_X = {
   X_close,
@@ -88,7 +90,10 @@ struct dm dm_X = {
   X_setFGColor,
   X_setBGColor,
   X_setLineAttr,
+  X_configureWin,
   X_setWinBounds,
+  X_setLight,
+  X_setZBuffer,
   X_debug,
   Nu_int0,
   Nu_int0,
@@ -119,6 +124,8 @@ struct dm dm_X = {
   0,				/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
+  0,				/* no lighting */
+  0,				/* no zbuffer */
   0				/* no zclipping */
 };
 
@@ -420,7 +427,7 @@ Done:
 
 Skip_dials:
 #ifndef CRAY2
-  X_configureWindowShape(dmp);
+  (void)X_configureWin(dmp);
 #endif
 
   Tk_SetWindowBackground(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
@@ -437,7 +444,7 @@ Skip_dials:
  *  
  *  Gracefully release the display.
  */
-static int
+HIDDEN int
 X_close(dmp)
 struct dm *dmp;
 {
@@ -476,7 +483,7 @@ struct dm *dmp;
 /*
  *			X _ D R A W B E G I N
  */
-static int
+HIDDEN int
 X_drawBegin(dmp)
 struct dm *dmp;
 {
@@ -508,7 +515,7 @@ struct dm *dmp;
 /*
  *			X _ E P I L O G
  */
-static int
+HIDDEN int
 X_drawEnd(dmp)
 struct dm *dmp;
 {
@@ -535,7 +542,7 @@ struct dm *dmp;
  *  many calls to X_drawVList().
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 X_loadMatrix(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
@@ -568,7 +575,7 @@ int which_eye;
  *  
  */
 
-static int
+HIDDEN int
 X_drawVList(dmp, vp)
 struct dm *dmp;
 register struct rt_vlist *vp;
@@ -806,7 +813,7 @@ register struct rt_vlist *vp;
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
  */
-static int
+HIDDEN int
 X_normal(dmp)
 struct dm *dmp;
 {
@@ -823,7 +830,7 @@ struct dm *dmp;
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 X_drawString2D(dmp, str, x, y, size, use_aspect)
 struct dm *dmp;
 register char *str;
@@ -856,7 +863,7 @@ int use_aspect;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 X_drawLine2D( dmp, x1, y1, x2, y2)
 struct dm *dmp;
 fastf_t x1, y1;
@@ -885,7 +892,7 @@ fastf_t x2, y2;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 X_drawPoint2D( dmp, x, y )
 struct dm *dmp;
 fastf_t x, y;
@@ -908,7 +915,7 @@ fastf_t x, y;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 X_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
 unsigned char r, g, b;
@@ -948,7 +955,7 @@ int strict;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 X_setBGColor(dmp, r, g, b)
 struct dm *dmp;
 unsigned char r, g, b;
@@ -983,7 +990,7 @@ unsigned char r, g, b;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 X_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
@@ -1013,7 +1020,7 @@ int style;
 }
 
 /* ARGSUSED */
-static int
+HIDDEN int
 X_debug(dmp, lvl)
 struct dm *dmp;
 int lvl;
@@ -1025,7 +1032,7 @@ int lvl;
   return TCL_OK;
 }
 
-static int
+HIDDEN int
 X_setWinBounds(dmp, w)
 struct dm *dmp;
 register int w[6];
@@ -1043,8 +1050,8 @@ register int w[6];
   return TCL_OK;
 }
 
-void
-X_configureWindowShape(dmp)
+HIDDEN int
+X_configureWin(dmp)
 struct dm *dmp;
 {
   XWindowAttributes xwa;
@@ -1058,7 +1065,7 @@ struct dm *dmp;
   dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
   if (dmp->dm_debugLevel) {
-    bu_log("X_configureWindowShape()\n");
+    bu_log("X_configureWin()\n");
     bu_log("width = %d, height = %d", dmp->dm_width, dmp->dm_height);
   }
 
@@ -1079,7 +1086,7 @@ struct dm *dmp;
       if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	   XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, FONTBACK)) == NULL) {
 	bu_log("dm-X: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-	return;
+	return TCL_ERROR;
       }
     }
 
@@ -1152,9 +1159,37 @@ struct dm *dmp;
       }
     }
   }
+
+  return TCL_OK;
 }
 
-static XVisualInfo *
+HIDDEN int
+X_setLight(dmp, light_on)
+     struct dm *dmp;
+     int light_on;
+{
+  if (dmp->dm_debugLevel)
+    bu_log("X_setLight:\n");
+
+  dmp->dm_light = light_on;
+
+  return TCL_OK;
+}
+
+HIDDEN int
+X_setZBuffer(dmp, zbuffer_on)
+struct dm *dmp;
+int zbuffer_on;
+{
+  if (dmp->dm_debugLevel)
+    bu_log("X_setZBuffer:\n");
+
+  dmp->dm_zbuffer = zbuffer_on;
+
+  return TCL_OK;
+}
+
+HIDDEN XVisualInfo *
 X_choose_visual(dmp)
 struct dm *dmp;
 {
@@ -1236,6 +1271,6 @@ struct dm *dmp;
     if(desire_trueColor)
       desire_trueColor = 0;
     else
-      return NULL; /* failure */
+      return (XVisualInfo *)NULL; /* failure */
   }
 }
