@@ -12,7 +12,7 @@
 #	are provided by the calling application
 check_externs "_mged_press _mged_ill _mged_matpick"
 
-proc solid_illum { spath } {
+proc solid_illum {spath {ri 1}} {
     set state [_mged_status state]
 
     switch $state {
@@ -25,24 +25,24 @@ proc solid_illum { spath } {
 	}
     }
     
-    _mged_ill -n $spath
+    _mged_ill -n -i $ri $spath
 }
 
-proc matrix_illum { spath path_pos } {
+proc matrix_illum { spath path_pos {ri 1}} {
     set state [_mged_status state]
 
     switch $state {
 	VIEWING {
 	    _mged_press oill
-	    _mged_ill $spath
+	    _mged_ill -i $ri $spath
 	}
 	"OBJ PICK" {
-	    _mged_ill $spath
+	    _mged_ill -i $ri $spath
 	}
 	default {
 	    _mged_press reject
 	    _mged_press oill
-	    _mged_ill $spath
+	    _mged_ill -i $ri $spath
 	}
     }
 

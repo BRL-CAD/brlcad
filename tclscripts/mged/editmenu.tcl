@@ -86,7 +86,7 @@ proc ray_build_edit_menu { type x y } {
 	s {
 	    if {[llength $paths] == 1} {
 		_mged_press sill
-		_mged_ill [lindex $paths 0]
+		_mged_ill -i 1 [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
 		build_solid_menu s $id $paths
 	    }
@@ -94,7 +94,7 @@ proc ray_build_edit_menu { type x y } {
 	o {
 	    if {[llength $paths] == 1} {
 		_mged_press oill
-		_mged_ill [lindex $paths 0]
+		_mged_ill -i 1 [lindex $paths 0]
 		build_matrix_menu $id [lindex $paths 0]
 	    } elseif {[llength $paths] > 1} {
 		build_solid_menu o $id $paths
@@ -149,7 +149,7 @@ proc build_solid_menu { type id paths } {
 		    solid_illum \$item"
 	    bind_listbox $top "<Double-1>"\
 		    "set item \[get_listbox_entry %W %x %y\];\
-		    _mged_sed \$item;\ 
+		    _mged_sed -i 1 \$item;\ 
 		    destroy $top"
 	}
 	o {
@@ -207,7 +207,7 @@ proc build_matrix_menu { id path } {
     bind_listbox $top "<Double-1>"\
 	    "set path_pos \[%W index @%x,%y\];\
 	    _mged_press oill;\
-	    _mged_ill $path;\
+	    _mged_ill -i 1 $path;\
 	    _mged_matpick \$path_pos;\
 	    destroy $top"
     bind_listbox $top "<ButtonRelease-1>"\

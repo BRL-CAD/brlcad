@@ -108,13 +108,14 @@ proc mouse_get_spath_and_pos { x y } {
 
     bind_listbox $top "<B1-Motion>"\
 	    "set item \[%W index @%x,%y\];\
+	    _mged_press reject;\
 	    _mged_press oill;\
-	    _mged_ill \$mged_gui($id,mgs_path);\
+	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
 	    _mged_matpick -n \$item"
     bind_listbox $top "<ButtonPress-1>"\
 	    "set item \[%W index @%x,%y\];\
 	    _mged_press oill;\
-	    _mged_ill \$mged_gui($id,mgs_path);\
+	    _mged_ill -i 1 \$mged_gui($id,mgs_path);\
 	    _mged_matpick -n \$item"
     bind_listbox $top "<Double-1>"\
 	    "set mged_gui($id,mgs_pos) \[%W index @%x,%y\];\
@@ -232,7 +233,7 @@ proc mouse_solid_edit_select { x y } {
     }
 
     _mged_press sill
-    _mged_ill $spath
+    _mged_ill -i 1 $spath
 
     mged_apply_all [winset] "set mouse_behavior d"
     foreach id $mged_players {
@@ -254,7 +255,7 @@ proc mouse_matrix_edit_select { x y } {
     }
 
     _mged_press oill
-    _mged_ill [lindex $spath_and_pos 0]
+    _mged_ill -i 1 [lindex $spath_and_pos 0]
     _mged_matpick [lindex $spath_and_pos 1]
 
     mged_apply_all [winset] "set mouse_behavior d"
