@@ -3,6 +3,7 @@
 # make your shader param names unique
 # the 'id' is passed to these routines to use for uniqueness
 # the top-level interface is 'do_shader'
+# See "comb.tcl" for an explanation of the widget hierarchy
 
 # To implement a new shader gui:
 #	1. add the new shader to the switch command in 'stack_add',
