@@ -39,7 +39,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "msr.h"
 
-#define MSRMAXTBL
 
 
 
