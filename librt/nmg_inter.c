@@ -2037,6 +2037,16 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	 *
 	 *  See the comment in nmg_isect_two_generic_faces() for details
 	 *  on the constraints on this ray, and the algorithm.
+	 *
+	 *  XXX Danger?
+	 *  The ray -vs- RPP check is being done in 3D.
+	 *  It really ought to be done in 2D, to ensure that
+	 *  long edge lines on nearly axis-aligned faces don't
+	 *  get discarded prematurely!
+	 *  XXX Can't just comment out the code, I think the selection
+	 *  XXX of is->pt is significant:
+	 *	1)  All intersections are at positive distances on the ray,
+	 *	2)  dir cross N will point "left".
 	 */
 	vu1 = eu1->vu_p;
 	vu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
@@ -2167,6 +2177,9 @@ do_ret:
  *  edgeuses, only split existing ones and add new ones.
  *  It might reduce complexity to unbreak edges in here, but that
  *  would violate the assumption of edgeuses not vanishing.
+ *
+ *  Called by -
+ *	nmg_isect_two_generic_faces()
  *
  *  Call tree -
  *	nmg_isect_vert2p_face2p()
@@ -2827,11 +2840,13 @@ struct model		*m;		/* XXX */
 }
 
 /*
+ *			N M G _ I S E C T _ L I N E 2 _ F A C E 2 P
+ *
  * HEART
  *
  *  For each distinct edge_g_lseg LINE on the face (composed of potentially many
- *  edgeuses and many different edges), intersect the edge_g_lseg LINE with
- *  the face/face intersection line.
+ *  edgeuses and many different edges), intersect with the edge_g_lseg LINE
+ *  which represents the face/face intersection line.
  *
  *  Note that the geometric intersection of the two faces is
  *  stored in is->pt and is->dir.
@@ -2895,11 +2910,18 @@ struct nmg_ptbl		*eu2_list;
 #endif
 			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ by %g deg.  Using on_eg line.\n",
 				acos(fabs(dot)) * rt_radtodeg );
+
+			/* Ensure absolute consistency between the two versions of the line! */
+			VMOVE( is->pt, is->on_eg->e_pt );
+			VMOVE( is->dir, is->on_eg->e_dir );
+			VUNITIZE(is->dir);
+			/*
+			 * XXX What about the constraints on the ray?
+			 *	1)  All intersections are at positive distances on the ray,
+			 *	2)  dir cross N will point "left".
+			 * XXX Don't they have to be recomputed here?
+			 */
 		}
-		/* Ensure absolute consistency between the two versions of the line! */
-		VMOVE( is->pt, is->on_eg->e_pt );
-		VMOVE( is->dir, is->on_eg->e_dir );
-		VUNITIZE(is->dir);
 	}
 
 	/* Project the intersect line into 2D.  Build matrix first. */
