@@ -11,14 +11,19 @@
  *  
  *  Source -
  *	The U. S. Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -450,6 +455,70 @@ CONST struct rt_tol	*tol;
 	nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 	rt_bomb("nmg_loop_is_ccw()\n");
 	return 0;
+}
+
+/*
+ *			N M G _ L O O P _ T O U C H E S _ S E L F
+ *
+ *  Search through all the vertices in a loop.
+ *  If there are two distinct uses of one vertex in the loop,
+ *  return true.
+ *  This is useful for detecting "accordian pleats"
+ *  unexpectedly showing up in a loop.
+ *  Derrived from nmg_split_touchingloops().
+ *
+ *  Returns -
+ *	vu	Yes, the loop touches itself at least once, at this vu.
+ *	0	No, the loop does not touch itself.
+ */
+CONST struct vertexuse *
+nmg_loop_touches_self( lu )
+CONST struct loopuse	*lu;
+{
+	CONST struct edgeuse	*eu;
+	CONST struct vertexuse	*vu;
+	CONST struct vertex	*v;
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return (CONST struct vertexuse *)0;
+
+	/* For each edgeuse, get vertexuse and vertex */
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		CONST struct vertexuse	*tvu;
+
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+
+		/*
+		 *  For each vertexuse on vertex list,
+		 *  check to see if it points up to the this loop.
+		 *  If so, then there is a duplicated vertex.
+		 *  Ordinarily, the vertex list will be *very* short,
+		 *  so this strategy is likely to be faster than
+		 *  a table-based approach, for most cases.
+		 */
+		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
+			CONST struct edgeuse		*teu;
+			CONST struct loopuse		*tlu;
+			CONST struct loopuse		*newlu;
+
+			if( tvu == vu )  continue;
+			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			teu = tvu->up.eu_p;
+			NMG_CK_EDGEUSE(teu);
+			if( *teu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			tlu = teu->up.lu_p;
+			NMG_CK_LOOPUSE(tlu);
+			if( tlu != lu )  continue;
+			/*
+			 *  Repeated vertex exists.
+			 */
+			return vu;
+		}
+	}
+	return (CONST struct vertexuse *)0;
 }
 
 /************************************************************************
