@@ -348,13 +348,11 @@ char	**argv;
 		return CMD_BAD;
 	}
 	if( strcmp(parameter, "help") == 0)  {
-		rt_log("Usage:\n");
-		(void) fputs(adc_syntax, stdout);
+		rt_log("Usage:\n%s", adc_syntax);
 		return CMD_OK;
 	} else {
 		rt_log("ADC: unrecognized command: '%s'\n", argv[1]);
-		rt_log("Usage:\n");
-		(void) fputs(adc_syntax, stdout);
+		rt_log("Usage:\n%s", adc_syntax);
 	}
 	return CMD_BAD;
 }
