@@ -268,7 +268,7 @@ then
 	cd .cake.$MACHINE
 	make ${SILENT} clobber
 	make ${SILENT} install
-	/usr/bin/make ${SILENT} clobber
+	make ${SILENT} clobber
 
 	if test ! -f ${BRLCAD_BINDIR}/cake
 	then
