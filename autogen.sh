@@ -31,6 +31,12 @@ HAVE_SED=no
 if [ $? = 0 ] ; then
   [ "x$_have_sed" = "xyes" ] && HAVE_SED=yes
 fi
+case `echo "testing\c"; echo 1,2,3`,`echo -n testing; echo 1,2,3` in
+  *c*,-n*) ECHO_N= ECHO_C='
+' ECHO_T='	' ;;
+  *c*,*  ) ECHO_N=-n ECHO_C= ECHO_T= ;;
+  *)       ECHO_N= ECHO_C='\c' ECHO_T= ;;
+esac
 
 
 #################
@@ -120,6 +126,8 @@ if [ ! $? = 0 ] ; then
   fi
 fi
 
+# !!! check where ltmain.sh is put
+ln -s ../ltmain.sh misc/ltmain.sh
 
 ##############
 # stash path #
@@ -165,11 +173,11 @@ fi
 # prepare build via autoreconf or manually #
 ############################################
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
-  echo -n "Automatically preparing build ..."
+  echo $ECHO_N "Automatically preparing build ...$ECHO_C"
   autoreconf -i
   [ ! $? = 0 ] && echo "ERROR: autoreconf failed" && exit 2
 else
-  echo -n "Preparing build ..."
+  echo $ECHO_N "Preparing build ...$ECHO_C"
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
     libtoolize --automake -c -f
     [ ! $? = 0 ] && echo "ERROR: libtoolize failed" && exit 2
