@@ -570,6 +570,30 @@ char	**argv;
 	return CMD_OK;
 }
 
+/*
+ *  To return all the free "struct rt_vlist" and "struct solid" items
+ *  lurking on their respective freelists, back to rt_malloc().
+ *  Primarily as an aid to tracking memory leaks.
+ *  WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
+ *  and RT_GET_VLIST in h/raytrace.h.
+ */
+void
+mged_freemem()
+{
+	register struct solid		*sp;
+	register struct rt_vlist	*vp;
+
+	while( (sp = FreeSolid) != SOLID_NULL )  {
+		FreeSolid = sp->s_forw;
+		rt_free( (char *)sp, "mged_freemem: struct solid" );
+	}
+	while( RT_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
+		vp = RT_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
+		RT_LIST_DEQUEUE( &(vp->l) );
+		rt_free( (char *)vp, "mged_freemem: struct rt_vlist" );
+	}
+}
+
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
 int
@@ -595,6 +619,7 @@ char	**argv;
 		FREE_SOLID( sp );
 		sp = nsp;
 	}
+	mged_freemem();
 	(void)chg_state( state, state, "zap" );
 	dmaflag = 1;
 
