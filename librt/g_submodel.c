@@ -157,6 +157,9 @@ if(sub_dbip == rtip->rti_dbip) bu_log("rt_submodel_prep(%s): re-attached to pare
 	sub_rtip = rt_new_rti( sub_dbip );	/* does db_clone_dbi() */
 	RT_CK_RTI(sub_rtip);
 
+	/* Set search term before leaving critical section */
+	sub_rtip->rti_treetop = bu_strdup(sip->treetop);
+
 	bu_semaphore_release(RT_SEM_MODEL);
 
 bu_log("rt_submodel_prep(%s) rtip=x%x, sub_rtip=x%x\n", stp->st_name, rtip, sub_rtip);
@@ -172,7 +175,6 @@ bu_log("rt_submodel_prep(%s) rtip=x%x, sub_rtip=x%x\n", stp->st_name, rtip, sub_
 	sub_rtip->rti_hasty_prep = rtip->rti_hasty_prep;
 	sub_rtip->rti_tol = rtip->rti_tol;	/* struct copy */
 	sub_rtip->rti_ttol = rtip->rti_ttol;	/* struct copy */
-	sub_rtip->rti_treetop = bu_strdup(sip->treetop);
 
 	if( sip->meth )  {
 		sub_rtip->rti_space_partition = sip->meth;
@@ -205,6 +207,15 @@ bu_log("submodel(%s) finished rt_gettrees\n", stp->st_name);
 	if( BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen )  {
 		BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
 	}
+
+	bu_log("%s: %s= %d nu, %d cut, %d box (%d empty)\n",
+		stp->st_name,
+		sub_rtip->rti_space_partition == RT_PART_NUGRID ?
+			"NUGrid" : "NUBSP",
+		sub_rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+		sub_rtip->rti_ncut_by_type[CUT_CUTNODE],
+		sub_rtip->rti_ncut_by_type[CUT_BOXNODE],
+		sub_rtip->nempty_cells );
 
 done:	
 	BU_GETSTRUCT( submodel, submodel_specific );
