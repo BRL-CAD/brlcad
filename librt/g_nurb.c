@@ -591,6 +591,11 @@ register CONST mat_t		mat;
 		register dbfloat_t	*vp;
 		int			pt_type;
 		
+		if( rp->d.d_id != ID_BSURF )  {
+			rt_log("rt_nurb_import() surf %d bad ID\n", s);
+			return -1;
+		}
+
 		if( rp->d.d_geom_type == 3)
 			pt_type = RT_NURB_MAKE_PT_TYPE(3,RT_NURB_PT_XYZ,RT_NURB_PT_NONRAT);
 		else
@@ -766,6 +771,9 @@ struct nurb_hit * head;
 	return (struct nurb_hit *) ret;
 }
 
+/*
+ *			R T _ N U R B _ E X P O R T
+ */
 int
 rt_nurb_export( ep, ip, local2mm)
 struct rt_external	 	* ep;
@@ -778,11 +786,11 @@ double				local2mm;
 	int			s;
 	int			grans;
 	int			total_grans;
-	double			* vp;
+	dbfloat_t		* vp;
 	int			n;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_BSOLID) return(-1);
+	if( ip->idb_type != ID_BSPLINE) return(-1);
 	sip = (struct rt_nurb_internal *) ip->idb_ptr;
 	RT_NURB_CK_MAGIC(sip);
 
@@ -809,36 +817,46 @@ double				local2mm;
 
 	for( s = 0; s < sip->nsrf; s++)
 	{
-		grans = rt_nurb_grans( sip->srfs[s]);
+		register struct snurb	*srf = sip->srfs[s];
+		NMG_CK_SNURB(srf);
+
+		grans = rt_nurb_grans( srf);
 
 		rec[rec_ptr].d.d_id = ID_BSURF;
-		rec[rec_ptr].d.d_order[0] = sip->srfs[s]->order[0];
-		rec[rec_ptr].d.d_order[1] = sip->srfs[s]->order[1];
-		rec[rec_ptr].d.d_kv_size[0] = sip->srfs[s]->u_knots.k_size;
-		rec[rec_ptr].d.d_kv_size[1] = sip->srfs[s]->v_knots.k_size;
-		rec[rec_ptr].d.d_ctl_size[0] = 	sip->srfs[s]->s_size[0];
-		rec[rec_ptr].d.d_ctl_size[1] = 	sip->srfs[s]->s_size[1];
-		rec[rec_ptr].d.d_geom_type = 
-			RT_NURB_EXTRACT_COORDS(sip->srfs[s]->pt_type);
+		rec[rec_ptr].d.d_nknots = (((srf->u_knots.k_size + srf->v_knots.k_size) 
+			* sizeof(dbfloat_t)) + sizeof(union record)-1)/ sizeof(union record);
+		rec[rec_ptr].d.d_nctls = ((
+			RT_NURB_EXTRACT_COORDS(srf->pt_type)
+			* (srf->s_size[0] * srf->s_size[1])
+			* sizeof(dbfloat_t)) + sizeof(union record)-1 )
+			/ sizeof(union record);
 
-		vp = (double *) &rec[rec_ptr +1];
+		rec[rec_ptr].d.d_order[0] = srf->order[0];
+		rec[rec_ptr].d.d_order[1] = srf->order[1];
+		rec[rec_ptr].d.d_kv_size[0] = srf->u_knots.k_size;
+		rec[rec_ptr].d.d_kv_size[1] = srf->v_knots.k_size;
+		rec[rec_ptr].d.d_ctl_size[0] = 	srf->s_size[0];
+		rec[rec_ptr].d.d_ctl_size[1] = 	srf->s_size[1];
+		rec[rec_ptr].d.d_geom_type = 
+			RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+		vp = (dbfloat_t *) &rec[rec_ptr +1];
 		for(n = 0; n < rec[rec_ptr].d.d_kv_size[0]; n++)
 		{
-			*vp++ = sip->srfs[s]->u_knots.knots[n];
+			*vp++ = srf->u_knots.knots[n];
 		}
 
 		for(n = 0; n < rec[rec_ptr].d.d_kv_size[1]; n++)
 		{
-			*vp++ = sip->srfs[s]->v_knots.knots[n];
+			*vp++ = srf->v_knots.knots[n];
 		}
 		
-		vp = (double *) &rec[(rec[rec_ptr].d.d_kv_size[0] + 
-			rec[rec_ptr].d.d_kv_size[0] + 7) /8];
+		vp = (dbfloat_t *) &rec[rec_ptr + 1 +
+			rec[rec_ptr].d.d_nknots];
 
-		for( n = 0; n < (rec[rec_ptr].d.d_ctl_size[0] + 
-			rec[rec_ptr].d.d_ctl_size[1]) * 
+		for( n = 0; n < (srf->s_size[0] * srf->s_size[1]) * 
 			rec[rec_ptr].d.d_geom_type; n++)
-			*vp++ = sip->srfs[s]->ctl_points[n];
+			*vp++ = srf->ctl_points[n];
 
 		rec_ptr += grans;
 		total_grans -= grans;
@@ -850,21 +868,20 @@ int
 rt_nurb_grans( srf )
 struct snurb * srf;
 {
-	int grans = 0;
 	int total_knots, total_points;
+	int	k_gran;
+	int	p_gran;
 
-	grans++;
-	total_knots = srf->u_knots.k_size +
-		srf->v_knots.k_size;
-	grans += (total_knots+7)/8;
+	total_knots = srf->u_knots.k_size + srf->v_knots.k_size;
+	k_gran = ((total_knots * sizeof(dbfloat_t)) + sizeof(union record)-1)
+		/ sizeof(union record);
 
 	total_points = RT_NURB_EXTRACT_COORDS(srf->pt_type) *
-		(srf->s_size[0] +
-		srf->s_size[1]);
+		(srf->s_size[0] * srf->s_size[1]);
+	p_gran = ((total_points * sizeof(dbfloat_t)) + sizeof(union record)-1)
+		/ sizeof(union record);
 
-	grans += (total_points + 7)/8;
-
-	return grans;
+	return 1 + k_gran + p_gran;
 }
 
 void
@@ -889,6 +906,9 @@ struct rt_db_internal 	*ip;
 	ip->idb_ptr = GENPTR_NULL;
 }
 
+/*
+ *			R T _ N U R B _ D E S C R I B E
+ */
 rt_nurb_describe(str, ip, verbose, mm2local )
 struct rt_vls		* str;
 struct rt_db_internal	* ip;
@@ -898,51 +918,56 @@ double			mm2local;
 	register int		j;
 	register struct rt_nurb_internal * sip =
 		(struct rt_nurb_internal *) ip->idb_ptr;
-	char 			buf[256];
 	int			i;
 	int			surf;
 
 	RT_NURB_CK_MAGIC(sip);
-	rt_vls_strcat( str, "Non Uniform Rational B-SPline solid (nurb)\n");
+	rt_vls_strcat( str, "Non Uniform Rational B-Spline solid (NURB)\n");
 	
-	sprintf( buf, "\t%d surfaces\n", sip->nsrf);
-	rt_vls_strcat( str, buf );
+	rt_vls_printf( str, "\t%d surfaces\n", sip->nsrf);
 
 	for( surf = 0; surf < sip->nsrf; surf++)
 	{
 		register struct snurb 	* np;
 		register fastf_t 	* mp;
+		int			ncoord;
 
 		np = sip->srfs[surf];
+		NMG_CK_SNURB(np);
 		mp = np->ctl_points;
+		ncoord = RT_NURB_EXTRACT_COORDS(np->pt_type);
 
-		sprintf( buf, "\tSurface %d: order %d x %d, mesh %d x %d\n",
+		rt_vls_printf( str,
+			"\tSurface %d: order %d x %d, mesh %d x %d\n",
 			surf, np->order[0], np->order[1],
 			np->s_size[0], np->s_size[1]);
-		rt_vls_strcat( str, buf);
 
-		sprintf( buf, "\t\tV (%g, %g, %g)\n",
+		rt_vls_printf( str, "\t\tV (%g, %g, %g)\n",
 			mp[X] * mm2local, 
 			mp[Y] * mm2local, 
 			mp[Z] * mm2local);
 
-		rt_vls_strcat( str, buf);
-		
 		if( !verbose ) continue;
 		
 		/* print out all the points */
 		for(i=0; i < np->s_size[0]; i++)
 		{
-			sprintf( buf,"\tRT_NURB_SPLIT_ROW %d:\n", i);
-			rt_vls_strcat( str, buf );
+			rt_vls_printf( str, "\tRow %d:\n", i);
 			for( j = 0; j < np->s_size[1]; j++)
 			{
-				sprintf( buf, "\t\t(%g, %g, %g)\n",
-					mp[X] * mm2local, 
-					mp[Y] * mm2local, 
-					mp[Z] * mm2local);
-				rt_vls_strcat( str, buf);
-				mp += RT_NURB_EXTRACT_COORDS(np->pt_type);
+				if( ncoord == 3 ) {
+					rt_vls_printf( str, "\t\t(%g, %g, %g)\n",
+						mp[X] * mm2local, 
+						mp[Y] * mm2local, 
+						mp[Z] * mm2local);
+				} else {
+					rt_vls_printf( str, "\t\t(%g, %g, %g, %g)\n",
+						mp[X] * mm2local, 
+						mp[Y] * mm2local, 
+						mp[Z] * mm2local,
+						mp[W] );
+				}
+				mp += ncoord;
 			}
 		}
 	}
