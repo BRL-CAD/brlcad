@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAX_COLORTBL	11
 #define WHITE		colortbl[0]
 #define BACKGROUND	colortbl[MAX_COLORTBL]
-#define	OPT_STRING	"CF:N:S:W:X:b:c:d:ef:ghikl:m:p:s:v:x:?"
+#define	OPT_STRING	"CF:N:S:W:X:a:b:c:d:ef:ghikl:m:p:s:v:x:?"
 
 
 /* Macros with arguments */
@@ -109,15 +109,23 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 typedef int		bool;
 typedef union
 {
-    double	v_scalar;
-    RGBpixel	v_color;
-}			cell_val;
+    double		v_scalar;
+    RGBpixel		v_color;
+} cell_val;
 typedef struct
 {
-    double	c_x;
-    double	c_y;
-    cell_val	c_val;
-}			Cell;
+    double		c_x;
+    double		c_y;
+    cell_val		c_val;
+} Cell;
+struct locrec
+{
+    struct rt_list	l;
+    fastf_t		h;
+    fastf_t		v;
+};
+#define	LOCREC_MAGIC	0x6c637263
+#define locrec_magic	l.magic
 
 /* Global variables */
 static Cell	*grid;
@@ -134,6 +142,7 @@ static char	*usage[] = {
 	" -S n          Set frame-buffer height and width to `n' pixels",
 	" -W n          Set frame-buffer width to `n' pixels",
 	" -X n          Set local debug flag to hex value `n' (default is 0)",
+	" -a \"h v\"    Print pixel coords of point",
 	" -b n          Ignore values not equal to `n'",
 	" -c n          Assume cell size of `n' user units (default is 100)",
 	" -d \"m n\"      Expect input in interval [m, n] (default is [0, 1])",
@@ -157,7 +166,7 @@ static double	az;			/* To dump to log file */
 static double	bool_val;		/* Only value displayed for -b option */
 static double	cell_size = 100.0;	/* Size of cell in user units */
 static double	el;			/* To dump to log file */
-static double	key_height = 0;		/* How many cell heights for key? */
+static double	key_height = 0.0;	/* How many cell heights for key? */
 static double	xmin;			/* Extrema of coordinates	*/
 static double	ymin;			/* in user units		*/
 static double	xmax;			/* (set in read_Cell_Data())	*/
@@ -212,6 +221,8 @@ static CONST char   *mon_nam[] =
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 #endif
 
+STATIC struct locrec	gp_locs;
+
 STATIC bool	get_OK();
 STATIC bool	pars_Argv();
 STATIC long	read_Cell_Data();
@@ -229,6 +240,7 @@ char	**argv;
 {	
     static long	ncells;
 
+    RT_LIST_INIT(&(gp_locs.l));
     if (! pars_Argv(argc, argv))
     {
 	prnt_Usage();
@@ -243,6 +255,7 @@ char	**argv;
     }
     do
     {
+	struct locrec	*lrp;
 
 	init_Globs();
 	if ((ncells = read_Cell_Data()) == 0)
@@ -250,14 +263,25 @@ char	**argv;
 	    rt_log("cell-fb: failed to read view\n");
 	    exit (1);
 	}
-	rt_log("Displaying %ld cells\n", ncells);
-	if (! display_Cells(ncells))
+	if (RT_LIST_NON_EMPTY(&(gp_locs.l)))
+	    while (RT_LIST_WHILE(lrp, locrec, (&(gp_locs.l))))
+	    {
+		RT_LIST_DEQUEUE(&(lrp->l));
+		rt_log("%g %g	%d %d\n", lrp -> h, lrp -> v,
+		    (int) H2SCRX(lrp -> h), (int) V2SCRY(lrp -> v));
+		rt_free((char *) lrp, "location record");
+	    }
+	else
 	{
-	    rt_log("cell-fb: failed to display %ld cells\n", ncells);
-	    exit (1);
+	    rt_log("Displaying %ld cells\n", ncells);
+	    if (! display_Cells(ncells))
+	    {
+		rt_log("cell-fb: failed to display %ld cells\n", ncells);
+		exit (1);
+	    }
+	    if (log_flag)
+		log_Run();
 	}
-	if (log_flag)
-	    log_Run();
     } while ((view_flag == 0) && ! feof(filep) && get_OK());
 }
 
@@ -654,6 +678,23 @@ RGBpixel	rgb;
     }
     return;
 }
+
+STATIC struct locrec *mk_locrec (h, v)
+
+fastf_t	h;
+fastf_t	v;
+
+{
+    struct locrec	*lrp;
+
+    lrp = (struct locrec *)
+	    rt_malloc(sizeof(struct locrec), "location record");
+    lrp -> locrec_magic = LOCREC_MAGIC;
+    lrp -> h = h;
+    lrp -> v = v;
+    return (lrp);
+}
+
 STATIC bool pars_Argv (argc, argv)
 
 register int	argc;
@@ -718,6 +759,21 @@ register char	**argv;
 		{
 		    rt_log("Invalid debug flag: '%s'\n", optarg);
 		    return (false);
+		}
+		break;
+	    case 'a':
+		{
+		    fastf_t		h;
+		    fastf_t		v;
+		    struct locrec	*lrp;
+
+		    if (sscanf(optarg, "%lf %lf", &h, &v) != 2)
+		    {
+			rt_log("Invalid grid-plane location: '%s'\n", optarg);
+			return (false);
+		    }
+		    lrp = mk_locrec(h, v);
+		    RT_LIST_INSERT(&(gp_locs.l), &(lrp -> l));
 		}
 		break;
 	    case 'b':
