@@ -283,6 +283,10 @@ The
 .B help
 command can be given to get a list of all available commands.
 (Don't forget the semi-colon).
+.SH OPTIONS
+.TP
+.B \-q enables quiet mode. This option suppresses the status messages
+that are normally printed on standard error.
 .SH EXAMPLE
 What follows here is a Bourne shell script which will generate
 two input tables using ``here documents'', and will then
@@ -392,12 +396,6 @@ of existing scientific analysis programs, and extracting the
 few gems of data burried in the heaps of ``printout''.
 .SH "SEE ALSO"
 tabsub(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)
-.SH DIAGNOSTICS
-In it's present form, the program is a bit verbose, reporting
-on the progress of each command on standard error.
-This behavior will probably be placed under control of a
-.B \-v
-flag in a future version.
 .SH BUGS
 You can't
 .I grep
