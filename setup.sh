@@ -96,10 +96,11 @@ chmod 664 Cakefile.defs
 #  This is mostly a double-check on people porting to new machines.
 #
 ############################################################################
-FILE=/tmp/cadsetup$$
-trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
+IN_FILE=/tmp/setup$$.c
+OUT_FILE=/tmp/setup$$
+trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
 
-/lib/cpp -DDEFINES_ONLY << EOF > ${FILE}
+cat << EOF > ${IN_FILE}
 #line 1 "$0"
 #include "Cakefile.defs"
 
@@ -111,11 +112,21 @@ C_MACHINE=MTYPE;
 #endif
 C_HAS_TCP=HAS_TCP;
 EOF
+# Run the file through the macro preprocessor.
+# Many systems don't provide many built-in symbols with bare CPP,
+# so try to run through the compiler.
+# Using cc is essential for the IBM RS/6000, and helpful on the SGI.
+cc -E -I. -DDEFINES_ONLY ${IN_FILE} > ${OUT_FILE}
+if test $? -ne 0
+then
+	# Must be an old C compiler without -E, fall back to /lib/cpp
+	/lib/cpp -DDEFINES_ONLY < ${IN_FILE} > ${OUT_FILE}
+fi
 
 # Note that we depend on CPP's "#line" messages to be ignored as comments
 # when sourced by the "." command here:
-. ${FILE}
-/bin/rm -f ${FILE}
+. ${OUT_FILE}
+/bin/rm -f ${IN_FILE} ${OUT_FILE}
 
 # See if things match up
 if test x${MACHINE} != x${C_MACHINE} -o \
