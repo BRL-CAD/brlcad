@@ -20,11 +20,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 #include <stdio.h>
 #include <signal.h>
+#include <math.h>
+#include <setjmp.h>
 
-
-#include "./vextern.h"
+#include "machine.h"
+#include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"
+#include "./vextern.h"
 
 #include "./std.h"
 
@@ -50,11 +53,8 @@ deck( prefix )
 register char *prefix;
 	{	register int	i, j;
 	
-	nns = nnr = regflag = numrr = 0;
+	nns = nnr = 0;
 	
-	/* Rewind object file.						*/
-	(void) lseek( objfd, 0L, 0 );
-
 	/* Create file for solid table.					*/
 	if( prefix != 0 )
 		{
@@ -117,24 +117,6 @@ register char *prefix;
 	ewrite( ridfd, buff, 5 );
 	ewrite( ridfd, LF, 1 );
 
-	/* Create /tmp file for discrimination of files.		*/
-	(void) strncpy( disc_file, mktemp( "/tmp/disXXXXXX" ), 15 );
-	if( (idfd = creat( disc_file, 0644 )) < 0 )
-		{
-		perror( disc_file );
-		exit( 10 );
-		}
-	rd_idfd = open( disc_file, 2 );
-
-	/* Create /tmp file for storage of region names in the comgeom desc.	*/
-	(void) strncpy( reg_file, mktemp( "/tmp/regXXXXXX" ), 15 );
-	if( (rrfd = creat( reg_file, 0644 )) < 0 )
-		{
-		perror( reg_file );
-		exit( 10 );
-		}
-	rd_rrfd = open( reg_file, 2 );
-
 	/* Initialize matrices.						*/
 	mat_idn( identity );
 	mat_idn( xform );
@@ -160,36 +142,6 @@ register char *prefix;
 	/* Finish region id table.					*/
 	ewrite( ridfd, LF, 1 );
 
- 	/* Must go back and add regions as members of regions.		*/
-	if( numrr > 0 )
-		{
-		for( i = 1; i <= numrr; i++ )
-			{
-			(void) lseek( rd_rrfd, 0L, 0 );   /* rewind */
-			for( j = 1; j <= nnr; j++ )
-				{
-				/* Next region name in desc.		 */
-				eread( rd_rrfd, name, NAMESIZE );
-				if( strcmp( findrr[i].rr_name, name ) == 0 )
-					{ /* Region number in desc is j add
-						to regfd at rrpos[i]	*/
-					(void) lseek( regfd, findrr[i].rr_pos, 0);
-					itoa( j+delreg, buff, 4 );
-					ewrite( regfd, buff, 4 );
-					break;
-					}
-				}
-			if( j > nnr )
-				{
-				(void) fprintf( stderr,
-					"Region %s is member of a region ",
-					findrr[i].rr_name );
-				(void) fprintf( stderr,
-					"but not in description.\n" );
-				exit( 10 );
- 				}
-			}
-		}
 	(void) printf( "====================================================\n" );
 	(void) printf( "O U T P U T    F I L E S :\n\n" );
 	(void) printf( "solid table = \"%s\"\n", st_file );
@@ -198,16 +150,11 @@ register char *prefix;
 	(void) close( solfd );
 	(void) close( regfd );
 	(void) close( ridfd );
-	(void) unlink( disc_file );
-	(void) close( idfd );
-	(void) close( rd_idfd );
-	(void) unlink( reg_file );
-	(void) close( rrfd );
-	(void) close( rd_rrfd );
 
 	/* reset starting numbers for solids and regions
 	 */
 	delsol = delreg = 0;
+	/* XXX should free soltab list */
 	}
 
 /*	s h e l l ( )
@@ -317,6 +264,7 @@ char	 *args[];
 	return;
 	}
 
+#define NAMESIZE	16
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
 			buf[column++] = '\n';\
@@ -674,18 +622,6 @@ register int	w, d;
 		}
 }
 
-/*	c h e c k ( )
-	Compares solids to see if have a new solid.
- */
-check( a, b )
-register char	*a, *b;
-	{ 	register int	c = sizeof( struct deck_ident );
-	while( c-- )
-		if( *a++ != *b++ )
-			return	0;   /* new solid */
-	return	1;   /* match - old solid */
-	}
-
 /*
 	Section 5:	I / O   R O U T I N E S
  *
@@ -796,22 +732,7 @@ void
 abort_sig( sig )
 	{
 	(void) signal( SIGINT, quit );	/* reset trap */
-	if( access( disc_file, 0 ) == 0 )
-		{
-		(void) unlink( disc_file );
-		if( idfd > 0 )
-			(void) close( idfd );
-		if( rd_idfd > 0 )
-			(void) close( rd_idfd );
-		}
-	if( access( reg_file, 0 ) == 0 )
-		{
-		(void) unlink( reg_file );
-		if( rrfd > 0 )
-			(void) close( rrfd );
-		if( rd_rrfd > 0 )
-			(void) close( rd_rrfd );
-		}
+
 	/* goto command interpreter with environment restored.		*/
 	longjmp( env, sig );
 	}

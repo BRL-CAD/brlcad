@@ -6,45 +6,10 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 */
-#include <math.h>
-#include <setjmp.h>
-
-				/* Machine.h use to be here
-				 * and seemed to break everything 
-				 * for vdeck since it wanted 
-				 * to use only floats so here is
-				 * a quick fix to make things work
-				 * since we should really not be 
-			 	 * supporting this anyways.
-				 */
-
-#if 1
-#include "machine.h"
-#else
-typedef float	fastf_t;	/* double|float, "Fastest" float type */
-#define LOCAL	static		/* static|auto, for serial|parallel cpu */
-#define FAST	LOCAL		/* LOCAL|register, for fastest floats */
-typedef long	bitv_t;		/* largest integer type */
-#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-#endif
-
-#include "vmath.h"
-#include "db.h"
-#include "raytrace.h"
-#include "externs.h"
 
 /* Special characters.							*/
 #define	LF		"\n"
 #define BLANKS	"                                                                          "
-
-/* Colors.								*/
-#define RED	'1'
-#define GREEN	'2'
-#define YELLOW	'3'
-#define BLUE	'4'
-#define MAGENTA	'5'
-#define CYAN	'6'
-#define WHITE	'7'
 
 /* Command line options.						*/
 #define DECK		'd'
@@ -69,13 +34,6 @@ typedef long	bitv_t;		/* largest integer type */
 /* Size limits.								*/
 #define MAXLN	80	/* max length of input line */
 #define MAXRR	100	/* max regions to remember */
-#ifndef MAXSOL
-#ifdef sel
-#define MAXSOL	4000	/* max solids in description */
-#else
-#define MAXSOL	10000	/* max solids in description */
-#endif
-#endif
 #ifndef NDIR
 #ifdef sel
 #define NDIR	9000	/* max objects in input */
@@ -133,19 +91,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define MINMAX( min, max, val )		MIN( min, val );\
 				else	MAX( max, val )
 
-/* Region names to find comgeom numbers for.				*/
-struct findrr {
-	char rr_name[16];    /* name to find comgeom number for */
-	long rr_pos;         /* position in regfd to add the comgeom # */
-};
-
-/* Identification structure for final discrimination of solids.		*/
-struct deck_ident {
-	short	i_index;
-	char	i_name[16];
-	mat_t	i_mat;    /* homogeneous transformation matrix */
-};
-
 extern double	unit_conversion;
 extern int	debug;
 extern char	*usage[], *cmd[];
@@ -153,11 +98,6 @@ extern mat_t	xform, notrans, identity;
 
 typedef union record Record;
 extern Record record;
-extern struct findrr findrr[];
-
-extern char	dir_names[], *dir_last;
-
-extern int	discr[];
 
 extern void		abort_sig(), quit();
 extern void		toc(), list_toc();
@@ -171,19 +111,16 @@ extern int	arg_ct;
 extern char	*tmp_list[];
 extern int	tmp_ct;
 
-extern int	objfd;		extern char	*objfile;
+extern char	*objfile;
+
 extern int	solfd;		extern char	st_file[];
 extern int	regfd;		extern char	rt_file[];
 extern int	ridfd;		extern char	id_file[];
-extern int	idfd, rd_idfd;	extern char	disc_file[];
-extern int	rrfd, rd_rrfd;	extern char	reg_file[];
 
-extern int	ndir, nns, nnr, numrr;
+extern int	ndir, nns, nnr;
 
-extern int			regflag, orflag, delsol, delreg;
-extern int			isave;
-extern char			buff[],	name[];
-extern char			operate;
+extern int			delsol, delreg;
+extern char			buff[];
 extern long			savsol;
 extern struct deck_ident	d_ident, idbuf;
 

@@ -49,13 +49,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <string.h>
 #endif
+#include <math.h>
+#include <setjmp.h>
+
 #include "machine.h"
 #include "vmath.h"
+#include "db.h"		/* XXX */
 #include "externs.h"
-#include "./vextern.h"
 #include "rtstring.h"
-#include "rtgeom.h"
 #include "raytrace.h"
+#include "rtgeom.h"
+
+#include "./vextern.h"
 
 int	debug = 0;
 
@@ -84,15 +89,15 @@ char	*usage[] = {
 "",
 "v d e c k ($Revision$)",
 "Make COMGEOM decks of objects from a \"mged\" file suitable as",
-"input to the Cyber GIFT5 or gift(1V).",
+"input to GIFT5 or gift(1V).",
 "",
-"Usage: vdeck {file}.vg",
+"Usage: vdeck file.g",
 "",
 0 };
 
 /* Units conversion factor from milimeters to whatever is specified in
 	the ident record.  If nothing is specified, unity scaling is used.
-	See '3d.h' for defined units and ident record definition.  This
+	See 'db.h' for defined units and ident record definition.  This
 	capability dates back to GED database version (v4).
  */
 double	unit_conversion = 1.0;
@@ -116,49 +121,31 @@ int	tmp_ct = 0;
 jmp_buf	env;
 
 /* File names and descriptors.						*/
-int	objfd;		char	*objfile;
-int	regfd;		char	reg_file[15];
+char	*objfile;
+int	regfd;		char	rt_file[15];
 int	solfd;		char	st_file[73];
 int	ridfd;		char	id_file[73];
-int	rrfd, rd_rrfd;	char	rt_file[73];
 
 /* Counters.								*/
 int	nns;		/* Solids.					*/
 int	nnr;		/* Regions not members of other regions.	*/
-int	numrr;		/* Regions.					*/
 int	ndir;		/* Entries in directory.			*/
 
 /* Miscellaneous globals leftover from Keith's KARDS code.		*/
-int		regflag, orflag, delsol = 0, delreg = 0;
-int		isave;
-char		operate, buff[30], name[16];
-long		savsol;
+int		delsol = 0, delreg = 0;
+char		buff[30];
+long		savsol;		/* File postion of # of solids & regions */
 
 /* Structures.								*/
 mat_t		xform, notrans, identity;
 Record		record;
-struct findrr	findrr[MAXRR];
-char		dir_names[NDIR*10], *dir_last = dir_names;
-
 
 extern void		blank_fill(), menu();
 extern void		quit();
-char			regBuffer[BUFSIZ], *regBufPtr;
 
 char			getcmd();
 void			prompt();
 void			eread(), ewrite();
-
-#define endRegion( buff ) \
-	     	(void) sprintf( regBufPtr, "%s\n", buff ); \
-	    	ewrite( regfd, regBuffer, (unsigned) strlen( regBuffer ) ); \
-	    	regBufPtr = regBuffer;
-
-#define putSpaces( s, xx ) \
-		{	register int ii; \
-		for( ii = 0; ii < (xx); ii++ ) \
-			*s++ = ' '; \
-		}
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;
@@ -212,7 +199,6 @@ char	*argv[];
 		switch( getcmd( arg_list, 0 ) )
 			{
 		case DECK :
-			regBufPtr = regBuffer;
 			deck( arg_list[1] );
 			break;
 		case ERASE :
@@ -612,7 +598,6 @@ next_one: ;
 		break;
 	}
 
-rt_log("solid='%s'\n", rt_vls_addr(&sol) );
 	ewrite( solfd, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
 
 	/* ---------------- */

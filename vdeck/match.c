@@ -22,7 +22,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <string.h>
 #endif
+#include <setjmp.h>
 
+#include "machine.h"
+#include "vmath.h"
 #include "./vextern.h"
 
 #define NUL	'\0'
