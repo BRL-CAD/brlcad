@@ -73,6 +73,8 @@ struct pkg_conn {
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
+extern int pkg_process(register struct pkg_conn *);
+extern int pkg_suckin(register struct pkg_conn *);
 extern struct pkg_conn *pkg_open();
 extern struct pkg_conn *pkg_transerver();
 extern int pkg_permserver();
