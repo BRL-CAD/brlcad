@@ -308,6 +308,9 @@ char	*dp;
 
 	if( ps->magic != PL_MAGIC )  rt_log("phong_render: bad magic\n");
 
+	if( rdebug&RDEBUG_SHADE)
+		rt_structprint( "phong_render", phong_parse, (char *)ps );
+
 	swp->sw_transmit = ps->transmit;
 	swp->sw_reflect = ps->reflect;
 	swp->sw_refrac_index = ps->refrac_index;
