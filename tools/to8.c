@@ -179,7 +179,7 @@ char **argv;
 	 * Give it a background color of black, since the real background
 	 * will be dithered anyway.
 	 */
-	if ( rle_dflt_hdr.background != NULL )
+	if ( rle_dflt_hdr.background != 0 )
 	{
 	    out_hdr.bg_color = (int *)malloc( sizeof( int ) );
 	    out_hdr.bg_color[0] = 0;
