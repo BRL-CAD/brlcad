@@ -573,6 +573,7 @@ get_bitv()  {
 	register int size;		/* size of structure to really get */
 
 	size = BITS2BYTES(nsolids) + BITS2BYTES(nregions) + 4*sizeof(bitv_t);
+	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
 	bytes = byte_roundup(16*size);
 	if( (cp = vmalloc(bytes, "get_bitv")) == (char *)0 )  {
 		rtlog("get_bitv: malloc failure\n");
