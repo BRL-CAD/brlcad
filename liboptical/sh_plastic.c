@@ -275,7 +275,7 @@ register struct partition *pp;
 	/* Diffuse reflectance from secondary light source (at eye) */
 	d_a = 0;
 	if( (cosI2 = VDOT( hitp->hit_normal, to_eye )) > 0.0 )  {
-		if( cosI2 > 1 )  {
+		if( cosI2 > 1.00001 )  {
 			rt_log("cosI2=%f (x%d,y%d,lvl%d)\n", cosI2,
 				ap->a_x, ap->a_y, ap->a_level);
 			cosI2 = 1;
