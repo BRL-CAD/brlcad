@@ -17,7 +17,6 @@ proc mged_apply { id cmd } {
 	mged_apply_all $cmd
     } else {
 	winset $mged_gui($id,active_dm)
-#	catch [list uplevel #0 $cmd]
 	catch { uplevel #0 $cmd }
     }
 }
@@ -26,19 +25,15 @@ proc mged_apply_local { id cmd } {
     global mged_gui
 
     winset $mged_gui($id,top).ul
-#    catch [list uplevel #0 $cmd]
     catch { uplevel #0 $cmd } msg
 
     winset $mged_gui($id,top).ur
-#    catch [list uplevel #0 $cmd]
     catch { uplevel #0 $cmd } msg
 
     winset $mged_gui($id,top).ll
-#    catch [list uplevel #0 $cmd]
     catch { uplevel #0 $cmd } msg
 
     winset $mged_gui($id,top).lr
-#    catch [list uplevel #0 $cmd] msg
     catch { uplevel #0 $cmd } msg
 
     winset $mged_gui($id,active_dm)
@@ -51,7 +46,6 @@ proc mged_apply_using_list { id cmd } {
 
     foreach dm $mged_gui($id,apply_list) {
 	winset $dm
-#	catch [list uplevel #0 $cmd] msg
 	catch { uplevel #0 $cmd } msg
     }
 
@@ -61,7 +55,6 @@ proc mged_apply_using_list { id cmd } {
 proc mged_apply_all { cmd } {
     foreach dm [get_dm_list] {
 	winset $dm
-#	catch [list uplevel #0 $cmd] msg
 	catch { uplevel #0 $cmd } msg
     }
 
