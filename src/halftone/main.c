@@ -1,20 +1,26 @@
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
-#include "common.h"
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-                                                                                                                                                                            
-#include <stdio.h>
-#include <ctype.h>
-#include <math.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "msr.h"
-/*	halftone	given a bw file, generate a ht file.
+/*                          M A I N . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file main.c
+ *
+ * given a bw file, generate a ht file.
  *
  * Usage:
  *	halftone
@@ -59,6 +65,24 @@ static const char RCSid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  */
+
+#ifndef lint
+static const char RCSid[] = "$Header$";
+#endif
+#include "common.h"
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+                                                                                                                                                                            
+#include <stdio.h>
+#include <ctype.h>
+#include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "msr.h"
+
 int width=512;		/* width of pixture */
 int height=512;		/* height of pixture */
 double Beta=0.0;	/* Beta for sharpening */

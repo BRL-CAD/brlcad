@@ -1,23 +1,26 @@
-#ifndef lint
-static const char RCSid[] = "$Header$";
-#endif
-
-#include "common.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include "machine.h"
-
-#define	DLEVEL	1
-extern int Debug;
-typedef struct Cubic {
-	double	x,A,B,C,D;
-} C;
-static struct Cubic	*EqCubics=0;
-int eq_cubic(int x);
-
-/*	tonescale	Given a raw pixel value, return a scaled value
+/*                     T O N E S C A L E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file tonescale.c
+ *
+ * Given a raw pixel value, return a scaled value.
  *
  * This is normally used to map the output devices characteristics to
  * the input intinsites.  There can be a diffrent map for each color.
@@ -48,6 +51,26 @@ int eq_cubic(int x);
  *	ctj 90/04/04 - change to use a standard cubic line format for the
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  */
+
+#ifndef lint
+static const char RCSid[] = "$Header$";
+#endif
+
+#include "common.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "machine.h"
+
+#define	DLEVEL	1
+extern int Debug;
+typedef struct Cubic {
+	double	x,A,B,C,D;
+} C;
+static struct Cubic	*EqCubics=0;
+int eq_cubic(int x);
+
 void
 tonescale(unsigned char *map, float Slope, float B, int (*eqptr) (/* ??? */))
 {
