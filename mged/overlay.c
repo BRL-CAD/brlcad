@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 /* Usage:  overlay file.plot [name] */
 int

@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 int	regmemb;	/* # of members left to process in a region */
 char	memb_oper;	/* operation for present member of processed region */

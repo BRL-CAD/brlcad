@@ -32,7 +32,7 @@ static char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 /* XXX When finalized, this stuff belongs in a header file of it's own */
 struct polygon_header  {

@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #define MAXOBJECTS	3000
 

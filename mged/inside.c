@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "externs.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 BU_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct rt_tol *tol ) );
 BU_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s, fastf_t thick , int normal_ward , int approximate , CONST struct rt_tol *tol ) );

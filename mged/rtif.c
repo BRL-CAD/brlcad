@@ -47,7 +47,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./mgedtcl.h"
 
 void		setup_rt();
