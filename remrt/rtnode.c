@@ -342,12 +342,21 @@ pcsrv, control_host, tcp_port);
 		max_cpus = avail_cpus-1;
 	} else {
 		/*
-		 *  Non-realtime, we compete with everybody else.
+		 *  Non-realtime sched., we compete with everybody else.
 		 *  As our duty-cycle is less than 50%,
 		 *  try to use 'em all for those moments we want to compute.
 		 *  User can interactively decrement if he wants.
 		 */
-		max_cpus = avail_cpus;
+		if( avail_cpus < 8 )
+			max_cpus = avail_cpus;
+		else if( avail_cpus < 16 )
+			max_cpus = avail_cpus - 1;
+		else if( avail_cpus < 32 )
+			max_cpus = avail_cpus - 2;
+		else if( avail_cpus < 48 )
+			max_cpus = avail_cpus - 3;
+		else
+			max_cpus = avail_cpus - 4;
 	}
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
