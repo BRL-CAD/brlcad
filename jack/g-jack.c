@@ -534,9 +534,11 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 	struct shell		*s;
 	struct vertex		*v, **verts[1];
 	int			*map;	/* map from v->index to Jack vert # */
+	struct nmg_ptbl		vtab;	/* vertex table */
 
 	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
+#if 0
 	sz = 1000;
 	verts[0] = init_heap(sz);
 	cnt = 0;
@@ -632,9 +634,30 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 			vg->coord[Y] / 10.,
 			vg->coord[Z] / 10.);
 	}
+#else
+	nmg_region_vertex_list( &vtab, r );
+
+	/* Print list of unique vertices and convert from mm to cm. */
+	for (i = 0; i < NMG_TBL_END(&vtab); i++)  {
+		struct vertex			*v;
+		register struct vertex_g	*vg;
+		v = (struct vertex *)NMG_TBL_GET(&vtab,i);
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
+		NMG_CK_VERTEX_G(vg);
+		NMG_INDEX_ASSIGN( map, v, i+1 );	/* map[v] = i+1 */
+		fprintf(fp_psurf, "%f\t%f\t%f\n",
+			vg->coord[X] / 10.,
+			vg->coord[Y] / 10.,
+			vg->coord[Z] / 10.);
+	}
+	nmg_tbl( &vtab, TBL_FREE, 0 );
+#endif
 	fprintf(fp_psurf, ";;\n");
 	jack_faces(r, fp_psurf, verts[0], cnt-1, map);
+#if 0
 	rt_free((char *)(verts[0]), "heap");
+#endif
 	rt_free( (char *)map, "Jack vert map" );
 }
 
