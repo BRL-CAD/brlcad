@@ -2,7 +2,7 @@
  *			F I R P A S S . C
  *
  *  Author -
- *	S.Coates - 13 March 1991
+ *	S.Coates - 8 July 1991
  *  
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
@@ -96,15 +96,14 @@ struct structovr		/*  structure for recording overlaps  */
 	double *ovrdep;		/*  maximum depth of overlap  */
 };
 struct structovr *overlaps;	/*  name of structovr structure  */
-double newx,newy,newz;		/*  Point after it has been rotated back.  */
 
-main(argc,argv)
+int main(argc,argv)
 
 int argc;
 char *argv[];
 
 {
-	int i,j,ii,jj;	/*  variables used in loops  */
+	int i,j,ii;	/*  variables used in loops  */
 	int ia;		/*  variable used to set short to int  */
 
 	int index;	/*  Index for rt_dirbuild and  */
@@ -117,10 +116,6 @@ char *argv[];
 	double gridspace;	/*  variables to determine where ray starts  */
 	int flag;		/*  flag for checking variance of volume &  */
 				/*  surface area  */
-	double smallest;	/*  used in checking variance, finds  */
-				/*  smallest occurance  */
-	double checkvar;	/*  variance allowed  */
-	double checkdiff;	/*  actual difference  */
 	int num;		/*  number of regions  */
 	double total;		/*  used in computing different values  */
 	FILE *fp;		/*  used for writing output to file  */
@@ -223,35 +218,35 @@ char *argv[];
 	/*  Ask if output goes to standard out or a file.  */
 	(void)printf("Write output to standard out (0) or a file (1) or ");
 	(void)printf("not at all (2)?  ");
-	fflush(stdout);
-	scanf("%d",&iwrite);
+	(void)fflush(stdout);
+	(void)scanf("%d",&iwrite);
 	if((iwrite != 0) && (iwrite != 1)) iwrite=2;
 	if(iwrite == 1)
 	{
 	  (void)printf("Enter name of file output is to be written ");
 	  (void)printf("to (15 char max).  ");
-	  fflush(stdout);
-	  scanf("%s",filename);
+	  (void)fflush(stdout);
+	  (void)scanf("%s",filename);
 	  fp=fopen(filename,"w");
 	}
 
 	/*  Get error file name.  */
 	(void)printf("Enter name of error file to be created ");
 	(void)printf("(15 char max).  ");
-	fflush(stdout);
-	scanf("%s",fileerr);
+	(void)fflush(stdout);
+	(void)scanf("%s",fileerr);
 
 	/*  Get second pass file name.  */
 	(void)printf("Enter name of second pass file to be ");
 	(void)printf("created (15 char max).  ");
-	fflush(stdout);
-	scanf("%s",spfile);
+	(void)fflush(stdout);
+	(void)scanf("%s",spfile);
 
 	/*  Get name of material id file.  */
 	(void)printf("Enter name of material id file to be read ");
 	(void)printf("(15 char max).  ");
-	fflush(stdout);
-	scanf("%s",fileden);
+	(void)fflush(stdout);
+	(void)scanf("%s",fileden);
 
 	/*  What types of files are to be written?  */
 	(void)printf("Enter type of file to be written.\n");
@@ -266,8 +261,8 @@ char *argv[];
 	{
 	   (void)printf("Enter name of facet file to be created. ");
 	   (void)printf("(15 char max)  ");
-	   fflush(stdout);
-	   scanf("%s",facfile);
+	   (void)fflush(stdout);
+	   (void)scanf("%s",facfile);
 	}
 
 	/*  Get generic file name.  */
@@ -275,8 +270,8 @@ char *argv[];
 	{
 	   (void)printf("Enter name of generic file to be created. ");
 	   (void)printf("(15 char max)  ");
-	   fflush(stdout);
-	   scanf("%s",filegen);
+	   (void)fflush(stdout);
+	   (void)scanf("%s",filegen);
 	}
 	
 	/*  Get geometric file name.  */
@@ -289,8 +284,8 @@ char *argv[];
 	   typeout += typeouta;
 	   (void)printf("Enter name of geometric properties file to be ");
 	   (void)printf("created (15 char max).  ");
-	   fflush(stdout);
-	   scanf("%s",filegeo);
+	   (void)fflush(stdout);
+	   (void)scanf("%s",filegeo);
 	}
 
 /*
@@ -302,7 +297,7 @@ char *argv[];
 	fp4=fopen(fileden,"r");
 /*
  *	(void)printf("Materail id file open for reading.\n");
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 	/*  Assumption is made that material ids run from 0 to 40  */
 	/*  and ALL numbers 0-40 have a density.  */
@@ -335,39 +330,39 @@ char *argv[];
  *		(void)printf("%d, %f, %f, %f, %f, %f\n",i,
  *		   matprop[i].d,matprop[i].sh,matprop[i].a,
  *		   matprop[i].e1,matprop[i].e2);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
  
 	}
-	fclose(fp4);
+	(void)fclose(fp4);
 
 	/*  Print out the name of the file being used.  */
 	(void)printf("File Used:  %s\n",argv[1]);
-	fflush(stdout);
+	(void)fflush(stdout);
 	if(iwrite == 1)
 	{
 	  (void)fprintf(fp,"File Used:  %s,  ",argv[1]);
-	  fflush(fp);
+	  (void)fflush(fp);
 	}
 
 	/*  Print out name of material id file being used.  */
 	(void)printf("Material ID File:  %s\n",fileden);
-	fflush(stdout);
+	(void)fflush(stdout);
 	if(iwrite == 1)
 	{
 		(void)fprintf(fp,"Material ID File:  %s\n",fileden);
-		fflush(fp);
+		(void)fflush(fp);
 	}
 
 	/*  Build the directory.  */
 	index = 1;	/*  Setup index for rt_dirbuild  */
 	rtip=rt_dirbuild(argv[index],idbuf,sizeof(idbuf));
 	(void)printf("Database Title:  %s\n",idbuf);
-	fflush(stdout);
+	(void)fflush(stdout);
 	if(iwrite == 1)
 	{
 	  (void)fprintf(fp,"Database Title:  %s\n",idbuf);
-	  fflush(fp);
+	  (void)fflush(fp);
 	}
 
 	/*  Set useair to 1, to show hits of air.  */
@@ -385,7 +380,7 @@ char *argv[];
 	num = (int)rtip->nregions;
 /*
  *	(void)printf("\n Number of Regions? = %d\n",num);
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 
 	/*  The number of regions (num) is now known.  It  */
@@ -395,18 +390,18 @@ char *argv[];
 	(void)printf("Mallocing arrays.\n");
 	(void)fflush(stdout);
 
-	region = malloc(num * sizeof (*region) );
-	overlaps = malloc(num * sizeof (*overlaps) );
+	region = (struct table *)malloc(num * sizeof (*region) );
+	overlaps = (struct structovr *)malloc(num * sizeof (*overlaps) );
 
 	for(i=0; i<num; i++)
 	{
-		region[i].adjreg = malloc(num * sizeof (int) );
-		region[i].ssurarea[0] = malloc(num * sizeof (double) );
-		region[i].ssurarea[1] = malloc(num * sizeof (double) );
-		region[i].ssurarea[2] = malloc(num * sizeof (double) );
+		region[i].adjreg = (int *)malloc(num * sizeof (int) );
+		region[i].ssurarea[0] = (double *)malloc(num * sizeof (double) );
+		region[i].ssurarea[1] = (double *)malloc(num * sizeof (double) );
+		region[i].ssurarea[2] = (double *)malloc(num * sizeof (double) );
 
-		overlaps[i].ovrreg = malloc(num * sizeof (int) );
-		overlaps[i].ovrdep = malloc(num * sizeof (double) );
+		overlaps[i].ovrreg = (int *)malloc(num * sizeof (int) );
+		overlaps[i].ovrdep = (double *)malloc(num * sizeof (double) );
 	}
 
 	/*  Now that the arrays are 'dimensioned' zero ALL variables.  */
@@ -493,12 +488,12 @@ char *argv[];
 
 	/*  Write model minimum & maximum.  */
 	(void)printf("Model minimum & maximum.\n");
-	fflush(stdout);
+	(void)fflush(stdout);
 	(void)printf("\tX:  %f to %f\n\tY:  %f to %f\n\tZ:  %f to %f\n\n",
 		rtip->mdl_min[X],rtip->mdl_max[X],
 		rtip->mdl_min[Y],rtip->mdl_max[Y],
 		rtip->mdl_min[Z],rtip->mdl_max[Z]);
-	fflush(stdout);
+	(void)fflush(stdout);
 	if(iwrite == 1)
 	{
 	  (void)fprintf(fp,"Model minimum & maximum.\n");
@@ -506,23 +501,23 @@ char *argv[];
 		rtip->mdl_min[X],rtip->mdl_max[X],
 		rtip->mdl_min[Y],rtip->mdl_max[Y],
 		rtip->mdl_min[Z],rtip->mdl_max[Z]);
-	  fflush(fp);
+	  (void)fflush(fp);
 	}
 
 	/*  User enters grid spacing.  All units are in mm.  */
 	(void)printf("Enter grid spacing (mm) for fired rays.\n");
-	fflush(stdout);
-	scanf("%lf",&gridspace);
+	(void)fflush(stdout);
+	(void)scanf("%lf",&gridspace);
 
 	if(iwrite == 0)
 	{
-	  (void)printf("grid spacing:  %lf\n",gridspace);
-	  fflush(stdout);
+	  (void)printf("grid spacing:  %f\n",gridspace);
+	  (void)fflush(stdout);
 	}
 	else if(iwrite == 1)
 	{
-	  (void)fprintf(fp,"grid spacing:  %lf,  ",gridspace);
-	  fflush(fp);
+	  (void)fprintf(fp,"grid spacing:  %f,  ",gridspace);
+	  (void)fflush(fp);
 	}
 
 	/*  Find area of "ray".  */
@@ -530,12 +525,12 @@ char *argv[];
 	if(iwrite == 0)
 	{
 	  (void)printf("area=%f\n",area);
-	  fflush(stdout);
+	  (void)fflush(stdout);
 	}
 	if(iwrite == 1)
 	{
 	  (void)fprintf(fp,"area=%f\n",area);
-	  fflush(fp);
+	  (void)fflush(fp);
 	}
 
 	/*  Set up other parameters for rt_shootray.  */
@@ -555,7 +550,7 @@ char *argv[];
 	/*  negative).  */
 
 	(void)printf("\nSHOOTING DOWN X-AXIS\n");
-	fflush(stdout);
+	(void)fflush(stdout);
 
 	whichview=0;
 
@@ -576,7 +571,7 @@ char *argv[];
 	t[Y] = strtpt[Y] - center[Y];
 	t[Z] = strtpt[Z] - center[Z];
 
-	rotate(t,angle,r);
+	(void)rotate(t,angle,r);
 
 	ap.a_ray.r_pt[X] = center[X] + r[X];
 	ap.a_ray.r_pt[Y] = center[Y] + r[Y];
@@ -584,7 +579,7 @@ char *argv[];
 
 	/*  Rotate firing direction.  (new dir = R[D])  */
 
-	rotate(strtdir,angle,r);
+	(void)rotate(strtdir,angle,r);
 
 	ap.a_ray.r_dir[X] = r[X];
 	ap.a_ray.r_dir[Y] = r[Y];
@@ -600,7 +595,7 @@ char *argv[];
 		r[Z]=zmax - center[X] + 5.;
 
 
-		rotate(r,angle,t);
+		(void)rotate(r,angle,t);
 
 		leavept[X] = center[X] + t[X];
 		leavept[Y] = center[Y] + t[Y];
@@ -635,7 +630,7 @@ char *argv[];
 		t[Z] = strtpt[Z] - center[Z];
 
 
-		rotate(t,angle,r);
+		(void)rotate(t,angle,r);
 
 		ap.a_ray.r_pt[X] = center[X] + r[X];
 		ap.a_ray.r_pt[Y] = center[Y] + r[Y];
@@ -645,12 +640,12 @@ char *argv[];
 	if(iwrite == 0)
 	{
 	  (void)printf("\nNumber of regions:  %d\n\n",num);
-	  fflush(stdout);
+	  (void)fflush(stdout);
 	}
 	if(iwrite == 1)
 	{
 	  (void)fprintf(fp,"Number of regions:  %d\n",num);
-	  fflush(fp);
+	  (void)fflush(fp);
 	}
 
 	/*  Compute the volume & surface area of each region.  */
@@ -664,13 +659,13 @@ char *argv[];
  *		   region[i].centroid[2]);
  *		(void)printf("\tvolumes:  %f, %f, %f\n",region[i].cumvol[0],
  *		   region[i].cumvol[1],region[i].cumvol[2]);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 		total = region[i].cumvol[0] + region[i].cumvol[1] +
 		   region[i].cumvol[2];
 /*
  *		(void)printf("\tcummulative volume:  %f",total);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 		if( (total < -ZEROTOL) || (ZEROTOL < total) )
 		{
@@ -705,7 +700,7 @@ char *argv[];
  *			   region[i].ssurarea[0][j],
  *			   region[i].ssurarea[1][j],
  *			   region[i].ssurarea[2][j]);
- *			fflush(stdout);
+ *			(void)fflush(stdout);
  */
 			flag = 0;
 			region[i].ssurarea[1][j] = flag;
@@ -757,26 +752,26 @@ char *argv[];
 
 	if(iwrite == 0)
 	{ (void)printf("\n\n\nPRINT OUT STRUCTURE\n");
-	fflush(stdout);
+	(void)fflush(stdout);
 	i=0;
 	while( i < num )
 	{
 		(void)printf("region #:  %d, name:  %s\n",i,region[i].regname);
 		(void)printf("\tmaterial code:  %d\n",region[i].mat);
-		fflush(stdout);
+		(void)fflush(stdout);
 
 		if(region[i].cumvol[1] == 1)
 		{
 		   (void)printf("\tvolume:  %f - difference is above",
 			region[i].cumvol[0]);
 		   (void)printf(" %f variance.\n",VOLVAR);
-		   fflush(stdout);
+		   (void)fflush(stdout);
 		}
 		else
 		{
 		   (void)printf("\t volume:  %f - within variance.\n",
 			region[i].cumvol[0]);
-		   fflush(stdout);
+		   (void)fflush(stdout);
 		}
 			
 		if(region[i].surarea[1] == 1)
@@ -784,30 +779,30 @@ char *argv[];
 		   (void)printf("\tarea:  %f - difference is above",
 			region[i].surarea[0]);
 		   (void)printf(" %f variance.\n",VOLVAR);
-		   fflush(stdout);
+		   (void)fflush(stdout);
 		}
 		else
 		{
 		   (void)printf("\t area:  %f - within variance.\n",
 			region[i].surarea[0]);
-		   fflush(stdout);
+		   (void)fflush(stdout);
 		}
 			
 		(void)printf("\tcentroid:  %f, %f, %f\n",region[i].centroid[0],
 			region[i].centroid[1],region[i].centroid[2]);
-		fflush(stdout);
+		(void)fflush(stdout);
 		(void)printf("\tcummulative normal of the exterior ");
 		(void)printf("free surface:\n\t\t%f, %f, %f\n",
 			region[i].cumnorm[X],region[i].cumnorm[Y],
 			region[i].cumnorm[Z]);
-		fflush(stdout);
+		(void)fflush(stdout);
 		(void)printf("\texterior surface air:  %f\n",
 			region[i].cumfs[0]);
 		(void)printf("\tcrew compartment air:  %f\n",
 			region[i].cumfs[1]);
 		(void)printf("\tengine compartment air:  %f\n",
 			region[i].cumfs[2]);
-		fflush(stdout);
+		(void)fflush(stdout);
 		for(j=0; j<num; j++)
 		{
 		   if(region[i].adjreg[j] == 1)
@@ -815,17 +810,17 @@ char *argv[];
 			(void)printf("\tadjreg[%d]=%d, ",j,region[i].adjreg[j]);
 			(void)printf("shared surface area:  %f\n",
 			   region[i].ssurarea[0][j]);
-			fflush(stdout);
+			(void)fflush(stdout);
 			if(region[i].ssurarea[1][j] == 1)
 			{
 			   (void)printf("\tdifference is above %f variance\n",
 				VOLVAR);
-			   fflush(stdout);
+			   (void)fflush(stdout);
 			}
 			else
 			{
 			   (void)printf("\twithin variance\n");
-			   fflush(stdout);
+			   (void)fflush(stdout);
 			}
 		   }
 		}
@@ -844,13 +839,13 @@ char *argv[];
 		   (void)fprintf(fp,"\tvolume:  %f - difference is above",
 			region[i].cumvol[0]);
 		   (void)fprintf(fp," %f variance.\n",VOLVAR);
-		   fflush(fp);
+		   (void)fflush(fp);
 		}
 		else
 		{
 		   (void)fprintf(fp,"\t volume:  %f - within variance.\n",
 			region[i].cumvol[0]);
-		   fflush(fp);
+		   (void)fflush(fp);
 		}
 			
 		if(region[i].surarea[1] == 1)
@@ -858,31 +853,31 @@ char *argv[];
 		   (void)fprintf(fp,"\tarea:  %f - difference is above",
 			region[i].surarea[0]);
 		   (void)fprintf(fp," %f variance.\n",VOLVAR);
-		   fflush(fp);
+		   (void)fflush(fp);
 		}
 		else
 		{
 		   (void)fprintf(fp,"\t area:  %f - within variance.\n",
 			region[i].surarea[0]);
-		   fflush(fp);
+		   (void)fflush(fp);
 		}
 			
 		(void)fprintf(fp,"\tcentroid:  %f, %f, %f\n",
 			region[i].centroid[0],
 			region[i].centroid[1],region[i].centroid[2]);
-		fflush(fp);
+		(void)fflush(fp);
 		(void)fprintf(fp,"\tcummulative normal of the exterior ");
 		(void)fprintf(fp,"free surface:\n\t\t%f, %f, %f\n",
 			region[i].cumnorm[X],region[i].cumnorm[Y],
 			region[i].cumnorm[Z]);
-		fflush(fp);
+		(void)fflush(fp);
 		(void)fprintf(fp,"\texterior surface air:  %f\n",
 			region[i].cumfs[0]);
 		(void)fprintf(fp,"\tcrew compartment air:  %f\n",
 			region[i].cumfs[1]);
 		(void)fprintf(fp,"\tengine compartment air:  %f\n",
 			region[i].cumfs[2]);
-		fflush(fp);
+		(void)fflush(fp);
 		for(j=0; j<num; j++)
 		{
 		   if(region[i].adjreg[j] == 1)
@@ -891,18 +886,18 @@ char *argv[];
 			   j,region[i].adjreg[j]);
 			(void)fprintf(fp,"shared surface area:  %f;\n",
 			   region[i].ssurarea[0][j]);
-			fflush(fp);
+			(void)fflush(fp);
 			if(region[i].ssurarea[1][j] == 1)
 			{
 			   (void)fprintf(fp,"\tdifference is above ");
 			   (void)fprintf(fp,"%f variance\n",
 				VOLVAR);
-			   fflush(fp);
+			   (void)fflush(fp);
 			}
 			else
 			{
 			   (void)fprintf(fp,"\twithin variance\n");
-			   fflush(fp);
+			   (void)fflush(fp);
 			}
 		   }
 		}
@@ -913,12 +908,12 @@ char *argv[];
 	(void)fprintf(fp,"\n\nSUMMARY OF FILES USED & CREATED\n");
 	(void)fprintf(fp,"\t.g file used:  %s\n",argv[1]);
 	(void)fprintf(fp,"\tregions used:\n");
-	fflush(fp);
+	(void)fflush(fp);
 	i=2;
 	while(argv[i] != NULL)
 	{
 	   (void)fprintf(fp,"\t\t%s\n",argv[i]);
-	   fflush(fp);
+	   (void)fflush(fp);
 	   i++;
 	}
 	(void)fprintf(fp,"\tmaterial id file used:  %s\n",fileden);
@@ -934,9 +929,9 @@ char *argv[];
 	   "\tgeneric file created:  %s\n",filegen);
 	if( typeout == 2 ) (void)fprintf(fp,
 	   "\tgeometric file created:  %s\n",filegeo);
-	fflush(fp);
+	(void)fflush(fp);
 
-	fclose(fp); }
+	(void)fclose(fp); }
 
 /****************************************************************************/
 	if( typeout == 0 ) {			/*  START # 11 */
@@ -946,16 +941,16 @@ char *argv[];
 
 	/*  Print type number of file (02) and description.  */
 	(void)fprintf(fp1,"02\tFacet file for use with PRISM.\n");
-	fflush(fp1);
+	(void)fflush(fp1);
 
 	/*  Print header information for facedt file.  */
 	(void)fprintf(fp1," FN DESCRIPTION               TY");
 	(void)fprintf(fp1,"    AREA    MASS  SPHEAT      E1");
 	(void)fprintf(fp1,"      E2   ABSOR\n");
-	fflush(fp1);
+	(void)fflush(fp1);
 	(void)fprintf(fp1,"   SN(X)   SN(Y)   SN(Z)    CONV");
 	(void)fprintf(fp1,"       K       L   SHAPE\n");
-	fflush(fp1);
+	(void)fflush(fp1);
 
 	/*  Make calculations to get PRISM information & then  */
 	/*  write to file for each region (or facet as PRISM  */
@@ -967,7 +962,7 @@ char *argv[];
 		facnum = i + 1;
 /*
  *		(void)printf("\n\tfacet number:  %d\n",facnum);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Find facet name (25 char max).  */
@@ -994,14 +989,14 @@ char *argv[];
 		}
 /*
  *		(void)printf("name:%.25s:\n",facname);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Find facet type (for now all are 1).  */
 		factype = 1;
 /*
  *		(void)printf("facet type:  %d  ",factype);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Find area of facet or as it has been called  */
@@ -1012,7 +1007,7 @@ char *argv[];
 		   facarea = region[i].cumfs[2] * (1.e-6);
 /*
  *		(void)printf("area:  %8.3f  ",facarea);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Set material id number.  */
@@ -1024,7 +1019,7 @@ char *argv[];
 		facmass = matprop[ia].d * region[i].cumvol[0] * (1.e-9);
 /*
  *		(void)printf("mass:  %8.3f\n",facmass);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Find the specific heat of the facet (J/kg deg C).  */
@@ -1041,7 +1036,7 @@ char *argv[];
 /*
  *		(void)printf("specific heat:  %8.3f  emissivities:  %8.3f & %8.3f  absorb:  %8.3f\n",
  *		   facspheat,face1,face2,facabs);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Surface normal of facet.  Must be rotated back first.  */
@@ -1066,7 +1061,7 @@ char *argv[];
 /*
  *		(void)printf("faccv:  %8.3f, fack:  %3d, facl:  %3d\n",
  *		   faccv,fack,facl);
- *		fflush (stdout);
+ *		(void)fflush (stdout);
  */
 
 		/*  Shape factors for engine & track facets  */
@@ -1082,7 +1077,7 @@ char *argv[];
 /*
  *		(void)printf("facshape:  %8.3f, facradius:  %8.3f, facfric:  %8.3f\n",
  *		   facshape,facradius,facfric);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Print information to the facet file.  */
@@ -1090,18 +1085,18 @@ char *argv[];
 		    facnum,facname,factype,facarea,facmass,facspheat);
 		(void)fprintf(fp1,"%8.3f%8.3f%8.3f\n",face1,
 		    face2,facabs);
-		fflush(fp1);
+		(void)fflush(fp1);
 
 		(void)fprintf(fp1,"%8.3f%8.3f%8.3f%8.3f%8d%8d",
 		    facnorm[0],facnorm[1],facnorm[2],faccv,fack,facl);
 		(void)fprintf(fp1,"%8.3f%8.3f%8.3f\n",facshape,
 		    facradius,facfric);
-		fflush(fp1);
+		(void)fflush(fp1);
 
 	}
 
 	/*  Close facet file.  */
-	fclose(fp1);
+	(void)fclose(fp1);
 
 	}						/*  END # 11  */
 
@@ -1220,7 +1215,7 @@ char *argv[];
 	   }
 
 	   /*  Close generic file.  */
-	   fclose(fp5);
+	   (void)fclose(fp5);
 
 	}						/*  END # 12  */
 
@@ -1448,7 +1443,7 @@ char *argv[];
 	   }
 
 	   /*  Close geometric file.  */
-	   fclose(fp6);
+	   (void)fclose(fp6);
 
 	}						/*  END # 13  */
 /****************************************************************************/
@@ -1459,7 +1454,7 @@ char *argv[];
 	/*  Write info to second pass file.  */
 	/*  Write number of regions to file.  */
 	(void)fprintf(fp2,"%8d\n",num);
-	fflush(fp2);
+	(void)fflush(fp2);
 
 	for(i=0; i<num; i++)
 	{
@@ -1469,7 +1464,7 @@ char *argv[];
 		(void)fprintf(fp2,"%8d  %.6e  %.6e  %.6e  %3d\n",
 		   i,region[i].centroid[0],region[i].centroid[1],
 		   region[i].centroid[2],region[i].mat);
-		fflush(fp2);
+		(void)fflush(fp2);
 
 		/*  Write area of adjacent region.  */
 		for(j=0; j<num; j++)
@@ -1477,12 +1472,12 @@ char *argv[];
 		   spsarea = region[i].ssurarea[0][j];
 		   (void)fprintf(fp2,"%8d  %.6e\n",
 		      j,spsarea);
-		   fflush(fp2);
+		   (void)fflush(fp2);
 		}
 	}
 
 	/*  Close second pass file.  */
-	fclose(fp2);
+	(void)fclose(fp2);
 
 /****************************************************************************/
 
@@ -1491,7 +1486,7 @@ char *argv[];
 
 	/*  Write errors to error file.  */
 	(void)fprintf(fp3,"\nERRORS from firpass\n\n");
-	fflush(fp3);
+	(void)fflush(fp3);
 	for(i=0; i<num; i++)
 	{
 	   if(region[i].cumvol[1] == 1)
@@ -1499,7 +1494,7 @@ char *argv[];
 		(void)fprintf(fp3,"region %d:  ",i);
 		(void)fprintf(fp3,"large variance on volume:  %f\n",
 		   region[i].cumvol[0]);
-		fflush(fp3);
+		(void)fflush(fp3);
 	   }
 
 	   if(region[i].surarea[1] == 1)
@@ -1507,7 +1502,7 @@ char *argv[];
 		(void)fprintf(fp3,"region %d:  large variance ",i);
 		(void)fprintf(fp3,"on surface area:  %f\n",
 		   region[i].surarea[0]);
-		fflush(fp3);
+		(void)fflush(fp3);
 	   }
 
 	   for(j=0; j<num; j++)
@@ -1518,14 +1513,14 @@ char *argv[];
 			i,j);
 		   (void)fprintf(fp3,"\tlarge variance on shared surface ");
 		   (void)fprintf(fp3,"area:  %f\n",region[i].ssurarea[0][j]);
-		   fflush(fp3);
+		   (void)fflush(fp3);
 		}
 	   }
 	}
 
 	/*  Write overlaps to error file.  */
 	(void)fprintf(fp3,"\n\n\tOVERLAPS\n\n");
-	fflush(fp3);
+	(void)fflush(fp3);
 	for(i=0; i<num; i++)
 	{
 	   for(j=0; j<num; j++)
@@ -1535,16 +1530,16 @@ char *argv[];
 		   (void)fprintf(fp3,"%s & %s, max depth:  %fmm  ",
 			region[i].regname,region[j].regname,
 			overlaps[i].ovrdep[j]);
-		   fflush(fp3);
+		   (void)fflush(fp3);
 		   if(overlaps[i].ovrdep[j] < ADJTOL)
 		   {
 			(void)fprintf(fp3,"(within tolerance)\n");
-			fflush(fp3);
+			(void)fflush(fp3);
 		   }
 		   else
 		   {
 			(void)fprintf(fp3,"\n");
-			fflush(fp3);
+			(void)fflush(fp3);
 		   }
 		}
 	   }
@@ -1552,7 +1547,7 @@ char *argv[];
 
 	/*  Write number of adjacent regions to error file.  */
 	(void)fprintf(fp3,"\n\nREGION NUMBER     NUMBER OF ADJACENT REGIONS\n");
-	fflush(fp3);
+	(void)fflush(fp3);
 	for(i=0; i<num; i++)
 	{
 	   numadjreg = 0;
@@ -1562,19 +1557,19 @@ char *argv[];
 	   }
 	   (void)fprintf(fp3,"        %5d                          ",i);
 	   (void)fprintf(fp3,"%5d\n",numadjreg);
-	   fflush(fp3);
+	   (void)fflush(fp3);
 	}
 
 	/*  Print out names of all files used.  */
 	(void)printf("\n\nSUMMARY OF FILES USED & CREATED\n");
 	(void)printf("\t.g file used:  %s\n",argv[1]);
 	(void)printf("\tregions used:\n");
-	fflush(stdout);
+	(void)fflush(stdout);
 	i=2;
 	while(argv[i] != NULL)
 	{
 	   (void)printf("\t\t%s\n",argv[i]);
-	   fflush(stdout);
+	   (void)fflush(stdout);
 	   i++;
 	}
 	(void)printf("\tmaterial id file used:  %s\n",fileden);
@@ -1590,10 +1585,10 @@ char *argv[];
 	   "\tgeneric file created:  %s\n\n\n",filegen);
 	if( typeout == 2 ) (void)printf(
 	   "\tgeometric file created:  %s\n\n\n",filegeo);
-	fflush(stdout);
+	(void)fflush(stdout);
 
 	/*  Close error file.  */
-	fclose(fp3);
+	(void)fclose(fp3);
 
 	/*  Everything is complete, free all memory.  */
 
@@ -1613,6 +1608,7 @@ char *argv[];
 	free(overlaps);
 
    }
+   return(0);
 }
 
 
@@ -1626,8 +1622,6 @@ struct partition *PartHeadp;
 	register struct soltab *stp;
 	struct curvature cur;
 
-	int index;
-	int i;
 	double enterpt[3];	/*  Point where ray enters.  */
 	double distance;	/*  Distance between where point enters  */
 				/*  and leaves.  */
@@ -1638,6 +1632,10 @@ struct partition *PartHeadp;
 	short prevregid;	/*  Previous region id.  */
 	short prevair;		/*  Previous air code.  */
 
+	/*  Initialize the following.  */
+	prevregid = (-1);
+	prevair = (-1);
+
 	pp=PartHeadp->pt_forw;
 	for( ; pp != PartHeadp; pp = pp->pt_forw)
 	{
@@ -1646,28 +1644,28 @@ struct partition *PartHeadp;
  *			pp->pt_regionp->reg_name,
  *			pp->pt_inseg->seg_stp->st_name,
  *			pp->pt_outseg->seg_stp->st_name);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  *		(void)printf("index to region:  %d\n",
  *			pp->pt_regionp->reg_bit);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Print out region id and aircode.  */
 /*
  *		(void)printf("region id:  %d, aircode:  %d\n",
  *		    pp->pt_regionp->reg_regionid,pp->pt_regionp->reg_aircode);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Put region name into region[].regname.  */
 /*
  *		(void)printf("Putting region name into struct.\n");
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 		icur=pp->pt_regionp->reg_bit;	/*  region # hit  */
 /*
  *		(void)printf("region %d:  *%s*\n",icur,region[icur].regname);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		region[icur].regname = (char *)pp->pt_regionp->reg_name;
@@ -1675,7 +1673,7 @@ struct partition *PartHeadp;
 /*
  *		(void)printf("region #:  %d, region name:  %s\n",
  *			icur,region[icur].regname);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Put material code into region[].mat.  */
@@ -1684,7 +1682,7 @@ struct partition *PartHeadp;
 		/*  Find normal and hit point of entering ray.  */
 /*
  *		(void)printf("Entering Ray\n");
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 		hitp=pp->pt_inhit;
 		stp=pp->pt_inseg->seg_stp;
@@ -1748,12 +1746,12 @@ struct partition *PartHeadp;
  *			hitp->hit_point[X],
  *			hitp->hit_point[Y],
  *			hitp->hit_point[Z]);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  *		(void)printf("Normal Point:  (%f, %f, %f)\n",
  *			hitp->hit_normal[X],
  *			hitp->hit_normal[Y],
  *			hitp->hit_normal[Z]);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Compute cummulative free surface normal,  */
@@ -1874,17 +1872,17 @@ struct partition *PartHeadp;
  *			cur.crv_pdir[X],
  *			cur.crv_pdir[Y],
  *			cur.crv_pdir[Z]);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  *		(void)printf("Inverse radii of curvature:  c1=%f, c2=%f\n",
  *			cur.crv_c1,
  *			cur.crv_c2);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Find normal and hit point of leaving ray.  */
 /*
  *		(void)printf("Leaving Ray\n");
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 		hitp=pp->pt_outhit;
 		stp=pp->pt_outseg->seg_stp;
@@ -1917,12 +1915,12 @@ struct partition *PartHeadp;
  *			hitp->hit_point[X],
  *			hitp->hit_point[Y],
  *			hitp->hit_point[Z]);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  *		(void)printf("Normal Point:  (%f, %f, %f)\n",
  *			hitp->hit_normal[X],
  *			hitp->hit_normal[Y],
  *			hitp->hit_normal[Z]);
- *		fflush(stdout);
+ *		(void)fflush(stdout);
  */
 
 		/*  Continue finding cummulative volume.  */
@@ -1992,7 +1990,7 @@ register struct application *ap;
 {
 /*
  *	(void)printf("It was a miss.\n");
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 	return (0);
 }
@@ -2011,9 +2009,9 @@ struct region *reg1,*reg2;
 
 /*
  *	(void)printf("In ovrlap.  ");
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  *	(void)printf("%s & %s\n",reg1->reg_name,reg2->reg_name);
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 
 	a=(int)reg1->reg_bit;
@@ -2021,7 +2019,7 @@ struct region *reg1,*reg2;
 
 /*
  *	(void)printf("a=%d, b=%d.  ",a,b);
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 
 	/*  Enter region names incase they are never entered  */
@@ -2033,21 +2031,21 @@ struct region *reg1,*reg2;
 
 /*
  *	(void)printf("ovrreg set to 1.  ");
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 
 	depth = PartHeadp->pt_outhit->hit_dist - PartHeadp->pt_inhit->hit_dist;
 
 /*
  *	(void)printf("depth set to %f.  ",depth);
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 
 	if(depth > overlaps[a].ovrdep[b]) overlaps[a].ovrdep[b] = depth;
 
 /*
  *	(void)printf("ovrdep set.\n");
- *	fflush(stdout);
+ *	(void)fflush(stdout);
  */
 
 	return(1);

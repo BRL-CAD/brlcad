@@ -2,7 +2,7 @@
  *			S U B R O U T I N E S . C
  *
  *  Author -
- *	S.Coates - 18 December 1990
+ *	S.Coates - 8 July 1991
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -28,7 +28,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*  Subroutine to rotate a point, given a point (3 coordinates)  */
 /*  and three angles (in radians).  */
 
-void rotate( double p[3], double a[3], double np[3] )
+void rotate( p, a, np )
+
+double p[3];
+double a[3];
+double np[3];
+
 {
 
 	/*  p[3]  - The point brought in where p[0] is the x-coordinate,  */

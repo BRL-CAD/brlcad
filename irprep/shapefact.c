@@ -5,7 +5,7 @@
  *  This program fires parallel rays.
  *
  *  Author -
- *	S.Coates - 23 May 1991
+ *	S.Coates - 8 July 1991
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -57,7 +57,7 @@ struct table
 struct table info[MAXREG];
 double nummiss;		/*  Number of misses.  */
 
-main(argc,argv)
+int main(argc,argv)
 
 int argc;
 char **argv;
@@ -84,13 +84,10 @@ char **argv;
    double q;		/*  Temporary variable used to find points.  */
    int numreg;		/*  Number of regions.  */
    double center[3];	/*  Center of the bounding rpp.  */
-   double cordir[3];	/*  Used to see if firing direction points  */
-			/*  toward the bounding rpp.  */
    double sf;		/*  Used to print shape factor.  */
    double dump;		/*  How often a dump is to occur.  */
    int idump;		/*  1=>dump to occur.  */
 
-   char line[81];	/*  Used to read one line from a file.  */
    FILE *fp;		/*  Used to open files.  */
    char outfile[16];	/*  Output file.  */
    double totalsf;	/*  Sum of shape factors.  */
@@ -131,7 +128,7 @@ char **argv;
 	{
 		(void)fprintf(stderr,"Enter unsigned integer seed.  ");
 		(void)fflush(stderr);
-		(void)scanf("%u",&seed);
+		(void)scanf("%ld",&seed);
 	}
 	(void) srand48(seed);
 
@@ -431,9 +428,10 @@ char **argv;
 	   (void)fprintf(fp,"  sum of shape factors:  %f\n",totalsf);
 	   (void)fflush(fp);
 	}
-	fclose(fp);
+	(void)fclose(fp);
 
    }						/*  END # 1  */
+   return(0);
 }
 
 
