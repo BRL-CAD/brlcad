@@ -510,7 +510,7 @@ register struct rt_i	*rtip;
 #ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		(char *)sbrk(0)-beginptr );
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 #endif
 }
 
@@ -542,7 +542,7 @@ struct rt_i	*rtip;
 #ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		(char *)sbrk(0)-beginptr );
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 #endif
 }
 
@@ -829,7 +829,7 @@ int framenumber;
 #ifdef HAVE_SBRK
 	rt_log("Additional dynamic memory used=%d. bytes\n",
 		(char *)sbrk(0)-beginptr );
-		beginptr = sbrk(0);
+		beginptr = (char *) sbrk(0);
 #endif
 	rt_log("%ld solid/ray intersections: %ld hits + %ld miss\n",
 		rtip->nshots, rtip->nhits, rtip->nmiss );
