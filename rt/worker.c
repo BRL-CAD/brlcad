@@ -25,7 +25,9 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "./ext.h"
 #include "./mathtab.h"
@@ -135,8 +137,7 @@ grid_setup()
 	/* "Lower left" corner of viewing plane */
 	if( rt_perspective > 0.0 )  {
 		fastf_t	zoomout;
-		extern double mat_degtorad;
-		zoomout = 1.0 / tan( mat_degtorad * rt_perspective / 2.0 );
+		zoomout = 1.0 / tan( bn_degtorad * rt_perspective / 2.0 );
 		VSET( temp, -1, -1/aspect, -zoomout );	/* viewing plane */
 		/*
 		 * Divergance is (0.5 * viewsize / width) mm at
