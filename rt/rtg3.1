@@ -53,6 +53,32 @@ A color vector display of ray-model intersections can be written to
 .I rtg3.pl
 and displayed with \fIpl_fb\fR or \fIpl_sgi\fR.
 .LP
+.B GIFT
+format required the translation of a ray's zero distance to the
+model center.  This was done by adding a distance correction factor.
+Each ray's origin was translated to the cell center.  The cell center
+coordinates and the ones actually fired from are outputted.
+.LP
+Obliquity angles (declensions off the normal) are computed internally
+in
+.I radians
+but outputted in
+.I degrees
+to satisfy the
+.B GIFT
+format.  Note that 
+.I rt
+normals always point outward, whereas
+.B GIFT
+normals point inward.
+.LP
+.B
+GIFT
+prefixes the first component of each ccrd with a space.  It also
+zero-fills the card if there are less than three components.  Neither
+COVART II nor COVART III require this zero-filling, so it is omitted by
+.I rtg3.
+.LP
 The following options are recognized.
 .TP
 .B \-s#
