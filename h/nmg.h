@@ -673,6 +673,8 @@ struct fu_pt_info {
 
 #define NMG_FPI_MAGIC 0x66706900 /* fpi\0 */
 #define NMG_CK_FPI(_fpi)	NMG_CKMAG(_fpi, NMG_FPI_MAGIC, "fu_pt_info")
+#define NMG_FPI_FREE( _fpi ) {	(void)rt_free( (char *)_fpi->tbl ); \
+				(void)rt_free( (char *)_fpi ); }
 
 /* values for fu_pt_info->tbl entries */
 #define NMG_FPI_VIRGIN	0
