@@ -273,7 +273,7 @@ char **argv;
 	rt_vls_init(&mged_prompt);
 	input_str_index = 0;
 
-	/* Get set up to use Tcl/Tk */
+	/* Get set up to use Tcl */
 	mged_setup();
 
 	windowbounds[0] = XMAX;		/* XHR */
