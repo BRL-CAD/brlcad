@@ -528,7 +528,7 @@ int	kind;
 		rt_log("ERROR, bad kind\n");
 		return(-1);
 	case 1:		/* Wireframes */
-		i = db_walk_tree( dbip, argc, argv,
+		i = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
@@ -557,7 +557,7 @@ int	kind;
 Please note that the NMG library used by this command is experimental.\n\
 A production implementation will exist in the maintenance release.\n");
 	  	mged_nmg_model = nmg_mm();
-		i = db_walk_tree( dbip, argc, argv,
+		i = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
@@ -1097,7 +1097,7 @@ char	**argv;
 		mged_abs_tol, mged_rel_tol, mged_nrm_tol );
 	mged_facetize_tree = (union tree *)0;
   	mged_nmg_model = nmg_mm();
-	i = db_walk_tree( dbip, argc, argv,
+	i = db_walk_tree( dbip, argc, (CONST char **)argv,
 		ncpu,
 		&mged_initial_tree_state,
 		0,			/* take all regions */
