@@ -292,15 +292,8 @@ register struct directory *dp;
 			record.b.b_values[2]*base2local );
 		return;
 	}
-	if( record.u_id == ID_B_SPL_HEAD ) {
-		(void)printf("%s:  SPLINE\n", dp->d_namep );
-		db_getrec( dp, &record, 0 );
-		(void)printf(" order %d %d\n",
-			record.d.d_order[0],
-			record.d.d_order[1]);
-		(void)printf(" num Control points %d %d\n",
-			record.d.d_ctl_size[0],
-			record.d.d_ctl_size[1]);
+	if( record.u_id == ID_BSOLID ) {
+		dbpr_spline( dp );
 		return;
 	}
 	if( record.u_id == ID_P_HEAD )  {

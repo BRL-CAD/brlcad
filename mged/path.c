@@ -67,9 +67,9 @@ matp_t old_xlate;
 
 	if( rec.u_id == ID_SOLID ||
 	    rec.u_id == ID_ARS_A ||
-	    rec.u_id == ID_B_SPL_HEAD ||
+	    rec.u_id == ID_BSOLID ||
 	    rec.u_id == ID_P_HEAD )  {
-		register struct solid *sp;	/* XXX */
+		register struct solid *sp;
 		/*
 		 * Enter new solid (or processed region) into displaylist.
 		 */

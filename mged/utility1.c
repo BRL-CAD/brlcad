@@ -322,10 +322,8 @@ f_dup( )
 			case ID_ARS_B:
 			case ID_MEMB:
 			case ID_P_DATA:
-			case ID_B_SPL_KV:
-			case ID_B_SPL_CTL:
 			case ID_MATERIAL:
-			break;
+				break;
 
 			case ID_SOLID:
 				if(record.s.s_name[0] == 0)
@@ -336,7 +334,7 @@ f_dup( )
 				}
 				else
 					tmpdp = lookup(record.s.s_name, LOOKUP_QUIET);
-			break;
+				break;
 
 			case ID_ARS_A:
 				if(record.a.a_name[0] == 0) 
@@ -347,7 +345,7 @@ f_dup( )
 				}
 				else
 					tmpdp = lookup(record.a.a_name, LOOKUP_QUIET);
-			break;
+				break;
 
 			case ID_COMB:
 				if(record.c.c_name[0] == 0)
@@ -358,18 +356,26 @@ f_dup( )
 				}
 				else
 					tmpdp = lookup(record.c.c_name, LOOKUP_QUIET);
-			break;
+				break;
 
-			case ID_B_SPL_HEAD:
-				if(record.d.d_name[0] == 0)
+			case ID_BSOLID:
+				if(record.B.B_name[0] == 0)
 					break;
 				if( ncharadd ) {
-					prename(record.d.d_name);
+					prename(record.B.B_name);
 					tmpdp = lookup(new_name, LOOKUP_QUIET);
 				}
 				else
-					tmpdp = lookup(record.d.d_name, LOOKUP_QUIET);
-			break;
+					tmpdp = lookup(record.B.B_name, LOOKUP_QUIET);
+				break;
+
+			case ID_BSURF:
+				/* Need to skip over knots & mesh which follows! */
+				(void)fseek( dupfp,
+					(record.d.d_nknots+record.d.d_nctls) *
+						(long)(sizeof(record)),
+					1 );
+				continue;
 
 			case ID_P_HEAD:
 				if(record.p.p_name[0] == 0)
@@ -380,12 +386,12 @@ f_dup( )
 				}
 				else
 					tmpdp = lookup(record.p.p_name, LOOKUP_QUIET);
-			break;
+				break;
 
 			default:
 				(void)printf("Unknown record type (%c) in %s\n",
 						record.u_id,cmd_args[1]);
-			break;
+				break;
 
 		}
 
@@ -480,13 +486,11 @@ f_cat( )
 			case ID_ARS_B:
 			case ID_MEMB:
 			case ID_P_DATA:
-			case ID_B_SPL_KV:
-			case ID_B_SPL_CTL:
-			break;
+				break;
 
 			case ID_MATERIAL:
 				color_addrec( &record, -1 );
-			break;
+				break;
 
 			case ID_SOLID:
 				if(record.s.s_name[0] == 0)
@@ -507,11 +511,9 @@ f_cat( )
 				/* add the record to the data base file */
 				db_alloc( dp, 1 );
 				db_putrec(dp, &record, 0);
-			break;
+				break;
 
 			case ID_ARS_A:
-				if(record.a.a_name[0] == 0) 
-					break;
 				if( ncharadd ) {
 					prename(record.a.a_name);
 					NAMEMOVE(new_name, record.a.a_name);
@@ -534,11 +536,9 @@ f_cat( )
 					(void)fread( (char *)&record, sizeof record, 1, catfp );
 					db_putrec(dp, &record, i);
 				}
-			break;
+				break;
 
 			case ID_COMB:
-				if(record.c.c_name[0] == 0)
-					break;
 				if( ncharadd ) {
 					prename(record.c.c_name);
 					NAMEMOVE(new_name, record.c.c_name);
@@ -572,35 +572,22 @@ f_cat( )
 					}
 					db_putrec(dp, &record, i);
 				}
-			break;
+				break;
 
-			case ID_B_SPL_HEAD:
-				if(record.d.d_name[0] == 0)
-					break;
+			case ID_BSOLID:
 				if( ncharadd ) {
-					prename(record.d.d_name);
-					NAMEMOVE(new_name, record.d.d_name);
+					prename(record.B.B_name);
+					NAMEMOVE(new_name, record.B.B_name);
 				}
-				if( lookup(record.d.d_name, LOOKUP_QUIET) != DIR_NULL ) {
+				if( lookup(record.B.B_name, LOOKUP_QUIET) != DIR_NULL ) {
 					nskipped++;
 					(void)printf("SPLINE (%s) already exists in %s....will skip\n",
-							record.d.d_name, filename);
+							record.B.B_name, filename);
 					break;
 				}
-				/* add to the directory */
-				length = record.d.d_totlen;
-				if( (dp = dir_add( record.d.d_name, -1,
-					DIR_SOLID, length+1) ) == DIR_NULL )
-					return;
-				/* add the record to the data base file */
-				db_alloc( dp, length+1 );
-				db_putrec(dp, &record, 0);
-				/* get the other records (knot and control) */
-				for(i=1; i<=length; i++) {
-					(void)fread( (char *)&record, sizeof record, 1, catfp );
-					db_putrec(dp, &record, i);
-				}
-			break;
+	printf("SPLINE not implemented yet, aborting!\n");
+				/* Need to miss the knots and mesh */
+				return;
 
 			case ID_P_HEAD:
 				if(record.p.p_name[0] == 0)
@@ -616,12 +603,12 @@ f_cat( )
 					break;
 				}
 printf("POLYGONS not implemented yet.....SKIP %s\n",record.p.p_name);
-			break;
+				break;
 
 			default:
 				(void)printf("BAD record type (%c) in %s\n",
 						record.u_id,cmd_args[1]);
-			break;
+				break;
 
 		}
 

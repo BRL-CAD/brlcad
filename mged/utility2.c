@@ -100,7 +100,7 @@ f_tabobj( )
 			(void)printf("POLYGON: not implemented yet\n");
 		}
 
-		if(record.u_id == ID_B_SPL_HEAD) {
+		if(record.u_id == ID_BSOLID) {
 			(void)printf("SPLINE: not implemented yet\n");
 		}
 	}
@@ -223,7 +223,7 @@ f_copyeval( )
 	/* check if last path member is a solid */
 	db_getrec( obj[objpos-1], (char *)&record, 0);
 	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A &&
-		record.u_id != ID_B_SPL_HEAD && record.u_id != ID_P_HEAD) {
+		record.u_id != ID_BSOLID && record.u_id != ID_P_HEAD) {
 		(void)printf("Bottom of path %s is not a solid\n",dp->d_namep);
 		return;
 	}
@@ -292,7 +292,7 @@ f_copyeval( )
 		return;
 	}
 
-	if(saverec.u_id == ID_B_SPL_HEAD) {
+	if(saverec.u_id == ID_BSOLID) {
 		(void)printf("B-SPLINEs not implemented\n");
 		return;
 	}
@@ -469,8 +469,8 @@ int flag;
 		(void)printf("POLYGON data print not implemented\n");
 		return;
 	}
-	if(record.u_id == ID_B_SPL_HEAD) {
-		(void)printf("/%s:\n",record.d.d_name);
+	if(record.u_id == ID_BSOLID) {
+		(void)printf("/%s:\n",record.B.B_name);
 		(void)printf("B-SPLINE data print not implemented\n");
 		return;
 	}
@@ -615,9 +615,9 @@ f_push( )
 			 *	When splines and polygons are implemented, must update
 			 *	this section.
 			 */
-			case ID_B_SPL_HEAD:
+			case ID_BSOLID:
 				(void)printf("WARNING: (%s) SPLINE not pushed with other elements\n",
-						record.d.d_name);
+						record.B.B_name);
 			break;
 
 			case ID_P_HEAD:
@@ -697,9 +697,9 @@ mat_t	old_xlate;
 	}
 
 	/* not a combination  -  should have a solid */
-	if(record.u_id == ID_B_SPL_HEAD) {
+	if(record.u_id == ID_BSOLID) {
 		(void)printf("push: (%s) SPLINE not implemented yet - abort\n",
-				record.d.d_name);
+				record.B.B_name);
 		abort = 1;
 		return;
 	}

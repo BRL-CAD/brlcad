@@ -44,6 +44,9 @@ int	los_default = 100;	/* Line-of-sight estimate */
  * This routine is used when the object to be moved is
  * the top level in its reference path.  The object itself
  * is relocated.
+ *
+ * This routine really should just be a bunch of calls to
+ * solid-specific routines.
  */
 void
 moveHobj( dp, xlate )
@@ -89,18 +92,8 @@ matp_t xlate;
 		}
 		break;
 
-	case ID_B_SPL_HEAD:
-		for( i = 1; i < dp->d_len; i++) {
-			db_getrec( dp, &record, i);
-			if( record.u_id != ID_B_SPL_CTL )
-				continue;
-			for( p = &record.l.l_pts[0*3];
-			     p < &record.l.l_pts[8*3]; p += 3) {
-				MAT4X3VEC( work, xlate, p );
-				VMOVE( p, work );
-			}
-			db_putrec( dp, &record, i);
-		}
+	case ID_BSOLID:
+		move_spline( &record.B, dp, xlate );
 		break;
 
 	case ID_SOLID:

@@ -147,8 +147,8 @@ int regionid;
 			draw_ars( &recordp->a, cur_path[pathpos], xform );
 			break;
 
-		case ID_B_SPL_HEAD:
-			draw_spline( &recordp->a, cur_path[pathpos], xform );
+		case ID_BSOLID:
+			draw_spline( &recordp->B, cur_path[pathpos], xform );
 			break;
 
 		case ID_P_HEAD:

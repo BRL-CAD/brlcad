@@ -1158,7 +1158,7 @@ init_objedit()
 	/* Not an evaluated region - just a regular path ending in a solid */
 	db_getrec( illump->s_path[illump->s_last], &es_rec, 0 );
 
-	if( es_rec.u_id == ID_B_SPL_HEAD ) {
+	if( es_rec.u_id == ID_BSOLID ) {
 		(void)printf("SPLINE may not work well\n");
 		mat_idn(es_mat);
 		es_menu = 0;

@@ -174,8 +174,7 @@ f_mirror()
 
 	db_getrec( proto, &record, 0 );
 	if( record.u_id == ID_SOLID ||
-		record.u_id == ID_ARS_A ||
-		record.u_id == ID_B_SPL_HEAD
+		record.u_id == ID_ARS_A
 	)  {
 		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
 			return;
@@ -189,17 +188,6 @@ f_mirror()
 				db_getrec( proto, &record, i );
 				for( j = k; j < 24; j += 3 )
 					record.b.b_values[j] *= -1.0;
-				db_putrec( dp, &record, i );
-			}
-		} else if( record.u_id == ID_B_SPL_HEAD )  {
-			NAMEMOVE( cmd_args[2], record.d.d_name );
-			db_putrec( dp, &record, 0 );
-			for( i = 1; i < proto->d_len; i++ ) {
-				db_getrec( proto, &record, i );
-				if( record.u_id != ID_B_SPL_CTL )
-					continue;
-				for( j = k; j < 24; j += 3)
-					record.l.l_pts[j] *= -1.0;
 				db_putrec( dp, &record, i );
 			}
 		} else  {

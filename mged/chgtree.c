@@ -120,11 +120,11 @@ f_copy()
 			db_getrec( proto, &record, i );
 			db_putrec( dp, &record, i );
 		}
-	} else if( record.u_id == ID_B_SPL_HEAD ) {
+	} else if( record.u_id == ID_BSOLID ) {
 		if( (dp = dir_add( cmd_args[2], -1, DIR_SOLID, proto->d_len )) == DIR_NULL )
 			return;
 		db_alloc( dp, proto->d_len );
-		NAMEMOVE( cmd_args[2], record.d.d_name );
+		NAMEMOVE( cmd_args[2], record.B.B_name );
 		db_putrec( dp, &record, 0 );
 		for( i = 1; i < proto->d_len; i++ ) {
 			db_getrec( proto, &record, i );
