@@ -39,8 +39,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+extern int mged_svbase();
 extern void set_e_axes_pos();
 extern int mged_zoom();
+extern void set_scroll();  /* defined in set.c */
 
 /* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
@@ -336,33 +338,21 @@ void
 bv_edit_toggle()
 {
   mged_variables.edit = !mged_variables.edit;
-
-  if(mged_variables.scroll_enabled)
-    Tcl_Eval(interp, "sliders on");
-
-  dmaflag = 1;
+  set_scroll();
 }
 
 static void
 bv_rate_toggle()
 {
   mged_variables.rateknobs = !mged_variables.rateknobs;
-
-  if(mged_variables.scroll_enabled)
-    Tcl_Eval(interp, "sliders on");
-
-  dmaflag = 1;
+  set_scroll();
 }
 
 static void
 be_s_context()
 {
   mged_variables.context = !mged_variables.context;
-
-  if(mged_variables.scroll_enabled)
-    Tcl_Eval(interp, "sliders on");
-
-  dmaflag = 1;
+  set_scroll();
 }
 
 static void
@@ -449,31 +439,15 @@ bv_adcursor()
 #endif
   }
 
-  if(mged_variables.scroll_enabled){
-#if 0
-    char *av[3];
-
-    av[0] = "sliders";
-    av[1] = "on";
-    av[2] = NULL;
-    (void)cmd_sliders((ClientData)NULL, interp, 2, av);
-#else
-    Tcl_Eval(interp, "sliders on");
-#endif
-  }
-  
-  dmaflag = 1;
+  set_scroll();
 }
 
 static void
 bv_reset()  {
   /* Reset view such that all solids can be seen */
   size_reset();
-  MAT_DELTAS_GET(orig_pos, toViewcenter);
   setview( 0.0, 0.0, 0.0 );
-  absolute_zoom = 0.0;
-  VSETALL( absolute_rotate, 0.0 );
-  VSETALL( absolute_slew, 0.0 );
+  (void)mged_svbase();
 }
 
 static void

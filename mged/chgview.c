@@ -62,11 +62,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 
-#if 0
-#include "tcl.h"
-#include "tk.h"
-#endif
-
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -83,7 +78,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int mged_param();
 extern void color_soltab();
+extern void set_scroll();   /* defined in set.c */
 
+void knob_update_rate_vars();
 int mged_svbase();
 int knob_tran();
 int mged_tran();
@@ -116,6 +113,7 @@ int abs_tran[3];
 #endif
 
 vect_t edit_absolute_rotate;
+vect_t last_edit_absolute_rotate;
 vect_t edit_rate_rotate;
 int edit_rateflag_rotate;
 
@@ -213,6 +211,11 @@ double x, y, z;
      absolute_slew[Z] != 0.0){
     VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
     MAT4X3PNT(absolute_slew, model2view, new_pos);
+#if 1
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
   }
 
   return TCL_OK;
@@ -467,11 +470,7 @@ int	catch_sigint;
 	  BU_LIST_NON_EMPTY(&HeadSolid.l)) {
 	size_reset();
 	new_mats();
-
-	MAT_DELTAS_GET(orig_pos, toViewcenter);
-	absolute_zoom = 0.0;
-	VSETALL( absolute_rotate, 0.0 );
-	VSETALL( absolute_slew, 0.0 );
+	(void)mged_svbase();
       }
 
       color_soltab();
@@ -1557,6 +1556,37 @@ check_nonzero_rates()
   dmaflag = 1;	/* values changed so update faceplate */
 }
 
+void
+knob_update_rate_vars()
+{
+  if(!mged_variables.rateknobs)
+    return;
+
+  if(scroll_edit == EDIT_CLASS_ROTATE){
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_rotate_vls[Z]));
+  }else{
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_rotate_vls[Z]));
+  }
+
+  if(scroll_edit == EDIT_CLASS_SCALE)
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_scale_vls));
+  else
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_scale_vls));
+
+  if(es_edclass == EDIT_CLASS_TRAN){
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_tran_vls[Z]));
+  }else{
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&rate_tran_vls[Z]));
+  }
+}
 
 int
 mged_print_knobvals(interp)
@@ -1567,7 +1597,7 @@ Tcl_Interp *interp;
   bu_vls_init(&vls);
 
   if(mged_variables.rateknobs){
-    if(EDIT_ROTATE && mged_variables.edit){
+    if(scroll_edit == EDIT_CLASS_ROTATE){
       bu_vls_printf(&vls, "x = %f\n", edit_rate_rotate[X]);
       bu_vls_printf(&vls, "y = %f\n", edit_rate_rotate[Y]);
       bu_vls_printf(&vls, "z = %f\n", edit_rate_rotate[Z]);
@@ -1577,12 +1607,12 @@ Tcl_Interp *interp;
       bu_vls_printf(&vls, "z = %f\n", rate_rotate[Z]);
     }
 
-    if(EDIT_SCALE && mged_variables.edit)
+    if(scroll_edit == EDIT_CLASS_SCALE)
       bu_vls_printf(&vls, "S = %f\n", edit_rate_scale);
     else
       bu_vls_printf(&vls, "S = %f\n", rate_zoom);
 
-    if(EDIT_TRAN && mged_variables.edit){
+    if(es_edclass == EDIT_CLASS_TRAN){
       bu_vls_printf(&vls, "X = %f\n", edit_rate_tran[X]);
       bu_vls_printf(&vls, "Y = %f\n", edit_rate_tran[Y]);
       bu_vls_printf(&vls, "Z = %f\n", edit_rate_tran[Z]);
@@ -1592,7 +1622,7 @@ Tcl_Interp *interp;
       bu_vls_printf(&vls, "Z = %f\n", rate_slew[Z]);
     }
   }else{
-    if(EDIT_ROTATE && mged_variables.edit){
+    if(scroll_edit == EDIT_CLASS_ROTATE){
       bu_vls_printf(&vls, "ax = %f\n", edit_absolute_rotate[X]);
       bu_vls_printf(&vls, "ay = %f\n", edit_absolute_rotate[Y]);
       bu_vls_printf(&vls, "az = %f\n", edit_absolute_rotate[Z]);
@@ -1602,12 +1632,12 @@ Tcl_Interp *interp;
       bu_vls_printf(&vls, "az = %f\n", absolute_rotate[Z]);
     }
 
-    if(EDIT_SCALE && mged_variables.edit)
+    if(scroll_edit == EDIT_CLASS_SCALE)
       bu_vls_printf(&vls, "aS = %f\n", edit_absolute_scale);
     else
       bu_vls_printf(&vls, "aS = %f\n", absolute_zoom);
 
-    if(EDIT_TRAN && mged_variables.edit){
+    if(es_edclass == EDIT_CLASS_TRAN){
       bu_vls_printf(&vls, "aX = %f\n", edit_absolute_tran[X]);
       bu_vls_printf(&vls, "aY = %f\n", edit_absolute_tran[Y]);
       bu_vls_printf(&vls, "aZ = %f\n", edit_absolute_tran[Z]);
@@ -1699,6 +1729,7 @@ char	**argv;
       VSETALL( edit_rate_rotate, 0 );
       VSETALL( edit_rate_tran, 0 );
       edit_rate_scale = 0.0;
+      knob_update_rate_vars();
 		
       (void)f_adc( clientData, interp, 2, av );
 
@@ -1899,13 +1930,13 @@ char	**argv;
 	  (void)mged_param(interp, 3, edit_absolute_rotate);
 	}else {
 	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	    tvec[X] = f - edit_absolute_rotate[X];
+	    tvec[X] = f - last_edit_absolute_rotate[X];
 	    tvec[Y] = 0.0;
 	    tvec[Z] = 0.0;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[X] = f;
 	  }else{
-	    mged_vrot(f - absolute_rotate[X], 0.0, 0.0);
+	    mged_vrot(f - last_absolute_rotate[X], 0.0, 0.0);
 	    absolute_rotate[X] = f;
 	  }
 	}
@@ -1918,6 +1949,7 @@ char	**argv;
 	else if(edit_absolute_rotate[X] > 180.0)
 	  edit_absolute_rotate[X] = edit_absolute_rotate[X] - 360.0;
 
+	last_edit_absolute_rotate[X] = edit_absolute_rotate[X];
 	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[X]));
       }else{
 	if(absolute_rotate[X] < -180.0)
@@ -1925,6 +1957,7 @@ char	**argv;
 	else if(absolute_rotate[X] > 180.0)
 	  absolute_rotate[X] = absolute_rotate[X] - 360.0;
 
+	last_absolute_rotate[X] = absolute_rotate[X];
 	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[X]));
       }
 
@@ -1953,12 +1986,12 @@ char	**argv;
 	}else {
 	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    tvec[X] = 0.0;
-	    tvec[Y] = f - edit_absolute_rotate[Y];
+	    tvec[Y] = f - last_edit_absolute_rotate[Y];
 	    tvec[Z] = 0.0;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Y] = f;
 	  }else{
-	    mged_vrot(0.0, f - absolute_rotate[Y], 0.0);
+	    mged_vrot(0.0, f - last_absolute_rotate[Y], 0.0);
 	    absolute_rotate[Y] = f;
 	  }
 	}
@@ -1971,6 +2004,7 @@ char	**argv;
 	else if(edit_absolute_rotate[Y] > 180.0)
 	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] - 360.0;
 
+	last_edit_absolute_rotate[Y] = edit_absolute_rotate[Y];
 	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Y]));
       }else{
 	if(absolute_rotate[Y] < -180.0)
@@ -1978,6 +2012,7 @@ char	**argv;
 	else if(absolute_rotate[Y] > 180.0)
 	  absolute_rotate[Y] = absolute_rotate[Y] - 360.0;
 
+	last_absolute_rotate[Y] = absolute_rotate[Y];
 	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Y]));
       }
 
@@ -2007,11 +2042,11 @@ char	**argv;
 	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    tvec[X] = 0.0;
 	    tvec[Y] = 0.0;
-	    tvec[Z] = f - edit_absolute_rotate[Z];
+	    tvec[Z] = f - last_edit_absolute_rotate[Z];
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Z] = f;
 	  }else{
-	    mged_vrot(0.0, 0.0, f - absolute_rotate[Z]);
+	    mged_vrot(0.0, 0.0, f - last_absolute_rotate[Z]);
 	    absolute_rotate[Z] = f;
 	  }
 	}
@@ -2024,6 +2059,7 @@ char	**argv;
 	else if(edit_absolute_rotate[Z] > 180.0)
 	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] - 360.0;
 
+	last_edit_absolute_rotate[Z] = edit_absolute_rotate[Z];
 	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_rotate_vls[Z]));
       }else{
 	if(absolute_rotate[Z] < -180.0)
@@ -2031,6 +2067,7 @@ char	**argv;
 	else if(absolute_rotate[Z] > 180.0)
 	  absolute_rotate[Z] = absolute_rotate[Z] - 360.0;
 
+	last_absolute_rotate[Z] = absolute_rotate[Z];
 	Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_rotate_vls[Z]));
       }
 
@@ -2433,10 +2470,13 @@ abs_zoom()
      absolute_slew[Z] != 0.0){
     VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
     MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
   }
 
-  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
-    (void)Tcl_Eval(interp, "set_sliders");
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_scale_vls));
 }
 
 int
@@ -2465,11 +2505,13 @@ double val;
      absolute_slew[Z] != 0.0){
     VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
     MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
   }
 
-  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
-        (void)Tcl_Eval(interp, "set_sliders");
-
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_scale_vls));
   return TCL_OK;
 }
 
@@ -2677,6 +2719,11 @@ vect_t tranvec;
 #endif
   new_mats();
 
+#if 1
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
   return TCL_OK;
 }
 
@@ -2791,6 +2838,7 @@ mged_svbase()
 
   /* reset absolute slider values */
   VSETALL( absolute_rotate, 0.0);
+  VSETALL( last_absolute_rotate, 0.0);
   VSETALL( absolute_slew, 0.0);
   absolute_zoom = 0.0;
 
@@ -3059,10 +3107,12 @@ double a1, a2, a3;		/* DOUBLE angles, in degrees */
      absolute_slew[Z] != 0.0){
     VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
     MAT4X3PNT(absolute_slew, model2view, temp);
+#if 1
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
   }
-
-  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
-    Tcl_Eval(interp, "set_sliders");
 }
 
 
@@ -3096,7 +3146,10 @@ vect_t view_pos;
   VSET(temp, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
   MAT4X3PNT(absolute_slew, model2view, temp);
 
-  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
-    (void)Tcl_Eval(interp, "set_sliders");
+#if 1
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
+  Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
 }
 
