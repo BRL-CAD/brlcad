@@ -175,6 +175,12 @@ char	*dp;
 	if( ymin < 0 )  ymin = 0;
 	if( xmax > 1 )  xmax = 1;
 	if( ymax > 1 )  ymax = 1;
+
+	if( rdebug & RDEBUG_SHADE )
+		bu_log( "footprint in texture space is (%g %g) <-> (%g %g)\n",
+			xmin * (tp->tx_w-1), ymin * (tp->tx_n-1),
+			xmax * (tp->tx_w-1), ymax * (tp->tx_n-1) );
+			
 #if 1
 	dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
 	dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
