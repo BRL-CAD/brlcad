@@ -75,40 +75,24 @@ struct bu_vls tcl_output_hook;
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
 
-#ifdef DO_RUBBER_BAND
-#define RUBBER_BAND_COLOR "255 255 255"
-#define RUBBER_BAND_LINE_WIDTH "1"
-#define RUBBER_BAND_LINE_STYLE "0"
+/* query_ray stuff */
+#define QUERY_RAY_BASENAME "query_ray"
+#define QUERY_RAY_FMT "query_ray_fmt"
 
-struct bu_vls rubber_band_color;
-struct bu_vls rubber_band_line_width;
-struct bu_vls rubber_band_line_style;
-#endif
+struct bu_vls query_ray_basename;
 
-/* nirt stuff */
-#define NIRT_EVEN_COLOR "255 255 0"
-#define NIRT_ODD_COLOR "0 255 255"
-#define NIRT_VOID_COLOR "255 0 255"
-#define NIRT_RAY_BASENAME "nirt_ray"
-#define NIRT_FMT "nirt_fmt"
-
-struct bu_vls nirt_even_color;
-struct bu_vls nirt_odd_color;
-struct bu_vls nirt_void_color;
-struct bu_vls nirt_basename;
-
-struct nirt_fmt {
+struct query_ray_fmt {
   struct bu_vls tclName;
   struct bu_vls fmt;
 };
-struct nirt_fmt *nirt_fmts;
+struct query_ray_fmt *query_ray_fmts;
 
-struct nirt_fmt_data {
+struct query_ray_fmt_data {
   char type;
   char *fmt;
 };
 
-struct nirt_fmt_data def_nirt_fmt_data[] = {
+struct query_ray_fmt_data def_query_ray_fmt_data[] = {
   {'r', "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e"},
   {'h', "\"    Region Name               Entry (x y z)              LOS  Obliq_in\\n\""},
   {'p', "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\\n\" reg_name x_in y_in z_in los obliq_in"},
@@ -117,7 +101,7 @@ struct nirt_fmt_data def_nirt_fmt_data[] = {
   {'o', "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"},
   {(char)NULL, (char *)NULL}
 };
-/* End nirt format stuff */
+/* End query_ray format stuff */
 
 /*
  *			C M D _ L E F T _ M O U S E
@@ -334,6 +318,7 @@ static struct cmdtab cmdtab[] = {
 	"push", f_push,
 	"putmat", f_putmat,
 	"q", f_quit,
+	"query_ray", f_nirt,
 	"quit", f_quit,
 	"qorot", f_qorot,
 	"qvrot", f_qvrot,
@@ -404,6 +389,7 @@ static struct cmdtab cmdtab[] = {
 	"viewset", cmd_viewset,
 	"view2model", f_view2model,
 	"vnirt", f_vnirt,
+	"vquery_ray", f_vnirt,
 	"vrmgr", f_vrmgr,
 	"vrot", f_vrot,
 	"vrot_center", f_vrot_center,
@@ -740,7 +726,7 @@ mged_setup()
 {
 	struct bu_vls str;
 	char *filename;
-	struct nirt_fmt_data *nfdp;
+	struct query_ray_fmt_data *nfdp;
 	register int i, n;
 
 	/* The following is for GUI output hooks: contains name of function to
@@ -919,55 +905,28 @@ mged_setup()
 	Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state],
 		   TCL_GLOBAL_ONLY);
 
-#ifdef DO_RUBBER_BAND
-	/* initialize rubber band variables */
-	bu_vls_init(&rubber_band_color);
-	bu_vls_init(&rubber_band_line_width);
-	bu_vls_init(&rubber_band_line_style);
+	/* initialize query_ray variables */
+	bu_vls_init(&query_ray_basename);
 
-	bu_vls_strcpy(&rubber_band_color, "rubber_band_color");
-	Tcl_SetVar(interp, bu_vls_addr(&rubber_band_color), RUBBER_BAND_COLOR, TCL_GLOBAL_ONLY);
+	bu_vls_strcpy(&query_ray_basename, "query_ray_basename");
+	Tcl_SetVar(interp, bu_vls_addr(&query_ray_basename), QUERY_RAY_BASENAME, TCL_GLOBAL_ONLY);
 
-	bu_vls_strcpy(&rubber_band_line_width, "rubber_band_line_width");
-	Tcl_SetVar(interp, bu_vls_addr(&rubber_band_line_width), RUBBER_BAND_LINE_WIDTH, TCL_GLOBAL_ONLY);
-
-	bu_vls_strcpy(&rubber_band_line_style, "rubber_band_line_style");
-	Tcl_SetVar(interp, bu_vls_addr(&rubber_band_line_style), RUBBER_BAND_LINE_STYLE, TCL_GLOBAL_ONLY);
-#endif
-
-	/* initialize nirt variables */
-	bu_vls_init(&nirt_even_color);
-	bu_vls_init(&nirt_odd_color);
-	bu_vls_init(&nirt_void_color);
-	bu_vls_init(&nirt_basename);
-
-	bu_vls_strcpy(&nirt_basename, "nirt_ray_basename");
-	Tcl_SetVar(interp, bu_vls_addr(&nirt_basename), NIRT_RAY_BASENAME, TCL_GLOBAL_ONLY);
-
-	/* nirt color variables */
-	bu_vls_strcpy(&nirt_even_color, "nirt_ray_colors(even)");
-	Tcl_SetVar(interp, bu_vls_addr(&nirt_even_color), NIRT_EVEN_COLOR, TCL_GLOBAL_ONLY);
-	bu_vls_strcpy(&nirt_odd_color, "nirt_ray_colors(odd)");
-	Tcl_SetVar(interp, bu_vls_addr(&nirt_odd_color), NIRT_ODD_COLOR, TCL_GLOBAL_ONLY);
-	bu_vls_strcpy(&nirt_void_color, "nirt_ray_colors(void)");
-	Tcl_SetVar(interp, bu_vls_addr(&nirt_void_color), NIRT_VOID_COLOR, TCL_GLOBAL_ONLY);
-
-	/* nirt format variables */
+	/* query_ray format variables */
 	n = 0;
-	for(nfdp = def_nirt_fmt_data; nfdp->fmt != (char *)NULL; ++nfdp)
+	for(nfdp = def_query_ray_fmt_data; nfdp->fmt != (char *)NULL; ++nfdp)
 	  ++n;
 
-	nirt_fmts = (struct nirt_fmt *)bu_malloc(sizeof(struct nirt_fmt) * n, "nirt_fmts");
+	query_ray_fmts = (struct query_ray_fmt *)bu_malloc(sizeof(struct query_ray_fmt) * n, "query_ray_fmts");
 	for(i = 0; i < n; ++i){
-	  bu_vls_init(&nirt_fmts[i].tclName);
-	  bu_vls_init(&nirt_fmts[i].fmt);
+	  bu_vls_init(&query_ray_fmts[i].tclName);
+	  bu_vls_init(&query_ray_fmts[i].fmt);
 
-	  bu_vls_printf(&nirt_fmts[i].tclName, "%s(%c)",
-			NIRT_FMT, def_nirt_fmt_data[i].type);
-	  bu_vls_strcpy(&nirt_fmts[i].fmt, def_nirt_fmt_data[i].fmt);
+	  bu_vls_printf(&query_ray_fmts[i].tclName, "%s(%c)",
+			QUERY_RAY_FMT, def_query_ray_fmt_data[i].type);
+	  bu_vls_strcpy(&query_ray_fmts[i].fmt, def_query_ray_fmt_data[i].fmt);
 
-	  Tcl_SetVar(interp, bu_vls_addr(&nirt_fmts[i].tclName),
-		     bu_vls_addr(&nirt_fmts[i].fmt), TCL_GLOBAL_ONLY);
+	  Tcl_SetVar(interp, bu_vls_addr(&query_ray_fmts[i].tclName),
+		     bu_vls_addr(&query_ray_fmts[i].fmt), TCL_GLOBAL_ONLY);
 	}
 
 	Tcl_ResetResult(interp);
