@@ -507,7 +507,7 @@ proc gui { args } {
 	hoc_register_menu_data "File" "Create/Update .mgedrc" "Create/Update .mgedrc"\
 			{ { summary "Create the .mgedrc startup file with default variable settings, or update to current settings." }
 	{ see_also } }
-        .$id.menubar.file add command -label "Clear Command Window" -underline 1 \
+        .$id.menubar.file add command -label "Clear Command Window" -underline 14 \
 	    -command ".$id.t delete 1.0 end; mged_print_prompt .$id.t {mged> }"
         hoc_register_menu_data "File" "Clear Command Window" "Delete all text from command window"\
 	    { { summary "Delete all text from command window" } see_also }
