@@ -27,7 +27,6 @@ set help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{Boolean e
 set help_data(c)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
 set help_data(cat)		{{<objects>}	{list attributes (brief)}}
 set help_data(center)		{{x y z}	{set view center}}
-set help_data(closew)		{{id}	{close display/command window pair}}
 set help_data(color)		{{low high r g b str}	{make color entry}}
 set help_data(comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
 set help_data(comb_color)	{{comb R G B}	{assign a color to a combination (like 'mater')}}
@@ -75,8 +74,14 @@ set help_data(fracture)		{{NMGsolid [prefix]}	{fracture an NMG solid into many N
 set help_data(g)		{{groupname <objects>}	{group objects}}
 set help_data(get_comb)		{{comb_name} {get information about combination}}
 #set help_data(getknob)		{{knobname}	{Gets the current setting of the given knob}}
+set help_data(get_rect)		{{} {Get the rectangle of the current display manager}}
 set help_data(get_view)         {{[-a]} {returns a list of view id numbers that are in the view ring}}
 set help_data(goto_view)        {{vid} {make view vid the current view}}
+set help_data(gui)		{{[-gt gui_type] [options for gui_type]} {create graphical user interface}}
+set help_data(gui_create)	{{[-gt gui_type] [options for gui_type]} {create graphical user interface}}
+set help_data(gui_destroy)	{{[-gt gui_type] [options for gui_type]} {destroy graphical user interface}}
+set help_data(gui_create_default)	{{[-config b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-c -h -j -s]}	{create display/command window pair}}
+set help_data(gui_destroy_default)	{{id}	{destroy display/command window pair}}
 set help_data(help)		{{[commands]}	{give usage message for given commands}}
 set help_data(helplib)		{{[library commands]}	{give usage message for given library commands}}
 set help_data(history)		{{[-delays]}	{list command history}}
@@ -88,7 +93,7 @@ set help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
 set help_data(ill)		{{name}	{illuminate object}}
 set help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set help_data(inside)		{{}	{finds inside solid per specified thicknesses}}
-set help_data(item)		{{region item [air [GIFTmater [los]]]}	{set region ident codes}}
+set help_data(item)		{{region ident [air [GIFTmater [los]]]}	{set region ident codes}}
 set help_data(jcs)		{{id}	{join collaborative session}}
 set help_data(joint)		{{command [options]}	{articulation/animation commands}}
 set help_data(journal)		{{[-d] fileName}	{record all commands and timings to journal}}
@@ -120,12 +125,11 @@ set help_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to vie
 set help_data(mv)		{{old new}	{rename object}}
 set help_data(mvall)		{{oldname newname}	{rename object everywhere}}
 set help_data(next_view)        {{} {set the current view to the next view on the view ring}}
-set help_data(nirt)		{{}	{trace a single ray from current view}}
-set help_data(nmg_collapse)	{{ maximum_error_distance new_solid nmg_solid}	{decimate NMG solid via edge collapse}}
+set help_data(nirt)		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
+set help_data(nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set help_data(oed)		{{path_lhs path_rhs}	{Go from view to object_edit of path_lhs/path_rhs}}
 set help_data(opendb)		{{[database.g]}	{Close current .g file, and open new .g file}}
-set help_data(openw)		{{[-config b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-c -h -j -s]}	{open display/command window pair}}
 set help_data(orientation)	{{x y z w}	{Set view direction from quaternion}}
 set help_data(orot)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set help_data(oscale)		{{factor}	{scale object by factor}}
@@ -151,6 +155,7 @@ set help_data(put_comb)		{{comb_name is_Region id air gift los color shader inhe
 set help_data(putmat)		{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
 set help_data(q)		{{}	{quit}}
 set help_data(qcs)		{{id}	{quit collaborative session}}
+set help_data(query_ray)	{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set help_data(quit)		{{}	{quit}}
 set help_data(qorot)		{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
 set help_data(qvrot)		{{dx dy dz theta}	{set view from direction vector and twist angle}}
@@ -161,7 +166,7 @@ set help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES 
 set help_data(red)		{{object}	{edit a group or region using a text editor}}
 set help_data(refresh)		{{}	{send new control list}}
 set help_data(regdebug)		{{[number]}	{toggle display manager debugging or set debug level}}
-set help_data(regdef)		{{item [air [los [GIFTmaterial]]]}	{change next region default codes}}
+set help_data(regdef)		{{ident [air [los [GIFTmaterial]]]}	{change next region default codes}}
 set help_data(regions)		{{file object(s)}	{make ascii summary of regions}}
 set help_data(release)		{{[name]}	{release display processor}}
 set help_data(rfarb)		{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
@@ -177,6 +182,7 @@ set help_data(savekey)		{{file [time]}	{save keyframe in file (experimental)}}
 set help_data(saveview)		{{file [args]}	{save view in file for RT}}
 set help_data(sca)              {{sfactor} {scale by sfactor}}
 set help_data(sed)		{{<path>}	{solid-edit named solid}}
+set help_data(set_rect)		{{x y width height} {Set the rectangle of the current display manager}}
 set help_data(setview)		{{x y z}	{set the view given angles x, y, and z in degrees}}
 set help_data(shader)		{{comb material [arg(s)]}	{assign materials (like 'mater')}}
 set help_data(share_menu)	{{pathName1 pathName2}  {pathName1 shares its menu with pathName2}}
@@ -214,6 +220,8 @@ set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermenta
 set help_data(viewget)		{{center|size|eye|ypr|quat|aet}	{Experimental - return high-precision view parameters.}}
 set help_data(viewset)		{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
 set help_data(view2model)	{{mx my mz}	{convert point in view coords to model coords (mm)}}
+set help_data(vnirt)		{{x y}  	{trace a single ray from x y}}
+set help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 set help_data(vrmgr)		{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set help_data(vrot)		{{xdeg ydeg zdeg}	{rotate viewpoint}}
 set help_data(vrot_center)	{{v|m x y z}	{set center point of viewpoint rotation, in model or view coords}}
