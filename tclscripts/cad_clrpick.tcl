@@ -959,19 +959,30 @@ proc cadColorWidget_ResizeColorBars {w} {
 proc cadColorWidget_HandleSelEntry {w} {
     upvar #0 $w data
 
-    set text [string trim $data(selection)]
-    # Check to make sure that the color is valid
-    if [catch {set color [winfo rgb . $text]} ] {
+    set color [string trim $data(selection)]
+    set rgb [cadColorWidget_getRGB . $color]
+
+    # Check to make sure the color is valid
+    if {[llength $rgb] != 3} {
 	set data(selection) $data(finalColor)
 	return
     }
-    
-    set R [expr [lindex $color 0]/0x100]
-    set G [expr [lindex $color 1]/0x100]
-    set B [expr [lindex $color 2]/0x100]
 
-    cadColorWidget_SetRGBValue $w "$R $G $B"
-    set data(selection) $text
+    cadColorWidget_SetRGBValue $w $rgb
+    set data(selection) $color
+}
+
+proc cadColorWidget_getRGB { w color } {
+    if [catch {winfo rgb $w $color} rgb] {
+	return ""
+    }
+
+    # scale from (0, 65535) to (0,255)
+    set R [expr [lindex $rgb 0]/0x100]
+    set G [expr [lindex $rgb 1]/0x100]
+    set B [expr [lindex $rgb 2]/0x100]
+
+    return "$R $G $B"
 }
 
 # cadColorWidget_HandleColorEntry --
