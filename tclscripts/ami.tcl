@@ -11,30 +11,35 @@ then
 fi
 
 # this is a comment \
-if test -x ${BRLCAD_ROOT}/bin/bwish
+if test -x ${BRLCAD_ROOT}/bin/tclsh
 # this is a comment \
 then
 # this is a comment \
-	TCL_PROG=${BRLCAD_ROOT}/bin/bwish
+	TCLSH=${BRLCAD_ROOT}/bin/tclsh
+# this is a comment \
+elif test -x /usr/bin/tclsh
+# this is a comment \
+then
+# this is a comment \
+	TCLSH=/usr/bin/tclsh
+# this is a comment \
+elif test -x /usr/local/bin/tclsh
+# this is a comment \
+then
+# this is a comment \
+	TCLSH=/usr/local/bin/tclsh
 # this is a comment \
 else
 # this is a comment \
 	exit 1
 # this is a comment \
 fi
-# the next line restarts using bwish \
-exec $TCL_PROG "$0" "$@"
+# the next line restarts using tclsh \
+exec $TCLSH "$0" "$@"
 
-# Use the following line with bwish
-wm withdraw .
-
-# Use the following two lines with tclsh
-#load $env(BRLCAD_ROOT)/lib/libitcl.so
-#auto_mkindex_parser::slavehook {_%@namespace import -force ::itcl::*}
+package require Itcl
+auto_mkindex_parser::slavehook {_%@namespace import -force ::itcl::*}
 
 foreach arg $argv {
     catch {auto_mkindex $arg *.tcl *.itcl}
 }
-
-# Use the following line with bwish
-exit
