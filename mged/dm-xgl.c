@@ -920,18 +920,18 @@ register struct solid *sp;
 				case RT_VLIST_POLY_MOVE:
 				case RT_VLIST_LINE_MOVE:
 					/* Move, not draw */
-					ptr->x = pt[0];
-					ptr->y = pt[1];
-					ptr->z = pt[2];
+					ptr->x = pt[0][0];
+					ptr->y = pt[0][1];
+					ptr->z = pt[0][2];
 					ptr->flag = 0x00;
 					continue;
 				case RT_VLIST_POLY_DRAW:
 				case RT_VLIST_POLY_END:
 				case RT_VLIST_LINE_DRAW:
 					/* draw */
-					ptr->x = pt[0];
-					ptr->y = pt[1];
-					ptr->z = pt[2];
+					ptr->x = pt[0][0];
+					ptr->y = pt[0][1];
+					ptr->z = pt[0][2];
 					ptr->flag = 0x01;
 					continue;
 				}
