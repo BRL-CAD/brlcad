@@ -504,6 +504,12 @@ TAGS)
 		( cd $dir && cake -k ${SILENT} ${TARGET} )
 	done;;
 
+etags)
+	/bin/rm -f etags;
+	for dir in ${BDIRS}; do
+		echo -------------------------------- ${dir};
+		etags -a -o etags ${dir}/*.c
+	done;;
 shell)
 	for dir in ${BDIRS}; do
 		( cd ${dir}; echo ${dir}; /bin/sh )
