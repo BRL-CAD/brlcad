@@ -16,6 +16,6 @@ VERSION=${ITCL_VERSION}
 RELPATH=..
 itcl_LIB_FILE=libitcl${ITCL_VERSION}.so
 pkgIndex.tcl: pkgIndex.tcl.in Makefile.am
-	sed -e "s/@VERSION/${ITCL_VERSION}/" -e 's/@RELPATH/../' -e "s/@itcl_LIB_FILE/libitcl${ITCL_VERSION}.so/" $< | sed 's/@//g' > $@
+	sed -e "s/@VERSION/${ITCL_VERSION}/" -e 's/@RELPATH/../' -e "s/@itcl_LIB_FILE/libitcl${ITCL_VERSION}.so/" ${top_srcdir}/libitcl/itcl/pkgIndex.tcl.in | sed 's/@//g' > $@
 
 EXTRA_DIST = pkgIndex.tcl.in
