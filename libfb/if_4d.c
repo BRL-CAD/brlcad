@@ -44,10 +44,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-#include <math.h>
 #include <gl.h>
 #include <get.h>
 #include <device.h>
+#include <psio.h>
 #include <sys/types.h>
 #include <sys/invent.h>
 #include <sys/ipc.h>
@@ -249,10 +249,6 @@ struct sgiinfo {
 #define MODE_9NORMAL	(0<<8)
 #define MODE_9SINGLEBUF	(1<<8)
 
-#define MODE_10MASK	(1<<9)
-#define MODE_10NORMAL	(0<<9)
-#define MODE_10WIDGET	(1<<9)
-
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
@@ -297,7 +293,6 @@ struct sgi_clip {
 	int	xscrpad;
 	int	yscrpad;
 };
-
 
 /************************************************************************/
 /************************************************************************/
@@ -541,11 +536,10 @@ int		npix;
 					SGI(ifp)->mi_xoff+xbase,
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+xbase+npix-1,
-					SGI(ifp)->mi_yoff+y,
-					(unsigned long *)&ifp->if_mem[
+					SGI(ifp)->mi_yoff+y, 
+					(unsigned long *) &ifp->if_mem[
 					    (y*SGI(ifp)->mi_memwidth+xbase)*
-					    sizeof(struct sgi_pixel)]
-				);
+					    sizeof(struct sgi_pixel)] );
 			else
 				fake_rectwrite(
 					xbase,
@@ -582,8 +576,9 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
 					SGI(ifp)->mi_yoff+y+nlines-1,
-					(unsigned long *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
-					    sizeof(struct sgi_pixel)] );
+					(unsigned long *) &ifp->if_mem[
+						(y*SGI(ifp)->mi_memwidth)*
+						sizeof(struct sgi_pixel)] );
 			else
 				fake_rectwrite(
 					0,
@@ -609,8 +604,9 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+xbase+npix-1,
 					SGI(ifp)->mi_yoff+y,
-					(unsigned long *)&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
-					    sizeof(struct sgi_pixel)] );
+					(unsigned long *) &ifp->if_mem[
+						(y*SGI(ifp)->mi_memwidth+xbase)*
+						sizeof(struct sgi_pixel)] );
 			else
 				fake_rectwrite(
 					xbase,
@@ -647,7 +643,7 @@ int		npix;
 					SGI(ifp)->mi_yoff+y,
 					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
 					SGI(ifp)->mi_yoff+y,
-					(unsigned long *)op );
+					(unsigned long *) op );
 			else
 				fake_rectwrite(
 					0,
@@ -742,8 +738,8 @@ int		npix;
 					lrectwrite(
 						xscrmin, yscr,
 						xscrmax, yscr,
-						(unsigned long *)
-						    SGI(ifp)->mi_scanline );
+						(unsigned long *) 
+							SGI(ifp)->mi_scanline );
 				else
 					fake_rectwrite(
 						xscrmin - SGI(ifp)->mi_xoff,
@@ -845,6 +841,38 @@ int	width, height;
 		}
 	}
 	ifp->if_mode = mode;
+
+#ifdef IF_4D_AUTO_POSTSCRIPT
+	/*
+	 *  Now that the mode has been determined,
+	 *  ensure that the graphics system is running.
+	 *  XXX Note that ps_open_PostScript is not in the
+	 *  XXX shared libgl, so this can't be done in an
+	 *  XXX SGI processor-independent way.  Sigh.
+	 */
+	if( !(g_status = ps_open_PostScript()) )  {
+		char * grcond = "/etc/gl/grcond";
+		char * newshome = "/usr/brlcad/etc";		/* XXX */
+
+		f = fork();
+		if( f < 0 )  {
+			perror("fork");
+			return(-1);		/* error */
+		}
+		if( f == 0 )  {
+			/* Child */
+			chdir( newshome );
+			execl( grcond, (char *) 0 );
+			perror( grcond );
+			_exit(1);
+			/* NOTREACHED */
+		}
+		/* Parent */
+		while( !(g_status = ps_open_PostScript()) )  {
+			sleep(1);
+		}
+	}
+#endif
 
 	/*
 	 *  Allocate extension memory section,
@@ -1153,12 +1181,6 @@ int	width, height;
 		gt_zbuf_to_screen( ifp, -1 );
 	}
 
-	qdevice(RIGHTMOUSE);
-	qdevice(LEFTMOUSE);
-	tie(LEFTMOUSE, MOUSEX, MOUSEY);
-	qdevice(MIDDLEMOUSE);
-	tie(MIDDLEMOUSE, MOUSEX, MOUSEY);
-
 	/* Make the file descriptor available for selecting on */
 	ifp->if_selfd = qgetfd();
 	if( ifp->if_selfd < 0 )
@@ -1212,7 +1234,6 @@ FBIO	*ifp;
 		setcursor( 0, 1, 0 );		/* system default cursor */
 		curson();
 	}
-
 
 	winclose( ifp->if_fd );		/* close window */
 
@@ -1283,12 +1304,6 @@ FBIO	*ifp;
 	short val;
 	int k;
 	FILE *fp = NULL;
-	static long	win_lx, win_ly;
-	static long	win_hx, win_hy;
-	static int 	mousex;
-	static int 	mousey;
-	static int	pending_middlemouse = 0;
-	static int	pending_leftmouse = 0;
 
 	winset(ifp->if_fd);
 
@@ -1333,67 +1348,21 @@ FBIO	*ifp;
 
 	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
 
-	menu = defpup("framebuffer %t|close|reset view");
+	menu = defpup("close");
+	qdevice(RIGHTMOUSE);
+	qdevice(REDRAW);
 	
 	while(1)  {
-
 		val = 0;
 		dev = qread( &val );
-
 		switch( dev )  {
 
 		case RIGHTMOUSE:
 			menuval = dopup( menu );
 			if (menuval == 1 )
 				goto out;
-			if (menuval == 2)
-				sgi_view(ifp, ifp->if_width/2,
-					ifp->if_height/2, 1, 1);
 			break;
-		case MIDDLEMOUSE:
-			/* will also get MOUSEX and MOUSEY so we remember
-			 * this event until MOUSEY
-			 */
-			if (val) {
-				pending_middlemouse = 1;
-				getorigin( &win_lx, &win_ly );
-				getsize( &win_hx, &win_hy );
-			}
-			break;
-		case LEFTMOUSE:
-			/* will also get MOUSEX and MOUSEY so we remember
-			 * this event until MOUSEY
-			 */
-			if (val == 1) {
-				pending_leftmouse = 1;
-				getorigin( &win_lx, &win_ly );
-				getsize( &win_hx, &win_hy );
-			}
-			break;
-		case MOUSEX:
-			mousex = val - win_lx;
-			break;
-		case MOUSEY:
-			mousey = val - win_ly;
-			if (pending_middlemouse) {
-				pending_middlemouse = !pending_middlemouse;
-				mousex = (mousex - ifp->if_width/2)
-						/ ifp->if_xzoom;
-				mousey = (mousey - ifp->if_height/2)
-						/ ifp->if_xzoom;
-				sgi_view(ifp,
-					ifp->if_xcenter + mousex,
-					ifp->if_ycenter + mousey,
-					ifp->if_xzoom, ifp->if_yzoom);
-			} else if (pending_leftmouse) {
-				pending_leftmouse = !pending_leftmouse;
-				mousex = (mousex * 32) / win_hx;
 
-				sgi_view(ifp,
-					ifp->if_xcenter, ifp->if_ycenter,
-					mousex, mousex);
-			}
-			break;
 		case REDRAW:
 			reshapeviewport();
 			sgi_xmit_scanlines(ifp, 0, ifp->if_height,
@@ -1518,8 +1487,7 @@ int	xzoom, yzoom;
 
 	if( ifp->if_xzoom > 1 || ifp->if_yzoom > 1 )
 		ifp->if_zoomflag = 1;
-	else	
-		ifp->if_zoomflag = 0;
+	else	ifp->if_zoomflag = 0;
 
 	if( SGI(ifp)->mi_is_gt )  {
 		/* Transmitting the Zbuffer is all that is needed */
@@ -1527,7 +1495,6 @@ int	xzoom, yzoom;
 	} else {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 	}
-
 	return(0);
 }
 
@@ -1998,17 +1965,6 @@ register FBIO *ifp;
 	short val;
 	int redraw = 0;
 	register int ev;
-	static long	win_lx, win_ly;
-	static long	win_hx, win_hy;
-	static int 	mousex;
-	static int 	mousey;
-	static int	pending_middlemouse = 0;
-	static int	pending_leftmouse = 0;
-	static int	menu = 0;
-	int menuval = 0;
-
-	if (!menu)
-		menu = defpup("framebuffer %t|<close>|reset view");
 
 	winset(ifp->if_fd);
 
@@ -2025,58 +1981,8 @@ register FBIO *ifp;
 			 * the color map? */
 			fb_log("sgi_inqueue:  modechange?\n");
 			break;
-		case RIGHTMOUSE:
-			menuval = dopup( menu );
-			if (menuval == 2)
-				sgi_view(ifp, ifp->if_width/2,
-					ifp->if_height/2, 1, 1);
-			break;
-		case MIDDLEMOUSE:
-			/* will also get MOUSEX and MOUSEY so we remember
-			 * this event until MOUSEY
-			 */
-			if (val) {
-				pending_middlemouse = 1;
-				getorigin( &win_lx, &win_ly );
-				getsize( &win_hx, &win_hy );
-			}
-			break;
-		case LEFTMOUSE:
-			/* will also get MOUSEX and MOUSEY so we remember
-			 * this event until MOUSEY
-			 */
-			if (val == 1) {
-				pending_leftmouse = 1;
-				getorigin( &win_lx, &win_ly );
-				getsize( &win_hx, &win_hy );
-			}
-			break;
-		case MOUSEX:
-			mousex = val - win_lx;
-			break;
-		case MOUSEY:
-			mousey = val - win_ly;
-			if (pending_middlemouse) {
-				pending_middlemouse = !pending_middlemouse;
-				mousex = (mousex - ifp->if_width/2)
-						/ ifp->if_xzoom;
-				mousey = (mousey - ifp->if_height/2)
-						/ ifp->if_xzoom;
-				sgi_view(ifp,
-					ifp->if_xcenter + mousex,
-					ifp->if_ycenter + mousey,
-					ifp->if_xzoom, ifp->if_yzoom);
-				redraw = 1;
-			} else if (pending_leftmouse) {
-				pending_leftmouse = !pending_leftmouse;
-				mousex = (mousex * 32) / win_hx;
-
-				sgi_view(ifp,
-					ifp->if_xcenter, ifp->if_ycenter,
-					mousex, mousex);
-				redraw = 1;
-			}
-			break;
+		case MOUSEX :
+		case MOUSEY :
 		case KEYBD :
 			break;
 		default:
