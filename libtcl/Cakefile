@@ -18,13 +18,13 @@
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	[[echo libtcl''TCLTK_VERS.a]]
-#define	AFTER_MAKE	/**/
+#define	AFTER_MAKE	ln -s PRODUCTS libtcl.a
 #else
 #define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --quiet --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR
 #define PRODUCTS	[[ echo libtcl''TCLTK_VERS.so]]
 #define SHARED_PRODUCT	libtcl''TCLTK_VERS.so''[[LIBVERS]]
-#define	AFTER_MAKE	mv -f libtcl''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
+#define	AFTER_MAKE	mv -f libtcl''TCLTK_VERS.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT ; ln -s SHARED_PRODUCT libtcl.so
 #endif
 #define EXTRA_PRODUCTS	tclsh
 
