@@ -69,11 +69,10 @@ main (argc,argv)
 int argc;
 char **argv;
 {
-	int i, val;
+	int val;
 	fastf_t time, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
 	vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated;
 	mat_t m_rot1, m_rot2, m_ans;
-	FILE	*fp;
 	int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
 
 	read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;

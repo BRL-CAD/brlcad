@@ -62,7 +62,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	int count, endcount, status, num_read, enn, i, pp;
+	int count, status, num_read, enn, i, pp;
 	fastf_t *points, *cur;
 	fastf_t yaw, pch, rll, stepsize, first[4], second[4];
 	fastf_t f_prm_0(), f_prm_1(), f_prm_2();
@@ -178,7 +178,7 @@ fastf_t (*function)();
 	fastf_t step,vel[3],accel[3];
 	fastf_t f_double_prm(),xyz2yaw(),xyz2pch(),bank();
 
-	static fastf_t last_yaw, last_pch, last_rll;
+	static fastf_t last_yaw;
 	static int not_first_time, upside_down;
 
 	step = p2[0] - p1[0];
@@ -202,8 +202,6 @@ fastf_t (*function)();
 	}
 	
 	last_yaw = *p_yaw;
-	last_pch = *p_pch;
-	last_rll = *p_rll;
 	not_first_time = 1;
 }
 

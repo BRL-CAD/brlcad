@@ -75,12 +75,6 @@ struct local_part
 	struct end_pt *in, *out;
 };
 
-static struct cube_str
-{
-	point_t start_pt;
-	struct end_pt *corner[8];
-} cube;
-
 static struct bu_ptbl verts;
 static struct xray *xy_rays;
 static struct xray *xz_rays;
@@ -89,8 +83,6 @@ static struct rt_i *rtip;
 static struct bn_tol tol;
 static char *usage="Usage:\n\
 	%s [-d debug_level] [-n] [-v] [-i initial_ray_dir] [-g cell_size] [-d debug_level] -o brlcad_output_file database.g object1 object2...\n";
-static char *_inside="inside";
-static char *_outside="outside";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
 
 static struct local_part *xy_parts=(struct local_part *)NULL;
@@ -103,13 +95,10 @@ static long	face_count=0;
 static fastf_t	cell_size=50.0;
 static fastf_t	cell_size_sq=2500.0;
 static fastf_t	edge_tol=0.0;
-static FILE	*fd_sgp=NULL, *fd_out=NULL, *fd_plot=NULL;
+static FILE	*fd_out=NULL, *fd_plot=NULL;
 static char	*output_file=(char *)NULL;
 static char	*plotfile;
-static long	rpp_count=0;
 static short	vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
-static int	x_del[4]={0, 1, 1, 0};
-static int	z_del[4]={0, 0, 1, 1};
 static int	debug=0;
 static char	*token_seps=" \t,;\n";
 static int	cur_dir=0;
@@ -497,7 +486,6 @@ struct seg *segs;
 	struct model *m;
 	struct nmg_shot_data *sd;
 	int i;
-	int extremes;
 
 	sd = (struct nmg_shot_data *)ap->a_uptr;
 	s = sd->s;
@@ -557,7 +545,7 @@ struct seg *segs;
 		vect_t diff1, diff2;
 		fastf_t len1_sq, len2_sq;
 
-		extremes=Get_extremes( s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2 );
+		(void)Get_extremes( s, &ap2, sd->hitmiss, sd->manifolds, hit1, hit2 );
 
 		if( debug )
 		{
@@ -790,15 +778,11 @@ struct bu_ptbl *tab;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct bu_ptbl faces;
-	vect_t ray_dir;
 	int face_no;
 
 	NMG_CK_SHELL( s );
 
 	bu_ptbl_init( &faces, 128, "faces" );
-
-	VSETALL( ray_dir, 0.0 );
-	ray_dir[cur_dir] = 1.0;
 
 	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
@@ -839,7 +823,6 @@ struct bu_ptbl *tab;
 		{
 			vect_t edge_dir;
 			struct vertex_g *vga, *vgb;
-			fastf_t dot;
 
 			vga = eu->vu_p->v_p->vg_p;
 			vgb = eu->eumate_p->vu_p->v_p->vg_p;
@@ -949,7 +932,6 @@ struct bu_ptbl *tab;
 
 			if( IN_SEG( cut_value, vg1a->coord[cur_dir], vg1b->coord[cur_dir] ) )
 			{
-				struct edgeuse *new_eu;
 				point_t cut_pt;
 
 				/* split eu1 at cut_value */
@@ -968,7 +950,6 @@ struct bu_ptbl *tab;
 
 			if( IN_SEG( cut_value, vg2a->coord[cur_dir], vg2b->coord[cur_dir] ) )
 			{
-				struct edgeuse *new_eu;
 				point_t cut_pt;
 
 				/* split eu2 at cut_value */
@@ -1125,10 +1106,8 @@ struct shell *s;
 		struct vertex *v;
 		struct faceuse *fu;
 		struct vertexuse *vu;
-		fastf_t count=0;
 		vect_t dir;
 		vect_t abs_dir;
-		vect_t min_dist, max_dist, mins;
 		int dir_index;
 
 		v = (struct vertex *)BU_PTBL_GET( &extra_verts, vert_no );
@@ -1527,7 +1506,7 @@ struct shell *s;
 static void
 Make_shell()
 {
-	int i,j;
+	int i;
 	int x_index, y_index, z_index;
 	int cell_no[4];
 	int status;
