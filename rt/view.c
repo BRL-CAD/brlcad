@@ -112,6 +112,7 @@ static int	buf_mode=0;
 #define BUFMODE_DYNAMIC	2		/* Dynamic output buffering */
 #define BUFMODE_INCR	3		/* incr_mode set, dynamic buffering */
 #define BUFMODE_RTSRV	4		/* output buffering into scanbuf */
+#define BUFMODE_FULLFLOAT 5		/* buffer entire frame as floats */
 
 static struct scanline {
 	int	sl_left;		/* # pixels left on this scanline */
@@ -119,6 +120,15 @@ static struct scanline {
 } *scanline;
 
 static int	pwidth;			/* Width of each pixel (in bytes) */
+
+int	fullfloat_mode = 0;
+struct floatpixel {
+	double	ff_dist;		/* range to ff_hitpt[], <-INFINITY for miss */
+	float	ff_hitpt[3];
+	char	ff_color[3];
+};
+struct floatpixel	*curr_float_frame;	/* buffer of full frame */
+struct floatpixel	*prev_float_frame;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
@@ -181,9 +191,28 @@ register struct application *ap;
 
 	if(rdebug&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
 		r,g,b, ap->a_x, ap->a_y,
-		ap->a_color[0], ap->a_color[1], ap->a_color[2] );
+		V3ARGS(ap->a_color) );
 
 	switch( buf_mode )  {
+
+	case BUFMODE_FULLFLOAT:
+		{
+			/* No output semaphores required for word-width memory writes */
+			register struct floatpixel	*fp;
+			fp = &curr_float_frame[ap->a_y*width + ap->a_x];
+			fp->ff_color[0] = r;
+			fp->ff_color[1] = g;
+			fp->ff_color[2] = b;
+			if( ap->a_user == 0 )  {
+				fp->ff_dist = -INFINITY;	/* shot missed model */
+				return;
+			}
+			/* XXX a_dist is negative and misleading when eye is in air */
+			fp->ff_dist = (float)ap->a_dist;
+			VJOIN1( fp->ff_hitpt, ap->a_ray.r_pt,
+				ap->a_dist, ap->a_ray.r_dir );
+			return;
+		}
 
 	case BUFMODE_UNBUF:
 		{
@@ -383,7 +412,11 @@ register struct application *ap;
 view_end(ap)
 struct application *ap;
 {
-	free_scanlines();
+	if( buf_mode == BUFMODE_FULLFLOAT )  {
+		/* For now, disposal of the frame is handled elsewhere */
+	}
+
+	if( scanline )  free_scanlines();
 	return(0);		/* OK */
 }
 
@@ -682,6 +715,7 @@ struct seg *finished_segs;
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+	/* XXX This is always negative when eye is inside air solid */
 	ap->a_dist = hitp->hit_dist;
 out:
 	if(rdebug&RDEBUG_HITS)  {
@@ -909,7 +943,7 @@ char	*framename;
 	/* Always allocate the scanline[] array
 	 * (unless we already have one in incremental mode)
 	 */
-	if( !incr_mode || !scanline )
+	if( (!incr_mode || !scanline) && !fullfloat_mode )
 	{
 		if( scanline )  free_scanlines();
 		scanline = (struct scanline *)bu_calloc(
@@ -920,7 +954,9 @@ char	*framename;
 #ifdef RTSRV
 	buf_mode = BUFMODE_RTSRV;		/* multi-pixel buffering */
 #else
-	if( incr_mode )  {
+	if( fullfloat_mode )  {
+		buf_mode = BUFMODE_FULLFLOAT;
+	} else if( incr_mode )  {
 		buf_mode = BUFMODE_INCR;
 	} else if( rt_g.rtg_parallel )  {
 		buf_mode = BUFMODE_DYNAMIC;
@@ -935,6 +971,15 @@ char	*framename;
 	case BUFMODE_UNBUF:
 		bu_log("Single pixel I/O, unbuffered\n");
 		break;	
+	case BUFMODE_FULLFLOAT:
+		if( prev_float_frame )  {
+			bu_free( (genptr_t)prev_float_frame, "floatpixel frame");
+			prev_float_frame = curr_float_frame;
+		}
+		curr_float_frame = (struct floatpixel *)bu_malloc(
+			width * height * sizeof(struct floatpixel),
+			"floatpixel frame");
+		break;
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
 		scanbuf = bu_malloc( srv_scanlen*pwidth + sizeof(long),
