@@ -24,12 +24,12 @@
 # menubutton contains some canned color entries as well as an
 # entry that invokes a user specified command for setting the color.
 #
-proc color_entry_build { top key var_name user_color_cmd width icolor } {
+proc color_entry_build { top key vn user_color_cmd width icolor } {
     frame $top.$key\F -relief sunken -bd 2
-    entry $top.$key\E -relief flat -width $width -textvar $var_name
+    entry $top.$key\E -relief flat -width $width -textvar $vn
     hoc_register_data $top.$key\E "Color"\
 	    { { summary "Enter a color specification. The color
-is specified using three integers (i.e. r g b)
+can be specified using three integers (i.e. r g b)
 in the range 0 to 255. For example:
 
 \tblack\t\t0 0 0
@@ -40,6 +40,12 @@ in the range 0 to 255. For example:
 \tyellow\t\t255 255 0
 \tcyan\t\t0 255 255
 \tmagenta\t\t255 0 255
+
+The color can also be specified using a six character
+hexadecimal number (i.e. #ff0000 specifies red). And
+of course the color can be specified by name. For
+example, the name \"blue\" specifies a color with
+an rgb value of 0 0 255.
 
 Note - when entering colors directly,
 pressing \"Enter\" will update the color
@@ -52,35 +58,43 @@ of the menubutton." } }
 in the menu is an entry for a color tool." } }
     menu $top.$key\MB.m -title "Color" -tearoff 0
     $top.$key\MB.m add command -label black\
-	    -command "set $var_name \"0 0 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"0 0 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" black "Color - Black"\
 	    { { summary "Black is specified by \"0 0 0\"." } }
     $top.$key\MB.m add command -label white\
-	    -command "set $var_name \"255 255 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"255 255 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" white "Color - White"\
 	    { { summary "White is specified by \"255 255 255\"." } }
     $top.$key\MB.m add command -label red\
-	    -command "set $var_name \"255 0 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"255 0 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" red "Color - Red"\
 	    { { summary "Red is specified by \"255 0 0\"." } }
     $top.$key\MB.m add command -label green\
-	    -command "set $var_name \"0 255 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"0 255 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" green "Color - Green"\
 	    { { summary "Green is specified by \"0 255 0\"." } }
     $top.$key\MB.m add command -label blue\
-	    -command "set $var_name \"0 0 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"0 0 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" blue "Color - Blue"\
 	    { { summary "Blue is specified by \"0 0 255\"." } }
     $top.$key\MB.m add command -label yellow\
-	    -command "set $var_name \"255 255 0\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"255 255 0\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" yellow "Color - Yellow"\
 	    { { summary "Yellow is specified by \"255 255 0\"." } }
     $top.$key\MB.m add command -label cyan\
-	    -command "set $var_name \"0 255 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"0 255 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" cyan "Color - Cyan"\
 	    { { summary "Cyan is specified by \"0 255 255\"." } }
     $top.$key\MB.m add command -label magenta\
-	    -command "set $var_name \"255 0 255\"; set_WidgetRGBColor $top.$key\MB \$$var_name"
+	    -command "set $vn \"255 0 255\"; \
+	              setWidgetRGBColor $top.$key\MB $vn \$$vn"
     hoc_register_menu_data "Color" magenta "Color - Magenta"\
 	    { { summary "Magenta is specified by \"255 0 255\"." } }
     $top.$key\MB.m add separator
@@ -91,14 +105,14 @@ a color using either RGB or HSV. The resulting
 color is RGB." } }
 
     # initialize color
-    catch [list uplevel #0 [list set $var_name $icolor]]
-    set_WidgetRGBColor $top.$key\MB $icolor
+    catch [list uplevel #0 [list set $vn $icolor]]
+    setWidgetRGBColor $top.$key\MB $vn $icolor
 
     grid $top.$key\E $top.$key\MB -sticky "nsew" -in $top.$key\F
     grid columnconfigure $top.$key\F 0 -weight 1
     grid rowconfigure $top.$key\F 0 -weight 1
 
-    bind $top.$key\E <Return> "set_WidgetRGBColor $top.$key\MB \$$var_name"
+    bind $top.$key\E <Return> "setWidgetColor $top.$key\MB $vn \$$vn"
 
     return $top.$key\F
 }
@@ -108,8 +122,8 @@ proc color_entry_destroy { top key } {
     destroy $top.$key\F $top.$key\E $top.$key\MB
 }
 
-proc color_entry_update { top key icolor } {
-    set_WidgetRGBColor $top.$key\MB $icolor
+proc color_entry_update { top key vn icolor } {
+    setWidgetRGBColor $top.$key\MB $vn $icolor
 }
 
 proc color_entry_chooser { id top key title vn vin } {
@@ -137,22 +151,26 @@ proc color_entry_ok { id top w key vn vin } {
     unset data
 }
 
-# set_WidgetRGBColor --
+# setWidgetRGBColor --
 #
 # Set the widget color given an rgb string.
 #
-proc set_WidgetRGBColor { w rgb_str } {
+proc setWidgetRGBColor { w vn rgb } {
+    upvar #0 $vn varname
+
     if ![winfo exists $w] {
-	return "set_WidgetRGBColor: bad Tk window name --> $w"
+	return "setWidgetRGBColor: bad Tk window name --> $w"
     }
 
-    if {$rgb_str != ""} {
+    if {$rgb != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
-		$rgb_str cmatch red green blue]
+		$rgb cmatch red green blue]
 	if {!$result} {
+	    # reset varname to properly reflect the current color of the widget
+	    set varname [lindex [$w configure -bg] 4]
 	    cad_dialog $w.colorDialog [winfo screen $w]\
 		    "Improper color specification!"\
-		    "Improper color specification: $rgb_str"\
+		    "Improper color specification: $rgb"\
 		    "" 0 OK
 	    return
 	}
@@ -161,4 +179,21 @@ proc set_WidgetRGBColor { w rgb_str } {
     }
 
     $w configure -bg [format "#%02x%02x%02x" $red $green $blue]
+}
+
+proc setWidgetColor { w vn color } {
+    if ![winfo exists $w] {
+	return "setWidgetColor: bad Tk window name --> $w"
+    }
+
+    # convert to RGB
+    set rgb [cadColorWidget_getRGB $w $color]
+
+    # Check to make sure the color is valid
+    if {[llength $rgb] == 3} {
+	setWidgetRGBColor $w $vn $rgb
+    } else {
+	# assume already RGB, if not setWidgetRGBColor will catch it 
+	setWidgetRGBColor $w $vn $color
+    }
 }
