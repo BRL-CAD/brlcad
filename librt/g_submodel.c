@@ -208,14 +208,7 @@ bu_log("submodel(%s) finished rt_gettrees\n", stp->st_name);
 		BU_PTBL_LEN(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
 	}
 
-	bu_log("%s: %s= %d nu, %d cut, %d box (%d empty)\n",
-		stp->st_name,
-		sub_rtip->rti_space_partition == RT_PART_NUGRID ?
-			"NUGrid" : "NUBSP",
-		sub_rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
-		sub_rtip->rti_ncut_by_type[CUT_CUTNODE],
-		sub_rtip->rti_ncut_by_type[CUT_BOXNODE],
-		sub_rtip->nempty_cells );
+rt_pr_cut_info( sub_rtip, stp->st_name );
 
 done:	
 	BU_GETSTRUCT( submodel, submodel_specific );
