@@ -334,6 +334,7 @@ static Pr_brush sun_whitebrush = { 4 };
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
+#define	MAXVEC	2048
 /* ARGSUSED */
 int
 SunPw_object(sp, mat, ratio, white)
@@ -344,8 +345,8 @@ double	ratio;
 	register struct vlist	*vp;
 	register struct pr_pos	*ptP;		/* Sun point list */
 	register u_char		*mvP;		/* Sun move/draw list */
-	struct pr_pos   ptlist[1024+1];		/* Sun point buffer */
-	u_char          mvlist[1024+1];		/* Sun move/draw buffer */
+	struct pr_pos   ptlist[MAXVEC];		/* Sun point buffer */
+	u_char          mvlist[MAXVEC];		/* Sun move/draw buffer */
 	int             numvec;			/* number of points */
 	static vect_t   pt;			/* working point */
 	struct mater	*mp;
@@ -374,10 +375,10 @@ double	ratio;
 		else
 			*mvP++ = 1;
 
-		if( numvec++ > 1024 ) {
+		if( ++numvec >= MAXVEC ) {
 			(void)fprintf( stderr,
-				"SunPw_object: nvec %d clipped to 1024\n",
-				sp->s_vlen );
+				"SunPw_object: nvec %d clipped to %d\n",
+				sp->s_vlen, numvec );
 			break;
 		}
 	}
