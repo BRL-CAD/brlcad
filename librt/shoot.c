@@ -780,7 +780,8 @@ register struct application *ap;
 		rt_init_resource( resp, resp->re_cpu, rtip );
 	}
 	/* Ensure that this CPU's resource structure is registered */
-	BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
+	if( resp != &rt_uniresource )
+		BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 
 	if( BU_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
 		solidbits = bu_bitv_new( rtip->nsolids );
