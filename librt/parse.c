@@ -269,23 +269,26 @@ CONST char				*value;	/* string containing value */
  *	 0	OK
  */
 int
-rt_structparse( vls, desc, base )
-struct rt_vls			*vls;		/* string to parse through */
+rt_structparse( in_vls, desc, base )
+CONST struct rt_vls		*in_vls;	/* string to parse through */
 CONST struct structparse	*desc;		/* structure description */
 char				*base;		/* base addr of users struct */
 {
+	struct rt_vls	vls;
 	register char *cp;
 	char	*name;
 	char	*value;
 
-	RT_VLS_CHECK(vls);
+	RT_VLS_CHECK(in_vls);
 	if (desc == (struct structparse *)NULL) {
 		rt_log( "Null \"struct structparse\" pointer\n");
 		return(-1);
 	}
 
-
-	cp = RT_VLS_ADDR(vls);
+	/* Duplicate the input string.  This algorithm is destructive. */
+	RT_VLS_INIT( &vls );
+	rt_vls_vlscat( &vls, in_vls );
+	cp = RT_VLS_ADDR( &vls );
 
 	while( *cp )  {
 		/* NAME = VALUE white-space-separator */
@@ -305,6 +308,7 @@ char				*base;		/* base addr of users struct */
 			/* end of string in middle of arg */
 			rt_log("rt_structparse: name '%s' without '='\n",
 				name );
+			rt_vls_free( &vls );
 			return(-2);
 		}
 
@@ -324,6 +328,7 @@ char				*base;		/* base addr of users struct */
 			if (*cp != '"') {
 				rt_log("rt_structparse: name '%s'=\" without closing \"\n",
 					name);
+				rt_vls_free( &vls );
 				return(-3);
 			}
 		} else {
@@ -343,6 +348,7 @@ char				*base;		/* base addr of users struct */
 			rt_structprint( "troublesome one", desc, base );
 		}
 	}
+	rt_vls_free( &vls );
 	return(0);
 }
 
