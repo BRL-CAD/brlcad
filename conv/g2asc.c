@@ -254,7 +254,7 @@ nmg_dump()
 		for( k=0 ; k<sizeof( union record)/32 ; k++ )
 		{
 			for( j=0 ; j<32 ; j++ )
-				fprintf(ofp,  "%02x" , *cp++ );	 /* two hex digits per byte */
+				fprintf(ofp,  "%02x" , (0xff & (*cp++)) );	 /* two hex digits per byte */
 			putchar( '\n' );
 		}
 	}
