@@ -719,10 +719,10 @@ choose:
  *  The caller must free whatever is in both partition chains.
  *
  *
- *  --- NOTES for improvements that haven't been implemented yet ---
+ *  NOTES for code improvements -
  *
- *  With a_onehit != 0, it is difficult to honor the 'enddist' value
- *  (and the a_ray_length value), and still get correct results.
+ *  With a_onehit != 0, it is difficult to stop at the 'enddist' value
+ *  (or the a_ray_length value), and always get correct results.
  *  Need to take into account some additional factors:
  *
  *  1)  A region shouldn't be evaluated until all it's solids have been
@@ -739,12 +739,13 @@ choose:
  *	are ready to be evaluated.
  */
 int
-rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regiontable, ap )
+rt_boolfinal( InputHdp, FinalHdp, startdist, enddist, regiontable, ap, solidbits )
 struct partition *InputHdp;
 struct partition *FinalHdp;
 fastf_t startdist, enddist;
 struct bu_ptbl	*regiontable;
 struct application *ap;
+CONST struct bu_bitv	*solidbits;
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
 	LOCAL struct region *TrueRg[2];
@@ -753,6 +754,7 @@ struct application *ap;
 	int		hits_avail = 0;
 	int		hits_needed;
 	int		ret = 0;
+	int		indefinite_outpt = 0;
 	char		*reason = (char *)NULL;
 	fastf_t		diff;
 
@@ -762,6 +764,7 @@ struct application *ap;
 	RT_CK_PT_HD(FinalHdp);
 	BU_CK_PTBL(regiontable);
 	RT_CHECK_RTI(ap->a_rt_i);
+	BU_CK_BITV(solidbits);
 
 	if( enddist <= 0 )  {
 		reason = "not done, behind start point";
@@ -846,21 +849,15 @@ struct application *ap;
 		}
 
 		/*
-		 *  If partition ends before current box starts,
-		 *  discard it immediately.
-		 *  If all the solids are properly located in the space
-		 *  partitioning tree's cells, no intersection calculations
-		 *  further forward on the ray should ever produce valid
-		 *  segments or partitions earlier in the ray.
+		 *  If partition is behind ray start point, discard it.
 		 *
-		 *  If partition is behind ray start point, also
-		 *  discard it.
+		 *  Partition may start before current box starts, because
+		 *  it's still waiting for all it's solids to be shot.
 		 */
-		if( pp->pt_outhit->hit_dist < startdist ||
-		    pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
+		if( pp->pt_outhit->hit_dist <= 0.001 /* milimeters */ )  {
 			register struct partition *zap_pp;
 			if(rt_g.debug&DEBUG_PARTITION)bu_log(
-				"discarding early partition x%x, out dist=%g\n",
+				"discarding partition x%x behind ray start, out dist=%g\n",
 				pp, pp->pt_outhit->hit_dist);
 			zap_pp = pp;
 			pp = pp->pt_forw;
@@ -872,6 +869,7 @@ struct application *ap;
 		/*
 		 *  If partition begins beyond current box end,
 		 *  the state of the partition is not fully known yet,
+		 *  and new partitions might be added in front of this one,
 		 *  so stop now.
 		 */
 		diff = pp->pt_inhit->hit_dist - enddist;
@@ -887,6 +885,8 @@ struct application *ap;
 		 *  If partition ends somewhere beyond the end of the current
 		 *  box, the condition of the outhit information is not fully
 		 *  known yet.
+		 *  The partition might be broken or shortened by subsequent
+		 *  segments, not discovered until entering future boxes.
 		 */
 		diff = pp->pt_outhit->hit_dist - enddist;
 		if( diff > ap->a_rt_i->rti_tol.dist )  {
@@ -894,22 +894,16 @@ struct application *ap;
 				"partition ends beyond current box end\n");
 			if( ap->a_onehit == 0 )  {
 				ret = 0;
-				reason = "a_onehit=0, more partitions to go";
+				reason = "a_onehit=0, trace remaining boxes";
 				goto out;
 			}
-			if( HITS_TODO > 0 )  {
-				ret = 0;
-				reason = "a_onehit not satisfied yet";
-				goto out;
-			}
-			/*  In this case, proceed as if pt_outhit was correct,
-			 *  even though it probably is not.
-			 *  Application asked for this behavior, and it
-			 *  saves having to do more ray-tracing.
-			 * XXX Note that this moves partitions onto final list
-			 * XXX if they evaluate to TRUE!
-			 */
+			/* pt_outhit may not be correct */
+			indefinite_outpt = 1;
+		} else {
+			indefinite_outpt = 0;
 		}
+
+		/* XXX a_ray_length checking should be done here, not in rt_shootray() */
 
 		/* Start with a clean slate when evaluating this partition */
 		bu_ptbl_reset(regiontable);
@@ -928,8 +922,35 @@ struct application *ap;
 			}
 		}
 
-		if(rt_g.debug&DEBUG_PARTITION)
-			bu_pr_ptbl( "regiontable", regiontable, 1 );
+		if(rt_g.debug&DEBUG_PARTITION)  {
+			struct region **regpp;
+			bu_log("Region table for this partition:\n");
+			for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
+				register struct region *regp;
+
+				regp = *regpp;
+				RT_CK_REGION(regp);
+				bu_log("%9lx %s\n", (long)regp, regp->reg_name);
+			}
+		}
+
+		if( indefinite_outpt )  {
+			if(rt_g.debug&DEBUG_PARTITION)bu_log(
+				"indefinite out point, checking partition eligibility for early evaluation.\n");
+			/*
+			 *  More hits still needed.  HITS_TODO > 0.
+			 *  If every solid in every region participating
+			 *  in this partition has been intersected,
+			 *  then it is OK to evaluate it now.
+			 */
+			if( !rt_bool_partition_eligible(regiontable, solidbits, pp) )  {
+				ret = 0;
+				reason = "Partition not yet eligible for evaluation";
+				goto out;
+			}
+			if(rt_g.debug&DEBUG_PARTITION)bu_log(
+				"Partition is eligibile for evaluation.\n");
+		}
 
 		/* Evaluate the boolean trees of any regions involved */
 		{
@@ -1085,13 +1106,17 @@ struct application *ap;
 		}
 
 		/* See if it's worthwhile breaking out of partition loop early */
+		pp = pp->pt_forw;
 		if( ap->a_onehit != 0 && HITS_TODO <= 0 )  {
 			ret = 1;
-			reason = "a_onehit satisfied early";
+			if( pp == InputHdp )
+				reason = "a_onehit satisfied at bottom";
+			else
+				reason = "a_onehit satisfied early";
 			goto out;
 		}
 	}
-	if( ap->a_onehit > 0 && HITS_TODO <= 0 )  {
+	if( ap->a_onehit != 0 && HITS_TODO <= 0 )  {
 		ret = 1;
 		reason = "a_onehit satisfied at end";
 	} else {
@@ -1414,4 +1439,93 @@ register struct partition	*partheadp;
 		if( ++count > 1000000 )  rt_bomb("partition length > 10000000 elements\n");
 	}
 	return( (int)count );
+}
+
+
+/*
+ *			R T _ T R E E _ T E S T _ R E A D Y
+ *
+ *  Test to see if a region is ready to be evaluated over a given
+ *  partition, i.e. if all the prerequisites have been satisfied.
+ *
+ *  Returns -
+ *	!0	Region is ready for (correct) evaluation.
+ *	0	Region is not ready
+ */
+int
+rt_tree_test_ready( tp, solidbits, regionp, pp )
+register CONST union tree	*tp;
+register CONST struct bu_bitv	*solidbits;
+register CONST struct region	*regionp;
+register CONST struct partition	*pp;
+{
+	RT_CK_TREE(tp);
+	BU_CK_BITV(solidbits);
+	RT_CK_REGION(regionp);
+	RT_CHECK_PT(pp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return 1;
+
+	case OP_SOLID:
+		if( BU_BITTEST( solidbits, tp->tr_a.tu_stp->st_bit ) )
+			return 1;	/* This solid's been shot, segs are valid. */
+		/*
+		 *  This solid has not been shot yet.
+		 */
+		return 0;
+
+	case OP_NOT:
+		return !rt_tree_test_ready( tp->tr_b.tb_left, solidbits, regionp, pp );
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		if( !rt_tree_test_ready( tp->tr_b.tb_left, solidbits, regionp, pp ) )
+			return 0;
+		return rt_tree_test_ready( tp->tr_b.tb_right, solidbits, regionp, pp );
+
+	default:
+		rt_bomb("rt_tree_test_ready: bad op\n");
+	}
+	return 0;
+}
+
+/*
+ *			R T _ B O O L _ P A R T I T I O N _ E L I G I B L E
+ *
+ *  If every solid in every region participating in this
+ *  ray-partition has already been intersected with the ray,
+ *  then this partition can be safely evaluated.
+ *
+ *  Returns -
+ *	!0	Partition is ready for (correct) evaluation.
+ *	0	Partition is not ready
+ */
+int
+rt_bool_partition_eligible(regiontable, solidbits, pp)
+register CONST struct bu_ptbl	*regiontable;
+register CONST struct bu_bitv	*solidbits;
+register CONST struct partition	*pp;
+{
+	struct region **regpp;
+
+	BU_CK_PTBL(regiontable);
+	BU_CK_BITV(solidbits);
+	RT_CHECK_PT(pp);
+
+	for( BU_PTBL_FOR( regpp, (struct region **), regiontable ) )  {
+		register struct region *regp;
+
+		regp = *regpp;
+		RT_CK_REGION(regp);
+
+		/* Check region prerequisites */
+		if( !rt_tree_test_ready( regp->reg_treetop, solidbits, regp, pp) )  {
+			return 0;
+		}
+	}
+	return 1;
 }
