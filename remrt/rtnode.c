@@ -52,6 +52,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 # include <sys/socket.h>
 #endif
 
+#include <signal.h>
+
 #undef	VMIN
 #include "machine.h"
 #include "vmath.h"
@@ -419,6 +421,12 @@ char *buf;
 
 /* -------------------- */
 
+void
+rtsync_timeout()
+{
+	bu_bomb("rtnode: unable to open remote framebuffer.  Ensure BRL-CAD Release 5.0 fbserv is running. Aborting.\n");
+}
+
 /*
  *			R T S Y N C _ P H _ O P E N F B
  *
@@ -445,10 +453,13 @@ char			*buf;
 	if( debug )  fprintf(stderr, "rtsync_ph_openfb: %d %d %s\n",
 		w, h, fb );
 
+	(void)signal( SIGALRM, rtsync_timeout );
+	alarm(7);
 	if( (fbp = fb_open( fb, w, h ) ) == 0 )  {
 		bu_log("rtnode: fb_open(%s, %d, %d) failed\n", fb, w, h );
 		exit(1);
 	}
+	alarm(0);
 
 	if( w <= 0 || fb_getwidth(fbp) < w )
 		width = fb_getwidth(fbp);
