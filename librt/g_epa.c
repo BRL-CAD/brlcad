@@ -1161,8 +1161,11 @@ const struct bn_tol	*tol;
 		/* free mem for old approximation of parabola */
 		pos_b = pts_b;
 		while ( pos_b ) {
+			struct rt_pt_node *tmp;
+
+			tmp = pos_b->next;
 			bu_free( (char *)pos_b, "rt_pt_node" );
-			pos_b = pos_b->next;
+			pos_b = tmp;
 		}
 		/* construct parabola along semi-major axis of epa
 		 * using same z coords as parab along semi-minor axis
@@ -1224,10 +1227,8 @@ const struct bn_tol	*tol;
 		} else if (theta_new < theta_prev) {
 			nseg *= 2;
 			pts_dbl[i] = 1;
-			outfaceuses = NULL;
 		} else {
 			pts_dbl[i] = 0;
-			outfaceuses = NULL;
 		}
 		theta_prev = theta_new;
 
