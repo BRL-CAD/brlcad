@@ -803,6 +803,7 @@ CONST char	*filename;
 }
 
 /*
+ *			R T _ P R _ T A B L E
  */
 void
 rt_pr_table( title, tabp )
@@ -817,6 +818,25 @@ CONST struct rt_table	*tabp;
 	for( j=0; j <= tabp->nx; j++ )  {
 		bu_log("%3d: %g\n", j, tabp->x[j] );
 	}
+}
+
+/*
+ *			R T _ P R _ T A B D A T A
+ */
+void
+rt_pr_tabdata( title, data )
+CONST char		*title;
+CONST struct rt_tabdata	*data;
+{
+	int	j;
+
+	bu_log("rt_pr_tabdata(%s): ", title);
+	RT_CK_TABDATA(data);
+
+	for( j=0; j < data->ny; j++ )  {
+		bu_log("%g, ", data->y[j] );
+	}
+	bu_log("\n");
 }
 
 /*
@@ -1049,7 +1069,7 @@ CONST struct rt_tabdata	*in;
 	if( in->ny != out->ny )
 		rt_bomb("rt_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (char *)in->y, (char *)out->y, in->ny * sizeof(fastf_t) );
+	bcopy( (char *)in->y, (char *)out->y, RT_SIZEOF_TABDATA(in) );
 }
 
 /*
@@ -1064,7 +1084,7 @@ CONST struct rt_tabdata	*in;
 	RT_CK_TABDATA( in );
 	RT_GET_TABDATA( data, in->table );
 
-	bcopy( (char *)in->y, (char *)data->y, in->ny * sizeof(fastf_t) );
+	bcopy( (char *)in->y, (char *)data->y, RT_SIZEOF_TABDATA(in) );
 	return data;
 }
 
