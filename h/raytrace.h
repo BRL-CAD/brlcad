@@ -471,6 +471,7 @@ struct rt_i {
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
 	struct directory *rti_DirHead;	/* directory for this DB */
+	union record	*rti_db;	/* in-core database, when needed */
 };
 #define RTI_NULL	((struct rt_i *)0)
 
