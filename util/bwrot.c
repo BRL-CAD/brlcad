@@ -36,7 +36,7 @@ extern char	*optarg;
 extern int	optind;
 extern unsigned char *malloc();
 
-#define	MAXBUFBYTES	(1024*1024)
+#define	MAXBUFBYTES	(1280*1024)
 
 int	buflines, scanbytes;
 int	firsty = -1;	/* first "y" scanline in buffer */
@@ -132,7 +132,7 @@ main( argc, argv )
 int argc; char **argv;
 {
 	int	x, y;
-	int	outbyte, outplace;
+	long	outbyte, outplace;
 
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);
@@ -149,7 +149,11 @@ int argc; char **argv;
 	}
 	if( buflines > nyin ) buflines = nyin;
 	buffer = malloc( buflines * scanbytes );
-	obuf = malloc( nyin );
+	obuf = (nyin > nxin) ? malloc( nyin ) : malloc( nxin );
+	if( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
+		fprintf( stderr, "bwrot: malloc failed\n" );
+		exit( 3 );
+	}
 
 	/*
 	 * Clear our "file pointer."  We need to maintain this
@@ -176,7 +180,7 @@ int argc; char **argv;
 				xout = (nyin - 1) - lasty;
 				outbyte = ((yout * nyin) + xout);
 				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0L ) < 0 ) {
+					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
 						exit( 3 );
 					}
@@ -197,7 +201,7 @@ int argc; char **argv;
 				xout = yin;
 				outbyte = ((yout * nyin) + xout);
 				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0L ) < 0 ) {
+					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
 						exit( 3 );
 					}
@@ -211,7 +215,7 @@ int argc; char **argv;
 				yout = (nyin - 1) - y;
 				outbyte = yout * scanbytes; 
 				if( outplace != outbyte ) {
-					if( fseek( ofp, outbyte, 0L ) < 0 ) {
+					if( fseek( ofp, outbyte, 0 ) < 0 ) {
 						fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
 						exit( 3 );
 					}
@@ -234,14 +238,10 @@ int argc; char **argv;
 void
 fill_buffer()
 {
+	buflines = fread( buffer, scanbytes, buflines, ifp );
+
 	firsty = lasty + 1;
 	lasty = firsty + (buflines - 1);
-	if( lasty > (nyin-1) ) {
-		lasty = nyin - 1;
-		buflines = lasty - firsty + 1;
-	}
-
-	fread( buffer, 1, scanbytes * buflines, ifp );
 }
 
 void
