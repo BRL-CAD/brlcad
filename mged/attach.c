@@ -98,6 +98,7 @@ char *name;
 			continue;
 		dmp = *dp;
 
+		no_memory = 0;
 		if( dmp->dmr_open() )
 			break;
 
