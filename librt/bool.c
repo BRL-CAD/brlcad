@@ -731,7 +731,6 @@ struct region **fr1;
 struct region **fr2;
 CONST struct partition *pp;
 {
-	fastf_t d1, d2;
 	struct bu_ptbl	sl1, sl2;
 	CONST struct seg *s1, *s2;
 	fastf_t depth;
@@ -752,16 +751,12 @@ CONST struct partition *pp;
 	RT_CK_SEG(s1);
 	RT_CK_SEG(s2);
 
-	d1 = s1->seg_out.hit_dist - s1->seg_in.hit_dist;
-	d2 = s2->seg_out.hit_dist - s2->seg_in.hit_dist;
-
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 
 	/* 6.35mm = 1/4 inch */
 	if( depth < 6.35 )  {
-		/* Resolve overlap in favor of region with longest seg */
-		/* XXX or is rule "take region with lowest inhit? */
-		if( d1 > d2 )  {
+		/* take region with lowest inhit */
+		if( s1->seg_in.hit_dist < s2->seg_in.hit_dist )  {
 			/* keep fr1, delete fr2 */
 			*fr2 = REGION_NULL;
 		} else {
@@ -770,11 +765,9 @@ CONST struct partition *pp;
 		}
 	} else {
 		/*
-		 * This partition is wide enough, resolve in favor of
-		 * the shorter segment.
-		 * XXX or is it: the region who's seg started at start of partition?
+		 * take the region who's seg started at start of partition
 		 */
-		if( d1 < d2 )  {
+		if( s1->seg_in.hit_dist == pp->pt_inhit->hit_dist )  {
 			/* keep fr1, delete fr2 */
 			*fr2 = REGION_NULL;
 		} else {
@@ -818,7 +811,7 @@ struct application *ap;
 	bu_log("Resolving FASTGEN plate/volume overlap: %s %s\n", (*fr1)->reg_name, (*fr2)->reg_name);
 
 	prev = pp->pt_back;
-	if( pp->pt_magic == PT_HD_MAGIC )  {
+	if( prev->pt_magic == PT_HD_MAGIC )  {
 		/* No prev partition, this is the first.  d=0, plate wins */
 		*fr2 = REGION_NULL;
 		return;
