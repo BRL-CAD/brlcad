@@ -2552,7 +2552,7 @@ get_rotation_vertex()
 {
   int i, j;
   int type, loc, valid;
-  int fixv;
+  int fixv = -1;
   struct bu_vls str;
   struct bu_vls cmd;
 
