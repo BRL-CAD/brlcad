@@ -771,91 +771,295 @@ plane_t	planes[6];
 	return(0);
 }
 
-/* finds inside of tgc */
+/*	Calculates inside TGC
+ *
+ * thick[0] is thickness for base (AxB)
+ * thick[1] is thickness for top (CxD)
+ * thick[2] is thickness for side
+ */
 int
 tgcin(ip, thick)
 struct rt_db_internal	*ip;
 fastf_t	thick[6];
 {
 	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
-	fastf_t	mag[5], nmag[5];
-	vect_t	unitH, unitA, unitB;
-	vect_t	unitC, unitD;
-	vect_t	hwork;
-	fastf_t	aa[2], ab[2], ba[2], bb[2];
-	fastf_t	dt, h1, h2, ht, dtha, dthb;
-	fastf_t	s, d4, d5, ctan, t3;
-	register int i, k;
-	double ratio;
+	vect_t norm;		/* unit vector normal to base */
+	fastf_t normal_height;	/* height in direction normal to base */
+	vect_t v,h,a,b,c,d;	/* parameters for inside TGC */
+	point_t top;		/* vertex at top of inside TGC */
+	fastf_t mag_a,mag_b,mag_c,mag_d; /* lengths of original semi-radii */
+	fastf_t new_mag_a,new_mag_b,new_mag_c,new_mag_d; /* new lengths */
+	vect_t unit_a,unit_b,unit_c,unit_d; /* unit vectors along semi radii */
+	fastf_t ratio;
 
-	thick[3] = thick[2];
 	RT_TGC_CK_MAGIC(tgc);
 
-	mag[0] = MAGNITUDE( tgc->h );
-	mag[1] = MAGNITUDE( tgc->a );
-	mag[2] = MAGNITUDE( tgc->b );
-	mag[3] = MAGNITUDE( tgc->c );
-	mag[4] = MAGNITUDE( tgc->d );
+	VCROSS( norm, tgc->a, tgc->b )
+	VUNITIZE( norm )
 
-	if( (ratio = (mag[2] / mag[1])) < .8 )
-		thick[3] = thick[3] / (1.016447 * pow(ratio, .071834));
-	VSCALE(unitH, tgc->h, 1.0/mag[0]);
-	VSCALE(unitA, tgc->a, 1.0/mag[1]);
-	VSCALE(unitB, tgc->b, 1.0/mag[2]);
-	VSCALE(unitC, tgc->c, 1.0/mag[3]);
-	VSCALE(unitD, tgc->d, 1.0/mag[4]);
-
-	VCROSS(hwork, unitA, unitB);
-	if( (dt = VDOT(hwork, unitH)) == 0.0 ) {
-	  Tcl_AppendResult(interp, "BAD cylinder\n", (char *)NULL);
-	  return(1);
-	}
-	else if( dt < 0.0 )
-		dt = (-dt);
-
-	h1 = thick[0] / dt;
-	h2 = thick[1] / dt;
-	if( (ht = dt * mag[0]) == 0.0 ) {
-	  Tcl_AppendResult(interp, "Cannot find the inside cylinder\n", (char *)NULL);
-	  return(1);
-	}
-	dtha = VDOT(unitA, tgc->h);
-	dthb = VDOT(unitB, tgc->h);
-	s = 1.0;
-	for(k=0; k<2; k++) {
-		if( k )
-			s = -1.0;
-		d4 = s * dtha + mag[3];
-		d5 = s * dthb + mag[4];
-		ctan = (mag[1] - d4) / ht;
-		t3 = thick[2] * sqrt( (mag[1] - d4)*(mag[1] - d4) + ht*ht ) / ht;
-		aa[k] = mag[1] - t3 - (thick[0]*ctan);
-		ab[k] = d4 - t3 + (thick[1]*ctan);
-
-		ctan = (mag[2] - d5) / ht;
-		t3 = thick[3] * sqrt( (mag[2]-d5)*(mag[2]-d5) + ht*ht ) / ht;
-		ba[k] = mag[2] - t3 - (thick[0]*ctan);
-		bb[k] = d5 - t3 + (thick[1]*ctan);
+	normal_height = VDOT( norm, tgc->h );
+	if( normal_height < 0.0 )
+	{
+		normal_height = (-normal_height);
+		VREVERSE( norm, norm )
 	}
 
-	nmag[0] = mag[0] - (h1+h2);
-	nmag[1] = ( aa[0] + aa[1] ) * .5;
-	nmag[2] = ( ba[0] + ba[1] ) * .5;
-	nmag[3] = (ab[0] + ab[1]) * .5;
-	nmag[4] = (bb[0] + bb[1]) * .5;
-	VSCALE(tgc->h, unitH, nmag[0] );
-	VSCALE(tgc->a, unitA, nmag[1] );
-	VSCALE(tgc->b, unitB, nmag[2] );
-	VSCALE(tgc->c, unitC, nmag[3] );
-	VSCALE(tgc->d, unitD, nmag[4] );
-
-	for( i=0; i<3; i++ )  {
-		tgc->v[i] += unitH[i]*h1 + .5 *
-		    ( (aa[0] - aa[1])*unitA[i] + (ba[0] - ba[1])*unitB[i] );
+	if( (thick[0] + thick[1]) >= normal_height )
+	{
+		Tcl_AppendResult(interp, "TGC shorter than base and top thicknesses\n", (char *)NULL);
+		return( 1 );
 	}
-	return(0);
+
+	mag_a = MAGNITUDE( tgc->a );
+	mag_b = MAGNITUDE( tgc->b );
+	mag_c = MAGNITUDE( tgc->c );
+	mag_d = MAGNITUDE( tgc->d );
+
+	if(( mag_a < VDIVIDE_TOL && mag_c < VDIVIDE_TOL ) ||
+	   ( mag_b < VDIVIDE_TOL && mag_d < VDIVIDE_TOL ) )
+	{
+		Tcl_AppendResult(interp, "TGC is too small too create inside solid", (char *)NULL );
+		return( 1 );
+	}
+
+	if( mag_a >= VDIVIDE_TOL )
+		VSCALE( unit_a, tgc->a, 1.0/mag_a )
+	else if( mag_c >= VDIVIDE_TOL )
+		VSCALE( unit_a, tgc->c, 1.0/mag_c )
+
+	if( mag_c >= VDIVIDE_TOL )
+		VSCALE( unit_c, tgc->c, 1.0/mag_c )
+	else if( mag_a >= VDIVIDE_TOL )
+		VSCALE( unit_c, tgc->a, 1.0/mag_a )
+
+	if( mag_b >= VDIVIDE_TOL )
+		VSCALE( unit_b, tgc->b, 1.0/mag_b )
+	else if( mag_d >= VDIVIDE_TOL )
+		VSCALE( unit_b, tgc->d, 1.0/mag_d )
+
+	if( mag_d >= VDIVIDE_TOL )
+		VSCALE( unit_d, tgc->d, 1.0/mag_d )
+	else if( mag_c >= VDIVIDE_TOL )
+		VSCALE( unit_d, tgc->b, 1.0/mag_b )
+
+	/* Calculate new vertex from base thickness */
+	if( thick[0] != 0.0 )
+	{
+		/* calculate new vertex using similar triangles */
+		ratio = thick[0]/normal_height;
+		VJOIN1( v, tgc->v, ratio, tgc->h )
+
+		/* adjust lengths of a and c to account for new vertex position */
+		new_mag_a = mag_a + (mag_c - mag_a)*ratio;
+		new_mag_b = mag_b + (mag_d - mag_b)*ratio;
+	}
+	else /* just copy the existing values */
+	{
+		VMOVE( v, tgc->v )
+		new_mag_a = mag_a;
+		new_mag_b = mag_b;
+	}
+
+	/* calculate new height vector */
+	if( thick[1] != 0.0 )
+	{
+		/* calculate new height vector using simialr triangles */
+		ratio = thick[1]/normal_height;
+		VJOIN1( top, tgc->v, 1.0 - ratio, tgc->h )
+
+		/* adjust lengths of c and d */
+		new_mag_c = mag_c + (mag_a - mag_c)*ratio;
+		new_mag_d = mag_d + (mag_b - mag_d)*ratio;
+	}
+	else /* just copy existing values */
+	{
+		VADD2( top, tgc->v, tgc->h )
+		new_mag_c = mag_c;
+		new_mag_d = mag_d;
+	}
+
+	/* calculate new height vector based on new vertex and top */
+	VSUB2( h, top, v )
+
+	if( thick[2] != 0.0 )	/* ther is a side thickness */
+	{
+		vect_t ctoa;	/* unit vector from tip of C to tip of A */
+		vect_t dtob;	/* unit vector from tip of D to tip of B */
+		point_t pt_a, pt_b, pt_c, pt_d;	/* points at tips of semi radii */
+		fastf_t delta_ac, delta_bd;	/* radius change for thickness */
+		fastf_t dot;	/* dot product */
+		fastf_t ratio1,ratio2;
+
+		if( (thick[2] >= new_mag_a || thick[2] >= new_mag_b) &&
+		    (thick[2] >= new_mag_c || thick[2] >= new_mag_d) )
+		{
+			/* can't make a small enough TGC */
+			Tcl_AppendResult(interp, "Side thickness too large\n", (char *)NULL );
+			return( 1 );
+		}
+
+		/* approach this as two 2D problems. One is in the plane containing
+		 * the a, h, and c vectors. The other is in the plane containing
+		 * the b, h, and d vectors.
+		 * In the ahc plane:
+		 * Calculate the amount that both a and c must be changed to produce
+		 * a normal thickness of thick[2]. Use the vector from tip of c to tip
+		 * of a and the unit_a vector to get sine of angle that the normal
+		 * side thickness makes with vector a (and so also with vector c).
+		 * The amount vectors a and c must change is thick[2]/(cosine of that angle).
+		 * Similar for the bhd plane.
+		 */
+
+		/* Calculate unit vectors from tips of c/d to tips of a/b */
+		VJOIN1( pt_a, v, new_mag_a, unit_a )
+		VJOIN1( pt_b, v, new_mag_b, unit_b )
+		VJOIN2( pt_c, v, 1.0, h, new_mag_c, unit_c )
+		VJOIN2( pt_d, v, 1.0, h, new_mag_d, unit_d )
+		VSUB2( ctoa, pt_a, pt_c )
+		VSUB2( dtob, pt_b, pt_d )
+		VUNITIZE( ctoa )
+		VUNITIZE( dtob )
+
+		/* Calculate amount vectors a and c must change */
+		dot = VDOT( ctoa, unit_a );
+		delta_ac = thick[2]/sqrt( 1.0 - dot*dot );
+
+		/* Calculate amount vectors d and d must change */
+		dot = VDOT( dtob, unit_b );
+		delta_bd = thick[2]/sqrt( 1.0 - dot*dot );
+
+		if( (delta_ac > new_mag_a || delta_bd > new_mag_b) &&
+		    (delta_ac > new_mag_c || delta_bd > new_mag_d) )
+		{
+			/* Can't make TGC small enough */
+			Tcl_AppendResult(interp, "Side thickness too large\n", (char *)NULL );
+			return( 1 );
+		}
+
+		/* Check if changes will make vectors a or d lengths negative */
+		if( delta_ac >= new_mag_c || delta_bd >= new_mag_d )
+		{
+			/* top vertex (height) must move. Calculate similar triangle ratios */
+			if( delta_ac >= new_mag_c )
+				ratio1 = (new_mag_a - delta_ac)/(new_mag_a - new_mag_c);
+			else
+				ratio1 = 1.0;
+
+			if( delta_bd >= new_mag_d )
+				ratio2 = (new_mag_b - delta_bd)/(new_mag_b - new_mag_d);
+			else
+				ratio2 = 1.0;
+
+			/* choose the smallest similar triangle for setting new top vertex */
+			if( ratio1 < ratio2 )
+				ratio = ratio1;
+			else
+				ratio = ratio2;
+
+			if( ratio1 == ratio && ratio1 < 1.0 ) /* c vector must go to zero */
+				new_mag_c = SQRT_SMALL_FASTF;
+			else if( ratio1 > ratio && ratio < 1.0 )
+			{
+				/* vector d will go to zero, but vector c will not */
+
+				/* calculate original length of vector c at new top vertex */
+				new_mag_c = new_mag_c + (new_mag_a - new_mag_c)*( 1.0 - ratio);
+
+				/* now just subtract delta */
+				new_mag_c -= delta_ac;
+			}
+			else /* just change c vector length by delta */
+				new_mag_c -= delta_ac;
+
+			if( ratio2 == ratio && ratio2 < 1.0 ) /* vector d must go to zero */
+				new_mag_d = SQRT_SMALL_FASTF;
+			else if( ratio2 > ratio && ratio < 1.0 )
+			{
+				/* calculate vector length at new top vertex */
+				new_mag_d = new_mag_d + (new_mag_b - new_mag_d)*(1.0 - ratio);
+
+				/* now just subtract delta */
+				new_mag_d -= delta_bd;
+			}
+			else /* just adjust length */
+				new_mag_d -= delta_bd;
+
+			VSCALE( h, h, ratio )
+			new_mag_a -= delta_ac;
+			new_mag_b -= delta_bd;
+		}
+		else if( delta_ac >= new_mag_a || delta_bd >= new_mag_b)
+		{
+			/* base vertex (v) must move */
+
+			/* Calculate similar triangle ratios */
+			if( delta_ac >= new_mag_a )
+				ratio1 = (new_mag_c - delta_ac)/(new_mag_c - new_mag_a);
+			else
+				ratio1 = 1.0;
+
+			if( delta_bd >= new_mag_b )
+				ratio2 = (new_mag_d - delta_bd)/(new_mag_d - new_mag_b);
+			else
+				ratio2 = 1.0;
+
+			/* select smallest triangle to set new base vertex */
+			if( ratio1 < ratio2 )
+				ratio = ratio1;
+			else
+				ratio = ratio2;
+
+			if( ratio1 == ratio && ratio1 < 1.0 ) /* vector a must go to zero */
+				new_mag_a = SQRT_SMALL_FASTF;
+			else if( ratio1 > ratio && ratio < 1.0 )
+			{
+				/* calculate length of vector a if it were at new base location */
+				new_mag_a = new_mag_c + (new_mag_a - new_mag_c)*ratio;
+
+				/* now just subtract delta */
+				new_mag_a -= delta_ac;
+			}
+			else /* just subtract delta */
+				new_mag_a -= delta_ac;
+
+			if( ratio2 == ratio && ratio2 < 1.0 ) /* vector b must go to zero */
+				new_mag_b = SQRT_SMALL_FASTF;
+			else if( ratio2 > ratio && ratio < 1.0 )
+			{
+				/* Calculate length of b if it were at new base vector */
+				new_mag_b = new_mag_d + (new_mag_b - new_mag_d)*ratio;
+
+				/* now just subtract delta */
+				new_mag_b -= delta_bd;
+			}
+			else /* just subtract delta */
+				new_mag_b -= delta_bd;
+
+			/* adjust height vector using smallest similar triangle ratio */
+			VJOIN1( v, v, 1.0-ratio, h )
+			VSUB2( h, top, v )
+			new_mag_c -= delta_ac;
+			new_mag_d -= delta_bd;
+		}
+		else /* just change the vector lengths */
+		{
+			new_mag_a -= delta_ac;
+			new_mag_b -= delta_bd;
+			new_mag_c -= delta_ac;
+			new_mag_d -= delta_bd;
+		}
+	}
+
+	/* copy new values into the TGC */
+	VMOVE( tgc->v, v )
+	VMOVE( tgc->h, h)
+	VSCALE( tgc->a, unit_a, new_mag_a )
+	VSCALE( tgc->b, unit_b, new_mag_b )
+	VSCALE( tgc->c, unit_c, new_mag_c )
+	VSCALE( tgc->d, unit_d, new_mag_d )
+
+	return( 0 );
 }
-
 
 /* finds inside of torus */
 int
