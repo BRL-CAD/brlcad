@@ -567,7 +567,7 @@ nmgbld()
 	cp = ((char *)ext.ext_buf) + (26+1)*SIZEOF_NETWORK_LONG;
 	for( j=0; j < granules * 4; j++ )  {
 		int k;
-		int cp_i;
+		unsigned int cp_i;
 
 		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 		{

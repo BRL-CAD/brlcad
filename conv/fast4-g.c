@@ -3437,11 +3437,11 @@ char *argv[];
 				warnings = 1;
 				break;
 			case 'x':
-				sscanf( optarg, "%x", &rt_debug );
+				sscanf( optarg, "%x", (unsigned int *)&rt_debug );
 				bu_debug = rt_debug;
 				break;
 			case 'b':
-				sscanf( optarg, "%x", &bu_debug );
+				sscanf( optarg, "%x", (unsigned int *)&bu_debug );
 				break;
 			default:
 				bu_log( "Unrecognzed option (%c)\n", c );

@@ -1908,7 +1908,7 @@ char *argv[];
 				bot = 1;
 				break;
 			case 'X':	/* nmg debug flags */
-				sscanf( optarg, "%x", &rt_g.NMG_debug );
+				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				bu_log( "%s: setting rt_g.NMG_debug to x%x\n", argv[0], rt_g.NMG_debug );
 				break;
 		}

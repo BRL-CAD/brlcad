@@ -182,12 +182,12 @@ char *argv[];
 				verbose = 1;
 				break;
 			case 'x':
-				sscanf( optarg, "%x", &rt_g.debug );
+				sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
 				bu_printb( "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT );
 				bu_log("\n");
 				break;
 			case 'X':
-				sscanf( optarg, "%x", &rt_g.NMG_debug );
+				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				bu_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
 				bu_log("\n");
 				break;
