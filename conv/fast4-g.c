@@ -93,6 +93,7 @@ static int	region_list_len=0;	/* actual length of the malloc'd region_list array
 static int	do_plot=0;		/* flag indicating plot file should be created */
 static struct cline    *cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember  group_head[11];	/* Lists of regions for groups */
+static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct model	*m;		/* NMG model for surface elements */
 static struct nmgregion	*r;		/* NMGregion */
@@ -232,9 +233,13 @@ struct holes
 {
 	int group;
 	int component;
+	int type;
 	struct hole_list *holes;
 	struct holes *next;
 } *hole_root;
+
+#define HOLE 1
+#define WALL 2
 
 struct fast_verts
 {
@@ -270,6 +275,41 @@ struct elem_list
 static int elem_match[4]={1,2,4,8};
 
 #define NMG_PUSH( _ptr , _stack )       bu_ptbl_ins_unique( _stack , (long *) _ptr )
+
+int
+is_a_hole( id )
+int id;
+{
+	struct holes *hole_ptr;
+	struct hole_list *ptr;
+
+	hole_ptr = hole_root;
+
+	while( hole_ptr )
+	{
+		if( hole_ptr->type == HOLE )
+		{
+			ptr = hole_ptr->holes;
+			while( ptr )
+			{
+				if( (ptr->group * 1000 + ptr->component) == id )
+					return( 1 );
+				ptr = ptr->next;
+			}
+		}
+		hole_ptr = hole_ptr->next;
+	}
+	return( 0 );
+}
+
+void
+add_to_holes( name, reg_id )
+char *name;
+int reg_id;
+{
+	if( mk_addmember( name , &hole_head , WMOP_UNION ) == (struct wmember *)NULL )
+		bu_log( "add_to_holes: mk_addmember failed for region %s\n" , name );
+}
 
 void
 plot_tri( pt1, pt2, pt3 )
@@ -2030,7 +2070,10 @@ make_comp_group()
 		}
 
 		mk_lfcomb( fdout , name , &g_head , 0 );
-		add_to_series( name , region_id );
+		if( !is_a_hole( region_id ) )
+			add_to_series( name , region_id );
+		else
+			add_to_holes( name, region_id );
 	}
 }
 
@@ -2061,6 +2104,9 @@ do_groups()
 
 	if( BU_LIST_NON_EMPTY( &head_all.l ) )
 		mk_lfcomb( fdout , "all" , &head_all , 0 );
+
+	if( BU_LIST_NON_EMPTY( &hole_head.l ) )
+		mk_lfcomb( fdout , "holes" , &hole_head , 0 );
 }
 
 void
@@ -2477,10 +2523,10 @@ do_sphere()
 	center_pt = atoi( field );
 
 	strncpy( field , &line[56] , 8 );
-	thick = atof( field );
+	thick = atof( field ) * 25.4;
 
 	strncpy( field , &line[64] , 8 );
-	radius = atof( field );
+	radius = atof( field ) * 25.4;
 	if( radius <= 0.0 )
 	{
 		bu_log( "do_sphere: illegal radius (%f), skipping sphere\n" , radius );
@@ -5386,7 +5432,8 @@ do_ccone2()
 }
 
 void
-Add_holes( gr , comp , ptr )
+Add_holes( type, gr , comp , ptr )
+int type;
 int gr;
 int comp;
 struct hole_list *ptr;
@@ -5398,6 +5445,7 @@ struct hole_list *ptr;
 		hole_root = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_root" );
 		hole_root->group = gr;
 		hole_root->component = comp;
+		hole_root->type = type;
 		hole_root->holes = ptr;
 		hole_root->next = (struct holes *)NULL;
 		return;
@@ -5407,13 +5455,14 @@ struct hole_list *ptr;
 	while( hole_ptr &&
 	    hole_ptr->group != gr &&
 	    hole_ptr->component != comp &&
+	    hole_ptr->type != type &&
 	    hole_ptr->next )
 		hole_ptr = hole_ptr->next;
 
 	if( !hole_ptr )
 		rt_bomb( "ERROR: Add_holes fell off end of list\n" );
 
-	if( hole_ptr->group == gr && hole_ptr->component == comp )
+	if( hole_ptr->group == gr && hole_ptr->component == comp && hole_ptr->type == type )
 	{
 		struct hole_list *list;
 
@@ -5427,17 +5476,21 @@ struct hole_list *ptr;
 			list->next = ptr;
 		}
 	}
-
-	hole_ptr->next = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_ptr->next" );
-	hole_ptr = hole_ptr->next;
-	hole_ptr->group = gr;
-	hole_ptr->component = comp;
-	hole_ptr->holes = ptr;
-	hole_ptr->next = (struct holes *)NULL;
+	else
+	{
+		hole_ptr->next = (struct holes *)bu_malloc( sizeof( struct holes ) , "Add_holes: hole_ptr->next" );
+		hole_ptr = hole_ptr->next;
+		hole_ptr->group = gr;
+		hole_ptr->component = comp;
+		hole_ptr->type = type;
+		hole_ptr->holes = ptr;
+		hole_ptr->next = (struct holes *)NULL;
+	}
 }
 
 void
-do_hole_wall()
+do_hole_wall( type )
+int type;
 {
 	struct hole_list *list_ptr;
 	struct hole_list *list_start;
@@ -5495,7 +5548,7 @@ do_hole_wall()
 		col += 8;
 	}
 
-	Add_holes( group , comp , list_start );
+	Add_holes( type, group , comp , list_start );
 }
 
 int
@@ -6444,9 +6497,9 @@ int pass_number;
 		if( !strncmp( line , "VEHICLE" , 7 ) )
 			do_vehicle();
 		else if( !strncmp( line , "HOLE" , 4 ) )
-			do_hole_wall();
+			do_hole_wall( HOLE );
 		else if( !strncmp( line , "WALL" , 4 ) )
-			do_hole_wall();
+			do_hole_wall( WALL );
 		else if( !strncmp( line , "SECTION" , 7 ) )
 			do_section( 0 );
 		else if( !strncmp( line , "$NAME" , 5 ) )
@@ -6794,6 +6847,8 @@ char *argv[];
 
 	for( i=0 ; i<11 ; i++ )
 		BU_LIST_INIT( &group_head[i].l );
+
+	BU_LIST_INIT( &hole_head.l );
 
 	Process_input( 0 );
 
