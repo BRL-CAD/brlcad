@@ -37,6 +37,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
+/* Conversion factor for Gallons to cubic millimeters */
+#define GALLONS_TO_MM3 3785411.784
+
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct bn_tol		mged_tol;		/* from ged.c */
 
@@ -285,7 +288,7 @@ CONST struct rt_db_internal	*ip;
 			tot_vol*base2local*base2local*base2local,
 			tot_area*base2local*base2local);
 	bu_vls_printf(vp,"      |          %18.3f gal                               |\n",
-		tot_vol/3787878.79);
+		tot_vol/GALLONS_TO_MM3);
 	bu_vls_printf(vp,"      -----------------------------------------------------------------\n");
 }
 
@@ -555,7 +558,7 @@ CONST struct rt_db_internal	*ip;
 
 	bu_vls_printf(vp,"TOR Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
 		vol*base2local*base2local*base2local,
-		vol/3787878.79,
+		vol/GALLONS_TO_MM3,
 		sur_area*base2local*base2local);
 
 	return;
@@ -596,7 +599,7 @@ CONST struct rt_db_internal	*ip;
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
 	bu_vls_printf(vp,"ELL Volume = %.4f (%.4f gal)",
 		vol*base2local*base2local*base2local,
-		vol/3787878.79);
+		vol/GALLONS_TO_MM3);
 
 	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
@@ -759,7 +762,7 @@ CONST struct rt_db_internal	*ip;
 			area_side*base2local*base2local);
 	bu_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(area_base+area_top+area_side)*base2local*base2local,
-			vol*base2local*base2local*base2local,vol/3787878.79);
+			vol*base2local*base2local*base2local,vol/GALLONS_TO_MM3);
 	/* Print units? */
 	return;
 
@@ -832,7 +835,7 @@ CONST struct rt_db_internal	*ip;
 	bu_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(2*area_parab+2*r*h+area_body)*base2local*base2local,
 			vol_parab*base2local*base2local*base2local,
-			vol_parab/3787878.79);
+			vol_parab/GALLONS_TO_MM3);
 }
 
 /*	analyze rhc */
@@ -878,7 +881,7 @@ CONST struct rt_db_internal	*ip;
 	bu_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(2*area_hyperb+2*r*h+2*area_body)*base2local*base2local,
 			vol_hyperb*base2local*base2local*base2local,
-			vol_hyperb/3787878.79);
+			vol_hyperb/GALLONS_TO_MM3);
 }
 
 
