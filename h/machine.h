@@ -205,6 +205,11 @@
  *				  *
  **********************************/
 
+#if defined(_MSC_VER) && defined(_M_IX86)
+#define CONST const
+#endif
+
+
 #ifdef HEP
 /********************************
  *				*
@@ -420,6 +425,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define MALLOC_NOT_MP_SAFE 1
 
 #endif
+
 
 #ifdef n16
 /********************************

@@ -89,6 +89,20 @@
 #	define HAVE_TERMIOS_H	1
 #endif
 
+#if defined(_MSC_VER) && defined(_M_IX86)
+#	define USE_PROTOTYPES 1
+#	define HAVE_STRING_H 1
+#	define HAVE_STDLIB_H 1
+#	define HAVE_STDARG_H 1
+#	define HAVE_VARARGS_H 1
+#	define USE_STRING_H 1
+#	define HAVE_DRAND48 1
+#	define HAVE_GETHOSTNAME 1
+#	define HAVE_GETOPT 1
+#	define HAVE_STRCHR 1
+#	define HAVE_UNIX_IO 1
+#endif
+
 #if defined(sgi) || defined(__sgi) || defined(IRIX)
 #	if IRIX < 6
 #		define HAS_SGIGL	1	/* Old GL */
