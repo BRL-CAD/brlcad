@@ -930,34 +930,36 @@ region(lmemb,umemb)
 static int
 arbn_shot()
 {
-	static float s,*pp,dxbdn,wbdn,te;
+	register float *pp;
+	static float *pend;
+	static float dxbdn,wbdn,te;
 
 	rin = ri;
 	rout = ro;
 
 	te = tol;
 	if(oper == '-' && negpos)
-		te = -1.0 * tol;
+		te = -tol;
 
-	for(pp = &peq[la*4];pp <= &peq[lb*4];pp+=4){
-		dxbdn = *(pp+3)-VDOT(xb,pp);
+	pend = &peq[lb*4];
+	for(pp = &peq[la*4]; pp <= pend; pp+=4){
+		dxbdn = pp[3]-VDOT(xb,pp);
 		wbdn=VDOT(wb,pp);
-		if(fabs(wbdn)>.001){
+		if( wbdn < -0.001 || wbdn > 0.001 )  {
+			register float s;
+
 			s=dxbdn/wbdn;
 			if(wbdn > 0.0) {
 				MAX(rin, s);
-			}
-			else {
+			} else {
 				MIN(rout,s);
 			}
-		}
-		else{
+		} else {
 			if(dxbdn>te) return(0);
 		}
 		if((rin+tol)>=rout || rout<=tol) return(0);
 	}
-	/* ray starts inside */
-	MAX(rin,0);
+	MAX(rin,0);	/* ray may start inside */
 	return(1);
 }
 
