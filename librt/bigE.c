@@ -2235,6 +2235,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 
 	dgcdp->rtip = rt_new_rti( dgop->dgo_wdbp->dbip );
 	dgcdp->rtip->rti_tol = dgop->dgo_wdbp->wdb_tol;	/* struct copy */
+	dgcdp->rtip->useair = 1;
 	dgcdp->ap->a_rt_i = dgcdp->rtip;
 
 	dgcdp->nvectors = 0;
