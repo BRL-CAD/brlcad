@@ -29,73 +29,110 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define bzero(p,cnt)	memset(p,'\0',cnt);
 #endif
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern double	atof();
+
 int curchan = 0;	/* 0=r, 1=g, 2=b */
 
-double atof();
 double col[6] = {128,128,128};		/* r,g,b h,s,v */
 
-int npix = 512;
-RGBpixel buf[1024];
+int	screen_width = 512;
+int	screen_height = 512;
+
 RGBpixel pix;
 
-double deltav;
-int title_height = 80;
-int h_start = 240;
-int h_end = 50;
+double	deltav;
+int	title_height = 80;
+int	h_start = 240;
+int	h_end = 50;
 
 FBIO *fbp;
 
 #define FILL(r,g,b)	{ register RGBpixel *pp; \
 	pix[RED]=r; pix[GRN]=g; pix[BLU]=b; \
-	for( pp = (RGBpixel *)&buf[npix-1][RED]; pp >= buf; pp-- ) \
+	for( pp = (RGBpixel *)&buf[screen_width-1][RED]; pp >= buf; pp-- ) \
 		COPYRGB(*pp, pix); }
+
+char usage[] = "\
+Usage:  fbbackgnd [-h] [-t title_height] hue saturation\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "ht:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			screen_height = screen_width = 1024;
+			title_height = 90;
+			break;
+		case 't':
+			/* Title area size */
+			title_height = atoi( optarg );
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+	if( argc < optind+1 )
+		return(0);		/* missing args */
+	return(1);			/* OK */
+}
 
 main(argc, argv )
 char **argv;
 {
 	register int i;
 	register int line;
+	register RGBpixel *buf;
 
-	if( argc < 3 )  {
-		fprintf(stderr,"Usage:  fbbackgnd [-h] hue saturation\n");
-		exit(1);
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
-	if( argv[1][0] == '-' && argv[1][1] == 'h' )  {
-		argc--;
-		argv++;
-		npix = 1024;
-		title_height = 90;
-	}
-
-	if( (fbp = fb_open( NULL, npix, npix )) == FBIO_NULL )  {
+	if( (fbp = fb_open( NULL, screen_width, screen_height )) == FBIO_NULL )  {
 		fprintf(stderr, "fbbackgnd:  fb_open failed\n");
 		exit(1);
 	}
 
-	/* Write out top area with initial HSV */
-	col[3] = atof(argv[1]);
-	col[4] = atof(argv[2]);
+	/* Adjust to what we got */
+	screen_height = fb_getheight(fbp);
+	screen_width = fb_getwidth(fbp);
+	buf = (RGBpixel *)malloc( screen_width * sizeof(RGBpixel) );
+
+	col[3] = atof(argv[optind++]);
+	col[4] = atof(argv[optind]);
 	col[5] = h_start;
 	hsvrgb( &col[3], col );
-	FILL( col[0], col[1], col[2] );
-	for( line=0; line<title_height; line++ )
-		fb_write( fbp, 0, npix-1-line, buf, npix );
 
-	/* A white stripe, 4 lines wide */
-	FILL( 250, 250, 250 );
-	for( i=0; i<4; i++,line++ )
-		fb_write( fbp, 0, npix-1-line, buf, npix );
+	line = 0;
+	if( title_height > 0 )  {
+		/* Write out top area with initial HSV */
+		FILL( col[RED], col[GRN], col[BLU] );
+		for( ; line<title_height; line++ )
+			fb_write( fbp, 0, screen_height-1-line, buf, screen_width );
+
+		/* A white stripe, 4 lines wide */
+		FILL( 250, 250, 250 );
+		for( i=0; i<4; i++,line++ )
+			fb_write( fbp, 0, screen_height-1-line, buf, screen_width );
+	}
 
 	/* Do rest with V dropping from start to end values */
 	col[5] = h_start;
-	deltav = (h_start-h_end) / (double)(npix-line);
-printf("%d..%d: deltav=%f\n", h_start, h_end, deltav);
-	for( ; line<npix; line++ )  {
+	deltav = (h_start-h_end) / (double)(screen_height-line);
+
+	for( ; line<screen_height; line++ )  {
 		col[5] -= deltav;
 		hsvrgb( &col[3], col );
-		FILL( col[0], col[1], col[2] );
-		fb_write( fbp, 0, npix-1-line, buf, npix );
+		FILL( col[RED], col[GRN], col[BLU] );
+		fb_write( fbp, 0, screen_height-1-line, buf, screen_width );
 	}
 	exit(0);
 }
@@ -112,9 +149,9 @@ register double *hsv;
 	static double h;
         double dif;
 
-        r = rgb[0];
-        g = rgb[1];
-        b = rgb[2];
+        r = rgb[RED];
+        g = rgb[GRN];
+        b = rgb[BLU];
         v = ((r > g) ? r : g);
         v = ((v > b) ? v : b);
         x = ((r < g) ? r : g);
@@ -214,7 +251,7 @@ register double *rgb;
         else
             r = g = b = hsv[2];
 
-        rgb[0] = r;
-        rgb[1] = g;
-        rgb[2] = b;
+        rgb[RED] = r;
+        rgb[GRN] = g;
+        rgb[BLU] = b;
 }
