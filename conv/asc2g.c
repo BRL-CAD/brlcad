@@ -49,7 +49,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 extern void rt_dsp_ifree( struct rt_db_internal	*ip);
-
+extern void rt_ebm_ifree( struct rt_db_internal	*ip);
+extern void rt_vol_ifree( struct rt_db_internal	*ip);
 
 
 #define BUFSIZE			(8*1024)	/* input line buffer size */
@@ -273,45 +274,86 @@ after_read:
 void
 strsolbld()
 {
-	char	*type;
-	char	*name;
-	char	*args;
-	struct bu_vls	str;
+    char	*type;
+    char	*name;
+    char	*args;
+    struct bu_vls	str;
 
-	bu_vls_init(&str);
+    bu_vls_init(&str);
 
-	(void)strtok( buf, " " );
-	/* skip stringsolid_id */
-	type = strtok( NULL, " " );
-	name = strtok( NULL, " " );
-	args = strtok( NULL, "\n" );
+    (void)strtok( buf, " " );
+    /* skip stringsolid_id */
+    type = strtok( NULL, " " );
+    name = strtok( NULL, " " );
+    args = strtok( NULL, "\n" );
 
-	if( strcmp( type, "dsp" ) == 0 )  {
-		struct rt_dsp_internal *dsp;
+    if( strcmp( type, "dsp" ) == 0 )  {
+	struct rt_dsp_internal *dsp;
 
-		BU_GETSTRUCT( dsp, rt_dsp_internal );
-		bu_vls_init( &dsp->dsp_name );
-		bu_vls_strcpy( &str, args );
-		if( bu_struct_parse( &str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp ) < 0 )  {
-			bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
-				name, type, args);
-			rt_dsp_ifree( (struct rt_db_internal *)dsp );
-			goto out;
-		}
-		dsp->magic = RT_DSP_INTERNAL_MAGIC;
-		if( wdb_export( ofp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm ) < 0 )  {
-			bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
-				name, type, args);
-			goto out;
-		}
-		/* 'dsp' has already been freed by wdb_export() */
-	} else {
-		bu_log("strsolbld(%s): unable to convert '%s' type solid, skipping\n",
-			name, type);
+	BU_GETSTRUCT( dsp, rt_dsp_internal );
+	bu_vls_init( &dsp->dsp_name );
+	bu_vls_strcpy( &str, args );
+	if( bu_struct_parse( &str, rt_functab[ID_DSP].ft_parsetab, (char *)dsp ) < 0 )  {
+	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
+		   name, type, args);
+	    rt_dsp_ifree( (struct rt_db_internal *)dsp );
+	    goto out;
 	}
+	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+	if( wdb_export( ofp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm ) < 0 )  {
+	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
+		   name, type, args);
+	    goto out;
+	}
+	/* 'dsp' has already been freed by wdb_export() */
+    } else if ( strcmp(type, "ebm") == 0) {
+	struct rt_ebm_internal *ebm;
 
-out:
-	bu_vls_free(&str);
+	BU_GETSTRUCT( ebm, rt_ebm_internal );
+
+	MAT_IDN(ebm->mat);
+
+	bu_vls_strcpy( &str, args );
+	if (bu_struct_parse( &str, rt_functab[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
+	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
+		   name, type, args);
+	    rt_ebm_ifree( (struct rt_db_internal *)ebm );
+	    return;
+	}
+	ebm->magic = RT_EBM_INTERNAL_MAGIC;
+	if (wdb_export(ofp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm) < 0) {
+	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
+		   name, type, args);
+	    goto out;
+	}
+	/* 'ebm' has already been freed by wdb_export() */
+    } else if ( strcmp(type, "vol") == 0) {
+	struct rt_vol_internal *vol;
+
+	BU_GETSTRUCT( vol, rt_vol_internal );
+	MAT_IDN(vol->mat);
+
+	bu_vls_strcpy( &str, args );
+	if (bu_struct_parse( &str, rt_functab[ID_VOL].ft_parsetab, (char *)vol) < 0) {
+	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
+		   name, type, args);
+	    rt_vol_ifree( (struct rt_db_internal *)vol );
+	    return;
+	}
+	vol->magic = RT_VOL_INTERNAL_MAGIC;
+	if (wdb_export(ofp, name, (genptr_t)vol, ID_VOL, mk_conv2mm) < 0) {
+	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
+		   name, type, args);
+	    goto out;
+	}
+	/* 'vol' has already been freed by wdb_export() */
+    } else {
+	bu_log("strsolbld(%s): unable to convert '%s' type solid, skipping\n",
+	       name, type);
+    }
+
+ out:
+    bu_vls_free(&str);
 }
 
 #define LSEG 'L'

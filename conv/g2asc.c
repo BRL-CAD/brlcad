@@ -132,8 +132,8 @@ char **argv;
 		struct db_i	*dbip;
 		struct directory *dp;
 
-		bu_log("Attempting to export Release 6 database\n" );
-		bu_log("  Note that the Release 6 binary format is machine independent\n");
+		bu_log("Exporting Release 6 database\n" );
+		bu_log("  Note that the Release 6 binary format is machine independent.\n");
 		bu_log("  Converting to ASCII to move database to a different\n");
 		bu_log("  computer architecture is no longer necessary.\n");
 		interp = Tcl_CreateInterp();
