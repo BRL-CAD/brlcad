@@ -6,6 +6,7 @@ asc-nmg
 asc2g
 asc2pix
 bot-bldxf
+bot-raw
 bot_shell-vtk
 conv-vg2g
 cy-g
@@ -28,10 +29,15 @@ g-tankill
 g-vrml
 g-wave
 g-x3d
+g-xxx
+g-xxx_facets
 g2asc
+g4-g5
+g5-g4
 nastran-g
 nmg-bot
 nmg-rib
+nmg-sgp
 pix2asc
 ply-g
 poly-bot
