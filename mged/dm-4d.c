@@ -607,7 +607,7 @@ double ratio;
 		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 			float	norm[3];
 			switch( vp->vl_draw )  {
-			case 0:
+			case VL_CMD_LINE_MOVE:
 				/* Move, start line */
 				if( first == 0 )
 					endline();
@@ -615,11 +615,11 @@ double ratio;
 				bgnline();
 				v3d( vp->vl_pnt );
 				break;
-			case 1:
+			case VL_CMD_LINE_DRAW:
 				/* Draw line */
 				v3d( vp->vl_pnt );
 				break;
-			case 2:
+			case VL_CMD_POLY_START:
 				/* Start poly marker & normal */
 				if( first == 0 )
 					endline();
@@ -631,15 +631,15 @@ double ratio;
 				norm[Z] = vp->vl_pnt[Z];
 				n3f(norm);
 				break;
-			case 3:
+			case VL_CMD_POLY_MOVE:
 				/* Polygon Move */
 				v3d( vp->vl_pnt );
 				break;
-			case 4:
+			case VL_CMD_POLY_DRAW:
 				/* Polygon Draw */
 				v3d( vp->vl_pnt );
 				break;
-			case 5:
+			case VL_CMD_POLY_END:
 				/* Draw, End Polygon */
 				v3d( vp->vl_pnt );
 				endpolygon();
