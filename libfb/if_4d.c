@@ -931,6 +931,10 @@ int	width, height;
 		/* NTSC, see below */
 		ifp->if_width = ifp->if_max_width = XMAX170+1;	/* 646 */
 		ifp->if_height = ifp->if_max_height = YMAX170+1; /* 485 */
+	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
+		/* Bump default size up to full screen, since we have it all */
+		ifp->if_width = XMAXSCREEN+1;		/* 1280 */
+		ifp->if_height = YMAXSCREEN+1;		/* 1024 */
 	}
 
 	if( width <= 0 )
@@ -949,7 +953,13 @@ int	width, height;
 	foreground();		/* Direct focus here, don't detach */
 
 	if( (ifp->if_mode & MODE_5MASK) == MODE_5NTSC )  {
+		noborder();
+#if defined(__sgi) && defined(__mips)
+		/* Deal with Irix 4.0 bug:  (+2,+21) offset due to title */
+		prefposition( 0-2, XMAX170-2, 0+21, YMAX170+21 );
+#else
 		prefposition( 0, XMAX170, 0, YMAX170 );
+#endif
 		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
 		if( sgi_nwindows == 0 ) {
@@ -960,7 +970,13 @@ int	width, height;
 		SGI(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
 	}  else  {
 		/* MODE_3MASK == MODE_3FULLSCR */
+		noborder();
+#if defined(__sgi) && defined(__mips)
+		/* Deal with Irix 4.0 bug:  (+2,+21) offset due to title */
+		prefposition( 0-2, XMAXSCREEN-2, 0+21, YMAXSCREEN+21 );
+#else
 		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
+#endif
 		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	}
 
