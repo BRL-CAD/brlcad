@@ -1735,6 +1735,7 @@ char			*buf;
 	int		last_i;
 	int		reproj_percent;
 	long		total_bits;
+	double		ms_nonnet_min, ms_nonnet_max;
 
 	blend2 = 1 - blend1;	/* blend1 may change via Tcl interface */
 
@@ -1828,11 +1829,14 @@ check_others:
 	/* Find max and min of ray-tracing time */
 	ms_rt_min =  9999999;
 	ms_rt_max = -9999999;
+	ms_nonnet_min =  9999999;
+	ms_nonnet_max = -9999999;
 	ms_total_min =  9999999;
 	ms_total_max = -9999999;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		double		rtt;
 		double		tot;
+		double		nonnet;
 
 		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
@@ -1841,7 +1845,12 @@ check_others:
 		if( rtt < ms_rt_min )  ms_rt_min = rtt;
 		if( rtt > ms_rt_max )  ms_rt_max = rtt;
 
+		nonnet = rtt + rtnodes[i].pr_time;
+		if( nonnet < ms_nonnet_min )  ms_nonnet_min = nonnet;
+		if( nonnet > ms_nonnet_max )  ms_nonnet_max = nonnet;
+
 		tot = rtnodes[i].time_delta * 1000;
+if( tot <= 0 )  bu_log("tot = %e for %s\n", tot, rtnodes[i].host->ht_name);
 		if( tot < ms_total_min )  ms_total_min = tot;
 		if( tot > ms_total_max )  ms_total_max = tot;
 	}
@@ -1854,7 +1863,8 @@ check_others:
 	burst_mbps = total_bits / (interval - ms_rt_min/1000) / 1000000.0;
 
 	/* Calculate "network overhead" as % of total time */
-	network_overhead = (int)(((double)ms_total - ms_rt_max) / (double)ms_total * 100);
+	network_overhead = (int)(((double)ms_total - ms_nonnet_max) /
+		(double)ms_total * 100);
 
 	/* Calculate assignment duration variation. 1X is optimum. */
 	variation = ms_total_max / ms_total_min;
