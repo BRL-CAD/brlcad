@@ -230,11 +230,11 @@ rt_log("went all the way around\n");
 
 			/* If abs1 == absr, warn about unfused faces, and skip. */
 			if( NEAR_ZERO( abs1-absr, 1.0e-8 ) )  {
-				if( fu1->f_p->fg_p == fur->f_p->fg_p )  {
+				if( fu1->f_p->g.plane_p == fur->f_p->g.plane_p )  {
 					/* abs1 == absr, faces are fused, don't insert here. */
 					if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
 						rt_log("fu1 and fur share face geometry x%x (flip1=%d, flip2=%d), skip\n",
-							fu1->f_p->fg_p, fu1->f_p->flip, fur->f_p->flip );
+							fu1->f_p->g.plane_p, fu1->f_p->flip, fur->f_p->flip );
 					}
 					goto cont;
 				}
@@ -242,14 +242,14 @@ rt_log("went all the way around\n");
 				rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused, may be ambiguous.\n  abs1=%e, absr=%e, asb2=%e\n",
 					abs1*rt_radtodeg, absr*rt_radtodeg, abs2*rt_radtodeg);
 				rt_log("  fu1=x%x, f1=x%x, f1->flip=%d, fg1=x%x\n",
-					fu1, fu1->f_p, fu1->f_p->flip, fu1->f_p->fg_p );
+					fu1, fu1->f_p, fu1->f_p->flip, fu1->f_p->g.plane_p );
 				rt_log("  fu2=x%x, f2=x%x, f2->flip=%d, fg2=x%x\n",
-					fu2, fu2->f_p, fu2->f_p->flip, fu2->f_p->fg_p );
+					fu2, fu2->f_p, fu2->f_p->flip, fu2->f_p->g.plane_p );
 				rt_log("  fur=x%x, fr=x%x, fr->flip=%d, fgr=x%x\n",
-					fur, fur->f_p, fur->f_p->flip, fur->f_p->fg_p );
-				PLPRINT("  fu1", fu1->f_p->fg_p->N );
-				PLPRINT("  fu2", fu2->f_p->fg_p->N );
-				PLPRINT("  fur", fur->f_p->fg_p->N );
+					fur, fur->f_p, fur->f_p->flip, fur->f_p->g.plane_p );
+				PLPRINT("  fu1", fu1->f_p->g.plane_p->N );
+				PLPRINT("  fu2", fu2->f_p->g.plane_p->N );
+				PLPRINT("  fur", fur->f_p->g.plane_p->N );
 				{
 					int debug = rt_g.NMG_debug;
 					rt_g.NMG_debug |= DEBUG_MESH;

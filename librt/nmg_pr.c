@@ -204,13 +204,13 @@ char *h;
  */
 void 
 nmg_pr_fg(fg, h)
-CONST struct face_g *fg;
+CONST struct face_g_plane *fg;
 char *h;
 {
 	MKPAD(h);
 
 	rt_log("%sFACE_G %8x\n", h, fg);
-	NMG_CK_FACE_G(fg);
+	NMG_CK_FACE_G_PLANE(fg);
 
 	rt_log("%s%fX + %fY + %fZ = %f\n", h, fg->N[0], fg->N[1],
 		fg->N[2], fg->N[3]);
@@ -312,15 +312,15 @@ char *h;
 
 	rt_log("%sFACE %8x\n", h, f);
 	rt_log("%s%8x fu_p\n", h, f->fu_p);
-	rt_log("%s%8x fg_p\n", h, f->fg_p);
+	rt_log("%s%8x g.magic_p\n", h, f->g.magic_p);
 	
 	rt_log("%s%f %f %f Min\n", h, f->min_pt[X], f->min_pt[Y],
 		f->min_pt[Z]);
 	rt_log("%s%f %f %f Max\n", h, f->max_pt[X], f->max_pt[Y],
 		f->max_pt[Z]);
 
-	if (f->fg_p)
-		nmg_pr_fg(f->fg_p, h);
+	if (f->g.plane_p)
+		nmg_pr_fg(f->g.plane_p, h);
 
 	Return;
 }

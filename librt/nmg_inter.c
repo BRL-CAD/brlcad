@@ -423,7 +423,7 @@ struct nmg_inter_struct	*is;
 CONST long		*assoc_use;
 {
 	struct model	*m;
-	struct face_g	*fg;
+	struct face_g_plane	*fg;
 	vect_t		to;
 	point_t		centroid;
 	point_t		centroid_proj;
@@ -455,8 +455,8 @@ CONST long		*assoc_use;
 		struct face	*f1;
 
 		f1 = fu1->f_p;
-		fg = f1->fg_p;
-		NMG_CK_FACE_G(fg);
+		fg = f1->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fg);
 		is->twod = &f1->l.magic;
 		if( f1->flip )  {
 			VREVERSE( n, fg->N );
@@ -3341,8 +3341,8 @@ CONST struct rt_tol	*tol;
 {
 	CONST struct faceuse	*fu1;
 	CONST struct loopuse	*lu1;
-	CONST struct face_g	*fg1;
-	CONST struct face_g	*fg2;
+	CONST struct face_g_plane	*fg1;
+	CONST struct face_g_plane	*fg2;
 	CONST struct face	*f1;
 	struct edgeuse		*ret = (struct edgeuse *)NULL;
 	int			coincident;
@@ -3351,12 +3351,12 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACEUSE(fu2);
 	RT_CK_TOL(tol);
 
-	fg1 = ofu1->f_p->fg_p;
-	fg2 = fu2->f_p->fg_p;
-	NMG_CK_FACE_G(fg1);
-	NMG_CK_FACE_G(fg2);
+	fg1 = ofu1->f_p->g.plane_p;
+	fg2 = fu2->f_p->g.plane_p;
+	NMG_CK_FACE_G_PLANE(fg1);
+	NMG_CK_FACE_G_PLANE(fg2);
 
-	if( fg1 == fg2 )  rt_bomb("nmg_find_eg_between_2fg() face_g shared, infinitely many results\n");
+	if( fg1 == fg2 )  rt_bomb("nmg_find_eg_between_2fg() face_g_plane shared, infinitely many results\n");
 
 	/* For all faces using fg1 */
 	for( RT_LIST_FOR( f1, face, &fg1->f_hd ) )  {
@@ -3386,7 +3386,7 @@ CONST struct rt_tol	*tol;
 					if (*eur->up.magic_p != NMG_LOOPUSE_MAGIC ) continue;
 					if( *eur->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )  continue;
 					tfu = eur->up.lu_p->up.fu_p;
-					if( tfu->f_p->fg_p != fg2 )  continue;
+					if( tfu->f_p->g.plane_p != fg2 )  continue;
 
 				    	/* Found the other face on this edge! */
 				    	if( !ret )  {
@@ -3656,12 +3656,12 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACEUSE(fu1);
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
-	NMG_CK_FACE_G(f1->fg_p);
+	NMG_CK_FACE_G_PLANE(f1->g.plane_p);
 
 	NMG_CK_FACEUSE(fu2);
 	f2 = fu2->f_p;
 	NMG_CK_FACE(f2);
-	NMG_CK_FACE_G(f2->fg_p);
+	NMG_CK_FACE_G_PLANE(f2->g.plane_p);
 
 	NMG_GET_FU_PLANE( pl1, fu1 );
 	NMG_GET_FU_PLANE( pl2, fu2 );
@@ -3681,7 +3681,7 @@ nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 	}
 
-	if( f1->fg_p == f2->fg_p )  {
+	if( f1->g.plane_p == f2->g.plane_p )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			rt_log("co-planar faces (shared fg)\n");
 		}
@@ -3727,7 +3727,7 @@ nmg_fu_touchingloops(fu2);
 
 	switch( status )  {
 	case 0:
-		if( fu1->f_p->fg_p == fu2->f_p->fg_p )  {
+		if( fu1->f_p->g.plane_p == fu2->f_p->g.plane_p )  {
 			rt_bomb("nmg_isect_two_generic_faces: co-planar faces not detected\n");
 		}
 		/* All is well */
@@ -4227,7 +4227,7 @@ CONST struct rt_tol	*tol;
 
 		if( fu1->orientation != OT_SAME )  continue;
 		if( NMG_INDEX_IS_SET(flags, f1) )  continue;
-		NMG_CK_FACE_G(f1->fg_p);
+		NMG_CK_FACE_G_PLANE(f1->g.plane_p);
 
 		/* See if face f1 overlaps shell2 */
 		if( ! V3RPP_OVERLAP_TOL(sa2->min_pt, sa2->max_pt,

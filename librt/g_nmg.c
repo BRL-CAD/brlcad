@@ -462,12 +462,12 @@ struct disk_face {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
 	disk_index_t		fu_p;
-	disk_index_t		fg_p;
+	disk_index_t		g;
 	unsigned char		flip[4];
 };
 
-#define DISK_FACE_G_MAGIC	0x4e665f61	/* Nf_a */
-struct disk_face_g {
+#define DISK_FACE_G_PLANE_MAGIC	0x4e665f61	/* Nf_a */
+struct disk_face_g_plane {
 	unsigned char		magic[4];
 	struct disk_rt_list	f_hd;
 	unsigned char		N[4*8];
@@ -598,7 +598,7 @@ struct disk_vertexuse_a {
 #define NMG_KIND_FACEUSE	6
 #define NMG_KIND_FACEUSE_A	7
 #define NMG_KIND_FACE		8
-#define NMG_KIND_FACE_G		9
+#define NMG_KIND_FACE_G_PLANE	9
 #define NMG_KIND_LOOPUSE	10
 #define NMG_KIND_LOOPUSE_A	11
 #define NMG_KIND_LOOP		12
@@ -624,7 +624,7 @@ int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_faceuse),
 	sizeof(struct disk_faceuse_a),
 	sizeof(struct disk_face),
-	sizeof(struct disk_face_g),
+	sizeof(struct disk_face_g_plane),
 	sizeof(struct disk_loopuse),
 	sizeof(struct disk_loopuse_a),
 	sizeof(struct disk_loop),
@@ -692,8 +692,8 @@ register long	magic;
 		return NMG_KIND_FACEUSE_A;
 	case NMG_FACE_MAGIC:
 		return NMG_KIND_FACE;
-	case NMG_FACE_G_MAGIC:
-		return NMG_KIND_FACE_G;
+	case NMG_FACE_G_PLANE_MAGIC:
+		return NMG_KIND_FACE_G_PLANE;
 	case NMG_LOOPUSE_MAGIC:
 		return NMG_KIND_LOOPUSE;
 	case NMG_LOOPUSE_A_MAGIC:
@@ -909,18 +909,18 @@ double		local2mm;
 			PUTMAGIC( DISK_FACE_MAGIC );
 			INDEXL( d, f, l );	/* face is member of fg list */
 			INDEX( d, f, fu_p );
-			INDEX( d, f, fg_p );
+			rt_plong( d->g, rt_nmg_reindex((genptr_t)(f->g.magic_p), ecnt) );
 			rt_plong( d->flip, f->flip );
 		}
 		return;
-	case NMG_KIND_FACE_G:
+	case NMG_KIND_FACE_G_PLANE:
 		{
-			struct face_g	*fg = (struct face_g *)ip;
-			struct disk_face_g	*d;
+			struct face_g_plane	*fg = (struct face_g *)ip;
+			struct disk_face_g_plane	*d;
 			plane_t			plane;
-			d = &((struct disk_face_g *)op)[oindex];
-			NMG_CK_FACE_G(fg);
-			PUTMAGIC( DISK_FACE_G_MAGIC );
+			d = &((struct disk_face_g_plane *)op)[oindex];
+			NMG_CK_FACE_G_PLANE(fg);
+			PUTMAGIC( DISK_FACE_G_PLANE_MAGIC );
 			INDEXL( d, fg, f_hd );
 			VMOVE( plane, fg->N );
 			plane[3] = fg->N[3] * local2mm;
@@ -1241,26 +1241,29 @@ mat_t		mat;
 		{
 			struct face	*f = (struct face *)op;
 			struct disk_face	*d;
+			int			g_index;
+
 			d = &((struct disk_face *)ip)[iindex];
 			NMG_CK_FACE(f);
 			RT_CK_DISKMAGIC( d->magic, DISK_FACE_MAGIC );
 			INDEX( d, f, faceuse, fu_p );
-			INDEX( d, f, face_g, fg_p );
+			g_index = rt_glong(d->g);
+			f->g.magic_p = (long *)ptrs[g_index];
 			f->flip = rt_glong( d->flip );
 			/* Enrole this face on fg's list of users */
-			NMG_CK_FACE_G(f->fg_p);
-			INDEXL_HD( d, f, l, f->fg_p->f_hd ); /* after fu->fg_p set */
+			NMG_CK_FACE_G_PLANE(f->g.plane_p);
+			INDEXL_HD( d, f, l, f->g.plane_p->f_hd ); /* after fu->fg_p set */
 			NMG_CK_FACEUSE(f->fu_p);
 		}
 		return 0;
-	case NMG_KIND_FACE_G:
+	case NMG_KIND_FACE_G_PLANE:
 		{
-			struct face_g	*fg = (struct face_g *)op;
-			struct disk_face_g	*d;
+			struct face_g_plane	*fg = (struct face_g *)op;
+			struct disk_face_g_plane	*d;
 			plane_t			plane;
-			d = &((struct disk_face_g *)ip)[iindex];
-			NMG_CK_FACE_G(fg);
-			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_MAGIC );
+			d = &((struct disk_face_g_plane *)ip)[iindex];
+			NMG_CK_FACE_G_PLANE(fg);
+			RT_CK_DISKMAGIC( d->magic, DISK_FACE_G_PLANE_MAGIC );
 			INDEXL_HD( d, fg, f_hd, fg->f_hd );
 			ntohd( plane, d->N, 4 );
 			rt_rotate_plane( fg->N, mat, plane );
@@ -1549,11 +1552,11 @@ rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 					ptrs[subscript] = (long *)f;
 				}
 				break;
-			case NMG_KIND_FACE_G:
+			case NMG_KIND_FACE_G_PLANE:
 				{
-					struct face_g	*fg;
-					GET_FACE_G( fg, m );
-					fg->magic = NMG_FACE_G_MAGIC;
+					struct face_g_plane	*fg;
+					GET_FACE_G_PLANE( fg, m );
+					fg->magic = NMG_FACE_G_PLANE_MAGIC;
 					RT_LIST_INIT( &fg->f_hd );
 					ptrs[subscript] = (long *)fg;
 				}
@@ -1783,7 +1786,7 @@ CONST struct rt_tol		*tol;
  *	loop_g
  *  are not converted for storage in the database.
  *  They should be re-generated at import time.
- *  (Saving space in face_g is problematic).
+ *  (Saving space in face_g_plane is problematic).
  *
  *  If the "compact" flag is not set, then the NMG model is saved, verbatim.
  */

@@ -246,7 +246,7 @@ CONST struct shell	*s;
 int			poly_markers;
 {
 	struct faceuse	*fu;
-	struct face_g	*fg;
+	struct face_g_plane	*fg;
 	register struct loopuse	*lu;
 	vect_t		normal;
 
@@ -259,8 +259,8 @@ int			poly_markers;
 		/* Consider this face */
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
-		fg = fu->f_p->fg_p;
-		NMG_CK_FACE_G(fg);
+		fg = fu->f_p->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fg);
 		if (fu->orientation != OT_SAME)  continue;
 		NMG_GET_FU_NORMAL( n, fu );
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
@@ -2058,7 +2058,7 @@ CONST struct faceuse	*fu;
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
 	struct rt_vlblock	*vbp;
-	struct face_g	*fg;
+	struct face_g_plane	*fg;
 	long		*tab;
 	int		fancy;
 	static int	num = 1;
@@ -2118,7 +2118,7 @@ CONST struct faceuse	*fu1, *fu2;
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
 	struct rt_vlblock	*vbp;
-	struct face_g	*fg;
+	struct face_g_plane	*fg;
 	long		*tab;
 	int		fancy;
 

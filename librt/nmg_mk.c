@@ -198,8 +198,8 @@ static struct vertexuse *nmg_mvvu RT_ARGS( (long *upptr, struct model *m) );
  *	6 loop_g structures
  *		Each loop_g structure contains a bounding box for the loop.
  *		It is referenced by 1 loop structure.
- *	6 face_g structures
- *		Each face_g structure contains a plane equation and
+ *	6 face_g_plane structures
+ *		Each face_g_plane structure contains a plane equation and
  *		a bounding box.  It is referenced by one face structure.
  *		The plane equation is calculated from the vertex_g data
  *		by nmg_fu_planeeqn().
@@ -426,7 +426,7 @@ struct loopuse *lu1;
 	GET_FACEUSE(fu2, m);
 
 	f->fu_p = fu1;
-	f->fg_p = (struct face_g *)NULL;
+	f->g.plane_p = (struct face_g_plane *)NULL;
 	f->flip = 0;
 	RT_LIST_INIT(&f->l);
 	f->l.magic = NMG_FACE_MAGIC;	/* Face struct is GOOD */
@@ -1167,7 +1167,7 @@ struct faceuse *fu1;
 	struct faceuse *fu2;
 	struct face	*f1;
 	struct face	*f2;
-	struct face_g	*fg;
+	struct face_g_plane	*fg;
 	struct shell	*s;
 	int		ret;
 
@@ -1189,14 +1189,15 @@ struct faceuse *fu1;
 	}
 
 	/* Release the geometry */
-	if (fg = f1->fg_p) {
-		/* Disassociate this face from face_g */
+	if (fg = f1->g.plane_p) {
+		NMG_CK_FACE_G_PLANE(fg);
+
+		/* Disassociate this face from face_g_plane */
 		RT_LIST_DEQUEUE( &f1->l );
 
-		/* If face_g is not referred to by any other face, free it */
+		/* If face_g_plane is not referred to by any other face, free it */
 		if( RT_LIST_IS_EMPTY( &fg->f_hd ) )  {
-			NMG_CK_FACE_G(fg);
-			FREE_FACE_G(fg);
+			FREE_FACE_G_PLANE(fg);
 		}
 	}
 	FREE_FACE(f1);
@@ -1832,7 +1833,7 @@ struct faceuse *fu;
 CONST plane_t p;
 {
 	int i;
-	struct face_g	*fg;
+	struct face_g_plane	*fg;
 	struct face	*f;
 	struct model	*m;
 
@@ -1843,16 +1844,16 @@ CONST plane_t p;
 	fu->orientation = OT_SAME;
 	fu->fumate_p->orientation = OT_OPPOSITE;
 
-	fg = f->fg_p;
+	fg = f->g.plane_p;
 	if (fg) {
-		/* Face already has face_g associated with it */
-		NMG_CK_FACE_G(fg);
+		/* Face already has face_g_plane associated with it */
+		NMG_CK_FACE_G_PLANE(fg);
 	} else {
 		m = nmg_find_model( &fu->l.magic );
-		GET_FACE_G(f->fg_p, m);
+		GET_FACE_G_PLANE(f->g.plane_p, m);
 		f->flip = 0;
-		fg = f->fg_p;
-		fg->magic = NMG_FACE_G_MAGIC;
+		fg = f->g.plane_p;
+		fg->magic = NMG_FACE_G_PLANE_MAGIC;
 		RT_LIST_INIT(&fg->f_hd);
 		RT_LIST_APPEND( &fg->f_hd, &f->l );
 	}
@@ -2398,18 +2399,18 @@ nmg_jfg( f1, f2 )
 struct face	*f1;
 struct face	*f2;
 {
-	struct face_g	*fg1;
-	struct face_g	*fg2;
+	struct face_g_plane	*fg1;
+	struct face_g_plane	*fg2;
 	struct face	*f;
 
 	NMG_CK_FACE(f1);
 	NMG_CK_FACE(f2);
-	fg1 = f1->fg_p;
-	fg2 = f2->fg_p;
+	fg1 = f1->g.plane_p;
+	fg2 = f2->g.plane_p;
 	if( fg2 && !fg1 )  {
 		/* Make f1 share existing geometry of f2 */
-		NMG_CK_FACE_G(fg1);
-		f1->fg_p = fg2;
+		NMG_CK_FACE_G_PLANE(fg1);
+		f1->g.plane_p = fg2;
 		f1->flip = f2->flip;
 		RT_LIST_INSERT( &fg2->f_hd, &f1->l );
 
@@ -2420,8 +2421,8 @@ struct face	*f2;
 	}
 	if( fg1 && !fg2 )  {
 		/* Make f2 share existing geometry of f1 */
-		NMG_CK_FACE_G(fg1);
-		f2->fg_p = fg1;
+		NMG_CK_FACE_G_PLANE(fg1);
+		f2->g.plane_p = fg1;
 		f2->flip = f1->flip;
 		RT_LIST_INSERT( &fg1->f_hd, &f2->l );
 
@@ -2431,8 +2432,8 @@ struct face	*f2;
 		return;
 	}
 
-	NMG_CK_FACE_G(fg1);
-	NMG_CK_FACE_G(fg2);
+	NMG_CK_FACE_G_PLANE(fg1);
+	NMG_CK_FACE_G_PLANE(fg2);
 
 	if( fg1 == fg2 )
 	{
@@ -2447,13 +2448,13 @@ struct face	*f2;
 		f = RT_LIST_FIRST( face, &fg2->f_hd );
 		RT_LIST_DEQUEUE( &f->l );
 		NMG_CK_FACE(f);
-		f->fg_p = fg1;
+		f->g.plane_p = fg1;
 		/* flip flag is left unchanged here, on purpose */
 		RT_LIST_INSERT( &fg1->f_hd, &f->l );
 	}
 
 	/* fg2 list is now empty, release that face geometry */
-	FREE_FACE_G(fg2);
+	FREE_FACE_G_PLANE(fg2);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1 , f2);

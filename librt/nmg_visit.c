@@ -175,8 +175,8 @@ genptr_t			*state;		/* Handler's private state */
 
 	if(htab->vis_face) htab->vis_face( (long *)f, state, 0 );
 
-	if(htab->vis_face_g && f->fg_p)
-		htab->vis_face_g( (long *)f->fg_p, state, 0 );
+	if(htab->vis_face_g && f->g.plane_p)
+		htab->vis_face_g( (long *)f->g.plane_p, state, 0 );
 }
 
 /*

@@ -79,11 +79,11 @@ CONST mat_t m;
 void
 nmg_tabulate_face_g_verts( tab , fg )
 struct nmg_ptbl *tab;
-CONST struct face_g *fg;
+CONST struct face_g_plane *fg;
 {
 	struct face *f;
 
-	NMG_CK_FACE_G( fg );
+	NMG_CK_FACE_G_PLANE( fg );
 
 	/* loop through all faces using fg */
 	for( RT_LIST_FOR( f , face , &fg->f_hd ) )
@@ -615,11 +615,11 @@ plane_t pl;
  *
  * Calculate face geometry using a least squares fit.
  *
- * If fu does not already have a face_g associated, only
+ * If fu does not already have a face_g_plane associated, only
  * vertices in fu will participate.
  *
- * if fu has a face_g, then all vertices in any face that
- * references the same face_g will participate in the
+ * if fu has a face_g_plane, then all vertices in any face that
+ * references the same face_g_plane will participate in the
  * fit for the face plane.
  *
  * This routine is not efficient for use with newly created
@@ -640,7 +640,7 @@ struct faceuse *fu_in;
 	struct nmg_ptbl verts;
 	plane_t pl,old_pl;
 	struct face *f;
-	struct face_g *fg;
+	struct face_g_plane *fg;
 	struct loopuse *lu;
 	mat_t matrix;
 	mat_t inverse;
@@ -656,10 +656,10 @@ struct faceuse *fu_in;
 	NMG_CK_FACEUSE( fu );
 	f = fu->f_p;
 	NMG_CK_FACE( f );
-	fg = f->fg_p;
+	fg = f->g.plane_p;
 	if( fg )
 	{
-		NMG_CK_FACE_G( fg );
+		NMG_CK_FACE_G_PLANE( fg );
 		nmg_tabulate_face_g_verts( &verts , fg );
 	}
 	else
@@ -2024,7 +2024,7 @@ long ***trans_tbl;
 					NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p , (long *)new_fu->f_p );
 				}
 			}
-			if (fu->f_p->fg_p)
+			if (fu->f_p->g.plane_p)
 			{
 #if 1
 				/* Do it this way if you expect to change the normals */
@@ -2036,8 +2036,8 @@ long ***trans_tbl;
 				nmg_jfg( fu, new_fu );
 #endif
 
-				/* XXX Perhaps this should be new_fu->f_p->fg_p ? */
-				NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p->fg_p , (long *)new_fu->f_p->fg_p );
+				/* XXX Perhaps this should be new_fu->f_p->g.plane_p ? */
+				NMG_INDEX_ASSIGN( (*trans_tbl) , fu->f_p->g.plane_p , (long *)new_fu->f_p->g.plane_p );
 			}
 			new_fu->orientation = fu->orientation;
 			new_fu->fumate_p->orientation = fu->fumate_p->orientation;
@@ -2402,7 +2402,7 @@ CONST struct shell *s;
 	rt_free( (char *)flags , "nmg_shell_is_void: flags" );
 
 	NMG_CK_FACE( f );
-	NMG_CK_FACE_G( f->fg_p );
+	NMG_CK_FACE_G_PLANE( f->g.plane_p );
 	fu = f->fu_p;
 	NMG_CK_FACEUSE( fu );
 
@@ -2612,9 +2612,9 @@ CONST struct rt_tol *tol;
 		f_top = nmg_find_top_face( s , flags );	
 		NMG_CK_FACE( f_top );
 		if( f_top->flip )
-			z = - f_top->fg_p->N[Z];
+			z = - f_top->g.plane_p->N[Z];
 		else
-			z =   f_top->fg_p->N[Z];
+			z =   f_top->g.plane_p->N[Z];
 
 		/* f_top is the topmost face (in the +z direction), so its OT_SAME use should have a
 		 * normal with a positive z component */
@@ -3848,7 +3848,7 @@ int *free_edges;
 CONST struct rt_tol *tol;
 {
 	struct faceuse *fu;
-	struct face_g *fg;
+	struct face_g_plane *fg;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 	int i;
@@ -3870,7 +3870,7 @@ CONST struct rt_tol *tol;
 			continue;;
 
 		NMG_CK_FACEUSE( fu );
-		fg = fu->f_p->fg_p;
+		fg = fu->f_p->g.plane_p;
 
 		/* check if this face is different from the ones on list */
 		unique = 1;
@@ -3879,7 +3879,7 @@ CONST struct rt_tol *tol;
 			struct face *fp;
 
 			fp = (struct face *)NMG_TBL_GET( faces , i );
-			if( fp->fg_p == fg || rt_coplanar( fg->N , fp->fg_p->N , tol ) > 0 )
+			if( fp->g.plane_p == fg || rt_coplanar( fg->N , fp->g.plane_p->N , tol ) > 0 )
 			{
 				unique = 0;
 				break;
@@ -3953,21 +3953,22 @@ CONST struct nmg_ptbl *faces;
 
 		case 1:		/* just move the vertex to the plane */
 			fp1 = (struct face *)NMG_TBL_GET( faces , 0 );
-			vert_move_len = DIST_PT_PLANE( vg->coord , fp1->fg_p->N );
-			VJOIN1( vg->coord , vg->coord , -vert_move_len , fp1->fg_p->N );
+			vert_move_len = DIST_PT_PLANE( vg->coord , fp1->g.plane_p->N );
+			VJOIN1( vg->coord , vg->coord , -vert_move_len , fp1->g.plane_p->N );
 			break;
 
 		case 2:		/* create a third plane perpendicular to first two */
 			fp1 = (struct face *)NMG_TBL_GET( faces , 0 );
 			fp2 = (struct face *)NMG_TBL_GET( faces , 1 );
 
-			VCROSS( pl1 , fp1->fg_p->N , fp2->fg_p->N );
+			VCROSS( pl1 , fp1->g.plane_p->N , fp2->g.plane_p->N );
 			pl1[3] = VDOT( vg->coord , pl1 );
-			if( rt_mkpoint_3planes( vg->coord , fp1->fg_p->N , fp2->fg_p->N , pl1 ) )
+			if( rt_mkpoint_3planes( vg->coord , fp1->g.plane_p->N , fp2->g.plane_p->N , pl1 ) )
 			{
 				rt_log( "nmg_simple_vertex_solve: Cannot find new coords for two planes\n" );
 				rt_log( "\tplanes are ( %f %f %f %f ) and ( %f %f %f %f )\n",
-					V4ARGS( fp1->fg_p->N ) , V4ARGS( fp2->fg_p->N ) );
+					V4ARGS( fp1->g.plane_p->N ) ,
+					V4ARGS( fp2->g.plane_p->N ) );
 				rt_log( "\tcalculated third plane is ( %f %f %f %f )\n" , V4ARGS( pl1 ) );
 				failed = 1;
 				break;
@@ -3978,12 +3979,12 @@ CONST struct nmg_ptbl *faces;
 			fp1 = (struct face *)NMG_TBL_GET( faces , 0 );
 			fp2 = (struct face *)NMG_TBL_GET( faces , 1 );
 			fp3 = (struct face *)NMG_TBL_GET( faces , 2 );
-			if( rt_mkpoint_3planes( vg->coord , fp1->fg_p->N , fp2->fg_p->N , fp3->fg_p->N ) )
+			if( rt_mkpoint_3planes( vg->coord , fp1->g.plane_p->N , fp2->g.plane_p->N , fp3->g.plane_p->N ) )
 			{
 				rt_log( "nmg_simple_vertex_solve: failed for 3 planes:\n" );
-				rt_log( "\t( %f %f %f %f )\n" , V4ARGS( fp1->fg_p->N ) );
-				rt_log( "\t( %f %f %f %f )\n" , V4ARGS( fp2->fg_p->N ) );
-				rt_log( "\t( %f %f %f %f )\n" , V4ARGS( fp3->fg_p->N ) );
+				rt_log( "\t( %f %f %f %f )\n" , V4ARGS( fp1->g.plane_p->N ) );
+				rt_log( "\t( %f %f %f %f )\n" , V4ARGS( fp2->g.plane_p->N ) );
+				rt_log( "\t( %f %f %f %f )\n" , V4ARGS( fp3->g.plane_p->N ) );
 				failed = 1;
 				break;
 			}
@@ -4038,8 +4039,8 @@ CONST struct rt_tol *tol;
 
 		NMG_CK_FACEUSE( fu );
 		NMG_CK_FACE( fu->f_p );
-		NMG_CK_FACE_G( fu->f_p->fg_p );
-		dist = DIST_PT_PLANE( v->vg_p->coord , fu->f_p->fg_p->N );
+		NMG_CK_FACE_G_PLANE( fu->f_p->g.plane_p );
+		dist = DIST_PT_PLANE( v->vg_p->coord , fu->f_p->g.plane_p->N );
 		dist = (dist < 0.0 ? (-dist) : dist);
 		if( dist > tol->dist )
 		{
@@ -4365,14 +4366,14 @@ CONST struct rt_tol *tol;
 			 * the line is defined by start and dir */
 
 			NMG_GET_FU_NORMAL( normal1 , fu1 );
-			if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->fg_p->N , fu2->f_p->fg_p->N , new_v->vg_p->coord , &tol_tmp ) )
+			if( ret_val=rt_isect_2planes( start , dir , fu1->f_p->g.plane_p->N , fu2->f_p->g.plane_p->N , new_v->vg_p->coord , &tol_tmp ) )
 			{
 				/* Cannot find line for this edge */
 				rt_log( "nmg_inside_vert: Cannot find new edge between two planes\n" );
 				rt_log( "return from rt_isect_2planes is %d\n" , ret_val );
 				rt_log( "\tplanes are ( %f %f %f %f ) and ( %f %f %f %f )\n" ,
-					V4ARGS( fu1->f_p->fg_p->N ),
-					V4ARGS( fu2->f_p->fg_p->N ) );
+					V4ARGS( fu1->f_p->g.plane_p->N ),
+					V4ARGS( fu2->f_p->g.plane_p->N ) );
 				rt_log( "\tfus x%x and x%x, faces x%x and x%x\n" ,
 					fu1, fu2, fu1->f_p, fu2->f_p );
 				nmg_pr_fu_briefly( fu1 , "fu1: " );
@@ -4565,10 +4566,10 @@ CONST struct rt_tol *tol;
 					continue;
 
 				/* Do not intersect with a plane that this edge is parallel to */
-				if( NEAR_ZERO( VDOT( f->fg_p->N , edge_fus->dir ) , tol->perp ) )
+				if( NEAR_ZERO( VDOT( f->g.plane_p->N , edge_fus->dir ) , tol->perp ) )
 					continue;
 
-				if( rt_isect_line3_plane( &dist[0] , edge_fus->start , edge_fus->dir , f->fg_p->N , tol ) > 1 )
+				if( rt_isect_line3_plane( &dist[0] , edge_fus->start , edge_fus->dir , f->g.plane_p->N , tol ) > 1 )
 					continue;
 
 				if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -7354,10 +7355,10 @@ struct model *m;
 					fu->fumate_p->orientation = orientation;
 					NMG_INDEX_SET( flags , fu->fumate_p );
 
-					if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p->fg_p ) )
+					if( NMG_INDEX_TEST_AND_SET( flags , fu->f_p->g.plane_p ) )
 					{
 						/* correct normal vector */
-						fu->f_p->fg_p->N[Y] = (-fu->f_p->fg_p->N[Y]);
+						fu->f_p->g.plane_p->N[Y] = (-fu->f_p->g.plane_p->N[Y]);
 					}
 				}
 			}

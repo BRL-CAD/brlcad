@@ -416,9 +416,9 @@ long		*up;
  */
 void
 nmg_vfg(fg)
-struct face_g *fg;
+struct face_g_plane *fg;
 {
-	NMG_CK_FACE_G(fg);
+	NMG_CK_FACE_G_PLANE(fg);
 
 	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 &&
 	    fg->N[H]!=0.0) {
@@ -457,7 +457,7 @@ struct faceuse *fup;
 		if (f->min_pt[i] >= f->max_pt[i])
 			rt_bomb("nmg_vface() face min_pt greater than max_pt\n");
 	
-	if (f->fg_p) nmg_vfg(f->fg_p);
+	if (f->g.plane_p) nmg_vfg(f->g.plane_p);
 }
 
 /* Verify faceuse attributes */
@@ -882,14 +882,14 @@ char *str;
 void
 nmg_ck_fg(f, fg, str)
 struct face *f;
-struct face_g *fg;
+struct face_g_plane *fg;
 char *str;
 {
 	char *errstr;
 	errstr = rt_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
 	(void)sprintf(errstr, "%sFace_g %8x\n", str, f);
 
-	NMG_CK_FACE_G(fg);
+	NMG_CK_FACE_G_PLANE(fg);
 	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 && fg->N[H]!=0.0){
 		(void)sprintf(&errstr[strlen(errstr)],
 			"nmg_ck_fg() bad NMG plane equation %fX + %fY + %fZ = %f\n",
@@ -915,11 +915,11 @@ char *str;
 
 	NMG_CK_FACE(f);
 	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE_G(f->fg_p);
+	NMG_CK_FACE_G_PLANE(f->g.plane_p);
 	if (f->fu_p != fu && f->fu_p->fumate_p != fu) rt_bomb(
 		strcat(errstr,"nmg_ck_f() Cannot get from face to \"parent faceuse\"\n"));
 
-	if (f->fg_p) nmg_ck_fg(f, f->fg_p, errstr);
+	if (f->g.plane_p) nmg_ck_fg(f, f->g.plane_p, errstr);
 
 	rt_free(errstr, "nmg_ck_f error str");
 }

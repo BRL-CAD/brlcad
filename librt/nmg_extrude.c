@@ -1109,7 +1109,7 @@ CONST struct rt_tol *tol;
 	struct edgeuse *eu;
 	struct loopuse *lu;
 	struct faceuse *fu;
-	struct face_g *fg_p;
+	struct face_g_plane *fg_p;
 	struct model *m;
 	struct shell *is;	/* inside shell */
 	struct shell *s_tmp;
@@ -1180,8 +1180,8 @@ CONST struct rt_tol *tol;
 		{
 			NMG_CK_FACEUSE( fu );
 			NMG_CK_FACE( fu->f_p );
-			fg_p = fu->f_p->fg_p;
-			NMG_CK_FACE_G( fg_p );
+			fg_p = fu->f_p->g.plane_p;
+			NMG_CK_FACE_G_PLANE( fg_p );
 
 			/* move the faces by the distance "thick" */
 			if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )
@@ -1398,12 +1398,12 @@ CONST struct rt_tol *tol;
 		/* now adjust all the planes, first move them by distance "thick" */
 		for( RT_LIST_FOR( fu , faceuse , &s_tmp->fu_hd ) )
 		{
-			struct face_g *fg_p;
+			struct face_g_plane *fg_p;
 
 			NMG_CK_FACEUSE( fu );
 			NMG_CK_FACE( fu->f_p );
-			fg_p = fu->f_p->fg_p;
-			NMG_CK_FACE_G( fg_p );
+			fg_p = fu->f_p->g.plane_p;
+			NMG_CK_FACE_G_PLANE( fg_p );
 
 			/* move the faces by the distance "thick" */
 			if( NMG_INDEX_TEST_AND_SET( flags , fg_p ) )

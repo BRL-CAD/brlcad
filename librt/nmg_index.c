@@ -63,8 +63,8 @@ register long	*p;
 		return ((struct faceuse_a *)p)->index;
 	case NMG_FACE_MAGIC:
 		return ((struct face *)p)->index;
-	case NMG_FACE_G_MAGIC:
-		return ((struct face_g *)p)->index;
+	case NMG_FACE_G_PLANE_MAGIC:
+		return ((struct face_g_plane *)p)->index;
 	case NMG_LOOPUSE_MAGIC:
 		return ((struct loopuse *)p)->index;
 	case NMG_LOOPUSE_A_MAGIC:
@@ -158,9 +158,9 @@ struct model	*m;
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_MARK_INDEX(f);
-				if( f->fg_p )  {
-					NMG_CK_FACE_G(f->fg_p);
-					NMG_MARK_INDEX(f->fg_p);
+				if( f->g.plane_p )  {
+					NMG_CK_FACE_G_PLANE(f->g.plane_p);
+					NMG_MARK_INDEX(f->g.plane_p);
 				}
 				/* Loops in face */
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
@@ -379,7 +379,7 @@ register long	newindex;
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_ASSIGN_NEW_INDEX(f);
-				if( f->fg_p )  NMG_ASSIGN_NEW_INDEX(f->fg_p);
+				if( f->g.plane_p )  NMG_ASSIGN_NEW_INDEX(f->g.plane_p);
 				/* Loops in face */
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 					NMG_CK_LOOPUSE(lu);
@@ -512,7 +512,7 @@ CONST struct nmg_struct_counts	*ctr;
 	rt_vls_printf(str, "\t%6d shell\n", ctr->shell);
 	rt_vls_printf(str, "\t%6d shell_a\n", ctr->shell_a);
 	rt_vls_printf(str, "\t%6d face\n", ctr->face);
-	rt_vls_printf(str, "\t%6d face_g\n", ctr->face_g);
+	rt_vls_printf(str, "\t%6d face_g_plane\n", ctr->face_g);
 	rt_vls_printf(str, "\t%6d faceuse\n", ctr->faceuse);
 	rt_vls_printf(str, "\t%6d faceuse_a\n", ctr->faceuse_a);
 	rt_vls_printf(str, "\t%6d loopuse\n", ctr->loopuse);
@@ -629,9 +629,9 @@ register struct nmg_struct_counts	*ctr;
 				f = fu->f_p;
 				NMG_CK_FACE(f);
 				NMG_UNIQ_INDEX(f, face);
-				if( f->fg_p )  {
-					NMG_CK_FACE_G(f->fg_p);
-					NMG_UNIQ_INDEX(f->fg_p, face_g);
+				if( f->g.plane_p )  {
+					NMG_CK_FACE_G_PLANE(f->g.plane_p);
+					NMG_UNIQ_INDEX(f->g.plane_p, face_g_plane);
 				}
 				/* Loops in face */
 				for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {

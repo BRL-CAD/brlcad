@@ -598,7 +598,7 @@ CONST struct rt_tol	*tol;
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G(fu->f_p->fg_p);
+	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
 	if(ignore_lu) NMG_CK_LOOPUSE(ignore_lu);
 	RT_CK_TOL(tol);
 

@@ -301,7 +301,7 @@ CONST struct vertexuse *vu;
 /*
  *			N M G _ F I N D _ F U _ W I T H _ F G _ I N _ S
  *
- *  Find a faceuse in shell s1 that shares the face_g structure with
+ *  Find a faceuse in shell s1 that shares the face_g_plane structure with
  *  fu2 and has the same orientation.
  *  This may be an OT_OPPOSITE faceuse, depending on orientation.
  *  Returns NULL if no such faceuse can be found in s1.
@@ -314,15 +314,15 @@ CONST struct faceuse	*fu2;
 {
 	struct faceuse		*fu1;
 	struct face		*f2;
-	register struct face_g	*fg2;
+	register struct face_g_plane	*fg2;
 
 	NMG_CK_SHELL(s1);
 	NMG_CK_FACEUSE(fu2);
 
 	f2 = fu2->f_p;
 	NMG_CK_FACE(f2);
-	fg2 = f2->fg_p;
-	NMG_CK_FACE_G(fg2);
+	fg2 = f2->g.plane_p;
+	NMG_CK_FACE_G_PLANE(fg2);
 
 	for( RT_LIST_FOR( fu1, faceuse, &s1->fu_hd ) )  {
 		register struct face	*f1;
@@ -332,8 +332,8 @@ CONST struct faceuse	*fu2;
 		NMG_CK_FACEUSE(fu1);
 		f1 = fu1->f_p;
 		NMG_CK_FACE(f1);
-		fg1 = fu1->f_p->fg_p;
-		NMG_CK_FACE_G(fg1);
+		fg1 = fu1->f_p->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fg1);
 
 		if( fg1 != fg2 )  continue;
 
@@ -1370,7 +1370,7 @@ CONST struct edgeuse	*eu;
 	fu = lu->up.fu_p;
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G(fu->f_p->fg_p);
+	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
 
 	/* Get unit length Normal vector for edgeuse's faceuse */
 	NMG_GET_FU_NORMAL( Norm, fu );

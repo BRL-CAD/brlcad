@@ -518,7 +518,7 @@ struct faceuse	*fu1;
 struct face	*f2;
 CONST struct rt_tol	*tol;
 {
-	CONST struct face_g	*fg2;
+	CONST struct face_g_plane	*fg2;
 	struct nmg_ptbl		vtab;
 	FAST fastf_t		dist;
 	fastf_t			worst = 0;
@@ -529,8 +529,8 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACE( f2 );
 	RT_CK_TOL(tol);
 
-	fg2 = f2->fg_p;
-	NMG_CK_FACE_G(fg2);
+	fg2 = f2->g.plane_p;
+	NMG_CK_FACE_G_PLANE(fg2);
 
 	nmg_vertex_tabulate( &vtab, &fu1->l.magic );
 
@@ -594,7 +594,7 @@ struct faceuse *fu1;
 struct face *f2;
 CONST struct rt_tol *tol;
 {
-	struct face_g *fg1;
+	struct face_g_plane *fg1;
 	struct faceuse *fu;
 	struct face *f;
 	int count=0;
@@ -604,8 +604,8 @@ CONST struct rt_tol *tol;
 	RT_CK_TOL( tol );
 
 	NMG_CK_FACE( fu1->f_p );
-	fg1 = fu1->f_p->fg_p;
-	NMG_CK_FACE_G( fg1 );
+	fg1 = fu1->f_p->g.plane_p;
+	NMG_CK_FACE_G_PLANE( fg1 );
 
 	for( RT_LIST_FOR( f , face , &fg1->f_hd ) )
 	{
@@ -644,8 +644,8 @@ struct face	*f1;
 struct face	*f2;
 CONST struct rt_tol	*tol;
 {
-	register struct face_g	*fg1;
-	register struct face_g	*fg2;
+	register struct face_g_plane	*fg1;
+	register struct face_g_plane	*fg2;
 	FAST fastf_t		dist;
 	int			flip2 = 0;
 
@@ -653,8 +653,8 @@ CONST struct rt_tol	*tol;
 	NMG_CK_FACE(f2);
 	RT_CK_TOL(tol);
 
-	fg1 = f1->fg_p;
-	fg2 = f2->fg_p;
+	fg1 = f1->g.plane_p;
+	fg2 = f2->g.plane_p;
 
 	if( !fg1 || !fg2 )  {
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
@@ -664,8 +664,8 @@ CONST struct rt_tol	*tol;
 		return 0;
 	}
 
-	NMG_CK_FACE_G(fg1);
-	NMG_CK_FACE_G(fg2);
+	NMG_CK_FACE_G_PLANE(fg1);
+	NMG_CK_FACE_G_PLANE(fg2);
 
 	if( fg1 == fg2 )  {
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
@@ -835,29 +835,29 @@ CONST struct rt_tol	*tol;
 
 	for( i = NMG_TBL_END(&ftab)-1; i >= 0; i-- )  {
 		register struct face	*f1;
-		register struct face_g	*fg1;
+		register struct face_g_plane	*fg1;
 		f1 = (struct face *)NMG_TBL_GET(&ftab, i);
 		NMG_CK_FACE(f1);
-		fg1 = f1->fg_p;
+		fg1 = f1->g.plane_p;
 		if( !fg1 )  continue;
-		NMG_CK_FACE_G(fg1);
+		NMG_CK_FACE_G_PLANE(fg1);
 
 		/* Check that all the verts of f1 are within tol of face */
 		if( nmg_ck_fu_verts( f1->fu_p, f1, tol ) != 0 )  {
-			PLPRINT(" f1", f1->fg_p->N);
+			PLPRINT(" f1", f1->g.plane_p->N);
 			nmg_pr_fu_briefly(f1->fu_p, 0);
 			rt_bomb("nmg_model_face_fuse(): verts not within tol of containing face\n");
 		}
 
 		for( j = i-1; j >= 0; j-- )  {
 			register struct face	*f2;
-			register struct face_g	*fg2;
+			register struct face_g_plane	*fg2;
 
 			f2 = (struct face *)NMG_TBL_GET(&ftab, j);
 			NMG_CK_FACE(f2);
-			fg2 = f2->fg_p;
+			fg2 = f2->g.plane_p;
 			if( !fg2 )  continue;
-			NMG_CK_FACE_G(fg2);
+			NMG_CK_FACE_G_PLANE(fg2);
 
 			if( fg1 == fg2 )  continue;	/* Already shared */
 

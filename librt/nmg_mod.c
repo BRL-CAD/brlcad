@@ -63,8 +63,8 @@ CONST int		simplify;
 	struct faceuse	*fu2;
 	struct face	*f1;
 	struct face	*f2;
-	struct face_g	*fg1;
-	struct face_g	*fg2;
+	struct face_g_plane	*fg1;
+	struct face_g_plane	*fg2;
 
 	NMG_CK_SHELL(s);
 	m = nmg_find_model( &s->l.magic );
@@ -84,8 +84,8 @@ CONST int		simplify;
 		if( NMG_INDEX_TEST(flags1, f1) )  continue;
 		NMG_INDEX_SET(flags1, f1);
 
-		fg1 = f1->fg_p;
-		NMG_CK_FACE_G(fg1);
+		fg1 = f1->g.plane_p;
+		NMG_CK_FACE_G_PLANE(fg1);
 		NMG_GET_FU_PLANE( n1, fu1 );
 
 		/* For this face, visit all remaining faces in the shell. */
@@ -103,8 +103,8 @@ CONST int		simplify;
 			if( NMG_INDEX_TEST(flags2, f2) )  continue;
 			NMG_INDEX_SET(flags2, f2);
 
-			fg2 = f2->fg_p;
-			NMG_CK_FACE_G(fg2);
+			fg2 = f2->g.plane_p;
+			NMG_CK_FACE_G_PLANE(fg2);
 
 			if( fu2->fumate_p == fu1 || fu1->fumate_p == fu2 )
 				rt_bomb("nmg_shell_coplanar_face_merge() mate confusion\n");
@@ -552,7 +552,7 @@ CONST struct rt_tol	*tol;
 		fu1 = nmg_find_fu_with_fg_in_s( s1, fu2 );
 		if( fu1 )  {
 			if (rt_g.NMG_debug & DEBUG_BASIC)
-				rt_log("nmg_js(): shared face_g, doing nmg_jf()\n");
+				rt_log("nmg_js(): shared face_g_plane, doing nmg_jf()\n");
 			nmg_jf( fu1, fu2 );
 			/* fu2 pointer is invalid here */
 			fu2 = fu1;
@@ -1325,7 +1325,7 @@ register struct faceuse	*fu;
 	fumate = fu->fumate_p;
 	NMG_CK_FACEUSE(fumate);
 	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G(fu->f_p->fg_p);
+	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
 
 	/* reverse face normal vector */
 	fu->f_p->flip = !fu->f_p->flip;
@@ -1714,7 +1714,7 @@ struct shell *s;
 				nmg_orientation(new_lu->orientation));
 	}
 
-	if (fu->f_p->fg_p) {
+	if (fu->f_p->g.plane_p) {
 		plane_t		n;
 		if( fu->orientation == OT_SAME )  {
 			NMG_GET_FU_PLANE( n, fu );
