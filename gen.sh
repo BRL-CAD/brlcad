@@ -228,7 +228,12 @@ esac
 # Needs to be coordinated with setting of LIBTCL in Cakefile.defs
 case "${MACHINE}" in
 	li|fbsd)
-		BDIRS=`echo ${BDIRS} | sed -e  's/libtcl//' -e 's/libtk//' `
+		tclsh << EOF
+exit
+EOF
+		if test $? -eq 0
+		then BDIRS=`echo ${BDIRS} | sed -e  's/libtcl//' -e 's/libtk//' `
+		fi
 		;;
 esac
 
