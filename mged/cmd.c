@@ -168,8 +168,10 @@ static struct funtab funtab[] = {
 "adc", "[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]",
 	"control the angle/distance cursor",
         f_adc, 1, 5, TRUE,
-"ae", "azim elev", "set view using az and elev angles",
+"ae", "azim elev", "set view using azim and elev angles",
 	f_aeview, 3, 3, TRUE,
+"aet", "[-i] azim elev twist", "set view using azim, elev and twist angles",
+	f_aetview, 4, 5, TRUE,
 "aim", "[command_window [pathName]]", "aims command_window at pathName",
         f_aim, 1, 3, TRUE,
 "aip", "[fb]", "advance illumination pointer or path position forward or backward",
@@ -298,24 +300,14 @@ static struct funtab funtab[] = {
 	f_instance,3,4,TRUE,
 "idents", "file object(s)", "make ascii summary of region idents",
 	f_tables, 3, MAXARGS, TRUE,
-"iknob", "id [val]", "increment knob value",
-       f_knob,2,3, TRUE,
 "ill", "name", "illuminate object",
 	f_ill,2,2,TRUE,
 "in", "[-f] [-s] parameters...", "keyboard entry of solids.  -f for no drawing, -s to enter solid edit",
 	f_in, 1, MAXARGS, TRUE,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS, TRUE,
-#if 0
-"irot", "x y z", "incremental/relative rotate",
-        f_irot, 4, 4, TRUE,
-#endif
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,TRUE,
-#if 0
-"itran", "x y z", "incremental/relative translate using normalized screen coordinates",
-        f_tran, 4, 4,TRUE,
-#endif
 "joint", "command [options]", "articulation/animation commands",
 	f_joint, 1, MAXARGS, TRUE,
 "journal", "fileName", "record all commands and timings to journal",
@@ -330,8 +322,8 @@ static struct funtab funtab[] = {
 	f_killall, 2, MAXARGS,TRUE,
 "killtree", "<object>", "kill complete tree[s] - BE CAREFUL",
 	f_killtree, 2, MAXARGS, TRUE,
-"knob", "id [val]", "emulate knob twist",
-	f_knob,2,3, TRUE,
+"knob", "[-i] [id [val]]", "emulate knob twist",
+	f_knob,1,MAXARGS, TRUE,
 "l", "<objects>", "list attributes (verbose)",
 	cmd_list,2,MAXARGS, TRUE,
 "L",  "1|0 xpos ypos", "handle a left mouse event",
@@ -520,6 +512,8 @@ static struct funtab funtab[] = {
 	f_units,1,2,TRUE,
 "untie", "pathName", "untie display manager pathName",
         f_untie, 2,2,TRUE,
+"mged_update", "", "handle outstanding events and refresh",
+        f_update, 1,1,TRUE,
 "vars",	"[var=opt]", "assign/display mged variables",
 	f_set,1,2,TRUE,
 #if 1
@@ -2429,6 +2423,26 @@ set_e_axes_pos()
       VSETALL( absolute_rotate, 0.0 );
   }
 #endif
+}
+
+int
+f_update(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  event_check(1);  /* non-blocking */
+
+  if( sedraw > 0)
+    sedit();
+
+  refresh();
+
+  return TCL_OK;
 }
 
 int
