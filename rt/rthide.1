@@ -2,7 +2,7 @@
 .TH RTHIDE 1 BRL/CAD
 .UC 4
 .SH NAME
-rthide \(em raytrace a model, writing a UNIX-Plot hidden line removed
+rthide \(em ray-traces a model and writes a hidden line removed UNIX-Plot
 file.
 .SH SYNOPSIS
 .B rthide
@@ -17,7 +17,11 @@ operates on the indicated
 in the input
 .I model.g
 and produces a hidden line removed UNIX-Plot
-file with bas-relief features.
+file with bas-relief features.  \fBrthide\fR produces plots by drawing a
+boundary whenever a change in region_id is detected.  It also recognizes
+and portrays abrupt changes in surface curvature and changes in surface
+height.  This permits the recognition of pits, protrusions, and changes in
+surface curvature.
 .LP
 The orientation of the rays to be fired may be specified by
 the
@@ -98,71 +102,43 @@ program is a simple front-end to
 which is most useful when used with
 .IR mged (1).
 .SH EXAMPLE
-This section will acquaint the user with the ordinary usage of \fIrthide\fR.
+This section shows the ordinary usage of \fIrthide\fR.  For example,
 
 .nf
-.ce
-\fIrthide -s32 model.g all.g > file.pl\fR
+	\fIrthide -a# -e# -s32 model.g all.g > file.pl\fR
 .fi
 
-This will result in a 32 by 32 UNIXplot file of the named model.  There will 
-be some shading of the plot based on surface curvature.  In order to minimize
-this shading, an angle can be specified:
+results in a 32 by 32 UNIXplot file of the named model at the specified
+azimuth and elevation.  There will be some cross-hatching
+of the plot based on surface curvature.  In order to minimize
+this cross-hatching, an angle can be specified:
 
 .nf
-.ce
- \fIrthide -s32 -A89.0  model.g all.g > file.pl\fR
+	 \fIrthide -a# -e# -s32 -A89.0  model.g all.g > file.pl\fR
 .fi
 
-elliminates shading due to curvature.  However, shading resulting from sharp
+elliminates cross-hatching due to curvature.  However, 
+cross-hatching resulting from sharp
 changes in gradient cannot be elliminated.
 .LP
 The plotfile resulting from an \fIrthide\fR run can be viewed directly
-via \fIpl-sgi\fR:
+via \fIpl-sgi\fR and may be rotated with \fBplrot\fR at the user's option:
 
 .nf
-.ce
- \fIpl-sgi hide.pl\fR
+	\fIpl-sgi hide.pl\fR  or \fIplrot -a# -e# -g hide.pl | pl-sgi\fR
 .fi
 
 or it can be overlayed onto a solid model in \fImged\fR:
 
 .nf
-.ce
-\fImged>\fR
-\fIoverlay hide.pl\fR
+	\fImged>\fR
+	\fIoverlay hide.pl\fR
 .fi
 
 This technique can be used to position and plot \fIrthide\fR output.
-.SH "OVERLAP REPORTING"
-\fIRthide\fR shares overlap handling and reporting with the rest of the
-\fIRT\fR family of applications.  A brief description of the overlap
-reporting follows.
-.LP
-The first one hundred (100) overlaps are individually reported.  Thereafter,
-only one out of each additional one hundred overlaps are reported, and
-the user is notified that overlap printouts are being omitted.  This
-alerts the user that more overlaps exist, but that they are too numerous to
-list individually.  The general overlap message takes the following form:
-
-.nf
-.ce
- \fI"OVERLAP1: reg=region_name isol=solid_name"\fR
-.ce
- \fI"OVERLAP2: reg=region_name isol=solid_name"\fR
-.ce
- \fI"OVERLAP depth #mm at (x, y, z) sx# sy# lvl#"\fR
-.fi
-
-This means that OVERLAP1 and OVERLAP2 share a common space (depth) of
-#millimeters starting at the point x, y, z in model coordinates, and 
-at the ray coordinates (screen coordinates) sx and sy.  Level refers to the
-level of recursion, and will typically be zero unless glass or mirror
-objects are present.
 .SH "SEE ALSO"
-mged(1),
-rt(1), rtray(1),
-librt(3), libplot3(), plot3(5), ray(5V).
+mged(1), pl-sgi(1), plrot(1), rt(1), rtray(1), rtregis(1), rtscale(1),
+librt(3), libplot3(3), plot3(5), ray(5V).
 .SH DIAGNOSTICS
 Numerous error conditions are possible, usually due to errors in
 the geometry database.
