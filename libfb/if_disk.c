@@ -16,8 +16,13 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+
 #include <stdio.h>
+#ifdef BSD
+#include <sys/file.h>
+#else
 #include <fcntl.h>
+#endif
 #include "fb.h"
 #include "./fblocal.h"
 
