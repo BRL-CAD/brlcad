@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./solid.h"
 #include "./menu.h"
+#include "./scroll.h"
 #include "./dm.h"
 #include "./sedit.h"
 
@@ -110,9 +111,13 @@ static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
 static int	vsaved = 0;	/* set iff view saved */
 
-void btn_head_menu();
-void btn_item_hit();
-void	state_err();
+extern void	sl_halt_scroll();	/* in scroll.c */
+extern void	sl_toggle_scroll();
+
+void		btn_head_menu();
+void		btn_item_hit();
+
+void		state_err();
 
 static struct menu_item first_menu[] = {
 	{ "(BUTTON MENU)", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -131,6 +136,8 @@ static struct menu_item second_menu[] = {
 	{ "Save View", btn_item_hit, BV_VSAVE },
 	{ "Ang/Dist Curs", btn_item_hit, BV_ADCURSOR },
 	{ "Reset Viewsize", btn_item_hit, BV_RESET },
+	{ "Zero Sliders", sl_halt_scroll, 0 },
+	{ "Sliders", sl_toggle_scroll, 0 },
 	{ "Solid Illum", btn_item_hit, BE_S_ILLUMINATE },
 	{ "Object Illum", btn_item_hit, BE_O_ILLUMINATE },
 	{ "", (void (*)())NULL, 0 }
@@ -143,6 +150,7 @@ static struct menu_item sed_menu[] = {
 	{ "Scale", btn_item_hit, BE_S_SCALE },
 	{ "", (void (*)())NULL, 0 }
 };
+
 static struct menu_item oed_menu[] = {
 	{ "*OBJ EDIT*", btn_head_menu, 2 },
 	{ "Scale", btn_item_hit, BE_O_SCALE },

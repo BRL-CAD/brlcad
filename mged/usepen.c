@@ -28,8 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "externs.h"
+#include "./ged.h"
+#include "./titles.h"
 #include "./solid.h"
 #include "./menu.h"
 #include "./dm.h"
@@ -89,6 +90,25 @@ usepen()
 	int isave;
 
 	/*
+	 * If pen press is in scroll area, see if scrolling, and if so,
+	 * divert this pen press.
+	 */
+	if( (dm_values.dv_xpen >= MENUXLIM) &&
+	    dm_values.dv_penpress)  {
+		register int i;
+
+		if( (i = scroll_select(dm_values.dv_xpen, dm_values.dv_ypen )) < 0 )  {
+			(void)printf("pen press outside valid scroll area\n");
+			return;
+		} 
+		if( i > 0 )  {
+			/* Scroller bars claimed button press */
+			return;
+		}
+		/* Otherwise, fall through */
+	}
+
+	/*
 	 * If menu is active, and pen press is in menu area,
 	 * divert this pen press for menu purposes.
 	 */
@@ -109,7 +129,7 @@ usepen()
 		}
 		/* Otherwise, fall through */
 	}
-
+	
 	/*
 	 *  In the best of all possible worlds, nothing should happen
 	 *  when the pen is not pressed;  this would relax the requirement

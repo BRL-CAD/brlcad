@@ -27,8 +27,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "./ged.h"
 #include "externs.h"
+#include "./ged.h"
+#include "./titles.h"
 #include "./solid.h"
 #include "./sedit.h"
 #include "./dm.h"
@@ -90,8 +91,7 @@ dotitles()
 	/* Display state and local unit in upper right corner, boxed */
 	dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
 #define YPOS	(MENUY - MENU_DY - 75 )
-	dmp->dmr_2d_line(MENUXLIM, YPOS, XMIN, YPOS, 0); /* side-side */
-	dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);
+	dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
 #undef YPOS
 
 	/*
@@ -114,6 +114,7 @@ dotitles()
 	/*
 	 * The top of the menu (if any) begins at the Y value specified.
 	 */
+	scroll_display( SCROLLY ); 
 	mmenu_display( y );
 
 	/* print parameter locations on screen */
