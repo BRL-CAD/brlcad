@@ -48,15 +48,22 @@ struct edgeuse *eu1, *eu2;
 	pointp_t pt, ptmate;
 	point_t test_pt;
 	vect_t veu1, veu2, plvec1, plvec2;
+	struct faceuse	*fu1, *fu2;
 	register struct edgeuse *eutmp;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_LOOPUSE(eu1->up.lu_p);
-	NMG_CK_FACEUSE(eu1->up.lu_p->up.fu_p);
+	fu1 = eu1->up.lu_p->up.fu_p;
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_FACE(fu1->f_p);
+	NMG_CK_FACE_G(fu1->f_p->fg_p);
+
 	NMG_CK_EDGEUSE(eu2);
 	NMG_CK_LOOPUSE(eu2->up.lu_p);
-	NMG_CK_FACEUSE(eu2->up.lu_p->up.fu_p);
-
+	fu2 = eu2->up.lu_p->up.fu_p;
+	NMG_CK_FACEUSE(fu2);
+	NMG_CK_FACE(fu2->f_p);
+	NMG_CK_FACE_G(fu2->f_p->fg_p);
 
 	if (rt_g.NMG_debug & DEBUG_MESH) {
 		NMG_CK_VERTEXUSE(eu1->vu_p);
@@ -103,24 +110,23 @@ struct edgeuse *eu1, *eu2;
 			pt[0], pt[1], pt[2],
 			ptmate[0], ptmate[1], ptmate[2]);
 
-		nmg_pr_orient(eu1->up.lu_p->up.fu_p->orientation, "\teu1");
-		nmg_pr_orient(eu2->up.lu_p->up.fu_p->orientation, "\teu2");
+		nmg_pr_orient(fu1->orientation, "\teu1");
+		nmg_pr_orient(fu2->orientation, "\teu2");
 	}
 
-
 	/* get Normal vectors for edgeuse faces */
-	if (eu1->up.lu_p->up.fu_p->orientation == OT_SAME) {
-		VMOVEN(Norm1, eu1->up.lu_p->up.fu_p->f_p->fg_p->N, 4);
-	} else if (eu1->up.lu_p->up.fu_p->orientation == OT_OPPOSITE){
-		VREVERSE(Norm1, eu1->up.lu_p->up.fu_p->f_p->fg_p->N);
-		Norm1[3] = -eu1->up.lu_p->up.fu_p->f_p->fg_p->N[3];
+	if (fu1->orientation == OT_SAME) {
+		VMOVEN(Norm1, fu1->f_p->fg_p->N, 4);
+	} else if (fu1->orientation == OT_OPPOSITE){
+		VREVERSE(Norm1, fu1->f_p->fg_p->N);
+		Norm1[3] = -fu1->f_p->fg_p->N[3];
 	} else rt_bomb("bad fu1 orientation\n");
 
-	if (eu2->up.lu_p->up.fu_p->orientation == OT_SAME) {
-		VMOVEN(Norm2, eu2->up.lu_p->up.fu_p->f_p->fg_p->N, 4);
-	} else if (eu2->up.lu_p->up.fu_p->orientation == OT_OPPOSITE){
-		VREVERSE(Norm2, eu2->up.lu_p->up.fu_p->f_p->fg_p->N);
-		Norm2[3] = -eu2->up.lu_p->up.fu_p->f_p->fg_p->N[3];
+	if (fu2->orientation == OT_SAME) {
+		VMOVEN(Norm2, fu2->f_p->fg_p->N, 4);
+	} else if (fu2->orientation == OT_OPPOSITE){
+		VREVERSE(Norm2, fu2->f_p->fg_p->N);
+		Norm2[3] = -fu2->f_p->fg_p->N[3];
 	} else rt_bomb("bad fu2 orientation\n");
 
 	/* get vectors for edgeuses (edgeuse mates should point
@@ -174,8 +180,6 @@ struct edgeuse *eu1, *eu2;
 		cosangle = 0.0;
 	}
 
-
-
 	if (rt_g.NMG_debug & DEBUG_MESH)
 	rt_log("\tdist:%g\n\tAngle between faces is %g butlerians (0<=X<=4)\n", 
 		dist, cosangle);
@@ -184,14 +188,18 @@ struct edgeuse *eu1, *eu2;
 }
 
 /*
- *			N M G _ J O I N _ E U
+ *			N M G _ R A D I A L _ J O I N _ E U
  *
- *	Join two edgeuses that share the same vertices to same edge,
+ *	Make all the edgeuses around eu2's edge to refer to eu1's edge,
  *	taking care to organize them into the proper angular orientation,
  *	so that the attached faces are correctly arranged radially
  *	around the edge.
+ *
+ *	This depends on both edges being part of face loops,
+ *	with vertex and face geometry already associated.
  */
-static void nmg_join_eu(eu1, eu2)
+void
+nmg_radial_join_eu(eu1, eu2)
 struct edgeuse *eu1, *eu2;
 {
 	struct edgeuse *nexteu;
@@ -208,9 +216,12 @@ struct edgeuse *eu1, *eu2;
 	if( eu1->e_p == eu2->e_p )  return;
 	if( (eu1->vu_p->v_p != eu2->vu_p->v_p && eu1->vu_p->v_p != eu2->eumate_p->vu_p->v_p) ||
 	    (eu1->eumate_p->vu_p->v_p != eu2->vu_p->v_p && eu1->eumate_p->vu_p->v_p != eu2->eumate_p->vu_p->v_p) )
-		rt_bomb("nmg_join_eu(): edgeuses don't share both vertices\n");
+		rt_bomb("nmg_radial_join_eu(): edgeuses don't share both vertices\n");
 
 	if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
+		rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
+			eu1, eu2,
+			eu1->e_p, eu2->e_p);
 		EUPRINT("\tJoining", eu1);
 		EUPRINT("\t     to", eu2);
 	}
@@ -236,7 +247,7 @@ struct edgeuse *eu1, *eu2;
 			if( eu1 == eu1->radial_p->eumate_p )  break;
 			eu1 = eu1->radial_p->eumate_p;
 			if( eu1 == first_eu1 )  {
-				rt_bomb("nmg_join_eu():  went full circle, no face insertion point.\n");
+				rt_bomb("nmg_radial_join_eu():  went full circle, no face insertion point.\n");
 				break;
 			}
 			angle1 = get_angle(eu1, eu2);
@@ -244,7 +255,7 @@ struct edgeuse *eu1, *eu2;
 		}
 		if(iteration2 >= 10000)  {
 			rt_log("angle1=%e, angle2=%e\n", angle1, angle2);
-			rt_bomb("nmg_join_eu: infinite loop (2)\n");
+			rt_bomb("nmg_radial_join_eu: infinite loop (2)\n");
 		}
 
 		/* find the next use of the edge eu2 is on.  If eu2 and it's
@@ -266,7 +277,7 @@ struct edgeuse *eu1, *eu2;
 		/* get ready to move the next edgeuse */
 		eu2 = nexteu;
 	}
-	if( iteration1 >= 10000 )  rt_bomb("nmg_join_eu:  infinite loop (1)\n");
+	if( iteration1 >= 10000 )  rt_bomb("nmg_radial_join_eu:  infinite loop (1)\n");
 }
 
 /*
@@ -343,7 +354,7 @@ register struct faceuse *fu1, *fu2;
 					     eu2->eumate_p->vu_p->v_p == v1b) ||
 					    (eu2->eumate_p->vu_p->v_p == v1a &&
 					     eu2->vu_p->v_p == v1b) )  {
-						nmg_join_eu(eu1, eu2);
+						nmg_radial_join_eu(eu1, eu2);
 					     	count++;
 					 }
 				}
