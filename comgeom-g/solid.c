@@ -6,8 +6,9 @@
  *  is used to translate between COMGEOM solids, and the
  *  more general GED solids.
  *
- *  Author -
+ *  Authors -
  *	Michael John Muuss
+ *	Susanne L. Muuss, J.D.
  *
  *  Original Version -
  *	March, 1980
@@ -32,6 +33,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "machine.h"
 #include "vmath.h"
+#include "rtlist.h"
+#include "wdb.h"
+
 
 extern FILE	*outfp;
 extern int	version;
@@ -462,11 +466,69 @@ getsolid()
 
 	if( strcmp( solid_type, "sph" ) == 0 )  {
 		/* V, radius */
-		if( getsoldata( dd, 1*3+2, sol_work ) < 0 )
+		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 			return(-1);
 		return( mk_sph( outfp, name, D(0), dd[3] ) );
 	}
 
+	if( strncmp( solid_type, "wir", 3 ) == 0 )  {
+		int			numpts;		/* points per wire */
+		int			num;
+		int			i;
+		double			rad;
+		double			*pts;		/* 3 entries per pt */
+		struct	wdb_pipeseg	*ps;
+		struct	wdb_pipeseg	head;		/* all ow a whole struct for head */
+
+		/* This might be getint( solid_type, 3, 2 ); for non-V5 */
+		numpts = getint( scard, 9, 2 );
+		num = numpts * 3 + 1;			/* 3 entries per pt */
+		
+		/* allocate space for the points array */
+		if( (pts = ( double *)malloc(num * sizeof( double)) ) == NULL )  {
+			printf("malloc failure for WIR %d\n", sol_work);
+			return(-1);
+		}
+
+		if( getsoldata( pts, num, sol_work ) < 0 )  {
+			return(-1);
+		}
+		rad = pts[num-1];
+
+		/* allocate nodes on a list and store all information in
+		 * the appropriate location.
+		 */
+		RT_LIST_INIT( &head.l );
+		for( i = 0; i < numpts - 1; i++ )  {
+			/* malloc a new structure */
+			if( (ps = (struct wdb_pipeseg *)malloc( 
+			 sizeof( struct wdb_pipeseg)) ) == WDB_PIPESEG_NULL )  {
+			   	printf("malloc failure for WIR %d\n", sol_work);
+			   	return(-1);
+			 }
+			VMOVE( ps->ps_start, &pts[i*3]);	/* 3 pts at a time */
+			ps->ps_id = 0;				/* solid */
+			ps->ps_od = rad;
+			ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+			RT_LIST_INSERT( &head.l, &ps->l );
+		}
+
+		/* make the end plate */
+		if( (ps = ( struct wdb_pipeseg *)malloc( sizeof(
+	          struct wdb_pipeseg)) ) == WDB_PIPESEG_NULL )  {
+	               	printf("malloc failure for WIR %d\n", sol_work);
+	               	return(-1);
+	        }
+		VMOVE( ps->ps_start, &pts[3 * (numpts-1)] );
+		ps->ps_type = WDB_PIPESEG_TYPE_END;
+		ps->ps_id = 0;
+		ps->ps_od = rad;
+		RT_LIST_INSERT( &head.l, &ps->l );
+		
+		return( mk_pipe( outfp, name, &head ) );
+	}
+	         		
+			
 	if( version <= 4 && strcmp( solid_type, "ell" ) == 0 )  {
 		/* Foci F1, F2, major axis length L */
 		vect_t	v;
