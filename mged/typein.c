@@ -193,8 +193,8 @@ char *p_ars[] = {
 	"Enter number of points per waterline, and number of waterlines: ",
 	"Enter number of waterlines: ",
 	"Enter X, Y, Z for First row point: ",
-	"Enter Y: ",
-	"Enter Z: ",
+	"Enter Y for First row point: ",
+	"Enter Z for First row point: ",
 	"Enter X  Y  Z",
 	"Enter Y",
 	"Enter Z",
@@ -1360,11 +1360,6 @@ char			*prompt[];
 	pipe = (struct rt_pipe_internal *)intern->idb_ptr;
 	pipe->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT( &pipe->pipe_segs_head );
-
-	if( argc != 4 + num_points*6 ) {
-		return CMD_BAD;
-	}
-
 	for( i=4 ; i<argc ; i+= 6 )
 	{
 		struct wdb_pipept *pipept;
@@ -1405,62 +1400,117 @@ char			*promp[];
 	int			cv;	/* current curve (waterline) # */
 	int			axis;	/* current fastf_t in waterline */
 	int			ncurves_minus_one;
-	int num_pts, num_curves;
-
+	int num_pts = 0;
+	int num_curves = 0;
+	int vals_present, total_vals_needed;
+	struct bu_vls tmp_vls;
 
 	CHECK_DBI_NULL;
 
-	if( argc < 5 ) {
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
+	vals_present = argc - 3;
+
+	if (vals_present > 0) {
+	    num_pts = atoi(argv[3]);
+	    if (num_pts < 3 ) {
+		Tcl_AppendResult(interp,
+				 "points per waterline must be >= 3\n",
+				 (char *)NULL);
+		intern->idb_meth = &rt_functab[ID_ARS];
+		return CMD_BAD;
+	    }
+	}
+
+	if (vals_present > 1) {
+	    num_curves = atoi(argv[4]);
+	    if (num_curves < 3) {
+		Tcl_AppendResult(interp, "points per waterline must be >= 3\n",
+				 (char *)NULL);
+		intern->idb_meth = &rt_functab[ID_ARS];
+		return CMD_BAD;
+	    }
+	}
+
+	if (vals_present < 5) {
+	    /* for #rows, #pts/row & first point, 
+	     * pre-formatted prompts exist
+	     */
+	  Tcl_AppendResult(interp, MORE_ARGS_STR,
+			   promp[vals_present], (char *)NULL);
 	  return CMD_MORE;
 	}
 
-	num_pts = atoi(argv[3]);
-	num_curves = atoi(argv[4]);
+	total_vals_needed = 2 +		/* #rows, #pts/row */
+	    (ELEMENTS_PER_PT * 2) +	/* the first point, and very last */
+	    (num_pts * ELEMENTS_PER_PT * (num_curves-2)); /* the curves */
 
-	if (num_pts < 3 || num_curves < 3 ) {
-	  Tcl_AppendResult(interp, "Invalid number of lines or pts_per_curve\n", (char *)NULL);
-	  return CMD_BAD;
+	if (vals_present < (total_vals_needed - ELEMENTS_PER_PT)) {
+	    /* if we're looking for points on the curves, and not 
+	     * the last point which makes up the last curve, we
+	     * have to format up a prompt string
+	     */
+	    bu_vls_init(&tmp_vls);
+
+	    switch ((vals_present-2) % 3) {
+	    case 0:
+		bu_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
+			      promp[5],
+			      1+(argc-8)/3/num_pts,
+			      ((argc-8)/3)%num_pts );
+		break;
+	    case 1:
+		bu_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
+			      promp[6], 
+			      1+(argc-8)/3/num_pts,
+			      ((argc-8)/3)%num_pts );
+		break;
+	    case 2:
+		bu_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
+			      promp[7], 
+			      1+(argc-8)/3/num_pts,
+			      ((argc-8)/3)%num_pts );
+		break;
+	    }
+
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls),
+			     (char *)NULL);
+	    bu_vls_free(&tmp_vls);
+
+	    return CMD_MORE;
+	} else if (vals_present < total_vals_needed) {
+	    /* we're looking for the last point which is used for all points
+	     * on the last curve
+	     */
+	    bu_vls_init(&tmp_vls);
+
+
+	    switch ((vals_present-2) % 3) {
+	    case 0:
+		bu_vls_printf(&tmp_vls, "%s for pt of last Waterline : ",
+			      promp[5],
+			      1+(argc-8)/3/num_pts,
+			      ((argc-8)/3)%num_pts );
+		break;
+	    case 1:
+		bu_vls_printf(&tmp_vls, "%s for pt of last Waterline : ",
+			      promp[6], 
+			      1+(argc-8)/3/num_pts,
+			      ((argc-8)/3)%num_pts );
+		break;
+	    case 2:
+		bu_vls_printf(&tmp_vls, "%s for pt of last Waterline : ",
+			      promp[7], 
+			      1+(argc-8)/3/num_pts,
+			      ((argc-8)/3)%num_pts );
+		break;
+	    }
+
+
+	    Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls),
+			     (char *)NULL);
+	    bu_vls_free(&tmp_vls);
+
+	    return CMD_MORE;
 	}
-
-	if( argc < 8 ) {
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[argc-3], (char *)NULL);
-	  return CMD_MORE;
-	}
-
-#if 0
-	if( argc < 8+((num_curves-2)*num_pts*3) ) {
-		bu_log("%s for Waterline %d, Point %d : ",
-			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%
-			num_pts );
-		return CMD_MORE;
-	}
-
-	if( argc < 8+((num_curves-2)*num_pts*3+3)) {
-		bu_log("%s for point of last waterline : ",
-			promp[5+(argc-8)%3]);
-		return CMD_MORE;
-	}
-#else
-	if( argc < 5+3*(num_curves-1)*num_pts ) {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "%s for Waterline %d, Point %d : ",
-			promp[5+(argc-8)%3], 1+(argc-8)/3/num_pts, ((argc-8)/3)%num_pts );
-
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-
-	  return CMD_MORE;
-	}
-
-	if( argc < 5+3*num_curves*num_pts ) {
-	  Tcl_AppendResult(interp, MORE_ARGS_STR, promp[5+(argc-8)%3],
-			   " for point of last waterline : ", (char *)NULL);
-	  return CMD_MORE;
-	}
-#endif
 
 	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern->idb_type = ID_ARS;
