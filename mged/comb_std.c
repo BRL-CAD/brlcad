@@ -192,7 +192,6 @@ char	**argv;
 	if (db_put(dbip, dp, &record, 0, 1) < 0)
 	{
 	    TCL_WRITE_ERR_return;
-	    return TCL_ERROR;
 	}
 	return TCL_OK;
     }
