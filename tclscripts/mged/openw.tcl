@@ -523,7 +523,7 @@ menu .$id.menubar.edit -tearoff $do_tearoffs
 
 menu .$id.menubar.create -tearoff $do_tearoffs
 .$id.menubar.create add cascade\
-	-label "Make a Solid" -underline 0 -menu .$id.menubar.create.solid
+	-label "Make Solid" -underline 0 -menu .$id.menubar.create.solid
 #.$id.menubar.create add command\
 #	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
 .$id.menubar.create add command -label "Solid Editor..." -underline 0 \
@@ -1381,21 +1381,27 @@ proc toggle_edit_info { id } {
     global mged_display
 
     if {$show_edit_info($id)} {
-	if {$mged_display(state) == "SOL EDIT" || $mged_display(state) == "OBJ EDIT"} {
+	if {$mged_display(state) == "SOL EDIT"} {
+	    init_edit_solid_int $id
+	} elseif {$mged_display(state) == "OBJ EDIT"} {
 	    build_edit_info $id
 	}
     } else {
-	destroy_edit_info $id
+	if {$mged_display(state) == "SOL EDIT"} {
+	    esolint_destroy $id
+	} elseif {$mged_display(state) == "OBJ EDIT"} {
+	    destroy_edit_info $id
+	}
     }
 }
 
 proc build_edit_info { id } {
     global player_screen
-    global edit_info
     global edit_info_pos
     global show_edit_info
 
     if [winfo exists .sei$id] {
+	raise .sei$id
 	return
     }
 
@@ -1412,7 +1418,6 @@ proc build_edit_info { id } {
 
 proc destroy_edit_info { id } {
     global edit_info_pos
-    global show_edit_info
 
     if ![winfo exists .sei$id] {
 	return
@@ -2056,14 +2061,6 @@ proc set_fb { id } {
 	.$id.menubar.settings.fb entryconfigure 7 -state disabled
 	.$id.menubar.modes entryconfigure 4 -state disabled
 	set mged_listen($id) 0
-    }
-}
-
-proc new_db_callback { dbname } {
-    global mged_players
-
-    foreach id $mged_players {
-	set_wm_title $id $dbname
     }
 }
 
