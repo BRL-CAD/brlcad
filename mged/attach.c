@@ -114,7 +114,17 @@ extern struct dm dm_XGL;
 extern struct dm dm_ogl;
 #endif
 
+#ifdef DM_GLX
+extern struct dm dm_glx;
+#endif
+
+#ifdef MULTI_ATTACH
+struct rt_list dm_list_head;  /* list of active display managers */
+struct dm_list *dm_list_curr;
+void initialize_dm();
+#else
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
+#endif
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
@@ -131,6 +141,9 @@ static struct dm *which_dm[] = {
 #endif
 #ifdef DM_XGL
 	&dm_XGL,
+#endif
+#ifdef DM_GLX
+	&dm_glx,
 #endif
 #ifdef DM_GT
 	&dm_gt,
@@ -183,51 +196,63 @@ void
 attach(name)
 char *name;
 {
-	register struct dm **dp;
-	register struct solid *sp;
+  register struct dm **dp;
+  register struct solid *sp;
 
+#ifdef MULTI_ATTACH
+  register struct dm_list *dmlp;
+
+  for( dp=which_dm; *dp != (struct dm *)0; dp++ )  {
+    if( strcmp( (*dp)->dmr_name, name ) != 0 )
+      continue;
+
+    dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
+				       "dm_list");
+    RT_LIST_APPEND(&dm_list_head, &dmlp->l);
+    dm_list_curr = dmlp;
+    dm_list_curr->_dmp = *dp;
+    initialize_dm();
+
+    no_memory = 0;
+    if( dmp->dmr_open() )
+      break;
+
+    rt_log("ATTACHING %s (%s)\n",
+	   dmp->dmr_name, dmp->dmr_lname);
+
+    FOR_ALL_SOLIDS( sp )  {
+      /* Write vector subs into new display processor */
+      if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
+	sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
+	if( sp->s_addr == 0 )  break;
+	sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
+      } else {
+	sp->s_addr = 0;
+	sp->s_bytes = 0;
+      }
+    }
+    dmp->dmr_colorchange();
+    color_soltab();
+    dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
+    dmaflag++;
+    return;
+  }
+  rt_log("attach(%s): BAD\n", name);
+  dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
+				     "dm_list");
+  RT_LIST_APPEND(&dm_list_head, &dmlp->l);
+  dm_list_curr = dmlp;
+  dm_list_curr->_dmp = &dm_Null;
+  initialize_dm();
+#else
 	if( dmp != &dm_Null )
 		release();
+
 	for( dp=which_dm; *dp != (struct dm *)0; dp++ )  {
 		if( strcmp( (*dp)->dmr_name, name ) != 0 )
 			continue;
 		dmp = *dp;
 
-#ifdef XMGED
-		FOR_ALL_SOLIDS( sp )  {
-			/* Write vector subs into new display processor */
-			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
-				sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
-				if( sp->s_addr == 0 )  break;
-				sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
-			} else {
-				sp->s_addr = 0;
-				sp->s_bytes = 0;
-			}
-		}
-
-		no_memory = 0;
-		switch( dmp->dmr_open() ){
-		case -1:
-			goto not_okay;
-		case 0:
-			break;
-		case 1:
-			goto okay;	/* just released the X display */
-		}
-
-		(void)rt_log( "ATTACHING %s (%s)\n",
-			     dmp->dmr_name, dmp->dmr_lname);
-
-		dmp->dmr_colorchange();
-		color_soltab();
-		dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
-		dmaflag++;
-		return;
-	}
-not_okay:	(void)rt_log( "attach(%s): BAD\n", name);
-okay:		dmp = &dm_Null;
-#else
 		no_memory = 0;
 		if( dmp->dmr_open() )
 			break;
@@ -386,5 +411,24 @@ char	**argv;
 int
 is_dm_null()
 {
+#ifdef MULTI_ATTACH
+  return dm_list_curr == NULL;
+#else
 	return dmp == &dm_Null;
+#endif
 }
+
+
+#ifdef MULTI_ATTACH
+void
+initialize_dm()
+{
+  /* init rotation matrix */
+  Viewscale = 500;		/* => viewsize of 1000mm (1m) */
+  mat_idn( Viewrot );
+  mat_idn( toViewcenter );
+
+  new_mats();
+  setview( 0.0, 0.0, 0.0 );
+}
+#endif
