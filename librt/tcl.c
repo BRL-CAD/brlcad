@@ -1236,6 +1236,29 @@ error:
 }
 
 /*
+ *			R T _ D B _ C L O S E
+ */
+int
+rt_db_close( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct rt_wdb		        *wdbp = (struct rt_wdb *)clientData;
+
+	RT_CK_WDB_TCL(wdbp);
+
+	wdb_close(wdbp);		/* frees memory */
+	wdbp = NULL;
+
+	/* De-register Tcl command */
+bu_log("De-registering Tcl command '%s'\n", argv[-1] );
+	Tcl_DeleteCommand( interp, argv[-1] );
+	return TCL_OK;
+}
+
+/*
  *			R T _ D B
  *
  * Generic interface for the database_class manipulation routines.
@@ -1262,6 +1285,7 @@ char **argv;
 		"put",		rt_db_put,
 		"adjust",	rt_db_adjust,
 		"form",		rt_db_form,
+		"close",	rt_db_close,
 		(char *)0,	(int (*)())0
 	};
 
@@ -1308,6 +1332,7 @@ char **argv;
  *  Example -
  *	set wdbp [wdb_open .inmem inmem $dbip]
  *	.inmem get box.s
+ *	.inmem close
  */
 int
 wdb_open( clientData, interp, argc, argv )
@@ -1342,11 +1367,6 @@ Usage: wdb_open widget_command file filename\n\
 			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
 		} else if( strcmp( argv[2], "inmem" ) == 0 )  {
 			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_INMEM );
-			/* TEMPORARY: Prevent accidents in MGED */
-			if( wdb && !dbip->dbi_read_only )  {
-				Tcl_AppendResult(interp, "(database changed to read-only)\n", NULL);
-				dbip->dbi_read_only = 1;
-			}
 		} else if( strcmp( argv[2], "inmem_append" ) == 0 )  {
 			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY );
 		} else {
