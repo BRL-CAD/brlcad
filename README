@@ -7,8 +7,8 @@ and
 RAY-TRACING BENCHMARK
 .sp
 DISTRIBUTION PACKAGE
-Release 1.19
-(12-Feb-87)
+Release 1.20
+(13-Feb-87)
 .fi
 .sp
 .IP "DISTRIBUTION DETAILS"
@@ -196,7 +196,7 @@ timer42	4.2 BSD, 4.3 BSD (Berkeley UNIX)
 timerunix	Generic UNIX, System III, V, etc.
 timer52brl	For BRL's System 5-under-4.n BSD
 timerhep	Denelcor HEP
-timercray	Cray X-MP running UNIX, and Cray-2
+timercray	Cray X-MP and Cray-2, running UNICOS (UNIX)
 timercos	Cray X-MP running COS
 .TE
 .fi
@@ -304,6 +304,7 @@ c1east	Convex C1 XP (2 IOPs, 4 Multibus, 4-way disk striping, 64 Mbytes), Convex
 utah-ug	VAX 8600, FPA, 4.3 BSD
 brl-vector	Alliant FX/8 (4 CEs, 6 IPs, 16 Mbytes), Concentrix 2.0
 brl-viper	Alliant FX/8 (8 CEs, 6 IPs, 16 Mbytes), Concentrix 2.0
+hep		Denelcor HEP, 4 PEMs
 nrl-xmp	Cray X-MP/12, COS V115, 9.5ns clock
 snm2	Cray 1-M, SN2, UNICOS 2.0
 brl-patton	Cray X-MP/48, SN213, COS V115BF2, 8.5ns clock
@@ -342,8 +343,10 @@ _
 1309.5	 1813.5	 16.17	brl-vector, 4 CEs, no vectors (3.68X)
 1396.6			nrl-xmp, no vectors, no optim
 1745.0	 2492.9	 22.24	snm2, no vectors, no optim
+1752.1	  	 22.32	hep, 1 PEM, npsw=10
 2366.8	 3354.4	 29.92	brl-viper, 8 CEs, no vectors (6.8X)
 2418.3	 3453.3	 30.81	brl-patton, 1 CPU, no vectors, no optim (1.00X)
+2840.3	  	 36.18	hep, 1 PEM, npsw=40
 4802.1	 6856.5	 61.16	brl-patton, 2 CPUs, no vectors, no optim (1.99X)
 7148.1	10205.1	 91.04	brl-patton, 3 CPUs, no vectors, no optim (2.96X)
 9331.8	13320.2	118.82	brl-patton, 4 CPUs, no vectors, no optim (3.86X)
