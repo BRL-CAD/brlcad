@@ -68,7 +68,11 @@ static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static char	*id_file = NULL;	/* Output ident file */
 static FILE	*fp_id = NULL;		/* Output ident file pointer */
-static struct nmg_ptbl		idents;	/* Table of region ident numbers */
+static int	*idents;		/* Array of region ident numbers */
+static int	ident_count=0;		/* Number of idents in above array */
+static int	ident_length=0;		/* Length of idents array */
+#define		IDENT_BLOCK	256	/* Number of idents array slots to allocate */
+
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
@@ -85,6 +89,28 @@ static int	regions_written = 0;
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+
+void
+insert_id( id )
+int id;
+{
+	int i;
+
+	for( i=0 ; i<ident_count ; i++ )
+	{
+		if( idents[i] == id )
+			return;
+	}
+
+	if( ident_count == ident_length )
+	{
+		idents = (int *)rt_realloc( (char *)idents , (ident_length + IDENT_BLOCK)*sizeof( int ) , "insert_id: idents" );
+		ident_length += IDENT_BLOCK;
+	}
+
+	idents[ident_count] = id;
+	ident_count++;
+}
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
@@ -106,7 +132,7 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
-	nmg_tbl( &idents , TBL_INS_UNIQUE , (long *)tsp->ts_regionid );
+	insert_id( tsp->ts_regionid );
 	return( -1 );
 }
 
@@ -281,7 +307,6 @@ CONST struct rt_tol *ttol;
 						if( NMG_INDEX_GET( flags , test_s ) > 1 )
 						{
 							struct face *test_f;
-							fastf_t test_z;
 
 							if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , test_s->sa_p->min_pt , test_s->sa_p->max_pt ) )
 								continue;
@@ -633,7 +658,7 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	int		i,j,ret;
+	int		j;
 	register int	c;
 	double		percent;
 
@@ -660,9 +685,6 @@ char	*argv[];
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
-
-	/* Initialize ident table */
-	nmg_tbl( &idents , TBL_INIT , NULL );
 
 	/* XXX For visualization purposes, in the debug plot files */
 	{
@@ -754,7 +776,7 @@ char	*argv[];
 	optind++;
 
 	/* First produce a list of region ident codes */
-	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,				/* ncpu */
 		&tree_state,
 		get_reg_id,			/* put id in table */
@@ -762,7 +784,7 @@ char	*argv[];
 		leaf_stub );			/* do nothing */
 
 	/* TANKILL only allows up to 2000 distinct component codes */
-	if( NMG_TBL_END( &idents ) > 2000 )
+	if( ident_count > 2000 )
 	{
 		rt_log( "Too many ident codes for TANKILL\n" );
 		rt_log( "\tProcessing all regions anyway\n" );
@@ -770,14 +792,14 @@ char	*argv[];
 
 	/* Process regions in ident order */
 	curr_id = 0;
-	for( id_counter=0 ; id_counter<NMG_TBL_END( &idents ) ; id_counter++ )
+	for( id_counter=0 ; id_counter<ident_count ; id_counter++ )
 	{
 		int next_id = 99999999;
-		for( j=0 ; j<NMG_TBL_END( &idents ) ; j++ )
+		for( j=0 ; j<ident_count ; j++ )
 		{
 			int test_id;
 
-			test_id = (int)NMG_TBL_GET( &idents , j );
+			test_id = idents[j];
 			if( test_id > curr_id && test_id < next_id )
 				next_id = test_id;
 		}
@@ -787,7 +809,7 @@ char	*argv[];
 		rt_log( "Processing id %d\n" , curr_id );
 
 		/* Walk indicated tree(s).  Each region will be output separately */
-		ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+		(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 			1,				/* ncpu */
 			&tree_state,
 			select_region,			/* selects regions with curr_id */

@@ -79,7 +79,7 @@ char *argv[];
 	int name_len;
 	struct rt_tol tol;
 	int done=0;
-	int i,j;
+	int i;
 	int no_of_verts;
 	int no_of_faces=0;
 	char line[LINELEN];
@@ -91,7 +91,7 @@ char *argv[];
 	struct shell *s;
 	struct faceuse *fu;
 	struct viewpoint_verts *verts;	/* array of structures holding coordinates and normals */
-	struct wmember reg_head,*wmem;
+	struct wmember reg_head;
 
         /* XXX These need to be improved */
         tol.magic = RT_TOL_MAGIC;
@@ -429,7 +429,7 @@ char *argv[];
 	RT_LIST_INIT( &reg_head.l );
 	for( i=0 ; i<NMG_TBL_END( &names ) ; i++ )
 	{
-		if( (wmem = mk_addmember( (char *)NMG_TBL_GET( &names , i ) , &reg_head , WMOP_UNION ) ) == WMEMBER_NULL )
+		if( mk_addmember( (char *)NMG_TBL_GET( &names , i ) , &reg_head , WMOP_UNION ) == WMEMBER_NULL )
 		{
 			rt_log( "Cannot make top level group\n" );
 			exit( 1 );

@@ -52,7 +52,6 @@ static char RCSid[] = "$Header$";
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
 static int polysolid=0;		/* Flag for polysolid output rather than NMG's */
-static int NMG_debug=0;		/* NMG debug flag */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
@@ -85,7 +84,6 @@ char *name,*obj;
 	struct name_conv_list *ptr,*ptr2;
 	char tmp_name[NAMESIZE];
 	int len;
-	int try_count=0;
 	char try_char='@';
 
 	/* Add a new name */
@@ -285,7 +283,6 @@ char line[MAX_LINE_LEN];
 	unsigned char color[3];
 	char *brlcad_name;
 	struct wmember head;
-	struct wmember *wmem;
 	vect_t normal;
 
 	RT_LIST_INIT( &head.l );
@@ -499,7 +496,6 @@ char	*argv[];
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
-			NMG_debug = rt_g.NMG_debug;
 			break;
 		case 'p':
 			polysolid = 1;

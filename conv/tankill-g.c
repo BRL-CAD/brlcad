@@ -145,8 +145,6 @@ char *argv[];
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
 	struct nmg_ptbl faces;
 	struct rt_tol tol;
 	struct wmember reg_head;
@@ -468,8 +466,6 @@ char *argv[];
 	ptr = id_root;
 	while( ptr != NULL )
 	{
-		struct wmember *wmem;
-
 		RT_LIST_INIT( &reg_head.l );
 
 		/* make linked list of members */
@@ -477,7 +473,7 @@ char *argv[];
 		{
 			/* recreate the name of each solid */
 			sprintf( name , "s.%d.%d" , ptr->ident , i+1 );
-			wmem = mk_addmember( name , &reg_head , WMOP_UNION );
+			(void)mk_addmember( name , &reg_head , WMOP_UNION );
 		}
 
 		/* make the region name */
@@ -496,8 +492,6 @@ char *argv[];
 	/* Make groups based on ident numbers */
 	for( i=0 ; i<100 ; i++ )
 	{
-		struct wmember *wmem;
-
 		RT_LIST_INIT( &reg_head.l );
 
 		group_len[i] = 0;
@@ -509,7 +503,7 @@ char *argv[];
 				/* make the region name */
 				sprintf( name , "r.%d" , ptr->ident );
 
-				wmem = mk_addmember( name , &reg_head , WMOP_UNION );
+				(void)mk_addmember( name , &reg_head , WMOP_UNION );
 				group_len[i]++;
 			}
 			ptr = ptr->next;
@@ -533,7 +527,6 @@ char *argv[];
 	/* Make next higher level groups */
 	for( i=0 ; i<10 ; i++ )
 	{
-		struct wmember *wmem;
 		int do_group;
 		int k;
 
@@ -548,7 +541,7 @@ char *argv[];
 
 				/* make group name */
 				sprintf( name , "%02dXX_codes" , k );
-				wmem = mk_addmember( name , &reg_head , WMOP_UNION );
+				(void)mk_addmember( name , &reg_head , WMOP_UNION );
 			}
 		}
 		if( do_group )
@@ -569,7 +562,6 @@ char *argv[];
 
 	for( i=0 ; i<10 ; i++ )
 	{
-		struct wmember *wmem;
 		int do_group;
 		int k;
 
@@ -587,7 +579,7 @@ char *argv[];
 			/* make the group */
 			sprintf( name , "%dXXX_codes" , i );
 
-			if( (wmem = mk_addmember( name , &reg_head , WMOP_UNION ) ) == WMEMBER_NULL )
+			if( mk_addmember( name , &reg_head , WMOP_UNION ) == WMEMBER_NULL )
 				rt_log( "mk_admember failed for %s\n" , name );
 			all_len++;
 		}

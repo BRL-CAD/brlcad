@@ -82,6 +82,33 @@ char	*argv[];
 }
 
 /*
+ *	C r e a t e _ B r l c a d _ D b
+ *
+ *	Write the nmg to a brl-cad style data base.
+ */
+void
+create_brlcad_db(fpout, m, reg_name, grp_name)
+FILE		*fpout;
+char		*grp_name, *reg_name;
+struct model	*m;
+{
+	char	*rname, *sname;
+
+	mk_id(fpout, "Ascii NMG");
+
+	rname = malloc(sizeof(reg_name) + 3);	/* Region name. */
+	sname = malloc(sizeof(reg_name) + 3);	/* Solid name. */
+
+	sprintf(sname, "s.%s", reg_name);
+	mk_nmg(fpout, sname,  m);		/* Make nmg object. */
+	sprintf(rname, "r.%s", reg_name);
+	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
+	if (grp_name) {
+		mk_comb1(fpout, grp_name, rname, 1);	/* Region in group. */
+	}
+}
+
+/*
  *	A s c i i _ t o _ B r l c a d
  *
  *	Convert an ascii nmg description into a BRL-CAD data base.
@@ -90,7 +117,6 @@ ascii_to_brlcad(fpin, fpout, reg_name, grp_name)
 FILE	*fpin, *fpout;
 char	*reg_name, *grp_name;
 {
-	FILE		*fp;
 	struct model	*m;
 	struct nmgregion	*r;
 	struct rt_tol	tol;
@@ -119,33 +145,6 @@ char	*reg_name, *grp_name;
 		extrude_nmg_face(RT_LIST_FIRST(faceuse, &s->fu_hd), Ext, &tol);
 	create_brlcad_db(fpout, m, reg_name, grp_name);
 	nmg_km(m);		/* Destroy the nmg model. */
-}
-
-/*
- *	C r e a t e _ B r l c a d _ D b
- *
- *	Write the nmg to a brl-cad style data base.
- */
-int
-create_brlcad_db(fpout, m, reg_name, grp_name)
-FILE		*fpout;
-char		*grp_name, *reg_name;
-struct model	*m;
-{
-	char	*rname, *sname;
-
-	mk_id(fpout, "Ascii NMG");
-
-	rname = malloc(sizeof(reg_name) + 3);	/* Region name. */
-	sname = malloc(sizeof(reg_name) + 3);	/* Solid name. */
-
-	sprintf(sname, "s.%s", reg_name);
-	mk_nmg(fpout, sname,  m);		/* Make nmg object. */
-	sprintf(rname, "r.%s", reg_name);
-	mk_comb1(fpout, rname, sname, 1);	/* Put object in a region. */
-	if (grp_name) {
-		mk_comb1(fpout, grp_name, rname, 1);	/* Region in group. */
-	}
 }
 
 /*
@@ -349,8 +348,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	struct edgeuse	*eu;
 	struct faceuse	*back, *front, *fu2, *nmg_dup_face(), **outfaceuses;
 	struct loopuse	*lu, *lu2;
-	struct shell	*s;
-	struct vertex	*v, *vertlist[4], **verts, **verts2;
+	struct vertex	*vertlist[4], **verts, **verts2;
 	plane_t		N;
 
 #define MIKE_TOL 0.0001
@@ -467,7 +465,7 @@ struct rt_tol	*tol;
 			i;
 	struct vertex	**verts;	/* List of verts in face. */
 	struct edgeuse	*eu;
-	struct loopuse	*lu, *lu2;
+	struct loopuse	*lu;
 	struct vertex	*v;
 
 	/* Go through each loop and flip it. */

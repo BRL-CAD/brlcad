@@ -82,6 +82,12 @@ static struct model	*m;		/* NMG model for surface elements */
 static struct nmgregion	*r;		/* NMGregion */
 static struct shell	*s;		/* NMG shell */
 static struct rt_tol	tol;		/* Tolerance struct for NMG's */
+
+static int	*int_list;		/* Array of integers */
+static int	int_list_count=0;	/* Number of ints in above array */
+static int	int_list_length=0;	/* Length of int_list array */
+#define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
+
 static char	*usage="Usage:\n\tfast4-g [-dwp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D distance] [-P cosine] fastgen4_bulk_data_file output.g\n\
 	d - print debugging info\n\
 	w - print warnings about creating default names\n\
@@ -97,13 +103,6 @@ RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick 
 RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CONST struct shell *s , int wires ) );
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
 RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
-
-static char	*mode_str[3]=		/* mode strings */
-{
-	"unknown mode",
-	"plate mode",
-	"volume mode"
-};
 
 #define		PLATE_MODE	1
 #define		VOLUME_MODE	2
@@ -227,6 +226,28 @@ struct adjacent_faces
 	struct edgeuse *eu1,*eu2;
 	struct adjacent_faces *next;
 } *adj_root;
+
+void
+insert_int( in )
+int in;
+{
+	int i;
+
+	for( i=0 ; i<int_list_count ; i++ )
+	{
+		if( int_list[i] == in )
+			return;
+	}
+
+	if( int_list_count == int_list_length )
+	{
+		int_list = (int *)rt_realloc( (char *)int_list , (int_list_length + INT_LIST_BLOCK)*sizeof( int ) , "insert_id: int_list" );
+		int_list_length += INT_LIST_BLOCK;
+	}
+
+	int_list[int_list_count] = in;
+	int_list_count++;
+}
 
 void
 tmp_shell_coplanar_face_merge( s, tmp_tol, simplify )
@@ -946,7 +967,6 @@ void
 make_unique_name( name )
 char *name;
 {
-	struct name_tree *ptr;
 	char append[10];
 	int append_len;
 	int len;
@@ -956,7 +976,7 @@ char *name;
 
 	len = strlen( name );
 
-	ptr = Search_names( name_root , name , &found );
+	(void)Search_names( name_root , name , &found );
 	while( found )
 	{
 		sprintf( append , "_%d" , name_count );
@@ -968,7 +988,7 @@ char *name;
 		else
 			strcpy( &name[NAMESIZE-append_len] , append );
 
-		ptr = Search_names( name_root , name , &found );
+		(void)Search_names( name_root , name , &found );
 	}
 }
 
@@ -977,10 +997,6 @@ add_to_series( name , reg_id )
 char *name;
 int reg_id;
 {
-	int group_no;
-
-	group_no = reg_id / 1000;
-
 	if( group_id < 0 || group_id > 10 )
 	{
 		rt_log( "add_to_series: region (%s) not added, illegal group number %d, region_id=$d\n" ,
@@ -1159,9 +1175,7 @@ int element_id;
 char type;
 {
 	int r_id;
-	int found;
 	char *tmp_name;
-	struct name_tree *ptr;
 
 	r_id = g_id * 1000 + c_id;
 
@@ -1262,7 +1276,6 @@ void
 make_cline_regions()
 {
 	struct cline *cline_ptr;
-	struct nmg_ptbl points;
 	struct wmember head;
 	char name[NAMESIZE+1];
 	int sph_no;
@@ -1271,21 +1284,20 @@ make_cline_regions()
 		rt_log( "make_cline_regions\n" );
 
 	RT_LIST_INIT( &head.l );
-	nmg_tbl( &points , TBL_INIT , (long *)NULL );
 
 	/* make a list of all the endpoints */
 	cline_ptr = cline_root;
 	while( cline_ptr )
 	{
 		/* Add endpoints to points list */
-		nmg_tbl( &points , TBL_INS_UNIQUE , (long *)cline_ptr->pt1 );
-		nmg_tbl( &points , TBL_INS_UNIQUE , (long *)cline_ptr->pt2 );
+		insert_int( cline_ptr->pt1 );
+		insert_int( cline_ptr->pt2 );
 		
 		cline_ptr = cline_ptr->next;
 	}
 
 	/* Now build cline objects */
-	for( sph_no=0 ; sph_no < NMG_TBL_END( &points ) ; sph_no++ )
+	for( sph_no=0 ; sph_no < int_list_length ; sph_no++ )
 	{
 		int pt_no;
 		int line_no;
@@ -1295,7 +1307,7 @@ make_cline_regions()
 
 		nmg_tbl( &lines , TBL_INIT , (long *)NULL );
 
-		pt_no = (int)NMG_TBL_GET( &points , sph_no );
+		pt_no = int_list[sph_no];
 
 		/* get list of clines that touch this point */
 		cline_ptr = cline_root;
@@ -1441,7 +1453,7 @@ make_cline_regions()
 		nmg_tbl( &lines , TBL_FREE , (long *)NULL );
 	}
 
-	nmg_tbl( &points , TBL_FREE , (long *)NULL );
+	int_list_length = 0;
 
 	/* free the linked list of cline pointers */
 	cline_ptr = cline_root;
@@ -1553,7 +1565,6 @@ void
 Check_normals()
 {
 	/* XXXX This routine is far from complete */
-	struct nmgregion *r1;
 	struct nmg_ptbl verts;
 	struct shell *s1;
 
@@ -2167,7 +2178,6 @@ Reunite_faces( tbl )
 CONST long **tbl;
 {
 	struct adjacent_faces *adj;
-	struct vertex *verts[3];
 	struct shell *s_eu1;
 
 	/* maybe ther's nothing to do */
@@ -2278,8 +2288,6 @@ Extrude_faces()
 	center = POS_CENTER;
 	for( thick_no=0 ; thick_no<num_thicks ; thick_no++ )
 	{
-		struct shell *s2;
-
 		if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
 			continue;
 
@@ -2297,7 +2305,6 @@ Extrude_faces()
 	{
 		for( center=1 ; center<3 ; center++ )
 		{
-			struct faceuse *fu;
 			long **trans_tbl;
 
 			if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
@@ -2371,6 +2378,8 @@ Extrude_faces()
 	rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
 	s = s1;
 	Glue_shell_faces( s );
+
+	return( 0 );
 }
 
 void
@@ -2458,7 +2467,7 @@ Make_arb6_obj()
 		fus = fus->next;
 	}
 
-out:	nmg_km( m );
+	nmg_km( m );
 
 	m = (struct model *)NULL;
 	r = (struct nmgregion *)NULL;
@@ -2604,7 +2613,7 @@ make_nmg_objects()
 		rt_log( "Coplanar face merge\n" );
 
 	tmp_shell_coplanar_face_merge( s , &tol , 0 );
-	Recalc_face_g( s , &tol );
+	Recalc_face_g( s );
 
 	if( debug )
 		rt_log( "model fuse\n" );
@@ -2802,7 +2811,6 @@ do_ccone1()
 	fastf_t r1,r2;
 	char outer_name[NAMESIZE+1];
 	char inner_name[NAMESIZE+1];
-	char reg_name[NAMESIZE+1];
 	struct wmember r_head;
 
 	strncpy( field , &line[8] , 8 );
@@ -2814,8 +2822,8 @@ do_ccone1()
 		if( !getline() )
 		{
 			rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-				group_id, comp_id, element_id , c1 );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
 			rt_bomb( "CCONE1\n" );
 		}
 		return;
@@ -3019,8 +3027,8 @@ do_ccone2()
 		if( !getline() )
 		{
 			rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-				group_id, comp_id, element_id , c1 );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
 			rt_bomb( "CCONE2\n" );
 		}
 		return;
@@ -3767,8 +3775,8 @@ do_hex1()
 		if( !getline() )
 		{
 			rt_log( "Unexpected EOF while reading continuation card for CHEX1\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-				group_id, comp_id, element_id , cont1 );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
 			rt_bomb( "CHEX1\n" );
 		}
 		return;
@@ -3892,8 +3900,8 @@ do_hex2()
 		if( !getline() )
 		{
 			rt_log( "Unexpected EOF while reading continuation card for CHEX2\n" );
-			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-				group_id, comp_id, element_id , cont1 );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
+				group_id, comp_id, element_id );
 			rt_bomb( "CHEX2\n" );
 		}
 		return;

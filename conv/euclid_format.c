@@ -50,7 +50,6 @@ main()
 		for( i=0 ; i<npts ; i++ )
 		{
 			int j;
-			float x,y,z;
 
 			if( scanf( "%d %f %f %f" , &j , &a , &b , &c ) == EOF )
 				rt_bomb( "Unexpected EOF\n" );

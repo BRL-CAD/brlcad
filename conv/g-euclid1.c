@@ -28,11 +28,7 @@ static char RCSid[] = "$Header$";
 #else
 #include <strings.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>	/* XXX Don't really need this, included in externs.h */
-#endif
 #include <signal.h>
-#include <setjmp.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -45,11 +41,10 @@ static char RCSid[] = "$Header$";
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	debug_plots;		/* Make debugging plots */
 static int	ncpu = 1;		/* Number of processors */
 static int	face_count;		/* Count of faces output for a region id */
 static struct db_i		*dbip;
@@ -175,7 +170,6 @@ FILE *fp_out;
 		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 		{
 			struct loopuse *lu;
-			int face_type=0;
 			int no_of_loops=0;
 			int no_of_holes=0;
 
@@ -396,8 +390,6 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*dot;
-	int		i,j,ret;
 	register int	c;
 	double		percent;
 
@@ -429,13 +421,10 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:r:s:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
-			break;
-		case 'd':
-			debug_plots = 1;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
@@ -487,7 +476,7 @@ char	*argv[];
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
 
-	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,			/* ncpu */
 		&tree_state,
 		0,

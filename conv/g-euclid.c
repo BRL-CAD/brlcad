@@ -42,14 +42,18 @@ RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
-static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
+static int	NMG_debug=0;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	ncpu = 1;		/* Number of processors */
 static int	curr_id;		/* Current region ident code */
 static int	face_count;		/* Count of faces output for a region id */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
-static struct nmg_ptbl		idents;	/* Table of region ident numbers */
+static int	*idents;		/* Array of region ident numbers */
+static int	ident_count=0;		/* Number of idents in above array */
+static int	ident_length=0;		/* Length of idents array */
+#define		IDENT_BLOCK	256	/* Number of idents array slots to allocate */
+
 static struct db_i		*dbip;
 static struct rt_tess_tol	ttol;
 static struct rt_tol		tol;
@@ -74,6 +78,29 @@ struct facets
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
+
+void
+insert_id( id )
+int id;
+{
+	int i;
+
+	for( i=0 ; i<ident_count ; i++ )
+	{
+		if( idents[i] == id )
+			return;
+	}
+
+	if( ident_count == ident_length )
+	{
+		idents = (int *)rt_realloc( (char *)idents , (ident_length + IDENT_BLOCK)*sizeof( int ) , "insert_id: idents" );
+		ident_length += IDENT_BLOCK;
+	}
+
+	idents[ident_count] = id;
+	ident_count++;
+}
+
 static int
 select_region( tsp, pathp, curtree )
 register struct db_tree_state	*tsp;
@@ -97,7 +124,7 @@ union tree		*curtree;
 {
 	if( verbose )
 		rt_log( "get_reg_id: Adding id %d to list\n" , tsp->ts_regionid );
-	nmg_tbl( &idents , TBL_INS_UNIQUE , (long *)tsp->ts_regionid );
+	insert_id( tsp->ts_regionid );
 	return( -1 );
 }
 
@@ -109,6 +136,8 @@ union tree		*curtree;
 {
 	rt_log( "region stub called, this shouldn't happen\n" );
 	rt_bomb( "region_stub\n" );
+
+	return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
 
 static union tree *
@@ -120,6 +149,8 @@ int                     id;
 {
 	rt_log( "leaf stub called, this shouldn't happen\n" );
 	rt_bomb( "leaf_stub\n" );
+
+	return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
 
 static void
@@ -210,7 +241,6 @@ struct db_tree_state *tsp;
 		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 		{
 			struct loopuse *lu;
-			int face_type=0;
 			int no_of_loops=0;
 			int no_of_holes=0;
 
@@ -431,13 +461,13 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*dot;
-	int		i,j,ret;
+	int		i,j;
 	register int	c;
 	double		percent;
 
 	port_setlinebuf( stderr );
 
+	rt_g.debug = 0;
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;
 #endif
@@ -461,16 +491,12 @@ char	*argv[];
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
 
-	/* Initialize ident table */
-	nmg_tbl( &idents , TBL_INIT , NULL );
-
 	/* XXX For visualization purposes, in the debug plot files */
 	{
 		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
 		/* XXX This value is specific to the Bradley */
 		nmg_eue_dist = 2.0;
 	}
-
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
@@ -539,24 +565,23 @@ char	*argv[];
 	fprintf( fp_out , "$03" );
 
 	/* First produce an unordered list of region ident codes */
-	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,			/* ncpu */
 		&tree_state,
 		get_reg_id,			/* put id in table */
 		region_stub,
 		leaf_stub );
 
-
 	/* Process regions in ident order */
 	curr_id = 0;
-	for( i=0 ; i<NMG_TBL_END( &idents ) ; i++ )
+	for( i=0 ; i<ident_length ; i++ )
 	{
 		int next_id = 99999999;
-		for( j=0 ; j<NMG_TBL_END( &idents ) ; j++ )
+		for( j=0 ; j<ident_length ; j++ )
 		{
 			int test_id;
 
-			test_id = (int)NMG_TBL_GET( &idents , j );
+			test_id = idents[j];
 			if( test_id > curr_id && test_id < next_id )
 				next_id = test_id;
 		}
@@ -573,7 +598,7 @@ char	*argv[];
 		tree_state.ts_tol = &tol;
 		tree_state.ts_ttol = &ttol;
 
-		ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+		(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 			1,			/* ncpu */
 			&tree_state,
 			select_region,

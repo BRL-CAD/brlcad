@@ -48,11 +48,10 @@ static char RCSid[] = "$Header$";
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
-static int	debug_plots;		/* Make debugging plots */
 static int	ncpu = 1;		/* Number of processors */
 static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = NULL;	/* Output filename */
@@ -82,7 +81,7 @@ struct directory *dp;
 	int comb_len;
 	int i;
 	int region_flag;
-	struct wmember *wmem,headp;
+	struct wmember headp;
 
 	if( dp->d_flags & DIR_REGION )
 		return;
@@ -104,7 +103,7 @@ struct directory *dp;
 	RT_LIST_INIT( &headp.l );
 
 	for( i=1 ; i<dp->d_len ; i++ )
-		wmem = mk_addmember( rp[i].M.m_instname , &headp , rp[i].M.m_relation );
+		(void)mk_addmember( rp[i].M.m_instname , &headp , rp[i].M.m_relation );
 
 	if( rp[0].c.c_flags == 'R' )
 		region_flag = 1;
@@ -129,7 +128,7 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	int		i,j,ret;
+	int		i;
 	CONST char	*units;
 	register int	c;
 	double		percent;
@@ -168,13 +167,10 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:dn:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:n:o:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
-			break;
-		case 'd':		/* debug plots */
-			debug_plots = 1;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
@@ -240,7 +236,7 @@ char	*argv[];
 		mk_id( fp_out , dbip->dbi_title );
 
 	/* Walk indicated tree(s).  Each region will be output separately */
-	ret = db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,				/* ncpu */
 		&tree_state,
 		0,				/* select all regions */
@@ -348,7 +344,7 @@ union tree		*curtree;
 	{
 		char nmg_name[16];
 		unsigned char rgb[3];
-		struct wmember headp,*wmem;
+		struct wmember headp;
 
 		/* Write the nmgregion to the output file */
 		nmg_count++;
@@ -360,7 +356,7 @@ union tree		*curtree;
 
 		/* Now make a normal brlcad region */
 		RT_LIST_INIT( &headp.l );
-		wmem = mk_addmember( nmg_name , &headp , WMOP_UNION );
+		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
 		rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
 		rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
 		rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
