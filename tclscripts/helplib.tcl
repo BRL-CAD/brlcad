@@ -70,6 +70,7 @@ set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
+set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
 set helplib_data(vo_close)		{{} {close/destroy this view object}}
 set helplib_data(vo_size)		{{vsize} {set/get the view size}}
 set helplib_data(vo_invSize)		{{} {get the inverse view size}}
@@ -84,6 +85,7 @@ set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
 set helplib_data(vo_eye)		{{"x y z"} {set the eyepoint}}
 set helplib_data(vo_eye_pos)		{{"x y z"} {set the eye position}}
 set helplib_data(vo_lookat)		{{"x y z"} {set the look-at point}}
+set helplib_data(vo_mrot)		{{x y z} {rotate view using model x,y,z}}
 set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
 set helplib_data(vo_pov)		{{args} {center quat scale eye_pos perspective}}
 set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
