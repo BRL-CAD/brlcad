@@ -40,7 +40,7 @@ int argc; char *argv[];
 	char * tea_name = "UtahTeapot";
 	int i;
 
-	rt_init_resource( &rt_uniresource, 1 );
+	rt_init_resource( &rt_uniresource, 0, NULL );
 
 	outfp = wdb_fopen("teapot.g");
 
