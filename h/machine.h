@@ -158,6 +158,11 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
+#if	(defined(__sgi) && defined(__mips))
+/* Strict ANSI C does not define CPP symbols that don't start with __ */
+#	define sgi	1
+#	define mips	1
+#endif
 #if	(defined(sgi) && defined(mips))
 /********************************
  *				*
