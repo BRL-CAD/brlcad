@@ -40,10 +40,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include <ctype.h>
 
-static char	red_tmpfil[16];
-static char	*red_tmpfil_init = "/tmp/GED.aXXXXX";
-static char	red_tmpcomb[15];
-static char	*red_tmpcomb_init = "red_tmp.aXXXXX";
+static char	red_tmpfil[17];
+static char	*red_tmpfil_init = "/tmp/GED.aXXXXXX";
+static char	red_tmpcomb[16];
+static char	*red_tmpcomb_init = "red_tmp.aXXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
 
 void put_rgb_into_comb();
@@ -1196,6 +1196,12 @@ checkcomb()
 
 		while (!done2) {
 			/* First non-white is the relation operator */
+			if( !ptr )
+			{
+				done2 = 1;
+				break;
+			}
+			
 			relation = (*ptr);
 			if( relation == '\0' )
 			{
