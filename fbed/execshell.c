@@ -12,13 +12,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <signal.h>
 #include <fcntl.h>
+#include "machine.h"
+#include "externs.h"
 #include "./extern.h"
 
 #define DFL_SHELL	"/bin/sh"
-
-extern void perror(), exit();
-extern char *getenv();
-extern int errno;
 
 /*	e x e c _ S h e l l ( )
 	If args[0] is NULL, spawn a shell, otherwise execute the specified
@@ -51,7 +49,7 @@ char *args[];
 			sleep( 2 );
 			(void) execvp( args[0], args );
 			fb_log( "%s : could not execute.\n", args[0] );
-			exit( errno );
+			exit( 1 );
 		default :
 			{	register int pid;
 				int stat_loc;

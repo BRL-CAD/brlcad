@@ -86,8 +86,6 @@ extern int LI, CO;
 extern Func_Tab	*get_Func_Name();
 extern RGBpixel *get_Fb_Panel();
 extern char *char_To_String();
-extern char *getenv();
-extern char *malloc();
 extern int add_Try();
 extern int bitx();
 extern int fb_Init_Menu();

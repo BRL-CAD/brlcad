@@ -12,6 +12,8 @@ char sccsTag[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archive /vld/mos
 
 #include <stdio.h>
 #include <assert.h>
+#include "machine.h"
+#include "externs.h"
 #include "./extern.h"
 #define NewTry( p ) \
 		if( ((p) = (Try *) malloc( sizeof(Try) )) == TRY_NULL ) \

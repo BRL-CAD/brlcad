@@ -13,6 +13,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <fcntl.h>
+#include "machine.h"
+#include "externs.h"
 #include "./extern.h"
 
 static struct
