@@ -1997,7 +1997,7 @@ char	**argv;
       return TCL_OK;
     }
     Tcl_AppendResult(interp, "opendb: No database presently open\n", (char *)NULL);
-    return TCL_ERROR;
+    return TCL_OK;
   }
 
   if(3 < argc || (strlen(argv[1]) == 0)){
