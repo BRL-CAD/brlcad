@@ -1,2 +1,0 @@
-if {[package vcompare [package provide Tcl] @TCLVER@] != 0} { return }
-package ifneeded Tk @TKVER@ [list load [file join $dir .. libtk@TKVER@.so] Tk]
