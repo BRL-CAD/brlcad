@@ -150,25 +150,25 @@ char **argv;
 		argv += 2;
 		break;
 	case 'u':
-		sscanf( argv[1], "%x", &bu_debug );
+		sscanf( argv[1], "%x", (unsigned int *)&bu_debug );
 		fprintf(stderr,"librt bu_debug=x%x\n", bu_debug);
 		argc -= 2;
 		argv += 2;
 		break;
 	case 'x':
-		sscanf( argv[1], "%x", &rt_g.debug );
+		sscanf( argv[1], "%x", (unsigned int *)&rt_g.debug );
 		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
 		argc -= 2;
 		argv += 2;
 		break;
 	case 'X':
-		sscanf( argv[1], "%x", &rdebug );
+		sscanf( argv[1], "%x", (unsigned int *)&rdebug );
 		fprintf(stderr,"rdebug=x%x\n", rdebug);
 		argc -= 2;
 		argv += 2;
 		break;
 	case 'N':
-		sscanf( argv[1], "%x", &rt_g.NMG_debug);
+		sscanf( argv[1], "%x", (unsigned int *)&rt_g.NMG_debug);
 		fprintf(stderr,"librt rt_g.NMG_debug=x%x\n", rt_g.NMG_debug);
 		argc -= 2;
 		argv += 2;

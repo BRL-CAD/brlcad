@@ -217,10 +217,10 @@ char **argv;
 				classic_mged = 1;
 				break;
 			case 'x':
-				sscanf( bu_optarg, "%x", &rt_g.debug );
+				sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 				break;
 			case 'X':
-	                        sscanf( bu_optarg, "%x", &bu_debug );
+	                        sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
 				break;
 			default:
 				fprintf( stdout, "Unrecognized option (%c)\n", c );

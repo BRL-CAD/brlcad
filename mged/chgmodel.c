@@ -2574,7 +2574,6 @@ f_binary(     ClientData	clientData,
 	char *file_name;
 	int input_mode=0;
 	int output_mode=0;
-	struct bu_mapped_file *bu_fd;
 	struct rt_binunif_internal *bip;
 	struct rt_db_internal intern;
 	struct directory *dp;
@@ -2674,7 +2673,6 @@ f_binary(     ClientData	clientData,
 			bu_vls_printf( &vls, "Object %s already exists", obj_name );
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 			bu_vls_free( &vls );
-			bu_close_mapped_file( bu_fd );
 			return TCL_ERROR;
 		}
 

@@ -82,6 +82,8 @@ extern void set_port();		/* defined in fbserv.c */
 extern void predictor_init();	/* defined in predictor.c */
 extern void view_ring_init(); /* defined in chgview.c */
 
+extern void Tk_CreateCanvasBezierType();
+
 #ifdef DM_X
 extern Tk_Window tkwin;
 #endif

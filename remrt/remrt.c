@@ -360,7 +360,7 @@ int		use_air = 0;
 
 /* variables shared with worker() */
 extern int	hypersample;
-extern int	jitter;
+extern unsigned int	jitter;
 extern fastf_t	rt_perspective;
 extern fastf_t	aspect;
 extern fastf_t	eye_backoff;

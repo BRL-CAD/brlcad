@@ -171,10 +171,10 @@ char **argv;
 		if( strcmp( argv[1], "-d" ) == 0 )  {
 			debug++;
 		} else if( strcmp( argv[1], "-x" ) == 0 )  {
-			sscanf( argv[2], "%x", &rt_g.debug );
+			sscanf( argv[2], "%x", (unsigned int *)&rt_g.debug );
 			argc--; argv++;
 		} else if( strcmp( argv[1], "-X" ) == 0 )  {
-			sscanf( argv[2], "%x", &rdebug );
+			sscanf( argv[2], "%x", (unsigned int *)&rdebug );
 			argc--; argv++;
 		} else {
 			fprintf(stderr, srv_usage);

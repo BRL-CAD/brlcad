@@ -98,6 +98,7 @@ char *p_dsp_v5[] = {
 	"Enter width of displacement-map (number of values): ",
 	"Enter length of displacement-map (number of values): ",
 	"Normal Interpolation? 0=no 1=yes: ",
+	"Cut direction [ad|lR|Lr] ",
 	"Cell size: ",
 	"Unit elevation: "
 };
@@ -587,7 +588,7 @@ char **argv;
 			menu = p_dsp_v4;
 			fn_in = dsp_in_v4;
 		} else {
-			nvals = 7;
+			nvals = 8;
 			menu = p_dsp_v5;
 			fn_in = dsp_in_v5;
 		}
@@ -950,12 +951,26 @@ struct rt_db_internal	*intern;
 	dsp->dsp_xcnt = atoi( cmd_argvs[5] );
 	dsp->dsp_ycnt = atoi( cmd_argvs[6] );
 	dsp->dsp_smooth = atoi( cmd_argvs[7] );
+	switch ( *cmd_argvs[8] == 'a' ) {
+	case 'a':	/* adaptive */
+	case 'A': 
+	    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
+	    break;
+	case 'l':	/* lower left to upper right */
+	    dsp->dsp_cuttype = DSP_CUT_DIR_llUR;
+	    break;
+	case 'L':	/* Upper Left to lower right */
+	    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
+	    break;
+	
+	}
+
 	MAT_IDN( dsp->dsp_stom );
 	
 	dsp->dsp_stom[0] = dsp->dsp_stom[5] = 
-		atof( cmd_argvs[8] ) * local2base;
+		atof( cmd_argvs[9] ) * local2base;
 
-	dsp->dsp_stom[10] = atof( cmd_argvs[9] ) * local2base;
+	dsp->dsp_stom[10] = atof( cmd_argvs[10] ) * local2base;
 
 	bn_mat_inv( dsp->dsp_mtos, dsp->dsp_stom );
 

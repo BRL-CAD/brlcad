@@ -54,7 +54,7 @@ extern int		save_overlaps;		/* flag for setting rti_save_overlaps */
 /***** variables shared with worker() ******/
 extern int		stereo;			/* stereo viewing */
 extern int		hypersample;		/* number of extra rays to fire */
-extern int		jitter;			/* jitter (bit vector) */
+extern unsigned int	jitter;			/* jitter (bit vector) */
 #define JITTER_CELL	0x1			/* jitter position of ray in each cell */
 #define JITTER_FRAME	0x2			/* jitter position of entire frame */
 extern fastf_t		rt_perspective;		/* presp (degrees X) 0 => ortho */

@@ -449,10 +449,8 @@ edit_com(int	argc,
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 	register struct cmd_list *save_cmd_list;
-	double		elapsed_time;
 	int		ret;
 	int		initial_blank_screen;
-	struct bu_vls vls;
 
 	CHECK_DBI_NULL;
 
@@ -658,7 +656,7 @@ f_debugbu(ClientData	clientData,
 
 
 	if( argc >= 2 )  {
-		sscanf( argv[1], "%x", &bu_debug );
+		sscanf( argv[1], "%x", (unsigned int *)&bu_debug );
 	} else {
 		bu_vls_printb(&vls, "Possible flags", 0xffffffffL, BU_DEBUG_FORMAT );
 		bu_vls_printf(&vls, "\n");
@@ -695,7 +693,7 @@ f_debuglib(ClientData	clientData,
 	}
 
 	if (argc >= 2) {
-		sscanf(argv[1], "%x", &rt_g.debug);
+		sscanf(argv[1], "%x", (unsigned int *)&rt_g.debug);
 		if (RT_G_DEBUG) bu_debug |= BU_DEBUG_COREDUMP;
 	} else {
 		bu_vls_printb(&vls, "Possible flags", 0xffffffffL, DEBUG_FORMAT);
@@ -766,7 +764,7 @@ f_debugnmg(ClientData	clientData,
 	}
 
 	if (argc >= 2) {
-		sscanf(argv[1], "%x", &rt_g.NMG_debug);
+		sscanf(argv[1], "%x", (unsigned int *)&rt_g.NMG_debug);
 	} else {
 		bu_vls_printb(&vls, "possible flags", 0xffffffffL, NMG_DEBUG_FORMAT);
 		bu_vls_printf(&vls, "\n");

@@ -42,7 +42,7 @@ static const char RCSid[] = "@(#)$Header$";
 
 extern struct db_i	*dbip;	/* database instance pointer */
 
-static int joint_debug = 0;
+static unsigned int joint_debug = 0;
 #define DEBUG_J_MESH	0x00000001
 #define DEBUG_J_LOAD	0x00000002
 #define DEBUG_J_MOVE	0x00000004

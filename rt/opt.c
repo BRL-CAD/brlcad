@@ -59,7 +59,7 @@ int		query_rdebug;
 int		query_debug;
 int		stereo = 0;		/* stereo viewing */
 int		hypersample=0;		/* number of extra rays to fire */
-int		jitter=0;		/* jitter ray starting positions */
+unsigned int	jitter=0;		/* ray jitter control variable */
 fastf_t		rt_perspective=0;	/* presp (degrees X) 0 => ortho */
 fastf_t		aspect = 1;		/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
@@ -267,7 +267,7 @@ int get_args( int argc, register char **argv )
 			finalframe = atoi( bu_optarg );
 			break;
 		case 'N':
-			sscanf( bu_optarg, "%x", &rt_g.NMG_debug);
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug);
 			bu_log("NMG_debug=0x%x\n", rt_g.NMG_debug);
 			break;
 		case 'M':
@@ -277,13 +277,13 @@ int get_args( int argc, register char **argv )
 			AmbientIntensity = atof( bu_optarg );
 			break;
 		case 'x':
-			sscanf( bu_optarg, "%x", &rt_g.debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
 			break;
 		case 'X':
-			sscanf( bu_optarg, "%x", &rdebug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rdebug );
 			break;
 		case '!':
-			sscanf( bu_optarg, "%x", &bu_debug );
+			sscanf( bu_optarg, "%x", (unsigned int *)&bu_debug );
 			break;
 
 		case 's':
@@ -349,7 +349,7 @@ int get_args( int argc, register char **argv )
 			}
 			break;
 		case 'v': /* Set level of "non-debug" debugging output */
-			sscanf( bu_optarg, "%x", &rt_verbosity );
+			sscanf( bu_optarg, "%x", (unsigned int *)&rt_verbosity );
 			bu_printb( "Verbosity:", rt_verbosity,
 				VERBOSE_FORMAT);
 			bu_log("\n");
