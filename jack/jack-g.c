@@ -48,6 +48,8 @@ static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area, (CONST struct loopuse *lu, plane_t pl ) );
 
+void	jack_to_brlcad();
+
 main(argc, argv)
 int	argc;
 char	*argv[];
@@ -145,6 +147,7 @@ char	*argv[];
  *
  *	Convert a UPenn Jack data base into a BRL-CAD data base.
  */
+void
 jack_to_brlcad(fpin, fpout, reg_name, grp_name, jfile, bfile)
 FILE	*fpin, *fpout;
 char	*reg_name, *grp_name, *jfile, *bfile;
