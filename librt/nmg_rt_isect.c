@@ -1974,7 +1974,8 @@ struct face_g_plane *fg_p;
 	rd->face_subhit = 0;
 	rd->ray_dist_to_plane = dist;
 	fpi = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
-		eu_touch_func, vu_touch_func, (char *)rd, 1, rd->tol);
+		eu_touch_func, vu_touch_func, (char *)rd, NMG_FPI_PERGEOM,
+		rd->tol);
 
 
 	GET_HITMISS(myhit);
