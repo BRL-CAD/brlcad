@@ -2450,7 +2450,7 @@ Make_arb6_obj()
 		sprintf( arb6_name , "arb%d.%d.%d" , group_id , comp_id , arb_count );
 		arb_count++;
 
-		mk_arb8( fdout , arb6_name , pts );
+		mk_arb8( fdout , arb6_name , &pts[0][X] );
 
 		if( mk_addmember( arb6_name , &arb6_head , WMOP_UNION ) == WMEMBER_NULL )
 			rt_log( "Make_arb6_obj: Failed to add %s to member list\n" , arb6_name );
@@ -3812,7 +3812,7 @@ do_hex1()
 		VMOVE( points[i] , grid_pts[pts[i]].pt );
 
 	make_solid_name( name , CHEX1 , element_id , comp_id , group_id , 0 );
-	mk_arb8( fdout , name , points );
+	mk_arb8( fdout , name , &points[0][X] );
 
 	RT_LIST_INIT( &head.l );
 
@@ -3937,7 +3937,7 @@ do_hex2()
 		VMOVE( points[i] , grid_pts[pts[i]].pt );
 
 	make_solid_name( name , CHEX2 , element_id , comp_id , group_id , 0 );
-	mk_arb8( fdout , name , points );
+	mk_arb8( fdout , name , &points[0][X] );
 
 	RT_LIST_INIT( &head.l );
 
