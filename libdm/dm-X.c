@@ -21,6 +21,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "tk.h"
 #include <X11/Xutil.h>
 
@@ -46,6 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 void     X_configure_window_shape();
 void     X_establish_perspective();
 void     X_set_perspective();
+int      X_drawString2D();
 
 static void	label();
 static void	draw();
@@ -56,11 +62,11 @@ static int X_set_visual();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-static int	X_open();
+struct dm	*X_open();
 static int	X_close();
 static int	X_drawBegin(), X_drawEnd();
 static int	X_normal(), X_newrot();
-static int	X_drawString2D(), X_drawLine2D();
+static int	X_drawLine2D();
 static int      X_drawVertex2D();
 static int	X_drawVlist();
 static int      X_setColor(), X_setLineAttr();
@@ -88,6 +94,11 @@ struct dm dm_X = {
   0,				/* no displaylist */
   PLOTBOUND,
   "X", "X Window System (X11)",
+  1,
+  0,
+  0,
+  1.0, /* aspect ratio */
+  0,
   0,
   0,
   0,
@@ -108,54 +119,163 @@ static int perspective_table[] = { 30, 45, 60, 90 };
  * Fire up the display manager, and the display processor.
  *
  */
-static int
+struct dm *
+#if DO_NEW_LIBDM_OPEN
+X_open(eventHandler, argc, argv)
+int (*eventHandler)();
+#else
 X_open(dmp, argc, argv)
 struct dm *dmp;
+#endif
 int argc;
 char *argv[];
 {
   static int count = 0;
   int i;
+  int a_screen;
+  int make_square = -1;
   XGCValues gcv;
   XColor a_color;
   Visual *a_visual;
-  int a_screen;
   Colormap  a_cmap;
   struct bu_vls str;
+  struct bu_vls top_vls;
   Display *tmp_dpy;
+#if DO_NEW_LIBDM_OPEN
+  struct dm *dmp;
+
+  dmp = BU_GETSTRUCT(dmp, dm);
+  *dmp = dm_X;
+  dmp->dm_eventHandler = eventHandler;
+#endif
 
   /* Only need to do this once for this display manager */
   if(!count)
     (void)X_load_startup(dmp);
 
-  bu_vls_init_if_uninit(&dmp->dm_pathName);
-  bu_vls_init_if_uninit(&dmp->dm_initWinProc);
-  i = dm_process_options(dmp, argc, argv);
-  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
-    bu_vls_printf(&dmp->dm_pathName, ".dm_x%d", count++);
-  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
-    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm_win");
-
   dmp->dm_vars = bu_calloc(1, sizeof(struct x_vars), "X_init: x_vars");
-  ((struct x_vars *)dmp->dm_vars)->perspective_angle = 3;
+  if(!dmp->dm_vars){
+    bu_free(dmp, "X_open: dmp");
+    return DM_NULL;
+  }
 
-  /* initialize the modifiable variables */
+  bu_vls_init(&dmp->dm_pathName);
+  bu_vls_init(&dmp->dm_tkName);
+  bu_vls_init(&dmp->dm_dName);
+  bu_vls_init(&dmp->dm_initWinProc);
+
+  i = dm_process_options(dmp,
+			 &dmp->dm_width,
+			 &dmp->dm_height,
+			 argc,
+			 argv);
+
+  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+    bu_vls_printf(&dmp->dm_pathName, ".dm_x%d", count);
+
+  ++count;
+  if(bu_vls_strlen(&dmp->dm_dName) == 0){
+    char *dp;
+
+    dp = getenv("DISPLAY");
+    if(dp)
+      bu_vls_strcpy(&dmp->dm_dName, dp);
+    else
+      bu_vls_strcpy(&dmp->dm_dName, ":0.0");
+  }
+  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
+    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm");
+
+  /* initialize dm specific variables */
+  ((struct x_vars *)dmp->dm_vars)->perspective_angle = 3;
+  dmp->dm_aspect = 1.0;
+
+  /* initialize modifiable variables */
   ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
 
+#if 0  
   if(BU_LIST_IS_EMPTY(&head_x_vars.l))
+#else
+  if(dmp->dm_eventHandler != DM_EVENT_HANDLER_NULL)
+#endif
     Tk_CreateGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_X);
 
   BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
 
-  if(!dmp->dm_vars)
-    return TCL_ERROR;
-
   ((struct x_vars *)dmp->dm_vars)->fontstruct = NULL;
 
-  /* Make xtkwin a toplevel window */
-  ((struct x_vars *)dmp->dm_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-				       bu_vls_addr(&dmp->dm_pathName), dmp->dm_dname);
+  bu_vls_init(&top_vls);
+  if(dmp->dm_top){
+    /* Make xtkwin a toplevel window */
+    ((struct x_vars *)dmp->dm_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+						      bu_vls_addr(&dmp->dm_pathName),
+						      bu_vls_addr(&dmp->dm_dName));
+    ((struct x_vars *)dmp->dm_vars)->top = ((struct x_vars *)dmp->dm_vars)->xtkwin;
+    bu_vls_printf(&top_vls, "%S", &dmp->dm_pathName);
+  }else{
+    char *cp;
 
+    cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
+    if(cp == bu_vls_addr(&dmp->dm_pathName)){
+      ((struct x_vars *)dmp->dm_vars)->top = tkwin;
+      bu_vls_strcpy(&top_vls, ".");
+    }else{
+      bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
+		    bu_vls_addr(&dmp->dm_pathName));
+      ((struct x_vars *)dmp->dm_vars)->top =
+	Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+    }
+
+    /* Make xtkwin an embedded window */
+    ((struct x_vars *)dmp->dm_vars)->xtkwin =
+      Tk_CreateWindow(interp, ((struct x_vars *)dmp->dm_vars)->top,
+		      cp + 1, (char *)NULL);
+  }
+
+  if(((struct x_vars *)dmp->dm_vars)->xtkwin == NULL){
+    Tcl_AppendResult(interp, "dm-X: Failed to open ",
+		     bu_vls_addr(&dmp->dm_pathName),
+		     "\n", (char *)NULL);
+    (void)X_close(dmp);
+    return DM_NULL;
+  }
+
+  bu_vls_printf(&dmp->dm_tkName, "%s",
+		(char *)Tk_Name(((struct x_vars *)dmp->dm_vars)->xtkwin));
+
+#if 1
+  bu_vls_init(&str);
+  bu_vls_printf(&str, "_new_init_dm %S %S %S\n",
+		&dmp->dm_initWinProc,
+		&top_vls,
+		&dmp->dm_pathName);
+
+  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    bu_vls_free(&str);
+    (void)X_close(dmp);
+    return DM_NULL;
+  }
+
+  bu_vls_free(&str);
+  bu_vls_free(&top_vls);
+
+  ((struct x_vars *)dmp->dm_vars)->dpy =
+    Tk_Display(((struct x_vars *)dmp->dm_vars)->top);
+
+  if(dmp->dm_width == 0){
+    dmp->dm_width =
+      DisplayWidth(((struct x_vars *)dmp->dm_vars)->dpy,
+		   DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
+    ++make_square;
+  }
+
+  if(dmp->dm_height == 0){
+    dmp->dm_height =
+      DisplayHeight(((struct x_vars *)dmp->dm_vars)->dpy,
+		    DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
+    ++make_square;
+  }
+#else
   /*
    * Create the X drawing window by calling init_x which
    * is defined in xinit.tcl
@@ -167,36 +287,42 @@ char *argv[];
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
-    return TCL_ERROR;
+    (void)X_close(dmp);
+    return DM_NULL;
   }
 
   bu_vls_free(&str);
 
   ((struct x_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct x_vars *)dmp->dm_vars)->xtkwin);
-  ((struct x_vars *)dmp->dm_vars)->width =
+
+  dmp->dm_width =
     DisplayWidth(((struct x_vars *)dmp->dm_vars)->dpy,
 		 DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
-  ((struct x_vars *)dmp->dm_vars)->height =
+  dmp->dm_height =
     DisplayHeight(((struct x_vars *)dmp->dm_vars)->dpy,
 		  DefaultScreen(((struct x_vars *)dmp->dm_vars)->dpy)) - 20;
 
-  /* Make window square */
-  if(((struct x_vars *)dmp->dm_vars)->height < ((struct x_vars *)dmp->dm_vars)->width)
-    ((struct x_vars *)dmp->dm_vars)->width = ((struct x_vars *)dmp->dm_vars)->height;
-  else
-    ((struct x_vars *)dmp->dm_vars)->height = ((struct x_vars *)dmp->dm_vars)->width;
+#endif
+  if(make_square > 0){
+    /* Make window square */
+    if(dmp->dm_height <
+       dmp->dm_width)
+      dmp->dm_width = dmp->dm_height;
+    else
+      dmp->dm_height = dmp->dm_width;
+  }
 
   Tk_GeometryRequest(((struct x_vars *)dmp->dm_vars)->xtkwin,
-		     ((struct x_vars *)dmp->dm_vars)->width, 
-		     ((struct x_vars *)dmp->dm_vars)->height);
+		     dmp->dm_width, 
+		     dmp->dm_height);
 
 #if 0
   /*XXX*/
   XSynchronize(((struct x_vars *)dmp->dm_vars)->dpy, TRUE);
 #endif
 
-  a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dm_vars)->xtkwin);
+  a_screen = Tk_ScreenNumber(((struct x_vars *)dmp->dm_vars)->top);
 
   /* must do this before MakeExist */
   if(X_set_visual(((struct x_vars *)dmp->dm_vars)->dpy,
@@ -204,7 +330,8 @@ char *argv[];
 		  &((struct x_vars *)dmp->dm_vars)->cmap,
 		  &((struct x_vars *)dmp->dm_vars)->depth) == NULL){
     Tcl_AppendResult(interp, "X_open: Can't get an appropriate visual.\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)X_close(dmp);
+    return DM_NULL;
   }
 
   Tk_MakeWindowExist(((struct x_vars *)dmp->dm_vars)->xtkwin);
@@ -214,8 +341,8 @@ char *argv[];
   ((struct x_vars *)dmp->dm_vars)->pix =
     Tk_GetPixmap(((struct x_vars *)dmp->dm_vars)->dpy,
 		 DefaultRootWindow(((struct x_vars *)dmp->dm_vars)->dpy),
-		 ((struct x_vars *)dmp->dm_vars)->width,
-		 ((struct x_vars *)dmp->dm_vars)->height,
+		 dmp->dm_width,
+		 dmp->dm_height,
 		 Tk_Depth(((struct x_vars *)dmp->dm_vars)->xtkwin));
 
   dm_allocate_color_cube( ((struct x_vars *)dmp->dm_vars)->dpy,
@@ -245,7 +372,7 @@ char *argv[];
 			 ((struct x_vars *)dmp->dm_vars)->bg);
   Tk_MapWindow(((struct x_vars *)dmp->dm_vars)->xtkwin);
 
-  return TCL_OK;
+  return dmp;
 }
 
 /*
@@ -281,8 +408,12 @@ struct dm *dmp;
   if(((struct x_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct x_vars *)dmp->dm_vars)->l);
 
+  bu_vls_free(&dmp->dm_pathName);
+  bu_vls_free(&dmp->dm_tkName);
+  bu_vls_free(&dmp->dm_dName);
+  bu_vls_free(&dmp->dm_initWinProc);
   bu_free(dmp->dm_vars, "X_close: x_vars");
-
+  bu_free(dmp, "X_close: dmp");
   return TCL_OK;
 }
 
@@ -304,8 +435,8 @@ struct dm *dmp;
   XFillRectangle(((struct x_vars *)dmp->dm_vars)->dpy,
 		 ((struct x_vars *)dmp->dm_vars)->pix,
 		 ((struct x_vars *)dmp->dm_vars)->gc, 0,
-		 0, ((struct x_vars *)dmp->dm_vars)->width + 1,
-		 ((struct x_vars *)dmp->dm_vars)->height + 1);
+		 0, dmp->dm_width + 1,
+		 dmp->dm_height + 1);
 
   return TCL_OK;
 }
@@ -321,8 +452,8 @@ struct dm *dmp;
 	    ((struct x_vars *)dmp->dm_vars)->pix,
 	    ((struct x_vars *)dmp->dm_vars)->win,
 	    ((struct x_vars *)dmp->dm_vars)->gc,
-	      0, 0, ((struct x_vars *)dmp->dm_vars)->width,
-	    ((struct x_vars *)dmp->dm_vars)->height, 0, 0);
+	      0, 0, dmp->dm_width,
+	    dmp->dm_height, 0, 0);
 
   /* Prevent lag between events and updates */
   XSync(((struct x_vars *)dmp->dm_vars)->dpy, 0);
@@ -390,7 +521,7 @@ mat_t mat;
 		if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
 		   pnt[1] < -1e6 || pnt[1] > 1e6 )
 		    continue; /* omit this point (ugh) */
-		pnt[0] *= 2047;
+		pnt[0] *= 2047 * dmp->dm_aspect;
 		pnt[1] *= 2047;
 		x = GED_TO_Xx(dmp, pnt[0]);
 		y = GED_TO_Xy(dmp, pnt[1]);
@@ -408,7 +539,7 @@ mat_t mat;
 
 		/* Integerize and let the X server do the clipping */
 
-		pnt[0] *= 2047;
+		pnt[0] *= 2047 * dmp->dm_aspect;
 		pnt[1] *= 2047;
 		x = GED_TO_Xx(dmp, pnt[0]);
 		y = GED_TO_Xy(dmp, pnt[1]);
@@ -463,16 +594,21 @@ struct dm *dmp;
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-static int
-X_drawString2D( dmp, str, x, y, size )
+int
+X_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
 int size;
+int use_aspect;
 {
   int	sx, sy;
 
-  sx = GED_TO_Xx(dmp, x );
+  if(use_aspect)
+    sx = GED_TO_Xx(dmp, x * dmp->dm_aspect);
+  else
+    sx = GED_TO_Xx(dmp, x );
+
   sy = GED_TO_Xy(dmp, y );
 
   XDrawString( ((struct x_vars *)dmp->dm_vars)->dpy,
@@ -491,10 +627,10 @@ int x2, y2;
 {
   int	sx1, sy1, sx2, sy2;
 
-  sx1 = GED_TO_Xx(dmp, x1 );
-  sy1 = GED_TO_Xy(dmp, y1 );
-  sx2 = GED_TO_Xx(dmp, x2 );
-  sy2 = GED_TO_Xy(dmp, y2 );
+  sx1 = GED_TO_Xx(dmp, x1);
+  sy1 = GED_TO_Xy(dmp, y1);
+  sx2 = GED_TO_Xx(dmp, x2);
+  sy2 = GED_TO_Xy(dmp, y2);
 
   XDrawLine( ((struct x_vars *)dmp->dm_vars)->dpy,
 	     ((struct x_vars *)dmp->dm_vars)->pix,
@@ -620,8 +756,20 @@ struct dm *dmp;
 
   XGetWindowAttributes( ((struct x_vars *)dmp->dm_vars)->dpy,
 			((struct x_vars *)dmp->dm_vars)->win, &xwa );
-  ((struct x_vars *)dmp->dm_vars)->height = xwa.height;
-  ((struct x_vars *)dmp->dm_vars)->width = xwa.width;
+  dmp->dm_height = xwa.height;
+  dmp->dm_width = xwa.width;
+  dmp->dm_aspect =
+    (fastf_t)dmp->dm_height /
+    (fastf_t)dmp->dm_width;
+
+  Tk_FreePixmap(((struct x_vars *)dmp->dm_vars)->dpy,
+		((struct x_vars *)dmp->dm_vars)->pix);
+  ((struct x_vars *)dmp->dm_vars)->pix =
+    Tk_GetPixmap(((struct x_vars *)dmp->dm_vars)->dpy,
+		 DefaultRootWindow(((struct x_vars *)dmp->dm_vars)->dpy),
+		 dmp->dm_width,
+		 dmp->dm_height,
+		 Tk_Depth(((struct x_vars *)dmp->dm_vars)->xtkwin));
 
   /* First time through, load a font or quit */
   if (((struct x_vars *)dmp->dm_vars)->fontstruct == NULL) {
@@ -644,7 +792,7 @@ struct dm *dmp;
   /* Always try to choose a the font that best fits the window size.
    */
 
-  if (((struct x_vars *)dmp->dm_vars)->width < 582) {
+  if (dmp->dm_width < 582) {
     if (((struct x_vars *)dmp->dm_vars)->fontstruct->per_char->width != 5) {
       if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dmp->dm_vars)->dpy,
 					  FONT5)) != NULL ) {
@@ -656,7 +804,7 @@ struct dm *dmp;
 		  ((struct x_vars *)dmp->dm_vars)->gc, GCFont, &gcv);
       }
     }
-  } else if (((struct x_vars *)dmp->dm_vars)->width < 679) {
+  } else if (dmp->dm_width < 679) {
     if (((struct x_vars *)dmp->dm_vars)->fontstruct->per_char->width != 6){
       if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dmp->dm_vars)->dpy,
 					  FONT6)) != NULL ) {
@@ -668,7 +816,7 @@ struct dm *dmp;
 		  ((struct x_vars *)dmp->dm_vars)->gc, GCFont, &gcv);
       }
     }
-  } else if (((struct x_vars *)dmp->dm_vars)->width < 776) {
+  } else if (dmp->dm_width < 776) {
     if (((struct x_vars *)dmp->dm_vars)->fontstruct->per_char->width != 7){
       if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dmp->dm_vars)->dpy,
 					  FONT7)) != NULL ) {
@@ -680,7 +828,7 @@ struct dm *dmp;
 		  ((struct x_vars *)dmp->dm_vars)->gc, GCFont, &gcv);
       }
     }
-  } else if (((struct x_vars *)dmp->dm_vars)->width < 873) {
+  } else if (dmp->dm_width < 873) {
     if (((struct x_vars *)dmp->dm_vars)->fontstruct->per_char->width != 8){
       if ((newfontstruct = XLoadQueryFont(((struct x_vars *)dmp->dm_vars)->dpy,
 					  FONT8)) != NULL ) {

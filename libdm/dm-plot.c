@@ -45,7 +45,7 @@ static int Plot_load_startup();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-static int	Plot_open();
+struct dm	*Plot_open();
 static int	Plot_close();
 static int	Plot_drawBegin(), Plot_drawEnd();
 static int	Plot_normal(), Plot_newrot();
@@ -82,6 +82,11 @@ struct dm dm_Plot = {
   0,
   0,
   0,
+  1.0, /* aspect ratio */
+  0,
+  0,
+  0,
+  0,
   0,
   0,
   0
@@ -95,23 +100,41 @@ struct plot_vars head_plot_vars;
  * Fire up the display manager, and the display processor.
  *
  */
-static int
+struct dm *
+#if DO_NEW_LIBDM_OPEN
+Plot_open(eventHandler, argc, argv)
+int (*eventHandler)();
+#else
 Plot_open(dmp, argc, argv)
 struct dm *dmp;
+#endif
 int argc;
 char *argv[];
 {
   static int count = 0;
+#if DO_NEW_LIBDM_OPEN
+  struct dm *dmp;
+
+  dmp = BU_GETSTRUCT(dmp, dm);
+  *dmp = dm_Plot;
+  dmp->dm_eventHandler = eventHandler;
+#endif
 
   /* Only need to do this once for this display manager */
   if(!count)
     (void)Plot_load_startup(dmp);
 
-  bu_vls_init(&dmp->dm_pathName);
-  bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
-
   dmp->dm_vars = bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
+  if(!dmp->dm_vars){
+    bu_free(dmp, "Plot_open: dmp");
+    return DM_NULL;
+  }
+
   bu_vls_init(&((struct plot_vars *)dmp->dm_vars)->vls);
+  bu_vls_init(&dmp->dm_pathName);
+  bu_vls_init(&dmp->dm_tkName);
+  bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
+  bu_vls_printf(&dmp->dm_tkName, "dm_plot%d", count++);
 
   /* Process any options */
   ((struct plot_vars *)dmp->dm_vars)->is_3D = 1;          /* 3-D w/color, by default */
@@ -138,13 +161,15 @@ char *argv[];
 #endif
     default:
       Tcl_AppendResult(interp, "bad PLOT option ", argv[0], "\n", (char *)NULL);
-      return TCL_ERROR;
+      (void)Plot_close(dmp);
+      return DM_NULL;
     }
     argv++;
   }
   if( argv[0] == (char *)0 )  {
     Tcl_AppendResult(interp, "no filename or filter specified\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)Plot_close(dmp);
+    return DM_NULL;
   }
 
   if( argv[0][0] == '|' )  {
@@ -159,14 +184,12 @@ char *argv[];
     bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, argv[0]);
   }
 
-  if(!dmp->dm_vars)
-    return TCL_ERROR;
-
   if(((struct plot_vars *)dmp->dm_vars)->is_pipe){
     if((((struct plot_vars *)dmp->dm_vars)->up_fp =
 	popen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w")) == NULL){
       perror( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
-      return TCL_ERROR;
+      (void)Plot_close(dmp);
+      return DM_NULL;
     }
     
     Tcl_AppendResult(interp, "piped to ",
@@ -176,7 +199,8 @@ char *argv[];
     if((((struct plot_vars *)dmp->dm_vars)->up_fp =
 	fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w" )) == NULL){
       perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
-      return TCL_ERROR;
+      (void)Plot_close(dmp);
+      return DM_NULL;
     }
 
     Tcl_AppendResult(interp, "plot stored in ",
@@ -194,7 +218,7 @@ char *argv[];
     pl_space( ((struct plot_vars *)dmp->dm_vars)->up_fp,
 	      -2048, -2048, 2048, 2048 );
 
-  return TCL_OK;
+  return dmp;
 }
 
 /*
@@ -216,7 +240,9 @@ struct dm *dmp;
   if(((struct plot_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct plot_vars *)dmp->dm_vars)->l);
 
+  bu_vls_free(&dmp->dm_pathName);
   bu_free(dmp->dm_vars, "Plot_close: plot_vars");
+  bu_free(dmp, "Plot_close: dmp");
   return TCL_OK;
 }
 
@@ -366,11 +392,12 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-Plot_drawString2D( dmp, str, x, y, size )
+Plot_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
 int size;
+int use_aspect;
 {
   pl_move( ((struct plot_vars *)dmp->dm_vars)->up_fp, x,y);
   pl_label( ((struct plot_vars *)dmp->dm_vars)->up_fp, str);

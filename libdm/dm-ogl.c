@@ -38,6 +38,11 @@
 #endif
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "externs.h"
@@ -83,7 +88,7 @@ char  ogl_sgi_used = 0;
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-static int	Ogl_open();
+struct dm	*Ogl_open();
 static int	Ogl_close();
 static int	Ogl_drawBegin();
 static int      Ogl_drawEnd();
@@ -116,7 +121,12 @@ struct dm dm_ogl = {
   0,				/* no displaylist */
   IRBOUND,
   "ogl", "X Windows with OpenGL graphics",
-  0,				/* mem map */
+  1,
+  0,
+  0,
+  1.0, /* aspect ratio */
+  0,
+  0,
   0,
   0,
   0,
@@ -161,11 +171,16 @@ struct dm *dmp;
  *  then to MGED-style +/-2048 range.
  */
 int
-Ogl_irisX2ged(dmp, x)
+Ogl_irisX2ged(dmp, x, use_aspect)
 struct dm *dmp;
 register int x;
+int use_aspect;
 {
-  return ((x/(double)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 4095);
+  if(use_aspect)
+    return ((x/(double)dmp->dm_width - 0.5) /
+	    dmp->dm_aspect * 4095);
+  else
+    return ((x/(double)dmp->dm_width - 0.5) * 4095);
 }
 
 int
@@ -173,7 +188,7 @@ Ogl_irisY2ged(dmp, y)
 struct dm *dmp;
 register int y;
 {
-  return ((0.5 - y/(double)((struct ogl_vars *)dmp->dm_vars)->height) * 4095);
+  return ((0.5 - y/(double)dmp->dm_height) * 4095);
 }
 
 /*
@@ -182,9 +197,14 @@ register int y;
  * Fire up the display manager, and the display processor.
  *
  */
-static int
+struct dm *
+#if DO_NEW_LIBDM_OPEN
+Ogl_open(eventHandler, argc, argv)
+int (*eventHandler)();
+#else
 Ogl_open(dmp, argc, argv)
 struct dm *dmp;
+#endif
 int argc;
 char *argv[];
 {
@@ -195,33 +215,68 @@ char *argv[];
   int i, j, k;
   int ndevices;
   int nclass = 0;
+  int make_square = -1;
   XDeviceInfoPtr olist, list;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
   struct bu_vls str;
+  struct bu_vls top_vls;
   Display *tmp_dpy;
+#if DO_NEW_LIBDM_OPEN
+  fastf_t tmp_vp;
+  struct dm *dmp;
+
+  dmp = BU_GETSTRUCT(dmp, dm);
+  *dmp = dm_ogl;
+  dmp->dm_eventHandler = eventHandler;
+  dmp->dm_vp = &tmp_vp;
+#endif
 
   /* Only need to do this once for this display manager */
   if(!count)
     (void)Ogl_load_startup(dmp);
 
-  bu_vls_init_if_uninit(&dmp->dm_pathName);
-  bu_vls_init_if_uninit(&dmp->dm_initWinProc);
-  i = dm_process_options(dmp, argc, argv);
-  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
-     bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count++);
-  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
-    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm_win");
-
   dmp->dm_vars = bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
+  if(!dmp->dm_vars){
+    bu_free(dmp, "Ogl_open: dmp");
+    return DM_NULL;
+  }
+
+  bu_vls_init(&dmp->dm_pathName);
+  bu_vls_init(&dmp->dm_tkName);
+  bu_vls_init(&dmp->dm_dName);
+  bu_vls_init(&dmp->dm_initWinProc);
+
+  i = dm_process_options(dmp,
+			 &dmp->dm_width,
+			 &dmp->dm_height,
+			 argc,
+			 argv);
+
+  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+     bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
+  ++count;
+  if(bu_vls_strlen(&dmp->dm_dName) == 0){
+    char *dp;
+
+    dp = getenv("DISPLAY");
+    if(dp)
+      bu_vls_strcpy(&dmp->dm_dName, dp);
+    else
+      bu_vls_strcpy(&dmp->dm_dName, ":0.0");
+  }
+  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
+    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm");
+
+  /* initialize dm specific variables */
   ((struct ogl_vars *)dmp->dm_vars)->devmotionnotify = LASTEvent;
   ((struct ogl_vars *)dmp->dm_vars)->devbuttonpress = LASTEvent;
   ((struct ogl_vars *)dmp->dm_vars)->devbuttonrelease = LASTEvent;
   ((struct ogl_vars *)dmp->dm_vars)->perspective_angle = 3;
-  ((struct ogl_vars *)dmp->dm_vars)->aspect = 1.0;
+  dmp->dm_aspect = 1.0;
 
-  /* initialize the modifiable variables */
+  /* initialize modifiable variables */
   ((struct ogl_vars *)dmp->dm_vars)->mvars.rgb = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.zclipping_on = 1;
@@ -231,74 +286,135 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fogdensity = 1.0;
 
+#if 0
   if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
+#else
+  if(dmp->dm_eventHandler != DM_EVENT_HANDLER_NULL)
+#endif
     Tk_CreateGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_OGL);
 
   BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)dmp->dm_vars)->l);
-
-  if(!dmp->dm_vars)
-    return TCL_ERROR;
 
   /* this is important so that Ogl_configure_notify knows to set
    * the font */
   ((struct ogl_vars *)dmp->dm_vars)->fontstruct = NULL;
 
-  if((tmp_dpy = XOpenDisplay(dmp->dm_dname)) == NULL){
+  if((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL){
     bu_vls_free(&str);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
 
-  ((struct ogl_vars *)dmp->dm_vars)->width =
-    DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-  ((struct ogl_vars *)dmp->dm_vars)->height =
-    DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+  if(dmp->dm_width == 0){
+    dmp->dm_width =
+      DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+     ++make_square;
+  }
+  if(dmp->dm_height == 0){
+    dmp->dm_height =
+      DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+     ++make_square;
+  }
 
-  /* Make window square */
-  if(((struct ogl_vars *)dmp->dm_vars)->height <
-     ((struct ogl_vars *)dmp->dm_vars)->width)
-    ((struct ogl_vars *)dmp->dm_vars)->width =
-      ((struct ogl_vars *)dmp->dm_vars)->height;
-  else
-    ((struct ogl_vars *)dmp->dm_vars)->height =
-      ((struct ogl_vars *)dmp->dm_vars)->width;
+  if(make_square > 0){
+    /* Make window square */
+    if(dmp->dm_height <
+       dmp->dm_width)
+      dmp->dm_width =
+	dmp->dm_height;
+    else
+      dmp->dm_height =
+	dmp->dm_width;
+  }
 
   XCloseDisplay(tmp_dpy);
 
-  /* Make xtkwin a toplevel window */
-  ((struct ogl_vars *)dmp->dm_vars)->xtkwin =
-    Tk_CreateWindowFromPath(interp, tkwin,
-			    bu_vls_addr(&dmp->dm_pathName), dmp->dm_dname);
+  bu_vls_init(&top_vls);
+  if(dmp->dm_top){
+    /* Make xtkwin a toplevel window */
+    ((struct ogl_vars *)dmp->dm_vars)->xtkwin =
+      Tk_CreateWindowFromPath(interp,
+			      tkwin,
+			      bu_vls_addr(&dmp->dm_pathName),
+			      bu_vls_addr(&dmp->dm_dName));
+    ((struct ogl_vars *)dmp->dm_vars)->top = ((struct ogl_vars *)dmp->dm_vars)->xtkwin;
+    bu_vls_printf(&top_vls, "%S", &dmp->dm_pathName);
+  }else{
+     char *cp;
+
+     cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
+     if(cp == bu_vls_addr(&dmp->dm_pathName)){
+       ((struct ogl_vars *)dmp->dm_vars)->top = tkwin;
+       bu_vls_strcpy(&top_vls, ".");
+     }else{
+       bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
+		     bu_vls_addr(&dmp->dm_pathName));
+       ((struct ogl_vars *)dmp->dm_vars)->top =
+	 Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+     }
+
+     /* Make xtkwin an embedded window */
+     ((struct ogl_vars *)dmp->dm_vars)->xtkwin =
+       Tk_CreateWindow(interp, ((struct ogl_vars *)dmp->dm_vars)->top,
+		       cp + 1, (char *)NULL);
+  }
 
   if( ((struct ogl_vars *)dmp->dm_vars)->xtkwin == NULL ) {
     Tcl_AppendResult(interp, "dm-Ogl: Failed to open ",
 		     bu_vls_addr(&dmp->dm_pathName),
 		     "\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
 
+  bu_vls_printf(&dmp->dm_tkName, "%s",
+		(char *)Tk_Name(((struct ogl_vars *)dmp->dm_vars)->xtkwin));
+
+#if 1
+  bu_vls_init(&str);
+  bu_vls_printf(&str, "_new_init_dm %S %S %S\n",
+		&dmp->dm_initWinProc,
+		&top_vls,
+		&dmp->dm_pathName);
+
+  if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
+    bu_vls_free(&str);
+    (void)Ogl_close(dmp);
+    return DM_NULL;
+  }
+
+  bu_vls_free(&str);
+  bu_vls_free(&top_vls);
+
+  ((struct ogl_vars *)dmp->dm_vars)->dpy =
+    Tk_Display(((struct ogl_vars *)dmp->dm_vars)->top);
+#else
   bu_vls_init(&str);
   bu_vls_printf(&str, "_init_dm %s %s\n",
 		bu_vls_addr(&dmp->dm_initWinProc),
 		bu_vls_addr(&dmp->dm_pathName));
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
   bu_vls_free(&str);
 
   ((struct ogl_vars *)dmp->dm_vars)->dpy =
     Tk_Display(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
+#endif
 
   Tk_GeometryRequest(((struct ogl_vars *)dmp->dm_vars)->xtkwin,
-		     ((struct ogl_vars *)dmp->dm_vars)->width,
-		     ((struct ogl_vars *)dmp->dm_vars)->height);
+		     dmp->dm_width,
+		     dmp->dm_height);
 
   /* must do this before MakeExist */
   if((vip=Ogl_set_visual(dmp,
 			 ((struct ogl_vars *)dmp->dm_vars)->xtkwin))==NULL){
     Tcl_AppendResult(interp, "Ogl_open: Can't get an appropriate visual.\n",
 		     (char *)NULL);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
 
 #if 0
@@ -320,7 +436,8 @@ char *argv[];
 			ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
     Tcl_AppendResult(interp, "Ogl_open: couldn't create glXContext.\n",
 		     (char *)NULL);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
   /* If we used an indirect context, then as far as sgi is concerned,
    * gl hasn't been used.
@@ -397,13 +514,15 @@ Done:
 		      ((struct ogl_vars *)dmp->dm_vars)->win,
 		      ((struct ogl_vars *)dmp->dm_vars)->glxc)){
     Tcl_AppendResult(interp, "Ogl_open: Couldn't make context current\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
 
   /* display list (fontOffset + char) will displays a given ASCII char */
   if ((((struct ogl_vars *)dmp->dm_vars)->fontOffset = glGenLists(128))==0){
     Tcl_AppendResult(interp, "dm-ogl: Can't make display lists for font.\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)Ogl_close(dmp);
+    return DM_NULL;
   }
 
   /* do viewport, ortho commands and initialize font*/
@@ -426,7 +545,7 @@ Done:
   /* Leave it in model_view mode normally */
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
+  glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
   glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp->dm_vars)->faceplate_mat);
   glPushMatrix();
   glMatrixMode(GL_MODELVIEW);
@@ -437,7 +556,7 @@ Done:
   ((struct ogl_vars *)dmp->dm_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 
   Tk_MapWindow(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
-  return TCL_OK;
+  return dmp;
 }
 
 static int
@@ -491,7 +610,12 @@ struct dm *dmp;
   if(((struct ogl_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct ogl_vars *)dmp->dm_vars)->l);
 
+  bu_vls_free(&dmp->dm_pathName);
+  bu_vls_free(&dmp->dm_tkName);
+  bu_vls_free(&dmp->dm_dName);
+  bu_vls_free(&dmp->dm_initWinProc);
   bu_free(dmp->dm_vars, "Ogl_close: ogl_vars");
+  bu_free(dmp, "Ogl_close: dmp");
 
   return TCL_OK;
 }
@@ -653,15 +777,22 @@ int which_eye;
     mptr = mat;
   }
 
-  gtmat[0] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
-  gtmat[4] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
-  gtmat[8] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
-  gtmat[12] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
+  gtmat[0] = *(mptr++) * dmp->dm_aspect;
+  gtmat[4] = *(mptr++) * dmp->dm_aspect;
+  gtmat[8] = *(mptr++) * dmp->dm_aspect;
+  gtmat[12] = *(mptr++) * dmp->dm_aspect;
 
-  gtmat[1] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
-  gtmat[5] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
-  gtmat[9] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
-  gtmat[13] = *(mptr++) * ((struct ogl_vars *)dmp->dm_vars)->aspect;
+#if 0
+  gtmat[1] = *(mptr++) * dmp->dm_aspect;
+  gtmat[5] = *(mptr++) * dmp->dm_aspect;
+  gtmat[9] = *(mptr++) * dmp->dm_aspect;
+  gtmat[13] = *(mptr++) * dmp->dm_aspect;
+#else
+  gtmat[1] = *(mptr++);
+  gtmat[5] = *(mptr++);
+  gtmat[9] = *(mptr++);
+  gtmat[13] = *(mptr++);
+#endif
 
   gtmat[2] = *(mptr++);
   gtmat[6] = *(mptr++);
@@ -835,17 +966,21 @@ struct dm *dmp;
  * The starting position of the beam is as specified.
  */
 static int
-Ogl_drawString2D( dmp, str, x, y, size )
+Ogl_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
 int size;
+int use_aspect;
 {
   if (((struct ogl_vars *)dmp->dm_vars)->mvars.debug)
     Tcl_AppendResult(interp, "Ogl_drawString2D()\n", (char *)NULL);
 
-	
-  glRasterPos2f(GED2IRIS(x),  GED2IRIS(y));
+  if(use_aspect)	
+    glRasterPos2f(GED2IRIS(x) * dmp->dm_aspect,  GED2IRIS(y));
+  else
+    glRasterPos2f(GED2IRIS(x),  GED2IRIS(y));
+
   glListBase(((struct ogl_vars *)dmp->dm_vars)->fontOffset);
   glCallLists(strlen( str ), GL_UNSIGNED_BYTE,  str );
 
@@ -1171,13 +1306,13 @@ struct dm *dmp;
 
   XGetWindowAttributes( ((struct ogl_vars *)dmp->dm_vars)->dpy,
 			((struct ogl_vars *)dmp->dm_vars)->win, &xwa );
-  ((struct ogl_vars *)dmp->dm_vars)->height = xwa.height;
-  ((struct ogl_vars *)dmp->dm_vars)->width = xwa.width;
+  dmp->dm_height = xwa.height;
+  dmp->dm_width = xwa.width;
 	
-  glViewport(0,  0, (((struct ogl_vars *)dmp->dm_vars)->width),
-	     (((struct ogl_vars *)dmp->dm_vars)->height));
-  glScissor(0,  0, (((struct ogl_vars *)dmp->dm_vars)->width)+1,
-	    (((struct ogl_vars *)dmp->dm_vars)->height)+1);
+  glViewport(0,  0, (dmp->dm_width),
+	     (dmp->dm_height));
+  glScissor(0,  0, (dmp->dm_width)+1,
+	    (dmp->dm_height)+1);
 
   if( ((struct ogl_vars *)dmp->dm_vars)->mvars.zbuffer_on )
     Ogl_establish_zbuffer(dmp);
@@ -1207,9 +1342,9 @@ struct dm *dmp;
   glLoadIdentity();
   glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
   glMatrixMode(mm);
-  ((struct ogl_vars *)dmp->dm_vars)->aspect =
-    (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height/
-    (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width;
+  dmp->dm_aspect =
+    (fastf_t)dmp->dm_height/
+    (fastf_t)dmp->dm_width;
 
 
   /* First time through, load a font or quit */
@@ -1234,7 +1369,7 @@ struct dm *dmp;
   /* Always try to choose a the font that best fits the window size.
    */
 
-  if (((struct ogl_vars *)dmp->dm_vars)->width < 582) {
+  if (dmp->dm_width < 582) {
     if (((struct ogl_vars *)dmp->dm_vars)->fontstruct->per_char->width != 5) {
       if ((newfontstruct = XLoadQueryFont(((struct ogl_vars *)dmp->dm_vars)->dpy,
 					  FONT5)) != NULL ) {
@@ -1245,7 +1380,7 @@ struct dm *dmp;
 		     0, 127, ((struct ogl_vars *)dmp->dm_vars)->fontOffset);
       }
     }
-  } else if (((struct ogl_vars *)dmp->dm_vars)->width < 679) {
+  } else if (dmp->dm_width < 679) {
     if (((struct ogl_vars *)dmp->dm_vars)->fontstruct->per_char->width != 6){
       if ((newfontstruct = XLoadQueryFont(((struct ogl_vars *)dmp->dm_vars)->dpy,
 					  FONT6)) != NULL ) {
@@ -1256,7 +1391,7 @@ struct dm *dmp;
 		     0, 127, ((struct ogl_vars *)dmp->dm_vars)->fontOffset);
       }
     }
-  } else if (((struct ogl_vars *)dmp->dm_vars)->width < 776) {
+  } else if (dmp->dm_width < 776) {
     if (((struct ogl_vars *)dmp->dm_vars)->fontstruct->per_char->width != 7){
       if ((newfontstruct = XLoadQueryFont(((struct ogl_vars *)dmp->dm_vars)->dpy,
 					  FONT7)) != NULL ) {
@@ -1267,7 +1402,7 @@ struct dm *dmp;
 		     0, 127, ((struct ogl_vars *)dmp->dm_vars)->fontOffset);
       }
     }
-  } else if (((struct ogl_vars *)dmp->dm_vars)->width < 873) {
+  } else if (dmp->dm_width < 873) {
     if (((struct ogl_vars *)dmp->dm_vars)->fontstruct->per_char->width != 8){
       if ((newfontstruct = XLoadQueryFont(((struct ogl_vars *)dmp->dm_vars)->dpy,
 					  FONT8)) != NULL ) {

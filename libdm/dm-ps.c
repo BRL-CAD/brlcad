@@ -45,7 +45,7 @@ static int PS_load_startup();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-static int	PS_open();
+struct dm	*PS_open();
 static int	PS_close();
 static int	PS_drawBegin(), PS_drawEnd();
 static int	PS_normal(), PS_newrot();
@@ -82,6 +82,11 @@ struct dm dm_PS = {
   0,
   0,
   0,
+  1.0, /* aspect ratio */
+  0,
+  0,
+  0,
+  0,
   0,
   0,
   0
@@ -98,22 +103,41 @@ struct ps_vars head_ps_vars;
  * Open the output file, and output the PostScript prolog.
  *
  */
-static int
+struct dm *
+#if DO_NEW_LIBDM_OPEN
+PS_open(eventHandler, argc, argv)
+int (*eventHandler)();
+#else
 PS_open(dmp, argc, argv)
 struct dm *dmp;
+#endif
 int argc;
 char *argv[];
 {
   static int count = 0;
+#if DO_NEW_LIBDM_OPEN
+  struct dm *dmp;
+
+  dmp = BU_GETSTRUCT(dmp, dm);
+  *dmp = dm_PS;
+  dmp->dm_eventHandler = eventHandler;
+#endif
 
   /* Only need to do this once for this display manager */
   if(!count)
     (void)PS_load_startup(dmp);
 
-  bu_vls_init(&dmp->dm_pathName);
-  bu_vls_printf(&dmp->dm_pathName, ".dm_ps%d", count++);
-
   dmp->dm_vars = bu_calloc(1, sizeof(struct ps_vars), "PS_init: ps_vars");
+  if(!dmp->dm_vars){
+    bu_free(dmp, "PS_open: dmp");
+    return DM_NULL;
+  }
+
+  bu_vls_init(&dmp->dm_pathName);
+  bu_vls_init(&dmp->dm_tkName);
+  bu_vls_printf(&dmp->dm_pathName, ".dm_ps%d", count++);
+  bu_vls_printf(&dmp->dm_tkName, "dm_ps%d", count++);
+
   bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->fname);
   bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->font);
   bu_vls_init(&((struct ps_vars *)dmp->dm_vars)->title);
@@ -136,7 +160,8 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  return TCL_ERROR;
+	  (void)PS_close(dmp);
+	  return DM_NULL;
 	}else
 	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->font, &argv[0][0]);
       }
@@ -148,7 +173,8 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  return TCL_ERROR;
+	  (void)PS_close(dmp);
+	  return DM_NULL;
 	}else
 	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->title, &argv[0][0]);
       }
@@ -160,7 +186,8 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  return TCL_ERROR;
+	  (void)PS_close(dmp);
+	  return DM_NULL;
 	}else
 	  bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, &argv[0][0]);
       }
@@ -175,7 +202,8 @@ char *argv[];
 	  argv++;
 	  if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	    Tcl_AppendResult(interp, ps_usage, (char *)0);
-	    return TCL_ERROR;
+	    (void)PS_close(dmp);
+	    return DM_NULL;
 	  }else
 	    sscanf(&argv[0][0], "%lf", &size);
 	}
@@ -190,34 +218,35 @@ char *argv[];
 	argv++;
 	if(argv[0] == (char *)0 || argv[0][0] == '-'){
 	  Tcl_AppendResult(interp, ps_usage, (char *)0);
-	  return TCL_ERROR;
+	  (void)PS_close(dmp);
+	  return DM_NULL;
 	}else
 	  sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
       }
       break;
     default:
       Tcl_AppendResult(interp, ps_usage, (char *)0);
-      return TCL_ERROR;
+      (void)PS_close(dmp);
+      return DM_NULL;
     }
     argv++;
   }
 
   if(argv[0] == (char *)0){
     Tcl_AppendResult(interp, "no filename specified\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)PS_close(dmp);
+    return DM_NULL;
   }
 
   bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->fname, argv[0]);
-
-  if(!dmp->dm_vars)
-    return TCL_ERROR;
 
   if( (((struct ps_vars *)dmp->dm_vars)->ps_fp =
        fopen(bu_vls_addr(&((struct ps_vars *)dmp->dm_vars)->fname), "w")) == NULL){
     Tcl_AppendResult(interp, "f_ps: Error opening file - ",
 		     ((struct ps_vars *)dmp->dm_vars)->fname,
 		     "\n", (char *)NULL);
-    return TCL_ERROR;
+    (void)PS_close(dmp);
+    return DM_NULL;
   }
   
   setbuf( ((struct ps_vars *)dmp->dm_vars)->ps_fp,
@@ -266,7 +295,7 @@ NEWPG\n\
 	  ((struct ps_vars *)dmp->dm_vars)->scale,
 	  ((struct ps_vars *)dmp->dm_vars)->scale);
 
-  return TCL_OK;
+  return dmp;
 }
 
 /*
@@ -287,11 +316,14 @@ struct dm *dmp;
   if(((struct ps_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct ps_vars *)dmp->dm_vars)->l);
 
+  bu_vls_free(&dmp->dm_pathName);
+  bu_vls_free(&dmp->dm_tkName);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->fname);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->font);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->title);
   bu_vls_free(&((struct ps_vars *)dmp->dm_vars)->creator);
   bu_free(dmp->dm_vars, "PS_close: ps_vars");
+  bu_free(dmp, "PS_close: dmp");
 
   return TCL_OK;
 }
@@ -436,11 +468,12 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-PS_drawString2D( dmp, str, x, y, size )
+PS_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
 int x, y;
 int size;
+int use_aspect;
 {
   if( !((struct ps_vars *)dmp->dm_vars)->ps_fp )
     return TCL_ERROR;
