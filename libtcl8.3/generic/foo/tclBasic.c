@@ -1714,7 +1714,7 @@ TclInvokeStringCommand(clientData, interp, objc, objv)
     ClientData clientData;	/* Points to command's Command structure. */
     Tcl_Interp *interp;		/* Current interpreter. */
     register int objc;		/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Command *cmdPtr = (Command *) clientData;
     register int i;
@@ -3325,7 +3325,7 @@ TclObjInvokeGlobal(interp, objc, objv, flags)
     Tcl_Interp *interp;		/* Interpreter in which command is to be
 				 * invoked. */
     int objc;			/* Count of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects; objv[0] points to the
+    Tcl_Obj *const objv[];	/* Argument objects; objv[0] points to the
 				 * name of the command to invoke. */
     int flags;			/* Combination of flags controlling the
 				 * call: TCL_INVOKE_HIDDEN,
@@ -3365,7 +3365,7 @@ TclObjInvoke(interp, objc, objv, flags)
     Tcl_Interp *interp;		/* Interpreter in which command is to be
 				 * invoked. */
     int objc;			/* Count of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects; objv[0] points to the
+    Tcl_Obj *const objv[];	/* Argument objects; objv[0] points to the
 				 * name of the command to invoke. */
     int flags;			/* Combination of flags controlling the
 				 * call: TCL_INVOKE_HIDDEN,
@@ -3954,7 +3954,7 @@ void
 Tcl_AddErrorInfo(interp, message)
     Tcl_Interp *interp;		/* Interpreter to which error information
 				 * pertains. */
-    CONST char *message;	/* Message to record. */
+    const char *message;	/* Message to record. */
 {
     Tcl_AddObjErrorInfo(interp, message, -1);
 }
@@ -3986,7 +3986,7 @@ void
 Tcl_AddObjErrorInfo(interp, message, length)
     Tcl_Interp *interp;		/* Interpreter to which error information
 				 * pertains. */
-    CONST char *message;	/* Points to the first byte of an array of
+    const char *message;	/* Points to the first byte of an array of
 				 * bytes of the message. */
     int length;			/* The number of bytes in the message.
 				 * If < 0, then append all bytes up to a
@@ -4252,3 +4252,4 @@ void Tcl_GetVersion(majorV, minorV, patchLevelV, type)
     }
 }
  
+

@@ -31,16 +31,16 @@
  */
 
 static int		GetFileFinderAttributes _ANSI_ARGS_((Tcl_Interp *interp,
-			    int objIndex, CONST char *fileName,
+			    int objIndex, const char *fileName,
 			    Tcl_Obj **attributePtrPtr));
 static int		GetFileReadOnly _ANSI_ARGS_((Tcl_Interp *interp,
-			    int objIndex, CONST char *fileName,
+			    int objIndex, const char *fileName,
 			    Tcl_Obj **readOnlyPtrPtr));
 static int		SetFileFinderAttributes _ANSI_ARGS_((Tcl_Interp *interp,
-			    int objIndex, CONST char *fileName,
+			    int objIndex, const char *fileName,
 			    Tcl_Obj *attributePtr));
 static int		SetFileReadOnly _ANSI_ARGS_((Tcl_Interp *interp,
-			    int objIndex, CONST char *fileName,
+			    int objIndex, const char *fileName,
 			    Tcl_Obj *readOnlyPtr));
 
 /*
@@ -58,7 +58,7 @@ static int		SetFileReadOnly _ANSI_ARGS_((Tcl_Interp *interp,
 
 char *tclpFileAttrStrings[] = {"-creator", "-hidden", "-readonly",
 	"-type", (char *) NULL};
-CONST TclFileAttrProcs tclpFileAttrProcs[] = {
+const TclFileAttrProcs tclpFileAttrProcs[] = {
 	{GetFileFinderAttributes, SetFileFinderAttributes},
 	{GetFileFinderAttributes, SetFileFinderAttributes},
 	{GetFileReadOnly, SetFileReadOnly},
@@ -74,21 +74,21 @@ static pascal Boolean 	CopyErrHandler _ANSI_ARGS_((OSErr error,
 			    short srcVRefNum, long srcDirID,
 			    ConstStr255Param srcName, short dstVRefNum,
 			    long dstDirID,ConstStr255Param dstName));
-static int		DoCopyDirectory _ANSI_ARGS_((CONST char *src,
-			    CONST char *dst, Tcl_DString *errorPtr));
-static int		DoCopyFile _ANSI_ARGS_((CONST char *src, 
-			    CONST char *dst));
-static int		DoCreateDirectory _ANSI_ARGS_((CONST char *path));
-static int		DoDeleteFile _ANSI_ARGS_((CONST char *path));
-static int		DoRemoveDirectory _ANSI_ARGS_((CONST char *path, 
+static int		DoCopyDirectory _ANSI_ARGS_((const char *src,
+			    const char *dst, Tcl_DString *errorPtr));
+static int		DoCopyFile _ANSI_ARGS_((const char *src, 
+			    const char *dst));
+static int		DoCreateDirectory _ANSI_ARGS_((const char *path));
+static int		DoDeleteFile _ANSI_ARGS_((const char *path));
+static int		DoRemoveDirectory _ANSI_ARGS_((const char *path, 
 			    int recursive, Tcl_DString *errorPtr));
-static int		DoRenameFile _ANSI_ARGS_((CONST char *src,
-			    CONST char *dst));
+static int		DoRenameFile _ANSI_ARGS_((const char *src,
+			    const char *dst));
 OSErr			FSpGetFLockCompat _ANSI_ARGS_((const FSSpec *specPtr, 
 			    Boolean *lockedPtr));
 static OSErr		GenerateUniqueName _ANSI_ARGS_((short vRefNum, 
 			    long dirID1, long dirID2, Str31 uniqueName));
-static OSErr		GetFileSpecs _ANSI_ARGS_((CONST char *path, 
+static OSErr		GetFileSpecs _ANSI_ARGS_((const char *path, 
 			    FSSpec *pathSpecPtr, FSSpec *dirSpecPtr,	
 			    Boolean *pathExistsPtr, 
 			    Boolean *pathIsDirectoryPtr));
@@ -134,9 +134,9 @@ static int		Pstrequal _ANSI_ARGS_((ConstStr255Param stringA,
 
 int
 TclpRenameFile( 
-    CONST char *src,		/* Pathname of file or dir to be renamed
+    const char *src,		/* Pathname of file or dir to be renamed
 				 * (UTF-8). */
-    CONST char *dst)		/* New pathname of file or directory
+    const char *dst)		/* New pathname of file or directory
 				 * (UTF-8). */
 {
     int result;
@@ -153,9 +153,9 @@ TclpRenameFile(
 
 static int
 DoRenameFile(
-    CONST char *src,		/* Pathname of file or dir to be renamed
+    const char *src,		/* Pathname of file or dir to be renamed
 				 * (native). */
-    CONST char *dst)		/* New pathname of file or directory
+    const char *dst)		/* New pathname of file or directory
 				 * (native). */
 {
     FSSpec srcFileSpec, dstFileSpec, dstDirSpec;
@@ -409,8 +409,8 @@ MoveRename(
  
 int 
 TclpCopyFile(
-    CONST char *src,		/* Pathname of file to be copied (UTF-8). */
-    CONST char *dst)		/* Pathname of file to copy to (UTF-8). */
+    const char *src,		/* Pathname of file to be copied (UTF-8). */
+    const char *dst)		/* Pathname of file to copy to (UTF-8). */
 {
     int result;
     Tcl_DString srcString, dstString;
@@ -426,8 +426,8 @@ TclpCopyFile(
 
 static int
 DoCopyFile(
-    CONST char *src,		/* Pathname of file to be copied (native). */
-    CONST char *dst)		/* Pathname of file to copy to (native). */
+    const char *src,		/* Pathname of file to be copied (native). */
+    const char *dst)		/* Pathname of file to copy to (native). */
 {
     OSErr err, dstErr;
     Boolean dstExists, dstIsDirectory, dstLocked;
@@ -517,7 +517,7 @@ DoCopyFile(
 
 int
 TclpDeleteFile( 
-    CONST char *path)		/* Pathname of file to be removed (UTF-8). */
+    const char *path)		/* Pathname of file to be removed (UTF-8). */
 {
     int result;
     Tcl_DString pathString;
@@ -530,7 +530,7 @@ TclpDeleteFile(
 
 static int
 DoDeleteFile(
-    CONST char *path)		/* Pathname of file to be removed (native). */
+    const char *path)		/* Pathname of file to be removed (native). */
 {
     OSErr err;
     FSSpec fileSpec;
@@ -593,7 +593,7 @@ DoDeleteFile(
 
 int
 TclpCreateDirectory(
-    CONST char *path)		/* Pathname of directory to create (UTF-8). */
+    const char *path)		/* Pathname of directory to create (UTF-8). */
 {
     int result;
     Tcl_DString pathString;
@@ -606,7 +606,7 @@ TclpCreateDirectory(
 
 static int
 DoCreateDirectory(
-    CONST char *path)		/* Pathname of directory to create (native). */
+    const char *path)		/* Pathname of directory to create (native). */
 {
     OSErr err;
     FSSpec dirSpec;
@@ -654,9 +654,9 @@ DoCreateDirectory(
 
 int
 TclpCopyDirectory(
-    CONST char *src,		/* Pathname of directory to be copied
+    const char *src,		/* Pathname of directory to be copied
 				 * (UTF-8). */
-    CONST char *dst,		/* Pathname of target directory (UTF-8). */
+    const char *dst,		/* Pathname of target directory (UTF-8). */
     Tcl_DString *errorPtr)	/* If non-NULL, uninitialized or free
 				 * DString filled with UTF-8 name of file
 				 * causing error. */
@@ -675,9 +675,9 @@ TclpCopyDirectory(
 
 static int
 DoCopyDirectory(
-    CONST char *src,		/* Pathname of directory to be copied
+    const char *src,		/* Pathname of directory to be copied
 				 * (UTF-8). */
-    CONST char *dst,		/* Pathname of target directory (UTF-8). */
+    const char *dst,		/* Pathname of target directory (UTF-8). */
     Tcl_DString *errorPtr)	/* If non-NULL, uninitialized or free
 				 * DString filled with UTF-8 name of file
 				 * causing error. */
@@ -857,7 +857,7 @@ CopyErrHandler(
  
 int
 TclpRemoveDirectory(
-    CONST char *path,		/* Pathname of directory to be removed
+    const char *path,		/* Pathname of directory to be removed
 				 * (UTF-8). */
     int recursive,		/* If non-zero, removes directories that
 				 * are nonempty.  Otherwise, will only remove
@@ -879,7 +879,7 @@ TclpRemoveDirectory(
 
 static int
 DoRemoveDirectory(
-    CONST char *path,		/* Pathname of directory to be removed
+    const char *path,		/* Pathname of directory to be removed
 				 * (native). */
     int recursive,		/* If non-zero, removes directories that
 				 * are nonempty.  Otherwise, will only remove
@@ -1051,7 +1051,7 @@ GenerateUniqueName(
 
 static OSErr
 GetFileSpecs(
-    CONST char *path,		/* The path to query. */
+    const char *path,		/* The path to query. */
     FSSpec *pathSpecPtr,	/* Filled with information about path. */
     FSSpec *dirSpecPtr,		/* Filled with information about path's
     				 * parent directory. */
@@ -1194,7 +1194,7 @@ static int
 GetFileFinderAttributes(
     Tcl_Interp *interp,		/* The interp to report errors with. */
     int objIndex,		/* The index of the attribute option. */
-    CONST char *fileName,	/* The name of the file (UTF-8). */
+    const char *fileName,	/* The name of the file (UTF-8). */
     Tcl_Obj **attributePtrPtr)	/* A pointer to return the object with. */
 {
     OSErr err;
@@ -1273,7 +1273,7 @@ static int
 GetFileReadOnly(
     Tcl_Interp *interp,		/* The interp to report errors with. */
     int objIndex,		/* The index of the attribute. */
-    CONST char *fileName,	/* The name of the file (UTF-8). */
+    const char *fileName,	/* The name of the file (UTF-8). */
     Tcl_Obj **readOnlyPtrPtr)	/* A pointer to return the object with. */
 {
     OSErr err;
@@ -1338,7 +1338,7 @@ static int
 SetFileFinderAttributes(
     Tcl_Interp *interp,		/* The interp to report errors with. */
     int objIndex,		/* The index of the attribute. */
-    CONST char *fileName,	/* The name of the file (UTF-8). */
+    const char *fileName,	/* The name of the file (UTF-8). */
     Tcl_Obj *attributePtr)	/* The command line object. */
 {
     OSErr err;
@@ -1430,7 +1430,7 @@ static int
 SetFileReadOnly(
     Tcl_Interp *interp,		/* The interp to report errors with. */
     int objIndex,		/* The index of the attribute. */
-    CONST char *fileName,	/* The name of the file (UTF-8). */
+    const char *fileName,	/* The name of the file (UTF-8). */
     Tcl_Obj *readOnlyPtr)	/* The command line object. */
 {
     OSErr err;

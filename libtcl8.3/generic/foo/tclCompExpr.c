@@ -1046,3 +1046,4 @@ LogSyntaxError(infoPtr)
     Tcl_AppendStringsToObj(Tcl_GetObjResult(infoPtr->interp),
 	    buffer, (char *) NULL);
 }
+

@@ -1,0 +1,73 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLEADDCOM 1 2/2/87 1
+.UC 4
+.SH NAME
+rleaddcom \- add picture comments to an RLE file.
+.SH SYNOPSIS
+.B
+rleaddcom 
+[
+.B \-d
+] [
+.B \-i
+] [
+.B \-o
+.I outfile
+] 
+.I infile
+.I comments
+.SH DESCRIPTION
+The 
+.I rleaddcom
+program will add one or more comments to an 
+.IR RLE (5)
+file.  If
+.I infile
+is "\-", it will read from the standard input.  The modified 
+.IR RLE (5)
+file is written to the standard output if the
+.B \-o
+.I outfile
+option is not given.  All remaining arguments on
+the command line are taken as comments.  Comments are nominally of the
+form
+.I name=value
+or
+.IR name .
+Any comment already in the file with the same
+.I name
+will be replaced.
+.SH OPTIONS
+.TP
+.B \-d
+Will cause matching comments to be deleted, no comments will be added
+in this case.
+.TP
+.B \-i
+"In place."  The input file will be rewritten with the added comments.
+This argument requires write permission to the directory containing
+.IR infile ,
+but does not require write permission for
+.IR infile .
+Of the special file name cases described in 
+.IR urt (1),
+only compressed files may be updated in place.  (It doesn't make sense
+to update the output of a pipe "in place", does it?)
+
+If
+.BI  \-o " outfile"
+is specified together with 
+.BR \-i ,
+then 
+.I outfile
+will not be modified until \fIrleaddcom\fP has finished (this is
+similar to the way that
+.IR into (1)
+works).
+.SH SEE ALSO
+.IR into (1),
+.IR rlehdr (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Utah

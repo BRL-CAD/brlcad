@@ -95,7 +95,7 @@ static void		FinalizeRegexp _ANSI_ARGS_((ClientData clientData));
 static void		FreeRegexp _ANSI_ARGS_((TclRegexp *regexpPtr));
 static void		FreeRegexpInternalRep _ANSI_ARGS_((Tcl_Obj *objPtr));
 static int		RegExpExecUniChar _ANSI_ARGS_((Tcl_Interp *interp,
-			    Tcl_RegExp re, CONST Tcl_UniChar *uniString,
+			    Tcl_RegExp re, const Tcl_UniChar *uniString,
 			    int numChars, int nmatches, int flags));
 static int		SetRegexpFromAny _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *objPtr));
@@ -175,8 +175,8 @@ Tcl_RegExpExec(interp, re, string, start)
     Tcl_RegExp re;		/* Compiled regular expression;  must have
 				 * been returned by previous call to
 				 * Tcl_GetRegExpFromObj. */
-    CONST char *string;		/* String against which to match re. */
-    CONST char *start;		/* If string is part of a larger string,
+    const char *string;		/* String against which to match re. */
+    const char *start;		/* If string is part of a larger string,
 				 * this identifies beginning of larger
 				 * string, so that "^" won't match. */
 {
@@ -249,7 +249,7 @@ Tcl_RegExpRange(re, index, startPtr, endPtr)
 				 * in (sub-) range here. */
 {
     TclRegexp *regexpPtr = (TclRegexp *) re;
-    CONST char *string;
+    const char *string;
 
     if ((size_t) index > regexpPtr->re.re_nsub) {
 	*startPtr = *endPtr = NULL;
@@ -292,7 +292,7 @@ RegExpExecUniChar(interp, re, wString, numChars, nmatches, flags)
     Tcl_Interp *interp;		/* Interpreter to use for error reporting. */
     Tcl_RegExp re;		/* Compiled regular expression; returned by
 				 * a previous call to Tcl_GetRegExpFromObj */
-    CONST Tcl_UniChar *wString;	/* String against which to match re. */
+    const Tcl_UniChar *wString;	/* String against which to match re. */
     int numChars;		/* Length of Tcl_UniChar string (must
 				 * be >= 0). */
     int nmatches;		/* How many subexpression matches (counting
@@ -1027,3 +1027,4 @@ FinalizeRegexp(clientData)
 	ckfree(tsdPtr->patterns[i]);
     }
 }
+

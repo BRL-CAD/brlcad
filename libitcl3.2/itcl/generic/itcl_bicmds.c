@@ -241,7 +241,7 @@ Itcl_BiIsaCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass, *cdefn;
     ItclObject *contextObj;
@@ -317,7 +317,7 @@ Itcl_BiConfigureCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass;
     ItclObject *contextObj;
@@ -541,7 +541,7 @@ Itcl_BiCgetCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* class definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass;
     ItclObject *contextObj;
@@ -689,7 +689,7 @@ Itcl_BiChainCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int result = TCL_OK;
 
@@ -805,7 +805,7 @@ Itcl_BiInfoClassCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     Tcl_Namespace *activeNs = Tcl_GetCurrentNamespace(interp);
     Tcl_Namespace *contextNs = NULL;
@@ -872,7 +872,7 @@ Itcl_BiInfoInheritCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     Tcl_Namespace *activeNs = Tcl_GetCurrentNamespace(interp);
 
@@ -940,7 +940,7 @@ Itcl_BiInfoHeritageCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     Tcl_Namespace *activeNs = Tcl_GetCurrentNamespace(interp);
 
@@ -1014,7 +1014,7 @@ Itcl_BiInfoFunctionCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *cmdName = NULL;
     Tcl_Obj *resultPtr = NULL;
@@ -1209,7 +1209,7 @@ Itcl_BiInfoVariableCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *varName = NULL;
     Tcl_Obj *resultPtr = NULL;
@@ -1463,7 +1463,7 @@ Itcl_BiInfoBodyCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *name;
     ItclClass *contextClass;
@@ -1550,7 +1550,7 @@ Itcl_BiInfoArgsCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *name;
     ItclClass *contextClass;
@@ -1656,7 +1656,7 @@ Itcl_DefaultInfoCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int result;
     char *name;

@@ -85,7 +85,7 @@ Tcl_PwdObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     Tcl_DString ds;
 
@@ -124,7 +124,7 @@ Tcl_RegexpObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     int i, indices, match, about, offset, all, doinline, numMatchesSaved;
     int cflags, eflags, stringLength;
@@ -442,7 +442,7 @@ Tcl_RegsubObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     int i, result, cflags, all, wlen, numMatches, offset;
     Tcl_RegExp regExpr;
@@ -710,7 +710,7 @@ Tcl_RenameObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Arbitrary value passed to the command. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     char *oldName, *newName;
     
@@ -747,7 +747,7 @@ Tcl_ReturnObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Interp *iPtr = (Interp *) interp;
     int optionLen, argLen, code, result;
@@ -843,7 +843,7 @@ Tcl_SourceObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     char *bytes;
     int result;
@@ -881,7 +881,7 @@ Tcl_SplitObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_UniChar ch;
     int len;
@@ -972,7 +972,7 @@ Tcl_StringObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int index, left, right;
     Tcl_Obj *resultPtr;
@@ -2132,7 +2132,7 @@ Tcl_SubstObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];       	/* Argument objects. */
+    Tcl_Obj *const objv[];       	/* Argument objects. */
 {
     static char *substOptions[] = {
 	"-nobackslashes", "-nocommands", "-novariables", (char *) NULL
@@ -2280,7 +2280,7 @@ Tcl_SwitchObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int i, j, index, mode, matched, result, splitObjs, seenComment;
     char *string, *pattern;
@@ -2450,7 +2450,7 @@ Tcl_TimeObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Tcl_Obj *objPtr;
     register int i, result;
@@ -2514,7 +2514,7 @@ Tcl_TraceObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     int optionIndex, commandLength;
     char *name, *rwuOps, *command, *p;
@@ -2817,7 +2817,7 @@ Tcl_WhileObjCmd(dummy, interp, objc, objv)
     ClientData dummy;                   /* Not used. */
     Tcl_Interp *interp;                 /* Current interpreter. */
     int objc;                           /* Number of arguments. */
-    Tcl_Obj *CONST objv[];       	/* Argument objects. */
+    Tcl_Obj *const objv[];       	/* Argument objects. */
 {
     int result, value;
 
@@ -2854,4 +2854,5 @@ Tcl_WhileObjCmd(dummy, interp, objc, objv)
     }
     return result;
 }
+
 

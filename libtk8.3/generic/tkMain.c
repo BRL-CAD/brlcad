@@ -56,7 +56,7 @@ Tcl_ThreadDataKey dataKey;
 
 #if !defined(__WIN32__) && !defined(_WIN32)
 extern int		isatty _ANSI_ARGS_((int fd));
-extern char *		strrchr _ANSI_ARGS_((CONST char *string, int c));
+extern char *		strrchr _ANSI_ARGS_((const char *string, int c));
 #endif
 extern void		TkpDisplayWarning _ANSI_ARGS_((char *msg,
 			    char *title));

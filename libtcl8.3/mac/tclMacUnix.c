@@ -119,7 +119,7 @@ Tcl_LsObjCmd(
     ClientData dummy,			/* Not used. */
     Tcl_Interp *interp,			/* Current interpreter. */
     int objc,				/* Number of arguments. */
-    Tcl_Obj *CONST objv[])		/* Argument strings. */
+    Tcl_Obj *const objv[])		/* Argument strings. */
 {
 #define STRING_LENGTH 80
 #define CR '\n'

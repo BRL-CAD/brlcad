@@ -1,0 +1,4 @@
+s@include@include/brlcad@g
+/^CC=/a\
+SHELL=/usr/bin/sh
+/^depend:/,$d

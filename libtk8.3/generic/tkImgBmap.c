@@ -80,7 +80,7 @@ typedef struct BitmapInstance {
 
 static int		GetByte _ANSI_ARGS_((Tcl_Channel chan));
 static int		ImgBmapCreate _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *name, int argc, Tcl_Obj *CONST objv[],
+			    char *name, int argc, Tcl_Obj *const objv[],
 			    Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr));
 static ClientData	ImgBmapGet _ANSI_ARGS_((Tk_Window tkwin,
@@ -155,13 +155,13 @@ typedef struct ParseInfo {
  */
 
 static int		ImgBmapCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int argc, Tcl_Obj *CONST objv[]));
+			    Tcl_Interp *interp, int argc, Tcl_Obj *const objv[]));
 static void		ImgBmapCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static void		ImgBmapConfigureInstance _ANSI_ARGS_((
 			    BitmapInstance *instancePtr));
 static int		ImgBmapConfigureMaster _ANSI_ARGS_((
-			    BitmapMaster *masterPtr, int argc, Tcl_Obj *CONST objv[],
+			    BitmapMaster *masterPtr, int argc, Tcl_Obj *const objv[],
 			    int flags));
 static int		NextBitmapWord _ANSI_ARGS_((ParseInfo *parseInfoPtr));
 
@@ -189,7 +189,7 @@ ImgBmapCreate(interp, name, argc, argv, typePtr, master, clientDataPtr)
 				 * image. */
     char *name;			/* Name to use for image. */
     int argc;			/* Number of arguments. */
-    Tcl_Obj *CONST argv[];	/* Argument objects for options (doesn't
+    Tcl_Obj *const argv[];	/* Argument objects for options (doesn't
 				 * include image name or type). */
     Tk_ImageType *typePtr;	/* Pointer to our type record (not used). */
     Tk_ImageMaster master;	/* Token for image, to be used by us in
@@ -247,7 +247,7 @@ ImgBmapConfigureMaster(masterPtr, objc, objv, flags)
     BitmapMaster *masterPtr;	/* Pointer to data structure describing
 				 * overall bitmap image to (reconfigure). */
     int objc;			/* Number of entries in objv. */
-    Tcl_Obj *CONST objv[];	/* Pairs of configuration options for image. */
+    Tcl_Obj *const objv[];	/* Pairs of configuration options for image. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget,
 				 * such as TK_CONFIG_ARGV_ONLY. */
 {
@@ -759,7 +759,7 @@ ImgBmapCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about the image master. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *bmapOptions[] = {"cget", "configure", (char *) NULL};
     BitmapMaster *masterPtr = (BitmapMaster *) clientData;

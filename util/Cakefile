@@ -1,0 +1,434 @@
+/*
+ *			util/Cakefile
+ *
+ *  $Header$
+ */
+
+#define SRCDIR	util
+#define PRODUCTS	\
+	alias-pix ap-pix asc-pl azel bary buffer dbcp \
+	bw-a bw-imp bw-pix bw-ps bw3-pix bw-png png-bw png_info \
+	bwcrop bwdiff bwfilter bwhist bwhisteq \
+	bwmod bwrect bwrot bwscale bwshrink \
+	bwstat bwthresh \
+	cv double-asc dpix-pix dunncolor dunnsnap \
+	pixelswap decimate \
+	files-tape gencolor hd loop mac-pix \
+	op-bw orle-pix \
+	pix-alias pix-bw pix-bw3 pix-orle \
+	pix-ps pix-rle bw-rle pix-spm pix-sun \
+	pix-ppm pcd-pix pix-png png-pix \
+	pix-yuv yuv-pix \
+	pix3filter pixbackgnd pixbgstrip pixbustup pixcolors pixdiff \
+	pixdsplit pixfade pixfields pixfieldsep pixfilter pixhalve pixhist \
+	pixhist3d-pl pixhist3d pixinterp2x pixmatte pixmerge \
+	pixrect pixrot pixsaturate pixscale pixshrink pixstat \
+	pixtile pixuntile pixembed \
+	pixcut pixpaste \
+	pl-asc pl-hpgl \
+	pl-pl pl-tek pl-ps pl-sgi \
+	plcolor pldebug plgetframe plline2 plrot plstat \
+	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
+	pixborder mst texturescale pixclump pixcount imgdims remapid \
+	wavelet pixsubst terrain ttcp dsp_add morphedit.tcl rtwizard
+
+/* SGI specific goodies: pix-ci */
+/* X11 specific program:  pl-X */
+/* Untested programs:  pl-X10 pl-starbase */
+
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+/* NOTE that LIBPNG needs to come after the BRL-CAD products,
+ * so that e.g. /usr/local/lib/libbn isn't taken over ours.
+ */
+
+all&: STATIC_PRODUCTS PRODUCTS
+
+pixsubst: pixsubst.o
+	CC LDFLAGS -o pixsubst pixsubst.o
+
+wavelet: wavelet.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o wavelet wavelet.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+png_info:	png_info.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP
+	CC LDFLAGS -o png_info png_info.o LIBBN LIBBU LIBBU_LIBES LIBPNG LIBZ LIBES
+
+pix-png:	pix-png.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP
+	CC LDFLAGS -o pix-png pix-png.o LIBBN LIBBU LIBBU_LIBES LIBPNG LIBZ LIBES
+
+png-pix:	png-pix.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP
+	CC LDFLAGS -o png-pix png-pix.o LIBBN LIBBU LIBBU_LIBES LIBPNG LIBZ LIBES
+
+bw-png:		bw-png.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP LIBBN_DEP
+	CC LDFLAGS -o bw-png bw-png.o LIBBN LIBBU LIBBU_LIBES LIBPNG LIBZ LIBES
+
+png-bw:		png-bw.o LIBBU_DEP LIBPNG_DEP LIBZ_DEP LIBBN_DEP
+	CC LDFLAGS -o png-bw png-bw.o LIBBN LIBBU LIBBU_LIBES LIBPNG LIBZ LIBES
+
+dunncolor:	dunncolor.o dunncomm.o
+	CC LDFLAGS -o dunncolor dunncolor.o dunncomm.o LIBES
+
+dunnsnap:	dunnsnap.o dunncomm.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o dunnsnap dunnsnap.o dunncomm.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+loop:		loop.o
+	CC LDFLAGS -o loop loop.o LIBES
+
+mac-pix:	mac-pix.o
+	CC LDFLAGS -o mac-pix mac-pix.o LIBES
+
+sun-pix:	sun-pix.o
+	CC LDFLAGS -o sun-pix sun-pix.o LIBES
+
+ttcp:	ttcp.o
+	CC LDFLAGS -o ttcp ttcp.o LIBES
+
+pixmerge:	pixmerge.o
+	CC LDFLAGS -o pixmerge pixmerge.o LIBES
+
+pixmatte:	pixmatte.o
+	CC LDFLAGS -o pixmatte pixmatte.o LIBES
+
+pixbustup:	pixbustup.o
+	CC LDFLAGS -o pixbustup pixbustup.o LIBES
+
+/* The difficulty here is obtaining the random number tables */
+pixfade:	pixfade.o
+	CC LDFLAGS -o pixfade pixfade.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixfields:	pixfields.o
+	CC LDFLAGS -o pixfields pixfields.o LIBES
+
+pixfieldsep:	pixfieldsep.o
+	CC LDFLAGS -o pixfieldsep pixfieldsep.o LIBES
+
+pixdiff:	pixdiff.o
+	CC LDFLAGS -o pixdiff pixdiff.o LIBES
+
+pixinterp2x:	pixinterp2x.o
+	CC LDFLAGS -o pixinterp2x pixinterp2x.o LIBES
+
+pixtile:	pixtile.o
+	CC LDFLAGS -o pixtile pixtile.o LIBES
+
+pixuntile:	pixuntile.o
+	CC LDFLAGS -o pixuntile pixuntile.o LIBES
+
+/* Old RLE Programs (Utah format Edition 2) */
+
+orle-pix:	orle-pix.o LIBFB_DEP LIBORLE_DEP LIBBU_DEP
+	CC LDFLAGS -o orle-pix orle-pix.o LIBORLE LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+pix-orle:	pix-orle.o LIBORLE_DEP
+	CC LDFLAGS -o pix-orle pix-orle.o LIBORLE LIBES
+
+/* New RLE Programs (Utah format Edition 3) -- matches Utah Raster Toolkit */
+
+/*** oldtonewrle.c ? */
+
+rle-pix:	rle-pix.o strdup.o LIBRLE_DEP
+	CC LDFLAGS -o rle-pix rle-pix.o strdup.o LIBRLE LIBES
+
+pix-rle:	pix-rle.o strdup.o LIBRLE_DEP
+	CC LDFLAGS -o pix-rle pix-rle.o strdup.o LIBRLE LIBES
+
+bw-rle:	bw-rle.o strdup.o LIBRLE_DEP
+	CC LDFLAGS -o bw-rle bw-rle.o strdup.o LIBRLE LIBES
+
+ap-pix:		ap-pix.o
+	CC LDFLAGS -o ap-pix ap-pix.o LIBES
+
+pixbackgnd:	pixbackgnd.o
+	CC LDFLAGS -o pixbackgnd pixbackgnd.o LIBES
+
+pixbgstrip:	pixbgstrip.o LIBFB_DEP LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o pixbgstrip pixbgstrip.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBBN LIBES
+
+bw-a:		bw-a.o LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o bw-a bw-a.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+bw-imp:	bw-imp.o
+	CC LDFLAGS -o bw-imp bw-imp.o LIBES
+
+bw-ps:	bw-ps.o
+	CC LDFLAGS -o bw-ps bw-ps.o LIBES
+
+bw-pix:		bw-pix.o
+	CC LDFLAGS -o bw-pix bw-pix.o LIBES
+
+bw3-pix:	bw3-pix.o
+	CC LDFLAGS -o bw3-pix bw3-pix.o LIBES
+
+bwcrop:		bwcrop.o
+	CC LDFLAGS -o bwcrop bwcrop.o LIBES
+
+bwdiff:		bwdiff.o
+	CC LDFLAGS -o bwdiff bwdiff.o LIBES
+
+bwfilter:	bwfilter.o
+	CC LDFLAGS -o bwfilter bwfilter.o LIBES
+
+bwhist:		bwhist.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o bwhist bwhist.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+bwhisteq:	bwhisteq.o
+	CC LDFLAGS -o bwhisteq bwhisteq.o LIBES
+
+bwmod:		bwmod.o
+	CC LDFLAGS -o bwmod bwmod.o LIBES
+
+bwrect:		bwrect.o
+	CC LDFLAGS -o bwrect bwrect.o LIBES
+
+bwrot:		bwrot.o
+	CC LDFLAGS -o bwrot bwrot.o LIBES
+
+bwscale:	bwscale.o
+	CC LDFLAGS -o bwscale bwscale.o LIBES
+
+bwstat:		bwstat.o
+	CC LDFLAGS -o bwstat bwstat.o LIBES
+
+gencolor:	gencolor.o
+	CC LDFLAGS -o gencolor gencolor.o LIBES
+
+pix-bw:		pix-bw.o
+	CC LDFLAGS -o pix-bw pix-bw.o LIBES
+
+pix-bw3:	pix-bw3.o
+	CC LDFLAGS -o pix-bw3 pix-bw3.o LIBES
+
+pixfilter:	pixfilter.o
+	CC LDFLAGS -o pixfilter pixfilter.o LIBES
+
+pixhist:	pixhist.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhist pixhist.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+pixhist3d:	pixhist3d.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhist3d pixhist3d.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+pixrect:	pixrect.o
+	CC LDFLAGS -o pixrect pixrect.o LIBES
+
+pixrot:		pixrot.o
+	CC LDFLAGS -o pixrot pixrot.o LIBES
+
+pixscale:	pixscale.o
+	CC LDFLAGS -o pixscale pixscale.o LIBES
+
+pixembed:	pixembed.o
+	CC LDFLAGS -o pixembed pixembed.o LIBES
+
+pixcut:	pixcut.o LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o pixcut pixcut.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixpaste:	pixpaste.o LIBBU_DEP LIBBN_DEP
+	CC LDFLAGS -o pixpaste pixpaste.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixstat:	pixstat.o
+	CC LDFLAGS -o pixstat pixstat.o LIBES
+
+pixhist3d-pl:	pixhist3d-pl.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhist3d-pl pixhist3d-pl.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pl-sgi:		pl-sgi.o LIBBN_DEP LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-sgi pl-sgi.o LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+pl-ps:		pl-ps.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-ps pl-ps.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pldebug:	pldebug.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pldebug pldebug.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+plgetframe:	plgetframe.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o plgetframe plgetframe.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+plrot:		plrot.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o plrot plrot.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+cv:		cv.o LIBBU_DEP
+	CC LDFLAGS -o cv cv.o LIBBU LIBBU_LIBES LIBES
+
+op-bw:		op-bw.o
+	CC LDFLAGS -o op-bw op-bw.o LIBES
+
+plcolor:	plcolor.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o plcolor plcolor.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+plline2:	plline2.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o plline2 plline2.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pl-pl:	pl-pl.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-pl pl-pl.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pl-tek:	pl-tek.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-tek pl-tek.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+buffer:		buffer.o
+	CC LDFLAGS -o buffer buffer.o LIBES
+
+dbcp:		dbcp.o
+	CC LDFLAGS -o dbcp dbcp.o LIBES
+
+files-tape:	files-tape.o
+	CC LDFLAGS -o files-tape files-tape.o LIBES
+
+pix3filter:	pix3filter.o
+	CC LDFLAGS -o pix3filter pix3filter.o LIBES
+
+pix-spm:	pix-spm.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pix-spm pix-spm.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pix-sun:	pix-sun.o
+	CC LDFLAGS -o pix-sun pix-sun.o LIBES
+
+pix-alias:	pix-alias.o
+	CC LDFLAGS -o pix-alias pix-alias.o LIBES
+
+alias-pix:	alias-pix.o
+	CC LDFLAGS -o alias-pix alias-pix.o LIBES
+
+pixcolors:	pixcolors.o
+	CC LDFLAGS -o pixcolors pixcolors.o LIBES
+
+hd:	hd.o
+	CC LDFLAGS -o hd hd.o LIBES
+
+sgi-pix:	sgi-pix.o LIBFB_DEP LIBBU_DEP
+	CC LDFLAGS -o sgi-pix sgi-pix.o LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+
+pixsaturate:	pixsaturate.o
+	CC LDFLAGS -o pixsaturate pixsaturate.o LIBES
+
+query:	query.o
+	CC LDFLAGS -o query query.o LIBES
+
+pixshrink: pixshrink.o
+	CC LDFLAGS -o pixshrink pixshrink.o LIBES
+
+bwshrink: bwshrink.o
+	CC LDFLAGS -o bwshrink bwshrink.o LIBES
+
+pixhalve: pixhalve.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pixhalve pixhalve.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pix-ps: pix-ps.o
+	CC LDFLAGS -o pix-ps pix-ps.o LIBES
+
+pix-ppm: pix-ppm.o  LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pix-ppm pix-ppm.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pcd-pix: pcd-pix.o
+	CC LDFLAGS -o pcd-pix pcd-pix.o LIBES
+
+pix-yuv: pix-yuv.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pix-yuv pix-yuv.o LIBBU LIBBU_LIBES LIBBN LIBES
+
+yuv-pix: yuv-pix.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o yuv-pix yuv-pix.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+plstat: plstat.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o plstat plstat.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pl-asc: pl-asc.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-asc pl-asc.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+asc-pl: asc-pl.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o asc-pl asc-pl.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pl-hpgl: pl-hpgl.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pl-hpgl pl-hpgl.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+xyz-pl: xyz-pl.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o xyz-pl xyz-pl.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+azel:	azel.o
+	CC LDFLAGS -o azel azel.o LIBES
+
+bary:	bary.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o bary bary.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixdsplit:	pixdsplit.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pixdsplit pixdsplit.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+mst:	mst.o LIBBU_DEP
+	CC LDFLAGS -o mst mst.o LIBBU LIBBU_LIBES LIBES
+
+remapid:	remapid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o remapid remapid.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+
+texturescale:	texturescale.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS -o texturescale texturescale.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+double-asc:	double-asc.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o double-asc double-asc.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+bwthresh: bwthresh.o
+	CC LDFLAGS -o bwthresh bwthresh.o LIBES
+
+dpix-pix: dpix-pix.o
+	CC LDFLAGS -o dpix-pix dpix-pix.o LIBES
+
+pix-ci:	pix-ci.o
+	CC LDFLAGS -o pix-ci pix-ci.o LIBES
+
+pl-X:	../SRCDIR/pl-X.c LIBFB_DEP LIBBN_DEP LIBBU_DEP
+	CC CFLAGS -I/usr/X11/include -o pl-X ../SRCDIR/pl-X.c LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+pl-X10:	pl-X10.o
+	CC LDFLAGS -o pl-X10 pl-X10.o LIBES
+
+pl-starbase:	pl-starbase.o
+	CC LDFLAGS -o pl-starbase pl-starbase.o LIBES
+
+pixelswap : pixelswap.o
+	CC LDFLAGS -o pixelswap pixelswap.o
+
+decimate : decimate.o
+	CC LDFLAGS -o decimate decimate.o
+
+msrandom: msrandom.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o msrandom msrandom.o LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixblend:	pixblend.o
+	CC LDFLAGS -o pixblend pixblend.o LIBES
+
+pixmorph:	pixmorph.o LIBFB_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o pixmorph pixmorph.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixborder:	pixborder.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS -o pixborder pixborder.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixclump:	pixclump.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS -o pixclump pixclump.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+pixcount:	pixcount.o LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS -o pixcount pixcount.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+imgdims:	imgdims.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o imgdims imgdims.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
+
+
+terrain:	terrain.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o terrain terrain.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
+
+dsp_add:	dsp_add.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o dsp_add dsp_add.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
+
+morphedit.tcl:	../SRCDIR/morphedit.tcl
+	#ifdef NFS
+	cp ../SRCDIR/morphedit.tcl morphedit.tcl
+	#endif
+	
+rtwizard:	../SRCDIR/rtwizard
+	#ifdef NFS
+	cp ../SRCDIR/rtwizard rtwizard
+	#endif
+
+#include "../Cakefile.rules"

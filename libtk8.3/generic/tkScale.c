@@ -164,7 +164,7 @@ static void		ComputeFormat _ANSI_ARGS_((TkScale *scalePtr));
 static void		ComputeScaleGeometry _ANSI_ARGS_((TkScale *scalePtr));
 static int		ConfigureScale _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkScale *scalePtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		DestroyScale _ANSI_ARGS_((char *memPtr));
 static void		ScaleCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
@@ -175,7 +175,7 @@ static char *		ScaleVarProc _ANSI_ARGS_((ClientData clientData,
 			    int flags));
 static int		ScaleWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		ScaleWorldChanged _ANSI_ARGS_((
 			    ClientData instanceData));
 static void		ScaleSetVariable _ANSI_ARGS_((TkScale *scalePtr));
@@ -215,7 +215,7 @@ Tk_ScaleObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     register TkScale *scalePtr;
     Tk_OptionTable optionTable;
@@ -354,7 +354,7 @@ ScaleWidgetObjCmd(clientData, interp, objc, objv)
 					 * widget. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument strings. */
+    Tcl_Obj *const objv[];		/* Argument strings. */
 {
     TkScale *scalePtr = (TkScale *) clientData;
     Tcl_Obj *objPtr;
@@ -588,7 +588,7 @@ ConfigureScale(interp, scalePtr, objc, objv)
     register TkScale *scalePtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int objc;			/* Number of valid entries in objv. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *errorResult = NULL;

@@ -53,7 +53,7 @@
  */
 
 typedef struct TkOption {
-    CONST Tk_OptionSpec *specPtr;	/* The original spec from the template
+    const Tk_OptionSpec *specPtr;	/* The original spec from the template
 					 * passed to Tk_CreateOptionTable.*/
     Tk_Uid dbNameUID;		 	/* The Uid form of the option database 
 					 * name. */
@@ -170,14 +170,14 @@ Tk_CreateOptionTable(interp, templatePtr)
     Tcl_Interp *interp;			/* Interpreter associated with the
 					 * application in which this table
 					 * will be used. */
-    CONST Tk_OptionSpec *templatePtr;	/* Static information about the
+    const Tk_OptionSpec *templatePtr;	/* Static information about the
 					 * configuration options. */
 {
     Tcl_HashTable *hashTablePtr;
     Tcl_HashEntry *hashEntryPtr;
     int newEntry;
     OptionTable *tablePtr;
-    CONST Tk_OptionSpec *specPtr, *specPtr2;
+    const Tk_OptionSpec *specPtr, *specPtr2;
     Option *optionPtr;
     int numOptions, i;
 
@@ -622,7 +622,7 @@ DoObjConfig(interp, recordPtr, optionPtr, valuePtr, tkwin, savedOptionPtr)
 				 * internal representation of value. */
     Tk_SavedOption internal;	/* Used to save the old internal representation
 				 * of the value if savedOptionPtr is NULL. */
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
     int nullOK;
 
     /*
@@ -1141,7 +1141,7 @@ Tk_SetOptions(interp, recordPtr, optionTable, objc, objv, tkwin, savePtr,
     char *recordPtr;	    		/* The record to configure. */
     Tk_OptionTable optionTable;		/* Describes valid options. */
     int objc;				/* The number of elements in objv. */
-    Tcl_Obj *CONST objv[];		/* Contains one or more name-value
+    Tcl_Obj *const objv[];		/* Contains one or more name-value
 					 * pairs. */
     Tk_Window tkwin;			/* Window associated with the thing
 					 * being configured; needed for some
@@ -1268,7 +1268,7 @@ Tk_RestoreSavedOptions(savePtr)
 				 * from record. */
     char *internalPtr;		/* Points to internal value of option in
 				 * record. */
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
 
     /*
      * Be sure to restore the options in the opposite order they were
@@ -1476,7 +1476,7 @@ Tk_FreeConfigOptions(recordPtr, optionTable, tkwin)
     int count;
     Tcl_Obj **oldPtrPtr, *oldPtr; 
     char *oldInternalPtr;
-    CONST Tk_OptionSpec *specPtr;
+    const Tk_OptionSpec *specPtr;
 
     for (tablePtr = (OptionTable *) optionTable; tablePtr != NULL;
 	    tablePtr = tablePtr->nextPtr) {

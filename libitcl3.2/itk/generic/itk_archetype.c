@@ -133,41 +133,41 @@ typedef struct ConfigCmdline {
 static void Itk_DelMergeInfo _ANSI_ARGS_((char* cdata));
 
 static int Itk_ArchInitOptsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static void Itk_DelArchInfo _ANSI_ARGS_((ClientData cdata));
 static int Itk_ArchDeleteOptsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 
 static int Itk_ArchComponentCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchCompAddCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchCompDeleteCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptKeepCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptIgnoreCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptRenameCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptUsualCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 
 static int Itk_ArchInitCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptionCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptionAddCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchOptionRemoveCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 
 static int Itk_ArchCompAccessCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchConfigureCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_ArchCgetCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int Itk_PropagateOption _ANSI_ARGS_((Tcl_Interp *interp,
     ItclObject *contextObj, ClientData cdata, char *newval));
 static int Itk_PropagatePublicVar _ANSI_ARGS_((Tcl_Interp *interp,
@@ -384,7 +384,7 @@ Itk_ArchInitOptsCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int newEntry, result;
     ArchInfo *info;
@@ -526,7 +526,7 @@ Itk_ArchDeleteOptsCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass;
     ItclObject *contextObj;
@@ -584,7 +584,7 @@ Itk_ArchComponentCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *cmd, *token, c;
     int length;
@@ -663,7 +663,7 @@ Itk_ArchCompAddCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     Tcl_HashEntry *entry = NULL;
     char *path = NULL;
@@ -1087,7 +1087,7 @@ Itk_ArchCompDeleteCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int i;
     char *token;
@@ -1215,7 +1215,7 @@ Itk_ArchOptKeepCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ArchMergeInfo *mergeInfo = (ArchMergeInfo*)clientData;
     int result = TCL_OK;
@@ -1320,7 +1320,7 @@ Itk_ArchOptIgnoreCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ArchMergeInfo *mergeInfo = (ArchMergeInfo*)clientData;
 
@@ -1394,7 +1394,7 @@ Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ArchMergeInfo *mergeInfo = (ArchMergeInfo*)clientData;
 
@@ -1523,7 +1523,7 @@ Itk_ArchOptUsualCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ArchMergeInfo *mergeInfo = (ArchMergeInfo*)clientData;
 
@@ -1606,7 +1606,7 @@ Itk_UsualCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ArchMergeInfo *mergeInfo = (ArchMergeInfo*)clientData;
 
@@ -1691,7 +1691,7 @@ Itk_ArchInitCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass, *cdefn;
     ItclObject *contextObj;
@@ -1889,7 +1889,7 @@ Itk_ArchOptionCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *cmd, *token, c;
     int length;
@@ -1985,7 +1985,7 @@ Itk_ArchOptionAddCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass, *cdefn;
     ItclObject *contextObj;
@@ -2165,7 +2165,7 @@ Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass, *cdefn;
     ItclObject *contextObj;
@@ -2318,7 +2318,7 @@ Itk_ArchCompAccessCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int i, result;
     char *token, *name, *val;
@@ -2471,7 +2471,7 @@ Itk_ArchConfigureCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int i;
     char *token, *val;
@@ -2607,7 +2607,7 @@ Itk_ArchCgetCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *token, *val;
     ItclClass *contextClass;

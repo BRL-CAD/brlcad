@@ -18,7 +18,7 @@
 #include "tclPort.h"
 #include <locale.h>
 
-typedef int (StatProc)_ANSI_ARGS_((CONST char *path, struct stat *buf));
+typedef int (StatProc)_ANSI_ARGS_((const char *path, struct stat *buf));
 
 /*
  * Prototypes for local procedures defined in this file:
@@ -35,7 +35,7 @@ static int		SplitPath _ANSI_ARGS_((Tcl_Interp *interp,
 static int		StoreStatData _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *varName, struct stat *statPtr));
 static char **		StringifyObjects _ANSI_ARGS_((int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 
 /*
  *----------------------------------------------------------------------
@@ -64,7 +64,7 @@ Tcl_BreakObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     if (objc != 1) {
 	Tcl_WrongNumArgs(interp, 1, objv, NULL);
@@ -96,13 +96,13 @@ Tcl_CaseObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register int i;
     int body, result;
     char *string, *arg;
     int caseObjc;
-    Tcl_Obj *CONST *caseObjv;
+    Tcl_Obj *const *caseObjv;
     Tcl_Obj *armPtr;
 
     if (objc < 3) {
@@ -238,7 +238,7 @@ Tcl_CatchObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Obj *varNamePtr = NULL;
     int result;
@@ -305,7 +305,7 @@ Tcl_CdObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     char *dirName;
     Tcl_DString ds;
@@ -359,7 +359,7 @@ Tcl_ConcatObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     if (objc >= 2) {
 	Tcl_SetObjResult(interp, Tcl_ConcatObj(objc-1, objv+1));
@@ -394,7 +394,7 @@ Tcl_ContinueObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     if (objc != 1) {
 	Tcl_WrongNumArgs(interp, 1, objv, NULL);
@@ -424,7 +424,7 @@ Tcl_EncodingObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int index, length;
     Tcl_Encoding encoding;
@@ -551,7 +551,7 @@ Tcl_ErrorObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Interp *iPtr = (Interp *) interp;
     char *info;
@@ -602,7 +602,7 @@ Tcl_EvalObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int result;
     register Tcl_Obj *objPtr;
@@ -655,7 +655,7 @@ Tcl_ExitObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int value;
 
@@ -704,7 +704,7 @@ Tcl_ExprObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {	 
     register Tcl_Obj *objPtr;
     Tcl_Obj *resultPtr;
@@ -781,7 +781,7 @@ Tcl_FileObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Obj *resultPtr;
     int index;
@@ -1606,7 +1606,7 @@ Tcl_ForObjCmd(dummy, interp, objc, objv)
     ClientData dummy;                   /* Not used. */
     Tcl_Interp *interp;                 /* Current interpreter. */
     int objc;                           /* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int result, value;
 
@@ -1689,7 +1689,7 @@ Tcl_ForeachObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int result = TCL_OK;
     int i;			/* i selects a value list */
@@ -1916,7 +1916,7 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
     ClientData dummy;    	/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     char *format;		/* Used to read characters from the format
 				 * string. */
@@ -2373,7 +2373,7 @@ Tcl_FormatObjCmd(dummy, interp, objc, objv)
 static char **
 StringifyObjects(objc, objv)
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int i;
     char **argv;
@@ -2385,3 +2385,4 @@ StringifyObjects(objc, objv)
     argv[i] = NULL;
     return argv;
 }
+

@@ -238,7 +238,7 @@ extern char **environ;
 int TclpLstat(const char *path, struct stat *bufPtr);
 
 char *TclpFindExecutable(const char *argv0);
-int TclpFindVariable(CONST char *name, int *lengthPtr);
+int TclpFindVariable(const char *name, int *lengthPtr);
 
 #define fopen(path, mode) TclMacFOpenHack(path, mode)
 #define readlink(fileName, buffer, size) TclMacReadlink(fileName, buffer, size)
@@ -250,8 +250,8 @@ int TclpFindVariable(CONST char *name, int *lengthPtr);
  * Prototypes needed for compatability
  */
 
-/* EXTERN int	strncasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2, size_t n)); */
+/* EXTERN int	strncasecmp _ANSI_ARGS_((const char *s1,
+			    const char *s2, size_t n)); */
 
 /*
  * These definitions force putenv & company to use the version
@@ -261,9 +261,9 @@ int TclpFindVariable(CONST char *name, int *lengthPtr);
 #   define unsetenv	TclUnsetEnv
 #   define putenv	Tcl_PutEnv
 #   define setenv	TclSetEnv
-void	TclSetEnv(CONST char *name, CONST char *value);
-/* int	Tcl_PutEnv(CONST char *string); */
-void	TclUnsetEnv(CONST char *name);
+void	TclSetEnv(const char *name, const char *value);
+/* int	Tcl_PutEnv(const char *string); */
+void	TclUnsetEnv(const char *name);
 #endif
 
 /*

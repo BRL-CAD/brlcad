@@ -1,0 +1,353 @@
+<html>
+<title>AnimMate: Table Editor documentation</title>
+<body>
+<h1><a name="top">Table Editor</a></h1>
+The 
+<a href="./teditor.gif">table editor</a>
+ displays an animation table in a simple text editor so
+that the contents can be viewed and edited with the mouse and keyboard.
+In addition, the table editor provides many other functions useful for
+animation, such as interpolation, mathematical operations on columns, 
+and various input/output options.
+<p>
+Each table editor is labeled with an identifying number, 
+which is displayed at the top of the window.
+Below that label is a column bar which numbers the columns.
+This is useful for keeping track of which column is which during
+horizontal scrolling of the table.
+<p>
+Beneath the column bar is the main editing window. If there is a current
+animation curve when the table editor is created, then the contents of
+the curve are automatically loaded into the editing window. This 
+creates a table with four columns for the time, x, y, and z 
+parameters, and one row for each node in the curve. 
+<p>
+After clicking 
+on the editing window with the left mouse, the user can edit the text. 
+The editor event bindings are the default bindings for a Tk text
+widget, described in detail in the Tk documentation under
+<file>libtk/doc/text.n</file>. 
+Some of the more important bindings are listed below:
+
+<pre>
+mouse 1, click			- move insertion cursor
+mouse 1, drag			- select text
+mouse 1, 3 clicks		- select line
+mouse 1, 3 clicks and drag	- select lines
+mouse 2, click			- insert selection
+Insert				- insert selection
+mouse 2, drag			- drag view
+arrow keys			- move insertion cursor
+shift-arrow keys		- select text
+CTRL-/				- select entire contents
+Meta-w 				- copy selection to clipboard
+CTRL-w				- cut
+CTRL-y				- paste
+</pre>
+In addition, the editor supports many commonly used emacs key bindings
+(CTRL-f, CTRL-k, etc.).
+<p>
+The buttons which implement the rest of the table editor's capabilities
+are found in a menu bar at the bottom of the window. 
+<dl>
+<dt><b><a name="Write">Write</a></b>
+<dd>
+
+The contents of the table editor can be written to a file, curve, or
+view curve. (See the 
+<a href="./vcurve_doc.html">next section</a>
+ to learn about view curves). After specifying one of these three
+destinations,  the user is asked for
+the name of the file, curve, or view curve to write to, and which
+columns of the table should be written. 
+While a file can accept any number of columns, curves
+and view curves are picky about the number of columns they accept. A
+curve can accept either three or four columns; in the latter case, the
+columns are interpreted as "<var>time x y z</var>", and in the former
+case, columns are interpreted as "<var>x y z</var>" and the time of each
+node is set to the node index. A view curve may need anywhere from seven
+to nine columns, depending on its view format.
+If the number of columns in the table is incompatible with the
+destination, an error message is displayed.
+<p>
+To specify which columns of a table will be written to a given 
+destination, the following syntax is used.
+The string <kbd>all</kbd> in this context represents all the columns.
+Comma-separated integers are used to identify individual columns: 0 
+is the
+first column and <var>n</var>-1 is the last of <var>n</var> columns.
+Dashes represent ranges. For example, <kbd>2-4</kbd>
+is identical in meaning to <kbd>2,3,4</kbd>; <kbd>4-2</kbd> is the same
+as <kbd>4,3,2</kbd>; and <kbd>4-</kbd> represents columns 4 through 
+<var>n-1</var>.
+<p>
+<dt><b><a name="Read">Read</a></b>
+<dd>The table editor can read data from a file, another text editor, a
+curve, or a view curve. When the <b>Read</b> menu is posted, it contains
+a <b>from File</b> option and one option for each of the existing
+editors, curves, and view curves. 
+<p>
+If <b>from File</b> is selected, then
+the user is asked to  specify 
+which columns of which file to read.
+Buttons on the bottom of the window are used to select one of
+three possible insertion modes: Replace, Append, and Add Columns.
+Depending on the
+insertion mode, the new data will replace the previous table, will be 
+appended
+on the bottom in new rows, or will be added to the right side of the table 
+in new columns.
+<p>
+If any of the editor, curve, or view curve options is selected, the
+user is similarly asked which source columns should be read and which
+insertion mode should be used. The syntax for specifying 
+columns is the same as that used with the <b>Write</b> option, above.
+<p>
+<dt><b><a name="Clear">Clear</a></b>
+<dd>This button clears the contents of the table editor.
+<p>
+<dt><b><a name="Interpolate">Interpolate</a></b>
+<dd>This button creates an 
+<a href="./icolumn.gif">interpolation widget</a>
+ for interpolating the data in an animation table. When using the 
+interpolation widget, the first column of the animation table should 
+always be the time column. Each of the other columns is interpolated with 
+respect to the first column, using any of 
+a variety of 
+algorithms, including step, linear, and spline interpolation. 
+The interpolator is implemented by a system call to 
+<a href="./tabinterp.html">tabinterp</a>.
+<p>
+The intepolation widget contains three boxes 
+which control the temporal limits and resolution 
+of the interpolation. The output table begins at
+the time labeled <b>Start Time</b> and ends at the time labeled <b>End
+Time</b>. The number of output rows created for
+each second of time is controlled by the <b>Frames Per
+Second</b> parameter.
+The start and end times default to the initial and final times in
+the input table, and the frames per second parameter defaults to 30 fps,
+a common value for animations intended to be shown on video.
+<p>
+Above these time-control boxes are column-control boxes, labeled by the
+index of the output column to which they correspond. Column zero of the
+output table is always the time column. Then the box labeled
+<b>1:</b> controls the contents of output column 1, and so on.
+For each desired output column, the user must provide an interpolation
+command in the corresponding box. 
+To delete an output column, the user need only delete
+the interpolation command from the corresponding entry box. 
+To add an output column, the user creates an new entry box
+with the <b>Add Column</b> button and enters an interpolation command.
+<p>
+The valid interpolation commands
+are described below.
+The notation <var>i</var> is an integer representing the index of a column 
+of the  
+input table, and <var>j</var> represents the index of a
+column of the output table.
+<p>
+<dl>
+<dt>step <var>i</var>
+<dd>Interpolate column <var>i</var> of the input table with step
+functions. In other words, values only change in instanteous jumps at
+the times specified in the input table.
+<p>
+<dt>linear <var>i</var>
+<dd>Interpolate column <var>i</var> of the input table with a piecewise
+linear function.
+<p>
+<dt>spline <var>i</var>
+<dd>Interpolate column <var>i</var> of the input table with a cubic spline
+curve with open end conditions.
+<p>
+<dt>cspline <var>i</var>
+<dd>Interpolate column <var>i</var> of the input table with a cubic spline
+curve with periodic end conditions. Note: the row of the input table
+corresponding to <b>End Time</b> is ignored and assumed to be equal to
+the row corresponding to <b>Start Time</b>.
+<p>
+<dt>quat <var>i</var>
+<dd>Register column <var>i</var> of the input table as a quaternion
+parameter. Four consecutive columns of the output table should contain
+quaternion commands, in which case the four columns will be interpolated
+jointly using quaternion interpolation. If the number of consecutive
+quaternion commands is not a multiple of four, an error message is
+displayed.
+<p>
+<dt>rate <var>start</var> <var>increment</var>
+<dd>Create a rate-based column. The first row of the column will contain
+the <var>start</var> value, and then successive rows will be change
+linearly so that <var>increment</var> units are added for every second of
+time.
+<p>
+<dt>accel <var>start</var> <var>increment</var>
+<dd>Create an acceleration-based column. The first row of the column
+will contain the <var>start</var> value, and then successive rows will
+change exponentially so that the value is multiplied by
+<var>increment</var> during every second of time.
+<p>
+<dt>next <var>j</var> <var>offset</var>
+<dd>
+This command
+creates an output column which is a copy of the output column indexed by
+<var>j</var>. The column is shifted forward in time by <var>offset</var>
+rows. For example, the command  
+<code>next 2 3</code> creates a copy of output column 2 with the first 
+three entries removed. The last entry in the column is repeated three 
+times so that the resulting column is the same length as column 2.
+Negative values are permissible for the offset.
+It is an error for a <code>next</code> column to reference itself 
+or a non-existent output column.
+</dl>
+<p>
+By default, the interpolation widget uses spline interpolation on 
+each column of the input table, but
+all
+other interpolation types are available by changing the interpolation 
+commands.  The <b>Active 
+Command</b> menu provides a shortcut for changing
+the commands for several columns at once.
+When the user presses on the label
+of a given column, the interpolation command for that column is replaced
+with the active command. 
+For example,
+all of the columns could be changed to linear interpolation by selecting
+the entry labeled <b>Linear (src)</b> from the <b>Active Command</b>
+menu and then clicking on each of the column labels in turn. 
+<p>
+The text on each entry of the <b>Active Command</b> menu 
+reminds the user of the arguments each
+command requires. For example, the label <b>Linear (src)</b> is a 
+reminder that the <code>linear</code> command requires an integer 
+argument specifying the source input column.
+<p>
+<dt><b><a name="EColumns">Edit Columns</a></b>
+<dd>This function pops up a 
+<a href="ecolumn.gif">column editor </a>
+ which allows
+mathematical operations to be applied to the columns of an animation
+table. The editor consists of three parts: the column-control entry
+boxes, the button bar, and the <b>Number of Rows</b> field.
+<p>
+Each column-control entry box is labeled by the index of the output
+column to which it  corresponds. For each desired output column, the
+user must place an expression defining its contents in the appropriate
+entry box. With the exception of some substitutions described below,
+these output column definition expressions are treated like 
+normal Tcl expressions. This means that the whole gamut of Tcl operators
+(*,+,!, etc.) and functions (cos, sqrt, floor, etc.) can be
+used. Thus a column definition such as:
+<code>
+sqrt(2.0)/2.0
+</code>
+results in a column in which the value of every row is set to
+<code>0.707107</code>. The precision of the result, which defaults to
+six significant digits, can be increased 
+by setting the global variable <var>tcl_precision</var> to
+the desired number of significant digits. For example, ten significant
+digits are obtained by typing:
+<pre>
+mged> <b>set tcl_precision 10</b>
+</pre>
+in the MGED interaction window. Note that this will effect the
+precision to which expressions are evaluated in the entire Tcl environment.
+<p>
+Much of the usefulness of the column editor comes from the substitutions
+which can be performed on a row-by-row basis. A <code>@</code> character
+followed by a substitution keyword in the column definition
+expression is replaced according to the following rules before the
+expression is evaluated:
+<p>
+<ul>
+<li>Replace @i with the index of the current row.
+<li>Replace @n with the number of rows the output table will have.
+<li>Replace @3 with the contents of column
+3 of the input table, and similarly for any other integer.
+<li>Replace @pi with the numeric value of the mathematical constant pi.
+<li>Replace @e with the numerical value of the mathematical constant e.
+</ul>
+<p>
+For example, the expression <code>@2</code> simply copies column two
+from the input table, and the expression <code>(80.0*@i/(@n-1)+20.0)</code>
+creates a column which varies linearly from a value of <code>20.0</code> in the first
+row to a value of <code>100.0</code> in the last row.
+<p>
+An output column can be deleted by deleting the column definition from
+the corresponding entry box. To add an output column, a new entry box
+is created with the <b>Add Column</b> button, and the desired definition
+is entered. The specified output columns are created when the <b>OK</b>
+button is invoked, and the output table appears in the place of the
+input table.
+<p>
+The parameter to the <b>Number of Rows</b> field determines how many
+rows the output table will have. By default, the field contains the 
+string <code>all</code>, indicating that the output table should have 
+the same number of rows as the input table. Any other number of rows can  
+be specified by entering an integer in the box.
+Note that if a
+table is being created out of nothing ( ie the input table is empty)
+then the number of rows in the output table must be specified explicitly
+or the length of the output table will also be zero.
+<p>
+<dt><b><a name="ETime">Estimate Time</a></b>
+<dd>When creating an animation curve, the animator usually knows where
+the object should move and how long the whole motion should take, but he
+or she doesn't necessarily know the best time parameters for the
+intermediate key points. The 
+<b>Estimate Time</b> function
+ calculates
+appropriate time values for an animation table containing an animation curve.
+The first column of the animation table must be the time
+column, and three other columns must specify a path through space.
+The <b>Estimate Time</b> function leaves the first and last values in the 
+time
+column unchanged and adjusts the intermediate time values so that the 
+resulting motion is smooth.
+<p>
+When the <b>Estimate Time</b> button is pressed, a
+<a href="./etime.gif">window</a> pops
+up asking for the desired start and end speed of the object. 
+The user can specify an absolute speed, in millimeters per second, or a 
+relative speed. A relative speed is specified as a 
+percentage of the speed needed
+to traverse the path in the given time at a constant rate. For example,
+if it is intended that the object move at a constant speed along the
+entire path, the start and end speeds would both be set to
+<code>100%</code>. (These are the default settings.)
+Or,
+if it is intended that the object start from rest and accelerate to a
+final speed of 2 mm/s, the start and end speeds would be 0.0 and 2.0,
+respectively. Starting and ending speeds must be positive and must not
+be greater than three times the rate corresponding to 100%, or an error
+message results. See the 
+<a href="./anim_time.html">manual page</a>
+of the underlying system call for 
+more information. 
+<p>
+The user is also asked which three
+columns of the input table specify the animation path. By default, it is 
+assumed that these are columns one through three, 
+but any three columns can be used. 
+<p>
+<dt><b><a name="Clone">Clone</a></b>
+<dd>This button creates a new copy of the current table editor 
+It is good
+practice to create a clone before doing interpolations or complicated
+column editing, so that data is not accidentally lost.
+<p>
+<dt><b><a name="Up">Up</a></b>
+<dd>This button raises the parent of the table editor to the top
+of the stacking order.
+<p>
+<dt><b><a name="Cancel">Cancel</a></b>
+<dd>This button closes this table editor.
+</dl>
+<hr>
+<a href="./vcurve_doc.html">Next Section: View Curve Editor</a>
+<p>
+<a href="./curve_doc.html">Previous Section: Curve Editor</a>
+<p>
+<a href="./anim_doc.html#index">Index</a>
+</body>
+</html>

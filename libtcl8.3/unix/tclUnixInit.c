@@ -51,11 +51,11 @@ static char pkgPath[sizeof(TCL_PACKAGE_PATH)+200] = TCL_PACKAGE_PATH;
  */
 
 typedef struct LocaleTable {
-    CONST char *lang;
-    CONST char *encoding;
+    const char *lang;
+    const char *encoding;
 } LocaleTable;
 
-static CONST LocaleTable localeTable[] = {
+static const LocaleTable localeTable[] = {
     {"ja_JP.SJIS",	"shiftjis"},
     {"ja_JP.EUC",	"euc-jp"},
     {"ja_JP.JIS",	"iso2022-jp"},
@@ -187,7 +187,7 @@ TclpInitPlatform()
 
 void
 TclpInitLibraryPath(path)
-CONST char *path;		/* Path to the executable in native 
+const char *path;		/* Path to the executable in native 
 				 * multi-byte encoding. */
 {
 #define LIBRARY_SIZE	    32
@@ -365,7 +365,7 @@ CONST char *path;		/* Path to the executable in native
 void
 TclpSetInitialEncodings()
 {
-    CONST char *encoding;
+    const char *encoding;
     int i;
     Tcl_Obj *pathPtr;
     char *langEnv;
@@ -616,7 +616,7 @@ TclpSetVariables(interp)
 
 int
 TclpFindVariable(name, lengthPtr)
-    CONST char *name;		/* Name of desired environment variable
+    const char *name;		/* Name of desired environment variable
 				 * (native). */
     int *lengthPtr;		/* Used to return length of name (for
 				 * successful searches) or number of non-NULL
@@ -624,7 +624,7 @@ TclpFindVariable(name, lengthPtr)
 				 * searches). */
 {
     int i, result = -1;
-    register CONST char *env, *p1, *p2;
+    register const char *env, *p1, *p2;
     Tcl_DString envString;
 
     Tcl_DStringInit(&envString);

@@ -265,11 +265,11 @@ static void		CanvasSetOrigin _ANSI_ARGS_((TkCanvas *canvasPtr,
 static void		CanvasUpdateScrollbars _ANSI_ARGS_((
 			    TkCanvas *canvasPtr));
 static int		CanvasWidgetCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int argc, Tcl_Obj *CONST *argv));
+			    Tcl_Interp *interp, int argc, Tcl_Obj *const *argv));
 static void		CanvasWorldChanged _ANSI_ARGS_((
 			    ClientData instanceData));
 static int		ConfigureCanvas _ANSI_ARGS_((Tcl_Interp *interp,
-			    TkCanvas *canvasPtr, int argc, Tcl_Obj *CONST *argv,
+			    TkCanvas *canvasPtr, int argc, Tcl_Obj *const *argv,
 			    int flags));
 static void		DestroyCanvas _ANSI_ARGS_((char *memPtr));
 static void		DisplayCanvas _ANSI_ARGS_((ClientData clientData));
@@ -279,20 +279,20 @@ static void		EventuallyRedrawItem _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr));
 #ifdef USE_OLD_TAG_SEARCH
 static int		FindItems _ANSI_ARGS_((Tcl_Interp *interp,
-			    TkCanvas *canvasPtr, int argc, Tcl_Obj *CONST *argv,
+			    TkCanvas *canvasPtr, int argc, Tcl_Obj *const *argv,
 			    Tcl_Obj *newTagObj, int first));
 #else /* USE_OLD_TAG_SEARCH */
 static int		FindItems _ANSI_ARGS_((Tcl_Interp *interp,
-			    TkCanvas *canvasPtr, int argc, Tcl_Obj *CONST *argv,
+			    TkCanvas *canvasPtr, int argc, Tcl_Obj *const *argv,
 			    Tcl_Obj *newTagObj, int first,
 			    TagSearch **searchPtrPtr));
 #endif /* USE_OLD_TAG_SEARCH */
 static int		FindArea _ANSI_ARGS_((Tcl_Interp *interp,
-			    TkCanvas *canvasPtr, Tcl_Obj *CONST *argv, Tk_Uid uid,
+			    TkCanvas *canvasPtr, Tcl_Obj *const *argv, Tk_Uid uid,
 			    int enclosed));
 static double		GridAlign _ANSI_ARGS_((double coord, double spacing));
 static char**		GetStringsFromObjs _ANSI_ARGS_((int argc,
-			    Tcl_Obj *CONST *objv));
+			    Tcl_Obj *const *objv));
 static void		InitCanvas _ANSI_ARGS_((void));
 #ifdef USE_OLD_TAG_SEARCH
 static Tk_Item *	NextItem _ANSI_ARGS_((TagSearch *searchPtr));
@@ -361,7 +361,7 @@ Tk_CanvasObjCmd(clientData, interp, argc, argv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int argc;			/* Number of arguments. */
-    Tcl_Obj *CONST argv[];	/* Argument objects. */
+    Tcl_Obj *const argv[];	/* Argument objects. */
 {
     Tk_Window tkwin = (Tk_Window) clientData;
     TkCanvas *canvasPtr;
@@ -513,7 +513,7 @@ CanvasWidgetCmd(clientData, interp, argc, argv)
 					 * widget. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int argc;				/* Number of arguments. */
-    Tcl_Obj *CONST argv[];		/* Argument objects. */
+    Tcl_Obj *const argv[];		/* Argument objects. */
 {
     TkCanvas *canvasPtr = (TkCanvas *) clientData;
     unsigned int length;
@@ -2011,7 +2011,7 @@ ConfigureCanvas(interp, canvasPtr, argc, argv, flags)
     TkCanvas *canvasPtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int argc;			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST argv[];	/* Argument objects. */
+    Tcl_Obj *const argv[];	/* Argument objects. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     XGCValues gcValues;
@@ -3952,7 +3952,7 @@ FindItems(interp, canvasPtr, argc, argv, newTag, first, searchPtrPtr)
 					 * searched. */
     int argc;				/* Number of entries in argv.  Must be
 					 * greater than zero. */
-    Tcl_Obj *CONST *argv;		/* Arguments that describe what items
+    Tcl_Obj *const *argv;		/* Arguments that describe what items
 					 * to search for (see user doc on
 					 * "find" and "addtag" options). */
     Tcl_Obj *newTag;			/* If non-NULL, gives new tag to set
@@ -4233,7 +4233,7 @@ FindArea(interp, canvasPtr, argv, uid, enclosed)
 					 * and result storing. */
     TkCanvas *canvasPtr;		/* Canvas whose items are to be
 					 * searched. */
-    Tcl_Obj *CONST *argv;		/* Array of four arguments that
+    Tcl_Obj *const *argv;		/* Array of four arguments that
 					 * give the coordinates of the
 					 * rectangular area to search. */
     Tk_Uid uid;				/* If non-NULL, gives new tag to set
@@ -5487,7 +5487,7 @@ CanvasSetOrigin(canvasPtr, xOrigin, yOrigin)
 static char **
 GetStringsFromObjs(argc, objv)
     int argc;
-    Tcl_Obj *CONST objv[];
+    Tcl_Obj *const objv[];
 {
     register int i;
     char **argv;

@@ -305,7 +305,7 @@ Tcl_WrongNumArgs(interp, objc, objv, message)
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments to print
 					 * from objv. */
-    Tcl_Obj *CONST objv[];		/* Initial argument objects, which
+    Tcl_Obj *const objv[];		/* Initial argument objects, which
 					 * should be included in the error
 					 * message. */
     char *message;			/* Error message to print after the
@@ -343,3 +343,4 @@ Tcl_WrongNumArgs(interp, objc, objv, message)
     }
     Tcl_AppendStringsToObj(objPtr, "\"", (char *) NULL);
 }
+

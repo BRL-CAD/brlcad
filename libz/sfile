@@ -1,2 +1,5 @@
+s@include@include/brlcad@g
+s@^LIBS=libz.*$@LIBS=libz.so@
 /^CC=/a\
 SHELL=/usr/bin/sh
+/^depend:/,$d

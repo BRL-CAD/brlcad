@@ -344,11 +344,11 @@ static void		ChangeListboxOffset _ANSI_ARGS_((Listbox *listPtr,
 static void		ChangeListboxView _ANSI_ARGS_((Listbox *listPtr,
 			    int index));
 static int		ConfigureListbox _ANSI_ARGS_((Tcl_Interp *interp,
-			    Listbox *listPtr, int objc, Tcl_Obj *CONST objv[],
+			    Listbox *listPtr, int objc, Tcl_Obj *const objv[],
 			    int flags));
 static int		ConfigureListboxItem _ANSI_ARGS_ ((Tcl_Interp *interp,
 			    Listbox *listPtr, ItemAttr *attrs, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		ListboxDeleteSubCmd _ANSI_ARGS_((Listbox *listPtr,
 			    int first, int last));
 static void		DestroyListbox _ANSI_ARGS_((char *memPtr));
@@ -359,7 +359,7 @@ static int		GetListboxIndex _ANSI_ARGS_((Tcl_Interp *interp,
 			    Listbox *listPtr, Tcl_Obj *index, int endIsSize,
 			    int *indexPtr));
 static int		ListboxInsertSubCmd _ANSI_ARGS_((Listbox *listPtr,
-			    int index, int objc, Tcl_Obj *CONST objv[]));
+			    int index, int objc, Tcl_Obj *const objv[]));
 static void		ListboxCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static void		ListboxComputeGeometry _ANSI_ARGS_((Listbox *listPtr,
@@ -383,18 +383,18 @@ static void		ListboxUpdateVScrollbar _ANSI_ARGS_(
 			    (Listbox *listPtr));
 static int		ListboxWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
 	                    Tcl_Interp *interp, int objc,
-	                    Tcl_Obj *CONST objv[]));
+	                    Tcl_Obj *const objv[]));
 static int		ListboxBboxSubCmd _ANSI_ARGS_ ((Tcl_Interp *interp,
 	                    Listbox *listPtr, int index));
 static int		ListboxSelectionSubCmd _ANSI_ARGS_ (
 			    (Tcl_Interp *interp, Listbox *listPtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		ListboxXviewSubCmd _ANSI_ARGS_ ((Tcl_Interp *interp,
 			    Listbox *listPtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		ListboxYviewSubCmd _ANSI_ARGS_ ((Tcl_Interp *interp,
 			    Listbox *listPtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static ItemAttr *	ListboxGetItemAttributes _ANSI_ARGS_ (
     			    (Tcl_Interp *interp, Listbox *listPtr, int index));
 static void		ListboxWorldChanged _ANSI_ARGS_((
@@ -441,7 +441,7 @@ Tk_ListboxObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Listbox *listPtr;
     Tk_Window tkwin;
@@ -594,7 +594,7 @@ ListboxWidgetObjCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Information about listbox widget. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Arguments as Tcl_Obj's. */
+    Tcl_Obj *const objv[];		/* Arguments as Tcl_Obj's. */
 {
     register Listbox *listPtr = (Listbox *) clientData;
     int cmdIndex, index;
@@ -1130,7 +1130,7 @@ ListboxSelectionSubCmd(interp, listPtr, objc, objv)
     Tcl_Interp *interp;          /* Pointer to the calling Tcl interpreter */
     Listbox *listPtr;            /* Information about the listbox */
     int objc;                    /* Number of arguments in the objv array */
-    Tcl_Obj *CONST objv[];       /* Array of arguments to the procedure */
+    Tcl_Obj *const objv[];       /* Array of arguments to the procedure */
 {
     int selCmdIndex, first, last;
     int result = TCL_OK;
@@ -1216,7 +1216,7 @@ ListboxXviewSubCmd(interp, listPtr, objc, objv)
     Tcl_Interp *interp;          /* Pointer to the calling Tcl interpreter */
     Listbox *listPtr;            /* Information about the listbox */
     int objc;                    /* Number of arguments in the objv array */
-    Tcl_Obj *CONST objv[];       /* Array of arguments to the procedure */
+    Tcl_Obj *const objv[];       /* Array of arguments to the procedure */
 {
 
     int index, count, type, windowWidth, windowUnits;
@@ -1292,7 +1292,7 @@ ListboxYviewSubCmd(interp, listPtr, objc, objv)
     Tcl_Interp *interp;          /* Pointer to the calling Tcl interpreter */
     Listbox *listPtr;            /* Information about the listbox */
     int objc;                    /* Number of arguments in the objv array */
-    Tcl_Obj *CONST objv[];       /* Array of arguments to the procedure */
+    Tcl_Obj *const objv[];       /* Array of arguments to the procedure */
 {
     int index, count, type;
     double fraction, fraction2;
@@ -1518,7 +1518,7 @@ ConfigureListbox(interp, listPtr, objc, objv, flags)
     register Listbox *listPtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int objc;			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[];	/* Arguments. */
+    Tcl_Obj *const objv[];	/* Arguments. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     Tk_SavedOptions savedOptions;
@@ -1654,7 +1654,7 @@ ConfigureListboxItem(interp, listPtr, attrs, objc, objv)
 				 * not already have values for some fields. */
     ItemAttr *attrs;		/* Information about the item to configure */
     int objc;			/* Number of valid entries in argv. */
-    Tcl_Obj *CONST objv[];	/* Arguments. */
+    Tcl_Obj *const objv[];	/* Arguments. */
 {
     Tk_SavedOptions savedOptions;
 
@@ -2085,7 +2085,7 @@ ListboxInsertSubCmd(listPtr, index, objc, objv)
     int index;			/* Add the new elements before this
 				 * element. */
     int objc;			/* Number of new elements to add. */
-    Tcl_Obj *CONST objv[];	/* New elements (one per entry). */
+    Tcl_Obj *const objv[];	/* New elements (one per entry). */
 {
     int i, oldMaxWidth;
     Tcl_Obj *newListObj;

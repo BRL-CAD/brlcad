@@ -94,7 +94,7 @@ static Tk_OptionSpec configSpecs[] = {
 
 int			SquareObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj * CONST objv[]));
+			    Tcl_Obj * const objv[]));
 static void		SquareDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static int		SquareConfigure _ANSI_ARGS_((Tcl_Interp *interp,
@@ -105,7 +105,7 @@ static void		KeepInWindow _ANSI_ARGS_((Square *squarePtr));
 static void		SquareObjEventProc _ANSI_ARGS_((ClientData clientData,
 			    XEvent *eventPtr));
 static int		SquareWidgetCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *, int objc, Tcl_Obj * CONST objv[]));
+			    Tcl_Interp *, int objc, Tcl_Obj * const objv[]));
 
 /*
  *--------------------------------------------------------------
@@ -130,7 +130,7 @@ SquareObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj * CONST objv[];	/* Argument objects. */
+    Tcl_Obj * const objv[];	/* Argument objects. */
 {
     Square *squarePtr;
     Tk_Window tkwin;
@@ -239,7 +239,7 @@ SquareWidgetCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Information about square widget. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj * CONST objv[];		/* Argument objects. */
+    Tcl_Obj * const objv[];		/* Argument objects. */
 {
     Square *squarePtr = (Square *) clientData;
     int result = TCL_OK;

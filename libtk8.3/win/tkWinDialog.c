@@ -112,10 +112,10 @@ static UINT CALLBACK	ColorDlgHookProc(HWND hDlg, UINT uMsg, WPARAM wParam,
 			    LPARAM lParam);
 static int 		GetFileNameA(ClientData clientData, 
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[], int isOpen);
+			    Tcl_Obj *const objv[], int isOpen);
 static int 		GetFileNameW(ClientData clientData, 
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[], int isOpen);
+			    Tcl_Obj *const objv[], int isOpen);
 static int 		MakeFilter(Tcl_Interp *interp, char *string, 
 			    Tcl_DString *dsPtr);
 static UINT APIENTRY	OFNHookProc(HWND hdlg, UINT uMsg, WPARAM wParam, 
@@ -179,7 +179,7 @@ Tk_ChooseColorObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tk_Window tkwin, parent;
     HWND hWnd;
@@ -389,7 +389,7 @@ Tk_GetOpenFileObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
 	return GetFileNameW(clientData, interp, objc, objv, 1);
@@ -420,7 +420,7 @@ Tk_GetSaveFileObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
 	return GetFileNameW(clientData, interp, objc, objv, 0);
@@ -450,7 +450,7 @@ GetFileNameW(clientData, interp, objc, objv, open)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
     int open;			/* 1 to call GetOpenFileName(), 0 to 
 				 * call GetSaveFileName(). */
 {
@@ -757,7 +757,7 @@ GetFileNameA(clientData, interp, objc, objv, open)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
     int open;			/* 1 to call GetOpenFileName(), 0 to 
 				 * call GetSaveFileName(). */
 {
@@ -1199,7 +1199,7 @@ Tk_ChooseDirectoryObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     OPENFILENAME ofn;
     TCHAR path[MAX_PATH], savePath[MAX_PATH];
@@ -1615,7 +1615,7 @@ Tk_MessageBoxObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tk_Window tkwin, parent;
     HWND hWnd;

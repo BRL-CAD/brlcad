@@ -1,0 +1,6 @@
+This image type consists of a simple, full-color rendering. This is the most common image type. 
+
+To produce this image, you will need to specify the objects you want to render, and the view information (e.g. azimuth and elevation).
+
+To change the colors of the objects, you must use 'mged' to change the shader parameters for the objects.
+

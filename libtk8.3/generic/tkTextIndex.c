@@ -239,7 +239,7 @@ TkTextMakeCharIndex(tree, lineIndex, charIndex, indexPtr)
 
 TkTextSegment *
 TkTextIndexToSeg(indexPtr, offsetPtr)
-    CONST TkTextIndex *indexPtr;/* Text index. */
+    const TkTextIndex *indexPtr;/* Text index. */
     int *offsetPtr;		/* Where to store offset within segment, or
 				 * NULL if offset isn't wanted. */
 {
@@ -277,10 +277,10 @@ TkTextIndexToSeg(indexPtr, offsetPtr)
 
 int
 TkTextSegToOffset(segPtr, linePtr)
-    CONST TkTextSegment *segPtr;/* Segment whose offset is desired. */
-    CONST TkTextLine *linePtr;	/* Line containing segPtr. */
+    const TkTextSegment *segPtr;/* Segment whose offset is desired. */
+    const TkTextLine *linePtr;	/* Line containing segPtr. */
 {
-    CONST TkTextSegment *segPtr2;
+    const TkTextSegment *segPtr2;
     int offset;
 
     offset = 0;
@@ -551,7 +551,7 @@ TkTextGetIndex(interp, textPtr, string, indexPtr)
 
 void
 TkTextPrintIndex(indexPtr, string)
-    CONST TkTextIndex *indexPtr;/* Pointer to index. */
+    const TkTextIndex *indexPtr;/* Pointer to index. */
     char *string;		/* Place to store the position.  Must have
 				 * at least TK_POS_CHARS characters. */
 {
@@ -600,8 +600,8 @@ TkTextPrintIndex(indexPtr, string)
 
 int
 TkTextIndexCmp(index1Ptr, index2Ptr)
-    CONST TkTextIndex *index1Ptr;		/* First index. */
-    CONST TkTextIndex *index2Ptr;		/* Second index. */
+    const TkTextIndex *index1Ptr;		/* First index. */
+    const TkTextIndex *index2Ptr;		/* Second index. */
 {
     int line1, line2;
 
@@ -750,7 +750,7 @@ ForwBack(string, indexPtr)
 
 void
 TkTextIndexForwBytes(srcPtr, byteCount, dstPtr)
-    CONST TkTextIndex *srcPtr;	/* Source index. */
+    const TkTextIndex *srcPtr;	/* Source index. */
     int byteCount;		/* How many bytes forward to move.  May be
 				 * negative. */
     TkTextIndex *dstPtr;	/* Destination index: gets modified. */
@@ -816,7 +816,7 @@ TkTextIndexForwBytes(srcPtr, byteCount, dstPtr)
 
 void
 TkTextIndexForwChars(srcPtr, charCount, dstPtr)
-    CONST TkTextIndex *srcPtr;	/* Source index. */
+    const TkTextIndex *srcPtr;	/* Source index. */
     int charCount;		/* How many characters forward to move.
 				 * May be negative. */
     TkTextIndex *dstPtr;	/* Destination index: gets modified. */
@@ -906,7 +906,7 @@ TkTextIndexForwChars(srcPtr, charCount, dstPtr)
 
 void
 TkTextIndexBackBytes(srcPtr, byteCount, dstPtr)
-    CONST TkTextIndex *srcPtr;	/* Source index. */
+    const TkTextIndex *srcPtr;	/* Source index. */
     int byteCount;		/* How many bytes backward to move.  May be
 				 * negative. */
     TkTextIndex *dstPtr;	/* Destination index: gets modified. */
@@ -970,7 +970,7 @@ TkTextIndexBackBytes(srcPtr, byteCount, dstPtr)
 
 void
 TkTextIndexBackChars(srcPtr, charCount, dstPtr)
-    CONST TkTextIndex *srcPtr;	/* Source index. */
+    const TkTextIndex *srcPtr;	/* Source index. */
     int charCount;		/* How many characters backward to move.
 				 * May be negative. */
     TkTextIndex *dstPtr;	/* Destination index: gets modified. */

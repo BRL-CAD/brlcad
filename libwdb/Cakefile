@@ -1,0 +1,19 @@
+/*
+ *			libwdb/Cakefile
+ *
+ *  $Header$
+ */
+#define PRODUCTS	libwdb.ARCH_SUF
+#define SRCDIR	libwdb
+#define FILES	wdb reg ars arbn units pipe export nmg id \
+		strsol cline bot skt extr mater nurb
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#define VERSION_VARIABLE	libwdb_version
+#define LIBRARY_TITLE		"BRL-CAD Library for Writing Databases"
+
+#include "../Cakefile.defs"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"

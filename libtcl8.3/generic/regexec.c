@@ -123,7 +123,7 @@ struct vars {
 /* =====^!^===== begin forwards =====^!^===== */
 /* automatically gathered by fwd; do not hand-edit */
 /* === regexec.c === */
-int exec _ANSI_ARGS_((regex_t *, CONST chr *, size_t, rm_detail_t *, size_t, regmatch_t [], int));
+int exec _ANSI_ARGS_((regex_t *, const chr *, size_t, rm_detail_t *, size_t, regmatch_t [], int));
 static int find _ANSI_ARGS_((struct vars *, struct cnfa *, struct colormap *));
 static int cfind _ANSI_ARGS_((struct vars *, struct cnfa *, struct colormap *));
 static int cfindloop _ANSI_ARGS_((struct vars *, struct cnfa *, struct colormap *, struct dfa *, struct dfa *, chr **));
@@ -157,13 +157,13 @@ static struct sset *pickss _ANSI_ARGS_((struct vars *, struct dfa *, chr *, chr 
 
 /*
  - exec - match regular expression
- ^ int exec(regex_t *, CONST chr *, size_t, rm_detail_t *,
+ ^ int exec(regex_t *, const chr *, size_t, rm_detail_t *,
  ^					size_t, regmatch_t [], int);
  */
 int
 exec(re, string, len, details, nmatch, pmatch, flags)
 regex_t *re;
-CONST chr *string;
+const chr *string;
 size_t len;
 rm_detail_t *details;
 size_t nmatch;
@@ -1036,3 +1036,4 @@ chr *end;			/* end of same */
 
 
 #include "rege_dfa.c"
+

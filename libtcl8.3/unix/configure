@@ -5808,7 +5808,7 @@ else
 	    ;;
     esac
     TCL_SHLIB_CFLAGS=""
-    TCL_LD_SEARCH_FLAGS="${LD_SEARCH_FLAGS}"
+    TCL_LD_SEARCH_FLAGS=""
     eval "TCL_LIB_FILE=libtcl${TCL_UNSHARED_LIB_SUFFIX}"
     MAKE_LIB="ar cr \${TCL_LIB_FILE} \${OBJS}"
 fi

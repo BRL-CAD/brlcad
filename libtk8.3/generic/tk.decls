@@ -186,7 +186,7 @@ declare 30 generic {
 
 declare 31 generic {
     Tk_TextLayout Tk_ComputeTextLayout (Tk_Font font, \
-	    CONST char *str, int numChars, int wrapLength, \
+	    const char *str, int numChars, int wrapLength, \
 	    Tk_Justify justify, int flags, int *widthPtr, \
 	    int *heightPtr)
 }
@@ -251,7 +251,7 @@ declare 43 generic {
 }
 
 declare 44 generic {
-    int Tk_DefineBitmap (Tcl_Interp *interp, CONST char *name, char *source, \
+    int Tk_DefineBitmap (Tcl_Interp *interp, const char *name, char *source, \
 	    int width, int height)
 }
 
@@ -322,7 +322,7 @@ declare 58 generic {
 
 declare 59 generic {
     void Tk_DrawChars (Display *display, Drawable drawable, GC gc, \
-	    Tk_Font tkfont, CONST char *source, int numBytes, int x, int y)
+	    Tk_Font tkfont, const char *source, int numBytes, int x, int y)
 }
 
 declare 60 generic {
@@ -441,7 +441,7 @@ declare 84 generic {
 }
 
 declare 85 generic {
-    Pixmap Tk_GetBitmap (Tcl_Interp *interp, Tk_Window tkwin, CONST char * str)
+    Pixmap Tk_GetBitmap (Tcl_Interp *interp, Tk_Window tkwin, const char * str)
 }
 
 declare 86 generic {
@@ -479,7 +479,7 @@ declare 92 generic {
 
 declare 93 generic {
     Tk_Font Tk_GetFont (Tcl_Interp *interp, \
-	    Tk_Window tkwin, CONST char *str)
+	    Tk_Window tkwin, const char *str)
 }
 
 declare 94 generic {
@@ -560,7 +560,7 @@ declare 110 generic {
 }
 
 declare 111 generic {
-    Tk_Uid Tk_GetUid (CONST char *str)
+    Tk_Uid Tk_GetUid (const char *str)
 }
 
 declare 112 generic {
@@ -628,7 +628,7 @@ declare 125 generic {
 
 declare 126 generic {
     int Tk_MeasureChars (Tk_Font tkfont, \
-	    CONST char *source, int numBytes, int maxPixels, \
+	    const char *source, int numBytes, int maxPixels, \
 	    int flags, int *lengthPtr)
 }
 
@@ -846,7 +846,7 @@ declare 175 generic {
 }
 
 declare 176 generic {
-    int Tk_TextWidth (Tk_Font font, CONST char *str, int numBytes)
+    int Tk_TextWidth (Tk_Font font, const char *str, int numBytes)
 }
 
 declare 177 generic {
@@ -856,7 +856,7 @@ declare 177 generic {
 declare 178 generic {
     void Tk_UnderlineChars (Display *display, \
 	    Drawable drawable, GC gc, Tk_Font tkfont, \
-	    CONST char *source, int x, int y, int firstByte, \
+	    const char *source, int x, int y, int firstByte, \
 	    int lastByte)
 }
 
@@ -916,7 +916,7 @@ declare 189 generic {
 
 declare 190 generic {
     Tk_OptionTable Tk_CreateOptionTable (Tcl_Interp *interp, \
-	    CONST Tk_OptionSpec *templatePtr)
+	    const Tk_OptionSpec *templatePtr)
 }
 
 declare 191 generic {
@@ -1007,7 +1007,7 @@ declare 209 generic {
 
 declare 210 generic {
     int  Tk_GetScrollInfoObj (Tcl_Interp *interp, \
-	    int objc, Tcl_Obj *CONST objv[], double *dblPtr, int *intPtr)
+	    int objc, Tcl_Obj *const objv[], double *dblPtr, int *intPtr)
 }
 
 declare 211 generic {
@@ -1028,7 +1028,7 @@ declare 213 generic {
 declare 214 generic {
     int  Tk_SetOptions (Tcl_Interp *interp, char *recordPtr, \
 	    Tk_OptionTable optionTable, int objc, \
-	    Tcl_Obj *CONST objv[], Tk_Window tkwin, \
+	    Tcl_Obj *const objv[], Tk_Window tkwin, \
 	    Tk_SavedOptions *savePtr, int *maskPtr)
 }
 
@@ -1049,11 +1049,11 @@ declare 217 generic {
 #}
 
 #declare 219 generic {
-#    VOID *Tk_GetCanvasVisitor (Tcl_Interp *interp, CONST char *name)
+#    VOID *Tk_GetCanvasVisitor (Tcl_Interp *interp, const char *name)
 #}
 
 declare 220 generic {
-    int Tk_GetDash (Tcl_Interp *interp, CONST char *value, Tk_Dash *dash)
+    int Tk_GetDash (Tcl_Interp *interp, const char *value, Tk_Dash *dash)
 }
 declare 221 generic {
     void Tk_CreateOutline (Tk_Outline *outline)

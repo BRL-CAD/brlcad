@@ -339,7 +339,7 @@ TclpInitPlatform()
 
 void
 TclpInitLibraryPath(argv0)
-    CONST char *argv0;		/* Name of executable from argv[0] to main().
+    const char *argv0;		/* Name of executable from argv[0] to main().
 				 * Not used because we can determine the name
 				 * by querying the module handle. */
 {
@@ -407,7 +407,7 @@ TclpInitLibraryPath(argv0)
 void
 TclpSetInitialEncodings()
 {
-    CONST char *encoding;
+    const char *encoding;
     Tcl_Obj *pathPtr;
     int fontId;
     
@@ -593,7 +593,7 @@ TclpCheckStackSpace()
 
 int
 TclpFindVariable(name, lengthPtr)
-    CONST char *name;		/* Name of desired environment variable
+    const char *name;		/* Name of desired environment variable
 				 * (native). */
     int *lengthPtr;		/* Used to return length of name (for
 				 * successful searches) or number of non-NULL
@@ -601,7 +601,7 @@ TclpFindVariable(name, lengthPtr)
 				 * searches). */
 {
     int i, result = -1;
-    register CONST char *env, *p1, *p2;
+    register const char *env, *p1, *p2;
     Tcl_DString envString;
 
     Tcl_DStringInit(&envString);

@@ -60,7 +60,7 @@ Tk_BellObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *bellOptions[] = {"-displayof", (char *) NULL};
     Tk_Window tkwin = (Tk_Window) clientData;
@@ -405,7 +405,7 @@ Tk_DestroyObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tk_Window window;
     Tk_Window tkwin = (Tk_Window) clientData;
@@ -455,7 +455,7 @@ Tk_LowerObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tk_Window mainwin = (Tk_Window) clientData;
     Tk_Window tkwin, other;
@@ -510,7 +510,7 @@ Tk_RaiseObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tk_Window mainwin = (Tk_Window) clientData;
     Tk_Window tkwin, other;
@@ -563,7 +563,7 @@ Tk_TkObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int index;
     Tk_Window tkwin;
@@ -857,7 +857,7 @@ Tk_UpdateObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     static char *updateOptions[] = {"idletasks", (char *) NULL};
     int flags, index;
@@ -930,7 +930,7 @@ Tk_WinfoObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int index, x, y, width, height, useX, useY, class, skip;
     char *string;
@@ -1532,7 +1532,7 @@ Tk_WmObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tk_Window tkwin;
     TkWindow *winPtr;
@@ -1753,7 +1753,7 @@ int
 TkGetDisplayOf(interp, objc, objv, tkwinPtr)
     Tcl_Interp *interp;		/* Interpreter for error reporting. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. If it is present,
+    Tcl_Obj *const objv[];	/* Argument objects. If it is present,
 				 * "-displayof" should be in objv[0] and
 				 * objv[1] the name of a window. */
     Tk_Window *tkwinPtr;	/* On input, contains main window of

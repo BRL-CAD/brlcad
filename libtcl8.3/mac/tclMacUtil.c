@@ -201,7 +201,7 @@ FSpFindFolder(
 int
 FSpLocationFromPath(
     int length,			/* Length of path. */
-    CONST char *path,		/* The path to convert. */
+    const char *path,		/* The path to convert. */
     FSSpecPtr fileSpecPtr)	/* On return the spec for the path. */
 {
     Str255 fileName;

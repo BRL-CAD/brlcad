@@ -1357,3 +1357,4 @@ ResultAdd (r, buf, toWrite)
     memcpy(r->buf + r->used, buf, (size_t) toWrite);
     r->used += toWrite;
 }
+

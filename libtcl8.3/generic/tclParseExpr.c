@@ -1850,3 +1850,4 @@ LogSyntaxError(infoPtr)
     infoPtr->parsePtr->errorType = TCL_PARSE_SYNTAX;
     infoPtr->parsePtr->term = infoPtr->start;
 }
+

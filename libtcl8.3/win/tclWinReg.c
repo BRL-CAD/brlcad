@@ -85,24 +85,24 @@ typedef struct RegWinProcs {
     int useWide;
 
     LONG (WINAPI *regConnectRegistryProc)(TCHAR *, HKEY, PHKEY);
-    LONG (WINAPI *regCreateKeyExProc)(HKEY, CONST TCHAR *, DWORD, TCHAR *,
+    LONG (WINAPI *regCreateKeyExProc)(HKEY, const TCHAR *, DWORD, TCHAR *,
 	    DWORD, REGSAM, SECURITY_ATTRIBUTES *, HKEY *, DWORD *); 
-    LONG (WINAPI *regDeleteKeyProc)(HKEY, CONST TCHAR *);
-    LONG (WINAPI *regDeleteValueProc)(HKEY, CONST TCHAR *);
+    LONG (WINAPI *regDeleteKeyProc)(HKEY, const TCHAR *);
+    LONG (WINAPI *regDeleteValueProc)(HKEY, const TCHAR *);
     LONG (WINAPI *regEnumKeyProc)(HKEY, DWORD, TCHAR *, DWORD);
     LONG (WINAPI *regEnumKeyExProc)(HKEY, DWORD, TCHAR *, DWORD *, DWORD *,
 	    TCHAR *, DWORD *, FILETIME *);
     LONG (WINAPI *regEnumValueProc)(HKEY, DWORD, TCHAR *, DWORD *, DWORD *,
 	    DWORD *, BYTE *, DWORD *);
-    LONG (WINAPI *regOpenKeyExProc)(HKEY, CONST TCHAR *, DWORD, REGSAM,
+    LONG (WINAPI *regOpenKeyExProc)(HKEY, const TCHAR *, DWORD, REGSAM,
 	    HKEY *);
     LONG (WINAPI *regQueryInfoKeyProc)(HKEY, TCHAR *, DWORD *, DWORD *,
 	    DWORD *, DWORD *, DWORD *, DWORD *, DWORD *, DWORD *, DWORD *,
 	    FILETIME *);
-    LONG (WINAPI *regQueryValueExProc)(HKEY, CONST TCHAR *, DWORD *, DWORD *,
+    LONG (WINAPI *regQueryValueExProc)(HKEY, const TCHAR *, DWORD *, DWORD *,
 	    BYTE *, DWORD *);
-    LONG (WINAPI *regSetValueExProc)(HKEY, CONST TCHAR *, DWORD, DWORD,
-	    CONST BYTE*, DWORD);
+    LONG (WINAPI *regSetValueExProc)(HKEY, const TCHAR *, DWORD, DWORD,
+	    const BYTE*, DWORD);
 } RegWinProcs;
 
 static RegWinProcs *regWinProcs;
@@ -111,50 +111,50 @@ static RegWinProcs asciiProcs = {
     0,
 
     (LONG (WINAPI *)(TCHAR *, HKEY, PHKEY)) RegConnectRegistryA,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD, TCHAR *,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD, TCHAR *,
 	    DWORD, REGSAM, SECURITY_ATTRIBUTES *, HKEY *,
 	    DWORD *)) RegCreateKeyExA, 
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *)) RegDeleteKeyA,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *)) RegDeleteValueA,
+    (LONG (WINAPI *)(HKEY, const TCHAR *)) RegDeleteKeyA,
+    (LONG (WINAPI *)(HKEY, const TCHAR *)) RegDeleteValueA,
     (LONG (WINAPI *)(HKEY, DWORD, TCHAR *, DWORD)) RegEnumKeyA,
     (LONG (WINAPI *)(HKEY, DWORD, TCHAR *, DWORD *, DWORD *,
 	    TCHAR *, DWORD *, FILETIME *)) RegEnumKeyExA,
     (LONG (WINAPI *)(HKEY, DWORD, TCHAR *, DWORD *, DWORD *,
 	    DWORD *, BYTE *, DWORD *)) RegEnumValueA,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD, REGSAM,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD, REGSAM,
 	    HKEY *)) RegOpenKeyExA,
     (LONG (WINAPI *)(HKEY, TCHAR *, DWORD *, DWORD *,
 	    DWORD *, DWORD *, DWORD *, DWORD *, DWORD *, DWORD *, DWORD *,
 	    FILETIME *)) RegQueryInfoKeyA,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD *, DWORD *,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD *, DWORD *,
 	    BYTE *, DWORD *)) RegQueryValueExA,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD, DWORD,
-	    CONST BYTE*, DWORD)) RegSetValueExA,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD, DWORD,
+	    const BYTE*, DWORD)) RegSetValueExA,
 };
 
 static RegWinProcs unicodeProcs = {
     1,
 
     (LONG (WINAPI *)(TCHAR *, HKEY, PHKEY)) RegConnectRegistryW,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD, TCHAR *,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD, TCHAR *,
 	    DWORD, REGSAM, SECURITY_ATTRIBUTES *, HKEY *,
 	    DWORD *)) RegCreateKeyExW, 
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *)) RegDeleteKeyW,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *)) RegDeleteValueW,
+    (LONG (WINAPI *)(HKEY, const TCHAR *)) RegDeleteKeyW,
+    (LONG (WINAPI *)(HKEY, const TCHAR *)) RegDeleteValueW,
     (LONG (WINAPI *)(HKEY, DWORD, TCHAR *, DWORD)) RegEnumKeyW,
     (LONG (WINAPI *)(HKEY, DWORD, TCHAR *, DWORD *, DWORD *,
 	    TCHAR *, DWORD *, FILETIME *)) RegEnumKeyExW,
     (LONG (WINAPI *)(HKEY, DWORD, TCHAR *, DWORD *, DWORD *,
 	    DWORD *, BYTE *, DWORD *)) RegEnumValueW,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD, REGSAM,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD, REGSAM,
 	    HKEY *)) RegOpenKeyExW,
     (LONG (WINAPI *)(HKEY, TCHAR *, DWORD *, DWORD *,
 	    DWORD *, DWORD *, DWORD *, DWORD *, DWORD *, DWORD *, DWORD *,
 	    FILETIME *)) RegQueryInfoKeyW,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD *, DWORD *,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD *, DWORD *,
 	    BYTE *, DWORD *)) RegQueryValueExW,
-    (LONG (WINAPI *)(HKEY, CONST TCHAR *, DWORD, DWORD,
-	    CONST BYTE*, DWORD)) RegSetValueExW,
+    (LONG (WINAPI *)(HKEY, const TCHAR *, DWORD, DWORD,
+	    const BYTE*, DWORD)) RegSetValueExW,
 };
 
 
@@ -186,7 +186,7 @@ static int		ParseKeyName(Tcl_Interp *interp, char *name,
 static DWORD		RecursiveDeleteKey(HKEY hStartKey, TCHAR * pKeyName);
 static int		RegistryObjCmd(ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static int		SetValue(Tcl_Interp *interp, Tcl_Obj *keyNameObj,
 			    Tcl_Obj *valueNameObj, Tcl_Obj *dataObj,
 			    Tcl_Obj *typeObj);
@@ -253,7 +253,7 @@ RegistryObjCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj * CONST objv[])	/* Argument values. */
+    Tcl_Obj * const objv[])	/* Argument values. */
 {
     int index;
     char *errString;

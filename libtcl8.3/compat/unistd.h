@@ -33,18 +33,18 @@
  */
 
 extern void _exit _ANSI_ARGS_((int status));
-extern int access _ANSI_ARGS_((CONST char *path, int mode));
-extern int chdir _ANSI_ARGS_((CONST char *path));
-extern int chown _ANSI_ARGS_((CONST char *path, uid_t owner, gid_t group));
+extern int access _ANSI_ARGS_((const char *path, int mode));
+extern int chdir _ANSI_ARGS_((const char *path));
+extern int chown _ANSI_ARGS_((const char *path, uid_t owner, gid_t group));
 extern int close _ANSI_ARGS_((int fd));
 extern int dup _ANSI_ARGS_((int oldfd));
 extern int dup2 _ANSI_ARGS_((int oldfd, int newfd));
-extern int execl _ANSI_ARGS_((CONST char *path, ...));
-extern int execle _ANSI_ARGS_((CONST char *path, ...));
-extern int execlp _ANSI_ARGS_((CONST char *file, ...));
-extern int execv _ANSI_ARGS_((CONST char *path, char **argv));
-extern int execve _ANSI_ARGS_((CONST char *path, char **argv, char **envp));
-extern int execvp _ANSI_ARGS_((CONST char *file, char **argv));
+extern int execl _ANSI_ARGS_((const char *path, ...));
+extern int execle _ANSI_ARGS_((const char *path, ...));
+extern int execlp _ANSI_ARGS_((const char *file, ...));
+extern int execv _ANSI_ARGS_((const char *path, char **argv));
+extern int execve _ANSI_ARGS_((const char *path, char **argv, char **envp));
+extern int execvp _ANSI_ARGS_((const char *file, char **argv));
 extern pid_t fork _ANSI_ARGS_((void));
 extern char *getcwd _ANSI_ARGS_((char *buf, size_t size));
 extern gid_t getegid _ANSI_ARGS_((void));
@@ -61,22 +61,22 @@ extern int setgid _ANSI_ARGS_((gid_t group));
 extern int setuid _ANSI_ARGS_((uid_t user));
 extern unsigned sleep _ANSI_ARGS_ ((unsigned seconds));
 extern char *ttyname _ANSI_ARGS_((int fd));
-extern int unlink _ANSI_ARGS_((CONST char *path));
-extern int write _ANSI_ARGS_((int fd, CONST char *buf, size_t size));
+extern int unlink _ANSI_ARGS_((const char *path));
+extern int write _ANSI_ARGS_((int fd, const char *buf, size_t size));
 
 #ifndef	_POSIX_SOURCE
-extern char *crypt _ANSI_ARGS_((CONST char *, CONST char *));
+extern char *crypt _ANSI_ARGS_((const char *, const char *));
 extern int fchown _ANSI_ARGS_((int fd, uid_t owner, gid_t group));
 extern int flock _ANSI_ARGS_((int fd, int operation));
 extern int ftruncate _ANSI_ARGS_((int fd, unsigned long length));
 extern int ioctl _ANSI_ARGS_((int fd, int request, ...));
-extern int readlink _ANSI_ARGS_((CONST char *path, char *buf, int bufsize));
+extern int readlink _ANSI_ARGS_((const char *path, char *buf, int bufsize));
 extern int setegid _ANSI_ARGS_((gid_t group));
 extern int seteuid _ANSI_ARGS_((uid_t user));
 extern int setreuid _ANSI_ARGS_((int ruid, int euid));
-extern int symlink _ANSI_ARGS_((CONST char *, CONST char *));
+extern int symlink _ANSI_ARGS_((const char *, const char *));
 extern int ttyslot _ANSI_ARGS_((void));
-extern int truncate _ANSI_ARGS_((CONST char *path, unsigned long length));
+extern int truncate _ANSI_ARGS_((const char *path, unsigned long length));
 extern int vfork _ANSI_ARGS_((void));
 #endif /* _POSIX_SOURCE */
 

@@ -1,0 +1,27 @@
+/*
+ *		CAKE(1) specification file for GTOOLS
+ *
+ * $Header$
+ */
+
+#define	SRCDIR	gtools
+#define	PRODUCTS	g_lint g_diff
+#define	SRCSUFF		.c
+#define	MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+g_diff:	g_diff.o LIBRT_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o g_diff g_diff.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES
+
+g_lint:	g_lint.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS g_lint.o LIBRT LIBBN LIBBU LIBBU_LIBES  LIBES -o g_lint
+
+solshoot:	solshoot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS solshoot.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o solshoot
+
+testfree:	testfree.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS testfree.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o testfree
+
+#include "../Cakefile.rules"

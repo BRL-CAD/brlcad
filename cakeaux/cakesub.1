@@ -1,0 +1,31 @@
+.TH CAKESUB 1-ucb
+.SH NAME
+cakesub \- perform substitutions
+.SH ORIGIN
+University of Melbourne
+.SH SYNOPSIS
+.B cakesub
+[-i] [-vchar] oldpattern newpattern name ...
+.SH DESCRIPTION
+.sp 1
+\fICakesub\fP is a tool intended to work with \fIcake\fP,
+although it may be useful in its own right.
+The first two nonoption arguments are name patterns in the sense of
+cake(l), except that variables are introduced not by % but by X,
+or by the character following \-v if it is given.
+.sp 1
+Cakesub matches each name against the old pattern,
+setting up the values of its variables,
+then prints out the new pattern with those values substituted.
+If a name does not match the old pattern, \fIcakesub\fP prints nothing.
+E.g. the command "cakesub X.c X.o x.c y.h z.c" prints "x.o z.o".
+.sp 1
+The exit code of \fIcakesub\fP is the number of unmatched names;
+the example above would exit with status code 1.
+This can be useful for testing
+whether a name comforms to a pattern or not.
+However, the \-i option makes \fIcakesub\fP ignore failed matches;
+when given \fIcakesub\fP will always exit with a zero status.
+.SH "SEE ALSO"
+cake(1)
+.\"	@(#)cakesub.l	6/10/85
