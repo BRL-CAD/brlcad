@@ -82,12 +82,12 @@ char *str;
  */
 struct directory *
 db_lookup( dbip, name, noisy )
-register struct db_i	*dbip;
+struct db_i		*dbip;
 register char		*name;
 int			noisy;
 {
 	register struct directory *dp;
-	static char local[NAMESIZE+2];
+	char		local[NAMESIZE+2];
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_lookup:  bad dbip\n");
 
@@ -98,10 +98,11 @@ int			noisy;
 	}
 	dp = dbip->dbi_Head[db_dirhash(name)];
 	for(; dp != DIR_NULL; dp=dp->d_forw )  {
+		register char	*this;
 		if(
-			name[0] == dp->d_namep[0]  &&	/* speed */
-			name[1] == dp->d_namep[1]  &&	/* speed */
-			strcmp( name, dp->d_namep ) == 0
+			name[0] == (this=dp->d_namep)[0]  &&	/* speed */
+			name[1] == this[1]  &&	/* speed */
+			strcmp( name, this ) == 0
 		)  {
 			if(rt_g.debug&DEBUG_DB) rt_log("db_lookup(%s) x%x\n", name, dp);
 			return(dp);
@@ -129,26 +130,44 @@ int			flags;
 {
 	register struct directory **headp;
 	register struct directory *dp;
-	struct directory	*dupdp;
-	char			local[NAMESIZE+2];
+	char			local[NAMESIZE+2+2];
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_diradd:  bad dbip\n");
 
-	if(rt_g.debug&DEBUG_DB) rt_log("db_diradd( x%x, %s, addr=x%x, len=%d, flags=x%x)\n", dbip, name, laddr, len, flags);
-
-	if( (dupdp = db_lookup( dbip, name, 0 )) != DIR_NULL )  {
+	if(rt_g.debug&DEBUG_DB)  {
 		rt_log("db_diradd(dbip=x%x, name='%s', addr=x%x, len=%d, flags=x%x)\n",
 			dbip, name, laddr, len, flags );
-		rt_log("Attempt to duplicate existing entry x%x d_addr=x%x with same name, ignored\n",
-			dupdp, dupdp->d_addr );
-		return( DIR_NULL );
+	}
+
+	(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
+	local[NAMESIZE] = '\0';			/* ensure null termination */
+
+	if( db_lookup( dbip, local, 0 ) != DIR_NULL )  {
+		register int	c;
+
+		/* Shift right two characters */
+		/* Don't truncate to NAMESIZE, name is just internal */
+		strncpy( local+2, name, NAMESIZE );
+		local[1] = '_';			/* distinctive separater */
+		local[NAMESIZE+2] = '\0';	/* ensure null termination */
+
+		for( c = 'A'; c <= 'Z'; c++ )  {
+			local[0] = c;
+			if( db_lookup( dbip, local, 0 ) == DIR_NULL )
+				break;
+		}
+		if( c > 'Z' )  {
+			rt_log("db_diradd: Duplicate of name '%s', ignored\n",
+				local );
+			return( DIR_NULL );
+		}
+		rt_log("db_diradd: Duplicate of '%s', given temporary name '%s'\n",
+			name, local );
 	}
 
 	GETSTRUCT( dp, directory );
 	if( dp == DIR_NULL )
 		return( DIR_NULL );
-	(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
-	local[NAMESIZE] = '\0';			/* ensure null termination */
 	dp->d_namep = rt_strdup( local );
 	dp->d_addr = laddr;
 	dp->d_flags = flags;
