@@ -16,6 +16,7 @@ fi
 BUG_REPORT=/tmp/cad_bug.$$
 
 cat > $BUG_REPORT << ___EOF___
+
 Abstract: [Program/library, 40 character or so descriptive subject (for ref)]
 Environment: [BRL-CAD Release, Hardware, OS version]
 Description:
@@ -50,15 +51,29 @@ if [ -z "$USER" ] ; then
 fi
 
 
+FAILED=0
 if [ -x /usr/ucb/mail ] ; then
 	/usr/ucb/mail -s "BUG REPORT" cad-bugs@arl.mil "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
+		exit
 	else
-		echo "mail exited with non-zero status."
+		FAILED=1
+		echo "/usr/ucb/mail exited with non-zero status."
 		echo "message file $BUG_REPORT not deleted"
 	fi
-	exit
+fi
+
+if [ -x /usr/bsd/Mail ] ; then
+	/usr/bsd/Mail -s "BUG REPORT" cad-bugs@arl.mil "$USER" < $BUG_REPORT
+	if [ $? -eq 0 ] ; then
+		rm -f $BUG_REPORT
+		exit
+	else
+		FAILED=1
+		echo "/usr/bsd/Mail exited with non-zero status."
+		echo "message file $BUG_REPORT not deleted"
+	fi
 fi
 
 if [ -x /bin/mail ] ; then
@@ -66,10 +81,14 @@ if [ -x /bin/mail ] ; then
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 	else
-		echo "mail exited with non-zero status."
+		FAILED=1
+		echo "/bin/mail exited with non-zero status."
 		echo "message file $BUG_REPORT not deleted"
 	fi
 	exit
 fi
 
-/bin/echo "Mail agent not found.  Send file $BUG_REPORT to cad-bugs@arl.mil"
+if [ $FAILED -eq 1] ; then
+	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to cad-bugs@arl.mil"
+else
+	/bin/echo "Mail agent not found.  Send file $BUG_REPORT to cad-bugs@arl.mil"
