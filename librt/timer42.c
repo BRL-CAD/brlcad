@@ -32,7 +32,9 @@ static struct	rusage ru0;	/* Resource utilization at the start */
 static struct	rusage ru0c;	/* Resource utilization at the start */
 
 static void prusage();
+#if 0
 static void tvadd();
+#endif
 static void tvsub();
 static void psecs();
 
@@ -189,6 +191,7 @@ struct rt_vls	*vp;
 	}
 }
 
+#if 0
 static void
 tvadd(tsum, t0)
 	struct timeval *tsum, *t0;
@@ -199,6 +202,7 @@ tvadd(tsum, t0)
 	if (tsum->tv_usec > 1000000)
 		tsum->tv_sec++, tsum->tv_usec -= 1000000;
 }
+#endif
 
 static void
 tvsub(tdiff, t1, t0)
