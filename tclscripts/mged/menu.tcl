@@ -8,10 +8,11 @@
 proc mmenu_set { w id i menu } {
     global mmenu
 
-    set mmenu($id,$i) $menu
     if {![winfo exists $w]} {
 	return
     }
+
+    set mmenu($id,$i) $menu
 
     if { [llength $menu]<=0 } {
 	pack forget $w.f$i
