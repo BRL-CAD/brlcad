@@ -808,16 +808,14 @@ struct loopuse *lu1;
 		FREE_LOOPUSE_A(lu2->lua_p);
 	}
 
-	/* XXX when would this not be set? */
-/**	if (lu1->l_p) **/ {
-		NMG_CK_LOOP(lu1->l_p);
-		if (lu1->l_p->lg_p) {
-			NMG_CK_LOOP_G(lu1->l_p->lg_p);
-			FREE_LOOP_G(lu1->l_p->lg_p);
-		}
-		FREE_LOOP(lu1->l_p);
-		lu1->l_p = lu2->l_p = (struct loop *)NULL;
+	NMG_CK_LOOP(lu1->l_p);
+	if (lu1->l_p->lg_p) {
+		NMG_CK_LOOP_G(lu1->l_p->lg_p);
+		FREE_LOOP_G(lu1->l_p->lg_p);
 	}
+	FREE_LOOP(lu1->l_p);
+	lu1->l_p = lu2->l_p = (struct loop *)NULL;
+
 	FREE_LOOPUSE(lu1);
 	FREE_LOOPUSE(lu2);
 }
@@ -942,7 +940,7 @@ register struct edgeuse *eu1;
 		lu2 = eu2->up.lu_p;
 		NMG_CK_LOOPUSE(lu1);
 		NMG_CK_LOOPUSE(lu2);
-		/* XXX This may be OK for wire edges / wire loops */
+
 		if( lu1 == lu2 )  rt_bomb("nmg_keu() edgeuses on same loop\n");
 		if (lu1->lumate_p != lu2 || lu1 != lu2->lumate_p ) {
 			rt_log("lu1=x%x, mate=x%x\n", lu1, lu1->lumate_p);
@@ -1162,9 +1160,21 @@ struct edge *e;
 	/* compute the direction from the endpoints of the edgeuse(s) */
 	pt = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 	VSUB2(eg_p->e_dir, eg_p->e_pt, pt);	
-	/* XXX What happens if e_dir has zero length,
-	 * XXX such as when eumate_p->vu_p == eu_p->vu_p
+
+
+	/* If the edge vector is essentially 0 magnitude we're in trouble.
+	 * We warn the user and create an arbitrary vector we can use.
 	 */
+	if (VNEAR_ZERO(eg_p->e_dir, SMALL_FASTF)) {
+		pointp_t pt2 = e->eu_p->vu_p->v_p->vg_p->coord;
+		VPRINT("nmg_edge_g(): e_dir too small", eg_p->e_dir);
+		rt_log("nmg_edge_g(): (%g %g %g) -> (%g %g %g)",
+				pt[X],  pt[Y],  pt[Z],
+				pt2[X], pt2[Y], pt2[Z]);
+
+		VSET(eg_p->e_dir, 1.0, 0.0, 0.0);
+		VPRINT("nmg_edge_g(): Forcing e_dir to", eg_p->e_dir);
+	}
 }
 
 /*
