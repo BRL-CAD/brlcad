@@ -150,7 +150,8 @@ if [info exists env(MGED_LIBRARY)] then {
 	if [file exists ../mged/mged.tcl] then {
 		set mged_library ../mged
 	} else {
-		set mged_library /usr/brlcad/tcl
+		# For now, take MGED macros from /usr/brlcad/tcl/.
+		set mged_library $tcl_library
 	}
 }
 
