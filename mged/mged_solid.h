@@ -48,15 +48,18 @@ extern struct solid	*FreeSolid;	/* Head of freelist */
 extern struct solid	HeadSolid;	/* Head of doubly linked solid tab */
 extern int		ndrawn;
 
-#define GET_SOLID(p)    { if( ((p)=FreeSolid) == SOLID_NULL )  { \
-			p = (struct solid *)malloc(sizeof(struct solid)); \
-			  if( p == SOLID_NULL )  {\
-				(void)printf("GETSOLID: malloc failed\n"); \
-				no_memory = 2; \
-			  } \
-			} else { \
-				FreeSolid = (p)->s_forw; \
-			} }
+#define GET_SOLID(p)    {  \
+	if( ((p)=FreeSolid) == SOLID_NULL )  { \
+		if( (p = (struct solid *)malloc(sizeof(struct solid))) == SOLID_NULL )  {\
+			(void)printf("GET_SOLID( p ): malloc failed\n"); \
+			no_memory = 2; \
+		} else { \
+			bzero( (char *)p, sizeof(struct solid) ); \
+		} \
+	} else { \
+		FreeSolid = (p)->s_forw; \
+	} }
+
 #define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p); \
 	if((p)->s_vlist) (void)free((char *)(p)->s_vlist); \
 	(p)->s_vlist = 0; (p)->s_addr = 0; }
