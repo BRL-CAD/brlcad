@@ -81,8 +81,14 @@ register long	magic;
 	/*
 	 *  bn.h
 	 */
+	case BN_TOL_MAGIC:
+		return "bn_tol";
 	case BN_POLY_MAGIC:
 		return "bn_poly";
+	case BN_UNIF_MAGIC:
+		return "bn_unif";
+	case BN_GAUSS_MAGIC:
+		return "bn_gauss";
 
 	/*
 	 *  nmg.h:  NMG magic numbers
@@ -136,8 +142,6 @@ register long	magic;
 	/*
 	 *  raytrace.h
 	 */
-	case RT_TOL_MAGIC:
-		return("rt_tol");
 	case RT_TESS_TOL_MAGIC:
 		return("rt_tess_tol");
 	case RT_DB_INTERNAL_MAGIC:
@@ -199,13 +203,6 @@ register long	magic;
 		return("rt_pipe_internal");
 	case RT_PART_INTERNAL_MAGIC:
 		return("rt_part_internal");
-	/*
-	 * msr.h
-	 */
-	case MSR_UNIF_MAGIC:
-		return("msr_unif_magic");
-	case MSR_GAUSS_MAGIC:
-		return("msr_gauss_magic");
 	/*
 	 * wdb.h
 	 */
