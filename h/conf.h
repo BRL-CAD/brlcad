@@ -124,12 +124,21 @@
 #	define HAVE_GETOPT	1
 #endif
 
+#if defined(__NetBSD__)
+#	define HAVE_GETOPT_DECL	1
+#endif
+
 #if (defined(SYSV) || BSD >= 43) && !__STDC__
 #	define HAVE_MATHERR	1
 #endif
 
 #if defined(BSD)
 #	define HAVE_REGEX	1
+#endif
+
+#if defined(__NetBSD__)
+#	define HAVE_REGEX_DECL	1
+co -l conf.h
 #endif
 
 #if !defined(SYSV)
