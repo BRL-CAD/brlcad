@@ -70,9 +70,14 @@ gif)
 	ARGS=`gif2fb -h $FILE 2>&1 ` ;;
 pr|ras)
 	ARGS=`sun-pix -h $FILE` ;;
-*)
+"")
+	# No suffix given, this is a problem.
 	ARGS="-w0 -n0"
 	SUFFIX=unknown ;;
+*)
+	#  Suffix not recognized, just act innocent.
+	#  Calling routine may know what to do anyway.
+	ARGS="-w0 -n0" ;;
 esac
 
 set -- `getopt hs:S:w:n:W:N: $ARGS`
