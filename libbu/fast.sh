@@ -1,7 +1,7 @@
 #!/bin/sh
 #			F A S T . S H
 #
-# A quick way of recompiling LIBRT using multiple processors.
+# A quick way of recompiling LIBBU using multiple processors.
 #
 # Optional flag:  -s	for silent running
 #
