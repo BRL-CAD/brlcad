@@ -100,6 +100,8 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) dbip=x%x, dp=x%x, ext_nbytes=%ld\n",
 		dp->d_namep, dbip, dp, ep->ext_nbytes );
 
+	BU_ASSERT_LONG( ep->ext_nbytes&7, ==, 0 );
+
 	if( dp->d_flags & RT_DIR_INMEM )  {
 		if( dp->d_un.ptr )  {
 			dp->d_un.ptr = bu_realloc( dp->d_un.ptr,
@@ -116,11 +118,19 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 		return(-1);
 	}
 
-	/* Simple algorithm -- zap old copy, extend for new copy */
+	/* Simple algorithm -- zap old copy, extend file for new copy */
 	if( dp->d_addr != -1L )  {
 		db5_write_free( dbip, dp, dp->d_len );
+		dp->d_addr = -1L;	/* sanity */
 	}
+	/* extend */
+	dp->d_addr = dbip->dbi_eof;
+	dbip->dbi_eof += ep->ext_nbytes;
+	dp->d_len = ep->ext_nbytes;
+	db5_write_free( dbip, dp, dp->d_len );
+	return 0;
 
-
+#if 0
 	bu_bomb("db5_realloc() not fully implemented\n");
+#endif
 }
