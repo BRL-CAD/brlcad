@@ -490,6 +490,7 @@ AC_CHECK_HEADERS( \
 	getopt.h \
 	limits.h \
 	limits.h \
+	math.h \
 	memory.h \
 	pthread.h \
 	stdarg.h \
@@ -681,6 +682,7 @@ AC_CHECK_FUNCS( \
 	bzero \
 	dlopen \
 	drand \
+	fabs \ 
 	gethostname \
 	getopt \
 	sbrk \
