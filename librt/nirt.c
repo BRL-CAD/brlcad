@@ -371,6 +371,13 @@ done:
 		rt_vlblock_free(vbp);
 	}
 
+	/*
+	 * Notify observers, if any, before generating textual output since
+	 * such an act (observer notification) wipes out whatever gets stuffed
+	 * into interp->result.
+	 */
+	dgo_notify(dgop, interp);
+
 	if (DG_QRAY_TEXT(dgop)) {
 		bu_vls_free(&t_vls);
 
@@ -393,8 +400,6 @@ done:
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
 		sp->s_wflag = DOWN;
-
-	dgo_notify(dgop, interp);
 
 	return TCL_OK;
 }
