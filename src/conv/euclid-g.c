@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file euclid-g.c
+ */
+/** @file euclid-g.c
  *
  *  Program to convert Euclid file into a BRL-CAD NMG object.
  *

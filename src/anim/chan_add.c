@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file chan_add.c
+ */
+/** @file chan_add.c
  *  Add a given value to specified columns of data.
  *
  *  Author -

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-euclid1.c
+ */
+/** @file g-euclid1.c
  *			G - E U C L I D . C
  *
  *  Program to convert a BRL-CAD model (in a .g file) to a Euclid "decoded" facetted model

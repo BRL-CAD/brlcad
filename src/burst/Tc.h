@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file Tc.h
+ */
+/** @file Tc.h
 	SCCS id:	%Z% %M%	%I%
 	Modified: 	%G% at %U%
 	Retrieved: 	%H% at %T%

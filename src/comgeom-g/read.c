@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file read.c
+ */
+/** @file read.c
  *
  * This module contains all of the routines necessary to read in
  * a COMGEOM input file, and put the information into internal form.

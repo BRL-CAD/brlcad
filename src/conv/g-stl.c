@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-stl.c
+ */
+/** @file g-stl.c
  *
  *  Program to convert a BRL-CAD model (in a .g file) to an STL file
  *  by calling on the NMG booleans.  Based on g-acad.c.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_orient.c
+ */
+/** @file anim_orient.c
  *	Convert between different orientation formats. The formats are:
  *  quaternion, yaw-pitch-roll, azimuth-elevation-twist, xyz angles, 
  *  pre-multiplication rotation matrices, and transposed matrices (inverses).

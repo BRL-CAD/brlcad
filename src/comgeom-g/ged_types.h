@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file ged_types.h
+ */
+/** @file ged_types.h
  * type definition for new "C" declaration:  "homog_t".
  *
  * This is to make declairing Homogeneous Transform matricies easier.

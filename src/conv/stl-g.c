@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file stl-g.c
+ */
+/** @file stl-g.c
  *		S T L - G
  *
  * Code to convert Stereolithography format files to BRL-CAD

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file asc2g.c
+ */
+/** @file asc2g.c
  *  
  *  This program generates a GED database from an
  *  ASCII GED data file.

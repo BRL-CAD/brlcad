@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g4-g5.c
+ */
+/** @file g4-g5.c
  *
  *       g4-g5: program to convert version 4 databases to version 5
  *

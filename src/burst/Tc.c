@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file Tc.c
+ */
+/** @file Tc.c
 	XXX Outdated : should not be used
   
 	SCCS id:	%Z% %M%	%I%

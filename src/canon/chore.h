@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file chore.h
+ */
+/** @file chore.h
  *
  *  Header file for multi-threaded scanner support.
  *

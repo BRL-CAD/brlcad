@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file mat.c
+ */
+/** @file mat.c
  *
  * 4 x 4 Matrix manipulation functions..............
  *

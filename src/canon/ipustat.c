@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file ipustat.c
+ */
+/** @file ipustat.c
  *
  *	print the status of a Canon CLC500 IPU-10.
  *

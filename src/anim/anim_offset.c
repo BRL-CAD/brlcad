@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_offset.c
+ */
+/** @file anim_offset.c
  *	Animate an object which is rigidly attached to another.
  *
  *  Given an animation table specifying the position and orientation of

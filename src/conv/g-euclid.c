@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-euclid.c
+ */
+/** @file g-euclid.c
  *
  *  Program to convert a BRL-CAD model (in a .g file) to a Euclid "decoded" facetted model
  *  by calling on the NMG booleans.

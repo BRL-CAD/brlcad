@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file cattrack.c
+ */
+/** @file cattrack.c
  *  Caternary curve routines used by anim_track.c
  *
  */

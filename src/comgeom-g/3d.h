@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file 3d.h
+ */
+/** @file 3d.h
  *
  * This header file describes the object file structure,
  * and some commonly used 3D vector math macros.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file bot_shell-vtk.c
+ */
+/** @file bot_shell-vtk.c
  *	This program uses raytracing to determine which triangles of the specified objects
  *	are external, and includes them in an output VTK polydata file.
  *

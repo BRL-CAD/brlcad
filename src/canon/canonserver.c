@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file canonserver.c
+ */
+/** @file canonserver.c
  *
  * MDQS interface for Canon CLC500 on SGI SCSI bus
  *

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_turn.c
+ */
+/** @file anim_turn.c
  *	Animate front-wheel steered vehicles.
  *
  *  This is a filter which operates on animation tables. Given an

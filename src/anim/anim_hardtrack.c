@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_hardtrack.c
+ */
+/** @file anim_hardtrack.c
  *  Animate the links and wheels of a tracked vehicle. It is assumed
  *  that the wheels do not translate with respect to the vehicle.
  *

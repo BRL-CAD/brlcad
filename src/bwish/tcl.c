@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file tcl.c
+ */
+/** @file tcl.c
  *
  *  The supporting Tcl routines for BWISH and BTCLSH.
  *

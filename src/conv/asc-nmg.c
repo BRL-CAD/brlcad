@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file asc-nmg.c
+ */
+/** @file asc-nmg.c
  *
  *  Program to convert an ascii description of an NMG into a BRL-CAD
  *  NMG model.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-vrml.c
+ */
+/** @file g-vrml.c
  *			G - V R M L 2 . C
  *
  *  Program to convert a BRL-CAD model (in a .g file) to a VRML (2.0)  facetted model

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-wave.c
+ */
+/** @file g-wave.c
  *
  *  Program to convert a BRL-CAD model (in a .g file) to a Wavefront '.obj' file
  *  by calling on the NMG booleans.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file nmg-bot.c
+ */
+/** @file nmg-bot.c
  *
  * Routine to convert all the NMG solids in a BRL-CAD model to BoTs.
  *

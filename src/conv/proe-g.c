@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file proe-g.c
+ */
+/** @file proe-g.c
  *		P R O E - G
  *
  * Code to convert ascii output from Pro/Engineer to BRL-CAD

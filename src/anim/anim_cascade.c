@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_cascade.c
+ */
+/** @file anim_cascade.c
  *  Purpose: Given position and orientation of main frame of reference,
  * along with the position and orientation of another frame with respect
  * to the main frame, give the absolute orientation and position of the

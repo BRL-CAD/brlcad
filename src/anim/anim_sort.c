@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_sort.c
+ */
+/** @file anim_sort.c
  *	Combine multiple animation scripts on standard input into a 
  *  single script on standard output. The output can be in natural order
  *  or in a scrambled order for incrementally increasing time 

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file tankill-g.c
+ */
+/** @file tankill-g.c
  *                      T A N K I L L - G
  *
  *  Program to convert the UK TANKILL format to BRL-CAD.

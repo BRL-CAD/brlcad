@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file tools.c
+ */
+/** @file tools.c
  *
  */
 

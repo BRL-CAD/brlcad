@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file chan_permute.c
+ */
+/** @file chan_permute.c
  *	This program mixes, matches, and merges files organized in
  *  channels or columns.
  *	It's nothing cut and paste can't do, but sometimes it's nice to

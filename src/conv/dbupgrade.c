@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file dbupgrade.c
+ */
+/** @file dbupgrade.c
  *
  *	This is a program to upgrade database files to the current
  *	version.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_track.c
+ */
+/** @file anim_track.c
  *  Animate the links and wheels of a tracked vehicle. Handles tracks that
  *  change in shape during the animation.
  *

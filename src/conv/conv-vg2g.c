@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file conv-vg2g.c
+ */
+/** @file conv-vg2g.c
  *  
  *  Converts .vg files to .g (latest style, with idents).
  *  

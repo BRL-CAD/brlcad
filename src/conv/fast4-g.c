@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file fast4-g.c
+ */
+/** @file fast4-g.c
  *                      F A S T 4 - G
  *
  *  Program to convert the FASTGEN4 format to BRL-CAD.

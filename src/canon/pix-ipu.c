@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file pix-ipu.c
+ */
+/** @file pix-ipu.c
  *
  *  Print a BRL-CAD .pix or .bw file on the Canon CLC-500 scanner.
  *

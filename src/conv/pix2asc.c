@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file pix2asc.c
+ */
+/** @file pix2asc.c
  *  
  *  Author -
  *  	Michael John Muuss

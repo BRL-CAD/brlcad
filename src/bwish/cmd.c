@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file cmd.c
+ */
+/** @file cmd.c
  *
  * This is the place where BWISH/BTCLSH's commands live.
  * The history routines were borrowed from mged/history.c

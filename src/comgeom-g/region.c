@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file region.c
+ */
+/** @file region.c
  *  Author -
  *	Michael John Muuss
  *  

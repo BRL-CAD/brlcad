@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_fly.c
+ */
+/** @file anim_fly.c
  *	Simulate flying motion, for an airplane or virtual camera.
  *
  *  This filter operates on animation tables. Given the desired position

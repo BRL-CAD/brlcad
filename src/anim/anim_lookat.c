@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_lookat.c
+ */
+/** @file anim_lookat.c
  *	Given animation tables for the position of the virtual camera 
  * and a point to look at at each time, this program produces an animation
  * script to control the camera. The view is kept rightside up, whenever 

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file enf-g.c
+ */
+/** @file enf-g.c
  *
  *  Program to convert the tessellated Elysium Neutral File format to BRL-CAD.
  *

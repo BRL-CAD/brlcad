@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file asc2pix.c
+ */
+/** @file asc2pix.c
  *
  *  Convert ASCII (hex) pixel files to the binary form.
  *  For portable images.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file gridrotate.c
+ */
+/** @file gridrotate.c
 	Author:		Jeff Hanes
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground

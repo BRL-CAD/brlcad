@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file png-ipu.c
+ */
+/** @file png-ipu.c
  *
  *  Display a PNG file on the Canon CLC-500 Color Laser printer.
  *  This program is based upon pix-ipu.c

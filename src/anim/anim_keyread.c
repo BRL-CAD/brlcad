@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_keyread.c
+ */
+/** @file anim_keyread.c
  *	Convert an list of mged-style 'savekey' keyframes into an 
  *  animation table
  *

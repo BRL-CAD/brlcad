@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file nmg-sgp.c
+ */
+/** @file nmg-sgp.c
  *
  *  Program to convert an NMG BRL-CAD model (in a .g file) to a SGP facetted model
  *

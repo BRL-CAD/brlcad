@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-shell.rect.c
+ */
+/** @file g-shell.rect.c
  *
  *	This routine creates an single NMG shell from an object by
  *	raytracing and using the hit points as vertices in the shell.

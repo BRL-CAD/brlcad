@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file nastran-g.c
+ */
+/** @file nastran-g.c
  *
  *	Code to convert a NASTRAN finite element model to BRL-CAD.
  *

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file poly-bot.c
+ */
+/** @file poly-bot.c
  *			P O L Y - B O T
  *
  *  Program to convert all the polysolids in a BRL-CAD model (in a .g file) to BOT solids

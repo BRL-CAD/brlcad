@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file euclid_format.c
+ */
+/** @file euclid_format.c
  *
  * Converts from no CR format to Euclid decoded format
  *

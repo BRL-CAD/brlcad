@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file input.c
+ */
+/** @file input.c
  *
  * Input handling routines. Some of this code was borrowed from mged/ged.c
  * and modified for use in this application.

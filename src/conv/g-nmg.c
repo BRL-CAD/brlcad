@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-nmg.c
+ */
+/** @file g-nmg.c
  *
  *  Program to convert a BRL-CAD model (in a .g file) to an NMG facetted model
  *  by calling on the NMG booleans.

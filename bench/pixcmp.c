@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file pixcmp.c
+ */
+/** @file pixcmp.c
  *
  *  Compute the difference between two .pix files.
  *  To establish context, a monochrome image is produced when there

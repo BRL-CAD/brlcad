@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-tankill.c
+ */
+/** @file g-tankill.c
  *
  *  Program to convert a BRL-CAD model (in a .g file) to a TANKILL facetted model
  *  by calling on the NMG booleans.

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_time.c
+ */
+/** @file anim_time.c
  *  Given an animation path consiting of time stamps and 3-d points,
  *  estimate new time stamps based on the distances between points, the
  *  given starting and ending times, and optionally specified starting 

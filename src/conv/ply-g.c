@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file ply-g.c
+ */
+/** @file ply-g.c
  *
  */
 

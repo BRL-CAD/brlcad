@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file canonlib.c
+ */
+/** @file canonlib.c
  *
  *  Author -
  *	Lee A. Butler

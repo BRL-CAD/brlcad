@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file nmg-rib.c
+ */
+/** @file nmg-rib.c
  *
  *	Convert a polygonal model from NMG's to RIB format polygons.
  *

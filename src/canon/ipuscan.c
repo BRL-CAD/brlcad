@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file ipuscan.c
+ */
+/** @file ipuscan.c
  *	
  *  Obtain a BRL-CAD .pix file from the Canon CLC-500 scanner glass.
  *

@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file Sc.h
+ */
+/** @file Sc.h
 	Author:	Gary S. Moss
 	U. S. Army Ballistic Research Laboratory
 	Aberdeen Proving Ground

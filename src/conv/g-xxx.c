@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file g-xxx.c
+ */
+/** @file g-xxx.c
  *
  *	Sample code for converting BRL-CAD models to some other format.
  *	This code assumes that your receiving format can handle CSG primitives

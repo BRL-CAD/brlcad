@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file chan_mult.c
+ */
+/** @file chan_mult.c
  *  Multiply specified columns of data by a given factor.
  *
  *  Author -

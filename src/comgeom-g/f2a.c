@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file f2a.c
+ */
+/** @file f2a.c
  *
  * convert float to ascii.
  */

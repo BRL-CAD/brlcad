@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file anim_script.c
+ */
+/** @file anim_script.c
  *	Turn an animation table into an animation script suitable for
  *  use by rt. Anim_script.c makes a script for one object at a time (or the
  *  virtual camera). Some of the available options include rotation

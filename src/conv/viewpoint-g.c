@@ -18,7 +18,8 @@
  * along with this file; see the file named COPYING for more
  * information.
  *
- **//** @file viewpoint-g.c
+ */
+/** @file viewpoint-g.c
  *	V I E W P O I N T - G
  *
  *  Converter from Viewpoint Datalabs coor/elem format
