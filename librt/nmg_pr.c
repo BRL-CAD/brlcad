@@ -1008,13 +1008,25 @@ CONST struct rt_tol	*tol;
 		s = eu->up.s_p;
 	}
 	NMG_CK_SHELL(s);
-	rt_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x %g deg\n",
-		eu,
-		lu, lu_orient,
-		f,
-		fu, fu_orient,
-		s,
-		nmg_measure_fu_angle(eu, xvec, yvec, zvec) * rt_radtodeg );
+	if( f && *f->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+	{
+		rt_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x SNURB\n",
+			eu,
+			lu, lu_orient,
+			f,
+			fu, fu_orient,
+			s );
+	}
+	else
+	{
+		rt_log(" %8.8x, lu=%8.8x=%1.1s, f=%8.8x, fu=%8.8x=%1.1s, s=%8.8x %g deg\n",
+			eu,
+			lu, lu_orient,
+			f,
+			fu, fu_orient,
+			s,
+			nmg_measure_fu_angle(eu, xvec, yvec, zvec) * rt_radtodeg );
+	}
 }
 
 /*
@@ -1072,7 +1084,7 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 	rt_log("nmg_pr_fu_around_eu(x%x)\n", eu);
 
-	if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p )
+	if( eu->vu_p->v_p == eu->eumate_p->vu_p->v_p || *eu->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
 	{
 		VSET( xvec , 1 , 0 , 0 );
 		VSET( yvec , 0 , 1 , 0 );
