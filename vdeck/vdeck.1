@@ -1,6 +1,6 @@
 .TH DECK 1 VMB
-'\"	last edit:	5/4/83	G S Moss
-'\"	SCCSID		@(#)vdeck.1	1.1
+'\"	last edit:	6/14/83	G S Moss
+'\"	SCCSID		@(#)vdeck.1	1.2
 .SH NAME
 Deck \- Generate COM-GEOM decks from a GED database file
 .SH SYNOPSIS
@@ -10,8 +10,8 @@ Deck \- Generate COM-GEOM decks from a GED database file
 .BI object...
 ]
 .SH DESCRIPTION
-.nf
-Deck allows the user to select a list of objects (solids,  regions,  or
+.I Deck\^
+allows the user to select a list of objects (solids,  regions,  or
 groups) from a GED database file and generate a COM-GEOM deck for them.
 A list of objects  can be specified when invoking the program or a list
 can be selected interactively from the table of contents. String match-
@@ -26,22 +26,25 @@ case the tables are suffixed by a ".st", ".rt" and ".id".
 On-line documentation is provided.
 .sp
 .SH FILES
-.nf
 Output files:
-
-	solids, regions, region_ids		Default file names
-	*.st,   *.rt,    *.id			Unique file names
-
+.sp
+.in +1.0
+solids, regions, region_ids		Default file names
+.br
+*.st,   *.rt,    *.id			Unique file names
+.in -1.0
 Temporary files:
-
-        /tmp/disXXXXXX
-        /tmp/regXXXXXX
-.fi
+.sp
+.in +1.0
+/tmp/disXXXXXX
+/tmp/regXXXXXX
+.in -1.0
 .sp
 .SH "SEE ALSO"
 ged, gedu, view
 .sp
 .SH AUTHORS
-.nf
-        Gary S. Moss, BRL/VLD-VMB
-        Keith Applin, BRL/VLD-TAB
+.in +1.0
+Gary S. Moss, BRL/VLD-VMB
+Keith Applin, BRL/VLD-TAB
+.in -1.0
