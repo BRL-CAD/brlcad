@@ -261,7 +261,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	}
 
 #if NUgrid
-	rt_hist_init( &nu_hist_cellsize, 0, 399, 400 );
+	rt_hist_init( &nu_hist_cellsize, 0.0, 399.0, 400 );
 	/* For the moment, re-use "union cutter" */
 	nu_grid = (union cutter *)rt_malloc(
 		nu_cells_per_axis[X] * nu_cells_per_axis[Y] *
@@ -400,8 +400,8 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 	rt_ct_optim( &rtip->rti_CutHead, 0 );
 
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
-	rt_hist_init( &rtip->rti_hist_cellsize, 0, 399, 400 );
-	rt_hist_init( &rtip->rti_hist_cutdepth, 0, rt_cutDepth+1, 400 );
+	rt_hist_init( &rtip->rti_hist_cellsize, 0.0, 399.0, 400 );
+	rt_hist_init( &rtip->rti_hist_cutdepth, 0.0, (fastf_t)rt_cutDepth+1, 400 );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
 	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
 	if(rt_g.debug&DEBUG_CUT)  {
