@@ -1477,7 +1477,6 @@ plane_t pl;
 			return( 0 );
 		}
 
-		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 		nmg_tabulate_face_g_verts( &verts , fg );
 	}
 	else		/* just use vertices from this faceuse */
@@ -1489,7 +1488,6 @@ plane_t pl;
 			return( 0 );
 		}
 
-		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
 		nmg_vertex_tabulate( &verts , &fu->l.magic );
 	}
 

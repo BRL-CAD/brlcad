@@ -1016,6 +1016,7 @@ CONST struct rt_tol		*tol;
 		nmg_tbl( &edgeuses, TBL_FREE, 0 );
 		edgeuses = new_edgeuses;		/* struct copy */
 	}
+	nmg_tbl( &verts, TBL_FREE, 0 );
 	if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC) )
 		rt_log("nmg_model_break_e_on_v() broke %d edges\n", count);
 	return count;
