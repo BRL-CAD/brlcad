@@ -153,6 +153,7 @@
 #	define HAVE_GETOPT_DECL	1
 #	define HAVE_XOPEN	1
 #	define HAVE_TERMIOS_H	1
+#	define HAVE_IOCTL_COMPAT_H 1
 #	define HAVE_SYS_MMAN_H	1
 #	define HAVE_MEMORY_H	1				/* XXX */
 #	if !defined(_XOPEN_SOURCE)				/* XXX */
@@ -187,6 +188,7 @@
 #	define HAVE_REGEX_DECL	1
 #	define HAVE_SYS_ERRLIST_DECL	1
 #	define HAVE_SBRK_DECL		1
+#	define HAVE_IOCTL_COMPAT_H	1
 #endif
 
 #if defined(__STDC__)
