@@ -81,16 +81,16 @@ typedef struct FBIO_ {
 	int	(*if_close)FB_ARGS((struct FBIO_ *ifp));				/* close device		*/
 	int	(*if_clear)FB_ARGS((struct FBIO_ *ifp, unsigned char *pp));		/* clear device 	*/
 	int	(*if_read)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, int count));		/* read pixels		*/
-	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, unsigned char *pp, int count));		/* write pixels		*/
+	int	(*if_write)FB_ARGS((struct FBIO_ *ifp, int x, int y, CONST unsigned char *pp, int count));		/* write pixels		*/
 	int	(*if_rmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));		/* read colormap 	*/
-	int	(*if_wmap)FB_ARGS((struct FBIO_ *ifp, ColorMap *cmap));		/* write colormap 	*/
+	int	(*if_wmap)FB_ARGS((struct FBIO_ *ifp, CONST ColorMap *cmap));		/* write colormap 	*/
 	int	(*if_view)FB_ARGS((struct FBIO_ *ifp, int xcent, int ycent, int xzoom, int yzoom));		/* set view		*/
 	int	(*if_getview)FB_ARGS((struct FBIO_ *ifp, int *xcent, int *ycent, int *xzoom, int *yzoom));	/* get view		*/
 	int	(*if_setcursor)FB_ARGS((struct FBIO_ *ifp, unsigned char *bits, int xb, int yb, int xo, int yo));	/* define cursor 	*/
 	int	(*if_cursor)FB_ARGS((struct FBIO_ *ifp, int mode, int x, int y));		/* set cursor		*/
 	int	(*if_getcursor)FB_ARGS((struct FBIO_ *ifp, int *mode, int *x, int *y));	/* get cursor		*/
 	int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* read rectangle 	*/
-	int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* write rectangle 	*/
+	int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, CONST unsigned char *pp));	/* write rectangle 	*/
 	int	(*if_poll)FB_ARGS((struct FBIO_ *ifp));		/* handle events 	*/
 	int	(*if_flush)FB_ARGS((struct FBIO_ *ifp));	/* flush output 	*/
 	int	(*if_free)FB_ARGS((struct FBIO_ *ifp));		/* free resources 	*/
@@ -202,7 +202,7 @@ extern int	_fb_pgout();
 extern int	_fb_pgflush();
 extern int	_fb_disk_enable;
 extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-extern int	fb_sim_writerect(FBIO *ifp, int	xmin, int ymin, int width, int height, unsigned char *pp);
+extern int	fb_sim_writerect(FBIO *ifp, int	xmin, int ymin, int width, int height, CONST unsigned char *pp);
 extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
