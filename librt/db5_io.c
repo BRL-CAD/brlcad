@@ -37,7 +37,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 BU_EXTERN(CONST unsigned char *db5_get_raw_internal_ptr, (struct db5_raw_internal *rip, unsigned char * CONST ip));
 
-CONST static int db5_enc_len[4] = {
+const int db5_enc_len[4] = {
 	1,
 	2,
 	4,
@@ -158,10 +158,10 @@ int			format;
  *	pointer to next available byte.
  */
 unsigned char *
-db5_encode_length( cp, val, format )
-unsigned char	*cp;
-long		val;
-int		format;
+db5_encode_length(
+	unsigned char	*cp,
+	long		val,
+	int		format)
 {
 	switch( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
@@ -452,9 +452,8 @@ int				zzz;		/* compression, someday */
 
 	/* Allocate the buffer for the combined external representation */
 	out->ext_magic = BU_EXTERNAL_MAGIC;
-	out->ext_nbytes = 0;
 	out->ext_buf = bu_malloc( need, "external object3" );
-	out->ext_nbytes = need;		/* temporary */
+	out->ext_nbytes = need;		/* will be trimmed, below */
 
 	/* Determine encoding for the header length field */
 	h_width = db5_select_length_encoding( (need+7)>>3 );

@@ -245,6 +245,11 @@ RT_DECLARE_INTERFACE(cline)
 RT_DECLARE_INTERFACE(bot)
 
 /* from db_comb.c */
+BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
+		CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip ));
+BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
+		CONST struct rt_db_internal *ip,
+		double local2mm, CONST struct db_i *dbip ));
 BU_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
 		CONST struct bu_external *ep, CONST mat_t mat, CONST struct db_i *dbip ));
 BU_EXTERN(int rt_comb_export, (struct bu_external *ep,
@@ -800,7 +805,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_comb_import5, rt_comb_export5,
 		rt_comb_import,	rt_comb_export,	rt_comb_ifree,
 		rt_comb_describe,rt_generic_xform, NULL,
 		0,				0,
