@@ -243,6 +243,8 @@ static int		no_2d_flag;		/* ON - no display of 2d ctx */
 static int		detached_flag;		/* ON - termsw is detached */
 static int		mouse_tracking;		/* ON - we are tracing mouse */
 static int		busy;			/* ON - busy cursor showing */
+static int		xpen;			/* mouse/pen location (x) */
+static int		ypen;			/* mouse/pen location (y) */
 
 					/* Xview	*/
 static Display		*display;		/* Display */
@@ -1936,28 +1938,28 @@ caddr_t	*arg;
 	if(x >= width)  x = width  - 1;
 	if(y >= height) y = height - 1;
 	
-	dm_values.dv_xpen = SUNPWx_TO_GED(x);
-	dm_values.dv_ypen = SUNPWy_TO_GED(y);
+	xpen = SUNPWx_TO_GED(x);
+	ypen = SUNPWy_TO_GED(y);
 
 	switch(event_id(event)) {
 	case ACTION_SELECT:
 	case MS_LEFT:
 		if (event_is_down(event)) {
-			dm_values.dv_penpress = DV_OUTZOOM;
+			rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
 			stop_func(0, 0);
 		}
 		break;
 	case ACTION_ADJUST:
 	case MS_MIDDLE:
 		if (!no_2d_flag && event_is_down(event)) {
-			dm_values.dv_penpress = DV_PICK;
+			rt_vls_printf(  &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
 			stop_func(0, 0);
 		}
 	 	break;
 	case ACTION_MENU:
 	case MS_RIGHT:
 		if (event_is_down(event)) {
-			dm_values.dv_penpress = DV_INZOOM;
+			rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
 			stop_func(0, 0);
 		}
 		break;
@@ -2050,13 +2052,14 @@ static void
 set_dm_values()
 {
 	float		xval, yval, zoomval;
+	char		str_buf[128];
 
 	if(sun_buttons) {
-		xval = (float) dm_values.dv_xpen / 2048.;
+		xval = (float) xpen / 2048.;
 		if (xval < -1.0) xval = -1.0;
 		if (xval > 1.0)  xval = 1.0;
 
-		yval = (float) dm_values.dv_ypen / 2048.;
+		yval = (float) ypen / 2048.;
 		if (yval < -1.0) yval = -1.0;
 		if (yval > 1.0)  yval = 1.0;
 
@@ -2064,15 +2067,41 @@ set_dm_values()
 		if(yval < 0) zoomval = -zoomval;
 	}
 
-	dm_values.dv_zoom  = (sun_buttons & ZOOM_FLAG)   ? zoomval : 0.0;
-
-	dm_values.dv_xslew = (sun_buttons & X_SLEW_FLAG) ? xval : 0.0;
-	dm_values.dv_yslew = (sun_buttons & Y_SLEW_FLAG) ? yval : 0.0;
-	dm_values.dv_zslew = (sun_buttons & Z_SLEW_FLAG) ? yval : 0.0;
-
-	dm_values.dv_xjoy  = (sun_buttons & X_ROT_FLAG)  ? xval : 0.0;
-	dm_values.dv_yjoy  = (sun_buttons & Y_ROT_FLAG)  ? yval : 0.0;
-	dm_values.dv_zjoy  = (sun_buttons & Z_ROT_FLAG)  ? yval : 0.0;
+	if(sun_buttons & ZOOM_FLAG)
+	{
+		(void)sprintf( str_buf , "zoom %f\n", zoomval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
+	if(sun_buttons & X_SLEW_FLAG)
+	{
+		(void)sprintf( str_buf , "knob X %f\n", xval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
+	if(sun_buttons & Y_SLEW_FLAG)
+	{
+		(void)sprintf( str_buf , "knob Y %f\n", yval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
+	if(sun_buttons & Z_SLEW_FLAG)
+	{
+		(void)sprintf( str_buf , "knob Z %f\n", yval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
+	if(sun_buttons & X_ROT_FLAG)
+	{
+		(void)sprintf( str_buf , "knob x %f\n", xval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
+	if(sun_buttons & Y_ROT_FLAG)
+	{
+		(void)sprintf( str_buf , "knob Y %f\n", yval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
+	if(sun_buttons & Z_ROT_FLAG)
+	{
+		(void)sprintf( str_buf , "knob Z %f\n", yval );
+		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	}
 
 	return;
 }

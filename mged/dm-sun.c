@@ -637,71 +637,85 @@ caddr_t	*arg;
 	int             button;
 	float           xval;
 	float           yval;
+	int		xpen, ypen;
 
 	id = event_id(event);
-	dm_values.dv_penpress = 0;
-	dm_values.dv_xpen = SUNPWx_TO_GED(event_x(event));
-	dm_values.dv_ypen = -SUNPWy_TO_GED(event_y(event));
+	xpen = SUNPWx_TO_GED(event_x(event));
+	ypen = -SUNPWy_TO_GED(event_y(event));
 	if( sun_debug )
 		printf("Event %d at (%d %d)\n",id,event_x(event),event_y(event));
 	switch(id) {
 	case MS_LEFT:
 		if (event_is_down(event)) {
-			dm_values.dv_penpress = DV_OUTZOOM;
+			rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
 			peripheral_input++;
 		}
 		break;
 	case MS_MIDDLE:
 		if (event_is_down(event)) {
-			dm_values.dv_penpress = DV_PICK;
+			rt_vls_printf( &dm_values.dv_string , "M 1 %d %d\n" , xpen, ypen );
 			peripheral_input++;
 		}
 		break;
 	case MS_RIGHT:
 		if (event_is_down(event)) {
-			dm_values.dv_penpress = DV_INZOOM;
+			rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
 			peripheral_input++;
 		}
 		break;
 	case LOC_DRAG:
 		break;
 	case LOC_MOVE:
-		xval = (float) dm_values.dv_xpen / 2048.;
+		xval = (float) xpen / 2048.;
 		if (xval < -1.0)
 			xval = -1.0;
 		if (xval > 1.0)
 			xval = 1.0;
-		yval = (float) dm_values.dv_ypen / 2048.;
+		yval = (float) ypen / 2048.;
 		if (yval < -1.0)
 			yval = -1.0;
 	    	if (yval > 1.0)
 			yval = 1.0;
 		for( button = 0; button < NBUTTONS; button++ ) {
+			char str_buf[128];
+
 			if( sun_buttons[button] ) {
 				peripheral_input++;
 				switch(button) {
 				case ZOOM_BUTTON:
-					dm_values.dv_zoom = (yval*yval) / 2;
-					if (yval < 0)
-					    dm_values.dv_zoom = -dm_values.dv_zoom;
+					{
+						float zoom;
+
+						zoom = (yval*yval) / 2;
+						if (yval < 0)
+						    zoom = -zoom;
+						sprintf( str_buf , &dm_values.dv_string, "zoom %f\n", zoom );
+						rt_vls_strcat( &dm_values.dv_string, str_buf );
+					}
 					break;
 				case X_SLEW_BUTTON:
-					dm_values.dv_xslew = xval;
+					sprintf( str_buf, "knob X %f\n", xval );
+					rt_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Y_SLEW_BUTTON:
-					dm_values.dv_yslew = yval;
+					sprintf( str_buf, "knob Y %f\n", yval );
+					rt_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Z_SLEW_BUTTON:
-					dm_values.dv_yslew = yval;
+					sprintf( str_buf, "knob Z %f\n", yval );
+					rt_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case X_ROT_BUTTON:
-					dm_values.dv_xjoy = xval;
+					sprintf( str_buf, "knob x %f\n", xval );
+					rt_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Y_ROT_BUTTON:
-					dm_values.dv_yjoy = yval;
+					sprintf( str_buf, "knob y %f\n", yval );
+					rt_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				case Z_ROT_BUTTON:
-					dm_values.dv_zjoy = yval;
+					sprintf( str_buf, "knob z %f\n", yval );
+					rt_vls_strcat( &dm_values.dv_string, str_buf );
 					break;
 				}
 			}
@@ -711,37 +725,24 @@ caddr_t	*arg;
 		break;
 	case KEY_TOP(ZOOM_BUTTON):
 		sun_key(event, ZOOM_BUTTON);
-		dm_values.dv_zoom = 0.0;
 		break;
 	case KEY_TOP(X_SLEW_BUTTON):
 		sun_key(event, X_SLEW_BUTTON);
-		dm_values.dv_xslew = 0.0;
 		break;
 	case KEY_TOP(Y_SLEW_BUTTON):
 		sun_key(event, Y_SLEW_BUTTON);
-		dm_values.dv_yslew = 0.0;
 		break;
 	case KEY_TOP(Z_SLEW_BUTTON):
 		sun_key(event, Z_SLEW_BUTTON);
-		dm_values.dv_yslew = 0.0;
 		break;
 	case KEY_TOP(X_ROT_BUTTON):
 		sun_key(event, X_ROT_BUTTON);
-		dm_values.dv_xjoy = 0.0;
-		dm_values.dv_yjoy = 0.0;
-		dm_values.dv_zjoy = 0.0;
 		break;
 	case KEY_TOP(Y_ROT_BUTTON):
 		sun_key(event, Y_ROT_BUTTON);
-		dm_values.dv_xjoy = 0.0;
-		dm_values.dv_yjoy = 0.0;
-		dm_values.dv_zjoy = 0.0;
 		break;
 	case KEY_TOP(Z_ROT_BUTTON):
 		sun_key(event, Z_ROT_BUTTON);
-		dm_values.dv_xjoy = 0.0;
-		dm_values.dv_yjoy = 0.0;
-		dm_values.dv_zjoy = 0.0;
 		break;
 	/*
 	 * Gratuitous Input Events - supposed to be good for you

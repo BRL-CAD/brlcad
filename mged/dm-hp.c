@@ -267,40 +267,54 @@ fd_set		*input;
 int		noblock;
 {
 	int ch;
+	int xpen, ypen;
+	char str_buf[128];
 
 	/* XXX No select() processing here */
 
 	if ((ch = getchar()) == '\033') {	/* hp2397a penpress */
-	    switch ((ch = getchar())) {		/* what kind of penpress ? */
-		case 'q':
-		    dm_values.dv_penpress = DV_SLEW;
-		    break;
-		case 'r':
-		    dm_values.dv_penpress = DV_INZOOM;
-		    break;
-		case 's':
-		    dm_values.dv_penpress = DV_OUTZOOM;
-		    break;
-		default:
-		    dm_values.dv_penpress = DV_PICK;
-	    }
+	    ch = getchar();			/* what kind of penpress ? */
 	    fflush(stdin);
 	    printf("\033*s3^");		/* ask terminal for cursor position */
 	    scanf("%d,%d",&curx,&cury);
-	    dm_values.dv_xpen     = XHP_TO_GED(curx);
-	    dm_values.dv_ypen     = YHP_TO_GED(cury);
+	    xpen     = XHP_TO_GED(curx);
+	    ypen     = YHP_TO_GED(cury);
+	    switch ( ch ) {
+		case 'q':
+	    		if( xpen )
+	    		{
+		    		sprintf( str_buf , "knob X %f\n" , (float)xpen/2048.0 );
+	    			rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    		}
+	    		if( ypen )
+	    		{
+		    		sprintf( str_buf , "knob Y %f\n" , (float)ypen/2048.0 );
+	    			rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    		}
+		    break;
+		case 'r':
+	    		rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
+		    break;
+		case 's':
+	    		rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
+		    break;
+		default:
+	    		sprintf( str_buf , "M 1 %d %d\n", xpen, ypen );
+	    		rt_vls_strcat( &dm_values.dv_string , str_buf );
+	    	    break;
+	    }
 		FD_CLR( fileno(stdin), input );
 		return;
 	} else if (ch == '+') {		/* hp2627a penpress */
 	    scanf("%d,%d",&curx,&cury);
-	    dm_values.dv_xpen     = XHP_TO_GED(curx);
-	    dm_values.dv_ypen     = YHP_TO_GED(cury);
-	    dm_values.dv_penpress = DV_PICK;
+	    xpen     = XHP_TO_GED(curx);
+	    ypen     = YHP_TO_GED(cury);
+	    sprintf( str_buf , "M 1 %d %d\n", xpen, ypen );
+	    rt_vls_strcat( &dm_values.dv_string , str_buf );
 		FD_CLR( fileno(stdin), input );
 		return;
 	} else {			/* Not a penpress so */
 	    ungetc(ch,stdin);		/* put character back on stdin. */
-	    dm_values.dv_penpress = 0;
 		FD_SET( fileno(stdin), input );
 		return;
 	}
