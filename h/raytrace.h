@@ -971,6 +971,9 @@ struct rt_wdb  {
 	FILE		*fp;
 	struct db_i	*dbip;
 	struct bu_vls	wdb_name;	/* database object name */
+	struct db_tree_state	wdb_initial_tree_state;
+	struct rt_tess_tol	wdb_ttol;
+	struct bn_tol		wdb_tol;
 
 	/* variables for name prefixing */
 	char		wdb_prestr[RT_NAMESIZE];
@@ -1029,9 +1032,11 @@ struct dg_obj {
 	struct solid		dgo_headSolid;	/* head of solid list */
 	struct bu_list		dgo_headVDraw;	/* head of vdraw list */
 	struct vd_curve		*dgo_currVHead;	/* current vdraw head */
+#if 0   /*XXX moved to rt_wdb */
 	struct db_tree_state	dgo_initial_tree_state;
 	struct rt_tess_tol	dgo_ttol;
 	struct bn_tol		dgo_tol;
+#endif
 	char			*dgo_rt_cmd[RT_MAXARGS];
 	int			dgo_rt_cmd_len;
 };
