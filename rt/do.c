@@ -97,6 +97,10 @@ extern int	max_bounces;		/* max reflection/recursion level */
 extern int	max_ireflect;		/* max internal reflection level */
 /***** end variables shared with refract.c *****/
 
+/***** variables shared with text.c *****/
+struct region	env_region;		/* environment map region */
+/***** end variables shared with text.c *****/
+
 void		def_tree();
 void		do_ae();
 
@@ -391,7 +395,6 @@ int	argc;
 char	**argv;
 {
 	register struct region	*regp;
-	extern struct region	env_region;
 
 	/* The linkage here needs to be much better for things
 	 * like rtrad, etc. XXXX

@@ -27,7 +27,7 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-struct region	env_region;
+extern struct region	env_region;		/* in do.c */
 
 HIDDEN int	txt_setup(), txt_render();
 HIDDEN int	ckr_setup(), ckr_render();
