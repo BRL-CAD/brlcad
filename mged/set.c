@@ -335,11 +335,7 @@ void
 set_absolute_view_tran()
 {
   /* calculate absolute_tran */
-#ifdef MGED_USE_VIEW_OBJ
   MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_vop->vo_model2view, view_state->vs_orig_pos);
-#else
-  MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_model2view, view_state->vs_orig_pos);
-#endif
   /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
   VMOVE(view_state->vs_last_absolute_tran, view_state->vs_absolute_tran);
 }
@@ -351,15 +347,9 @@ set_absolute_model_tran()
   point_t diff;
 
   /* calculate absolute_model_tran */
-#ifdef MGED_USE_VIEW_OBJ
   MAT_DELTAS_GET_NEG(new_pos, view_state->vs_vop->vo_center);
   VSUB2(diff, view_state->vs_orig_pos, new_pos);
   VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_vop->vo_scale);
-#else
-  MAT_DELTAS_GET_NEG(new_pos, view_state->vs_toViewcenter);
-  VSUB2(diff, view_state->vs_orig_pos, new_pos);
-  VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_Viewscale);
-#endif
   /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
   VMOVE(view_state->vs_last_absolute_model_tran, view_state->vs_absolute_model_tran);
 }
@@ -437,6 +427,9 @@ set_perspective()
   else
     mged_variables->mv_perspective_mode = 0;
 
+  /* keep view object in sync */
+  view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
+
   set_dirty_flag();
 }
 
@@ -445,6 +438,9 @@ establish_perspective()
 {
   mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
     perspective_table[perspective_angle] : -1;
+
+  /* keep view object in sync */
+  view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
 
   /* keep display manager in sync */
   dmp->dm_perspective = mged_variables->mv_perspective_mode;
@@ -477,6 +473,9 @@ toggle_perspective()
     return;
 
   mged_variables->mv_perspective = perspective_table[perspective_angle];
+
+  /* keep view object in sync */
+  view_state->vs_vop->vo_perspective = mged_variables->mv_perspective;
 
   set_dirty_flag();
 }

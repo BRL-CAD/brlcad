@@ -112,9 +112,7 @@ extern int bot_vertex_fuse(), bot_condense();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-#ifdef MGED_USE_VIEW_OBJ
 extern void mged_view_obj_callback();
-#endif
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
@@ -148,7 +146,7 @@ static struct cmdtab cmdtab[] = {
 	{"accept",	be_accept},
 	{"adc", f_adc},
 	{"adjust",	cmd_adjust},
-	{"ae", f_aetview},
+	{"ae", cmd_aetview},
 	{"aip", f_aip},
 	{"analyze", f_analyze},
 	{"arb", f_arbdef},
@@ -170,7 +168,7 @@ static struct cmdtab cmdtab[] = {
 	{"bottom",	bv_bottom},
 	{"c", cmd_comb_std},
 	{"cat", cmd_cat},
-	{"center", f_center},
+	{"center", cmd_center},
 	{"cmd_win", cmd_cmd_win},
 	{"color", cmd_color},
 	{"comb", cmd_comb},
@@ -320,7 +318,7 @@ static struct cmdtab cmdtab[] = {
 	{"plot", f_plot},
 	{"pl", f_pl},
 	{"polybinout", f_polybinout},
-	{"pov", f_pov},
+	{"pov", cmd_pov},
 	{"prcolor", cmd_prcolor},
 	{"prefix", f_prefix},
 	{"press", f_press},
@@ -387,7 +385,7 @@ static struct cmdtab cmdtab[] = {
 	{"shells", cmd_shells},
 	{"showmats", cmd_showmats},
 	{"sill",		be_s_illuminate},
-	{"size", f_size},
+	{"size", cmd_size},
 	{"solid_report", cmd_solid_report},
 	{"solids", f_tables},
 	{"solids_on_ray", cmd_solids_on_ray},
@@ -422,7 +420,7 @@ static struct cmdtab cmdtab[] = {
 	{"viewget", cmd_viewget},
 	{"viewset", cmd_viewset},
 #endif
-	{"viewsize", f_size},		/* alias "size" for saveview scripts */
+	{"viewsize", cmd_size},		/* alias "size" for saveview scripts */
 	{"view2grid_lu", f_view2grid_lu},
 	{"view2model", f_view2model},
 	{"view2model_vec", f_view2model_vec},
@@ -809,11 +807,9 @@ mged_setup()
 		bu_log("Rt_Init error %s\n", interp->result);
 	}
 
-#if 1
 	/* initialize MGED's drawable geometry object */
 	dgop = dgo_open_cmd("mged", wdbp);
 
-#ifdef MGED_USE_VIEW_OBJ
 	view_state->vs_vop = vo_open_cmd("");
 	view_state->vs_vop->vo_callback = mged_view_obj_callback;
 	view_state->vs_vop->vo_clientData = view_state;
@@ -821,8 +817,6 @@ mged_setup()
 	view_state->vs_vop->vo_size = 2.0 * view_state->vs_vop->vo_scale;
 	view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
 	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_vop->vo_center);
-#endif
-#endif
 
 	/* register commands */
 	cmd_setup();
@@ -2912,12 +2906,10 @@ cmd_units(ClientData	clientData,
 	update_grids(sf);
 	update_views = 1;
 
-#ifdef MGED_USE_VIEW_OBJ
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
 		dmlp->dml_view_state->vs_vop->vo_local2base = dbip->dbi_local2base;
 		dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
 	}
-#endif
 
 	return ret;
 }
@@ -3156,8 +3148,7 @@ cmd_list(ClientData	clientData,
 	 * Here we have no usable arguments,
 	 * so we better be in an edit state.
 	 */
-	if ((argc == 1 || argc == 2 && recurse) && illump != SOLID_NULL) {
-		register int	i;
+	if ((argc == 1 || (argc == 2 && recurse)) && illump != SOLID_NULL) {
 		struct bu_vls	vls;
 		int		ret;
 		int		ac;
@@ -3168,7 +3159,7 @@ cmd_list(ClientData	clientData,
 		if (state == ST_S_EDIT)
 			db_path_to_vls( &vls, &illump->s_fullpath );
 		else if (state == ST_O_EDIT) {
-			int i;
+			register int	i;
 			for( i=0; i < ipathpos; i++ ) {
 				bu_vls_printf(&vls, "/%s",
 					      DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep );
@@ -3313,11 +3304,7 @@ cmd_E(ClientData	clientData,
 			(void)mged_svbase();
 
 			for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
-#ifdef MGED_USE_VIEW_OBJ
 				vrp->vr_scale = view_state->vs_vop->vo_scale;
-#else
-			vrp->vr_scale = view_state->vs_Viewscale;
-#endif
 		}
 	}
 

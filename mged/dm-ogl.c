@@ -102,11 +102,7 @@ char *argv[];
     return TCL_ERROR;
 
   /*XXXX this eventually needs to move into Ogl's private structure */
-#ifdef MGED_USE_VIEW_OBJ
   dmp->dm_vp = &view_state->vs_vop->vo_scale;
-#else
-  dmp->dm_vp = &view_state->vs_Viewscale;
-#endif
   dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
   eventHandler = Ogl_doevent;

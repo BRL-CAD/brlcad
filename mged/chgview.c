@@ -340,13 +340,11 @@ cmd_erase_all(ClientData	clientData,
 /* DEBUG -- force view center */
 /* Format: C x y z	*/
 int
-f_center(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+cmd_center(ClientData	clientData,
+	   Tcl_Interp	*interp,
+	   int		argc,
+	   char		**argv)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	int	ret;
 
 	CHECK_DBI_NULL;
@@ -355,67 +353,23 @@ char	**argv;
 		(void)mged_svbase();
 
 	return ret;
-#else
-  struct bu_vls str;
-  point_t center;
-
-  CHECK_DBI_NULL;
-
-  if(argc != 1 && argc != 4){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help center");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(argc == 4)  {
-	/* Set center.  Value is in local units */
-	VSET(center, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-
-	/* must convert to base units */
-	VSCALE(center, center, local2base);
-	mged_center(center);
-  }
-
-  /* Whether set or not, print current center in local units */
-  MAT_DELTAS_GET_NEG(center, view_state->vs_toViewcenter);
-  VSCALE(center, center, base2local);
-
-  bu_vls_init(&str);
-  bu_vls_printf(&str, "%f %f %f\n", V3ARGS(center));
-  Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-  bu_vls_free(&str);
-
-  return TCL_OK;
-#endif
 }
 
 void
 mged_center(point_t center)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	vo_center(view_state->vs_vop, interp, center);
-#else
-	MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, center);
-	new_mats();
-#endif
-
 	(void)mged_svbase();
 }
 
 /* DEBUG -- force viewsize */
 /* Format: view size	*/
 int
-f_size(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+cmd_size(ClientData	clientData,
+	 Tcl_Interp	*interp,
+	 int		argc,
+	 char		**argv)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	int	ret;
 
 	CHECK_DBI_NULL;
@@ -432,37 +386,6 @@ char	**argv;
 	}
 
 	return ret;
-#else
-  fastf_t f;
-
-  CHECK_DBI_NULL;
-
-  if(argc < 2 || 2 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help size");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  f = atof( argv[1] );
-  if( f < 0.0001 ) f = 0.0001;
-  view_state->vs_Viewscale = f * 0.5 * local2base;
-  new_mats();
-
-  view_state->vs_absolute_scale = 1.0 - view_state->vs_Viewscale / view_state->vs_i_Viewscale;
-  if(view_state->vs_absolute_scale < 0.0)
-    view_state->vs_absolute_scale /= 9.0;
-
-  if(view_state->vs_absolute_tran[X] != 0.0 ||
-     view_state->vs_absolute_tran[Y] != 0.0 ||
-     view_state->vs_absolute_tran[Z] != 0.0)
-    set_absolute_tran();
-
-  return TCL_OK;
-#endif
 }
 
 #if 0
@@ -508,62 +431,8 @@ char	**argv;
 void
 size_reset()
 {
-#if 1
 	dgo_autoview(dgop, view_state->vs_vop, interp);
 	view_state->vs_i_Viewscale = view_state->vs_vop->vo_scale;
-#else
-	register struct solid	*sp;
-	vect_t		min, max;
-	vect_t		minus, plus;
-	vect_t		center;
-	vect_t		radial;
-
-	VSETALL( min,  INFINITY );
-	VSETALL( max, -INFINITY );
-
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		minus[X] = sp->s_center[X] - sp->s_size;
-		minus[Y] = sp->s_center[Y] - sp->s_size;
-		minus[Z] = sp->s_center[Z] - sp->s_size;
-		VMIN( min, minus );
-		plus[X] = sp->s_center[X] + sp->s_size;
-		plus[Y] = sp->s_center[Y] + sp->s_size;
-		plus[Z] = sp->s_center[Z] + sp->s_size;
-		VMAX( max, plus );
-	}
-
-	if(BU_LIST_IS_EMPTY(&dgop->dgo_headSolid)) {
-		/* Nothing is in view */
-		VSETALL( center, 0.0 );
-		VSETALL( radial, 1000.0 );	/* 1 meter */
-	} else {
-		VADD2SCALE( center, max, min, 0.5 );
-		VSUB2( radial, max, center );
-	}
-
-	if( VNEAR_ZERO( radial , SQRT_SMALL_FASTF ) )
-		VSETALL( radial , 1.0 );
-
-#ifdef MGED_USE_VIEW_OBJ
-	MAT_IDN(view_state->vs_vop->vo_center);
-	MAT_DELTAS(view_state->vs_vop->vo_center, -center[X], -center[Y], -center[Z]);
-	view_state->vs_vop->vo_scale = radial[X];
-	V_MAX(view_state->vs_vop->vo_scale, radial[Y]);
-	V_MAX(view_state->vs_vop->vo_scale, radial[Z]);
-
-	view_state->vs_i_Viewscale = view_state->vs_vop->vo_scale;
-	view_state->vs_vop->vo_size = 2.0 * view_state->vs_vop->vo_scale;
- 	view_state->vs_vop->vo_invSize = 1.0 / view_state->vs_vop->vo_size;
-#else
-	MAT_IDN( view_state->vs_toViewcenter );
-	MAT_DELTAS( view_state->vs_toViewcenter, -center[X], -center[Y], -center[Z] );
-	view_state->vs_Viewscale = radial[X];
-	V_MAX( view_state->vs_Viewscale, radial[Y] );
-	V_MAX( view_state->vs_Viewscale, radial[Z] );
-
-	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
-#endif
-#endif
 }
 
 /*
@@ -587,7 +456,6 @@ edit_com(int	argc,
 
 	CHECK_DBI_NULL;
 
-#if 1
 	initial_blank_screen = BU_LIST_IS_EMPTY(&dgop->dgo_headSolid);
 
 	if ((ret = dgo_draw_cmd(dgop, interp, argc, argv, kind)) != TCL_OK)
@@ -609,20 +477,11 @@ edit_com(int	argc,
 		    BU_LIST_NON_EMPTY(&dgop->dgo_headSolid)) {
 			struct view_ring *vrp;
 
-#if 1
 			dgo_autoview(dgop, view_state->vs_vop, interp);
-#else
-			size_reset();
-			new_mats();
-#endif
 			(void)mged_svbase();
 
 			for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
-#ifdef MGED_USE_VIEW_OBJ
 				vrp->vr_scale = view_state->vs_vop->vo_scale;
-#else
-				vrp->vr_scale = view_state->vs_Viewscale;
-#endif
 		}
 	}
 
@@ -630,68 +489,6 @@ edit_com(int	argc,
 	curr_cmd_list = save_cmd_list;
 
 	return TCL_OK;
-#else
-	bu_vls_init(&vls);
-	initial_blank_screen = BU_LIST_IS_EMPTY(&dgop->dgo_headSolid);
-
-	/*  First, delete any mention of these objects.
-	 *  Silently skip any leading options (which start with minus signs).
-	 */
-	eraseobjpath(interp, argc-1, argv+1, LOOKUP_QUIET, 0);
-
-	update_views = 1;
-
-	if (setjmp(jmp_env) == 0)
-		(void)signal(SIGINT, sig3);	/* allow interupts */
-	else {
-		bu_vls_free(&vls);
-		return TCL_OK;
-	}
-
-	nvectors = 0;
-	rt_prep_timer();
-	drawtrees(argc, argv, kind);
-	(void)rt_get_timer((struct bu_vls *)0, &elapsed_time);
-
-	save_dmlp = curr_dm_list;
-	save_cmd_list = curr_cmd_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l) {
-		curr_dm_list = dmlp;
-		if (curr_dm_list->dml_tie)
-			curr_cmd_list = curr_dm_list->dml_tie;
-		else
-			curr_cmd_list = &head_cmd_list;
-
-		/* If we went from blank screen to non-blank, resize */
-		if (mged_variables->mv_autosize  && initial_blank_screen &&
-		    BU_LIST_NON_EMPTY(&dgop->dgo_headSolid)) {
-			struct view_ring *vrp;
-
-			size_reset();
-			new_mats();
-			(void)mged_svbase();
-
-			for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
-#ifdef MGED_USE_VIEW_OBJ
-				vrp->vr_scale = view_state->vs_vop->vo_scale;
-#else
-				vrp->vr_scale = view_state->vs_Viewscale;
-#endif
-		}
-	}
-
-	color_soltab();
-	curr_dm_list = save_dmlp;
-	curr_cmd_list = save_cmd_list;
-
-	bu_vls_printf(&vls, "%ld vectors in %g sec\n", nvectors, elapsed_time);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-	bu_vls_free(&vls);
-	(void)signal(SIGINT, SIG_IGN);
-	solid_list_callback();
-	return TCL_OK;
-#endif
 }
 
 int
@@ -725,20 +522,11 @@ cmd_autoview(ClientData clientData,
 		else
 			curr_cmd_list = &head_cmd_list;
 
-#if 1
-			dgo_autoview(dgop, view_state->vs_vop, interp);
-#else
-		size_reset();
-		new_mats();
-#endif
+		dgo_autoview(dgop, view_state->vs_vop, interp);
 		(void)mged_svbase();
 
 		for (BU_LIST_FOR(vrp, view_ring, &view_state->vs_headView.l))
-#ifdef MGED_USE_VIEW_OBJ
 			vrp->vr_scale = view_state->vs_vop->vo_scale;
-#else
-			vrp->vr_scale = view_state->vs_Viewscale;
-#endif
 	}
 	curr_dm_list = save_dmlp;
 	curr_cmd_list = save_cmd_list;
@@ -1156,7 +944,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 
 	CHECK_DBI_NULL;
@@ -1261,143 +1048,6 @@ char	**argv;
 		return TCL_OK;
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-
-  CHECK_DBI_NULL;
-
-  if(argc < 1 || 2 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help status");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(argc == 1) {
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-		   
-    bu_log("STATE=%s, ", state_str[state] );
-    bu_log("Viewscale=%f (%f mm)\n", view_state->vs_Viewscale*base2local, view_state->vs_Viewscale);
-    bu_log("base2local=%f\n", base2local);
-    bn_mat_print("toViewcenter", view_state->vs_toViewcenter);
-    bn_mat_print("Viewrot", view_state->vs_Viewrot);
-    bn_mat_print("model2view", view_state->vs_model2view);
-    bn_mat_print("view2model", view_state->vs_view2model);
-
-    if( state != ST_VIEW )  {
-      bn_mat_print("model2objview", view_state->vs_model2objview);
-      bn_mat_print("objview2model", view_state->vs_objview2model);
-    }
-
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "state")){
-    Tcl_AppendResult(interp, state_str[state], (char *)NULL);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "Viewscale")){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%f", view_state->vs_Viewscale*base2local);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "base2local")){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%f", base2local);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "local2base")){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "%f", local2base);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "toViewcenter")){
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-    bn_mat_print("toViewcenter", view_state->vs_toViewcenter);
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "Viewrot")){
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-    bn_mat_print("Viewrot", view_state->vs_Viewrot);
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "model2view")){
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-    bn_mat_print("model2view", view_state->vs_model2view);
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "view2model")){
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-    bn_mat_print("view2model", view_state->vs_view2model);
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "model2objview")){
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-    bn_mat_print("model2objview", view_state->vs_model2objview);
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "objview2model")){
-    bu_vls_init(&vls);
-    start_catching_output(&vls);
-    bn_mat_print("objview2model", view_state->vs_objview2model);
-    stop_catching_output(&vls);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_OK;
-  }
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "help status");
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-
-  if(!strcmp(argv[1], "help"))
-    return TCL_OK;
-
-  return TCL_ERROR;
-#endif
 }
 
 int
@@ -1407,7 +1057,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	int n;
 	point_t pt;
 	mat_t mat;
@@ -1715,339 +1364,6 @@ char	**argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  int n;
-  point_t pt;
-  mat_t mat;
-  struct bu_vls vls;
-
-  CHECK_DBI_NULL;
-
-  if(argc < 1 || 6 < argc){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  if(argc == 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help view");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "quat")){
-    quat_t quat;
-
-    /* return Viewrot as a quaternion */
-    if(argc == 2){
-      quat_mat2quat(quat, view_state->vs_Viewrot);
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "%.12g %.12g %.12g %.12g", V4ARGS(quat));
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_OK;
-    }
-
-    if(argc != 6){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view: quat requires four parameters");
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    /* attempt to set Viewrot given a quaternion */
-    n = sscanf(argv[2], "%lf", quat);
-    n += sscanf(argv[3], "%lf", quat+1);
-    n += sscanf(argv[4], "%lf", quat+2);
-    n += sscanf(argv[5], "%lf", quat+3);
-
-    if(n < 4){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view quat: bad value detected - %s %s %s %s",
-		    argv[2], argv[3], argv[4], argv[5]);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    quat_quat2mat(view_state->vs_Viewrot, quat);
-    new_mats();
-
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "ypr")){
-    vect_t ypr;
-
-    /* return Viewrot as yaw, pitch and roll */
-    if(argc == 2){
-      bn_mat_trn(mat, view_state->vs_Viewrot);
-      anim_v_unpermute(mat);
-      n = anim_mat2ypr(pt, mat);
-      if(n == 2){
-	Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
-	return TCL_ERROR;
-      }
-      VSCALE(pt, pt, bn_radtodeg);
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(pt));
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_OK;
-    }
-
-    if(argc != 5){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view: ypr requires 3 parameters");
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    /* attempt to set Viewrot given yaw, pitch and roll */
-    n = sscanf(argv[2], "%lf", ypr);
-    n += sscanf(argv[3], "%lf", ypr+1);
-    n += sscanf(argv[4], "%lf", ypr+2);
-
-    if(n < 3){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view ypr: bad value detected - %s %s %s",
-		    argv[2], argv[3], argv[4]);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    anim_dy_p_r2mat(mat, V3ARGS(ypr));
-    anim_v_permute(mat);
-    bn_mat_trn(view_state->vs_Viewrot, mat);
-    new_mats();
-
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "aet")){
-    vect_t aet;
-
-    /* return Viewrot as azimuth, elevation and twist */
-    if(argc == 2){
-      bn_mat_trn(mat, view_state->vs_Viewrot);
-      anim_v_unpermute(mat);
-      n = anim_mat2ypr(pt, mat);
-      if(n == 2){
-	Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
-	return TCL_ERROR;
-      }
-      VSCALE(pt, pt, bn_radtodeg);
-      if(pt[0] >= 180.0 )
-	pt[0] -= 180;
-      if(pt[0] < 180.0 )
-	pt[0] += 180;
-      pt[1] = -pt[1];
-      pt[2] = -pt[2];
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(pt));
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_OK;
-    }
-
-    if(argc != 5){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view: aet requires 3 parameters");
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    /* attempt to set Viewrot given azimuth, elevation and twist */
-    n = sscanf(argv[2], "%lf", aet);
-    n += sscanf(argv[3], "%lf", aet+1);
-    n += sscanf(argv[4], "%lf", aet+2);
-
-    if(n < 3){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view aet: bad value detected - %s %s %s",
-		    argv[2], argv[3], argv[4]);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    anim_dy_p_r2mat(mat, aet[0]+180.0, -aet[1], -aet[2]);
-    anim_v_permute(mat);
-    bn_mat_trn(view_state->vs_Viewrot, mat);
-    new_mats();
-
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "center")){
-    point_t center;
-
-    /* return view center */
-    if(argc == 2){
-      MAT_DELTAS_GET_NEG(center, view_state->vs_toViewcenter);
-      VSCALE(center, center, base2local);
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(center));
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-      return TCL_OK;
-    }
-
-    if(argc != 5){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view: center requires 3 parameters");
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-      return TCL_ERROR;
-    }
-
-    /* attempt to set the view center */
-    n = sscanf(argv[2], "%lf", center);
-    n += sscanf(argv[3], "%lf", center+1);
-    n += sscanf(argv[4], "%lf", center+2);
-
-    if(n < 3){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view center: bad value detected - %s %s %s",
-		    argv[2], argv[3], argv[4]);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    VSCALE(center, center, local2base);
-    MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, center);
-    new_mats();
-
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "eye")){
-    point_t eye;
-    vect_t dir;
-
-    /* return the eye point */
-    if(argc == 2){
-      VSET(pt, 0.0, 0.0, 1.0);
-      MAT4X3PNT(eye, view_state->vs_view2model, pt);
-      VSCALE(eye, eye, base2local);
-
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "%.12g %.12g %.12g", V3ARGS(eye));
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_OK;
-    }
-
-    if(argc != 5){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view: eye requires 3 parameters");
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    /* attempt to set view center given the eye point */
-    n = sscanf(argv[2], "%lf", eye);
-    n += sscanf(argv[3], "%lf", eye+1);
-    n += sscanf(argv[4], "%lf", eye+2);
-
-    if(n < 3){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view eye: bad value detected - %s %s %s",
-		    argv[2], argv[3], argv[4]);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    VSCALE(eye, eye, local2base);
-    VSET(pt, 0.0, 0.0, view_state->vs_Viewscale);
-    bn_mat_trn(mat, view_state->vs_Viewrot);
-    MAT4X3PNT(dir, mat, pt);
-    VSUB2(pt, dir, eye);
-    MAT_DELTAS_VEC(view_state->vs_toViewcenter, pt);
-    new_mats();
-
-    return TCL_OK;
-  }
-
-  if(!strcmp(argv[1], "size")){
-    fastf_t size;
-
-    /* return the view size */
-    if(argc == 2){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "%.12g", view_state->vs_Viewscale * 2.0 * base2local);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_OK;
-    }
-
-    if(argc != 3){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view: size requires 1 parameter");
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    /* attempt to set view size */
-    n = sscanf(argv[2], "%lf", &size);
-
-    if(n < 1){
-      bu_vls_init(&vls);
-      bu_vls_printf(&vls, "view size: bad value detected - %s", argv[2]);
-      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-      bu_vls_free(&vls);
-
-      return TCL_ERROR;
-    }
-
-    size *= local2base;
-    if(size < 0.0001)
-      size = 0.0001;
-    view_state->vs_Viewscale = size * 0.5;
-    new_mats();
-
-    return TCL_OK;
-  }
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "help view");
-  Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-  return TCL_ERROR;
-#endif
 }
 
 int
@@ -2071,10 +1387,12 @@ char	**argv;
   return TCL_OK;
 }
 
+#if 0
 int
-mged_aetview(iflag, azim, elev, twist)
-int iflag;
-fastf_t azim, elev, twist;
+mged_aetview(int	iflag,
+	     fastf_t	azim,
+	     fastf_t	elev,
+	     fastf_t	twist)
 {
   int status = TCL_OK;
   fastf_t o_twist;
@@ -2083,30 +1401,17 @@ fastf_t azim, elev, twist;
   struct bu_vls vls;
 
   /* grab old twist angle before it's lost */
-#ifdef MGED_USE_VIEW_OBJ
   o_twist = view_state->vs_vop->vo_aet[BN_TWIST];
-#else
-  o_twist = view_state->vs_twist;
-#endif
   o_arz = view_state->vs_absolute_rotate[Z];
   o_larz = view_state->vs_last_absolute_rotate[Z];
 
   /* set view using azimuth and elevation angles */
-#ifdef MGED_USE_VIEW_OBJ
   if(iflag)
     setview(270.0 + elev + view_state->vs_vop->vo_aet[BN_ELEVATION],
 	    0.0,
 	    270.0 - azim - view_state->vs_vop->vo_aet[BN_AZIMUTH]);
   else
     setview(270.0 + elev, 0.0, 270.0 - azim );
-#else
-  if(iflag)
-	  setview(270.0 + elev + view_state->vs_elevation,
-		  0.0,
-		  270.0 - azim - view_state->vs_azimuth);
-  else
-	  setview(270.0 + elev, 0.0, 270.0 - azim);
-#endif
 
   bu_vls_init(&vls);
 
@@ -2123,15 +1428,18 @@ fastf_t azim, elev, twist;
 
   return status;
 }
+#endif
 
 /* set view using azimuth, elevation and twist angles */
 int
-f_aetview(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+cmd_aetview(ClientData	clientData,
+	    Tcl_Interp	*interp,
+	    int		argc,
+	    char	**argv)
 {
+#if 1
+	return vo_aet_cmd(view_state->vs_vop, interp, argc, argv);
+#else
   int iflag = 0;
   fastf_t twist = 0.0;  /* assumed to be 0.0 ---- unless supplied by user */
 
@@ -2166,6 +1474,7 @@ char	**argv;
     twist = atof(argv[3]);
 
   return mged_aetview(iflag, atof(argv[1]), atof(argv[2]), twist);
+#endif
 }
 
 
@@ -2404,23 +1713,6 @@ char	**argv;
 
 	CHECK_DBI_NULL;
 
-#if 0
-	if(argc < 2 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help ill");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if(!strcmp("-n", argv[1])){
-	  illum_only = 1;
-	  --argc;
-	  ++argv;
-	}
-#else
 	if (argc < 2 || 5 < argc) {
 		struct bu_vls vls;
 
@@ -2463,7 +1755,6 @@ char	**argv;
 
 	argc -= (bu_optind - 1);
 	argv += (bu_optind - 1);
-#endif
 
 	if(argc != 2){
 	  struct bu_vls vls;
@@ -2599,17 +1890,6 @@ f_sed(
   CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
-#if 0
-  if(argc < 2 || 2 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help sed");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-#else
   if (argc < 2 || 5 < argc) {
 	  struct bu_vls vls;
 
@@ -2619,7 +1899,6 @@ f_sed(
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
   }
-#endif
 
   if( not_state( ST_VIEW, "keyboard solid edit start") )
     return TCL_ERROR;
@@ -3633,11 +2912,7 @@ char	**argv;
       do_rot = 1;
       break;
     case 'X':
-#ifdef MGED_USE_VIEW_OBJ
       sf = f * local2base / view_state->vs_vop->vo_scale;
-#else
-      sf = f * local2base / view_state->vs_Viewscale;
-#endif
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
@@ -3669,40 +2944,24 @@ char	**argv;
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	  case 'o':
-#ifdef MGED_USE_VIEW_OBJ
 	    tvec[X] = f - last_edit_absolute_model_tran[X]*view_state->vs_vop->vo_scale*base2local;
-#else
-	    tvec[X] = f - last_edit_absolute_model_tran[X]*view_state->vs_Viewscale*base2local;
-#endif
 	    edit_absolute_model_tran[X] = sf;
 	    last_edit_absolute_model_tran[X] = edit_absolute_model_tran[X];
 
 	    break;
 	  case 'v':
-#ifdef MGED_USE_VIEW_OBJ
 	    tvec[X] = f - last_edit_absolute_view_tran[X]*view_state->vs_vop->vo_scale*base2local;
-#else
-	    tvec[X] = f - last_edit_absolute_view_tran[X]*view_state->vs_Viewscale*base2local;
-#endif
 	    edit_absolute_view_tran[X] = sf;
 	    last_edit_absolute_view_tran[X] = edit_absolute_view_tran[X];
 
 	    break;
 	  }
 	}else if(model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
-#ifdef MGED_USE_VIEW_OBJ
 	  tvec[X] = f - view_state->vs_last_absolute_model_tran[X]*view_state->vs_vop->vo_scale*base2local;
-#else
-	  tvec[X] = f - view_state->vs_last_absolute_model_tran[X]*view_state->vs_Viewscale*base2local;
-#endif
 	  view_state->vs_absolute_model_tran[X] = sf;
 	  view_state->vs_last_absolute_model_tran[X] = view_state->vs_absolute_model_tran[X];
 	}else{
-#ifdef MGED_USE_VIEW_OBJ
 	  tvec[X] = f - view_state->vs_last_absolute_tran[X]*view_state->vs_vop->vo_scale*base2local;
-#else
-	  tvec[X] = f - view_state->vs_last_absolute_tran[X]*view_state->vs_Viewscale*base2local;
-#endif
 	  view_state->vs_absolute_tran[X] = sf;
 	  view_state->vs_last_absolute_tran[X] = view_state->vs_absolute_tran[X];
 	}
@@ -3712,11 +2971,7 @@ char	**argv;
       do_tran = 1;
       break;
     case 'Y':
-#ifdef MGED_USE_VIEW_OBJ
       sf = f * local2base / view_state->vs_vop->vo_scale;
-#else
-      sf = f * local2base / view_state->vs_Viewscale;
-#endif
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
@@ -3748,40 +3003,24 @@ char	**argv;
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	  case 'o':
-#ifdef MGED_USE_VIEW_OBJ
 	    tvec[Y] = f - last_edit_absolute_model_tran[Y]*view_state->vs_vop->vo_scale*base2local;
-#else
-	    tvec[Y] = f - last_edit_absolute_model_tran[Y]*view_state->vs_Viewscale*base2local;
-#endif
 	    edit_absolute_model_tran[Y] = sf;
 	    last_edit_absolute_model_tran[Y] = edit_absolute_model_tran[Y];
 
 	    break;
 	  case 'v':
-#ifdef MGED_USE_VIEW_OBJ
 	    tvec[Y] = f - last_edit_absolute_view_tran[Y]*view_state->vs_vop->vo_scale*base2local;
-#else
-	    tvec[Y] = f - last_edit_absolute_view_tran[Y]*view_state->vs_Viewscale*base2local;
-#endif
 	    edit_absolute_view_tran[Y] = sf;
 	    last_edit_absolute_view_tran[Y] = edit_absolute_view_tran[Y];
 
 	    break;
 	  }
 	}else if(model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
-#ifdef MGED_USE_VIEW_OBJ
 	  tvec[Y] = f - view_state->vs_last_absolute_model_tran[Y]*view_state->vs_vop->vo_scale*base2local;
-#else
-	  tvec[Y] = f - view_state->vs_last_absolute_model_tran[Y]*view_state->vs_Viewscale*base2local;
-#endif
 	  view_state->vs_absolute_model_tran[Y] = sf;
 	  view_state->vs_last_absolute_model_tran[Y] = view_state->vs_absolute_model_tran[Y];
 	}else{
-#ifdef MGED_USE_VIEW_OBJ
 	  tvec[Y] = f - view_state->vs_last_absolute_tran[Y]*view_state->vs_vop->vo_scale*base2local;
-#else
-	  tvec[Y] = f - view_state->vs_last_absolute_tran[Y]*view_state->vs_Viewscale*base2local;
-#endif
 	  view_state->vs_absolute_tran[Y] = sf;
 	  view_state->vs_last_absolute_tran[Y] = view_state->vs_absolute_tran[Y];
 	}
@@ -3790,11 +3029,7 @@ char	**argv;
       do_tran = 1;
       break;
     case 'Z':
-#ifdef MGED_USE_VIEW_OBJ
       sf = f * local2base / view_state->vs_vop->vo_scale;
-#else
-      sf = f * local2base / view_state->vs_Viewscale;
-#endif
       if(incr_flag){
 	if(EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
 			  !view_flag && !model_flag) || edit_flag)){
@@ -3826,40 +3061,24 @@ char	**argv;
 	  switch(mged_variables->mv_coords){
 	  case 'm':
 	  case 'o':
-#ifdef MGED_USE_VIEW_OBJ
 	    tvec[Z] = f - last_edit_absolute_model_tran[Z]*view_state->vs_vop->vo_scale*base2local;
-#else
-	    tvec[Z] = f - last_edit_absolute_model_tran[Z]*view_state->vs_Viewscale*base2local;
-#endif
 	    edit_absolute_model_tran[Z] = sf;
 	    last_edit_absolute_model_tran[Z] = edit_absolute_model_tran[Z];
 
 	    break;
 	  case 'v':
-#ifdef MGED_USE_VIEW_OBJ
 	    tvec[Z] = f - last_edit_absolute_view_tran[Z]*view_state->vs_vop->vo_scale*base2local;
-#else
-	    tvec[Z] = f - last_edit_absolute_view_tran[Z]*view_state->vs_Viewscale*base2local;
-#endif
 	    edit_absolute_view_tran[Z] = sf;
 	    last_edit_absolute_view_tran[Z] = edit_absolute_view_tran[Z];
 
 	    break;
 	  }
 	}else if(model_flag || (mged_variables->mv_coords == 'm' && !view_flag)){
-#ifdef MGED_USE_VIEW_OBJ
 	  tvec[Z] = f - view_state->vs_last_absolute_model_tran[Z]*view_state->vs_vop->vo_scale*base2local;
-#else
-	  tvec[Z] = f - view_state->vs_last_absolute_model_tran[Z]*view_state->vs_Viewscale*base2local;
-#endif
 	  view_state->vs_absolute_model_tran[Z] = sf;
 	  view_state->vs_last_absolute_model_tran[Z] = view_state->vs_absolute_model_tran[Z];
 	}else{
-#ifdef MGED_USE_VIEW_OBJ
 	  tvec[Z] = f - view_state->vs_last_absolute_tran[Z]*view_state->vs_vop->vo_scale*base2local;
-#else
-	  tvec[Z] = f - view_state->vs_last_absolute_tran[Z]*view_state->vs_Viewscale*base2local;
-#endif
 	  view_state->vs_absolute_tran[Z] = sf;
 	  view_state->vs_last_absolute_tran[Z] = view_state->vs_absolute_tran[Z];
 	}
@@ -4067,40 +3286,21 @@ abs_zoom()
 {
   /* Use initial Viewscale */
   if(-SMALL_FASTF < view_state->vs_absolute_scale && view_state->vs_absolute_scale < SMALL_FASTF)
-#ifdef MGED_USE_VIEW_OBJ
     view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale;
-#else
-    view_state->vs_Viewscale = view_state->vs_i_Viewscale;
-#endif
   else{
     /* if positive */
     if(view_state->vs_absolute_scale > 0){
       /* scale i_Viewscale by values in [0.0, 1.0] range */
-#ifdef MGED_USE_VIEW_OBJ
       view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale * (1.0 - view_state->vs_absolute_scale);
-#else
-      view_state->vs_Viewscale = view_state->vs_i_Viewscale * (1.0 - view_state->vs_absolute_scale);
-#endif
     }else/* negative */
       /* scale i_Viewscale by values in [1.0, 10.0] range */
-#ifdef MGED_USE_VIEW_OBJ
       view_state->vs_vop->vo_scale = view_state->vs_i_Viewscale * (1.0 + (view_state->vs_absolute_scale * -9.0));
-#else
-      view_state->vs_Viewscale = view_state->vs_i_Viewscale * (1.0 + (view_state->vs_absolute_scale * -9.0));
-#endif
   }
 
-#ifdef MGED_USE_VIEW_OBJ
   if (view_state->vs_vop->vo_scale < MINVIEW)
 	  view_state->vs_vop->vo_scale = MINVIEW;
 
   vo_zoom(view_state->vs_vop, interp, 1.0);
-#else
-  if( view_state->vs_Viewscale < MINVIEW )
-    view_state->vs_Viewscale = MINVIEW;
-
-  new_mats();
-#endif
 
   if(view_state->vs_absolute_tran[X] != 0.0 ||
      view_state->vs_absolute_tran[Y] != 0.0 ||
@@ -4112,27 +3312,12 @@ abs_zoom()
 int
 mged_zoom(double val)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	int	ret;
 
 	if ((ret = vo_zoom(view_state->vs_vop, interp, val)) != TCL_OK)
 		return ret;
 
 	view_state->vs_absolute_scale = 1.0 - view_state->vs_vop->vo_scale / view_state->vs_i_Viewscale;
-#else
-	if( val < SMALL_FASTF || val > INFINITY )  {
-		Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	view_state->vs_Viewscale /= val;
-	if( view_state->vs_Viewscale < MINVIEW )
-		view_state->vs_Viewscale = MINVIEW;
-
-	new_mats();
-
-	view_state->vs_absolute_scale = 1.0 - view_state->vs_Viewscale / view_state->vs_i_Viewscale;
-#endif
 
 	if (view_state->vs_absolute_scale < 0.0)
 		view_state->vs_absolute_scale /= 9.0;
@@ -4184,29 +3369,7 @@ cmd_orientation(ClientData	clientData,
 		int		argc,
 		char		**argv)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	return vo_orientation_cmd(view_state->vs_vop, interp, argc, argv);
-#else
-	register int	i;
-	quat_t		quat;
-
-	if (argc != 5) {
-		struct bu_vls vls;
-
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help orientation");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	for (i=0; i<4; i++)
-		quat[i] = atof( argv[i+1] );
-	quat_quat2mat(view_state->vs_Viewrot, quat);
-	new_mats();
-
-	return TCL_OK;
-#endif
 }
 
 /*
@@ -4322,7 +3485,6 @@ cmd_setview(ClientData	clientData,
 	    int     	argc,
 	    char    	*argv[])
 {
-#if 1
 	int	ret;
 
 	if ((ret = vo_setview_cmd(view_state->vs_vop, interp, argc, argv)) != TCL_OK)
@@ -4335,41 +3497,6 @@ cmd_setview(ClientData	clientData,
 	}
 
 	return TCL_OK;
-#else
-  double x, y, z;
-
-  if(argc < 4 || 4 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help setview");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &x) < 1){
-    Tcl_AppendResult(interp, "f_setview: bad x value - ",
-		     argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &y) < 1){
-    Tcl_AppendResult(interp, "f_setview: bad y value - ",
-		     argv[2], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &z) < 1){
-    Tcl_AppendResult(interp, "f_setview: bad z value - ",
-		     argv[3], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  setview(x, y, z);
-
-  return TCL_OK;
-#endif
 }
 
 int
@@ -4379,7 +3506,6 @@ Tcl_Interp *interp;
 int	argc;
 char	*argv[];
 {
-#if 1
 	point_t old_model_center;
 	point_t new_model_center;
 	vect_t diff;
@@ -4401,47 +3527,6 @@ char	*argv[];
 
 	set_absolute_tran();
 	return TCL_OK;
-#else
-  int x, y, z;
-  vect_t slewvec;
-
-  if(argc < 3 || 4 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help sv");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%d", &x) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad x value - ",
-		     argv[1], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%d", &y) < 1){
-    Tcl_AppendResult(interp, "f_slewview: bad y value - ",
-		     argv[2], "\n", (char *)NULL);
-    return TCL_ERROR;
-  }
-
-  if(argc == 4){
-    if(sscanf(argv[3], "%d", &z) < 1){
-      Tcl_AppendResult(interp, "f_slewview: bad z value - ",
-		       argv[3], "\n", (char *)NULL);
-      return TCL_ERROR;
-    }
-  }else
-    z = 0;
-
-  VSET(slewvec, x * INV_GED, y * INV_GED, z * INV_GED);
-  VSUB2(view_state->vs_absolute_tran, view_state->vs_absolute_tran, slewvec);
-  slewview( slewvec );
-
-  return TCL_OK;
-#endif
 }
 
 
@@ -4449,13 +3534,8 @@ char	*argv[];
 int
 mged_svbase()
 { 
-#ifdef MGED_USE_VIEW_OBJ
 	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_vop->vo_center);
 	view_state->vs_i_Viewscale = view_state->vs_vop->vo_scale;
-#else
-	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
-#endif
 
 	/* reset absolute slider values */
 	VSETALL(view_state->vs_absolute_rotate, 0.0);
@@ -4550,16 +3630,6 @@ double	xangle, yangle, zangle;
 {
 	mat_t	newrot;		/* NEW rot matrix, from joystick */
 
-#if 0
-	if( state == ST_S_EDIT )  {
-		if( sedit_rotate( xangle, yangle, zangle ) > 0 )
-			return;		/* solid edit claimed event */
-	} else if( state == ST_O_EDIT )  {
-		if( objedit_rotate( xangle, yangle, zangle ) > 0 )
-			return;		/* object edit claimed event */
-	}
-#endif
-
 	/* NORMAL CASE.
 	 * Apply delta viewing rotation for non-edited parts.
 	 * The view rotates around the VIEW CENTER.
@@ -4567,11 +3637,7 @@ double	xangle, yangle, zangle;
 	MAT_IDN( newrot );
 	bn_mat_angles_rad( newrot, xangle, yangle, zangle );
 
-#ifdef MGED_USE_VIEW_OBJ
 	bn_mat_mul2(newrot, view_state->vs_vop->vo_rotation);
-#else
-	bn_mat_mul2( newrot, view_state->vs_Viewrot );
-#endif
 	{
 		mat_t	newinv;
 		bn_mat_inv( newinv, newrot );
@@ -4593,11 +3659,7 @@ const point_t	ang;
 	point_t	rad;
 
 	VSCALE( rad, ang, bn_pi );	/* range from -pi to +pi */
-#ifdef MGED_USE_VIEW_OBJ
 	bn_mat_angles_rad(view_state->vs_vop->vo_rotation, rad[X], rad[Y], rad[Z]);
-#else
-	bn_mat_angles_rad( view_state->vs_Viewrot, rad[X], rad[Y], rad[Z] );
-#endif
 	new_mats();
 }
 
@@ -4615,12 +3677,10 @@ setview(double	a1,
 	double	a2,
 	double	a3)		/* DOUBLE angles, in degrees */
 {
-#ifdef MGED_USE_VIEW_OBJ
-	vo_setview(view_state->vs_vop, interp, a1, a2, a3);
-#else
-	bn_mat_angles(view_state->vs_Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad);
-	new_mats();
-#endif
+	vect_t		rvec;
+
+	VSET(rvec, a1, a2, a3);
+	vo_setview(view_state->vs_vop, interp, rvec);
 
 	if (view_state->vs_absolute_tran[X] != 0.0 ||
 	    view_state->vs_absolute_tran[Y] != 0.0 ||
@@ -4638,7 +3698,6 @@ setview(double	a1,
 void
 slewview(vect_t view_pos)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	point_t old_model_center;
 	point_t new_model_center;
 	vect_t diff;
@@ -4655,23 +3714,6 @@ slewview(vect_t view_pos)
 	MAT_IDN(delta);
 	MAT_DELTAS_VEC(delta, diff);
 	bn_mat_mul2(delta, view_state->vs_ModelDelta);	/* updates ModelDelta */
-#else
-	point_t old_model_center;
-	point_t new_model_center;
-	vect_t diff;
-	mat_t	delta;
-
-	MAT_DELTAS_GET_NEG(old_model_center, view_state->vs_toViewcenter);
-
-	MAT4X3PNT(new_model_center, view_state->vs_view2model, view_pos);
-	MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, new_model_center);
-
-	VSUB2(diff, new_model_center, old_model_center);
-	MAT_IDN(delta);
-	MAT_DELTAS_VEC(delta, diff);
-	bn_mat_mul2(delta, view_state->vs_ModelDelta);	/* updates ModelDelta */
-	new_mats();
-#endif
 
 	set_absolute_tran();
 }
@@ -4689,39 +3731,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	return vo_eye_cmd(view_state->vs_vop, interp, argc, argv);
-#else
-	point_t	eye_model;
-	vect_t	xlate;
-	vect_t	new_cent;
-
-	if(argc < 4 || 4 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help eye_pt");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	VSET(eye_model, atof(argv[1]), atof(argv[2]), atof(argv[3]) );
-
-	/* First step:  put eye at view center (view 0,0,0) */
-	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, eye_model );
-	new_mats();
-
-	/*  Second step:  put eye at view 0,0,1.
-	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
-	 */
-	VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	MAT4X3PNT( new_cent, view_state->vs_view2model, xlate );
-	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_cent );
-	new_mats();
-
-	return TCL_OK;
-#endif
 }
 
 /*
@@ -4737,7 +3747,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
+#if 0
+	return vo_model2view_cmd(view_state->vs_vop, interp, argc, argv);
+#else
 	point_t	model;
 	point_t	view;
 	struct bu_vls	str;
@@ -4768,33 +3780,6 @@ char	**argv;
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
-#else
-	point_t	model;
-	point_t	view;
-	struct bu_vls	str;
-
-	if(argc < 4 || 4 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "helpdevel model2view");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	VSET(model, atof(argv[1]),
-		atof(argv[2]),
-		atof(argv[3]) );
-
-	MAT4X3PNT( view, view_state->vs_model2view, model );
-
-	bu_vls_init(&str);
-	bu_vls_printf(&str, "%.15e %.15e %.15e", V3ARGS(view) );
-	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-	bu_vls_free(&str);
-
-	return TCL_OK;
 #endif
 }
 
@@ -4811,7 +3796,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	point_t	model;
 	point_t	view;
 	struct bu_vls	str;
@@ -4842,31 +3826,6 @@ char	**argv;
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
-#else
-	point_t	model;
-	point_t	view;
-	struct bu_vls	str;
-
-	if(argc < 4 || 4 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "helpdevel view2model");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	VSET(view, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-	MAT4X3PNT(model, view_state->vs_view2model, view);
-
-	bu_vls_init(&str);
-	bu_vls_printf(&str, "%.15e %.15e %.15e", V3ARGS(model) );
-	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
-	bu_vls_free(&str);
-
-	return TCL_OK;
-#endif
 }
 
 /*
@@ -4882,7 +3841,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	fastf_t f;
 	point_t view_pt;
@@ -4919,36 +3877,6 @@ char	**argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  fastf_t f;
-  point_t view_pt;
-  point_t model_pt;
-
-  CHECK_DBI_NULL;
-
-  bu_vls_init(&vls);
-
-  if(argc != 4){
-    bu_vls_printf(&vls, "helpdevel model2view_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  VSET(model_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-  VSCALE(model_pt, model_pt, local2base);
-  MAT4X3PNT(view_pt, view_state->vs_model2view, model_pt);
-  f = view_state->vs_Viewscale * base2local;
-  VSCALE(view_pt, view_pt, f);
-
-  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(view_pt));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -4964,7 +3892,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	fastf_t sf;
 	point_t view_pt;
@@ -5001,36 +3928,6 @@ char	**argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  fastf_t sf;
-  point_t view_pt;
-  point_t model_pt;
-
-  CHECK_DBI_NULL;
-
-  bu_vls_init(&vls);
-
-  if(argc != 4){
-    bu_vls_printf(&vls, "helpdevel view2model_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  sf = 1.0 / (view_state->vs_Viewscale * base2local);
-  VSET(view_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-  VSCALE(view_pt, view_pt, sf);
-  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
-  VSCALE(model_pt, model_pt, base2local);
-
-  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_pt));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -5046,7 +3943,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	fastf_t f;
 	point_t view_pt;
@@ -5091,43 +3987,6 @@ char	**argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  fastf_t f;
-  point_t view_pt;
-  point_t model_pt;
-  point_t mo_view_pt;           /* model origin in view space */
-  point_t diff;
-
-  CHECK_DBI_NULL;
-
-  bu_vls_init(&vls);
-
-  if(argc != 4){
-    bu_vls_printf(&vls, "helpdevel model2grid_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(mo_view_pt, view_state->vs_model2view, model_pt);
-
-  VSET(model_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-  VSCALE(model_pt, model_pt, local2base);
-  MAT4X3PNT(view_pt, view_state->vs_model2view, model_pt);
-
-  VSUB2(diff, view_pt, mo_view_pt);
-  f = view_state->vs_Viewscale * base2local;
-  VSCALE(diff, diff, f);
-
-  bu_vls_printf(&vls, "%.15e %.15e", diff[X], diff[Y]);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -5143,7 +4002,6 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	fastf_t f;
 	point_t view_pt;
@@ -5187,44 +4045,6 @@ char    **argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  fastf_t f;
-  point_t view_pt;
-  point_t model_pt;
-  point_t mo_view_pt;           /* model origin in view space */
-  point_t diff;
-
-  CHECK_DBI_NULL;
-
-  bu_vls_init(&vls);
-
-  if(argc != 3){
-    bu_vls_printf(&vls, "helpdevel grid2model_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  f = 1.0 / (view_state->vs_Viewscale * base2local);
-  diff[X] = atof(argv[1]) * f;
-  diff[Y] = atof(argv[2]) * f;
-  diff[Z] = 0.0;
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(mo_view_pt, view_state->vs_model2view, model_pt);
-
-  VADD2(view_pt, mo_view_pt, diff);
-  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
-  VSCALE(model_pt, model_pt, base2local);
-
-  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_pt));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -5240,7 +4060,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	fastf_t f;
 	point_t view_pt;
@@ -5281,40 +4100,6 @@ char	**argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  fastf_t f;
-  point_t view_pt;
-  point_t model_pt;
-  point_t mo_view_pt;           /* model origin in view space */
-  point_t diff;
-
-  CHECK_DBI_NULL;
-
-  bu_vls_init(&vls);
-
-  if(argc != 4){
-    bu_vls_printf(&vls, "helpdevel view2grid_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  VSET(view_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(mo_view_pt, view_state->vs_model2view, model_pt);
-  f = view_state->vs_Viewscale * base2local;
-  VSCALE(mo_view_pt, mo_view_pt, f);
-  VSUB2(diff, view_pt, mo_view_pt);
-
-  bu_vls_printf(&vls, "%.15e %.15e", diff[X], diff[Y]);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -5330,7 +4115,6 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	fastf_t f;
 	point_t view_pt;
@@ -5369,42 +4153,6 @@ char    **argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  fastf_t f;
-  point_t view_pt;
-  point_t model_pt;
-  point_t mo_view_pt;           /* model origin in view space */
-  point_t diff;
-
-  CHECK_DBI_NULL;
-
-  bu_vls_init(&vls);
-
-  if(argc != 3){
-    bu_vls_printf(&vls, "helpdevel grid2view_lu");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  diff[X] = atof(argv[1]);
-  diff[Y] = atof(argv[2]);
-  diff[Z] = 0.0;
-
-  VSETALL(model_pt, 0.0);
-  MAT4X3PNT(mo_view_pt, view_state->vs_model2view, model_pt);
-  f = view_state->vs_Viewscale * base2local;
-  VSCALE(mo_view_pt, mo_view_pt, f);
-  VADD2(view_pt, mo_view_pt, diff);
-
-  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(view_pt));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 /*
@@ -5420,7 +4168,6 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	struct bu_vls vls;
 	point_t model_vec;
 	point_t view_vec;
@@ -5454,32 +4201,6 @@ char    **argv;
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
-#else
-  struct bu_vls vls;
-  point_t model_vec;
-  point_t view_vec;
-  mat_t inv_Viewrot;
-
-  bu_vls_init(&vls);
-
-  if(argc != 4){
-    bu_vls_printf(&vls, "helpdevel view2model_vec");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  VSET(view_vec, atof(argv[1]), atof(argv[2]), atof(argv[3]));
-  bn_mat_inv(inv_Viewrot, view_state->vs_Viewrot);
-  MAT4X3PNT(model_vec, inv_Viewrot, view_vec);
-
-  bu_vls_printf(&vls, "%.15e %.15e %.15e", V3ARGS(model_vec));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-
-  bu_vls_free(&vls);
-  return TCL_OK;
-#endif
 }
 
 int
@@ -5489,57 +4210,9 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	CHECK_DBI_NULL;
 
 	return vo_lookat_cmd(view_state->vs_vop, interp, argc, argv);
-#else
-  point_t look;
-  point_t eye;
-  point_t tmp;
-  point_t new_center;
-  vect_t dir;
-  fastf_t new_az, new_el;
-  int status;
-  struct bu_vls vls;
-
-  CHECK_DBI_NULL;
-
-  if(argc < 4 || 4 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help lookat");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  VSET( look, atof(argv[1]),
-	atof(argv[2]),
-	atof(argv[3]) );
-
-  VSCALE( look, look, local2base );
-
-  VSET( tmp, 0.0, 0.0, 1.0 );
-  MAT4X3PNT(eye, view_state->vs_view2model, tmp);
-
-  VSUB2( dir, eye, look );
-  VUNITIZE( dir );
-  bn_ae_vec( &new_az, &new_el, dir );
-
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "ae %-15.10f %-15.10f %-15.10f", new_az, new_el, view_state->vs_twist);
-  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-
-  VJOIN1( new_center, eye, -view_state->vs_Viewscale, dir );
-  MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_center );
-
-  new_mats();
-
-  return( status );
-#endif
 }
 
 /*
@@ -5642,7 +4315,6 @@ char    **argv;
       return TCL_ERROR;
     }
 
-#ifdef MGED_USE_VIEW_OBJ
     /* save current Viewrot */
     MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_vop->vo_rotation);
 
@@ -5651,16 +4323,6 @@ char    **argv;
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_vop->vo_scale;
-#else
-    /* save current Viewrot */
-    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-    /* save current toViewcenter */
-    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-    /* save current Viewscale */
-    view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-#endif
 
     /* allocate memory and append to list */
     BU_GETSTRUCT(vrp, view_ring);
@@ -5691,7 +4353,6 @@ char    **argv;
        BU_LIST_IS_HEAD(view_state->vs_current_view->l.back, &view_state->vs_headView.l))
       return TCL_OK;
 
-#ifdef MGED_USE_VIEW_OBJ
     /* save current Viewrot */
     MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_vop->vo_rotation);
 
@@ -5700,16 +4361,6 @@ char    **argv;
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_vop->vo_scale;
-#else
-    /* save current Viewrot */
-    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-    /* save current toViewcenter */
-    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-    /* save current Viewscale */
-    view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-#endif
 
     view_state->vs_last_view = view_state->vs_current_view;
     view_state->vs_current_view = BU_LIST_PNEXT(view_ring, view_state->vs_current_view);
@@ -5717,15 +4368,9 @@ char    **argv;
     if(BU_LIST_IS_HEAD(view_state->vs_current_view, &view_state->vs_headView.l))
       view_state->vs_current_view = BU_LIST_FIRST(view_ring, &view_state->vs_headView.l);
 
-#ifdef MGED_USE_VIEW_OBJ
     MAT_COPY(view_state->vs_vop->vo_rotation, view_state->vs_current_view->vr_rot_mat);
     MAT_COPY(view_state->vs_vop->vo_center, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_vop->vo_scale = view_state->vs_current_view->vr_scale;
-#else
-    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-    view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-#endif
 
     new_mats();
     (void)mged_svbase();
@@ -5747,7 +4392,6 @@ char    **argv;
        BU_LIST_IS_HEAD(view_state->vs_current_view->l.back, &view_state->vs_headView.l))
       return TCL_OK;
 
-#ifdef MGED_USE_VIEW_OBJ
     /* save current Viewrot */
     MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_vop->vo_rotation);
 
@@ -5756,16 +4400,6 @@ char    **argv;
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_vop->vo_scale;
-#else
-    /* save current Viewrot */
-    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-    /* save current toViewcenter */
-    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-    /* save current Viewscale */
-    view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-#endif
 
     view_state->vs_last_view = view_state->vs_current_view;
     view_state->vs_current_view = BU_LIST_PLAST(view_ring, view_state->vs_current_view);
@@ -5773,15 +4407,9 @@ char    **argv;
     if(BU_LIST_IS_HEAD(view_state->vs_current_view, &view_state->vs_headView.l))
       view_state->vs_current_view = BU_LIST_LAST(view_ring, &view_state->vs_headView.l);
 
-#ifdef MGED_USE_VIEW_OBJ
     MAT_COPY(view_state->vs_vop->vo_rotation, view_state->vs_current_view->vr_rot_mat);
     MAT_COPY(view_state->vs_vop->vo_center, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_vop->vo_scale = view_state->vs_current_view->vr_scale;
-#else
-    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-    view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-#endif
 
     new_mats();
     (void)mged_svbase();
@@ -5800,7 +4428,6 @@ char    **argv;
       return TCL_ERROR;
     }
 
-#ifdef MGED_USE_VIEW_OBJ
     /* save current Viewrot */
     MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_vop->vo_rotation);
 
@@ -5809,29 +4436,13 @@ char    **argv;
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_vop->vo_scale;
-#else
-    /* save current Viewrot */
-    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-    /* save current toViewcenter */
-    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-    /* save current Viewscale */
-    view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-#endif
 
     save_last_view = view_state->vs_last_view;
     view_state->vs_last_view = view_state->vs_current_view;
     view_state->vs_current_view = save_last_view;
-#ifdef MGED_USE_VIEW_OBJ
     MAT_COPY(view_state->vs_vop->vo_rotation, view_state->vs_current_view->vr_rot_mat);
     MAT_COPY(view_state->vs_vop->vo_center, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_vop->vo_scale = view_state->vs_current_view->vr_scale;
-#else
-    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-    view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-#endif
 
     new_mats();
     (void)mged_svbase();
@@ -5875,15 +4486,9 @@ char    **argv;
       }else
 	view_state->vs_current_view = view_state->vs_last_view;
 
-#ifdef MGED_USE_VIEW_OBJ
       MAT_COPY(view_state->vs_vop->vo_rotation, view_state->vs_current_view->vr_rot_mat);
       MAT_COPY(view_state->vs_vop->vo_center, view_state->vs_current_view->vr_tvc_mat);
       view_state->vs_vop->vo_scale = view_state->vs_current_view->vr_scale;
-#else
-      MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-      MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-      view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-#endif
       new_mats();
       (void)mged_svbase();
     }else if(vrp == view_state->vs_last_view)
@@ -5921,7 +4526,6 @@ char    **argv;
     if(vrp == view_state->vs_current_view)
       return TCL_OK;
 
-#ifdef MGED_USE_VIEW_OBJ
     /* save current Viewrot */
     MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_vop->vo_rotation);
 
@@ -5930,28 +4534,12 @@ char    **argv;
 
     /* save current Viewscale */
     view_state->vs_current_view->vr_scale = view_state->vs_vop->vo_scale;
-#else
-    /* save current Viewrot */
-    MAT_COPY(view_state->vs_current_view->vr_rot_mat, view_state->vs_Viewrot);
-
-    /* save current toViewcenter */
-    MAT_COPY(view_state->vs_current_view->vr_tvc_mat, view_state->vs_toViewcenter);
-
-    /* save current Viewscale */
-    view_state->vs_current_view->vr_scale = view_state->vs_Viewscale;
-#endif
 
     view_state->vs_last_view = view_state->vs_current_view;
     view_state->vs_current_view = vrp;
-#ifdef MGED_USE_VIEW_OBJ
     MAT_COPY(view_state->vs_vop->vo_rotation, view_state->vs_current_view->vr_rot_mat);
     MAT_COPY(view_state->vs_vop->vo_center, view_state->vs_current_view->vr_tvc_mat);
     view_state->vs_vop->vo_scale = view_state->vs_current_view->vr_scale;
-#else
-    MAT_COPY(view_state->vs_Viewrot, view_state->vs_current_view->vr_rot_mat);
-    MAT_COPY(view_state->vs_toViewcenter, view_state->vs_current_view->vr_tvc_mat);
-    view_state->vs_Viewscale = view_state->vs_current_view->vr_scale;
-#endif
 
     new_mats();
     (void)mged_svbase();
@@ -6014,19 +4602,11 @@ mged_erot(struct view_obj	*vop,
 		bn_mat_mul(newrot, temp2, temp1);
 		break;
 	case 'v':
-#ifdef MGED_USE_VIEW_OBJ
 		bn_mat_inv(temp1, view_state->vs_vop->vo_rotation);
-#else
-		bn_mat_inv(temp1, view_state->vs_Viewrot);
-#endif
 
 		/* transform into model rotations */
 		bn_mat_mul(temp2, temp1, newrot);
-#ifdef MGED_USE_VIEW_OBJ
 		bn_mat_mul(newrot, temp2, view_state->vs_vop->vo_rotation);
-#else
-		bn_mat_mul(newrot, temp2, view_state->vs_Viewrot);
-#endif
 		break;
 	}
 
@@ -6057,19 +4637,11 @@ mged_erot(struct view_obj	*vop,
 		switch (rotate_about) {
 		case 'v':       /* View Center */
 			VSET(work, 0.0, 0.0, 0.0);
-#ifdef MGED_USE_VIEW_OBJ
 			MAT4X3PNT(point, view_state->vs_vop->vo_view2model, work);
-#else
-			MAT4X3PNT(point, view_state->vs_view2model, work);
-#endif
 			break;
 		case 'e':       /* Eye */
 			VSET(work, 0.0, 0.0, 1.0);
-#ifdef MGED_USE_VIEW_OBJ
 			MAT4X3PNT(point, view_state->vs_vop->vo_view2model, work);
-#else
-			MAT4X3PNT(point, view_state->vs_view2model, work);
-#endif
 			break;
 		case 'm':       /* Model Center */
 			VSETALL(point, 0.0);
@@ -6108,42 +4680,11 @@ cmd_mrot(ClientData	clientData,
 	 int     	argc,
 	 char    	**argv)
 {
-#if 1
 	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	    mged_variables->mv_transform == 'e')
 		return vo_mrot_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())mged_erot);
 	else
 		return vo_mrot_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())0);
-#else
-  vect_t rvec;
-
-  if(argc < 4 || 4 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help mrot");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &rvec[X]) < 1){
-    Tcl_AppendResult(interp, "f_mrot: bad x value - %s\n", argv[1]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &rvec[Y]) < 1){
-    Tcl_AppendResult(interp, "f_mrot: bad y value - %s\n", argv[2]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &rvec[Z]) < 1){
-    Tcl_AppendResult(interp, "f_mrot: bad z value - %s\n", argv[3]);
-    return TCL_ERROR;
-  }
-
-  return mged_vrot_xyz(mged_variables->mv_rotate_about, 'm', rvec);
-#endif
 }
 
 /*
@@ -6154,7 +4695,6 @@ mged_vrot(origin, newrot)
 char origin;
 mat_t newrot;
 {
-#ifdef MGED_USE_VIEW_OBJ
 	mat_t   newinv;
 
 	bn_mat_inv(newinv, newrot);
@@ -6206,59 +4746,6 @@ mat_t newrot;
 	set_absolute_tran();
 
 	return TCL_OK;
-#else
-  mat_t   newinv;
-
-  bn_mat_inv( newinv, newrot );
-
-  if(origin != 'v'){
-    point_t		rot_pt;
-    point_t		new_origin;
-    mat_t		viewchg, viewchginv;
-    point_t		new_cent_view;
-    point_t		new_cent_model;
-
-    if(origin == 'e'){
-      /* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
-      VSET( rot_pt, 0.0, 0.0, 1.0 );		/* point to rotate around */
-    }else if(origin == 'k' && state == ST_S_EDIT){
-      /* rotate around keypoint */
-      MAT4X3PNT(rot_pt, view_state->vs_model2view, curr_e_axes_pos);
-    }else if(origin == 'k' && state == ST_O_EDIT){
-      point_t kpWmc;
-
-      MAT4X3PNT(kpWmc, modelchanges, es_keypoint);
-      MAT4X3PNT(rot_pt, view_state->vs_model2view, kpWmc);
-    }else{
-      /* rotate around model center (0,0,0) */
-      VSET( new_origin, 0.0, 0.0, 0.0 );
-      MAT4X3PNT( rot_pt, view_state->vs_model2view, new_origin );  /* point to rotate around */
-    }
-
-    bn_mat_xform_about_pt( viewchg, newrot, rot_pt );
-    bn_mat_inv( viewchginv, viewchg );
-
-    /* Convert origin in new (viewchg) coords back to old view coords */
-    VSET( new_origin, 0.0, 0.0, 0.0 );
-    MAT4X3PNT( new_cent_view, viewchginv, new_origin );
-    MAT4X3PNT( new_cent_model, view_state->vs_view2model, new_cent_view );
-    MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_cent_model );
-
-    /* XXX This should probably capture the translation too */
-    /* XXX I think the only consumer of ModelDelta is the predictor frame */
-    wrt_view( view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta );		/* pure rotation */
-  } else
-    /* Traditional method:  rotate around view center (0,0,0) viewspace */
-    wrt_view( view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta );
-
-  /* Update the rotation component of the model2view matrix */
-  bn_mat_mul2( newrot, view_state->vs_Viewrot ); /* pure rotation */
-  new_mats();
-
-  set_absolute_tran();
-
-  return TCL_OK;
-#endif
 }
 
 int
@@ -6272,7 +4759,6 @@ mged_vrot_xyz(char	origin,
 	MAT_IDN(newrot);
 	bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
 
-#ifdef MGED_USE_VIEW_OBJ
 	if (coords == 'm') {
 		/* transform model rotations into view rotations */
 		bn_mat_inv(temp1, view_state->vs_vop->vo_rotation);
@@ -6289,26 +4775,6 @@ mged_vrot_xyz(char	origin,
 		bn_mat_mul(temp2, view_state->vs_vop->vo_rotation, newrot);
 		bn_mat_mul(newrot, temp2, temp1);
 	} /* else assume already view rotations */
-#else
-  if (coords == 'm') {
-    /* transform model rotations into view rotations */
-    bn_mat_inv(temp1, view_state->vs_Viewrot);
-    bn_mat_mul(temp2, view_state->vs_Viewrot, newrot);
-    bn_mat_mul(newrot, temp2, temp1);
-  } else if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	     coords == 'o') {
-
-    /* first, transform object rotations into model rotations */
-    bn_mat_inv(temp1, acc_rot_sol);
-    bn_mat_mul(temp2, acc_rot_sol, newrot);
-    bn_mat_mul(newrot, temp2, temp1);
-
-    /* now transform model rotations into view rotations */
-    bn_mat_inv(temp1, view_state->vs_Viewrot);
-    bn_mat_mul(temp2, view_state->vs_Viewrot, newrot);
-    bn_mat_mul(newrot, temp2, temp1);
-  } /* else assume already view rotations */
-#endif
 
   return mged_vrot(origin, newrot);
 }
@@ -6319,7 +4785,6 @@ cmd_vrot(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
-#if 1
 	int ret;
 
 	if ((ret = vo_vrot_cmd(view_state->vs_vop, interp, argc, argv)) != TCL_OK)
@@ -6327,79 +4792,7 @@ cmd_vrot(ClientData	clientData,
 
 	set_absolute_tran();
 	return TCL_OK;
-#else
-  vect_t rvec;
-
-  if(argc < 4 || 4 < argc){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help vrot");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &rvec[X]) < 1){
-    Tcl_AppendResult(interp, "f_vrot: bad x value - %s\n", argv[1]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &rvec[Y]) < 1){
-    Tcl_AppendResult(interp, "f_vrot: bad y value - %s\n", argv[2]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &rvec[Z]) < 1){
-    Tcl_AppendResult(interp, "f_vrot: bad z value - %s\n", argv[3]);
-    return TCL_ERROR;
-  }
-
-  VSCALE(rvec, rvec, -1.0);
-
-  return mged_vrot_xyz(mged_variables->mv_rotate_about, 'v', rvec);
-#endif
 }
-
-#if 0
-int
-mged_rot(char	origin,
-	 mat_t	newrot)
-{
-	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	    mged_variables->mv_transform == 'e')
-		return mged_erot(view_state->vs_vop, mged_variables->mv_coords, origin, newrot);
-
-#ifdef MGED_USE_VIEW_OBJ
-	return vo_rot(view_state->vs_vop, interp, mged_variables->mv_coords, origin, newrot, (int (*)())0);
-#else
-  /* apply to View */
-  if(mged_variables->mv_coords == 'm'){
-    mat_t temp1, temp2;
-
-    /* transform model rotations into view rotations */
-    bn_mat_inv(temp1, view_state->vs_Viewrot);
-    bn_mat_mul(temp2, view_state->vs_Viewrot, newrot);
-    bn_mat_mul(newrot, temp2, temp1);
-  }
-
-  return mged_vrot(origin, newrot);
-#endif
-}
-
-int
-mged_rot_xyz(origin, rvec)
-char origin;
-vect_t rvec;
-{
-  mat_t newrot;
-
-  MAT_IDN(newrot);
-  bn_mat_angles(newrot, rvec[X], rvec[Y], rvec[Z]);
-
-  return mged_rot(origin, newrot);
-}
-#endif
 
 int
 cmd_rot(ClientData	clientData,
@@ -6407,46 +4800,11 @@ cmd_rot(ClientData	clientData,
 	int		argc,
 	char		**argv)
 {
-#if 1
 	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	    mged_variables->mv_transform == 'e')
 		return vo_rot_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())mged_erot);
 	else
 		return vo_rot_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())0);
-#else
-  vect_t rvec;
-
-  if(argc != 4){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help rot");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &rvec[X]) < 1){
-    Tcl_AppendResult(interp, "f_rot: bad x value - %s\n", argv[1]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &rvec[Y]) < 1){
-    Tcl_AppendResult(interp, "f_rot: bad y value - %s\n", argv[2]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &rvec[Z]) < 1){
-    Tcl_AppendResult(interp, "f_rot: bad z value - %s\n", argv[3]);
-    return TCL_ERROR;
-  }
-
-  if(state != ST_S_EDIT && state != ST_O_EDIT){
-    VSCALE(rvec, rvec, -1.0);
-  }
-
-  return mged_rot_xyz(mged_variables->mv_rotate_about, rvec);
-#endif
 }
 
 int
@@ -6455,55 +4813,11 @@ cmd_arot(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
-#if 1
 	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	    mged_variables->mv_transform == 'e')
 		return vo_arot_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())mged_erot);
 	else
 		return vo_arot_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())0);
-#else
-  mat_t newrot;
-  point_t pt;
-  vect_t axis;
-  fastf_t angle;
-
-  if(argc != 5){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help arot");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &axis[X]) < 1){
-    Tcl_AppendResult(interp, "f_arot: bad x value - %s\n", argv[1]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &axis[Y]) < 1){
-    Tcl_AppendResult(interp, "f_arot: bad y value - %s\n", argv[2]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &axis[Z]) < 1){
-    Tcl_AppendResult(interp, "f_arot: bad z value - %s\n", argv[3]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[4], "%lf", &angle) < 1){
-    Tcl_AppendResult(interp, "f_arot: bad angle - %s\n", argv[4]);
-    return TCL_ERROR;
-  }
-
-  VSETALL(pt, 0.0);
-  VUNITIZE(axis);
-
-  bn_mat_arb_rot(newrot, pt, axis, angle*degtorad);
-
-  return mged_rot(mged_variables->mv_rotate_about, newrot);
-#endif
 }
 
 int
@@ -6529,15 +4843,9 @@ mged_etran(struct view_obj	*vop,
     break;
   case 'v':
   default:
-#ifdef MGED_USE_VIEW_OBJ
     VSCALE(p2, tvec, local2base/view_state->vs_vop->vo_scale);
     MAT4X3PNT(work, view_state->vs_vop->vo_view2model, p2);
     MAT_DELTAS_GET_NEG(vcenter, view_state->vs_vop->vo_center);
-#else
-    VSCALE(p2, tvec, local2base/view_state->vs_Viewscale);
-    MAT4X3PNT(work, view_state->vs_view2model, p2);
-    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
-#endif
     VSUB2(delta, work, vcenter);
 
     break;
@@ -6584,15 +4892,9 @@ mged_mtran(const vect_t tvec)
 	point_t vc, nvc;
 
 	VSCALE(delta, tvec, local2base);
-#ifdef MGED_USE_VIEW_OBJ
 	MAT_DELTAS_GET_NEG(vc, view_state->vs_vop->vo_center);
 	VSUB2(nvc, vc, delta);
 	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, nvc);
-#else
-	MAT_DELTAS_GET_NEG(vc, view_state->vs_toViewcenter);
-	VSUB2(nvc, vc, delta);
-	MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, nvc);
-#endif
 	new_mats();
 
 	/* calculate absolute_tran */
@@ -6609,21 +4911,12 @@ mged_vtran(const vect_t tvec)
   point_t work;
   point_t vc, nvc;
 
-#ifdef MGED_USE_VIEW_OBJ
   VSCALE(tt, tvec, local2base/view_state->vs_vop->vo_scale);
   MAT4X3PNT(work, view_state->vs_vop->vo_view2model, tt);
   MAT_DELTAS_GET_NEG(vc, view_state->vs_vop->vo_center);
   VSUB2(delta, work, vc);
   VSUB2(nvc, vc, delta);
   MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, nvc);
-#else
-  VSCALE(tt, tvec, local2base/view_state->vs_Viewscale);
-  MAT4X3PNT(work, view_state->vs_view2model, tt);
-  MAT_DELTAS_GET_NEG(vc, view_state->vs_toViewcenter);
-  VSUB2(delta, work, vc);
-  VSUB2(nvc, vc, delta);
-  MAT_DELTAS_VEC_NEG(view_state->vs_toViewcenter, nvc);
-#endif
 
   new_mats();
 
@@ -6656,48 +4949,11 @@ cmd_tra(ClientData	clientData,
 	int     	argc,
 	char    	**argv)
 {
-#if 1
 	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	    mged_variables->mv_transform == 'e')
 		return vo_tra_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())mged_etran);
 	else
 		return vo_tra_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())0);
-#else
-  vect_t tvec;
-
-  CHECK_DBI_NULL;
-
-  if(argc != 4){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help tra");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &tvec[X]) < 1){
-    Tcl_AppendResult(interp, "f_tra: bad x value - %s\n", argv[1]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[2], "%lf", &tvec[Y]) < 1){
-    Tcl_AppendResult(interp, "f_tra: bad y value - %s\n", argv[2]);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[3], "%lf", &tvec[Z]) < 1){
-    Tcl_AppendResult(interp, "f_tra: bad z value - %s\n", argv[3]);
-    return TCL_ERROR;
-  }
-
-  if(state != ST_S_EDIT && state != ST_O_EDIT){
-    VSCALE(tvec, tvec, -1.0);
-  }
-
-  return mged_tran(tvec);
-#endif
 }
 
 int
@@ -6790,11 +5046,7 @@ fastf_t sfactor;
     /* Have scaling take place with respect to keypoint,
      * NOT the view center.
      */
-#if 0
-    MAT4X3PNT(temp, es_mat, es_keypoint);
-#else
     VMOVE(temp, es_keypoint);
-#endif
     MAT4X3PNT(pos_model, modelchanges, temp);
     wrt_point(modelchanges, smat, modelchanges, pos_model);
 
@@ -6812,17 +5064,10 @@ mged_vscale(fastf_t sfactor)
 	if (-SMALL_FASTF < sfactor && sfactor < SMALL_FASTF)
 		return TCL_OK;
 
-#ifdef MGED_USE_VIEW_OBJ
 	view_state->vs_vop->vo_scale *= sfactor;
 	if (view_state->vs_vop->vo_scale < RT_MINVIEWSIZE)
 		view_state->vs_vop->vo_scale = RT_MINVIEWSIZE;
 	f = view_state->vs_vop->vo_scale / view_state->vs_i_Viewscale;
-#else
-	view_state->vs_Viewscale *= sfactor;
-	if( view_state->vs_Viewscale < MINVIEW )
-		view_state->vs_Viewscale = MINVIEW;
-	f = view_state->vs_Viewscale / view_state->vs_i_Viewscale;
-#endif
 
 	if (f >= 1.0)
 		view_state->vs_absolute_scale = (f - 1.0) / -9.0;
@@ -6850,7 +5095,6 @@ cmd_sca(ClientData	clientData,
 	int     	argc,
 	char    	**argv)
 {
-#if 1
 	if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
 	    mged_variables->mv_transform == 'e')
 		return vo_sca_cmd(view_state->vs_vop, interp, argc, argv, (int (*)())mged_escale);
@@ -6869,24 +5113,4 @@ cmd_sca(ClientData	clientData,
 
 		return TCL_OK;
 	}
-#else
-  fastf_t sfactor;
-
-  if(argc != 2){
-    struct bu_vls vls;
-
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help sca");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lf", &sfactor) < 1){
-    Tcl_AppendResult(interp, "f_sca: bad scale factor - %s\n", argv[1]);
-    return TCL_ERROR;
-  }
-
-  return mged_scale(sfactor);
-#endif
 }

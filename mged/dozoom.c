@@ -46,7 +46,9 @@ extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 /* Screen coords of actual eye position.  Usually it is at (0,0,+1),
  * but in head-tracking and VR applications, it can move.
  */
+#if 0
 point_t	eye_pos_scr = { 0, 0, 1 };
+#endif
 
 struct solid	FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
@@ -276,21 +278,13 @@ int	which_eye;
 	struct dm_list *save_dm_list = curr_dm_list;
 
 	ndrawn = 0;
-#ifdef MGED_USE_VIEW_OBJ
 	inv_viewsize = view_state->vs_vop->vo_invSize;
-#else
-	inv_viewsize = 1 / VIEWSIZE;
-#endif
 
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
-	if( mged_variables->mv_perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
-#ifdef MGED_USE_VIEW_OBJ
+	if( view_state->vs_vop->vo_perspective <= 0 && view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 		mat = view_state->vs_vop->vo_model2view;
-#else
-		mat = view_state->vs_model2view;
-#endif
 	} else {
 		/*
 		 *  There are two strategies that could be used:
@@ -305,7 +299,7 @@ int	which_eye;
 		point_t	l, h, eye;
 
 		/* Determine where eye should be */
-		to_eye_scr = 1 / tan(mged_variables->mv_perspective * bn_degtorad * 0.5);
+		to_eye_scr = 1 / tan(view_state->vs_vop->vo_perspective * bn_degtorad * 0.5);
 
 #define SCR_WIDTH_PHYS	330	/* Assume a 330 mm wide screen */
 
@@ -327,11 +321,7 @@ VPRINT("h", h);
 		switch(which_eye)  {
 		case 0:
 			/* Non-stereo case */
-#ifdef MGED_USE_VIEW_OBJ
 			mat = view_state->vs_vop->vo_model2view;
-#else
-			mat = view_state->vs_model2view;
-#endif
 /* XXX hack */
 #define HACK 0
 #if !HACK
@@ -339,19 +329,19 @@ if( 1 ) {
 #else
 if( mged_variables->mv_faceplate > 0 )  {
 #endif
-			if( eye_pos_scr[Z] == 1.0 )  {
+			if( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
-				persp_mat( perspective_mat, mged_variables->mv_perspective,
+				persp_mat( perspective_mat, view_state->vs_vop->vo_perspective,
 					1.0, 0.01, 1.0e10, 1.0 );
 			} else {
 				/* This way does not have reasonable Z-clipping,
 				 * but includes shear, for GDurf's testing.
 				 */
-				deering_persp_mat( perspective_mat, l, h, eye_pos_scr );
+				deering_persp_mat( perspective_mat, l, h, view_state->vs_vop->vo_eye_pos );
 			}
 } else {
 			/* New way, should handle all cases */
-			mike_persp_mat( perspective_mat, eye_pos_scr );
+			mike_persp_mat( perspective_mat, view_state->vs_vop->vo_eye_pos );
 }
 #if HACK
 bn_mat_print("perspective_mat", perspective_mat);
@@ -359,21 +349,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 			break;
 		case 1:
 			/* R */
-#ifdef MGED_USE_VIEW_OBJ
 			mat = view_state->vs_vop->vo_model2view;
-#else
-			mat = view_state->vs_model2view;
-#endif
 			eye[X] = eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
 		case 2:
 			/* L */
-#ifdef MGED_USE_VIEW_OBJ
 			mat = view_state->vs_vop->vo_model2view;
-#else
-			mat = view_state->vs_model2view;
-#endif
 			eye[X] = -eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
@@ -384,11 +366,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	DM_LOADMATRIX( dmp, mat, which_eye );
 
-#if 1
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-#else
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-#endif
 		sp->s_flag = DOWN;		/* Not drawn yet */
 		/* If part of object edit, will be drawn below */
 		if( sp->s_iflag == UP )
@@ -489,7 +467,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	if( state == ST_VIEW )
 		return;
 
-	if( mged_variables->mv_perspective <= 0 )  {
+	if( view_state->vs_vop->vo_perspective <= 0 )  {
 		mat = view_state->vs_model2objview;
 	} else {
 		bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );

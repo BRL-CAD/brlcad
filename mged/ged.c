@@ -179,9 +179,7 @@ struct bu_vls mged_prompt;
 void pr_prompt(), pr_beep();
 int mged_bomb_hook();
 
-#ifdef MGED_USE_VIEW_OBJ
 void mged_view_obj_callback();
-#endif
 
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
@@ -340,14 +338,6 @@ char **argv;
 	BU_GETSTRUCT(view_state, _view_state);
 	view_state->vs_rc = 1;
 	view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
-#ifndef MGED_USE_VIEW_OBJ
-	/* init rotation matrix */
-	view_state->vs_Viewscale = 500;		/* => viewsize of 1000mm (1m) */
-	MAT_IDN( view_state->vs_Viewrot );
-	MAT_IDN( view_state->vs_toViewcenter );
-	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
-	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
-#endif
 	MAT_IDN( view_state->vs_ModelDelta );
 
 	am_mode = AMM_IDLE;
@@ -1382,15 +1372,9 @@ event_check( int non_blocking )
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-#ifdef MGED_USE_VIEW_OBJ
 		    edit_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
-#else
-		    edit_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-#endif
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
@@ -1422,15 +1406,9 @@ event_check( int non_blocking )
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-#ifdef MGED_USE_VIEW_OBJ
 		    edit_rate_view_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
-#else
-		    edit_rate_view_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-#endif
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
@@ -1494,15 +1472,9 @@ event_check( int non_blocking )
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-#ifdef MGED_USE_VIEW_OBJ
 		      view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		      view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		      view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
-#else
-		      view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-#endif
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1527,15 +1499,9 @@ event_check( int non_blocking )
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-#ifdef MGED_USE_VIEW_OBJ
 		      view_state->vs_rate_tran[X] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		      view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_vop->vo_scale * base2local,
 		      view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_vop->vo_scale * base2local);
-#else
-		      view_state->vs_rate_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
-		      view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
-#endif
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1872,54 +1838,7 @@ reset_input_strings()
 void
 new_mats()
 {
-#ifdef MGED_USE_VIEW_OBJ
 	vo_update(view_state->vs_vop, interp, 0);
-#else
-	bn_mat_mul( view_state->vs_model2view, view_state->vs_Viewrot, view_state->vs_toViewcenter );
-	view_state->vs_model2view[15] = view_state->vs_Viewscale;
-	bn_mat_inv( view_state->vs_view2model, view_state->vs_model2view );
-
-#if 1
-	{
-	  vect_t work, work1;
-	  vect_t temp, temp1;
-
-	  /* Find current azimuth, elevation, and twist angles */
-	  VSET( work , 0.0, 0.0, 1.0 );       /* view z-direction */
-	  MAT4X3VEC( temp , view_state->vs_view2model , work );
-	  VSET( work1 , 1.0, 0.0, 0.0 );      /* view x-direction */
-	  MAT4X3VEC( temp1 , view_state->vs_view2model , work1 );
-
-	  /* calculate angles using accuracy of 0.005, since display
-	   * shows 2 digits right of decimal point */
-	  bn_aet_vec( &view_state->vs_azimuth,
-		       &view_state->vs_elevation,
-		       &view_state->vs_twist,
-		       temp , temp1 , (fastf_t)0.005 );
-#if 1
-	  /* Force azimuth range to be [0,360] */
-	  if((NEAR_ZERO(view_state->vs_elevation - 90.0,(fastf_t)0.005) ||
-	     NEAR_ZERO(view_state->vs_elevation + 90.0,(fastf_t)0.005)) &&
-	     view_state->vs_azimuth < 0 &&
-	     !NEAR_ZERO(view_state->vs_azimuth,(fastf_t)0.005))
-	    view_state->vs_azimuth += 360.0;
-	  else if(NEAR_ZERO(view_state->vs_azimuth,(fastf_t)0.005))
-	    view_state->vs_azimuth = 0.0;
-#else
-	  /* Force azimuth range to be [-180,180] */
-	  if(!NEAR_ZERO(view_state->vs_elevation - 90.0,(fastf_t)0.005) &&
-	      !NEAR_ZERO(view_state->vs_elevation + 90.0,(fastf_t)0.005))
-	    view_state->vs_azimuth -= 180;
-#endif
-	}
-#endif
-
-	if( state != ST_VIEW ) {
-	  bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
-	  bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
-	}
-	view_state->vs_flag = 1;
-#endif
 }
 
 #ifdef DO_NEW_EDIT_MATS
@@ -1935,11 +1854,7 @@ new_edit_mats()
       continue;
 
     curr_dm_list = p;
-#ifdef MGED_USE_VIEW_OBJ
     bn_mat_mul( view_state->vs_model2objview, view_state->vs_vop->vo_model2view, modelchanges );
-#else
-    bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
-#endif
     bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
     view_state->vs_flag = 1;
   }
@@ -1948,7 +1863,6 @@ new_edit_mats()
 }
 #endif
 
-#ifdef MGED_USE_VIEW_OBJ
 void
 mged_view_obj_callback(genptr_t		clientData,
 		       struct view_obj	*vop)
@@ -1961,7 +1875,6 @@ mged_view_obj_callback(genptr_t		clientData,
 	}
 	vsp->vs_flag = 1;
 }
-#endif
 
 /*
  *			D O _ R C
@@ -2232,19 +2145,12 @@ f_opendb(
 		/* Close the Tcl database objects */
 		Tcl_Eval(interp, "db close; .inmem close");
 
-#if 0
-		wdb_close(wdbp);
-
-		/* Close current database.  Releases MaterHead, etc. too. */
-		db_close(dbip);
-#endif
 		dbip = new_dbip;
 		rt_material_head = new_materp;
 
 		log_event( "CEASE", "(close)" );
 	}
 
-#ifdef MGED_USE_VIEW_OBJ
 	{
 		register struct dm_list *dmlp;
 
@@ -2254,7 +2160,6 @@ f_opendb(
 			dmlp->dml_view_state->vs_vop->vo_base2local = dbip->dbi_base2local;
 		}
 	}
-#endif
 
 	if( dbip->dbi_read_only )
 		bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
@@ -2267,23 +2172,7 @@ f_opendb(
 		Tcl_AppendResult(interp, "wdb_dbopen() failed?\n", (char *)NULL);
 		return TCL_ERROR;
 	}
-#if 0
-	/* Establish LIBWDB TCL access to both disk and in-memory databases */
-	/* This creates "db" and ".inmem" Tcl objects */
-	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls,
-		      "set wdbp [wdb_open %s disk [get_dbip]]; wdb_open %s inmem [get_dbip]",
-		      MGED_DB_NAME, MGED_INMEM_NAME);
-	if( Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK )  {
-		bu_vls_printf(&msg, "%s\n%s\n",
-		    interp->result,
-		    Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
-		Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
-		bu_vls_free(&vls);
-		bu_vls_free(&msg);
-		return TCL_ERROR;
-	}
-#else
+
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	/* This creates "db" and ".inmem" Tcl objects */
 	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
@@ -2307,8 +2196,8 @@ f_opendb(
 		return TCL_ERROR;
 	}
 
+	/* link the drawable geometry object to the database object */
 	dgop->dgo_wdbp = wdbp;
-#endif
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&vls, 0);

@@ -386,21 +386,12 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
 {
 	static mat_t t1, t2;
 
-#ifdef MGED_USE_VIEW_OBJ
 	bn_mat_mul(t1, view_state->vs_vop->vo_center, in);
 	bn_mat_mul(t2, change, t1);
 
 	/* Build "fromViewcenter" matrix */
 	MAT_IDN(t1);
 	MAT_DELTAS(t1, -view_state->vs_vop->vo_center[MDX], -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
-#else
-	bn_mat_mul(t1, view_state->vs_toViewcenter, in);
-	bn_mat_mul(t2, change, t1);
-
-	/* Build "fromViewcenter" matrix */
-	MAT_IDN(t1);
-	MAT_DELTAS(t1, -view_state->vs_toViewcenter[MDX], -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-#endif
 	bn_mat_mul(out, t1, t2);
 }
 

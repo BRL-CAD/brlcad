@@ -401,15 +401,9 @@ bv_vrestore(ClientData	clientData,
 {
   /* restore to saved view */
 	if (vsaved) {
-#ifdef MGED_USE_VIEW_OBJ
 		view_state->vs_vop->vo_scale = sav_vscale;
 		MAT_COPY(view_state->vs_vop->vo_rotation, sav_viewrot);
 		MAT_COPY(view_state->vs_vop->vo_center, sav_toviewcenter);
-#else
-		view_state->vs_Viewscale = sav_vscale;
-		MAT_COPY( view_state->vs_Viewrot, sav_viewrot );
-		MAT_COPY( view_state->vs_toViewcenter, sav_toviewcenter );
-#endif
 		new_mats();
 
 		(void)mged_svbase();
@@ -424,17 +418,10 @@ bv_vsave(ClientData	clientData,
 	 int		argc,
 	 char		**argv)
 {
-#ifdef MGED_USE_VIEW_OBJ
 	/* save current view */
 	sav_vscale = view_state->vs_vop->vo_scale;
 	MAT_COPY(sav_viewrot, view_state->vs_vop->vo_rotation);
 	MAT_COPY(sav_toviewcenter, view_state->vs_vop->vo_center);
-#else
-	/* save current view */
-	sav_vscale = view_state->vs_Viewscale;
-	MAT_COPY( sav_viewrot, view_state->vs_Viewrot );
-	MAT_COPY( sav_toviewcenter, view_state->vs_toViewcenter );
-#endif
 	vsaved = 1;
 	return TCL_OK;
 }

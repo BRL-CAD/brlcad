@@ -126,19 +126,11 @@ vect_t eye_model;
 {
 	register int i;
 
-#ifdef MGED_USE_VIEW_OBJ
 	(void)fprintf(fp, "%.9e\n", view_state->vs_vop->vo_size);
-#else
-	(void)fprintf(fp, "%.9e\n", VIEWSIZE );
-#endif
 	(void)fprintf(fp, "%.9e %.9e %.9e\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
 	for( i=0; i < 16; i++ )  {
-#ifdef MGED_USE_VIEW_OBJ
 		(void)fprintf(fp, "%.9e ", view_state->vs_vop->vo_rotation[i]);
-#else
-		(void)fprintf( fp, "%.9e ", view_state->vs_Viewrot[i] );
-#endif
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
 	}
@@ -161,36 +153,9 @@ vect_t eye_model;
 	quat_t		quat;
 	register struct solid *sp;
 
-#ifdef MGED_USE_VIEW_OBJ
 	(void)fprintf(fp, "viewsize %.15e;\n", view_state->vs_vop->vo_size);
-#if 0
-	(void)fprintf(fp, "viewrot ");
-	for (i=0; i < 16; i++) {
-		(void)fprintf(fp, "%.15e ", view_state->vs_vop->vo_rotation[i]);
-		if ((i%4) == 3)
-			(void)fprintf(fp, "\n");
-	}
-	(void)fprintf(fp, ";\n");
-#else
 	quat_mat2quat(quat, view_state->vs_vop->vo_rotation);
 	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n", V4ARGS(quat));
-#endif
-#else
-	(void)fprintf(fp, "viewsize %.15e;\n", VIEWSIZE );
-#if 0
-	(void)fprintf(fp, "viewrot ");
-	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.15e ", view_state->vs_Viewrot[i] );
-		if( (i%4) == 3 )
-			(void)fprintf(fp, "\n");
-	}
-	(void)fprintf(fp, ";\n");
-#else
-	quat_mat2quat( quat, view_state->vs_Viewrot );
-	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n",
-		V4ARGS( quat ) );
-#endif
-#endif
 	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
 
@@ -329,20 +294,10 @@ cmd_rtabort(ClientData clientData,
 	     int argc,
 	     char **argv)
 {
-#if 0
 	return dgo_rtabort_cmd(dgop, interp, argc, argv);
-#else
-	struct run_rt *rrp;
-
-	for (BU_LIST_FOR(rrp, run_rt, &head_run_rt.l)) {
-		kill(rrp->pid, SIGKILL);
-		rrp->aborted = 1;
-	}
-
-	return TCL_OK;
-#endif
 }
 
+#if 1
 static void
 rt_output_handler(ClientData clientData, int mask)
 {
@@ -388,6 +343,7 @@ rt_output_handler(ClientData clientData, int mask)
 	/*XXX For now just blather to stderr */
 	bu_log("%s", line);
 }
+#endif
 
 static void
 rt_set_eye_model(eye_model)
@@ -397,11 +353,7 @@ vect_t eye_model;
     vect_t temp;
 
     VSET( temp, 0.0, 0.0, 1.0 );
-#ifdef MGED_USE_VIEW_OBJ
     MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
-#else
-    MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-#endif
   }else{ /* not doing zclipping, so back out of geometry */
     register struct solid *sp;
     register int i;
@@ -411,13 +363,8 @@ vect_t eye_model;
     vect_t  extremum[2];
     vect_t  minus, plus;    /* vers of this solid's bounding box */
 
-#ifdef MGED_USE_VIEW_OBJ
     VSET(eye_model, -view_state->vs_vop->vo_center[MDX],
 	 -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
-#else
-    VSET(eye_model, -view_state->vs_toViewcenter[MDX],
-	 -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-#endif
 
     for (i = 0; i < 3; ++i){
       extremum[0][i] = INFINITY;
@@ -433,11 +380,7 @@ vect_t eye_model;
       plus[Z] = sp->s_center[Z] + sp->s_size;
       VMAX( extremum[1], plus );
     }
-#ifdef MGED_USE_VIEW_OBJ
     VMOVEN(direction, view_state->vs_vop->vo_rotation + 8, 3);
-#else
-    VMOVEN(direction, view_state->vs_Viewrot + 8, 3);
-#endif
     VSCALE(direction, direction, -1.0);
     for(i = 0; i < 3; ++i)
       if (NEAR_ZERO(direction[i], 1e-10))
@@ -462,6 +405,7 @@ vect_t eye_model;
   }
 }
 
+#if 1
 /*
  *			R U N _ R T
  */
@@ -528,6 +472,7 @@ run_rt()
 
 	return 0;
 }
+#endif
 
 /*
  *			F _ R T
@@ -538,7 +483,6 @@ cmd_rt(ClientData	clientData,
        int		argc,
        char		**argv)
 {
-#if 1
 	CHECK_DBI_NULL;
 
 	/* skip past _mged_ */
@@ -547,66 +491,6 @@ cmd_rt(ClientData	clientData,
 		argv[0] += 6;
 
 	return dgo_rt_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-#else
-	register char **vp;
-	register int i;
-	char	pstring[32];
-
-	CHECK_DBI_NULL;
-
-	if(argc < 1 || MAXARGS < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help rt");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
-	  return TCL_ERROR;
-
-	vp = &rt_cmd_vec[0];
-	*vp++ = "rt";
-	*vp++ = "-s512";
-	*vp++ = "-M";
-	*vp++ = "-v60";		/* Reduced RT logging when run interactively */
-	if( mged_variables->mv_perspective > 0 )  {
-		(void)sprintf(pstring, "-p%g", mged_variables->mv_perspective);
-		*vp++ = pstring;
-	}
-	for( i=1; i < argc; i++ ) {
-	    if( argv[i][0] == '-' && argv[i][1] == '-' &&
-		argv[i][2] == '\0' ) {
-		++i;
-		break;
-	    }
-	    *vp++ = argv[i];
-	}
-	*vp++ = dbip->dbi_filename;
-
-	/*
-	 * Now that we've grabbed all the options, if no args remain,
-	 * have setup_rt() append the names of all stuff currently displayed.
-	 * Otherwise, simply append the remaining args.
-	 */
-	if ( i == argc )
-	    setup_rt( vp, 1 );
-	else {
-	    while( i < argc )
-		*vp++ = argv[i++];
-	    *vp = 0;
-	    vp = &rt_cmd_vec[0];
-	    while( *vp )
-	      Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
-
-	    Tcl_AppendResult(interp, "\n", (char *)NULL);
-	}
-	(void)run_rt();
-
-	return TCL_OK;
-#endif
 }
 
 /*
@@ -652,6 +536,7 @@ char	**argv;
 	return TCL_OK;
 }
 
+#if 0
 static void
 rtcheck_vector_handler(clientData, mask)
 ClientData clientData;
@@ -718,6 +603,7 @@ int mask;
   line[count] = '\0';
   bu_log("%s", line);
 }
+#endif
 
 int
 cmd_rtcheck(ClientData	clientData,
@@ -725,118 +611,9 @@ cmd_rtcheck(ClientData	clientData,
 	    int		argc,
 	    char	**argv)
 {
-#if 1
 	CHECK_DBI_NULL;
 
 	return dgo_rtcheck_cmd(dgop, view_state->vs_vop, interp, argc, argv);
-#else
-	register char **vp;
-	register int i;
-	int	pid; 	 
-	int	i_pipe[2];	/* MGED reads results for building vectors */
-	int	o_pipe[2];	/* MGED writes view parameters */
-	int	e_pipe[2];	/* MGED reads textual results */
-	FILE	*fp;
-	struct rtcheck *rtcp;
-
-	CHECK_DBI_NULL;
-
-	if(argc < 1 || MAXARGS < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help rtcheck");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( not_state( ST_VIEW, "Overlap check in current view" ) )
-	  return TCL_ERROR;
-
-	vp = &rt_cmd_vec[0];
-	*vp++ = "rtcheck";
-	*vp++ = "-s50";
-	*vp++ = "-M";
-	for( i=1; i < argc; i++ )
-		*vp++ = argv[i];
-	*vp++ = dbip->dbi_filename;
-
-	setup_rt( vp, 1 );
-
-	(void)pipe( i_pipe );
-	(void)pipe( o_pipe );
-	(void)pipe( e_pipe );
-	(void)signal( SIGINT, SIG_IGN );
-	if ( ( pid = fork()) == 0 )  {
-		/* Redirect stdin, stdout and stderr */
-		(void)close(0);
-		(void)dup(i_pipe[0]);
-		(void)close(1);
-		(void)dup(o_pipe[1]);
-		(void)close(2);
-		(void)dup(e_pipe[1]);
-
-		/* close pipes */
-		(void)close(i_pipe[0]);
-		(void)close(i_pipe[1]);
-		(void)close(o_pipe[0]);
-		(void)close(o_pipe[1]);
-		(void)close(e_pipe[0]);
-		(void)close(e_pipe[1]);
-
-		for( i=3; i < 20; i++ )
-			(void)close(i);
-
-		(void)signal( SIGINT, SIG_DFL );
-		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
-		perror( rt_cmd_vec[0] );
-		exit(16);
-	}
-
-	/* As parent, send view information down pipe */
-	(void)close(i_pipe[0]);
-	fp = fdopen(i_pipe[1], "w");
-	{
-		vect_t temp;
-		vect_t eye_model;
-
-		VSET( temp, 0.0, 0.0, 1.0 );
-#ifdef MGED_USE_VIEW_OBJ
-		MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
-#else
-		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-#endif
-		rt_write(fp, eye_model );
-	}
-	(void)fclose(fp);
-
-	/* close write end of pipes */
-	(void)close(o_pipe[1]);
-	(void)close(e_pipe[1]);
-
-	BU_GETSTRUCT(rtcp, rtcheck);
-
-	/* initialize the rtcheck struct */
-	rtcp->fd = o_pipe[0];
-	rtcp->fp = fdopen(o_pipe[0], "r");
-	rtcp->pid = pid;
-	rtcp->vbp = rt_vlblock_init();
-	rtcp->vhead = rt_vlblock_find( rtcp->vbp, 0xFF, 0xFF, 0x00 );
-#ifdef MGED_USE_VIEW_OBJ
-	rtcp->csize = view_state->vs_vop->vo_scale * 0.01;
-#else
-	rtcp->csize = view_state->vs_Viewscale * 0.01;
-#endif
-
-	/* register file handlers */
-	Tcl_CreateFileHandler(rtcp->fd, TCL_READABLE,
-			      rtcheck_vector_handler, (ClientData)rtcp);
-	Tcl_CreateFileHandler(e_pipe[0], TCL_READABLE,
-			      rtcheck_output_handler, (ClientData)e_pipe[0]);
-
-	return TCL_OK;
-#endif
 }
 
 
@@ -906,8 +683,8 @@ char	**argv;
 	(void)chmod( argv[1], 0755 );	/* executable */
 	/* Do not specify -v option to rt; batch jobs must print everything. -Mike */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
-	if( mged_variables->mv_perspective > 0 )
-		(void)fprintf(fp, "-p%g", mged_variables->mv_perspective);
+	if( view_state->vs_vop->vo_perspective > 0 )
+		(void)fprintf(fp, "-p%g", view_state->vs_vop->vo_perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
@@ -1040,7 +817,6 @@ work:
 	while( !feof( fp ) &&
 	    rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
 	    	switch(mode)  {
-#ifdef MGED_USE_VIEW_OBJ
 	    	case -1:
 	    		/* First step:  put eye in center */
 		       	view_state->vs_vop->vo_scale = scale;
@@ -1068,35 +844,6 @@ work:
 				-eye_model[Z] );
 			new_mats();
 	    		break;
-#else
-	    	case -1:
-	    		/* First step:  put eye in center */
-		       	view_state->vs_Viewscale = scale;
-		       	MAT_COPY( view_state->vs_Viewrot, rot );
-			MAT_DELTAS( view_state->vs_toViewcenter,
-				-eye_model[X],
-				-eye_model[Y],
-				-eye_model[Z] );
-	    		new_mats();
-	    		/* Second step:  put eye in front */
-	    		VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	    		MAT4X3PNT( eye_model, view_state->vs_view2model, xlate );
-			MAT_DELTAS( view_state->vs_toViewcenter,
-				-eye_model[X],
-				-eye_model[Y],
-				-eye_model[Z] );
-	    		new_mats();
-	    		break;
-	    	case 0:
-		       	view_state->vs_Viewscale = scale;
-			MAT_IDN(view_state->vs_Viewrot);	/* top view */
-			MAT_DELTAS( view_state->vs_toViewcenter,
-				-eye_model[X],
-				-eye_model[Y],
-				-eye_model[Z] );
-			new_mats();
-	    		break;
-#endif
 	    	case 1:
 	    		/* Adjust center for displaylist devices */
 	    		VMOVE( sp->s_center, eye_model );
@@ -1200,11 +947,7 @@ char	**argv;
 	 *  Eye is in conventional place.
 	 */
 	VSET( temp, 0.0, 0.0, 1.0 );
-#ifdef MGED_USE_VIEW_OBJ
 	MAT4X3PNT(eye_model, view_state->vs_vop->vo_view2model, temp);
-#else
-	MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-#endif
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
 
@@ -1401,15 +1144,9 @@ char	**argv;
 	 *  Initialize the view to the current one in MGED
 	 *  in case a view specification is never given.
 	 */
-#ifdef MGED_USE_VIEW_OBJ
 	MAT_COPY(rtif_viewrot, view_state->vs_vop->vo_rotation);
 	VSET(temp, 0.0, 0.0, 1.0);
 	MAT4X3PNT(rtif_eye_model, view_state->vs_vop->vo_view2model, temp);
-#else
-	MAT_COPY(rtif_viewrot, view_state->vs_Viewrot);
-	VSET(temp, 0.0, 0.0, 1.0);
-	MAT4X3PNT(rtif_eye_model, view_state->vs_view2model, temp);
-#endif
 
 	if( setjmp( jmp_env ) == 0 )
 	  /* If user hits ^C, preview will stop, and clean up */
@@ -1524,19 +1261,11 @@ char	**argv;
 
 	  VSET(view_ray_orig, (fastf_t)adc_state->adc_dv_x, (fastf_t)adc_state->adc_dv_y, GED_MAX);
 	  VSCALE(view_ray_orig, view_ray_orig, INV_GED);
-#ifdef MGED_USE_VIEW_OBJ
 	  MAT4X3PNT(center_model, view_state->vs_vop->vo_view2model, view_ray_orig);
 	}else if(!use_input_orig){
 	  VSET(center_model, -view_state->vs_vop->vo_center[MDX],
 	       -view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
 	}
-#else
-	  MAT4X3PNT(center_model, view_state->vs_view2model, view_ray_orig);
-	}else if(!use_input_orig){
-	  VSET(center_model, -view_state->vs_toViewcenter[MDX],
-	       -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-	}
-#endif
 
 	if( mged_variables->mv_perspective_mode )
 	{
@@ -1544,11 +1273,7 @@ char	**argv;
 
 		/* get eye point */
 		VSET(pt, 0.0, 0.0, 1.0);
-#ifdef MGED_USE_VIEW_OBJ
 		MAT4X3PNT(eye, view_state->vs_vop->vo_view2model, pt);
-#else
-		MAT4X3PNT(eye, view_state->vs_view2model, pt);
-#endif
 		VSCALE(eye, eye, base2local);
 
 		/* point passed in is actually the aim point */
@@ -1560,11 +1285,7 @@ char	**argv;
 		VMOVE(cml, eye);
 	} else {
 		VSCALE(cml, center_model, base2local);
-#ifdef MGED_USE_VIEW_OBJ
 		VMOVEN(dir, view_state->vs_vop->vo_rotation + 8, 3);
-#else
-		VMOVEN(dir, view_state->vs_Viewrot + 8, 3);
-#endif
 		VSCALE(dir, dir, -1.0);
 	}
 
@@ -1598,7 +1319,7 @@ char	**argv;
 
 	  if(QRAY_TEXT){
 	    char *cp;
-	    int count;
+	    int count = 0;
 
 	    bu_vls_init(&o_vls);
 
@@ -1619,8 +1340,6 @@ char	**argv;
 
 	    if(cp != (char *)NULL) /* found it */
 	      count = cp - val;
-	    else
-	      count = 0;
 
 done:
 	    if(*val == '\0')
@@ -1862,11 +1581,7 @@ char    **argv;
 
   /* Calculate point from which to fire ray */
   VSCALE(view_ray_orig, view_ray_orig, sf);
-#ifdef MGED_USE_VIEW_OBJ
   MAT4X3PNT(center_model, view_state->vs_vop->vo_view2model, view_ray_orig);
-#else
-  MAT4X3PNT(center_model, view_state->vs_view2model, view_ray_orig);
-#endif
   VSCALE(center_model, center_model, base2local);
 
   bu_vls_init(&x_vls);
@@ -1916,11 +1631,7 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-#ifdef MGED_USE_VIEW_OBJ
 	view_state->vs_vop->vo_scale = atof(argv[1])*0.5;
-#else
-	view_state->vs_Viewscale = atof(argv[1])*0.5;
-#endif
 	return(0);
 }
 
@@ -2030,7 +1741,6 @@ int	argc;
 		RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_DRAW );
 	}
 
-#ifdef MGED_USE_VIEW_OBJ
 	/* First step:  put eye at view center (view 0,0,0) */
        	MAT_COPY(view_state->vs_vop->vo_rotation, rtif_viewrot);
 	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, rtif_eye_model);
@@ -2055,32 +1765,6 @@ int	argc;
 	VSET(xlate, 0.0, 0.0, -1.0);	/* correction factor */
 	MAT4X3PNT(new_cent, view_state->vs_vop->vo_view2model, xlate);
 	MAT_DELTAS_VEC_NEG(view_state->vs_vop->vo_center, new_cent);
-#else
-	/* First step:  put eye at view center (view 0,0,0) */
-       	MAT_COPY( view_state->vs_Viewrot, rtif_viewrot );
-	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, rtif_eye_model );
-	new_mats();
-
-	/*
-	 * Compute camera orientation notch to right (+X) and up (+Y)
-	 * Done here, with eye in center of view.
-	 */
-	VSET( xv, 0.05, 0.0, 0.0 );
-	VSET( yv, 0.0, 0.05, 0.0 );
-	MAT4X3PNT( xm, view_state->vs_view2model, xv );
-	MAT4X3PNT( ym, view_state->vs_view2model, yv );
-	RT_ADD_VLIST( vhead, xm, BN_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_MOVE );
-	RT_ADD_VLIST( vhead, ym, BN_VLIST_LINE_DRAW );
-	RT_ADD_VLIST( vhead, rtif_eye_model, BN_VLIST_LINE_MOVE );
-
-	/*  Second step:  put eye at view 0,0,1.
-	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
-	 */
-	VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	MAT4X3PNT( new_cent, view_state->vs_view2model, xlate );
-	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_cent );
-#endif
 	new_mats();
 
 	/* If new treewalk is needed, get new objects into view. */
@@ -2251,13 +1935,8 @@ char		**argv;
 	return (TCL_ERROR);
     }
 
-#ifdef MGED_USE_VIEW_OBJ
     VSET(ray_orig, -view_state->vs_vop->vo_center[MDX],
 	-view_state->vs_vop->vo_center[MDY], -view_state->vs_vop->vo_center[MDZ]);
-#else
-    VSET(ray_orig, -view_state->vs_toViewcenter[MDX],
-	-view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-#endif
     /*
      * Compute bounding box of all objects displayed.
      * Borrowed from size_reset() in chgview.c
@@ -2278,11 +1957,7 @@ char		**argv;
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
 	    VMAX( extremum[1], plus );
     }
-#ifdef MGED_USE_VIEW_OBJ
     VMOVEN(ray_dir, view_state->vs_vop->vo_rotation + 8, 3);
-#else
-    VMOVEN(ray_dir, view_state->vs_Viewrot + 8, 3);
-#endif
     VSCALE(ray_dir, ray_dir, -1.0);
     for (i = 0; i < 3; ++i)
 	if (NEAR_ZERO(ray_dir[i], 1e-10))
@@ -2307,17 +1982,10 @@ char		**argv;
 	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
     }
 
-#ifdef MGED_USE_VIEW_OBJ
     VMOVEN(unit_H, view_state->vs_vop->vo_model2view, 3);
     VMOVEN(unit_V, view_state->vs_vop->vo_model2view + 4, 3);
     VJOIN1(ray_orig, ray_orig, h * view_state->vs_vop->vo_scale * INV_GED, unit_H);
     VJOIN1(ray_orig, ray_orig, v * view_state->vs_vop->vo_scale * INV_GED, unit_V);
-#else
-    VMOVEN(unit_H, view_state->vs_model2view, 3);
-    VMOVEN(unit_V, view_state->vs_model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * view_state->vs_Viewscale * INV_GED, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * view_state->vs_Viewscale * INV_GED, unit_V);
-#endif
 
     /*
      *	Build a list of all the top-level objects currently displayed

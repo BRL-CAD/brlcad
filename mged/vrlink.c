@@ -41,7 +41,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int		(*cmdline_hook)();	/* cmd.c */
 
+#if 0
 extern point_t		eye_pos_scr;		/* dozoom.c */
+#endif
 
 static struct pkg_conn	*vrmgr;			/* PKG connection to VR mgr */
 static char		*vr_host = "None";	/* host running VR mgr */
@@ -149,35 +151,19 @@ vr_viewpoint_hook()
 	bu_vls_init_if_uninit(&old_str);
 	bu_vls_init(&str);
 
-#ifdef MGED_USE_VIEW_OBJ
 	quat_mat2quat(orient, view_state->vs_vop->vo_rotation);
-#else
-	quat_mat2quat( orient, view_state->vs_Viewrot );
-#endif
 
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
-#ifdef MGED_USE_VIEW_OBJ
-	bu_vls_printf(&str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
+	bu_vls_printf(&str, "pov {%e %e %e}   {%e %e %e %e}   %e   {%e %e %e}  %e\n", 
 		      -view_state->vs_vop->vo_center[MDX],
 		      -view_state->vs_vop->vo_center[MDY],
 		      -view_state->vs_vop->vo_center[MDZ],
 		      V4ARGS(orient),
 		      view_state->vs_vop->vo_scale,
-		      V3ARGS(eye_pos_scr),
-		      mged_variables->mv_perspective);
-#else
-	bu_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
-		-view_state->vs_toViewcenter[MDX],
-		-view_state->vs_toViewcenter[MDY],
-		-view_state->vs_toViewcenter[MDZ],
-		V4ARGS(orient),
-		view_state->vs_Viewscale,
-		V3ARGS(eye_pos_scr),
-		mged_variables->mv_perspective
-		);
-#endif
+		      V3ARGS(view_state->vs_vop->vo_eye_pos),
+		      view_state->vs_vop->vo_perspective);
 
 	if( strcmp( bu_vls_addr(&old_str), bu_vls_addr(&str) ) == 0 )  {
 		bu_vls_free( &str );
@@ -202,61 +188,17 @@ vr_viewpoint_hook()
  *  XXX this should move to chgview.c when finished.
  */
 int
-f_pov(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	*argv[];
+cmd_pov(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		*argv[])
 {
-	quat_t		orient;
+	int	ret;
 
-	if(argc < 8){
-	  struct bu_vls vls;
+	if ((ret = vo_pov_cmd(view_state->vs_vop, interp, argc, argv)) != TCL_OK)
+		return ret;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help pov");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if( argc < 1+3+4+1+3+1 )  {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "pov: insufficient args, only got %d\n", argc);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	  return TCL_ERROR;
-	}
-
-#ifdef MGED_USE_VIEW_OBJ
-	view_state->vs_vop->vo_center[MDX] = -atof(argv[1]);
-	view_state->vs_vop->vo_center[MDY] = -atof(argv[2]);
-	view_state->vs_vop->vo_center[MDZ] = -atof(argv[3]);
-	orient[0] = atof(argv[4]);
-	orient[1] = atof(argv[5]);
-	orient[2] = atof(argv[6]);
-	orient[3] = atof(argv[7]);
-	quat_quat2mat(view_state->vs_vop->vo_rotation, orient);
-	view_state->vs_vop->vo_scale = atof(argv[8]);
-#else
-	view_state->vs_toViewcenter[MDX] = -atof(argv[1]);
-	view_state->vs_toViewcenter[MDY] = -atof(argv[2]);
-	view_state->vs_toViewcenter[MDZ] = -atof(argv[3]);
-	orient[0] = atof(argv[4]);
-	orient[1] = atof(argv[5]);
-	orient[2] = atof(argv[6]);
-	orient[3] = atof(argv[7]);
-	quat_quat2mat( view_state->vs_Viewrot, orient );
-	view_state->vs_Viewscale = atof(argv[8]);
-#endif
-	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
-	eye_pos_scr[Y] = atof(argv[10]);
-	eye_pos_scr[Z] = atof(argv[11]);
-	mged_variables->mv_perspective = atof(argv[12]);
-	new_mats();
-
+	mged_variables->mv_perspective = view_state->vs_vop->vo_perspective;
 	return TCL_OK;
 }
 

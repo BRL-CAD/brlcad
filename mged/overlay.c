@@ -77,11 +77,7 @@ cmd_overlay(ClientData	clientData,
 	}
 
 	vbp = rt_vlblock_init();
-#ifdef MGED_USE_VIEW_OBJ
 	ret = rt_uplot_to_vlist(vbp, fp, view_state->vs_vop->vo_scale * 0.01);
-#else
-	ret = rt_uplot_to_vlist( vbp, fp, view_state->vs_Viewscale * 0.01 );
-#endif
 	fclose(fp);
 	if( ret < 0 )  {
 		rt_vlblock_free(vbp);
@@ -124,13 +120,8 @@ char	**argv;
 
 	vbp = rt_vlblock_init();
 	MAT_IDN(mat);
-#ifdef MGED_USE_VIEW_OBJ
 	bn_mat_inv(mat, view_state->vs_vop->vo_rotation);
 	scale = view_state->vs_vop->vo_size / 100;		/* divide by # chars/screen */
-#else
-	bn_mat_inv( mat, view_state->vs_Viewrot );
-	scale = VIEWSIZE / 100;		/* divide by # chars/screen */
-#endif
 
 	for( i=1; i<argc; i++ )  {
 		struct solid	*s;

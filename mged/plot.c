@@ -139,7 +139,6 @@ char	**argv;
 	}
 
 	if( floating )  {
-#ifdef MGED_USE_VIEW_OBJ
 		pd_3space( fp,
 			-view_state->vs_vop->vo_center[MDX] - view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] - view_state->vs_vop->vo_scale,
@@ -147,15 +146,6 @@ char	**argv;
 			-view_state->vs_vop->vo_center[MDX] + view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDY] + view_state->vs_vop->vo_scale,
 			-view_state->vs_vop->vo_center[MDZ] + view_state->vs_vop->vo_scale );
-#else
-		pd_3space( fp,
-			-view_state->vs_toViewcenter[MDX] - view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDY] - view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDZ] - view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDX] + view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDY] + view_state->vs_Viewscale,
-			-view_state->vs_toViewcenter[MDZ] + view_state->vs_Viewscale );
-#endif
 		Dashing = 0;
 		pl_linmod( fp, "solid" );
 		FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
@@ -222,21 +212,13 @@ char	**argv;
 				case RT_VLIST_POLY_MOVE:
 				case RT_VLIST_LINE_MOVE:
 					/* Move, not draw */
-#ifdef MGED_USE_VIEW_OBJ
 					MAT4X3PNT( last, view_state->vs_vop->vo_model2view, *pt );
-#else
-					MAT4X3PNT( last, view_state->vs_model2view, *pt );
-#endif
 					continue;
 				case RT_VLIST_POLY_DRAW:
 				case RT_VLIST_POLY_END:
 				case RT_VLIST_LINE_DRAW:
 					/* draw */
-#ifdef MGED_USE_VIEW_OBJ
 					MAT4X3PNT(fin, view_state->vs_vop->vo_model2view, *pt);
-#else
-					MAT4X3PNT( fin, view_state->vs_model2view, *pt );
-#endif
 					VMOVE( start, last );
 					VMOVE( last, fin );
 					break;
@@ -412,21 +394,13 @@ char	**argv;
 	      case RT_VLIST_POLY_MOVE:
 	      case RT_VLIST_LINE_MOVE:
 		/* Move, not draw */
-#ifdef MGED_USE_VIEW_OBJ
 		MAT4X3VEC(last, view_state->vs_vop->vo_rotation, *pt);
-#else
-		MAT4X3VEC( last, view_state->vs_Viewrot, *pt );
-#endif
 		continue;
 	      case RT_VLIST_POLY_DRAW:
 	      case RT_VLIST_POLY_END:
 	      case RT_VLIST_LINE_DRAW:
 		/* draw.  */
-#ifdef MGED_USE_VIEW_OBJ
 		MAT4X3VEC(fin, view_state->vs_vop->vo_rotation, *pt);
-#else
-		MAT4X3VEC( fin, view_state->vs_Viewrot, *pt );
-#endif
 		break;
 	      }
 
