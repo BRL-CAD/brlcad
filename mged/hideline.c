@@ -36,6 +36,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
 

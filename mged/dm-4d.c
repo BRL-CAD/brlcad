@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
+#include "externs.h"
 #include "./solid.h"
 
 #include <gl/gl.h>		/* SGI IRIS library */

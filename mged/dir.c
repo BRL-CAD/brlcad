@@ -49,13 +49,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "./ged.h"
+#include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
-
-extern int	read(), strcmp();
-extern long	lseek();
-extern char	*malloc();
-extern void	exit(), free(), perror();
 
 #define BAD_EOF	(-1L)			/* eof_addr not set yet */
 

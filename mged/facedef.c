@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
+#include "externs.h"
 #include "./solid.h"
 
 extern int numargs;   			/* number of arguments */

@@ -18,6 +18,7 @@
 #include "mater.h"
 #include "./ged.h"
 #include "./dm.h"
+#include "externs.h"
 #include "./solid.h"
 
 typedef unsigned char u_char;

@@ -51,6 +51,7 @@ is different from the factory default.
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
+#include "externs.h"
 #include "./solid.h"
 
 extern void	perror();
