@@ -175,7 +175,7 @@ set mged_help_data(saveview)	{{file [args]}	{save view in file for RT}}
 set mged_help_data(sca)		{{sfactor} {scale by sfactor}}
 set mged_help_data(sed)		{{<path>}	{solid-edit named solid}}
 set mged_help_data(setview)	{{x y z}	{set the view given angles x, y, and z in degrees}}
-set mged_help_data(shader)	{{comb material [arg(s)]}	{assign materials (like 'mater')}}
+set mged_help_data(shader)	{{comb {shader_name {keyword value keyword value ...}}}	{assign shader using Tcl list format}}
 set mged_help_data(shells)	{{nmg_model}	{breaks model into seperate shells}}
 set mged_help_data(showmats)	{{path}	{show xform matrices along path}}
 set mged_help_data(size)	{{size}	{set view size}}
