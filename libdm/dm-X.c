@@ -37,11 +37,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
-
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-X.h"
+#include "solid.h"
 
 void     X_configure_window_shape();
 void     X_establish_perspective();
@@ -56,7 +56,6 @@ static int X_set_visual();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-static int	X_init();
 static int	X_open();
 static int	X_close();
 static int	X_drawBegin(), X_drawEnd();
@@ -69,7 +68,6 @@ static unsigned X_cvtvecs(), X_load();
 static int	X_setWinBounds(), X_debug();
 
 struct dm dm_X = {
-  X_init,
   X_open,
   X_close,
   X_drawBegin,
@@ -94,6 +92,7 @@ struct dm dm_X = {
   0,
   0,
   0,
+  0,
   0
 };
 
@@ -103,19 +102,39 @@ extern Tk_Window tkwin;
 struct x_vars head_x_vars;
 static int perspective_table[] = { 30, 45, 60, 90 };
 
+/*
+ *			X _ O P E N
+ *
+ * Fire up the display manager, and the display processor.
+ *
+ */
 static int
-X_init(dmp, argc, argv)
+X_open(dmp, argc, argv)
 struct dm *dmp;
 int argc;
 char *argv[];
 {
   static int count = 0;
+  int i;
+  XGCValues gcv;
+  XColor a_color;
+  Visual *a_visual;
+  int a_screen;
+  Colormap  a_cmap;
+  struct bu_vls str;
+  Display *tmp_dpy;
 
   /* Only need to do this once for this display manager */
   if(!count)
     (void)X_load_startup(dmp);
 
-  bu_vls_printf(&dmp->dm_pathName, ".dm_x%d", count++);
+  bu_vls_init_if_uninit(&dmp->dm_pathName);
+  bu_vls_init_if_uninit(&dmp->dm_initWinProc);
+  i = dm_process_options(dmp, argc, argv);
+  if(bu_vls_strlen(&dmp->dm_pathName) == 0)
+    bu_vls_printf(&dmp->dm_pathName, ".dm_x%d", count++);
+  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
+    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm_win");
 
   dmp->dm_vars = bu_calloc(1, sizeof(struct x_vars), "X_init: x_vars");
   ((struct x_vars *)dmp->dm_vars)->perspective_angle = 3;
@@ -128,31 +147,8 @@ char *argv[];
 
   BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
 
-  if(dmp->dm_vars)
-    return TCL_OK;
-
-  return TCL_ERROR;
-}
-
-/*
- *			X _ O P E N
- *
- * Fire up the display manager, and the display processor.
- *
- */
-static int
-X_open(dmp)
-struct dm *dmp;
-{
-  XGCValues gcv;
-  XColor a_color;
-  Visual *a_visual;
-  int a_screen;
-  Colormap  a_cmap;
-  struct bu_vls str;
-  Display *tmp_dpy;
-
-  bu_vls_init(&str);
+  if(!dmp->dm_vars)
+    return TCL_ERROR;
 
   ((struct x_vars *)dmp->dm_vars)->fontstruct = NULL;
 
@@ -164,8 +160,10 @@ struct dm *dmp;
    * Create the X drawing window by calling init_x which
    * is defined in xinit.tcl
    */
-  bu_vls_strcpy(&str, "init_x ");
-  bu_vls_printf(&str, "%s\n", bu_vls_addr(&dmp->dm_pathName));
+  bu_vls_init(&str);
+  bu_vls_printf(&str, "init_dm_win %s %s\n",
+		bu_vls_addr(&dmp->dm_initWinProc),
+		bu_vls_addr(&dmp->dm_pathName));
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
     bu_vls_free(&str);
@@ -259,26 +257,31 @@ static int
 X_close(dmp)
 struct dm *dmp;
 {
-  if(((struct x_vars *)dmp->dm_vars)->gc != 0)
-    XFreeGC(((struct x_vars *)dmp->dm_vars)->dpy,
-	    ((struct x_vars *)dmp->dm_vars)->gc);
+  if(((struct x_vars *)dmp->dm_vars)->dpy){
+    if(((struct x_vars *)dmp->dm_vars)->gc)
+      XFreeGC(((struct x_vars *)dmp->dm_vars)->dpy,
+	      ((struct x_vars *)dmp->dm_vars)->gc);
 
-  if(((struct x_vars *)dmp->dm_vars)->pix != 0)
-     Tk_FreePixmap(((struct x_vars *)dmp->dm_vars)->dpy,
-		   ((struct x_vars *)dmp->dm_vars)->pix);
+    if(((struct x_vars *)dmp->dm_vars)->pix)
+      Tk_FreePixmap(((struct x_vars *)dmp->dm_vars)->dpy,
+		    ((struct x_vars *)dmp->dm_vars)->pix);
 
-  /*XXX Possibly need to free the colormap */
+    /*XXX Possibly need to free the colormap */
+    if(((struct x_vars *)dmp->dm_vars)->cmap)
+      XFreeColormap(((struct x_vars *)dmp->dm_vars)->dpy,
+		    ((struct x_vars *)dmp->dm_vars)->cmap);
 
-  if(((struct x_vars *)dmp->dm_vars)->xtkwin != 0)
-    Tk_DestroyWindow(((struct x_vars *)dmp->dm_vars)->xtkwin);
+    if(((struct x_vars *)dmp->dm_vars)->xtkwin)
+      Tk_DestroyWindow(((struct x_vars *)dmp->dm_vars)->xtkwin);
+
+    if(BU_LIST_IS_EMPTY(&head_x_vars.l))
+      Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_X);
+  }
 
   if(((struct x_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
     BU_LIST_DEQUEUE(&((struct x_vars *)dmp->dm_vars)->l);
 
   bu_free(dmp->dm_vars, "X_close: x_vars");
-
-  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_X);
 
   return TCL_OK;
 }
