@@ -14,7 +14,7 @@
 #include "vmath.h"		/* BRLCAD Vector macros */
 #include "nurb.h"		/* BRLCAD Spline data structures */
 #include "raytrace.h"
-#include "../librt/debug.h"	/* rt_g.debug flag settings */
+#include "wdb.h"
 
 #include "./tea.h"		/* IEEE Data Structures */
 #include "./ducks.h"		/* Teapot Vertex data */
