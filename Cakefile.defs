@@ -130,8 +130,7 @@ set -S2 "/bin/sh"
 #	define	MTYPE	vax
 #	define	UNIXTYPE	BSD
 #	define	HAS_TCP	1
-/*	Uncomment the following line on Ultrix & 4.1 systems */
-/*#	define	CC_DEFS	-Dvoid=int
+/*	On Ultrix & 4.1 systems, #define	CC_DEFS	-Dvoid=int */
 #	define	LIBFB_OBJS	if_remote pkg if_ptty if_adage
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_ADAGE
 /*	At USNA, add -DGM256 to LIBFB_CONFIG */
