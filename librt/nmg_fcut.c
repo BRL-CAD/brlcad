@@ -231,6 +231,8 @@ struct vertexuse	*vu;
 		if( eu->vu_p == vu )  return eu;
 	}
 	rt_bomb("nmg_eu_with_vu_in_lu:  Unable to find vu!\n");
+	/* NOTREACHED */
+	return((struct edgeuse *)NULL);
 }
 
 /*
