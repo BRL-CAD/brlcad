@@ -10,7 +10,7 @@ DIR=`pwd`
 if test x$DIR = x; then DIR="mged.`machinetype.sh`"; fi
 touch version
 awk '	{	version = $1 + 1; }\
-END	{	printf "char version[] = \"@(#) BRL-CAD Release 3.0 Graphics Editor (MGED) Compilation %d", version > "vers.c";\
+END	{	printf "char version[] = \"@(#) BRL-CAD Release 3.1 Graphics Editor (MGED) Compilation %d", version > "vers.c";\
 		printf "%d\n", version > "version"; }' < version
 if test x`machinetype.sh -s` = xBSD
 then
