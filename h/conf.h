@@ -146,7 +146,6 @@
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_SYS_MMAN_H	1
 #	define HAVE_SBRK_DECL	1
-#	define HAVE_GETOPT_DECL	1
 #endif
 
 #if defined(__bsdi__)
