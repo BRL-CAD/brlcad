@@ -2323,7 +2323,7 @@ BU_EXTERN(int db_region_mat, (mat_t m, CONST struct db_i *dbip,
 BU_EXTERN(int db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
 				CONST struct region *rp, point_t p_min,
 				point_t p_max) );
-int db_string_to_path(struct db_full_path *pp, struct db_i *dbip, CONST char *str);
+int db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str);
 void db_full_path_init( struct db_full_path *pathp );
 void db_append_full_path( struct db_full_path *dest, const struct db_full_path *src );
 
@@ -2416,6 +2416,9 @@ BU_EXTERN(int db_delete, ( struct db_i *, struct directory *dp ) );
 BU_EXTERN(int db_zapper, ( struct db_i *, struct directory *dp, int start ) );
 
 /* db_tree.c */
+void db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp);
+void db_free_db_tree_state( struct db_tree_state *tsp );
+void db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip );
 BU_EXTERN(struct combined_tree_state *db_new_combined_tree_state,
 	(CONST struct db_tree_state *tsp, CONST struct db_full_path *pathp));
 BU_EXTERN(struct combined_tree_state *db_dup_combined_tree_state,
@@ -2429,14 +2432,42 @@ BU_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
 	CONST struct db_full_path *pathp, CONST struct rt_comb_internal *comb));
 BU_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST union tree *tp));
+int db_apply_state_from_one_member( struct db_tree_state *tsp,
+	struct db_full_path *pathp, const char *cp, int sofar,
+	const union tree *tp );
+union tree *db_find_named_leaf( union tree *tp, const char *cp );
+union tree *db_find_named_leafs_parent( int *side, union tree *tp, const char *cp );
+void db_tree_del_lhs( union tree *tp );
+void db_tree_del_rhs( union tree *tp );
+int db_tree_del_dbleaf(union tree **tp, const char *cp);
+void db_tree_mul_dbleaf( union tree *tp, const mat_t mat );
+void db_tree_funcleaf(
+	struct db_i		*dbip,
+	struct rt_comb_internal	*comb,
+	union tree		*comb_tree,
+	void			(*leaf_func)(),
+	genptr_t		user_ptr1,
+	genptr_t		user_ptr2,
+	genptr_t		user_ptr3 );
+int
+db_follow_path(
+	struct db_tree_state		*tsp,
+	struct db_full_path		*total_path,
+	CONST struct db_full_path	*new_path,
+	int				noisy,
+	int				depth );
 BU_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST char *orig_str, int noisy));
 BU_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
 	struct db_full_path *pathp,
 	struct combined_tree_state **region_start_statepp, genptr_t client_data));
 BU_EXTERN(union tree *db_dup_subtree, (CONST union tree	*tp));
+void db_ck_tree( const union tree *tp );
 BU_EXTERN(void db_free_tree, (union tree *tp));
+void db_left_hvy_node( union tree *tp );
 BU_EXTERN(void db_non_union_push, (union tree *tp));
+int db_count_tree_nodes( const union tree *tp, int count );
+int db_is_tree_all_unions( const union tree *tp );
 BU_EXTERN(int db_count_subtree_regions, (CONST union tree *tp));
 BU_EXTERN(int db_tally_subtree_regions, (union tree *tp,
 	union tree **reg_trees, int cur, int lim));
@@ -2463,9 +2494,8 @@ BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
-BU_EXTERN(union tree		*db_find_named_leaf, (union tree *tp,
-				CONST char *cp));
-int db_tree_del_dbleaf(union tree **tp, const char *cp);
+int db_region_mat( mat_t m, const struct db_i *dbip, const char *name );
+/* XXX db_shader_mat, should be called rt_shader_mat */
 
 /* dir.c */
 extern struct rt_i *rt_dirbuild( const char *filename, char *buf, int len );

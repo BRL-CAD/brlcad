@@ -243,7 +243,7 @@ CONST struct db_full_path	*pathp;
  *	 0	OK
  */
 int
-db_string_to_path(struct db_full_path *pp, struct db_i *dbip, CONST char *str)
+db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
 	register char		*cp;
 	register char		*slashp;
