@@ -60,10 +60,11 @@ main(argc, argv)
 int	argc;
 char	*argv[];
 {
-	char		*dot, *fig_file;
+	char		*dot;
 	int		i, ret;
 	register int	c;
 	double		percent;
+	struct rt_vls	fig_file;
 
 #ifdef BSD
 	setlinebuf( stderr );
@@ -161,27 +162,30 @@ rt_g.debug |= DEBUG_MEM_FULL;
 	db_scan(dbip, (int (*)())db_diradd, 1);
 
 	/* Create .fig file name and open it. */
-	fig_file = rt_malloc(sizeof(prefix) + sizeof(argv[0] + 4), "st");
+	rt_vls_init( &fig_file );
 	/* Ignore leading path name. */
 	if ((dot = strrchr(argv[0], '/')) != (char *)NULL) {
 		if (prefix)
-			strcat(strcpy(fig_file, prefix), 1 + dot);
-		else
-			strcpy(fig_file, 1 + dot);
+			rt_vls_strcpy( &fig_file, prefix );
+		rt_vls_strcat( &fig_file, dot+1 );
 	} else {
 		if (prefix)
-			strcat(strcpy(fig_file, prefix), argv[0]);
-		else
-			strcpy(fig_file, argv[0]);
+			rt_vls_strcpy( &fig_file, prefix );
+		rt_vls_strcat( &fig_file, argv[0] );
 	}
 
 	/* Get rid of any file name extension (probably .g). */
-	if ((dot = strrchr(fig_file, '.')) != (char *)NULL)
+	if ((dot = strrchr(rt_vls_addr(&fig_file), '.')) != (char *)NULL)  {
 		*dot = (char)NULL;
-	strcat(fig_file, ".fig");	/* Add required Jack suffix. */
+		/* Recalculate shorter VLS length.  Ugh. */
+		rt_vls_trunc( &fig_file, dot - rt_vls_addr(&fig_file) );
+	}
+	rt_vls_strcat( &fig_file, ".fig");	/* Add required Jack suffix. */
 
-	if ((fp_fig = fopen(fig_file, "w")) == NULL)
-		perror(fig_file);
+	if ((fp_fig = fopen(rt_vls_addr(&fig_file), "w")) == NULL)  {
+		perror(rt_vls_addr(&fig_file));
+		return 2;
+	}
 	fprintf(fp_fig, "figure {\n");
 	rt_vls_init(&base_seg);		/* .fig figure file's main segment. */
 
@@ -196,7 +200,7 @@ rt_g.debug |= DEBUG_MEM_FULL;
 	fprintf(fp_fig, "\troot=%s_seg.base;\n", rt_vls_addr(&base_seg));
 	fprintf(fp_fig, "}\n");
 	fclose(fp_fig);
-	rt_free(fig_file, "st");
+	rt_vls_free(&fig_file);
 	rt_vls_free(&base_seg);
 
 	percent = 0;
