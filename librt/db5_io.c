@@ -680,14 +680,14 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 /*
  *			D B 5 _ E X P O R T _ A T T R I B U T E S
  *
- *  One attempt at encoding attribute-value information in the external
- *  format.
- *  This may not be the best or only way to do it, but it gets things
- *  started, for testing.
+ *  Encode the attribute-value pair information into the external
+ *  on-disk format.
  *
  *  The on-disk encoding is:
  *
  *	aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
+ *
+ *  'ext' is initialized on behalf of the caller.
  */
 void
 db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_set *avs )
@@ -823,6 +823,7 @@ rt_db_cvt_to_external5(
 
 	RT_CK_DB_INTERNAL( ip );
 	if(dbip) RT_CK_DBI(dbip);	/* may be null */
+	BU_INIT_EXTERNAL( &body );
 
 	/* Scale change on export is 1.0 -- no change */
 	if( ip->idb_meth->ft_export5( &body, ip, conv2mm, dbip ) < 0 )  {
