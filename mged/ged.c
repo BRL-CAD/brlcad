@@ -281,6 +281,15 @@ char **argv;
 	cur_sigint = signal( SIGINT, SIG_IGN );		/* sample */
 	(void)signal( SIGINT, cur_sigint );		/* restore */
 
+	if( !classic_mged ) {
+		pid_t pid;
+
+		pid = fork();
+		if( pid > 0 ) {
+			exit( 0 );
+		}
+	}
+
 #if 1
 	/* If multiple processors might be used, initialize for it.
 	 * Do not run any commands before here.
@@ -458,8 +467,6 @@ char **argv;
 	    get_attached();
 #endif
 	  } else {
-
-	    if ((fork()) == 0){
 	      struct bu_vls vls;
 	      int status;
 
@@ -493,10 +500,6 @@ char **argv;
 	      /* close stdin */
 	      (void)close(0);
 #endif
-	    }else{
-	      exit(0);
-	    }
-
 	    bu_add_hook(&bu_bomb_hook_list, mged_bomb_hook, GENPTR_NULL);
 	  }
 	}
