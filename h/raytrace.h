@@ -74,7 +74,7 @@
  */
 
 /* Acquire storage for a given struct, eg, GETSTRUCT(ptr,structname); */
-#if __STDC__ && !alliant
+#if __STDC__ && !alliant && !apollo
 # define GETSTRUCT(p,str) \
 	p = (struct str *)rt_calloc(1,sizeof(struct str), "getstruct " #str)
 #else
@@ -1143,7 +1143,7 @@ extern CONST double rt_inv255;
 /*
  *  System library routines used by the RT library.
  */
-#if __STDC__
+#if __STDC__ && !apollo
 /*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
 #	include <stdlib.h>
 #	include <stddef.h>

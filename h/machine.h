@@ -152,6 +152,30 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
+#ifdef apollo
+/********************************
+ *				*
+ *  Apollo			*
+ *  with SR 10			*
+ *				*
+ ********************************/
+#if __STDC__
+#define const	/**/		/* Does not support this keyword */
+#endif
+
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	static		/* static|auto, for serial|parallel cpu */
+#define FAST	LOCAL		/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define RES_INIT(ptr)		;
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#define MAX_PSW		1	/* only one processor, max */
+#define DEFAULT_PSW	1
+
+#endif
 
 #ifndef LOCAL
 /********************************

@@ -23,7 +23,7 @@
 #ifndef EXTERNS_H_SEENYET
 #define EXTERNS_H_SEENYET
 
-#if __STDC__
+#if __STDC__ && !apollo
 #	include <stdlib.h>
 #else
 
