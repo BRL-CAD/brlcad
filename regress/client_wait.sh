@@ -20,8 +20,8 @@ fi
 
 set -- $args
 
-BEGIN_HOUR=15
-END_HOUR=9
+BEGIN_HOUR=13
+END_HOUR=24
 MAILUSER=morrison@arl.army.mil
 QUIET=0
 SLEEP_DELTA=10
