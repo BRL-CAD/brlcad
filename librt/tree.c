@@ -1166,6 +1166,33 @@ binary:
 }
 
 /*
+ *			R T _ F R  _ T R E E
+ */
+HIDDEN void
+rt_fr_tree( tp )
+register union tree *tp;
+{
+	register union tree *low;
+
+	switch( tp->tr_op )  {
+	case OP_SOLID:
+		rt_free( (char *)tp, "leaf tree union");
+		return;
+	case OP_SUBTRACT:
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_XOR:
+		rt_fr_tree( tp->tr_b.tb_left );
+		rt_fr_tree( tp->tr_b.tb_right );
+		rt_free( (char *)tp, "binary tree union");
+		return;
+	default:
+		rt_log("rt_fr_tree: bad op x%x\n", tp->tr_op);
+		return;
+	}
+}
+
+/*
  *  			S O L I D _ B I T F I N D E R
  *  
  *  Used to walk the boolean tree, setting bits for all the solids in the tree
@@ -1207,7 +1234,8 @@ register int regbit;
  *  			R T _ P R E P
  *  
  *  This routine should be called just before the first call to rt_shootray().
- *  Right now, it should only be called ONCE per execution.
+ *  It should only be called ONCE per execution, unless rt_clean() is
+ *  called inbetween.
  */
 void
 rt_prep(rtip)
@@ -1277,6 +1305,76 @@ register struct rt_i *rtip;
 
 	/* Partition space */
 	rt_cut_it(rtip);
+}
+
+/*
+ *			R T _ C L E A N
+ *
+ *  Release all the dynamic storage associated with a particular rt_i
+ *  structure, except for the database directory.
+ */
+rt_clean( rtip )
+register struct rt_i *rtip;
+{
+	register struct region *regp;
+	register struct soltab *stp;
+
+	if( rtip->rti_db )  {
+		rt_free( (char *)rtip->rti_db, "in-core database");
+		rtip->rti_db = (union record *)0;
+	}
+
+	/*
+	 *  Clear out the solid table
+	 */
+	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; )  {
+		register struct soltab *nextstp = stp->st_forw;
+
+		rt_free( (char *)stp->st_regions, "st_regions bitv" );
+		if( stp->st_specific )  {
+			/* REALLY need a solid-specific clean routine! */
+			rt_free( (char *)stp->st_specific, "st_specific" );
+		}
+		stp->st_name = (char *)0;	/* was ptr to directory */
+		rt_free( (char *)stp, "struct soltab");
+		stp = nextstp;			/* advance to next one */
+	}
+	rtip->HeadSolid = SOLTAB_NULL;
+
+	/*  
+	 *  Clear out the region table
+	 */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
+		register struct region *nextregp = regp->reg_forw;
+
+		rt_fr_tree( regp->reg_treetop );
+		rt_free( regp->reg_name, "region name str");
+		rt_free( (char *)regp, "struct region");
+		regp = nextregp;
+	}
+	rtip->HeadRegion = REGION_NULL;
+
+	/* Clean out the array of pointers to regions */
+	rt_free( (char *)rtip->Regions, "rtip->Regions[]" );
+	rtip->Regions = (struct region **)0;
+
+	/* Free space partitions */
+	rt_fr_cut( &(rtip->rti_CutHead) );
+	bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
+	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
+	rt_fr_cut( &(rtip->rti_inf_box) );
+	bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
+	VMOVE( rtip->rti_inf_box.bn.bn_min, rtip->mdl_min );
+	VMOVE( rtip->rti_inf_box.bn.bn_max, rtip->mdl_max );
+
+	/* Make no assumptions about next size of model */
+	VSETALL( rtip->mdl_min, -0.1 );
+	VSETALL( rtip->mdl_max,  0.1 );
+
+	/* Free animation structures */
+	rt_fr_anim(rtip);
+
+	rtip->needprep = 1;
 }
 
 /*
