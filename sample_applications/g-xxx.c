@@ -41,7 +41,7 @@ static char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "../librt/debug.h"
+#include "debug.h"
 
 RT_EXTERN( void comb_func , ( struct db_i *dbip , struct directory *dp ) );
 RT_EXTERN( void solid_func , ( struct db_i *dbip , struct directory *dp ) );
