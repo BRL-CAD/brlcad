@@ -364,13 +364,9 @@ register struct partition *pp;
 	}
 	if( ps->reflect > 0 )  {
 		/* Mirror reflection */
+		sub_ap = *ap;		/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
-		sub_ap.a_hit = colorview;
-		sub_ap.a_miss = hit_nothing;
-		sub_ap.a_rt_i = ap->a_rt_i;
 		sub_ap.a_onehit = 1;
-		sub_ap.a_rbeam = ap->a_rbeam;
-		sub_ap.a_diverge = ap->a_diverge;
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 		f = 2 * VDOT( to_eye, hitp->hit_normal );
 		VSCALE( work, hitp->hit_normal, f );
@@ -400,7 +396,9 @@ do_inside:
 		sub_ap.a_hit =  phg_rhit;
 		sub_ap.a_miss = phg_rmiss;
 		if( rt_shootray( &sub_ap ) == 0 )  {
-			rt_log("phong: Refracted ray missed, lvl=%d\n",sub_ap.a_level );
+			rt_log("phong: Refracted ray missed %s, lvl=%d\n",
+				pp->pt_inseg->seg_stp->st_name,
+				sub_ap.a_level );
 			goto finish;		/* abandon hope */
 		}
 		/* NOTE: phg_rhit returns EXIT Point in sub_ap.a_uvec,
@@ -420,7 +418,8 @@ do_inside:
 		) )  {
 			/* Reflected internally -- keep going */
 			if( (++sub_ap.a_level)%100 > MAX_IREFLECT )  {
-				rt_log("Excessive internal reflection (x%d,y%d, lvl%d)\n",
+				rt_log("phong: %s Excessive internal reflection (x%d, y%d, lvl=%d)\n",
+					pp->pt_inseg->seg_stp->st_name,
 					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
 				if(rt_g.debug) {
 					VSET( ap->a_color, 0, 1, 0 );	/* green */
@@ -475,7 +474,7 @@ struct partition *PartHeadp;
 	register struct partition *pp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+		if( pp->pt_outhit->hit_dist > 0.01 )  break;
 	if( pp == PartHeadp )  {
 		rt_log("phg_rhit:  no hit out front?\n");
 		return(0);
@@ -483,8 +482,9 @@ struct partition *PartHeadp;
 
 	hitp = pp->pt_inhit;
 	if( !NEAR_ZERO(hitp->hit_dist, 10) )  {
-		rt_log("phg_rhit:   inhit not near zero!\n");
+		rt_log("phg_rhit:   inhit %g not near zero!\n", hitp->hit_dist);
 		rt_pr_hit("inhit", hitp);
+		rt_pr_hit("outhit", pp->pt_outhit);
 		return(0);
 	}
 
