@@ -142,7 +142,7 @@ for LAST in \
 	html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
 	html/ReleaseNotes/Rel5.0/Summary pro-engineer \
 	pro-engineer/text pro-engineer/sgi_elf2 pro-engineer/sun4_solaris \
-	pro-engineer/text/fullhelp pro-engineer/text/menus
+	pro-engineer/text/fullhelp pro-engineer/text/menus sample_applications
 do
 	if test ! -d $BASEDIR/$LAST
 	then
