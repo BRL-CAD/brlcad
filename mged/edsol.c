@@ -9007,7 +9007,7 @@ char **argv;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel put_sedit");
+    bu_vls_printf(&vls, "helpdevel put_sed");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -9087,7 +9087,7 @@ char **argv;
 
   if(argc != 1){
     bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helpdevel reset_edit_solid");
+    bu_vls_printf(&vls, "helpdevel sed_reset");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -9191,7 +9191,7 @@ char **argv;
 
 	if (argc != 1) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helpdevel reset_edit_matrix");
+		bu_vls_printf(&vls, "helpdevel oed_reset");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
