@@ -63,6 +63,10 @@ static char *nmg_state_names[] = {
 #define NMG_V_ASSESSMENT_LONE		16
 #define NMG_V_ASSESSMENT_COMBINE(_p,_n)	(((_p)<<2)|(_n))
 
+/* Extract previous and next assessments from combined version */
+#define NMG_V_ASSESSMENT_PREV(_a)	(((_a)>>2)&3)
+#define NMG_V_ASSESSMENT_NEXT(_a)	((_a)&3)
+
 static char *nmg_v_assessment_names[17] = {
 	"Left,Left",
 	"Left,Right",
@@ -237,8 +241,9 @@ struct vertexuse	*vu;
  *  So, an alternative formulation is to compute gamma = atan2(-x,-y),
  *  and then theta = gamma + pi.  Now, any error will occur in the
  *  vicinity of theta = 0, which can be handled much more readily.
- *  If theta is negative, set it to zero.
- *  If theta is greater than two pi, set it to two pi.
+ *
+ *  If theta is negative, or greater than two pi,
+ *  wrap it around.
  *  These conditions only occur if there are problems in atan2().
  *
  *  Returns -
@@ -262,9 +267,13 @@ vect_t	y_dir;
 	gamma = atan2( yproj, xproj );	/* -pi..+pi */
 	ang = rt_pi + gamma;		/* 0..+2pi */
 	if( ang < 0 )  {
-		return 0;
+rt_log("angle = %e < 0, setting to %e (%g deg)\n",
+ang, rt_twopi + ang, (rt_twopi + ang) * rt_radtodeg );
+		return rt_twopi + ang;
 	} else if( ang > rt_twopi )  {
-		return rt_twopi;
+rt_log("angle = %e > 2pi, setting to %e (%g deg)\n",
+ang, ang - rt_twopi, (ang - rt_twopi) * rt_radtodeg );
+		return ang - rt_twopi;
 	}
 	return ang;
 }
@@ -286,35 +295,93 @@ vect_t	y_dir;
  *	0.0 if unable to compute 'vec'
  */
 double
-nmg_vu_angle_measure( vu, x_dir, y_dir )
+nmg_vu_angle_measure( vu, x_dir, y_dir, assessment )
 struct vertexuse	*vu;
 vect_t			x_dir;
 vect_t			y_dir;
+int			assessment;
 {	
 	struct loopuse	*lu;
 	struct edgeuse	*this_eu;
 	struct edgeuse	*prev_eu;
 	vect_t		vec;
 	fastf_t		ang;
+	int		entry_ass;
 
 	NMG_CK_VERTEXUSE( vu );
 	if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
 		return 0;		/* Unable to compute 'vec' */
 	}
+
+	/*
+	 *  For consistency, if entry edge is ON the ray,
+	 *  force the angles to be exact, don't compute them.
+	 */
+	entry_ass = NMG_V_ASSESSMENT_PREV( assessment );
+	if( entry_ass == NMG_E_ASSESSMENT_ON_FORW )  {
+rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=0\n");
+		return 0;		/* zero angle */
+	}
+	if( entry_ass == NMG_E_ASSESSMENT_ON_REV )  {
+rt_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=180\n");
+		return rt_pi;		/* 180 degrees */
+	}
+
+	/*
+	 *  Compute the angle
+	 */
 	lu = nmg_lu_of_vu(vu);
 	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
 	prev_eu = this_eu;
 	do {
 		prev_eu = RT_LIST_PLAST_CIRC( edgeuse, prev_eu );
 		if( prev_eu == this_eu )  {
+rt_log("nmg_vu_angle_measure: prev eu is this eu, ang=0\n");
 			return 0;	/* Unable to compute 'vec' */
 		}
 		/* Skip any edges that stay on this vertex */
 	} while( prev_eu->vu_p->v_p == this_eu->vu_p->v_p );
 	VSUB2( vec, prev_eu->vu_p->v_p->vg_p->coord, vu->v_p->vg_p->coord );
 	ang = rt_angle_measure( vec, x_dir, y_dir );
-rt_log("ang=%g, vec=(%g,%g,%g), x=(%g,%g,%g), y=(%g,%g,%g)\n",
- ang*rt_radtodeg, V3ARGS(vec), V3ARGS(x_dir), V3ARGS(y_dir) );
+rt_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*rt_radtodeg);
+
+	/*
+	 *  Since the entry edge is not on the ray, ensure the
+	 *  angles are not exactly 0 or pi.
+	 */
+	if( ang == 0 )  {
+		if( entry_ass == NMG_E_ASSESSMENT_RIGHT )  {
+			ang = SMALL_FASTF;
+		} else {
+			/* Assuming NMG_E_ASSESSMENT_LEFT */
+			ang = rt_twopi;
+		}
+	} else if( ang == rt_pi )  {
+		if( entry_ass == NMG_E_ASSESSMENT_RIGHT )  {
+			ang = rt_pi - SMALL_FASTF;
+		} else {
+			ang = rt_pi + SMALL_FASTF;
+		}
+	}
+
+	/*
+	 *  Also, ensure computed angle and topological assessment agree
+	 *  about which side of the ray this edge is on.
+	 */
+	if( ang > rt_pi )  {
+		if( entry_ass != NMG_E_ASSESSMENT_LEFT )  {
+			rt_log("*** ERROR topology/geometry conflict, ang=%e, ass=%s\n",
+				ang*rt_radtodeg,
+				nmg_e_assessment_names[entry_ass] );
+		}
+	} else if( ang < rt_pi )  {
+		if( entry_ass != NMG_E_ASSESSMENT_RIGHT )  {
+			rt_log("*** ERROR topology/geometry conflict, ang=%e, ass=%s\n",
+				ang*rt_radtodeg,
+				nmg_e_assessment_names[entry_ass] );
+		}
+	}
+rt_log("ang=%g (%e), vec=(%g,%g,%g)\n", ang*rt_radtodeg, ang*rt_radtodeg, V3ARGS(vec) );
 	return ang;
 }
 
@@ -524,7 +591,7 @@ rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
 		vs[nvu].vu = rs->vu[i];
 		/* x_dir is -dir, y_dir is -left */
 		vs[nvu].vu_angle = nmg_vu_angle_measure( rs->vu[i],
-			rs->ang_x_dir, rs->ang_y_dir ) * rt_radtodeg;
+			rs->ang_x_dir, rs->ang_y_dir, ass ) * rt_radtodeg;
 		/* Search for loopuse table entry */
 		for( l = 0; l < nloop; l++ )  {
 			if( ls[l].lu == lu )  goto got_loop;
@@ -563,7 +630,7 @@ got_loop:
 	/* Copy new vu's back to main array */
 	for( i=0; i < nvu; i++ )  {
 		rs->vu[start+i] = vs[i].vu;
-		rt_log(" vu[%]=x%x, v=x%x\n",
+		rt_log(" vu[%d]=x%x, v=x%x\n",
 			start+i, rs->vu[start+i], rs->vu[start+i]->v_p );
 	}
 	return start+nvu;
@@ -1020,9 +1087,10 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 		NMG_CK_LOOPUSE(prev_lu);
 		if( lu->l_p == prev_lu->l_p )  {
 			/* Same loop, cut into two */
-rt_log("nmg_cut_loop\n");
+rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
 			nmg_cut_loop( prev_vu, vu );
 rt_log("After CUT, the final loop: ");
+nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
 nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 			break;
 		}
