@@ -8,6 +8,9 @@
  *  advantage of centralizing the struct timeval stuff.
  */
 
+#if defined(i386)
+#	define BSD
+#endif
 #if defined(BSD)
 #	include <sys/types.h>	/* for fd_set macros */
 #endif
