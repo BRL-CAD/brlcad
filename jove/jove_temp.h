@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  19:33:24  mike
+ * Changed VMUNIX to !defined(pdp11)
+ * 
  * Revision 2.3  91/08/30  17:39:55  mike
  * No symbols after #else
  * 

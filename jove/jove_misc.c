@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.6  91/08/30  18:59:49  mike
+ * Modifications for clean compilation on the XMP
+ * 
  * Revision 2.5  91/08/30  17:54:37  mike
  * Changed #include directives to distinguish between local and system header
  * files.

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  19:41:36  mike
+ * Added ^Xe to run cake, like ^X^E runs make.
+ * 
  * Revision 2.2  91/08/30  17:54:33  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -28,6 +31,9 @@ static char RCSid[] = "@(#)$Header$";
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  19:41:36  mike
+ * Added ^Xe to run cake, like ^X^E runs make.
+ * 
  * Revision 2.2  91/08/30  17:54:33  mike
  * Changed #include directives to distinguish between local and system header
  * files.

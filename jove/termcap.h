@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  88/03/10  05:24:49  phil
+ * ignore ll if li != winsize
+ * 
  * Revision 2.0  84/12/26  16:50:05  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 

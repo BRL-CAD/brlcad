@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  91/08/30  18:11:07  mike
+ * Made explicit that termcap.h to be used is the local version
+ * 
  * Revision 2.4  91/08/30  17:54:39  mike
  * Changed #include directives to distinguish between local and system header
  * files.

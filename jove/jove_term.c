@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.6  91/08/30  20:24:18  mike
+ * global var "ospeed" clashed with some library on the Stardent.
+ * 
  * Revision 2.5  91/08/30  17:54:40  mike
  * Changed #include directives to distinguish between local and system header
  * files.

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  19:47:04  mike
+ * Stardent ANSI C
+ * 
  * Revision 2.3  91/08/30  18:46:09  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
  * 

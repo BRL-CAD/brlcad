@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  87/05/05  21:08:18  dpk
+ * Removed reference to _sobuf.
+ * 
  * Revision 2.0  84/12/26  16:44:29  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 

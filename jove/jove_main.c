@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.16  91/08/30  20:24:48  mike
+ * Added !defined(SYS5) protection around some BSD ioctls
+ * 
  * Revision 2.15  91/08/30  19:28:59  mike
  * Added BRL-specific identification
  * 

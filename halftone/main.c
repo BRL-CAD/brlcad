@@ -54,6 +54,9 @@ static char rcsid[] = "$Header$";
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 2.5  91/09/23  05:47:40  mike
+ * Eliminated prototype warning on atof()
+ * 
  * Revision 2.4  91/07/27  01:58:57  mike
  * Removed ^X from end of #include directive.  IBM objects, strenuously.
  * 

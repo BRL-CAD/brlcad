@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.6  91/09/23  03:08:17  mike
+ * Eliminated return / return(expr) warning
+ * 
  * Revision 2.5  91/08/30  18:59:47  mike
  * Modifications for clean compilation on the XMP
  * 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  18:59:46  mike
+ * Modifications for clean compilation on the XMP
+ * 
  * Revision 2.3  91/08/30  18:11:00  mike
  * Made explicit that termcap.h to be used is the local version
  * 

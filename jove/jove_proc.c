@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.10  91/09/23  03:16:45  mike
+ * Eliminated return / return(expr) warning.
+ * Removed some dead code
+ * 
  * Revision 2.9  91/09/23  02:58:55  mike
  * gldav() is not a BSD system call.
  * 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/09/23  03:15:30  mike
+ * two  return / return(expr) warnings
+ * 
  * Revision 2.3  91/08/30  19:17:49  mike
  * Stardent ANSI lint
  * 

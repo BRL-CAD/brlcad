@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  18:59:44  mike
+ * Modifications for clean compilation on the XMP
+ * 
  * Revision 2.2  91/08/30  18:46:02  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
  * 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.11  91/08/30  22:56:06  mike
+ * __CRAY1 too
+ * 
  * Revision 2.10  91/08/30  22:37:07  mike
  * Fixed in-core buffering to operate on the array subscripts, rather than
  * a (char *) pointer, as this is more portable, and avoids CRAY problems.

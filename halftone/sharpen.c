@@ -39,6 +39,9 @@ extern double Beta;
  *	Christopher T. Johnson
  *
  * $Log$
+ * Revision 2.4  91/08/30  00:26:43  mike
+ * Stardent ANSI C
+ * 
  * Revision 2.3  91/01/03  23:01:09  cjohnson
  * Added range checking, to limit values to 0..255
  * 
