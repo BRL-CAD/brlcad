@@ -306,26 +306,32 @@ ibm_normalized:
 			word = *((float *)in);
 		else
 #endif
-			word  = (in[0]<<56) | (in[1]<<48) | (in[2]<<40) | (in[3]<<32) |
-				(in[4]<<24) | (in[5]<<16) | (in[6]<<8) | in[7];
+			word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
+				(((long)in[2])<<40) | (((long)in[3])<<32) |
+				(((long)in[4])<<24) | (((long)in[5])<<16) |
+				(((long)in[6])<<8) | ((long)in[7]);
 		in += 8;
 
 		if( word == 0 )
 			OUT_IEEE_ZERO;
 		exp = (word >> 48) & 0x7FFF;
-		signbit = word & 0x8000000000000000;
+		signbit = word & 0x8000000000000000L;
 #ifdef redundant
 		if( exp <= 020001 || exp >= 060000 )
 			OUT_IEEE_NAN;
 #endif
 		exp += 1023 - 040000 - 1;
 		if( (exp & ~0x7FF) != 0 )  {
-			fprintf(stderr,"htond:  Cray exponent too large\n");
+			fprintf(stderr,"htond:  Cray exponent too large on x%x\n", word);
 			OUT_IEEE_NAN;
 		}
 
-		word = ((word & 0x00007FFFFFFFFFFF) << (15-11+1)) |
-			signbit | (exp<<(64-12));
+#if defined(CRAY2) && defined(ROUNDING)
+		/* Cray-2 seems to round down, XMP rounds up */
+		word += 1;
+#endif
+		word = ((word & 0x00007FFFFFFFFFFFL) << (15-11+1)) |
+			signbit | (((long)exp)<<(64-12));
 
 		*out++ = word>>56;
 		*out++ = word>>48;
@@ -583,23 +589,26 @@ ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 			word = *((float *)in);
 		else
 #endif
-			word  = (in[0]<<56) | (in[1]<<48) | (in[2]<<40) | (in[3]<<32) |
-				(in[4]<<24) | (in[5]<<16) | (in[6]<<8) | in[7];
+			word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
+				(((long)in[2])<<40) | (((long)in[3])<<32) |
+				(((long)in[4])<<24) | (((long)in[5])<<16) |
+				(((long)in[6])<<8) | ((long)in[7]);
 		in += 8;
 
 		exp = (word>>(64-12)) & 0x7FF;
-		signbit = word & 0x8000000000000000;
+		signbit = word & 0x8000000000000000L;
 		if( exp == 0 )  {
 			word = 0;
 			goto cray_out;
 		}
 		if( exp == 0x7FF )  {
-			word = 067777<<48;	/* Cray out of range */
+			word = 067777L<<48;	/* Cray out of range */
 			goto cray_out;
 		}
 		exp += 040000 - 1023 + 1;
-		word = ((word & 0x000FFFFFFFFFFFFF) >> (15-11+1)) |
-			0x0000800000000000 | signbit | (exp<<(64-16));
+		word = ((word & 0x000FFFFFFFFFFFFFL) >> (15-11+1)) |
+			0x0000800000000000L | signbit |
+			(((long)exp)<<(64-16));
 
 cray_out:
 		*out++ = word>>56;
