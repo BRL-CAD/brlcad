@@ -25,7 +25,6 @@
 
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
 
 extern FILE	*outfp;
 extern int	version;
@@ -35,9 +34,119 @@ extern double	getdouble();
 extern int	sol_total, sol_work;
 
 #define PI	3.14159265358979323846264	/* Approx */
+#define	DEG2RAD	0.0174532925199433
 
-char	scard[132];
+char	scard[132];			/* Solid card buffer area */
 
+/*
+ *			G E T S O L D A T A
+ *
+ *  Obtain 'num' data items from input card(s).
+ *  The first input card is already in global 'scard'.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+getsoldata( dp, num, solid_num )
+double	*dp;
+int	num;
+int	solid_num;
+{
+	int	cd;
+	double	*fp;
+	int	i;
+	int	j;
+
+	fp = dp;
+	for( cd=1; num > 0; cd++ )  {
+		if( cd != 1 )  {
+			if( getline( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
+				printf("too few cards for solid %d\n",
+					solid_num);
+				return(-1);
+			}
+			/* continuation card
+			 * solid type should be blank 
+			 */
+			if( (version==5 && scard[5] != ' ' ) ||
+			    (version==4 && scard[3] != ' ' ) )  {
+				printf("solid %d (continuation) card %d non-blank\n",
+					solid_num, cd);
+				return(-1);
+			}
+		}
+
+		if( num < 6 )
+			j = num;
+		else
+			j = 6;
+
+		for( i=0; i<j; i++ )  {
+			*fp++ = getdouble( scard, 10+i*10, 10 );
+		}
+		num -= j;
+	}
+	return(0);
+}
+
+/*
+ *			G E T X S O L D A T A
+ *
+ *  Obtain 'num' data items from input card(s).
+ *  All input cards must be freshly read.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	failure
+ */
+int
+getxsoldata( dp, num, solid_num )
+double	*dp;
+int	num;
+int	solid_num;
+{
+	int	cd;
+	double	*fp;
+	int	i;
+	int	j;
+
+	fp = dp;
+	for( cd=1; num > 0; cd++ )  {
+		if( getline( scard, sizeof(scard), "x solid card" ) == EOF )  {
+			printf("too few cards for solid %d\n",
+				solid_num);
+			return(-1);
+		}
+		if( cd != 1 )  {
+			/* continuation card
+			 * solid type should be blank 
+			 */
+			if( (version==5 && scard[5] != ' ' ) ||
+			    (version==4 && scard[3] != ' ' ) )  {
+				printf("solid %d (continuation) card %d non-blank\n",
+					solid_num, cd);
+				return(-1);
+			}
+		}
+
+		if( num < 6 )
+			j = num;
+		else
+			j = 6;
+
+		for( i=0; i<j; i++ )  {
+			*fp++ = getdouble( scard, 10+i*10, 10 );
+		}
+		num -= j;
+	}
+	return(0);
+}
+
+/*
+ *			T R I M _ T R A I L _ S P A C E S
+ */
 trim_trail_spaces( cp )
 register char	*cp;
 {
@@ -369,20 +478,7 @@ ell1:
 	}
 
 	if( strcmp( solid_type, "arbn" ) == 0 )  {
-		int	a,b,c,d;
-		/* 4 counts: a, b, c, d */
-		a = getint( scard, 10+0*10, 10 );
-		b = getint( scard, 10+1*10, 10 );
-		c = getint( scard, 10+2*10, 10 );
-		d = getint( scard, 10+3*10, 10 );
-
-		/* I'm not sure what these cards are for yet */
-		if(a>0) eat( (a+1)/2 );		/* vertex points */
-		if(b>0) eat( (b+5)/6 );		/* vertex pt index numbers */
-		if(c>0) eat( c );		/* plane eqns? */
-		if(d>0) eat( (d+1)/2 );		/* 2 nums & vertex index? */
-
-		return(-1);
+		return( read_arbn( name ) );
 	}
 
 	/*
@@ -393,118 +489,310 @@ ell1:
 	return(-1);
 }
 
+read_arbn( name )
+char	*name;
+{
+	int	npt;			/* # vertex pts to be read in */
+	int	npe;			/* # planes from 3 vertex points */
+	int	neq;			/* # planes from equation */
+	int	nae;			/* # planes from az,el & vertex index */
+	int	nface;			/* total number of faces */
+	double	*input_points = (double *)0;
+	double	*vertex = (double *)0;	/* vertex list of final solid */
+	int	last_vertex;		/* index of first unused vertex */
+	int	max_vertex;		/* size of vertex array */
+	int	*used = (int *)0;	/* plane eqn use count */
+	plane_t	*eqn = (plane_t *)0;	/* plane equations */
+	int	cur_eq = 0;		/* current (free) equation number */
+	int	symm = 0;		/* symmetry about Y used */
+	register int	i;
+	int	j;
+	int	k;
+	register int	m;
+	point_t	cent;			/* centroid of arbn */
+
+	npt = getint( scard, 10+0*10, 10 );
+	npe = getint( scard, 10+1*10, 10 );
+	neq = getint( scard, 10+2*10, 10 );
+	nae = getint( scard, 10+3*10, 10 );
+printf("npt=%d, npe=%d, neq=%d, nae=%d\n", npt, npe, neq, nae);
+
+	nface = npe + neq + nae;
+	if( npt < 1 )  {
+		/* Having one point is necessary to compute centroid */
+		printf("arbn defined without at least one point\n");
+bad:
+		if(npt>0) eat( (npt+1)/2 );	/* vertex input_points */
+		if(npe>0) eat( (npe+5)/6 );	/* vertex pt index numbers */
+		if(neq>0) eat( neq );		/* plane eqns? */
+		if(nae>0) eat( (nae+1)/2 );	/* az el & vertex index? */
+		return(-1);
+	}
+
+	/* Allocate storage for plane equations */
+	if( (eqn = (plane_t *)malloc(nface*sizeof(plane_t))) == (plane_t *)0 )  {
+		printf("arbn plane equation malloc failure\n");
+		goto bad;
+	}
+	/* Allocate storage for per-plane use count */
+	if( (used = (int *)malloc(nface*sizeof(int))) == (int *)0 )  {
+		printf("arbn use count malloc failure\n");
+		goto bad;
+	}
+
+	if( npt >= 1 )  {
+		/* Obtain vertex input_points */
+		if( (input_points = (double *)malloc(npt*3*sizeof(double))) == (double *)0 )  {
+			printf("arbn point malloc failure\n");
+			goto bad;
+		}
+		if( getxsoldata( input_points, npt*3, sol_work ) < 0 )
+			goto bad;
+	}
+
+	/* Get planes defined by three points, 6 per card */
+	for( i=0; i<npe; i += 6 )  {
+		if( getline( scard, sizeof(scard), "arbn vertex point indices" ) == EOF )  {
+			printf("too few cards for arbn %d\n",
+				sol_work);
+			return(-1);
+		}
+		for( j=0; j<6; j++ )  {
+			int	q,r,s;
+			point_t	a,b,c;
+
+			q = getint( scard, 10+j*10+0, 4 );
+			r = getint( scard, 10+j*10+4, 3 );
+			s = getint( scard, 10+j*10+7, 3 );
+
+			if( q == 0 || r == 0 || s == 0 ) continue;
+
+			if( q < 0 )  {
+				VMOVE( a, &input_points[((-q)-1)*3] );
+				a[Y] = -a[Y];
+				symm = 1;
+			} else {
+				VMOVE( a, &input_points[((q)-1)*3] );
+			}
+
+			if( r < 0 )  {
+				VMOVE( b, &input_points[((-r)-1)*3] );
+				b[Y] = -b[Y];
+				symm = 1;
+			} else {
+				VMOVE( b, &input_points[((r)-1)*3] );
+			}
+
+			if( s < 0 )  {
+				VMOVE( c, &input_points[((-s)-1)*3] );
+				c[Y] = -c[Y];
+				symm = 1;
+			} else {
+				VMOVE( c, &input_points[((s)-1)*3] );
+			}
+			if( rt_mk_plane_3pts( eqn[cur_eq], a,b,c ) < 0 )  {
+				printf("arbn degenerate plane\n");
+				VPRINT("a", a);
+				VPRINT("b", b);
+				VPRINT("c", c);
+				continue;
+			}
+			cur_eq++;
+		}
+	}
+
+	/* Get planes defined by their equation */
+	for( i=0; i < neq; i++ )  {
+		register double	scale;
+		if( getline( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
+			printf("too few cards for arbn %d\n",
+				sol_work);
+			return(-1);
+		}
+		eqn[cur_eq][0] = getdouble( scard, 10+0*10, 10 );
+		eqn[cur_eq][1] = getdouble( scard, 10+1*10, 10 );
+		eqn[cur_eq][2] = getdouble( scard, 10+2*10, 10 );
+		eqn[cur_eq][3] = getdouble( scard, 10+3*10, 10 );
+		scale = MAGNITUDE(eqn[cur_eq]);
+		if( scale < SMALL )  {
+			printf("arbn plane normal too small\n");
+			continue;
+		}
+		scale = 1/scale;
+		VSCALE( eqn[cur_eq], eqn[cur_eq], scale );
+		eqn[cur_eq][3] = eqn[cur_eq][3] * scale;
+		cur_eq++;
+	}
+
+	/* Get planes defined by azimuth, elevation, and pt, 2 per card */
+	for( i=0; i < nae;  i += 2 )  {
+		if( getline( scard, sizeof(scard), "arbn az/el card" ) == EOF )  {
+			printf("too few cards for arbn %d\n",
+				sol_work);
+			return(-1);
+		}
+		for( j=0; j<2; j++ )  {
+			double	az, el;
+			int	vertex;
+			double	cos_el;
+			point_t	pt;
+
+			az = getdouble( scard, 10+j*30+0*10, 10 ) * DEG2RAD;
+			el = getdouble( scard, 10+j*30+1*10, 10 ) * DEG2RAD;
+			vertex = getint( scard, 10+j*30+2*10, 10 );
+			if( vertex == 0 )  break;
+			cos_el = cos(el);
+			eqn[cur_eq][X] = cos(az)*cos_el;
+			eqn[cur_eq][Y] = sin(az)*cos_el;
+			eqn[cur_eq][Z] = sin(el);
+
+			if( vertex < 0 )  {
+				VMOVE( pt, &input_points[((-vertex)-1)*3] );
+				pt[Y] = -pt[Y];
+			} else {
+				VMOVE( pt, &input_points[((vertex)-1)*3] );
+			}
+			eqn[cur_eq][3] = VDOT(pt, eqn[cur_eq]);
+			cur_eq++;
+		}
+	}
+	if( nface != cur_eq )  {
+		printf("arbn expected %d faces, got %d\n", nface, cur_eq);
+		return(-1);
+	}
+
+	/* Average all given points together to find centroid */
+	/* This is why there must be at least one (two?) point given */
+	VSETALL(cent, 0);
+	for( i=0; i<npt; i++ )  {
+		VADD2( cent, cent, &input_points[i*3] );
+	}
+	VSCALE( cent, cent, 1.0/npt );
+	if( symm )  cent[Y] = 0;
+
+	/* Point normals away from centroid */
+	for( i=0; i<nface; i++ )  {
+		double	dist;
+
+		dist = VDOT( eqn[i], cent ) - eqn[i][3];
+		/* If dist is negative, 'cent' is inside halfspace */
+#define DIST_TOL	(1.0e-8)
+#define DIST_TOL_SQ	(1.0e-10)
+		if( dist < -DIST_TOL )  continue;
+		if( dist > DIST_TOL )  {
+			/* Flip halfspace over */
+			VREVERSE( eqn[i], eqn[i] );
+			eqn[i][3] = -eqn[i][3];
+		} else {
+			/* Centroid lies on this face */
+			printf("arbn centroid lies on face\n");
+			return(-1);
+		}
+		
+	}
+
+	/* Release storage for input points */
+	free( (char *)input_points );
+	input_points = (double *)0;
+
+
+	/*
+	 *  ARBN must be convex.  Test for concavity.
+	 *  Byproduct is an enumeration of all the verticies.
+	 */
+	last_vertex = max_vertex = 0;
+
+	/* Zero face use counts */
+	for( i=0; i<nface; i++ )  {
+		used[i] = 0;
+	}
+	for( i=0; i<nface-2; i++ )  {
+		for( j=i+1; j<nface-1; j++ )  {
+			double	dot;
+
+			/* If normals are parallel, no intersection */
+			dot = VDOT( eqn[i], eqn[j] );
+			if( !NEAR_ZERO( dot, 0.999999 ) )  continue;
+
+			for( k=j+1; k<nface; k++ )  {
+				point_t	pt;
+
+				if( rt_mkpoint_3planes( pt, eqn[i], eqn[j], eqn[k] ) < 0 )  continue;
+
+				/* See if point is outside arb */
+				for( m=0; m<nface; m++ )  {
+					if( i==m || j==m || k==m )  continue;
+					if( VDOT(pt, eqn[m])-eqn[m][3] > DIST_TOL )
+						goto next_k;
+				}
+				/* See if vertex already was found */
+				for( m=0; m<last_vertex; m++ )  {
+					vect_t	dist;
+					VSUB2( dist, pt, &vertex[m*3] );
+					if( MAGSQ(dist) < DIST_TOL_SQ )
+						goto next_k;
+				}
+
+				/*
+				 *  Add point to vertex array.
+				 *  If more room needed, realloc.
+				 */
+				if( last_vertex >= max_vertex )  {
+					if( max_vertex == 0 )   {
+						max_vertex = 3;
+						vertex = (double *)malloc( max_vertex*3*sizeof(double) );
+					} else {
+						max_vertex *= 10;
+						vertex = (double *)realloc( (char *)vertex, max_vertex*3*sizeof(double) );
+					}
+					if( vertex == (double *)0 )  {
+						printf("arbn vertex realloc fail\n");
+						goto bad;
+					}
+				}
+
+				VMOVE( &vertex[last_vertex*3], pt );
+				last_vertex++;
+
+				/* Increment "face used" counts */
+				used[i]++;
+				used[j]++;
+				used[k]++;
+next_k:				;
+			}
+		}
+	}
+
+	/* If any planes were not used, then arbn is not convex */
+	for( i=0; i<nface; i++ )  {
+		if( used[i] != 0 )  continue;	/* face was used */
+		printf("arbn face %d unused, solid is not convex\n", i);
+		return(-1);
+	}
+
+	/* Write out the solid ! */
+	i = mk_arbn( outfp, name, nface, eqn );
+
+	if( input_points )  free( (char *)input_points );
+	if( vertex )  free( (char *)vertex );
+	if( eqn )  free( (char *)eqn );
+	if( used )  free( (char *)used );
+
+	return(i);
+}
+
+/*
+ *			E A T
+ *
+ *  Eat the indicated number of input lines
+ */
 eat( count )
 int	count;
 {
+	char	lbuf[132];
 	int	i;
 
 	for( i=0; i<count; i++ )  {
-		getline( scard, sizeof(scard), "eaten card" );
+		getline( lbuf, sizeof(lbuf), "eaten card" );
 	}
-}
-
-/*
- *			G E T S O L D A T A
- *
- *  Obtain 'num' data items from input card(s).
- *  The first input card is already in global 'scard'.
- *
- *  Returns -
- *	 0	OK
- *	-1	failure
- */
-int
-getsoldata( dp, num, solid_num )
-double	*dp;
-int	num;
-int	solid_num;
-{
-	int	cd;
-	double	*fp;
-	int	i;
-	int	j;
-
-	fp = dp;
-	for( cd=1; num > 0; cd++ )  {
-		if( cd != 1 )  {
-			if( getline( scard, sizeof(scard), "solid continuation card" ) == EOF )  {
-				printf("too few cards for solid %d\n",
-					solid_num);
-				return(-1);
-			}
-			/* continuation card
-			 * solid type should be blank 
-			 */
-			if( (version==5 && scard[5] != ' ' ) ||
-			    (version==4 && scard[3] != ' ' ) )  {
-				printf("solid %d (continuation) card %d non-blank\n",
-					solid_num, cd);
-				return(-1);
-			}
-		}
-
-		if( num < 6 )
-			j = num;
-		else
-			j = 6;
-
-		for( i=0; i<j; i++ )  {
-			*fp++ = getdouble( scard, 10+i*10, 10 );
-		}
-		num -= j;
-	}
-	return(0);
-}
-
-/*
- *			G E T X S O L D A T A
- *
- *  Obtain 'num' data items from input card(s).
- *  All input cards must be freshly read.
- *
- *  Returns -
- *	 0	OK
- *	-1	failure
- */
-int
-getxsoldata( dp, num, solid_num )
-double	*dp;
-int	num;
-int	solid_num;
-{
-	int	cd;
-	double	*fp;
-	int	i;
-	int	j;
-
-	fp = dp;
-	for( cd=1; num > 0; cd++ )  {
-		if( getline( scard, sizeof(scard), "x solid card" ) == EOF )  {
-			printf("too few cards for solid %d\n",
-				solid_num);
-			return(-1);
-		}
-		if( cd != 1 )  {
-			/* continuation card
-			 * solid type should be blank 
-			 */
-			if( (version==5 && scard[5] != ' ' ) ||
-			    (version==4 && scard[3] != ' ' ) )  {
-				printf("solid %d (continuation) card %d non-blank\n",
-					solid_num, cd);
-				return(-1);
-			}
-		}
-
-		if( num < 6 )
-			j = num;
-		else
-			j = 6;
-
-		for( i=0; i<j; i++ )  {
-			*fp++ = getdouble( scard, 10+i*10, 10 );
-		}
-		num -= j;
-	}
-	return(0);
 }
