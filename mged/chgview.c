@@ -138,7 +138,11 @@ char edit_rate_model_origin;
 char edit_rate_object_origin;
 char edit_rate_view_origin;
 char edit_rate_coords;
-struct dm_list *edit_dm_list;
+struct dm_list *edit_rate_mr_dm_list;
+struct dm_list *edit_rate_or_dm_list;
+struct dm_list *edit_rate_vr_dm_list;
+struct dm_list *edit_rate_mt_dm_list;
+struct dm_list *edit_rate_vt_dm_list;
 
 struct bu_vls edit_info_vls;
 struct bu_vls edit_rate_model_tran_vls[3];
@@ -1865,20 +1869,20 @@ char	**argv;
 	    case 'm':
 	      edit_rate_model_rotate[X] += f;
 	      edit_rate_model_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_mr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[X]));
 	      break;
 	    case 'o':
 	      edit_rate_object_rotate[X] += f;
 	      edit_rate_object_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_or_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[X]));
 	      break;
 	    case 'v':
 	    default:
 	      edit_rate_view_rotate[X] += f;
 	      edit_rate_view_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_vr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[X]));
 	      break;
 	    }
@@ -1900,20 +1904,20 @@ char	**argv;
 	    case 'm':
 	      edit_rate_model_rotate[X] = f;
 	      edit_rate_model_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_mr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[X]));
 	      break;
 	    case 'o':
 	      edit_rate_object_rotate[X] = f;
 	      edit_rate_object_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_or_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[X]));
 	      break;
 	    case 'v':
 	    default:
 	      edit_rate_view_rotate[X] = f;
 	      edit_rate_view_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_vr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[X]));
 	      break;
 	    }
@@ -1939,20 +1943,20 @@ char	**argv;
 	    case 'm':
 	      edit_rate_model_rotate[Y] += f;
 	      edit_rate_model_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_mr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Y]));
 	      break;
 	    case 'o':
 	      edit_rate_object_rotate[Y] += f;
 	      edit_rate_object_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_or_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Y]));
 	      break;
 	    case 'v':
 	    default:
 	      edit_rate_view_rotate[Y] += f;
 	      edit_rate_view_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_vr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Y]));
 	      break;
 	    }
@@ -1974,20 +1978,20 @@ char	**argv;
 	    case 'm':
 	      edit_rate_model_rotate[Y] = f;
 	      edit_rate_model_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_mr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Y]));
 	      break;
 	    case 'o':
 	      edit_rate_object_rotate[Y] = f;
 	      edit_rate_object_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_or_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Y]));
 	      break;
 	    case 'v':
 	    default:
 	      edit_rate_view_rotate[Y] = f;
 	      edit_rate_view_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_vr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Y]));
 	      break;
 	    }
@@ -2013,20 +2017,20 @@ char	**argv;
 	    case 'm':
 	      edit_rate_model_rotate[Z] += f;
 	      edit_rate_model_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_mr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Z]));
 	      break;
 	    case 'o':
 	      edit_rate_object_rotate[Z] += f;
 	      edit_rate_object_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_or_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Z]));
 	      break;
 	    case 'v':
 	    default:
 	      edit_rate_view_rotate[Z] += f;
 	      edit_rate_view_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_vr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Z]));
 	      break;
 	    }
@@ -2048,20 +2052,20 @@ char	**argv;
 	    case 'm':
 	      edit_rate_model_rotate[Z] = f;
 	      edit_rate_model_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_mr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_rotate_vls[Z]));
 	      break;
 	    case 'o':
 	      edit_rate_object_rotate[Z] = f;
 	      edit_rate_object_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_or_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_object_rotate_vls[Z]));
 	      break;
 	    case 'v':
 	    default:
 	      edit_rate_view_rotate[Z] = f;
 	      edit_rate_view_origin = origin;
-	      edit_dm_list = curr_dm_list;
+	      edit_rate_vr_dm_list = curr_dm_list;
 	      Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_rotate_vls[Z]));
 	      break;
 	    }
@@ -2087,13 +2091,13 @@ char	**argv;
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[X] += f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_mt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[X]));
 	    break;
 	  case 'v':
 	  default:
 	    edit_rate_view_tran[X] += f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_vt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[X]));
 	    break;
 	  }
@@ -2112,13 +2116,13 @@ char	**argv;
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[X] = f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_mt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[X]));
 	    break;
 	  case 'v':
 	  default:
 	    edit_rate_view_tran[X] = f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_vt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[X]));
 	    break;
 	  }
@@ -2141,13 +2145,13 @@ char	**argv;
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Y] += f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_mt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Y]));
 	    break;
 	  case 'v':
 	  default:
 	    edit_rate_view_tran[Y] += f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_vt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Y]));
 	    break;
 	  }
@@ -2166,13 +2170,13 @@ char	**argv;
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Y] = f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_mt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Y]));
 	    break;
 	  case 'v':
 	  default:
 	    edit_rate_view_tran[Y] = f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_vt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Y]));
 	    break;
 	  }
@@ -2195,13 +2199,13 @@ char	**argv;
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Z] += f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_mt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Z]));
 	    break;
 	  case 'v':
 	  default:
 	    edit_rate_view_tran[Z] += f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_vt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Z]));
 	    break;
 	  }
@@ -2220,13 +2224,13 @@ char	**argv;
 	  case 'm':
 	  case 'o':
 	    edit_rate_model_tran[Z] = f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_mt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_model_tran_vls[Z]));
 	    break;
 	  case 'v':
 	  default:
 	    edit_rate_view_tran[Z] = f;
-	    edit_dm_list = curr_dm_list;
+	    edit_rate_vt_dm_list = curr_dm_list;
 	    Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_rate_view_tran_vls[Z]));
 	    break;
 	  }
@@ -3109,12 +3113,16 @@ abs_zoom()
      absolute_tran[Z] != 0.0){
     set_absolute_tran();
 
+#ifdef UPDATE_TCL_SLIDERS
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Y]));
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[Z]));
+#endif
   }
 
+#ifdef UPDATE_TCL_SLIDERS
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_scale_vls));
+#endif
 }
 
 int
@@ -4689,12 +4697,148 @@ char    **argv;
 }
 
 int
+mged_escale(sfactor)
+fastf_t sfactor;
+{
+  fastf_t old_scale;
+
+  if(-SMALL_FASTF < sfactor && sfactor < SMALL_FASTF)
+    return TCL_OK;
+
+  if(state == ST_S_EDIT){
+    int save_edflag;
+
+    save_edflag = es_edflag;
+    if(!SEDIT_SCALE)
+      es_edflag = SSCALE;
+
+    es_scale = sfactor;
+    old_scale = acc_sc_sol;
+    acc_sc_sol *= sfactor;
+
+    if(acc_sc_sol < MGED_SMALL_SCALE){
+      acc_sc_sol = old_scale;
+      es_edflag = save_edflag;
+      return TCL_OK;
+    }
+
+    if(acc_sc_sol >= 1.0)
+      edit_absolute_scale = (acc_sc_sol - 1.0) / 3.0;
+    else
+      edit_absolute_scale = acc_sc_sol - 1.0;
+
+    sedit();
+
+    es_edflag = save_edflag;
+  }else{
+    point_t temp;
+    point_t pos_model;
+    mat_t smat;
+    fastf_t inv_sfactor;
+
+    inv_sfactor = 1.0 / sfactor;
+    bn_mat_idn(smat);
+
+    switch(edobj){
+    case BE_O_XSCALE:                            /* local scaling ... X-axis */
+      smat[0] = inv_sfactor;
+      old_scale = acc_sc[X];
+      acc_sc[X] *= inv_sfactor;
+
+      if(acc_sc[X] < MGED_SMALL_SCALE){
+	acc_sc[X] = old_scale;
+	return TCL_OK;
+      }
+      break;
+    case BE_O_YSCALE:                            /* local scaling ... Y-axis */
+      smat[5] = inv_sfactor;
+      old_scale = acc_sc[Y];
+      acc_sc[Y] *= inv_sfactor;
+
+      if(acc_sc[Y] < MGED_SMALL_SCALE){
+	acc_sc[Y] = old_scale;
+	return TCL_OK;
+      }
+      break;
+    case BE_O_ZSCALE:                            /* local scaling ... Z-axis */
+      smat[10] = inv_sfactor;
+      old_scale = acc_sc[Z];
+      acc_sc[Z] *= inv_sfactor;
+
+      if(acc_sc[Z] < MGED_SMALL_SCALE){
+	acc_sc[Z] = old_scale;
+	return TCL_OK;
+      }
+      break;
+    case BE_O_SCALE:                             /* global scaling */
+    default:
+      smat[15] = inv_sfactor;
+      old_scale = acc_sc_sol;
+      acc_sc_sol *= inv_sfactor;
+
+      if(acc_sc_sol < MGED_SMALL_SCALE){
+	acc_sc_sol = old_scale;
+	return TCL_OK;
+      }
+      break;
+    }
+
+    /* Have scaling take place with respect to keypoint,
+     * NOT the view center.
+     */
+    MAT4X3PNT(temp, es_mat, es_keypoint);
+    MAT4X3PNT(pos_model, modelchanges, temp);
+    wrt_point(modelchanges, smat, modelchanges, pos_model);
+
+    new_edit_mats();
+  }
+
+  return TCL_OK;
+}
+
+int
+mged_vscale(sfactor)
+fastf_t sfactor;
+{
+  fastf_t f;
+
+  if(-SMALL_FASTF < sfactor && sfactor < SMALL_FASTF)
+    return TCL_OK;
+
+  Viewscale *= sfactor;
+  if( Viewscale < MINVIEW )
+        Viewscale = MINVIEW;
+  f = Viewscale / i_Viewscale;
+
+  if(f >= 1.0)
+    absolute_scale = (f - 1.0) / -9.0;
+  else
+    absolute_scale = 1.0 - f;
+
+  new_mats();
+  return TCL_OK;
+}
+
+int
+mged_scale(sfactor)
+fastf_t sfactor;
+{
+  if((state == ST_S_EDIT || state == ST_O_EDIT) &&
+    mged_variables.transform == 'e')
+    return mged_escale(sfactor);
+
+  return mged_vscale(sfactor);
+}
+
+int
 f_sca(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
+  fastf_t sfactor;
+
   if(argc != 2){
     struct bu_vls vls;
 
@@ -4705,5 +4849,10 @@ char    **argv;
     return TCL_ERROR;
   }
 
-  return TCL_OK;
+  if(sscanf(argv[1], "%lf", &sfactor) < 1){
+    Tcl_AppendResult(interp, "f_sca: bad scale factor - %s\n", argv[1]);
+    return TCL_ERROR;
+  }
+
+  return mged_scale(sfactor);
 }
