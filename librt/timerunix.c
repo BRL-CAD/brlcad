@@ -36,21 +36,21 @@ static long time0;
 
 
 /*
- *			T I M E R _ P R E P
+ *			P R E P _ T I M E R
  */
 void
-timer_prep()
+prep_timer()
 {
 	(void)time(&time0);
 }
 
 
 /*
- *			T I M E R _ P R I N T
+ *			P R _ T I M E R
  * 
  */
 double
-timer_print(str)
+pr_timer(str)
 char *str;
 {
 	long now;

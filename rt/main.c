@@ -129,7 +129,7 @@ char **argv;
 	title_file = argv[0];
 	title_obj = argv[1];
 
-	timer_prep();		/* Start timing preparations */
+	prep_timer();		/* Start timing preparations */
 
 	/* Build directory of GED database */
 	if( dir_build( argv[0] ) < 0 )
@@ -146,7 +146,7 @@ char **argv;
 	view_init( &ap );
 	ap.a_init( &ap, title_file, title_obj );
 
-	(void)timer_print("PREP");
+	(void)pr_timer("PREP");
 
 	if( HeadSolid == SOLTAB_NULL )  {
 		fprintf(stderr, "No solids remain after prep, exiting.\n");
@@ -223,7 +223,7 @@ char **argv;
 		VUNITIZE(l2vec);
 	}
 
-	timer_prep();	/* start timing actual run */
+	prep_timer();	/* start timing actual run */
 
 	fflush(stderr);
 
@@ -244,7 +244,7 @@ char **argv;
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	utime = timer_print("SHOT");
+	utime = pr_timer("SHOT");
 	fprintf(stderr,"ft_shot(): %ld = %ld hits + %ld miss\n",
 		nshots, nhits, nmiss );
 	fprintf(stderr,"pruned:  %ld model RPP, %ld sub-tree RPP, %ld solid RPP\n",

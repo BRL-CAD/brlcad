@@ -44,21 +44,21 @@ static void psecs();
 static void p2dig();
 
 /*
- *			T I M E R _ P R E P
+ *			P R E P _ T I M E R
  */
 void
-timer_prep()
+prep_timer()
 {
 	_gettimeofday(&time0, (struct timezone *)0);
 	_getrusage(RUSAGE_SELF, &ru0);
 }
 
 /*
- *			T I M E R _ P R I N T
+ *			P R _ T I M E R
  * 
  */
 double
-timer_print(str)
+pr_timer(str)
 char *str;
 {
 	struct timeval timedol;

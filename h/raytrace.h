@@ -344,8 +344,8 @@ extern vect_t mdl_max;		/* max corner of model bounding RPP */
 extern int get_tree();			/* Get expr tree for object */
 extern int shootray();			/* Shoot a ray */
 extern void rtbomb();			/* Exit with error message */
-extern void timer_prep();		/* Start the timer */
-extern double timer_print();		/* Stop timer, print, return time */
+extern void prep_timer();		/* Start the timer */
+extern double pr_timer();		/* Stop timer, print, return time */
 extern int dir_build();			/* Read named GED db, build toc */
 extern void pr_seg();			/* Print seg struct */
 extern void pr_partitions();		/* Print the partitions */
