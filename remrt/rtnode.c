@@ -317,16 +317,21 @@ char **argv;
 	avail_cpus = bu_avail_cpus();
 	max_cpus = bu_get_public_cpus();
 
-	/* Be nice on loaded machines */
-	if( (debug&1) == 0 )  {
-		int	iload;
+	if( bu_set_realtime() )  {
+		/* We have realtime priority, use every CPU */
+		max_cpus = avail_cpus;
+	} else {
+		/* Be nice on loaded machines */
+		if( (debug&1) == 0 )  {
+			int	iload;
 
-		load = bu_get_load_average();
-		iload = (int)(load + 0.5);	/* round up */
-		max_cpus -= iload;
-		if( max_cpus <= 0 )  {
-			bu_log("This machine is overloaded, load=%g, aborting.\n", load);
-			exit(9);
+			load = bu_get_load_average();
+			iload = (int)(load + 0.5);	/* round up */
+			max_cpus -= iload;
+			if( max_cpus <= 0 )  {
+				bu_log("This machine is overloaded, load=%g, aborting.\n", load);
+				exit(9);
+			}
 		}
 	}
 
