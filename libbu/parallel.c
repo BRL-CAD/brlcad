@@ -93,7 +93,17 @@ static struct sched_param bu_param;
 #	include <sys/unistd.h>
 #	include <thread.h>
 #	include <synch.h>
+#define rt_thread_t	thread_t
 #endif	/* SUNOS */
+
+/*
+ * multithread support built on POSIX Threads (pthread) library.
+ */
+#ifdef HAS_POSIX_THREADS
+#	include <sys/unistd.h>
+#	include <pthread.h>
+#define rt_thread_t	pthread_t
+#endif	/* HAS_POSIX_THREADS */
 
 #ifdef CRAY
 struct taskcontrol {
@@ -233,6 +243,10 @@ bu_avail_cpus()
 #       define  RT_AVAIL_CPUS
 #endif	/* defined(SUNOS) */
 
+#if defined(HAS_POSIX_THREADS)
+	/* XXX Posix doesn't specify how to learn how many CPUs there are. */
+	ret = 2;
+#endif /* HAS_POSIX_THREADS */
 #if defined(n16)
 	if( (ret = sysadmin( SADMIN_NUMCPUS, 0 )) < 0 )
 		perror("sysadmin");
@@ -252,7 +266,7 @@ bu_avail_cpus()
  *  A generally portable method for obtaining the 1-minute load average.
  *  Vendor-specific methods which don't involve a fork/exec sequence
  *  would be preferable.
- *  Alas, very very systems put the load average in /proc,
+ *  Alas, very very few systems put the load average in /proc,
  *  most still grunge the avenrun[3] array out of /dev/kmem,
  *  which requires special privleges to open.
  */
@@ -425,6 +439,14 @@ bu_parallel_interface()
 {
 	register int	cpu;		/* our CPU (thread) number */
 
+#ifdef HAS_POSIX_THREADS
+	{
+		pthread_t	pt;
+		pt = pthread_self();
+		fprintf(stderr,"bu_parallel_interface, Thread ID = 0x%x\n",
+			pt);
+	}
+#endif
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	cpu = bu_nthreads_started++;
 	bu_semaphore_release( BU_SEM_SYSCALL );
@@ -512,12 +534,12 @@ genptr_t	arg;
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
-#if SUNOS >= 52
+#if SUNOS >= 52 || defined(HAS_POSIX_THREADS)
 	int		nthreadc;
 	int		nthreade;
 	static int	concurrency = 0; /* Max concurrency we have set */
-	thread_t	thread;
-	thread_t	thread_tbl[MAX_PSW];
+	rt_thread_t	thread;
+	rt_thread_t	thread_tbl[MAX_PSW];
 	int		i;
 #endif	/* SUNOS */
 
@@ -766,7 +788,7 @@ genptr_t	arg;
 			/* Not much to do, lump it */
 		} else {
 			if( bu_debug & BU_DEBUG_PARALLEL )
-				bu_log("bu_parallel(): created thread: (thread: %d) (loop:%d) (nthreadc:%d)\n",
+				bu_log("bu_parallel(): created thread: (thread: 0x%x) (loop:%d) (nthreadc:%d)\n",
 				       thread, x, nthreadc);
 
 			thread_tbl[nthreadc] = thread;
@@ -776,7 +798,7 @@ genptr_t	arg;
 
 	if( bu_debug & BU_DEBUG_PARALLEL )
 		for (i = 0; i < nthreadc; i++)
-			bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
+			bu_log("bu_parallel(): thread_tbl[%d] = 0x%x\n",
 			       i, thread_tbl[i]);
 
 	/*
@@ -792,7 +814,7 @@ genptr_t	arg;
 			bu_log("bu_parallel(): waiting for thread to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
 			       x, nthreadc, nthreade);
 
-		if (thr_join((thread_t)0, &thread, NULL)) {
+		if (thr_join((rt_thread_t)0, &thread, NULL)) {
 			/* badness happened */
 			fprintf(stderr, "thr_join()");
 		}
@@ -800,13 +822,13 @@ genptr_t	arg;
 		/* Check to see if this is one the threads we created */
 		for (i = 0; i < nthreadc; i++) {
 			if (thread_tbl[i] == thread) {
-				thread_tbl[i] = -1;
+				thread_tbl[i] = (rt_thread_t)-1;
 				nthreade++;
 				break;
 			}
 		}
 
-		if ((thread_tbl[i] != -1) && i < nthreadc) {
+		if ((thread_tbl[i] != (rt_thread_t)-1) && i < nthreadc) {
 			bu_log("bu_parallel(): unknown thread %d completed.\n",
 			       thread);
 		}
@@ -820,6 +842,74 @@ genptr_t	arg;
 		bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
 		       nthreadc, nthreade);
 #endif	/* SUNOS */
+#if defined(HAS_POSIX_THREADS)
+
+	thread = 0;
+	nthreadc = 0;
+
+	/* XXX How to advise thread library that we need 'ncpu' processors? */
+
+	/* Create the threads */
+	for (x = 0; x < ncpu; x++)  {
+
+		if (pthread_create(&thread, 0,
+		    (void *(*)(void *))bu_parallel_interface, NULL)) {
+			fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
+				bu_parallel_interface, &thread, x);
+			bu_log("ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
+				bu_parallel_interface, &thread, x);
+			/* Not much to do, lump it */
+		} else {
+			if( bu_debug & BU_DEBUG_PARALLEL ) {
+				bu_log("bu_parallel(): created thread: (thread: %d) (loop:%d) (nthreadc:%d)\n",
+				       thread, x, nthreadc);
+			}
+
+			thread_tbl[nthreadc] = thread;
+			nthreadc++;
+		}
+	}
+
+	if( bu_debug & BU_DEBUG_PARALLEL ) {
+		for (i = 0; i < nthreadc; i++) {
+			bu_log("bu_parallel(): thread_tbl[%d] = %d\n",
+			       i, thread_tbl[i]);
+		}
+#if __FreeBSD__
+		/* Is this FreeBSD-only? */
+		_thread_dump_info();
+#endif
+	}
+
+	/*
+	 * Wait for completion of all threads.
+	 * Wait for them in order.
+	 */
+	thread = 0;
+	nthreade = 0;
+	for (x = 0; x < nthreadc; x++)  {
+		int ret;
+
+		if( bu_debug & BU_DEBUG_PARALLEL )
+			bu_log("bu_parallel(): waiting for thread x%x to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+				thread_tbl[x], x, nthreadc, nthreade);
+
+		if ( (ret = pthread_join(thread_tbl[x], NULL)) != 0) {
+			/* badness happened */
+			fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%x) ret=%d\n", x, thread_tbl[x], ret);
+		}
+		nthreade++;
+		thread_tbl[x] = (rt_thread_t)-1;
+
+		if( bu_debug & BU_DEBUG_PARALLEL )
+			bu_log("bu_parallel(): thread completed: (thread: %d)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+			       thread, x, nthreadc, nthreade);
+	}
+
+	if( bu_debug & BU_DEBUG_PARALLEL )
+		bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
+		       nthreadc, nthreade);
+#endif
 
 	/*
 	 *  Ensure that all the threads are REALLY finished.

@@ -122,6 +122,14 @@ struct bu_semaphores {
 };
 #endif	/* SUNOS */
 
+#if defined(HAS_POSIX_THREADS)
+#	include <sys/unistd.h>
+#	include <pthread.h>
+struct bu_semaphores {
+	pthread_mutex_t	mu;
+};
+#endif	/* HAS_POSIX_THREADS */
+
 #if defined(SGI_4D)
 /*
  *			 B U _ S E M A P H O R E _ S G I _ I N I T
@@ -154,14 +162,12 @@ bu_semaphore_sgi_init()
 	/* Set maximum number of procs that can share this arena */
 	usconfig(CONF_INITUSERS, bu_avail_cpus()+1);
 
-#if 0
-	/* Horrible R8000 TFP Bug!!  Regular locks die!! */
-	/* XXX This is fixed in Irix 6.0.1, due out in January 95 */
-	fprintf(stderr,"\n\n***Horrible R8000 IRIX 6 Bug, switching to software semaphores to bypass.\n\n");
-	usconfig(CONF_LOCKTYPE, US_DEBUG);
-#else
-	usconfig(CONF_LOCKTYPE, US_NODEBUG);
-#endif
+	if( bu_debug & BU_DEBUG_PARALLEL )  {
+		/* This is a big performance hit, but may find bugs */
+		usconfig(CONF_LOCKTYPE, US_DEBUG);
+	} else {
+		usconfig(CONF_LOCKTYPE, US_NODEBUG);
+	}
 
 	/* Initialize arena */
 	bu_lockstuff = usinit(bu_lockfile);
