@@ -221,7 +221,7 @@ char *s;
 	/* This part might be done in a loop, to match usage message? */
 
 	if ((fd = fopen(s, "r")) == (FILE *)NULL) {
-		(void)fprintf(stderr, "%s: routine get_includes: ", progname);
+		(void)fprintf(stderr, "%s:  ", progname);
 		perror(s);
 		exit(-1);
 	}
@@ -234,6 +234,7 @@ char *s;
 	if (eob == 0) {
 		fprintf(stderr, "%s: Error reading file \"%s\"\n",
 				progname, s);
+		perror("fread");
 		exit(-1);
 	}
 	
