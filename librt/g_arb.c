@@ -261,11 +261,14 @@ next_pt:		;
 		}
 
 		if( uv_wanted )  {
+			register struct oface	*oip, *oop;
 			arbp->arb_opt = (struct oface *)rt_malloc(
 				pa.pa_faces * sizeof(struct oface), "arb_opt");
 #			include "noalias.h"
-			for( i = pa.pa_faces-1; i>=0; i-- )
-				arbp->arb_opt[i] = pa.pa_opt[i];	/* struct copy */
+			oip = &pa.pa_opt[pa.pa_faces-1];
+			oop = &arbp->arb_opt[pa.pa_faces-1];
+			for( i = pa.pa_faces-1; i>=0; i--, oip--, oop-- )
+				*oop = *oip;	/* struct copy */
 		} else {
 			arbp->arb_opt = (struct oface *)0;
 		}
