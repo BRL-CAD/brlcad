@@ -6,6 +6,13 @@
  * This header file will also work if called by a "traditional" C
  * compiler.
  *
+ *  For best results, before the #include "plot3.h", there should be:
+ *
+ *		#include "machine.h"
+ *    and	#include "vmath.h"
+ *
+ *  although not doing this should not be fatal.
+ *
  *	$Header$
  */
 #ifndef	PLOT3_H
@@ -80,5 +87,100 @@ PL_EXTERN(void pd_3move, (FILE *plotfp, double x, double y, double z));
 PL_EXTERN(void pd_3cont, (FILE *plotfp, double x, double y, double z));
 PL_EXTERN(void pd_3line, (FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2));
 PL_EXTERN(void pd_3box, (FILE *plotfp, double x1, double y1, double z1, double x2, double y2, double z2));
+
+/*
+ *  The following routines are taken from the BRL TIG-PACK
+ *  (Terminal Independent Plotting Package).
+ *  These routines create plots by using the pl_() and pd_() routines
+ *  declared above.
+ */
+
+/*
+ *			P L _ F O R T R A N
+ *
+ *  This macro is used to take the 'C' function name,
+ *  and convert it at compile time to the
+ *  FORTRAN calling convention used for this particular system.
+ *
+ *  Both lower-case and upper-case alternatives have to be provided
+ *  because there is no way to get the C preprocessor to change the
+ *  case of a token.
+ */
+#if CRAY
+#	define	PL_FORTRAN(lc,uc)	uc
+#endif
+#if defined(apollo) || defined(mips) || defined(aux)
+	/* Lower case, with a trailing underscore */
+#ifdef __STDC__
+#	define	PL_FORTRAN(lc,uc)	lc ## _
+#else
+#	define	PL_FORTRAN(lc,uc)	lc/**/_
+#endif
+#endif
+#if !defined(PL_FORTRAN)
+#	define	PL_FORTRAN(lc,uc)	lc
+#endif
+
+PL_EXTERN(void tp_i2list, (FILE *fp, int *x, int *y, int npoints));
+PL_EXTERN(void tp_2list, (FILE *fp, double *x, double *y, int npoints));
+PL_EXTERN(void PL_FORTRAN(f2list, F2LIST), (FILE **fpp, float *x, float *y,
+			int *n));
+PL_EXTERN(void tp_3list, (FILE *fp, double *x, double *y, double *z,
+			int npoints));
+PL_EXTERN(void PL_FORTRAN(f3list, F3LIST), (FILE **fpp, float *x, float *y,
+			float *z, int n));
+PL_EXTERN(void tp_2mlist, (FILE *fp, double *x, double *y, int npoints,
+			int flag, int mark, int interval, double size));
+PL_EXTERN(void PL_FORTRAN(f2mlst, F2MLST), (FILE **fp, float *x, float *y,
+			int *np, int *flag, int *mark, int *interval,
+
+			float *size));
+PL_EXTERN(void tp_2marker, (FILE *fp, int c, double x, double y, double scale));
+PL_EXTERN(void PL_FORTRAN(f2mark, F2MARK), (FILE **fp, int *c, float *x,
+			float *y, float *scale));
+PL_EXTERN(void tp_3marker, (FILE *fp, int c, double x, double y, double z,
+			double scale));
+PL_EXTERN(void PL_FORTRAN(f3mark, F3MARK), (FILE **fp, int *c, float *x,
+			float *y, float *z, float *scale));
+PL_EXTERN(void tp_2number, (FILE *fp, double input, int x, int y, int cscale,
+			double theta, int digits));
+PL_EXTERN(void PL_FORTRAN(f2numb, F2NUMB), (FILE **fp, float *input,
+			int *x, int *y, float *cscale, float *theta, int *digits));
+PL_EXTERN(void tp_scale, (int idata[], int elements, int mode, int length,
+			int odata[], double *min, double *dx));
+
+PL_EXTERN(void PL_FORTRAN(fscale, FSCALE), (int	idata[], int *elements,
+			char *mode, int *length, int odata[], double *min,
+			double *dx));
+PL_EXTERN(void tp_2symbol, (FILE *fp, char *string, double x, double y,
+			double scale, double theta));
+PL_EXTERN(void PL_FORTRAN(f2symb, F2SYMB), (FILE **fp, char *string,
+			float *x, float *y, float *scale, float *theta));
+PL_EXTERN(void tp_plot, (FILE *fp, int xp, int yp, int xl, int yl,
+			char xtitle[], char ytitle[], float x[], float y[],
+			int n, double cscale));
+PL_EXTERN(void PL_FORTRAN(fplot, FPLOT), (FILE **fp, int *xp, int *yp,
+			int *xl, int *yl, char *xtitle, char *ytitle,
+			float *x, float *y, int *n, float *cscale));
+#ifdef VMATH_H
+PL_EXTERN(void tp_3axis, (FILE *fp, char *string, point_t origin,
+			mat_t rot, double length, int ccw, int ndigits,
+			double label_start, double label_incr,
+			double tick_separation, double char_width));
+PL_EXTERN(void PL_FORTRAN(f3axis, F3AXIS), (FILE **fp, char *string,
+			float *x, float *y, float *z,
+			float *length, float *theta,
+			int *ccw, int *ndigits,
+			float *label_start, float *label_incr,
+			float *tick_separation, float *char_width));
+PL_EXTERN(void tp_3symbol, (FILE *fp, char *string, point_t origin,
+			mat_t rot, double scale));
+PL_EXTERN(void tp_3vector, (FILE *plotfp, point_t from, point_t to,
+			double fromheadfract, double toheadfract));
+PL_EXTERN(void PL_FORTRAN(f3vect, F3VECT), (FILE **fp,
+			float *fx, float *fy, float *fz,
+			float *tx, float *ty, float *tz,
+			float *fl, float *tl));
+#endif /* VMATH_H */
 
 #endif /* PLOT3_H */
