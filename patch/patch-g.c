@@ -1783,7 +1783,7 @@ int cnt;
 
 		/* make solids */
 
-		mk_arb8( stdout, name, pt8 );
+		mk_arb8( stdout, name, &pt8[0][X] );
 		count++;
 
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -1822,7 +1822,7 @@ int cnt;
 		ctflg = 'n';
 		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
-		mk_arb8( stdout, name, pt8 );
+		mk_arb8( stdout, name, &pt8[0][X] );
 		mir_count++;
 
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -2013,7 +2013,7 @@ int cnt;
 
 		/* make solid */
 
-		mk_arb8( stdout, name, pt8 );
+		mk_arb8( stdout, name, &pt8[0][X] );
 		count++;
 
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -2062,7 +2062,7 @@ int cnt;
 				VADD3(pt8[2],aci,adi,pt8[0]);
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
-				mk_arb8( stdout, name, pt8 );
+				mk_arb8( stdout, name, &pt8[0][X] );
 				mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
@@ -2104,7 +2104,7 @@ int cnt;
 		ctflg = 'n';
 		strcpy( name , proc_sname (shflg,mrflg,mir_count+1,ctflg) );
 
-		mk_arb8( stdout, name, pt8 );
+		mk_arb8( stdout, name, &pt8[0][X] );
 		mir_count++;
 
 		(void) mk_addmember(name,&head,WMOP_UNION);
@@ -2153,7 +2153,7 @@ int cnt;
 				VADD3(pt8[2],aci,adi,pt8[0]);
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
-				mk_arb8( stdout, name, pt8 );
+				mk_arb8( stdout, name, &pt8[0][X] );
 				mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
