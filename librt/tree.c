@@ -40,10 +40,11 @@ HIDDEN union tree *rt_drawobj();
 HIDDEN void rt_add_regtree();
 HIDDEN union tree *rt_mkbool_tree();
 HIDDEN int rt_rpp_tree();
-HIDDEN char *rt_basename();
+extern char	*rt_basename();
 HIDDEN struct region *rt_getregion();
 HIDDEN void rt_fr_tree();
 extern int rt_id_solid();
+extern void	rt_pr_soltab();
 
 extern struct rt_functab	rt_functab[];
 extern int			rt_nfunctab;
@@ -281,16 +282,7 @@ next_one: ;
 	}
 
 	stp->st_bit = rtip->nsolids++;
-	if(rt_g.debug&DEBUG_SOLIDS)  {
-		rt_log("------------ %s (bit %d) %s ------------\n",
-			stp->st_name, stp->st_bit, rt_functab[id].ft_name );
-		VPRINT("Bound Sph CENTER", stp->st_center);
-		rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
-		rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
-		VPRINT("Bound RPP min", stp->st_min);
-		VPRINT("Bound RPP max", stp->st_max);
-		rt_functab[id].ft_print( stp );
-	}
+	if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
 	return( stp );
 }
 
@@ -955,7 +947,7 @@ register fastf_t *min_rpp, *max_rpp;
  *  Given a string containing slashes such as a pathname, return a
  *  pointer to the first character after the last slash.
  */
-HIDDEN char *
+char *
 rt_basename( str )
 register char	*str;
 {	
@@ -1577,4 +1569,30 @@ register struct rt_i *rtip;
 
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
+}
+
+/*
+ *			R T _ P R _ S O L T A B
+ */
+void
+rt_pr_soltab( stp )
+register struct soltab	*stp;
+{
+	register int	id = stp->st_id;
+
+	if( id <= 0 || id > ID_MAXIMUM )  {
+		rt_log("stp=x%x, id=%d.\n", stp, id);
+		rt_bomb("rt_pr_soltab:  bad st_id");
+	}
+	rt_log("------------ %s (bit %d) %s ------------\n",
+		stp->st_name, stp->st_bit,
+		rt_functab[id].ft_name );
+	VPRINT("Bound Sph CENTER", stp->st_center);
+	rt_log("Approx Sph Radius = %g\n", stp->st_aradius);
+	rt_log("Bounding Sph Radius = %g\n", stp->st_bradius);
+	VPRINT("Bound RPP min", stp->st_min);
+	VPRINT("Bound RPP max", stp->st_max);
+	rt_pr_bitv( "Referenced by Regions",
+		stp->st_regions, stp->st_maxreg );
+	rt_functab[id].ft_print( stp );
 }
