@@ -115,6 +115,38 @@ then
 			*)	MACHINE=m4i$OS_REVISION$OS_MINOR ;;
 			esac ;;
 		esac ;;
+	# IBM is ugly, returns number code here.  From IBM's man page on uname:
+	# The machine ID number contains 12 characters in the following digit
+	# format: xxyyyyyymmss. The xx positions indicate the system and is
+	# always 00. The yyyyyy positions contain the unique ID number for
+	# the entire system. The mm position represents the model ID. The
+	# ss position is the submodel number and is always 00. The model ID
+	# describes the ID of the CPU Planar, not the model of the System
+	# as a whole. Many new machines share a common machine ID of 4C.
+	# xxyyyyyymmss	xx=00, mm=4C, ss=00
+	# 00******4C00
+	#
+	# 006020514C00	-brainerd1	IBM,9076-N80
+	# 006004604C00	-brainerd2	IBM,9076-N80
+	#
+	# 00212ACA4C00	-shelton	IBM,7040-681
+	#
+	00??????4C00)
+		HARDWARE_TYPE=`uname -M`
+		case "$HARDWARE_TYPE" in
+		"IBM,9076-N80")
+			case "$OS_TYPE" in
+			"AIX")
+				MACHINE=sp3; UNIXTYPE=BSD;
+				HAS_TCP=1; HAS_SYMLINKS=1 ;;
+			esac;;
+		"IBM,7040-681")
+			case "$OS_TYPE" in
+			"AIX")
+				MACHINE=sp4; UNIXTYPE=BSD;
+				HAS_TCP=1; HAS_SYMLINKS=1 ;;
+			esac;;
+		esac ;;
 	esac
 fi
 

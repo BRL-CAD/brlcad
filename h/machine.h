@@ -528,6 +528,32 @@ typedef long    bitv_t;         /* could use long long */
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
 #endif
 
+#ifdef __sp3__
+/********************************
+ *                              *
+ *      IBM SP3                 *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1       /* Uses IEEE style floating point */
+typedef double  fastf_t;        /* double|float, "Fastest" float type */
+#define LOCAL   auto            /* static|auto, for serial|parallel cpu */
+#define FAST    register        /* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#if 1	/* Multi-CPU SP3 build */
+#	define MAX_PSW		16
+#	define DEFAULT_PSW	1
+#	define	PARALLEL	1
+#	define	HAS_POSIX_THREADS	1
+#	define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
+#else	/* 1 CPU SP3 build */
+#	define MAX_PSW		1	/* only one processor, max */
+#	define DEFAULT_PSW	1
+#endif
+
+#endif
+
 #ifdef linux
 /********************************
  *                              *

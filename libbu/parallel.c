@@ -66,6 +66,12 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include <sys/sysctl.h>
 #endif
 
+#ifdef __sp3__
+#include <sys/types.h>
+#include <sys/sysconfig.h>
+#include <sys/var.h>
+#endif
+
 #ifdef CRAY
 # include <sys/category.h>
 # include <sys/resource.h>
@@ -137,7 +143,11 @@ static struct sched_param bu_param;
  * multithread support built on POSIX Threads (pthread) library.
  */
 #ifdef HAS_POSIX_THREADS
+#ifdef __sp3__
+#	include	<unistd.h>
+#else
 #	include <sys/unistd.h>
+#endif
 #	include <pthread.h>
 #define rt_thread_t	pthread_t
 #endif	/* HAS_POSIX_THREADS */
@@ -267,6 +277,13 @@ bu_avail_cpus()
 	size_t len;
 #endif
 
+#ifdef __sp3__
+	int status;
+	int cmd;
+	int parmlen;
+	struct var p;
+#endif
+
 #ifdef SGI_4D
 	/* XXX LAB 04 June 2002
 	 * The call prctl(PR_MAXPPROCS) is supposed to indicate the number
@@ -308,12 +325,27 @@ bu_avail_cpus()
 #       define  RT_AVAIL_CPUS
 #endif	/* defined(SUNOS) */
 
-#if defined(HAS_POSIX_THREADS) && !defined(linux)
+
+#if defined(HAS_POSIX_THREADS) && !defined(linux) && !defined(__sp3__)
 	/* XXX Old posix doesn't specify how to learn how many CPUs there are. 
 	 *  never posix can make a sysctl call -- see __ppc__ below */
 	ret = 2;
 #	define	RT_AVAIL_CPUS
 #endif /* HAS_POSIX_THREADS */
+
+#if defined(HAS_POSIX_THREADS) && defined(__sp3__)
+#if 1
+	cmd = SYS_GETPARMS;
+	parmlen = sizeof(struct var);
+	if( sysconfig(cmd, &p, parmlen) != 0 ) {
+		bu_bomb("bu_parallel(): sysconfig error for sp3");
+	}
+	ret = p.v_ncpus;	/* or should this be p.v_ncpus_cfg ??? */
+#else
+	ret = 16;
+#endif
+#	define	RT_AVAIL_CPUS
+#endif	/* defined(HAS_POSIX_THREADS) && defined(__sp3__) */
 
 /* 
  * These machines may or may not have posix threads, but (more importantly)

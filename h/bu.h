@@ -1592,7 +1592,7 @@ BU_EXTERN(void			bu_log_indent_vls, (struct bu_vls *v) );
 BU_EXTERN(void			bu_log_add_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXTERN(void			bu_log_delete_hook, (bu_hook_t func, genptr_t clientdata));
 BU_EXTERN(void			bu_putchar, (int c) );
-#if __STDC__
+#if defined(HAVE_STDARG_H)
  BU_EXTERN(void			bu_log, (char *, ... ) );
  BU_EXTERN(void			bu_flog, (FILE *, char *, ... ) );
 #else

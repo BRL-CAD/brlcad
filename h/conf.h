@@ -354,6 +354,33 @@
 #       define HAVE_WRITEV              1
 #endif
 
+#if defined(__sp3__)
+#	define USE_PROTOTYPES	1
+#       define USE_STRING_H     1
+#	define HAS_POSIX_THREADS	1
+#	define HAVE_FLOAT_H	1
+#	define HAVE_GETHOSTNAME	1
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL	1
+#	define HAVE_LIMITS_H	1
+#	define HAVE_MEMORY_H	1
+#	define HAVE_SBRK	1
+#	define HAVE_SBRK_DECL	1
+#	define HAVE_STRCHR	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_STDARG_H	1
+#	define HAVE_STRING_H	1
+#	define HAVE_SYS_MMAN_H	1
+#	define HAVE_SYS_SOCKET_H	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_UNIX_DOMAIN_SOCKETS	1
+#	define HAVE_UNIX_IO	1
+#	define HAVE_VFORK	1
+#	define HAVE_VPRINTF	1
+#	define HAVE_WRITEV	1
+#endif
+
 #if defined(__STDC__)
 #	define HAVE_STDLIB_H	1
 #	define HAVE_STDARG_H	1

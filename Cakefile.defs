@@ -1285,6 +1285,97 @@ set -S2 "/bin/sh"
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
+#if defined(__CAKE__sp3)
+/*	IBM SP3 running AIX */
+#undef	sp3
+#	ifndef __sp3__ /* is not defined until we get to cc, so define for use in Cakefile */
+#	define __sp3__
+#	endif
+#	if 0
+#		define SP3_USE_64_BIT
+#	else
+#		define SP3_USE_32_BIT
+#	endif
+#	define	MTYPE	sp3
+#	define	HAS_TCP	1
+#	define	HAS_SYMLINKS 1
+#	define	BSD	44
+#	define	CC	/usr/local/bin/gcc
+#	ifdef	SP3_USE_64_BIT
+/* #		define	FLAG_64	-q64 */
+#	else
+/* #		define	FLAG_64	-q32 */
+#	endif
+#	define	CC_OPTS	-D__sp3__ -mminimal-toc 
+/* #	define	CC_OPTS -D__sp3__ -mno-fp-in-toc */
+/* #	define	CC_OPTS	-D__sp3__ -qmaxmem=32768 -qlanglvl=extended */
+#	define	GETHOST	hostname
+#	define	LIBRT_TIMER	timerunix
+#	define	OPTIMIZER	-O3
+/*	BUILD_SHARED is not quite working yet, so set BUILD_SHARED to 0 */
+/*	to get a static build (but it's over 600 MBytes installed) */
+#	if BUILD_SHARED
+/* 		-fPIC ignored for AIX (all code is position independent) */
+/*		define	CC_DEFS	-fPIC	*/
+#		define	ARCH_SUF	so
+#		define	LIBVERS	../sh/sharedlibvers.sh
+#		define	BUILD_LIBRARY	/usr/local/bin/gcc -shared -Wl,-G -o
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-lm -lpthreads -Wl,-G
+/* #		define	LD_OPTS		GFLAG	*/
+#	else
+#		define	ARCH_SUF	a
+#		define	LIBVERS	../sh/newvers.sh
+#		define	RANLIB	ranlib5.sh
+#		define	STANDARD_LIBES	-lm -lpthreads
+/* #		define	STANDARD_LIBES	-lm -lmalloc	*/
+/* #		define	LD_OPTS		GFLAG	*/
+#	endif
+#	define	XINCDIR	/usr/include/X11
+#	define	XLIBDIR	/usr/lib
+#	define  LIBTERMLIB      -lcurses
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+#	if BUILD_OPENGL
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR -DIF_OGL
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lGL
+#		define	LIBDM_OBJS	color query dm-X dm-ogl
+#		define	LIBDM_CONFIG	-DDM_X -DDM_OGL
+#		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR -DDM_OGL
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -L''XLIBDIR -lXi -lXext
+#	else	/* just use X */
+#		if BUILD_XWINDOWS
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	LIBDM_OBJS	color query dm-X
+#		define	LIBDM_CONFIG	-DDM_X
+#		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
+#		define	MGED_OBJS	doevent update dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -L''XLIBDIR -lXi -lXext
+#		else	/* no X */
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_LIBES	LIBPKG
+#		define	LIBDM_OBJS	
+#		define	LIBDM_CONFIG	
+#		define	LIBDM_LIBES	LIBTCL LIBTCL_LIBES
+#		define	MGED_OBJS	
+#		define	MGED_CONFIG	
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES
+#		define	LIBTK		/**/
+#		define	LIBTK_DEP	/**/
+#		define	NO_LIBTK
+#		endif
+#	endif
+#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
+#	define	LIBDM_SAMPLE_LIBES	\$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
+#endif
+
 #if defined(__CAKE__ibm)
 /*	IBM RS/6000 running AIX */
 #	undef	ibm
@@ -2182,7 +2273,7 @@ set -S2 "/bin/sh"
 #endif
 
 #ifndef LIBVERS
-#	define	LIBVERS	echo
+#	define	LIBVERS	/bin/echo
 #endif
 
 /*
