@@ -19,14 +19,16 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (BRL)"
 #endif
 
-#if defined(BSD)
+#include "conf.h"
+
+#if defined(HAVE_REGEX)
 #ifndef lint
 char	regex_dummy;      /* some systems can't handle empty object modules */
 #else
-		/* Nothing further to do on BSD systems */
+		/* Nothing further to do on systems that have regex */
 #endif
 #else
 
