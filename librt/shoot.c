@@ -46,10 +46,16 @@ char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United St
 
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
 #include "raytrace.h"
+#include "plot3.h"
 #include "./debug.h"
 
 struct resource rt_uniresource;		/* Resources for uniprocessor */
@@ -108,7 +114,6 @@ struct resource	*resp;
 struct rt_i	*rtip;
 {
 	struct rt_piecestate	*psp;
-	struct soltab		*stp;
 	int			i;
 
 	RT_CK_RESOURCE(resp);
@@ -700,7 +705,6 @@ register struct application *ap;
 	struct rt_i		*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 	fastf_t			pending_hit = 0; /* dist of closest odd hit pending */
-	int			odd_hits_pending = 0;	/* boolean.  are odd hits pending? */
 
 	RT_AP_CHECK(ap);
 	if( ap->a_magic )  {
@@ -974,7 +978,6 @@ start_cell:
 			for( ; plp >= cutp->bn.bn_piecelist; plp-- )  {
 				struct rt_piecestate *psp;
 				struct soltab	*stp;
-				int piecenum;
 				int ret;
 				int had_hits_before;
 
@@ -1526,6 +1529,7 @@ int	n;		/* First cell is #0 */
  *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
  *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
+int
 rt_in_rpp( rp, invdir, min, max )
 struct xray		*rp;
 register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
@@ -1610,6 +1614,7 @@ register CONST fastf_t *max;
 }
 
 /* For debugging */
+int
 rt_DB_rpp( rp, invdir, min, max )
 register struct xray *rp;
 register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
