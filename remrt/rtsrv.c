@@ -278,7 +278,7 @@ char **argv;
 	 *  the parallel processing support.
 	 */
 
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 
 #define PUBLIC_CPUS	"/usr/tmp/public_cpus"
 	max_cpus = avail_cpus = rt_avail_cpus();
