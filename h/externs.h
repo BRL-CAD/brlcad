@@ -36,7 +36,11 @@ extern int	execl();
 extern void	exit();
 extern int	fork();
 extern int	getuid();
+#ifdef BSD
 extern int	lseek();
+#else
+extern long	lseek();
+#endif
 extern int	nice();
 extern int	open();
 extern int	pipe();
