@@ -48,9 +48,11 @@ static int X_doevent();
 #endif
 
 struct bu_structparse X_vparse[] = {
-  {"%d",  1, "zclip",             X_MV_O(zclip),            dirty_hook },
-  {"%d",  1, "debug",             X_MV_O(debug),            BU_STRUCTPARSE_FUNC_NULL },
-  {"",    0, (char *)0,           0,                        BU_STRUCTPARSE_FUNC_NULL }
+  {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
+  {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
+  {"%d",  1, "zclip",		 DM_O(dm_zclip),	dirty_hook},
+  {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
+  {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 
 int
@@ -71,7 +73,6 @@ char *argv[];
   if((dmp = dm_open(DM_TYPE_X, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
 
-  zclip_ptr = &((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip;
   eventHandler = X_doevent;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);
@@ -151,15 +152,15 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      bu_struct_print("dm_X internal variables", X_vparse, (CONST char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars );
+      bu_struct_print("dm_X internal variables", X_vparse, (CONST char *)dmp );
     } else if( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, X_vparse, argv[1], (CONST char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
+      bu_vls_struct_item_named( &vls, X_vparse, argv[1], (CONST char *)dmp, ',');
       bu_log( "%s", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      bu_struct_parse( &vls, X_vparse, (char *)&((struct x_vars *)dmp->dm_vars.priv_vars)->mvars );
+      bu_struct_parse( &vls, X_vparse, (char *)dmp );
     }
 
     bu_vls_free(&vls);

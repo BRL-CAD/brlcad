@@ -53,11 +53,15 @@ static void     Ogl_colorchange();
 static void     establish_zbuffer();
 static void     establish_lighting();
 static void     dirty_hook();
+static void     zclip_hook();
+static void     debug_hook();
+static void     bound_hook();
+static void     boundFlag_hook();
 static void     do_fogHint();
 
 struct bu_structparse Ogl_vparse[] = {
 	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
-	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	dirty_hook },
+	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook },
 	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
 	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
 	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint },
@@ -66,7 +70,9 @@ struct bu_structparse Ogl_vparse[] = {
 	{"%d",  1, "has_rgb",		Ogl_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "has_doublebuffer",	Ogl_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "depth",		Ogl_MV_O(depth),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "debug",		Ogl_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "debug",		Ogl_MV_O(debug),	debug_hook },
+	{"%f",  1, "bound",		Ogl_MV_O(bound),	bound_hook },
+	{"%d",  1, "useBound",		Ogl_MV_O(boundFlag),	boundFlag_hook },
 	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
@@ -92,7 +98,7 @@ char *argv[];
   /*XXXX this eventually needs to move into Ogl's private structure */
   dmp->dm_vp = &view_state->vs_Viewscale;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->perspective_mode = &mged_variables->mv_perspective_mode;
-  zclip_ptr = &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
+
   eventHandler = Ogl_doevent;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);
@@ -249,4 +255,33 @@ static void
 dirty_hook()
 {
   dirty = 1;
+}
+
+static void
+zclip_hook()
+{
+  dmp->dm_zclip = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on;
+  dirty_hook();
+}
+
+static void
+debug_hook()
+{
+  DM_DEBUG(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug);
+}
+
+static void
+bound_hook()
+{
+  dmp->dm_bound =
+    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.bound;
+  dirty_hook();
+}
+
+static void
+boundFlag_hook()
+{
+  dmp->dm_boundFlag =
+    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag;
+  dirty_hook();
 }
