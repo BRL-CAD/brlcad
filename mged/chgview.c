@@ -436,14 +436,16 @@ f_refresh()
 }
 
 /*
- *  			R T _ W R I T E
+ *  			R T _ O L D W R I T E
  *  
  *  Write out the information that RT's -M option needs to show current view.
  *  Note that the model-space location of the eye is a parameter,
  *  as it can be computed in different ways.
+ *  The is the OLD format, needed only when sending to RT on a pipe,
+ *  due to some oddball hackery in RT to determine old -vs- new format.
  */
 HIDDEN void
-rt_write(fp, eye_model)
+rt_oldwrite(fp, eye_model)
 FILE *fp;
 vect_t eye_model;
 {
@@ -458,6 +460,33 @@ vect_t eye_model;
 			(void)fprintf(fp, "\n");
 	}
 	(void)fprintf(fp, "\n");
+}
+
+/*
+ *  			R T _ W R I T E
+ *  
+ *  Write out the information that RT's -M option needs to show current view.
+ *  Note that the model-space location of the eye is a parameter,
+ *  as it can be computed in different ways.
+ */
+HIDDEN void
+rt_write(fp, eye_model)
+FILE *fp;
+vect_t eye_model;
+{
+	register int i;
+
+	(void)fprintf(fp, "viewsize %.9e;\n", VIEWSIZE );
+	(void)fprintf(fp, "eye_pt %.9e %.9e %.9e;\n",
+		eye_model[X], eye_model[Y], eye_model[Z] );
+	(void)fprintf(fp, "viewrot ");
+	for( i=0; i < 16; i++ )  {
+		(void)fprintf( fp, "%.9e ", Viewrot[i] );
+		if( (i%4) == 3 )
+			(void)fprintf(fp, "\n");
+	}
+	(void)fprintf(fp, ";\n");
+	(void)fprintf(fp, "start 0;\nend;\n");
 }
 
 /*
@@ -517,7 +546,7 @@ f_rt()
 
 	vp = &vec[0];
 	*vp++ = "rt";
-	*vp++ = "-f50";
+	*vp++ = "-s50";
 	*vp++ = "-M";
 	for( i=1; i < numargs; i++ )
 		*vp++ = cmd_args[i];
@@ -573,7 +602,7 @@ f_rt()
 
 		VSET( temp, 0, 0, 1 );
 		MAT4X3PNT( eye_model, view2model, temp );
-		rt_write(fp, eye_model );
+		rt_oldwrite(fp, eye_model );
 	}
 	(void)fclose( fp );
 	
@@ -681,7 +710,7 @@ f_rrt()
 
 		VSET( temp, 0, 0, 1 );
 		MAT4X3PNT( eye_model, view2model, temp );
-		rt_write(fp, eye_model );
+		rt_oldwrite(fp, eye_model );
 	}
 	(void)fclose( fp );
 	
@@ -1101,6 +1130,7 @@ f_savekey()
 	register FILE *fp;
 	float	time;
 	vect_t	eye_model;
+	vect_t temp;
 
 	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
 		perror(cmd_args[1]);
@@ -1110,14 +1140,11 @@ f_savekey()
 		time = atof( cmd_args[2] );
 		(void)fprintf(fp,"%f\n", time);
 	}
-	/* Important difference:  The eye is located
-	 *  where the alignment dot in the center of
-	 *  the screen is, NOT at the front of the viewing cube.
-	 *  At least for now.
+	/*
+	 *  Eye is in conventional place.
 	 */
-	VSET( eye_model, -toViewcenter[MDX],
-		 -toViewcenter[MDY],
-		 -toViewcenter[MDZ] );
+	VSET( temp, 0, 0, 1 );
+	MAT4X3PNT( eye_model, view2model, temp );
 	rt_write(fp, eye_model);
 	(void)fclose( fp );
 }
