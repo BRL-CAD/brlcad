@@ -387,6 +387,12 @@ f_in()
 			(void)printf("ERROR, rpp not made!\n");
 			return;
 		}
+	} else if( strcmp( cmd_args[2], "str" ) == 0 )  {
+		if( strsol_in( &record ) < 0 )  {
+			(void)printf("ERROR, string solid not made!\n");
+			return;
+		}
+		goto do_update;
 	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
 		(void)printf("typein ars not implimented yet\n");
 		return;
@@ -411,6 +417,7 @@ f_in()
 		return;		/* failure */
 	}
 
+do_update:
 	/* don't allow interrupts while we update the database! */
 	(void)signal( SIGINT, SIG_IGN);
  
@@ -426,6 +433,50 @@ f_in()
 	drawtree( dp );
 	dmp->dmr_colorchange();
 	dmaflag = 1;
+}
+
+/*
+ *			S T R S O L _ I N
+ *
+ *  Read string solid info from keyboard
+ *  "in" name str arg(s)
+ */
+int
+strsol_in( rp )
+union record	*rp;
+{
+	int	left;
+	register char	*cp;
+	int	i;
+	int	len;
+
+	/* Read at least one "arg(s)" */
+	while( args < (3 + 1) )  {
+		(void)printf("Arg? ");
+		if( (argcnt = getcmd(args)) < 0 )  {
+			return(-1);	/* failure */
+		}
+		args += argcnt;
+	}
+
+	/* Up to DB_SS_LEN chars of arg, space separated, null terminated */
+	left = DB_SS_LEN-1;
+	cp = &rp->ss.ss_str[0];
+	for( i = 3; i < args; i++ )  {
+		len = strlen( cmd_args[i] );
+		if( len > left )  {
+			(void)printf("Too long, truncating\n");
+			break;
+		}
+		if( i > 3 ) *cp++ = ' ';
+		strncpy( cp, cmd_args[i], len );
+		cp += len;
+		left -= len+1;
+	}
+	*cp++ = '\0';
+
+	rp->ss.ss_id = ID_STRSOL;
+	return(0);		/* OK */
 }
 
 /*	H A L F _ I N ( ) :    	reads halfspace parameters from keyboard
