@@ -1,57 +1,60 @@
 /*
- *			J O V E _ P R O C . C 
+ *			J O V E _ P R O C . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:19  mike
+ * Release_4.4
+ *
  * Revision 10.3  94/12/21  22:04:46  mike
  * Eliminated "statement not reached" warning.
- * 
+ *
  * Revision 10.2  93/10/26  05:57:41  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:54:03  mike
  * Release_4.0
- * 
+ *
  * Revision 2.10  91/09/23  03:16:45  mike
  * Eliminated return / return(expr) warning.
  * Removed some dead code
- * 
+ *
  * Revision 2.9  91/09/23  02:58:55  mike
  * gldav() is not a BSD system call.
- * 
+ *
  * Revision 2.8  91/08/30  19:41:59  mike
  * Added ^Xe to run cake, like ^X^E runs make.
- * 
+ *
  * Revision 2.7  91/08/30  19:14:21  mike
  * Modified to successfully parse C compiler errors, even on more modern
  * compilers, and on the oddball CRAYs.
- * 
+ *
  * Revision 2.6  91/08/30  18:59:50  mike
  * Modifications for clean compilation on the XMP
- * 
+ *
  * Revision 2.5  91/08/30  18:46:08  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
- * 
+ *
  * Revision 2.4  91/08/30  17:54:37  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.3  91/08/30  17:49:13  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.2  87/04/14  20:11:25  dpk
  * Added hack for supporting CRAY.
- * 
+ *
  * Revision 2.1  86/04/06  06:20:27  gwyn
  * SpellCom was using sprintf return value, non-portable.
- * 
+ *
  * Revision 2.0  84/12/26  16:47:33  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:09:16  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -59,7 +62,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
-  
+
    jove_proc.c
 
    This file contains procedures to handle the shell to buffer commands
@@ -70,8 +73,8 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <signal.h>
 
-extern	char *cerrfmt;
-extern	char *lerrfmt;
+extern	char cerrfmt[];
+extern	char lerrfmt[];
 
 struct error {
 	BUFFER		*er_buf;	/* Buffer error is in */
@@ -89,7 +92,7 @@ int	MakeAll = 0,		/* Not make -k */
 	WtOnMk = 1;		/* Write the modified files when we make */
 
 extern char	*StdShell;
-extern char	*ProcTmp;
+extern char	ProcTmp[];
 
 void		SpParse();
 
@@ -150,11 +153,11 @@ ErrParse(fmtstr)
 char	*fmtstr;
 {
 	BUFLOC	*bp;
-	char	fname[100],
+	char	fname[LBSIZE],
 		lineno[10];
 	struct error	*ep = 0;
 	BUFFER	*buf;
-	
+
 	Bof();
 	if (errorlist)
 		ErrFree();
@@ -169,7 +172,7 @@ char	*fmtstr;
 	}
 }
 
-/* Send the buffer to the spell program (for some reason, writing the 
+/* Send the buffer to the spell program (for some reason, writing the
    file and running spell on that file caused spell to just sit there!)
    and then go find each occurrence of the mispelled words that the user
    says to go find.  Check out SpParse() */
@@ -178,16 +181,15 @@ SpellCom()
 {
 	WINDOW	*errwind,
 		*savewind;
-	char	command[100];
+	char	command[LBSIZE];
 
 	savewind = curwind;
 	exp_p = 1;
 	if (IsModified(curbuf))
 		SaveFile();
-
-	ignore(sprintf(command, "spell %s", curbuf->b_fname));	/* DAG */
+	ignore(sprintf(command, "spell %s", curbuf->b_fname));
 	ignore(UnixToBuf("Spell", 1, !exp_p, "/bin/sh", "sh", "-c",
-			command, 0));	/* DAG -- don't use sprintf return value */
+			command, (char *)0));
 	NotModified();
 	Bof();		/* Beginning of (error messages) file */
 	errwind = curwind;
@@ -211,7 +213,7 @@ WINDOW	*err,
 	*buf;
 {
 	BUFLOC	*bp;
-	char	string[100], ans = '\0';
+	char	string[LBSIZE], ans = '\0';
 	struct error	*newerr = 0;
 
 	if (errorlist)
@@ -244,12 +246,12 @@ WINDOW	*err,
 		if (ans == 'Y') {	/* Not correct */
 			while (bp = dosearch(string, 1, 1)) {
 				SetDot(bp);
-				newerr = AddError(newerr, 
+				newerr = AddError(newerr,
 				    thisbuf->b_dot, buf->w_bufp,
 				    curline, curchar);
 			}
 		}
-			
+
 nextword:
 		SetWind(err);	/* Back to error window to move to
 				   the next word */
@@ -328,9 +330,9 @@ MakeErrors()
 	if (WtOnMk)
 		WtModBuf();
 	if (MakeAll)
-		status = UnixToBuf("make", 1, 1, "make", "Make", "-k", what, 0);
+		status = UnixToBuf("make", 1, 1, "make", "Make", "-k", what, (char *)0);
 	else
-		status = UnixToBuf("make", 1, 1, "make", "Make", what, 0);
+		status = UnixToBuf("make", 1, 1, "make", "Make", what, (char *)0);
 	com_finish(status, "make");
 	if (errorlist)
 		ErrFree();
@@ -364,9 +366,9 @@ CakeErrors()
 	if (WtOnMk)
 		WtModBuf();
 	if (MakeAll)
-		status = UnixToBuf("cake", 1, 1, "cake", "cake", "-k", what, 0);
+		status = UnixToBuf("cake", 1, 1, "cake", "cake", "-k", what, (char *)0);
 	else
-		status = UnixToBuf("cake", 1, 1, "cake", "cake", what, 0);
+		status = UnixToBuf("cake", 1, 1, "cake", "cake", what, (char *)0);
 	com_finish(status, "cake");
 	if (errorlist)
 		ErrFree();
@@ -403,11 +405,11 @@ char	*command;
 	return bufname;
 }
 
-static char	ShcomBuf[100] = {0};	/* I hope ??? */
+static char	ShcomBuf[LBSIZE] = {0};	/* I hope ??? */
 
 ShToBuf()
 {
-	char	bufname[100];
+	char	bufname[LBSIZE];
 
 	strcpy(bufname, ask((char *) 0, "Buffer: "));
 	DoShell(bufname, ask(ShcomBuf, "Command: "));
@@ -432,7 +434,7 @@ char	*bufname,
 
 	exp = 1;
 	status = UnixToBuf(bufname, 1, !exp_p, StdShell, "shell", "-c",
-			command, 0);
+			command, (char *)0);
 	com_finish(status, command);
 	SetWind(savewp);
 }
@@ -461,26 +463,40 @@ int	p[];
  * and redisplay if disp is non-zero.
  */
 
-/* VARARGS3 */
+/* VARARGS */
 
-#if defined(CRAY)
-UnixToBuf(bufname, disp, clobber, func, a1, a2, a3, a4, a5, a6)
-#else
-UnixToBuf(bufname, disp, clobber, func, args)
-#endif
-char	*bufname,
-	*func;
+int
+UnixToBuf(VA_T(char *bufname) VA_T(int disp) VA_T(int clobber)
+	VA_T(const char *func) VA_ALIST)
+	VA_DCL
 {
+	VA_D(char	*bufname)
+	VA_D(int	disp)
+	VA_D(int	clobber)
+	VA_D(char	*func)
+	VA_LIST(ap)
+	char	*args[ALSIZE],
+		**argp;
 	int	p[2],
 		pid;
 	char	buff[LBSIZE];
 	extern int	ninbuf;
-	int	status = 0;
 
 	message("Starting up...");
+	VA_START(ap, func)
+	VA_I(ap, char *, bufname)
+	VA_I(ap, int, disp)
+	VA_I(ap, int, clobber)
+	VA_I(ap, char *, func)
+	for (argp = args; argp - args < ALSIZE; ++argp)
+		if ((*argp = VA_ARG(ap, char *)) == (char *)0)
+			break;
+	VA_END(ap)
+	if (argp - args == ALSIZE)
+		complain("Too many arguments");
 	pop_wind(bufname, clobber);
 	if (disp)
-		redisplay();		
+		redisplay();
 	if (clobber)
 		SetScratch(curbuf);
 	exp = 1;
@@ -493,24 +509,17 @@ char	*bufname,
 		complain("Cannot fork");
 	}
 	if (pid == 0) {
-#ifdef SIGTSTP
 		ignorf(signal(SIGINT, SIG_DFL));
-#else
-		ignorf(signal(SIGINT, SIG_DFL));
-#endif
 		ignore(close(1));
 		ignore(close(2));
 		ignore(dup(p[1]));
 		ignore(dup(p[1]));
 		PipeClose(p);
-#if defined(CRAY)
-		execlp(func, a1, a2, a3, a4, a5, a6, (char *)0);
-#else
-		execvp(func, (char **) &args);
-#endif
-		ignore(write(1, "Execl failed", 12));
-		exit(1);
+		execvp(func, args);
+		ignore(write(1, "Execvp failed", 12));
+		_exit(1);
 	} else {
+		int	status;
 		char	*mess;
 
 		ignore(close(p[1]));
@@ -529,15 +538,16 @@ char	*bufname,
 		while (wait(&status) != pid)
 			;
 		ttyset(1);
+		return status;
 	}
-	return status;
+	return 0;
 }
 
 /* Send a region to shell.  Now we can beautify C and sort programs */
 
 RegToShell()
 {
-	char	com[100];
+	char	com[LBSIZE];
 	MARK	*m = CurMark();
 
 	strcpy(com, ask((char *) 0, FuncName()));
@@ -563,16 +573,21 @@ LINE	*line1,
 	*line2;
 char	*func;
 {
+#if HAS_TEMPNAM
+	/* Honor $TMPDIR in user's environment */
+	char	*fname = tempnam((char *)NULL, "jovep");
+#else
 	char	*fname = mktemp(ProcTmp);
-	char	com[100];
+#endif
+	char	com[LBSIZE];
 
-	if ((io = creat(fname, 0644)) == -1)
+	if ((io = creat(fname, 0600)) == -1)
 		complain(IOerr("create", fname));
 	putreg(line1, char1, line2, char2);
 	IOclose();
 	if (replace)
 		DelReg();
 	ignore(sprintf(com, "%s < %s", func, fname));
-	ignore(UnixToBuf(bufname, 0, 0, StdShell, "shell", "-c", com, 0));
+	ignore(UnixToBuf(bufname, 0, 0, StdShell, "shell", "-c", com, (char *)0));
 	ignore(unlink(fname));
 }
