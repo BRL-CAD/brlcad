@@ -1543,7 +1543,7 @@ struct bu_vls *vls;
 
 				/* copy value up to next white space or end of string */
 				start = iptr;
-				while( *iptr && !isspace( *iptr ) )
+				while( *iptr && *iptr != ';' && !isspace( *iptr ) )
 					iptr++;
 
 				bu_vls_strncat( vls, start, iptr - start );
@@ -1822,7 +1822,7 @@ char *params;
 
 	if( len%2 )
 	{
-		bu_log( "bu_shader_to_key_eq: Error: shader parameters must be even numbered!!\n\t%s\n", params );
+		bu_log( "bu_key_val_to_vls: Error: shader parameters must be even numbered!!\n\t%s\n", params );
 		return( 1 );
 	}
 
@@ -1861,6 +1861,16 @@ struct bu_vls *vls;
 	BU_CK_VLS( vls );
 
 	len = bu_tcl_list_length( in );
+
+	if( len == 0 )
+		return( 0 );
+
+	if( len == 1 )
+	{
+		/* shader with no parameters */
+		bu_vls_strcpy( vls, in );
+		return( 0 );
+	}
 
 	if( len != 2 )
 	{
