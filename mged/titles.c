@@ -75,6 +75,7 @@ dotitles()
 	mat_t new_mat;
 	register int yloc, xloc;
 	register float y_val;
+	auto fastf_t	az, el;
 	auto char linebuf[512];
 
 	/* Enclose window in decorative box.  Mostly for alignment. */
@@ -351,7 +352,12 @@ dotitles()
 
 	cp = &linebuf[0];
 	FINDNULL(cp);
-	(void)sprintf( cp, "ang=(%.2f, %.2f, %.2f)",
+	/* az/el 0,0 is when screen +Z is model +X */
+	VSET( work, 0, 0, 1 );
+	MAT3X3VEC( temp, view2model, work );
+	ae_vec( &az, &el, temp );
+	(void)sprintf( cp, "az=%3.0f el=%2.0f ang=(%.2f, %.2f, %.2f)",
+		az, el,
 		dm_values.dv_xjoy * 6,
 		dm_values.dv_yjoy * 6,
 		dm_values.dv_zjoy * 6 );
