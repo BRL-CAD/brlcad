@@ -233,6 +233,22 @@ register int	want;
 				}
 			}
 		}
+		if( rdebug&(RDEBUG_RAYPLOT|RDEBUG_SHADE) )  {
+			point_t		endpt;
+			fastf_t		f;
+			/* Plot the surface normal -- green/blue */
+			/* plotfp */
+			if(rdebug&RDEBUG_RAYPLOT) pl_color( stdout, 0, 255, 255 );
+			f = ap->a_rt_i->rti_radius * 0.02;
+			VJOIN1( endpt, swp->sw_hit.hit_point,
+				f, swp->sw_hit.hit_normal );
+			if(rdebug&RDEBUG_RAYPLOT) pdv_3line( stdout, swp->sw_hit.hit_point, endpt );
+			bu_log("Surface normal for shader:\n\
+vdraw o norm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+				V3ARGS(swp->sw_hit.hit_point),
+				V3ARGS(endpt) );
+
+		}
 		have |= MFI_NORMAL;
 	}
 	if( want & MFI_UV )  {
