@@ -10,6 +10,6 @@ nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 man_MANS = nirt.1 showshot.1
 EXTRA_DIST = $(man_MANS)
 
-vers.c: $(nirt_SOURCES) Makefile.am
+vers.c: $(nirt_srcs) Makefile.am
 	sh $(top_srcdir)/sh/newvers.sh version "Natalie's Interactive Ray Tracer"
 
