@@ -507,7 +507,7 @@ if( cmdline_hook )  (*cmdline_hook)(&dm_values.dv_string); else
 		fastf_t	factor;
 #define MINVIEW		0.001	/* smallest view.  Prevents runaway zoom */
 
-		factor = 1.0 - (dm_values.dv_zoom / 10);
+		factor = 1.0 - (rate_zoom / 10);
 		Viewscale *= factor;
 		if( Viewscale < MINVIEW )
 			Viewscale = MINVIEW;
