@@ -54,6 +54,7 @@ struct chan {
 #define	INTERP_LINEAR	2
 #define	INTERP_SPLINE	3
 #define INTERP_RATE	4
+#define INTERP_ACCEL	5
 	int	c_periodic;	/* cyclic end conditions? */
 };
 
@@ -70,6 +71,7 @@ extern int	cm_times();
 extern int	cm_interp();
 extern int	cm_idump();
 extern int	cm_rate();
+extern int	cm_accel();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
@@ -80,8 +82,10 @@ struct command_tab cmdtab[] = {
 		cm_interp,	3, 999,
 	"idump", "[chan_num(s)]", "dump input channel values",
 		cm_idump,	1, 999,
-	"rate", "chan_num initial_value [comment]", "create rate based channel",
-		cm_rate,	3, 4,
+	"rate", "chan_num init_value incr_per_sec [comment]", "create rate based channel",
+		cm_rate,	4, 5,
+	"accel", "chan_num init_value mult_per_sec [comment]", "create acceleration based channel",
+		cm_accel,	4, 5,
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
@@ -523,6 +527,9 @@ again:
 		case INTERP_RATE:
 			rate_interpolate( chp, times );
 			break;
+		case INTERP_ACCEL:
+			accel_interpolate( chp, times );
+			break;
 		}
 	}
 	rt_free( (char *)times, "loc times");
@@ -627,16 +634,47 @@ register fastf_t	*times;
 {
 	register int	t;		/* output time index */
 	register int	i;		/* input time index */
+	register double	ival;
 	register double	rate;
 
-	if( chp->c_ilen != 1 )  {
-		fprintf(stderr,"rate_interpolate:  only 1 point (the rate) may be specified\n");
+	if( chp->c_ilen != 2 )  {
+		fprintf(stderr,"rate_interpolate:  only 2 points (ival & rate) may be specified\n");
 		return;
 	}
-	rate = chp->c_ival[0];
+	ival = chp->c_ival[0];
+	rate = chp->c_ival[1];
 
 	for( t=0; t < o_len; t++ )  {
-		chp->c_oval[t] = rate * times[t];
+		chp->c_oval[t] = ival + rate * times[t];
+	}
+}
+
+/*
+ *			A C C E L _ I N T E R P O L A T E
+ *
+ */
+accel_interpolate( chp, times )
+register struct chan	*chp;
+register fastf_t	*times;
+{
+	register int	t;		/* output time index */
+	register int	i;		/* input time index */
+	double	ival;
+	double	mul;
+	register double scale;
+
+	if( chp->c_ilen != 2 )  {
+		fprintf(stderr,"accel_interpolate:  only 2 points (ival & mul) may be specified\n");
+		return;
+	}
+	ival = chp->c_ival[0];
+	mul = chp->c_ival[1];
+	/* scale ^ fps = mul */
+	scale = exp( log(mul) / fps );
+
+	chp->c_oval[0] = ival;
+	for( t=1; t < o_len; t++ )  {
+		chp->c_oval[t] = chp->c_oval[t-1] * scale;
 	}
 }
 
@@ -792,21 +830,54 @@ bad:
 	return(0);
 }
 
+/*
+ *			C M _ R A T E
+ *
+ *  Just to communiate with the "interpolator", use two input values.
+ *  First is initial value, second is change PER SECOND
+ *  Input time values are meaningless.
+ */
 cm_rate( argc, argv )
 int	argc;
 char	**argv;
 {
 	register struct chan	*chp;
 	int	ch;
-	double	val;
+	int	nvals = 2;
 
-	val = atof(argv[2]);
-	ch = create_chan( argv[1], 1, argc>3?argv[3]:"rate chan" );
+	ch = create_chan( argv[1], nvals, argc>4?argv[4]:"rate chan" );
 	chp = &chan[ch];
 	chp->c_interp = INTERP_RATE;
 	chp->c_periodic = 0;
-	chp->c_itime = (fastf_t *)rt_malloc( 1 * sizeof(fastf_t), "rate times");
-	chp->c_itime[0] = 0;
-	chp->c_ival[0] = val;
+	chp->c_itime = (fastf_t *)rt_malloc( nvals * sizeof(fastf_t), "rate times");
+	chp->c_itime[0] = chp->c_itime[1] = 0;
+	chp->c_ival[0] = atof(argv[2]);
+	chp->c_ival[1] = atof(argv[3]);
+	return(0);
+}
+
+/*
+ *			C M _ A C C E L
+ *
+ *  Just to communiate with the "interpolator", use two input values.
+ *  First is initial value, second is change PER SECOND
+ *  Input time values are meaningless.
+ */
+cm_accel( argc, argv )
+int	argc;
+char	**argv;
+{
+	register struct chan	*chp;
+	int	ch;
+	int	nvals = 2;
+
+	ch = create_chan( argv[1], nvals, argc>4?argv[4]:"accel chan" );
+	chp = &chan[ch];
+	chp->c_interp = INTERP_ACCEL;
+	chp->c_periodic = 0;
+	chp->c_itime = (fastf_t *)rt_malloc( nvals * sizeof(fastf_t), "accel times");
+	chp->c_itime[0] = chp->c_itime[1] = 0;
+	chp->c_ival[0] = atof(argv[2]);
+	chp->c_ival[1] = atof(argv[3]);
 	return(0);
 }
