@@ -1118,12 +1118,12 @@ register struct rt_i *rtip;
 	 *  Enlarge the model RPP just slightly, to avoid nasty
 	 *  effects with a solid's face being exactly on the edge
 	 */
-	rtip->mdl_min[X] = floor( rtip->mdl_min[X] - 1 );
-	rtip->mdl_min[Y] = floor( rtip->mdl_min[Y] - 1 );
-	rtip->mdl_min[Z] = floor( rtip->mdl_min[Z] - 1 );
-	rtip->mdl_max[X] = ceil( rtip->mdl_max[X] + 1 );
-	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] + 1 );
-	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] + 1 );
+	rtip->mdl_min[X] = floor( rtip->mdl_min[X] );
+	rtip->mdl_min[Y] = floor( rtip->mdl_min[Y] );
+	rtip->mdl_min[Z] = floor( rtip->mdl_min[Z] );
+	rtip->mdl_max[X] = ceil( rtip->mdl_max[X] );
+	rtip->mdl_max[Y] = ceil( rtip->mdl_max[Y] );
+	rtip->mdl_max[Z] = ceil( rtip->mdl_max[Z] );
 
 	/*  Build array of region pointers indexed by reg_bit.
 	 *  Optimize each region's expression tree.
