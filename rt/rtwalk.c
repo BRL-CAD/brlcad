@@ -244,17 +244,8 @@ err:
 			exit(0);
 		}
 
-		if( clear_dist > 0.0 )  {
-			fastf_t	step;
-			if( clear_dist < incr_dist )
-				step = clear_dist;
-			else
-				step = incr_dist;
-			VJOIN1( ap.a_ray.r_pt, ap.a_ray.r_pt,
-				step, ap.a_ray.r_dir );
-			clear_dist -= step;
-			continue;
-		}
+		/* See if additional clear space ahead */
+		if( clear_dist > 0.0 )  goto advance;
 
 		/*
 		 * Initial direction:  Head directly towards the goal.
@@ -363,6 +354,20 @@ err:
 		if( clear_dist > max_dist_togo )
 			clear_dist = max_dist_togo;
 
+		/* Advance position along ray */
+advance:	;
+		if( clear_dist > 0.0 )  {
+			fastf_t	step;
+			if( clear_dist < incr_dist )
+				step = clear_dist;
+			else
+				step = incr_dist;
+			VJOIN1( ap.a_ray.r_pt, ap.a_ray.r_pt,
+				step, ap.a_ray.r_dir );
+			clear_dist -= step;
+		}
+
+		/* Save status */
 		VMOVE( norm_prev_step, norm_cur_try );
 	}
 	fprintf(stderr,"%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
