@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:56  mike
+ * Release_4.0
+ * 
  * Revision 2.3  91/08/30  18:10:44  mike
  * Made explicit that termcap.h to be used is the local version
  * 
@@ -522,7 +525,7 @@ register int	linenum;
 			ignore(swrite(sprint("%6d  ", (linenum - FLine(w) +
 					w->w_topnum))));
 		if (hasIC) {
-			char	outbuf[132],
+			char	outbuf[LBSIZE],
 				buff[LBSIZE],
 				*bptr;
 			int	fromcol = w->w_numlines ? 8 : 0;
