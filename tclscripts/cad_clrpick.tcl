@@ -35,10 +35,10 @@
 # The caller is responsible for calling "unset data"
 #
 proc cadColorWidget { mode parent child args } {
-    global tkPriv
+    global ::tk::Priv
 
     if ![winfo exists $parent] {
-	cad_dialog $tkPriv(cad_dialog) [winfo screen .]\
+	cad_dialog $::tk::Priv(cad_dialog) [winfo screen .]\
 		"cadColorWidget: parent does not exist"\
 		"cadColorWidget: parent does not exist - $parent"\
 		"" 0 OK
@@ -90,7 +90,7 @@ proc cadColorWidget { mode parent child args } {
     set data(xoffset) [expr 3 + $data(indent)]
 
     # Create toplevel on parent's screen
-    toplevel $w -class tkColorDialog -screen [winfo screen $parent]
+    toplevel $w -class ::tk::dialog::color:: -screen [winfo screen $parent]
     cadColorWidget_Build $w $mode
 
 #    wm transient $w $parent
@@ -424,9 +424,9 @@ window that implements the X selection protocol." } }
 
     # Button specific accelerator bindings
     #
-    bind $w <KeyPress-Escape> "tkButtonInvoke $data(dismissBtn)"
-    bind $w <Alt-c> "tkButtonInvoke $data(dismissBtn)"
-    bind $w <Alt-o> "tkButtonInvoke $data(applyBtn)"
+    bind $w <KeyPress-Escape> "::tk::ButtonInvoke $data(dismissBtn)"
+    bind $w <Alt-c> "::tk::ButtonInvoke $data(dismissBtn)"
+    bind $w <Alt-o> "::tk::ButtonInvoke $data(applyBtn)"
 }
 
 proc cadColorWidget_OkCancelButtons { w botFrame } {
@@ -453,9 +453,9 @@ apply the color." } }
 
     # Button specific accelerator bindings
     #
-    bind $w <KeyPress-Escape> "tkButtonInvoke $data(cancelBtn)"
-    bind $w <Alt-c> "tkButtonInvoke $data(cancelBtn)"
-    bind $w <Alt-o> "tkButtonInvoke $data(okBtn)"
+    bind $w <KeyPress-Escape> "::tk::ButtonInvoke $data(cancelBtn)"
+    bind $w <Alt-c> "::tk::ButtonInvoke $data(cancelBtn)"
+    bind $w <Alt-o> "::tk::ButtonInvoke $data(okBtn)"
 }
 
 # cadColorWidget_SetRGBValue --
