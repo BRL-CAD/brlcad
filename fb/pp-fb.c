@@ -34,11 +34,10 @@ extern void	perror(), exit();
 #else
 #define FBBUFSIZE (4*1024)	/* Size of frame buffer DMA */
 #endif
-static Pixel	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
+static RGBpixel	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 #define FBWPIXEL(pix) \
-	{ \
-	*fb_p++ = *pix; \
-	if( fb_p >= end_p ) \
+	{ COPYRGB( *fb_p, pix ); \
+	if( ++fb_p >= end_p ) \
 		{ \
 		fb_write( fbp, 0, fb_y, pix_buf, FBBUFSIZE ); \
 		fb_y -= scans_per_buffer; \
@@ -57,28 +56,28 @@ FBIO *fbp;
 #define NCOLORS	((sizeof(ctab))/(sizeof(struct colors)))
 static struct colors {
 	char *color;
-	Pixel	c_pixel;
+	RGBpixel	c_pixel;
 } ctab[] = {
-	"black",	0,0,0,0,
-	"white",	255,255,255,0,
-	"red",		255,0,0,0,
-	"green",	0,255,0,0,
-	"blue",		0,0,255,0,
-	"cyan",		0,255,200,0,
-	"magenta",	255,0,255,0,
-	"yellow",	255,200,0,0,
-	"orange",	255,100,0,0,
-	"lime",		200,255,0,0,
-	"olive",	220,190,0,0,
-	"lt blue",	0,255,255,0,
-	"violet",	200,0,255,0,
-	"rose",		255,0,175,0,
-	"gray",		120,120,120,0,
-	"silver",	237,237,237,0,
-	"brown",	200,130,0,0,
-	"pink",		255,200,200,0,
-	"flesh",	255,200,160,0,
-	"rust",		200,100,0,0
+	"black",	0,0,0,
+	"white",	255,255,255,
+	"red",		255,0,0,
+	"green",	0,255,0,
+	"blue",		0,0,255,
+	"cyan",		0,255,200,
+	"magenta",	255,0,255,
+	"yellow",	255,200,0,
+	"orange",	255,100,0,
+	"lime",		200,255,0,
+	"olive",	220,190,0,
+	"lt blue",	0,255,255,
+	"violet",	200,0,255,
+	"rose",		255,0,175,
+	"gray",		120,120,120,
+	"silver",	237,237,237,
+	"brown",	200,130,0,
+	"pink",		255,200,200,
+	"flesh",	255,200,160,
+	"rust",		200,100,0
 };
 static struct items {
 	long	low;
@@ -112,17 +111,19 @@ char **argv;
 	static int newsurface;
 	static int inten_high;		/* high bits of intentisy */
 	static float rm[3];
-	static Pixel icl;
+	static RGBpixel icl;
 	static int ibc;			/* background color index */
-	static Pixel *backgroundp;	/* pointer to background pixel */
+	static RGBpixel *backgroundp;	/* pointer to background pixel */
 	static int maxh,maxv,mnh,mnv;
 	static int vert_max;
 	static long li,lj;
 	register char c;
 	register int	scans_per_buffer; /* Increment for 'fb_y'.	*/
-	register int	fb_y;	    /* Scanline to write to next.	*/
-	register Pixel	*fb_p;	    /* Current position in buffer.	*/
-	register Pixel	*end_p = &pix_buf[FBBUFSIZE]; /* End of buffer.	*/
+	register int	fb_y;		/* Scanline to write to next.	*/
+	register RGBpixel *fb_p;	/* Current position in buffer.	*/
+	register RGBpixel *end_p;	/* End of buffer.	*/
+
+	end_p = (RGBpixel *)&(pix_buf[FBBUFSIZE][RED]);
 
 	/* check invocation */
 	if( ! pars_Argv( argc, argv ) )
@@ -212,14 +213,14 @@ line1:
 	fb_y = 511;
 
 	/* paint background on upper part of screen */
-	backgroundp= &ctab[ibc-1].c_pixel;
+	backgroundp= (RGBpixel *)&(ctab[ibc-1].c_pixel[RED]);
 	for(vert_pos=512; vert_pos > vert_max; vert_pos--)
 		for(i=0;i<512;i++)
-			FBWPIXEL(backgroundp);
+			FBWPIXEL(*backgroundp);
 
 	/* paint background on left side of screen */
 	for(horiz_pos=0;horiz_pos<mnh;horiz_pos++)
-		FBWPIXEL(backgroundp); 
+		FBWPIXEL(*backgroundp); 
 
 	while((c=g())!='/')  {
 		last_unpacked=c-32;
@@ -231,23 +232,23 @@ noread:
 			register float pi;
 
 			pi=REFLECTANCE * ( (last_unpacked&0x1F) + inten_high );
-			icl.red = pi*rm[0];
-			icl.green = pi*rm[1];
-			icl.blue = pi*rm[2];
+			icl[RED] = pi*rm[0];
+			icl[GRN] = pi*rm[1];
+			icl[BLU] = pi*rm[2];
 			ftemp=ABS(spi-pi);
 			spi=pi;
 			if(newsurface==0||ftemp>.1)  {
-				FBWPIXEL( &icl );
+				FBWPIXEL( icl );
 			}  else {
 				/* fill scan between surfaces of same intensity */
-				static Pixel pixel;
+				static RGBpixel pixel;
 
 				if(pi<.15) pi+=.15;
 				if(pi>=.15) pi-=.15;
-				pixel.red = pi*rm[0];
-				pixel.green = pi*rm[1];
-				pixel.blue = pi*rm[2];
-				FBWPIXEL( &pixel );
+				pixel[RED] = pi*rm[0];
+				pixel[GRN] = pi*rm[1];
+				pixel[BLU] = pi*rm[2];
+				FBWPIXEL( pixel );
 			}
 			newsurface=0;
 			horiz_pos++;
@@ -263,7 +264,7 @@ noread:
 			/* miss target */
 			lj=numb();
 			for(li=0; li<lj; li++,horiz_pos++)  {
-				FBWPIXEL(backgroundp);
+				FBWPIXEL(*backgroundp);
 			}
 			newsurface=0;
 			goto noread;
@@ -280,35 +281,35 @@ noread:
 			for(i=0;i<(nitems-1);i++)
 				if( lj >= itemtab[i].low && lj <= itemtab[i].high )
 					break;
-			rm[0]=ctab[itemtab[i].color].c_pixel.red;
-			rm[1]=ctab[itemtab[i].color].c_pixel.green;
-			rm[2]=ctab[itemtab[i].color].c_pixel.blue;
+			rm[0]=ctab[itemtab[i].color].c_pixel[RED];
+			rm[1]=ctab[itemtab[i].color].c_pixel[GRN];
+			rm[2]=ctab[itemtab[i].color].c_pixel[BLU];
 			goto noread;
 
 		case 10:
 			/* repeat intensity */
 			lj=numb();
-			for(li=0;li<lj;li++,horiz_pos++) FBWPIXEL( &icl );
+			for(li=0;li<lj;li++,horiz_pos++) FBWPIXEL( icl );
 			if(last_unpacked!=10) goto noread;
 			break;
 
 		case 14:
 			/* end of line -- fill edges with background */
 			while((horiz_pos++)<512)
-				FBWPIXEL(backgroundp); 
+				FBWPIXEL(*backgroundp); 
 			vert_pos--;
 			for(horiz_pos=0;horiz_pos<mnh;horiz_pos++)
-				FBWPIXEL(backgroundp);
+				FBWPIXEL(*backgroundp);
 		}
 	}
 
 	/* end of view */
 	while((horiz_pos++)<512)
-		FBWPIXEL(backgroundp);
+		FBWPIXEL(*backgroundp);
 	vert_pos--;
 	while((vert_pos--)>0)
 		for(i=0;i<512;i++)
-			FBWPIXEL(backgroundp);
+			FBWPIXEL(*backgroundp);
 
 	/* Gobble up file until we see an alphabetic in col 1 */
 	while(1)  {
