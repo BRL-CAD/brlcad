@@ -64,6 +64,8 @@ class Mged {
     public method label {obj}
     public method listeval {args}
     public method ls {args}
+    public method make_bb {name args}
+    public method make_name {args}
     public method match {args}
     public method mv {args}
     public method mvall {args}
@@ -268,6 +270,14 @@ body Mged::cat {args} {
 
 body Mged::i {args} {
     eval $db i $args
+}
+
+body Mged::make_bb {name args} {
+    eval $db make_bb $name $args
+}
+
+body Mged::make_name {args} {
+    eval $db make_name $args
 }
 
 body Mged::draw {args} {
