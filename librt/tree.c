@@ -247,7 +247,8 @@ next_one: ;
 		/* Convert from database (float) to fastf_t */
 		rt_fastf_float( (fastf_t *)v, rec->s.s_values, 8 );
 	}
-	stp->st_name = dp->d_namep;
+	stp->st_dp = dp;
+	stp->st_name = dp->d_namep;	/* st_name could be eliminated */
 	stp->st_specific = (int *)0;
 
 	/* init solid's maxima and minima */
