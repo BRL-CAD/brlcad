@@ -304,7 +304,7 @@ Ir_configure_window_shape()
 	case NTSC:
 		/* Only use the central square part */
 		npix = YMAX170-30;
-		winx_size = npix * 5 / 4;	/* NTSC aspect ratio */
+		winx_size = npix * 4 / 3;	/* NTSC aspect ratio */
 		winy_size = npix;
 		win_l = (XMAX170 - winx_size)/2;
 		win_r = win_l + winx_size;
