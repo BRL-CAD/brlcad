@@ -249,25 +249,37 @@ savescreen(ofp,xorg,yorg,xsize,ysize)
 FILE	*ofp;
 int	xorg,yorg,xsize,ysize;
 {
-	unsigned long	lbuf[2048];
+	unsigned long	*lbuf;
+	unsigned long	*lp;
+	int	npix;
 	int	x;
 	int	y;
 	register unsigned char	*op;
 	long	got;
 
-	for(y=0; y<ysize; y++) {
-		got = readdisplay( xorg, yorg+y, xorg+xsize-1, yorg+y,
-			lbuf, RD_FREEZE );
-		if( got != xsize )  {
-			fprintf(stderr,"sgi-pix: readdisplay() wanted %d, got %d\n",
-				xsize, got );
-			/* exit? */
-		}
+	npix = (xsize+1)*(ysize+1);		/* conservative */
+	lbuf = (unsigned long *)malloc( sizeof(long) * npix );
+	if( lbuf == (unsigned long *)NULL )  {
+		fprintf(stderr, "sgi-pix:  malloc error\n");
+		exit(1);
+	}
+
+	npix = (xsize)*(ysize);			/* exact */
+	got = readdisplay( xorg, yorg, xorg+xsize-1, yorg+ysize-1,
+		lbuf, RD_FREEZE );
+	if( got != npix )  {
+		fprintf(stderr,"sgi-pix: readdisplay() wanted %d, got %d\n",
+			npix, got );
+	}
+	lp = lbuf;
+	for( y=0; y<ysize; y++ )  {
+		register unsigned long	w;
 		op = (unsigned char *)obuf;
 		for( x=0; x<xsize; x++ )  {
-			*op++ = (lbuf[x]    ) & 0xFF;
-			*op++ = (lbuf[x]>> 8) & 0xFF;
-			*op++ = (lbuf[x]>>16) & 0xFF;
+			w = *lp++;
+			*op++ = (w    ) & 0xFF;
+			*op++ = (w>> 8) & 0xFF;
+			*op++ = (w>>16) & 0xFF;
 		}
 		if( fwrite(obuf,3,xsize,ofp) != xsize )  {
 			perror("fwrite");
