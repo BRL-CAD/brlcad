@@ -2121,7 +2121,7 @@ struct edge_line_state {
 	struct nmg_ptbl		*tabl;
 	point_t			pt;
 	vect_t			dir;
-	CONST struct rt_tol	*tol;
+	struct rt_tol		tol;
 };
 
 /*
@@ -2149,23 +2149,20 @@ int		first;
 	 *  checking the endpoints.  This helps reject very short edges
 	 *  which are colinear only by virtue of being very small.
 	 */
-	RT_CK_TOL(sp->tol);
+	RT_CK_TOL(&sp->tol);
 	NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);
-#if 1
-	/* XXX This assumes unit vectors.  These are not.  Fixing this causes lots of error messages, though. */
-	/* ERROR: vu=x10063d54 v=x10050578 is on isect line, tvu=x10063614 eu=x10081b30 isn't */
-	if( fabs( VDOT( eu->g.lseg_p->e_dir, sp->dir ) ) < sp->tol->para )
+
+	/* sp->tol.para and RT_DOT_TOL are too tight. 0.1 is 5 degrees */
+	/* These are not unit vectors. */
+	if( fabs( VDOT( eu->g.lseg_p->e_dir, sp->dir ) ) <
+	    0.9 * MAGNITUDE(eu->g.lseg_p->e_dir) * MAGNITUDE(sp->dir) )
 		return;
-#else
-	/* sp->tol->para and RT_DOT_TOL are too tight. 0.1 is 5 degrees */
-	if( fabs( VDOT( eu->g.lseg_p->e_dir, sp->dir ) ) < 0.9 * MAGNITUDE(eu->g.lseg_p->e_dir) * MAGNITUDE(sp->dir) )
-		return;
-#endif
+
 	if( rt_distsq_line3_pt3( sp->pt, sp->dir, eu->vu_p->v_p->vg_p->coord )
-	    > sp->tol->dist_sq )
+	    > sp->tol.dist_sq )
 		return;
 	if( rt_distsq_line3_pt3( sp->pt, sp->dir, eu->eumate_p->vu_p->v_p->vg_p->coord )
-	    > sp->tol->dist_sq )
+	    > sp->tol.dist_sq )
 		return;
 
 	/* Both points are within tolerance, add edgeuse to the list */
@@ -2179,6 +2176,14 @@ int		first;
  *  build an nmg_ptbl list which cites every edgeuse
  *  pointer from there on "down" in the model
  *  that has both vertices within tolerance of the given line.
+ *
+ *  XXX This routine is a potential source of major trouble.
+ *  XXX If there are "nearby" edges that "should" be on the list but
+ *  XXX don't make it, then the intersection calculations might
+ *  XXX miss important intersections.
+ *  As an admittedly grubby workaround, use 10X the distance tol here,
+ *  just to get more candidates onto the list.
+ *  The caller will have to wrestle with the added fuzz.
  */
 void
 nmg_edgeuse_on_line_tabulate( tab, magic_p, pt, dir, tol )
@@ -2200,7 +2205,13 @@ CONST struct rt_tol	*tol;
 	st.tabl = tab;
 	VMOVE( st.pt, pt );
 	VMOVE( st.dir, dir );
-	st.tol = tol;
+
+	st.tol = *tol;					/* struct copy */
+#if 0
+	/* Use larger tolerance */
+	st.tol.dist = 10 * tol->dist;
+	st.tol.dist_sq = st.tol.dist * st.tol.dist;
+#endif
 
 	(void)nmg_tbl( tab, TBL_INIT, 0 );
 
