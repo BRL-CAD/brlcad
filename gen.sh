@@ -319,20 +319,19 @@ benchmark)
 	if test x$NFS = x1
 	then	sh $0 relink
 	fi
-	(cd ${DIRPRE}libsysv${DIRSUF} && cake -k ${SILENT} )
-	(cd ${DIRPRE}bench${DIRSUF} && cake -k ${SILENT} )
-	(cd ${DIRPRE}libwdb${DIRSUF} && cake -k ${SILENT})
-	if test ${HAS_TCP} = 1
-	then
-		(cd ${DIRPRE}libpkg${DIRSUF} && cake -k ${SILENT})  # needed for IF_REMOTE
-	fi
-	(cd ${DIRPRE}libfb${DIRSUF} && cake -k ${SILENT})
-	(cd ${DIRPRE}libbu${DIRSUF} && cake -k ${SILENT})
-	(cd ${DIRPRE}libbn${DIRSUF} && cake -k ${SILENT})
-	(cd ${DIRPRE}librt${DIRSUF} && cake -k ${SILENT})
-	(cd ${DIRPRE}conv${DIRSUF} && cake -k ${SILENT})
-	(cd ${DIRPRE}db${DIRSUF} && cake -k ${SILENT})
-	(cd ${DIRPRE}rt${DIRSUF} && cake -k ${SILENT})
+	(T=libsysv; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT} )
+	(T=bench; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT} )
+	(T=libwdb; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libpkg; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})  # needed for IF_REMOTE
+	(T=libfb; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libbu; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libbn; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=librt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libtcl; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libitcl; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=rt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=conv; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=db; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	;;
 
 #  These directives operate in the machine-specific directories
