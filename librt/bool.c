@@ -1014,6 +1014,12 @@ struct application *ap;
 				lastpp->pt_outhit = newpp->pt_outhit;
 				lastpp->pt_outflip = newpp->pt_outflip;
 				lastpp->pt_outseg = newpp->pt_outseg;
+
+				/* Don't lose the fact that this partition (solid) contributed */
+				BITSET( lastpp->pt_solhit, newpp->pt_inseg->seg_stp->st_bit);
+				BITSET( lastpp->pt_solhit, newpp->pt_outseg->seg_stp->st_bit);
+
+
 				FREE_PT( newpp, ap->a_resource );
 				newpp = lastpp;
 			}  else  {
