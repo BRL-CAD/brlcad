@@ -530,7 +530,7 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g
 #		define	SHARED		/**/
 #	endif
-#	define	GFLAG		-G 13
+#	define	GFLAG		-G 9
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
