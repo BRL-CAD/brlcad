@@ -23,11 +23,15 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 # include "config.h"
 #endif
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 
 #include <stdio.h>
 #include "machine.h"
 
+#include "fb.h"
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int	scanbytes;		/* # of bytes of scanline */
