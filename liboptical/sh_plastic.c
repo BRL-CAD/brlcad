@@ -322,8 +322,8 @@ char	*dp;
 	register struct light_specific *lp;
 #if !RT_MULTISPECTRAL
 	register fastf_t *intensity;
-	register fastf_t refl;
 #endif
+	register fastf_t refl;
 	register fastf_t *to_light;
 	register int	i;
 	register fastf_t cosine;
