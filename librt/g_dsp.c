@@ -206,6 +206,7 @@ static CONST vect_t	dsp_pl[BBOX_PLANES] = {
 
 struct bu_structparse rt_dsp_parse[] = {
 	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), FUNC_NULL },
+	{"%d",  1, "sm", DSP_O(dsp_smooth), FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), FUNC_NULL },
 	{"%f",	1, "xs", DSP_O(dsp_xs), FUNC_NULL },
@@ -217,6 +218,7 @@ struct bu_structparse rt_dsp_parse[] = {
 
 struct bu_structparse rt_dsp_ptab[] = {
 	{"%s",	DSP_NAME_LEN, "file", DSP_AO(dsp_file), FUNC_NULL },
+	{"%d",  1, "sm", DSP_O(dsp_smooth), FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), FUNC_NULL },
 	{"%f", 16, "stom", DSP_AO(dsp_stom), FUNC_NULL },
@@ -235,8 +237,8 @@ CONST struct rt_dsp_internal *dsp_ip;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
 	bu_vls_init( vls );
-	bu_vls_printf( vls, "Displacement Map\n  file='%s' xc=%d yc=%d\n",
-		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
+	bu_vls_printf( vls, "Displacement Map\n  file='%s' xc=%d yc=%d sm=%d\n",
+		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt, dsp_ip->dsp_smooth);
 
 	VSETALL(pt, 0.0);
 	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
@@ -714,8 +716,6 @@ int inside;
 				&min_val, &max_val);
 
 
-		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, tmp);
-
 			/* plot cell top bounding box */
 			pl_color(fd, 60, 60, 190);
 
@@ -878,6 +878,7 @@ int inside;
 		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, next_pt);
 		pdv_3cont(fd, pt);
 
+
 		fclose(fd);
 		RES_RELEASE( &rt_g.res_syscall);
 	}
@@ -918,12 +919,6 @@ int *inside;
 	char *reason1;
 	char *reason2;
 
-	FILE *fd;
-	short h, i;
-
-	point_t tmp;
-
-
 	/*  C	 D
 	 *   *--*
 	 *   | /|
@@ -963,7 +958,7 @@ int *inside;
 	NdotD1 = VDOT( N, isect->r.r_dir);
 
 	hit1 = 0;
-	reason1 = "";
+	reason1 = (char *)NULL;
 	if ( BN_VECT_ARE_PERP(NdotD1, isect->tol)) {
 		reason1 = "perpendicular";
 		goto tri2;
@@ -998,12 +993,16 @@ int *inside;
 	dist1 = VDOT( PA, N ) / NdotD1;
 
 tri2:
+	if (rt_g.debug & DEBUG_HF && reason1 != (char *)NULL)
+		bu_log("missed tri1 %s\n", reason1);
+		
+
 
 	VCROSS(N, AD, AC);
 	NdotD2 = VDOT( N, isect->r.r_dir);
 
 	hit2 = 0;
-	reason2 = "";
+	reason2 = (char *)NULL;
 	if (BN_VECT_ARE_PERP(NdotD2, isect->tol)) {
 		reason2 = "perpendicular";
 		goto done;
@@ -1035,6 +1034,9 @@ tri2:
 	dist2 = VDOT( PA, N ) / NdotD2;
 
 done:
+	if (rt_g.debug & DEBUG_HF && reason2 != (char *)NULL)
+		bu_log("missed tri2 %s\n", reason2);
+
 	/* plot some diagnostic overlays */
 	if (rt_g.debug & DEBUG_HF && plot_em)
 		plot_cell_ray(isect, cell, curr_pt, next_pt, hit1, dist1, hit2, dist2, *inside);
@@ -1313,7 +1315,7 @@ struct isect_stuff *isect;
 	int	stepX, stepY;	/* signed step delta for grid cell marching */
 	int	insurfX, outsurfX;
 	int	insurfY, outsurfY;
-/*	vect_t	pDX, pDY;	/* vector for 1 cell change in x, y */
+
 	double	tDX;		/* dist along ray to span 1 cell in X dir */
 	double	tDY;		/* dist along ray to span 1 cell in Y dir */
 	int hit=0;		/* boolean */
@@ -1327,7 +1329,7 @@ struct isect_stuff *isect;
 
 	double	out_dist;
 
-				
+
 	double	tX, tY;	/* dist along ray from hit pt. to next cell boundary */
 	/* since we're probably starting in the middle of a cell, we need
 	 * to compute the distance along the ray to the initial
@@ -1783,6 +1785,7 @@ struct seg		*seghead;
 	int	i;
 	vect_t	dir, v;
 	struct isect_stuff isect;
+	static CONST point_t junk = { 0.0, 0.0, 0.0 };
 
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d,%d)\n",
@@ -1825,7 +1828,7 @@ struct seg		*seghead;
 	isect.sp = (struct seg *)NULL;
 
 	if (isect.minbox.in_surf < 5 && isect.minbox.out_surf < 5 ) {
-		point_t junk;
+
 
 		/*  We actually hit and exit the dsp BELOW the min value.
 		 *  For example:
@@ -1917,9 +1920,108 @@ struct application	*ap;
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_vshot()\n");
 
-	rt_vstub( stp, rp, segp, n, ap );
+	(void)rt_vstub( stp, rp, segp, n, ap );
 }
 
+static void
+compute_normal_at_gridpoint(N, dsp, x, y)
+vect_t N;
+struct dsp_specific *dsp;
+int x, y;
+{
+	/*  Gridpoint specified is "B" we compute normal based upon
+	 *  A/C, D/E
+	 *
+	 * 		E
+	 *
+	 *		|
+	 *
+	 *	A   -	B   -	C
+	 *
+	 *		|
+	 *
+	 *		D
+	 */
+	
+	point_t A, B, C, D, E, tmp;
+	vect_t Vac, Vde;
+
+	if (x < 1) {
+		VSET(tmp, x, y, DSP(dsp, x, y) );
+	} else {
+		VSET(tmp, x-1, y, DSP(dsp, x-1, y) );
+	}
+	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+	if (x >= XSIZ(dsp)) {
+		VSET(tmp, x, y,  DSP(dsp, x, y) );
+	} else {
+		VSET(tmp, x+1, y,  DSP(dsp, x+1, y) );
+	}
+	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+
+
+	if (y < 1) {
+		VSET(tmp, x, y, DSP(dsp, x, y) );
+	} else {
+		VSET(tmp, x, y-1, DSP(dsp, x, y-1) );
+	}
+	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+	if (y >= YSIZ(dsp)) {
+		VSET(tmp, x, y, DSP(dsp, x, y) );
+	} else {
+		VSET(tmp, x, y+1, DSP(dsp, x, y+1) );
+	}
+
+	MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
+
+	VSUB2(Vac, A, C);
+	VSUB2(Vde, D, E);
+
+	VCROSS(N, Vac, Vde);
+
+	VUNITIZE(N);
+
+	if (rt_g.debug & DEBUG_HF) {
+		char buf[32];
+		FILE *fd;
+
+		VSET(tmp, x, y, DSP(dsp, x, y));
+		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+
+		RES_ACQUIRE( &rt_g.res_model);
+		sprintf(buf, "dsp%d.pl", plot_file_num++);
+		RES_RELEASE( &rt_g.res_model);
+		bu_log("%s\n", buf);
+
+		RES_ACQUIRE( &rt_g.res_syscall);
+		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
+			pl_color(fd, 255, 255, 0);
+			VJOIN1(tmp, B, 1.0, N);
+			pdv_3line(fd, B, tmp);
+
+			pl_color(fd, 255, 140, 0);
+			VUNITIZE(Vac);
+			VUNITIZE(Vde);
+
+			VJOIN1(tmp, B, 1.0, Vac);
+			pdv_3line(fd, B, tmp);
+
+			VJOIN1(tmp, B, 1.0, Vde);
+			pdv_3line(fd, B, tmp);
+
+			fclose(fd);
+		}
+		RES_RELEASE( &rt_g.res_syscall);
+	}
+
+
+
+
+
+
+}
 /*
  *  			R T _ D S P _ N O R M
  *  
@@ -1935,6 +2037,7 @@ register struct xray	*rp;
 		(struct dsp_specific *)stp->st_specific;
 	vect_t N, tmp, A, B, C, D, AB, AC, AD;
 	int cell[2];
+	char buf[32];
 
  	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_norm()\n");
@@ -1943,49 +2046,123 @@ register struct xray	*rp;
 	if (hitp->hit_surfno < 0) {
 		MAT4X3VEC( N, dsp->dsp_i.dsp_stom, 
 			dsp_pl[ BBSURF(hitp->hit_surfno) ] );
+	} else if (dsp->dsp_i.dsp_smooth) {
+		if (  hitp->hit_surfno == TRI2 ||  hitp->hit_surfno == TRI1 ) {
+			vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
+			double Xfrac, Yfrac;
+			int x, y;
+			point_t pt;
+	
+			x = hitp->hit_vpriv[X];
+			y = hitp->hit_vpriv[Y];
+	
+			compute_normal_at_gridpoint(Anorm, dsp, x, y);
+			compute_normal_at_gridpoint(Bnorm, dsp, x+1, y);
+			compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1);
+			compute_normal_at_gridpoint(Cnorm, dsp, x, y+1);
+	
+			VSET(A, x,   y, DSP(dsp, x, y)  );
+	
+			VSET(D, x+1, y+1, DSP(dsp, x+1, y+1));
+	
+			MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
+	
+			Xfrac = (pt[X] - A[X]) / (D[X] - A[X]);
+			Yfrac = (pt[Y] - A[Y]) / (D[Y] - A[Y]);
+	
+			VSCALE(Anorm, Anorm, (1.0-Xfrac) );
+			VSCALE(Bnorm, Bnorm,      Xfrac  );
+			VADD2(ABnorm, Anorm, Bnorm);
 
-	} else if ( hitp->hit_surfno == TRI1 ) {
-		cell[X] = hitp->hit_vpriv[X];
-		cell[Y] = hitp->hit_vpriv[Y];
-		
-		VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
-		MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-
-		VSET(tmp, cell[X]+1, cell[Y],   DSP(dsp, cell[X]+1, cell[Y])  );
-		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
-
-		VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
-		MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-
-
-		VSUB2(AB, B, A);
-		VSUB2(AD, D, A);
-
-		VCROSS(N, AB, AD); 
-
-	} else if ( hitp->hit_surfno == TRI2 ) {
-		cell[X] = hitp->hit_vpriv[X];
-		cell[Y] = hitp->hit_vpriv[Y];
-
-		VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
-		MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-
-		VSET(tmp, cell[X],   cell[Y]+1, DSP(dsp, cell[X],   cell[Y]+1));
-		MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
-
-		VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
-		MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-
-		VSUB2(AD, D, A);
-		VSUB2(AC, C, A);
+			VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
+			VSCALE(Dnorm, Dnorm,      Xfrac  );
+			VADD2(CDnorm, Dnorm, Cnorm);
 
 
-		VCROSS(N, AD, AC); 
+			VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
+			VSCALE(CDnorm, CDnorm, Yfrac );
+	
+			VADD2(N, ABnorm, CDnorm);
+			if (rt_g.debug & DEBUG_HF) {
+				FILE *fd;
 
+				VPRINT("A", A);
+				VPRINT("D", D);
+				VPRINT("pt", pt);
+				bu_log("Xfrac:%g Yfrac:%g\n", Xfrac, Yfrac);
+
+				RES_ACQUIRE( &rt_g.res_model);
+				sprintf(buf, "dsp%d.pl", plot_file_num++);
+				RES_RELEASE( &rt_g.res_model);
+				bu_log("plotting normal in %s\n", buf);
+
+				RES_ACQUIRE( &rt_g.res_syscall);
+				if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
+					pl_color(fd, 220, 220, 90);
+
+					VJOIN1(tmp, hitp->hit_point, 1.0, Anorm);
+					pdv_3line(fd, hitp->hit_point, tmp);
+
+					VJOIN1(tmp, hitp->hit_point, 1.0, Bnorm);
+					pdv_3line(fd, hitp->hit_point, tmp);
+
+					VJOIN1(tmp, hitp->hit_point, 1.0, Dnorm);
+					pdv_3line(fd, hitp->hit_point, tmp);
+
+					VJOIN1(tmp, hitp->hit_point, 1.0, Cnorm);
+					pdv_3line(fd, hitp->hit_point, tmp);
+
+					fclose(fd);
+				}
+				RES_RELEASE( &rt_g.res_syscall);
+			}
+		} else {
+			bu_log("%s:%d ", __FILE__, __LINE__);
+			bu_log("bogus surface of DSP %d\n", hitp->hit_surfno);
+			bu_bomb("");
+		}
 	} else {
-		bu_log("%s:%d ", __FILE__, __LINE__);
-		bu_log("bogus surface of DSP %d\n", hitp->hit_surfno);
-		bu_bomb("");
+		if ( hitp->hit_surfno == TRI1 ) {
+			cell[X] = hitp->hit_vpriv[X];
+			cell[Y] = hitp->hit_vpriv[Y];
+		
+			VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
+			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X]+1, cell[Y],   DSP(dsp, cell[X]+1, cell[Y])  );
+			MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+
+			VSUB2(AB, B, A);
+			VSUB2(AD, D, A);
+
+			VCROSS(N, AB, AD); 
+		} else if ( hitp->hit_surfno == TRI2 ) {
+			cell[X] = hitp->hit_vpriv[X];
+			cell[Y] = hitp->hit_vpriv[Y];
+
+			VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
+			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X],   cell[Y]+1, DSP(dsp, cell[X],   cell[Y]+1));
+			MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+			VSUB2(AD, D, A);
+			VSUB2(AC, C, A);
+
+
+			VCROSS(N, AD, AC); 
+		} else {
+			bu_log("%s:%d ", __FILE__, __LINE__);
+			bu_log("bogus surface of DSP %d\n", hitp->hit_surfno);
+			bu_bomb("");
+		}
 	}
 
 	VUNITIZE(N);
@@ -2014,14 +2191,18 @@ register struct xray	*rp;
 		RES_ACQUIRE( &rt_g.res_model);
 		sprintf(buf, "dsp%d.pl", plot_file_num++);
 		RES_RELEASE( &rt_g.res_model);
+		bu_log("plotting normal in %s\n", buf);
+
+		RES_ACQUIRE( &rt_g.res_syscall);
 		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
 			pl_color(fd, 90, 220, 90);
 
 			pdv_3move(fd, hitp->hit_point);
-			VADD2(tmp, hitp->hit_point, N);
+			VJOIN1(tmp, hitp->hit_point, 1.0, N);
 			pdv_3cont(fd, tmp);
 			fclose(fd);
 		}
+		RES_RELEASE( &rt_g.res_syscall);
 	}
 }
 
@@ -2349,6 +2530,7 @@ register CONST mat_t		mat;
 	memset(&dsp_ip->dsp_file[0], 0, DSP_NAME_LEN); 
 	dsp_ip->dsp_xcnt = dsp_ip->dsp_ycnt = 0;
 	dsp_ip->dsp_xs = dsp_ip->dsp_ys = dsp_ip->dsp_zs = 0.0;
+	dsp_ip->dsp_smooth = 1;
 	mat_idn(dsp_ip->dsp_stom);
 	mat_idn(dsp_ip->dsp_mtos);
 
