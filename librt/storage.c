@@ -96,7 +96,8 @@ ok:	;
  */
 void
 rt_free(ptr,str)
-char *ptr;
+char	*ptr;
+char	*str;
 {
 #ifdef MEMDEBUG
 	{
