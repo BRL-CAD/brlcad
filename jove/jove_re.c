@@ -4,6 +4,11 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/12/10  03:47:46  mike
+ * Fixed the "FindTag" support to be able to search "tags" files
+ * that include ANSI function declarations.
+ * This means not treating ".*[" as regular expression "magic".
+ * 
  * Revision 10.2  93/10/26  05:56:57  mike
  * ANSI C
  * 
@@ -1015,6 +1020,10 @@ char	*tagname;
 		return;
 	}
 
+	if (numwindows() == 1)
+		curwind = div_wind(curwind);
+	else
+		curwind = next_wind(curwind);
 	SetBuf(do_find(curwind, filebuf));
 	Bof();
 
@@ -1036,4 +1045,46 @@ FindTag()
 
 	tagname = ask((char *) 0, FuncName());
 	find_tag(tagname);
+}
+
+int
+isfuncname(c)
+int	c;
+{
+	if( isalpha(c) || isdigit(c) || c == '_' ) return 1;
+	return 0;
+}
+
+/* Called from user typing M-t */
+FindCursorTag()
+{
+	register int	c;
+	int	start;
+	int	end;
+#define MAX_FUNCTION_NAME_LEN	80
+	char	buf[MAX_FUNCTION_NAME_LEN];
+	int	len;
+
+	if( !isfuncname(linebuf[curchar]) )  {
+		message("Cursor is not over a word, FindCursorTag aborted.");
+		return;
+	}
+
+	/* Find beginning of current word, going backward in line. */
+	start = curchar;
+	while( start > 0 && (c = linebuf[start-1]) != 0 && isfuncname(c) )
+		start--;
+
+	/* Find ending of current word */
+	end = curchar;
+	while( (c = linebuf[end]) != 0 && isfuncname(c) )
+		end++;
+
+	/* Snatch out that string, and null terminate */
+	len = end - start;
+	if( len > MAX_FUNCTION_NAME_LEN-1 )  len = MAX_FUNCTION_NAME_LEN-1;
+	bcopy( linebuf+start, buf, len );
+	buf[len] = '\0';
+
+	find_tag(buf);
 }

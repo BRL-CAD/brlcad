@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/10/26  03:47:08  mike
+ * ANSI C
+ * 
  * Revision 10.1  91/10/12  06:53:58  mike
  * Release_4.0
  * 
@@ -150,6 +153,7 @@ extern int
 	FindFile(),
 	WindFind(),
 	FindTag(),
+	FindCursorTag(),
 	ToIndent(),
 	ForChar(),
 	Fparen(),
@@ -278,6 +282,7 @@ InitFuncs()
 	DefFunc("find-file", FindFile);
 	DefFunc("find-file-in-other-window", WindFind);
 	DefFunc("find-tag", FindTag);
+	DefFunc("find-cursor-tag", FindCursorTag);
 	DefFunc("first-non-blank", ToIndent);
 	DefFunc("forward-char", ForChar);
 	DefFunc("forward-paren", Fparen);
@@ -500,6 +505,8 @@ InitBindings()
 	BindFunc(pref1map, 'r', RevSearch);
 	BindFunc(pref1map, 'S', ForSearch);
 	BindFunc(pref1map, 's', ForSearch);
+	BindFunc(pref1map, 'T', FindCursorTag);
+	BindFunc(pref1map, 't', FindCursorTag);
 	BindFunc(pref1map, 'U', UppWord);
 	BindFunc(pref1map, 'u', UppWord);
 	BindFunc(pref1map, 'V', PrevPage);
