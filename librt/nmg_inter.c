@@ -2033,6 +2033,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
 
+	is->on_eg = eu1->e_p->eg_p;
     	is->l1 = &vert_list1;
     	is->l2 = &vert_list2;
 	is->s1 = nmg_find_s_of_eu(eu1);		/* may be wire edge */
@@ -2124,6 +2125,7 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	nmg_edgeuse_with_eg_tabulate( &eutab,
 		fu1 ? &fu1->l.magic : eu1->up.magic_p,
 		eu1->e_p->eg_p );
+#if !HEART
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
@@ -2134,15 +2136,21 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		nmg_isect_vert2p_face2p( is, vu1a, fu2 );
 		nmg_isect_vert2p_face2p( is, vu1b, fu2 );
 	}
+#endif
 
 	/* Run infinite line containing eu1 through fu2 */
+#if HEART
+	total_splits = 1;
+	nmg_isect_line2_face2pNEW( is, fu2 );
+#else
 	total_splits = nmg_isect_line2_face2p( is, fu2, eu1, &eutab );
+#endif
 
 	/* Now, run line through fu1, if eu1 is not wire */
 	if( fu1 )  {
 		/* We are intersecting with ourself */
-#if 0
-		total_splits += nmg_isect_line2_face2p( is, fu1, eu1, &eutab );
+#if HEART
+		nmg_isect_line2_face2pNEW( is, fu1 );
 #else
 		total_splits += nmg_isect_line2_face2p( is, fu1, 0, 0 );
 #endif
