@@ -420,8 +420,8 @@ struct soltab {
 #define ID_GRIP		22	/* Pseudo Solid Grip */
 #define ID_JOINT	23	/* Pseudo Solid/Region Joint */
 #define ID_HF		24	/* Height Field */
-
-#define ID_MAXIMUM	24	/* Maximum defined ID_xxx value */
+#define ID_FBM		25	/* fBm sphere */
+#define ID_MAXIMUM	25	/* Maximum defined ID_xxx value */
 
 #define ID_COMBINATION	(ID_MAXIMUM+1)	/* Combination Record (non-geometric) */
 
