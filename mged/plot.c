@@ -65,6 +65,7 @@ f_plot()
 	int Three_D;			/* 0=2-D -vs- 1=3-D */
 	int Z_clip;			/* Z clipping */
 	int Dashing;			/* linetype is dashed */
+	int floating;			/* 3-D floating point plot */
 	char **argv;
 	char buf[128];
 
@@ -74,9 +75,16 @@ f_plot()
 	/* Process any options */
 	Three_D = 1;				/* 3-D w/color, by default */
 	Z_clip = 0;				/* NO Z clipping, by default*/
+	floating = 0;
 	argv = &cmd_args[1];
 	while( argv[0] != (char *)0 && argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
+		case 'f':
+			floating = 1;
+			break;
+		case '3':
+			Three_D = 1;
+			break;
 		case '2':
 			Three_D = 0;		/* 2-D, for portability */
 			break;
@@ -121,7 +129,54 @@ f_plot()
 
 	color_soltab();		/* apply colors to the solid table */
 
-	/* Compute the clipping bounds of the screen in view space */
+	if( floating )  {
+		pd_3space( fp,
+			-toViewcenter[MDX] - Viewscale,
+			-toViewcenter[MDY] - Viewscale,
+			-toViewcenter[MDZ] - Viewscale,
+			-toViewcenter[MDX] + Viewscale,
+			-toViewcenter[MDY] + Viewscale,
+			-toViewcenter[MDZ] + Viewscale );
+		Dashing = 0;
+		pl_linmod( fp, "solid" );
+		FOR_ALL_SOLIDS( sp )  {
+			register struct mater *mp;
+			mp = (struct mater *)sp->s_materp;
+			if( mp != MATER_NULL )
+				pl_color( fp,
+					mp->mt_r,
+					mp->mt_g,
+					mp->mt_b );
+			if( Dashing != sp->s_soldash )  {
+				if( sp->s_soldash )
+					pl_linmod( fp, "dotdashed");
+				else
+					pl_linmod( fp, "solid");
+				Dashing = sp->s_soldash;
+			}
+			nvec = sp->s_vlen;
+			for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
+				if( vp->vl_pen == PEN_UP )
+					pd_3move( fp,
+						vp->vl_pnt[X],
+						vp->vl_pnt[Y],
+						vp->vl_pnt[Z] );
+				else
+					pd_3cont( fp,
+						vp->vl_pnt[X],
+						vp->vl_pnt[Y],
+						vp->vl_pnt[Z] );
+			}
+		}
+		goto out;
+	}
+
+	/*
+	 *  Integer output version, either 2-D or 3-D.
+	 *  Viewing region is from -1.0 to +1.0
+	 *  which is mapped to integer space -2048 to +2048 for plotting.
+	 *  Compute the clipping bounds of the screen in view space.
+	 */
 	clipmin[X] = -1.0;
 	clipmax[X] =  1.0;
 	clipmin[Y] = -1.0;
@@ -130,14 +185,10 @@ f_plot()
 		clipmin[Z] = -1.0;
 		clipmax[Z] =  1.0;
 	} else {
-		clipmin[Z] = -1.0e17;
-		clipmax[Z] =  1.0e17;
+		clipmin[Z] = -1.0e20;
+		clipmax[Z] =  1.0e20;
 	}
 
-	/*
-	 * Viewing region is from -1.0 to +1.0
-	 * which we map to integer space -2048 to +2048
-	 */
 	if( Three_D )
 		pl_3space( fp, -2048, -2048, -2048, 2048, 2048, 2048 );
 	else
@@ -191,6 +242,7 @@ f_plot()
 					(int)( fin[1] * 2047 ) );
 		}
 	}
+out:
 	if( cmd_args[1][0] == '|' )
 		(void)pclose( fp );
 	else
