@@ -49,6 +49,9 @@ int eq_cubic();
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 11.2  1996/07/17 17:02:46  jra
+ * Minor Mods for IRIX 6.2
+ *
  * Revision 11.1  1995/01/04  10:21:56  mike
  * Release_4.4
  *
@@ -202,7 +205,7 @@ cubic_init(n,x,y)
 int n;
 int *x,*y;
 {
-	int i,j;
+	int i;
 	double *h,*alpha,*mi,*z,*l;
 
 	h = (double *) malloc(n*sizeof(double));
