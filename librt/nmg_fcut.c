@@ -642,8 +642,6 @@ static CONST char *nmg_wedge2_string[] = {
  *	WEDGE2_AB_IN_CD		AB is inside CD
  *	WEDGE2_CD_IN_AB		CD is inside AB
  *	WEDGE2_IDENTICAL		AB == CD
- *  XXX Would there be any value to detecting non-overlapping wedges
- *  XXX that share an edge?
  */
 static int
 nmg_compare_2_wedges( a, b, c, d )
@@ -654,6 +652,10 @@ double	a,b,c,d;
 	int	b_in_cd = 0;
 	int	c_in_ab = 0;
 	int	d_in_ab = 0;
+	int	a_eq_c = 0;
+	int	a_eq_d = 0;
+	int	b_eq_c = 0;
+	int	b_eq_d = 0;
 	int	ret;
 
 #define	ANG_SMASH(_a)	{\
@@ -679,12 +681,30 @@ double	a,b,c,d;
 		d = t;
 	}
 
-	if( a == c && b == d )  {
-		ret = WEDGE2_IDENTICAL;
+	if( NEAR_ZERO( a-c, 0.01 ) )  a_eq_c = 1;
+	if( NEAR_ZERO( a-d, 0.01 ) )  a_eq_d = 1;
+	if( NEAR_ZERO( b-c, 0.01 ) )  b_eq_c = 1;
+	if( NEAR_ZERO( b-d, 0.01 ) )  b_eq_d = 1;
+
+	if( a_eq_c )  {
+		if( b_eq_d )  {
+			ret = WEDGE2_IDENTICAL;
+			goto out;
+		}
+		/* We already know that A <= B, from sort above */
+		if( b < d )  ret = WEDGE2_AB_IN_CD;
+		else  ret = WEDGE2_CD_IN_AB;
 		goto out;
 	}
 
-	if( NEAR_ZERO( b-c, 0.01 ) )  {
+	if( b_eq_d )  {
+		/* a != c, because of previous IF statement */
+		if( a < c )  ret = WEDGE2_CD_IN_AB;
+		else  ret = WEDGE2_AB_IN_CD;
+		goto out;
+	}
+
+	if( b_eq_c )  {
 		/* Wedges touch along B-C junction */
 		ret = WEDGE2_AB_TOUCH_CD;
 		goto out;
@@ -793,7 +813,15 @@ int	skip_array[];
 		this_wrt_orig = nmg_compare_2_wedges(
 			vs[i].lo_ang, vs[i].hi_ang,
 			lo_ang, hi_ang );
-		if( this_wrt_orig != WEDGE2_AB_IN_CD )  continue;	/* not inside */
+		switch( this_wrt_orig )  {
+		case WEDGE2_AB_IN_CD:
+			break;
+		case WEDGE2_IDENTICAL:
+			candidate = i;
+			goto out;
+		default:
+			continue;	/* not inside wedge */
+		}
 
 		if( candidate < 0 ) {
 			/* This wedge AB is inside original wedge.
@@ -836,6 +864,7 @@ int	skip_array[];
 			continue;
 		}
 	}
+out:
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 		rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) candidate=%d\n",
 			start, end, lo_ang, hi_ang,
@@ -1117,6 +1146,7 @@ again:
 		 */
 		int	other_way_round;
 		not_these[outer_wedge] = 0;	/* temporary reset */
+		not_these[inner_wedge] = 1;
 		other_way_round = nmg_find_vu_in_wedge( vs, start, end,
 			vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang,
 			wclass, not_these );
