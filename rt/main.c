@@ -70,10 +70,12 @@ extern char	**objtab;		/* array of treetop strings */
 char		*beginptr;		/* sbrk() at start of program */
 extern int	matflag;		/* read matrix from stdin */
 extern int	desiredframe;		/* frame to start at */
-extern int	curframe;		/* current frame number */
+extern int	curframe;		/* current frame number,
+					 * also shared with view.c */
 extern char	*outputfile;		/* name of base of output file */
 extern int	interactive;		/* human is watching results */
 /***** end variables shared with do.c *****/
+
 
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
