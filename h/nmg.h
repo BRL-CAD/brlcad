@@ -412,11 +412,15 @@ struct edge {
 	long			magic;
 	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
 	struct edge_g		*eg_p;  /* geometry */
+	long			is_real;/* artifact or modeled edge */
 	long			index;	/* struct # in this model */
 };
 
 struct edge_g {
 	long			magic;
+	long			usage;	/* # of uses of this geometry */
+	point_t			e_pt;	/* parametric equation of the edge */
+	vect_t			e_dir;
 	long			index;	/* struct # in this model */
 };
 
@@ -511,7 +515,7 @@ struct vertexuse_a {
 #define GET_LOOPUSE(p,m)    {NMG_GETSTRUCT(p, loopuse); NMG_INCR_INDEX(p,m);}
 #define GET_LOOPUSE_A(p,m)  {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p,m);}
 #define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
-#define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); NMG_INCR_INDEX(p,m);}
+#define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); (p)->usage = 1; NMG_INCR_INDEX(p,m);}
 #define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
 #define GET_EDGEUSE_A(p,m)  {NMG_GETSTRUCT(p, edgeuse_a); NMG_INCR_INDEX(p,m);}
 #define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
@@ -544,7 +548,7 @@ struct vertexuse_a {
 #define FREE_LOOPUSE(p)	    FREESTRUCT(p, loopuse)
 #define FREE_LOOPUSE_A(p)   FREESTRUCT(p, loopuse_a)
 #define FREE_EDGE(p)	    FREESTRUCT(p, edge)
-#define FREE_EDGE_G(p)	    FREESTRUCT(p, edge_g)
+#define FREE_EDGE_G(p)	    if (--((p)->usage) <= 0)  FREESTRUCT(p, edge_g)
 #define FREE_EDGEUSE(p)	    FREESTRUCT(p, edgeuse)
 #define FREE_EDGEUSE_A(p)   FREESTRUCT(p, edgeuse_a)
 #define FREE_VERTEX(p)	    FREESTRUCT(p, vertex)
