@@ -52,7 +52,7 @@ char	*argv;
 			&xyz[0], &xyz[1], &xyz[2] );
 		if(debug)  {
 			fprintf(stderr,"buf=%s", buf);
-			fprintf(stderr,"%d: %lf\t%lf\t%lf\n",
+			fprintf(stderr,"%d: %f\t%f\t%f\n",
 				i, xyz[0], xyz[1], xyz[2] );
 		}
 		if( i <= 0 )
