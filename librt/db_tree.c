@@ -1421,7 +1421,7 @@ union tree		 *(*leaf_func)();
 		return;
 
 	default:
-		bu_log("db_walk_subtree: bad op\n", tp->tr_op);
+		bu_log("db_walk_subtree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_walk_subtree\n");
 	}
 }
