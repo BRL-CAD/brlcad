@@ -152,10 +152,9 @@ FBIO sgi_interface =
 /* Interface to the 12-bit window versions of these routines */
 int		sgw_dopen();
 _LOCAL_ int
-		sgw_bwrite(),
 		sgw_curs_set(),
-		sgw_cmemory_addr(),
-		sgw_cscreen_addr();
+		sgw_cmemory_addr();
+
 _LOCAL_ Colorindex get_Color_Index();
 _LOCAL_ void	sgw_inqueue();
 
@@ -167,14 +166,14 @@ static FBIO sgiw_interface =
 		fb_null,
 		sgi_dclear,
 		sgi_bread,
-		sgw_bwrite,
+		sgi_bwrite,
 		sgi_cmread,
 		sgi_cmwrite,
 		sgi_viewport_set,
 		sgi_window_set,
 		sgi_zoom_set,
-		sgi_curs_set,
-		sgi_cmemory_addr,
+		sgw_curs_set,
+		sgw_cmemory_addr,
 		fb_null,
 		"Silicon Graphics IRIS, in 12-bit mode, for windows",
 		1024,			/* max width */
@@ -217,6 +216,14 @@ struct sgiinfo {
 #define MODE_RGB	0		/* 24-bit mode */
 #define MODE_APPROX	1		/* color cube approximation */
 #define MODE_FIT	2		/* Best-fit mode */
+
+/* Map RGB onto 10x10x10 color cube, giving index in range 0..999 */
+#define COLOR_APPROX(p)	\
+	(((p)[RED]/26)+ ((p)[GRN]/26)*10 + ((p)[BLU]/26)*100 + MAP_RESERVED)
+/***
+#define COLOR_APPROX(p)	\
+	(((((((((p)[BLU])*10)+((p)[GRN]))*10)+((p)[RED]))*10)>>8)+MAP_RESERVED)
+***/
 
 _LOCAL_ ColorMap _sgi_cmap;
 
@@ -288,17 +295,19 @@ register FBIO	*ifp;
 	register unsigned char *ip;
 	short y;
 	short xscroff, yscroff;
+	short xwidth;
 
 	if( SGI(ifp)->si_curs_on )
 		cursoff();		/* Cursor interferes with drawing */
 
 	xscroff = yscroff = 0;
-	i = (ifp->if_width/2)/SGI(ifp)->si_xzoom;
+	xwidth = ifp->if_width/SGI(ifp)->si_xzoom;
+	i = xwidth/2;
 	xmin = SGI(ifp)->si_xcenter - i;
-	xmax = SGI(ifp)->si_xcenter + i + 1;
+	xmax = SGI(ifp)->si_xcenter + i - 1;
 	i = (ifp->if_height/2)/SGI(ifp)->si_yzoom;
 	ymin = SGI(ifp)->si_ycenter - i;
-	ymax = SGI(ifp)->si_ycenter + i + 1;
+	ymax = SGI(ifp)->si_ycenter + i - 1;
 	if( xmin < 0 )  {
 		xscroff = -xmin * SGI(ifp)->si_xzoom;
 		xmin = 0;
@@ -321,7 +330,7 @@ register FBIO	*ifp;
 			l = xscroff;
 			b = yscroff + (y-ymin)*SGI(ifp)->si_yzoom;
 			t = b + SGI(ifp)->si_yzoom;
-			for( i=xmax-xmin; i > 0; i--)  {
+			for( i=xwidth; i > 0; i--)  {
 				switch( SGI(ifp)->si_mode ) {
 				case MODE_RGB:
 					RGBcolor( (short)(ip[RED]),
@@ -332,14 +341,11 @@ register FBIO	*ifp;
 					color(get_Color_Index( ifp, ip ));
 					break;
 				case MODE_APPROX:
-					color(MAP_RESERVED +
-						(ip[RED]/26) +
-						(ip[GRN]/26) * 10 +
-						(ip[BLU]/26) * 100 );
+					color(COLOR_APPROX(ip));
 					break;
 				}
 				r = l + SGI(ifp)->si_xzoom;
-				/* left bottom right top: im_rectfs( l, b, r, t ); */
+				/* left bottom right top: rectfs( l, b, r, t ); */
 				hole->s = GEmovepoly | GEPA_2S;
 				hole->s = l;
 				hole->s = b;
@@ -366,15 +372,15 @@ register FBIO	*ifp;
 		hole->s = yscroff + y;
 		switch( SGI(ifp)->si_mode )  {
 		case MODE_RGB:
-			for( i=xmax-xmin; i > 0; )  {
+			for( i=xwidth; i > 0; )  {
 				register short chunk;
 
 				if( i <= (127/3) )
 					chunk = i;
 				else
 					chunk = 127/3;
-				hole->s = ((chunk*3)<<8)|8;	/* GEpassthru */
-				hole->s = 0xD;		/* FBCdrawpixels */
+				hole->s = ((chunk*3)<<8) | GEpassthru;
+				hole->s = FBCdrawpixels;
 				i -= chunk;
 				for( ; chunk>0; chunk--)  {
 					hole->us = *ip++;
@@ -384,15 +390,15 @@ register FBIO	*ifp;
 			}
 			break;
 		case MODE_FIT:
-			for( i=xmax-xmin; i > 0; )  {
+			for( i=xwidth; i > 0; )  {
 				register short chunk;
 
 				if( i <= 127 )
 					chunk = i;
 				else
 					chunk = 127;
-				hole->s = (chunk<<8)|8; /* GEpassthru */
-				hole->s = 0xD;		 /* FBCdrawpixels */
+				hole->s = (chunk<<8) | GEpassthru;
+				hole->s = FBCdrawpixels;
 				i -= chunk;
 				for( ; chunk > 0; chunk-- )  {
 					hole->s = get_Color_Index( ifp, ip );
@@ -400,21 +406,18 @@ register FBIO	*ifp;
 			}
 			break;
 		case MODE_APPROX:
-			for( i=xmax-xmin; i > 0; )  {
+			for( i=xwidth; i > 0; )  {
 				register short chunk;
 
 				if( i <= 127 )
 					chunk = i;
 				else
 					chunk = 127;
-				hole->s = (chunk<<8)|8; /* GEpassthru */
-				hole->s = 0xD;		 /* FBCdrawpixels */
+				hole->s = (chunk<<8) | GEpassthru;
+				hole->s = FBCdrawpixels;
 				i -= chunk;
 				for( ; chunk > 0; chunk--, ip += sizeof(RGBpixel) )  {
-					hole->s = MAP_RESERVED +
-						(ip[RED]/26) +
-						(ip[GRN]/26) * 10 +
-						(ip[BLU]/26) * 100;
+					hole->s = COLOR_APPROX(ip);
 				}
 			}
 			break;
@@ -569,10 +572,7 @@ register RGBpixel	*pp;
 			break;
 		case MODE_APPROX:
 			writemask( 0x3FF );
-			color( MAP_RESERVED +
-				((*pp)[RED]/26) +
-				((*pp)[GRN]/26) * 10 +
-				((*pp)[BLU]/26) * 100 );
+			color( COLOR_APPROX(*pp) );
 			break;
 		}
 	} else {
@@ -692,7 +692,7 @@ RGBpixel *pixelp;
 int	count;
 {
 	register union gepipe *hole = GEPIPE;
-	register int scan_count;
+	register short scan_count;	/* # pixels on this scanline */
 	int xpos, ypos;
 	register int i;
 	register unsigned char *cp;
@@ -712,27 +712,32 @@ int	count;
 		if( count < scan_count )
 			scan_count = count;
 
-		hole->l = 0x0008001A;	/* passthru, */
-		hole->s = 0x0912;		/* cmov2s */
-		hole->s = xpos;
-		hole->s = ypos;
 		op = (unsigned char *)&ifp->if_mem[(ypos*1024+xpos)*sizeof(RGBpixel)];
 
-		for( i=scan_count; i > 0; )  {
-			register short chunk;
+		if( SGI(ifp)->si_zoomflag )  {
+			register Scoord l, b, r, t;
 
-			if( SGI(ifp)->si_zoomflag )  {
-				Scoord l, b, r, t;
+			l = xpos * SGI(ifp)->si_xzoom;
+			b = ypos * SGI(ifp)->si_yzoom;
+			t = b + SGI(ifp)->si_yzoom;
+			for( i=scan_count; i > 0; i-- )  {
 
-				RGBcolor( (short)(cp[RED]),
-					(short)(cp[GRN]),
-					(short)(cp[BLU]) );
-				l = xpos * SGI(ifp)->si_xzoom;
-				b = ypos * SGI(ifp)->si_yzoom;
+				switch( SGI(ifp)->si_mode )  {
+				case MODE_RGB:
+					RGBcolor( (short)(cp[RED]),
+						(short)(cp[GRN]),
+						(short)(cp[BLU]) );
+					break;
+				case MODE_FIT:
+					color(get_Color_Index( ifp, cp ));
+					break;
+				case MODE_APPROX:
+					color(COLOR_APPROX(cp));
+					break;
+				}
 				r = l + SGI(ifp)->si_xzoom;
-				t = b + SGI(ifp)->si_yzoom;
 
-				/* left bottom right top: im_rectfs( l, b, r, t ); */
+				/* left bottom right top: rectfs( l, b, r, t ); */
 				hole->s = GEmovepoly | GEPA_2S;
 				hole->s = l;
 				hole->s = b;
@@ -746,32 +751,139 @@ int	count;
 				hole->s = l;
 				hole->s = t;
 				hole->s = GEclosepoly;	/* Last? */
+				l = r;
 
 				*op++ = *cp++;
 				*op++ = *cp++;
 				*op++ = *cp++;
-				i--;
-				xpos++;
-				continue;
 			}
-			if( i <= (127/3) )
-				chunk = i;
-			else
-				chunk = 127/3;
-			hole->s = ((chunk*3)<<8)|8;	/* GEpassthru */
-			hole->s = 0xD;		/* FBCdrawpixels */
-			i -= chunk;
+			continue;
+		}
+
+		/* Non-zoomed case */
+		hole->l = 0x0008001A;		/* passthru, */
+		hole->s = 0x0912;		/* cmov2s */
+		hole->s = xpos;
+		hole->s = ypos;
+		switch( SGI(ifp)->si_mode )  {
+		case MODE_RGB:
 			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
-				for( ; chunk>0; chunk--)  {
-					hole->us = (*op++ = *cp++);
-					hole->us = (*op++ = *cp++);
-					hole->us = (*op++ = *cp++);
+				for( i=scan_count; i > 0; )  {
+					register short chunk;
+
+					if( i <= (127/3) )
+						chunk = i;
+					else
+						chunk = 127/3;
+					hole->s = ((chunk*3)<<8) | GEpassthru;
+					hole->s = FBCdrawpixels;
+					i -= chunk;
+					for( ; chunk>0; chunk--)  {
+						hole->us = (*op++ = *cp++);
+						hole->us = (*op++ = *cp++);
+						hole->us = (*op++ = *cp++);
+					}
 				}
 			} else {
-				for( ; chunk>0; chunk-- )  {
-					hole->s = _sgi_cmap.cm_red[*op++ = *cp++];
-					hole->s = _sgi_cmap.cm_green[*op++ = *cp++];
-					hole->s = _sgi_cmap.cm_blue[*op++ = *cp++];
+				for( i=scan_count; i > 0; )  {
+					register short chunk;
+
+					if( i <= (127/3) )
+						chunk = i;
+					else
+						chunk = 127/3;
+					hole->s = ((chunk*3)<<8) | GEpassthru;
+					hole->s = FBCdrawpixels;
+					i -= chunk;
+					for( ; chunk>0; chunk-- )  {
+						hole->s = _sgi_cmap.cm_red[
+							*op++ = *cp++];
+						hole->s = _sgi_cmap.cm_green[
+							*op++ = *cp++];
+						hole->s = _sgi_cmap.cm_blue[
+							*op++ = *cp++];
+					}
+				}
+			}
+			break;
+		case MODE_FIT:
+			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
+				for( i = scan_count; i > 0; )  {
+					register short	chunk;
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					hole->s = (chunk<<8) | GEpassthru;
+					hole->s = FBCdrawpixels;
+					i -= chunk;
+					for( ; chunk > 0; chunk--, pixelp++ )  {
+						hole->s = get_Color_Index( ifp, pixelp );
+						*op++ = (*pixelp)[RED];
+						*op++ = (*pixelp)[GRN];
+						*op++ = (*pixelp)[BLU];
+					}
+				}
+			} else {
+				for( i = scan_count; i > 0; )  {
+					register short	chunk;
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					hole->s = (chunk<<8) | GEpassthru;
+					hole->s = FBCdrawpixels;
+					i -= chunk;
+					for( ; chunk > 0; chunk--, pixelp++ )  {
+						static RGBpixel new;
+						new[RED] = _sgi_cmap.cm_red[
+							*op++ = (*pixelp)[RED]];
+						new[GRN] = _sgi_cmap.cm_green[
+							*op++ = (*pixelp)[GRN]];
+						new[BLU] = _sgi_cmap.cm_blue[
+							*op++ = (*pixelp)[BLU]];
+						hole->s = get_Color_Index(ifp,new);
+					}
+				}
+			}
+		case MODE_APPROX:
+			if ( SGI(ifp)->si_cmap_flag == FALSE )  {
+				for( i = scan_count; i > 0; )  {
+					register short	chunk;
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					hole->s = (chunk<<8) | GEpassthru;
+					hole->s = FBCdrawpixels;
+					i -= chunk;
+					for( ; chunk > 0; chunk--, pixelp++ )  {
+						hole->s = COLOR_APPROX(*pixelp);
+						*op++ = (*pixelp)[RED];
+						*op++ = (*pixelp)[GRN];
+						*op++ = (*pixelp)[BLU];
+					}
+				}
+			} else {
+				for( i = scan_count; i > 0; )  {
+					register short	chunk;
+					if( i <= 127 )
+						chunk = i;
+					else
+						chunk = 127;
+					hole->s = (chunk<<8) | GEpassthru;
+					hole->s = FBCdrawpixels;
+					i -= chunk;
+					for( ; chunk > 0; chunk--, pixelp++ )  {
+						static RGBpixel new;
+						new[RED] = _sgi_cmap.cm_red[
+							*op++ = (*pixelp)[RED]];
+						new[GRN] = _sgi_cmap.cm_green[
+							*op++ = (*pixelp)[GRN]];
+						new[BLU] = _sgi_cmap.cm_blue[
+							*op++ = (*pixelp)[BLU]];
+						hole->s = COLOR_APPROX(new);
+					}
 				}
 			}
 		}
@@ -1077,97 +1189,6 @@ int	width, height;
 	/* The screen has no useful state.  Restore it as it was before */
 	sgi_repaint( ifp );
 	return	0;
-}
-
-_LOCAL_ int
-sgw_bwrite( ifp, x, y, pixelp, count )
-FBIO	*ifp;
-int	x, y;
-register RGBpixel	*pixelp;
-int	count;
-{	
-	register union gepipe *hole = GEPIPE;
-	int scan_count;
-	register int i;
-	register unsigned char *op;
-	int ret;
-
-	if( qtest() )
-		sgw_inqueue(ifp);
-	writemask( 0x3FF );
-	ret = 0;
-	while( count > 0 )  {
-		register short	ypos = y*SGI(ifp)->si_yzoom;
-		register short	xpos = x*SGI(ifp)->si_xzoom;
-
-		if( ypos >= ifp->if_height )
-			break;
-		scan_count = ifp->if_width / SGI(ifp)->si_xzoom;
-		if( count < scan_count )
-			scan_count = count;
-
-		op = (unsigned char *)&ifp->if_mem[(y*1024+x)*sizeof(RGBpixel)];
-
-		if( !(SGI(ifp)->si_zoomflag) )  {	
-			register Colorindex	colori;
-
-			CMOV2S( hole, xpos, ypos );
-			for( i = scan_count; i > 0; )  {	
-				register short	chunk;
-				if( i <= 127 )
-					chunk = i;
-				else
-					chunk = 127;
-				hole->s = (chunk<<8)|8; /* GEpassthru */
-				hole->s = 0xD;		 /* FBCdrawpixels */
-				i -= chunk;
-				for( ; chunk > 0; chunk--, pixelp++ )  {
-					if( SGI(ifp)->si_mode == MODE_FIT ) {
-						colori = get_Color_Index( ifp, pixelp );
-						*op++ = (*pixelp)[RED];
-						*op++ = (*pixelp)[GRN];
-						*op++ = (*pixelp)[BLU];
-						hole->s = colori;
-						continue;
-					}
-					colori =  MAP_RESERVED +
-					    ((*op++=(*pixelp)[RED])/26);
-					colori += ((*op++=(*pixelp)[GRN])/26) * 10;
-					colori += ((*op++=(*pixelp)[BLU])/26) * 100;
-					hole->s = colori;
-				}
-			}
-			GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
-		} else {
-			for( i = 0; i < scan_count; i++, pixelp++ )  {	
-				register Colorindex	col;
-				register Scoord	r = xpos + SGI(ifp)->si_xzoom - 1;
-				register Scoord t = ypos + SGI(ifp)->si_yzoom - 1;
-
-				CMOV2S( hole, xpos, ypos );
-				if( SGI(ifp)->si_mode == MODE_FIT ) {
-					col = get_Color_Index( ifp, pixelp );
-					*op++ = (*pixelp)[RED];
-					*op++ = (*pixelp)[GRN];
-					*op++ = (*pixelp)[BLU];
-				} else {
-					col =  MAP_RESERVED +
-					    ((*op++=(*pixelp)[RED])/26);
-					col += ((*op++=(*pixelp)[GRN])/26) * 10;
-					col += ((*op++=(*pixelp)[BLU])/26) * 100;
-				}
-
-				color( col );
-				im_rectfs( (Scoord)xpos, (Scoord)ypos, r, t );
-				xpos += SGI(ifp)->si_xzoom;
-			}
-		}
-		count -= scan_count;
-		ret += scan_count;
-		x = 0;
-		y++;
-	}
-	return(ret);
 }
 
 _LOCAL_ int
