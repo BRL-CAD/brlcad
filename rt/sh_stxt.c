@@ -43,7 +43,7 @@ struct	stxt_specific  {
 #define SOL_NULL ((struct stxt_specific *)0)
 
 struct	matparse stxt_parse[] = {
-#ifndef cray
+#ifndef CRAY
 	"transp",	(mp_off_ty)(SOL_NULL->stx_transp),"%C",
 	"file",		(mp_off_ty)(SOL_NULL->stx_file),	"%s",
 #else

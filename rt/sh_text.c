@@ -75,7 +75,7 @@ struct txt_specific {
 #define TX_NULL	((struct txt_specific *)0)
 
 struct matparse txt_parse[] = {
-#ifndef cray
+#ifndef CRAY
 	"transp",	(mp_off_ty)(TX_NULL->tx_transp),"%C",
 	"file",		(mp_off_ty)(TX_NULL->tx_file),	"%s",
 #else
@@ -285,7 +285,7 @@ struct ckr_specific  {
 #define CKR_NULL ((struct ckr_specific *)0)
 
 struct matparse ckr_parse[] = {
-#ifndef cray
+#ifndef CRAY
 	"a",		(mp_off_ty)(CKR_NULL->ckr_a),	"%C",
 	"b",		(mp_off_ty)(CKR_NULL->ckr_b),	"%C",
 #else
