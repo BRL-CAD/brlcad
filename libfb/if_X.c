@@ -414,6 +414,7 @@ unsigned char	*pp;
 {
 	unsigned char *bitbuf = XI(ifp)->bitbuf;
 	unsigned char *bytebuf = XI(ifp)->bytebuf;
+#ifdef XXX
 	RGBpixel v;
 
 	if( pp == RGBPIXEL_NULL ) {
@@ -423,7 +424,6 @@ unsigned char	*pp;
 		v[GRN] = (pp)[GRN];
 		v[BLU] = (pp)[BLU];
 	}
-#ifdef XXX
 	if( v[RED] == v[GRN] && v[RED] == v[BLU] ) {
 		int	bytes = ifp->if_width*ifp->if_height*3;
 		if( v[RED] == 0 )
