@@ -98,12 +98,20 @@ int
 hash(s)
 reg	char	*s;
 {
+#ifdef CRAY
+	reg	long	h;
+#else
 	reg	int	h;
+#endif
 
 	for (h = 0; *s != '\0'; s++)
 		h = (h << 1) + *s;
 
-	return (h >= 0? h: -h) % SIZE;
+	h = (h >= 0? h: -h) % SIZE;
+	if( h < 0 || h > SIZE )  {
+		fprintf(stderr, "cake: hash error, h=%d\n", h);	/* BRL */
+	}
+	return h;
 }
 
 /*
