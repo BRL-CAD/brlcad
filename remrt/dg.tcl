@@ -1,4 +1,4 @@
-#!/m/cad/.tk.6d/wish dg.tcl
+#!/m/cad/.libtk.6d/wish dg.tcl
 #!/bin/sh
 # The next line restarts the shell script using best WISH in $PATH
 # exec wish "$0" "$@"
