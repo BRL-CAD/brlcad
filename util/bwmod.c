@@ -51,9 +51,7 @@ int	numop = 0;		/* number of operations */
 int	op[256];		/* operations */
 double	val[256];		/* arguments to operations */
 unsigned char ibuf[BUFLEN];	/* input buffer */
-unsigned char mapbuf[256];	/* translation buffer/lookup table */
-unsigned char clip_h[256];	/* map of values which clip high */
-unsigned char clip_l[256];	/* map of values which clip low */
+int mapbuf[256];		/* translation buffer/lookup table */
 
 
 get_args( argc, argv )
@@ -133,9 +131,6 @@ void mk_trans_tbl()
 	register int j, i;
 	register double d;
 
-	(void)bzero((char *)clip_h, sizeof(clip_h));
-	(void)bzero((char *)clip_l, sizeof(clip_l));
-
 	/* create translation map */
 	for (j = 0; j < sizeof(mapbuf) ; ++j) {
 		d = j;
@@ -145,15 +140,15 @@ void mk_trans_tbl()
 			case MULT: d *= val[i]; break;
 			case POW : d = pow( d, val[i]); break;
 			case ABS : if (d < 0.0) d = - d; break;
-			default  : (void)fprintf(stderr, "%s: error in op\n", progname); break;
+			default  : (void)fprintf(stderr, "%s: error in op\n", progname);
+				   exit(-1);
+				   break;
 			}
 		}
 		if (d > 255.0) {
-			clip_h[j] = 1;
-			mapbuf[j] = 255;
+			mapbuf[j] = 256;
 		} else if (d < 0.0) {
-			clip_l[j] = 1;
-			mapbuf[j] = 0;
+			mapbuf[j] = -1;
 		} else
 			mapbuf[j] = d + 0.5;
 	}
@@ -163,26 +158,29 @@ int main( argc, argv )
 int argc;
 char **argv;
 {
-	register int	j, n;
-	unsigned long clip_high, clip_low;
+	register unsigned char	*p, *q;
+	register int		tmp;
+	int	 		n;
+	unsigned long		clip_high, clip_low;
 	
 	progname = *argv;
 
-	if( !get_args( argc, argv ) || isatty(fileno(stdin))
-	    || isatty(fileno(stdout)) ) {
+	if( !get_args( argc, argv ) || isatty((int)fileno(stdin))
+	    || isatty((int)fileno(stdout)) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
 	mk_trans_tbl();
 
-	clip_high = clip_low = 0;
+	clip_high = clip_low = 0L;
 	while ( (n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 		/* translate */
-		for (j=0 ; j < n ; ++j) {
-			ibuf[j] = mapbuf[ibuf[j]];
-			if (clip_h[j]) clip_high++;
-			else if (clip_l[j]) clip_low++;
+		for (p = ibuf, q = &ibuf[n] ; p < q ; ++p) {
+			tmp = mapbuf[*p];
+			if (tmp > 255) { ++clip_high; *p = 255; }
+			else if (tmp < 0) { ++clip_low; *p = 0; }
+			else *p = tmp;
 		}
 		/* output */
 		if (write(1, (void *)ibuf, (unsigned)n) != n) {
