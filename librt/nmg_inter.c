@@ -5574,11 +5574,21 @@ struct nmg_inter_struct *is;
 	NMG_CK_VERTEX_G( vg2 );
 	dist2 = DIST_PT_PLANE( vg2->coord, pl );
 	if( dist2 > is->tol.dist )
+	{
 		class2 = NMG_CLASS_AoutB;
+		out++;
+	}
 	else if( dist2 < (-is->tol.dist) )
+	{
 		class2 = NMG_CLASS_AinB;
+		in++;
+	}
 	else
+	{
 		class2 = NMG_CLASS_AonBshared;
+		on++;
+	}
+
 	vcut1 = (struct vertex *)NULL;
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
@@ -5588,51 +5598,57 @@ struct nmg_inter_struct *is;
 		dist1 = dist2;
 		class1 = class2;
 
-		if( class1 == NMG_CLASS_AonBshared )
-			on++;
-
 		vg2 = eu->eumate_p->vu_p->v_p->vg_p;
 		dist2 = DIST_PT_PLANE( vg2->coord, pl );
 
 		if( dist2 > is->tol.dist )
+		{
 			class2 = NMG_CLASS_AoutB;
+			out++;
+		}
 		else if( dist2 < (-is->tol.dist) )
+		{
 			class2 = NMG_CLASS_AinB;
+			in++;
+		}
 		else
+		{
 			class2 = NMG_CLASS_AonBshared;
+			on++;
+		}
 
 		if( class1 == NMG_CLASS_AonBshared && class2 != class1 )
 		{
 			if( !vcut1 )
+			{
 				vcut1 = eu->vu_p->v_p;
+			}
 			else if( vcut1 != eu->vu_p->v_p )
 			{
 				nmg_tbl( &cut_list, TBL_INS, (long *)vcut1 );
 				nmg_tbl( &cut_list, TBL_INS, (long *)eu->vu_p->v_p );
 				vcut1 = (struct vertex *)NULL;
 			}
-			else
-				vcut1 = (struct vertex *)NULL;
 		}
 		else if( class2 == NMG_CLASS_AonBshared && class1 != class2 )
 		{
 			if( !vcut1 )
+			{
 				vcut1 = eu->eumate_p->vu_p->v_p;
+			}
 			else if( vcut1 != eu->eumate_p->vu_p->v_p )
 			{
 				nmg_tbl( &cut_list, TBL_INS, (long *)vcut1 );
 				nmg_tbl( &cut_list, TBL_INS, (long *)eu->eumate_p->vu_p->v_p );
 				vcut1 = (struct vertex *)NULL;
 			}
-			else
-				vcut1 = (struct vertex *)NULL;
 		}
 	}
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	{
 		rt_log( "\t pl=( %g %g %g %g )\n", V4ARGS( pl ) );
-		rt_log( "\tcut_lists=%d, on=%d\n", NMG_TBL_END( &cut_list ),on );
+		rt_log( "\tcut_lists=%d, on=%d, in=%d, out=%d\n", NMG_TBL_END( &cut_list ),on,in,out );
 		if( NMG_TBL_END( &cut_list ) )
 		{
 			rt_log( "\tcut_lists:\n" );
@@ -5655,6 +5671,84 @@ struct nmg_inter_struct *is;
 		return;
 	}
 
+	if( nmg_loop_is_a_crack( lu ) )
+	{
+		struct nmg_ptbl lus;
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log( "Loop is a crack\n" );
+
+		i = 0;
+		while( i < NMG_TBL_END( &cut_list ) )
+		{
+			struct vertexuse *vu;
+
+			vcut1 = (struct vertex *)NMG_TBL_GET( &cut_list, i );
+			for( RT_LIST_FOR( vu, vertexuse, &vcut1->vu_hd ) )
+			{
+				if( nmg_find_lu_of_vu( vu ) != lu )
+					continue;
+
+				eu = vu->up.eu_p;
+				if( NMG_ARE_EUS_ADJACENT( eu, RT_LIST_PNEXT_CIRC( edgeuse, &eu->l ) ) )
+				{
+					i--;
+					nmg_tbl( &cut_list, TBL_RM, (long *)vcut1 );
+				}
+				else if( NMG_ARE_EUS_ADJACENT( eu, RT_LIST_PPREV_CIRC( edgeuse, &eu->l ) ) )
+				{
+					i--;
+					nmg_tbl( &cut_list, TBL_RM, (long *)vcut1 );
+				}
+			}
+			i++;
+		}
+
+		if( NMG_TBL_END( &cut_list ) == 0 )
+		{
+			nmg_tbl( &cut_list, TBL_FREE, (long *)NULL );
+			return;
+		}
+
+		nmg_tbl( &lus, TBL_INIT, (long *)NULL );
+		nmg_tbl( &lus, TBL_INS, (long *)lu );
+		for( i=0 ; i<NMG_TBL_END( &cut_list ) ; i++ )
+		{
+			int j;
+			struct loopuse *new_lu;
+
+			vcut1 = (struct vertex *)NMG_TBL_GET( &cut_list, i );
+
+			for( j=0 ; j<NMG_TBL_END( &lus ) ; j++ )
+			{
+				int did_split=0;
+				struct loopuse *lu1;
+				struct vertexuse *vu1;
+				struct loopuse *new_lu;
+
+				lu1 = (struct loopuse *)NMG_TBL_GET( &lus, j );
+
+				for( RT_LIST_FOR( vu1, vertexuse, &vcut1->vu_hd ) )
+				{
+					if( nmg_find_lu_of_vu( vu1 ) == lu1 )
+					{
+						new_lu = nmg_split_lu_at_vu( lu1, vu1 );
+						new_lu->orientation = OT_SAME;
+						new_lu->lumate_p->orientation = OT_SAME;
+						nmg_tbl( &lus, TBL_INS, (long *)new_lu );
+						did_split = 1;
+						break;
+					}
+				}
+				if( did_split )
+					break;
+			}
+		}
+		nmg_tbl( &lus, TBL_FREE, (long *)NULL );
+		nmg_tbl( &cut_list, TBL_FREE, (long *)NULL );
+		return;
+	}
+
 	if( NMG_TBL_END( &cut_list )%2 )
 	{
 		rt_log( "Uneven number (%d) of vertices on cut list\n" , NMG_TBL_END( &cut_list ) );
@@ -5663,7 +5757,7 @@ struct nmg_inter_struct *is;
 
 	for( i=0 ; i<NMG_TBL_END( &cut_list ) ; i += 2 )
 	{
-		struct loopuse *lu;
+		struct loopuse *lu1;
 		struct vertexuse *vu;
 		vect_t dir;
 		point_t hit_pt;
@@ -5672,9 +5766,27 @@ struct nmg_inter_struct *is;
 		struct edgeuse *new_eu;
 		fastf_t len;
 		fastf_t inv_len;
+		int skip=0;
 
 		vcut1 = (struct vertex *)NMG_TBL_GET( &cut_list, i );
 		vcut2 = (struct vertex *)NMG_TBL_GET( &cut_list, i+1 );
+
+		/* make sure these are not the ends of an edge of lu */
+		for( RT_LIST_FOR( vu, vertexuse, &vcut1->vu_hd ) )
+		{
+			if( nmg_find_lu_of_vu( vu ) != lu )
+				continue;
+
+			eu = vu->up.eu_p;
+			if( eu->eumate_p->vu_p->v_p == vcut2 )
+			{
+				/* already an edge here */
+				skip = 1;
+				break;
+			}
+		}
+		if( skip )
+			continue;
 
 		/* need to cut face along line from vcut1 to vcut2 */
 		VMOVE( is->pt, vcut1->vg_p->coord );
@@ -5704,16 +5816,16 @@ struct nmg_inter_struct *is;
 		}
 
 		/* look for other edges that may intersect this line */
-		for( RT_LIST_FOR( lu, loopuse, &is->fu1->lu_hd ) )
+		for( RT_LIST_FOR( lu1, loopuse, &is->fu1->lu_hd ) )
 		{
 			struct edgeuse *eu1;
 
-			NMG_CK_LOOPUSE( lu );
+			NMG_CK_LOOPUSE( lu1 );
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			for( RT_LIST_FOR( eu1, edgeuse, &lu->down_hd ) )
+			for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )
 			{
 				int code;
 				fastf_t dists[2];
@@ -6672,6 +6784,8 @@ struct faceuse *fu1,*fu2;
 
 		nmg_cut_lu_into_coplanar_and_non( lu, pl1, is );
 	}
+
+	/* XXXX Need to break edges in faces on vertices that may lie on new edges formed by cuts */
 
 	nmg_tbl( &loops, TBL_FREE, (long *)NULL );
 
