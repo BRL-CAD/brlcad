@@ -219,7 +219,7 @@ struct rt_i		*rtip;
 	RT_RHC_CK_MAGIC(xip);
 
 	/* compute |B| |H| */
-	mag_b = rhc->rhc_b = sqrt( magsq_b = MAGSQ( xip->rhc_B ) );
+	mag_b = sqrt( magsq_b = MAGSQ( xip->rhc_B ) );
 	mag_h = sqrt( magsq_h = MAGSQ( xip->rhc_H ) );
 	mag_r = xip->rhc_r;
 	magsq_r = rhc->rhc_rsq = mag_r * mag_r;
@@ -244,6 +244,7 @@ struct rt_i		*rtip;
 
 	GETSTRUCT( rhc, rhc_specific );
 	stp->st_specific = (genptr_t)rhc;
+	rhc->rhc_b = mag_b;
 
 	/* make unit vectors in B, H, and BxH directions */
 	VMOVE(    rhc->rhc_Hunit, xip->rhc_H );
