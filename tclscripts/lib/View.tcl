@@ -22,7 +22,7 @@
 class View {
     public variable size 1000
     public variable center {0 0 0}
-    public variable aet "0 90 0"
+    public variable ae "0 90 0"
     public variable perspective_angle 0
     public variable coord "v"
     public variable rotate_about "v"
@@ -32,21 +32,34 @@ class View {
     constructor {args} {}
     destructor {}
 
-    public method aet {args}
+    public method ae {args}
+    public method arot {args}
     public method center {args}
     public method coord {args}
+    public method eye {args}
+    public method eye_pos {args}
     public method get_viewname {}
+    public method invSize {args}
     public method keypoint {args}
-    public method model2view {}
+    public method lookat {args}
+    public method model2view {args}
+    public method mrot {args}
     public method observer {args}
+    public method orientation {args}
     public method perspective {args}
-    public method pmodel2view {}
+    public method pmat {args}
+    public method pmodel2view {args}
+    public method pov {args}
+    public method rmat {args}
     public method rot {args}
     public method rotate_about {args}
+    public method sca {args}
+    public method setview {args}
     public method size {args}
     public method slew {x y}
     public method tra {args}
     public method units {args}
+    public method view2model {args}
     public method vrot {args}
     public method vtra {args}
     public method zoom {sf}
@@ -71,8 +84,8 @@ configbody View::center {
     eval View::center $center
 }
 
-configbody View::aet {
-    eval View::aet $aet
+configbody View::ae {
+    eval View::ae $ae
 }
 
 configbody View::perspective_angle {
@@ -114,19 +127,22 @@ body View::get_viewname {} {
     return $view
 }
 
-body View::observer {args} {
-    eval $view observer $args
-}
-
-body View::aet {args} {
-    # get aet
+body View::ae {args} {
+    # get ae
     if {$args == ""} {
-	return $aet
+	return $ae
     }
 
-    # set aet
-    $view aet $args
-    set aet $args
+    # set ae
+    eval $view ae $args
+    set ae $args
+}
+
+body View::arot {args} {
+    eval $view arot $args
+
+    set ae [$view ae]
+    set center [$view center]
 }
 
 body View::center {args} {
@@ -136,16 +152,123 @@ body View::center {args} {
     }
 
     # set center
-    $view center $args
+    eval $view center $args
     set center $args
+}
+
+body View::coord {args} {
+    # get coord
+    if {$args == ""} {
+	return $coord
+    }
+
+    eval $view coord $args
+    set coord $args
+}
+
+body View::eye {args} {
+    eval $view eye $args
+}
+
+body View::eye_pos {args} {
+    eval $view eye_pos $args
+}
+
+body View::invSize {args} {
+    eval $view invSize $args
+}
+
+body View::keypoint {args} {
+    # get keypoint
+    if {$args == ""} {
+	return $keypoint
+    }
+
+    eval $view keypoint $args
+    set keypoint $args
+}
+
+body View::lookat {args} {
+    eval $view lookat $args
+}
+
+body View::model2view {args} {
+    eval $view model2view $args
+}
+
+body View::mrot {args} {
+    eval $view mrot $args
+}
+
+body View::observer {args} {
+    eval $view observer $args
+}
+
+body View::orientation {args} {
+    eval $view orientation $args
+}
+
+body View::perspective {args} {
+    # get perspective angle
+    if {$args == ""} {
+	return $perspective_angle
+    }
+
+    eval $view perspective $args
+    set perspective_angle $args
+}
+
+body View::pmat {args} {
+    eval $view pmat $args
+}
+
+body View::pmodel2view {args} {
+    eval $view pmodel2view $args
+}
+
+body View::pov {args} {
+    eval $view pov $args
+}
+
+body View::rmat {args} {
+    eval $view rmat $args
 }
 
 body View::rot {args} {
     # rotate view
-    $view rot $args
+    eval $view rot $args
 
-    set aet [$view aet]
+    set ae [$view ae]
     set center [$view center]
+}
+
+body View::rotate_about {args} {
+    # get rotate_about
+    if {$args == ""} {
+	return $rotate_about
+    }
+
+    eval $view rotate_about $args
+    set rotate_about $args
+}
+
+body View::sca {args} {
+    eval $view sca $args
+}
+
+body View::setview {args} {
+    eval $view setview $args
+}
+
+body View::size {args} {
+    # get size
+    if {$args == ""} {
+	return $size
+    }
+
+    # set size
+    eval $view size $args
+    set size $args
 }
 
 body View::slew {x y} {
@@ -157,20 +280,9 @@ body View::slew {x y} {
 
 body View::tra {args} {
     # translate view
-    $view tra $args
+    eval $view tra $args
 
     set center [$view center]
-}
-
-body View::size {args} {
-    # get size
-    if {$args == ""} {
-	return $size
-    }
-
-    # set size
-    $view size $args
-    set size $args
 }
 
 body View::units {args} {
@@ -180,77 +292,33 @@ body View::units {args} {
     }
 
     # set units
-    $view units $args
+    eval $view units $args
     set units $args
+}
+
+body View::view2model {args} {
+    eval $view view2model
 }
 
 body View::vrot {args} {
     # rotate view
-    $view rot -v $args
+    eval $view rot -v $args
 
-    set aet [$view aet]
+    set ae [$view ae]
     set center [$view center]
 }
 
 body View::vtra {args} {
     # translate view
-    $view tra -v $args
+    eval $view tra -v $args
 
     set center [$view center]
 }
 
 body View::zoom {sf} {
-    $view zoom $sf
+    eval $view zoom $sf
 
     set size [$view size]
-}
-
-body View::model2view {} {
-    $view model2view
-}
-
-body View::pmodel2view {} {
-    $view pmodel2view
-}
-
-body View::perspective {args} {
-    # get perspective angle
-    if {$args == ""} {
-	return $perspective_angle
-    }
-
-    $view perspective $args
-    set perspective_angle $args
-}
-
-body View::coord {args} {
-    # get coord
-    if {$args == ""} {
-	return $coord
-    }
-
-    $view coord $args
-    set coord $args
-}
-
-body View::keypoint {args} {
-    # get keypoint
-    if {$args == ""} {
-	return $keypoint
-    }
-
-    $view keypoint $args
-    set keypoint $args
-}
-
-body View::rotate_about {args} {
-    # get rotate_about
-    if {$args == ""} {
-	return $rotate_about
-    }
-
-    $view rotate_about $args
-    set rotate_about $args
 }
 
 body View::? {} {
@@ -272,7 +340,7 @@ body View::help {args} {
 body View::init {} {
     View::size $size
     eval View::center $center
-    eval View::aet $aet
+    eval View::ae $ae
     View::perspective $perspective_angle
     View::coord $coord
     View::rotate_about $rotate_about
@@ -284,15 +352,32 @@ body View::init {} {
 body View::help_init {} {
     set help [cadwidgets::Help #auto]
 
-    $help add aet		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
+    $help add ae		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
+    $help add arot		{{x y z angle} {rotate about axis x,y,z by angle (degrees)}}
     $help add center		{{["x y z"]} {set/get the view center}}
     $help add coord		{{[m|v]} {set/get the coodinate system}}
+    $help add eye		{{mx my mz} {set eye point to given model coordinates}}	
+    $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
+    $help add invSize		{{} {returns the inverse of view size}}
     $help add keypoint		{{[point]} {set/get the keypoint}}
+    $help add lookat		{{x y z} {adjust view to look at given coordinates}}
+    $help add model2view	{{} {returns the model2view matrix}}
+    $help add mrot		{{x y z} {rotate view using model x,y,z}}
+    $help add orientation	{{x y z w} {set view direction from quaternion}}
     $help add perspective	{{[angle]} {set/get the perspective angle}}
+    $help add pmat		{{} {get the perspective matrix}}
+    $help add pmodel2view	{{} {get the pmodel2view matrix}}
+    $help add pov		{{args}	{experimental:  set point-of-view}}
+    $help add rmat		{{} {get/set the rotation matrix}}
     $help add rot		{{"x y z"} {rotate the view}}
     $help add rotate_about	{{[e|k|m|v]} {set/get the rotate about point}}
+    $help add sca		{{sfactor} {scale by sfactor}}
+    $help add setview		{{x y z} {set the view given angles x, y, and z in degrees}}
     $help add size		{{vsize} {set/get the view size}}
     $help add slew		{{"x y"} {slew the view}}
-    $help add tra		{{"x y z"} {translate the view}}
+    $help add tra		{{[-v|-m] "x y z"} {translate the view}}
+    $help add units		{{[unit]} {get/set the local units}}
+    $help add vrot		{{xdeg ydeg zdeg} {rotate viewpoint}}
+    $help add vtra		{{"x y z"} {translate the view}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}
 }
