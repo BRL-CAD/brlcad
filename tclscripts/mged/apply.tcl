@@ -16,9 +16,17 @@ proc mged_apply { id cmd } {
     } elseif {$mged_gui($id,apply_to) == 3} {
 	mged_apply_all $cmd
     } else {
-	winset $mged_gui($id,active_dm)
-	catch { uplevel #0 $cmd }
+	mged_apply_active $id $cmd
     }
+}
+
+proc mged_apply_active { id cmd } {
+    global mged_gui
+
+    winset $mged_gui($id,active_dm)
+    catch { uplevel #0 $cmd } msg
+
+    return $msg
 }
 
 proc mged_apply_local { id cmd } {
