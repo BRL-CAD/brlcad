@@ -514,9 +514,9 @@ out:
 		rt_log("nmg_assess_eu(x%x, fw=%d, pos=%d) v=x%x otherv=x%x: %s\n",
 			eu, forw, pos, v, otherv,
 			nmg_e_assessment_names[ret] );
-		rt_log(" v(%g,%g,%g) other(%g,%g,%g)\n",
+		rt_log(" v(%g, %g, %g) other(%g, %g, %g)\n",
 			V3ARGS(v->vg_p->coord), V3ARGS(otherv->vg_p->coord) );
-		rt_log(" rs->left(%g,%g,%g) heading(%g,%g,%g)\n",
+		rt_log(" rs->left(%g, %g, %g) heading(%g, %g, %g)\n",
 			V3ARGS(rs->left), V3ARGS(heading) );
 	}
 	return ret;
@@ -594,7 +594,7 @@ struct nmg_vu_stuff {
 	fastf_t			lo_ang;		/* small if RIGHT, large if LEFT */
 	fastf_t			hi_ang;
 	int			seq;		/* seq # after lsp->min_vu */
-	int			wedge_class;	/* -1=LEFT, 0=Cross, +1=RIGHT */
+	int			wedge_class;	/* WEDGE_LEFT, etc */
 };
 struct nmg_loop_stuff {
 	struct loopuse		*lu;
@@ -603,14 +603,16 @@ struct nmg_loop_stuff {
 	int			n_vu_in_loop;	/* # ray vu's in this loop */
 };
 
-#define WEDGE_LEFT	-1
-#define WEDGE_CROSS	0
-#define WEDGE_RIGHT	1
-#define WEDGECLASS2STR(_cl)	nmg_wedgeclass_string[(_cl)+1]
+#define WEDGE_LEFT	0
+#define WEDGE_CROSS	1
+#define WEDGE_RIGHT	2
+#define WEDGE_ON	3
+#define WEDGECLASS2STR(_cl)	nmg_wedgeclass_string[(_cl)]
 static CONST char *nmg_wedgeclass_string[] = {
 	"LEFT",
 	"CROSS",
 	"RIGHT",
+	"ON",
 	"???"
 };
 /*
@@ -627,12 +629,14 @@ static CONST char *nmg_wedgeclass_string[] = {
  *	==0	( ==> X == 180 ) ON_FORW
  *
  *  Returns -
- *	-1	LEFT
- *	 0	Crossing or both ON
- *	 1	RIGHT
+ *	WEDGE_LEFT
+ *	WEDGE_CROSSING
+ *	WEDGE_RIGHT
+ *	WEDGE_ON
  */
 int
-nmg_wedge_class(a,b)
+nmg_wedge_class(ass, a,b)
+int	ass;			/* assessment of two edges forming wedge */
 double	a;
 double	b;
 {
@@ -641,6 +645,15 @@ double	b;
 
 	ha = a - 180;
 	hb = b - 180;
+
+	if( ass == NMG_V_COMB(NMG_E_ASSESSMENT_ON_FORW, NMG_E_ASSESSMENT_ON_FORW) )  {
+		ret = WEDGE_ON;
+		goto out;
+	}
+	if( ass == NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV, NMG_E_ASSESSMENT_ON_REV) )  {
+		ret = WEDGE_ON;
+		goto out;
+	}
 
 	if( NEAR_ZERO( ha, .01 ) )  {
 		/* A is on the ray */
@@ -903,12 +916,23 @@ int	skip_array[];
 		}
 
 		/* Ignore wedges crossing, or on other side of line */
-		if( vs[i].wedge_class != wclass )  {
+		if( vs[i].wedge_class != wclass && vs[i].wedge_class != WEDGE_ON )  {
 			if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
 				rt_log("Seeking wedge_class=%s, [%d] has wedge_class %s\n",
 					WEDGECLASS2STR(wclass), i, WEDGECLASS2STR(vs[i].wedge_class) );
 			}
 			continue;
+		}
+
+		if( vs[i].wedge_class == WEDGE_ON )  {
+			/* Ensure that comparisons will work */
+			if( wclass == WEDGE_RIGHT )  {
+				vs[i].lo_ang = 0;
+				vs[i].hi_ang = 180;
+			} else {
+				vs[i].lo_ang = 360;
+				vs[i].hi_ang = 180;
+			}
 		}
 
 		this_wrt_orig = nmg_compare_2_wedges(
@@ -967,7 +991,7 @@ int	skip_array[];
 	}
 out:
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
-		rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) candidate=%d\n",
+		rt_log("nmg_find_vu_in_wedge(start=%d,end=%d, lo=%g, hi=%g) END candidate=%d\n",
 			start, end, lo_ang, hi_ang,
 			candidate);
 	return candidate;	/* is -1 if none found */
@@ -1033,6 +1057,14 @@ tie_break:
 		B_WINS;
 	}
 	switch( a->wedge_class )  {
+	case WEDGE_ON:
+		switch( b->wedge_class )  {
+		case WEDGE_ON:
+			goto tie_break;
+		default:
+			rt_bomb("nmg_face_vu_compare() WEDGE_ON 1?\n");
+		}
+		break;
 	case WEDGE_LEFT:
 		switch( b->wedge_class )  {
 		case WEDGE_LEFT:
@@ -1054,6 +1086,8 @@ tie_break:
 			diff = 360 - a->lo_ang;/* CW version of left angle */
 			if( b->lo_ang <= diff )  B_WINS;
 			A_WINS;
+		case WEDGE_ON:
+			rt_bomb("nmg_face_vu_compare() WEDGE_ON 2?\n");
 		}
 	case WEDGE_CROSS:
 		switch( b->wedge_class )  {
@@ -1076,6 +1110,8 @@ tie_break:
 			diff = 360 - a->hi_ang;/* CW version of left angle */
 			if( diff < b->lo_ang )  A_WINS;
 			B_WINS;
+		case WEDGE_ON:
+			rt_bomb("nmg_face_vu_compare() WEDGE_ON 3?\n");
 		}
 	case WEDGE_RIGHT:
 		switch( b->wedge_class )  {
@@ -1096,6 +1132,8 @@ tie_break:
 			}
 			if( a->lo_ang < b->lo_ang )  A_WINS;
 			B_WINS;
+		case WEDGE_ON:
+			rt_bomb("nmg_face_vu_compare() WEDGE_ON 4?\n");
 		}
 	}
 out:
@@ -1204,11 +1242,17 @@ int	wclass;
 	struct loopuse	*inner_lu;
 	int		not_these[128];
 
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+		rt_log("nmg_special_wedge_processing(start=%d,end=%d, lo=%g, hi=%g, wclass=%s)\n",
+			start, end, lo_ang, hi_ang,
+			WEDGECLASS2STR(wclass) );
+	}
+
 	if( end-start >= 128 )  rt_bomb("nmg_special_wedge_processing: array overflow\n");
 	bzero( (char *)not_these, sizeof(not_these) );
 
 again:
-	/* There may be many wedges to iterate over */
+	/* May be many "outer" wedges to iterate over this side of line */
 	outer_wedge = nmg_find_vu_in_wedge( vs, start, end,
 		lo_ang, hi_ang, wclass, not_these );
 	if( outer_wedge <= -1 )  return 0;	/* No wedges to process */
@@ -1350,7 +1394,7 @@ top:
 		else if( ass == NMG_V_COMB(NMG_E_ASSESSMENT_LEFT, NMG_E_ASSESSMENT_ON_REV) )
 			vs[nvu].out_vu_angle = 360;
 
-		vs[nvu].wedge_class = nmg_wedge_class( vs[nvu].in_vu_angle, vs[nvu].out_vu_angle );
+		vs[nvu].wedge_class = nmg_wedge_class( ass, vs[nvu].in_vu_angle, vs[nvu].out_vu_angle );
 		if(rt_g.NMG_debug&DEBUG_VU_SORT) rt_log("nmg_wedge_class = %d %s\n", vs[nvu].wedge_class, WEDGECLASS2STR(vs[nvu].wedge_class));
 		/* Sort the angles (Don't forget to sort for CROSS case too) */
 		if( (vs[nvu].wedge_class == WEDGE_LEFT && vs[nvu].in_vu_angle > vs[nvu].out_vu_angle) ||
@@ -1421,6 +1465,7 @@ got_loop:
 	/* Here is where the special wedge-breaking code goes */
 	if( nmg_special_wedge_processing( vs, 0, nvu, 0.0, 180.0, WEDGE_RIGHT ) )
 		goto top;
+	/* XXX reclass on/on edges from WEDGE_RIGHT to WEDGE_LEFT here? */
 	if( nmg_special_wedge_processing( vs, 0, nvu, 360.0, 180.0, WEDGE_LEFT ) )
 		goto top;
 
