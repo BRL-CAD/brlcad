@@ -60,35 +60,57 @@
 
 #define FB_TCL_CK_FBIO(_p) FB_TCL_CKMAG(_p, FB_MAGIC, "FBIO")
 
+/*XXX At some point these routines should be moved to FBIO */
 #ifdef IF_OGL
+extern int ogl_refresh();
 extern int ogl_open_existing();
 extern int ogl_close_existing();
 extern FBIO ogl_interface;
 #endif
 
+extern int X24_refresh();
 extern int X24_open_existing();
 extern int X24_close_existing();
 extern FBIO X24_interface;
 
 int fb_tcl_open();
-int fb_tcl_clear();
-int fb_tcl_cursor();
-int fb_tcl_getcursor();
 int fb_tcl_close();
 int fb_tcl_open_existing();
 int fb_tcl_close_existing();
+int fb_tcl_clear();
+int fb_tcl_cursor();
+int fb_tcl_getcursor();
+int fb_tcl_writerect();
+int fb_tcl_refresh();
+int fb_refresh();
 
 static struct fbcmd{
   char *cmdName;
   int (*cmdFunc)();
 }fb_cmds[] = {
   "fb_open", fb_tcl_open,
+  "fb_close", fb_tcl_close,
+  "fb_open_existing", fb_tcl_open_existing,
+  "fb_close_existing", fb_tcl_close_existing,
   "fb_clear", fb_tcl_clear,
   "fb_cursor", fb_tcl_cursor,
   "fb_getcursor", fb_tcl_getcursor,
-  "fb_close", fb_tcl_close,
+  "fb_writerect", fb_tcl_writerect,
+  "fb_refresh", fb_tcl_refresh,
   (char *)0, (int (*)())0
 };
+
+void
+fb_tclInit(interp)
+Tcl_Interp *interp;
+{
+  struct fbcmd *fbp;
+
+  for(fbp = fb_cmds; fbp->cmdName != (char *)0; ++fbp){
+    (void)Tcl_CreateCommand(interp, fbp->cmdName, fbp->cmdFunc,
+			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+  }
+}
 
 int
 fb_tcl_open(clientData, interp, argc, argv)
@@ -363,28 +385,6 @@ char **argv;
 
   FB_TCL_CK_FBIO(ifp);
 }
-int
-fb_tcl_(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-  FBIO *ifp;
-  int status;
-
-  if(argc != ){
-    /*XXX put usage message here */
-    return TCL_ERROR;
-  }
-
-  if(sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1){
-    /*XXX put usage message here */
-    return TCL_ERROR;
-  }
-
-  FB_TCL_CK_FBIO(ifp);
-}
 #endif
 
 int
@@ -421,24 +421,6 @@ char **argv;
 #endif
 
   return TCL_OK;
-}
-
-void
-fb_tclInit(interp)
-Tcl_Interp *interp;
-{
-  struct fbcmd *fbp;
-
-  for(fbp = fb_cmds; fbp->cmdName != (char *)0; ++fbp){
-    (void)Tcl_CreateCommand(interp, fbp->cmdName, fbp->cmdFunc,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-  }
-
-/*XXX Experimenting */
-  (void)Tcl_CreateCommand(interp, "fb_open_existing", fb_tcl_open_existing,
-			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-  (void)Tcl_CreateCommand(interp, "fb_close_existing", fb_tcl_close_existing,
-			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 }
 
 /*XXX Experimenting */
@@ -592,6 +574,144 @@ char **argv;
     free((void *)ifp->if_pbase);
   free((void *)ifp->if_name);
   free((void *)ifp);
+
+  return TCL_OK;
+}
+
+int
+fb_tcl_writerect(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  FBIO *ifp;
+  int x, y, w, h;
+  unsigned char *pp;
+  int status;
+
+  if(argc != 7){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  FB_TCL_CK_FBIO(ifp);
+
+  if(sscanf(argv[2], "%d", &x) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[3], "%d", &y) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[4], "%d", &w) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[5], "%d", &h) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[6], "%lu", (unsigned long *)&pp) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  status = fb_writerect(ifp, x, y, w, h, pp);
+
+  if(status < 0)
+    return TCL_ERROR;
+
+  return TCL_OK;
+}
+
+int
+fb_tcl_refresh(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  FBIO *ifp;
+  int x, y, w, h; /* rectangle to be refreshed */
+
+  if(argc != 2 && argc != 6){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  if(sscanf(argv[1], "%lu", (unsigned long *)&ifp) != 1){
+    /*XXX put usage message here */
+    return TCL_ERROR;
+  }
+
+  FB_TCL_CK_FBIO(ifp);
+
+  if(argc == 2){  /* refresh the whole display */
+    x = y = 0;
+    w = ifp->if_width;
+    h = ifp->if_height;
+  }else{  /* refresh only the given rectangle of the display */
+    if(sscanf(argv[2], "%d", &x) != 1){
+      /*XXX put usage message here */
+      return TCL_ERROR;
+    }
+
+    if(sscanf(argv[3], "%d", &y) != 1){
+      /*XXX put usage message here */
+      return TCL_ERROR;
+    }
+
+    if(sscanf(argv[4], "%d", &w) != 1){
+      /*XXX put usage message here */
+      return TCL_ERROR;
+    }
+
+    if(sscanf(argv[5], "%d", &h) != 1){
+      /*XXX put usage message here */
+      return TCL_ERROR;
+    }
+  }
+
+  return fb_refresh(ifp, x, y, w, h);
+}
+
+int
+fb_refresh(ifp, x, y, w, h)
+FBIO *ifp;
+int x, y;
+int w, h;
+{
+  char *X_name = "/dev/X";
+#ifdef IF_OGL
+  char *ogl_name = "/dev/ogl";
+#endif
+  int status;
+
+  if(!strcmp(ifp->if_name, X_name)){
+    status = X24_refresh(ifp, x, y, w, h);
+  }
+#ifdef IF_OGL
+  else if(!strcmp(ifp->if_name, ogl_name)){
+    status = ogl_refresh(ifp, x, y, w, h);
+  }
+#endif
+  else{
+    return TCL_ERROR;
+  }
+
+  if(status < 0)
+    return TCL_ERROR;
 
   return TCL_OK;
 }
