@@ -453,7 +453,7 @@ set -S2 "/bin/sh"
 #	if 1 /*	Use 64 bit	*/
 #		define M4I64_USE_64_BIT
 #	endif
-#	if 1 /*	PRODUCTION	*/
+#	if 1 /*	PRODUCTION=1	*/
 #		define	M4I64_PRODUCTION
 #	endif
 #	define	MTYPE	m4i64
@@ -557,7 +557,8 @@ set -S2 "/bin/sh"
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
-#		define	OPTIMIZER	-g -use_readonly_const
+#		define	OPTIMIZER	-g -use_readonly_const \
+			-woff 1174
 #	endif
 #	define	GFLAG		-64 -mips4 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
