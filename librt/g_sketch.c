@@ -55,6 +55,10 @@ static char RCSsketch[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
+#if !defined(M_PI)
+#define M_PI            3.14159265358979323846
+#endif
+
 fastf_t rt_cnurb_par_edge();
 
 int
