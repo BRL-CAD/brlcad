@@ -304,7 +304,7 @@ ibm_normalized:
 
 #ifdef never
 		if( (((int)in) & 07) == 0 )
-			word = *((float *)in);
+			word = *((unsigned long *)in);
 		else
 #endif
 			word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
@@ -342,6 +342,40 @@ ibm_normalized:
 		*out++ = word>>16;
 		*out++ = word>>8;
 		*out++ = word;
+	}
+	return;
+#	define	HTOND	yes
+#endif
+
+#ifdef convex
+	/*
+	 *  Convex C1 version, for Native Convex floating point.
+	 *  (Which seems to be VAX "G" format -- almost IEEE).
+	 */
+	register int	i;
+	for( i=count-1; i >= 0; i-- )  {
+		register unsigned long long	word;
+		register int exp;
+
+
+		word = *((unsigned long long *)in);
+		in += 8;
+
+		if( word == 0 )
+			OUT_IEEE_ZERO;
+		exp = (word >> 52) & 0x7FF;
+		/* What value here is a Convex NaN ? */
+		exp += 1023 - 1024 - 1;
+		if( (exp & ~0x7FF) != 0 )  {
+			fprintf(stderr,"htond:  Convex exponent too large on x%lx\n", word);
+			OUT_IEEE_NAN;
+		}
+
+		word = ((word & 0x800FFFFFFFFFFFFFLL) |
+			((long long)exp)<<52);
+
+		*((unsigned long long *)out) = word;
+		out += 8;
 	}
 	return;
 #	define	HTOND	yes
@@ -588,7 +622,7 @@ ibm_undef:		*out++ = 0;		/* IBM zero.  No NAN */
 
 #ifdef never
 		if( (((int)in) & 07) == 0 )
-			word = *((float *)in);
+			word = *((unsigned long *)in);
 		else
 #endif
 			word  = (((long)in[0])<<56) | (((long)in[1])<<48) |
@@ -621,6 +655,41 @@ cray_out:
 		*out++ = word>>16;
 		*out++ = word>>8;
 		*out++ = word;
+	}
+	return;
+#	define	NTOHD	yes
+#endif
+
+#ifdef convex
+	/*
+	 *  Convex C1 version, for Native Convex floating point.
+	 */
+	register int	i;
+	for( i=count-1; i >= 0; i-- )  {
+		register unsigned long long	word;
+		register int exp;
+
+		word = *((unsigned long long *)in);
+		in += 8;
+
+		exp = (word >> 52) & 0x7FF;
+		if( exp == 0 )  {
+			word = 0;
+			goto convex_out;
+		}
+		if( exp == 0x7FF )  {
+			/* IEEE NaN = Convex what? */
+			fprintf(stderr,"ntohd: Convex NaN unimplemented\n");
+			word = 0;
+			goto convex_out;
+		}
+		exp += 1024 - 1023 + 1;
+		word = (word & 0x800FFFFFFFFFFFFFLL) |
+			(((long long)exp)<<52);
+
+convex_out:
+		*((unsigned long long *)out) = word;
+		out += 8;
 	}
 	return;
 #	define	NTOHD	yes
