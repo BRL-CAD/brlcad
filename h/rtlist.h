@@ -113,6 +113,24 @@ struct rt_list  {
 	(cur)->forw = (cur)->back = RT_LIST_NULL;  /* sanity */ }
 
 /*
+ *  The Stack Discipline
+ *
+ *  RT_LIST_PUSH places p at the tail of hp.
+ *  RT_LIST_POP  sets p to last element in hp's list (else NULL)
+ *		  and, if p is non-null, dequeues it.
+ */
+#define RT_LIST_PUSH(hp,p)					\
+	RT_LIST_APPEND(hp, (struct rt_list *)(p))
+
+#define RT_LIST_POP(structure,hp,p)				\
+	if (RT_LIST_NON_EMPTY(hp))				\
+	{							\
+	    (p) = ((struct structure *)((hp)->forw));		\
+	    RT_LIST_DEQUEUE((struct rt_list *)(p));		\
+	}							\
+	else							\
+	     (p) = (struct structure *) 0
+/*
  *  "Bulk transfer" all elements from the list headed by src_hd
  *  onto the list headed by dest_hd, without examining every element
  *  in the list.  src_hd is left with a valid but empty list.
@@ -189,6 +207,20 @@ struct rt_list  {
 	(p)=RT_LIST_FIRST(structure,hp); \
 	RT_LIST_NOT_HEAD(p,hp); \
 	(p)=RT_LIST_PNEXT(structure,p)
+/*
+ *  Intended as innards for a for() loop to visit elements of two lists
+ *	in tandem, e.g.:
+ *	    for (RT_LIST_FOR2(p1, p2, structure, hp1, hp2) ) {
+ *		    process( p1, p2 );
+ *	    }
+ */
+#define	RT_LIST_FOR2(p1,p2,structure,hp1,hp2)				\
+		(p1)=RT_LIST_FIRST(structure,hp1),			\
+		(p2)=RT_LIST_FIRST(structure,hp2);			\
+		RT_LIST_NOT_HEAD((struct rt_list *)(p1),(hp1)) &&	\
+		RT_LIST_NOT_HEAD((struct rt_list *)(p2),(hp2));		\
+		(p1)=RT_LIST_NEXT(structure,(struct rt_list *)(p1)),	\
+		(p2)=RT_LIST_NEXT(structure,(struct rt_list *)(p2))
 
 /*
  *  Innards for a while() loop that constantly picks off the first element.
