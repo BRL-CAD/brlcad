@@ -17,6 +17,8 @@
  *	This software is Copyright (C) 1986 by the United States Army.
  *	All rights reserved.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 
@@ -69,7 +71,7 @@ char **argv;
 	 */
 	num_values = 0;
 	sum = sum2 = 0;
-#if (defined(__EXTENSIONS__) || defined (_POSIX_SOURCE))
+#if defined(HUGE_VAL)
 	min = HUGE_VAL;
 	max = -HUGE_VAL;
 #else
