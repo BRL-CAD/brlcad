@@ -1,8 +1,8 @@
 /*LINTLIBRARY*/
 /*
-	SCCS id:	@(#) termio.c	1.1
-	Last edit: 	3/13/85 at 19:00:54
-	Retrieved: 	8/13/86 at 03:17:50
+	SCCS id:	@(#) termio.c	1.2
+	Last edit: 	3/13/85 at 22:13:48
+	Retrieved: 	8/13/86 at 03:17:54
 	SCCS archive:	/m/cad/fb_utils/RCS/s.termio.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) termio.c	1.1	last edit 3/13/85 at 19:00:54";
+char	sccsTag[] = "@(#) termio.c	1.2	last edit 3/13/85 at 22:13:48";
 #include <stdio.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
