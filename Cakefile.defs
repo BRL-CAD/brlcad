@@ -820,6 +820,10 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11 -lnsl -lsocket
 
 /*	XMGED requires a Motif license and include/X11/Xm/Xm.h */
+#	define  XMGED_ALLOCA
+#	define	XMGED_OBJS	dm-X
+#	define	XMGED_CONFIG	-DDM_X -DDMX_SIGNALS -I/usr/X11/include
+#	define	XMGED_LIBES	-L/usr/X11/lib -lXm -lXt -lXi -lXext -lX11 -ll
 
 #endif
 
