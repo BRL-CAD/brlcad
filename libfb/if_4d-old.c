@@ -46,6 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <gl.h>
+#include <get.h>
 #include <device.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -104,7 +105,7 @@ FBIO mips_interface =
 		mips_curs_set,
 		mips_cmemory_addr,
 		fb_null,		/* cscreen_addr */
-		"Silicon Graphics Iris-4D",
+		"Silicon Graphics Iris-4D (non-GT)",
 		XMAXSCREEN+1,		/* max width */
 		YMAXSCREEN+1,		/* max height */
 		"/dev/sgi",
@@ -174,6 +175,7 @@ static int map_size;			/* # of color map slots available */
  *	TRANSIENT -vs- LINGERING windows
  *	Windowed -vs- Full screen
  *	Default Hz -vs- 30hz monitor mode
+ *	Genlock NTSC -vs- normal monitor mode
  */
 #define MODE_1MASK	(1<<0)
 #define MODE_1MALLOC	(0<<0)		/* Use malloc memory */
@@ -190,6 +192,10 @@ static int map_size;			/* # of color map slots available */
 #define MODE_4MASK	(1<<3)
 #define MODE_4HZDEF	(0<<3)
 #define MODE_4HZ30	(1<<3)
+
+#define MODE_5MASK	(1<<4)
+#define MODE_5NORMAL	(0<<4)
+#define MODE_5GENLOCK	(1<<4)
 
 static RGBpixel	rgb_table[4096];
 
@@ -558,7 +564,8 @@ int	width, height;
 	 *  is used as the operating mode.
 	 *  The default mode is set here, and it isn't mode 0, but mode 1.
 	 */
-	mode =  MODE_4HZDEF |		/* 0 */
+	mode =  MODE_5NORMAL |		/* 0 */
+		MODE_4HZDEF |		/* 0 */
 		MODE_3WINDOW |		/* 0 */
 		MODE_2TRANSIENT |	/* 0 */
 		MODE_1SHARED;		/* 1 */
@@ -579,7 +586,7 @@ int	width, height;
 		}
 
 		/* Pick off just the mode bits of interest here */
-		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK);
+		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK | MODE_5MASK);
 	}
 	ifp->if_mode = mode;
 
@@ -621,6 +628,12 @@ int	width, height;
 		return(-1);
 	}
 
+	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
+		/* NTSC, see below */
+		ifp->if_width = ifp->if_max_width = XMAX170+1;	/* 646 */
+		ifp->if_height = ifp->if_max_height = YMAX170+1; /* 485 */
+	}
+
 	if( width <= 0 )
 		width = ifp->if_width;
 	if( height <= 0 )
@@ -635,7 +648,10 @@ int	width, height;
 
 	blanktime(0);
 
-	if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
+	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
+		prefposition( 0, XMAX170, 0, YMAX170 );
+		MIPS(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
+	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
 		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
 		MIPS(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
 	}  else  {
@@ -650,14 +666,43 @@ int	width, height;
 		return	-1;
 	}
 
-	/*  Establish operating mode (Hz).
+	/*  Establish operating mode (Hz, GENLOCK).
 	 *  The assumption is that the device is always in the
-	 *  desired normal mode to start with.  The mode will only
-	 *  be saved and restored when 30Hz operation is specified.
+	 *  "normal" mode to start with.  The mode will only
+	 *  be saved and restored when 30Hz operation is specified;
+	 *  on GENLOCK operation, valid NTSC sync pulses must be present
+	 *  for downstream equipment;  user should run "Set60" when done.
 	 */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
 		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
 		setvideo( DE_R1, DER1_30HZ);	/* 4-wire RS-343 */
+	} else if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
+		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
+		if( getvideo(CG_MODE) != -1 )  {
+		    	/*
+			 *  Optional CG2 GENLOCK boark is installed.
+		    	 *  Locked to incoming NTSC composite video picture
+		    	 *  for sync and chroma (on "REM IN" connector),
+		    	 *  generating composite NTSC output (on "VID OUT"
+			 *  connector).
+		    	 *  Color subcarrier is phase and amplitude locked to
+		    	 *  incomming color burst.
+		    	 *  The blue LSB has no effect on video overlay.
+			 *  (To use internal sync generator,
+			 *  change to CG2_M_MODE2).
+		    	 */
+			/* CG2_M_HIGHOUT for 1.4V p-p, else 1.0V */
+		    	setvideo(CG_MODE, CG2_M_MODE3);
+		    	setvideo(DE_R1, DER1_G_170 );
+		} else {
+			/*
+			 *  No genlock board is installed, produce RS-170
+			 *  video at NTSC rates with separate sync,
+			 *  and hope that they have an outboard NTSC
+			 *  encoder device.
+			 */
+			setmonitor(NTSC);
+		}
 	}
 
 	/* Build a descriptive window title bar */
@@ -686,14 +731,17 @@ int	width, height;
 	color(BLACK);
 	clear();
 
-	/* In full screen mode, center the image on the screen */
+	/* In full screen mode, center the image on the
+	 * usable part of the screen, either high-res, or NTSC
+	 */
 	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
 		int	xleft, ybot;
-		xleft = (XMAXSCREEN+1)/2 - ifp->if_width/2;
-		ybot = (YMAXSCREEN+1)/2 - ifp->if_height/2;
+		xleft = (ifp->if_max_width)/2 - ifp->if_width/2;
+		ybot = (ifp->if_max_height)/2 - ifp->if_height/2;
 		viewport( xleft, xleft + ifp->if_width,
 			  ybot, ybot + ifp->if_height );
-		ortho2( 0, ifp->if_width, 0, ifp->if_height );
+		ortho2( (Coord)0, (Coord)ifp->if_width,
+			(Coord)0, (Coord)ifp->if_height );
 		/* set input focus to current window, so that
 		 * we can manipulate the cursor icon */
 		winattach();
@@ -776,6 +824,14 @@ FBIO	*ifp;
 	fclose( stdout );
 	fclose( stderr );
 
+	/* Ignore likely signals, perhaps in the background,
+	 * from other typing at the keyboard
+	 */
+	(void)signal( SIGHUP, SIG_IGN );
+	(void)signal( SIGINT, SIG_IGN );
+	(void)signal( SIGQUIT, SIG_IGN );
+	(void)signal( SIGALRM, SIG_IGN );
+
 	/* Line up at the "complaints window", just in case... */
 	fp = fopen("/dev/console", "w");
 
@@ -837,6 +893,14 @@ out:
 	/* Restore initial operation mode, if this was 30Hz */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
 		setvideo( DE_R1, MIPS(ifp)->mi_der1 );
+
+	/*
+	 *  Note that for the MODE_5GENLOCK mode, the monitor will
+	 *  be left in NTSC mode until the user issues a "Set60"
+	 *  command.  This is vitally necessary because the Lyon-
+	 *  Lamb and VTR equipment need a stedy source of NTSC sync
+	 *  pulses while in the process of laying down frames.
+	 */
 
 	/* Always leave cursor on when done */
 	if( MIPS(ifp)->mi_curs_on == 0 )  {
