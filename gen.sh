@@ -807,7 +807,7 @@ EndOfFile
 
 cat > contents << EOF
 @name brlcad-$RELEASE
-@pkgdep png-1.0.9
+@pkgdep png-1.0.10
 @cwd /usr
 @owner bin
 @group bin
