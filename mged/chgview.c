@@ -106,9 +106,9 @@ extern long	nvectors;	/* from dodraw.c */
 extern struct bn_tol mged_tol;	/* from ged.c */
 extern vect_t e_axes_pos;
 
-fastf_t ar_scale_factor = 2047.0 / ABS_ROT_FACTOR;
-fastf_t rr_scale_factor = 2047.0 / RATE_ROT_FACTOR;
-fastf_t adc_angle_scale_factor = 2047.0 / ADC_ANGLE_FACTOR;
+fastf_t ar_scale_factor = GED_MAX / ABS_ROT_FACTOR;
+fastf_t rr_scale_factor = GED_MAX / RATE_ROT_FACTOR;
+fastf_t adc_angle_scale_factor = GED_MAX / ADC_ANGLE_FACTOR;
 
 vect_t edit_absolute_model_rotate;
 vect_t edit_absolute_object_rotate;
@@ -3411,88 +3411,105 @@ char	**argv;
       goto usage;
     }
   } else if( strcmp( cmd, "xadc" ) == 0 ) {
-	  char *av[4];
-	  char    sval[32];
+	  char *av[5];
+	  char sval[32];
+	  int nargs = 3;
 
-	  av[1] = "x";
-	  av[3] = NULL;
+	  av[0] = "adc";
+	  if (incr_flag) {
+	    ++nargs;
+	    av[1] = "-i";
+	    av[2] = "x";
+	    av[3] = sval;
+	    av[4] = NULL;
+	  } else {
+	    av[1] = "x";
+	    av[2] = sval;
+	    av[3] = NULL;
+	  }
 
-	  if(incr_flag)
-	    av[0] = "iadc";
-	  else
-	    av[0] = "adc";
-
-	  av[2] = sval;
 	  sprintf(sval, "%d", i);
-	  (void)f_adc(clientData, interp, 3, av);
+	  (void)f_adc(clientData, interp, nargs, av);
 	} else if( strcmp( cmd, "yadc" ) == 0 )  {
-	  char *av[4];
-	  char    sval[32];
+	  char *av[5];
+	  char sval[32];
+	  int nargs = 3;
 
-	  av[1] = "y";
-	  av[3] = NULL;
+	  av[0] = "adc";
+	  if (incr_flag) {
+	    ++nargs;
+	    av[1] = "-i";
+	    av[2] = "y";
+	    av[3] = sval;
+	    av[4] = NULL;
+	  } else {
+	    av[1] = "y";
+	    av[2] = sval;
+	    av[3] = NULL;
+	  }
 
-	  if(incr_flag)
-	    av[0] = "iadc";
-	  else
-	    av[0] = "adc";
-
-	  av[2] = sval;
 	  sprintf(sval, "%d", i);
-	  (void)f_adc(clientData, interp, 3, av);
+	  (void)f_adc(clientData, interp, nargs, av);
 	} else if( strcmp( cmd, "ang1" ) == 0 )  {
-	  char *av[4];
-	  char    sval[32];
+	  char *av[5];
+	  char sval[32];
+	  int nargs = 3;
 
-	  av[1] = "a1";
-	  av[3] = NULL;
+	  av[0] = "adc";
+	  if (incr_flag) {
+	    ++nargs;
+	    av[1] = "-i";
+	    av[2] = "a1";
+	    av[3] = sval;
+	    av[4] = NULL;
+	  } else {
+	    av[1] = "a1";
+	    av[2] = sval;
+	    av[3] = NULL;
+	  }
 
-	  if(incr_flag)
-	    av[0] = "iadc";
-	  else
-	    av[0] = "adc";
-
-	  av[2] = sval;
-#if 1
 	  sprintf(sval, "%f", f);
-#else
-	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
-#endif
-	  (void)f_adc(clientData, interp, 3, av);
+	  (void)f_adc(clientData, interp, nargs, av);
 	} else if( strcmp( cmd, "ang2" ) == 0 )  {
-	  char *av[4];
-	  char    sval[32];
+	  char *av[5];
+	  char sval[32];
+	  int nargs = 3;
 
-	  av[1] = "a2";
-	  av[3] = NULL;
+	  av[0] = "adc";
+	  if (incr_flag) {
+	    ++nargs;
+	    av[1] = "-i";
+	    av[2] = "a2";
+	    av[3] = sval;
+	    av[4] = NULL;
+	  } else {
+	    av[1] = "a2";
+	    av[2] = sval;
+	    av[3] = NULL;
+	  }
 
-	  if(incr_flag)
-	    av[0] = "iadc";
-	  else
-	    av[0] = "adc";
-
-	  av[2] = sval;
-#if 1
 	  sprintf(sval, "%f", f);
-#else
-	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
-#endif
-	  (void)f_adc(clientData, interp, 3, av);
-	} else if( strcmp( cmd, "distadc" ) == 0 )  {
-	  char *av[4];
-	  char    sval[32];
+	  (void)f_adc(clientData, interp, nargs, av);
+	} else if (strcmp(cmd, "distadc") == 0) {
+	  char *av[5];
+	  char sval[32];
+	  int nargs = 3;
 
-	  av[1] = "dst";
-	  av[3] = NULL;
+	  av[0] = "adc";
+	  if (incr_flag) {
+	    ++nargs;
+	    av[1] = "-i";
+	    av[2] = "odst";
+	    av[3] = sval;
+	    av[4] = NULL;
+	  } else {
+	    av[1] = "odst";
+	    av[2] = sval;
+	    av[3] = NULL;
+	  }
 
-	  if(incr_flag)
-	    av[0] = "iadc";
-	  else
-	    av[0] = "adc";
-
-	  av[2] = sval;
-	  sprintf(sval, "%f", ((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2_DIV2);
-	  (void)f_adc(clientData, interp, 3, av);
+	  sprintf(sval, "%d", i);
+	  (void)f_adc(clientData, interp, nargs, av);
 	} else {
 usage:
 	  Tcl_AppendResult(interp,
@@ -4042,7 +4059,7 @@ char	*argv[];
   }else
     z = 0;
 
-  VSET(slewvec, x/2047.0, y/2047.0, z/2047.0);
+  VSET(slewvec, x * INV_GED, y * INV_GED, z * INV_GED);
   VSUB2(absolute_tran, absolute_tran, slewvec);
   slewview( slewvec );
 
