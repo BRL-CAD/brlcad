@@ -13,74 +13,13 @@ static	wchar_t		  msgfil[PRODEV_NAME_SIZE];
 
 struct object_list
 {
-	Pro_object_info info;
+	char *obj;
 	struct object_list *next;
 } *obj_root;
 
-void
-Copy_obj_info( to , from )
-Pro_object_info *to,*from;
-{
-	int i;
-
-	for( i=0 ; i<80 ; i++ )
-		to->name[i] = from->name[i];
-
-	for( i=0 ; i<10 ; i++ )
-		to->type[i] = from->type[i];
-
-	for( i=0 ; i<256 ; i++ )
-		to->path[i] = from->path[i];
-
-	for( i=0 ; i<20 ; i++ )
-		to->device[i] = from->device[i];
-
-	for( i=0 ; i<80 ; i++ )
-		to->host[i] = from->host[i];
-
-	to->version = from->version;
-}
-
 int
-Same_object( info1 , info2 )
-Pro_object_info *info1,*info2;
-{
-	char buf1[1024],buf2[1024];
-
-	pro_wstr_to_str( buf1 , info1->name );
-	pro_wstr_to_str( buf2 , info2->name );
-	if( strcmp( buf1 , buf2 ) )
-		return( 0 );
-
-	pro_wstr_to_str( buf1 , info1->type );
-	pro_wstr_to_str( buf2 , info2->type );
-	if( strcmp( buf1 , buf2 ) )
-		return( 0 );
-
-	pro_wstr_to_str( buf1 , info1->path );
-	pro_wstr_to_str( buf2 , info2->path );
-	if( strcmp( buf1 , buf2 ) )
-		return( 0 );
-
-	pro_wstr_to_str( buf1 , info1->device );
-	pro_wstr_to_str( buf2 , info2->device );
-	if( strcmp( buf1 , buf2 ) )
-		return( 0 );
-
-	pro_wstr_to_str( buf1 , info1->host );
-	pro_wstr_to_str( buf2 , info2->host );
-	if( strcmp( buf1 , buf2 ) )
-		return( 0 );
-
-	if( info1->version != info2->version )
-		return( 0 );
-
-	return( 1 );
-}
-
-int
-Object_already_output( info )
-Pro_object_info *info;
+Object_already_output( obj )
+char *obj;
 {
 	int return_val;
 	struct object_list *objl,*prev;
@@ -90,14 +29,14 @@ Pro_object_info *info;
 	{
 		obj_root = (struct object_list *)malloc( sizeof( struct object_list ) );
 		obj_root->next = (struct object_list *)NULL;
-		Copy_obj_info( &obj_root->info , info );
+		obj_root->obj = obj;
 		return_val = 0;
 	}
 	else
 	{
 		objl = obj_root;
 		prev = (struct object_list *)NULL;
-		while( objl != (struct object_list *)NULL && !Same_object( &objl->info , info ) )
+		while( objl != (struct object_list *)NULL && objl->obj != obj )
 		{
 			prev = objl;
 			objl = objl->next;
@@ -109,7 +48,7 @@ Pro_object_info *info;
 			prev->next = (struct object_list *)malloc( sizeof( struct object_list ) );
 			objl = prev->next;
 			objl->next = (struct object_list *)NULL;
-			Copy_obj_info( &objl->info , info );
+			objl->obj = obj;
 		}
 		else
 			return_val = 1;
@@ -194,7 +133,7 @@ char *obj;
 		return;
 	}
 
-	if( Object_already_output( &obj_info ) )
+	if( Object_already_output( obj ) )
 		return;
 
 	pro_wstr_to_str( name , obj_info.name );
@@ -292,14 +231,11 @@ proe_brl()
 	if( !promsg_getstring( buff , 255 ) )
 		pro_wstr_to_str( output_file , buff );
 
-fprintf( stderr , "filename = %s\n" , output_file );
-
 	quality = DEFAULT_QUALITY;
 	promsg_print( MSGFIL , "USER_GET_QUALITY" , &quality );
-fprintf( stderr , "Printed message for quality\n" );
+
 	if( promsg_getint( &quality , range ) )
 		quality = DEFAULT_QUALITY;
-fprintf( stderr , "Quality set to %d\n" , quality );
 
 	if( (fd_out = fopen( output_file , "w" )) == NULL )
 	{
