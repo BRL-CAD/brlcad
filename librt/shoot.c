@@ -995,7 +995,7 @@ register struct application *ap;
 
 			/* Evaluate regions upto box_end */
 			done = rt_boolfinal( &InitialPart, &FinalPart,
-				last_bool_start, ss.box_end, regionbits, ap );
+				last_bool_start, ss.box_end, regionbits, ap, solidbits );
 			last_bool_start = ss.box_end;
 
 			/* See if enough partitions have been acquired */
@@ -1034,7 +1034,7 @@ weave:
 	 */
 	(void)rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
 		rtip->rti_inf_box.bn.bn_len > 0 ? INFINITY : ss.model_end,
-		regionbits, ap);
+		regionbits, ap, solidbits);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ap->a_return = ap->a_miss( ap );
