@@ -118,14 +118,9 @@ static char *default_view_strings[] = {
   "35,25"
 };
 
-struct w_dm {
-  struct dm *dp;
-  int (*init)();
-};
-
-static struct w_dm which_dm[] = {
-  { &dm_Plot, Plot_dm_init },
-  { &dm_PS, PS_dm_init },
+struct w_dm which_dm[] = {
+  { &dm_Plot, Plot_dm_init },  /* DM_PLOT_INDEX defined in mged_dm.h */
+  { &dm_PS, PS_dm_init },      /* DM_PS_INDEX defined in mged_dm.h */
 #ifdef DM_X
   { &dm_X, X_dm_init },
 #endif
@@ -761,7 +756,7 @@ struct dm_list *initial_dm_list;
   int i;
 
   BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
-  mged_variables = default_mged_variables;
+  mged_variables = default_mged_variables; /* struct copy */
 
   bn_mat_copy(Viewrot, bn_mat_identity);
   size_reset();
