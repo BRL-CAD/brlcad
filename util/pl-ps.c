@@ -2,7 +2,7 @@
  *			P L - P S . C
  *
  *  Display plot3(5) as PostScript.
- *  Based on pl-X.c
+ *  Based on pl-X.c and bw-ps.c
  *
  *  Authors -
  *	Michael John Muuss
@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 
 extern	char	*getenv();
 
@@ -105,12 +106,84 @@ double	cx, cy, cz;		/* current x, y, z, point */
 double	arg[6];			/* parsed plot command arguments */
 double	sp[6];			/* space command */
 char	strarg[512];		/* string buffer */
-int	width = 4096;
+
+#define	DEFAULT_SIZE	6.75	/* default output size in inches */
+
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+int	encapsulated = 0;	/* encapsulated postscript */
+int	center = 0;		/* center output on 8.5 x 11 page */
+int	width = 4096;		/* Our integer plotting space */
 int	height = 4096;
+double	outwidth;		/* output plot size in inches */
+double	outheight;
+int	xpoints;		/* output plot size in points */
+int	ypoints;
+int	page_dirty = 0;		/* to skip extra erases */
+
+static char	*file_name;
+static FILE	*infp;
 
 static char usage[] = "\
-Usage: pl-ps [-v] < unix_plot\n";
+Usage: pl-ps [-e] [-c] [-S inches_square]\n\
+        [-W width_inches] [-N height_inches] [file.pl]\n";
 
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "ecs:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'e':
+			/* Encapsulated PostScript */
+			encapsulated++;
+			break;
+		case 'c':
+			center = 1;
+			break;
+		case 'S':
+		case 's':
+			/* square file size */
+			outheight = outwidth = atof(optarg);
+			break;
+		case 'W':
+		case 'w':
+			outwidth = atof(optarg);
+			break;
+		case 'N':
+		case 'n':
+			outheight = atof(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "[stdin]";
+		infp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (infp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pl-ps: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+		/*fileinput++;*/
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pl-ps: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main( argc, argv )
 int	argc;
@@ -120,19 +193,10 @@ char	**argv;
 	struct	uplot *up;
 	int	i;
 
-	while( argc > 1 ) {
-		if( strcmp(argv[1], "-v") == 0 ) {
-			verbose++;
-		} else
-			break;
+	outwidth = outheight = DEFAULT_SIZE;
 
-		argc--;
-		argv++;
-	}
-
-	/* Input file will be binary */
-	if( isatty(fileno(stdin)) ) {
-		fprintf( stderr, usage );
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
@@ -140,45 +204,16 @@ char	**argv;
 	sp[0] = sp[1] = sp[2] = 0.0;	/* minimum */
 	sp[3] = sp[4] = sp[5] = 4096.0;	/* max */
 
-	/* Postscript prolog */
-	fputs( "%!PS-Adobe-1.0\n\
-%begin(plot)\n\
-%%DocumentFonts:  Courier\n", stdout );
+	if( encapsulated ) {
+		xpoints = width;
+		ypoints = height;
+	} else {
+		xpoints = outwidth * 72 + 0.5;
+		ypoints = outheight * 72 + 0.5;
+	}
+	prolog(stdout, file_name, xpoints, ypoints);
 
-	printf("%%%%Title: Converted BRL unix-plot file\n" );
-
-	fputs( "\
-%%Creator: BRL-CAD pl-ps.c\n\
-%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX\n\
-%%EndComments\n\
-\n", stdout );
-
-	fputs( "\
-4 setlinewidth\n\
-\n\
-% Sizes, made functions to avoid scaling if not needed\n\
-/FntH /Courier findfont 80 scalefont def\n\
-/DFntL { /FntL /Courier findfont 73.4 scalefont def } def\n\
-/DFntM { /FntM /Courier findfont 50.2 scalefont def } def\n\
-/DFntS { /FntS /Courier findfont 44 scalefont def } def\n\
-\n\
-% line styles\n\
-/NV { [] 0 setdash } def	% normal vectors\n\
-/DV { [8] 0 setdash } def	% dotted vectors\n\
-/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors\n\
-/SDV { [32 8] 0 setdash } def	% short-dash vectors\n\
-/LDV { [64 8] 0 setdash } def	% long-dash vectors\n\
-\n\
-/NEWPG {\n\
-	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)\n\
-} def\n\
-\n\
-FntH  setfont\n\
-NV\n\
-NEWPG\n\
-", stdout);
-
-	while( (c = getchar()) != EOF ) {
+	while( (c = getc(infp)) != EOF ) {
 		/* look it up */
 		if( c < 'A' || c > 'z' ) {
 			up = &uerror;
@@ -257,7 +292,12 @@ NEWPG\n\
 			break;
 		case 'e':
 			/* New page */
-			printf("NEWPG\n");
+			if( page_dirty ) {
+				printf("showpage\n");
+				/* Recenter and rescale! */
+				scaleinfo(stdout, xpoints, ypoints);
+				page_dirty = 0;
+			}
 			break;
 		case 'f':
 			/* linmod */
@@ -281,6 +321,7 @@ NEWPG\n\
 			fprintf( stderr, "%s\n", up->desc );
 	}
 
+	postlog( stdout );
 	exit(0);
 }
 
@@ -301,7 +342,7 @@ struct uplot *up;
 				getstring();
 				break;
 			case TCHAR:
-				arg[i] = getchar();
+				arg[i] = getc(infp);
 				break;
 			case TNONE:
 			default:
@@ -317,7 +358,7 @@ getstring()
 	char	*cp;
 
 	cp = strarg;
-	while( (c = getchar()) != '\n' && c != EOF )
+	while( (c = getc(infp)) != '\n' && c != EOF )
 		*cp++ = c;
 	*cp = 0;
 }
@@ -326,8 +367,8 @@ getshort()
 {
 	register long	v, w;
 
-	v = getchar();
-	v |= (getchar()<<8);	/* order is important! */
+	v = getc(infp);
+	v |= (getc(infp)<<8);	/* order is important! */
 
 	/* worry about sign extension - sigh */
 	if( v <= 0x7FFF )  return(v);
@@ -342,7 +383,7 @@ getieee()
 	char	in[8];
 	double	d;
 
-	fread( in, 8, 1, stdin );
+	fread( in, 8, 1, infp );
 	ntohd( &d, in, 1 );
 	return	d;
 }
@@ -369,6 +410,8 @@ double	x2, y2, z2;	/* to point */
 	cx = x2;
 	cy = y2;
 	cz = z2;
+
+	page_dirty = 1;
 }
 
 label( x, y, str )
@@ -376,10 +419,112 @@ double	x, y;
 char	*str;
 {
 	int	sx, sy;
+	static int lastx = -1;
+	static int lasty = -1;
 
 	sx = (x - sp[0]) / (sp[3] - sp[0]) * width;
 	sy = (y - sp[1]) / (sp[4] - sp[1]) * height;
 
-	printf("DFntM (%s) %d %d moveto show\n",
-		str, sx, sy );
+	/* HACK for "continued text", i.e. more text
+	 * without a move command in between.  We
+	 * really need a better solution. - XXX
+	 */
+	if( lastx == x && lasty == y ) {
+		printf("DFntM (%s) show\n", str );
+
+	} else {
+		printf("DFntM (%s) %d %d moveto show\n",
+			str, sx, sy );
+		lastx = x;
+		lasty = y;
+	}
+
+	page_dirty = 1;
+}
+
+char boilerplate[] = "\
+4 setlinewidth\n\
+\n\
+% Sizes, made functions to avoid scaling if not needed\n\
+/FntH /Courier findfont 80 scalefont def\n\
+/DFntL { /FntL /Courier findfont 73.4 scalefont def } def\n\
+/DFntM { /FntM /Courier findfont 50.2 scalefont def } def\n\
+/DFntS { /FntS /Courier findfont 44 scalefont def } def\n\
+\n\
+% line styles\n\
+/NV { [] 0 setdash } def		% normal vectors\n\
+/DV { [8] 0 setdash } def		% dotted vectors\n\
+/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors\n\
+/SDV { [32 8] 0 setdash } def		% short-dash vectors\n\
+/LDV { [64 8] 0 setdash } def		% long-dash vectors\n\
+\n\
+FntH  setfont\n\
+NV\n\
+% Begin Plot Data\n\
+";
+
+prolog( fp, name, width, height )
+FILE	*fp;
+char	*name;
+int	width, height;		/* in points */
+{
+	long	ltime;
+
+	ltime = time(0);
+
+	if( encapsulated ) {
+		fputs( "%!PS-Adobe-2.0 EPSF-1.2\n", fp );
+		fputs( "%%Creator: BRL-CAD pl-ps\n", fp );
+		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
+		fprintf(fp, "%%%%Title: %s\n", name );
+		fputs( "%%Pages: 0\n", fp );
+	} else {
+		fputs( "%!PS-Adobe-1.0\n", fp );
+		fputs( "%begin(plot)\n", fp );
+		fputs( "%%DocumentFonts:  Courier\n", fp );
+		fprintf(fp, "%%%%Title: %s\n", name );
+		fputs( "%%Creator: BRL-CAD pl-ps\n", fp );
+		fprintf(fp, "%%%%CreationDate: %s", ctime(&ltime) );
+	}
+	fprintf(fp, "%%%%BoundingBox: 0 0 %d %d\n", width, height );
+	fputs( "%%EndComments\n\n", fp );
+
+	scaleinfo(fp, xpoints, ypoints);
+	fputs( boilerplate, fp );
+}
+
+scaleinfo( fp, width, height )
+FILE	*fp;
+int	width, height;		/* in points */
+{
+	/*
+	 * About this PostScript scaling issue...
+	 * A "unit" in postscript with no scaling is 1/72 of an inch
+	 * (i.e. one point).  Thus below, 8.5 x 11 inches is converted
+	 * to POINTS (*72).  The width and height are already given
+	 * in points.
+	 * All of our UnixPlot commands are scaled to a first quadrant
+	 * space from 0-4096 x 0-4096.  We thus calculate a scale
+	 * command to bring this space down to our width and height.
+	 */
+	if( !encapsulated && center ) {
+		int	xtrans, ytrans;
+		xtrans = (8.5*72 - width)/2.0;
+		ytrans = (11*72 - height)/2.0;
+		fprintf( fp, "%d %d translate\n", xtrans, ytrans );
+	}
+	fprintf( fp, "%f %f scale\n", width/4096.0, height/4096.0 );
+}
+
+postlog( fp )
+FILE	*fp;
+{
+	fputs( "\n", fp );
+	if( !encapsulated )
+		fputs( "%end(plot)\n", fp );
+	/*
+	 * I believe the Adobe spec says that even Encapsulated
+	 * PostScript files can end with a showpage.
+	 */
+	fputs( "showpage\n", fp );
 }
