@@ -778,6 +778,81 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
 }
 
 /*
+ * N M G _ I S E C T _ T W O _ C O L I N E A R _ E D G E 2 P _ B O T H _ W A Y S
+ *
+ *  A wrapper for nmg_isect_two_colinear_edge2p().
+ */
+int
+nmg_isect_two_colinear_edge2p_both_ways( dist, l1, l2, vu1a, vu1b, vu2a, vu2b, eu1, eu2, fu1, fu2, tol )
+CONST fastf_t		dist[2];
+struct nmg_ptbl		*l1;
+struct nmg_ptbl		*l2;
+struct vertexuse	*vu1a;
+struct vertexuse	*vu1b;
+struct vertexuse	*vu2a;
+struct vertexuse	*vu2b;
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
+struct faceuse		*fu1;		/* fu of eu1, for plane equation */
+struct faceuse		*fu2;		/* fu of eu2, for error checks */
+CONST struct rt_tol	*tol;
+{
+	fastf_t	eu2dist[2];
+	fastf_t	ptol;
+	int	ret = 0;
+
+	RT_CK_TOL(tol);
+
+	/*
+	 *  Special case of colinear overlapping edges.
+	 *  There may be 2 intersect points.
+	 *  dist[1] has special meaning for this return status:
+	 *  it's distance w.r.t. eu1's 1st point (vu1a), not eu2's 1st.
+	 *  Find break points on eu1 caused by vu2[ab].
+	 */
+	if( nmg_isect_two_colinear_edge2p( dist, l1, l2,
+		vu1a, vu1b, vu2a, vu2b,
+		eu1, eu2, fu1, fu2, tol, "eu1/eu2" )
+	   > 0
+	)  {
+		ret |= ISECT_SPLIT1;	/* eu1 was broken */
+	}
+
+	/*
+	 *  If the segments only partially overlap, need to intersect
+	 *  the other way as well.
+	 *  Find break points on eu2 caused by vu1[ab].
+	 */
+	if( fabs(eu2_dir[X]) >= fabs(eu2_dir[Y]) )  {
+		eu2dist[0] = (eu1_start[X] - eu2_start[X])/eu2_dir[X];
+		eu2dist[1] = (eu1_start[X] + eu1_dir[X] - eu2_start[X])/eu2_dir[X];
+	} else {
+		eu2dist[0] = (eu1_start[Y] - eu2_start[Y])/eu2_dir[Y];
+		eu2dist[1] = (eu1_start[Y] + eu1_dir[Y] - eu2_start[Y])/eu2_dir[Y];
+	}
+	/* Tolerance processing */
+	ptol = tol->dist / sqrt( eu2_dir[X]*eu2_dir[X] + eu2_dir[Y]*eu2_dir[Y] );
+	if( eu2dist[0] > -ptol && eu2dist[0] < ptol )  eu2dist[0] = 0;
+	else if( eu2dist[0] > 1-ptol && eu2dist[0] < 1+ptol ) eu2dist[0] = 1;
+		if( eu2dist[1] > -ptol && eu2dist[1] < ptol )  eu2dist[1] = 0;
+	else if( eu2dist[1] > 1-ptol && eu2dist[1] < 1+ptol ) eu2dist[1] = 1;
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+	rt_log("\trt_isect_line2_lseg2()=%d, eu2dist: %g, %g\n",
+			status, eu2dist[0], eu2dist[1] );
+		rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
+	}
+
+	/*  Find break points on eu2 caused by vu1[ab]. */
+	if( nmg_isect_two_colinear_edge2p( eu2dist, l2, l1,
+		vu2a, vu2b, vu1a, vu1b,
+		eu2, eu1, fu2, fu1, tol, "eu2/eu1" )
+	> 0 )  {
+		ret |= ISECT_SPLIT2;	/* eu2 was broken */
+	}
+	return ret;
+}
+
+/*
  *			N M G _ I S E C T _ T W O _ C O L I N E A R _ E D G E 2 P
  *
  *  Two colinear line segments (eu1 and eu2, or just "1" and "2" in the
@@ -834,14 +909,14 @@ CONST char		*str;
 	NMG_CK_VERTEXUSE(vu2b);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
-	NMG_CK_FACEUSE(fu1);
-	NMG_CK_FACEUSE(fu2);
+	if(fu1)NMG_CK_FACEUSE(fu1);
+	if(fu2)NMG_CK_FACEUSE(fu2);
 	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_two_colinear_edge2p(x%x, x%x) %s\n", eu1, eu2, str);
-	nmg_ck_face_worthless_edges( fu1 );
-	nmg_ck_face_worthless_edges( fu2 );
+	if(fu1)nmg_ck_face_worthless_edges( fu1 );
+	if(fu2)nmg_ck_face_worthless_edges( fu2 );
 
 	if( dist[0] > dist[1] )  {
 		/* Need to swap vu2a and vu2b */
@@ -866,14 +941,14 @@ CONST char		*str;
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2a->l.magic);
 		nmg_jv(vu1a->v_p, vu2a->v_p);
-		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
+		if(fu1&&fu2)nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
 	} else if( d0 == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1a intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1a->v_p, vu2b->v_p);
-		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
+		if(fu1&&fu2)nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
 	} else if( d0 > 0 && d0 < 1 )  {
 		/* Break eu1 into two pieces */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -885,8 +960,8 @@ CONST char		*str;
 		eu1 = nmg_ebreak( vu2a->v_p, eu1 );
 		nbreak++;
 		vu1a = eu1->vu_p;
-		nmg_ck_face_worthless_edges( fu1 );
-		nmg_ck_face_worthless_edges( fu2 );
+		if(fu1)nmg_ck_face_worthless_edges( fu1 );
+		if(fu2)nmg_ck_face_worthless_edges( fu2 );
 	}
 
 	/* Second intersection point: break eu1 again */
@@ -896,21 +971,21 @@ CONST char		*str;
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1a->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1a->v_p, vu2b->v_p);
-		nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
+		if(fu1&&fu2)nmg_ck_v_in_2fus(vu1a->v_p, fu1, fu2, tol);
 	} else if( d1 == 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu1b intersects vu2b\n");
 		(void)nmg_tbl(l1, TBL_INS_UNIQUE, &vu1b->l.magic);
 		(void)nmg_tbl(l2, TBL_INS_UNIQUE, &vu2b->l.magic);
 		nmg_jv(vu1b->v_p, vu2b->v_p);
-		nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, tol);
+		if(fu1&&fu2)nmg_ck_v_in_2fus(vu1b->v_p, fu1, fu2, tol);
 	} else if( d1 > 0 && d1 < 1 )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tvu2b=x%x breaks eu1=x%x\n", vu2b, eu1 );
 		(void)nmg_ebreak( vu2b->v_p, eu1 );
 		nbreak++;
-		nmg_ck_face_worthless_edges( fu1 );
-		nmg_ck_face_worthless_edges( fu2 );
+		if(fu1)nmg_ck_face_worthless_edges( fu1 );
+		if(fu2)nmg_ck_face_worthless_edges( fu2 );
 	}
 	return nbreak;
 }
@@ -1066,64 +1141,17 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	}
 
 	if( status == 0 )  {
-		fastf_t	eu2dist[2];
-		fastf_t	ptol;
-
-		/*
-		 *  Special case of colinear overlapping edges.
-		 *  There may be 2 intersect points.
-		 *  dist[1] has special meaning for this return status:
-		 *  it's distance w.r.t. eu1's 1st point (vu1a), not eu2's 1st.
-		 *  Find break points on eu1 caused by vu2[ab].
-		 */
-		if( nmg_isect_two_colinear_edge2p( dist, is->l1, is->l2,
+		ret |= nmg_isect_two_colinear_edge2p_both_ways( dist,
+			is->l1, is->l2,
 			vu1a, vu1b, vu2a, vu2b,
-			eu1, eu2, fu1, fu2, &is->tol, "eu1/eu2" )
-		   > 0
-		)  {
-			ret |= ISECT_SPLIT1;	/* eu1 was broken */
-		}
-
-		/*
-		 *  If the segments only partially overlap, need to intersect
-		 *  the other way as well.
-		 *  Find break points on eu2 caused by vu1[ab].
-		 */
-		if( fabs(eu2_dir[X]) >= fabs(eu2_dir[Y]) )  {
-			eu2dist[0] = (eu1_start[X] - eu2_start[X])/eu2_dir[X];
-			eu2dist[1] = (eu1_start[X] + eu1_dir[X] - eu2_start[X])/eu2_dir[X];
-		} else {
-			eu2dist[0] = (eu1_start[Y] - eu2_start[Y])/eu2_dir[Y];
-			eu2dist[1] = (eu1_start[Y] + eu1_dir[Y] - eu2_start[Y])/eu2_dir[Y];
-		}
-		/* Tolerance processing */
-		ptol = is->tol.dist / sqrt( eu2_dir[X]*eu2_dir[X] + eu2_dir[Y]*eu2_dir[Y] );
-		if( eu2dist[0] > -ptol && eu2dist[0] < ptol )  eu2dist[0] = 0;
-		else if( eu2dist[0] > 1-ptol && eu2dist[0] < 1+ptol ) eu2dist[0] = 1;
-
-		if( eu2dist[1] > -ptol && eu2dist[1] < ptol )  eu2dist[1] = 0;
-		else if( eu2dist[1] > 1-ptol && eu2dist[1] < 1+ptol ) eu2dist[1] = 1;
-
-		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			rt_log("\trt_isect_line2_lseg2()=%d, eu2dist: %g, %g\n",
-				status, eu2dist[0], eu2dist[1] );
-			rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
-		}
-
-		/*  Find break points on eu2 caused by vu1[ab]. */
-		if( nmg_isect_two_colinear_edge2p( eu2dist, is->l2, is->l1,
-			vu2a, vu2b, vu1a, vu1b,
-			eu2, eu1, fu2, fu1, &is->tol, "eu2/eu1" )
-		> 0 )  {
-			ret |= ISECT_SPLIT2;	/* eu2 was broken */
-		}
+			eu1, eu2, fu1, fu2, &is->tol );
 		goto out;
 	}
 
 	/* There is only one intersect point.  Break one or both edges. */
 
 
-	/* The ray defined by the edgeuse intersects the eu2.
+	/* The ray defined by the edgeuse line eu1 intersects the lseg eu2.
 	 * Tolerances have already been factored in.
 	 * The edge exists over values of 0 <= dist <= 1.
 	 */
@@ -3009,11 +3037,14 @@ struct edgeuse		*eu2;
 	vect_t			eu2_dir;
 	fastf_t			dist[2];
 	int			status;
+	struct vertex		*new_v;
+	point_t			hit_pt;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
 
+top:
 	vu1a = eu1->vu_p;
 	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
 	vu2a = eu2->vu_p;
@@ -3046,7 +3077,8 @@ struct edgeuse		*eu2;
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
 
-	status = rt_isect_line_lseg( dist,
+	/* A is vu2a, B is vu2b */
+	status = rt_isect_lseg3_lseg3( dist,
 			vu1a->v_p->vg_p->coord, eu1_dir,
 			vu2a->v_p->vg_p->coord, eu2_dir, &is->tol );
 
@@ -3059,13 +3091,69 @@ struct edgeuse		*eu2;
 		/* missed */
 		return;
 	}
-	if( status == 0 )  {
-		/* lines are colinear */
-	}
-	/* XXX More goes here */
-/* XXXXXXXXXXXXXXXXXXXXXXX */
 
-	rt_bomb("nmg_isect_edge3p_edge3p\n");
+	if( status == 0 )  {
+		int	nbreak;
+		/* lines are colinear */
+rt_g.NMG_debug |= DEBUG_POLYSECT;
+/* XXX must use a 3-D version!! */
+		nbreak = nmg_isect_two_colinear_edge2p_both_ways( dist,
+			is->l1, is->l2,
+			vu1a, vu1b, vu2a, vu2b,
+			eu1, eu2,
+			nmg_find_fu_of_eu(eu1),
+			nmg_find_fu_of_eu(eu2),
+			&is->tol );
+		/* XXXXXXXX */
+		rt_bomb("nmg_isect_edge3p_edge3p colinear case!\n");
+	}
+
+	/* dist[0] is distance along eu1 */
+	if( dist[0] == 0 )  {
+		/* Hit is at vu1a */
+		if( dist[1] == 0 )  {
+			/* Hit is at vu2a */
+			nmg_jv( vu1a->v_p, vu2a->v_p );
+			return;
+		} else if( dist[1] == 1 )  {
+			/* Hit is at vu2b */
+			nmg_jv( vu1a->v_p, vu2b->v_p );
+			return;
+		}
+		/* Break eu2 on vu1a */
+		nmg_ebreak( vu1a->v_p, eu2 );
+		return;
+	} else if( dist[0] == 1 )  {
+		/* Hit is at vu1b */
+		if( dist[1] == 0 )  {
+			/* Hit is at vu2a */
+			nmg_jv( vu1b->v_p, vu2a->v_p );
+			return;
+		} else if( dist[1] == 1 )  {
+			/* Hit is at vu2b */
+			nmg_jv( vu1b->v_p, vu2b->v_p );
+			return;
+		}
+		/* Break eu2 on vu1b */
+		nmg_ebreak( vu1b->v_p, eu2 );
+		return;
+	} else {
+		/* Hit on eu1 is between vu1a and vu1b */
+		if( dist[1] == 0 )  {
+			/* Hit is at vu2a */
+			nmg_ebreak( vu2a->v_p, eu1 );
+			return;
+		} else if( dist[1] == 1 )  {
+			/* Hit is at vu2b */
+			nmg_ebreak( vu2b->v_p, eu1 );
+			return;
+		}
+		/* Hit is amidships on both eu1 and eu2. */
+		new_v = nmg_e2break( eu1, eu2 );
+
+		VJOIN1( hit_pt, vu2a->v_p->vg_p->coord, dist[1], eu2_dir );
+		nmg_vertex_gv(new_v, hit_pt);
+	}
 }
 
 /*
