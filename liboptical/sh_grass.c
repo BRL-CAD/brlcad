@@ -109,7 +109,7 @@ struct grass_specific grass_defaults = {
 	grass_MAGIC,
 	0,
 	{300.0, 300.0},			/* cell */
-	3.0,				/* plants_per_cell */
+	5.0,				/* plants_per_cell */
 	3.0,				/* deviation of plants_per_cell */
 	300.0,				/* "t" mean length of leaf */
 	3.0,				/* max width (mm) of blade segment */
@@ -304,11 +304,12 @@ double w;	/* 0..1, */
 	if (rdebug&RDEBUG_SHADE)
 		bu_log("plant_scale(%g)\n", w);
 
-	d = 1.0 - w;
+	d =  w * 2.0;
+	d = CLAMP(d, 0.0, 1.0);
 
 	/* decide the number of blades */
-	if (d < .8) {
-		pl->blades -= d * pl->blades * .5;
+	if (d < .7) {
+		pl->blades -= (1.0 - d) * pl->blades;
 		pl->blades = CLAMP(pl->blades, 1, BLADE_LAST);
 	} 
 
@@ -376,7 +377,7 @@ struct grass_specific *grass_sp;
 
     /* pick a start angle for the first segment */
     start_angle = 55.0 + 30.0 * (1.0-val);
-    seg_len = grass_sp->t / grass_sp->proto.b[blade].segs;
+    seg_len = 1.5 * grass_sp->t / grass_sp->proto.b[blade].segs;
 
     for (seg=0 ; seg < grass_sp->proto.b[blade].segs; seg++) {
         grass_sp->proto.b[blade].leaf[seg].magic = LEAF_MAGIC;
