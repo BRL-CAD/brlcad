@@ -1,48 +1,51 @@
 /*
- *			J O V E _ R E . C 
+ *			J O V E _ R E . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:20  mike
+ * Release_4.4
+ *
  * Revision 10.6  94/09/17  04:57:35  butler
  * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
- * 
+ *
  * Revision 10.5  1993/12/10  05:37:01  mike
  * ANSI lint
  *
  * Revision 10.4  93/12/10  04:25:35  mike
  * Added FindCursorTag(), bound to M-t.
- * 
+ *
  * Revision 10.3  93/12/10  03:47:46  mike
  * Fixed the "FindTag" support to be able to search "tags" files
  * that include ANSI function declarations.
  * This means not treating ".*[" as regular expression "magic".
- * 
+ *
  * Revision 10.2  93/10/26  05:56:57  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:54:03  mike
  * Release_4.0
- * 
+ *
  * Revision 2.4  91/08/30  19:47:04  mike
  * Stardent ANSI C
- * 
+ *
  * Revision 2.3  91/08/30  18:46:09  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
- * 
+ *
  * Revision 2.2  91/08/30  17:54:38  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.1  91/08/30  17:49:14  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.0  84/12/26  16:47:42  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:09:27  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -93,7 +96,7 @@ void	compile();
 void	isearch();
 void	find_tag();
 
-#define SEARCHSIZE 100
+#define SEARCHSIZE LBSIZE
 #define EOL	-1
 
 char	unmatched[] = "unmatched parens?";
@@ -152,7 +155,7 @@ replace(query)
 	strcpy(searchbuf, reptr);
 	compile(EOL, IsFlagSet(globflags, MAGIC));
 			/* Compile search string complaining
-			 * about errors before asking for 
+			 * about errors before asking for
 			 * the replacement string.
 			 */
 	reptr = ask("", "Replace \"%s\" with: ", searchbuf);
@@ -186,7 +189,7 @@ int	magic;		/* 0=> don't process "*[." regular expression chars */
 	fromchar = curchar;
 	if (dir < 0)
 		fromchar--;
-	
+
 	if (fromchar >= (int)strlen(linebuf) && dir > 0)
 		a1 = a1->l_next, fromchar = 0;
 	else if (fromchar < 0 && dir < 0)
@@ -246,7 +249,7 @@ search(forward)
 	SetDot(newdot);
 }
 
-/* Perform the substitution.  Both the replacement and search strings have 
+/* Perform the substitution.  Both the replacement and search strings have
    been compiled already.  This knows how to deal with query replace. */
 
 substitute(query)
@@ -286,9 +289,9 @@ reswitch:
 				    	m = MakeMark(curline, fromchar);
 				    	curchar = loc2 - genbuf;
 					message("Recursive edit ...");
-				    	memcpy(pushexp, expbuf, ESIZE + 4);
+				    	bcopy(expbuf, pushexp, ESIZE + 4);
 					Recurse();
-					memcpy(expbuf, pushexp, ESIZE + 4);
+					bcopy(pushexp, expbuf, ESIZE + 4);
 					SetBuf(oldbuf);
 				    	ToMark(m);
 				    	DelMark(m);
@@ -384,7 +387,7 @@ char	*base;
 			/* At least one character forward after the replace
 			   to prevent infinite number of replacements in the
 			   same place, e.g. replace "^" with "" */
-	
+
 	while (*sp++ = *lp++)
 		if (sp >= &base[LBSIZE])
 			len_error(ERROR);
@@ -813,7 +816,7 @@ register char	*set,
 #define FOUND	1
 #define GOBACK	2
 
-static char	IncBuf[100],
+static char	IncBuf[LBSIZE],
 		*incp = 0;
 int	FirstInc = 0;
 jmp_buf	incjmp;
@@ -1020,8 +1023,8 @@ void
 find_tag(tagname)
 char	*tagname;
 {
-	char	filebuf[50],
-		sstr[100];
+	char	filebuf[LBSIZE/2],
+		sstr[LBSIZE];
 	BUFLOC	*bp;
 
 	if (look_up(sstr, filebuf, tagname) == 0) {
@@ -1093,7 +1096,7 @@ FindCursorTag()
 	/* Snatch out that string, and null terminate */
 	len = end - start;
 	if( len > MAX_FUNCTION_NAME_LEN-1 )  len = MAX_FUNCTION_NAME_LEN-1;
-	memcpy( buf, linebuf+start, len );
+	bcopy( linebuf+start, buf, len );
 	buf[len] = '\0';
 
 	find_tag(buf);
