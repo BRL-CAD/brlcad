@@ -609,7 +609,46 @@ BU_ASSERT_PTR( attrib->ext_nbytes, >=, 5 );
 }
 
 /*
+ *			D B 5 _ M A K E _ F R E E _ O B J E C T _ H D R
+ *
+ *  Make only the front (header) portion of a free object.
+ *  This is used when operating on very large contiguous free objects
+ *  in the database (e.g. 50 MBytes).
+ */
+void
+db5_make_free_object_hdr( struct bu_external *ep, long length )
+{
+	struct db5_ondisk_header *odp;
+	int		h_width;
+	unsigned char	*cp;
+
+	BU_CK_EXTERNAL(ep);
+
+	BU_ASSERT_LONG( length, >=, 8 );
+	BU_ASSERT_LONG( length&7, ==, 0 );
+
+	/* Reserve enough space to hold any free header, even w/64-bit len */
+	ep->ext_nbytes = 8+8;
+	ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "db5_make_free_object_hdr" );
+
+	/* Determine encoding for the header length field */
+	h_width = db5_select_length_encoding( length>>3 );
+
+	/* prepare header of external object */
+	odp = (struct db5_ondisk_header *)ep->ext_buf;
+	odp->db5h_magic1 = DB5HDR_MAGIC1;
+	odp->db5h_hflags = (h_width << DB5HDR_HFLAGS_OBJECT_WIDTH_SHIFT) |
+			DB5HDR_HFLAGS_DLI_FREE_STORAGE;
+
+	cp = ((unsigned char *)ep->ext_buf) + sizeof(struct db5_ondisk_header);
+	cp = db5_encode_length( cp, length>>3, h_width );
+}
+
+/*
  *			D B 5 _ M A K E _ F R E E _ O B J E C T
+ *
+ *  Make a complete, zero-filled, free object.
+ *  Note that free objects can sometimes get quite large.
  */
 void
 db5_make_free_object( struct bu_external *ep, long length )
