@@ -46,7 +46,8 @@ proc init_Raytrace { id } {
     $top.menubar add cascade -label "Objects" -underline 0 -menu $top.menubar.obj
 
     menu $top.menubar.fb -title "Framebuffer" -tearoff 0
-    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable rt_control($id,fb)\
+    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1\
+	    -variable rt_control($id,fb)\
 	    -label "Active" -underline 0 \
 	    -command "rt_set_fb $id"
     hoc_register_menu_data "Framebuffer" "Active" "Destination Framebuffer Active"\
@@ -104,7 +105,7 @@ of objects to be raytraced." } }
 	    { { summary "Pop up a tool to edit the list
 of objects to be raytraced." } }
     $top.menubar.obj add command -label "clear list"\
-	    -command "set rt_control($id,olist) {}"
+	    -command "rt_olist_clear $id"
     hoc_register_menu_data "Objects" "clear list" "Clear List"\
 	    { { summary "Clear the list of objects to be raytraced." } }
 
@@ -120,35 +121,39 @@ using the pathname of any pane. The panes associated with this
 instance of the GUI may also be specified with keywords. For
 example, ul, \"upper left\" and \"Upper Left\" all specify the
 upper left pane." } }
-    bind $top.srcE <KeyRelease> "rt_cook_src $id \$rt_control($id,raw_src)"
+    bind $top.srcE <KeyRelease> "rt_force_cook_src $id \$rt_control($id,raw_src)"
     menubutton $top.srcMB -relief raised -bd 2\
 	    -menu $top.srcMB.menu -indicatoron 1
     hoc_register_data $top.srcMB "Source"\
 	    { { summary "Pop up a menu of likely sources." } }
     menu $top.srcMB.menu -title "Source" -tearoff 0
     $top.srcMB.menu add command -label "Active Pane"\
-	    -command "rt_cook_src $id \$mged_gui($id,active_dm)"
+	    -command "rt_force_cook_src $id \$mged_gui($id,active_dm)"
     hoc_register_menu_data "Source" "Active Pane" "Source - Active Pane"\
 	    { { summary "Set the source to the active pane. The
 active pane is the pane currently tied
 to the GUI." } }
     $top.srcMB.menu add separator
     $top.srcMB.menu add command -label "Upper Left"\
-	    -command "rt_cook_src $id $mged_gui($id,top).ul"
+	    -command "rt_force_cook_src $id $mged_gui($id,top).ul"
     hoc_register_menu_data "Source" "Upper Left" "Source - Upper Left"\
 	    { { summary "Set the source to the \"Upper Left\" pane." } }
     $top.srcMB.menu add command -label "Upper Right"\
-	    -command "rt_cook_src $id $mged_gui($id,top).ur"
+	    -command "rt_force_cook_src $id $mged_gui($id,top).ur"
     hoc_register_menu_data "Source" "Upper Right" "Source - Upper Right"\
 	    { { summary "Set the source to the \"Upper Right\" pane." } }
     $top.srcMB.menu add command -label "Lower Left"\
-	    -command "rt_cook_src $id $mged_gui($id,top).ll"
+	    -command "rt_force_cook_src $id $mged_gui($id,top).ll"
     hoc_register_menu_data "Source" "Lower Left" "Source - Lower Left"\
 	    { { summary "Set the source to the \"Lower Left\" pane." } }
     $top.srcMB.menu add command -label "Lower Right"\
-	    -command "rt_cook_src $id $mged_gui($id,top).lr"
+	    -command "rt_force_cook_src $id $mged_gui($id,top).lr"
     hoc_register_menu_data "Source" "Lower Right" "Source - Lower Right"\
 	    { { summary "Set the source to the \"Lower Right\" pane." } }
+    $top.srcMB.menu add separator
+    $top.srcMB.menu add checkbutton -offvalue 0 -onvalue 1\
+	    -variable rt_control($id,fixedSrc)\
+	    -label "Fixed"
 
     label $top.destL -text "Destination" -anchor e
     entry $top.destE -relief flat -width 12 -textvar rt_control($id,raw_dest)
@@ -163,50 +168,54 @@ upper left pane. The destination can also be a file or an external
 framebuffer. To specify an external framebuffer the user might
 enter fbhost:0 to send the output to the framebuffer running on
 the machine fbhost and listening on port 0." } }
-    bind $top.destE <KeyRelease> "rt_cook_dest $id \$rt_control($id,raw_dest)"
+    bind $top.destE <KeyRelease> "rt_force_cook_dest $id \$rt_control($id,raw_dest)"
     menubutton $top.destMB -relief raised -bd 2\
 	    -menu $top.destMB.menu -indicatoron 1
     hoc_register_data $top.destMB "Destination"\
 	    { { summary "Pop up a menu of likely destinations." } }
     menu $top.destMB.menu -title "Destination" -tearoff 0
     $top.destMB.menu add command -label "Active Pane"\
-	    -command "rt_cook_dest $id \$mged_gui($id,active_dm)"
+	    -command "rt_force_cook_dest $id \$mged_gui($id,active_dm)"
     hoc_register_menu_data "Destination" "Active Pane" "Destination - Active Pane"\
 	    { { summary "Set the destination to the active pane.
 The active pane is the pane currently
 tied to the GUI." } }
     $top.destMB.menu add separator
     $top.destMB.menu add command -label "Upper Left"\
-	    -command "rt_cook_dest $id $mged_gui($id,top).ul"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).ul"
     hoc_register_menu_data "Destination" "Upper Left" "Destination - Upper Left"\
 	    { { summary "Set the destination to \"Upper Left\" pane." } }
     $top.destMB.menu add command -label "Upper Right"\
-	    -command "rt_cook_dest $id $mged_gui($id,top).ur"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).ur"
     hoc_register_menu_data "Destination" "Upper Right" "Destination - Upper Right"\
 	    { { summary "Set the destination to \"Upper Right\" pane." } }
     $top.destMB.menu add command -label "Lower Left"\
-	    -command "rt_cook_dest $id $mged_gui($id,top).ll"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).ll"
     hoc_register_menu_data "Destination" "Lower Left" "Destination - Lower Left"\
 	    { { summary "Set the destination to \"Lower Left\" pane." } }
     $top.destMB.menu add command -label "Lower Right"\
-	    -command "rt_cook_dest $id $mged_gui($id,top).lr"
+	    -command "rt_force_cook_dest $id $mged_gui($id,top).lr"
     hoc_register_menu_data "Destination" "Lower Right" "Destination - Lower Right"\
 	    { { summary "Set the destination to \"Lower Right\" pane." } }
     $top.destMB.menu add separator
+    set dbname [rt_db_to_pix]
+    if {$dbname == ""} {
+	set dbname foo.pix
+    }
+    $top.destMB.menu add command -label $dbname\
+	    -command "rt_force_cook_dest $id $dbname"
+    hoc_register_menu_data "Destination" "$dbname" "Destination - $dbname"\
+	    { { summary "Set the destination to the specified file." } }
     if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
 	$top.destMB.menu add command -label "$env(FB_FILE)"\
-		-command "rt_cook_dest $id $env(FB_FILE)"
+		-command "rt_force_cook_dest $id $env(FB_FILE)"
 	hoc_register_menu_data "Destination" "$env(FB_FILE)" "Destination - $env(FB_FILE)"\
 		{ { summary "Set the destination to the specified framebuffer." } }
     }
-
-    set dbname [rt_db_to_pix]
-    if {$dbname != ""} {
-	$top.destMB.menu add command -label $dbname\
-		-command "rt_cook_dest $id $dbname"
-	hoc_register_menu_data "Destination" "$dbname" "Destination - $dbname"\
-		{ { summary "Set the destination to the specified file." } }
-    }
+    $top.destMB.menu add separator
+    $top.destMB.menu add checkbutton -offvalue 0 -onvalue 1\
+	    -variable rt_control($id,fixedDest)\
+	    -label "Fixed"
 
     label $top.sizeL -text "Size" -anchor e
     hoc_register_data $top.sizeL "Size"\
@@ -327,7 +336,8 @@ destination." } }
     grid rowconfigure $top 0 -weight 1
 
     color_entry_update $top color $rt_control($id,color)
-
+    rt_solid_list_callback $id
+    rt_olist_edit_configure $id
     place_near_mouse $top
     wm title $top "Raytrace Control Panel ($id)"
 }
@@ -354,38 +364,9 @@ proc do_Raytrace { id } {
     winset $rt_control($id,cooked_src)
     set rt_cmd "_mged_rt" 
 
-if { 1 } {
     if {$rt_control($id,cooked_dest) != ""} {
 	append rt_cmd " -F$rt_control($id,cooked_dest)"
     }
-} else {
-    if {$rt_control($id,fb_or_file) == "filename"} {
-	if {$rt_control($id,file) != ""} {
-	    if {[file exists $rt_control($id,file)]} {
-		set result [cad_dialog .$id.rtDialog $mged_gui($id,screen)\
-			"Overwrite $rt_control($id,file)?"\
-			"Overwrite $rt_control($id,file)?"\
-			"" 0 OK CANCEL]
-
-		if {$result} {
-		    return
-		} else {
-		    file rename -force $rt_control($id,file) $rt_control($id,file).bak
-		}
-	    }
-
-	    append rt_cmd " -o $rt_control($id,file)"
-	} else {
-	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
-		    "No file name specified!"\
-		    "No file name specified!"\
-		    "" 0 OK
-	    return
-	}
-    } else {
-	append rt_cmd " -F $port"
-    }
-}
 
     if {$rt_control($id,size) != ""} {
 	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
@@ -475,9 +456,12 @@ if { 1 } {
     }
 
     switch $rt_control($id,omode) {
-	one 
+	one
 	    -
 	several {
+	    # update rt_control($id,olist) with what's in the text widget
+	    rt_olist_apply $id
+
 	    catch {eval $rt_cmd -- $rt_control($id,olist)}
 	}
 	all {
@@ -535,15 +519,21 @@ proc rt_set_fb_size { id } {
 proc rt_dismiss { id } {
     global rt_control
 
-    set top $rt_control($id,topAS)
-    if [winfo exists $top] {
-	catch { destroy $top }
+    if [winfo exists $rt_control($id,topAS)] {
+	catch { destroy $rt_control($id,topAS) }
     }
 
-    set top $rt_control($id,top)
-    if [winfo exists $top] {
-	catch { destroy $top }
+    if [winfo exists $rt_control($id,topOLE)] {
+	catch { destroy $rt_control($id,topOLE) }
     }
+
+    if [winfo exists $rt_control($id,top)] {
+	catch { destroy $rt_control($id,top) }
+    }
+
+    set rt_control($id,fixedSrc) 0
+    set rt_control($id,fixedDest) 0
+    set rt_control($id,omode) one
 }
 
 proc do_Advanced_Settings { id } {
@@ -704,18 +694,21 @@ showing the principal direction vector." } }
     wm title $top "Advanced Settings ($id)"
 }
 
-## - update_Raytrace
+## - rt_update_dest
 #
 # Called by main GUI to update the Raytrace Control Panel
 #
-proc update_Raytrace { id } {
+proc rt_update_dest { id } {
     global mged_gui
     global rt_control
-    global listen
     global port
     global fb
     global fb_all
     global fb_overlay
+
+    if ![info exists rt_control($id,top)] {
+	return
+    }
 
     set top $rt_control($id,top)
     if ![winfo exists $top] {
@@ -736,6 +729,36 @@ proc update_Raytrace { id } {
     set tmplist [list summary "The active pane is $rt_control($id,cooked_src)."]
     hoc_register_data $top.framebufferL "Active Pane"\
 	    [list $tmplist]
+}
+
+## - rt_update_src
+#
+# Called by main GUI to update the Raytrace Control Panel
+#
+proc rt_update_src { id } {
+    global mged_gui
+    global rt_control
+    global mouse_behavior
+
+    if ![info exists rt_control($id,top)] {
+	return
+    }
+
+    if ![winfo exists $rt_control($id,top)] {
+	return
+    }
+
+    if {$rt_control($id,cooked_src) != $mged_gui($id,active_dm)} {
+	return
+    }
+
+    if {$mouse_behavior == "o"} {
+	if {$rt_control($id,omode) == "all"} {
+	    set rt_control($id,omode) one
+	}
+    } else {
+	set rt_control($id,omode) all
+    }
 }
 
 proc rt_olist_edit { id } {
@@ -760,36 +783,76 @@ proc rt_olist_edit { id } {
     grid rowconfigure $top.olistF 0 -weight 1
 
     frame $top.buttonF
-    button $top.okB -relief raised -text "Ok"\
-	    -command "rt_olist_ok $id"
-    button $top.applyB -relief raised -text "Apply"\
-	    -command "rt_olist_apply $id"
-    button $top.resetB -relief raised -text "Reset"\
-	    -command "rt_olist_reset $id"
+    button $top.clearB -relief raised -text "Clear"\
+	    -command "rt_olist_clear $id"
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "rt_olist_dismiss $id"
-    grid $top.okB $top.applyB x $top.resetB x $top.dismissB\
+    grid x $top.clearB x $top.dismissB x\
 	    -sticky nsew -in $top.buttonF
+    grid columnconfigure $top.buttonF 0 -weight 1
     grid columnconfigure $top.buttonF 2 -weight 1
     grid columnconfigure $top.buttonF 4 -weight 1
 
-    grid $top.olistF -sticky nsew
-    grid $top.buttonF -sticky nsew
+    grid $top.olistF -sticky nsew -padx 8 -pady 4
+    grid $top.buttonF -sticky nsew -padx 8 -pady 4
     grid columnconfigure $top 0 -weight 1
     grid rowconfigure $top 0 -weight 1
 
     rt_olist_reset $id
+    rt_olist_edit_configure $id
     place_near_mouse $top
     wm title $top "Object List Editor ($id)"
 }
 
-proc rt_olist_ok { id } {
-    rt_olist_apply $id
-    rt_olist_dismiss $id
+proc rt_olist_edit_configure { id } {
+    global rt_control
+
+    switch $rt_control($id,omode) {
+	several {
+	    rt_olist_edit_enable $id
+	}
+	one
+	   -
+	all {
+	    rt_olist_edit_disable $id
+	}
+    }
 }
 
+proc rt_olist_edit_disable { id } {
+    global rt_control
+
+    $rt_control($id,top).menubar.obj entryconfigure 5 -state disabled
+
+    if ![winfo exists $rt_control($id,topOLE)] {
+	return
+    }
+    $rt_control($id,topOLE).clearB configure -state disabled
+    $rt_control($id,topOLE).olistT configure -state disabled
+}
+
+proc rt_olist_edit_enable { id } {
+    global rt_control
+
+    $rt_control($id,top).menubar.obj entryconfigure 5 -state normal
+
+    if ![winfo exists $rt_control($id,topOLE)] {
+	return
+    }
+    $rt_control($id,topOLE).clearB configure -state normal
+    $rt_control($id,topOLE).olistT configure -state normal
+}
+
+## - rt_olist_apply
+#
+# update rt_control($id,olist) with what's in the text widget
+#
 proc rt_olist_apply { id } {
     global rt_control
+
+    if ![winfo exists $rt_control($id,topOLE)] {
+	return
+    }
 
     set rt_control($id,olist) {}
     foreach obj  [$rt_control($id,topOLE).olistT get 0.0 end] {
@@ -797,37 +860,92 @@ proc rt_olist_apply { id } {
     }
 }
 
-proc rt_olist_reset { id } {
-    global rt_control
-
-    rt_olist_clear $id
-    foreach obj $rt_control($id,olist) {
-	rt_olist_add $id $obj
-    }
-}
-
 proc rt_olist_dismiss { id } {
     global rt_control
 
+    rt_olist_apply $id
     destroy $rt_control($id,topOLE)
+}
+
+## - rt_olist_reset
+#
+# Reset the text widget with elements from rt_control($id,olist).
+#
+proc rt_olist_reset { id } {
+    global rt_control
+
+    rt_olist_set $id $rt_control($id,olist)
+}
+
+## - rt_olist_set
+#
+# Set the text widget and rt_control($id,olist) with elements from olist.
+#
+proc rt_olist_set { id olist } {
+    global rt_control
+
+    set rt_control($id,olist) $olist
+
+    if ![winfo exists $rt_control($id,topOLE)] {
+	return
+    }
+
+    # save state of text widget
+    set save_state [lindex [$rt_control($id,topOLE).olistT\
+	    configure -state] 4]
+
+    # enable the text widget (it may already be enabled, so what)
+    # so we can write to it.
+    $rt_control($id,topOLE).olistT configure -state normal
+
+    # clean out text widget
+    $rt_control($id,topOLE).olistT delete 0.0 end
+
+    # fill it back up with olist elements
+    foreach obj $olist {
+	$rt_control($id,topOLE).olistT insert end $obj\n
+    }
+
+    # put back state
+    $rt_control($id,topOLE).olistT configure -state $save_state
 }
 
 proc rt_olist_add { id obj } {
     global rt_control
 
-    set top $rt_control($id,topOLE)
-
-    if [winfo exists $top] {
-	$top.olistT insert end $obj\n
-    } else {
-	lappend rt_control($id,olist) $obj
+    if {[lsearch $rt_control($id,olist) $obj] != -1} {
+	# already in list
+	return
     }
+
+    lappend rt_control($id,olist) $obj
+
+    if ![winfo exists $rt_control($id,topOLE)] {
+	return
+    }
+
+    # save state of text widget
+    set save_state [lindex [$rt_control($id,topOLE).olistT\
+	    configure -state] 4]
+
+    # enable the text widget (it may already be enabled, so what)
+    # so we can write to it.
+    $rt_control($id,topOLE).olistT configure -state normal
+
+    $rt_control($id,topOLE).olistT insert end $obj\n
+
+    # put back state
+    $rt_control($id,topOLE).olistT configure -state $save_state
 }
 
 proc rt_olist_clear { id } {
     global rt_control
 
-    $rt_control($id,topOLE).olistT delete 0.0 end
+    set rt_control($id,olist) {}
+
+    if [winfo exists $rt_control($id,topOLE)] {
+	$rt_control($id,topOLE).olistT delete 0.0 end
+    }
 }
 
 proc rt_set_mouse_behavior { id } {
@@ -835,29 +953,45 @@ proc rt_set_mouse_behavior { id } {
     global rt_control
     global mouse_behavior
 
-    if ![winfo exists $rt_control($id,half_baked_dest)] {
+    set bad [catch {winset $rt_control($id,cooked_src)} msg]
+    if {$bad} {
 	return
     }
 
-    winset $rt_control($id,half_baked_dest)
     switch $rt_control($id,omode) {
 	one
 	    -
 	several {
+	    # apply to source window
 	    set mouse_behavior o
 
-	    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+	    # update the GUI specified by $id
+	    if {$rt_control($id,cooked_src) == $mged_gui($id,active_dm)} {
 		set mged_gui($id,mouse_behavior) o
 	    }
+
+	    # apply to all windows in the GUI specified by $id
+	    #mged_apply_local $id "set mouse_behavior o"
+
+	    rt_olist_apply $id
 	}
 	all {
+	    # apply to source window
 	    set mouse_behavior d
 
-	    if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
+	    # update the GUI specified by $id
+	    if {$rt_control($id,cooked_src) == $mged_gui($id,active_dm)} {
 		set mged_gui($id,mouse_behavior) d
 	    }
+
+	    # apply to all windows in the GUI specified by $id
+	    #mged_apply_local $id "set mouse_behavior d"
+
+	    rt_solid_list_callback $id
 	}
     }
+
+    rt_olist_edit_configure $id
 }
 
 #
@@ -873,9 +1007,12 @@ proc rt_cook_dest { id raw_dest } {
     global fb
     global fb_all
     global fb_overlay
-    global mouse_behavior
 
     if {$raw_dest == ""} {
+	return
+    }
+
+    if {$rt_control($id,fixedDest)} {
 	return
     }
 
@@ -916,15 +1053,6 @@ proc rt_cook_dest { id raw_dest } {
     set rt_control($id,color) [rset cs bg]
     color_entry_update $rt_control($id,top) color $rt_control($id,color)
 
-    if {$mouse_behavior == "o"} {
-	if {![info exists rt_control($id,omode)] ||\
-		$rt_control($id,omode) == "all"} {
-	    set rt_control($id,omode) one
-	}
-    } else {
-	set rt_control($id,omode) all
-    }
-
     if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $fb
 	set mged_gui($id,listen) $listen
@@ -941,19 +1069,39 @@ proc rt_cook_dest { id raw_dest } {
 #
 proc rt_cook_src { id raw_src } {
     global rt_control
+    global mouse_behavior
 
     if {$raw_src == ""} {
 	return
     }
 
+    if {$rt_control($id,fixedSrc)} {
+	return
+    }
+
     set rt_control($id,raw_src) $raw_src
     set rt_control($id,cooked_src) [rt_half_bake $id $raw_src]
+
+    set bad [catch {winset $rt_control($id,cooked_src)} msg]
+    if {$bad} {
+	return
+    }
+
+    if {$mouse_behavior == "o"} {
+	if {![info exists rt_control($id,omode)] ||\
+		$rt_control($id,omode) == "all"} {
+	    set rt_control($id,omode) one
+	}
+    } else {
+	set rt_control($id,omode) all
+    }
 }
 
 proc rt_set_fb { id } {
     global mged_gui
     global rt_control
     global fb
+    global listen
 
     if ![winfo exists $rt_control($id,half_baked_dest)] {
 	return
@@ -961,6 +1109,9 @@ proc rt_set_fb { id } {
 
     winset $rt_control($id,half_baked_dest)
     set fb $rt_control($id,fb)
+    if {$fb} {
+	set listen 1
+    }
 
     if {$rt_control($id,half_baked_dest) == $mged_gui($id,active_dm)} {
 	set mged_gui($id,fb) $rt_control($id,fb)
@@ -1093,9 +1244,76 @@ proc rt_init_vars { id win } {
 	# set widget padding
 	set rt_control($id,padx) 4
 	set rt_control($id,pady) 2
+
+	set rt_control($id,fixedSrc) 0
+	set rt_control($id,fixedDest) 0
     }
 
     # initialize everytime
     rt_cook_src $id $win
     rt_cook_dest $id $win
+}
+
+proc rt_force_cook_src { id win } {
+    global rt_control
+
+    # save fixed source
+    set save_fsrc $rt_control($id,fixedSrc)
+
+    set rt_control($id,fixedSrc) 0
+    rt_cook_src $id $win
+
+    # restore fixed source
+    set rt_control($id,fixedSrc) $save_fsrc
+}
+
+proc rt_force_cook_dest { id win } {
+    global rt_control
+
+    # save fixed destination
+    set save_fdest $rt_control($id,fixedDest)
+
+    set rt_control($id,fixedDest) 0
+    rt_cook_dest $id $win
+
+    # restore fixed destination
+    set rt_control($id,fixedDest) $save_fdest
+}
+
+#################### CALLBACKS ####################
+
+proc rt_opendb_callback { id } {
+    global rt_control
+
+    if ![info exists rt_control($id,top)] {
+	return
+    }
+
+    if [winfo exists $rt_control($id,top)] {
+	set dbname [rt_db_to_pix]
+	if {$dbname != ""} {
+	    $rt_control($id,top).destMB.menu entryconfigure 7\
+		    -label $dbname -command "rt_cook_dest $id $dbname"
+	}
+    }
+
+    rt_olist_clear $id
+}
+
+proc rt_solid_list_callback { id } {
+    global rt_control
+
+    if ![info exists rt_control($id,top)] {
+	return
+    }
+
+    if ![winfo exists $rt_control($id,top)] {
+	return
+    }
+
+    if {$rt_control($id,omode) == "all"} {
+	set rt_control($id,olist) [_mged_who]
+	rt_olist_reset $id
+	return
+    }
 }
