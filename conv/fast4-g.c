@@ -2757,11 +2757,11 @@ make_bot_object()
 	count = bot_vertex_fuse( &bot_ip );
 	if( count )
 		(void)bot_condense( &bot_ip );
-#if 0
+
 	count = bot_face_fuse( &bot_ip );
 	if( count )
 		bu_log( "\t%d duplicate faces eliminated\n", count );
-#endif
+
 	BU_LIST_INIT( &bot_region.l );
 
 	make_solid_name( name , BOT , element_id , comp_id , group_id , 0 );
@@ -3309,7 +3309,7 @@ genptr_t	ptr;
 
 	comb2 = (struct rt_comb_internal *)internal2.idb_ptr;
 	RT_CK_COMB( comb2 );
-
+bu_log( "Fixing region %s\n", dp->d_namep );
 	/* move the second tree into the first */
 	tree2 = comb2->tree;
 	comb->tree = tree2;
