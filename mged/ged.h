@@ -156,6 +156,7 @@ extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
 			usepen(), vtoh_move(), setview(),
 			adcursor(), menu_display(),
 			col_item(), col_putchar(), col_eol();
+extern void		sedit_menu();
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern char		*addname(), *strdup();
 extern int		clip(), getname(), use_pen(), drawHsolid();
