@@ -744,6 +744,7 @@ char	**argv;
     bu_log("\n");
 
     /* Initialize the application structure */
+    bzero( &ap, sizeof( struct application ) );
     ap.a_hit =
 	(control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit
 						    : no_op_hit;
