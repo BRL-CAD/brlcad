@@ -638,7 +638,7 @@ struct seg		*seghead;
 		}
 	} else {
 		LOCAL poly	Q, Qsqr;
-		LOCAL complex	val[MAXP];	/* roots of final equation */
+		LOCAL complex	val[4];	/* roots of final equation */
 		register int	l;
 		register int nroots;
 
@@ -1104,7 +1104,7 @@ struct application	*ap;
 				npts = 2;
 			}
 		} else {
-			LOCAL complex	val[MAXP];	/* roots of final equation */
+			LOCAL complex	val[4];	/* roots of final equation */
 			register int	l;
 			register int nroots;
 

@@ -338,7 +338,7 @@ struct seg		*seghead;
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
 	LOCAL poly	C;		/* The final equation */
-	LOCAL complex	val[MAXP];	/* The complex roots */
+	LOCAL bn_complex_t val[4];		/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
 	LOCAL int	j;
@@ -527,7 +527,7 @@ struct application	*ap;
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
 	LOCAL poly	*C;		/* The final equation */
-	LOCAL complex	(*val)[MAXP];	/* The complex roots */
+	LOCAL bn_complex_t (*val)[4];	/* The complex roots */
 	LOCAL int	num_roots;
 	LOCAL int	num_zero;
 	LOCAL poly	A, Asqr;
@@ -537,7 +537,7 @@ struct application	*ap;
 
 	/* Allocate space for polys and roots */
         C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
-	val = (complex (*)[MAXP])rt_malloc(n * sizeof(complex) * MAXP,
+	val = (complex (*)[4])rt_malloc(n * sizeof(complex) * 4,
 		"tor complex");
 	cor_proj = (fastf_t *)rt_malloc(n * sizeof(fastf_t), "tor proj");
 
@@ -643,7 +643,7 @@ struct application	*ap;
 		if ( (num_roots = rt_poly_roots( &(C[i]), &(val[i][0]) )) != 4 ){
 			if( num_roots != 0 )  {
 				rt_log("tor:  rt_poly_roots() 4!=%d\n", num_roots);
-				rt_pr_roots( "tor", val, num_roots );
+				rt_pr_roots( "tor", val[i], num_roots );
 			}
 			SEG_MISS(segp[i]);		/* MISS */
 		}
