@@ -18,6 +18,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
+fastf_t nmg_loop_plane_area();
+
 struct faceuse *
 Make_planar_face( s , entityno , face_orient )
 struct shell *s;
@@ -160,7 +162,8 @@ int face_orient;
 		area = nmg_loop_plane_area( lu , pl );
 		if( area < 0.0 )
 		{
-			rt_log( "Could not calculate area for face\n" );
+			rt_log( "Could not calculate area for face (entityno = %d)\n", entityno );
+			nmg_pr_fu_briefly( fu, "" );
 			nmg_kfu( fu );
 			fu = (struct faceuse *)NULL;
 			goto err;
