@@ -87,12 +87,7 @@ configbody Db::name {
 }
 
 body Db::open {args} {
-    if {$args == ""} {
-	return $name
-    } else {
-	$db open $args
-	set name $args
-    }
+    set name [eval $db open $args]
 }
 
 body Db::observer {args} {
