@@ -466,8 +466,10 @@ static struct funtab funtab[] = {
 	f_sync, 1, 1,TRUE,
 "t", "", "table of contents",
 	dir_print,1,MAXARGS,TRUE,
+#if 0
 "tab", "object[s]", "tabulates objects as stored in database",
 	f_tabobj, 2, MAXARGS,TRUE,
+#endif
 "ted", "", "text edit a solid's parameters",
 	f_tedit,1,1,TRUE,
 "tie", "pathName1 pathName2", "tie display manager pathName1 to display manager pathName2",
