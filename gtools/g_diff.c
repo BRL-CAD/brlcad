@@ -369,11 +369,15 @@ struct rt_wdb *wdb1, *wdb2;
 	struct db_i *dbip1, *dbip2;
 	char *argv[4]={NULL, NULL, NULL, NULL};
 	struct bu_vls s1_tcl, s2_tcl;
+	struct wdb_obj wdbobj1, wdbobj2;
 
 	RT_CK_WDB(wdb1);
 	RT_CK_WDB(wdb2);
 	dbip1 = wdb1->dbip;
 	dbip2 = wdb2->dbip;
+
+	wdbobj1.wdb_wp = wdb1;
+	wdbobj2.wdb_wp = wdb2;
 
 	bu_vls_init( &s1_tcl );
 	bu_vls_init( &s2_tcl );
@@ -395,7 +399,7 @@ struct rt_wdb *wdb1, *wdb2;
 
 			/* try to get the TCL version of this object */
 			argv[2] = dp1->d_namep;
-			if( rt_db_get( (ClientData)(wdb1), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
+			if( wdb_get_tcl( (ClientData)(&wdbobj1), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
 				/* cannot get TCL version, use bu_external */
 				Tcl_ResetResult( interp );
@@ -414,7 +418,7 @@ struct rt_wdb *wdb1, *wdb2;
 			Tcl_ResetResult( interp );
 
 			/* try to get TCL version of object from the other database */				
-			if( rt_db_get( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
+			if( wdb_get_tcl( (ClientData)(&wdbobj2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 			{
 				Tcl_ResetResult( interp );
 
@@ -476,7 +480,7 @@ struct rt_wdb *wdb1, *wdb2;
 			{
 				/* need to add this object */
 				argv[2] = dp2->d_namep;
-				if( rt_db_get( (ClientData)(wdb2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
+				if( wdb_get_tcl( (ClientData)(&wdbobj2), interp, 3, argv ) == TCL_ERROR || !strncmp( interp->result, "invalid", 7 ) )
 				{
 					/* could not get TCL version */
 					if( mode == HUMAN )
