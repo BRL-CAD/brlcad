@@ -601,6 +601,19 @@ bad:
 }
 
 /*
+ *			C M _ C L E A N
+ *
+ *  Clean out results of last rt_prep(), and start anew.
+ */
+cm_clean( argc, argv )
+int	argc;
+char	**argv;
+{
+	rt_clean( ap.a_rt_i );
+	return(0);
+}
+
+/*
  *			D E F _ T R E E
  *
  *  Load default tree list, from command line.

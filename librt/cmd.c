@@ -86,6 +86,7 @@ extern int	cm_end();
 extern int	cm_multiview();
 extern int	cm_anim();
 extern int	cm_tree();
+extern int	cm_clean();
 
 #define MAXWORDS		32	/* Maximum number of args per command */
 
@@ -105,6 +106,7 @@ static struct cmd_tab cmdtab[] = {
 	"multiview",	"",		cm_multiview,	1, 1,
 	"anim",		"path type args", cm_anim,	4, MAXWORDS,
 	"tree",		"treetop(s)",	cm_tree,	1, MAXWORDS,
+	"clean",	"",		cm_clean,	1, 1,
 	(char *)0,	(char *)0,	0,		0, 0	/* END */
 };
 
