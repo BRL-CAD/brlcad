@@ -262,7 +262,7 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(*buffer = 'c'){
+      if(*buffer == 'c'){
 	bu_vls_free(&cmd);
 	curr_dm_list = save_dm_list;
 
