@@ -226,6 +226,7 @@ EOF
 tabsub ./template < table.final >> script
 .fi
 .sp .5
+.PP
 The frame number is taken from the input table line number,
 and substituted into the
 .I start
@@ -254,21 +255,105 @@ file that
 .IR rt (1)
 just wrote, so that it can be post-processed, compressed,
 sent to a video recorder, etc.
+.PP
+Try clipping this example out of the manual page
+(usually found in /usr/brlcad/man/man1/tabsub.1)
+and running it.
 .SH EXAMPLE2
+.PP
+In the
+.IR tabinterp (1)
+manual page, mention was made of animating the flight of a rocket.
+This partial example outlines how that might be accomplished.
+.sp .5
+.nf
+tabinterp << EOF > rocket.final
+# Channel allocations:
+#   0,1,2	position of base of rocket
+#   3,4,5	next position of base of rocket
+#
+# Input table column allocations:  time, X, Y, Z
+file rocket.table 0 1 2;
+#
+times 0 4 60;
+#
+# Assign interpolators to output channels
+interp spline 0 1 2;
+#
+# Get +1 "look ahead" on values, for auto-guidance
+next 3 0 1;
+next 4 1 1;
+next 5 2 1;
+EOF
+cat << EOF > rocket.template
 
-
+start @(line);
+clean;
+anim all.g/rot.g matrix rmul
+ @(xlate @0 @1 @2);
+anim rot.g/rocket.g matrix rmul
+  @(fromto +Z @0 @1 @2 @3 @4 @5);
+end;
+EOF
+tabsub ./rocket.template < rocket.final >> script
+.fi
+.sp .5
+.PP
+The items worty of note are the use of the
+.IR tabinterp (1)
+.B next
+command to place the position look-ahead into channels 3,4,5
+and the matching use of the
+.I tabsub
+.B fromto
+macro to convert the current and next positions into an
+appropriate rotation.
+In this case, the central axis of the rocket as found in the
+.IR mged (1)
+database rises up the +Z axis.
+Translating the rocket into position is handled one matrix
+higher up the tree, using the
+.B xlate
+macro.
+.SH "POST PROCESSING"
+.PP
+.I rt
+style animation scripts can be processed by
+.IR rt (1)
+and
+.IR remrt (1)
+by giving the
+.B \-M
+option on the command line, and providing the script on standard input.
+For example, the rocket animation might be run like this:
+.sp .5
+rt -M -V4:3 -w1440 -n972 -p90 -o rocket.pix rocket.g all.g < script
+.sp .5
+to produce images in NTSC ("Academy" 4:3) aspect ratio at double the
+normal resolution, suitable for later processing by
+.IR pixhalve (1).
+.PP
+The same animation can be previewed in near real-time using
+.IR mged (1).
+For this example,
+.IR mged (1)
+would be started with
+.sp .5
+   mged rocket.g
+.sp .5
+followed by attaching to an appropriate display device.
+Then, these commands would be given:
+.sp .5
+   e all.g
+   preview script
+.sp .5
+.IR mged (1)
+will process each frame as fast as it can, and update the screen.
 .SH "SEE ALSO"
 tabinterp(1), xyz-pl(1), txyz-pl(1), cut(1), paste(1), rt(1), mged(1)
-.SH DIAGNOSTICS
-In it's present form, the program is a bit verbose, reporting
-on the progress of each command on standard error.
-This behavior will probably be placed under control of a
-.B \-v
-flag in a future version.
 .SH BUGS
-You can't
-.I grep
-dead trees.
+There is presently a compiled-in
+limit of 1023 channels in the input table.
 .SH AUTHOR
 Michael John Muuss
 .SH SOURCE
