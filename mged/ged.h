@@ -133,6 +133,14 @@ extern int	no_memory;	/* flag indicating memory for drawing is used up */
 /* defined in menu.c */
 extern int	menuflag;	/* flag indicating if a menu item is selected */
 
+/* defined in chgview.c */
+extern int	rateflag_slew;
+extern vect_t	rate_slew;
+extern int	rateflag_rotate;
+extern vect_t	rate_rotate;
+extern int	rateflag_zoom;
+extern fastf_t	rate_zoom;
+
 /*
  * These variables are global for the benefit of
  * the display portion of dozoom. - defined in adc.c
@@ -155,7 +163,7 @@ extern void		eraseobj(), mged_finish(), slewview(),
 			mmenu_init(), moveHinstance(), moveHobj(), pr_solid(),
 			quit(), refresh(), rej_sedit(), sedit(),
 			dir_print(),
-			usepen(), setview(),
+			setview(),
 			adcursor(), mmenu_display(),
 			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
