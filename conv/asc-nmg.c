@@ -1,16 +1,24 @@
 /*
- *			A - G . C
+ *			A S C - N M G . C
  *
  *  Program to convert an ascii description of an NMG into a BRL-CAD
  *  NMG model.
  *
  *  Authors -
  *	Michael Markowski
+ *	Lee A. Butler
  *  
  *  Source -
- *      The US Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -21,7 +29,6 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "rtlist.h"
-#include "/m/cad/librt/debug.h"
 
 struct faceuse *nmg_add_loop_to_face();
 
