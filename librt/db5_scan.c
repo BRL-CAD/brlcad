@@ -42,7 +42,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *	 0	Success
  *	-1	Fatal Error
  */
-HIDDEN int
+int
 db5_scan(
 	struct db_i	*dbip,
 	void		(*handler)(struct db_i *,
