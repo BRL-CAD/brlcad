@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.3
- *	Last edit: 	7/11/84 at 15:38:55
- *	Retrieved: 	8/13/86 at 08:10:10
+ *	SCCS id:	@(#) vdeck.c	2.4
+ *	Last edit: 	9/17/84 at 07:56:50
+ *	Retrieved: 	8/13/86 at 08:10:37
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.3	last edit 7/11/84 at 15:38:55";
+char	sccsTag[] = "@(#) vdeck.c	2.4	last edit 9/17/84 at 07:56:50";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -404,6 +404,7 @@ matp_t	old_xlate;
 			 */
 			cgobj( nextdp, pathpos+1, new_xlate );
 		}
+#ifdef NEVER_FOO
 		/* check for end of this region
 		 */
 		if( isave < 0 ) { int	n;
@@ -413,6 +414,7 @@ matp_t	old_xlate;
 			putSpaces( regBufPtr, n );
 			endRegion( buff );
 		}
+#endif NEVER_FOO
 		lseek( objfd, savepos, 0 );
 		return;
 	}
