@@ -357,8 +357,9 @@ char	**argv;
 	rt_log("\n");
 }
 
-
-
+/*
+ *			D O _ L I S T
+ */
 void
 do_list( dp, verbose )
 register struct directory *dp;
@@ -366,11 +367,21 @@ int	verbose;
 {
 	register int	i;
 	register union record	*rp;
-	int		id;
+	int			id;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	mat_t			ident;
+	struct rt_vls		str;
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+	printf("%s:  ", dp->d_namep);
+	RT_INIT_EXTERNAL(&ext);
+	if( db_get_external( &ext, dp, dbip ) < 0 )  {
+		printf("db_get_external failure\n");
 		return;
+	}
+	rp = (union record *)ext.ext_buf;
 
+	/* XXX This should be converted to _import and _describe routines! */
 	if( rp[0].u_id == ID_COMB )  {
 		/* Combination */
 		(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
@@ -465,80 +476,22 @@ int	verbose;
 		goto out;
 	}
 
-	/* XXX This should run through the ft_switch[] table!! */
-	/* XXX The result should be a variable length string */
 	id = rt_id_solid( rp );
-	switch( id )  {
-	case ID_ARB8:
-		dbpr_arb( &rp[0].s, dp );
-sol_com:
-		/* This stuff ought to get pushed into the dbpr_xx code */
-		pr_solid( &rp[0].s );
-
-		for( i=0; i < es_nlines; i++ )
-			(void)printf("%s\n",&es_display[ES_LINELEN*i]);
-
-		/* If in solid edit, re-compute solid params */
-		if(state == ST_S_EDIT)
-			pr_solid(&es_rec.s);
-
+	mat_idn( ident );
+	if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
+		printf("database import error\n");
 		goto out;
-	default:
-		printf("Unknown solid type, id=%d\n", id);
-		break;
-
-	case ID_BSPLINE:
-		dbpr_spline( dp );
-		break;
-
-	case ID_EBM:
-	case ID_VOL:
-		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
-		break;
-
-	case ID_POLY:
-	case ID_ELL:
-	case ID_SPH:		/* shouldn't occur, special case of ID_ELL */
-	case ID_TOR:
-	case ID_ARS:
-	case ID_HALF:
-	case ID_PARTICLE:
-	case ID_PIPE:
-	case ID_ARBN:
-	case ID_TGC:
-	case ID_REC:		/* shouldn't occur, special case of ID_TGC */
-		{
-			struct rt_external	ext;
-			struct rt_db_internal	intern;
-			mat_t			ident;
-			struct rt_vls		str;
-
-			printf("%s:  ", dp->d_namep);
-			RT_INIT_EXTERNAL(&ext);
-			if( db_get_external( &ext, dp, dbip ) < 0 )  {
-				printf("db_get_external failure\n");
-				break;
-			}
-			mat_idn( ident );
-			if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
-				printf("database import error\n");
-				db_free_external( &ext );
-				break;
-			}
-			db_free_external( &ext );
-			rt_vls_init( &str );
-			if( rt_functab[id].ft_describe( &str, &intern,
-			    verbose, base2local ) < 0 )
-				printf("describe error\n");
-			rt_functab[id].ft_ifree( &intern );
-			fputs( rt_vls_addr( &str ), stdout );
-			rt_vls_free( &str );
-		}
-		break;
 	}
+	rt_vls_init( &str );
+	if( rt_functab[id].ft_describe( &str, &intern,
+	    verbose, base2local ) < 0 )
+		printf("describe error\n");
+	rt_functab[id].ft_ifree( &intern );
+	fputs( rt_vls_addr( &str ), stdout );
+	rt_vls_free( &str );
 
 out:
-	if(rp) rt_free( (char *)rp, "do_list records");
+	db_free_external( &ext );
 }
 
 /* List object information, verbose */
