@@ -111,6 +111,9 @@ struct ee_2d_state {
 RT_EXTERN(void			nmg_isect2d_prep, (struct nmg_inter_struct *is,
 				CONST long *assoc_use));
 RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
+RT_EXTERN(void			nmg_isect_line2_face2pNEW, (struct nmg_inter_struct *is,
+				struct faceuse *fu1, struct nmg_ptbl *eu1_list,
+				struct nmg_ptbl *eu2_list));
 
 static int	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
 			struct edgeuse *eu, struct faceuse *fu,
@@ -424,7 +427,7 @@ bad:
 void
 nmg_isect2d_prep( is, assoc_use )
 struct nmg_inter_struct	*is;
-long			*assoc_use;
+CONST long		*assoc_use;
 {
 	struct model	*m;
 	struct face_g	*fg;
@@ -1062,6 +1065,70 @@ struct nmg_inter_struct	*is;
 
 out:
 	return new_eu;
+}
+
+/*
+ *			N M G _ B R E A K _ E G _ O N _ V
+ *
+ *  Given a vertex 'v' which is already known to have geometry that lies
+ *  on the line defined by 'eg', break all the edgeuses along 'eg'
+ *  which cross 'v'.
+ *
+ *  Calculation is done in 1 dimension:  parametric distance along 'eg'.
+ *  Edge direction vector needs to be made unit length so that tol->dist
+ *  makes sense.
+ */
+void
+nmg_break_eg_on_v( eg, v, tol )
+CONST struct edge_g	*eg;
+struct vertex		*v;
+CONST struct rt_tol	*tol;
+{
+	register struct edgeuse	**eup;
+	struct nmg_ptbl	eutab;
+	vect_t		dir;
+	double		vdist;
+
+	NMG_CK_EDGE_G(eg);
+	NMG_CK_VERTEX(v);
+	RT_CK_TOL(tol);
+
+	VMOVE( dir, eg->e_dir );
+	VUNITIZE( dir );
+	vdist = rt_dist_pt3_along_line3( eg->e_pt, dir, v->vg_p->coord );
+
+	/* XXX Replace with walk of eg eu list */
+	nmg_edgeuse_with_eg_tabulate( &eutab, nmg_find_model(&v->magic), eg );
+
+	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab);
+	     eup--
+	)  {
+		struct vertex	*va;
+		struct vertex	*vb;
+		double		a;
+		double		b;
+		struct edgeuse	*new_eu;
+
+		NMG_CK_EDGEUSE(*eup);
+		if( (*eup)->e_p->eg_p != eg )  continue;
+
+		va = (*eup)->vu_p->v_p;
+		vb = (*eup)->eumate_p->vu_p->v_p;
+		if( rt_pt3_pt3_equal( v->vg_p->coord, va->vg_p->coord, tol ) )
+			continue;
+		if( rt_pt3_pt3_equal( v->vg_p->coord, vb->vg_p->coord, tol ) )
+			continue;
+		a = rt_dist_pt3_along_line3( eg->e_pt, dir, va->vg_p->coord );
+		b = rt_dist_pt3_along_line3( eg->e_pt, dir, vb->vg_p->coord );
+		if( !rt_between( a, vdist, b, tol ) )  continue;
+		new_eu = nmg_ebreak( v, *eup );
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("nmg_break_eg_on_v( eg=x%x, v=x%x ) new_eu=x%x\n",
+				eg, v, new_eu );
+		}
+	}
+	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
 }
 
 /*
@@ -3364,6 +3431,7 @@ struct model		*m;		/* XXX */
 		hit_v = nmg_search_v_eg( *eu1, 0, eg1, eg2, hit_v, tol );
 		hit_v = nmg_search_v_eg( *eu1, 1, eg1, eg2, hit_v, tol );
 	}
+	nmg_tbl( &eu1_list, TBL_FREE, (long *)0 );
 	return hit_v;
 }
 
@@ -3518,13 +3586,9 @@ colinear:
 		VJOIN1_2D( hit2d, is->pt2d, dist[0], is->dir2d );
 
 		/* Consistency check between geometry, and hit_v. */
-		if( hit_v && !rt_pt3_pt3_equal( hit3d, hit_v->vg_p->coord, &(is->tol) ) )  {
-			rt_log("NOTICE: hit_v and hit3d don't agree, using hit_v.\n");
-			VPRINT("\thit3d", hit3d);
-			VPRINT("\thit_v", hit_v->vg_p->coord);
-
+		if( hit_v )  {
 force_isect:
-			/* Just in case, make things consistent */
+			/* Force things to be consistent, use geom from hit_v */
 			VMOVE(hit3d, hit_v->vg_p->coord);
 			nmg_get_2d_vertex( hit2d, hit_v, is, fu1 );
 		}
@@ -3623,6 +3687,15 @@ hit_b:
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 						rt_log("\tmaking new vertex vu=x%x hit_v=x%x\n",
 							vu1_midpt, hit_v);
+					}
+					/*  Before we loose track of the fact
+					 *  that this vertex lies on *both*
+					 *  lines, break any edges in the
+					 *  intersection line that cross it.
+					 */
+					if( is->on_eg )  {
+						nmg_break_eg_on_v( is->on_eg,
+							hit_v, &(is->tol) );
 					}
 				} else {
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
