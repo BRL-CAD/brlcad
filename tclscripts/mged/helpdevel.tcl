@@ -18,7 +18,7 @@ set mged_helpdevel_data(grid2view_lu)	{{gx gy}	{given a point in grid coordinate
         convert it to view coordinates (local units).}}
 set mged_helpdevel_data(gui_destroy)	{{id}	{destroy display/command window pair}}
 set mged_helpdevel_data(hist)	{{command}	{routine for maintaining command history}}
-set mged_helpdevel_data(make_name)	{{template}	{make an object name not occuring in the database}}
+set mged_helpdevel_data(make_name)	{{template | -s [num]}	{make an object name not occuring in the database}}
 set mged_helpdevel_data(mged_update)	{{non_blocking}	{handle outstanding events and refresh}}
 set mged_helpdevel_data(mmenu_get)	{{[index]}	{get menu corresponding to index}}
 set mged_helpdevel_data(mmenu_set)	{{w id i menu}	{this Tcl proc is used to set/install menu "i"}}
