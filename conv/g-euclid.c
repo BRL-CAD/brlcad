@@ -78,6 +78,44 @@ struct facets
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
+void
+fastf_print( fp_out, length, f )
+FILE *fp_out;
+int length;
+fastf_t f;
+{
+	char buffer[128];
+	char *ptr;
+	int i;
+	int buf_len;
+
+	sprintf( &buffer[1], "%f", f );
+	buffer[0] = ' ';
+
+	buf_len = strlen( buffer );
+	if( buf_len <= length )
+	{
+		for( i=0 ; i<length ; i++ )
+		{
+			if( i < buf_len )
+				fputc( buffer[i], fp_out );
+			else
+				fputc( ' ', fp_out );
+		}
+
+		return;
+	}
+
+	ptr = strchr( buffer, '.' );
+	if( (ptr - buffer) > length )
+	{
+		rt_log( "Value (%f) too large for format length (%d)\n" , f, length );
+		rt_bomb( "fastf_print\n" );
+	}
+
+	for( i=0 ; i<length ; i++ )
+		fputc( buffer[i], fp_out );
+}
 
 void
 insert_id( id )
@@ -186,11 +224,17 @@ CONST int face_number;
 	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	{
 		struct vertex *v;
+		int i;
 
 		NMG_CK_EDGEUSE( eu );
 		v = eu->vu_p->v_p;
 		NMG_CK_VERTEX( v );
-		fprintf( fp_out , "%10d%8f%8f%8f" , ++vertex_count , V3ARGS( v->vg_p->coord ) );
+/*		fprintf( fp_out , "%10d%8f%8f%8f" , ++vertex_count , V3ARGS( v->vg_p->coord ) ); */
+		vertex_count++;
+		fprintf( fp_out, "%10d", vertex_count );
+
+		for( i=X; i<=Z; i++ )
+			fastf_print( fp_out, 8, v->vg_p->coord[i] );
 	}
 
 	fu = lu->up.fu_p;
@@ -723,6 +767,7 @@ union tree		*curtree;
 
 out:
 	GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return(curtree);
 }
