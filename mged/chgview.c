@@ -1037,3 +1037,22 @@ char	**argv;
 	new_mats();
 }
 
+/*
+ *			F _ O R I E N T A T I O N
+ *
+ *  Set current view direction from a quaternion,
+ *  such as might be found in a "saveview" script.
+ */
+void
+f_orientation( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int	i;
+	quat_t		quat;
+
+	for( i=0; i<4; i++ )
+		quat[i] = atof( argv[i+1] );
+	quat_quat2mat( Viewrot, quat );
+	new_mats();
+}
