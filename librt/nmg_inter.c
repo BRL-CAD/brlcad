@@ -2019,64 +2019,33 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	}
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu2);
-if(fu1)nmg_fu_touchingloops(fu1);
-nmg_region_v_unique( is->s2->r_p, &is->tol );
-nmg_region_v_unique( is->s1->r_p, &is->tol );
+		nmg_fu_touchingloops(fu2);
+		if(fu1)nmg_fu_touchingloops(fu1);
+		nmg_region_v_unique( is->s1->r_p, &is->tol );
+		nmg_region_v_unique( is->s2->r_p, &is->tol );
 	}
-	/* Run through the list until no more edges are split in either face */
-	total_splits = 0;
-	do  {
-		another_pass = 0;
 
-		/* First, eu1 -vs- fu2 */
-		for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
-			struct edgeuse	*eu2;
+	/* The use of an infinite line through fu2 is essential! */
+	/* Put eu1's vu's on the list.  They are the hardest to get
+	 * right by geometry. (Needed to fix Test18) */
+	/* XXX What about join operations on colinear edgeuses? */
+/* XXX YYY ZZZ What about proper breaking of colinear edgeuses, too! */
+/* XXX Can I just enlist them, and let the face cutter deal with it? */
+/* XXX Should get list of all eu's on edge_g, and enlist all their vu's! */
+	nmg_enlist_vu( is, eu1->vu_p, 0 );
+	nmg_enlist_vu( is, RT_LIST_PNEXT_CIRC(edgeuse,eu1)->vu_p, 0 );
 
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
-				struct vertexuse	*vu;
-				vu = RT_LIST_FIRST( vertexuse, &lu->down_hd );
-				if( nmg_isect_edge2p_vert2p( is, eu1, vu ) > 1 )  {
-					another_pass++;	/* edge was split */
-					total_splits++;
-				}
-				continue;
-			}
-			for( RT_LIST_FOR( eu2, edgeuse, &lu->down_hd ) )  {
-				/* isect eu1 with eu2 */
-				if( nmg_isect_edge2p_edge2p( is, eu1, eu2, fu1, fu2 )
-				 & (ISECT_SPLIT1|ISECT_SPLIT2)
-				)  {
-					another_pass++;	/* edge was split */
-					total_splits++;
-				}
-				if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu2);
-if(fu1)nmg_fu_touchingloops(fu1);
-nmg_region_v_unique( is->s2->r_p, &is->tol );
-nmg_region_v_unique( is->s1->r_p, &is->tol );
-				}
-			}
-		}
-		if (rt_g.NMG_debug & DEBUG_POLYSECT && another_pass > 0 )
-			rt_log("nmg_isect_edge2p_face2p(): lu=x%x, another_pass=%d\n", lu, another_pass);
-	} while( another_pass );
-
-	/*
-	 *  If there were _no_ new intersections, IN EITHER FACE,
-	 *  then there is no need to call the face cutter here.
-	 *  Otherwise, process _all_ the vu's along the line of intersection.
-	 */
-	if (rt_g.NMG_debug & DEBUG_POLYSECT )
-		rt_log("nmg_isect_edge2p_face2p(): lu=x%x, total_splits=%d\n", lu, total_splits);
-
-	/* Now, run line of intersection through fu1, if eu1 is not wire */
-/* XXX This is new */
+	/* Run eu1's line through fu2 */
+	total_splits = nmg_isect_line2_face2p( is, &vert_list2, fu2, fu1 );
+	/* Now, run line through fu1, if eu1 is not wire */
 	if( fu1 )  {
-		total_splits += nmg_isect_line2_face2p( is, &vert_list1, fu1, fu2 );
-		if (rt_g.NMG_debug & DEBUG_POLYSECT )
-			rt_log("nmg_isect_edge2p_face2p(): lu=x%x, total_splits=%d B\n", lu, total_splits);
+		total_splits += nmg_isect_line2_face2p( is,
+			&vert_list1, fu1, fu2 );
 	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT )
+		rt_log("nmg_isect_edge2p_face2p(): total_splits=%d\n", lu, total_splits);
+	/* XXX Should modify caller to tally all eu's sharing this edge_g */
+
 
 	if( total_splits <= 0 )  goto out;
 
@@ -2098,18 +2067,12 @@ nmg_region_v_unique( is->s1->r_p, &is->tol );
 	if (vert_list1.end == 0 && vert_list2.end == 0) goto out;
 
 	/* Invoke the face cutter to snip and join loops along isect line */
-nmg_fu_touchingloops(fu2);
-if(fu1)nmg_fu_touchingloops(fu1);
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
-nmg_fu_touchingloops(fu2);		/* XXX r410 dies here */
-nmg_fu_touchingloops(fu1);
 	ret = 1;		/* face cutter was called. */
 
 out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
-nmg_fu_touchingloops(fu2);
-if(fu1)nmg_fu_touchingloops(fu1);
 
 do_ret:
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
