@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.3  93/10/26  06:05:57  mike
+ * ANSI C
+ * 
  * Revision 10.2  93/10/26  06:01:52  mike
  * Changed getchar() to jgetchar() to prevent stdio.h conflict
  * 
@@ -228,7 +231,8 @@ dword(forward)
 	BUFLOC	savedot;
 
 	DOTsave(&savedot);
-	forward ? ForWord() : BackWord();
+	if(forward) ForWord();
+	else	BackWord();
 	reg_kill(savedot.p_line, savedot.p_char, curline, curchar, !forward);
 }
 
