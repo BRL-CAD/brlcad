@@ -96,7 +96,7 @@ union tree		*curtree;
 {
 	struct region		*rp;
 	struct directory	*dp;
-	vect_t			region_min, region_max;
+	point_t			region_min, region_max;
 
 	if( curtree->tr_op == OP_NOP )  {
 		/* Ignore empty regions */
@@ -729,6 +729,10 @@ struct resource		*resp;
 	*sp++ = tp;
 	while( (tp = *--sp) != TREE_NULL ) {
 		switch( tp->tr_op )  {
+		case OP_NOP:
+			/* XXX Consider eliminating nodes of form (A op NOP) */
+			/* XXX Needs to be detected in previous iteration */
+			break;
 		case OP_SOLID:
 			break;
 		case OP_SUBTRACT:
