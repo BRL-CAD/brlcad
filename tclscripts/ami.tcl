@@ -40,13 +40,6 @@ exec $TCLSH "$0" "$@"
 package require Itcl
 auto_mkindex_parser::slavehook {_%@namespace import -force ::itcl::*}
 
-# Use the following two lines with tclsh
-#load $env(BRLCAD_ROOT)/lib/libitcl.so
-#auto_mkindex_parser::slavehook {_%@namespace import -force ::itcl::*}
-
 foreach arg $argv {
     catch {auto_mkindex $arg *.tcl *.itcl}
 }
-
-# Use the following line with bwish
-exit
