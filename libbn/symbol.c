@@ -68,7 +68,7 @@ static tp_setup()
 /*
  *			T P _ S Y M B O L
  */
-tp_symbol( fp, string, x, y, scale, theta )
+tp_2symbol( fp, string, x, y, scale, theta )
 char	*string;		/* string of chars to be plotted */
 double	x, y;			/* x,y of lower left corner of 1st char */
 double	scale;			/* scale factor to change 1x1 char sz */
@@ -1143,7 +1143,7 @@ static TINY	pptable[] = {
 /*
  *  This FORTRAN interface expects REAL args (single precision).
  */
-FSYMBOL( fp, string, x, y, scale, theta )
+F2SYMB( fp, string, x, y, scale, theta )
 FILE	**fp;
 char	*string;
 float	*x, *y;
@@ -1152,25 +1152,6 @@ float	*theta;
 {
 	char buf[128];
 
-	tp_strncpy( buf, string, sizeof(buf) );
-	tp_symbol( *fp, buf, *x, *y, *scale, *theta );
-}
-
-/*
- *			T P _ S T R N C P Y
- *
- *  Make null-terminated copy of a string in output buffer,
- *  being careful not to exceed indicated buffer size
- *  Accept "$" as alternate string-terminator for FORTRAN Holerith constants.
- */
-tp_strncpy( out, in, sz )
-register char *out;
-register char *in;
-register int sz;
-{
-	register int c;
-
-	while( --sz > 0 && (c = *in++) != '\0' && c != '$' )
-		*out++ = c;
-	*out++ = '\0';
+	pl_strncpy( buf, string, sizeof(buf) );
+	tp_2symbol( *fp, buf, *x, *y, *scale, *theta );
 }

@@ -1,9 +1,6 @@
 /*
  *			T P _ A X I S
  *
- *	Terminal Independant Graphics Display Package
- *		Mike Muuss  August 01, 1978
- *
  *	This routine is used to generate an axis for a graph.
  * It draws an axis with a linear scale, places tic marks every inch,
  * labels the tics, and uses the supplied title for the axis.
@@ -15,7 +12,23 @@
  * tick label (xnum,ynum) are computed along with the delta x
  * and delta y (xincr,yincr) which describes the interval to
  * the start of the next tick.
+ *
+ *  Author -
+ *	Michael John Muuss
+ *	August 01, 1978
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <math.h>
 
@@ -27,7 +40,7 @@
 #define	TITLE_YOFF	(5*char_width)	/* title offset from line */
 
 
-tp_axis( fp, string, origin, rot, length, ccw,
+tp_3axis( fp, string, origin, rot, length, ccw,
 	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE	*fp;
 char	*string;		/* label for axis */
@@ -144,7 +157,7 @@ double	char_width;		/* character scale (size) */
 	}
 }
 
-FAXIS(fp, string, x, y, z, length, theta, ccw,
+F3AXIS(fp, string, x, y, z, length, theta, ccw,
 	ndigits, label_start, label_incr, tick_separation, char_width )
 FILE		**fp;
 char		*string;	/* label for axis */
@@ -165,8 +178,8 @@ float		*char_width;	/* character scale (size) */
 	VSET( pnt, *x, *y, *z );
 	mat_idn(mat);
 	mat_angles( mat, 0.0, 0.0, *theta );
-	tp_strncpy( buf, string, sizeof(buf) );
-	tp_axis( *fp, buf, pnt, mat, *length, *ccw,
+	pl_strncpy( buf, string, sizeof(buf) );
+	tp_3axis( *fp, buf, pnt, mat, *length, *ccw,
 		*ndigits, *label_start, *label_incr,
 		*tick_separation, *char_width );
 }

@@ -78,12 +78,12 @@ double	cscale;		/* character scale factor */
 	xpen = xp;
 
 	pl_move(fp, xpen, yp-TIC);
-	pl_draw(fp, xpen,yp);
+	pl_cont(fp, xpen,yp);
 
 	/* label first tic */
 	lab = xmin;
 	sprintf( str, "%3.3g", xmin );
-	tp_symbol( fp, str, xpen-171,yp-TIC-NUM_DISTANCE, cscale, 0.0);
+	tp_2symbol( fp, str, xpen-171,yp-TIC-NUM_DISTANCE, cscale, 0.0);
 	i = 0;
 	while((xpen+ddx)<=xend){
 		i++;
@@ -94,14 +94,14 @@ double	cscale;		/* character scale factor */
 		/* need if test here to check for overlap */
 		if( (i%xtics) == 0){
 			sprintf( str, "%3.3g", lab );
-			tp_symbol( fp, str, xpen-171, yp-TIC-NUM_DISTANCE, cscale, 0.0);
+			tp_2symbol( fp, str, xpen-171, yp-TIC-NUM_DISTANCE, cscale, 0.0);
 		}
 	}
 
 	/* insert axis label here */
 	xtl = xp+(xl - strlen(xtitle)*cscale)/2;
 	ytl = yp - 8 * cscale;
-	tp_symbol( fp, xtitle,xtl, ytl, 100, 0.0);
+	tp_2symbol( fp, xtitle,xtl, ytl, 100, 0.0);
 	yend = yl+yp;
 	ypen= yp;
 	pl_line( fp, xp-TIC, ypen, xp, ypen );
@@ -109,7 +109,7 @@ double	cscale;		/* character scale factor */
 	/* draw first y label */
 	lab = ymin;
 	sprintf( str, "%3.3g", lab );
-	tp_symbol( fp,str, xp-TIC-LAB_LNGTH-NUM_DISTANCE, ypen, cscale, 0.0);
+	tp_2symbol( fp,str, xp-TIC-LAB_LNGTH-NUM_DISTANCE, ypen, cscale, 0.0);
 
 	i=0;
 	while((ypen+ddy)<=yend){
@@ -120,14 +120,14 @@ double	cscale;		/* character scale factor */
 		lab += dy;
 		if(( i%ytics) ==0){
 			sprintf( str, "%3.3g", lab );
-			tp_symbol( fp,str, xp-TIC-LAB_LNGTH-NUM_DISTANCE, ypen, cscale, 0.0);
+			tp_2symbol( fp,str, xp-TIC-LAB_LNGTH-NUM_DISTANCE, ypen, cscale, 0.0);
 		}
 	}
 
 	/* insert y-axis title here */
 	xtl= xp-1500;
 	ytl= yp + (yl - strlen(ytitle)*cscale)/2 ;
-	tp_symbol( fp,ytitle,xtl,ytl,100,90.0);
+	tp_2symbol( fp,ytitle,xtl,ytl,100,90.0);
 
 	/* now at long last plot the data */
 	j = 0;
@@ -154,7 +154,7 @@ loop:
 		i++;
 		j++;
 	}
-	tp_line( fp, ix, iy, isave+1 );
+	tp_2list( fp, ix, iy, isave+1 );
 	if( isave == 100 )
 		goto loop;
 }
@@ -385,10 +385,10 @@ float x;
  *	CULC FORTRAN-IV Interface Entry
  */
 
-fplot(xp, yp, xl, yl, xtitle, ytitle, x, y, n )
+FPLOT(xp, yp, xl, yl, xtitle, ytitle, x, y, n )
 char *xtitle, *ytitle;
 int *xp, *yp, *xl, *yl, *n;
 float *x, *y;
 {
-	plot(*xp, *yp, *xl, *yl, xtitle, ytitle, x, y, *n);
+	tp_plot(*xp, *yp, *xl, *yl, xtitle, ytitle, x, y, *n);
 }

@@ -1,6 +1,20 @@
 /*
  *			V E C T O R . C
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 #include <math.h>
 
@@ -8,7 +22,7 @@
 #include "vmath.h"
 
 /*
- *			T P _ V E C T O R . C
+ *			T P _ 3 V E C T O R
  *
  *  Draw a vector between points "from" and "to", with the option
  *  of having an arrowhead on either or both ends.
@@ -19,7 +33,7 @@
  *  Positive points towards the "to" point, negative points towards "from".
  *  Upon return, the virtual pen is left at the "to" position.
  */
-tp_vector( plotfp, from, to, fromheadfract, toheadfract )
+tp_3vector( plotfp, from, to, fromheadfract, toheadfract )
 FILE	*plotfp;
 point_t	from, to;
 double	fromheadfract, toheadfract;
@@ -73,7 +87,7 @@ double	fromheadfract, toheadfract;
 
 }
 
-FVECTOR(fp, fx, fy, fz, tx, ty, tz, fl, tl )
+F3VECT(fp, fx, fy, fz, tx, ty, tz, fl, tl )
 FILE	**fp;
 float	*fx;
 float	*fy;
@@ -88,5 +102,5 @@ float	*tl;
 
 	VSET( from, *fx, *fy, *fz );
 	VSET( to, *tx, *ty, *tz );
-	tp_vector( *fp, from, to, *fl, *tl );
+	tp_3vector( *fp, from, to, *fl, *tl );
 }
