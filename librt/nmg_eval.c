@@ -400,7 +400,7 @@ struct nmg_ptbl class_table[];
 
 	/* Plot the result */
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
-		FILE *fp, *fopen();
+		FILE	*fp;
 
 		if ((fp=fopen("bool_ans.pl", "w")) == (FILE *)NULL) {
 			(void)perror("bool_ans.pl");
@@ -703,7 +703,7 @@ struct nmg_bool_state *bs;
  */
 int
 nmg_eval_action( ptr, bs )
-genptr_t			ptr;
+long				*ptr;
 register struct nmg_bool_state	*bs;
 {
 	register int	ret;

@@ -114,7 +114,7 @@ struct vertexuse *vu1, *vu2;
 {
 	struct loopuse *lu, *oldlu;
 	struct edgeuse *eu1, *eu2, *eunext, *neweu, *eu;
-	FILE *fd, *fopen();
+	FILE *fd;
 	struct nmg_ptbl b;
 	char name[32];
 	static int i=0;
@@ -903,7 +903,7 @@ struct faceuse *fu1, *fu2;	/* fu1 = face being worked, */
 	} p;
 	pointp_t	p1, p2;
 	struct nmg_ptbl tbl;
-	FILE *fp, *fopen();
+	FILE *fp;
 	static int pn=0;
 	static char name[32];
 	int vn=0;

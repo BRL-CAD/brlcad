@@ -28,15 +28,17 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-#include "rtstring.h"
 #ifdef BSD
 # include <strings.h>
 #else
 # include <string.h>
 #endif
+
+#include "machine.h"
+#include "vmath.h"
+#include "rtstring.h"
+#include "externs.h"
+#include "raytrace.h"
 
 /*
  *		P A R S E _ F L O A T
@@ -608,7 +610,6 @@ char				*base;	/* structure ponter */
 						*loc);
 			} else {
 				register char *p; 
-				char *strchr();
 				register int count=0;
 
 				/* count the quote characters */
