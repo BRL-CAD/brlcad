@@ -484,9 +484,9 @@ fi
 
 ###
 # Steps taken are as follows:
-#  aclocal
+#  aclocal [-I m4]
 #  libtoolize --automake -c -f
-#  aclocal          
+#  aclocal [-I m4]
 #  autoconf -f
 #  autoheader
 #  automake -a -c -f
@@ -512,8 +512,8 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
   fi
 
   # re-run again as instructed by libtoolize
-  $VERBOSE_ECHO "$ACLOCAL"
-  $ACLOCAL
+  $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
+  $ACLOCAL $SEARCH_DIRS
 
   # libtoolize might put ltmain.sh in the wrong place
   if test -f ltmain.sh ; then
