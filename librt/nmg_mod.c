@@ -3574,11 +3574,6 @@ int		share_geom;
 	vB = eu->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX(vB);
 
-	/* vA and vB are the endpoints of the original edge "e" */
-	if( vA == vB )  {
-		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", vA);
-/*		rt_bomb("nmg_esplit() of edge running from&to same v\n");	*/
-	}
 	if( v && ( v == vA || v == vB ) )  {
 		rt_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
 		rt_bomb("nmg_esplit() new vertex is already an edge vertex\n");
