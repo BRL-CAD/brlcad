@@ -16,6 +16,14 @@
 # Description - routines for looking at MUVES final results files.
 #
 
+if ![info exists mged_default(tearoff_menus)] {
+    set mged_default(tearoff_menus) 0
+}
+
+if ![info exists tk_version] {
+    loadtk
+}
+
 proc muves_gui_init { id dpy }  {
     global muves_states
     global muves_active
@@ -29,11 +37,16 @@ proc muves_gui_init { id dpy }  {
 	return
     }
 
+    if ![info exists muves_states] {
+	return -code error "muves_gui_init: muves_states has not been initialized\n\
+see muves_states_init or muves_states_initp"
+    }
+
     if ![info exists muves_color_ramp($id,num)] {
 	set ramp -1
 
 	incr ramp
-	set muves_color_ramp($id,$ramp,label) "Ramp 0"
+	set muves_color_ramp($id,$ramp,label) "Spectrum 0"
 	set muves_color_ramp($id,$ramp,range) {{0.0 0.0} {0.0 0.1} {0.1 0.2} \
 		{0.2 0.3} {0.3 0.4} {0.4 0.5} {0.5 0.6} {0.6 0.7} {0.7 0.8} \
 		{0.8 0.9} {0.9 1.0}}
@@ -43,13 +56,36 @@ proc muves_gui_init { id dpy }  {
 	set muves_color_ramp($id,$ramp,num) [llength $muves_color_ramp($id,$ramp,range)]
 
 	incr ramp
-	set muves_color_ramp($id,$ramp,label) "Red Ramp"
+	set muves_color_ramp($id,$ramp,label) "Spectrum 1"
+	set muves_color_ramp($id,$ramp,range) {{0.0 0.0} {0.0 1.6} {1.6 3.2} \
+		{3.2 4.8} {4.8 6.4} {6.4 8.0} {8.0 9.6} {9.6 11.2} {11.2 12.8} \
+		{12.8 14.4} {14.4 16.0}}
+	set muves_color_ramp($id,$ramp,rgb) {{255 255 255} {100 100 140} {0 0 255} \
+		{0 120 255} {100 200 140} {0 150 0} {0 225 0} {255 255 0} \
+		{255 160 0} {255 100 100} {255 0 0}}
+	set muves_color_ramp($id,$ramp,num) [llength $muves_color_ramp($id,$ramp,range)]
+
+	incr ramp
+	set muves_color_ramp($id,$ramp,label) "Red 0"
 	set muves_color_ramp($id,$ramp,range) {{0.0 0.0} {0.0 0.1} {0.1 0.2} \
 		{0.2 0.3} {0.3 0.4} {0.4 0.5} {0.5 0.6} {0.6 0.7} {0.7 0.8} \
 		{0.8 0.9} {0.9 1.0}}
 	set muves_color_ramp($id,$ramp,rgb) {{255 255 255} {255 229 229} {255 204 204} \
 		{255 178 178} {255 153 153} {255 127 127} {255 102 102} {255 77 77} \
 		{255 51 51} {255 26 26} {255 0 0}}
+	set muves_color_ramp($id,$ramp,num) [llength $muves_color_ramp($id,$ramp,range)]
+
+	incr ramp
+	set muves_color_ramp($id,$ramp,label) "Red 1"
+	set muves_color_ramp($id,$ramp,range) {{0.0 0.0} {0.0 0.0001} {0.0001 0.0002} \
+		{0.0002 0.0003} {0.0003 0.0004} {0.0004 0.0005} {0.0005 0.0006} \
+		{0.0006 0.0007} {0.0007 0.0008} {0.0008 0.0009} {0.0009 0.1} \
+	        {0.1 0.2} {0.2 0.3} {0.3 0.4} {0.4 0.5} {0.5 0.6} {0.6 0.7} {0.7 0.8} \
+	        {0.8 0.9} {0.9 1.0}}
+	set muves_color_ramp($id,$ramp,rgb) {{255 255 255} {255 230 230} {255 220 220} \
+		{255 210 210} {255 190 190} {255 170 170} {255 150 150} {255 130 130} \
+		{255 110 110} {255 90 90} {255 80 80} {255 70 70} {255 60 60} {255 50 50} {255 50 40} \
+	        {255 30 30} {255 20 20} {255 15 15} {255 10 10} {255 0 0}}
 	set muves_color_ramp($id,$ramp,num) [llength $muves_color_ramp($id,$ramp,range)]
 
 	incr ramp
@@ -65,16 +101,20 @@ proc muves_gui_init { id dpy }  {
 	set muves_active($id,op2) "<="
 	set muves_active($id,cval1) 0.0
 	set muves_active($id,cval2) 1.0
-	set muves_active($id,pass_color) "0 255 0"
-	set muves_active($id,fail_color) "255 0 0"
+	set muves_active($id,pass_color) "255 0 0"
+	set muves_active($id,fail_color) "0 255 0"
 	set muves_active($id,mode) "pass_fail"
+
     }
 
     toplevel $top -screen $dpy -menu $top.menubar
+    frame $top.pass_failF
+    frame $top.color_rampF
 
-    set n -1
-    incr n
-    frame $top.gridF$n
+    set row -1
+
+    incr row
+    frame $top.gridF
     label $top.stateL -text "State Vectors"
     listbox $top.stateLB -width 50 -height 8 -selectmode single \
 	    -yscrollcommand "$top.stateSB set"
@@ -82,288 +122,336 @@ proc muves_gui_init { id dpy }  {
     foreach state $muves_states(names) {
 	$top.stateLB insert end $state
     }
-    grid $top.stateL - -sticky "nsew" -in $top.gridF$n -pady 4
-    grid $top.stateLB $top.stateSB -sticky "nsew" -in $top.gridF$n
-    grid columnconfigure $top.gridF$n 0 -weight 1
-    grid columnconfigure $top.gridF$n 1 -weight 0
-    grid rowconfigure $top.gridF$n 1 -weight 1
-    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
-    grid rowconfigure $top $n -weight 1
+    grid $top.stateL - -sticky "nsew" -in $top.gridF -pady 4
+    grid $top.stateLB $top.stateSB -sticky "nsew" -in $top.gridF
+    grid columnconfigure $top.gridF 0 -weight 1
+    grid rowconfigure $top.gridF 1 -weight 1
+    grid $top.gridF -sticky "nsew" -padx 4 -pady 4
+    grid rowconfigure $top $row -weight 1
 
-    incr n
+    incr row
     menu $top.menubar -tearoff $mged_default(tearoff_menus)
-    $top.menubar add cascade -label "Mode" -underline 0 -menu $top.menubar.mode
+    $top.menubar add cascade -label "Modes" -underline 0 -menu $top.menubar.mode
 
-    menu $top.menubar.mode -title "Mode" -tearoff $mged_default(tearoff_menus)
+    menu $top.menubar.mode -title "Modes" -tearoff $mged_default(tearoff_menus)
     $top.menubar.mode add radiobutton -value "pass_fail" -variable muves_active($id,mode) \
 	    -label "Pass/Fail" -underline 0\
-	    -command "muves_toggle_mode $id $top $n"
+	    -command "muves_toggle_mode $id $top $row"
     $top.menubar.mode add radiobutton -value "color_ramp" -variable muves_active($id,mode) \
 	    -label "Color Ramp" -underline 0\
-	    -command "muves_toggle_mode $id $top $n"
+	    -command "muves_toggle_mode $id $top $row"
 
-    muves_toggle_mode $id $top $n
-    muves_update_components $id $top
+    muves_create_modes $id $top $top.pass_failF pass_fail
+    muves_create_modes $id $top $top.color_rampF color_ramp
+    muves_toggle_mode $id $top $row
 
     grid columnconfigure $top 0 -weight 1
 
     bind $top.stateLB <ButtonPress-1> "set muves_active($id,sindex) \[%W nearest %y\]; \
 	    muves_update_components $id $top"
 
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    wm geometry $top +$x+$y
-    wm title $top "MGED MUVES Tool"
+#    set pxy [winfo pointerxy $top]
+#    set x [lindex $pxy 0]
+#    set y [lindex $pxy 1]
+    wm geometry $top +30+60
+
+    # force behavior change to favor user specified size
+    update
+    wm geometry $top [wm geometry $top]
 }
 
-proc muves_toggle_mode { id top n } {
+proc muves_create_modes { id top parent mode } {
     global muves_active
     global muves_color_ramp
     global mged_default
 
-    switch $muves_active($id,mode) {
+    set n -1
+
+    switch $mode {
 	pass_fail {
-	    frame $top.gridF$n -relief groove -bd 2
-	    label $top.constraintL -text "Constraints"
-	    frame $top.vtypeF -relief flat -bd 2
-	    label $top.vtypeL -text "Val Type: "
-	    radiobutton $top.minRB -text "min" -anchor w \
+	    incr n
+	    frame $parent.gridF$n -relief groove -bd 2
+	    label $parent.constraintL -text "Constraints"
+	    frame $parent.vtypeF -relief flat -bd 2
+	    label $parent.vtypeL -text "Val Type: "
+	    radiobutton $parent.minRB -text "min" -anchor w \
 		    -value min -variable muves_active($id,pvt) \
 		    -command "muves_update_components $id $top"
-	    radiobutton $top.meanRB -text "mean" -anchor w \
+	    radiobutton $parent.meanRB -text "mean" -anchor w \
 		    -value mean -variable muves_active($id,pvt) \
 		    -command "muves_update_components $id $top"
-	    radiobutton $top.maxRB -text "max" -anchor w \
+	    radiobutton $parent.maxRB -text "max" -anchor w \
 		    -value max -variable muves_active($id,pvt) \
 		    -command "muves_update_components $id $top"
-	    entry $top.val1E -relief sunken -bd 2 -width 12 -textvar muves_active($id,cval1)
-	    menubutton $top.op1MB -relief flat -bd 2 -textvar muves_active($id,op1) -menu $top.op1MB.m
-	    menu $top.op1MB.m -tearoff 0
-	    $top.op1MB.m add command -label "<" \
+	    entry $parent.val1E -relief sunken -bd 2 -width 12 -textvar muves_active($id,cval1)
+	    menubutton $parent.op1MB -relief flat -bd 2 -textvar muves_active($id,op1) -menu $parent.op1MB.m
+	    menu $parent.op1MB.m -tearoff 0
+	    $parent.op1MB.m add command -label "<" \
 		    -command "set muves_active($id,op1) <; muves_update_components $id $top"
-	    $top.op1MB.m add command -label "<=" \
+	    $parent.op1MB.m add command -label "<=" \
 		    -command "set muves_active($id,op1) <=; muves_update_components $id $top"
-	    $top.op1MB.m add command -label ">" \
+	    $parent.op1MB.m add command -label ">" \
 		    -command "set muves_active($id,op1) >; muves_update_components $id $top"
-	    $top.op1MB.m add command -label ">=" \
+	    $parent.op1MB.m add command -label ">=" \
 		    -command "set muves_active($id,op1) >=; muves_update_components $id $top"
-	    label $top.valL -text "val"
-	    menubutton $top.op2MB -relief flat -bd 2 -textvar muves_active($id,op2) -menu $top.op2MB.m
-	    menu $top.op2MB.m -tearoff 0
-	    $top.op2MB.m add command -label "<" \
+	    label $parent.valL -text "val"
+	    menubutton $parent.op2MB -relief flat -bd 2 -textvar muves_active($id,op2) -menu $parent.op2MB.m
+	    menu $parent.op2MB.m -tearoff 0
+	    $parent.op2MB.m add command -label "<" \
 		    -command "set muves_active($id,op2) <; muves_update_components $id $top"
-	    $top.op2MB.m add command -label "<=" \
+	    $parent.op2MB.m add command -label "<=" \
 		    -command "set muves_active($id,op2) <=; muves_update_components $id $top"
-	    $top.op2MB.m add command -label ">" \
+	    $parent.op2MB.m add command -label ">" \
 		    -command "set muves_active($id,op2) >; muves_update_components $id $top"
-	    $top.op2MB.m add command -label ">=" \
+	    $parent.op2MB.m add command -label ">=" \
 		    -command "set muves_active($id,op2) >=; muves_update_components $id $top"
-	    entry $top.val2E -relief sunken -bd 2 -width 12 -textvar muves_active($id,cval2)
-	    grid $top.constraintL - - - - -sticky "nsew" -in $top.gridF$n -pady 4
-	    grid $top.vtypeL $top.minRB $top.meanRB $top.maxRB -sticky "w" -in $top.vtypeF
-	    grid $top.vtypeF - - - - -sticky w -in $top.gridF$n -padx 4 -pady 4
-	    grid $top.val1E $top.op1MB $top.valL $top.op2MB $top.val2E \
-		    -sticky "nsew" -in $top.gridF$n -padx 4 -pady 4
-	    grid columnconfigure $top.gridF$n 0 -weight 1
-	    grid columnconfigure $top.gridF$n 4 -weight 1
-	    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
+	    entry $parent.val2E -relief sunken -bd 2 -width 12 -textvar muves_active($id,cval2)
+	    grid $parent.constraintL - - - - -sticky "nsew" -in $parent.gridF$n -pady 4
+	    grid $parent.vtypeL $parent.minRB $parent.meanRB $parent.maxRB -sticky "w" -in $parent.vtypeF
+	    grid $parent.vtypeF - - - - -sticky w -in $parent.gridF$n -padx 4 -pady 4
+	    grid $parent.val1E $parent.op1MB $parent.valL $parent.op2MB $parent.val2E \
+		    -sticky "nsew" -in $parent.gridF$n -padx 4 -pady 4
+	    grid columnconfigure $parent.gridF$n 0 -weight 1
+	    grid columnconfigure $parent.gridF$n 4 -weight 1
+	    grid $parent.gridF$n -sticky "nsew" -padx 4 -pady 4
 
 	    incr n
-	    frame $top.gridF$n -relief groove -bd 2
-	    label $top.componentL -textvar muves_active($id,clabel)
+	    frame $parent.gridF$n -relief groove -bd 2
+	    label $parent.componentL -textvar muves_active($id,clabel)
 	    # Widgets for components that "passed"
-	    frame $top.pcomponentF
-	    label $top.pcomponentL -text "Pass"
-	    listbox $top.pcomponentLB -selectmode single -yscrollcommand "$top.pcomponentSB set"
-	    scrollbar $top.pcomponentSB -command "$top.pcomponentLB yview"
+	    frame $parent.pcomponentF
+	    label $parent.pcomponentL -text "Pass"
+	    listbox $parent.pcomponentLB -selectmode single -yscrollcommand "$parent.pcomponentSB set"
+	    scrollbar $parent.pcomponentSB -command "$parent.pcomponentLB yview"
 	    # Widgets for components that "failed"
-	    frame $top.fcomponentF
-	    label $top.fcomponentL -text "Fail"
-	    listbox $top.fcomponentLB -selectmode single -yscrollcommand "$top.fcomponentSB set"
-	    scrollbar $top.fcomponentSB -command "$top.fcomponentLB yview"
-	    grid $top.componentL - -sticky "nsew" -in $top.gridF$n
-	    grid $top.pcomponentL - -sticky "nsew" -in $top.pcomponentF
-	    grid $top.pcomponentLB $top.pcomponentSB -sticky "nsew" -in $top.pcomponentF
-	    grid columnconfigure $top.pcomponentF 0 -weight 1
-	    grid rowconfigure $top.pcomponentF 1 -weight 1
-	    grid $top.fcomponentL - -sticky "nsew" -in $top.fcomponentF
-	    grid $top.fcomponentLB $top.fcomponentSB -sticky "nsew" -in $top.fcomponentF
-	    grid columnconfigure $top.fcomponentF 0 -weight 1
-	    grid rowconfigure $top.fcomponentF 1 -weight 1
-	    grid $top.pcomponentF $top.fcomponentF -sticky "nsew" -in $top.gridF$n -padx 4 -pady 4
-	    grid columnconfigure $top.gridF$n 0 -weight 1
-	    grid columnconfigure $top.gridF$n 1 -weight 1
-	    grid rowconfigure $top.gridF$n 1 -weight 1
-	    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
-	    grid rowconfigure $top $n -weight 1
+	    frame $parent.fcomponentF
+	    label $parent.fcomponentL -text "Fail"
+	    listbox $parent.fcomponentLB -selectmode single -yscrollcommand "$parent.fcomponentSB set"
+	    scrollbar $parent.fcomponentSB -command "$parent.fcomponentLB yview"
+	    grid $parent.componentL - -sticky "nsew" -in $parent.gridF$n
+	    grid $parent.pcomponentL - -sticky "nsew" -in $parent.pcomponentF
+	    grid $parent.pcomponentLB $parent.pcomponentSB -sticky "nsew" -in $parent.pcomponentF
+	    grid columnconfigure $parent.pcomponentF 0 -weight 1
+	    grid rowconfigure $parent.pcomponentF 1 -weight 1
+	    grid $parent.fcomponentL - -sticky "nsew" -in $parent.fcomponentF
+	    grid $parent.fcomponentLB $parent.fcomponentSB -sticky "nsew" -in $parent.fcomponentF
+	    grid columnconfigure $parent.fcomponentF 0 -weight 1
+	    grid rowconfigure $parent.fcomponentF 1 -weight 1
+	    grid $parent.pcomponentF $parent.fcomponentF -sticky "nsew" -in $parent.gridF$n -padx 4 -pady 4
+	    grid columnconfigure $parent.gridF$n 0 -weight 1
+	    grid columnconfigure $parent.gridF$n 1 -weight 1
+	    grid rowconfigure $parent.gridF$n 1 -weight 1
+	    grid $parent.gridF$n -sticky "nsew" -padx 4 -pady 4
+	    grid rowconfigure $parent $n -weight 1
 
 	    incr n
-	    frame $top.gridF$n -relief groove -bd 2
+	    frame $parent.gridF$n -relief groove -bd 2
 	    #Colors
-	    label $top.colorL -text "Draw Colors"
+	    label $parent.colorL -text "Draw Colors"
 	    #Pass Color
-	    frame $top.pcolorF
-	    frame $top.pcolorFF -relief sunken -bd 2
-	    label $top.pcolorL -text "Pass" -anchor w
-	    entry $top.pcolorE -relief flat -width 12 -textvar muves_active($id,pass_color)
-	    menubutton $top.pcolorMB -relief raised -bd 2 \
-		    -menu $top.pcolorMB.m -indicatoron 1
+	    frame $parent.pcolorF
+	    frame $parent.pcolorFF -relief sunken -bd 2
+	    label $parent.pcolorL -text "Pass" -anchor w
+	    entry $parent.pcolorE -relief flat -width 12 -textvar muves_active($id,pass_color)
+	    menubutton $parent.pcolorMB -relief raised -bd 2 \
+		    -menu $parent.pcolorMB.m -indicatoron 1
 	    # Set menubutton color
-	    set_WidgetRGBColor $top.pcolorMB $muves_active($id,pass_color)
-	    menu $top.pcolorMB.m -tearoff 0
-	    $top.pcolorMB.m add command -label black\
+	    set_WidgetRGBColor $parent.pcolorMB $muves_active($id,pass_color)
+	    menu $parent.pcolorMB.m -tearoff 0
+	    $parent.pcolorMB.m add command -label black\
 		    -command "set  muves_active($id,pass_color) \"0 0 0\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label white\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label white\
 		    -command "set  muves_active($id,pass_color) \"255 255 255\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label red\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label red\
 		    -command "set  muves_active($id,pass_color) \"255 0 0\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label green\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label green\
 		    -command "set  muves_active($id,pass_color) \"0 255 0\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label blue\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label blue\
 		    -command "set  muves_active($id,pass_color) \"0 0 255\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label yellow\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label yellow\
 		    -command "set  muves_active($id,pass_color) \"255 255 0\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label cyan\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label cyan\
 		    -command "set  muves_active($id,pass_color) \"0 255 255\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add command -label magenta\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add command -label magenta\
 		    -command "set  muves_active($id,pass_color) \"255 0 255\"; \
-		    set_WidgetRGBColor $top.pcolorMB \$muves_active($id,pass_color)"
-	    $top.pcolorMB.m add separator
-	    $top.pcolorMB.m add command -label "Color Tool..."\
+		    set_WidgetRGBColor $parent.pcolorMB \$muves_active($id,pass_color)"
+	    $parent.pcolorMB.m add separator
+	    $parent.pcolorMB.m add command -label "Color Tool..."\
 		    -command "muves_choose_pcolor $id $top"
 	    #Fail Color
-	    frame $top.fcolorF
-	    frame $top.fcolorFF -relief sunken -bd 2
-	    label $top.fcolorL -text "Fail" -anchor w
-	    entry $top.fcolorE -relief flat -width 12 -textvar muves_active($id,fail_color)
-	    menubutton $top.fcolorMB -relief raised -bd 2 \
-		    -menu $top.fcolorMB.m -indicatoron 1
+	    frame $parent.fcolorF
+	    frame $parent.fcolorFF -relief sunken -bd 2
+	    label $parent.fcolorL -text "Fail" -anchor w
+	    entry $parent.fcolorE -relief flat -width 12 -textvar muves_active($id,fail_color)
+	    menubutton $parent.fcolorMB -relief raised -bd 2 \
+		    -menu $parent.fcolorMB.m -indicatoron 1
 	    # Set menubutton color
-	    set_WidgetRGBColor $top.fcolorMB $muves_active($id,fail_color)
-	    menu $top.fcolorMB.m -tearoff 0
-	    $top.fcolorMB.m add command -label black\
+	    set_WidgetRGBColor $parent.fcolorMB $muves_active($id,fail_color)
+	    menu $parent.fcolorMB.m -tearoff 0
+	    $parent.fcolorMB.m add command -label black\
 		    -command "set  muves_active($id,fail_color) \"0 0 0\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label white\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label white\
 		    -command "set  muves_active($id,fail_color) \"255 255 255\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label red\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label red\
 		    -command "set  muves_active($id,fail_color) \"255 0 0\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label green\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label green\
 		    -command "set  muves_active($id,fail_color) \"0 255 0\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label blue\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label blue\
 		    -command "set  muves_active($id,fail_color) \"0 0 255\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label yellow\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label yellow\
 		    -command "set  muves_active($id,fail_color) \"255 255 0\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label cyan\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label cyan\
 		    -command "set  muves_active($id,fail_color) \"0 255 255\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add command -label magenta\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add command -label magenta\
 		    -command "set  muves_active($id,fail_color) \"255 0 255\"; \
-		    set_WidgetRGBColor $top.fcolorMB \$muves_active($id,fail_color)"
-	    $top.fcolorMB.m add separator
-	    $top.fcolorMB.m add command -label "Color Tool..."\
+		    set_WidgetRGBColor $parent.fcolorMB \$muves_active($id,fail_color)"
+	    $parent.fcolorMB.m add separator
+	    $parent.fcolorMB.m add command -label "Color Tool..."\
 		    -command "muves_choose_fcolor $id $top"
-	    grid $top.pcolorL -sticky "ew" -in $top.pcolorF
-	    grid $top.pcolorE $top.pcolorMB -sticky "ew" -in $top.pcolorFF
-	    grid columnconfigure $top.pcolorFF 0 -weight 1
-	    grid $top.pcolorFF -sticky "ew" -in $top.pcolorF
-	    grid columnconfigure $top.pcolorF 0 -weight 1
-	    grid $top.fcolorL -sticky "ew" -in $top.fcolorF
-	    grid $top.fcolorE $top.fcolorMB -sticky "ew" -in $top.fcolorFF
-	    grid columnconfigure $top.fcolorFF 0 -weight 1
-	    grid $top.fcolorFF -sticky "ew" -in $top.fcolorF
-	    grid columnconfigure $top.fcolorF 0 -weight 1
-	    grid $top.colorL - - -sticky "ew" -in $top.gridF$n -padx 4 -pady 4
-	    grid $top.pcolorF x $top.fcolorF -sticky "ew" -in $top.gridF$n -padx 4 -pady 4
-	    grid columnconfigure $top.gridF$n 0 -weight 1
-	    grid columnconfigure $top.gridF$n 2 -weight 1
-	    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
+	    grid $parent.pcolorL -sticky "ew" -in $parent.pcolorF
+	    grid $parent.pcolorE $parent.pcolorMB -sticky "ew" -in $parent.pcolorFF
+	    grid columnconfigure $parent.pcolorFF 0 -weight 1
+	    grid $parent.pcolorFF -sticky "ew" -in $parent.pcolorF
+	    grid columnconfigure $parent.pcolorF 0 -weight 1
+	    grid $parent.fcolorL -sticky "ew" -in $parent.fcolorF
+	    grid $parent.fcolorE $parent.fcolorMB -sticky "ew" -in $parent.fcolorFF
+	    grid columnconfigure $parent.fcolorFF 0 -weight 1
+	    grid $parent.fcolorFF -sticky "ew" -in $parent.fcolorF
+	    grid columnconfigure $parent.fcolorF 0 -weight 1
+	    grid $parent.colorL - - -sticky "ew" -in $parent.gridF$n -padx 4 -pady 4
+	    grid $parent.pcolorF x $parent.fcolorF -sticky "ew" -in $parent.gridF$n -padx 4 -pady 4
+	    grid columnconfigure $parent.gridF$n 0 -weight 1
+	    grid columnconfigure $parent.gridF$n 2 -weight 1
+	    grid $parent.gridF$n -sticky "nsew" -padx 4 -pady 4
 
 	    #Buttons
 	    incr n
-	    frame $top.gridF$n
-	    button $top.pdrawB -relief raised -text "Draw Pass" \
+	    frame $parent.gridF$n
+	    button $parent.pdrawB -relief raised -text "Draw Pass" \
 		    -command "eval muves_cdraw \\\"\$muves_active($id,pass_color)\\\" \
-		    \[$top.pcomponentLB get 0 end\]"
-	    button $top.peraseB -relief raised -text "Erase Pass" \
-		    -command "eval muves_erase \[$top.pcomponentLB get 0 end\]"
-	    button $top.fdrawB -relief raised -text "Draw Fail" \
+		    \[$parent.pcomponentLB get 0 end\]"
+	    button $parent.peraseB -relief raised -text "Erase Pass" \
+		    -command "eval muves_erase \[$parent.pcomponentLB get 0 end\]"
+	    button $parent.fdrawB -relief raised -text "Draw Fail" \
 		    -command "eval muves_cdraw \\\"\$muves_active($id,fail_color)\\\" \
-		    \[$top.fcomponentLB get 0 end\]"
-	    button $top.feraseB -relief raised -text "Erase Fail" \
-		    -command "eval muves_erase \[$top.fcomponentLB get 0 end\]"
-	    button $top.dismissB -relief raised -text "Dismiss" \
+		    \[$parent.fcomponentLB get 0 end\]"
+	    button $parent.feraseB -relief raised -text "Erase Fail" \
+		    -command "eval muves_erase \[$parent.fcomponentLB get 0 end\]"
+	    button $parent.drawshotB -relief raised -text "Draw Shot" \
+		    -command "muves_draw_shot 0"
+	    button $parent.eraseshotB -relief raised -text "Erase Shot" \
+		    -command "muves_erase_shot 0"
+	    button $parent.zapB -relief raised -text "Zap" \
+		    -command "_mged_Z"
+	    button $parent.dismissB -relief raised -text "Dismiss" \
 		    -command "destroy $top"
-	    grid $top.pdrawB $top.peraseB x $top.fdrawB $top.feraseB $top.dismissB \
-		    -sticky "ew" -in $top.gridF$n
-	    grid columnconfigure $top.gridF$n 2 -weight 1
-	    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
+	    grid $parent.pdrawB $parent.peraseB x $parent.fdrawB $parent.feraseB \
+		    -sticky "ew" -in $parent.gridF$n
+	    grid $parent.drawshotB $parent.eraseshotB x $parent.zapB $parent.dismissB \
+		    -sticky "ew" -in $parent.gridF$n
+	    grid columnconfigure $parent.gridF$n 2 -weight 1
+	    grid $parent.gridF$n -sticky "nsew" -padx 4 -pady 4
 
-	    bind $top.val1E <Return> "muves_update_components $id $top"
-	    bind $top.val2E <Return> "muves_update_components $id $top"
+	    grid columnconfigure $parent 0 -weight 1
+
+	    bind $parent.val1E <Return> "muves_update_components $id $top"
+	    bind $parent.val2E <Return> "muves_update_components $id $top"
 	}
 	color_ramp {
-	    frame $top.gridF$n -relief groove -bd 2
-	    label $top.constraintL -text "Constraints"
-	    frame $top.vtypeF -relief flat -bd 2
-	    label $top.vtypeL -text "Val Type: "
-	    radiobutton $top.minRB -text "min" -anchor w \
+	    incr n
+	    frame $parent.gridF$n -relief groove -bd 2
+	    label $parent.constraintL -text "Constraints"
+	    frame $parent.vtypeF -relief flat -bd 2
+	    label $parent.vtypeL -text "Val Type: "
+	    radiobutton $parent.minRB -text "min" -anchor w \
 		    -value min -variable muves_active($id,pvt) \
 		    -command "muves_update_components $id $top"
-	    radiobutton $top.meanRB -text "mean" -anchor w \
+	    radiobutton $parent.meanRB -text "mean" -anchor w \
 		    -value mean -variable muves_active($id,pvt) \
 		    -command "muves_update_components $id $top"
-	    radiobutton $top.maxRB -text "max" -anchor w \
+	    radiobutton $parent.maxRB -text "max" -anchor w \
 		    -value max -variable muves_active($id,pvt) \
 		    -command "muves_update_components $id $top"
-	    menubutton $top.color_rampMB -textvariable muves_color_ramp($id,label) \
+	    menubutton $parent.color_rampMB -textvariable muves_color_ramp($id,label) \
 		    -relief raised -bd 2 -indicatoron 1\
-		    -menu $top.color_rampMB.m
-	    menu $top.color_rampMB.m -tearoff $mged_default(tearoff_menus)
-	    $top.color_rampMB.m add command -label $muves_color_ramp($id,0,label) \
+		    -menu $parent.color_rampMB.m
+	    menu $parent.color_rampMB.m -tearoff $mged_default(tearoff_menus)
+	    $parent.color_rampMB.m add command -label $muves_color_ramp($id,0,label) \
 		    -command "toggle_ramp $id $top 0"
-	    $top.color_rampMB.m add command -label $muves_color_ramp($id,1,label) \
+	    $parent.color_rampMB.m add command -label $muves_color_ramp($id,1,label) \
 		    -command "toggle_ramp $id $top 1"
+	    $parent.color_rampMB.m add command -label $muves_color_ramp($id,2,label) \
+		    -command "toggle_ramp $id $top 2"
+	    $parent.color_rampMB.m add command -label $muves_color_ramp($id,3,label) \
+		    -command "toggle_ramp $id $top 3"
 
-	    grid $top.constraintL -in $top.gridF$n -pady 4
-	    grid $top.vtypeL $top.minRB $top.meanRB $top.maxRB x -in $top.vtypeF -sticky nsew
-	    grid $top.vtypeF -in $top.gridF$n -sticky nsew -padx 4 -pady 4
-	    grid columnconfigure $top.vtypeF 4 -weight 1
-	    grid $top.color_rampMB -in $top.gridF$n -padx 4 -pady 4
-	    grid columnconfigure $top.gridF$n 0 -weight 1
-	    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
+	    grid $parent.constraintL -in $parent.gridF$n -pady 4
+	    grid $parent.vtypeL $parent.minRB $parent.meanRB $parent.maxRB x -in $parent.vtypeF -sticky nsew
+	    grid $parent.vtypeF -in $parent.gridF$n -sticky nsew -padx 4 -pady 4
+	    grid columnconfigure $parent.vtypeF 4 -weight 1
+	    grid $parent.color_rampMB -in $parent.gridF$n -padx 4 -pady 4
+	    grid columnconfigure $parent.gridF$n 0 -weight 1
+	    grid $parent.gridF$n -sticky "nsew" -padx 4 -pady 4
 
 	    #Buttons
 	    incr n
-	    frame $top.gridF$n
-	    button $top.drawB -relief raised -text "Draw" \
+	    frame $parent.gridF$n
+	    button $parent.drawB -relief raised -text "Draw Components" \
 		    -command "muves_ramp_draw $id"
-	    button $top.eraseB -relief raised -text "Erase" \
+	    button $parent.eraseB -relief raised -text "Erase Components" \
 		    -command "muves_ramp_erase $id"
-	    button $top.zapB -relief raised -text "Zap" \
+	    button $parent.drawshotB -relief raised -text "Draw Shot" \
+		    -command "muves_draw_shot 0"
+	    button $parent.eraseshotB -relief raised -text "Erase Shot" \
+		    -command "muves_erase_shot 0"
+	    button $parent.zapB -relief raised -text "Zap" \
 		    -command "_mged_Z"
-	    button $top.dismissB -relief raised -text "Dismiss" \
+	    button $parent.dismissB -relief raised -text "Dismiss" \
 		    -command "destroy $top"
-	    grid $top.drawB $top.eraseB x $top.zapB $top.dismissB -sticky "ew" -in $top.gridF$n
-	    grid columnconfigure $top.gridF$n 2 -weight 1
-	    grid $top.gridF$n -sticky "nsew" -padx 4 -pady 4
+	    grid $parent.drawB $parent.eraseB x x x -sticky "ew" -in $parent.gridF$n
+	    grid $parent.drawshotB $parent.eraseshotB x $parent.zapB $parent.dismissB \
+		    -sticky "ew" -in $parent.gridF$n
+	    grid columnconfigure $parent.gridF$n 2 -weight 1
+	    grid $parent.gridF$n -sticky "nsew" -padx 4 -pady 4
+
+	    grid columnconfigure $parent 0 -weight 1
 
 	    toggle_ramp $id $top $muves_color_ramp($id,ramp)
 	}
     }
+}
+
+proc muves_toggle_mode { id top row } {
+    global muves_active
+
+    switch $muves_active($id,mode) {
+	pass_fail {
+	    catch { grid forget $top.color_rampF }
+	    grid $top.pass_failF -row 1 -sticky nsew
+	    grid rowconfigure $top $row -weight 1
+	}
+	color_ramp {
+	    catch { grid forget $top.pass_failF }
+	    grid $top.color_rampF -row 1 -sticky nsew
+	    grid rowconfigure $top $row -weight 0
+	}
+    }
+
+    muves_update_components $id $top
 }
 
 proc toggle_ramp { id top ramp } {
@@ -383,33 +471,35 @@ proc muves_update_components { id top } {
     set muves_active($id,clabel) \
 	    "Components for [lindex $muves_states(names) $muves_active($id,sindex)]"
 
+    wm title $top [lindex $muves_states(names) $muves_active($id,sindex)]
+
+    # get the number of values in state vector "state"
+    set nval [lindex $muves_states(nval) $muves_active($id,sindex)]
+
+    # get the processed vector of type "type" for "shot_record" and "state"
+    set type $muves_active($id,pvt)
+    set svec [lindex $muves_states(SR:0,$type) $muves_active($id,sindex)]
+
+    # get the list of components for "state"
+    set sdef [lindex $muves_states(defs) $muves_active($id,sindex)]
+
     switch $muves_active($id,mode) {
 	pass_fail {
 	    # first delete any existing members
-	    $top.pcomponentLB delete 0 end
-	    $top.fcomponentLB delete 0 end
+	    $top.pass_failF.pcomponentLB delete 0 end
+	    $top.pass_failF.fcomponentLB delete 0 end
 
-	    set components [muves_get_components_in_range 0 $muves_active($id,sindex) \
-		    $muves_active($id,pvt) $muves_active($id,op1) $muves_active($id,op2) \
+	    set pf [muves_get_components_in_range $nval $svec $sdef \
+		    $muves_active($id,op1) $muves_active($id,op2) \
 		    $muves_active($id,cval1) $muves_active($id,cval2)]
 
 	    #load components that "passed"
-	    eval $top.pcomponentLB insert end [lindex $components 0]
+	    eval $top.pass_failF.pcomponentLB insert end [lindex [lindex $pf 0] 1]
 
 	    #load components that "failed"
-	    eval $top.fcomponentLB insert end [lindex $components 1]
+	    eval $top.pass_failF.fcomponentLB insert end [lindex [lindex $pf 1] 1]
 	}
 	color_ramp {
-	    # get the number of values in state vector "state"
-	    set nval [lindex $muves_states(nval) $muves_active($id,sindex)]
-
-	    # get the processed vector of type "type" for "shot_record" and "state"
-	    set type $muves_active($id,pvt)
-	    set svec [lindex $muves_states(SR:0,$type) $muves_active($id,sindex)]
-
-	    # get the list of components for "state"
-	    set sdef [lindex $muves_states(defs) $muves_active($id,sindex)]
-
 	    set ramp $muves_color_ramp($id,ramp)
 	    set n $muves_color_ramp($id,$ramp,num)
 	    if [info exists muves_color_ramp($id,$ramp,components)] {
@@ -421,9 +511,21 @@ proc muves_update_components { id top } {
 		set lval [lindex $rval 0]
 		set uval [lindex $rval 1]
 
-		lappend muves_color_ramp($id,$ramp,components) \
-			[muves_get_components_in_range2 $nval $svec $sdef \
-			<= <= $lval $uval]
+		if {$nval > 0} {
+# pf is a pass/fail list with the following form:
+# { { {pv1 pv2 ... pvn} {pc1 pc2 ... pcn} } { {fv1 fv2 ... fvn} {fc1 fc2 ... fcn} } }
+# pv - pass value           pc - pass component
+# fv - fail value           fc - fail component
+		    set pf [muves_get_components_in_range $nval $svec $sdef <= <= $lval $uval]
+		    lappend muves_color_ramp($id,$ramp,components) [lindex [lindex $pf 0] 1]
+
+		    # assign leftovers to svec and sdef
+		    set svec [lindex [lindex $pf 1] 0]
+		    set sdef [lindex [lindex $pf 1] 1]
+		    set nval [llength $svec]
+		} else {
+		    lappend muves_color_ramp($id,$ramp,components) {}
+		}
 	    }
 	}
     }
@@ -473,10 +575,18 @@ proc muves_fcolor_ok { id parent w } {
     unset data
 }
 
-proc muves_data_init { rm_file fr_file } {
+proc muves_states_init { rm_file fr_file } {
     muves_read_region_map $rm_file
     muves_read_final_results $fr_file
     muves_process_shot_records
+}
+
+proc muves_states_initp { rm_file fr_file pfr_file } {
+    global muves_states
+
+    muves_read_region_map $rm_file
+    muves_read_final_results $fr_file
+    source $pfr_file
 }
 
 proc muves_read_region_map { rm_file } {
@@ -637,6 +747,7 @@ proc muves_read_final_results { fr_file } {
     }
 
     close $fr_file_cid
+    muves_create_shot 0
 }
 
 proc muves_ramp_draw { id } {
@@ -721,7 +832,36 @@ proc muves_to_rid { args } {
 }
 
 proc muves_to_mged { args } {
-    eval whichid -s [eval muves_to_rid $args]
+    set ids [eval muves_to_rid $args]
+    set n [llength  $ids]
+    set region_ids {}
+    set air_ids {}
+
+    for { set i 0 } { $i < $n } { incr i } {
+	set id [lindex $ids $i]
+	regexp "\(-?\[0-9\]+\)(\[:-\]\(-?\[0-9\]+\))?" $id match id1 sub1 id2
+
+	if { $id1 > 0 } {
+	    lappend region_ids $id
+	} else {
+	    if { $sub1 == {} } {
+		lappend air_ids [expr -1 * $id1]
+	    } else {
+		lappend air_ids "[expr -1 * $id1]:[expr -1 * $id2]"
+	    }
+	}
+    }
+
+    set mged_objects {}
+    if { $region_ids != {} } {
+	set mged_objects [eval whichid -s $region_ids]
+    }
+
+    if { $air_ids != {} } {
+	set mged_objects [concat $mged_objects [eval whichair -s $air_ids]]
+    }
+
+    return $mged_objects
 }
 
 ## muves_process_shot_records
@@ -835,8 +975,8 @@ proc muves_process_shot_records {} {
 ## muves_get_components_in_range
 #
 # Returns a list of two sublists of muves components. The first sublist
-# contains components that passed while the second contains components
-# that failed.
+# contains the values and components that passed while the second contains
+# the values and components that failed.
 # op1, op2, val1 and val2 are evaluated to determine if the value in
 # question passes.
 # For example, assume the parameters have the following values:
@@ -849,20 +989,17 @@ proc muves_process_shot_records {} {
 # member of the processed vector of interest. So, in English, this passes if VAL
 # is greater than 0.0 and less than or equal to 1.0.
 #
-proc muves_get_components_in_range { shot_record state type op1 op2 val1 val2 } {
+proc muves_get_components_in_range { nval svec sdef op1 op2 val1 val2 } {
     global muves_states
 
-    # get the number of values in state vector "state"
-    set nval [lindex $muves_states(nval) $state]
+    if { ![muves_check_val $val1] || ![muves_check_val $val2] } {
+	return { {} {} }
+    }
 
-    # get the processed vector of type "type" for "shot_record" and "state"
-    set svec [lindex $muves_states(SR:$shot_record,$type) $state]
-
-    # get the list of components for "state"
-    set sdef [lindex $muves_states(defs) $state]
-
-    set pass {}
-    set fail {}
+    set pass_comp {}
+    set pass_val {}
+    set fail_comp {}
+    set fail_val {}
 
     # For each value "i" in state vector "state"
     for { set i 0 } { $i < $nval } { incr i } {
@@ -870,37 +1007,84 @@ proc muves_get_components_in_range { shot_record state type op1 op2 val1 val2 } 
 	if [expr $val1 $op1 $tval] {
 	    if [expr $tval $op2 $val2] {
 		# this components value is in range so add to list
-		lappend pass [lindex $sdef $i]
+		lappend pass_comp [lindex $sdef $i]
+		lappend pass_val $tval
 	    } else {
-		lappend fail [lindex $sdef $i]
+		lappend fail_comp [lindex $sdef $i]
+		lappend fail_val $tval
 	    }
 	} else {
-	    lappend fail [lindex $sdef $i]
+	    lappend fail_comp [lindex $sdef $i]
+	    lappend fail_val $tval
 	}
     }
 
-    set components [list $pass $fail]
-
-    return $components
+    return [list [list $pass_val $pass_comp] [list $fail_val $fail_comp]]
 }
 
-proc muves_get_components_in_range2 { nval svec sdef op1 op2 val1 val2 } {
-    global muves_states
+proc muves_check_val { val } {
+    set result [regexp "\[0-9\]+(\\.\[0-9\]+)?" $val match]
 
-    set pass {}
-
-    # For each value "i" in state vector "state"
-    for { set i 0 } { $i < $nval } { incr i } {
-	set tval [lindex $svec $i]
-	if [expr $val1 $op1 $tval] {
-	    if [expr $tval $op2 $val2] {
-		# this components value is in range so add to list
-		lappend pass [lindex $sdef $i]
-	    }
-	}
+    if { $result == 1 && $val == $match } {
+	return 1
     }
 
-    return $pass
+    return 0
+}
+
+proc muves_draw_shot { shot } {
+    vdraw open shot$shot
+    vdraw send
+}
+
+proc muves_erase_shot { shot } {
+    catch { d _VDRWshot$shot }
+}
+
+proc muves_create_shot { shot } {
+    global muves_shot_records
+    global M_PI_2
+
+    set move 0
+    set draw 1
+
+    set point1 [lrange $muves_shot_records(AP:$shot) 0 2]
+    set dir [lrange $muves_shot_records(AP:$shot) 3 5]
+    set dist [vscale $dir 10000]
+    set point2 [vadd2 $point1 $dist]
+
+    # make arrow
+    set dist [vscale $dir 400]
+    set tmp_pt [vsub2 $point2 $dist]
+    set perp [mat_vec_perp $dir]
+    set perp_dist [vscale $perp 100]
+    set point3 [vadd2 $tmp_pt $perp_dist]
+    set point4 [vsub2 $tmp_pt $perp_dist]
+    set mat [mat_arb_rot $point1 $dir $M_PI_2]
+    set point5 [mat4x3pnt $mat $point3]
+    set point6 [mat4x3pnt $mat $point4]
+
+    vdraw open shot$shot
+    eval vdraw write 0 $move $point1
+    eval vdraw write next $draw $point2
+    eval vdraw write next $draw $point3
+    eval vdraw write next $move $point2
+    eval vdraw write next $draw $point4
+    eval vdraw write next $move $point2
+    eval vdraw write next $draw $point5
+    eval vdraw write next $move $point2
+    eval vdraw write next $draw $point6
+    eval vdraw write next $draw $point4
+    eval vdraw write next $draw $point5
+    eval vdraw write next $draw $point3
+    eval vdraw write next $draw $point6
+}
+
+proc muves_destroy_shot { shot } {
+    muves_erase_shot $shot
+
+    vdraw open shot$shot
+    vdraw delete all
 }
 
 ## get_bits_from_hex
