@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:46:04  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:57  dpk
  * Added distinctive RCS header
  * 
@@ -247,8 +250,8 @@ char	*prompt;
 {
 	char	response[132],
 		*cp,
-		*begin,
-		c;
+		*begin;
+	int	c;	/* DAG -- was char */
 	int	minmatch,
 		command,
 		i,
