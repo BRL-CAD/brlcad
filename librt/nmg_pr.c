@@ -409,7 +409,6 @@ char *h;
 {
 	CONST struct loopuse *lu;
 	struct face *f;
-	struct face_g_plane *fg;
 
 	MKPAD(h);
 	NMG_CK_FACEUSE(fu);
