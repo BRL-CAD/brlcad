@@ -2019,7 +2019,8 @@ rt_arb_edit(Tcl_Interp			*interp,
     int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
     short *edptr;		/* pointer to arb edit array */
     short *final;		/* location of points to redo */
-    int i, *iptr;
+    int i;
+    const int *iptr;
     int edit_class = RT_ARB_EDIT_EDGE;
 
     RT_ARB_CK_MAGIC(arb);
