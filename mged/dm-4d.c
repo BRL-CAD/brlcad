@@ -1,25 +1,14 @@
 /*
- *			D M - I R I S . C
+ *			D M - 4 D . C
  *
- *  Uses library -lgl2
+ *  This version for the SGI 4-D Iris, both regular and GT versions.
  *
- *  NON-displaylist version.
- *
- *  MGED display manager for the IRIS.
- *  Based on dm-mer.c
- *
- *  Display structure -
- *	ROOT LIST = { wrld }
- *	wrld = { face, Mvie, Medi }
- *	face = { faceplate stuff, 2d lines and text }
- *	Mvie = { model2view matrix, view }
- *	view = { (all non-edit solids) }
- *	Medi = { model2objview matrix, edit }
- *	edit = { (all edit solids) }
+ *  Uses library -lgl
  *
  *  Authors -
- *	Michael John Muuss
  *	Paul R. Stay
+ *	Michael John Muuss
+ *	Robert J. Reschly
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -27,10 +16,8 @@
  *	Aberdeen Proving Ground, Maryland  21005
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
+ *	This software is Copyright (C) 1988 by the United States Army.
  *	All rights reserved.
- *
- *  Now with BUTTONS and KNOBS! - Ron Natalie, BRL,  3 Oct, 1986
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -50,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
-#include <gl/immed.h>
 
 /* Display Manager package interface */
 
@@ -67,10 +53,6 @@ int	Ir_object();
 unsigned Ir_cvtvecs(), Ir_load();
 void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
-
-
-#define	IR_BUTTONS	32
-#define	IR_KNOBS	8
 
 
 static char ir_title[] = "BRL MGED";
@@ -338,7 +320,12 @@ Ir_normal()
 {
 	color(BLACK);
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
+#ifdef never
+	/* Doing this here affects the redraw speed, due to the
+	 * slow serial line running out to the keyboard!
+	 */
 	kblights();
+#endif
 }
 
 /*
@@ -354,7 +341,6 @@ Ir_epilog()
 	Ir_2d_line( 0, 0, 0, 0, 0 );
 	/* End of faceplate */
 
-	gflush();
 	swapbuffers();
 
 	ir_buffer = (ir_buffer==0)?1:0;
@@ -372,8 +358,6 @@ void
 Ir_newrot(mat)
 mat_t mat;
 {
-	im_setup;
-	
 }
 
 /*
@@ -392,8 +376,12 @@ register fastf_t *m;
 double ratio;
 {
 	register struct vlist *vp;
-	im_setup;
 	register int nvec;
+	register float gtvec[3];
+	register fastf_t *mptr;
+	Matrix gtmat;
+	int first;
+	int i,j;	
 	mat_t	mtmp, newm;
 
 	/* This section has the potential of being speed up since a new
@@ -409,30 +397,13 @@ double ratio;
 		m = newm;
 	}
 
-	im_dirty_matrixstack;
-	GEWAIT;
-	
-	im_outshort(GEloadmm);
+	mptr = m;
+	for(i= 0; i < 4; i++)
+	for(j= 0; j < 4; j++)
+		gtmat[j][i] = *(mptr++);
 
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	GEWAIT;
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	GEWAIT;
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	GEWAIT;
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_outfloat( *m++);
-	im_last_outfloat( *m++);
+	loadmatrix( gtmat );
+
 
 	/*
 	 * IMPORTANT DEPTHCUEING NOTE:  The IRIS screen +Z points in
@@ -446,14 +417,8 @@ double ratio;
 	 * highlight mode uses the *next* to the brightest entry --
 	 * otherwise it can (and does) fall off the shading ramp.
 	 */
-	
-
 	if (sp->s_soldash)
-	{
-		GEWAIT;
-		im_passcmd(2, FBClinestyle);
-		im_last_outshort( 0xCF33 );
-	}
+		setlinestyle( 1 );		/* set dot-dash */
 
 	if( white || sp->s_materp == (char *)0 ) {
 		ovec = nvec = map_entry(DM_WHITE);
@@ -473,29 +438,39 @@ double ratio;
 		  }
 	}
 
-	im_color( nvec );
+	color( nvec );
 
+#ifdef SGI4D_GT
+	first = 1;
 	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
 		if( vp->vl_draw == 0 )  {
 			/* Move, not draw */
-			im_outshort( GEmove | GEPA_3F );
-		}  else  {
-			/* draw */
-			im_outshort( GEdraw | GEPA_3F );
+			if ( first )
+				first = 0;
+			else
+				endline();
+			bgnline();
 		}
-		im_out3F( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
-
+		mptr = &(vp->vl_pnt[0]);
+		gtvec[0] = *mptr;
+		gtvec[1] = *(mptr+1);
+		gtvec[2] = *(mptr+2); 
+		v3f( gtvec ); 
 	}
-
-	GEWAIT;
+	endline();
+#else
+	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+		/* Viewing region is from -1.0 to +1.0 */
+		if( vp->vl_draw == 0 )
+			move( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
+		else
+			draw( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
+	}
+#endif
 
 	if (sp->s_soldash)
-	{
-		GEWAIT;
-		im_passcmd(2, FBClinestyle);
-		im_last_outshort( 0xFFFF );
-	}
+		setlinestyle(0);		/* restore solid lines */
 
 	return(1);	/* OK */
 }
@@ -509,7 +484,6 @@ double ratio;
 void
 Ir_update()
 {
-	gflush();		/* Flush any pending output */
 	if( !dmaflag )
 		return;
 }
@@ -523,20 +497,11 @@ Ir_update()
 void
 Ir_puts( str, x, y, size, colour )
 register char *str;
+int x,y,size, colour;
 {
-	im_setup;
-
-	/*
-	 * HACK ALERT!  The following is a quick first attempt at turning
-	 * off all text except vertices in the small graphics window.
-	 */
-	if( (big_txt == 0) || ((strlen(str) == 1) && (colour == DM_WHITE))) {
-		im_cmov2( GED2IRIS(x), GED2IRIS(y));
-
-		im_color( map_entry(colour) );
-
-		charstr( str );
-	}
+	cmov2( GED2IRIS(x), GED2IRIS(y));
+	color( map_entry(colour) );
+	charstr( str );
 }
 
 /*
@@ -549,28 +514,22 @@ int x1, y1;
 int x2, y2;
 int dashed;
 {
-	im_setup;
 	register int nvec;
 	if((nvec = map_entry(DM_YELLOW)) != ovec) {
 	  	if(cueing_on) shaderange(nvec, nvec, 0, 768);
 	  	ovec = nvec;
 	}
 	
-	im_color( nvec );
+	color( nvec );
 
-	if( dashed )  {
-		GEWAIT;
-		im_passcmd(2, FBClinestyle);
-		im_last_outshort( 0xFFFF );
-	}
-	im_move2( GED2IRIS(x1), GED2IRIS(y1));
-	im_draw2( GED2IRIS(x2), GED2IRIS(y2));
+	if( dashed )
+		setlinestyle(1);	/* into dot-dash */
 
-	if( dashed )  {
-		GEWAIT;
-		im_passcmd(2, FBClinestyle);
-		im_last_outshort( 0xFFFF );
-	}
+	move2( GED2IRIS(x1), GED2IRIS(y1));
+	draw2( GED2IRIS(x2), GED2IRIS(y2));
+
+	if( dashed )
+		setlinestyle(0);	/* restore to solid */
 }
 
 /*
@@ -1206,14 +1165,12 @@ kblights()
 {
 	char	lights;
 
-#ifdef never
 	lights = (cueing_on)
 		| (zclipping_on << 1)
 		| (perspective_on << 2);
 
 	lampon(lights);
 	lampoff(lights^0xf);
-#endif
 }
 
 /*
@@ -1242,3 +1199,10 @@ fastf_t	fovy, aspect, near, far, backoff;
 	tran[11] = -backoff;
 	mat_mul( m, m2, tran );
 }
+
+#ifndef SGI4D_Rel2
+/* Fakeouts so that we don't have to link with -lmpc */
+usinit()	{ printf("usinit\n"); }
+usnewlock()	{ printf("usnewlock\n"); }
+taskcreate()	{ printf("taskcreate\n"); }
+#endif
