@@ -392,7 +392,8 @@ double	r1, r2;
 	rec.s.s_type = TOR;
 	NAMEMOVE(name,rec.s.s_name);
 
-	if( r1 <= 0 || r2 <= 0 || r1 < r2 )  {
+	/* Validate that 0 < r2 <= r1 */
+	if( r2 <= 0.0 || r2 > r1 )  {
 		fprintf(stderr, "mk_tor(%s):  illegal r1=%g, r2=%g\n",
 			name, r1, r2);
 		return(-1);
