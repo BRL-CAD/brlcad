@@ -186,7 +186,7 @@ static struct funtab funtab[] = {
 	f_extrude,3,3,
 "facedef", "####", "define new face for an arb",
 	f_facedef, 2, MAXARGS,
-"facetize", "new_obj old_obj(s)", "convert objects to faceted NMG objects at current tol",
+"facetize", "[-t] [-P#] new_obj old_obj(s)", "convert objects to faceted NMG objects at current tol",
 	f_facetize, 3, MAXARGS,
 "find", "<objects>", "find all references to objects",
 	f_find, 1, MAXARGS,

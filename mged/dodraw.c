@@ -999,6 +999,7 @@ char	**argv;
 	int			i;
 	register int		c;
 	int			ncpu;
+	int			triangulate;
 	char			*newname;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
@@ -1022,13 +1023,17 @@ char	**argv;
 
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
+	triangulate = 0;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"P:")) != EOF )  {
+	while( (c=getopt(argc,argv,"tP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
 			ncpu = atoi(optarg);
+			break;
+		case 't':
+			triangulate = 1;
 			break;
 		default:
 			printf("option '%c' unknown\n", c);
@@ -1079,10 +1084,17 @@ char	**argv;
 	/* New region remains part of this nmg "model" */
 	NMG_CK_REGION( r );
 
-	rt_log("facetize:  converting NMG to database format\n");
-
 	/* Free boolean tree */
 	db_free_tree( mged_facetize_tree );
+
+	/* Triangulate model, if requested */
+	if( triangulate )
+	{
+		rt_log("facetize:  triangulating resulting object\n" );
+		nmg_triangulate_model( mged_nmg_model , &mged_tol );
+	}
+
+	rt_log("facetize:  converting NMG to database format\n");
 
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
