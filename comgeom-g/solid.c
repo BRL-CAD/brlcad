@@ -23,17 +23,15 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "./ged_types.h"
-#include "./3d.h"
-
-#define VADD2SCALE( o, a, b, s )	o[X] = ((a)[X] + (b)[X]) * (s); \
-					o[Y] = ((a)[Y] + (b)[Y]) * (s); \
-					o[Z] = ((a)[Z] + (b)[Z]) * (s);
+#include "machine.h"
+#include "vmath.h"
+#include "db.h"
 
 extern FILE	*outfp;
 extern int	version;
 
-extern int sol_total, sol_work;
+extern double	getdouble();
+extern int	sol_total, sol_work;
 
 #define PI	3.14159265358979323846264	/* Approx */
 
@@ -43,29 +41,6 @@ struct scard {
 	char	sc_fields[6][10];
 	char	sc_remark[16];
 } scard;
-
-int ncards[] =  {
-	0,
-	1,	/* RPP */
-	2,
-	2,
-	2,
-	3,
-	3,
-	4,
-	4,	/* ARB8 */
-	2,	/* ELL */
-	2,	/* ELL1 */
-	1,	/* SPH */
-	2,	/* RCC */
-	2,	/* REC */
-	2,	/* TRC */
-	3,	/* TEC */
-	2,	/* TOR */
-	3,	/* TGC */
-	0,	/* GENTGC, 18 */
-	2,	/* ELLG, 19 */
-};
 
 /*
  * Table to map names of solids into internal numbers.
@@ -160,23 +135,10 @@ register char	*cp;
  */
 getsolid()
 {
-	register struct solids *solidp;
-	static int i,j,n,jj,m,mx;
-	static float *fp;
-	int cd,cds,M,N,Nb_strcx,Nb_strsl,nst,structn,rmcx,cdcx;
-	static char nbuf[6];
-	static float xmax, ymax, zmax;
-	static float xmin, ymin, zmin;
-	static float ibuf[10];
-	static float jbuf[10];
-	struct ars_rec *arsap;
-	union record *b;
 	char	cur_solid_num[16];
 	char	solid_type[16];
 	int	cur_type;
-	union record	rec;
-
-	solidp = &rec.s;
+	int	i;
 
 	if( sol_work == sol_total )	/* processed all solids */
 		return( 0 );
@@ -213,28 +175,30 @@ getsolid()
 	}
 
 	if( cur_type == ARS){
+		static int j,n,jj,m,mx;
+		static float *fp;
+		int cd,cds,M,N,Nb_strcx,Nb_strsl,nst,structn,rmcx,cdcx;
+		static char nbuf[6];
+		static float ibuf[10];
+		static float jbuf[10];
+		struct ars_rec *arsap;
+		union record *b;
+		union record	rec;
+
+
 		/*
 		 * PROCESS ARS SOLID
 		 */
-		arsap = (struct ars_rec *) solidp;
-		arsap->a_id = ARS_A;
-		arsap -> a_type = ARS;
-		namecvt( sol_work, arsap -> a_name, 's');
+		arsap = &rec.a;
+		arsap->a_id = ID_ARS_A;
+		arsap->a_type = ARS;
+		namecvt( sol_work, arsap->a_name, 's');
 		col_pr( arsap->a_name );
 
-		/*  init  max and min values */
-		xmax = ymax = zmax = -10000.0;
-		xmin = ymin = zmin = 10000.0;
-		/* read   N  M values    ->     convert ASCII to integer  */
-		nbuf[10] = '\0';
-		for (i=0; i<10; i++)
-			nbuf[i]=scard.sc_fields[0][i];
-
-		M = atoi(nbuf);
-		arsap -> a_m = M;
-		for(i=0; i<10; i++)
-			nbuf[i]=scard.sc_fields[1][i];
-		N=atoi(nbuf);
+		/* M is # of curves, N is # of points per curve */
+		M = getint( scard, 10, 10 );
+		N = getint( scard, 20, 10 );
+		arsap->a_m = M;
 		arsap->a_n = N;
 
 		/*
@@ -301,7 +265,7 @@ getsolid()
 				if((j=(n % 4)) == 1)  {
 					structn++;   /* increment granule number   */
 					nst++;    /*increment structure number */
-					b[nst].b.b_id = ARS_B;
+					b[nst].b.b_id = ID_ARS_B;
 					b[nst].b.b_type = ARSCONT;
 					b[nst].b.b_n = m;  /*  save cross section number  */
 					b[nst].b.b_ngranule = structn;  /* save granule number  */
@@ -349,32 +313,6 @@ getsolid()
 
 				}
 			}
-
-			/* calculate  min and max values associated with ARS data points */
-			/*   save in A type structure */
-			for(j=0; j < Nb_strsl; j++)   {
-				for(i=0; i<8; i++){
-					if(b[j].b.b_values[i*3] > xmax)
-						xmax = b[j].b.b_values[i*3];
-					else if(b[j].b.b_values[i*3] < xmin)
-						xmin = b[j].b.b_values[i*3];
-					else if(b[j].b.b_values[(i*3)+1] > ymax )
-						ymax = b[j].b.b_values[(i*3)+1];
-					else if(b[j].b.b_values[(i*3)+1] < ymin)
-						ymin = b[j].b.b_values[(i*3)+1];
-					else if(b[j].b.b_values[(i*3)+2] > zmax)
-						zmax = b[j].b.b_values[(i*3)+2];
-					else if(b[j].b.b_values[(i*3)+2] < zmin)
-						zmin = b[j].b.b_values[(i*3)+2];
-				}
-			}
-			/* save max's and min in atype structure */
-			arsap->a_xmax=xmax;
-			arsap->a_xmin=xmin;
-			arsap->a_ymax=ymax;
-			arsap->a_ymin=ymin;
-			arsap->a_zmax=zmax;
-			arsap->a_zmin=zmin;
 		}
 
 		/*    subtract base vector from  each vector in description */
@@ -426,7 +364,9 @@ int	solid_num;
 	int	cd;
 	double	*fp;
 	int	i;
+	int	j;
 
+	fp = dp;
 	for( cd=1; num > 0; cd++ )  {
 		if( cd != 1 )  {
 			if( getline( &scard, sizeof(scard), "solid continuation card" ) == EOF )  {
@@ -445,15 +385,15 @@ int	solid_num;
 			}
 		}
 
-		fp = &dp[cd*6-1];
-		if( num <= 6 )
-			i = num-1;
+		if( num < 6 )
+			j = num;
 		else
-			i = 5;
-		for(; i>=0; i--,num--)   {
-			scard.sc_fields[i][10] = '\0';	/* null OFF END */
-			*fp-- = atof( scard.sc_fields[i] );
+			j = 6;
+
+		for( i=0; i<j; i++ )  {
+			*fp++ = getdouble( &scard, 10+i*10, 10 );
 		}
+		num -= j;
 	}
 	return(0);
 }
@@ -462,6 +402,7 @@ int	solid_num;
  *			C O N V E R T
  *
  *  This routine is expected to write the records out itself.
+ *  The first card has already been read into 'scard'.
  */
 convert( cur_type, sol_num, solid_type )
 int	cur_type;
@@ -477,17 +418,16 @@ char	*solid_type;
 	double	tmp[3*8];	/* 8 vectors of 3 nums each */
 
 	namecvt( sol_num, name, 's' );
+	col_pr( name );
 
 #define D(_i)	(&(dd[_i*3]))
 #define T(_i)	(&(tmp[_i*3]))
-	if( getsoldata( dd, ncards[cur_type]*6, sol_num ) < 0 )
-		return(-1);
-
-	col_pr( name );
 
 	switch( cur_type )  {
 
 	case RPP:
+		if( getsoldata( dd, 2*3, sol_num ) < 0 )
+			return(-1);
 		{
 			double	min[3], max[3];
 
@@ -497,6 +437,8 @@ char	*solid_type;
 		}
 
 	case BOX:
+		if( getsoldata( dd, 4*3, sol_num ) < 0 )
+			return(-1);
 		VMOVE( T(0), D(0) );
 		VADD2( T(1), D(0), D(2) );
 		VADD3( T(2), D(0), D(2), D(1) );
@@ -509,6 +451,8 @@ char	*solid_type;
 		return( mk_arb8( outfp, name, tmp ) );
 
 	case RAW:
+		if( getsoldata( dd, 4*3, sol_num ) < 0 )
+			return(-1);
 		VMOVE( T(0), D(0) );
 		VADD2( T(1), D(0), D(2) );
 		VMOVE( T(2), T(1) );
@@ -521,13 +465,19 @@ char	*solid_type;
 		return( mk_arb8( outfp, name, tmp ) );
 
 	case ARB8:
+		if( getsoldata( dd, 8*3, sol_num ) < 0 )
+			return(-1);
 		return( mk_arb8( outfp, name, dd ) );
 
 	case ARB7:
+		if( getsoldata( dd, 7*3, sol_num ) < 0 )
+			return(-1);
 		VMOVE( D(7), D(4) );
 		return( mk_arb8( outfp, name, dd ) );
 
 	case ARB6:
+		if( getsoldata( dd, 6*3, sol_num ) < 0 )
+			return(-1);
 		/* Note that the ordering is important, as data is in D(4), D(5) */
 		VMOVE( D(7), D(5) );
 		VMOVE( D(6), D(5) );
@@ -535,27 +485,41 @@ char	*solid_type;
 		return( mk_arb8( outfp, name, dd ) );
 
 	case ARB5:
+		if( getsoldata( dd, 5*3, sol_num ) < 0 )
+			return(-1);
 		VMOVE( D(5), D(4) );
 		VMOVE( D(6), D(4) );
 		VMOVE( D(7), D(4) );
 		return( mk_arb8( outfp, name, dd ) );
 
 	case ARB4:
+		if( getsoldata( dd, 4*3, sol_num ) < 0 )
+			return(-1);
 		return( mk_arb4( outfp, name, dd ) );
 
 	case RCC:
+		/* V, H, r */
+		if( getsoldata( dd, 2*3+1, sol_num ) < 0 )
+			return(-1);
 		return( mk_rcc( outfp, name, D(0), D(1), dd[6] ) );
 
 	case REC:
-		/* base height, a, b, c, d */
+		/* V, H, A, B */
+		if( getsoldata( dd, 4*3, sol_num ) < 0 )
+			return(-1);
 		return( mk_tgc( outfp, name, D(0), D(1),
 			D(2), D(3), D(2), D(3) ) );
 
 	case TRC:
+		/* V, H, r1, r2 */
+		if( getsoldata( dd, 2*3+2, sol_num ) < 0 )
+			return(-1);
 		return( mk_trc( outfp, name, D(0), D(1), dd[6], dd[7] ) );
 
 	case TEC:
 		/* V, H, A, B, p */
+		if( getsoldata( dd, 4*3+1, sol_num ) < 0 )
+			return(-1);
 		r1 = 1.0/dd[12];	/* P */
 		VSCALE( D(4), D(2), r1 );
 		VSCALE( D(5), D(3), r1 );
@@ -564,6 +528,8 @@ char	*solid_type;
 
 	case TGC:
 		/* V, H, A, B, r1, r2 */
+		if( getsoldata( dd, 4*3+2, sol_num ) < 0 )
+			return(-1);
 		r1 = dd[12] / MAGNITUDE( D(2) );	/* A/|A| * C */
 		r2 = dd[13] / MAGNITUDE( D(3) );	/* B/|B| * D */
 		VSCALE( D(4), D(2), r1 );
@@ -573,17 +539,22 @@ char	*solid_type;
 
 	case SPH:
 		/* V, radius */
+		if( getsoldata( dd, 1*3+2, sol_num ) < 0 )
+			return(-1);
 		return( mk_sph( outfp, name, D(0), dd[3] ) );
 
 	case ELL:
 		if( version == 4 )  {
 			vect_t	v;
+
 			/*
 			 * For simplicity, we convert ELL to ELL1, then
 			 * fall through to ELL1 code.
 			 * Format of ELL is F1, F2, len
 			 * ELL1 format is V, A, r
 			 */
+			if( getsoldata( dd, 2*3+1, sol_num ) < 0 )
+				return(-1);
 			VADD2SCALE( v, D(0), D(1), 0.5 ); /* V is midpoint */
 
 			VSUB2( work, D(1), D(0) );	/* work holds F2 -  F1 */
@@ -594,15 +565,19 @@ char	*solid_type;
 			dd[6] = sqrt( MAGSQ( D(1) ) -
 				(m1 * 0.5)*(m1 * 0.5) );	/* r */
 			VMOVE( D(0), v );
+			goto ellcom;
 		} else {
 			/* NO ELL's in gift5  -  fall through to ELL1 */
 		}
-		/* fall through */
+		/* Fall through */
 
 	case ELL1:		/* GIFT4 name */
 	case GENELL:		/* GIFT5 name */
 		/* V, A, r */
+		if( getsoldata( dd, 2*3+1, sol_num ) < 0 )
+			return(-1);
 
+ellcom:
 		r1 = dd[6];		/* R */
 		VMOVE( work, D(0) );
 		work[0] += PI;
@@ -621,6 +596,8 @@ char	*solid_type;
 
 	case TOR:
 		/* V, N, r1, r2 */
+		if( getsoldata( dd, 2*3+2, sol_num ) < 0 )
+			return(-1);
 		return( mk_tor( outfp, name, D(0), D(1), dd[6], dd[7] ) );
 	}
 
