@@ -175,35 +175,6 @@ MGED_EXTERN(void memfree, (struct mem_map **pp, unsigned size, unsigned long add
 MGED_EXTERN(void mempurge, (struct mem_map **pp) );
 MGED_EXTERN(void memprint, (struct mem_map **pp) );
 
-/* The matrix math routines */
-MGED_EXTERN(double mat_atan2, (double y, double x) );
-MGED_EXTERN(void mat_zero, (mat_t m) );
-MGED_EXTERN(void mat_idn, (mat_t m) );
-MGED_EXTERN(void mat_copy, (mat_t dest, mat_t src) );
-MGED_EXTERN(void mat_mul, (mat_t dest, mat_t a, mat_t b) );
-MGED_EXTERN(void matXvec, (vect_t dest, mat_t m, vect_t src) );
-MGED_EXTERN(void mat_inv, (mat_t dest, mat_t src) );
-/* XXX these two need mat_ on their names */
-MGED_EXTERN(void vtoh_move, (hvect_t dest, vect_t src) );
-MGED_EXTERN(void htov_move, (vect_t dest, hvect_t src) );
-MGED_EXTERN(void mat_print, (char *title, mat_t m) );
-MGED_EXTERN(void mat_trn, (mat_t dest, mat_t src) );
-MGED_EXTERN(void mat_ae, (mat_t dest, double azimuth, double elev) );
-/* XXX new name */
-MGED_EXTERN(void ae_vec, (fastf_t *azp, fastf_t *elp, vect_t src) );
-MGED_EXTERN(void mat_angles, (mat_t dest, double alpha, double beta, double ggamma) );
-/* XXX new name */
-MGED_EXTERN(void eigen2x2, (fastf_t *val1, fastf_t *val2,
-	vect_t vec1, vect_t vec2, double a, double b, double c) );
-MGED_EXTERN(void mat_fromto, (mat_t dest, vect_t from, vect_t to) );
-MGED_EXTERN(void mat_xrot, (mat_t dest, double sinx, double cosx) );
-MGED_EXTERN(void mat_yrot, (mat_t dest, double siny, double cosy) );
-MGED_EXTERN(void mat_zrot, (mat_t dest, double sinz, double cosz) );
-MGED_EXTERN(void mat_lookat, (mat_t dest, vect_t dir, int yflip) );
-/* XXX new names */
-MGED_EXTERN(void vec_ortho, (vect_t dest, vect_t src) );
-MGED_EXTERN(void vec_perp, (vect_t dest, vect_t src) );
-
 /* buttons.c */
 MGED_EXTERN(void button, (int bnum) );
 MGED_EXTERN(void press, (char *str) );
