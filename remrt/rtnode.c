@@ -772,7 +772,10 @@ char			*buf;
 	point_t	viewcenter_model;
 	point_t	eye_screen;
 	int	saved_print_on = print_on;
-	char	obuf[32];
+	char	obuf[128];
+	double	rt_elapsed_time;
+	double	fb_elapsed_time;
+	double	ck_elapsed_time;
 
 	RT_CK_RTI(rtip);
 
@@ -858,9 +861,13 @@ char			*buf;
 	rtip->nhits = 0;
 	rtip->rti_nrays = 0;
 
+	rt_prep_timer();
+
 	if( test_fb_speed )  {
 		unsigned char	*buf;
 		int	y;
+
+		rt_elapsed_time = 0;
 
 		/* Write out colored lines. */
 		switch( curframe%3 )  {
@@ -882,9 +889,9 @@ char			*buf;
 			y += todo;
 		}
 	} else {
-		rt_prep_timer();
 		do_run( start_line*width, end_line*width+width-1 );
-		(void)rt_read_timer( (char *)0, 0 );
+		(void)rt_get_timer( (struct bu_vls *)NULL, &rt_elapsed_time  );
+		rt_prep_timer();
 
 		if( fullfloat_mode )  {
 			unsigned char		*bigbuf;
@@ -912,6 +919,9 @@ char			*buf;
 		view_end(&ap);
 	}
 
+	(void)rt_get_timer( (struct bu_vls *)NULL, &fb_elapsed_time  );
+	rt_prep_timer();
+
 	/*
 	 *  Ensure all scanlines have made it to display server,
 	 *  by requesting a cheap LIBFB service which requires a reply.
@@ -921,10 +931,16 @@ char			*buf;
 		(void)fb_getview( fbp, &xcent, &ycent, &xzoom, &yzoom );
 	}
 
+	(void)rt_get_timer( (struct bu_vls *)NULL, &ck_elapsed_time  );
+
 	if(debug) bu_log("done!\n");
 
 	/* Build up reply message */
-	sprintf(obuf, "%d", npsw);
+	sprintf(obuf, "%d %g %g %g",
+		npsw,
+		rt_elapsed_time * 1000,
+		fb_elapsed_time * 1000,
+		ck_elapsed_time * 1000 );
 	if( pkg_send( RTSYNCMSG_DONE, obuf, strlen(obuf)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCMSG_DONE failed\n");
 		exit(12);
