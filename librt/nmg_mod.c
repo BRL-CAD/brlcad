@@ -827,31 +827,31 @@ int n;
 				__FILE__, __LINE__);
 			rt_bomb("nmg_gluefaces\n");
 		}
-		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
-		NMG_CK_LOOPUSE(lu);
-		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC) {
-			/* Not an edgeuse, probably a vertexuse */
-			rt_bomb("nmg_gluefaces() Cannot glue edges of face on vertex\n");
-		} else {
-			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
-			NMG_CK_EDGEUSE(eu);
-		}
 	}
 
 	for (i=0 ; i < n ; ++i) {
-		lu = RT_LIST_FIRST( loopuse, &fulist[i]->lu_hd );
-		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-			for( f_no = i+1; f_no < n; f_no++ )  {
-				struct loopuse		*lu2;
-				register struct edgeuse	*eu2;
+		for( RT_LIST_FOR( lu , loopuse , &fulist[i]->lu_hd ) ) {
+			NMG_CK_LOOPUSE( lu );
 
-				if( eu->radial_p != eu->eumate_p )  break;
+			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+				continue;
 
-				lu2 = RT_LIST_FIRST(loopuse,
-					&fulist[f_no]->lu_hd);
-				for( RT_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
-					if (EDGESADJ(eu, eu2))
-					    	nmg_moveeu(eu, eu2);
+			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+				for( f_no = i+1; f_no < n; f_no++ )  {
+					struct loopuse		*lu2;
+					register struct edgeuse	*eu2;
+
+					if( eu->radial_p != eu->eumate_p )  break;
+
+					for( RT_LIST_FOR( lu2 , loopuse , &fulist[f_no]->lu_hd ) ) {
+						NMG_CK_LOOPUSE( lu2 );
+						if( RT_LIST_FIRST_MAGIC(&lu2->down_hd) != NMG_EDGEUSE_MAGIC )
+							continue;
+						for( RT_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
+							if (EDGESADJ(eu, eu2))
+							    	nmg_moveeu(eu, eu2);
+						}
+					}
 				}
 			}
 		}
