@@ -1,12 +1,15 @@
 /*
- *			J O V E _ I O . C 
+ *			J O V E _ I O . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:15  mike
+ * Release_4.4
+ *
  * Revision 10.5  95/01/03  21:35:28  butler
  * lseek takes an off_t as its second arg under BSDI and NetBSD
- * 
+ *
  * Revision 10.4  1994/09/17  04:57:35  butler
  * changed all calls to bcopy to be memcpy instead.  Useful for Solaris 5.2
  *
@@ -17,63 +20,63 @@
  * Revision 10.2  92/01/31  16:56:12  mike
  * Must do chown() *after* close(), so that on NFS clients, we don't
  * loose write permission on the file before we write any data into it.
- * 
+ *
  * Revision 10.1  91/10/12  06:54:00  mike
  * Release_4.0
- * 
+ *
  * Revision 2.11  91/08/30  22:56:06  mike
  * __CRAY1 too
- * 
+ *
  * Revision 2.10  91/08/30  22:37:07  mike
  * Fixed in-core buffering to operate on the array subscripts, rather than
  * a (char *) pointer, as this is more portable, and avoids CRAY problems.
  * In addition, turned off the in-core buffering on CRAY1 (and X and Y)
  * systems, as it consumes an extra 256 Kbytes, which on smaller Crays
  * isn't worth it.  Their I/O is plenty fast, and memory is usually tight.
- * 
+ *
  * Revision 2.9  91/08/30  20:29:44  mike
  * Added extern int read().
- * 
+ *
  * Revision 2.8  91/08/30  19:34:16  mike
  * Changed VMUNIX to !defined(pdp11)
- * 
+ *
  * Revision 2.7  91/08/30  19:17:44  mike
  * Stardent ANSI lint
- * 
+ *
  * Revision 2.6  91/08/30  18:46:05  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
- * 
+ *
  * Revision 2.5  91/08/30  18:11:04  mike
  * Made explicit that termcap.h to be used is the local version
- * 
+ *
  * Revision 2.4  91/08/30  17:54:34  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.3  91/08/30  17:49:08  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.2  87/04/14  20:27:17  dpk
  * Commented out the bcopy routine.  Will use memcpy for bcopy.
- * 
+ *
  * Revision 2.1  86/09/23  22:28:40  mike
  * Externs now declared properly.
  * I/O fixes for SysV
- * 
+ *
  * Revision 2.1  86/09/23  22:26:37  mike
  * Externs now declared properly.
  * I/O fixes for SysV
- * 
+ *
  * Revision 2.0  84/12/26  16:46:34  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  *
  * Revision 1.3  84/03/20  22:29:18  dpk
  * Improved file handling, fixed "Free line in list" loop
- * 
+ *
  * Revision 1.2  83/12/16  00:08:33  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -81,7 +84,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
-  
+
    Commands to read/write files/regions.  */
 
 #include <stdio.h>
@@ -94,7 +97,7 @@ static char RCSid[] = "@(#)$Header$";
 
 extern	int errno;
 extern	int Dfltmode;
-extern	char *TempFile;
+extern	char TempFile[];
 
 int	BackupFiles = SAVE_NO;
 
@@ -320,14 +323,14 @@ void
 bufname(bp)
 BUFFER	*bp;
 {
-	char	tmp[100],
-		tmp1[100],
+	char	tmp[LBSIZE],
+		tmp1[LBSIZE],
 		*cp;
 	int	try = 1;
 
 	if ((cp = bp->b_fname) == 0)
 		complain("No file name");
-		
+
 	if (*cp == '.')
 		++cp;
 	strcpy(tmp, cp);
@@ -363,7 +366,7 @@ char	*fname;
 		return;
 	if ((stbuf.st_ino != curbuf->b_ino
 	   || stbuf.st_dev != curbuf->b_dev)
-	  && (stbuf.st_mode & S_IFMT) != S_IFCHR) 
+	  && (stbuf.st_mode & S_IFMT) != S_IFCHR)
 		confirm("\"%s\" already exist; are you sure? ", fname);
 }
 
@@ -382,7 +385,7 @@ AppReg()
 void
 DoWriteReg(app)
 {
-	char	fname[100];
+	char	fname[LBSIZE];
 	MARK	*mp = CurMark();
 
 	/* Won't get here if there isn't a mark */
@@ -396,7 +399,7 @@ DoWriteReg(app)
 			io = creat(fname, Dfltmode);
 		else
 			dolseek(io, 0L, 2);
-	} else 
+	} else
 		io = creat(fname, Dfltmode);
 	if (io == -1)
 		complain(IOerr("create", fname));
@@ -415,7 +418,7 @@ void
 WriteFile()
 {
 	char	*fname,
-		fnamebuf[100];
+		fnamebuf[LBSIZE];
 
 	fname = ask(curbuf->b_fname, FuncName());
 	strncpy(fnamebuf, fname, sizeof fnamebuf);
@@ -517,7 +520,7 @@ char	*fname;
 		if (length(curline))	/* Not a blank line */
 			DoTimes(LineInsert, 1);	/* Make it blank */
 		SetDot(&save);
-	}		
+	}
 	putreg(curbuf->b_zero, 0, curbuf->b_dol, length(curbuf->b_dol));
 	FileMess(fname, nlines, count);
 	IOclose();
@@ -560,7 +563,7 @@ BUFFER	*bp;
 {
 	lfreelist(bp->b_zero);
 	ignore(listput(bp, (LINE *) 0));		/* First line in buffer */
-	
+
 	bp->b_dot->l_dline = putline("") | DIRTY;
 	bp->b_char = 0;
 	AllMarkSet(bp, bp->b_dot, 0);
@@ -576,7 +579,7 @@ setcmode()
 	register int	len;
 
 	len = curbuf->b_fname ? strlen(curbuf->b_fname) : 0;
-	
+
 	if (len < 2 || IsDisabled(globflags, CMODE))
 		return;
 	if (curbuf->b_fname[--len] == 'c' && curbuf->b_fname[--len] == '.')
@@ -622,7 +625,7 @@ long	offset;
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 5-25-83
-  
+
    Much of this code was lifted from VI (ex_temp.c).  These functions
    deal with (put/get)ing lines in/from the tmp file.  */
 
@@ -636,9 +639,9 @@ int	DOLsave = 0;	/* Do Lsave flag.  If lines aren't being save
 void
 tmpinit()
 {
-#if defined(L_tmpnam)	/* From modern stdio.h */
+#if HAS_TEMPNAM
 	/* Honor $TMPDIR in user's environment */
-	tfname = (char *) tempnam(NULL, "jove");
+	tfname = tempnam((char *)NULL, "jovet");
 #else
 	tfname = mktemp(TempFile);
 #endif
@@ -784,10 +787,10 @@ int	(*iofcn)();
 #ifdef INCORB
 	if (b < INCORB) {
 		if (iofcn == read) {
-			memcpy(buf, &incorb[pageround((b+1)*BSIZ)], BSIZ);
+			bcopy(&incorb[pageround((b+1)*BSIZ)], buf, BSIZ);
 			return;
 		}
-		memcpy(&incorb[pageround((b+1)*BSIZ)], buf, BSIZ);
+		bcopy(buf, &incorb[pageround((b+1)*BSIZ)], BSIZ);
 		return;
 	}
 #endif
@@ -805,7 +808,7 @@ bcopy(from, to, count)
 	while ((--count) >= 0)
 		*to++ = *from++;
 }
-#endif 
+#endif
 
 /*
  * Save the current contents of linebuf, if it has changed.
