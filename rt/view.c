@@ -3,8 +3,19 @@
  *
  * Ray Tracing program, lighting model
  *
- * Author -
+ *  Many varied and wonderous "lighting models" are implemented.
+ *  The notion of output format is randomly mixed in as well.
+ *  The extern "lightmodel" selects which one is being used:
+ *	0	model with color, based on Moss's LGT
+ *	1	1-light, from the eye.
+ *	2	Spencer's surface-normals-as-colors display
+ *	3	GIFT format .PP (pretty picture) files
+ *	4	Gwyn format ray files
+ *	5	3-light debugging model
+ *
+ * Authors -
  *	Michael John Muuss
+ *	Gary Moss
  *
  *	U. S. Army Ballistic Research Laboratory
  *	March 27, 1984
@@ -189,7 +200,7 @@ struct partition *PartHeadp;
 		/* Add in contribution from ambient light */
 		VSCALE( work1, ambient_color, AmbientIntensity );
 		VADD2( work0, work0, work1 );
-	}  else if( lightmodel == 0 )  {
+	}  else if( lightmodel == 5 )  {
 		/* Simple attempt at a 3-light model. */
 		diffuse0 = 0;
 		if( (cosI0 = VDOT(hitp->hit_normal, l0vec)) >= 0.0 )
@@ -243,6 +254,165 @@ struct partition *PartHeadp;
 	if( b > 255 ) b = 255;
 	if( r<0 || g<0 || b<0 )  {
 		VPRINT("@@ Negative RGB @@", work0);
+		inten = 0x0080FF80;
+	} else {
+		inten = (b << 16) |		/* B */
+			(g <<  8) |		/* G */
+			(r);			/* R */
+	}
+
+	if( ikfd > 0 )
+		ikwpixel( ap->a_x, ap->a_y, inten);
+	if( outfd > 0 )
+		*pixelp++ = inten;
+}
+
+
+/*	l g t _ P i x e l ( )
+	Color pixel based on the energy of a point light source (Eps)
+	plus some diffuse illumination (Epd) reflected from the point
+	<x,y> :
+
+				E = Epd + Eps		(1)
+
+	The energy reflected from diffuse illumination is the product
+	of the reflectance coefficient at point P (Rp) and the diffuse
+	illumination (Id) :
+
+				Epd = Rp * Id		(2)
+
+	The energy reflected from the point light source is calculated
+	by the sum of the diffuse reflectance (Rd) and the specular
+	reflectance (Rs), multiplied by the intensity of the light
+	source (Ips) :
+
+				Eps = (Rd + Rs) * Ips	(3)
+
+	The diffuse reflectance is calculated by the product of the
+	reflectance coefficient (Rp) and the cosine of the angle of
+	incidence (I) :
+
+				Rd = Rp * cos(I)	(4)
+
+	The specular reflectance is calculated by the product of the
+	specular reflectance coeffient and (the cosine of the angle (S)
+	raised to the nth power) :
+
+				Rs = W(I) * cos(S)**n	(5)
+
+	Where,
+		I is the angle of incidence.
+		S is the angle between the reflected ray and the observer.
+		W returns the specular reflection coefficient as a function
+	of the angle of incidence.
+		n (roughly 1 to 10) represents the shininess of the surface.
+
+ */
+
+/*	d i f f R e f l e c ( )
+ *	Return the diffuse reflectance from 'light' source.
+ */
+double
+diffReflec( norml, light, illum, cosI )
+double	*norml, *light;
+double	illum;
+double	*cosI;	/* Cosine of the angle of incidence */
+{
+	if( (*cosI = VDOT( norml, light )) < 0.0 ) {
+		return	0.0;
+	} else
+		return	*cosI * illum;
+}
+
+colorview( ap, PartHeadp )
+register struct application *ap;
+struct partition *PartHeadp;
+{
+	register struct partition *pp = PartHeadp->pt_forw;
+	register struct hit *hitp= pp->pt_inhit;
+	static long inten;
+	static int r,g,b;
+	int inshadow = 0;	/* 1 => shadowed */
+
+	double	Rd1, Rd2;
+	double	cosI1, cosI2;
+	double	cosS;
+	vect_t	work;
+	double	dist_gradient = 1.0;
+	int	red, grn, blu;
+	static vect_t	reflected;
+	static vect_t	to_eye;
+
+	if( pp->pt_inflip )  {
+		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+	}
+	VREVERSE( to_eye, ap->a_ray.r_dir );
+
+	/* Diminish intensity of reflected light the as a function of
+	 * the distance from your eye.
+	 */
+/**	dist_gradient = kCons / (hitp->hit_dist + cCons);
+
+	/* Diffuse reflectance from primary light source. */
+#define illum_pri_src	0.6
+	Rd1 = diffReflec( hitp->hit_normal, l0vec, illum_pri_src, &cosI1 );
+	Rd1 *= dist_gradient;
+
+	/* Diffuse reflectance from secondary light source (at eye) */
+#define illum_sec_src	0.4
+	Rd2 = diffReflec( hitp->hit_normal, to_eye, illum_sec_src, &cosI2 );
+	Rd2 *= dist_gradient;
+
+	/* Calculate specular reflectance.
+	 *	Reflected ray = (2 * cos(i) * Normal) - Incident ray.
+	 * 	Cos(s) = dot product of Reflected ray with Shotline vector.
+	 */
+	VSCALE( work, hitp->hit_normal, 2 * cosI1 );
+	VSUB2( reflected, work, l0vec );
+	cosS = VDOT( reflected, to_eye );
+
+	/* Get default color-by-ident for region.			*/
+	lookupColor( &red, &grn, &blu, pp->pt_regionp->reg_regionid );
+
+	/* Apply secondary (ambient) (white) lighting. */
+	r = (double) red * Rd2;
+	g = (double) grn * Rd2;
+	b = (double) blu * Rd2;
+
+	/* If not shadowed add primary lighting.			*/
+#define lgt1_red_coef	1
+#define lgt1_grn_coef	1
+#define lgt1_blu_coef	1
+	if( !inshadow )  {
+		red = r + (int)((double)red * Rd1 * lgt1_red_coef);
+		grn = g + (int)((double)grn * Rd1 * lgt1_grn_coef);
+		blu = b + (int)((double)blu * Rd1 * lgt1_blu_coef);
+
+		/* Check for specular reflection. */
+#define cosSRAngle 0.9
+		if( cosS >= cosSRAngle )  {
+			/* We have a specular return.	*/
+			double	spec_intensity = 0.0;
+
+			if( cosSRAngle < 1.0 )	{
+				spec_intensity = (cosS-cosSRAngle)/(1.0-cosSRAngle);
+			}
+#define redSpecComponent 255
+#define grnSpecComponent 255
+#define bluSpecComponent 255
+			red += ((redSpecComponent-red) * spec_intensity);
+			grn += ((grnSpecComponent-grn) * spec_intensity);
+			blu += ((bluSpecComponent-blu) * spec_intensity);
+		}
+		r = red;
+		g = grn;
+		b = blu;
+	}
+
+	if( r > 255 ) r = 255;
+	if( g > 255 ) g = 255;
+	if( b > 255 ) b = 255;
+	if( r<0 || g<0 || b<0 )  {
 		inten = 0x0080FF80;
 	} else {
 		inten = (b << 16) |		/* B */
@@ -396,8 +566,14 @@ register struct application *ap;
 
 	switch( lightmodel )  {
 	case 0:
+		ap->a_hit = colorview;
+		ap->a_miss = wbackground;
+		ap->a_eol = dev_eol;
+		one_hit_flag = 1;
+		break;
 	case 1:
 	case 2:
+	case 5:
 		ap->a_hit = viewit;
 		ap->a_miss = wbackground;
 		ap->a_eol = dev_eol;
@@ -425,4 +601,108 @@ register struct application *ap;
 			outfp = fdopen( outfd, "w" );
 		else
 			rtbomb("No output file specified");
+}
+
+/********/
+/*
+ *  These routines map GIFT region ID values to
+ *  an RGB color.  This belongs in a separate file.
+ */
+
+/* Standard colors defined in 'spectra[]' in 'glob.c'.			*/
+#define BLACK		0
+#define PURPLE		1
+#define AZURE		2
+#define	BLUE		3
+#define LT_BLUE		4
+#define LAVENDER	5
+#define GREEN		6
+#define	LT_GREEN	7
+#define YELLOW		8
+#define ORANGE		9
+#define	RED		10
+#define PINK		11
+#define WHITE		12
+#define LT_ORANGE	13
+#define INDIGO		14
+#define GRAY		15
+
+#define MAX_COLOR	15
+
+#define GRAD_SLOPE	0.6
+
+/* Ikonas frame buffer style pixels.					*/
+typedef struct { /* Intensities (0-255) in each color.			*/
+	unsigned char	R; /* Red.					*/
+	unsigned char	G; /* Green.					*/
+	unsigned char	B; /* Blue.					*/
+	unsigned char	U; /* Unused memory.				*/
+} Pixel;
+
+Pixel	spectra[] = {
+      {   0,   0,   0,   0 },	/* Black */
+      { 180,  90, 180,   0 },   /* Purple */
+      {  80, 100, 255,   0 },   /* Azure */
+      {  80, 150, 230,   0 },   /* Blue */
+      { 100, 190, 190,   0 },   /* Light blue */
+      { 255, 100, 255,   0 },	/* Lavender */    
+      {	100, 210, 100,   0 },   /* Green */	
+      { 167, 255,  80,   0 },   /* Light green */
+      { 240, 240,   0,   0 },   /* Yellow */
+      { 240, 120,  80,   0 },   /* Red-orange */
+      {	255, 100, 100,   0 },   /* Red */
+      { 255, 120, 120,   0 },	/* Pink */
+      { 255, 255, 255,   0 },	/* White */
+      { 255, 170,  30,   0 },   /* Light orange */
+      {  50,  50, 200,   0 },   /* Dark blue */
+      { 200, 200, 200,   0 }	/* Gray */
+};
+	
+#define getColor(c)	*redP=spectra[c].R;\
+			*grnP=spectra[c].G;\
+			*bluP=spectra[c].B;
+
+/*	l o o k u p C o l o r ( )
+	Get default color for by number.
+ */
+lookupColor( redP, grnP, bluP, id )
+register int	*redP, *grnP, *bluP;
+register int	id;
+{
+	if( id >=    1 && id <= 599  ) {
+		getColor( PURPLE );
+	} else
+	if( id >=  600 && id <= 999  ) {
+		getColor( AZURE );
+	} else
+	if( id >= 1000 && id <= 1999 ) {
+		getColor( BLUE );
+	} else
+	if( id >= 2000 && id <= 2999 ) {
+		getColor( LT_BLUE );
+	} else
+	if( id >= 3000 && id <= 3999 ) {
+		getColor( LAVENDER );
+	} else
+	if( id >= 4000 && id <= 4999 ) {
+		getColor( GREEN );
+	} else
+	if( id >= 5000 && id <= 5999 ) {
+		getColor( LT_GREEN );
+	} else
+	if( id >= 6000 && id <= 6999 ) {
+		getColor( YELLOW );
+	} else
+	if( id >= 7000 && id <= 7999 ) {
+		getColor( ORANGE );
+	} else
+	if( id >= 8000 && id <= 8999 ) {
+		getColor( RED );
+	} else
+	if( id >= 9000 && id <= 9999 ) {
+		getColor( PINK );
+	} else { /* default color */
+		getColor( WHITE );
+	}
+	return;
 }
