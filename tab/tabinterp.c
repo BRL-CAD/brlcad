@@ -36,6 +36,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
+#include "../librt/debug.h"
+
 struct chan {
 	/* INPUTS */
 	int	c_ilen;		/* length of input array */
@@ -63,14 +65,17 @@ struct chan	*chan;		/* ptr to array of chan structs */
 extern int	cm_file();
 extern int	cm_times();
 extern int	cm_interp();
+extern int	cm_idump();
 
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
 		cm_file,	3, 999,
 	"times", "start stop fps", "specify time range and fps rate",
 		cm_times,	4, 4,
-	"interp", "{linear|spline|cspline} chan_num(s)", "set interpolation type",
+	"interp", "{step|linear|spline|cspline} chan_num(s)", "set interpolation type",
 		cm_interp,	3, 999,
+	"idump", "[chan_num(s)]", "dump input channel values",
+		cm_idump,	1, 999,
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
@@ -85,6 +90,10 @@ char	**argv;
 	register char	*buf;
 	register int	ret;
 
+#if 0
+	rt_g.debug = DEBUG_MEM;
+#endif
+
 	/*
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
@@ -96,8 +105,6 @@ char	**argv;
 		if( ret < 0 )
 			break;
 	}
-
-	pr_ichans();
 
 	go();
 
@@ -151,7 +158,7 @@ char	**argv;
 	iwords = (char **)rt_malloc( (nwords+1) * sizeof(char *), "iwords[]" );
 
 	/* Retained dynamic memory */
-	times = (fastf_t *)rt_malloc( nwords * sizeof(fastf_t), "times");
+	times = (fastf_t *)rt_malloc( nlines * sizeof(fastf_t), "times");
 
 	/* Now, create & allocate memory for each chan */
 	for( i = 1; i < nwords; i++ )  {
@@ -236,13 +243,44 @@ char	*itag;
 				"chan[]" );
 		}
 	}
-	for( ; n >= nchans; nchans++ )
-		bzero( (char *)&chan[nchans], sizeof(struct chan) );
+	/* Allocate and clear channels */
+	while( nchans <= n )  {
+		if( chan[nchans].c_ilen > 0 ) {
+			fprintf(stderr,"create_chan: internal error\n");
+		} else {
+			bzero( (char *)&chan[nchans++], sizeof(struct chan) );
+		}
+	}
 
 	chan[n].c_ilen = len;
 	chan[n].c_itag = rt_strdup( itag );
+fprintf(stderr,"c_itag=%s\n", chan[n].c_itag);
 	chan[n].c_ival = (fastf_t *)rt_malloc( len * sizeof(fastf_t), "c_ival");
 	return(n);
+}
+
+/*
+ *			C M _ I D U M P
+ *
+ *  Dump the indicated input channels, or all, if none specified.
+ */
+cm_idump( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int	ch;
+	register int	i;
+
+	if( argc <= 1 )  {
+		for( ch=0; ch < nchans; ch++ )  {
+			pr_ichan( ch );
+		}
+	} else {
+		for( i = 1; i < argc; i++ )  {
+			pr_ichan( atoi( argv[i] ) );
+		}
+	}
+	return(0);
 }
 
 /*
@@ -250,19 +288,21 @@ char	*itag;
  *
  *  Print input channel values.
  */
-pr_ichans()
+pr_ichan( ch )
+register int		ch;
 {
-	register int		ch;
 	register struct chan	*cp;
 	register int		i;
 
-	for( ch=0; ch < nchans; ch++ )  {
-		cp = &chan[ch];
-		fprintf(stderr,"--- Channel %d, ilen=%d (%s):\n",
-			ch, cp->c_ilen, cp->c_itag );
-		for( i=0; i < cp->c_ilen; i++ )  {
-			fprintf(stderr," %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
-		}
+	if( ch < 0 || ch >= nchans )  {
+		fprintf(stderr, "pr_ichan(%d) out of range\n", ch );
+		return;
+	}
+	cp = &chan[ch];
+	fprintf(stderr,"--- Channel %d, ilen=%d (%s):\n",
+		ch, cp->c_ilen, cp->c_itag );
+	for( i=0; i < cp->c_ilen; i++ )  {
+		fprintf(stderr," %g\t%g\n", cp->c_itime[i], cp->c_ival[i]);
 	}
 }
 
@@ -376,7 +416,11 @@ char	**argv;
 }
 
 
-/* Perform linear interpolation on each channel */
+/*
+ *			G O
+ *
+ *  Perform the requested interpolation on each channel
+ */
 go()
 {
 	int	ch;
