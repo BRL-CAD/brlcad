@@ -27,7 +27,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "spm.h"
 #include "./material.h"
-#include "./mathtab.h"
 #include "./rdebug.h"
 
 struct spm_specific {
