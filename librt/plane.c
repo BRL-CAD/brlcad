@@ -1092,6 +1092,57 @@ CONST vect_t	dir;
 		return(0.0);
 	return( sqrt(PTdotD) );
 }
+/*
+ *			R T _ D I S T _ L I N E 2 _ P O I N T 2
+ *
+ *  Given a parametric line defined by PT + t * DIR and a point A,
+ *  return the closest distance between the line and the point.
+ *  It is necessary that DIR have unit length.
+ *
+ *  Return -
+ *	Distance
+ */
+double
+rt_dist_line2_point2( pt, dir, a )
+CONST point_t	pt;
+CONST vect_t	dir;
+CONST point_t	a;
+{
+	LOCAL vect_t		f;
+	register fastf_t	FdotD;
+
+	VSUB2_2D( f, pt, a );
+	FdotD = VDOT_2D( f, dir );
+	if( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
+		return(0.0);
+	return( sqrt(FdotD) );
+}
+
+/*
+ *			R T _ D I S T S Q _ L I N E 2 _ P O I N T 2
+ *
+ *  Given a parametric line defined by PT + t * DIR and a point A,
+ *  return the closest distance between the line and the point, squared.
+ *  It is necessary that DIR have unit length.
+ *
+ *  Return -
+ *	Distance squared
+ */
+double
+rt_distsq_line2_point2( pt, dir, a )
+CONST point_t	pt;
+CONST vect_t	dir;
+CONST point_t	a;
+{
+	LOCAL vect_t		f;
+	register fastf_t	FdotD;
+
+	VSUB2_2D( f, pt, a );
+	FdotD = VDOT_2D( f, dir );
+	if( (FdotD = VDOT_2D( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
+		return(0.0);
+	return( FdotD );
+}
 
 /*
  *			R T _ A R E A _ O F _ T R I A N G L E
