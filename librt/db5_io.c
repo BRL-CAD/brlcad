@@ -1553,6 +1553,8 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 			bu_free_external( &ext );
 			return -3;
 		}
+	} else {
+		bu_avs_init( avs, 0, "db_get_attributes" );
 	}
 
 	bu_free_external( &ext );
