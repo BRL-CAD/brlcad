@@ -23,7 +23,7 @@ static char RCSid[] = "$Header$";
 #include "./usrfmt.h"
 
 char		*local_unit[] = {
-		    "none", "um", "mm", "cm", "m", "km",
+		    "none", "mm", "um", "cm", "m", "km",
 		    "in", "ft", "yd", "mi", "unknown"
 		};
 char		local_u_name[64];
@@ -526,6 +526,33 @@ char	*str;
 }
 
 void
+cm_debug(buffer, ctp)
+char		*buffer;
+com_table	*ctp;
+{
+	register char	*cp = buffer;
+
+	/* This is really icky -- should have argc, argv interface */
+	while( *cp && isascii(*cp) && isspace(*cp) )  cp++;
+	if (*cp == '\0')
+	{
+	    /* display current value */
+	    bu_printb( "debug ", nirt_debug, DEBUG_FORMAT );
+	    bu_log("\n");
+	    return;
+	}
+
+	/* Set a new value */
+	if (sscanf( cp, "%x", &nirt_debug ) == 1)
+	{
+	    bu_printb( "debug ", nirt_debug, DEBUG_FORMAT );
+	    bu_log("\n");
+	}
+	else
+	    com_usage(ctp);
+}
+
+void
 cm_libdebug(buffer, ctp)
 char		*buffer;
 com_table	*ctp;
@@ -537,7 +564,7 @@ com_table	*ctp;
 	if (*cp == '\0')
 	{
 	    /* display current value */
-	    rt_printb( "libdebug ", rt_g.debug, DEBUG_FORMAT );
+	    bu_printb( "libdebug ", rt_g.debug, RT_DEBUG_FORMAT );
 	    bu_log("\n");
 	    return;
 	}
@@ -545,7 +572,7 @@ com_table	*ctp;
 	/* Set a new value */
 	if (sscanf( cp, "%x", &rt_g.debug ) == 1)
 	{
-	    rt_printb( "libdebug ", rt_g.debug, DEBUG_FORMAT );
+	    bu_printb( "libdebug ", rt_g.debug, RT_DEBUG_FORMAT );
 	    bu_log("\n");
 	}
 	else
