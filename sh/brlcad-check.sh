@@ -149,6 +149,6 @@ then
 	exit 6		# Die
 fi
 
-echo " OK: PATH, cake, machinetype.sh, and Cakefile.defs are set properly."
+echo " OK. PATH, cake, machinetype.sh, and Cakefile.defs are set properly."
 /bin/rm -f ${IN_FILE} ${OUT_FILE}
 exit 0
