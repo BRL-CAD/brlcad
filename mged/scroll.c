@@ -525,11 +525,13 @@ int y_top;
 		f = edit_rate_model_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_model_rotate[X] / ABS_ROT_FACTOR;
+	      break;
 	    case 'o':
 	      if(mged_variables->mv_rateknobs)
 		f = edit_rate_object_rotate[X] / RATE_ROT_FACTOR;
 	      else
 		f = edit_absolute_object_rotate[X] / ABS_ROT_FACTOR;
+	      break;
 	    case 'v':
 	    default:
 	      if(mged_variables->mv_rateknobs)
