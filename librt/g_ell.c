@@ -1,7 +1,7 @@
 /*
  *			E L L G . C
  *
- * Function -
+ * Purpose -
  *	Intersect a ray with a Generalized Ellipsoid
  *
  * Authors -
@@ -23,7 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 
 /*
- *  Algorithm;
+ *  Algorithm:
  *  
  *  Given V, A, B, and C, there is a set of points on this ellipsoid
  *  
@@ -95,56 +95,103 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *    = inverse[ inverse(S) o R ] ( W' )
  *    = invR o S ( W' )
  *    = invR( S( S( R( W - V ) ) ) )
+ *
+ *  Note that the normal vector produced above will not have unit length.
  */
 
 struct ell_specific {
 	vect_t	ell_V;		/* Vector to center of ellipsoid */
-	vect_t	ell_A;		/* Three axis vectors */
-	vect_t	ell_B;
-	vect_t	ell_C;
 	mat_t	ell_SoR;	/* Scale(Rot(vect)) */
-	mat_t	ell_SoS;	/* Scale(Scale(vect)) */
+	mat_t	ell_invRSSR;	/* invRot(Scale(Scale(Rot(vect)))) */
 	vect_t	ell_invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|C|**2) ] */
 };
 
+/*
+ *  			E L L G _ P R E P
+ *  
+ *  Given a pointer to a GED database record, and a transformation matrix,
+ *  determine if this is a valid ellipsoid, and if so, precompute various
+ *  terms of the formula.
+ *  
+ *  Returns -
+ *  	0	ELL is OK
+ *  	!0	Error in description
+ *  
+ *  Implicit return -
+ *  	A struct ell_specific is created, and it's address is stored in
+ *  	stp->st_specific for use by ellg_shot().
+ */
 ellg_prep( sp, stp, mat )
-struct solidrec *sp;
+register struct solidrec *sp;
 struct soltab *stp;
 matp_t mat;
 {
 	register struct ell_specific *ell;
-	double magsq_a, magsq_b, magsq_c;
-	float f;
+	static double	magsq_a, magsq_b, magsq_c;
+	static mat_t	R;
+	static mat_t	Rinv;
+	static mat_t	SS;
+	static mat_t	mtemp;
+	register float	f;
 
-	/* Should do some validation here */
-	/* A.B == 0, B.C == 0, A.C == 0 */
-	/* |A| > 0, |B| > 0, |C| > 0 */
+#define SP_A	&sp->s_values[3]
+#define SP_B	&sp->s_values[6]
+#define SP_C	&sp->s_values[9]
 
+	/* TODO:  Apply 4x4mat to V, special_mat to A,B,C */
+
+	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
+	magsq_a = MAGSQ( SP_A );
+	magsq_b = MAGSQ( SP_B );
+	magsq_c = MAGSQ( SP_C );
+	if( NEAR_ZERO(magsq_a) || NEAR_ZERO(magsq_b) || NEAR_ZERO(magsq_c) ) {
+		printf("ell(%s):  zero length A, B, or C vector\n",
+			stp->st_name );
+		return(1);		/* BAD */
+	}
+
+	/* Validate that A.B == 0, B.C == 0, A.C == 0 */
+	if( VDOT( SP_A, SP_B ) != 0.0  ||
+	    VDOT( SP_B, SP_C ) != 0.0  ||
+	    VDOT( SP_A, SP_C ) != 0.0 )  {
+		printf("ell(%s):  A, B, or C not perpendicular\n",
+			stp->st_name);
+		return(1);		/* BAD */
+	}
+
+	/* Solid is OK, compute constant terms now */
 	GETSTRUCT( ell, ell_specific );
 	stp->st_specific = (int *)ell;
 
 	VMOVE( ell->ell_V, &sp->s_values[0] );
-	VMOVE( ell->ell_A, &sp->s_values[3] );
-	VMOVE( ell->ell_B, &sp->s_values[6] );
-	VMOVE( ell->ell_C, &sp->s_values[9] );
-
-	magsq_a = MAGSQ( ell->ell_A );
-	magsq_b = MAGSQ( ell->ell_B );
-	magsq_c = MAGSQ( ell->ell_C );
 
 	VSET( ell->ell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
 
 	mat_zero( ell->ell_SoR );
-	mat_zero( ell->ell_SoS );
+	mat_zero( R );
 
-	/* Uses 3x3 of the 4x4 matrix */
-	ell->ell_SoS[ 0] = ell->ell_invsq[0];
-	ell->ell_SoS[ 5] = ell->ell_invsq[1];
-	ell->ell_SoS[10] = ell->ell_invsq[2];
+	/* Compute R and Rinv matrices */
+	f = 1.0/sqrt(magsq_a);
+	VSCALE( &R[0], SP_A, f );
+	f = 1.0/sqrt(magsq_b);
+	VSCALE( &R[4], SP_B, f );
+	f = 1.0/sqrt(magsq_c);
+	VSCALE( &R[8], SP_C, f );
+	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 
-	VSCALE( &ell->ell_SoR[0], ell->ell_A, ell->ell_invsq[0] );
-	VSCALE( &ell->ell_SoR[4], ell->ell_B, ell->ell_invsq[1] );
-	VSCALE( &ell->ell_SoR[8], ell->ell_C, ell->ell_invsq[2] );
+	/* Compute SoS.  Uses 3x3 of the 4x4 matrix */
+	SS[ 0] = ell->ell_invsq[0];
+	SS[ 5] = ell->ell_invsq[1];
+	SS[10] = ell->ell_invsq[2];
+
+	/* Compute invRSSR */
+	mat_mul( mtemp, SS, R );
+	mat_mul( ell->ell_invRSSR, Rinv, mtemp );
+
+	/* Compute SoR */
+	VSCALE( &ell->ell_SoR[0], SP_A, ell->ell_invsq[0] );
+	VSCALE( &ell->ell_SoR[4], SP_B, ell->ell_invsq[1] );
+	VSCALE( &ell->ell_SoR[8], SP_C, ell->ell_invsq[2] );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, ell->ell_V );
@@ -165,16 +212,25 @@ register struct soltab *stp;
 		(struct ell_specific *)stp->st_specific;
 
 	VPRINT("V", ell->ell_V);
-	VPRINT("A", ell->ell_A);
-	VPRINT("B", ell->ell_B);
-	VPRINT("C", ell->ell_C);
 	VPRINT("1/magitude**2", ell->ell_invsq );
 	mat_print("S o R", ell->ell_SoR );
-	mat_print("S o S", ell->ell_SoS );
+	mat_print("invRSSR", ell->ell_invRSSR );
 }
 
-extern struct seg *HeadSeg;	/* Pointer to segment list */
-
+/*
+ *  			E L L G _ S H O T
+ *  
+ *  Intersect a ray with an ellipsoid, where all constant terms have
+ *  been precomputed by ellg_prep().  If an intersection occurs,
+ *  a struct seg will be acquired and filled in.
+ *  
+ *  Returns -
+ *  	0	HIT
+ *  	1	MISS
+ *  
+ *  Implicit Return -
+ *  	struct seg is added to st_next chain headed by HeadSeg.
+ */
 ellg_shot( stp, rp )
 struct soltab *stp;
 register struct ray *rp;
@@ -188,6 +244,7 @@ register struct ray *rp;
 	static float	root;		/* root of radical */
 	static float	k1, k2;		/* distance constants of solution */
 	static vect_t	xlated;		/* translated vector */
+	extern struct seg *HeadSeg;	/* Pointer to segment list */
 
 	/* out, Mat, vect */
 	MAT3XVEC( dprime, ell->ell_SoR, rp->r_dir );
@@ -236,7 +293,7 @@ register struct ray *rp;
 
 		/* Normal at that point, pointing out */
 		VSUB2( xlated, segp->seg_in.hit_point, ell->ell_V );
-		VELMUL( segp->seg_in.hit_normal, xlated, ell->ell_invsq );
+		MAT3XVEC( segp->seg_in.hit_normal, ell->ell_invRSSR, xlated );
 		f = 1.0 / MAGNITUDE(segp->seg_in.hit_normal );
 		VSCALE( segp->seg_in.hit_normal, segp->seg_in.hit_normal, f);
 	}
@@ -247,7 +304,7 @@ register struct ray *rp;
 		VCOMPOSE1( segp->seg_out.hit_point, rp->r_pt, k2, rp->r_dir );
 
 		VSUB2( xlated, segp->seg_out.hit_point, ell->ell_V );
-		VELMUL( segp->seg_out.hit_normal, xlated, ell->ell_invsq );
+		MAT3XVEC( segp->seg_out.hit_normal,ell->ell_invRSSR, xlated );
 		f = 1.0 / MAGNITUDE( segp->seg_out.hit_normal );
 		VSCALE(segp->seg_out.hit_normal, segp->seg_out.hit_normal, f);
 	}
