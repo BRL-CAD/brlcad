@@ -55,6 +55,11 @@ static	char line[MAX_LINE_LEN];
 static	fastf_t local_tol;
 static	fastf_t local_tol_sq;
 static	int ident;
+static	char *part_name_file=NULL;
+static	int use_part_name_hash=0;
+static	int max_name_len=0;
+static	Tcl_HashTable htbl;
+static	int name_not_converted=0;
 
 static int verbose=0;
 
@@ -113,6 +118,55 @@ union vert_tree {
 #define VERT_LEAF	'l'
 #define VERT_NODE	'n'
 
+
+void
+create_name_hash( FILE *fd )
+{
+	char line[MAX_LINE_LEN];
+	Tcl_HashEntry *hash_entry=NULL;
+	int new_entry=0;
+
+	Tcl_InitHashTable( &htbl, TCL_STRING_KEYS );
+
+	while( fgets( line, MAX_LINE_LEN, fd ) ) {
+		char *part_no, *desc, *ptr;
+
+		ptr = strtok( line, "\t\n" );
+		if( !ptr ) {
+			bu_log( "Error processing part name file at line:\n" );
+			bu_log( "\t%s\n", line );
+			exit( 1 );
+		}
+		part_no = bu_strdup( ptr );
+		ptr = strtok( (char *)NULL, "\t\n" );
+		if( !ptr ) {
+			bu_log( "Error processing part name file at line:\n" );
+			bu_log( "\t%s\n", line );
+			exit( 1 );
+		}
+		desc = bu_strdup( ptr );
+
+		hash_entry = Tcl_CreateHashEntry( &htbl, part_no, &new_entry );
+		if( new_entry ) {
+			Tcl_SetHashValue( hash_entry, desc );
+		} else {
+			bu_free( (char *)part_no, "part_no" );
+			bu_free( (char *)desc, "desc" );
+		}
+	}
+}
+
+void
+lower_case( char *name )
+{
+	unsigned char *c;
+
+	c = (unsigned char *)name;
+	while( *c ) {
+		(*c) = tolower( *c );
+		c++;
+	}
+}
 
 
 /* routine to check for bad triangles
@@ -326,7 +380,7 @@ List_assem( struct obj_info *assem )
 void
 Usage()
 {
-	bu_log( "Usage:\n\tenf-g [-i starting_ident] [-t tolerance] input_facets_file output_brlcad_file.g\n" );
+	bu_log( "Usage:\n\tenf-g [-i starting_ident] [-t tolerance] [-l name_length_limit] [-n part_number_to_name_list] input_facets_file output_brlcad_file.g\n" );
 }
 
 void
@@ -336,30 +390,71 @@ Make_brlcad_names( struct obj_info *part )
 	struct directory *dp;
 	int count=0;
 	char *tmp_name, *ptr;
+	Tcl_HashEntry *hash_entry=NULL;
 
 	bu_vls_init( &vls );
 
-	/* make a copy of object name, then make it a legal BRL-CAD name */
-	if( strlen( part->obj_name ) < 1 ) {
-		tmp_name = bu_strdup( "s.1" );
-	} else {
-		tmp_name = bu_strdup( part->obj_name );
-		ptr = tmp_name;
-		while( *ptr != '\0' ) {
-			if( !isalnum( *ptr ) ) {
-				*ptr = '_';
+	if( use_part_name_hash ) {
+		hash_entry = Tcl_FindHashEntry( &htbl, part->obj_name );
+		if( !hash_entry ) {
+			/* try without any name extension */
+			if( (ptr=strrchr( part->obj_name, '_' )) != NULL ) {
+				bu_vls_strncpy( &vls, part->obj_name, (ptr - part->obj_name) );
+				hash_entry = Tcl_FindHashEntry( &htbl, bu_vls_addr( &vls ) );
 			}
-			ptr++;
+		}
+
+		if( !hash_entry ) {
+			name_not_converted++;
+		}
+	}
+
+	bu_vls_free( &vls );
+	if( hash_entry ) {
+		tmp_name = bu_strdup( (char *)Tcl_GetHashValue( hash_entry ) );
+	} else {
+		if( use_part_name_hash ) {
+			bu_log( "\tWarning: no name found for part %s\n", part->obj_name );
+		}
+		/* make a copy of object name, then make it a legal BRL-CAD name */
+		if( strlen( part->obj_name ) < 1 ) {
+			tmp_name = bu_strdup( "s.1" );
+		} else {
+			tmp_name = bu_strdup( part->obj_name );
+			ptr = tmp_name;
+			while( *ptr != '\0' ) {
+				if( !(isalnum( *ptr ) || *ptr == '-')) {
+					*ptr = '_';
+				}
+				ptr++;
+			}
 		}
 	}
 
 	if( part->obj_type == PART_TYPE ) {
 		/* find a unique solid name */
 		bu_vls_printf( &vls, "s.%s", tmp_name );
+		if( max_name_len ) {
+			bu_vls_trunc( &vls, max_name_len );
+		}
 		while( (dp=db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET )) != DIR_NULL) {
+			int digits, val=10;
+
 			count++;
-			bu_vls_trunc( &vls, 0 );
-			bu_vls_printf( &vls, "s.%s.%d", tmp_name, count );
+			if( max_name_len ) {
+				digits = 1;
+				while( count >= val ) {
+					digits++;
+					val *= 10;
+				}
+				bu_vls_trunc( &vls, 0 );
+				bu_vls_printf( &vls, "s.%s", tmp_name );
+				bu_vls_trunc( &vls, max_name_len - digits - 1 );
+				bu_vls_printf( &vls, ".%d", count );
+			} else {
+				bu_vls_trunc( &vls, 0 );
+				bu_vls_printf( &vls, "s.%s.%d", tmp_name, count );
+			}
 		}
 		part->brlcad_solid = bu_vls_strgrab( &vls );
 	} else {
@@ -368,12 +463,53 @@ Make_brlcad_names( struct obj_info *part )
 
 	/* find a unique non-primitive name */
 	bu_vls_printf( &vls, "%s", tmp_name );
+	if( max_name_len ) {
+		bu_vls_trunc( &vls, max_name_len );
+	}
 	while( (dp=db_lookup( fd_out->dbip, bu_vls_addr( &vls ), LOOKUP_QUIET) ) != DIR_NULL ) {
+		int digits, val=10;
+
 		count++;
-		bu_vls_trunc( &vls, 0 );
-		bu_vls_printf( &vls, "%s.%d", tmp_name, count );
+		if( max_name_len ) {
+			digits = 1;
+			while( count >= val ) {
+				digits++;
+				val *= 10;
+			}
+			bu_vls_trunc( &vls, 0 );
+			bu_vls_printf( &vls, "%s", tmp_name );
+			bu_vls_trunc( &vls, max_name_len - digits - 1 );
+			bu_vls_printf( &vls, ".%d", count );
+		} else {
+			bu_vls_trunc( &vls, 0 );
+			bu_vls_printf( &vls, "%s.%d", tmp_name, count );
+		}
 	}
 	part->brlcad_comb = bu_vls_strgrab( &vls );
+
+	switch( part->obj_type ) {
+		case UNKNOWN_TYPE:
+			bu_log( "ERROR: Unknown object type for %s\n", part->obj_name );
+			break;
+		case PART_TYPE:
+			if( use_part_name_hash ) {
+				bu_log( "Found part %s changed name to (%s)\n",
+					part->obj_name,
+					part->brlcad_comb );
+			} else {
+				bu_log( "Found part %s\n", part->brlcad_comb );
+			}
+			break;
+		case ASSEMBLY_TYPE:
+			if( use_part_name_hash ) {
+				bu_log( "Found assembly %s changed name to (%s)\n",
+					part->obj_name,
+					part->brlcad_comb );
+			} else {
+				bu_log( "Found assembly %s\n", part->brlcad_comb );
+			}
+			break;
+	}
 
 	bu_free( tmp_name, "tmp_name" );
 }
@@ -401,8 +537,8 @@ Part_import( int id_start )
 		if( !strncmp( line, "PartName", 8 ) ) {
 			line[strlen( line ) - 1] = '\0';
 			part->obj_name = bu_strdup( &line[9] );
+			lower_case( part->obj_name );
 			Make_brlcad_names( part );
-			bu_log( "Found Part %s\n", part->obj_name );
 		} else if( !strncmp( line, "FaceCount", 9 ) ) {
 			surf_count = atoi( &line[10] );
 			if( surf_count == 0 ) {
@@ -503,6 +639,13 @@ Part_import( int id_start )
 				part->brlcad_comb, part->obj_name );
 			exit( 1 );
 		}
+		if( use_part_name_hash ) {
+			if( db5_update_attribute( part->brlcad_comb, "Part_No",
+						  part->obj_name, fd_out->dbip ) ) {
+				bu_log( "Failed to assign Part_no attribute to %s\n",
+					part->brlcad_comb );
+			}
+		}
 	}
 
 	/* free some memory */
@@ -542,7 +685,7 @@ Assembly_import( int id_start )
 		if( !strncmp( line, "AssemblyName", 12 ) ) {
 			line[strlen( line ) - 1] = '\0';
 			this_assem->obj_name = bu_strdup( &line[13] );
-			bu_log( "Found assembly %s\n", this_assem->obj_name );
+			lower_case( this_assem->obj_name );
 		} else if( !strncmp( line, "PartId", 6 ) ) {
 			/* found a member part */
 			member_id = atoi( &line[7] );
@@ -603,6 +746,13 @@ Assembly_import( int id_start )
 			this_assem->brlcad_comb );
 		exit( 1 );
 	}
+	if( use_part_name_hash ) {
+		if( db5_update_attribute( this_assem->brlcad_comb, "Part_No",
+					  this_assem->obj_name, fd_out->dbip ) ) {
+			bu_log( "Failed to assign Part_no attribute to %s\n",
+				this_assem->brlcad_comb );
+		}
+	}
 
 	return( this_assem );
 }
@@ -611,6 +761,7 @@ int
 main( int argc, char *argv[] )
 {
 	char *input_file, *output_file;
+	FILE *fd_parts;
 	struct obj_info **top_level_assems=NULL;
 	int top_level_assem_count=0;
 	int curr_top_level=-1;
@@ -622,7 +773,7 @@ main( int argc, char *argv[] )
 	local_tol_sq = local_tol * local_tol;
 	ident = 1000;
 
-	while( (c=getopt( argc, argv, "vi:t:" ) ) != EOF ) {
+	while( (c=getopt( argc, argv, "vi:t:n:l:" ) ) != EOF ) {
 		switch( c ) {
 			case 'v':	/* verbose */
 				verbose = 1;
@@ -635,6 +786,17 @@ main( int argc, char *argv[] )
 				if( tmp <= 0.0 ) {
 					bu_log( "Illegal tolerance (%g), musy be > 0.0\n",
 						tmp );
+					exit( 1 );
+				}
+				break;
+			case 'n':	/* part name list */
+				part_name_file = optarg;
+				use_part_name_hash = 1;
+				break;
+			case 'l':	/* max name length */
+				max_name_len = atoi( optarg );
+				if( max_name_len < 5 ) {
+					bu_log( "Unreasonable name length limitation\n" );
 					exit( 1 );
 				}
 				break;
@@ -664,6 +826,15 @@ main( int argc, char *argv[] )
 		bu_log( "Cannot open %s for writing\n", output_file );
 		perror( argv[0] );
 		exit( 1 );
+	}
+
+	if( use_part_name_hash ) {
+		if( (fd_parts=fopen( part_name_file, "r" )) == NULL ) {
+			bu_log( "Cannot open part name file (%s)\n", part_name_file );
+			perror( argv[0] );
+			exit( 1 );
+		}
+		create_name_hash( fd_parts );
 	}
 
 	/* finally, start processing the input */
@@ -704,6 +875,12 @@ main( int argc, char *argv[] )
 			id = atoi( &line[7] );
 			top_level_part = Part_import( id );
 		}
+	}
+
+	if( name_not_converted ) {
+		bu_log( "Warning %d objects were not found in the part number to name mapping,\n",
+			name_not_converted );
+		bu_log( "\ttheir names remain as part numbers.\n" );
 	}
 
 	return( 0 );
