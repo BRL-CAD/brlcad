@@ -986,7 +986,7 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-	Viewscale = atof(argv[1]);
+	Viewscale = atof(argv[1])*0.5;
 	return(0);
 }
 
@@ -1183,6 +1183,10 @@ char	**argv;
 int	argc;
 {
 	f_zap( 0, (char *)0 );
+
+	/* Free animation structures */
+	db_free_anim(dbip);
+
 	tree_walk_needed = 1;
 	return 0;
 }
