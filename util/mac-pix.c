@@ -72,7 +72,7 @@ char	*file_name;
 FILE	*infp;
 
 static char usage[] = "\
-Usage: mac-pix [-c -l -B]\n\
+Usage: mac-pix [-c -l -b]\n\
 	[-s squareMacsize] [-w Mac_width] [-n Mac_height]\n\
 	[-x Mac_xoff] [-y Mac_yoff] [-X outp_xoff] [-Y outp_yoff]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height] [file.mac]\n";
@@ -82,14 +82,14 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "clBs:w:n:x:y:X:Y:S:W:N:r:g:b:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:R:G:B:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			/* Center in output */
 			scr_xoff = (scr_width-file_width)/2;
 			scr_yoff = (scr_height-file_height)/2;
 			break;
-		case 'B':
+		case 'b':
 			bwflag = 1;
 			break;
 		case 'l':
@@ -127,13 +127,13 @@ register char **argv;
 		case 'y':
 			file_yoff = atoi(optarg);
 			break;
-		case 'r':
+		case 'R':
 		        color[0] = atoi( optarg );
 			break;
-		case 'g':
+		case 'G':
 		        color[1] = atoi( optarg );
 			break;
-		case 'b':
+		case 'B':
 		        color[2] = atoi( optarg );
 			break;
 
