@@ -516,9 +516,9 @@ dist)
 	do
 		rm -fr ${DISTDIR}/$i
 		mkdir ${DISTDIR}/$i
-		# Get everything (recursively) except the RCS subdirs
+		# Get everything (recursively) except the RCS & CVS subdirs
 		# XXX Note that this rule will also miss README files
-		cp -r $i/[!R]* ${DISTDIR}/$i/.
+		cp -r $i/[!CR]* ${DISTDIR}/$i/.
 	done
 	for i in ${TOP_FILES}
 	do
@@ -532,7 +532,7 @@ dist)
 
 	echo "Preparing the 'bench' directory"
 	(cd bench; cake clobber; cake install)
-	echo "End of BRL-CAD Release $RELEASE tape, `date`" > ${DISTDIR}/zzzEND
+	echo "End of BRL-CAD Release $RELEASE archive, `date`" > ${DISTDIR}/zzzEND
 	cd ${DISTDIR}; du -a > Contents
 	;;
 
@@ -552,7 +552,7 @@ arch)
 	echo "${ARCHIVE} created"
 
 	# The FTP images:
-	FTP_ARCHIVE=/n/wolf/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
+	FTP_ARCHIVE=/n/cad/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
 	echo "encryption key is /$KEY/"
@@ -567,46 +567,50 @@ arch)
 
 	/usr/gnu/bin/tar cfv - Copy* README doc html papers \
 	    zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-a.Z
-	chmod 444 ${FTP_ARCHIVE}-a.Z
-	echo "${FTP_ARCHIVE}-a.Z created (doc)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-a.gz
+	chmod 444 ${FTP_ARCHIVE}-a.gz
+	echo "${FTP_ARCHIVE}-a.gz created (doc)"
 
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} [A-Z]* [a-k]* zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-b.Z
-	chmod 444 ${FTP_ARCHIVE}-b.Z
-	echo "${FTP_ARCHIVE}-b.Z created (core 1)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-b.gz
+	chmod 444 ${FTP_ARCHIVE}-b.gz
+	echo "${FTP_ARCHIVE}-b.gz created (core 1)"
 
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [l]* zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-c.Z
-	chmod 444 ${FTP_ARCHIVE}-c.Z
-	echo "${FTP_ARCHIVE}-c.Z created (core 2)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-c.gz
+	chmod 444 ${FTP_ARCHIVE}-c.gz
+	echo "${FTP_ARCHIVE}-c.gz created (core 2)"
 
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-t]* zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-d.Z
-	chmod 444 ${FTP_ARCHIVE}-d.Z
-	echo "${FTP_ARCHIVE}-d.Z created (core 3)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-d.gz
+	chmod 444 ${FTP_ARCHIVE}-d.gz
+	echo "${FTP_ARCHIVE}-d.gz created (core 3)"
 
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [u-z]* zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-e.Z
-	chmod 444 ${FTP_ARCHIVE}-e.Z
-	echo "${FTP_ARCHIVE}-e.Z created (core 4)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-e.gz
+	chmod 444 ${FTP_ARCHIVE}-e.gz
+	echo "${FTP_ARCHIVE}-e.gz created (core 4)"
 
 	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-f.Z
-	chmod 444 ${FTP_ARCHIVE}-f.Z
-	echo "${FTP_ARCHIVE}-f.Z created (pix)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-f.gz
+	chmod 444 ${FTP_ARCHIVE}-f.gz
+	echo "${FTP_ARCHIVE}-f.gz created (pix)"
 
 	/usr/gnu/bin/tar cfv - Copy* README vfont zzzEND |\
-		compress | crypt ${KEY} > ${FTP_ARCHIVE}-g.Z
-	chmod 444 ${FTP_ARCHIVE}-g.Z
-	echo "${FTP_ARCHIVE}-g.Z created (vfont)"
+		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-g.gz
+	chmod 444 ${FTP_ARCHIVE}-g.gz
+	echo "${FTP_ARCHIVE}-g.gz created (vfont)"
 
 ##	/usr/gnu/bin/tar cfv - Copy* README contributed zzzEND |\
-##		compress | crypt ${KEY} > ${FTP_ARCHIVE}-h.Z
-##	chmod 444 ${FTP_ARCHIVE}-h.Z
-##	echo "${FTP_ARCHIVE}-h.Z created (contrib)"
+##		gzip -9 | crypt ${KEY} > ${FTP_ARCHIVE}-h.gz
+##	chmod 444 ${FTP_ARCHIVE}-h.gz
+##	echo "${FTP_ARCHIVE}-h.gz created (contrib)"
 
 	rm -f ${EXCLUDE}
+	;;
+
+# On a Linux system, bundle up /usr/brlcad binary tree as an RPM.
+rpm)
 	;;
 
 *)
