@@ -125,6 +125,10 @@ FBIO abekas_interface = {
 #define MODE_3QUIET	(0<<2)
 #define MODE_3VERBOSE	(1<<2)
 
+#define MODE_4MASK	(1<<3)
+#define MODE_4NETWORK	(0<<3)
+#define MODE_4DISK	(1<<3)
+
 #define STATE_FRAME_WAS_READ	(1<<8)
 #define STATE_USER_HAS_READ	(1<<9)
 #define STATE_USER_HAS_WRITTEN	(1<<10)
@@ -141,6 +145,8 @@ static struct modeflags {
 		"Output only (in before out); default=always read first" },
 	{ 'v',	MODE_3MASK, MODE_3VERBOSE,
 		"Verbose logging; default=quiet" },
+	{ 'f',	MODE_4MASK, MODE_4DISK,
+		"Read/write YUV to disk file given by @#; default=use EtherNet" },
 	{ '\0', 0, 0, "" }
 };
 
@@ -220,8 +226,13 @@ int		width, height;
 	} else {
 		/* Get hostname from environment variable */
 		if( (ifp->if_host = getenv("ABEKAS")) == NULL )  {
-			fb_log("ab_open: hostname not given and ABEKAS environment variable not set\n");
-			return(-1);
+			if( (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK )  {
+				fb_log("ab_open: hostname not given and ABEKAS environment variable not set\n");
+				return(-1);
+			} else {
+				/* Here, "host" is a filename prefix. */
+				ifp->if_host = "";
+			}
 		}
 	}
 
@@ -231,12 +242,15 @@ int		width, height;
 		register int	i;
 
 		i = atoi(cp+1);
-		if( i >= 50*30 )  {
-			fb_log("ab_open: frame %d out of range\n", i);
-			return(-1);
-		}
-		if( i < 0 ) {
-			fb_log("ab_open: frame < 0, using frame store\n");
+		if( (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK )  {
+			/* Perform validity checking on frame numbers */
+			if( i >= 50*30 )  {
+				fb_log("ab_open: frame %d out of range\n", i);
+				return(-1);
+			}
+			if( i < 0 ) {
+				fb_log("ab_open: frame < 0, using frame store\n");
+			}
 		}
 		ifp->if_frame = i;
 	} else if( *cp != '\0' )  {
@@ -337,7 +351,9 @@ FBIO	*ifp;
 
 	ab_log(ifp, "Reading frame");
 	if( ab_yuvio( 0, ifp->if_host, ifp->if_yuv,
-	    720*486*2, ifp->if_frame ) != 720*486*2 )  {
+	    720*486*2, ifp->if_frame,
+	    (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK
+	    ) != 720*486*2 )  {
 		fb_log("ab_readframe(%d): unable to get frame from %s!\n",
 			ifp->if_frame, ifp->if_host);
 		return(-1);
@@ -380,8 +396,11 @@ FBIO	*ifp;
 		ab_log(ifp, "Writing frame");
 
 		if( ab_yuvio( 1, ifp->if_host, ifp->if_yuv,
-		    720*486*2, ifp->if_frame ) != 720*486*2 )  {
-			fb_log("ab_close: unable to send frame to A60!\n");
+		    720*486*2, ifp->if_frame,
+		    (ifp->if_mode & MODE_4MASK) == MODE_4NETWORK
+		    ) != 720*486*2 )  {
+			fb_log("ab_close: unable to send frame %d to A60 %s!\n",
+				ifp->if_frame, ifp->if_host);
 		    	ret = -1;
 		}
 		ab_log(ifp, "Transmission done");
@@ -670,12 +689,13 @@ FBIO	*ifp;
  *	-1	error
  *	len	successful count
  */
-ab_yuvio( output, host, buf, len, frame )
+ab_yuvio( output, host, buf, len, frame, to_network )
 int	output;		/* 0=read(input), 1=write(output) */
 char	*host;
 char	*buf;
 int	len;
 int	frame;		/* frame number */
+int	to_network;
 {
 	struct sockaddr_in	sinme;		/* Client */
 	struct sockaddr_in	sinhim;		/* Server */
@@ -685,6 +705,29 @@ int	frame;		/* frame number */
 	int			n;
 	int			netfd;
 	int			got;
+
+	if( !to_network )  {
+		sprintf( xmit_buf, "%s%d.yuv", host, frame );
+		if( output )
+			netfd = creat( xmit_buf, 0444 );
+		else
+			netfd = open( xmit_buf, 0 );
+		if( netfd < 0 )  {
+			perror( xmit_buf );
+			return -1;
+		}
+		if( output )
+			got = write( netfd, buf, len );
+		else
+			got = ab_mread( netfd, buf, len );
+		if( got != len )  {
+			perror("read/write");
+			fb_log("ab_yuvio file read/write error, len=%d, got=%d\n", len, got );
+			goto err;
+		}
+		(void)close(netfd);
+		return got;		/* OK */
+	}
 
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
