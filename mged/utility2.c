@@ -27,9 +27,9 @@
 #include "./sedit.h"
 #include "./objdir.h"
 
-int		args;		/* total number of args available */
-int		argcnt;		/* holder for number of args added later */
-int		newargs;	/* number of args from getcmd() */
+extern int	args;		/* total number of args available */
+extern int	argcnt;		/* holder for number of args added later */
+extern int	newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
@@ -515,12 +515,12 @@ struct idpush {
 	char	i_name[NAMESIZE];
 	mat_t	i_mat;
 };
-struct idpush idpush, idbuf;
+static struct idpush idpush, idbuf;
 
 #define MAXSOL 2000
-int discr[MAXSOL], idfd, rd_idfd;
-int push_count;		/* count of solids to be pushed */
-int abort;
+extern int discr[], idfd, rd_idfd;	/* from utility1 */
+static int push_count;		/* count of solids to be pushed */
+static int abort_flag;
 
 /*
  *		F _ P U S H ( )
@@ -550,10 +550,10 @@ f_push( )
 			continue;
 		}
 		push_count = 0;		/* NO solids yet */
-		abort = 0;
+		abort_flag = 0;
 		mat_idn( identity );
 		push(dp, 0, identity);
-		if( abort ) {
+		if( abort_flag ) {
 			/* Cannot push transformations for this object */
 			(void)printf("%s: push failed\n",cmd_args[i]);
 			continue;
@@ -673,7 +673,7 @@ mat_t	old_xlate;
 	int nparts, i, k, j;
 	int dchar = 0;
 
-	if( abort == 99 )	/* go no further */
+	if( abort_flag == 99 )	/* go no further */
 		return;
 
 	if( pathpos >= MAX_LEVELS ) {
@@ -681,7 +681,7 @@ mat_t	old_xlate;
 		for(i=0; i<MAX_LEVELS; i++)
 			(void)printf("/%s", path[i]->d_namep);
 		(void)printf("\n");
-		abort = 1;
+		abort_flag = 1;
 		return;
 	}
 
@@ -704,18 +704,18 @@ mat_t	old_xlate;
 	if(record.u_id == ID_BSOLID) {
 		(void)printf("push: (%s) SPLINE not implemented yet - abort\n",
 				record.B.B_name);
-		abort = 1;
+		abort_flag = 1;
 		return;
 	}
 	if(record.u_id == ID_P_HEAD) {
 		(void)printf("push: (%s) POLYGON not implemented yet - abort\n",
 				record.p.p_name);
-		abort = 1;
+		abort_flag = 1;
 		return;
 	}
 	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A) {
 		(void)printf("bad record type '%c' should be 'S' or 'A'\n",record.u_id);
-		abort = 1;
+		abort_flag = 1;
 		return;
 	}
 
@@ -752,7 +752,7 @@ mat_t	old_xlate;
 				/* BAD ... matrices are diff but names the same */
 				(void)printf("Cannot push: solid (%s) has conflicts\n",
 						idpush.i_name);
-				abort = 1;
+				abort_flag = 1;
 				return;
 			}
 		}
@@ -762,7 +762,7 @@ mat_t	old_xlate;
 	discr[push_count++] = dchar;
 	if(push_count > MAXSOL) {
 		(void)printf("push: number of solids > max (%d)\n",MAXSOL);
-		abort = 99;
+		abort_flag = 99;
 		return;
 	}
 	(void)lseek(idfd, 0L, 2);
