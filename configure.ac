@@ -150,40 +150,7 @@ AM_CONFIG_HEADER([include/config.h])
 # a secondary automated automake may blow away COPYING & INSTALL due
 # to an automake bug in older version, so restore those files if
 # needed.
-for file in COPYING INSTALL ; do
-	curr="$srcdir/$file"
-	if ! test -f "$curr" ; then
-		continue
-	fi
-	back="$srcdir/misc/${file}.backup"
-	if ! test -f "$back" ; then
-		continue
-	fi
-
-	AC_MSG_CHECKING([whether ${file} needs to be restored])
-	current="`cat $curr`"
-	backup="`cat $back`"
-	if test "x$current" = "x$backup" ; then
-		AC_MSG_RESULT(no)
-	else
-		current_rev=`grep '$Revision' "$curr" | awk '{print $2}' | sed 's/\.//g'`
-		if test "x$current_rev" = "x" ; then
-			current_rev=0
-		fi
-		backup_rev=`grep '$Revision' "$back" | awk '{print $2}' | sed 's/\.//g'`
-		if test "x$backup_rev" = "x" ; then
-			backup_rev=0
-		fi
-		if test "$current_rev" -ge "$backup_rev" ; then
-			AC_MSG_RESULT(no, saving backup)
-			# new version from cvs.. back it up
-			cp -pr "$curr" "$back"
-		else
-			AC_MSG_RESULT(yes)
-			cp -pr "$back" "$curr"
-		fi
-	fi
-done
+BC_RESTORE_CLOBBERED([COPYING INSTALL], [misc])
 
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
