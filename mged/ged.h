@@ -1,4 +1,3 @@
-/*	SCCSID	%W%	%E%	*/
 /*
  *			G E D . H
  *
@@ -40,13 +39,6 @@
  */
 
 extern double	degtorad, radtodeg;	/* Defined in e4.c */
-
-/*
- *	Global file descriptors - defined in e1.c
- */
-extern int	objfd;		/* Object file */
-extern int	p_out;		/* Pipe to GED2, output FD */
-extern int	p_in;		/* Pipe to GED2, input FD */
 
 extern int	dmaflag;	/* Set to 1 to force a new screen DMA */
 extern int	regdebug;
@@ -155,6 +147,8 @@ extern char		*addname(), *strdup();
 extern int		clip(), getname(), use_pen(), drawHsolid();
 extern struct directory	*combadd(), *dir_add(), *lookup();
 extern struct solid *redraw();
+extern void		ellipse(), memfree();
+extern unsigned		memalloc();
 
 #ifndef	NULL
 #define	NULL		0
@@ -165,8 +159,6 @@ extern struct solid *redraw();
  */
 #define UP	0
 #define DOWN	1
-#define QUIET	UP
-#define NOISY	DOWN
 
 /*
  * Entry number of solid in solid table to be illuminated. - defined in e4.c
@@ -219,3 +211,6 @@ extern char *state_str[];		/* identifying strings */
 #define ST_O_PICK	4		/* Picking for Object Edit */
 #define ST_O_PATH	5		/* Path select for Object Edit */
 #define ST_O_EDIT	6		/* Object Editing */
+
+#define MIN(a,b)	if( (b) < (a) )  a = b
+#define MAX(a,b)	if( (b) > (a) )  a = b
