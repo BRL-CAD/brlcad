@@ -34,7 +34,7 @@ struct nmg_bool_state  {
 	struct shell	*bs_src;
 	int		bs_isA;		/* true if A, else doing B */
 	long		**bs_classtab;
-	int		*bs_actions;
+	CONST int	*bs_actions;
 };
 
 static void nmg_eval_shell RT_ARGS( (struct shell *s,
@@ -149,7 +149,7 @@ long		*classlist[8];
 {
 	struct loopuse	*lu;
 	struct faceuse	*fu;
-	int		*actions;
+	int CONST	*actions;
 	int		i;
 	struct nmg_bool_state	bool_state;
 
