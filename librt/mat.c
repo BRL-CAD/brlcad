@@ -84,13 +84,14 @@ double	y,x;
  */
 void
 mat_zero( m )
-register matp_t m;
+mat_t	m;
 {
 	register int i = 0;
+	register matp_t mp = m;
 
 	/* Clear everything */
 	for(; i<16; i++)
-		*m++ = 0.0;
+		*mp++ = 0.0;
 }
 
 
@@ -101,7 +102,7 @@ register matp_t m;
  */
 void
 mat_idn( m )
-register matp_t m;
+register mat_t	m;
 {
 	/* Clear everything first */
 	mat_zero( m );
@@ -114,17 +115,20 @@ register matp_t m;
 /*
  *			M A T _ C O P Y
  *
- * Copy the matrix "im" into the matrix "om".
+ * Copy the matrix
  */
 void
-mat_copy( om, im )
-register matp_t om;
-register matp_t im;
+mat_copy( dest, src )
+mat_t	dest;
+mat_t	src;
 {
-	register int i = 0;
+	register matp_t om = dest;
+	register matp_t im = src;
+	register int i;
 
 	/* Copy all elements */
-	for(; i<16; i++)
+#	include "noalias.h"
+	for( i=15; i>=0; i--)
 		*om++ = *im++;
 }
 
@@ -139,9 +143,9 @@ register matp_t im;
  */
 void
 mat_mul( o, a, b )
-register matp_t o;
-register matp_t a;
-register matp_t b;
+register mat_t o;
+register mat_t a;
+register mat_t b;
 {
 	o[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 4] + a[ 2]*b[ 8] + a[ 3]*b[12];
 	o[ 1] = a[ 0]*b[ 1] + a[ 1]*b[ 5] + a[ 2]*b[ 9] + a[ 3]*b[13];
@@ -173,9 +177,9 @@ register matp_t b;
  */
 void
 matXvec(ov, im, iv)
-register vectp_t ov;
-register matp_t im;
-register vectp_t iv;
+register vect_t ov;
+register mat_t im;
+register vect_t iv;
 {
 	register int eo = 0;		/* Position in output vector */
 	register int em = 0;		/* Position in input matrix */
@@ -205,8 +209,8 @@ register vectp_t iv;
  */
 void
 mat_inv( output, input )
-matp_t input;
-register matp_t output;
+mat_t		input;
+register mat_t	output;
 {
 	register int i, j;			/* Indices */
 	LOCAL int k;				/* Indices */
@@ -296,12 +300,12 @@ register matp_t output;
  */
 void
 vtoh_move( h, v )
-register vectp_t h, v;
+register vect_t h, v;
 {
-	*h++ = *v++;
-	*h++ = *v++;
-	*h++ = *v;
-	*h++ = 1.0;
+	h[X] = v[X];
+	h[Y] = v[Y];
+	h[Z] = v[Z];
+	h[W] = 1.0;
 }
 
 /*
@@ -313,23 +317,23 @@ register vectp_t h, v;
  */
 void
 htov_move( v, h )
-register vectp_t v, h;
+register vect_t v, h;
 {
 	FAST fastf_t inv;
 
 	if( h[3] == 1.0 )  {
-		*v++ = *h++;
-		*v++ = *h++;
-		*v   = *h;
+		v[X] = h[X];
+		v[Y] = h[Y];
+		v[Z] = h[Z];
 	}  else  {
-		if( h[3] == 0.0 )  {
-			rt_log("htov_move: divide by %f!\n", h[3]);
+		if( h[W] == 0.0 )  {
+			rt_log("htov_move: divide by %f!\n", h[W]);
 			return;
 		}
-		inv = 1.0 / h[3];
-		*v++ = *h++ * inv;
-		*v++ = *h++ * inv;
-		*v   = *h   * inv;
+		inv = 1.0 / h[W];
+		v[X] = h[X] * inv;
+		v[Y] = h[Y] * inv;
+		v[Z] = h[Z] * inv;
 	}
 }
 
@@ -338,8 +342,8 @@ register vectp_t v, h;
  */
 void
 mat_print( title, m )
-char *title;
-mat_t m;
+char	*title;
+mat_t	m;
 {
 	register int i;
 
@@ -358,28 +362,30 @@ mat_t m;
  */
 void
 mat_trn( om, im )
-register matp_t om;
-register matp_t im;
+mat_t		om;
+register mat_t	im;
 {
-	*om++ = im[0];
-	*om++ = im[4];
-	*om++ = im[8];
-	*om++ = im[12];
+	register matp_t op = om;
 
-	*om++ = im[1];
-	*om++ = im[5];
-	*om++ = im[9];
-	*om++ = im[13];
+	*op++ = im[0];
+	*op++ = im[4];
+	*op++ = im[8];
+	*op++ = im[12];
 
-	*om++ = im[2];
-	*om++ = im[6];
-	*om++ = im[10];
-	*om++ = im[14];
+	*op++ = im[1];
+	*op++ = im[5];
+	*op++ = im[9];
+	*op++ = im[13];
 
-	*om++ = im[3];
-	*om++ = im[7];
-	*om++ = im[11];
-	*om++ = im[15];
+	*op++ = im[2];
+	*op++ = im[6];
+	*op++ = im[10];
+	*op++ = im[14];
+
+	*op++ = im[3];
+	*op++ = im[7];
+	*op++ = im[11];
+	*op++ = im[15];
 }
 
 /*
@@ -393,9 +399,9 @@ register matp_t im;
  */
 void
 mat_ae( m, azimuth, elev )
-register matp_t m;
-double azimuth;
-double elev;
+register mat_t	m;
+double		azimuth;
+double		elev;
 {
 	LOCAL double sin_az, sin_el;
 	LOCAL double cos_az, cos_el;
@@ -463,7 +469,7 @@ vect_t	v;
  */
 void
 mat_angles( mat, alpha, beta, ggamma )
-register matp_t mat;
+register mat_t	mat;
 double alpha, beta, ggamma;
 {
 	LOCAL double calpha, cbeta, cgamma;
@@ -734,15 +740,9 @@ int	yflip;
 	/* First, rotate D around Z axis to match +X axis (azimuth) */
 	hypot_xy = hypot( dir[X], dir[Y] );
 	mat_zrot( first, -dir[Y] / hypot_xy, dir[X] / hypot_xy );
-#if 0
-rt_log(" az angle=%g\n", mat_atan2( -dir[Y] / hypot_xy, dir[X] / hypot_xy )*mat_radtodeg );
-#endif
 
 	/* Next, rotate D around Y axis to match -Z axis (elevation) */
 	mat_yrot( second, -hypot_xy, -dir[Z] );
-#if 0
-rt_log(" el angle=%g\n", mat_atan2( -hypot_xy, -dir[Z] )*mat_radtodeg );
-#endif
 	mat_mul( prod12, second, first );
 
 	/* Produce twist correction, by re-orienting projection of X axis */
@@ -756,9 +756,6 @@ rt_log(" el angle=%g\n", mat_atan2( -hypot_xy, -dir[Z] )*mat_radtodeg );
 		return;
 	}
 	mat_zrot( third, -xproj[Y] / hypot_xy, xproj[X] / hypot_xy );
-#if 0
-rt_log(" tw angle=%g\n", mat_atan2( -xproj[Y] / hypot_xy, xproj[X] / hypot_xy )*mat_radtodeg);
-#endif
 	mat_mul( rot, third, prod12 );
 
 	if( yflip )  {
@@ -789,7 +786,8 @@ rt_log(" tw angle=%g\n", mat_atan2( -xproj[Y] / hypot_xy, xproj[X] / hypot_xy )*
  */
 void
 vec_ortho( out, in )
-register fastf_t *out, *in;
+register vect_t	out;
+register vect_t	in;
 {
 	register int j, k;
 	FAST fastf_t	f;
