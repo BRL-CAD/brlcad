@@ -53,9 +53,16 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
-#define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)DBI_MAGIC,"struct db_i")
-#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RTI_MAGIC,"struct rt_i")
-#define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RT_WDB_MAGIC,"struct rt_wdb")
+#define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
+#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,RTI_MAGIC,"struct rt_i")
+#define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,RT_WDB_MAGIC,"struct rt_wdb")
+#define RT_CK_COMB_TCL(_p)	BU_CKMAG_TCL(interp,_p,RT_COMB_MAGIC, "rt_comb_internal" )
+
+/************************************************************************
+ *									*
+ *		Tcl interface to Ray-tracing				*
+ *									*
+ ************************************************************************/
 
 struct dbcmdstruct {
 	char *cmdname;
@@ -472,6 +479,12 @@ char **argv;
 	return TCL_ERROR;
 }
 
+/************************************************************************
+ *									*
+ *		Tcl interface to Combination import/export		*
+ *									*
+ ************************************************************************/
+
 /*
  *		D B _ T C L _ T R E E _ D E S C R I B E
  *
@@ -728,25 +741,24 @@ out:
 }
 
 /*
- *		D B _ T C L _ C O M B _ D E S C R I B E
+ *			R T _ C O M B _ T C L G E T
  *
- * Sets the interp->result string to a description of the given combination.
+ *  Sets the interp->result string to a description of the given combination.
+ *  Entered via rt_functab[].ft_tclget().
  */
-
 int
-db_tcl_comb_describe( interp, comb, item )
-Tcl_Interp		*interp;
-struct rt_comb_internal *comb;
-CONST char		*item;
+rt_comb_tclget( interp, intern, item )
+Tcl_Interp			*interp;
+CONST struct rt_db_internal	*intern;
+CONST char			*item;
 {
+	CONST struct rt_comb_internal *comb;
 	char buf[128];
 	Tcl_DString	ds;
-	
-	if( !comb ) {
-		Tcl_AppendResult( interp, "error: null combination",
-				  (char *)NULL );
-		return TCL_ERROR;
-	}
+
+	RT_CK_DB_INTERNAL(intern);
+	comb = (struct rt_comb_internal *)intern->idb_ptr;
+	RT_CK_COMB_TCL(comb);
 
 	if( item==0 ) {
 		/* Print out the whole combination. */
@@ -875,24 +887,28 @@ CONST char		*item;
 
 
 /*
- *			D B _ T C L _ C O M B _ A D J U S T
+ *			R T _ C O M B _ T C L A D J U S T
  *
- *  Invocation:
+ *  Example -
  *	rgb "1 2 3" ...
+ *
+ *  Invoked via rt_functab[].ft_tcladjust()
  */
-
 int
-db_tcl_comb_adjust( comb, interp, argc, argv )
-struct rt_comb_internal	       *comb;
-Tcl_Interp		       *interp;
-int				argc;
-char			      **argv;
+rt_comb_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
 {
+	struct rt_comb_internal	       *comb;
 	char	buf[128];
 	int	i;
 	double	d;
-	
-	RT_CK_COMB( comb );
+
+	RT_CK_DB_INTERNAL(intern);
+	comb = (struct rt_comb_internal *)intern->idb_ptr;
+	RT_CK_COMB(comb);
 
 	while( argc >= 2 ) {
 		/* Force to lower case */
@@ -1035,10 +1051,17 @@ char			      **argv;
 	return TCL_OK;
 
  not_region:
-	Tcl_AppendResult( interp, "attribute not valid for non-region",
+	Tcl_AppendResult( interp, "adjusting attribute ",
+		buf, " is not valid for a non-region combination.",
 			  (char *)NULL );
 	return TCL_ERROR;
 }
+
+/************************************************************************
+ *									*
+ *		Tcl interface to the Database				*
+ *									*
+ ************************************************************************/
 
 /*
  *			R T _ D B _ M A T C H
@@ -1185,6 +1208,72 @@ struct rt_wdb		*wdb;
 }
 
 /*
+ *			R T _ P A R S E T A B _ T C L G E T
+ *
+ *  This is the generic routine to be listed in rt_functab[].ft_tclget
+ *  for those solid types which are fully described by their ft_parsetab
+ *  entry.
+ */
+int
+rt_parsetab_tclget( interp, intern, attr )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+CONST char		*attr;
+{
+	register CONST struct bu_structparse	*sp = NULL;
+	register CONST struct rt_functab	*ftp;
+	int                     status;
+	Tcl_DString             ds;
+	struct bu_vls           str;
+
+	RT_CK_DB_INTERNAL( intern );
+	ftp = intern->idb_meth;
+	RT_CK_FUNCTAB(ftp);
+
+	sp = ftp->ft_parsetab;
+	if( !sp )  {
+		Tcl_AppendResult( interp, ftp->ft_label,
+ " {a Tcl output routine for this type of object has not yet been implemented}",
+		  (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	bu_vls_init( &str );
+	Tcl_DStringInit( &ds );
+
+	if( attr == (char *)0 ) {
+		/* Print out solid type and all attributes */
+		Tcl_DStringAppendElement( &ds, ftp->ft_label );
+		while( sp->sp_name != NULL ) {
+			Tcl_DStringAppendElement( &ds, sp->sp_name );
+			bu_vls_trunc( &str, 0 );
+			bu_vls_struct_item( &str, sp,
+					 (char *)intern->idb_ptr, ' ' );
+			Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+			++sp;
+		}
+		status = TCL_OK;
+	} else {
+		if( bu_vls_struct_item_named( &str, sp, attr,
+				   (char *)intern->idb_ptr, ' ') < 0 ) {
+			bu_vls_printf(&str,
+				"Objects of type %s do not have a %s attribute.",
+				ftp->ft_label, attr);
+			status = TCL_ERROR;
+		} else {
+			status = TCL_OK;
+		}
+		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
+	}
+
+	Tcl_DStringResult( interp, &ds );
+	Tcl_DStringFree( &ds );
+	bu_vls_free( &str );
+
+	return status;
+}
+
+/*
  *			R T _ D B _ R E P O R T
  *
  *  Report on a particular object from the database.
@@ -1192,19 +1281,18 @@ struct rt_wdb		*wdb;
  *  Also used in MGED for get_edit_solid.
  *  'attr' is specified to retrieve only one attribute, rather than all.
  *  Example:  "db get ell.s B" to get only the B vector.
+ *  XXX This routine should go away soon, and be replaced by
+ *  XXX idb_meth->ft_tclget().
  */
 int
 rt_db_report( interp, intern, attr )
 Tcl_Interp		*interp;
-struct rt_db_internal	*intern;
+CONST struct rt_db_internal	*intern;
 CONST char		*attr;
 {
 	register CONST struct bu_structparse	*sp = NULL;
 	register CONST struct rt_functab	*ftp;
-
 	int                     id, status;
-	Tcl_DString             ds;
-	struct bu_vls           str;
 
 	RT_CK_DB_INTERNAL( intern );
 
@@ -1213,11 +1301,11 @@ CONST char		*attr;
 	ftp = intern->idb_meth;
 	RT_CK_FUNCTAB(ftp);
 
+	/* return ftp->ft_tclget( interp, intern, attr ); */
+
 	switch( id ) {
 	case ID_COMBINATION:
-		status = db_tcl_comb_describe( interp,
-			       (struct rt_comb_internal *)intern->idb_ptr,
-					       attr );
+		status = rt_comb_tclget( interp, intern, attr );
 		break;
 	default:
 		if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
@@ -1226,40 +1314,7 @@ CONST char		*attr;
 				  (char *)NULL );
 			return TCL_OK;
 		}
-
-		bu_vls_init( &str );
-		Tcl_DStringInit( &ds );
-
-		sp = ftp->ft_parsetab;
-		if( attr == (char *)0 ) {
-			/* Print out solid type and all attributes */
-			Tcl_DStringAppendElement( &ds, ftp->ft_label );
-			while( sp->sp_name != NULL ) {
-				Tcl_DStringAppendElement( &ds, sp->sp_name );
-				bu_vls_trunc( &str, 0 );
-				bu_vls_struct_item( &str, sp,
-						 (char *)intern->idb_ptr, ' ' );
-				Tcl_DStringAppendElement( &ds,
-							  bu_vls_addr(&str) );
-				++sp;
-			}
-			status = TCL_OK;
-		} else {
-			if( bu_vls_struct_item_named( &str, sp, attr,
-					   (char *)intern->idb_ptr, ' ') < 0 ) {
-				bu_vls_printf(&str,
-					"Objects of type %s do not have a %s attribute.",
-					ftp->ft_label, attr);
-				status = TCL_ERROR;
-			} else {
-				status = TCL_OK;
-			}
-			Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
-		}
-
-		Tcl_DStringResult( interp, &ds );
-		Tcl_DStringFree( &ds );
-		bu_vls_free( &str );
+		status = rt_parsetab_tclget( interp, intern, attr );
 	}
 
 	return status;
@@ -1318,9 +1373,97 @@ char	      **argv;
 		return TCL_ERROR;
 
 	status = rt_db_report( interp, &intern, argv[2] );
+	/* status = intern.idb_meth->ft_tclget( interp, &intern, argv[2] ); */
 
 	intern.idb_meth->ft_ifree( &intern );
 	return status;
+}
+
+/*
+ *			R T _ C O M B _ M A K E
+ *
+ *  Create a blank combination with appropriate values.
+ *
+ *  Called via rt_functab[ID_COMBINATION].ft_make().
+ */
+void
+rt_comb_make( ftp, intern, diameter )
+CONST struct rt_functab	*ftp;
+struct rt_db_internal	*intern;
+double			diameter;
+{
+	struct rt_comb_internal *comb;
+
+	intern->idb_type = ID_COMBINATION;
+	intern->idb_meth = &rt_functab[ID_COMBINATION];
+	intern->idb_ptr = bu_calloc( sizeof(struct rt_comb_internal), 1,
+					    "rt_comb_internal" );
+
+	comb = (struct rt_comb_internal *)intern->idb_ptr;
+	comb->magic = (long)RT_COMB_MAGIC;
+	comb->temperature = -1;
+	comb->tree = (union tree *)0;
+	comb->region_flag = 1;
+	comb->region_id = 0;
+	comb->aircode = 0;
+	comb->GIFTmater = 0;
+	comb->los = 0;
+	comb->rgb_valid = 0;
+	comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
+	bu_vls_init( &comb->shader );
+	bu_vls_init( &comb->material );
+	comb->inherit = 0;
+}
+
+/*
+ *			R T _ G E N E R I C _ M A K E
+ *
+ *  This one assumes that making all the parameters null is fine.
+ *  (More generally, diameter == 0 means make 'em all zero, otherwise
+ *  build something interesting to look at.)
+ */
+void
+rt_generic_make( ftp, intern, diameter )
+CONST struct rt_functab	*ftp;
+struct rt_db_internal	*intern;
+double			diameter;
+{
+	intern->idb_type = ftp - rt_functab;
+	BU_ASSERT(&rt_functab[intern->idb_type] == ftp);
+
+	intern->idb_meth = ftp;
+	intern->idb_ptr = bu_calloc( ftp->ft_internal_size, 1, "rt_generic_make");
+	*((long *)(intern->idb_ptr)) = ftp->ft_internal_magic;
+}
+
+/*
+ *			R T _ G E N E R I C _ T C L A D J U S T
+ *
+ *  For those solids entirely defined by their parsetab.
+ *  Invoked via rt_functab[].ft_tcladjust()
+ */
+int
+rt_generic_tcladjust( interp, intern, argc, argv )
+Tcl_Interp		*interp;
+struct rt_db_internal	*intern;
+int			argc;
+char			**argv;
+{
+	CONST struct rt_functab	*ftp;
+
+	RT_CK_DB_INTERNAL(intern);
+	ftp = intern->idb_meth;
+	RT_CK_FUNCTAB(ftp);
+
+	if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
+		Tcl_AppendResult( interp, ftp->ft_label,
+			  " type objects do not yet have a 'db put' (tcladjust) handler.",
+			  (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	return bu_structparse_argv(interp, argc, argv, ftp->ft_parsetab,
+				(char *)intern->idb_ptr );
 }
 
 /*
@@ -1357,11 +1500,11 @@ char	      **argv;
 
 	name = argv[1];
     
-	/* XXX
-	   Verify that this wdb supports lookup operations (non-null dbip) */
-	/* If not, just skip the lookup test and write the object */
-
-	if( db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
+	/* Verify that this wdb supports lookup operations (non-null dbip).
+	 * stdout/file wdb objects don't, but can still be written to.
+	 * If not, just skip the lookup test and write the object
+	 */
+	if( wdb->dbip && db_lookup(wdb->dbip, argv[1], LOOKUP_QUIET) != DIR_NULL ) {
 		Tcl_AppendResult(interp, argv[1], " already exists",
 				 (char *)NULL);
 		return TCL_ERROR;
@@ -1375,56 +1518,32 @@ char	      **argv;
 	}
 	type[i] = 0;
 
-	if( strcmp(type, "comb")==0 ) {
-		struct rt_comb_internal *comb;
-		intern.idb_type = ID_COMBINATION;
-		intern.idb_ptr = bu_calloc( sizeof(struct rt_comb_internal), 1,
-					    "rt_db_put" );
-		/* Create combination with appropriate values */
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		comb->magic = (long)RT_COMB_MAGIC;
-		comb->temperature = -1;
-		comb->tree = (union tree *)0;
-		comb->region_flag = 1;
-		comb->region_id = 0;
-		comb->aircode = 0;
-		comb->GIFTmater = 0;
-		comb->los = 0;
-		comb->rgb_valid = 0;
-		comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
-		bu_vls_init( &comb->shader );
-		bu_vls_init( &comb->material );
-		comb->inherit = 0;
+	ftp = rt_get_functab_by_label( type );
+	if( ftp == NULL ) {
+		Tcl_AppendResult( interp, type,
+				  " is an unknown object type.",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
 
-		if( db_tcl_comb_adjust( comb, interp, argc-3,
+	if( strcmp(type, "comb")==0 ) {
+		rt_comb_make( ftp, &intern, 0.0 );
+		/* ftp->ft_make( ftp, &intern, 0.0 ); */
+
+		/* ftp->ft_tcladjust( interp, &intern, argc-3, argv+3 ) */
+
+		if( rt_comb_tcladjust( interp, &intern, argc-3,
 					argv+3 ) == TCL_ERROR ) {
 			rt_db_free_internal( &intern );
 			return TCL_ERROR;
 		}
 	} else {
-		ftp = rt_get_functab_by_label( type );
-		if( ftp == NULL ) {
-			Tcl_AppendResult( interp, type,
-					  " is an unknown object type.",
-					  (char *)NULL );
-			return TCL_ERROR;
-		}
+		rt_generic_make( ftp, &intern, 0.0 );
+		/* ftp->ft_make( ftp, &intern, 0.0 ); */
 
-		if( ftp->ft_parsetab == (struct bu_structparse *)NULL ) {
-			Tcl_AppendResult( interp, type,
-					  " type objects do not yet have a 'db put' handler.",
-					  (char *)NULL );
-			return TCL_ERROR;
-		}
+		/* ftp->ft_tcladjust( interp, intern, argc-3, argv+3 ) */
 
-		intern.idb_type = ftp - rt_functab;
-		BU_ASSERT(&rt_functab[intern.idb_type] == ftp);
-		intern.idb_meth = ftp;
-		intern.idb_ptr = bu_calloc( ftp->ft_internal_size, 1,
-					    "rt_db_put" );
-		*((long *)intern.idb_ptr) = ftp->ft_internal_magic;
-		if( bu_structparse_argv(interp, argc-3, argv+3, ftp->ft_parsetab,
-					(char *)intern.idb_ptr )==TCL_ERROR ) {
+		if( rt_generic_tcladjust( interp, &intern, argc-3, argv+3 ) == TCL_ERROR )  {
 			rt_db_free_internal(&intern);
 			return TCL_ERROR;
 		}
@@ -1476,8 +1595,7 @@ char	      **argv;
 	}
 	name = argv[2];
 
-	/* XXX
-	   Verify that this wdb supports lookup operations (non-null dbip) */
+	/* Verify that this wdb supports lookup operations (non-null dbip) */
 	RT_CK_DBI_TCL(wdb->dbip);
 
 	dp = db_lookup( wdb->dbip, name, LOOKUP_QUIET );
@@ -1499,31 +1617,13 @@ char	      **argv;
 	id = intern.idb_type;
 	RT_CK_FUNCTAB(intern.idb_meth);
 
+	/* status = ftp->ft_tcladjust( interp, intern, argc-3, argv+3 ) */
 	if( id == ID_COMBINATION ) {
-		struct rt_comb_internal *comb =
-			(struct rt_comb_internal *)intern.idb_ptr;
-		RT_CK_COMB(comb);
-
 		/* .inmem adjust light.r rgb { 255 255 255 } */
-		status = db_tcl_comb_adjust( comb, interp, argc-3, argv+3 );
-	} else if( (sp = intern.idb_meth->ft_parsetab) == NULL )  {
-		Tcl_AppendResult( interp,
-	           "Manipulation routines for objects of type ",
-		   intern.idb_meth->ft_label,
-		   " have not yet been implemented.",
-				  (char *)NULL );
-		status = TCL_ERROR;
+		status = rt_comb_tcladjust( interp, &intern, argc-3, argv+3 );
 	} else {
-		/* If we were able to find an entry in the strutparse "cheat sheet",
-		   just use the handy parse functions to return the object.
-		   Pass first attribute as argv[0].
-		 */
 		/* .inmem adjust LIGHT V { -46 -13 5 } */
-		status = bu_structparse_argv( interp, argc-3, argv+3, sp,
-					      (char *)intern.idb_ptr );
-		if( status != TCL_OK )  Tcl_AppendResult( interp,
-			"bu_structparse_argv(", name, ") failure\n", (char *)NULL );
-		/* fall through */
+		status = rt_generic_tcladjust( interp, &intern, argc-3, argv+3 );
 	}
 
 	if( status == TCL_OK && wdb_export( wdb, name, intern.idb_ptr,
