@@ -2270,6 +2270,7 @@ RT_EXTERN(int			nmg_class_pt_f, (CONST point_t pt,
 				CONST struct rt_tol *tol) );
 RT_EXTERN(int			nmg_class_pt_s, (CONST point_t pt,
 				CONST struct shell *s,
+				CONST int in_or_out_only,
 				CONST struct rt_tol *tol) );
 
 /* From nmg_pt_fu.c */
