@@ -77,6 +77,7 @@ char	**argv;
 	vect_t	r1min, r1max, r1thick;
 	vect_t	lwh;		/* length, width, height */
 	vect_t	pbase;
+	float	*randp;
 
 	head.wm_forw = head.wm_back = &head;
 
@@ -126,13 +127,13 @@ char	**argv;
 	white[0] = white[1] = white[2] = 255;
 	base = size*(quant/2+1);
 	VSET( aim, 0, 0, 0 );
-	VSET( pos, base, base, minheight+maxheight*rand0to1() );
+	VSET( pos, base, base, minheight+maxheight*rand0to1(randp) );
 	do_light( "l1", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, base, minheight+maxheight*rand0to1() );
+	VSET( pos, -base, base, minheight+maxheight*rand0to1(randp) );
 	do_light( "l2", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, -base, -base, minheight+maxheight*rand0to1() );
+	VSET( pos, -base, -base, minheight+maxheight*rand0to1(randp) );
 	do_light( "l3", pos, aim, 1, 100.0, white, &head );
-	VSET( pos, base, -base, minheight+maxheight*rand0to1() );
+	VSET( pos, base, -base, minheight+maxheight*rand0to1(randp) );
 	do_light( "l4", pos, aim, 1, 100.0, white, &head );
 #endif
 
