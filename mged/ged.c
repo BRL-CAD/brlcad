@@ -197,7 +197,7 @@ char **argv;
 	}
 #endif
 
-	while ((c = bu_getopt(argc, argv, "d:hicrx:X:")) != EOF)
+	while ((c = bu_getopt(argc, argv, "d:hicnrx:X:")) != EOF)
 	{
 		switch( c )
 		{
@@ -210,6 +210,7 @@ char **argv;
 			case 'r':
 				read_only_flag = 1;
 				break;
+			case 'n':		/* "not new" == "classic" */
 			case 'c':
 				classic_mged = 1;
 				break;
@@ -219,14 +220,13 @@ char **argv;
 			case 'X':
 	                        sscanf( bu_optarg, "%x", &bu_debug );
 				break;
-			case 'h':
-				fprintf(stdout, "Usage:  %s [-h] [-i] [-n] [-r] [database [command]]\n", argv[0]);
-				fflush(stdout);
-				return(1);
 			default:
 				fprintf( stdout, "Unrecognized option (%c)\n", c );
+				/* Fall through to help */
+			case 'h':
+				fprintf(stdout, "Usage:  %s [-c] [-h] [-i] [-r] [-x#] -X#] [database [command]]\n", argv[0]);
 				fflush(stdout);
-				return( 1 );
+				return(1);
 		}
 	}
 
@@ -1632,7 +1632,7 @@ refresh()
 #endif
 
 	/* Compute and display angle/distance cursor */
-	if (mged_variables->adcflag)
+	if (adc_draw)
 	  adcursor();
 
 	/* Display titles, etc., if desired */
