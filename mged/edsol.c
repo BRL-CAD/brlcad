@@ -200,6 +200,9 @@ init_sedit()
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat );
 
+	/* get the inverse matrix */
+	mat_inv( es_invmat, es_mat );
+
 	/* put up menu header */
 	MENU_ON( FALSE );
 	switch( es_gentype ) {
@@ -258,7 +261,10 @@ sedit()
 	case SSCALE:
 		/* scale the solid */
 		if(inpara) {
-			es_scale = es_para[0];
+			/* accumulate the scale factor */
+			es_scale = es_para[0] / acc_sc_sol;
+			acc_sc_sol = es_para[0];
+
 		}
 		for(i=3; i<=21; i+=3) { 
 			op = &es_rec.s.s_values[i];
@@ -271,8 +277,12 @@ sedit()
 	case STRANS:
 		/* translate solid  */
 		if(inpara) {
-			/* Keyboard parameter */
-			VMOVE(es_rec.s.s_values, es_para);
+			/* Keyboard parameter.
+			 * Apply inverse of es_mat to these
+			 * model coordinates first.
+			 */
+			MAT4X3PNT( work, es_invmat, es_para );
+			VMOVE(es_rec.s.s_values, work);
 		}
 		break;
 
@@ -286,7 +296,9 @@ sedit()
 		 * to H vector.
 		 */
 		if( inpara ) {
-			VSUB2(&es_rec.s.s_tgc_H, es_para, &es_rec.s.s_tgc_V);
+			/* apply es_invmat to convert to real model coordinates */
+			MAT4X3PNT( work, es_invmat, es_para );
+			VSUB2(&es_rec.s.s_tgc_H, work, &es_rec.s.s_tgc_V);
 		}
 
 		/* check for zero H vector */
@@ -331,8 +343,11 @@ sedit()
 		break;
 
 	case EARB:   /* edit an ARB edge */
-		if( inpara )
-			editarb( es_para );
+		if( inpara ) { 
+			/* apply es_invmat to convert to real model space */
+			MAT4X3PNT( work, es_invmat, es_para );
+			editarb( work );
+		}
 		break;
 
 	case SROT:
@@ -344,7 +359,7 @@ sedit()
 			 * in degrees.  First, cancel any existing rotations,
 			 * then perform new rotation
 			 */
-			mat_inv( invsolr, modelchanges );
+			mat_inv( invsolr, acc_rot_sol );
 			for(i=1; i<8; i++) {
 				op = &es_rec.s.s_values[i*3];
 				VMOVE( work, op );
@@ -357,6 +372,7 @@ sedit()
 				es_para[0] * degtorad,
 				es_para[1] * degtorad,
 				es_para[2] * degtorad );
+			mat_copy(acc_rot_sol, modelchanges);
 
 			/* Apply new rotation to solid */
 			for(i=1; i<8; i++) {
@@ -364,6 +380,9 @@ sedit()
 				VMOVE( work, op );
 				MAT4X3VEC( op, modelchanges, work );
 			}
+			/*  Clear out solid rotation */
+			mat_idn( modelchanges );
+
 		}  else  {
 			/* Apply incremental changes */
 			for(i=1; i<8; i++) {
@@ -439,7 +458,7 @@ register float *angles, *unitv;
 		title, (base)[X], (base)[Y], (base)[Z], '\0' )
 
 #define PR_VECM(ln,title,base,mag)	sprintf( &es_display[ln*ES_LINELEN],\
-		" %c (%.4f, %.4f, %.4f) mag=%f%c", \
+		" %c (%.4f, %.4f, %.4f) Mag=%f%c", \
 		title, (base)[X], (base)[Y], (base)[Z], mag, '\0' )
 
 #define PR_ANG(ln,str,base)	sprintf( &es_display[ln*ES_LINELEN],\
@@ -569,8 +588,12 @@ pscale()
 
 	case MENUH:	/* scale height vector */
 		op = &es_rec.s.s_tgc_H;
-		if( inpara )
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
 			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+
 		VSCALE(op, op, es_scale);
 		break;
 
@@ -578,8 +601,11 @@ pscale()
 		/* scale radius 1 of TOR */
 		mr2 = MAGNITUDE(&es_rec.s.s_tor_H);
 		op = &es_rec.s.s_tor_B;
-		if(inpara)
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
 			es_scale = es_para[0] / MAGNITUDE(op);
+		}
 		VSCALE(op, op, es_scale);
 
 		op = &es_rec.s.s_tor_A;
@@ -614,9 +640,11 @@ torcom:
 	case MENUR2:
 		/* scale radius 2 of TOR */
 		op = &es_rec.s.s_values[3];
-		if(inpara)
-			es_scale = es_para[0] /
-					MAGNITUDE(op);
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
+			es_scale = es_para[0] / MAGNITUDE(op);
+		}
 		VSCALE(op, op, es_scale);
 		mr2 = MAGNITUDE(op);
 		mr1 = MAGNITUDE(&es_rec.s.s_values[6]);
@@ -632,15 +660,21 @@ torcom:
 
 		case GENELL:
 			op = &es_rec.s.s_ell_A;
-			if(inpara)
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(op);
+			}
 			VSCALE(op, op, es_scale);
 			break;
 
 		case GENTGC:
 			op = &es_rec.s.s_tgc_A;
-			if(inpara)
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(op);
+			}
 			VSCALE(op, op, es_scale);
 			break;
 
@@ -653,15 +687,21 @@ torcom:
 
 		case GENELL:
 			op = &es_rec.s.s_ell_B;
-			if(inpara)
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(op);
+			}
 			VSCALE(op, op, es_scale);
 			break;
 
 		case GENTGC:
 			op = &es_rec.s.s_tgc_B;
-			if(inpara)
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
 				es_scale = es_para[0] / MAGNITUDE(op);
+			}
 			VSCALE(op, op, es_scale);
 			break;
 		}
@@ -670,23 +710,33 @@ torcom:
 	case MENUC:
 		/* scale vector C (ELL only) */
 		op = &es_rec.s.s_ell_C;
-		if(inpara)
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
 			es_scale = es_para[0] / MAGNITUDE(op);
+		}
+
 		VSCALE(op, op, es_scale);
 		break;
 
 	case MENUP1:
 		/* TGC: scale ratio "c" */
 		op = &es_rec.s.s_tgc_C;
-		if(inpara)
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
 			es_scale = es_para[0] / MAGNITUDE(op);
+		}
 		VSCALE(op, op, es_scale);
 		break;
 
 	case MENUP2:   /* scale  d for tgc */
 		op = &es_rec.s.s_tgc_D;
-		if(inpara)
+		if( inpara ) {
+			/* take es_mat[15] (path scaling) into account */
+			es_para[0] *= es_mat[15];
 			es_scale = es_para[0] / MAGNITUDE(op);
+		}
 		VSCALE(op, op, es_scale);
 		break;
 	}
