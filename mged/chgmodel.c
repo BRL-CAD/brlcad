@@ -68,27 +68,26 @@ void	ext4to6();
 
 int		newedge;		/* new edge for arb editing */
 
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 /* Add/modify item and air codes of a region */
 /* Format: I region item <air>	*/
 void
-f_itemair()
+f_itemair( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	int ident, air;
 	union record record;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	air = ident = 0;
-	ident = atoi( cmd_args[2] );
+	ident = atoi( argv[2] );
 
 	/* If <air> is not included, it is assumed to be zero */
-	if( numargs == 4 )  {
-		air = atoi( cmd_args[3] );
+	if( argc == 4 )  {
+		air = atoi( argv[3] );
 	}
 	db_get( dbip,  dp, &record, 0 , 1);
 	if( record.u_id != ID_COMB ) {
@@ -107,7 +106,9 @@ f_itemair()
 /* Modify material information */
 /* Usage:  mater name */
 void
-f_mater()
+f_mater( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	char line[80];
@@ -115,7 +116,7 @@ f_mater()
 	int r=0, g=0, b=0;
 	char	*nlp;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	db_get( dbip,  dp, &record, 0 , 1);
@@ -123,8 +124,8 @@ f_mater()
 		(void)printf("%s: not a combination\n", dp->d_namep );
 		return;
 	}
-	if( numargs >= 3 )  {
-		if( strncmp( cmd_args[2], "del", 3 ) != 0 )  {
+	if( argc >= 3 )  {
+		if( strncmp( argv[2], "del", 3 ) != 0 )  {
 			(void)printf("Use 'mater name del' to delete\n");
 			return;
 		}
@@ -220,7 +221,9 @@ out:
 /* Mirror image */
 /* Format: m oldobject newobject axis	*/
 void
-f_mirror()
+f_mirror( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
@@ -229,19 +232,19 @@ f_mirror()
 	mat_t mirmat;
 	mat_t temp;
 
-	if( (proto = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	if( db_lookup( dbip,  cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[2] );
+	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[2] );
 		return;
 	}
 	k = -1;
-	if( strcmp( cmd_args[3], "x" ) == 0 )
+	if( strcmp( argv[3], "x" ) == 0 )
 		k = 0;
-	if( strcmp( cmd_args[3], "y" ) == 0 )
+	if( strcmp( argv[3], "y" ) == 0 )
 		k = 1;
-	if( strcmp( cmd_args[3], "z" ) == 0 )
+	if( strcmp( argv[3], "z" ) == 0 )
 		k = 2;
 	if( k < 0 ) {
 		(void)printf("axis must be x, y or z\n");
@@ -252,13 +255,13 @@ f_mirror()
 	if( record.u_id == ID_SOLID ||
 		record.u_id == ID_ARS_A
 	)  {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
+		if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
 
 		/* create mirror image */
 		if( record.u_id == ID_ARS_A )  {
-			NAMEMOVE( cmd_args[2], record.a.a_name );
+			NAMEMOVE( argv[2], record.a.a_name );
 			db_put( dbip, dp, &record, 0, 1 );
 			for( i = 1; i < proto->d_len; i++ )  {
 				db_get( dbip,  proto, &record, i , 1);
@@ -269,19 +272,19 @@ f_mirror()
 		} else  {
 			for( i = k; i < 24; i += 3 )
 				record.s.s_values[i] *= -1.0;
-			NAMEMOVE( cmd_args[2], record.s.s_name );
+			NAMEMOVE( argv[2], record.s.s_name );
 			db_put( dbip, dp, &record, 0, 1 );
 		}
 	} else if( record.u_id == ID_COMB ) {
 		if( (dp = db_diradd( dbip, 
-			cmd_args[2], -1, proto->d_len,
+			argv[2], -1, proto->d_len,
 				record.c.c_flags == 'R' ?
 				DIR_COMB|DIR_REGION :
 				DIR_COMB)
 		) == DIR_NULL )
 			return;
 		db_alloc( dbip, dp, proto->d_len );
-		NAMEMOVE(cmd_args[2], record.c.c_name);
+		NAMEMOVE(argv[2], record.c.c_name);
 		db_put( dbip, dp, &record, 0, 1 );
 		mat_idn( mirmat );
 		mirmat[k*5] = -1.0;
@@ -299,25 +302,27 @@ f_mirror()
 			db_put( dbip, dp, &record, i, 1 );
 		}
 	} else {
-		(void)printf("%s: Cannot mirror\n",cmd_args[2]);
+		(void)printf("%s: Cannot mirror\n",argv[2]);
 		return;
 	}
 
 	if( no_memory )  {
 		(void)printf(
 		"Mirror image (%s) created but NO memory left to draw it\n",
-			cmd_args[2] );
+			argv[2] );
 		return;
 	}
-	drawtree( dp );
-	dmp->dmr_colorchange();		/* To color new solid */
-	dmaflag = 1;
+
+	/* draw the "made" solid */
+	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
 }
 
 /* Extrude command - project an arb face */
 /* Format: extrude face distance	*/
 void
-f_extrude()
+f_extrude( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i, j;
 	static int face;
@@ -339,10 +344,10 @@ f_extrude()
 		return;
 	}
 
-	face = atoi( cmd_args[1] );
+	face = atoi( argv[1] );
 
 	/* get distance to project face */
-	dist = atof( cmd_args[2] );
+	dist = atof( argv[2] );
 	/* apply es_mat[15] to get to real model space */
 	/* convert from the local unit (as input) to the base unit */
 	dist = dist * es_mat[15] * local2base;
@@ -542,10 +547,8 @@ a4toa6:
 		VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
 	}
 
-	/* draw the new solid */
-	illump = redraw( illump, &es_rec, es_mat );
-
-	/* Update display information */
+	/* draw the updated solid */
+	replot_editing_solid();
 	pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
@@ -553,7 +556,9 @@ a4toa6:
 /* define an arb8 using rot fb angles to define a face */
 /* Format: a name rot fb	*/
 void
-f_arbdef()
+f_arbdef( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	union record record;
@@ -561,21 +566,21 @@ f_arbdef()
 	fastf_t rota, fb;
 	vect_t	norm;
 
-	if( db_lookup( dbip,  cmd_args[1] , LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[1] );
+	if( db_lookup( dbip,  argv[1] , LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[1] );
 		return;
 	}
 
 	/* get rotation angle */
-	rota = atof( cmd_args[2] ) * degtorad;
+	rota = atof( argv[2] ) * degtorad;
 
 	/* get fallback angle */
-	fb = atof( cmd_args[3] ) * degtorad;
+	fb = atof( argv[3] ) * degtorad;
 
-	if( (dp = db_diradd( dbip,  cmd_args[1], -1, 1, DIR_SOLID )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  argv[1], -1, 1, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
-	NAMEMOVE( cmd_args[1], record.s.s_name );
+	NAMEMOVE( argv[1], record.s.s_name );
 	record.s.s_id = ID_SOLID;
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = ARB8;
@@ -623,30 +628,32 @@ f_arbdef()
 	if( no_memory )  {
 		(void)printf(
 			"ARB8 (%s) created but no memory left to draw it\n",
-			cmd_args[1] );
+			argv[1] );
 		return;
 	}
-	drawtree( dp );
-	dmp->dmr_colorchange();		/* To color new solid */
-	dmaflag = 1;
+
+	/* draw the "made" solid */
+	f_edit( 2, argv );	/* depends on name being in argv[1] */
 }
 
 /* Modify Combination record information */
 /* Format: edcomb combname Regionflag regionid air los GIFTmater */
 void
-f_edcomb()
+f_edcomb( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	union record record;
 	int regionid, air, mat, los;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	regionid = atoi( cmd_args[3] );
-	air = atoi( cmd_args[4] );
-	los = atoi( cmd_args[5] );
-	mat = atoi( cmd_args[6] );
+	regionid = atoi( argv[3] );
+	air = atoi( argv[4] );
+	los = atoi( argv[5] );
+	mat = atoi( argv[6] );
 
 	db_get( dbip,  dp, &record, 0 , 1);
 	if( record.u_id != ID_COMB ) {
@@ -654,7 +661,7 @@ f_edcomb()
 		return;
 	}
 
-	if( cmd_args[2][0] == 'R' )
+	if( argv[2][0] == 'R' )
 		record.c.c_flags = 'R';
 	else
 		record.c.c_flags =' ';
@@ -668,7 +675,9 @@ f_edcomb()
 /* Mirface command - mirror an arb face */
 /* Format: mirror face axis	*/
 void
-f_mirface()
+f_mirface( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i, j, k;
 	static int face;
@@ -689,18 +698,18 @@ f_mirface()
 		(void)printf("ARB%d: mirroring of faces not allowed\n",es_type);
 		return;
 	}
-	face = atoi( cmd_args[1] );
+	face = atoi( argv[1] );
 	if( face > 9999 || (face < 1000 && es_type != ARB6) ) {
 		(void)printf("ERROR: %d bad face\n",face);
 		return;
 	}
 	/* check which axis */
 	k = -1;
-	if( strcmp( cmd_args[2], "x" ) == 0 )
+	if( strcmp( argv[2], "x" ) == 0 )
 		k = 0;
-	if( strcmp( cmd_args[2], "y" ) == 0 )
+	if( strcmp( argv[2], "y" ) == 0 )
 		k = 1;
-	if( strcmp( cmd_args[2], "z" ) == 0 )
+	if( strcmp( argv[2], "z" ) == 0 )
 		k = 2;
 	if( k < 0 ) {
 		(void)printf("axis must be x, y or z\n");
@@ -871,10 +880,8 @@ f_mirface()
 		VSUB2( &es_rec.s.s_values[i], &lsolid.s_values[i], &lsolid.s_values[0]);
 	}
 
-	/* draw the new solid */
-	illump = redraw( illump, &es_rec, es_mat );
-
-	/* Update display information */
+	/* draw the updated solid */
+	replot_editing_solid();
 	pr_solid( &es_rec.s );
 	dmaflag = 1;
 }
@@ -884,23 +891,25 @@ f_mirface()
  * Base unit is fixed so just changing the current local unit.
  */
 void
-f_units()
+f_units( argc, argv )
+int	argc;
+char	**argv;
 {
 	int new_unit = 0;
 
-	if( strcmp(cmd_args[1], "mm") == 0 ) 
+	if( strcmp(argv[1], "mm") == 0 ) 
 		new_unit = ID_MM_UNIT;
 	else
-	if( strcmp(cmd_args[1], "cm") == 0 ) 
+	if( strcmp(argv[1], "cm") == 0 ) 
 		new_unit = ID_CM_UNIT;
 	else
-	if( strcmp(cmd_args[1],"m")==0 || strcmp(cmd_args[1],"meters")==0 ) 
+	if( strcmp(argv[1],"m")==0 || strcmp(argv[1],"meters")==0 ) 
 		new_unit = ID_M_UNIT;
 	else
-	if( strcmp(cmd_args[1],"in")==0 || strcmp(cmd_args[1],"inches")==0 ) 
+	if( strcmp(argv[1],"in")==0 || strcmp(argv[1],"inches")==0 ) 
 		new_unit = ID_IN_UNIT;
 	else
-	if( strcmp(cmd_args[1],"ft")==0 || strcmp(cmd_args[1],"feet")==0 ) 
+	if( strcmp(argv[1],"ft")==0 || strcmp(argv[1],"feet")==0 ) 
 		new_unit = ID_FT_UNIT;
 
 	if( new_unit ) {
@@ -918,7 +927,7 @@ f_units()
 		return;
 	}
 
-	(void)printf("%s: unrecognized unit\n", cmd_args[1]);
+	(void)printf("%s: unrecognized unit\n", argv[1]);
 	(void)printf("valid units: <mm|cm|m|in|ft|meters|inches|feet>\n");
 }
 
@@ -926,14 +935,16 @@ f_units()
  *	Change the current title of the description
  */
 void
-f_title()
+f_title( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i;
 	char	title[256];
 
 	title[0] = '\0';
-	for(i=1; i<numargs; i++) {
-		(void)strcat(title, cmd_args[i]);
+	for(i=1; i<argc; i++) {
+		(void)strcat(title, argv[i]);
 		(void)strcat(title, " ");
 	}
 
@@ -957,13 +968,16 @@ char	*name;
  *  (Generic, or explicit)
  */
 void
-f_make()  {
+f_make( argc, argv )
+int	argc;
+char	**argv;
+{
 	register struct directory *dp;
 	union record record;
 	int i;
 
-	if( db_lookup( dbip,  cmd_args[1], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[1] );
+	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[1] );
 		return;
 	}
 	/* Position this solid at view center */
@@ -978,7 +992,7 @@ f_make()  {
 	}
 
 	/* make name <arb8|arb7|arb6|arb5|arb4|ellg|ell|sph|tor|tgc|rec|trc|rcc> */
-	if( strcmp( cmd_args[2], "arb8" ) == 0 )  {
+	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB8;
 		VSET( &record.s.s_values[0*3],
@@ -992,7 +1006,7 @@ f_make()  {
 		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
 		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), (Viewscale*2) );
 		VSET( &record.s.s_values[7*3],  -(Viewscale*2), 0, (Viewscale*2)  );
-	} else if( strcmp( cmd_args[2], "arb7" ) == 0 )  {
+	} else if( strcmp( argv[2], "arb7" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB7;
 		VSET( &record.s.s_values[0*3],
@@ -1006,7 +1020,7 @@ f_make()  {
 		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
 		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), Viewscale );
 		VSET( &record.s.s_values[7*3],  -(Viewscale*2), 0, 0  );
-	} else if( strcmp( cmd_args[2], "arb6" ) == 0 )  {
+	} else if( strcmp( argv[2], "arb6" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB6;
 		VSET( &record.s.s_values[0*3],
@@ -1020,7 +1034,7 @@ f_make()  {
 		VSET( &record.s.s_values[5*3],  -(Viewscale*2), Viewscale, 0 );
 		VSET( &record.s.s_values[6*3],  -(Viewscale*2), Viewscale, (Viewscale*2) );
 		VSET( &record.s.s_values[7*3],  -(Viewscale*2), Viewscale, (Viewscale*2)  );
-	} else if( strcmp( cmd_args[2], "arb5" ) == 0 )  {
+	} else if( strcmp( argv[2], "arb5" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB5;
 		VSET( &record.s.s_values[0*3],
@@ -1034,7 +1048,7 @@ f_make()  {
 		VSET( &record.s.s_values[5*3],  -(Viewscale*2), Viewscale, Viewscale );
 		VSET( &record.s.s_values[6*3],  -(Viewscale*2), Viewscale, Viewscale );
 		VSET( &record.s.s_values[7*3],  -(Viewscale*2), Viewscale, Viewscale  );
-	} else if( strcmp( cmd_args[2], "arb4" ) == 0 )  {
+	} else if( strcmp( argv[2], "arb4" ) == 0 )  {
 		record.s.s_type = GENARB8;
 		record.s.s_cgtype = ARB4;
 		VSET( &record.s.s_values[0*3],
@@ -1048,25 +1062,25 @@ f_make()  {
 		VSET( &record.s.s_values[5*3],  -(Viewscale*2), (Viewscale*2), 0 );
 		VSET( &record.s.s_values[6*3],  -(Viewscale*2), (Viewscale*2), 0 );
 		VSET( &record.s.s_values[7*3],  -(Viewscale*2), (Viewscale*2), 0  );
-	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
+	} else if( strcmp( argv[2], "sph" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = SPH;
 		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* A */
 		VSET( &record.s.s_values[2*3], 0, (0.5*Viewscale), 0 );	/* B */
 		VSET( &record.s.s_values[3*3], 0, 0, (0.5*Viewscale) );	/* C */
-	} else if( strcmp( cmd_args[2], "ell" ) == 0 )  {
+	} else if( strcmp( argv[2], "ell" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = ELL;
 		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* A */
 		VSET( &record.s.s_values[2*3], 0, (0.25*Viewscale), 0 );	/* B */
 		VSET( &record.s.s_values[3*3], 0, 0, (0.25*Viewscale) );	/* C */
-	} else if( strcmp( cmd_args[2], "ellg" ) == 0 )  {
+	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
 		record.s.s_type = GENELL;
 		record.s.s_cgtype = ELL;
 		VSET( &record.s.s_values[1*3], Viewscale, 0, 0 );	/* A */
 		VSET( &record.s.s_values[2*3], 0, (0.5*Viewscale), 0 );	/* B */
 		VSET( &record.s.s_values[3*3], 0, 0, (0.25*Viewscale) );	/* C */
-	} else if( strcmp( cmd_args[2], "tor" ) == 0 )  {
+	} else if( strcmp( argv[2], "tor" ) == 0 )  {
 		record.s.s_type = TOR;
 		record.s.s_cgtype = TOR;
 		VSET( &record.s.s_values[1*3], (0.5*Viewscale), 0, 0 );	/* N with mag = r2 */
@@ -1076,7 +1090,7 @@ f_make()  {
 		VSET( &record.s.s_values[5*3], 0, 0, (0.5*Viewscale) );	/* B == r1-r2 */
 		VSET( &record.s.s_values[6*3], 0, (1.5*Viewscale), 0 );	/* A == r1+r2 */
 		VSET( &record.s.s_values[7*3], 0, 0, (1.5*Viewscale) );	/* B == r1+r2 */
-	} else if( strcmp( cmd_args[2], "tgc" ) == 0 )  {
+	} else if( strcmp( argv[2], "tgc" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = TGC;
 		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
@@ -1084,7 +1098,7 @@ f_make()  {
 		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
 		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
 		VSET( &record.s.s_values[5*3],  0, (0.5*Viewscale), 0 );
-	} else if( strcmp( cmd_args[2], "tec" ) == 0 )  {
+	} else if( strcmp( argv[2], "tec" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = TEC;
 		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
@@ -1092,7 +1106,7 @@ f_make()  {
 		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
 		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
 		VSET( &record.s.s_values[5*3],  0, 31.75, 0 );
-	} else if( strcmp( cmd_args[2], "rec" ) == 0 )  {
+	} else if( strcmp( argv[2], "rec" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = REC;
 		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
@@ -1100,7 +1114,7 @@ f_make()  {
 		VSET( &record.s.s_values[3*3],  0, (0.25*Viewscale), 0 );
 		VSET( &record.s.s_values[4*3],  (0.5*Viewscale), 0, 0 );
 		VSET( &record.s.s_values[5*3],  0, (0.25*Viewscale), 0 );
-	} else if( strcmp( cmd_args[2], "trc" ) == 0 )  {
+	} else if( strcmp( argv[2], "trc" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = TRC;
 		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
@@ -1108,7 +1122,7 @@ f_make()  {
 		VSET( &record.s.s_values[3*3],  0, (0.5*Viewscale), 0 );
 		VSET( &record.s.s_values[4*3],  (0.25*Viewscale), 0, 0 );
 		VSET( &record.s.s_values[5*3],  0, (0.25*Viewscale), 0 );
-	} else if( strcmp( cmd_args[2], "rcc" ) == 0 )  {
+	} else if( strcmp( argv[2], "rcc" ) == 0 )  {
 		record.s.s_type = GENTGC;
 		record.s.s_cgtype = RCC;
 		VSET( &record.s.s_values[1*3],  0, 0, (Viewscale*2) );
@@ -1116,30 +1130,31 @@ f_make()  {
 		VSET( &record.s.s_values[3*3],  0, (0.5*Viewscale), 0 );
 		VSET( &record.s.s_values[4*3],  (0.5*Viewscale), 0, 0 );
 		VSET( &record.s.s_values[5*3],  0, (0.5*Viewscale), 0 );
-	} else if( strcmp( cmd_args[2], "ars" ) == 0 )  {
+	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		(void)printf("make ars not implimented yet\n");
 		return;
 	} else {
-		(void)printf("make:  %s is not a known primitive\n", cmd_args[2]);
+		(void)printf("make:  %s is not a known primitive\n", argv[2]);
 		return;
 	}
 
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  cmd_args[1], -1, 0, DIR_SOLID )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  argv[1], -1, 0, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
 
-	NAMEMOVE( cmd_args[1], record.s.s_name );
+	NAMEMOVE( argv[1], record.s.s_name );
 	db_put( dbip, dp, &record, 0, 1 );
+
 	/* draw the "made" solid */
-	drawtree( dp );
-	dmp->dmr_colorchange();		/* To color new solid */
-	dmaflag = 1;
+	f_edit( 2, argv );	/* depends on name being in argv[1] */
 }
 
 /* allow precise changes to object rotation */
 void
-f_rot_obj()
+f_rot_obj( argc, argv )
+int	argc;
+char	**argv;
 {
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
@@ -1178,9 +1193,9 @@ f_rot_obj()
 
 	/* build new rotation matrix */
 	mat_idn(temp);
-	buildHrot(temp, atof(cmd_args[1])*degtorad,
-			atof(cmd_args[2])*degtorad,
-			atof(cmd_args[3])*degtorad );
+	buildHrot(temp, atof(argv[1])*degtorad,
+			atof(argv[2])*degtorad,
+			atof(argv[3])*degtorad );
 
 	/* Record the new rotation matrix into the revised
 	 *	modelchanges matrix wrt "point"
@@ -1193,7 +1208,9 @@ f_rot_obj()
 
 /* allow precise changes to object scaling, both local & global */
 void
-f_sc_obj()
+f_sc_obj( argc, argv )
+int	argc;
+char	**argv;
 {
 	mat_t incr;
 	vect_t point, temp;
@@ -1201,7 +1218,7 @@ f_sc_obj()
 	if( not_state( ST_O_EDIT, "Object Scaling" ) )
 		return;
 
-	if( atof(cmd_args[1]) <= 0.0 ) {
+	if( atof(argv[1]) <= 0.0 ) {
 		(void)printf("ERROR: scale factor <=  0\n");
 		return;
 	}
@@ -1223,25 +1240,25 @@ f_sc_obj()
 
 		case BE_O_SCALE:
 			/* global scaling */
-			incr[15] = 1.0 / (atof(cmd_args[1]) * modelchanges[15]);
+			incr[15] = 1.0 / (atof(argv[1]) * modelchanges[15]);
 		break;
 
 		case BE_O_XSCALE:
 			/* local scaling ... X-axis */
-			incr[0] = atof(cmd_args[1]) / acc_sc[0];
-			acc_sc[0] = atof(cmd_args[1]);
+			incr[0] = atof(argv[1]) / acc_sc[0];
+			acc_sc[0] = atof(argv[1]);
 		break;
 
 		case BE_O_YSCALE:
 			/* local scaling ... Y-axis */
-			incr[5] = atof(cmd_args[1]) / acc_sc[1];
-			acc_sc[1] = atof(cmd_args[1]);
+			incr[5] = atof(argv[1]) / acc_sc[1];
+			acc_sc[1] = atof(argv[1]);
 		break;
 
 		case BE_O_ZSCALE:
 			/* local scaling ... Z-axis */
-			incr[10] = atof(cmd_args[1]) / acc_sc[2];
-			acc_sc[2] = atof(cmd_args[1]);
+			incr[10] = atof(argv[1]) / acc_sc[2];
+			acc_sc[2] = atof(argv[1]);
 		break;
 
 	}
@@ -1257,7 +1274,9 @@ f_sc_obj()
 
 /* allow precise changes to object translation */
 void
-f_tr_obj()
+f_tr_obj( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i;
 	mat_t incr, old;
@@ -1278,7 +1297,7 @@ f_tr_obj()
 	}
 
 	for(i=0; i<3; i++) {
-		new_vertex[i] = atof(cmd_args[i+1]) * local2base;
+		new_vertex[i] = atof(argv[i+1]) * local2base;
 	}
 	/* XXX should have an es_keypoint for this */
 	MAT4X3PNT(model_sol_pt, es_mat, es_rec.s.s_values);
@@ -1294,28 +1313,30 @@ f_tr_obj()
 /* Change the default region ident codes: item air los mat
  */
 void
-f_regdef()
+f_regdef( argc, argv )
+int	argc;
+char	**argv;
 {
 
 	dmaflag = 1;
-	item_default = atoi(cmd_args[1]);
+	item_default = atoi(argv[1]);
 
-	if(numargs == 2)
+	if(argc == 2)
 		return;
 
-	air_default = atoi(cmd_args[2]);
+	air_default = atoi(argv[2]);
 	if(air_default) 
 		item_default = 0;
 
-	if(numargs == 3)
+	if(argc == 3)
 		return;
 
-	los_default = atoi(cmd_args[3]);
+	los_default = atoi(argv[3]);
 
-	if(numargs == 4)
+	if(argc == 4)
 		return;
 
-	mat_default = atoi(cmd_args[4]);
+	mat_default = atoi(argv[4]);
 }
 
 
@@ -1325,7 +1346,9 @@ f_regdef()
  */
 
 void
-f_edgedir()
+f_edgedir( argc, argv )
+int	argc;
+char	**argv;
 {
 	register int i;
 	vect_t slope;
@@ -1348,9 +1371,9 @@ f_edgedir()
 	 *	if 2 values input assume rot, fb used
 	 *	else assume delta_x, delta_y, delta_z
 	 */
-	if( numargs == 3 ) {
-		rot = atof( cmd_args[1] ) * degtorad;
-		fb = atof( cmd_args[2] ) * degtorad;
+	if( argc == 3 ) {
+		rot = atof( argv[1] ) * degtorad;
+		fb = atof( argv[2] ) * degtorad;
 		slope[0] = cos(fb) * cos(rot);
 		slope[1] = cos(fb) * sin(rot);
 		slope[2] = sin(fb);
@@ -1358,7 +1381,7 @@ f_edgedir()
 	else {
 		for(i=0; i<3; i++) {
 			/* put edge slope in slope[] array */
-			slope[i] = atof( cmd_args[i+1] );
+			slope[i] = atof( argv[i+1] );
 		}
 	}
 

@@ -269,7 +269,7 @@ f_facedef()
 	}
 
 	/* draw the new solid */
-	illump = redraw( illump, &es_rec, es_mat );
+	replot_editing_solid();
 
 	/* update display information */
 	pr_solid( &es_rec.s );

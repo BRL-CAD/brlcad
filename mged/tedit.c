@@ -95,7 +95,7 @@ f_tedit()
 		}
 
 		/* Update the display */
-		illump = redraw( illump, &es_rec, es_mat );
+		replot_editing_solid();
 		pr_solid( &es_rec.s );
 		dmaflag = 1;
 		(void)printf("done\n");

@@ -429,21 +429,20 @@ tryagain:	/* sent here to try next set of names */
 		(void)combadd(dp, grpname, 0, UNION, 0, 0);
 	}
 
-	(void)printf("The track regions are in group %s\n",grpname);
-
 	/* draw this track */
-	dp = db_lookup( dbip, grpname, LOOKUP_QUIET);
-	drawtree( dp );
-	dmp->dmr_colorchange();
-	dmaflag = 1;
+	(void)printf("The track regions are in group %s\n",grpname);
+	{
+		char	*arglist[3];
+		arglist[0] = "e";
+		arglist[1] = grpname;
+		f_edit( 2, arglist );
+	}
 
 	Trackpos += 10;
 	item_default = item;
 	mat_default = mat;
 	los_default = los;
 	grpname[5] = solname[8] = regname[8] = '\0';
-
-	return;
 }
 
 void

@@ -76,7 +76,9 @@ char *p_arb3pt[] = {
  *
  */
 void
-f_3ptarb(  )
+f_3ptarb( argc, argv )
+int	argc;
+char	**argv;
 {
 	int i, solve;
 	vect_t	vec1;
@@ -298,10 +300,9 @@ thickagain:
 		return;
 	db_alloc( dbip, dp, 1 );
 	db_put( dbip,  dp, &record, 0, 1 );
-	drawtree( dp );
-	dmp->dmr_colorchange();
-	dmaflag = 1;
-	return;
+
+	/* draw the "made" solid */
+	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
 }
 
 
@@ -536,10 +537,9 @@ thckagain:
 		return;
 	db_alloc( dbip, dp, 1 );
 	db_put( dbip,  dp, &record, 0, 1 );
-	drawtree( dp );
-	dmp->dmr_colorchange();
-	dmaflag = 1;
-	return;
+
+	/* draw the "made" solid */
+	f_edit( 2, cmd_args );	/* depends on name being in cmd_args[1] */
 }
 
 

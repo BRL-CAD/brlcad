@@ -46,134 +46,93 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int	atoi();
 void	aexists();
 
-extern int	numargs;	/* number of args */
-extern char	*cmd_args[];	/* array of pointers to args */
-
 /* Rename an object */
 /* Format: n oldname newname	*/
 void
-f_name()
+f_name( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	union record record;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	if( db_lookup( dbip,  cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[2] );
+	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[2] );
 		return;
 	}
 
 	/*  Change object name in the directory. */
-	if( db_rename( dbip, dp, cmd_args[2] ) < 0 )
-		printf("error in rename to %s\n", cmd_args[2] );
+	if( db_rename( dbip, dp, argv[2] ) < 0 )
+		printf("error in rename to %s\n", argv[2] );
 
 	/* Change name in the file */
 	(void)db_get( dbip,  dp, &record, 0 , 1);
-	NAMEMOVE( cmd_args[2], record.c.c_name );
+	NAMEMOVE( argv[2], record.c.c_name );
 	(void)db_put( dbip, dp, &record, 0, 1 );
 }
 
 /* Copy an object */
 /* Format: cp oldname newname	*/
 void
-f_copy()
+f_copy( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	union record record;
-	register int i;
+	union record		*rp;
 
-	if( (proto = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	if( db_lookup( dbip,  cmd_args[2], LOOKUP_QUIET ) != DIR_NULL )  {
-		aexists( cmd_args[2] );
+	if( db_lookup( dbip,  argv[2], LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( argv[2] );
 		return;
 	}
 
-	db_get( dbip,  proto, &record, 0 , 1);
+	rp = db_getmrec( dbip, proto );
 
-	if(record.u_id == ID_SOLID) {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, proto->d_len );
+	if( (dp=db_diradd( dbip, argv[2], -1, proto->d_len, proto->d_flags)) == DIR_NULL )
+		return;
+	db_alloc( dbip, dp, proto->d_len );
 
-		/*
-		 * Update the disk record
-		 */
-		NAMEMOVE( cmd_args[2], record.s.s_name );
-		db_put( dbip, dp, &record, 0, 1 );
-
-		/* draw the new solid */
-		drawtree( dp );
-		dmaflag = 1;
-
-		/* color the solid */
-		dmp->dmr_colorchange();
-	} else if(record.u_id == ID_ARS_A)  {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, proto->d_len );
-		NAMEMOVE( cmd_args[2], record.a.a_name );
-		db_put( dbip, dp, &record, 0, 1 );
-
-		/* Process the rest of the ARS (b records)  */
-		for( i = 1; i < proto->d_len; i++ )  {
-			db_get( dbip, proto, &record, i, 1);
-			db_put( dbip, dp, &record, i, 1 );
-		}
-	} else if( record.u_id == ID_BSOLID ) {
-		if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, proto->d_len );
-		NAMEMOVE( cmd_args[2], record.B.B_name );
-		db_put( dbip, dp, &record, 0, 1 );
-		for( i = 1; i < proto->d_len; i++ ) {
-			db_get( dbip, proto, &record, i, 1);
-			db_put( dbip, dp, &record, i, 1 );
-		}
-	} else if(record.u_id == ID_COMB) {
-		if( (dp = db_diradd( dbip, 
-			cmd_args[2], -1, proto->d_len,
-			record.c.c_flags == 'R' ?
-			DIR_COMB|DIR_REGION : DIR_COMB)) == DIR_NULL )
-			return;
-		db_alloc( dbip, dp, proto->d_len );
-
-		NAMEMOVE( cmd_args[2], record.c.c_name );
-		db_put( dbip, dp, &record, 0, 1 );
-
-		/* Process member records  */
-		for( i = 1; i < proto->d_len; i++ )  {
-			db_get( dbip, proto, &record, i, 1);
-			db_put( dbip, dp, &record, i, 1 );
-		}
-	} else {
-		(void)printf("%s: cannot copy\n",cmd_args[2]);
+	/* All objects have name in the same place */
+	NAMEMOVE( argv[2], rp->c.c_name );
+	if( db_put( dbip, dp, rp, 0, proto->d_len ) < 0 )  {
+		(void)printf("db_put() failed, skipping\n");
+		rt_free( (char *)rp, "record" );
+		return;
 	}
+
+	/* draw the new object */
+	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
+	rt_free( (char *)rp, "record" );
 }
 
 /* Create an instance of something */
 /* Format: i object combname [op]	*/
 void
-f_instance()
+f_instance( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	char oper;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	oper = UNION;
-	if( numargs == 4 )
-		oper = cmd_args[3][0];
+	if( argc == 4 )
+		oper = argv[3][0];
 	if(oper != UNION && oper != SUBTRACT &&	oper != INTERSECT) {
 		(void)printf("bad operation: %c\n", oper );
 		return;
 	}
-	if( combadd( dp, cmd_args[2], 0, oper, 0, 0 ) == DIR_NULL )
+	if( combadd( dp, argv[2], 0, oper, 0, 0 ) == DIR_NULL )
 		return;
 }
 
@@ -181,7 +140,9 @@ f_instance()
 /* and then add solids */
 /* Format: r regionname opr1 sol1 opr2 sol2 ... oprn soln */
 void
-f_region()
+f_region( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	union record record;
@@ -193,12 +154,12 @@ f_region()
  	air = air_default;
  
 	/* Check for even number of arguments */
-	if( numargs & 01 )  {
+	if( argc & 01 )  {
 		(void)printf("error in number of args!\n");
 		return;
 	}
 
-	if( db_lookup( dbip, cmd_args[1], LOOKUP_QUIET) == DIR_NULL ) {
+	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
 		/* will attempt to create the region */
 		if(item_default) {
 			item_default++;
@@ -207,15 +168,15 @@ f_region()
 	}
 
 	/* Get operation and solid name for each solid */
-	for( i = 2; i < numargs; i += 2 )  {
-		if( cmd_args[i][1] != '\0' )  {
+	for( i = 2; i < argc; i += 2 )  {
+		if( argv[i][1] != '\0' )  {
 			(void)printf("bad operation: %s skip member: %s\n",
-				cmd_args[i], cmd_args[i+1] );
+				argv[i], argv[i+1] );
 			continue;
 		}
-		oper = cmd_args[i][0];
-		if( (dp = db_lookup( dbip,  cmd_args[i + 1], LOOKUP_NOISY )) == DIR_NULL )  {
-			(void)printf("skipping %s\n", cmd_args[i + 1] );
+		oper = argv[i][0];
+		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
+			(void)printf("skipping %s\n", argv[i+1] );
 			continue;
 		}
 
@@ -234,13 +195,13 @@ f_region()
 			}
 		}
 
-		if( combadd( dp, cmd_args[1], 1, oper, ident, air ) == DIR_NULL )  {
+		if( combadd( dp, argv[1], 1, oper, ident, air ) == DIR_NULL )  {
 			(void)printf("error in combadd\n");
 			return;
 		}
 	}
 
-	if( db_lookup( dbip, cmd_args[1], LOOKUP_QUIET) == DIR_NULL ) {
+	if( db_lookup( dbip, argv[1], LOOKUP_QUIET) == DIR_NULL ) {
 		/* failed to create region */
 		if(item_default > 1)
 			item_default--;
@@ -256,7 +217,9 @@ f_region()
  *  Format: comb comb_name sol1 opr2 sol2 ... oprN solN
  */
 void
-f_comb()
+f_comb( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	char	*comb_name;
@@ -264,24 +227,24 @@ f_comb()
 	char	oper;
 
 	/* Check for odd number of arguments */
-	if( numargs & 01 )  {
+	if( argc & 01 )  {
 		(void)printf("error in number of args!\n");
 		return;
 	}
 
 	/* Save combination name, for use inside loop */
-	comb_name = cmd_args[1];
+	comb_name = argv[1];
 
 	/* Get operation and solid name for each solid */
-	for( i = 2; i < numargs; i += 2 )  {
-		if( cmd_args[i][1] != '\0' )  {
+	for( i = 2; i < argc; i += 2 )  {
+		if( argv[i][1] != '\0' )  {
 			(void)printf("bad operation: %s skip member: %s\n",
-				cmd_args[i], cmd_args[i+1] );
+				argv[i], argv[i+1] );
 			continue;
 		}
-		oper = cmd_args[i][0];
-		if( (dp = db_lookup( dbip,  cmd_args[i + 1], LOOKUP_NOISY )) == DIR_NULL )  {
-			(void)printf("skipping %s\n", cmd_args[i + 1] );
+		oper = argv[i][0];
+		if( (dp = db_lookup( dbip,  argv[i+1], LOOKUP_NOISY )) == DIR_NULL )  {
+			(void)printf("skipping %s\n", argv[i+1] );
 			continue;
 		}
 
@@ -304,50 +267,55 @@ f_comb()
 /* Remove an object or several from the description */
 /* Format: k object1 object2 .... objectn	*/
 void
-f_kill()
+f_kill( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int i;
 
-	for( i = 1; i < numargs; i++ )  {
-		if( (dp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY )) != DIR_NULL )  {
+	for( i = 1; i < argc; i++ )  {
+		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )  {
 			eraseobj( dp );
 			db_delete( dbip, dp );
 			db_dirdelete( dbip, dp );
 		}
 	}
-	dmaflag = 1;
 }
 
 /* Grouping command */
 /* Format: g groupname object1 object2 .... objectn	*/
 void
-f_group()
+f_group( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int i;
 
 	/* get objects to add to group */
-	for( i = 2; i < numargs; i++ )  {
-		if( (dp = db_lookup( dbip,  cmd_args[i], LOOKUP_NOISY)) != DIR_NULL )  {
-			if( combadd( dp, cmd_args[1], 0,
+	for( i = 2; i < argc; i++ )  {
+		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL )  {
+			if( combadd( dp, argv[1], 0,
 				UNION, 0, 0) == DIR_NULL )
 				return;
 		}  else
-			(void)printf("skip member %s\n", cmd_args[i]);
+			(void)printf("skip member %s\n", argv[i]);
 	}
 }
 
 /* Delete members of a combination */
 /* Format: D comb memb1 memb2 .... membn	*/
 void
-f_rm()
+f_rm( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *dp;
 	register int i, rec, num_deleted;
 	union record record;
 
-	if( (dp = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
 	/* Examine all the Member records, one at a time */
@@ -356,10 +324,10 @@ top:
 	for( rec = 1; rec < dp->d_len; rec++ )  {
 		db_get( dbip,  dp, &record, rec , 1);
 		/* Compare this member to each command arg */
-		for( i = 2; i < numargs; i++ )  {
-			if( strcmp( cmd_args[i], record.M.m_instname ) != 0 )
+		for( i = 2; i < argc; i++ )  {
+			if( strcmp( argv[i], record.M.m_instname ) != 0 )
 				continue;
-			(void)printf("deleting member %s\n", cmd_args[i] );
+			(void)printf("deleting member %s\n", argv[i] );
 			num_deleted++;
 			db_delrec( dbip, dp, rec );
 			goto top;
@@ -379,17 +347,19 @@ top:
  * Format: cpi old new
  */
 void
-f_copy_inv()
+f_copy_inv( argc, argv )
+int	argc;
+char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
 	union record record;
 	register int i;
 
-	if( (proto = db_lookup( dbip,  cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
+	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
 
-	NAMEMOVE( cmd_args[2], record.s.s_name );
+	NAMEMOVE( argv[2], record.s.s_name );
 	if( db_lookup( dbip,  record.s.s_name, LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( record.s.s_name );
 		return;
@@ -402,7 +372,7 @@ f_copy_inv()
 		return;
 	}
 
-	if( (dp = db_diradd( dbip,  cmd_args[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
+	if( (dp = db_diradd( dbip,  argv[2], -1, proto->d_len, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, proto->d_len );
 
@@ -414,19 +384,14 @@ f_copy_inv()
 	/*
 	 * Update the disk record
 	 */
-	NAMEMOVE( cmd_args[2], record.s.s_name );
+	NAMEMOVE( argv[2], record.s.s_name );
 	db_put( dbip, dp, &record, 0, 1 );
 
 	/* draw the new solid */
-	drawtree( dp );
-	dmaflag = 1;
-
-	/* color the solid */
-	dmp->dmr_colorchange();
+	f_edit( 2, argv+1 );	/* depends on name being in argv[2] ! */
 
 	if(state == ST_VIEW) {
 		/* solid edit this new cylinder */
-		strcpy(cmd_args[1], cmd_args[2]);
-		f_sed();
+		f_sed( 2, argv+1 );	/* new name in argv[2] */
 	}
 }

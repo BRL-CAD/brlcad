@@ -169,7 +169,6 @@ char **argv;
 
 	drawreg = 0;		/* no region processing */
 	regmemb = -1;		/* no members to process */
-	reg_error = 0;		/* no errors yet */
 	no_memory = 0;		/* memory left */
 	es_edflag = -1;		/* no solid editing just now */
 

@@ -521,22 +521,9 @@ static void be_accept()  {
 
 		/* Now, recompute new chunks of displaylist */
 		FOR_ALL_SOLIDS( sp )  {
-			union record *recp;
-			mat_t	curmat;
-
 			if( sp->s_iflag == DOWN )
 				continue;
-			if( sp->s_Eflag )  {
-				(void)printf("Unable to-redraw evaluated things\n");
-				continue;
-			}
-			pathHmat( sp, curmat, sp->s_last-1 );
-			recp = db_getmrec( dbip, sp->s_path[sp->s_last]);
-
-			illump = sp;	/* flag to drawHsolid! */
-			(void)redraw( sp, recp, curmat );
-
-			free( (char *)recp );
+			(void)replot_original_solid( sp );
 			sp->s_iflag = DOWN;
 		}
 		mat_idn( modelchanges );
@@ -571,13 +558,7 @@ static void be_reject()  {
 		menu_array[MENU_L2] = MENU_NULL;
 
 		/* Restore the original solid */
-		{
-			union record *recp;
-
-			recp = db_getmrec( dbip,  illump->s_path[illump->s_last] );
-			illump = redraw( illump, recp, es_mat );
-			free( (char *)recp );
-		}
+		replot_original_solid( illump );
 		break;
 
 	case ST_O_EDIT:

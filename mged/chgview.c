@@ -227,7 +227,7 @@ size_reset()
 	if( HeadSolid.s_forw == &HeadSolid )  {
 		/* Nothing is in view */
 		VSETALL( center, 0 );
-		VSETALL( radial, 1 );
+		VSETALL( radial, 1000 );	/* 1 meter */
 	} else {
 		VADD2SCALE( center, max, min, 0.5 );
 		VSUB2( radial, max, center );
@@ -274,7 +274,6 @@ int	kind;
 
 	nvectors = 0;
 	(void)time( &stime );
-	/* XXX For big-E, regmemb must be set to -1 after each object */
 	drawtrees( argc-1, &argv[1], kind );
 	(void)time( &etime );
 	(void)printf("%ld vectors in %ld sec\n", nvectors, etime - stime );
@@ -649,15 +648,16 @@ register struct directory *dp;
 	while( sp != &HeadSolid )  {
 		nsp = sp->s_forw;
 		for( i=0; i<=sp->s_last; i++ )  {
-			if( sp->s_path[i] == dp )  {
-				if( state != ST_VIEW && illump == sp )
-					button( BE_REJECT );
-				dmp->dmr_viewchange( DM_CHGV_DEL, sp );
-				memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
-				DEQUEUE_SOLID( sp );
-				FREE_SOLID( sp );
-				break;
-			}
+			if( sp->s_path[i] != dp )  continue;
+
+			if( state != ST_VIEW && illump == sp )
+				button( BE_REJECT );
+			dmp->dmr_viewchange( DM_CHGV_DEL, sp );
+			memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
+			DEQUEUE_SOLID( sp );
+			FREE_SOLID( sp );
+			dmaflag = 1;
+			break;
 		}
 		sp = nsp;
 	}
@@ -778,7 +778,7 @@ char	**argv;
 		return;
 
 	button(BE_S_ILLUMINATE);	/* To ST_S_PICK */
-	f_ill();		/* Illuminate named solid --> ST_S_EDIT */
+	f_ill(argc, argv);		/* Illuminate named solid --> ST_S_EDIT */
 }
 
 /* Simulate a knob twist.  "knob id val" */

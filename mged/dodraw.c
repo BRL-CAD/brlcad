@@ -1,14 +1,14 @@
 /*
  * XXXXX Big-E is badly broken right now
- * XXXXX redraw() is broken too -- breaks solid edits.
  *
  *			D O D R A W . C
  *
  * Functions -
- *	drawtree	Draw a tree
+ *	drawtrees	Add a set of tree hierarchies to the active set
  *	drawHsolid	Manage the drawing of a COMGEOM solid
  *	pathHmat	Find matrix across a given path
- *	redraw		redraw a single solid, given matrix and record.
+ *	replot_original_solid	Replot vector list for a solid
+ *	replot_modified_solid	Replot solid, given matrix and db record.
  *  
  *  Author -
  *	Michael John Muuss
@@ -105,6 +105,10 @@ union record		*rp;
 int			id;
 {
 	union tree	*curtree;
+	int		dashflag;		/* draw with dashed lines */
+	struct vlhead	vhead;
+
+	vhead.vh_first = vhead.vh_last = VL_NULL;
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -113,12 +117,15 @@ int			id;
 		rt_free(sofar, "path string");
 	}
 
-	/*
-	 * Enter new solid (or processed region) into displaylist.
-	 */
-	if( drawHsolid( rp, pathp, id, tsp ) < 0 ) {
+	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
+
+	if( rt_functab[id].ft_plot( rp, tsp->ts_mat, &vhead,
+	    DB_FULL_PATH_CUR_DIR(pathp) ) < 0 )  {
+		printf("%s: plot failure\n",
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 	    	return(TREE_NULL);		/* ERROR */
 	}
+	drawH_part2( dashflag, vhead.vh_first, pathp, tsp, SOLID_NULL );
 
 	/* Indicate success by returning something other than TREE_NULL */
 	GETUNION( curtree, tree );
@@ -138,6 +145,58 @@ struct db_full_path	*pathp;
 union record		*rp;
 int			id;
 {
+	union tree	*curtree;
+	int		dashflag;		/* draw with dashed lines */
+	struct vlhead	vhead;
+	int		flag = '-';
+	int		i;
+
+	vhead.vh_first = vhead.vh_last = VL_NULL;
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+		rt_log("mged_bigE_leaf(%s) path='%s'\n",
+			rt_functab[id].ft_name, sofar );
+		rt_free(sofar, "path string");
+	}
+
+	/* processing a member of a processed region */
+	/* regmemb  =>  number of members left */
+	/* regmemb == 0  =>  last member */
+	if(memb_oper == UNION)
+		flag = 999;
+
+	/* The hard part */
+	/* XXX flag is the boolean operation */
+	i = proc_region( rp, tsp->ts_mat, flag );
+	if( i < 0 )  {
+		/* error somwhere */
+		(void)printf("Error in converting solid %s to ARBN\n",
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
+		if(regmemb == 0) {
+			regmemb = -1;
+		}
+	    	return(TREE_NULL);		/* ERROR */
+	}
+
+	/* if more member solids to be processed, no drawing was done
+	 */
+	if( regmemb > 0 )  {
+		/* NOP -- more to come */
+	    	return(TREE_NULL);
+	}
+
+	i = finish_region( &vhead );
+	if( i < 0 )  {
+		(void)printf("error in finish_region()\n");
+	    	return(TREE_NULL);		/* ERROR */
+	}
+	drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
+
+	/* Indicate success by returning something other than TREE_NULL */
+	GETUNION( curtree, tree );
+	curtree->tr_op = OP_NOP;
+	return( curtree );
 }
 
 /*
@@ -150,6 +209,7 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
+	return( curtree );
 }
 
 /*
@@ -190,7 +250,10 @@ int			id;
 	return(curtree);
 }
 
-struct nmgregion *
+/*
+ *			M G E D _ N M G _ D O I T
+ */
+HIDDEN struct nmgregion *
 mged_nmg_doit( tp )
 union tree	*tp;
 {
@@ -275,7 +338,7 @@ union tree		*curtree;
 		/* 0 = vectors, 1 = w/polygon markers */
 		nmg_s_to_vlist( &vhead, r->s_p, 1 );
 
-		drawH_part2( 0, vhead.vh_first, pathp, tsp );
+		drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
 	}
 
 	/* Return original tree -- it needs to be freed (by caller) */
@@ -346,103 +409,33 @@ int	kind;
 }
 
 /*
- *			D R A W T R E E
+ *			D R A W h _ P A R T 2
  *
- *  This routine is the analog of rt_gettree().
+ *  Once the vlist has been created, perform the common tasks
+ *  in handling the drawn solid.
  */
-void
-drawtree( dp )
-struct directory	*dp;
-{
-	(void)drawtrees( 1, &(dp->d_namep) );
-}
-
-/*
- *			D R A W H S O L I D
- *
- * Returns -
- *	-1	on error
- *	 0	if OK
- */
-int
-drawHsolid( recordp, pathp, id, tsp )
-union record	*recordp;
-struct db_full_path	*pathp;
-int		id;
-struct db_tree_state	*tsp;
-{
-	register int	i;
-	int		dashflag;		/* draw with dashed lines */
-	struct vlhead	vhead;
-
-	vhead.vh_first = vhead.vh_last = VL_NULL;
-	if( regmemb >= 0 ) {
-		int	flag = '-';
-		/* processing a member of a processed region */
-		/* regmemb  =>  number of members left */
-		/* regmemb == 0  =>  last member */
-		if(memb_oper == UNION)
-			flag = 999;
-
-		/* The hard part */
-		/* XXX flag is the boolean operation */
-		i = proc_region( recordp, tsp->ts_mat, flag );
-
-		if( i < 0 )  {
-			/* error somwhere */
-			(void)printf("Error in converting solid %s to ARBN\n",
-				DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
-			if(regmemb == 0) {
-				regmemb = -1;
-			}
-			return(-1);		/* ERROR */
-		}
-
-		/* if more member solids to be processed, no drawing was done
-		 */
-		if( regmemb > 0 )
-			return(0);		/* NOP -- more to come */
-
-		i = finish_region( &vhead );
-		if( i < 0 )  {
-			(void)printf("error in finish_region()\n");
-			return(-1);		/* ERROR */
-		}
-		drawH_part2( 0, vhead.vh_first, pathp, tsp );
-	}  else  {
-		/* Doing a normal solid */
-
-		dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
-
-		if( rt_functab[id].ft_plot( recordp, tsp->ts_mat, &vhead,
-		    DB_FULL_PATH_CUR_DIR(pathp) ) < 0 )  {
-			printf("%s: vector conversion failure\n",
-				DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
-		}
-		drawH_part2( dashflag, vhead.vh_first, pathp, tsp );
-	}
-	return(1);		/* OK */
-}
-
-drawH_part2( dashflag, vfirst, pathp, tsp )
+drawH_part2( dashflag, vfirst, pathp, tsp, existing_sp )
 int		dashflag;
 struct vlist	*vfirst;
 struct db_full_path	*pathp;
 struct db_tree_state	*tsp;
+struct solid		*existing_sp;
 {
 	register struct solid *sp;
 	register struct vlist *vp;
 	register int	i;
 	vect_t		maxvalue, minvalue;
 
-	GET_SOLID( sp );
-
-	/* Take note of the base color */
-	if( tsp )  {
-		sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-		sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-		sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+	if( !existing_sp )  {
+		/* Handling a new solid */
+		GET_SOLID( sp );
+	} else {
+		/* Just updating an existing solid.
+		 *  'tsp' and 'pathpos' will not be used
+		 */
+		sp = existing_sp;
 	}
+
 
 	/*
 	 * Compute the min, max, and center points.
@@ -452,6 +445,7 @@ struct db_tree_state	*tsp;
 	sp->s_vlist = vfirst;
 	sp->s_vlen = 0;
 	for( vp = vfirst; vp != VL_NULL; vp = vp->vl_forw )  {
+		/* XXX need to skip normal vectors, markers */
 		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
 		sp->s_vlen++;
 	}
@@ -464,10 +458,16 @@ struct db_tree_state	*tsp;
 	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
 
 	/*
-	 * If this solid is not illuminated, fill in it's information.
-	 * A solid might be illuminated yet vectorized again by redraw().
+	 *  If this solid is new, fill in it's information.
+	 *  Otherwise, don't touch what is already there.
 	 */
-	if( sp != illump )  {
+	if( !existing_sp )  {
+		/* Take note of the base color */
+		if( tsp )  {
+			sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+			sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+			sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+		}
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
 
@@ -483,8 +483,8 @@ struct db_tree_state	*tsp;
 		/* Copy path information */
 		for( i=0; i<=sp->s_last; i++ )
 			sp->s_path[i] = pathp->fp_names[i];
+		sp->s_regionid = tsp->ts_regionid;
 	}
-	sp->s_regionid = tsp->ts_regionid;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;
 
@@ -502,12 +502,12 @@ struct db_tree_state	*tsp;
 	}
 
 	/* Solid is successfully drawn */
-	if( sp != illump )  {
+	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
 		APPEND_SOLID( sp, HeadSolid.s_back );
 		dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 	} else {
-		/* replacing illuminated solid -- struct already linked in */
+		/* replacing existing solid -- struct already linked in */
 		sp->s_iflag = UP;
 		dmp->dmr_viewchange( DM_CHGV_REPL, sp );
 	}
@@ -565,42 +565,93 @@ next_level:
 }
 
 /*
- *  			R E D R A W
- *  
- *  Probably misnamed.
+ *			R E P L O T _ O R I G I N A L _ S O L I D
+ *
+ *  Given an existing solid structure that may have been subjected to
+ *  solid editing, recompute the vector list, etc, to make the solid
+ *  the same as it originally was.
+ *
+ *  Returns -
+ *	-1	error
+ *	 0	OK
  */
-struct solid *
-redraw( sp, recp, mat )
-struct solid *sp;
-union record *recp;
-mat_t	mat;
+int
+replot_original_solid( sp )
+struct solid	*sp;
 {
-	int addr, bytes;
+	union record	*rp;
+	mat_t		mat;
 
-	if( sp == SOLID_NULL )
-		return( sp );
+	if( sp->s_Eflag )  {
+		(void)printf("replot_original_solid(%s): Unable to plot evaluated regions, skipping\n",
+			sp->s_path[sp->s_last]->d_namep );
+		return(-1);
+	}
+	pathHmat( sp, mat, sp->s_last-1 );
+	rp = db_getmrec( dbip, sp->s_path[sp->s_last]);
+	if( replot_modified_solid( sp, rp, mat ) < 0 )  {
+		rt_free( (char *)rp, "original solid rec" );
+		return(-1);
+	}
+	rt_free( (char *)rp, "original solid rec" );
+	return(0);
+}
 
-/* XXX This is really broken!! */
+/*
+ *  			R E P L O T _ M O D I F I E D _ S O L I D
+ *
+ *  Given the solid structure of a solid that has already been drawn,
+ *  and a new database record and transform matrix,
+ *  create a new vector list for that solid, and substitute.
+ *  Used for solid editing mode.
+ *
+ *  Returns -
+ *	-1	error
+ *	 0	OK
+ */
+int
+replot_modified_solid( sp, recp, mat )
+struct solid	*sp;
+union record	*recp;
+mat_t		mat;
+{
+	unsigned	addr, bytes;
+	struct vlhead	vhead;
+	int		id;
+
+	vhead.vh_first = vhead.vh_last = VL_NULL;
+
+	if( sp == SOLID_NULL )  {
+		(void)printf("replot_modified_solid() sp==NULL?\n");
+		return(-1);
+	}
+
+	if( (id = rt_id_solid( recp )) == ID_NULL )  {
+		(void)printf("replot_modified_solid() unable to identify type of solid %s\n",
+			sp->s_path[sp->s_last]->d_namep );
+		return(-1);
+	}
 
 	/* Remember displaylist location of previous solid */
 	addr = sp->s_addr;
 	bytes = sp->s_bytes;
 
-	if( drawHsolid(
-		sp,
-		sp->s_soldash,
-		sp->s_last,
-		mat,
-		recp,
-		sp->s_regionid,
-		(struct mater_info *)0
-	) != 1 )  {
-		(void)printf("redraw():  error in drawHsolid()\n");
-		return(sp);
+	/* Draw (plot) a normal solid */
+	if( rt_functab[id].ft_plot( recp, mat, &vhead,
+	    sp->s_path[sp->s_last] ) < 0 )  {
+		(void)printf("%s: plot failure\n",
+			sp->s_path[sp->s_last]->d_namep );
+	    	return(-1);
 	}
 
-	/* Release previous chunk of displaylist, and rewrite control list */
-	memfree( &(dmp->dmr_map), (unsigned)bytes, (unsigned long)addr );
+	/* Write new displaylist */
+	drawH_part2( sp->s_soldash, vhead.vh_first,
+		(struct db_full_path *)0,
+		(struct db_tree_state *)0, sp );
+
+	/* Release previous chunk of displaylist. */
+	if( bytes > 0 )
+		memfree( &(dmp->dmr_map), bytes, (unsigned long)addr );
 	dmaflag = 1;
-	return( sp );
+	return(0);
 }

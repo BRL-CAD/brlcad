@@ -49,8 +49,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern char    *cmd_args[];
 extern int 	numargs;
 
-extern struct solid	*redraw();
-
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -661,6 +659,18 @@ init_sedit()
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
 }
 
+/*
+ *			R E P L O T _ E D I T I N G _ S O L I D
+ *
+ *  All solid edit routines call this subroutine after
+ *  making a change to es_rec or es_mat.
+ */
+void
+replot_editing_solid()
+{
+	replot_modified_solid( illump, &es_rec, es_mat );
+}
+
 /* put up menu header */
 void
 sedit_menu()  {
@@ -893,7 +903,7 @@ sedit()
 		mat_idn( incr_change );
 
 		/* no need to calc_planes again */
-		illump = redraw( illump, &es_rec, es_mat );
+		replot_editing_solid();
 
 		inpara = 0;
 		pr_solid( &es_rec.s );
@@ -1081,7 +1091,7 @@ sedit()
 	if( es_rec.s.s_type == GENARB8 )
 		calc_planes( &es_rec.s, es_rec.s.s_cgtype );
 
-	illump = redraw( illump, &es_rec, es_mat );
+	replot_editing_solid();
 
 	inpara = 0;
 	pr_solid( &es_rec.s );
@@ -1742,11 +1752,10 @@ f_eqn()
 	
 	calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
 
-	/* draw the new solid */
-	illump = redraw( illump, &es_rec, es_mat );
+	/* draw the new version of the solid */
+	replot_editing_solid();
 
 	/* update display information */
 	pr_solid( &es_rec.s );
 	dmaflag = 1;
-	return;	
 }

@@ -365,12 +365,15 @@ f_inside()
 	if( (dp = db_diradd( dbip,  newrec.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL )
 		return;
 	db_alloc( dbip, dp, 1 );
-
 	db_put( dbip, dp, &newrec, 0, 1 );
-	/* draw the "inside" solid */
-	drawtree( dp );
-	dmp->dmr_colorchange();
-	dmaflag = 1;
+
+	/* Draw the new solid */
+	{
+		char	*arglist[3];
+		arglist[0] = "e";
+		arglist[1] = newrec.s.s_name;
+		f_edit( 2, arglist );
+	}
 }
 
 

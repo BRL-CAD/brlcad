@@ -428,12 +428,10 @@ do_update:
 		return;		/* failure */
 	}
 	db_alloc( dbip, dp, 1 );
-
 	db_put( dbip, dp, &record, 0, 1 );
-	/* draw the "typed-in" solid */
-	drawtree( dp );
-	dmp->dmr_colorchange();
-	dmaflag = 1;
+
+	/* draw the "made" solid */
+	f_edit( 2, cmd_args );	/* depends on name being in argv[1] */
 }
 
 /*
