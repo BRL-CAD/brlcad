@@ -24,7 +24,7 @@ main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
 {
 	char * id_name = "Spline Example";
-	char * tea_name = "Utah Teapot";
+	char * tea_name = "UtahTeapot";
 	int i;
 
 
