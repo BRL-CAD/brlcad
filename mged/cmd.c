@@ -25,13 +25,15 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 #include "machine.h"
 #include "vmath.h"
@@ -382,11 +384,7 @@ struct rt_vls	*vp;
 	rt_vls_init( &str );
 
 	while( cp < end )  {
-#ifdef BSD
-		ep = index( cp, '\n' );
-#else
 		ep = strchr( cp, '\n' );
-#endif
 		if( ep == NULL )  break;
 
 		/* Copy one cmd, incl newline.  Null terminate */
