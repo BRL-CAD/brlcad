@@ -300,6 +300,12 @@ BU_EXTERN(double	bn_noise_fbm, (point_t point, double h_val,
 				double lacunarity, double octaves) );
 BU_EXTERN(double	bn_noise_turb, (point_t point, double h_val,
 				double lacunarity, double octaves ) );
+BU_EXTERN(double	bn_noise_mf, (point_t point, double h_val,
+				double lacunarity, double octaves,
+				double offset) );
+BU_EXTERN(double	bn_noise_ridged, (point_t point, double h_val,
+				double lacunarity, double octaves,
+				double offset) );
 
 /*----------------------------------------------------------------------*/
 /* plane.c */

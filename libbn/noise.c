@@ -740,3 +740,126 @@ double octaves;
 	return( value );
 
 } /* noise_turb() */
+
+/***********************************************************************
+ *
+ *	From "Texturing and Modeling, A Procedural Approach" 2nd ed p338
+ *
+ *
+ */
+double
+bn_noise_ridged(point, h_val, lacunarity, octaves, offset)
+point_t point;
+double h_val;
+double lacunarity;
+double octaves;
+double offset;
+{
+	struct fbm_spec		*ep;
+	double			result, weight, signal, *spec_wgts;
+	point_t			pt;
+	int			i, oct;
+	
+	/* The first order of business is to see if we have pre-computed
+	 * the spectral weights table for these parameters in a previous
+	 * invocation.  If not, the we compute them and save them for
+	 * possible future use
+	 */
+
+	ep = find_spec_wgt(h_val, lacunarity, octaves);
+
+	/* copy the point so we don't corrupt 
+	 * the caller's copy of the variable
+	 */
+	PCOPY(pt, point);	
+	spec_wgts = ep->spec_wgts;
+
+	
+	/* get first octave */
+	signal = noise_perlin(pt);
+
+	/* get absolute value of signal (this creates the ridges) */
+	if (signal < 0.0) signal = -signal;
+
+	/* invert and translate (note that "offset shoudl be ~= 1.0 */
+	signal = offset - signal;
+
+	/* square the signal, to increase "sharpness" of ridges */
+	signal *= signal;
+
+	/* assign initial value */
+	result = signal;
+	weight = 1.0;
+
+	for (i=1 ; i < octaves ; i++ ) {
+		PSCALE(pt, lacunarity);
+
+		signal = noise_perlin(pt);
+
+		if (signal < 0.0) signal = - signal;
+		signal = offset - signal;
+
+		/* weight the contribution */
+		signal *= weight;
+		result += signal * spec_wgts[i];
+	}
+	return result;
+}
+
+/***********************************************************************
+ *
+ *
+ *
+ *
+ */
+
+double
+bn_noise_mf( point, h_val, lacunarity, octaves, offset)
+point_t point;
+double h_val;
+double lacunarity;
+double octaves;
+double offset;
+{
+	double 			frequency;
+	struct fbm_spec		*ep;
+	double			result, weight, signal, *spec_wgts;
+	point_t			pt;
+	int			i, oct;
+	
+	/* The first order of business is to see if we have pre-computed
+	 * the spectral weights table for these parameters in a previous
+	 * invocation.  If not, the we compute them and save them for
+	 * possible future use
+	 */
+
+	ep = find_spec_wgt( h_val, lacunarity, octaves );
+
+	/* copy the point so we don't corrupt 
+	 * the caller's copy of the variable
+	 */
+	PCOPY( pt, point );
+	spec_wgts = ep->spec_wgts;
+	offset = 1.0;
+
+	result = (noise_perlin(pt) + offset) * spec_wgts[0];
+	weight = result;
+
+	for (i=1 ; i < octaves ; i++) {
+		PSCALE(pt, lacunarity);
+
+		if (weight > 1.0) weight = 1.0;
+
+		signal = ( noise_perlin(pt) + offset ) * spec_wgts[i];
+
+		signal += fabs(noise_perlin( pt )) * pow(frequency, -h_val);
+		frequency *= lacunarity;
+		PSCALE(pt, lacunarity);
+	}
+	return result;
+}
+
+
+
+
+
