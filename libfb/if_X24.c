@@ -69,6 +69,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #  include <sys/mman.h>
 #  include <fcntl.h>
 #  define CAN_LINGER 1
+#  undef HAVE_SYS_SHM_H		/* Don't use both ways, mmap is preferred. */
 # else
 #  ifdef HAVE_SYS_SHM_H
 #	include <sys/ipc.h>
