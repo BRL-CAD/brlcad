@@ -56,7 +56,7 @@ struct model	*m;
  *	the shell should be a 3-manifold (winged edge).
  *	since polysolids may only have up to 5 vertices per face,
  *	any face with a loop of more than 5 vertices is triangulated
- *	using "nmg_triangulate_face" prior to output.
+ *	using "nmg_triangulate_fu" prior to output.
  */
 void
 write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
@@ -99,7 +99,7 @@ write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
 
 		/* if any loop has more than 5 vertices, triangulate the face */
 		if( max_count > 5 )
-			nmg_triangulate_face( fu );
+			nmg_triangulate_fu( fu );
 
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
