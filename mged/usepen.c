@@ -148,7 +148,7 @@ char	**argv;
 		 * Use the mouse for illuminating a solid
 		 */
 		illuminate( ypos );
-		return;
+		return CMD_OK;
 
 	case ST_O_PATH:
 		/*
