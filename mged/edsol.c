@@ -78,6 +78,7 @@ fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 fastf_t	es_m[3];		/* edge(line) slope */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
+static point_t	es_keypoint;	/* center of editing xforms */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -102,6 +103,65 @@ int	es_menu;		/* item selected from menu */
 #define MENU_ELL_SCALE_B	39
 #define MENU_ELL_SCALE_C	40
 #define MENU_ELL_SCALE_ABC	41
+
+/*
+ *			M A T _ S C A L E _ A B O U T _ P T
+ *
+ *  Build a matrix to scale uniformly around a given point.
+ *
+ *  Returns -
+ *	-1	if scale is too small.
+ *	 0	if OK.
+ */
+int
+mat_scale_about_pt( mat, pt, scale )
+mat_t		mat;
+CONST point_t	pt;
+CONST double	scale;
+{
+	mat_t	xlate;
+	mat_t	s;
+	mat_t	tmp;
+
+	mat_idn( xlate );
+	MAT_DELTAS_VEC_NEG( xlate, pt );
+
+	mat_idn( s );
+	if( NEAR_ZERO( scale, SMALL ) )  {
+		mat_zero( mat );
+		return -1;			/* ERROR */
+	}
+	s[15] = 1/scale;
+
+	mat_mul( tmp, s, xlate );
+
+	MAT_DELTAS_VEC( xlate, pt );
+	mat_mul( mat, xlate, tmp );
+	return 0;				/* OK */
+}
+
+/*
+ *			M A T _ X F O R M _ A B O U T _ P T
+ *
+ *  Build a matrix to apply arbitary 4x4 transformation around a given point.
+ */
+void
+mat_xform_about_pt( mat, xform, pt )
+mat_t		mat;
+CONST mat_t	xform;
+CONST point_t	pt;
+{
+	mat_t	xlate;
+	mat_t	tmp;
+
+	mat_idn( xlate );
+	MAT_DELTAS_VEC_NEG( xlate, pt );
+
+	mat_mul( tmp, xform, xlate );
+
+	MAT_DELTAS_VEC( xlate, pt );
+	mat_mul( mat, xlate, tmp );
+}
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */
@@ -682,6 +742,7 @@ init_sedit()
 
 		es_rec = es_orig;		/* struct copy */
 		temprec = es_rec.s;		/* struct copy */
+		VMOVE( es_keypoint, es_rec.s.s_values );
 
 		if( (type = es_rec.s.s_cgtype) < 0 )
 			type *= -1;
@@ -720,11 +781,16 @@ init_sedit()
 #if 1
 		/* XXX strictly experimental! */
 		if( es_rec.s.s_type == GENELL )  {
+			char	*str = "V";
+
 			rt_log("Experimental:  new_way=1\n");
 			new_way = 1;
 			rt_log("es_int.idb_magic=x%x\n", es_int.idb_magic);
 			rt_log("es_int.idb_type=%d.\n", es_int.idb_type);
 			rt_log("es_int.idb_ptr=x%x\n", es_int.idb_ptr);
+
+			get_solid_keypoint( es_keypoint, &str, &es_int );
+			VPRINT("es_keypoint", es_keypoint);
 		}
 #endif
 
@@ -1098,8 +1164,7 @@ sedit()
 		}
 		if( new_way )  {
 			mat_t	scalemat;
-			mat_idn(scalemat);
-			scalemat[15] = 1/es_scale;
+			mat_scale_about_pt( scalemat, es_keypoint, es_scale );
 			transform_editing_solid(&es_int, scalemat, &es_int, 1);
 		} else {
 			for(i=3; i<=21; i+=3) { 
@@ -1119,15 +1184,19 @@ sedit()
 			 * model coordinates first, because sedit_mouse()
 			 * as already applied es_mat to them.
 			 */
+			MAT4X3PNT( work, es_invmat, es_para );
 			if( new_way )  {
+				vect_t	delta;
 				mat_t	xlatemat;
+
 				/* Need vector from current vertex/keypoint
-				 * to new location.  Then apply matrix.
+				 * to desired new location.
 				 */
-				rt_bomb("new_way");
+				VSUB2( delta, work, es_keypoint );
+				mat_idn( xlatemat );
+				MAT_DELTAS_VEC_NEG( xlatemat, delta );
 				transform_editing_solid(&es_int, xlatemat, &es_int, 1);
 			} else {
-				MAT4X3PNT( work, es_invmat, es_para );
 				VMOVE(es_rec.s.s_values, work);
 			}
 		}
@@ -1241,9 +1310,10 @@ sedit()
 		}
 		/* Apply changes to solid */
 		if( new_way )  {
-			/* XXX Need to xlate keypoint to origin, then rotate, then put back. */
-			rt_bomb("new_way");
-			transform_editing_solid(&es_int, incr_change, &es_int, 1);
+			mat_t	mat;
+			/* xlate keypoint to origin, rotate, then put back. */
+			mat_xform_about_pt( mat, incr_change, es_keypoint );
+			transform_editing_solid(&es_int, mat, &es_int, 1);
 		} else {
 			for(i=1; i<8; i++) {
 				op = &es_rec.s.s_values[i*3];
@@ -1278,6 +1348,12 @@ sedit()
 	/* must re-calculate the face plane equations for arbs */
 	if( es_rec.s.s_type == GENARB8 )
 		calc_planes( &es_rec.s, es_rec.s.s_cgtype );
+
+	/* If the keypoint changed location, find about it here */
+	if( new_way )  {
+		char	*str = "V";
+		get_solid_keypoint( es_keypoint, &str, &es_int );
+	}
 
 	replot_editing_solid();
 
@@ -1318,18 +1394,39 @@ CONST vect_t	mousevec;
 	case STRANS:
 		/* 
 		 * Use mouse to change solid's location.
-		 * Project solid's V point into view space,
+		 * Project solid's keypoint into view space,
 		 * replace X,Y (but NOT Z) components, and
 		 * project result back to model space.
+		 * Then move keypoint there.
 		 */
-		/* XXX this makes bad assumptions about format of es_rec !! */
-		/* XXX new_way */
-		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
-		MAT4X3PNT( pos_view, model2view, temp );
-		pos_view[X] = mousevec[X];
-		pos_view[Y] = mousevec[Y];
-		MAT4X3PNT( temp, view2model, pos_view );
-		MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
+		if( new_way )  {
+			point_t	pt;
+			vect_t	delta;
+			mat_t	xlatemat;
+
+			MAT4X3PNT( temp, es_mat, es_keypoint );
+			MAT4X3PNT( pos_view, model2view, temp );
+			pos_view[X] = mousevec[X];
+			pos_view[Y] = mousevec[Y];
+			MAT4X3PNT( temp, view2model, pos_view );
+			MAT4X3PNT( pt, es_invmat, temp );
+
+			/* Need vector from current vertex/keypoint
+			 * to desired new location.
+			 */
+			VSUB2( delta, es_keypoint, pt );
+			mat_idn( xlatemat );
+			MAT_DELTAS_VEC_NEG( xlatemat, delta );
+			transform_editing_solid(&es_int, xlatemat, &es_int, 1);
+		} else {
+			/* XXX this makes bad assumptions about format of es_rec !! */
+			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+			MAT4X3PNT( pos_view, model2view, temp );
+			pos_view[X] = mousevec[X];
+			pos_view[Y] = mousevec[Y];
+			MAT4X3PNT( temp, view2model, pos_view );
+			MAT4X3PNT( es_rec.s.s_values, es_invmat, temp );
+		}
 		sedraw = 1;
 		return;
 	case ECMD_TGC_MV_H:
@@ -1437,19 +1534,17 @@ CONST vect_t	mousevec;
 			break;
 		}
 
-		/* Have scaling take place with respect to a point,
+		/* Have scaling take place with respect to keypoint,
 		 * NOT the view center.
 		 */
-		/* XXX should have an es_keypoint for this */
-		MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
+		MAT4X3PNT(temp, es_mat, es_keypoint);
 		MAT4X3PNT(pos_model, modelchanges, temp);
 		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 	}  else if( movedir & (RARROW|UARROW) )  {
 		mat_t oldchanges;	/* temporary matrix */
 
-		/* Vector from object center to cursor */
-		/* XXX should have an es_keypoint for this */
-		MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
+		/* Vector from object keypoint to cursor */
+		MAT4X3PNT( temp, es_mat, es_keypoint );
 		MAT4X3PNT( pos_view, model2objview, temp );
 		if( movedir & RARROW )
 			pos_view[X] = mousevec[X];
@@ -1808,7 +1903,7 @@ torcom:
 		VSCALE(op, op, ma/mb);
 		break;
 
-	case MENU_ELL_SCALE_ABC:	/* scale A,B, and C of ellg */
+	case MENU_ELL_SCALE_ABC:	/* set A,B, and C length the same */
 		if( new_way )  {
 			struct rt_ell_internal	*ell = 
 				(struct rt_ell_internal *)es_int.idb_ptr;
@@ -1869,12 +1964,7 @@ init_objedit()
 		/* Have a processed (E'd) region - NO key solid.
 		 * 	Use the 'center' as the key
 		 */
-		/* XXX should have an es_keypoint for this */
-		VMOVE(es_rec.s.s_values, illump->s_center);
-
-		/* Zero the other values */
-		for(i=3; i<24; i++)
-			es_rec.s.s_values[i] = 0.0;
+		VMOVE(es_keypoint, illump->s_center);
 
 		/* The s_center takes the es_mat into account already */
 		return;
@@ -1901,8 +1991,7 @@ init_objedit()
 	/* XXX hack:  get first granule into es_rec (ugh) */
 	bcopy( (char *)es_ext.ext_buf, (char *)&es_rec, sizeof(es_rec) );
 
-	/* XXX should have an es_keypoint here;
-	 * instead, be certain that es_rec.s.s_values[0] has key point! */
+	/* Find the keypoint for editing */
 	id = rt_id_solid( &es_ext );
 	switch( id )  {
 	case ID_NULL:
@@ -1920,7 +2009,7 @@ init_objedit()
 			/* XXX should import the ARS! */
 
 			/* only interested in vertex */
-			VMOVE(es_rec.s.s_values, rec[1].b.b_values);
+			VMOVE(es_keypoint, rec[1].b.b_values);
 			es_rec.s.s_type = ARS;		/* XXX wrong */
 			es_rec.s.s_cgtype = ARS;
 		}
@@ -1943,18 +2032,18 @@ init_objedit()
 			}
 			es_rec.s.s_cgtype = type;
 		}
+		VMOVE( es_keypoint, es_rec.s.s_values );
 		break;
 
 	case ID_EBM:
 		/* Use model origin as key point */
-		VSETALL(es_rec.s.s_values, 0 );
+		VSETALL(es_keypoint, 0 );
 		break;
 
 	default:
-		/* XXX Need SOMETHING in s_values, s/b es_keypoint */
+		VMOVE(es_keypoint, illump->s_center);
 		printf("init_objedit() using %g,%g,%g as keypoint\n",
-			V3ARGS(illump->s_center) );
-		VMOVE(es_rec.s.s_values, illump->s_center);
+			V3ARGS(es_keypoint) );
 	}
 
 	/* Save aggregate path matrix */
@@ -1962,6 +2051,9 @@ init_objedit()
 
 	/* get the inverse matrix */
 	mat_inv( es_invmat, es_mat );
+
+	/* XXX Zap out es_rec, nobody should look there any further */
+	bzero( (char *)&es_rec, sizeof(es_rec) );
 
 	/* XXX These should move to oedit_accept() and oedit_reject() ! */
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
@@ -2212,8 +2304,7 @@ double	xangle, yangle, zangle;
 
 	/* accumulate change matrix - do it wrt a point NOT view center */
 	mat_mul(tempp, modelchanges, es_mat);
-	/* XXX should have an es_keypoint for this */
-	MAT4X3PNT(point, tempp, es_rec.s.s_values);
+	MAT4X3PNT(point, tempp, es_keypoint);
 	wrt_point(modelchanges, incr_change, modelchanges, point);
 
 	new_mats();
@@ -2349,4 +2440,65 @@ struct rt_db_internal	*ip;
 	}
 
 	pl[npl].str[0] = '\0';	/* Mark ending */
+}
+
+/*
+ *  Keypoint in model space is established in "pt".
+ *  If "str" is set, then that point is used, else default
+ *  for this solid is selected and set.
+ *  "str" may be a constant string, in either upper or lower case,
+ *  or it may be something complex like "(3,4)" for an ARS or spline
+ *  to select a particular vertex or control point.
+ *
+ *  XXX Perhaps this should be done via solid-specific parse tables,
+ *  so that solids could be pretty-printed & structprint/structparse
+ *  processed as well?
+ */
+void
+get_solid_keypoint( pt, strp, ip )
+point_t		pt;
+char		**strp;
+struct rt_db_internal	*ip;
+{
+	char	*cp = *strp;
+
+	RT_CK_DB_INTERNAL( ip );
+
+	switch( ip->idb_type )  {
+	case ID_ELL:
+		{
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)ip->idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( pt, ell->v );
+				*strp = "V";
+				return;
+			}
+			if( strcmp( cp, "A" ) == 0 )  {
+				VMOVE( pt, ell->a );
+				*strp = "A";
+				return;
+			}
+			if( strcmp( cp, "B" ) == 0 )  {
+				VMOVE( pt, ell->b );
+				*strp = "B";
+				return;
+			}
+			if( strcmp( cp, "C" ) == 0 )  {
+				VMOVE( pt, ell->c );
+				*strp = "C";
+				return;
+			}
+			/* Default */
+			VMOVE( pt, ell->v );
+			*strp = "V";
+			return;
+		}
+	default:
+		VSETALL( pt, 0 );
+		*strp = "(origin)";
+		break;
+	}
 }
