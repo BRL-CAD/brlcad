@@ -32,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 #ifndef M_SQRT2
 #define M_SQRT2		1.41421356237309504880
@@ -71,13 +71,9 @@ adcursor()
 	idxy[1] = (idxy[1] < MINVAL ? MINVAL : idxy[1]);
 	idxy[1] = (idxy[1] > MAXVAL ? MAXVAL : idxy[1]);
 
-#ifdef USE_LIBDM
 	dmp->dmr_2d_line( dmp, MINVAL, idxy[1], MAXVAL, idxy[1], 0 ); /* Horiz */
 	dmp->dmr_2d_line( dmp, idxy[0], MAXVAL, idxy[0], MINVAL, 0);  /* Vert */
-#else
-	dmp->dmr_2d_line( MINVAL, idxy[1], MAXVAL, idxy[1], 0 ); /* Horiz */
-	dmp->dmr_2d_line( idxy[0], MAXVAL, idxy[0], MINVAL, 0);  /* Vert */
-#endif
+
 	curs_x = (fastf_t) (idxy[0]);
 	curs_y = (fastf_t) (idxy[1]);
 
@@ -105,13 +101,9 @@ adcursor()
 	y4 = curs_y + d1;
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
-#ifdef USE_LIBDM
 	dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
 	dmp->dmr_2d_line( dmp, (int)x3, (int)y3, (int)x4, (int)y4, 0 );
-#else
-	dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-	dmp->dmr_2d_line( (int)x3, (int)y3, (int)x4, (int)y4, 0 );
-#endif
+
 	d1 = cos (angle2) * 8000.0;
 	d2 = sin (angle2) * 8000.0;
 	x1 = curs_x + d1;
@@ -127,13 +119,9 @@ adcursor()
 	(void)clip ( &x3, &y3, &x4, &y4 );
 
 	/* Dashed lines */
-#ifdef USE_LIBDM
 	dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 1 );
 	dmp->dmr_2d_line( dmp, (int)x3, (int)y3, (int)x4, (int)y4, 1 );
-#else
-	dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 1 );
-	dmp->dmr_2d_line( (int)x3, (int)y3, (int)x4, (int)y4, 1 );
-#endif
+
 	/*
 	 * Position tic marks from dial 9.
 	 */
@@ -152,11 +140,7 @@ adcursor()
 	x2 = curs_x + d1 -t1;
 	y2 = curs_y + d2 + t2;
 	if (clip ( &x1, &Y1, &x2, &y2 ) == 0) {
-#ifdef USE_LIBDM
 		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#else
-		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#endif
 	}
 
 	/* Quadrant 2 */
@@ -165,11 +149,7 @@ adcursor()
 	x2 = curs_x - d2 - t2;
 	y2 = curs_y + d1 - t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-#ifdef USE_LIBDM
 		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#else
-		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#endif
 	}
 
 	/* Quadrant 3 */
@@ -178,11 +158,7 @@ adcursor()
 	x2 = curs_x - d1 + t1;
 	y2 = curs_y - d2 - t2;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-#ifdef USE_LIBDM
 		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#else
-		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#endif
 	}
 
 	/* Quadrant 4 */
@@ -191,11 +167,7 @@ adcursor()
 	x2 = curs_x + d2 + t2;
 	y2 = curs_y - d1 + t1;
 	if (clip (&x1, &Y1, &x2, &y2) == 0) {
-#ifdef USE_LIBDM
 		dmp->dmr_2d_line( dmp, (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#else
-		dmp->dmr_2d_line( (int)x1, (int)Y1, (int)x2, (int)y2, 0 );
-#endif
 	}
 }
 
@@ -242,18 +214,10 @@ char	**argv;
 	if (argc == 1)
 	{
 	  if (mged_variables.adcflag)  {
-#ifdef USE_LIBDM
 	    dmp->dmr_light( dmp, LIGHT_OFF, BV_ADCURSOR );
-#else
-	    dmp->dmr_light( LIGHT_OFF, BV_ADCURSOR );
-#endif
 	    mged_variables.adcflag = 0;
 	  } else {
-#ifdef USE_LIBDM
 	    dmp->dmr_light( dmp, LIGHT_ON, BV_ADCURSOR );
-#else
-	    dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
-#endif
 	    mged_variables.adcflag = 1;
 	  }
 
