@@ -123,6 +123,7 @@ set help_data(mged_update)	{{}	{handle outstanding events and refresh}}
 set help_data(mirface)		{{#### axis}	{mirror an ARB face}}
 set help_data(mirror)		{{old new axis}	{mirror solid or combination around axis}}
 set help_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to view coords}}
+set help_data(model2view_lu)	{{mx my mz}	{convert point in model coords (local units) to view coords (local units)}}
 set help_data(mv)		{{old new}	{rename object}}
 set help_data(mvall)		{{oldname newname}	{rename object everywhere}}
 set help_data(next_view)        {{} {set the current view to the next view on the view ring}}
@@ -221,6 +222,8 @@ set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermenta
 set help_data(viewget)		{{center|size|eye|ypr|quat|aet}	{Experimental - return high-precision view parameters.}}
 set help_data(viewset)		{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
 set help_data(view2model)	{{mx my mz}	{convert point in view coords to model coords (mm)}}
+set help_data(view2model_vec)	{{mx my mz}	{convert vector in view coords to model coords}}
+set help_data(view2model_lu)	{{mx my mz}	{convert point in view coords (local units) to model coords (local units)}}
 set help_data(vnirt)		{{x y}  	{trace a single ray from x y}}
 set help_data(vquery_ray)	{{x y}  	{trace a single ray from x y}}
 set help_data(vrmgr)		{{host {master|slave|overview}}	{link with Virtual Reality manager}}
