@@ -55,6 +55,9 @@ extern "C" {
 
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
+/* interface headers */
+#include "vmath.h"
+
 #define BN_AZIMUTH 0
 #define BN_ELEVATION 1
 #define BN_TWIST 2
