@@ -29,14 +29,11 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
