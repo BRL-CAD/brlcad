@@ -402,7 +402,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Rad\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Rad\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE41D03C67030003F204C = {
 			buildActionMask = 2147483647;
@@ -633,7 +633,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Pretty-Picture\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Pretty-Picture\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE44403C67063003F204C = {
 			buildActionMask = 2147483647;
@@ -858,7 +858,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Ray\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Ray\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE46B03C67077003F204C = {
 			buildActionMask = 2147483647;
@@ -1472,7 +1472,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Check\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Check\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE4E003C670BB003F204C = {
 			buildActionMask = 2147483647;
@@ -1709,7 +1709,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RTG3\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RTG3\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE50703C670CD003F204C = {
 			buildActionMask = 2147483647;
@@ -1946,7 +1946,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Cell\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Cell\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE52E03C670E2003F204C = {
 			buildActionMask = 2147483647;
@@ -2183,7 +2183,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT X-Ray\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT X-Ray\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE55503C670F1003F204C = {
 			buildActionMask = 2147483647;
@@ -2420,7 +2420,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Hidden-Line Plot\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Hidden-Line Plot\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE57C03C670F4003F204C = {
 			buildActionMask = 2147483647;
@@ -2657,7 +2657,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Volume Fractions\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Volume Fractions\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE5A303C670FA003F204C = {
 			buildActionMask = 2147483647;
@@ -2894,7 +2894,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Range Plot\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Range Plot\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE5CA03C67104003F204C = {
 			buildActionMask = 2147483647;
@@ -3509,7 +3509,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Silhouette\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Silhouette\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE63F03C67298003F204C = {
 			buildActionMask = 2147483647;
@@ -3746,7 +3746,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Weight\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Weight\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE66603C672A0003F204C = {
 			buildActionMask = 2147483647;
@@ -3983,7 +3983,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Edge Renderer\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Edge Renderer\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE68D03C672A9003F204C = {
 			buildActionMask = 2147483647;
@@ -4408,7 +4408,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Area\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"RT Area\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4E3CE6DB03C672BE003F204C = {
 			buildActionMask = 2147483647;
@@ -4761,6 +4761,18 @@
 			isa = PBXTargetDependency;
 			target = 4E3CE6A503C672B3003F204C;
 		};
+		4E6A2EF803F879ED003F204C = {
+			fileEncoding = 30;
+			isa = PBXFileReference;
+			path = g_superell.c;
+			refType = 4;
+		};
+		4E6A2EFA03F87A04003F204C = {
+			fileRef = 4E6A2EF803F879ED003F204C;
+			isa = PBXBuildFile;
+			settings = {
+			};
+		};
 		4E8E3C3703B6B63C003F204C = {
 			buildActionMask = 2147483647;
 			files = (
@@ -4800,7 +4812,6 @@
 				4E8E3C7B03B6B786003F204C,
 				4E8E3C7C03B6B786003F204C,
 				4E8E3C7D03B6B786003F204C,
-				4E8E3C7E03B6B786003F204C,
 				4E8E3C7F03B6B786003F204C,
 				4E8E3EEE03B6FF2E003F204C,
 			);
@@ -5037,12 +5048,6 @@
 		};
 		4E8E3C7D03B6B786003F204C = {
 			fileRef = 4EE8D4C303B6A5B9003F204C;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		4E8E3C7E03B6B786003F204C = {
-			fileRef = 4EE8D4C403B6A5B9003F204C;
 			isa = PBXBuildFile;
 			settings = {
 			};
@@ -7427,6 +7432,7 @@
 				4E8E3E6503B6D660003F204C,
 				4E8E3E6603B6D661003F204C,
 				4E8E3EFA03B7001A003F204C,
+				4E6A2EFA03F87A04003F204C,
 			);
 			isa = PBXSourcesBuildPhase;
 			runOnlyForDeploymentPostprocessing = 0;
@@ -9044,7 +9050,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh ";
-			shellScript = "cd $TEMP_ROOT/../libbu/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh bu_version \"The BRL-CAD Utility Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh bu_version \"The BRL-CAD Utility Library\"\ncp vers.c $TEMP_ROOT/../libbu/.";
 		};
 		4E8E3EDE03B6FA9D003F204C = {
 			fileEncoding = 30;
@@ -9082,7 +9088,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libbn/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh bn_version \"The BRL-CAD Numerical Computation Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh bn_version \"The BRL-CAD Numerical Computation Library\"\ncp vers.c $TEMP_DIR/../libbn/.";
 		};
 		4E8E3EE203B6FBD4003F204C = {
 			buildActionMask = 2147483647;
@@ -9095,7 +9101,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libwdb/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libwdb_version \"The BRL-CAD Library for Writing Database\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh libwdb_version \"The BRL-CAD Library for Writing Database\"\ncp vers.c $TEMP_ROOT/../libwdb/.";
 		};
 		4E8E3EE303B6FBF3003F204C = {
 			buildActionMask = 2147483647;
@@ -9108,7 +9114,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libpkg/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh pkg_version \"The BRL-CAD Network Package (PKG) Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh pkg_version \"The BRL-CAD Network Package (PKG) Library\"\ncp vers.c $TEMP_ROOT/../libpkg/.";
 		};
 		4E8E3EE403B6FC15003F204C = {
 			buildActionMask = 2147483647;
@@ -9121,7 +9127,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libfb/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh fb_version \"The BRL-CAD FrameBuffer Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh fb_version \"The BRL-CAD FrameBuffer Library\"\ncp vers.c $TEMP_ROOT/../libfb/.";
 		};
 		4E8E3EE503B6FC4B003F204C = {
 			buildActionMask = 2147483647;
@@ -9134,7 +9140,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libdm/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh dm_version \"The BRL-CAD Display Manager Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh dm_version \"The BRL-CAD Display Manager Library\"\ncp vers.c $TEMP_ROOT/../libdm/.";
 		};
 		4E8E3EE603B6FC76003F204C = {
 			buildActionMask = 2147483647;
@@ -9147,7 +9153,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libpng/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh png_version \"The PNG Reference Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh png_version \"The PNG Reference Library\"\ncp vers.c $TEMP_ROOT/../libpng/.";
 		};
 		4E8E3EE703B6FCA3003F204C = {
 			buildActionMask = 2147483647;
@@ -9160,7 +9166,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../librt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh rt_version \"The BRL-CAD Ray-Tracing Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh rt_version \"The BRL-CAD Ray-Tracing Library\"\ncp vers.c $TEMP_ROOT/../librt/.";
 		};
 		4E8E3EE803B6FCBC003F204C = {
 			buildActionMask = 2147483647;
@@ -9173,7 +9179,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../liboptical/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh liboptical_version \"The BRL-CAD Optical Shader Library\"";
+			shellScript = "PATH=$TEMP_ROOT/../sh:$PATH\ncd $TEMP_DIR\n$TEMP_ROOT/../sh/newvers.sh liboptical_version \"The BRL-CAD Optical Shader Library\"\ncp vers.c $TEMP_ROOT/../liboptical/.";
 		};
 		4E8E3EE903B6FCD9003F204C = {
 			buildActionMask = 2147483647;
@@ -9186,7 +9192,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libmultispectral/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libmultispectral_version \"The BRL-CAD Multi-Spectral Shader Library\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libmultispectral_version \"The BRL-CAD Multi-Spectral Shader Library\"\ncp vers.c $TEMP_ROOT/../libmultispectral/.";
 		};
 		4E8E3EEA03B6FD01003F204C = {
 			buildActionMask = 2147483647;
@@ -9199,7 +9205,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../libtermio/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libtermio_version \"The BRL-CAD Terminal Mode Compatibility Library\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh libtermio_version \"The BRL-CAD Terminal Mode Compatibility Library\"\ncp vers.c $TEMP_ROOT/../libtermio/.";
 		};
 		4E8E3EEB03B6FEDC003F204C = {
 			fileEncoding = 30;
@@ -16274,7 +16280,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd $TEMP_ROOT/../rt/\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"The BRL-CAD Ray-Tracer RT\"";
+			shellScript = "cd $TEMP_DIR\nPATH=$TEMP_ROOT/../sh:$PATH\n$TEMP_ROOT/../sh/newvers.sh version \"The BRL-CAD Ray-Tracer RT\"\ncp vers.c $TEMP_ROOT/../rt/.";
 		};
 		4EA9698703B72165003F204C = {
 			fileEncoding = 30;
@@ -23895,7 +23901,6 @@
 				4EE8D4C103B6A5B9003F204C,
 				4EE8D4C203B6A5B9003F204C,
 				4EE8D4C303B6A5B9003F204C,
-				4EE8D4C403B6A5B9003F204C,
 				4EE8D4C503B6A5B9003F204C,
 				4E8E3EED03B6FF2E003F204C,
 			);
@@ -24101,12 +24106,6 @@
 			path = vector.c;
 			refType = 4;
 		};
-		4EE8D4C403B6A5B9003F204C = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			path = vert_tree.c;
-			refType = 4;
-		};
 		4EE8D4C503B6A5B9003F204C = {
 			fileEncoding = 30;
 			isa = PBXFileReference;
@@ -24131,7 +24130,6 @@
 				4EE8D4D403B6A5BA003F204C,
 				4EE8D4D503B6A5BA003F204C,
 				4EE8D4D603B6A5BA003F204C,
-				4EE8D4D703B6A5BA003F204C,
 				4EE8D4D803B6A5BA003F204C,
 				4EE8D4D903B6A5BA003F204C,
 				4EE8D4DA03B6A5BA003F204C,
@@ -24271,12 +24269,6 @@
 			fileEncoding = 30;
 			isa = PBXFileReference;
 			path = getopt.c;
-			refType = 4;
-		};
-		4EE8D4D703B6A5BA003F204C = {
-			fileEncoding = 30;
-			isa = PBXFileReference;
-			path = hash.c;
 			refType = 4;
 		};
 		4EE8D4D803B6A5BA003F204C = {
@@ -31903,6 +31895,7 @@
 				4EE8D95803B6A5C6003F204C,
 				4EE8D95903B6A5C6003F204C,
 				4EE8D95A03B6A5C6003F204C,
+				4E6A2EF803F879ED003F204C,
 				4EE8D95B03B6A5C6003F204C,
 				4EE8D95C03B6A5C6003F204C,
 				4EE8D95D03B6A5C6003F204C,
@@ -52960,7 +52953,6 @@
 				4EE8E56903B6A7E1003F204C,
 				4EE8E56B03B6A7E1003F204C,
 				4EE8E56C03B6A7E1003F204C,
-				4EE8E56D03B6A7E1003F204C,
 				4EE8E56E03B6A7E1003F204C,
 				4EE8E56F03B6A7E1003F204C,
 				4EE8E57103B6A7E1003F204C,
@@ -53129,12 +53121,6 @@
 		};
 		4EE8E56C03B6A7E1003F204C = {
 			fileRef = 4EE8D4D603B6A5BA003F204C;
-			isa = PBXBuildFile;
-			settings = {
-			};
-		};
-		4EE8E56D03B6A7E1003F204C = {
-			fileRef = 4EE8D4D703B6A5BA003F204C;
 			isa = PBXBuildFile;
 			settings = {
 			};
