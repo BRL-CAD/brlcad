@@ -135,7 +135,7 @@ set mged_help_data(keypoint)	{{[x y z | reset]}	{set/see center of editing trans
 set mged_help_data(kill)	{{[-f] <objects>}	{delete object[s] from file}}
 set mged_help_data(killall)	{{<objects>}	{kill object[s] and all references}}
 set mged_help_data(killtree)	{{<object>}	{kill complete tree[s] - BE CAREFUL}}
-set mged_help_data(knob)	{{[-e -i -m -v] [id [val]]}	{emulate knob twist}}
+set mged_help_data(knob)	{{[-e -i -m -o -v] [id [val]]}	{emulate knob twist}}
 set mged_help_data(l)		{{[-r] <object(s)>}	{list attributes (verbose). Objects may be paths}}
 set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {list the MGED components that make up the specified MUVES components/systems}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
