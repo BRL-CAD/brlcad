@@ -94,14 +94,6 @@ static struct bu_list *bu_memq = BU_LIST_NULL;
 static struct bu_list bu_memqhd;
 #define MEMQDEBUG_NULL	((struct memqdebug *)0)
 
-struct memqdebug {
-	struct bu_list	q;
-	struct memdebug	m;
-};
-static struct bu_list *bu_memq = BU_LIST_NULL;
-static struct bu_list bu_memqhd;
-#define MEMQDEBUG_NULL	((struct memqdebug *)0)
-
 const char bu_strdup_message[] = "bu_strdup string";
 extern const char bu_vls_message[];	/* from vls.c */
 
