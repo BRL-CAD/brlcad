@@ -42,6 +42,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 			(i.e. str[1-58] matches str1, str2, ... str5, str8)
 		\	Escapes special characters.
  */
+int
 match(	 pattern,  string )
 register
 char	*pattern, *string;
