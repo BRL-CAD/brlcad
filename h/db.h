@@ -26,18 +26,22 @@ extern char *strncpy();
  *		FILE FORMAT
  *
  * All records are of fixed length, and have one of these formats:
+ *	A Free record
  *	An ID record
- *	A SOLID description
- *	A COMBINATION description (1 header, 1 member)
- *	A COMBINATION extension (2 members)
- *	An ARS `A' (header) record
- *	An ARS `B' (data) record
- *	A free record
- *	A Polygon header record
- *	A Polygon data record
- *      A B-spline header record
- *      A B-spline knot vector record
- *      A B-spline control mesh record
+ *	A SOLID record
+ *	A COMBINATION record, followed by multiple
+ *		MEMBER records
+ *	An ARS `A' (header) record, followed by multiple
+ *		ARS `B' (data) records
+ *	A Polygon header record, followed by multiple
+ *		Polygon data records
+ *      A B-spline solid header record, followed by multiple
+ *		B-spline surface records, followed by
+ *			d_kv_size[0] floats,
+ *			d_kv_size[1] floats,
+ *			padded to d_nknots granules, followed by
+ *			ctl_size[0]*ctl_size[1]*geom_type floats,
+ *			padded to d_nctls granules.
  *
  * The records are stored as binary records corresponding to PDP-11 and
  * VAX C structs, so padding must be supplied explicitly for alignment.
@@ -53,9 +57,8 @@ union record  {
 #define ID_FREE		'F'	/* Free record -- ignore */
 #define ID_P_HEAD	'P'	/* Polygon header */
 #define ID_P_DATA	'Q'	/* Polygon data record */
-#define ID_B_SPL_HEAD   'D'     /* B-spline header. (d is for d_spline) */
-#define ID_B_SPL_KV     'K'     /* B-spline knot vector */
-#define ID_B_SPL_CTL    'L'     /* B-spline control mesh */
+#define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
+#define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
 	char	u_size[128];	/* Total record size */
 	struct material_rec {
@@ -68,33 +71,29 @@ union record  {
 		unsigned char md_b;
 		char	md_material[100]; /* UNUSED now */
 	} md;
-	struct b_spline_head {
-		char    d_id;		/* = B_SPLINE_HEAD */
-		char    d_pad1;
-		char    d_name[NAMESIZE];
+	struct B_solid {
+		char	B_id;		/* = ID_BSOLID */
+		char	B_pad;
+		char	B_name[NAMESIZE];
+		short	B_nsurf;	/* # of surfaces in this solid */
+		float   B_resolution;	/* resolution of flatness */
+	} B;
+	struct b_surf {
+		char    d_id;		/* = ID_BSURF */
 		short   d_order[2];	/* order of u and v directions */
 		short   d_kv_size[2];	/* knot vector size  (u and v) */
 		short   d_ctl_size[2];  /* control mesh size ( u and v) */
-		float   d_resolution;	/* resolution of flatness */
 		short   d_geom_type;	/* geom type 3 or 4 */
-		int     d_totlen;	/* number of total records */
-		float   d_minx;		/* bounding box values */
-		float   d_miny;
-		float   d_minz;
-		float   d_maxx;
-		float   d_maxy;
-		float   d_maxz;
+		short	d_nknots;	/* # granules of knots */
+		short	d_nctls;	/* # granules of ctls */
 	} d;
-	struct b_spline_kv {
-		char    k_id;		/* = B_SPLINE_KV */
+	/* 
+	 * The b_surf_head record is followed by
+	 * d_nknots granules of knot vectors (first u, then v),
+	 * and then by d_nctls granules of control mesh information.
+	 * Note that neither of these have an ID field!
+	 */
 #define SPLINE   22
-		char    k_dir;		/* direction of knots */
-		float   k_values[30];   /* knot vector values */
-	} k;
-	struct b_spline_ctl {
-		char    l_id;		/* = B_SPLINE_CTL */
-		float   l_pts[ 8 * 3 ];    /* homogeneous points */
-	} l; 
 	struct polyhead  {
 		char	p_id;		/* = POLY_HEAD */
 		char	p_pad1;
