@@ -50,13 +50,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NMG_STATE_ON_L		2
 #define NMG_STATE_ON_R		3
 #define NMG_STATE_ON_B		4
-#define NMG_STATE_IN		5
+#define NMG_STATE_ON_N		5
+#define NMG_STATE_IN		6
 static CONST char *nmg_state_names[] = {
 	"*ERROR*",
 	"out",
 	"on_L",
 	"on_R",
-	"on_both",
+	"on_both",		/* "hole" crack */
+	"on_neither",		/* "non-hole" crack */
 	"in",
 	"TOOBIG"
 };
@@ -1478,9 +1480,13 @@ fastf_t			*mag2;
 			rt_log("\nnmg_face_combineX() vu block, index1=%d, index2=%d\n", cur1, cur2);
 
 		if( mag1[cur1] < mag2[cur2] )  {
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log("\nnmg_face_combineX() doing index1 block (at end)\n");
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
 			nxt2 = cur2;
 		} else if( mag1[cur1] > mag2[cur2] )  {
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log("\nnmg_face_combineX() doing index2 block (at end)\n");
 			nxt1 = cur1;
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
 		} else {
@@ -1495,7 +1501,11 @@ fastf_t			*mag2;
 					cur1, cur2, vu1->v_p, vu2->v_p);
 				rt_bomb("nmg_face_combineX: vertex lists scrambled");
 			}
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log("\nnmg_face_combineX() doing index1 block\n");
 			nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2->state );
+			if(rt_g.NMG_debug&DEBUG_FCUT)
+				rt_log("\nnmg_face_combineX() doing index2 block\n");
 			nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, old_rs1_state );
 		}
 	}
@@ -1719,7 +1729,7 @@ static CONST struct state_transitions nmg_state_is_out[17] = {
 	{ NMG_ON_FORW_ON_REV,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_REV_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_REV_RIGHT,	NMG_STATE_ON_R,		NMG_ACTION_VFY_EXT },
-	{ NMG_ON_REV_ON_FORW,	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
+	{ NMG_ON_REV_ON_FORW,	NMG_STATE_ON_N,		NMG_ACTION_NONE },
 	{ NMG_ON_REV_ON_REV,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LONE,		NMG_STATE_OUT,		NMG_ACTION_NONE }
 };
@@ -1737,7 +1747,7 @@ static CONST struct state_transitions nmg_state_is_on_L[17] = {
 	{ NMG_ON_FORW_RIGHT,	NMG_STATE_IN,		NMG_ACTION_NONE },
 	{ NMG_ON_FORW_ON_FORW,	NMG_STATE_ON_L,		NMG_ACTION_NONE },
 	{ NMG_ON_FORW_ON_REV,	NMG_STATE_IN,		NMG_ACTION_NONE },
-	{ NMG_ON_REV_LEFT,	NMG_STATE_IN,		NMG_ACTION_VFY_MULTI },
+	{ NMG_ON_REV_LEFT,	NMG_STATE_ON_N,		NMG_ACTION_VFY_MULTI },
 	{ NMG_ON_REV_RIGHT,	NMG_STATE_ON_B,		NMG_ACTION_VFY_EXT },
 	{ NMG_ON_REV_ON_FORW,	NMG_STATE_ON_L,		NMG_ACTION_VFY_MULTI },
 	{ NMG_ON_REV_ON_REV,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
@@ -1749,9 +1759,9 @@ static CONST struct state_transitions nmg_state_is_on_R[17] = {
 	{ NMG_LEFT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ON_B,		NMG_ACTION_NONE },
 	{ NMG_LEFT_ON_REV,	NMG_STATE_IN,		NMG_ACTION_NONE },
-	{ NMG_RIGHT_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_RIGHT_LEFT,	NMG_STATE_ON_N,		NMG_ACTION_VFY_MULTI },
 	{ NMG_RIGHT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ NMG_RIGHT_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_RIGHT_ON_FORW,	NMG_STATE_ON_N,		NMG_ACTION_VFY_MULTI },
 	{ NMG_RIGHT_ON_REV,	NMG_STATE_OUT,		NMG_ACTION_NONE },
 	{ NMG_ON_FORW_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_FORW_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
@@ -1782,6 +1792,26 @@ static CONST struct state_transitions nmg_state_is_on_B[17] = {
 	{ NMG_ON_REV_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_ON_REV_ON_REV,	NMG_STATE_ON_B,		NMG_ACTION_VFY_MULTI },
 	{ NMG_LONE,		NMG_STATE_ON_B,		NMG_ACTION_LONE_V_ESPLIT }
+};
+
+static CONST struct state_transitions nmg_state_is_on_N[17] = {
+	{ NMG_LEFT_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_LEFT_RIGHT,	NMG_STATE_OUT,		NMG_ACTION_VFY_MULTI },
+	{ NMG_LEFT_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_LEFT_ON_REV,	NMG_STATE_ON_L,		NMG_ACTION_VFY_MULTI },
+	{ NMG_RIGHT_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_RIGHT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_RIGHT_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_RIGHT_ON_REV,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_ON_FORW_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_ON_FORW_RIGHT,	NMG_STATE_ON_R,		NMG_ACTION_VFY_MULTI },
+	{ NMG_ON_FORW_ON_FORW,	NMG_STATE_ON_N,		NMG_ACTION_VFY_MULTI },
+	{ NMG_ON_FORW_ON_REV,	NMG_STATE_OUT,		NMG_ACTION_NONE },
+	{ NMG_ON_REV_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_ON_REV_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_ON_REV_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
+	{ NMG_ON_REV_ON_REV,	NMG_STATE_ON_N,		NMG_ACTION_VFY_MULTI },
+	{ NMG_LONE,		NMG_STATE_ON_N,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
 static CONST struct state_transitions nmg_state_is_in[17] = {
@@ -1867,6 +1897,9 @@ int			other_rs_state;
 		break;
 	case NMG_STATE_ON_B:
 		stp = &nmg_state_is_on_B[assessment];
+		break;
+	case NMG_STATE_ON_N:
+		stp = &nmg_state_is_on_N[assessment];
 		break;
 	case NMG_STATE_IN:
 		stp = &nmg_state_is_in[assessment];
