@@ -512,7 +512,7 @@ hit:
 		goto hit;
 	}
 	if( nhits == 3 )  {
-		FAST fastf_t tol_dist = ap->a_rt_i->rti_tol.dist;
+		fastf_t tol_dist = ap->a_rt_i->rti_tol.dist;
 		/*
 		 *  Check for case where two of the three hits
 		 *  have the same distance, e.g. hitting at the rim.
