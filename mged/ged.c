@@ -1961,10 +1961,15 @@ char	**argv;
 {
   struct db_i *save_dbip;
   struct bu_vls vls;
+  struct bu_vls msg;	/* use this to hold returned message */
 
   bu_vls_init(&vls);
+  bu_vls_init(&msg);
 
   if( argc <= 1 )  {
+    bu_vls_free(&vls);
+    bu_vls_free(&msg);
+
     /* Invoked without args, return name of current database */
     if( dbip != DBI_NULL )  {
       Tcl_AppendResult(interp, dbip->dbi_filename, (char *)NULL);
@@ -1979,6 +1984,7 @@ char	**argv;
     bu_vls_printf(&vls, "help opendb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
+    bu_vls_free(&msg);
     return TCL_ERROR;
   }
 
@@ -1988,6 +1994,7 @@ char	**argv;
     bu_vls_printf(&vls, "help opendb");
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
+    bu_vls_free(&msg);
     return TCL_ERROR;
   }
 
@@ -2006,6 +2013,8 @@ char	**argv;
 	(void)fgets(line, sizeof(line), stdin);
 	if( line[0] != 'y' && line[0] != 'Y' ) {
 	  bu_log("Warning: no database is currently opened!\n");
+	  bu_vls_free(&vls);
+	  bu_vls_free(&msg);
 	  return TCL_OK;
 	}
       }else{
@@ -2019,10 +2028,11 @@ char	**argv;
 			argv[1]);
 
 	status = Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
 
 	if(status != TCL_OK || interp->result[0] != '0') {
-	  bu_log("Warning: no database is currently opened!\n");
+	  bu_log("opendb: no database is currently opened!\n");
+	  bu_vls_free(&vls);
+	  bu_vls_free(&msg);
 	  return TCL_OK;
 	}
       }
@@ -2033,22 +2043,41 @@ char	**argv;
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 			 (char *)NULL);
 	bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
+	bu_vls_free(&vls);
+	bu_vls_free(&msg);
 	return TCL_ERROR;
       }
 
       if( *argv[2] != 'y' && *argv[2] != 'Y' ){
 	dbip = save_dbip; /* restore previous database */
+	bu_vls_free(&vls);
+	bu_vls_free(&msg);
 	return TCL_OK;
       }
     }
 
-    Tcl_AppendResult(interp, "Creating new database \"", argv[1],
-		     "\"\n", (char *)NULL);
-
     if( (dbip = db_create( argv[1] )) == DBI_NULL )  {
-      perror( argv[1] );
-      exit(2);		/* NOT finish() */
+      dbip = save_dbip; /* restore previous database */
+      bu_vls_free(&vls);
+      bu_vls_free(&msg);
+
+      if (mged_init_flag) {
+	/* we need to use bu_log here */
+	bu_log("opendb: failed to create %s\n", argv[1]);
+	bu_log("opendb: no database is currently opened!\n");
+	return TCL_OK;
+      }
+      
+      Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n",\
+		       (char *)NULL);
+      if (dbip == DBI_NULL)
+	Tcl_AppendResult(interp, "opendb: no database is currently opened!", \
+			 (char *)NULL);
+
+      return TCL_ERROR;
     }
+
+    bu_vls_printf(&msg, "The new database %s was successfully created.\n", argv[1]);
   }/* if( ((dbip = db_open( argv[1] ..... */
 
   if( save_dbip )  {
@@ -2067,7 +2096,7 @@ char	**argv;
   }
 
   if( dbip->dbi_read_only )
-    Tcl_AppendResult(interp, dbip->dbi_filename, ":  READ ONLY\n", (char *)NULL);
+    bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
 
   /* Quick -- before he gets away -- write a logfile entry! */
   log_event( "START", argv[1] );
@@ -2082,12 +2111,14 @@ char	**argv;
   /* Establish TCL access to both disk and in-memory databases */
   bu_vls_strcpy(&vls, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]");
   if( Tcl_Eval( interp, bu_vls_addr(&vls) ) != TCL_OK )  {
-	bu_log("%s\n%s\n",
+        bu_vls_printf(&msg, "%s\n%s\n",
     		interp->result,
 		Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+	bu_vls_free(&vls);
+	bu_vls_free(&msg);
 	return TCL_ERROR;
   }
-  Tcl_ResetResult( interp );
 
   /* Perhaps do something special with the GUI */
   bu_vls_trunc(&vls, 0);
@@ -2104,14 +2135,17 @@ char	**argv;
   Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&base2local,
 	      TCL_LINK_DOUBLE|TCL_LINK_READ_ONLY);
 
-  bu_vls_free(&vls);
-
   set_localunit_TclVar();
 
   /* Print title/units information */
   if( interactive )
-    Tcl_AppendResult(interp, dbip->dbi_title, " (units=",
-		     units_str[dbip->dbi_localunit], ")\n", (char *)NULL);
+    bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
+		  units_str[dbip->dbi_localunit]);
 
+  Tcl_ResetResult( interp );
+  Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);
+
+  bu_vls_free(&vls);
+  bu_vls_free(&msg);
   return TCL_OK;
 }
