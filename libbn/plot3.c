@@ -41,6 +41,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*#define putsi(a)	putc(a&0377,plotfp); putc((a>>8)&0377,plotfp)*/
 #define putsi(a)	putc(a,plotfp); putc((a>>8),plotfp)
 
+
+/*
+ *  These interfaces provide the standard UNIX-Plot functionality
+ */
+
 pl_point( plotfp, x, y )
 register FILE *plotfp;
 int x, y;
@@ -100,7 +105,7 @@ register char *s;
 }
 
 pl_space( plotfp, x1, y1, x2, y2 )
-FILE *plotfp;
+register FILE *plotfp;
 int x1, y1, x2, y2;
 {
 	putc( 's', plotfp );
@@ -111,13 +116,13 @@ int x1, y1, x2, y2;
 }
 
 pl_erase( plotfp )
-FILE *plotfp;
+register FILE *plotfp;
 {
 	putc( 'e', plotfp );
 }
 
 pl_circle( plotfp, x, y, r )
-FILE *plotfp;
+register FILE *plotfp;
 int x, y, r;
 {
 	putc( 'c', plotfp );
@@ -164,6 +169,13 @@ int r, g, b;
 	putc( r, plotfp );
 	putc( g, plotfp );
 	putc( b, plotfp );
+}
+
+pl_flush( plotfp )
+register FILE *plotfp;
+{
+	putc( 'F', plotfp );
+	fflush( plotfp );
 }
 
 pl_3space( plotfp, x1, y1, z1, x2, y2, z2 )
@@ -286,7 +298,7 @@ double x1, y1, x2, y2;
 	fwrite( out, 1, 4*8+1, plotfp );
 }
 
-/* no pd_linmod! */
+/* Note: no pd_linmod(), just use pl_linmod() */
 
 pd_move( plotfp, x, y )
 register FILE *plotfp;
