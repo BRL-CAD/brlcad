@@ -10,10 +10,14 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
+
+#if !defined(M_PI)
 #define M_PI            3.14159265358979323846
+#endif
 
 #define CLAMP(_x,_a,_b)	(_x < _a ? _a : (_x > _b ? _b : _x))
 #define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )

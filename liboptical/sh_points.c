@@ -35,9 +35,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "spm.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 #define PT_NAME_LEN 128
 struct points_specific {

@@ -19,7 +19,27 @@
  *	4) Edit Cakefile to add shader file to "FILES" and "RT_OBJ" macros.
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
+ *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -28,9 +48,11 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
+
 
 /* The internal representation of the solids must be stored so that we
  * can access their parameters at shading time.  This is done with

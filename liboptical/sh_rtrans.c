@@ -4,7 +4,27 @@
  *	Random transparency shader. A random number from 0 to 1 is drawn
  * for each pixel rendered. If the random number is less than the threshold
  * value, the pixel is rendered as 100% transparent
+ *
+ *  Author -
+ *	John R. Anderson
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -13,9 +33,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "msr.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 #define RTRANS_MAGIC 0x4a6f686e
 struct rtrans_specific {

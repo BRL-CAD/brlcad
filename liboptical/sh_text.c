@@ -1,5 +1,5 @@
 /*
- *  			T E X T . C
+ *  			S H _ T E X T . C
  *  
  *  Texture map lookup
  *
@@ -7,16 +7,20 @@
  *	Michael John Muuss
  *
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1985 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCStext[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -26,9 +30,10 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 struct region	env_region;			/* share with view.c */
 
@@ -761,12 +766,13 @@ char	*dp;
  *			E N V M A P _ S E T U P
  */
 HIDDEN int
-envmap_setup( rp, matparm, dpp, mfp, rtip )
+envmap_setup( rp, matparm, dpp, mfp, rtip, headp )
 register struct region *rp;
 struct rt_vls *matparm;
 char	**dpp;
 CONST struct mfuncs	*mfp;
 struct rt_i	*rtip;
+struct mfuncs	**headp;
 {
 	register char	*cp;
 	struct rt_vls	material;
@@ -786,7 +792,7 @@ struct rt_i	*rtip;
 
 	env_region.reg_mater.ma_shader = bu_vls_strdup( matparm );
 
-	if( mlib_setup( &env_region, rtip ) < 0 )
+	if( mlib_setup( headp, &env_region, rtip ) < 0 )
 		rt_log("envmap_setup() material '%s' failed\n", env_region.reg_mater );
 
 	return(0);		/* This region should be dropped */

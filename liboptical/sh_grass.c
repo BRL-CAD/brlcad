@@ -3,7 +3,26 @@
  *
  *	A procedural shader to produce grass
  *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -12,9 +31,10 @@
 #include "vmath.h"
 #include "plot3.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 #ifndef M_PI
 #define M_PI            3.14159265358979323846
@@ -667,7 +687,7 @@ double fract;
 	r->occlusion = 1.0;
 	return;
 
-
+#if 0
 	if (ldist[0] < r->hit.hit_dist) {
 
 		/* we're the closest hit on the cell */
@@ -711,6 +731,7 @@ double fract;
 				ldist[0], r->hit.hit_dist);
 	}
 	return /* SHADE_CONT */;
+#endif
 }
 
 

@@ -9,9 +9,10 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 
 #define Nfbm_MAGIC 0x18364	/* XXX change this number for each shader */
@@ -79,10 +80,10 @@ HIDDEN int	Nfbm_setup(), Nfbm_render();
 HIDDEN void	Nfbm_print(), Nfbm_free();
 
 struct mfuncs Nfbm_mfuncs[] = {
-	{"Nfbm",	0,	0,		MFI_NORMAL,		0,
+	{MF_MAGIC,	"Nfbm",		0,		MFI_NORMAL,	0,
 	Nfbm_setup,	Nfbm_render,	Nfbm_print,	Nfbm_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{0,		(char *)0,	0,		0,		0,
 	0,		0,		0,		0 }
 };
 

@@ -39,10 +39,11 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "./rdebug.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./light.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
+#include "../rt/light.h"
 
 /* Sky onditions for luminance calculations. */
 #define CLEAR_SKY	0

@@ -12,7 +12,26 @@
  *	the shader to produce a new image structure.  All other options
  *	following "file" apply to that image until the next "file" directive.
  *
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" license agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1998 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -22,9 +41,10 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 #define prj_MAGIC 0x1998    /* make this a unique number for each shader */
 #define CK_prj_SP(_p) RT_CKMAG(_p, prj_MAGIC, "prj_specific")

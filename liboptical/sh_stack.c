@@ -25,8 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 HIDDEN int	stk_setup(), stk_render();
 HIDDEN void	stk_print(), stk_free();
@@ -56,12 +58,13 @@ struct bu_structparse stk_parse[] = {
  *  Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-stk_setup( rp, matparm, dpp, mf_p, rtip )
+stk_setup( rp, matparm, dpp, mf_p, rtip, headp )
 register struct region *rp;
 struct rt_vls	*matparm;	/* parameter string */
 char		**dpp;		/* pointer to user data pointer */
 struct mfuncs	*mf_p;
 struct rt_i	*rtip;
+struct mfuncs	**headp;
 {
 	register struct stk_specific *sp;
 	char	*cp, *start;
@@ -89,8 +92,8 @@ struct rt_i	*rtip;
 				return( 0 );
 			}
 			/* add one */
-			if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
-				rtip) == 0 )  {
+			if( stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
+				rtip, headp) == 0 )  {
 				inputs |= sp->mfuncs[i]->mf_inputs;
 				i++;
 			} else {
@@ -108,8 +111,8 @@ struct rt_i	*rtip;
 			return( 0 );
 		}
 		/* add one */
-		if( dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
-		    rtip ) == 0 )  {
+		if( stk_dosetup(start, rp, &sp->udata[i], &sp->mfuncs[i],
+		    rtip, headp ) == 0 )  {
 			inputs |= sp->mfuncs[i]->mf_inputs;
 			i++;
 		} else {
@@ -203,14 +206,16 @@ char *cp;
 	rt_free( cp, "stk_specific" );
 }
 
-extern struct mfuncs *mfHead;	/* Head of list of materials */
-
-dosetup( cp, rp, dpp, mpp, rtip )
+/*
+ *			S T K _ D O S E T U P
+ */
+stk_dosetup( cp, rp, dpp, mpp, rtip, headp )
 char	*cp;
 struct region	*rp;
 char	**dpp;		/* udata pointer address */
 char	**mpp;		/* mfuncs pointer address */
 struct rt_i	*rtip;
+struct mfuncs	**headp;
 {
 	register struct mfuncs *mfp;
 	struct rt_vls	arg;
@@ -235,7 +240,7 @@ struct rt_i	*rtip;
 	}
 	matname[i] = '\0';	/* ensure null termination */
 
-	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
+	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if( matname[0] != mfp->mf_name[0]  ||
 		    strcmp( matname, mfp->mf_name ) != 0 )
 			continue;
@@ -250,7 +255,7 @@ found:
 	*dpp = (char *)0;
 	RT_VLS_INIT( &arg );
 	rt_vls_strcat( &arg, cp );
-	if( mfp->mf_setup( rp, &arg, dpp, mfp, rtip ) < 0 )  {
+	if( mfp->mf_setup( rp, &arg, dpp, mfp, rtip, headp ) < 0 )  {
 		/* What to do if setup fails? */
 		return(-1);		/* BAD */
 	}

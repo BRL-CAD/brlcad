@@ -29,10 +29,11 @@ static char RCScook[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "./rdebug.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./light.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
+#include "../rt/light.h"
 
 /* from view.c */
 extern double AmbientIntensity;

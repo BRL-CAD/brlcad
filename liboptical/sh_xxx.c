@@ -1,7 +1,7 @@
 /*
  *	S H _ X X X . C
  *
- *  To add a new shader to the "rt" program:
+ *  To add a new shader to the "rt" program's LIBOPTICAL library:
  *
  *	1) Copy this file to sh_shadername.c
  *	2) edit sh_shadername.c:
@@ -14,9 +14,9 @@
  *			each shader name being built.
  *		edit the xxx_setup function to do shader-specific setup
  *		edit the xxx_render function to do the actual rendering
- *	3) Edit view.c to add extern for xxx_mfuncs and call to mlib_add
- *		to function view_init()
- *	4) Edit Cakefile to add shader file to "FILES" and "RT_OBJ" macros.
+ *	3) Edit init.c to add extern for xxx_mfuncs and 
+ *		a call to mlib_add_shader().
+ *	4) Edit Cakefile to add shader file to "FILES" macro (without the .o)
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
  */
@@ -27,9 +27,10 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./material.h"
-#include "./mathtab.h"
-#include "./rdebug.h"
+#include "shadefuncs.h"
+#include "shadework.h"
+#include "../rt/mathtab.h"
+#include "../rt/rdebug.h"
 
 #define xxx_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_xxx_SP(_p) RT_CKMAG(_p, xxx_MAGIC, "xxx_specific")
