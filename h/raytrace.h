@@ -229,8 +229,9 @@ struct soltab {
 #define ID_SPH		10	/* Sphere */
 #define	ID_STRINGSOL	11	/* String-defined solid */
 #define ID_EBM		12	/* Extruded bitmap solid */
+#define ID_VOL		13	/* 3-D Volume */
 
-#define ID_MAXIMUM	12	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	13	/* Maximum defined ID_xxx value */
 
 /*
  *			F U N C T A B
