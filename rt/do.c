@@ -411,6 +411,7 @@ extern struct bu_structparse view_parse[];
 
 /* from librt/g_bot.c */
 extern int rt_bot_minpieces;
+extern int rt_bot_tri_per_piece;
 
 /*
  *  Generic settable parameters.
@@ -445,6 +446,7 @@ struct bu_structparse set_parse[] = {
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "rt_bot_tri_per_piece", byteoffset(rt_bot_tri_per_piece),BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",  1, "rt_cline_radius", byteoffset(rt_cline_radius),BU_STRUCTPARSE_FUNC_NULL },
 	{"%S",  1, "ray_data_file", byteoffset(ray_data_file),BU_STRUCTPARSE_FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
