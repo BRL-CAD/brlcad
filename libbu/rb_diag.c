@@ -44,7 +44,6 @@ int		depth;
     package = (node -> rbn_package)[d_order];
     pp = tree -> rbt_print;
 
-#if 1
     rt_log("%*snode <%x>...\n", depth * 2, "", node);
     rt_log("%*s  tree:   <%x>\n", depth * 2, "", node -> rbn_tree);
     rt_log("%*s  parent: <%x>\n", depth * 2, "", rb_parent(node, d_order));
@@ -55,9 +54,7 @@ int		depth;
 	    (rb_get_color(node, d_order) == RB_RED) ? "RED" :
 	    (rb_get_color(node, d_order) == RB_BLACK) ? "BLACK" : "Huhh?");
     rt_log("%*s  package: <%x> ", depth * 2, "", package);
-#else
-    rt_log("%*s", depth * 8, "");
-#endif
+
     if ((pp != 0) && (package != RB_PKG_NULL))
 	(*pp)(package -> rbp_data);
     else
