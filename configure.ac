@@ -260,8 +260,10 @@ dnl *************************
 
 AC_HEADER_STDC
 AC_CHECK_HEADERS( \
+	JavaVM/jni.h \
 	float.h \
 	getopt.h \
+	jni.h \
 	limits.h \
 	limits.h \
 	memory.h \
@@ -546,6 +548,18 @@ AC_CONFIG_FILES([
 ])
 AC_OUTPUT
 
+dnl
+dnl Expand the variables for summary reporting
+dnl
+prefix=`eval "echo $prefix"`
+prefix=`eval "echo $prefix"`
+bindir=`eval "echo $bindir"`
+bindir=`eval "echo $bindir"`
+sysconfdir=`eval "echo $sysconfdir"`
+sysconfdir=`eval "echo $sysconfdir"`
+mandir=`eval "echo $mandir"`
+mandir=`eval "echo $mandir"`
+
 
 dnl **********************
 dnl *** Report Summary ***
@@ -554,16 +568,16 @@ dnl **********************
 echo
 echo BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE
 echo
-echo              Prefix: ${prefix}
-echo            Binaries: ${bindir}
-echo Configuration files: ${sysconfdir}
-echo        Manual pages: ${mandir}
+echo "             Prefix: ${prefix}"
+echo "           Binaries: ${bindir}"
+echo "Configuration files: ${sysconfdir}"
+echo "       Manual pages: ${mandir}"
 echo
-echo CC       = ${CC}
-echo CFLAGS   = ${CFLAGS}
-echo CPPFLAGS = ${CPPFLAGS}
-echo LDFLAGS  = ${LDFLAGS}
-echo LIBS     = ${LIBS}
+echo "CC       = ${CC}"
+echo "CFLAGS   = ${CFLAGS}"
+echo "CPPFLAGS = ${CPPFLAGS}"
+echo "LDFLAGS  = ${LDFLAGS}"
+echo "LIBS     = ${LIBS}"
 echo
 echo Build Tcl ............................: yes
 echo Build Tk .............................: yes
@@ -585,7 +599,8 @@ echo Build profile release ................: no
 echo Print verbose compilation warnings ...: no
 echo
 echo Generate doxygen documentation .......: $enable_doxygen
-echo Run benchmark ........................: no
+echo Only build benchmark .................: no
+echo Only build librtserver ...............: $onlyrts
 echo
 echo ---
 echo $0 complete, type \'make\' to begin building
