@@ -53,7 +53,7 @@ extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 extern char	**promp;	/* pointer to a pointer to a char */
 
-void		center();
+void		arb_center();
 
 static int	nface, np, nm, mp;
 static fastf_t	thick[6];
@@ -382,7 +382,7 @@ arbin()
 	int i;
 
 	/* find reference point (pc[3]) to find direction of normals */
-	center();
+	arb_center(pc, newrec.s.s_values, np);
 
 	/* new face planes for the desired thicknesses */
 	for(i=0; i<nface; i++) {
@@ -408,24 +408,31 @@ arbin()
 	return(0);
 }
 
-
-/* finds reference center point (pc[3]) for the arb */
+/* 
+ *	A R B _ C E N T E R
+ *
+ * Find the center point for the arb whose values are in the s array,
+ * with the given number of verticies.  Return the point in cpt.
+ * WARNING: The s array is dbfloat_t's not fastf_t's.
+ */
 void
-center()
+arb_center( cpt, s, npoints )
+vect_t cpt;
+dbfloat_t s[];
+int npoints;
 {
-	register int i, j, k;
-	register fastf_t ppc;
+	int i,j,k;
+	fastf_t temp;
 
 	for(i=0; i<3; i++) {
-		ppc = 0.0;
-		for(j=0; j<np; j++) {
+		temp = 0.0;
+		for(j=0; j<npoints; j++) {
 			k = j * 3 + i;
-			ppc += newrec.s.s_values[k];
+			temp += s[k];
 		}
-		pc[i] = ppc / (fastf_t)np;
+		cpt[i] = temp / (fastf_t)npoints;
 	}
 }
-
 
 
 
