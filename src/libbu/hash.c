@@ -4,24 +4,22 @@
  *	An implimentation of hash tables
  */
 
-
 #ifndef lint
 static const char libbu_hash_RCSid[] = "@(#) $Header$";
 #endif
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "bu.h"
+
 
 /*		B U _ H A S H
  * the hashing function
@@ -284,7 +282,7 @@ bu_hash_tbl_pr( struct bu_hash_tbl *hsh_tbl, char *str )
 		hsh_entry = hsh_tbl->lists[index];
 		while( hsh_entry ) {
 			BU_CK_HASH_ENTRY( hsh_entry );
-			fprintf( stderr, "\tindex=%ld, key=x%x, value=x%x\n", index, (unsigned int)hsh_entry->key, (unsigned int)hsh_entry->value );
+			fprintf( stderr, "\tindex=%ld, key=x%x, value=x%x\n", index, hsh_entry->key, hsh_entry->value );
 			hsh_entry = hsh_entry->next;
 		}
 	}
