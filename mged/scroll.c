@@ -48,18 +48,19 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  ************************************************************************/
 
 static void sl_tol();
-static void	sl_itol();
-static double	sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
+static void sl_artol();
+static void sl_itol();
+static double sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
 
 struct scroll_item scr_menu[] = {
 	{ "xslew",	sl_tol,		0,	"X" },
 	{ "yslew",	sl_tol,		1,	"Y" },
 	{ "zslew",	sl_tol,		2,	"Z" },
 	{ "zoom",	sl_tol,		3,	"S" },
-	{ "xrot",	sl_tol,		4,   "x" },
-	{ "yrot",	sl_tol,		5,   "y" },
-	{ "zrot",	sl_tol,		6,   "z" },
-	{ "",		(void (*)())NULL, 0, "" }
+	{ "xrot",	sl_tol,		4,	"x" },
+	{ "yrot",	sl_tol,		5,	"y" },
+	{ "zrot",	sl_tol,		6,	"z" },
+	{ "",		(void (*)())NULL, 0,	"" }
       };
 
 struct scroll_item sl_abs_menu[] = {
@@ -67,18 +68,18 @@ struct scroll_item sl_abs_menu[] = {
 	{ "Yslew",	sl_tol,		1,	"aY" },
 	{ "Zslew",	sl_tol,		2,	"aZ" },
 	{ "Zoom",	sl_tol,		3,	"aS" },
-	{ "Xrot",	sl_tol,		4,   "ax" },
-	{ "Yrot",	sl_tol,		5,   "ay" },
-	{ "Zrot",	sl_tol,		6,   "az" },
-	{ "",		(void (*)())NULL, 0, "" }
+	{ "Xrot",	sl_artol,	4,	"ax" },
+	{ "Yrot",	sl_artol,	5,	"ay" },
+	{ "Zrot",	sl_artol,	6,	"az" },
+	{ "",		(void (*)())NULL, 0,	"" }
 };
 
 struct scroll_item sl_adc_menu[] = {
-	{ "xadc",	sl_itol,	0, "xadc" },
-	{ "yadc",	sl_itol,	1, "yadc" },
-	{ "ang 1",	sl_itol,	2, "ang1" },
-	{ "ang 2",	sl_itol,	3, "ang2" },
-	{ "tick",	sl_itol,	4, "distadc" },
+	{ "xadc",	sl_itol,	0,	"xadc" },
+	{ "yadc",	sl_itol,	1,	"yadc" },
+	{ "ang 1",	sl_itol,	2,	"ang1" },
+	{ "ang 2",	sl_itol,	3,	"ang2" },
+	{ "tick",	sl_itol,	4,	"distadc" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
 
@@ -94,7 +95,8 @@ struct scroll_item sl_adc_menu[] = {
  *
  *  Reset all scroll bars to the zero position.
  */
-void sl_halt_scroll()
+void
+sl_halt_scroll()
 {
 #if 0
   char *av[3];
@@ -112,7 +114,8 @@ void sl_halt_scroll()
 /*
  *			S L _ T O G G L E _ S C R O L L
  */
-void sl_toggle_scroll()
+void
+sl_toggle_scroll()
 {
 #if 0
   char *av[3];
@@ -183,11 +186,12 @@ char **argv;
  *									*
  *  Where the floating point value pointed to by scroll_val		*
  *  in the range -1.0 to +1.0 is the only desired result,		*
- *  everything can bel handled by sl_tol().				*
+ *  everything can be handled by sl_tol().				*
  *									*
  ************************************************************************/
 
-static void sl_tol( mptr, val )
+static void
+sl_tol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
@@ -223,7 +227,30 @@ double				val;
   bu_vls_free(&vls);
 }
 
-static void sl_itol( mptr, val )
+static void
+sl_artol( mptr, val )
+register struct scroll_item *mptr;
+double val;
+{
+  struct bu_vls vls;
+
+  if( val < -SL_TOL )   {
+    val += SL_TOL;
+  } else if( val > SL_TOL )   {
+    val -= SL_TOL;
+  } else {
+    val = 0.0;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*180.0);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+}
+
+
+static void
+sl_itol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
@@ -238,24 +265,8 @@ double				val;
   }
 
   bu_vls_init(&vls);
-
-#if 0
-  {
-    char *av[4];
-
-    av[0] = "knob";
-    av[1] = mptr->scroll_cmd;
-    av[3] = NULL;
-
-    bu_vls_printf(&vls, "%d", (int)(val*2047.0));
-    av[2] = bu_vls_addr(&vls);
-    (void)f_knob((ClientData)NULL, interp, 3, av);
-  }
-#else
   bu_vls_printf(&vls, "knob %s %d", mptr->scroll_cmd, val*2047.0);
   Tcl_Eval(interp, bu_vls_addr(&vls));
-#endif
-
   bu_vls_free(&vls);
 }
 
@@ -348,7 +359,7 @@ int y_top;
 		if(mged_variables.rateknobs)
 		  f = rate_rotate[X];
 		else
-		  f = absolute_rotate[X];
+		  f = absolute_rotate[X] / 180.0;
 	      }
 	      break;
 	    case 5:
@@ -359,7 +370,7 @@ int y_top;
 		if(mged_variables.rateknobs)
 		  f = rate_rotate[Y];
 		else
-		  f = absolute_rotate[Y];
+		  f = absolute_rotate[Y] / 180.0;
 	      }
 	      break;
 	    case 6:
@@ -370,7 +381,7 @@ int y_top;
 		if(mged_variables.rateknobs)
 		  f = rate_rotate[Z];
 		else
-		  f = absolute_rotate[Z];
+		  f = absolute_rotate[Z] / 180.0;
 	      }
 	      break;
 	    default:
