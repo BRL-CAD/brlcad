@@ -52,6 +52,7 @@ extern int	rec_prep(), rec_class();
 extern int	pg_prep(), pg_class();
 extern int	spl_prep(), spl_class();
 extern int	sph_prep(), sph_class();
+extern int	ebm_prep(), ebm_class();
 
 extern void	nul_print(), nul_norm(), nul_uv();
 extern void	tor_print(), tor_norm(), tor_uv();
@@ -64,6 +65,7 @@ extern void	rec_print(), rec_norm(), rec_uv();
 extern void	pg_print(),  pg_norm(),  pg_uv();
 extern void	spl_print(), spl_norm(), spl_uv();
 extern void	sph_print(), sph_norm(), sph_uv();
+extern void	ebm_print(), ebm_norm(), ebm_uv();
 
 extern void	nul_curve(), nul_free(), nul_plot();
 extern void	tor_curve(), tor_free(), tor_plot();
@@ -76,6 +78,7 @@ extern void	rec_curve(), rec_free(), rec_plot();
 extern void	pg_curve(),  pg_free(),  pg_plot();
 extern void	spl_curve(), spl_free(), spl_plot();
 extern void	sph_curve(), sph_free(), sph_plot();
+extern void	ebm_curve(), ebm_free(), ebm_plot();
 
 extern struct seg *nul_shot();
 extern struct seg *tor_shot();
@@ -88,6 +91,7 @@ extern struct seg *rec_shot();
 extern struct seg *pg_shot();
 extern struct seg *spl_shot();
 extern struct seg *sph_shot();
+extern struct seg *ebm_shot();
 
 struct rt_functab rt_functab[] = {
 	"ID_NULL",	0,
@@ -145,6 +149,16 @@ struct rt_functab rt_functab[] = {
 		sph_uv,		sph_curve,	sph_class,	sph_free,
 		sph_plot,
 
+	"ID_STRINGSOL",	0,
+		nul_prep,	nul_shot,	nul_print,	nul_norm,
+		nul_uv,		nul_curve,	nul_class,	nul_free,
+		nul_plot,
+
+	"ID_EBM",	1,
+		ebm_prep,	ebm_shot,	ebm_print,	ebm_norm,
+		ebm_uv,		ebm_curve,	ebm_class,	ebm_free,
+		ebm_plot,
+
 	">ID_NULL",	0,
 		nul_prep,	nul_shot,	nul_print,	nul_norm,
 		nul_uv,		nul_curve,	nul_class,	nul_free,
@@ -191,10 +205,11 @@ static char idmap[] = {
 	ID_TGC,		/* GENTGC 18 supergeneralized TGC; internal form */
 	ID_ELL,		/* GENELL 19: V,A,B,C */
 	ID_ARB8,	/* GENARB8 20:  V, and 7 other vectors */
-	ID_NULL,	/* ARS 21: arbitrary triangular-surfaced polyhedron */
-	ID_NULL,	/* ARSCONT 22: extension record type for ARS solid */
+	ID_NULL,	/* HACK: ARS 21: arbitrary triangular-surfaced polyhedron */
+	ID_NULL,	/* HACK: ARSCONT 22: extension record type for ARS solid */
 	ID_NULL,	/* ELLG 23:  gift-only */
 	ID_HALF,	/* HALFSPACE 24:  halfspace */
+	ID_NULL,	/* HACK: SPLINE 25 */
 	ID_NULL		/* n+1 */
 };
 
@@ -235,7 +250,7 @@ char *node;
 
 	root_mater = rt_no_mater;	/* struct copy */
 
-	if( (dp = rt_dir_lookup( rtip, node, LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp = db_lookup( rtip->rti_dbip, node, LOOKUP_NOISY )) == DIR_NULL )
 		return(-1);		/* ERROR */
 
 	/* Process animations located at the root */
@@ -279,13 +294,16 @@ static vect_t zaxis = { 0, 0, 1.0 };
 
 /*
  *			R T _ A D D _ S O L I D
+ *
+ *  The record pointer "rec" points to all relevant records,
+ *  in a contiguous in-core array.
  */
 HIDDEN
 struct soltab *
-rt_add_solid( rtip, rec, name, mat )
+rt_add_solid( rtip, rec, dp, mat )
 struct rt_i	*rtip;
 union record	*rec;
-char		*name;
+struct directory *dp;
 matp_t		mat;
 {
 	register struct soltab *stp;
@@ -308,7 +326,7 @@ matp_t		mat;
 	    ! NEAR_ZERO(fy, 0.0001) ||
 	    ! NEAR_ZERO(fz, 0.0001) )  {
 		rt_log("rt_add_solid(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
-			name, fx, fy, fz );
+			dp->d_namep, fx, fy, fz );
 		mat_print("bad matrix", mat);
 		return( SOLTAB_NULL );		/* BAD */
 	}
@@ -321,9 +339,9 @@ matp_t		mat;
 		register int i;
 
 		if(
-			name[0] != nsp->st_name[0]  ||	/* speed */
-			name[1] != nsp->st_name[1]  ||	/* speed */
-			strcmp( name, nsp->st_name ) != 0
+			dp->d_namep[0] != nsp->st_name[0]  ||	/* speed */
+			dp->d_namep[1] != nsp->st_name[1]  ||	/* speed */
+			strcmp( dp->d_namep, nsp->st_name ) != 0
 		)
 			continue;
 		for( i=0; i<16; i++ )  {
@@ -334,7 +352,7 @@ matp_t		mat;
 		/* Success, we have a match! */
 		if( rt_g.debug & DEBUG_SOLIDS )
 			rt_log("rt_add_solid:  %s re-referenced\n",
-				name );
+				dp->d_namep );
 		return(nsp);
 next_one: ;
 	}
@@ -351,14 +369,15 @@ next_one: ;
 		/* Convert from database (float) to fastf_t */
 		rt_fastf_float( (fastf_t *)v, rec->s.s_values, 8 );
 	}
-	stp->st_name = name;
+	stp->st_name = dp->d_namep;
 	stp->st_specific = (int *)0;
 
 	/* init solid's maxima and minima */
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-	if( rt_functab[id].ft_prep( v, stp, mat, &(rec->s), rtip ) )  {
+	/* "rec" points to array of all relevant records */
+	if( rt_functab[id].ft_prep( v, stp, mat, rec, rtip, dp ) )  {
 		/* Error, solid no good */
 		rt_free( (char *)stp, "struct soltab");
 		return( SOLTAB_NULL );		/* BAD */
@@ -376,6 +395,8 @@ next_one: ;
 	 *
 	 *  Don't update min & max for halfspaces;  instead, add them
 	 *  to the list of infinite solids, for special handling.
+	 *
+	 *  XXX If this solid is subtracted, don't update model RPP either.
 	 */
 	if( stp->st_aradius >= INFINITY )  {
 		rt_cut_extend( &rtip->rti_inf_box, stp );
@@ -463,14 +484,13 @@ struct region	*argregion;
 matp_t		old_xlate;
 struct mater_info *materp;
 {
-	auto union record rec;		/* local copy of this record */
-	register int i;
-	auto int j;
-	union tree *curtree;		/* ptr to current tree top */
-	struct region *regionp;
-	union record *members;		/* ptr to array of member recs */
-	int subtreecount;		/* number of non-null subtrees */
-	struct tree_list *trees;	/* ptr to array of structs */
+	union record	*rp;
+	register int	i;
+	auto int	j;
+	union tree	*curtree = TREE_NULL;/* cur tree top, ret. code */
+	struct region	*regionp;
+	int		subtreecount;	/* number of non-null subtrees */
+	struct tree_list *trees = (struct tree_list *)0;/* ptr to ary of structs */
 	struct tree_list *tlp;		/* cur tree_list */
 	struct mater_info curmater;
 
@@ -481,66 +501,47 @@ struct mater_info *materp;
 	}
 	path[pathpos] = dp;
 
-	/*
-	 * Load the first record of the object into local record buffer
-	 */
-#ifdef DB_MEM
-	rec = rtip->rti_db[dp->d_addr];	/* struct copy */
-#else DB_MEM
-#ifdef CRAY_COS
-	/* CRAY COS can't fseek() properly, hence this hideous I/O hack */
-	rewind(rtip->fp);
-	while( !feof(rtip->fp) && ftell(rtip->fp) <= dp->d_addr  &&
-	    fread( (char *)&rec, sizeof rec, 1, rtip->fp ) == 1 )
-		/* NULL */ ;
-#else CRAY_COS
-	if( fseek( rtip->fp, dp->d_addr, 0 ) < 0 ||
-	    fread( (char *)&rec, sizeof rec, 1, rtip->fp ) != 1 )  {
-		rt_log("rt_drawobj: %s record read error\n",
-			rt_path_str(pathpos) );
+	if( (rp = db_getmrec( rtip->rti_dbip, dp )) == (union record *)0 )
 		return(TREE_NULL);
-	}
-#endif CRAY_COS
-#endif DB_MEM
+	/* Any "return" below here must release "rp" dynamic memory */
 
 	/*
 	 *  Draw a solid
 	 */
-	if( rec.u_id == ID_SOLID || rec.u_id == ID_ARS_A ||
-	    rec.u_id == ID_P_HEAD || rec.u_id == ID_BSOLID )  {
+	if( rp->u_id == ID_SOLID || rp->u_id == ID_ARS_A ||
+	    rp->u_id == ID_P_HEAD || rp->u_id == ID_BSOLID )  {
 		register struct soltab *stp;
-		register union tree *xtp;
 
-		if( (stp = rt_add_solid( rtip, &rec, dp->d_namep, old_xlate )) ==
+		if( (stp = rt_add_solid( rtip, rp, dp, old_xlate )) ==
 		    SOLTAB_NULL )
-			return( TREE_NULL );
+			goto out;
 
-		/**GETSTRUCT( xtp, union tree ); **/
-		if( (xtp=(union tree *)rt_malloc(sizeof(union tree), "solid tree"))
+		/**GETSTRUCT( curtree, union tree ); **/
+		if( (curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree"))
 		    == TREE_NULL )
 			rt_bomb("rt_drawobj: solid tree malloc failed\n");
-		bzero( (char *)xtp, sizeof(union tree) );
-		xtp->tr_op = OP_SOLID;
-		xtp->tr_a.tu_stp = stp;
-		xtp->tr_a.tu_name = rt_strdup(rt_path_str(pathpos));
-		xtp->tr_regionp = argregion;
-		return( xtp );
+		bzero( (char *)curtree, sizeof(union tree) );
+		curtree->tr_op = OP_SOLID;
+		curtree->tr_a.tu_stp = stp;
+		curtree->tr_a.tu_name = rt_strdup(rt_path_str(pathpos));
+		curtree->tr_regionp = argregion;
+		goto out;
 	}
 
-	if( rec.u_id != ID_COMB )  {
+	if( rp->u_id != ID_COMB )  {
 		rt_log("rt_drawobj:  %s defective database record, type '%c' (0%o), addr=x%x\n",
 			dp->d_namep,
-			rec.u_id, rec.u_id, dp->d_addr );
-		return(TREE_NULL);			/* ERROR */
+			rp->u_id, rp->u_id, dp->d_addr );
+		goto null;
 	}
 
 	/*
 	 *  Process a Combination (directory) node
 	 */
-	if( rec.c.c_length <= 0 )  {
-		rt_log(  "Warning: combination with zero members \"%.16s\".\n",
-			rec.c.c_name );
-		return(TREE_NULL);
+	if( dp->d_len <= 1 )  {
+		rt_log(  "Warning: combination with zero members \"%s\".\n",
+			dp->d_namep );
+		goto null;
 	}
 	regionp = argregion;
 
@@ -550,33 +551,35 @@ struct mater_info *materp;
 	 *  inheritance interlocks.
 	 */
 	curmater = *materp;	/* struct copy */
-	if( rec.c.c_override == 1 )  {
+	if( rp->c.c_override == 1 )  {
 		if( argregion != REGION_NULL )  {
-			rt_log("rt_drawobj: ERROR: color override in combination within region %s\n", argregion->reg_name );
+			rt_log("rt_drawobj: ERROR: color override in combination within region %s\n",
+				argregion->reg_name );
 		} else {
 			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
-				curmater.ma_color[0] = (rec.c.c_rgb[0])*rt_inv255;
-				curmater.ma_color[1] = (rec.c.c_rgb[1])*rt_inv255;
-				curmater.ma_color[2] = (rec.c.c_rgb[2])*rt_inv255;
-				curmater.ma_cinherit = rec.c.c_inherit;
+				curmater.ma_color[0] = (rp->c.c_rgb[0])*rt_inv255;
+				curmater.ma_color[1] = (rp->c.c_rgb[1])*rt_inv255;
+				curmater.ma_color[2] = (rp->c.c_rgb[2])*rt_inv255;
+				curmater.ma_cinherit = rp->c.c_inherit;
 			}
 		}
 	}
-	if( rec.c.c_matname[0] != '\0' )  {
+	if( rp->c.c_matname[0] != '\0' )  {
 		if( argregion != REGION_NULL )  {
-			rt_log("rt_drawobj: ERROR: material property spec in combination within region %s\n", argregion->reg_name );
+			rt_log("rt_drawobj: ERROR: material property spec in combination within region %s\n",
+				argregion->reg_name );
 		} else {
 			if( curmater.ma_minherit == DB_INH_LOWER )  {
-				strncpy( curmater.ma_matname, rec.c.c_matname, sizeof(rec.c.c_matname) );
-				strncpy( curmater.ma_matparm, rec.c.c_matparm, sizeof(rec.c.c_matparm) );
-				curmater.ma_minherit = rec.c.c_inherit;
+				strncpy( curmater.ma_matname, rp->c.c_matname, sizeof(rp->c.c_matname) );
+				strncpy( curmater.ma_matparm, rp->c.c_matparm, sizeof(rp->c.c_matparm) );
+				curmater.ma_minherit = rp->c.c_inherit;
 			}
 		}
 	}
 
 	/* Handle combinations which are the top of a "region" */
-	if( rec.c.c_flags == 'R' )  {
+	if( rp->c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
 			rt_log("Warning:  region %s below region %s, ignored\n",
 				rt_path_str(pathpos),
@@ -585,15 +588,15 @@ struct mater_info *materp;
 			register struct region *nrp;
 
 			/* Ignore "air" regions unless wanted */
-			if( rtip->useair == 0 &&  rec.c.c_aircode != 0 )
-				return(TREE_NULL);
+			if( rtip->useair == 0 &&  rp->c.c_aircode != 0 )
+				goto null;
 
 			/* Start a new region here */
 			GETSTRUCT( nrp, region );
 			nrp->reg_forw = REGION_NULL;
-			nrp->reg_regionid = rec.c.c_regionid;
-			nrp->reg_aircode = rec.c.c_aircode;
-			nrp->reg_gmater = rec.c.c_material;
+			nrp->reg_regionid = rp->c.c_regionid;
+			nrp->reg_aircode = rp->c.c_aircode;
+			nrp->reg_gmater = rp->c.c_material;
 			nrp->reg_name = rt_strdup(rt_path_str(pathpos));
 			nrp->reg_mater = curmater;	/* struct copy */
 			/* Material property processing in rt_add_regtree() */
@@ -602,49 +605,30 @@ struct mater_info *materp;
 		}
 	}
 
-	/* Read all the member records */
-	i = sizeof(union record) * rec.c.c_length;
-	j = sizeof(struct tree_list) * rec.c.c_length;
-	trees = (struct tree_list *)0;	/* satisfy picky compilers */
-	if( (members = (union record *)rt_malloc(i, "member records")) ==
-	    (union record *)0  ||
-	    (trees = (struct tree_list *)rt_malloc( j, "tree_list array" )) ==
+	/* Process all the member records */
+	j = sizeof(struct tree_list) * (dp->d_len-1);
+	if( (trees = (struct tree_list *)rt_malloc( j, "tree_list array" )) ==
 	    (struct tree_list *)0 )
 		rt_bomb("rt_drawobj:  malloc failure\n");
-
-#ifdef DB_MEM
-	/* For now, the "members" struct array is simply ignored */
-#else DB_MEM
-	/* Read in all members of this combination before recursing */
-	if( fread( (char *)members, sizeof(union record), rec.c.c_length,
-	    rtip->fp ) != rec.c.c_length )  {
-		rt_log("rt_drawobj:  %s member read error\n",
-			rt_path_str(pathpos) );
-		return(TREE_NULL);
-	}
-#endif DB_MEM
 
 	/* Process and store all the sub-trees */
 	subtreecount = 0;
 	tlp = trees;
-	for( i=0; i<rec.c.c_length; i++ )  {
+	for( i = 1; i < dp->d_len; i++ )  {
 		register struct member *mp;
 		auto struct directory *nextdp;
 		auto mat_t new_xlate;		/* Accum translation mat */
 		auto struct mater_info newmater;
 		mat_t xmat;		/* temp fastf_t matrix for conv */
 
-#ifdef DB_MEM
-		mp = &(rtip->rti_db[dp->d_addr+i+1].M);
-#else DB_MEM
-		mp = &(members[i].M);
-#endif DB_MEM
+		mp = &(rp[i].M);
 		if( mp->m_id != ID_MEMB )  {
 			rt_log("rt_drawobj:  defective member of %s\n", dp->d_namep);
 			continue;
 		}
-		if( (nextdp = rt_dir_lookup( rtip, mp->m_instname, LOOKUP_NOISY )) ==
-		    DIR_NULL )
+		/* m_instname needs trimmed here! */
+		if( (nextdp = db_lookup( rtip->rti_dbip, mp->m_instname,
+		    LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
 		newmater = curmater;	/* struct copy -- modified below */
@@ -774,9 +758,13 @@ next_one:			;
 
 	/* Release dynamic memory and return */
 out:
-	rt_free( (char *)trees, "tree_list array");
-	rt_free( (char *)members, "member records" );
+	if( trees )  rt_free( (char *)trees, "tree_list array");
+	if( rp )  rt_free( (char *)rp, "rt_drawobj records");
 	return( curtree );
+null:
+	if( trees )  rt_free( (char *)trees, "tree_list array");
+	if( rp )  rt_free( (char *)rp, "rt_drawobj records");
+	return( TREE_NULL );				/* ERROR */
 }
 
 /*
@@ -791,15 +779,15 @@ out:
 HIDDEN union tree *
 rt_mkbool_tree( tree_list, howfar, regionp )
 struct tree_list *tree_list;
-int howfar;
-struct region *regionp;
+int		howfar;
+struct region	*regionp;
 {
 	register struct tree_list *tlp;
-	register int i;
+	register int		i;
 	register struct tree_list *first_tlp = (struct tree_list *)0;
-	register union tree *xtp;
-	register union tree *curtree;
-	register int inuse;
+	register union tree	*xtp;
+	register union tree	*curtree;
+	register int		inuse;
 
 	if( howfar <= 0 )
 		return(TREE_NULL);
@@ -910,7 +898,7 @@ int		noisy;
 			ep++;		/* walk over element name */
 		oldc = *ep;
 		*ep = '\0';
-		if( (dp = rt_dir_lookup( rtip, cp, noisy )) == DIR_NULL )
+		if( (dp = db_lookup( rtip->rti_dbip, cp, noisy )) == DIR_NULL )
 			return(-1);
 		path[depth++] = dp;
 		cp = ep+1;
@@ -1511,11 +1499,6 @@ register struct rt_i *rtip;
 	rtip->rti_bv_bytes = BITS2BYTES(rtip->nsolids) +
 		BITS2BYTES(rtip->nregions) + 4*sizeof(bitv_t);
 
-	if( rtip->rti_db )  {
-		rt_free( (char *)rtip->rti_db, "in-core database");
-		rtip->rti_db = (union record *)0;
-	}
-
 	/*
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
@@ -1579,7 +1562,7 @@ register struct rt_i *rtip;
  *			R T _ C L E A N
  *
  *  Release all the dynamic storage associated with a particular rt_i
- *  structure, except for the database directory.
+ *  structure, except for the database instance information (dir, etc).
  */
 void
 rt_clean( rtip )
@@ -1589,11 +1572,6 @@ register struct rt_i *rtip;
 	register struct soltab *stp;
 
 	if( rtip->rti_magic != RTI_MAGIC )  rt_bomb("rt_clean:  bad rtip\n");
-
-	if( rtip->rti_db )  {
-		rt_free( (char *)rtip->rti_db, "in-core database");
-		rtip->rti_db = (union record *)0;
-	}
 
 	/*
 	 *  Clear out the solid table
@@ -1648,7 +1626,7 @@ register struct rt_i *rtip;
 
 	/*
 	 *  Re-initialize everything important.
-	 *  Some things, like file & fp remain untouched.
+	 *  This duplicates the code in rt_dirbuild().
 	 */
 
 	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
