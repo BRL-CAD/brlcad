@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  18:11:00  mike
+ * Made explicit that termcap.h to be used is the local version
+ * 
  * Revision 2.2  91/08/30  17:54:31  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -68,7 +71,7 @@ register char	*lp;
 register int	c_char;
 {
 	register int	pos = 0;
-	register char	c;
+	register char	c = 0;
 
 	while ((--c_char >= 0) && (c = *lp++)) {
 		if (c == '\t')

@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  17:54:32  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.3  91/08/30  17:49:05  mike
  * Paul Stay mods for ANSI C
  * 
@@ -397,7 +401,7 @@ char	*what;
 	int	len,
 		i,
 		found = 0,
-		save,
+		save = -1,
 		exactmatch = -1;
 
 	len = strlen(what);

@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  17:54:09  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.1  91/08/30  17:48:53  mike
  * Paul Stay mods for ANSI C
  * 
@@ -69,7 +73,7 @@ buf_exists(name)
 char	*name;
 {
 	BUFFER	*bp;
-	int	n;
+	int	n = 0;
 
 	if (name == 0)
 		return 0;
@@ -240,6 +244,8 @@ char	*obj;
 	char	*new;
 	if (obj)
 		new = realloc(obj, (unsigned) size);
+	else
+		new = 0;
 	if (new == 0 || !obj)
 		new = emalloc(size);
 	if (new == 0)

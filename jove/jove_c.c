@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  18:46:02  mike
+ * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
+ * 
  * Revision 2.1  91/08/30  17:54:29  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -41,7 +44,7 @@ LINE	*stop;
 		count = 0;
 	register LINE	*lp = curline;
 	register char	*cp,
-			c;
+			c = '\0';
 	int	c_char = curchar;
 	static BUFLOC	ret;
 

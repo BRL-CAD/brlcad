@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  91/08/30  17:54:37  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.4  91/08/30  17:49:12  mike
  * Paul Stay mods for ANSI C
  * 
@@ -72,7 +76,8 @@ int	FastPrompt = 0;
 static char	*StrToShow;
 static int	siged = 0;
 void
-slowpoke()
+slowpoke(num)
+int	num;
 {
 	s_mess("%s", StrToShow);
 	UpdateMesg();
@@ -365,7 +370,7 @@ char	*buf,
 	what;
 {
 	char	*cp = &buf[charpos],
-		c;
+		c = '\0';
 
 	if (dir > 0) {
 		while (c = *cp++)

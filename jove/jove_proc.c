@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.5  91/08/30  18:46:08  mike
+ * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
+ * 
  * Revision 2.4  91/08/30  17:54:37  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -180,7 +183,7 @@ WINDOW	*err,
 	*buf;
 {
 	BUFLOC	*bp;
-	char	string[100], ans;
+	char	string[100], ans = '\0';
 	struct error	*newerr = 0;
 
 	if (errorlist)
