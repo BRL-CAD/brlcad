@@ -319,7 +319,8 @@ XEvent *eventPtr;
 	    dm_unlimit(dv_1adc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd, "knob ang1 %d\n", setting );
+	bu_vls_printf( &cmd, "knob ang1 %f\n",
+		       45.0 - 45.0*((double)setting)/2047.0);
       }
       break;
     case DIAL1:
@@ -373,7 +374,8 @@ XEvent *eventPtr;
 	    dm_unlimit(dv_2adc) + M->axis_data[0] - knob_values[M->first_axis];
 
 	setting = dm_limit(((struct glx_vars *)dmp->dm_vars)->knobs[M->first_axis]);
-	bu_vls_printf( &cmd, "knob ang2 %d\n", setting );
+	bu_vls_printf( &cmd, "knob ang2 %f\n",
+		       45.0 - 45.0*((double)setting)/2047.0);
       }else {
 	if(mged_variables.rateknobs){
 	  if(EDIT_ROTATE && mged_variables.edit)
