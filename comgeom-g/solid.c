@@ -381,6 +381,23 @@ getsolid()
 		return( mk_arb8( outfp, name, tmp ) );
 	}
 
+	if( strcmp( solid_type, "arw" ) == 0) {
+		/* ARbitrary Wedge --- ERIM */
+		if( getsoldata( dd, 4*3, sol_work ) < 0)
+			return(-1);
+		VMOVE( T(0), D(0) );
+		VADD2( T(1), D(0), D(2) );
+		VADD3( T(2), D(0), D(2), D(3) );
+		VADD2( T(3), D(0), D(3) );
+
+		VADD2( T(4), D(0), D(1) );
+		VMOVE( T(5), T(4) );
+
+		VADD3( T(6), D(0), D(1), D(3) );
+		VMOVE( T(7), T(6) );
+		return( mk_arb8( outfp, name, (point_t *)tmp) );
+	}
+
 	if( strcmp( solid_type, "arb8" ) == 0 )  {
 		if( getsoldata( dd, 8*3, sol_work ) < 0 )
 			return(-1);
