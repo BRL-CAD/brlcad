@@ -351,7 +351,7 @@ bu_set_realtime()
 		int	policy;
 
 		if( (policy = sched_getscheduler(0)) >= 0 )  {
-			if( policy == SCHED_RR )
+			if( policy == SCHED_RR || policy == SCHED_FIFO )
 				return 1;
 		}
 
