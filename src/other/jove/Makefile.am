@@ -27,7 +27,7 @@ jove_SOURCES = \
 	$(SRCS) \
 	version.c
 
-jove_LDADD = @CURSES@
+jove_LDADD = ${CURSES}
 findcom_SOURCES = findcom.c tune.c
 
 BUILT_SOURCES = tune.c version.c

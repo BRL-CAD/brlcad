@@ -18,7 +18,7 @@ include_HEADERS = \
 	generic/itk.h \
 	generic/itkDecls.h
 
-AM_CFLAGS = @X_CFLAGS@
+AM_CFLAGS = ${X_CFLAGS}
 
 MAINTAINERCLEANFILES = \
 	Makefile.in
