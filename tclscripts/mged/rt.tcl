@@ -1162,10 +1162,10 @@ proc rt_set_fb { id } {
 
 	if {$mged_gui($id,fb)} {
 	    set mged_gui($id,listen) 1
-	    .$id.menubar.settings.fb entryconfigure 7 -state normal
+	    .$id.menubar.settings.fb entryconfigure 8 -state normal
 	    .$id.menubar.modes entryconfigure 4 -state normal
 	} else {
-	    .$id.menubar.settings.fb entryconfigure 7 -state disabled
+	    .$id.menubar.settings.fb entryconfigure 8 -state disabled
 	    .$id.menubar.modes entryconfigure 4 -state disabled
 	    set mged_gui($id,listen) 0
 	}

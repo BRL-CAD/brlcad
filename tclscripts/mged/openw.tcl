@@ -2796,18 +2796,22 @@ proc set_listen { id } {
 
 proc set_fb { id } {
     global mged_gui
+    global fb
+    global listen
 
     mged_apply $id "set fb \$mged_gui($id,fb)"
+    if {$fb && !$listen} {
+	mged_apply $id "set listen \$mged_gui($id,listen)"
+    }
 
     if {$mged_gui($id,fb)} {
+	set mged_gui($id,listen) 1
 	.$id.menubar.settings.fb entryconfigure 8 -state normal
 	.$id.menubar.modes entryconfigure 4 -state normal
-	set mged_gui($id,listen) 1
-	mged_apply $id "set listen \$mged_gui($id,listen)"
     } else {
+	set mged_gui($id,listen) 0
 	.$id.menubar.settings.fb entryconfigure 8 -state disabled
 	.$id.menubar.modes entryconfigure 4 -state disabled
-	set mged_gui($id,listen) 0
     }
 
     # update raytrace control panel
