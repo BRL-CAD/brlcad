@@ -105,16 +105,21 @@ dir_build()  {
 		(void)printf("This database should be converted before further use.\n");
 		localunit = 0;
 		local2base = base2local = 1.0;
-	}
-	else {
-		/* have ID record - set up the unit conversion factors */
-		localunit = record.i.i_units;
-		conversions( record.i.i_units );
-
+	} else {
+		if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
+			(void)printf("File is Version %s, Program is version %s\n",
+				record.i.i_version, ID_VERSION );
+			(void)printf("This database should be converted before further use.\n");
+			localunit = 0;
+			local2base = base2local = 1.0;
+		} else {
+			/* get the unit conversion factors */
+			localunit = record.i.i_units;
+			conversions( record.i.i_units );
+		}
 		/* save the title */
 		cur_title[0] = '\0';
 		strcat(cur_title, record.i.i_title);
-
 	}
 
 	(void)lseek( objfd, 0L, 0 );
@@ -127,11 +132,6 @@ dir_build()  {
 			break;
 
 		if( record.u_id == ID_IDENT )  {
-			if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
-				(void)printf("File is Version %s, Program is version %s\n",
-					record.i.i_version, ID_VERSION );
-				finish(8);
-			}
 			(void)printf("%s (units=%s)\n",
 				record.i.i_title,
 				units_str[record.i.i_units] );
@@ -611,56 +611,47 @@ conversions( local )
 int local;
 {
 
-	/*	This routine assumes the base unit == inches
-	 */
+	/* Base unit is MM */
 	switch( local ) {
 
-		case ID_NO_UNIT:
-			/* no local unit specified ... use the base unit(inches) */
-			localunit = record.i.i_units = ID_IN_UNIT;
-			local2base = base2local = 1.0;
+	case ID_NO_UNIT:
+		/* no local unit specified ... use the base unit */
+		localunit = record.i.i_units = ID_MM_UNIT;
+		local2base = 1.0;
 		break;
 
-		case ID_MM_UNIT:
-			/* local unit is mm */
-			local2base = 1.0 / 25.4;
-			base2local = 25.4;
+	case ID_MM_UNIT:
+		/* local unit is mm */
+		local2base = 1.0;
 		break;
 
-		case ID_CM_UNIT:
-			/* local unit is cm */
-			local2base = 1.0 / 2.54;
-			base2local = 2.54;
+	case ID_CM_UNIT:
+		/* local unit is cm */
+		local2base = 10.0;		/* CM to MM */
 		break;
 
-		case ID_M_UNIT:
-			/* local unit is meters */
-			local2base = 1.0 / .0254;
-			base2local = .0254;
+	case ID_M_UNIT:
+		/* local unit is meters */
+		local2base = 1000.0;		/* M to MM */
 		break;
 
-		case ID_IN_UNIT:
-			/* local unit is inches */
-			local2base = base2local = 1.0;
+	case ID_IN_UNIT:
+		/* local unit is inches */
+		local2base = 25.4;		/* IN to MM */
 		break;
 
-		case ID_FT_UNIT:
-			/* local unit is feet */
-			base2local = 1.0 / 12.0;
-			local2base = 12.0;
+	case ID_FT_UNIT:
+		/* local unit is feet */
+		local2base = 304.8;		/* FT to MM */
 		break;
 
-		default:
-			local2base = base2local = 1.0;
-			localunit = 6;
+	default:
+		local2base = 1.0;
+		localunit = 6;
 		break;
-
 	}
-
+	base2local = 1.0 / local2base;
 }
-
-
-
 
 /* change the local unit of the description */
 dir_units( new_unit )
@@ -715,6 +706,4 @@ dir_title( )
 	strcat(record.i.i_title, cur_title);
 
 	(void)write(objfd, (char *)&record, sizeof record);
-
 }
-
