@@ -185,6 +185,10 @@ fi
 
 if [ "x$reconfigure_manually" = "xyes" ] ; then
   echo $ECHO_N "Preparing build ... $ECHO_C"
+
+  aclocal
+  [ ! $? = 0 ] && echo "ERROR: aclocal failed" && exit 2
+
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
     libtoolize --automake -c -f
     [ ! $? = 0 ] && echo "ERROR: libtoolize failed" && exit 2
@@ -207,14 +211,14 @@ if [ "x$reconfigure_manually" = "xyes" ] ; then
     fi
   fi
 
-  aclocal
-  [ ! $? = 0 ] && echo "ERROR: aclocal failed" && exit 2
-  autoheader 
-  [ ! $? = 0 ] && echo "ERROR: autoheader failed" && exit 2
-  automake -a -c 
-  [ ! $? = 0 ] && echo "ERROR: automake failed" && exit 2
   autoconf -f
   [ ! $? = 0 ] && echo "ERROR: autoconf failed" && exit 2
+
+  autoheader 
+  [ ! $? = 0 ] && echo "ERROR: autoheader failed" && exit 2
+
+  automake -a -c 
+  [ ! $? = 0 ] && echo "ERROR: automake failed" && exit 2
 fi
 
 
