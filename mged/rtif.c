@@ -283,6 +283,7 @@ char	**argv;
 	int retcode;
 	char *dm;
 	int	needs_reattach;
+	char	pstring[32];
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 		return;
@@ -299,6 +300,10 @@ char	**argv;
 	*vp++ = "rt";
 	*vp++ = "-s50";
 	*vp++ = "-M";
+	if( mged_variables.perspective > 0 )  {
+		(void)sprintf(pstring, "-p%g", mged_variables.perspective);
+		*vp++ = pstring;
+	}
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
@@ -497,6 +502,8 @@ char	**argv;
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
+	if( mged_variables.perspective > 0 )
+		(void)fprintf(fp, "-p%g", mged_variables.perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n $*\\\n -o %s.pix\\\n", base);
