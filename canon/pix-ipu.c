@@ -145,7 +145,7 @@ char *av[];
 	ipu_put_image(dsp, (char)1, width, height, img_buffer);
 
 	ipu_print_config(dsp, units, divisor, conv,
-			mosaic, gamma, tray);
+			mosaic, ipu_gamma, tray);
 
 	if (!strcmp(progname, "pix-ipu"))
 		ipu_print_file(dsp, (char)1, copies, 0/*wait*/,

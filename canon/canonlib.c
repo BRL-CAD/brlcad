@@ -528,7 +528,7 @@ void
 ipu_print_config(struct dsreq *dsp, 
 		 char units, 
 		 int divisor, 
-		 u_char conv, u_char mosaic, u_char gamma, 
+		 u_char conv, u_char mosaic, u_char ipu_gamma, 
 		 int tray)
 {
 	register u_char *p;
@@ -539,14 +539,14 @@ ipu_print_config(struct dsreq *dsp,
 	if (ipu_debug)
 		fprintf(stderr,
 		"ipu_print_config(0x%0x, 0x%0x, 0x%0x, 0x%0x, 0x%0x, 0x%0x)\n",
-		units, divisor, conv, mosaic, gamma, tray);
+		units, divisor, conv, mosaic, ipu_gamma, tray);
 
 	save = dsdebug;
 
 	pr_mode[2] = conv;
 	if (mosaic) pr_mode[3] = 1;
 	else pr_mode[3] = 0;
-	pr_mode[4] = gamma;
+	pr_mode[4] = ipu_gamma;
 	pr_mode[5] = (u_char)tray;
 
 	ipu_units[2] = 0x23;	/* print mode parameters */
@@ -1002,7 +1002,7 @@ extern int optind, opterr, getopt();
 
 char *progname = "(noname)";
 char scsi_device[1024] = "/dev/scsi/sc2d6l3";
-char gamma = IPU_GAMMA_CG;
+char ipu_gamma = IPU_GAMMA_CG;
 char tray = IPU_UPPER_CASSETTE;
 char conv = IPU_AUTOSCALE;
 char clear = 0;
@@ -1105,11 +1105,11 @@ char *av[];
 				  	usage("-d scsi_device_name\n");
 				break;
 		case 'g'	: if (*optarg == 's')
-					gamma = IPU_GAMMA_STANDARD;
+					ipu_gamma = IPU_GAMMA_STANDARD;
 				   else if (*optarg == 'r')
-					gamma = IPU_GAMMA_RGB;
+					ipu_gamma = IPU_GAMMA_RGB;
 				   else if (*optarg == 'c')
-					gamma = IPU_GAMMA_CG;
+					ipu_gamma = IPU_GAMMA_CG;
 				   else
 				   	usage("-g {std|rgb|cg}\n");
 				break;
