@@ -740,6 +740,12 @@ struct combined_tree_state	**region_start_statepp;
 			 */
 			if( tsp->ts_region_start_func && 
 			    tsp->ts_region_start_func( &nts, pathp ) < 0 )  {
+				if(rt_g.debug&DEBUG_TREEWALK)  {
+					char	*sofar = db_path_to_string(pathp);
+					bu_log("db_recurse() ts_region_start_func deletes %s\n",
+						sofar);
+					rt_free(sofar, "path string");
+				}
 				curtree = TREE_NULL;		/* FAIL */
 				goto out;
 			}
@@ -1648,7 +1654,8 @@ union tree *	(*leaf_func)();
 			}
 			RT_CK_TREE(treep);
 			if( treep->tr_op != OP_REGION )  {
-				bu_log("%d: op=%\n", i, treep->tr_op);
+				bu_log("%d: op=%d\n", i, treep->tr_op);
+				rt_pr_tree( treep, 2 );
 				continue;
 			}
 			ctsp = treep->tr_c.tc_ctsp;
