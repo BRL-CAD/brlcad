@@ -69,7 +69,7 @@ DISTCLEANFILES = \
 	config.log \
 	config.status \
 	configure \
-	install.$(host_triplet) \
+	install.$(host_triplet).log \
 	libtool \
 	so_locations
 
@@ -83,7 +83,7 @@ MAINTAINERCLEANFILES = Makefile.in
 $(PACKAGE)-$(VERSION).tar.gz: dist
 
 $(PACKAGE_NAME)-$(VERSION).pkg:
-	@if ! test -f "install.$(host_triplet)" ; then \
+	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
 	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
 	  $(ECHO) "  WARNING: It seems as though you might not have" ; \
@@ -99,12 +99,12 @@ $(PACKAGE_NAME)-$(VERSION).pkg:
 	@$(ECHO) "Warning: this package target presently assumes that the install directory"
 	@$(ECHO) "         does not contain extra files and comprises a full clean install."
 	@$(ECHO)
-	@@SH@ sh/make_pkg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)" "misc/macosx/Resources"
+	@${SH} sh/make_pkg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)" "misc/macosx/Resources"
 
 $(PACKAGE_NAME)-$(VERSION).dmg: $(PACKAGE_NAME)-$(VERSION).pkg
 	@$(ECHO) "Building a Disk Image for Mac OS X"
 	@$(ECHO)
-	@@SH@ sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERISION)" "$(PACKAGE_NAME)-$(MAJOR_VERISON).$(MINOR_VERSION).$(.PATCH_ERSION)"
+	@${SH} sh/make_dmg.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERISION)" "$(PACKAGE_NAME)-$(MAJOR_VERISON).$(MINOR_VERSION).$(.PATCH_ERSION)"
 
 # using home is probably not a great choice..
 $(PACKAGE)-$(VERSION).rpm: $(PACKAGE)-$(VERSION).tar.gz
@@ -130,10 +130,10 @@ $(PACKAGE)-$(VERSION).src.rpm: $(PACKAGE)-$(VERSION).tar.gz
 $(PACKAGE)-$(VERSION).deb:
 	@$(ECHO) "Building a package for Debian Linux"
 	@$(ECHO)
-	@@SH@ sh/make_deb.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} sh/make_deb.sh "$(PACKAGE_NAME)-$(VERSION)"
 
 $(PACKAGE)-$(VERSION).bin.zip:
-	@if ! test -f "install.$(host_triplet)" ; then \
+	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
 	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
 	  $(ECHO) "  WARNING: It seems as though you might not have" ; \
@@ -146,26 +146,26 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	fi
 	@$(ECHO) "Building a zip-compressed file archive"
 	@$(ECHO)
-	@@SH@ sh/make_zip.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} sh/make_zip.sh "$(PACKAGE_NAME)-$(VERSION)"
 	@$(ECHO)
 	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.zip for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar.gz: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a gzip-compressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_tgz.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} sh/make_tgz.sh "$(PACKAGE_NAME)-$(VERSION)"
 	@$(ECHO)
 	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.gz for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar.bz2: $(PACKAGE)-$(VERSION).bin.tar
 	@$(ECHO) "Building a bzip2-compressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_bz2.sh "$(PACKAGE_NAME)-$(VERSION)"
+	@${SH} sh/make_bz2.sh "$(PACKAGE_NAME)-$(VERSION)"
 	@$(ECHO)
 	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar.bz2 for $(host_triplet)"
 
  $(PACKAGE)-$(VERSION).bin.tar:
-	@if ! test -f "install.$(host_triplet)" ; then \
+	@if ! test -f "install.$(host_triplet).log" ; then \
 	  $(ECHO) ; \
 	  $(ECHO) "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}" ; \
 	  $(ECHO) "  WARNING: It seems as though you might not have" ; \
@@ -178,7 +178,7 @@ $(PACKAGE)-$(VERSION).bin.zip:
 	fi
 	@$(ECHO) "Building an uncompressed tape archive"
 	@$(ECHO)
-	@@SH@ sh/make_tar.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
+	@${SH} sh/make_tar.sh "$(PACKAGE_NAME)" "$(MAJOR_VERSION)" "$(MINOR_VERSION)" "$(PATCH_VERSION)" "$(DESTDIR)$(prefix)"
 	@$(ECHO)
 	@$(ECHO) "Built $(PACKAGE_NAME)-$(VERSION).bin.tar for $(host_triplet)"
 
@@ -187,12 +187,20 @@ $(PACKAGE)-$(VERSION).bin.zip:
 # the rules #
 #############
 
-.PHONY : benchmark bench pkg dmg rpm deb zip tgz tbz
+.PHONY : benchmark bench regression regress test pkg dmg rpm deb zip tgz tbz
 
 benchmark: all
-	@SH@ $(top_srcdir)/bench/run.sh
+	${SH} $(top_srcdir)/bench/run.sh
 
 bench: benchmark
+
+regression: all
+	@cd regress
+	@make regression
+
+regress: regression
+
+test: regression
 
 pkg: $(PACKAGE_NAME)-$(VERSION).pkg
 	@$(ECHO) "Done."
@@ -312,7 +320,7 @@ install-data-local:
 	    $(ECHO) "{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{" ; \
 	    $(ECHO) ; \
 	fi ; \
-	touch install.$(host_triplet)
+	@touch install.$(host_triplet).log
 
 
 # Print out an informative summary.  As just about everything seems to
@@ -342,7 +350,7 @@ all-local:
 	  $(ECHO) $(ECHO_N) "Elapsed time since configuration: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@ ;\
 	  $(ECHO) "---" ;\
-	  $(ECHO) "Run 'cd regress ; make regress' to run the BRL-CAD test Suite" ;\
+	  $(ECHO) "Run 'cd regress ; make regress' to run the BRL-CAD Test Suite" ;\
 	  $(ECHO) "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
 	  $(ECHO) ;\
 	  line1="  BRL-CAD @BRLCAD_VERSION@ is now installed into $(prefix)" ;\
