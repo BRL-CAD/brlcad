@@ -58,6 +58,12 @@ _LOCAL_ int	X_open(),
 		X_flush(),
 		X_help();
 
+#if __STDC__
+static int	do_event( FBIO	*ifp );
+#else
+static int	do_event();
+#endif
+
 /* This is the ONLY thing that we normally "export" */
 FBIO X_interface = {
 	X_open,			/* device_open		*/
