@@ -36,7 +36,7 @@ extern void	reattach();			/* in attach.c */
 
 struct _mged_variables default_mged_variables = {
 /* autosize */			1,
-/* rateknobs */			1,
+/* rateknobs */			0,
 /* adcflag */                   0,
 /* slidersflag */               0,
 /* sgi_win_size */		0,
@@ -45,13 +45,14 @@ struct _mged_variables default_mged_variables = {
 /* orig_gui */                  1,
 /* m_axes */    	        0,
 /* v_axes */    	        0,
+/* v_axes_pos */                0,
 /* e_axes */            	0,
 /* linewidth */                 1,
 /* linestyle */                 0,
 /* send_key */                  0,
 /* hot_key */                   0,
 /* context */                   1,
-/* dlist */                     0,
+/* dlist */                     1,
 /* coords */                    'v',
 /* rotate_about */              'v',
 /* transform */                 'v',
@@ -67,7 +68,8 @@ struct _mged_variables default_mged_variables = {
 };
 
 static void set_dlist();
-static void set_v_axes();
+static void set_v_axes_pos();
+void set_dirty_flag();
 void set_scroll();
 void set_absolute_tran();
 
@@ -80,10 +82,14 @@ refresh_hook()
 	dmaflag = 1;
 }
 
-static void
-dirty_hook()
+void
+set_dirty_flag()
 {
-  dirty = 1;
+  struct dm_list *dmlp;
+
+  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+    if(dmlp->_mged_variables == mged_variables)
+      dmlp->_dirty = 1;
 }
 
 static void
@@ -92,7 +98,7 @@ nmg_eu_dist_set()
   extern double nmg_eue_dist;
   struct bu_vls tmp_vls;
 
-  nmg_eue_dist = mged_variables.nmg_eu_dist;
+  nmg_eue_dist = mged_variables->nmg_eu_dist;
 
   bu_vls_init(&tmp_vls);
   bu_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
@@ -108,26 +114,27 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "slidersflag",	MV_O(slidersflag),   set_scroll },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "faceplate",		MV_O(faceplate),	dirty_hook },
-	{"%d",	1, "orig_gui",		MV_O(orig_gui),	        dirty_hook },
-	{"%d",  1, "m_axes",            MV_O(m_axes),           dirty_hook },
-	{"%d",  1, "v_axes",            MV_O(v_axes),           set_v_axes },
-	{"%d",  1, "e_axes",            MV_O(e_axes),           dirty_hook },
-	{"%d",	1, "linewidth",		MV_O(linewidth),	dirty_hook },
-	{"%d",	1, "linestyle",		MV_O(linestyle),	dirty_hook },
+	{"%d",	1, "faceplate",		MV_O(faceplate),	set_dirty_flag },
+	{"%d",	1, "orig_gui",		MV_O(orig_gui),	        set_dirty_flag },
+	{"%d",  1, "m_axes",            MV_O(m_axes),           set_dirty_flag },
+	{"%d",  1, "v_axes",            MV_O(v_axes),           set_dirty_flag },
+	{"%d",  1, "v_axes_pos",        MV_O(v_axes_pos),       set_v_axes_pos },
+	{"%d",  1, "e_axes",            MV_O(e_axes),           set_dirty_flag },
+	{"%d",	1, "linewidth",		MV_O(linewidth),	set_dirty_flag },
+	{"%d",	1, "linestyle",		MV_O(linestyle),	set_dirty_flag },
 	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "context",           MV_O(context),          dirty_hook },
+	{"%d",  1, "context",           MV_O(context),          set_dirty_flag },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
 	{"%c",  1, "coords",            MV_O(coords),           set_absolute_tran },
-	{"%c",  1, "rotate_about",      MV_O(rotate_about),     dirty_hook },
-	{"%c",  1, "transform",         MV_O(transform),        dirty_hook },
+	{"%c",  1, "rotate_about",      MV_O(rotate_about),     set_dirty_flag },
+	{"%c",  1, "transform",         MV_O(transform),        set_dirty_flag },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
 	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
-	{"%f",	1, "perspective",	MV_O(perspective),	dirty_hook },
+	{"%f",	1, "perspective",	MV_O(perspective),	set_dirty_flag },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
-	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
+	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	set_dirty_flag },
 	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
@@ -156,7 +163,7 @@ int flags;
     /* Ask the libbu structparser for the value of the variable */
 
     bu_vls_init( &str );
-    bu_vls_struct_item( &str, sp, (CONST char *)&mged_variables, ' ');
+    bu_vls_struct_item( &str, sp, (CONST char *)mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
     (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),
@@ -187,7 +194,7 @@ int flags;
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_init( &str );
     bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
-    if( bu_struct_parse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
+    if( bu_struct_parse( &str, mged_vparse, (char *)mged_variables ) < 0) {
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -280,14 +287,14 @@ char *argv[];
 
 	  bu_vls_init(&tmp_vls);
 	  start_catching_output(&tmp_vls);
-	  bu_struct_print("mged variables", mged_vparse, (CONST char *)&mged_variables);
+	  bu_struct_print("mged variables", mged_vparse, (CONST char *)mged_variables);
 	  bu_log("%s", bu_vls_addr(&vls) );
 	  stop_catching_output(&tmp_vls);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
 		bu_vls_strcpy(&vls, argv[1]);
-		bu_struct_parse(&vls, mged_vparse, (char *)&mged_variables);
+		bu_struct_parse(&vls, mged_vparse, (char *)mged_variables);
 	}
 
 	bu_vls_free(&vls);
@@ -301,7 +308,7 @@ set_scroll()
 {
   struct bu_vls vls;
 
-  if(es_edclass && mged_variables.transform == 'e')
+  if(es_edclass && mged_variables->transform == 'e')
     scroll_edit = es_edclass;
   else
     scroll_edit = EDIT_CLASS_NULL;
@@ -311,7 +318,7 @@ set_scroll()
 
   bu_vls_init(&vls);
 
-  if( mged_variables.slidersflag )
+  if( mged_variables->slidersflag )
     bu_vls_printf(&vls, "sliders on");
   else
     bu_vls_printf(&vls, "sliders off");
@@ -323,63 +330,88 @@ set_scroll()
 void
 set_absolute_tran()
 {
+  struct dm_list *dmlp;
+  struct dm_list *save_dmlp;
   point_t new_pos;
   point_t diff;
 
-  /* calculate absolute_model_tran */
-  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-  VSUB2(diff, orig_pos, new_pos);
-  VSCALE(absolute_model_tran, diff, 1/Viewscale);
+  save_dmlp = curr_dm_list;
 
-  /* calculate absolute_tran */
-  MAT4X3PNT(absolute_tran, model2view, orig_pos);
+  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+    if(dmlp->_mged_variables != save_dmlp->_mged_variables)
+      continue;
 
-  if(mged_variables.faceplate && mged_variables.orig_gui)
-    dirty = 1;
+    curr_dm_list = dmlp;
+
+    /* calculate absolute_model_tran */
+    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+    VSUB2(diff, orig_pos, new_pos);
+    VSCALE(absolute_model_tran, diff, 1/Viewscale);
+
+    /* calculate absolute_tran */
+    MAT4X3PNT(absolute_tran, model2view, orig_pos);
+
+    if(mged_variables->faceplate && mged_variables->orig_gui)
+      dirty = 1;
+  }
+
+  /* restore */
+  curr_dm_list = save_dmlp;
 }
 
 static void
-set_v_axes()
+set_v_axes_pos()
 {
-  dirty = 1;
-
-  if(mged_variables.v_axes == 0)
-    return;
-
-  if(mged_variables.v_axes == 1){
-    mged_variables.v_axes = last_v_axes;
-    return;
-  }
-
-  last_v_axes = mged_variables.v_axes;
+  if(mged_variables->v_axes)
+    set_dirty_flag();
 }
 
 static void
 set_dlist()
 {
+  struct dm_list *dmlp;
+  struct dm_list *save_dmlp;
+
+  save_dmlp = curr_dm_list;
+
 #ifdef DO_DISPLAY_LISTS
-  if(mged_variables.dlist){
+  if(mged_variables->dlist){
     /* create display lists */
-    if(displaylist){
-      dirty = 1;
+    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+      if(dmlp->_mged_variables != save_dmlp->_mged_variables)
+	continue;
+
+      curr_dm_list = dmlp;
+      if(displaylist){
+	dirty = 1;
 #ifdef DO_SINGLE_DISPLAY_LIST
-      createDList(&HeadSolid);
+	createDList(&HeadSolid);
 #else
-      createDLists(&HeadSolid); 
+	createDLists(&HeadSolid); 
 #endif
+      }
     }
   }else{
     /* free display lists */
-    if(displaylist){
-      dirty = 1;
+    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+      if(dmlp->_mged_variables != save_dmlp->_mged_variables)
+	continue;
+
+      curr_dm_list = dmlp;
+      if(displaylist){
+	dirty = 1;
 #ifdef DO_SINGLE_DISPLAY_LIST
-      dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist, 1);
+	dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + displaylist, 1);
 #else
-      dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist,
-			 BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-			 HeadSolid.s_dlist + 1);
+	dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + displaylist,
+			   BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
+			   HeadSolid.s_dlist + 1);
 #endif
+      }
     }
   }
 #endif
+
+  /* restore */
+  curr_dm_list = save_dmlp;
 }
