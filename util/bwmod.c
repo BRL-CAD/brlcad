@@ -142,7 +142,7 @@ char **argv;
 	register int j;
 	long	value;
 	unsigned char ibuf[BUFLEN];
-	long	clipped_high, clipped_low;
+	long	clip_high, clip_low;
 
 	if( !get_args( argc, argv ) || isatty(fileno(infp))
 	    || isatty(fileno(stdout)) ) {
@@ -150,7 +150,7 @@ char **argv;
 		exit( 1 );
 	}
 
-	clipped_high = clipped_low = 0;
+	clip_high = clip_low = 0;
 
 	while( (n = fread(ibuf, sizeof(*ibuf), BUFLEN, infp)) > 0 ) {
 		for( i = 0; i < n; i++ )
@@ -192,18 +192,18 @@ char **argv;
 			value = buf[i] + 0.5;	/* double -> long */
 			if( value > 255 ) {
 				obuf[i] = 255;
-				clipped_high++;
+				clip_high++;
 			} else if( value < 0 ) {
 				obuf[i] = 0;
-				clipped_low++;
+				clip_low++;
 			} else
 				obuf[i] = value;
 		}
 		fwrite( obuf, sizeof(*obuf), n, stdout );
 	}
 
-	if( clipped_high != 0 || clipped_low != 0 ) {
+	if( clip_high != 0 || clip_low != 0 ) {
 		fprintf( stderr, "bwmod: clipped %d high, %d low\n",
-			clipped_high, clipped_low );
+			clip_high, clip_low );
 	}
 }

@@ -48,7 +48,7 @@ int argc; char **argv;
 {
 	int	in, out, num;
 	int	multiple_colors, num_color_planes;
-	int	clipped_high, clipped_low;
+	int	clip_high, clip_low;
 	double	value;
 	FILE	*finp, *foutp;
 
@@ -119,7 +119,7 @@ int argc; char **argv;
 	if( blue != 0 && bweight == 0.0 )
 		bweight = 1.0 / (double)num_color_planes;
 
-	clipped_high = clipped_low = 0;
+	clip_high = clip_low = 0;
 	while( (num = fread( ibuf, sizeof( char ), 3*1024, finp )) > 0 ) {
 		/*
 		 * The loops are repeated for efficiency...
@@ -129,10 +129,10 @@ int argc; char **argv;
 				value = rweight*ibuf[in] + gweight*ibuf[in+1] + bweight*ibuf[in+2];
 				if( value > 255.0 ) {
 					obuf[out] = 255;
-					clipped_high++;
+					clip_high++;
 				} else if( value < 0.0 ) {
 					obuf[out] = 0;
-					clipped_low++;
+					clip_low++;
 				} else
 					obuf[out] = value;
 			}
@@ -153,8 +153,8 @@ int argc; char **argv;
 		fwrite( obuf, sizeof( char ), num/3, foutp );
 	}
 
-	if( clipped_high != 0 || clipped_low != 0 ) {
+	if( clip_high != 0 || clip_low != 0 ) {
 		fprintf( stderr, "pix-bw: clipped %d high, %d, low\n",
-			clipped_high, clipped_low );
+			clip_high, clip_low );
 	}
 }
