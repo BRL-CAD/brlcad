@@ -46,6 +46,7 @@ struct vertex
 struct bridge
 {
     long		b_magic;
+    unsigned long	b_index;	/* automatically generated (unique) */
     double		b_weight;
     struct vertex	*b_vert_civ;
     struct vertex	*b_vert_unciv;
@@ -54,6 +55,8 @@ struct bridge
 #define	BRIDGE_MAGIC	0x6d737462
 
 static rb_tree		*prioq;		/* Priority queue of bridges */
+#define	PRIOQ_INDEX	0
+#define	PRIOQ_WEIGHT	1
 
 struct neighbor
 {
@@ -82,11 +85,21 @@ struct vertex	*vup;
 double		weight;
 
 {
-    struct bridge	*bp;
+    static unsigned long	next_index = 0;
+    struct bridge		*bp;
 
+    /*
+     *	XXX Hope that unsigned long is sufficient to ensure
+     *	uniqueness of bridge indices.
+     */
+
+    BU_CKMAG(vup, VERTEX_MAGIC, "vertex");
+    bu_log("mk_bridge(<x%x>, <x%x>, %g) assigning index %d\n",
+	vcp, vup, weight, next_index + 1);
     bp = (struct bridge *) bu_malloc(sizeof(struct bridge), "bridge");
 
     bp -> b_magic = BRIDGE_MAGIC;
+    bp -> b_index = ++next_index;
     bp -> b_weight = weight;
     bp -> b_vert_civ = vcp;
     bp -> b_vert_unciv = vup;
@@ -110,6 +123,32 @@ struct bridge	*bp;
 {
     BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
     bu_free((genptr_t) bp, "bridge");
+}
+
+/*
+ *		     P R I N T _ B R I D G E ( )
+ *
+ */
+void print_bridge (bp)
+
+struct bridge	*bp;
+
+{
+    BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
+
+    bu_log(" bridge <x%x> %d... <x%x> and <x%x>, weight = %g\n",
+	bp, bp -> b_index,
+	bp -> b_vert_civ, bp -> b_vert_unciv, bp -> b_weight);
+}
+
+/*
+ *		    P R I N T _ P R I O Q ( )
+ */
+#define	print_prioq()						\
+{								\
+    bu_log("----- The priority queue -----\n");			\
+    rb_walk(prioq, PRIOQ_WEIGHT, print_bridge, INORDER);	\
+    bu_log("------------------------------\n\n");		\
 }
 
 /*
@@ -223,9 +262,9 @@ void	*v2;
 }
 
 /*
- *	    C O M P A R E _ B R I D G E S ( )
+ *	    C O M P A R E _ B R I D G E _ W E I G H T S ( )
  */
-int compare_bridges (v1, v2)
+int compare_bridge_weights (v1, v2)
 
 void	*v1;
 void	*v2;
@@ -240,16 +279,77 @@ void	*v2;
 
     if (is_infinite_bridge(b1))
 	if (is_infinite_bridge(b2))
+	{
+	    bu_log("compare_bridge_weights: <x%x> %d == <x%x> %d\n",
+		b1, b1 -> b_index, b2, b2 -> b_index);
+	    return 0;
+	}
+	else
+	{
+	    bu_log("compare_bridge_weights: <x%x> %d > <x%x> %d\n",
+		b1, b1 -> b_index, b2, b2 -> b_index);
+	    return 1;
+	}
+    else if (is_infinite_bridge(b2))
+    {
+	bu_log("compare_bridge_weights: <x%x> %d < <x%x> %d\n",
+		b1, b1 -> b_index, b2, b2 -> b_index);
+	return -1;
+    }
+
+    delta = b1 -> b_weight  -  b2 -> b_weight;
+    bu_log("compare_bridge_weights: <x%x> %d %s <x%x> %d\n",
+	b1, b1 -> b_index,
+	((delta < 0.0) ? "<" : (delta == 0.0) ? "==" : ">"),
+	b2, b2 -> b_index);
+    return ((delta <  0.0) ? -1 :
+	    (delta == 0.0) ?  0 :
+			      1);
+}
+
+/*
+ *	    C O M P A R E _ B R I D G E _ I N D I C E S ( )
+ */
+int compare_bridge_indices (v1, v2)
+
+void	*v1;
+void	*v2;
+
+{
+    struct bridge	*b1 = (struct bridge *) v1;
+    struct bridge	*b2 = (struct bridge *) v2;
+
+    BU_CKMAG(b1, BRIDGE_MAGIC, "bridge");
+    BU_CKMAG(b2, BRIDGE_MAGIC, "bridge");
+
+    if (b1 -> b_index < b2 -> b_index)
+	return -1;
+    else if (b1 -> b_index == b2 -> b_index)
+	return 0;
+    else
+	return 1;
+}
+
+int compare_weights (w1, w2)
+
+double	w1;
+double	w2;
+
+{
+    double	delta;
+
+    if (w1 <= 0.0)
+	if (w2 <= 0.0)
 	    return 0;
 	else
 	    return 1;
-    else if (is_infinite_bridge(b2))
+    else if (w2 <= 0.0)
 	return -1;
-
-    delta = b1 -> b_weight  -  b2 -> b_weight;
-    return ((delta <  0) ? -1 :
-	    (delta == 0) ?  0 :
-			    1);
+    
+    delta = w1 - w2;
+    return ((delta <  0.0) ? -1 :
+	    (delta == 0.0) ?  0 :
+			      1);
 }
 
 /************************************************************************
@@ -292,7 +392,7 @@ long	index;
 	    vp = qvp;
 	    break;
 	default:
-	    bu_log("rb_insert() returns %d:  This shouldn't happen\n", rc);
+	    bu_log("rb_insert() returns %d:  This should not happen\n", rc);
 	    exit (1);
     }
 
@@ -326,17 +426,18 @@ void del_from_prioq (vp)
 struct vertex	*vp;
 
 {
-
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
 
-    if (rb_search1(prioq, (void *) (vp -> v_bridge)) == NULL)
+    bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
+	vp, vp -> v_bridge, vp -> v_bridge -> b_index);
+    if (rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
     {
 	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
 	bu_log("  This should not happen\n");
 	exit (1);
     }
-    rb_delete1(prioq);
+    rb_delete(prioq, PRIOQ_INDEX);
 }
 
 /*
@@ -347,12 +448,12 @@ struct bridge *extract_min ()
 {
     struct bridge	*bp;
 
-    bp = (struct bridge *) rb_min(prioq, 0);
+    bp = (struct bridge *) rb_min(prioq, PRIOQ_WEIGHT);
     if (bp != BRIDGE_NULL)
     {
 	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
+	rb_delete(prioq, PRIOQ_WEIGHT);
     }
-    rb_delete1(prioq);
     return (bp);
 }
 
@@ -416,6 +517,7 @@ char	*argv[];
     struct vertex	*vertex[2];	/* The current edge */
     struct neighbor	*neighbor[2];	/* Their neighbors */
     struct neighbor	*np;		/* A neighbor of vup */
+    int			(*po[2])();	/* Priority queue order functions */
 
     /*
      *	Initialize the dictionary and the priority queue
@@ -437,19 +539,27 @@ char	*argv[];
 	neighbor[0] -> n_vertex = vertex[1];
 	neighbor[1] -> n_vertex = vertex[0];
     }
-
     /*
      *	Initialize the priority queue
      */
-    prioq = rb_create1("Priority queue of bridges", compare_bridges);
+    po[PRIOQ_INDEX] = compare_bridge_indices;
+    po[PRIOQ_WEIGHT] = compare_bridge_weights;
+    prioq = rb_create("Priority queue of bridges", 2, po);
     rb_walk1(dictionary, add_to_prioq, INORDER);
+
+    print_prioq();
+    rb_walk1(dictionary, print_vertex, INORDER);
     
     /*
      *	Grow a minimum spanning tree,
      *	using Prim's algorithm
      */
+    weight = 0.0;
     while ((bp = extract_min()) != BRIDGE_NULL)
     {
+	bu_log("We've extracted bridge <x%x>, which leaves...\n", bp);
+	print_prioq();
+
 	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
 	vcp = bp -> b_vert_civ;
 	vup = bp -> b_vert_unciv;
@@ -457,33 +567,52 @@ char	*argv[];
 
 	if (is_finite_bridge(bp))
 	{
+	    print_bridge(bp);
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
-	    bu_log(" ...edge %d %d of weight %d\n",
+	    bu_log(" ...edge %d %d of weight %g\n",
 		vcp -> v_index, vup -> v_index, bp -> b_weight);
+	    weight += bp -> b_weight;
 	}
 	free_bridge(bp);
 	vup -> v_civilized = 1;
 
-	for (BU_LIST_FOR(np, neighbor, &(vup -> v_neighbors)))
+	bu_log("Looking for uncivilized neighbors of...\n");
+	print_vertex(vup);
+	while (BU_LIST_WHILE(np, neighbor, &(vup -> v_neighbors)))
 	{
+	    bu_log("np = <x%x>\n", np);
 	    BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
 	    up = np -> n_vertex;
 	    BU_CKMAG(up, VERTEX_MAGIC, "vertex");
 
-	    if (up -> v_civilized)
+	    if (up -> v_civilized == 0)
 	    {
 		BU_CKMAG(up -> v_bridge, BRIDGE_MAGIC, "bridge");
-		if (np -> n_weight < up -> v_bridge -> b_weight)
+		if (compare_weights(np -> n_weight,
+				    up -> v_bridge -> b_weight) < 0)
 		{
 		    del_from_prioq(up);
+		    bu_log("After the deletion of bridge <x%x>...\n",
+			up -> v_bridge);
+		    print_prioq();
 		    up -> v_bridge -> b_vert_civ = vup;
 		    up -> v_bridge -> b_weight = np -> n_weight;
 		    add_to_prioq(up);
+		    bu_log("Reduced bridge <x%x> weight to %g\n",
+			up -> v_bridge,
+			up -> v_bridge -> b_weight);
+		    print_prioq();
 		}
+		else
+		    bu_log("bridge <x%x>'s weight of %g stands up\n",
+			    up -> v_bridge, up -> v_bridge -> b_weight);
 	    }
+	    else
+		bu_log("Skipping civilized neighbor <x%x>\n", up);
 	    BU_LIST_DEQUEUE(&(np -> l));
 	}
     }
+    bu_log(" ...overall weight: %g\n", weight);
 }
 
 /*
