@@ -59,14 +59,15 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		 ../SRCDIR/"unix"/configure TK_OPTS; \
 		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
-clean&:
+clean&:	Makefile.MTYPE
 	make -f Makefile.MTYPE clean
 
 noprod&:
-	rm -rf *.so *.a wish
+	rm -rf *.so *.a wish tktest
 
-clobber&: 
-	rm -f *.o libtk* wish *.MTYPE tkConfig.sh config.log config.status Makefile 
+clobber&: Makefile.MTYPE
+	make -f Makefile.MTYPE clean
+	rm -f *.o libtk* wish tktest *.MTYPE tkConfig.sh config.log config.status Makefile 
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
