@@ -2560,7 +2560,7 @@ cmd_solids_on_ray (ClientData clientData, Tcl_Interp *interp, int argc, char **a
     
     bu_vls_init(&vls);
     start_catching_output(&vls);
-    snames = skewer_solids(rt_cmd_vec_len, rt_cmd_vec, ray_orig, ray_dir, 1);
+    snames = skewer_solids(rt_cmd_vec_len, (const char **)rt_cmd_vec, ray_orig, ray_dir, 1);
     stop_catching_output(&vls);
 
     if (snames == 0)
