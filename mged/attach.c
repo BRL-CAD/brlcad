@@ -499,6 +499,10 @@ char *dstr;
     return TCL_ERROR;
   }
 
+  /* Add Bezier Curves to the canvas widget */
+  Tk_CreateCanvasBezierType();
+
+
   /* Initialize libdm */
   (void)Dm_Init(interp);
 
