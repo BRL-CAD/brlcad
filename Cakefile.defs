@@ -1216,36 +1216,50 @@ set -S2 "/bin/sh"
 
 #if !NFS
 /*	Local style, binaries in source directories */
-#	define	LIBFB	-L../libfb -lfb
+#	define	LIBFB_DIR	../libfb
+#	define	LIBFB		-L''LIBFB_DIR -lfb
 #	define	LIBFB_DEP	[[LIBVERS ../libfb/libfb.ARCH_SUF]]
-#	define	LIBRT	-L../librt -lrt
+#	define	LIBRT_DIR	../librt
+#	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../librt/librt.ARCH_SUF]]
-#	define	LIBPLOT	-L../libplot3 -lplot3
+#	define	LIBPLOT_DIR	../libplot3
+#	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../libplot3/libplot3.ARCH_SUF]]
-#	define	LIBORLE	-L../liborle -lorle
+#	define	LIBORLE_DIR	../liborle
+#	define	LIBORLE		-L''LIBORLE_DIR -lorle
 #	define	LIBORLE_DEP	[[LIBVERS ../liborle/liborle.ARCH_SUF]]
-#	define	LIBRLE	-L../librle -lrle
+#	define	LIBRLE_DIR	../librle
+#	define	LIBRLE		-L''LIBRLE_DIR -lrle
 #	define	LIBRLE_DEP	[[LIBVERS ../librle/librle.ARCH_SUF]]
-#	define  LIBFFT	-L../libfft -lfft
+#	define  LIBFFT		-L../libfft -lfft
 #	define	LIBFFT_DEP	[[LIBVERS ../libfft/libfft.ARCH_SUF]]
-#	define	LIBWDB	-L../libwdb -lwdb
+#	define	LIBWDB_DIR	../libwdb
+#	define	LIBWDB		-L''LIBWDB_DIR -lwdb
 #	define	LIBWDB_DEP	[[LIBVERS ../libwdb/libwdb.ARCH_SUF]]
-#	define	LIBNURB	-L../libnurb -lnurb
+#	define	LIBNURB_DIR	../libnurb
+#	define	LIBNURB		-L''LIBNURB_DIR -lnurb
 #	define	LIBNURB_DEP	[[LIBVERS ../libnurb/libnurb.ARCH_SUF]]
-#	define	LIBMSR	-L../libmsr -lmsr
+#	define	LIBMSR_DIR	../libmsr
+#	define	LIBMSR		-L''LIBMSR_DIR -lmsr
 #	define	LIBMSR_DEP	[[LIBVERS ../libmsr/libmsr.ARCH_SUF]]
-#	define	LIBRAD	-L../librad -lrad
+#	define	LIBRAD_DIR	../librad
+#	define	LIBRAD		-L''LIBRAD_DIR -lrad
 #	define	LIBRAD_DEP	[[LIBVERS ../librad/librad.ARCH_SUF]]
-#	define	LIBTERMIO	-L../libtermio -ltermio
+#	define	LIBTERMIO_DIR	../libtermio
+#	define	LIBTERMIO	-L''LIBTERMIO_DIR -ltermio
 #	define	LIBTERMIO_DEP	[[LIBVERS ../libtermio/libtermio.ARCH_SUF]]
-#	define	LIBCURSOR	-L../libcursor -lcursor
+#	define	LIBCURSOR_DIR	../libcursor
+#	define	LIBCURSOR	-L''LIBCURSOR_DIR -lcursor
 #	define	LIBCURSOR_DEP	[[LIBVERS ../libcursor/libcursor.ARCH_SUF]]
-#	define	LIBFONT	-L../libfont -lfont
+#	define	LIBFONT_DIR	../libfont
+#	define	LIBFONT		-L''LIBFONT_DIR -lfont
 #	define	LIBFONT_DEP	[[LIBVERS ../libfont/libfont.ARCH_SUF]]
-#	define	LIBSYSV	-L../libsysv -lsysv
+#	define	LIBSYSV_DIR	../libsysv
+#	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../libsysv/libsysv.ARCH_SUF]]
 #	if HAS_TCP
-#		define	LIBPKG	-L../libpkg -lpkg
+#		define	LIBPKG_DIR	../libpkg
+#		define	LIBPKG	-L''LIBPKG_DIR -lpkg
 #		define	LIBPKG_DEP	[[LIBVERS ../libpkg/libpkg.ARCH_SUF]]
 #	else
 #		define	LIBPKG	/**/
@@ -1254,36 +1268,51 @@ set -S2 "/bin/sh"
 
 #else
 /*	NFS style, append machine name */
-#	define	LIBFB	-L../.libfb.MTYPE -lfb
+#	define	LIBFB_DIR	../.libfb.MTYPE
+#	define	LIBFB		-L''LIBFB_DIR -lfb
 #	define	LIBFB_DEP	[[LIBVERS ../.libfb.MTYPE/libfb.ARCH_SUF]]
-#	define	LIBRT	-L../.librt.MTYPE -lrt
+#	define	LIBRT_DIR	../.librt.MTYPE
+#	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../.librt.MTYPE/librt.ARCH_SUF]]
-#	define	LIBPLOT	-L../.libplot3.MTYPE -lplot3
+#	define	LIBPLOT_DIR	../.libplot3.MTYPE
+#	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../.libplot3.MTYPE/libplot3.ARCH_SUF]]
-#	define	LIBORLE	-L../.liborle.MTYPE -lorle
+#	define	LIBORLE_DIR	../.liborle.MTYPE
+#	define	LIBORLE		-L''LIBORLE_DIR -lorle
 #	define	LIBORLE_DEP	[[LIBVERS ../.liborle.MTYPE/liborle.ARCH_SUF]]
-#	define	LIBRLE	-L../.librle.MTYPE -lrle
+#	define	LIBRLE_DIR	../.librle.MTYPE
+#	define	LIBRLE		-L''LIBRLE_DIR -lrle
 #	define	LIBRLE_DEP	[[LIBVERS ../.librle.MTYPE/librle.ARCH_SUF]]
-#	define	LIBFFT	-L../.libfft.MTYPE -lfft
+#	define	LIBFFT_DIR	../.libfft.MTYPE
+#	define	LIBFFT		-L''LIBFFT_DIR -lfft
 #	define	LIBFFT_DEP	[[LIBVERS ../.libfft.MTYPE/libfft.ARCH_SUF]]
-#	define	LIBWDB	-L../.libwdb.MTYPE -lwdb
+#	define	LIBWDB_DIR	../.libwdb.MTYPE
+#	define	LIBWDB		-L''LIBWDB_DIR -lwdb
 #	define	LIBWDB_DEP	[[LIBVERS ../.libwdb.MTYPE/libwdb.ARCH_SUF]]
-#	define	LIBNURB	-L../.libnurb.MTYPE -lnurb
+#	define	LIBNURB_DIR	../.libnurb.MTYPE
+#	define	LIBNURB		-L''LIBNURB_DIR -lnurb
 #	define	LIBNURB_DEP	[[LIBVERS ../.libnurb.MTYPE/libnurb.ARCH_SUF]]
-#	define	LIBMSR	-L../.libmsr.MTYPE -lmsr
+#	define	LIBMSR_DIR	../.libmsr.MTYPE
+#	define	LIBMSR		-L''LIBMSR_DIR -lmsr
 #	define	LIBMSR_DEP	[[LIBVERS ../.libmsr.MTYPE/libmsr.ARCH_SUF]]
-#	define	LIBRAD	-L../.librad.MTYPE -lrad
+#	define	LIBRAD_DIR	../.librad.MTYPE
+#	define	LIBRAD		-L''LIBRAD_DIR -lrad
 #	define	LIBRAD_DEP	[[LIBVERS ../.librad.MTYPE/librad.ARCH_SUF]]
-#	define	LIBTERMIO	-L../.libtermio.MTYPE -ltermio
+#	define	LIBTERMIO_DIR	../.libtermio.MTYPE
+#	define	LIBTERMIO	-L''LIBTERMIO_DIR -ltermio
 #	define	LIBTERMIO_DEP	[[LIBVERS ../.libtermio.MTYPE/libtermio.ARCH_SUF]]
-#	define	LIBCURSOR	-L../.libcursor.MTYPE -lcursor
+#	define	LIBCURSOR_DIR	../.libcursor.MTYPE
+#	define	LIBCURSOR	-L''LIBCURSOR_DIR -lcursor
 #	define	LIBCURSOR_DEP	[[LIBVERS ../.libcursor.MTYPE/libcursor.ARCH_SUF]]
-#	define	LIBFONT	-L../.libfont.MTYPE -lfont
+#	define	LIBFONT_DIR	../.libfont.MTYPE
+#	define	LIBFONT		-L''LIBFONT_DIR -lfont
 #	define	LIBFONT_DEP	[[LIBVERS ../.libfont.MTYPE/libfont.ARCH_SUF]]
-#	define	LIBSYSV	-L../.libsysv.MTYPE -lsysv
+#	define	LIBSYSV_DIR	../.libsysv.MTYPE
+#	define	LIBSYSV		-L''LIBSYSV_DIR -lsysv
 #	define	LIBSYSV_DEP	[[LIBVERS ../.libsysv.MTYPE/libsysv.ARCH_SUF]]
 #	if HAS_TCP
-#		define	LIBPKG	-L../.libpkg.MTYPE -lpkg
+#		define	LIBPKG_DIR	../.libpkg.MTYPE
+#		define	LIBPKG	-L''LIBPKG_DIR -lpkg
 #		define	LIBPKG_DEP	[[LIBVERS ../.libpkg.MTYPE/libpkg.ARCH_SUF]]
 #	else
 #		define	LIBPKG	/**/
