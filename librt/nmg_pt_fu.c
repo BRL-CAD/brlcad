@@ -726,12 +726,16 @@ struct fpi	*fpi;
 		/* point is not in RPP of loop */
 
 		if (rt_g.NMG_debug & DEBUG_PT_FU )
+		{
 			rt_log("nmg_class_pt_lu( pt(%g %g %g) outside loop RPP\n",
 				V3ARGS(fpi->pt));
+			rt_log( "   lu RPP: ( %g %g %g ) <-> ( %g %g %g )\n",
+				V3ARGS(lu->l_p->lg_p->min_pt), V3ARGS( lu->l_p->lg_p->max_pt) );
+		}
 
 		if (lu->orientation == OT_SAME)
 			return NMG_CLASS_AoutB;
-		else if (lu->orientation == OT_SAME)
+		else if (lu->orientation == OT_OPPOSITE)
 			return NMG_CLASS_AinB;
 			
 	}
