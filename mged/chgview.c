@@ -837,13 +837,11 @@ mged_freemem()
 /* ZAP the display -- everything dropped */
 /* Format: Z	*/
 int
-cmd_zap(
-	ClientData clientData,
-	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+cmd_zap(ClientData	clientData,
+	Tcl_Interp	*interp,
+	int		argc,
+	char		**argv)
 {
-#if 1
 	CHECK_DBI_NULL;
 
 	update_views = 1;
@@ -859,64 +857,15 @@ cmd_zap(
 #endif
 
 	dgo_zap_cmd(dgop, interp);
+
+	/* Keeping freelists improves performance.  When debugging, give mem back */
+	if (rt_g.debug)
+		mged_freemem();
+
 	(void)chg_state(state, state, "zap");
 	solid_list_callback();
 
 	return TCL_OK;
-#else
-	register struct solid *sp;
-	register struct solid *nsp;
-	struct directory	*dp;
-
-	CHECK_DBI_NULL;
-
-	if(argc < 1 || 1 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help Z");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	update_views = 1;
-
-	/* FIRST, reject any editing in progress */
-	if( state != ST_VIEW )
-		button( BE_REJECT );
-
-#ifdef DO_DISPLAY_LISTS
-	freeDListsAll(BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist,
-		      BU_LIST_LAST(solid, &dgop->dgo_headSolid)->s_dlist -
-		      BU_LIST_FIRST(solid, &dgop->dgo_headSolid)->s_dlist + 1);
-#endif
-
-	sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
-	while(BU_LIST_NOT_HEAD(sp, &dgop->dgo_headSolid)){
-		dp = FIRST_SOLID(sp);
-		RT_CK_DIR(dp);
-		if( dp->d_addr == RT_DIR_PHONY_ADDR )  {
-			if( db_dirdelete( dbip, dp ) < 0 )  {
-			  Tcl_AppendResult(interp, "f_zap: db_dirdelete failed\n", (char *)NULL);
-			}
-		}
-
-		nsp = BU_LIST_PNEXT(solid, sp);
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp,&FreeSolid.l);
-		sp = nsp;
-	}
-
-
-	/* Keeping freelists improves performance.  When debugging, give mem back */
-	if( RT_G_DEBUG )  mged_freemem();
-
-	(void)chg_state( state, state, "zap" );
-
-	solid_list_callback();
-	return TCL_OK;
-#endif
 }
 
 int
