@@ -4,6 +4,21 @@
 #             Generalized the code to accommodate multiple instances of the
 #             user interface.
 #
+
+#
+#    Preliminary...
+#    Ensure that all commands used here but not defined herein
+#    are provided by the application
+#
+
+set extern_commands "M _mged_M"
+foreach cmd $extern_commands {
+    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	puts stderr "Application fails to provide command '$cmd'"
+	return
+    }
+}
+
 proc solclick { } {
     echo \nShoot a ray by clicking the middle mouse button.
     # Replace mouse event handler
