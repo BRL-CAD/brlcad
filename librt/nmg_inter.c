@@ -199,11 +199,12 @@ struct nmg_inter_struct *bs;
 struct edgeuse *eu;
 struct faceuse *fu;
 {
-	struct vertexuse *vu;
+	struct vertexuse *vu_other;
+	struct vertex	*v1;
+	struct vertex	*v1mate;
 	point_t		hit_pt;
 	vect_t		edge_vect;
 	fastf_t		edge_len;	/* MAGNITUDE(edge_vect) */
-	pointp_t	p1, p2;
 	fastf_t		dist;		/* parametric dist to hit point */
 	fastf_t		dist_to_plane;	/* distance to hit point, in mm */
 	int		status;
@@ -251,8 +252,8 @@ struct faceuse *fu;
 	 * This all assumes that an edge can only intersect a face at one
 	 * point.  This is probably a bad assumption for the future
 	 */
-	if (vu=vertex_on_face(eu->vu_p->v_p, fu)) {
-
+	if (vu_other=vertex_on_face(eu->vu_p->v_p, fu)) {
+		register pointp_t	p1, p2;
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			p1 = eu->vu_p->v_p->vg_p->coord;
 			NMG_CK_EDGEUSE(eu->eumate_p);
@@ -261,14 +262,15 @@ struct faceuse *fu;
 			NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
-				p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
+				V3ARGS(p1), V3ARGS(p2) );
 			rt_log("\tvertex topologically on intersection plane\n");
 		}
 
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu->l.magic);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		return;
-	} else if (vu=vertex_on_face(eu->eumate_p->vu_p->v_p, fu)) {
+	} else if (vu_other=vertex_on_face(eu->eumate_p->vu_p->v_p, fu)) {
+		register pointp_t	p1, p2;
 
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			p1 = eu->vu_p->v_p->vg_p->coord;
@@ -278,7 +280,7 @@ struct faceuse *fu;
 			NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
-				p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
+				V3ARGS(p1), V3ARGS(p2) );
 			rt_log("\tMATE vertex topologically on intersection plane. skipping edgeuse\n");
 		}
 		return;
@@ -289,16 +291,16 @@ struct faceuse *fu;
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
-	p1 = eu->vu_p->v_p->vg_p->coord;
-	p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
-	VSUB2(edge_vect, p2, p1);
+	v1 = eu->vu_p->v_p;
+	v1mate = eu->eumate_p->vu_p->v_p;
+	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
 
-	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 		rt_log("Testing %g, %g, %g -> %g, %g, %g\n",
-			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+			V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
+	}
 
-
-	status = rt_isect_ray_plane(&dist, p1, edge_vect, fu->f_p->fg_p->N);
+	status = rt_isect_ray_plane(&dist, v1->vg_p->coord, edge_vect, fu->f_p->fg_p->N);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		if (status >= 0)
@@ -325,7 +327,7 @@ struct faceuse *fu;
 	 * to other absolute distances like dist_to_plane & edge_len.
 	 * The vertices are "fattened" by +/- bs->tol units.
 	 */
-	VJOIN1( hit_pt, p1, dist, edge_vect );
+	VJOIN1( hit_pt, v1->vg_p->coord, dist, edge_vect );
 	edge_len = MAGNITUDE(edge_vect);
 	dist_to_plane = edge_len * dist;
 
@@ -349,22 +351,22 @@ struct faceuse *fu;
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 
 		/* If face doesn't have a "very similar" point, give it one */
-		vu = nmg_find_vu_in_face(p1, fu, bs->tol);
-		if (vu) {
+		vu_other = nmg_find_vu_in_face(v1->vg_p->coord, fu, bs->tol);
+		if (vu_other) {
 			register pointp_t	p3;
 			/* Face has a vertex very similar to this one.
 			 * Add vertex to face's list of vertices on
 			 * intersection line.
 			 */
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu->l.magic);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 
 			/* new coordinates are the midpoint between
 			 * the two existing coordinates
 			 */
-			p3 = vu->v_p->vg_p->coord;
-			VADD2SCALE(p1, p1, p3, 0.5);
+			p3 = vu_other->v_p->vg_p->coord;
+			VADD2SCALE(v1->vg_p->coord, v1->vg_p->coord, p3, 0.5);
 			/* Combine the two vertices */
-			nmg_jv(eu->vu_p->v_p, vu->v_p);
+			nmg_jv(v1, vu_other->v_p);
 		} else {
 			/* Since the other face doesn't have a vertex quite
 			 * like this one, we make a copy of this one and make.
@@ -374,9 +376,9 @@ struct faceuse *fu;
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("Making vertexloop",
-			    		eu->vu_p->v_p->vg_p->coord);
+			    		v1->vg_p->coord);
 
-			plu = nmg_mlv(&fu->l.magic, eu->vu_p->v_p, OT_UNSPEC);
+			plu = nmg_mlv(&fu->l.magic, v1, OT_UNSPEC);
 
 			/* make sure this vertex is in other face's list of
 			 * points to deal with
@@ -395,7 +397,7 @@ struct faceuse *fu;
 		 */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 			rt_log("Splitting %g, %g, %g <-> %g, %g, %g\n",
-			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+				V3ARGS(v1->vg_p->coord), V3ARGS(v1mate->vg_p->coord) );
 			VPRINT("\tPoint of intersection", hit_pt);
 		}
 
@@ -403,15 +405,15 @@ struct faceuse *fu;
 		 * other face, we'll build a new vertex.  Otherwise
 		 * we re-use an old one.
 		 */
-		vu = nmg_find_vu_in_face(hit_pt, fu, bs->tol);
-		if (vu) {
+		vu_other = nmg_find_vu_in_face(hit_pt, fu, bs->tol);
+		if (vu_other) {
 			/* the other face has a convenient vertex for us */
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("re-using vertex from other face\n");
 
-			(void)nmg_esplit(vu->v_p, eu->e_p);
-			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu->l.magic);
+			(void)nmg_esplit(vu_other->v_p, eu->e_p);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		} else {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("Making new vertex\n");
@@ -464,6 +466,7 @@ struct faceuse *fu;
 				rt_bomb("I was supposed to share verticies!\n");
 
 			if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+				register pointp_t	p1, p2;
 				p1 = eu->vu_p->v_p->vg_p->coord;
 				p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
 				rt_log("Just split %g, %g, %g -> %g, %g, %g\n",
@@ -492,22 +495,25 @@ struct faceuse *fu;
 					rt_bomb("bad plumate\n");
 
 			}
+			/* XXX Should this be TBL_INS_UNIQUE ? */
 			(void)nmg_tbl(bs->l2, TBL_INS,
 				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
 
 		euforw = RT_LIST_PNEXT_CIRC(edgeuse, eu);
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			register pointp_t	p1, p2;
 			p1 = eu->vu_p->v_p->vg_p->coord;
 			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("\tNow %g, %g, %g <-> %g, %g, %g\n",
-				p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+				V3ARGS(p1), V3ARGS(p2) );
 			p1 = euforw->vu_p->v_p->vg_p->coord;
 			p2 = euforw->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("\tand %g, %g, %g <-> %g, %g, %g\n\n",
-				p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
+				V3ARGS(p1), V3ARGS(p2) );
 		}
 
+		/* XXX Should this be TBL_INS_UNIQUE ? */
 		(void)nmg_tbl(bs->l1, TBL_INS, &euforw->vu_p->l.magic);
 		return;
 	}
@@ -520,20 +526,20 @@ struct faceuse *fu;
 			rt_log("\tedge ends at plane intersect\n");
 
 		if( RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p->v_p !=
-		    eu->eumate_p->vu_p->v_p )
+		    v1mate )
 			rt_bomb("isect_edge_face: discontinuous eu loop\n");
 
 		/* If face has a "very similar" point, connect up with it */
-		vu = nmg_find_vu_in_face(p2, fu, bs->tol);
-		if (vu) {
+		vu_other = nmg_find_vu_in_face(v1mate->vg_p->coord, fu, bs->tol);
+		if (vu_other) {
 			register pointp_t	p3;
 			/* new coordinates are the midpoint between
 			 * the two existing coordinates
 			 */
-			p3 = vu->v_p->vg_p->coord;
-			VADD2SCALE(p2, p2, p3, 0.5);
+			p3 = vu_other->v_p->vg_p->coord;
+			VADD2SCALE(v1mate->vg_p->coord, v1mate->vg_p->coord, p3, 0.5);
 			/* Combine the two vertices */
-			nmg_jv(eu->eumate_p->vu_p->v_p, vu->v_p);
+			nmg_jv(v1mate, vu_other->v_p);
 		}
 		return;
 	}
