@@ -683,19 +683,19 @@ against MGED database objects."\
         } }
 
 menu .$id.menubar.edit -title "Edit" -tearoff $mged_default(tearoff_menus)
-.$id.menubar.edit add command -label "Solid Selection..." -underline 0 \
+.$id.menubar.edit add command -label "Prim Selection..." -underline 0 \
 	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all s"
-hoc_register_menu_data "Edit" "Solid Selection..." "Solid Selection"\
-	{ { summary "A tool for selecting a solid to edit." } }
+hoc_register_menu_data "Edit" "Prim Selection..." "Prim Selection"\
+	{ { summary "A tool for selecting a primitive to edit." } }
 .$id.menubar.edit add command -label "Matrix Selection..." -underline 0 \
 	-command "winset \$mged_gui($id,active_dm); build_edit_menu_all o"
 hoc_register_menu_data "Edit" "Matrix Selection..." "Matrix Selection"\
 	{ { summary "A tool for selecting a matrix to edit." } }
 .$id.menubar.edit add separator
-.$id.menubar.edit add command -label "Solid Editor" -underline 6 \
+.$id.menubar.edit add command -label "Prim Editor" -underline 6 \
 	-command "init_edit_solid $id"
-hoc_register_menu_data "Edit" "Solid Editor" "Solid Editor"\
-	{ { summary "A tool for editing/creating solids." } }
+hoc_register_menu_data "Edit" "Prim Editor" "Prim Editor"\
+	{ { summary "A tool for editing/creating primitives." } }
 .$id.menubar.edit add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
 hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
@@ -704,19 +704,19 @@ hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 
 menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.create add cascade\
-	-label "Make Solid" -underline 0 -menu .$id.menubar.create.solid
+	-label "Make Prim" -underline 0 -menu .$id.menubar.create.solid
 #.$id.menubar.create add command\
 #	-label "Instance Creation Panel..." -underline 0 -command "icreate $id"
-.$id.menubar.create add command -label "Solid Editor" -underline 0 \
+.$id.menubar.create add command -label "Prim Editor" -underline 0 \
 	-command "init_edit_solid $id"
-hoc_register_menu_data "Create" "Solid Editor" "Solid Editor"\
+hoc_register_menu_data "Create" "Prim Editor" "Prim Editor"\
 	{ { summary "A tool for editing/creating solids." } }
 .$id.menubar.create add command -label "Combination Editor" -underline 0 \
 	-command "init_comb $id"
 hoc_register_menu_data "Create" "Combination Editor" "Combination Editor"\
 	{ { summary "A tool for editing/creating combinations." } }
 
-menu .$id.menubar.create.solid -title "Make Solid" -tearoff $mged_default(tearoff_menus)
+menu .$id.menubar.create.solid -title "Make Prim" -tearoff $mged_default(tearoff_menus)
 set make_solid_types [_mged_make -t]
 foreach solid_type $make_solid_types {
     .$id.menubar.create.solid add command -label "$solid_type..."\
@@ -724,7 +724,7 @@ foreach solid_type $make_solid_types {
 
     set ksl {}
     lappend ksl "summary \"Make a $solid_type using the values found in the tcl variable solid_data(attr,$solid_type).\"" "see_also \"make, in\""
-    hoc_register_menu_data "Make Solid" "$solid_type..." "Make a $solid_type" $ksl
+    hoc_register_menu_data "Make Prim" "$solid_type..." "Make a $solid_type" $ksl
 }
 
 .$id.menubar.create.solid add separator
@@ -733,7 +733,7 @@ foreach solid_type $make_solid_types {
     -command "dsp_create $id"
 set ksl {}
 lappend ksl "summary \"Make a dsp solid.\"" "see_also \"make, in\""
-hoc_register_menu_data "Make Solid" "dsp..." "Make a dsp solid" $ksl
+hoc_register_menu_data "Make Prim" "dsp..." "Make a dsp solid" $ksl
 
 menu .$id.menubar.view -title "View" -tearoff $mged_default(tearoff_menus)
 .$id.menubar.view add command -label "Top" -underline 0\
@@ -917,9 +917,9 @@ the same as MGED 4.5 and earlier. See the table below.\n\n
           { see_also "rset, vars" } }
 .$id.menubar.settings.mouse_behavior add separator
 .$id.menubar.settings.mouse_behavior add radiobutton -value s -variable mged_gui($id,mouse_behavior)\
-	-label "Pick Edit-Solid" -underline 10\
+	-label "Pick Edit-Prim" -underline 10\
 	-command "set_mouse_behavior $id"
-hoc_register_menu_data "Mouse Behavior" "Pick Edit-Solid" "Pick Edit-Solid"\
+hoc_register_menu_data "Mouse Behavior" "Pick Edit-Prim" "Pick Edit-Prim"\
 	{ { synopsis "Enter pick edit-solid mode." }
           { description "In this mode, the mouse is used to fire rays for selecting
 a solid to edit. If more than one solid is hit, a listbox of the hit
@@ -1718,10 +1718,10 @@ hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"
 	{ { summary "Tool for building animation scripts." }
           { see_also animmate } }
 .$id.menubar.tools add separator
-.$id.menubar.tools add command -label "Solid Editor" -underline 0\
+.$id.menubar.tools add command -label "Prim Editor" -underline 0\
 	-command "init_edit_solid $id"
-hoc_register_menu_data "Tools" "Solid Editor" "Solid Editor"\
-	{ { summary "Tool for creating/editing solids." } }
+hoc_register_menu_data "Tools" "Prim Editor" "Prim Editor"\
+	{ { summary "Tool for creating/editing primitives." } }
 .$id.menubar.tools add command -label "Combination Editor" -underline 0\
 	-command "init_comb $id"
 hoc_register_menu_data "Tools" "Combination Editor" "Combination Editor"\
