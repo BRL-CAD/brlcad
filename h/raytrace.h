@@ -1265,7 +1265,7 @@ extern int rt_isect_line_lseg(fastf_t *t, point_t p, vect_t d, point_t a, point_
 extern int rt_dist_line_point(point_t pt, vect_t dir, point_t a);
 extern double rt_dist_line_origin(point_t pt, vect_t dir);
 extern double rt_area_of_triangle(point_t a, point_t b, point_t c);
-extern int rt_isect_pt_lseg(fastf_t, *dist, point_t a, point_t b, point_t p, fastf_t tolsq);
+extern int rt_isect_pt_lseg(fastf_t *dist, point_t a, point_t b, point_t p, fastf_t tolsq);
 extern double rt_dist_pt_lseg(point_t pca, point_t a, point_t b, point_t p);
 
 #else
