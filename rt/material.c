@@ -77,7 +77,7 @@ struct mfuncs *mfp1;
  *  named "material" in the table.
  */
 static struct mfuncs *
-try_load(const char *path, const char *material)
+try_load(const char *path, const char *material, const char *shader_name)
 {
 	void *handle;
 	struct mfuncs *shader_mfuncs;
@@ -95,7 +95,7 @@ try_load(const char *path, const char *material)
 	}
 
 	/* Find the {shader}_mfuncs symbol in the library */
-	sprintf(sym, "%s_mfuncs", material);
+	sprintf(sym, "%s_mfuncs", shader_name);
 	shader_mfuncs = dlsym(handle, sym);
 	if ( (dl_error_str=dlerror()) == (char *)NULL) goto found;
 
@@ -113,17 +113,17 @@ try_load(const char *path, const char *material)
 
 found:
 	if (rdebug&RDEBUG_MATERIAL)
-		bu_log("%s mfuncs table found\n", material);
+		bu_log("%s mfuncs table found\n", shader_name);
 
 	/* make sure the shader we were looking for is in the mfuncs table */
 	for (mfp = shader_mfuncs ; mfp->mf_name != (char *)NULL; mfp++) {
 		RT_CK_MF(mfp);
 
-		if ( ! strcmp(mfp->mf_name, material))
+		if ( ! strcmp(mfp->mf_name, shader_name))
 			return shader_mfuncs; /* found ! */
 	}
 
-	if (rdebug&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", material);
+	if (rdebug&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
 
 	/* found the library, but not the shader */
 	dlclose(handle);
@@ -145,24 +145,33 @@ load_dynamic_shader(const char *material,
 	char libname[MAXPATHLEN];
 	char *cwd = (char *)NULL;
 	int old_rdebug = rdebug;
+	char sh_name[128]; /* XXX constants are bogus */
 
+	if (mlen < sizeof(sh_name)) {
+	    strncpy(sh_name, material, mlen);
+	    sh_name[mlen+1] = '\0';
+	} else {
+	    bu_log("shader name too long \"%s\" %d > %d\n",
+		   material, mlen, sizeof(sh_name));
+	    return (struct mfuncs *)NULL;
+	}
 	/* rdebug |= RDEBUG_MATERIAL; */
 
 	if (rdebug&RDEBUG_MATERIAL)
-		bu_log("load_dynamic_shader( \"%s\", %d )\n", material, mlen);
+		bu_log("load_dynamic_shader( \"%s\", %d )\n", sh_name, mlen);
 
 	cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
 
 	if ( cwd ) {
-		/* Look in the current working directory for {material}.so */
-		sprintf(libname, "%s/%s.so", cwd, material);
-		if ( (shader_mfuncs = try_load(libname, material)) )
+		/* Look in the current working directory for {sh_name}.so */
+		sprintf(libname, "%s/%s.so", cwd, sh_name);
+		if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 			goto done;
 
 
 		/* Look in the current working directory for shaders.so */
 		sprintf(libname, "%s/shaders.so", cwd);
-		if ( (shader_mfuncs = try_load(libname, material)) )
+		if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 			goto done;
 
 	} else {
@@ -170,16 +179,16 @@ load_dynamic_shader(const char *material,
 	}
 
 	/* Look in the location indicated by $LD_LIBRARY_PATH for
-	 * lib{material}.so
+	 * lib{sh_name}.so
 	 */
-	sprintf(libname, "lib%s.so", material);
-	if ( (shader_mfuncs = try_load(libname, material)) )
+	sprintf(libname, "lib%s.so", sh_name);
+	if ( (shader_mfuncs = try_load(libname, material, sh_name)) )
 		goto done;
 
-	/* Look in $BRLCAD_ROOT/lib/ for lib{material}.so */
+	/* Look in $BRLCAD_ROOT/lib/ for lib{sh_name}.so */
 	strcpy(libname, bu_brlcad_path(""));
-	sprintf( &libname[strlen(libname)], "/lib/lib%s.so", material);
-	if ( (shader_mfuncs = try_load(libname, material)) ) 
+	sprintf( &libname[strlen(libname)], "/lib/lib%s.so", sh_name);
+	if ( (shader_mfuncs = try_load(libname, material, sh_name)) ) 
 		goto done;
 
 
