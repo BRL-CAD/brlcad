@@ -37,7 +37,7 @@ include_HEADERS = \
 	pkgtypes.h \
 	sgicursor.h
 
-AM_CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h -DIF_REMOTE -DIF_AB -DIF_X
+AM_CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
 libfb_la_LIBADD = @PKG@ @X_LIBS@
 
 BUILT_SOURCES = vers.c
