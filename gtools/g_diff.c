@@ -559,10 +559,10 @@ char *argv[];
 		exit( 1 );
 	}
 
-	if( db_scan( dbip1, (int (*)())db_diradd, 1, NULL ) < 0 )
+	if( db_dirbuild( dbip1 ) < 0 )
 	{
 		db_close( dbip1 );
-		bu_log( "db_scan failed on %s\n", file1 );
+		bu_log( "db_dirbuild failed on %s\n", file1 );
 		exit( 1 );
 	}
 
@@ -575,11 +575,11 @@ char *argv[];
 
 	RT_CK_DBI(dbip2);
 
-	if( db_scan( dbip2, (int (*)())db_diradd, 1, NULL ) < 0 )
+	if( db_dirbuild( dbip2 ) < 0 )
 	{
 		db_close( dbip1 );
 		db_close( dbip2 );
-		bu_log( "db_scan failed on %s\n", file2 );
+		bu_log( "db_dirbuild failed on %s\n", file2 );
 		exit( 1 );
 	}
 
