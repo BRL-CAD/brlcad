@@ -191,18 +191,27 @@ int		finish_position;
 struct timeval	frame_start;
 struct timeval	t_assigned;
 struct timeval	t_1st_done;
+struct timeval	t_last_done;
 struct timeval	t_all_done;
 
-/* Cooked values in ms */
-int		ms_assigned;
+/* Cooked values in ms from this past frame */
+fastf_t		ms_assigned;
 int		ms_1st_done;
 int		ms_all_done;
 int		ms_flush;
 int		ms_total;
-fastf_t		sec_between_frames;
+fastf_t		sec_since_last;
 
 fastf_t		ms_rt_min;		/* ms it took fastest ray-tracer */
 fastf_t		ms_rt_max;		/* ms it took slowest ray-tracer */
+
+fastf_t		ms_total_min;		/* ms it took fastest worker */
+fastf_t		ms_total_max;
+
+fastf_t		average_mbps = 0;	/* mbps */
+fastf_t		burst_mbps = 0;		/* mbps -- a lower bound */
+int		network_overhead = 0;	/* integer percentage */
+char		last_host_done[32];	/* short ident of last host done */
 
 static fd_set	select_list;			/* master copy */
 static int	max_fd;
@@ -220,6 +229,7 @@ Tk_Window	tkwin;
 
 CONST char	*database;
 struct bu_vls	treetops;
+double		blend1 = 0.8;		/* weight to give older timing data */
 
 char		*node_search_path;
 
@@ -637,6 +647,112 @@ char **argv;
 	return TCL_ERROR;
 }
 
+/*
+ *			G E T _ S T A T S
+ *  Arg -
+ *	-2	Get summary line rtsync stats, like what's printed per frame.
+ *	-1	Get overall rtsync time-breakdown stats, in ms.
+ *	0..n	Get rtnode-specific stats for indicated node.
+ * XXX -3:  rtsync HOST fb $FB_FILE vrmgr $HOST db DATABASE
+ */
+int
+get_stats( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int		i;
+	struct bu_vls	str;
+
+	if( argc != 2 )  {
+		Tcl_AppendResult(interp, "Usage: get_stats #\n", NULL);
+		return TCL_ERROR;
+	}
+	i = atoi(argv[1]);
+	if( i >= MAX_NODES )  {
+		Tcl_AppendResult(interp, "get_stats ", argv[1], " out of range\n", NULL);
+		return TCL_ERROR;
+	}
+
+	if( i < 0 )  switch(i) {
+	case -1:
+		bu_vls_init(&str);
+		/* All values reported in ms */
+		bu_vls_printf(&str,
+			"lag %.1f asgn %.1f 1st %d all %d flush %d total %d",
+			sec_since_last * 1000,
+			ms_assigned,
+			ms_1st_done,
+			ms_all_done,
+			ms_flush,
+			ms_total
+		    );
+		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+		bu_vls_free(&str);
+		return TCL_OK;
+	case -2:
+		bu_vls_init(&str);
+		/* All values reported in ms */
+		bu_vls_printf(&str,
+			"mbps %.1f net%% %d rt_min %.1f rt_max %.1f last %s",
+			burst_mbps,
+			network_overhead,
+			ms_rt_min,
+			ms_rt_max,
+			last_host_done
+		    );
+		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+		bu_vls_free(&str);
+		return TCL_OK;
+	case -3:
+		bu_vls_init(&str);
+		bu_vls_printf(&str,
+			"rtsync %s vrmgr %s fb %s",
+			get_our_hostname(),
+			vrmgr_pc ? vrmgr_ihost->ht_name : "{NIL}",
+			framebuffer );
+		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+		bu_vls_free(&str);
+		return TCL_OK;
+	case -4:
+		bu_vls_init(&str);
+		bu_vls_strcat(&str, database);
+		bu_vls_putc(&str, ' ');
+		bu_vls_vlscat(&str, &treetops);
+		Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+		bu_vls_free(&str);
+		return TCL_OK;
+	default:
+		bu_vls_free(&str);
+		Tcl_AppendResult(interp, "get_stats ", argv[1], " out of range\n", NULL);
+		return TCL_ERROR;
+	}
+	if( rtnodes[i].fd <= 0 )  {
+		Tcl_AppendResult(interp, "get_stats ",
+			argv[1], " index not assigned\n", NULL);
+		return TCL_ERROR;
+	}
+	if( rtnodes[i].state != STATE_PREPPED )  {
+		Tcl_AppendResult(interp, "get_stats ",
+			argv[1], " not prepped yet\n", NULL);
+		return TCL_ERROR;
+	}
+
+	/* Report on the indicated node */
+	bu_vls_init(&str);
+	bu_vls_printf(&str,
+		"total %g rt %g fb %g ck %g",
+		rtnodes[i].time_delta * 1000,
+		rtnodes[i].rt_time,
+		rtnodes[i].fb_time,
+		rtnodes[i].ck_time
+	    );
+	Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+	bu_vls_free(&str);
+	return TCL_OK;
+}
+
 /**********************************************************************/
 
 /*
@@ -894,8 +1010,10 @@ char	*argv[];
 	/* Don't allow unknown commands to be fed to the shell */
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
+	Tcl_LinkVar( interp, "framebuffer", (char *)&framebuffer, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 	Tcl_LinkVar( interp, "database", (char *)&database, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 	Tcl_LinkVar( interp, "debug", (char *)&debug, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "blend1", (char *)&blend1, TCL_LINK_DOUBLE );
 
 	/* This string may be supplemented by the Tcl runtime */
 	Tcl_LinkVar( interp, "node_search_path", (char *)&node_search_path, TCL_LINK_STRING );
@@ -926,6 +1044,8 @@ char	*argv[];
 	(void)Tcl_CreateCommand(interp, "reprep", reprep,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "refresh", refresh,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "get_stats", get_stats,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "list_rtnodes", list_rtnodes,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
@@ -965,6 +1085,15 @@ char	*argv[];
 		width = fb_getwidth(fbp);
 	if( height <= 0 || fb_getheight(fbp) < height )
 		height = fb_getheight(fbp);
+
+	{
+		unsigned char	flash[4];
+		flash[0] = 224;
+		flash[1] = 255;
+		flash[2] = 224;
+		(void)fb_clear(fbp, flash);
+		(void)fb_flush(fbp);
+	}
 
 	/* Listen for VRMGR Master PKG connections from MGED */
 	if( (vrmgr_listen_fd = pkg_permserver("5555", "tcp", 8, bu_log)) < 0 )  {
@@ -1063,7 +1192,7 @@ ClientData clientData;
 	finish_position = 0;
 
 	/* Determine how long it's been since end of last frame */
-	sec_between_frames = tvdiff( &frame_start, &t_all_done );
+	sec_since_last = tvdiff( &frame_start, &t_all_done );
 
 	/* Keep track of the POV used for this assignment.  For refresh. */
 	if( last_pov )  {
@@ -1579,20 +1708,16 @@ char			*buf;
 	register int	i;
 	struct timeval	time_end;
 	double		interval;
-	double		blend1, blend2;
+	double		blend2;
 	int		new_npsw;
 	double		t1, t2, t3;
 	int		nfields;
 	int		sched_update = 0;
 	int		last_i;
-	char		nbuf[32];
 	long		total_bits;
-	fastf_t		average_mbps;
-	fastf_t		burst_mbps;	/* a lower bound only */
-	int		network_overhead;
+	double		variation;
 
-	blend1 = 0.8;
-	blend2 = 1 - blend1;
+	blend2 = 1 - blend1;	/* blend1 may change via Tcl interface */
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].pkg != pc )  continue;
@@ -1660,36 +1785,44 @@ check_others:
 	/*
 	 *  Frame is entirely done, this was the last assignemnt outstanding.
 	 */
-	strncpy( nbuf, rtnodes[last_i].host->ht_name, 6 );
-	nbuf[6] = '\0';
+	strncpy( last_host_done, rtnodes[last_i].host->ht_name, 6 );
+	last_host_done[6] = '\0';
 	
 	/* Record time that final assignment came back */
-	(void)gettimeofday( &t_all_done, (struct timezone *)NULL );
+	(void)gettimeofday( &t_last_done, (struct timezone *)NULL );
 
 	/* This frame is now done, flush to screen */
 	fb_flush(fbp);
+	(void)gettimeofday( &t_all_done, (struct timezone *)NULL );
 
 	/* Compute total time for this frame */
-	(void)gettimeofday( &time_end, (struct timezone *)NULL );
-	interval = tvdiff( &time_end, &frame_start );
-	if( interval <= 0 )  interval = 999;
-	ms_total = interval * 1000;
 	ms_assigned = tvdiff( &t_assigned, &frame_start ) * 1000;
 	ms_1st_done = tvdiff( &t_1st_done, &frame_start ) * 1000;
-	ms_all_done = tvdiff( &t_all_done, &frame_start ) * 1000;
-	ms_flush = tvdiff( &time_end, &t_all_done ) * 1000;
+	ms_all_done = tvdiff( &t_last_done, &frame_start ) * 1000;
+	ms_flush = tvdiff( &t_all_done, &t_last_done ) * 1000;
+	interval = tvdiff( &t_all_done, &frame_start );
+	if( interval <= 0 )  interval = 999;
+	ms_total = interval * 1000;
 
 	/* Find max and min of ray-tracing time */
 	ms_rt_min =  9999999;
 	ms_rt_max = -9999999;
+	ms_total_min =  9999999;
+	ms_total_max = -9999999;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
-		register int	rtt;
-		if( rtnodes[i].pkg != pc )  continue;
+		double		rtt;
+		double		tot;
+
 		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
-		rtt = (int)rtnodes[i].rt_time;
+
+		rtt = rtnodes[i].rt_time;
 		if( rtt < ms_rt_min )  ms_rt_min = rtt;
 		if( rtt > ms_rt_max )  ms_rt_max = rtt;
+
+		tot = rtnodes[i].time_delta * 1000;
+		if( tot < ms_total_min )  ms_total_min = tot;
+		if( tot > ms_total_max )  ms_total_max = tot;
 	}
 
 	/* Calculate network bandwidth consumed in non-raytracing time */
@@ -1701,14 +1834,18 @@ check_others:
 	/* Calculate "network overhead" as % of total time */
 	network_overhead = (int)(((double)ms_total - ms_rt_max) / (double)ms_total * 100);
 
-	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %2d%%net %d/%d %s\n",
+	/* Calculate assignment duration variation. 1X is optimum. */
+	variation = ms_total_max / ms_total_min;
+
+	bu_log("%s%6d ms, %5.1f Mbps, %4.1f fps, %2d%%net %d/%d %.1fX %s\n",
 		stamp(),
 		ms_total,
 		burst_mbps,
 		1.0/interval,
 		network_overhead,
-		ms_1st_done, ms_all_done,
-		nbuf
+		(int)ms_total_min, (int)ms_total_max,
+		variation,
+		last_host_done
 	    );
 
 	/* Trigger TCL code to auto-update cpu status window on major changes */
