@@ -338,8 +338,11 @@ char **argv;
 	}
 	Npixels = fb_getwidth(fbp);
 	Nscanlines = fb_getheight(fbp);
-	if( immediate )
+	if( immediate )  {
 		lines_per_band = Nscanlines;
+		if( !overlay )
+			fb_clear( fbp, RGBPIXEL_NULL );
+	}
 
 	/*
 	 * Handle image-size specific initializations
