@@ -27,7 +27,8 @@ must be one of the following:
 .B m 
 (rotation matrix).
 In addition, the output format may be modified by the
-.B u option, and the input and output formats may be modified by the 
+.B u 
+option, and the input and output formats may be modified by the 
 .BR r ,
 .BR i ,
 and
@@ -40,7 +41,7 @@ than degrees. The
 and 
 .B u
 options are explained below.
-
+.PP
 To clearly understand the operation of anim_orient, it is important to
 examine the difference between orientation and rotation.
 The matrices, quaternions, and angles
@@ -54,7 +55,7 @@ to represent orientations with rotations, we
 must define a default initial orientation for the object.
 Then a given matrix, quaternion, or set of angles represents the orientation 
 resulting from applying the rotation to the initial object orientation.
-
+.PP
 If no modifying codes are specified, anim_orient assumes that the
 default orientation of the object in question faces the positive
 x-direction, with the world y-axis pointing to the object's left and the
