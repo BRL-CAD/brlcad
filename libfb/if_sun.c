@@ -114,39 +114,39 @@ _LOCAL_ int	sun_dopen(),
 		sun_help();
 
 /* This is the ONLY thing that we "export" */
-FBIO            sun_interface = {
-				 sun_dopen,
-				 sun_dclose,
-				 fb_null,	/* reset? */
-				 sun_dclear,
-				 sun_bread,
-				 sun_bwrite,
-				 sun_cmread,
-				 sun_cmwrite,
-				 sun_viewport_set,
-				 sun_window_set,
-				 sun_zoom_set,
-				 sun_curs_set,
-				 sun_cmemory_addr,
-				 sun_cscreen_addr,
-				fb_sim_readrect,
-				fb_sim_writerect,
-				 sun_help,
-				 "SUN SunView or raw Pixwin",
-				 XMAXWINDOW,	/* max width */
-				 YMAXWINDOW,	/* max height */
-				 "/dev/sun",
-				 XMAXWINDOW,	/* current/default width  */
-				 YMAXWINDOW,	/* current/default height */
-				 -1,	/* file descriptor */
-				 PIXEL_NULL,	/* page_base */
-				 PIXEL_NULL,	/* page_curp */
-				 PIXEL_NULL,	/* page_endp */
-				 -1,	/* page_no */
-				 0,	/* page_ref */
-				 0L,	/* page_curpos */
-				 0L,	/* page_pixels */
-				 0	/* debug */
+FBIO sun_interface = {
+		sun_dopen,
+		sun_dclose,
+		fb_null,	/* reset? */
+		sun_dclear,
+		sun_bread,
+		sun_bwrite,
+		sun_cmread,
+		sun_cmwrite,
+		sun_viewport_set,
+		sun_window_set,
+		sun_zoom_set,
+		sun_curs_set,
+		sun_cmemory_addr,
+		sun_cscreen_addr,
+		fb_sim_readrect,
+		fb_sim_writerect,
+		sun_help,
+		"SUN SunView or raw Pixwin",
+		XMAXWINDOW,	/* max width */
+		YMAXWINDOW,	/* max height */
+		"/dev/sun",
+		512,		/* current/default width  */
+		512,		/* current/default height */
+		-1,		/* file descriptor */
+		PIXEL_NULL,	/* page_base */
+		PIXEL_NULL,	/* page_curp */
+		PIXEL_NULL,	/* page_endp */
+		-1,		/* page_no */
+		0,		/* page_ref */
+		0L,		/* page_curpos */
+		0L,		/* page_pixels */
+		0		/* debug */
 };
 
 static int	is_linear_cmap();
@@ -154,7 +154,7 @@ static int	is_linear_cmap();
 /*
  * Our image (window) pixwin
  * XXX WARNING: this should be in suninfo but isn't there yet
- * because of signal routines the need to find it.
+ * because of signal routines that need to find it.
  */
 static Pixwin	*imagepw;
 
