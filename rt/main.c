@@ -277,11 +277,7 @@ char **argv;
 		rt_log("incremental resolution, nlevels = %d\n", incr_nlevel);
 	}
 
-	RES_INIT( &rt_g.res_syscall );
-	RES_INIT( &rt_g.res_worker );
-	RES_INIT( &rt_g.res_stats );
-	RES_INIT( &rt_g.res_results );
-
+	/* Handle parallel initialization, if applicable */
 #ifndef PARALLEL
 	npsw = 1;		/* serial */
 #endif
@@ -289,6 +285,10 @@ char **argv;
 		parallel = 1;
 	if( parallel )
 		fprintf(stderr,"rt:  running with %d processors\n", npsw );
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
 
 	title_file = argv[optind];
 	title_obj = argv[optind+1];
