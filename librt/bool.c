@@ -186,9 +186,16 @@ struct application	*ap;
 		segp = RT_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
 		if(rt_g.debug&DEBUG_PARTITION)  {
+			point_t		pt;
+
 			rt_pr_seg(segp);
 			rt_pr_hit(" In", &segp->seg_in );
+			VJOIN1( pt, ap->a_ray.r_pt, segp->seg_in.hit_dist, ap->a_ray.r_dir );
+			VPRINT(" IPoint", pt );
+
 			rt_pr_hit("Out", &segp->seg_out );
+			VJOIN1( pt, ap->a_ray.r_pt, segp->seg_out.hit_dist, ap->a_ray.r_dir );
+			VPRINT(" OPoint", pt );
 		}
 		if( segp->seg_stp->st_bit >= rtip->nsolids) rt_bomb("rt_boolweave: st_bit");
 
