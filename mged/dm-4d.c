@@ -74,10 +74,11 @@ extern Tk_Window tkwin;
 static Tk_Window xtkwin;
 static Display  *dpy;
 static Window   win;
-#else
+static int devmotionnotify;
+static int devbuttonpress;
+#endif
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
-#endif
 #include <gl/get.h>		/* SGI IRIS library */
 #include <gl/cg2vme.h>		/* SGI IRIS, for DE_R1 defn on IRIX 3 */
 #include <gl/addrs.h>		/* SGI IRIS, for DER1_STEREO defn on IRIX 3 */
@@ -738,14 +739,21 @@ Ir_open()
 	return(0);
 #else
 	char ref[] = "mged_glx";
-	int count;
 	struct rt_vls str;
+	int j, k;
+	int ndevices;
+	int nclass = 0;
+	XDeviceInfoPtr olist, list;
+	XDevice *dev;
+	XEventClass e_class[15];
+	XInputClassInfo *cip;
+	XAnyClassPtr any;
 
 	rt_vls_init(&str);
 	rt_vls_strcpy(&str, "loadtk\n");
 	(void)cmdline(&str, FALSE);
 	rt_vls_free(&str);
-
+	
 	TkGLX_Init(interp, tkwin);
 
 	/* Invoke script to create a mixed-mode X window */
@@ -758,12 +766,13 @@ Ir_open()
 	  mged_finish(1);
 	}
 
-	dpy = Tk_Display(xtkwin);
+	/* Do this now to force a GLXlink */
 	Tk_MapWindow(xtkwin);
-#if 0
+
+	dpy = Tk_Display(xtkwin);
 	Tk_MakeWindowExist(xtkwin);
-#endif
-	
+	win = Tk_WindowId(xtkwin);
+
 	ir_is_gt = 1;
 	ir_has_zbuf = 1;
 	ir_has_rgb = 1;
@@ -812,9 +821,51 @@ Ir_open()
 
 	Ir_configure_window_shape();
 
+/* Take a look at the available input devices */
+	olist = list = (XDeviceInfoPtr) XListInputDevices (dpy, &ndevices);
+
+	/* IRIX 4.0.5 bug workaround */
+	if( list == (XDeviceInfoPtr)NULL ||
+	   list == (XDeviceInfoPtr)1 )  goto Done;
+
+	for(j = 0; j < ndevices; ++j, list++){
+	  if(list->use == IsXExtensionDevice){
+	    if(!strcmp(list->name, "dial+buttons")){
+	      if((dev = XOpenDevice(dpy, list->id)) == (XDevice *)NULL){
+		rt_log("Ir_open: Couldn't open the dials+buttons\n");
+		goto Done;
+	      }
+
+	      for(cip = dev->classes, k = 0; k < dev->num_classes;
+		  ++k, ++cip){
+		switch(cip->input_class){
+		case ButtonClass:
+		  DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
+		  ++nclass;
+		  break;
+		case ValuatorClass:
+		  DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
+		  ++nclass;
+		  break;
+		default:
+		  break;
+		}
+	      }
+
+	      XSelectExtensionEvent(dpy, win, e_class, nclass);
+	      goto Done;
+	    }
+	  }
+	}
+Done:
+	XFreeDeviceList(olist);
+#if 0
 	Tk_CreateEventHandler(xtkwin, ExposureMask|PointerMotionMask|
 			      StructureNotifyMask,
 			      (void (*)())Ircheckevents, (ClientData)NULL);
+#else
+	Tk_CreateGenericHandler(Ircheckevents, (ClientData)NULL);
+#endif
 
 	/* Line style 0 is solid.  Program line style 1 as dot-dashed */
 	deflinestyle( 1, 0xCF33 );
@@ -828,7 +879,7 @@ Ir_open()
 void
 Ir_loadGLX()
 {
-  if(Tcl_EvalFile(interp, "../mged/glxinit.tk") == TCL_ERROR){
+  if(Tcl_EvalFile(interp, "/m/cad/mged/glxinit.tk") == TCL_ERROR){
     rt_log("Ir_open: %s\n", interp->result);
     mged_finish(1);
   }
@@ -1711,23 +1762,150 @@ Ircheckevents(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
+  XEvent event;
+
+/*XXX still drawing too much!!!
+i.e. drawing atleast 2 times when resizing the window to a larger size.
+once for the Configure and once for the expose */
+
+#if 1
+  if (eventPtr->xany.window != win)
+    return TCL_OK;
+#endif
+
+#if 0
+if(eventPtr->type == Expose)
+  rt_log("%d\t%d\tevent type - %d\tcount - %d\n",
+	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
+else if( eventPtr->type == ConfigureNotify )
+  rt_log("%d\t%d\tevent type - %d\n",
+	 win, eventPtr->xany.window, eventPtr->type, eventPtr->xexpose.count);
+#endif
+
+
   /* Now getting X events */
-  if((eventPtr->type == Expose && eventPtr->xexpose.count == 0) ||
-      eventPtr->type == ConfigureNotify){
+  if(eventPtr->type == Expose && eventPtr->xexpose.count == 0){
     /* Window may have moved */
     Ir_configure_window_shape();
+
     dmaflag = 1;
     if( ir_has_doublebuffer) /* to fix back buffer */
-       refresh();
+      refresh();
     dmaflag = 1;
+  }else if( eventPtr->type == ConfigureNotify ){
+      /* Window may have moved */
+      Ir_configure_window_shape();
+
+      if (eventPtr->xany.window != win)
+	return TCL_OK;
+
+      dmaflag = 1;
+      if( ir_has_doublebuffer) /* to fix back buffer */
+	refresh();
+      dmaflag = 1;
   }else if( eventPtr->type == MotionNotify ) {
     int x, y;
+
+    if (eventPtr->xany.window != win)
+      return TCL_OK;
 
     x = (eventPtr->xmotion.x/(double)winx_size - 0.5) * 4095;
     y = (0.5 - eventPtr->xmotion.y/(double)winy_size) * 4095;
     /* Constant tracking (e.g. illuminate mode) bound to M mouse */
     rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
+  }else if( eventPtr->type == devmotionnotify ){
+    XDeviceMotionEvent *M;
+    int setting;
+
+    if (eventPtr->xany.window != win)
+      return TCL_OK;
+
+    M = (XDeviceMotionEvent * ) eventPtr;
+    setting = irlimit(M->axis_data[0]);
+
+    switch(DIAL0 + M->first_axis){
+    case DIAL0:
+      if(adcflag) {
+	rt_vls_printf( &dm_values.dv_string, "knob ang1 %d\n",
+		      setting );
+      }
+      break;
+    case DIAL1:
+      rt_vls_printf( &dm_values.dv_string , "knob S %f\n",
+		    setting/2048.0 );
+      break;
+    case DIAL2:
+      if(adcflag)
+	rt_vls_printf( &dm_values.dv_string , "knob ang2 %d\n",
+		      setting );
+      else
+	rt_vls_printf( &dm_values.dv_string , "knob z %f\n",
+		      setting/2048.0 );
+      break;
+    case DIAL3:
+      if(adcflag)
+	rt_vls_printf( &dm_values.dv_string , "knob distadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &dm_values.dv_string , "knob Z %f\n",
+		      setting/2048.0 );
+      break;
+    case DIAL4:
+      if(adcflag)
+	rt_vls_printf( &dm_values.dv_string , "knob yadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &dm_values.dv_string , "knob y %f\n",
+		      setting/2048.0 );
+      break;
+    case DIAL5:
+      rt_vls_printf( &dm_values.dv_string , "knob Y %f\n",
+		    setting/2048.0 );
+      break;
+    case DIAL6:
+      if(adcflag)
+	rt_vls_printf( &dm_values.dv_string , "knob xadc %d\n",
+		      setting );
+      else
+	rt_vls_printf( &dm_values.dv_string , "knob x %f\n",
+		      setting/2048.0 );
+      break;
+    case DIAL7:
+      rt_vls_printf( &dm_values.dv_string , "knob X %f\n",
+		    setting/2048.0 );
+      break;
+    default:
+      break;
+    }
+
+  }else if( eventPtr->type == devbuttonpress ){
+    XDeviceButtonEvent *B;
+
+    if (eventPtr->xany.window != win)
+      return TCL_OK;
+
+    B = (XDeviceButtonEvent * ) eventPtr;
+
+/* Temporary */
+    if(B->button == 4)
+          rt_vls_strcat(&dm_values.dv_string, "knob zero\n");
+    else
+      rt_vls_printf(&dm_values.dv_string, "press %s\n",
+		 label_button(bmap[B->button - 1]));
   }
+
+#if 0
+/*XXX hack */
+  while( XPending( dpy ) > 0){
+    XNextEvent( dpy, &event );
+    if( event.type == devmotionnotify)
+      rt_log("Ircheckevents: got a devmotionnotify event\n");
+    else if( event.type == devbuttonpress)
+      rt_log("Ircheckevents: got a devbuttonpress event\n");
+    else
+      rt_log("Ircheckevents: got an event of type %d\n", event.type);
+  }
+#endif
 
   return TCL_OK;
 }
