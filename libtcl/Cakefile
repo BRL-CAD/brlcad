@@ -21,7 +21,6 @@
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
-	echo CAKEFLAGS
 	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE CAKEFLAGS
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
