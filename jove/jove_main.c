@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.12  94/12/14  15:33:54  jra
+ * Cray also needs file.h included.
+ * 
  * Revision 10.11  94/10/14  17:29:25  mike
  * SunOS 5.2
  * 
@@ -494,9 +497,19 @@ ttsetup() {
 		newtty.c_oflag &= ~(OFILL);
 #	endif
 
+#	if defined(IEXTEN)
+		newtty.c_lflag &= ~(IEXTEN);	/* (Solaris) Eliminate ^V doubling */
+#	endif
+
 	/* VMIN = 0 causes us to loop in jgetchar() */
 	newtty.c_cc[VMIN] = 1;
 	newtty.c_cc[VTIME] = 0;
+#	if defined(VLNEXT)
+		newtty.c_cc[VLNEXT] = 0;	/* (Alpha) Eliminate ^V doubling */
+#	endif
+#	if defined(LNEXT)
+		newtty.c_cc[LNEXT] = 0;		/* (Solaris) Eliminate ^V doubling */
+#	endif
 #endif
 #else
 	newtty.sg_flags &= ~(ECHO | CRMOD);
