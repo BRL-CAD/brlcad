@@ -212,11 +212,8 @@ CONST void *p1, *p2;
 /*
  *			R T _ N U G R I D _ C U T
  *
- *   Makes a NUGrid node (CUT_NUGRIDNODE) and fills in the specified
- *   list of solids.
- *
- *   This may possibly recurse if a particular box is
- *   assigned more than RT_MAX_NUGRIDCELL_ENTRIES.
+ *   Makes a NUGrid node (CUT_NUGRIDNODE), filling the cells with solids
+ *   from the given list.
  */
 
 void
@@ -236,7 +233,7 @@ int				 just_collect_info, depth;
 	int	nu_ncells;		/* # cells along one axis */
 	int	nu_sol_per_cell;	/* avg # solids per cell */
 	int	nu_max_ncells;		/* hard limit on nu_ncells */
-	int	fake_depth;
+	int	pseudo_depth;		/* "fake" depth to tell rt_ct_optim */
 	register int	i, j, xp, yp, zp;
 	vect_t	xmin, xmax, ymin, ymax, zmin, zmax;
 	struct boxnode nu_xbox, nu_ybox, nu_zbox;
@@ -310,10 +307,10 @@ int				 just_collect_info, depth;
 		nu_ncells = rtip->rti_nugrid_dimlimit;
 	nu_sol_per_cell = (fromp->bn_len + nu_ncells - 1) / nu_ncells;
 	nu_max_ncells = 2*nu_ncells + 8;
-#if 1
-	fake_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));
+#if 0
+	pseudo_depth = depth+(int)log((double)(nu_ncells*nu_ncells*nu_ncells));
 #else
-	fake_depth = depth;
+	pseudo_depth = depth;
 #endif
 
 	if( rt_g.debug&DEBUG_CUT )
@@ -477,18 +474,20 @@ int				 just_collect_info, depth;
 					continue;
 
 				/* Don't make really teeny intervals. */
-#if 0
-				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
-				           rtip->rti_tol.dist )
+				if( pos <= nugnp->nu_axis[i][axi].nu_spos
+#if 1				    
+					   + 1.0
+#endif				    
+				           + rtip->rti_tol.dist )
 					continue;
-#else
-				if( pos <= nugnp->nu_axis[i][axi].nu_spos +
-				           2.0 )
-					continue;
-#endif				
+
 				/* don't make any more cuts if we've gone
 				   past the end. */
-				if( pos >= fromp->bn_max[i] )
+				if( pos >= fromp->bn_max[i]
+#if 1				    
+					   - 1.0
+#endif
+					   - rtip->rti_tol.dist )
 					continue;
 
 				/* End current interval, start new one */
@@ -653,7 +652,7 @@ int				 just_collect_info, depth;
 
 				if( rtip->rti_nugrid_dimlimit > 0 ) {
 #if 1					
-					rt_ct_optim( rtip, cutp, fake_depth );
+					rt_ct_optim( rtip, cutp, pseudo_depth);
 #else
 				/* Recurse, but only if we're cutting down on
 				   the cellsize. */
@@ -1224,7 +1223,9 @@ register CONST struct rt_i *rtip;
 	/* Ignore "dead" solids in the list.  (They failed prep) */
 	if( stp->st_aradius <= 0 )  return(0);
 	if( stp->st_aradius >= INFINITY )  {
-		/* Need object classification test here */
+		if( rt_functab[stp->st_id].ft_classify( stp, min, max,
+				&rtip->rti_tol ) == RT_CLASSIFY_OUTSIDE )
+			goto fail;
 		if( rt_g.debug&DEBUG_BOXING )  bu_log("rt_ck_overlap:  TRUE (inf)\n");
 		return(1);
 	}

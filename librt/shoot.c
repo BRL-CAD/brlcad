@@ -71,8 +71,6 @@ extern void	rt_plot_cell();		/* at end of file */
 			ssp->abs_inv_dir[_ax]; \
 	}
 
-/* end NUgrid XXX */
-
 #define BACKING_DIST	(-2.0)		/* mm to look behind start point */
 #define OFFSET_DIST	0.01		/* mm to advance point into box */
 
@@ -332,12 +330,12 @@ again:				t0 = ssp->tv[out_axis];
 					"?" );
 			break; }
 		case CUT_CUTNODE:
-			t0 += OFFSET_DIST;
 			/* fall through */
 		case CUT_BOXNODE:
 /*
  *  This version uses Muuss' non-uniform binary space partitioning tree.
  */
+			t0 += OFFSET_DIST;
 			cutp = curcut;
 			break;
 		default:
@@ -375,9 +373,12 @@ test:		if( cutp==CUTTER_NULL ) {
 			goto done;
 		}
 		
-		if( px < ssp->curmin[X] || px > ssp->curmax[X] ||
-		    py < ssp->curmin[Y] || py > ssp->curmax[Y] ||
-		    pz < ssp->curmin[Z] || pz > ssp->curmax[Z] ) {
+		if( (ssp->rstep[X] <= 0 && px < ssp->curmin[X]) ||
+		    (ssp->rstep[X] >= 0 && px > ssp->curmax[X]) ||
+		    (ssp->rstep[Y] <= 0 && py < ssp->curmin[Y]) ||
+		    (ssp->rstep[Y] >= 0 && py > ssp->curmax[Y]) ||
+		    (ssp->rstep[Z] <= 0 && pz < ssp->curmin[Z]) ||
+		    (ssp->rstep[Z] >= 0 && pz > ssp->curmax[Z]) ) {
 			cutp = CUTTER_NULL;
 			goto test;
 		}
@@ -419,14 +420,14 @@ test:		if( cutp==CUTTER_NULL ) {
 
 		switch( cutp->cut_type ) {
 		case CUT_BOXNODE:
-#if UNNECESSARY			
-		    /* Ensure point is located in the indicated cell */
-			if( px < cutp->bn.bn_min[X] ||
-			    px > cutp->bn.bn_max[X] ||
-			    py < cutp->bn.bn_min[Y] ||
-			    py > cutp->bn.bn_max[Y] ||
-			    pz < cutp->bn.bn_min[Z] ||
-			    pz > cutp->bn.bn_max[Z] ) {
+#if EXTRA_SAFETY
+			if( (ssp->rstep[X] <= 0 && px < cutp->bn.bn_min[X]) ||
+			    (ssp->rstep[X] >= 0 && px > cutp->bn.bn_max[X]) ||
+			    (ssp->rstep[Y] <= 0 && py < cutp->bn.bn_min[Y]) ||
+			    (ssp->rstep[Y] >= 0 && py > cutp->bn.bn_max[Y]) ||
+			    (ssp->rstep[Z] <= 0 && pz < cutp->bn.bn_min[Z]) ||
+			    (ssp->rstep[Z] >= 0 && pz > cutp->bn.bn_max[Z]) ) {
+				/* This cell is old news. */
 				bu_log(
 		  "rt_advance_to_next_cell(): point not in cell, advancing\n");
 				if( rt_g.debug & DEBUG_ADVANCE ) {
@@ -1483,23 +1484,6 @@ struct rt_i		*rtip;
 	case CUT_BOXNODE:
 		pdv_3box( fp, cutp->bn.bn_min, cutp->bn.bn_max );
 		break;
-#if 0
-	case CUT_NUGRIDNODE:
-		{
-			point_t	a, b;
-
-			VSET( a,
-				cutp->nugn.nu_axis[X]->spos,
-				cutp->nugn.nu_axis[Y]->spos,
-				cutp->nugn.nu_axis[Z]->spos );
-			VSET( b,
-				cutp->nugn.nu_axis[X]->epos,
-				cutp->nugn.nu_axis[Y]->epos,
-				cutp->nugn.nu_axis[Z]->epos );
-			pdv_3box( fp, a, b );
-		}
-		break;
-#endif
 	default:
 		bu_log("cut_type = %d\n", cutp->cut_type );
 		bu_bomb("Unknown cut_type\n");
