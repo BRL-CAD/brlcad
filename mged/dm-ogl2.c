@@ -49,7 +49,9 @@
 #include <GL/glx.h>
 #include <GL/gl.h>
 /*XXXX*/
+#if 0
 #include <gl/device.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"
@@ -86,21 +88,14 @@ static int	Ogl2_doevent();
 static void	Ogl2_gen_color();
 static void     Ogl2_colorit();
 static int      Ogl2_load_startup();
-static void     Ogl_var_init();
+static void     ogl_var_init();
 static XVisualInfo *Ogl2_set_visual();
 static void     print_cmap();
 static struct dm_list *get_dm_list();
 static int irisX2ged();
 static int irisY2ged();
 
-/* Flags indicating whether the gl and sgi display managers have been
- * attached. 
- * These are necessary to decide whether or not to use direct rendering
- * with gl.
- */
-char	ogl2_ogl_used = 0;
-char	ogl2_sgi_used = 0;
-char	ogl2_is_direct = 0;
+static char    ogl_is_direct = 0;
 
 /* Display Manager package interface */
 
@@ -144,10 +139,6 @@ struct dm dm_ogl2 = {
 
 /* ogl stuff */
 static int ogl2_index_size;
-static Colormap cmap;
-
-static GLdouble faceplate_mat[16];
-static int ogl2_face_flag;		/* 1: faceplate matrix on stack */
 
 #define dpy (((struct ogl_vars *)dm_vars)->_dpy)
 #define win (((struct ogl_vars *)dm_vars)->_win)
@@ -188,9 +179,14 @@ struct modifiable_ogl_vars {
 };
 
 struct ogl_vars {
+  struct rt_list l;
+  struct dm_list *dm_list;
   Display *_dpy;
   Window _win;
   Tk_Window _xtkwin;
+  Colormap cmap;
+  GLdouble faceplate_mat[16];
+  int face_flag;
   int width;
   int height;
 #ifdef VIRTUAL_TRACKBALL
@@ -248,6 +244,7 @@ static char	*kn2_knobs[] = {
 };
 #endif
 
+static struct ogl_vars head_ogl_vars;
 static int perspective_table[] = {
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
@@ -381,7 +378,7 @@ Ogl2_open()
   char	display[82];
   char	*envp;
 
-  Ogl_var_init();
+  ogl_var_init();
 
   /* get or create the default display */
   if( (envp = getenv("DISPLAY")) == NULL ) {
@@ -421,6 +418,11 @@ Ogl2_load_startup()
 
 /*XXX*/
 #define DM_OGL_RCFILE "oglinit.tk"
+
+#if 1
+  bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
+  RT_LIST_INIT( &head_ogl_vars.l );
+#endif
 
   found = 0;
   rt_vls_init( &str );
@@ -464,7 +466,7 @@ Ogl2_load_startup()
 
     /* Using default */
     if(Tcl_Eval( interp, ogl_init_str ) == TCL_ERROR){
-      rt_log("Glx_load_startup: Error interpreting glx_init_str.\n");
+      rt_log("ogl2_load_startup: Error interpreting ogl_init_str.\n");
       rt_log("%s\n", interp->result);
       return -1;
     }
@@ -497,14 +499,21 @@ Ogl2_close()
 /*	glClearDepth(0.0);*/
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+#if 0
 	glXMakeCurrent(dpy, None, NULL);
-
+#endif
 	glXDestroyContext(dpy, glxc);
 
-	Tk_DeleteGenericHandler(Ogl2_doevent, (ClientData)NULL);
 	Tk_DestroyWindow(xtkwin);
+	RT_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
 	rt_free(dm_vars, "Ogl2_close: dm_vars");
 	rt_vls_free(&pathName);
+#if 0
+	Tk_DeleteGenericHandler(Ogl2_doevent, (ClientData)curr_dm_list);
+#else
+	if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+	  Tk_DeleteGenericHandler(Ogl2_doevent, (ClientData)NULL);
+#endif
 }
 
 /*
@@ -524,9 +533,13 @@ Ogl2_prolog()
     rt_log( "Ogl2_prolog\n");
 
   if (!glXMakeCurrent(dpy, win, glxc)){
-    rt_log("Ogl2_open: Couldn't make context current\n");
+    rt_log("Ogl2_prolog: Couldn't make context current\n");
     return;
   }
+
+#if 0
+  Ogl2_configure_window_shape();
+#endif
 
   if (!((struct ogl_vars *)dm_vars)->mvars.doublebuffer){
     glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -534,12 +547,12 @@ Ogl2_prolog()
     /*			return;*/
   }
 
-  if (ogl2_face_flag){
+  if (((struct ogl_vars *)dm_vars)->face_flag){
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    ogl2_face_flag = 0;
+    ((struct ogl_vars *)dm_vars)->face_flag = 0;
     if (((struct ogl_vars *)dm_vars)->mvars.cueing_on){
       glEnable(GL_FOG);
       fogdepth = 2.2 * Viewscale; /* 2.2 is heuristic */
@@ -719,7 +732,7 @@ int which_eye;
 	} else {
 		/* Orthographic projection */
 		glMatrixMode(	GL_PROJECTION);
-		glLoadMatrixd( faceplate_mat);
+		glLoadMatrixd( ((struct ogl_vars *)dm_vars)->faceplate_mat);
 
 	}
 
@@ -958,14 +971,14 @@ Ogl2_normal()
 		glIndexi( ovec );
 	}
 
-	if (!ogl2_face_flag){
+	if (!((struct ogl_vars *)dm_vars)->face_flag){
 		glMatrixMode(GL_PROJECTION);
 		glPushMatrix();
-		glLoadMatrixd( faceplate_mat );
+		glLoadMatrixd( ((struct ogl_vars *)dm_vars)->faceplate_mat );
 		glMatrixMode(GL_MODELVIEW);
 		glPushMatrix();
 		glLoadIdentity();
-		ogl2_face_flag = 1;
+		((struct ogl_vars *)dm_vars)->face_flag = 1;
 		if(((struct ogl_vars *)dm_vars)->mvars.cueing_on)
 			glDisable(GL_FOG);
 		if (((struct ogl_vars *)dm_vars)->mvars.lighting_on)
@@ -1013,6 +1026,7 @@ int x,y,size, colour;
 		ovec = MAP_ENTRY(colour);
 		glIndexi( ovec );
 	}
+
 
 /*	glRasterPos2i( x,  y);*/
 	glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));
@@ -1111,9 +1125,13 @@ XEvent *eventPtr;
 #ifdef SEND_KEY_DOWN_PIPE
   if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
+    KeySym keysym;
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
-		  (KeySym *)NULL, (XComposeStatus *)NULL);
+		  &keysym, (XComposeStatus *)NULL);
+
+    if(keysym == mged_variables.hot_key)
+      goto end;
 
     write(dm_pipe[1], buffer, 1);
     rt_vls_free(&cmd);
@@ -1124,22 +1142,12 @@ XEvent *eventPtr;
   }
 #endif
 
-  if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-#if 0
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    if (((struct ogl_vars *)dm_vars)->mvars.zbuffer_on)
-      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    else
-      glClear(GL_COLOR_BUFFER_BIT);
-    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
-    dmaflag = 1;
-#else
+  if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
     Ogl2_configure_window_shape();
     dmaflag = 1;
     refresh();
     goto end;
-#endif
-  } else if( eventPtr->type == ConfigureNotify) {
+  } else if( eventPtr->type == ConfigureNotify ) {
     Ogl2_configure_window_shape();
     dmaflag = 1;
     refresh();
@@ -1190,6 +1198,9 @@ XEvent *eventPtr;
 	y = (0.5 - eventPtr->xmotion.y/(double)((struct ogl_vars *)dm_vars)->height) * 4095;
 	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
 #endif
+#if 1
+  }
+#else
   }else if( eventPtr->type == devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
@@ -1287,6 +1298,7 @@ XEvent *eventPtr;
     if(B->button == 1)
       button0 = 0;
   }
+#endif
 
   (void)cmdline(&cmd, FALSE);
 end:
@@ -1546,6 +1558,11 @@ char	*name;
     }
   }
 
+  if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+    Tk_CreateGenericHandler(Ogl2_doevent, (ClientData)NULL);
+
+  RT_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)curr_dm_list->_dm_vars)->l);
+
   rt_vls_printf(&pathName, ".dm_ogl%d", count++);
 
   /* this is important so that Ogl2_configure_notify knows to set
@@ -1607,17 +1624,17 @@ char	*name;
    * an indirect context. Otherwise use direct, since it is usually
    * faster.
    */
-  if ((glxc = glXCreateContext(dpy, vip, 0, ogl2_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
+  if ((glxc = glXCreateContext(dpy, vip, 0, ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
     rt_log("Ogl2_open: couldn't create glXContext.\n");
 		return -1;
   }
   /* If we used an indirect context, then as far as sgi is concerned,
    * gl hasn't been used.
    */
-  ogl2_is_direct = (char) glXIsDirect(dpy, glxc);
-  rt_log("Using %s OpenGL rendering context.\n", ogl2_is_direct ? "a direct" : "an indirect");
-  /* set ogl2_ogl_used if the context was ever direct */
-  ogl2_ogl_used = (ogl2_is_direct || ogl2_ogl_used);
+  ogl_is_direct = (char) glXIsDirect(dpy, glxc);
+  rt_log("Using %s OpenGL rendering context.\n", ogl_is_direct ? "a direct" : "an indirect");
+  /* set ogl_ogl_used if the context was ever direct */
+  ogl_ogl_used = (ogl_is_direct || ogl_ogl_used);
 
   /*
    * Take a look at the available input devices. We're looking
@@ -1663,8 +1680,10 @@ char	*name;
 Done:
   XFreeDeviceList(olist);
 
+#if 0
   /* Register the file descriptor with the Tk event handler */
-  Tk_CreateGenericHandler(Ogl2_doevent, (ClientData)NULL);
+  Tk_CreateGenericHandler(Ogl2_doevent, (ClientData)curr_dm_list);
+#endif
 
 #if 0
   Tk_SetWindowBackground(xtkwin, bg);
@@ -1706,14 +1725,14 @@ Done:
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 2.0);
-  glGetDoublev(GL_PROJECTION_MATRIX, faceplate_mat);
+  glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dm_vars)->faceplate_mat);
   glPushMatrix();
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity(); 
   glTranslatef( 0.0, 0.0, -1.0); 
   glPushMatrix();
   glLoadIdentity();
-  ogl2_face_flag = 1;	/* faceplate matrix is on top of stack */
+  ((struct ogl_vars *)dm_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 		
   return 0;
 }
@@ -1796,15 +1815,15 @@ Tk_Window tkwin;
 
 				/* make sure Tk handles it */
 				if (maxvip->class == PseudoColor)
-					cmap = XCreateColormap(dpy,
+					((struct ogl_vars *)dm_vars)->cmap = XCreateColormap(dpy,
 						RootWindow(dpy, maxvip->screen),
 						maxvip->visual, AllocAll);
 				else
-					cmap = XCreateColormap(dpy,
+					((struct ogl_vars *)dm_vars)->cmap = XCreateColormap(dpy,
 						RootWindow(dpy, maxvip->screen),
 						maxvip->visual, AllocNone);
 
-				if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, cmap)){
+				if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, ((struct ogl_vars *)dm_vars)->cmap)){
 					((struct ogl_vars *)dm_vars)->mvars.doublebuffer = m_double;
 					glXGetConfig(dpy, maxvip, GLX_DEPTH_SIZE, &((struct ogl_vars *)dm_vars)->mvars.depth);
 					if (((struct ogl_vars *)dm_vars)->mvars.depth > 0)
@@ -1819,7 +1838,7 @@ Tk_Window tkwin;
 					/* retry with lesser depth */
 					baddepth = maxvip->depth;
 					tries ++;
-					XFreeColormap(dpy,cmap);
+					XFreeColormap(dpy,((struct ogl_vars *)dm_vars)->cmap);
 				}
 			}
 					
@@ -2306,7 +2325,7 @@ int c;
 				    	cells[i].flags = DoRed|DoGreen|DoBlue;
 				    }
 			}
-			XStoreColors(dpy, cmap, cells, CMAP_RAMP_WIDTH);
+			XStoreColors(dpy, ((struct ogl_vars *)dm_vars)->cmap, cells, CMAP_RAMP_WIDTH);
 		}
 	} else {
 		XColor cell, celltest;
@@ -2316,7 +2335,7 @@ int c;
 		cell.green = ogl2_rgbtab[c].g * 256;
 		cell.blue = ogl2_rgbtab[c].b * 256;
 		cell.flags = DoRed|DoGreen|DoBlue;
-		XStoreColor(dpy, cmap, &cell);
+		XStoreColor(dpy, ((struct ogl_vars *)dm_vars)->cmap, &cell);
 
 	}
 }
@@ -2329,7 +2348,7 @@ print_cmap()
 
 	for (i=0; i<112; i++){
 		cell.pixel = i;
-		XQueryColor(dpy, cmap, &cell);
+		XQueryColor(dpy, ((struct ogl_vars *)dm_vars)->cmap, &cell);
 		printf("%d  = %d %d %d\n",i,cell.red,cell.green,cell.blue);
 	}
 }
@@ -2349,23 +2368,6 @@ set_knob_offset()
 }
 
 static void
-Ogl_var_init()
-{
-  dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars), "Ogl_var_init: ogl_vars");
-  bzero((void *)dm_vars, sizeof(struct ogl_vars));
-  devmotionnotify = LASTEvent;
-  devbuttonpress = LASTEvent;
-  devbuttonrelease = LASTEvent;
-
-  /* initialize the modifiable variables */
-  ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
-  ((struct ogl_vars *)dm_vars)->mvars.zclipping_on = 1;       /* Z Clipping flag */
-  ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
-  ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
-  ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
-}
-
-static void
 ogl_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct ogl_vars),
@@ -2374,6 +2376,8 @@ ogl_var_init()
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;
   devbuttonrelease = LASTEvent;
+  ((struct ogl_vars *)dm_vars)->dm_list = curr_dm_list;
+  perspective_angle = 3;
 
   /* initialize the modifiable variables */
   ((struct ogl_vars *)dm_vars)->mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
@@ -2381,26 +2385,41 @@ ogl_var_init()
   ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
   ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
+  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = 1;
 }
 
 static struct dm_list *
 get_dm_list(window)
 Window window;
 {
+#if 0
   register struct dm_list *p;
-  struct rt_vls str;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(window == ((struct ogl_vars *)p->_dm_vars)->_win)
       if (!glXMakeCurrent(((struct ogl_vars *)p->_dm_vars)->_dpy,
 			  ((struct ogl_vars *)p->_dm_vars)->_win,
 			  ((struct ogl_vars *)p->_dm_vars)->_glxc)){
-	rt_log("Ogl2_open: Couldn't make context current\n");
+	rt_log("get_dm_list: Couldn't make context current\n");
 	return DM_LIST_NULL;
       }
 
       return p;
   }
+#else
+  register struct ogl_vars *p;
+
+  for( RT_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
+    if(window == p->_win){
+      if (!glXMakeCurrent(p->_dpy, p->_win, p->_glxc)){
+	rt_log("get_dm_list: Couldn't make context current\n");
+	return DM_LIST_NULL;
+      }
+
+      return p->dm_list;
+    }
+  }
+#endif
 
   return DM_LIST_NULL;
 }

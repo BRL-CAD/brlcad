@@ -91,7 +91,6 @@ extern int dm_pipe[];
 extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 extern inventory_t	*getinvent();
-extern void (*knob_offset_hook)();
 
 /* Display Manager package interface */
 
@@ -120,7 +119,6 @@ static Tk_GenericProc Glx_doevent;
 static int Glx_doevent();
 #endif
 static void glx_var_init();
-
 
 #define dpy (((struct glx_vars *)dm_vars)->_dpy)
 #define win (((struct glx_vars *)dm_vars)->_win)
@@ -166,6 +164,8 @@ struct modifiable_glx_vars {
 };
 
 struct glx_vars {
+  struct rt_list l;
+  struct dm_list *dm_list;
   Display *_dpy;
   Window _win;
   Tk_Window _xtkwin;
@@ -186,6 +186,7 @@ struct glx_vars {
   struct modifiable_glx_vars _mvars;
 };
 
+static struct glx_vars head_glx_vars;
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
@@ -420,9 +421,6 @@ Glx_open()
       return(1);	/* BAD */
   }
 
-  /* Ignore the old scrollbars and menus */
-  mged_variables.show_menu = 0;
-
   knob_offset_hook = set_knob_offset;
 
   return(0);			/* OK */
@@ -472,6 +470,11 @@ char *name;
       return -1;
     }
   }
+
+  if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
+    Tk_CreateGenericHandler(Glx_doevent, (ClientData)NULL);
+
+  RT_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
 
   rt_vls_init(&pathName);
   rt_vls_printf(&pathName, ".dm_glx%d", ref_count++);
@@ -660,12 +663,14 @@ char *name;
   }
 Done:
   XFreeDeviceList(olist);
+#if 0
   Tk_CreateGenericHandler(Glx_doevent,
 			  (ClientData)curr_dm_list);
+#endif
 
-  /* start with constant tracking OFF */
+  /* start with constant tracking ON */
   XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-	       KeyPressMask|StructureNotifyMask);
+	       KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
 
   return(0);
 }
@@ -682,6 +687,11 @@ Glx_load_startup()
 
 /*XXX*/
 #define DM_GLX_RCFILE "glxinit.tk"
+
+#if 1
+  bzero((void *)&head_glx_vars, sizeof(struct glx_vars));
+  RT_LIST_INIT( &head_glx_vars.l );
+#endif
 
   found = 0;
   rt_vls_init( &str );
@@ -771,11 +781,19 @@ Glx_close()
   frontbuffer(0);
 
   Tk_DestroyWindow(Tk_Parent(xtkwin));
-  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
+
   knob_offset_hook = NULL;
+  RT_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
   rt_free(dm_vars, "Glx_close: dm_vars");
   rt_vls_free(&pathName);
   free(ref);
+
+#if 0
+  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
+#else
+  if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
+    Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
+#endif
 }
 
 /*
@@ -1251,25 +1269,32 @@ XEvent *eventPtr;
   register struct dm_list *p;
   struct rt_vls cmd;
 
-/*XXX still drawing too much!!!
-i.e. drawing 2 or more times when resizing the window to a larger size.
-once for the Configure and once for the expose. This is especially
-annoying when running remotely. */
-
   rt_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
+#if 1
   curr_dm_list = get_dm_list(eventPtr->xany.window);
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
+  if(mvars.debug)
+    rt_log("curr_dm_list: %d\n", (int)curr_dm_list);
+#else
+  curr_dm_list = (struct dm_list *)clientData;
+  TkGLXwin_RefWinset(ref, GLX_NORMAL);
+#endif
+
 #ifdef SEND_KEY_DOWN_PIPE
-  if(mged_variables.send_key && eventPtr->type == KeyPress){
+  if(curr_dm_list->_mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
+    KeySym keysym;
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
-		  (KeySym *)NULL, (XComposeStatus *)NULL);
+		  &keysym, (XComposeStatus *)NULL);
+
+    if(keysym == mged_variables.hot_key)
+      goto end;
 
     write(dm_pipe[1], buffer, 1);
     rt_vls_free(&cmd);
@@ -2503,6 +2528,8 @@ glx_var_init()
   devmotionnotify = LASTEvent;
   devbuttonpress = LASTEvent;
   devbuttonrelease = LASTEvent;
+  ((struct glx_vars *)dm_vars)->dm_list = curr_dm_list;
+  perspective_angle = 3;
 
   /* initialize the modifiable variables */
   mvars.cueing_on = 1;          /* Depth cueing flag - for colormap work */
@@ -2510,6 +2537,7 @@ glx_var_init()
   mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   mvars.linewidth = 1;      /* Line drawing width */
   mvars.dummy_perspective = 1;
+  mvars.virtual_trackball = 1;
 }
 
 
@@ -2517,8 +2545,8 @@ static struct dm_list *
 get_dm_list(window)
 Window window;
 {
+#if 0
   register struct dm_list *p;
-  struct rt_vls str;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(window == ((struct glx_vars *)p->_dm_vars)->_win){
@@ -2526,6 +2554,16 @@ Window window;
       return p;
     }
   }
+#else
+  register struct glx_vars *p;
+
+  for( RT_LIST_FOR(p, glx_vars, &head_glx_vars.l) ){
+    if(window == p->_win){
+      TkGLXwin_RefWinset(p->_ref, GLX_NORMAL);
+      return p->dm_list;
+    }
+  }
+#endif
 
   return DM_LIST_NULL;
 }

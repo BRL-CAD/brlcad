@@ -118,9 +118,12 @@ struct modifiable_x_vars {
 #ifdef VIRTUAL_TRACKBALL
   int virtual_trackball;
 #endif
+  int debug;
 };
 
 struct x_vars {
+  struct rt_list l;
+  struct dm_list *dm_list;
   Display *dpy;
   Tk_Window xtkwin;
   Window win;
@@ -132,6 +135,7 @@ struct x_vars {
 #ifdef VIRTUAL_TRACKBALL
   int omx, omy;
 #endif
+  int perspective_angle;
   GC gc;
   XFontStruct *fontstruct;
   int is_monochrome;
@@ -143,17 +147,18 @@ struct x_vars {
 #define X_MV_O(_m) offsetof(struct modifiable_x_vars, _m)
 struct structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
-  {"%d",  1, "set_perspective", X_MV_O(dummy_perspective),  set_perspective },
+  {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
 #ifdef VIRTUAL_TRACKBALL
   {"%d",  1, "virtual_trackball", X_MV_O(virtual_trackball),establish_vtb },
 #endif
-  {"",    0,  (char *)0,          0,                      FUNC_NULL }
+  {"%d",  1, "debug",             X_MV_O(debug),            FUNC_NULL },
+  {"",    0, (char *)0,           0,                        FUNC_NULL }
 };
 
-static int perspective_angle = 3;	/* Angle of perspective */
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 
+static struct x_vars head_x_vars;
 static int XdoMotion = 0;
 
 /*
@@ -223,13 +228,14 @@ X_close()
   if(((struct x_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
 
-#if 1
-  Tk_DeleteGenericHandler(Xdoevent, (ClientData)curr_dm_list);
+  RT_LIST_DEQUEUE(&((struct x_vars *)dm_vars)->l);
   rt_free(dm_vars, "X_close: dm_vars");
   rt_vls_free(&pathName);
+#if 0
+  Tk_DeleteGenericHandler(Xdoevent, (ClientData)curr_dm_list);
 #else
-  /* to prevent events being processed after window destroyed */
-  win = -1;
+  if(RT_LIST_IS_EMPTY(&head_x_vars.l))
+    Tk_DeleteGenericHandler(Xdoevent, (ClientData)NULL);
 #endif
 }
 
@@ -541,27 +547,32 @@ XEvent *eventPtr;
   struct rt_vls cmd;
   register struct dm_list *save_dm_list;
 
+#if 1
   save_dm_list = curr_dm_list;
+#endif
 
+#if 1
   curr_dm_list = get_dm_list(eventPtr->xany.window);
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
-#if 0
-  /* Not interested */
-  if (eventPtr->xany.window != ((struct x_vars *)dm_vars)->win){
-    curr_dm_list = save_dm_list;
-    return TCL_OK;
-  }
+  if(((struct x_vars *)dm_vars)->mvars.debug)
+    rt_log("curr_dm_list: %d\n", (int)curr_dm_list);
+#else
+  curr_dm_list = (struct dm_list *)clientData;
 #endif
 
 #ifdef SEND_KEY_DOWN_PIPE
-  if(mged_variables.send_key && eventPtr->type == KeyPress){
+  if(curr_dm_list->_mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
+    KeySym keysym;
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
-		  (KeySym *)NULL, (XComposeStatus *)NULL);
+		  &keysym, (XComposeStatus *)NULL);
+
+    if(keysym == mged_variables.hot_key)
+      goto end;
 
     write(dm_pipe[1], buffer, 1);
     curr_dm_list = save_dm_list;
@@ -646,7 +657,9 @@ XEvent *eventPtr;
   (void)cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
 end:
+#if 1
   curr_dm_list = save_dm_list;
+#endif
   return TCL_OK;
 }
 	    
@@ -880,6 +893,11 @@ char	*name;
     }
   }
 
+  if(RT_LIST_IS_EMPTY(&head_x_vars.l))
+    Tk_CreateGenericHandler(Xdoevent, (ClientData)NULL);
+
+  RT_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)curr_dm_list->_dm_vars)->l);
+
   rt_vls_printf(&pathName, ".dm_x%d", count++);
 
 #if 0
@@ -1075,13 +1093,15 @@ char	*name;
 						&gcv);
 #else
     ((struct x_vars *)dm_vars)->gc = XCreateGC(((struct x_vars *)dm_vars)->dpy,
-					       ((struct x_vars *)dm_vars)->win,
+`					       ((struct x_vars *)dm_vars)->win,
 					       (GCForeground|GCBackground),
 					       &gcv);
 #endif
-    
+
+#if 0    
     /* Register the file descriptor with the Tk event handler */
     Tk_CreateGenericHandler(Xdoevent, (ClientData)curr_dm_list);
+#endif
 
     Tk_SetWindowBackground(((struct x_vars *)dm_vars)->xtkwin, ((struct x_vars *)dm_vars)->bg);
     Tk_MapWindow(((struct x_vars *)dm_vars)->xtkwin);
@@ -1095,7 +1115,7 @@ establish_perspective()
   rt_vls_printf( &dm_values.dv_string,
 		"set perspective %d\n",
 		((struct x_vars *)dm_vars)->mvars.perspective_mode ?
-		perspective_table[perspective_angle] : -1 );
+		perspective_table[((struct x_vars *)dm_vars)->perspective_angle] : -1 );
   dmaflag = 1;
 }
 
@@ -1109,15 +1129,15 @@ set_perspective()
 {
   /* set perspective matrix */
   if(((struct x_vars *)dm_vars)->mvars.dummy_perspective > 0)
-    perspective_angle = ((struct x_vars *)dm_vars)->mvars.dummy_perspective <= 4 ?
+    ((struct x_vars *)dm_vars)->perspective_angle = ((struct x_vars *)dm_vars)->mvars.dummy_perspective <= 4 ?
     ((struct x_vars *)dm_vars)->mvars.dummy_perspective - 1: 3;
-  else if (--perspective_angle < 0) /* toggle perspective matrix */
-    perspective_angle = 3;
+  else if (--((struct x_vars *)dm_vars)->perspective_angle < 0) /* toggle perspective matrix */
+    ((struct x_vars *)dm_vars)->perspective_angle = 3;
 
   if(((struct x_vars *)dm_vars)->mvars.perspective_mode)
     rt_vls_printf( &dm_values.dv_string,
 		  "set perspective %d\n",
-		  perspective_table[perspective_angle] );
+		  perspective_table[((struct x_vars *)dm_vars)->perspective_angle] );
 
   /*
      Just in case the "!" is used with the set command. This
@@ -1249,8 +1269,12 @@ x_var_init()
 {
   dm_vars = (char *)rt_malloc(sizeof(struct x_vars), "x_var_init: x_vars");
   bzero((void *)dm_vars, sizeof(struct x_vars));
+  ((struct x_vars *)dm_vars)->dm_list = curr_dm_list;
+  ((struct x_vars *)dm_vars)->perspective_angle = 3;
 
+  /* initialize the modifiable variables */
   ((struct x_vars *)dm_vars)->mvars.dummy_perspective = 1;
+  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = 1;
 }
 
 static int
@@ -1263,6 +1287,11 @@ X_load_startup()
   int     found;
 
 #define DM_X_RCFILE "xinit.tk"
+
+#if 1
+  bzero((void *)&head_x_vars, sizeof(struct x_vars));
+  RT_LIST_INIT( &head_x_vars.l );
+#endif
 
   found = 0;
   rt_vls_init( &str );
@@ -1331,13 +1360,21 @@ static struct dm_list *
 get_dm_list(window)
 Window window;
 {
+#if 0
   register struct dm_list *p;
-  struct rt_vls str;
 
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(window == ((struct x_vars *)p->_dm_vars)->win)
       return p;
   }
+#else
+  register struct x_vars *p;
+
+  for( RT_LIST_FOR(p, x_vars, &head_x_vars.l) ){
+    if(window == p->win)
+      return p->dm_list;
+  }
+#endif
 
   return DM_LIST_NULL;
 }
