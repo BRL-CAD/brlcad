@@ -23,7 +23,10 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * add license files and modify file headers
 
 * add checks for system libs and optionally build our libs only if
-  they don't have suitable system libs
+  they don't have suitable system libs (namely, libtcl)
+
+* add distdir target to Makefile.in files in libtcl/libtk so make
+  dist can work.
 
 
 THESE ARE LOWER PRIORITY
