@@ -41,7 +41,6 @@ static char RCStgc[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./debug.h"
-#include "./complex.h"
 #include "nurb.h" 
 RT_EXTERN(int rt_rec_prep, (struct soltab *stp, struct rt_db_internal *ip,
 struct rt_i *rtip));
