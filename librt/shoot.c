@@ -141,6 +141,12 @@ register struct rt_shootray_status	*ssp;
 	double					fraction;
 	int					exponent;
 
+	if( curcut == &ssp->ap->a_rt_i->rti_inf_box )  {
+		/* Last pass did the infinite solids, there is nothing more */
+		ssp->curcut = CUTTER_NULL;
+		return CUTTER_NULL;
+	}
+
 #if EXTRA_SAFETY	
 	if( curcut == CUTTER_NULL ) {
 		bu_log(
@@ -331,7 +337,7 @@ test:		if( cutp==CUTTER_NULL ) {
 			   is nothing left to do. */
 			register struct rt_shootray_status *old = ssp->old_status;
 
-			if( old == NULL ) return CUTTER_NULL;
+			if( old == NULL ) goto escaped_from_model;
 			*ssp = *old;		/* struct copy -- XXX SLOW! */
 			bu_free( old, "old rt_shootray_status" );
 			curcut = ssp->curcut;
@@ -581,6 +587,17 @@ done:			ssp->lastcut = cutp;
 	}
 	/* NOTREACHED */
 	bu_bomb("rt_advance_to_next_cell: escaped for(;;) loop: impossible!");
+
+	/*
+	 *  If ray has escaped from model RPP, and there are infinite solids
+	 *  in the model, there is one more (special) BOXNODE for the
+	 *  caller to process.
+	 */
+escaped_from_model:
+	curcut = &ssp->ap->a_rt_i->rti_inf_box;
+	if( curcut->bn.bn_len <= 0 )  curcut = CUTTER_NULL;
+	ssp->curcut = curcut;
+	return curcut;
 }
 
 /*
@@ -794,6 +811,24 @@ register struct application *ap;
 	 */
 	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
+		cutp = &ap->a_rt_i->rti_inf_box;
+	    	if( cutp->bn.bn_len > 0 )  {
+	    		/* Model has infinite solids, need to fire at them. */
+			ss.box_start = BACKING_DIST;
+			ss.model_start = 0;
+			ss.box_end = ss.model_end = INFINITY;
+			ss.lastcut = CUTTER_NULL;
+			ss.old_status = (struct rt_shootray_status *)NULL;
+			ss.curcut = cutp;
+	    		ss.lastcell = ss.curcut;
+			VMOVE( ss.curmin, rtip->mdl_min );
+			VMOVE( ss.curmax, rtip->mdl_max );
+			last_bool_start = BACKING_DIST;
+			ss.newray = ap->a_ray;		/* struct copy */
+			ss.odist_corr = ss.obox_start = ss.obox_end = -99;
+	    		ss.dist_corr = 0.0;
+	    		goto start_cell;
+	    	}
 		resp->re_nmiss_model++;
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS model";
@@ -859,6 +894,7 @@ register struct application *ap;
 	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
 	while( (cutp = rt_advance_to_next_cell( &ss )) != CUTTER_NULL )  {
+start_cell:
 		if(debug_shoot) {
 			rt_pr_cut( cutp, 0 );
 		}
