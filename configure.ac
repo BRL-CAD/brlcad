@@ -67,15 +67,15 @@ BRLCAD_VERSION="$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION"
 
 # print out the title with a pretty box computed to wrap around
 title="Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_DATE"
-length="`echo $title | wc -c`"
+length="`echo x${title}x | wc -c`"
 separator=""
 while test $length -gt 1 ; do
       separator="${separator}*"
       length="`expr $length - 1`"
 done
-echo "****${separator}****"
+echo "***${separator}***"
 echo "*** ${title} ***"
-echo "****${separator}****"
+echo "***${separator}***"
 
 AC_SUBST(CONFIG_DATE)
 AC_SUBST(CONFIG_TIME)
