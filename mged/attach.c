@@ -469,7 +469,7 @@ char *dstr;
   Tcl_StaticPackage(interp, "Tk", Tk_Init, Tk_SafeInit);
 #endif
 
-#if 0
+#if 1
   /* XXX Initialize [incr Tk] */
   if (Itk_Init(interp) == TCL_ERROR) {
     bu_vls_free(&vls);
