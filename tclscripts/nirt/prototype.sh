@@ -18,6 +18,15 @@ wm title . "NIRT"
 set units	"millimeters"
 set use_air	0
 
+set x_value	0.0
+set y_value	0.0
+set z_value	0.0
+set h_value	0.0
+set v_value	0.0
+set d_value	0.0
+set az_value	0.0
+set el_value	0.0
+
 # Draw caliper legs in geometry windows?
 set show_cal_legs	0
 
@@ -79,6 +88,8 @@ proc shoot_a_ray {} {
 
     clearf
     printf "Shooting a ray at $time...\n"
+
+    exec nirt ~pjt/mged/scene.g scene
     
 }
 
@@ -133,11 +144,50 @@ proc link_to_mged {} {
     send $mged_answer {puts "Hello from NIRT!\n"}
     send $mged_answer "send $this_nirt \{puts \"Hello from us\\n\"\}"
 
+    set result [send $mged_answer {ae 35 25}]
+    printf "The result of the transaction was: <$result>\n"
+
     return $mged_answer
 }
 
-proc x_coord {string} {
-    lindex $string 0
+proc set_xyz {} {
+
+    global x_value
+    global y_value
+    global z_value
+
+    toplevel .xyz
+    wm title .xyz "NIRT Set xyz"
+
+    set x_tmp $x_value
+    set y_tmp $y_value
+    set z_tmp $z_value
+
+    frame .xyz.xline
+	label .xyz.xlbl -text "x"
+	entry .xyz.xentry -textvariable x_tmp
+	pack .xyz.xlbl .xyz.xentry -side left -in .xyz.xline
+    frame .xyz.yline
+	label .xyz.ylbl -text "y"
+	entry .xyz.yentry -textvariable y_tmp
+	pack .xyz.ylbl .xyz.yentry -side left -in .xyz.yline
+    frame .xyz.zline
+	label .xyz.zlbl -text "z"
+	entry .xyz.zentry -textvariable z_tmp
+	pack .xyz.zlbl .xyz.zentry -side left -in .xyz.zline
+    pack .xyz.xline .xyz.yline .xyz.zline
+
+    frame .xyz.bbar
+	button .xyz.ok -text "OK" \
+	    -command {
+		set x_value $x_tmp
+		set y_value $y_tmp
+		set z_value $z_tmp
+		destroy .xyz
+	    }
+	button .xyz.cancel -text "Cancel" -command {destroy .xyz}
+	pack .xyz.ok .xyz.cancel -side left -in .xyz.bbar
+    pack .xyz.bbar
 }
 
 proc y_coord {string} {
@@ -212,7 +262,6 @@ frame .mbar -relief raised -bd 2
 	    .options.menu add checkbutton -label "Use air" -variable "use_air"
 	    .options.menu add command -label "Link to MGED..." \
 		-command link_to_mged
-	    #.options.menu entryconfigure "Link to MGED..." -state disabled
 	    .options.menu add command -label "Debug flags..." \
 		-command {printf "twiddle bits\n"}
     menubutton .formats -text Formats -menu .formats.menu
@@ -235,41 +284,42 @@ frame .rayspec
     frame .origin -relief raised -borderwidth 4
 	label .origin_lbl -text "Ray Origin"
 	frame .origin_mdl
-	    label .mdl_lbl -text "Model Coordinates"
+	    button .mdl_lbl -text "Model Coordinates" \
+		-command set_xyz
 	    #
 	    frame .xline
-	    label .xlbl -text "x"
-	    entry .xentry -textvariable x_value
-	    pack .xlbl .xentry -side left -in .xline
+	    label .xlbl -text "x ="
+	    label .x_val -textvariable x_value
+	    pack .xlbl .x_val -side left -in .xline
 	    #
 	    frame .yline
-	    label .ylbl -text "y"
-	    entry .yentry -textvariable y_value
-	    pack .ylbl .yentry -side left -in .yline
+	    label .ylbl -text "y ="
+	    label .y_val -textvariable y_value
+	    pack .ylbl .y_val -side left -in .yline
 	    #
 	    frame .zline
-	    label .zlbl -text "z"
-	    entry .zentry -textvariable z_value
-	    pack .zlbl .zentry -side left -in .zline
+	    label .zlbl -text "z ="
+	    label .z_val -textvariable z_value
+	    pack .zlbl .z_val -side left -in .zline
 	    #
 	    pack .mdl_lbl .xline .yline .zline -side top -in .origin_mdl
 	frame .origin_view
-	    label .view_lbl -text "View Coordinates"
+	    button .view_lbl -text "View Coordinates"
 	    #
 	    frame .hline
-	    label .hlbl -text "h"
-	    entry .hentry -textvariable h_value
-	    pack .hlbl .hentry -side left -in .hline
+	    label .hlbl -text "h ="
+	    label .h_val -textvariable h_value
+	    pack .hlbl .h_val -side left -in .hline
 	    #
 	    frame .vline
-	    label .vlbl -text "v"
-	    entry .ventry -textvariable v_value
-	    pack .vlbl .ventry -side left -in .vline
+	    label .vlbl -text "v ="
+	    label .v_val -textvariable v_value
+	    pack .vlbl .v_val -side left -in .vline
 	    #
 	    frame .dline
-	    label .dlbl -text "d"
-	    entry .dentry -textvariable d_value
-	    pack .dlbl .dentry -side left -in .dline
+	    label .dlbl -text "d ="
+	    label .d_val -textvariable d_value
+	    pack .dlbl .d_val -side left -in .dline
 	    #
 	    pack .view_lbl .hline .vline .dline -side top -in .origin_view
 	pack .origin_lbl -side top -in .origin
@@ -278,36 +328,36 @@ frame .rayspec
     frame .direc -relief raised -borderwidth 4
 	label .direc_lbl -text "Ray Direction"
 	frame .direc_mdl
-	    label .dir_lbl -text "Model Coordinates"
+	    button .dir_lbl -text "Model Coordinates"
 	    #
 	    frame .dxline
-	    label .dxlbl -text "dx"
-	    entry .dxentry -textvariable x_value
-	    pack .dxlbl .dxentry -side left -in .dxline
+	    label .dxlbl -text "dx ="
+	    label .dx_val -textvariable x_value
+	    pack .dxlbl .dx_val -side left -in .dxline
 	    #
 	    frame .dyline
-	    label .dylbl -text "dy"
-	    entry .dyentry -textvariable y_value
-	    pack .dylbl .dyentry -side left -in .dyline
+	    label .dylbl -text "dy ="
+	    label .dy_val -textvariable y_value
+	    pack .dylbl .dy_val -side left -in .dyline
 	    #
 	    frame .dzline
-	    label .dzlbl -text "dz"
-	    entry .dzentry -textvariable z_value
-	    pack .dzlbl .dzentry -side left -in .dzline
+	    label .dzlbl -text "dz ="
+	    label .dz_val -textvariable z_value
+	    pack .dzlbl .dz_val -side left -in .dzline
 	    #
 	    pack .dir_lbl .dxline .dyline .dzline -side top -in .direc_mdl
 	frame .az_el
-	    label .az_el_lbl -text "Azimuth & Elevation"
+	    button .az_el_lbl -text "Azimuth & Elevation"
 	    #
 	    frame .az_line
-	    label .az_lbl -text "az"
-	    entry .az_entry -textvariable h_value
-	    pack .az_lbl .az_entry -side left -in .az_line
+	    label .az_lbl -text "az ="
+	    label .az_val -textvariable h_value
+	    pack .az_lbl .az_val -side left -in .az_line
 	    #
 	    frame .el_line
-	    label .el_lbl -text "el"
-	    entry .el_entry -textvariable v_value
-	    pack .el_lbl .el_entry -side left -in .el_line
+	    label .el_lbl -text "el ="
+	    label .el_val -textvariable v_value
+	    pack .el_lbl .el_val -side left -in .el_line
 	    #
 	    pack .az_el_lbl .az_line .el_line -side top -in .az_el
 	pack .direc_lbl -side top -in .direc
