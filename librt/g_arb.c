@@ -379,13 +379,13 @@ struct application	*ap;
 		FAST fastf_t	s;
 
 		dxbdn = VDOT( arbp->arb_N, rp->r_pt ) - arbp->arb_NdotA;
-		if( (dn = -VDOT( arbp->arb_N, rp->r_dir )) < -1.0e-10 )  {
+		if( (dn = -VDOT( arbp->arb_N, rp->r_dir )) < -SQRT_SMALL_FASTF )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
 			if( out > (s = dxbdn/dn) )  {
 				out = s;
 				oplane = arbp;
 			}
-		} else if ( dn > 1.0e-10 )  {
+		} else if ( dn > SQRT_SMALL_FASTF )  {
 			/* entry point, when dir.N > 0.  in = max(in,s) */
 			if( in < (s = dxbdn/dn) )  {
 				in = s;
