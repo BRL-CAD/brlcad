@@ -661,6 +661,7 @@ int	argc;
 char	**argv;
 {
 	static int regdebug = 0;
+	static char debug_str[10];
 
 	if(argc < 1 || 2 < argc){
 	  struct bu_vls vls;
@@ -677,7 +678,9 @@ char	**argv;
 	else
 		regdebug = atoi( argv[1] );
 
-	Tcl_AppendResult(interp, "regdebug=", argv[1], "\n", (char *)NULL);
+	sprintf( debug_str, "%d", regdebug );
+
+	Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
 	dmp->dm_debug(dmp, regdebug);
 
