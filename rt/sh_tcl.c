@@ -138,7 +138,7 @@ char **argv;
 	struct bu_vls	shader;
 	char		buf[64];
 
-	if( argc != 6 )  {
+	if( argc < 4 )  {
 		Tcl_AppendResult(interp, "Usage: sh_directchange_shader $rtip comb shader_arg(s)\n", NULL);
 		return TCL_ERROR;
 	}
@@ -158,6 +158,7 @@ char **argv;
 
 	bu_vls_init(&shader);
 	bu_vls_from_argv(&shader, argc-3, argv+3);
+	bu_vls_trimspace(&shader);
 
 	/* Find all region names which match /comb/ pattern */
 	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
