@@ -35,7 +35,12 @@ static char	*usage[] =
 	};
 
 void	init_Status();
-void	prnt_Status(), prnt_Usage(), prnt_Event(), prnt_Scroll();
+void	prnt_Status(), prnt_Usage();
+#if __STDC__
+void	prnt_Event(char *fmt, ...);
+#else
+void	prnt_Event();
+#endif
 void	prnt_Prompt();
 void	prnt_Macro();
 void	prnt_Rectangle();
@@ -129,6 +134,13 @@ RGBpixel	*pixelp;
 	return;
 	}
 
+#if __STDC__
+#include <stdarg.h>
+#define Va_Decl( _func )	_func(char *fmt, ...)
+#define Va_Start()		va_list	ap; va_start( ap, fmt )
+#define Va_End()		va_end( ap )
+#define Va_Print( _p )		(void) vfprintf( _p, fmt, ap )
+#else
 #include <varargs.h>
 #ifdef CRAY
 #define Va_Decl( _func )	_func(fmt, a,b,c,d,e,f,g,h,i) char *fmt;
@@ -140,6 +152,7 @@ RGBpixel	*pixelp;
 #define Va_Start()		va_list	ap; va_start( ap )
 #define Va_End()		va_end( ap )
 #define Va_Print( _p )		(void) _doprnt( fmt, ap, _p )
+#endif
 #endif
 /* VARARGS */
 void
