@@ -119,13 +119,8 @@ static int perspective_table[] = { 30, 45, 60, 90 };
  *
  */
 struct dm *
-#if DO_NEW_LIBDM_OPEN
 X_open(eventHandler, argc, argv)
 int (*eventHandler)();
-#else
-X_open(dmp, argc, argv)
-struct dm *dmp;
-#endif
 int argc;
 char *argv[];
 {
@@ -140,13 +135,11 @@ char *argv[];
   struct bu_vls str;
   struct bu_vls top_vls;
   Display *tmp_dpy;
-#if DO_NEW_LIBDM_OPEN
   struct dm *dmp;
 
   dmp = BU_GETSTRUCT(dmp, dm);
   *dmp = dm_X;
   dmp->dm_eventHandler = eventHandler;
-#endif
 
   /* Only need to do this once for this display manager */
   if(!count){

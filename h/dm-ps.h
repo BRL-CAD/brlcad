@@ -22,6 +22,7 @@ struct ps_vars {
   int linewidth;
 };
 
+extern struct dm *PS_open();
 extern struct ps_vars head_ps_vars;
 
 #endif /* SEEN_DM_PS */

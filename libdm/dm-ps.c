@@ -104,24 +104,17 @@ struct ps_vars head_ps_vars;
  *
  */
 struct dm *
-#if DO_NEW_LIBDM_OPEN
 PS_open(eventHandler, argc, argv)
 int (*eventHandler)();
-#else
-PS_open(dmp, argc, argv)
-struct dm *dmp;
-#endif
 int argc;
 char *argv[];
 {
   static int count = 0;
-#if DO_NEW_LIBDM_OPEN
   struct dm *dmp;
 
   dmp = BU_GETSTRUCT(dmp, dm);
   *dmp = dm_PS;
   dmp->dm_eventHandler = eventHandler;
-#endif
 
   /* Only need to do this once for this display manager */
   if(!count)

@@ -197,13 +197,8 @@ register int y;
  *
  */
 struct dm *
-#if DO_NEW_LIBDM_OPEN
 Ogl_open(eventHandler, argc, argv)
 int (*eventHandler)();
-#else
-Ogl_open(dmp, argc, argv)
-struct dm *dmp;
-#endif
 int argc;
 char *argv[];
 {
@@ -222,7 +217,6 @@ char *argv[];
   struct bu_vls str;
   struct bu_vls top_vls;
   Display *tmp_dpy;
-#if DO_NEW_LIBDM_OPEN
   fastf_t tmp_vp;
   struct dm *dmp;
 
@@ -230,7 +224,6 @@ char *argv[];
   *dmp = dm_ogl;
   dmp->dm_eventHandler = eventHandler;
   dmp->dm_vp = &tmp_vp;
-#endif
 
   /* Only need to do this once for this display manager */
   if(!count){

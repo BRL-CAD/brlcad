@@ -200,13 +200,8 @@ register int y;
  *  message. It doesn't hurt anything.  Silly MEX.
  */
 struct dm *
-#if DO_NEW_LIBDM_OPEN
 Glx_open(eventHandler, argc, argv)
 int (*eventHandler)();
-#else
-Glx_open(dmp, argc, argv)
-struct dm *dmp;
-#endif
 int argc;
 char *argv[];
 {
@@ -226,13 +221,11 @@ char *argv[];
   XInputClassInfo *cip;
   GLXconfig *p, *glx_config;
   XVisualInfo *visual_info;
-#if DO_NEW_LIBDM_OPEN
   struct dm *dmp;
 
   dmp = BU_GETSTRUCT(dmp, dm);
   *dmp = dm_glx;
   dmp->dm_eventHandler = eventHandler;
-#endif
 
   /* Only need to do this once for this display manager */
   if(!count){
