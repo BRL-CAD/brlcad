@@ -57,6 +57,9 @@ struct model	*m;
  *	since polysolids may only have up to 5 vertices per face,
  *	any face with a loop of more than 5 vertices is triangulated
  *	using "nmg_triangulate_fu" prior to output.
+ *
+ *	XXX Since the nmg_triangulate_fu needs a tolerance structure, we
+ *		have to invent one for the moment.  This is bogus.
  */
 void
 write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
@@ -68,6 +71,7 @@ write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
 	int count_npts;
 	int max_count;
 	int i;
+	struct rt_tol tol;
 
 	NMG_CK_SHELL( s );
 
@@ -98,9 +102,15 @@ write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
 		}
 
 		/* if any loop has more than 5 vertices, triangulate the face */
-		if( max_count > 5 )
-			nmg_triangulate_fu( fu );
-
+		if( max_count > 5 ) {
+			/* XXX Yet another tol structure is "faked" */
+			tol.magic = RT_TOL_MAGIC;
+			tol.dist = 0.005;
+			tol.dist_sq = tol.dist * tol.dist;
+			tol.perp = 1e-6;
+			tol.para = 1 - tol.perp;
+			nmg_triangulate_fu( fu, (CONST struct rt_tol *)&tol );
+		}
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
 			NMG_CK_LOOPUSE( lu );
