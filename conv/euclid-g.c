@@ -37,6 +37,8 @@ static char RCSid[] = "$Header$";
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
+RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
+
 extern struct faceuse *nmg_add_loop_to_face();
 extern int errno;
 
@@ -172,7 +174,7 @@ cvt_euclid_region(fp, fpdb, reg_id)
 FILE	*fp, *fpdb;
 int	reg_id;
 {
-	int	cur_id, face, facet_type, fail, hole_face, i, j,
+	int	cur_id, face, facet_type, hole_face, i, j,
 		lst[MAX_PTS_PER_FACE], np, nv;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
@@ -245,10 +247,29 @@ int	reg_id;
 			nmg_vertex_gv(vert.vt[i], &vert.pt[3*i]);
 
 	/* Associate the face geometry. */
-	for (i = 0, fail = 0; i < face; i++)
-		if (nmg_fu_planeeqn(outfaceuses[i], &tol) < 0) {
-			fprintf(stderr, "Warning: in region %d, face %d is degenerate.\n", reg_id, i);
+	for (i = 0; i < face; i++)
+	{
+		plane_t pl;
+		fastf_t area;
+		struct loopuse *lu;
+
+		for( RT_LIST_FOR( lu , loopuse , &outfaceuses[i]->lu_hd ) )
+		{
+			area = nmg_loop_plane_area( lu , pl );
+			if( area > 0.0 )
+			{
+				if( lu->orientation == OT_OPPOSITE )
+					HREVERSE( pl , pl );
+				nmg_face_g( outfaceuses[i] , pl );
+				break;
+			}
 		}
+		if( !outfaceuses[i]->f_p->fg_p )
+		{
+			nmg_pr_fu_briefly( outfaceuses[i] , (char *)NULL );
+			rt_bomb( "Cannot find plane eqn for above faceuse\n" );
+		}
+	}
 
 	/* Glue edges of outward pointing face uses together. */
 	nmg_gluefaces(outfaceuses, face);
