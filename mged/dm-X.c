@@ -32,8 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-extern void	perror();
-extern char	*getenv();
 static void	label();
 static void	draw();
 static void	checkevents();
