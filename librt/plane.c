@@ -261,15 +261,16 @@ vect_t	rpp_min;
 	register fastf_t	d;
 	LOCAL vect_t		abs_dir;
 	LOCAL plane_t		pl;
+	/* XXX These should be parameters */
+	fastf_t			cos_ang_tol = 0.999999;
+	fastf_t			dist_tol = 0.005;
 
 	/* Check to see if the planes are parallel */
 	d = VDOT( a, b );
-	/* XXX angular tolerance needed */
-	if( !NEAR_ZERO( d, 0.999999 ) )  {
+	if( !NEAR_ZERO( d, cos_ang_tol ) )  {
 		/* See if the planes are identical */
 		d = a[3] - b[3];
-		/* XXX need distance tolerance */
-		if( NEAR_ZERO( d, 0.005 ) )  {
+		if( NEAR_ZERO( d, dist_tol ) )  {
 			return(-1);	/* FAIL -- planes are identical */
 		}
 		return(-2);		/* FAIL -- parallel & distinct */
@@ -570,6 +571,8 @@ point_t		b;
 	auto fastf_t	u;		/* As in, A + u * C = X */
 	register fastf_t f;
 	register int	ret;
+	/* XXX should be a parameter */
+	fastf_t		dist_tol_sq = SMALL_FASTF;
 
 	VSUB2( c, b, a );
 	/*
@@ -578,12 +581,7 @@ point_t		b;
 	 *  However, it is a good idea to make sure that
 	 *  C is a non-zero vector, (ie, that A and B are distinct).
 	 */
-#if 0
-	/* Perhaps something like this would be more efficient? */
-	if( VNEAR_ZERO( c, 0.005 ) )  return(-3);
-#endif
-	f = MAGNITUDE(c);		/* always positive */
-	if( f < SQRT_SMALL_FASTF )  {
+	if( MAGSQ(c) < dist_tol_sq )  {
 		return(-3);		/* A and B are not distinct */
 	}
 
@@ -721,12 +719,11 @@ register point_t a, b, c;
  *	tol = distance limit from line to pt P;
  *	dist = distance from A to P'
  */
-int rt_isect_pt_lseg(dist, a, b, p, tolsq)
-fastf_t *dist;	/* distance along line from A to P */
-point_t a, b, p; /* points for line and intersect */
-fastf_t tolsq;	/* distance tolerance (squared) for point being */
-{		/* on line or other-point */
-
+int rt_isect_pt_lseg(dist, a, b, p, dist_tol_sq)
+fastf_t *dist;		/* distance along line from A to P */
+point_t a, b, p;	/* points for line and intersect */
+fastf_t dist_tol_sq;	/* dist tol (squared) for pt on line or other-point */
+{
 	vect_t	AtoP,
 		BtoP,
 		AtoB,
@@ -738,20 +735,20 @@ fastf_t tolsq;	/* distance tolerance (squared) for point being */
 	fastf_t distsq;		/* distance^2 from parametric line to pt */
 
 	VSUB2(AtoP, p, a);
-	if (MAGSQ(AtoP) < tolsq)
+	if (MAGSQ(AtoP) < dist_tol_sq)
 		return(1);	/* P at A */
 
 	VSUB2(BtoP, p, b);
-	if (MAGSQ(BtoP) < tolsq)
+	if (MAGSQ(BtoP) < dist_tol_sq)
 		return(2);	/* P at B */
 
 	VSUB2(AtoB, b, a);
 	VMOVE(ABunit, AtoB);
 	VUNITIZE(ABunit);
 
-/* This part is similar to rt_dist_line_pt.  The difference being that we
- * never actually have to do the sqrt that the other routine does.
- */
+	/* Similar to rt_dist_line_pt, except we
+	 * never actually have to do the sqrt that the other routine does.
+	 */
 
 	/* find dist as a function of ABunit, actually the projection
 	 * of AtoP onto ABunit
@@ -764,12 +761,10 @@ fastf_t tolsq;	/* distance tolerance (squared) for point being */
 	if (distsq < 0)
 		distsq = 0.0;
 
-	if (distsq > tolsq)
+	if (distsq > dist_tol_sq)
 		return(-1);	/* dist pt to line too large */
 
-/* at this point we know the distance from the point to the line is
- * within tolerance.
- */
+	/* Distance from the point to the line is within tolerance. */
 	*dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
 
 	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
@@ -804,7 +799,7 @@ point_t pca, a, b, p;
 
 	if (Pr_prop < 1.0 && Pr_prop > 0.0) {
 		/* pt is along edge of lseg, scale AtoB by Pr_prop to
-		 * egt a vector from A to the P.C.A.
+		 * get a vector from A to the P.C.A.
 		 */
 		VJOIN1(pca, a, Pr_prop, AtoB);
 		VUNITIZE(AtoB);
