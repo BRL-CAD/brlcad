@@ -234,15 +234,16 @@ proc tkMenuEscape menu {
 
     set parent [winfo parent $menu]
     if {([winfo class $parent] != "Menu")} {
-	if {[$menu cget -type] == "menubar"} {
-	    tkMenuUnpost [$menu entrycget $tkPriv(activeItem) -menu]
-	} else {
-	    tkMenuUnpost $menu
-	}
+	tkMenuUnpost $menu
     } elseif {([$parent cget -type] == "menubar")} {
 	tkMenuUnpost $menu
 	tkRestoreOldGrab
     } else {
-	tkMenuNextMenu $menu left
+	set grand_parent [winfo parent $parent]
+	if {[winfo class $grand_parent] != "Menu"} {
+	    tkMenuUnpost $menu
+	} else {
+	    tkMenuNextMenu $menu left
+	}
     }
 }
