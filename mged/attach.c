@@ -635,6 +635,7 @@ char *name;
 
     MAT_DELTAS_GET(orig_pos, toViewcenter);
 
+    am_mode = ALT_MOUSE_MODE_IDLE;
     rc = 1;
     dmaflag = 1;
     owner = 1;
