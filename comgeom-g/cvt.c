@@ -97,10 +97,7 @@ register char **argv;
 
 	/* Input File */
 	if( optind >= argc )  {
-		if( isatty(fileno(stdin)) )
-			return(0);
-		infp = stdin;
-		optind++;
+		return(0);		/* FAIL */
 	} else {
 		file_name = argv[optind++];
 		if( (infp = fopen(file_name, "r")) == NULL )  {
@@ -111,13 +108,10 @@ register char **argv;
 
 	/* Output File */
 	if( optind >= argc )  {
-		if( isatty(fileno(stdout)) )
-			return(0);
-		outfp = stdout;
-		optind++;
+		return(0);		/* FAIL */
 	} else {
 		file_name = argv[optind++];
-		if( (outfp = fopen(file_name, "w")) == NULL )  {
+		if( (outfp = wdb_fopen(file_name)) == NULL )  {
 			perror(file_name);
 			return(0);
 		}
