@@ -208,25 +208,12 @@ RT_EXTERN( void rt_part_ifree, (struct rt_db_internal *ip) );
  *  	A struct part_specific is created, and it's address is stored in
  *  	stp->st_specific for use by part_shot().
  */
-#if NEW_IF
-/* new way */
 int
 rt_part_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-/* old interface */
-int
-rt_part_prep( stp, rec, rtip )
-struct soltab		*stp;
-union record		*rec;
-struct rt_i		*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct part_specific *part;
 	struct rt_part_internal	*pip;
 	int			i;
@@ -237,20 +224,6 @@ struct rt_i		*rtip;
 	vect_t		max, min;
 	vect_t		tip;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	i = rt_part_import( ip, ep, stp->st_pathmat );
-	if( i < 0 )  {
-		rt_log("rt_part_setup(%s): db import failure\n", stp->st_name);
-		return(-1);		/* BAD */
-	}
-#endif
 	RT_CK_DB_INTERNAL( ip );
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);
@@ -824,7 +797,6 @@ vect_t		h;
 /*
  *			R T _ P A R T _ P L O T
  */
-#if NEW_IF
 int
 rt_part_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -834,20 +806,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_part_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_part_internal	*pip;
 	point_t		tail;
 	point_t		sphere_rim[16];
@@ -858,20 +816,6 @@ double		norm_tol;
 	vect_t		Hunit;
 	register int	i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_part_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_part_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	pip = (struct rt_part_internal *)ip->idb_ptr;
 	RT_PART_CK_MAGIC(pip);

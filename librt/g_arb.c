@@ -87,7 +87,6 @@ struct prep_arb {
 	/* These elements must be initialized before using */
 	fastf_t		pa_tol_sq;	/* points-are-equal tol sq */
 	int		pa_doopt;	/* compute pa_opt[] stuff */
-	char		*pa_name;	/* string for error messages */
 };
 
 /*
@@ -237,8 +236,8 @@ int		ptno;	/* current point # on face */
 		f = VDOT( afp->peqn, P_A );
 		if( ! NEAR_ZERO(f,RT_SLOPPY_DOT_TOL) )  {
 			/* Non-planar face */
-			rt_log("arb(%s): face %s[%d] non-planar, dot=%g\n",
-				pap->pa_name, title, ptno, f );
+			rt_log("arb(): face %s[%d] non-planar, dot=%g\n",
+				title, ptno, f );
 #ifdef CONSERVATIVE
 			return(-1);			/* BAD */
 #endif
@@ -308,8 +307,7 @@ struct rt_arb_internal		*aip;
 	next_point: ;
 	}
 	if( rt_g.debug & DEBUG_ARB8 )  {
-		rt_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
-		pap->pa_name,
+		rt_log("arb() equiv_pts[] = %d %d %d %d %d %d %d %d\n",
 		equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
 		equiv_pts[4], equiv_pts[5], equiv_pts[6], equiv_pts[7]);
 	}
@@ -372,8 +370,8 @@ skip_pt:		;
 		pap->pa_faces++;
 	}
 	if( pap->pa_faces < 4  || pap->pa_faces > 6 )  {
-		rt_log("arb(%s):  only %d faces present\n",
-			pap->pa_name, pap->pa_faces);
+		rt_log("arb():  only %d faces present\n",
+			pap->pa_faces);
 		return(-1);			/* Error */
 	}
 	return(0);			/* OK */
@@ -402,7 +400,6 @@ int			uv_wanted;
 	RT_ARB_CK_MAGIC(aip);
 
 	pa.pa_doopt = uv_wanted;
-	pa.pa_name = stp->st_name;
 	pa.pa_tol_sq = 0.005;
 
 	if( rt_arb_mk_planes( &pa, aip ) < 0 )  {
@@ -481,37 +478,14 @@ int			uv_wanted;
  *	 0	OK
  *	!0	failure
  */
-#if NEW_IF
 int
 rt_arb_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_arb_prep( stp, rec, rtip )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_arb_internal	*aip;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_arb_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
@@ -879,7 +853,6 @@ register struct soltab *stp;
  *  This draws each edge only once.
  *  XXX No checking for degenerate faces is done, but probably should be.
  */
-#if NEW_IF
 int
 rt_arb_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -889,34 +862,9 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_arb_plot( rp, mat, vhead, dp )
-register union record	*rp;
-register mat_t		mat;
-struct vlhead		*vhead;
-struct directory	*dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_arb_internal	*aip;
 	int			i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_arb_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_arb_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
@@ -1096,7 +1044,6 @@ struct rt_db_internal	*ip;
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
-#if NEW_IF
 int
 rt_arb_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -1107,21 +1054,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_arb_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
-struct nmgregion	**r;
-struct model		*m;
-union record		*rp;
-mat_t			mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
 	struct prep_arb		pa;
@@ -1130,27 +1062,12 @@ double			norm_tol;
 	struct vertex		*verts[8];
 	struct vertex		**vertp[4];
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_arb_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_arb_tess(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct rt_arb_internal *)ip->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
 	bzero( (char *)&pa, sizeof(pa) );
 	pa.pa_doopt = 0;		/* no UV stuff */
-	pa.pa_name = dp->d_namep;
 	pa.pa_tol_sq = 0.005;	/* XXX need real tolerance here! XXX */
 	if( rt_arb_mk_planes( &pa, aip ) < 0 )  return(-2);
 

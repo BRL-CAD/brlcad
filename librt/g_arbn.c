@@ -44,22 +44,12 @@ RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
  *	 0	OK
  *	!0	failure
  */
-#if NEW_IF
 int
 rt_arbn_prep( stp, ep, rtip )
 struct soltab		*stp;
 struct rt_external	*ep;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_arbn_prep( stp, rec, rtip )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-{
-	struct rt_external	ext, *ep;
-#endif
 	struct rt_arbn_internal	*aip;
 	struct rt_db_internal	intern, *ip;
 	vect_t		work;
@@ -69,19 +59,6 @@ struct rt_i	*rtip;
 	int		k;
 	int		*used = (int *)0;	/* plane eqn use count */
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_arbn_import( ip, ep, stp->st_pathmat ) < 0 )  {
-		rt_log("arbn(%s): db import error\n", stp->st_name );
-		return(-1);		/* BAD */
-	}
-#endif
 	RT_CK_DB_INTERNAL( ip );
 	aip = (struct rt_arbn_internal *)intern.idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
@@ -347,7 +324,6 @@ register struct soltab *stp;
  *  plot without requiring extra bookkeeping.
  *  Note that the vectors will be drawn in no special order.
  */
-#if NEW_IF
 int
 rt_arbn_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -357,36 +333,11 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_arbn_plot( rp, mat, vhead, dp )
-union record		*rp;
-mat_t			mat;
-struct vlhead		*vhead;
-struct directory	*dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct rt_arbn_internal	*aip;
 	register int	i;
 	register int	j;
 	register int	k;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_arbn_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_arbn_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	aip = (struct rt_arbn_internal *)ip->idb_ptr;
 	RT_ARBN_CK_MAGIC(aip);
@@ -431,8 +382,8 @@ struct directory	*dp;
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
 					VSUB2( dist, pt, b );
 					if( MAGSQ(dist) < DIST_TOL_SQ )  continue;
-					rt_log("rt_arbn_plot(%s): error, point_count=%d (>2) on edge %d/%d, non-convex\n",
-						dp->d_namep, point_count+1,
+					rt_log("rt_arbn_plot() error, point_count=%d (>2) on edge %d/%d, non-convex\n",
+						point_count+1,
 						i, j );
 					VPRINT(" a", a);
 					VPRINT(" b", b);

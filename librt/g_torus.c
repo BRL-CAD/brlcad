@@ -157,41 +157,18 @@ struct tor_specific {
  *  	A struct tor_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_tor_shot().
  */
-#if NEW_IF
 int
 rt_tor_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_tor_prep( stp, rec, rtip )
-struct soltab		*stp;
-union record		*rec;
-struct rt_i		*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct tor_specific *tor;
 	LOCAL mat_t	R;
 	LOCAL vect_t	P, w1;	/* for RPP calculation */
 	FAST fastf_t	f;
 	struct rt_tor_internal	*tip;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_tor_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
 
@@ -935,7 +912,6 @@ rt_tor_class()
  *	ti.a,ti.b	perpindicular, to CENTER of torus (for top, bottom)
  *
  */
-#if NEW_IF
 int
 rt_tor_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -945,20 +921,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_tor_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
-union record		*rp;
-register mat_t		mat;
-struct vlhead		*vhead;
-struct directory	 *dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	fastf_t		alpha;
 	fastf_t		beta;
 	fastf_t		cos_alpha, sin_alpha;
@@ -974,19 +936,6 @@ double			norm_tol;
 	vect_t		radius;
 	vect_t		edge;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	if( rt_tor_import( &intern, ep, mat ) < 0 )  {
-		rt_log("rt_tor_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);
@@ -1082,7 +1031,6 @@ double			norm_tol;
 /*
  *			R T _ T O R _ T E S S
  */
-#if NEW_IF
 int
 rt_tor_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -1093,21 +1041,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_tor_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
-struct nmgregion	**r;
-struct model		*m;
-register union record	*rp;
-register mat_t		mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	fastf_t		alpha;
 	fastf_t		beta;
 	fastf_t		cos_alpha, sin_alpha;
@@ -1129,20 +1062,6 @@ double			norm_tol;
 	int		nfaces;
 	int		i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_tor_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_tor_tess(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tor_internal *)ip->idb_ptr;
 	RT_TOR_CK_MAGIC(tip);

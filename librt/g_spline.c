@@ -105,39 +105,16 @@ struct local_hit	*rt_spl_ray_poly();
  * determine if this is avalid B_spline solid, and if so prepare the
  * surface so that the subdivision works.
  */
-#if NEW_IF
 int
 rt_spl_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_spl_prep( stp, rec, rtip )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_spl_internal	*sip;
 	struct b_head		*nlist = (struct b_head *) 0;
 	int			i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_spl_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	sip = (struct rt_spl_internal *)ip->idb_ptr;
 	RT_SPL_CK_MAGIC(sip);
 
@@ -244,7 +221,6 @@ rt_spl_class()
 /*
  *			R T _ S P L _ P L O T
  */
-#if NEW_IF
 int
 rt_spl_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -254,37 +230,12 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_spl_plot( rp, mat, vhead, dp )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_spl_internal	*sip;
 	register int	i;
 	register int	j;
 	register fastf_t *vp;
 	int		s;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_spl_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_spl_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	sip = (struct rt_spl_internal *)ip->idb_ptr;
 	RT_SPL_CK_MAGIC(sip);
@@ -1111,7 +1062,6 @@ struct spl_poly * p1;
 /*
  *			R T _ S P L _ T E S S
  */
-#if NEW_IF
 int
 rt_spl_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -1122,38 +1072,9 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_spl_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
-struct nmgregion	**r;
-struct model		*m;
-union record		*rp;
-mat_t			mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_spl_internal	*sip;
 	int	i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_spl_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_spl_tess(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	sip = (struct rt_spl_internal *)ip->idb_ptr;
 	RT_SPL_CK_MAGIC(sip);

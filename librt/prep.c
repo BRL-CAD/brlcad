@@ -236,29 +236,48 @@ register FILE		*fp;
 struct rt_i		*rtip;
 register struct soltab	*stp;
 {
-	union record	*recp;
 	struct vlhead	vhead;
 	struct region	*regp;
 	register struct vlist	*vp;
 	int		rnum;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	int		id = stp->st_id;
 
 	vhead.vh_first = vhead.vh_last = VL_NULL;
-	if( (recp = db_getmrec( rtip->rti_dbip, stp->st_dp )) == (union record *)0 )  {
-		rt_log("rt_plot_solid(%s): db_getmrec() failure\n", stp->st_name);
-		return(-1);		/* FAIL */
+
+	if( db_get_external( &ext, stp->st_dp, rtip->rti_dbip ) < 0 )  {
+		rt_log("rt_plot_solid(%s): db_get_external() failure\n",
+			stp->st_name);
+		return(-1);			/* FAIL */
 	}
-	if( rt_functab[stp->st_id].ft_plot(
-		recp, stp->st_pathmat, &vhead,
-		stp->st_dp,
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, &ext, stp->st_pathmat ) < 0 )  {
+		rt_log("rt_plot_solid(%s):  solid import failure\n",
+			stp->st_name );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		db_free_external( &ext );
+		return(-1);			/* FAIL */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	if( rt_functab[id].ft_plot(
+		&vhead,
+		stp->st_pathmat,
+		&intern,
 		0.0,		/* absolute tolerance */
 		0.01,		/* relative tolerance */
 		0.0		/* normal tolerance */
 	    ) < 0 )  {
-		rt_log("rt_plot_solid(%s): ft_plot() failure\n", stp->st_name);
-		rt_free( (char *)recp, "db record" );
+		rt_log("rt_plot_solid(%s): ft_plot() failure\n",
+			stp->st_name);
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		db_free_external( &ext );
 	    	return(-2);
 	}
-	rt_free( (char *)recp, "db record" );
+    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	db_free_external( &ext );
 
 	/* Take color from one region */
 	if( (rnum = stp->st_maxreg-1) < 0 ) rnum = 0;

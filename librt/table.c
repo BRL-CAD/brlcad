@@ -31,7 +31,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #if __STDC__ && !alliant && !apollo
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_##name##_prep, (struct soltab *stp, \
-			union record *rec, struct rt_i *rtip)); \
+			struct rt_db_internal *ip, struct rt_i *rtip)); \
 	RT_EXTERN(int rt_##name##_shot, (struct soltab *stp, struct xray *rp, \
 			struct application *ap, struct seg *seghead)); \
 	RT_EXTERN(void rt_##name##_print, (struct soltab *stp)); \
@@ -44,15 +44,15 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct hit *hitp, struct soltab *stp)); \
 	RT_EXTERN(int rt_##name##_class, ()); \
 	RT_EXTERN(void rt_##name##_free, (struct soltab *stp)); \
-	RT_EXTERN(int rt_##name##_plot, (union record *rp, mat_t mat, \
-			struct vlhead *vhead, struct directory *dp, \
+	RT_EXTERN(int rt_##name##_plot, (struct vlhead *vhead, \
+			mat_t mat, struct rt_db_internal *ip, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
 			struct seg segp[], int n, struct resource *resp)); \
 	RT_EXTERN(int rt_##name##_tess, (struct nmgregion **r, \
-			struct model *m, union record *rp, \
-			mat_t mat, struct directory *dp, \
+			struct model *m, struct rt_db_internal *ip, \
+			mat_t mat, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(int rt_##name##_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
@@ -66,7 +66,7 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #else
 # define RT_DECLARE_INTERFACE(name)	\
 	RT_EXTERN(int rt_/**/name/**/_prep, (struct soltab *stp, \
-			union record *rec, struct rt_i *rtip)); \
+			struct rt_db_internal *ip, struct rt_i *rtip)); \
 	RT_EXTERN(int rt_/**/name/**/_shot, (struct soltab *stp, struct xray *rp, \
 			struct application *ap, struct seg *seghead)); \
 	RT_EXTERN(void rt_/**/name/**/_print, (struct soltab *stp)); \
@@ -79,15 +79,15 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 			struct hit *hitp, struct soltab *stp)); \
 	RT_EXTERN(int rt_/**/name/**/_class, ()); \
 	RT_EXTERN(void rt_/**/name/**/_free, (struct soltab *stp)); \
-	RT_EXTERN(int rt_/**/name/**/_plot, (union record *rp, mat_t mat, \
-			struct vlhead *vhead, struct directory *dp, \
+	RT_EXTERN(int rt_/**/name/**/_plot, (struct vlhead *vhead, \
+			mat_t mat, struct rt_db_internal *ip, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(void rt_/**/name/**/_vshot, (struct soltab *stp[], \
 			struct xray *rp[], \
 			struct seg segp[], int n, struct resource *resp)); \
 	RT_EXTERN(int rt_/**/name/**/_tess, (struct nmgregion **r, \
-			struct model *m, union record *rp, \
-			mat_t mat, struct directory *dp, \
+			struct model *m, struct rt_db_internal *ip, \
+			mat_t mat, \
 			double abs_tol, double rel_tol, double norm_tol)); \
 	RT_EXTERN(int rt_/**/name/**/_import, (struct rt_db_internal *ip, \
 			struct rt_external *ep, mat_t mat)); \
@@ -208,16 +208,16 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_EBM",	0,
 		rt_ebm_prep,	rt_ebm_shot,	rt_ebm_print,	rt_ebm_norm,
 		rt_ebm_uv,	rt_ebm_curve,	rt_ebm_class,	rt_ebm_free,
-		rt_ebm_plot,	rt_vstub,	rt_nul_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_ebm_plot,	rt_vstub,	rt_ebm_tess,
+		rt_ebm_import,	rt_ebm_export,	rt_ebm_ifree,
+		rt_ebm_describe,
 
 	"ID_VOL",	0,
 		rt_vol_prep,	rt_vol_shot,	rt_vol_print,	rt_vol_norm,
 		rt_vol_uv,	rt_vol_curve,	rt_vol_class,	rt_vol_free,
-		rt_vol_plot,	rt_vstub,	rt_nul_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_vol_plot,	rt_vstub,	rt_vol_tess,
+		rt_vol_import,	rt_vol_export,	rt_vol_ifree,
+		rt_vol_describe,
 
 	"ID_ARBN",	0,
 		rt_arbn_prep,	rt_arbn_shot,	rt_arbn_print,	rt_arbn_norm,
@@ -259,7 +259,9 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 #define NDEF(func,args)	func RT_ARGS(args) { \
 	rt_log("func unimplemented\n"); return(-1); }
 
-int IDEF(rt_nul_prep,(struct soltab *stp,union record *rec,struct rt_i *rtip))
+int IDEF(rt_nul_prep,(struct soltab *stp,
+			struct rt_db_internal *ip,
+			struct rt_i *rtip))
 int IDEF(rt_nul_shot,(struct soltab *stp,
 			struct xray *rp,
 			struct application *ap,
@@ -277,10 +279,9 @@ void DEF(rt_nul_curve,(struct curvature *cvp,
 			struct soltab *stp))
 int IDEF(rt_nul_class,())
 void DEF(rt_nul_free,(struct soltab *stp))
-int NDEF(rt_nul_plot,(union record *rec,
+int NDEF(rt_nul_plot,(struct vlhead *vhead,
 			mat_t mat,
-			struct vlhead *vhead,
-			struct directory *dp,
+			struct rt_db_internal *ip,
 			double abs_tol, double rel_tol, double norm_tol))
 void DEF(rt_nul_vshot,(struct soltab *stp[],
 			struct xray *rp[],
@@ -288,9 +289,8 @@ void DEF(rt_nul_vshot,(struct soltab *stp[],
 			struct resource *resp))
 int NDEF(rt_nul_tess,(struct nmgregion **r,
 			struct model *m,
-			union record *rec,
+			struct rt_db_internal *ip,
 			mat_t mat,
-			struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol))
 int NDEF(rt_nul_import,(struct rt_db_internal *ip,
 			struct rt_external *ep,

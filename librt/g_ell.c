@@ -155,23 +155,12 @@ struct ell_specific {
  *  	A struct ell_specific is created, and it's address is stored in
  *  	stp->st_specific for use by rt_ell_shot().
  */
-#if NEW_IF
 int
 rt_ell_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_ell_prep( stp, rec, rtip )
-struct soltab		*stp;
-union record		*rec;
-struct rt_i		*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct ell_specific *ell;
 	struct rt_ell_internal	*eip;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
@@ -184,18 +173,6 @@ struct rt_i		*rtip;
 	LOCAL fastf_t	f;
 	int		i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_ell_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
 
@@ -629,7 +606,6 @@ fastf_t *A, *B;
 /*
  *			R T _ E L L _ P L O T
  */
-#if NEW_IF
 int
 rt_ell_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -639,20 +615,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_ell_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
-union record		*rp;
-register mat_t		mat;
-struct vlhead		*vhead;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register int		i;
 	struct rt_ell_internal	*eip;
 	fastf_t top[16*3];
@@ -660,20 +622,6 @@ double			norm_tol;
 	fastf_t bottom[16*3];
 	fastf_t	points[3*8];
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_ell_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_ell_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(eip);
@@ -780,7 +728,6 @@ struct vert_strip {
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
-#if NEW_IF
 int
 rt_ell_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -791,21 +738,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_ell_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
-struct nmgregion	**r;
-struct model		*m;
-register union record	*rp;
-register mat_t		mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
 	LOCAL mat_t	invR;
@@ -830,20 +762,6 @@ double			norm_tol;
 	int	blim;		/* base subscript limit */
 	int	tlim;		/* top subscrpit limit */
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_ell_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_ell_tess(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	state.eip = (struct rt_ell_internal *)ip->idb_ptr;
 	RT_ELL_CK_MAGIC(state.eip);
@@ -853,8 +771,7 @@ double			norm_tol;
 	magsq_b = MAGSQ( state.eip->b );
 	magsq_c = MAGSQ( state.eip->c );
 	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
-		rt_log("rt_ell_tess(%s):  zero length A, B, or C vector\n",
-			dp->d_namep );
+		rt_log("rt_ell_tess():  zero length A, B, or C vector\n");
 		return(-2);		/* BAD */
 	}
 
@@ -869,17 +786,17 @@ double			norm_tol;
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell(%s):  A not perpendicular to B, f=%f\n",dp->d_namep, f);
+		rt_log("ell():  A not perpendicular to B, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Bu, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell(%s):  B not perpendicular to C, f=%f\n",dp->d_namep, f);
+		rt_log("ell():  B not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 	f = VDOT( Au, Cu );
 	if( ! NEAR_ZERO(f, 0.005) )  {
-		rt_log("ell(%s):  A not perpendicular to C, f=%f\n",dp->d_namep, f);
+		rt_log("ell():  A not perpendicular to C, f=%f\n", f);
 		return(-3);		/* BAD */
 	}
 

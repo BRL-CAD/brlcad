@@ -78,23 +78,12 @@ struct  tgc_specific {
  *  space to the original space.  This NOT the inverse of the transformation
  *  matrix (if you really want to know why, talk to Ed Davisson).
  */
-#if NEW_IF
 int
 rt_tgc_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_tgc_prep( stp, rec, rtip )
-struct soltab		*stp;
-union record		*rec;
-struct rt_i		*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_tgc_internal	*tip;
 	register struct tgc_specific *tgc;
 	register fastf_t	f;
@@ -107,18 +96,6 @@ struct rt_i		*rtip;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_tgc_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
 
@@ -1645,7 +1622,6 @@ struct rt_db_internal	*ip;
 /*
  *			R T _ T G C _ P L O T
  */
-#if NEW_IF
 int
 rt_tgc_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -1655,17 +1631,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_tgc_plot( rp, mat, vhead, dp )
-union record	*rp;
-register mat_t	mat;
-struct vlhead	*vhead;
-struct directory *dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
 	LOCAL fastf_t		top[16*3];
@@ -1673,20 +1638,6 @@ struct directory *dp;
 	LOCAL vect_t		work;		/* Vec addition work area */
 	LOCAL fastf_t		points[3*8];
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_tgc_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_tgc_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);
@@ -1803,7 +1754,6 @@ struct soltab *stp;
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
  */
-#if NEW_IF
 int
 rt_tgc_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -1814,18 +1764,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_tgc_tess( r, m, rp, mat, dp )
-struct nmgregion	**r;
-struct model		*m;
-union record	*rp;
-register mat_t	mat;
-struct directory *dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct shell		*s;
 	register int		i;
 	LOCAL fastf_t		top[16*3];
@@ -1842,20 +1780,6 @@ struct directory *dp;
 	int			face;
 	plane_t			plane;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_tgc_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_tgc_tess(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	tip = (struct rt_tgc_internal *)ip->idb_ptr;
 	RT_TGC_CK_MAGIC(tip);

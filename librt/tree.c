@@ -179,6 +179,8 @@ int			id;
 	register struct soltab	*stp;
 	union tree		*curtree;
 	struct directory	*dp;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern;
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
@@ -220,30 +222,16 @@ next_one: ;
 	VSETALL( stp->st_max, -INFINITY );
 	VSETALL( stp->st_min,  INFINITY );
 
-#if 1
-	/*
-	 * "rec" points to array of all relevant records, in
-	 *  database format.  xxx_prep() routine is responsible for
-	 *  import/export issues.
-	 */
-	if( rt_functab[id].ft_prep( stp, rp, rt_tree_rtip ) )  {
-		/* Error, solid no good */
-		rt_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep );
-		rt_free( (char *)stp, "struct soltab");
-		return( TREE_NULL );		/* BAD */
-	}
-#else
-    {
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern;
-
+	/* XXX this should be passed in as an arg */
 	ep = &ext;
 	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
+	ep->ext_buf = (genptr_t)rp;
 	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
 
+    	RT_INIT_DB_INTERNAL(&intern);
 	if( rt_functab[id].ft_import( &intern, ep, stp->st_pathmat ) < 0 )  {
 		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 		rt_free( (char *)stp, "struct soltab");
 		return( TREE_NULL );		/* BAD */
 	}
@@ -252,7 +240,8 @@ next_one: ;
 	if(rt_g.debug&DEBUG_SOLIDS)  {
 		struct rt_vls	str;
 		rt_vls_init( &str );
-		if( rt_functab[id].ft_describe( &str, &intern, 1 ) < 0 )  {
+		/* verbose=1, mm2local=1.0 */
+		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
 			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
 				dp->d_namep );
 		}
@@ -272,8 +261,6 @@ next_one: ;
 		return( TREE_NULL );		/* BAD */
 	}
     	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-    }
-#endif
 	id = stp->st_id;	/* type may have changed in prep */
 
 	/* For now, just link them all onto the same list */

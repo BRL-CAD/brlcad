@@ -52,41 +52,16 @@ RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
  *  	A struct pipe_specific is created, and it's address is stored in
  *  	stp->st_specific for use by pipe_shot().
  */
-#if NEW_IF
 int
 rt_pipe_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_pipe_prep( stp, rec, rtip )
-struct soltab		*stp;
-union record		*rec;
-struct rt_i		*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct pipe_specific *pipe;
 	struct rt_pipe_internal	*pip;
 	int			i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	i = rt_pipe_import( &intern, ep, stp->st_pathmat );
-	if( i < 0 )  {
-		rt_log("rt_pipe_setup(%s): db import failure\n", stp->st_name);
-		return(-1);		/* BAD */
-	}
-#endif
 	RT_CK_DB_INTERNAL( ip );
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
@@ -230,7 +205,6 @@ rt_pipe_class()
 /*
  *			R T _ P I P E _ P L O T
  */
-#if NEW_IF
 int
 rt_pipe_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -240,20 +214,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_pipe_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
-double		abs_tol;
-double		rel_tol;
-double		norm_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct wdb_pipeseg	*psp;
 	register struct wdb_pipeseg	*np;
 	struct rt_pipe_internal	*pip;
@@ -261,20 +221,6 @@ double		norm_tol;
 	point_t		pt;
 	int		i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_pipe_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_pipe_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);

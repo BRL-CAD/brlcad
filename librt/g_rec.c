@@ -162,7 +162,6 @@ struct rec_specific {
  *  	stp->st_specific for use by rt_rec_shot().
  *	If the TGC is really an REC, stp->st_id is modified to ID_REC.
  */
-/* NEW_IF already */
 int
 rt_rec_prep( stp, ip, rtip )
 struct soltab		*stp;

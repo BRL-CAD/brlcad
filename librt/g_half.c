@@ -59,38 +59,15 @@ struct half_specific  {
 /*
  *  			R T _ H L F _ P R E P
  */
-#if NEW_IF
 int
 rt_hlf_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_hlf_prep( stp, rec, rtip )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_half_internal	*hip;
 	register struct half_specific *halfp;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_hlf_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);
 
@@ -418,7 +395,6 @@ rt_hlf_class()
  *  We just make a cross in the plane, with the outward normal
  *  drawn shorter.
  */
-#if NEW_IF
 int
 rt_hlf_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -428,17 +404,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_hlf_plot( rp, mat, vhead, dp )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
 	vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -446,19 +411,6 @@ struct directory *dp;
 	vect_t y1, y2;
 	vect_t tip;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	if( rt_hlf_import( &intern, ep, mat ) < 0 )  {
-		rt_log("rt_hlf_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	hip = (struct rt_half_internal *)ip->idb_ptr;
 	RT_HALF_CK_MAGIC(hip);

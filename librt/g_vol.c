@@ -578,23 +578,12 @@ struct rt_db_internal	*ip;
  *	A struct rt_vol_specific is created, and it's address is stored
  *	in stp->st_specific for use by rt_vol_shot().
  */
-#if NEW_IF
 int
 rt_vol_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-#else
-int
-rt_vol_prep( stp, rec, rtip )
-struct soltab	*stp;
-union record	*rec;
-struct rt_i	*rtip;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_vol_internal	*vip;
 	register struct rt_vol_specific *volp;
 	vect_t	norm;
@@ -602,18 +591,6 @@ struct rt_i	*rtip;
 	vect_t	diam;
 	vect_t	small;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rec;
-	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
-	ip = &intern;
-	if( rt_vol_import( ip, ep, stp->st_pathmat ) < 0 )
-		return(-1);		/* BAD */
-	RT_CK_DB_INTERNAL( ip );
-#endif
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	RT_VOL_CK_MAGIC(vip);
 
@@ -780,7 +757,6 @@ rt_vol_class()
 /*
  *			R T _ V O L _ P L O T
  */
-#if NEW_IF
 int
 rt_vol_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
 struct vlhead	*vhead;
@@ -790,37 +766,12 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_vol_plot( rp, mat, vhead, dp )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	register struct rt_vol_internal *vip;
 	register short	x,y,z;
 	register short	v1,v2;
 	point_t		a,b,c,d;
 	int		i;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_vol_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_vol_plot(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	RT_VOL_CK_MAGIC(vip);
@@ -941,7 +892,6 @@ register struct rt_vol_internal	*vip;
 /*
  *			R T _ V O L _ T E S S
  */
-#if NEW_IF
 int
 rt_vol_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
 struct nmgregion	**r;
@@ -952,20 +902,6 @@ double		abs_tol;
 double		rel_tol;
 double		norm_tol;
 {
-#else
-int
-rt_vol_tess( r, m, rp, mat, dp, abs_tol, rel_tol )
-struct nmgregion	**r;
-struct model		*m;
-register union record	*rp;
-register mat_t		mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-{
-	struct rt_external	ext, *ep;
-	struct rt_db_internal	intern, *ip;
-#endif
 	struct rt_vol_internal	*vip;
 	register int	i;
 	struct shell	*s;
@@ -973,20 +909,6 @@ double			rel_tol;
 	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
 	struct faceuse	*fu;
 
-#if NEW_IF
-	/* All set */
-#else
-	ep = &ext;
-	RT_INIT_EXTERNAL(ep);
-	ep->ext_buf = (genptr_t)rp;
-	ep->ext_nbytes = dp->d_len*sizeof(union record);
-	i = rt_vol_import( &intern, ep, mat );
-	if( i < 0 )  {
-		rt_log("rt_vol_tess(): db import failure\n");
-		return(-1);		/* BAD */
-	}
-	ip = &intern;
-#endif
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
 	RT_VOL_CK_MAGIC(vip);

@@ -74,7 +74,6 @@ struct sph_specific {
  *  	stp->st_specific for use by rt_sph_shot().
  *	If the ELL is really a SPH, stp->st_id is modified to ID_SPH.
  */
-/* NEW_IF already */
 int
 rt_sph_prep( stp, ip, rtip )
 struct soltab		*stp;
