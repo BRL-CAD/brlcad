@@ -74,10 +74,9 @@ static int cut_count=0;		/* count of assembly cut HAF solids created */
 static int do_regex=0;		/* flag to indicate if 'u' option is in effect */
 static int do_simplify=0;	/* flag to try to simplify solids */
 static regex_t reg_cmp;		/* compiled regular expression */
-static char *proe_usage="%s [-sdarSn] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] proe_file.brl output.g\n\
+static char *proe_usage="%s [-darS] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x rt_debug_flag] proe_file.brl output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
-	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
 	The -I option sets the non-negative ident number that will be assigned to all regions (conflicts with -i).\n\
@@ -91,12 +90,11 @@ static char *proe_usage="%s [-sdarSn] [-i initial_ident] [-I constant_ident] [-m
 		previously converted Pro/E assemblies.\n\
 	The -S option indicates that the input file is raw STL (STereoLithography) format.\n\
 	The -x option specifies an RT debug flags (see cad/librt/debug.h).\n";
-static char *stl_usage="%s [-dsan] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
+static char *stl_usage="%s [-da] [-N forced_name] [-i initial_ident] [-I constant_ident] [-m material_code] [-c units_str] [-u reg_exp] [-x rt_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
 	The -c option specifies the units used in the STL file (units_str may be \"in\", \"ft\",... default is \"mm\"\n\
 	The -N option specifies a name to use for the object.\n\
-	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
 	The -i option sets the initial region ident number (default is 1000).\n\
 	The -I option sets the ident number that will be assigned to all regions (conflicts with -i).\n\
@@ -286,45 +284,7 @@ int type;
 	if( type != CUT_SOLID_TYPE )
 	{
 		/* make sure brlcad_name is unique */
-#if 0
-		suffix_insert = strlen( ptr->brlcad_name );
-		if( suffix_insert > NAMESIZE - 3 )
-			suffix_insert = NAMESIZE - 3;
-
-		strncpy( tmp_name, ptr->brlcad_name, NAMESIZE );
-		if( debug )
-			bu_log( "\tMaking sure %s is a unique name\n", tmp_name );
-		ptr2 = name_root;
-		while( ptr2 )
-		{
-			if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
-			{
-				if( debug )
-					bu_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
-				try_char++;
-				if( try_char == '[' )
-					try_char = 'a';
-				if( debug )
-					bu_log( "\t\t\ttry_char = %c\n", try_char );
-				if( try_char == '{' )
-				{
-					bu_log( "Too many objects with same name (%s)\n" , ptr->brlcad_name );
-					exit(1);
-				}
-
-				strncpy( tmp_name, ptr->brlcad_name, NAMESIZE );
-				sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
-				if( debug )
-					bu_log( "\t\tNew name to try is %s\n", tmp_name );
-				ptr2 = name_root;
-			}
-			else
-				ptr2 = ptr2->next;
-		}
-		strncpy( ptr->brlcad_name, tmp_name, NAMESIZE );
-#else
 		strncpy( ptr->brlcad_name, Build_unique_name( name ), NAMESIZE );
-#endif
 	}
 
 	if( type == ASSEMBLY_TYPE )
@@ -351,40 +311,7 @@ int type;
 		suffix_insert = NAMESIZE - 3;
 
 	strncpy( tmp_name, ptr->solid_name, NAMESIZE );
-#if 0
-	ptr2 = name_root;
-	try_char = '@';
-	while( ptr2 )
-	{
-		if( !strncmp( tmp_name , ptr2->brlcad_name , NAMESIZE ) || !strncmp( tmp_name , ptr2->solid_name , NAMESIZE ) )
-		{
-			if( debug )
-				bu_log( "\t\t%s matches existing name (%s or %s)\n", tmp_name, ptr2->brlcad_name, ptr2->solid_name );
-			try_char++;
-			if( try_char == '[' )
-				try_char = 'a';
-			if( debug )
-				bu_log( "\t\t\ttry_char = %c\n", try_char );
-			if( try_char == '{' )
-			{
-				bu_log( "Too many solids with same name (%s)\n" , ptr->solid_name );
-				exit(1);
-			}
-
-			strncpy( tmp_name, ptr->solid_name, NAMESIZE );
-			sprintf( &tmp_name[suffix_insert] , "_%c" , try_char );
-			if( debug )
-				bu_log( "\t\tNew name to try is %s\n", tmp_name );
-			ptr2 = name_root;
-		}
-		else
-			ptr2 = ptr2->next;
-	}
-
-	strncpy( ptr->solid_name, tmp_name, NAMESIZE );
-#else
 	strncpy( ptr->solid_name, Build_unique_name( ptr->solid_name ), NAMESIZE );
-#endif
 	return( ptr );
 }
 
@@ -746,106 +673,7 @@ point_t min, max;
 		while( isspace( line1[++(*start)] ) );
 	}
 }
-#if 0
-static int
-Unbreak_shell_edges( s_in )
-struct shell *s_in;
-{
-	struct faceuse *fu;
-	int count=0;
 
-	NMG_CK_SHELL( s_in );
-
-	for( BU_LIST_FOR( fu, faceuse, &s_in->fu_hd ) )
-	{
-		struct loopuse *lu;
-
-		for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
-		{
-			struct edgeuse *eu;
-
-			if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-				continue;
-
-			eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
-			while( BU_LIST_NOT_HEAD( &eu->l, &lu->down_hd ))
-			{
-				struct edgeuse *next_eu, *prev_eu;
-
-				next_eu = BU_LIST_PNEXT( edgeuse, &eu->l );
-				prev_eu = BU_LIST_PPREV_CIRC( edgeuse, &eu->l );
-
-				if( prev_eu == next_eu )
-					break;
-
-				if( prev_eu->g.magic_p == eu->g.magic_p )
-				{
-					if( nmg_unbreak_shell_edge_unsafe( prev_eu ) > 0 )
-						count++;
-				}
-
-				eu = next_eu;
-			}
-		}
-	}
-	return( count );
-}
-void
-Check_edge_uses( m )
-struct model *m;
-{
-	struct bu_ptbl edges;
-	int i;
-	int use_count;
-	long bad_count=0;
-
-	if( !m )
-		return;
-
-	NMG_CK_MODEL( m );
-
-	bu_ptbl_init( &edges, 64, "edge list" );
-
-	nmg_edge_tabulate( &edges, &m->magic );
-
-	for( i=0 ; i<BU_PTBL_END( &edges ) ; i++ )
-	{
-		struct edge *e;
-		struct edgeuse *eu_start;
-		struct edgeuse *eu;
-
-		e = (struct edge *)BU_PTBL_GET( &edges, i );
-
-		use_count = 1;
-		eu_start = e->eu_p;
-		eu = eu_start->radial_p->eumate_p;
-		while( eu != eu_start && eu->eumate_p != eu_start )
-		{
-			eu = eu->radial_p->eumate_p;
-			use_count++;
-		}
-
-		if( use_count != 2 )
-		{
-			struct vertex_g *vg1, *vg2;
-
-			bad_count++;
-
-			vg1 = eu->vu_p->v_p->vg_p;
-			vg2 = eu->eumate_p->vu_p->v_p->vg_p;
-
-			bu_log( "\tedge has %d uses (should always be 2!!!)\n", use_count );
-			bu_log( "\t\t(%g %g %g) <-> (%g %g %g)\n",
-				V3ARGS( vg1->coord ), V3ARGS( vg2->coord ) );
-		}
-	}
-
-	if( bad_count )
-		bu_log( "%d of %d edges had the wrong number of uses\n", bad_count, BU_PTBL_END( &edges ) );
-
-	bu_ptbl_free( &edges );
-}
-#endif
 int
 Add_vert( x, y, z )
 fastf_t x, y, z;
@@ -859,7 +687,7 @@ fastf_t x, y, z;
 	VSET( new_v, x, y, z );
 
 	/* first search for this vertex in list */
-	for( i=0 ; i<bot_vsize ; i++ )
+	for( i=0 ; i<bot_vcurr ; i++ )
 	{
 		v = &bot_verts[i*3];
 		VSUB2( diff, v, new_v );
@@ -907,15 +735,6 @@ int face[3];
 }
 
 static void
-Make_bot( solid_name )
-char *solid_name;
-{
-	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_CCW, 0, bot_vcurr, bot_fcurr, bot_verts, bot_faces, NULL, NULL );
-	bot_vcurr = 0;
-	bot_fcurr = 0;
-}
-
-static void
 Convert_part( line )
 char line[MAX_LINE_LEN];
 {
@@ -950,6 +769,8 @@ char line[MAX_LINE_LEN];
 	}
 
 
+	bot_vcurr = 0;
+	bot_fcurr = 0;
 	BU_LIST_INIT( &head.l );
 	VSETALL( part_min, MAX_FASTF );
 	VSETALL( part_max, -MAX_FASTF );
@@ -1145,7 +966,7 @@ char line[MAX_LINE_LEN];
 
 				bu_log( "Making Face:\n" );
 				for( n=0 ; n<3; n++ )
-					bu_log( "\t( %g %g %g )\n" , V3ARGS( &bot_verts[tmp_face[n]] ) );
+					bu_log( "\tvertex #%d: ( %g %g %g )\n", tmp_face[n], V3ARGS( &bot_verts[3*tmp_face[n]] ) );
 			}
 
 			Add_face( tmp_face );
@@ -1196,7 +1017,7 @@ char line[MAX_LINE_LEN];
 			bu_log( "\t%d faces were too small\n", small_count );
 	}
 
-	Make_bot( solid_name );
+	mk_bot( fd_out, solid_name, RT_BOT_SOLID, RT_BOT_CCW, 0, bot_vcurr, bot_fcurr, bot_verts, bot_faces, NULL, NULL );
 
 	if( face_count && !solid_in_region )
 	{
