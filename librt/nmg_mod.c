@@ -4250,7 +4250,7 @@ struct edgeuse	*eu1_first;
 	}
 	NMG_CK_EDGE_G_LSEG(eg);
 
-	/* if the edge geometry doesn't have at least four edgeuses, this
+	/* If the edge geometry doesn't have at least four edgeuses, this
 	 * is not a candidate for unbreaking */		
 	if( rt_list_len( &eg->eu_hd2 ) < 2*2 )  {
 		ret = -2;
@@ -4334,6 +4334,14 @@ struct edgeuse	*eu1_first;
 			V3ARGS( vb->vg_p->coord ),
 			V3ARGS( vc->vg_p->coord ) );
 	}
+
+	if( va == vc )
+	{
+		/* rt_log( "nmg_unbreak_edge( eu=%x ): Trying to break a jaunt, va==vc (%x)\n", eu1_first, va ); */
+		ret = -9;
+		goto out;
+	}
+		
 
 	/* visit all the edgeuse pairs radial to eu1 */
 	for(;;)  {
