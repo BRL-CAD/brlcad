@@ -22,16 +22,17 @@
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "machine.h"
 #include "vmath.h"
@@ -219,7 +220,7 @@ char	*argv[];
 		if( (dp=db_lookup( dbip, argv[optind], LOOKUP_NOISY)) == DIR_NULL )
 			continue;
 
-		if( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity )) < 0 )
+		if( (id=rt_db_get_internal( &ip, dp, dbip, bn_mat_identity, &rt_uniresource )) < 0 )
 		{
 			bu_log( "Cannot get object (%s).....ignoring\n", dp->d_namep );
 			continue;
@@ -228,7 +229,7 @@ char	*argv[];
 		if( id != ID_NMG )
 		{
 			bu_log( "%s is not an NMG......ignoring\n", dp->d_namep );
-			rt_db_free_internal( &ip );
+			rt_db_free_internal( &ip, &rt_uniresource );
 			continue;
 		}
 
@@ -236,7 +237,7 @@ char	*argv[];
 		NMG_CK_MODEL( m );
 
 		write_model_as_sgp( m );
-		rt_db_free_internal( &ip );
+		rt_db_free_internal( &ip, &rt_uniresource );
 	}
 
 	fprintf( fp_out, "end_object\n" );
