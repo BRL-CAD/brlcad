@@ -204,5 +204,12 @@ then
 	exit 1		# Die
 fi
 
+############################################################################
+#
+#  Make final preparations to ready things for compilation.
+#
+############################################################################
+make mkdir		# Won't have any effect unless NFS is set.
+
 # Congratulations.  Everything is fine.
 echo "BRL-CAD initial setup is complete."
