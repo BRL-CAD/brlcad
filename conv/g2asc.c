@@ -130,9 +130,9 @@ char **argv;
 		struct directory *dp;
 
 		bu_log("Attempting to export Release 6 database\n" );
-		bu_log("\tNote that the binary format is machine independent\n");
-		bu_log("\tConverting to ASCII to move database to a different architecture\n");
-		bu_log("\tis no longer necessary.\n");
+		bu_log("  Note that the Release 6 binary format is machine independent\n");
+		bu_log("  Converting to ASCII to move database to a different\n");
+		bu_log("  computer architecture is no longer necessary.\n");
 		interp = Tcl_CreateInterp();
 		/* This runs the init.tcl script */
 		if( Tcl_Init(interp) == TCL_ERROR )
