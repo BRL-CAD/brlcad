@@ -127,7 +127,7 @@ proc copy_tree { args } {
 
 			if { $type != "comb" } {
 				# this is a solid
-				if { [catch {cp $leaf $new_name} ret] } {
+				if { [catch {eval db put $new_name $leaf_db} ret] } {
 					error "Cannot create copy of primitive $leaf as $new_name\n\t$ret"
 				}
 			} else {
@@ -140,7 +140,7 @@ proc copy_tree { args } {
 					set region 1
 					if { $depth == "regions" } {
 						# just copy the region to the new name
-						if { [catch {cp $leaf $new_name} ret] } {
+						if { [catch {eval db put $new_name $leaf_db} ret] } {
 							error "Cannot create copy of region $leaf as $new_name\n\t$ret"
 						}
 						# adjust region id
@@ -161,7 +161,7 @@ proc copy_tree { args } {
 				incr index
 				set old_tree [lindex $leaf_db $index]
 				set new_tree [eval copy_tree $opt_str [list $old_tree]]
-				if { [catch {cp $leaf $new_name} ret] } {
+				if { [catch {eval db put $new_name $leaf_db} ret] } {
 					error "Cannot create copy of combination $leaf as $new_name\n\t$ret"
 				}
 				if { [catch {db adjust $new_name tree $new_tree} ret] } {
@@ -253,7 +253,7 @@ proc copy_obj { args } {
 		}
 		# just copy the solid to a new name
 		set new_name [create_new_name $obj $sstr $rstr $increment]
-		if { [catch {cp $obj $new_name} ret] } {
+		if { [catch {eval db put $new_name $obj_db} ret] } {
 			error "cannot copy $obj to $new_name!!!\n\t$ret"
 		}
 		return $new_name
@@ -272,7 +272,7 @@ proc copy_obj { args } {
 		if { $depth == "regions" } {
 			# just copy this region to a new name
 			set new_name [create_new_name $obj $sstr $rstr $increment]
-			if { [catch {cp $obj $new_name} ret] } {
+			if { [catch {eval db put $new_name $obj_db} ret] } {
 				error "Cannot copy $obj to $new_name!!!\n\t$ret"
 			}
 			set regdef [regdef]
@@ -296,7 +296,7 @@ proc copy_obj { args } {
 	set tree [lindex $obj_db $tree_idx]
 	set new_tree [eval copy_tree $opt_str [list $tree]]
 	set new_name [create_new_name $obj $sstr $rstr $increment]
-	if { [catch {cp $obj $new_name} ret] } {
+	if { [catch {eval db put $new_name $obj_db} ret] } {
 		error "Cannot copy $obj to $new_name!!!\n\t$ret"
 	}
 	if { [catch {db adjust $new_name tree $new_tree} ret] } {
