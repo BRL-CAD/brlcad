@@ -714,12 +714,12 @@ int	frame;		/* frame number */
 	}
 	sinme.sin_port = 0;		/* let kernel pick it */
 
-	if( bind(netfd, (char *)&sinme, sizeof(sinme)) < 0 )  {
+	if( bind(netfd, (struct sockaddr *)&sinme, sizeof(sinme)) < 0 )  {
 		perror("bind()");
 		goto err;
 	}
 
-	if( connect(netfd, (char *)&sinhim, sizeof(sinhim)) < 0 )  {
+	if( connect(netfd, (struct sockaddr *)&sinhim, sizeof(sinhim)) < 0 ) {
 		perror("connect()");
 		goto err;
 	}
