@@ -99,9 +99,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
-
 #define SHMEM_KEY	42
 
+int X24_refresh();
+int X24_close_existing();
 int X24_open_existing();
 static int _X24_open_existing();
 
@@ -134,8 +135,8 @@ static	int	linger();
 static	int	xsetup();
 static	void	print_display_info();	/* debug */
 
-static void	handle_event FB_ARGS((FBIO *ifp, XEvent *event));
-
+static void X24_handle_event FB_ARGS((FBIO *ifp, XEvent *event));
+void X24_configureWindow FB_ARGS((FBIO *ifp, int width, int height));
 
 /* This is the ONLY thing that we normally "export" */
 FBIO X24_interface =  {
@@ -595,7 +596,7 @@ GC gc;
   ifp->if_ycenter = height/2;
 
   /* create a struct of state information */
-  if ((xi = (struct xinfo *) calloc(1, sizeof(struct xinfo))) == NULL) {
+  if ((xi = (struct xinfo *)calloc(1, sizeof(struct xinfo))) == NULL) {
     fb_log("X24_open: xinfo malloc failed\n");
     return -1;
   }
@@ -703,6 +704,8 @@ FBIO    *ifp;
     XDestroyRegion(xi->xi_reg);
 
   free((char *)xi);
+
+  return (0);
 }
 
 static void
@@ -756,44 +759,45 @@ X24_clear(ifp, pp)
 FBIO	*ifp;
 unsigned char	*pp;
 {
-	struct xinfo *xi = XI(ifp);
+  struct xinfo *xi = XI(ifp);
 
-	int red, grn, blu;
-	int npix;
-	int n;
-	unsigned char *cp;
+  int red, grn, blu;
+  int npix;
+  int n;
+  unsigned char *cp;
 
 #if X_DBG
-printf("X24_clear(ifp:0x%x, pp:0x%x) pixel = (%d, %d, %d): entered.\n",
-	ifp, pp, pp[RED], pp[GRN], pp[BLU]);
+  printf("X24_clear(ifp:0x%x, pp:0x%x) pixel = (%d, %d, %d): entered.\n",
+	 ifp, pp, pp[RED], pp[GRN], pp[BLU]);
 #endif
 
-	red = pp[RED];
-	grn = pp[GRN];
-	blu = pp[BLU];
+  if(pp == (unsigned char *)NULL){
+    red = grn = blu = 0;
+  }else{
+    red = pp[RED];
+    grn = pp[GRN];
+    blu = pp[BLU];
+  }
 
-	/* Clear the backing store */
+  /* Clear the backing store */
+  npix = xi->xi_iwidth * xi->xi_xheight;
 
-	npix = xi->xi_iwidth * xi->xi_xheight;
+  if(red == grn && red == blu){
+    memset(xi->xi_mem, red, npix*3);
+  }else{
+    cp = xi->xi_mem;
+    n = npix;
+    while(n--){
+      *cp++ = red;
+      *cp++ = grn;
+      *cp++ = blu;
+    }
+  }
 
-	if (pp == (unsigned char *) NULL) {
-		memset(xi->xi_mem, 0, npix*3);
-	} else if (red == grn && red == blu) {
-		memset(xi->xi_mem, red, npix*3);
-	} else {
-		cp = xi->xi_mem;
-		n = npix;
-		while (n--) {
-			*cp++ = red;
-			*cp++ = grn;
-			*cp++ = blu;
-		}
-	}
+  X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight,
+	   BLIT_DISP | BLIT_PZ);
 
-	X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight,
-		BLIT_DISP | BLIT_PZ);
-
-	return(0);
+  return(0);
 }
 
 
@@ -1259,7 +1263,7 @@ printf("X24_poll(ifp:0x%x) entered\n", ifp);
 
 	/* Check for and dispatch event */
 	while (XCheckMaskEvent(xi->xi_dpy, ~NoEventMask, &event))
-	    handle_event(ifp, &event);
+	  X24_handle_event(ifp, &event);
 
 	return(0);
 }
@@ -1749,8 +1753,8 @@ printf("Creating window\n");
 	case FLG_VP8:
 	case FLG_VS8:
 	case FLG_VG8:
-		if ((xi->xi_pix =
-		    (unsigned char *) malloc(width*height)) == NULL) {
+		if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
+							   width*height)) == NULL) {
 			fb_log("X24_open: pix8 malloc failed\n");
 			return(-1);
 		}
@@ -1766,9 +1770,8 @@ printf("Creating window\n");
 			xi->xi_visual, xi->xi_depth, XYBitmap, 0,
 			NULL, width, height, 32, 0);
 
-		if ((xi->xi_pix =
-		    (unsigned char *) malloc(xi->xi_image->bytes_per_line *
-		    height)) == NULL) {
+		if ((xi->xi_pix = (unsigned char *) calloc(sizeof(char),
+							   xi->xi_image->bytes_per_line * height)) == NULL) {
 			fb_log("X24_open: pix1 malloc failed\n");
 			return(-1);
 		}
@@ -1815,232 +1818,238 @@ FBIO	*ifp;
 
 	while(alive) {
 		XNextEvent(xi->xi_dpy, &event);
-		handle_event(ifp, &event);
+		X24_handle_event(ifp, &event);
 	}
 	return (0);
 }
 
 
 static void
-handle_event(ifp, event)
-FBIO	*ifp;
+X24_handle_event(ifp, event)
+FBIO *ifp;
 XEvent *event;
 {
-	struct xinfo *xi = XI(ifp);
+  struct xinfo *xi = XI(ifp);
 
-
-	switch((int) event->type) {
-	case Expose: {
-		XExposeEvent	*expose = (XExposeEvent *) event;
-
-		int ex1, ey1, ex2, ey2;
-
-#if EVENT_DBG
-printf("expose event x= %d y= %d width= %d height= %d\n",
-	expose->x, expose->y, expose->width, expose->height);
-#endif
-
-		ex1 = expose->x;
-		ey1 = expose->y;
-		ex2 = ex1 + expose->width - 1;
-		ey2 = ey1 + expose->height - 1;
-
-		/* Clip to outline of valid bits in window */
-
-		if (ex1 < xi->xi_xlf)
-			ex1 = xi->xi_xlf;
-		if (ex2 > xi->xi_xrt)
-			ex2 = xi->xi_xrt;
-		if (ey1 < xi->xi_xtp)
-			ey1 = xi->xi_xtp;
-		if (ey2 > xi->xi_xbt)
-			ey2 = xi->xi_xbt;
+  switch((int)event->type){
+  case Expose:
+    {
+      XExposeEvent *expose = (XExposeEvent *)event;
+      int ex1, ey1, ex2, ey2;
 
 #if EVENT_DBG
-printf("expose limits (%d, %d) to (%d, %d)\n",
-	xi->xi_xlf, xi->xi_xtp, xi->xi_xrt, xi->xi_xbt);
-printf("clipped expose (%d, %d) to (%d, %d)\n",
-	ex1, ey1, ex2, ey2);
+      printf("expose event x= %d y= %d width= %d height= %d\n",
+	     expose->x, expose->y, expose->width, expose->height);
 #endif
 
-		if (ex2 >= ex1 && ey2 >= ey1)
-			XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc,
-				xi->xi_image, ex1, ey1, ex1,
-				ey1, ex2 - ex1 + 1, ey2 - ey1 + 1);
-		break;
+      ex1 = expose->x;
+      ey1 = expose->y;
+      ex2 = ex1 + expose->width - 1;
+      ey2 = ey1 + expose->height - 1;
+
+      /* Clip to outline of valid bits in window */
+      if (ex1 < xi->xi_xlf)
+	ex1 = xi->xi_xlf;
+      if (ex2 > xi->xi_xrt)
+	ex2 = xi->xi_xrt;
+      if (ey1 < xi->xi_xtp)
+	ey1 = xi->xi_xtp;
+      if (ey2 > xi->xi_xbt)
+	ey2 = xi->xi_xbt;
+
+#if EVENT_DBG
+      printf("expose limits (%d, %d) to (%d, %d)\n",
+	     xi->xi_xlf, xi->xi_xtp, xi->xi_xrt, xi->xi_xbt);
+      printf("clipped expose (%d, %d) to (%d, %d)\n",
+	     ex1, ey1, ex2, ey2);
+#endif
+
+      if (ex2 >= ex1 && ey2 >= ey1)
+	XPutImage(xi->xi_dpy, xi->xi_win, xi->xi_gc,
+		  xi->xi_image, ex1, ey1, ex1,
+		  ey1, ex2 - ex1 + 1, ey2 - ey1 + 1);
+      break;
+    }
+  case ButtonPress:
+    {
+      int button = (int) event->xbutton.button;
+      if (button == Button1) {
+	/* Check for single button mouse remap.
+	 * ctrl-1 => 2
+	 * meta-1 => 3
+	 */
+	if (event->xbutton.state & ControlMask)
+	  button = Button2;
+	else if (event->xbutton.state & Mod1Mask)
+	  button = Button3;
+      }
+
+      switch(button){
+      case Button1:
+	break;
+      case Button2:
+	{
+	  int	x, sy;
+	  int	ix, isy;
+	  unsigned char	*cp;
+
+	  x = event->xbutton.x;
+	  sy = xi->xi_xheight - event->xbutton.y - 1;
+
+	  x -= xi->xi_xlf;
+	  sy -= xi->xi_xheight - xi->xi_xbt - 1;
+	  if(x < 0 || sy < 0){
+	    fb_log("No RGB (outside image) 1\n");
+	    break;
+	  }
+
+	  if (x < xi->xi_ilf_w)
+	    ix = xi->xi_ilf;
+	  else
+	    ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
+
+	  if (sy < xi->xi_ibt_h)
+	    isy = xi->xi_ibt;
+	  else
+	    isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
+
+	  if(ix >= xi->xi_iwidth || isy >= xi->xi_iheight){
+	    fb_log("No RGB (outside image) 2\n");
+	    break;
+	  }
+
+	  cp = &(xi->xi_mem[(isy*xi->xi_iwidth + ix)*3]);
+	  fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
+		 ix, isy, cp[RED], cp[GRN], cp[BLU]);
+
+	  break;
 	}
+      case Button3:
+	alive = 0;
+	break;
+      }
+      break;
+    }
+  case ConfigureNotify:
+    {
+      XConfigureEvent *conf = (XConfigureEvent *)event;
 
-	case ButtonPress: {
-		int button = (int) event->xbutton.button;
-		if (button == Button1) {
-			/* Check for single button mouse remap.
-			 * ctrl-1 => 2
-			 * meta-1 => 3
-			 */
-			if (event->xbutton.state & ControlMask)
-				button = Button2;
-			else if (event->xbutton.state & Mod1Mask)
-				button = Button3;
-		}
-
-		switch(button) {
-		case Button1:
-			break;
-
-		case Button2: {
-			int	x, sy;
-			int	ix, isy;
-			unsigned char	*cp;
-
-			x = event->xbutton.x;
-			sy = xi->xi_xheight - event->xbutton.y - 1;
-
-			x -= xi->xi_xlf;
-			sy -= xi->xi_xheight - xi->xi_xbt - 1;
-			if (x < 0 || sy < 0)
-			{
-				fb_log("No RGB (outside image) 1\n");
-				break;
-			}
-
-			if (x < xi->xi_ilf_w)
-				ix = xi->xi_ilf;
-			else
-				ix = xi->xi_ilf + 
-					(x - xi->xi_ilf_w + ifp->if_xzoom - 1) /
-					ifp->if_xzoom;
-
-			if (sy < xi->xi_ibt_h)
-				isy = xi->xi_ibt;
-			else
-				isy = xi->xi_ibt + 
-					(sy - xi->xi_ibt_h + ifp->if_yzoom -
-						1) / ifp->if_yzoom;
-
-			if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight)
-			{
-				fb_log("No RGB (outside image) 2\n");
-				break;
-			}
-
-			cp = &(xi->xi_mem[(isy*xi->xi_iwidth + ix)*3]);
-			fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-				ix, isy, cp[RED], cp[GRN], cp[BLU]);
-
-			break;
-		}
-
-		case Button3:
-			alive = 0;
-			break;
-		}
-		break;
-	}
-
-	case ConfigureNotify: {
-		XConfigureEvent *conf = (XConfigureEvent *) event;
-
-
-		if (conf->height == xi->xi_xheight &&
-		    conf->width == xi->xi_xwidth)
-			return;
+      if(conf->width == xi->xi_xwidth &&
+	 conf->height == xi->xi_xheight)
+	return;
 
 #if EVENT_DBG
-printf("configure, oldht %d oldwid %d newht %d newwid %d\n",
-	xi->xi_xheight, xi->xi_xwidth, conf->height,
-	conf->width);
+      printf("configure, oldht %d oldwid %d newht %d newwid %d\n",
+	     xi->xi_xheight, xi->xi_xwidth, conf->height,
+	     conf->width);
 #endif
 
-		xi->xi_xheight = conf->height;
-		xi->xi_xwidth = conf->width;
+      X24_configureWindow(ifp, conf->width, conf->height);
 
-		X24_updstate(ifp);
+      /*
+       * Blit backing store to image buffer (we'll blit to screen
+       * when we get the expose event)
+       */
+      X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight, BLIT_RESIZE);
+    default:
+      break;
+    }
+  }
 
-		switch (xi->xi_flags & FLG_VMASK)
-		{
-		case FLG_VD24:
-		case FLG_VT24:
-			/* Destroy old image struct and image buffer */
+  return;
+}
 
-			XDestroyImage(xi->xi_image);
+void
+X24_configureWindow(ifp, width, height)
+FBIO *ifp;
+int width, height;
+{
+  struct xinfo *xi = XI(ifp);
+  XRectangle rect;
 
-			/* Make new buffer and new image */
+  if(width == xi->xi_xwidth &&
+     height == xi->xi_xheight)
+    return;
 
-			if ((xi->xi_pix = (unsigned char *)
-			     calloc(sizeof (unsigned int),
-				    xi->xi_xwidth*xi->xi_xheight)) == NULL) {
-			  fb_log("X24: pix32 malloc failed in resize!\n");
-			  return;
-			}
+  ifp->if_width = ifp->if_max_width = width;
+  ifp->if_height = ifp->if_max_height = height;
 
-			xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
+  xi->xi_xwidth = xi->xi_iwidth = width;
+  xi->xi_xheight = xi->xi_iheight = height;
+
+  ifp->if_xcenter = width/2;
+  ifp->if_ycenter = height/2;
+
+  /* redo region */
+  XDestroyRegion(xi->xi_reg);
+  xi->xi_reg = XCreateRegion();
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = xi->xi_xwidth;
+  rect.height = xi->xi_xheight;
+  XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
+
+  X24_updstate(ifp);
+
+  switch(xi->xi_flags & FLG_VMASK){
+  case FLG_VD24:
+  case FLG_VT24:
+    /* Destroy old image struct and image buffer */
+    XDestroyImage(xi->xi_image);
+
+    /* Make new buffer and new image */
+    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(unsigned int),
+					      xi->xi_xwidth*xi->xi_xheight)) == NULL) {
+      fb_log("X24: pix32 malloc failed in resize!\n");
+      return;
+    }
+
+    xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
 				xi->xi_depth, ZPixmap, 0, (char *) xi->xi_pix,
 				xi->xi_xwidth, xi->xi_xheight,
 				sizeof (unsigned int) * 8, 0);
 
-			break;
+    break;
+  case FLG_VP8:
+  case FLG_VS8:
+  case FLG_VG8:
+    /* Destroy old image struct and image buffers */
+    XDestroyImage(xi->xi_image);
 
-		case FLG_VP8:
-		case FLG_VS8:
-		case FLG_VG8:
-			/* Destroy old image struct and image buffers */
+    /* Make new buffers and new image */
+    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
+					      xi->xi_xwidth * xi->xi_xheight)) == NULL) {
+      fb_log("X24: pix8 malloc failed in resize!\n");
+      return;
+    }
 
-			XDestroyImage(xi->xi_image);
-
-			/* Make new buffers and new image */
-
-			if ((xi->xi_pix =
-			    (unsigned char *) malloc(xi->xi_xwidth *
-			    xi->xi_xheight)) == NULL) {
-				fb_log("X24: pix8 malloc failed in resize!\n");
-				return;
-			}
-
-			xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
+    xi->xi_image = XCreateImage(xi->xi_dpy, xi->xi_visual,
 				xi->xi_depth, ZPixmap, 0, (char *) xi->xi_pix,
 				xi->xi_xwidth, xi->xi_xheight, 8, 0);
-			break;
+    break;
+  case FLG_VS1:
+    /* Destroy old image struct and image buffers */
+    XDestroyImage(xi->xi_image);
 
-		case FLG_VS1:
-			/* Destroy old image struct and image buffers */
-
-			XDestroyImage(xi->xi_image);
-
-			/* Make new buffers and new image */
-
-			xi->xi_image = XCreateImage(xi->xi_dpy,
+    /* Make new buffers and new image */
+    xi->xi_image = XCreateImage(xi->xi_dpy,
 				xi->xi_visual, xi->xi_depth, XYBitmap, 0,
 				NULL, xi->xi_xwidth, xi->xi_xheight, 32, 0);
 
-			if ((xi->xi_pix = (unsigned char *)
-			    malloc(xi->xi_image->bytes_per_line *
-			    xi->xi_xheight)) == NULL) {
-				fb_log("X24: pix1 malloc failed in resize!\n");
-				return;
-			}
-			xi->xi_image->data = (char *) xi->xi_pix;
-			xi->xi_image->byte_order = MSBFirst;
-			xi->xi_image->bitmap_bit_order = MSBFirst;
+    if ((xi->xi_pix = (unsigned char *)calloc(sizeof(char),
+					      xi->xi_image->bytes_per_line * xi->xi_xheight)) == NULL) {
+      fb_log("X24: pix1 malloc failed in resize!\n");
+      return;
+    }
 
-			break;
-		}
+    xi->xi_image->data = (char *) xi->xi_pix;
+    xi->xi_image->byte_order = MSBFirst;
+    xi->xi_image->bitmap_bit_order = MSBFirst;
 
-		/*
-		 * Blit backing store to image buffer (we'll blit to screen
-		 * when we get the expose event)
-		 */
+    break;
+  }
 
-		X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight, BLIT_RESIZE);
-	}
-
-	default:
-		break;
-	}
-
-	return;
 }
-
-
 
 /*
  *  A given Display (i.e. Server) can have any number of Screens.
@@ -3535,4 +3544,24 @@ printf("blit: PutImage of %dx%d to (%d, %d)\n", xwd, xht, ox, oy - xht + 1);
 
 	if (flags & BLIT_DISP)
 		XFlush(xi->xi_dpy);
+}
+
+int
+X24_refresh(ifp, x, y, w, h)
+FBIO *ifp;
+int x, y, w, h;
+{
+  if(w < 0){
+    w = -w;
+    x -= w;
+  }
+
+  if(h < 0){
+    h = -h;
+    y -= h;
+  }
+
+  X24_blit(ifp, x, y, w, h, BLIT_DISP);
+
+  return 0;
 }
