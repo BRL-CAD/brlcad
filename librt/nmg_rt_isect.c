@@ -586,7 +586,7 @@ char *Pole_name;
 	default:
 		rt_log("%s %d: So-called 'Impossible' status codes\n",
 			__FILE__, __LINE__);
-		rt_bomb("Pretending NOT to bomb\n");
+		rt_bomb("get_pole_dist_to_face() Pretending NOT to bomb\n");
 		break;
 	}
 
@@ -970,6 +970,9 @@ struct hitmiss *myhit;
 	myhit->outbound_use = (long *)South_vu;
 
 	switch (myhit->in_out) {
+#if 0
+	case HMG_HIT_ON_ON:	/* fallthrough???  -MJM??? */
+#endif
 	case HMG_HIT_IN_IN:	/* fallthrough */
 	case HMG_HIT_OUT_OUT:	/* fallthrough */
 	case HMG_HIT_IN_ON:	/* fallthrough */
@@ -985,9 +988,9 @@ struct hitmiss *myhit;
 		myhit->hit.hit_private = (genptr_t)North_vu;
 		break;
 	default:
-		rt_log("%s %d: Bad vertex in/out state?\n",
-			__FILE__, __LINE__);
-		rt_bomb("bombing\n");
+		rt_log("%s %d: vertex_neighborhood() Bad vertex in_out state = x%x\n",
+			__FILE__, __LINE__, myhit->in_out);
+		rt_bomb("vertex_neighborhood() bad vertex in_out state\n");
 		break;
 
 	}
@@ -1322,7 +1325,7 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 	NMG_GET_FU_NORMAL(norm, inb_fu);
 	VMOVE(myhit->inbound_norm, norm);
 	if (MAGSQ(norm) < VDIVIDE_TOL)
-		rt_bomb("null normal!\n");
+		rt_bomb("edge_hit_ray_state() null normal!\n");
 
 	cos_angle = VDOT(norm, rd->rp->r_dir);
 
@@ -1404,8 +1407,8 @@ next_edgeuse:	eu_p = eu_p->eumate_p->radial_p;
 		myhit->hit.hit_private = (genptr_t)inb_eu;
 		break;
 	default:
-		rt_log("%s %d: Bad edge in/out state?\n", __FILE__, __LINE__);
-		rt_bomb("bombing\n");
+		rt_log("%s %d: Bad edge in/out state = x%x\n", __FILE__, __LINE__, myhit->in_out);
+		rt_bomb("edge_hit_ray_state() bad edge in_out state\n");
 		break;
 	}
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
@@ -1627,7 +1630,7 @@ struct edgeuse *eu_p;
 	}
 
 	if (eu_p->e_p != eu_p->eumate_p->e_p)
-		rt_bomb("edgeuse mate has step-father\n");
+		rt_bomb("isect_ray_edgeuse() edgeuse mate has step-father\n");
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("\n\tLooking for previous hit on edge 0x%08x ...\n",
@@ -1835,7 +1838,7 @@ plane_t norm;
 			/* perpendicular? */
 			rt_log("%s[%d]: Ray is in plane of face?\n",
 				__FILE__, __LINE__);
-				rt_bomb("I quit\n");
+				rt_bomb("record_face_hit() I quit\n");
 		} else if (cos_angle > 0.0) {
 			myhit->in_out = HMG_HIT_IN_OUT;
 			VREVERSE(myhit->outbound_norm, norm);
@@ -1853,7 +1856,7 @@ plane_t norm;
 			/* perpendicular? */
 			rt_log("%s[%d]: Ray is in plane of face?\n",
 				__FILE__, __LINE__);
-				rt_bomb("I quit\n");
+				rt_bomb("record_face_hit() I quit\n");
 		} else if (cos_angle > 0.0) {
 			myhit->in_out = HMG_HIT_OUT_IN;
 			VREVERSE(myhit->inbound_norm, norm);
@@ -1869,7 +1872,7 @@ plane_t norm;
 	default:
 		rt_log("%s %d:face orientation not SAME/OPPOSITE\n",
 			__FILE__, __LINE__);
-		rt_bomb("Crash and burn\n");
+		rt_bomb("record_face_hit() Crash and burn\n");
 	}
 
 	hit_ins(rd, myhit);
@@ -1956,7 +1959,7 @@ struct face_g_plane *fg_p;
 	if (DIST_PT_PLANE(plane_pt, norm) > rd->tol->dist) {
 		rt_log("%s:%d plane_pt (%g %g %g) @ dist (%g)out of tolerance\n",
 			__FILE__, __LINE__, V3ARGS(plane_pt), dist);
-		rt_bomb("");
+		rt_bomb("isect_ray_planar_face() dist out of tol\n");
 	}
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
@@ -2013,7 +2016,7 @@ struct face_g_plane *fg_p;
 	case NMG_CLASS_Unknown	:
 		rt_log("%s[line:%d] ray/plane intercept point cannot be classified wrt face\n",
 			__FILE__, __LINE__);
-		rt_bomb("bombing");
+		rt_bomb("isect_ray_planar_face() class unknown\n");
 		break;
 	case NMG_CLASS_AinB	:
 	case NMG_CLASS_AonBshared :
@@ -2049,7 +2052,7 @@ struct face_g_plane *fg_p;
 	default	:
 		rt_log("%s[line:%d] BIZZARE ray/plane intercept point classification\n",
 			__FILE__, __LINE__);
-		rt_bomb("bombing");
+		rt_bomb("isect_ray_planar_face() Bizz\n");
 	}
 
 	/* intersect the ray with the edges/verticies of the face */
@@ -2362,7 +2365,7 @@ int *hari_kari;
 			pt_class = NMG_CLASS_AonBshared;
 			break;
 		default:
-			rt_bomb("no-class hitpoint\n");
+			rt_bomb("guess_class_from_hitlist_max() no-class hitpoint\n");
 			break;
 		}
 	} else {
@@ -2454,7 +2457,7 @@ int *hari_kari;
 			pt_class = NMG_CLASS_AonBshared;
 			break;
 		default:
-			rt_bomb("no-class hitpoint\n");
+			rt_bomb("guess_class_from_hitlist_min() no-class hitpoint\n");
 			break;
 		}
 	} else {
@@ -2476,9 +2479,21 @@ int *hari_kari;
  *
  *	Intended as a support routine for nmg_class_pt_s() in nmg_class.c
  *
- *	Intersect a ray with a shell and return the number of hitpoints with
- *	positive distance values.
+ *	Intersect a ray with a shell, and return whether the ray start
+ *	point is inside or outside or ON the shell.
+ *	Count the number of crossings (hit points) along the ray,
+ *	both in the negative and positive directions.
+ *	If an even number, point is outside, if an odd number point is inside.
+ *	If the negative-going and positive-going assessments don't agree,
+ *	this is a problem.
  *
+ *	The caller must be prepared for a return of NMG_CLASS_Unknown,
+ *	in which case it should pick a less difficult ray direction to fire
+ *	and try again.
+ *
+ *  Returns -
+ *	NMG_CLASS_Unknown	Can't tell
+ *	NMG_CLASS_xxx		Classification of the pt w.r.t. the shell.
  */
 int
 nmg_class_ray_vs_shell(rp, s, tol)
@@ -2501,7 +2516,7 @@ struct rt_tol *tol;
 	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT)) {
-		rt_log("nmg_ray_vs_shell(pt(%g %g %g), dir(%g %g %g))\n",
+		rt_log("nmg_class_ray_vs_shell(pt(%g %g %g), dir(%g %g %g))\n",
 			V3ARGS(rp->r_pt), V3ARGS(rp->r_dir));
 	}
 
@@ -2580,6 +2595,7 @@ struct rt_tol *tol;
 	}
 
 
+#if 0
 	/* XXX This should be fixed in the guess_* routines
 	 * instead of being fudged here.
 	 */
@@ -2597,7 +2613,7 @@ struct rt_tol *tol;
 		if (plus_class == NMG_CLASS_Unknown) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				nmg_rt_print_hitlist(&rd.rd_hit);
-			rt_bomb("minus hari kari & plus unknown");
+			rt_bomb("minus unknown & plus unknown");
 		}
 		minus_class = plus_class;
 	} else if (plus_class == NMG_CLASS_Unknown || hari_kari_plus) {
@@ -2614,6 +2630,38 @@ struct rt_tol *tol;
 		nmg_rt_print_hitlist(&rd.rd_hit);
 		rt_bomb("");
 	}
+#else
+	/*
+	 *  Rather than blowing up, or guessing, just report that
+	 *  it didn't work, and let caller try another direction.
+	 */
+	if( hari_kari_minus || hari_kari_plus )  {
+		rt_log("hari_kari = %d, %d\n", hari_kari_minus, hari_kari_plus);
+		plus_class = NMG_CLASS_Unknown;
+		goto out;
+	}
+	/*
+	 *  If there is no geometry behind (or in front of) the start point,
+	 *  the classification in that direction will be NMG_CLASS_Unknown.
+	 *  This isn't an error.
+	 */
+#if 1
+	if( minus_class == NMG_CLASS_Unknown && plus_class != NMG_CLASS_Unknown )
+		goto out;
+#endif
+	if( plus_class == NMG_CLASS_Unknown && minus_class != NMG_CLASS_Unknown )  {
+		plus_class = minus_class;
+		goto out;
+	}
+	if (plus_class != minus_class) {
+		nmg_rt_print_hitlist(&rd.rd_hit);
+		rt_log("minus_class = (%s) %d, hari_kari=%d\n", nmg_class_name(minus_class), minus_class, hari_kari_minus);
+		rt_log("plus_class = (%s)\n", nmg_class_name(plus_class));
+		rt_log("nmg_class_ray_vs_shell() -- can't tell\n");
+		plus_class = NMG_CLASS_Unknown;
+	}
+out:
+#endif
 
 	while (RT_LIST_WHILE(a_hit, hitmiss, &rd.rd_hit)) {
 		RT_LIST_DEQUEUE( &a_hit->l );
@@ -2625,11 +2673,9 @@ struct rt_tol *tol;
 
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_RT_ISECT))
-		rt_log("nmg_ray_vs_shell() returns %s(%d)\n",
+		rt_log("nmg_class_ray_vs_shell() returns %s(%d)\n",
 			nmg_class_name(plus_class), plus_class);
 
 
 	return plus_class;
 }
-
-
