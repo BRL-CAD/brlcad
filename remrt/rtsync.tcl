@@ -193,7 +193,7 @@ proc apply_air {} {
 # The Update CPU Status button, in it's own window
 toplevel .status
 button .status.button -text "Update CPU Status" -command update_cpu_status
-listbox .status.list -height 1 -width 48
+listbox .status.list -height 1 -width 60
 pack .status.button .status.list -side top -in .status
 
 proc update_cpu_status {} {
