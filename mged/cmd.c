@@ -774,7 +774,66 @@ int argc;
 char **argv;
 {
     register int i;
+#if 1
+    static struct {
+	char *knobname;
+	fastf_t variable;
+    } knobs[] = {
+	"ax", 0, 
+	"ay", 0,
+	"az", 0,
+	"aX", 0,
+	"aY", 0,
+	"aZ", 0,
+	"aS", 0,
+	"x", 0,
+	"y", 0,
+	"z", 0,
+	"X", 0,
+	"Y", 0,
+	"Z", 0,
+	"S", 0,
+	"xadc", 0,
+	"yadc", 0,
+	"ang1", 0,
+	"ang2", 0,
+	"distadc", 0,
+    };
 
+    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+      return TCL_ERROR;
+
+    knobs[0].variable = absolute_rotate[X];
+    knobs[1].variable = absolute_rotate[Y];
+    knobs[2].variable = absolute_rotate[Z];
+    knobs[3].variable = absolute_slew[X];
+    knobs[4].variable = absolute_slew[Y];
+    knobs[5].variable = absolute_slew[Z];
+    knobs[6].variable = absolute_zoom;
+    knobs[7].variable = rate_rotate[X];
+    knobs[8].variable = rate_rotate[Y];
+    knobs[9].variable = rate_rotate[Z];
+    knobs[10].variable = rate_slew[X];
+    knobs[11].variable = rate_slew[Y];
+    knobs[12].variable = rate_slew[Z];
+    knobs[13].variable = rate_zoom;
+    knobs[14].variable = (fastf_t)dv_xadc;
+    knobs[15].variable = (fastf_t)dv_yadc;
+    knobs[16].variable = (fastf_t)dv_1adc;
+    knobs[17].variable = (fastf_t)dv_2adc;
+    knobs[18].variable = (fastf_t)dv_distadc;
+	
+    if( argc < 2 ) {
+	Tcl_AppendResult(interp, "getknob: need a knob name", (char *)NULL);
+	return TCL_ERROR;
+    }
+
+    for (i = 0; i < 19; ++i)
+      if (strcmp(knobs[i].knobname, argv[1]) == 0) {
+	sprintf(interp->result, "%lf", knobs[i].variable);
+	return TCL_OK;
+      }
+#else
     static struct {
 	char *knobname;
 	fastf_t *variable;
@@ -833,7 +892,7 @@ char **argv;
 	sprintf(interp->result, "%lf", *(knobs[i].variable));
 	return TCL_OK;
       }
-    
+#endif    
     Tcl_AppendResult(interp, "getknob: invalid knob name", (char *)NULL);
     return TCL_ERROR;
 }
@@ -1129,11 +1188,40 @@ int argc;
 char **argv;
 {
   struct cmd_list *clp;
+  int name_not_used = 1;
 
   if(argc != 3){
     Tcl_AppendResult(interp, "Usage: cmd_init name id", (char *)NULL);
     return TCL_ERROR;
   }
+
+#if 1
+  /* First, search to see if there exists a command window with the name
+     in argv[1] */
+  for( RT_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+    if(!strcmp(argv[1], rt_vls_addr(&clp->name))){
+      name_not_used = 0;
+      break;
+    }
+
+  if(name_not_used){
+    clp = (struct cmd_list *)rt_malloc(sizeof(struct cmd_list), "cmd_list");
+    bzero((void *)clp, sizeof(struct cmd_list));
+    RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
+    clp->cur_hist = head_cmd_list.cur_hist;
+    rt_vls_init(&clp->more_default);
+    rt_vls_init(&clp->name);
+    rt_vls_strcpy(&clp->name, argv[1]);
+  }else{
+    clp->cur_hist = head_cmd_list.cur_hist;
+
+    if(clp->aim != NULL){
+      clp->aim->aim = CMD_LIST_NULL;
+      clp->aim = DM_LIST_NULL;
+    }
+  }
+
+#else
 
   clp = (struct cmd_list *)rt_malloc(sizeof(struct cmd_list), "cmd_list");
   bzero((void *)clp, sizeof(struct cmd_list));
@@ -1142,6 +1230,8 @@ char **argv;
   rt_vls_init(&clp->more_default);
   rt_vls_init(&clp->name);
   rt_vls_strcpy(&clp->name, argv[1]);
+
+#endif
 
   return TCL_OK;
 }
