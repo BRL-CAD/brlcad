@@ -209,8 +209,19 @@ static CONST mat_t	rt_equal_matrix = {
  *  This is the same optimization used in searching the directory lists.
  *
  *  This subroutine is the critical bottleneck in parallel tree walking.
- *  XXX As a future enhancement, it would be safe (and faster!) to use
- *  XXX different critical sections for the different lists.
+ *
+ *  It is safe, and much faster, to use several different
+ *  critical sections when searching different lists.
+ *  Note that there are only 5 resource locks defined:
+ *
+ *	res_worker 	is used by db_walk_dispatcher(), so it can't be used
+ * 			for fear of affecting load balancing.
+ *	res_syscall	is used by rt_malloc() & database reading, so it
+ *			can't be used either.
+ *
+ *  This unfortunately limits the code to having only 3 CPUs doing list
+ *  searching at any one time.  Hopefully, this is enough parallelism
+ *  to keep the rest of the CPUs doing I/O and actual solid prepping.
  */
 HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
 register CONST matp_t		mat;
@@ -228,7 +239,18 @@ struct rt_i			*rtip;
 	have_match = 0;
 	hash = db_dirhash( dp->d_namep );
 
-	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
+	/* Enter the appropriate critical section */
+	switch( hash%3 )  {
+	case 0:
+		RES_ACQUIRE( &rt_g.res_model );
+		break;
+	case 1:
+		RES_ACQUIRE( &rt_g.res_results );
+		break;
+	default:
+		RES_ACQUIRE( &rt_g.res_stats );
+		break;
+	}
 
 	head = &(rtip->rti_solidheads[hash]);
 
@@ -292,7 +314,18 @@ next_one: ;
 		RT_LIST_INSERT( head, &(stp->l) );
 	}
 
-	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
+	/* Leave the appropriate critical section */
+	switch( hash%3 )  {
+	case 0:
+		RES_RELEASE( &rt_g.res_model );
+		break;
+	case 1:
+		RES_RELEASE( &rt_g.res_results );
+		break;
+	default:
+		RES_RELEASE( &rt_g.res_stats );
+		break;
+	}
 	return stp;
 }
 
