@@ -624,13 +624,15 @@ static CONST char *nmg_wedge2_string[] = {
 	"WEDGE2_AB_IN_CD",
 	"WEDGE2_CD_IN_AB",
 	"WEDGE2_IDENTICAL",
-	"???"
+	"WEDGE2_AB_TOUCH_CD",
+	"WEDGE2_???"
 };
 #define WEDGE2_OVERLAP		-2
 #define WEDGE2_NO_OVERLAP	-1
 #define WEDGE2_AB_IN_CD		0
 #define WEDGE2_CD_IN_AB		1
 #define WEDGE2_IDENTICAL	2
+#define WEDGE2_AB_TOUCH_CD	3
 /*
  *			N M G _ C O M P A R E _ 2 _W E D G E S
  *
@@ -679,6 +681,13 @@ double	a,b,c,d;
 
 	if( a == c && b == d )  {
 		ret = WEDGE2_IDENTICAL;
+		goto out;
+	}
+
+	if( NEAR_ZERO( b-c, 0.01 ) )  {
+		/* Wedges touch along B-C junction */
+		ret = WEDGE2_AB_TOUCH_CD;
+		goto out;
 	}
 
 	/* See if c < a,b < d */
@@ -767,14 +776,17 @@ int	skip_array[];
 
 		NMG_CK_VERTEXUSE( vs[i].vu );
 		if( skip_array[i] )  {
-rt_log("Skipping index %d\n", i);
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("Skipping index %d\n", i);
 			continue;
 		}
 
 		/* Ignore wedges crossing, or on other side of line */
 		if( vs[i].wedge_class != wclass )  {
-rt_log("Seeking wedge_class=%s, [%d] has wedge_class %s\n",
-WEDGECLASS2STR(wclass), i, WEDGECLASS2STR(vs[i].wedge_class) );
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)  {
+				rt_log("Seeking wedge_class=%s, [%d] has wedge_class %s\n",
+					WEDGECLASS2STR(wclass), i, WEDGECLASS2STR(vs[i].wedge_class) );
+			}
 			continue;
 		}
 
@@ -787,7 +799,8 @@ WEDGECLASS2STR(wclass), i, WEDGECLASS2STR(vs[i].wedge_class) );
 			/* This wedge AB is inside original wedge.
 			 * If candidate is -1, use AB as candidate.
 			 */
-rt_log("Initial candidate %d selected\n", i);
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("Initial candidate %d selected\n", i);
 			candidate = i;
 			cand_lo = vs[i].lo_ang;
 			cand_hi = vs[i].hi_ang;
@@ -801,7 +814,8 @@ rt_log("Initial candidate %d selected\n", i);
 		case WEDGE2_CD_IN_AB:
 			/* This wedge AB contains candidate wedge CD, therefore
 			 * this wedge is closer to original wedge */
-rt_log("This candidate %d is closer\n", i);
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("This candidate %d is closer\n", i);
 			candidate = i;
 			cand_lo = vs[i].lo_ang;
 			cand_hi = vs[i].hi_ang;
@@ -809,14 +823,16 @@ rt_log("This candidate %d is closer\n", i);
 		case WEDGE2_NO_OVERLAP:
 			/* No overlap, but both are inside.  Take lower angle */
 			if( vs[i].lo_ang < cand_lo )  {
-rt_log("Taking lower angle %d\n", i);
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("Taking lower angle %d\n", i);
 				candidate = i;
 				cand_lo = vs[i].lo_ang;
 				cand_hi = vs[i].hi_ang;
 			}
 			break;
 		default:
-rt_log("Continuing with search\n");
+			if(rt_g.NMG_debug&DEBUG_VU_SORT)
+				rt_log("Continuing with search\n");
 			continue;
 		}
 	}
@@ -1085,12 +1101,14 @@ again:
 	NMG_CK_LOOPUSE(inner_lu);
 
 	if( outer_lu == inner_lu )  {
-		rt_log("special_wedge:  inner and outer wedges from same loop, cutting loop\n");
+		if(rt_g.NMG_debug&DEBUG_VU_SORT)
+			rt_log("special_wedge:  inner and outer wedges from same loop, cutting loop\n");
 		(void)nmg_cut_loop( vs[outer_wedge].vu, vs[inner_wedge].vu );
 		return 1;
 	}
 
-	rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("wedge at vu[%d] is inside wedge at vu[%d]\n", inner_wedge, outer_wedge);
 
 	if( outer_lu->orientation == inner_lu->orientation )  {
 		/* Different loops with same orientation.  If they are exactly
@@ -1107,7 +1125,8 @@ again:
 				outer_wedge, inner_wedge, other_way_round);
 			rt_bomb("nmg_special_wedge_processing: touching loops have same orientation, but are not exactly the same wedge\n");
 		}
-		rt_log("joining loops\n");
+		if(rt_g.NMG_debug&DEBUG_VU_SORT)
+			rt_log("joining loops\n");
 		vs[inner_wedge].vu = nmg_join_2loops( vs[outer_wedge].vu,
 			vs[inner_wedge].vu );
 		return 1;
@@ -1119,7 +1138,8 @@ again:
 	    vs[inner_wedge].lo_ang, vs[inner_wedge].hi_ang, wclass ) )
 		return 1;	/* An inner wedge was cut */
 
-	rt_log("Inner wedge was not cut, need to consider cut/joinhere\n");
+	if(rt_g.NMG_debug&DEBUG_VU_SORT)
+		rt_log("Inner wedge was not cut, need to consider cut/joinhere\n");
 
 	rt_bomb("XXX special wedge processing needed\n");
 	return 1;
