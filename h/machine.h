@@ -475,7 +475,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		256	/* need to increase this for Super Dragon? */
-#define DEFAULT_PSW	64
+#define DEFAULT_PSW	bu_avail_cpu()
 #define PARALLEL	1
 
 #endif
@@ -516,14 +516,8 @@ typedef double  fastf_t;        /* double|float, "Fastest" float type */
 #define FAST    register        /* LOCAL|register, for fastest floats */
 typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
-
-#define MAX_PSW         4       /* Unused, I actually pull from posix */
-#define DEFAULT_PSW     2       /* Using 2 allows rt to use both cpus
-                                 * on a dual box without the user requesting
-                                 * -P 2. Does not adversely affect usage
-                                 * on 1 cpu box because bu_avail_cpus will
-                                 * return 1. */
-			        
+#define MAX_PSW         512       /* Unused, but useful for thread debugging */
+#define DEFAULT_PSW     bu_avail_cpus()	/* use as many as we can */
 #define PARALLEL        1
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
 #endif
@@ -542,8 +536,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #if 1	/* Multi-CPU SP3 build */
-#	define MAX_PSW		16
-#	define DEFAULT_PSW	1
+#	define MAX_PSW		32     	/* they can go 32-way per single image */
+#	define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are configured by default */
 #	define	PARALLEL	1
 #	define	HAS_POSIX_THREADS	1
 #	define	MALLOC_NOT_MP_SAFE	1	/* XXX Not sure about this */
@@ -574,12 +568,8 @@ typedef long bitv_t;          /* could use long long */
 
 # define LOCAL auto             /* static|auto, for serial|parallel cpu */
 # define FAST register          /* LOCAL|register, for fastest floats */
-# define MAX_PSW         4
-# define DEFAULT_PSW     2      /* Using 2 allows rt to use both cpus
-				 * on a dual box without the user spec'ing
-				 * -P 2. Does not adversely affect usage
-				 * on 1 cpu box because bu_avail_cpus will
-				 * return 1. */
+# define MAX_PSW         16
+# define DEFAULT_PSW     bu_avail_cpus()	/* use as many processors as are available */
 # define PARALLEL        1
 # define HAS_POSIX_THREADS 1    /* formerly in conf.h */
 # define MALLOC_NOT_MP_SAFE 1   /* uncertain, but this is safer for now */
@@ -607,8 +597,8 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-#define MAX_PSW		1	/* only one processor, max */
-#define DEFAULT_PSW	1
+#define MAX_PSW		4	/* allow for a dual core dual */
+#define DEFAULT_PSW	bu_avail_cpus()	/* use as many as are available by default */ 
 
 #endif
 
