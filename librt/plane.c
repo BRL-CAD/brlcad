@@ -679,6 +679,7 @@ CONST struct rt_tol	*tol;
 	register fastf_t f;
 	fastf_t		ctol;
 	int		ret;
+	point_t		b;
 
 	RT_CK_TOL(tol);
 	if( rt_g.debug & DEBUG_MATH )  {
@@ -692,9 +693,28 @@ CONST struct rt_tol	*tol;
 	 *  However, it is a good idea to make sure that
 	 *  C is a non-zero vector, (ie, that A and B are distinct).
 	 */
-	if( (ctol = MAGSQ_2D(c)) < tol->dist_sq )  {
+	if( (ctol = MAGSQ_2D(c)) <= tol->dist_sq )  {
 		ret = -4;		/* points A and B are not distinct */
 		goto out;
+	}
+
+	/*
+	 *  Detecting colinearity is difficult, and very very important.
+	 *  As a first step, check to see if both points A and B lie
+	 *  within tolerance of the line.  If so, then the line segment AC
+	 *  is ON the line.
+	 */
+	VADD2_2D( b, a, c );
+	if( rt_distsq_line2_point2( p, d, a ) <= tol->dist_sq  &&
+	    rt_distsq_line2_point2( p, d, b ) <= tol->dist_sq )  {
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("rt_isect_line2_lseg2() pts A and B within tol of line\n");
+		}
+	    	/* Find the parametric distance along the ray */
+	    	dist[0] = rt_dist_pt2_along_line2( p, d, a );
+	    	dist[1] = rt_dist_pt2_along_line2( p, d, b );
+	    	ret = 0;		/* Colinear */
+	    	goto out;
 	}
 
 	if( (ret = rt_isect_line2_line2( dist, p, d, a, c, tol )) < 0 )  {
@@ -730,11 +750,9 @@ CONST struct rt_tol	*tol;
 	 */
 	{
 		fastf_t		ab_dist = 0;
-		point_t		b;
 		point_t		hit_pt;
 		point_t		hit2;
 
-		VADD2_2D( b, a, c );
 		VJOIN1_2D( hit_pt, p, dist[0], d );
 		VJOIN1_2D( hit2, a, dist[1], c );
 		ret = rt_isect_pt2_lseg2( &ab_dist, a, b, hit_pt, tol );
@@ -1312,6 +1330,23 @@ CONST struct rt_tol	*tol;
 		return(-4);		/* points A and B are not distinct */
 	}
 
+	/*
+	 *  Detecting colinearity is difficult, and very very important.
+	 *  As a first step, check to see if both points A and B lie
+	 *  within tolerance of the line.  If so, then the line segment AC
+	 *  is ON the line.
+	 */
+	if( rt_distsq_line3_pt3( p, d, a ) <= tol->dist_sq  &&
+	    rt_distsq_line3_pt3( p, d, b ) <= tol->dist_sq )  {
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("rt_isect_line3_lseg3() pts A and B within tol of line\n");
+		}
+	    	/* Find the parametric distance along the ray */
+		*t = rt_dist_pt3_along_line3( p, d, a );
+		/*** dist[1] = rt_dist_pt3_along_line3( p, d, b ); ***/
+		return 0;		/* Colinear */
+	}
+
 	if( (ret = rt_isect_line3_line3( t, &u, p, d, a, c, tol )) < 0 )  {
 		/* No intersection found */
 		return( -1 );
@@ -1354,6 +1389,8 @@ CONST struct rt_tol	*tol;
  *
  *  Return -
  *	Distance
+ *
+ *  XXX Another name for this might be rt_dist_line3_pt3()
  */
 double
 rt_dist_line_point( pt, dir, a )
@@ -1369,6 +1406,32 @@ CONST point_t	a;
 	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
 		return(0.0);
 	return( sqrt(FdotD) );
+}
+
+/*
+ *			R T _ D I S T S Q _ L I N E 3 _ P T 3
+ *
+ *  Given a parametric line defined by PT + t * DIR and a point A,
+ *  return the square of the closest distance between the line and the point.
+ *  It is necessary that DIR have unit length.
+ *
+ *  Return -
+ *	Distance squared
+ */
+double
+rt_distsq_line3_pt3( pt, dir, a )
+CONST point_t	pt;
+CONST vect_t	dir;
+CONST point_t	a;
+{
+	LOCAL vect_t		f;
+	register fastf_t	FdotD;
+
+	VSUB2( f, pt, a );
+	FdotD = VDOT( f, dir );
+	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
+		return(0.0);
+	return FdotD;
 }
 
 /*
@@ -2054,4 +2117,45 @@ CONST vect_t	y_dir;
 		return ang - rt_twopi;
 	}
 	return ang;
+}
+
+/*
+ *			R T _ D I S T _ P T 3 _ A L O N G _ L I N E 3
+ *
+ *  Return the parametric distance t of a point X along a line defined
+ *  as a ray, i.e. solve X = P + t * D.
+ *  If the point X does not lie on the line, then t is the distance of
+ *  the perpendicular projection of point X onto the line.
+ */
+double
+rt_dist_pt3_along_line3( p, d, x )
+CONST point_t	p;
+CONST vect_t	d;
+CONST point_t	x;
+{
+	vect_t	x_p;
+
+	VSUB2( x_p, x, p );
+	return VDOT( x_p, d );
+}
+
+
+/*
+ *			R T _ D I S T _ P T 2 _ A L O N G _ L I N E 2
+ *
+ *  Return the parametric distance t of a point X along a line defined
+ *  as a ray, i.e. solve X = P + t * D.
+ *  If the point X does not lie on the line, then t is the distance of
+ *  the perpendicular projection of point X onto the line.
+ */
+double
+rt_dist_pt2_along_line2( p, d, x )
+CONST point_t	p;
+CONST vect_t	d;
+CONST point_t	x;
+{
+	vect_t	x_p;
+
+	VSUB2_2D( x_p, x, p );
+	return VDOT_2D( x_p, d );
 }
