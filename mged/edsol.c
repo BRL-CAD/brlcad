@@ -54,10 +54,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./menu.h"
 
+extern void bv_edit_toggle();
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
-extern void set_e_axes_pos();
-
+extern short earb4[5][18];
+extern short earb5[9][18];
+extern short earb6[10][18];
+extern short earb7[12][18];
+extern short earb8[12][18];
 #if 0
 extern int      savedit;
 #endif
@@ -72,7 +76,9 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 
 void pscale();
 void	calc_planes();
-
+void sedit_absolute_tran_update();
+void set_e_axes_pos();
+vect_t e_axes_pos;
 #if 1
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 #else
@@ -105,7 +111,7 @@ char	*es_keytag;		/* string identifying the keypoint */
 int	es_keyfixed;		/* keypoint specified by user? */
 
 vect_t		es_para;	/* keyboard input param. Only when inpara set.  */
-extern int	inpara;		/* es_para valid.  es_mvalid must = 0 */
+int		inpara;		/* es_para valid.  es_mvalid must = 0 */
 static vect_t	es_mparam;	/* mouse input param.  Only when es_mvalid set */
 static int	es_mvalid;	/* es_mparam valid.  inpara must = 0 */
 
@@ -1778,6 +1784,136 @@ mat_t		mat;
 	}
 	MAT4X3PNT( pt, mat, mpt );
 }
+
+
+void
+set_e_axes_pos()
+{
+  int	i;
+
+#if 0
+  update_views = 1;
+
+  if(EDIT_TRAN) {
+    VMOVE(e_axes_pos, es_keypoint);
+    MAT4X3PNT( absolute_slew, model2view, es_keypoint );
+  }else{
+    point_t new_pos;
+
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+    if(EDIT_ROTATE)
+      VSETALL( absolute_rotate, 0.0 );
+  }
+#else
+  update_views = 1;
+  switch(es_int.idb_type){
+  case	ID_ARB8:
+  case	ID_ARBN:
+    if(state == ST_O_EDIT)
+      i = 0;
+    else
+      switch(es_edflag){
+      case	STRANS:
+	i = 0;
+	break;
+      case	EARB:
+	switch(es_type){
+	case	ARB5:
+	  i = earb5[es_menu][0];
+	  break;
+	case	ARB6:
+	  i = earb6[es_menu][0];
+	  break;
+	case	ARB7:
+	  i = earb7[es_menu][0];
+	  break;
+	case	ARB8:
+	  i = earb8[es_menu][0];
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case	PTARB:
+	switch(es_type){
+	case    ARB4:
+	  i = es_menu;	/* index for point 1,2,3 or 4 */
+	  break;
+	case    ARB5:
+	case	ARB7:
+	  i = 4;	/* index for point 5 */
+	  break;
+	case    ARB6:
+	  i = es_menu;	/* index for point 5 or 6 */
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case ECMD_ARB_MOVE_FACE:
+	switch(es_type){
+	case	ARB4:
+	  i = arb_faces[0][es_menu * 4];
+	  break;
+	case	ARB5:
+	  i = arb_faces[1][es_menu * 4];  		
+	  break;
+	case	ARB6:
+	  i = arb_faces[2][es_menu * 4];  		
+	  break;
+	case	ARB7:
+	  i = arb_faces[3][es_menu * 4];  		
+	  break;
+	case	ARB8:
+	  i = arb_faces[4][es_menu * 4];  		
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case ECMD_ARB_ROTATE_FACE:
+	i = fixv;
+	break;
+      default:
+	i = 0;
+	break;
+      }
+
+    VMOVE(e_axes_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+    break;
+  case ID_TGC:
+  case ID_REC:
+    if(es_edflag == ECMD_TGC_MV_H ||
+       es_edflag == ECMD_TGC_MV_HH){
+      struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+
+      VADD2(e_axes_pos, tgc->h, tgc->v);
+      break;
+    }
+  default:
+    VMOVE(e_axes_pos, es_keypoint);
+    break;
+  }
+#endif
+
+  if(EDIT_ROTATE)
+    VSETALL( edit_absolute_rotate, 0.0 )
+  else if(EDIT_TRAN)
+    VSETALL( edit_absolute_tran, 0.0 )
+  else if(SEDIT_SCALE)
+    edit_absolute_scale = 0;
+
+  mat_idn(acc_rot_sol);
+
+  mged_variables.edit = 0;
+  bv_edit_toggle();
+}
+
 
 /* 	CALC_PLANES()
  *		calculate the plane (face) equations for an arb
@@ -3628,24 +3764,9 @@ CONST vect_t	mousevec;
 			mat_idn( xlatemat );
 			MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			transform_editing_solid(&es_int, xlatemat, &es_int, 1);
-
-			{
-/*XXXXX  More experimentation */
-			  extern point_t e_axes_pos;
-			  vect_t model_pos;
-			  vect_t diff;
-			  fastf_t inv_Viewscale = 1/Viewscale;
-
-			  MAT4X3PNT( pos_view, model2view, es_keypoint);
-			  mousevec[Z] = pos_view[Z];
-			  MAT4X3PNT(model_pos, view2model, mousevec);
-			  VSUB2(diff, model_pos, e_axes_pos);
-			  VSCALE(edit_absolute_tran, diff, inv_Viewscale);
-
-			  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
-			    (void)Tcl_Eval(interp, "set_sliders");
-			}
 		}
+
+	        sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	case ECMD_VTRANS:
@@ -3665,6 +3786,8 @@ CONST vect_t	mousevec;
 		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;	/* es_mparam is valid */
 		/* Leave the rest to code in sedit() */
+
+		sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	case ECMD_TGC_MV_H:
@@ -3685,6 +3808,8 @@ CONST vect_t	mousevec;
 			MAT4X3PNT( tr_temp, es_invmat, temp );
 			VSUB2( tgc->h, tr_temp, tgc->v );
 		}
+
+	        sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	case PTARB:
@@ -3705,6 +3830,8 @@ CONST vect_t	mousevec;
 		MAT4X3PNT(temp, view2model, pos_view);
 		MAT4X3PNT(pos_model, es_invmat, temp);
 		editarb( pos_model );
+
+		sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	case EARB:
@@ -3713,6 +3840,8 @@ CONST vect_t	mousevec;
 		/* apply inverse of es_mat */
 		MAT4X3PNT( pos_model, es_invmat, temp );
 		editarb( pos_model );
+
+		sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	case ECMD_ARB_MOVE_FACE:
@@ -3730,6 +3859,8 @@ CONST vect_t	mousevec;
 			RT_ARB_CK_MAGIC( arb );
 			(void)rt_arb_calc_points( arb , es_type , es_peqn , &mged_tol );
 		}
+
+		sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	case ECMD_NMG_EPICK:
@@ -3768,6 +3899,7 @@ CONST vect_t	mousevec;
 			  bu_vls_free(&tmp_vls);
 			}
 
+			sedit_absolute_tran_update(mousevec);
 			sedraw = 1;
 		}
 	        break;
@@ -3788,6 +3920,8 @@ CONST vect_t	mousevec;
 		/* apply inverse of es_mat */
 		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;
+
+		sedit_absolute_tran_update(mousevec);
 		sedraw = 1;
 		return;
 	default:
@@ -3801,90 +3935,24 @@ CONST vect_t	mousevec;
 	 */
 }
 
-/*
- *  Object Edit
- */
 void
-objedit_mouse( mousevec )
-CONST vect_t	mousevec;
+sedit_absolute_tran_update(mousevec)
+vect_t mousevec;
 {
-	fastf_t			scale;
-	vect_t	pos_view;	 	/* Unrotated view space pos */
-	vect_t	pos_model;	/* Rotated screen space pos */
-	vect_t	tr_temp;		/* temp translation vector */
-	vect_t	temp;
+  vect_t pos_view;
+  vect_t model_pos;
+  vect_t diff;
+  fastf_t inv_Viewscale = 1/Viewscale;
 
-	mat_idn( incr_change );
-	scale = 1;
-	if( movedir & SARROW )  {
-		/* scaling option is in effect */
-		scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
-			mousevec[Y] : -mousevec[Y]);
-		if ( mousevec[Y] <= 0 )
-			scale = 1.0 / scale;
-
-		/* switch depending on scaling option selected */
-		switch( edobj ) {
-
-			case BE_O_SCALE:
-				/* global scaling */
-				incr_change[15] = 1.0 / scale;
-			break;
-
-			case BE_O_XSCALE:
-				/* local scaling ... X-axis */
-				incr_change[0] = scale;
-				/* accumulate the scale factor */
-				acc_sc[0] *= scale;
-			break;
-
-			case BE_O_YSCALE:
-				/* local scaling ... Y-axis */
-				incr_change[5] = scale;
-				/* accumulate the scale factor */
-				acc_sc[1] *= scale;
-			break;
-
-			case BE_O_ZSCALE:
-				/* local scaling ... Z-axis */
-				incr_change[10] = scale;
-				/* accumulate the scale factor */
-				acc_sc[2] *= scale;
-			break;
-		}
-
-		/* Have scaling take place with respect to keypoint,
-		 * NOT the view center.
-		 */
-		MAT4X3PNT(temp, es_mat, es_keypoint);
-		MAT4X3PNT(pos_model, modelchanges, temp);
-		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
-	}  else if( movedir & (RARROW|UARROW) )  {
-		mat_t oldchanges;	/* temporary matrix */
-
-		/* Vector from object keypoint to cursor */
-		MAT4X3PNT( temp, es_mat, es_keypoint );
-		MAT4X3PNT( pos_view, model2objview, temp );
-		if( movedir & RARROW )
-			pos_view[X] = mousevec[X];
-		if( movedir & UARROW )
-			pos_view[Y] = mousevec[Y];
-
-		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
-		MAT4X3PNT( tr_temp, modelchanges, temp );
-		VSUB2( tr_temp, pos_model, tr_temp );
-		MAT_DELTAS(incr_change,
-			tr_temp[X], tr_temp[Y], tr_temp[Z]);
-		mat_copy( oldchanges, modelchanges );
-		mat_mul( modelchanges, incr_change, oldchanges );
-	}  else  {
-	  Tcl_AppendResult(interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
-	  return;
-	}
-	mat_idn( incr_change );
-	new_mats();
+  MAT4X3PNT( pos_view, model2view, es_keypoint);
+  mousevec[Z] = pos_view[Z];
+  MAT4X3PNT(model_pos, view2model, mousevec);
+  VSUB2(diff, model_pos, e_axes_pos);
+  VSCALE(edit_absolute_tran, diff, inv_Viewscale);
+  
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+    (void)Tcl_Eval(interp, "set_sliders");
 }
-
 
 void
 sedit_trans(tvec)
@@ -4069,7 +4137,7 @@ vect_t tvec;
 }
 
 void
-sedit_scale()
+sedit_abs_scale()
 {
   fastf_t old_acc_sc_sol;
 
@@ -4088,6 +4156,175 @@ sedit_scale()
   es_scale = acc_sc_sol / old_acc_sc_sol;
 
   sedit();
+}
+
+
+/*
+ *  Object Edit
+ */
+void
+objedit_mouse( mousevec )
+CONST vect_t	mousevec;
+{
+	fastf_t			scale;
+	vect_t	pos_view;	 	/* Unrotated view space pos */
+	vect_t	pos_model;	/* Rotated screen space pos */
+	vect_t	tr_temp;		/* temp translation vector */
+	vect_t	temp;
+
+	mat_idn( incr_change );
+	scale = 1;
+	if( movedir & SARROW )  {
+		/* scaling option is in effect */
+		scale = 1.0 + (fastf_t)(mousevec[Y]>0 ?
+			mousevec[Y] : -mousevec[Y]);
+		if ( mousevec[Y] <= 0 )
+			scale = 1.0 / scale;
+
+		/* switch depending on scaling option selected */
+		switch( edobj ) {
+
+			case BE_O_SCALE:
+				/* global scaling */
+				incr_change[15] = 1.0 / scale;
+			break;
+
+			case BE_O_XSCALE:
+				/* local scaling ... X-axis */
+				incr_change[0] = scale;
+				/* accumulate the scale factor */
+				acc_sc[0] *= scale;
+			break;
+
+			case BE_O_YSCALE:
+				/* local scaling ... Y-axis */
+				incr_change[5] = scale;
+				/* accumulate the scale factor */
+				acc_sc[1] *= scale;
+			break;
+
+			case BE_O_ZSCALE:
+				/* local scaling ... Z-axis */
+				incr_change[10] = scale;
+				/* accumulate the scale factor */
+				acc_sc[2] *= scale;
+			break;
+		}
+
+		/* Have scaling take place with respect to keypoint,
+		 * NOT the view center.
+		 */
+		MAT4X3PNT(temp, es_mat, es_keypoint);
+		MAT4X3PNT(pos_model, modelchanges, temp);
+		wrt_point(modelchanges, incr_change, modelchanges, pos_model);
+	}  else if( movedir & (RARROW|UARROW) )  {
+		mat_t oldchanges;	/* temporary matrix */
+
+		/* Vector from object keypoint to cursor */
+		MAT4X3PNT( temp, es_mat, es_keypoint );
+		MAT4X3PNT( pos_view, model2objview, temp );
+		if( movedir & RARROW )
+			pos_view[X] = mousevec[X];
+		if( movedir & UARROW )
+			pos_view[Y] = mousevec[Y];
+
+		MAT4X3PNT( pos_model, view2model, pos_view );/* NOT objview */
+		MAT4X3PNT( tr_temp, modelchanges, temp );
+		VSUB2( tr_temp, pos_model, tr_temp );
+		MAT_DELTAS(incr_change,
+			tr_temp[X], tr_temp[Y], tr_temp[Z]);
+		mat_copy( oldchanges, modelchanges );
+		mat_mul( modelchanges, incr_change, oldchanges );
+	}  else  {
+	  Tcl_AppendResult(interp, "No object edit mode selected;  mouse press ignored\n", (char *)NULL);
+	  return;
+	}
+	mat_idn( incr_change );
+	new_mats();
+}
+
+
+void
+oedit_trans(tvec)
+vect_t tvec;
+{
+  vect_t  pos_view;
+  vect_t  pos_model;
+  vect_t  tr_temp;
+  vect_t  temp;
+  mat_t incr_mat;
+  mat_t oldchanges;	/* temporary matrix */
+
+  mat_idn( incr_mat );
+  MAT4X3PNT( temp, es_mat, es_keypoint );
+  MAT4X3PNT( pos_model, view2model, tvec);/* NOT objview */
+  MAT4X3PNT( tr_temp, modelchanges, temp );
+  VSUB2( tr_temp, pos_model, tr_temp );
+  MAT_DELTAS(incr_mat,
+	     tr_temp[X], tr_temp[Y], tr_temp[Z]);
+  mat_copy( oldchanges, modelchanges );
+  mat_mul( modelchanges, incr_mat, oldchanges );
+
+  new_mats();
+}
+
+
+void
+oedit_abs_scale()
+{
+  fastf_t scale;
+  vect_t temp;
+  vect_t pos_model;
+  mat_t incr_mat;
+
+  mat_idn( incr_mat );
+
+  if(-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
+    scale = 1;
+  else if(edit_absolute_scale > 0.0)
+    scale = 1.0 + edit_absolute_scale * 3.0;
+  else
+    scale = 1.0 + edit_absolute_scale;
+
+  /* switch depending on scaling option selected */
+  switch( edobj ) {
+
+  case BE_O_SCALE:
+    /* global scaling */
+    incr_mat[15] = scale / acc_sc_obj;
+    acc_sc_obj = scale;
+    break;
+
+  case BE_O_XSCALE:
+    /* local scaling ... X-axis */
+    incr_mat[0] = scale / acc_sc[0];
+    /* accumulate the scale factor */
+    acc_sc[0] = scale;
+    break;
+
+  case BE_O_YSCALE:
+    /* local scaling ... Y-axis */
+    incr_mat[5] = scale / acc_sc[1];
+    /* accumulate the scale factor */
+    acc_sc[1] = scale;
+    break;
+
+  case BE_O_ZSCALE:
+    /* local scaling ... Z-axis */
+    incr_mat[10] = scale / acc_sc[2];
+    /* accumulate the scale factor */
+    acc_sc[2] = scale;
+    break;
+  }
+
+  /* Have scaling take place with respect to keypoint,
+   * NOT the view center.
+   */
+  MAT4X3PNT(temp, es_mat, es_keypoint);
+  MAT4X3PNT(pos_model, modelchanges, temp);
+  wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
+
+  new_mats();
 }
 
 
@@ -5144,6 +5381,105 @@ sedit_reject()
 	db_free_external( &es_ext );
 }
 
+int
+mged_param(interp, argc, argvect)
+Tcl_Interp *interp;
+int argc;
+vect_t argvect;
+{
+  register int i;
+
+  if( es_edflag <= 0 )  {
+    Tcl_AppendResult(interp,
+		     "A solid editor option not selected\n",
+		     (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if( es_edflag == ECMD_TGC_ROT_H
+      || es_edflag == ECMD_TGC_ROT_AB
+      || es_edflag == ECMD_ETO_ROT_C ) {
+    Tcl_AppendResult(interp,
+		     "\"p\" command not defined for this option\n",
+		     (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  inpara = 0;
+  sedraw++;
+  for( i = 0; i < argc; i++ )  {
+    es_para[ inpara++ ] = argvect[i];
+  }
+
+  if( es_edflag == PSCALE || es_edflag == SSCALE )  {
+    if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || MENU_PIPE_SCALE_ID )
+      {
+	if( es_para[0] < 0.0 )
+	  {
+	    Tcl_AppendResult(interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
+	    inpara = 0;
+	    sedraw = 0;
+	    return TCL_ERROR;
+	  }
+      }
+    else
+      {
+	if(es_para[0] <= 0.0) {
+	  Tcl_AppendResult(interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
+	  inpara = 0;
+	  sedraw = 0;
+	  return TCL_ERROR;
+	}
+      }
+  }
+
+  /* check if need to convert input values to the base unit */
+  switch( es_edflag ) {
+
+  case STRANS:
+  case ECMD_VTRANS:
+  case PSCALE:
+  case EARB:
+  case ECMD_ARB_MOVE_FACE:
+  case ECMD_TGC_MV_H:
+  case ECMD_TGC_MV_HH:
+  case PTARB:
+  case ECMD_NMG_ESPLIT:
+  case ECMD_NMG_EMOVE:
+  case ECMD_NMG_LEXTRU:
+  case ECMD_PIPE_PICK:
+  case ECMD_PIPE_SPLIT:
+  case ECMD_PIPE_PT_MOVE:
+  case ECMD_PIPE_PT_ADD:
+  case ECMD_PIPE_PT_INS:
+  case ECMD_ARS_PICK:
+  case ECMD_ARS_MOVE_PT:
+  case ECMD_ARS_MOVE_CRV:
+  case ECMD_ARS_MOVE_COL:
+#if 0
+    if(SEDIT_TRAN){
+      vect_t temp;
+		    
+      MAT4X3PNT( edit_absolute_tran, model2view, es_para );
+    }
+#endif
+    /* must convert to base units */
+    es_para[0] *= local2base;
+    es_para[1] *= local2base;
+    es_para[2] *= local2base;
+    /* fall through */
+  default:
+    break;
+  }
+
+  return TCL_OK;
+
+  /* XXX I would prefer to see an explicit call to the guts of sedit()
+   * XXX here, rather than littering the place with global variables
+   * XXX for later interpretation.
+   */
+}
+
 /* Input parameter editing changes from keyboard */
 /* Format: p dx [dy dz]		*/
 int
@@ -5153,95 +5489,17 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	register int i;
+  register int i;
+  vect_t argvect;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-	if( es_edflag <= 0 )  {
-	  Tcl_AppendResult(interp, "A solid editor option not selected\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-	if( es_edflag == ECMD_TGC_ROT_H
-		|| es_edflag == ECMD_TGC_ROT_AB
-		|| es_edflag == ECMD_ETO_ROT_C ) {
-	  Tcl_AppendResult(interp, "\"p\" command not defined for this option\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
+  for( i = 1; i < argc && i <= 3 ; i++ ){
+    argvect[i-1] = atof( argv[i] );
+  }
 
-	inpara = 0;
-	sedraw++;
-	for( i = 1; i < argc && i <= 3 ; i++ )  {
-		es_para[ inpara++ ] = atof( argv[i] );
-	}
-
-	if( es_edflag == PSCALE || es_edflag == SSCALE )  {
-		if( es_menu == MENU_PIPE_PT_OD || es_menu == MENU_PIPE_PT_ID || MENU_PIPE_SCALE_ID )
-		{
-			if( es_para[0] < 0.0 )
-			{
-			   Tcl_AppendResult(interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
-			   inpara = 0;
-			   sedraw = 0;
-			   return TCL_ERROR;
-			}
-		}
-		else
-		{
-			if(es_para[0] <= 0.0) {
-			  Tcl_AppendResult(interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
-			  inpara = 0;
-			  sedraw = 0;
-			  return TCL_ERROR;
-			}
-		}
-	}
-
-	/* check if need to convert input values to the base unit */
-	switch( es_edflag ) {
-
-		case STRANS:
-		case ECMD_VTRANS:
-		case PSCALE:
-		case EARB:
-		case ECMD_ARB_MOVE_FACE:
-		case ECMD_TGC_MV_H:
-		case ECMD_TGC_MV_HH:
-		case PTARB:
-		case ECMD_NMG_ESPLIT:
-		case ECMD_NMG_EMOVE:
-		case ECMD_NMG_LEXTRU:
-		case ECMD_PIPE_PICK:
-		case ECMD_PIPE_SPLIT:
-		case ECMD_PIPE_PT_MOVE:
-		case ECMD_PIPE_PT_ADD:
-		case ECMD_PIPE_PT_INS:
-		case ECMD_ARS_PICK:
-		case ECMD_ARS_MOVE_PT:
-		case ECMD_ARS_MOVE_CRV:
-		case ECMD_ARS_MOVE_COL:
-#if 0
-		  if(SEDIT_TRAN){
-		    vect_t temp;
-		    
-		    MAT4X3PNT( edit_absolute_tran, model2view, es_para );
-		  }
-#endif
-			/* must convert to base units */
-			es_para[0] *= local2base;
-			es_para[1] *= local2base;
-			es_para[2] *= local2base;
-			/* fall through */
-		default:
-			break;
-	}
-
-	return TCL_OK;
-
-	/* XXX I would prefer to see an explicit call to the guts of sedit()
-	 * XXX here, rather than littering the place with global variables
-	 * XXX for later interpretation.
-	 */
+  return mged_param(interp, argc-1, argvect);
 }
 
 /*

@@ -61,9 +61,11 @@ int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
  */
 mat_t	acc_rot_sol;
 fastf_t	acc_sc_sol;
+fastf_t	acc_sc_obj;     /* global object scale factor --- accumulations */
 fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
-static void bv_zoomin(), bv_zoomout(), bv_rate_toggle(), bv_edit_toggle();
+void bv_edit_toggle();
+static void bv_zoomin(), bv_zoomout(), bv_rate_toggle();
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
 static void bv_vrestore(), bv_vsave(), bv_adcursor(), bv_reset();
@@ -322,7 +324,7 @@ static void bv_zoomout()
 	new_mats();
 }
 
-static void
+void
 bv_edit_toggle()
 {
   mged_variables.edit = !mged_variables.edit;
@@ -478,6 +480,9 @@ be_o_illuminate()  {
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
 
+	/* reset accumulation global scale factors */
+	acc_sc_obj = 1.0;
+
 	update_views = 1;
 }
 
@@ -507,6 +512,11 @@ be_o_scale()  {
 	edobj = BE_O_SCALE;
 	movedir = SARROW;
 	update_views = 1;
+	set_e_axes_pos();
+
+	edit_absolute_scale = acc_sc_obj - 1.0;
+	if(edit_absolute_scale > 0.0)
+	  edit_absolute_scale /= 3.0;
 }
 
 static void
@@ -521,6 +531,11 @@ be_o_xscale()  {
 	edobj = BE_O_XSCALE;
 	movedir = SARROW;
 	update_views = 1;
+	set_e_axes_pos();
+
+	edit_absolute_scale = acc_sc[0] - 1.0;
+	if(edit_absolute_scale > 0.0)
+	  edit_absolute_scale /= 3.0;
 }
 
 static void
@@ -535,6 +550,11 @@ be_o_yscale()  {
 	edobj = BE_O_YSCALE;
 	movedir = SARROW;
 	update_views = 1;
+	set_e_axes_pos();
+
+	edit_absolute_scale = acc_sc[1] - 1.0;
+	if(edit_absolute_scale > 0.0)
+	  edit_absolute_scale /= 3.0;
 }
 
 static void
@@ -549,6 +569,11 @@ be_o_zscale()  {
 	edobj = BE_O_ZSCALE;
 	movedir = SARROW;
 	update_views = 1;
+	set_e_axes_pos();
+
+	edit_absolute_scale = acc_sc[2] - 1.0;
+	if(edit_absolute_scale > 0.0)
+	  edit_absolute_scale /= 3.0;
 }
 
 static void

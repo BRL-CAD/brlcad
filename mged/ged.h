@@ -139,6 +139,7 @@ extern mat_t	identity;
 
 /* defined in buttons.c */
 extern fastf_t	acc_sc_sol;	/* accumulate solid scale factor */
+extern fastf_t  acc_sc_obj;	/* accumulate global object scale factor */
 extern fastf_t	acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
 

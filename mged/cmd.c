@@ -59,14 +59,12 @@ int cmd_init();
 int cmd_set();
 int cmd_get();
 int get_more_default();
-int tran(), irot();
 int f_tran();
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 
-extern mat_t    ModelDelta;
-extern void sedit_trans();
-extern int mged_vrot();
+
+extern void sync();
 extern int gui_setup();
 extern int cmd_stuff_str();
 extern int f_decompose();
@@ -76,19 +74,8 @@ extern int f_whatid();
 extern int f_which_air();
 extern int f_eac();
 
-extern short earb4[5][18];
-extern short earb5[9][18];
-extern short earb6[10][18];
-extern short earb7[12][18];
-extern short earb8[12][18];
-extern struct rt_db_internal es_int;
-extern short int fixv; /* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
-
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
-point_t e_axes_pos;
-void set_e_axes_pos();
-
 
 /* Carl Nuzman experimental */
 #if 1
@@ -99,9 +86,6 @@ extern int cmd_who();
 #endif
 
 extern Tcl_CmdProc	cmd_fhelp;
-
-extern void sync();
-int	inpara;			/* parameter input from keyboard */
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
@@ -2282,6 +2266,30 @@ char    *argv[];
 
 
 int
+mged_tran(interp, tranvec)
+Tcl_Interp *interp;
+vect_t tranvec;
+{
+  vect_t old_pos;
+  vect_t new_pos;
+  vect_t diff;
+
+  VMOVE(absolute_slew, tranvec);
+  MAT4X3PNT( new_pos, view2model, absolute_slew );
+  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
+  VSUB2( diff, new_pos, old_pos );
+  VADD2(new_pos, orig_pos, diff);
+  MAT_DELTAS_VEC( toViewcenter, new_pos);
+#if 0
+  MAT_DELTAS_VEC( ModelDelta, new_pos);
+#endif
+  new_mats();
+
+  return TCL_OK;
+}
+
+
+int
 f_tran(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -2290,9 +2298,7 @@ char	*argv[];
 {
   int incr = 0;
   int x, y, z;
-  point_t old_pos;
-  point_t new_pos;
-  point_t diff;
+  vect_t tranvec;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -2333,22 +2339,12 @@ char	*argv[];
     point_t tpoint;
 
     VSET(tpoint, x/2047.0, y/2047.0, z/2047.0);
-    VADD2(absolute_slew, absolute_slew, tpoint);
+    VADD2(tranvec, absolute_slew, tpoint);
   }else{
-    VSET(absolute_slew, x/2047.0, y/2047.0, z/2047.0);
+    VSET(tranvec, x/2047.0, y/2047.0, z/2047.0);
   }
 
-  MAT4X3PNT( new_pos, view2model, absolute_slew );
-  MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
-  VSUB2( diff, new_pos, old_pos );
-  VADD2(new_pos, orig_pos, diff);
-  MAT_DELTAS_VEC( toViewcenter, new_pos);
-#if 0
-  MAT_DELTAS_VEC( ModelDelta, new_pos);
-#endif
-  new_mats();
-
-  return TCL_OK;
+  return mged_tran(interp, tranvec);
 }
 
 
@@ -2391,131 +2387,6 @@ char	*argv[];
   slewview( slewvec );
 
   return TCL_OK;
-}
-
-void
-set_e_axes_pos()
-{
-  int	i;
-
-#if 0
-  update_views = 1;
-
-  if(EDIT_TRAN) {
-    VMOVE(e_axes_pos, es_keypoint);
-    MAT4X3PNT( absolute_slew, model2view, es_keypoint );
-  }else{
-    point_t new_pos;
-
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-
-    if(EDIT_ROTATE)
-      VSETALL( absolute_rotate, 0.0 );
-  }
-#else
-  update_views = 1;
-  switch(es_int.idb_type){
-  case	ID_ARB8:
-  case	ID_ARBN:
-    if(state == ST_O_EDIT)
-      i = 0;
-    else
-      switch(es_edflag){
-      case	STRANS:
-	i = 0;
-	break;
-      case	EARB:
-	switch(es_type){
-	case	ARB5:
-	  i = earb5[es_menu][0];
-	  break;
-	case	ARB6:
-	  i = earb6[es_menu][0];
-	  break;
-	case	ARB7:
-	  i = earb7[es_menu][0];
-	  break;
-	case	ARB8:
-	  i = earb8[es_menu][0];
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case	PTARB:
-	switch(es_type){
-	case    ARB4:
-	  i = es_menu;	/* index for point 1,2,3 or 4 */
-	  break;
-	case    ARB5:
-	case	ARB7:
-	  i = 4;	/* index for point 5 */
-	  break;
-	case    ARB6:
-	  i = es_menu;	/* index for point 5 or 6 */
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case ECMD_ARB_MOVE_FACE:
-	switch(es_type){
-	case	ARB4:
-	  i = arb_faces[0][es_menu * 4];
-	  break;
-	case	ARB5:
-	  i = arb_faces[1][es_menu * 4];  		
-	  break;
-	case	ARB6:
-	  i = arb_faces[2][es_menu * 4];  		
-	  break;
-	case	ARB7:
-	  i = arb_faces[3][es_menu * 4];  		
-	  break;
-	case	ARB8:
-	  i = arb_faces[4][es_menu * 4];  		
-	  break;
-	default:
-	  i = 0;
-	  break;
-	}
-	break;
-      case ECMD_ARB_ROTATE_FACE:
-	i = fixv;
-	break;
-      default:
-	i = 0;
-	break;
-      }
-
-    VMOVE(e_axes_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
-    break;
-  case ID_TGC:
-  case ID_REC:
-    if(es_edflag == ECMD_TGC_MV_H ||
-       es_edflag == ECMD_TGC_MV_HH){
-      struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
-
-      VADD2(e_axes_pos, tgc->h, tgc->v);
-      break;
-    }
-  default:
-    VMOVE(e_axes_pos, es_keypoint);
-    break;
-  }
-
-  if(EDIT_ROTATE)
-    VSETALL( edit_absolute_rotate, 0.0 )
-  else if(EDIT_TRAN)
-    VSETALL( edit_absolute_tran, 0.0 )
-  else if(EDIT_SCALE)
-    edit_absolute_scale = 0;
-
-  mat_idn(acc_rot_sol);
-#endif
 }
 
 int
@@ -2574,80 +2445,3 @@ char    **argv;
 		    "\n", (char *)NULL);
   return TCL_ERROR;
 }
-
-
-int
-tran(view_flag)
-int view_flag;
-{
-  point_t old_pos;
-  point_t new_pos;
-  point_t diff;
-  point_t model_pos;
-
-  if(EDIT_TRAN && mged_variables.edit && !view_flag){
-    VSCALE(diff, edit_absolute_tran, Viewscale);
-    VADD2(model_pos, diff, e_axes_pos);
-    MAT4X3PNT(new_pos, model2view, model_pos);
-
-    if(state = ST_S_EDIT){
-      sedit_trans(new_pos);
-    }else
-      objedit_mouse(new_pos);
-  }else{/* slew the view */
-    MAT4X3PNT( new_pos, view2model, absolute_slew )
-    MAT_DELTAS_GET_NEG( old_pos, toViewcenter )
-    VSUB2( diff, new_pos, old_pos )
-    VADD2(new_pos, orig_pos, diff)
-    MAT_DELTAS_VEC( toViewcenter, new_pos)
-    new_mats();
-  }
-
-  return CMD_OK;
-}
-
-int
-irot(x, y, z, iflag)
-fastf_t x, y, z;
-int iflag;
-{
-  point_t model_pos;
-  point_t new_pos;
-  int status;
-  char *av[6];
-  struct bu_vls xval, yval, zval;
-
-  bu_vls_init(&xval);
-  bu_vls_init(&yval);
-  bu_vls_init(&zval);
-  bu_vls_printf(&xval, "%f", x);
-  bu_vls_printf(&yval, "%f", y);
-  bu_vls_printf(&zval, "%f", z);
-  av[1] = bu_vls_addr(&xval);
-  av[2] = bu_vls_addr(&yval);
-  av[3] = bu_vls_addr(&zval);
-  av[4] = NULL;
-
-  if(state == ST_S_EDIT){
-    av[0] = "p";
-    status = f_param((ClientData)NULL, interp, 4, av);
-  }else if(state == ST_O_EDIT){
-    av[0] = "orot";
-    if(iflag){
-      av[1] = "-i";
-      av[2] = bu_vls_addr(&xval);
-      av[3] = bu_vls_addr(&yval);
-      av[4] = bu_vls_addr(&zval);
-      av[5] = NULL;
-      status = f_rot_obj((ClientData)NULL, interp, 5, av);
-    }else
-      status = f_rot_obj((ClientData)NULL, interp, 4, av);
-  }
-
-  bu_vls_free(&xval);
-  bu_vls_free(&yval);
-  bu_vls_free(&zval);
-
-  return status;
-}
-

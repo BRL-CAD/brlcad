@@ -51,13 +51,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static void sl_tol();
 static void sl_artol();
 static void sl_itol();
-static double sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
 
-struct scroll_item scr_menu[] = {
+struct scroll_item sl_menu[] = {
 	{ "xslew",	sl_tol,		0,	"X" },
 	{ "yslew",	sl_tol,		1,	"Y" },
 	{ "zslew",	sl_tol,		2,	"Z" },
-	{ "zoom",	sl_tol,		3,	"S" },
+	{ "scale",	sl_tol,		3,	"S" },
 	{ "xrot",	sl_tol,		4,	"x" },
 	{ "yrot",	sl_tol,		5,	"y" },
 	{ "zrot",	sl_tol,		6,	"z" },
@@ -68,7 +67,7 @@ struct scroll_item sl_abs_menu[] = {
 	{ "Xslew",	sl_tol,		0,	"aX" },
 	{ "Yslew",	sl_tol,		1,	"aY" },
 	{ "Zslew",	sl_tol,		2,	"aZ" },
-	{ "Zoom",	sl_tol,		3,	"aS" },
+	{ "Scale",	sl_tol,		3,	"aS" },
 	{ "Xrot",	sl_artol,	4,	"ax" },
 	{ "Yrot",	sl_artol,	5,	"ay" },
 	{ "Zrot",	sl_artol,	6,	"az" },
@@ -143,7 +142,7 @@ char **argv;
 
     if (mged_variables.scroll_enabled) {
       if(mged_variables.rateknobs)
-	scroll_array[0] = scr_menu;
+	scroll_array[0] = sl_menu;
       else
 	scroll_array[0] = sl_abs_menu;
     } else {

@@ -61,7 +61,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "../librt/debug.h"	/* XXX */
 
+extern int mged_param();
 extern void color_soltab();
+
+int knob_tran();
 int mged_vrot();
 static void abs_zoom();
 
@@ -77,6 +80,7 @@ extern mat_t    ModelDelta;     /* from ged.c */
 extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
+extern vect_t e_axes_pos;
 
 vect_t edit_absolute_rotate;
 vect_t edit_rate_rotate;
@@ -1534,7 +1538,8 @@ char	**argv;
 {
   int	i;
   fastf_t f;
-  char	*cmd;/* = argv[1];*/
+  vect_t tvec;
+  char	*cmd;
   int do_tran = 0;
   int incr_flag = 0;  /* interpret values as increments */
   int view_flag = 0;  /* force view interpretation */
@@ -1650,10 +1655,12 @@ char	**argv;
       ++argv;
 
     if( cmd[1] == '\0' )  {
+#if 0
       if( f < -1.0 )
 	f = -1.0;
       else if( f > 1.0 )
 	f = 1.0;
+#endif
 
       switch( cmd[0] )  {
       case 'x':
@@ -1756,12 +1763,13 @@ char	**argv;
       if(incr_flag){
 	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_rotate[X] += f;
-	  (void)irot(edit_absolute_rotate[X],
-		     edit_absolute_rotate[Y],
-		     edit_absolute_rotate[Z], 0);
+	  (void)mged_param(interp, 3, edit_absolute_rotate);
 	}else {
 	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	    (void)irot(f, 0.0, 0.0, 1);
+	    tvec[X] = f;
+	    tvec[Y] = 0.0;
+	    tvec[Z] = 0.0;
+	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[X] += f;
 	  }else{
 	    (void)mged_vrot(f, 0.0, 0.0);
@@ -1771,12 +1779,13 @@ char	**argv;
       }else{
 	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_absolute_rotate[X] = f;
-	    (void)irot(edit_absolute_rotate[X],
-		       edit_absolute_rotate[Y],
-		       edit_absolute_rotate[Z], 0);
+	    (void)mged_param(interp, 3, edit_absolute_rotate);
 	  }else {
 	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	      (void)irot(f - edit_absolute_rotate[X], 0.0, 0.0, 1);
+	      tvec[X] = f - edit_absolute_rotate[X];
+	      tvec[Y] = 0.0;
+	      tvec[Z] = 0.0;
+	      mged_rot_obj(interp, 1, tvec);
 	      edit_absolute_rotate[X] = f;
 	    }else{
 	      mged_vrot(f - absolute_rotate[X], 0.0, 0.0);
@@ -1803,12 +1812,13 @@ char	**argv;
       if(incr_flag){
 	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_rotate[Y] += f;
-	  (void)irot(edit_absolute_rotate[X],
-		     edit_absolute_rotate[Y],
-		     edit_absolute_rotate[Z], 0);
+	  (void)mged_param(interp, 3, edit_absolute_rotate);
 	}else {
 	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	    (void)irot(0.0, f, 0.0, 1);
+	    tvec[X] = 0.0;
+	    tvec[Y] = f;
+	    tvec[Z] = 0.0;
+	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Y] += f;
 	  }else{
 	    (void)mged_vrot(0.0, f, 0.0);
@@ -1818,18 +1828,18 @@ char	**argv;
       }else{
 	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_absolute_rotate[Y] = f;
-	    (void)irot(edit_absolute_rotate[X],
-		       edit_absolute_rotate[Y],
-		       edit_absolute_rotate[Z], 0);
+	    (void)mged_param(interp, 3, edit_absolute_rotate);
 	  }else {
 	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	      (void)irot(0.0, f - edit_absolute_rotate[Y], 0.0, 1);
+	      tvec[X] = 0.0;
+	      tvec[Y] = f - edit_absolute_rotate[Y];
+	      tvec[Z] = 0.0;
+	      mged_rot_obj(interp, 1, tvec);
 	      edit_absolute_rotate[Y] = f;
 	    }else{
 	      mged_vrot(0.0, f - absolute_rotate[Y], 0.0);
 	      absolute_rotate[Y] = f;
 	    }
-	    
 	  }
       }
 	  
@@ -1851,12 +1861,13 @@ char	**argv;
       if(incr_flag){
 	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_rotate[Z] += f;
-	  (void)irot(edit_absolute_rotate[X],
-		     edit_absolute_rotate[Y],
-		     edit_absolute_rotate[Z], 0);
+	  (void)mged_param(interp, 3, edit_absolute_rotate);
 	}else {
 	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	    (void)irot(0.0, 0.0, f, 1);
+	    tvec[X] = 0.0;
+	    tvec[Y] = 0.0;
+	    tvec[Z] = f;
+	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Z] += f;
 	  }else{
 	    (void)mged_vrot(0.0, 0.0, f);
@@ -1866,12 +1877,13 @@ char	**argv;
       }else{
 	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_absolute_rotate[Z] = f;
-	    (void)irot(edit_absolute_rotate[X],
-		       edit_absolute_rotate[Y],
-		       edit_absolute_rotate[Z], 0);
+	    (void)mged_param(interp, 3, edit_absolute_rotate);
 	  }else {
 	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
-	      (void)irot(0.0, 0.0, f - edit_absolute_rotate[Z], 1);
+	      tvec[X] = 0.0;
+	      tvec[Y] = 0.0;
+	      tvec[Z] = f - edit_absolute_rotate[Z];
+	      mged_rot_obj(interp, 1, tvec);
 	      edit_absolute_rotate[Z] = f;
 	    }else{
 	      mged_vrot(0.0, 0.0, f - absolute_rotate[Z]);
@@ -1944,8 +1956,10 @@ char	**argv;
       if(incr_flag){
 	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_scale += f;
-	  if(state = ST_S_EDIT)
-	    sedit_scale();
+	  if(state == ST_S_EDIT)
+	    sedit_abs_scale();
+	  else
+	    oedit_abs_scale();
 	}else{
 	  absolute_zoom += f;
 	  abs_zoom();
@@ -1953,8 +1967,10 @@ char	**argv;
       }else{
 	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_scale = f;
-	  if(state = ST_S_EDIT)
-	    sedit_scale();
+	  if(state == ST_S_EDIT)
+	    sedit_abs_scale();
+	  else
+	    oedit_abs_scale();
 	}else{
 	  absolute_zoom = f;
 	  abs_zoom();
@@ -2055,11 +2071,39 @@ usage:
   }
 
   if(do_tran)
-    (void)tran(view_flag);
+    (void)knob_tran(interp, view_flag, edit_flag);
  
   check_nonzero_rates();
   return TCL_OK;
 }
+
+int
+knob_tran(interp, view_flag, edit_flag)
+Tcl_Interp *interp;
+int view_flag;
+int edit_flag;
+{
+  point_t old_pos;
+  point_t new_pos;
+  point_t diff;
+  point_t model_pos;
+
+  if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag)){
+    VSCALE(diff, edit_absolute_tran, Viewscale);
+    VADD2(model_pos, diff, e_axes_pos);
+    MAT4X3PNT(new_pos, model2view, model_pos);
+
+    if(state == ST_S_EDIT)
+      sedit_trans(new_pos);
+    else
+      oedit_trans(new_pos);
+
+  }else /* slew the view */
+    mged_tran(interp, absolute_slew);
+
+  return TCL_OK;
+}
+
 
 /*
  *			F _ T O L
