@@ -1125,7 +1125,7 @@ rt_arb_plot( vhead, ip, ttol, tol )
 struct bu_list			*vhead;
 struct rt_db_internal		 *ip;
 CONST struct rt_tess_tol	*ttol;
-struct bn_tol			*tol;
+CONST struct bn_tol		*tol;
 {
 	struct rt_arb_internal	*aip;
 
@@ -1231,10 +1231,11 @@ CONST struct db_i		*dbip;
  *			R T _ A R B _ E X P O R T
  */
 int
-rt_arb_export( ep, ip, local2mm )
+rt_arb_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rec;
@@ -1417,7 +1418,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol	*ttol;
-struct bn_tol		*tol;
+CONST struct bn_tol		*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1530,7 +1531,7 @@ rt_arb_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-struct bn_tol		*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
