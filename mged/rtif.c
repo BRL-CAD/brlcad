@@ -195,6 +195,8 @@ register char	**vp;
 
 		if( sp->s_iflag == UP )
 			continue;
+		if( sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR )
+			continue;	/* Ignore overlays, predictor, etc */
 		if( vp < &rt_cmd_vec[LEN] )
 			*vp++ = sp->s_path[0]->d_namep;
 		else  {
@@ -796,8 +798,11 @@ static struct rt_vlblock	*rtif_vbp;
 static FILE	*rtif_fp;
 static double	rtif_delay;
 static struct mged_variables	rtif_saved_state;	/* saved state variables */
+static int	rtif_mode;
 
 /*
+ *			R T I F _ S I G I N T
+ *
  *  Called on SIGINT from within preview.
  *  Close things down and abort.
  *
@@ -841,13 +846,17 @@ char	**argv;
 	mged_variables.autosize = 0;
 
 	rtif_delay = 0;			/* Full speed, by default */
+	rtif_mode = 1;			/* wireframe drawing */
 
 	/* Parse options */
 	optind = 1;			/* re-init getopt() */
-	while( (c=getopt(argc,argv,"d:")) != EOF )  {
+	while( (c=getopt(argc,argv,"d:v")) != EOF )  {
 		switch(c)  {
 		case 'd':
 			rtif_delay = atof(optarg);
+			break;
+		case 'v':
+			rtif_mode = 3;	/* Like "ev" */
 			break;
 		default:
 			printf("option '%c' unknown\n", c);
@@ -1175,7 +1184,7 @@ int	argc;
 
 	/* If new treewalk is needed, get new objects into view. */
 	if( tree_walk_needed )  {
-		edit_com( rt_cmd_vec_len, rt_cmd_vec, 1, 0 );
+		edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
 	}
 
 	dmaflag = 1;
