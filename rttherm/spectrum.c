@@ -452,9 +452,11 @@ rt_log("rt_spect_black_body_fast( x%x, %g degK )\n", ss, temp );
 }
 
 /*
- *  Returns point-samples values of spectral radiant emittance,
+ *			R T _ S P E C T _ B L A C K _ B O D Y _ P O I N T S
+ *
+ *  Returns point-sampled values of spectral radiant emittance,
  *  in units of watts/cm**2/um,
- *  straight from Planck's formula.
+ *  straight from Planck's black-body radiation formula.
  */
 void
 rt_spect_black_body_points( ss, temp )
