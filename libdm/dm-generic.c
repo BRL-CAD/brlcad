@@ -16,13 +16,17 @@ extern struct dm *plot_open();
 extern struct dm *ps_open();
 #ifdef DM_X
 extern struct dm *X_open();
+#if 0
 extern void X_configureWindowShape();
+#endif
 #endif
 #ifdef DM_OGL
 extern struct dm *ogl_open();
+#if 0
 extern void ogl_configureWindowShape();
 extern void ogl_zbuffer();
 extern void ogl_lighting();
+#endif
 extern void ogl_fogHint();
 #endif
 
@@ -127,6 +131,7 @@ int use_aspect;
     return (0.5 - f * 0.5) * dmp->dm_height;
 }
 
+#if 0
 void
 dm_configureWindowShape(dmp)
 struct dm *dmp;
@@ -178,6 +183,7 @@ int lighting_on;
     return;
   }
 }
+#endif
 
 void
 dm_fogHint(dmp, fastfog)
