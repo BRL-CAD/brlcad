@@ -25,36 +25,9 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./ext.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
-
-/***** view.c variables imported from rt.c *****/
-extern mat_t	view2model;
-extern mat_t	model2view;
-
-/***** worker.c variables imported from opt.c *****/
-extern void	worker();
-extern struct application ap;
-extern int	stereo;			/* stereo viewing */
-extern vect_t	left_eye_delta;
-extern int	hypersample;		/* number of extra rays to fire */
-extern int	jitter;			/* jitter ray starting positions */
-extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
-extern fastf_t	aspect;			/* view aspect ratio X/Y */
-extern vect_t	dx_model;		/* view delta-X as model-space vect */
-extern vect_t	dy_model;		/* view delta-Y as model-space vect */
-extern fastf_t	cell_width;		/* model space grid cell width */
-extern fastf_t	cell_height;		/* model space grid cell height */
-extern point_t	eye_model;		/* model-space location of eye */
-extern int	width;			/* # of pixels in X */
-extern int	height;			/* # of lines in Y */
-extern mat_t	Viewrotscale;
-extern fastf_t	viewsize;
-extern int	incr_mode;		/* !0 for incremental resolution */
-extern int	incr_level;		/* current incremental level */
-extern int	incr_nlevel;		/* number of levels */
-extern int	npsw;
-extern struct resource resource[];
 
 /* Local communication with worker() */
 HIDDEN point_t	viewbase_model;	/* model-space location of viewplane corner */
@@ -190,9 +163,9 @@ worker()
 	RES_ACQUIRE( &rt_g.res_worker );
 	cpu = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
-/*printf("cpu = %d, &resource[0] = 0x%x\n", cpu, &resource[0]);*/
 
 	resource[cpu].re_cpu = cpu;
+	resource[cpu].re_magic = RESOURCE_MAGIC;
 
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
@@ -201,11 +174,11 @@ worker()
 
 		if( com > last_pixel )
 			break;
+
 		/* Note: ap.... may not be valid until first time here */
 		a = ap;				/* struct copy */
-/*		bcopy( &ap, &a, sizeof(a) );*/
 		a.a_resource = &resource[cpu];
-/*printf("cpu = %d, &resource[0] = 0x%x\n", cpu, &resource[0]);*/
+
 		if( incr_mode )  {
 			register int i = 1<<incr_level;
 			a.a_x = com%i;
