@@ -39,9 +39,9 @@ kill_obj( name )
 char *name;
 {
 	if( mode == HUMAN )
-		bu_log( "%s has been killed\n", name );
+		printf( "%s has been killed\n", name );
 	else
-		bu_log( "kill %s\n", name );
+		printf( "kill %s\n", name );
 
 }
 
@@ -67,9 +67,9 @@ struct db_i *dbip1, *dbip2;
 		bcmp( (void *)ext1.ext_buf, (void *)ext2.ext_buf, ext1.ext_nbytes ) )
 	{
 		if( mode == HUMAN )
-			bu_log( "kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename );
+			printf( "kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename );
 		else
-			bu_log( "kill %s\n# IMPORT %s from %s", dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
+			printf( "kill %s\n# IMPORT %s from %s", dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
 	}
 }
 
@@ -90,18 +90,18 @@ struct db_i *dbip1, *dbip2;
 	{
 		/* different solid types */
 		if( mode == HUMAN )
-			bu_log( "solid %s:\n\twas: %s\n\tis now: %s\n", dp1->d_namep, str1, str2 );
+			printf( "solid %s:\n\twas: %s\n\tis now: %s\n", dp1->d_namep, str1, str2 );
 		else
-			bu_log( "kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2 );
+			printf( "kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2 );
 	}
 	else if( strcmp( str1, str2 ) )
 	{
 		/* same solid type */
 		/* XXXX can add more code to limit number of args to 'db adjust' */
 		if( mode == HUMAN )
-			bu_log( "solid %s:\n\twas: %s\n\tis now: %s\n", dp1->d_namep, str1, str2 );
+			printf( "solid %s:\n\twas: %s\n\tis now: %s\n", dp1->d_namep, str1, str2 );
 		else
-			bu_log( "db adjust %s %s\n", dp1->d_namep, c2 );
+			printf( "db adjust %s %s\n", dp1->d_namep, c2 );
 	}
 }
 
@@ -161,10 +161,10 @@ struct rt_wdb *wdb1, *wdb2;
 
 				/* cannot get it, they MUST be different */
 				if( mode == HUMAN )
-					bu_log( "Replace %s with the same object from %s\n",
+					printf( "Replace %s with the same object from %s\n",
 						dp1->d_namep, dbip2->dbi_filename );
 				else
-					bu_log( "kill %s\n# IMPORT %s from %s\n",
+					printf( "kill %s\n# IMPORT %s from %s\n",
 						dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
 				continue;
 			}
@@ -184,10 +184,10 @@ struct rt_wdb *wdb1, *wdb2;
 			if( strcmp( str1, str2 ) )
 			{
 				if( mode == HUMAN )
-					bu_log( "%s:\n\twas: %s\n\tis now: %s\n",
+					printf( "%s:\n\twas: %s\n\tis now: %s\n",
 						dp1->d_namep, str1, str2 );
 				else
-					bu_log( "kill %s\ndb put %s %s\n",
+					printf( "kill %s\ndb put %s %s\n",
 						dp1->d_namep, dp2->d_namep, str2 );
 			}
 		}
@@ -210,19 +210,19 @@ struct rt_wdb *wdb1, *wdb2;
 				{
 					/* could not get TCL version */
 					if( mode == HUMAN )
-						bu_log( "Import %s from %s\n",
+						printf( "Import %s from %s\n",
 							dp2->d_namep, dbip2->dbi_filename );
 					else
-						bu_log( "# IMPORT %s from %s\n",
+						printf( "# IMPORT %s from %s\n",
 							dp2->d_namep, dbip2->dbi_filename );
 				}
 				else
 				{
 					if( mode == HUMAN )
-						bu_log( "%s does not exist in %s\n",
+						printf( "%s does not exist in %s\n",
 							dp2->d_namep, dbip1->dbi_filename );
 					else
-						bu_log( "db put %s %s\n",
+						printf( "db put %s %s\n",
 							dp2->d_namep, Tcl_GetStringResult( interp ) );
 				}
 				Tcl_ResetResult( interp );
@@ -282,7 +282,6 @@ char *argv[];
 
 	RT_CK_DBI(dbip1);
 
-	bu_log( "# " );
 	if( (wdb1 = wdb_dbopen( dbip1, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )
 	{
 		bu_log( "wdb_dbopen failed for %s\n", file1 );
@@ -313,7 +312,6 @@ char *argv[];
 		exit( 1 );
 	}
 
-	bu_log( "# " );
 	if( (wdb2 = wdb_dbopen( dbip2, RT_WDB_TYPE_DB_DISK )) == RT_WDB_NULL )
 	{
 		db_close( dbip2 );
@@ -326,18 +324,18 @@ char *argv[];
 	if( strcmp( dbip1->dbi_title, dbip2->dbi_title ) )
 	{
 		if( mode == HUMAN )
-			bu_log( "Title has changed from: \"%s\" to: \"%s\"\n", dbip1->dbi_title, dbip2->dbi_title );
+			printf( "Title has changed from: \"%s\" to: \"%s\"\n", dbip1->dbi_title, dbip2->dbi_title );
 		else
-			bu_log( "title %s\n", dbip2->dbi_title );
+			printf( "title %s\n", dbip2->dbi_title );
 	}
 
 	/* and units */
 	if( dbip1->dbi_local2base != dbip2->dbi_local2base )
 	{
 		if( mode == HUMAN )
-			bu_log( "Units changed from %s to %s\n", rt_units_string(dbip1->dbi_local2base), rt_units_string(dbip2->dbi_local2base) );
+			printf( "Units changed from %s to %s\n", rt_units_string(dbip1->dbi_local2base), rt_units_string(dbip2->dbi_local2base) );
 		else
-			bu_log( "units %s\n", rt_units_string(dbip2->dbi_local2base) );
+			printf( "units %s\n", rt_units_string(dbip2->dbi_local2base) );
 	}
 
 	/* next compare objects */
