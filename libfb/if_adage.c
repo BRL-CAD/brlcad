@@ -61,7 +61,7 @@ _LOCAL_ int	adage_device_open(),
 		adage_colormap_write(),
 		adage_window_set(),
 		adage_zoom_set(),
-		adage_cinit_bitmap(),
+		adage_curs_set(),
 		adage_cmemory_addr(),
 		adage_cscreen_addr();
 
@@ -78,7 +78,7 @@ FBIO adage_interface =
 		fb_null,
 		adage_window_set,
 		adage_zoom_set,
-		adage_cinit_bitmap,
+		adage_curs_set,
 		adage_cmemory_addr,
 		adage_cscreen_addr,
 		"Adage RDS3000",
@@ -136,18 +136,25 @@ struct	ikinfo {
 	struct	ik_fbc	ikfbcmem;	/* Current FBC state */
 	short	*_ikUBaddr;		/* Mapped-in Ikonas address */
 	/* Current values initialized in adage_init() */
+	int	mode;			/* 0,1,2 */
 	int	x_zoom, y_zoom;
 	int	x_window, y_window;	/* Ikonas, upper left of window */
-	int	mode;			/* 0,1,2 */
 	int	y_winoff;		/* y window correction factor */
+	int	x_corig, y_corig;	/* cursor origin offsets */
 };
 #define	IKI(ptr) ((struct ikinfo *)((ptr)->u1.p))
 #define	IKIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
-static long cursor[32] =
-	{
+struct	adage_cursor {
+	int	xbits, ybits;
+	int	xorig, yorig;
+	unsigned char bits[32*4];
+};
+
+static struct adage_cursor default_cursor = {
+/*#include "./adageframe.h"*/
 #include "./adagecursor.h"
-	};
+};
 
 /*
  * RGBpixel -> Ikonas pixel buffer
@@ -228,11 +235,7 @@ int	width, height;
 
 	/* Build an identity for the crossbar switch */
 	for( i=0; i < 34; i++ )
-#ifndef pdp11
 		xbsval[i] = (long)i;
-#else
-		xbsval[i] = (((long)i)<<16);	/* word swap.. */
-#endif
 	if( lseek( ifp->if_fd, XBS*4L, 0 ) == -1 ) {
 		fb_log( "adage_device_open : lseek failed.\n" );
 		return	-1;
@@ -244,11 +247,7 @@ int	width, height;
 	}
 
 	/* Initialize the LUVO crossbar switch, too */
-#ifndef pdp11
 	xbsval[0] = 0x24L;		/* 1:1 mapping, magic number */
-#else
-	xbsval[0] = (0x24L<<16);
-#endif
 	if( lseek( ifp->if_fd, LUVOXBS*4L, 0 ) == -1 ) {
 		fb_log( "adage_device_open : lseek failed.\n" );
 		return	-1;
@@ -260,7 +259,9 @@ int	width, height;
 	}
 
 	/* Dump in default cursor. */
-	if( adage_cinit_bitmap( ifp, cursor ) == -1 )
+	if( adage_curs_set( ifp, default_cursor.bits,
+	    default_cursor.xbits, default_cursor.ybits,
+	    default_cursor.xorig, default_cursor.yorig ) == -1 )
 		return	-1;
 	/* seek to start of pixels */
 	if( lseek( ifp->if_fd, 0L, 0 ) == -1 ) {
@@ -278,6 +279,11 @@ int	width, height;
 	IKI(ifp)->y_zoom = 1;
 	IKI(ifp)->x_window = 0;
 	IKI(ifp)->y_window = 0;
+	/* 12bit 2's complement window setting */
+	i = ikfbc_setup[IKI(ifp)->mode].fbc_ywindow;
+	if( i >= 2048 )
+		i = - (4096 - i);
+	IKI(ifp)->y_winoff = i;
 	return	ifp->if_fd;
 }
 
@@ -672,14 +678,24 @@ register int	x, y;
 			else
 				IKI(ifp)->ikfbcmem.fbc_xzoom = 0;
 			if( x & 1 )  fb_log("Unable to do odd X zooms properly in HIRES\n");
+			IKI(ifp)->ikfbcmem.fbc_xsizeview = 511;
 		} else {
 			IKI(ifp)->ikfbcmem.fbc_Hcontrol =
 				ikfbc_setup[2].fbc_Hcontrol;
 			IKI(ifp)->ikfbcmem.fbc_xzoom = 0;
+			IKI(ifp)->ikfbcmem.fbc_xsizeview =
+				ikfbc_setup[2].fbc_xsizeview;
 		}
+		/* set pixel clock */
 		if( lseek( ifp->if_fd, FBCVC*4L, 0 ) == -1 ||
 		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 4 ) != 4 ) {
 			fb_log( "adage_zoom_set : FBCVC write failed.\n" );
+			return	-1;
+		}
+		/* set x viewport size */
+		if( lseek( ifp->if_fd, FBCVPS*4L, 0 ) == -1 ||
+		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xsizeview), 4 ) != 4 ) {
+			fb_log( "adage_zoom_set : FBCVPS write failed.\n" );
 			return	-1;
 		}
 		
@@ -837,23 +853,20 @@ int	x, y;
 #endif
 
 	y = ifp->if_height-1-y;		/* q1 -> q4 */
-	y -= IKI(ifp)->y_window;
-	x -= IKI(ifp)->x_window;
-
+	y = y - IKI(ifp)->y_window;
+	x = x - IKI(ifp)->x_window;
+/*
 	if( y < 0 )  y = 0;
 	if( x < 0 )  x = 0;
-#ifdef never
-	if( x >= ifp->if_width/IKI(ifp)->x_zoom-1 )
-		x = ifp->if_width/IKI(ifp)->x_zoom-1;
-	if( y >= ifp->if_height/IKI(ifp)->y_zoom-1 )
-		y = ifp->if_height/IKI(ifp)->y_zoom-1;
-	y -= IKI(ifp)->y_winoff;
-#else
+*/
 	y *= IKI(ifp)->y_zoom;
-	x *= IKI(ifp)->x_zoom;
+	if( IKI(ifp)->mode == 2 && IKI(ifp)->x_zoom > 1 )
+		x *= (IKI(ifp)->x_zoom / 2);
+	else
+		x *= IKI(ifp)->x_zoom;
 	y -= IKI(ifp)->y_winoff;
-	y += (IKI(ifp)->y_zoom-1)*2;	/* HACK to correct drift */
-#endif
+	x -= IKI(ifp)->x_corig;
+	y -= IKI(ifp)->y_corig;
 
 	if( mode )
 		IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_CURSOR;
@@ -904,28 +917,68 @@ int	x, y;
 }
 
 _LOCAL_ int
-adage_cinit_bitmap( ifp, bitmap )
+adage_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-long	*bitmap;
+unsigned char	*bits;
+int	xbits, ybits;
+int	xorig, yorig;
 {
-	register int i;
-	long	cursorarray[256];
+	int	x, y, xbytes;
+	unsigned long cursor[256];
+	unsigned char *ip, imask;
+	unsigned long *op, omask;
 
-#ifdef pdp11
-	for(i = 0; i < 256; i++)
-		cursorarray[i] = ((bitmap[i/8]>>((i%8)*4))&017L)<<16;
-#else
-	for (i = 0; i < 256; i++)
-		cursorarray[i] = (bitmap[i/8]>>((i%8)*4))&017L;
-#endif
+	/* Determine bytes per cursor "scanline" */
+	xbytes = xbits / 8;
+	if( xbytes * 8 != xbits ) xbytes++;
+
+	/* check size of cursor */
+	if( ybits > 32 ) ybits = 32;
+	if( ybits < 0 ) return -1;
+	if( xbits > 32 ) xbits = 32;
+	if( xbits < 0 ) return -1;
+
+	/* Clear it out first */
+	for( x = 0; x < 256; x++ )
+		cursor[x] = 0;
+
+	for( y = 0; y < ybits; y++ ) {
+		ip = &bits[ y * xbytes ];
+		op = &cursor[ (31-y) * 8 ];
+		imask = 0x80;
+		omask = 1;
+		for( x = 0; x < xbits; x++ ) {
+			if( *ip & imask )
+				*op |= omask;
+			/*
+			 * update bit masks and pointers
+			 */
+			imask >>= 1;
+			if( imask == 0 ) {
+				imask = 0x80;
+				ip++;
+			}
+			omask <<= 1;
+			if( omask == 0x10 ) {
+				omask = 1;
+				op++;
+			}
+		}
+	}
+
 	if( lseek( ifp->if_fd, FBCCD*4L, 0 ) == -1 ) {
-		fb_log( "adage_cinit_bitmap : lseek failed.\n" );
+		fb_log( "adage_curs_set : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, cursorarray, 1024 ) != 1024 ) {
-		fb_log( "adage_cinit_bitmap : write failed.\n" );
+	if( write( ifp->if_fd, cursor, 1024 ) != 1024 ) {
+		fb_log( "adage_curs_set : write failed.\n" );
 		return	-1;
 	}
+
+	/* Set the cursor origin offsets */
+	IKI(ifp)->x_corig = xorig;
+	IKI(ifp)->y_corig = 32 - yorig;
+
 	return	0;
 }
 
@@ -979,19 +1032,6 @@ register ColorMap	*cp;
 		}
 	}
 
-#ifdef pdp11
-	/* 16-bit-word-in-long flipping for PDP's */
-	for( i=0; i < 512; i++ ) {
-		register struct twiddle {
-			short rhs;
-			short lhs;
-		}  *cmp = &cmap[i];
-		register short temp;
-		temp = cmp->rhs;
-		cmp->rhs = cmp->lhs;
-		cmp->lhs = temp;
-	}
-#endif
 	/*
 	 * Replicate first copy of color map onto second copy,
 	 * and also do the "overlay" portion too.
@@ -1026,23 +1066,11 @@ register ColorMap	*cp;
 		fb_log( "adage_colormap_read : read failed.\n" );
 		return	-1;
 	}
-#ifndef pdp11
 	for( i=0; i < 256; i++ ) {
 		cp->cm_red[i] = (cmap[i]<<(6+0))  & 0xFFC0;
 		cp->cm_green[i] = (cmap[i]>>(10-6))  & 0xFFC0;
 		cp->cm_blue[i] = (cmap[i]>>(20-6)) & 0xFFC0;
 	}
-#else
-	for( i=0; i < 256; i++ ) {
-		register struct twiddle {
-			short rhs;
-			short lhs;
-		}  *cmp = &cmap[i];
-		cp->cm_red[i] = (cmp->rhs & 0x3FF) << 6;
-		cp->cm_green[i] = (((cmp->lhs<<6)&0x3C0) | ((cmp->rhs>>10)&0x3F)) << 6;
-		cp->cm_blue[i] = ((cmp->lhs>>4) & 0x3FF) << 6;
-	}
-#endif
 	return	0;
 }
 
