@@ -10,6 +10,8 @@
  *	Phillip Dykstra
  *	17 Apr 1987
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 
