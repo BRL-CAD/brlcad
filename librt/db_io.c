@@ -101,13 +101,13 @@ int		len;
 
 	if( dp->d_addr < 0 )  {
 		where->u_id = '\0';	/* undefined id */
-		return;
+		return(-1);
 	}
 	if( offset < 0 || offset+len > dp->d_len )  {
 		rt_log("db_get(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
 		where->u_id = '\0';	/* undefined id */
-		return;
+		return(-1);
 	}
 	if( dbip->dbi_inmem )  {
 		register int	start;
@@ -119,7 +119,7 @@ int		len;
 #else
 		bcopy( dbip->dbi_inmem + start, (char *)where, want );
 #endif
-		return;
+		return(0);
 	}
 #if unix
 	want = len * sizeof(union record);
@@ -137,8 +137,9 @@ int		len;
 		rt_log("db_get(%s):  read error.  Wanted %d, got %d bytes\n",
 			dp->d_namep, want, got );
 		where->u_id = '\0';	/* undefined id */
-		return;
+		return(-1);
 	}
+	return(0);			/* OK */
 }
 
 /*
@@ -169,12 +170,12 @@ int		len;
 	if( dbip->dbi_read_only )  {
 		rt_log("db_put(%s):  READ-ONLY file\n",
 			dbip->dbi_filename);
-		return;
+		return(-1);
 	}
 	if( offset < 0 || offset+len > dp->d_len )  {
 		rt_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
-		return;
+		return(-1);
 	}
 #if unix
 	want = len * sizeof(union record);
@@ -185,11 +186,14 @@ int		len;
 	want = len;
 	(void)fseek( dbip->dbi_fp,
 		(long)(dp->d_addr + offset * sizeof(union record)), 0 );
-	got = fwrite( (char *)where, want, sizeof(union record), dbip->dbi_fp );
+	got = fwrite( (char *)where, want, sizeof(union record),
+		dbip->dbi_fp );
 #endif
 	if( got != want )  {
 		perror("db_put");
 		rt_log("db_put(%s):  write error.  Sent %d, achieved %d bytes\n",
 			dp->d_namep, want, got );
+		return(-1);
 	}
+	return(0);
 }
