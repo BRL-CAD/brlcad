@@ -1944,10 +1944,19 @@ BU_EXTERN(struct rt_i *rt_new_rti, (struct db_i *dbip));
 BU_EXTERN(void rt_free_rti, (struct rt_i *rtip));
 BU_EXTERN(void rt_prep, (struct rt_i *rtip) );
 BU_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
-					/* Handle overlap w/o logging */
+					/* DEPRECATED, set a_logoverlap */
 BU_EXTERN(int rt_overlap_quietly, (struct application *ap,
 	struct partition *pp, struct region *reg1,
 	struct region *reg2, struct partition *pheadp) );
+BU_EXTERN(void rt_default_multioverlap, (struct application *ap,
+	struct partition *pp, struct bu_ptbl *regiontable,
+	struct partition *InputHdp));
+BU_EXTERN(void rt_silent_logoverlap, (struct application *ap,
+	CONST struct partition *pp, CONST struct bu_ptbl *regiontable,
+	CONST struct partition *InputHdp));
+BU_EXTERN(void rt_default_logoverlap, (struct application *ap,
+	CONST struct partition *pp, CONST struct bu_ptbl *regiontable,
+	CONST struct partition *InputHdp));
 					/* Shoot a ray */
 BU_EXTERN(int rt_shootray, (struct application *ap) );
 					/* Get expr tree for object */
