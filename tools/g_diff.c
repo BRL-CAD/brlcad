@@ -1,3 +1,35 @@
+/*
+ *			G _ D I F F . C
+ *
+ *	Routine to determine the differences between two BRL-CAD databases (".g" files).
+ *	With no options, the output to stdout is an MGED script that may be fed to
+ *	MGED to convert the first database to the match the second.
+ *	The script uses the MGED "db" command to make the changes. Some solid types
+ *	do not yet have support in the "db" command. Such solids that change from
+ *	one database to the next, will be noted by a comment in the database as:
+ *	"#IMPORT solid_name from database_name"
+ *
+ *  Author -
+ *      John R. Anderson
+ *
+ *  Source -
+ *      The U. S. Army Research Laboratory
+ *      Aberdeen Proving Ground, Maryland  21005-5066
+ *
+ *  Distribution Notice -
+ *      Re-distribution of this software is restricted, as described in
+ *      your "Statement of Terms and Conditions for the Release of
+ *      The BRL-CAD Pacakge" agreement.
+ *
+ *  Copyright Notice -
+ *      This software is Copyright (C) 1998 by the United States Army
+ *      in all countries except the USA.  All rights reserved.
+ */
+
+#ifndef lint
+static char RCSid[] = "$Header$";
+#endif
+
 #include "conf.h"
 
 #include <stdio.h>
@@ -69,17 +101,197 @@ struct db_i *dbip1, *dbip2;
 		if( mode == HUMAN )
 			printf( "kill %s and import it from %s\n", dp1->d_namep, dbip1->dbi_filename );
 		else
-			printf( "kill %s\n# IMPORT %s from %s", dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
+			printf( "kill %s\n# IMPORT %s from %s\n", dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
 	}
 }
 
 void
-compare_tcl_solids( str1, dp1, dbip1, str2, dp2, dbip2 )
+do_adjusts( adjust, obj1, obj2 )
+Tcl_Obj *obj1, *obj2;
+struct bu_vls *adjust;
+{
+	Tcl_Obj *key1, *val1, *key2, *val2;
+	int len1, len2, found, junk;
+	int i, j;
+
+	if( Tcl_ListObjLength( interp, obj1, &len1 ) == TCL_ERROR )
+	{
+		bu_log( "Error getting length of TCL object!!!\n" );
+		bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+		exit ( 1 );
+	}
+	if( Tcl_ListObjLength( interp, obj2, &len2 ) == TCL_ERROR )
+	{
+		bu_log( "Error getting length of TCL object!!!\n" );
+		bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+		exit ( 1 );
+	}
+
+	if( Tcl_ListObjIndex( interp, obj1, 0, &key1 ) == TCL_ERROR )
+	{
+		bu_log( "Error getting word #%d in TCL object (%s)!!!\n", 0, Tcl_GetStringFromObj( obj1, &junk ) );
+		bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+		exit ( 1 );
+	}
+
+	/* check for changed values from object 1 to object2 */
+	for( i=1 ; i<len1 ; i+=2 )
+	{
+		if( Tcl_ListObjIndex( interp, obj1, i, &key1 ) == TCL_ERROR )
+		{
+			bu_log( "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj1, &junk ) );
+			bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+			exit ( 1 );
+		}
+
+		if( Tcl_ListObjIndex( interp, obj1, i+1, &val1 ) == TCL_ERROR )
+		{
+			bu_log( "Error getting word #%d in TCL object!!! (%s)\n", i+1, Tcl_GetStringFromObj( obj1, &junk ) );
+			bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+			exit ( 1 );
+		}
+
+		found = 0;
+		for( j=1 ; j<len2 ; j += 2 )
+		{
+			if( Tcl_ListObjIndex( interp, obj2, j, &key2 ) == TCL_ERROR )
+			{
+				bu_log( "Error getting word #%d in TCL object!!! (%s)\n", j, Tcl_GetStringFromObj( obj2, &junk ) );
+				bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+				exit ( 1 );
+			}
+			if( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) )
+			{
+				found = 1;
+				if( Tcl_ListObjIndex( interp, obj2, j+1, &val2 ) == TCL_ERROR )
+				{
+					bu_log( "Error getting word #%d in TCL object!!! (%s)\n", j+1, Tcl_GetStringFromObj( obj2, &junk ) );
+					bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+					exit ( 1 );
+				}
+
+				/* check if this value has changed */
+				if( strcmp( Tcl_GetStringFromObj( val1, &junk ), Tcl_GetStringFromObj( val2, &junk ) ) )
+				{
+					if( mode == HUMAN )
+					{
+						printf( "\t%s has changed from:\n\t\t%s\n\tto:\n\t\t%s\n",
+							Tcl_GetStringFromObj( key1, &junk ),
+							Tcl_GetStringFromObj( val1, &junk ),
+							Tcl_GetStringFromObj( val2, &junk ) );
+					}
+					else
+					{
+						int val_len;
+
+						bu_vls_strcat( adjust, " " );
+						bu_vls_strcat( adjust, Tcl_GetStringFromObj( key1, &junk ) );
+						bu_vls_strcat( adjust, " " );
+						if( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR )
+						{
+							bu_log( "Error getting length of TCL object!!\n" );
+							bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+							exit( 1 );
+						}
+						if( val_len > 1 )
+							bu_vls_putc( adjust, '{' );
+						bu_vls_strcat( adjust, Tcl_GetStringFromObj( val2, &junk ) );
+						if( val_len > 1 )
+							bu_vls_putc( adjust, '}' );
+					}
+				}
+				break;
+			}
+		}
+		if( !found )
+		{
+			/* this keyword value pair has been eliminated */
+			if( mode == HUMAN )
+			{
+				printf( "\t%s has been eliminated\n",
+					Tcl_GetStringFromObj( key1, &junk ) );
+			}
+			else
+			{
+				bu_vls_strcat( adjust, " " );
+				bu_vls_strcat( adjust, Tcl_GetStringFromObj( key1, &junk ) );
+				bu_vls_strcat( adjust, " none" );
+			}
+		}
+	}
+
+	/* check for keyword value pairs in object 2 that don't appear in object 1 */
+	for( i=1 ; i<len2 ; i+= 2 )
+	{
+		/* get keyword/value pairs from object 2 */
+		if( Tcl_ListObjIndex( interp, obj2, i, &key2 ) == TCL_ERROR )
+		{
+			bu_log( "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj2, &junk ) );
+			bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+			exit ( 1 );
+		}
+
+		if( Tcl_ListObjIndex( interp, obj2, i+1, &val2 ) == TCL_ERROR )
+		{
+			bu_log( "Error getting word #%d in TCL object!!! (%s)\n", i+1, Tcl_GetStringFromObj( obj2, &junk ) );
+			bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+			exit ( 1 );
+		}
+
+		found = 0;
+		/* look for this keyword in object 1 */
+		for( j=1 ; j<len1 ; j += 2 )
+		{
+			if( Tcl_ListObjIndex( interp, obj1, j, &key1 ) == TCL_ERROR )
+			{
+				bu_log( "Error getting word #%d in TCL object!!! (%s)\n", i, Tcl_GetStringFromObj( obj1, &junk ) );
+				bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+				exit ( 1 );
+			}
+			if( !strcmp( Tcl_GetStringFromObj( key1, &junk ), Tcl_GetStringFromObj( key2, &junk ) ) )
+			{
+				found = 1;
+				break;
+			}
+		}
+		if( found )
+			continue;
+
+		/* This keyword/value pair in object 2 is not in object 1 */
+		if( mode == HUMAN )
+			printf( "\tadd %s %s\n", Tcl_GetStringFromObj( key2, &junk ), Tcl_GetStringFromObj( val2, &junk ) );
+		else
+		{
+			int val_len;
+
+			bu_vls_strcat( adjust, " " );
+			bu_vls_strcat( adjust, Tcl_GetStringFromObj( key2, &junk ) );
+			bu_vls_strcat( adjust, " " );
+			if( Tcl_ListObjLength( interp, val2, &val_len ) == TCL_ERROR )
+			{
+				bu_log( "Error getting length of TCL object!!\n" );
+				bu_log( "%s\n", Tcl_GetStringResult( interp ) );
+				exit( 1 );
+			}
+			if( val_len > 1 )
+				bu_vls_putc( adjust, '{' );
+			bu_vls_strcat( adjust, Tcl_GetStringFromObj( val2, &junk ) );
+			if( val_len > 1 )
+				bu_vls_putc( adjust, '}' );
+		}
+	}
+}
+
+void
+compare_tcl_solids( str1, obj1, dp1, dbip1, str2, obj2, dp2, dbip2 )
 char *str1, *str2;
+Tcl_Obj *obj1, *obj2;
 struct directory *dp1, *dp2;
 struct db_i *dbip1, *dbip2;
 {
 	char *c1, *c2;
+	Tcl_Obj *key1, *val1, *key2, *val2;
+	struct bu_vls adjust;
 
 	/* check if same solid type */
 	c1 = str1;
@@ -90,18 +302,61 @@ struct db_i *dbip1, *dbip2;
 	{
 		/* different solid types */
 		if( mode == HUMAN )
-			printf( "solid %s:\n\twas: %s\n\tis now: %s\n", dp1->d_namep, str1, str2 );
+			printf( "solid %s:\n\twas: %s\n\tis now: %s\n\n", dp1->d_namep, str1, str2 );
 		else
 			printf( "kill %s\ndb put %s %s\n", dp1->d_namep, dp1->d_namep, str2 );
+
+		return;
 	}
-	else if( strcmp( str1, str2 ) )
+	else if( !strcmp( str1, str2 ) )
+		return;		/* no difference */
+
+	/* same solid type, can use "db adjust" */
+
+	if( mode == HUMAN )
+		printf( "%s has changed:\n", dp1->d_namep );
+	else
 	{
-		/* same solid type */
-		/* XXXX can add more code to limit number of args to 'db adjust' */
-		if( mode == HUMAN )
-			printf( "solid %s:\n\twas: %s\n\tis now: %s\n", dp1->d_namep, str1, str2 );
-		else
-			printf( "db adjust %s %s\n", dp1->d_namep, c2 );
+		bu_vls_init( &adjust );
+		bu_vls_printf( &adjust, "db adjust %s", dp1->d_namep );
+	}
+
+	do_adjusts( &adjust, obj1, obj2 );
+
+	if( mode != HUMAN )
+	{
+		printf( "%s\n", bu_vls_addr( &adjust ) );
+		bu_vls_free( &adjust );
+	}
+}
+
+void
+compare_tcl_combs( obj1, dp1, dbip1, obj2, dp2, dbip2 )
+Tcl_Obj *obj1, *obj2;
+struct directory *dp1, *dp2;
+struct db_i *dbip1, *dbip2;
+{
+	int junk;
+	struct bu_vls adjust;
+
+	/* first check if there is any difference */
+	if( !strcmp( Tcl_GetStringFromObj( obj1, &junk ), Tcl_GetStringFromObj( obj2, &junk ) ) )
+		return;
+
+	if( mode != HUMAN )
+	{
+		bu_vls_init( &adjust );
+		bu_vls_printf( &adjust, "db adjust %s", dp1->d_namep );
+	}
+	else
+		printf( "%s has changed:\n", dp1->d_namep );
+
+	do_adjusts( &adjust, obj1, obj2 );
+
+	if( mode != HUMAN )
+	{
+		printf( "%s\n", bu_vls_addr( &adjust ) );
+		bu_vls_free( &adjust );
 	}
 }
 
@@ -129,6 +384,7 @@ struct rt_wdb *wdb1, *wdb2;
 		for( dp1 = dbip1->dbi_Head[i]; dp1 != DIR_NULL; dp1 = dp1->d_forw )
 		{
 			char *str1, *str2;
+			Tcl_Obj *obj1, *obj2;
 
 			/* check if this object exists in the other database */
 			if( (dp2 = db_lookup( dbip2, dp1->d_namep, 0 )) == DIR_NULL )
@@ -146,6 +402,9 @@ struct rt_wdb *wdb1, *wdb2;
 				compare_external( dp1, dbip1, dp2, dbip2 );
 				continue;
 			}
+
+			obj1 = Tcl_NewListObj( 0, NULL );
+			Tcl_AppendToObj( obj1, interp->result, -1 );
 
 			bu_vls_trunc( &s1_tcl, 0 );
 			bu_vls_trunc( &s2_tcl, 0 );
@@ -168,6 +427,10 @@ struct rt_wdb *wdb1, *wdb2;
 						dp1->d_namep, dp2->d_namep, dbip2->dbi_filename );
 				continue;
 			}
+
+			obj2 = Tcl_NewListObj( 0, NULL );
+			Tcl_AppendToObj( obj2, interp->result, -1 );
+
 			bu_vls_strcpy( &s2_tcl , Tcl_GetStringResult( interp ) );
 			str2 = bu_vls_addr( &s2_tcl );
 			Tcl_ResetResult( interp );
@@ -176,15 +439,22 @@ struct rt_wdb *wdb1, *wdb2;
 			if( (dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID) )
 			{
 				/* both are solids */
-				compare_tcl_solids( str1, dp1, dbip1, str2, dp2, dbip2 );
+				compare_tcl_solids( str1, obj1, dp1, dbip1, str2, obj2, dp2, dbip2 );
 				continue;
 			}
 
-			/* at least one is a combination */
+			if( (dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB ) )
+			{
+				/* both are combinations */
+				compare_tcl_combs( obj1, dp1, dbip1, obj2, dp2, dbip2 );
+				continue;
+			}
+
+			/* the two objects are different types */
 			if( strcmp( str1, str2 ) )
 			{
 				if( mode == HUMAN )
-					printf( "%s:\n\twas: %s\n\tis now: %s\n",
+					printf( "%s:\n\twas: %s\n\tis now: %s\n\n",
 						dp1->d_namep, str1, str2 );
 				else
 					printf( "kill %s\ndb put %s %s\n",
@@ -320,11 +590,14 @@ char *argv[];
 		exit( 1 );
 	}
 
+	if( mode == HUMAN)
+		printf( "\nChanges from %s to %s\n\n", dbip1->dbi_filename, dbip2->dbi_filename );
+
 	/* compare titles */
 	if( strcmp( dbip1->dbi_title, dbip2->dbi_title ) )
 	{
 		if( mode == HUMAN )
-			printf( "Title has changed from: \"%s\" to: \"%s\"\n", dbip1->dbi_title, dbip2->dbi_title );
+			printf( "Title has changed from: \"%s\" to: \"%s\"\n\n", dbip1->dbi_title, dbip2->dbi_title );
 		else
 			printf( "title %s\n", dbip2->dbi_title );
 	}
