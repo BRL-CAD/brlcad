@@ -714,6 +714,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 	app->name = NULL;
 	app->value = NULL;
 
+if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_import_attributes");
 	return avs->count;
 }
 
@@ -735,15 +736,17 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 	int	need = 0;
 	CONST struct bu_attribute_value_pair	*avpp;
 	char	*cp;
+	int	i;
 
 	BU_CK_AVS( avs );
 	avpp = avs->avp;
 
 	BU_INIT_EXTERNAL(ext);
 	if( avs->count <= 0 )  return;
+if(bu_debug & BU_DEBUG_AVS)  bu_avs_print(avs, "db5_export_attributes");
 
 	/* First pass -- determine how much space is required */
-	for( avpp = avs->avp; avpp->name != NULL; avpp++ )  {
+	for( i = 0; i < avs->count; i++, avpp++ )  {
 		need += strlen( avpp->name ) + strlen( avpp->value ) + 2;
 	}
 	if( need <= 0 )  return;
@@ -754,7 +757,8 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 
 	/* Second pass -- store in external form */
 	cp = (char *)ext->ext_buf;
-	for( avpp = avs->avp; avpp->name != NULL; avpp++ )  {
+	avpp = avs->avp;
+	for( i = 0; i < avs->count; i++, avpp++ )  {
 		need = strlen( avpp->name ) + 1;
 		bcopy( avpp->name, cp, need );
 		cp += need;
@@ -884,7 +888,7 @@ db5_update_attribute( const char *obj_name, const char *aname, const char *value
  *			D B 5 _ U P D A T E _ I D E N T
  *
  *  Update the _GLOBAL object, which in v5 serves the place of the
- *  "ident" header record in v4.
+ *  "ident" header record in v4 as the place to stash global information.
  *  Since every database will have one of these things,
  *  it's no problem to update it.
  *
@@ -901,10 +905,26 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
 	RT_CK_DBI(dbip);
 
-	if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY )) == DIR_NULL )  {
-		bu_log("db5_update_ident() %s object is missing!\n", DB5_GLOBAL_OBJECT_NAME );
-		/* XXX Really should create one here */
-		return -1;
+	if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET )) == DIR_NULL )  {
+		struct bu_external	global;
+
+		bu_log("db5_update_ident() WARNING: %s object is missing, creating new one.\nYou may have lost important global state when you deleted this object.\n",
+			DB5_GLOBAL_OBJECT_NAME );
+
+		/* OK, make one.  It will be empty to start with, updated below. */
+		db5_export_object3( &global,
+			DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			DB5_GLOBAL_OBJECT_NAME, NULL, NULL,
+			DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
+			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
+
+		dp = db_diradd( dbip, DB5_GLOBAL_OBJECT_NAME, -1L, 0, 0, NULL );
+		if( db_put_external( &global, dp, dbip ) < 0 )  {
+			bu_log("db5_update_ident() unable to create replacement %s object!\n", DB5_GLOBAL_OBJECT_NAME );
+			bu_free_external(&global);
+			return -1;
+		}
+		bu_free_external(&global);
 	}
 
 	bu_vls_init( &units );
