@@ -42,18 +42,20 @@
 #define	LOOKAT_YPR	1
 #define LOOKAT_QUAT	2
 
+
 extern int optind;
 extern char *optarg;
 
 int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
+int print_viewsize = 0;
 
 main(argc,argv)
 int argc;
 char **argv;
 {
-	fastf_t time;
-	vect_t eye,look,dir,prev_dir, angles, norm;
+	fastf_t time, vsize;
+	vect_t eye,look,dir,prev_dir, angles, norm, temp;
 	quat_t quat;
 	mat_t mat;
 	int val = 0;
@@ -72,6 +74,12 @@ char **argv;
 			break;
 		}
 
+		if (print_viewsize) {
+			VSUB2(temp, eye, look);
+			vsize = MAGNITUDE(temp);
+			vsize *= 2.0;
+		}
+
 		VSUBUNIT(dir,look,eye);
 		anim_dirn2mat(mat,dir,norm);
 		VSET(norm, mat[1],mat[5], 0.0); 
@@ -79,11 +87,13 @@ char **argv;
 		case LOOKAT_SCRIPT:
 			printf("start %d;\n",frame++);
 			printf("clean;\n");
-	                printf("eye_pt %f %f %f;\n",eye[0],eye[1],eye[2]);
-			printf("viewrot %f %f %f 0\n", -mat[1], -mat[5], -mat[9]);
-	                printf("%f %f %f 0\n", mat[2], mat[6], mat[10]);
-	                printf("%f %f %f 0\n", -mat[0], -mat[4], -mat[8]);
-	                printf("0 0 0 1;\n");
+			if (print_viewsize)
+				printf("viewsize %f;\n",vsize);
+	                printf("eye_pt %.10g %.10g %.10g;\n",eye[0],eye[1],eye[2]);
+			printf("viewrot %.10g\t%.10g\t%.10g\t0\n", -mat[1], -mat[5], -mat[9]);
+	                printf("%.10g\t%.10f\t%.10g\t0\n", mat[2], mat[6], mat[10]);
+	                printf("%.10g\t%.10g\t%.10g\t0\n", -mat[0], -mat[4], -mat[8]);
+	                printf("0\t0\t0\t1;\n");
 			printf("end;\n");
 			break;
 		case LOOKAT_YPR:
@@ -91,13 +101,19 @@ char **argv;
 			angles[0] *= RTOD;
 			angles[1] *= RTOD;
 			angles[2] *= RTOD;
-			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
-			printf("%g\t%g\t%g\n",angles[0],angles[1],angles[2]);
+			printf("%.10g",time);
+			if (print_viewsize)
+				printf("\t%.10g",vsize);
+			printf("\t%.10g\t%.10g\t%.10g",eye[0],eye[1],eye[2]);
+			printf("\t%.10g\t%.10g\t%.10g\n",angles[0],angles[1],angles[2]);
 			break;
 		case LOOKAT_QUAT:
 			anim_mat2quat(quat,mat);
-			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
-			printf("%g\t%g\t%g\t%g\n",quat[0],quat[1],quat[2],quat[3]);
+			printf("%.10g",time);
+			if (print_viewsize)
+				printf("\t%.10g",vsize);
+			printf("\t%.10g\t%.10g\t%.10g",eye[0],eye[1],eye[2]);
+			printf("\t%.10g\t%.10g\t%.10g\t%.10g\n",quat[0],quat[1],quat[2],quat[3]);
 			break;
 		}
 
@@ -105,7 +121,7 @@ char **argv;
 	}
 }
 
-#define OPT_STR "f:yq"
+#define OPT_STR "f:yqv"
 
 int get_args(argc,argv)
 int argc;
@@ -122,6 +138,9 @@ char **argv;
 			break;
 		case 'q':
 			print_mode = LOOKAT_QUAT;
+			break;
+		case 'v':
+			print_viewsize = 1;
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);
