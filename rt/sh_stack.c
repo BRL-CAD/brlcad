@@ -75,7 +75,7 @@ struct rt_i	*rtip;
 	GETSTRUCT( sp, stk_specific );
 	*dpp = (char *)sp;
 
-	/*bu_structparse( matparm, stk_parse, (char *)sp );*/
+	/*bu_struct_parse( matparm, stk_parse, (char *)sp );*/
 
 	if(rdebug&RDEBUG_MATERIAL)
 		rt_log( "stk_setup called with \"%s\"\n", RT_VLS_ADDR(matparm) );

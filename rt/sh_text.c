@@ -340,7 +340,7 @@ CONST struct mfuncs	*mfp;
 	tp->tx_file[0] = '\0';
 	tp->tx_w = tp->tx_n = -1;
 	tp->tx_trans_valid = 0;
-	if( bu_structparse( matparm, txt_parse, (char *)tp ) < 0 )  {
+	if( bu_struct_parse( matparm, txt_parse, (char *)tp ) < 0 )  {
 		rt_free( (char *)tp, "txt_specific" );
 		return(-1);
 	}
@@ -459,7 +459,7 @@ char			**dpp;
 	GETSTRUCT( ckp, ckr_specific );
 	*dpp = (char *)ckp;
 	ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
-	if( bu_structparse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
+	if( bu_struct_parse( matparm, ckr_parse, (char *)ckp ) < 0 )  {
 		rt_free( (char *)ckp, "ckr_specific" );
 		return(-1);
 	}

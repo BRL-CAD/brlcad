@@ -360,7 +360,7 @@ char			**dpp;
 	 *	Parse the MATPARM field
 	 */
 
-	if( bu_structparse( matparm, wood_parse, (char *)wd ) < 0 )  {
+	if( bu_struct_parse( matparm, wood_parse, (char *)wd ) < 0 )  {
 		rt_free( (char *)wd, "wood_specific" );
 		return(-1);
 		}

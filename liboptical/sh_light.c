@@ -68,7 +68,7 @@ struct mfuncs light_mfuncs[] = {
 /*
  *			A I M _ S E T
  *
- *  This routine is called by bu_structparse() if the "aim"
+ *  This routine is called by bu_struct_parse() if the "aim"
  *  qualifier is encountered, and causes lt_exaim to be set.
  */
 
@@ -153,7 +153,7 @@ genptr_t	*dpp;
 	lp->lt_infinite = 0;
 	lp->lt_rp = rp;
 	lp->lt_name = rt_strdup( rp->reg_name );
-	if( bu_structparse( matparm, light_parse, (char *)lp ) < 0 )  {
+	if( bu_struct_parse( matparm, light_parse, (char *)lp ) < 0 )  {
 		rt_free( (char *)lp, "light_specific" );
 		return(-1);
 	}

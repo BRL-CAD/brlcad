@@ -241,7 +241,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_structparse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
+	if( bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
 		return(-1);
 
 	/* Optional:

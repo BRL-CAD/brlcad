@@ -132,7 +132,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	memcpy(cs_sp, &cs_defaults, sizeof(struct cs_specific) );
 
 	/* parse the user's arguments for this use of the shader. */
-	if( bu_structparse( matparm, cs_parse_tab, (char *)cs_sp ) < 0 )
+	if( bu_struct_parse( matparm, cs_parse_tab, (char *)cs_sp ) < 0 )
 		return(-1);
 
 	/* Optional:

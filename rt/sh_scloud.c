@@ -102,7 +102,7 @@ struct rt_i		*rtip;
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("scloud_setup\n");
 
-	if( bu_structparse( matparm, scloud_parse, (char *)scloud ) < 0 )
+	if( bu_struct_parse( matparm, scloud_parse, (char *)scloud ) < 0 )
 		return(-1);
 
 	(void)bu_structprint( rp->reg_name, scloud_pr, (char *)scloud );

@@ -188,7 +188,7 @@ char			**dpp;
 		return(-1);
 
 	/**	Get input values  **/
-	if( bu_structparse( matparm, stxt_parse, (char *)stp ) < 0 )  {
+	if( bu_struct_parse( matparm, stxt_parse, (char *)stp ) < 0 )  {
 		rt_free( (char *)stp, "stxt_specific" );
 		return(-1);
 	}

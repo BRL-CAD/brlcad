@@ -137,7 +137,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
 
-	if( bu_structparse( matparm, camo_parse, (char *)camo_sp ) < 0 )
+	if( bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
 		return(-1);
 
 	/* Optional:  get the matrix which maps model space into

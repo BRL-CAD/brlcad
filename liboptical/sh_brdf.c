@@ -120,7 +120,7 @@ char	**dpp;
 	pp->extinction = 0.0;
 	pp->rms_slope = 0.05;
 
-	if( bu_structparse( matparm, brdf_parse, (char *)pp ) < 0 )  {
+	if( bu_struct_parse( matparm, brdf_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "brdf_specific" );
 		return(-1);
 	}

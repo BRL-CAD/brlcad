@@ -109,7 +109,7 @@ char	**dpp;
 
 	spp->sp_file[0] = '\0';
 	spp->sp_w = -1;
-	if( bu_structparse( matparm, spm_parse, (char *)spp ) < 0 )  {
+	if( bu_struct_parse( matparm, spm_parse, (char *)spp ) < 0 )  {
 		rt_free( (char *)spp, "spm_specific" );
 		return(-1);
 	}

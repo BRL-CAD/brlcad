@@ -265,7 +265,7 @@ HIDDEN int marble_prep ()
 /*
  *		S e t u p   H o o k   R o u t i n e s
  *
- *	The following are routines which are called by bu_structparse()
+ *	The following are routines which are called by bu_struct_parse()
  *	while parsing the MATPARM field.  These are currently limited to
  *	setting flag bits, indicating the presence of certain options.
  */
@@ -390,7 +390,7 @@ char	**dpp;
 	 *	Parse the parameter block
 	 */
 
-	if (bu_structparse (matparm, marble_parse, (char *)mp) < 0)
+	if (bu_struct_parse(matparm, marble_parse, (char *)mp) < 0)
 		return(-1);
 
 	/*

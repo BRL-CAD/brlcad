@@ -184,7 +184,7 @@ char	**dtp;
 	(void)strcpy( tp->material, "junk" );
 	VSET(tp->Zenith, 0., 0., 1.);
 
-	if (bu_structparse(matparm, toyota_parse, (char *)tp) < 0)  {
+	if (bu_struct_parse(matparm, toyota_parse, (char *)tp) < 0)  {
 		rt_free((char *)tp, "toyota_specific");
 		return(-1);
 	}

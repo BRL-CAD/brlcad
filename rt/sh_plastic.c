@@ -120,7 +120,7 @@ char	**dpp;
 	pp->refrac_index = RI_AIR;
 	pp->extinction = 0.0;
 
-	if( bu_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
@@ -154,7 +154,7 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	if( bu_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}
@@ -189,7 +189,7 @@ char	**dpp;
 	pp->refrac_index = 1.65;
 	pp->extinction = 0.0;
 
-	if( bu_structparse( matparm, phong_parse, (char *)pp ) < 0 )  {
+	if( bu_struct_parse( matparm, phong_parse, (char *)pp ) < 0 )  {
 		rt_free( (char *)pp, "phong_specific" );
 		return(-1);
 	}

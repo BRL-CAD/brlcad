@@ -74,7 +74,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	memcpy(rtrans_sp, &rtrans_defaults, sizeof(struct rtrans_specific) );
 
-	if( bu_structparse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
+	if( bu_struct_parse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);
 
 	rtrans_sp->msr = msr_unif_init( 0, 0 );
