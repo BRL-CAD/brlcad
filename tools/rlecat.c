@@ -198,7 +198,7 @@ char **argv;
 	    }
 
 	    /* Free memory. */
-	    rle_raw_free( &in_hdr, rows );
+	    rle_raw_free( &in_hdr, rows, n_op );
 
 	    /* Write an end-of-image code. */
 	    rle_puteof( &out_hdr );
@@ -214,7 +214,7 @@ char **argv;
 	 * has been read.  Otherwise, print an error message.
 	 */
 	if ( rle_cnt == 0 || (rle_err != RLE_EOF && rle_err != RLE_EMPTY) )
-	    rle_get_error( rle_err, cmd_name( argv ), infname );
+	    rle_get_error( rle_err, cmd_name( argv ), *infname );
     }
 
     /* If collating, do the repeats here. */
