@@ -2620,51 +2620,65 @@ min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
  */
 
 int
-bn_distsq_line3_line3( dist, P, d, Q, e, pt1, pt2 )
+bn_distsq_line3_line3( dist, P, d_in, Q, e_in, pt1, pt2 )
 fastf_t dist[3];
 point_t P;
-vect_t d;
+vect_t d_in;
 point_t Q;
-vect_t e;
+vect_t e_in;
 point_t pt1, pt2;
 {
-	fastf_t de, dd, ee, Qe, Pe, denom;
+	fastf_t de, Qe, Pe, denom;
 	vect_t diff, PmQ, tmp;
+	vect_t d, e;
+	fastf_t len_e, inv_len_e, len_d, inv_len_d;
 	int ret=0;
 
+	len_e = MAGNITUDE( e_in );
+	if( NEAR_ZERO( len_e, SMALL_FASTF ) )
+		bu_bomb( "bn_distsq_line3_line3() called with zero length vector!!!\n");
+	inv_len_e = 1.0 / len_e;
+
+	len_d = MAGNITUDE( d_in );
+	if( NEAR_ZERO( len_d, SMALL_FASTF ) )
+		bu_bomb( "bn_distsq_line3_line3() called with zero length vector!!!\n");
+	inv_len_d = 1.0 / len_d;
+
+	VSCALE( e, e_in, inv_len_e );
+	VSCALE( d, d_in, inv_len_d );
 	de = VDOT( d, e );
 
 	if( NEAR_ZERO( de, SMALL_FASTF ) )
 	{
 		/* lines are perpendicular */
-		dist[0] = (VDOT( Q, d ) - VDOT( P, d ))/VDOT( d, d );
-		dist[1] = (VDOT( P, e ) - VDOT( Q, e ))/VDOT( e, e );
+		dist[0] = VDOT( Q, d ) - VDOT( P, d );
+		dist[1] = VDOT( P, e ) - VDOT( Q, e );
 	}
 	else
 	{
-		dd = VDOT( d, d );
-		ee = VDOT( e, e );
 		VSUB2( PmQ, P, Q );
-		denom = dd*ee - de*de;
+		denom = 1.0 - de*de;
 		if( NEAR_ZERO( denom, SMALL_FASTF ) )
 		{
 			/* lines are parallel */
 			dist[0] = 0.0;
-			dist[1] = VDOT( PmQ, d ) / VDOT( d, e );
+			dist[1] = VDOT( PmQ, d );
 			ret = 1;
 		}
 		else
 		{
-			VBLEND2( tmp, dd, e, -de, d );
+			VBLEND2( tmp, 1.0, e, -de, d );
 			dist[1] = VDOT( PmQ, tmp )/denom;
 			Qe = VDOT( Q, e );
 			Pe = VDOT( P, e );
-			dist[0] = (dist[1] * ee + (Qe - Pe))/de;
+			dist[0] = dist[1] * de - VDOT( PmQ, d );
 		}
 	}
 	VJOIN1( pt1, P, dist[0], d );
 	VJOIN1( pt2, Q, dist[1], e );
 	VSUB2( diff, pt1, pt2 );
+	dist[0] *= inv_len_d;
+	dist[1] *= inv_len_e;
 	dist[2] =  MAGSQ( diff );
 	return( ret );
 }
