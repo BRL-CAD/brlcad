@@ -259,12 +259,17 @@ dsk_rmap( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
-	if( lseek( ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+	int		fd = ifp->if_fd;
+
+	/* Reads on stdout make no sense.  Take reads from stdin. */
+	if( fd == 1 )  fd = 0;
+
+	if( lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 	   	return	-1;
 	}
-	if( read( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
+	if( read( fd, (char *) cmap, sizeof(ColorMap) )
 		!= sizeof(ColorMap) ) {
 		/* Not necessarily an error.  It is not required
 		 * that a color map be saved and the standard 
@@ -357,8 +362,12 @@ FBIO	*ifp;
 	fb_log( "Default width/height: %d %d\n",
 		disk_interface.if_width,
 		disk_interface.if_height );
-	fb_log( "Note: you may have just created a disk file\n" );
-	fb_log( "called \"%s\" by running this.\n", ifp->if_name );
+	if( ifp->if_fd == 1 )  {
+		fb_log("File \"-\" reads from stdin, writes to stdout\n");
+	} else {
+		fb_log( "Note: you may have just created a disk file\n" );
+		fb_log( "called \"%s\" by running this.\n", ifp->if_name );
+	}
 
 	return(0);
 }
