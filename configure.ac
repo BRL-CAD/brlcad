@@ -835,11 +835,12 @@ echo X11 support ..........................: yes
 echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
 echo
-echo Print verbose compilation warnings ...: $use_warnings
+echo Build optimized release ..............: $use_optimized
 echo Build debug release ..................: $use_debug
 echo Build profile release ................: $use_profiling
 echo Build static libraries ...............: $enable_static
 echo Build shared/dynamic libraries .......: $enable_shared
+echo Print verbose compilation warnings ...: $use_warnings
 echo
 echo Only build benchmark suite ...........: $only_benchmark
 echo Only build librtserver ...............: $only_rts
