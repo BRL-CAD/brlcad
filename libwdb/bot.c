@@ -35,6 +35,7 @@ static char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "wdb.h"
 
+int
 mk_bot( fp, name, mode, orientation, error_mode, num_vertices, num_faces, vertices, faces, thickness, face_mode )
 FILE *fp;
 char *name;
