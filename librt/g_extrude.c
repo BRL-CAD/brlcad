@@ -1502,7 +1502,7 @@ struct rt_db_internal	*ip;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 	if( extrude_ip->skt )
 	{
-		RT_CK_DB_INTERNAL( &tmp_ip );
+		RT_INIT_DB_INTERNAL( &tmp_ip );
 		tmp_ip.idb_type = ID_SKETCH;
 		tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 		tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
