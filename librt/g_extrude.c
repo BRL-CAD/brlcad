@@ -538,13 +538,13 @@ struct db_i		*dbip;
 	extrude_ip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 	extrude_ip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
 
-	ntohd( tmp_vec, rp->extr.ex_V, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_V, 3 );
 	MAT4X3PNT( extrude_ip->V, mat, tmp_vec );
-	ntohd( tmp_vec, rp->extr.ex_h, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_h, 3 );
 	MAT4X3VEC( extrude_ip->h, mat, tmp_vec );
-	ntohd( tmp_vec, rp->extr.ex_uvec, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_uvec, 3 );
 	MAT4X3VEC( extrude_ip->u_vec, mat, tmp_vec );
-	ntohd( tmp_vec, rp->extr.ex_vvec, 3 );
+	ntohd( (unsigned char *)tmp_vec, rp->extr.ex_vvec, 3 );
 	MAT4X3VEC( extrude_ip->v_vec, mat, tmp_vec );
 	extrude_ip->keypoint = bu_glong( rp->extr.ex_key );
 
@@ -587,13 +587,13 @@ CONST struct db_i		*dbip;
 	rec->extr.ex_id = DBID_EXTR;
 
 	VSCALE( tmp_vec, extrude_ip->V, local2mm );
-	htond( rec->extr.ex_V, tmp_vec, 3 );
+	htond( rec->extr.ex_V, (unsigned char *)tmp_vec, 3 );
 	VSCALE( tmp_vec, extrude_ip->h, local2mm );
-	htond( rec->extr.ex_h, tmp_vec, 3 );
+	htond( rec->extr.ex_h, (unsigned char *)tmp_vec, 3 );
 	VSCALE( tmp_vec, extrude_ip->u_vec, local2mm );
-	htond( rec->extr.ex_uvec, tmp_vec, 3 );
+	htond( rec->extr.ex_uvec, (unsigned char *)tmp_vec, 3 );
 	VSCALE( tmp_vec, extrude_ip->v_vec, local2mm );
-	htond( rec->extr.ex_vvec, tmp_vec, 3 );
+	htond( rec->extr.ex_vvec, (unsigned char *)tmp_vec, 3 );
 	bu_plong( rec->extr.ex_key, extrude_ip->keypoint );
 	bu_plong( rec->extr.ex_count, 1 );
 

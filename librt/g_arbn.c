@@ -817,7 +817,7 @@ register CONST mat_t		mat;
 	if( aip->neqn <= 0 )  return(-1);
 	aip->eqn = (plane_t *)rt_malloc( aip->neqn*sizeof(plane_t), "arbn plane eqn[]");
 
-	ntohd( (char *)aip->eqn, (char *)(&rp[1]), aip->neqn*4 );
+	ntohd( (unsigned char *)aip->eqn, (unsigned char *)(&rp[1]), aip->neqn*4 );
 
 	/* Transform by the matrix */
 #	include "noalias.h"
@@ -891,7 +891,7 @@ double				local2mm;
 		*sp++ = aip->eqn[i][3] * local2mm;
 	}
 
-	htond( (char *)&rec[1], (char *)sbuf, aip->neqn * 4 );
+	htond( (unsigned char *)&rec[1], (unsigned char *)sbuf, aip->neqn * 4 );
 
 	rt_free( (char *)sbuf, "arbn temp" );
 	return(0);			/* OK */
