@@ -252,7 +252,8 @@ exit
 EOF
 		if test $? -eq 0
 		then BDIRS=`echo ${BDIRS} | \
-			sed -e  's/libtcl//' -e 's/libtk//' -e 's/libz//' `
+		    sed -e  's/libtcl//' -e 's/libtk//' \
+			-e 's/libz//' -e 's/libpng//' `
 		fi
 		;;
 esac
