@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:54:00  mike
+ * Release_4.0
+ * 
  * Revision 2.16  91/08/30  20:24:48  mike
  * Added !defined(SYS5) protection around some BSD ioctls
  * 
@@ -258,7 +261,7 @@ charp()
 			return( 0 );
 #else 
 #ifdef FIONREAD
-		long c;
+		int c = 0;
 
 		if (ioctl(0, FIONREAD, (char *) &c) == -1)
 			c = 0;
