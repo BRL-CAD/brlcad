@@ -19,7 +19,7 @@
  *  to drive the JTCG-approved COVART2 and COVART3 applications.
  *
  *  Authors -
- *	Dr. Susanne L. Muuss
+ *	Susanne L. Muuss, J.D.
  *	Michael John Muuss
  *  
  *  Source -
@@ -48,10 +48,11 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "rdebug.h"
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
-/* #define TOL
- *
- * void	part_compact();
- */
+#ifdef
+#define TOL 0.01/MM2IN			/* GIFT has a 0.01 inch tolerance */
+
+ void	part_compact();
+#endif
 
 extern double	mat_radtodeg;
 extern int	npsw;			/* number of worker PSWs to run */
@@ -64,6 +65,8 @@ struct structparse view_parse[] = {
 };
 
 static FILE	*plotfp;		/* optional plotting file */
+fastf_t		h_offset;
+fastf_t		v_offset;
 
 char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
@@ -72,8 +75,9 @@ Options:\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -g		Grid cell width in millimeters\n\
- -G		Grid cell height in millimeters\n\
+ -g #		Grid cell width in millimeters (conflicts with -s\n\
+ -G #		Grid cell height in millimeters (conflicts with -s\n\
+ -J #		Jitter.  Default is off.  Any non-zero number is on\n\
  -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n\
  -U #		Set use_air boolean to # (default=1)\n\
  -x #		Set librt debug flags\n\
@@ -134,6 +138,9 @@ view_2init( ap )
 struct application	*ap;
 {
 
+	point_t		model_origin;		/* origin in model coordinates */
+	point_t		v_model_origin;		/* model origin shifted to view space coordinates */
+
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
 
@@ -166,7 +173,17 @@ struct application	*ap;
 		"     %-15.8f     %-15.8f                              %10f\n",
 		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
 
-	regionfix( ap, "rtray.regexp" );		/* XXX */
+	/* Calculate the offset of the screen_space origin to the
+	 * model_space origin.  First set the model origin to 0, 0, 0,
+	 * and then convert it to view space coordinates.
+	 */
+
+	VSET(model_origin, 0, 0, 0);
+	MAT4X3PNT(v_model_origin, model2view, model_origin);
+	
+	h_offset = (v_model_origin[X] + 1) * 0.5 * width * MAGNITUDE(dx_model);
+	v_offset = (v_model_origin[Y] + 1) * 0.5 * height * MAGNITUDE(dy_model);
+
 }
 
 /*
@@ -226,7 +243,7 @@ register struct partition *PartHeadp;
 	fastf_t			h, v;		/* h,v actual ray pos */
 	fastf_t			hcen, vcen;	/* h,v cell center */
 	fastf_t			dfirst, dlast;	/* ray distances */
-	fastf_t			dcorrection = 0; /* RT to GIFT dist corr */
+	static fastf_t		dcorrection = 0; /* RT to GIFT dist corr */
 	int			card_count;	/* # comp. on this card */
 	char			*fmt;		/* printf() format string */
 	struct rt_vls		str;
@@ -235,7 +252,7 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-/*	part_compacter(Partheadp, TOL);
+/*	part_compacter(ap, Partheadp, TOL);
  *
  */
 	/*  comp components in partitions */
@@ -256,8 +273,8 @@ register struct partition *PartHeadp;
 	 *  GIFT format wants grid coordinates, which are the
 	 *  h,v coordinates of the screen plain projected into model space.
 	 */
-	hcen = (ap->a_x + 0.5) * MAGNITUDE(dx_model);
-	vcen = (ap->a_y + 0.5) * MAGNITUDE(dy_model);
+	hcen = (ap->a_x + 0.5) * MAGNITUDE(dx_model) - h_offset;
+	vcen = (ap->a_y + 0.5) * MAGNITUDE(dy_model) - v_offset;
 	if( jitter )  {
 		vect_t	hv;
 		/*
@@ -268,19 +285,22 @@ register struct partition *PartHeadp;
 		 */
 		MAT4X3PNT( hv, model2view, ap->a_ray.r_pt );
 
-		h = (hv[X]+1)*0.5 * width * MAGNITUDE(dx_model);
-		v = (hv[Y]+1)*0.5 * height * MAGNITUDE(dy_model);
+		h = (hv[X]+1)*0.5 * width * MAGNITUDE(dx_model) - h_offset;
+		v = (hv[Y]+1)*0.5 * height * MAGNITUDE(dy_model) - v_offset;
 	} else {
 		/* h,v coordinates of ray are of the lower left corner */
-		h = ap->a_x * MAGNITUDE(dx_model);
-		v = ap->a_y * MAGNITUDE(dy_model);
+		h = ap->a_x * MAGNITUDE(dx_model) - h_offset;
+		v = ap->a_y * MAGNITUDE(dy_model) - v_offset;
 	}
 
-	/*
-	 *  In RT, rays are launched from the plain of the screen,
+	/* This code is for diagnostics.
+	 *	fprintf(stderr, " h_offset=%g, v_offset=%g, hcen=%g, vcen=%g, h=%g, v=%g\n",
+	 *	h_offset, v_offset, hcen, vcen, h);
+	 *
+	 *  In RT, rays are launched from the plane of the screen,
 	 *  and ray distances are relative to the start point.
 	 *  In GIFT-3 output files, ray distances are relative to
-	 *  the screen plain translated so that it contains the origin.
+	 *  the screen plane translated so that it contains the origin.
 	 *  A distance correction is required to convert between the two.
 	 *  Since this really should be computed only once, not every time,
 	 *  the trip_count flag was added.
@@ -301,11 +321,20 @@ register struct partition *PartHeadp;
 			trip_count = 1;
 		}
 	}
-	dfirst = PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection;
-	dlast = PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection;
+
+	/* This code is for diagnostics.
+	 * fprintf(stderr, "dcorrection=%g\n", dcorrection);
+	 */
+
+	/* dfirst and dlast have been made negative to account for GIFT looking
+	 * in the opposite direction of RT.
+	 */
+
+	dfirst = -(PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection);
+	dlast = -(PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection);
 
 	/* This code is to note any occurances of negative distances. */
-		if( dfirst < 0)  {
+		if( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
 			rt_log("ERROR: dfirst=%g\n", dfirst);
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
@@ -555,8 +584,8 @@ void	view_eol()
  *
  *  View_end() is called by rt_shootray in do_run().  It
  *  outputs a special 999.9 "end of view" marker, composed of
- *  a "999.9" shotline header, with one
- *  all-zero component record.  Note that the component count must also
+ *  a "999.9" shotline header, with one all-zero component record.
+ *  This is the way GIFT did it.  Note that the component count must also
  *  be zero on this shotline, or else the client codes get confused.
  */
 void
@@ -568,8 +597,12 @@ view_end()
 		0,			/* component count */
 		0.0, 0.0,
 		azimuth, elevation );
-	/* An abbreviated component record:  just give item code 0 */
-	fprintf(outfp, " %4d\n", 0 );
+	/* An abbreviated component record:  just give item code 0.  This is
+	 * not required since GIFT truncates the above line at the first
+	 * 999.9: putting out the abovementioned 0 caused a lot of oscillation
+	 * over the last year, so the line has been removed. 
+	 */
+
 	fflush(outfp);
 }
 
@@ -579,9 +612,10 @@ void view_cleanup() {}
 
 /*		P A R T _ C O M P A C T E R
  *
- * This routine takes at partition-head pointer and a tolerance.  It goes
- * throught the partition list shot-line by shot-line and checks for regions
- * with identical region-id abutting.  If one is found, and the distance
+ * This routine takes at partition-head pointer, an application
+ * structure pointer,  and a tolerance.  It goes through the partition
+ * list shot-line by shot-line and checks for regions with identical
+ * region-ids abutting.  If one is found, and the distance
  * between the two abbutting regions is less than the tolerance, the two
  * corresponding partions are collapsed into one, and the outhit from the
  * second partions becomes the governing outhit.  This will prevent the
@@ -590,7 +624,8 @@ void view_cleanup() {}
  */
 
 void
-part_compacter(PartHeadp, tolerance)
+part_compacter(ap, PartHeadp, tolerance)
+register struct application		*ap;
 register struct partition		*PartHeadp;
 fastf_t					tolerance;
 {
@@ -623,7 +658,7 @@ top:		nextpp = pp->pt_forw;
 
 		/* Now dequeue and free the nextpp */
 /*		DEQUEUE_PT(nextpp);
- *		free(nextpp);
+ *		FREE_PT(nextpp, ap->a_resource);
  */
 		goto top;
 	}
