@@ -40,8 +40,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <X11/keysym.h> 
 #include <X11/StringDefs.h> 
 #include <GL/glx.h>
-#include <GL/gl.h> 
-#include <GL/glu.h> 
+#include <GL/gl.h>
 #undef RED
 
 #include "machine.h"
