@@ -51,13 +51,15 @@ command is given to load the necessary columns of raw values into
 the output channels.
 If a channel number in the list is given as a minus ('-'),
 that input column is skipped.
+.sp .5
+   file filename chan_num(s);
+.sp .5
 Using the output channel assignments given above
-as an example, if an input table named "table1" existed which consisted of
+as an example, if an input table existed in a file named "table1"
+which consisted of
 five columns of values representing (time, brightness, objX, objY, objZ),
 then these values would be loaded with this command:
 .sp .5
-   file filename chan_num(s);
-.br
    file table1 6 0 1 2;
 .sp .5
 This command indicates that from the file "table1", the current time and
@@ -72,9 +74,16 @@ of text, with columns separated by one or more spaces and tabs.
 After all the
 .B file
 commands have been given, it is necessary to define over what range of
-time values found in the raw output table will be processed, and
+time all the values just read into the
+the raw output table will be sent on to the interpolators, and
 how many rows of interpolated output should be produced for each second
-(time unit) in the input file.  This can be thought of as the
+(time unit) in the input file.
+.sp .5
+   times start stop fps;
+.sp .5
+The
+.I fps
+parameter can be thought of as the
 ``frames per second'' rate of the interpolation, and is usually set
 to 24 for film (cine) work, 30 for NTSC video, and 60 for field-at-a-time
 NTSC video.  Any positive integer value is acceptable.
@@ -82,8 +91,6 @@ NTSC video.  Any positive integer value is acceptable.
 Nothing depends on the units being seconds.)
 For example, the command:
 .sp .5
-   times start stop fps;
-.br
    times 1 7.3 24;
 .sp .5
 would cause
@@ -94,13 +101,17 @@ to process data values from time 1 second to 7.3 seconds, producing
 After the
 .B times
 command has been given, it is necessary to associate an interpolator
-procedure or a ``value generator'' procedure with each output channel.
+procedure or a ``value generator'' command with each output channel.
 The available interpolator procedures are:
 \fBstep, linear, spline, cspline,\fR and \fBquat\fR.
-For example, the command:
+The available value generator commands are:
+\fBrate, accel,\fR and \fBnext\fR.
+The interpolator procedures are selected by giving commands of this form:
 .sp .5
    interp type chan_num(s);
-.br
+.sp .5
+For example, the command:
+.sp .5
    interp linear 3 4 5;
 .sp .5
 would indicate that output channels 3, 4, and 5 (representing the camera
@@ -161,30 +172,39 @@ and
 .B accel
 commands can be quite useful.
 One command is given
-for each output channel.  For example,
+for each output channel.
+The
+.B rate
+command takes these arguments:
 .sp .5
    rate chan_num init_value incr_per_sec;
-.br
+.sp .5
+For example,
+.sp .5
    rate 6 1.5 0.5;
 .sp .5
 says to make channel 6 a rate based channel, with the initial value
 (at time=0) of 1.5, linearly increasing with an increment of 0.5 for
-the passing of every additional second.
+the passing of every additional second (time unit).
 In this case, the value would be 2.0 at time=1, 2.5 at time=2, and so on.
 This can be used to establish linear changes where it is the increment
 and not the final value that is important.
 For example, the rotation angle of a helicopter rotor could be specified
 in this way.
 .PP
-Similarly, the command
+The
+.B accel
+command takes these arguments:
 .sp .5
    accel chan_num init_value mult_per_sec;
-.br
+.sp .5
+For example,
+.sp .5
    accel 5 10 2;
 .sp .5
 says to make channel 5 an acceleration based channel,
 with the initial value at time=0 of 10.0, which is multipled by
-2 for every additional second.
+2 for every additional second (time unit).
 In this case, the value would be 20.0 at time=1, and 40.0 at time=2.
 This can be useful to create constant acceleration, such as
 a car accelerating smoothly away from it's position at rest
@@ -199,22 +219,24 @@ and then look ahead in time to see where the rocket is going to go next
 in order to determine where to aim the nose of the rocket (by rotating it).
 This kind of lookahead is easily implemented using the
 .B next
-command.  (See also the
+command.
+.sp .5
+   next dest_chan src_chan nsamp;
+.sp .5
+(See also the
 .B fromto
 directive in
 .IR tabsub (1)
 which is used in conjunction with this).
 The command
 .sp .5
-   next dest_chan src_chan nsamp;
-.br
    next 4 5 +3;
 .sp .5
 says to fill channel 4 with the values that will be present in channel 5
 at 3 output rows later on.
 Negative values are also permitted.
 Since the lookahead is defined in terms of output rows rather than
-time steps, this means that the values generated for this column will
+time units, this means that the values generated for this column will
 change as the frames per second (fps) value on the
 .B times
 command is changed.
