@@ -1384,12 +1384,12 @@ double			mm2local;
 			mp->mesh_size[1] );
 		rt_vls_strcat( str, buf );
 
-		sprintf(buf, "\tKnot vector %d + %d\n",
+		sprintf(buf, "\t\tKnot vector %d + %d\n",
 			sp->u_kv->k_size,
 			sp->u_kv->k_size );
 		rt_vls_strcat( str, buf );
 
-		sprintf(buf, "\tV (%g, %g, %g)\n",
+		sprintf(buf, "\t\tV (%g, %g, %g)\n",
 			mp->mesh[X] * mm2local,
 			mp->mesh[Y] * mm2local,
 			mp->mesh[Z] * mm2local );
