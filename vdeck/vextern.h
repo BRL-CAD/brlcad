@@ -1,6 +1,6 @@
 /*
- *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:08,
- *	@(#) version 1.7		last edit: 11/29/83 at 08:15:02.
+ *	@(#) vextern.h			retrieved: 8/13/86 at 08:19:13,
+ *	@(#) version 2.1		last edit: 6/1/84 at 14:05:13.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
