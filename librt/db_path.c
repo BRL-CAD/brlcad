@@ -95,7 +95,7 @@ register CONST struct db_full_path	*oldp;
 	}
 	newp->fp_names = (struct directory **)rt_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
-		"duplicate full path array" );
+		"db_full_path array (duplicate)" );
 	bcopy( (char *)oldp->fp_names, (char *)newp->fp_names,
 		newp->fp_len * sizeof(struct directory *) );
 }
@@ -174,7 +174,7 @@ int					start;
 	}
 	newp->fp_names = (struct directory **)rt_malloc(
 		newp->fp_maxlen * sizeof(struct directory *),
-		"duplicate full path array" );
+		"db_full_path array (duplicate)" );
 	bcopy( (char *)&oldp->fp_names[start], (char *)newp->fp_names,
 		newp->fp_len * sizeof(struct directory *) );
 }
