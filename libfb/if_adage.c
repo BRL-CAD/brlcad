@@ -56,42 +56,38 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <ctype.h>
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
-_LOCAL_ int	adage_device_open(),
-		adage_device_close(),
-		adage_device_clear(),
-		adage_buffer_read(),
-		adage_buffer_write(),
-		adage_colormap_read(),
-		adage_colormap_write(),
-		adage_window_set(),
-		adage_zoom_set(),
-		adage_curs_set(),
-		adage_cmemory_addr(),
-		adage_cscreen_addr(),
+_LOCAL_ int	adage_open(),
+		adage_close(),
+		adage_clear(),
+		adage_read(),
+		adage_write(),
+		adage_rmap(),
+		adage_wmap(),
+		adage_view(),
+		adage_window_set(),	/* OLD */
+		adage_zoom_set(),	/* OLD */
+		adage_setcursor(),
+		adage_cursor(),
 		adage_help();
 
-FBIO adage_interface =
-		{
-		adage_device_open,
-		adage_device_close,
-		fb_null,
-		adage_device_clear,
-		adage_buffer_read,
-		adage_buffer_write,
-		adage_colormap_read,
-		adage_colormap_write,
-		fb_null,
-		adage_window_set,
-		adage_zoom_set,
-		adage_curs_set,
-		adage_cmemory_addr,
-		adage_cscreen_addr,
+FBIO adage_interface = {
+		adage_open,
+		adage_close,
+		adage_clear,
+		adage_read,
+		adage_write,
+		adage_rmap,
+		adage_wmap,
+		adage_view,
+		fb_sim_getview,
+		adage_setcursor,
+		adage_cursor,
+		fb_sim_getcursor,
 		fb_sim_readrect,
 		fb_sim_writerect,
+		fb_null,		/* poll */
 		fb_null,		/* flush */
-		adage_device_close,	/* free */
+		adage_close,		/* free */
 		adage_help,
 		"Adage RDS3000",
 		1024,
@@ -100,6 +96,10 @@ FBIO adage_interface =
 		512,
 		512,
 		-1,
+		-1,
+		1, 1,			/* zoom */
+		256, 256,		/* window */
+		0, 0, 0,		/* cursor */
 		PIXEL_NULL,
 		PIXEL_NULL,
 		PIXEL_NULL,
@@ -108,7 +108,7 @@ FBIO adage_interface =
 		0L,
 		0L,
 		0
-		};
+};
 
 static struct ik_fbc ikfbc_setup[5] = {
     {
@@ -169,7 +169,6 @@ struct	ikinfo {
 	short	*_ikUBaddr;		/* Mapped-in Ikonas address */
 	/* Current values initialized in adage_init() */
 	int	mode;			/* 0,1,2 */
-	int	x_zoom, y_zoom;
 	int	x_window, y_window;	/* Ikonas, upper left of window */
 	int	y_winoff;		/* y window correction factor */
 	int	x_corig, y_corig;	/* cursor origin offsets */
@@ -220,7 +219,7 @@ typedef unsigned char IKONASpixel[4];
  * structure.
  */
 _LOCAL_ int
-adage_device_open( ifp, file, width, height )
+adage_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -263,7 +262,7 @@ int	width, height;
 		case 'h':
 			break;		/* Discard, for compatability */
 		default:
-			fb_log( "adage_device_open: Bad unit suffix %s\n", cp );
+			fb_log( "adage_open: Bad unit suffix %s\n", cp );
 			return(-1);
 	}
 
@@ -274,12 +273,12 @@ int	width, height;
 
 	/* create a clean ikinfo struct */
 	if( (IKIL(ifp) = (char *)calloc( 1, sizeof(struct ikinfo) )) == NULL ) {
-		fb_log( "adage_device_open: ikinfo malloc failed\n" );
+		fb_log( "adage_open: ikinfo malloc failed\n" );
 		return	-1;
 	}
 #if defined( vax )
 	if( ioctl( ifp->if_fd, IKIOGETADDR, &(IKI(ifp)->_ikUBaddr) ) < 0 )
-		fb_log( "adage_device_open : ioctl(IKIOGETADDR) failed.\n" );
+		fb_log( "adage_open : ioctl(IKIOGETADDR) failed.\n" );
 #endif
 	ifp->if_width = width;
 	ifp->if_height = height;
@@ -307,12 +306,12 @@ int	width, height;
 	 */
 	if( !noinit )  {
 		if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
-			fb_log( "adage_device_open : lseek failed.\n" );
+			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
 		if( write( ifp->if_fd, (char *)&ikfbc_setup[IKI(ifp)->mode],
 		    sizeof(struct ik_fbc) ) != sizeof(struct ik_fbc) ) {
-			fb_log( "adage_device_open : write failed.\n" );
+			fb_log( "adage_open : write failed.\n" );
 			return	-1;
 		}
 		IKI(ifp)->ikfbcmem = ikfbc_setup[IKI(ifp)->mode];/* struct copy */
@@ -321,29 +320,29 @@ int	width, height;
 		for( i=0; i < 34; i++ )
 			xbsval[i] = (long)i;
 		if( lseek( ifp->if_fd, XBS*4L, 0 ) == -1 ) {
-			fb_log( "adage_device_open : lseek failed.\n" );
+			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
 		if( write( ifp->if_fd, (char *) xbsval, sizeof(xbsval) )
 		    != sizeof(xbsval) ) {
-			fb_log( "adage_device_open : write failed.\n" );
+			fb_log( "adage_open : write failed.\n" );
 			return	-1;
 		}
 
 		/* Initialize the LUVO crossbar switch, too */
 		xbsval[0] = 0x24L;		/* 1:1 mapping, magic number */
 		if( lseek( ifp->if_fd, LUVOXBS*4L, 0 ) == -1 ) {
-			fb_log( "adage_device_open : lseek failed.\n" );
+			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
 		if( write( ifp->if_fd, (char *) xbsval, sizeof(long) )
 		    != sizeof(long) ) {
-			fb_log( "adage_device_open : write failed.\n" );
+			fb_log( "adage_open : write failed.\n" );
 			return	-1;
 		}
 
 		/* Dump in default cursor. */
-		if( adage_curs_set( ifp, default_cursor.bits,
+		if( adage_setcursor( ifp, default_cursor.bits,
 		    default_cursor.xbits, default_cursor.ybits,
 		    default_cursor.xorig, default_cursor.yorig ) == -1 )
 			return	-1;
@@ -351,18 +350,18 @@ int	width, height;
 
 	/* seek to start of pixels */
 	if( lseek( ifp->if_fd, 0L, 0 ) == -1 ) {
-		fb_log( "adage_device_open : lseek failed.\n" );
+		fb_log( "adage_open : lseek failed.\n" );
 		return	-1;
 	}
 	/* Create pixel buffer */
 	if( _pixbuf == NULL ) {
 		if( (_pixbuf = malloc( ADAGE_DMA_BYTES )) == NULL ) {
-			fb_log( "adage_device_open : pixbuf malloc failed.\n" );
+			fb_log( "adage_open : pixbuf malloc failed.\n" );
 			return	-1;
 		}
 	}
-	IKI(ifp)->x_zoom = 1;
-	IKI(ifp)->y_zoom = 1;
+	ifp->if_xzoom = 1;
+	ifp->if_yzoom = 1;
 	IKI(ifp)->x_window = 0;
 	IKI(ifp)->y_window = 0;
 	/* 12bit 2's complement window setting */
@@ -374,7 +373,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-adage_device_close( ifp )
+adage_close( ifp )
 FBIO	*ifp;
 {
 	/* free ikinfo struct */
@@ -385,12 +384,12 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-adage_device_clear( ifp, bgpp )
+adage_clear( ifp, bgpp )
 FBIO	*ifp;
 RGBpixel	*bgpp;
 {
 
-	/* If adage_device_clear() was called with non-black color, must
+	/* If adage_clear() was called with non-black color, must
 	 *  use DMAs to fill the frame buffer since there is no
 	 *  hardware support for this.
 	 */
@@ -400,24 +399,24 @@ RGBpixel	*bgpp;
 	IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_AUTOCLEAR;
 
 	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
-		fb_log( "adage_device_clear : lseek failed.\n" );
+		fb_log( "adage_clear : lseek failed.\n" );
 		return	-1;
 	}
 	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
 	    != sizeof(struct ik_fbc) ) {
-		fb_log( "adage_device_clear : write failed.\n" );
+		fb_log( "adage_clear : write failed.\n" );
 		return	-1;
 	}
 
 	sleep( 1 );	/* Give the FBC a chance to act */
 	IKI(ifp)->ikfbcmem.fbc_Lcontrol &= ~FBC_AUTOCLEAR;
 	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
-		fb_log( "adage_device_clear : lseek failed.\n" );
+		fb_log( "adage_clear : lseek failed.\n" );
 		return	-1;
 	}
 	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
 	    !=	sizeof(struct ik_fbc) ) {
-		fb_log( "adage_device_clear : write failed.\n" );
+		fb_log( "adage_clear : write failed.\n" );
 		return	-1;
 	}
 	return	0;
@@ -441,7 +440,7 @@ RGBpixel	*bgpp;
 	    		*sizeof(IKONASpixel),0) == -1) return -1;
 
 _LOCAL_ int
-adage_buffer_read( ifp, x, y, pixelp, count )
+adage_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel *pixelp;
@@ -560,7 +559,7 @@ headin:
 }
 
 _LOCAL_ int
-adage_buffer_write( ifp, x, y, pixelp, count )
+adage_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel *pixelp;
@@ -768,6 +767,18 @@ RGBpixel	*datap;
 	return	1;
 }
 
+_LOCAL_ int
+adage_view( ifp, xcenter, ycenter, xzoom, yzoom )
+FBIO	*ifp;
+int	xcenter, ycenter;
+int	xzoom, yzoom;
+{
+	adage_window_set(ifp, xcenter, ycenter);
+	adage_zoom_set(ifp, xzoom, yzoom);
+	fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
+	return	0;
+}
+
 /*	a d a g e _ z o o m _ s e t ( )
 	Update fbc_[xy]zoom registers in FBC
  */
@@ -786,8 +797,8 @@ register int	x, y;
 	if( x > 16 )  x=16;
 	if( y > 16 )  y=16;
 
-	IKI(ifp)->x_zoom = x;
-	IKI(ifp)->y_zoom = y;
+	ifp->if_xzoom = x;
+	ifp->if_yzoom = y;
 
 	/*
 	 * From RDS 3000 Programming Reference Manual, June 1982, section
@@ -869,6 +880,9 @@ int	x, y;
 	int first_line;
 	int top_margin;
 
+	ifp->if_xcenter = x;
+	ifp->if_ycenter = y;
+
 	/*
 	 *  To start with, we are given the 1st quadrant coordinates
 	 *  of the CENTER of the region we wish to view.  Since the
@@ -878,8 +892,8 @@ int	x, y;
 	 *  Then convert from first to fourth for the Ikonas.
 	 *  The order of these conversions is significant.
 	 */
-	ikx = x - (ifp->if_width / IKI(ifp)->x_zoom)/2;
-	iky = y + (ifp->if_height / IKI(ifp)->y_zoom)/2 - 1;
+	ikx = x - (ifp->if_width / ifp->if_xzoom)/2;
+	iky = y + (ifp->if_height / ifp->if_yzoom)/2 - 1;
 	iky = ifp->if_height-1-iky;		/* q1 -> q4 */
 
 	/* for the cursor routines, save q4 upper left */
@@ -910,12 +924,12 @@ int	x, y;
 		break;
 	}
 	IKI(ifp)->y_winoff = y_window;	/* save for cursor routines */
-	y_window /= IKI(ifp)->y_zoom;
+	y_window /= ifp->if_yzoom;
 
 	/* HACK - XXX */
-	if( IKI(ifp)->x_zoom > 1 )
+	if( ifp->if_xzoom > 1 )
 		ikx--;
-	if( IKI(ifp)->mode == 2 && IKI(ifp)->y_zoom > 1 )
+	if( IKI(ifp)->mode == 2 && ifp->if_yzoom > 1 )
 		iky--;	/* hires zoom */
 
 	if( IKI(ifp)->mode != 2 )
@@ -944,11 +958,13 @@ int	x, y;
  *	so backwards correction must be applied.
  */
 _LOCAL_ int
-adage_cmemory_addr( ifp, mode, x, y )
+adage_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	fb_sim_cursor( ifp, mode, x, y );
+
 	y = ifp->if_height-1-y;		/* q1 -> q4 */
 	y = y - IKI(ifp)->y_window;
 	x = x - IKI(ifp)->x_window;
@@ -956,14 +972,14 @@ int	x, y;
 	if( y < 0 )  y = 0;
 	if( x < 0 )  x = 0;
 */
-	y *= IKI(ifp)->y_zoom;
+	y *= ifp->if_yzoom;
 	/* HACK - XXX */
-	if( IKI(ifp)->x_zoom > 1 )
+	if( ifp->if_xzoom > 1 )
 		x++;
-	if( IKI(ifp)->mode == 2 && IKI(ifp)->x_zoom > 1 )
-		x *= (IKI(ifp)->x_zoom / 2);
+	if( IKI(ifp)->mode == 2 && ifp->if_xzoom > 1 )
+		x *= (ifp->if_xzoom / 2);
 	else
-		x *= IKI(ifp)->x_zoom;
+		x *= ifp->if_xzoom;
 	y -= IKI(ifp)->y_winoff;
 	x -= IKI(ifp)->x_corig;
 	y -= IKI(ifp)->y_corig;
@@ -976,11 +992,11 @@ int	x, y;
 	IKI(ifp)->ikfbcmem.fbc_ycursor = y&01777;
 
 	if( lseek( ifp->if_fd, FBCVC*4L, 0 ) == -1 ) {
-		fb_log( "adage_cmemory_addr : lseek failed.\n" );
+		fb_log( "adage_cursor : lseek failed.\n" );
 		return	-1;
 	}
 	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 8 ) != 8 ) {
-		fb_log( "adage_cmemory_addr : write failed.\n" );
+		fb_log( "adage_cursor : write failed.\n" );
 		return	-1;
 	}
 	return	0;
@@ -996,7 +1012,7 @@ int	mode;
 int	x, y;
 {
 	y = ifp->if_width-1-y;		/* 1st quadrant */
-	if( ifp->if_width == 1024 && IKI(ifp)->y_zoom == 1 )
+	if( ifp->if_width == 1024 && ifp->if_yzoom == 1 )
 		y += 30;
 	if (mode)
 		IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_CURSOR;
@@ -1017,7 +1033,7 @@ int	x, y;
 }
 
 _LOCAL_ int
-adage_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+adage_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char	*bits;
 int	xbits, ybits;
@@ -1067,11 +1083,11 @@ int	xorig, yorig;
 	}
 
 	if( lseek( ifp->if_fd, FBCCD*4L, 0 ) == -1 ) {
-		fb_log( "adage_curs_set : lseek failed.\n" );
+		fb_log( "adage_setcursor : lseek failed.\n" );
 		return	-1;
 	}
 	if( write( ifp->if_fd, cursor, 1024 ) != 1024 ) {
-		fb_log( "adage_curs_set : write failed.\n" );
+		fb_log( "adage_setcursor : write failed.\n" );
 		return	-1;
 	}
 
@@ -1088,7 +1104,7 @@ int	xorig, yorig;
 	Offset indexes into the map.
  */
 _LOCAL_ int
-adage_colormap_write_entry( ifp, cp, page, offset )
+adage_wmap_entry( ifp, cp, page, offset )
 FBIO	*ifp;
 register RGBpixel	*cp;
 long	page, offset;
@@ -1098,7 +1114,7 @@ long	page, offset;
 	lp = RGB10( (*cp)[RED]>>6, (*cp)[GRN]>>6, (*cp)[BLU]>>6 );
 	lseek( ifp->if_fd, (LUVO + page*256 + offset)*4L, 0);
 	if( write( ifp->if_fd, (char *) &lp, 4 ) != 4 ) {
-		fb_log( "adage_colormap_write_entry : write failed.\n" );
+		fb_log( "adage_wmap_entry : write failed.\n" );
 		return	-1;
 	}
 	return	0;
@@ -1106,7 +1122,7 @@ long	page, offset;
 #endif
 
 _LOCAL_ int
-adage_colormap_write( ifp, cp )
+adage_wmap( ifp, cp )
 FBIO	*ifp;
 register ColorMap	*cp;
 {
@@ -1140,18 +1156,18 @@ register ColorMap	*cp;
 		cmap[i+512] = cmap[i];
 	}
 	if( lseek( ifp->if_fd, LUVO*4L, 0) == -1 ) {
-		fb_log( "adage_colormap_write : lseek failed.\n" );
+		fb_log( "adage_wmap : lseek failed.\n" );
 		return	-1;
 	}
 	if( write( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
-		fb_log( "adage_colormap_write : write failed.\n" );
+		fb_log( "adage_wmap : write failed.\n" );
 		return	-1;
 	}
 	return	0;
 }
 
 _LOCAL_ int
-adage_colormap_read( ifp, cp )
+adage_rmap( ifp, cp )
 FBIO	*ifp;
 register ColorMap	*cp;
 {
@@ -1159,11 +1175,11 @@ register ColorMap	*cp;
 	long cmap[1024];
 
 	if( lseek( ifp->if_fd, LUVO*4L, 0) == -1 ) {
-		fb_log( "adage_colormap_read : lseek failed.\n" );
+		fb_log( "adage_rmap : lseek failed.\n" );
 		return	-1;
 	}
 	if( read( ifp->if_fd, cmap, 1024*4 ) != 1024*4 ) {
-		fb_log( "adage_colormap_read : read failed.\n" );
+		fb_log( "adage_rmap : read failed.\n" );
 		return	-1;
 	}
 	for( i=0; i < 256; i++ ) {
