@@ -49,7 +49,6 @@ kitchensink_dirs = \
 	proc-db \
 	remrt \
 	rttherm \
-	sample_applications \
 	sig \
 	tab \
 	tclscripts \
