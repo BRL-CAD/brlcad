@@ -295,7 +295,7 @@ rt_output_handler(clientData, mask)
 ClientData clientData;
 int mask;
 {
-  int fd = (int)clientData;
+  int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
   int count;
   char line[RT_MAXLINE];
 
@@ -597,7 +597,7 @@ int mask;
 {
   int count;
   char line[RT_MAXLINE];
-  int fd = (int)clientData;
+  int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
 
   /* Get textual output from rtcheck */
 #if 0
