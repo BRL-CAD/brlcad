@@ -810,7 +810,10 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 		 * This is expensive.  For getting started, tolerate it.
 		 */
 		int	class;
-		class = nmg_class_pt_f( hit_pt, fu2, &is->tol );
+		class = nmg_class_pt_fu_except( hit_pt, fu2,
+			(struct loopuse *)NULL,
+			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
+			&is->tol );
 		if( class == NMG_CLASS_AoutB )  {
 			/* point outside face loop, no need to break eu1 */
 #if 0
