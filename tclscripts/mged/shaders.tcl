@@ -1,5 +1,3 @@
-#!/vld/jra/brlcad/.libtk.m4i64/wish
-
 # these routines implement the gui for the BRL-CAD shaders
 # shader_params is a global array containing all the values for this shader gui
 # the 'id' is passed to these routines to use for uniqueness
