@@ -182,7 +182,7 @@ fb_flush( ifp )
 register FBIO	*ifp;
 {
 	if( ifp->if_debug & FB_DEBUG_BIO ) {
-		fb_flush( "fb_flush( 0x%lx )\n", (unsigned long)ifp );
+		fb_log( "fb_flush( 0x%lx )\n", (unsigned long)ifp );
 	}
 
 	if( ifp->if_pdirty )
