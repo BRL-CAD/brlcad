@@ -176,30 +176,31 @@ adcursor()
 
 /*
  *			F _ A D C
- *
- *	"adc"		toggles display of angle/distance cursor
- *	"adc a1 #"	sets angle1
- *	"adc a2 #"	sets angle2
- *	"adc x #"	sets horz. coord of angle/distance cursor location
- *	"adc y #"	sets vert. coord of angle/distance cursor location
- *	"adc dst #"	sets radius of angle/distance cursor tick
- *	"adc reset"	Resets angles, location, and tick distance
  */
-#define ADCPARM_A1	1
-#define ADCPARM_A2	2
-#define ADCPARM_X	3
-#define ADCPARM_Y	4
-#define ADCPARM_DST	5
-#define ADCPARM_RESET	6
-#define ADCPARM_NONE	0
 
+static char	adc_syntax[] = "\
+ adc		toggle display of angle/distance cursor\n\
+ adc a1 #	set angle1\n\
+ adc a2 #	set angle2\n\
+ adc dst #	set radius (distance) of tick\n\
+ adc dh #	reposition horizontally\n\
+ adc dv #	reposition vertically\n\
+ adc dx #	reposition in X direction\n\
+ adc dy #	reposition in Y direction\n\
+ adc dz #	reposition in Z direction\n\
+ adc hv # #	reposition (view coordinates)\n\
+ adc xyz # # #	reposition in front of a point (model coordinates)\n\
+ adc reset	reset angles, location, and tick distance\n\
+";
 void f_adc (argc, argv)
 int	argc;
 char	**argv;
 {
 	char	*parameter;
-	double	f;
-	int	parm_code;
+	point_t	center_model;
+	point_t	pt;		/* Value(s) provided by user */
+	point_t	pt2, pt3;	/* Extra points as needed */
+	int	i;
 
 	if (argc == 1)
 	{
@@ -213,77 +214,100 @@ char	**argv;
 		dmaflag = 1;
 		return;
 	}
-	parameter = argv[1];
 
-	if( strcmp( parameter, "x" ) == 0 )  {
-		parm_code = ADCPARM_X;
-	} else if( strcmp( parameter, "y" ) == 0 )  {
-		parm_code = ADCPARM_Y;
-	} else if( strcmp( parameter, "a1" ) == 0 )  {
-		parm_code = ADCPARM_A1;
-	} else if( strcmp( parameter, "a2" ) == 0 )  {
-		parm_code = ADCPARM_A2;
-	} else if( (strcmp(parameter, "dst") == 0))  {
-		parm_code = ADCPARM_DST;
-	} else if( (strcmp(parameter, "reset") == 0))  {
-		parm_code = ADCPARM_RESET;
+	parameter = argv[1];
+	argc -= 2;
+	for (i = 0; i < argc; ++i)
+	    pt[i] = atof(argv[i + 2]);
+	VSET(center_model,
+	    -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ]);
+
+	if( strcmp( parameter, "a1" ) == 0 )  {
+		if (argc == 1) {
+		    dm_values.dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp( parameter, "a2" ) == 0 )  {
+		if (argc == 1) {
+		    dm_values.dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if(strcmp(parameter, "dst") == 0)  {
+		if (argc == 1) {
+		    dm_values.dv_distadc = (pt[0] / (Viewscale * base2local * M_SQRT2) -1.0)
+			* 2047.0;
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp( parameter, "dh" ) == 0 )  {
+		if (argc == 1) {
+		    dm_values.dv_xadc += pt[0] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp( parameter, "dv" ) == 0 )  {
+		if (argc == 1) {
+		    dm_values.dv_yadc += pt[0] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp( parameter, "dx" ) == 0 )  {
+		if (argc == 1) {
+		    VSET(pt2, pt[0], 0.0, 0.0);
+		    MAT4X3VEC(pt3, Viewrot, pt2);
+		    dm_values.dv_xadc += pt3[X] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_yadc += pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp( parameter, "dy" ) == 0 )  {
+		if (argc == 1) {
+		    VSET(pt2, 0.0, pt[0], 0.0);
+		    MAT4X3VEC(pt3, Viewrot, pt2);
+		    dm_values.dv_xadc += pt3[X] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_yadc += pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp( parameter, "dz" ) == 0 )  {
+		if (argc == 1) {
+		    VSET(pt2, 0.0, 0.0, pt[0]);
+		    MAT4X3VEC(pt3, Viewrot, pt2);
+		    dm_values.dv_xadc += pt3[X] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_yadc += pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp(parameter, "hv") == 0)  {
+		if (argc == 2) {
+		    MAT4X3VEC(pt2, Viewrot, center_model);
+		    VSUB2(pt3, pt, pt2);
+		    dm_values.dv_xadc = pt3[X] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_yadc = pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp(parameter, "xyz") == 0)  {
+		if (argc == 3) {
+		    VSUB2(pt2, pt, center_model);
+		    MAT4X3VEC(pt3, Viewrot, pt2);
+		    dm_values.dv_xadc = pt3[X] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_yadc = pt3[Y] * 2047.0 / (Viewscale * base2local);
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp(parameter, "reset") == 0)  {
+		if (argc == 0) {
+		    dm_values.dv_xadc = dm_values.dv_yadc = 0;
+		    dm_values.dv_1adc = dm_values.dv_2adc = 0;
+		    dm_values.dv_distadc = 0;
+		    dm_values.dv_flagadc = 1;
+		    return;
+	}} else if( strcmp(parameter, "help") == 0)  {
+		(void) printf("Usage:\n");
+		(void) fputs(adc_syntax, stdout);
+		return;
 	} else  {
 		(void) printf("ADC: unrecognized parameter: '%s'\n", argv[1]);
-		(void) printf("valid parameters: <a1|a2|x|y|dst|reset>\n");
+		(void) printf("valid parameters: %s\n",
+			    "<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help>\n");
 		return;
-	}
-	if (parm_code == ADCPARM_RESET)
-	{
-		if (argc != 2)
-		{
-			(void) printf("ADC: the parameter '%s' accepts no value\n",
-			    parameter);
-			return;
-		}
-	}
-	else
-	{
-		if (argc == 2)
-		{
-			(void) printf("ADC: no value provided for parameter '%s'\n",
-			    parameter);
-			return;
-		}
-		else
-			f = atof(argv[2]);
 	}
 
-	switch (parm_code)
-	{
-	case ADCPARM_X:
-		dm_values.dv_xadc = f * 2047.0 / (Viewscale * base2local);
-		dm_values.dv_flagadc = 1;
-		return;
-	case ADCPARM_Y:
-		dm_values.dv_yadc = f * 2047.0 / (Viewscale * base2local);
-		dm_values.dv_flagadc = 1;
-		return;
-	case ADCPARM_A1:
-		dm_values.dv_1adc = (1.0 - f / 45.0) * 2047.0;
-		dm_values.dv_flagadc = 1;
-		return;
-	case ADCPARM_A2:
-		dm_values.dv_2adc = (1.0 - f / 45.0) * 2047.0;
-		dm_values.dv_flagadc = 1;
-		return;
-	case ADCPARM_DST:
-		dm_values.dv_distadc = (f / (Viewscale * base2local * M_SQRT2) -1.0)
-		    * 2047.0;
-		dm_values.dv_flagadc = 1;
-		return;
-	case ADCPARM_RESET:
-		dm_values.dv_xadc = dm_values.dv_yadc = 0;
-		dm_values.dv_1adc = dm_values.dv_2adc = 0;
-		dm_values.dv_distadc = 0;
-		dm_values.dv_flagadc = 1;
-		return;
-	default:
-		(void) fprintf(stderr,
-		    "f_adc(): parm_code=%d.  This shouldn't happen\n", parm_code);
-	}
+	(void) printf("ADC: invalid syntax for parameter '%s'\n",
+	    parameter);
+	(void) printf("usage is:\n");
+	(void) fputs(adc_syntax, stdout);
 }
