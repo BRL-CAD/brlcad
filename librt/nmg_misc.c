@@ -6579,6 +6579,8 @@ struct rt_list *vhead;
 	{
 		register int i;
 		register int nused = vp->nused;
+		fastf_t edge_len_sq;
+		vect_t edge_vec;
 
 		for( i=0 ; i<vp->nused ; i++ )
 		{
@@ -6592,6 +6594,9 @@ struct rt_list *vhead;
 					break;
 				case RT_VLIST_LINE_DRAW:
 				case RT_VLIST_POLY_DRAW:
+					VSUB2( edge_vec , pt2 , vp->pt[i] );
+					if( VNEAR_ZERO( edge_vec , SMALL_FASTF ) )
+						break;
 					VMOVE( pt1 , pt2 );
 					v1 = v2;
 					VMOVE( pt2 , vp->pt[i] );
@@ -6602,6 +6607,7 @@ struct rt_list *vhead;
 					nmg_vertex_gv( v2 , pt2 );
 					if( !v1->vg_p )
 						nmg_vertex_gv( v1 , pt1 );
+					nmg_edge_g( eu );
 					break;
 				case RT_VLIST_POLY_START:
 				case RT_VLIST_POLY_END:
