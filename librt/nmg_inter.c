@@ -6806,6 +6806,8 @@ nmg_fu_touchingloops(fu2);
 	case -2:
 		/* co-planar faces */
 		{
+			int coplanar1=0;
+			int coplanar2=0;
 			int coplanar=0;
 			int parallel=0;
 			fastf_t max_dist1;
@@ -6862,10 +6864,10 @@ nmg_fu_touchingloops(fu2);
 			{
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log( "nmg_isect_two_generic_faces: coplanar faces don't share face geometry, intersecting anyway\n" );
-				coplanar = 1;
+				coplanar1 = 1;
 			}
 
-			if( !coplanar && !parallel )
+			if( !parallel )
 			{
 				/* Nothing determined so far, try looking at vertices in the other face */
 				nmg_vertex_tabulate( &verts, &fu2->l.magic );
@@ -6906,7 +6908,7 @@ nmg_fu_touchingloops(fu2);
 				{
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)
 						rt_log( "nmg_isect_two_generic_faces: coplanar faces don't share face geometry, intersecting anyway\n" );
-					coplanar = 1;
+					coplanar2 = 1;
 				}
 			}
 
@@ -6917,6 +6919,9 @@ nmg_fu_touchingloops(fu2);
 				rt_log( "max_dist1 = %g, min_dist1 = %g\n", max_dist1, min_dist1 );
 				rt_log( "max_dist2 = %g, min_dist2 = %g\n", max_dist2, min_dist2 );
 			}
+
+			if( coplanar1 && coplanar2 )
+				coplanar = 1;
 
 			if( coplanar )
 			{
@@ -6938,11 +6943,12 @@ cplanar:
 	}
 
 	nmg_isect2d_cleanup( &bs );
-
+#if 0
+	/* 	TOO EARLY, These are needed for identifying shared vertices */
 	/* Eliminate any OT_BOOLPLACE self-loops now. */
 	nmg_sanitize_fu( fu1 );
 	nmg_sanitize_fu( fu2 );
-
+#endif
 	/* Eliminate stray vertices that were added along edges in this step */
 	(void)nmg_unbreak_region_edges( &fu1->l.magic );
 	(void)nmg_unbreak_region_edges( &fu2->l.magic );
@@ -7536,11 +7542,12 @@ CONST struct rt_tol	*tol;
 	/* Eliminate stray vertices that were added along edges in this step */
 	(void)nmg_unbreak_region_edges( &s1->l.magic );
 	(void)nmg_unbreak_region_edges( &s2->l.magic );
-
+#if 0
+		/* TOO EARLY!!! These are needed to identify shared vertices */
 	/* clean things up now that the intersections have been built */
 	nmg_sanitize_s_lv(s1, OT_BOOLPLACE);
 	nmg_sanitize_s_lv(s2, OT_BOOLPLACE);
-
+#endif
 	nmg_isect2d_cleanup(&is);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
