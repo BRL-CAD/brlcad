@@ -66,7 +66,7 @@ libfb \- multiple device, generic frame buffer library
 .PP
 /* Buffered frame buffer I/O: */
 .PP
-.B void fb_ioinit(fbp)
+.B int fb_ioinit(fbp)
 .B FBIO *fbp;
 .PP
 .B int fb_seek(fbp, x, y)
@@ -99,6 +99,14 @@ is handled by the library.
 .PP
 This version of the library assumes that red, green, and blue
 intensities are described by unsigned 8-bit bytes in the range (0..255).
+The library interface uses arrays of
+.BR RGBpixel s,
+which is a typedef for an array of three unsigned chars (this was
+done to avoid structure padding).  Note that a pointer to an
+.B RGBpixel
+is thus the name of the
+.B RGBpixel
+itself, i.e. no ampersand is needed.
 .PP
 The exact interpretation of color maps tends to be somewhat device
 specific.
@@ -441,6 +449,7 @@ brlcad(1).
 .IR fb_setcursor\^ ,
 .IR fb_window\^ ,
 .IR fb_zoom\^ ,
+.IR fb_ioinit\^ ,
 .IR fb_seek\^ ,
 .IR fb_wpixel\^ ,
 .I fb_rpixel\^
