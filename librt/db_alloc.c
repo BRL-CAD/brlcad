@@ -263,7 +263,8 @@ int			recnum;
  *  			D B _ D E L E T E
  *  
  *  Delete the indicated database record(s).
- *  Mark all records with ID_FREE.
+ *  Arrange to write "free storage" database markers in it's place,
+ *  positively erasing what had been there before.
  */
 int
 db_delete( dbip, dp )
@@ -283,16 +284,22 @@ struct directory *dp;
 		dp->d_len = 0;
 		return 0;
 	}
-	BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
 
-	i = db_zapper( dbip, dp, 0 );
-
-	rt_memfree( &(dbip->dbi_freep), (unsigned)dp->d_len,
-		dp->d_addr/(sizeof(union record)) );
+	if( dbip->dbi_version == 4 )  {
+		i = db_zapper( dbip, dp, 0 );
+		rt_memfree( &(dbip->dbi_freep), (unsigned)dp->d_len,
+			dp->d_addr/(sizeof(union record)) );
+	} else if( dbip->dbi_version == 5 )  {
+		i = db5_write_free( dbip, dp, dp->d_len );
+		rt_memfree( &(dbip->dbi_freep), dp->d_len,
+			dp->d_addr );
+	} else {
+		bu_bomb("db_delete() unsupported database version\n");
+	}
 
 	dp->d_len = 0;
 	dp->d_addr = -1;
-	return(i);
+	return i;
 }
 
 /*
