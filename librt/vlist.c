@@ -296,6 +296,62 @@ rt_vlist_cleanup()
 	bn_vlist_cleanup( &rt_g.rtg_vlfree );
 }
 
+/*
+ */
+void
+bn_vlist_rpp(hd, minn, maxx)
+struct bu_list	*hd;
+CONST point_t	minn;
+CONST point_t	maxx;
+{
+	point_t	p;
+
+	VSET( p, minn[X], minn[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE )
+
+	/* first side */
+	VSET( p, minn[X], maxx[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+	VSET( p, minn[X], maxx[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+	VSET( p, minn[X], minn[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+	VSET( p, minn[X], minn[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+
+	/* across */
+	VSET( p, maxx[X], minn[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+
+	/* second side */
+	VSET( p, maxx[X], maxx[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+	VSET( p, maxx[X], maxx[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+	VSET( p, maxx[X], minn[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+	VSET( p, maxx[X], minn[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+
+	/* front edge */
+	VSET( p, minn[X], maxx[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE )
+	VSET( p, maxx[X], maxx[Y], minn[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+
+	/* bottom back */
+	VSET( p, minn[X], minn[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE )
+	VSET( p, maxx[X], minn[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+
+	/* top back */
+	VSET( p, minn[X], maxx[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_MOVE )
+	VSET( p, maxx[X], maxx[Y], maxx[Z] );
+	BN_ADD_VLIST( &rt_g.rtg_vlfree, hd, p, BN_VLIST_LINE_DRAW )
+}
+
 /************************************************************************
  *									*
  *			Binary VLIST import/export routines		*
