@@ -70,7 +70,7 @@ dozoom()
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dmp->dmr_object( sp->s_center, model2view, ratio, sp->s_addr, sp==illump ) )  {
+		if( dmp->dmr_object( sp, model2view, ratio, sp==illump ) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -101,7 +101,7 @@ dozoom()
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dmp->dmr_object( sp->s_center, model2objview, ratio, sp->s_addr, 1 ) )  {
+		if( dmp->dmr_object( sp, model2objview, ratio, 1 ) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}

@@ -45,37 +45,9 @@ f_center()
 
 f_rot()
 {
-	register char c = cmd_args[1][0];
-	static float f;
-
-	f = atof(cmd_args[2]) * degtorad;
-
-	switch( c )  {
-	case 'x':
-	case 'X':
-		usejoy( f, 0.0, 0.0 );
-		break;
-	case 'y':
-	case 'Y':
-		usejoy( 0.0, f, 0.0 );
-		break;
-	case 'z':
-	case 'Z':
-		usejoy( 0.0, 0.0, f );
-		break;
-	default:
-		printf("Unknown axis '%s'\n", cmd_args[1]);
-		break;
-	}
-}
-
-/* DEBUG -- simulate button press */
-/* Format: press button#	*/
-f_press()
-{
-	int i;
-	i = atoi( cmd_args[1] );
-	button( i );
+	usejoy(	atof(cmd_args[1]) * degtorad,
+		atof(cmd_args[2]) * degtorad,
+		atof(cmd_args[3]) * degtorad );
 }
 
 /* DEBUG -- force viewsize */

@@ -179,8 +179,7 @@ union record *recordp;
 	(void)memcpy( (char *)sp->s_vlist, (char *)veclist, count );
 
 	/* Cvt to displaylist, determine displaylist memory requirement. */
-	sp->s_bytes = dmp->dmr_cvtvecs( sp->s_vlist,
-		sp->s_center, sp->s_size, dashflag, sp->s_vlen );
+	sp->s_bytes = dmp->dmr_cvtvecs( sp );
 
 	/* Allocate displaylist storage for object */
 	sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );

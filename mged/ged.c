@@ -85,11 +85,11 @@ char **argv;
 		exit(1);		/* NOT finish() */
 	}
 
+	/* Identify ourselves */
+	printf("%s\n", version);
+
 	/* Get input file */
 	db_open( argv[1] );
-
-	/* Identify ourselves */
-	printf("%s", version);
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
@@ -110,7 +110,7 @@ char **argv;
 	mat_idn( modelchanges );
 	new_mats();
 
-	setview( 270, 0, 0 );
+	setview( 0, 0, 0 );
 
 	drawreg = 0;		/* no region processing */
 	regmemb = -1;		/* no members to process */
@@ -119,8 +119,13 @@ char **argv;
 	es_edflag = -1;		/* no solid editing just now */
 
 	inten_scale = 0x7FF0;	/* full positive, to start with */
+
 	windowbounds[0] = 2047;		/* XHR */
-	windowbounds[3] = -925;		/* YLR */
+	windowbounds[1] = -2048;	/* XLR */
+	windowbounds[2] = 2047;		/* YHR */
+	windowbounds[3] = -2048;	/* YLR */
+	windowbounds[4] = 2047;		/* ZHR */
+	windowbounds[5] = -2048;	/* ZLR */
 
 	dmaflag = 1;
 

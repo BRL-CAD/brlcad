@@ -82,9 +82,9 @@ static struct funtab {
 	"%",f_comm,1,1,"% (escape to interactive shell)",
 	"q",f_quit,1,1,"q (quit)",
 	"center",f_center,4,4,"center x y z (debug, set view center)",
-	"press",f_press,2,2,"press button# (debug, emulate button press)",
+	"press",f_press,2,20,"press button (emulate button press)",
 	"size",f_view,2,2,"size size (debug, set view size)",
-	"rot",f_rot,3,3,"rot axis degrees (debug, rotate view)",
+	"rot",f_rot,4,4,"rot xdeg ydeg zdeg (rotate view)",
 	"x",f_debug,1,1,"x (debug, list drawn objects)",
 	"regdump",f_regdebug,1,1,"regdump (debug, toggle register print)",
 	"edcomb",f_edcomb,7,7,"edcomb combname flag item air mat los (edit combination record info)",
@@ -305,4 +305,14 @@ static void
 f_return()
 {
 	/* presently unused */
+}
+
+/* Hook for displays with no buttons */
+void
+f_press()
+{
+	register int i;
+
+	for( i = 1; i < numargs; i++ )
+		press( cmd_args[i] );
 }

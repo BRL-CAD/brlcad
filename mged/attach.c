@@ -39,7 +39,7 @@ struct dm dm_Null = {
 	0.0,
 	"nu", "Null Display"
 };
-extern struct dm dm_Mg, dm_Vg;
+extern struct dm dm_Mg, dm_Vg, dm_Tek;
 
 struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 
@@ -47,6 +47,7 @@ struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 static struct dm *which_dm[] = {
 	&dm_Mg,
 	&dm_Vg,
+	&dm_Tek,
 	&dm_Null,
 	0
 };
@@ -86,10 +87,7 @@ char *name;
 
 		FOR_ALL_SOLIDS( sp )  {
 			/* Write vector subs into new display processor */
-			sp->s_bytes = dmp->dmr_cvtvecs( sp->s_vlist,
-				sp->s_center, sp->s_size,
-				sp->s_soldash, sp->s_vlen );
-
+			sp->s_bytes = dmp->dmr_cvtvecs( sp );
 			sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
 			if( sp->s_addr == 0 )  break;
 			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
