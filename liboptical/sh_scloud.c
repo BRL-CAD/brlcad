@@ -23,9 +23,9 @@ struct scloud_specific {
 	double	lacunarity;
 	double	h_val;
 	double	octaves;
-	double	thresh;
-	vect_t	delta;
+	vect_t	delta;	/* xlatd in noise space (where interesting noise is)*/
 	point_t	scale;	/* scale coordinate space */
+	double	max_d_p_mm;	/* maximum density per millimeter */
 	mat_t	xform;
 };
 
@@ -33,9 +33,9 @@ static struct scloud_specific scloud_defaults = {
 	2.1753974,	/* lacunarity */
 	1.0,		/* h_val */
 	4.0,		/* octaves */
-	1.0,		/* threshold for opacity */
 	{ 0.0, 0.0, 0.0 },	/* delta */
 	{ 1.0, 1.0, 1.0 },	/* scale */
+	0.01			/* max_d_p_mm */
 	};
 
 #define SHDR_NULL	((struct scloud_specific *)0)
@@ -46,7 +46,6 @@ struct structparse scloud_pr[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",	1, "thresh",		SHDR_O(thresh),	FUNC_NULL },
 	{"%f",  3, "scale",		SHDR_AO(scale),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -55,12 +54,11 @@ struct structparse scloud_parse[] = {
 	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 		SHDR_O(h_val),	FUNC_NULL },
 	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",	1, "thresh",		SHDR_O(thresh),	FUNC_NULL },
 	{"%f",  3, "scale",		SHDR_AO(scale),	FUNC_NULL },
 	{"%f",  3, "delta",		SHDR_AO(delta),	FUNC_NULL },
 	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
+	{"%f",	1, "m", 		SHDR_O(max_d_p_mm),	FUNC_NULL },
 	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",	1, "t",			SHDR_O(thresh),	FUNC_NULL },
 	{"%f",  3, "s",			SHDR_AO(scale),	FUNC_NULL },
 	{"%f",  3, "d",			SHDR_AO(delta),	FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
@@ -177,67 +175,75 @@ char	*dp;
 {
 	register struct scloud_specific *scloud_sp =
 		(struct scloud_specific *)dp;
-	point_t in_pt, out_pt, pt;
-	vect_t	v_cloud;
-	double	thickness;
-	int	steps;
-	double	step_delta;
+	point_t in_pt;	/* point where ray enters scloud solid */
+	point_t out_pt; /* point where ray leaves scloud solid */
+	point_t pt;
+	vect_t	v_cloud;/* vector representing ray/solid intersection */
+	double	thickness; /* magnitude of v_cloud (distance through solid) */
+	int	steps;	   /* # of samples along ray/solid intersection */
+	double	step_delta;/* distance between sample points */
 	int	i;
 	double  val;
-	double	transmission;
+	double	trans;
+	double	sum;
 
 	RT_CHECK_PT(pp);
 	RT_AP_CHECK(ap);
 	RT_CK_REGION(pp->pt_regionp);
 
 #if 0
+	/* just shade the surface with a transparency */
 	MAT4X3PNT(in_pt, scloud_sp->xform, swp->sw_hit.hit_point);
-		val = noise_fbm(in_pt, scloud_sp->h_val, 
+	val = noise_fbm(in_pt, scloud_sp->h_val,
 			scloud_sp->lacunarity, scloud_sp->octaves );
- 	VSET(swp->sw_color, val, val, val);
+	swp->sw_transmit = 1.0 - CLAMP(val, 0.0, 1.0);
+
+/* 	VSET(swp->sw_color, val, val, val); */
 	return 1;
 #endif
 	VJOIN1(in_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VJOIN1(out_pt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
-	/* transform point into "noise-space coordinates" */
+	/* transform points into "noise-space coordinates" */
 	MAT4X3PNT(in_pt, scloud_sp->xform, in_pt);
 	MAT4X3PNT(out_pt, scloud_sp->xform, out_pt);
 
+	/* get ray/solid intersection vector and compute thickness of
+	 * solid along ray path
+	 */
 	VSUB2(v_cloud, out_pt, in_pt);
 	thickness = MAGNITUDE(v_cloud);
-	steps = (int)(thickness * 3.0);
+
+#if 0
+	/* shade with a transparency proportional to the thickness */
+	swp->sw_transmit = exp( - scloud_sp->max_d_p_mm * thickness );
+	swp->sw_transmit = CLAMP(swp->sw_transmit, 0.0, 1.0);
+	return 1;
+#endif
+
+	if (thickness < 3.0) steps = 3;
+	else steps = (int)thickness;
 
 	step_delta = thickness / (double)steps;
 
 	VUNITIZE(v_cloud);
-
 	VMOVE(pt, in_pt);
-	transmission = 1.0;
+	trans = 1.0;
 	for (i=0 ; i < steps ; i++ ) {
 		/* compute the next point in the cloud space */
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
 
-		val = noise_fbm(pt, scloud_sp->h_val, 
+		val = noise_turb(pt, scloud_sp->h_val, 
 			scloud_sp->lacunarity, scloud_sp->octaves );
 
-		val = (val+1.) * .5;
+		val -= .5;
+		val = CLAMP(val, 0.0, 1.0);
+		val *= 2.0;
 
-		if (val > scloud_sp->thresh) {
-
-			transmission -= 1-val;
-			if (transmission < 0.000001) {
-				transmission = 0.;
-				break;
-			}
-		}
+		trans *=  exp( - val * scloud_sp->max_d_p_mm * step_delta);
 	}
-
-	transmission = CLAMP(transmission, 0.0, 1.0);
-
-	swp->sw_transmit = transmission;
-
-/* 	VSET(swp->sw_color, transmission, transmission, transmission); */
+	
+	swp->sw_transmit = trans;
 
 	return(1);
 }
