@@ -1,86 +1,99 @@
 .TH RLE-FB 1V VMB
-'\"	last edit:	85/03/28	G. S. Moss
-'\"	SCCS ID:	@(#)rle-fb.1	1.2
+'\"	last edit:	85/04/22	G. S. Moss
+'\"	SCCS ID:	@(#)rle-fb.1	1.3
 .SH NAME
-rle-fb \- Restore Run-Length Encoded image onto a framebuffer
+rle-fb \- Restore Run-Length Encoded image onto a frame buffer
 .SH SYNOPSIS
-.B rle-ik
+.B rle-fb
 [
-.B -Ov
+.B \-Ov
 ] [
-.B -b
-(
+.B \-b
+{
 .B rgbBG
-)] [
-.B -pX Y
-] [
-.B file.rle
-]
+} ] [
+.B \-p
+x y ] [ file.rle ]
 .SH DESCRIPTION
-Restores an Alpha_1 standard format run-length encoded (RLE)
+.I Rle-fb\^
+restoresto the name of another device or file name, an Alpha_1 standard format run-length encoded (RLE)
 file saved with
-.I fb-rle
-or similar program.
+.I fb-rle\^
+or a similar program.
 If
 .I file.rle\^
 is not specified, the standard input is read.
-By default, the device ``/dev/ik0l'',
+By default, the device
+.B /dev/ik0l
 is used to display the decoded image.
 This may be changed by setting the environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name,
-and exporting it before execution of 
+to the name of another device or file name
+and exporting it before execution of
 .IR rle-fb\^ .
-Images may be written to disk or any supported framebuffer device.
+Images may be written to disk or any supported frame buffer device.
 .I Rle-fb\^
 determines the type and size of the saved file (color or B&W)
 and acts accordingly.
 .TP
-.B -v
+.B \-v
 Provides a verbose description of the parameters of the saved image
 on the standard error output.
 .TP
-.B -O
+.B \-O
 Restores the image data in \fIoverlay\fP mode.
 Only areas of the original image which were not the background color are
 restored.  The rest of the image already in the frame buffer is undisturbed.
 Note that this mode uses twice as many DMAs to the frame buffer as
 the normal mode, as the previous image must be read back into the host.
 .TP
-.B -bX
+.BI \-b x\^
 If the image is not being restored in overlay mode, the background is
-normally set to the value recorded in the RLE file.  This option permits
+normally set to the value recorded in the RLE file.
+This option permits
 the user to specify an alternate background color from a limited
-set of colors.  The character \fBX\fR can be any of `r' (red),
-`g' (green), `b' (blue), `B' (black), or `G' (18% grey).
+set of colors.
+The character
+.I x
+can be any of
+.B r
+(red),
+.B g
+(green),
+.B b
+(blue),
+.B B
+(black), or
+.B G
+(18% grey).
 .TP
-.B -p X Y
-Reposition the image.  The original lower left corner is positioned at [x, y]
-before restoring the image.  A warning:  A saved image should not be
+.BI \-p "x y"
+Reposition the image.
+The original lower left corner is positioned at
+.RI [ x\^ ", " y\^ ]
+before restoring the image.
+Warning:
+a saved image should not be
 repositioned so that any saved data wraps around the X borders.
 .TP
-.B file.rle
-Name of file to restore.  Must be in Alpha_1 RLE format.
+.I file.rle\^
+Name of file to restore.
+The file must be in Alpha_1 RLE format.
 .SH EXAMPLE
-In the Bourne shell :
-.br
+.RS
 $ \fIFB_FILE=/dev/ik1l export FB_FILE\fR
 .br
 $ \fI\|rle-fb \|\-O \|tank.rle\fR
-.br
-In the C shell :
-.br
-% \fI\|setenv \|FB_FILE \|tank.fb\fR
-.br
-% \fI\|rle-fb \|\-v \|< \|tank.rle\fR
+.RE
 .SH FILES
-/vld/lib/librle.a, /vld/lib/libfb.a
+/vld/lib/librle.a
+.br
+/vld/lib/libfb.a
+.SH SEE ALSO
+fb-rle(1V).
 .SH AUTHORS
-.PP 
 Gary S. Moss, BRL-VLD
 .br
 Michael John Muuss, BRL-SECAD
-.SH SEE ALSO
-fb-rle(1V)

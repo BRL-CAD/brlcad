@@ -1,8 +1,8 @@
 .TH FBCLEAR 1V VMB
-'\"	last edit:	85/03/28	G. S. Moss
-'\"	SCCS ID:	@(#)fbclear.1	1.1
+'\"	last edit:	85/04/22	G. S. Moss
+'\"	SCCS ID:	@(#)fbclear.1	1.2
 .SH NAME
-fbclear \- clear a framebuffer image
+fbclear \- clear a frame buffer image
 .SH SYNOPSIS
 .B fbclear
 [
@@ -12,32 +12,35 @@ fbclear \- clear a framebuffer image
 ]
 .SH DESCRIPTION
 .B Fbclear
-is used to erase a framebuffer using whatever method is efficient for the
-device being accessed.  By default, the device ``/dev/ik0l'',
-is assumed.  This may be changed by setting the environment
+is used to erase a frame buffer using whatever method is efficient for the
+device being accessed.
+By default, the device
+.B /dev/ik0l
+is assumed.
+This may be changed by setting the environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name,
+to the name of another device or file name
 and exporting it before execution of 
 .IR fbclear\^ .
 If the
 .B \-h
-options is used, the
+option is used, the
 .SM
 .B HIRES
-(1024x1024x24) memory is cleared, otherwise a
+(1024x1024x24) memory is cleared; otherwise a
 .SM
 .B LORES
 (512x512x24) device is assumed.
 If the optional color values are given,
 .B fbclear
 writes the specified color over the entire
-image.  The color values must be in the range 0 to 255.
+image.
+The color values must be in the range 0 to 255.
 .SH FILE
 /vld/lib/libfb.a
 .SH AUTHORS
-.PP 
 Gary S. Moss, BRL-VLD
 .br
 Michael John Muuss, BRL-SECAD

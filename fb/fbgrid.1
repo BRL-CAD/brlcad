@@ -1,38 +1,40 @@
 .TH FBGRID 1V VMB
-'\"	last edit:	85/03/28	G. S. Moss
-'\"	SCCS ID:	@(#)fbgrid.1	1.1
+'\"	last edit:	85/04/22	G. S. Moss
+'\"	SCCS ID:	@(#)fbgrid.1	1.2
 .SH NAME
-fbgrid \- draw a grid on a framebuffer
+fbgrid \- draw a grid on a frame buffer
 .SH SYNOPSIS
 .B fbgrid
 [
 .B \-h
 ]
 .SH DESCRIPTION
-.B Fbgrid
-is used to generate a grid on a framebuffer for purposes of aligning the
+.I Fbgrid\^
+is used to generate a grid on a frame buffer for purposes of aligning the
 monitor.
-By default, the device ``/dev/ik0l'',
-is assumed.  This may be changed by setting the environment
+By default, the device
+.B /dev/ik0l
+is assumed.
+This may be changed by setting the environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name,
+to the name of another device or file name
 and exporting it before execution of 
 .IR fbgrid\^ .
 If the
 .B \-h
-options is used, a
+option is used, a
 .SM
 .B HIRES
-(1024x1024x24) grid is written, otherwise a
+(1024x1024x24) grid is written;
+otherwise a
 .SM
 .B LORES
 (512x512x24) device is assumed.
 .SH FILE
 /vld/lib/libfb.a
 .SH AUTHORS
-.PP 
 Gary S. Moss, BRL-VLD
 .br
 Michael John Muuss, BRL-SECAD

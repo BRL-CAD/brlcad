@@ -1,33 +1,36 @@
 .TH FBZOOM 1V VMB
-'\"	last edit:	85/03/28	G. S. Moss
-'\"	SCCS ID:	@(#)fbzoom.1	1.1
+'\"	last edit:	85/04/22	G. S. Moss
+'\"	SCCS ID:	@(#)fbzoom.1	1.2
 .SH NAME
-fbzoom \- enlarge a framebuffer image
+fbzoom \- enlarge a frame buffer image
 .SH SYNOPSIS
 .B fbzoom
 [
 .B \-h
 ]
 .SH DESCRIPTION
-.B Fbzoom
+.I Fbzoom\^
 is used to
-.I zoom-in
-on a framebuffer image by enlarging each pixel and windowing in on
+zoom-in
+on a frame buffer image by enlarging each pixel and windowing in on
 a portion of the image.
-By default, the device ``/dev/ik0l'',
-is assumed.  This may be changed by setting the environment
+By default, the device
+.B /dev/ik0l
+is assumed.
+This may be changed by setting the environment
 variable
 .B
 .SM FB_FILE
-to the name of another device or file name,
+to the name of another device or file name
 and exporting it before execution of 
 .IR fbzoom\^ .
 If the
 .B \-h
-options is used, a
+option is used, a
 .SM
 .B HIRES
-(1024x1024x24) device is used, otherwise a
+(1024x1024x24) device is used;
+otherwise a
 .SM
 .B LORES
 (512x512x24) device is assumed.
@@ -35,7 +38,6 @@ Commands for manipulating the display are documented on-line.
 .SH FILE
 /vld/lib/libfb.a
 .SH AUTHORS
-.PP 
 Gary S. Moss, BRL-VLD
 .br
 Michael John Muuss, BRL-SECAD
