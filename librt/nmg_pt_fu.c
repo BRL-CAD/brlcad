@@ -901,13 +901,18 @@ CONST struct rt_tol     *tol;
 	struct loopuse	*lu;
 	int		ot_same_in = 0;
 	int		ot_opposite_out = 0;
+	int		ot_same[4];
+	int		ot_opposite[4];
 	int		lu_class;
 	int		fu_class = NMG_CLASS_Unknown;
 	double		dist;
 	struct ve_dist	*ved_p;
+	int		i;
 
 	if (rt_g.NMG_debug & DEBUG_PT_FU )
 		rt_log("nmg_class_pt_fu_except( (%g %g %g) )\n", V3ARGS(pt));
+
+	if(fu->orientation != OT_SAME) rt_bomb("nmg_class_pt_fu_except() not OT_SAME\n");
 
 	NMG_CK_FACEUSE(fu);
 	NMG_CK_FACE(fu->f_p);
@@ -933,6 +938,9 @@ CONST struct rt_tol     *tol;
 		return NMG_CLASS_AoutB;
 	}
 
+	for( i=0; i<4; i++ )  {
+		ot_same[i] = ot_opposite[i] = 0;
+	}
 
 	fpi.fu_p = fu;
 	fpi.tol = tol;
@@ -948,30 +956,53 @@ CONST struct rt_tol     *tol;
 		if( ignore_lu && (ignore_lu==lu || ignore_lu==lu->lumate_p) )
 			continue;
 
+		/* Ignore OT_BOOLPLACE, etc */
+		if( lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE )
+			continue;
+
 		lu_class = nmg_class_pt_lu(lu, &fpi);
 		if (rt_g.NMG_debug & DEBUG_PT_FU )
 			rt_log("loop %s says pt is %s\n",
 				nmg_orientation(lu->orientation),
 				nmg_class_name(lu_class) );
 
-		if (lu->orientation == OT_OPPOSITE &&
-		    lu_class == NMG_CLASS_AoutB )
-			ot_opposite_out++;
-		else if (lu->orientation == OT_SAME &&
-		    (lu_class == NMG_CLASS_AinB ||
-		     lu_class == NMG_CLASS_AonBshared))
-			ot_same_in++;
+		if( lu_class < 0 || lu_class > 3 )  {
+			rt_log("nmg_class_pt_fu_except() lu_class=%s %d\n",
+				nmg_class_name(lu_class), lu_class);
+			rt_bomb("nmg_class_pt_fu_except() bad lu_class\n");
+		}
+
+		if (lu->orientation == OT_OPPOSITE)  {
+			ot_opposite[lu_class]++;
+			if( lu_class == NMG_CLASS_AoutB )
+				ot_opposite_out++;
+		} else if (lu->orientation == OT_SAME )  {
+			ot_same[lu_class]++;
+			if (lu_class == NMG_CLASS_AinB ||
+			     lu_class == NMG_CLASS_AonBshared)
+				ot_same_in++;
+		}
 	}
 
-	if (rt_g.NMG_debug & DEBUG_PT_FU )
+	if (rt_g.NMG_debug & DEBUG_PT_FU )  {
 		rt_log("loops ot_same_in:%d ot_opposite_out:%d\n",
 			ot_same_in, ot_opposite_out);
+		rt_log("loops in/onS/onA/out ot_same=%d/%d/%d/%d ot_opp=%d/%d/%d/%d\n",
+			ot_same[0], ot_same[1], ot_same[2], ot_same[3],
+			ot_opposite[0], ot_opposite[1], ot_opposite[2], ot_opposite[3] );
+	}
 
-	if (ot_same_in == ot_opposite_out) fu_class = NMG_CLASS_AoutB;
-	else if (ot_same_in > ot_opposite_out) {
+	if (ot_same_in == ot_opposite_out)  {
+		/* All the holes cancel out the solid loops */
+		fu_class = NMG_CLASS_AoutB;
+	} else if (ot_same_in > ot_opposite_out) {
+		/* XXX How can this difference be > 1 ? */
 		fu_class = NMG_CLASS_AinB;
 	} else {
 		/* Panic time!  How did I get a parity mis-match? */
+		rt_log("loops in/onS/onA/out ot_same=%d/%d/%d/%d ot_opp=%d/%d/%d/%d\n",
+			ot_same[0], ot_same[1], ot_same[2], ot_same[3],
+			ot_opposite[0], ot_opposite[1], ot_opposite[2], ot_opposite[3] );
 		rt_log("nmg_class_pt_fu_except(%g %g %g)\nParity error @ %s:%d ot_same_in:%d ot_opposite_out:%d\n",
 			V3ARGS(pt), __FILE__, __LINE__,
 			ot_same_in, ot_opposite_out);
