@@ -2481,10 +2481,6 @@ extern CONST char   *rt_vlist_cmd_descriptions[];
 /* vers.c (created by librt/Cakefile) */
 extern CONST char   rt_version[];
 
-#if defined(NMG_H)
-extern CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
-#endif
-
 #ifdef __cplusplus
 }
 #endif
