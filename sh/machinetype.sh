@@ -76,6 +76,7 @@ then
 	esac
 
 	if test "$MACHINE" = ""; then case "$OS_TYPE" in
+	FreeBSD) UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1; MACHINE=fbsd;;
 	IRIX)  	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
 		case "$OS_REVISION" in
 		4)	MACHINE=5d;;

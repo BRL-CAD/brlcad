@@ -70,6 +70,12 @@ typedef	long	Cast;
 #	define	CPP_OPTIONS	"-D__CAKE__bsdi"
 #endif
 
+#if __MACHINETYPE__fbsd
+	/* FreeBSD OS from www.frebsd.org */
+#	define	CPP		"/usr/bin/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__fbsd"
+#endif
+
 #if __MACHINETYPE__li
 	/* Linux with GNU CPP */
 #	define	CPP		"/lib/cpp"

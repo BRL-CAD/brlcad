@@ -149,6 +149,23 @@
 #	define HAVE_SBRK_DECL	1
 #endif
 
+#if defined(__FreeBSD__)
+#	define	HAVE_STDLIB_H	1
+#	define	HAVE_STDARG_H	1
+#	define	HAVE_XOSDEFS_H	1
+#	define	HAVE_GETHOSTNAME	1
+#	define	HAVE_GETOPT	1
+#	define	HAVE_REGEX	1
+#	define	HAVE_STRCHR	1
+#	define	HAVE_VFORK	1
+#	define	HAVE_VPRINTF	1
+#	define	HAVE_WRITEV	1
+#	define	HAVE_SBRK	1
+
+#	define	HAVE_SYS_ERRLIST_DECL	1
+#	define	USE_REGCOMP	1
+#endif
+
 #if defined(__bsdi__)
 #	define HAVE_GETOPT	1
 #	define HAVE_GETOPT_DECL	1

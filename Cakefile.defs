@@ -671,6 +671,35 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBTCL_LIBES	-ldl
 #endif
 
+#if defined(__CAKE__fbsd)
+/*	IBM PC or clone running FreeBSD Unix */
+#undef	fbsd
+#	define	MTYPE	fbsd
+#	define	HAS_TCP 1
+#	define	HAS_SYMLINKS 1
+#	define	BSD	44
+#	define	CC	/usr/bin/cc
+#	define	OPTIMIZER	/**/
+#	define	CC_OPTS -O
+#	define	XINCDIR	/usr/X11R6/include
+#	define	XLIBDIR	/usr/X11R6/lib
+
+#	define	LIBRT_TIMER	timer42
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#	define	LIBDM_OBJS	dm-X
+#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#       define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
+#	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
+/* #	define	LIBTCL_LIBES	-ldl */
+#	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1  -I''XINCDIR
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#endif
+
 #if defined(__CAKE__bsdi)
 /*	IBM PC or clone running BSDI Unix */
 #undef	bsdi
