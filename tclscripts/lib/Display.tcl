@@ -181,6 +181,15 @@ configbody Display::type {
     if {!$initializing} {
 	return -code error "type is read-only"
     }
+    
+    switch $type {
+	X -
+	ogl {
+	}
+	default {
+	    set type X
+	}
+    }
 }
 
 configbody Display::geolist {
