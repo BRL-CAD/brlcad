@@ -3,7 +3,7 @@
 g-iges \- IGES Translator (BRL-CAD to IGES)
 .SH SYNOPSIS
 .B g-iges
-[-f|t] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o file.iges] database.g object(s)
+[-f|t|m] [-v] [-s] [-x flag1] [-X flag2] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file_or_directory] database.g object(s)
 .SH DESCRIPTION
 .I g-iges\^
 converts the specified objects of the BRL-CAD database,
@@ -32,6 +32,14 @@ the
 option. The file produced in this way is acceptable to the Pro/Engineer IGES
 import routine.
 The
+.B \-m
+option implies the
+.B \-t
+option, and is used to produce multiple IGES files (one for each region converted). In this case
+the argument to the
+.B \-o
+option should be a directory where the IGES files will accumulate.
+The
 .B \-s
 option may be used in conjunction with the
 .B \-f
@@ -43,8 +51,10 @@ options to indicate that all facets in BREP objects should be output
 in the form of planar NURBs (Intergraph likes their IGES files this way).
 If neither the
 .B \-f
-nor the
+,
 .B \-t
+, nor the
+.B \-m
 options are selected, the default is a CSG IGES file. In this situation,
 all regions will be written to the IGES file as Boolean trees with
 all possible solids represented by their IGES CSG equivalent. In cases
@@ -57,6 +67,9 @@ option allows the user to set a hex librt debug flag (see librt/debug.h for valu
 The
 .B \-X
 option allows the user to set a hex NMG debug flag (see h/nmg.h for values).
+The
+.B \-v
+option requests debugging information.
 .SH EXAMPLE
 .nf
 .ce
