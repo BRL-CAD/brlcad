@@ -1,4 +1,4 @@
-#define NUgrid 0
+#define NUgrid 1
 /*
  *  			C U T . C
  *  
@@ -492,6 +492,16 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 				bcopy( (char *)nu_zbox.bn_list,
 					(char *)cutp->bn.bn_list,
 					nu_zbox.bn_len * sizeof(struct soltab *) );
+
+				if( rt_g.debug&DEBUG_CUT ) {
+					bu_log( "Solids in cell (%d,%d,%d) [in nu%d%d%d rpp %g %g %g %g %g %g]:",
+						xp, yp, zp, xp, yp, zp,
+						zmin[X], zmax[X],
+						zmin[Y], zmax[Y],
+						zmin[Z], zmax[Z]);
+					rt_pr_cut( cutp, 0 );
+				}
+
 			}
 		}
 	}
@@ -515,8 +525,6 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			rt_cut_extend( &rtip->rti_inf_box, stp );
 		}
 	} RT_VISIT_ALL_SOLTABS_END
-
-#if !NUgrid		  
 
 	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids, "rti_cuts_waiting ptbl" );
 
@@ -614,12 +622,8 @@ if(rt_g.debug&DEBUG_CUT)  bu_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		/* Produce a voluminous listing of the cut tree */
 		rt_pr_cut( &rtip->rti_CutHead, 0 );
 	}
-#endif	
 
 	/*  Finished with temporary data structures */
-	for( i=0; i<3; i++ )  {
-		rt_free( (char *)rt_nu_axis[i], "NUgrid axis" );
-	}
 	bu_hist_free( &xhist );
 	bu_hist_free( &yhist );
 	bu_hist_free( &zhist );
