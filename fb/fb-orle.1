@@ -1,8 +1,8 @@
-.TH FB-RLE 1 BRL/CAD
+.TH FB-ORLE 1 BRL/CAD
 .SH NAME
-fb\(hyrle \- save a frame buffer image in run-length encoded form
+fb\(hyorle \- save a frame buffer image in old run-length encoded form
 .SH SYNOPSIS
-.B fb-rle
+.B fb-orle
 .RB [ \-CShvw ]
 .RB [ \-c { rgbwBG }]
 .RB [ \-l
@@ -10,10 +10,16 @@ x y]
 .RB [ \-p
 x y] [file.rle]
 .SH DESCRIPTION
-.I Fb-rle\^
+.I fb-orle\^
 saves a frame buffer image in a file, using the
-University of Utah standard
+old University of Utah standard (Edition-2)
 Run-Length Encoded (RLE) format.
+This program is provided for compatability with the old RLE image
+tools, and generally should not be used for saving new images,
+except where compatability with the old tools is a factor.
+The equivalent new tool is
+.IR fb-rle(1) .
+.PP
 The environment
 variable
 .B
@@ -25,7 +31,7 @@ be used.
 If
 .I file.rle\^
 is not specified, the encoded file is written to standard output.
-.I Fb-rle\^
+.I fb-orle\^
 attempts to compress flat-colored areas
 as much as possible.
 This means that it is generally reasonable to save an entire
@@ -38,7 +44,7 @@ is restored all non-image pixels will be set to the background pixel value
 stored in the RLE header.
 Images saved in this mode may be displayed normally, or in ``overlay''
 mode by the RLE decoder program (see
-.IR rle-fb\^ (1)).
+.IR orle-fb\^ (1)).
 Alternatively, the
 .B \-S
 option may be used to RLE encode the background as well (recommended only
@@ -97,14 +103,14 @@ on its standard error as it proceeds through encoding the image.
 to 1024.  The default is 512x512.
 .SH EXAMPLE
 .RS
-\fIfb-rle \|\-h \|tank.rle\fR
+\fIfb-orle \|\-h \|tank.rle\fR
 .RE
 .SH AUTHORS
 Gary S. Moss
 .br
 Michael John Muuss
 .SH "SEE ALSO"
-rle-fb(1), rle-pix(1), pix-rle(1), librle(3).
+orle-fb(1), rle-fb(1), rle-pix(1), pix-rle(1), librle(3).
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br

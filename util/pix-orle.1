@@ -1,8 +1,8 @@
-.TH PIX-RLE 1 BRL/CAD
+.TH PIX-ORLE 1 BRL/CAD
 .SH NAME
-pix\(hyrle \- convert a pix format RGB file into run-length encoded form
+pix\(hyorle \- convert a pix format RGB file into old run-length encoded form
 .SH SYNOPSIS
-.B pix-rle
+.B pix-orle
 .RB [ \-hdv ]
 .RB [ \-s\  squarefilesize]
 .RB [ \-w\  file_width]
@@ -10,11 +10,18 @@ pix\(hyrle \- convert a pix format RGB file into run-length encoded form
 .RB [file.pix]
 .RB [file.rle]
 .SH DESCRIPTION
-.I Pix-rle\^
+.I pix-orle\^
 saves a
 .IR pix (5)
 format image in a
-Run-Length Encoded (RLE) form.
+Run-Length Encoded (RLE) form,
+using the old University of Utah standard (Edition-2) format.
+This program is provided for compatability with the old RLE image
+tools, and generally should not be used for saving new images,
+except where compatability with the old tools is a factor.
+The equivalent new tool is
+.IR pix-rle(1) .
+.PP
 If
 .I file.pix\^
 is not specified, the
@@ -23,7 +30,7 @@ file is read from standard in.
 If
 .I file.rle\^
 is not specified, the encoded file is written to standard out.
-.I Pix-rle\^
+.I pix-orle\^
 attempts to compress flat-colored areas
 as much as possible.
 This means that it is generally reasonable to save an entire image,
@@ -58,17 +65,18 @@ Debug mode.
 .SH EXAMPLE
 .RS
 .ft I
-pix-rle \|\<plane.pix \|plane.rle
+pix-orle \|\<plane.pix \|plane.rle
 .br
-pix-rle \|\-h \|car.pix \|car.rle
+pix-orle \|\-h \|car.pix \|car.rle
 .br
-pixfilter -f lo <truck.pix | pix-rle > truck-filt.rle
+pixfilter -f lo <truck.pix | pix-orle > truck-filt.rle
 .ft R
 .RE
 .SH AUTHOR
 Michael John Muuss
 .SH "SEE ALSO"
-brlcad(1), rle-pix(1), pix-fb(1), fb-pix(1), librle(3).
+brlcad(1), rle-pix(1), pix-fb(1), pix-rle(1), fb-pix(1),
+librle(3), liborle(3).
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br
