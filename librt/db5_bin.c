@@ -6,6 +6,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -15,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSell[] = "@(#)$Header$ (BRL)";
+static const char RCSell[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -177,6 +178,7 @@ rt_bin_import5( struct rt_db_internal		*ip,
 	case DB5_MAJORTYPE_BINARY_MIME:
 	    return rt_binmime_import5( ip, minor_type, ep, dbip );
     }
+    return -1;
 }
 
 /*
@@ -277,13 +279,13 @@ rt_binunif_describe( struct bu_vls		*str,
 	wid = (bip->type & DB5_MINORTYPE_BINU_WID_MASK) >> 4;
 	switch (wid) {
 	    case 0:
-		sprintf( buf, "%d ", bip->count ); break;
+		sprintf( buf, "%ld ", bip->count ); break;
 	    case 1:
-		sprintf( buf, "%d pairs of ", bip->count / 2 ); break;
+		sprintf( buf, "%ld pairs of ", bip->count / 2 ); break;
 	    case 2:
-		sprintf( buf, "%d triples of ", bip->count / 3 ); break;
+		sprintf( buf, "%ld triples of ", bip->count / 3 ); break;
 	    case 3:
-		sprintf( buf, "%d quadruples of ", bip->count / 4 ); break;
+		sprintf( buf, "%ld quadruples of ", bip->count / 4 ); break;
 	}
 	bu_vls_strcat( str, buf );
 	switch (bip->type & DB5_MINORTYPE_BINU_ATM_MASK) {

@@ -6,6 +6,7 @@
  *
  *  Author -
  *	Paul J. Tanenbaum
+ *
  *  Source -
  *	The U. S. Army Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
@@ -15,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSell[] = "@(#)$Header$ (BRL)";
+static const char RCSell[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -314,6 +315,7 @@ db5_type_sizeof_h_binu( CONST unsigned char minor ) {
 	case DB5_MINORTYPE_BINU_64BITINT_U:
 	    return (size_t) 8;
     }
+    return 0;
 }
 
 size_t
@@ -336,4 +338,5 @@ db5_type_sizeof_n_binu( CONST unsigned char minor ) {
 	case DB5_MINORTYPE_BINU_64BITINT_U:
 	    return (size_t) 8;
     }
+    return 0;
 }
