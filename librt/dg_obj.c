@@ -104,6 +104,7 @@ static void dgo_rt_set_eye_model();
 
 void dgo_notify();
 static void dgo_print_schain();
+static void dgo_print_schain_vlcmds();
 
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
@@ -1547,7 +1548,11 @@ dgo_report_tcl(clientData, interp, argc, argv)
 
 	if (argc == 3)
 		lvl = atoi(argv[2]);
-	dgo_print_schain(dgop, interp, lvl);
+
+	if (lvl <= 3) 
+		dgo_print_schain(dgop, interp, lvl);
+	else
+		dgo_print_schain_vlcmds(dgop, interp);
 
 	return TCL_OK;
 }
@@ -3039,6 +3044,52 @@ dgo_print_schain(dgop, interp, lvl)
 
 		bu_vls_printf(&vls, "  %d vlist structures, %d pts\n", nvlist, npts);
 		bu_vls_printf(&vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+}
+
+/*
+ *			D G O _ P R _ S C H A I N _ V L C M D S
+ *
+ *  Given a pointer to a member of the circularly linked list of solids
+ *  (typically the head), chase the list and print out the vlist cmds
+ *  for each structure.
+ */
+static void
+dgo_print_schain_vlcmds(dgop, interp)
+     struct dg_obj	*dgop;
+     Tcl_Interp		*interp;
+{
+	register struct solid		*sp;
+	register int			i;
+	register struct bn_vlist	*vp;
+	struct bu_vls 		vls;
+
+	if (dgop->dgo_wdbp->dbip == DBI_NULL)
+		return;
+
+	bu_vls_init(&vls);
+
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+		bu_vls_printf(&vls, "-1 %d %d %d\n",
+			      sp->s_color[0],
+			      sp->s_color[1],
+			      sp->s_color[2]);
+
+		/* Print the actual vector list */
+		for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+			register int	i;
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+
+			BN_CK_VLIST(vp);
+
+			for (i = 0; i < nused; i++, cmd++, pt++)
+				bu_vls_printf(&vls, "%d %g %g %g\n", *cmd, V3ARGS(*pt));
+		}
 	}
 
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
