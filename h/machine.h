@@ -209,16 +209,17 @@
  * by a process.
  */
 
+#if !defined(FOPEN_MAX) && defined(_NFILE)
+#	define FOPEN_MAX	_NFILE
+#endif
+#if !defined(FOPEN_MAX) && defined(NOFILE)
+#	define FOPEN_MAX	NOFILE
+#endif
+#if !defined(FOPEN_MAX) && defined(OPEN_MAX)
+#	define FOPEN_MAX	OPEN_MAX
+#endif
 #if !defined(FOPEN_MAX)
-#	if defined(_NFILE)
-#		define FOPEN_MAX	_NFILE
-#	elif defined(NOFILE)
-#		define FOPEN_MAX	NOFILE
-#	elif defined(OPEN_MAX)
-#		define FOPEN_MAX	OPEN_MAX
-#	else
-#		define FOPEN_MAX	32
-#	endif
+#	define FOPEN_MAX	32
 #endif
 
 /**********************************
