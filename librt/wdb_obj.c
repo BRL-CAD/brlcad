@@ -55,6 +55,13 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 extern void rt_insert_color( struct mater *newp );
 
+/* A verbose message to attempt to soothe and advise the user */
+#define	WDB_TCL_ERROR_RECOVERY_SUGGESTION\
+        Tcl_AppendResult(interp, "\
+The in-memory table of contents may not match the status of the on-disk\n\
+database.  The on-disk database should still be intact.  For safety,\n\
+you should exit MGED now, and resolve the I/O problem, before continuing.\n", (char *)NULL)
+
 #define WDB_MAX_LEVELS 12
 #define WDB_CPEVAL	0
 #define WDB_LISTPATH	1
@@ -2875,8 +2882,8 @@ wdb_region_tcl(clientData, interp, argc, argv)
 	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	register struct directory *dp;
 	int i;
-	int ident, air;
 	char oper;
+	struct bu_list head;
 
 	if (wdbp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
@@ -2893,8 +2900,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
- 	ident = wdbp->wdb_item_default;
- 	air = wdbp->wdb_air_default;
+	BU_LIST_INIT(&head);
 
 	/* skip past procname */
 	--argc;
@@ -2950,17 +2956,22 @@ wdb_region_tcl(clientData, interp, argc, argv)
 					 " is a region\n", (char *)NULL);
 		}
 
-		if (wdb_combadd(interp, wdbp->dbip, dp,
-				argv[1], 1, oper, ident, air, wdbp) == DIR_NULL) {
-			Tcl_AppendResult(interp, "error in combadd", (char *)NULL);
-			return TCL_ERROR;
-		}
+		mk_addmember(argv[i+1], &head, oper);
 	}
 
-	if (db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET) == DIR_NULL) {
+	if (mk_comb(wdbp, argv[1], &head,
+		    1, NULL, NULL, NULL,
+		    wdbp->wdb_item_default, wdbp->wdb_air_default,
+		    wdbp->wdb_mat_default, wdbp->wdb_los_default,
+		    0, 1, 1) < 0) {
 		/* failed to create region */
 		if (wdbp->wdb_item_default > 1)
 			wdbp->wdb_item_default--;
+
+		Tcl_AppendResult(interp,
+				 "An error has occured while adding '",
+				 argv[1], "' to the database.\n", (char *)NULL);
+		WDB_TCL_ERROR_RECOVERY_SUGGESTION;
 		return TCL_ERROR;
 	}
 
@@ -4079,7 +4090,6 @@ wdb_push_tcl(clientData, interp, argc, argv)
 	struct wdb_push_id	*pip;
 	struct rt_db_internal	es_int;
 	int			i;
-	int			id;
 	int			ncpu;
 	int			c;
 	int			old_debug;
