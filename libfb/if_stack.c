@@ -55,8 +55,8 @@ FBIO stk_interface =  {
 	stk_curs_set,		/* curs_set		*/
 	stk_cmemory_addr,	/* cursor_move_memory_addr */
 	stk_cscreen_addr,	/* cursor_move_screen_addr */
-	stk_help,
-	"Device Stacker",	/* device description	*/
+	stk_help,		/* help function	*/
+	"Multiple Device Stacker", /* device description */
 	1280,			/* max width		*/
 	1024,			/* max height		*/
 	"/dev/stack",		/* short device name	*/
@@ -107,8 +107,10 @@ int	width, height;
 		cp++;	/* skip suffix */
 
 	/* special check for a possibly user confusing case */
-	if( cp == NULL ) {
+	if( *cp == NULL ) {
 		fb_log("stack_dopen: No devices specified\n");
+		fb_log("Usage: /dev/stack device_one; device_two; [etc]\n");
+		return(-1);
 	}
 
 	i = 0;
