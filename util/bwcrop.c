@@ -92,7 +92,7 @@ int argc; char **argv;
 		printf("Scanline length in input file: ");
 		scanf( "%d", &scanlen );
 		if( scanlen <= 0 ) {
-			fprintf("bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
+			fprintf(stderr,"bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
 			exit( 4 );
 		}
 		printf("Line Length and Number of scan lines (in new file)?: ");
