@@ -2028,7 +2028,6 @@ char	**argv;
 		if (interactive) {
 			if(mged_init_flag){
 				if(classic_mged){
-					perror( argv[1] );
 					bu_log("Create new database (y|n)[n]? ");
 					(void)fgets(line, sizeof(line), stdin);
 					if( line[0] != 'y' && line[0] != 'Y' ) {
