@@ -1935,175 +1935,25 @@ Usage: wdb_open newprocname file filename\n\
 }
 
 /*
- *			D B _ T C L _ F O L L O W _ P A T H
- *
- *  Provides the same format output as a "db get" operation on a
- *  combination, as much as possible.
- */
-int
-db_tcl_follow_path( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
-{
-	struct db_i		*dbip;
-	struct db_tree_state	ts;
-	struct db_full_path	old_path;
-	struct db_full_path	new_path;
-	Tcl_DString		ds;
-	char			buf[128];
-	int			ret;
-
-	if( argc != 3 )  {
-		Tcl_AppendResult(interp, "Usage: db_follow_path [get_dbip] path\n", NULL);
-		return TCL_ERROR;
-	}
-
-	dbip = (struct db_i *)atol( argv[1] );
-	/* Could core dump */
-	RT_CK_DBI_TCL(dbip);
-
-	db_init_db_tree_state( &ts, dbip );
-	db_full_path_init(&old_path);
-	db_full_path_init(&new_path);
-
-	if( db_string_to_path( &new_path, dbip, argv[2] ) < 0 )  {
-		Tcl_AppendResult(interp, "tcl_follow_path: '",
-			argv[2], "' contains unknown object names\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-	ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
-	db_free_full_path( &old_path );
-	db_free_full_path( &new_path );
-
-	if( ret < 0 )  {
-		Tcl_AppendResult(interp, "tcl_follow_path: '",
-			argv[2], "' is a bad path\n", (char *)NULL );
-		return TCL_ERROR;
-	}
-
-	/* Could be called db_tcl_tree_state_describe() */
-	Tcl_DStringInit( &ds );
-
-	Tcl_DStringAppendElement( &ds, "region" );
-	if( ts.ts_sofar & TS_SOFAR_REGION ) {
-		Tcl_DStringAppendElement( &ds, "yes" );
-
-		Tcl_DStringAppendElement( &ds, "id" );
-		sprintf( buf, "%d", ts.ts_regionid );
-		Tcl_DStringAppendElement( &ds, buf );
-
-		if( ts.ts_aircode )  {
-			Tcl_DStringAppendElement( &ds, "air" );
-			sprintf( buf, "%d", ts.ts_aircode );
-			Tcl_DStringAppendElement( &ds, buf );
-		}
-
-		if( ts.ts_los )  {
-			Tcl_DStringAppendElement( &ds, "los" );
-			sprintf( buf, "%d", ts.ts_los );
-			Tcl_DStringAppendElement( &ds, buf );
-		}
-
-		if( ts.ts_gmater )  {
-			Tcl_DStringAppendElement( &ds, "GIFTmater" );
-			sprintf( buf, "%d", ts.ts_gmater );
-			Tcl_DStringAppendElement( &ds, buf );
-		}
-	} else {
-		Tcl_DStringAppendElement( &ds, "no" );
-	}
-		
-	if( ts.ts_mater.ma_color_valid ) {
-		Tcl_DStringAppendElement( &ds, "rgb" );
-		sprintf( buf, "%d %d %d",
-			(int)(ts.ts_mater.ma_color[0]*255),
-			(int)(ts.ts_mater.ma_color[1]*255),
-			(int)(ts.ts_mater.ma_color[2]*255) );
-		Tcl_DStringAppendElement( &ds, buf );
-	}
-
-	if( ts.ts_mater.ma_temperature > 0 )  {
-		Tcl_DStringAppendElement( &ds, "temp" );
-		sprintf( buf, "%g", ts.ts_mater.ma_temperature );
-		Tcl_DStringAppendElement( &ds, buf );
-	}
-
-	if( ts.ts_mater.ma_shader && strlen( ts.ts_mater.ma_shader ) > 0 )  {
-		Tcl_DStringAppendElement( &ds, "shader" );
-		Tcl_DStringAppendElement( &ds, ts.ts_mater.ma_shader );
-	}
-
-#if 0
-	Tcl_DStringAppendElement( &ds, "material" );
-	Tcl_DStringAppendElement( &ds, bu_vls_addr(&comb->material) );
-#endif
-	if( ts.ts_mater.ma_minherit )
-		Tcl_DStringAppendElement( &ds, "inherit" );
-
-	if ( !bn_mat_is_identity( ts.ts_mat ) )  {
-		struct bu_vls	str;
-		Tcl_DStringAppendElement( &ds, "mat" );
-		bu_vls_init(&str);
-		bn_encode_mat( &str, ts.ts_mat );
-		Tcl_DStringAppendElement( &ds, bu_vls_addr(&str) );
-		bu_vls_free(&str);
-	}
-
-	db_free_db_tree_state( &ts );
-
-	Tcl_DStringResult( interp, &ds );
-	Tcl_DStringFree( &ds );
-
-	return TCL_OK;
-}
-
-/*
- *  XXX This interface is deprecated.  Used "wdb_open" instead.
- */
-int
-rt_tcl_db_open( clientData, interp, argc, argv )
-ClientData	clientData;
-Tcl_Interp	*interp;
-int		argc;
-char		**argv;
-{
-  char buf[128];
-  struct db_i *dbip = DBI_NULL;
-
-  if(argc != 2)
-    return TCL_ERROR;
-
-  if( ((dbip = db_open( argv[1], "r+w" )) == DBI_NULL ) &&
-      ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
-    return TCL_ERROR;
-  }
-
-  /* --- Scan geometry database and build in-memory directory --- */
-  db_scan( dbip, (int (*)())db_diradd, 1);
-
-  sprintf( buf, "%ld", (long)(*((void **)&dbip)) );
-  Tcl_AppendResult( interp, buf, (char *)NULL );
-
-  return TCL_OK;
-}
-
-/*
  *			R T _ T C L _ S E T U P
  *
  *  Add all the supported Tcl interfaces to LIBRT routines to
  *  the list of commands known by the given interpreter.
+ *
+ *  wdb_open creates database "objects" which appear as Tcl procs,
+ *  which respond to many operations.
+ *  The "db rt_gettrees" operation in turn creates a ray-traceable object
+ *  as yet another Tcl proc, which responds to additional operations.
+ *
+ *  Note that the MGED mainline C code automatically runs
+ *  "wdb_open db" and "wdb_open .inmem" on behalf of the MGED user,
+ *  which exposes all of this power.
  */
 void
 rt_tcl_setup(interp)
 Tcl_Interp *interp;
 {
 	(void)Tcl_CreateCommand(interp, "wdb_open", wdb_open,
-		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "rt_db_open", rt_tcl_db_open,
-		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-	(void)Tcl_CreateCommand(interp, "db_follow_path", db_tcl_follow_path,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	Tcl_SetVar(interp, "rt_version", (char *)rt_version+5, TCL_GLOBAL_ONLY);
 }
