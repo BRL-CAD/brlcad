@@ -67,8 +67,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2		1.41421356237309504880
 #endif
 
-#if 0
-#endif
+extern mat_t    ModelDelta;     /* from ged.c */
 extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
@@ -134,13 +133,17 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+  mat_t newrot;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
+#if 0
 	/* Actually, it would be nice if this worked all the time */
 	/* usejoy isn't quite the right thing */
 	if( not_state( ST_VIEW, "View Rotate") )
 	  return TCL_ERROR;
+#endif
 
 	if(!rot_set){
           rot_x += atof(argv[1]);
@@ -148,9 +151,23 @@ char	**argv;
           rot_z += atof(argv[3]);
         }
 
+#if 1
+	mat_idn( newrot );
+	buildHrot( newrot, atof(argv[1]) * degtorad,
+		   atof(argv[2]) * degtorad, atof(argv[3]) * degtorad );
+	mat_mul2( newrot, Viewrot );
+
+	{
+	  mat_t   newinv;
+	  mat_inv( newinv, newrot );
+	  wrt_view( ModelDelta, newinv, ModelDelta );
+	}
+	new_mats();
+#else
 	usejoy(	atof(argv[1]) * degtorad,
 		atof(argv[2]) * degtorad,
 		atof(argv[3]) * degtorad );
+#endif
 
 	return TCL_OK;
 }
