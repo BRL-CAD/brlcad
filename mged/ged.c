@@ -100,7 +100,7 @@ extern Tcl_Interp *interp;
 extern Tk_Window tkwin;
 
 /* defined in attach.c */
-extern int mged_slider_link_vars();
+extern int mged_link_vars();
 
 /* defined in chgmodel.c */
 extern void set_localunit_TclVar();
@@ -390,7 +390,7 @@ char **argv;
 	mged_setup();
 	mmenu_init();
 	btn_head_menu(0,0,0);
-	mged_slider_link_vars(curr_dm_list);
+	mged_link_vars(curr_dm_list);
 
 	{
 	  struct bu_vls vls;
