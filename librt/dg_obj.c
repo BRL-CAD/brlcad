@@ -2,7 +2,7 @@
  *				D G _ O B J . C
  *
  * A drawable geometry object contains methods and attributes
- * for creating/destroying geometry that is ready (i.e. vlists) for
+ * for preparing geometry that is ready (i.e. vlists) for
  * display. Much of this code was extracted from MGED and modified
  * to work herein.
  * 
@@ -244,61 +244,20 @@ dgo_close_tcl(clientData, interp, argc, argv)
 }
 
 /*
- * Open/create a drawable geometry object that's associated with the
- * database object "rt_wdb".
- *
- * USAGE:
- *	  dgo_open [name rt_wdb]
+ * Create an command/object named "oname" in "interp".
  */
-static int
-dgo_open_tcl(clientData, interp, argc, argv)
-     ClientData clientData;
-     Tcl_Interp *interp;
-     int     argc;
-     char    **argv;
+struct dg_obj *
+dgo_open_cmd(Tcl_Interp		*interp,
+	     char		*oname,
+	     struct rt_wdb	*wdbp)
 {
 	struct dg_obj *dgop;
-	struct rt_wdb *wdbp;
-	struct bu_vls vls;
 
-	if (argc == 1) {
-		/* get list of drawable geometry objects */
-		for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
-			Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_name), " ", (char *)NULL);
-
-		return TCL_OK;
-	}
-
-	if (argc != 3) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dgo_open");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
-
-	/* search for database object */
-	for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
-		if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
-			break;
-	}
-
-	if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l)) {
-#if 0
-		Tcl_AppendResult(interp, "dgo_open: bad database object - ", argv[2],
-				 "\n", (char *)NULL);
-		return TCL_ERROR;
-#else
-		wdbp = RT_WDB_NULL;
-#endif
-	}
-
-	/* acquire dg_obj struct */
 	BU_GETSTRUCT(dgop,dg_obj);
 
 	/* initialize dg_obj */
 	bu_vls_init(&dgop->dgo_name);
-	bu_vls_strcpy(&dgop->dgo_name,argv[1]);
+	bu_vls_strcpy(&dgop->dgo_name, oname);
 	dgop->dgo_wdbp = wdbp;
 	BU_LIST_INIT(&dgop->dgo_headSolid);
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
@@ -327,6 +286,55 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	/* append to list of dg_obj's */
 	BU_LIST_APPEND(&HeadDGObj.l,&dgop->l);
 
+	return dgop;
+}
+
+/*
+ * Open/create a drawable geometry object that's associated with the
+ * database object "rt_wdb".
+ *
+ * USAGE:
+ *	  dgo_open [name rt_wdb]
+ */
+static int
+dgo_open_tcl(ClientData	clientData,
+	     Tcl_Interp	*interp,
+	     int	argc,
+	     char	**argv)
+{
+	struct dg_obj *dgop;
+	struct rt_wdb *wdbp;
+	struct bu_vls vls;
+
+	if (argc == 1) {
+		/* get list of drawable geometry objects */
+		for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+			Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_name), " ", (char *)NULL);
+
+		return TCL_OK;
+	}
+
+	if (argc != 3) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dgo_open");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* search for database object */
+	for (BU_LIST_FOR(wdbp, rt_wdb, &rt_g.rtg_headwdb.l)) {
+		if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
+			break;
+	}
+
+	if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l))
+		wdbp = RT_WDB_NULL;
+
+	/* first, delete any commands by this name */
+	(void)Tcl_DeleteCommand(interp, argv[1]);
+
+	dgop = dgo_open_cmd(interp, argv[1], wdbp);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&dgop->dgo_name),
 				dgo_cmd,
@@ -336,6 +344,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	/* Return new function name as result */
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_name), (char *)NULL);
+
 	return TCL_OK;
 }
 
