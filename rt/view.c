@@ -35,12 +35,14 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "../librt/debug.h"
+#include "./mathtab.h"
 
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
