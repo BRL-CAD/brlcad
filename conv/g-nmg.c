@@ -50,6 +50,7 @@ RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
+static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	ncpu = 1;		/* Number of processors */
@@ -92,6 +93,8 @@ union tree		*curtree;
 	char nmg_name[16];
 	unsigned char rgb[3];
 	unsigned char *color;
+	char *shader;
+	char *matparm;
 	struct wmember headp;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
@@ -158,6 +161,9 @@ union tree		*curtree;
 		r = (struct nmgregion *)NULL;
 
 	regions_converted++;
+
+	shader = strtok( tsp->ts_mater.ma_shader, tok_sep );
+	matparm = strtok( (char *)NULL, tok_sep );
 	if (r != 0)
 	{
 		struct shell *s;
@@ -215,7 +221,7 @@ union tree		*curtree;
 		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
-		    tsp->ts_mater.ma_matname, tsp->ts_mater.ma_matparm, color,
+		    shader, matparm, color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
@@ -227,7 +233,7 @@ union tree		*curtree;
 		RT_LIST_INIT( &headp.l );
 		if( mk_lrcomb( fp_out,
 		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
-		    tsp->ts_mater.ma_matname, tsp->ts_mater.ma_matparm, color,
+		    shader, matparm, color,
 		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
 		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
 		{
