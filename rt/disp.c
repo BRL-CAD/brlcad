@@ -53,6 +53,7 @@ struct rt_tabdata	*cie_y;
 struct rt_tabdata	*cie_z;
 int			use_cie_xyz = 0;	/* Linked with TCL */
 mat_t			xyz2rgb;
+/* mat_t			rgb2xyz; */
 
 struct rt_tabdata	*ntsc_r;
 struct rt_tabdata	*ntsc_g;
@@ -253,13 +254,14 @@ Tcl_Interp	*inter;
 
 void check( double x, double y, double z);
 
-/* Check XYZ value to spectrum and back */
+/* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
 void
 check( x, y, z )
 double x, y, z;
 {
 	point_t	xyz;
-	point_t	new;
+	point_t	rgb;
+	point_t	xyz2, rgb2;
 	struct rt_tabdata	*tabp;
 	FAST fastf_t	tab_area;
 
@@ -269,14 +271,24 @@ double x, y, z;
 	xyz[Z] = z;
 	VPRINT( "\nstarting xyz", xyz );
 
+#if 0
+	/* XXX No way to do this yet!! */
 	rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z );
+#else
+	MAT3X3VEC( rgb, xyz2rgb, xyz );
+	VPRINT( "rgb", rgb );
+	rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b );
+#endif
 	rt_pr_table_and_tabdata( "/dev/tty", tabp );
 	tab_area = rt_tabdata_area2( tabp );
 	bu_log(" tab_area = %g\n", tab_area);
 
-	rt_spect_curve_to_xyz( new, tabp, cie_x, cie_y, cie_z );
+	rt_spect_curve_to_xyz( xyz2, tabp, cie_x, cie_y, cie_z );
 
-	VPRINT( "new xyz", new );
+	VPRINT( "xyz2", xyz2 );
+	MAT3X3VEC( rgb2, xyz2rgb, xyz2 );
+	VPRINT( "rgb2", rgb2 );
+
 	rt_free( (char *)tabp, "struct rt_tabdata" );
 exit(2);
 }
@@ -287,6 +299,8 @@ char	**argv;
 {
 
 	rt_g.debug = 1;
+
+	rt_make_ntsc_xyz2rgb( xyz2rgb );
 
 #if 1
 {
@@ -310,7 +324,7 @@ bu_log("flat:\n");rt_pr_table_and_tabdata( "/dev/tty", flat );
 rt_spect_curve_to_xyz(xyz, flat, cie_x, cie_y, cie_z );
 VPRINT("flat xyz?", xyz);
 
-/* Check identity of XYZ->spectrum->XYZ */
+/* Check identity of XYZ->RGB->spectrum->XYZ->RGB */
 check( 1, 0, 0 );
 check( 0, 1, 0 );
 check( 0, 0, 1 );
@@ -322,8 +336,6 @@ check( .5, .5, .5 );
 exit(1);
 }
 #endif
-
-	rt_make_ntsc_xyz2rgb( xyz2rgb );
 
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
 		rt_bomb("Unable to open fb\n");
