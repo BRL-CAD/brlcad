@@ -59,19 +59,26 @@
 #endif
 
 
+/* The internal representation of the solids must be stored so that we
+ * can access their parameters at shading time.  This is done with
+ * a list of "struct reg_db_internals".  Each struct holds the
+ * representation of one of the solids which make up the region.
+ */
 #define DBINT_MAGIC 0xDECCA
 struct reg_db_internals {
 	struct rt_list	l;
 	struct rt_db_internal ip;	/* internal rep from rtgeom.h */
 	struct soltab	*st_p;
 	vect_t one_sigma;
+	mat_t	ell2model;	/* maps ellipse coord to model coord */
+	mat_t	model2ell;	/* maps model coord to ellipse coord */
 };
 #define DBINT_MAGIC 0xDECCA
 #define CK_DBINT(_p) RT_CKMAG( _p, DBINT_MAGIC, "struct reg_db_internals" )
 
 struct tree_bark {
 	struct db_i	*dbip;
-	struct rt_list	*l;
+	struct rt_list	*l;	/* lists solids in region (built in setup) */
 	CONST char	*name;
 	struct gauss_specific *gs;
 };
@@ -144,9 +151,10 @@ struct mfuncs gauss_mfuncs[] = {
 
 
 static void
-tree_solids(tp, tb)
+tree_solids(tp, tb, op)
 union tree *tp;
 struct tree_bark *tb;
+int op;
 {
 	RT_CK_TREE(tp);
 
@@ -159,6 +167,7 @@ struct tree_bark *tb;
 		matp_t mp;
 		long sol_id;
 		struct rt_ell_internal *ell_p;
+		vect_t v;
 
 		GETSTRUCT( dbint, reg_db_internals );
 		RT_LIST_MAGIC_SET( &(dbint->l), DBINT_MAGIC);
@@ -184,39 +193,56 @@ struct tree_bark *tb;
 
 
 		if (sol_id != ID_ELL) {
-			rt_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
-				sol_id, rt_functab[sol_id].ft_name);
-		} else {
-			ell_p = dbint->ip.idb_ptr;
+
+			if (op == OP_UNION)
+				rt_log( "Non-ellipse \"union\" solid of \"%s\" being ignored\n",
+					tb->name);
 
 			if( rdebug&RDEBUG_SHADE)
-				rt_log(" got a solid type %d \"%s\"\n",
-					sol_id,
-					rt_functab[sol_id].ft_name);
+				rt_log(" got a solid type %d \"%s\".  This solid ain't no ellipse bucko!\n",
+					sol_id, rt_functab[sol_id].ft_name);
 
-			RT_ELL_CK_MAGIC(ell_p);
-
-			if( rdebug&RDEBUG_SHADE) {
-				VPRINT("point", ell_p->v); 
-				VPRINT("a", ell_p->a); 
-				VPRINT("b", ell_p->b); 
-				VPRINT("c", ell_p->c); 
-			}
+			break;
 		}
 
-		/* XXX Only works for axis aligned solids */
 
+		ell_p = dbint->ip.idb_ptr;
 
-		if ((! NEAR_ZERO(ell_p->a[0], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->a[0] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
-		    (! NEAR_ZERO(ell_p->a[1], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->a[1] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
-		    (! NEAR_ZERO(ell_p->a[2], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->a[2] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
-		    (! NEAR_ZERO(ell_p->b[0], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->b[0] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
-		    (! NEAR_ZERO(ell_p->b[1], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->b[1] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
-		    (! NEAR_ZERO(ell_p->b[2], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->b[2] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ||
-		    (! NEAR_ZERO(ell_p->c[2], VDIVIDE_TOL) && ! NEAR_ZERO(ell_p->c[2] - MAGNITUDE(ell_p->a), VDIVIDE_TOL)) ) {
-			rt_log("Warning: gauss ellipse not axis aligned\n");
+		if( rdebug&RDEBUG_SHADE)
+			rt_log(" got a solid type %d \"%s\"\n",
+				sol_id,
+				rt_functab[sol_id].ft_name);
+
+		RT_ELL_CK_MAGIC(ell_p);
+
+		if( rdebug&RDEBUG_SHADE) {
+			VPRINT("point", ell_p->v); 
+			VPRINT("a", ell_p->a); 
+			VPRINT("b", ell_p->b); 
+			VPRINT("c", ell_p->c); 
 		}
 
+		/* create the matrix that maps the coordinate system defined
+		 * by the ellipse into model space, and get inverse for use
+		 * in the _render() proc
+		 */
+		mat_idn(mp);
+		VMOVE(v, ell_p->a);	VUNITIZE(v);
+		mp[0] = v[0];	mp[4] = v[1];	mp[8] = v[2];
+
+		VMOVE(v, ell_p->b);	VUNITIZE(v);
+		mp[1] = v[0];	mp[5] = v[1];	mp[9] = v[2];		
+
+		VMOVE(v, ell_p->c);	VUNITIZE(v);
+		mp[2] = v[0];	mp[6] = v[1];	mp[10] = v[2];		
+
+		MAT_DELTAS_VEC(mp, ell_p->v);
+
+		mat_copy(dbint->ell2model, mp);
+		mat_inv(dbint->model2ell, mp);
+
+
+		/* find scaling of gaussian puff in ellipsoid space */
 		VSET(dbint->one_sigma,
 			MAGNITUDE(ell_p->a) / tb->gs->gauss_sigma,
 			MAGNITUDE(ell_p->b) / tb->gs->gauss_sigma,
@@ -231,23 +257,28 @@ struct tree_bark *tb;
 		break;
 	}
 	case OP_UNION:
-		tree_solids(tp->tr_b.tb_left, tb);
-		tree_solids(tp->tr_b.tb_right, tb);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 		break;
 
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-		rt_log("Warning: Non-union region op in %s!\n", tb->name);
-		tree_solids(tp->tr_b.tb_left, tb);
+	case OP_NOT: rt_log("Warning: 'Not' region operator in %s\n",tb->name);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		break;
+	case OP_GUARD:rt_log("Warning: 'Guard' region operator in %s\n",tb->name);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		break;
+	case OP_XNOP:rt_log("Warning: 'XNOP' region operator in %s\n",tb->name);
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
 		break;
 
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
-		rt_log("Warning: Non-union region op in %s!\n", tb->name);
-		tree_solids(tp->tr_b.tb_left, tb);
-		tree_solids(tp->tr_b.tb_right, tb);
+		/* XXX this can get us in trouble if 1 solid is subtracted
+		 * from less than all the "union" solids of the region.
+		 */
+		tree_solids(tp->tr_b.tb_left, tb, tp->tr_op);
+		tree_solids(tp->tr_b.tb_right, tb, tp->tr_op);
 		return;
 
 	default:
@@ -415,6 +446,14 @@ struct seg *seg_p;
 	double dist;
 	int steps;
 
+
+	/* XXX Should map the ray into the coordinate system of the ellipsoid
+	 * here, so that all computations are done in an axis-aligned system
+	 * with the axes being the gaussian dimensions
+	 */
+
+
+
 	span = seg_p->seg_out.hit_dist - seg_p->seg_in.hit_dist;
 	steps = (int)(span / 100.0 + 0.5);
 	if ( steps < 2 ) steps = 2;
@@ -483,7 +522,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 	RT_CK_LIST_HEAD(&gauss_sp->dbil);
 
 
-	/* look at each segment that participated in the ray */
+	/* look at each segment that participated in the ray partition(s) */
 	for (RT_LIST_FOR(seg_p, seg, &swp->sw_segs->l) ) {
 
 		if( rdebug&RDEBUG_SHADE) {
@@ -498,7 +537,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if (BITTEST(pp->pt_solhit, seg_p->seg_stp->st_bit) ) {
 
 
-			/* check to see if the solid is in this region */
+			/* check to see if the solid is from this region */
 			for (RT_LIST_FOR(dbint_p, reg_db_internals,
 			    &gauss_sp->dbil)){
 
