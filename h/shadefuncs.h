@@ -1,30 +1,13 @@
 /*
  *			M A T E R I A L . H
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *
+ *  $Header$
  */
-
-#if defined(CRAY)
-	/*
-	 * CRAY machines have a problem taking the address of an arbitrary
-	 * character within a structure.  int pointers have to be used.
-	 * There is some matching hackery in the invididual tables.
-	 */
-	typedef int	*mp_off_ty;
-#else
-#	ifdef __STDC__
-		typedef void	*mp_off_ty;
-#	else
-		typedef char	*mp_off_ty;
-#	endif
-#endif
-
-/*
- *			M A T P A R S E
- */
-struct matparse {
-	char		*mp_name;
-	mp_off_ty	mp_offset;
-	char		*mp_fmt;
-};
 
 /*
  *			M F U N C S
