@@ -79,65 +79,99 @@ a geometric properties file.
 The following is an example from an interactive session.
 .sp
 .nf
-$ firpass simple.g all
-Write output to standard out (0) or a file (1) or not at all (2)?  1
-Enter name of file output is to be written to (15 char max).  all.f.out
-Enter name of error file to be created (15 char max).  all.f.err
-Enter name of second pass file to be created (15 char max).  all.f.2nd
-Enter name of material id file to be read (15 char max).  matprop_table
+$ firpass test.veh.g vehicle air
+Write output to standard out (0) or a file (1) or not at all (2)?  2
+Enter name of error file to be created (15 char max).  veh.f.err
+Enter name of second pass file to be created (15 char max).  veh.f.2nd
+Enter name of region # & name file to be created (15 char max).  veh.f.rnn
+Enter name of material id file to be read (15 char max).  prp
 Enter type of file to be written.
 	0 - PRISM file
 	1 - Generic file
 	2 - Geometric properties file
 0
-Enter name of facet file to be created. (15 char max)  all.f.fac
-File Used:  simple.g
-Material ID File:  matprop_table
-Database Title:  simple object 
+Enter name of facet file to be created. (15 char max)  veh.f.fac
+Which release of PRISM is being used, 2.0 (2) or 3.0 (3)?  3
+File Used:  test.veh.g
+Material ID File:  prp
+Database Title:  test vehicle for use with irprep programs
 Mallocing arrays.
 Zeroing variables.
-Center of bounding rpp ( 0.000000, 0.000000, 0.000000 )
-Length of diagonal of bounding rpp:  634.455834
+Center of bounding rpp ( 356.500000, 0.000000, 1250.000000 )
+Length of diagonal of bounding rpp:  3829.051456
 Minimums & maximums
-  x:  -634.455834 - 634.455834
-  y:  -634.455834 - 634.455834
-  z:  -634.455834 - 634.455834
+  x:  -3472.551456 - 4185.551456
+  y:  -3829.051456 - 3829.051456
+  z:  -2579.051456 - 5079.051456
 Model minimum & maximum.
-	X:  -630.000000 to 630.000000
-	Y:  -50.000000 to 50.000000
-	Z:  -50.000000 to 50.000000
+	X:  -3001.000000 to 3714.000000
+	Y:  -1350.000000 to 1350.000000
+	Z:  0.000000 to 2500.000000
 
 Enter grid spacing (mm) for fired rays.
-1
+10
 
 SHOOTING DOWN X-AXIS
-Normal before normalizing
-  829.094287, -1436.706436, -491.207450
-Normal before normalizing
-  -810.212222, -519.348694, -192.003269
-Normal before normalizing
-  0.000000, 0.000000, 1.305407
-Normal before normalizing
-  0.000000, -3.681156, 0.000000
-Normal before normalizing
-  6.866205, -14.724625, 1.305407
+There are no exterior surfaces on region 19.  Setting exterior surface area
+	to total surface area 31.014883
+There are no exterior surfaces on region 20.  Setting exterior surface area
+	to total surface area 12.235728
+There are no exterior surfaces on region 21.  Setting exterior surface area
+	to total surface area 10.856470
 
 
 SUMMARY OF FILES USED & CREATED
-	.g file used:  simple.g
+	.g file used:  test.veh.g
 	regions used:
-		all
-	material id file used:  matprop_table
-	output file created:  all.f.out
-	second pass file created:  all.f.2nd
-	error file created:  all.f.err
-	facet file created:  all.f.fac
+		vehicle
+		air
+	material id file used:  prp
+	second pass file created:  veh.f.2nd
+	error file created:  veh.f.err
+	region # & name file created:  veh.f.rnn
+	facet file created:  veh.f.fac
+	  (format is PRISM 3.0)
 
 
 Freeing memory.
 .fi
+.SH CHANGES SINCE BRL-CAD RELEASE 4.0
+1.  Region number and name file is created for use with shapefact and
+display.
+.sp
+.sp -1
+2.  The region number is the same across all irprep files, i.e.
+region numbers start at one not zero.  This affects the diagnostic
+file, the second pass file, and the error file.
+.sp
+.sp -1
+3.  When there is engine air area it is printed in the the radius
+field of the PRISM facet file.
+.sp
+.sp -1
+4.  The user is given a choice of a PRISM format of PRISM 2.0 or
+PRISM 3.0 for the facet file.
+.sp
+.sp -1
+5.  Addition air types have been added:  closed compartment air,
+exhaust air, generic air 1, and generic air 2.
+.sp
+.sp -1
+6.  An additional line was added to the end of the PRISM facet
+file to indicate the end of the file.  This line is required by
+PRISM.
+.sp
+.sp -1
+7.  If the exterior surface area is zero
+the total surface area is written out in the exterior surface
+area field in the PRISM facet file.  PRISM will not accept zero in
+this field.
+.sp
 .SH SEE ALSO
-secpass(1), shapefact(1), User's Manual for IRPREP (in progress)
+secpass(1), shapefact(1), display(1), see(1), see2(1), pictx(1),
+pictsgi(1), User's Manual for IRPREP (BRL-SP-96), Computer Programs
+for Generating an Input File for PRISM and Displaying PRISM Results
+(BRL report in progress)
 
 .SH AUTHOR
 Susan A. Coates
