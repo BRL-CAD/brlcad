@@ -60,61 +60,62 @@ extern void (*nmg_mged_debug_display_hack)();
 /* declared in vdraw.c */
 extern struct bu_cmdtab vdraw_cmds[];
 
-HIDDEN int dgo_open_tcl();
-HIDDEN int dgo_close_tcl();
-HIDDEN int dgo_cmd();
-HIDDEN int dgo_headSolid_tcl();
-HIDDEN int dgo_draw_tcl();
-HIDDEN int dgo_erase_tcl();
-HIDDEN int dgo_who_tcl();
-HIDDEN int dgo_rt_tcl();
-HIDDEN int dgo_vdraw_tcl();
-HIDDEN int dgo_overlay_tcl();
-HIDDEN int dgo_getview_tcl();
+static int dgo_open_tcl();
+static int dgo_close_tcl();
+static int dgo_cmd();
+static int dgo_headSolid_tcl();
+static int dgo_draw_tcl();
+static int dgo_erase_tcl();
+static int dgo_who_tcl();
+static int dgo_rt_tcl();
+static int dgo_vdraw_tcl();
+static int dgo_overlay_tcl();
+static int dgo_getview_tcl();
 
-HIDDEN void dgo_plot_anim_upcall_handler();
-HIDDEN void dgo_vlblock_anim_upcall_handler();
-HIDDEN void dgo_nmg_debug_display_hack();
-HIDDEN union tree *dgo_wireframe_region_end();
-HIDDEN union tree *dgo_wireframe_leaf();
-HIDDEN int dgo_drawtrees();
-HIDDEN void dgo_cvt_vlblock_to_solids();
-HIDDEN int dgo_invent_solid();
-HIDDEN void dgo_bound_solid();
-HIDDEN void dgo_drawH_part2();
-HIDDEN void dgo_eraseobjall();
+static void dgo_plot_anim_upcall_handler();
+static void dgo_vlblock_anim_upcall_handler();
+static void dgo_nmg_debug_display_hack();
+static union tree *dgo_wireframe_region_end();
+static union tree *dgo_wireframe_leaf();
+static int dgo_drawtrees();
+static void dgo_cvt_vlblock_to_solids();
+static int dgo_invent_solid();
+static void dgo_bound_solid();
+static void dgo_drawH_part2();
+static void dgo_eraseobjall();
 void dgo_eraseobjall_callback();
-HIDDEN void dgo_eraseobj();
-HIDDEN void dgo_color_soltab();
+static void dgo_eraseobj();
+static void dgo_color_soltab();
+static dgo_run_rt();
 
-HIDDEN int		dgo_draw_nmg_only;
-HIDDEN int		dgo_nmg_triangulate;
-HIDDEN int		dgo_draw_wireframes;
-HIDDEN int		dgo_draw_normals;
-HIDDEN int		dgo_draw_solid_lines_only=0;
-HIDDEN int		dgo_draw_no_surfaces = 0;
-HIDDEN int		dgo_shade_per_vertex_normals=0;
-HIDDEN int		dgo_wireframe_color_override;
-HIDDEN int		dgo_wireframe_color[3];
-HIDDEN struct model	*dgo_nmg_model;
-HIDDEN struct db_tree_state	dgo_initial_tree_state;
-HIDDEN struct rt_tess_tol	dgo_ttol;
-HIDDEN struct bn_tol		dgo_tol;
+static int		dgo_draw_nmg_only;
+static int		dgo_nmg_triangulate;
+static int		dgo_draw_wireframes;
+static int		dgo_draw_normals;
+static int		dgo_draw_solid_lines_only=0;
+static int		dgo_draw_no_surfaces = 0;
+static int		dgo_shade_per_vertex_normals=0;
+static int		dgo_wireframe_color_override;
+static int		dgo_wireframe_color[3];
+static struct model	*dgo_nmg_model;
+static struct db_tree_state	dgo_initial_tree_state;
+static struct rt_tess_tol	dgo_ttol;
+static struct bn_tol		dgo_tol;
 
-HIDDEN int dgo_do_not_draw_nmg_solids_during_debugging = 0;
-HIDDEN int dgo_draw_edge_uses=0;
-HIDDEN int dgo_enable_fastpath = 0;
-HIDDEN int dgo_fastpath_count=0;	/* statistics */
-HIDDEN struct bn_vlblock	*dgo_draw_edge_uses_vbp;
+static int dgo_do_not_draw_nmg_solids_during_debugging = 0;
+static int dgo_draw_edge_uses=0;
+static int dgo_enable_fastpath = 0;
+static int dgo_fastpath_count=0;	/* statistics */
+static struct bn_vlblock	*dgo_draw_edge_uses_vbp;
 
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
-HIDDEN struct dg_obj *curr_dgop;	/* current drawable geometry object */
-HIDDEN Tcl_Interp *curr_interp;		/* current Tcl interpreter */
-HIDDEN struct db_i *curr_dbip;		/* current database instance pointer */
-HIDDEN struct solid *curr_hsp;		/* current head solid pointer */
-HIDDEN struct solid FreeSolid;		/* head of free solid list */
+static struct dg_obj *curr_dgop;	/* current drawable geometry object */
+static Tcl_Interp *curr_interp;		/* current Tcl interpreter */
+static struct db_i *curr_dbip;		/* current database instance pointer */
+static struct solid *curr_hsp;		/* current head solid pointer */
+static struct solid FreeSolid;		/* head of free solid list */
 
-HIDDEN struct bu_cmdtab dgo_cmds[] = {
+static struct bu_cmdtab dgo_cmds[] = {
 	"headSolid",		dgo_headSolid_tcl,
 	"draw",			dgo_draw_tcl,
 	"ev",			dgo_draw_tcl,
@@ -144,7 +145,7 @@ HIDDEN struct bu_cmdtab dgo_cmds[] = {
  *
  * Returns: result of dbo command.
  */
-HIDDEN int
+static int
 dgo_cmd(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -187,7 +188,7 @@ Dgo_Init(interp)
 /*
  * Called by Tcl when the object is destroyed.
  */
-HIDDEN void
+static void
 dgo_deleteProc(clientData)
      ClientData clientData;
 {
@@ -205,7 +206,7 @@ dgo_deleteProc(clientData)
  * USAGE:
  *	  procname close
  */
-HIDDEN int
+static int
 dgo_close_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -236,7 +237,7 @@ dgo_close_tcl(clientData, interp, argc, argv)
  * USAGE:
  *	  dgo_open [name wdb_obj]
  */
-HIDDEN int
+static int
 dgo_open_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -309,7 +310,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
  *
  * Returns: database objects headSolid.
  */
-HIDDEN int
+static int
 dgo_headSolid_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -341,7 +342,7 @@ dgo_headSolid_tcl(clientData, interp, argc, argv)
  *        procname draw|ev [args]
  *
  */
-HIDDEN int
+static int
 dgo_draw_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -392,7 +393,7 @@ dgo_draw_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
-HIDDEN void
+static void
 dgo_erase(dgop, interp, argc, argv)
      struct dg_obj *dgop;
      Tcl_Interp *interp;
@@ -415,7 +416,7 @@ dgo_erase(dgop, interp, argc, argv)
  *        procname erase object(s)
  *
  */
-HIDDEN int
+static int
 dgo_erase_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -444,7 +445,7 @@ dgo_erase_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname who [r(eal)|p(hony)|b(oth)]
  */
-HIDDEN int
+static int
 dgo_who_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
@@ -516,7 +517,7 @@ dgo_who_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
-HIDDEN void
+static void
 dgo_overlay(fp, name, char_size)
      FILE *fp;
      char *name;
@@ -542,7 +543,7 @@ dgo_overlay(fp, name, char_size)
  * Usage:
  *        procname overlay file.plot char_size [name]
  */
-HIDDEN int
+static int
 dgo_overlay_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -596,7 +597,7 @@ char	**argv;
  * Usage:
  *        procname getview
  */
-HIDDEN int
+static int
 dgo_getview_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -649,7 +650,7 @@ char	**argv;
  * Usage:
  *        procname rt view_obj arg(s)
  */
-HIDDEN int
+static int
 dgo_rt_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -737,7 +738,7 @@ char	**argv;
  * Usage:
  *        procname vdraw cmd arg(s)
  */
-HIDDEN int
+static int
 dgo_vdraw_tcl(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -758,7 +759,7 @@ char	**argv;
 
 /*
  */
-HIDDEN void
+static void
 dgo_plot_anim_upcall_handler(file, us)
      char *file;
      long us;		/* microseconds of extra delay */
@@ -776,7 +777,7 @@ dgo_plot_anim_upcall_handler(file, us)
 
 /*
  */
-HIDDEN void
+static void
 dgo_vlblock_anim_upcall_handler(vbp, us, copy)
      struct bn_vlblock *vbp;
      long us; /* microseconds of extra delay */
@@ -787,12 +788,12 @@ dgo_vlblock_anim_upcall_handler(vbp, us, copy)
 
 /*
  */
-HIDDEN void
+static void
 dgo_nmg_debug_display_hack()
 {
 }
 
-HIDDEN union tree *
+static union tree *
 dgo_wireframe_region_end(tsp, pathp, curtree)
      register struct db_tree_state	*tsp;
      struct db_full_path	*pathp;
@@ -806,7 +807,7 @@ dgo_wireframe_region_end(tsp, pathp, curtree)
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 dgo_wireframe_leaf(tsp, pathp, ep, id)
      struct db_tree_state	*tsp;
      struct db_full_path	*pathp;
@@ -1029,7 +1030,7 @@ out:
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN union tree *
+static union tree *
 dgo_nmg_region_end( tsp, pathp, curtree )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
@@ -1161,7 +1162,7 @@ union tree		*curtree;
  *  	0	Ordinarily
  *	-1	On major error
  */
-HIDDEN int
+static int
 dgo_drawtrees(argc, argv, kind)
      int	argc;
      char	**argv;
@@ -1340,7 +1341,7 @@ dgo_drawtrees(argc, argv, kind)
 /*
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
-HIDDEN void
+static void
 dgo_cvt_vlblock_to_solids(vbp, name, copy)
 struct bn_vlblock	*vbp;
 char			*name;
@@ -1377,7 +1378,7 @@ int			copy;
  *
  *  This parallels much of the code in dodraw.c
  */
-HIDDEN int
+static int
 dgo_invent_solid(name, vhead, rgb, copy)
      char		*name;
      struct bu_list	*vhead;
@@ -1445,7 +1446,7 @@ dgo_invent_solid(name, vhead, rgb, copy)
  *  Also finds s_vlen;
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
-HIDDEN void
+static void
 dgo_bound_solid(sp)
      register struct solid *sp;
 {
@@ -1510,7 +1511,7 @@ dgo_bound_solid(sp)
  *
  *  This routine must be prepared to run in parallel.
  */
-HIDDEN void
+static void
 dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp)
 int			dashflag;
 struct bu_list		*vhead;
@@ -1629,7 +1630,7 @@ dgo_eraseobjall_callback(interp, dbip, dp)
  * This routine goes through the solid table and deletes all displays
  * which contain the specified object in their 'path'
  */
-HIDDEN void
+static void
 dgo_eraseobjall(interp, dgop, dp)
      Tcl_Interp *interp;
      struct dg_obj *dgop;
@@ -1665,7 +1666,7 @@ dgo_eraseobjall(interp, dgop, dp)
   }
 }
 
-HIDDEN void
+static void
 dgo_eraseobj(interp, dgop, dp)
      Tcl_Interp *interp;
      struct dg_obj *dgop;
@@ -1705,7 +1706,7 @@ dgo_eraseobj(interp, dgop, dp)
  *  Pass through the solid table and set pointer to appropriate
  *  mater structure.
  */
-HIDDEN void
+static void
 dgo_color_soltab(hsp)
      struct solid *hsp;
 {
@@ -1805,7 +1806,7 @@ dgo_build_tops(interp, hsp, start, end)
  *  Note that the model-space location of the eye is a parameter,
  *  as it can be computed in different ways.
  */
-HIDDEN void
+static void
 dgo_rt_write(dgop, vop, fp, eye_model)
      struct dg_obj *dgop;
      struct view_obj *vop;
@@ -1851,7 +1852,7 @@ dgo_rt_write(dgop, vop, fp, eye_model)
 	(void)fprintf(fp, "end;\n");
 }
 
-HIDDEN void
+static void
 dgo_rt_output_handler(clientData, mask)
      ClientData clientData;
      int mask;
@@ -1879,7 +1880,7 @@ dgo_rt_output_handler(clientData, mask)
 	bu_log("%s", line);
 }
 
-HIDDEN void
+static void
 dgo_rt_set_eye_model(dgop, vop, eye_model)
      struct dg_obj *dgop;
      struct view_obj *vop;
@@ -1948,7 +1949,7 @@ dgo_rt_set_eye_model(dgop, vop, eye_model)
 /*
  *                  D G O _ R U N _ R T
  */
-HIDDEN int
+static int
 dgo_run_rt(dgop, vop)
      struct dg_obj *dgop;
      struct view_obj *vop; 
