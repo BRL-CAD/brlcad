@@ -463,7 +463,7 @@ else
 	build_zlib=yes
 	Z='${top_builddir}/src/other/libz/libz.la'
 fi
-AM_CONDITIONAL(NEED_ZLIB, [test "$have_zlib" == no])
+AM_CONDITIONAL(BUILD_ZLIB, [test "$have_zlib" == no])
 
 dnl detect a useable system png library
 have_png=no
@@ -476,7 +476,7 @@ else
 	build_png=yes
 	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${Z}'
 fi
-AM_CONDITIONAL(NEED_PNG, [test "$have_png" == no])
+AM_CONDITIONAL(BUILD_PNG, [test "$have_png" == no])
 AC_SUBST(PNG_LIBS)
 
 
