@@ -157,7 +157,7 @@ grip_DB_ARGS=""
 #
 # HALFSPACE (half) Arguments
 # 
-# in args =>
+# in args => name type outward-pointing-normal distance-from-origin
 #
 half_IN_ARGS="0 0 1  0"
 half_DB_ARGS="N {0 0 1} d 0"
